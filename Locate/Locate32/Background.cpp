@@ -801,13 +801,14 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 	for (int i=pUpdateList->GetSize()-1;i>=0;i--)
 	{
 		Item* pListItem=pUpdateList->GetAt(i);
-		//BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Checking whether pItem=%X is pListItem=%X",pItem,pListItem,NULL,NULL);
+		
+		BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Checking whether pItem=%X is pListItem=%X",pItem,pListItem,NULL,NULL);
 
 		if (pUpdateList->GetAt(i)->m_pItem==pItem)
 		{
 			if (nDetail==CLocateDlg::Needed)
 			{
-				//BkgDebugMessage("CBackgroundUpdater::AddToUpdateList checking whether all needed details");
+				BkgDebugMessage("CBackgroundUpdater::AddToUpdateList checking whether all needed details");
 				
 				for (int type=0;type<=CLocateDlg::LastType;type++)
 				{
@@ -820,7 +821,7 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 						}
 						if (j<0) // Not found
 						{
-							//BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new(1) detail %d to item %X",nDetail,pListItem,0,0);
+							BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new(1) detail %d to item %X",nDetail,pListItem,0,0);
 							pListItem->m_aDetails.Add((CLocateDlg::DetailType)type);
 						}
 					}
@@ -828,7 +829,7 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 			}
             else
 			{
-				//BkgDebugFormatMessage("CBackgroundUpdater::AddToUpdateList checking wheter detail %d exists",nDetail);
+				BkgDebugFormatMessage("CBackgroundUpdater::AddToUpdateList checking wheter detail %d exists",nDetail);
 					
 				for (int j=pListItem->m_aDetails.GetSize()-1;j>=0;j--)
 				{
@@ -838,35 +839,35 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 				if (j<0)
 				{
 					// Not found
-					//BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new(2) detail %d to item %X",nDetail,pListItem,0,0);
+					BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new(2) detail %d to item %X",nDetail,pListItem,0,0);
 					pListItem->m_aDetails.Add(nDetail);
 				}
 			}
 			ReleaseUpdaterListPtr();
 			
-			//BkgDebugMessage("CBackgroundUpdater::AddToUpdateList END (loop)");
+			BkgDebugMessage("CBackgroundUpdater::AddToUpdateList END (loop)");
 			return;
 		}
 	}
 	
 
-	//BkgDebugMessage("CBackgroundUpdater::AddToUpdateList END (loop)");
+	BkgDebugMessage("CBackgroundUpdater::AddToUpdateList END (loop)");
 			
 	if (nDetail!=CLocateDlg::Needed)
 	{
-		//BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new item (%X,%d,%d)",pItem,iItem,nDetail,0);
+		BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new item (%X,%d,%d)",pItem,iItem,nDetail,0);
 			
 		pUpdateList->Add(new Item(pItem,iItem,nDetail));
 		ReleaseUpdaterListPtr();
 
-		//BkgDebugMessage("CBackgroundUpdater::AddToUpdateList END (newitem)");
+		BkgDebugMessage("CBackgroundUpdater::AddToUpdateList END (newitem)");
 		return;
 	}
 
 	// Adding needed
 	ReleaseUpdaterListPtr();
 	
-	//BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new item with all necessary details (%X,%d)",pItem,iItem,0,0);
+	BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new item with all necessary details (%X,%d)",pItem,iItem,0,0);
 	Item* pUpdateItem=new Item(pItem,iItem);
 
 	for (int type=0;type<=CLocateDlg::LastType;type++)

@@ -3928,6 +3928,8 @@ BOOL CLocateDlg::SendFiles(CString& dst,CListCtrl* pList,CLSID& clsid)
 
 BYTE CLocateDlg::BeginDragFiles(CListCtrl* pList)
 {
+	DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList) BEGIN");
+	
 	OleInitialize(NULL);
 
 	CFileTarget* pTarget=new CFileTarget;
@@ -3941,28 +3943,39 @@ BYTE CLocateDlg::BeginDragFiles(CListCtrl* pList)
 	DWORD nEffect;
 	pfo->SetFiles(pList);
 	
-	DoDragDrop(pfo,&fs,DROPEFFECT_COPY|DROPEFFECT_MOVE|DROPEFFECT_LINK|DROPEFFECT_SCROLL,&nEffect);
-
+	DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): DoDragDrop is about to be called");
+	HRESULT hRes=DoDragDrop(pfo,&fs,DROPEFFECT_COPY|DROPEFFECT_MOVE|DROPEFFECT_LINK|DROPEFFECT_SCROLL,&nEffect);
+	DebugFormatMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): DoDragDrop returned %X",hRes);
+	
 	// Updating selected items
 	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
 	while (nItem!=-1)
 	{
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+		DebugFormatMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): updating item %X",pItem);
+	
 		// Just disabling flags, let background thread do the rest
 		pItem->RemoveFlags(LITEM_COULDCHANGE);
+		DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): removed flags");
+	
 		if (m_pBackgroundUpdater!=NULL)
 		{
 			m_pBackgroundUpdater->AddToUpdateList(pItem,nItem,Needed);
+
+			DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): calling m_pBackgroundUpdater->StopWaiting()");
 			m_pBackgroundUpdater->StopWaiting();
 		}
 		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
 	}
 	pfo->Release();
 	
+
+	DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): calling RevokeDragDrop(*m_pListCtrl)");
 	RevokeDragDrop(*m_pListCtrl);
 	pTarget->Release();
 
 	OleUninitialize();
+	DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList) END");
 	return TRUE;
 }
 
