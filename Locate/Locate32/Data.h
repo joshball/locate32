@@ -2,6 +2,7 @@
 #define DATA_H
 
 #define SCHEDULE_V1_LEN		0x20
+
 class CSchedule
 {
 public:
@@ -152,6 +153,98 @@ public:
 	inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
 #endif
 };
+
+// Keyboard shortcut
+class CShortcut {
+public:
+	// Flags
+	enum Flags {
+		sfLocateDialog = 0x00,
+		sfGlobalHotkey = 0x01,
+		sfGlobalHook = 0x03,
+		sfKeyTypeMask = 0x03,
+
+		sfUseMemonic = 0x04,
+		sfExecuteWhenUp = 0x08,
+
+		sfRemoveKeyUpMessage = 0x10,
+		sfRemoveKeyDownMessage = 0x20
+	};
+	DWORD m_dwFlags;
+	
+	// Shortcut
+	WORD m_wVirtualKey;
+	WORD m_wModifiers;
+	enum Modifiers {
+		ModifierAlt= MOD_ALT,
+		ModifierControl = MOD_CONTROL,
+		ModifierWin = MOD_WIN,
+		ModifierShift = MOD_SHIFT
+	};
+	LPSTR m_pClass; // NULL=none, -1==locate dialog
+	LPSTR m_pTitle; // NULL=none
+	UINT m_nDelay; // 0=none, -1=post, otherwise it is delay in ms
+	
+	
+	// Actions
+	class CKeyboardAction {
+	public:
+		enum Action {
+			ActivateControl = 0,
+			ActivateTab = 1
+		} nAction;
+	
+		enum ActionActivateControls { // First is control to be activated, second is for memonics
+			// Dialog itself
+			FindNow = MAKELONG(IDC_OK,IDC_OK),
+			Stop = MAKELONG(IDC_STOP,IDC_STOP),
+			NewSearch = MAKELONG(IDC_NEWSEARCH,IDC_NEWSEARCH),
+			ResultList = MAKELONG(IDC_FILELIST,0),
+			Presets = MAKELONG(IDC_PRESETS,IDC_PRESETS),
+
+			// Name and Location
+			Name = MAKELONG(IDC_NAME,IDC_NAMESTATIC),
+			Type = MAKELONG(IDC_TYPE,IDC_TYPESTATIC),
+            LookIn= MAKELONG(IDC_LOOKIN,IDC_LOOKINSTATIC),
+			MoreDirectories = MAKELONG(IDC_MOREDIRECTORIES,0),
+			Browse = MAKELONG(IDC_BROWSE,IDC_BROWSE),
+
+			// Size and Data
+			MinimumSize = MAKELONG(IDC_MINIMUMSIZE,IDC_CHECKMINIMUMSIZE),
+			MaximumSize = MAKELONG(IDC_MAXIMUMSIZE,IDC_CHECKMINIMUMSIZE),
+			MinimumDate = MAKELONG(IDC_MINDATE,IDC_CHECKMINIMUMSIZE),
+			MaximumDate = MAKELONG(IDC_MAXDATE,IDC_CHECKMINIMUMSIZE),
+			
+			// Advanced
+			CheckFilesOrFolders = MAKELONG(IDC_CHECK,IDC_CHECKSTATIC),
+			MatchWholeName = MAKELONG(IDC_MATCHWHOLENAME,IDC_MATCHWHOLENAME),
+			ReplaceSpaces = MAKELONG(IDC_REPLACESPACES,IDC_REPLACESPACES),
+			TypeOfFile = MAKELONG(IDC_FILETYPE,IDC_FILETYPESTATIC),
+			ContainingText = MAKELONG(IDC_CONTAINDATACHECK,IDC_CONTAINDATACHECK),
+			TextMatchCase = MAKELONG(IDC_DATAMATCHCASE,IDC_DATAMATCHCASE),
+			TextHelp = MAKELONG(IDC_HELPTOOLBAR,0)
+		};
+
+		enum ActionActivateTabs {
+			NameAndLocation = 0,
+			SizeAndData = 1,
+			Advanced = 2
+		};
+
+		union { // Action specifig type
+			ActionActivateControls m_nActivateControl;
+			ActionActivateTabs m_nActivateTab;
+	    };
+
+		CKeyboardAction* m_pNextAction;
+	};
+
+	CKeyboardAction* m_pFirstAction;
+};
+
+////////////////////////////////////////////////////////////
+// Inliners
+////////////////////////////////////////////////////////////
 
 inline CSchedule::CSchedule(CSchedule* pSchedule)
 {

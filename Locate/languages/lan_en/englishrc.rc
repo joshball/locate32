@@ -92,13 +92,13 @@ STYLE DS_SETFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    LTEXT           "&Named:",IDC_STATIC,5,14,43,11
+    LTEXT           "&Named:",IDC_NAMESTATIC,5,14,43,11
     COMBOBOX        IDC_NAME,50,12,145,53,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    LTEXT           "Ex&tensions:",IDC_STATIC,5,35,43,10
+    LTEXT           "Ex&tensions:",IDC_TYPESTATIC,5,35,43,10
     COMBOBOX        IDC_TYPE,50,34,145,53,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    LTEXT           "&Look in:",IDC_STATIC,5,55,43,10
+    LTEXT           "&Look in:",IDC_LOOKINSTATIC,5,55,43,10
     CONTROL         "",IDC_LOOKIN,"ComboBoxEx32",CBS_DROPDOWN | 
                     CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | WS_TABSTOP,50,52,
                     145,110
@@ -150,14 +150,14 @@ STYLE DS_SETFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    LTEXT           "C&heck:",IDC_STATIC,8,8,38,9
+    LTEXT           "C&heck:",IDC_CHECKSTATIC,8,8,38,9
     COMBOBOX        IDC_CHECK,50,5,145,53,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "&Match whole name only",IDC_MATCHWHOLENAME,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,8,21,100,9
     CONTROL         "Replace &spaces with asterisk",IDC_REPLACESPACES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,110,21,140,9
-    LTEXT           "&Type of file:",IDC_STATIC,8,32,80,8
+    LTEXT           "&Type of file:",IDC_FILETYPESTATIC,8,32,80,8
     COMBOBOX        IDC_FILETYPE,8,42,185,103,CBS_DROPDOWNLIST | 
                     CBS_OWNERDRAWVARIABLE | CBS_SORT | WS_VSCROLL | 
                     WS_TABSTOP
@@ -545,6 +545,81 @@ BEGIN
     LTEXT           "Application needs to be restarted to take this effect",IDC_STATIC,6,286,
                     273,10
 END
+
+IDD_KEYBOARDSHORTCUTS DIALOGEX 0, 0, 287, 301
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Schortcuts:",IDC_STATIC,2,0,283,163
+    LTEXT           "&Assigned:",IDC_STATIC,8,13,133,10
+    PUSHBUTTON      "&New",IDC_NEW,143,11,41,12
+    PUSHBUTTON      "&Remove",IDC_REMOVE,189,11,41,12
+    PUSHBUTTON      "&Reset",IDC_RESET,235,11,41,12
+    CONTROL         "",IDC_KEYLIST,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SHAREIMAGELISTS | 
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,25,269,132
+    GROUPBOX        "Shortcut:",IDC_STATIC,2,168,283,38
+    LTEXT           "&Key:",IDC_STATIC,8,183,28,11
+    CONTROL         "",IDC_HOTKEY1,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,
+                    40,181,87,14
+    LTEXT           "&Where:",IDC_STATIC,132,183,28,11
+    COMBOBOX        IDC_WHERE,159,180,71,84,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "A&dvanced",IDC_ADVANCED,237,180,39,12
+    GROUPBOX        "Actions:",IDC_STATIC,2,214,283,84
+	CONTROL         "",IDC_ACTIONTOOLBAR,"ToolbarWindow32",WS_CLIPSIBLINGS | 0x0200 | 0x0100 | 0x8000 |
+                    0x004d,190,222,90,13
+    LTEXT           "&Action:",IDC_STATIC,8,240,29,9
+    COMBOBOX        IDC_ACTION,40,238,101,108,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "SubAction:",IDC_STATIC,148,240,41,9
+    COMBOBOX        IDC_SUBACTION,198,238,80,108,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    
+END
+
+IDD_SHORTCUTADVANCED DIALOGEX 100, 100, 273, 193
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Advanced settings:"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "&Overwrite virtualkey:",IDC_STATIC,4,0,263,37
+    COMBOBOX        IDC_OVERWRITEKEY,9,13,72,84,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Hot key control does not allow ESC, SPACE and TAB. So choose any key in the main dialog and select overwrite. Modifiers are specified as in hotkey control.",
+                    IDC_STATIC,84,8,179,25
+    GROUPBOX        "Where pressed:",IDC_STATIC,4,41,263,46
+    LTEXT           "Window title:",IDC_STATIC,10,52,47,9
+    LTEXT           "Class:",IDC_STATIC,87,51,47,9
+    EDITTEXT        IDC_WINDOWTITLE,10,63,71,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_WINDOWCLASS,87,62,71,14,ES_AUTOHSCROLL
+    CONTROL         "Locate dialog",IDC_LOCATEDIALOG,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,170,64,97,9
+    GROUPBOX        "Execute options:",IDC_STATIC,4,94,263,78
+    LTEXT           "Execute when:",IDC_EXECUTEWHENSTATIC,10,108,61,8
+    CONTROL         "Key is down",IDC_EXECUTEWHENKEYISDOWN,"Button",
+                    BS_AUTORADIOBUTTON,119,108,64,10
+    CONTROL         "Key is released",IDC_EXECUTEWHENKEYISUP,"Button",
+                    BS_AUTORADIOBUTTON,190,108,72,10
+    LTEXT           "Remove messages from queue:",IDC_REMOVEMESSAGESTATIC,10,
+                    125,100,8
+    CONTROL         "Key down",IDC_REMOVEDOWNMESSAGE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,119,125,47,10
+    CONTROL         "Key up",IDC_REMOVEUPMESSAGE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,190,125,38,10
+    LTEXT           "&Wait before execute:",IDC_STATIC,10,139,117,11
+    CONTROL         "None",IDC_WAITNONE,"Button",BS_AUTORADIOBUTTON,10,152,
+                    49,11
+    CONTROL         "Delay (ms):",IDC_WAITDELAY,"Button",BS_AUTORADIOBUTTON,
+                    61,152,55,11
+    EDITTEXT        IDC_WAITMS,121,152,40,12,ES_AUTOHSCROLL
+    CONTROL         "Post",IDC_WAITPOST,"Button",BS_AUTORADIOBUTTON,182,152,
+                    35,11
+    DEFPUSHBUTTON   "OK",IDC_OK,71,176,50,14
+    PUSHBUTTON      "Cancel",IDC_CANCEL,149,176,50,14
+END
+
+
 
 IDD_SELECTDETAILS DIALOGEX 100, 100, 262, 263
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 

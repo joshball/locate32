@@ -108,8 +108,10 @@ IDB_SAVERESTOOLBARBITMAPS BITMAP                  "commonres\\saverestoolbarbitm
 IDB_SAVERESTOOLBARBITMAPSH BITMAP                  "commonres\\saverest.bmp"
 IDB_TOOLBARBITMAPSH     BITMAP                  "commonres\\bmp00001.bmp"
 IDB_TOOLBARBITMAPSD     BITMAP                  "commonres\\bmp00002.bmp"
-IDB_SAVERESTOOLBARBITMAPSD BITMAP                  "commonres\\bmp00003.bmp"
+IDB_SHORTCUTACTIONSBITMAPSD BITMAP                  "commonres\\bmp00003.bmp"
 IDB_OPTIONSPROPERTYPAGEBITMAPS BITMAP                  "commonres\\advancedsettingsbitmap.bmp"
+IDB_SHORTCUTACTIONSBITMAPS BITMAP                  "commonres\\bmp00004.bmp"
+IDB_SHORTCUTACTIONSBITMAPSH BITMAP                  "commonres\\shortcut.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //

@@ -36,16 +36,18 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_pLanguage=new CLanguageSettingsPage;
 	m_pDatabases=new CDatabasesSettingsPage;
 	m_pAutoUpdate=new CAutoUpdateSettingsPage;
+	m_pKeyboardShortcuts=new CKeyboardShortcutsPage;
 	
 	AddPage((CPropertyPage*)m_pGeneral);
 	AddPage((CPropertyPage*)m_pAdvanced);
 	AddPage((CPropertyPage*)m_pLanguage);
 	AddPage((CPropertyPage*)m_pDatabases);
 	AddPage((CPropertyPage*)m_pAutoUpdate);
+	AddPage((CPropertyPage*)m_pKeyboardShortcuts);
 	
-	m_pGeneral->m_pSettings=this;
-	m_pAdvanced->m_pSettings=m_pLanguage->m_pSettings=this;
-	m_pAutoUpdate->m_pSettings=m_pDatabases->m_pSettings=this;
+	m_pGeneral->m_pSettings=m_pAdvanced->m_pSettings=this;
+	m_pLanguage->m_pSettings=m_pAutoUpdate->m_pSettings=this;
+	m_pDatabases->m_pSettings=m_pKeyboardShortcuts->m_pSettings=this;
 
 	m_psh.dwFlags|=PSH_NOAPPLYNOW|PSH_NOCONTEXTHELP;
 
@@ -5426,3 +5428,168 @@ BOOL CALLBACK COptionsPropertyPage::DefaultColorProc(BASICPARAMS* pParams)
 
 
 		
+////////////////////////////////////////
+// CKeyboardShortcutsPage
+////////////////////////////////////////
+
+
+BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
+{
+	CPropertyPage::OnInitDialog(hwndFocus);
+
+	m_pList=new CListCtrl(GetDlgItem(IDC_KEYLIST));
+
+	m_pList->InsertColumn(0,"Shortcut",LVCFMT_LEFT,130);
+	m_pList->InsertColumn(1,"Action",LVCFMT_LEFT,150);
+	m_pList->InsertColumn(2,"Global",LVCFMT_LEFT,80);
+	
+	m_pList->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT ,LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT );
+	m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Shortcuts Settings List Widths");
+
+	m_ToolBarBitmaps.Create(IDB_SHORTCUTACTIONSBITMAPS,15,0,RGB(255,255,255));
+	m_ToolBarBitmapsHot.Create(IDB_SHORTCUTACTIONSBITMAPSH,15,0,RGB(255,255,255));
+	m_ToolBarBitmapsDisabled.Create(IDB_SHORTCUTACTIONSBITMAPSD,15,0,RGB(255,255,255));
+
+	m_pToolBar=new CToolBarCtrl(GetDlgItem(IDC_ACTIONTOOLBAR));
+	m_pToolBar->SetImageList(m_ToolBarBitmaps);
+	m_pToolBar->SetDisabledImageList(m_ToolBarBitmapsDisabled);
+	m_pToolBar->SetHotImageList(m_ToolBarBitmapsHot);
+	
+	TBBUTTON toolbuttons[]={
+#pragma warning (disable :4305 4309)
+		{0,IDC_ADD,TBSTATE_ENABLED,TBSTYLE_BUTTON,0,0,0,0},
+		{1,IDC_REMOVE,0,TBSTYLE_BUTTON,0,0,0,0},
+		{2,IDC_NEXT,0,TBSTYLE_BUTTON,0,0,0,0},
+		{3,IDC_PREV,0,TBSTYLE_BUTTON,0,0,0,0},
+		{4,IDC_SWAPWITHPREVIOUS,0,TBSTYLE_BUTTON,0,0,0,0},
+		{5,IDC_SWAPWITHNEXT,TBSTATE_ENABLED,TBSTYLE_BUTTON,0,0,0,0}
+#pragma warning (default :4305 4309)
+	};
+	m_pToolBar->AddButtons(6,toolbuttons);
+
+	m_pToolBar->SetWindowPos(HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);
+	return FALSE;
+}
+
+BOOL CSettingsProperties::CKeyboardShortcutsPage::OnApply()
+{
+	CPropertyPage::OnApply();
+
+	
+	return TRUE;
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::OnDestroy()
+{
+	CPropertyPage::OnDestroy();
+
+	if (m_pList!=NULL)
+	{
+		m_pList->SaveColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Shortcuts Settings List Widths");
+		delete m_pList;
+		m_pList=NULL;
+	}
+
+	if (m_pToolBar!=NULL)
+	{
+		delete m_pToolBar;
+		m_pToolBar=NULL;
+	}
+
+}
+		
+void CSettingsProperties::CKeyboardShortcutsPage::OnCancel()
+{
+	m_pSettings->SetFlags(CSettingsProperties::settingsCancelled);
+
+	CPropertyPage::OnCancel();
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::OnTimer(DWORD wTimerID)
+{
+	/*KillTimer(wTimerID);
+
+	if (m_pList->GetNextItem(-1,LVNI_SELECTED)==-1)
+		m_pList->SetItemState(nLastSel,LVIS_SELECTED,LVIS_SELECTED);*/
+}
+
+BOOL CSettingsProperties::CKeyboardShortcutsPage::OnNotify(int idCtrl,LPNMHDR pnmh)
+{
+	switch (idCtrl)
+	{
+	case IDC_SHORTCUTKEY:
+		ListNotifyHandler((LV_DISPINFO*)pnmh,(NMLISTVIEW*)pnmh);
+		break;
+	default:
+		if (pnmh->code==TTN_NEEDTEXT)
+		{
+			switch (pnmh->idFrom)
+			{
+			case IDC_ADD:
+				((LPTOOLTIPTEXT)pnmh)->lpszText="Add new action";
+				break;
+			case IDC_REMOVE:
+				((LPTOOLTIPTEXT)pnmh)->lpszText="Remove action";
+				break;
+			case IDC_NEXT:
+				((LPTOOLTIPTEXT)pnmh)->lpszText="Next action";
+				break;
+			case IDC_PREV:
+				((LPTOOLTIPTEXT)pnmh)->lpszText="Previous action";
+				break;
+			case IDC_SWAPWITHPREVIOUS:
+				((LPTOOLTIPTEXT)pnmh)->lpszText="Swap with previous";
+				break;
+			case IDC_SWAPWITHNEXT:
+				((LPTOOLTIPTEXT)pnmh)->lpszText="Swap with next";
+				break;
+			}
+		}
+	}
+	return CPropertyPage::OnNotify(idCtrl,pnmh);
+}
+
+
+BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
+{
+	/*switch(pLvdi->hdr.code)
+	{
+	case LVN_DELETEITEM:
+		delete (LanguageItem*)pNm->lParam;
+		break;
+	case LVN_GETDISPINFO:
+		{
+			LanguageItem* li=(LanguageItem*)pLvdi->item.lParam;
+            if (li==NULL)
+				break;
+			
+			pLvdi->item.mask=LVIF_TEXT|LVIF_DI_SETITEM;
+
+			switch (pLvdi->item.iSubItem)
+			{
+			case 0:
+				pLvdi->item.pszText=li->Language.GetBuffer();
+				break;
+			case 1:
+				pLvdi->item.pszText=li->File.GetBuffer();
+				break;
+			case 2:
+				pLvdi->item.pszText=li->Description.GetBuffer();
+				break;
+			}
+			break;
+		}
+	case LVN_ITEMCHANGED:
+		if ((pNm->uOldState&LVIS_SELECTED)==0 && (pNm->uNewState&LVIS_SELECTED))
+		{
+			nLastSel=pNm->iItem;
+			KillTimer(0);
+		}
+		if ((pNm->uOldState&LVIS_SELECTED) && (pNm->uNewState&LVIS_SELECTED)==0)
+			SetTimer(0,100,NULL);
+		break;
+	}
+	*/
+	return TRUE;
+}
+

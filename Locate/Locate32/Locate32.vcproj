@@ -663,7 +663,13 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\commonres\bmp00004.bmp">
+		</File>
+		<File
 			RelativePath="..\..\Install\Locate2\Readme.txt">
+		</File>
+		<File
+			RelativePath=".\commonres\shortcut.bmp">
 		</File>
 	</Files>
 	<Globals>

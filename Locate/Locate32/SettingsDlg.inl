@@ -410,6 +410,12 @@ inline CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::CChedul
 {
 }
 
+inline CSettingsProperties::CKeyboardShortcutsPage::CKeyboardShortcutsPage()
+:	CPropertyPage(IDD_KEYBOARDSHORTCUTS,IDS_LANGUAGESETTINGS),
+	m_pList(NULL),m_pToolBar(NULL),m_ToolBarBitmaps(NULL),
+	m_ToolBarBitmapsDisabled(NULL),m_ToolBarBitmapsHot(NULL)
+{
+}
 
 
 #endif

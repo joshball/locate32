@@ -543,6 +543,41 @@ public:
 
 	};
 
+	class CKeyboardShortcutsPage : public CPropertyPage 
+	{
+	public:
+		CKeyboardShortcutsPage();
+		virtual BOOL OnInitDialog(HWND hwndFocus);
+		virtual BOOL OnApply();
+		virtual void OnCancel();
+		virtual void OnDestroy();
+		virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
+		virtual void OnTimer(DWORD wTimerID); 
+			
+		BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
+				
+	protected:
+		friend CSettingsProperties;
+		CSettingsProperties* m_pSettings;
+
+		
+#ifdef _DEBUG
+	public:
+		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
+		inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
+		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
+#endif
+	private:
+		CListCtrl* m_pList;
+		CToolBarCtrl* m_pToolBar;
+		CImageList m_ToolBarBitmaps;
+		CImageList m_ToolBarBitmapsDisabled;
+		CImageList m_ToolBarBitmapsHot;
+		
+		
+
+	};
+
 public:
 	//General
 	DWORD m_dwLocateDialogFlags;  // Used with CLocateDlg::LocateDialogFlags
@@ -626,6 +661,7 @@ private:
 	CLanguageSettingsPage* m_pLanguage;
 	CDatabasesSettingsPage* m_pDatabases;
 	CAutoUpdateSettingsPage* m_pAutoUpdate;
+	CKeyboardShortcutsPage* m_pKeyboardShortcuts;
 
 	friend CGeneralSettingsPage;
 
