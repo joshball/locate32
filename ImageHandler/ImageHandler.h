@@ -1,5 +1,5 @@
 /* Image property handler front-end for GDI+ 
-Copyright (C) 2003-2004 Janne Huttunen				*/
+Copyright (C) 2003-2005 Janne Huttunen				*/
 
 #if !defined(IMAGEHANDLER_H)
 #define IMAGEHANDLER_H

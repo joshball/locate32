@@ -180,7 +180,7 @@ CLocater::~CLocater()
 	}
 	else
 	{
-		m_sName.Empty();
+		m_aNames.RemoveAll();
 		m_aExtensions.RemoveAll();
 	}
 
@@ -637,19 +637,24 @@ void CLocater::SetAdvanced(DWORD dwFlags,BYTE* pContainData,DWORD dwContainDataL
 	}
 }
 
-BOOL CLocater::LocateFiles(BOOL bThreaded,LPCSTR szName,
+BOOL CLocater::LocateFiles(BOOL bThreaded,LPCSTR* szNames,DWORD nNames,
 								LPCSTR* szExtensions,DWORD nExtensions,
 								LPCSTR* szDirectories,DWORD nDirectories)
 {
-	LocaterDebugMessage5("CLocater::LocateFiles BEGIN, \r\nszName:%s\r\nszExtensions:%X\r\nnExtensions:%X\r\nszDirectories:%X\r\nnDirectories:%d",
-		szName,(DWORD)szExtensions,nExtensions,(DWORD)szDirectories,nDirectories,0);
 
-	if (szName!=NULL)
-	{
-		m_sName=szName;
-		m_sName.MakeLower();
-	}
 	DWORD i;
+	for (i=0;i<nNames;i++)
+	{
+		if (szNames[i]!=NULL && szNames[i][0]!='\0')
+		{
+			m_aNames.Add(alloccopy(szNames[i]));
+#ifdef WIN32
+			CharLower(m_aNames.GetLast());
+#else			
+			strlwr(m_aNames.GetLast());
+#endif
+		}
+	}
 	for (i=0;i<nExtensions;i++)
 		m_aExtensions.Add(new CString(szExtensions[i]));
 
@@ -766,7 +771,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 		}
 	}
 
-	if (m_sName.IsEmpty() && m_aExtensions.GetSize()==0)
+	if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
 		return TRUE;
 
 	// Checking extension first
@@ -805,37 +810,42 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 		if (!bFound)
 			return FALSE;
 	}
+
 	
-	if (!m_sName.IsEmpty())
+	
+	if (m_aNames.GetSize()==0)
+		return TRUE;
+
+	DWORD dwNameLength;
+	// If whole name is what are we looking for, copy all name to szName
+	if (m_dwFlags&LOCATE_EXTENSIONWITHNAME)
+		dwNameLength=GetFileNameLen();
+	else
 	{
-		DWORD dwNameLength;
-		// If whole name is what are we looking for, copy all name to szName
-		if (m_dwFlags&LOCATE_EXTENSIONWITHNAME)
+		dwNameLength=GetFileExtensionPos();
+		if (dwNameLength==0) // No extension
 			dwNameLength=GetFileNameLen();
-		else
-		{
-			dwNameLength=GetFileExtensionPos();
-			if (dwNameLength==0) // No extension
-				dwNameLength=GetFileNameLen();
-		}
-		
-		// Copying to buffer
-		char* szName=new char[dwNameLength+2];
-		sMemCopy(szName,GetFileName(),dwNameLength);
-		szName[dwNameLength]='\0';
+	}
+	
+	// Copying to buffer
+	char* szName=new char[dwNameLength+2];
+	sMemCopy(szName,GetFileName(),dwNameLength);
+	szName[dwNameLength]='\0';
 #ifdef WIN32
-		CharLowerBuff(szName,dwNameLength);
+	CharLowerBuff(szName,dwNameLength);
 #else 
-		strlwr(szName);
+	strlwr(szName);
 #endif	
-		if (!_ContainString(szName,m_sName))
+	for (int i=0;i<m_aNames.GetSize();i++)
+	{
+		if (_ContainString(szName,m_aNames[i]))
 		{
 			delete[] szName;
-			return FALSE;
+			return TRUE;
 		}
-		delete[] szName;
-	}
-	return TRUE;
+	}	
+	delete[] szName;
+	return FALSE;
 }
 
 inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
@@ -862,7 +872,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 		
 	}
 	
-	if (m_sName.IsEmpty() && m_aExtensions.GetSize())
+	if (m_aNames.GetSize()==0 && m_aExtensions.GetSize())
 		return TRUE;
 
 	// Checking extension first
@@ -905,28 +915,32 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 			return FALSE;
 	}
 	
-	if (!m_sName.IsEmpty())
-	{
-		if (GetFolderNameLen()==0)
-			return FALSE;
+	if (m_aNames.GetSize()==0)
+		return TRUE;
 
-		// Copying to buffer
-		char* szName=new char[GetFolderNameLen()+1];
-		sMemCopy(szName,GetFolderName(),GetFolderNameLen());
-		szName[GetFolderNameLen()]='\0';
+	if (GetFolderNameLen()==0)
+		return FALSE;
+
+	// Copying to buffer
+	char* szName=new char[GetFolderNameLen()+1];
+	sMemCopy(szName,GetFolderName(),GetFolderNameLen());
+	szName[GetFolderNameLen()]='\0';
 #ifdef WIN32
-		CharLower(szName);
+	CharLower(szName);
 #else
-		strlwr(szName);
+	strlwr(szName);
 #endif		
-		if (!_ContainString(szName,m_sName))
+
+	for (int i=0;i<m_aNames.GetSize();i++)
+	{
+		if (_ContainString(szName,m_aNames[i]))
 		{
 			delete[] szName;
-			return FALSE;
+			return TRUE;
 		}
-		delete[] szName;
 	}
-	return TRUE;
+	delete[] szName;
+	return FALSE;
 }
 
 inline BOOL CLocater::IsFileAdvancedWhatAreWeLookingFor() const

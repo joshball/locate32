@@ -241,6 +241,7 @@ int main (int argc,char * argv[])
 	DWORD dwContainDataLength=0;
 
 	CString String;
+	
 	CArrayFAP<LPSTR> aDirectories;
 	CArrayFAP<LPSTR> aExtensions;
 	int i;
@@ -508,25 +509,20 @@ int main (int argc,char * argv[])
 		  {
 				if (!String.IsEmpty())
 				{
+					// Inserting '/' or space 
 					if (dwMainFlags&flagReplaceSpaces)
 						String << '*';
 					else
 						String << ' ';
 	
 				}
-				else if (!(dwMainFlags&flagWholeWord))
-					String << '*';
-		  
+				
 				String << argv[i];
 		  }
 		}
 	}
 
-	if (!(dwFlags&LOCATE_REGULAREXPRESSION))
-	{
-		if (!(dwMainFlags&flagWholeWord) && String.LastChar()!='*' && !String.IsEmpty())
-			String << '*';
-	}
+	
 
    
 	if (helps==1)
@@ -587,12 +583,98 @@ int main (int argc,char * argv[])
 		locater.LocateFiles(FALSE,String,(dwFlags&LOCATE_REGULAREXPRESSIONINPATH)?TRUE:FALSE,
 			(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
-	else
+	else if (!String.IsEmpty())
 	{
-		locater.LocateFiles(FALSE,String,
+		int nIndex=String.FindFirst(',');
+		if (nIndex==-1)
+		{
+			// Inserting '*':s if needed
+			if (!(dwMainFlags&flagWholeWord))
+			{
+				if (String[0]!='*')
+					String.InsChar(0,'*');
+				if (String.LastChar()!='*')
+					String << '*';
+			}
+
+			LPCSTR s=String;
+			locater.LocateFiles(FALSE,&s,1,
+				(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+				(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+		}
+		else
+		{
+			// Separate strings
+			
+			CArrayFAP<LPSTR> m_aStrings;
+			LPCSTR pStr=String;
+			BOOL bContinue=TRUE;
+
+			while (bContinue)
+			{
+				
+				if (nIndex==-1)
+				{
+					bContinue=FALSE;
+					nIndex=strlen(pStr);
+				}
+
+				if (nIndex>0)
+				{
+					if (dwMainFlags&flagWholeWord)
+						m_aStrings.Add(alloccopy(pStr,nIndex));
+					else
+					{
+						// Inserting '*'
+						char* pTemp=new char[nIndex+3];
+						if (pStr[0]!='*')
+						{
+							pTemp[0]='*';
+							sMemCopy(pTemp+1,pStr,nIndex);
+							if (pStr[nIndex-1]!='*')
+							{	
+								pTemp[nIndex+1]='*';
+								pTemp[nIndex+2]='\0';
+							}
+							else
+								pTemp[nIndex+1]='\0';
+						}
+						else
+						{
+							sMemCopy(pTemp,pStr,nIndex);
+							if (pStr[nIndex-1]!='*')
+							{	
+								pTemp[nIndex]='*';
+								pTemp[nIndex+1]='\0';
+							}
+							else
+								pTemp[nIndex]='\0';
+						}
+						m_aStrings.Add(pTemp);
+
+
+					}
+
+					pStr+=nIndex+1;
+					nIndex=FirstCharIndex(pStr,',');
+				}
+			
+			}
+
+			locater.LocateFiles(FALSE,(LPCSTR*)m_aStrings.GetData(),m_aStrings.GetSize(),
+				(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+				(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+
+		}
+
+		
+	
+	}
+	else
+		locater.LocateFiles(FALSE,NULL,0,
 			(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
 			(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
-	}
+
 
 
 	if (pContainData!=NULL)

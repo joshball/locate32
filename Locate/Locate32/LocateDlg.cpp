@@ -1001,7 +1001,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 	
 	CWaitCursor wait;
 	CString Name,Title;
-	CArrayFAP<LPSTR> aExtensions,aDirectories;
+	CArrayFAP<LPSTR> aExtensions,aDirectories,aNames;
 	DWORD nRet;
 
 	if (m_pBackgroundUpdater!=NULL)
@@ -1096,16 +1096,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 						Name[i]='*';
 				}
 			}
-			
-			if (!(nRet&CAdvancedDlg::flagMatchCase))
-			{
-				// Insert asterisks to begin and end of name
-				if (Name[0]!='*')
-					Name.InsChar(0,'*');
-				if (Name.LastChar()!='*')
-					Name << '*';
-			}
-			
+
 			// Removing extra asterisks
 			for (i=0;i<Name.GetLength();i++)
 			{
@@ -1115,6 +1106,76 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 						Name.DelChar(i+1);
 				}
 			}
+
+			// Separate strings
+			int nIndex=Name.FindFirst(',');
+			if (nIndex==-1)
+			{
+				// Only one string
+				if (!(nRet&CAdvancedDlg::flagMatchCase))
+				{
+					// Insert asterisks to begin and end of name
+					if (Name[0]!='*')
+						Name.InsChar(0,'*');
+					if (Name.LastChar()!='*')
+						Name << '*';
+				}
+				aNames.Add(Name.GiveBuffer());
+			}
+			else
+			{
+				LPCSTR pStr=Name;
+				BOOL bContinue=TRUE;
+
+				while (bContinue)
+				{
+					if (nIndex==-1)
+					{
+						bContinue=FALSE;
+						nIndex=istrlen(pStr);
+					}
+
+					if (nIndex>0)
+					{
+						if (nRet&CAdvancedDlg::flagMatchCase)
+							aNames.Add(alloccopy(pStr,nIndex));
+						else
+						{
+							// Inserting '*'
+							char* pTemp=new char[nIndex+3];
+							if (pStr[0]!='*')
+							{
+								pTemp[0]='*';
+								sMemCopy(pTemp+1,pStr,nIndex);
+								if (pStr[nIndex-1]!='*')
+								{	
+									pTemp[nIndex+1]='*';
+									pTemp[nIndex+2]='\0';
+								}
+								else
+									pTemp[nIndex+1]='\0';
+							}
+							else
+							{
+								sMemCopy(pTemp,pStr,nIndex);
+								if (pStr[nIndex-1]!='*')
+								{	
+									pTemp[nIndex]='*';
+									pTemp[nIndex+1]='\0';
+								}
+								else
+									pTemp[nIndex]='\0';
+							}
+							aNames.Add(pTemp);
+
+
+						}
+
+						pStr+=nIndex+1;
+						nIndex=FirstCharIndex(pStr,',');
+					}
+				}
+			}			
 		}
 	}
 	
@@ -1133,7 +1194,15 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 
 	// Making title
 	Title.LoadString(IDS_TITLE);
-	if (Name.IsEmpty())
+	if (nRet&CAdvancedDlg::flagNameIsRegularExpression)
+	{
+		if (nRet&CAdvancedDlg::flagNameIsRegularExpressionInPath)
+			Title.AddString(IDS_REGULAREXPRESSIONFULLPATH);
+		else
+			Title.AddString(IDS_REGULAREXPRESSION);
+		Title << Name;
+	}
+	else if (aNames.GetSize()==0)
 	{
 		if (aExtensions.GetSize()==1)
 		{
@@ -1143,19 +1212,11 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 		else
 			Title.AddString(IDS_ALLFILES);
 	}
-	else if (nRet&CAdvancedDlg::flagNameIsRegularExpression)
-	{
-		if (nRet&CAdvancedDlg::flagNameIsRegularExpressionInPath)
-			Title.AddString(IDS_REGULAREXPRESSIONFULLPATH);
-		else
-			Title.AddString(IDS_REGULAREXPRESSION);
-		Title << Name;
-	}
 	else
 	{
 		Title.AddString(IDS_FILESNAMED);
 		Title << Name;
-		if (aExtensions.GetSize()==1)
+		if (aExtensions.GetSize()==1 && aNames.GetSize()==1)
 			Title << "." << aExtensions[0];
 	}
 	SetText(Title);
@@ -1167,7 +1228,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 	// Starting location
 	if (!(nRet&CAdvancedDlg::flagNameIsRegularExpression))
 	{
-		m_pLocater->LocateFiles(TRUE,Name,
+		m_pLocater->LocateFiles(TRUE,(LPCSTR*)aNames.GiveBuffer(),aNames.GetSize(),
 			(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
 			(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}

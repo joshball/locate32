@@ -92,7 +92,7 @@ public:
 	void SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC* pFoundProcs,DWORD dwParam=0);
 
 	// Creates new thread and start to locate files
-	BOOL LocateFiles(BOOL bThreaded,LPCSTR szName,
+	BOOL LocateFiles(BOOL bThreaded,LPCSTR* szName,DWORD dwNames,
 		LPCSTR* szExtensions,DWORD nExtensions,
 		LPCSTR* szDirectories,DWORD nDirectories); 
 	BOOL LocateFiles(BOOL bThreaded,LPCSTR szRegExp,BOOL bInPath,
@@ -193,7 +193,7 @@ private:
 	// Locate information
 	union {
 		struct {
-			CString m_sName;
+			CArrayFAP<LPSTR> m_aNames;
 			CArrayFP<CString*> m_aExtensions;
 		};
 		struct {
