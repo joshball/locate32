@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2003 Janne Huttunen
-   Updatedb.exe v2.98.4.11280 */
+   Updatedb.exe v2.98.4.12301 */
 
 #include <HFCLib.h>
 #include "locatedb/locatedb.h"
@@ -7,9 +7,9 @@
 #include "lan_resources.h"
 
 #ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 v2.98.4.11280";
+		LPCSTR szVersionStr="updtdb32 v2.98.4.12301";
 #else
-		LPCSTR szVersionStr="updatedb v2.98.4.11280";
+		LPCSTR szVersionStr="updatedb v2.98.4.12301";
 #endif
 
 
@@ -63,12 +63,16 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 		{
 			if (strncmp(pUpdater->GetCurrentDatabaseName(),"PARAMX",6)==0 ||
 				strncmp(pUpdater->GetCurrentDatabaseName(),"DEFAULTX",8)==0)
-			    printf(CString(IDS_UPDATEDB32UPDATINGDATABASE2),pUpdater->GetCurrentDatabaseFile());
+				printf(CString(IDS_UPDATEDB32UPDATINGDATABASE2),pUpdater->GetCurrentDatabaseFile());
+					
 			else
-			{
-                printf(CString(IDS_UPDATEDB32UPDATINGDATABASE),
+			    printf(CString(IDS_UPDATEDB32UPDATINGDATABASE),
 					pUpdater->GetCurrentDatabaseName(),pUpdater->GetCurrentDatabaseFile());
-			}
+			
+			if (pUpdater->IsIncrementUpdate())
+				printf("%s\n",(LPCSTR)CString(IDS_UPDATEDB32INCREMENTALUPDATE));
+			else
+				putchar('\n');
 		}
 		break;
 	case RootChanged:
@@ -101,6 +105,20 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 			case ueFolderUnavailable:
 				fprintf(stderr,CString(IDS_UPDATEDB32ROOTUNAVAILABLE),
 					pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():"(NULL)");
+				break;
+			case ueCannotIncrement:
+				{
+					int ch;
+					do
+					{
+						fprintf(stderr,CString(IDS_UPDATEDB32CANNOTUPDATEINCREMENTALLY),pUpdater->GetCurrentDatabaseFile());
+						ch=getc(stdin);
+					}
+					while (ch!='Y' && ch!='y' && ch!='N' && ch!='n');
+
+					if (ch!='Y' && ch!='y')
+						return FALSE;
+				}
 				break;
 			}
 		}
@@ -287,6 +305,17 @@ int main (int argc,char ** argv)
 					   aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
 				}
 				break;
+			case 'i':
+			case 'I':
+				if (strncmp(aDatabases.GetLast()->GetName(),"PARAMX",6)!=0 &&
+					strncmp(aDatabases.GetLast()->GetName(),"DEFAULTX",8)!=0)
+					printf(CString(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
+				else
+				{
+                    aDatabases.GetLast()->SetFlag(CDatabase::flagIncrementalUpdate,TRUE);
+					aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
+				}
+				break;
 			case 'N':
 			case 'n':
 				wCurrentThread++;
@@ -339,6 +368,8 @@ int main (int argc,char ** argv)
 					{
 						CDatabase* pDatabase=CDatabase::FromName(HKCU,
 							"Software\\Update\\Databases",szName);
+						pDatabase->SetFlag(CDatabase::flagGlobalUpdate);
+
 						if (pDatabase!=NULL)
 						{
 							// Is only default loaded
