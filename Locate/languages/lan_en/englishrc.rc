@@ -84,7 +84,7 @@ BEGIN
     CONTROL         "",IDC_STATUS,"msctls_statusbar32",WS_CLIPSIBLINGS | 
                     0x113,1,113,283,6,WS_EX_NOPARENTNOTIFY
     CONTROL         "Tab",IDC_TAB,"SysTabControl32",WS_TABSTOP,7,7,216,17
-	PUSHBUTTON      "Presets",IDC_PRESETS,233,80,31,14
+	PUSHBUTTON      "Presets",IDC_PRESETS,233-0,80,31+0,14
 END
 
 IDD_NAME DIALOGEX 9, 21, 211, 88
@@ -165,7 +165,7 @@ BEGIN
     CONTROL         "File containing te&xt:",IDC_CONTAINDATACHECK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,61,77,10
     CONTROL         "Match &case",IDC_DATAMATCHCASE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,92,61,90,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,92-0,61,90+0,10
     EDITTEXT        IDC_CONTAINDATA,8,72,155,12,ES_AUTOHSCROLL
     CONTROL         "",IDC_HELPTOOLBAR,"ToolbarWindow32",WS_CLIPSIBLINGS | 
                     0x894d,149,59,14,13
@@ -1585,6 +1585,7 @@ BEGIN
 	   VK_DELETE,								       IDM_LOOKINREMOVESELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
 	   VK_PRIOR ,								   IDM_LOOKINPREVSELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
 	   VK_NEXT ,								   IDM_LOOKINNEXTSELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
+	   "W",						IDM_CLOSE,VIRTKEY,CONTROL,NOINVERT
 END
 
 IDR_NAMEDLGACCEL ACCELERATORS 
@@ -1606,6 +1607,7 @@ BEGIN
 	   VK_DELETE,								       IDM_LOOKINREMOVESELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
 	   VK_PRIOR ,								   IDM_LOOKINPREVSELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
 	   VK_NEXT ,								   IDM_LOOKINNEXTSELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
+	   "W",						IDM_CLOSE,VIRTKEY,CONTROL,NOINVERT
 END    
 
 IDR_SIZEDATEDLGACCEL ACCELERATORS 
@@ -1624,6 +1626,7 @@ BEGIN
        VK_TAB,                                                     IDC_PTAB,               VIRTKEY, NOINVERT
        VK_TAB,                                                     IDC_PUNTAB,             VIRTKEY, SHIFT, NOINVERT
        "W",                        IDC_NEWSEARCH,          VIRTKEY, ALT, NOINVERT
+	   "W",						IDM_CLOSE,VIRTKEY,CONTROL,NOINVERT
 END    
 
 IDR_ADVANCEDDLGACCEL ACCELERATORS 
@@ -1644,6 +1647,7 @@ BEGIN
        VK_TAB,                                                     IDC_PTAB,               VIRTKEY, NOINVERT
        VK_TAB,                                                     IDC_PUNTAB,             VIRTKEY, SHIFT, NOINVERT
        "W",                        IDC_NEWSEARCH,          VIRTKEY, ALT, NOINVERT
+	   "W",						IDM_CLOSE,VIRTKEY,CONTROL,NOINVERT
 END    
 
 /////////////////////////////////////////////////////////////////////////////

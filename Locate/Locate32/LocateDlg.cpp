@@ -2308,7 +2308,9 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 			case DetailType::Title:
 				if (pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon())
 				{
-					ASSERT(m_pBackgroundUpdater!=NULL);
+					if (m_pBackgroundUpdater==NULL)
+						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+					
 					//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,Title)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
 					m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Title);
 					if (m_pLocater==NULL) // Locating in process
@@ -2332,7 +2334,8 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 			case DetailType::InFolder:
 				if (pItem->ShouldUpdateParentIcon())
 				{
-					ASSERT(m_pBackgroundUpdater!=NULL);
+					if (m_pBackgroundUpdater==NULL)
+						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
 					//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,InFolder)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
 					m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,InFolder);
 					if (m_pLocater==NULL) // Locating is not in process
@@ -2348,7 +2351,8 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 				
 				if (pItem->ShouldUpdateByDetail(nDetail))
 				{
-					ASSERT(m_pBackgroundUpdater!=NULL);
+					if (m_pBackgroundUpdater==NULL)
+						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
 					//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,%d)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem,DWORD(nDetail));
 					
 					m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,nDetail);

@@ -83,6 +83,7 @@ STRMAIN_FILELISTCOLUMN_DATABASEFILE=Database File
 DLGMAIN_PRESETS=Presets
 STRMAIN_PRESETMENU_SAVE=&Save Preset
 STRMAIN_PRESETMENU_REMOVE=&Remove Preset
+DLGMAIN_PRESETSBUTTONEXTRALEN=0
 
 
 # Name dialog (A tab in the main dialog)
@@ -140,6 +141,7 @@ STRADVANCED_TYPES_BYEXTENSION=(by extension)
 STRADVANCED_CHECK_FILENAMES=File names only
 STRADVANCED_CHECK_FILEANDFOLDERNAMES=File and folder names
 STRADVANCED_CHECK_FOLDERNAMES=Folder names only
+DLGADVANCED_MATCHCASEEEXTRALEN=0
 
 ###########################
 # About dialog
@@ -761,5 +763,4 @@ STRLOCATE_UNKNOWNERROR=Error: Unknown error.
 STRLOCATE_CANNOTOPEN=Error: Cannot open database file '%s'.
 STRLOCATE_CANNOTREAD=Error: Cannot read database file '%s'.
 STRLOCATE_INVALIDDATABASE=Error: Invalid database file '%s'.
-
 

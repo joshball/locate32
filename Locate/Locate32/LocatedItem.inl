@@ -22,18 +22,18 @@ inline LPSTR CLocatedItem::FormatFileSize() const
 			LoadString(IDS_GB,Temp,10);
 			wsprintf(g_szBuffer,"%d%s",static_cast<DWORD>(GetFileSize()/(1024*1024*1024)),Temp);
 		}
-		else if (GetFileSizeLo()<1024)
+		else /*if (GetFileSizeLo()<1024)*/
 		{
 			LoadString(IDS_BYTES,Temp,10);
 			wsprintf(g_szBuffer,"%d%s",GetFileSizeLo(),Temp);
 		}
-		else
+		/*else
 		{
 			LoadString(IDS_KB,Temp,10);
 			wsprintf(g_szBuffer,"%d%s",
 				static_cast<DWORD>(GetFileSizeLo()/1024)+(GetFileSizeLo()%1024==0?0:1),
 				Temp);
-		}
+		}*/
 		return g_szBuffer;
 	}
 	return const_cast<LPSTR>(szEmpty);

@@ -761,7 +761,9 @@ inline BOOL CBackgroundUpdater::RunningProc()
 							(bDetail || (pt.x >= 0 && pt.x<=rcListClient.right)))
 						{
 							BOOL bReDraw=FALSE;
-							pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
+							
+							// TODO: Temporarely disabled
+							//pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
 
 							if (bReDraw)
 								m_pList->PostMessage(LVM_REDRAWITEMS,pItem->m_iItem,pItem->m_iItem);
