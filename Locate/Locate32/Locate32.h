@@ -77,6 +77,7 @@ extern LPSTR g_szBuffer;
 #define DIR_IMAGE					((CLocateApp*)GetApp())->m_nDirImage
 #define DRIVE_IMAGE					((CLocateApp*)GetApp())->m_nDriveImage
 
+#define ID_REDRAWITEMS				1
 #define ID_CLICKWAIT				4
 #define ID_LOCATEANIM				5
 #define ID_UPDATEANIM				6

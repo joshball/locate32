@@ -159,6 +159,12 @@ CLocater::~CLocater()
 	m_aDatabases.RemoveAll();
 	m_aDirectories.RemoveAll();
 
+	if (dbFile!=NULL)
+	{
+		delete dbFile;
+		dbFile=NULL;
+	}
+
 	if (m_dwFlags&LOCATE_REGULAREXPRESSION)
 	{
 		if (m_regexp!=NULL)
@@ -190,6 +196,8 @@ CLocater::~CLocater()
 	if (m_pContentSearcher!=NULL)
 		delete m_pContentSearcher;
 
+
+
 	LocaterDebugMessage("CLocater::~CLocater() END");
 }
 
@@ -213,8 +221,8 @@ BOOL CLocater::LocatingProc()
 	// Opening database file
 	
 	szBuffer=NULL;
-	CFile* dbFile=NULL;
-
+	ASSERT(dbFile==NULL);
+	
 	
 	for (int i=0;i<m_aDatabases.GetSize() && ueResult==ueStillWorking;i++)
 	{
@@ -478,11 +486,16 @@ BOOL CLocater::LocatingProc()
 	}
 	
 	
+	if (dbFile!=NULL)
+	{
+		delete dbFile;
+		dbFile=NULL;
+	}
+	
 	m_pProc(m_dwData,FinishedLocating,ueResult,m_dwFoundFiles,this);
 	m_pProc(m_dwData,ClassShouldDelete,ueResult,m_dwFoundFiles,this);
 	
-	if (dbFile!=NULL)
-		delete dbFile;
+	// This class is deleted in the previous call, do not access this
 	
 	LocaterDebugMessage("CLocater::LocatingProc() END");
 	return TRUE;

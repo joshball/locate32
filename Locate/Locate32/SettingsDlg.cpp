@@ -199,8 +199,15 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 				bp.hControl=pItems[i]->hControl;
 				pItems[i]->pProc(&bp);
 			}
+			
 			if (pItems[i]->pData!=NULL)
-				::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(pItems[i]->pData));
+			{
+				// Checking whether value is found in combo
+				int nFind=::SendMessage(pItems[i]->hControl,CB_FINDSTRINGEXACT,0,LPARAM(pItems[i]->pData));
+				::SendMessage(pItems[i]->hControl,CB_SETCURSEL,nFind,0);
+				if (nFind==CB_ERR)
+					::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(pItems[i]->pData));
+			}
 			break;
 		}
 		
@@ -354,7 +361,7 @@ BOOL COptionsPropertyPage::OnApply()
 
 void COptionsPropertyPage::CallApply(Item** pItems)
 {
-	BASICPARAMS bp;
+	COMBOAPPLYPARAMS bp;
 	bp.pPage=this;
 	bp.crReason=BASICPARAMS::Apply;
 
@@ -365,6 +372,8 @@ void COptionsPropertyPage::CallApply(Item** pItems)
 			if (pItems[i]->pProc!=NULL)
 			{
 				pItems[i]->SetValuesForBasicParams(&bp);
+				if (pItems[i]->nType==Item::Combo)
+					bp.nCurSel=::SendMessage(pItems[i]->hControl,CB_GETCURSEL,0,0);
 				pItems[i]->pProc(&bp);
 			}
 			if (pItems[i]->pChilds!=NULL)
@@ -1993,6 +2002,9 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::TimeFormatComboProc(CO
 			EnumTimeFormats(EnumTimeFormatsProc,LOCALE_USER_DEFAULT,0);
 			//EnumDateFormats(DateFormatsProc,LOCALE_USER_DEFAULT,DATE_SHORTDATE);
 		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETSYSTEMDEFAULT));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_SETCURSEL,0,0);		
+	
 			for (int i=0;i<((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer.GetSize();i++)
 				::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer[i]);
 			
@@ -2000,12 +2012,15 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::TimeFormatComboProc(CO
 		}
 		break;
 	case BASICPARAMS::Get:
-		pParams->pData=alloccopy(((CAdvancedSettingsPage*)pParams->pPage)->m_pSettings->m_TimeFormat);
+		if (!((CAdvancedSettingsPage*)pParams->pPage)->m_pSettings->m_TimeFormat.IsEmpty())
+			pParams->pData=alloccopy(((CAdvancedSettingsPage*)pParams->pPage)->m_pSettings->m_TimeFormat);
+		else
+			pParams->pData=NULL;
 		break;
 	case BASICPARAMS::Set:
 		break;
 	case BASICPARAMS::Apply:
-		if (pParams->pData==NULL)
+		if (pParams->pData==NULL || ((COMBOAPPLYPARAMS*)pParams)->nCurSel==0)
 			((CAdvancedSettingsPage*)pParams->pPage)->m_pSettings->m_TimeFormat.Empty();
 		else
 			((CAdvancedSettingsPage*)pParams->pPage)->m_pSettings->m_TimeFormat.Copy(pParams->pData);
@@ -2027,6 +2042,9 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::DateFormatComboProc(CO
 			((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer.RemoveAll();
 			EnumDateFormats(EnumDateFormatsProc,LOCALE_USER_DEFAULT,DATE_SHORTDATE);
 		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETSYSTEMDEFAULT));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_SETCURSEL,0,0);		
+
 			for (int i=0;i<((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer.GetSize();i++)
 				::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer[i]);
 			
@@ -2034,12 +2052,15 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::DateFormatComboProc(CO
 		}
 		break;
 	case BASICPARAMS::Get:
-		pParams->pData=alloccopy(((CAdvancedSettingsPage*)pParams->pPage)->m_pSettings->m_DateFormat);
+		if (!((CAdvancedSettingsPage*)pParams->pPage)->m_pSettings->m_DateFormat.IsEmpty())
+			pParams->pData=alloccopy(((CAdvancedSettingsPage*)pParams->pPage)->m_pSettings->m_DateFormat);
+		else
+			pParams->pData=NULL;
 		break;
 	case BASICPARAMS::Set:
 		break;
 	case BASICPARAMS::Apply:
-		if (pParams->pData==NULL)
+		if (pParams->pData==NULL || ((COMBOAPPLYPARAMS*)pParams)->nCurSel==0)
 			((CAdvancedSettingsPage*)pParams->pPage)->m_pSettings->m_DateFormat.Empty();
 		else
 			((CAdvancedSettingsPage*)pParams->pPage)->m_pSettings->m_DateFormat.Copy(pParams->pData);
@@ -2280,6 +2301,9 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnInitDialog(HWND hwndFocus)
 
 		EnableDlgItem(IDC_THREADS,FALSE);
 		EnableDlgItem(IDC_THREADSPIN,FALSE);
+
+		ShowDlgItem(IDC_THREADS,swHide);
+		ShowDlgItem(IDC_THREADSPIN,swHide);
 	}
 	else
 	{
@@ -2666,11 +2690,15 @@ void CSettingsProperties::CDatabasesSettingsPage::OnRestore()
 	
 	// Enabling dlg buttons
 	EnableDlgItem(IDC_NEW,TRUE);
-	EnableDlgItem(IDC_THREADS,TRUE);
-	EnableDlgItem(IDC_THREADSPIN,TRUE);
 	
 	ShowDlgItem(IDC_OVERRIDETXT,swHide);
 	ShowDlgItem(IDC_RESTORE,swHide);
+	
+	ShowDlgItem(IDC_THREADS,swShow);
+	ShowDlgItem(IDC_THREADSPIN,swShow);
+	EnableDlgItem(IDC_THREADS,TRUE);
+	EnableDlgItem(IDC_THREADSPIN,TRUE);
+	
 	EnableButtons();
 	m_pList->SetFocus();
 }

@@ -85,6 +85,7 @@ public:
 	BOOL IsWaiting() const;
 
 	void AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateDlg::DetailType nDetail);
+	DWORD GetUpdateListSize() const;
 
 public:
 	HANDLE m_hThread;
@@ -292,6 +293,10 @@ inline void CBackgroundUpdater::GoToSleep()
 	InterlockedExchange(&m_lGoToSleep,TRUE);
 }
 
+inline DWORD CBackgroundUpdater::GetUpdateListSize() const
+{
+	return m_aUpdateList.GetSize();
+}
 	
 inline CBackgroundUpdater::Item::Item(CLocatedItem* pItem, int iItem)
 :	m_pItem(pItem),m_iItem(iItem)
@@ -303,4 +308,6 @@ inline CBackgroundUpdater::Item::Item(CLocatedItem* pItem, int iItem,CLocateDlg:
 {
 	m_aDetails.Add(nDetail);
 }
+
+
 #endif

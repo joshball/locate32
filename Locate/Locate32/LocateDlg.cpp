@@ -611,12 +611,14 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		return m_NameDlg.OnCommand(wID,wNotifyCode,hControl);
 	default:
 		// IDM_ should be in descending order
-		if (wID>=IDM_DEFCOLSELITEM)
+		if (wID>=IDM_DEFCOLSELITEM && wID<IDM_DEFCOLSELITEM+1000)
 			m_pListCtrl->ColumnSelectionMenuProc(wID,IDM_DEFCOLSELITEM);
-		else if (wID>=IDM_DEFSENDTOITEM)
+		else if (wID>=IDM_DEFSENDTOITEM && wID<IDM_DEFSENDTOITEM+1000)
 			OnSendToCommand(wID);
-		else if (wID>=IDM_DEFCONTEXTITEM)
+		else if (wID>=IDM_DEFCONTEXTITEM && wID<IDM_DEFCONTEXTITEM+1000)
 			OnMenuCommands(wID);
+		else if (wID>=IDM_DEFUPDATEDBITEM && wID<IDM_DEFUPDATEDBITEM+1000)
+			GetLocateApp()->OnDatabaseMenuItem(wID);
 		break;
 	}
 	return CDialog::OnCommand(wID,wNotifyCode,hControl);
@@ -1243,10 +1245,12 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 		((CLocateDlg*)dwParam)->m_pLocater=NULL;
 		
 		if (((CLocateDlg*)dwParam)->m_pBackgroundUpdater!=NULL)
-		{
 			((CLocateDlg*)dwParam)->StartBackgroundOperations();
-			((CLocateDlg*)dwParam)->m_pBackgroundUpdater->StopWaiting();
-		}
+		
+		((CLocateDlg*)dwParam)->m_pBackgroundUpdater->StopWaiting();
+		
+		// To update items, looks like this is only way
+		((CLocateDlg*)dwParam)->SetTimer(ID_REDRAWITEMS,50);
 		return TRUE;
 	case ErrorOccured:
 		switch (ueCode)
@@ -1608,6 +1612,11 @@ void CLocateDlg::OnTimer(DWORD wTimerID)
 	
 	switch (wTimerID)
 	{
+	case ID_REDRAWITEMS:
+		KillTimer(ID_REDRAWITEMS);
+		m_pListCtrl->InvalidateRect(NULL,FALSE);
+		m_pListCtrl->UpdateWindow();
+		break;
 	case ID_CLICKWAIT:
 		KillTimer(ID_CLICKWAIT);
 		m_ClickWait=FALSE;
@@ -1780,6 +1789,7 @@ LRESULT CALLBACK CLocateDlg::DebugWindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,L
 		if (pDlg->m_pBackgroundUpdater!=NULL)
 		{
 			str << "Background updated running, isWaiting=" << (int) pDlg->m_pBackgroundUpdater->IsWaiting();
+			str << " items=" << (DWORD) pDlg->m_pBackgroundUpdater->GetUpdateListSize();
 			str.SetBase(16);
 			str << " hThread=0x" << (DWORD) pDlg->m_pBackgroundUpdater->m_hThread;
 		}
@@ -3377,7 +3387,7 @@ void CLocateDlg::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
 	HMENU hMainMenu=GetMenu();
 	HMENU hFileMenu=GetSubMenu(hMainMenu,0);
 	HMENU hEditMenu=GetSubMenu(hMainMenu,1);
-	// m_hActivePopupMenu on se context menu joka on auki
+	// m_hActivePopupMenu points to last activate menu 
 	
 	if (nIndex>0 && GetSubMenu(GetMenu(),nIndex)==hPopupMenu)
 	{
@@ -3409,6 +3419,12 @@ void CLocateDlg::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
 		// SentTo menu, deleting previous menu items and inserting 
 		// new ones corresponding selected items
 		OnInitSendToMenu(hPopupMenu);
+	}
+	else if (CLocateApp::IsDatabaseMenu(hPopupMenu))
+	{
+		// Database menu, deleting previous menu items and inserting 
+		// new ones database items
+		GetLocateApp()->OnInitDatabaseMenu(hPopupMenu);
 	}
 }
 	
@@ -3443,6 +3459,11 @@ void CLocateDlg::OnInitFileMenu(HMENU hPopupMenu)
 	EnableMenuItem(hPopupMenu,IDM_GLOBALUPDATEDB,!GetLocateApp()->IsUpdating()?MF_BYCOMMAND|MF_ENABLED:MF_BYCOMMAND|MF_GRAYED);
 	EnableMenuItem(hPopupMenu,IDM_UPDATEDATABASES,!GetLocateApp()->IsUpdating()?MF_BYCOMMAND|MF_ENABLED:MF_BYCOMMAND|MF_GRAYED);
 	EnableMenuItem(hPopupMenu,IDM_STOPUPDATING,GetLocateApp()->IsUpdating()?MF_BYCOMMAND|MF_ENABLED:MF_BYCOMMAND|MF_GRAYED);
+
+	int iDatabaseMenu=CLocateApp::GetDatabaseMenuIndex(hPopupMenu);
+	if (iDatabaseMenu!=-1)
+		EnableMenuItem(hPopupMenu,iDatabaseMenu,!GetLocateApp()->IsUpdating()?MF_BYPOSITION|MF_ENABLED:MF_BYPOSITION|MF_GRAYED);
+
 	
 	if (m_pListCtrl->GetSelectedCount())
 	{
@@ -3468,29 +3489,27 @@ void CLocateDlg::OnInitSendToMenu(HMENU hPopupMenu)
 
 	CString SendToPath;
 	
+	// Resolving Send To -directory location
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		// Resolvinf Send To -directory location
-		CRegKey RegKey;
-
-		if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
-		{
-			RegKey.QueryValue("SendTo",SendToPath);
-			RegKey.CloseKey();
-		}
-
-		if (m_hSendToListFont!=NULL)
-			DeleteObject(m_hSendToListFont);
-		
-		// Initializing fonts
-		if (RegKey.OpenKey(HKCU,"Control Panel\\Desktop\\WindowMetrics",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
-		{
-			LOGFONTW font;
-			RegKey.QueryValue("MenuFont",(LPSTR)&font,sizeof(LOGFONTW));
-			m_hSendToListFont=CreateFontIndirectW(&font);
-		}
-		else
-			m_hSendToListFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
+		RegKey.QueryValue("SendTo",SendToPath);
+		RegKey.CloseKey();
 	}
+
+	if (m_hSendToListFont!=NULL)
+		DeleteObject(m_hSendToListFont);
+	
+	// Initializing fonts
+	if (RegKey.OpenKey(HKCU,"Control Panel\\Desktop\\WindowMetrics",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		LOGFONTW font;
+		RegKey.QueryValue("MenuFont",(LPSTR)&font,sizeof(LOGFONTW));
+		m_hSendToListFont=CreateFontIndirectW(&font);
+	}
+	else
+		m_hSendToListFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
+
 	AddSendToMenuItems(hPopupMenu,SendToPath,IDM_DEFSENDTOITEM);
 }
 
@@ -3508,7 +3527,6 @@ UINT CLocateDlg::AddSendToMenuItems(HMENU hMenu,CString& sSendToPath,UINT wStart
 	mi.fState=MFS_ENABLED;
 	mi.wID=wStartID;
 	mi.dwTypeData=(LPSTR)hMenu;
-	mi.fType=MFT_OWNERDRAW;
 	bErr=Find.FindFile(Path);
 	while (bErr)
 	{
@@ -3534,6 +3552,7 @@ UINT CLocateDlg::AddSendToMenuItems(HMENU hMenu,CString& sSendToPath,UINT wStart
 	Find.Close();
 	if (mi.wID==wStartID)
 	{
+		// Inserting default menu items
 		Path.LoadString(IDS_EMPTY);
 		mi.dwTypeData=(LPSTR)(LPCSTR)Path;
 		mi.dwItemData=0;
@@ -3601,13 +3620,6 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 		InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_FILEMENU),0);
 	}
 	
-		
-
-	// If any items in list are not selected, return
-	ASSERT(m_pListCtrl->GetSelectedCount()>0);
-	/*if (m_pListCtrl->GetSelectedCount()==0)
-		return hFileMenu;*/
-
 	// Creating context menu for file items
 	CArrayFP<CString*> aFiles;
 	CString sParent; // For checking that are files in same folder
@@ -3677,16 +3689,12 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 
 			if (HIBYTE(GetKeyState(VK_SHIFT)))
 			{
-				/*hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_EXTENDEDVERBS);*/
 				hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
 					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_VERBSONLY|CMF_EXTENDEDVERBS);
 
 			}
 			else
 			{
-				/*hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL);*/
 				hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
 					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_VERBSONLY);
 
@@ -3726,49 +3734,10 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 		}
 	}
 
-	ASSERT(hFileMenu==NULL);
-	
-	hFileMenu=CreatePopupMenu();
-	InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN),0,IDM_DEFOPEN);
-
-	/*HMENU hSrcMenu=m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN);
-	int nMenuLength;
 	if (hFileMenu==NULL)
-	{
-		// Createing popupmenu if not yet done
 		hFileMenu=CreatePopupMenu();
-		nMenuLength=GetMenuItemCount(hSrcMenu);
-	}
-	else
-		nMenuLength=2;
+	InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN),0,IDM_DEFOPEN);
 	
-	// Copying other items from template menu in resource script	
-	MENUITEMINFO mii;
-	char szName[100];
-	mii.cbSize=sizeof(MENUITEMINFO);
-	for (int i=0;i<nMenuLength;i++)
-	{
-		mii.fMask=MIIM_ID|MIIM_TYPE|MIIM_STATE|MIIM_SUBMENU;
-		mii.dwTypeData=szName;
-		mii.cch=100;
-		GetMenuItemInfo(hSrcMenu,i,TRUE,&mii);
-		if (mii.hSubMenu!=NULL)
-			mii.hSubMenu=CreatePopupMenu();
-		if (i==0) // First item is default
-			mii.fState|=MFS_DEFAULT;
-		InsertMenuItem(hFileMenu,i,TRUE,&mii);
-		if (mii.hSubMenu!=NULL)
-		{
-			// Inserting empty send to -item, otherwise OnInitMenuPopup 
-			// does not know is this menu Send To -menu
-			mii.fMask=MIIM_ID|MIIM_TYPE;
-			mii.dwTypeData="(Empty)";
-			mii.wID=IDM_DEFSENDTOITEM;
-			mii.fType=MFT_STRING;
-			InsertMenuItem(mii.hSubMenu,0,TRUE,&mii);
-		}
-	}*/	
-
 	return hFileMenu;
 	
 }

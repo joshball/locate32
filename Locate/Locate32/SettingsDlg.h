@@ -45,6 +45,9 @@ public:
 	struct INITIALIZEPARAMS : public BASICPARAMS {
 		HWND hControl;
 	};
+	struct COMBOAPPLYPARAMS : public BASICPARAMS {
+		LONG nCurSel;
+	};
 	struct SPINPOXPARAMS : public BASICPARAMS {
 		int iLow;
 		int iHigh;

@@ -662,6 +662,9 @@
 				RelativePath=".\HFCDebug.log">
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\..\Install\Locate2\Readme.txt">
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

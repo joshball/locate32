@@ -12,14 +12,14 @@
 	m_wMinDate(WORD(-1)),m_wMaxDate(WORD(-1)), \
 	m_dwFlags(LOCATE_FOLDERNAMES),szBuffer(NULL), \
 	m_pContentSearcher(NULL), \
-	m_hThread(NULL)
+	m_hThread(NULL),dbFile(NULL)
 #else
 #define CLOCATERINITIALIATIONS   \
 :	m_dwMaxFoundFiles(DWORD(-1)), \
 	m_dwMinSize(DWORD(-1)),m_dwMaxSize(DWORD(-1)), \
 	m_wMinDate(WORD(-1)),m_wMaxDate(WORD(-1)), \
 	m_dwFlags(LOCATE_FOLDERNAMES),szBuffer(NULL), \
-	m_pContentSearcher(NULL)
+	m_pContentSearcher(NULL),dbFile(NULL)
 #endif
 
 

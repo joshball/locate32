@@ -190,7 +190,9 @@ BOOL CDatabaseInfo::GetRootsFromDatabases(CArray<LPSTR>& aRoots,const PDATABASE*
 BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPSTR>& aRoots,const CDatabase* pDatabase)
 {
 	BYTE* szBuffer=NULL;
+	
 	CFile* dbFile=NULL;
+	
 	BOOL bRet=TRUE;
 	CString Temp;
 		

@@ -171,6 +171,7 @@ private:
 	
 
 private:
+	CFile* dbFile;
 	UPDATEPROC m_pProc;
 	DWORD m_dwData;
 #ifdef WIN32

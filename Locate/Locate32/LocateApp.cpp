@@ -32,7 +32,6 @@ CLocateApp::~CLocateApp()
 
 BOOL CLocateApp::InitInstance()
 {
-	CWinApp::InitInstance();
 
 	DebugNumMessage("CLocateApp::InitInstance(), thread is 0x%X",GetCurrentThreadId());
 
@@ -856,6 +855,8 @@ void CLocateApp::LoadDateAndTimeString()
 		RegKey.QueryValue("TimeFormat",m_strTimeFormat);
 	}
 
+	// "" are now defaults
+	/*
 	if (m_strTimeFormat.IsEmpty())
 	{
 		EnumTimeFormats(TimeFormatsProc,LOCALE_USER_DEFAULT,0);
@@ -867,7 +868,7 @@ void CLocateApp::LoadDateAndTimeString()
 		EnumDateFormats(DateFormatsProc,LOCALE_USER_DEFAULT,DATE_SHORTDATE);
 		if (m_strDateFormat.IsEmpty())
 			m_strDateFormat="d.MM.yyyy";
-	}
+	}*/
 }
 
 void CLocateApp::SaveDateAndTimeString()
@@ -883,6 +884,7 @@ void CLocateApp::SaveDateAndTimeString()
 	}
 }
 	
+/*
 BOOL CALLBACK CLocateApp::DateFormatsProc(LPTSTR lpDateFormatString)
 {
 	if (((CLocateApp*)GetApp())->m_strDateFormat.GetLength()==0 ||
@@ -897,21 +899,71 @@ BOOL CALLBACK CLocateApp::TimeFormatsProc(LPTSTR lpTimeFormatString)
 		strlen(lpTimeFormatString)<((CLocateApp*)GetApp())->m_strTimeFormat.GetLength())
 		((CLocateApp*)GetApp())->m_strTimeFormat=lpTimeFormatString;
 	return TRUE;
-}	
+}*/	
 
 LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 {
 	DWORD dwLength=2;
 	
+	enum {
+		fDateIsDefault = 0x1,
+		fTimeIsDefault = 0x2
+	};
+	BYTE fFlags=0;
+
+	// wDate/wTime is 0xFFFFFFFF, omit date/time
 	if (wDate!=WORD(-1))
-		dwLength+=m_strDateFormat.GetLength()*2;
+	{
+		if (m_strDateFormat.IsEmpty())
+		{
+			// Using default format
+			fFlags|=fDateIsDefault;
+
+			// Using GetDateFormat as default
+			SYSTEMTIME st;
+			st.wDay=DOSDATETODAY(wDate);
+			st.wMonth=DOSDATETOMONTH(wDate);
+			st.wYear=DOSDATETOYEAR(wDate);
+
+			GetDateFormat(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,
+				NULL,m_strDateFormat.GetBuffer(1000),1000);
+			m_strDateFormat.FreeExtra();
+
+			dwLength+=m_strDateFormat.GetLength();
+		}
+		else
+            dwLength+=m_strDateFormat.GetLength()*2;
+	}
 	if (wTime!=WORD(-1))
-		dwLength+=m_strTimeFormat.GetLength()*2;
+	{
+		if (m_strTimeFormat.IsEmpty())
+		{
+			// Using default format
+			fFlags|=fTimeIsDefault;
+
+			// Using GetTimeFormat as default
+			SYSTEMTIME st;
+			st.wHour=DOSTIMETO24HOUR(wTime);
+			st.wMinute=DOSTIMETOMINUTE(wTime);
+			st.wSecond=DOSTIMETOSECOND(wTime);
+			st.wMilliseconds=0;
+			GetTimeFormat(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,
+				NULL,m_strTimeFormat.GetBuffer(1000),1000);
+			m_strTimeFormat.FreeExtra();
+
+			dwLength+=m_strTimeFormat.GetLength();
+		}
+		else
+			dwLength+=m_strTimeFormat.GetLength()*2;
+	
+		
+	}
 
 	LPSTR szRet=new char[dwLength];
 	LPSTR pPtr=szRet;
 
-	if (wDate!=WORD(-1))
+	//Formatting date
+    if (wDate!=WORD(-1))
 	{
 		for (DWORD i=0;i<m_strDateFormat.GetLength();i++)
 		{
@@ -1011,6 +1063,7 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 		}
 	}
 	
+	// Formatting time
 	if (wTime!=WORD(-1))
 	{
 		*pPtr=' ';
@@ -1138,6 +1191,11 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 	}
 
 	*pPtr='\0';
+
+	if (fFlags&fDateIsDefault)
+		m_strDateFormat.Empty();
+	if (fFlags&fTimeIsDefault)
+		m_strTimeFormat.Empty();
 	return szRet;
 }
 
@@ -2297,8 +2355,14 @@ void CLocateAppWnd::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
 	if (bSysMenu)
 		return;
 
-	if (hPopupMenu==m_Menu.GetSubMenu(0))
+	if (CLocateApp::IsDatabaseMenu(hPopupMenu))
+		GetLocateApp()->OnInitDatabaseMenu(hPopupMenu);
+	else if (hPopupMenu==m_Menu.GetSubMenu(0))
 	{
+		int iDatabaseMenu=CLocateApp::GetDatabaseMenuIndex(hPopupMenu);
+		if (iDatabaseMenu!=-1)
+			EnableMenuItem(hPopupMenu,iDatabaseMenu,!GetLocateApp()->IsUpdating()?MF_BYPOSITION|MF_ENABLED:MF_BYPOSITION|MF_GRAYED);
+
 		EnableMenuItem(hPopupMenu,IDM_GLOBALUPDATEDB,!GetLocateApp()->IsUpdating()?MF_BYCOMMAND|MF_ENABLED:MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hPopupMenu,IDM_UPDATEDATABASES,!GetLocateApp()->IsUpdating()?MF_BYCOMMAND|MF_ENABLED:MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hPopupMenu,IDM_STOPUPDATING,GetLocateApp()->IsUpdating()?MF_BYCOMMAND|MF_ENABLED:MF_BYCOMMAND|MF_GRAYED);
@@ -2370,6 +2434,10 @@ BOOL CLocateAppWnd::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		}
 		else
 			DestroyWindow();
+		break;
+	default:
+		if (wID>=IDM_DEFUPDATEDBITEM && wID<IDM_DEFUPDATEDBITEM+1000)
+			GetLocateApp()->OnDatabaseMenuItem(wID);
 		break;
 	}
 	return FALSE;
@@ -3299,12 +3367,79 @@ BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg)
 	return TRUE;
 }
 
-DWORD CLocateApp::GetLongPathName(LPCSTR lpszShortPath,LPSTR lpszLongPath,DWORD cchBuffer)
+void CLocateApp::OnInitDatabaseMenu(HMENU hPopupMenu)
 {
-	LPSTR pTemp;
-	return GetFullPathName(lpszShortPath,cchBuffer,lpszLongPath,&pTemp);
+	// Removing existing items
+	for(int i=GetMenuItemCount(hPopupMenu)-1;i>=0;i--)
+		DeleteMenu(hPopupMenu,i,MF_BYPOSITION);
+
+	CString title;
+	MENUITEMINFO mi;
+	mi.cbSize=sizeof(MENUITEMINFO);
+	mi.fMask=MIIM_DATA|MIIM_ID|MIIM_STATE|MIIM_TYPE|MIIM_SUBMENU;
+	mi.wID=IDM_DEFUPDATEDBITEM;
+	mi.fType=MFT_STRING;
+	mi.fState=MFS_ENABLED;
+	mi.hSubMenu=NULL;
+
+	if (m_aDatabases.GetSize()==0)
+	{
+		// Inserting default items
+		title.LoadString(IDS_EMPTY);
+		mi.dwTypeData=(LPSTR)(LPCSTR)title;
+		mi.dwItemData=0;
+		mi.fState=MFS_GRAYED;
+		InsertMenuItem(hPopupMenu,mi.wID,FALSE,&mi);
+		return;
+	}
+
+	// Starting to insert database items 
+	for (int i=0;i<m_aDatabases.GetSize();i++)
+	{
+		title.Format("&%d: %s",i+1,m_aDatabases[i]->GetName());
+		mi.dwTypeData=(LPSTR)(LPCSTR)title;
+		mi.dwItemData=m_aDatabases[i]->GetID();
+		mi.wID=IDM_DEFUPDATEDBITEM+i;
+		InsertMenuItem(hPopupMenu,mi.wID,FALSE,&mi);
+	}	
 }
 
+void CLocateApp::OnDatabaseMenuItem(WORD wID)
+{
+	int iDB=wID-IDM_DEFUPDATEDBITEM;
+
+	ASSERT(iDB>=0 && iDB<m_aDatabases.GetSize());
+
+	DWORD dwLength=istrlen(m_aDatabases[iDB]->GetName());
+	LPSTR pDatabaseName=new char[dwLength+2];
+	sMemCopy(pDatabaseName,m_aDatabases[iDB]->GetName(),dwLength);
+	pDatabaseName[dwLength]='\0';
+	pDatabaseName[dwLength+1]='\0';
+
+	GetLocateAppWnd()->OnUpdate(FALSE,pDatabaseName);
+
+	delete[] pDatabaseName;
+}
+
+int CLocateApp::GetDatabaseMenuIndex(HMENU hPopupMenu)
+{
+	MENUITEMINFO mii;
+	mii.cbSize=sizeof(MENUITEMINFO);
+	mii.fMask=MIIM_TYPE|MIIM_SUBMENU;
+	
+	for(int i=GetMenuItemCount(hPopupMenu)-1;i>=0;i--)
+	{
+		if (!GetMenuItemInfo(hPopupMenu,i,TRUE,&mii))
+			continue;
+
+		if (mii.fType==MFT_STRING && mii.hSubMenu!=NULL)
+		{
+			if (IsDatabaseMenu(GetSubMenu(hPopupMenu,i)))
+				return i;
+		}
+	}
+	return -1;
+}
 
 #ifdef _DEBUG
 DEBUGALLOCATORTYPE DebugAlloc;

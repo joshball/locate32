@@ -245,7 +245,7 @@ private:
 	LOCATEFOUNDPROC m_pCurrentFoundProc;
 	DWORD m_dwData;
 	CSearchFromFile* m_pContentSearcher;
-
+	CFile* dbFile;
 
 private:
 	DWORD m_dwFoundFiles;

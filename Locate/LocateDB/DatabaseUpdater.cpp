@@ -12,7 +12,7 @@
 CDatabaseUpdater::CDatabaseUpdater(LPCSTR szDatabaseFile,LPCSTR szAuthor,LPCSTR szComment,
 		LPCSTR* pszRoots,DWORD nNumberOfRoots,UPDATEPROC pProc,DWORD dwParam)
 :	m_pCurrentRoot(NULL),sStatus(statusInitializing),m_dwFiles(0),m_dwDirectories(0),
-	m_pProc(pProc),m_dwData(dwParam),m_pCurrentDatabase(NULL)
+	m_pProc(pProc),m_dwData(dwParam),m_pCurrentDatabase(NULL),dbFile(NULL)
 #ifdef WIN32	
 	,m_hThread(NULL),m_lForceQuit(FALSE)
 #endif
@@ -26,7 +26,7 @@ CDatabaseUpdater::CDatabaseUpdater(LPCSTR szDatabaseFile,LPCSTR szAuthor,LPCSTR 
 CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
 		int nDatabases,UPDATEPROC pProc,DWORD dwParam)
 :	m_pCurrentRoot(NULL),sStatus(statusInitializing),m_dwFiles(0),m_dwDirectories(0),
-	m_pProc(pProc),m_dwData(dwParam),m_pCurrentDatabase(NULL)
+	m_pProc(pProc),m_dwData(dwParam),m_pCurrentDatabase(NULL),dbFile(NULL)
 #ifdef WIN32	
 	,m_hThread(NULL),m_lForceQuit(FALSE)
 #endif
@@ -40,7 +40,7 @@ CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
 CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
 		int nDatabases,UPDATEPROC pProc,WORD wThread,DWORD dwParam)
 :	m_pCurrentRoot(NULL),sStatus(statusInitializing),m_dwFiles(0),m_dwDirectories(0),
-	m_pProc(pProc),m_dwData(dwParam),m_pCurrentDatabase(NULL)
+	m_pProc(pProc),m_dwData(dwParam),m_pCurrentDatabase(NULL),dbFile(NULL)
 #ifdef WIN32	
 	,m_hThread(NULL),m_lForceQuit(FALSE)
 #endif
@@ -59,6 +59,11 @@ CDatabaseUpdater::~CDatabaseUpdater()
 {
 	DebugMessage("CDatabaseUpdater::~CDatabaseUpdater()");
 
+	if (dbFile!=NULL)
+	{
+		delete dbFile;
+		dbFile=NULL;
+	}
 	
 
 #ifdef WIN32
@@ -82,7 +87,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 	InterlockedExchange(&m_lForceQuit,FALSE);
 #endif
 
-	CFile* dbFile=NULL;
+	ASSERT(dbFile==NULL);
 
 	for (int i=0;i<m_aDatabases.GetSize();i++)
 	{
@@ -237,7 +242,6 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			// End mark
 			dbFile->Write((DWORD)0);
 
-			dbFile->Close();
 			delete dbFile;
 			dbFile=NULL;
 
@@ -313,13 +317,20 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 		m_pProc(m_dwData,FinishedDatabase,ueResult,this);
 	}
 
+	// Closing file if needed
+	if (dbFile!=NULL)
+	{
+		delete dbFile;
+		dbFile=NULL;
+	}
+	
 	m_pProc(m_dwData,FinishedUpdating,ueResult,this);
 	m_pProc(m_dwData,ClassShouldDelete,ueResult,this);
 
+	// This class is deleted in the previous call, do not access this anymore
+
 	DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): ALL DONE ueResult=%d",DWORD(ueResult));
 
-	if (dbFile!=NULL)
-		delete dbFile;
 	return ueResult;
 }
 

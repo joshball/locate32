@@ -186,6 +186,11 @@ inline CLocateDlg::CAdvancedDlg::FileType::FileType(FREEDATA frType,FREEDATA frT
 {
 }
 
+inline DWORD CLocateApp::GetLongPathName(LPCSTR lpszShortPath,LPSTR lpszLongPath,DWORD cchBuffer)
+{
+	LPSTR pTemp;
+	return GetFullPathName(lpszShortPath,cchBuffer,lpszLongPath,&pTemp);
+}
 
 
 #endif

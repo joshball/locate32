@@ -52,6 +52,7 @@ public:
 
 	static DWORD WINAPI KillUpdaterProc(LPVOID lpParameter);
 
+
 public:
 	CMenu m_Menu;
 	CAboutDlg* m_pAbout;
@@ -187,11 +188,15 @@ public:
 	
 	BOOL GlobalUpdate(CArray<PDATABASE>* paDatabases=NULL);
 
+	// Database menu functions
+	static BOOL IsDatabaseMenu(HMENU hMenu);
+	void OnInitDatabaseMenu(HMENU hPopupMenu);
+	void OnDatabaseMenuItem(WORD wID);
+	static int GetDatabaseMenuIndex(HMENU hPopupMenu);
+    	
 private:
 	static BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater);
 	
-	static BOOL CALLBACK DateFormatsProc(LPTSTR lpDateFormatString);
-	static BOOL CALLBACK TimeFormatsProc(LPTSTR lpDateFormatString);
 
 public:
 	WORD m_wComCtrlVersion;
@@ -290,6 +295,14 @@ inline const CDatabase* CLocateApp::GetDatabase(WORD wID) const
 	}
 	return NULL;
 }
+
+	
+inline BOOL CLocateApp::IsDatabaseMenu(HMENU hMenu)
+{
+	UINT nID=GetMenuItemID(hMenu,0);
+	return nID>=IDM_DEFUPDATEDBITEM && nID<IDM_DEFUPDATEDBITEM+1000;
+}
+
 
 inline CLocateApp* GetLocateApp()
 {

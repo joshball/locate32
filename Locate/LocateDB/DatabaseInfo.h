@@ -41,8 +41,8 @@ public:
 	};
 	
 protected:
-	CDatabaseInfo() { bVersion=0; bLongFilenames=0;
-		dwNumberOfDirectories=dwNumberOfFiles=(DWORD)-1;dwFileSize=0; }
+	CDatabaseInfo();
+
 	BOOL GetInfo(const CDatabase* pDatabase);
 
 public:
@@ -66,7 +66,13 @@ public:
 	// Fonctions do not clear aRoots
 	static BOOL GetRootsFromDatabases(CArray<LPSTR>& aRoots,const PDATABASE* pDatabases,int nDatabases,BOOL bOnlyEnabled=FALSE);
 	static BOOL GetRootsFromDatabases(CArray<LPSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled=FALSE);
+
 };
+
+inline 	CDatabaseInfo::CDatabaseInfo()
+:	bVersion(0), bLongFilenames(0),dwNumberOfDirectories(DWORD(-1)),dwNumberOfFiles(DWORD(-1))
+{
+}
 
 inline CDatabaseInfo* CDatabaseInfo::GetFromDatabase(const CDatabase* pDatabase)
 {
