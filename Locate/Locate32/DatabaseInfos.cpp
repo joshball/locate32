@@ -214,7 +214,7 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 				m_pList->SetItem(&li);
 
 				li.iSubItem=3;
-				Temp.Format("%X-%X",HIWORD(di->aRootFolders.GetAt(i)->dwVolumeSerial),
+				Temp.Format("%0X-%0X",HIWORD(di->aRootFolders.GetAt(i)->dwVolumeSerial),
 					LOWORD(di->aRootFolders.GetAt(i)->dwVolumeSerial));
 				li.pszText=Temp.GetBuffer();
 				m_pList->SetItem(&li);

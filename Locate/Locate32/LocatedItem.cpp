@@ -1,6 +1,9 @@
 #include <HFCLib.h>
 #include "Locate32.h"
 
+#include <md5.h>
+#pragma comment(lib, "libmd5.lib")
+
 
 
 
@@ -9,6 +12,7 @@ void CLocatedItem::SetFolder(const CLocater* pLocater)
 	ItemDebugMessage("CLocatedItem::SetFolder BEGIN");
 
 	wDatabaseID=pLocater->GetCurrentDatabaseID();
+	wRootID=pLocater->GetCurrentDatabaseRootID();
 	
 	// Setting path, name and extension
 	DWORD nPathLen=pLocater->GetCurrentPathLen();
@@ -58,6 +62,7 @@ void CLocatedItem::SetFile(const CLocater* pLocater)
 	ItemDebugMessage("CLocatedItem::SetFile BEGIN");
 
 	wDatabaseID=pLocater->GetCurrentDatabaseID();
+	wRootID=pLocater->GetCurrentDatabaseRootID();
 	
 	// Setting path, name and extension
 	DWORD nPathLen=pLocater->GetCurrentPathLen();
@@ -179,6 +184,8 @@ BOOL CLocatedItem::ShouldUpdateByDetail(CLocateDlg::DetailType nDetail) const
 	case CLocateDlg::DetailType::Database:
 	case CLocateDlg::DetailType::DatabaseDescription:
 	case CLocateDlg::DetailType::DatabaseArchive:
+	case CLocateDlg::DetailType::VolumeLabel:
+	case CLocateDlg::DetailType::VolumeSerial:
 		return FALSE;
 	case CLocateDlg::DetailType::Title:
 		// Tässä tulee virhe, tarkista ketkä kutsuu tätä

@@ -1009,7 +1009,7 @@ void CDatabase::ReadIniFile(BYTE* pData,CArrayFAP<LPSTR>* paRoots,CString* pCrea
 LPSTR CDatabase::ConstructExtraBlock() const
 {
 	CString str;
-	str.Format("$$LDBSET$T:%02X$",m_wThread);
+	str.Format("$$LDBSET$T:%04X$",m_wThread);
 	
 	// Flags
 	if (m_wFlags!=0)

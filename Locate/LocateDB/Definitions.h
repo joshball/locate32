@@ -20,7 +20,8 @@ enum CallingReason {
 	ErrorOccured=6,
 	RootChanged=7,
 	SearchingStarted=8, // Only for CLocater
-	SearchingEnded=9 // Only for CLocater
+	SearchingEnded=9, // Only for CLocater
+	RootInformationAvail=10 // Only for CLocater
 };
 
 enum UpdateError {

@@ -1089,6 +1089,8 @@ BEGIN
     IDS_LISTDATABASE        "Database"
     IDS_LISTDATABASEDESC    "Database Description"
     IDS_LISTDATABASEFILE    "Database File"
+    IDS_LISTVOLUMELABEL	    "Volume Label"
+    IDS_LISTVOLUMESERIAL    "Volume Serial"
     IDS_UPDATINGDATABASE    "Updating database..."
 	IDS_UPDATINGTOOLTIPTITLE "Updating database:"
     

@@ -178,7 +178,11 @@ public:
 	LPCSTR GetCurrentDatabaseName() const;
 	LPCSTR GetCurrentDatabaseFile() const;
 	BOOL IsCurrentDatabaseNamesOEM() const;
-	
+	WORD GetCurrentDatabaseRootID() const;
+	BYTE GetCurrentDatabaseRootType() const;
+	LPCSTR GetCurrentDatabaseVolumeLabel() const;
+	DWORD GetCurrentDatabaseVolumeSerial() const;
+	LPCSTR GetCurrentDatabaseFileSystem() const;
 	
 	// allocates memory to szName & copies database name to szName
 	void GetCurrentDatabaseName(LPSTR& szName) const; 
@@ -226,7 +230,16 @@ private:
 	CArrayFP<DBArchive*> m_aDatabases;
 	DBArchive* m_pCurrentDatabase;
 	WORD m_wCurrentDatabaseID;
-		
+	WORD m_wCurrentRootIndex;
+	
+	// Volume information
+	BYTE m_bCurrentRootType;
+	LPCSTR m_szVolumeName;
+	DWORD m_dwVolumeSerial;
+	LPCSTR m_szFileSystem;
+
+	
+
 private:
 	// Advanced
 	DWORD m_dwMaxFoundFiles;

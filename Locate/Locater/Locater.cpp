@@ -233,13 +233,13 @@ BOOL CLocater::LocatingProc()
 		
 		m_pCurrentDatabase=m_aDatabases[i];
 		m_wCurrentDatabaseID=m_pCurrentDatabase->wID;
-
-		m_pCurrentFoundProc=m_pCurrentDatabase->m_pFoundProc;
+		m_wCurrentRootIndex=0;
+        m_pCurrentFoundProc=m_pCurrentDatabase->m_pFoundProc;
 
 		ueResult=ueStillWorking;
 		m_pProc(m_dwData,BeginningDatabase,ueStillWorking,(DWORD)m_pCurrentDatabase->szName,this);
 
-		
+
 		
 		try 
 		{
@@ -285,21 +285,24 @@ BOOL CLocater::LocatingProc()
 			
 			// Reading root data
 			LocaterDebugMessage("CLocater::LocatingProc() READINGROOTDATA");
-			dbFile->Read(dwBlockSize);
 			
 			if (m_aDirectories.GetSize())
 			{
+				// There is directories in which files should be
+
+				dbFile->Read(dwBlockSize);
 				while (dwBlockSize>0
 	#ifdef WIN32
 					&& !m_lForceQuit
 	#endif
 				)
 				{
-					// Skipping type data
-					dbFile->Seek(1,CFile::current);
-								
 					m_pProc(m_dwData,RootChanged,ueStillWorking,m_dwFoundFiles,this);
-		
+					
+					// Reading type data
+					dbFile->Read(m_bCurrentRootType);
+								
+					
 					// Reading path
 					{
 						BYTE cTemp;
@@ -328,13 +331,26 @@ BOOL CLocater::LocatingProc()
 						pPoint=szBuffer=new BYTE[dwBlockSize];
 						dbFile->Read(szBuffer,dwBlockSize);
 
-						// Skipping volume name and volume serial
+						// Resolving volume name 
+						m_szVolumeName=(LPCSTR)pPoint;
 						for (;*pPoint!='\0';pPoint++);
-						pPoint+=1+sizeof(DWORD); // 1 == '\0' in volumename
-						// Skipping file system and numver of found fles and folders
+						pPoint++;
+					
+						// Resolving volume serial
+						m_dwVolumeSerial=*((DWORD*)pPoint);
+						pPoint+=sizeof(DWORD); // 1 == '\0' in volumename
+					
+						// Resolving file system
+						m_szFileSystem=(LPCSTR)pPoint;
 						for (;*pPoint!='\0';pPoint++);
-						pPoint+=1+2*sizeof(DWORD);
+						pPoint++;
 
+						// Skipping the number of files and directories
+						pPoint+=2*sizeof(DWORD);
+
+						// Telling that volume information is available
+						m_pProc(m_dwData,RootInformationAvail,ueStillWorking,m_dwFoundFiles,this);
+					
 						// OK, now we are beginning of folder data
 						if (vtType==ValidFolders)
 							CheckFolder(nPathLen);
@@ -346,26 +362,28 @@ BOOL CLocater::LocatingProc()
 						dbFile->Seek(dwBlockSize,CFile::current);
 				
 				
-					
-			
+					// New root
+					m_wCurrentRootIndex++;
 					dbFile->Read(dwBlockSize);
 				}
 			}
 			else
 			{
+				// No restrinctions about directories
+				dbFile->Read(dwBlockSize);
+				
 				while (dwBlockSize>0
 	#ifdef WIN32
 					&& !m_lForceQuit
 	#endif
 				)
 				{
-					BOOL bReadRoot=TRUE;
-					
 					m_pProc(m_dwData,RootChanged,ueStillWorking,m_dwFoundFiles,this);
 				
-					// Skipping type data
-					dbFile->Seek(1,CFile::current);
+					// Reading type data
+					dbFile->Read(m_bCurrentRootType);
 								
+					BOOL bReadRoot=TRUE;
 					// Reading path
 					{
 						BYTE cTemp;
@@ -385,17 +403,31 @@ BOOL CLocater::LocatingProc()
 					pPoint=szBuffer=new BYTE[dwBlockSize];
 					dbFile->Read(szBuffer,dwBlockSize);
 
-					// Skipping volume name and volume serial
+					// Resolving volume name 
+					m_szVolumeName=(LPCSTR)pPoint;
 					for (;*pPoint!='\0';pPoint++);
-					pPoint+=1+sizeof(DWORD); // 1 == '\0' in volumename
-					// Skipping file system and numver of found fles and folders
+					pPoint++;
+					
+					// Resolving volume serial
+					m_dwVolumeSerial=*((DWORD*)pPoint);
+					pPoint+=sizeof(DWORD); // 1 == '\0' in volumename
+					
+					// Resolving file system
+					m_szFileSystem=(LPCSTR)pPoint;
 					for (;*pPoint!='\0';pPoint++);
-					pPoint+=1+2*sizeof(DWORD);
+					pPoint++;
+					
+					// Skipping the number of files and directories
+					pPoint+=2*sizeof(DWORD);
+
+					// Telling that volume information is available
+					m_pProc(m_dwData,RootInformationAvail,ueStillWorking,m_dwFoundFiles,this);
+					
 					// OK, now we are at the beginning of folder data
-					
-					
 					CheckFolder(nPathLen);
-							
+					
+					// New root
+					m_wCurrentRootIndex++;
 					dbFile->Read(dwBlockSize);
 				}
 			}

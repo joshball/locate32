@@ -280,6 +280,8 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_pListCtrl->InsertColumn(Database,IDS_LISTDATABASE,FALSE,LVCFMT_LEFT,70,LanguageSpecificResource);
 	m_pListCtrl->InsertColumn(DatabaseDescription,IDS_LISTDATABASEDESC,FALSE,LVCFMT_LEFT,150,LanguageSpecificResource);
 	m_pListCtrl->InsertColumn(DatabaseArchive,IDS_LISTDATABASEFILE,FALSE,LVCFMT_LEFT,150,LanguageSpecificResource);
+	m_pListCtrl->InsertColumn(VolumeLabel,IDS_LISTVOLUMELABEL,FALSE,LVCFMT_LEFT,100,LanguageSpecificResource);
+	m_pListCtrl->InsertColumn(VolumeSerial,IDS_LISTVOLUMESERIAL,FALSE,LVCFMT_LEFT,90,LanguageSpecificResource);
 	
 	m_pListCtrl->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP,LVS_EX_HEADERDRAGDROP);
 	m_pListCtrl->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General","ListWidths");
@@ -947,8 +949,8 @@ void CLocateDlg::SetDialogMode(BOOL bLarge)
 				SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
 
 			// Now, terminate available background updater
-			m_pListCtrl->DeleteAllItems();
-
+			RemoveResultsFromList();
+			
 			ISDLGTHREADOK
 			if (g_szBuffer!=NULL)
 			{
@@ -1002,8 +1004,8 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 		m_pLocater->StopLocating();
 	
 	// Deleting previous items
-	m_pListCtrl->DeleteAllItems();
-
+	RemoveResultsFromList();
+	
 	if (m_pListTooltips!=NULL)
 		DeleteTooltipTools();
 
@@ -1194,6 +1196,9 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 
 		// Selecting path column
 		((CLocateDlg*)dwParam)->m_pListCtrl->SendMessage(LVM_FIRST+140/* LVM_SETSELECTEDCOLUMN */,1,0);
+		
+		// Clearing volume information
+		((CLocateDlg*)dwParam)->m_aVolumeInformation.RemoveAll();
 		return TRUE;
 	}
 	case FinishedLocating:
@@ -1284,6 +1289,12 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 				return FALSE;
 			}
 		}
+		break;
+	case RootInformationAvail:
+		((CLocateDlg*)dwParam)->m_aVolumeInformation.Add(new VolumeInformation(
+			pLocater->GetCurrentDatabaseID(),pLocater->GetCurrentDatabaseRootID(),
+			pLocater->GetCurrentDatabaseRootType(),pLocater->GetCurrentDatabaseVolumeSerial(),
+			pLocater->GetCurrentDatabaseVolumeLabel(),pLocater->GetCurrentDatabaseFileSystem()));
 		break;
 	}
 	
@@ -1471,7 +1482,7 @@ void CLocateDlg::OnNewSearch()
 	if (m_pLocater!=NULL)
 		m_pLocater->StopLocating();
 
-	m_pListCtrl->DeleteAllItems();
+	RemoveResultsFromList();
 	if (m_pListTooltips!=NULL)
 		DeleteTooltipTools();
 	SetDialogMode(FALSE);

@@ -146,6 +146,10 @@ inline LPSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) con
 		return const_cast<LPSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetDescription());
 	case CLocateDlg::DetailType::DatabaseArchive:
 		return const_cast<LPSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetArchiveName());
+	case CLocateDlg::DetailType::VolumeLabel:
+		return const_cast<LPSTR>(CLocateDlg::GetVolumeLabel(GetDatabaseID(),GetRootID()));
+	case CLocateDlg::DetailType::VolumeSerial:
+		return const_cast<LPSTR>(CLocateDlg::GetVolumeSerial(GetDatabaseID(),GetRootID()));
 	}
 	return const_cast<LPSTR>(szEmpty);
 }

@@ -28,6 +28,8 @@
 #define IDS_LISTDATABASE                15
 #define IDS_LISTDATABASEDESC            16
 #define IDS_LISTDATABASEFILE            17
+#define IDS_LISTVOLUMELABEL	            18
+#define IDS_LISTVOLUMESERIAL            19
 #define IDI_LENS                        23
 #define IDS_LOCATINGLIMITREACHED        24
 #define IDS_LOCATINGSUCCESS             25

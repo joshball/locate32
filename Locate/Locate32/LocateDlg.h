@@ -68,7 +68,9 @@ public:
 		Database=13,
 		DatabaseDescription=14,
 		DatabaseArchive=15,
-		LastType=15,
+		VolumeLabel=16,
+		VolumeSerial=17,
+		LastType=17,
 
 		Needed=255
 	};
@@ -430,7 +432,7 @@ protected:
 	void LoadRegistry();
 
 	void SetDialogMode(BOOL bLarge);
-	
+	void RemoveResultsFromList();
 
 	void DeleteTooltipTools();
 
@@ -605,6 +607,20 @@ protected:
 	BYTE m_nSorting;	// used for sorting list item, 0-6 bits: detail type, 7 bit: if 1 ascend sorting
 	BYTE m_ClickWait;
 
+	// For volume serial and label information 
+	struct VolumeInformation {
+		WORD wDB;
+		WORD wRootID;
+		LPSTR szVolumeSerial;
+		LPSTR szVolumeLabel;
+		LPSTR szFileSystem;
+		BYTE bType;
+
+		VolumeInformation(WORD wDB,WORD wRootID,BYTE bType,DWORD dwVolumeSerial,LPCSTR szVolumeLabel,LPCSTR szFileSystem);
+		~VolumeInformation();
+	};
+	CArrayFP<VolumeInformation*> m_aVolumeInformation;
+
 
 	// Accessors
 public:
@@ -612,6 +628,10 @@ public:
 	DWORD GetExtraFlags() const { return m_dwExtraFlags; }
 	DWORD GetMaxFoundFiles() const { return m_dwMaxFoundFiles; }
 	void SetMaxFoundFiles(DWORD dwValue) { m_dwMaxFoundFiles=dwValue; }
+
+	static LPCSTR GetVolumeLabel(WORD wDB,WORD wRootID);
+	static LPCSTR GetVolumeSerial(WORD wDB,WORD wRootID);
+	static LPCSTR GetVolumeFileSystem(WORD wDB,WORD wRootID);
 
 
 	friend class CLocateDlgThread;
@@ -626,6 +646,9 @@ public:
 
 	static LRESULT CALLBACK DebugWindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 #endif
+
+
+	
 };
 
 inline CLocateDlg* GetLocateDlg()

@@ -84,6 +84,7 @@ private:
 	BYTE bNameLength;
 
 	WORD wDatabaseID;
+	WORD wRootID;
 
 public:
 	//static LPSTR m_szBuffer; 
@@ -112,6 +113,7 @@ public:
 	
 	// Accessors
 	WORD GetDatabaseID() const { return wDatabaseID; }
+	WORD GetRootID() const { return wRootID; }
 
 	BYTE GetAttributes() const { return bAttribs; }
 	void AddAttribute(BYTE bAttribute) { bAttribs|=bAttribute; }

@@ -362,6 +362,11 @@ inline WORD CLocater::GetCurrentDatabaseID() const
 {
 	return m_wCurrentDatabaseID;
 }
+
+inline WORD CLocater::GetCurrentDatabaseRootID() const
+{
+	return m_wCurrentRootIndex;
+}	
 	
 inline LPCSTR CLocater::GetCurrentDatabaseName() const
 {
@@ -389,4 +394,24 @@ inline DWORD CLocater::GetNumberOfDatabases() const
 	return m_aDatabases.GetSize();
 }
 
+inline BYTE CLocater::GetCurrentDatabaseRootType() const
+{
+	return m_bCurrentRootType;
+}
+
+inline LPCSTR CLocater::GetCurrentDatabaseVolumeLabel() const
+{
+	return m_szVolumeName;
+}
+
+inline DWORD CLocater::GetCurrentDatabaseVolumeSerial() const
+{
+	return m_dwVolumeSerial;
+}
+
+inline LPCSTR CLocater::GetCurrentDatabaseFileSystem() const
+{
+	return m_szFileSystem;
+}
+	
 #endif
