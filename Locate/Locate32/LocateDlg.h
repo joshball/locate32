@@ -615,6 +615,9 @@ protected:
 	BYTE m_nSorting;	// used for sorting list item, 0-6 bits: detail type, 7 bit: if 1 ascend sorting
 	BYTE m_ClickWait;
 
+	WORD m_WaitEvery30;
+	WORD m_WaitEvery60;
+
 	// For volume serial and label information 
 	struct VolumeInformation {
 		WORD wDB;

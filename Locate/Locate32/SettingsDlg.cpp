@@ -29,7 +29,8 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_dwLocateDialogExtraFlags(CLocateDlg::efDefault),
 	m_dwProgramFlags(CLocateAppWnd::pfDefault),
 	m_bDefaultFlag(defaultDefault),	m_dwSettingsFlags(settingsDefault),
-	m_nNumberOfDirectories(DEFAULT_NUMBEROFDIRECTORIES)
+	m_nNumberOfDirectories(DEFAULT_NUMBEROFDIRECTORIES),
+	m_nTransparency(0),m_nToolTipTransparency(0)
 {
 	m_pGeneral=new CGeneralSettingsPage;
 	m_pAdvanced=new CAdvancedSettingsPage;
@@ -48,6 +49,14 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_pAutoUpdate->m_pSettings=m_pDatabases->m_pSettings=this;
 
 	m_psh.dwFlags|=PSH_NOAPPLYNOW|PSH_NOCONTEXTHELP;
+
+	CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(&m_lToolTipTextFont,&m_lToolTipTitleFont);
+
+	m_cToolTipBackColor=GetSysColor(COLOR_INFOBK);
+	m_cToolTipTextColor=GetSysColor(COLOR_INFOTEXT);
+	m_cToolTipTitleColor=GetSysColor(COLOR_INFOTEXT);
+	m_cToolTipErrorColor=GetSysColor(COLOR_INFOTEXT);
+
 }
 
 CSettingsProperties::~CSettingsProperties()
@@ -149,6 +158,9 @@ BOOL CSettingsProperties::LoadSettings()
 		RegKey.QueryValue("Use other program to open folders",nTemp);
 		SetFlags(settingsUseOtherProgramsToOpenFolders,nTemp);
 		RegKey.QueryValue("Open folders with",m_OpenFoldersWith);
+
+		if (RegKey.QueryValue("Transparency",nTemp))
+			m_nTransparency=min(nTemp,255);
 	}
 
 	// m_bAdvancedAndContextMenuFlag
@@ -199,8 +211,33 @@ BOOL CSettingsProperties::LoadSettings()
 			
 		}
 	}
+	
+	// Update status tooltip
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		DWORD dwTemp;
+		if (RegKey.QueryValue("Transparency",dwTemp))
+			m_nToolTipTransparency=min(dwTemp,255);
+		if (RegKey.QueryValue("TextColor",dwTemp))
+			m_cToolTipTextColor=dwTemp;
+		if (RegKey.QueryValue("TitleColor",dwTemp))
+			m_cToolTipTitleColor=dwTemp;
+		if (RegKey.QueryValue("ErrorColor",dwTemp))
+			m_cToolTipErrorColor=dwTemp;
+		if (RegKey.QueryValue("BackColor",dwTemp))
+			m_cToolTipBackColor=dwTemp;
+
+	
+		if (RegKey.QueryValue("TextFont",(LPSTR)&m_lToolTipTextFont,sizeof(LOGFONT))<sizeof(LOGFONT))
+			CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(&m_lToolTipTextFont,NULL);
+		
+		if (RegKey.QueryValue("TitleFont",(LPSTR)&m_lToolTipTitleFont,sizeof(LOGFONT))<sizeof(LOGFONT))
+			CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(NULL,&m_lToolTipTitleFont);
+		
+	}
 	return TRUE;
 }
+
 
 BOOL CSettingsProperties::SaveSettings()
 {
@@ -259,6 +296,8 @@ BOOL CSettingsProperties::SaveSettings()
 		// Overrinding explorer for opening folders
 		RegKey.SetValue("Use other program to open folders",(DWORD)IsFlagSet(settingsUseOtherProgramsToOpenFolders));
 		RegKey.SetValue("Open folders with",m_OpenFoldersWith);
+
+		RegKey.SetValue("Transparency",m_nTransparency);
 	}
 
 	// Start/Stop hooking
@@ -425,6 +464,22 @@ BOOL CSettingsProperties::SaveSettings()
 
 		}	
 	}
+
+	// Update status tooltip
+	Path.LoadString(IDS_REGPLACE,CommonResource);
+	Path<<"\\Dialogs\\Updatestatus";
+	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	{
+		
+		RegKey.SetValue("Transparency",m_nToolTipTransparency);
+		RegKey.SetValue("TextFont",(LPSTR)&m_lToolTipTextFont,sizeof(LOGFONT));
+		RegKey.SetValue("TitleFont",(LPSTR)&m_lToolTipTitleFont,sizeof(LOGFONT));
+		RegKey.SetValue("TextColor",(DWORD)m_cToolTipTextColor);
+		RegKey.SetValue("TitleColor",(DWORD)m_cToolTipTitleColor);
+		RegKey.SetValue("ErrorColor",(DWORD)m_cToolTipErrorColor);
+		RegKey.SetValue("BackColor",(DWORD)m_cToolTipBackColor);
+	}
+	
 	return TRUE;
 }
 
@@ -800,22 +855,41 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETLOADTYPES,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLoadRegistryTypes,&m_pSettings->m_dwLocateDialogFlags),
 		CreateRoot(IDS_ADVSETLOOKINCOMBO,LookInItems),
+		NULL, // For transparency
 		NULL
 	};
+	
+	Item* StatusTooltipItems[]={
+		CreateColor(IDS_ADVSETTOOLTIPTEXTCOLOR,DefaultColorProc,NULL,&m_pSettings->m_cToolTipTextColor),
+		CreateColor(IDS_ADVSETTOOLTIPTITLECOLOR,DefaultColorProc,NULL,&m_pSettings->m_cToolTipTitleColor),
+		CreateColor(IDS_ADVSETTOOLTIPERRORCOLOR,DefaultColorProc,NULL,&m_pSettings->m_cToolTipErrorColor),
+		CreateColor(IDS_ADVSETTOOLTIPBACKCOLOR,DefaultColorProc,NULL,&m_pSettings->m_cToolTipBackColor),
+		CreateFont(IDS_ADVSETTOOLTIPTEXTFONT,DefaultFontProc,NULL,&m_pSettings->m_lToolTipTextFont),
+		CreateFont(IDS_ADVSETTOOLTIPTITLEFONT,DefaultFontProc,NULL,&m_pSettings->m_lToolTipTitleFont),
+		NULL, // For transparency
+		NULL
+	};
+	if (GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes")!=NULL)
+	{
+		// Needs at least Win2k
+		DialogItems[3]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
+			MAKELONG(0,255),&m_pSettings->m_nTransparency);
+		StatusTooltipItems[6]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
+			MAKELONG(0,255),&m_pSettings->m_nToolTipTransparency);
+
+	}
 		
+
 	Item* UpdateProcessItems[]={
 		CreateCheckBox(IDS_ADVSETSHOWCRITICALERRORS,NULL,
 			DefaultCheckBoxProc,CLocateAppWnd::pfShowCriticalErrors,&m_pSettings->m_dwProgramFlags),
 		CreateCheckBox(IDS_ADVSETSHOWNONCRITICALERRORS,NULL,
 			DefaultCheckBoxProc,CLocateAppWnd::pfShowNonCriticalErrors,&m_pSettings->m_dwProgramFlags),
-		NULL,
+		CreateCheckBox(IDS_ADVSETSHOWUPDATESTATUSTOOLTIP,StatusTooltipItems,
+			DefaultCheckBoxProc,CLocateAppWnd::pfEnableUpdateTooltip,&m_pSettings->m_dwProgramFlags),
 		NULL
 	};
-	if (GetLocateApp()->m_wShellDllVersion>=0x0500)
-	{
-		UpdateProcessItems[2]=CreateCheckBox(IDS_ADVSETSHOWUPDATESTATUSTOOLTIP,NULL,
-			DefaultCheckBoxProc,CLocateAppWnd::pfEnableUpdateTooltip,&m_pSettings->m_dwProgramFlags);
-	}
+	
 
 	Item* Parents[]={
 		CreateRoot(IDS_ADVSETRESULTS,ResultsItems),
@@ -3871,3 +3945,1434 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnTypeCha
 	return TRUE;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////
+// Class COptionsPropertyPage
+///////////////////////////
+#define IDC_EDITCONTROLFORSELECTEDITEM  1300
+#define IDC_SPINCONTROLFORSELECTEDITEM  1301
+#define IDC_COMBOCONTROLFORSELECTEDITEM 1302
+#define IDC_COLORBUTTONFORSELECTEDITEM	1303
+#define IDC_FONTBUTTONFORSELECTEDITEM	1304
+//#define sMemCopyW	MemCopyW
+
+
+void COptionsPropertyPage::Construct(const OPTIONPAGE* pOptionPage)
+{
+	CPropertyPage::Construct(pOptionPage->dwFlags&OPTIONPAGE::opTemplateIsID?
+		MAKEINTRESOURCE(pOptionPage->nIDTemplate):pOptionPage->lpszTemplateName,
+		pOptionPage->dwFlags&OPTIONPAGE::opCaptionIsID?pOptionPage->nIDCaption:0,
+		LanguageSpecificResource);
+
+	if (!(pOptionPage->dwFlags&OPTIONPAGE::opCaptionIsID))
+	{
+		m_psp.pszTitle=pOptionPage->lpszCaption;
+		m_psp.dwFlags|=PSP_USETITLE;
+	}
+	m_nTreeID=pOptionPage->nTreeCtrlID;
+
+	if (pOptionPage->dwFlags&OPTIONPAGE::opChangeIsID)
+		m_ChangeText.LoadString(pOptionPage->nIDChangeText);
+	else
+		m_ChangeText=pOptionPage->lpszChangeText;
+}
+
+BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
+{
+	if (m_pTree==NULL)
+	{
+		m_pTree=new CTreeCtrl(GetDlgItem(IDC_SETTINGS));
+		m_Images.Create(IDB_OPTIONSPROPERTYPAGEBITMAPS,16,256,RGB(255,255,255),IMAGE_BITMAP,LR_SHARED|LR_CREATEDIBSECTION);
+		m_pTree->SetImageList(m_Images,TVSIL_STATE);
+
+		
+	}
+
+	if (pItems==NULL)
+		return FALSE;
+	
+	// Counting items
+	for (int iItems=0;pItems[iItems]!=NULL;iItems++);
+	
+	m_pItems=new Item*[iItems+1];
+	m_pItems[iItems]=NULL;
+	CopyMemory(m_pItems,pItems,sizeof(Item*)*(iItems+1));
+	return InsertItemsToTree(NULL,m_pItems,NULL);
+	
+}
+
+
+
+BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyPage::Item** pItems,COptionsPropertyPage::Item* pParent)
+{
+	INITIALIZEPARAMS bp;
+	bp.pPage=this;
+
+	
+
+	union {
+		TVINSERTSTRUCTA tisa;
+		TVINSERTSTRUCTW tisw;
+	};
+	
+	if (!IsFullUnicodeSupport())
+	{
+		// Windows 9x
+		tisa.hInsertAfter=TVI_LAST;
+		tisa.hParent=hParent;
+		tisa.itemex.stateMask=TVIS_STATEIMAGEMASK|TVIS_EXPANDED;
+		tisa.itemex.mask=TVIF_STATE|TVIF_CHILDREN|TVIF_TEXT|TVIF_PARAM;
+	}
+	else
+	{
+		// Windows NT/2000/XP
+		tisw.hInsertAfter=TVI_LAST;
+		tisw.hParent=hParent;
+		tisw.itemex.stateMask=TVIS_STATEIMAGEMASK|TVIS_EXPANDED;
+		tisw.itemex.mask=TVIF_STATE|TVIF_CHILDREN|TVIF_TEXT|TVIF_PARAM;
+	}
+
+	HTREEITEM hSelectedRadioItem=NULL;
+	
+	int nItemHeight=18;
+    for (int i=0;pItems[i]!=NULL;i++)
+	{
+		if (pItems[i]->pProc!=NULL)
+		{
+			bp.crReason=BASICPARAMS::Get;
+			pItems[i]->SetValuesForBasicParams(&bp);
+			if (pItems[i]->pProc(&bp))
+				pItems[i]->GetValuesFromBasicParams(&bp);
+		}
+        			
+		if (!IsFullUnicodeSupport())
+		{
+			DWORD iStrLen;
+			dstrlen(pItems[i]->pString,iStrLen);
+			tisa.itemex.pszText=new char [iStrLen+2];
+			MemCopyWtoA(tisa.itemex.pszText,pItems[i]->pString,iStrLen+1);
+			tisa.itemex.cChildren=pItems[i]->pChilds==0?0:1;
+			tisa.itemex.lParam=LPARAM(pItems[i]);
+			tisa.itemex.state=TVIS_EXPANDED|INDEXTOSTATEIMAGEMASK(pItems[i]->GetStateImage(&m_Images));
+			tisa.hInsertAfter=m_pTree->InsertItem(&tisa);
+			delete[] tisa.itemex.pszText;
+		}
+		else
+		{
+			tisw.itemex.pszText=pItems[i]->pString;
+			tisw.itemex.cChildren=pItems[i]->pChilds==0?0:1;
+			tisw.itemex.lParam=LPARAM(pItems[i]);
+			tisw.itemex.state=TVIS_EXPANDED|INDEXTOSTATEIMAGEMASK(pItems[i]->GetStateImage(&m_Images));
+			tisw.hInsertAfter=m_pTree->InsertItem(&tisw);
+		}
+
+
+		if (pItems[i]->pChilds!=NULL)
+			InsertItemsToTree(!IsFullUnicodeSupport()?tisa.hInsertAfter:tisw.hInsertAfter,pItems[i]->pChilds,pItems[i]);
+
+		// Type specified actions
+		switch (pItems[i]->nType)
+		{
+		case Item::RadioBox:
+			if (pItems[i]->bChecked)
+				hSelectedRadioItem=!IsFullUnicodeSupport()?tisa.hInsertAfter:tisw.hInsertAfter;
+			// Continuing
+		case Item::CheckBox:
+			EnableChilds(!IsFullUnicodeSupport()?tisa.hInsertAfter:tisw.hInsertAfter,pItems[i]->bChecked);
+			break;
+		case Item::Edit:
+            pItems[i]->hControl=CreateWindow("EDIT","",
+				ES_AUTOHSCROLL|WS_TABSTOP|WS_CHILDWINDOW|WS_BORDER,
+				10,10,100,13,*this,(HMENU)IDC_EDITCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+			::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
+			
+			// Initializing
+			if (pItems[i]->pProc!=NULL)
+			{
+				bp.crReason=BASICPARAMS::Initialize;
+				bp.hControl=pItems[i]->hControl;
+				pItems[i]->pProc(&bp);
+			}
+			if (pItems[i]->pData!=NULL)
+				::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(pItems[i]->pData));
+			break;
+		case Item::Numeric:
+			{
+				pItems[i]->hControl=CreateWindow("EDIT","",
+					ES_AUTOHSCROLL|WS_TABSTOP|WS_CHILDWINDOW|WS_BORDER|ES_NUMBER,
+					10,10,50,20,*this,(HMENU)IDC_EDITCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
+	
+				// Initializing
+				if (pItems[i]->pProc!=NULL)
+				{
+					bp.crReason=BASICPARAMS::Initialize;
+					bp.hControl=pItems[i]->hControl;
+					pItems[i]->pProc(&bp);
+				}
+				char szText[100];
+				itoa(pItems[i]->lValue,szText,10);
+				::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(szText));
+			}
+			break;
+		case Item::List:
+			pItems[i]->hControl=CreateWindow("COMBOBOX","",
+				CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP|WS_CHILDWINDOW|WS_BORDER,
+				10,10,100,100,*this,(HMENU)IDC_COMBOCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+			::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
+
+			// Initializing
+			if (pItems[i]->pProc!=NULL)
+			{
+				bp.crReason=BASICPARAMS::Initialize;
+				bp.hControl=pItems[i]->hControl;
+				pItems[i]->pProc(&bp);
+			}
+			::SendMessage(pItems[i]->hControl,CB_SETCURSEL,pItems[i]->lValue,NULL);
+		
+
+			break;
+		case Item::Combo:
+			pItems[i]->hControl=CreateWindow("COMBOBOX","",
+				CBS_DROPDOWN|WS_VSCROLL|WS_TABSTOP|WS_CHILDWINDOW|WS_BORDER,
+				10,10,100,100,*this,(HMENU)IDC_COMBOCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+			::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
+
+			// Initializing
+			if (pItems[i]->pProc!=NULL)
+			{
+				bp.crReason=BASICPARAMS::Initialize;
+				bp.hControl=pItems[i]->hControl;
+				pItems[i]->pProc(&bp);
+			}
+			
+			if (pItems[i]->pData!=NULL)
+			{
+				// Checking whether value is found in combo
+				int nFind=::SendMessage(pItems[i]->hControl,CB_FINDSTRINGEXACT,0,LPARAM(pItems[i]->pData));
+				::SendMessage(pItems[i]->hControl,CB_SETCURSEL,nFind,0);
+				if (nFind==CB_ERR)
+					::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(pItems[i]->pData));
+			}
+			break;
+		case Item::Font:
+			pItems[i]->hControl=CreateWindow("BUTTON",m_ChangeText,BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW,
+				10,10,100,13,*this,(HMENU)IDC_FONTBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+			::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
+
+			// Initializing
+			if (pItems[i]->pProc!=NULL)
+			{
+				bp.crReason=BASICPARAMS::Initialize;
+				bp.hControl=pItems[i]->hControl;
+				pItems[i]->pProc(&bp);
+			}
+			break;
+		case Item::Color:
+			pItems[i]->hControl=CreateWindow("BUTTON",m_ChangeText,BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW,
+				10,10,100,13,*this,(HMENU)IDC_COLORBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+			::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
+
+			// Initializing
+			if (pItems[i]->pProc!=NULL)
+			{
+				bp.crReason=BASICPARAMS::Initialize;
+				bp.hControl=pItems[i]->hControl;
+				pItems[i]->pProc(&bp);
+			}
+			break;
+			
+		}
+		
+		// Setting text
+		LPWSTR pCurText=pItems[i]->GetText();
+		if (pCurText!=pItems[i]->pString)
+		{
+			if (!IsFullUnicodeSupport())
+			{
+				DWORD iStrLen;
+				dstrlen(pCurText,iStrLen);
+				tisa.itemex.pszText=new char[iStrLen+2];
+				MemCopyWtoA(tisa.itemex.pszText,pCurText,iStrLen+1);
+				m_pTree->SetItemText(tisa.hInsertAfter,tisa.itemex.pszText);
+				delete[] tisa.itemex.pszText;
+			}
+			else
+				m_pTree->SetItemText(tisw.hInsertAfter,pCurText);
+			
+		}
+
+
+		
+		if (pItems[i]->hControl!=NULL)
+		{
+			CRect rc;
+			::GetWindowRect(pItems[i]->hControl,&rc);
+			if (rc.Height()-2>nItemHeight)
+				nItemHeight=rc.Height()-2;
+		}
+	}
+
+	// Ensuring that one radio is at least selected
+	if (hSelectedRadioItem==NULL)
+	{
+		HTREEITEM hItem;
+		if (hParent==NULL)
+			hItem=m_pTree->GetNextItem(NULL,TVGN_ROOT);
+		else
+			hItem=m_pTree->GetNextItem(hParent,TVGN_CHILD);
+
+		while (hItem!=NULL)
+		{
+			Item* pItem=(Item*)m_pTree->GetItemData(hItem);
+			if (pItem!=NULL)
+			{
+				if (pItem->nType==Item::RadioBox)
+				{
+					hSelectedRadioItem=hItem;
+					SetCheckState(hItem,pItem,Checked);					
+					break;
+				}
+			}            			
+			hItem=m_pTree->GetNextItem(hItem,TVGN_NEXT);
+		}
+	}
+	else
+		UncheckOtherRadioButtons(hSelectedRadioItem,hParent);
+
+	if (nItemHeight>m_pTree->GetItemHeight())
+		m_pTree->SetItemHeight(nItemHeight);
+	return TRUE;
+}
+
+BOOL COptionsPropertyPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
+{
+	CPropertyPage::OnCommand(wID,wNotifyCode,hControl);
+
+	switch (wID)
+	{
+	case IDC_EDITCONTROLFORSELECTEDITEM:
+		switch (wNotifyCode)
+		{
+		case EN_CHANGE:
+			{
+				HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
+				if (hItem==NULL)
+					break;
+				Item* pItem=(Item*)m_pTree->GetItemData(hItem);
+				if (pItem==NULL)
+					break;
+				if (pItem->hControl!=hControl)
+					break;
+
+				if (pItem->nType==Item::Numeric)
+					SetNumericValue(pItem);
+				else if (pItem->nType==Item::Edit)
+					SetTextValue(pItem);
+				break;
+			}
+		case EN_SETFOCUS:
+			::SendMessage(hControl,EM_SETSEL,0,MAKELPARAM(0,-1));
+			break;
+		}
+		break;
+	case IDC_SPINCONTROLFORSELECTEDITEM:
+		break;
+	case IDC_COMBOCONTROLFORSELECTEDITEM:
+		switch (wNotifyCode)
+		{
+		case CBN_SELCHANGE:
+			{
+				HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
+				if (hItem==NULL)
+					break;
+				Item* pItem=(Item*)m_pTree->GetItemData(hItem);
+				if (pItem==NULL)
+					break;
+				if (pItem->hControl!=hControl)
+					break;
+				if (pItem->nType==Item::Combo)
+					SetTextValue(pItem);
+				else if (pItem->nType==Item::List)
+					SetListValue(pItem);
+				break;
+			}
+		case CBN_EDITCHANGE:
+			{
+				HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
+				if (hItem==NULL)
+					break;
+				Item* pItem=(Item*)m_pTree->GetItemData(hItem);
+				if (pItem==NULL)
+					break;
+				if (pItem->hControl!=hControl)
+					break;
+
+				if (pItem->nType==Item::Combo)
+					SetTextValue(pItem);
+				break;
+			}
+		case CBN_SETFOCUS:
+			::SendMessage(hControl,CB_SETEDITSEL,0,MAKELPARAM(0,-1));
+			break;
+		default:
+			CAppData::stdfunc();
+			break;
+		}
+		break;
+	case IDC_COLORBUTTONFORSELECTEDITEM:
+		{
+			HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
+			if (hItem==NULL)
+				break;
+			Item* pItem=(Item*)m_pTree->GetItemData(hItem);
+			if (pItem==NULL)
+				break;
+			if (pItem->hControl!=hControl)
+				break;
+
+			if (pItem->nType==Item::Color)
+			{
+				CColorDialog cd(pItem->cColor);
+				cd.DoModal(*this);
+	
+				SetColorValue(pItem,cd.GetColor());
+
+				m_pTree->RedrawWindow();
+				break;
+			}
+			break;
+		}
+	case IDC_FONTBUTTONFORSELECTEDITEM:
+		{
+			HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
+			if (hItem==NULL)
+				break;
+			Item* pItem=(Item*)m_pTree->GetItemData(hItem);
+			if (pItem==NULL)
+				break;
+			if (pItem->hControl!=hControl)
+				break;
+
+			if (pItem->nType==Item::Font)
+			{
+				CFontDialog fd(pItem->pLogFont,CF_SCREENFONTS);
+                
+				fd.DoModal(*this);
+	
+				SetFontValue(pItem,&fd.m_lf);
+
+				WCHAR* pText=pItem->GetText(TRUE);
+				m_pTree->SetItemText(hItem,pText);
+				pItem->FreeText(pText);
+
+				break;
+			}
+			break;
+		}
+	}
+	return FALSE;
+}
+
+BOOL COptionsPropertyPage::OnApply()
+{
+	CPropertyPage::OnApply();
+	if (m_pItems!=NULL)
+		CallApply(m_pItems);
+	return TRUE;
+}
+
+void COptionsPropertyPage::CallApply(Item** pItems)
+{
+	COMBOAPPLYPARAMS bp;
+	bp.pPage=this;
+	bp.crReason=BASICPARAMS::Apply;
+
+	for (int i=0;pItems[i]!=NULL;i++)
+	{
+		if (pItems[i]->bEnabled)
+		{
+			if (pItems[i]->pProc!=NULL)
+			{
+				pItems[i]->SetValuesForBasicParams(&bp);
+				if (pItems[i]->nType==Item::Combo)
+					bp.nCurSel=::SendMessage(pItems[i]->hControl,CB_GETCURSEL,0,0);
+				pItems[i]->pProc(&bp);
+			}
+			if (pItems[i]->pChilds!=NULL)
+				CallApply(pItems[i]->pChilds);
+		}
+	}
+}
+
+void COptionsPropertyPage::OnDestroy()
+{
+	CPropertyPage::OnDestroy();
+
+	if (m_pTree!=NULL)
+	{
+		delete m_pTree;
+		m_pTree=NULL;
+	}
+
+	if (m_pItems!=NULL)
+	{
+		for (int i=0;m_pItems[i]!=NULL;i++)
+			delete m_pItems[i];
+		delete[] m_pItems;
+	}
+}
+	
+void COptionsPropertyPage::OnActivate(WORD fActive,BOOL fMinimized,HWND hwnd)
+{
+	CPropertyPage::OnActivate(fActive,fMinimized,hwnd);
+
+	if (fActive!=WA_INACTIVE)
+		PostMessage(WM_REDRAWSELITEMCONTROL);
+}
+
+/*void COptionsPropertyPage::OnTimer(DWORD wTimerID)
+{
+	switch (wTimerID)
+	{
+	case 0:
+		KillTimer(0);
+		PostMessage(WM_REDRAWSELITEMCONTROL);
+		break;
+	}
+	CPropertyPage::OnTimer(wTimerID);
+}*/
+
+int COptionsPropertyPage::Item::IconFromColor(CImageList* pImageList,int nReplace) const
+{
+	int cx=16,cy=16;
+	pImageList->GetIconSize(&cx,&cy);
+
+	HDC hScreenDC=::GetDC(NULL);
+	HDC memDC=::CreateCompatibleDC(hScreenDC);
+    HBITMAP memBM=CreateCompatibleBitmap(hScreenDC,cx,cy);
+    HBITMAP memBM2=CreateCompatibleBitmap(hScreenDC,cx,cy);
+    
+	// Creating first image
+	SelectObject(memDC,memBM);
+    HBRUSH hBrush=CreateSolidBrush(cColor);
+	FillRect(memDC,&CRect(2,0,cx-2,cy-3),hBrush);
+	DeleteObject(hBrush);
+	
+	// Crating second image
+	SelectObject(memDC,memBM2);
+    hBrush=CreateSolidBrush(RGB(255,255,255));
+	FillRect(memDC,&CRect(0,0,cx,cy),hBrush);
+	DeleteObject(hBrush);
+	hBrush=CreateSolidBrush(RGB(0,0,0));
+	FillRect(memDC,&CRect(2,0,cx-2,cy-3),hBrush);
+	DeleteObject(hBrush);
+	
+	DeleteDC(memDC);
+	
+	
+	int nImage=-1;
+	
+	if (nReplace==-1)
+		nImage=pImageList->Add(memBM,memBM2);
+	else
+		nImage=pImageList->Replace(nReplace,memBM,memBM2)?nReplace:-1;
+    
+	DeleteObject(memBM);
+	DeleteObject(memBM2);
+	::ReleaseDC(NULL,hScreenDC);
+	
+	return nImage;
+}
+	
+BOOL COptionsPropertyPage::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
+{
+	switch(msg)
+	{
+	case WM_REDRAWSELITEMCONTROL:
+		{
+			HTREEITEM hActiveItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
+			if (hActiveItem==NULL)
+				return TRUE;
+
+			Item* pItem=(Item*)m_pTree->GetItemData(hActiveItem);
+			if (pItem==NULL)
+				return TRUE;
+
+			if (pItem->hControl!=NULL)
+			{
+				// Checking that should position change
+				RECT rcItem,rcOrig,rcTree,rcOther;
+				m_pTree->GetClientRect(&rcTree);
+				m_pTree->GetItemRect(hActiveItem,&rcItem,TRUE);
+				BOOL bNotVisible=rcItem.top<0 || rcItem.bottom>rcTree.bottom;
+				m_pTree->ClientToScreen(&rcItem);
+				
+				::GetWindowRect(pItem->hControl,&rcOrig);
+				if (pItem->hControl2!=NULL)
+				{
+					::GetWindowRect(pItem->hControl2,&rcOther);
+					rcOther.left-=rcOrig.left;
+					rcOther.top-=rcOrig.top;
+				}
+
+
+				if (rcOrig.left!=rcItem.right+1 || rcOrig.top!=rcItem.top-1)
+				{
+					// Moving control to correct place
+					ScreenToClient(&rcItem);
+					::SetWindowPos(pItem->hControl,HWND_TOP,rcItem.right+1,rcItem.top-1,0,0,
+						(bNotVisible?SWP_HIDEWINDOW:SWP_SHOWWINDOW)|SWP_NOSIZE|SWP_NOACTIVATE);
+					
+
+					if (pItem->hControl2!=NULL)
+					{
+						::SetWindowPos(pItem->hControl2,HWND_TOP,rcItem.right+1+rcOther.left,rcItem.top-1+rcOther.top,0,0,
+							(bNotVisible?SWP_HIDEWINDOW:SWP_SHOWWINDOW)|SWP_NOSIZE|SWP_NOACTIVATE);
+						::InvalidateRect(pItem->hControl2,NULL,FALSE);
+					}
+
+				}
+
+				::InvalidateRect(pItem->hControl,NULL,FALSE);
+				if (pItem->hControl2!=NULL)
+					::InvalidateRect(pItem->hControl2,NULL,FALSE);
+			}
+			break;
+		}
+	case WM_FOCUSSELITEMCONTROL:
+		{
+			HTREEITEM hActiveItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
+			if (hActiveItem==NULL)
+				return TRUE;
+
+			Item* pItem=(Item*)m_pTree->GetItemData(hActiveItem);
+			if (pItem==NULL)
+				return TRUE;
+			
+			if (pItem->hControl!=NULL)
+			{
+				::InvalidateRect(pItem->hControl,NULL,FALSE);
+				::SetFocus(pItem->hControl);
+			}
+
+			break;
+		}
+	}
+	return CPropertyPage::WindowProc(msg,wParam,lParam);
+}
+
+BOOL COptionsPropertyPage::OnNotify(int idCtrl,LPNMHDR pnmh)
+{
+	if (idCtrl==m_nTreeID)
+	{
+		CPropertyPage::OnNotify(idCtrl,pnmh);
+		BOOL bRet=TreeNotifyHandler((NMTVDISPINFO*)pnmh,(NMTREEVIEW*)pnmh);
+		if (bRet)
+			SetWindowLong(dwlMsgResult,bRet);
+		return bRet;
+	}			
+	return CPropertyPage::OnNotify(idCtrl,pnmh);
+}
+
+BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi,NMTREEVIEW *pNm)
+{
+	switch (pNm->hdr.code)
+	{
+	case TVN_KEYDOWN:
+		if (((NMTVKEYDOWN*)pNm)->wVKey==VK_SPACE)
+		{
+			HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
+			if (hItem==NULL)
+				break;
+			Item* pItem=(Item*)m_pTree->GetItemData(hItem);
+			if (pItem==NULL)
+				break;
+			if (pItem->bEnabled && (pItem->nType==Item::RadioBox || pItem->nType==Item::CheckBox))
+				SetCheckState(hItem,pItem,Toggle);
+			
+		}
+		break;
+	case NM_CLICK:
+	case NM_DBLCLK:
+		{
+			TVHITTESTINFO ht;
+			GetCursorPos(&ht.pt);
+			m_pTree->ScreenToClient(&ht.pt);
+			HTREEITEM hItem=m_pTree->HitTest(&ht);
+			if (hItem==NULL)
+				break;
+			Item* pItem=(Item*)m_pTree->GetItemData(hItem);
+			if (pItem==NULL)
+				break;
+			if (pItem->nType==Item::RadioBox || pItem->nType==Item::CheckBox)
+			{
+				if (pItem->bEnabled && (ht.flags&TVHT_ONITEMSTATEICON || pNm->hdr.code==NM_DBLCLK))
+					SetCheckState(hItem,pItem,Toggle);
+			}
+			break;
+		}
+	case TVN_SELCHANGING:
+		// Checking if selection cannot be vhanged
+		if (pNm->itemNew.lParam!=NULL)
+		{
+			if (!((Item*)pNm->itemNew.lParam)->bEnabled)
+				return TRUE;
+		}
+
+		// Hiding control for previous item
+		if (pNm->itemOld.lParam!=NULL)
+		{
+			Item* pItem=(Item*)pNm->itemOld.lParam;
+			if (pItem->hControl!=NULL)
+			{
+				// Hiding window and ensuring that that part of tree is redrawn
+				RECT rc;
+				::GetWindowRect(pItem->hControl,&rc);
+				::ShowWindow(pItem->hControl,SW_HIDE);
+				m_pTree->ScreenToClient(&rc);
+				::InvalidateRect(*m_pTree,&rc,FALSE);
+				
+				// Setting text
+				WCHAR* pText=pItem->GetText(FALSE);
+				if (!IsFullUnicodeSupport())
+				{
+					DWORD iStrLen;
+					dstrlen(pText,iStrLen);
+					char* paText=new char [iStrLen+2];
+                    MemCopyWtoA(paText,pText,iStrLen+1);
+					m_pTree->SetItemText(pNm->itemOld.hItem,paText);
+					delete[] paText;
+				
+				}
+				else
+					m_pTree->SetItemText(pNm->itemOld.hItem,pText);
+				pItem->FreeText(pText);
+				
+				// Deleting another control
+				if (pItem->hControl2!=NULL)
+				{
+					::DestroyWindow(pItem->hControl2);
+					pItem->hControl2=NULL;
+				}
+			}
+		}
+		// Showing control for previous item
+		if (pNm->itemNew.lParam!=NULL)
+		{
+			Item* pItem=(Item*)pNm->itemNew.lParam;
+			if (pItem->hControl!=NULL)
+			{
+				// Changing text
+				// Setting text
+				WCHAR* pText=pItem->GetText(TRUE);
+				if (!IsFullUnicodeSupport())
+				{
+					DWORD iStrLen;
+					dstrlen(pText,iStrLen);
+					char* paText=new char [iStrLen+2];
+                    MemCopyWtoA(paText,pText,iStrLen+1);
+					m_pTree->SetItemText(pNm->itemNew.hItem,paText);
+					delete[] paText;
+				
+				}
+				else
+					m_pTree->SetItemText(pNm->itemNew.hItem,pText);
+				
+				
+				// Show control
+				::ShowWindow(((Item*)pNm->itemNew.lParam)->hControl,SW_SHOW);
+                
+				// Moving it
+				RECT rc;
+				m_pTree->GetItemRect(pNm->itemNew.hItem,&rc,TRUE);
+				m_pTree->ClientToScreen(&rc);
+				ScreenToClient(&rc);
+				
+				int nWidth=60; // 60 is for numeric
+				if (pItem->nType==Item::Font || pItem->nType==Item::Color) 
+				{
+					CDC dc(this);
+					HGDIOBJ hOldFont=dc.SelectObject((HFONT)SendMessage(WM_GETFONT));
+					CSize sz=dc.GetTextExtent(m_ChangeText);
+					nWidth=sz.cx+10;
+					dc.SelectObject(hOldFont);
+				}
+				else if (pItem->nType!=Item::Numeric)
+				{
+					RECT rcTree;
+					m_pTree->GetClientRect(&rcTree);
+					nWidth=rcTree.right-rc.right;
+				}
+				::SetWindowPos(pItem->hControl,HWND_TOP,0,0,nWidth,20,SWP_SHOWWINDOW|SWP_NOMOVE);
+
+
+				
+				if (pItem->nType==Item::Numeric)
+				{
+					// Creating Up/Down control
+					pItem->hControl2=CreateWindow("msctls_updown32","",
+						UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_ARROWKEYS|WS_TABSTOP|WS_CHILDWINDOW|WS_VISIBLE,
+						rc.right+20,rc.top-1,10,10,*this,(HMENU)IDC_SPINCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+					::SendMessage(pItem->hControl2,UDM_SETBUDDY,WPARAM(pItem->hControl),NULL);
+					
+					if (pItem->pProc!=NULL)
+					{
+						SPINPOXPARAMS spb;
+						spb.iLow=0;
+						spb.iHigh=MAXLONG;
+						pItem->SetValuesForBasicParams(&spb);
+						spb.crReason=SPINPOXPARAMS::SetSpinRange;
+						spb.pPage=this;
+						pItem->pProc(&spb);
+						::SendMessage(pItem->hControl2,UDM_SETRANGE32,spb.iLow,spb.iHigh);
+					}
+					else
+						::SendMessage(pItem->hControl2,UDM_SETRANGE32,0,MAXLONG);
+
+					::SetWindowPos(pItem->hControl2,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
+				}
+
+				PostMessage(WM_FOCUSSELITEMCONTROL);
+			}
+		}
+		break;
+	case TVN_SELCHANGED:
+		/*if (pNm->itemNew.lParam!=NULL)
+		{
+			if (((Item*)pNm->itemNew.lParam)->hControl!=NULL)
+				::SetFocus(((Item*)pNm->itemNew.lParam)->hControl);
+		}*/
+		break;
+	case TVN_ITEMEXPANDING:
+		if (pNm->action==TVE_COLLAPSE || pNm->action==TVE_TOGGLE)
+			return TRUE;
+		return FALSE;
+	case NM_CUSTOMDRAW:
+		{
+			NMTVCUSTOMDRAW* pCustomDraw=(NMTVCUSTOMDRAW*)pNm;
+			if (pCustomDraw->nmcd.dwDrawStage==CDDS_PREPAINT)
+				return CDRF_NOTIFYITEMDRAW|CDRF_NOTIFYPOSTPAINT;
+			else if (pCustomDraw->nmcd.dwDrawStage==CDDS_POSTPAINT)
+			{
+				PostMessage(WM_REDRAWSELITEMCONTROL);
+				return CDRF_NOTIFYITEMDRAW;
+			}
+			else if (pCustomDraw->nmcd.dwDrawStage&CDDS_ITEMPREPAINT)
+			{
+				Item* pItem=(Item*)pCustomDraw->nmcd.lItemlParam;
+				if (!pItem->bEnabled)
+					pCustomDraw->clrText=GetSysColor(COLOR_GRAYTEXT);
+				return CDRF_DODEFAULT;
+			}
+			break;
+		}
+	}
+	return FALSE;
+}
+
+
+BOOL COptionsPropertyPage::SetCheckState(HTREEITEM hItem,COptionsPropertyPage::Item* pItem,
+										 COptionsPropertyPage::NewState nNewState)
+{
+	if (nNewState==Toggle && pItem->nType==Item::RadioBox)
+		nNewState=Checked;
+
+	if (pItem->pProc!=NULL)
+	{
+		CHANGINGVALPARAMS cp;
+		cp.crReason=BASICPARAMS::ChangingValue;
+		cp.pPage=this;
+		pItem->SetValuesForBasicParams(&cp);
+		cp.nNewState=nNewState;
+		if (!pItem->pProc(&cp))
+			return FALSE;
+	}
+
+	if (pItem->nType==Item::CheckBox || pItem->nType==Item::RadioBox)
+	{
+		if (nNewState==Toggle)
+		    pItem->bChecked=!pItem->bChecked;
+		else if (nNewState==Checked)
+		{
+			if (pItem->bChecked)
+				return FALSE;
+			pItem->bChecked=TRUE;
+		}
+		else
+		{
+			if (!pItem->bChecked)
+				return FALSE;
+			pItem->bChecked=FALSE;
+		}
+		m_pTree->SetItemState(hItem,INDEXTOSTATEIMAGEMASK(pItem->GetStateImage(&m_Images)),TVIS_STATEIMAGEMASK);
+
+		if (pItem->nType==Item::RadioBox && pItem->bChecked)
+			UncheckOtherRadioButtons(hItem,m_pTree->GetParentItem(hItem));
+		
+		EnableChilds(hItem,pItem->bChecked);
+		
+		
+		if (pItem->pProc!=NULL)
+		{
+			BASICPARAMS bp;
+			bp.crReason=BASICPARAMS::Set;
+			bp.pPage=this;
+			pItem->SetValuesForBasicParams(&bp);
+			pItem->pProc(&bp);
+		}
+		return TRUE;
+	}
+	return FALSE;
+}
+
+BOOL COptionsPropertyPage::SetNumericValue(Item* pItem)
+{
+	int iTextLen=::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,0,0)+1;
+	char* szText=new char[iTextLen];
+	::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(szText));
+
+	CHANGINGVALPARAMS cp;
+	cp.lNewValue=atol(szText);
+	delete[] szText;
+
+	// Asking wheter value can be changed
+	if (pItem->pProc!=NULL)
+	{
+		cp.crReason=BASICPARAMS::ChangingValue;
+		pItem->SetValuesForBasicParams(&cp);
+		cp.pPage=this;
+		if (!pItem->pProc(&cp))
+			return FALSE;
+	}
+	pItem->lValue=cp.lNewValue;
+	if (pItem->pProc!=NULL)
+	{
+		cp.crReason=BASICPARAMS::Set;
+		cp.lValue=pItem->lValue;
+		pItem->pProc(&cp);
+	}
+	return TRUE;
+}
+
+BOOL COptionsPropertyPage::SetTextValue(Item* pItem)
+{
+	CHANGINGVALPARAMS cp;
+	int iTextLen,iCurSel;
+	switch (pItem->nType)
+	{
+	case Item::Combo:
+	case Item::List:
+		iCurSel=::SendMessage(pItem->hControl,CB_GETCURSEL,0,0);
+		if (iCurSel!=CB_ERR)
+		{
+			iTextLen=::SendMessage(pItem->hControl,CB_GETLBTEXTLEN,iCurSel,0)+2;			
+			cp.pNewData=new char[iTextLen];
+			::SendMessage(pItem->hControl,CB_GETLBTEXT,iCurSel,LPARAM(cp.pNewData));
+		}
+		else
+		{
+			iTextLen=::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,iCurSel,0)+2;			
+			cp.pNewData=new char[iTextLen];
+			::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(cp.pNewData));
+		}
+
+		break;
+	default:
+		iTextLen=::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,0,0)+1;
+		cp.pNewData=new char[iTextLen];
+		::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(cp.pNewData));
+		break;
+	}
+	// Asking wheter value can be changed
+	if (pItem->pProc!=NULL)
+	{
+		cp.crReason=BASICPARAMS::ChangingValue;
+		pItem->SetValuesForBasicParams(&cp);
+		cp.pPage=this;
+		if (!pItem->pProc(&cp))
+		{
+			delete[] cp.pNewData;
+			return FALSE;
+		}
+	}
+	if (pItem->pData!=NULL)
+		delete[] pItem->pData;
+	pItem->pData=cp.pNewData;
+	if (pItem->pProc!=NULL)
+	{
+		cp.crReason=BASICPARAMS::Set;
+		cp.pData=cp.pData;
+		pItem->pProc(&cp);
+	}
+	return TRUE;
+}
+
+BOOL COptionsPropertyPage::SetListValue(Item* pItem)
+{
+	CHANGINGVALPARAMS cp;
+	cp.lNewValue=::SendMessage(pItem->hControl,CB_GETCURSEL,0,0);
+	
+	// Asking wheter value can be changed
+	if (pItem->pProc!=NULL)
+	{
+		cp.crReason=BASICPARAMS::ChangingValue;
+		pItem->SetValuesForBasicParams(&cp);
+		cp.pPage=this;
+		if (!pItem->pProc(&cp))
+			return FALSE;
+	}
+	pItem->lValue=cp.lNewValue;
+	if (pItem->pProc!=NULL)
+	{
+		cp.crReason=BASICPARAMS::Set;
+		cp.lValue=pItem->lValue;
+		pItem->pProc(&cp);
+	}
+	return TRUE;
+}
+
+BOOL COptionsPropertyPage::SetColorValue(Item* pItem,COLORREF cNewColor)
+{
+	CHANGINGVALPARAMS cp;
+	cp.cNewColor=cNewColor;
+	
+	// Asking wheter value can be changed
+	if (pItem->pProc!=NULL)
+	{
+		cp.crReason=BASICPARAMS::ChangingValue;
+		pItem->SetValuesForBasicParams(&cp);
+		cp.pPage=this;
+		if (!pItem->pProc(&cp))
+			return FALSE;
+	}
+	pItem->cColor=cp.cNewColor;
+	if (pItem->pProc!=NULL)
+	{
+		cp.crReason=BASICPARAMS::Set;
+		cp.cColor=pItem->cColor;
+		pItem->pProc(&cp);
+	}
+
+	pItem->m_nStateIcon=pItem->IconFromColor(&m_Images,pItem->m_nStateIcon);
+	return TRUE;
+}
+
+BOOL COptionsPropertyPage::SetFontValue(Item* pItem,LOGFONT* pLogFont)
+{
+	CHANGINGVALPARAMS cp;
+	cp.pNewLogFont=pLogFont;
+	
+	// Asking wheter value can be changed
+	if (pItem->pProc!=NULL)
+	{
+		cp.crReason=BASICPARAMS::ChangingValue;
+		pItem->SetValuesForBasicParams(&cp);
+		cp.pPage=this;
+		if (!pItem->pProc(&cp))
+			return FALSE;
+	}
+	if (pItem->pLogFont==NULL)
+		pItem->pLogFont=new LOGFONT;
+    CopyMemory(pItem->pLogFont,cp.pNewLogFont,sizeof(LOGFONT));
+	
+	if (pItem->pProc!=NULL)
+	{
+		cp.crReason=BASICPARAMS::Set;
+		cp.pLogFont=pItem->pLogFont;
+		pItem->pProc(&cp);
+	}
+	return TRUE;
+}
+	
+	
+void COptionsPropertyPage::EnableChilds(HTREEITEM hItem,BOOL bEnable)
+{
+	HTREEITEM hChildItem=m_pTree->GetNextItem(hItem,TVGN_CHILD);
+    while (hChildItem!=NULL)
+	{
+		Item* pItem=(Item*)m_pTree->GetItemData(hChildItem);
+		if (pItem!=NULL)
+			pItem->bEnabled=bEnable;
+		
+		m_pTree->SetItemState(hChildItem,bEnable?0:TVIS_CUT,TVIS_CUT);
+		
+		hChildItem=m_pTree->GetNextItem(hChildItem,TVGN_NEXT);
+	}
+}
+
+void COptionsPropertyPage::UncheckOtherRadioButtons(HTREEITEM hItem,HTREEITEM hParent)
+{
+	if (hParent==NULL)
+		return;
+	
+	HTREEITEM hChilds;
+	if (hParent==NULL)
+		hChilds=m_pTree->GetNextItem(NULL,TVGN_ROOT);
+	else
+		hChilds=m_pTree->GetNextItem(hParent,TVGN_CHILD);
+
+
+
+	while (hChilds!=NULL)
+	{
+		Item* pItem=(Item*)m_pTree->GetItemData(hChilds);
+		if (pItem!=NULL)
+		{
+			if (pItem->nType==Item::RadioBox && hChilds!=hItem)
+				SetCheckState(hChilds,(Item*)m_pTree->GetItemData(hChilds),Unchecked);
+		}
+		hChilds=m_pTree->GetNextItem(hChilds,TVGN_NEXT);
+	}
+}
+
+WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
+{
+	switch (nType)
+	{
+	case Numeric:
+		if (hControl!=NULL && !bActive)
+		{
+			WCHAR szText[100];
+			_itow(lValue,szText,10);
+			int iLength=istrlenw(szText)+1;
+			int iLabelLen=istrlenw(pString);
+			
+			WCHAR* pText=new WCHAR[iLabelLen+iLength+2];
+			sMemCopyW(pText,pString,iLabelLen);
+			pText[iLabelLen++]=' ';
+			sMemCopyW(pText+iLabelLen,szText,iLength);
+			return pText;
+		}
+		return pString;
+	case List:
+    case Combo:
+		if (hControl!=NULL && !bActive)
+		{
+			int nCurSel=::SendMessage(hControl,CB_GETCURSEL,0,0);
+			int iLength=(nCurSel!=-1)?
+				::SendMessage(hControl,CB_GETLBTEXTLEN,nCurSel,0)+1:
+				::SendMessage(hControl,WM_GETTEXTLENGTH,0,0)+1;
+			int iLabelLen=istrlenw(pString);
+			
+			WCHAR* pText=new WCHAR[iLabelLen+iLength+2];
+			sMemCopyW(pText,pString,iLabelLen);
+			pText[iLabelLen++]=' ';
+				
+			if (nCurSel!=-1)
+			{
+				char* pTemp=new char[iLength+2];
+				::SendMessage(hControl,CB_GETLBTEXT,nCurSel,LPARAM(pTemp));
+				MemCopyAtoW(pText+iLabelLen,pTemp,iLength+1);
+				delete[] pTemp;
+			}
+			else
+			{
+				if (!IsFullUnicodeSupport())
+				{
+					// 9x
+					char* pTemp=new char[iLength+2];
+					::GetWindowText(hControl,pTemp,iLength);
+					MemCopyAtoW(pText+iLabelLen,pTemp,iLength+1);
+					delete[] pTemp;
+				}
+				else
+					::GetWindowTextW(hControl,pText+iLabelLen,iLength);
+			}
+
+			return pText;
+		}
+		return pString;
+	case Edit:
+		if (hControl!=NULL && !bActive)
+		{
+			int iLength=::SendMessage(hControl,WM_GETTEXTLENGTH,0,0)+1;
+			int iLabelLen=istrlenw(pString);
+			
+			WCHAR* pText=new WCHAR[iLabelLen+iLength+1];
+			sMemCopyW(pText,pString,iLabelLen);
+			pText[iLabelLen++]=' ';
+				
+			if (!IsFullUnicodeSupport())
+			{
+				// 9x
+				char* pTemp=new char[iLength+2];
+				::GetWindowText(hControl,pTemp,iLength);
+				MemCopyAtoW(pText+iLabelLen,pTemp,iLength+1);
+				delete[] pTemp;
+			}
+			else
+				::GetWindowTextW(hControl,pText+iLabelLen,iLength);
+				
+			return pText;
+		}
+		return pString;
+	case Font:
+		if (pLogFont!=NULL)
+		{
+			CStringW str(pString);
+			str << ' ' << pLogFont->lfFaceName;
+
+			if (pLogFont->lfHeight<0)
+			{
+				// Getting device caps
+				HDC hScreenDC=::GetDC(NULL);
+				int pt=MulDiv(-pLogFont->lfHeight, 72,::GetDeviceCaps(hScreenDC,LOGPIXELSY));
+				::ReleaseDC(NULL,hScreenDC);
+				
+				str << ' ' << pt;
+			}
+
+			return str.GiveBuffer();
+		}
+		return pString;
+	case RadioBox:
+	case CheckBox:
+	case Root:
+	case Color:
+	default:
+		return pString;
+	}
+}
+
+// lParam is pointer to DWORD value which is will be set
+// wParam is used mask
+BOOL CALLBACK COptionsPropertyPage::DefaultCheckBoxProc(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch (pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		break;
+	case BASICPARAMS::Get:
+		pParams->bChecked=(*((DWORD*)pParams->lParam))&pParams->wParam?TRUE:FALSE;
+		break;
+	case BASICPARAMS::Set:
+		break;
+	case BASICPARAMS::Apply:
+		if (pParams->bChecked)
+			*((DWORD*)pParams->lParam)|=DWORD(pParams->wParam);
+		else
+			*((DWORD*)pParams->lParam)&=~DWORD(pParams->wParam);
+		break;
+	case BASICPARAMS::ChangingValue:
+		break;
+	}
+	return TRUE;
+}
+
+// lParam is pointer to DWORD value which is will be set
+// HIWORD of wParam is mask to be setted, LOWORD is value
+BOOL CALLBACK COptionsPropertyPage::DefaultRadioBoxProc(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch (pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		break;
+	case BASICPARAMS::Get:
+		if (pParams->lParam!=NULL)
+			pParams->bChecked=((*((DWORD*)pParams->lParam))&(HIWORD(pParams->wParam)))==LOWORD(pParams->wParam);
+		else
+			pParams->bChecked=0;
+		break;
+	case BASICPARAMS::Set:
+		/*
+		*((DWORD*)pParams->lParam)&=~HIWORD(pParams->wParam);
+		if (pParams->bChecked)
+			*((DWORD*)pParams->lParam)|=LOWORD(pParams->wParam);
+		*/
+		break;
+	case BASICPARAMS::Apply:
+		if (pParams->bChecked && pParams->lParam!=NULL)
+		{
+			*((DWORD*)pParams->lParam)&=~HIWORD(pParams->wParam);
+			*((DWORD*)pParams->lParam)|=LOWORD(pParams->wParam);
+		}
+		break;		
+	case BASICPARAMS::ChangingValue:
+		break;
+	}
+	return TRUE;
+}
+
+// lParam is pointer to DWORD value which is will be set
+// HIWORD of wParam is mask (shifted 16 bits) to be setted, LOWORD is value (shifted 16 bit)
+BOOL CALLBACK COptionsPropertyPage::DefaultRadioBoxShiftProc(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch (pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		break;
+	case BASICPARAMS::Get:
+		pParams->bChecked=((*((DWORD*)pParams->lParam))&(HIWORD(pParams->wParam)<<16))==LOWORD(pParams->wParam)<<16;
+		break;
+	case BASICPARAMS::Set:
+		/*
+		*((DWORD*)pParams->lParam)&=~HIWORD(pParams->wParam);
+		if (pParams->bChecked)
+			*((DWORD*)pParams->lParam)|=LOWORD(pParams->wParam);
+		*/
+		break;
+	case BASICPARAMS::Apply:
+		if (pParams->bChecked)
+		{
+			*((DWORD*)pParams->lParam)&=~(HIWORD(pParams->wParam)<<16);
+			*((DWORD*)pParams->lParam)|=LOWORD(pParams->wParam)<<16;
+		}
+		break;		
+	case BASICPARAMS::ChangingValue:
+		break;
+	}
+	return TRUE;
+}
+
+// lParam is pointer to DWORD value which is will be set
+// if wParam==0, all values are accepted
+// if wParam==-1, positive values are accepted
+// otherwise HIWORD is maximum, LOWORD is minimum
+BOOL CALLBACK COptionsPropertyPage::DefaultNumericProc(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch (pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		break;
+	case BASICPARAMS::Get:
+		pParams->lValue=*((DWORD*)pParams->lParam);
+		if (pParams->wParam==0) 
+			break; // Accept all values
+		else if (pParams->wParam==DWORD(-1))
+		{
+			// -1: Accept only nonnegative values
+			if (pParams->lValue<0)
+				pParams->lValue=0;
+		}
+		else if (pParams->lValue>int(HIWORD(pParams->wParam)))
+			pParams->lValue=int(HIWORD(pParams->wParam));
+		else if (pParams->lValue<int(LOWORD(pParams->wParam)))
+			pParams->lValue=int(LOWORD(pParams->wParam));
+		break;
+	case BASICPARAMS::Set:
+		/*
+		*((DWORD*)pParams->lParam)&=~HIWORD(pParams->wParam);
+		if (pParams->bChecked)
+			*((DWORD*)pParams->lParam)|=LOWORD(pParams->wParam);
+		*/
+		break;
+	case BASICPARAMS::Apply:
+		*((DWORD*)pParams->lParam)=pParams->lValue;
+		break;		
+	case BASICPARAMS::SetSpinRange:
+		if (pParams->wParam==0)
+		{
+			((SPINPOXPARAMS*)pParams)->iLow=MINLONG;
+			((SPINPOXPARAMS*)pParams)->iHigh=MAXLONG;
+		}
+		else if (pParams->wParam==DWORD(-1))
+		{
+			((SPINPOXPARAMS*)pParams)->iLow=0;
+			((SPINPOXPARAMS*)pParams)->iHigh=MAXLONG;
+		}
+		else
+		{
+			((SPINPOXPARAMS*)pParams)->iLow=LOWORD(pParams->wParam);
+			((SPINPOXPARAMS*)pParams)->iHigh=HIWORD(pParams->wParam);
+		}
+		break;
+	case BASICPARAMS::ChangingValue:
+		if (pParams->wParam==0) // 
+			break;
+		else if (pParams->wParam==DWORD(-1))
+		{
+			if (((CHANGINGVALPARAMS*)pParams)->lNewValue<0)
+				return FALSE;
+		}
+		else if (((CHANGINGVALPARAMS*)pParams)->lNewValue<int(LOWORD(pParams->wParam)) || 
+			((CHANGINGVALPARAMS*)pParams)->lNewValue>int(HIWORD(pParams->wParam)))
+			return FALSE;
+		break;
+	}
+	return TRUE;
+}
+
+// lParam is pointer to string class which will be set
+BOOL CALLBACK COptionsPropertyPage::DefaultEditStrProc(BASICPARAMS* pParams)
+{
+	switch(pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		break;
+	case BASICPARAMS::Get:
+		pParams->pData=alloccopy(*(CString*)pParams->lParam);
+		break;
+	case BASICPARAMS::Set:
+		break;
+	case BASICPARAMS::Apply:
+		if (pParams->pData==NULL)
+			((CString*)pParams->lParam)->Empty();
+		else
+			((CString*)pParams->lParam)->Copy(pParams->pData);
+		break;
+	case BASICPARAMS::ChangingValue:
+		break;
+	}		
+	return TRUE;
+}
+
+// lParam is pointer to LOGFONT strcut
+BOOL CALLBACK COptionsPropertyPage::DefaultFontProc(BASICPARAMS* pParams)
+{
+	switch(pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		break;
+	case BASICPARAMS::Get:
+		if (pParams->pLogFont==NULL)
+			pParams->pLogFont=new LOGFONT;
+		CopyMemory(pParams->pLogFont,pParams->lParam,sizeof(LOGFONT));
+		break;
+	case BASICPARAMS::Set:
+		break;
+	case BASICPARAMS::Apply:
+		CopyMemory(pParams->lParam,pParams->pLogFont,sizeof(LOGFONT));	
+		break;
+	case BASICPARAMS::ChangingValue:
+		break;
+	}		
+	return TRUE;
+}
+
+// lParam is pointer to COLORREF
+BOOL CALLBACK COptionsPropertyPage::DefaultColorProc(BASICPARAMS* pParams)
+{
+	switch(pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		break;
+	case BASICPARAMS::Get:
+		pParams->cColor=*((COLORREF*)pParams->lParam);
+		break;
+	case BASICPARAMS::Set:
+		break;
+	case BASICPARAMS::Apply:
+		*((COLORREF*)pParams->lParam)=pParams->cColor;
+		break;
+	case BASICPARAMS::ChangingValue:
+		break;
+	}		
+	return TRUE;
+}
+
+
+		

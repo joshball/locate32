@@ -72,13 +72,15 @@ public:
 		CBuffer *m_pFirstBuffer,*pCurrentBuffer;
 		BYTE* pPoint;
 		
-		CRootDirectory* m_pNext;
 
 		// Excluded directories
 		CArray<LPSTR> m_aExcludedDirectories; 
 
 		friend CDatabaseUpdater;
 		friend DBArchive;
+	public:
+		CRootDirectory* m_pNext;
+
 	};
 
 	class DBArchive {
@@ -164,6 +166,8 @@ public:
 	const CRootDirectory* GetCurrentRoot() const;
 	LPCSTR GetCurrentRootPath() const;
 	LPSTR GetCurrentRootPathStr() const;
+
+	BOOL EnumDatabases(int iDatabase,LPCSTR& szName,LPCSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot);
 	
 	const LPCSTR GetCurrentDatabaseName() const;
 	const LPCSTR GetCurrentDatabaseFile() const;
@@ -351,6 +355,17 @@ inline BOOL CDatabaseUpdater::IsIncrementUpdate() const
 	return m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::IncrementalUpdate);
 }
 
+inline BOOL CDatabaseUpdater::EnumDatabases(int iDatabase,LPCSTR& szName,LPCSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot)
+{
+	if (iDatabase<0 || iDatabase>=m_aDatabases.GetSize())
+		return FALSE;
+
+	szName=m_aDatabases[iDatabase]->m_szName;
+	szFile=m_aDatabases[iDatabase]->m_szArchive;
+	nArchiveType=m_aDatabases[iDatabase]->m_nArchiveType;
+	pFirstRoot=m_aDatabases[iDatabase]->m_pFirstRoot;
+	return TRUE;
+}
 
 #if defined(WIN32) && !defined(DBUPD_NOFORCELIBS)
 	#pragma comment(lib, "Mpr.lib")

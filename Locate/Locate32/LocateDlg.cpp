@@ -16,9 +16,28 @@ BOOL CLocateDlgThread::InitInstance()
 	m_pMainWnd=m_pLocate=new CLocateDlg;
 	LoadAccelTable(IDR_MAINACCEL);
 	m_pLocate->Create(NULL);
-	m_pLocate->SetMenu(LoadMenu(IDR_MAINMENU));
-	//m_pLocate->SetWindowPos(HWND_TOPMOST,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);
 	
+	// Settings transparency
+	BOOL(WINAPI * pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD)=(BOOL(WINAPI *)(HWND,COLORREF,BYTE,DWORD))GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes");
+	if (pSetLayeredWindowAttributes!=NULL)
+	{
+		CRegKey RegKey;
+		if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+		{
+			DWORD dwTransparency=0;
+			if (RegKey.QueryValue("Transparency",dwTransparency))
+			{
+				if (dwTransparency>0)
+				{
+					m_pLocate->SetWindowLong(CWnd::WindowLongIndex::gwlExStyle,WS_EX_CONTROLPARENT|WS_EX_LAYERED);
+					pSetLayeredWindowAttributes(*m_pLocate,0,BYTE(255-min(dwTransparency,255)),LWA_ALPHA);
+				}
+			}				
+				
+		}
+	}
+
+	m_pLocate->SetMenu(LoadMenu(IDR_MAINMENU));
 	return TRUE;
 }
 
@@ -181,7 +200,7 @@ CLocateDlg::CLocateDlg()
 	m_pLocateAnimBitmaps(NULL),m_pUpdateAnimBitmaps(NULL),
 	m_pFileNotificationsThread(NULL),m_dwMaxFoundFiles(0),
 	m_pImageHandler(NULL),m_iTooltipItem(-1),m_iTooltipSubItem(-1),m_bTooltipActive(FALSE),
-	m_hLastFocus(NULL)
+	m_hLastFocus(NULL),m_WaitEvery30(10),m_WaitEvery60(20)
 {
 }
 
@@ -486,15 +505,10 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		break;
 	case IDM_GLOBALUPDATEDB:
 	case IDM_GLOBALUPDATEDBACCEL:
-		GetLocateAppWnd()->OnUpdate(FALSE);
-		break;
-	case IDM_STOPUPDATING:
-		// Stopping updating quite nicely
-		GetLocateAppWnd()->OnUpdate(TRUE);
-        break;	
 	case IDM_UPDATEDATABASES:
 	case IDM_UPDATEDATABASESACCEL:
-		GetLocateAppWnd()->OnUpdate(FALSE,LPSTR(-1));
+		//CLocateAppWnd handles these
+		GetLocateAppWnd()->SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
 		break;
 	case IDC_PRESETS:
 		OnPresets();
@@ -628,7 +642,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		else if (wID>=IDM_DEFCONTEXTITEM && wID<IDM_DEFCONTEXTITEM+1000)
 			OnMenuCommands(wID);
 		else if (wID>=IDM_DEFUPDATEDBITEM && wID<IDM_DEFUPDATEDBITEM+1000)
-			GetLocateApp()->OnDatabaseMenuItem(wID);
+			GetLocateAppWnd()->SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
 		break;
 	}
 	return CDialog::OnCommand(wID,wNotifyCode,hControl);
@@ -812,6 +826,37 @@ BOOL CLocateDlg::UpdateSettings()
 
 	SetDialogMode(GetFlags()&fgLargeMode);
 
+	BOOL(WINAPI * pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD)=(BOOL(WINAPI *)(HWND,COLORREF,BYTE,DWORD))GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes");
+	if (pSetLayeredWindowAttributes!=NULL)
+	{
+		// Transparency
+		Path.LoadString(IDS_REGPLACE,CommonResource);
+		Path<<"\\General";
+		if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+		{
+			if (!RegKey.QueryValue("Transparency",temp))
+				temp=0;
+
+			if (temp>255)
+				temp=255;
+
+			DWORD dwExtraStyle=GetExStyle();
+			if (temp==0)
+			{
+				// Disabling layer
+				if (dwExtraStyle&WS_EX_LAYERED)
+					SetExStyle(dwExtraStyle&~WS_EX_LAYERED);
+			}
+			else
+			{
+				if (!(dwExtraStyle&WS_EX_LAYERED))
+					SetExStyle(dwExtraStyle|WS_EX_LAYERED);
+				pSetLayeredWindowAttributes(*this,0,BYTE(255-temp),LWA_ALPHA);
+			}
+		}
+	}
+
+	// Background operations
 	if ((GetExtraFlags()&efItemUpdatingMask)==efEnableItemUpdating)
 	{
 		if (m_pFileNotificationsThread!=NULL)
@@ -1452,9 +1497,9 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLoca
 
 	// To prevent drawing error
 	if (pLocater->GetFoundFiles()%60==59)
-		Sleep(20);
+		Sleep(((CLocateDlg*)dwParam)->m_WaitEvery60);
 	else if (pLocater->GetFoundFiles()%30==29)
-		Sleep(10);
+		Sleep(((CLocateDlg*)dwParam)->m_WaitEvery30);
 
 	li.state=0;
 	li.stateMask=0;
@@ -2309,6 +2354,19 @@ void CLocateDlg::LoadRegistry()
 		wp.showCmd=SW_SHOW;
 		SetWindowPlacement(&wp);
 	}
+
+	
+	Path.LoadString(IDS_REGPLACE,CommonResource);
+	Path<<"\\Locate";
+	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		DWORD dwTemp;
+		if (RegKey.QueryValue("WaitEvery30",dwTemp))
+			m_WaitEvery30=WORD(dwTemp);
+		if (RegKey.QueryValue("WaitEvery60",dwTemp))
+			m_WaitEvery60=WORD(dwTemp);
+	}
+	
 }
 
 void CLocateDlg::LoadDialogTexts()

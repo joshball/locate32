@@ -78,13 +78,14 @@ extern LPSTR g_szBuffer;
 #define DRIVE_IMAGE					((CLocateApp*)GetApp())->m_nDriveImage
 
 #define ID_REDRAWITEMS				1
-#define ID_UPDATESTATUS				3
 #define ID_CLICKWAIT				4
 #define ID_LOCATEANIM				5
 #define ID_UPDATEANIM				6
 #define ID_SYNCSCHEDULES			7
 #define ID_CHECKSCHEDULES			8
 
+#define ID_UPDATESTATUS				1
+#define ID_IDLEEXIT					2
 
 #define RESULT_INCLUDEDATE			0x1
 #define RESULT_INCLUDELABELS		0x2
@@ -110,6 +111,7 @@ extern LPSTR g_szBuffer;
 #define WM_UPDATENEEDEDDETAILTS		WM_APP+102 //wParam is item, lParam is pointer to item
 #define WM_REFRESHNOTIFIERHANDLERS	WM_APP+103
 #define WM_GETLOCATEDLG				WM_APP+105
+#define WM_FREEUPDATESTATUSPOINTERS	WM_APP+106
 
 
 // String copyers

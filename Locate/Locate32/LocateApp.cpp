@@ -1201,7 +1201,7 @@ BOOL CLocateApp::StopUpdating(BOOL bForce)
 		//pLocateDlg->ResetFileNotificators();
 		pLocateDlg->PostMessage(WM_REFRESHNOTIFIERHANDLERS);
 	}
-	GetLocateAppWnd()->SetShellNotifyIconAndTip((HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,0),IDS_NOTIFYLOCATE);
+	GetLocateAppWnd()->SetUpdateStatusInformation((HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,0),IDS_NOTIFYLOCATE);
 	
 	// I think pointers are removed elsewhere
 	ASSERT(m_ppUpdaters==NULL);
@@ -1242,6 +1242,489 @@ void CLocateApp::ClearStartData()
 	}
 }
 
+BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater)
+{
+	DbcDebugFormatMessage2("CLocateApp::UpdateProc BEGIN, reason=%d, code=%d",crReason,ueCode);
+	
+	switch (crReason)
+	{
+	case Initializing:
+		return TRUE;
+	case RootChanged:
+	{
+		CLocateDlg* pLocateDlg=GetLocateDlg();
+		if (pLocateDlg!=NULL)
+		{
+			CString str;
+
+			if (pUpdater->GetCurrentRoot()!=NULL)
+			{
+				str.Format(IDS_UPDATINGDATABASE2,
+					pUpdater->GetCurrentDatabaseName(),
+					pUpdater->GetCurrentRoot()->m_Path);
+			}
+			else
+			{
+				str.Format(IDS_UPDATINGDATABASE2,
+					pUpdater->GetCurrentDatabaseName(),
+					(LPCSTR)CString(IDS_UPDATINGWRITINGDATABASE));
+			}
+			
+			pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
+		}
+	
+		
+		if (dwParam!=NULL)
+			((CLocateAppWnd*)dwParam)->SetUpdateStatusInformation(NULL,IDS_NOTIFYUPDATING);
+		return TRUE;
+	}
+	case FinishedUpdating:
+	{
+		CLocateDlg* pLocateDlg=GetLocateDlg();
+		if (pLocateDlg!=NULL)
+		{
+			if (ueCode!=ueStopped) // This is done at the end of CLocateApp::StopUpdating
+			{
+				pLocateDlg->m_NameDlg.InitDriveBox();
+				
+				//pLocateDlg->ResetFileNotificators();
+				pLocateDlg->PostMessage(WM_REFRESHNOTIFIERHANDLERS);
+			}
+		
+			if (ueCode==ueStopped)
+			{
+				CString str;
+				str.Format(IDS_UPDATINGDATABASE2,
+					pUpdater->GetCurrentDatabaseName(),
+					(LPCSTR)CString(IDS_UPDATINGCANCELLED2));
+
+				pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
+				return FALSE;
+			}
+			else if (ueCode!=ueSuccess)
+			{
+				CString str;
+				str.Format(IDS_UPDATINGDATABASE2,
+					pUpdater->GetCurrentDatabaseName(),
+					(LPCSTR)CString(IDS_UPDATINGFAILED));
+
+				pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
+				return FALSE;
+			}
+			CString str;
+			str.Format(IDS_UPDATINGDATABASE2,
+				pUpdater->GetCurrentDatabaseName(),
+				(LPCSTR)CString(IDS_UPDATINGDONE));
+
+			pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
+		}
+
+		return TRUE;
+	}
+	case ClassShouldDelete:
+		{
+			if (!GetLocateApp()->IsUpdating())
+				return TRUE; // One thread mode
+
+						
+			CLocateAppWnd* pAppWnd=(CLocateAppWnd*)dwParam;
+			DWORD dwRunning=0;
+			
+			CDatabaseUpdater*** pppUpdaters=GetLocateApp()->GetUpdatersPointerPtr();
+			
+			if (pppUpdaters==NULL)
+				return FALSE;
+
+			
+			for (int i=0;(*pppUpdaters)[i]!=NULL;i++)
+			{
+				if ((*pppUpdaters)[i]==pUpdater)
+					(*pppUpdaters)[i]=UPDATER_EXITED(ueCode);
+				else if (!IS_UPDATER_EXITED((*pppUpdaters)[i]))
+					dwRunning++;
+			}
+			delete pUpdater;
+			
+			if (dwRunning==0)
+			{
+				// No updaters running anymore...
+				
+				// ...so stopping animations
+				if (pAppWnd!=NULL)
+				{
+					if (pAppWnd->m_pUpdateStatusWnd!=NULL)
+						pAppWnd->m_pUpdateStatusWnd->Update();
+					pAppWnd->StopUpdateStatusNotification();
+				}
+
+				CLocateDlg* pLocateDlg=GetLocateDlg();
+				if (pLocateDlg!=NULL)
+				{
+					pLocateDlg->StopUpdateAnimation();
+					
+					CString str;
+					
+					// ... and constucting notification message:
+					// checking wheter all are stopped, or cancelled 
+					for (i=0;(*pppUpdaters)[i]!=NULL;i++)
+					{
+						if (GET_UPDATER_CODE((*pppUpdaters)[i])!=ueStopped)
+							break;
+					}
+					if ((*pppUpdaters)[i]==NULL)
+					{
+						// All updaters are interrupted by user
+						str.LoadString(IDS_UPDATINGCANCELLED);
+						pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
+						pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),3,SBT_OWNERDRAW);
+
+					}
+					else
+					{
+						// All succeeded or some updaters failed/interrupted
+                        CString str2;
+						str.LoadString(IDS_UPDATINGENDED);
+						int added=0;
+							
+						for (i=0;(*pppUpdaters)[i]!=NULL;i++)
+						{
+							switch (GET_UPDATER_CODE((*pppUpdaters)[i]))
+							{
+							case ueSuccess:
+								break;
+							case ueStopped:
+								if (added>0)
+									str2 << ", ";
+								str2 << CString(IDS_UPDATINGTHREAD);
+								str2 << ' ' << (int)(i+1) << ": ";
+								str2 << CString(IDS_UPDATINGCANCELLED2);
+								added++;
+								break;
+							case ueFolderUnavailable:
+								if (added>0)
+									str2 << ", ";
+								str2 << CString(IDS_UPDATINGTHREAD);
+								str2 << ' ' << (int)(i+1) << ": ";
+								str2 << CString(IDS_UPDATINGUNAVAILABLEROOT);
+								added++;
+								break;
+							default:
+								if (added>0)
+									str2 << ", ";
+								str2 << CString(IDS_UPDATINGTHREAD);
+								str2 << ' ' << (int)(i+1) << ": ";
+								str2 << CString(IDS_UPDATINGFAILED);
+								added++;
+								break;
+							}
+						}
+
+						if (str2.IsEmpty())
+							str.LoadString(IDS_UPDATINGSUCCESS);
+						else
+						{
+							pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),3,SBT_OWNERDRAW);
+							str << ' ' << str2;
+						}
+						pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
+					}
+				}
+		
+				// Freeing memory
+				delete[] *pppUpdaters;
+				*pppUpdaters=NULL;
+
+				GetLocateApp()->ReleaseUpdatersPointer();
+
+				if (GetLocateApp()->m_nStartup&CStartData::startupExitAfterUpdating && pAppWnd!=NULL)
+					pAppWnd->PostMessage(WM_COMMAND,IDM_EXIT,NULL);
+
+			}
+			else 
+			{
+				// Updaters still running, updating shell notify icons
+				GetLocateApp()->ReleaseUpdatersPointer();
+				
+				if (dwParam!=NULL)
+				{
+					// dwParam can be NULL, if updating process is started via 
+					// command line parameters such that dialog is not opened
+				
+					((CLocateAppWnd*)dwParam)->SetUpdateStatusInformation(NULL,IDS_NOTIFYUPDATING);
+				}
+			}
+			return TRUE;
+		}
+	case ErrorOccured:
+		if (((CLocateAppWnd*)dwParam)->m_pUpdateStatusWnd!=NULL)
+			((CLocateAppWnd*)dwParam)->m_pUpdateStatusWnd->FormatErrorForStatusTooltip(ueCode,pUpdater);
+			
+		switch(ueCode)
+		{
+		case ueUnknown:
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			{
+				char* pError;
+
+				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
+					GetLastError(),LANG_USER_DEFAULT,(LPSTR)&pError,0,NULL))
+				{
+					CString str,state;
+					if (pUpdater->GetCurrentRoot()==NULL)
+						state.Format(IDS_ERRORUNKNOWNWRITEDB,pUpdater->GetCurrentDatabaseFile());
+					else
+						state.Format(IDS_ERRORUNKNOWNSCANROOT,pUpdater->GetCurrentRootPath());
+					
+					
+					str.Format(IDS_ERRORUNKNOWNOS,pError);
+					while (str.LastChar()=='\n' || str.LastChar()=='\r')
+						str.DelLastChar();
+					str << state;
+					
+					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
+						str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+					LocalFree(pError);
+
+					
+				}
+				else
+					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
+						CString(IDS_ERRORUNKNOWN),CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+				return FALSE;
+			}
+			break;
+		case ueCreate:
+		case ueOpen:
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			{
+				CString str;
+				str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
+				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+				return FALSE;
+			}
+			break;
+		case ueRead:
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			{
+				CString str;
+				str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
+				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+				return FALSE;
+			}
+			break;
+		case ueWrite:
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			{
+				CString str;
+				str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
+				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+                return FALSE;
+			}
+			break;
+		case ueAlloc:
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			{
+				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
+					CString(IDS_ERRORCANNOTALLOCATE),CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+			}
+			break;
+		case ueInvalidDatabase:
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			{
+				CString str;
+				str.Format(IDS_ERRORINVALIDDB,pUpdater->GetCurrentDatabaseName());
+				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+				return FALSE;
+			}
+			break;
+		case ueFolderUnavailable:
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowNonCriticalErrors)
+			{
+				CString str;
+				str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():"");
+				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+				return FALSE;
+			}
+			break;
+		case ueCannotIncrement:
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowNonCriticalErrors)
+			{
+				CString str;
+				str.Format(IDS_ERRORCANNOTWRITEINCREMENTALLY,pUpdater->GetCurrentDatabaseName());
+				
+				return ::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
+			}
+			return TRUE;
+		}
+		break;
+	}
+	
+	DebugMessage("CLocateApp::UpdateProc END");
+	return TRUE;
+}
+
+BOOL CLocateApp::SetLanguageSpecifigHandles()
+{
+	CRegKey RegKey;
+	CString LangFile;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource),
+		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		RegKey.QueryValue("Language",LangFile);
+		RegKey.CloseKey();
+	}
+	if (LangFile.IsEmpty())
+		LangFile="lan_en.dll";
+
+	CString Path(GetApp()->GetExeName(),GetApp()->GetExeName().FindLast('\\')+1);
+	
+	
+
+	HINSTANCE hLib=LoadLibrary(Path+LangFile);
+	if (hLib==NULL)
+	{
+		hLib=LoadLibrary(Path+"lan_en.dll");
+
+		if (hLib==NULL)
+		{
+			MessageBox(NULL,CString(IDS_ERRORCANNOTLOADLANGUAGEFILE,CommonResource),
+				CString(IDS_ERROR),MB_ICONERROR|MB_OK);
+			return FALSE;
+		}
+
+		MessageBox(NULL,CString(IDS_ERRORCANNOTLOADLANGUAGEFILE2,CommonResource),
+			CString(IDS_ERROR),MB_ICONERROR|MB_OK);
+	}
+
+	SetResourceHandle(hLib,LanguageSpecificResource);
+	return TRUE;
+}
+
+
+BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg)
+{
+	if (IsUpdating())
+		return FALSE;
+
+	CArray<PDATABASE>* paDatabases;
+	if (paDatabasesArg==NULL)
+	{
+		paDatabases=new CArray<PDATABASE>;
+		for (int i=0;i<m_aDatabases.GetSize();i++)
+		{
+			if (m_aDatabases[i]->IsGloballyUpdated())
+				paDatabases->Add(new CDatabase(*m_aDatabases[i]));
+		}
+	}
+	else
+		paDatabases=paDatabasesArg;
+
+	WORD wThreads=CDatabase::CheckIDs(*paDatabases);
+	if (wThreads==0)
+		return FALSE;
+
+	GetUpdatersPointer();
+	
+	m_ppUpdaters=new CDatabaseUpdater*[wThreads+1];
+	
+	for (WORD wThread=0;wThread<wThreads;wThread++)
+	{
+		m_ppUpdaters[wThread]=new CDatabaseUpdater(*paDatabases,paDatabases->GetSize(),
+			UpdateProc,wThread,(DWORD)m_pMainWnd);
+	}
+	m_ppUpdaters[wThreads]=NULL;
+    
+	// Starting
+	for (wThread=0;wThread<wThreads;wThread++)
+		m_ppUpdaters[wThread]->Update(TRUE);
+	
+	
+	ReleaseUpdatersPointer();
+	
+	if (paDatabasesArg==NULL)
+	{
+		for (int i=0;i<paDatabases->GetSize();i++)
+			delete paDatabases->GetAt(i);
+		delete paDatabases;
+	}
+	return TRUE;
+}
+
+void CLocateApp::OnInitDatabaseMenu(HMENU hPopupMenu)
+{
+	// Removing existing items
+	for(int i=GetMenuItemCount(hPopupMenu)-1;i>=0;i--)
+		DeleteMenu(hPopupMenu,i,MF_BYPOSITION);
+
+	CString title;
+	MENUITEMINFO mi;
+	mi.cbSize=sizeof(MENUITEMINFO);
+	mi.fMask=MIIM_DATA|MIIM_ID|MIIM_STATE|MIIM_TYPE;
+	mi.wID=IDM_DEFUPDATEDBITEM;
+	mi.fType=MFT_STRING;
+	mi.fState=MFS_ENABLED;
+	
+	if (m_aDatabases.GetSize()==0)
+	{
+		// Inserting default items
+		title.LoadString(IDS_EMPTY);
+		mi.dwTypeData=(LPSTR)(LPCSTR)title;
+		mi.dwItemData=0;
+		mi.fState=MFS_GRAYED;
+		InsertMenuItem(hPopupMenu,mi.wID,FALSE,&mi);
+		return;
+	}
+
+	// Starting to insert database items 
+	for (int i=0;i<m_aDatabases.GetSize();i++)
+	{
+		title.Format("&%d: %s",i+1,m_aDatabases[i]->GetName());
+		mi.dwTypeData=(LPSTR)(LPCSTR)title;
+		mi.dwItemData=m_aDatabases[i]->GetID();
+		mi.wID=IDM_DEFUPDATEDBITEM+i;
+		InsertMenuItem(hPopupMenu,mi.wID,FALSE,&mi);
+	}	
+}
+
+void CLocateApp::OnDatabaseMenuItem(WORD wID)
+{
+	int iDB=wID-IDM_DEFUPDATEDBITEM;
+
+	ASSERT(iDB>=0 && iDB<m_aDatabases.GetSize());
+
+	DWORD dwLength=istrlen(m_aDatabases[iDB]->GetName());
+	LPSTR pDatabaseName=new char[dwLength+2];
+	sMemCopy(pDatabaseName,m_aDatabases[iDB]->GetName(),dwLength);
+	pDatabaseName[dwLength]='\0';
+	pDatabaseName[dwLength+1]='\0';
+
+	GetLocateAppWnd()->OnUpdate(FALSE,pDatabaseName);
+
+	delete[] pDatabaseName;
+}
+
+int CLocateApp::GetDatabaseMenuIndex(HMENU hPopupMenu)
+{
+	MENUITEMINFO mii;
+	mii.cbSize=sizeof(MENUITEMINFO);
+	mii.fMask=MIIM_SUBMENU;
+	
+	for(int i=GetMenuItemCount(hPopupMenu)-1;i>=0;i--)
+	{
+		if (!GetMenuItemInfo(hPopupMenu,i,TRUE,&mii))
+			continue;
+
+		if (mii.hSubMenu!=NULL)
+		{
+			if (IsDatabaseMenu(GetSubMenu(hPopupMenu,i)))
+				return i;
+		}
+	}
+	return -1;
+}
+
+/////////////////////////////////////////////
+// CSchedule
 
 CSchedule::CSchedule()
 :	m_bFlags(flagEnabled|flagRunnedAtStartup),m_nType(typeDaily),m_pDatabases(NULL)
@@ -2001,6 +2484,10 @@ BOOL CSchedule::SDATE::operator>(const SDATE& t) const
 	return FALSE;
 }
 
+
+/////////////////////////////////////////////
+// CLocateAppWnd
+
 int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 {
 	// Loading menu
@@ -2095,14 +2582,91 @@ BOOL CLocateAppWnd::UpdateSettings()
 	return TRUE;
 }
 
+void CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootInfos)
+{
+	// Counting threads		
+	CDatabaseUpdater** ppUpdaters=GetLocateApp()->GetUpdatersPointer();
+	wThreads=0;
+	if (ppUpdaters!=NULL)
+	{
+		for (;ppUpdaters[wThreads]!=NULL;wThreads++);
+	}
+	GetLocateApp()->ReleaseUpdatersPointer();
+	
+	pRootInfos=new RootInfo[max(wThreads,2)];
+	
+	// Retrieving information
+	wRunning=0;
+	ppUpdaters=GetLocateApp()->GetUpdatersPointer();
+	for (WORD i=0;i<wThreads;i++)
+	{
+		if (IS_UPDATER_EXITED(ppUpdaters[i]))
+		{
+			pRootInfos[i].pName=NULL;
+			pRootInfos[i].pRoot=NULL;
+			pRootInfos[i].ueError=GET_UPDATER_CODE(ppUpdaters[i]);
+		}
+		else 
+		{
+			wRunning++;
+
+			pRootInfos[i].ueError=ueStillWorking;
+
+			if (ppUpdaters[i]->GetCurrentDatabaseName()==NULL)
+			{
+				// Not started yet
+				pRootInfos[i].pName=allocempty();
+				pRootInfos[i].pRoot=NULL;
+
+				if (m_pUpdateStatusWnd!=NULL)
+				{
+					pRootInfos[i].dwNumberOfDatabases=ppUpdaters[i]->GetNumberOfDatabases();
+					pRootInfos[i].dwCurrentDatabase=0;
+					pRootInfos[i].wProgressState=0;
+				}
+			}
+			else
+			{
+				pRootInfos[i].pName=ppUpdaters[i]->GetCurrentDatabaseNameStr();
+				if (ppUpdaters[i]->GetCurrentRoot()==NULL)
+					pRootInfos[i].pRoot=NULL; // Is writing database
+				else
+					pRootInfos[i].pRoot=ppUpdaters[i]->GetCurrentRootPathStr();
+				
+				if (m_pUpdateStatusWnd!=NULL)
+				{
+					pRootInfos[i].dwNumberOfDatabases=ppUpdaters[i]->GetNumberOfDatabases();
+					pRootInfos[i].dwCurrentDatabase=ppUpdaters[i]->GetCurrentDatabase();
+					pRootInfos[i].wProgressState=ppUpdaters[i]->GetProgressStatus();
+				}
+
+			}
+			
+		}
+	}
+	GetLocateApp()->ReleaseUpdatersPointer();
+}
+
+void CLocateAppWnd::FreeRootInfos(WORD wThreads,RootInfo* pRootInfos)
+{
+	// Freeing memory
+	for (int i=0;i<wThreads;i++)
+	{
+		if (pRootInfos[i].pName!=NULL)
+			delete[] pRootInfos[i].pName;
+		if (pRootInfos[i].pRoot!=NULL)
+			delete[] pRootInfos[i].pRoot;
+	}
+	delete[] pRootInfos;
+}
+
 #define MAXTIPTEXTLENGTH		128
 #define MAXINFOTEXTLENGTH		256
 #define MAXINFOTITLELENGTH		64
 
-
-BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
+BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 {
-	DebugFormatMessage("CLocateAppWnd::SetShellNotifyIconAndTip: BEGIN, hIcon=%X, uTip=%d",DWORD(hIcon),uTip);
+	DebugFormatMessage("CLocateAppWnd::SetUpdateStatusInformation: BEGIN, hIcon=%X, uTip=%d",DWORD(hIcon),uTip);
 
 	NOTIFYICONDATA nid;
 	ZeroMemory(&nid,sizeof(NOTIFYICONDATA));
@@ -2125,90 +2689,16 @@ BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 	
 	if (uTip==IDS_NOTIFYUPDATING)
 	{
-		if (GetProgramFlags()&pfShowUpdateTooltip)
-			nid.uFlags|=NIF_INFO;
-		else
-			nid.uFlags|=NIF_TIP;
+		nid.uFlags|=NIF_TIP;
 		
-		// Counting threads		
-		CDatabaseUpdater** ppUpdaters=GetLocateApp()->GetUpdatersPointer();
-		for (WORD wThreads=0;ppUpdaters[wThreads]!=NULL;wThreads++);
-		GetLocateApp()->ReleaseUpdatersPointer();
-		RootInfo* pRootInfos=new RootInfo[max(wThreads,2)];
-		// Retrieving information
-		WORD wRunning=0;
-		ppUpdaters=GetLocateApp()->GetUpdatersPointer();
-		for (WORD i=0;i<wThreads;i++)
-		{
-			if (IS_UPDATER_EXITED(ppUpdaters[i]))
-			{
-				pRootInfos[i].pName=NULL;
-				pRootInfos[i].pRoot=NULL;
-				pRootInfos[i].ueError=GET_UPDATER_CODE(ppUpdaters[i]);
-			}
-			else 
-			{
-				wRunning++;
-
-				pRootInfos[i].ueError=ueStillWorking;
-
-				if (ppUpdaters[i]->GetCurrentDatabaseName()==NULL)
-				{
-					// Not started yet
-					pRootInfos[i].pName=allocempty();
-					pRootInfos[i].pRoot=NULL;
-
-					if (GetProgramFlags()&pfShowUpdateTooltip)
-					{
-						pRootInfos[i].dwNumberOfDatabases=ppUpdaters[i]->GetNumberOfDatabases();
-						pRootInfos[i].dwCurrentDatabase=0;
-						pRootInfos[i].wProgressState=0;
-					}
-				}
-				else
-				{
-					pRootInfos[i].pName=ppUpdaters[i]->GetCurrentDatabaseNameStr();
-					if (ppUpdaters[i]->GetCurrentRoot()==NULL)
-						pRootInfos[i].pRoot=NULL; // Is writing database
-					else
-						pRootInfos[i].pRoot=ppUpdaters[i]->GetCurrentRootPathStr();
-					
-					if (GetProgramFlags()&pfShowUpdateTooltip)
-					{
-						pRootInfos[i].dwNumberOfDatabases=ppUpdaters[i]->GetNumberOfDatabases();
-						pRootInfos[i].dwCurrentDatabase=ppUpdaters[i]->GetCurrentDatabase();
-						pRootInfos[i].wProgressState=ppUpdaters[i]->GetProgressStatus();
-					}
-
-				}
-				
-			}
-		}
-		GetLocateApp()->ReleaseUpdatersPointer();
+		WORD wThreads,wRunning;
+		RootInfo* pRootInfos;
+		GetRootInfos(wThreads,wRunning,pRootInfos);
 		
-		if (GetProgramFlags()&pfShowUpdateTooltip)
-		{
-			// Forming title
-			if (wRunning>0)
-				LoadString(IDS_UPDATINGTOOLTIPTITLE,nid.szInfoTitle,MAXINFOTITLELENGTH);
-			else
-				LoadString(IDS_UPDATINGENDED,nid.szInfoTitle,MAXINFOTITLELENGTH);
-			nid.dwInfoFlags=NIIF_NOSOUND|NIIF_INFO;
-			nid.uTimeout=10000;
-
-
-			CString txt;
-			for (BYTE iShorten=0;iShorten<5;iShorten++)
-			{
-				if (FormatTooltipStatusText(txt,pRootInfos,wThreads,iShorten)<MAXINFOTEXTLENGTH)
-					break;
-			}
-
-			DWORD dwLength=min(txt.GetLength(),MAXINFOTEXTLENGTH-1);
-			CopyMemory(nid.szInfo,(LPCSTR)txt,dwLength);
-			nid.szInfo[dwLength]='\0';			
-		}
-		else if (wThreads>1)
+		if (m_pUpdateStatusWnd!=NULL)
+			m_pUpdateStatusWnd->Update(wThreads,wRunning,pRootInfos);
+			
+		if (wThreads>1)
 		{
 			if (((CLocateApp*)GetApp())->m_wShellDllVersion>=0x0500 &&	wThreads<10)
 			{
@@ -2322,14 +2812,14 @@ BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 		else
 		{
 			// Only one thread
-			if (pRootInfos[i].pRoot==NULL) // Is writing database
+			if (pRootInfos[0].pRoot==NULL) // Is writing database
 				wsprintf(nid.szTip,(LPCSTR)CString(IDS_UPDATINGWRITINGDATABASE));
 			else
 			{
 				char szBuf[50];
 				LoadString(IDS_NOTIFYUPDATING,szBuf,50);
 			
-				LPSTR pRoot=pRootInfos[i].pRoot;
+				LPSTR pRoot=pRootInfos[0].pRoot;
 
 				// Cutting to 35 characters
 				for (int i=0;i<35 && pRoot[i]!='\0';i++); 
@@ -2345,15 +2835,8 @@ BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 		}
 
 
-		// Freeing memory
-		for (int i=0;i<wThreads;i++)
-		{
-			if (pRootInfos[i].pName!=NULL)
-				delete[] pRootInfos[i].pName;
-			if (pRootInfos[i].pRoot!=NULL)
-				delete[] pRootInfos[i].pRoot;
-		}
-		delete[] pRootInfos;
+		FreeRootInfos(wThreads,pRootInfos);
+			
 	}
 	else if (uTip!=0)
 	{
@@ -2361,140 +2844,20 @@ BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 		nid.uFlags|=NIF_TIP;
 	}
 	
-	DebugMessage("CLocateAppWnd::SetShellNotifyIconAndTip: END");
+	DebugMessage("CLocateAppWnd::SetUpdateStatusInformation: END");
 	
 	return Shell_NotifyIcon(NIM_MODIFY,&nid);
 }
 
-UINT CLocateAppWnd::FormatTooltipStatusText(CString& str,RootInfo* pRootInfo,WORD wThreads,BYTE bShortenLevel)
-{
-	DebugMessage("CLocateAppWnd::FormatTooltipStatusText BEGIN");
-
-	str.Empty();
-
-	for (WORD i=0;i<wThreads;i++)
-	{
-		if (i!=0)
-			str << '\n';
-
-		// #X  thread number
-		if (wThreads>1)
-			str << '#' << (int)(i+1);
-
-		if (pRootInfo[i].pName==NULL)
-		{
-			// Finished
-			if (wThreads>1)
-				str << ": ";
-			switch (pRootInfo[i].ueError)
-			{
-			case ueStopped:
-				str.AddString(IDS_UPDATINGCANCELLED);
-				break;
-			case ueFolderUnavailable:
-			case ueSuccess:
-				str.AddString(IDS_NOTIFYDONE);
-				break;
-			default:
-				str.AddString(IDS_UPDATINGFAILED2);
-				break;
-			}
-		}
-		else if (pRootInfo[i].pName[0]=='\0')
-		{
-			// Initializing
-			if (wThreads>1)
-				str << ": ";
-			str.AddString(IDS_NOTIFYINITIALIZING);
-		}
-		else
-		{
-			if (pRootInfo[i].dwNumberOfDatabases>1)
-			{
-				if (wThreads>1)
-                    str << ' ';
-				str << (int)(pRootInfo[i].dwCurrentDatabase+1) << '/' << (int)pRootInfo[i].dwNumberOfDatabases << ": ";
-			}
-			else if (wThreads>1)
-				str << ": ";
-			str << pRootInfo[i].pName;
-
-			
-			if (pRootInfo[i].pRoot==NULL)
-			{
-				str << ": ";
-				str.AddString(IDS_NOTIFYWRITINGDATABASE);
-			}
-			else
-			{
-				if (pRootInfo[i].wProgressState!=WORD(-1))
-				{
-					str << ' ' << (int)((int)(pRootInfo[i].wProgressState)/10) << '%';
-				}
-
-				switch (bShortenLevel)
-				{
-				case 0:
-					str << ": " << pRootInfo[i].pRoot;
-					break;
-				case 1:
-					str << ": " ;
-					if (istrlen(pRootInfo[i].pRoot)>40)
-					{
-						str.Append(pRootInfo[i].pRoot,38);
-						str << "...";
-					}
-					else
-						str << pRootInfo[i].pRoot;
-					break;
-				case 2:
-					str << ": " ;
-					if (istrlen(pRootInfo[i].pRoot)>30)
-					{
-						str.Append(pRootInfo[i].pRoot,28);
-						str << "...";
-					}
-					else
-						str << pRootInfo[i].pRoot;
-					break;
-				case 3:
-					str << ": " ;
-					if (istrlen(pRootInfo[i].pRoot)>20)
-					{
-						str.Append(pRootInfo[i].pRoot,18);
-						str << "...";
-					}
-					else
-						str << pRootInfo[i].pRoot;
-					break;
-				default:
-					// bShortenLevel>=4: no roots at all
-					break;
-				}
-			}
-		}
-	}
-
-	if (bShortenLevel<=2)
-	{
-		// Inserting error message
-		char* pError=m_szLastUpdateError;
-		if (pError!=NULL)
-			str << '\n' << pError;
-	}
-
-
-	DebugMessage("CLocateAppWnd::FormatTooltipStatusText END");
-	return str.GetLength();
-}
 
 BOOL CLocateAppWnd::StartUpdateStatusNotification()
 {
-	// Clearing last error 
-	if (!(m_dwProgramFlags&pfShowUpdateTooltip) && m_szLastUpdateError)
+	// Closing existing update status window if necessary
+	if (m_pUpdateStatusWnd!=NULL)
 	{
-		delete[] m_szLastUpdateError;
-		m_szLastUpdateError=NULL;
+		m_pUpdateStatusWnd->DestroyWindow();
+		delete m_pUpdateStatusWnd;
+		m_pUpdateStatusWnd=NULL;
 	}
 	
 	if (m_pUpdateAnimIcons==NULL)
@@ -2519,10 +2882,39 @@ BOOL CLocateAppWnd::StartUpdateStatusNotification()
 	}
 	
 	if (m_dwProgramFlags&pfEnableUpdateTooltip && 
-		!(m_dwProgramFlags&pfShowUpdateTooltip))
+		m_pUpdateStatusWnd==NULL)
 	{
-		m_dwProgramFlags|=pfShowUpdateTooltip;
-		SetTimer(ID_UPDATESTATUS,500);
+		m_pUpdateStatusWnd=new CUpdateStatusWnd;
+		
+		// Registering window class for notify icon handler window
+		BOOL(WINAPI * pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD)=(BOOL(WINAPI *)(HWND,COLORREF,BYTE,DWORD))GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes");
+	
+		BYTE nTransparency=0;
+		DWORD dwExtra=WS_EX_TOOLWINDOW|WS_EX_NOACTIVATE|WS_EX_TOPMOST;
+
+		if (pSetLayeredWindowAttributes!=NULL)
+		{
+			CRegKey RegKey;
+			if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+			{
+				DWORD dwTemp;
+				if (RegKey.QueryValue("Transparency",dwTemp))
+					nTransparency=(BYTE)min(dwTemp,255);
+			}
+
+			if (nTransparency>0)
+				dwExtra|=WS_EX_LAYERED;
+		}
+		
+		m_pUpdateStatusWnd->Create("LOCATEAPPUPDATESTATUS","US",WS_POPUPWINDOW|WS_VISIBLE,
+			NULL,NULL,LPCSTR(0),dwExtra);
+
+		if (nTransparency>0)
+			pSetLayeredWindowAttributes(*m_pUpdateStatusWnd,0,255-nTransparency,LWA_ALPHA);
+
+		m_pUpdateStatusWnd->SetPosition();
+		
+
 	}
 
 	return TRUE;
@@ -2530,22 +2922,15 @@ BOOL CLocateAppWnd::StartUpdateStatusNotification()
 
 BOOL CLocateAppWnd::StopUpdateStatusNotification()
 {
-	if (m_dwProgramFlags&pfShowUpdateTooltip)
-	{
-		KillTimer(ID_UPDATESTATUS);
-        GetLocateAppWnd()->SetShellNotifyIconAndTip((HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,0),IDS_NOTIFYUPDATING);
-		m_dwProgramFlags&=~pfShowUpdateTooltip;
-		
-		// Changing interval
-		SetTimer(ID_UPDATESTATUS,5000,NULL);
-	}
-
+	if (m_pUpdateStatusWnd!=NULL)
+		m_pUpdateStatusWnd->IdleClose();
+	
 	if (m_pUpdateAnimIcons!=NULL)
 	{
 		KillTimer(ID_UPDATEANIM);
 		delete[] m_pUpdateAnimIcons;
 		m_pUpdateAnimIcons=NULL;
-		GetLocateAppWnd()->SetShellNotifyIconAndTip((HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,0),IDS_NOTIFYLOCATE);
+		GetLocateAppWnd()->SetUpdateStatusInformation((HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,0),IDS_NOTIFYLOCATE);
 	}
 	return TRUE;
 }
@@ -2580,9 +2965,11 @@ BOOL CLocateAppWnd::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		OnLocate();
 		break;
 	case IDM_GLOBALUPDATEDB:
+	case IDM_GLOBALUPDATEDBACCEL:
 		OnUpdate(FALSE);
 		break;
 	case IDM_UPDATEDATABASES:
+	case IDM_UPDATEDATABASESACCEL:
 		OnUpdate(FALSE,LPSTR(-1));
 		break;
 	case IDM_STOPUPDATING:
@@ -2591,7 +2978,10 @@ BOOL CLocateAppWnd::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		OnUpdate(TRUE);
 		break;
 	case IDM_SETTINGS:
-		OnSettings();
+		if (GetLocateDlg()!=NULL)
+			GetLocateDlg()->SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
+		else
+			OnSettings();
 		break;
 	case IDM_ABOUT:
 		OnAbout();
@@ -2722,7 +3112,7 @@ BYTE CLocateAppWnd::OnLocate()
 	GetLocateApp()->ClearStartupFlag(CLocateApp::CStartData::startupExitAfterUpdating);
 	
 	// Refreshing icon
-	SetShellNotifyIconAndTip(m_pUpdateAnimIcons!=NULL?m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]:NULL);
+	SetUpdateStatusInformation(m_pUpdateAnimIcons!=NULL?m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]:NULL);
 	
 	if (m_pLocateDlgThread==NULL)
 	{
@@ -2858,8 +3248,11 @@ void CLocateAppWnd::OnDestroy()
 
 	KillTimer(ID_CHECKSCHEDULES);
 	
-	// Ensure that update animation is stopped
+	// Ensure that update animation and status window are stopped
 	StopUpdateStatusNotification();
+	if (m_pUpdateStatusWnd!=NULL)
+		m_pUpdateStatusWnd->DestroyWindow();
+	
 	
 	// Unhookin if necessary
 	if (m_hHook!=NULL)
@@ -2927,6 +3320,13 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		if (m_pLocateDlgThread->m_pLocate==NULL)
 			return NULL;
 		return (BOOL)(HWND)*m_pLocateDlgThread->m_pLocate;
+	case WM_FREEUPDATESTATUSPOINTERS:
+		if (m_pUpdateStatusWnd!=NULL)
+		{
+			delete m_pUpdateStatusWnd;
+			m_pUpdateStatusWnd=NULL;
+		}
+		break;
 	default:
 		if (msg==nHFCInstallationMessage)
 		{
@@ -2981,80 +3381,6 @@ void CLocateAppWnd::DeleteTaskbarIcon()
 	Shell_NotifyIcon(NIM_DELETE,&nid);
 }
 
-void CLocateAppWnd::FormatLastErrorForStatusTooltip(UpdateError ueError,CDatabaseUpdater* pUpdater)
-{
-	if (!(m_dwProgramFlags&pfShowUpdateTooltip))
-		return;
-
-	if (ueError==ueStopped)
-		return;
-
-	// Now, change pointer to null, if someone is accesing pointer, it may have enough time to read
-	LPSTR szOldPtr=m_szLastUpdateError;
-	if (szOldPtr!=NULL)
-		InterlockedExchangePointer(&m_szLastUpdateError,NULL);
-
-
-
-	char error[300];
-	int nLabelLength=LoadString(IDS_LASTERROR,error,200);
-
-	LPCSTR szExtra=NULL;
-
-	switch(ueError)
-	{
-	case ueUnknown:
-		LoadString(IDS_LASTERRORUNKNOWN,error+nLabelLength,300-nLabelLength);
-		szExtra=pUpdater->GetCurrentDatabaseName();
-		break;
-	case ueCreate:
-	case ueOpen:
-		LoadString(IDS_LASTERRORCANNOTOPEN,error+nLabelLength,300-nLabelLength);
-		szExtra=pUpdater->GetCurrentDatabaseName();
-		break;
-	case ueRead:
-		LoadString(IDS_LASTERRORCANNOTREAD,error+nLabelLength,300-nLabelLength);
-		szExtra=pUpdater->GetCurrentDatabaseName();
-		break;
-	case ueWrite:
-		LoadString(IDS_LASTERRORCANNOTWRITE,error+nLabelLength,300-nLabelLength);
-		szExtra=pUpdater->GetCurrentDatabaseName();
-		break;
-	case ueAlloc:
-		LoadString(IDS_LASTERRORCANNOTALLOCATE,error+nLabelLength,300-nLabelLength);
-		break;
-	case ueInvalidDatabase:
-		LoadString(IDS_LASTERRORINVALIDDB,error+nLabelLength,300-nLabelLength);
-		szExtra=pUpdater->GetCurrentDatabaseName();
-		break;
-	case ueFolderUnavailable:
-		LoadString(IDS_LASTERRORROOTUNAVAILABLE,error+nLabelLength,300-nLabelLength);
-		szExtra=pUpdater->GetCurrentRootPath();
-		break;
-	case ueCannotIncrement:
-		LoadString(IDS_LASTERRORCANNOTINCREMENTDB,error+nLabelLength,300-nLabelLength);
-		szExtra=pUpdater->GetCurrentDatabaseName();
-		break;
-	default:
-		sprintf(error+nLabelLength,"%d",(int)ueError);
-		break;
-	}
-
-	LPSTR szNewPtr;
-	if (szExtra!=NULL)
-	{
-		szNewPtr=new char[istrlen(error)+istrlen(szExtra)+1];
-		wsprintf(szNewPtr,error,szExtra);
-	}
-	else
-		szNewPtr=alloccopy(error);
-
-    
-	InterlockedExchangePointer(&m_szLastUpdateError,szNewPtr);
-	
-	// OK, freeing memory
-	delete[] szOldPtr;
-}
 
 DWORD CLocateAppWnd::OnSystemTrayMessage(UINT uID,UINT msg)
 {
@@ -3101,10 +3427,6 @@ DWORD CLocateAppWnd::OnSystemTrayMessage(UINT uID,UINT msg)
 		case NIN_BALLOONTIMEOUT:
 			break;
 		case NIN_BALLOONUSERCLICK:
-			// User click tip, closing it
-			m_dwProgramFlags&=~pfShowUpdateTooltip;
-			KillTimer(ID_UPDATESTATUS);
-			SetShellNotifyIconAndTip(NULL,IDS_NOTIFYUPDATING);
 			break;
 		default:
 			break;
@@ -3137,35 +3459,11 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 	//CFrameWnd::OnTimer(wTimerID);
 	switch (wTimerID)
 	{
-	case ID_UPDATESTATUS:
-		if (m_dwProgramFlags&pfShowUpdateTooltip)
-			SetShellNotifyIconAndTip(NULL,IDS_NOTIFYUPDATING);
-		else
-		{
-			KillTimer(ID_UPDATESTATUS);
-			
-			// Closing balloon tooltip
-			NOTIFYICONDATA nid;
-			ZeroMemory(&nid,sizeof(NOTIFYICONDATA));
-			nid.cbSize=sizeof(NOTIFYICONDATA);
-			nid.uFlags=NIF_INFO;
-			nid.hWnd=*this;
-			nid.uID=1000;
-			Shell_NotifyIcon(NIM_MODIFY,&nid);
-
-			if (m_szLastUpdateError!=NULL)
-			{
-				// At this time, there is no updater threads
-				delete[] m_szLastUpdateError;
-				m_szLastUpdateError=NULL;
-			}
-		}
-		break;
 	case ID_UPDATEANIM:
 		m_nCurUpdateAnimBitmap++;
 		if (m_nCurUpdateAnimBitmap>12)
 			m_nCurUpdateAnimBitmap=0;
-		SetShellNotifyIconAndTip(m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]);
+		SetUpdateStatusInformation(m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]);
 		break;
 	case ID_SYNCSCHEDULES:
 		KillTimer(ID_SYNCSCHEDULES);
@@ -3387,483 +3685,590 @@ void CLocateAppWnd::CheckSchedules()
 		SaveSchedules();
 }
 
-BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater)
+////////////////////////////
+// CLocateAppWnd::CUpdateStatusWnd
+CLocateAppWnd::CUpdateStatusWnd::CUpdateStatusWnd()
+:	CFrameWnd(),m_WindowSize(0,0)
 {
-	DbcDebugFormatMessage2("CLocateApp::UpdateProc BEGIN, reason=%d, code=%d",crReason,ueCode);
 	
-	switch (crReason)
-	{
-	case Initializing:
-		return TRUE;
-	case RootChanged:
-	{
-		CLocateDlg* pLocateDlg=GetLocateDlg();
-		if (pLocateDlg!=NULL)
-		{
-			CString str;
+	RegisterWndClass("LOCATEAPPUPDATESTATUS",CS_HREDRAW|CS_VREDRAW,LoadCursor(NULL,IDC_ARROW),
+		(HBRUSH)(COLOR_INFOBK+1),NULL);
 
-			if (pUpdater->GetCurrentRoot()!=NULL)
-			{
-				str.Format(IDS_UPDATINGDATABASE2,
-					pUpdater->GetCurrentDatabaseName(),
-					pUpdater->GetCurrentRoot()->m_Path);
-			}
-			else
-			{
-				str.Format(IDS_UPDATINGDATABASE2,
-					pUpdater->GetCurrentDatabaseName(),
-					(LPCSTR)CString(IDS_UPDATINGWRITINGDATABASE));
-			}
-			
-			pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
+	m_cTextColor=GetSysColor(COLOR_INFOTEXT);
+	m_cTitleColor=GetSysColor(COLOR_INFOTEXT);
+	m_cErrorColor=GetSysColor(COLOR_INFOTEXT);
+	m_cBackColor=GetSysColor(COLOR_INFOBK);
+
+	// Update status tooltip
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		DWORD dwTemp;
+		if (RegKey.QueryValue("TextColor",dwTemp))
+			m_cTextColor=dwTemp;
+		if (RegKey.QueryValue("TitleColor",dwTemp))
+			m_cTitleColor=dwTemp;
+		if (RegKey.QueryValue("ErrorColor",dwTemp))
+			m_cErrorColor=dwTemp;
+		if (RegKey.QueryValue("BackColor",dwTemp))
+			m_cBackColor=dwTemp;
+	}
+
+	m_hUpdateMutex=CreateMutex(NULL,FALSE,NULL);
+}
+
+CLocateAppWnd::CUpdateStatusWnd::~CUpdateStatusWnd()
+{
+	if (m_hUpdateMutex!=NULL)
+	{
+		if (WaitForMutex(m_hUpdateMutex,BACKGROUNDUPDATERMUTEXTIMEOUT))
+		{
+			DebugMessage("CLocateAppWnd::CUpdateStatusWnd::~CUpdateStatusWnd() WaitForMutex returns error");
 		}
 	
-		
-		if (dwParam!=NULL)
-			((CLocateAppWnd*)dwParam)->SetShellNotifyIconAndTip(NULL,IDS_NOTIFYUPDATING);
-		return TRUE;
+		CloseHandle(m_hUpdateMutex);
+		m_hUpdateMutex=NULL;
 	}
-	case FinishedUpdating:
+	
+	m_aErrors.RemoveAll();
+
+	m_Font.DeleteObject();
+	m_TitleFont.DeleteObject();
+
+	
+}
+	
+int CLocateAppWnd::CUpdateStatusWnd::OnCreate(LPCREATESTRUCT lpcs)
+{
+	SetTimer(ID_UPDATESTATUS,500,NULL);
+	return CFrameWnd::OnCreate(lpcs);
+}
+
+
+
+void CLocateAppWnd::CUpdateStatusWnd::OnNcDestroy()
+{
+	CWnd::OnNcDestroy();
+
+	// If this is NULL, class is deleted anyway
+	if (GetLocateAppWnd()->m_pUpdateStatusWnd!=NULL)
+		GetLocateAppWnd()->PostMessage(WM_FREEUPDATESTATUSPOINTERS);
+	else
+		delete this;
+}
+
+
+void CLocateAppWnd::CUpdateStatusWnd::OnTimer(DWORD wTimerID)
+{
+	switch (wTimerID)
 	{
-		CLocateDlg* pLocateDlg=GetLocateDlg();
-		if (pLocateDlg!=NULL)
-		{
-			if (ueCode!=ueStopped) // This is done at the end of CLocateApp::StopUpdating
-			{
-				pLocateDlg->m_NameDlg.InitDriveBox();
-				
-				//pLocateDlg->ResetFileNotificators();
-				pLocateDlg->PostMessage(WM_REFRESHNOTIFIERHANDLERS);
-			}
-		
-			if (ueCode==ueStopped)
-			{
-				CString str;
-				str.Format(IDS_UPDATINGDATABASE2,
-					pUpdater->GetCurrentDatabaseName(),
-					(LPCSTR)CString(IDS_UPDATINGCANCELLED2));
-
-				pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
-				return FALSE;
-			}
-			else if (ueCode!=ueSuccess)
-			{
-				CString str;
-				str.Format(IDS_UPDATINGDATABASE2,
-					pUpdater->GetCurrentDatabaseName(),
-					(LPCSTR)CString(IDS_UPDATINGFAILED));
-
-				pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
-				return FALSE;
-			}
-			CString str;
-			str.Format(IDS_UPDATINGDATABASE2,
-				pUpdater->GetCurrentDatabaseName(),
-				(LPCSTR)CString(IDS_UPDATINGDONE));
-
-			pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
-		}
-
-		return TRUE;
-	}
-	case ClassShouldDelete:
-		{
-			if (!GetLocateApp()->IsUpdating())
-				return TRUE; // One thread mode
-
-						
-			CLocateAppWnd* pAppWnd=(CLocateAppWnd*)dwParam;
-			DWORD dwRunning=0;
-			
-			CDatabaseUpdater*** pppUpdaters=GetLocateApp()->GetUpdatersPointerPtr();
-			
-			if (pppUpdaters==NULL)
-				return FALSE;
-
-			
-			for (int i=0;(*pppUpdaters)[i]!=NULL;i++)
-			{
-				if ((*pppUpdaters)[i]==pUpdater)
-					(*pppUpdaters)[i]=UPDATER_EXITED(ueCode);
-				else if (!IS_UPDATER_EXITED((*pppUpdaters)[i]))
-					dwRunning++;
-			}
-			delete pUpdater;
-			
-			if (dwRunning==0)
-			{
-				// No updaters running anymore...
-				
-				// ...so stopping animations
-				if (pAppWnd!=NULL)
-				{
-					if (GetLocateApp()->m_nStartup&CStartData::startupExitAfterUpdating)
-						pAppWnd->PostMessage(WM_COMMAND,IDM_EXIT,NULL);
-
-					pAppWnd->StopUpdateStatusNotification();
-				}
-
-				CLocateDlg* pLocateDlg=GetLocateDlg();
-				if (pLocateDlg!=NULL)
-				{
-					pLocateDlg->StopUpdateAnimation();
-					
-					CString str;
-					
-					// ... and constucting notification message:
-					// checking wheter all are stopped, or cancelled 
-					for (i=0;(*pppUpdaters)[i]!=NULL;i++)
-					{
-						if (GET_UPDATER_CODE((*pppUpdaters)[i])!=ueStopped)
-							break;
-					}
-					if ((*pppUpdaters)[i]==NULL)
-					{
-						// All updaters are interrupted by user
-						str.LoadString(IDS_UPDATINGCANCELLED);
-						pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
-						pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),3,SBT_OWNERDRAW);
-
-					}
-					else
-					{
-						// All succeeded or some updaters failed/interrupted
-                        CString str2;
-						str.LoadString(IDS_UPDATINGENDED);
-						int added=0;
-							
-						for (i=0;(*pppUpdaters)[i]!=NULL;i++)
-						{
-							switch (GET_UPDATER_CODE((*pppUpdaters)[i]))
-							{
-							case ueSuccess:
-								break;
-							case ueStopped:
-								if (added>0)
-									str2 << ", ";
-								str2 << CString(IDS_UPDATINGTHREAD);
-								str2 << ' ' << (int)(i+1) << ": ";
-								str2 << CString(IDS_UPDATINGCANCELLED2);
-								added++;
-								break;
-							case ueFolderUnavailable:
-								if (added>0)
-									str2 << ", ";
-								str2 << CString(IDS_UPDATINGTHREAD);
-								str2 << ' ' << (int)(i+1) << ": ";
-								str2 << CString(IDS_UPDATINGUNAVAILABLEROOT);
-								added++;
-								break;
-							default:
-								if (added>0)
-									str2 << ", ";
-								str2 << CString(IDS_UPDATINGTHREAD);
-								str2 << ' ' << (int)(i+1) << ": ";
-								str2 << CString(IDS_UPDATINGFAILED);
-								added++;
-								break;
-							}
-						}
-
-						if (str2.IsEmpty())
-							str.LoadString(IDS_UPDATINGSUCCESS);
-						else
-						{
-							pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),3,SBT_OWNERDRAW);
-							str << ' ' << str2;
-						}
-						pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
-					}
-				}
-		
-				// Freeing memory
-				delete[] *pppUpdaters;
-				*pppUpdaters=NULL;
-
-				GetLocateApp()->ReleaseUpdatersPointer();
-			}
-			else 
-			{
-				// Updaters still running, updating shell notify icons
-				GetLocateApp()->ReleaseUpdatersPointer();
-				
-				if (dwParam!=NULL)
-				{
-					// dwParam can be NULL, if updating process is started via 
-					// command line parameters such that dialog is not opened
-				
-					((CLocateAppWnd*)dwParam)->SetShellNotifyIconAndTip(NULL,IDS_NOTIFYUPDATING);
-				}
-			}
-			return TRUE;
-		}
-	case ErrorOccured:
-		((CLocateAppWnd*)dwParam)->FormatLastErrorForStatusTooltip(ueCode,pUpdater);
-			
-		switch(ueCode)
-		{
-		case ueUnknown:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
-			{
-				char* pError;
-
-				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
-					GetLastError(),LANG_USER_DEFAULT,(LPSTR)&pError,0,NULL))
-				{
-					CString str,state;
-					if (pUpdater->GetCurrentRoot()==NULL)
-						state.Format(IDS_ERRORUNKNOWNWRITEDB,pUpdater->GetCurrentDatabaseFile());
-					else
-						state.Format(IDS_ERRORUNKNOWNSCANROOT,pUpdater->GetCurrentRootPath());
-					
-					
-					str.Format(IDS_ERRORUNKNOWNOS,pError);
-					while (str.LastChar()=='\n' || str.LastChar()=='\r')
-						str.DelLastChar();
-					str << state;
-					
-					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-						str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
-					LocalFree(pError);
-
-					
-				}
-				else
-					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-						CString(IDS_ERRORUNKNOWN),CString(IDS_ERROR),MB_OK|MB_ICONERROR);
-				return FALSE;
-			}
-			break;
-		case ueCreate:
-		case ueOpen:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
-			{
-				CString str;
-				str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
-				return FALSE;
-			}
-			break;
-		case ueRead:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
-			{
-				CString str;
-				str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
-				return FALSE;
-			}
-			break;
-		case ueWrite:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
-			{
-				CString str;
-				str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
-                return FALSE;
-			}
-			break;
-		case ueAlloc:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
-			{
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-					CString(IDS_ERRORCANNOTALLOCATE),CString(IDS_ERROR),MB_OK|MB_ICONERROR);
-			}
-			break;
-		case ueInvalidDatabase:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
-			{
-				CString str;
-				str.Format(IDS_ERRORINVALIDDB,pUpdater->GetCurrentDatabaseName());
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
-				return FALSE;
-			}
-			break;
-		case ueFolderUnavailable:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowNonCriticalErrors)
-			{
-				CString str;
-				str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():"");
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
-				return FALSE;
-			}
-			break;
-		case ueCannotIncrement:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowNonCriticalErrors)
-			{
-				CString str;
-				str.Format(IDS_ERRORCANNOTWRITEINCREMENTALLY,pUpdater->GetCurrentDatabaseName());
-				
-				return ::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
-			}
-			return TRUE;
-		}
+	case ID_UPDATESTATUS:
+		Update();
+		break;
+	case ID_IDLEEXIT:
+		KillTimer(ID_IDLEEXIT);
+		CWnd::DestroyWindow();
 		break;
 	}
-	
-	DbcDebugMessage("CLocateApp::UpdateProc END");
-	return TRUE;
 }
 
-BOOL CLocateApp::SetLanguageSpecifigHandles()
+#define EXTRA_MARGINSX 3
+#define EXTRA_MARGINSY 3
+#define EXTRA_LINES 2
+
+void CLocateAppWnd::CUpdateStatusWnd::OnPaint()
 {
-	CRegKey RegKey;
-	CString LangFile;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource),
-		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	CPaintDC dc(this);
+
+	dc.SetMapMode(MM_TEXT);
+	dc.SetBkMode(TRANSPARENT);
+	dc.SelectObject(m_TitleFont);
+
+	if (WaitForMutex(m_hUpdateMutex,BACKGROUNDUPDATERMUTEXTIMEOUT))
 	{
-		RegKey.QueryValue("Language",LangFile);
-		RegKey.CloseKey();
+		DebugMessage("CLocateAppWnd::CUpdateStatusWnd::OnPaint() WaitForMutex returns error");
+		return;
 	}
-	if (LangFile.IsEmpty())
-		LangFile="lan_en.dll";
-
-	CString Path(GetApp()->GetExeName(),GetApp()->GetExeName().FindLast('\\')+1);
 	
-	
+	RECT rcClient,rc2;
+	GetClientRect(&rcClient);
+	rcClient.left+=EXTRA_MARGINSX;
+	//rcClient.top+=EXTRA_MARGINSY;
 
-	HINSTANCE hLib=LoadLibrary(Path+LangFile);
-	if (hLib==NULL)
+	
+    // Drawing title
+	LPCSTR pPtr=sStatusText;
+	int nLength=FirstCharIndex(pPtr,'\n');
+	rc2=rcClient;
+	dc.SetTextColor(m_cTitleColor);
+	dc.DrawText(pPtr,nLength,&rc2,DT_SINGLELINE|DT_CALCRECT);
+	dc.DrawText(pPtr,nLength,&rc2,DT_SINGLELINE);
+	rcClient.top+=rc2.bottom-rc2.top+EXTRA_LINES;
+
+	dc.SelectObject(m_Font);
+	
+	// Drawing texts
+	dc.SetTextColor(m_cTextColor);
+	while (nLength!=-1)
 	{
-		hLib=LoadLibrary(Path+"lan_en.dll");
+		pPtr+=nLength+1;
+		nLength=FirstCharIndex(pPtr,'\n');
 
-		if (hLib==NULL)
-		{
-			MessageBox(NULL,CString(IDS_ERRORCANNOTLOADLANGUAGEFILE,CommonResource),
-				CString(IDS_ERROR),MB_ICONERROR|MB_OK);
-			return FALSE;
-		}
-
-		MessageBox(NULL,CString(IDS_ERRORCANNOTLOADLANGUAGEFILE2,CommonResource),
-			CString(IDS_ERROR),MB_ICONERROR|MB_OK);
+		rc2=rcClient;
+		dc.DrawText(pPtr,nLength,&rc2,DT_SINGLELINE|DT_CALCRECT);
+		dc.DrawText(pPtr,nLength,&rc2,DT_SINGLELINE);
+	
+		rcClient.top+=rc2.bottom-rc2.top+EXTRA_LINES;
 	}
 
-	SetResourceHandle(hLib,LanguageSpecificResource);
-	return TRUE;
+	// Drawing errors
+	dc.SetTextColor(m_cErrorColor);
+	for (int i=0;i<m_aErrors.GetSize();i++)
+	{
+		rc2=rcClient;	
+		dc.DrawText(m_aErrors[i],-1,&rc2,DT_SINGLELINE|DT_CALCRECT);
+		dc.DrawText(m_aErrors[i],-1,&rc2,DT_SINGLELINE);
+	
+		rcClient.top+=rc2.bottom-rc2.top+EXTRA_LINES;
+	}
+	ReleaseMutex(m_hUpdateMutex);
 }
 
 
-BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg)
+void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ueError,CDatabaseUpdater* pUpdater)
 {
-	if (IsUpdating())
-		return FALSE;
+	if (ueError==ueStopped)
+		return;
 
-	CArray<PDATABASE>* paDatabases;
-	if (paDatabasesArg==NULL)
+	if (WaitForMutex(m_hUpdateMutex,BACKGROUNDUPDATERMUTEXTIMEOUT))
 	{
-		paDatabases=new CArray<PDATABASE>;
-		for (int i=0;i<m_aDatabases.GetSize();i++)
-		{
-			if (m_aDatabases[i]->IsGloballyUpdated())
-				paDatabases->Add(new CDatabase(*m_aDatabases[i]));
-		}
-	}
-	else
-		paDatabases=paDatabasesArg;
-
-	WORD wThreads=CDatabase::CheckIDs(*paDatabases);
-	if (wThreads==0)
-		return FALSE;
-
-	GetUpdatersPointer();
-	
-	m_ppUpdaters=new CDatabaseUpdater*[wThreads+1];
-	
-	for (WORD wThread=0;wThread<wThreads;wThread++)
-	{
-		m_ppUpdaters[wThread]=new CDatabaseUpdater(*paDatabases,paDatabases->GetSize(),
-			UpdateProc,wThread,(DWORD)m_pMainWnd);
-	}
-	m_ppUpdaters[wThreads]=NULL;
-    
-	// Starting
-	for (wThread=0;wThread<wThreads;wThread++)
-		m_ppUpdaters[wThread]->Update(TRUE);
-	
-	
-	ReleaseUpdatersPointer();
-	
-	if (paDatabasesArg==NULL)
-	{
-		for (int i=0;i<paDatabases->GetSize();i++)
-			delete paDatabases->GetAt(i);
-		delete paDatabases;
-	}
-	return TRUE;
-}
-
-void CLocateApp::OnInitDatabaseMenu(HMENU hPopupMenu)
-{
-	// Removing existing items
-	for(int i=GetMenuItemCount(hPopupMenu)-1;i>=0;i--)
-		DeleteMenu(hPopupMenu,i,MF_BYPOSITION);
-
-	CString title;
-	MENUITEMINFO mi;
-	mi.cbSize=sizeof(MENUITEMINFO);
-	mi.fMask=MIIM_DATA|MIIM_ID|MIIM_STATE|MIIM_TYPE;
-	mi.wID=IDM_DEFUPDATEDBITEM;
-	mi.fType=MFT_STRING;
-	mi.fState=MFS_ENABLED;
-	
-	if (m_aDatabases.GetSize()==0)
-	{
-		// Inserting default items
-		title.LoadString(IDS_EMPTY);
-		mi.dwTypeData=(LPSTR)(LPCSTR)title;
-		mi.dwItemData=0;
-		mi.fState=MFS_GRAYED;
-		InsertMenuItem(hPopupMenu,mi.wID,FALSE,&mi);
+		DebugMessage("CLocateAppWnd::CUpdateStatusWnd::~CUpdateStatusWnd() WaitForMutex returns error");
 		return;
 	}
 
-	// Starting to insert database items 
-	for (int i=0;i<m_aDatabases.GetSize();i++)
+	// Now, change pointer to null, if someone is accesing pointer, it may have enough time to read
+	char error[300];
+	int nLabelLength=LoadString(IDS_LASTERROR,error,200);
+
+	LPCSTR szExtra=NULL;
+
+	switch(ueError)
 	{
-		title.Format("&%d: %s",i+1,m_aDatabases[i]->GetName());
-		mi.dwTypeData=(LPSTR)(LPCSTR)title;
-		mi.dwItemData=m_aDatabases[i]->GetID();
-		mi.wID=IDM_DEFUPDATEDBITEM+i;
-		InsertMenuItem(hPopupMenu,mi.wID,FALSE,&mi);
-	}	
-}
+	case ueUnknown:
+		LoadString(IDS_LASTERRORUNKNOWN,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentDatabaseName();
+		break;
+	case ueCreate:
+	case ueOpen:
+		LoadString(IDS_LASTERRORCANNOTOPEN,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentDatabaseName();
+		break;
+	case ueRead:
+		LoadString(IDS_LASTERRORCANNOTREAD,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentDatabaseName();
+		break;
+	case ueWrite:
+		LoadString(IDS_LASTERRORCANNOTWRITE,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentDatabaseName();
+		break;
+	case ueAlloc:
+		LoadString(IDS_LASTERRORCANNOTALLOCATE,error+nLabelLength,300-nLabelLength);
+		break;
+	case ueInvalidDatabase:
+		LoadString(IDS_LASTERRORINVALIDDB,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentDatabaseName();
+		break;
+	case ueFolderUnavailable:
+		LoadString(IDS_LASTERRORROOTUNAVAILABLE,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentRootPath();
+		break;
+	case ueCannotIncrement:
+		LoadString(IDS_LASTERRORCANNOTINCREMENTDB,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentDatabaseName();
+		break;
+	default:
+		sprintf(error+nLabelLength,"%d",(int)ueError);
+		break;
+	}
 
-void CLocateApp::OnDatabaseMenuItem(WORD wID)
-{
-	int iDB=wID-IDM_DEFUPDATEDBITEM;
+	LPSTR szNewPtr;
+	int nLength;
+	if (szExtra!=NULL)
+	{
+		szNewPtr=new char[istrlen(error)+istrlen(szExtra)+1];
+		nLength=wsprintf(szNewPtr,error,szExtra);
+	}
+	else
+	    szNewPtr=alloccopy(error,nLength=istrlen(error));
 
-	ASSERT(iDB>=0 && iDB<m_aDatabases.GetSize());
+	m_aErrors.Add(szNewPtr);
 
-	DWORD dwLength=istrlen(m_aDatabases[iDB]->GetName());
-	LPSTR pDatabaseName=new char[dwLength+2];
-	sMemCopy(pDatabaseName,m_aDatabases[iDB]->GetName(),dwLength);
-	pDatabaseName[dwLength]='\0';
-	pDatabaseName[dwLength+1]='\0';
-
-	GetLocateAppWnd()->OnUpdate(FALSE,pDatabaseName);
-
-	delete[] pDatabaseName;
-}
-
-int CLocateApp::GetDatabaseMenuIndex(HMENU hPopupMenu)
-{
-	MENUITEMINFO mii;
-	mii.cbSize=sizeof(MENUITEMINFO);
-	mii.fMask=MIIM_SUBMENU;
+	// Make status window bigger
+	{
+		CDC dc(this);
+		dc.SetMapMode(MM_TEXT);
+		dc.SelectObject(m_Font);
+		CSize sz=dc.GetTextExtent(szNewPtr,nLength);
 	
-	for(int i=GetMenuItemCount(hPopupMenu)-1;i>=0;i--)
-	{
-		if (!GetMenuItemInfo(hPopupMenu,i,TRUE,&mii))
-			continue;
+		if (m_WindowSize.cx<sz.cx)
+			m_WindowSize.cx=sz.cx;
+		m_WindowSize.cy+=sz.cy+EXTRA_MARGINSY;
+	}
+	
+	ReleaseMutex(m_hUpdateMutex);
 
-		if (mii.hSubMenu!=NULL)
+	SetPosition();
+}
+
+
+void CLocateAppWnd::CUpdateStatusWnd::FormatStatusTextLine(CString& str,const CLocateAppWnd::RootInfo& pRootInfo,int nThreadID,int nThreads)
+{
+	// #X  thread number
+	if (nThreadID!=-1)
+		str << '#' << (int)nThreadID;
+
+	if (pRootInfo.pName==NULL)
+	{
+		// Finished
+		if (nThreadID!=-1)
+			str << ": ";
+
+		switch (pRootInfo.ueError)
 		{
-			if (IsDatabaseMenu(GetSubMenu(hPopupMenu,i)))
-				return i;
+		case ueStopped:
+			str.AddString(IDS_UPDATINGCANCELLED);
+			break;
+		case ueFolderUnavailable:
+		case ueSuccess:
+			str.AddString(IDS_NOTIFYDONE);
+			break;
+		default:
+			str.AddString(IDS_UPDATINGFAILED2);
+			break;
 		}
 	}
-	return -1;
+	else if (pRootInfo.pName[0]=='\0')
+	{
+		// Initializing
+		if (nThreadID!=-1)
+			str << ": ";
+		str.AddString(IDS_NOTIFYINITIALIZING);
+	}
+	else
+	{
+		if (pRootInfo.dwNumberOfDatabases>1)
+		{
+			if (nThreadID!=-1)
+                str << ' ';
+			str << (int)(pRootInfo.dwCurrentDatabase+1) << '/' << (int)pRootInfo.dwNumberOfDatabases << ": ";
+		}
+		else if (nThreadID!=-1)
+			str << ": ";
+		str.AddString(IDS_UPDATINGUPDATING);
+		str << pRootInfo.pName;
+
+		
+		if (pRootInfo.pRoot==NULL)
+		{
+			str << ": ";
+			str.AddString(IDS_NOTIFYWRITINGDATABASE);
+		}
+		else
+		{
+			if (pRootInfo.wProgressState!=WORD(-1))
+			{
+				str << ' ' << (int)((int)(pRootInfo.wProgressState)/10) << '%';
+			}
+
+			str << ": ";
+			str.AddString(IDS_UPDATINGSCANNINGROOT);
+			str << pRootInfo.pRoot;
+		}
+	}
 }
 
+void CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(LOGFONT* pTextFont,LOGFONT* pTitleFont)
+{
+	int nDeviceCaps;
+	{
+		// Getting device caps
+		HDC hScreenDC=::GetDC(NULL);
+		nDeviceCaps=::GetDeviceCaps(hScreenDC,LOGPIXELSY);
+		::ReleaseDC(NULL,hScreenDC);
+	}
+
+	if (pTextFont!=NULL)
+	{
+		ZeroMemory(pTextFont,sizeof(LOGFONT));
+		pTextFont->lfHeight=-MulDiv(8, nDeviceCaps, 72);
+		pTextFont->lfWeight=FW_NORMAL;
+		//pTextFont->lfCharSet=ANSI_CHARSET;
+		//pTextFont->lfOutPrecision=OUT_DEFAULT_PRECIS;
+		//pTextFont->lfClipPrecision=CLIP_DEFAULT_PRECIS;
+		//pTextFont->lfQuality=DEFAULT_QUALITY;
+		//pTextFont->lfPitchAndFamily=DEFAULT_PITCH|FF_DONTCARE;
+		strcpy(pTextFont->lfFaceName,"Tahoma");
+	}
+
+	if (pTitleFont!=NULL)
+	{
+		ZeroMemory(pTitleFont,sizeof(LOGFONT));
+		pTitleFont->lfHeight=-MulDiv(10, nDeviceCaps, 72);
+		pTitleFont->lfWeight=FW_BOLD;
+		//pTitleFont->lfCharSet=ANSI_CHARSET;
+		//pTitleFont->lfOutPrecision=OUT_DEFAULT_PRECIS;
+		//pTitleFont->lfClipPrecision=CLIP_DEFAULT_PRECIS;
+		//pTitleFont->lfQuality=DEFAULT_QUALITY;
+		//pTitleFont->lfPitchAndFamily=DEFAULT_PITCH|FF_DONTCARE;
+		strcpy(pTitleFont->lfFaceName,"Tahoma");
+	}
+}
+
+
+void CLocateAppWnd::CUpdateStatusWnd::SetFonts()
+{
+	if (m_TitleFont.m_hObject!=NULL && m_Font.m_hObject!=NULL)
+		return;
+
+	// Update status tooltip
+	CRegKey RegKey;
+	LOGFONT lTitleFont,lTextFont;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		if (RegKey.QueryValue("TextFont",(LPSTR)&lTextFont,sizeof(LOGFONT))<sizeof(LOGFONT))
+			CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(&lTextFont,NULL);
+	
+		if (RegKey.QueryValue("TitleFont",(LPSTR)&lTitleFont,sizeof(LOGFONT))<sizeof(LOGFONT))
+			CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(NULL,&lTitleFont);
+	}
+	else
+		CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(&lTextFont,&lTitleFont);
+
+	
+	if (m_TitleFont.m_hObject==NULL)
+	{
+		if (!m_TitleFont.CreateFontIndirect(&lTitleFont))
+		{
+			lTitleFont.lfFaceName[0]='\0';
+			if (!m_TitleFont.CreateFontIndirect(&lTitleFont))
+				m_TitleFont.CreateStockObject(DEFAULT_GUI_FONT);
+		}
+		
+	}
+	if (m_Font.m_hObject==NULL)
+	{
+		if (!m_Font.CreateFontIndirect(&lTextFont))
+		{
+			lTextFont.lfFaceName[0]='\0';
+			if (!m_Font.CreateFontIndirect(&lTextFont))
+				m_Font.CreateStockObject(DEFAULT_GUI_FONT);
+		}
+		
+	}
+}
+
+BOOL CLocateAppWnd::CUpdateStatusWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
+{
+	switch (msg)
+	{
+	case WM_ERASEBKGND:
+		{
+			HBRUSH hBrush=CreateSolidBrush(m_cBackColor);
+			if (hBrush!=NULL)
+			{
+				RECT rc;
+				GetClientRect(&rc);
+                FillRect((HDC)wParam,&rc,hBrush);
+				DeleteObject(hBrush);
+				return TRUE;
+			}
+			break;
+		}
+	}
+	return CWnd::WindowProc(msg,wParam,lParam);
+}
+
+
+void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
+{	
+	CRect rcDesktopRect,rcTrayRect;
+	HWND hShellTrayWnd=FindWindow("Shell_TrayWnd",NULL); // Whole tray window
+	HWND hDesktop=FindWindow("Progman","Program Manager");
+	if (hDesktop==NULL)
+		hDesktop=GetDesktopWindow();
+	
+	CPoint ptUpperLeft;
+	CSize szSize;
+	
+	// Computing width and height
+	if (m_WindowSize.cx==0 && m_WindowSize.cy==0)
+	{
+		SetFonts();
+	
+		CDC dc(this);
+		dc.SetMapMode(MM_TEXT);
+
+		// Checking how much space title will take
+		CString str(IDS_UPDATINGTOOLTIPTITLE);
+		dc.SelectObject(m_TitleFont);
+		szSize=dc.GetTextExtent(str);	
+		
+		str.LoadString(IDS_UPDATINGENDED);
+		EnlargeSizeForText(dc,str,szSize);
+		
+        // Changing font
+		dc.SelectObject(m_Font);
+		
+		CDatabaseUpdater** ppUpdaters=GetLocateApp()->GetUpdatersPointer();
+		if (ppUpdaters!=NULL)
+		{
+			for (WORD wThreads=0;ppUpdaters[wThreads]!=NULL;wThreads++);
+
+            CLocateAppWnd::RootInfo ri;
+			for (int i=0;ppUpdaters[i]!=NULL;i++)
+			{
+				szSize.cy+=EXTRA_LINES;
+
+				ri.pName=NULL;
+				ri.pRoot=NULL;
+				ri.ueError=ueSuccess;
+				ri.wProgressState=1000;
+
+				// Cheking how much space "initializing" will take
+				str.Empty();
+				FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
+				CSize szThisLine=dc.GetTextExtent(str);
+				
+				// Cheking how much space "finished" will take
+				ri.pName=(LPSTR)szEmpty;
+				str.Empty();
+				FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
+				EnlargeSizeForText(dc,str,szThisLine);
+				
+				LPCSTR szFile=NULL;
+				CDatabase::ArchiveType nArchiveType;
+				CDatabaseUpdater::CRootDirectory* pRoot;
+				ri.dwNumberOfDatabases=ppUpdaters[i]->GetNumberOfDatabases();
+				for (ri.dwCurrentDatabase=0;ppUpdaters[i]->EnumDatabases(ri.dwCurrentDatabase,ri.pName,szFile,nArchiveType,pRoot);ri.dwCurrentDatabase++)
+				{
+					// Checking how much space "writing database" will take
+					ri.pRoot=NULL;	
+					str.Empty();
+					FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
+					EnlargeSizeForText(dc,str,szThisLine);
+				
+					while (pRoot!=NULL)
+					{
+						// Checking how much space "scanning root" will take
+						ri.pRoot=pRoot->m_Path.GetBuffer();
+						str.Empty();
+						FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
+						EnlargeSizeForText(dc,str,szThisLine);
+						pRoot=pRoot->m_pNext;
+					}
+					
+				}
+
+				szSize.cy+=szThisLine.cy;
+				if (szSize.cx<szThisLine.cx)
+					szSize.cx=szThisLine.cx;
+
+			}
+		}    
+		GetLocateApp()->ReleaseUpdatersPointer();
+		
+		szSize.cx+=2*EXTRA_MARGINSX;
+		szSize.cy+=2*EXTRA_MARGINSY;
+
+	}
+	else
+		szSize=m_WindowSize;
+
+	// Checking where tray window is
+	::GetWindowRect(hDesktop,&rcDesktopRect);
+	if (hShellTrayWnd==NULL)
+	{
+		// Default
+		ptUpperLeft.x=rcDesktopRect.right-szSize.cx-10;
+		ptUpperLeft.y=rcDesktopRect.bottom-szSize.cy-30;
+		return;
+	}
+
+    ::GetWindowRect(hShellTrayWnd,&rcTrayRect);
+	POINT ptDesktopCenter={(rcDesktopRect.left+rcDesktopRect.right)/2,(rcDesktopRect.top+rcDesktopRect.bottom)/2};
+	
+	if (rcTrayRect.top>ptDesktopCenter.y)
+	{
+		// Bottom
+		ptUpperLeft.x=rcTrayRect.right-szSize.cx-1;
+		ptUpperLeft.y=rcTrayRect.top-szSize.cy-1;
+	}
+	else if (rcTrayRect.bottom<ptDesktopCenter.y)
+	{
+		// Top
+		ptUpperLeft.x=rcTrayRect.right-szSize.cx-1;
+		ptUpperLeft.y=rcTrayRect.bottom+1;
+	}
+	else if (rcTrayRect.right<ptDesktopCenter.x)
+	{
+		// Left
+		ptUpperLeft.y=rcDesktopRect.bottom-szSize.cy-1;
+		ptUpperLeft.x=rcTrayRect.right+1;
+	}
+	else
+	{
+		// Right
+		ptUpperLeft.y=rcDesktopRect.bottom-szSize.cy-1;
+		ptUpperLeft.x=rcTrayRect.left-szSize.cx-1;
+	}
+
+	SetWindowPos(HWND_TOP,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOZORDER|SWP_NOACTIVATE);
+	m_WindowSize=szSize;
+}
+
+
+void CLocateAppWnd::CUpdateStatusWnd::Update(WORD wThreads,WORD wRunning,RootInfo* pRootInfos)
+{
+	if (WaitForMutex(m_hUpdateMutex,BACKGROUNDUPDATERMUTEXTIMEOUT))
+	{
+		DebugMessage(" CLocateAppWnd::CUpdateStatusWnd::Update WaitForMutex returns error");
+		return;
+	}
+	
+	
+	sStatusText.Empty();
+
+	// Forming title
+	if (wRunning>0)
+		sStatusText.LoadString(IDS_UPDATINGTOOLTIPTITLE);
+	else
+		sStatusText.LoadString(IDS_UPDATINGENDED);
+
+	for (WORD i=0;i<wThreads;i++)
+	{
+		sStatusText << '\n';
+		FormatStatusTextLine(sStatusText,pRootInfos[i],wThreads>1?i+1:-1,wThreads);
+	}
+	
+	ReleaseMutex(m_hUpdateMutex);
+
+	InvalidateRect(NULL,TRUE);
+}
+
+
+void CLocateAppWnd::CUpdateStatusWnd::IdleClose()
+{
+	KillTimer(ID_UPDATESTATUS);
+	SetTimer(ID_IDLEEXIT,4000,NULL);
+}
+
+BOOL CLocateAppWnd::CUpdateStatusWnd::DestroyWindow()
+{
+	KillTimer(ID_IDLEEXIT);
+	GetLocateAppWnd()->m_pUpdateStatusWnd=NULL;
+	CWnd::DestroyWindow();
+	return TRUE;
+}
 
 #ifdef _DEBUG
 DEBUGALLOCATORTYPE DebugAlloc;

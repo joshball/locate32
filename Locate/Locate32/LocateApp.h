@@ -24,13 +24,64 @@ public:
 		
 		// Tooltip
 		pfEnableUpdateTooltip = 0x10, // Option
-		pfShowUpdateTooltip = 0x20, // Update tooltip should currently shown
 		pfTooltipMask = 0x30,
 		pfTooltipDefault = pfEnableUpdateTooltip,
 		pfTooltipSave = pfEnableUpdateTooltip,
 
 		pfDefault = pfErrorDefault|pfTooltipDefault,
 		pfSave = pfErrorSave|pfTooltipSave
+	};
+	
+	struct RootInfo {
+		LPSTR pName;
+		LPSTR pRoot;
+		DWORD dwNumberOfDatabases;
+		DWORD dwCurrentDatabase;
+		WORD wProgressState;
+		UpdateError ueError;
+	};
+
+	class CUpdateStatusWnd : public CFrameWnd 
+	{
+	public:
+		CUpdateStatusWnd();
+		virtual ~CUpdateStatusWnd();
+	
+		virtual int OnCreate(LPCREATESTRUCT lpcs);
+		virtual void OnNcDestroy();
+		virtual void OnTimer(DWORD wTimerID);
+		virtual void OnPaint();
+		virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+	
+		
+
+	public:
+		void Update();
+		void Update(WORD wThreads,WORD wRunning,RootInfo* pRootInfos);
+		void IdleClose();
+		virtual BOOL DestroyWindow();
+
+		void SetFonts();
+		void SetPosition();
+		void FormatErrorForStatusTooltip(UpdateError ueError,CDatabaseUpdater* pUpdater);
+		void FormatStatusTextLine(CString& str,const CLocateAppWnd::RootInfo& pRootInfo,int nThreadID=-1,int nThreads=1);
+		static void EnlargeSizeForText(CDC& dc,CString& str,CSize& szSize);
+		static void EnlargeSizeForText(CDC& dc,LPCSTR szText,int nLength,CSize& szSize);
+		static void FillFontStructs(LOGFONT* pTextFont,LOGFONT* pTitleFont);
+
+			
+		CString sStatusText;
+		CArrayFAP<LPSTR> m_aErrors;
+		
+		CFont m_TitleFont,m_Font;
+		CSize m_WindowSize;
+
+		COLORREF m_cTextColor;
+		COLORREF m_cTitleColor;
+		COLORREF m_cErrorColor;
+		COLORREF m_cBackColor;
+		
+		HANDLE m_hUpdateMutex;
 	};
 
 public:
@@ -49,7 +100,10 @@ public:
 	
 	DWORD OnAnotherInstance(ATOM aCommandLine);
 	DWORD OnSystemTrayMessage(UINT uID,UINT msg);
-	BOOL SetShellNotifyIconAndTip(HICON hIcon=NULL,UINT uTip=0);
+	BOOL SetUpdateStatusInformation(HICON hIcon=NULL,UINT uTip=0);
+	void GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootInfos);
+	static void FreeRootInfos(WORD wThreads,RootInfo* pRootInfos);
+
 	void AddTaskbarIcon();
 	void DeleteTaskbarIcon();
 	
@@ -76,19 +130,9 @@ public:
 	BYTE OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases=NULL); 
 
 	static DWORD WINAPI KillUpdaterProc(LPVOID lpParameter);
-private:
-	struct RootInfo {
-		LPSTR pName;
-		LPSTR pRoot;
-		DWORD dwNumberOfDatabases;
-		DWORD dwCurrentDatabase;
-		WORD wProgressState;
-		UpdateError ueError;
-	};
-    UINT FormatTooltipStatusText(CString& str,RootInfo* pRootInfo,WORD wThreads,BYTE bShortenLevel);  
+    
 public:
-	void FormatLastErrorForStatusTooltip(UpdateError ueError,CDatabaseUpdater* pUpdater);
-
+	
 public:
 	CMenu m_Menu;
 	CAboutDlg* m_pAbout;
@@ -96,11 +140,11 @@ public:
 	
 
 	CLocateDlgThread* m_pLocateDlgThread;
+	CUpdateStatusWnd* m_pUpdateStatusWnd;
 	
 	HICON* m_pUpdateAnimIcons;
 	int m_nCurUpdateAnimBitmap;
-	volatile LPSTR m_szLastUpdateError;
-
+	
 	CListFP <CSchedule*> m_Schedules;
 
 
@@ -364,7 +408,7 @@ inline CLocateAppWnd* GetLocateAppWnd()
 inline CLocateAppWnd::CLocateAppWnd()
 :	m_pAbout(NULL),m_pSettings(NULL),
 	m_pLocateDlgThread(NULL),m_dwProgramFlags(pfDefault),
-	m_pUpdateAnimIcons(NULL),m_hHook(NULL),m_szLastUpdateError(NULL)
+	m_pUpdateAnimIcons(NULL),m_hHook(NULL)
 {
 	DebugMessage("CLocateAppWnd::CLocateAppWnd()");
 }
@@ -374,12 +418,7 @@ inline CLocateAppWnd::~CLocateAppWnd()
 	DebugMessage("CLocateAppWnd::~CLocateAppWnd()");
 	//m_Schedules.RemoveAll();
 
-	if (m_szLastUpdateError!=NULL)
-	{
-		// At this time, there is no updater threads
-		delete[] m_szLastUpdateError;
-		m_szLastUpdateError=NULL;
-	}
+	
 
 }
 
@@ -435,6 +474,32 @@ inline void CLocateApp::ChangeAndAlloc(LPSTR& pVar,LPCSTR szText,DWORD dwLength)
 	pVar=new char [dwLength+1];
 	CopyMemory(pVar,szText,dwLength);
 	pVar[dwLength]='\0';
+}
+
+
+
+inline void CLocateAppWnd::CUpdateStatusWnd::Update()
+{
+	WORD wThreads,wRunning;
+	RootInfo* pRootInfos;
+	GetLocateAppWnd()->GetRootInfos(wThreads,wRunning,pRootInfos);
+	Update(wThreads,wRunning,pRootInfos);
+	CLocateAppWnd::FreeRootInfos(wThreads,pRootInfos);
+}
+
+inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,CString& str,CSize& szSize)
+{
+	EnlargeSizeForText(dc,str,str.GetLength(),szSize);
+}
+
+inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,LPCSTR szText,int nLength,CSize& szSize)
+{
+	CRect rc(0,0,0,0);
+	dc.DrawText(szText,nLength,&rc,DT_SINGLELINE|DT_CALCRECT);
+	if (szSize.cx<rc.Width())
+		szSize.cx=rc.Width();
+	if (szSize.cy<rc.Height())
+		szSize.cy=rc.Height();
 }
 
 extern FASTALLOCATORTYPE Allocation;
