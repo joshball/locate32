@@ -2510,6 +2510,10 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 
 void CLocateDlg::SortItems(DetailType nColumn,BYTE bDescending)
 {
+	DebugFormatMessage("CLocateDlg::SortItems(%X,%d) BEGIN",int(nColumn),bDescending);
+
+
+	
 	CWaitCursor wait;
 	if ((m_nSorting&127)!=nColumn && (m_nSorting&127)<100)
 		SetSortArrowToHeader(DetailType(m_nSorting&127),TRUE,FALSE); // Removing old arrow
@@ -2520,15 +2524,21 @@ void CLocateDlg::SortItems(DetailType nColumn,BYTE bDescending)
 
 	if (!bDescending)
 	{ 
-		m_pListCtrl->SortItems(ListViewCompareProc,(LPARAM)(nColumn));
+		DebugFormatMessage("Going to sort(1), nColumn is %X",LPARAM(nColumn));
+		BOOL bRet=m_pListCtrl->SortItems(ListViewCompareProc,(LPARAM)(nColumn));
+		DebugFormatMessage("bRet=%X",bRet);
 		m_nSorting=nColumn&127;
 	}
 	else
 	{
-		m_pListCtrl->SortItems(ListViewCompareProc,(LPARAM)(nColumn|128));
+		DebugFormatMessage("Going to sort(2), nColumn is %X",LPARAM(nColumn));
+		BOOL bRet=m_pListCtrl->SortItems(ListViewCompareProc,(LPARAM)(nColumn|128));
+		DebugFormatMessage("bRet=%X",bRet);
 		m_nSorting=nColumn|128;
 	}
 	m_pListCtrl->SendMessage(LVM_FIRST+140/* LVM_SETSELECTEDCOLUMN */,nColumn,0);
+
+	DebugMessage("CLocateDlg::SortItems END");
 }
 
 int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
@@ -2586,14 +2596,10 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		else
 			return lParamSort&128?-1:1;
 	case DetailType::FileType:
-		if (!(GetLocateDlg()->m_dwFlags&fgLVShowFileTypes))
-			return 0;
-		
 		if (pItem1->ShouldUpdateType())
 			pItem1->UpdateType();
 		if (pItem2->ShouldUpdateType())
 			pItem2->UpdateType();
-		
 		if (lParamSort&128)
 			return lstrcmpi(pItem2->GetType(),pItem1->GetType());
 		return lstrcmpi(pItem1->GetType(),pItem2->GetType());
