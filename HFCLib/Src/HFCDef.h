@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2004 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2005 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 
@@ -216,6 +216,12 @@ enum TypeOfResourceHandle {
 
 #define WM_MDICLOSED			WM_FIRSTMDI
 #define WM_MDIPOSCHANGED		WM_FIRSTMDI+1
+
+// For CPropertyPage
+#define WM_REDRAWSELITEMCONTROL		WM_APP+100
+#define WM_FOCUSSELITEMCONTROL		WM_APP+101
+
+
 
 // Error Handling
 typedef DWORD					HFCERROR;

@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2004 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2005 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 
@@ -371,6 +371,188 @@ protected:
 
 };
 
+class COptionsPropertyPage : public CPropertyPage
+{
+public:
+	struct Item;
+
+	enum NewState {
+		Unchecked,
+		Checked,
+		Toggle 
+	};
+	// Callback systtem
+	struct BASICPARAMS {
+		enum Reason {
+			Initialize,
+			SetSpinRange,
+			Get,
+			Set,
+			Apply,
+			ChangingValue
+		} crReason;
+
+		// Input
+		DWORD wParam;
+		void* lParam;
+		COptionsPropertyPage* pPage;
+
+		// Output
+		union {
+			BOOL bChecked;
+			LPSTR pData;
+			LONG lValue;
+		};
+	};
+
+	struct INITIALIZEPARAMS : public BASICPARAMS {
+		HWND hControl;
+	};
+	struct COMBOAPPLYPARAMS : public BASICPARAMS {
+		LONG nCurSel;
+	};
+	struct SPINPOXPARAMS : public BASICPARAMS {
+		int iLow;
+		int iHigh;
+	};
+	struct CHANGINGVALPARAMS : public BASICPARAMS {
+		union {
+			NewState nNewState;
+			LPSTR pNewData;
+			LONG lNewValue;
+		};
+	};
+
+	typedef BOOL (CALLBACK* CALLBACKPROC)(BASICPARAMS* pParams);
+
+	// lParam is pointer to DWORD value which is will be set
+	// wParam is used mask
+	static BOOL CALLBACK DefaultCheckBoxProc(BASICPARAMS* pParams); 
+	
+	// lParam is pointer to DWORD value which is will be set
+	// HIWORD of wParam is mask to be setted, LOWORD is value
+	static BOOL CALLBACK DefaultRadioBoxProc(BASICPARAMS* pParams); 
+
+	// lParam is pointer to DWORD value which is will be set
+	// HIWORD of wParam is mask (shifted 16 bits) to be setted, LOWORD is value (shifted 16 bit)
+	static BOOL CALLBACK DefaultRadioBoxShiftProc(BASICPARAMS* pParams); 
+
+	// lParam is pointer to DWORD value which is will be set
+	// if wParam==0, all values are accepted
+	// if wParam==-1, only nonnegative values are accepted
+	// otherwise HIWORD is maximum, LOWORD is minimum
+	static BOOL CALLBACK DefaultNumericProc(BASICPARAMS* pParams); 
+
+	// lParam is pointer to string class which will be set
+	static BOOL CALLBACK DefaultEditStrProc(BASICPARAMS* pParams); 
+
+
+public:
+	// Item class
+	struct Item {
+	private:
+		BOOL bEnabled;
+
+		// Visualization
+		enum ItemType {
+			Root,
+			CheckBox,
+			RadioBox,
+			Edit,
+			Combo,
+			List,
+			Numeric
+		} nType;
+		Item* pParent;
+		Item** pChilds; // NULL terminated array
+		LPWSTR pString;
+
+		HWND hControl; // Control associated for item
+		HWND hControl2; // Another control associated for item
+
+		// Data
+		union {
+			BOOL bChecked;
+			LPSTR pData;
+			LONG lValue;
+		};
+
+		// Callback
+		CALLBACKPROC pProc;
+		DWORD wParam;
+		void* lParam;
+
+
+	private:
+		Item(ItemType nType,Item* pParent,Item** pChilds,LPWSTR pString,
+			CALLBACKPROC pProc,DWORD wParam,void* lParam);
+		Item(ItemType nType,Item* pParent,Item** pChilds,UINT nStringID,
+			CALLBACKPROC pProc,DWORD wParam,void* lParam);
+		~Item();
+
+		int GetStateImage() const;
+		
+		void SetValuesForBasicParams(COptionsPropertyPage::BASICPARAMS* pParams);
+		void GetValuesFromBasicParams(const COptionsPropertyPage::BASICPARAMS* pParams);
+
+		LPWSTR GetText(BOOL bActive=FALSE) const;
+		void FreeText(LPWSTR pText) const;
+
+		friend COptionsPropertyPage;
+	};
+	
+	
+public:
+	COptionsPropertyPage(UINT nIDTemplate,UINT nIDCaption,UINT nTreeCtrlID);
+	COptionsPropertyPage(LPCTSTR lpszTemplateName,UINT nIDCaption,UINT nTreeCtrlID);
+
+
+	virtual BOOL OnApply();
+	virtual void OnDestroy();
+	virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
+	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
+	virtual void OnActivate(WORD fActive,BOOL fMinimized,HWND hwnd);
+	//virtual void OnTimer(DWORD wTimerID); 
+	
+	virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+
+	BOOL Initialize(Item** pItems);
+	
+	static Item* CreateRoot(LPWSTR szText,Item** pChilds);
+	static Item* CreateRoot(UINT nTextID,Item** pChilds);
+	static Item* CreateCheckBox(LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateCheckBox(UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateRadioBox(LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateRadioBox(UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateEdit(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateEdit(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateListBox(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateListBox(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateComboBox(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateComboBox(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateNumeric(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateNumeric(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+
+private:
+    BOOL InsertItemsToTree(HTREEITEM hParent,Item** pItems,Item* pParent=NULL);
+	BOOL TreeNotifyHandler(NMTVDISPINFO *pTvdi,NMTREEVIEW *pNm);
+	BOOL SetCheckState(HTREEITEM hItem,Item* pItem,NewState nNewState);
+	BOOL SetNumericValue(Item* pItem);
+	BOOL SetTextValue(Item* pItem);
+	BOOL SetListValue(Item* pItem);
+	void EnableChilds(HTREEITEM hItem,BOOL bEnable);
+	void UncheckOtherRadioButtons(HTREEITEM hItem,HTREEITEM hParent);
+	void CallApply(Item** pItems);
+	
+private:
+	CTreeCtrl* m_pTree;
+	CImageList m_Images;
+	Item** m_pItems;
+	UINT m_nTreeID;
+		
+};
+
+
 /////////////////////////////////////////////////
 // Inline function
 /////////////////////////////////////////////////
@@ -724,6 +906,261 @@ inline int CInputDialog::GetInputText(CString& text) const
 	text=m_Input;
 	return text.GetLength();
 }
+
+///////////////////////////
+// Class COptionsPropertyPage
+inline COptionsPropertyPage::COptionsPropertyPage(UINT nIDTemplate,UINT nIDCaption,UINT nTreeCtrlID)
+:	CPropertyPage(nIDTemplate,nIDCaption),m_pTree(NULL),m_pItems(NULL),m_nTreeID(nTreeCtrlID)
+{
+}
+
+inline COptionsPropertyPage::COptionsPropertyPage(LPCTSTR lpszTemplateName,UINT nIDCaption,UINT nTreeCtrlID)
+:	CPropertyPage(lpszTemplateName,nIDCaption),m_pTree(NULL),m_pItems(NULL),m_nTreeID(nTreeCtrlID)
+{
+}
+
+inline COptionsPropertyPage::Item::Item(
+	ItemType nType_,Item* pParent_,Item** pChilds_,LPWSTR pString_,
+	CALLBACKPROC pProc_,DWORD wParam_,void* lParam_)
+:	nType(nType_),pParent(pParent_),bChecked(0),bEnabled(TRUE),
+	wParam(wParam_),lParam(lParam_),pProc(pProc_),hControl(NULL),hControl2(NULL)
+{
+	if (pString_!=NULL)
+		pString=alloccopy(pString_);
+	else 
+		pString=NULL;
+	
+	if (pChilds_!=NULL)
+	{
+		for (int i=0;pChilds_[i]!=NULL;i++);
+		if (i>0)
+		{
+			pChilds=new Item*[i+1];
+			CopyMemory(pChilds,pChilds_,sizeof(Item*)*(i+1));
+			return;
+		}
+	}
+	pChilds=NULL;
+}
+
+inline COptionsPropertyPage::Item::Item(
+	ItemType nType_,Item* pParent_,Item** pChilds_,UINT nStringID,
+	CALLBACKPROC pProc_,DWORD wParam_,void* lParam_)
+:	nType(nType_),pParent(pParent_),bChecked(0),bEnabled(TRUE),
+	wParam(wParam_),lParam(lParam_),pProc(pProc_),hControl(NULL),hControl2(NULL)
+{
+	int nCurLen=50;
+	int iLength;
+	
+	if (!IsFullUnicodeSupport())
+	{
+		// Non-unicode
+		char* szText=new char[nCurLen];
+		while ((iLength=::LoadString(GetResourceHandle(LanguageSpecificResource),nStringID,szText,nCurLen)+1)>=nCurLen)
+		{
+			delete[] szText;
+			nCurLen+=50;
+			szText=new char[nCurLen];
+		}
+		pString=new WCHAR[iLength];
+		MemCopyAtoW(pString,szText,iLength);
+		delete[] szText;
+	}
+	else
+	{
+		// Unicode
+		WCHAR* szText=new WCHAR[nCurLen];
+		while ((iLength=::LoadStringW(GetResourceHandle(LanguageSpecificResource),nStringID,szText,nCurLen)+1)>=nCurLen)
+		{
+			delete[] szText;
+			nCurLen+=50;
+			szText=new WCHAR[nCurLen];
+		}
+		pString=new WCHAR[iLength];
+		MemCopyW(pString,szText,iLength);
+		delete[] szText;
+	}
+
+	if (pChilds_!=NULL)
+	{
+		for (int i=0;pChilds_[i]!=NULL;i++);
+		if (i>0)
+		{
+			pChilds=new Item*[i+1];
+			CopyMemory(pChilds,pChilds_,sizeof(Item*)*(i+1));
+			return;
+		}
+	}
+	pChilds=NULL;
+}
+
+
+inline COptionsPropertyPage::Item::~Item()
+{
+	if (pChilds!=NULL)
+	{
+		for (int i=0;pChilds[i]!=NULL;i++)
+			delete pChilds[i];
+		delete[] pChilds;
+	}
+	if (pString!=NULL)
+		delete[] pString;
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRoot(LPWSTR szText,Item** pChilds)
+{
+	return new Item(Item::Root,NULL,pChilds,szText,NULL,0,0);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRoot(UINT nTextID,Item** pChilds)
+{
+	return new Item(Item::Root,NULL,pChilds,nTextID,NULL,0,0);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateCheckBox(
+	LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::CheckBox,NULL,pChilds,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateCheckBox(
+	UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::CheckBox,NULL,pChilds,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRadioBox(
+	LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::RadioBox,NULL,pChilds,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRadioBox(
+	UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::RadioBox,NULL,pChilds,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateComboBox(
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Combo,NULL,NULL,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateComboBox(
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Combo,NULL,NULL,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateEdit(
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Edit,NULL,NULL,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateEdit(
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Edit,NULL,NULL,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateListBox(
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::List,NULL,NULL,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateListBox(
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::List,NULL,NULL,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateNumeric(
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Numeric,NULL,NULL,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateNumeric(
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Numeric,NULL,NULL,nTextID,pProc,wParam,lParam);
+}
+
+inline int COptionsPropertyPage::Item::GetStateImage() const
+{
+	switch (nType)
+	{
+	case CheckBox:
+		return bChecked?2:1;
+	case RadioBox:
+		return bChecked?4:3;
+	case Root:
+		return 5;
+	default:
+		return 0;
+	}
+}
+
+inline void COptionsPropertyPage::Item::GetValuesFromBasicParams(const COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch (nType)
+	{
+	case RadioBox:
+	case CheckBox:
+		bChecked=pParams->bChecked;
+		break;
+	case Numeric:
+	case List:
+    	lValue=pParams->lValue;
+		break;
+	case Edit:
+	case Combo:
+		if (pData!=NULL)
+			delete[] pData;
+		pData=pParams->pData;
+		break;
+	case Root:
+	default:
+		break;
+	}
+}
+
+inline void COptionsPropertyPage::Item::SetValuesForBasicParams(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	pParams->lParam=lParam;
+	pParams->wParam=wParam;
+	
+	switch (nType)
+	{
+	case RadioBox:
+	case CheckBox:
+		pParams->bChecked=bChecked;
+		break;
+	case Numeric:
+	case List:
+    	pParams->lValue=lValue;
+		break;
+	case Edit:
+	case Combo:
+		pParams->pData=pData;
+		break;
+	case Root:
+	default:
+		pParams->pData=NULL;
+		break;
+	}
+}
+
+inline void COptionsPropertyPage::Item::FreeText(LPWSTR pText) const
+{
+    if (pText!=pString)
+		delete[] pText;
+}
+
+
 
 
 

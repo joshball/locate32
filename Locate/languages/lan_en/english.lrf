@@ -123,11 +123,13 @@ DLGSIZEDATE_FILEDATEATLEAST=Filedate at &least:
 ACCSIZEDATE_FILEDATEATLEAST="L"
 DLGSIZEDATE_FILEDATEATMOST=Filedate at &most:
 ACCSIZEDATE_FILEDATEATMOST="M"
-DLGSIZEDATE_INFOTEXT=Size and date will be looked from database. If database does not contain size and dateinformation, these options will be ignored.
+DLGSIZEDATE_INFOTEXT=Size and date will be looked from database. If \ndatabase does not contain size and dateinformation, these options will be ignored.
 STRSIZEDATA_DATETYPE_MODIFIED=Modified
 STRSIZEDATA_DATETYPE_CREATED=Created
 STRSIZEDATA_DATETYPE_LASTACCESSED=Last accessed
 DLGSIZEDATE_CONTROLWIDTHEXTRA=0
+DLGSIZEDATE_INFOWIDTHEXTRA=0
+DLGSIZEDATE_INFOHEIGHTEXTRA=0
 
 # Advanced dialog (A tab in the main dialog)
 STRADVANCED_TABCAPTION=Advanced

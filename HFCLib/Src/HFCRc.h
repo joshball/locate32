@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2004 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2005 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #ifndef HFCLIB_H // Building rc file
@@ -25,6 +25,10 @@
 #ifndef IDC_STATIC
 #define IDC_STATIC				-1
 #endif
+
+// For COptionsPropertyPage
+#define IDC_SETTINGS                    1299
+#define IDB_OPTIONSPROPERTYPAGEBITMAPS	1299
 
 //Common 3D controls' styles
 #define C3DS_BORDER					0x00008000

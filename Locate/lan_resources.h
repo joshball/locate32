@@ -384,7 +384,6 @@
 #define IDC_TITLECASE                   1174
 #define IDC_TOGGLECASE                  1175
 #define IDC_TREE1                       1175
-#define IDC_SETTINGS                    1175
 #define IDC_LOWERCASE                   1176
 #define IDC_UPPERCASE                   1177
 #define IDC_SELECTALLKEY                1200
@@ -397,9 +396,6 @@
 #define IDD_GENERALSETTINGS             1211
 #define IDD_SIZEDATE                    1212
 #define IDD_LANGUAGESETTINGS            1213
-#define IDC_EDITCONTROLFORSELECTEDITEM  1300
-#define IDC_SPINCONTROLFORSELECTEDITEM  1301
-#define IDC_COMBOCONTROLFORSELECTEDITEM 1302
 #define IDS_LASTERROR					1900
 #define IDS_LASTERRORUNKNOWN			1901
 #define IDS_LASTERRORINVALIDDB			1902

@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2004 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2005 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 
@@ -162,9 +162,9 @@ class CObject;
 
 #include "HFCRc.h"
 #include "HFCWin.h"
-#include "HFCDlgs.h"
 #include "HFCCtrl.h"
 #include "HFCCmn.h"
+#include "HFCDlgs.h"
 #include "HFCCmnEx.h"
 #include "HFCApp.h"
 #include "HFCMath.h"
