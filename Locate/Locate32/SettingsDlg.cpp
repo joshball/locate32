@@ -1862,6 +1862,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateComboBox(IDS_ADVSETSHOWTIMESINFORMAT,TimeFormatComboProc,0,0),
 		CreateCheckBox(IDS_ADVSETUSEPROGRAMFORFOLDERS,OtherExplorerProgram,DefaultCheckBoxProc,
 			CSettingsProperties::settingsUseOtherProgramsToOpenFolders,&m_pSettings->m_dwSettingsFlags),
+		CreateCheckBox(IDS_ADVSETCOMPUTEMD5SUMS,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVComputeMD5Sums,&m_pSettings->m_dwLocateDialogFlags),
 		NULL
 	};
 	Item* LimitMaximumResults[]={
@@ -2420,6 +2422,12 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnCommand(WORD wID,WORD wNotif
 	case IDC_RESTORE:
 		OnRestore();
 		break;
+	case IDC_IMPORT:
+		OnImport();
+		break;
+	case IDC_EXPORT:
+		OnExport();
+		break;
 	case IDC_THREADS:
 		if (wNotifyCode==EN_CHANGE)
 			OnThreads();
@@ -2748,6 +2756,16 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnNotify(int idCtrl,LPNMHDR pn
 	return CPropertyPage::OnNotify(idCtrl,pnmh);
 }
 
+void CSettingsProperties::CDatabasesSettingsPage::OnImport()
+{
+	MessageBox("not implemented");
+}
+
+void CSettingsProperties::CDatabasesSettingsPage::OnExport()
+{
+	MessageBox("not implemented");
+}
+
 BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 {
 	switch(pLvdi->hdr.code)
@@ -2766,6 +2784,8 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(LV_DISPINFO 
 			}
 			else
 				((CDatabase*)pNm->lParam)->Enable(m_pList->GetCheckState(pNm->iItem));
+
+			EnableButtons();
 		}	
 		break;
 	case NM_CLICK:
@@ -3009,7 +3029,11 @@ void CSettingsProperties::CDatabasesSettingsPage::EnableButtons()
 	
 	EnableDlgItem(IDC_EDIT,nSelectedItem!=-1);
 	EnableDlgItem(IDC_REMOVE,bEnable);
-	EnableDlgItem(IDC_UPDATE,bEnable);	
+	EnableDlgItem(IDC_UPDATE,bEnable);
+	
+	
+	EnableDlgItem(IDC_EXPORT,bEnable);
+	EnableDlgItem(IDC_IMPORT,!m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden));
 	
 	if (bEnable)
 	{
@@ -3083,7 +3107,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	CheckDlgButton(IDC_ENABLE,m_pDatabase->IsEnabled());
 	CheckDlgButton(IDC_GLOBALUPDATE,m_pDatabase->IsGloballyUpdated());
 	CheckDlgButton(IDC_STOPIFROOTUNAVAILABLE,m_pDatabase->IsFlagged(CDatabase::flagStopIfRootUnavailable));
-
+	CheckDlgButton(IDC_INCREMENTALUPDATE,m_pDatabase->IsFlagged(CDatabase::flagIncrementalUpdate));
 		
 	// Inserting local drives to drive list
 	DWORD nLength=GetLogicalDriveStrings(0,NULL)+1;
@@ -3287,6 +3311,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 	m_pDatabase->Enable(IsDlgButtonChecked(IDC_ENABLE));
 	m_pDatabase->UpdateGlobally(IsDlgButtonChecked(IDC_GLOBALUPDATE));
 	m_pDatabase->SetFlag(CDatabase::flagStopIfRootUnavailable,IsDlgButtonChecked(IDC_STOPIFROOTUNAVAILABLE));
+	m_pDatabase->SetFlag(CDatabase::flagIncrementalUpdate,IsDlgButtonChecked(IDC_INCREMENTALUPDATE));
 
 	// Setting thread ID
 	m_pDatabase->SetThreadId((WORD)SendDlgItemMessage(IDC_USEDTHREAD,CB_GETCURSEL));

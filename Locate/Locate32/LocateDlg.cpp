@@ -282,6 +282,8 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_pListCtrl->InsertColumn(DatabaseArchive,IDS_LISTDATABASEFILE,FALSE,LVCFMT_LEFT,150,LanguageSpecificResource);
 	m_pListCtrl->InsertColumn(VolumeLabel,IDS_LISTVOLUMELABEL,FALSE,LVCFMT_LEFT,100,LanguageSpecificResource);
 	m_pListCtrl->InsertColumn(VolumeSerial,IDS_LISTVOLUMESERIAL,FALSE,LVCFMT_LEFT,90,LanguageSpecificResource);
+	m_pListCtrl->InsertColumn(VOlumeFileSystem,IDS_LISTVOLUMEFILESYSTEM,FALSE,LVCFMT_LEFT,90,LanguageSpecificResource);
+	m_pListCtrl->InsertColumn(MD5sum,IDS_LISTMD5SUM,FALSE,LVCFMT_LEFT,100,LanguageSpecificResource);
 	
 	m_pListCtrl->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP,LVS_EX_HEADERDRAGDROP);
 	m_pListCtrl->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General","ListWidths");
@@ -554,6 +556,12 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		break;
 	case IDM_FORCEUPDATE:
 		OnUpdateLocatedItem();
+		break;
+	case IDM_COMPUTEMD5SUM:
+		OnComputeMD5Sums(FALSE);
+		break;
+	case IDM_MD5SUMSFORSAMESIZEFILES:
+		OnComputeMD5Sums(TRUE);
 		break;
 	case IDM_CHANGEFILENAME:
 	case IDM_CHANGEFILENAMEACCEL:
@@ -2716,6 +2724,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 	case DetailType::Owner:
 	case DetailType::ShortFileName:	
 	case DetailType::ShortFilePath:
+	case DetailType::MD5sum:
 		{
 			if (pItem1->ShouldUpdateExtra(nDetail))
 				pItem1->UpdateByDetail(nDetail);
@@ -2762,7 +2771,32 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		}
 		return lstrcmpi(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetArchiveName(),
 			GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetArchiveName());
+	case DetailType::VolumeLabel:
+		if (lParamSort&128)
+		{
+			return lstrcmpi(CLocateDlg::GetVolumeLabel(pItem2->GetDatabaseID(),pItem2->GetRootID()),
+				CLocateDlg::GetVolumeLabel(pItem1->GetDatabaseID(),pItem1->GetRootID()));
+		}
+		return lstrcmpi(CLocateDlg::GetVolumeLabel(pItem1->GetDatabaseID(),pItem1->GetRootID()),
+			CLocateDlg::GetVolumeLabel(pItem2->GetDatabaseID(),pItem2->GetRootID()));
+	case DetailType::VolumeSerial:
+		if (lParamSort&128)
+		{
+			return lstrcmpi(CLocateDlg::GetVolumeSerial(pItem2->GetDatabaseID(),pItem2->GetRootID()),
+				CLocateDlg::GetVolumeSerial(pItem1->GetDatabaseID(),pItem1->GetRootID()));
+		}
+		return lstrcmpi(CLocateDlg::GetVolumeSerial(pItem1->GetDatabaseID(),pItem1->GetRootID()),
+			CLocateDlg::GetVolumeSerial(pItem2->GetDatabaseID(),pItem2->GetRootID()));
+	case DetailType::VOlumeFileSystem:
+		if (lParamSort&128)
+		{
+			return lstrcmpi(CLocateDlg::GetVolumeFileSystem(pItem2->GetDatabaseID(),pItem2->GetRootID()),
+				CLocateDlg::GetVolumeFileSystem(pItem1->GetDatabaseID(),pItem1->GetRootID()));
+		}
+		return lstrcmpi(CLocateDlg::GetVolumeFileSystem(pItem1->GetDatabaseID(),pItem1->GetRootID()),
+			CLocateDlg::GetVolumeFileSystem(pItem2->GetDatabaseID(),pItem2->GetRootID()));
 	}
+	
 	return 0;
 }
 
@@ -4474,7 +4508,79 @@ void CLocateDlg::OnUpdateLocatedItem()
 	
         nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
 	}
-}	
+}
+
+void CLocateDlg::OnComputeMD5Sums(BOOL bForSameSizeFilesOnly)
+{
+	CWaitCursor e;
+	if (bForSameSizeFilesOnly)
+	{
+		UINT uSelected=m_pListCtrl->GetSelectedCount();
+		if (uSelected<2)
+			return; 
+        
+		CLocatedItem** pItems=new CLocatedItem*[uSelected];
+		int* pItemsID=new int[uSelected];
+
+		int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+		for (UINT i=0;i<uSelected;i++)
+		{
+			ASSERT(nItem!=-1);
+			pItems[i]=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+			pItemsID[i]=nItem;
+			nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+		}
+
+		for (UINT i=0;i<uSelected;i++)
+		{
+			if (pItems[i]==NULL)
+				continue;
+
+			BOOL bFound=FALSE;
+
+			for (UINT j=i+1;j<uSelected;j++)
+			{
+				if (pItems[j]==NULL)
+					continue;
+
+				if (pItems[i]->GetFileSizeHi()==pItems[j]->GetFileSizeHi() &&
+					pItems[i]->GetFileSizeLo()==pItems[j]->GetFileSizeLo())
+				{
+					bFound=TRUE;
+					pItems[j]->ComputeMD5sum(TRUE);
+					m_pListCtrl->RedrawItems(pItemsID[j],pItemsID[j]);
+					pItems[j]=NULL;
+				}
+			}
+
+			if (bFound)
+			{
+				pItems[i]->ComputeMD5sum(TRUE);
+				m_pListCtrl->RedrawItems(pItemsID[i],pItemsID[i]);
+				pItems[i]=NULL;
+			}
+		}
+
+		delete[] pItems;
+		delete[] pItemsID;
+	}
+	else
+	{
+		int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+		while (nItem!=-1)
+		{
+			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+			if (pItem!=NULL)
+			{
+				pItem->ComputeMD5sum(TRUE);
+				m_pListCtrl->RedrawItems(nItem,nItem);
+			}
+			nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+		}
+	
+        
+	}
+}
 
 void CLocateDlg::OnSelectDetails()
 {

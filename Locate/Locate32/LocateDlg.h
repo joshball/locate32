@@ -70,7 +70,10 @@ public:
 		DatabaseArchive=15,
 		VolumeLabel=16,
 		VolumeSerial=17,
-		LastType=17,
+		VOlumeFileSystem=18,
+		MD5sum=19,
+		LastType=19,
+
 
 		Needed=255
 	};
@@ -425,7 +428,8 @@ protected:
 	void OnChangeFileName();
 	void OnChangeFileNameCase();
 	void OnUpdateLocatedItem();
-	
+	void OnComputeMD5Sums(BOOL bForSameSizeFilesOnly);
+
 	BOOL SetListStyle(int id,BOOL bInit=FALSE);
 	void SetVisibleWindowInTab();
 	void SaveRegistry();
@@ -482,7 +486,8 @@ public:
 		fgLVDontShowHiddenFiles=0x00000040,
 		fgLVDontShowTooltips=0x00010000,
 		fgLVNoDoubleItems=0x00020000,
-		fgLVShowFlag=0x000300F0,
+		fgLVComputeMD5Sums=0x00040000,
+		fgLVShowFlag=0x000700F0,
 		
 		fgLVUseGetFileTitle=0x00000000,
 		fgLVUseOwnMethod=0x00000100,
@@ -503,8 +508,8 @@ public:
 		fgLVStyleAlwaysUnderline=0x00008000|fgLVStyleUnderLine,
 		fgLVStyleUnderlineFlag=0x00008000|fgLVStyleUnderLine,
 		fgLVStyleFlag=0x0000F000,
-		fgLVFlag=0x0003FFF0,
-		fgLVSave=0x0003FFF0,
+		fgLVFlag=0x0007FFF0,
+		fgLVSave=0x0007FFF0,
 			
 		// Name tab
 		fgNameMultibleDirectories=0x04000000,

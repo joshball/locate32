@@ -132,6 +132,7 @@ inline LPSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) con
 	case CLocateDlg::DetailType::Owner:
 	case CLocateDlg::DetailType::ShortFileName:
 	case CLocateDlg::DetailType::ShortFilePath:
+	case CLocateDlg::DetailType::MD5sum:
 		{
 			LPSTR ret=GetExtraText(nDetailType);
 			if (ret==NULL)
@@ -150,6 +151,8 @@ inline LPSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) con
 		return const_cast<LPSTR>(CLocateDlg::GetVolumeLabel(GetDatabaseID(),GetRootID()));
 	case CLocateDlg::DetailType::VolumeSerial:
 		return const_cast<LPSTR>(CLocateDlg::GetVolumeSerial(GetDatabaseID(),GetRootID()));
+	case CLocateDlg::DetailType::VOlumeFileSystem:
+		return const_cast<LPSTR>(CLocateDlg::GetVolumeFileSystem(GetDatabaseID(),GetRootID()));
 	}
 	return const_cast<LPSTR>(szEmpty);
 }
@@ -214,7 +217,7 @@ inline BOOL CLocatedItem::ShouldUpdateParentIcon2() const
 
 inline BOOL CLocatedItem::ShouldUpdateExtra(CLocateDlg::DetailType nDetail) const
 {
-	if (!(GetLocateDlg()->GetExStyle()&CLocateDlg::efEnableItemUpdating))
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
 		return FALSE;
 
 	ExtraInfo* pTmp=pFirstExtraInfo;
@@ -229,7 +232,7 @@ inline BOOL CLocatedItem::ShouldUpdateExtra(CLocateDlg::DetailType nDetail) cons
 
 inline void CLocatedItem::CheckIfDeleted()
 {
-	if (!(GetLocateDlg()->GetExStyle()&CLocateDlg::efEnableItemUpdating))
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
 		return;
 	
 

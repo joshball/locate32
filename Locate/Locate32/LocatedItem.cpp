@@ -2,7 +2,11 @@
 #include "Locate32.h"
 
 #include <md5.h>
+#ifdef HFC_MTLIBS
+#pragma comment(lib, "libmd5mt.lib")
+#else
 #pragma comment(lib, "libmd5.lib")
+#endif
 
 
 
@@ -170,6 +174,9 @@ void CLocatedItem::UpdateByDetail(CLocateDlg::DetailType nDetail)
 	case CLocateDlg::DetailType::ShortFilePath:
 		UpdateShortFilePath();
 		break;
+	case CLocateDlg::DetailType::MD5sum:
+		ComputeMD5sum();
+		break;
 	}	
 }
 
@@ -186,9 +193,9 @@ BOOL CLocatedItem::ShouldUpdateByDetail(CLocateDlg::DetailType nDetail) const
 	case CLocateDlg::DetailType::DatabaseArchive:
 	case CLocateDlg::DetailType::VolumeLabel:
 	case CLocateDlg::DetailType::VolumeSerial:
+	case CLocateDlg::DetailType::VOlumeFileSystem:
 		return FALSE;
 	case CLocateDlg::DetailType::Title:
-		// Tässä tulee virhe, tarkista ketkä kutsuu tätä
 		return ShouldUpdateTitle() || ShouldUpdateIcon();
 	case CLocateDlg::DetailType::InFolder:
 		return ShouldUpdateParentIcon();
@@ -613,6 +620,81 @@ void CLocatedItem::UpdateDimensions()
 		pField->szImageDimension=dim;
 
 	ItemDebugMessage("CLocatedItem::UpdateDimensions END");
+}
+
+void CLocatedItem::ComputeMD5sum(BOOL bForce)
+{
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+
+	ItemDebugMessage("CLocatedItem::ComputeMD5sum BEGIN");
+
+	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::DetailType::MD5sum);
+	pField->bShouldUpdate=FALSE;
+
+	if (!bForce && !(GetLocateDlg()->GetFlags()&CLocateDlg::fgLVComputeMD5Sums))
+		return; 
+		
+	if (pField->szText!=NULL)
+	{
+		Allocation.Free(pField->szText);
+		pField->szText=NULL;
+	}
+
+	if (IsFolder() || IsDeleted())
+		return; // No need
+
+
+
+	// Computing MD5 sum
+	md5_state_t state;
+	md5_byte_t digest[16];
+	md5_init(&state);
+
+	BOOL bOK=TRUE;
+	CFile* pFile=NULL;
+	try {
+		pFile=new CFile(GetPath(),CFile::defRead,TRUE);
+	
+		md5_byte_t* pData=new md5_byte_t[1024];
+	
+		for (;;)
+		{	
+			DWORD dwRead=pFile->Read(pData,1024*sizeof(md5_byte_t));
+			if (dwRead==0)
+				break;
+			md5_append(&state, pData, dwRead);
+		}
+        
+		delete[] pData;		
+		pFile->Close();
+	}
+	catch (...)
+	{
+		bOK=FALSE;
+	}
+
+	if (pFile!=NULL)
+		delete pFile;
+
+    if (bOK)
+	{
+		md5_finish(&state, digest);
+
+		pField->szText=(char*)Allocation.AllocateFast(2*16+1);
+
+		for (int i=0;i<16;i++)
+		{
+			BYTE bHi=BYTE(digest[i]>>4)&0xF;
+			BYTE bLo=BYTE(digest[i]&0xF);
+
+			pField->szText[i*2]=bHi>=10?bHi-10+'a':bHi+'0';
+			pField->szText[i*2+1]=bLo>=10?bLo-10+'a':bLo+'0';
+		}
+		pField->szText[16*2]='\0';
+	}
+
+	ItemDebugMessage("CLocatedItem::ComputeMD5sum END");
 }
 
 void CLocatedItem::UpdateOwner()

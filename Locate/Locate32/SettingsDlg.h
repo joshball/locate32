@@ -327,7 +327,11 @@ public:
 		void OnUpdate();
 		void OnRestore();
 		void OnThreads();
+		void OnImport();
+		void OnExport();
+
 		void SetDatabasesToList();
+		
 
 		BOOL ItemUpOrDown(BOOL bUp);		
 		BOOL IncreaseThread(int nItem,CDatabase* pDatabase,BOOL bDecrease=FALSE);

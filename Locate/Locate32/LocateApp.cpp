@@ -2406,7 +2406,10 @@ UINT CLocateAppWnd::FormatTooltipStatusText(CString& str,RootInfo* pRootInfo,WOR
 		}
 		else
 		{
-			str << ' ' << (int)(pRootInfo[i].dwCurrentDatabase+1) << '/' << (int)pRootInfo[i].dwNumberOfDatabases << ": ";
+			if (pRootInfo[i].dwNumberOfDatabases>1)
+				str << ' ' << (int)(pRootInfo[i].dwCurrentDatabase+1) << '/' << (int)pRootInfo[i].dwNumberOfDatabases << ": ";
+			else if (wThreads>1)
+				str << ": ";
 			str << pRootInfo[i].pName;
 
 			
@@ -3506,6 +3509,15 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 				return FALSE;
 			}
 			break;
+		case ueCannotIncrement:
+			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowNonCriticalErrors)
+			{
+				CString str;
+				str.Format(IDS_ERRORCANNOTWRITEINCREMENTALLY,pUpdater->GetCurrentDatabaseName());
+				
+				return ::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
+			}
+			return TRUE;
 		}
 		break;
 	}

@@ -56,6 +56,7 @@ public:
 	void UpdateOwner();
 	void UpdateShortFileName();
 	void UpdateShortFilePath();
+	void ComputeMD5sum(BOOL bForce=FALSE);
 
 	void SetToDeleted();
 	void OemtoAnsi();
@@ -156,7 +157,6 @@ public:
 	BOOL GetImageDimensions(SIZE& dim) const;
 	int GetImageDimensionsProduct() const;
 	LPSTR GetExtraText(CLocateDlg::DetailType nDetailType) const; 
-	void ExtraShouldUpdateIfExists(CLocateDlg::DetailType nDetailType);
 	void ExtraSetUpdateWhenFileSizeChanged();
 	void DeleteAllExtraFields();
     BOOL IsItemShortcut() const;
@@ -348,21 +348,22 @@ inline LPSTR CLocatedItem::GetExtraText(CLocateDlg::DetailType nDetail) const
 	return NULL;
 }
 
-inline void CLocatedItem::ExtraShouldUpdateIfExists(CLocateDlg::DetailType nDetail)
-{
-	ExtraInfo* pInfo=GetFieldForType(nDetail);
-	if (pInfo!=NULL)
-		pInfo->bShouldUpdate=TRUE;
-}
-
 inline void CLocatedItem::ExtraSetUpdateWhenFileSizeChanged()
 {
 	ExtraInfo* pTmp=pFirstExtraInfo;
 	while (pTmp!=NULL)
 	{
-		if (pTmp->nType==CLocateDlg::DetailType::Owner || 
-			pTmp->nType==CLocateDlg::DetailType::ImageDimensions)
-			pTmp->bShouldUpdate=TRUE;
+		switch (pTmp->nType)
+		{
+		case CLocateDlg::DetailType::Owner:
+		case CLocateDlg::DetailType::ImageDimensions:
+            pTmp->bShouldUpdate=TRUE;
+			break;
+		case CLocateDlg::DetailType::MD5sum:
+			if (GetLocateDlg()->GetFlags()&CLocateDlg::fgLVComputeMD5Sums)
+				pTmp->bShouldUpdate=TRUE;
+			break;
+		}
 		pTmp=pTmp->pNext;
 	}
 }
@@ -390,6 +391,7 @@ inline CLocatedItem::ExtraInfo::~ExtraInfo()
 	case CLocateDlg::DetailType::ShortFileName:
 	case CLocateDlg::DetailType::ShortFilePath:
 	case CLocateDlg::DetailType::Owner:
+	case CLocateDlg::DetailType::MD5sum:
 		if (szText!=NULL && szText!=szEmpty)
 			Allocation.Free(szText);
 		break;
