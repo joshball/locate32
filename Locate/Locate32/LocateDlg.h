@@ -422,6 +422,7 @@ protected:
 	void OnCopyPathToClipboard(BOOL bShortPath);
 	void OnChangeFileName();
 	void OnChangeFileNameCase();
+	void OnUpdateLocatedItem();
 	
 	BOOL SetListStyle(int id,BOOL bInit=FALSE);
 	void SaveRegistry();
@@ -459,6 +460,7 @@ public:
 	ImageHandlerDll* m_pImageHandler;
 
 
+	// 32 bit set for settings
 	enum LocateDialogFlags {
 		// Dialog
 		fgLargeMode=0x00000001,
@@ -519,16 +521,37 @@ public:
 		fgAdvancedSave=0x10000000,
 
 		// other
-		fgOtherUseOldMethodToNotifyChanges=0x80000000,
-		fgOtherFlag=0x80000000,
-		fgOtherSave=0x80000000,
+		fgOtherFlag=0x00000000,
+		fgOtherSave=0x00000000,
 
 		fgDefault=fgLVStyleSystemDefine|fgLVUseOwnMethod|fgLVHideKnownExtensions|fgLV1stCharUpper|
 			fgLVShowIcons|fgLVShowFileTypes|fgLoadRegistryTypes,
 		fgSave=fgDialogSave|fgLVSave|fgNameSave|fgTimeDateSizeSave|fgAdvancedSave|fgOtherSave		// mask to using when saving to registry
 	};
 
-	
+	// Another 32 set for settings
+	enum LocateDialogExtraFlags {
+		// Background operations
+		efDisableItemUpdating = 0x00,
+        efEnableItemUpdating = 0x01,
+		efItemUpdatingMask = 0x01,
+		efItemUpdatingSave = 0x01,
+		
+		efDisableFSTracking = 0x00,
+		efEnableFSTracking  = 0x02,
+		efEnableFSTrackingOld = 0x04|efEnableFSTracking,
+		efTrackingMask = efEnableFSTracking|efEnableFSTrackingOld,
+		efTrackingSave = efEnableFSTracking|efEnableFSTrackingOld,
+		
+		efBackgroundDefault = efEnableItemUpdating|efEnableFSTracking,
+		efBackgroundSave = efItemUpdatingSave|efTrackingSave,
+
+		efDefault = efBackgroundDefault,
+		efSave = efBackgroundSave
+	};
+
+
+
 public:
 	CTabCtrl* m_pTabCtrl;
 	CListCtrlEx* m_pListCtrl;
@@ -544,6 +567,7 @@ public:
 	
 protected:
 	DWORD m_dwFlags;
+	DWORD m_dwExtraFlags;
 
 	IContextMenu* m_pActiveContextMenu;
 	CMenu m_Menu;
@@ -582,6 +606,7 @@ protected:
 	// Accessors
 public:
 	DWORD GetFlags() const { return m_dwFlags; }
+	DWORD GetExtraFlags() const { return m_dwExtraFlags; }
 	DWORD GetMaxFoundFiles() const { return m_dwMaxFoundFiles; }
 	void SetMaxFoundFiles(DWORD dwValue) { m_dwMaxFoundFiles=dwValue; }
 
@@ -595,6 +620,8 @@ public:
 	inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
 	inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
 	inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
+
+	static LRESULT CALLBACK DebugWindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 #endif
 };
 

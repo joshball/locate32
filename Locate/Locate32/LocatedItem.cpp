@@ -249,6 +249,9 @@ void CLocatedItem::UpdateTitle()
 
 	if ((GetLocateDlg()->GetFlags()&CLocateDlg::fgLVMethodFlag)==CLocateDlg::fgLVUseGetFileTitle)
 	{
+		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+			return;
+		
 		szTitle=(char*)Allocation.Allocate(bNameLength+1);
 		WORD nLen=GetFileTitle(GetPath(),szTitle,bNameLength+1);
 		if (nLen!=0)
@@ -494,8 +497,12 @@ void CLocatedItem::UpdateType()
 
 void CLocatedItem::UpdateAttributes()
 {
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+
 	ItemDebugMessage("CLocatedItem::UpdateAttributes BEGIN");
-	
+
+
 	dwFlags|=LITEM_ATTRIBOK;
 	if (IsDeleted())
 		return;
@@ -514,6 +521,9 @@ void CLocatedItem::UpdateAttributes()
 
 void CLocatedItem::UpdateFileSizeAndTime()
 {
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+
 	ItemDebugMessage("CLocatedItem::UpdateFileSizeAndTime BEGIN");
 	
 	if (IsFolder())
@@ -575,6 +585,9 @@ void CLocatedItem::UpdateFileSizeAndTime()
 
 void CLocatedItem::UpdateDimensions()
 {
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+
 	ItemDebugMessage("CLocatedItem::UpdateDimensions BEGIN");
 	
 	if (GetLocateDlg()->m_pImageHandler==NULL)
@@ -597,6 +610,9 @@ void CLocatedItem::UpdateDimensions()
 
 void CLocatedItem::UpdateOwner()
 {
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+	
 	ItemDebugMessage("CLocatedItem::UpdateOwner BEGIN");
 	
 	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::DetailType::Owner);
@@ -672,6 +688,9 @@ void CLocatedItem::UpdateOwner()
 
 void CLocatedItem::UpdateShortFileName()
 {
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+
 	ItemDebugFormatMessage4("CLocatedItem::UpdateShortFileName BEGIN %s",GetPath(),0,0,0);
 	
 	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::DetailType::ShortFileName);
@@ -708,6 +727,9 @@ void CLocatedItem::UpdateShortFileName()
 
 void CLocatedItem::UpdateShortFilePath()
 {
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+
 	ItemDebugMessage("CLocatedItem::UpdateShortFilePath BEGIN");
 	
 	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::DetailType::ShortFilePath);
@@ -741,6 +763,9 @@ void CLocatedItem::UpdateShortFilePath()
 
 void CLocatedItem::SetToDeleted()
 {
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+
 	ItemDebugMessage("CLocatedItem::SetToDeleted BEGIN");
 	
 	char szBuffer[80];
@@ -771,6 +796,9 @@ void CLocatedItem::SetToDeleted()
 
 BOOL CLocatedItem::RemoveFlagsForChanged()
 {
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return FALSE;
+
 	ItemDebugFormatMessage4("CLocatedItem::RemoveFlagsForChanged BEGIN, item:%s, flags already=%X",GetPath(),dwFlags,0,0);
 	
 

@@ -78,8 +78,8 @@ BOOL CResults::Create(CListCtrl* pList,int* pDetails,int nDetails)
 				// Updating if necessary
 				
 				// TODO: Temporarely disabled
-				//if (pItem->ShouldUpdateByDetail((CLocateDlg::DetailType)m_pDetails[i]))
-				//	pItem->UpdateByDetail((CLocateDlg::DetailType)m_pDetails[i]);
+				if (pItem->ShouldUpdateByDetail((CLocateDlg::DetailType)m_pDetails[i]))
+					pItem->UpdateByDetail((CLocateDlg::DetailType)m_pDetails[i]);
 				
 				// Retrieving detail text
 				LPSTR szDetail=pItem->GetDetailText((CLocateDlg::DetailType)m_pDetails[i]);

@@ -1015,7 +1015,10 @@ BOOL CALLBACK COptionsPropertyPage::DefaultRadioBoxProc(COptionsPropertyPage::BA
 	case BASICPARAMS::Initialize:
 		break;
 	case BASICPARAMS::Get:
-		pParams->bChecked=((*((DWORD*)pParams->lParam))&(HIWORD(pParams->wParam)))==LOWORD(pParams->wParam);
+		if (pParams->lParam!=NULL)
+			pParams->bChecked=((*((DWORD*)pParams->lParam))&(HIWORD(pParams->wParam)))==LOWORD(pParams->wParam);
+		else
+			pParams->bChecked=0;
 		break;
 	case BASICPARAMS::Set:
 		/*
@@ -1025,7 +1028,7 @@ BOOL CALLBACK COptionsPropertyPage::DefaultRadioBoxProc(COptionsPropertyPage::BA
 		*/
 		break;
 	case BASICPARAMS::Apply:
-		if (pParams->bChecked)
+		if (pParams->bChecked && pParams->lParam!=NULL)
 		{
 			*((DWORD*)pParams->lParam)&=~HIWORD(pParams->wParam);
 			*((DWORD*)pParams->lParam)|=LOWORD(pParams->wParam);
@@ -1167,7 +1170,8 @@ BOOL CALLBACK COptionsPropertyPage::DefaultEditStrProc(BASICPARAMS* pParams)
 
 CSettingsProperties::CSettingsProperties(HWND hParent)
 :	CPropertySheet(IDS_SETTINGS,hParent,0),
-	m_nMaximumFoundFiles(0),m_dwLocateDialogFlags(CLocateDlg::fgDefault),
+	m_nMaximumFoundFiles(0),
+	m_dwLocateDialogFlags(CLocateDlg::fgDefault),m_dwLocateDialogExtraFlags(CLocateDlg::efDefault),
 	m_bDefaultFlag(defaultDefault),	m_dwSettingsFlags(settingsDefault),
 	m_nNumberOfDirectories(DEFAULT_NUMBEROFDIRECTORIES)
 {
@@ -1210,10 +1214,23 @@ BOOL CSettingsProperties::LoadSettings()
 	
 	m_DateFormat=((CLocateApp*)GetApp())->m_strDateFormat;
 	m_TimeFormat=((CLocateApp*)GetApp())->m_strTimeFormat;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	
+	if (GetLocateDlg()!=NULL)
 	{
-		RegKey.QueryValue("Program Status",m_dwLocateDialogFlags);
-		m_dwLocateDialogFlags&=CLocateDlg::fgSave;
+		m_dwLocateDialogFlags=GetLocateDlg()->GetFlags();
+		m_dwLocateDialogExtraFlags=GetLocateDlg()->GetExtraFlags();
+	}
+	else if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		DWORD temp=m_dwLocateDialogFlags;
+		RegKey.QueryValue("Program Status",temp);
+		m_dwLocateDialogFlags&=~CLocateDlg::fgSave;
+		m_dwLocateDialogFlags|=temp&CLocateDlg::fgSave;
+
+		temp=m_dwLocateDialogExtraFlags;
+		RegKey.QueryValue("Program StatusExtra",temp);
+		m_dwLocateDialogExtraFlags&=~CLocateDlg::efSave;
+		m_dwLocateDialogExtraFlags|=temp&CLocateDlg::efSave;
 
 	}
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Recent Strings",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
@@ -1337,6 +1354,7 @@ BOOL CSettingsProperties::SaveSettings()
 	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
 		RegKey.SetValue("Program Status",m_dwLocateDialogFlags&CLocateDlg::fgSave);
+		RegKey.SetValue("Program StatusExtra",m_dwLocateDialogExtraFlags&CLocateDlg::efSave);
 		RegKey.SetValue("DateFormat",m_DateFormat);
 		RegKey.SetValue("TimeFormat",m_TimeFormat);
 		RegKey.SetValue("OverrideExplorer",DWORD(m_bAdvancedAndContextMenuFlag&hookExplorer?TRUE:FALSE));
@@ -1786,7 +1804,6 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 {
 	COptionsPropertyPage::OnInitDialog(hwndFocus);
 
-	
 	Item* TitleMethodItems[]={
 		CreateCheckBox(IDS_ADVSETFIRSTCHARUPPER,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLV1stCharUpper,&m_pSettings->m_dwLocateDialogFlags),
@@ -1803,6 +1820,10 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			MAKELONG(CLocateDlg::fgLVShowShellType,CLocateDlg::fgLVShowShellType),&m_pSettings->m_dwLocateDialogFlags),
 		CreateRadioBox(IDS_ADVSETUSEOWNMETHODFORTYPE,NULL,DefaultRadioBoxProc,
 			MAKELONG(0,CLocateDlg::fgLVShowShellType),&m_pSettings->m_dwLocateDialogFlags),
+		NULL
+	};
+	Item* OtherExplorerProgram[]={
+		CreateEdit(IDS_ADVSETOPENFOLDERWITH,DefaultEditStrProc,0,&m_pSettings->m_OpenFoldersWith),
 		NULL
 	};
 
@@ -1823,6 +1844,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CLocateDlg::fgLVNoDoubleItems,&m_pSettings->m_dwLocateDialogFlags),
 		CreateComboBox(IDS_ADVSETSHOWDATESINFORMAT,DateFormatComboProc,0,0),
 		CreateComboBox(IDS_ADVSETSHOWTIMESINFORMAT,TimeFormatComboProc,0,0),
+		CreateCheckBox(IDS_ADVSETUSEPROGRAMFORFOLDERS,OtherExplorerProgram,DefaultCheckBoxProc,
+			CSettingsProperties::settingsUseOtherProgramsToOpenFolders,&m_pSettings->m_dwSettingsFlags),
 		NULL
 	};
 	Item* LimitMaximumResults[]={
@@ -1831,25 +1854,37 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL
 	};		
 	
-	Item* OtherExplorerProgram[]={
-		CreateEdit(IDS_ADVSETOPENFOLDERWITH,DefaultEditStrProc,0,&m_pSettings->m_OpenFoldersWith),
-		NULL
-	};
-
-	Item* ResultsItems[]={
-		CreateCheckBox(IDS_ADVSETLIMITRESULTS,LimitMaximumResults,LimitResultsCheckBoxProc,
-			0,&m_pSettings->m_nMaximumFoundFiles),
-		CreateRoot(IDS_ADVSETRESULTSLIST,FileViewItems),
-		CreateCheckBox(IDS_ADVSETUSEPROGRAMFORFOLDERS,OtherExplorerProgram,DefaultCheckBoxProc,
-			CSettingsProperties::settingsUseOtherProgramsToOpenFolders,&m_pSettings->m_dwSettingsFlags),
+	
+	Item* FileBackgroundOperations[]={
+		CreateRadioBox(IDS_ADVSETDISABLEFSCHANGETRACKING,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateDlg::efDisableFSTracking,CLocateDlg::efTrackingMask),&m_pSettings->m_dwLocateDialogExtraFlags),
+		CreateRadioBox(IDS_ADVSETENABLEFSCHANGETRACKING,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateDlg::efEnableFSTracking,CLocateDlg::efTrackingMask),&m_pSettings->m_dwLocateDialogExtraFlags),
 		NULL,
 		NULL
 	};
 	if (GetProcAddress(GetModuleHandle("kernel32.dll"),"ReadDirectoryChangesW")!=NULL)
 	{
-		ResultsItems[3]=CreateCheckBox(IDS_ADVSETUSEOWNMETHODFORBKGUPD,
-			NULL,DefaultCheckBoxProc,CLocateDlg::fgOtherUseOldMethodToNotifyChanges,&m_pSettings->m_dwLocateDialogFlags);
+		FileBackgroundOperations[2]=CreateRadioBox(IDS_ADVSETENABLEFSCHANGETRACKINGOLD,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateDlg::efEnableFSTrackingOld,CLocateDlg::efTrackingMask),&m_pSettings->m_dwLocateDialogExtraFlags);
 	}
+
+	Item* UpdateResults[]={
+		CreateRadioBox(IDS_ADVSETDISABLEUPDATING,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateDlg::efDisableItemUpdating,CLocateDlg::efItemUpdatingMask),&m_pSettings->m_dwLocateDialogExtraFlags),
+		CreateRadioBox(IDS_ADVSETENABLEUPDATING,FileBackgroundOperations,DefaultRadioBoxProc,
+			MAKELONG(CLocateDlg::efEnableItemUpdating,CLocateDlg::efItemUpdatingMask),&m_pSettings->m_dwLocateDialogExtraFlags),
+		NULL
+	};
+		
+
+	Item* ResultsItems[]={
+		CreateCheckBox(IDS_ADVSETLIMITRESULTS,LimitMaximumResults,LimitResultsCheckBoxProc,
+			0,&m_pSettings->m_nMaximumFoundFiles),
+		CreateRoot(IDS_ADVSETRESULTSLIST,FileViewItems),
+		CreateRoot(IDS_ADVSETUPDATERESULTS,UpdateResults),
+		NULL
+	};
 		
 
 	Item* ShellContextMenuItems[]={

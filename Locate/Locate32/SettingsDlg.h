@@ -468,7 +468,9 @@ public:
 
 public:
 	//General
-	DWORD m_dwLocateDialogFlags;  // Used with LocateDialogFlags
+	DWORD m_dwLocateDialogFlags;  // Used with CLocateDlg::LocateDialogFlags
+	DWORD m_dwLocateDialogExtraFlags;  // Used with CLocateDlg::LocateDialogExtraFlags
+	
 	DWORD m_nMaximumFoundFiles;
 	DWORD m_nNumberOfDirectories; // Directoried in NameDlg 
 	

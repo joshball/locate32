@@ -17,23 +17,25 @@ inline LPSTR CLocatedItem::FormatFileSize() const
 			delete[] g_szBuffer;
 		g_szBuffer=new char[30];
 		
+		// TODO: Tähän tuki omalle määritykselle
+
 		if (GetFileSizeHi()>0)
 		{
 			LoadString(IDS_GB,Temp,10);
 			wsprintf(g_szBuffer,"%d%s",static_cast<DWORD>(GetFileSize()/(1024*1024*1024)),Temp);
 		}
-		else /*if (GetFileSizeLo()<1024)*/
+		else if (GetFileSizeLo()<1024)
 		{
 			LoadString(IDS_BYTES,Temp,10);
 			wsprintf(g_szBuffer,"%d%s",GetFileSizeLo(),Temp);
 		}
-		/*else
+		else
 		{
 			LoadString(IDS_KB,Temp,10);
 			wsprintf(g_szBuffer,"%d%s",
 				static_cast<DWORD>(GetFileSizeLo()/1024)+(GetFileSizeLo()%1024==0?0:1),
 				Temp);
-		}*/
+		}
 		return g_szBuffer;
 	}
 	return const_cast<LPSTR>(szEmpty);
@@ -151,43 +153,49 @@ inline LPSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) con
 
 inline BOOL CLocatedItem::ShouldUpdateTitle() const 
 { 
+	// do not depend on efEnableUpdating
 	return !(dwFlags&LITEM_TITLEOK && dwFlags&LITEM_FILENAMEOK); 
 }
 
 inline BOOL CLocatedItem::ShouldUpdateFilename() const 
 { 
+	// do not depend on efEnableUpdating
 	return !(dwFlags&LITEM_FILENAMEOK); 
 }
 
 inline BOOL CLocatedItem::ShouldUpdateType() const 
 {
+	// do not depend on efEnableUpdating
 	return !(dwFlags&LITEM_TYPEOK);  
 }
 
 inline BOOL CLocatedItem::ShouldUpdateIcon() const 
 {
+	// do not depend on efEnableUpdating
 	return !(dwFlags&LITEM_ICONOK) && GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons;
 }
 
 
 inline BOOL CLocatedItem::ShouldUpdateFileSize() const 
 {
-	return !(dwFlags&LITEM_FILESIZEOK); 
+	return dwFlags&LITEM_FILESIZEOK?FALSE:(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating?TRUE:FALSE); 
 }
 
 inline BOOL CLocatedItem::ShouldUpdateTimeAndDate() const 
 {
-	return !(dwFlags&LITEM_TIMEDATEOK);  
+	return dwFlags&LITEM_TIMEDATEOK?FALSE:(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating?TRUE:FALSE);  
 }
 
 inline BOOL CLocatedItem::ShouldUpdateFileSizeOrDate() const 
 {
-	return ShouldUpdateFileSize() || ShouldUpdateTimeAndDate(); 
+	if (ShouldUpdateFileSize())
+		return TRUE;
+	return ShouldUpdateTimeAndDate(); 
 }
 
 inline BOOL CLocatedItem::ShouldUpdateAttributes() const 
 {
-	return !(dwFlags&LITEM_ATTRIBOK); 
+	return dwFlags&LITEM_ATTRIBOK?FALSE:(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating?TRUE:FALSE);
 }
 
 inline BOOL CLocatedItem::ShouldUpdateParentIcon() const 
@@ -202,6 +210,9 @@ inline BOOL CLocatedItem::ShouldUpdateParentIcon2() const
 
 inline BOOL CLocatedItem::ShouldUpdateExtra(CLocateDlg::DetailType nDetail) const
 {
+	if (!(GetLocateDlg()->GetExStyle()&CLocateDlg::efEnableItemUpdating))
+		return FALSE;
+
 	ExtraInfo* pTmp=pFirstExtraInfo;
 	while (pTmp!=NULL)
 	{
@@ -214,6 +225,10 @@ inline BOOL CLocatedItem::ShouldUpdateExtra(CLocateDlg::DetailType nDetail) cons
 
 inline void CLocatedItem::CheckIfDeleted()
 {
+	if (!(GetLocateDlg()->GetExStyle()&CLocateDlg::efEnableItemUpdating))
+		return;
+	
+
 	if (IsDeleted())
 		return;
 	if (IsFolder())

@@ -162,7 +162,7 @@ inline CCheckFileNotificationsThread::CCheckFileNotificationsThread()
 {
 	DebugMessage("CCheckFileNotificationsThread::CCheckFileNotificationsThread()");
 
-	if (GetLocateDlg()->GetFlags()&CLocateDlg::fgOtherUseOldMethodToNotifyChanges)
+	if ((GetLocateDlg()->GetExtraFlags()&CLocateDlg::efTrackingMask)==CLocateDlg::efEnableFSTrackingOld)
 		m_pReadDirectoryChangesW=NULL;
 	else
 		m_pReadDirectoryChangesW=(BOOL (WINAPI*)(HANDLE,LPVOID,DWORD,BOOL,DWORD,LPDWORD,LPOVERLAPPED,LPOVERLAPPED_COMPLETION_ROUTINE))
@@ -263,7 +263,7 @@ inline void CBackgroundUpdater::StopWaiting()
 	
 		return; // No reason to wake
 	}
-    if (m_hThread!=NULL)
+    if (m_hThread==NULL)
 		Start();
 	if (m_lIsWaiting)
 		SetEvent(m_phEvents[1]);

@@ -173,7 +173,7 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 }
 
 CLocateDlg::CLocateDlg()
-:	CDialog(IDD_MAIN),m_dwFlags(fgDefault),m_nSorting(BYTE(-1)),
+:	CDialog(IDD_MAIN),m_dwFlags(fgDefault),m_dwExtraFlags(efDefault),m_nSorting(BYTE(-1)),
 	m_nMaxYMinimized(0),m_nMaxYMaximized(0),m_nLargeY(354),
 	m_ClickWait(FALSE),m_hSendToListFont(NULL),m_hActivePopupMenu(NULL),
 	m_pListCtrl(NULL),m_pTabCtrl(NULL),m_pStatusCtrl(NULL),m_pListTooltips(NULL),
@@ -389,6 +389,12 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	mii.dwItemData=0;
 	mii.fType=MFT_STRING;
 	smenu.InsertMenu(0x76,FALSE,&mii);
+	mii.wID=0x77;
+	mii.dwTypeData="Show background op state";
+	mii.dwItemData=0;
+	mii.fType=MFT_STRING;
+	smenu.InsertMenu(0x77,FALSE,&mii);
+	
 #endif
 
 	m_NameDlg.SetFocus();
@@ -542,6 +548,9 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		break;
 	case IDM_CHANGECASE:
 		OnChangeFileNameCase();
+		break;
+	case IDM_FORCEUPDATE:
+		OnUpdateLocatedItem();
 		break;
 	case IDM_CHANGEFILENAME:
 	case IDM_CHANGEFILENAMEACCEL:
@@ -722,11 +731,17 @@ BOOL CLocateDlg::UpdateSettings()
 	Path<<"\\General";
 	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		//Liststatus
+		//Dialog flags
 		temp=m_dwFlags;
 		RegKey.QueryValue("Program Status",temp);
         m_dwFlags&=~fgSave;
 		m_dwFlags|=temp&fgSave;
+
+		//Extra flags
+		temp=m_dwExtraFlags;
+		RegKey.QueryValue("Program StatusExtra",temp);
+        m_dwExtraFlags&=~efSave;
+		m_dwExtraFlags|=temp&efSave;
 	}
 	m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount());
 	SetListSelStyle();
@@ -771,6 +786,16 @@ BOOL CLocateDlg::UpdateSettings()
 	m_NameDlg.InitDriveBox();
 
 	SetDialogMode(GetFlags()&fgLargeMode);
+
+	if ((GetExtraFlags()&efItemUpdatingMask)==efEnableItemUpdating)
+	{
+		if (m_pFileNotificationsThread!=NULL)
+			m_pFileNotificationsThread->Stop();
+
+        StartBackgroundOperations(); 
+	}
+	else
+		StopBackgroundOperations();
 	return TRUE;
 }
 
@@ -803,22 +828,28 @@ void CLocateDlg::StartBackgroundOperations()
 {
 	//DebugMessage("CLocateDlg::StartBackgroundOperations():  BEGIN");
 	if (m_pBackgroundUpdater==NULL)
-	{
 		m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
-		DebugFormatMessage("CLocateDlg::StartBackgroundOperations(): backgnd updater %X created",m_pBackgroundUpdater);
-	}
 
-	if (m_pFileNotificationsThread==NULL)
+	if ((GetExtraFlags()&efItemUpdatingMask)==efDisableItemUpdating)
+		return;
+
+	if (GetExtraFlags()&efEnableFSTracking)
 	{
-		m_pFileNotificationsThread=new CCheckFileNotificationsThread;
-		DebugFormatMessage("CLocateDlg::StartBackgroundOperations(): changentfr %X created",m_pFileNotificationsThread);
+		if (m_pFileNotificationsThread==NULL)
+		{
+			m_pFileNotificationsThread=new CCheckFileNotificationsThread;
+			//DebugFormatMessage("CLocateDlg::StartBackgroundOperations(): changentfr %X created",m_pFileNotificationsThread);
+		}
+		
+		if (m_pListCtrl->GetItemCount()>0)
+		{
+			m_pFileNotificationsThread->Start();
+			//m_pBackgroundUpdater->Start();
+		}
 	}
-	
-	if (m_pListCtrl->GetItemCount()>0)
-	{
-		m_pFileNotificationsThread->Start();
-		m_pBackgroundUpdater->Start();
-	}
+	else if (m_pFileNotificationsThread!=NULL)
+		m_pFileNotificationsThread->CouldStop();
+
 	//DebugMessage("CLocateDlg::StartBackgroundOperations():  END");
 	
 }
@@ -839,9 +870,7 @@ void CLocateDlg::StopBackgroundOperations()
 void CLocateDlg::ChangeBackgroundOperationsPriority(BOOL bLower)
 {
 	DebugFormatMessage("CLocateDlg::ChangeBackgroundOperationsPriority(bLower=%d) B=%X F=%X:  BEGIN",bLower,m_pBackgroundUpdater,m_pFileNotificationsThread);
-	ASSERT(m_pBackgroundUpdater!=NULL);
-	ASSERT(m_pFileNotificationsThread!=NULL);
-
+	
 	int nPriority=bLower?THREAD_PRIORITY_LOWEST:THREAD_PRIORITY_BELOW_NORMAL;
 
 	if (m_pBackgroundUpdater!=NULL)
@@ -1405,7 +1434,8 @@ void CLocateDlg::OnStop()
 {
 	CWaitCursor wait;
 	StartBackgroundOperations();
-	m_pBackgroundUpdater->StopWaiting();
+	if (m_pBackgroundUpdater!=NULL)
+		m_pBackgroundUpdater->StopWaiting();
 
 	if (m_pLocater!=NULL)
 		m_pLocater->StopLocating();
@@ -1707,6 +1737,61 @@ void CLocateDlg::OnSize(UINT nType, int cx, int cy)
 	//DebugMessage("CLocateDlg::OnSize END");
 }
 
+// Window showing background statistics
+#ifdef _DEBUG
+LRESULT CALLBACK CLocateDlg::DebugWindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_CREATE:
+		::CreateWindow("EDIT","",WS_VISIBLE|WS_CHILD|ES_AUTOHSCROLL|ES_AUTOVSCROLL|ES_MULTILINE,0,0,100,100,
+			hwnd,(HMENU)100,GetInstanceHandle(),NULL);
+		::SetTimer(hwnd,1,100,NULL);
+		return 0;
+	case WM_SIZE:
+		if (wParam==SIZE_RESTORED || wParam==0)
+		{
+			HWND hEdit=::GetDlgItem(hwnd,100);
+			::SetWindowPos(hEdit,NULL,0,0,LOWORD(lParam),HIWORD(lParam),SWP_NOZORDER);
+
+		}
+		break;
+	case WM_CLOSE:
+		::KillTimer(hwnd,1);
+		::DestroyWindow(hwnd);
+		break;
+	case WM_TIMER:
+	{
+		CString str;
+		CLocateDlg* pDlg=GetLocateDlg();
+		if (pDlg->m_pBackgroundUpdater!=NULL)
+		{
+			str << "Background updated running, isWaiting=" << (int) pDlg->m_pBackgroundUpdater->IsWaiting();
+			str.SetBase(16);
+			str << " hThread=0x" << (DWORD) pDlg->m_pBackgroundUpdater->m_hThread;
+		}
+		else
+			str << "Background updater is not running";
+		
+		if (pDlg->m_pFileNotificationsThread!=NULL)
+		{
+			str << "\r\nFileNotfications is running";
+			if (pDlg->m_pFileNotificationsThread->m_pReadDirectoryChangesW==NULL)
+				str << " using old method";
+			str << " hThread=0x" << (DWORD) pDlg->m_pFileNotificationsThread->m_hThread;
+		}
+		else
+			str << "\r\nFileNotifications is not running";
+
+		::SetDlgItemText(hwnd,100,LPCSTR(str));
+		break;
+	}
+	};
+	return DefWindowProc(hwnd,uMsg,wParam,lParam);
+}
+
+
+#endif
 
 BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 {
@@ -1868,6 +1953,24 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 				delete[] pData;
 			}
 		}
+		else if (wParam==0x77)
+		{
+			WNDCLASSEX wce;
+			ZeroMemory(&wce,sizeof(WNDCLASSEX));
+			wce.cbSize=sizeof(wce);
+			wce.style=CS_HREDRAW|CS_VREDRAW;
+			wce.lpfnWndProc=DebugWindowProc;
+			wce.hInstance=GetInstanceHandle();
+			wce.hbrBackground=(HBRUSH)COLOR_WINDOW;
+			wce.lpszClassName="DEBUGWINDOWCLASS";
+			RegisterClassEx(&wce);
+			
+			SetLastError(0);
+			if (CreateWindow("DEBUGWINDOWCLASS","DebugWindow",WS_OVERLAPPEDWINDOW|WS_VISIBLE,0,0,500,100,
+				NULL,NULL,GetInstanceHandle(),NULL)==NULL)
+				ReportSystemError();
+            
+		}
 		break;
 #endif
 	}
@@ -1995,7 +2098,8 @@ void CLocateDlg::SaveRegistry()
 		CRect rect;
 		CMenu menu(GetSubMenu(GetMenu(),2));
 		RegKey.SetValue("Program Status",m_dwFlags&fgSave);
-
+		RegKey.SetValue("Program StatusExtra",m_dwExtraFlags&efSave);
+		
 		SavePosition(RegKey,NULL,"Position");
 
 		GetWindowRect(&rect);
@@ -2024,7 +2128,7 @@ void CLocateDlg::LoadRegistry()
 {
 	CMenu menu(GetMenu());
 	CRegKey RegKey;
-	DWORD temp=3;
+	DWORD temp;
 	DWORD x=100,y=100,cx=438;
 
 	CString Path(IDS_REGPLACE,CommonResource);
@@ -2040,10 +2144,18 @@ void CLocateDlg::LoadRegistry()
 	Path<<"\\General";
 	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.QueryValue("Program Status",m_dwFlags);
-		m_dwFlags&=fgSave;
-
+		// Loading dwFlags
+		temp=m_dwFlags;
+		RegKey.QueryValue("Program Status",temp);
+		m_dwFlags&=~fgSave;
+		m_dwFlags|=temp&fgSave;
 		
+		temp=m_dwExtraFlags;
+		RegKey.QueryValue("Program StatusExtra",temp);
+		m_dwExtraFlags&=~efSave;
+		m_dwExtraFlags|=temp&efSave;
+		
+
 		DWORD dwOldFlags=m_dwFlags;
 		m_dwFlags|=fgLargeMode;
 		LoadPosition(RegKey,NULL,"Position",fgAllowMaximized|fgOnlyNormalPosition);
@@ -2336,6 +2448,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 				{
 					if (m_pBackgroundUpdater==NULL)
 						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+
 					//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,InFolder)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
 					m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,InFolder);
 					if (m_pLocater==NULL) // Locating is not in process
@@ -4337,6 +4450,28 @@ void CLocateDlg::OnChangeFileNameCase()
 		m_pListCtrl->UpdateWindow();
 	}
 }
+
+void CLocateDlg::OnUpdateLocatedItem()
+{
+	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+	while (nItem!=-1)
+	{
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+		if (pItem!=NULL)
+		{
+			DWORD dwExtraTemp=m_dwExtraFlags;
+			m_dwExtraFlags|=efEnableItemUpdating;
+
+			for (int nDetail=0;nDetail<=LastType;nDetail++)
+				pItem->UpdateByDetail((DetailType)nDetail);
+			m_dwExtraFlags=dwExtraTemp;      
+
+			m_pListCtrl->RedrawItems(nItem,nItem);
+		}
+	
+        nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+	}
+}	
 
 void CLocateDlg::OnSelectDetails()
 {

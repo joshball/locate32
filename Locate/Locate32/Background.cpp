@@ -762,8 +762,7 @@ inline BOOL CBackgroundUpdater::RunningProc()
 						{
 							BOOL bReDraw=FALSE;
 							
-							// TODO: Temporarely disabled
-							//pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
+							pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
 
 							if (bReDraw)
 								m_pList->PostMessage(LVM_REDRAWITEMS,pItem->m_iItem,pItem->m_iItem);
