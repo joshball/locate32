@@ -2034,7 +2034,13 @@ BOOL CSchedule::SDATE::operator>(const SDATE& t) const
 
 int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 {
+	// Loading menu
 	m_Menu.LoadMenu(IDR_SYSTEMTRAYMENU);
+
+	// Loading registry settings
+	LoadRegistry();
+	
+	// Set schedules
 	SetSchedules();
 	SetMenuDefaultItem(m_Menu.GetSubMenu(0),IDM_OPENLOCATE,FALSE);
 	
@@ -2098,6 +2104,50 @@ BOOL CLocateAppWnd::OnCreateClient(LPCREATESTRUCT lpcs)
 		OnLocate();
 	return bRet;
 }
+
+void CLocateAppWnd::SaveRegistry() const
+{
+	CRegKey RegKey;
+	if(RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",
+		CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	{
+		RegKey.SetValue("General Flags",m_dwProgramFlags&pfSave);
+	}
+}
+
+void CLocateAppWnd::LoadRegistry()
+{
+	CRegKey RegKey;
+	DWORD temp;
+
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",
+		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		// Loading dwFlags
+		temp=m_dwProgramFlags;
+		RegKey.QueryValue("General Flags",temp);
+		m_dwProgramFlags&=~pfSave;
+		m_dwProgramFlags|=temp&pfSave;
+	}
+}
+
+BOOL CLocateAppWnd::UpdateSettings()
+{
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",
+		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		//Program flags
+		DWORD temp=m_dwProgramFlags;
+		RegKey.QueryValue("General Flags",temp);
+        m_dwProgramFlags&=~pfSave;
+		m_dwProgramFlags|=temp&pfSave;
+	}
+
+	// TODO: Close update tooltip if it present
+	return TRUE;
+}
+
 
 BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 {
@@ -2480,9 +2530,12 @@ BYTE CLocateAppWnd::OnSettings()
 			m_pSettings=NULL;
 			return TRUE;
 		}
+		UpdateSettings();
+		
 		m_pSettings->SaveSettings();
 		SetSchedules(m_pSettings->GetSchedules());
 		SaveSchedules();
+		
 		if (GetLocateDlg()!=NULL)
 		{
 			if (m_pSettings->IsFlagSet(CSettingsProperties::settingsIsUsedDatabaseChanged))
@@ -2684,6 +2737,7 @@ void CLocateAppWnd::OnDestroy()
 	((CLocateApp*)GetApp())->StopUpdating();
 	
 	SaveSchedules();
+	SaveRegistry();
 	
 	CFrameWnd::OnDestroy();
 	DebugMessage("void CLocateAppWnd::OnDestroy() END");

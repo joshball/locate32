@@ -14,6 +14,19 @@ class CLocateDlgThread;
 class CLocateAppWnd : public CFrameWnd
 {
 public:
+	enum ProgramFlags {
+		// Update process
+		pfShowErrorMessages = 0x01,
+        pfShowUpdateTooltip = 0x02,
+		pfUpdateMask = 0x02,
+		pfUpdateDefaults = pfShowUpdateTooltip,
+		pfUpdateSave = pfShowErrorMessages|pfShowUpdateTooltip,
+
+		pfDefault = pfUpdateDefaults,
+		pfSave = pfUpdateSave
+	};
+
+public:
 	CLocateAppWnd();
 	virtual ~CLocateAppWnd();
 
@@ -38,6 +51,9 @@ public:
 	BOOL StartUpdateAnimation();
 	BOOL StopUpdateAnimation();
 	
+	void SaveRegistry() const;
+	void LoadRegistry();
+	BOOL UpdateSettings();
 
 	BYTE OnAbout();
 	BYTE OnSettings();
@@ -82,6 +98,12 @@ public:
 	UINT nHFCInstallationMessage;
 	UINT nTaskbarCreated;
 
+protected:
+	
+	DWORD m_dwProgramFlags;
+
+public:
+	DWORD GetProgramFlags() const { return m_dwProgramFlags; }
 };
 
 
@@ -215,6 +237,7 @@ public:
 
 	static DWORD WINAPI GetLongPathName(LPCSTR lpszShortPath,LPSTR lpszLongPath,DWORD cchBuffer);
 
+
 protected:
 	CStartData* m_pStartData;
 	CLocateAppWnd m_AppWnd;
@@ -318,7 +341,7 @@ inline CLocateAppWnd* GetLocateAppWnd()
 
 inline CLocateAppWnd::CLocateAppWnd()
 :	m_pAbout(NULL),m_pSettings(NULL),
-	m_pLocateDlgThread(NULL),
+	m_pLocateDlgThread(NULL),m_dwProgramFlags(pfDefault),
 	m_pUpdateAnimIcons(NULL),m_hHook(NULL)
 {
 	DebugMessage("CLocateAppWnd::CLocateAppWnd()");

@@ -1180,7 +1180,9 @@ BOOL CALLBACK COptionsPropertyPage::DefaultEditStrProc(BASICPARAMS* pParams)
 CSettingsProperties::CSettingsProperties(HWND hParent)
 :	CPropertySheet(IDS_SETTINGS,hParent,0),
 	m_nMaximumFoundFiles(0),
-	m_dwLocateDialogFlags(CLocateDlg::fgDefault),m_dwLocateDialogExtraFlags(CLocateDlg::efDefault),
+	m_dwLocateDialogFlags(CLocateDlg::fgDefault),
+	m_dwLocateDialogExtraFlags(CLocateDlg::efDefault),
+	m_dwProgramFlags(CLocateAppWnd::pfDefault),
 	m_bDefaultFlag(defaultDefault),	m_dwSettingsFlags(settingsDefault),
 	m_nNumberOfDirectories(DEFAULT_NUMBEROFDIRECTORIES)
 {
@@ -1224,6 +1226,8 @@ BOOL CSettingsProperties::LoadSettings()
 	m_DateFormat=((CLocateApp*)GetApp())->m_strDateFormat;
 	m_TimeFormat=((CLocateApp*)GetApp())->m_strTimeFormat;
 	
+	m_dwProgramFlags=GetLocateAppWnd()->GetProgramFlags();
+
 	if (GetLocateDlg()!=NULL)
 	{
 		m_dwLocateDialogFlags=GetLocateDlg()->GetFlags();
@@ -1364,6 +1368,8 @@ BOOL CSettingsProperties::SaveSettings()
 	{
 		RegKey.SetValue("Program Status",m_dwLocateDialogFlags&CLocateDlg::fgSave);
 		RegKey.SetValue("Program StatusExtra",m_dwLocateDialogExtraFlags&CLocateDlg::efSave);
+		RegKey.SetValue("General Flags",m_dwProgramFlags&CLocateAppWnd::pfSave);
+		
 		RegKey.SetValue("DateFormat",m_DateFormat);
 		RegKey.SetValue("TimeFormat",m_TimeFormat);
 		RegKey.SetValue("OverrideExplorer",DWORD(m_bAdvancedAndContextMenuFlag&hookExplorer?TRUE:FALSE));
