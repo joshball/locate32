@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   locate.exe v2.99.5.1230                 */
+   locate.exe v2.99.5.4031                 */
 
-const char* szVersionStr="locate 3.0 beta 5.1230";
+const char* szVersionStr="locate 3.0 beta 5.4031";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -316,8 +316,9 @@ int main (int argc,char * argv[])
 			case 'r':
 				dwFlags|=LOCATE_REGULAREXPRESSION;
 				break;
-			case 'R':
-				dwFlags|=LOCATE_REGULAREXPRESSION|LOCATE_REGULAREXPRESSIONINPATH;
+			case 'w':
+			case 'W':
+				dwFlags|=LOCATE_CHECKWHOLEPATH;
 				break;
 			case 'v':
 				helps=2;
@@ -580,7 +581,7 @@ int main (int argc,char * argv[])
 
 	if (dwFlags&LOCATE_REGULAREXPRESSION)
 	{
-		locater.LocateFiles(FALSE,String,(dwFlags&LOCATE_REGULAREXPRESSIONINPATH)?TRUE:FALSE,
+		locater.LocateFiles(FALSE,String,
 			(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 	else if (!String.IsEmpty())

@@ -254,7 +254,7 @@ public:
 			flagMatchCase=0x1,
 			flagReplaceSpaces=0x2,
 			flagNameIsRegularExpression=0x4, // These are not returned, 
-			flagNameIsRegularExpressionInPath=0x8 // instead used in CLocateDlg::OnOk
+			flagUseWholePath=0x8
 		};
 		DWORD OnOk(CLocater* pLocater);
 		void OnClear();

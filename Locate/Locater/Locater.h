@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   database locater v2.99.5.1020               */
+   database locater v2.99.5.4031               */
 
 #if !defined(LOCATER_H)
 #define LOCATER_H
@@ -37,7 +37,7 @@ typedef BOOL (CALLBACK* LOCATEFOUNDPROC)(DWORD dwParam,BOOL bFolder,const CLocat
 #define LOCATE_CONTAINTEXTISMATCHCASE	0x0200
 #define LOCATE_EXTENSIONWITHNAME		0x0400
 #define LOCATE_REGULAREXPRESSION		0x0800
-#define LOCATE_REGULAREXPRESSIONINPATH	0x1000
+#define LOCATE_CHECKWHOLEPATH			0x1000
 #define LOCATE_REGULAREXPRESSIONSEARCH  0x2000
 
 
@@ -95,7 +95,7 @@ public:
 	BOOL LocateFiles(BOOL bThreaded,LPCSTR* szName,DWORD dwNames,
 		LPCSTR* szExtensions,DWORD nExtensions,
 		LPCSTR* szDirectories,DWORD nDirectories); 
-	BOOL LocateFiles(BOOL bThreaded,LPCSTR szRegExp,BOOL bInPath,
+	BOOL LocateFiles(BOOL bThreaded,LPCSTR szRegExp,
 		LPCSTR* szDirectories,DWORD nDirectories); 
 
 

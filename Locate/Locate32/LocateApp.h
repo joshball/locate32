@@ -169,7 +169,9 @@ public:
 			statusMatchWholeName=0x80,
 			statusNoMatchWholeName=0x100,
 			statusReplaceSpacesWithAsterisks=0x200,
-			statusNoReplaceSpacesWithAsterisks=0x400
+			statusNoReplaceSpacesWithAsterisks=0x400,
+			statusUseWholePath=0x800,
+			statusNoUseWholePath=0x1000
 		};
 
 		enum StartupFlags {

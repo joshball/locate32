@@ -600,6 +600,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDC_CONTAINDATACHECK:
 	case IDC_DATAMATCHCASE:
 	case IDC_REPLACESPACES:
+	case IDC_USEWHOLEPATH:
 		// This is to ensure that these conrols get focus e.g. when alt+n is pressed
 		return m_AdvancedDlg.SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
 	case IDC_PTAB:
@@ -1124,6 +1125,10 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 	// Calling routines for subdialogs
 	m_SizeDateDlg.OnOk(m_pLocater);
 	nRet=m_AdvancedDlg.OnOk(m_pLocater);
+
+	
+
+
 	
 	// Checking name, inserting asterisks etc..
 	if (!Name.IsEmpty()) 
@@ -1135,7 +1140,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 			if (Name[0]==':')
 			{
 				Name.DelChar(0);
-				nRet|=CAdvancedDlg::flagNameIsRegularExpressionInPath;
+				nRet|=CAdvancedDlg::flagUseWholePath;
 			}
 			else if (Name[0]==' ')
 				Name.DelChar(0);
@@ -1236,7 +1241,13 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 	}
 	
 	// Extension no extensions, checking if name contains extension
-	if (aExtensions.GetSize()==0 && 
+	// No extension needed if "use whole path" is set
+	if (nRet==CAdvancedDlg::flagUseWholePath)
+	{
+		aExtensions.RemoveAll();
+		m_pLocater->AddAdvancedFlags(LOCATE_EXTENSIONWITHNAME|LOCATE_CHECKWHOLEPATH);
+	}
+    else if (aExtensions.GetSize()==0 && 
 		(m_pLocater->GetAdvancedFlags()&(LOCATE_FILENAMES|LOCATE_FOLDERNAMES))!=LOCATE_FOLDERNAMES)
 		m_pLocater->AddAdvancedFlags(LOCATE_EXTENSIONWITHNAME);
 
@@ -1252,7 +1263,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 	Title.LoadString(IDS_TITLE);
 	if (nRet&CAdvancedDlg::flagNameIsRegularExpression)
 	{
-		if (nRet&CAdvancedDlg::flagNameIsRegularExpressionInPath)
+		if (nRet&CAdvancedDlg::flagUseWholePath)
 			Title.AddString(IDS_REGULAREXPRESSIONFULLPATH);
 		else
 			Title.AddString(IDS_REGULAREXPRESSION);
@@ -1289,10 +1300,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 			(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 	else
-	{
-		m_pLocater->LocateFiles(TRUE,Name,(nRet&CAdvancedDlg::flagNameIsRegularExpressionInPath)?TRUE:FALSE,
-			(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
-	}
+		m_pLocater->LocateFiles(TRUE,Name,(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
 
 	DlgDebugMessage("CLocateDlg::OnOk END");
 	
@@ -1748,6 +1756,12 @@ void CLocateDlg::OnTimer(DWORD wTimerID)
 	
 	switch (wTimerID)
 	{
+	case ID_CLEARMENUVARS:
+		// This is called in ClearMenuVariables
+		//KillTimer(ID_CLEARMENUVARS);
+
+		ClearMenuVariables();
+		break;
 	case ID_REDRAWITEMS:
 		KillTimer(ID_REDRAWITEMS);
 		m_pListCtrl->InvalidateRect(NULL,FALSE);
@@ -1992,6 +2006,7 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			DeleteObject(m_hSendToListFont);
 			m_hSendToListFont=NULL;
 		}
+		SetTimer(ID_CLEARMENUVARS,1000);
 		break;
 	case WM_SETTINGCHANGE:
 		if (wParam==0x2a && lParam==NULL) // Possibly shell icon cache is updeted
@@ -3080,7 +3095,7 @@ void CLocateDlg::OnMenuCommands(WORD wID)
 
 void CLocateDlg::OnProperties()
 {
-	/*
+	
 	CWaitCursor wait;
 	if (m_pActiveContextMenu!=NULL)
 	{
@@ -3092,8 +3107,8 @@ void CLocateDlg::OnProperties()
 		cii.lpParameters=NULL;
 		cii.lpDirectory=NULL;
 		cii.nShow=SW_SHOWDEFAULT;
-		m_pActiveContextMenu->InvokeCommand(&cii);
-	}*/
+		m_pActiveContextMenu->pContextMenu->InvokeCommand(&cii);
+	}
 }
 
 void CLocateDlg::OnAutoArrange()
@@ -3802,7 +3817,7 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 			DeleteMenu(hFileMenu,i,MF_BYPOSITION);
 		
 		// Copying menu from template menu in resource
-		if (m_pListCtrl->GetSelectedCount()==0)
+		if (m_pListCtrl->GetNextItem(-1,LVNI_SELECTED)==-1)
 		{
 			InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_FILEMENUNOITEMS),0);
 			return hFileMenu;
@@ -3905,17 +3920,15 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 			//hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
 			//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL);
 		}
-		if (!SUCCEEDED(hRes))
-		{
-			// Didn't succee, so freeing pointer
-			delete m_pActiveContextMenu;
-			m_pActiveContextMenu=NULL;
-		}
-		else
+		if (SUCCEEDED(hRes))
 		{
 			InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
 			return hFileMenu;
 		}
+
+		// Didn't succee, so freeing pointer
+		delete m_pActiveContextMenu;
+		m_pActiveContextMenu=NULL;
 	}
 	
 	if (hFileMenu==NULL)
@@ -3925,7 +3938,8 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 		InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
 	}
 	else
-		InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN),0,IDM_DEFOPEN);
+		InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_OPENITEMFORFILEMENU),0);
+		
 			
 
 	return hFileMenu;
@@ -6419,7 +6433,9 @@ void CLocateDlg::CNameDlg::OnBrowse()
 void CLocateDlg::CNameDlg::EnableItems(BOOL bEnable)
 {
 	EnableDlgItem(IDC_NAME,bEnable);
-	EnableDlgItem(IDC_TYPE,bEnable && GetLocateDlg()->m_AdvancedDlg.SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL)==0 );
+	EnableDlgItem(IDC_TYPE,bEnable && 
+		GetLocateDlg()->m_AdvancedDlg.SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL)==0 &&
+		!GetLocateDlg()->m_AdvancedDlg.IsDlgButtonChecked(IDC_USEWHOLEPATH));
 	EnableDlgItem(IDC_LOOKIN,bEnable);
 	EnableDlgItem(IDC_MOREDIRECTORIES,bEnable);
 	EnableDlgItem(IDC_BROWSE,bEnable);
@@ -7555,6 +7571,29 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		}
 		ChangeEnableStateForCheck();
 		break;
+	case IDC_USEWHOLEPATH:
+		if (hControl==NULL && wNotifyCode==1) // Accelerator
+		{
+			CheckDlgButton(wID,!IsDlgButtonChecked(wID));
+			SetFocus(wID);
+		}
+		if (IsDlgButtonChecked(IDC_USEWHOLEPATH))
+		{
+			SendDlgItemMessage(IDC_FILETYPE,CB_SETCURSEL,0);
+			EnableDlgItem(IDC_FILETYPE,FALSE);
+			
+			GetLocateDlg()->m_NameDlg.EnableDlgItem(IDC_TYPE,FALSE);
+			GetLocateDlg()->m_NameDlg.SetDlgItemText(IDC_TYPE,szEmpty);
+			
+			ChangeEnableStateForCheck();
+		}
+		else
+		{
+			EnableDlgItem(IDC_FILETYPE,TRUE);
+			GetLocateDlg()->m_NameDlg.EnableDlgItem(IDC_TYPE,TRUE);
+		}
+		break;
+
 	case IDC_FILETYPE:
 		switch (wNotifyCode)
 		{
@@ -7638,17 +7677,11 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			SetFocus(IDC_CHECK);
 		break;
 	case IDC_REPLACESPACES:
-		if (hControl==NULL && wNotifyCode==1) // Accelerator
-		{
-			CheckDlgButton(IDC_REPLACESPACES,!IsDlgButtonChecked(IDC_REPLACESPACES));
-			SetFocus(IDC_REPLACESPACES);
-		}
-		break;
 	case IDC_MATCHWHOLENAME:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
 		{
-			CheckDlgButton(IDC_MATCHWHOLENAME,!IsDlgButtonChecked(IDC_MATCHWHOLENAME));
-			SetFocus(IDC_MATCHWHOLENAME);
+			CheckDlgButton(wID,!IsDlgButtonChecked(wID));
+			SetFocus(wID);
 		}
 		break;
 	case IDC_DATAMATCHCASE:
@@ -7720,7 +7753,6 @@ DWORD CLocateDlg::CAdvancedDlg::OnOk(CLocater* pLocater)
 		break;
 	}
 
-	
 	if (IsDlgButtonChecked(IDC_CONTAINDATACHECK))
 	{
 		if (IsDlgButtonChecked(IDC_DATAMATCHCASE))
@@ -7755,6 +7787,7 @@ DWORD CLocateDlg::CAdvancedDlg::OnOk(CLocater* pLocater)
 	DlgDebugMessage("CLocateDlg::CAdvancedDlg::OnOk END");
 
 	return (IsDlgButtonChecked(IDC_MATCHWHOLENAME)?flagMatchCase:0)|
+		(IsDlgButtonChecked(IDC_USEWHOLEPATH)?flagUseWholePath:0)|
 		(IsDlgButtonChecked(IDC_REPLACESPACES)?flagReplaceSpaces:0);
 
 }
@@ -7777,6 +7810,9 @@ void CLocateDlg::CAdvancedDlg::OnClear()
 		nTemp=0;
 		RegKey.QueryValue("Default ReplaceSpaces",nTemp);
 		CheckDlgButton(IDC_REPLACESPACES,nTemp);
+		nTemp=0;
+		RegKey.QueryValue("Default UseWholePath",nTemp);
+		CheckDlgButton(IDC_USEWHOLEPATH,nTemp);
 	}
 	else
 	{
@@ -7784,6 +7820,7 @@ void CLocateDlg::CAdvancedDlg::OnClear()
 		CheckDlgButton(IDC_MATCHWHOLENAME,0);
 		CheckDlgButton(IDC_DATAMATCHCASE,1);
 		CheckDlgButton(IDC_REPLACESPACES,0);
+		CheckDlgButton(IDC_USEWHOLEPATH,0);
 	}
 
 	SendDlgItemMessage(IDC_FILETYPE,CB_SETCURSEL,0);
@@ -7829,6 +7866,10 @@ void CLocateDlg::CAdvancedDlg::SetStartData(const CLocateApp::CStartData* pStart
 		CheckDlgButton(IDC_REPLACESPACES,1);
 	else if (pStartData->m_nStatus&CLocateApp::CStartData::statusNoReplaceSpacesWithAsterisks)
 		CheckDlgButton(IDC_REPLACESPACES,0);
+	if (pStartData->m_nStatus&CLocateApp::CStartData::statusUseWholePath)
+		CheckDlgButton(IDC_USEWHOLEPATH,1);
+	else if (pStartData->m_nStatus&CLocateApp::CStartData::statusNoUseWholePath)
+		CheckDlgButton(IDC_USEWHOLEPATH,0);
 	ChangeEnableStateForCheck();
 }
 void CLocateDlg::CAdvancedDlg::EnableItems(BOOL bEnable)
@@ -8002,6 +8043,10 @@ void CLocateDlg::CAdvancedDlg::LoadControlStates(CRegKey& RegKey)
 		dwTemp=0;
     CheckDlgButton(IDC_REPLACESPACES,dwTemp);
 
+	if (!RegKey.QueryValue("Advanced/UseWholePath",dwTemp))
+		dwTemp=0;
+    CheckDlgButton(IDC_USEWHOLEPATH,dwTemp);
+
 	if (!RegKey.QueryValue("Advanced/TextIsMatchCase",dwTemp))
 		dwTemp=1;	
 	CheckDlgButton(IDC_DATAMATCHCASE,dwTemp);
@@ -8058,6 +8103,7 @@ void CLocateDlg::CAdvancedDlg::SaveControlStates(CRegKey& RegKey)
 	RegKey.SetValue("Advanced/Check",SendDlgItemMessage(IDC_CHECK,CB_GETCURSEL));
 	RegKey.SetValue("Advanced/MatchWholeName",IsDlgButtonChecked(IDC_MATCHWHOLENAME));
 	RegKey.SetValue("Advanced/ReplaceSpaces",IsDlgButtonChecked(IDC_REPLACESPACES));
+	RegKey.SetValue("Advanced/UseWholePath",IsDlgButtonChecked(IDC_USEWHOLEPATH));
 	if (IsDlgButtonChecked(IDC_CONTAINDATACHECK))
 	{
 		CString str;

@@ -88,6 +88,7 @@ inline CLocateDlg::CAdvancedDlg::CAdvancedDlg()
 
 inline void CLocateDlg::ClearMenuVariables()
 {
+	KillTimer(ID_CLEARMENUVARS);
 	if (m_pActiveContextMenu!=NULL)
 	{
 		//m_pActiveContextMenu->Release();
@@ -104,8 +105,10 @@ inline void CLocateDlg::ClearMenuVariables()
 	
 inline BOOL CLocateDlg::IsSendToMenu(HMENU hMenu)
 {
-	UINT nID=GetMenuItemID(hMenu,0);
-	return nID>=IDM_DEFSENDTOITEM && nID<IDM_DEFSENDTOITEM+1000;
+	/*UINT nID=GetMenuItemID(hMenu,0);
+	return nID==IDM_DEFSENDTOITEM && nID<IDM_DEFSENDTOITEM+1000;*/
+
+	return GetMenuItemID(hMenu,0)==IDM_DEFSENDTOITEM;
 }
 	
 inline BOOL CLocateDlg::CSizeDateDlg::LookOnlyFiles() const

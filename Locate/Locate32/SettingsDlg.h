@@ -670,6 +670,7 @@ public:
 		defaultMatchCase=0x8,
 		defaultReplaceSpaces=0x10,
 		defaultTextIsCaseSensetive=0x20,
+		defaultUseWholePath=0x40,
 
 		defaultDefault=defaultMatchCase|defaultFileAndFolderNames
 	};

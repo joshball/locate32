@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,3290
- PRODUCTVERSION 2,99,5,3290
+ FILEVERSION 2,99,5,4031
+ PRODUCTVERSION 2,99,5,4031
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.3290"
+            VALUE "FileVersion", "3.0 beta 5.4031"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.3290"
+            VALUE "ProductVersion", "3.0 beta 5.4030"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -157,6 +157,8 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,8,21,100,9
     CONTROL         "Replace &spaces with asterisk",IDC_REPLACESPACES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,110,21,140,9
+    CONTROL         "&Use whole path",IDC_USEWHOLEPATH,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,255,21,140,9
     LTEXT           "&Type of file:",IDC_FILETYPESTATIC,8,32,80,8
     COMBOBOX        IDC_FILETYPE,8,42,185,103,CBS_DROPDOWNLIST | 
                     CBS_OWNERDRAWVARIABLE | CBS_SORT | WS_VSCROLL | 
@@ -347,6 +349,9 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,234,100,10
     CONTROL         "&Text is case sensitive",IDC_MATCHCASE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,113,234,117,10
+	CONTROL         "Use &whole path",IDC_USEWHOLEPATH,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,251,100,10
+    
 END
 
 IDD_ABOUT DIALOGEX 30, 15, 231, 158
@@ -948,17 +953,6 @@ BEGIN
             , GRAYED
         END
         MENUITEM SEPARATOR
-        POPUP "&Special"
-        BEGIN
-            MENUITEM "&Copy Path to Clipboard",        IDM_COPYPATHTOCB
-            MENUITEM "Copy &Short Path to Clipboard",        IDM_COPYSHORTPATHTOCB
-            MENUITEM "Change &Filename",         IDM_CHANGEFILENAME
-            MENUITEM "Change C&ase for Filename",         IDM_CHANGECASE
-			MENUITEM "Update file information",         IDM_FORCEUPDATE
-			MENUITEM "Compute MD5 sum",         IDM_COMPUTEMD5SUM
-			MENUITEM "Compute MD5 sums for equal size files",         IDM_MD5SUMSFORSAMESIZEFILES
-        END
-        MENUITEM SEPARATOR
         MENUITEM "Create &Shortcut", IDM_CREATESHORTCUT
         MENUITEM "&Delete",      IDM_DELETE
         MENUITEM "P&roperties",  IDM_PROPERTIES
@@ -1071,7 +1065,7 @@ BEGIN
         MENUITEM "&Line up Icons", 
                                                 IDM_LINEUPICONS
     END
-	POPUP "MultiDirectoryMenu(LookIn)")
+	POPUP "MultiDirectoryMenu(LookIn)"
 	BEGIN
 	    MENUITEM SEPARATOR
 		MENUITEM "Ne&xt selection\tCtrl+Shift+PgDn", IDM_LOOKINNEXTSELECTION
@@ -1080,11 +1074,16 @@ BEGIN
 		MENUITEM "&New directory\tCtrl+Shift+Insert", IDM_LOOKINNEWSELECTION
 		MENUITEM "&Remove selection\tCtrl+Shift+Del",IDM_LOOKINREMOVESELECTION
 	END
-	POPUP "PresetMenu")
+	POPUP "PresetMenu"
 	BEGIN
 		MENUITEM "&Save Preset", IDM_PRESETSAVE
 		MENUITEM "&Remove Preset",IDM_PRESETREMOVE
 	END
+	POPUP "Open for plank file menu"
+	BEGIN
+		MENUITEM "&Open", IDM_DEFOPEN
+        MENUITEM SEPARATOR
+	END        
 END
 
 IDR_SYSTEMTRAYMENU MENU 
@@ -1777,7 +1776,8 @@ BEGIN
        "X",                IDC_CONTAINDATACHECK,       VIRTKEY, ALT, NOINVERT
        "C",                     IDC_DATAMATCHCASE,          VIRTKEY, ALT, NOINVERT
        "S",                 IDC_REPLACESPACES,          VIRTKEY, ALT, NOINVERT
-       VK_F9,                                       IDM_GLOBALUPDATEDBACCEL,	VIRTKEY, NOINVERT
+       "U",					IDC_USEWHOLEPATH,           VIRTKEY, ALT, NOINVERT
+	   VK_F9,                                       IDM_GLOBALUPDATEDBACCEL,	VIRTKEY, NOINVERT
        VK_F9,                                       IDM_UPDATEDATABASESACCEL,	VIRTKEY, CONTROL
        VK_RETURN,                                   IDC_RETURN,					VIRTKEY, NOINVERT
        VK_RETURN,                                   IDM_FINDUSINGDBSACCEL,		VIRTKEY, CONTROL

@@ -377,6 +377,7 @@
 #define IDC_DETAILS                     1155
 #define IDC_LIST                        1156
 #define IDC_LABELS                      1157
+#define IDC_USEWHOLEPATH				1158
 #define IDC_TOOLBAR                     1159
 #define IDC_ALLITEMS                    1160
 #define IDC_SELECTEDITEMS               1161

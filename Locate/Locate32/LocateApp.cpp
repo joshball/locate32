@@ -592,6 +592,16 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 				else
 					pStartData->m_nStatus|=CStartData::statusReplaceSpacesWithAsterisks;
 				break;
+			case 'W': // check 'Use whole path' field
+				idx++;
+				if (lpCmdLine[idx]=='n')
+				{
+					idx++;
+					pStartData->m_nStatus|=CStartData::statusNoUseWholePath;
+				}
+				else
+					pStartData->m_nStatus|=CStartData::statusUseWholePath;
+				break;
 			case 'm': // set minumum file size
 				{
 					idx++;

@@ -155,6 +155,10 @@ BOOL CSettingsProperties::LoadSettings()
 		RegKey.QueryValue("Default ReplaceSpaces",nTemp);
 		if (nTemp) m_bDefaultFlag|=defaultReplaceSpaces;
 
+		nTemp=0;
+		RegKey.QueryValue("Default UseWholePath",nTemp);
+		if (nTemp) m_bDefaultFlag|=defaultUseWholePath;
+
 
 		// Overrinding explorer for opening folders
 		RegKey.QueryValue("Use other program to open folders",nTemp);
@@ -296,6 +300,7 @@ BOOL CSettingsProperties::SaveSettings()
 		RegKey.SetValue("Default MatchWholeName",m_bDefaultFlag&defaultWholeName?1:0);
 		RegKey.SetValue("Default DataMatchCase",m_bDefaultFlag&defaultMatchCase?1:0);
 		RegKey.SetValue("Default ReplaceSpaces",m_bDefaultFlag&defaultReplaceSpaces?1:0);
+		RegKey.SetValue("Default UseWholePath",m_bDefaultFlag&defaultUseWholePath?1:0);
 
 		// Overrinding explorer for opening folders
 		RegKey.SetValue("Use other program to open folders",(DWORD)IsFlagSet(settingsUseOtherProgramsToOpenFolders));
@@ -555,6 +560,7 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnInitDialog(HWND hwndFocus)
 	
 	CheckDlgButton(IDC_MATCHWHOLEFILENAMEONLY,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultWholeName);
 	CheckDlgButton(IDC_REPLACESPACES,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultReplaceSpaces);
+	CheckDlgButton(IDC_USEWHOLEPATH,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultUseWholePath);
 	CheckDlgButton(IDC_MATCHCASE,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultMatchCase);
 	
 	return FALSE;
@@ -626,6 +632,8 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnApply()
 		m_pSettings->m_bDefaultFlag|=CSettingsProperties::defaultWholeName;
 	if (IsDlgButtonChecked(IDC_REPLACESPACES))
 		m_pSettings->m_bDefaultFlag|=CSettingsProperties::defaultReplaceSpaces;
+	if (IsDlgButtonChecked(IDC_USEWHOLEPATH))
+		m_pSettings->m_bDefaultFlag|=CSettingsProperties::defaultUseWholePath;
 	if (IsDlgButtonChecked(IDC_MATCHCASE))
 		m_pSettings->m_bDefaultFlag|=CSettingsProperties::defaultMatchCase;
 	

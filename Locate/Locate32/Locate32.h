@@ -51,7 +51,20 @@ extern LPSTR g_szBuffer;
 // Defaults:
 #define DEFAULT_NUMBEROFDIRECTORIES		4
 
+// Timer IDs
+#define ID_REDRAWITEMS				1
+#define ID_CLEARMENUVARS			3
+#define ID_CLICKWAIT				4
+#define ID_LOCATEANIM				5
+#define ID_UPDATEANIM				6
+#define ID_SYNCSCHEDULES			7
+#define ID_CHECKSCHEDULES			8
 
+#define ID_UPDATESTATUS				1
+#define ID_IDLEEXIT					2
+
+
+// Include other files
 #include "Debugging.h"
 
 #include "Data.h"
@@ -77,15 +90,7 @@ extern LPSTR g_szBuffer;
 #define DIR_IMAGE					((CLocateApp*)GetApp())->m_nDirImage
 #define DRIVE_IMAGE					((CLocateApp*)GetApp())->m_nDriveImage
 
-#define ID_REDRAWITEMS				1
-#define ID_CLICKWAIT				4
-#define ID_LOCATEANIM				5
-#define ID_UPDATEANIM				6
-#define ID_SYNCSCHEDULES			7
-#define ID_CHECKSCHEDULES			8
 
-#define ID_UPDATESTATUS				1
-#define ID_IDLEEXIT					2
 
 #define RESULT_INCLUDEDATE			0x1
 #define RESULT_INCLUDELABELS		0x2
@@ -102,6 +107,7 @@ extern LPSTR g_szBuffer;
 #define SUBMENU_CONTEXTMENUNOITEMS			4
 #define SUBMENU_MULTIDIRSELECTION			5
 #define SUBMENU_PRESETSELECTION				6
+#define SUBMENU_OPENITEMFORFILEMENU			7
 
 
 #define RESULT_ACTIVATESELECTEDITEMS	0x1000

@@ -6,7 +6,7 @@ parameters:
     -i          shows what are we looking for
     -p          look in directory 'path'
     -r          'file' is interpreted as regular expression
-    -R          'file' is regular expression and full path is checked
+    -w          use whole path, not just file name
     -t          set extension
     -d file     set database file
     -D name     uses database named 'name'
