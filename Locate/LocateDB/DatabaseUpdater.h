@@ -92,7 +92,8 @@ public:
 
 	public:
 		enum DBFlags {
-			StopIfUnuavailable = 0x1 // Stops updating if root is unavailable
+			StopIfUnuavailable = 0x1, // Stops updating if root is unavailable
+			IncrementalUpdate = 0x2 // Incremental update
 		};
 
 		BOOL IsFlagged(DBFlags flag);
@@ -172,11 +173,15 @@ public:
 	DWORD GetCurrentDatabase() const;
 	WORD GetProgressStatus() const; // Estimated progress status between 0-1000
 
+	BOOL IsIncrementUpdate() const;
+
 #ifdef WIN32
 	static BYTE GetAttribFlag(DWORD dwAttribs);
 #endif
 
 private:
+
+	static CFile* OpenDatabaseFileForIncrementalUpdate(LPCSTR szArchive,DWORD dwFiles,DWORD dwDirectories);
 
 	CArrayFP<DBArchive*> m_aDatabases;
 	DWORD m_dwCurrentDatabase;
@@ -336,6 +341,14 @@ inline LPSTR CDatabaseUpdater::GetCurrentDatabaseNameStr() const
 	
 	CopyMemory(szRet,m_aDatabases[m_dwCurrentDatabase]->m_szName,m_aDatabases[m_dwCurrentDatabase]->m_dwNameLength+1);
 	return szRet;
+}
+
+inline BOOL CDatabaseUpdater::IsIncrementUpdate() const
+{
+	if (m_dwCurrentDatabase==DWORD(-1))
+		return FALSE;
+	
+	return m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::IncrementalUpdate);
 }
 
 

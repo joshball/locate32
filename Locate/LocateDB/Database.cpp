@@ -1024,11 +1024,15 @@ LPSTR CDatabase::ConstructExtraBlock() const
 			str << "G1";
 		else
 			str << "G0";
-
 		if (m_wFlags&flagStopIfRootUnavailable)
 			str << "S1";
 		else
 			str << "S0";
+		if (m_wFlags&flagIncrementalUpdate)
+			str << "I1";
+		else
+			str << "I0";
+		
 		str << '$';
 	}
 

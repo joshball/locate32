@@ -303,8 +303,7 @@ BOOL CDatabaseInfo::ReadFilesAndDirectoriesCount(CDatabase::ArchiveType nArchive
 {
 	CFile* dbFile=NULL;
 	BOOL bRet=TRUE;
-	BYTE* szBuffer=NULL;
-
+	
 	dwFiles=DWORD(-1);
 	dwDirectories=DWORD(-1);
 
@@ -323,7 +322,7 @@ BOOL CDatabaseInfo::ReadFilesAndDirectoriesCount(CDatabase::ArchiveType nArchive
 					-1,szArchive);
 		}
 			
-		szBuffer=new BYTE[11];
+		BYTE szBuffer[11];
 		
 		dbFile->Read(szBuffer,11);
 		if (szBuffer[0]!='L' || szBuffer[1]!='O' || 
@@ -361,7 +360,5 @@ BOOL CDatabaseInfo::ReadFilesAndDirectoriesCount(CDatabase::ArchiveType nArchive
 	}
 	if (dbFile!=NULL)
 		delete dbFile;
-	if (szBuffer!=NULL)
-		delete[] szBuffer;
 	return bRet;
 }

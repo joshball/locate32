@@ -231,8 +231,8 @@ public:
 	static BYTE SetStatus(LPCTSTR lpszFileName,
 				const CFileStatus& status);
 
-	DWORD SeekToEnd() { return this->Seek(0,begin); }
-	BYTE SeekToBegin() { return this->Seek(0,end)>0; }
+	DWORD SeekToEnd() { return this->Seek(0,end); }
+	BYTE SeekToBegin() { return this->Seek(0,begin)>0; }
 	virtual LONG Seek(LONG lOff, DWORD nFrom,CFileException* pError=NULL);
 #ifdef WIN32
 	virtual BYTE SetLength(DWORD dwNewLen);

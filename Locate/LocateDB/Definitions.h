@@ -38,6 +38,7 @@ enum UpdateError {
 	ueFolderUnavailable = 10,
 	ueInvalidDatabase = 11,
 	ueLimitReached = 12, // Only for CLocater
+	ueCannotIncrement = 13,
 	ueStillWorking = 0xF000
 };
 

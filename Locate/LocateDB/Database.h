@@ -20,7 +20,8 @@ public:
 	enum DatabaseFlags {
 		flagEnabled=0x1,
 		flagGlobalUpdate=0x2,
-		flagStopIfRootUnavailable=0x4
+		flagStopIfRootUnavailable=0x4,
+		flagIncrementalUpdate=0x8
 	};
 		
 	enum ArchiveType {

@@ -145,10 +145,31 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			sStatus=statusWritingDB;
 			
 			
+			BOOL bWriteHeader=TRUE;
+
 			// Opening file
 			switch (m_aDatabases[m_dwCurrentDatabase]->m_nArchiveType)
 			{
 			case CDatabase::archiveFile:
+				if (m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::IncrementalUpdate))
+				{
+					dbFile=OpenDatabaseFileForIncrementalUpdate(
+						m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
+						m_dwFiles,m_dwDirectories);
+					
+					
+					if (dbFile==(CFile*)-1)
+					{
+						dbFile=NULL;
+						if (!m_pProc(m_dwData,ErrorOccured,ueCannotIncrement,this))
+							throw ueStillWorking;
+					}
+					else if (dbFile!=NULL)
+					{
+						bWriteHeader=FALSE;
+						break;
+					}
+				}
 				dbFile=new CFile(m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
 					CFile::defWrite|CFile::otherStrNullTerminated,TRUE);
 				break;
@@ -157,87 +178,93 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 					-1,m_aDatabases[m_dwCurrentDatabase]->m_szArchive);
 			}
 			
-	#ifdef WIN32
-			// Writing identification, '\17=0x11=0x10|0x1' 0x1 = Long filenames and 0x10 = ANSI
-			dbFile->Write("LOCATEDB20",10);
-			dbFile->Write(BYTE(0x11));
-	#else
-			// Writing identification, '\0x0' = Short filenames and OEM
-			dbFile->Write("LOCATEDB20",10);
-			m_pCurrentRoot=m_pFirstRoot;
-			BOOL bLFN=FALSE;
-			while (m_pCurrentRoot!=NULL)
+			if (bWriteHeader)
 			{
-				if (_use_lfn(m_pCurrentRoot->m_Path))
+				//////////////////////////////////
+				// Writing header
+
+		#ifdef WIN32
+				// Writing identification, '\17=0x11=0x10|0x1' 0x1 = Long filenames and 0x10 = ANSI
+				dbFile->Write("LOCATEDB20",10);
+				dbFile->Write(BYTE(0x11));
+		#else
+				// Writing identification, '\0x0' = Short filenames and OEM
+				dbFile->Write("LOCATEDB20",10);
+				m_pCurrentRoot=m_pFirstRoot;
+				BOOL bLFN=FALSE;
+				while (m_pCurrentRoot!=NULL)
 				{
-					bLFN=TRUE;
-					break;
+					if (_use_lfn(m_pCurrentRoot->m_Path))
+					{
+						bLFN=TRUE;
+						break;
+					}
+					m_pCurrentRoot=m_pCurrentRoot->m_pNext;
 				}
-				m_pCurrentRoot=m_pCurrentRoot->m_pNext;
-			}
-			if (bLFN)
-				File.Write(BYTE(1));
-			else
-				File.Write(BYTE(0));
-	#endif
-			DWORD dwExtraSize1=1,dwExtraSize2=1;
-			if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
-				dwExtraSize1+=istrlen(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1);
-			if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
-				dwExtraSize2+=istrlen(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2);
-			
-			// Writing header size
-	        dbFile->Write(DWORD(
-				m_aDatabases[m_dwCurrentDatabase]->m_sAuthor.GetLength()+1+ // Author data
-				m_aDatabases[m_dwCurrentDatabase]->m_sComment.GetLength()+1+ // Comments data
-				dwExtraSize1+dwExtraSize2+ // Extra
-				4+ // Time
-				4+ // Number of files
-				4  // Number of directories
-				)
-			);
+				if (bLFN)
+					File.Write(BYTE(1));
+				else
+					File.Write(BYTE(0));
+		#endif
+				DWORD dwExtraSize1=1,dwExtraSize2=1;
+				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
+					dwExtraSize1+=istrlen(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1);
+				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
+					dwExtraSize2+=istrlen(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2);
+				
+				// Writing header size
+				dbFile->Write(DWORD(
+					m_aDatabases[m_dwCurrentDatabase]->m_sAuthor.GetLength()+1+ // Author data
+					m_aDatabases[m_dwCurrentDatabase]->m_sComment.GetLength()+1+ // Comments data
+					dwExtraSize1+dwExtraSize2+ // Extra
+					4+ // Time
+					4+ // Number of files
+					4  // Number of directories
+					)
+				);
 
-			// Writing author
-			dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_sAuthor);
-	
-			// Writing comments
-			dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_sComment);
-			
-			// Writing free data
-			if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
-				dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1,dwExtraSize1);
-			else
-				dbFile->Write((BYTE)0);
-			if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
-				dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2,dwExtraSize2);
-			else
-				dbFile->Write((BYTE)0);
-			
-			// Writing filedate
-			{
-				WORD wTime,wDate;
-	#ifdef WIN32
-				SYSTEMTIME st;
-				FILETIME ft;
-				GetLocalTime(&st);
-				SystemTimeToFileTime(&st,&ft);
-				FileTimeToDosDateTime(&ft,&wDate,&wTime);
-	#else
-				time_t tt;
-				struct tm *t;
-				time(&tt);
-				t=localtime(&tt);
-				wDate=(t->tm_mday&0x1F)|(((t->tm_mon+1)&0x0F)<<5)|(((t->tm_year-80)&0x7F)<<9);
-				wTime=((t->tm_sec/2)&0x1F)|((t->tm_min&0x3F)<<5)|((t->tm_hour&0x1F)<<11);
-	#endif
-				dbFile->Write(wDate);
-				dbFile->Write(wTime);
+				// Writing author
+				dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_sAuthor);
+		
+				// Writing comments
+				dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_sComment);
+				
+				// Writing free data
+				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
+					dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1,dwExtraSize1);
+				else
+					dbFile->Write((BYTE)0);
+				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
+					dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2,dwExtraSize2);
+				else
+					dbFile->Write((BYTE)0);
+				
+				// Writing filedate
+				{
+					WORD wTime,wDate;
+		#ifdef WIN32
+					SYSTEMTIME st;
+					FILETIME ft;
+					GetLocalTime(&st);
+					SystemTimeToFileTime(&st,&ft);
+					FileTimeToDosDateTime(&ft,&wDate,&wTime);
+		#else
+					time_t tt;
+					struct tm *t;
+					time(&tt);
+					t=localtime(&tt);
+					wDate=(t->tm_mday&0x1F)|(((t->tm_mon+1)&0x0F)<<5)|(((t->tm_year-80)&0x7F)<<9);
+					wTime=((t->tm_sec/2)&0x1F)|((t->tm_min&0x3F)<<5)|((t->tm_hour&0x1F)<<11);
+		#endif
+					dbFile->Write(wDate);
+					dbFile->Write(wTime);
+				}
+
+				// Writing number of files and directories
+				dbFile->Write(m_dwFiles);
+				dbFile->Write(m_dwDirectories);
 			}
 
-			// Writing number of files and directories
-			dbFile->Write(m_dwFiles);
-			dbFile->Write(m_dwDirectories);
-			
 			// Writing root directory datas
 			m_pCurrentRoot=m_aDatabases[m_dwCurrentDatabase]->m_pFirstRoot;
 			while (m_pCurrentRoot!=NULL && ueResult==ueSuccess)
@@ -920,9 +947,12 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 	m_szName=new char[m_dwNameLength+1];
 	CopyMemory(m_szName,pDatabase->GetName(),m_dwNameLength+1);
 
+	// Retrieving flags
 	if (pDatabase->IsFlagged(CDatabase::flagStopIfRootUnavailable))
 		m_nFlags|=DBFlags::StopIfUnuavailable;
-
+	if (pDatabase->IsFlagged(CDatabase::flagIncrementalUpdate))
+		m_nFlags|=DBFlags::IncrementalUpdate;
+	
 
 	LPCSTR pPtr=pDatabase->GetRoots();
 	if (pPtr==NULL)
@@ -1248,4 +1278,96 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCSTR* ppExclu
 	delete[] pdwExcludedDirectoriesLen;
 }
 
+CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCSTR szArchive,DWORD dwFiles,DWORD dwDirectories)
+{
+	CFile* dbFile=NULL;
+	
+	try {
+        dbFile=new CFile(szArchive,
+			CFile::modeReadWrite|CFile::openExisting|CFile::shareDenyWrite|CFile::shareDenyRead|CFile::otherStrNullTerminated,TRUE);
+
+		if (dbFile==NULL)
+		{
+			// Cannot open file, incremental update not possible
+			return NULL;
+		}
+	
+		dbFile->SeekToBegin();
+	
+		// Reading and verifing header
+		char szBuffer[11];
+		dbFile->Read(szBuffer,11);
+
+		if (szBuffer[0]!='L' || szBuffer[1]!='O' || 
+			szBuffer[2]!='C' || szBuffer[3]!='A' || 
+			szBuffer[4]!='T' || szBuffer[5]!='E' || 
+			szBuffer[6]!='D' || szBuffer[7]!='B' ||
+			szBuffer[8]!='2' || szBuffer[9]!='0' )
+		{
+			throw CFileException(CFileException::invalidFile,
+#ifdef WIN32
+				-1,
+#endif
+				szArchive);
+		}
+
+	
+		// Updating file and directory counts
+		DWORD dwBlockSize;
+		dbFile->Read(dwBlockSize);
+		dbFile->Seek(dwBlockSize-2*sizeof(DWORD),CFile::current);
+		
+		DWORD dwTemp1,dwTemp2;
+		dbFile->Read(dwTemp1);
+		dbFile->Read(dwTemp2);
+
+		dwTemp1+=dwFiles;
+		dwTemp2+=dwDirectories;
+		dbFile->Seek(-2*LONG(sizeof(DWORD)),CFile::current);
+
+		dbFile->Write(dwTemp1);
+		dbFile->Write(dwTemp2);
+
+		// Searching enf of file
+		dbFile->Read(dwBlockSize);
+		while (dwBlockSize>0)
+		{
+			dbFile->Seek(dwBlockSize,CFile::current);
+			dbFile->Read(dwBlockSize);
+		}
+
+
+		// Now we should be in the end of file
+		ASSERT(dbFile->IsEndOfFile());
+
+		dbFile->Seek(-LONG(sizeof(DWORD)),CFile::current);
+	}
+	catch (CFileException fe)
+	{
+		if (dbFile!=NULL)
+			delete dbFile;
+		switch (fe.m_cause)
+		{
+		case CFileException::invalidFile:
+		case CFileException::sharingViolation:
+		case CFileException::endOfFile:
+		case CFileException::writeProtected:
+		case CFileException::writeFault:
+		case CFileException::lockViolation:
+		case CFileException::accessDenied:
+		case CFileException::readFault:
+			return (CFile*)-1;
+		default:
+			return NULL;
+		}
+	}
+	catch (...)
+	{
+		if (dbFile!=NULL)
+			delete dbFile;
+		return NULL;
+	}
+
+	return dbFile;
+}
 

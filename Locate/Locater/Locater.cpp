@@ -276,7 +276,7 @@ BOOL CLocater::LocatingProc()
 			// Setting OEM info
 			m_pCurrentDatabase->bOEM=!(szBuffer[10]&0x10);
 
-			// Skipping header
+			// Skipping database header
 			DWORD dwBlockSize;
 			dbFile->Read(dwBlockSize);
 			dbFile->Seek(dwBlockSize,CFile::current);
