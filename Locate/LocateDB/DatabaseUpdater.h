@@ -154,6 +154,10 @@ public:
 	const LPCSTR GetCurrentDatabaseName() const;
 	const LPCSTR GetCurrentDatabaseFile() const;
 	LPSTR GetCurrentDatabaseNameStr() const;
+	
+	DWORD GetNumberOfDatabases() const;
+	DWORD GetCurrentDatabase() const;
+	WORD GetProgressStatus() const; // Estimated progress status between 0-1000
 
 #ifdef WIN32
 	static BYTE GetAttribFlag(DWORD dwAttribs);
@@ -162,7 +166,7 @@ public:
 private:
 
 	CArrayFP<DBArchive*> m_aDatabases;
-	DBArchive* m_pCurrentDatabase;
+	DWORD m_dwCurrentDatabase;
 
 	DWORD m_dwFiles;
 	DWORD m_dwDirectories;
@@ -244,6 +248,16 @@ inline BYTE CDatabaseUpdater::GetAttribFlag(DWORD dwAttribs)
 
 #endif
 
+inline DWORD CDatabaseUpdater::GetNumberOfDatabases() const
+{
+	return m_aDatabases.GetSize();
+}
+
+inline DWORD CDatabaseUpdater::GetCurrentDatabase() const
+{
+	return m_dwCurrentDatabase;
+}
+
 inline const CDatabaseUpdater::CRootDirectory* CDatabaseUpdater::GetCurrentRoot() const
 {
 	return m_pCurrentRoot;
@@ -265,24 +279,27 @@ inline LPSTR CDatabaseUpdater::GetCurrentRootPathStr() const
 
 inline const LPCSTR CDatabaseUpdater::GetCurrentDatabaseName() const
 {
-	if (m_pCurrentDatabase==NULL)
+	if (m_dwCurrentDatabase==DWORD(-1))
 		return NULL;
-	return m_pCurrentDatabase->m_szName;
+	return m_aDatabases[m_dwCurrentDatabase]->m_szName;
 }
 
 inline const LPCSTR CDatabaseUpdater::GetCurrentDatabaseFile() const
 {
-	if (m_pCurrentDatabase==NULL)
+	if (m_dwCurrentDatabase==DWORD(-1))
 		return NULL;
-	return m_pCurrentDatabase->m_szArchive;
+	return m_aDatabases[m_dwCurrentDatabase]->m_szArchive;
 }
 
 inline LPSTR CDatabaseUpdater::GetCurrentDatabaseNameStr() const
 {
-	LPSTR szRet=new char[m_pCurrentDatabase->m_dwNameLength+1];
-	ASSERT(strlen(m_pCurrentDatabase->m_szName)==m_pCurrentDatabase->m_dwNameLength);
+	if (m_dwCurrentDatabase==DWORD(-1))
+		return 0;
 	
-	CopyMemory(szRet,m_pCurrentDatabase->m_szName,m_pCurrentDatabase->m_dwNameLength+1);
+	LPSTR szRet=new char[m_aDatabases[m_dwCurrentDatabase]->m_dwNameLength+1];
+	ASSERT(strlen(m_aDatabases[m_dwCurrentDatabase]->m_szName)==m_aDatabases[m_dwCurrentDatabase]->m_dwNameLength);
+	
+	CopyMemory(szRet,m_aDatabases[m_dwCurrentDatabase]->m_szName,m_aDatabases[m_dwCurrentDatabase]->m_dwNameLength+1);
 	return szRet;
 }
 

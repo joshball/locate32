@@ -25,7 +25,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2004 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 alpha 4.12260
+FILEVERSION=3.0 alpha 4.12280
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -652,6 +652,7 @@ STR_LOCATING_LIMITREACHED=Results limit reached
 STR_LOCATING_SEARCHINGFROMFILE=Searching from file %s.
 STR_LOCATING_FILESFOUND=%d file(s) found
 STR_UPDATING=Updating database...
+STR_UPDATING_TOOLTIPTITLE=Updating database:
 STR_UPDATING_DATABASE=Updating database (%s: %s)...
 STR_UPDATING_WRITING=writing database
 STR_UPDATING_SUCCESS=Updating succeeded

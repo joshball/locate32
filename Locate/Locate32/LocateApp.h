@@ -55,8 +55,8 @@ public:
 	BOOL SaveSchedules();
 	void CheckSchedules();
 
-	BOOL StartUpdateAnimation();
-	BOOL StopUpdateAnimation();
+	BOOL StartUpdateStatusNotification();
+	BOOL StopUpdateStatusNotification();
 	
 	void SaveRegistry() const;
 	void LoadRegistry();

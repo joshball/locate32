@@ -1969,7 +1969,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL,
 		NULL
 	};
-	if (GetLocateApp()->m_wComCtrlVersion>=0x0500)
+	if (GetLocateApp()->m_wShellDllVersion>=0x0500)
 	{
 		UpdateProcessItems[2]=CreateCheckBox(IDS_ADVSETSHOWUPDATESTATUSTOOLTIP,NULL,
 			DefaultCheckBoxProc,CLocateAppWnd::pfEnableUpdateTooltip,&m_pSettings->m_dwProgramFlags);

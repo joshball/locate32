@@ -12,7 +12,7 @@
 CDatabaseUpdater::CDatabaseUpdater(LPCSTR szDatabaseFile,LPCSTR szAuthor,LPCSTR szComment,
 		LPCSTR* pszRoots,DWORD nNumberOfRoots,UPDATEPROC pProc,DWORD dwParam)
 :	m_pCurrentRoot(NULL),sStatus(statusInitializing),m_dwFiles(0),m_dwDirectories(0),
-	m_pProc(pProc),m_dwData(dwParam),m_pCurrentDatabase(NULL),dbFile(NULL)
+	m_pProc(pProc),m_dwData(dwParam),m_dwCurrentDatabase(DWORD(-1)),dbFile(NULL)
 #ifdef WIN32	
 	,m_hThread(NULL),m_lForceQuit(FALSE)
 #endif
@@ -26,7 +26,7 @@ CDatabaseUpdater::CDatabaseUpdater(LPCSTR szDatabaseFile,LPCSTR szAuthor,LPCSTR 
 CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
 		int nDatabases,UPDATEPROC pProc,DWORD dwParam)
 :	m_pCurrentRoot(NULL),sStatus(statusInitializing),m_dwFiles(0),m_dwDirectories(0),
-	m_pProc(pProc),m_dwData(dwParam),m_pCurrentDatabase(NULL),dbFile(NULL)
+	m_pProc(pProc),m_dwData(dwParam),m_dwCurrentDatabase(DWORD(-1)),dbFile(NULL)
 #ifdef WIN32	
 	,m_hThread(NULL),m_lForceQuit(FALSE)
 #endif
@@ -40,7 +40,7 @@ CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
 CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
 		int nDatabases,UPDATEPROC pProc,WORD wThread,DWORD dwParam)
 :	m_pCurrentRoot(NULL),sStatus(statusInitializing),m_dwFiles(0),m_dwDirectories(0),
-	m_pProc(pProc),m_dwData(dwParam),m_pCurrentDatabase(NULL),dbFile(NULL)
+	m_pProc(pProc),m_dwData(dwParam),m_dwCurrentDatabase(DWORD(-1)),dbFile(NULL)
 #ifdef WIN32	
 	,m_hThread(NULL),m_lForceQuit(FALSE)
 #endif
@@ -89,13 +89,12 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 
 	ASSERT(dbFile==NULL);
 
-	for (int i=0;i<m_aDatabases.GetSize();i++)
+	for (m_dwCurrentDatabase=0;m_dwCurrentDatabase<DWORD(m_aDatabases.GetSize());m_dwCurrentDatabase++)
 	{
 		try {
-			m_pCurrentDatabase=m_aDatabases[i];
-			m_pCurrentRoot=m_pCurrentDatabase->m_pFirstRoot;
+			m_pCurrentRoot=m_aDatabases[m_dwCurrentDatabase]->m_pFirstRoot;
 			
-			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): m_pCurrentDatabase=%X szName=%s",DWORD(m_pCurrentDatabase),m_pCurrentDatabase->m_szName);
+			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): m_pCurrentDatabase=%X szName=%s",DWORD(m_aDatabases[m_dwCurrentDatabase]),m_aDatabases[m_dwCurrentDatabase]->m_szName);
 				
 			m_pProc(m_dwData,StartedDatabase,ueResult,this);
 			
@@ -118,7 +117,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				if (ueResult==ueFolderUnavailable)
 				{
 					m_pProc(m_dwData,ErrorOccured,ueResult,this);
-					if (m_pCurrentDatabase->IsFlagged(DBArchive::StopIfUnuavailable))
+					if (m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::StopIfUnuavailable))
 						throw ueFolderUnavailable; // Next database
 				}
 				else if (ueResult!=ueSuccess && ueResult!=ueFolderUnavailable)
@@ -136,7 +135,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				throw ueResult=ueStopped;
 	#endif
 
-			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): writing to %s",m_pCurrentDatabase->m_szArchive);
+			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): writing to %s",m_aDatabases[m_dwCurrentDatabase]->m_szArchive);
 		
 			// Start writing database
 			m_pProc(m_dwData,RootChanged,ueResult,this);
@@ -145,15 +144,15 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			
 			
 			// Opening file
-			switch (m_aDatabases[i]->m_nArchiveType)
+			switch (m_aDatabases[m_dwCurrentDatabase]->m_nArchiveType)
 			{
 			case CDatabase::archiveFile:
-				dbFile=new CFile(m_pCurrentDatabase->m_szArchive,
+				dbFile=new CFile(m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
 					CFile::defWrite|CFile::otherStrNullTerminated,TRUE);
 				break;
 			default:
 				throw CFileException(CFileException::notImplemented,
-					-1,m_pCurrentDatabase->m_szArchive);
+					-1,m_aDatabases[m_dwCurrentDatabase]->m_szArchive);
 			}
 			
 	#ifdef WIN32
@@ -182,8 +181,8 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				
 			// Writing header size
 			dbFile->Write(DWORD(
-				m_pCurrentDatabase->m_sAuthor.GetLength()+1+ // Author data
-				m_pCurrentDatabase->m_sComment.GetLength()+1+ // Comments data
+				m_aDatabases[m_dwCurrentDatabase]->m_sAuthor.GetLength()+1+ // Author data
+				m_aDatabases[m_dwCurrentDatabase]->m_sComment.GetLength()+1+ // Comments data
 				1+1+ // Extra
 				4+ // Time
 				4+ // Number of files
@@ -192,10 +191,10 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			);
 
 			// Writing author
-			dbFile->Write(m_pCurrentDatabase->m_sAuthor);
+			dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_sAuthor);
 	
 			// Writing comments
-			dbFile->Write(m_pCurrentDatabase->m_sComment);
+			dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_sComment);
 			
 			// Writing free data
 			dbFile->Write((BYTE)0);
@@ -228,7 +227,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			dbFile->Write(m_dwDirectories);
 			
 			// Writing root directory datas
-			m_pCurrentRoot=m_pCurrentDatabase->m_pFirstRoot;
+			m_pCurrentRoot=m_aDatabases[m_dwCurrentDatabase]->m_pFirstRoot;
 			while (m_pCurrentRoot!=NULL && ueResult==ueSuccess)
 			{
 				sStatus=statusWritingDB;
@@ -245,7 +244,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			delete dbFile;
 			dbFile=NULL;
 
-			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): DB %X OK",DWORD(m_pCurrentDatabase));
+			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): DB %X OK",DWORD(m_aDatabases[m_dwCurrentDatabase]));
 		}
 		catch (CFileException fe)
 		{
@@ -323,7 +322,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 		delete dbFile;
 		dbFile=NULL;
 	}
-	
+	m_dwCurrentDatabase=DWORD(-1);
 	m_pProc(m_dwData,FinishedUpdating,ueResult,this);
 	m_pProc(m_dwData,ClassShouldDelete,ueResult,this);
 
@@ -1216,4 +1215,9 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCSTR* ppExclu
 		delete[] ppExcludedDirectories[i];
 	delete[] ppExcludedDirectories;
 	delete[] pdwExcludedDirectoriesLen;
+}
+
+WORD CDatabaseUpdater::GetProgressStatus() const
+{
+	return (WORD)(GetTickCount()%1000);
 }

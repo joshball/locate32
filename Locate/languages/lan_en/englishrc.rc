@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,98,4,12260
- PRODUCTVERSION 2,98,4,12260
+ FILEVERSION 2,98,4,12280
+ PRODUCTVERSION 2,98,4,12280
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 alpha 4.12260"
+            VALUE "FileVersion", "3.0 alpha 4.12280"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2004 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 alpha 4.11260"
+            VALUE "ProductVersion", "3.0 alpha 4.11280"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1090,6 +1090,8 @@ BEGIN
     IDS_LISTDATABASEDESC    "Database Description"
     IDS_LISTDATABASEFILE    "Database File"
     IDS_UPDATINGDATABASE    "Updating database..."
+	IDS_UPDATINGTOOLTIPTITLE "Updating database:"
+    
 END
 
 STRINGTABLE 
