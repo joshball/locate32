@@ -335,22 +335,87 @@ void CIdentifiers::CheckDifferences(CIdentifiers& rAnother,BOOL bCheckChanges)
 
 }
 
-void CIdentifiers::PrintUnused()
+void CIdentifiers::PrintUnused(BOOL bLineNumbers)
 {
+	BYTE bNumbers;
+
+	if (bLineNumbers)
+	{
+		DWORD dwMaxLines=0;
+		char szNumber[40];
+	
+		POSITION pPos=GetHeadPosition();
+		while (pPos!=NULL)
+		{
+			IDENTIFIER& rID=GetAtRef(pPos);
+			if (rID.bChanged && rID.dwLineNumber>dwMaxLines)
+				dwMaxLines=rID.dwLineNumber;				
+
+			pPos=GetNextPosition(pPos);
+		}
+
+		bNumbers=wsprintf(szNumber,"%d",dwMaxLines);
+	}
+	
 	POSITION pPos=GetHeadPosition();
 	while (pPos!=NULL)
 	{
 		IDENTIFIER& rID=GetAtRef(pPos);
 
 		if (!rID.bUsed)
-			printf("%s: '%s'\n",LPCSTR(rID.name),LPCSTR(rID.text));
+		{
+			if (bLineNumbers)
+			{
+				char szBuffer[10];
+				char* szLinuNumber=new char[bNumbers+2];
+				wsprintf(szBuffer,"00%dd",bNumbers);
+				szBuffer[0]='%';
+				wsprintf(szLinuNumber,szBuffer,rID.dwLineNumber);				
+
+				printf("%s %s: '%s'\n",szLinuNumber,LPCSTR(rID.name),LPCSTR(rID.text));
+				delete[] szLinuNumber;
+			}
+			else
+				printf("%s: '%s'\n",LPCSTR(rID.name),LPCSTR(rID.text));
+		}
+
 		
 		pPos=GetNextPosition(pPos);
 	}
 }
 
-void CIdentifiers::PrintChanged(CIdentifiers* pAnother)
+void CIdentifiers::PrintChanged(CIdentifiers* pAnother,BOOL bLineNumbers)
 {
+	BYTE bNumbers,bNumbers2;
+	if (bLineNumbers)
+	{
+		DWORD dwMaxLines=0,dwMaxLines2=0;
+		char szNumber[40];
+	
+		POSITION pPos=GetHeadPosition();
+		while (pPos!=NULL)
+		{
+			IDENTIFIER& rID=GetAtRef(pPos);
+			if (rID.bChanged && rID.dwLineNumber>dwMaxLines)
+				dwMaxLines=rID.dwLineNumber;				
+
+			pPos=GetNextPosition(pPos);
+		}
+	
+		pPos=pAnother->GetHeadPosition();
+		while (pPos!=NULL)
+		{
+			IDENTIFIER& rID=pAnother->GetAtRef(pPos);
+			if (rID.bChanged && rID.dwLineNumber>dwMaxLines2)
+				dwMaxLines2=rID.dwLineNumber;				
+
+			pPos=pAnother->GetNextPosition(pPos);
+		}
+	
+		bNumbers=wsprintf(szNumber,"%d",dwMaxLines);
+		bNumbers2=wsprintf(szNumber,"%d",dwMaxLines2);
+	}
+	
 	POSITION pPos=GetHeadPosition();
 	while (pPos!=NULL)
 	{
@@ -362,11 +427,39 @@ void CIdentifiers::PrintChanged(CIdentifiers* pAnother)
 			if (pAnother!=NULL)
 				pAnotherID=pAnother->FindIdentifier(rID.name);
 
+			if (bLineNumbers)
+			{
+				char szBuffer[10];
+				char* szLinuNumber=new char[bNumbers+2];
+				wsprintf(szBuffer,"00%dd",bNumbers);
+				szBuffer[0]='%';
+				wsprintf(szLinuNumber,szBuffer,rID.dwLineNumber);	
 
-			if (pAnotherID==NULL)			
-				printf("%s: '%s'\n",LPCSTR(rID.name),LPCSTR(rID.text));
+				if (pAnotherID==NULL)			
+					printf("%04d %s: '%s'\n",rID.dwLineNumber,LPCSTR(rID.name),LPCSTR(rID.text));
+				else
+				{
+					char* szLinuNumber2=new char[bNumbers2+2];
+					wsprintf(szBuffer,"00%dd",bNumbers2);
+					szBuffer[0]='%';
+					wsprintf(szLinuNumber2,szBuffer,pAnotherID->dwLineNumber);	
+
+
+					printf("%s %s: '%s'<-->%s '%s'\n",szLinuNumber,LPCSTR(rID.name),LPCSTR(rID.text),
+						szLinuNumber2,LPCSTR(pAnotherID->text));
+					delete[] szLinuNumber2;
+				}
+
+				delete[] szLinuNumber;
+			}
 			else
-				printf("%s: '%s'<-->'%s'\n",LPCSTR(rID.name),LPCSTR(rID.text),LPCSTR(pAnotherID->text));
+			{							
+				if (pAnotherID==NULL)			
+					printf("%s: '%s'\n",LPCSTR(rID.name),LPCSTR(rID.text));
+				else
+					printf("%s: '%s'<-->'%s'\n",LPCSTR(rID.name),LPCSTR(rID.text),LPCSTR(pAnotherID->text));
+			}
+
 		}
 		
 		pPos=GetNextPosition(pPos);

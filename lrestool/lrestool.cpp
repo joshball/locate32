@@ -2,7 +2,7 @@
 #include <conio.h>
 #include "lrestool.h"
 
-#define COPYRIGHTTEXT "lrestool v 2.1.4.3140 (C) 2003-2004 Janne Huttunen: language resource tool\n\n"
+#define COPYRIGHTTEXT "lrestool v 2.1.5.2050 (C) 2003-2005 Janne Huttunen: language resource tool\n\n"
 
 
 FILE* _stderr=stderr;
@@ -120,13 +120,13 @@ int DifferenceMode(Data& o)
 	iFirst.CheckDifferences(iSecond,TRUE);
 
 	printf("\nIdentifiers found only in file %s\n\n",LPCSTR(o.strLResFile));
-	iFirst.PrintUnused();
+	iFirst.PrintUnused(o.bShowLineNumbers);
 
 	printf("\n\nIdentifiers found only in file %s\n\n",LPCSTR(o.strReference));
-	iSecond.PrintUnused();
+	iSecond.PrintUnused(o.bShowLineNumbers);
 
 	printf("\n\nChanged identifiers (%s <--> %s)\n\n",LPCSTR(o.strLResFile),LPCSTR(o.strReference));
-	iFirst.PrintChanged(&iSecond);
+	iFirst.PrintChanged(&iSecond,o.bShowLineNumbers);
 
 	return 0;
 }
@@ -198,7 +198,11 @@ int main(int argc,char* argv[])
 				if (o.nMode!=Data::CreateRCFile)
 					o.bShowHelp=TRUE;
 				else 
+				{
 					o.nMode=Data::Difference;
+					if (argv[i][2]=='l')
+						o.bShowLineNumbers=TRUE;
+				}
 				break;
 			case 'R':
 				if (o.nMode!=Data::CreateRCFile)
@@ -240,6 +244,12 @@ int main(int argc,char* argv[])
 			case 'i':
 				if (o.nMode==Data::CheckLResFile)
 					o.bInteractive=TRUE;
+				else
+					o.bShowHelp=TRUE;
+				break;
+			case 'l':
+				if (o.nMode==Data::Difference)
+					o.bShowLineNumbers=TRUE;
 				else
 					o.bShowHelp=TRUE;
 				break;
@@ -303,9 +313,10 @@ int main(int argc,char* argv[])
 		printf("or:    lrestool -R[a,s,d] name [basefile]\n\n");
 		printf("\t-o outfile:\tset output file to 'outfile'\n");
 		printf("\t-c:\t\tchecks infile, adds missing identifiers\n\t\t\tand marks obsolete identifiers\n");
-		printf("\t-i:\t\tmakes checking interactively\n");
+		printf("\t-i:\t\tmakes checking interactively (use with -c only)\n");
 		printf("\t-r file:\tuses lrf file as reference\n");
 		printf("\t-d:\t\tchecks difference between to two lanfuage files\n");
+		printf("\t-l:\t\tshow line numbers (use with -d only)\n");
 		printf("\t-b basefile:\tset basefile file to 'basefile'\n");
 		printf("\t-e:\t\tuse stdout instead of stderr for error messages\n");
 		printf("\t-Ra:\t\tsets program name to corresponds with file \n\t\t\t 'basefile' (name corresponds with FOR_PROGRAM\n\t\t\tidentifier in lrf file)\n");

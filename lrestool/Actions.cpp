@@ -90,6 +90,7 @@ BOOL CIdentifiers::LoadFromLResFile(LPCSTR szFile,BOOL bShowFound)
 		}
 
 		pNew=FindIdentifier(name);
+		
 		if (pNew==NULL)
 		{			
 			pNew=AddTail();
@@ -97,6 +98,7 @@ BOOL CIdentifiers::LoadFromLResFile(LPCSTR szFile,BOOL bShowFound)
 			pNew->text.Swap(text);
 			pNew->bCommentsAbove=bIsThereCommentsBefore;
 
+			
 			if (pNew->name.CompareNoCase("FOR_PROGRAM")==0)
 			{
 				pNew->bUsed=TRUE;
@@ -112,6 +114,7 @@ BOOL CIdentifiers::LoadFromLResFile(LPCSTR szFile,BOOL bShowFound)
 			pNew->text.Swap(text);
 			pNew->bCommentsAbove=bIsThereCommentsBefore;
 		}
+		pNew->dwLineNumber=dwReadedLines;
 	}
 	
 	delete[] pBuffer;
@@ -449,18 +452,21 @@ BOOL CIdentifiers::UpdateLResFile(LPCSTR szInputFile,LPCSTR szOutputFile,BYTE bS
 					pNew=iInputFile.InsertAfter(pAfter->name);
 					pNew->name=pID->name;
 					pNew->text=text;
+					pNew->bUsed=TRUE;
 					break;
 				case Before:
 					InsertBeforeIdentifier(pFileContent,dwLength,pID->name,text,pBefore->name,TRUE);
 					pNew=iInputFile.InsertBefore(pBefore->name);
 					pNew->name=pID->name;
 					pNew->text=text;
+					pNew->bUsed=TRUE;
 					break;
 				case EndOfFile:
 					InsertToEndOfFile(pFileContent,dwLength,pID->name,text,!bCommentAddedToEndOfFile);
 					pNew=AddTail();
 					pNew->name=pID->name;
 					pNew->text=text;
+					pNew->bUsed=TRUE;
 					bCommentAddedToEndOfFile=TRUE;
 					break;
 				}

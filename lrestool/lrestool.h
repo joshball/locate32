@@ -14,18 +14,23 @@ struct CIdentifier {
 	BOOL bChanged:1;
 	BOOL bCommentsBelow:1;
 	BOOL bCommentsAbove:1;
+
+	DWORD dwLineNumber;
+	
 };
 
 typedef CIdentifier IDENTIFIER,*PIDENTIFIER;
 typedef const CIdentifier * PCIDENTIFIER;
  
 inline CIdentifier::CIdentifier()
-:	bUsed(FALSE),bCommentsAbove(FALSE),bCommentsBelow(FALSE),bChanged(FALSE)
+:	bUsed(FALSE),bCommentsAbove(FALSE),bCommentsBelow(FALSE),bChanged(FALSE),
+	dwLineNumber(DWORD(-1))
 {
 }
 
 inline CIdentifier::CIdentifier(LPCSTR szName)
-:	name(szName),bUsed(TRUE),bCommentsAbove(FALSE),bCommentsBelow(FALSE),bChanged(FALSE)
+:	name(szName),bUsed(TRUE),bCommentsAbove(FALSE),bCommentsBelow(FALSE),bChanged(FALSE),
+	dwLineNumber(DWORD(-1))
 {
 }
 
@@ -47,6 +52,7 @@ struct Data{
 	BYTE bShowHelp:1;
 	BYTE bVerbose:1;
 	BYTE bDoubleVerbose:1;
+	BYTE bShowLineNumbers:1;
 };
 	
 class CIdentifiers : public CList <IDENTIFIER>
@@ -72,8 +78,8 @@ public:
 	BOOL UpdateLResFile(LPCSTR szInputFile,LPCSTR szOutputFile,BYTE bShowFound,BYTE bInteractive,const CIdentifiers& iReference);
 	void CheckDifferences(CIdentifiers& rAnother,BOOL bCheckChanges);
 
-	void PrintUnused();
-	void PrintChanged(CIdentifiers* pAnother=NULL);
+	void PrintUnused(BOOL bLineNumbers=FALSE);
+	void PrintChanged(CIdentifiers* pAnother=NULL,BOOL bLineNumbers=FALSE);
 
 
 public:

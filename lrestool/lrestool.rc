@@ -53,8 +53,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,1,4,3140
- PRODUCTVERSION 2,1,4,3140
+ FILEVERSION 2,1,5,2050
+ PRODUCTVERSION 2,1,5,2050
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -71,12 +71,12 @@ BEGIN
         BEGIN
             VALUE "Comments", "Language resource tool for Locate 32"
             VALUE "FileDescription", "lrestool"
-            VALUE "FileVersion", "2, 1, 4, 3140"
+            VALUE "FileVersion", "2, 1, 5, 2050"
             VALUE "InternalName", "lrestool"
-            VALUE "LegalCopyright", "Copyright (C) 2003-2004 Janne Huttunen"
+            VALUE "LegalCopyright", "Copyright (C) 2003-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lrestool"
             VALUE "ProductName", " lrestool"
-            VALUE "ProductVersion", "2.1.4.3140"
+            VALUE "ProductVersion", "2.1.5.2050"
         END
     END
     BLOCK "VarFileInfo"
