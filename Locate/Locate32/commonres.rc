@@ -1,0 +1,195 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "commonres.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "hfcrc.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 2,98,4,9212
+ PRODUCTVERSION 2,98,4,9212
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x3L
+#else
+ FILEFLAGS 0x2L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "FileDescription", "Locate32"
+            VALUE "FileVersion", "2, 98, 4, 9212"
+            VALUE "InternalName", "Locate32"
+            VALUE "LegalCopyright", "Copyright © 1997-2004 Janne Huttunen"
+            VALUE "OriginalFilename", "Locate32.exe"
+            VALUE "ProductName", "Locate32"
+            VALUE "ProductVersion", "3.0 alpha 4.9212"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_APPLICATIONICON     ICON                    "commonres\\updtdb32.ico"
+IDI_FILES               ICON                    "commonres\\files.ico"
+IDI_DELETEDFILE         ICON                    "commonres\\deletedf.ico"
+IDI_FILE                ICON                    "commonres\\file.ico"
+IDI_UANIM1              ICON                    "commonres\\icon1.ico"
+IDI_UANIM2              ICON                    "commonres\\uanim2.ico"
+IDI_UANIM3              ICON                    "commonres\\uanim3.ico"
+IDI_UANIM4              ICON                    "commonres\\uanim4.ico"
+IDI_UANIM5              ICON                    "commonres\\uanim5.ico"
+IDI_UANIM6              ICON                    "commonres\\uanim6.ico"
+IDI_UANIM7              ICON                    "commonres\\uanim7.ico"
+IDI_UANIM8              ICON                    "commonres\\uanim8.ico"
+IDI_UANIM9              ICON                    "commonres\\uanim9.ico"
+IDI_UANIM10             ICON                    "commonres\\uanim10.ico"
+IDI_UANIM11             ICON                    "commonres\\uanim11.ico"
+IDI_UANIM12             ICON                    "commonres\\uanim12.ico"
+IDI_UANIM13             ICON                    "commonres\\uanim13.ico"
+IDI_YES                 ICON                    "commonres\\yes.ico"
+IDI_NO                  ICON                    "commonres\\no.ico"
+IDI_LANIM1              ICON                    "commonres\\ico00001.ico"
+IDI_LANIM2              ICON                    "commonres\\icon2.ico"
+IDI_LANIM3              ICON                    "commonres\\icon3.ico"
+IDI_LANIM4              ICON                    "commonres\\icon4.ico"
+IDI_LANIM6              ICON                    "commonres\\icon6.ico"
+IDI_LANIM5              ICON                    "commonres\\idb_lani.ico"
+IDI_LENS                ICON                    "commonres\\lens.ico"
+IDI_DBFILE              ICON                    "commonres\\ico00002.ico"
+IDI_INVALIDDBFILE       ICON                    "commonres\\dbfile.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_CIRCLE              BITMAP                  "commonres\\circle.bmp"
+IDB_ABOUTBANNER         BITMAP                  "commonres\\aboutbanner.bmp"
+IDB_DEFAULTTYPEICONS    BITMAP                  "commonres\\defaultt.bmp"
+IDB_TOOLBARBITMAPS      BITMAP                  "commonres\\toolbarb.bmp"
+IDB_SAVERESTOOLBARBITMAPS BITMAP                  "commonres\\saverestoolbarbitmaps.bmp"
+IDB_SAVERESTOOLBARBITMAPSH BITMAP                  "commonres\\saverest.bmp"
+IDB_TOOLBARBITMAPSH     BITMAP                  "commonres\\bmp00001.bmp"
+IDB_TOOLBARBITMAPSD     BITMAP                  "commonres\\bmp00002.bmp"
+IDB_SAVERESTOOLBARBITMAPSD BITMAP                  "commonres\\bmp00003.bmp"
+IDB_ADVANCEDSETTINGSBITMAPS BITMAP                  "commonres\\advancedsettingsbitmap.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// RT_MANIFEST
+//
+
+1                       RT_MANIFEST             "commonres\\manifest"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDS_REGPLACE            "Software\\Update\\Locate32"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_ERROR               "Error"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_ERRORCANNOTLOADLANGUAGEFILE "Cannot load language file."
+    IDS_ERRORCANNOTLOADLANGUAGEFILE2 
+                            "Cannot load language file, using default."
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Finnish resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FIN)
+#ifdef _WIN32
+LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "commonres.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""hfcrc.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Finnish resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

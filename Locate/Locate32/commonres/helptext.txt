@@ -1,0 +1,25 @@
+You can search text or binary data from files. For example type:
+
+Hello			search text 'Hello' from files
+str:Hello			same as 'Hello'
+str:Hello\0		search 'Hello' with zero byte
+uni:Hello			search unicode string 'Hello'
+hex:12AAFF		search binary data '12AAFF' from files
+bin:12AAFF		same as 'hex:12AAFF'
+dword(16):12345678	search double word  (32-bit value) '12345678' (base is 16)
+dword(10):12345678	search double word '12345678' (base is 10)
+word(16):1234		search word (16-bit value) '1234' from files
+byte(16):12		search byte (8-bit value) 12 from files
+
+'dword:12345678' is same as 'dword(16):12345678' and 'hex:78563412'
+'word:1234' is same as 'word(16):1234' and 'hex:3412'
+'byte:12' is same as 'byte(16):12' and 'hex:12'
+'hex:0 0 0 0 0' is same as 'hex:00000000', 'hex:00 00 00 00' and 'dword:0'
+
+With 'str:' and 'uni:' you can use:
+'\0': zero byte
+'\n': line break
+'\r': carriage return (\r\n is default line break in Windows)
+'\t': tabulatur
+'\b': bell
+'\XX': hex byte 'XX', for example \FF

@@ -1,0 +1,95 @@
+
+Locate DB fileformat reference for version 20 ((C) 2001-2004 Janne Huttunen)
+
+Order: header + 1. root dir + ... + n. root dir + 00000000
+
+HEADER:
+8xBYTE    2xBYTE   BYTE            DWORD                                                     
+LOCATEDB   XXXX       XX           XXXXXXXX     XX...X\0    XX...X\0    XX...X\0      XX...X\0   
+		  Version  0 = short names  Header        Creator     Comments    Free data I   Free data II
+                   1 = long names	 size                                  Reserved for future use
+				   0x10 = Ansi
+				   0x11 = Ansi + lfn
+
+DWORD=FILETIME    DWORD      DWORD
+     XXXX         XXXXXXXX   XXXXXXXX
+ Creation time     Number of  Number of
+                    files     directories
+
+
+
+
+
+
+ROOT DIRECTORY STRUCTURE (e.g. C: drive):
+   DWORD          BYTE                                        DWORD 
+  XXXXXXXX         XX               XX..X\0   XX...X\0       XXXXXXXX
+Data length       Type               Path    Volume name   Volume serial
+actual length  0x00 = Unknown                                 number
+= this + 4     0x10 = Fixed
+               0x20 = Removable (ex. Floppy)
+			   0x30 = CD-Rom
+			   0x40 = Remote (network)
+			   0x50 = Ramdisk
+			   0xF0 = Directory
+
+              DWORD       DWORD        
+ XX..X\0     XXXXXXXX    XXXXXXXX      XXX....XXXX....X		  0000
+File system  Number of   Number of      Files and folders
+    name       files    directories
+
+DIRECTORY STRUCTURE:
+
+  BYTE          DWORD           BYTE       
+   XX          XXXXXXXX          XX         XXX...X\0 
+0x0  = End     Data length     Dir name     dir name 
+0x10 = File					    length
+0x80 = Direc. actual size    
++attrib        = this + 4
+
+  DWORD       WORD	    WORD       
+XXXXXXXX      XXXX      XXXX         XXXX....XXX..X     00
+Modified    Created    Accessed		Files and subdirs
+
+FILE DATA STRUCTURE:
+
+  BYTE           BYTE        BYTE                     DWORD + BYTE   
+   XX             XX          XX         XXX...X\0    XXXXXXXXXX    
+0x0  = End     File name   Extension     File name    File size     
+0x10 = File     length    index (or 0)
+0x80 = Direc.
++ attrib
+
+  DWORD      WORD	     WORD
+XXXXXXXX     XXXX        XXXX
+Modified   Created d. Accessed date
+
+
+
+
+
+Attrib is compination of following:
+Hidden		0x1
+Readonly	0x2
+Archive		0x4
+System		0x8
+
+
+
+Briefly, to read file do following
+
+1. Read header 
+2. While next byte is not zero read root struct as follows:
+	1.  Read fields (e.g. type, path, ...) 
+	2a. If byte (after number of directories field) combined with 0xF0 is 0x10 
+	    (i.e. (byte&0xF0)==0x10), following data is file struct. Read name, size and date fields.
+	2b. If byte combined with 0xF0 is 0x80 (i.e. (byte&0xF0)==0x80), following data 
+	    is directory struct. Read it as follows:
+		- Read directory header (name, dates)
+		- Read subdirectories (e.g. recursively) and files until zero byte is obtained
+	3.  If byte combined with 0xF0 is 0x00 (i.e. (byte&0xF0)==0x00) read next root struct,
+		otherwise read next file or directory structure (steps 2a or 2b). 
+	
+
+
+
