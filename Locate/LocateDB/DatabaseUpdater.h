@@ -205,16 +205,23 @@ private:
 	volatile LONG m_lForceQuit;
 #endif
 
-	// Status flags (statusNotChanged is not by CDatabaseUpdater)
-	enum {
-		statusNotChanged,
-		statusInitializing,
-		statusScanning,
-		statusWritingDB
-	} sStatus;
+	
 	CRootDirectory* m_pCurrentRoot;
 
 	friend CRootDirectory;
+
+public:
+	// Status flags (statusNotChanged is not by CDatabaseUpdater)
+	enum UpdateStatus {
+		statusNotChanged,
+		statusInitializing,
+		statusScanning,
+		statusWritingDB,
+		statusFinishing
+	};	
+	UpdateStatus GetStatus() const { return sStatus; }
+private:
+	UpdateStatus sStatus;
 };
 
 typedef CDatabaseUpdater* PDATABASEUPDATER;

@@ -2618,6 +2618,9 @@ void CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootI
 				pRootInfos[i].pName=allocempty();
 				pRootInfos[i].pRoot=NULL;
 
+				if (ppUpdaters[i]->GetStatus()==CDatabaseUpdater::statusFinishing)
+					pRootInfos[i].ueError=ueSuccess;
+
 				if (m_pUpdateStatusWnd!=NULL)
 				{
 					pRootInfos[i].dwNumberOfDatabases=ppUpdaters[i]->GetNumberOfDatabases();
@@ -3949,10 +3952,14 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatStatusTextLine(CString& str,const CL
 	}
 	else if (pRootInfo.pName[0]=='\0')
 	{
-		// Initializing
+		// Initializing/finishing
 		if (nThreadID!=-1)
 			str << ": ";
-		str.AddString(IDS_NOTIFYINITIALIZING);
+
+		if (pRootInfo.ueError==ueSuccess)
+			str.AddString(IDS_NOTIFYFINISHING);
+		else
+			str.AddString(IDS_NOTIFYINITIALIZING);
 	}
 	else
 	{
@@ -4134,16 +4141,21 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 				ri.ueError=ueSuccess;
 				ri.wProgressState=1000;
 
-				// Cheking how much space "initializing" will take
+				// Cheking how much space "finished" will take
 				str.Empty();
 				FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
 				CSize szThisLine=dc.GetTextExtent(str);
 				
-				// Cheking how much space "finished" will take
+				// Cheking how much space "initializing/finished" will take
 				ri.pName=(LPSTR)szEmpty;
 				str.Empty();
+				ri.ueError=ueStillWorking;
 				FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
 				EnlargeSizeForText(dc,str,szThisLine);
+				ri.ueError=ueSuccess;
+				FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
+				EnlargeSizeForText(dc,str,szThisLine);
+					
 				
 				LPCSTR szFile=NULL;
 				CDatabase::ArchiveType nArchiveType;

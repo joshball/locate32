@@ -367,13 +367,15 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 		m_pProc(m_dwData,FinishedDatabase,ueResult,this);
 	}
 
+	sStatus=statusFinishing;
+	m_dwCurrentDatabase=DWORD(-1);
+	
 	// Closing file if needed
 	if (dbFile!=NULL)
 	{
 		delete dbFile;
 		dbFile=NULL;
 	}
-	m_dwCurrentDatabase=DWORD(-1);
 	m_pProc(m_dwData,FinishedUpdating,ueResult,this);
 	m_pProc(m_dwData,ClassShouldDelete,ueResult,this);
 

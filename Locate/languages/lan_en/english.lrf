@@ -25,7 +25,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2005 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 beta 5.1160
+FILEVERSION=3.0 beta 5.1230
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -123,7 +123,7 @@ DLGSIZEDATE_FILEDATEATLEAST=Filedate at &least:
 ACCSIZEDATE_FILEDATEATLEAST="L"
 DLGSIZEDATE_FILEDATEATMOST=Filedate at &most:
 ACCSIZEDATE_FILEDATEATMOST="M"
-DLGSIZEDATE_INFOTEXT=Size and date will be looked from database. If \ndatabase does not contain size and dateinformation, these options will be ignored.
+DLGSIZEDATE_INFOTEXT=Size and date will be looked from database. If database does not contain size and dateinformation, these options will be ignored.
 STRSIZEDATA_DATETYPE_MODIFIED=Modified
 STRSIZEDATA_DATETYPE_CREATED=Created
 STRSIZEDATA_DATETYPE_LASTACCESSED=Last accessed
@@ -252,7 +252,8 @@ STRADVANCEDSETTINGS_UPDATEPROCESS=Update process
 STRADVANCEDSETTINGS_SHOWCRITICALERRORS=Show critical errors (e.g., cannot write database, ...)
 STRADVANCEDSETTINGS_SHOWNONCRITICALERRORS=Show non-critical errors (e.g., path is not available, ...)
 STRADVANCEDSETTINGS_SHOWUPDATESTATUSINTOOLTIP=Show update status in tooltip
-STRADVANCEDSETTINGS_TRANSPARENCY=Transparency (0-255):
+STRADVANCEDSETTINGS_TRANSPARENCY=Locate dialog transparency (0-255):
+STRADVANCEDSETTINGS_TOPMOST=Locate dialog always on top
 STRADVANCEDSETTINGS_TOOLTIPTEXTCOLOR=Text color
 STRADVANCEDSETTINGS_TOOLTIPTITLECOLOR=Title text color
 STRADVANCEDSETTINGS_TOOLTIPERRORCOLOR=Error text color
@@ -693,6 +694,8 @@ STR_UPDATING_INTERRUPTED=Updating interrupted
 STR_UPDATING_THREAD=thread
 STR_UPDATING_UPDATING=database
 STR_UPDATING_SCANNINGROOT=scanning
+STR_UPDATING_INITIALIZING=initializing
+STR_UPDATING_FINISHING=finishing
 
 ###########################
 # Tray icon 
@@ -702,7 +705,6 @@ STR_TRAYICON_UPDATINGDATABASES=Locate (Updating databases: %d/%d threads running
 STR_TRAYICON_UPDATINGDATABASES2=Updating databases:
 STR_TRAYICON_THREAD=Thread
 STR_TRAYICON_DONE=done
-STR_TRAYICON_INITIALIZING=initializing
 STR_TRAYICON_WRITINGDATABASE=writing database
 
 ###########################

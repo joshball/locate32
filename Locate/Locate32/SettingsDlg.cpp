@@ -855,6 +855,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETLOADTYPES,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLoadRegistryTypes,&m_pSettings->m_dwLocateDialogFlags),
 		CreateRoot(IDS_ADVSETLOOKINCOMBO,LookInItems),
+		CreateCheckBox(IDS_ADVSETTOPMOST,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgDialogTopMost,&m_pSettings->m_dwLocateDialogFlags),
 		NULL, // For transparency
 		NULL
 	};
@@ -872,7 +874,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	if (GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes")!=NULL)
 	{
 		// Needs at least Win2k
-		DialogItems[3]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
+		DialogItems[4]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nTransparency);
 		StatusTooltipItems[6]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nToolTipTransparency);

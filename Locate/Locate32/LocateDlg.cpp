@@ -351,7 +351,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	// Loading registry
 	LoadRegistry();
 	// Refreshing dialog box
-	if ((GetLocateDlg()->GetFlags()&CLocateDlg::fgNameRootFlag)!=CLocateDlg::fgNameDontAddRoots)
+	if ((GetFlags()&fgNameRootFlag)!=fgNameDontAddRoots)
         m_NameDlg.InitDriveBox();
 		
 	// Set acceleration tables for subdialogs
@@ -361,9 +361,9 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	
 	SetDialogMode(FALSE);
 		
-	
-
-	
+	// Setting topmost mode if needed
+	if (GetFlags()&fgDialogTopMost)
+		SetWindowPos(HWND_TOPMOST,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);
 	
 	// Setting list control imagelists and style
 	SetSystemImagelists(m_pListCtrl,&m_AdvancedDlg.m_hDefaultTypeIcon);
@@ -855,6 +855,16 @@ BOOL CLocateDlg::UpdateSettings()
 			}
 		}
 	}
+
+	// Setting topmost status
+	if (GetFlags()&fgDialogTopMost)
+	{
+		if (!(GetExStyle()&WS_EX_TOPMOST))
+			SetWindowPos(HWND_TOPMOST,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);
+	}
+	else if (GetExStyle()&WS_EX_TOPMOST)
+		SetWindowPos(HWND_NOTOPMOST,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);
+
 
 	// Background operations
 	if ((GetExtraFlags()&efItemUpdatingMask)==efEnableItemUpdating)

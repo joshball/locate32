@@ -478,8 +478,9 @@ public:
 		fgDialogMinimizeToST=0x00000004,
 		fgDialogLeaveLocateBackground=0x00000008,
 		fgDialogLargeModeOnly=0x40000000,
-		fgDialogFlag=0x4000000E,
-		fgDialogSave=0x4000000E, // mask to using when saving to registry
+		fgDialogTopMost=0x80000000,
+		fgDialogFlag=0xB000000F,
+		fgDialogSave=0xB000000F, // mask to using when saving to registry
 				
 		// File list
 		fgLVShowIcons=0x00000010,
