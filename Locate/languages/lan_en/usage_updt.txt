@@ -9,6 +9,7 @@ parameters:
     -Lpath      check directory path
     -L1         check all local hard drives
     -Epath      Exclude directory from updating
+    -I		incrementally update database
     -Tc         set creator
     -Td         set description
     -n          following databases uses another thread
