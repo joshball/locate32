@@ -1450,7 +1450,7 @@ BOOL CSettingsProperties::SaveSettings()
 			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
 				CString command;
-				command.Format("\"%s\" /p3",GetApp()->GetExeName());
+				command.Format("\"%s\" /P4",GetApp()->GetExeName());
 				CommandKey.SetValue("",command);
 			}
 		}
@@ -1472,7 +1472,7 @@ BOOL CSettingsProperties::SaveSettings()
 			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
 				CString command;
-				command.Format("\"%s\" /p2",GetApp()->GetExeName());
+				command.Format("\"%s\" /P3",GetApp()->GetExeName());
 				CommandKey.SetValue("",command);
 			}
 		}

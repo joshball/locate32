@@ -6431,11 +6431,24 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCTSTR szPath)
 	LPTSTR tmp;
 	int ret=atoi(szPath);
 	
-	if ((ret>0 && ret<4) || szPath[0]=='0')
+	if ((ret>0 && ret<=4) || szPath[0]=='0')
 	{
-		LookIn.SetCurSel(ret);
-		LookIn.SetItemText(-1,LookIn.GetItemText(ret));
-		return TRUE;	
+		LPARAM lParam;
+		if (ret==0)
+			lParam=MAKELPARAM(Everywhere,Original);
+		else
+			lParam=MAKELPARAM(Special,ret);
+		
+		for (int i=0;LookIn.GetCount();i++)
+		{	
+			if (LookIn.GetItemData(i)==lParam)
+			{
+				LookIn.SetCurSel(i);
+				LookIn.SetItemText(-1,LookIn.GetItemText(i));
+				return TRUE;
+			}
+		}
+		return FALSE;	
 	}
 
 	ret=GetFullPathName(szPath,_MAX_PATH,temp.GetBuffer(_MAX_PATH),&tmp);
@@ -6487,8 +6500,16 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCTSTR szPath)
 			}
 		}
 	}
-	LookIn.SetCurSel(3);
-	LookIn.SetItemText(-1,LookIn.GetItemText(3));
+
+	for (int i=0;LookIn.GetCount();i++)
+	{
+		if (LookIn.GetItemData(i)==MAKELPARAM(Everywhere,Original))
+		{
+			LookIn.SetCurSel(i);
+			LookIn.SetItemText(-1,LookIn.GetItemText(i));
+			break;
+		}
+	}
 	return TRUE;
 }
 
@@ -6681,14 +6702,15 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 				wsprintf(szName,"Name/LookIn%04d",aSelections[i]);
 				
 				LONG lLength=RegKey.QueryValueLength(szName);
-				if (lLength>4)
-				{
-					char* pData=new char[lLength+1];
-					RegKey.QueryValue(szName,pData,lLength);
-					pData[lLength]='\0';
+				char* pData=new char[lLength+1];
+				RegKey.QueryValue(szName,pData,lLength);
 					
+					
+				if (*((WORD*)pData)==CNameDlg::TypeOfItem::NotSelected ||
+					(*((WORD*)pData)==CNameDlg::TypeOfItem::Custom && lLength>4))
+				{
+					pData[lLength]='\0';
 					SelectByCustomName(pData+4);
-					delete[] pData;
 	
 				}
 				else if (lLength==4) 
@@ -6699,6 +6721,7 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 					SelectByLParam(MAKELPARAM(HIWORD(dwLParam),LOWORD(dwLParam)));
 				}
 				
+				delete[] pData;
 				m_pMultiDirs[i]=new DirSelection(i==0);
 				m_pMultiDirs[i]->SetValuesFromControl(GetDlgItem(IDC_LOOKIN),m_pBrowse,m_nMaxBrowse);
 			}
@@ -6711,15 +6734,15 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 			m_pMultiDirs[1]=NULL;
             
 			LONG lLength=RegKey.QueryValueLength("Name/LookIn");
-			if (lLength>4)
+			char* pData=new char[lLength+1];
+			RegKey.QueryValue(szName,pData,lLength);
+			
+			
+			if (*((WORD*)pData)==CNameDlg::TypeOfItem::NotSelected ||
+				(*((WORD*)pData)==CNameDlg::TypeOfItem::Custom && lLength>4))
 			{
-				char* pData=new char[lLength+1];
-				RegKey.QueryValue(szName,pData,lLength);
 				pData[lLength]='\0';
-				
 				SelectByCustomName(pData+4);
-				delete[] pData;
-
 			}
 			else if (lLength==4) 
 			{
@@ -6729,6 +6752,8 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 				SelectByLParam(MAKELPARAM(HIWORD(dwLParam),LOWORD(dwLParam)));
 			}
 				
+			delete[] pData;
+
 			m_pMultiDirs[i]=new DirSelection(TRUE);
 			m_pMultiDirs[i]->SetValuesFromControl(GetDlgItem(IDC_LOOKIN),m_pBrowse,m_nMaxBrowse);
 
@@ -6758,14 +6783,17 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 		
 			char* pData=new char[lLength+1];
 			RegKey.QueryValue("Name/LookIn",pData,lLength);
-			if (*((WORD*)pData)==CNameDlg::TypeOfItem::NotSelected)
+			if (*((WORD*)pData)==CNameDlg::TypeOfItem::NotSelected ||
+				(*((WORD*)pData)==CNameDlg::TypeOfItem::Custom && lLength>4))
 			{
-				LookInEx.SetCurSel(-1);
+				// Data is REG_BINARY so '\' is not added by default
 				pData[lLength]='\0';
-				LookInEx.SetItemText(-1,pData+4);
+				SelectByCustomName(pData+4);
 			}
 			else
 			{
+				// Choose by lParam
+
 				LPARAM lParam=MAKELPARAM(((WORD*)pData)[1],((WORD*)pData)[0]);
 				for (int i=0;i<LookInEx.GetCount();i++)
 				{
@@ -6777,6 +6805,7 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 					}
 				}
 			}
+			delete[] pData;
 		}
 	}
 
@@ -6810,20 +6839,22 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 	if (m_pMultiDirs==NULL)
 	{
 		int nCurSel=LookInEx.GetCurSel();
-		if (nCurSel==CB_ERR)
+		LPARAM lParam=MAKELPARAM(TypeOfItem::NotSelected,0);
+		if (nCurSel!=CB_ERR)
+            lParam=LookInEx.GetItemData(nCurSel);
+			
+		if (LOWORD(lParam)==TypeOfItem::NotSelected || 
+			LOWORD(lParam)==TypeOfItem::Custom)
 		{
 			LookInEx.GetItemText(-1,str.GetBuffer(2000),2000);
 			str.FreeExtra();
 			char* pData=new char[str.GetLength()+4];
-			*((DWORD*)pData)=DWORD(TypeOfItem::NotSelected);
+			*((DWORD*)pData)=lParam;
 			CopyMemory(pData+4,LPCSTR(str),str.GetLength());
 			RegKey.SetValue("Name/LookIn",pData,str.GetLength()+4,REG_BINARY);
 		}
 		else
-		{
-			LPARAM lParam=LookInEx.GetItemData(nCurSel);
 			RegKey.SetValue("Name/LookIn",MAKELPARAM(HIWORD(lParam),LOWORD(lParam)));            
-		}
 	}
 	else
 	{
@@ -6835,12 +6866,17 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 			{
 				// Current selection
 				int nCurSel=LookInEx.GetCurSel();
-				if (nCurSel==CB_ERR)
+				LPARAM lParam=MAKELPARAM(TypeOfItem::NotSelected,0);
+				if (nCurSel!=CB_ERR)
+					lParam=LookInEx.GetItemData(nCurSel);
+				
+				if (LOWORD(lParam)==TypeOfItem::NotSelected || 
+					LOWORD(lParam)==TypeOfItem::Custom)
 				{
 					LookInEx.GetItemText(-1,str.GetBuffer(2000),2000);
 					str.FreeExtra();
 					char* pData=new char[str.GetLength()+4];
-					*((DWORD*)pData)=DWORD(TypeOfItem::NotSelected);
+					*((DWORD*)pData)=lParam;
 					CopyMemory(pData+4,LPCSTR(str),str.GetLength());
 					RegKey.SetValue(szName,pData,str.GetLength()+4,REG_BINARY);
 				}
@@ -6858,7 +6894,7 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 				dstrlen(m_pMultiDirs[i]->pTitleOrDirectory,dwLength);
 				
 				char* pData=new char[dwLength+4];
-				*((DWORD*)pData)=DWORD(TypeOfItem::NotSelected);
+				*((DWORD*)pData)=DWORD(TypeOfItem::Custom);
 				CopyMemory(pData+4,m_pMultiDirs[i]->pTitleOrDirectory,dwLength);
 				RegKey.SetValue(szName,pData,dwLength+4,REG_BINARY);
 			}

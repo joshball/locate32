@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   Updatedb.exe v2.99.5.1020 */
+   Updatedb.exe v2.99.5.1060 */
 
 #include <HFCLib.h>
 #include "locatedb/locatedb.h"
@@ -7,9 +7,9 @@
 #include "lan_resources.h"
 
 #ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 3.0 beta 5.1020";
+		LPCSTR szVersionStr="updtdb32 3.0 beta 5.1060";
 #else
-		LPCSTR szVersionStr="updatedb 3.0 beta 5.1020";
+		LPCSTR szVersionStr="updatedb 3.0 beta 5.1060";
 #endif
 
 
@@ -369,10 +369,10 @@ int main (int argc,char ** argv)
 					{
 						CDatabase* pDatabase=CDatabase::FromName(HKCU,
 							"Software\\Update\\Databases",szName);
-						pDatabase->SetFlag(CDatabase::flagGlobalUpdate);
 
 						if (pDatabase!=NULL)
 						{
+							pDatabase->SetFlag(CDatabase::flagGlobalUpdate);
 							// Is only default loaded
 							if (aDatabases.GetSize()==1 && strcmp(aDatabases[0]->GetName(),"DEFAULTX")==0)
 							{
@@ -422,6 +422,13 @@ int main (int argc,char ** argv)
 	{
 		aDatabases.RemoveAll();
 		CDatabase::LoadFromRegistry(HKCU,"Software\\Update\\Databases",aDatabases);   
+
+		// No registry values?
+		if (aDatabases.GetSize()==0)
+		{
+			aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],LastCharIndex(argv[0],'\\')+1));
+			aDatabases[0]->SetNamePtr(alloccopy("DEFAULTX"));
+		}
 	}
 		
 		
