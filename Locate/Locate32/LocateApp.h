@@ -50,6 +50,8 @@ public:
 	DWORD OnAnotherInstance(ATOM aCommandLine);
 	DWORD OnSystemTrayMessage(UINT uID,UINT msg);
 	BOOL SetShellNotifyIconAndTip(HICON hIcon=NULL,UINT uTip=0);
+	void AddTaskbarIcon();
+	void DeleteTaskbarIcon();
 	
 	DWORD SetSchedules(CList<CSchedule*>* pSchedules=NULL);
 	BOOL SaveSchedules();
@@ -81,8 +83,11 @@ private:
 		DWORD dwNumberOfDatabases;
 		DWORD dwCurrentDatabase;
 		WORD wProgressState;
+		UpdateError ueError;
 	};
     UINT FormatTooltipStatusText(CString& str,RootInfo* pRootInfo,WORD wThreads,BYTE bShortenLevel);  
+public:
+	void FormatLastErrorForStatusTooltip(UpdateError ueError,CDatabaseUpdater* pUpdater);
 
 public:
 	CMenu m_Menu;
@@ -94,6 +99,7 @@ public:
 	
 	HICON* m_pUpdateAnimIcons;
 	int m_nCurUpdateAnimBitmap;
+	volatile LPSTR m_szLastUpdateError;
 
 	CListFP <CSchedule*> m_Schedules;
 
@@ -214,6 +220,7 @@ public:
 	void SaveDateAndTimeString();
 	LPSTR FormatDateAndTimeString(WORD wDate,WORD wTime=WORD(-1));
 	BOOL SetLanguageSpecifigHandles();
+
 
 	BOOL StopUpdating(BOOL bForce=TRUE);
     BOOL IsUpdating() const;
@@ -357,7 +364,7 @@ inline CLocateAppWnd* GetLocateAppWnd()
 inline CLocateAppWnd::CLocateAppWnd()
 :	m_pAbout(NULL),m_pSettings(NULL),
 	m_pLocateDlgThread(NULL),m_dwProgramFlags(pfDefault),
-	m_pUpdateAnimIcons(NULL),m_hHook(NULL)
+	m_pUpdateAnimIcons(NULL),m_hHook(NULL),m_szLastUpdateError(NULL)
 {
 	DebugMessage("CLocateAppWnd::CLocateAppWnd()");
 }
@@ -366,6 +373,14 @@ inline CLocateAppWnd::~CLocateAppWnd()
 {
 	DebugMessage("CLocateAppWnd::~CLocateAppWnd()");
 	//m_Schedules.RemoveAll();
+
+	if (m_szLastUpdateError!=NULL)
+	{
+		// At this time, there is no updater threads
+		delete[] m_szLastUpdateError;
+		m_szLastUpdateError=NULL;
+	}
+
 }
 
 inline BOOL CLocateApp::IsUpdating() const

@@ -1174,12 +1174,6 @@ BOOL CLocateApp::StopUpdating(BOOL bForce)
     if (!IsUpdating())
 		return TRUE; // Already stopped
 
-	GetLocateAppWnd()->StopUpdateStatusNotification();
-	CLocateDlg* pLocateDlg=GetLocateDlg();
-	if (pLocateDlg!=NULL)
-		pLocateDlg->StopUpdateAnimation();
-	
-
 	BOOL bRet=TRUE;
 	GetUpdatersPointer();
 	for (int i=0;m_ppUpdaters!=NULL && m_ppUpdaters[i]!=NULL;i++)
@@ -1193,6 +1187,11 @@ BOOL CLocateApp::StopUpdating(BOOL bForce)
 		}
 	}
 	ReleaseUpdatersPointer();
+	
+	GetLocateAppWnd()->StopUpdateStatusNotification();
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg!=NULL)
+		pLocateDlg->StopUpdateAnimation();
 	
 	// It is good to check this handle again
 	pLocateDlg=GetLocateDlg();
@@ -2027,24 +2026,7 @@ int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 
 BOOL CLocateAppWnd::OnCreateClient(LPCREATESTRUCT lpcs)
 {
-	// Creating taskbar icon
-	NOTIFYICONDATA nid;
-	nid.cbSize=NOTIFYICONDATA_V1_SIZE;
-	nid.hWnd=*this;
-	nid.uID=1000;
-	nid.uFlags=NIF_ICON|NIF_MESSAGE|NIF_TIP;
-	nid.uCallbackMessage=WM_SYSTEMTRAY;
-	nid.hIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,LR_DEFAULTCOLOR|LR_SHARED);
-	LoadString(IDS_NOTIFYLOCATE,nid.szTip,63);
-	Shell_NotifyIcon(NIM_ADD,&nid);
-	
-	if (((CLocateApp*)GetApp())->m_wShellDllVersion>=0x0500)
-	{
-		nid.cbSize=sizeof(NOTIFYICONDATA);
-		nid.uVersion=0;
-		Shell_NotifyIcon(NIM_SETVERSION,&nid);
-	}
-	
+	AddTaskbarIcon();
 
 	BOOL bDoOpen=FALSE;
 
@@ -2120,6 +2102,8 @@ BOOL CLocateAppWnd::UpdateSettings()
 
 BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 {
+	DebugFormatMessage("CLocateAppWnd::SetShellNotifyIconAndTip: BEGIN, hIcon=%X, uTip=%d",DWORD(hIcon),uTip);
+
 	NOTIFYICONDATA nid;
 	ZeroMemory(&nid,sizeof(NOTIFYICONDATA));
 	
@@ -2160,10 +2144,13 @@ BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 			{
 				pRootInfos[i].pName=NULL;
 				pRootInfos[i].pRoot=NULL;
+				pRootInfos[i].ueError=GET_UPDATER_CODE(ppUpdaters[i]);
 			}
 			else 
 			{
 				wRunning++;
+
+				pRootInfos[i].ueError=ueStillWorking;
 
 				if (ppUpdaters[i]->GetCurrentDatabaseName()==NULL)
 				{
@@ -2374,11 +2361,15 @@ BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 		nid.uFlags|=NIF_TIP;
 	}
 	
+	DebugMessage("CLocateAppWnd::SetShellNotifyIconAndTip: END");
+	
 	return Shell_NotifyIcon(NIM_MODIFY,&nid);
 }
 
 UINT CLocateAppWnd::FormatTooltipStatusText(CString& str,RootInfo* pRootInfo,WORD wThreads,BYTE bShortenLevel)
 {
+	DebugMessage("CLocateAppWnd::FormatTooltipStatusText BEGIN");
+
 	str.Empty();
 
 	for (WORD i=0;i<wThreads;i++)
@@ -2388,14 +2379,26 @@ UINT CLocateAppWnd::FormatTooltipStatusText(CString& str,RootInfo* pRootInfo,WOR
 
 		// #X  thread number
 		if (wThreads>1)
-			str << '#' << (int)(i+1);
+			str << '#' << (int)(i+1) <<' ';
 
 		if (pRootInfo[i].pName==NULL)
 		{
 			// Finished
 			if (wThreads>1)
 				str << ": ";
-			str.AddString(IDS_NOTIFYDONE);
+			switch (pRootInfo[i].ueError)
+			{
+			case ueStopped:
+				str.AddString(IDS_UPDATINGCANCELLED);
+				break;
+			case ueFolderUnavailable:
+			case ueSuccess:
+				str.AddString(IDS_NOTIFYDONE);
+				break;
+			default:
+				str.AddString(IDS_UPDATINGFAILED2);
+				break;
+			}
 		}
 		else if (pRootInfo[i].pName[0]=='\0')
 		{
@@ -2407,7 +2410,11 @@ UINT CLocateAppWnd::FormatTooltipStatusText(CString& str,RootInfo* pRootInfo,WOR
 		else
 		{
 			if (pRootInfo[i].dwNumberOfDatabases>1)
-				str << ' ' << (int)(pRootInfo[i].dwCurrentDatabase+1) << '/' << (int)pRootInfo[i].dwNumberOfDatabases << ": ";
+			{
+				if (wThreads>1)
+                    str << ' ';
+				str << (int)(pRootInfo[i].dwCurrentDatabase+1) << '/' << (int)pRootInfo[i].dwNumberOfDatabases << ": ";
+			}
 			else if (wThreads>1)
 				str << ": ";
 			str << pRootInfo[i].pName;
@@ -2468,12 +2475,28 @@ UINT CLocateAppWnd::FormatTooltipStatusText(CString& str,RootInfo* pRootInfo,WOR
 		}
 	}
 
+	if (bShortenLevel<=2)
+	{
+		// Inserting error message
+		char* pError=m_szLastUpdateError;
+		if (pError!=NULL)
+			str << '\n' << pError;
+	}
 
+
+	DebugMessage("CLocateAppWnd::FormatTooltipStatusText END");
 	return str.GetLength();
 }
 
 BOOL CLocateAppWnd::StartUpdateStatusNotification()
 {
+	// Clearing last error 
+	if (!(m_dwProgramFlags&pfShowUpdateTooltip) && m_szLastUpdateError)
+	{
+		delete[] m_szLastUpdateError;
+		m_szLastUpdateError=NULL;
+	}
+	
 	if (m_pUpdateAnimIcons==NULL)
 	{
 		m_pUpdateAnimIcons=new HICON[13];
@@ -2828,12 +2851,8 @@ void CLocateAppWnd::OnDestroy()
 {
 	DebugMessage("void CLocateAppWnd::OnDestroy() START");
 	
-	NOTIFYICONDATA nid;
-	nid.cbSize=sizeof(NOTIFYICONDATA);
-	nid.hWnd=*this;
-	nid.uID=1000;
-	nid.uFlags=0;
-	Shell_NotifyIcon(NIM_DELETE,&nid);
+	DeleteTaskbarIcon();
+
 	PostQuitMessage(0);
 	m_Menu.DestroyMenu();
 
@@ -2924,41 +2943,190 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			return (BOOL)(HWND)*this;
 		}
 		else if (msg==nTaskbarCreated)
-		{
-			// Creating taskbar icon
-			NOTIFYICONDATA nid;
-			nid.cbSize=NOTIFYICONDATA_V1_SIZE;
-			nid.hWnd=*this;
-			nid.uID=1000;
-			nid.uFlags=NIF_ICON|NIF_MESSAGE|NIF_TIP;
-			nid.uCallbackMessage=WM_SYSTEMTRAY;
-			nid.hIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,LR_DEFAULTCOLOR|LR_SHARED);
-			LoadString(IDS_NOTIFYLOCATE,nid.szTip,63);
-	
-			Shell_NotifyIcon(NIM_ADD,&nid);
-		}
+			AddTaskbarIcon();
 		break;
 	}
 	return CFrameWnd::WindowProc(msg,wParam,lParam);
 }
 
+void CLocateAppWnd::AddTaskbarIcon()
+{
+	// Creating taskbar icon
+	NOTIFYICONDATA nid;
+	nid.cbSize=NOTIFYICONDATA_V1_SIZE;
+	nid.hWnd=*this;
+	nid.uID=1000;
+	nid.uFlags=NIF_ICON|NIF_MESSAGE|NIF_TIP;
+	nid.uCallbackMessage=WM_SYSTEMTRAY;
+	nid.hIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,LR_DEFAULTCOLOR|LR_SHARED);
+	LoadString(IDS_NOTIFYLOCATE,nid.szTip,63);
+
+	Shell_NotifyIcon(NIM_ADD,&nid);
+
+	if (((CLocateApp*)GetApp())->m_wShellDllVersion>=0x0500)
+	{
+		nid.cbSize=sizeof(NOTIFYICONDATA);
+		nid.uVersion=NOTIFYICON_VERSION;
+		Shell_NotifyIcon(NIM_SETVERSION,&nid);
+	}
+}
+
+void CLocateAppWnd::DeleteTaskbarIcon()
+{
+	NOTIFYICONDATA nid;
+	nid.cbSize=sizeof(NOTIFYICONDATA);
+	nid.hWnd=*this;
+	nid.uID=1000;
+	nid.uFlags=0;
+	Shell_NotifyIcon(NIM_DELETE,&nid);
+}
+
+void CLocateAppWnd::FormatLastErrorForStatusTooltip(UpdateError ueError,CDatabaseUpdater* pUpdater)
+{
+	if (!(m_dwProgramFlags&pfShowUpdateTooltip))
+		return;
+
+	if (ueError==ueStopped)
+		return;
+
+	// Now, change pointer to null, if someone is accesing pointer, it may have enough time to read
+	LPSTR szOldPtr=m_szLastUpdateError;
+	if (szOldPtr!=NULL)
+		InterlockedExchangePointer(&m_szLastUpdateError,NULL);
+
+
+
+	char error[300];
+	int nLabelLength=LoadString(IDS_LASTERROR,error,200);
+
+	LPCSTR szExtra=NULL;
+
+	switch(ueError)
+	{
+	case ueUnknown:
+		LoadString(IDS_LASTERRORUNKNOWN,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentDatabaseName();
+		break;
+	case ueCreate:
+	case ueOpen:
+		LoadString(IDS_LASTERRORCANNOTOPEN,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentDatabaseName();
+		break;
+	case ueRead:
+		LoadString(IDS_LASTERRORCANNOTREAD,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentDatabaseName();
+		break;
+	case ueWrite:
+		LoadString(IDS_LASTERRORCANNOTWRITE,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentDatabaseName();
+		break;
+	case ueAlloc:
+		LoadString(IDS_LASTERRORCANNOTALLOCATE,error+nLabelLength,300-nLabelLength);
+		break;
+	case ueInvalidDatabase:
+		LoadString(IDS_LASTERRORINVALIDDB,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentDatabaseName();
+		break;
+	case ueFolderUnavailable:
+		LoadString(IDS_LASTERRORROOTUNAVAILABLE,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentRootPath();
+		break;
+	case ueCannotIncrement:
+		LoadString(IDS_LASTERRORCANNOTINCREMENTDB,error+nLabelLength,300-nLabelLength);
+		szExtra=pUpdater->GetCurrentDatabaseName();
+		break;
+	default:
+		sprintf(error+nLabelLength,"%d",(int)ueError);
+		break;
+	}
+
+	LPSTR szNewPtr;
+	if (szExtra!=NULL)
+	{
+		szNewPtr=new char[istrlen(error)+istrlen(szExtra)+1];
+		wsprintf(szNewPtr,error,szExtra);
+	}
+	else
+		szNewPtr=alloccopy(error);
+
+    
+	InterlockedExchangePointer(&m_szLastUpdateError,szNewPtr);
+	
+	// OK, freeing memory
+	delete[] szOldPtr;
+}
 
 DWORD CLocateAppWnd::OnSystemTrayMessage(UINT uID,UINT msg)
 {
-	switch (msg)
+	if (GetLocateApp()->m_wShellDllVersion>=0x0500)
 	{
-	case WM_LBUTTONDBLCLK:
-		OnLocate();
-		break;
-	case WM_RBUTTONUP:
+		switch (msg)
 		{
-			POINT pt;
-			GetCursorPos(&pt);
-			SetForegroundWindow();
-			TrackPopupMenu(m_Menu.GetSubMenu(0),
-				TPM_RIGHTALIGN|TPM_BOTTOMALIGN|TPM_RIGHTBUTTON,pt.x,pt.y,0,
-				*this,NULL);
+		case WM_CONTEXTMENU:
+			{
+				/*POINT pt;
+				GetCursorPos(&pt);
+				SetForegroundWindow();
+				TrackPopupMenu(m_Menu.GetSubMenu(0),
+					TPM_RIGHTALIGN|TPM_BOTTOMALIGN|TPM_RIGHTBUTTON,pt.x,pt.y,0,
+					*this,NULL);*/
+				break;
+			}
+		case NIN_KEYSELECT:
+			// Keyboard space
+			OnLocate();
 			break;
+		case NIN_SELECT:
+			// One click
+			break;
+		case WM_LBUTTONDBLCLK:
+			// Doubleclick
+			OnLocate();
+			break;
+		case WM_RBUTTONUP:
+			{
+				POINT pt;
+				GetCursorPos(&pt);
+				SetForegroundWindow();
+				TrackPopupMenu(m_Menu.GetSubMenu(0),
+					TPM_RIGHTALIGN|TPM_BOTTOMALIGN|TPM_RIGHTBUTTON,pt.x,pt.y,0,
+					*this,NULL);
+				break;
+			}
+			break;
+		case NIN_BALLOONSHOW:
+			break;
+		case NIN_BALLOONHIDE:
+			break;
+		case NIN_BALLOONTIMEOUT:
+			break;
+		case NIN_BALLOONUSERCLICK:
+			// User click tip, closing it
+			m_dwProgramFlags&=~pfShowUpdateTooltip;
+			KillTimer(ID_UPDATESTATUS);
+			SetShellNotifyIconAndTip(NULL,IDS_NOTIFYUPDATING);
+			break;
+		default:
+			break;
+		}
+	}
+	else
+	{
+		switch (msg)
+		{
+		case WM_LBUTTONDBLCLK:
+			OnLocate();
+			break;
+		case WM_RBUTTONUP:
+			{
+				POINT pt;
+				GetCursorPos(&pt);
+				SetForegroundWindow();
+				TrackPopupMenu(m_Menu.GetSubMenu(0),
+					TPM_RIGHTALIGN|TPM_BOTTOMALIGN|TPM_RIGHTBUTTON,pt.x,pt.y,0,
+					*this,NULL);
+				break;
+			}
 		}
 	}
 	return TRUE;
@@ -2976,6 +3144,7 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 		{
 			KillTimer(ID_UPDATESTATUS);
 			
+			// Closing balloon tooltip
 			NOTIFYICONDATA nid;
 			ZeroMemory(&nid,sizeof(NOTIFYICONDATA));
 			nid.cbSize=sizeof(NOTIFYICONDATA);
@@ -2983,6 +3152,13 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 			nid.hWnd=*this;
 			nid.uID=1000;
 			Shell_NotifyIcon(NIM_MODIFY,&nid);
+
+			if (m_szLastUpdateError!=NULL)
+			{
+				// At this time, there is no updater threads
+				delete[] m_szLastUpdateError;
+				m_szLastUpdateError=NULL;
+			}
 		}
 		break;
 	case ID_UPDATEANIM:
@@ -3422,10 +3598,12 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			return TRUE;
 		}
 	case ErrorOccured:
+		((CLocateAppWnd*)dwParam)->FormatLastErrorForStatusTooltip(ueCode,pUpdater);
+			
 		switch(ueCode)
 		{
 		case ueUnknown:
-			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
 			{
 				char* pError;
 
@@ -3458,7 +3636,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			break;
 		case ueCreate:
 		case ueOpen:
-			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
@@ -3467,7 +3645,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			}
 			break;
 		case ueRead:
-			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
@@ -3476,7 +3654,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			}
 			break;
 		case ueWrite:
-			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
@@ -3485,14 +3663,14 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			}
 			break;
 		case ueAlloc:
-			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
 			{
 				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
 					CString(IDS_ERRORCANNOTALLOCATE),CString(IDS_ERROR),MB_OK|MB_ICONERROR);
 			}
 			break;
 		case ueInvalidDatabase:
-			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORINVALIDDB,pUpdater->GetCurrentDatabaseName());
@@ -3501,7 +3679,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			}
 			break;
 		case ueFolderUnavailable:
-			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowNonCriticalErrors)
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowNonCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():"");
@@ -3510,7 +3688,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			}
 			break;
 		case ueCannotIncrement:
-			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowNonCriticalErrors)
+			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowNonCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTWRITEINCREMENTALLY,pUpdater->GetCurrentDatabaseName());
@@ -3685,6 +3863,7 @@ int CLocateApp::GetDatabaseMenuIndex(HMENU hPopupMenu)
 	}
 	return -1;
 }
+
 
 #ifdef _DEBUG
 DEBUGALLOCATORTYPE DebugAlloc;

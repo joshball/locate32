@@ -153,9 +153,13 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			case CDatabase::archiveFile:
 				if (m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::IncrementalUpdate))
 				{
+					DebugMessage("CDatabaseUpdater::UpdatingProc(): trying to open database for incremental update");
+					
 					dbFile=OpenDatabaseFileForIncrementalUpdate(
 						m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
 						m_dwFiles,m_dwDirectories);
+					
+					DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): returns: %X",(DWORD)dbFile);
 					
 					
 					if (dbFile==(CFile*)-1)
@@ -170,6 +174,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 						break;
 					}
 				}
+				DebugMessage("CDatabaseUpdater::UpdatingProc(): trying to open database");
 				dbFile=new CFile(m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
 					CFile::defWrite|CFile::otherStrNullTerminated,TRUE);
 				break;
@@ -182,6 +187,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			{
 				//////////////////////////////////
 				// Writing header
+				DebugMessage("CDatabaseUpdater::UpdatingProc(): writing header");
 
 		#ifdef WIN32
 				// Writing identification, '\17=0x11=0x10|0x1' 0x1 = Long filenames and 0x10 = ANSI
@@ -263,7 +269,11 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				// Writing number of files and directories
 				dbFile->Write(m_dwFiles);
 				dbFile->Write(m_dwDirectories);
+			
+				DebugMessage("CDatabaseUpdater::UpdatingProc(): writing header end");
 			}
+
+			DebugMessage("CDatabaseUpdater::UpdatingProc(): writing directory data");
 
 			// Writing root directory datas
 			m_pCurrentRoot=m_aDatabases[m_dwCurrentDatabase]->m_pFirstRoot;
@@ -276,6 +286,8 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 
 				m_pCurrentRoot=m_pCurrentRoot->m_pNext;
 			}
+
+			DebugMessage("CDatabaseUpdater::UpdatingProc(): end of directory data");
 
 			// End mark
 			dbFile->Write((DWORD)0);
@@ -1280,23 +1292,30 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCSTR* ppExclu
 
 CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCSTR szArchive,DWORD dwFiles,DWORD dwDirectories)
 {
+	DebugFormatMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): BEGIN, archive='%s'",szArchive);
+	
 	CFile* dbFile=NULL;
 	
 	try {
+
+		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): opening file");
         dbFile=new CFile(szArchive,
 			CFile::modeReadWrite|CFile::openExisting|CFile::shareDenyWrite|CFile::shareDenyRead|CFile::otherStrNullTerminated,TRUE);
 
 		if (dbFile==NULL)
 		{
 			// Cannot open file, incremental update not possible
+			DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): END dbFile is NULL");
 			return NULL;
 		}
 	
-		dbFile->SeekToBegin();
+		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): seektobegin");
+        dbFile->SeekToBegin();
 	
 		// Reading and verifing header
 		char szBuffer[11];
-		dbFile->Read(szBuffer,11);
+		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): reading header");
+        dbFile->Read(szBuffer,11);
 
 		if (szBuffer[0]!='L' || szBuffer[1]!='O' || 
 			szBuffer[2]!='C' || szBuffer[3]!='A' || 
@@ -1313,6 +1332,8 @@ CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCSTR szArchive,D
 
 	
 		// Updating file and directory counts
+		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): updating file and directory count");
+        
 		DWORD dwBlockSize;
 		dbFile->Read(dwBlockSize);
 		dbFile->Seek(dwBlockSize-2*sizeof(DWORD),CFile::current);
@@ -1329,6 +1350,8 @@ CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCSTR szArchive,D
 		dbFile->Write(dwTemp2);
 
 		// Searching enf of file
+		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): searching end of file");
+        
 		dbFile->Read(dwBlockSize);
 		while (dwBlockSize>0)
 		{
@@ -1340,10 +1363,14 @@ CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCSTR szArchive,D
 		// Now we should be in the end of file
 		ASSERT(dbFile->IsEndOfFile());
 
+		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): it is end of file");
+        
 		dbFile->Seek(-LONG(sizeof(DWORD)),CFile::current);
 	}
 	catch (CFileException fe)
 	{
+		DebugFormatMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): fe.m_cause=%d",fe.m_cause);
+			
 		if (dbFile!=NULL)
 			delete dbFile;
 		switch (fe.m_cause)
@@ -1356,18 +1383,25 @@ CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCSTR szArchive,D
 		case CFileException::lockViolation:
 		case CFileException::accessDenied:
 		case CFileException::readFault:
+			DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): END2");
 			return (CFile*)-1;
 		default:
+			DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): END3");
 			return NULL;
 		}
 	}
 	catch (...)
 	{
+		DebugFormatMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): caugh unknown exception");
+
 		if (dbFile!=NULL)
 			delete dbFile;
+	
+		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): END4");
 		return NULL;
 	}
 
+	DebugFormatMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): END, will return='%X'",dbFile);
 	return dbFile;
 }
 

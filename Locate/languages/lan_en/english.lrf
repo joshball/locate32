@@ -25,7 +25,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2004 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 alpha 4.12301
+FILEVERSION=3.0 alpha 4.12310
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -669,6 +669,7 @@ STR_UPDATING_SUCCESS=Updating succeeded
 STR_UPDATING_ENDED=Updating ended:
 STR_UPDATING_DONE=done
 STR_UPDATING_FAILED=failed
+STR_UPDATING_FAILED2=Updating failed
 STR_UPDATING_INTERRUPTED2=interrupted
 STR_UPDATING_UNAVAILABLEROOT=unavailable root
 STR_UPDATING_INTERRUPTED=Updating interrupted
@@ -743,6 +744,16 @@ STRERROR_UNKNOWNOS=Unknown error. Latest OS error: %s
 STRERROR_UNKNOWNASWRITINGDB=State: writing database to file '%s'.
 STRERROR_UNKNOWNASSCANNINGROOT=State: scanning root '%s'.
 STRERROR_CANNOTWRITEINCREMENTALLY=Cannot write database '%s' incrementally, trying full update?
+
+STRERROR_LASTERROR=last error:
+STRERROR_LASTERROR_UNKNOWN=unknown (db %s)
+STRERROR_LASTERROR_CANNOTOPEN=cannot open database %s
+STRERROR_LASTERROR_CANNOTREAD=cannot read database %s
+STRERROR_LASTERROR_CANNOTWRITE=cannot write database %s
+STRERROR_LASTERROR_CANNOTALLOCATE=cannot allocate memory
+STRERROR_LASTERROR_INVALIDDB=database %s is invalid
+STRERROR_LASTERROR_ROOTUNAVAILABLE=folder %s is unavailable
+STRERROR_LASTERROR_CANNOTINCREMENT=database %s cannot be written incrementally
 
 ###########################
 # Misc messages
