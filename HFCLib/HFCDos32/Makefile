@@ -1,0 +1,121 @@
+
+CC=gcc
+INCLUDE=-I../src
+CFLAGS=-O2 -fomit-frame-pointer -fno-strength-reduce
+EXPFLAGS=-fsjlj-exceptions -frtti
+
+OBJS= 	WindowControls.o \
+	BaseClasses.o \
+	BaseWindowFunctions.o \
+	CommonControls.o \
+	Controls.o \
+	Converting.o \
+	Crypting.o \
+	Debugging.o \
+	Dialogs.o \
+	Error.o \
+        Exceptions.o \
+        File.o \
+	GeneralClasses.o \
+	Memory.o \
+	MainFunctions.o \
+	MathClasses.o \
+	MathFunctions.o \
+	ShellExtension.o \
+	StdHFCLibrary.o \
+	StringClass.o \
+	Strings.o \
+	System.o \
+	VB.o \
+	WindowClasses.o \
+	AppClasses.o \
+	WindowsFunctions.o
+
+all: libhfc.a
+
+libhfc.a: $(OBJS)
+	del libhfc.a
+	ar cq libhfc.a *.o
+clean: 
+	del *.o
+	del libhfc.a
+
+WindowControls.o: ../src/WindowControls.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/WindowControls.cpp
+
+BaseClasses.o: ../src/BaseClasses.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/BaseClasses.cpp
+
+
+BaseWindowFunctions.o: ../src/BaseWindowFunctions.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/BaseWindowFunctions.cpp
+
+CommonControls.o: ../src/CommonControls.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/CommonControls.cpp
+
+Controls.o: ../src/Controls.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/Controls.cpp
+
+Converting.o: ../src/Converting.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/Converting.cpp
+
+Crypting.o: ../src/Crypting.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/Crypting.cpp
+
+Debugging.o: ../src/Debugging.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/Debugging.cpp
+
+Dialogs.o: ../src/Dialogs.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c  ../src/Dialogs.cpp
+ 
+Error.o: ../src/Error.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/Error.cpp
+
+Exceptions.o: ../src/Exceptions.cpp
+	$(CC) $(CFLAGS) $(EXPFLAGS) $(INCLUDE) -c ../src/Exceptions.cpp
+
+File.o: ../src/File.cpp
+	$(CC) $(CFLAGS) $(EXPFLAGS) $(INCLUDE) -c ../src/File.cpp
+
+GeneralClasses.o: ../src/GeneralClasses.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/GeneralClasses.cpp
+
+Memory.o: ../src/Memory.cpp
+	$(CC) $(CFLAGS) $(EXPFLAGS) $(INCLUDE) -c ../src/Memory.cpp
+
+MainFunctions.o: ../src/MainFunctions.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/MainFunctions.cpp
+
+MathClasses.o: ../src/MathClasses.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/MathClasses.cpp
+
+MathFunctions.o: ../src/MathFunctions.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/MathFunctions.cpp
+
+ShellExtension.o: ../src/ShellExtension.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/ShellExtension.cpp
+
+StdHFCLibrary.o: ../src/StdHFCLibrary.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/StdHFCLibrary.cpp
+
+StringClass.o: ../src/StringClass.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/StringClass.cpp
+
+Strings.o: ../src/Strings.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/Strings.cpp
+
+System.o: ../src/System.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/System.cpp
+
+VB.o: ../src/VB.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/VB.cpp
+
+WindowClasses.o: ../src/WindowClasses.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/WindowClasses.cpp
+
+AppClasses.o: ../src/AppClasses.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/AppClasses.cpp
+
+WindowsFunctions.o: ../src/WindowsFunctions.cpp
+	$(CC) $(CFLAGS) $(INCLUDE) -c ../src/WindowsFunctions.cpp
+

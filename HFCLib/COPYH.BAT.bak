@@ -1,0 +1,4 @@
+@echo off
+echo a | copy src\*.h "E:\Program Files\HFC\Include"
+echo a | copy src\*.inl "E:\Program Files\HFC\Include"
+
