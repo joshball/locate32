@@ -98,7 +98,9 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				
 			m_pProc(m_dwData,StartedDatabase,ueResult,this);
 			
-			
+			// Initilizating file and directory count
+			m_dwFiles=0;
+			m_dwDirectories=0;
 
 			while (m_pCurrentRoot!=NULL
 	#ifdef WIN32
@@ -178,12 +180,17 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			else
 				File.Write(BYTE(0));
 	#endif
-				
+			DWORD dwExtraSize1=1,dwExtraSize2=1;
+			if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
+				dwExtraSize1+=istrlen(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1);
+			if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
+				dwExtraSize2+=istrlen(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2);
+			
 			// Writing header size
-			dbFile->Write(DWORD(
+	        dbFile->Write(DWORD(
 				m_aDatabases[m_dwCurrentDatabase]->m_sAuthor.GetLength()+1+ // Author data
 				m_aDatabases[m_dwCurrentDatabase]->m_sComment.GetLength()+1+ // Comments data
-				1+1+ // Extra
+				dwExtraSize1+dwExtraSize2+ // Extra
 				4+ // Time
 				4+ // Number of files
 				4  // Number of directories
@@ -197,9 +204,14 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_sComment);
 			
 			// Writing free data
-			dbFile->Write((BYTE)0);
-
-			dbFile->Write((BYTE)0);
+			if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
+				dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1,dwExtraSize1);
+			else
+				dbFile->Write((BYTE)0);
+			if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
+				dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2,dwExtraSize2);
+			else
+				dbFile->Write((BYTE)0);
 			
 			// Writing filedate
 			{
@@ -896,14 +908,15 @@ UpdateError CDatabaseUpdater::CRootDirectory::Write(CFile* dbFile)
 
 CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 :	m_sAuthor(pDatabase->GetCreator()),m_sComment(pDatabase->GetDescription()),
-	m_nArchiveType(pDatabase->GetArchiveType()),m_pFirstRoot(NULL),m_nFlags(0)
+	m_nArchiveType(pDatabase->GetArchiveType()),m_pFirstRoot(NULL),m_nFlags(0),
+	m_szExtra1(NULL),m_szExtra2(NULL)
 {
 	DWORD dwTemp;
-	dstrlen(pDatabase->GetArchiveName(),dwTemp);
+	sstrlen(pDatabase->GetArchiveName(),dwTemp);
 	m_szArchive=new char[dwTemp+1];
 	CopyMemory(m_szArchive,pDatabase->GetArchiveName(),dwTemp+1);
 
-	dstrlen(pDatabase->GetName(),m_dwNameLength);
+	sstrlen(pDatabase->GetName(),m_dwNameLength);
 	m_szName=new char[m_dwNameLength+1];
 	CopyMemory(m_szName,pDatabase->GetName(),m_dwNameLength+1);
 
@@ -1051,16 +1064,24 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 			tmp->m_pNext=NULL;
 	}
 
+
+	// Resolve expected directories and files
+	CDatabaseInfo::ReadFilesAndDirectoriesCount(m_nArchiveType,m_szArchive,
+		m_dwExpectedFiles,m_dwExpectedDirectories);
+
 	// Excluded directories
 	if (pDatabase->GetExcludedDirectories().GetSize()>0)
 		ParseExcludedDirectories(pDatabase->GetExcludedDirectories().GetData(),pDatabase->GetExcludedDirectories().GetSize());
+
+	m_szExtra2=pDatabase->ConstructExtraBlock();
 }
 		
 CDatabaseUpdater::DBArchive::DBArchive(LPCSTR szArchiveName,CDatabase::ArchiveType nArchiveType,
 											  LPCSTR szAuthor,LPCSTR szComment,LPCSTR* pszRoots,DWORD nNumberOfRoots,BYTE nFlags,
 											  LPCSTR* ppExcludedDirectories,int nExcludedDirectories)
 :	m_sAuthor(szAuthor),m_sComment(szComment),m_nArchiveType(nArchiveType),
-	m_szName(NULL),m_dwNameLength(0),m_nFlags(nFlags)
+	m_szName(NULL),m_dwNameLength(0),m_nFlags(nFlags),
+	m_szExtra1(NULL),m_szExtra2(NULL)
 {
 	DWORD dwTemp;
 	dstrlen(szArchiveName,dwTemp);
@@ -1080,6 +1101,11 @@ CDatabaseUpdater::DBArchive::DBArchive(LPCSTR szArchiveName,CDatabase::ArchiveTy
 
 	if (nExcludedDirectories>0)
 		ParseExcludedDirectories(ppExcludedDirectories,nExcludedDirectories);
+
+	CDatabaseInfo::ReadFilesAndDirectoriesCount(m_nArchiveType,m_szArchive,
+		m_dwExpectedFiles,m_dwExpectedDirectories);
+
+	
 }
 
 CDatabaseUpdater::DBArchive::~DBArchive()
@@ -1096,6 +1122,11 @@ CDatabaseUpdater::DBArchive::~DBArchive()
 
 	if (m_szArchive!=NULL)
         delete[] m_szArchive;
+
+	if (m_szExtra1!=NULL)
+		delete[] m_szExtra1;
+	if (m_szExtra2!=NULL)
+		delete[] m_szExtra2;
 }
 
 
@@ -1217,7 +1248,4 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCSTR* ppExclu
 	delete[] pdwExcludedDirectoriesLen;
 }
 
-WORD CDatabaseUpdater::GetProgressStatus() const
-{
-	return (WORD)(GetTickCount()%1000);
-}
+

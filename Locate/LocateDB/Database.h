@@ -92,6 +92,10 @@ private:
 	BOOL SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey);
 
 public:
+	LPSTR ConstructExtraBlock() const;
+
+
+public:
 	static BOOL LoadFromRegistry(HKEY hKeyRoot,LPCSTR szPath,CArray<PDATABASE>& aDatabases); // Returns the number or retrieved dbs
 	static INT LoadFromRegistry(HKEY hKeyRoot,LPCSTR szPath,PDATABASE*& ppDatabases); // Returns the number or retrieved dbs
 	static BOOL SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,const CArray<PDATABASE>& aDatabases);

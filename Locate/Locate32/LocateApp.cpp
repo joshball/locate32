@@ -856,20 +856,6 @@ void CLocateApp::LoadDateAndTimeString()
 		RegKey.QueryValue("TimeFormat",m_strTimeFormat);
 	}
 
-	// "" are now defaults
-	/*
-	if (m_strTimeFormat.IsEmpty())
-	{
-		EnumTimeFormats(TimeFormatsProc,LOCALE_USER_DEFAULT,0);
-		if (m_strTimeFormat.IsEmpty())
-			m_strTimeFormat="H:mm";
-	}
-	if (m_strDateFormat.IsEmpty())
-	{
-		EnumDateFormats(DateFormatsProc,LOCALE_USER_DEFAULT,DATE_SHORTDATE);
-		if (m_strDateFormat.IsEmpty())
-			m_strDateFormat="d.MM.yyyy";
-	}*/
 }
 
 void CLocateApp::SaveDateAndTimeString()
@@ -885,23 +871,6 @@ void CLocateApp::SaveDateAndTimeString()
 	}
 }
 	
-/*
-BOOL CALLBACK CLocateApp::DateFormatsProc(LPTSTR lpDateFormatString)
-{
-	if (((CLocateApp*)GetApp())->m_strDateFormat.GetLength()==0 ||
-		strlen(lpDateFormatString)<((CLocateApp*)GetApp())->m_strDateFormat.GetLength())
-		((CLocateApp*)GetApp())->m_strDateFormat=lpDateFormatString;
-	return TRUE;
-}	
-
-BOOL CALLBACK CLocateApp::TimeFormatsProc(LPTSTR lpTimeFormatString)
-{
-	if (((CLocateApp*)GetApp())->m_strTimeFormat.GetLength()==0 ||
-		strlen(lpTimeFormatString)<((CLocateApp*)GetApp())->m_strTimeFormat.GetLength())
-		((CLocateApp*)GetApp())->m_strTimeFormat=lpTimeFormatString;
-	return TRUE;
-}*/	
-
 LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 {
 	DWORD dwLength=2;
@@ -2181,16 +2150,7 @@ BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 		CDatabaseUpdater** ppUpdaters=GetLocateApp()->GetUpdatersPointer();
 		for (WORD wThreads=0;ppUpdaters[wThreads]!=NULL;wThreads++);
 		GetLocateApp()->ReleaseUpdatersPointer();
-
-		struct RootInfo {
-			LPSTR pName;
-			LPSTR pRoot;
-			DWORD dwNumberOfDatabases;
-			DWORD dwCurrentDatabase;
-			WORD wProgressState;
-		};
 		RootInfo* pRootInfos=new RootInfo[max(wThreads,2)];
-		
 		// Retrieving information
 		WORD wRunning=0;
 		ppUpdaters=GetLocateApp()->GetUpdatersPointer();
@@ -2241,6 +2201,7 @@ BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 		
 		if (GetProgramFlags()&pfShowUpdateTooltip)
 		{
+			// Forming title
 			if (wRunning>0)
 				LoadString(IDS_UPDATINGTOOLTIPTITLE,nid.szInfoTitle,MAXINFOTITLELENGTH);
 			else
@@ -2248,131 +2209,17 @@ BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 			nid.dwInfoFlags=NIIF_NOSOUND|NIIF_INFO;
 			nid.uTimeout=10000;
 
-			// Loading string
-			char szThread[20];
-			int iThreadLen;
-			if (wThreads>1)
-				iThreadLen=LoadString(IDS_NOTIFYTHREAD,szThread,20);
-			else
-				iThreadLen=0;
 
-			char szDone[20];
-			int iDoneLen=LoadString(IDS_NOTIFYDONE,szDone,20);
-			char szWriting[25];
-			int iWritingLen=LoadString(IDS_NOTIFYWRITINGDATABASE,szWriting,25);
-			char szInitializing[25];
-			int iInitializingLen=LoadString(IDS_NOTIFYINITIALIZING,szInitializing,25);
-
-			// Computing required length for string
-			int iRequired=0;
-			int iRequiredForRoots=0;
-
-			// Format: Thread N: name, root
-			for (int i=0;i<wThreads;i++)
+			CString txt;
+			for (BYTE iShorten=0;iShorten<5;iShorten++)
 			{
-				if (wThreads>1)
-				{
-					iRequired+=iThreadLen+4;
-					if (i>=9)
-						iRequired++; // Thread number takes 2 character
-				}
-				
-				if (pRootInfos[i].pName==NULL)
-					iRequired+=iDoneLen;
-				else if (pRootInfos[i].pName[0]=='\0')
-					iRequired+=iInitializingLen;
-				else
-				{
-					iRequired+=istrlen(pRootInfos[i].pName);
-					if (pRootInfos[i].pRoot==NULL)
-						iRequiredForRoots+=iWritingLen+2;
-					else
-                        iRequiredForRoots+=istrlen(pRootInfos[i].pRoot)+2;
-				}
-			}
-			iRequired+=wThreads-1; // For '\n'
-			
-			if (iRequired>=MAXINFOTEXTLENGTH && wThreads>1) 
-			{
-				iRequired-=wThreads*(iThreadLen+4);
-				if (wThreads>=10)
-					iRequired-=wThreads-9;
-				iThreadLen=0;
+				if (FormatTooltipStatusText(txt,pRootInfos,wThreads,iShorten)<MAXINFOTEXTLENGTH)
+					break;
 			}
 
-			if (iRequired>=MAXINFOTEXTLENGTH)
-			{
-				char szTemp[54];
-				LoadString(IDS_NOTIFYUPDATINGDBS,szTemp,54);
-				wsprintf(nid.szTip,szTemp,(int)wRunning,(int)wThreads);
-			}
-			else
-			{
-				LPSTR pPtr=nid.szInfo;
-				
-				for (int i=0;i<wThreads;i++)
-				{
-					if (i!=0)
-						*(pPtr++)='\n';
-
-					if (iThreadLen>0)
-					{
-						CopyMemory(pPtr,szThread,iThreadLen);
-						pPtr+=iThreadLen;
-						*(pPtr++)=' ';
-						if (i>=9)
-						{
-							*(pPtr++)='0'+char((i+1)/10);
-							*(pPtr++)='0'+char((i+1)%10);
-						}
-						else
-							*(pPtr++)='1'+char(i);
-						*(pPtr++)=':';
-                    	*(pPtr++)=' ';
-					}
-                    
-					if (pRootInfos[i].pName==NULL)
-					{
-						CopyMemory(pPtr,szDone,iDoneLen);
-						pPtr+=iDoneLen;
-					}
-					else if (pRootInfos[i].pName[0]=='\0')
-					{
-						CopyMemory(pPtr,szInitializing,iInitializingLen);
-						pPtr+=iInitializingLen;
-					}
-					else
-					{
-						int iLen=istrlen(pRootInfos[i].pName);
-						CopyMemory(pPtr,pRootInfos[i].pName,iLen);
-						pPtr+=iLen;
-						if (iRequired+iRequiredForRoots<MAXINFOTEXTLENGTH)
-						{
-							*(pPtr++)=',';
-							*(pPtr++)=' ';
-							if (pRootInfos[i].pRoot==NULL)
-							{
-								CopyMemory(pPtr,szWriting,iWritingLen);
-								pPtr+=iWritingLen;
-							}
-							else
-							{
-								int iLen=istrlen(pRootInfos[i].pRoot);
-								CopyMemory(pPtr,pRootInfos[i].pRoot,iLen);
-								pPtr+=iLen;
-							}
-						}
-					}
-
-				}
-				
-				// Checking that space is correctly calculated
-				ASSERT(iRequired+iRequiredForRoots<MAXINFOTEXTLENGTH?
-					DWORD(pPtr)-DWORD(nid.szInfo)==iRequired+iRequiredForRoots:
-					DWORD(pPtr)-DWORD(nid.szInfo)==iRequired);
-
-				*pPtr='\0';
-			}
+			DWORD dwLength=min(txt.GetLength(),MAXINFOTEXTLENGTH-1);
+			CopyMemory(nid.szInfo,(LPCSTR)txt,dwLength);
+			nid.szInfo[dwLength]='\0';			
 		}
 		else if (wThreads>1)
 		{
@@ -2528,6 +2375,98 @@ BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 	}
 	
 	return Shell_NotifyIcon(NIM_MODIFY,&nid);
+}
+
+UINT CLocateAppWnd::FormatTooltipStatusText(CString& str,RootInfo* pRootInfo,WORD wThreads,BYTE bShortenLevel)
+{
+	str.Empty();
+
+	for (WORD i=0;i<wThreads;i++)
+	{
+		if (i!=0)
+			str << '\n';
+
+		// #X  thread number
+		if (wThreads>1)
+			str << '#' << (int)(i+1);
+
+		if (pRootInfo[i].pName==NULL)
+		{
+			// Finished
+			if (wThreads>1)
+				str << ": ";
+			str.AddString(IDS_NOTIFYDONE);
+		}
+		else if (pRootInfo[i].pName[0]=='\0')
+		{
+			// Initializing
+			if (wThreads>1)
+				str << ": ";
+			str.AddString(IDS_NOTIFYINITIALIZING);
+		}
+		else
+		{
+			str << ' ' << (int)(pRootInfo[i].dwCurrentDatabase+1) << '/' << (int)pRootInfo[i].dwNumberOfDatabases << ": ";
+			str << pRootInfo[i].pName;
+
+			
+			if (pRootInfo[i].pRoot==NULL)
+			{
+				str << ": ";
+				str.AddString(IDS_NOTIFYWRITINGDATABASE);
+			}
+			else
+			{
+				if (pRootInfo[i].wProgressState!=WORD(-1))
+				{
+					str << ' ' << (int)((int)(pRootInfo[i].wProgressState)/10) << '%';
+				}
+
+				switch (bShortenLevel)
+				{
+				case 0:
+					str << ": " << pRootInfo[i].pRoot;
+					break;
+				case 1:
+					str << ": " ;
+					if (istrlen(pRootInfo[i].pRoot)>40)
+					{
+						str.Append(pRootInfo[i].pRoot,38);
+						str << "...";
+					}
+					else
+						str << pRootInfo[i].pRoot;
+					break;
+				case 2:
+					str << ": " ;
+					if (istrlen(pRootInfo[i].pRoot)>30)
+					{
+						str.Append(pRootInfo[i].pRoot,28);
+						str << "...";
+					}
+					else
+						str << pRootInfo[i].pRoot;
+					break;
+				case 3:
+					str << ": " ;
+					if (istrlen(pRootInfo[i].pRoot)>20)
+					{
+						str.Append(pRootInfo[i].pRoot,18);
+						str << "...";
+					}
+					else
+						str << pRootInfo[i].pRoot;
+					break;
+				default:
+					// bShortenLevel>=4: no roots at all
+					break;
+				}
+			}
+		}
+	}
+
+
+	return str.GetLength();
 }
 
 BOOL CLocateAppWnd::StartUpdateStatusNotification()
@@ -3029,7 +2968,7 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 	{
 	case ID_UPDATESTATUS:
 		if (m_dwProgramFlags&pfShowUpdateTooltip)
-			SetShellNotifyIconAndTip(m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]);
+			SetShellNotifyIconAndTip(NULL,IDS_NOTIFYUPDATING);
 		else
 		{
 			KillTimer(ID_UPDATESTATUS);

@@ -67,6 +67,7 @@ public:
 	static BOOL GetRootsFromDatabases(CArray<LPSTR>& aRoots,const PDATABASE* pDatabases,int nDatabases,BOOL bOnlyEnabled=FALSE);
 	static BOOL GetRootsFromDatabases(CArray<LPSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled=FALSE);
 
+	static BOOL ReadFilesAndDirectoriesCount(CDatabase::ArchiveType,LPCSTR szArchive,DWORD& dwFiles,DWORD& dwDirectories);
 };
 
 inline 	CDatabaseInfo::CDatabaseInfo()

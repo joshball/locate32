@@ -27,8 +27,8 @@ LANGUAGE $LANGUAGE_DECLARATION$, $SUBLANGUAGE_DECLARATION$
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,98,4,12280
- PRODUCTVERSION 2,98,4,12280
+ FILEVERSION 2,98,4,12290
+ PRODUCTVERSION 2,98,4,12290
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -49,7 +49,7 @@ BEGIN
             VALUE "LegalCopyright", "$LEGALCOPYRIGHT$"
             VALUE "OriginalFilename", "$ORIGINALFILENAME$"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 alpha 4.11280"
+            VALUE "ProductVersion", "3.0 alpha 4.11290"
             VALUE "ProvidesLanguage", "$PROVIDES_LANGUAGE$"
         END
     END

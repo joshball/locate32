@@ -99,7 +99,9 @@ public:
 		void SetFlag(DBFlags flag,BOOL bSet=TRUE);
 		void ParseExcludedDirectories(const LPCSTR* ppExcludedDirectories,int nExcludedDirectories);
 		
+
 	protected:
+
 		LPSTR m_szArchive;
 		CDatabase::ArchiveType m_nArchiveType;
 		
@@ -113,6 +115,15 @@ public:
 		BYTE m_nFlags;
 
 		friend CDatabaseUpdater;
+
+		LPSTR m_szExtra1;
+		LPSTR m_szExtra2;
+		
+		// For progress estimation
+		DWORD m_dwExpectedDirectories;
+		DWORD m_dwExpectedFiles;
+
+
 	};
 
 protected:
@@ -137,6 +148,8 @@ public:
 
 	~CDatabaseUpdater();
 	
+	void SetExtras(LPCSTR szExtra1,LPCSTR szExtra2);
+
 #ifdef WIN32
 	UpdateError Update(BOOL bThreaded=FALSE);
 
@@ -208,7 +221,9 @@ inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCSTR szPath,int iLengt
 }
 
 inline CDatabaseUpdater::DBArchive::DBArchive()
-:	m_szArchive(NULL),m_nArchiveType(CDatabase::archiveFile),m_pFirstRoot(NULL),m_nFlags(0)
+:	m_szArchive(NULL),m_nArchiveType(CDatabase::archiveFile),m_pFirstRoot(NULL),m_nFlags(0),
+	m_dwExpectedDirectories(DWORD(-1)),m_dwExpectedFiles(DWORD(-1)),
+	m_szExtra1(NULL),m_szExtra2(NULL)
 {
 }
 
@@ -261,6 +276,26 @@ inline DWORD CDatabaseUpdater::GetCurrentDatabase() const
 inline const CDatabaseUpdater::CRootDirectory* CDatabaseUpdater::GetCurrentRoot() const
 {
 	return m_pCurrentRoot;
+}
+
+
+inline WORD CDatabaseUpdater::GetProgressStatus() const
+{
+	if (m_dwCurrentDatabase==DWORD(-1))
+		return WORD(-1);
+	
+	
+	if (m_aDatabases[m_dwCurrentDatabase]->m_dwExpectedDirectories==DWORD(-1))
+		return WORD(-1);
+
+	DWORD dwDirectoriesCurrently=m_dwDirectories;
+	if (m_pCurrentRoot!=NULL)
+		dwDirectoriesCurrently+=m_pCurrentRoot->m_dwDirectories;
+
+	if (dwDirectoriesCurrently>m_aDatabases[m_dwCurrentDatabase]->m_dwExpectedDirectories)
+		return 990;
+
+    return WORD((dwDirectoriesCurrently*1000)/m_aDatabases[m_dwCurrentDatabase]->m_dwExpectedDirectories);
 }
 
 inline LPCSTR CDatabaseUpdater::GetCurrentRootPath() const

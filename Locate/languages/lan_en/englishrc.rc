@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,98,4,12280
- PRODUCTVERSION 2,98,4,12280
+ FILEVERSION 2,98,4,12290
+ PRODUCTVERSION 2,98,4,12290
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 alpha 4.12280"
+            VALUE "FileVersion", "3.0 alpha 4.12290"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2004 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 alpha 4.11280"
+            VALUE "ProductVersion", "3.0 alpha 4.11290"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -329,24 +329,24 @@ BEGIN
     RADIOBUTTON     "Doub&le click to open a file (single click to select)",IDC_DOUBLECLICK,
                     8,93,252,10
     GROUPBOX        "Dialogs",IDC_STATIC,2,135,281,137
-    CONTROL         "Remember states of controls",IDC_REMEMBERSTATES,"Button",
+    CONTROL         "&Remember states of controls",IDC_REMEMBERSTATES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,8,166,207,10
-    CONTROL         "Minimize to system tray",IDC_MINIMIZETOSYSTEMTRAY,
+    CONTROL         "&Minimize to system tray",IDC_MINIMIZETOSYSTEMTRAY,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,151,207,10
-    CONTROL         "Leave program background when dialog is closed",
+    CONTROL         "&Leave program background when dialog is closed",
                     IDC_CLOSETOSYSTEMTRAY,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,8,182,222,10
     LTEXT           "Defaults (states after ""New Search"" button is pressed):",
                     IDC_STATIC,8,201,222,10
-    CONTROL         "Match whole file name",
+    CONTROL         "M&atch whole file name",
                     IDC_MATCHWHOLEFILENAMEONLY,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,8,217,95,10
-    LTEXT           "Check in:",IDC_STATIC,113,219,40,10
+    LTEXT           "&Check in:",IDC_STATIC,113,219,40,10
     COMBOBOX        IDC_CHECKIN,153,215,87,76,CBS_DROPDOWNLIST| WS_VSCROLL | 
                     WS_TABSTOP
-    CONTROL         "Replace spaces",IDC_REPLACESPACES,
+    CONTROL         "R&eplace spaces",IDC_REPLACESPACES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,234,100,10
-    CONTROL         "Text is case sensitive",IDC_MATCHCASE,
+    CONTROL         "&Text is case sensitive",IDC_MATCHCASE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,113,234,117,10
 END
 

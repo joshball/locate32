@@ -902,6 +902,7 @@ void CDatabase::GetLogicalDrives(CArrayFAP<LPSTR>* paRoots)
 	}
 }
 
+
 /*
 void CDatabase::ReadIniFile(BYTE* pData,CArrayFAP<LPSTR>* paRoots,CString* pCreator,CString* pDescription,CString* pDatabaseFile)
 {
@@ -1004,3 +1005,120 @@ void CDatabase::ReadIniFile(BYTE* pData,CArrayFAP<LPSTR>* paRoots,CString* pCrea
 */
 
 #endif
+
+LPSTR CDatabase::ConstructExtraBlock() const
+{
+	CString str;
+	str.Format("$$LDBSET$T:%02X$",m_wThread);
+	
+	// Flags
+	if (m_wFlags!=0)
+	{
+		str << "F:";
+		
+		if (m_wFlags&flagEnabled)
+			str << "E1";
+		else
+			str << "E0";
+		if (m_wFlags&flagGlobalUpdate)
+			str << "G1";
+		else
+			str << "G0";
+
+		if (m_wFlags&flagStopIfRootUnavailable)
+			str << "S1";
+		else
+			str << "S0";
+		str << '$';
+	}
+
+	if (m_szName!=NULL)
+	{
+		// Name
+		str << "N:";
+		for (int i=0;m_szName[i]!='\0';i++)
+		{
+			if (m_szName[i]=='$')
+				str << '\\';
+			str << m_szName[i];
+		}
+		str << '$';
+	}
+
+	if (m_ArchiveType==archiveFile && m_szArchiveName!=NULL)
+	{
+		// Archive file
+		str << "AF:";
+		for (int i=0;m_szArchiveName[i]!='\0';i++)
+		{
+			if (m_szArchiveName[i]=='$')
+				str << '\\';
+			str << m_szArchiveName[i];
+		}
+		str << '$';
+	}
+
+	if (m_szCreator!=NULL)
+	{
+		// Creator
+		str << "C:";
+		for (int i=0;m_szCreator[i]!='\0';i++)
+		{
+			if (m_szCreator[i]=='$')
+				str << '\\';
+			str << m_szCreator[i];
+		}
+		str << '$';
+	}
+	if (m_szDescription!=NULL)
+	{
+		// Description
+		str << "D:";
+		for (int i=0;m_szDescription[i]!='\0';i++)
+		{
+			if (m_szDescription[i]=='$')
+				str << '\\';
+			str << m_szDescription[i];
+		}
+		str << '$';
+	}
+
+	// Roots
+	if (m_szRoots==NULL)
+		str << "R:1$";
+	else
+	{
+		LPSTR pStr=m_szRoots;
+		while (*pStr!='\0')
+		{
+			str << "R:";
+			while (*pStr!='\0')
+			{
+				if (*pStr=='$')
+					str << '$';
+				str << *pStr;
+				pStr++;
+			}
+			str << '$';
+			pStr++;
+		}
+	}
+
+	// Excluded directories
+	for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
+	{
+		str << "E:";
+		for (int j=0;m_aExcludedDirectories[i][j]!='\0';j++)
+		{
+			if (m_aExcludedDirectories[i][j]=='$')
+				str << '\\';
+			str << m_aExcludedDirectories[i][j];
+		}
+		str << '$';
+	
+	}
+
+	str << '$';
+	str.FreeExtra();
+	return str.GiveBuffer();
+}

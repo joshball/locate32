@@ -298,3 +298,70 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPSTR>& aRoots,const CDatabase* 
 	return bRet;
 }
 
+
+BOOL CDatabaseInfo::ReadFilesAndDirectoriesCount(CDatabase::ArchiveType nArchiveType,LPCSTR szArchive,DWORD& dwFiles,DWORD& dwDirectories)
+{
+	CFile* dbFile=NULL;
+	BOOL bRet=TRUE;
+	BYTE* szBuffer=NULL;
+
+	dwFiles=DWORD(-1);
+	dwDirectories=DWORD(-1);
+
+	if (szArchive==NULL)
+		return FALSE;
+		
+	try
+	{
+		switch (nArchiveType)
+		{
+		case CDatabase::archiveFile:
+			dbFile=new CFile(szArchive,CFile::defRead,TRUE);
+			break;
+		default:
+			throw CFileException(CFileException::notImplemented,
+					-1,szArchive);
+		}
+			
+		szBuffer=new BYTE[11];
+		
+		dbFile->Read(szBuffer,11);
+		if (szBuffer[0]!='L' || szBuffer[1]!='O' || 
+			szBuffer[2]!='C' || szBuffer[3]!='A' || 
+			szBuffer[4]!='T' || szBuffer[5]!='E' || 
+			szBuffer[6]!='D' || szBuffer[7]!='B' ||
+			szBuffer[8]<'0')
+		{
+			throw CFileException(CFileException::invalidFormat,-1,szArchive);
+		}
+	
+		DWORD dwHeaderSize;
+		dbFile->Read(dwHeaderSize);
+
+		dbFile->Seek(dwHeaderSize-2*sizeof(DWORD),CFile::current);
+
+		/*// Reading creator, description and reserved data
+		CString Temp;
+		dbFile->Read(Temp);
+		dbFile->Read(Temp);
+		dbFile->Read(Temp);
+		dbFile->Read(Temp);
+
+		dbFile->Seek(4,CFile::current);*/
+		
+		dbFile->Read(dwFiles);
+		dbFile->Read(dwDirectories);
+
+		dbFile->Close();
+		
+	}
+	catch (...)
+	{
+		bRet=FALSE;
+	}
+	if (dbFile!=NULL)
+		delete dbFile;
+	if (szBuffer!=NULL)
+		delete[] szBuffer;
+	return bRet;
+}

@@ -3971,7 +3971,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	CWaitCursor;
 
 	// Ask folder
-	CFolderDialog fd(IDS_ADDFOLDER,BIF_RETURNONLYFSDIRS|BIF_USENEWUI);
+	CFolderDialog fd(IDS_ADDFOLDER,BIF_RETURNONLYFSDIRS|BIF_USENEWUI|BIF_NONEWFOLDERBUTTON);
 	if (fd.DoModal(*this))
 	{
 		// Insert folder to list

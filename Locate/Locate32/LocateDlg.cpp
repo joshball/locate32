@@ -6126,7 +6126,7 @@ void CLocateDlg::CNameDlg::OnBrowse()
 {
 	CWaitCursor wait;
 	DebugMessage("CLocateDlg::CNameDlg::OnBrowse() BEGIN");
-	CFolderDialog fd(IDS_GETFOLDER,BIF_RETURNONLYFSDIRS|BIF_USENEWUI);
+	CFolderDialog fd(IDS_GETFOLDER,BIF_RETURNONLYFSDIRS|BIF_USENEWUI|BIF_NONEWFOLDERBUTTON);
 	if (fd.DoModal(*this))
 	{
 	

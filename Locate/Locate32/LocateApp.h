@@ -74,7 +74,15 @@ public:
 	BYTE OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases=NULL); 
 
 	static DWORD WINAPI KillUpdaterProc(LPVOID lpParameter);
-
+private:
+	struct RootInfo {
+		LPSTR pName;
+		LPSTR pRoot;
+		DWORD dwNumberOfDatabases;
+		DWORD dwCurrentDatabase;
+		WORD wProgressState;
+	};
+    UINT FormatTooltipStatusText(CString& str,RootInfo* pRootInfo,WORD wThreads,BYTE bShortenLevel);  
 
 public:
 	CMenu m_Menu;
