@@ -157,6 +157,13 @@ public:
 // Keyboard shortcut
 class CShortcut {
 public:
+	CShortcut();
+	~CShortcut();
+
+	WORD GetHotkeyModifiers() const;
+	void SetHotkeyModifiers(WORD wHotkeyModifier);
+
+
 	// Flags
 	enum Flags {
 		sfLocateDialog = 0x00,
@@ -165,10 +172,15 @@ public:
 		sfKeyTypeMask = 0x03,
 
 		sfUseMemonic = 0x04,
+		
+		sfExecuteWhenDown = 0x00,
 		sfExecuteWhenUp = 0x08,
+		sfExecuteMask = 0x08,
 
 		sfRemoveKeyUpMessage = 0x10,
-		sfRemoveKeyDownMessage = 0x20
+		sfRemoveKeyDownMessage = 0x20,
+
+		sfDefault = sfLocateDialog|sfExecuteWhenDown
 	};
 	DWORD m_dwFlags;
 	
@@ -189,10 +201,14 @@ public:
 	// Actions
 	class CKeyboardAction {
 	public:
+		CKeyboardAction();
+		~CKeyboardAction();
+
+
 		enum Action {
 			ActivateControl = 0,
 			ActivateTab = 1
-		} nAction;
+		} m_nAction;
 	
 		enum ActionActivateControls { // First is control to be activated, second is for memonics
 			// Dialog itself
@@ -324,8 +340,18 @@ inline int CSchedule::CTimeX::GetWeekIndex(int nDayIndex,BOOL bMondayIsFirst)
 		nDayIndex--;		
 	return int(nDayIndex/7);
 }
-		
 
+
+inline CShortcut::CKeyboardAction::CKeyboardAction()
+:	m_pNextAction(NULL),
+	m_nAction(ActivateControl),
+	m_nActivateControl(FindNow)
+{
+}
+
+inline CShortcut::CKeyboardAction::~CKeyboardAction()
+{
+}
 
 
 #endif

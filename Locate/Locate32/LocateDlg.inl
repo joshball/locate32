@@ -90,7 +90,8 @@ inline void CLocateDlg::ClearMenuVariables()
 {
 	if (m_pActiveContextMenu!=NULL)
 	{
-		m_pActiveContextMenu->Release();
+		//m_pActiveContextMenu->Release();
+		delete m_pActiveContextMenu;
 		m_pActiveContextMenu=NULL;
 	}
 	if (m_hActivePopupMenu!=NULL)
@@ -264,5 +265,45 @@ inline LPCSTR CLocateDlg::GetVolumeFileSystem(WORD wDB,WORD wRootID)
 	}
 	return szEmpty;
 }
+
+inline CLocateDlg::ContextMenuStuff::ContextMenuStuff()
+:	pContextMenu3(NULL),pContextMenu2(NULL),pContextMenu(NULL),
+	pParentFolder(NULL),pParentIDList(NULL),apidl(NULL)
+{
+}
+
+inline CLocateDlg::ContextMenuStuff::~ContextMenuStuff()
+{
+	// Releasing memory
+	
+	if (pContextMenu3!=NULL)
+		pContextMenu3->Release();
+	if (pContextMenu2!=NULL)
+		pContextMenu2->Release();
+	if (pContextMenu!=NULL)
+		pContextMenu->Release();
+	if (pParentFolder!=NULL)
+		pParentFolder->Release();
+	
+
+	IMalloc* pMalloc;
+	if (SHGetMalloc(&pMalloc)==NOERROR)
+	{
+		if (pParentIDList!=NULL)
+			pMalloc->Free(pParentIDList);
+		
+		if (apidl!=NULL)
+		{
+			for (int i=0;i<nIDlistCount;i++)
+				pMalloc->Free((void*)apidl[i]);
+			delete[] apidl;
+		}
+
+		pMalloc->Release();
+	}
+	//delete[] apcidl;
+
+}
+
 
 #endif

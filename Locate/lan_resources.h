@@ -292,7 +292,9 @@
 #define IDC_EVERYTXT                    1088
 #define IDC_DAYS                        1089
 #define IDC_WEEKS                       1090
+#define IDC_ADDACTION					1090
 #define IDC_MON                         1091
+#define IDC_REMOVEACTION				1091
 #define IDC_WED                         1092
 #define IDC_TUE                         1093
 #define IDC_THU                         1094
@@ -391,8 +393,7 @@
 #define IDC_RESET                       1168
 #define IDC_UPDATE2                     1169
 #define IDC_OVERRIDETXT                 1169
-#define IDC_COMBO1                      1171
-#define IDC_OVERWRITEKEY                1171
+#define IDC_OVERRIDEKEY                 1171
 #define IDC_STOPIFROOTUNAVAILABLE       1172
 #define IDC_THREADSLABEL                1172
 #define IDC_WHERE                       1172
@@ -403,7 +404,7 @@
 #define IDC_LOWERCASE                   1176
 #define IDC_KEYLIST                     1176
 #define IDC_UPPERCASE                   1177
-#define IDC_HOTKEY1                     1177
+#define IDC_SHORTCUT                    1177
 #define IDC_ACTION                      1179
 #define IDC_ACTION2                     1181
 #define IDC_SUBACTION                   1181
@@ -425,8 +426,13 @@
 #define IDC_SELECTALLKEY                1200
 #define IDC_DELETEKEY                   1201
 #define IDC_IMPORT                      1202
+#define IDC_STATICWHEREPRESSED			1202
 #define IDC_EXPORT                      1203
+#define IDC_STATICCLASS					1203
 #define IDC_INCREMENTALUPDATE           1204
+#define IDC_STATICWINDOWTITLE			1204
+#define IDC_STATICEXECUTAIONOPTIONS		1205
+#define IDC_STATICWAITBEFOREEXECUTE		1206
 #define IDD_RESULTSAVEDIALOG            1209
 #define IDD_RESULTPRINTDIALOG           1210
 #define IDD_GENERALSETTINGS             1211
@@ -434,6 +440,11 @@
 #define IDD_LANGUAGESETTINGS            1213
 #define IDD_KEYBOARDSHORTCUTS           1214
 #define IDD_SHORTCUTADVANCED            1215
+#define IDC_STATICACTIONS				1216
+#define IDC_STATICACTION				1217
+#define IDC_STATICSUBACTION				1218
+#define IDC_STATICSHORTCUT				1219
+#define IDC_STATICKEY					1220
 #define IDS_LASTERROR                   1900
 #define IDS_LASTERRORUNKNOWN            1901
 #define IDS_LASTERRORINVALIDDB          1902

@@ -43,7 +43,7 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	AddPage((CPropertyPage*)m_pLanguage);
 	AddPage((CPropertyPage*)m_pDatabases);
 	AddPage((CPropertyPage*)m_pAutoUpdate);
-	AddPage((CPropertyPage*)m_pKeyboardShortcuts);
+	//AddPage((CPropertyPage*)m_pKeyboardShortcuts);
 	
 	m_pGeneral->m_pSettings=m_pAdvanced->m_pSettings=this;
 	m_pLanguage->m_pSettings=m_pAutoUpdate->m_pSettings=this;
@@ -5440,8 +5440,8 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_pList=new CListCtrl(GetDlgItem(IDC_KEYLIST));
 
 	m_pList->InsertColumn(0,"Shortcut",LVCFMT_LEFT,130);
-	m_pList->InsertColumn(1,"Action",LVCFMT_LEFT,150);
-	m_pList->InsertColumn(2,"Global",LVCFMT_LEFT,80);
+	m_pList->InsertColumn(1,"Where",LVCFMT_LEFT,80);
+	m_pList->InsertColumn(2,"Action",LVCFMT_LEFT,150);
 	
 	m_pList->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT ,LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT );
 	m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Shortcuts Settings List Widths");
@@ -5457,8 +5457,8 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	
 	TBBUTTON toolbuttons[]={
 #pragma warning (disable :4305 4309)
-		{0,IDC_ADD,TBSTATE_ENABLED,TBSTYLE_BUTTON,0,0,0,0},
-		{1,IDC_REMOVE,0,TBSTYLE_BUTTON,0,0,0,0},
+		{0,IDC_ADDACTION,TBSTATE_ENABLED,TBSTYLE_BUTTON,0,0,0,0},
+		{1,IDC_REMOVEACTION,0,TBSTYLE_BUTTON,0,0,0,0},
 		{2,IDC_NEXT,0,TBSTYLE_BUTTON,0,0,0,0},
 		{3,IDC_PREV,0,TBSTYLE_BUTTON,0,0,0,0},
 		{4,IDC_SWAPWITHPREVIOUS,0,TBSTYLE_BUTTON,0,0,0,0},
@@ -5466,9 +5466,37 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 #pragma warning (default :4305 4309)
 	};
 	m_pToolBar->AddButtons(6,toolbuttons);
-
 	m_pToolBar->SetWindowPos(HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);
+
+	// Adding items to combo
+	SendDlgItemMessage(IDC_WHERE,CB_ADDSTRING,0,LPARAM("In Locate dialog"));
+	SendDlgItemMessage(IDC_WHERE,CB_ADDSTRING,0,LPARAM("Global (hotkey)"));
+	SendDlgItemMessage(IDC_WHERE,CB_ADDSTRING,0,LPARAM("Global (hook)"));
+	SendDlgItemMessage(IDC_WHERE,CB_SETCURSEL,0,0);
+
+	InsertSubActions();
+
+	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,LPARAM("Activate Control"));
+	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,0,0);
+	
+
+	EnableItems();
 	return FALSE;
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::InsertSubActions()
+{
+	SendDlgItemMessage(IDC_SUBACTION,CB_RESETCONTENT,0,0);
+
+	switch (SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL,0,0))
+	{
+	case 0:
+	case 1:
+		SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_NAME));
+		SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_SIZEDATE));
+		SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVANCED));
+		break;
+	}
 }
 
 BOOL CSettingsProperties::CKeyboardShortcutsPage::OnApply()
@@ -5517,7 +5545,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnNotify(int idCtrl,LPNMHDR pn
 {
 	switch (idCtrl)
 	{
-	case IDC_SHORTCUTKEY:
+	case IDC_KEYLIST:
 		ListNotifyHandler((LV_DISPINFO*)pnmh,(NMLISTVIEW*)pnmh);
 		break;
 	default:
@@ -5552,44 +5580,431 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnNotify(int idCtrl,LPNMHDR pn
 
 BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 {
-	/*switch(pLvdi->hdr.code)
+	switch(pLvdi->hdr.code)
 	{
 	case LVN_DELETEITEM:
-		delete (LanguageItem*)pNm->lParam;
+		delete (CShortcut*)pNm->lParam;
 		break;
 	case LVN_GETDISPINFO:
 		{
-			LanguageItem* li=(LanguageItem*)pLvdi->item.lParam;
+			CShortcut* li=(CShortcut*)pLvdi->item.lParam;
             if (li==NULL)
 				break;
 			
-			pLvdi->item.mask=LVIF_TEXT|LVIF_DI_SETITEM;
+			pLvdi->item.mask=LVIF_TEXT;
 
 			switch (pLvdi->item.iSubItem)
 			{
 			case 0:
-				pLvdi->item.pszText=li->Language.GetBuffer();
+				pLvdi->item.pszText="Shortcut";
 				break;
 			case 1:
-				pLvdi->item.pszText=li->File.GetBuffer();
+				pLvdi->item.pszText="1";
 				break;
 			case 2:
-				pLvdi->item.pszText=li->Description.GetBuffer();
+				pLvdi->item.pszText="2";
 				break;
 			}
 			break;
 		}
 	case LVN_ITEMCHANGED:
-		if ((pNm->uOldState&LVIS_SELECTED)==0 && (pNm->uNewState&LVIS_SELECTED))
-		{
-			nLastSel=pNm->iItem;
-			KillTimer(0);
-		}
-		if ((pNm->uOldState&LVIS_SELECTED) && (pNm->uNewState&LVIS_SELECTED)==0)
-			SetTimer(0,100,NULL);
+		OnChangeItem(pNm);
+		break;
+	case LVN_ITEMCHANGING:
+		OnChangingItem(pNm);
 		break;
 	}
-	*/
 	return TRUE;
 }
 
+BOOL CSettingsProperties::CKeyboardShortcutsPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
+{
+	CDialog::OnCommand(wID,wNotifyCode,hControl);
+
+	switch (wID)
+	{
+	case IDC_NEW:
+		{
+			LVITEM li;
+			li.pszText=LPSTR_TEXTCALLBACK;
+	        li.mask=LVIF_TEXT|LVIF_PARAM;
+			li.iSubItem=0;
+			li.iItem=m_pList->GetItemCount();
+			li.lParam=LPARAM(new CShortcut);
+			m_pList->InsertItem(&li);
+			break;
+		}
+	case IDC_REMOVE:
+		break;
+	case IDC_RESET:
+		break;
+	case IDC_SHORTCUTKEY:
+		break;
+	case IDC_ADVANCED:
+		OnAdvanced();
+		break;
+	case IDC_ADDACTION:
+		break;
+	case IDC_REMOVEACTION:
+		break;
+	case IDC_NEXT:
+		break;
+	case IDC_PREV:
+		break;
+	case IDC_SWAPWITHPREVIOUS:
+		break;
+	case IDC_SWAPWITHNEXT:
+		break;
+	}
+	return FALSE;
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::OnAdvanced()
+{
+	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+	if (nItem==-1)
+		return;
+
+	CShortcut* pShortcut=(CShortcut*)m_pList->GetItemData(nItem);
+	if (pShortcut==NULL)
+		return;
+
+	CAdvancedDlg dlg(pShortcut);
+	
+	if (dlg.DoModal(*this))
+		SetFieldsForShortcut(pShortcut);
+
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
+{
+	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+
+	EnableDlgItem(IDC_STATICSHORTCUT,nItem!=-1);
+	EnableDlgItem(IDC_STATICKEY,nItem!=-1);
+	EnableDlgItem(IDC_SHORTCUTKEY,nItem!=-1);
+	EnableDlgItem(IDC_STATICWHEREPRESSED,nItem!=-1);
+	EnableDlgItem(IDC_WHERE,nItem!=-1);
+	EnableDlgItem(IDC_ADVANCED,nItem!=-1);
+	EnableDlgItem(IDC_STATICACTIONS,nItem!=-1);
+	EnableDlgItem(IDC_ACTIONTOOLBAR,nItem!=-1);
+	EnableDlgItem(IDC_ACTION,nItem!=-1);
+	EnableDlgItem(IDC_SUBACTION,nItem!=-1);
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::OnChangeItem(NMLISTVIEW *pNm)
+{
+	if (pNm->iItem==-1)
+		return;
+
+	
+    if (!(pNm->uOldState&LVIS_SELECTED) ||
+		pNm->uNewState&LVIS_SELECTED)
+	{
+        // Item is selected
+		CShortcut* pShortcut=(CShortcut*)m_pList->GetItemData(pNm->iItem);
+		if (pShortcut==NULL)
+			return;
+		SetFieldsForShortcut(pShortcut);
+	}
+
+	EnableItems();
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::OnChangingItem(NMLISTVIEW *pNm)
+{
+	if (pNm->iItem==-1)
+		return;
+
+	
+    if (pNm->uOldState&LVIS_SELECTED ||
+		!(pNm->uNewState&LVIS_SELECTED))
+	{
+		// Item is deselected
+		CShortcut* pShortcut=(CShortcut*)m_pList->GetItemData(pNm->iItem);
+		if (pShortcut==NULL)
+			return;
+		SaveFieldsForShortcut(pShortcut);
+
+		m_pList->RedrawItems(pNm->iItem,pNm->iItem);
+	}
+
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForShortcut(CShortcut* pShortcut)
+{
+	if (pShortcut->m_wVirtualKey!=VK_ESCAPE ||
+		pShortcut->m_wVirtualKey!=VK_SPACE ||
+		pShortcut->m_wVirtualKey!=VK_TAB)
+		SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_SETHOTKEY,MAKEWPARAM(pShortcut->m_wVirtualKey,pShortcut->GetHotkeyModifiers()));
+	else
+		SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_SETHOTKEY,MAKEWPARAM('X',pShortcut->GetHotkeyModifiers()));
+	
+	switch (pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)
+	{
+	case CShortcut::sfGlobalHotkey:
+		SendDlgItemMessage(IDC_WHERE,CB_SETCURSEL,1);
+		break;
+	case CShortcut::sfGlobalHook:
+		SendDlgItemMessage(IDC_WHERE,CB_SETCURSEL,2);
+		break;
+	default:
+		SendDlgItemMessage(IDC_WHERE,CB_SETCURSEL,0);
+		break;
+	}
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForShortcut(CShortcut* pShortcut)
+{
+	LPARAM lParam=SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_GETHOTKEY,0,0);
+	
+	if (pShortcut->m_wVirtualKey!=VK_ESCAPE ||
+		pShortcut->m_wVirtualKey!=VK_SPACE ||
+		pShortcut->m_wVirtualKey!=VK_TAB)
+		pShortcut->m_wVirtualKey=LOWORD(lParam);
+
+    pShortcut->SetHotkeyModifiers(HIWORD(lParam));
+
+	pShortcut->m_dwFlags&=~CShortcut::sfKeyTypeMask;
+	switch (SendDlgItemMessage(IDC_WHERE,CB_GETCURSEL))
+	{
+	case 1:
+		pShortcut->m_dwFlags|=CShortcut::sfGlobalHotkey;
+		break;
+	case 2:
+		pShortcut->m_dwFlags|=CShortcut::sfGlobalHook;
+		break;
+	default:
+		pShortcut->m_dwFlags|=CShortcut::sfLocateDialog;
+		break;
+	}
+}
+
+
+
+
+BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
+{
+	CDialog::OnInitDialog(hwndFocus);
+
+	// Override option
+	SendDlgItemMessage(IDC_OVERRIDEKEY,CB_ADDSTRING,0,LPARAM("No overwrite"));
+	SendDlgItemMessage(IDC_OVERRIDEKEY,CB_ADDSTRING,0,LPARAM("With ESC"));
+	SendDlgItemMessage(IDC_OVERRIDEKEY,CB_ADDSTRING,0,LPARAM("With SPACE"));
+	SendDlgItemMessage(IDC_OVERRIDEKEY,CB_ADDSTRING,0,LPARAM("With TAB"));
+	
+	switch (m_pShortcut->m_wVirtualKey)
+	{
+	case VK_ESCAPE:
+		SendDlgItemMessage(IDC_OVERRIDEKEY,CB_SETCURSEL,1,0);
+		break;
+	case VK_SPACE:
+		SendDlgItemMessage(IDC_OVERRIDEKEY,CB_SETCURSEL,2,0);
+		break;
+	case VK_TAB:
+		SendDlgItemMessage(IDC_OVERRIDEKEY,CB_SETCURSEL,3,0);
+		break;
+	default:
+		SendDlgItemMessage(IDC_OVERRIDEKEY,CB_SETCURSEL,0,0);
+		break;
+	}
+	
+	// Where pressed field (works only with global keys)
+	if ((m_pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)==CShortcut::sfLocateDialog)
+	{
+		EnableDlgItem(IDC_STATICWHEREPRESSED,FALSE);
+		EnableDlgItem(IDC_STATICWINDOWTITLE,FALSE);
+		EnableDlgItem(IDC_STATICCLASS,FALSE);
+		EnableDlgItem(IDC_WINDOWCLASS,FALSE);
+		EnableDlgItem(IDC_WINDOWTITLE,FALSE);
+		EnableDlgItem(IDC_LOCATEDIALOG,FALSE);
+	}
+	else
+	{
+		if (m_pShortcut->m_pClass==LPSTR(-1))
+			CheckDlgButton(IDC_LOCATEDIALOG,1);
+		else
+		{
+			if (m_pShortcut->m_pTitle!=NULL)
+				SetDlgItemText(IDC_WINDOWTITLE,m_pShortcut->m_pTitle);
+			if (m_pShortcut->m_pClass!=NULL)
+				SetDlgItemText(IDC_WINDOWCLASS,m_pShortcut->m_pClass);
+		}
+	}		
+
+	
+	// Global hook specifig stuff
+	if ((m_pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)==CShortcut::sfGlobalHook)
+	{
+		if ((m_pShortcut->m_dwFlags&CShortcut::sfExecuteMask)!=CShortcut::sfExecuteWhenDown)
+			CheckDlgButton(IDC_EXECUTEWHENKEYISDOWN,1);
+		else
+			CheckDlgButton(IDC_EXECUTEWHENKEYISUP,1);
+
+		if (m_pShortcut->m_dwFlags&CShortcut::sfRemoveKeyDownMessage)
+			CheckDlgButton(IDC_REMOVEDOWNMESSAGE,TRUE);
+		if (m_pShortcut->m_dwFlags&CShortcut::sfRemoveKeyUpMessage)
+			CheckDlgButton(IDC_REMOVEUPMESSAGE,TRUE);
+	}
+	else
+	{
+		EnableDlgItem(IDC_EXECUTEWHENSTATIC,FALSE);
+		EnableDlgItem(IDC_EXECUTEWHENKEYISDOWN,FALSE);
+		EnableDlgItem(IDC_EXECUTEWHENKEYISUP,FALSE);
+		CheckDlgButton(IDC_EXECUTEWHENKEYISDOWN,1);
+		EnableDlgItem(IDC_REMOVEMESSAGESTATIC,FALSE);
+		EnableDlgItem(IDC_REMOVEDOWNMESSAGE,FALSE);
+		EnableDlgItem(IDC_REMOVEUPMESSAGE,FALSE);
+	}
+	
+
+	if (m_pShortcut->m_nDelay==0)
+		CheckDlgButton(IDC_WAITNONE,1);
+	else if (m_pShortcut->m_nDelay==UINT(-1))
+		CheckDlgButton(IDC_WAITPOST,1);
+	else
+	{
+		CheckDlgButton(IDC_WAITDELAY,1);
+		SetDlgItemInt(IDC_WAITMS,m_pShortcut->m_nDelay,FALSE);
+	}
+
+
+
+	EnableItems();
+	return FALSE;
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::EnableItems()
+{
+	if ((m_pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)!=CShortcut::sfLocateDialog)
+	{
+		BOOL bEnableWindowAndClass=!IsDlgButtonChecked(IDC_LOCATEDIALOG);
+
+		EnableDlgItem(IDC_WINDOWTITLE,bEnableWindowAndClass);
+		EnableDlgItem(IDC_WINDOWCLASS,bEnableWindowAndClass);
+		EnableDlgItem(IDC_STATICWINDOWTITLE,bEnableWindowAndClass);
+		EnableDlgItem(IDC_STATICCLASS,bEnableWindowAndClass);
+	}
+
+	EnableDlgItem(IDC_WAITMS,IsDlgButtonChecked(IDC_WAITDELAY));
+		
+
+}
+
+BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
+{
+	CDialog::OnCommand(wID,wNotifyCode,hControl);
+
+	switch (wID)
+	{
+	case IDC_OK:
+		OnOK();
+		break;
+	case IDC_CANCEL:
+		EndDialog(0);
+		break;
+	case IDC_LOCATEDIALOG:
+	case IDC_WAITNONE:
+	case IDC_WAITPOST:
+		EnableItems();
+		break;
+	case IDC_WAITDELAY:
+		EnableItems();
+		SetFocus(IDC_WAITMS);
+		break;
+	}	
+	return FALSE;
+}
+
+BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnClose()
+{
+	CDialog::OnClose();
+	EndDialog(0);
+	return FALSE;
+}
+
+
+void CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnOK()
+{
+	// Override key
+	switch (SendDlgItemMessage(IDC_OVERRIDEKEY,CB_GETCURSEL,0,0))
+	{
+	case 1:
+		m_pShortcut->m_wVirtualKey=VK_ESCAPE;
+		break;
+	case 2:
+		m_pShortcut->m_wVirtualKey=VK_SPACE;
+		break;
+	case 3:
+		m_pShortcut->m_wVirtualKey=VK_TAB;
+		break;
+	default:
+		m_pShortcut->m_wVirtualKey=0;
+		break;	
+	}
+	
+	
+	if ((m_pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)!=CShortcut::sfLocateDialog)
+	{
+		// Window and class
+		if (m_pShortcut->m_pClass!=NULL && m_pShortcut->m_pClass!=LPSTR(-1))
+			delete[] m_pShortcut->m_pClass;
+		if (m_pShortcut->m_pTitle!=NULL)
+			delete[] m_pShortcut->m_pClass;
+
+		if (IsDlgButtonChecked(IDC_LOCATEDIALOG))
+		{
+			m_pShortcut->m_pClass=LPSTR(-1);
+			m_pShortcut->m_pTitle=NULL;
+		}
+		else
+		{
+			CString Text;
+			if (GetDlgItemText(IDC_WINDOWTITLE,Text)>0)
+				m_pShortcut->m_pTitle=alloccopy(Text,Text.GetLength());
+			else
+				m_pShortcut->m_pTitle=NULL;
+
+			if (GetDlgItemText(IDC_WINDOWCLASS,Text)>0)
+				m_pShortcut->m_pClass=alloccopy(Text,Text.GetLength());
+			else
+				m_pShortcut->m_pClass=NULL;
+
+		}
+	}		
+	
+	// Global hook specifig stuff
+	if ((m_pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)==CShortcut::sfGlobalHook)
+	{
+		m_pShortcut->m_dwFlags&=~CShortcut::sfExecuteMask;
+		if (IsDlgButtonChecked(IDC_EXECUTEWHENKEYISUP))
+			m_pShortcut->m_dwFlags|=CShortcut::sfExecuteWhenUp;
+
+		if (IsDlgButtonChecked(IDC_REMOVEDOWNMESSAGE))
+			m_pShortcut->m_dwFlags|=CShortcut::sfRemoveKeyDownMessage;
+		else
+			m_pShortcut->m_dwFlags&=~CShortcut::sfRemoveKeyDownMessage;
+			
+		if (IsDlgButtonChecked(IDC_REMOVEUPMESSAGE))
+			m_pShortcut->m_dwFlags|=CShortcut::sfRemoveKeyUpMessage;
+		else
+			m_pShortcut->m_dwFlags&=~CShortcut::sfRemoveKeyUpMessage;
+	}
+	else
+	
+
+	// Setting wait time
+	if (IsDlgButtonChecked(IDC_WAITNONE))
+		m_pShortcut->m_nDelay=0;
+	else if (IsDlgButtonChecked(IDC_WAITPOST))
+		m_pShortcut->m_nDelay=UINT(-1);
+	else
+	{
+		BOOL bTranslated;
+		m_pShortcut->m_nDelay=GetDlgItemInt(IDC_WAITMS,&bTranslated,FALSE);
+		if (!bTranslated)
+			m_pShortcut->m_nDelay=0;
+	}
+
+	EndDialog(1);
+}

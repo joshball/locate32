@@ -164,6 +164,11 @@ STDMETHODIMP CShellExtClassFactory::QueryInterface(REFIID riid,
 STDMETHODIMP_(ULONG) CShellExtClassFactory::AddRef()
 {
     ODS("CShellExtClassFactory::AddRef()\r\n");
+
+	char szNum[100];
+	wsprintf(szNum,"m_cRef is after this call %d",m_cRef+1);
+	DebugMessage(szNum);
+
 	return ++m_cRef;
 }
 
@@ -171,10 +176,15 @@ STDMETHODIMP_(ULONG) CShellExtClassFactory::Release()
 {
 	ODS("CShellExtClassFactory::Release()\r\n");
 
+	char szNum[100];
+	wsprintf(szNum,"m_cRef is after this call %d",m_cRef-1);
+	DebugMessage(szNum);
+
     if (--m_cRef)
         return m_cRef;
 
-    delete this;
+	DebugMessage("Removing class"); 
+	delete this;
 
     return 0L;
 }
@@ -275,17 +285,26 @@ STDMETHODIMP_(ULONG) CLocateShellExtension::AddRef()
 	
     ODS("CShellExt::AddRef()\r\n");
 
-    return ++m_cRef;
+	char szNum[100];
+	wsprintf(szNum,"m_cRef is after this call %d",m_cRef+1);
+	DebugMessage(szNum);
+    
+	return ++m_cRef;
 }
 
 STDMETHODIMP_(ULONG) CLocateShellExtension::Release()
 {
     ODS("CShellExt::Release()\r\n");
 
+	char szNum[100];
+	wsprintf(szNum,"m_cRef is after this call %d",m_cRef-1);
+	DebugMessage(szNum);
+
     if (--m_cRef)
         return m_cRef;
 
-    delete this;
+    DebugMessage("delete this");
+	delete this;
 
     return 0L;
 }

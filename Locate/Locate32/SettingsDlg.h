@@ -545,17 +545,44 @@ public:
 
 	class CKeyboardShortcutsPage : public CPropertyPage 
 	{
+	protected:
+		class CAdvancedDlg: public CDialog  
+		{
+		public:
+			CAdvancedDlg(CShortcut* pShortcut);
+
+			virtual BOOL OnInitDialog(HWND hwndFocus);
+			virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
+			virtual BOOL OnClose();
+			
+			void OnOK();
+			void EnableItems();
+
+			CShortcut* m_pShortcut;
+		};
+
 	public:
 		CKeyboardShortcutsPage();
 		virtual BOOL OnInitDialog(HWND hwndFocus);
 		virtual BOOL OnApply();
 		virtual void OnCancel();
+		virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 		virtual void OnDestroy();
 		virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 		virtual void OnTimer(DWORD wTimerID); 
 			
 		BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
-				
+
+		void InsertSubActions();
+		void OnAdvanced();
+		void OnChangeItem(NMLISTVIEW *pNm);
+		void OnChangingItem(NMLISTVIEW *pNm);
+
+		void SetFieldsForShortcut(CShortcut* pShortcut);
+		void SaveFieldsForShortcut(CShortcut* pShortcut);
+		void EnableItems();
+
+
 	protected:
 		friend CSettingsProperties;
 		CSettingsProperties* m_pSettings;
@@ -573,7 +600,17 @@ public:
 		CImageList m_ToolBarBitmaps;
 		CImageList m_ToolBarBitmapsDisabled;
 		CImageList m_ToolBarBitmapsHot;
+
+		CShortcut* m_pCurrentShortcut;
+		int m_nCurrentAction;
 		
+
+		struct ControlItems {
+			CString sName;
+			CShortcut::CKeyboardAction::ActionActivateControls _nControl;
+		};
+		CArrayFP<ControlItems*> m_aControlItems;
+
 		
 
 	};

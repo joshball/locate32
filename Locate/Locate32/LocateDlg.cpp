@@ -2014,34 +2014,35 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		break;
 	case WM_DRAWCLIPBOARD:
 		return CDialog::WindowProc(msg,wParam,lParam);
-	case WM_INITMENUPOPUP:
 	case WM_DRAWITEM:
 	case WM_MEASUREITEM:
-	case WM_MENUCHAR:
+		if (wParam)
+			break;
+	case WM_INITMENUPOPUP:
 		if (m_pActiveContextMenu!=NULL)
 		{
-			IContextMenu2* pContextMenu2;
-			HRESULT hRes=m_pActiveContextMenu->QueryInterface(IID_IContextMenu2,(void**)&pContextMenu2);
-			if (SUCCEEDED(hRes))
-			{
-				hRes=pContextMenu2->HandleMenuMsg(msg,wParam,lParam);
-				pContextMenu2->Release();
-				if (hRes==NOERROR)
-					return TRUE;
-			}
+			if (m_pActiveContextMenu->pContextMenu2!=NULL)
+				m_pActiveContextMenu->pContextMenu2->HandleMenuMsg(msg,wParam,lParam);
 
-			IContextMenu3* pContextMenu3;
-			hRes=m_pActiveContextMenu->QueryInterface(IID_IContextMenu3,(void**)&pContextMenu3);
-			if (SUCCEEDED(hRes))
+			return (msg==WM_INITMENUPOPUP ? 0 : TRUE); // handled
+		}
+		break;
+	/*case WM_MENUCHAR:
+		if (m_pActiveContextMenu!=NULL)
+		{
+			if (m_pActiveContextMenu->pContextMenu3!=NULL)
 			{
-				HRESULT hRet;
-				hRes=pContextMenu3->HandleMenuMsg2(msg,wParam,lParam,&hRet);
-				pContextMenu3->Release();
+				HRESULT hRet,hRes;
+				hRes=m_pActiveContextMenu->pContextMenu3->HandleMenuMsg2(msg,wParam,lParam,&hRet);
 				if (hRes==NOERROR)
 					return hRet;
 			}
+			if (m_pActiveContextMenu->pContextMenu2!=NULL)
+				m_pActiveContextMenu->pContextMenu2->HandleMenuMsg(msg,wParam,lParam);
 		}
-		break;
+		break;*/
+
+
 	case WM_GETICON:
 	case WM_SETICON:
 		DefWindowProc(*this,msg,wParam,lParam);
@@ -2995,7 +2996,7 @@ void CLocateDlg::OnMenuCommands(WORD wID)
 	if (wID>=IDM_DEFCONTEXTITEM && m_pActiveContextMenu!=NULL)
 	{
 		char szName[100];
-		m_pActiveContextMenu->GetCommandString(wID-IDM_DEFCONTEXTITEM,GCS_VERBA,NULL,
+		m_pActiveContextMenu->pContextMenu->GetCommandString(wID-IDM_DEFCONTEXTITEM,GCS_VERBA,NULL,
 			szName,100);
 		DebugFormatMessage("Running context verb: %s",szName);
 		
@@ -3033,7 +3034,7 @@ void CLocateDlg::OnMenuCommands(WORD wID)
 		cii.lpParameters=NULL;
 		cii.lpDirectory=pItem->GetParent();
 		cii.nShow=SW_SHOWDEFAULT;
-		m_pActiveContextMenu->InvokeCommand(&cii);
+		m_pActiveContextMenu->pContextMenu->InvokeCommand(&cii);
 		ClearMenuVariables();
 	}
 	else if (wID==0)
@@ -3050,8 +3051,8 @@ void CLocateDlg::OnMenuCommands(WORD wID)
 			{
 				CArrayFP<CString*> aFile;
 				aFile.Add(new CString(pItem->GetPath()));
-				IContextMenu* pContextMenu=GetContextMenuForFiles(pItem->GetParent(),aFile);
-				if (pContextMenu!=NULL)
+				ContextMenuStuff* pContextMenuStuff=GetContextMenuForFiles(pItem->GetParent(),aFile);
+				if (pContextMenuStuff!=NULL)
 				{
 					CMINVOKECOMMANDINFO cii;
 					cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
@@ -3062,9 +3063,10 @@ void CLocateDlg::OnMenuCommands(WORD wID)
 					cii.lpDirectory=NULL;
 					cii.nShow=SW_SHOWDEFAULT;
 					HMENU hMenu=CreatePopupMenu();
-					pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
-					pContextMenu->InvokeCommand(&cii);
-					pContextMenu->Release();
+					pContextMenuStuff->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
+					pContextMenuStuff->pContextMenu->InvokeCommand(&cii);
+					
+					delete pContextMenuStuff;
 					DestroyMenu(hMenu);
 				}
 			}
@@ -3078,6 +3080,7 @@ void CLocateDlg::OnMenuCommands(WORD wID)
 
 void CLocateDlg::OnProperties()
 {
+	/*
 	CWaitCursor wait;
 	if (m_pActiveContextMenu!=NULL)
 	{
@@ -3090,7 +3093,7 @@ void CLocateDlg::OnProperties()
 		cii.lpDirectory=NULL;
 		cii.nShow=SW_SHOWDEFAULT;
 		m_pActiveContextMenu->InvokeCommand(&cii);
-	}
+	}*/
 }
 
 void CLocateDlg::OnAutoArrange()
@@ -3878,185 +3881,131 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 		if (hFileMenu==NULL)
 		{
 			hFileMenu=CreatePopupMenu();
-			InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUFORQUERIED),0);
 
 			if (HIBYTE(GetKeyState(VK_SHIFT)))
 			{
-				hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY|CMF_EXTENDEDVERBS);
 				//hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-				//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_EXTENDEDVERBS);
+				//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY|CMF_EXTENDEDVERBS);
+				hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
+					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_EXTENDEDVERBS);
 
 			}
 			else
 			{
-				hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY);
 				//hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-				//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL);
+				//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY);
+				hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
+					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE);
 			}
 		}
 		else
 		{
-			hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-				IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY);
+			hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
+				IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_VERBSONLY);
+			//hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
+			//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL);
 		}
 		if (!SUCCEEDED(hRes))
 		{
 			// Didn't succee, so freeing pointer
-			m_pActiveContextMenu->Release();
+			delete m_pActiveContextMenu;
 			m_pActiveContextMenu=NULL;
 		}
 		else
 		{
-			InsertBasicPopuoMenuItems(hFileMenu);
+			InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
 			return hFileMenu;
 		}
 	}
 	
 	if (hFileMenu==NULL)
+	{
 		hFileMenu=CreatePopupMenu();
-
-
-	InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN),0,IDM_DEFOPEN);
+		InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN),0,IDM_DEFOPEN);
+		InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
+	}
+	else
+		InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN),0,IDM_DEFOPEN);
+			
 
 	return hFileMenu;
 	
 }
-
-void CLocateDlg::InsertBasicPopuoMenuItems(HMENU hMenu)
-{
-	// Inserting other items to the begin of menu 
-	// ("Open containing folder", "Remove from this list", ...)
-	MENUITEMINFO mii;
-	mii.cbSize=sizeof(MENUITEMINFO);
-	mii.fMask=MIIM_ID|MIIM_TYPE;
-	mii.fType=MFT_STRING;
-	mii.wID=IDM_OPENCONTAININGFOLDER;
-	CString str(IDS_OPENCONTAININGFOLDER);
-	mii.dwTypeData=str.GetBuffer();
-	InsertMenuItem(hMenu,0,TRUE,&mii);
-	mii.wID=IDM_REMOVEFROMTHISLIST;
-	str.LoadString(IDS_REMOVEFROMTHISLIST);
-	mii.dwTypeData=str.GetBuffer();
-	InsertMenuItem(hMenu,1,TRUE,&mii);
-	mii.fMask=MIIM_TYPE;
-	mii.fType=MFT_SEPARATOR;
-	InsertMenuItem(hMenu,2,TRUE,&mii);
-}
-
 	
-IContextMenu* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CString*>& aFiles)
+CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CString*>& aFiles)
 {
-	IContextMenu* pContextMenu=NULL;
-
 	ASSERT(aFiles.GetSize()!=0);
 
-	// Creating shell link
-	IShellLink* pShellLink;
-	HRESULT hRes=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(LPVOID*)&pShellLink);
-	if (!SUCCEEDED(hRes))
-		return NULL;
-	
-	LPITEMIDLIST pParentIDList=NULL;
-		
-	// And resolving parent ID list
-	
-	/*hRes=pShellLink->SetPath(szParent);
+	ContextMenuStuff* pcs=new ContextMenuStuff;
+	pcs->nIDlistCount=aFiles.GetSize();
+
+	IShellFolder *pDesktopFolder;
+	HRESULT hRes=SHGetDesktopFolder(&pDesktopFolder);
 	if (!SUCCEEDED(hRes))
 	{
-		pShellLink->Release();
+		delete pcs;
 		return NULL;
 	}
-	hRes=pShellLink->GetIDList(&pParentIDList);
-	if (!SUCCEEDED(hRes))
-	{
-		pShellLink->Release();
-		return NULL;
-	}*/
 
+	CStringW sParent(szParent);
+	DWORD dwCutFileNames=sParent.GetLength();
 
-	// Getting ID list for first item
-	hRes=pShellLink->SetPath(*aFiles[0]);
+	if (szParent[1]==':' && szParent[2]=='\0')
+		sParent << L'\\';
+	
+	// Getting ID list of parent
+	hRes=pDesktopFolder->ParseDisplayName(*this,NULL,(LPOLESTR)(LPCWSTR)sParent,NULL,&pcs->pParentIDList,NULL);
 	if (!SUCCEEDED(hRes))
 	{
-		pShellLink->Release();
-		return NULL;
-	}
-	hRes=pShellLink->GetIDList(&pParentIDList);
-	if (!SUCCEEDED(hRes))
-	{
-		pShellLink->Release();
+		delete pcs;
 		return NULL;
 	}
-	
-	// Removing last item in id list
-	BYTE* apcid=(BYTE*)pParentIDList;
 
-	// Seeking last item in id list ...
-	while (*(USHORT*)(apcid+*((USHORT*)apcid))!=0)
-		apcid+=*((SHORT*)apcid);
-	// And removing it
-	*((USHORT*)apcid)=0;
+	// Querying IShellFolder interface for parent
+	hRes=pDesktopFolder->BindToObject(pcs->pParentIDList,NULL,IID_IShellFolder,(void**)&pcs->pParentFolder);
+	if (!SUCCEEDED(hRes))
+	{
+		delete pcs;
+		return NULL;
+	}
 
-	
-	
-	// Creating Itemidlist struct
-	LPITEMIDLIST* apidl=new LPITEMIDLIST[aFiles.GetSize()];
-	BYTE** apcidl=new BYTE*[aFiles.GetSize()];
+
+	// Querying id lists for files
+	pcs->apidl=new LPITEMIDLIST[aFiles.GetSize()+1];
+
 	for (int i=0;i<aFiles.GetSize();i++)
 	{
-		hRes=pShellLink->SetPath(*aFiles.GetAt(i));
+		LPCSTR szPath;
+
+		if ((*aFiles[i])[dwCutFileNames]=='\\')
+			szPath=((LPCSTR)*aFiles[i])+dwCutFileNames+1;
+		else
+			szPath=((LPCSTR)*aFiles[i])+aFiles[i]->FindLast('\\')+1;
+
+		
+		hRes=pcs->pParentFolder->ParseDisplayName(*this,NULL,(LPOLESTR)(LPCWSTR)CStringW(szPath),NULL,&pcs->apidl[i],NULL);
 		if (!SUCCEEDED(hRes))
-		{
-			pShellLink->Release();
-			return NULL;
-		}
-		pShellLink->GetIDList(apidl+i);
-		apcidl[i]=(BYTE*)apidl[i];
-		while (*(USHORT*)(apcidl[i]+*((USHORT*)apcidl[i]))!=0)
-			apcidl[i]+=*((USHORT*)apcidl[i]);
-		
-	}
-	pShellLink->Release();
-	
-	// Getting desktop IShellFolder interface
-	IShellFolder *pDesktopFolder,*pParentFolder;
-	hRes=SHGetDesktopFolder(&pDesktopFolder);
-	if (SUCCEEDED(hRes))
-	{
-
-		// Getting parent folder's IShellFolder interface
-		hRes=pDesktopFolder->BindToObject(pParentIDList,NULL,IID_IShellFolder,(void**)&pParentFolder);
-		if (SUCCEEDED(hRes))
-		{
-			// Getting IContextMenu
-			hRes=pParentFolder->GetUIObjectOf(*this,aFiles.GetSize(),(LPCITEMIDLIST*)apcidl,
-				IID_IContextMenu,NULL,(void**)&pContextMenu);
-			if (!SUCCEEDED(hRes))
-				pContextMenu=NULL;
-			pParentFolder->Release();
-	
-		}
-		pDesktopFolder->Release();
+			pcs->apidl[i]=NULL;
 
 	}
-	
-	
-	// Releasing memory
-	IMalloc* pMalloc;
-	if (SHGetMalloc(&pMalloc)==NOERROR)
+
+	pcs->pParentFolder->GetUIObjectOf(*this,aFiles.GetSize(),(LPCITEMIDLIST*)pcs->apidl,
+		IID_IContextMenu,NULL,(void**)&pcs->pContextMenu);
+	if (!SUCCEEDED(hRes))
 	{
-		pMalloc->Free(pParentIDList);
-		
-		for (int i=0;i<aFiles.GetSize();i++)
-			pMalloc->Free((void*)apidl[i]);
-		pMalloc->Release();
+		delete pcs;
+		return NULL;
 	}
-	delete[] apidl;
-	delete[] apcidl;
-	
-	return pContextMenu;
+
+	hRes=pcs->pContextMenu->QueryInterface(IID_IContextMenu2,(void**)&pcs->pContextMenu2);
+	if (!SUCCEEDED(hRes))
+		pcs->pContextMenu2=NULL;
+
+	hRes=pcs->pContextMenu->QueryInterface(IID_IContextMenu3,(void**)&pcs->pContextMenu3);
+	if (!SUCCEEDED(hRes))
+		pcs->pContextMenu3=NULL;
+
+	return pcs;
 } 
 
 int CLocateDlg::GetSendToMenuPos(HMENU hMenu)

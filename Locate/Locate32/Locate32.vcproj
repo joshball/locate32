@@ -259,6 +259,23 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\Data.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="HFCLib.h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="HFCLib.h"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="DatabaseInfos.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -721,6 +738,9 @@
 		</File>
 		<File
 			RelativePath=".\commonres\shortcutactionsbitmapshot.bmp">
+		</File>
+		<File
+			RelativePath=".\commonres\sresbitd.bmp">
 		</File>
 		<File
 			RelativePath=".\commonres\sresbith.bmp">

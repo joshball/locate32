@@ -337,6 +337,24 @@ private:
 		virtual void OnOK();
 	};
 
+	struct ContextMenuStuff {
+		ContextMenuStuff();
+		~ContextMenuStuff();
+		
+
+        IContextMenu* pContextMenu;
+		IContextMenu2* pContextMenu2;
+		IContextMenu3* pContextMenu3;
+		IShellFolder* pParentFolder;
+
+		LPITEMIDLIST pParentIDList;
+		LPITEMIDLIST* apidl;
+		BYTE** apcidl;
+		int nIDlistCount;
+
+	};
+
+	
 public:
 
 	CLocateDlg();
@@ -372,9 +390,8 @@ public:
 	static int SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSorting);
 	void SetSortArrowToHeader(DetailType nColumn,BOOL bRemove,BOOL bDownArrow);
 	HMENU CreateFileContextMenu(HMENU hFileMenu);
-	IContextMenu* GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CString*>& aFiles);
-	void InsertBasicPopuoMenuItems(HMENU hMenu);
-
+	ContextMenuStuff* GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CString*>& aFiles);
+	
 
 
 	void ClearMenuVariables();     
@@ -580,7 +597,8 @@ protected:
 	DWORD m_dwFlags;
 	DWORD m_dwExtraFlags;
 
-	IContextMenu* m_pActiveContextMenu;
+	
+	ContextMenuStuff* m_pActiveContextMenu;
 	
 	CMenu m_Menu;
 	HFONT m_hSendToListFont;

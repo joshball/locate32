@@ -413,9 +413,14 @@ inline CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::CChedul
 inline CSettingsProperties::CKeyboardShortcutsPage::CKeyboardShortcutsPage()
 :	CPropertyPage(IDD_KEYBOARDSHORTCUTS,IDS_LANGUAGESETTINGS),
 	m_pList(NULL),m_pToolBar(NULL),m_ToolBarBitmaps(NULL),
-	m_ToolBarBitmapsDisabled(NULL),m_ToolBarBitmapsHot(NULL)
+	m_ToolBarBitmapsDisabled(NULL),m_ToolBarBitmapsHot(NULL),
+	m_pCurrentShortcut(NULL)
 {
 }
 
+inline CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::CAdvancedDlg(CShortcut* pShortcut)
+:	CDialog(IDD_SHORTCUTADVANCED),m_pShortcut(pShortcut)
+{
+}
 
 #endif
