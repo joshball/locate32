@@ -6156,23 +6156,39 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCSTR pFolder,DWORD dwLength,BO
 void CLocateDlg::CNameDlg::OnBrowse()
 {
 	CWaitCursor wait;
+	DebugMessage("CLocateDlg::CNameDlg::OnBrowse() BEGIN");
 	CFolderDialog fd(IDS_GETFOLDER,BIF_RETURNONLYFSDIRS|BIF_USENEWUI);
 	if (fd.DoModal(*this))
 	{
+	
+
 		CString Folder;
 		if (fd.GetFolder(Folder))
+		{
+			DebugFormatMessage("CLocateDlg::CNameDlg::OnBrowse(): Folder=\"%s\"",LPCSTR(Folder));
+			
 			CheckAndAddDirectory(Folder,Folder.GetLength(),TRUE,FALSE);
+		}
 		else
 		{
 			char szName[500];
 			if (GetDisplayNameFromIDList(fd.m_lpil,szName,500))
 			{
+				DebugFormatMessage("CLocateDlg::CNameDlg::OnBrowse(): szName=\"%s\"",szName);
 				if (szName[0]=='\\' && szName[1]=='\\')
-					CheckAndAddDirectory(szName,Folder.GetLength(),TRUE,FALSE);
+					CheckAndAddDirectory(szName,istrlen(szName),TRUE,FALSE);
 			}
+			else
+				DebugMessage("CLocateDlg::CNameDlg::OnBrowse(): GetDisplayNameFromIDList failed");
+	
 		}
 		SetFocus(IDC_LOOKIN);
+
+		DebugMessage("CLocateDlg::CNameDlg::OnBrowse() END1");
+		return;
 	}
+	
+	DebugMessage("CLocateDlg::CNameDlg::OnBrowse() END2");
 }
 
 void CLocateDlg::CNameDlg::EnableItems(BOOL bEnable)
