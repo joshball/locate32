@@ -1435,7 +1435,7 @@ BEGIN
 	IDS_ADVSETSYSTEMDEFAULT			"(system default)"
 	IDS_ADVSETUPDATEPROCESS			"Update process"
 	IDS_ADVSETSHOWCRITICALERRORS	"Show critical errors (e.g., cannot write database, ...)"
-	IDS_ADVSETSHOWNONCRITICALERRORS	"Show non-critical errors (e.g., network resource is not available, ...)"
+	IDS_ADVSETSHOWNONCRITICALERRORS	"Show non-critical errors (e.g., path is not available, ...)"
 	IDS_ADVSETSHOWUPDATESTATUSTOOLTIP	"Show update status in tooltip"
 END
 	

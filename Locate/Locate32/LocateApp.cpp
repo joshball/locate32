@@ -32,6 +32,7 @@ CLocateApp::~CLocateApp()
 
 BOOL CLocateApp::InitInstance()
 {
+	CWinApp::InitInstance();
 
 	DebugNumMessage("CLocateApp::InitInstance(), thread is 0x%X",GetCurrentThreadId());
 
@@ -2117,6 +2118,10 @@ void CLocateAppWnd::SaveRegistry() const
 
 void CLocateAppWnd::LoadRegistry()
 {
+	// When modifications are done, check whether 
+	// function is applicable for UpdateSettings
+	
+	
 	CRegKey RegKey;
 	DWORD temp;
 
@@ -2133,16 +2138,7 @@ void CLocateAppWnd::LoadRegistry()
 
 BOOL CLocateAppWnd::UpdateSettings()
 {
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",
-		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
-	{
-		//Program flags
-		DWORD temp=m_dwProgramFlags;
-		RegKey.QueryValue("General Flags",temp);
-        m_dwProgramFlags&=~pfSave;
-		m_dwProgramFlags|=temp&pfSave;
-	}
+	LoadRegistry();
 
 	// TODO: Close update tooltip if it present
 	return TRUE;
@@ -2517,39 +2513,48 @@ BYTE CLocateAppWnd::OnSettings()
 	
 	if (m_pSettings==NULL)
 	{
+		// Creating new settings dialog
 		if (GetLocateDlg()==NULL)
 			m_pSettings=new CSettingsProperties(NULL);
 		else
 			m_pSettings=new CSettingsProperties(*GetLocateDlg());
+
+		// Loading settings
 		m_pSettings->LoadSettings();
+		
+		// Opening dialog
 		m_pSettings->DoModal();
 		
-		if (m_pSettings->IsFlagSet(CSettingsProperties::settingsCancelled))
+		if (!m_pSettings->IsFlagSet(CSettingsProperties::settingsCancelled))
 		{
-			delete m_pSettings;
-			m_pSettings=NULL;
-			return TRUE;
-		}
-		UpdateSettings();
-		
-		m_pSettings->SaveSettings();
-		SetSchedules(m_pSettings->GetSchedules());
-		SaveSchedules();
-		
-		if (GetLocateDlg()!=NULL)
-		{
-			if (m_pSettings->IsFlagSet(CSettingsProperties::settingsIsUsedDatabaseChanged))
+			// Saving settings to registry
+			m_pSettings->SaveSettings();
+			
+			// Set CLocateAppWnd to use new settings
+			UpdateSettings();
+			SetSchedules(m_pSettings->GetSchedules());
+			SaveSchedules();
+			
+			if (GetLocateDlg()!=NULL)
 			{
-				GetLocateDlg()->m_NameDlg.InitDriveBox();
-				GetLocateDlg()->ResetFileNotificators();
+				// Set LocateDlg to use new seetings
+				if (m_pSettings->IsFlagSet(CSettingsProperties::settingsIsUsedDatabaseChanged))
+				{
+					GetLocateDlg()->m_NameDlg.InitDriveBox();
+					GetLocateDlg()->ResetFileNotificators();
+				}
+				GetLocateDlg()->UpdateSettings();
 			}
-			GetLocateDlg()->UpdateSettings();
 		}
+		
+		// Freeing memory
 		delete m_pSettings;
 		m_pSettings=NULL;
 	}
 	else
 	{
+		// Settings dialog is already opened, just activating it
+
 		m_pSettings->SetWindowPos(HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);
 		m_pSettings->SetForegroundWindow();
 	}
@@ -3187,7 +3192,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 					}
 					if ((*pppUpdaters)[i]==NULL)
 					{
-						// All are stopped
+						// All updaters are interrupted by user
 						str.LoadString(IDS_UPDATINGCANCELLED);
 						pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
 						pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),3,SBT_OWNERDRAW);
@@ -3195,6 +3200,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 					}
 					else
 					{
+						// All succeeded or some updaters failed/interrupted
                         CString str2;
 						str.LoadString(IDS_UPDATINGENDED);
 						int added=0;
@@ -3243,6 +3249,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 					}
 				}
 		
+				// Freeing memory
 				delete[] *pppUpdaters;
 				*pppUpdaters=NULL;
 
@@ -3267,6 +3274,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 		switch(ueCode)
 		{
 		case ueUnknown:
+			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
 			{
 				char* pError;
 
@@ -3296,46 +3304,60 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 						CString(IDS_ERRORUNKNOWN),CString(IDS_ERROR),MB_OK|MB_ICONERROR);
 				return FALSE;
 			}
+			break;
 		case ueCreate:
 		case ueOpen:
+			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
 				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
 				return FALSE;
 			}
+			break;
 		case ueRead:
+			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
 				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
 				return FALSE;
 			}
+			break;
 		case ueWrite:
+			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
 				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
                 return FALSE;
 			}
+			break;
 		case ueAlloc:
-			::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-				CString(IDS_ERRORCANNOTALLOCATE),CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			{
+				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
+					CString(IDS_ERRORCANNOTALLOCATE),CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+			}
 			break;
 		case ueInvalidDatabase:
+			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORINVALIDDB,pUpdater->GetCurrentDatabaseName());
 				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
 				return FALSE;
 			}
+			break;
 		case ueFolderUnavailable:
+			if (GetLocateAppWnd()->GetProgramFlags()&CLocateAppWnd::pfShowNonCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():"");
 				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
 				return FALSE;
 			}
+			break;
 		}
 		break;
 	}
@@ -3440,12 +3462,11 @@ void CLocateApp::OnInitDatabaseMenu(HMENU hPopupMenu)
 	CString title;
 	MENUITEMINFO mi;
 	mi.cbSize=sizeof(MENUITEMINFO);
-	mi.fMask=MIIM_DATA|MIIM_ID|MIIM_STATE|MIIM_TYPE|MIIM_SUBMENU;
+	mi.fMask=MIIM_DATA|MIIM_ID|MIIM_STATE|MIIM_TYPE;
 	mi.wID=IDM_DEFUPDATEDBITEM;
 	mi.fType=MFT_STRING;
 	mi.fState=MFS_ENABLED;
-	mi.hSubMenu=NULL;
-
+	
 	if (m_aDatabases.GetSize()==0)
 	{
 		// Inserting default items
@@ -3489,14 +3510,14 @@ int CLocateApp::GetDatabaseMenuIndex(HMENU hPopupMenu)
 {
 	MENUITEMINFO mii;
 	mii.cbSize=sizeof(MENUITEMINFO);
-	mii.fMask=MIIM_TYPE|MIIM_SUBMENU;
+	mii.fMask=MIIM_SUBMENU;
 	
 	for(int i=GetMenuItemCount(hPopupMenu)-1;i>=0;i--)
 	{
 		if (!GetMenuItemInfo(hPopupMenu,i,TRUE,&mii))
 			continue;
 
-		if (mii.fType==MFT_STRING && mii.hSubMenu!=NULL)
+		if (mii.hSubMenu!=NULL)
 		{
 			if (IsDatabaseMenu(GetSubMenu(hPopupMenu,i)))
 				return i;

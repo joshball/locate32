@@ -19,17 +19,17 @@ public:
 		pfShowCriticalErrors = 0x01, // Option
         pfShowNonCriticalErrors = 0x02, // Option
         pfErrorMask = 0x03,
-		pfErrorDefault = pfShowCriticalErrors,
+		pfErrorDefault = pfShowCriticalErrors|pfShowNonCriticalErrors,
 		pfErrorSave = pfShowCriticalErrors|pfShowNonCriticalErrors,
 		
 		// Tooltip
 		pfEnableUpdateTooltip = 0x10, // Option
 		pfShowUpdateTooltip = 0x20, // Update tooltip should currently shown
 		pfTooltipMask = 0x30,
-		pfTooltipDefaults = pfEnableUpdateTooltip,
+		pfTooltipDefault = pfEnableUpdateTooltip,
 		pfTooltipSave = pfEnableUpdateTooltip,
 
-		pfDefault = pfErrorDefault|pfTooltipDefaults,
+		pfDefault = pfErrorDefault|pfTooltipDefault,
 		pfSave = pfErrorSave|pfTooltipSave
 	};
 

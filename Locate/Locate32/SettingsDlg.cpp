@@ -1226,6 +1226,7 @@ BOOL CSettingsProperties::LoadSettings()
 	m_DateFormat=((CLocateApp*)GetApp())->m_strDateFormat;
 	m_TimeFormat=((CLocateApp*)GetApp())->m_strTimeFormat;
 	
+	// GetLocateAppWnd() is alwyas present
 	m_dwProgramFlags=GetLocateAppWnd()->GetProgramFlags();
 
 	if (GetLocateDlg()!=NULL)
