@@ -40,6 +40,7 @@ LONGLONG GetDiskFreeSpace(LPCSTR szDrive)
 #endif
 }
 
+/* OBSOLETE, use CFile::IsFile
 BYTE IsFile(LPCTSTR File)
 {
 	HANDLE hFile;
@@ -58,6 +59,7 @@ BYTE IsFile(LPCTSTR File)
 #endif
 	return TRUE;
 }
+*/
 
 #ifndef WIN32
 
@@ -980,6 +982,7 @@ INT CFile::IsDirectory(LPCTSTR szDirectoryName)
 		switch (GetDriveType(szDirectoryName))
 		{
 		case DRIVE_UNKNOWN:
+		case DRIVE_NO_ROOT_DIR:
 			return 0;
 		case DRIVE_FIXED:
 			return 1;
@@ -1020,6 +1023,7 @@ INT CFile::IsDirectory(LPCTSTR szDirectoryName)
 				switch (GetDriveType(NULL))
 				{
 				case DRIVE_UNKNOWN:
+				case DRIVE_NO_ROOT_DIR:
 					return 0;
 				case DRIVE_FIXED:
 					return 1;
@@ -1112,6 +1116,183 @@ BOOL CFile::IsValidFileName(LPCSTR szFile,LPSTR szShortName)
 	remove(szFile);
 	return TRUE;
 #endif
+}
+
+
+// Last '//' is not counted, if exists
+DWORD CFile::ParseExistingPath(LPCSTR szPath)
+{
+	DWORD dwLength=strlen(szPath);
+
+	if (dwLength<2)
+		return 0;
+	if (dwLength==2 || dwLength==3)
+	{
+		if (szPath[1]==':')
+		{
+			char szTemp[]="X:\\";
+			szTemp[0]=szPath[0];
+			return GetDriveType(szTemp)==DRIVE_NO_ROOT_DIR?0:2;
+		}
+		return 0;
+	}
+	
+	char* pTempPath=new char[dwLength+2];
+	CopyMemory(pTempPath,szPath,dwLength+1);
+	if (pTempPath[dwLength-1]!='\\')
+	{
+		pTempPath[dwLength]='\\';
+		pTempPath[++dwLength]='\0';
+	}
+	
+	while (!IsDirectory(pTempPath))
+	{
+		dwLength--;
+		while (dwLength>0 && pTempPath[dwLength]=='\\')
+			dwLength--;
+
+		// Findling next '\\'
+		while (dwLength>0 && pTempPath[dwLength]!='\\')
+			dwLength--;
+        if (dwLength==0)
+		{
+			delete[] pTempPath;
+			return 0;
+		}
+
+		pTempPath[dwLength+1]='\0';
+	}
+
+	while (dwLength>0 && pTempPath[dwLength-1]=='\\')
+		dwLength--;
+	delete[] pTempPath;
+	return dwLength;
+}
+
+BOOL CFile::IsValidPath(LPCSTR szPath,BOOL bAsDirectory)
+{
+	BOOL bRet=FALSE;
+
+	int nExisting=ParseExistingPath(szPath);
+	if (nExisting==0)
+		return FALSE;
+
+	if (szPath[nExisting]!='\\')
+	{
+		if (szPath[nExisting]!='\0')
+			return FALSE; // Should not be possible
+		return TRUE;
+	}
+
+	int nStart=nExisting,nFirstNonExisting=-1;
+	for(;;)
+	{
+		// Next '\\' or '\0'
+        for (int i=nStart+1;szPath[i]!='\0' && szPath[i]!='\\';i++);
+			
+		if (szPath[i]=='\0')
+		{
+			// Is possible to create file?
+			if (bAsDirectory)
+			{
+				if (CreateDirectory(szPath,NULL))
+				{
+					bRet=TRUE;
+					RemoveDirectory(szPath);
+				}
+			}
+			else	
+			{
+				HANDLE hFile=CreateFile(szPath,GENERIC_WRITE,
+					FILE_SHARE_READ,NULL,CREATE_ALWAYS,
+					FILE_ATTRIBUTE_NORMAL,NULL);
+				if (hFile!=INVALID_HANDLE_VALUE)
+				{
+					CloseHandle(hFile);
+					DeleteFile(szPath);
+
+					bRet=TRUE;
+				}
+			}
+			break;
+		}
+
+		char* pTemp=new char[i+2];
+		CopyMemory(pTemp,szPath,i);
+		pTemp[i]='\0';
+
+		if (!CreateDirectory(pTemp,NULL))
+		{
+			delete[] pTemp;
+			break;
+		}
+
+		delete[] pTemp;
+		nStart=i;
+
+	}
+	
+	// Removing created directories
+	while (nStart>nExisting)
+	{
+		for (;szPath[nStart]!='\\' && nExisting<nStart;nStart--);
+
+		if (nStart<=nExisting)
+			break;
+
+		char* pTemp=new char[nStart+2];
+		CopyMemory(pTemp,szPath,nStart);
+		pTemp[nStart]='\0';
+		RemoveDirectory(pTemp);
+		delete[] pTemp;
+        
+		nStart--;
+	}
+
+	return bRet;
+}
+
+BOOL CFile::CreateDirectoryRecursive(LPCSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes)
+{
+	BOOL bRet=FALSE;
+
+	int nExisting=ParseExistingPath(szPath);
+	if (nExisting==0)
+		return FALSE;
+
+	if (szPath[nExisting]!='\\')
+	{
+		if (szPath[nExisting]!='\0')
+			return FALSE; // Should not be possible
+		return TRUE;
+	}
+
+
+
+	int nStart=nExisting,nFirstNonExisting=-1;
+	for(;;)
+	{
+		// Next '\\' or '\0'
+        for (int i=nStart+1;szPath[i]!='\0' && szPath[i]!='\\';i++);
+			
+		if (szPath[i]=='\0')
+			return CreateDirectory(szPath,NULL);
+
+		char* pTemp=new char[i+2];
+		CopyMemory(pTemp,szPath,i);
+		pTemp[i]='\0';
+
+		if (!CreateDirectory(pTemp,NULL))
+		{
+			delete[] pTemp;
+			return FALSE;
+		}
+
+		delete[] pTemp;
+		nStart=i;
+
+	}
+	return TRUE;
 }
 
 BOOL CFile::IsSamePath(LPCSTR szDir1,LPCSTR szDir2)

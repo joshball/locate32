@@ -200,7 +200,7 @@ inline int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax,TypeOfResourceHand
 #endif
 
 // File operations
-BYTE IsFile(LPCTSTR);
+//BYTE IsFile(LPCTSTR);
 #ifndef WIN32
 BYTE CopyFile(LPCSTR src,LPCSTR dst);
 #endif

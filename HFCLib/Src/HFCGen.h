@@ -275,9 +275,16 @@ public:
 
 	static BYTE IsFile(LPCTSTR szFileName);
 	static INT IsDirectory(LPCTSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
-	static BOOL IsValidFileName(LPCSTR szFile,LPSTR szShortName=NULL);
+	static BOOL IsValidFileName(LPCSTR szFile,LPSTR szShortName=NULL); // Parent directory must exist
+	static BOOL IsValidPath(LPCSTR szPath,BOOL bAsDirectory=FALSE);
+
 	static BOOL IsSamePath(LPCSTR szDir1,LPCSTR szDir2);
 	static BOOL IsSubDirectory(LPCSTR szSubDir,LPCSTR szPath);
+
+	// Last '//' is not counted, if exists
+	static DWORD ParseExistingPath(LPCSTR szPath);
+	static BOOL CreateDirectoryRecursive(LPCSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes);
+
 	
 };
 
