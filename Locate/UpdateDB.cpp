@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2003 Janne Huttunen
-   Updatedb.exe v2.98.4.9200                    */
+   Updatedb.exe v2.98.4.11070 */
 
 #include <HFCLib.h>
 #include "locatedb/locatedb.h"
@@ -7,9 +7,9 @@
 #include "lan_resources.h"
 
 #ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 v2.98.4.9200";
+		LPCSTR szVersionStr="updtdb32 v2.98.4.11070";
 #else
-		LPCSTR szVersionStr="updatedb v2.98.4.9200";
+		LPCSTR szVersionStr="updatedb v2.98.4.11070";
 #endif
 
 
@@ -359,12 +359,15 @@ int main (int argc,char ** argv)
     if (helps==1)
     {
 #ifdef WIN32
-		fprintf(stderr,CString(IDS_UPDATEDB32USAGE),szVersionStr);
+		fprintf(stderr,"%s\n",szVersionStr);
 #else
         fprintf(stderr,"%s\nusage updatedb",szVersionStr);
 #endif
 
-		fprintf(stderr,CString(IDS_UPDATEDB32USAGE2));
+		HRSRC hRc=FindResource(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDR_UPDATEDBHELP),"HELPTEXT");
+		HGLOBAL hGlobal=LoadResource(GetLanguageSpecificResourceHandle(),hRc);
+			
+		fprintf(stderr,(LPCSTR)LockResource(hGlobal));
 		return 1;
     }
 

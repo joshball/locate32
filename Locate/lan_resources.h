@@ -127,7 +127,8 @@
 #define IDS_STRING21                    213
 #define IDS_SELECTDETAILS               213
 #define IDR_SEARCHFROMFILE              222
-#define IDR_RT_MANIFEST1                223
+#define IDR_LOCATEHELP					223
+#define IDR_UPDATEDBHELP				224
 #define IDD_INPUTBOX                    225
 #define IDM_SELECTDETAILS               227
 #define IDD_SELECTDETAILS               229
@@ -576,8 +577,6 @@
 #define IDS_SYSPHYSMEM                  27031
 #define IDS_VERSION                     27032
 #define IDS_UPDATEDB32DIRECTORYISNOTVALID 30002
-#define IDS_UPDATEDB32USAGE             30003
-#define IDS_UPDATEDB32USAGE2            30004
 #define IDS_UPDATEDB32CANNOTCREATEFILE  30005
 #define IDS_UPDATEDB32CANNOTWRITE       30006
 #define IDS_UPDATEDB32ALLOCATEMEM       30008
@@ -594,12 +593,6 @@
 #define IDS_LOCATECANNOTOPEN            31004
 #define IDS_LOCATECANNOTREAD            31005
 #define IDS_LOCATEINVALIDDATABASE       31006
-#define IDS_LOCATEUSAGE1                31007
-#define IDS_LOCATEUSAGE2                31008
-#define IDS_LOCATEUSAGE3                31009
-#define IDS_LOCATEUSAGE4                31010
-#define IDS_LOCATEUSAGE5                31011
-#define IDS_LOCATEUSAGE6                31012
 #define IDM_CLOSE                       40001
 #define IDM_CREATESHORTCUT              40002
 #define IDM_DELETE                      40003
@@ -652,6 +645,9 @@
 #define IDM_CHANGECASE                  40066
 #define IDM_COPYSHORTPATHTOCB           40067
 #define	IDM_FORCEUPDATE					40068
+#define IDM_ACTIVATENAMETAB				40070
+#define IDM_ACTIVATESIZETAB				40071
+#define IDM_ACTIVATEADVANCEDTAB			40072
 #define IDM_DEFMENUITEM                 50000
 #define IDM_DEFCONTEXTITEM              51000
 #define IDM_DEFSENDTOITEM               52000

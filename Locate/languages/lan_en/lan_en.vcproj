@@ -127,10 +127,10 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc">
 			<File
-				RelativePath=".\lan_resources.h">
+				RelativePath="..\lan_resources.h">
 			</File>
 			<File
-				RelativePath="..\lan_resources.h">
+				RelativePath=".\lan_resources.h">
 			</File>
 		</Filter>
 		<Filter
@@ -153,6 +153,12 @@
 			</File>
 			<File
 				RelativePath="HELPTEXT.TXT">
+			</File>
+			<File
+				RelativePath=".\usage_loc.txt">
+			</File>
+			<File
+				RelativePath=".\usage_updt.txt">
 			</File>
 		</Filter>
 		<File

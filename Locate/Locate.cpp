@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2004 Janne Huttunen
-   locate.exe v2.98.4.9200                 */
+   locate.exe v2.98.4.11070                 */
 
-const char* szVersionStr="locate v2.98.4.9200";
+const char* szVersionStr="locate v2.98.4.11070";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -531,12 +531,12 @@ int main (int argc,char * argv[])
    
 	if (helps==1)
 	{
-		fprintf(stderr,CString(IDS_LOCATEUSAGE1),szVersionStr);
-		fprintf(stderr,CString(IDS_LOCATEUSAGE2));
-		fprintf(stderr,CString(IDS_LOCATEUSAGE3));
-		fprintf(stderr,CString(IDS_LOCATEUSAGE4));
-		fprintf(stderr,CString(IDS_LOCATEUSAGE5));
-		fprintf(stderr,CString(IDS_LOCATEUSAGE6));
+		fprintf(stderr,"%s\n",szVersionStr);
+		
+		HRSRC hRc=FindResource(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDR_LOCATEHELP),"HELPTEXT");
+		HGLOBAL hGlobal=LoadResource(GetLanguageSpecificResourceHandle(),hRc);
+		fprintf(stderr,(LPCSTR)LockResource(hGlobal));
+		
 		return 1;
 	}
 	else if (helps==2)

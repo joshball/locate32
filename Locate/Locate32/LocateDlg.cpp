@@ -180,7 +180,8 @@ CLocateDlg::CLocateDlg()
 	m_pLocater(NULL),m_pBackgroundUpdater(NULL),m_pActiveContextMenu(NULL),
 	m_pLocateAnimBitmaps(NULL),m_pUpdateAnimBitmaps(NULL),
 	m_pFileNotificationsThread(NULL),m_dwMaxFoundFiles(0),
-	m_pImageHandler(NULL),m_iTooltipItem(-1),m_iTooltipSubItem(-1),m_bTooltipActive(FALSE)
+	m_pImageHandler(NULL),m_iTooltipItem(-1),m_iTooltipSubItem(-1),m_bTooltipActive(FALSE),
+	m_hLastFocus(NULL)
 {
 }
 
@@ -590,6 +591,18 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		break;
 	case IDM_DEFOPEN:
 		OnMenuCommands(0);
+		break;
+	case IDM_ACTIVATENAMETAB:
+		m_pTabCtrl->SetCurSel(0);
+		SetVisibleWindowInTab();
+		break;
+	case IDM_ACTIVATESIZETAB:
+		m_pTabCtrl->SetCurSel(1);
+		SetVisibleWindowInTab();
+		break;
+	case IDM_ACTIVATEADVANCEDTAB:
+		m_pTabCtrl->SetCurSel(2);
+		SetVisibleWindowInTab();
 		break;
 	case IDM_LOOKINNEWSELECTION:
 	case IDM_LOOKINREMOVESELECTION:
@@ -2247,6 +2260,45 @@ void CLocateDlg::SaveDialogTexts()
 	}
 }
 
+void CLocateDlg::SetVisibleWindowInTab()
+{
+	switch (m_pTabCtrl->GetCurSel())
+	{
+	case 0:
+		if (!m_NameDlg.IsWindowVisible())
+		{
+			m_SizeDateDlg.ShowWindow(swHide);
+			m_AdvancedDlg.ShowWindow(swHide);				
+			m_NameDlg.ShowWindow(swShow);
+			
+			
+			m_NameDlg.SetFocus();
+		}
+		break;
+	case 1:
+		if (!m_SizeDateDlg.IsWindowVisible())
+		{
+			m_NameDlg.ShowWindow(swHide);
+			m_AdvancedDlg.ShowWindow(swHide);				
+			m_SizeDateDlg.ShowWindow(swShow);
+			
+			m_SizeDateDlg.SetFocus();
+		}
+		break;
+	case 2:
+		if (!m_AdvancedDlg.IsWindowVisible())
+		{
+			m_NameDlg.ShowWindow(swHide);
+			m_SizeDateDlg.ShowWindow(swHide);
+			m_AdvancedDlg.ShowWindow(swShow);				
+
+			m_AdvancedDlg.SetFocus();
+		}
+		break;
+	}
+}
+	
+
 BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 {
 	switch (idCtrl)
@@ -2256,42 +2308,7 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 		break;
 	case IDC_TAB:
 		if (pnmh->code==TCN_SELCHANGE)
-		{
-			switch (m_pTabCtrl->GetCurSel())
-			{
-			case 0:
-				if (!m_NameDlg.IsWindowVisible())
-				{
-					m_SizeDateDlg.ShowWindow(swHide);
-					m_AdvancedDlg.ShowWindow(swHide);				
-					m_NameDlg.ShowWindow(swShow);
-					
-					
-					m_NameDlg.SetFocus();
-				}
-				break;
-			case 1:
-				if (!m_SizeDateDlg.IsWindowVisible())
-				{
-					m_NameDlg.ShowWindow(swHide);
-					m_AdvancedDlg.ShowWindow(swHide);				
-					m_SizeDateDlg.ShowWindow(swShow);
-					
-					m_SizeDateDlg.SetFocus();
-				}
-				break;
-			case 2:
-				if (!m_AdvancedDlg.IsWindowVisible())
-				{
-					m_NameDlg.ShowWindow(swHide);
-					m_SizeDateDlg.ShowWindow(swHide);
-					m_AdvancedDlg.ShowWindow(swShow);				
-
-					m_AdvancedDlg.SetFocus();
-				}
-				break;
-			}
-		}
+			SetVisibleWindowInTab();
 		break;
 	default:
 		if (m_pListTooltips!=NULL)
@@ -6441,6 +6458,7 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 
 			aSelections.Add(nSel);
 		}
+	
 
         // Sorting, bubble sort
 		for (int i=0;i<aSelections.GetSize();i++)
@@ -6457,16 +6475,46 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 		}
 
 		delete[] m_pMultiDirs;
-		m_pMultiDirs=new DirSelection*[aSelections.GetSize()+1];
-		m_pMultiDirs[aSelections.GetSize()]=NULL;
-
-		for (int i=aSelections.GetSize()-1;i>=0;i--)
+		if (aSelections.GetSize())
 		{
-			wsprintf(szName,"Name/LookIn%04d",aSelections[i]);
-			
-			LONG lLength=RegKey.QueryValueLength(szName);
-			if (lLength<4)
-				continue;
+			m_pMultiDirs=new DirSelection*[aSelections.GetSize()+1];
+			m_pMultiDirs[aSelections.GetSize()]=NULL;
+
+			for (int i=aSelections.GetSize()-1;i>=0;i--)
+			{
+				wsprintf(szName,"Name/LookIn%04d",aSelections[i]);
+				
+				LONG lLength=RegKey.QueryValueLength(szName);
+				if (lLength>4)
+				{
+					char* pData=new char[lLength+1];
+					RegKey.QueryValue(szName,pData,lLength);
+					pData[lLength]='\0';
+					
+					SelectByCustomName(pData+4);
+					delete[] pData;
+	
+				}
+				else if (lLength==4) 
+				{
+					DWORD dwLParam;
+					RegKey.QueryValue(szName,dwLParam);
+	                
+					SelectByLParam(MAKELPARAM(HIWORD(dwLParam),LOWORD(dwLParam)));
+				}
+				
+				m_pMultiDirs[i]=new DirSelection(i==0);
+				m_pMultiDirs[i]->SetValuesFromControl(GetDlgItem(IDC_LOOKIN),m_pBrowse,m_nMaxBrowse);
+			}
+		}
+		else
+		{
+			// It is possible that multidir mode was 
+			// not enabled when state is saved, trying it (at least create empty selection)
+			m_pMultiDirs=new DirSelection*[2];
+			m_pMultiDirs[1]=NULL;
+            
+			LONG lLength=RegKey.QueryValueLength("Name/LookIn");
 			if (lLength>4)
 			{
 				char* pData=new char[lLength+1];
@@ -6477,26 +6525,37 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 				delete[] pData;
 
 			}
-			else 
+			else if (lLength==4) 
 			{
 				DWORD dwLParam;
 				RegKey.QueryValue(szName,dwLParam);
                 
 				SelectByLParam(MAKELPARAM(HIWORD(dwLParam),LOWORD(dwLParam)));
 			}
-			
-			m_pMultiDirs[i]=new DirSelection(i==0);
-            m_pMultiDirs[i]->SetValuesFromControl(GetDlgItem(IDC_LOOKIN),m_pBrowse,m_nMaxBrowse);
+				
+			m_pMultiDirs[i]=new DirSelection(TRUE);
+			m_pMultiDirs[i]->SetValuesFromControl(GetDlgItem(IDC_LOOKIN),m_pBrowse,m_nMaxBrowse);
+
 		}
 
 		DWORD nSelection=0;
 		RegKey.QueryValue("Name/LookInSel",nSelection);
+
+		// Marking #1 selected
+		SetDlgItemText(IDC_MOREDIRECTORIES,"#1");
 
 		OnLookInSelection(nSelection);
 	}
 	else
 	{
         LONG lLength=RegKey.QueryValueLength("Name/LookIn");
+		if (lLength<=0)
+		{
+			// It is possible that multidirecory mode was enabled
+			// when state is saved
+			lLength=RegKey.QueryValueLength("Name/LookIn0000");
+		}
+
 		if (lLength>=4) // Must be at least 4 bytes long
 		{
 	        CComboBoxEx LookInEx(GetDlgItem(IDC_LOOKIN));
@@ -7188,6 +7247,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			HGLOBAL hGlobal=LoadResource(GetLanguageSpecificResourceHandle(),hRc);
 			CString title(IDS_HELPINFO);
 			MessageBox((LPCSTR)LockResource(hGlobal),title,MB_OK|MB_ICONINFORMATION);
+			
 			break;
 		}
 	case IDC_CONTAINDATACHECK:

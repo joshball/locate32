@@ -425,10 +425,12 @@ protected:
 	void OnUpdateLocatedItem();
 	
 	BOOL SetListStyle(int id,BOOL bInit=FALSE);
+	void SetVisibleWindowInTab();
 	void SaveRegistry();
 	void LoadRegistry();
 
 	void SetDialogMode(BOOL bLarge);
+	
 
 	void DeleteTooltipTools();
 
@@ -593,6 +595,7 @@ protected:
 	HWND m_hNextClipboardViewer;
 	HMENU m_hActivePopupMenu;
 	
+	HWND m_hLastFocus;
 
 	DWORD m_dwMaxFoundFiles;
 	CLocater* m_pLocater;

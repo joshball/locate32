@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,98,4,10300
- PRODUCTVERSION 2,98,4,10300
+ FILEVERSION 2,98,4,11070
+ PRODUCTVERSION 2,98,4,11070
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 alpha 4.10300"
+            VALUE "FileVersion", "3.0 alpha 4.11070"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2004 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 alpha 4.10300"
+            VALUE "ProductVersion", "3.0 alpha 4.11070"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1049,6 +1049,8 @@ END
 //
 
 IDR_SEARCHFROMFILE      HELPTEXT                "helptext.txt"
+IDR_LOCATEHELP			HELPTEXT                "usage_loc.txt"
+IDR_UPDATEDBHELP		HELPTEXT                "usage_updt.txt"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1477,8 +1479,6 @@ END
 STRINGTABLE 
 BEGIN
     IDS_UPDATEDB32DIRECTORYISNOTVALID	"Directory %s is not valid.\n"
-    IDS_UPDATEDB32USAGE					"%s\nusage updtdb32"
-    IDS_UPDATEDB32USAGE2				" [-D dbname|-d dbfile] [-LPATH | -L1] [-EPATH] [-Tc creator] [-Td description] [-n] [-q]\n\nparameters:\n\t -d file\tuses database from file 'file'\n\t -D name\tuses database named 'name' (the properties of\n\t\t\tdatabase cannot be changed)\n\t -Lpath\t\tcheck directory path\n\t -L1\t\tcheck all local hard drives\n\t -Epath\t\tExclude directory from updating\n\t -Tc\t\tset creator\n\t -Td\t\tset description\n\t -n\t\tfollowing databases uses another thread\n\t -q\t\tquiet mode\n\t -h\t\thelp (this screen)\n\t -v\t\tshow version string \n"
     IDS_UPDATEDB32CANNOTCREATEFILE		"Error: cannot create file %s.\n"
     IDS_UPDATEDB32CANNOTWRITE			"Error: cannot write to file %s.\n"
     IDS_UPDATEDB32ALLOCATEMEM			"Error: cannot allocate memory.\n"
@@ -1493,12 +1493,6 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_LOCATEUSAGE1				"%s\nusage: locate [-s] [-p path] [-t type] [-r] [-R] [-d dbfile] [-D dbname] [-h] file\n\nparameters:\n\t-s\t\tpause after page\n\t-i\t\tshows what are we looking for\n\t"
-    IDS_LOCATEUSAGE2				"-p\t\tlook in directory 'path'\n\t-r\t\t'file' is interpreted as regular expression\n\t-R\t\t'file' is regular expression and full path is checked\n\t-t\t\tset extension\n\t-d file\t\tset database file\n"
-    IDS_LOCATEUSAGE3				"\t-D name\t\tuses database named 'name'\n\t-lm:SIZE\tset minimum size to SIZE, eg -lms:100k\n\t-lM:SIZE\tset maximum size to SIZE, eg -lMs:10M\n\t-lDmYYMMDD\tset minimum file modification date\n\t-lDcYYMMDD\tset minimum file creation date\n"
-    IDS_LOCATEUSAGE4				"\t-lDaYYMMDD\tset minimum file last access date\n\t-lDMYYMMDD\tset maximum file modification date\n\t-lDCYYMMDD\tset maximum file creation date\n\t-lDAYYMMDD\tset maximum file last access date \n\t-ln:NUM\t\tset number of maximum found files\n"
-    IDS_LOCATEUSAGE5				"\t-lf\t\tlook only file names (default)\n\t-ld\t\tlook only directory names\n\t-lfd\t\tlook file and directory names\n\t-lc:TEXT\tfile must contain string TEXT\n\t-lcm\t\tstring text is match case (default)\n\t-lcnm\t\tstring text is not match case\n"
-    IDS_LOCATEUSAGE6				"\t-lR:TEXT\tsame as above but TEXT is regular expression\n\t-lw\t\tmatch whole name only\n\t-lrn\t\tdon't replace spaces with asterisk\n\t-h\t\thelp, this screen\n"
     IDS_LOCATEFILENOTFOUND		"File %s not found, using default\n"
     IDS_LOCATESTRING			"name: %s\n"
 	IDS_LOCATEUNKNOWNERROR		"Error: Unknown error.\n"
@@ -1570,92 +1564,104 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 #endif //_WIN32
 IDR_MAINACCEL ACCELERATORS
 BEGIN
-       "B",                           IDC_BROWSE,             VIRTKEY, ALT, NOINVERT
-       VK_DELETE,                                        IDC_DELETEKEY,          VIRTKEY, NOINVERT
-       VK_DELETE,                                          IDC_DELETEKEY,          VIRTKEY, SHIFT, NOINVERT
-       "L",                           IDC_LOOKIN,             VIRTKEY, ALT, NOINVERT
-       "N",                            IDC_NAME,               VIRTKEY, ALT, NOINVERT
-       "W",                        IDC_NEWSEARCH,          VIRTKEY, ALT, NOINVERT
-       "I",                          IDC_OK,                 VIRTKEY, ALT, NOINVERT
-       VK_TAB,                                                     IDC_PTAB,               VIRTKEY, NOINVERT
-       VK_TAB,                                                     IDC_PUNTAB,             VIRTKEY, SHIFT, NOINVERT
-       VK_RETURN,                                          IDC_RETURN,             VIRTKEY, NOINVERT
-       VK_RETURN,                                          IDM_FINDUSINGDBSACCEL,             VIRTKEY, CONTROL
-       "A",                        IDC_SELECTALLKEY,       VIRTKEY, CONTROL, NOINVERT
-       "P",                                     IDC_STOP,               VIRTKEY, ALT, NOINVERT
-       "T",                       IDC_TYPE,               VIRTKEY, ALT, NOINVERT
-       "C",                                     IDM_COPY,               VIRTKEY, CONTROL, NOINVERT
-       "X",                                      IDM_CUT,                VIRTKEY, CONTROL, NOINVERT
-       VK_F9,                                                      IDM_GLOBALUPDATEDBACCEL, VIRTKEY, NOINVERT
-       VK_F9,                                                      IDM_UPDATEDATABASESACCEL, VIRTKEY, CONTROL
-       VK_F2,                                                      IDM_CHANGEFILENAMEACCEL, VIRTKEY, NOINVERT
-   	   VK_INSERT,								   IDM_LOOKINNEWSELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
-	   VK_DELETE,								       IDM_LOOKINREMOVESELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
-	   VK_PRIOR ,								   IDM_LOOKINPREVSELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
-	   VK_NEXT ,								   IDM_LOOKINNEXTSELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
-	   "W",						IDM_CLOSE,VIRTKEY,CONTROL,NOINVERT
+       "B",							IDC_BROWSE,					VIRTKEY, ALT, NOINVERT
+       VK_DELETE,									IDC_DELETEKEY,				VIRTKEY, NOINVERT
+       VK_DELETE,                                   IDC_DELETEKEY,				VIRTKEY, SHIFT, NOINVERT
+       "L",							IDC_LOOKIN,					VIRTKEY, ALT, NOINVERT
+       "N",								IDC_NAME,					VIRTKEY, ALT, NOINVERT
+       "W",							IDC_NEWSEARCH,				VIRTKEY, ALT, NOINVERT
+       "I",							IDC_OK,						VIRTKEY, ALT, NOINVERT
+       VK_TAB,                                      IDC_PTAB,					VIRTKEY, NOINVERT
+       VK_TAB,                                      IDC_PUNTAB,					VIRTKEY, SHIFT, NOINVERT
+       VK_RETURN,                                   IDC_RETURN,					VIRTKEY, NOINVERT
+       VK_RETURN,                                   IDM_FINDUSINGDBSACCEL,		VIRTKEY, CONTROL
+       "A",                   IDC_SELECTALLKEY,			VIRTKEY, CONTROL, NOINVERT
+       "P",                              IDC_STOP,					VIRTKEY, ALT, NOINVERT
+       "T",						IDC_TYPE,					VIRTKEY, ALT, NOINVERT
+       "C",                        IDM_COPY,					VIRTKEY, CONTROL, NOINVERT
+       "X",                         IDM_CUT,					VIRTKEY, CONTROL, NOINVERT
+       VK_F9,                                       IDM_GLOBALUPDATEDBACCEL,	VIRTKEY, NOINVERT
+       VK_F9,                                       IDM_UPDATEDATABASESACCEL,	VIRTKEY, CONTROL
+       VK_F2,                                       IDM_CHANGEFILENAMEACCEL,	VIRTKEY, NOINVERT
+   	   VK_INSERT,									IDM_LOOKINNEWSELECTION,		VIRTKEY, CONTROL,SHIFT,NOINVERT
+	   VK_DELETE,								    IDM_LOOKINREMOVESELECTION,	VIRTKEY, CONTROL,SHIFT,NOINVERT
+	   VK_PRIOR ,									IDM_LOOKINPREVSELECTION,	VIRTKEY, CONTROL,SHIFT,NOINVERT
+	   VK_NEXT ,									IDM_LOOKINNEXTSELECTION,	VIRTKEY, CONTROL,SHIFT,NOINVERT
+	   "W",											IDM_CLOSE,					VIRTKEY, CONTROL,NOINVERT
+	   "1",											IDM_ACTIVATENAMETAB,		VIRTKEY, ALT,NOINVERT
+	   "2",											IDM_ACTIVATESIZETAB,		VIRTKEY, ALT,NOINVERT
+	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT
 END
 
 IDR_NAMEDLGACCEL ACCELERATORS 
 BEGIN
-       "I",                          IDC_OK,                 VIRTKEY, ALT, NOINVERT
-       "P",                                     IDC_STOP,               VIRTKEY, ALT, NOINVERT
-       "W",                        IDC_NEWSEARCH,          VIRTKEY, ALT, NOINVERT
-       "L",                           IDC_LOOKIN,             VIRTKEY, ALT, NOINVERT
-       "B",                           IDC_BROWSE,             VIRTKEY, ALT, NOINVERT
-       "N",                            IDC_NAME,               VIRTKEY, ALT, NOINVERT
-       "T",                       IDC_TYPE,               VIRTKEY, ALT, NOINVERT
-       VK_F9,                                      IDM_GLOBALUPDATEDBACCEL, VIRTKEY, NOINVERT
-       VK_F9,                                      IDM_UPDATEDATABASESACCEL, VIRTKEY, CONTROL
-       VK_RETURN,                                  IDC_RETURN,             VIRTKEY, NOINVERT
-       VK_RETURN,                                  IDM_FINDUSINGDBSACCEL,             VIRTKEY, CONTROL
-       VK_TAB,                                     IDC_PTAB,               VIRTKEY, NOINVERT
-       VK_TAB,                                     IDC_PUNTAB,             VIRTKEY, SHIFT, NOINVERT
-	   VK_INSERT,								   IDM_LOOKINNEWSELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
-	   VK_DELETE,								       IDM_LOOKINREMOVESELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
-	   VK_PRIOR ,								   IDM_LOOKINPREVSELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
-	   VK_NEXT ,								   IDM_LOOKINNEXTSELECTION, VIRTKEY, CONTROL,SHIFT,NOINVERT
-	   "W",						IDM_CLOSE,VIRTKEY,CONTROL,NOINVERT
+       "I",							IDC_OK,						VIRTKEY, ALT, NOINVERT
+       "P",                              IDC_STOP,					VIRTKEY, ALT, NOINVERT
+       "W",							IDC_NEWSEARCH,				VIRTKEY, ALT, NOINVERT
+       "L",							IDC_LOOKIN,					VIRTKEY, ALT, NOINVERT
+       "B",							IDC_BROWSE,					VIRTKEY, ALT, NOINVERT
+       "N",								IDC_NAME,					VIRTKEY, ALT, NOINVERT
+       "T",						IDC_TYPE,					VIRTKEY, ALT, NOINVERT
+       VK_F9,										IDM_GLOBALUPDATEDBACCEL,	VIRTKEY, NOINVERT
+       VK_F9,										IDM_UPDATEDATABASESACCEL,	VIRTKEY, CONTROL
+       VK_RETURN,									IDC_RETURN,					VIRTKEY, NOINVERT
+       VK_RETURN,									IDM_FINDUSINGDBSACCEL,      VIRTKEY, CONTROL
+       VK_TAB,										IDC_PTAB,					VIRTKEY, NOINVERT
+       VK_TAB,										IDC_PUNTAB,					VIRTKEY, SHIFT, NOINVERT
+	   VK_INSERT,									IDM_LOOKINNEWSELECTION,		VIRTKEY, CONTROL,SHIFT,NOINVERT
+	   VK_DELETE,								    IDM_LOOKINREMOVESELECTION,	VIRTKEY, CONTROL,SHIFT,NOINVERT
+	   VK_PRIOR ,									IDM_LOOKINPREVSELECTION,	VIRTKEY, CONTROL,SHIFT,NOINVERT
+	   VK_NEXT ,									IDM_LOOKINNEXTSELECTION,	VIRTKEY, CONTROL,SHIFT,NOINVERT
+	   "W",											IDM_CLOSE,					VIRTKEY, CONTROL,NOINVERT
+	   "1",											IDM_ACTIVATENAMETAB,		VIRTKEY, ALT,NOINVERT
+	   "2",											IDM_ACTIVATESIZETAB,		VIRTKEY, ALT,NOINVERT
+	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT
 END    
 
 IDR_SIZEDATEDLGACCEL ACCELERATORS 
 BEGIN
-       "I",                          IDC_OK,                 VIRTKEY, ALT, NOINVERT
-       "P",                                     IDC_STOP,               VIRTKEY, ALT, NOINVERT
-       "W",                        IDC_NEWSEARCH,          VIRTKEY, ALT, NOINVERT
-       "N",                           IDC_CHECKMINIMUMSIZE,             VIRTKEY, ALT, NOINVERT
-       "A",                            IDC_CHECKMAXIMUMSIZE,               VIRTKEY, ALT, NOINVERT
-       "L",                       IDC_CHECKMINDATE,               VIRTKEY, ALT, NOINVERT
-       "M",                       IDC_CHECKMAXDATE,               VIRTKEY, ALT, NOINVERT
-       VK_F9,                                                      IDM_GLOBALUPDATEDBACCEL, VIRTKEY, NOINVERT
-       VK_F9,                                                      IDM_UPDATEDATABASESACCEL, VIRTKEY, CONTROL
-       VK_RETURN,                                          IDC_RETURN,             VIRTKEY, NOINVERT
-       VK_RETURN,                                          IDM_FINDUSINGDBSACCEL,             VIRTKEY, CONTROL
-       VK_TAB,                                                     IDC_PTAB,               VIRTKEY, NOINVERT
-       VK_TAB,                                                     IDC_PUNTAB,             VIRTKEY, SHIFT, NOINVERT
-       "W",                        IDC_NEWSEARCH,          VIRTKEY, ALT, NOINVERT
-	   "W",						IDM_CLOSE,VIRTKEY,CONTROL,NOINVERT
+       "I",							IDC_OK,						VIRTKEY, ALT, NOINVERT
+       "P",                              IDC_STOP,					VIRTKEY, ALT, NOINVERT
+       "W",							IDC_NEWSEARCH,				VIRTKEY, ALT, NOINVERT
+       "N",               IDC_CHECKMINIMUMSIZE,		VIRTKEY, ALT, NOINVERT
+       "A",               IDC_CHECKMAXIMUMSIZE,		VIRTKEY, ALT, NOINVERT
+       "L",               IDC_CHECKMINDATE,           VIRTKEY, ALT, NOINVERT
+       "M",                IDC_CHECKMAXDATE,           VIRTKEY, ALT, NOINVERT
+       VK_F9,										IDM_GLOBALUPDATEDBACCEL,	VIRTKEY, NOINVERT
+       VK_F9,                                       IDM_UPDATEDATABASESACCEL,	VIRTKEY, CONTROL
+       VK_RETURN,                                   IDC_RETURN,					VIRTKEY, NOINVERT
+       VK_RETURN,                                   IDM_FINDUSINGDBSACCEL,      VIRTKEY, CONTROL
+       VK_TAB,                                      IDC_PTAB,					VIRTKEY, NOINVERT
+       VK_TAB,                                      IDC_PUNTAB,					VIRTKEY, SHIFT, NOINVERT
+       "W",							IDC_NEWSEARCH,				VIRTKEY, ALT, NOINVERT
+	   "W",											IDM_CLOSE,					VIRTKEY, CONTROL,NOINVERT
+	   "1",											IDM_ACTIVATENAMETAB,		VIRTKEY, ALT,NOINVERT
+	   "2",											IDM_ACTIVATESIZETAB,		VIRTKEY, ALT,NOINVERT
+	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT
 END    
 
 IDR_ADVANCEDDLGACCEL ACCELERATORS 
 BEGIN
-       "I",                          IDC_OK,                 VIRTKEY, ALT, NOINVERT
-       "P",                                     IDC_STOP,               VIRTKEY, ALT, NOINVERT
-       "W",                        IDC_NEWSEARCH,          VIRTKEY, ALT, NOINVERT
-       "H",                           IDC_CHECK,             VIRTKEY, ALT, NOINVERT
-       "M"	,                           IDC_MATCHWHOLENAME,             VIRTKEY, ALT, NOINVERT
-       "T",                           IDC_FILETYPE,             VIRTKEY, ALT, NOINVERT
-       "X",                           IDC_CONTAINDATACHECK,             VIRTKEY, ALT, NOINVERT
-       "C",                           IDC_DATAMATCHCASE,             VIRTKEY, ALT, NOINVERT
-       "S",                           IDC_REPLACESPACES,             VIRTKEY, ALT, NOINVERT
-       VK_F9,                                                      IDM_GLOBALUPDATEDBACCEL, VIRTKEY, NOINVERT
-       VK_F9,                                                      IDM_UPDATEDATABASESACCEL, VIRTKEY, CONTROL
-       VK_RETURN,                                          IDC_RETURN,             VIRTKEY, NOINVERT
-       VK_RETURN,                                          IDM_FINDUSINGDBSACCEL,             VIRTKEY, CONTROL
-       VK_TAB,                                                     IDC_PTAB,               VIRTKEY, NOINVERT
-       VK_TAB,                                                     IDC_PUNTAB,             VIRTKEY, SHIFT, NOINVERT
-       "W",                        IDC_NEWSEARCH,          VIRTKEY, ALT, NOINVERT
-	   "W",						IDM_CLOSE,VIRTKEY,CONTROL,NOINVERT
+       "I",							IDC_OK,						VIRTKEY, ALT, NOINVERT
+       "P",								IDC_STOP,					VIRTKEY, ALT, NOINVERT
+       "W",							IDC_NEWSEARCH,				VIRTKEY, ALT, NOINVERT
+       "H",                         IDC_CHECK,					VIRTKEY, ALT, NOINVERT
+       "M"	,                IDC_MATCHWHOLENAME,         VIRTKEY, ALT, NOINVERT
+       "T",                    IDC_FILETYPE,				VIRTKEY, ALT, NOINVERT
+       "X",                IDC_CONTAINDATACHECK,       VIRTKEY, ALT, NOINVERT
+       "C",                     IDC_DATAMATCHCASE,          VIRTKEY, ALT, NOINVERT
+       "S",                 IDC_REPLACESPACES,          VIRTKEY, ALT, NOINVERT
+       VK_F9,                                       IDM_GLOBALUPDATEDBACCEL,	VIRTKEY, NOINVERT
+       VK_F9,                                       IDM_UPDATEDATABASESACCEL,	VIRTKEY, CONTROL
+       VK_RETURN,                                   IDC_RETURN,					VIRTKEY, NOINVERT
+       VK_RETURN,                                   IDM_FINDUSINGDBSACCEL,		VIRTKEY, CONTROL
+       VK_TAB,                                      IDC_PTAB,					VIRTKEY, NOINVERT
+       VK_TAB,                                      IDC_PUNTAB,					VIRTKEY, SHIFT, NOINVERT
+       "W",							IDC_NEWSEARCH,				VIRTKEY, ALT, NOINVERT
+	   "W",											IDM_CLOSE,					VIRTKEY, CONTROL,NOINVERT
+	   "1",											IDM_ACTIVATENAMETAB,		VIRTKEY, ALT,NOINVERT
+	   "2",											IDM_ACTIVATESIZETAB,		VIRTKEY, ALT,NOINVERT
+	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT
 END    
 
 /////////////////////////////////////////////////////////////////////////////

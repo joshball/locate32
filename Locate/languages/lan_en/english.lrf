@@ -25,7 +25,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2004 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 alpha 4.10300
+FILEVERSION=3.0 alpha 4.11070
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -740,8 +740,6 @@ STR_EXPLORER_UPDATEDATABASE=&Update Database...
 ###################################################
 
 STRUPDATEDB_DIRECTORYISNOTVALID=Directory %s is not valid.
-STRUPDATEDB_USAGE=%s\nusage updtdb32
-STRUPDATEDB_USAGE2= [-D dbname|-d dbfile] [-LPATH | -L1] [-EPATH] [-Tc creator] [-Td description] [-n] [-q]\n\nparameters:\n\t -d file\tuses database from file 'file'\n\t -D name\tuses database named 'name' (the properties of\n\t\t\tdatabase cannot be changed)\n\t -Lpath\t\tcheck directory path\n\t -L1\t\tcheck all local hard drives\n\t -Epath\t\tExclude directory from updating\n\t -Tc\t\tset creator\n\t -Td\t\tset description\n\t -n\t\tfollowing databases uses another thread\n\t -q\t\tquiet mode\n\t -h\t\thelp (this screen)\n\t -v\t\tshow version string \n
 STRUPDATEDB_CANNOTCREATEFILE=Error: cannot create file %s.
 STRUPDATEDB_CANNOTWRITEFILE=Error: cannot write to file %s.
 STRUPDATEDB_CANNOTALLOCATEMEMORY=Error: cannot allocate memory.
@@ -757,12 +755,6 @@ STRUPDATEDB_LOADEDCANNOTBECHANGED=The properties of loaded database '%s' cannot 
 # Strings for locate.exe
 ###################################################
 
-STRLOCATE_USAGE1=%s\nusage: locate [-s] [-p path] [-t type] [-r] [-R] [-d dbfile] [-D dbname] [-h] file\n\nparameters:\n\t-s\t\tpause after page\n\t-i\t\tshows what are we looking for\n\t
-STRLOCATE_USAGE2=-p\t\tlook in directory 'path'\n\t-r\t\t'file' is interpreted as regular expression\n\t-R\t\t'file' is regular expression and full path is checked\n\t-t\t\tset extension\n\t-d file\t\tset database file\n
-STRLOCATE_USAGE3=\t-D name\t\tuses database named 'name'\n\t-lm:SIZE\tset minimum size to SIZE, eg -lms:100k\n\t-lM:SIZE\tset maximum size to SIZE, eg -lMs:10M\n\t-lDmYYMMDD\tset minimum file modification date\n\t-lDcYYMMDD\tset minimum file creation date\n
-STRLOCATE_USAGE4=\t-lDaYYMMDD\tset minimum file last access date\n\t-lDMYYMMDD\tset maximum file modification date\n\t-lDCYYMMDD\tset maximum file creation date\n\t-lDAYYMMDD\tset maximum file last access date \n\t-ln:NUM\t\tset number of maximum found files\n
-STRLOCATE_USAGE5=\t-lf\t\tlook only file names (default)\n\t-ld\t\tlook only directory names\n\t-lfd\t\tlook file and directory names\n\t-lc:TEXT\tfile must contain string TEXT\n\t-lcm\t\tstring text is match case (default)\n\t-lcnm\t\tstring text is not match case\n
-STRLOCATE_USAGE6=\t-lR:TEXT\tsame as above but TEXT is regular expression\n\t-lw\t\tmatch whole name only\n\t-lrn\t\tdon't replace spaces with asterisk\n\t-h\t\thelp, this screen\n
 STRLOCATE_FILENOTFOUND=File %s not found, using default
 STRLOCATE_STRING=name: %s
 STRLOCATE_UNKNOWNERROR=Error: Unknown error.

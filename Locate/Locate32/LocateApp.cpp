@@ -1984,6 +1984,10 @@ int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 	HICON hIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,32,32,LR_SHARED);
 	SetIcon(hIcon,TRUE);
 	SetClassLong(gclHIcon,(LONG)hIcon);
+
+	nHFCInstallationMessage=RegisterWindowMessage("HFCINSTALLMESSAGE");
+	nTaskbarCreated=RegisterWindowMessage("TaskbarCreated");
+
 	return CFrameWnd::OnCreate(lpcs);
 }
 
@@ -2244,9 +2248,8 @@ BOOL CLocateAppWnd::SetShellNotifyIconAndTip(HICON hIcon,UINT uTip)
 		LoadString(uTip,nid.szTip,63);
 		nid.uFlags|=NIF_TIP;
 	}
-	Shell_NotifyIcon(NIM_MODIFY,&nid);
-		
-	return TRUE;
+	
+	return Shell_NotifyIcon(NIM_MODIFY,&nid);
 }
 
 BOOL CLocateAppWnd::StartUpdateAnimation()
@@ -2643,20 +2646,36 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		if (m_pLocateDlgThread->m_pLocate==NULL)
 			return NULL;
 		return (BOOL)(HWND)*m_pLocateDlgThread->m_pLocate;
-	}
-	if (msg==RegisterWindowMessage("HFCINSTALLMESSAGE"))
-	{
-		if (lParam!=NULL)
+	default:
+		if (msg==nHFCInstallationMessage)
 		{
-			char szAppLine[257];
-			GlobalGetAtomName((ATOM)lParam,szAppLine,256);
-			if (GetApp()->GetAppName().CompareNoCase(szAppLine)==0)
-			{
-				if (wParam==1 || wParam==2) // Installing (1) or UnInstalling (2)...
-					DestroyWindow();
+			if (lParam!=NULL)
+			{	
+				char szAppLine[257];
+				GlobalGetAtomName((ATOM)lParam,szAppLine,256);
+				if (GetApp()->GetAppName().CompareNoCase(szAppLine)==0)
+				{
+					if (wParam==1 || wParam==2) // Installing (1) or UnInstalling (2)...
+						DestroyWindow();
+				}
 			}
+			return (BOOL)(HWND)*this;
 		}
-		return (BOOL)(HWND)*this;
+		else if (msg==nTaskbarCreated)
+		{
+			// Creating taskbar icon
+			NOTIFYICONDATA nid;
+			nid.cbSize=NOTIFYICONDATA_V1_SIZE;
+			nid.hWnd=*this;
+			nid.uID=1000;
+			nid.uFlags=NIF_ICON|NIF_MESSAGE|NIF_TIP;
+			nid.uCallbackMessage=WM_SYSTEMTRAY;
+			nid.hIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,LR_DEFAULTCOLOR|LR_SHARED);
+			LoadString(IDS_NOTIFYLOCATE,nid.szTip,63);
+	
+			Shell_NotifyIcon(NIM_ADD,&nid);
+		}
+		break;
 	}
 	return CFrameWnd::WindowProc(msg,wParam,lParam);
 }

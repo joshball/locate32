@@ -1,0 +1,31 @@
+
+usage: locate [-s] [-p path] [-t type] [-r] [-R] [-d dbfile] [-D dbname] [-h] file
+
+parameters:
+    -s          pause after page
+    -i          shows what are we looking for
+    -p          look in directory 'path'
+    -r          'file' is interpreted as regular expression
+    -R          'file' is regular expression and full path is checked
+    -t          set extension
+    -d file     set database file
+    -D name     uses database named 'name'
+    -lm:SIZE    set minimum size to SIZE, eg -lms:100k
+    -lM:SIZE    set maximum size to SIZE, eg -lMs:10M
+    -lDmYYMMDD  set minimum file modification date
+    -lDcYYMMDD  set minimum file creation date
+    -lDaYYMMDD  set minimum file last access date
+    -lDMYYMMDD  set maximum file modification date
+    -lDCYYMMDD  set maximum file creation date
+    -lDAYYMMDD  set maximum file last access date 
+    -ln:NUM     set number of maximum found files
+    -lf         look only file names (default)
+    -ld         look only directory names
+    -lfd        look file and directory names
+    -lc:TEXT    file must contain string TEXT
+    -lcm        string text is match case (default)
+    -lcnm       string text is not match case
+    -lR:TEXT    same as above but TEXT is regular expression
+    -lw         match whole name only
+    -lrn        don't replace spaces with asterisk
+    -h          help, this screen

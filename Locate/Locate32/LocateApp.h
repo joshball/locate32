@@ -78,6 +78,9 @@ public:
 	inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
 #endif
 
+	UINT nHFCInstallationMessage;
+	UINT nTaskbarCreated;
+
 };
 
 
