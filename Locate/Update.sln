@@ -35,6 +35,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "keyhook", "keyhook\keyhook.
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shelldll", "shelldll\shelldll.vcproj", "{A6A844B3-DD81-46E9-A215-9478E4241982}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfiguration) = preSolution
 		Debug = Debug
@@ -90,6 +94,12 @@ Global
 		{7270309B-FD23-4B1D-807D-E6ABDAABE082}.Release.Build.0 = Release|Win32
 		{7270309B-FD23-4B1D-807D-E6ABDAABE082}.Release(Log).ActiveCfg = Release|Win32
 		{7270309B-FD23-4B1D-807D-E6ABDAABE082}.Release(Log).Build.0 = Release|Win32
+		{A6A844B3-DD81-46E9-A215-9478E4241982}.Debug.ActiveCfg = Debug|Win32
+		{A6A844B3-DD81-46E9-A215-9478E4241982}.Debug.Build.0 = Debug|Win32
+		{A6A844B3-DD81-46E9-A215-9478E4241982}.Release.ActiveCfg = Release|Win32
+		{A6A844B3-DD81-46E9-A215-9478E4241982}.Release.Build.0 = Release|Win32
+		{A6A844B3-DD81-46E9-A215-9478E4241982}.Release(Log).ActiveCfg = Release|Win32
+		{A6A844B3-DD81-46E9-A215-9478E4241982}.Release(Log).Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

@@ -3268,17 +3268,29 @@ void CLocateAppWnd::OnDestroy()
 		m_pAbout=NULL;
 	}
 	
+	HANDLE hLocateThread;
+	
 	if (m_pLocateDlgThread!=NULL)
 	{
+		hLocateThread=m_pLocateDlgThread->m_hThread;
+
+		DebugNumMessage("Trying to close locate dialog thread %X",(DWORD)m_pLocateDlgThread);
 		if (m_pLocateDlgThread->IsRunning())
 		{
 			GetLocateDlg()->PostMessage(WM_CLOSE);
-			if (m_pLocateDlgThread!=NULL)
-				WaitForSingleObject(*m_pLocateDlgThread,1000);
+			
 			if (m_pLocateDlgThread!=NULL)
 			{
-				m_pLocateDlgThread->TerminateThread(1);
-				delete m_pLocateDlgThread;
+				WaitForSingleObject(hLocateThread,1000);
+			}
+		
+			if (m_pLocateDlgThread!=NULL)
+			{
+				DebugNumMessage("Terminating locate dialog thread %X",(DWORD)m_pLocateDlgThread);
+				::TerminateThread(hLocateThread,1);
+				
+				if (m_pLocateDlgThread!=NULL)
+					delete m_pLocateDlgThread;
 				m_pLocateDlgThread=NULL;
 			}
 		}

@@ -45,7 +45,7 @@ int CLocateDlgThread::ExitInstance()
 {
 	delete m_pLocate;
 	m_pLocate=NULL;
-	GetLocateAppWnd()->m_pLocateDlgThread=NULL;
+	InterlockedExchangePointer(&GetLocateAppWnd()->m_pLocateDlgThread,NULL);
 	CoUninitialize();
 	return CWinThread::ExitInstance();
 }
@@ -3882,19 +3882,23 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 			if (HIBYTE(GetKeyState(VK_SHIFT)))
 			{
 				hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_VERBSONLY|CMF_EXTENDEDVERBS);
+					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY|CMF_EXTENDEDVERBS);
+				//hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
+				//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_EXTENDEDVERBS);
 
 			}
 			else
 			{
 				hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_VERBSONLY);
+					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY);
+				//hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
+				//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL);
 			}
 		}
 		else
 		{
 			hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-				IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_VERBSONLY);
+				IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY);
 		}
 		if (!SUCCEEDED(hRes))
 		{
@@ -3945,6 +3949,8 @@ IContextMenu* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CStrin
 {
 	IContextMenu* pContextMenu=NULL;
 
+	ASSERT(aFiles.GetSize()!=0);
+
 	// Creating shell link
 	IShellLink* pShellLink;
 	HRESULT hRes=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(LPVOID*)&pShellLink);
@@ -3954,7 +3960,23 @@ IContextMenu* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CStrin
 	LPITEMIDLIST pParentIDList=NULL;
 		
 	// And resolving parent ID list
-	hRes=pShellLink->SetPath(szParent);
+	
+	/*hRes=pShellLink->SetPath(szParent);
+	if (!SUCCEEDED(hRes))
+	{
+		pShellLink->Release();
+		return NULL;
+	}
+	hRes=pShellLink->GetIDList(&pParentIDList);
+	if (!SUCCEEDED(hRes))
+	{
+		pShellLink->Release();
+		return NULL;
+	}*/
+
+
+	// Getting ID list for first item
+	hRes=pShellLink->SetPath(*aFiles[0]);
 	if (!SUCCEEDED(hRes))
 	{
 		pShellLink->Release();
@@ -3966,6 +3988,17 @@ IContextMenu* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CStrin
 		pShellLink->Release();
 		return NULL;
 	}
+	
+	// Removing last item in id list
+	BYTE* apcid=(BYTE*)pParentIDList;
+
+	// Seeking last item in id list ...
+	while (*(USHORT*)(apcid+*((USHORT*)apcid))!=0)
+		apcid+=*((SHORT*)apcid);
+	// And removing it
+	*((USHORT*)apcid)=0;
+
+	
 	
 	// Creating Itemidlist struct
 	LPITEMIDLIST* apidl=new LPITEMIDLIST[aFiles.GetSize()];
@@ -3980,8 +4013,8 @@ IContextMenu* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CStrin
 		}
 		pShellLink->GetIDList(apidl+i);
 		apcidl[i]=(BYTE*)apidl[i];
-		while (*(SHORT*)(apcidl[i]+*((SHORT*)apcidl[i]))!=0)
-			apcidl[i]+=*((SHORT*)apcidl[i]);
+		while (*(USHORT*)(apcidl[i]+*((USHORT*)apcidl[i]))!=0)
+			apcidl[i]+=*((USHORT*)apcidl[i]);
 		
 	}
 	pShellLink->Release();
