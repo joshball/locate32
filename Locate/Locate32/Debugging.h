@@ -21,6 +21,7 @@ extern DEBUGALLOCATORTYPE DebugAlloc;
 //#define DEBUGMSG_ITEMS
 //#define DEBUGMSG_DBCALLBACK
 //#define DEBUGMSG_BACKGROUND
+#define DEBUGMSG_FILEOBJECT
 
 
 #ifdef DEBUGMSG_DIALOGS
@@ -57,6 +58,17 @@ extern DEBUGALLOCATORTYPE DebugAlloc;
 #define DbcDebugFormatMessage2(a,b1,b2)
 #endif
 
+
+#ifdef DEBUGMSG_FILEOBJECT
+#define FoDebugMessage(a)						DebugMessage(a)
+#define FoDebugFormatMessage2(a,b1,b2)			DebugFormatMessage(a,b1,b2)
+#define FoDebugFormatMessage4(a,b1,b2,b3,b4)	DebugFormatMessage(a,b1,b2,b3,b4)
+#else
+#define FoDebugMessage(a) 
+#define FoDebugFormatMessage2(a,b1,b2)
+#define FoDebugFormatMessage4(a,b1,b2,b3,b4)
+#endif
+
 #else
 
 // Release version
@@ -73,6 +85,9 @@ extern DEBUGALLOCATORTYPE DebugAlloc;
 #define DbcDebugMessage(a)
 #define DbcDebugFormatMessage2(a,b1,b2)
 
+#define FoDebugMessage(a) 
+#define FoDebugFormatMessage2(a,b1,b2)
+#define FoDebugFormatMessage4(a,b1,b2,b3,b4)
 #endif
 
 #endif

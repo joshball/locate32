@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2003 Janne Huttunen
-   Updatedb.exe v2.98.4.11070 */
+   Updatedb.exe v2.98.4.11280 */
 
 #include <HFCLib.h>
 #include "locatedb/locatedb.h"
@@ -7,9 +7,9 @@
 #include "lan_resources.h"
 
 #ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 v2.98.4.11070";
+		LPCSTR szVersionStr="updtdb32 v2.98.4.11280";
 #else
-		LPCSTR szVersionStr="updatedb v2.98.4.11070";
+		LPCSTR szVersionStr="updatedb v2.98.4.11280";
 #endif
 
 
@@ -196,7 +196,10 @@ int main (int argc,char ** argv)
 					strncmp(aDatabases.GetLast()->GetName(),"DEFAULTX",8)!=0)
 					printf(CString(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
 				else if (argv[i][2]=='1')
+				{
 					aDatabases.GetLast()->AddLocalRoots();
+					aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
+				}
 				else 
 				{
 					CString* pStr;
@@ -224,6 +227,8 @@ int main (int argc,char ** argv)
 					else
 						fprintf(stderr,CString(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCSTR)*pStr);
 					delete pStr;
+
+					aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
 				}
 				break;
 			case 'e':
@@ -254,6 +259,8 @@ int main (int argc,char ** argv)
 					else
 						fprintf(stderr,CString(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCSTR)*pStr);
 					delete pStr;
+
+					aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
 				}
 				break;
 			case 't':
@@ -267,6 +274,8 @@ int main (int argc,char ** argv)
                            aDatabases.GetLast()->SetCreatorPtr(alloccopy(argv[++i]));
                        else
                            aDatabases.GetLast()->SetCreatorPtr(alloccopy(argv[i]+2));
+
+					   aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
 				}
 				else if (argv[i][2]=='d' || argv[i][2]=='D')
 				{
@@ -274,6 +283,8 @@ int main (int argc,char ** argv)
                            aDatabases.GetLast()->SetDescriptionPtr(alloccopy(argv[++i]));
                        else
                            aDatabases.GetLast()->SetDescriptionPtr(alloccopy(argv[i]+2));
+
+					   aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
 				}
 				break;
 			case 'N':
@@ -375,7 +386,13 @@ int main (int argc,char ** argv)
 	// First, check that there is database 
 	if (aDatabases.GetSize()==0)
 		CDatabase::LoadFromRegistry(HKCU,"Software\\Update\\Databases",aDatabases);   
-	
+	else if (aDatabases.GetSize()==1 && strncmp(aDatabases.GetLast()->GetName(),"DEFAULTX",8)==0)
+	{
+		aDatabases.RemoveAll();
+		CDatabase::LoadFromRegistry(HKCU,"Software\\Update\\Databases",aDatabases);   
+	}
+		
+		
 	CDatabase::CheckValidNames(aDatabases);
 	CDatabase::CheckDoubleNames(aDatabases);
 	

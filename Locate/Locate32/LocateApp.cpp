@@ -2521,7 +2521,7 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases)
 				BOOL bFound=FALSE;
 				while (*pPtr!=NULL)
 				{
-					int iStrLen=istrlen(aGlobalDatabases[i]->GetName())+1;
+					int iStrLen=istrlen(pPtr)+1;
 					if (strncmp(pPtr,aGlobalDatabases[i]->GetName(),iStrLen)==0)
 					{
 						bFound=TRUE;
@@ -3168,21 +3168,21 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 		case ueOpen:
 			{
 				CString str;
-				str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseName());
+				str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
 				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
 				return FALSE;
 			}
 		case ueRead:
 			{
 				CString str;
-				str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseName());
+				str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
 				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
 				return FALSE;
 			}
 		case ueWrite:
 			{
 				CString str;
-				str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseName());
+				str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
 				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
                 return FALSE;
 			}

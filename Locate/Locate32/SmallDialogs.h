@@ -162,6 +162,7 @@ public:
 
 	virtual BOOL OnInitDialog(HWND hwndFocus);
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
+	virtual BOOL OnClose();
 	
 	void OnOK();
 };

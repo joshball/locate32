@@ -1314,6 +1314,7 @@ BOOL CSavePresetDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDC_OK:
 		OnOK();
 		break;
+	case IDCANCEL:
 	case IDC_CANCEL:
 		OnCancel();
 		break;
@@ -1408,6 +1409,7 @@ BOOL CChangeCaseDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 
 		EndDialog(1);
 		break;
+	case IDCANCEL:
 	case IDC_CANCEL:
 		EndDialog(0);
 		break;
@@ -1450,6 +1452,7 @@ BOOL CChangeFilenameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			EndDialog(1);
 		}
 		break;
+	case IDCANCEL:
 	case IDC_CANCEL:
 		EndDialog(0);
 		break;
@@ -1515,6 +1518,7 @@ BOOL CRemovePresetDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	CDialog::OnCommand(wID,wNotifyCode,hControl);
 	switch (wID)
 	{
+	case IDCANCEL:
 	case IDC_OK:
 		OnOK();
 		break;
@@ -1530,6 +1534,12 @@ BOOL CRemovePresetDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 }
 
 
+BOOL CRemovePresetDlg::OnClose()
+{
+	CDialog::OnClose();
+	EndDialog(0);
+	return FALSE;
+}
 
 
 
