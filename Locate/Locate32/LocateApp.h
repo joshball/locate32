@@ -15,15 +15,22 @@ class CLocateAppWnd : public CFrameWnd
 {
 public:
 	enum ProgramFlags {
-		// Update process
-		pfShowErrorMessages = 0x01,
-        pfShowUpdateTooltip = 0x02,
-		pfUpdateMask = 0x02,
-		pfUpdateDefaults = pfShowUpdateTooltip,
-		pfUpdateSave = pfShowErrorMessages|pfShowUpdateTooltip,
+		// Errors 
+		pfShowCriticalErrors = 0x01, // Option
+        pfShowNonCriticalErrors = 0x02, // Option
+        pfErrorMask = 0x03,
+		pfErrorDefault = pfShowCriticalErrors,
+		pfErrorSave = pfShowCriticalErrors|pfShowNonCriticalErrors,
+		
+		// Tooltip
+		pfEnableUpdateTooltip = 0x10, // Option
+		pfShowUpdateTooltip = 0x20, // Update tooltip should currently shown
+		pfTooltipMask = 0x30,
+		pfTooltipDefaults = pfEnableUpdateTooltip,
+		pfTooltipSave = pfEnableUpdateTooltip,
 
-		pfDefault = pfUpdateDefaults,
-		pfSave = pfUpdateSave
+		pfDefault = pfErrorDefault|pfTooltipDefaults,
+		pfSave = pfErrorSave|pfTooltipSave
 	};
 
 public:

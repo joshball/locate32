@@ -3099,6 +3099,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			if (ueCode!=ueStopped) // This is done at the end of CLocateApp::StopUpdating
 			{
 				pLocateDlg->m_NameDlg.InitDriveBox();
+				
 				//pLocateDlg->ResetFileNotificators();
 				pLocateDlg->PostMessage(WM_REFRESHNOTIFIERHANDLERS);
 			}
@@ -3159,7 +3160,9 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			
 			if (dwRunning==0)
 			{
+				// No updaters running anymore...
 				
+				// ...so stopping animations
 				if (pAppWnd!=NULL)
 				{
 					if (GetLocateApp()->m_nStartup&CStartData::startupExitAfterUpdating)
@@ -3173,16 +3176,18 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 				{
 					pLocateDlg->StopUpdateAnimation();
 					
-					// Checking wheter all is stopped
+					CString str;
+					
+					// ... and constucting notification message:
+					// checking wheter all are stopped, or cancelled 
 					for (i=0;(*pppUpdaters)[i]!=NULL;i++)
 					{
 						if (GET_UPDATER_CODE((*pppUpdaters)[i])!=ueStopped)
 							break;
 					}
-					CString str;
 					if ((*pppUpdaters)[i]==NULL)
 					{
-						// All stopped
+						// All are stopped
 						str.LoadString(IDS_UPDATINGCANCELLED);
 						pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
 						pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),3,SBT_OWNERDRAW);
@@ -3194,7 +3199,6 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 						str.LoadString(IDS_UPDATINGENDED);
 						int added=0;
 							
-						pLocateDlg->StopUpdateAnimation();
 						for (i=0;(*pppUpdaters)[i]!=NULL;i++)
 						{
 							switch (GET_UPDATER_CODE((*pppUpdaters)[i]))
@@ -3244,13 +3248,19 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 
 				GetLocateApp()->ReleaseUpdatersPointer();
 			}
-			else if (dwParam!=NULL)
+			else 
 			{
+				// Updaters still running, updating shell notify icons
 				GetLocateApp()->ReleaseUpdatersPointer();
-				((CLocateAppWnd*)dwParam)->SetShellNotifyIconAndTip(NULL,IDS_NOTIFYUPDATING);
+				
+				if (dwParam!=NULL)
+				{
+					// dwParam can be NULL, if updating process is started via 
+					// command line parameters such that dialog is not opened
+				
+					((CLocateAppWnd*)dwParam)->SetShellNotifyIconAndTip(NULL,IDS_NOTIFYUPDATING);
+				}
 			}
-			else
-				GetLocateApp()->ReleaseUpdatersPointer();
 			return TRUE;
 		}
 	case ErrorOccured:

@@ -1916,6 +1916,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL
 	};
 
+	
+
 	Item* SystemItems[]={
 		CreateCheckBox(IDS_ADVSETRUNATSYSTEMSTARTUP,NULL,
 			DefaultCheckBoxProc,CSettingsProperties::settingsStartLocateAtStartup,&m_pSettings->m_dwSettingsFlags),
@@ -1958,9 +1960,24 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL
 	};
 		
+	Item* UpdateProcessItems[]={
+		CreateCheckBox(IDS_ADVSETSHOWCRITICALERRORS,NULL,
+			DefaultCheckBoxProc,CLocateAppWnd::pfShowCriticalErrors,&m_pSettings->m_dwProgramFlags),
+		CreateCheckBox(IDS_ADVSETSHOWNONCRITICALERRORS,NULL,
+			DefaultCheckBoxProc,CLocateAppWnd::pfShowNonCriticalErrors,&m_pSettings->m_dwProgramFlags),
+		NULL,
+		NULL
+	};
+	if (GetLocateApp()->m_wComCtrlVersion>=0x0500)
+	{
+		UpdateProcessItems[2]=CreateCheckBox(IDS_ADVSETSHOWUPDATESTATUSTOOLTIP,NULL,
+			DefaultCheckBoxProc,CLocateAppWnd::pfEnableUpdateTooltip,&m_pSettings->m_dwProgramFlags);
+	}
+
 	Item* Parents[]={
 		CreateRoot(IDS_ADVSETRESULTS,ResultsItems),
 		CreateRoot(IDS_ADVSETDIALOGS,DialogItems),
+		CreateRoot(IDS_ADVSETUPDATEPROCESS,UpdateProcessItems),
 		CreateRoot(IDS_ADVSETSYSTEM,SystemItems),
 		NULL};
 

@@ -241,7 +241,13 @@ STRADVANCEDSETTINGS_ENABLEUPDATING=Enable updating (information corresponds file
 STRADVANCEDSETTINGS_DONTTRACKFILESYSTEMCHANGES=Do not track file system changes
 STRADVANCEDSETTINGS_TRACKFILESYSTEMCHANGES=Track file system changes
 STRADVANCEDSETTINGS_TRACKFILESYSTEMCHANGESOLD=Track file system changes (old method)
+STRADVANCEDSETTINGS_UPDATEPROCESS=Update process
+STRADVANCEDSETTINGS_SHOWCRITICALERRORS=Show critical errors (e.g., cannot write database, ...)
+STRADVANCEDSETTINGS_SHOWNONCRITICALERRORS=Show non-critical errors (e.g., network resource is not available, ...)
+STRADVANCEDSETTINGS_SHOWUPDATESTATUSINTOOLTIP=Show update status in tooltip
+
 STRADVANCEDSETTINGS_SYSTEMDEFAULT=(system default)
+
 
 # Language page
 STRLANGUAGESETTINGS_TABCAPTION=Language
