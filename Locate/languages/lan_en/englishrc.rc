@@ -1191,7 +1191,7 @@ BEGIN
     IDS_ERRORCANNOTOPENDB   "Cannot open database file '%s'."
     IDS_ERRORCANNOTREADDB   "Cannot read database file '%s'."
     IDS_ERRORCANNOTALLOCATE "Cannot allcate memory."
-    IDS_SHORTCUTTODESKTOP   "$STR7_SHORTCUT_TODESKTOP$"
+    IDS_SHORTCUTTODESKTOP   "Do you want the shortcut to be placed on the desktop?"
     IDS_ERRORINVALIDFILEFORMAT "Error loading file %s. Invalid file format."
     IDS_ERRCANNOTFIND       "File '%s' cannot found or invalid file format."
 END
