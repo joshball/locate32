@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2004 Janne Huttunen
-   database updater v2.98.4.9200                  */
+/* Copyright (c) 1997-2005 Janne Huttunen
+   database updater v2.99.5.1020                 */
 
 #if !defined(DATABASEINFO_H)
 #define DATABASEINFO_H
@@ -44,6 +44,7 @@ protected:
 	CDatabaseInfo();
 
 	BOOL GetInfo(const CDatabase* pDatabase);
+	BOOL GetInfo(CDatabase::ArchiveType nArchiveType,LPCSTR szArchivePath);
 
 public:
 	BYTE bVersion;
@@ -57,8 +58,12 @@ public:
 	CArrayFP<CRoot*> aRootFolders;
 	DWORD dwFileSize;
 
+	CString szExtra1;
+	CString szExtra2;
+
 public:
 	static CDatabaseInfo* GetFromDatabase(const CDatabase* pDatabase);
+	static CDatabaseInfo* GetFromFile(LPCSTR szArchivePath);
 
 		
 	static BOOL GetRootsFromDatabase(CArray<LPSTR>& aRoots,const CDatabase* pDatabase);
@@ -86,6 +91,23 @@ inline CDatabaseInfo* CDatabaseInfo::GetFromDatabase(const CDatabase* pDatabase)
 	}
 	return pRet;
 }
+
+inline CDatabaseInfo* CDatabaseInfo::GetFromFile(LPCSTR szArchivePath)
+{
+	CDatabaseInfo* pRet=new CDatabaseInfo;
+	
+	if (!pRet->GetInfo(CDatabase::archiveFile,szArchivePath))
+	{
+		delete pRet;
+		return NULL;
+	}
+	return pRet;
+}
+
+inline BOOL CDatabaseInfo::GetInfo(const CDatabase* pDatabase)
+{
+	return GetInfo(pDatabase->GetArchiveType(),pDatabase->GetArchiveName());
+} 
 
 inline BOOL CDatabaseInfo::GetRootsFromDatabases(CArray<LPSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled)
 {

@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2004 Janne Huttunen
-   database updater v2.98.4.9200                  */
+/* Copyright (c) 1997-2005 Janne Huttunen
+   database updater v2.99.5.1020                  */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -387,6 +387,174 @@ CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName,LPCSTR szAppDir,int iAp
 	else
 		pDatabase->m_szArchiveName=NULL;
 	return pDatabase;
+}
+
+/* Example
+ $$LDBSET$T:0000$F:E1G1S0I0$N:local$AF:C:\Utils\db\files.dbs$C:jmj@iik$D:All local files$R:1$$
+*/
+
+CDatabase* CDatabase::FromExtraBlock(LPCSTR szExtraBlock)
+{
+	
+	for (int i=0;szExtraBlock[i]!='\0';i++)
+	{
+		// Finding "$$LDBSET$"
+		if (strncmp(szExtraBlock+i,"$$LDBSET$",9)!=0)
+			continue;
+		
+        // Found
+		LPCSTR pPtr=szExtraBlock+i+9;
+        int length,keylen;
+
+		CDatabase* pDatabase=new CDatabase;
+		CArrayFAP<LPSTR> aRoots;
+		
+
+		for (;;)
+		{
+			// Counting field length
+            for (length=0;pPtr[length]!='$' && pPtr[length]!='$';length++);
+			if (length==0)
+				break;
+
+			// Find ':'
+			for (keylen=0;keylen<length && pPtr[keylen]!=':';keylen++);
+			if (pPtr[keylen]!=':')
+			{
+				// Not correct field
+				pPtr+=length+1;
+				continue;
+			}
+			CString sValue(pPtr+keylen+1,length-keylen-1);
+
+			switch (*pPtr)
+			{
+			case 'T': // Thread
+			case 't': 
+				{
+					// Checking zeroes
+					int i;
+					for (i=0;sValue[i]=='0';i++);
+					LPSTR pTemp;
+					pDatabase->m_wThread=(WORD)strtoul(LPCSTR(sValue)+i,&pTemp,16);
+                    break;
+				}
+			case 'F': // Flags
+			case 'f':
+				{
+					LPCSTR pTemp=sValue;
+					while (*pTemp!='\0')
+					{
+						switch (*(pTemp++))
+						{
+						case 'E':
+						case 'e':
+							if (*pTemp=='1')
+							{
+								pDatabase->m_wFlags|=flagEnabled;
+								pTemp++;
+							}
+							else if (*pTemp=='0')
+							{
+								pDatabase->m_wFlags&=~flagEnabled;
+								pTemp++;
+							}
+							else
+								pDatabase->m_wFlags|=flagEnabled;
+							break;
+						case 'G':
+						case 'g':
+							if (*pTemp=='1')
+							{
+								pDatabase->m_wFlags|=flagGlobalUpdate;
+								pTemp++;
+							}
+							else if (*pTemp=='0')
+							{
+								pDatabase->m_wFlags&=~flagGlobalUpdate;
+								pTemp++;
+							}
+							else
+								pDatabase->m_wFlags|=flagGlobalUpdate;
+							break;
+							break;
+						case 'S':
+						case 's':
+							if (*pTemp=='1')
+							{
+								pDatabase->m_wFlags|=flagStopIfRootUnavailable;
+								pTemp++;
+							}
+							else if (*pTemp=='0')
+							{
+								pDatabase->m_wFlags&=~flagStopIfRootUnavailable;
+								pTemp++;
+							}
+							else
+								pDatabase->m_wFlags|=flagStopIfRootUnavailable;
+							break;
+						case 'I':
+						case 'i':
+							if (*pTemp=='1')
+							{
+								pDatabase->m_wFlags|=flagIncrementalUpdate;
+								pTemp++;
+							}
+							else if (*pTemp=='0')
+							{
+								pDatabase->m_wFlags&=~flagIncrementalUpdate;
+								pTemp++;
+							}
+							else
+								pDatabase->m_wFlags|=flagIncrementalUpdate;
+							break;
+						}
+					}
+					break;
+				}
+			case 'N': // Name
+			case 'n':
+				pDatabase->m_szName=sValue.GiveBuffer();
+				break;
+			case 'A': // Archive
+			case 'a':
+				if (pPtr[1]=='F')
+				{
+					// File:
+					pDatabase->m_ArchiveType=CDatabase::archiveFile;
+					pDatabase->m_szArchiveName=sValue.GiveBuffer();
+				}
+				break;
+			case 'C': // Creator
+			case 'c':
+				pDatabase->m_szCreator=sValue.GiveBuffer();
+				break;
+			case 'D': // Description
+			case 'd':
+				pDatabase->m_szDescription=sValue.GiveBuffer();
+				break;
+			case 'R':
+			case 'r':
+				if (sValue.Compare("1")==0)
+					aRoots.RemoveAll();
+				else
+					aRoots.Add(sValue.GiveBuffer());
+				break;
+			case 'E':
+			case 'e':
+                pDatabase->m_aExcludedDirectories.Add(sValue.GiveBuffer());
+				break;
+			}
+
+			pPtr+=length+1;
+				
+		}
+
+		pDatabase->SetRoots(aRoots);
+
+		return pDatabase;
+	}
+	return NULL;
 }
 
 LPSTR CDatabase::GetCorrertFileName(LPCSTR szFileName,int dwNameLength)
@@ -1125,4 +1293,122 @@ LPSTR CDatabase::ConstructExtraBlock() const
 	str << '$';
 	str.FreeExtra();
 	return str.GiveBuffer();
+}
+
+
+
+BOOL CDatabase::SaveExtraBlockToDbFile(LPCSTR szArchive)
+{
+	
+	CFile *pInFile=NULL,*pOutFile=NULL;
+	char* szBuffer=NULL;
+
+	LPSTR szExtra=ConstructExtraBlock();
+	DWORD iExtraLen=istrlen(szExtra)+1;
+
+	// Constructing temp file name	
+	char szTempFile[MAX_PATH];
+	{
+		CString CurPath(szArchive,LastCharIndex(szArchive,'\\'));
+		if (!GetTempFileName(CurPath,"_dbtmp",0,szTempFile))
+			return FALSE;
+	}
+
+	BOOL bRet=TRUE;
+	DWORD dwTemp;
+	CString Creator,Description,Extra1,Extra2;
+	
+
+	try {
+		// Opening database and trying to read header
+		pInFile=new CFile(szArchive,CFile::defRead|CFile::otherStrNullTerminated,TRUE);
+
+		szBuffer=new char[12];
+		pInFile->Read(szBuffer,11);
+
+		if (szBuffer[0]!='L' || szBuffer[1]!='O' || 
+			szBuffer[2]!='C' || szBuffer[3]!='A' || 
+			szBuffer[4]!='T' || szBuffer[5]!='E' || 
+			szBuffer[6]!='D' || szBuffer[7]!='B' ||
+			szBuffer[8]!='2' || szBuffer[9]!='0' )
+		{
+			throw CFileException(CFileException::invalidFile,
+#ifdef WIN32
+				-1,
+#endif
+				szArchive);
+		}
+
+		// Reading fields
+		pInFile->Read(dwTemp); // Header size
+		pInFile->Read(Creator);
+		pInFile->Read(Description);
+		pInFile->Read(Extra1);
+		pInFile->Read(Extra2);
+
+		pOutFile=new CFile(szTempFile,CFile::defWrite|CFile::otherStrNullTerminated,TRUE);
+		
+		// Writing identification, '\17=0x11=0x10|0x1' 0x1 = Long filenames and 0x10 = ANSI
+		pOutFile->Write("LOCATEDB20",10);
+		pOutFile->Write(BYTE(0x11));
+
+        // Writing header size
+		pOutFile->Write(DWORD(
+			Creator.GetLength()+1+ // Author data
+			Description.GetLength()+1+ // Comments data
+			Extra1.GetLength()+1+
+			iExtraLen+ // Extra
+			4+ // Time
+			4+ // Number of files
+			4  // Number of directories
+			));
+
+        pOutFile->Write(Creator);
+		pOutFile->Write(Description);
+		pOutFile->Write(Extra1);
+		pOutFile->Write(szExtra,iExtraLen);
+		
+		// TIME, FILE and DIRECTORY counts
+		pInFile->Read(szBuffer,3*sizeof(DWORD));
+		pOutFile->Write(szBuffer,3*sizeof(DWORD));
+
+        // Roots
+		pInFile->Read(dwTemp);
+		while (dwTemp!=0)
+		{
+			pOutFile->Write(dwTemp);
+
+			delete[] szBuffer;
+			szBuffer=new char[dwTemp];
+			pInFile->Read(szBuffer,dwTemp);
+			pOutFile->Write(szBuffer,dwTemp);
+
+			pInFile->Read(dwTemp);
+		}
+
+		pOutFile->Write((DWORD)0);
+
+		pInFile->Close();
+		pOutFile->Close();
+
+        DeleteFile(szArchive);
+		MoveFile(szTempFile,szArchive);
+	}
+	catch (...)
+	{
+		bRet=FALSE;
+	}
+    
+	if (pInFile!=NULL)
+		delete pInFile;
+	if (pOutFile!=NULL)
+		delete pOutFile;
+	if (szBuffer!=NULL)
+		delete[] szBuffer;
+	delete[] szExtra;
+
+	
+	// Delete temp file 
+	DeleteFile(szTempFile);
+	return bRet;
 }

@@ -1,5 +1,5 @@
 /* Keyhook handler for Locate
-Copyright (C) 2004 Janne Huttunen				*/
+Copyright (C) 2004-2005 Janne Huttunen				*/
 
 #if !defined(KEYHOOK_H)
 #define KEYHOOK_H

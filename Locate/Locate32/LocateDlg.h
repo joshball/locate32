@@ -373,6 +373,8 @@ public:
 	void SetSortArrowToHeader(DetailType nColumn,BOOL bRemove,BOOL bDownArrow);
 	HMENU CreateFileContextMenu(HMENU hFileMenu);
 	IContextMenu* GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CString*>& aFiles);
+	void InsertBasicPopuoMenuItems(HMENU hMenu);
+
 
 
 	void ClearMenuVariables();     
@@ -579,6 +581,7 @@ protected:
 	DWORD m_dwExtraFlags;
 
 	IContextMenu* m_pActiveContextMenu;
+	
 	CMenu m_Menu;
 	HFONT m_hSendToListFont;
 

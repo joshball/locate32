@@ -1,6 +1,6 @@
 # English language file 
 #	
-# Copyright (C) 2003-2004 Janne Huttunen <Janne.Huttunen@uku.fi>
+# Copyright (C) 2003-2005 Janne Huttunen <Janne.Huttunen@uku.fi>
 #
 
 FOR_PROGRAM=LOCATE32
@@ -23,9 +23,9 @@ CODEPAGE=1252
 
 # FILEVERSION_NUMERIC must in in format A, B, C, D where A, B, C and D are integers between 0-65535
 ORIGINALFILENAME=lan_en.dll
-LEGALCOPYRIGHT=Copyright © 1997-2004 Janne Huttunen
+LEGALCOPYRIGHT=Copyright © 1997-2005 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 alpha 4.12310
+FILEVERSION=3.0 beta 5.1020
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -286,6 +286,12 @@ STRDATABASESETTINGS_THREADNAME=Thread %d
 STRDATABASESETTINGS_DELETEDATABASE=Delete database
 STRDATABASESETTINGS_DELETEDATABASEQ=Do you want also delete database file '%s'?
 STRDATABASESETTINGS_COMMANDLINEARGUMENT=Command line
+STRDATABASESETTINGS_IMPORTDATABASESETTINGS=Import database settings
+STRDATABASESETTINGS_EXPORTDATABASESETTINGS=Export database settings
+STRDATABASESETTINGS_FILEISNOTDATABASE=File '%s' exists and it is not database, do you want overwrite file?
+STRDATABASESETTINGS_INCREASETHREADCOUNT=The number of threads is lower than requested. Do you want increase thread count?
+STRDATABASESETTINGS_UNABLETOREADSETTINGS=Unable to read settings from file '%s'.
+STRDATABASESETTINGS_CANNOTWRITESETTINGS=Cannot write settings to file '%s'.
 
 # Autoupdate page
 SRTAUTOUPDATESETTINGS_TABCAPTION=Auto update
@@ -705,6 +711,8 @@ STR_SHORTCUT_TODESKTOP=Do you want the shortcut to be placed on the desktop?
 # Filetype masks
 STR_FILETYPEMASK_DATABASEFILES=Database files|*.dbs|All Files|*.*||
 STR_FILETYPEMASK_TEXTFILES=Text Files|*.txt|All Files|*.*||
+STR_FILETYPEMASK_IMPORTDATABASESETTINGS=Database settings (.dbs, .dbi, .txt)|*.dbs;*.dbi;*.txt|Database files (.dbi)|*.dbi|Text Files (.dbi, .txt)|*.dbi;*.txt|All Files|*.*||
+STR_FILETYPEMASK_EXPORTDATABASESETTINGS=Database files (.dbs)|*.dbs|Database setting (.dbi)|*.dbi|Text Files|*.txt|All Files|*.*||
 STR_FILETYPEMASK_BUILDINTYPES=Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps|0|Web Files|html htm asp shtm css|6|Document files|doc dot xls wpd rtf pdf|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h inl rc pas java|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 wma voc aif aiff cda ogg mpc ape flac|3|Video files|mpeg mpg avi mov ogm rm rmvb|4||
 
 ###########################

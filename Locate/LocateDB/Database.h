@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2004 Janne Huttunen
-   database updater v2.98.4.9200                */
+/* Copyright (c) 1997-2005 Janne Huttunen
+   database updater v2.99.5.1020                */
 
 #if !defined(DATABASE_H)
 #define DATABASE_H
@@ -94,6 +94,7 @@ private:
 
 public:
 	LPSTR ConstructExtraBlock() const;
+	BOOL SaveExtraBlockToDbFile(LPCSTR szArchive);
 
 
 public:
@@ -107,6 +108,7 @@ public:
 	static CDatabase* FromFile(LPCSTR szFileName,int dwNameLength=-1);
     static CDatabase* FromOldStyleDatabase(HKEY hKeyRoot,LPCSTR szPath);
 	static CDatabase* FromDefaults(BOOL bDefaultFileName,LPCSTR szAppDir,int iAppDirLength);
+	static CDatabase* FromExtraBlock(LPCSTR szExtraBlock);
 	
 	static void CheckValidNames(CArray<PDATABASE>& aDatabases);
 	static void CheckValidNames(PDATABASE* ppDatabases,int nDatabases);

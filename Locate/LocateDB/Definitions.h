@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2004 Janne Huttunen
-   database updater v2.98.4.9200                */
+/* Copyright (c) 1997-2005 Janne Huttunen
+   database updater v2.98.5.1020                */
 
 #if !defined(DBDEFINITIONS_H)
 #define DBDEFINITIONS_H

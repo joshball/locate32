@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2004 Janne Huttunen
-   database locater v2.98.4.9200                 */
+/* Copyright (c) 1997-2005 Janne Huttunen
+   database locater v2.99.5.1020                 */
 
 #include <HFCLib.h>
 

@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2003 Janne Huttunen
-   Updatedb.exe v2.98.4.12301 */
+/* Copyright (c) 1997-2005 Janne Huttunen
+   Updatedb.exe v2.99.5.1020 */
 
 #include <HFCLib.h>
 #include "locatedb/locatedb.h"
@@ -7,9 +7,9 @@
 #include "lan_resources.h"
 
 #ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 v2.98.4.12301";
+		LPCSTR szVersionStr="updtdb32 3.0 beta 5.1020";
 #else
-		LPCSTR szVersionStr="updatedb v2.98.4.12301";
+		LPCSTR szVersionStr="updatedb 3.0 beta 5.1020";
 #endif
 
 
@@ -61,18 +61,19 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 	case StartedDatabase:
 		if (!nQuiet)
 		{
+			CString msg;
+
 			if (strncmp(pUpdater->GetCurrentDatabaseName(),"PARAMX",6)==0 ||
 				strncmp(pUpdater->GetCurrentDatabaseName(),"DEFAULTX",8)==0)
-				printf(CString(IDS_UPDATEDB32UPDATINGDATABASE2),pUpdater->GetCurrentDatabaseFile());
+				msg.Format(IDS_UPDATEDB32UPDATINGDATABASE2,pUpdater->GetCurrentDatabaseFile());
 					
 			else
-			    printf(CString(IDS_UPDATEDB32UPDATINGDATABASE),
-					pUpdater->GetCurrentDatabaseName(),pUpdater->GetCurrentDatabaseFile());
+			    msg.Format(IDS_UPDATEDB32UPDATINGDATABASE,pUpdater->GetCurrentDatabaseName(),pUpdater->GetCurrentDatabaseFile());
 			
 			if (pUpdater->IsIncrementUpdate())
-				printf("%s\n",(LPCSTR)CString(IDS_UPDATEDB32INCREMENTALUPDATE));
-			else
-				putchar('\n');
+				msg.AddString(IDS_UPDATEDB32INCREMENTALUPDATE);
+			puts(msg);
+			
 		}
 		break;
 	case RootChanged:
@@ -81,7 +82,7 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 			if (pUpdater->GetCurrentRoot()!=NULL)
 				printf(CString(IDS_UPDATEDB32SCANNING),(LPCSTR)pUpdater->GetCurrentRoot()->m_Path);
 			else	
-				printf(CString(IDS_UPDATEDB32WRITINGDB));
+				printf("%s %s\n",(LPCSTR)CString(IDS_UPDATEDB32WRITINGDB),pUpdater->GetCurrentDatabaseName());
 		}
 		break;
 	case ErrorOccured:

@@ -1900,6 +1900,7 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 	case WM_INITMENUPOPUP:
 	case WM_DRAWITEM:
 	case WM_MEASUREITEM:
+	case WM_MENUCHAR:
 		if (m_pActiveContextMenu!=NULL)
 		{
 			IContextMenu2* pContextMenu2;
@@ -1911,13 +1912,9 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 				if (hRes==NOERROR)
 					return TRUE;
 			}
-		}
-		break;
-	case WM_MENUCHAR:
-		if (m_pActiveContextMenu!=NULL)
-		{
+
 			IContextMenu3* pContextMenu3;
-			HRESULT hRes=m_pActiveContextMenu->QueryInterface(IID_IContextMenu3,(void**)&pContextMenu3);
+			hRes=m_pActiveContextMenu->QueryInterface(IID_IContextMenu3,(void**)&pContextMenu3);
 			if (SUCCEEDED(hRes))
 			{
 				HRESULT hRet;
@@ -2911,6 +2908,8 @@ void CLocateDlg::OnMenuCommands(WORD wID)
 	}
 	else if (wID==0)
 	{
+		// Executing default item
+
 		int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
 		while (iItem!=-1)
 		{
@@ -3643,6 +3642,19 @@ BOOL CLocateDlg::InsertMenuItemsFromTemplate(HMENU hMenu,HMENU hTemplate,UINT uS
 	return TRUE;
 }
 
+/*void GetFirstParent(CString& parent,LPCSTR szPath)
+{
+	int i=FirstCharIndex(szPath,'\\')+1;
+	while (i!=0)
+	{
+		parent.Copy(szPath,i);
+		if (CFile::IsDirectory(parent))
+			return;
+		i=NextCharIndex(szPath,'\\',i)+1;
+	}		
+	parent=szPath;
+}*/
+
 HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 {
 	ClearMenuVariables();
@@ -3675,6 +3687,7 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 	if (!pItem->IsItemShortcut())
 	{
 		sParent=pItem->GetParent();
+		//GetFirstParent(sParent,pItem->GetParent());
 		aFiles.Add(new CString(pItem->GetPath()));
 	}
 	else
@@ -3683,7 +3696,10 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 	    CString* pStr=new CString;
 		GetShortcutTarget(pItem->GetPath(),pStr->GetBuffer(MAX_PATH));
 		pStr->FreeExtra();
-		sParent.Copy(*pStr,pStr->FindLast('\\')+1);
+        
+		sParent.Copy(*pStr,pStr->FindLast('\\'));
+        //GetFirstParent(sParent,*pStr);		
+		
 		aFiles.Add(pStr);
 	}
 	
@@ -3697,13 +3713,13 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 			// If item is shortcut, check parent
 			CString* pStr=new CString;
 			GetShortcutTarget(pItem->GetPath(),pStr->GetBuffer(_MAX_PATH));
-			int nIndex=LastCharIndex(*pStr,'\\');
-			if (strncmp(*pStr,pItem->GetPath(),nIndex)!=0)
+
+			if (strncmp(sParent,*pStr,pStr->FindLast('\\'))!=0)
 			{
 				delete pStr;
 				break;
 			}
-			pStr->FreeExtra(nIndex);
+			pStr->FreeExtra();
 			aFiles.Add(pStr);
 		}
 		else
@@ -3720,6 +3736,8 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 	// This is possible, if files are in same folder, 
 	if (iItem==-1)
 		m_pActiveContextMenu=GetContextMenuForFiles(sParent,aFiles);
+
+
 
 	if (m_pActiveContextMenu!=NULL)
 	{
@@ -3742,7 +3760,6 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 			{
 				hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
 					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_VERBSONLY);
-
 			}
 		}
 		else
@@ -3758,38 +3775,46 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 		}
 		else
 		{
-			// Inserting other items to the begin of menu 
-			// ("Open containing folder", "Remove from this list", ...)
-			MENUITEMINFO mii;
-			mii.cbSize=sizeof(MENUITEMINFO);
-			mii.fMask=MIIM_ID|MIIM_TYPE;
-			mii.fType=MFT_STRING;
-			mii.wID=IDM_OPENCONTAININGFOLDER;
-			CString str(IDS_OPENCONTAININGFOLDER);
-			mii.dwTypeData=str.GetBuffer();
-			InsertMenuItem(hFileMenu,0,TRUE,&mii);
-			mii.wID=IDM_REMOVEFROMTHISLIST;
-			str.LoadString(IDS_REMOVEFROMTHISLIST);
-			mii.dwTypeData=str.GetBuffer();
-			InsertMenuItem(hFileMenu,1,TRUE,&mii);
-			mii.fMask=MIIM_TYPE;
-			mii.fType=MFT_SEPARATOR;
-			InsertMenuItem(hFileMenu,2,TRUE,&mii);
+			InsertBasicPopuoMenuItems(hFileMenu);
 			return hFileMenu;
 		}
 	}
-
+	
 	if (hFileMenu==NULL)
 		hFileMenu=CreatePopupMenu();
+
+
 	InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN),0,IDM_DEFOPEN);
-	
+
 	return hFileMenu;
 	
 }
+
+void CLocateDlg::InsertBasicPopuoMenuItems(HMENU hMenu)
+{
+	// Inserting other items to the begin of menu 
+	// ("Open containing folder", "Remove from this list", ...)
+	MENUITEMINFO mii;
+	mii.cbSize=sizeof(MENUITEMINFO);
+	mii.fMask=MIIM_ID|MIIM_TYPE;
+	mii.fType=MFT_STRING;
+	mii.wID=IDM_OPENCONTAININGFOLDER;
+	CString str(IDS_OPENCONTAININGFOLDER);
+	mii.dwTypeData=str.GetBuffer();
+	InsertMenuItem(hMenu,0,TRUE,&mii);
+	mii.wID=IDM_REMOVEFROMTHISLIST;
+	str.LoadString(IDS_REMOVEFROMTHISLIST);
+	mii.dwTypeData=str.GetBuffer();
+	InsertMenuItem(hMenu,1,TRUE,&mii);
+	mii.fMask=MIIM_TYPE;
+	mii.fType=MFT_SEPARATOR;
+	InsertMenuItem(hMenu,2,TRUE,&mii);
+}
+
 	
 IContextMenu* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CString*>& aFiles)
 {
-	IContextMenu* pContextMenu;
+	IContextMenu* pContextMenu=NULL;
 
 	// Creating shell link
 	IShellLink* pShellLink;
@@ -3797,8 +3822,9 @@ IContextMenu* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CStrin
 	if (!SUCCEEDED(hRes))
 		return NULL;
 	
+	LPITEMIDLIST pParentIDList=NULL;
+		
 	// And resolving parent ID list
-	LPITEMIDLIST pParentIDList;
 	hRes=pShellLink->SetPath(szParent);
 	if (!SUCCEEDED(hRes))
 	{
@@ -3831,32 +3857,35 @@ IContextMenu* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CStrin
 	}
 	pShellLink->Release();
 	
-	
 	// Getting desktop IShellFolder interface
 	IShellFolder *pDesktopFolder,*pParentFolder;
 	hRes=SHGetDesktopFolder(&pDesktopFolder);
-	if (!SUCCEEDED(hRes))
-		return NULL;
-	
-	// Getting parent folder's IShellFolder interface
-	hRes=pDesktopFolder->BindToObject(pParentIDList,NULL,IID_IShellFolder,(void**)&pParentFolder);
-	if (!SUCCEEDED(hRes))
+	if (SUCCEEDED(hRes))
 	{
-		pDesktopFolder->Release();
-		return NULL;
-	}	
 
-	// Getting IContextMenu
-	hRes=pParentFolder->GetUIObjectOf(*this,aFiles.GetSize(),(LPCITEMIDLIST*)apcidl,
-		IID_IContextMenu,NULL,(void**)&pContextMenu);
-	if (!SUCCEEDED(hRes))
-		pContextMenu=NULL;
+		// Getting parent folder's IShellFolder interface
+		hRes=pDesktopFolder->BindToObject(pParentIDList,NULL,IID_IShellFolder,(void**)&pParentFolder);
+		if (SUCCEEDED(hRes))
+		{
+			// Getting IContextMenu
+			hRes=pParentFolder->GetUIObjectOf(*this,aFiles.GetSize(),(LPCITEMIDLIST*)apcidl,
+				IID_IContextMenu,NULL,(void**)&pContextMenu);
+			if (!SUCCEEDED(hRes))
+				pContextMenu=NULL;
+			pParentFolder->Release();
+	
+		}
+		pDesktopFolder->Release();
+
+	}
+	
 	
 	// Releasing memory
 	IMalloc* pMalloc;
 	if (SHGetMalloc(&pMalloc)==NOERROR)
 	{
 		pMalloc->Free(pParentIDList);
+		
 		for (int i=0;i<aFiles.GetSize();i++)
 			pMalloc->Free((void*)apidl[i]);
 		pMalloc->Release();
@@ -3864,8 +3893,6 @@ IContextMenu* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CStrin
 	delete[] apidl;
 	delete[] apcidl;
 	
-	pParentFolder->Release();
-	pDesktopFolder->Release();
 	return pContextMenu;
 } 
 

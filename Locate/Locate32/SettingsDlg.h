@@ -320,7 +320,7 @@ public:
         BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
 		static int CALLBACK ThreadSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
-		void OnNew();
+		void OnNew(CDatabase* pDatabaseTempl=NULL);
 		void OnEdit();
 		void OnRemove();
 		void OnEnable(BOOL nEnable);

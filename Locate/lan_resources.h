@@ -442,12 +442,18 @@
 #define IDS_ALREADYEXCLUDED				2101
 #define IDS_EMPTY                       3000
 #define IDS_CHANGEICON                  4000
+#define IDS_IMPORTDATABASEFILTERS		4001
+#define IDS_EXPORTDATABASEFILTERS		4002
 #define IDS_TXTFILTERS                  4004
 #define IDS_SAVERESULTS                 4010
 #define IDS_SAVERESULTSHEADER           4011
 #define IDS_SAVERESULTSDATE             4012
 #define IDS_SAVERESULTSDBCAPTION        4013
 #define IDS_SAVERESULTSDB               4014
+#define IDS_INCREASETHREADCOUNT			4015
+#define IDS_UNABLEREADSETTINGS			4016
+#define IDS_FILEISNOTDATABASE			4017
+#define IDS_CANNOTWRITESETTINGS			4018
 #define IDS_SETTINGS                    5000
 #define IDS_GENERALSETTINGS             5001
 #define IDS_DATABASESETTINGS            5002
@@ -485,6 +491,8 @@
 #define IDS_FOLDEREXIST                 5215
 #define IDS_SUBFOLDER                   5216
 #define IDS_ADDFOLDER                   5217
+#define IDS_IMPORTDATABASESETTINGS		5218
+#define IDS_EXPORTDATABASESETTINGS		5219
 #define IDS_NAMEALREADYEXISTS           5220
 #define IDS_FILEALREADYEXISTS           5221
 #define IDS_INVALIDFILENAME             5222

@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,98,4,12310
- PRODUCTVERSION 2,98,4,12310
+ FILEVERSION 2,99,5,1020
+ PRODUCTVERSION 2,99,5,1020
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 alpha 4.12310"
+            VALUE "FileVersion", "3.0 beta 5.1020"
             VALUE "InternalName", "lan_en"
-            VALUE "LegalCopyright", "Copyright © 1997-2004 Janne Huttunen"
+            VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 alpha 4.11310"
+            VALUE "ProductVersion", "3.0 beta 5.1020"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1314,6 +1314,14 @@ BEGIN
 	IDS_THREADNAME			"Thread %d"
 	IDS_DELETEDATABASE		"Delete database"
 	IDS_DELETEDATABASEQUESTION	"Do you want also delete database file '%s'?"
+	IDS_IMPORTDATABASESETTINGS	"Import database settings"
+	IDS_EXPORTDATABASESETTINGS	"Export database settings"
+	IDS_FILEISNOTDATABASE	"File '%s' exists and it is not database, do you want overwrite file?"
+	IDS_INCREASETHREADCOUNT "The number of threads is lower than requested. Do you want increase thread count?"
+	IDS_UNABLEREADSETTINGS  "Unable to read settings from file '%s'."
+	IDS_CANNOTWRITESETTINGS "Cannot write settings to file '%s'."
+	IDS_IMPORTDATABASEFILTERS "Database settings (.dbs, .dbi, .txt)|*.dbs;*.dbi;*.txt|Database files (.dbi)|*.dbi|Text Files (.dbi, .txt)|*.dbi;*.txt|All Files|*.*||"
+	IDS_EXPORTDATABASEFILTERS "Database files (.dbs)|*.dbs|Database setting (.dbi)|*.dbi|Text Files|*.txt|All Files|*.*||"	
 	IDS_FLOPPYSTRING        "Floppy"
     IDS_CDROMSTRING         "CD-ROM"
 END
@@ -1533,7 +1541,7 @@ BEGIN
 	IDS_UPDATEDB32UPDATINGDATABASE		"Updating database %s (file: %s)"
 	IDS_UPDATEDB32UPDATINGDATABASE2		"Updating database %s"
 	IDS_UPDATEDB32SCANNING				"Scanning %s\n"
-	IDS_UPDATEDB32WRITINGDB				"Writing database\n"
+	IDS_UPDATEDB32WRITINGDB				"Writing database"
 	IDS_UPDATEDB32CANNOTCHANGELOADED	"The properties of loaded database '%s' cannot be changed\n"
 	IDS_UPDATEDB32ROOTUNAVAILABLE		"Error: path unavailable: %s.\n"
 	IDS_UPDATEDB32CANNOTUPDATEINCREMENTALLY		"Error: cannot write %s incrementally, trying full update (y/n)?"

@@ -1,10 +1,11 @@
-/* Copyright (c) 1997-2004 Janne Huttunen
-   database updater v2.98.4.9200                  */
+/* Copyright (c) 1997-2005 Janne Huttunen
+   database updater v2.99.5.1020                  */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
 
-BOOL CDatabaseInfo::GetInfo(const CDatabase* pDatabase)
+
+BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCSTR szArchivePath)
 {
 	sCreator.Empty();
 	sDescription.Empty();
@@ -17,14 +18,13 @@ BOOL CDatabaseInfo::GetInfo(const CDatabase* pDatabase)
 
 	try
 	{
-		switch (pDatabase->GetArchiveType())
+		switch (nArchiveType)
 		{
 		case CDatabase::archiveFile:
-			dbFile=new CFile(pDatabase->GetArchiveName(),CFile::defRead,TRUE);
+			dbFile=new CFile(szArchivePath,CFile::defRead,TRUE);
 			break;
 		default:
-			throw CFileException(CFileException::notImplemented,
-					-1,pDatabase->GetArchiveName());
+			throw CFileException(CFileException::notImplemented,-1,szArchivePath);
 		}
 			
 		szBuffer=new BYTE[10];
@@ -38,7 +38,7 @@ BOOL CDatabaseInfo::GetInfo(const CDatabase* pDatabase)
 			szBuffer[4]!='T' || szBuffer[5]!='E' || 
 			szBuffer[6]!='D' || szBuffer[7]!='B')
 		{
-			throw CFileException(CFileException::invalidFormat,-1,pDatabase->GetArchiveName());
+			throw CFileException(CFileException::invalidFormat,-1,szArchivePath);
 		}
 	
 		if (szBuffer[8]>='0') // New database format
@@ -61,9 +61,8 @@ BOOL CDatabaseInfo::GetInfo(const CDatabase* pDatabase)
 			dbFile->Read(sDescription);
 
 			// Reading extra data, for future use
-			CString Reserved;
-			dbFile->Read(Reserved);
-			dbFile->Read(Reserved);
+			dbFile->Read(szExtra1);
+			dbFile->Read(szExtra2);
 
 			// Reading time
 			dbFile->Read(dwTemp);
@@ -137,7 +136,7 @@ BOOL CDatabaseInfo::GetInfo(const CDatabase* pDatabase)
 			dbFile->Close();
 		}
 		else
-			throw CFileException(CFileException::invalidFormat,-1,pDatabase->GetArchiveName());
+			throw CFileException(CFileException::invalidFormat,-1,szArchivePath);
 	}
 	catch (...)
 	{

@@ -322,6 +322,7 @@ BOOL CSelectDatabasesDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDC_CANCEL:
 		EndDialog(0);
 		break;
+	case IDC_DOWN:
 	case IDC_UP:
 		if (ItemUpOrDown(wID==IDC_UP))
 			SendDlgItemMessage(IDC_PRESETS,CB_SETCURSEL,CUSTOM_PRESET);

@@ -1396,18 +1396,13 @@ BOOL CSettingsProperties::SaveSettings()
 	CDatabase::CheckIDs(m_aDatabases);
 	if (!IsFlagSet(settingsDatabasesOverridden))
 	{
-		CDatabase::CheckIDs(m_aDatabases);
-
 		GetLocateApp()->SetDatabases(m_aDatabases);
 		CDatabase::SaveToRegistry(HKCU,"Software\\Update\\Databases",GetLocateApp()->GetDatabases());
 
 		GetLocateApp()->ClearStartupFlag(CLocateApp::CStartData::startupDatabasesOverridden);
 	}
 	else
-	{
-		CDatabase::CheckIDs(m_aDatabases);
 		GetLocateApp()->SetDatabases(m_aDatabases);
-	}
 	
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defWrite)==ERROR_SUCCESS)
 	{
@@ -2438,12 +2433,15 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnCommand(WORD wID,WORD wNotif
 	return CPropertyPage::OnCommand(wID,wNotifyCode,hControl);
 }
 
-void CSettingsProperties::CDatabasesSettingsPage::OnNew()
+void CSettingsProperties::CDatabasesSettingsPage::OnNew(CDatabase* pDatabaseTempl)
 {
 	CWaitCursor wait;
 
 	CDatabaseDialog dbd;
-	dbd.m_pDatabase=CDatabase::FromDefaults(FALSE,NULL,0);
+	if (pDatabaseTempl!=NULL)
+		dbd.m_pDatabase=pDatabaseTempl;
+	else
+		dbd.m_pDatabase=CDatabase::FromDefaults(FALSE,NULL,0);
 	dbd.m_nMaximumNumbersOfThreads=m_nThreadsCurrently;
 	
 	int iItem=m_pList->GetNextItem(-1,LVNI_ALL);
@@ -2758,12 +2756,144 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnNotify(int idCtrl,LPNMHDR pn
 
 void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 {
-	MessageBox("not implemented");
+	// Set wait cursor
+	CWaitCursor wait;
+	
+	// Initializing file name dialog
+	CString Title;
+	CFileDialog fd(TRUE,"*","",OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,CString(IDS_IMPORTDATABASEFILTERS));
+	fd.EnableFeatures();
+	Title.LoadString(IDS_IMPORTDATABASESETTINGS);
+	fd.m_pofn->lpstrTitle=Title;
+	
+	// Ask file name
+	if (!fd.DoModal(*this))
+		return;
+
+	// First, check whether file is database and read information
+	CDatabase* pDatabase;
+	CDatabaseInfo* pDatabaseInfo=CDatabaseInfo::GetFromFile(fd.GetPathName());
+	if (pDatabaseInfo!=NULL)
+	{
+		if (!pDatabaseInfo->szExtra2.IsEmpty())
+			pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->szExtra2);
+		if (pDatabase==NULL && !pDatabaseInfo->szExtra1.IsEmpty())
+			pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->szExtra1);
+
+		if (pDatabase!=NULL)
+		{
+			pDatabase->SetArchiveType(CDatabase::archiveFile);
+			pDatabase->SetArchiveName(fd.GetPathName());
+		}
+	}
+	else
+	{
+		CFile* pFile=NULL;
+		char* pFileContent=NULL;
+		BOOL bError=FALSE;
+
+		try {
+			pFile=new CFile(fd.GetPathName(),CFile::defRead,TRUE);
+
+			DWORD dwLength=pFile->GetLength();
+			pFileContent=new char[dwLength+1];
+			pFile->Read(pFileContent,dwLength);
+			pFileContent[dwLength]='\0';
+			pFile->Close();
+		}
+		catch (...)
+		{
+			bError=TRUE;
+		}
+        
+		if (!bError)
+			pDatabase=CDatabase::FromExtraBlock(pFileContent);
+
+		if (pFile!=NULL)
+			delete pFile;
+		if (pFileContent!=NULL)
+			delete[] pFileContent;
+	}
+
+	if (pDatabase==NULL)
+	{
+		CString msg;
+		msg.Format(IDS_UNABLEREADSETTINGS,(LPCSTR)fd.GetPathName());
+		MessageBox(msg,Title,MB_OK|MB_ICONERROR);
+		return;
+	}
+
+	if (pDatabase->GetThreadId()>=m_nThreadsCurrently)
+	{
+		if (MessageBox(CString(IDS_INCREASETHREADCOUNT),Title,MB_ICONQUESTION|MB_YESNO)==IDYES)
+		{
+			ChangeNumberOfThreads(pDatabase->GetThreadId()+1);
+			SetDlgItemInt(IDC_THREADS,pDatabase->GetThreadId()+1,FALSE);
+		}
+		else
+			pDatabase->SetThreadId(0);
+	}
+
+	OnNew(pDatabase);
 }
 
 void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 {
-	MessageBox("not implemented");
+	int iItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+	if (iItem==-1)
+		return;
+    
+	CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(iItem);
+	if (pDatabase==NULL)
+		return;
+
+	// Set wait cursor
+	CWaitCursor wait;
+	
+	LPCSTR pCurFile=szEmpty;
+	if (pDatabase->GetArchiveType()==CDatabase::archiveFile)
+		pCurFile=pDatabase->GetArchiveName();
+
+	// Initializing file name dialog
+	CString Title;
+	
+	CFileDialog fd(FALSE,"*",pCurFile,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,CString(IDS_EXPORTDATABASEFILTERS));
+	fd.EnableFeatures();
+	Title.LoadString(IDS_EXPORTDATABASESETTINGS);
+	fd.m_pofn->lpstrTitle=Title;
+	
+	
+	// Ask file name
+	if (!fd.DoModal(*this))
+		return;
+	
+	if (CFile::IsFile(fd.GetPathName()))
+	{
+		if (pDatabase->SaveExtraBlockToDbFile(fd.GetPathName()))
+			return;
+
+		CString msg;
+		msg.Format(IDS_FILEISNOTDATABASE,LPCSTR(fd.GetPathName()));
+		if (MessageBox(msg,Title,MB_ICONQUESTION|MB_YESNO)==IDNO)
+			return;			
+	}
+
+	CFile* pFile=NULL;
+	LPSTR pExtra=pDatabase->ConstructExtraBlock();
+	DWORD dwExtraLen=istrlen(pExtra);
+
+	try {
+		pFile=new CFile(fd.GetPathName(),CFile::defWrite,TRUE);
+		pFile->Write(pExtra,dwExtraLen);
+	}
+	catch (...)
+	{
+		MessageBox(CString(IDS_CANNOTWRITESETTINGS),Title,MB_ICONERROR|MB_OK);
+	}
+	if (pFile!=NULL)
+		delete pFile;
+	delete[] pExtra;
+    
 }
 
 BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)

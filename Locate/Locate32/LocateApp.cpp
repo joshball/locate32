@@ -1747,7 +1747,7 @@ DWORD CSchedule::WhenShouldRun(STIME& tTime,SDATE& tDate,UINT nDayOfWeek) const
 				int dx=CTimeX::GetIndex(tDate)-CTimeX::GetIndex(m_tLastStartDate);
 				if (m_bFlags&flagAtThisTime)
 				{
-					if (dx==(int)m_tDaily.wEvery)
+					if (dx>=(int)m_tDaily.wEvery)
 					{
 						int diff=tTime-m_tStartTime;
 						if (diff>=0 && diff<60)
@@ -2379,7 +2379,7 @@ UINT CLocateAppWnd::FormatTooltipStatusText(CString& str,RootInfo* pRootInfo,WOR
 
 		// #X  thread number
 		if (wThreads>1)
-			str << '#' << (int)(i+1) <<' ';
+			str << '#' << (int)(i+1);
 
 		if (pRootInfo[i].pName==NULL)
 		{

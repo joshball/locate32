@@ -48,10 +48,10 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 		{
 			CStringW str;
 #ifdef _DEBUG
-			str.Format(L"%s © 1997-2004 Janne Huttunen\nTHIS IS DEBUG VERSION, %s %s",
+			str.Format(L"%s © 1997-2005 Janne Huttunen\nTHIS IS DEBUG VERSION, %s %s",
 				(LPCWSTR)CStringW(IDS_COPYRIGHT),(LPCWSTR)CStringW(__DATE__),(LPCWSTR)CStringW(__TIME__));
 #else
-			str.Format(L"%s © 1997-2004 Janne Huttunen",(LPCWSTR)CStringW(IDS_COPYRIGHT));
+			str.Format(L"%s © 1997-2005 Janne Huttunen",(LPCWSTR)CStringW(IDS_COPYRIGHT));
 #endif
 			SetDlgItemText(IDC_COPYRIGHT,str);
 		}
@@ -59,10 +59,10 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 		{
 			CString str;
 #ifdef _DEBUG
-			str.Format("%s © 1997-2004 Janne Huttunen\nTHIS IS DEBUG VERSION, %s %s",
+			str.Format("%s © 1997-2005 Janne Huttunen\nTHIS IS DEBUG VERSION, %s %s",
 				(LPCSTR)CString(IDS_COPYRIGHT),__DATE__,__TIME__);
 #else
-			str.Format("%s © 1997-2004 Janne Huttunen",(LPCSTR)CString(IDS_COPYRIGHT));
+			str.Format("%s © 1997-2005 Janne Huttunen",(LPCSTR)CString(IDS_COPYRIGHT));
 #endif
 			SetDlgItemText(IDC_COPYRIGHT,str);
 		}
