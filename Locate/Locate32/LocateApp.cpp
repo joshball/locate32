@@ -6,7 +6,8 @@
 
 CLocateApp::CLocateApp()
 :	CWinApp("LOCATE32"),m_nDelImage(0),m_nStartup(0),
-	m_ppUpdaters(NULL),m_pLastDatabase(NULL)
+	m_ppUpdaters(NULL),m_pLastDatabase(NULL),m_nFileSizeFormat(fsfOverKBasKB),
+	m_dwProgramFlags(pfDefault)
 {
 	DebugMessage("CLocateApp::CLocateApp()");
 	m_pStartData=new CStartData;
@@ -121,7 +122,8 @@ BOOL CLocateApp::InitInstance()
 
 	
 	// Load date and time format strings from registry	
-	LoadDateAndTimeString();
+	LoadRegistry();
+
 	// Retrieving default icons
 	SetDeleteAndDefaultImage();
 
@@ -147,7 +149,8 @@ int CLocateApp::ExitInstance()
 		CoUninitialize();
 
 		// Savind date and time format strings
-		SaveDateAndTimeString();
+		SaveRegistry();
+		
 	}
 
 
@@ -841,35 +844,7 @@ BOOL CLocateApp::ChechOtherInstances()
 	return FALSE;
 }
 
-void CLocateApp::LoadDateAndTimeString()
-{
-	m_strDateFormat.Empty();
-	m_strTimeFormat.Empty();
 
-	CString Path;
-	CRegKey RegKey;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\General";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
-	{
-		RegKey.QueryValue("DateFormat",m_strDateFormat);
-		RegKey.QueryValue("TimeFormat",m_strTimeFormat);
-	}
-
-}
-
-void CLocateApp::SaveDateAndTimeString()
-{
-	CString Path;
-	CRegKey RegKey;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\General";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
-	{
-		RegKey.SetValue("DateFormat",m_strDateFormat);
-		RegKey.SetValue("TimeFormat",m_strTimeFormat);
-	}
-}
 	
 LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 {
@@ -1169,6 +1144,199 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 	return szRet;
 }
 
+LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) const
+{
+ 	char* szRet=new char[40];
+	char szUnit[10];
+	BOOL bDigits=0;
+		
+
+	switch (m_nFileSizeFormat)
+	{
+	case fsfOverKBasKB:
+		if (bFileSizeHi>0)
+		{
+			LoadString(IDS_KB,szUnit,10);
+			
+			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
+			_ui64toa(uiFileSize/1024,szRet,10);
+		}
+		else if (dwFileSizeLo<1024)
+		{
+			LoadString(IDS_BYTES,szUnit,10);
+			
+			ultoa(dwFileSizeLo,szRet,10);
+		}
+		else
+		{
+			LoadString(IDS_KB,szUnit,10);
+			
+			ultoa((dwFileSizeLo/1024)+(dwFileSizeLo%1024==0?0:1),szRet,10);
+		}
+		break;
+	case fsfBestUnit:
+		if (bFileSizeHi>0)
+		{
+			DWORD num=DWORD(((((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo))/(1024*1024));
+
+			if (num>=10*1024)
+				ultoa(num/1024,szRet,10);
+			else
+			{
+				bDigits=1;
+				sprintf(szRet,"%1.1f",double(num)/1024);
+			}
+
+			LoadString(IDS_GB,szUnit,10);
+		}
+		else if (dwFileSizeLo>1024*1024*1024)
+		{
+			DWORD num=dwFileSizeLo/(1024*1024);
+
+			if (num>=10*1024)
+				ultoa(num/1024,szRet,10);
+			else
+			{
+				bDigits=1;
+				sprintf(szRet,"%1.1f",double(num)/1024);
+			}
+
+			LoadString(IDS_GB,szUnit,10);
+		}
+		else if (dwFileSizeLo>1048576) // As MB
+		{
+			DWORD num=dwFileSizeLo/1024;
+			
+			if (num>=10*1024)
+				ultoa(num/1024,szRet,10);
+			else
+			{
+				bDigits=1;
+				sprintf(szRet,"%1.1f",double(num)/1024);
+			}
+
+			LoadString(IDS_MB,szUnit,10);
+		}
+		else if (dwFileSizeLo>1024) // As KB
+		{
+			if (dwFileSizeLo>=10*1024)
+				ultoa(dwFileSizeLo/1024,szRet,10);
+			else
+			{
+				bDigits=1;
+				sprintf(szRet,"%1.1f",double(dwFileSizeLo)/1024);
+			}
+			
+			LoadString(IDS_KB,szUnit,10);
+		}
+		else // As B
+		{
+			ultoa(dwFileSizeLo,szRet,10);
+		
+			LoadString(IDS_BYTES,szUnit,10);
+		}		
+		break;
+	case fsfBytes:
+		LoadString(IDS_BYTES,szUnit,10);
+	case fsfBytesNoUnit:
+		if (bFileSizeHi>0)
+		{
+			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
+			_ui64toa(uiFileSize,szRet,10);
+		}
+		else
+			ultoa(dwFileSizeLo,szRet,10);
+		
+		break;
+	case fsfKiloBytes:
+		LoadString(IDS_KB,szUnit,10);
+	case fsfKiloBytesNoUnit:
+		if (bFileSizeHi>0)
+		{
+			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
+			_ui64toa(uiFileSize/1024,szRet,10);
+		}
+		else if (dwFileSizeLo>10*1024)
+			ultoa(dwFileSizeLo/1024,szRet,10);
+		else if (dwFileSizeLo<1024)
+		{
+			bDigits=3;
+			sprintf(szRet,"%1.3f",((double)dwFileSizeLo)/1024);
+		}
+		else
+		{
+			bDigits=1;
+			sprintf(szRet,"%1.1f",((double)dwFileSizeLo)/1024);
+		}
+		break;
+	case fsfMegaBytesMegaBytes:
+		LoadString(IDS_MB,szUnit,10);
+	case fsfMegaBytesMegaBytesNoUnit:
+		if (bFileSizeHi>0)
+		{
+			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
+			_ui64toa(uiFileSize/1048576,szRet,10);
+		}
+		else if (dwFileSizeLo>10*1048576)
+			ultoa(dwFileSizeLo/1048576,szRet,10);
+		else if (dwFileSizeLo<1048576)
+		{
+			bDigits=3;
+			sprintf(szRet,"%1.3f",((double)dwFileSizeLo)/1048576);
+		}
+		else
+		{
+			bDigits=1;
+			sprintf(szRet,"%1.1f",((double)dwFileSizeLo)/1048576);
+		}		
+		break;
+	}
+
+	if (m_dwProgramFlags&pfFormatUseLocaleFormat)
+	{
+		CRegKey RegKey;
+		if (RegKey.OpenKey(HKCU,"Control Panel\\International",CRegKey::defRead)==ERROR_SUCCESS)
+		{
+			char* szRet2=new char[50];
+			char szTemp[10]=".",szTemp2[10]=" ";
+
+			NUMBERFMT fmt;
+			
+			// Defaults;
+			fmt.NumDigits=bDigits; 
+			fmt.LeadingZero=1;
+			fmt.Grouping=3; 
+			fmt.lpDecimalSep=szTemp; 
+			fmt.lpThousandSep=szTemp2; 
+			fmt.NegativeOrder=1; 
+			
+			if (RegKey.QueryValue("iLZero",szTemp,10)>1)
+				fmt.LeadingZero=atoi(szTemp);
+			if (RegKey.QueryValue("sGrouping",szTemp,10)>1)
+				fmt.Grouping=atoi(szTemp);
+			RegKey.QueryValue("sDecimal",szTemp,10);
+			RegKey.QueryValue("sThousand",szTemp2,10);
+
+			
+			if (GetNumberFormat(LOCALE_USER_DEFAULT,0,szRet,&fmt,szRet2,50)>0)
+			{
+				delete[] szRet;
+				szRet=szRet2;
+			}
+			else
+				delete[] szRet2;
+		}
+	}
+
+	if (!(m_nFileSizeFormat==fsfBytesNoUnit || 
+		m_nFileSizeFormat==fsfKiloBytesNoUnit|| 
+		m_nFileSizeFormat==fsfMegaBytesMegaBytesNoUnit))
+		strcat(szRet,szUnit);
+
+	return szRet;
+}
+
+
 BOOL CLocateApp::StopUpdating(BOOL bForce)
 {
     if (!IsUpdating())
@@ -1462,7 +1630,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 		switch(ueCode)
 		{
 		case ueUnknown:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
 				char* pError;
 
@@ -1495,7 +1663,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			break;
 		case ueCreate:
 		case ueOpen:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
@@ -1504,7 +1672,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			}
 			break;
 		case ueRead:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
@@ -1513,7 +1681,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			}
 			break;
 		case ueWrite:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
@@ -1522,14 +1690,14 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			}
 			break;
 		case ueAlloc:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
 				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
 					CString(IDS_ERRORCANNOTALLOCATE),CString(IDS_ERROR),MB_OK|MB_ICONERROR);
 			}
 			break;
 		case ueInvalidDatabase:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowCriticalErrors)
+			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORINVALIDDB,pUpdater->GetCurrentDatabaseName());
@@ -1538,7 +1706,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			}
 			break;
 		case ueFolderUnavailable:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowNonCriticalErrors)
+			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowNonCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():"");
@@ -1547,7 +1715,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			}
 			break;
 		case ueCannotIncrement:
-			if (((CLocateAppWnd*)dwParam)->GetProgramFlags()&CLocateAppWnd::pfShowNonCriticalErrors)
+			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowNonCriticalErrors)
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTWRITEINCREMENTALLY,pUpdater->GetCurrentDatabaseName());
@@ -2493,9 +2661,7 @@ int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 	// Loading menu
 	m_Menu.LoadMenu(IDR_SYSTEMTRAYMENU);
 
-	// Loading registry settings
-	LoadRegistry();
-	
+
 	// Set schedules
 	SetSchedules();
 	SetMenuDefaultItem(m_Menu.GetSubMenu(0),IDM_OPENLOCATE,FALSE);
@@ -2544,41 +2710,62 @@ BOOL CLocateAppWnd::OnCreateClient(LPCREATESTRUCT lpcs)
 	return bRet;
 }
 
-void CLocateAppWnd::SaveRegistry() const
+void CLocateApp::SaveRegistry() const
 {
 	CRegKey RegKey;
 	if(RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",
 		CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
 		RegKey.SetValue("General Flags",m_dwProgramFlags&pfSave);
+
+		RegKey.SetValue("DateFormat",m_strDateFormat);
+		RegKey.SetValue("TimeFormat",m_strTimeFormat);
+		RegKey.SetValue("SizeFormat",(DWORD)m_nFileSizeFormat);
 	}
+
+
 }
 
-void CLocateAppWnd::LoadRegistry()
+void CLocateApp::LoadRegistry()
 {
 	// When modifications are done, check whether 
 	// function is applicable for UpdateSettings
-	
-	
+
 	CRegKey RegKey;
-	DWORD temp;
+	m_strDateFormat.Empty();
+	m_strTimeFormat.Empty();
 
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		// Loading dwFlags
-		temp=m_dwProgramFlags;
+		DWORD temp=m_dwProgramFlags;
+		RegKey.QueryValue("General Flags",temp);
+		m_dwProgramFlags&=~pfSave;
+		m_dwProgramFlags|=temp&pfSave;
+
+
+
+		RegKey.QueryValue("DateFormat",m_strDateFormat);
+		RegKey.QueryValue("TimeFormat",m_strTimeFormat);
+		RegKey.QueryValue("SizeFormat",*((DWORD*)&m_nFileSizeFormat));
+
+	}
+}
+
+BOOL CLocateApp::UpdateSettings()
+{
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",
+		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		// Loading dwFlags
+		DWORD temp=m_dwProgramFlags;
 		RegKey.QueryValue("General Flags",temp);
 		m_dwProgramFlags&=~pfSave;
 		m_dwProgramFlags|=temp&pfSave;
 	}
-}
 
-BOOL CLocateAppWnd::UpdateSettings()
-{
-	LoadRegistry();
-
-	// TODO: Close update tooltip if it present
 	return TRUE;
 }
 
@@ -2884,7 +3071,7 @@ BOOL CLocateAppWnd::StartUpdateStatusNotification()
 		SetTimer(ID_UPDATEANIM,100);
 	}
 	
-	if (m_dwProgramFlags&pfEnableUpdateTooltip && 
+	if (CLocateApp::GetProgramFlags()&CLocateApp::pfEnableUpdateTooltip && 
 		m_pUpdateStatusWnd==NULL)
 	{
 		m_pUpdateStatusWnd=new CUpdateStatusWnd;
@@ -3080,7 +3267,7 @@ BYTE CLocateAppWnd::OnSettings()
 			m_pSettings->SaveSettings();
 			
 			// Set CLocateAppWnd to use new settings
-			UpdateSettings();
+			GetLocateApp()->UpdateSettings();
 			SetSchedules(m_pSettings->GetSchedules());
 			SaveSchedules();
 			
@@ -3274,7 +3461,6 @@ void CLocateAppWnd::OnDestroy()
 	{
 		hLocateThread=m_pLocateDlgThread->m_hThread;
 
-		DebugNumMessage("Trying to close locate dialog thread %X",(DWORD)m_pLocateDlgThread);
 		if (m_pLocateDlgThread->IsRunning())
 		{
 			GetLocateDlg()->PostMessage(WM_CLOSE);
@@ -3304,7 +3490,6 @@ void CLocateAppWnd::OnDestroy()
 	((CLocateApp*)GetApp())->StopUpdating();
 	
 	SaveSchedules();
-	SaveRegistry();
 	
 	CFrameWnd::OnDestroy();
 	DebugMessage("void CLocateAppWnd::OnDestroy() END");

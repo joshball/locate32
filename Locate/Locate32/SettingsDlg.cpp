@@ -27,7 +27,6 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_nMaximumFoundFiles(0),
 	m_dwLocateDialogFlags(CLocateDlg::fgDefault),
 	m_dwLocateDialogExtraFlags(CLocateDlg::efDefault),
-	m_dwProgramFlags(CLocateAppWnd::pfDefault),
 	m_bDefaultFlag(defaultDefault),	m_dwSettingsFlags(settingsDefault),
 	m_nNumberOfDirectories(DEFAULT_NUMBEROFDIRECTORIES),
 	m_nTransparency(0),m_nToolTipTransparency(0)
@@ -79,9 +78,10 @@ BOOL CSettingsProperties::LoadSettings()
 	
 	m_DateFormat=((CLocateApp*)GetApp())->m_strDateFormat;
 	m_TimeFormat=((CLocateApp*)GetApp())->m_strTimeFormat;
+	m_nFileSizeFormat=((CLocateApp*)GetApp())->m_nFileSizeFormat;
 	
 	// GetLocateAppWnd() is alwyas present
-	m_dwProgramFlags=GetLocateAppWnd()->GetProgramFlags();
+	m_dwProgramFlags=CLocateApp::GetProgramFlags();
 
 	if (GetLocateDlg()!=NULL)
 	{
@@ -251,14 +251,16 @@ BOOL CSettingsProperties::SaveSettings()
 	{
 		RegKey.SetValue("Program Status",m_dwLocateDialogFlags&CLocateDlg::fgSave);
 		RegKey.SetValue("Program StatusExtra",m_dwLocateDialogExtraFlags&CLocateDlg::efSave);
-		RegKey.SetValue("General Flags",m_dwProgramFlags&CLocateAppWnd::pfSave);
+		RegKey.SetValue("General Flags",m_dwProgramFlags&CLocateApp::pfSave);
 		
 		RegKey.SetValue("DateFormat",m_DateFormat);
 		RegKey.SetValue("TimeFormat",m_TimeFormat);
 		RegKey.SetValue("OverrideExplorer",DWORD(m_bAdvancedAndContextMenuFlag&hookExplorer?TRUE:FALSE));
-		((CLocateApp*)GetApp())->m_strDateFormat=m_DateFormat;
-		((CLocateApp*)GetApp())->m_strTimeFormat=m_TimeFormat;
 	}
+	((CLocateApp*)GetApp())->m_strDateFormat=m_DateFormat;
+	((CLocateApp*)GetApp())->m_strTimeFormat=m_TimeFormat;
+	((CLocateApp*)GetApp())->m_nFileSizeFormat=m_nFileSizeFormat;
+
 	Path.LoadString(IDS_REGPLACE,CommonResource);
 	Path<<"\\Recent Strings";
 	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
@@ -755,6 +757,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CLocateDlg::fgLVNoDoubleItems,&m_pSettings->m_dwLocateDialogFlags),
 		CreateComboBox(IDS_ADVSETSHOWDATESINFORMAT,DateFormatComboProc,0,0),
 		CreateComboBox(IDS_ADVSETSHOWTIMESINFORMAT,TimeFormatComboProc,0,0),
+		CreateListBox(IDS_ADVSETSHOWFILESIZESINFORMAT,FileSizeListProc,0,&m_pSettings->m_nFileSizeFormat),
+		CreateCheckBox(IDS_ADVSETFORMATWITHUSERLOCALE,NULL,DefaultCheckBoxProc,
+			CLocateApp::pfFormatUseLocaleFormat,&m_pSettings->m_dwProgramFlags),
 		CreateCheckBox(IDS_ADVSETUSEPROGRAMFORFOLDERS,OtherExplorerProgram,DefaultCheckBoxProc,
 			CSettingsProperties::settingsUseOtherProgramsToOpenFolders,&m_pSettings->m_dwSettingsFlags),
 		CreateCheckBox(IDS_ADVSETCOMPUTEMD5SUMS,NULL,DefaultCheckBoxProc,
@@ -884,11 +889,11 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 
 	Item* UpdateProcessItems[]={
 		CreateCheckBox(IDS_ADVSETSHOWCRITICALERRORS,NULL,
-			DefaultCheckBoxProc,CLocateAppWnd::pfShowCriticalErrors,&m_pSettings->m_dwProgramFlags),
+			DefaultCheckBoxProc,CLocateApp::pfShowCriticalErrors,&m_pSettings->m_dwProgramFlags),
 		CreateCheckBox(IDS_ADVSETSHOWNONCRITICALERRORS,NULL,
-			DefaultCheckBoxProc,CLocateAppWnd::pfShowNonCriticalErrors,&m_pSettings->m_dwProgramFlags),
+			DefaultCheckBoxProc,CLocateApp::pfShowNonCriticalErrors,&m_pSettings->m_dwProgramFlags),
 		CreateCheckBox(IDS_ADVSETSHOWUPDATESTATUSTOOLTIP,StatusTooltipItems,
-			DefaultCheckBoxProc,CLocateAppWnd::pfEnableUpdateTooltip,&m_pSettings->m_dwProgramFlags),
+			DefaultCheckBoxProc,CLocateApp::pfEnableUpdateTooltip,&m_pSettings->m_dwProgramFlags),
 		NULL
 	};
 	
@@ -1006,6 +1011,49 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::DateFormatComboProc(CO
 			((CAdvancedSettingsPage*)pParams->pPage)->m_pSettings->m_DateFormat.Empty();
 		else
 			((CAdvancedSettingsPage*)pParams->pPage)->m_pSettings->m_DateFormat.Copy(pParams->pData);
+		break;
+	case BASICPARAMS::ChangingValue:
+		break;
+	}
+	return TRUE;
+}
+
+
+BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::FileSizeListProc(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch(pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		// File size formats
+		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
+		{
+			CString text(IDS_ADVSETFILESIZEFORMATLESS1KB);
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			text.LoadString(IDS_ADVSETFILESIZEFORMATDEPENGINGSIZE);
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			text.LoadString(IDS_ADVSETFILESIZEFORMATBYTES);
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			text.LoadString(IDS_ADVSETFILESIZEFORMATBYTENOUNITS);
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			text.LoadString(IDS_ADVSETFILESIZEFORMATKB);
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			text.LoadString(IDS_ADVSETFILESIZEFORMATKBNOUNITS);
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			text.LoadString(IDS_ADVSETFILESIZEFORMATMB);
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			text.LoadString(IDS_ADVSETFILESIZEFORMATMBNOUNITS);
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+	
+		}
+
+		break;
+	case BASICPARAMS::Get:
+		pParams->lValue=*((CLocateApp::FileSizeFormats*)pParams->lParam);
+		break;
+	case BASICPARAMS::Set:
+		break;
+	case BASICPARAMS::Apply:
+		*((LONG*)pParams->lParam)=((COMBOAPPLYPARAMS*)pParams)->nCurSel;
 		break;
 	case BASICPARAMS::ChangingValue:
 		break;
@@ -4410,7 +4458,7 @@ void COptionsPropertyPage::CallApply(Item** pItems)
 			if (pItems[i]->pProc!=NULL)
 			{
 				pItems[i]->SetValuesForBasicParams(&bp);
-				if (pItems[i]->nType==Item::Combo)
+				if (pItems[i]->nType==Item::Combo || pItems[i]->nType==Item::List)
 					bp.nCurSel=::SendMessage(pItems[i]->hControl,CB_GETCURSEL,0,0);
 				pItems[i]->pProc(&bp);
 			}

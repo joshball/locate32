@@ -507,6 +507,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDM_GLOBALUPDATEDBACCEL:
 	case IDM_UPDATEDATABASES:
 	case IDM_UPDATEDATABASESACCEL:
+	case IDM_STOPUPDATING:
 		//CLocateAppWnd handles these
 		GetLocateAppWnd()->SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
 		break;

@@ -161,7 +161,6 @@ public:
 	void DeleteAllExtraFields();
     BOOL IsItemShortcut() const;
 
-	LPSTR FormatFileSize() const;
 	LPSTR FormatAttributes() const;
 	LPSTR FormatOwner() const;
 	LPSTR FormatImageInformation() const;

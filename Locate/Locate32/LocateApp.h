@@ -14,23 +14,6 @@ class CLocateDlgThread;
 class CLocateAppWnd : public CFrameWnd
 {
 public:
-	enum ProgramFlags {
-		// Errors 
-		pfShowCriticalErrors = 0x01, // Option
-        pfShowNonCriticalErrors = 0x02, // Option
-        pfErrorMask = 0x03,
-		pfErrorDefault = pfShowCriticalErrors|pfShowNonCriticalErrors,
-		pfErrorSave = pfShowCriticalErrors|pfShowNonCriticalErrors,
-		
-		// Tooltip
-		pfEnableUpdateTooltip = 0x10, // Option
-		pfTooltipMask = 0x30,
-		pfTooltipDefault = pfEnableUpdateTooltip,
-		pfTooltipSave = pfEnableUpdateTooltip,
-
-		pfDefault = pfErrorDefault|pfTooltipDefault,
-		pfSave = pfErrorSave|pfTooltipSave
-	};
 	
 	struct RootInfo {
 		LPSTR pName;
@@ -114,9 +97,6 @@ public:
 	BOOL StartUpdateStatusNotification();
 	BOOL StopUpdateStatusNotification();
 	
-	void SaveRegistry() const;
-	void LoadRegistry();
-	BOOL UpdateSettings();
 
 	BYTE OnAbout();
 	BYTE OnSettings();
@@ -163,12 +143,7 @@ public:
 	UINT nHFCInstallationMessage;
 	UINT nTaskbarCreated;
 
-protected:
-	
-	DWORD m_dwProgramFlags;
 
-public:
-	DWORD GetProgramFlags() const { return m_dwProgramFlags; }
 };
 
 
@@ -251,6 +226,42 @@ public:
 
 	};
 
+	enum ProgramFlags {
+		// Errors 
+		pfShowCriticalErrors = 0x01, // Option
+        pfShowNonCriticalErrors = 0x02, // Option
+        pfErrorMask = 0x03,
+		pfErrorDefault = pfShowCriticalErrors|pfShowNonCriticalErrors,
+		pfErrorSave = pfShowCriticalErrors|pfShowNonCriticalErrors,
+		
+		// Tooltip
+		pfEnableUpdateTooltip = 0x10, // Option
+		pfTooltipMask = 0x30,
+		pfTooltipDefault = pfEnableUpdateTooltip,
+		pfTooltipSave = pfEnableUpdateTooltip,
+
+		// Filesize/time/date format
+		pfFormatUseLocaleFormat = 0x4,
+		pfFormatMask = 0x4,
+		pfFormatDefault = pfFormatUseLocaleFormat,
+		pfFormatSave = pfFormatUseLocaleFormat,
+
+		pfDefault = pfErrorDefault|pfTooltipDefault|pfFormatDefault,
+		pfSave = pfErrorSave|pfTooltipSave|pfFormatSave
+	};
+
+	enum FileSizeFormats {
+		fsfOverKBasKB = 0,
+		fsfBestUnit = 1,
+		fsfBytes = 2,
+		fsfBytesNoUnit = 3,
+		fsfKiloBytes = 4,
+		fsfKiloBytesNoUnit = 5,
+		fsfMegaBytesMegaBytes = 6,
+		fsfMegaBytesMegaBytesNoUnit = 7
+	};
+
+
 protected:
 	BYTE CheckDatabases();
 	BYTE SetDeleteAndDefaultImage();
@@ -260,9 +271,12 @@ public:
 
 	static BOOL ChechOtherInstances();
 	
-	void LoadDateAndTimeString();
-	void SaveDateAndTimeString();
+	void SaveRegistry() const;
+	void LoadRegistry();
+	BOOL UpdateSettings();
+
 	LPSTR FormatDateAndTimeString(WORD wDate,WORD wTime=WORD(-1));
+	LPSTR FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) const;
 	BOOL SetLanguageSpecifigHandles();
 
 
@@ -281,15 +295,20 @@ public:
 	void OnInitDatabaseMenu(HMENU hPopupMenu);
 	void OnDatabaseMenuItem(WORD wID);
 	static int GetDatabaseMenuIndex(HMENU hPopupMenu);
+
+	static DWORD GetProgramFlags();
     	
 private:
 	static BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater);
 	
 
+protected:
+	DWORD m_dwProgramFlags;
+
 public:
 	WORD m_wComCtrlVersion;
 	WORD m_wShellDllVersion;
-
+	
 	int m_nDelImage;
 	int m_nDefImage;
 	int m_nDirImage;
@@ -298,6 +317,8 @@ public:
 	// Date & Time format string
 	CString m_strDateFormat;
 	CString m_strTimeFormat;
+	FileSizeFormats m_nFileSizeFormat;
+
 
 	DWORD(WINAPI* m_pGetLongPathName)(LPCSTR,LPSTR,DWORD);
 
@@ -407,7 +428,7 @@ inline CLocateAppWnd* GetLocateAppWnd()
 
 inline CLocateAppWnd::CLocateAppWnd()
 :	m_pAbout(NULL),m_pSettings(NULL),
-	m_pLocateDlgThread(NULL),m_dwProgramFlags(pfDefault),
+	m_pLocateDlgThread(NULL),
 	m_pUpdateAnimIcons(NULL),m_hHook(NULL)
 {
 	DebugMessage("CLocateAppWnd::CLocateAppWnd()");
@@ -476,6 +497,11 @@ inline void CLocateApp::ChangeAndAlloc(LPSTR& pVar,LPCSTR szText,DWORD dwLength)
 	pVar[dwLength]='\0';
 }
 
+inline DWORD CLocateApp::GetProgramFlags()
+{
+	extern CLocateApp theApp;
+	return theApp.m_dwProgramFlags;
+}
 
 
 inline void CLocateAppWnd::CUpdateStatusWnd::Update()

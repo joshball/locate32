@@ -6,41 +6,6 @@
 #endif
 
 
-inline LPSTR CLocatedItem::FormatFileSize() const
-{
-	if (GetFileSizeLo()!=DWORD(-1))
-	{
- 		char Temp[10];
-		
-		ISDLGTHREADOK
-		if (g_szBuffer!=NULL)
-			delete[] g_szBuffer;
-		g_szBuffer=new char[30];
-		
-		// TODO: Tähän tuki omalle määritykselle
-
-		if (GetFileSizeHi()>0)
-		{
-			LoadString(IDS_GB,Temp,10);
-			wsprintf(g_szBuffer,"%d%s",static_cast<DWORD>(GetFileSize()/(1024*1024*1024)),Temp);
-		}
-		else if (GetFileSizeLo()<1024)
-		{
-			LoadString(IDS_BYTES,Temp,10);
-			wsprintf(g_szBuffer,"%d%s",GetFileSizeLo(),Temp);
-		}
-		else
-		{
-			LoadString(IDS_KB,Temp,10);
-			wsprintf(g_szBuffer,"%d%s",
-				static_cast<DWORD>(GetFileSizeLo()/1024)+(GetFileSizeLo()%1024==0?0:1),
-				Temp);
-		}
-		return g_szBuffer;
-	}
-	return const_cast<LPSTR>(szEmpty);
-}
-
 inline LPSTR CLocatedItem::FormatAttributes() const
 {
 	if (!IsDeleted())
@@ -104,7 +69,13 @@ inline LPSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) con
 	case CLocateDlg::DetailType::FullPath:
 		return GetPath();
 	case CLocateDlg::DetailType::FileSize:
-		return FormatFileSize();
+		ISDLGTHREADOK
+		if (GetFileSizeLo()==DWORD(-1))
+			return const_cast<LPSTR>(szEmpty);
+		if (g_szBuffer!=NULL)
+			delete[] g_szBuffer;
+		return (g_szBuffer=((CLocateApp*)GetApp())->FormatFileSizeString(
+			GetFileSizeLo(),GetFileSizeHi()));
 	case CLocateDlg::DetailType::FileType:
 		if (GetType()==NULL)
 			return const_cast<LPSTR>(szEmpty);

@@ -563,7 +563,6 @@ public:
 	};
 
 
-
 public:
 	CTabCtrl* m_pTabCtrl;
 	CListCtrlEx* m_pListCtrl;
@@ -600,8 +599,11 @@ protected:
 	BYTE m_nPresetsButtonHeight;
 
 	BYTE m_nButtonSpacing;
-	BYTE m_nTabHeaderHeight;
+
+	
+	
 	WORD m_nTabbedDialogHeight;
+	BYTE m_nTabHeaderHeight;
 	
 	HWND m_hNextClipboardViewer;
 	HMENU m_hActivePopupMenu;

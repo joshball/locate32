@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,1230
- PRODUCTVERSION 2,99,5,1230
+ FILEVERSION 2,99,5,2260
+ PRODUCTVERSION 2,99,5,2260
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.1230"
+            VALUE "FileVersion", "3.0 beta 5.2260"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.1230"
+            VALUE "ProductVersion", "3.0 beta 5.2260"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -847,7 +847,7 @@ BEGIN
                                                     IDM_SHOWINGROUPS, GRAYED
             MENUITEM "&Auto Arrange", 
                                                     IDM_AUTOARRANGE
-            MENUITEM "Align to &Gird", 
+            MENUITEM "Align to &Grid", 
                                                     IDM_ALIGNTOGRID
         END
         MENUITEM "&Line Up Icons", IDM_LINEUPICONS
@@ -1461,6 +1461,16 @@ BEGIN
 	IDS_ADVSETRESULTSLIST			"Result list"
 	IDS_ADVSETSHOWDATESINFORMAT		"Show dates in format:"
 	IDS_ADVSETSHOWTIMESINFORMAT		"Show times in format:"
+	IDS_ADVSETSHOWFILESIZESINFORMAT	"Show file sizes as:"
+	IDS_ADVSETFORMATWITHUSERLOCALE	"Use user locale settings to format file size"
+	IDS_ADVSETFILESIZEFORMATLESS1KB	"sizes less than 1KB as bytes, other as kilobytes"
+	IDS_ADVSETFILESIZEFORMATDEPENGINGSIZE	"depending on size"
+	IDS_ADVSETFILESIZEFORMATBYTES	"bytes"
+	IDS_ADVSETFILESIZEFORMATBYTENOUNITS	"bytes (no unit)"
+	IDS_ADVSETFILESIZEFORMATKB		"kilobytes"
+	IDS_ADVSETFILESIZEFORMATKBNOUNITS	"kilobytes (no unit)"
+	IDS_ADVSETFILESIZEFORMATMB		"megabytes"
+	IDS_ADVSETFILESIZEFORMATMBNOUNITS	"megabytes (no unit)"
 	IDS_ADVSETLOCATE				"Locate"
 	IDS_ADVSETLIMITRESULTS			"Limit the number of results"
 	IDS_ADVSETMAXNUMBEROFRESULTS	"Maximum number of found files:"

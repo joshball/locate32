@@ -320,6 +320,7 @@ public:
 
 		static BOOL CALLBACK TimeFormatComboProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK DateFormatComboProc(COptionsPropertyPage::BASICPARAMS* pParams);
+		static BOOL CALLBACK FileSizeListProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK LimitResultsCheckBoxProc(COptionsPropertyPage::BASICPARAMS* pParams); 
 	
 
@@ -553,6 +554,7 @@ public:
 	
 	CString m_TimeFormat;
 	CString m_DateFormat;
+	CLocateApp::FileSizeFormats m_nFileSizeFormat;
 	
 	CString m_OpenFoldersWith;
 	
