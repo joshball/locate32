@@ -13,8 +13,8 @@ inline CSelectColumndDlg::CSelectColumndDlg()
 {
 }
 
-inline CSelectColumndDlg::ColumnItem::ColumnItem(int nCol,CLocateDlg::DetailType nType,int nWidth)
-:	m_nType(nType),m_nWidth(nWidth),m_nCol(nCol)
+inline CSelectColumndDlg::ColumnItem::ColumnItem(int nCol,CLocateDlg::DetailType nType,int nWidth,Align nAlign)
+:	m_nType(nType),m_nWidth(nWidth),m_nCol(nCol),m_nAlign(nAlign)
 {
 	m_strName.LoadString(IDS_LISTNAME+int(nType),LanguageSpecificResource);
 }

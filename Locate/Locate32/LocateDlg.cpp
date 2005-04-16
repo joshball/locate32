@@ -204,6 +204,9 @@ CLocateDlg::CLocateDlg()
 {
 }
 
+
+
+
 BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 {
 	ShowDlgItem(IDC_FILELIST,swHide);
@@ -288,7 +291,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_pListCtrl->InsertColumn(FullPath,IDS_LISTFULLPATH,FALSE,LVCFMT_LEFT,300,LanguageSpecificResource);
 	m_pListCtrl->InsertColumn(ShortFileName,IDS_LISTSHORTFILENAME,FALSE,LVCFMT_LEFT,200,LanguageSpecificResource);
 	m_pListCtrl->InsertColumn(ShortFilePath,IDS_LISTSHORTFILEPATH,FALSE,LVCFMT_LEFT,300,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(FileSize,IDS_LISTSIZE,TRUE,LVCFMT_LEFT,70,LanguageSpecificResource);
+	m_pListCtrl->InsertColumn(FileSize,IDS_LISTSIZE,TRUE,LVCFMT_RIGHT,70,LanguageSpecificResource);
 	m_pListCtrl->InsertColumn(FileType,IDS_LISTTYPE,TRUE,LVCFMT_LEFT,130,LanguageSpecificResource);
 	m_pListCtrl->InsertColumn(DateModified,IDS_LISTMODIFIED,TRUE,LVCFMT_LEFT,100,LanguageSpecificResource);
 	m_pListCtrl->InsertColumn(DateCreated,IDS_LISTCREATED,FALSE,LVCFMT_LEFT,100,LanguageSpecificResource);
@@ -4738,24 +4741,56 @@ void CLocateDlg::OnComputeMD5Sums(BOOL bForSameSizeFilesOnly)
 void CLocateDlg::OnSelectDetails()
 {
 	CSelectColumndDlg dlg;
+	
+	
+	int nColumns=m_pListCtrl->GetColumnCount();
 	dlg.m_aSelectedCols.SetSize(m_pListCtrl->GetVisibleColumnCount());
-	dlg.m_aWidths.SetSize(m_pListCtrl->GetColumnCount()),
-	dlg.m_aIDs.SetSize(m_pListCtrl->GetColumnCount()),
+	dlg.m_aWidths.SetSize(nColumns);
+	dlg.m_aIDs.SetSize(nColumns);
+	dlg.m_aAligns.SetSize(nColumns);
 	
 	m_pListCtrl->GetColumnOrderArray(m_pListCtrl->GetVisibleColumnCount(),
 		dlg.m_aSelectedCols.GetData());
-	m_pListCtrl->GetColumnWidthArray(m_pListCtrl->GetColumnCount(),
-		dlg.m_aWidths.GetData());	
-	m_pListCtrl->GetColumnIDArray(m_pListCtrl->GetColumnCount(),
-		dlg.m_aIDs.GetData());	
+
+	LVCOLUMN lc;int iCol;
+	lc.mask=LVCF_FMT|LVCF_WIDTH;
+	for (iCol=0;iCol<nColumns;iCol++)
+	{
+		// Set column id
+		dlg.m_aIDs[iCol]=m_pListCtrl->GetColumnID(iCol);
+
+		m_pListCtrl->GetColumn(iCol,&lc);
+
+		// Set column width
+		dlg.m_aWidths[iCol]=lc.cx;
+
+        // Set align
+		dlg.m_aAligns[iCol]=(CSelectColumndDlg::ColumnItem::Align)(lc.fmt&LVCFMT_JUSTIFYMASK);
+        
+	}
 
 	if (!dlg.DoModal(*this))
 		return; // Cancel
 
 	m_pListCtrl->SetColumnOrderArray(dlg.m_aSelectedCols.GetSize(),
 		dlg.m_aSelectedCols.GetData());
-	m_pListCtrl->SetColumnWidthArray(dlg.m_aWidths.GetSize(),
-		dlg.m_aWidths.GetData());
+
+	for (iCol=0;iCol<nColumns;iCol++)
+	{
+		lc.mask=LVCF_FMT;
+		m_pListCtrl->GetColumn(iCol,&lc);
+			
+		lc.mask=LVCF_FMT|LVCF_WIDTH;
+		// Set column width
+		lc.cx=dlg.m_aWidths[iCol];
+        // Set align
+		lc.fmt&=~LVCFMT_JUSTIFYMASK;
+		lc.fmt|=dlg.m_aAligns[iCol];
+
+		
+		m_pListCtrl->SetColumn(iCol,&lc);
+	}
+
 }
 
 void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)

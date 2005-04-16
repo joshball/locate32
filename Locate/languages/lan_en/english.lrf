@@ -25,7 +25,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2005 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 beta 5.4031
+FILEVERSION=3.0 beta 5.4160
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -498,6 +498,10 @@ DLGSELECTDETAILS_SHOW=&Show
 DLGSELECTDETAILS_HIDE=&Hide
 DLGSELECTDETAILS_TEXT=Select details for file list:
 DLGSELECTDETAILS_WIDTH=Width of the selected column (in pixels):
+DLGSELECTDETAILS_ALIGN=Align:
+DLGSELECTDETAILS_LEFT=&Left
+DLGSELECTDETAILS_RIGHT=&Right
+DLGSELECTDETAILS_CENTER=&Center
 
 ###########################
 # Select databases dialog

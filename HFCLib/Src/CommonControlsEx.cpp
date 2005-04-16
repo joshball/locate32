@@ -145,6 +145,15 @@ BOOL CListCtrlEx::HideColumn(int nCol)
 	return TRUE;
 }
 
+// Format
+// ~DWORD(Ncolumns) DWORD(Nvisiblecolumns) DWORD(Nwidth)*Ncolumns DWORD(Norder)*Nviscolumns DWORD(flags)*Ncolumns
+// Flags are:
+enum CListCtrlExFlags {
+	cefLeft = 0x0,
+	cefRight = 0x1,
+	cefCenter = 0x3,
+	cefJustifyMask=0x3
+};
 
 BOOL CListCtrlEx::LoadColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey)
 {
@@ -153,8 +162,14 @@ BOOL CListCtrlEx::LoadColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey)
 		RegKey.m_hKey=hRootKey;
 	else if (RegKey.OpenKey(hRootKey,lpKey,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 		return FALSE;
+	
+	int nColumnCount=GetColumnCount();
+	
+	// Get data length
 	DWORD nDataLength=RegKey.QueryValueLength(lpSubKey);
-	if (nDataLength<sizeof(int)*(2+GetColumnCount()) && 
+	
+	// Check whether length is correct, data contains at least widths
+	if (nDataLength<sizeof(int)*(2+nColumnCount) && 
 		nDataLength%sizeof(int)!=0)
 	{
 		if (lpKey==NULL)
@@ -163,20 +178,63 @@ BOOL CListCtrlEx::LoadColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey)
 	}
 	nDataLength/=sizeof(int);
 
+	// Query data
 	int* pData=new int[nDataLength];
 	DWORD dwRet=RegKey.QueryValue(lpSubKey,(LPSTR)pData,nDataLength*sizeof(int));
 	if (lpKey==NULL)
 		RegKey.m_hKey=NULL;
-	if (dwRet<nDataLength || pData[0]!=~GetColumnCount() ||
-		nDataLength!=~pData[0]+pData[1]+2)
+	
+	
+	if (dwRet<nDataLength || pData[0]!=~nColumnCount ||
+		(nDataLength!=nColumnCount+pData[1]+2 && // older
+		nDataLength!=2*nColumnCount+pData[1]+2)  // newer, also flags
+		)
 	{
 		delete[] pData;
 		return FALSE;
 	}
 
-    SetColumnOrderArray(pData[1],pData+2+GetColumnCount());
-	SetColumnWidthArray(GetColumnCount(),pData+2);
+    // Set column order
+	SetColumnOrderArray(pData[1],pData+2+nColumnCount);
+	
+	if (nDataLength==2*nColumnCount+pData[1]+2)
+	{
+		// New format, contains also flags
+		LVCOLUMN lc;
+		lc.iSubItem=0;
+	
+		int* piWidth=pData+2;
+		int* piFlags=pData+2+nColumnCount+pData[1];
 
+		// Set other flags
+		for (int iCol=0;iCol<nColumnCount;iCol++)
+		{
+			lc.mask=LVCF_FMT;
+			GetColumn(iCol,&lc); // Retrieving current fmt
+		
+			lc.mask=LVCF_FMT|LVCF_WIDTH;
+		
+			// Set width
+			lc.cx=piWidth[iCol];
+
+			// Set flags
+			lc.fmt&=~LVCFMT_JUSTIFYMASK;
+			if ((piFlags[iCol]&cefJustifyMask)==cefRight)
+				lc.fmt|=LVCFMT_RIGHT;
+			else if ((piFlags[iCol]&cefJustifyMask)==cefCenter)
+				lc.fmt|=LVCFMT_CENTER;
+			else
+				lc.fmt|=LVCFMT_LEFT;
+
+			// Set column data
+			SetColumn(iCol,&lc);
+		}
+	
+	}
+	else
+		SetColumnWidthArray(nColumnCount,pData+2);
+
+	
 	delete[] pData;
 	return TRUE;
 }
@@ -188,13 +246,48 @@ BOOL CListCtrlEx::SaveColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) c
 		RegKey.m_hKey=hRootKey;
 	else if (RegKey.OpenKey(hRootKey,lpKey,CRegKey::createNew|CRegKey::samAll)!=ERROR_SUCCESS)
 		return FALSE;
-	int* pData=new int[2+GetColumnCount()+GetVisibleColumnCount()];
-	pData[0]=~GetColumnCount(); 
-	pData[1]=GetVisibleColumnCount();
-    GetColumnWidthArray(GetColumnCount(),pData+2);
-	GetColumnOrderArray(GetVisibleColumnCount(),pData+2+GetColumnCount());
+	
+	int nColumnCount=GetColumnCount();
+	int nVisibleCount=GetVisibleColumnCount();
 
-    RegKey.SetValue(lpSubKey,(LPCSTR)pData,sizeof(int)*(2+GetColumnCount()+GetVisibleColumnCount()),REG_BINARY);
+	int* pData=new int[2+2*nColumnCount+nVisibleCount];
+	
+	
+	// Set Ncolumns
+	pData[0]=~nColumnCount; 
+	
+	// Set Nviscount
+	pData[1]=nVisibleCount;
+
+	// Retvieve orders
+	GetColumnOrderArray(nVisibleCount,pData+2+nColumnCount);
+
+	// Retvieve flags
+	LVCOLUMN lc;
+	lc.mask=LVCF_FMT|LVCF_WIDTH;
+	lc.iSubItem=0;
+	
+	int* piWidth=pData+2;
+	int* piFlags=pData+2+nColumnCount+nVisibleCount;
+		
+	for (int iCol=0;iCol<nColumnCount;iCol++)
+	{
+		GetColumn(iCol,&lc);
+		
+		// Set width
+		piWidth[iCol]=lc.cx;
+
+		// Set flags
+		if ((lc.fmt&LVCFMT_JUSTIFYMASK)==LVCFMT_RIGHT)
+			piFlags[iCol]=cefRight;
+		else if ((lc.fmt&LVCFMT_JUSTIFYMASK)==LVCFMT_CENTER)
+			piFlags[iCol]=cefCenter;
+		else
+			piFlags[iCol]=cefLeft;
+	}
+
+        
+	RegKey.SetValue(lpSubKey,(LPCSTR)pData,sizeof(int)*(2+2*nColumnCount+nVisibleCount),REG_BINARY);
 	RegKey.CloseKey();
 	delete[] pData;
 	if (lpKey==NULL)

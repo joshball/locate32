@@ -17,7 +17,9 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 	{
 		m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem,LPSTR_TEXTCALLBACK,0,0,0,
 			LPARAM(new ColumnItem(m_aSelectedCols[nItem],
-			(CLocateDlg::DetailType)m_aIDs[m_aSelectedCols[nItem]],m_aWidths[m_aSelectedCols[nItem]])));
+			(CLocateDlg::DetailType)m_aIDs[m_aSelectedCols[nItem]],
+			m_aWidths[m_aSelectedCols[nItem]],
+			m_aAligns[m_aSelectedCols[nItem]])));
 		m_pList->SetCheckState(nItem,TRUE);
 	}
 
@@ -26,7 +28,8 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 		if (m_aSelectedCols.Find(i)==-1)
 		{
 			m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem++,
-				LPSTR_TEXTCALLBACK,0,0,0,LPARAM(new ColumnItem(i,(CLocateDlg::DetailType)m_aIDs[i],m_aWidths[i])));
+				LPSTR_TEXTCALLBACK,0,0,0,LPARAM(new ColumnItem(i,
+				(CLocateDlg::DetailType)m_aIDs[i],m_aWidths[i],m_aAligns[i])));
 			m_pList->SetCheckState(nItem,FALSE);
 		}
 	}
@@ -58,6 +61,42 @@ BOOL CSelectColumndDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		m_pList->SetCheckState(m_pList->GetNextItem(-1,LVNI_SELECTED),wID==IDC_SHOW);
 		m_pList->SetFocus();
 		break;
+	case IDC_LEFT:
+		{
+			int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+			ASSERT(nItem!=-1);
+
+			ColumnItem* pItem=(ColumnItem*)m_pList->GetItemData(nItem);
+			if (pItem==NULL)
+				break;
+
+			pItem->m_nAlign=ColumnItem::Left;
+			break;
+		}
+	case IDC_RIGHT:
+		{
+			int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+			ASSERT(nItem!=-1);
+
+			ColumnItem* pItem=(ColumnItem*)m_pList->GetItemData(nItem);
+			if (pItem==NULL)
+				break;
+
+			pItem->m_nAlign=ColumnItem::Right;
+			break;
+		}
+	case IDC_CENTER:
+		{
+			int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+			ASSERT(nItem!=-1);
+
+			ColumnItem* pItem=(ColumnItem*)m_pList->GetItemData(nItem);
+			if (pItem==NULL)
+				break;
+
+			pItem->m_nAlign=ColumnItem::Center;
+			break;
+		}
 	case IDC_UP:
 		ItemUpOrDown(TRUE);
 		break;
@@ -189,6 +228,15 @@ BOOL CSelectColumndDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 			EnableDlgItem(IDC_WIDTH,TRUE);
 			::InvalidateRect(GetDlgItem(IDC_SPIN),NULL,TRUE);
 			SendDlgItemMessage(IDC_SPIN,UDM_SETPOS,0,pItem->m_nWidth);
+
+			EnableDlgItem(IDC_ALIGN,TRUE);
+			EnableDlgItem(IDC_LEFT,TRUE);
+			EnableDlgItem(IDC_RIGHT,TRUE);
+			EnableDlgItem(IDC_CENTER,TRUE);
+
+			CheckDlgButton(IDC_LEFT,pItem->m_nAlign==ColumnItem::Left);
+			CheckDlgButton(IDC_RIGHT,pItem->m_nAlign==ColumnItem::Right);
+			CheckDlgButton(IDC_CENTER,pItem->m_nAlign==ColumnItem::Center);
 		}
 		else if (pNm->uOldState&LVNI_SELECTED)
 			DisableItems();
@@ -206,6 +254,12 @@ void CSelectColumndDlg::DisableItems()
 	EnableDlgItem(IDC_TEXT,FALSE);
 	EnableDlgItem(IDC_WIDTH,FALSE);
 	::InvalidateRect(GetDlgItem(IDC_SPIN),NULL,TRUE);
+
+	EnableDlgItem(IDC_ALIGN,FALSE);
+	EnableDlgItem(IDC_LEFT,FALSE);
+	EnableDlgItem(IDC_RIGHT,FALSE);
+	EnableDlgItem(IDC_CENTER,FALSE);
+	
 }
 
 void CSelectColumndDlg::OnOK()
@@ -223,6 +277,7 @@ void CSelectColumndDlg::OnOK()
 	{
 		ColumnItem* pItem=(ColumnItem*)m_pList->GetItemData(nIndex);
 		m_aWidths[pItem->m_nCol]=pItem->m_nWidth; // Setting width
+		m_aAligns[pItem->m_nCol]=pItem->m_nAlign; // Setting align
 		
 		if (m_pList->GetCheckState(nIndex))
 			m_aSelectedCols.Add(pItem->m_nCol);

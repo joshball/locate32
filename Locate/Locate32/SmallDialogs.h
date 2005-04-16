@@ -24,12 +24,20 @@ public:
 
 	struct ColumnItem 
 	{
-		ColumnItem(int nCol,CLocateDlg::DetailType nType,int nWidth);
-
+		
 		CLocateDlg::DetailType m_nType;
 		int m_nCol;
 		int m_nWidth;
 		CString m_strName;
+
+		enum Align {
+			Left=LVCFMT_LEFT,
+			Right=LVCFMT_RIGHT,
+			Center=LVCFMT_CENTER
+		} m_nAlign;
+
+		ColumnItem(int nCol,CLocateDlg::DetailType nType,int nWidth,Align nAlign);
+
 	};
 
 
@@ -37,6 +45,7 @@ public:
 	CIntArray m_aSelectedCols; // In order
 	CIntArray m_aIDs;
 	CIntArray m_aWidths;
+	CArray<ColumnItem::Align> m_aAligns;
 
 private:
 	CListCtrl* m_pList;

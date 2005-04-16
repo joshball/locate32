@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,4031
- PRODUCTVERSION 2,99,5,4031
+ FILEVERSION 2,99,5,4160
+ PRODUCTVERSION 2,99,5,4160
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.4031"
+            VALUE "FileVersion", "3.0 beta 5.4160"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.4030"
+            VALUE "ProductVersion", "3.0 beta 5.4160"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -624,18 +624,13 @@ END
 
 
 
-IDD_SELECTDETAILS DIALOGEX 100, 100, 262, 263
+IDD_SELECTDETAILS DIALOGEX 100, 100, 262, 274
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Select Details"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     LTEXT           "Width of the selected column (in pixels):",IDC_TEXT,7,226,137,8
-    EDITTEXT        IDC_WIDTH,149,223,38,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT,189,222,18,16
-    DEFPUSHBUTTON   "OK",IDC_OK,151,245,50,14
-    PUSHBUTTON      "Cancel",IDC_CANCEL,205,245,50,14
-    LTEXT           "Select details for file list:",IDC_STATIC,7,7,95,8
     CONTROL         "",IDC_COLUMNS,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | 
                     WS_BORDER | WS_TABSTOP,7,18,194,198
@@ -643,7 +638,22 @@ BEGIN
     DEFPUSHBUTTON   "Move &Down",IDC_DOWN,205,38,50,14
     DEFPUSHBUTTON   "&Show",IDC_SHOW,205,57,50,14
     DEFPUSHBUTTON   "&Hide",IDC_HIDE,205,77,50,14
+    LTEXT           "Select details for file list:",IDC_STATIC,7,7,95,8
+    EDITTEXT        IDC_WIDTH,149,223,38,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT,189,222,18,16
+    LTEXT           "Align:",IDC_ALIGN,8,241,25,10
+    CONTROL         "&Left",IDC_LEFT,"Button",BS_AUTORADIOBUTTON,41,241,48,
+                    10
+    CONTROL         "&Right",IDC_RIGHT,"Button",BS_AUTORADIOBUTTON,91,241,48,
+                    10
+    CONTROL         "&Center",IDC_CENTER,"Button",BS_AUTORADIOBUTTON,142,241,
+                    48,10
+    DEFPUSHBUTTON   "OK",IDC_OK,151,257,50,14
+    PUSHBUTTON      "Cancel",IDC_CANCEL,205,257,50,14
 END
+
+
+
 
 IDD_SELECTDATABASES DIALOGEX 160, 100, 265, 295
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 

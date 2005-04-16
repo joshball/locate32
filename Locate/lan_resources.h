@@ -175,10 +175,10 @@
 #define IDC_LOOKINSTATIC                603
 #define IDC_CHECKSTATIC                 604
 #define IDC_FILETYPESTATIC              605
-#define IDC_NEXT						606
-#define IDC_PREV						607
-#define IDC_SWAPWITHPREVIOUS			608
-#define IDC_SWAPWITHNEXT				609
+#define IDC_NEXT                        606
+#define IDC_PREV                        607
+#define IDC_SWAPWITHPREVIOUS            608
+#define IDC_SWAPWITHNEXT                609
 #define IDC_OK                          1000
 #define IDS_ERROR                       1000
 #define IDC_CANCEL                      1001
@@ -292,9 +292,9 @@
 #define IDC_EVERYTXT                    1088
 #define IDC_DAYS                        1089
 #define IDC_WEEKS                       1090
-#define IDC_ADDACTION					1090
+#define IDC_ADDACTION                   1090
 #define IDC_MON                         1091
-#define IDC_REMOVEACTION				1091
+#define IDC_REMOVEACTION                1091
 #define IDC_WED                         1092
 #define IDC_TUE                         1093
 #define IDC_THU                         1094
@@ -377,7 +377,7 @@
 #define IDC_DETAILS                     1155
 #define IDC_LIST                        1156
 #define IDC_LABELS                      1157
-#define IDC_USEWHOLEPATH				1158
+#define IDC_USEWHOLEPATH                1158
 #define IDC_TOOLBAR                     1159
 #define IDC_ALLITEMS                    1160
 #define IDC_SELECTEDITEMS               1161
@@ -424,16 +424,21 @@
 #define IDC_REMOVEUPMESSAGE             1196
 #define IDC_EXECUTEWHENSTATIC           1197
 #define IDC_REMOVEMESSAGESTATIC         1198
+#define IDC_RADIO1                      1199
+#define IDC_RIGHT                       1199
 #define IDC_SELECTALLKEY                1200
+#define IDC_LEFT                        1200
 #define IDC_DELETEKEY                   1201
+#define IDC_CENTER                      1201
 #define IDC_IMPORT                      1202
-#define IDC_STATICWHEREPRESSED			1202
+#define IDC_ALIGN						1202
+#define IDC_STATICWHEREPRESSED          1202
 #define IDC_EXPORT                      1203
-#define IDC_STATICCLASS					1203
+#define IDC_STATICCLASS                 1203
 #define IDC_INCREMENTALUPDATE           1204
-#define IDC_STATICWINDOWTITLE			1204
-#define IDC_STATICEXECUTAIONOPTIONS		1205
-#define IDC_STATICWAITBEFOREEXECUTE		1206
+#define IDC_STATICWINDOWTITLE           1204
+#define IDC_STATICEXECUTAIONOPTIONS     1205
+#define IDC_STATICWAITBEFOREEXECUTE     1206
 #define IDD_RESULTSAVEDIALOG            1209
 #define IDD_RESULTPRINTDIALOG           1210
 #define IDD_GENERALSETTINGS             1211
@@ -441,11 +446,11 @@
 #define IDD_LANGUAGESETTINGS            1213
 #define IDD_KEYBOARDSHORTCUTS           1214
 #define IDD_SHORTCUTADVANCED            1215
-#define IDC_STATICACTIONS				1216
-#define IDC_STATICACTION				1217
-#define IDC_STATICSUBACTION				1218
-#define IDC_STATICSHORTCUT				1219
-#define IDC_STATICKEY					1220
+#define IDC_STATICACTIONS               1216
+#define IDC_STATICACTION                1217
+#define IDC_STATICSUBACTION             1218
+#define IDC_STATICSHORTCUT              1219
+#define IDC_STATICKEY                   1220
 #define IDS_LASTERROR                   1900
 #define IDS_LASTERRORUNKNOWN            1901
 #define IDS_LASTERRORINVALIDDB          1902
@@ -763,7 +768,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        236
 #define _APS_NEXT_COMMAND_VALUE         40063
-#define _APS_NEXT_CONTROL_VALUE         1199
+#define _APS_NEXT_CONTROL_VALUE         1200
 #define _APS_NEXT_SYMED_VALUE           108
 #endif
 #endif
