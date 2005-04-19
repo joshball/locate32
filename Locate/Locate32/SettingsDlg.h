@@ -304,6 +304,7 @@ public:
 		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
 		inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
 		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
+
 #endif
 	};
 	
@@ -558,11 +559,15 @@ public:
 			void OnOK();
 			void EnableItems();
 
+			
+
 			CShortcut* m_pShortcut;
 		};
 
 	public:
 		CKeyboardShortcutsPage();
+		virtual ~CKeyboardShortcutsPage();
+
 		virtual BOOL OnInitDialog(HWND hwndFocus);
 		virtual BOOL OnApply();
 		virtual void OnCancel();
@@ -574,13 +579,27 @@ public:
 		BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
 
 		void InsertSubActions();
+		
+		void OnNewShortcut();
+		void OnRemoveShortcut();
+		void OnReset();
 		void OnAdvanced();
+		void OnAddAction();
+		void OnRemoveAction();
+		void OnNextAction(BOOL bNext);
+		void OnSwapAction(BOOL bWithNext);
+		
 		void OnChangeItem(NMLISTVIEW *pNm);
 		void OnChangingItem(NMLISTVIEW *pNm);
 
 		void SetFieldsForShortcut(CShortcut* pShortcut);
 		void SaveFieldsForShortcut(CShortcut* pShortcut);
+		void SetFieldsForAction(CShortcut::CKeyboardAction* pAction);
+		void SaveFieldsForAction(CShortcut::CKeyboardAction* pAction);
+		void ClearActionFields();
 		void EnableItems();
+
+		static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);
 
 
 	protected:
@@ -604,12 +623,8 @@ public:
 		CShortcut* m_pCurrentShortcut;
 		int m_nCurrentAction;
 		
-
-		struct ControlItems {
-			CString sName;
-			CShortcut::CKeyboardAction::ActionActivateControls _nControl;
-		};
-		CArrayFP<ControlItems*> m_aControlItems;
+		CShortcut::CKeyboardAction::ActionActivateControls* m_pPossibleControls;
+		HWND hDialogs[4];	
 
 		
 

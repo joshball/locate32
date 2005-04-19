@@ -1513,10 +1513,10 @@ int CString::Find(LPCSTR lpszSub) const
 {
 	if (m_pData==NULL)
 		return -1;
-	if (strstr(m_pData,lpszSub)!=NULL)
-		return TRUE;
-	else
-		return FALSE;
+	LPSTR pret=strstr(m_pData,lpszSub);
+	if (pret!=NULL)
+		return (int)(pret-m_pData);
+	return -1;
 }
 
 LPSTR CString::GetBuffer(int nMinBufLength,BYTE bStoreData)

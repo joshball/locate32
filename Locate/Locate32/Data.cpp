@@ -770,7 +770,8 @@ CShortcut::CShortcut()
 	m_pClass(NULL),m_pTitle(NULL),
 	m_wModifiers(0),m_wVirtualKey(0)
 {
-	m_pFirstAction=new CKeyboardAction;
+	// At least one action is needed
+	m_apActions.Add(new CKeyboardAction);
 }
 
 CShortcut::~CShortcut()
@@ -780,14 +781,7 @@ CShortcut::~CShortcut()
 	if (m_pTitle!=NULL)
 		delete[] m_pTitle;
 
-	CKeyboardAction* pTmp;
-
-	while (m_pFirstAction!=NULL)
-	{
-		pTmp=m_pFirstAction;
-		m_pFirstAction=m_pFirstAction->m_pNextAction;
-		delete pTmp;
-	}	
+	m_apActions.RemoveAll();
 }
 
 WORD CShortcut::GetHotkeyModifiers() const

@@ -43,7 +43,7 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	AddPage((CPropertyPage*)m_pLanguage);
 	AddPage((CPropertyPage*)m_pDatabases);
 	AddPage((CPropertyPage*)m_pAutoUpdate);
-	//AddPage((CPropertyPage*)m_pKeyboardShortcuts);
+	AddPage((CPropertyPage*)m_pKeyboardShortcuts);
 	
 	m_pGeneral->m_pSettings=m_pAdvanced->m_pSettings=this;
 	m_pLanguage->m_pSettings=m_pAutoUpdate->m_pSettings=this;
@@ -5440,6 +5440,46 @@ BOOL CALLBACK COptionsPropertyPage::DefaultColorProc(BASICPARAMS* pParams)
 // CKeyboardShortcutsPage
 ////////////////////////////////////////
 
+INT_PTR CALLBACK CSettingsProperties::CKeyboardShortcutsPage::DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
+{
+	return FALSE;
+}
+
+CSettingsProperties::CKeyboardShortcutsPage::CKeyboardShortcutsPage()
+:	CPropertyPage(IDD_KEYBOARDSHORTCUTS,IDS_LANGUAGESETTINGS),
+	m_pList(NULL),m_pToolBar(NULL),m_ToolBarBitmaps(NULL),
+	m_ToolBarBitmapsDisabled(NULL),m_ToolBarBitmapsHot(NULL),
+	m_pCurrentShortcut(NULL)
+{
+	m_pPossibleControls=CShortcut::CKeyboardAction::GetPossibleControlValues();
+
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg!=NULL)
+	{
+		hDialogs[0]=*pLocateDlg;
+		hDialogs[1]=pLocateDlg->m_NameDlg;
+		hDialogs[2]=pLocateDlg->m_SizeDateDlg;
+		hDialogs[3]=pLocateDlg->m_AdvancedDlg;
+	}
+	else
+	{
+		hDialogs[0]=CreateDialog(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDD_MAIN),NULL,(DLGPROC)DummyDialogProc);
+		hDialogs[1]=CreateDialog(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDD_NAME),hDialogs[0],(DLGPROC)DummyDialogProc);
+		hDialogs[2]=CreateDialog(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDD_SIZEDATE),hDialogs[0],(DLGPROC)DummyDialogProc);
+		hDialogs[3]=CreateDialog(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDD_ADVANCED),hDialogs[0],(DLGPROC)DummyDialogProc);
+	}
+}
+
+CSettingsProperties::CKeyboardShortcutsPage::~CKeyboardShortcutsPage()
+{
+	delete[] m_pPossibleControls;
+
+	if (GetLocateDlg()==NULL)
+	{
+		for (int i=0;i<4;i++)
+            ::DestroyWindow(hDialogs[i]);
+	}
+}
 
 BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 {
@@ -5458,6 +5498,8 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_ToolBarBitmapsHot.Create(IDB_SHORTCUTACTIONSBITMAPSH,15,0,RGB(255,255,255));
 	m_ToolBarBitmapsDisabled.Create(IDB_SHORTCUTACTIONSBITMAPSD,15,0,RGB(255,255,255));
 
+	DWORD ic=m_ToolBarBitmaps.GetImageCount();
+
 	m_pToolBar=new CToolBarCtrl(GetDlgItem(IDC_ACTIONTOOLBAR));
 	m_pToolBar->SetImageList(m_ToolBarBitmaps);
 	m_pToolBar->SetDisabledImageList(m_ToolBarBitmapsDisabled);
@@ -5467,8 +5509,8 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 #pragma warning (disable :4305 4309)
 		{0,IDC_ADDACTION,TBSTATE_ENABLED,TBSTYLE_BUTTON,0,0,0,0},
 		{1,IDC_REMOVEACTION,0,TBSTYLE_BUTTON,0,0,0,0},
-		{2,IDC_NEXT,0,TBSTYLE_BUTTON,0,0,0,0},
-		{3,IDC_PREV,0,TBSTYLE_BUTTON,0,0,0,0},
+		{2,IDC_PREV,0,TBSTYLE_BUTTON,0,0,0,0},
+		{3,IDC_NEXT,0,TBSTYLE_BUTTON,0,0,0,0},
 		{4,IDC_SWAPWITHPREVIOUS,0,TBSTYLE_BUTTON,0,0,0,0},
 		{5,IDC_SWAPWITHNEXT,TBSTATE_ENABLED,TBSTYLE_BUTTON,0,0,0,0}
 #pragma warning (default :4305 4309)
@@ -5482,28 +5524,100 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	SendDlgItemMessage(IDC_WHERE,CB_ADDSTRING,0,LPARAM("Global (hook)"));
 	SendDlgItemMessage(IDC_WHERE,CB_SETCURSEL,0,0);
 
-	InsertSubActions();
-
 	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,LPARAM("Activate Control"));
+	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,LPARAM("Activate Tab"));
 	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,0,0);
 	
-
+	ClearActionFields();
 	EnableItems();
 	return FALSE;
 }
 
 void CSettingsProperties::CKeyboardShortcutsPage::InsertSubActions()
 {
+	ASSERT(m_pCurrentShortcut!=NULL);
+	ASSERT(m_nCurrentAction>=0 && m_nCurrentAction<m_pCurrentShortcut->m_apActions.GetSize());
+	
 	SendDlgItemMessage(IDC_SUBACTION,CB_RESETCONTENT,0,0);
 
 	switch (SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL,0,0))
 	{
 	case 0:
+		{
+			for (int i=0;m_pPossibleControls[i]!=CShortcut::CKeyboardAction::Null;i++)
+			{
+				// Check which dialog contains control
+				WORD wControlID=HIWORD(DWORD(m_pPossibleControls[i]));
+				CString Title;
+				int nIndex;
+				
+				if (wControlID!=0)
+				{
+					// Checking wheter dialog contains control 
+					HWND hControl=NULL;
+					for (int i=0;i<4;i++)
+					{
+						hControl=::GetDlgItem(hDialogs[i],wControlID);
+						if (hControl!=NULL)
+							break;
+					}
+
+					if (hControl!=NULL)
+					{
+						DWORD dwTextLen=::GetWindowTextLength(hControl);
+						::GetWindowText(hControl,Title.GetBuffer(dwTextLen),dwTextLen+1);
+						while ((nIndex=Title.Find('&'))!=-1)
+							Title.DelChar(nIndex);
+						
+						SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)Title);
+						continue;
+                        						
+					}
+
+					
+				}
+				
+				SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)"Unknown");
+			}
+			
+			SendDlgItemMessage(IDC_SUBACTION,CB_SETCURSEL,0);
+			if (m_pCurrentShortcut->m_apActions[m_nCurrentAction]->m_nAction==CShortcut::CKeyboardAction::ActivateControl)
+			{
+				for (int i=0;m_pPossibleControls[i]!=CShortcut::CKeyboardAction::Null;i++)
+				{
+					if (m_pCurrentShortcut->m_apActions[m_nCurrentAction]->m_nActivateControl==m_pPossibleControls[i])
+					{
+						SendDlgItemMessage(IDC_SUBACTION,CB_SETCURSEL,i);
+						break;
+					}
+				}
+			}
+			break;
+		}
 	case 1:
-		SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_NAME));
-		SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_SIZEDATE));
-		SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVANCED));
-		break;
+		{
+			CString str(IDS_NAME);
+			int nIndex;
+			while ((nIndex=str.Find("&&"))!=-1)
+				str.DelChar(nIndex);
+			SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
+
+			str.LoadString(IDS_SIZEDATE);
+			while ((nIndex=str.Find("&&"))!=-1)
+				str.DelChar(nIndex);
+			SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
+
+			str.LoadString(IDS_ADVANCED);
+			while ((nIndex=str.Find("&&"))!=-1)
+				str.DelChar(nIndex);
+			SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
+
+			if (m_pCurrentShortcut->m_apActions[m_nCurrentAction]->m_nAction==CShortcut::CKeyboardAction::ActivateTab)
+				SendDlgItemMessage(IDC_SUBACTION,CB_SETCURSEL,m_pCurrentShortcut->m_apActions[m_nCurrentAction]->m_nActivateTab);
+			else
+				SendDlgItemMessage(IDC_SUBACTION,CB_SETCURSEL,0);
+			break;
+		}
 	}
 }
 
@@ -5632,39 +5746,74 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnCommand(WORD wID,WORD wNotif
 	switch (wID)
 	{
 	case IDC_NEW:
-		{
-			LVITEM li;
-			li.pszText=LPSTR_TEXTCALLBACK;
-	        li.mask=LVIF_TEXT|LVIF_PARAM;
-			li.iSubItem=0;
-			li.iItem=m_pList->GetItemCount();
-			li.lParam=LPARAM(new CShortcut);
-			m_pList->InsertItem(&li);
-			break;
-		}
+		OnNewShortcut();
+		break;
 	case IDC_REMOVE:
+		OnRemoveShortcut();
 		break;
 	case IDC_RESET:
-		break;
-	case IDC_SHORTCUTKEY:
+		OnReset();
 		break;
 	case IDC_ADVANCED:
 		OnAdvanced();
 		break;
 	case IDC_ADDACTION:
+		OnAddAction();
 		break;
 	case IDC_REMOVEACTION:
+		OnRemoveAction();
 		break;
 	case IDC_NEXT:
-		break;
 	case IDC_PREV:
+		OnNextAction(wID==IDC_NEXT);
 		break;
 	case IDC_SWAPWITHPREVIOUS:
-		break;
 	case IDC_SWAPWITHNEXT:
+		OnSwapAction(wID==IDC_SWAPWITHNEXT);
 		break;
+	case IDC_ACTION:
+		if (wNotifyCode==CBN_SELCHANGE)
+			InsertSubActions();
+		break;		
 	}
 	return FALSE;
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::OnNewShortcut()
+{
+	LVITEM li;
+	li.pszText=LPSTR_TEXTCALLBACK;
+	li.mask=LVIF_TEXT|LVIF_PARAM;
+	li.iSubItem=0;
+	li.iItem=m_pList->GetItemCount();
+	li.lParam=LPARAM(new CShortcut);
+	m_pList->InsertItem(&li);
+	
+	EnableItems();
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::OnRemoveShortcut()
+{
+	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+	ASSERT(nItem!=-1);
+	
+	CShortcut* pShortcut=(CShortcut*)m_pList->GetItemData(nItem);
+	m_pList->SetItemData(nItem,NULL);
+	if (pShortcut!=NULL)
+		delete pShortcut;
+
+	m_pList->DeleteItem(nItem);
+	m_pCurrentShortcut=NULL;
+	
+	EnableItems();
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::OnReset()
+{
+	// TODO: Implement this
+
+
+	EnableItems();
 }
 
 void CSettingsProperties::CKeyboardShortcutsPage::OnAdvanced()
@@ -5684,20 +5833,126 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnAdvanced()
 
 }
 
+void CSettingsProperties::CKeyboardShortcutsPage::OnAddAction()
+{
+	ASSERT(m_pCurrentShortcut!=NULL);
+	ASSERT(m_nCurrentAction>=0 && m_nCurrentAction<m_pCurrentShortcut->m_apActions.GetSize());
+	
+	// Saving current fields
+	SaveFieldsForAction(m_pCurrentShortcut->m_apActions[m_nCurrentAction]);
+
+    // Creating new action
+	m_pCurrentShortcut->m_apActions.Add(new CShortcut::CKeyboardAction);
+
+	// Activating it
+	m_nCurrentAction=m_pCurrentShortcut->m_apActions.GetSize()-1;
+	SetFieldsForAction(m_pCurrentShortcut->m_apActions[m_nCurrentAction]);
+
+	EnableItems();
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::OnRemoveAction()
+{
+	ASSERT(m_pCurrentShortcut!=NULL);
+	ASSERT(m_pCurrentShortcut->m_apActions.GetSize()>1);
+	ASSERT(m_nCurrentAction>=0 && m_nCurrentAction<m_pCurrentShortcut->m_apActions.GetSize());
+	
+	
+	// Delete shortcut
+	m_pCurrentShortcut->m_apActions.RemoveAt(m_nCurrentAction);
+
+	// If not the first action, activate previous
+	if (m_nCurrentAction>0)
+		m_nCurrentAction--;
+	SetFieldsForAction(m_pCurrentShortcut->m_apActions[m_nCurrentAction]);
+
+	EnableItems();
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::OnNextAction(BOOL bNext)
+{
+	ASSERT(m_pCurrentShortcut!=NULL);
+	ASSERT(m_nCurrentAction>=0 && m_nCurrentAction<m_pCurrentShortcut->m_apActions.GetSize());
+	// If swap with previous, check that not first action
+	ASSERT(m_nCurrentAction>0 || bNext);
+	// If swap with next, check that not last action
+	ASSERT(m_nCurrentAction<m_pCurrentShortcut->m_apActions.GetSize()-1 || !bNext);
+
+	// Save current fields
+	SaveFieldsForAction(m_pCurrentShortcut->m_apActions[m_nCurrentAction]);
+
+	// Activate next/previous
+	m_nCurrentAction+=bNext?+1:-1;
+    SetFieldsForAction(m_pCurrentShortcut->m_apActions[m_nCurrentAction]);
+
+	EnableItems();
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::OnSwapAction(BOOL bWithNext)
+{
+	ASSERT(m_pCurrentShortcut!=NULL);
+	ASSERT(m_nCurrentAction>=0 && m_nCurrentAction<m_pCurrentShortcut->m_apActions.GetSize());
+	// If swap with previous, check that not first action
+	ASSERT(m_nCurrentAction>0 || bWithNext);
+	// If swap with next, check that not last action
+	ASSERT(m_nCurrentAction<m_pCurrentShortcut->m_apActions.GetSize()-1 || !bWithNext);
+
+	// Save current fields
+	SaveFieldsForAction(m_pCurrentShortcut->m_apActions[m_nCurrentAction]);
+
+	// Swapping
+	int m_nAnotherAction=m_nCurrentAction+(bWithNext?+1:-1);
+	CShortcut::CKeyboardAction* pTmp=m_pCurrentShortcut->m_apActions[m_nAnotherAction];
+	m_pCurrentShortcut->m_apActions[m_nAnotherAction]=m_pCurrentShortcut->m_apActions[m_nCurrentAction];
+	m_pCurrentShortcut->m_apActions[m_nCurrentAction]=pTmp;
+
+	// Set current fields
+	SetFieldsForAction(m_pCurrentShortcut->m_apActions[m_nCurrentAction=m_nAnotherAction]);
+	
+	EnableItems();
+}
+
+
 void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 {
 	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
 
+	// Enable/disable remove button
+	EnableDlgItem(IDC_REMOVE,nItem!=-1);
+	
+	// Enable/disable static group box
 	EnableDlgItem(IDC_STATICSHORTCUT,nItem!=-1);
-	EnableDlgItem(IDC_STATICKEY,nItem!=-1);
+	
+	// Enable/disable shortcut
 	EnableDlgItem(IDC_SHORTCUTKEY,nItem!=-1);
+	EnableDlgItem(IDC_STATICKEY,nItem!=-1);
+	
+	// Enable/disable where pressed
 	EnableDlgItem(IDC_STATICWHEREPRESSED,nItem!=-1);
 	EnableDlgItem(IDC_WHERE,nItem!=-1);
+
+	// Enable/disable advanced button
 	EnableDlgItem(IDC_ADVANCED,nItem!=-1);
-	EnableDlgItem(IDC_STATICACTIONS,nItem!=-1);
-	EnableDlgItem(IDC_ACTIONTOOLBAR,nItem!=-1);
-	EnableDlgItem(IDC_ACTION,nItem!=-1);
-	EnableDlgItem(IDC_SUBACTION,nItem!=-1);
+	
+	// Enable/disable action items
+	EnableDlgItem(IDC_STATICACTIONS,nItem!=-1); // Groupbox
+	EnableDlgItem(IDC_ACTIONTOOLBAR,nItem!=-1); // Toolbar
+	EnableDlgItem(IDC_STATICACTION,nItem!=-1); // Action static text
+	EnableDlgItem(IDC_ACTION,nItem!=-1); // Action combo
+	EnableDlgItem(IDC_STATICSUBACTION,nItem!=-1); // Subaction static text
+	EnableDlgItem(IDC_SUBACTION,nItem!=-1); // Subaction combo
+
+	if (nItem!=-1)
+	{
+		ASSERT(m_pCurrentShortcut==(CShortcut*)m_pList->GetItemData(nItem));
+		ASSERT(m_nCurrentAction>=0 && m_nCurrentAction<m_pCurrentShortcut->m_apActions.GetSize());
+		
+		m_pToolBar->EnableButton(IDC_REMOVEACTION,m_pCurrentShortcut->m_apActions.GetSize()>=2);
+		m_pToolBar->EnableButton(IDC_NEXT,m_nCurrentAction<=m_pCurrentShortcut->m_apActions.GetSize()-2);
+		m_pToolBar->EnableButton(IDC_PREV,m_nCurrentAction>0);
+		m_pToolBar->EnableButton(IDC_SWAPWITHNEXT,m_nCurrentAction<=m_pCurrentShortcut->m_apActions.GetSize()-2);
+		m_pToolBar->EnableButton(IDC_SWAPWITHPREVIOUS,m_nCurrentAction>0);
+	}
 }
 
 void CSettingsProperties::CKeyboardShortcutsPage::OnChangeItem(NMLISTVIEW *pNm)
@@ -5705,15 +5960,18 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnChangeItem(NMLISTVIEW *pNm)
 	if (pNm->iItem==-1)
 		return;
 
+	if (!(pNm->uChanged&LVIF_STATE))
+		return;
 	
-    if (!(pNm->uOldState&LVIS_SELECTED) ||
+    if (!(pNm->uOldState&LVIS_SELECTED) &&
 		pNm->uNewState&LVIS_SELECTED)
 	{
         // Item is selected
 		CShortcut* pShortcut=(CShortcut*)m_pList->GetItemData(pNm->iItem);
 		if (pShortcut==NULL)
 			return;
-		SetFieldsForShortcut(pShortcut);
+
+		SetFieldsForShortcut(m_pCurrentShortcut=pShortcut);
 	}
 
 	EnableItems();
@@ -5724,8 +5982,11 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnChangingItem(NMLISTVIEW *pNm
 	if (pNm->iItem==-1)
 		return;
 
+	if (!(pNm->uChanged&LVIF_STATE))
+		return;
+
 	
-    if (pNm->uOldState&LVIS_SELECTED ||
+    if (pNm->uOldState&LVIS_SELECTED &&
 		!(pNm->uNewState&LVIS_SELECTED))
 	{
 		// Item is deselected
@@ -5733,6 +5994,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnChangingItem(NMLISTVIEW *pNm
 		if (pShortcut==NULL)
 			return;
 		SaveFieldsForShortcut(pShortcut);
+		ClearActionFields();
 
 		m_pList->RedrawItems(pNm->iItem,pNm->iItem);
 	}
@@ -5760,6 +6022,11 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForShortcut(CShortcut
 		SendDlgItemMessage(IDC_WHERE,CB_SETCURSEL,0);
 		break;
 	}
+
+	m_nCurrentAction=0;
+	ASSERT(pShortcut->m_apActions.GetSize()>0);
+	SetFieldsForAction(pShortcut->m_apActions[0]);
+
 }
 
 void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForShortcut(CShortcut* pShortcut)
@@ -5786,11 +6053,62 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForShortcut(CShortcu
 		pShortcut->m_dwFlags|=CShortcut::sfLocateDialog;
 		break;
 	}
+
+	ASSERT(m_nCurrentAction>=0 && m_nCurrentAction<pShortcut->m_apActions.GetSize());
+	SaveFieldsForAction(pShortcut->m_apActions[m_nCurrentAction]);
 }
 
+void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CShortcut::CKeyboardAction* pAction)
+{
+	ASSERT(m_pCurrentShortcut!=NULL);
+	ASSERT(m_nCurrentAction>=0 && m_nCurrentAction<m_pCurrentShortcut->m_apActions.GetSize());
+	
+	// Change groupbox title
+	if (m_pCurrentShortcut->m_apActions.GetSize()>1)
+	{
+		CString str("Action (%d/%d):");
+		str.Format(str,m_nCurrentAction+1,m_pCurrentShortcut->m_apActions.GetSize());
+		SetDlgItemText(IDC_STATICACTIONS,str);
+	}
+	else
+		SetDlgItemText(IDC_STATICACTIONS,"Action:");
 
+	// Setting action, InsertSubActions does selection of subaction
+	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,pAction->m_nAction);
+	InsertSubActions(); 
+}
 
+void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CShortcut::CKeyboardAction* pAction)
+{
+	// Setting action
+	pAction->m_nAction=(CShortcut::CKeyboardAction::Action)SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL);
+	
+	switch (pAction->m_nAction)
+	{
+	case CShortcut::CKeyboardAction::ActivateControl:
+		{
+			int nCurSel=(CShortcut::CKeyboardAction::ActionActivateControls)SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+			if (nCurSel!=CB_ERR)
+				pAction->m_nActivateControl=m_pPossibleControls[nCurSel];
+			else
+				pAction->m_nActivateControl=m_pPossibleControls[0];
+			break;
+		}
+	case CShortcut::CKeyboardAction::ActivateTab:
+		pAction->m_nActivateControl=(CShortcut::CKeyboardAction::ActionActivateControls)SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+		if ((int)pAction->m_nActivateControl==CB_ERR)
+			pAction->m_nActivateControl=CShortcut::CKeyboardAction::FindNow;
+		break;
+	};
 
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::ClearActionFields()
+{
+	// Change groupbox title
+	SetDlgItemText(IDC_STATICACTIONS,"Action:");
+}
+		
 BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
@@ -5908,6 +6226,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnCommand(WORD w
 	case IDC_OK:
 		OnOK();
 		break;
+	case IDCANCEL:
 	case IDC_CANCEL:
 		EndDialog(0);
 		break;

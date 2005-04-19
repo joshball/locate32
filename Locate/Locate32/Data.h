@@ -211,6 +211,8 @@ public:
 		} m_nAction;
 	
 		enum ActionActivateControls { // First is control to be activated, second is for memonics
+			Null = 0,
+			
 			// Dialog itself
 			FindNow = MAKELONG(IDC_OK,IDC_OK),
 			Stop = MAKELONG(IDC_STOP,IDC_STOP),
@@ -242,6 +244,19 @@ public:
 			TextHelp = MAKELONG(IDC_HELPTOOLBAR,0)
 		};
 
+		static ActionActivateControls* GetPossibleControlValues() {
+			ActionActivateControls a[]={FindNow,Stop,NewSearch,ResultList,
+				Presets,Name,Type,LookIn,MoreDirectories,Browse,
+                MinimumSize,MaximumSize,MinimumDate,MaximumDate,
+				CheckFilesOrFolders,MatchWholeName,ReplaceSpaces,
+                UseWholePath,TypeOfFile,ContainingText,
+				TextMatchCase,TextHelp,Null};
+			ActionActivateControls* b=new ActionActivateControls[sizeof(a)];
+			CopyMemory(b,a,sizeof(a)*sizeof(ActionActivateControls));
+			return b;
+		}
+
+
 		enum ActionActivateTabs {
 			NameAndLocation = 0,
 			SizeAndData = 1,
@@ -253,10 +268,9 @@ public:
 			ActionActivateTabs m_nActivateTab;
 	    };
 
-		CKeyboardAction* m_pNextAction;
 	};
 
-	CKeyboardAction* m_pFirstAction;
+	CArrayFP<CKeyboardAction*> m_apActions;
 };
 
 ////////////////////////////////////////////////////////////
@@ -344,9 +358,7 @@ inline int CSchedule::CTimeX::GetWeekIndex(int nDayIndex,BOOL bMondayIsFirst)
 
 
 inline CShortcut::CKeyboardAction::CKeyboardAction()
-:	m_pNextAction(NULL),
-	m_nAction(ActivateControl),
-	m_nActivateControl(FindNow)
+:	m_nAction(ActivateControl),	m_nActivateControl(FindNow)
 {
 }
 
