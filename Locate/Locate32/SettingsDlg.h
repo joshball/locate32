@@ -579,6 +579,8 @@ public:
 		BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
 
 		void InsertSubActions();
+		void InsertKeysToVirtualKeyCombo();
+		void RefreshShortcutListLabels();
 		
 		void OnNewShortcut();
 		void OnRemoveShortcut();
@@ -600,7 +602,10 @@ public:
 		void EnableItems();
 
 		static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);
-
+		
+		static void FormatKeyLabel(BYTE bKey,BYTE bModifiers,CString& str);
+		static void FormatActionLabel(CShortcut::CKeyboardAction::Action,UINT uSubAction,CString& str);
+		
 
 	protected:
 		friend CSettingsProperties;
@@ -626,7 +631,7 @@ public:
 		CShortcut::CKeyboardAction::ActionActivateControls* m_pPossibleControls;
 		HWND hDialogs[4];	
 
-		
+		CString m_Buffer;
 
 	};
 

@@ -14,7 +14,7 @@ BOOL CLocateDlgThread::InitInstance()
 	CoInitialize(NULL);
 	
 	m_pMainWnd=m_pLocate=new CLocateDlg;
-	LoadAccelTable(IDR_MAINACCEL);
+	//LoadAccelTable(IDR_MAINACCEL);
 	m_pLocate->Create(NULL);
 	
 	// Settings transparency
@@ -358,9 +358,9 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
         m_NameDlg.InitDriveBox();
 		
 	// Set acceleration tables for subdialogs
-	GetCurrentWinThread()->SetAccelTableForChilds(m_NameDlg,IDR_NAMEDLGACCEL,TRUE,*this);
-	GetCurrentWinThread()->SetAccelTableForChilds(m_SizeDateDlg,IDR_SIZEDATEDLGACCEL,TRUE,*this);
-	GetCurrentWinThread()->SetAccelTableForChilds(m_AdvancedDlg,IDR_ADVANCEDDLGACCEL,TRUE,*this);
+	//GetCurrentWinThread()->SetAccelTableForChilds(m_NameDlg,IDR_NAMEDLGACCEL,TRUE,*this);
+	//GetCurrentWinThread()->SetAccelTableForChilds(m_SizeDateDlg,IDR_SIZEDATEDLGACCEL,TRUE,*this);
+	//GetCurrentWinThread()->SetAccelTableForChilds(m_AdvancedDlg,IDR_ADVANCEDDLGACCEL,TRUE,*this);
 	
 	SetDialogMode(FALSE);
 		

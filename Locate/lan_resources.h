@@ -394,10 +394,8 @@
 #define IDC_RESET                       1168
 #define IDC_UPDATE2                     1169
 #define IDC_OVERRIDETXT                 1169
-#define IDC_OVERRIDEKEY                 1171
 #define IDC_STOPIFROOTUNAVAILABLE       1172
 #define IDC_THREADSLABEL                1172
-#define IDC_WHERE                       1172
 #define IDC_SENTENCECASE                1173
 #define IDC_TITLECASE                   1174
 #define IDC_TOGGLECASE                  1175
@@ -418,9 +416,13 @@
 #define IDC_WINDOWTITLE                 1191
 #define IDC_CHECK1                      1192
 #define IDC_LOCATEDIALOG                1192
+#define IDC_MODSHIFT                    1192
 #define IDC_EXECUTEWHENKEYISDOWN        1193
+#define IDC_MODALT                      1193
 #define IDC_REMOVEDOWNMESSAGE           1194
+#define IDC_MODCTRL                     1194
 #define IDC_EXECUTEWHENKEYISUP          1195
+#define IDC_MODWIN                      1195
 #define IDC_REMOVEUPMESSAGE             1196
 #define IDC_EXECUTEWHENSTATIC           1197
 #define IDC_REMOVEMESSAGESTATIC         1198
@@ -428,10 +430,11 @@
 #define IDC_RIGHT                       1199
 #define IDC_SELECTALLKEY                1200
 #define IDC_LEFT                        1200
+#define IDC_CODE                        1200
 #define IDC_DELETEKEY                   1201
 #define IDC_CENTER                      1201
 #define IDC_IMPORT                      1202
-#define IDC_ALIGN						1202
+#define IDC_ALIGN                       1202
 #define IDC_STATICWHEREPRESSED          1202
 #define IDC_EXPORT                      1203
 #define IDC_STATICCLASS                 1203
@@ -439,6 +442,8 @@
 #define IDC_STATICWINDOWTITLE           1204
 #define IDC_STATICEXECUTAIONOPTIONS     1205
 #define IDC_STATICWAITBEFOREEXECUTE     1206
+#define IDC_SCANCODE                    1207
+#define IDC_STATICWHEREPRESSED2         1208
 #define IDD_RESULTSAVEDIALOG            1209
 #define IDD_RESULTPRINTDIALOG           1210
 #define IDD_GENERALSETTINGS             1211
@@ -450,7 +455,8 @@
 #define IDC_STATICACTION                1217
 #define IDC_STATICSUBACTION             1218
 #define IDC_STATICSHORTCUT              1219
-#define IDC_STATICKEY                   1220
+#define IDC_HOTKEYRADIO                 1220
+#define IDC_CODERADIO                   1221
 #define IDS_LASTERROR                   1900
 #define IDS_LASTERRORUNKNOWN            1901
 #define IDS_LASTERRORINVALIDDB          1902
@@ -511,6 +517,7 @@
 #define IDS_AUTOUPDATESETTINGS          5003
 #define IDS_ADVANCEDSETTINGS            5004
 #define IDS_LANGUAGESETTINGS            5005
+#define IDS_SHORTCUTSETTINGS            5006
 #define IDS_MONDAY                      5131
 #define IDS_TUESDAY                     5132
 #define IDS_WEDNESDAY                   5133
@@ -627,6 +634,31 @@
 #define IDS_ADVSETFILESIZEFORMATKBNOUNITS 5472
 #define IDS_ADVSETFILESIZEFORMATMB      5473
 #define IDS_ADVSETFILESIZEFORMATMBNOUNITS 5474
+#define IDS_SHORTCUTACTIVATECONTROL     5504
+#define IDS_SHORTCUTACTIVATETAB         5505
+#define IDS_SHORTCUTADDACTION           5506
+#define IDS_SHORTCUTREMOVEACTION        5507
+#define IDS_SHORTCUTNEXTACTION          5508
+#define IDS_SHORTCUTPREVACTION          5509
+#define IDS_SHORTCUTSWAPWITHPREVIOUS    5510
+#define IDS_SHORTCUTSWAPWITHNEXT        5511
+#define IDS_SHORTCUTACTION              5512
+#define IDS_SHORTCUTACTION2             5513
+#define IDS_SHORTCUTLISTLABELSHORTCUT   5514
+#define IDS_SHORTCUTLISTLABELTYPE       5515
+#define IDS_SHORTCUTLISTLABELACTION     5516
+#define IDS_SHORTCUTMULTIPLEACTIONS     5517
+#define IDS_SHORTCUTMODEXT              5518
+#define IDS_SHORTCUTMODCTRL             5519
+#define IDS_SHORTCUTMODALT              5520
+#define IDS_SHORTCUTMODSHIFT            5521
+#define IDS_SHORTCUTSCANCODE            5522
+#define IDS_ADVSHORTCUTLOCAL			5571
+#define IDS_ADVSHORTCUTGLOBALHOTKEY     5572
+#define IDS_ADVSHORTCUTGLOBALHOOK       5573
+#define IDS_KEYRESULTLIST               5590
+#define IDS_KEYMOREDIRECTORIES          5591
+#define IDS_KEYTEXTHELPBUTTON           5592
 #define IDS_SCHEDULEUPDATE              5901
 #define IDS_MINUTELY                    5909
 #define IDS_HOURLY                      5910
@@ -768,7 +800,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        236
 #define _APS_NEXT_COMMAND_VALUE         40063
-#define _APS_NEXT_CONTROL_VALUE         1200
+#define _APS_NEXT_CONTROL_VALUE         1201
 #define _APS_NEXT_SYMED_VALUE           108
 #endif
 #endif

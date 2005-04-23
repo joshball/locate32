@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,4170
- PRODUCTVERSION 2,99,5,4170
+ FILEVERSION 2,99,5,4230
+ PRODUCTVERSION 2,99,5,4230
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.4160"
+            VALUE "FileVersion", "3.0 beta 5.4230"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.4170"
+            VALUE "ProductVersion", "3.0 beta 5.4230"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -71,7 +71,6 @@ STYLE DS_LOCALEDIT | DS_SETFONT | DS_3DLOOK | DS_CENTER | WS_MINIMIZEBOX |
     WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_CONTROLPARENT
 CAPTION "Locate: All Files"
-//MENU 102
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "F&ind Now",IDC_OK,233,16,50,14
@@ -303,8 +302,7 @@ BEGIN
                     IDC_OFTHEMONTHS,78,49,53,12,SS_CENTERIMAGE
     CONTROL         "",IDC_ONCETIME,"SysDateTimePick32",WS_TABSTOP,76,48,99,
                     12,WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE
-    LTEXT           "&Run on:",IDC_RUNON,
-                    15,50,47,9
+    LTEXT           "&Run on:",IDC_RUNON,15,50,47,9
     LTEXT           "",IDC_LASTRUN,7,141,168,13
     PUSHBUTTON      "Databases",IDC_DATABASES,178,140,48,14
 END
@@ -369,7 +367,7 @@ BEGIN
     LTEXT           "This program is freeware.",IDC_YOURRIGHT,42,71,186,8
     LTEXT           "A\nB\nC\nD",IDC_SYSINFO,42,106,186,33
     LTEXT           "New versions on",IDC_STATIC,42,90,60,8
-    CONTROL         "http://venda.uku.fi/~jmhuttun/soft",IDC_GOTOHOMEPAGE,
+    CONTROL         "http://locate32.webhop.org",IDC_GOTOHOMEPAGE,
                     "Button",BS_OWNERDRAW | BS_LEFT | BS_VCENTER | BS_FLAT | 
                     WS_TABSTOP,102,90,125,8
     LTEXT           "",IDC_VERSION,42,44,186,10
@@ -523,8 +521,7 @@ BEGIN
 END
 
 IDD_INPUTBOX DIALOGEX 0, 0, 186, 65
-STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOOLWINDOW
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
@@ -556,71 +553,87 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Schortcuts:",IDC_STATIC,2,0,283,163
-    LTEXT           "&Assigned:",IDC_STATIC,8,13,133,10
+    LTEXT           "Assi&gned:",IDC_STATIC,8,13,133,10
     PUSHBUTTON      "&New",IDC_NEW,143,11,41,12
     PUSHBUTTON      "&Remove",IDC_REMOVE,189,11,41,12
-    PUSHBUTTON      "&Reset",IDC_RESET,235,11,41,12
+    PUSHBUTTON      "R&eset",IDC_RESET,235,11,41,12
     CONTROL         "",IDC_KEYLIST,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SHAREIMAGELISTS | 
                     LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,25,269,132
-    GROUPBOX        "Shortcut:",IDC_STATICSHORTCUT,2,168,283,38
-    LTEXT           "&Key:",IDC_STATICKEY,8,183,28,11
-    CONTROL         "",IDC_SHORTCUTKEY,"msctls_hotkey32",WS_BORDER | WS_TABSTOP,
-                    40,181,87,14
-    LTEXT           "&Where:",IDC_STATICWHEREPRESSED,132,183,28,11
-    COMBOBOX        IDC_WHERE,159,180,71,84,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "A&dvanced",IDC_ADVANCED,237,180,39,12
-    GROUPBOX        "",IDC_STATICACTIONS,2,214,283,84
-	CONTROL         "",IDC_ACTIONTOOLBAR,"ToolbarWindow32",WS_CLIPSIBLINGS | 0x0200 | 0x0100 | 0x8000 |
-                    0x004d,175,222,116,13
-    LTEXT           "&Action:",IDC_STATICACTION,8,240,29,9
-    COMBOBOX        IDC_ACTION,40,238,101,108,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "SubAction:",IDC_STATICSUBACTION,148,240,41,9
-    COMBOBOX        IDC_SUBACTION,198,238,80,108,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    
+    GROUPBOX        "Shortcut:",IDC_STATICSHORTCUT,2,168,283,59
+    RADIOBUTTON     "&Key:",IDC_HOTKEYRADIO,8,183,33,12
+    CONTROL         "",IDC_SHORTCUTKEY,"msctls_hotkey32",WS_BORDER | 
+                    WS_TABSTOP,62,181,129,14
+    RADIOBUTTON     "&Virtual Key:",IDC_CODERADIO,8,199,54,12
+    COMBOBOX        IDC_CODE,62,199,48,119,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "C&trl",IDC_MODCTRL,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,113,201,24,8
+    CONTROL         "&Alt",IDC_MODALT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    142,201,24,8
+    CONTROL         "S&hift",IDC_MODSHIFT,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,170,201,27,8
+    CONTROL         "&Scancode",IDC_SCANCODE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,232,201,45,8
+    GROUPBOX        "",IDC_STATICACTIONS,2,235,283,65
+    CONTROL         "",IDC_ACTIONTOOLBAR,"ToolbarWindow32",WS_CLIPSIBLINGS | 
+                    0x834d,175,243,116,13
+    LTEXT           "A&ction:",IDC_STATICACTION,8,261,29,9
+    COMBOBOX        IDC_ACTION,40,259,101,108,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    LTEXT           "S&ubAction:",IDC_STATICSUBACTION,148,261,41,9
+    COMBOBOX        IDC_SUBACTION,198,259,80,108,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Win",IDC_MODWIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    203,201,27,8
+    PUSHBUTTON      "A&dvanced",IDC_ADVANCED,240,182,39,12
 END
 
-IDD_SHORTCUTADVANCED DIALOGEX 100, 100, 273, 193
+IDD_SHORTCUTADVANCED DIALOGEX 100, 100, 273, 200
 STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Advanced settings:"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "&Override virtualkey:",IDC_STATIC,4,0,263,37
-    COMBOBOX        IDC_OVERRIDEKEY,9,13,72,84,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Hot key control does not allow ESC, SPACE and TAB. So choose any key in the main dialog and select override. Modifiers are specified as in hotkey control.",
-                    IDC_STATIC,84,8,179,25
-    GROUPBOX        "Where pressed:",IDC_STATICWHEREPRESSED,4,41,263,46
-    LTEXT           "Window title:",IDC_STATICWINDOWTITLE,10,52,47,9
-    EDITTEXT        IDC_WINDOWTITLE,10,63,71,14,ES_AUTOHSCROLL
-    LTEXT           "Class:",IDC_STATICCLASS,87,51,47,9
-    EDITTEXT        IDC_WINDOWCLASS,87,62,71,14,ES_AUTOHSCROLL
+    GROUPBOX        "Type of shortcut:",IDC_STATIC,4,1,263,34
+    LTEXT           "&Type:",IDC_STATIC,10,16,28,11
+    COMBOBOX        IDC_TYPE,45,13,87,84,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    GROUPBOX        "Where pressed:",IDC_STATICWHEREPRESSED,4,41,263,50
+    LTEXT           "Window title:",IDC_STATICWINDOWTITLE,10,56,47,8
+    EDITTEXT        IDC_WINDOWTITLE,10,68,71,14,ES_AUTOHSCROLL
+    LTEXT           "Class:",IDC_STATICCLASS,92,56,47,8
+    EDITTEXT        IDC_WINDOWCLASS,91,68,71,14,ES_AUTOHSCROLL
     CONTROL         "Locate dialog",IDC_LOCATEDIALOG,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,170,64,97,9
-    GROUPBOX        "Execute options:",IDC_STATICEXECUTAIONOPTIONS,4,94,263,78
-    LTEXT           "Execute when:",IDC_EXECUTEWHENSTATIC,10,108,61,8
-    CONTROL         "Key is down",IDC_EXECUTEWHENKEYISDOWN,"Button",
-                    BS_AUTORADIOBUTTON,119,108,64,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,173,71,87,9
+    GROUPBOX        "Execute options:",IDC_STATICEXECUTAIONOPTIONS,4,99,263,
+                    78
+    LTEXT           "When execute:",IDC_EXECUTEWHENSTATIC,10,113,61,8
+    CONTROL         "Key is pressed",IDC_EXECUTEWHENKEYISDOWN,"Button",
+                    BS_AUTORADIOBUTTON,119,113,64,10
     CONTROL         "Key is released",IDC_EXECUTEWHENKEYISUP,"Button",
-                    BS_AUTORADIOBUTTON,190,108,72,10
+                    BS_AUTORADIOBUTTON,190,113,72,10
     LTEXT           "Remove messages from queue:",IDC_REMOVEMESSAGESTATIC,10,
-                    125,100,8
+                    130,100,8
     CONTROL         "Key down",IDC_REMOVEDOWNMESSAGE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,125,47,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,119,130,47,10
     CONTROL         "Key up",IDC_REMOVEUPMESSAGE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,190,125,38,10
-    LTEXT           "&Wait before execute:",IDC_STATICWAITBEFOREEXECUTE,10,139,117,11
-    CONTROL         "None",IDC_WAITNONE,"Button",BS_AUTORADIOBUTTON,10,152,
+                    WS_TABSTOP,190,130,38,10
+    LTEXT           "&Wait before execute:",IDC_STATICWAITBEFOREEXECUTE,10,
+                    144,117,11
+    CONTROL         "None",IDC_WAITNONE,"Button",BS_AUTORADIOBUTTON,10,157,
                     49,11
     CONTROL         "Delay (ms):",IDC_WAITDELAY,"Button",BS_AUTORADIOBUTTON,
-                    61,152,55,11
-    EDITTEXT        IDC_WAITMS,121,152,40,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Post",IDC_WAITPOST,"Button",BS_AUTORADIOBUTTON,182,152,
+                    61,157,55,11
+    EDITTEXT        IDC_WAITMS,121,157,40,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Post",IDC_WAITPOST,"Button",BS_AUTORADIOBUTTON,182,157,
                     35,11
-    DEFPUSHBUTTON   "OK",IDC_OK,71,176,50,14
-    PUSHBUTTON      "Cancel",IDC_CANCEL,149,176,50,14
+    DEFPUSHBUTTON   "OK",IDC_OK,71,181,50,14
+    PUSHBUTTON      "Cancel",IDC_CANCEL,149,181,50,14
 END
+
+
+
 
 
 
@@ -749,151 +762,6 @@ BEGIN
     PUSHBUTTON      "Cancel",IDC_CANCEL,80,47,50,14
 END
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
-BEGIN
-    IDD_MAIN, DIALOG
-    BEGIN
-        LEFTMARGIN, 1
-        VERTGUIDE, 283
-        VERTGUIDE, 284
-        TOPMARGIN, 7
-    END
-
-    IDD_NAME, DIALOG
-    BEGIN
-        RIGHTMARGIN, 210
-        BOTTOMMARGIN, 87
-    END
-
-    IDD_FILESPROPERTIES, DIALOG
-    BEGIN
-        VERTGUIDE, 7
-        VERTGUIDE, 47
-        VERTGUIDE, 67
-        VERTGUIDE, 131
-        VERTGUIDE, 186
-    END
-
-    IDD_LOCATESETTINGS, DIALOG
-    BEGIN
-        LEFTMARGIN, 2
-        RIGHTMARGIN, 235
-        VERTGUIDE, 12
-        VERTGUIDE, 27
-        VERTGUIDE, 206
-        BOTTOMMARGIN, 226
-    END
-
-    IDD_ADVANCED, DIALOG
-    BEGIN
-        RIGHTMARGIN, 220
-        VERTGUIDE, 8
-        VERTGUIDE, 163
-        BOTTOMMARGIN, 87
-    END
-
-    IDD_RESULTSAVEDIALOG, DIALOG
-    BEGIN
-        RIGHTMARGIN, 237
-        BOTTOMMARGIN, 11
-    END
-
-    IDD_RESULTPRINTDIALOG, DIALOG
-    BEGIN
-        RIGHTMARGIN, 232
-        BOTTOMMARGIN, 11
-    END
-
-    IDD_SCHEDULEDUPDATE, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 226
-        VERTGUIDE, 131
-        VERTGUIDE, 175
-        VERTGUIDE, 178
-        TOPMARGIN, 4
-        BOTTOMMARGIN, 135
-        HORZGUIDE, 16
-    END
-
-    IDD_RESULTSAVEDIALOG2000, DIALOG
-    BEGIN
-        RIGHTMARGIN, 294
-        BOTTOMMARGIN, 11
-    END
-
-    IDD_GENERALSETTINGS, DIALOG
-    BEGIN
-        LEFTMARGIN, 2
-        RIGHTMARGIN, 235
-        VERTGUIDE, 8
-        VERTGUIDE, 215
-    END
-
-    IDD_ABOUT, DIALOG
-    BEGIN
-        VERTGUIDE, 42
-        VERTGUIDE, 226
-        BOTTOMMARGIN, 154
-    END
-
-    IDD_DATABASEINFO, DIALOG
-    BEGIN
-        LEFTMARGIN, 10
-        RIGHTMARGIN, 243
-        VERTGUIDE, 50
-        VERTGUIDE, 142
-        VERTGUIDE, 188
-        VERTGUIDE, 236
-        TOPMARGIN, 3
-        BOTTOMMARGIN, 227
-    END
-
-    IDD_AUTOUPDATESETTINGS, DIALOG
-    BEGIN
-        LEFTMARGIN, 2
-        RIGHTMARGIN, 235
-        VERTGUIDE, 7
-        VERTGUIDE, 186
-        VERTGUIDE, 229
-        TOPMARGIN, 2
-        BOTTOMMARGIN, 213
-    END
-
-    IDD_DATABASESETTINGS, DIALOG
-    BEGIN
-        LEFTMARGIN, 2
-        RIGHTMARGIN, 235
-        VERTGUIDE, 6
-        VERTGUIDE, 230
-        TOPMARGIN, 2
-        BOTTOMMARGIN, 240
-    END
-
-    IDD_SIZEDATE, DIALOG
-    BEGIN
-        RIGHTMARGIN, 210
-        BOTTOMMARGIN, 87
-    END
-
-    IDD_LANGUAGESETTINGS, DIALOG
-    BEGIN
-        LEFTMARGIN, 2
-        RIGHTMARGIN, 235
-        VERTGUIDE, 6
-        VERTGUIDE, 229
-        TOPMARGIN, 2
-        BOTTOMMARGIN, 239
-    END
-END
-#endif    // APSTUDIO_INVOKED
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1242,6 +1110,7 @@ BEGIN
     IDS_AUTOUPDATESETTINGS  "Auto update"
     IDS_ADVANCEDSETTINGS    "Advanced"
     IDS_LANGUAGESETTINGS    "Language"
+    IDS_SHORTCUTSETTINGS    "Keyboard shortcuts"
 END
 
 STRINGTABLE 
@@ -1593,6 +1462,43 @@ END
 
 STRINGTABLE
 BEGIN
+	IDS_SHORTCUTLISTLABELSHORTCUT	"Shortcut"
+	IDS_SHORTCUTLISTLABELTYPE		"Type"
+	IDS_SHORTCUTLISTLABELACTION		"Action:"
+	IDS_SHORTCUTACTIVATECONTROL		"Activate Control"
+	IDS_SHORTCUTACTIVATETAB			"Activate Tab"
+	IDS_SHORTCUTADDACTION			"New action"
+	IDS_SHORTCUTREMOVEACTION		"Remove action"
+	IDS_SHORTCUTNEXTACTION			"Next action"
+	IDS_SHORTCUTPREVACTION			"Previous action"
+	IDS_SHORTCUTSWAPWITHPREVIOUS	"Swap with previous"
+	IDS_SHORTCUTSWAPWITHNEXT		"Swap with next"
+	IDS_SHORTCUTACTION				"Action:"
+	IDS_SHORTCUTACTION2				"Action (%d/%d):"
+	IDS_SHORTCUTMULTIPLEACTIONS		"Multiple Actions"
+	IDS_SHORTCUTMODEXT				"Win+"
+	IDS_SHORTCUTMODCTRL				"Ctrl+"
+	IDS_SHORTCUTMODALT				"Alt+"
+	IDS_SHORTCUTMODSHIFT			"Shift+"
+	IDS_SHORTCUTSCANCODE			"Scancode: %d"
+END
+
+STRINGTABLE
+BEGIN
+	IDS_ADVSHORTCUTLOCAL			"Local"
+	IDS_ADVSHORTCUTGLOBALHOTKEY		"Global (hotkey)"
+	IDS_ADVSHORTCUTGLOBALHOOK		"Global (hook)"
+END
+
+STRINGTABLE
+BEGIN
+	IDS_KEYRESULTLIST				"Result list"
+	IDS_KEYMOREDIRECTORIES			"More Directories button"
+	IDS_KEYTEXTHELPBUTTON			"Containing Text Help"
+END
+
+STRINGTABLE
+BEGIN
 	IDS_PRESETNAMENOTVALID	"Name '%s' is not valid."
 	IDS_PRESETGLOBAL		"Global"
 	IDS_PRESETLATEST		"Latest"
@@ -1699,7 +1605,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 #endif //_WIN32
 IDR_MAINACCEL ACCELERATORS
 BEGIN
-       "B",							IDC_BROWSE,					VIRTKEY, ALT, NOINVERT
+/*       "B",							IDC_BROWSE,					VIRTKEY, ALT, NOINVERT
        VK_DELETE,									IDC_DELETEKEY,				VIRTKEY, NOINVERT
        VK_DELETE,                                   IDC_DELETEKEY,				VIRTKEY, SHIFT, NOINVERT
        "L",							IDC_LOOKIN,					VIRTKEY, ALT, NOINVERT
@@ -1725,12 +1631,12 @@ BEGIN
 	   "W",											IDM_CLOSE,					VIRTKEY, CONTROL,NOINVERT
 	   "1",											IDM_ACTIVATENAMETAB,		VIRTKEY, ALT,NOINVERT
 	   "2",											IDM_ACTIVATESIZETAB,		VIRTKEY, ALT,NOINVERT
-	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT
+	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT*/
 END
 
 IDR_NAMEDLGACCEL ACCELERATORS 
 BEGIN
-       "I",							IDC_OK,						VIRTKEY, ALT, NOINVERT
+/*       "I",							IDC_OK,						VIRTKEY, ALT, NOINVERT
        "P",                              IDC_STOP,					VIRTKEY, ALT, NOINVERT
        "W",							IDC_NEWSEARCH,				VIRTKEY, ALT, NOINVERT
        "L",							IDC_LOOKIN,					VIRTKEY, ALT, NOINVERT
@@ -1750,12 +1656,12 @@ BEGIN
 	   "W",											IDM_CLOSE,					VIRTKEY, CONTROL,NOINVERT
 	   "1",											IDM_ACTIVATENAMETAB,		VIRTKEY, ALT,NOINVERT
 	   "2",											IDM_ACTIVATESIZETAB,		VIRTKEY, ALT,NOINVERT
-	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT
+	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT*/
 END    
 
 IDR_SIZEDATEDLGACCEL ACCELERATORS 
 BEGIN
-       "I",							IDC_OK,						VIRTKEY, ALT, NOINVERT
+/*       "I",							IDC_OK,						VIRTKEY, ALT, NOINVERT
        "P",                              IDC_STOP,					VIRTKEY, ALT, NOINVERT
        "W",							IDC_NEWSEARCH,				VIRTKEY, ALT, NOINVERT
        "N",               IDC_CHECKMINIMUMSIZE,		VIRTKEY, ALT, NOINVERT
@@ -1772,12 +1678,12 @@ BEGIN
 	   "W",											IDM_CLOSE,					VIRTKEY, CONTROL,NOINVERT
 	   "1",											IDM_ACTIVATENAMETAB,		VIRTKEY, ALT,NOINVERT
 	   "2",											IDM_ACTIVATESIZETAB,		VIRTKEY, ALT,NOINVERT
-	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT
+	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT*/
 END    
 
 IDR_ADVANCEDDLGACCEL ACCELERATORS 
 BEGIN
-       "I",							IDC_OK,						VIRTKEY, ALT, NOINVERT
+/*       "I",							IDC_OK,						VIRTKEY, ALT, NOINVERT
        "P",								IDC_STOP,					VIRTKEY, ALT, NOINVERT
        "W",							IDC_NEWSEARCH,				VIRTKEY, ALT, NOINVERT
        "H",                         IDC_CHECK,					VIRTKEY, ALT, NOINVERT
@@ -1797,7 +1703,7 @@ BEGIN
 	   "W",											IDM_CLOSE,					VIRTKEY, CONTROL,NOINVERT
 	   "1",											IDM_ACTIVATENAMETAB,		VIRTKEY, ALT,NOINVERT
 	   "2",											IDM_ACTIVATESIZETAB,		VIRTKEY, ALT,NOINVERT
-	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT
+	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT*/
 END    
 
 /////////////////////////////////////////////////////////////////////////////

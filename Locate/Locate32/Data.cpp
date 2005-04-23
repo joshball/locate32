@@ -768,7 +768,7 @@ BOOL CSchedule::SDATE::operator>(const SDATE& t) const
 CShortcut::CShortcut()
 :	m_dwFlags(sfDefault),m_nDelay(0),
 	m_pClass(NULL),m_pTitle(NULL),
-	m_wModifiers(0),m_wVirtualKey(0)
+	m_bModifiers(0),m_bVirtualKey(0)
 {
 	// At least one action is needed
 	m_apActions.Add(new CKeyboardAction);
@@ -784,29 +784,29 @@ CShortcut::~CShortcut()
 	m_apActions.RemoveAll();
 }
 
-WORD CShortcut::GetHotkeyModifiers() const
+BYTE CShortcut::GetHotkeyModifiers() const
 {
-	WORD wRet=0;
-	if (m_wModifiers&ModifierAlt)
-		wRet|=HOTKEYF_ALT;
-	if (m_wModifiers&ModifierControl)
-		wRet|=HOTKEYF_CONTROL;
-	if (m_wModifiers&ModifierWin)
-		wRet|=HOTKEYF_EXT;
-	if (m_wModifiers&ModifierShift)
-		wRet|=HOTKEYF_SHIFT;
-	return wRet;
+	BYTE bRet=0;
+	if (m_bModifiers&ModifierAlt)
+		bRet|=HOTKEYF_ALT;
+	if (m_bModifiers&ModifierControl)
+		bRet|=HOTKEYF_CONTROL;
+	if (m_bModifiers&ModifierWin)
+		bRet|=HOTKEYF_EXT;
+	if (m_bModifiers&ModifierShift)
+		bRet|=HOTKEYF_SHIFT;
+	return bRet;
 }
 
-void CShortcut::SetHotkeyModifiers(WORD wHotkeyModifier)
+void CShortcut::SetHotkeyModifiers(BYTE bHotkeyModifier)
 {
-	m_wModifiers=0;
-	if (m_wModifiers&HOTKEYF_ALT)
-		m_wModifiers|=ModifierAlt;
-	if (m_wModifiers&HOTKEYF_CONTROL)
-		m_wModifiers|=ModifierControl;
-	if (m_wModifiers&HOTKEYF_EXT)
-		m_wModifiers|=ModifierWin;
-	if (m_wModifiers&HOTKEYF_SHIFT)
-		m_wModifiers|=ModifierShift;
+	m_bModifiers=0;
+	if (bHotkeyModifier&HOTKEYF_ALT)
+		m_bModifiers|=ModifierAlt;
+	if (bHotkeyModifier&HOTKEYF_CONTROL)
+		m_bModifiers|=ModifierControl;
+	if (bHotkeyModifier&HOTKEYF_EXT)
+		m_bModifiers|=ModifierWin;
+	if (bHotkeyModifier&HOTKEYF_SHIFT)
+		m_bModifiers|=ModifierShift;
 }

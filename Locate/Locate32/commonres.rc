@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,4160
- PRODUCTVERSION 2,99,5,4160
+ FILEVERSION 2,99,5,4230
+ PRODUCTVERSION 2,99,5,4230
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "Locate32"
-            VALUE "FileVersion", "2, 99, 5, 4160"
+            VALUE "FileVersion", "2, 99, 5, 4230"
             VALUE "InternalName", "Locate32"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "Locate32.exe"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.4160"
+            VALUE "ProductVersion", "3.0 beta 5.4230"
         END
     END
     BLOCK "VarFileInfo"

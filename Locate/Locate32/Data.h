@@ -160,13 +160,13 @@ public:
 	CShortcut();
 	~CShortcut();
 
-	WORD GetHotkeyModifiers() const;
-	void SetHotkeyModifiers(WORD wHotkeyModifier);
+	BYTE GetHotkeyModifiers() const;
+	void SetHotkeyModifiers(BYTE nHotkeyModifier);
 
 
 	// Flags
 	enum Flags {
-		sfLocateDialog = 0x00,
+		sfLocal	 = 0x00,
 		sfGlobalHotkey = 0x01,
 		sfGlobalHook = 0x03,
 		sfKeyTypeMask = 0x03,
@@ -180,13 +180,17 @@ public:
 		sfRemoveKeyUpMessage = 0x10,
 		sfRemoveKeyDownMessage = 0x20,
 
-		sfDefault = sfLocateDialog|sfExecuteWhenDown
+		sfVirtualKeySpecified = 0x1000,
+		sfScancodeKeySpecified = 0x2000,
+
+
+		sfDefault = sfLocal|sfExecuteWhenDown
 	};
-	DWORD m_dwFlags;
+	WORD m_dwFlags;
 	
 	// Shortcut
-	WORD m_wVirtualKey;
-	WORD m_wModifiers;
+	BYTE m_bVirtualKey;
+	BYTE m_bModifiers;
 	enum Modifiers {
 		ModifierAlt= MOD_ALT,
 		ModifierControl = MOD_CONTROL,
@@ -217,14 +221,14 @@ public:
 			FindNow = MAKELONG(IDC_OK,IDC_OK),
 			Stop = MAKELONG(IDC_STOP,IDC_STOP),
 			NewSearch = MAKELONG(IDC_NEWSEARCH,IDC_NEWSEARCH),
-			ResultList = MAKELONG(IDC_FILELIST,0),
+			ResultList = MAKELONG(IDC_FILELIST,~IDS_KEYRESULTLIST),
 			Presets = MAKELONG(IDC_PRESETS,IDC_PRESETS),
 
 			// Name and Location
 			Name = MAKELONG(IDC_NAME,IDC_NAMESTATIC),
 			Type = MAKELONG(IDC_TYPE,IDC_TYPESTATIC),
             LookIn= MAKELONG(IDC_LOOKIN,IDC_LOOKINSTATIC),
-			MoreDirectories = MAKELONG(IDC_MOREDIRECTORIES,0),
+			MoreDirectories = MAKELONG(IDC_MOREDIRECTORIES,~IDS_KEYMOREDIRECTORIES),
 			Browse = MAKELONG(IDC_BROWSE,IDC_BROWSE),
 
 			// Size and Data
@@ -241,7 +245,7 @@ public:
 			TypeOfFile = MAKELONG(IDC_FILETYPE,IDC_FILETYPESTATIC),
 			ContainingText = MAKELONG(IDC_CONTAINDATACHECK,IDC_CONTAINDATACHECK),
 			TextMatchCase = MAKELONG(IDC_DATAMATCHCASE,IDC_DATAMATCHCASE),
-			TextHelp = MAKELONG(IDC_HELPTOOLBAR,0)
+			TextHelp = MAKELONG(IDC_HELPTOOLBAR,~IDS_KEYTEXTHELPBUTTON)
 		};
 
 		static ActionActivateControls* GetPossibleControlValues() {

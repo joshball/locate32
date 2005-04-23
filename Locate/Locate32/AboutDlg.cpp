@@ -22,7 +22,7 @@ BOOL CAboutDlg::OnCommand(WORD wID, WORD wNotifyCode, HWND hControl)
 	case IDC_GOTOHOMEPAGE:
 		{
 			CWaitCursor wait;
-			ShellExecute(*this,NULL,"http://venda.uku.fi/~jmhuttun/soft",
+			ShellExecute(*this,NULL,"http://locate32.webhop.org", //http://venda.uku.fi/~jmhuttun/soft",
 				NULL,NULL,0);
 			break;
 		}
