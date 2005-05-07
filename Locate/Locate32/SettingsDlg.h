@@ -581,6 +581,9 @@ public:
 		void InsertSubActions();
 		void InsertKeysToVirtualKeyCombo();
 		void RefreshShortcutListLabels();
+		void SetShortcutKeyWhenVirtualKeyChanged();
+		void SetVirtualKeyWhenShortcutKeyChanged();
+		
 		
 		void OnNewShortcut();
 		void OnRemoveShortcut();
@@ -603,9 +606,13 @@ public:
 
 		static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);
 		
-		static void FormatKeyLabel(BYTE bKey,BYTE bModifiers,CString& str);
-		static void FormatActionLabel(CShortcut::CKeyboardAction::Action,UINT uSubAction,CString& str);
-		
+		void FormatKeyLabel(BYTE bKey,BYTE bModifiers,CString& str) const;
+		void FormatActionLabel(CString& str,CShortcut::CKeyboardAction::Action nAction,UINT uSubAction) const;
+		BOOL GetSubActionLabel(CString& str,CShortcut::CKeyboardAction::Action nAction,UINT uSubAction) const;
+		UINT IndexToSubAction(CShortcut::CKeyboardAction::Action nAction,UINT nIndex) const;
+		UINT SubActionToIndex(CShortcut::CKeyboardAction::Action nAction,UINT nSubAction) const;
+
+
 
 	protected:
 		friend CSettingsProperties;
@@ -629,7 +636,12 @@ public:
 		int m_nCurrentAction;
 		
 		CShortcut::CKeyboardAction::ActionActivateControls* m_pPossibleControls;
+		CShortcut::CKeyboardAction::ActionMenuCommands* m_pPossibleMenuCommands;
+
 		HWND hDialogs[4];	
+		HMENU hMainMenu;
+		HMENU hPopupMenu;
+
 
 		CString m_Buffer;
 

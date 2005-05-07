@@ -211,11 +211,12 @@ public:
 
 		enum Action {
 			ActivateControl = 0,
-			ActivateTab = 1
+			ActivateTab = 1,
+			MenuCommand = 2
 		} m_nAction;
 	
 		enum ActionActivateControls { // First is control to be activated, second is for memonics
-			Null = 0,
+			NullControl = 0,
 			
 			// Dialog itself
 			FindNow = MAKELONG(IDC_OK,IDC_OK),
@@ -254,12 +255,77 @@ public:
                 MinimumSize,MaximumSize,MinimumDate,MaximumDate,
 				CheckFilesOrFolders,MatchWholeName,ReplaceSpaces,
                 UseWholePath,TypeOfFile,ContainingText,
-				TextMatchCase,TextHelp,Null};
+				TextMatchCase,TextHelp,NullControl};
 			ActionActivateControls* b=new ActionActivateControls[sizeof(a)];
 			CopyMemory(b,a,sizeof(a)*sizeof(ActionActivateControls));
 			return b;
 		}
 
+		enum ActionMenuCommands { // First is menu identifier, second is specifies menu
+			NullMenuCommand = 0,
+			FileOpenContainingFolder = MAKELONG(IDM_OPENCONTAININGFOLDER,IDS_SHORTCUTMENUFILEITEM),
+			FileRemoveFromThisList = MAKELONG(IDM_REMOVEFROMTHISLIST,IDS_SHORTCUTMENUFILEITEM),
+            FileCreateShortcut = MAKELONG(IDM_CREATESHORTCUT,IDS_SHORTCUTMENUFILEITEM),
+			FileDelete = MAKELONG(IDM_DELETE,IDS_SHORTCUTMENUFILEITEM),
+			FileProperties = MAKELONG(IDM_PROPERTIES,IDS_SHORTCUTMENUFILEITEM),
+			FileSaveResults = MAKELONG(IDM_SAVERESULT,IDS_SHORTCUTMENUFILENOITEM),
+			FileFindUsingDatabase = MAKELONG(IDM_FINDUSINGDBS,IDS_SHORTCUTMENUFILENOITEM),
+			FileUpdateDatabases = MAKELONG(IDM_GLOBALUPDATEDB,IDS_SHORTCUTMENUFILENOITEM),
+			FileUpdateSelectedDatabase = MAKELONG(IDM_UPDATEDATABASES,IDS_SHORTCUTMENUFILENOITEM),
+			FileStopUpdating = MAKELONG(IDM_STOPUPDATING,IDS_SHORTCUTMENUFILENOITEM),
+			FileDatabaseInfo = MAKELONG(IDM_DATABASEINFO,IDS_SHORTCUTMENUFILENOITEM),
+			FileClose = MAKELONG(IDM_CLOSE,IDS_SHORTCUTMENUFILENOITEM),
+			SpecialCopyPathToClibboard = MAKELONG(IDM_COPYPATHTOCB,IDS_SHORTCUTMENUSPECIAL),
+			SpecialCopyShortPathToClibboard = MAKELONG(IDM_COPYSHORTPATHTOCB,IDS_SHORTCUTMENUSPECIAL),
+			SpecialChangeFileName = MAKELONG(IDM_CHANGEFILENAME,IDS_SHORTCUTMENUSPECIAL),
+            SpecialChangeCase = MAKELONG(IDM_CHANGECASE,IDS_SHORTCUTMENUSPECIAL),
+			SpecialForceUpdate = MAKELONG(IDM_FORCEUPDATE,IDS_SHORTCUTMENUSPECIAL),
+			SpecialComputeMD5Sum = MAKELONG(IDM_COMPUTEMD5SUM,IDS_SHORTCUTMENUSPECIAL),
+			SpecialComputeMD5SumsForSameSizeFiles = MAKELONG(IDM_MD5SUMSFORSAMESIZEFILES,IDS_SHORTCUTMENUSPECIAL),
+
+			EditCut = MAKELONG(IDM_CUT,IDS_SHORTCUTMENUEDIT),
+			EditCopy = MAKELONG(IDM_COPY,IDS_SHORTCUTMENUEDIT),
+			EditSelectAll = MAKELONG(IDM_SELECTALL,IDS_SHORTCUTMENUEDIT),
+			EditInvertSelection = MAKELONG(IDM_INVERTSELECTION,IDS_SHORTCUTMENUEDIT),
+
+			ViewLargeIcons = MAKELONG(IDM_LARGEICONS,IDS_SHORTCUTMENUVIEW),
+			ViewSmallIcons = MAKELONG(IDM_SMALLICONS,IDS_SHORTCUTMENUVIEW),
+			ViewList = MAKELONG(IDM_LIST,IDS_SHORTCUTMENUVIEW),
+			ViewDetails = MAKELONG(IDM_DETAILS,IDS_SHORTCUTMENUVIEW),
+			ViewArrangeIconsByName = MAKELONG(IDM_ARRANGENAME,IDS_SHORTCUTMENUVIEWARRANGEICONS),
+			ViewArrangeIconsByFolder = MAKELONG(IDM_ARRANGEFOLDER,IDS_SHORTCUTMENUVIEWARRANGEICONS),
+			ViewArrangeIconsByType = MAKELONG(IDM_ARRANGETYPE,IDS_SHORTCUTMENUVIEWARRANGEICONS),
+			ViewArrangeIconsByDate = MAKELONG(IDM_ARRANGESIZE,IDS_SHORTCUTMENUVIEWARRANGEICONS),
+			ViewArrangeIconsBySize = MAKELONG(IDM_ARRANGEDATE,IDS_SHORTCUTMENUVIEWARRANGEICONS),
+			ViewArrangeIconsAutoArrange = MAKELONG(IDM_AUTOARRANGE,IDS_SHORTCUTMENUVIEWARRANGEICONS),
+			ViewArrangeIconsAlignToGrid = MAKELONG(IDM_ALIGNTOGRID,IDS_SHORTCUTMENUVIEWARRANGEICONS),
+			ViewLineUpIcons = MAKELONG(IDM_LINEUPICONS,IDS_SHORTCUTMENUVIEW),
+			ViewSelectDetails= MAKELONG(IDM_SELECTDETAILS,IDS_SHORTCUTMENUVIEW),
+			ViewRefresh = MAKELONG(IDM_REFRESH,IDS_SHORTCUTMENUVIEW),
+
+			OptionsSettings = MAKELONG(IDM_SETTINGS,IDS_SHORTCUTMENUOPTIONS),
+
+			HelpAbout = MAKELONG(IDM_ABOUT,IDS_SHORTCUTMENUHELP)
+			
+		};
+
+		static ActionMenuCommands* GetPossibleMenuCommands() {
+			ActionMenuCommands a[]={FileOpenContainingFolder,FileRemoveFromThisList,
+				FileCreateShortcut,FileDelete,FileProperties,FileSaveResults,
+                FileFindUsingDatabase,FileUpdateDatabases,FileUpdateSelectedDatabase,
+                FileStopUpdating,FileDatabaseInfo,FileClose,SpecialCopyPathToClibboard,
+				SpecialCopyShortPathToClibboard,SpecialChangeFileName,SpecialChangeCase,
+				SpecialForceUpdate,SpecialComputeMD5Sum,SpecialComputeMD5SumsForSameSizeFiles,
+				EditCut,EditCopy,EditSelectAll,EditInvertSelection,ViewLargeIcons,ViewSmallIcons,
+                ViewList,ViewDetails,ViewArrangeIconsByName,ViewArrangeIconsByFolder,
+                ViewArrangeIconsByType,ViewArrangeIconsByDate,ViewArrangeIconsBySize,
+                ViewArrangeIconsAutoArrange,ViewArrangeIconsAlignToGrid,ViewLineUpIcons,
+				ViewSelectDetails,ViewRefresh,OptionsSettings,
+				HelpAbout,NullMenuCommand};
+			ActionMenuCommands* b=new ActionMenuCommands[sizeof(a)];
+			CopyMemory(b,a,sizeof(a)*sizeof(ActionMenuCommands));
+			return b;
+		}
 
 		enum ActionActivateTabs {
 			NameAndLocation = 0,
@@ -268,8 +334,10 @@ public:
 		};
 
 		union { // Action specifig type
+			UINT m_nSubAction;
 			ActionActivateControls m_nActivateControl;
 			ActionActivateTabs m_nActivateTab;
+			ActionMenuCommands m_nMenuCommand;
 	    };
 
 	};

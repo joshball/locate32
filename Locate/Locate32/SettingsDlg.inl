@@ -417,4 +417,10 @@ inline CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::CAdvancedDlg(C
 {
 }
 
+inline void CSettingsProperties::CKeyboardShortcutsPage::RefreshShortcutListLabels()
+{
+	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+	m_pList->RedrawItems(nItem,nItem);
+}
+
 #endif
