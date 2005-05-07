@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   database locater v2.99.5.4031               */
+   database locater v2.99.5.5070               */
 
 #if !defined(LOCATER_H)
 #define LOCATER_H
@@ -169,6 +169,7 @@ public:
 	WORD GetFileAccessedDate() const;
 	WORD GetFileAccessedTime() const;
 	BYTE GetFileAttributes() const;
+	BOOL HaveFileExtension() const;
 
 	LPCSTR GetCurrentPath() const;
 	DWORD GetCurrentPathLen() const;
@@ -193,7 +194,7 @@ private:
 	// Locate information
 	union {
 		struct {
-			CArrayFAP<LPSTR> m_aNames;
+			CArrayFP<CString*> m_aNames;
 			CArrayFP<CString*> m_aExtensions;
 		};
 		struct {

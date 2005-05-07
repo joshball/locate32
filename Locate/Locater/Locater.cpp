@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   database locater v2.99.5.4031                 */
+   database locater v2.99.5.5070                 */
 
 #include <HFCLib.h>
 
@@ -647,12 +647,9 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCSTR* szNames,DWORD nNames,
 	{
 		if (szNames[i]!=NULL && szNames[i][0]!='\0')
 		{
-			m_aNames.Add(alloccopy(szNames[i]));
-#ifdef WIN32
-			CharLower(m_aNames.GetLast());
-#else			
-			strlwr(m_aNames.GetLast());
-#endif
+			CString* pName=new CString(szNames[i]);
+			pName->MakeLower();
+            m_aNames.Add(pName);
 		}
 	}
 	for (i=0;i<nExtensions;i++)
@@ -670,8 +667,6 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCSTR szRegExp,LPCSTR* szDirectories,
 	{
 		m_dwFlags|=LOCATE_REGULAREXPRESSION;
 		
-
-
 		const char *error;
 		int erroffset;
 
@@ -794,7 +789,24 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
-			if (_ContainString(szName,m_aNames[i]))
+			if (m_aNames[i]->LastChar()=='.')
+			{
+				if (!HaveFileExtension())
+				{
+					// No extension, that is what are we looking for
+					LPSTR szCondition=m_aNames[i]->GetBuffer();
+					szCondition[m_aNames[i]->GetLength()-1]='\0';
+
+					if (_ContainString(szName,szCondition))
+					{
+						delete[] szName;
+						szCondition[m_aNames[i]->GetLength()-1]='.';
+						return TRUE;
+					}
+					szCondition[m_aNames[i]->GetLength()-1]='.';
+				}
+			}
+			else if (_ContainString(szName,*m_aNames[i]))
 			{
 				delete[] szName;
 				return TRUE;
@@ -812,33 +824,56 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 		if (m_aExtensions.GetSize()>0)
 		{
 			BOOL bFound=FALSE;
-			for (int i=0;i<m_aExtensions.GetSize();i++)
+			
+			if (!HaveFileExtension())
 			{
+				// No extension
+				for (int i=0;i<m_aExtensions.GetSize();i++)
+				{
+					if (m_aExtensions[i]->GetLength()==0)
+					{
+						bFound=TRUE;
+						break;
+					}
+				}
+			}
+			else
+			{
+
+				
 				// Resolving extension length
 				DWORD dwExtensionLen=GetFileNameLen()-GetFileExtensionPos()-1;
-				
-				if (dwExtensionLen!=m_aExtensions[i]->GetLength())
-					continue;
+				char* szExtension=NULL;
 
-				// Copying extension to buffer
-
-	#ifdef WIN32
-				char* szExtension=new char[dwExtensionLen];
-				sMemCopy(szExtension,GetFileName()+GetFileExtensionPos()+1,dwExtensionLen);
-				CharLowerBuff(szExtension,dwExtensionLen);
-	#else
-				char* szExtension=new char[dwExtensionLen+1];
-				sMemCopy(szExtension,GetFileName()+GetFileExtensionPos()+1,dwExtensionLen+1);
-				strlwr(szExtension);
-	#endif
-				
-				if (_strncmp(szExtension,*m_aExtensions[i],dwExtensionLen))
+				for (int i=0;i<m_aExtensions.GetSize();i++)
 				{
-					delete[] szExtension;
-					bFound=TRUE;
-					break;
+					if (dwExtensionLen!=m_aExtensions[i]->GetLength())
+						continue;
+
+					if (szExtension==NULL)
+					{
+			#ifdef WIN32
+						// Copying extension to buffer
+						szExtension=new char[dwExtensionLen];
+						sMemCopy(szExtension,GetFileName()+GetFileExtensionPos()+1,dwExtensionLen);
+						CharLowerBuff(szExtension,dwExtensionLen);
+			#else
+						szExtension=new char[dwExtensionLen+1];
+						sMemCopy(szExtension,GetFileName()+GetFileExtensionPos()+1,dwExtensionLen+1);
+						strlwr(szExtension);
+			#endif
+					}
+					
+					if (_strncmp(szExtension,*m_aExtensions[i],dwExtensionLen))
+					{
+						bFound=TRUE;
+						break;
+					}
 				}
-				delete[] szExtension;
+				if (szExtension!=NULL)
+					delete[] szExtension;
+
+				
 			}
 
 			if (!bFound)
@@ -872,7 +907,24 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 	#endif	
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
-			if (_ContainString(szName,m_aNames[i]))
+			if (m_aNames[i]->LastChar()=='.')
+			{
+				if (GetFileExtensionPos()==0 && GetFileName()[0]!='.')
+				{
+					// No extension, that is what are we looking for
+					LPSTR szCondition=m_aNames[i]->GetBuffer();
+					szCondition[m_aNames[i]->GetLength()-1]='\0';
+
+					if (_ContainString(szName,szCondition))
+					{
+						delete[] szName;
+						szCondition[m_aNames[i]->GetLength()-1]='.';
+						return TRUE;
+					}
+					szCondition[m_aNames[i]->GetLength()-1]='.';
+				}
+			}
+			else if (_ContainString(szName,*m_aNames[i]))
 			{
 				delete[] szName;
 				return TRUE;
@@ -928,7 +980,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
-			if (_ContainString(szName,m_aNames[i]))
+			if (_ContainString(szName,*m_aNames[i]))
 			{
 				delete[] szName;
 				return TRUE;
@@ -1002,7 +1054,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
-			if (_ContainString(szName,m_aNames[i]))
+			if (_ContainString(szName,*m_aNames[i]))
 			{
 				delete[] szName;
 				return TRUE;

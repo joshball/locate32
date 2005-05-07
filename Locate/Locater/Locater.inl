@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   database locater v2.99.5.4031                  */
+   database locater v2.99.5.5070                  */
 
 #if !defined(LOCATER_INL)
 #define LOCATER_INL
@@ -310,6 +310,12 @@ inline BYTE CLocater::GetFolderAttributes() const
 inline BYTE CLocater::GetFileAttributes() const
 {
 	return pPoint[0];
+}
+
+inline BOOL CLocater::HaveFileExtension() const
+{
+	//return GetFileExtensionPos()!=0 ||*GetFileName()[0]=='.';
+	return pPoint[2]!=0 || pPoint[3]=='.';
 }
 
 inline DWORD CLocater::GetAdvancedFlags() const

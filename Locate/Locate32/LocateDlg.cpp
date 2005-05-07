@@ -14,7 +14,7 @@ BOOL CLocateDlgThread::InitInstance()
 	CoInitialize(NULL);
 	
 	m_pMainWnd=m_pLocate=new CLocateDlg;
-	//LoadAccelTable(IDR_MAINACCEL);
+	LoadAccelTable(IDR_MAINACCEL);
 	m_pLocate->Create(NULL);
 	
 	// Settings transparency
@@ -358,9 +358,9 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
         m_NameDlg.InitDriveBox();
 		
 	// Set acceleration tables for subdialogs
-	//GetCurrentWinThread()->SetAccelTableForChilds(m_NameDlg,IDR_NAMEDLGACCEL,TRUE,*this);
-	//GetCurrentWinThread()->SetAccelTableForChilds(m_SizeDateDlg,IDR_SIZEDATEDLGACCEL,TRUE,*this);
-	//GetCurrentWinThread()->SetAccelTableForChilds(m_AdvancedDlg,IDR_ADVANCEDDLGACCEL,TRUE,*this);
+	GetCurrentWinThread()->SetAccelTableForChilds(m_NameDlg,IDR_NAMEDLGACCEL,TRUE,*this);
+	GetCurrentWinThread()->SetAccelTableForChilds(m_SizeDateDlg,IDR_SIZEDATEDLGACCEL,TRUE,*this);
+	GetCurrentWinThread()->SetAccelTableForChilds(m_AdvancedDlg,IDR_ADVANCEDDLGACCEL,TRUE,*this);
 	
 	SetDialogMode(FALSE);
 		
@@ -1184,7 +1184,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 					if (Name.LastChar()!='*')
 						Name << '*';
 				}
-				aNames.Add(Name.GiveBuffer());
+				aNames.Add(alloccopy(Name,Name.GetLength()));
 			}
 			else
 			{
@@ -1245,7 +1245,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 	
 	// Extension no extensions, checking if name contains extension
 	// No extension needed if "use whole path" is set
-	if (nRet==CAdvancedDlg::flagUseWholePath)
+	if (nRet&CAdvancedDlg::flagUseWholePath)
 	{
 		aExtensions.RemoveAll();
 		m_pLocater->AddAdvancedFlags(LOCATE_EXTENSIONWITHNAME|LOCATE_CHECKWHOLEPATH);
@@ -1298,7 +1298,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 	// Starting location
 	if (!(nRet&CAdvancedDlg::flagNameIsRegularExpression))
 	{
-		m_pLocater->LocateFiles(TRUE,(LPCSTR*)aNames.GiveBuffer(),aNames.GetSize(),
+		m_pLocater->LocateFiles(TRUE,(LPCSTR*)aNames.GetData(),aNames.GetSize(),
 			(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
 			(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}

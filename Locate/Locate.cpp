@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   locate.exe v2.99.5.4031                 */
+   locate.exe v2.99.5.5070                 */
 
-const char* szVersionStr="locate 3.0 beta 5.4031";
+const char* szVersionStr="locate 3.0 beta 5.5070";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -224,8 +224,16 @@ int main (int argc,char * argv[])
 	SetConsoleCtrlHandler(HandlerRoutine,TRUE);
 #endif
 
+	InitLocaterLibrary();
+
 	if (!SetLanguageSpecifigHandles(argv[0]))
+	{
+#ifdef _DEBUG
+		fprintf(stderr,"No language dll file");
+#else
 		return 1;
+#endif
+	}
 
 	CArrayFP<CDatabase*> aDatabases;
 	int helps=0;
@@ -267,49 +275,73 @@ int main (int argc,char * argv[])
 				dwMainFlags|=flagShowWhatAreWeLookingFor;
 				break;
             case 'd':
-                // Using database file
-                LPCSTR szFile;
-				if (argv[i][2]=='\0')
-                    szFile=argv[++i];
-                else
-                    szFile=(argv[i]+2);
-
-				if (CDatabase::FindByFile(aDatabases,szFile)==NULL)
 				{
-					CDatabase* pDatabase=CDatabase::FromFile(szFile);
-					if (pDatabase!=NULL)
-						aDatabases.Add(pDatabase);
-				}
-				break;
-			case 'D':
-				LPCSTR szName;
-				if (argv[i][2]=='\0')
-                    szName=argv[++i];
-                else
-                    szName=(argv[i]+2);
-
-				if (CDatabase::FindByName(aDatabases,szName)==NULL)
-				{
-					CDatabase* pDatabase=CDatabase::FromName(HKCU,
-						"Software\\Update\\Databases",szName);
-					if (pDatabase!=NULL)
+					// Using database file
+					LPCSTR szFile;
+					if (argv[i][2]=='\0')
 					{
-						pDatabase->SetThreadId(0);
-						aDatabases.Add(pDatabase);
+						if (i>=argc-1)
+							szFile="";
+						else
+							szFile=argv[++i];
 					}
+					else
+	                    szFile=(argv[i]+2);
+	
+					if (CDatabase::FindByFile(aDatabases,szFile)==NULL)
+					{
+						CDatabase* pDatabase=CDatabase::FromFile(szFile);
+						if (pDatabase!=NULL)
+							aDatabases.Add(pDatabase);
+					}
+					break;
 				}
-				break;
+			case 'D':
+				{
+					LPCSTR szName;
+					if (argv[i][2]=='\0')
+					{
+						if (i>=argc-1)
+							szName="";
+						else
+							szName=argv[++i];
+					}
+					else
+	                    szName=(argv[i]+2);
+	
+					if (CDatabase::FindByName(aDatabases,szName)==NULL)
+					{
+						CDatabase* pDatabase=CDatabase::FromName(HKCU,
+							"Software\\Update\\Databases",szName);
+						if (pDatabase!=NULL)
+						{
+							pDatabase->SetThreadId(0);
+							aDatabases.Add(pDatabase);
+						}
+					}
+					break;
+				}
 			case 'p':
 			case 'P':
                 if (argv[i][2]=='\0')
-                    aDirectories.Add(alloccopy(argv[++i]));
+				{
+					if (i>=argc-1)
+						aDirectories.Add(allocempty());
+					else
+						aDirectories.Add(alloccopy(argv[++i]));
+				}
                 else
                     aDirectories.Add(alloccopy(argv[i]+2));
 				break;
 			case 't':
 			case 'T':
                 if (argv[i][2]=='\0')
-                    aExtensions.Add(alloccopy(argv[++i]));
+				{
+					if (i>=argc-1)
+						aExtensions.Add(allocempty());
+					else
+						aExtensions.Add(alloccopy(argv[++i]));
+				}
                 else
                     aExtensions.Add(alloccopy(argv[i]+2));
 				break;
