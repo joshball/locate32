@@ -25,7 +25,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2005 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 beta 5.5070
+FILEVERSION=3.0 beta 5.5150
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -112,6 +112,7 @@ STRNAME_MULTIDIRMENU_NEXT=Ne&xt selection\tCtrl+Shift+PgDn
 STRNAME_MULTIDIRMENU_PREV=P&revious selection\tCtrl+Shift+PgUp
 STRNAME_LOOKIN=Look In:
 STRNAME_CONTRADICTIONINLOOKDIRECTORIES=You have chosen ""Everywhere"" and also other directories which leads to conflict. Do you want ignore ""Everywhere""? Otherwise, press ""No"" to ignore other choices.
+STRNAME_NOEXTENSION=(no extension)
 
 # Size & Date dialog (A tab in the main dialog)
 STRSIZEDATE_TABCAPTION=Size and Date
@@ -547,7 +548,6 @@ DLGDATABASEINFO_CREATOR=Creator:
 DLGDATABASEINFO_DESCRIPTION=Description:
 DLGDATABASEINFO_FILES=Files:
 DLGDATABASEINFO_DIRECTORIES=Directories:
-STRDATABASEINFO_UNKNOWN=(Unknown)
 STRDATABASEINFO_DBVERSION1=%d (Short filenames, no size/date)
 STRDATABASEINFO_DBVERSION2=%d (Long filenames, no size/date)
 STRDATABASEINFO_DBVERSION3=%d (Short filenames)
@@ -703,6 +703,7 @@ MENUPOPUP_CONTEXTMENU_CHANGECASE=Change C&ase for Filename
 MENUPOPUP_CONTEXTMENU_FORCEUPDATE=Update file information
 MENUPOPUP_CONTEXTMENU_COMPUTEMD5SUM=Compute MD5 sum
 MENUPOPUP_CONTEXTMENU_MD5SUMSFORSAMESIZEFILES=Compute MD5 sums for equal size files
+MENUPOPUP_CONTEXTMENU_SHOWFILEINFORMATION=Show total size of selected files
 
 MENUPOPUP_NOITEMCONTEXTMENU_VIEW=&View
 MENUPOPUP_NOITEMCONTEXTMENU_VIEW_LARGEICONS=Lar&ge Icons
@@ -873,10 +874,15 @@ STRERROR_LASTERROR_CANNOTINCREMENT=database %s cannot be written incrementally
 
 ###########################
 # Misc messages
+STR_UNKNOWN=(Unknown)
+STR_NONE=(none)
+STR_EMPTY=(empty)
 STR_RESULTFILEHEADER=Locate32 Results (%d files)
 STR_QUITNOW=Locate32 is updating database.\nDo you want quit now?
 STR_QUITNOW2=Locate32 is updating database and will exit after updating success.\nDo you want quit now?\n\nIf you don't want exit after updating press cancel.
 STR_FILECONTAININGTEXTHELPDIALOG_CAPTION=Info
+STR_FILEINFORMATION=File information
+STR_FILEINFORMATION_FORMAT=File information:\nFiles: %1:d\nDirectories: %2:d\nTotal size of files: %3:s bytes
 
 # Text in this help dialog is in a file named helptext.txt, translate this file also
 

@@ -448,6 +448,7 @@ protected:
 	void OnChangeFileNameCase();
 	void OnUpdateLocatedItem();
 	void OnComputeMD5Sums(BOOL bForSameSizeFilesOnly);
+	void OnShowFileInformation();
 
 	BOOL SetListStyle(int id,BOOL bInit=FALSE);
 	void SetVisibleWindowInTab();

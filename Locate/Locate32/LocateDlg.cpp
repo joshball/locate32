@@ -581,6 +581,9 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDM_MD5SUMSFORSAMESIZEFILES:
 		OnComputeMD5Sums(TRUE);
 		break;
+	case IDM_SHOWFILEINFORMATION:
+		OnShowFileInformation();
+		break;
 	case IDM_CHANGEFILENAME:
 	case IDM_CHANGEFILENAMEACCEL:
 		OnChangeFileName();
@@ -4738,6 +4741,38 @@ void CLocateDlg::OnComputeMD5Sums(BOOL bForSameSizeFilesOnly)
 	}
 }
 
+void CLocateDlg::OnShowFileInformation()
+{
+	DWORD dwFiles=0,dwDirectories=0;
+	LONGLONG llTotalSize=0;
+	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+	while (nItem!=-1)
+	{
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+		if (pItem!=NULL)
+		{
+			if (pItem->IsFolder())
+				dwDirectories++;
+			else
+			{
+				dwFiles++;
+				llTotalSize+=pItem->GetFileSize();
+			}
+		}
+
+		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+	}
+
+	if (dwFiles>0 || dwDirectories>0)
+	{
+		CString str;
+		char number[200];
+		_ui64toa(llTotalSize,number,10);
+        str.FormatEx(IDS_FILEINFORMATIONFMT,dwFiles,dwDirectories,number);
+		MessageBox(str,CString(IDS_FILEINFORMATION),MB_OK|MB_ICONINFORMATION);
+	}
+}
+
 void CLocateDlg::OnSelectDetails()
 {
 	CSelectColumndDlg dlg;
@@ -5410,29 +5445,36 @@ BOOL CLocateDlg::CNameDlg::OnOk(CString& sName,CArray<LPSTR>& aExtensions,CArray
 	GetDlgItemText(IDC_TYPE,sType);
 	if (::IsWindowEnabled(GetDlgItem(IDC_TYPE)))
 	{
-		for (i=Type.GetCount()-1;i>=0;i--)
+		if (Type.GetCurSel()==0) // Empty extension
+			aExtensions.Add(allocempty());
+		else
 		{
-			Type.GetLBText(i,Buffer);
-			if (sType.CompareNoCase(Buffer)==0)
-				Type.DeleteString(i);
-		}	
-		Type.InsertString(0,sType);
-		Type.SetText(sType);
-		if (Type.GetCount()>10)
-			Type.DeleteString(10);
+			for (i=Type.GetCount()-1;i>=1;i--)
+			{
+				Type.GetLBText(i,Buffer);
+				if (sType.CompareNoCase(Buffer)==0)
+					Type.DeleteString(i);
+			}	
+
+			Type.InsertString(1,sType); // 0 == (none)
+			Type.SetText(sType);
+			if (Type.GetCount()>10)
+				Type.DeleteString(10);
+
+			// Parsing extensions
+			LPCSTR pType=sType;
+			for (;pType[0]==' ';pType++);
+			while (*pType!='\0')
+			{
+				for (DWORD nLength=0;pType[nLength]!='\0' && pType[nLength]!=' ';nLength++);		
+				aExtensions.Add(alloccopy(pType,nLength));
+				pType+=nLength;
+				for (;pType[0]==' ';pType++);
+			}
+		}
 	}
 	
-	// Parsing extensions
-	LPCSTR pType=sType;
-	for (;pType[0]==' ';pType++);
-	while (*pType!='\0')
-	{
-		for (DWORD nLength=0;pType[nLength]!='\0' && pType[nLength]!=' ';nLength++);		
-		aExtensions.Add(alloccopy(pType,nLength));
-		pType+=nLength;
-		for (;pType[0]==' ';pType++);
-	}
-
+	
 
 	// Resolving directories
 	if (m_pMultiDirs!=NULL)
@@ -6239,7 +6281,7 @@ void CLocateDlg::CNameDlg::SaveRegistry() const
 			RegKey.DeleteKey(bfr);
 		}
 	
-		for (i=Type.GetCount()-1;i>=0;i--)
+		for (i=Type.GetCount()-1;i>0;i--) // 0 is (none)
 		{
 			bfr="Type";
 			bfr<<int(i);
@@ -6273,11 +6315,17 @@ void CLocateDlg::CNameDlg::LoadRegistry()
 	
 	Path.LoadString(IDS_REGPLACE,CommonResource);
 	Path<<"\\Recent Strings";
+
+    CComboBox NameCombo(GetDlgItem(IDC_NAME));
+	CComboBox TypeCombo(GetDlgItem(IDC_TYPE));
+
+	NameCombo.ResetContent();
+	TypeCombo.ResetContent();
+	TypeCombo.AddString(CString(IDS_NOEXTENSION));
 	
+
 	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		CComboBox NameCombo(GetDlgItem(IDC_NAME));
-		CComboBox TypeCombo(GetDlgItem(IDC_TYPE));
 		WORD i;
 		CString name;
 		CString buffer;
@@ -6521,7 +6569,12 @@ void CLocateDlg::CNameDlg::SetStartData(const CLocateApp::CStartData* pStartData
 	if (pStartData->m_pStartString!=NULL)
 		SetDlgItemText(IDC_NAME,pStartData->m_pStartString);
 	if (pStartData->m_pTypeString!=NULL)
-		SetDlgItemText(IDC_TYPE,pStartData->m_pTypeString);
+	{
+		if (pStartData->m_pTypeString[0]=='\0')
+			SendDlgItemMessage(IDC_TYPE,CB_SETCURSEL,0);
+		else
+			SetDlgItemText(IDC_TYPE,pStartData->m_pTypeString);
+	}
 	if (pStartData->m_pStartPath!=NULL)
 		SetPath(pStartData->m_pStartPath);
 }
@@ -6755,8 +6808,13 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 	RegKey.QueryValue("Name/Name",str);
 	SetDlgItemText(IDC_NAME,str);
 
-	RegKey.QueryValue("Name/Type",str);
-	SetDlgItemText(IDC_TYPE,str);
+	DWORD dwDataLength=RegKey.QueryValueLength("Name/Type"),dwType;
+	BYTE* pData=new BYTE[dwDataLength+2];
+	RegKey.QueryValue("Name/Type",(LPSTR)pData,dwDataLength+2,&dwType);
+	if (dwType==REG_DWORD)
+		SendDlgItemMessage(IDC_TYPE,CB_SETCURSEL,*((DWORD*)pData));
+	else if (dwType==REG_SZ)
+        SetDlgItemText(IDC_TYPE,(LPCSTR)pData);
 	
 	if (m_pMultiDirs!=NULL)
 	{
@@ -6921,8 +6979,14 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 	GetDlgItemText(IDC_NAME,str);
 	RegKey.SetValue("Name/Name",str);
 	str.Empty();
-	GetDlgItemText(IDC_TYPE,str);
-	RegKey.SetValue("Name/Type",str);
+	
+	if (SendDlgItemMessage(IDC_TYPE,CB_GETCURSEL)==0) // (none)
+		RegKey.SetValue("Name/Type",DWORD(0));
+	else
+	{
+		GetDlgItemText(IDC_TYPE,str);
+		RegKey.SetValue("Name/Type",str);
+	}
 	
 	// Lookin Combo
 	
@@ -7936,7 +8000,9 @@ void CLocateDlg::CAdvancedDlg::ChangeEnableStateForCheck()
 		bEnable=FALSE;
 	
 	int nCurSel=GetLocateDlg()->m_NameDlg.SendDlgItemMessage(IDC_TYPE,CB_GETCURSEL);
-	if (nCurSel==CB_ERR)
+	if (nCurSel==0)
+		bEnable=FALSE; // (none)
+	else if (nCurSel==CB_ERR)
 	{
 		if (GetLocateDlg()->m_NameDlg.SendDlgItemMessage(IDC_TYPE,WM_GETTEXTLENGTH)>0)
 			bEnable=FALSE;

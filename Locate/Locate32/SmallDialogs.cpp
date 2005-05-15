@@ -1513,8 +1513,8 @@ BOOL CChangeFilenameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		EndDialog(0);
 		break;
 	case IDC_EDIT:
-		if (wNotifyCode==CBN_SETFOCUS)
-			::SendMessage(hControl,CB_SETEDITSEL,0,MAKELPARAM(0,-1));
+		if (wNotifyCode==EN_SETFOCUS)
+			::SendMessage(hControl,EM_SETSEL,0,-1);
 		break;
 	}
 	return CDialog::OnCommand(wID,wNotifyCode,hControl);

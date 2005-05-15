@@ -57,6 +57,8 @@
 #define IDS_AM                          54
 #define IDS_PM                          55
 #define IDS_HELPINFO                    70
+#define IDS_FILEINFORMATION				71
+#define IDS_FILEINFORMATIONFMT			72
 #define IDS_NAME                        80
 #define IDS_ADVANCED                    81
 #define IDS_SIZEDATE                    82
@@ -91,6 +93,7 @@
 #define IDD_ADVANCEDSETTINGS            108
 #define IDS_LOOKINCONTRADICTION         109
 #define IDD_EXCLUDEDIRECTORIES          109
+#define IDS_NOEXTENSION					110
 #define IDC_COPYRIGHT                   111
 #define IDC_YOURRIGHT                   112
 #define IDC_YOURRIGHT2                  113
@@ -471,7 +474,6 @@
 #define IDS_SIZEBYTES                   2009
 #define IDS_ALLOFTYPE                   2017
 #define IDS_ALLIN                       2018
-#define IDS_UNKNOWN                     2020
 #define IDS_DATABASEINFOCAPTION         2030
 #define IDS_DBVERSION1                  2031
 #define IDS_DBVERSION2                  2032
@@ -498,6 +500,8 @@
 #define IDS_CANNOTEXCLUDESELECTED       2100
 #define IDS_ALREADYEXCLUDED             2101
 #define IDS_EMPTY                       3000
+#define IDS_NONE						3001
+#define IDS_UNKNOWN						3002
 #define IDS_CHANGEICON                  4000
 #define IDS_IMPORTDATABASEFILTERS       4001
 #define IDS_EXPORTDATABASEFILTERS       4002
@@ -798,6 +802,7 @@
 #define IDM_ACTIVATENAMETAB             40070
 #define IDM_ACTIVATESIZETAB             40071
 #define IDM_ACTIVATEADVANCEDTAB         40072
+#define IDM_SHOWFILEINFORMATION         40073
 #define IDM_DEFMENUITEM                 50000
 #define IDM_DEFCONTEXTITEM              51000
 #define IDM_DEFSENDTOITEM               52000

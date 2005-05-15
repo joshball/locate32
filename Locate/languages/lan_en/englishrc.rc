@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,5070
- PRODUCTVERSION 2,99,5,5070
+ FILEVERSION 2,99,5,5150
+ PRODUCTVERSION 2,99,5,5150
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.5070"
+            VALUE "FileVersion", "3.0 beta 5.5150"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.5070"
+            VALUE "ProductVersion", "3.0 beta 5.5150"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -898,6 +898,7 @@ BEGIN
             MENUITEM "Copy &Short Path to Clipboard",        IDM_COPYSHORTPATHTOCB
             MENUITEM "Change &Filename",         IDM_CHANGEFILENAME
             MENUITEM "Change C&ase for Filename",         IDM_CHANGECASE
+			MENUITEM "Show total size of selected files", IDM_SHOWFILEINFORMATION
 			MENUITEM "Update file information",         IDM_FORCEUPDATE
 			MENUITEM "Compute MD5 sum",         IDM_COMPUTEMD5SUM
 			MENUITEM "Compute MD5 sums for equal size files",         IDM_MD5SUMSFORSAMESIZEFILES
@@ -1087,8 +1088,7 @@ STRINGTABLE
 BEGIN
     IDS_DATABASEINFOCAPTION "Database Info:"
     IDS_DBVERSION1          "%d (Short filenames, no size/date)"
-    IDS_UNKNOWN             "(Unknown)"
-	IDS_DBNOTVALID			"Database is not valid"
+    IDS_DBNOTVALID			"Database is not valid"
 END
 
 STRINGTABLE 
@@ -1158,7 +1158,9 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_EMPTY               "(Empty)"
+    IDS_EMPTY               "(empty)"
+	IDS_UNKNOWN             "(Unknown)"
+	IDS_NONE				"(none)"	
 END
 
 STRINGTABLE 
@@ -1213,10 +1215,6 @@ BEGIN
     IDS_VOLUMEDIRECTORIES   "Directories"
 END
 
-STRINGTABLE 
-BEGIN
-    IDS_RESULTSTRING        "Locate32 Results (%d files)\r\n"
-END
 
 STRINGTABLE 
 BEGIN
@@ -1365,11 +1363,6 @@ BEGIN
     IDS_OPENCONTAININGFOLDER "Open Conta&ining Folder"
     IDS_OPEN                "&Open"
     IDS_SELECTDETAILS       "&Select Details"
-END
-
-STRINGTABLE 
-BEGIN
-    IDS_HELPINFO            "Info"
 END
 
 STRINGTABLE 
@@ -1524,8 +1517,12 @@ END
 
 STRINGTABLE 
 BEGIN
+    IDS_RESULTSTRING        "Locate32 Results (%d files)\r\n"
     IDS_QUITNOW             "Locate32 is updating database.\nDo you want quit now?"
     IDS_QUITNOW2            "Locate32 is updating database and will exit after updating success.\nDo you want quit now?\n\nIf you don't want exit after updating press cancel."
+    IDS_HELPINFO            "Info"
+	IDS_FILEINFORMATION		"File information"
+	IDS_FILEINFORMATIONFMT	"File information:\nFiles: %1:d\nDirectories: %2:d\nTotal size of files: %3:s bytes"
 END
 
 STRINGTABLE 
@@ -1565,6 +1562,7 @@ BEGIN
 	IDS_ROOTS				"Directories in included in databases:"
 	IDS_LOOKIN				"Look In:"
 	IDS_LOOKINCONTRADICTION "You have chosen ""Everywhere"" and also other directories which leads to conflict. Do you want ignore ""Everywhere""? Otherwise, press ""No"" to ignore other choices."
+	IDS_NOEXTENSION			"(no extension)"
 END
 
 STRINGTABLE 
@@ -1645,6 +1643,7 @@ BEGIN
 	   "1",											IDM_ACTIVATENAMETAB,		VIRTKEY, ALT,NOINVERT
 	   "2",											IDM_ACTIVATESIZETAB,		VIRTKEY, ALT,NOINVERT
 	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT
+	   "F",											IDM_OPENCONTAININGFOLDER,	VIRTKEY, CONTROL,NOINVERT
 END
 
 IDR_NAMEDLGACCEL ACCELERATORS 
