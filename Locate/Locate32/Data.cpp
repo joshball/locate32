@@ -784,29 +784,27 @@ CShortcut::~CShortcut()
 	m_apActions.RemoveAll();
 }
 
-BYTE CShortcut::GetHotkeyModifiers() const
+BYTE CShortcut::HotkeyModifiersToModifiers(BYTE bHotkeyModifier)
+{
+	BYTE bModifiers=0;
+	if (bHotkeyModifier&HOTKEYF_ALT)
+		bModifiers|=ModifierAlt;
+	if (bHotkeyModifier&HOTKEYF_CONTROL)
+		bModifiers|=ModifierControl;
+	if (bHotkeyModifier&HOTKEYF_SHIFT)
+		bModifiers|=ModifierShift;
+	return bModifiers;
+}
+
+BYTE CShortcut::ModifiersToHotkeyModifiers(BYTE bModifier)
 {
 	BYTE bRet=0;
-	if (m_bModifiers&ModifierAlt)
+	if (bModifier&ModifierAlt)
 		bRet|=HOTKEYF_ALT;
-	if (m_bModifiers&ModifierControl)
+	if (bModifier&ModifierControl)
 		bRet|=HOTKEYF_CONTROL;
-	if (m_bModifiers&ModifierWin)
-		bRet|=HOTKEYF_EXT;
-	if (m_bModifiers&ModifierShift)
+	if (bModifier&ModifierShift)
 		bRet|=HOTKEYF_SHIFT;
 	return bRet;
 }
 
-void CShortcut::SetHotkeyModifiers(BYTE bHotkeyModifier)
-{
-	m_bModifiers=0;
-	if (bHotkeyModifier&HOTKEYF_ALT)
-		m_bModifiers|=ModifierAlt;
-	if (bHotkeyModifier&HOTKEYF_CONTROL)
-		m_bModifiers|=ModifierControl;
-	if (bHotkeyModifier&HOTKEYF_EXT)
-		m_bModifiers|=ModifierWin;
-	if (bHotkeyModifier&HOTKEYF_SHIFT)
-		m_bModifiers|=ModifierShift;
-}

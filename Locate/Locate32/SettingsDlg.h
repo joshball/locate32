@@ -564,6 +564,13 @@ public:
 			CShortcut* m_pShortcut;
 		};
 
+		struct VirtualKeyName {
+			BYTE bKey;
+			LPSTR pName;
+			int iFriendlyNameId;
+		};
+
+
 	public:
 		CKeyboardShortcutsPage();
 		virtual ~CKeyboardShortcutsPage();
@@ -577,6 +584,7 @@ public:
 		virtual void OnTimer(DWORD wTimerID); 
 			
 		BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
+		BOOL WherePressedNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
 
 		void InsertSubActions();
 		void InsertKeysToVirtualKeyCombo();
@@ -606,11 +614,21 @@ public:
 
 		static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);
 		
-		void FormatKeyLabel(BYTE bKey,BYTE bModifiers,CString& str) const;
+		void FormatKeyLabel(BYTE bKey,BYTE bModifiers,BOOL bScancode,CString& str) const;
 		void FormatActionLabel(CString& str,CShortcut::CKeyboardAction::Action nAction,UINT uSubAction) const;
 		BOOL GetSubActionLabel(CString& str,CShortcut::CKeyboardAction::Action nAction,UINT uSubAction) const;
 		UINT IndexToSubAction(CShortcut::CKeyboardAction::Action nAction,UINT nIndex) const;
 		UINT SubActionToIndex(CShortcut::CKeyboardAction::Action nAction,UINT nSubAction) const;
+
+		void SetVirtualCode(BYTE bCode,BOOL bScanCode);
+		BYTE GetVirtualCode(BOOL bScanCode) const;
+		void SetHotKeyForShortcut(CShortcut* pShortcut);
+		void GetHotKeyForShortcut(CShortcut* pShortcut) const;
+
+		void SetHotKey(BYTE bKey,BYTE bModifiers);
+		
+
+		VirtualKeyName* GetVirtualKeyNames();
 
 
 
@@ -626,7 +644,7 @@ public:
 		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
 #endif
 	private:
-		CListCtrl* m_pList;
+		CListCtrl* m_pList,*m_pWherePressedList;
 		CToolBarCtrl* m_pToolBar;
 		CImageList m_ToolBarBitmaps;
 		CImageList m_ToolBarBitmapsDisabled;
@@ -637,6 +655,7 @@ public:
 		
 		CShortcut::CKeyboardAction::ActionActivateControls* m_pPossibleControls;
 		CShortcut::CKeyboardAction::ActionMenuCommands* m_pPossibleMenuCommands;
+		VirtualKeyName* m_pVirtualKeyNames;
 
 		HWND hDialogs[4];	
 		HMENU hMainMenu;

@@ -423,4 +423,26 @@ inline void CSettingsProperties::CKeyboardShortcutsPage::RefreshShortcutListLabe
 	m_pList->RedrawItems(nItem,nItem);
 }
 
+inline void CSettingsProperties::CKeyboardShortcutsPage::SetHotKey(BYTE bKey,BYTE bModifiers)
+{
+	SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_SETHOTKEY,MAKEWORD(bKey,bModifiers),0);
+	
+	// Check whether MOD_EXT is needed
+	if (LOBYTE(SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_GETHOTKEY))!=bKey)
+		SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_SETHOTKEY,MAKEWORD(bKey,bModifiers|HOTKEYF_EXT),0);
+}
+
+inline void CSettingsProperties::CKeyboardShortcutsPage::SetHotKeyForShortcut(CShortcut* pShortcut)
+{
+	return SetHotKey(pShortcut->m_bVirtualKey,pShortcut->GetHotkeyModifiers());
+}
+
+inline void CSettingsProperties::CKeyboardShortcutsPage::GetHotKeyForShortcut(CShortcut* pShortcut) const
+{
+	// Using hotkey control
+	WORD wKey=(WORD)SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_GETHOTKEY,0,0);
+	pShortcut->m_bVirtualKey=LOBYTE(wKey);
+    pShortcut->SetHotkeyModifiers(HIBYTE(wKey));
+}
+
 #endif

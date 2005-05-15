@@ -162,6 +162,9 @@ public:
 
 	BYTE GetHotkeyModifiers() const;
 	void SetHotkeyModifiers(BYTE nHotkeyModifier);
+	
+	static BYTE HotkeyModifiersToModifiers(BYTE bHotkeyModifiers);
+	static BYTE ModifiersToHotkeyModifiers(BYTE bModifiers);
 
 
 	// Flags
@@ -181,7 +184,7 @@ public:
 		sfRemoveKeyDownMessage = 0x20,
 
 		sfVirtualKeySpecified = 0x1000,
-		sfScancodeKeySpecified = 0x2000,
+		sfVirtualKeyIsScancode = 0x2000,
 
 
 		sfDefault = sfLocal|sfExecuteWhenDown
@@ -256,8 +259,8 @@ public:
 				CheckFilesOrFolders,MatchWholeName,ReplaceSpaces,
                 UseWholePath,TypeOfFile,ContainingText,
 				TextMatchCase,TextHelp,NullControl};
-			ActionActivateControls* b=new ActionActivateControls[sizeof(a)];
-			CopyMemory(b,a,sizeof(a)*sizeof(ActionActivateControls));
+			ActionActivateControls* b=new ActionActivateControls[sizeof(a)/sizeof(ActionActivateControls)];
+			CopyMemory(b,a,sizeof(a));
 			return b;
 		}
 
@@ -322,8 +325,8 @@ public:
                 ViewArrangeIconsAutoArrange,ViewArrangeIconsAlignToGrid,ViewLineUpIcons,
 				ViewSelectDetails,ViewRefresh,OptionsSettings,
 				HelpAbout,NullMenuCommand};
-			ActionMenuCommands* b=new ActionMenuCommands[sizeof(a)];
-			CopyMemory(b,a,sizeof(a)*sizeof(ActionMenuCommands));
+			ActionMenuCommands* b=new ActionMenuCommands[sizeof(a)/sizeof(ActionMenuCommands)];
+			CopyMemory(b,a,sizeof(a));
 			return b;
 		}
 
@@ -438,5 +441,15 @@ inline CShortcut::CKeyboardAction::~CKeyboardAction()
 {
 }
 
+
+inline BYTE CShortcut::GetHotkeyModifiers() const
+{
+    return ModifiersToHotkeyModifiers(m_bModifiers);	
+}
+
+inline void CShortcut::SetHotkeyModifiers(BYTE bHotkeyModifier)
+{
+	m_bModifiers=HotkeyModifiersToModifiers(bHotkeyModifier);
+}
 
 #endif
