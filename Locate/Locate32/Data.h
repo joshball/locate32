@@ -158,13 +158,27 @@ public:
 class CShortcut {
 public:
 	CShortcut();
+	CShortcut(CShortcut& rCopyFrom);
 	~CShortcut();
 
 	BYTE GetHotkeyModifiers() const;
 	void SetHotkeyModifiers(BYTE nHotkeyModifier);
+	char GetMnemonicForAction(HWND* hDialogs) const;
 	
 	static BYTE HotkeyModifiersToModifiers(BYTE bHotkeyModifiers);
 	static BYTE ModifiersToHotkeyModifiers(BYTE bModifiers);
+
+	enum LoadShortcuts {
+		loadLocal =  0x1,
+		loadGlobalHotkey = 0x2,
+		loadGlobalHook = 0x4,
+
+		loadAll = loadLocal|loadGlobalHotkey|loadGlobalHook
+	};
+	static BOOL LoadShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadFlag=loadAll);
+	static BOOL SaveShortcuts(const CArrayFP<CShortcut*>& aShortcuts);
+	static BOOL GetDefaultShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadFlag=loadAll);
+
 
 
 	// Flags
@@ -190,6 +204,8 @@ public:
 		sfDefault = sfLocal|sfExecuteWhenDown
 	};
 	WORD m_dwFlags;
+
+
 	
 	// Shortcut
 	BYTE m_bVirtualKey;
@@ -200,8 +216,24 @@ public:
 		ModifierWin = MOD_WIN,
 		ModifierShift = MOD_SHIFT
 	};
-	LPSTR m_pClass; // NULL=none, -1==locate dialog
-	LPSTR m_pTitle; // NULL=none
+	enum WherePresssed {
+		wpResultList = 0x0001,
+		wpNameTab = 0x0002,
+		wpSizeDateTab = 0x0004,
+		wpAdvancedTab = 0x0008,
+		wpElsewhere = 0x0010,
+
+		wpDefault = wpResultList|wpNameTab|wpSizeDateTab|wpSizeDateTab|wpAdvancedTab|wpElsewhere
+
+	};
+	union {
+		WORD m_wWherePressed; // Where pressed, combination of values of WherePressed enum
+
+		struct {
+			LPSTR m_pClass; // NULL=none, -1==locate dialog
+			LPSTR m_pTitle; // NULL=none
+		};
+	};
 	UINT m_nDelay; // 0=none, -1=post, otherwise it is delay in ms
 	
 	
@@ -343,9 +375,25 @@ public:
 			ActionMenuCommands m_nMenuCommand;
 	    };
 
+	protected:
+		DWORD GetData(BYTE* pData) const;
+		DWORD GetDataLength() const;
+		
+		static CKeyboardAction* FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed);
+		CKeyboardAction(void* pVoid); // Empty constructor
+
+		friend CShortcut;
+
 	};
 
 	CArrayFP<CKeyboardAction*> m_apActions;
+
+protected:
+	DWORD GetData(BYTE* pData) const;
+	DWORD GetDataLength() const;
+	static CShortcut* FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed);
+	CShortcut(void* pVoid); // Empty constructor
+
 };
 
 ////////////////////////////////////////////////////////////
@@ -450,6 +498,19 @@ inline BYTE CShortcut::GetHotkeyModifiers() const
 inline void CShortcut::SetHotkeyModifiers(BYTE bHotkeyModifier)
 {
 	m_bModifiers=HotkeyModifiersToModifiers(bHotkeyModifier);
+}
+
+inline CShortcut::CShortcut(void* pVoid)
+{
+}
+
+inline CShortcut::CKeyboardAction::CKeyboardAction(void* pVoid)
+{
+}
+
+inline DWORD CShortcut::CKeyboardAction::GetDataLength() const
+{
+	return sizeof(CKeyboardAction)+2;
 }
 
 #endif

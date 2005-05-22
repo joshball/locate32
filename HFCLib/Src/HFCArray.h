@@ -50,7 +50,7 @@ public:
 	TYPE& operator[](DWORD nIndex);
 	
 	void InsertAt(int nIndex,TYPE newElement,int nCount=1);
-	void RemoveAt(int nIndex,int nCount=1);
+	void RemoveAt(int nIndex);
 	void InsertAt(int nStartIndex,CArray* pNewArray);
 
 	int Find(TYPE element,int startat=0) const; // Returns index to element
@@ -346,12 +346,12 @@ void CArray<TYPE>::InsertAt(int nIndex,TYPE newElement,int nCount)
 }
 
 template<class TYPE>
-void CArray<TYPE>::RemoveAt(int nIndex,int nCount)
+void CArray<TYPE>::RemoveAt(int nIndex)
 {
 	int i;
-	for (i=nIndex;i<m_nSize-nCount;i++)
-		m_pData[i]=m_pData[i+nCount];
-	m_nSize-=nCount;
+	for (i=nIndex;i<m_nSize-1;i++)
+		m_pData[i]=m_pData[i+1];
+	m_nSize--;
 }
 
 template<class TYPE>
@@ -450,7 +450,7 @@ public:
 	void Copy(const CArrayFP& src);
 
 	void RemoveAll();
-	void RemoveAt(int nIndex,int nCount=1);
+	void RemoveAt(int nIndex);
 
 	void Swap(CArrayFP& src);
 };
@@ -464,12 +464,15 @@ inline CArrayFP<TYPE>::CArrayFP()
 }
 
 template<class TYPE>
-CArrayFP<TYPE>::~CArrayFP()
+void CArrayFP<TYPE>::RemoveAll()
 {
 	if (m_pData!=NULL)
 	{
 		for (int i=0;i<m_nSize;i++)
-			delete m_pData[i];
+		{
+			if (m_pData[i]!=NULL)
+				delete m_pData[i];
+		}
 		delete[] m_pData;
 	}
 	m_pData=NULL;
@@ -477,17 +480,12 @@ CArrayFP<TYPE>::~CArrayFP()
 }
 
 template<class TYPE>
-void CArrayFP<TYPE>::RemoveAll()
+CArrayFP<TYPE>::~CArrayFP()
 {
-	if (m_pData!=NULL)
-	{
-		for (int i=0;i<m_nSize;i++)
-			delete m_pData[i];
-		delete[] m_pData;
-	}
-	m_pData=NULL;
-	m_nSize=0;
+	RemoveAll();
 }
+
+
 
 
 template<class TYPE>
@@ -521,14 +519,16 @@ void CArrayFP<TYPE>::Copy(const CArrayFP& src)
 
 
 template<class TYPE>
-void CArrayFP<TYPE>::RemoveAt(int nIndex,int nCount)
+void CArrayFP<TYPE>::RemoveAt(int nIndex)
 {
 	int i;
-	for (i=0;i<nCount;i++)
-		delete m_pData[nIndex+i];
-	for (i=nIndex;i<m_nSize-nCount;i++)
-		m_pData[i]=m_pData[i+nCount];
-	m_nSize-=nCount;
+	if (m_pData[nIndex]!=NULL)
+		delete m_pData[nIndex];
+	
+	for (i=nIndex;i<m_nSize-1;i++)
+		m_pData[i]=m_pData[i+1];
+	
+	m_nSize--;
 }
 
 	
@@ -559,7 +559,7 @@ public:
 	void Copy(const CArrayFAP& src);
 
 	void RemoveAll();
-	void RemoveAt(int nIndex,int nCount=1);
+	void RemoveAt(int nIndex);
 	
 	void Swap(CArrayFAP& src);
 
@@ -574,12 +574,15 @@ inline CArrayFAP<TYPE>::CArrayFAP()
 }
 
 template<class TYPE>
-CArrayFAP<TYPE>::~CArrayFAP()
+void CArrayFAP<TYPE>::RemoveAll()
 {
 	if (m_pData!=NULL)
 	{
 		for (int i=0;i<m_nSize;i++)
-			delete[] m_pData[i];
+		{
+			if (m_pData[i]!=NULL)
+				delete[] m_pData[i];
+		}
 		delete[] m_pData;
 	}
 	m_pData=NULL;
@@ -587,17 +590,11 @@ CArrayFAP<TYPE>::~CArrayFAP()
 }
 
 template<class TYPE>
-void CArrayFAP<TYPE>::RemoveAll()
+CArrayFAP<TYPE>::~CArrayFAP()
 {
-	if (m_pData!=NULL)
-	{
-		for (int i=0;i<m_nSize;i++)
-			delete[] m_pData[i];
-		delete[] m_pData;
-	}
-	m_pData=NULL;
-	m_nSize=0;
+	RemoveAll();
 }
+
 
 
 template<class TYPE>
@@ -629,14 +626,16 @@ void CArrayFAP<TYPE>::Copy(const CArrayFAP& src)
 }
 
 template<class TYPE>
-void CArrayFAP<TYPE>::RemoveAt(int nIndex,int nCount)
+void CArrayFAP<TYPE>::RemoveAt(int nIndex)
 {
 	int i;
-	for (i=0;i<nCount;i++)
-		delete[] m_pData[nIndex+i];
-	for (i=nIndex;i<m_nSize-nCount;i++)
-		m_pData[i]=m_pData[i+nCount];
-	m_nSize-=nCount;
+	if (m_pData[nIndex]!=NULL)
+		delete[] m_pData[nIndex];
+	
+	for (i=nIndex;i<m_nSize-1;i++)
+		m_pData[i]=m_pData[i+1];
+	
+	m_nSize--;
 }
 	
 template<class TYPE>

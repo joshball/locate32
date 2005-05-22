@@ -772,15 +772,37 @@ CShortcut::CShortcut()
 {
 	// At least one action is needed
 	m_apActions.Add(new CKeyboardAction);
+
+	if ((m_dwFlags&sfKeyTypeMask)==sfLocal)
+		m_wWherePressed=wpDefault;
 }
+
+CShortcut::CShortcut(CShortcut& rCopyFrom)
+{
+	CopyMemory(this,&rCopyFrom,sizeof(CShortcut));
+
+	if ((m_dwFlags&sfKeyTypeMask)!=sfLocal)
+	{
+		if (m_pClass!=NULL && m_pClass!=LPSTR(-1))
+			m_pClass=alloccopy(m_pClass);
+		if (m_pTitle!=NULL)
+			m_pTitle=alloccopy(m_pTitle);
+	}
+
+	for (int i=0;i<m_apActions.GetSize();i++)
+		m_apActions[i]=new CKeyboardAction(*m_apActions[i]);
+}
+	
 
 CShortcut::~CShortcut()
 {
-	if (m_pClass!=NULL && m_pClass!=LPSTR(-1))
-		delete[] m_pClass;
-	if (m_pTitle!=NULL)
-		delete[] m_pTitle;
-
+	if ((m_dwFlags&sfKeyTypeMask)!=sfLocal)
+	{
+		if (m_pClass!=NULL && m_pClass!=LPSTR(-1))
+			delete[] m_pClass;
+		if (m_pTitle!=NULL)
+			delete[] m_pTitle;
+	}
 	m_apActions.RemoveAll();
 }
 
@@ -808,3 +830,282 @@ BYTE CShortcut::ModifiersToHotkeyModifiers(BYTE bModifier)
 	return bRet;
 }
 
+BOOL CShortcut::LoadShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadFlags)
+{
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)!=ERROR_SUCCESS)
+		return FALSE;
+
+	// TODO: take bLoadFlags into account
+	
+	DWORD dwDataLength=RegKey.QueryValueLength("Shortcuts");
+	if (dwDataLength<4)
+		return FALSE;
+
+	BYTE* pData=new BYTE[dwDataLength];
+	RegKey.QueryValue("Shortcuts",(LPSTR)pData,dwDataLength,NULL);
+	RegKey.CloseKey();
+
+	// TODO: this part to another function, for GetDefaultShortuts
+
+
+	BYTE* pPtr=pData;
+	while (dwDataLength>=4 && *((DWORD*)pPtr)!=NULL)
+	{
+		DWORD dwLength;
+		CShortcut* pShortcut=CShortcut::FromData(pPtr,dwDataLength,dwLength);
+
+		if (pShortcut==NULL)
+		{
+			delete[] pData;
+			return FALSE;
+		}
+
+		aShortcuts.Add(pShortcut);
+
+		pPtr+=dwLength;
+		dwDataLength-=dwLength;
+	}
+	return TRUE;
+}
+
+BOOL CShortcut::SaveShortcuts(const CArrayFP<CShortcut*>& aShortcuts)
+{
+	DWORD dwLength=sizeof(DWORD);
+	int i;
+
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defWrite)!=ERROR_SUCCESS)
+		return FALSE;
+
+	for (i=0;i<aShortcuts.GetSize();i++)
+		dwLength+=aShortcuts[i]->GetDataLength();
+
+    BYTE* pData=new BYTE[dwLength];
+	DWORD dwUsed=0;
+
+	for (i=0;i<aShortcuts.GetSize();i++)
+		dwUsed+=aShortcuts[i]->GetData(pData+dwUsed);
+	
+	*((DWORD*)(pData+dwUsed))=NULL;
+
+	ASSERT(dwUsed+sizeof(DWORD)==dwLength);
+
+	BOOL bRet=RegKey.SetValue("Shortcuts",(LPSTR)pData,dwLength,REG_BINARY)==dwLength;
+    delete[] pData;
+
+	return bRet;
+}
+
+DWORD CShortcut::GetData(BYTE* _pData) const
+{
+	BYTE* pData=_pData;
+	DWORD dwUsed;
+
+	*((WORD*)pData)=0xFFED; // Start mark
+	pData+=sizeof(WORD);
+
+	CopyMemory(pData,this,sizeof(CShortcut));
+	pData+=sizeof(CShortcut);
+
+
+	if ((m_dwFlags&sfKeyTypeMask)!=sfLocal)
+	{
+		if (m_pClass!=NULL && m_pClass!=LPSTR(-1))
+		{
+			dwUsed=istrlen(m_pClass)+1;
+			CopyMemory(pData,m_pClass,dwUsed);
+			pData+=dwUsed;
+		}
+
+		if (m_pTitle!=NULL)
+		{
+            dwUsed=istrlen(m_pTitle)+1;
+			CopyMemory(pData,m_pTitle,dwUsed);
+			pData+=dwUsed;
+		}
+	}
+
+	for (int i=0;i<m_apActions.GetSize();i++)
+	{
+		dwUsed=m_apActions[i]->GetData(pData);
+		pData+=dwUsed;
+	}
+
+	return DWORD(pData-_pData);
+}
+
+DWORD CShortcut::GetDataLength() const
+{
+	DWORD dwLen=sizeof(CShortcut)+sizeof(WORD);
+	if ((m_dwFlags&sfKeyTypeMask)!=sfLocal)
+	{
+		if (m_pClass!=NULL && m_pClass!=LPSTR(-1))
+			dwLen+=istrlen(m_pClass)+1;
+
+		if (m_pTitle!=NULL)
+			dwLen+=istrlen(m_pTitle)+1;
+	}
+
+	for (int i=0;i<m_apActions.GetSize();i++)
+		dwLen+=m_apActions[i]->GetDataLength();
+
+	return dwLen;
+}
+
+CShortcut* CShortcut::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
+{
+	DWORD dwLen;
+
+	if (dwDataLen<sizeof(CShortcut)+sizeof(WORD))
+		return NULL;
+
+    if (*((WORD*)pData)!=0xFFED)
+		return NULL;
+
+	CShortcut* pShortcut=new CShortcut((void*)NULL);
+	CopyMemory(pShortcut,pData+sizeof(WORD),sizeof(CShortcut));	
+	dwUsed=sizeof(WORD)+sizeof(CShortcut);
+	pData+=sizeof(WORD)+sizeof(CShortcut);
+	dwDataLen-=dwUsed;
+
+	if ((pShortcut->m_dwFlags&sfKeyTypeMask)!=sfLocal) // Load class and title 
+	{
+		if (pShortcut->m_pClass!=NULL && pShortcut->m_pClass!=LPSTR(-1))
+		{
+			for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
+
+			if (dwLen==dwDataLen)
+			{
+				delete pShortcut;
+				return NULL;
+			}
+
+			dwLen++;
+			pShortcut->m_pClass=new char[dwLen];
+			CopyMemory(pShortcut->m_pClass,pData,dwLen);
+			dwUsed+=dwLen;
+			pData+=dwLen;
+			dwDataLen-=dwLen;
+		}
+		
+		if (pShortcut->m_pTitle!=NULL)
+		{
+			for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
+
+			if (dwLen==dwDataLen)
+			{
+				delete pShortcut;
+				return NULL;
+			}
+
+			dwLen++;
+			pShortcut->m_pTitle=new char[dwLen];
+			CopyMemory(pShortcut->m_pTitle,pData,dwLen);
+			dwUsed+=dwLen;
+			pData+=dwLen;
+			dwDataLen-=dwLen;
+		}
+	}
+
+	DWORD dwActions=pShortcut->m_apActions.GetSize();
+	pShortcut->m_apActions.GiveBuffer(); // There is no allocated data
+	
+    for (DWORD i=0;i<dwActions;i++)
+	{
+		CKeyboardAction* pAction=CKeyboardAction::FromData(pData,dwDataLen,dwLen);
+
+		if (pAction==NULL)
+		{
+			delete pShortcut;
+			return NULL;
+		}
+
+		pShortcut->m_apActions.Add(pAction);
+		pData+=dwLen;
+		dwUsed+=dwLen;
+		dwDataLen-=dwLen;
+
+	}
+	return pShortcut;
+}
+
+CShortcut::CKeyboardAction* CShortcut::CKeyboardAction::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
+{
+	if (dwDataLen<sizeof(CKeyboardAction)+sizeof(WORD))
+		return NULL;
+	
+	if (*((WORD*)pData)!=0xFFEC)
+		return NULL;
+
+	
+	CKeyboardAction* pAction=new CKeyboardAction((void*)NULL);
+	CopyMemory(pAction,pData+sizeof(WORD),sizeof(CKeyboardAction));	
+	dwUsed=sizeof(WORD)+sizeof(CKeyboardAction);
+	
+	return pAction;
+}
+	
+DWORD CShortcut::CKeyboardAction::GetData(BYTE* pData) const
+{
+	*((WORD*)pData)=0xFFEC;
+	CopyMemory(pData+sizeof(WORD),this,sizeof(CKeyboardAction));
+	
+	return sizeof(CKeyboardAction)+2;
+}
+
+
+
+
+BOOL CShortcut::GetDefaultShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadFlag)
+{
+	aShortcuts.Add(new CShortcut);
+	aShortcuts[0]->m_bVirtualKey='b';
+
+	aShortcuts.Add(new CShortcut);
+	aShortcuts[0]->m_bVirtualKey='c';
+
+	return TRUE;
+}
+
+char CShortcut::GetMnemonicForAction(HWND* hDialogs) const
+{
+
+	for (int i=0;i<m_apActions.GetSize();i++)
+	{
+		CShortcut::CKeyboardAction* pAction=m_apActions[i];
+
+		if (pAction->m_nAction==CShortcut::CKeyboardAction::ActivateControl)
+		{
+			for (int j=0;hDialogs[j]!=NULL;j++)
+			{	
+				if (HIWORD(pAction->m_nActivateControl)& (1<<15))
+					continue;
+
+
+				HWND hControl=::GetDlgItem(hDialogs[j],HIWORD(pAction->m_nActivateControl));
+				if (hControl!=NULL)
+				{
+					DWORD dwTextLen=::SendMessage(hControl,WM_GETTEXTLENGTH,0,0);
+					char* pText=new char[dwTextLen+2];
+					::SendMessage(hControl,WM_GETTEXT,dwTextLen+2,LPARAM(pText));
+
+					for (DWORD k=0;k<dwTextLen-1;k++)
+					{
+						if (pText[k]=='&')
+						{
+							char cRet=pText[k+1];
+							delete[] pText;
+							return cRet;
+						}
+					}
+
+					delete[] pText;
+					break;
+				}
+			}
+		}
+	}
+
+	return 0;
+}

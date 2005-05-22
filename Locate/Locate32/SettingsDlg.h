@@ -585,6 +585,7 @@ public:
 			
 		BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
 		BOOL WherePressedNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
+		BOOL ItemUpOrDown(BOOL bUp);
 
 		void InsertSubActions();
 		void InsertKeysToVirtualKeyCombo();
@@ -611,6 +612,8 @@ public:
 		void SaveFieldsForAction(CShortcut::CKeyboardAction* pAction);
 		void ClearActionFields();
 		void EnableItems();
+		void SetFieldsRelativeToMnemonics();
+
 
 		static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);
 		
@@ -624,7 +627,7 @@ public:
 		BYTE GetVirtualCode(BOOL bScanCode) const;
 		void SetHotKeyForShortcut(CShortcut* pShortcut);
 		void GetHotKeyForShortcut(CShortcut* pShortcut) const;
-
+		
 		void SetHotKey(BYTE bKey,BYTE bModifiers);
 		
 
@@ -657,7 +660,7 @@ public:
 		CShortcut::CKeyboardAction::ActionMenuCommands* m_pPossibleMenuCommands;
 		VirtualKeyName* m_pVirtualKeyNames;
 
-		HWND hDialogs[4];	
+		HWND hDialogs[5];	
 		HMENU hMainMenu;
 		HMENU hPopupMenu;
 
@@ -681,9 +684,16 @@ public:
 	
 	CString m_OpenFoldersWith;
 	
- 	//Database
+ 	// Database
 	CArrayFP<PDATABASE> m_aDatabases;
 	
+	// Shortcuts
+	CArrayFP <CShortcut*> m_aShortcuts;
+
+	// Schedules
+	CListFP <CSchedule*> m_Schedules;
+	
+
 	// General settings flags	
 	enum SettingsFlags {
 		settingsCancelled=0x1,
@@ -730,9 +740,6 @@ public:
 	BYTE m_bDefaultFlag;
 	
 	CString m_strLangFile;
-	
-	CListFP <CSchedule*> m_Schedules;
-
 	DWORD m_nTransparency;
     
 	// Update tooltip
