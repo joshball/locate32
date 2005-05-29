@@ -718,8 +718,7 @@ public:
 		cmLocateOnMyDocuments=0x2,
 		cmLocateOnDrives=0x4,
 		cmLocateOnFolders=0x8,
-		cmUpdateOnMyComputer=0x10,
-		hookExplorer=0x80
+		cmUpdateOnMyComputer=0x10
 	};
 
 	// For m_bDefaultFlag

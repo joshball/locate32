@@ -1953,33 +1953,60 @@ BOOL CLocateAppWnd::OnCreateClient(LPCREATESTRUCT lpcs)
 
 BOOL CLocateAppWnd::TurnOnShortcuts()
 {
-	// Stop hooking
-	if (m_hHook!=NULL)
-	{
-		UnsetHook(m_hHook);
-		m_hHook;
-	}
+	TurnOffShortcuts();
 
-	// Remove old shortcuts
-	m_aShortcuts.RemoveAll();
-
+	OSVERSIONINFOEX oi;
+	oi.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);
+	BOOL bRet=GetVersionEx((LPOSVERSIONINFO) &oi);
+	BOOL bCanHook=!(bRet && oi.dwPlatformId!=VER_PLATFORM_WIN32_NT ||
+		!(oi.dwMajorVersion>=5 || (oi.dwMajorVersion==4 && oi.wServicePackMajor>=3) ));
 
 	// Loading new shortcuts
 	if (!CShortcut::LoadShortcuts(m_aShortcuts,CShortcut::loadGlobalHotkey|CShortcut::loadGlobalHook))
 	{
-		if (!CShortcut::GetDefaultShortcuts(m_aShortcuts,CShortcut::loadGlobalHotkey|CShortcut::loadGlobalHook))
+        if (!CShortcut::GetDefaultShortcuts(m_aShortcuts,
+			CShortcut::loadGlobalHotkey|(bCanHook?CShortcut::loadGlobalHook:0)))
 			ShowErrorMessage(IDS_ERRORCANNOTLOADDEFAULTSHORTUCS,IDS_ERROR);
 	}
 
+	// Count hooks and register hotkeys
+	UINT nHooks=0;
+	for (int i=0;i<m_aShortcuts.GetSize();i++)
+	{
+		switch(m_aShortcuts[i]->m_dwFlags&CShortcut::sfKeyTypeMask)
+		{
+		case CShortcut::sfGlobalHook:
+			nHooks++;
+			break;
+		case CShortcut::sfGlobalHotkey:
+			if (!RegisterHotKey(*this,i,m_aShortcuts[i]->m_bModifiers,m_aShortcuts[i]->m_bVirtualKey))
+			{
+				// TODO: Virhe viesti jos settings dialog auki
+			}
+			break;
+		}
+	}
+
+	if (nHooks>0)
+	{
+		ASSERT(bCanHook);
+		m_hHook=SetHook(*this,m_aShortcuts.GetData(),m_aShortcuts.GetSize());
+	}
 		
 	
-	m_hHook=SetHook(*this,m_aShortcuts.GetData(),m_aShortcuts.GetSize());			
-
-	return m_hHook!=NULL;
+	return TRUE;
 }
 
 BOOL CLocateAppWnd::TurnOffShortcuts()
 {
+	// Unregister hotkeys
+	for (int i=0;i<m_aShortcuts.GetSize();i++)
+	{
+		if ((m_aShortcuts[i]->m_dwFlags&CShortcut::sfKeyTypeMask)==CShortcut::sfGlobalHotkey)
+			UnregisterHotKey(*this,i);
+	}
+
+	// Stop hooking
 	if (m_hHook!=NULL)
 	{
 		UnsetHook(m_hHook);
@@ -2813,6 +2840,21 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			m_pUpdateStatusWnd=NULL;
 		}
 		break;
+	case WM_HOTKEY:
+		if (int(wParam)>=0 && int(wParam)<m_aShortcuts.GetSize())
+		{
+			if (!m_aShortcuts[int(wParam)]->IsForegroundWindowOk(*this))
+				break;
+
+			if (m_aShortcuts[int(wParam)]->m_nDelay>0 && 
+				m_aShortcuts[int(wParam)]->m_nDelay!=-1)
+				SetTimer(ID_SHORTCUTACTIONTIMER+int(wParam),m_aShortcuts[int(wParam)]->m_nDelay);
+			else if (m_aShortcuts[int(wParam)]->m_nDelay==-1 && lParam!=LPARAM(-1))
+				PostMessage(WM_EXECUTESHORTCUT,wParam,LPARAM(-1));
+			else           			
+				m_aShortcuts[int(wParam)]->ExecuteAction();
+        }
+		break;
 	case WM_EXECUTESHORTCUT:
 		if (int(wParam)>=0 && int(wParam)<m_aShortcuts.GetSize())
 		{
@@ -2824,6 +2866,9 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			else           			
 				m_aShortcuts[int(wParam)]->ExecuteAction();
 		}
+		break;
+	case WM_RESETSHORTCUTS:
+		TurnOnShortcuts();
 		break;
 	default:
 		if (msg==nHFCInstallationMessage)

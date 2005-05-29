@@ -184,7 +184,7 @@ BOOL CSettingsProperties::LoadSettings()
 	}
 
 	// m_bAdvancedAndContextMenuFlag
-	m_bAdvancedAndContextMenuFlag=GetLocateAppWnd()->m_hHook!=NULL?hookExplorer:0;
+	m_bAdvancedAndContextMenuFlag=0;
 	if (RegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 		m_bAdvancedAndContextMenuFlag|=cmLocateOnMyComputer;
 	if (RegKey.OpenKey(HKCR,"CLSID\\{450D8FBA-AD25-11D0-98A8-0800361B1103}\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
@@ -275,7 +275,6 @@ BOOL CSettingsProperties::SaveSettings()
 		
 		RegKey.SetValue("DateFormat",m_DateFormat);
 		RegKey.SetValue("TimeFormat",m_TimeFormat);
-		RegKey.SetValue("OverrideExplorer",DWORD(m_bAdvancedAndContextMenuFlag&hookExplorer?TRUE:FALSE));
 	}
 	((CLocateApp*)GetApp())->m_strDateFormat=m_DateFormat;
 	((CLocateApp*)GetApp())->m_strTimeFormat=m_TimeFormat;
@@ -313,8 +312,8 @@ BOOL CSettingsProperties::SaveSettings()
 	{
 		ShowErrorMessage(IDS_ERRORCANNOTSAVESHORTCUTS,IDS_ERROR);
 	}
-	GetLocateAppWnd()->TurnOnShortcuts();
-
+	GetLocateAppWnd()->PostMessage(WM_RESETSHORTCUTS);
+	
     
 	// Default flags
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defWrite)==ERROR_SUCCESS)
@@ -845,20 +844,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETRUNATSYSTEMSTARTUP,NULL,
 			DefaultCheckBoxProc,CSettingsProperties::settingsStartLocateAtStartup,&m_pSettings->m_dwSettingsFlags),
 		CreateRoot(IDS_ADVSETSHELLCONTEXTMENU,ShellContextMenuItems),
-		NULL,
 		NULL
 	};
 
-	OSVERSIONINFOEX oi;
-	oi.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);
-	BOOL bRet=GetVersionEx((LPOSVERSIONINFO) &oi);
-	if (!(bRet && oi.dwPlatformId!=VER_PLATFORM_WIN32_NT ||
-		!(oi.dwMajorVersion>=5 || (oi.dwMajorVersion==4 && oi.wServicePackMajor>=3) )))
-	{
-		// Overwriding does not work in Win9x or old WinNt
-		SystemItems[2]=CreateCheckBox(IDS_ADVSETOVERWRITEKEYS,NULL,
-			DefaultCheckBoxProc,CSettingsProperties::hookExplorer,&m_pSettings->m_bAdvancedAndContextMenuFlag);
-	}
 	
 	Item* LookInItems[]={
 		CreateNumeric(IDS_ADVSETNUMBEROFDIRECTORIES,DefaultNumericProc,
@@ -5861,7 +5849,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnApply()
 	CPropertyPage::OnApply();
 
 	if (m_pCurrentShortcut!=NULL)
-		SetFieldsForShortcut(m_pCurrentShortcut);
+		SaveFieldsForShortcut(m_pCurrentShortcut);
 
 	m_pSettings->m_aShortcuts.RemoveAll();
 	
@@ -7046,7 +7034,13 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnInitDialog(HWN
 	// Adding items to combo
 	SendDlgItemMessage(IDC_TYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSHORTCUTLOCAL));
 	SendDlgItemMessage(IDC_TYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSHORTCUTGLOBALHOTKEY));
-	SendDlgItemMessage(IDC_TYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSHORTCUTGLOBALHOOK));
+
+	OSVERSIONINFOEX oi;
+	oi.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);
+	BOOL bRet=GetVersionEx((LPOSVERSIONINFO) &oi);
+	if (!(bRet && oi.dwPlatformId!=VER_PLATFORM_WIN32_NT ||
+		!(oi.dwMajorVersion>=5 || (oi.dwMajorVersion==4 && oi.wServicePackMajor>=3) )))
+		SendDlgItemMessage(IDC_TYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSHORTCUTGLOBALHOOK));
 
 	// Set where
 	switch (m_pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)

@@ -459,23 +459,65 @@ void CShortcut::CKeyboardAction::DoActivateControl()
 	if (hControl==0)
 		return;
 	
-	::SendMessage(*pLocateDlg,WM_COMMAND,MAKEWPARAM(LOWORD(m_nActivateControl),1),0);
-	
-	
-    
+	pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nActivateControl),1),0);
 }
 
 
 void CShortcut::CKeyboardAction::DoMenuCommand()
 {
-	if (GetLocateAppWnd()->m_pLocateDlgThread==NULL)
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg==NULL)
 		return;
+
+	pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nMenuCommand),0),0);
 }
 
 void CShortcut::CKeyboardAction::DoShowHideDialog()
 {
-
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	
+	switch(m_nDialogCommand)
+	{
+	case ShowDialog:
+		GetLocateAppWnd()->OnLocate();
+		break;
+	case MinimizeDialog:
+		if (pLocateDlg!=NULL)
+			pLocateDlg->ShowWindow(CWnd::swMinimize);
+		break;
+	case CloseDialog:
+		if (pLocateDlg!=NULL)
+			pLocateDlg->PostMessage(WM_CLOSE);
+		break;
+	case ShowOrHideDialog:
+		if (pLocateDlg!=NULL)
+		{
+			WINDOWPLACEMENT wp;
+			wp.length=sizeof(WINDOWPLACEMENT);
+			pLocateDlg->GetWindowPlacement(&wp);
+			if (wp.showCmd!=SW_SHOWMINIMIZED &&wp.showCmd!=SW_HIDE)
+				pLocateDlg->ShowWindow(CWnd::swMinimize);
+			else 
+				GetLocateAppWnd()->OnLocate();
+		}
+		break;
+	case OpenOrCloseDialog:
+		if (pLocateDlg!=NULL)
+		{
+			WINDOWPLACEMENT wp;
+			wp.length=sizeof(WINDOWPLACEMENT);
+			pLocateDlg->GetWindowPlacement(&wp);
+			if (wp.showCmd!=SW_SHOWMINIMIZED &&wp.showCmd!=SW_HIDE)
+				pLocateDlg->PostMessage(WM_CLOSE);
+			else
+				GetLocateAppWnd()->OnLocate();
+		}
+		else
+			GetLocateAppWnd()->OnLocate();
+		break;
+	}
 }
+
 #endif
 
 static BOOL _ContainString(LPCSTR s1,LPCSTR s2,size_t s2len) // Is s2 in the s1
@@ -537,7 +579,7 @@ BOOL CShortcut::DoClassOrTitleMatch(LPCSTR pClass,LPCSTR pCondition)
     
 	for (;;)
 	{
-		for (nIndex=0;pCondition[nIndex]!='\0' && pCondition[nIndex]!='||';nIndex++);
+		for (nIndex=0;pCondition[nIndex]!='\0' && pCondition[nIndex]!='|';nIndex++);
 		
 		if (_ContainString(pClass,pCondition,nIndex))
 			return TRUE;

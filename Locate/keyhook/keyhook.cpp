@@ -115,7 +115,7 @@ LRESULT CALLBACK HookKeyboardProc(int code,WPARAM wParam,LPARAM lParam)
 					}
 					
 					// Checking modifiers
-					if (!g_pShortcuts[i]->IsModifiersOk(p->flags&LLKHF_ALTDOWN,
+					if (!g_pShortcuts[i]->IsModifiersOk(GetKeyState(VK_MENU) & 0x8000,
 						GetKeyState(VK_CONTROL) & 0x8000,
 						GetKeyState(VK_SHIFT) & 0x8000,
 						(GetKeyState(VK_LWIN)|GetKeyState(VK_RWIN)) & 0x8000))

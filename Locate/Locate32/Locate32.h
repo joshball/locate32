@@ -125,7 +125,7 @@ extern LPSTR g_szBuffer;
 #define WM_GETLOCATEDLG				WM_APP+105 // wParam==0: return HWND, wParam==1: return PTR, wParam==2: return PTR to ST
 #define WM_FREEUPDATESTATUSPOINTERS	WM_APP+106
 #define WM_EXECUTESHORTCUT			WM_APP+107 // wParam is index to shortcut 
-
+#define WM_RESETSHORTCUTS			WM_APP+108
 
 // String copyers
 #define sMemCopy(dst,src,len)	CopyMemory(dst,src,len)

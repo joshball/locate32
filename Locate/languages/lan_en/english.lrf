@@ -25,7 +25,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2005 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 beta 5.5150
+FILEVERSION=3.0 beta 5.5290
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -239,7 +239,6 @@ STRADVANCEDSETTINGS_DONTADDANYROOTS=Don't add directories (except local drives) 
 STRADVANCEDSETTINGS_MULTIPLEDIRECTORIES=Possible to choose more than one directory
 STRADVANCEDSETTINGS_LOADTYPEFROMREGISTRY=Load file types from registry (""Type of file"" combo)
 STRADVANCEDSETTINGS_SYSTEM=System
-STRADVANCEDSETTINGS_OVERWRITEKEYS=Overwrite Win+F (everywhere), Ctrl+F and F3 (in Explorer)
 STRADVANCEDSETTINGS_USEGETTITLE=Use GetFileTitle function to formulate a file titles
 STRADVANCEDSETTINGS_USEOWNMETHODFORTITLE=Use own method to generate file titles
 STRADVANCEDSETTINGS_SHOWTYPEICONS=Show type specified icons
