@@ -130,13 +130,12 @@ BOOL CSettingsProperties::LoadSettings()
 	m_aShortcuts.RemoveAll();
 	if (!CShortcut::LoadShortcuts(m_aShortcuts))
 	{
-        // TODO: Error message
-
-		m_aShortcuts.RemoveAll();
+        m_aShortcuts.RemoveAll();
 		if (!CShortcut::GetDefaultShortcuts(m_aShortcuts))
 		{
-			// TODO: Another error message
-		}
+			ShowErrorMessage(IDS_ERRORCANNOTLOADDEFAULTSHORTUCS,IDS_ERROR);
+			m_aShortcuts.RemoveAll();
+		}		
 	}
 
 	
@@ -312,9 +311,9 @@ BOOL CSettingsProperties::SaveSettings()
 	// Save shortcuts
 	if (!CShortcut::SaveShortcuts(m_aShortcuts))
 	{
-		// TODO: Error message
-#error Katso TODO:t!
+		ShowErrorMessage(IDS_ERRORCANNOTSAVESHORTCUTS,IDS_ERROR);
 	}
+	GetLocateAppWnd()->TurnOnShortcuts();
 
     
 	// Default flags
@@ -333,20 +332,7 @@ BOOL CSettingsProperties::SaveSettings()
 		RegKey.SetValue("Transparency",m_nTransparency);
 	}
 
-	// Start/Stop hooking
-	if (m_bAdvancedAndContextMenuFlag&hookExplorer)
-	{
-		if (GetLocateAppWnd()->m_hHook==NULL)
-			GetLocateAppWnd()->m_hHook=SetHook(*GetLocateAppWnd());
-	}
-	else
-	{
-		if (GetLocateAppWnd()->m_hHook!=NULL)
-		{
-			UnsetHook(GetLocateAppWnd()->m_hHook);
-			GetLocateAppWnd()->m_hHook=NULL;
-		}
-	}
+	
 
 
 	// Insert/Remove context menu items
@@ -5560,6 +5546,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_SHORTCUTACTIVATECONTROL));
 	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_SHORTCUTACTIVATETAB));
 	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_SHORTCUTMENUCOMMAND));
+	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_SHORTCUTSHOWHIDEDIALOG));
 	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,0,0);
 	
 	
@@ -5577,6 +5564,19 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	
 
 	// Inserting items
+	InsertShortcuts();
+	
+	ClearActionFields();
+	EnableItems();
+
+
+	return FALSE;
+}
+
+
+
+void CSettingsProperties::CKeyboardShortcutsPage::InsertShortcuts()
+{
 	LVITEM li;
 	li.pszText=LPSTR_TEXTCALLBACK;
 	li.mask=LVIF_TEXT|LVIF_PARAM;
@@ -5591,12 +5591,6 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 		li.iItem++;
 	}
 	delete[] m_pSettings->m_aShortcuts.GiveBuffer();
-	
-	ClearActionFields();
-	EnableItems();
-
-
-	return FALSE;
 }
 
 void CSettingsProperties::CKeyboardShortcutsPage::InsertSubActions()
@@ -5640,13 +5634,17 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::IndexToSubAction(CShortcut::CK
 			return (UINT)-1;
 		return m_pPossibleControls[nIndex];
 	case CShortcut::CKeyboardAction::ActivateTab:
-		if (nIndex>2)
+		if (nIndex>CShortcut::CKeyboardAction::ActivateTabsLast)
 			return (UINT)-1;
 		return nIndex;
 	case CShortcut::CKeyboardAction::MenuCommand:
 		if (m_pPossibleMenuCommands[nIndex]==CShortcut::CKeyboardAction::NullMenuCommand)
 			return (UINT)-1;
 		return m_pPossibleMenuCommands[nIndex];
+	case CShortcut::CKeyboardAction::ShowHideDialog:
+		if (nIndex>CShortcut::CKeyboardAction::ShowHideDialogLast)
+			return (UINT)-1;
+		return nIndex;
 	}
 	return (UINT)-1;
 }
@@ -5665,7 +5663,7 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::SubActionToIndex(CShortcut::CK
 			return (UINT)-1;
 		}
 	case CShortcut::CKeyboardAction::ActivateTab:
-		if (nSubAction>2)
+		if (nSubAction>CShortcut::CKeyboardAction::ActivateTabsLast)
 			return (UINT)-1;
 		return nSubAction;
 	case CShortcut::CKeyboardAction::MenuCommand:
@@ -5677,6 +5675,13 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::SubActionToIndex(CShortcut::CK
 			}
 			return (UINT)-1;
 		}
+	case CShortcut::CKeyboardAction::ShowHideDialog:
+		if (nSubAction>CShortcut::CKeyboardAction::ShowHideDialogLast)
+			return (UINT)-1;
+		return nSubAction;
+	default:
+		ASSERT(0);
+		break;
 	}
 	return (UINT)-1;
 	
@@ -5792,6 +5797,14 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str
 				hMenu=hPopupMenu;
 				nSubMenu=SUBMENU_EXTRACONTEXTMENUITEMS;
 				break;
+			case IDS_SHORTCUTMENUPRESETS:
+				hMenu=hPopupMenu;
+				nSubMenu=SUBMENU_PRESETSELECTION;
+				break;
+			case IDS_SHORTCUTMENUDIRECTORIES:
+				hMenu=hPopupMenu;
+				nSubMenu=SUBMENU_MULTIDIRSELECTION;
+				break;
 			}
 
 			BOOL bRet=GetMenuItemInfo(GetSubMenu(hMenu,nSubMenu),LOWORD(uSubAction),FALSE,&mii);
@@ -5806,7 +5819,36 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str
 			}
 			return FALSE;
 		}
+	case CShortcut::CKeyboardAction::ShowHideDialog:
+		{
+			switch (uSubAction)
+			{
+			case 0:
+				str.LoadString(IDS_SHORTCUTSDIALOGSHOW);
+				break;
+			case 1:
+				str.LoadString(IDS_SHORTCUTSDIALOGMINIMINZE);
+				break;
+			case 2:
+				str.LoadString(IDS_SHORTCUTSDIALOGCLOSE);
+				break;
+			case 3:
+				str.LoadString(IDS_SHORTCUTSDIALOGSHOWORHIDE);
+				break;
+			case 4:
+				str.LoadString(IDS_SHORTCUTSDIALOGOPENORCLOSE);
+				break;
+			default:
+				return FALSE;
+			}
+
+			int nIndex;
+			while ((nIndex=str.Find("&&"))!=-1)
+				str.DelChar(nIndex);
+			return TRUE;
+		}
 	default:
+		ASSERT(0);
 		return FALSE;
 	}
 
@@ -6455,9 +6497,19 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnRemoveShortcut()
 
 void CSettingsProperties::CKeyboardShortcutsPage::OnReset()
 {
-	// TODO: Implement this
+	m_pList->DeleteAllItems();
+
+	m_pSettings->m_aShortcuts.RemoveAll();
+	if (!CShortcut::GetDefaultShortcuts(m_pSettings->m_aShortcuts))
+	{
+		ShowErrorMessage(IDS_ERRORCANNOTLOADDEFAULTSHORTUCS,IDS_ERROR);
+		m_pSettings->m_aShortcuts.RemoveAll();
+	}		
+	else
+		InsertShortcuts();
 
 
+	RefreshShortcutListLabels();
 	EnableItems();
 }
 
@@ -6747,7 +6799,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForShortcut(CShortcut
 	}
 
 		
-		
+	InsertKeysToVirtualKeyCombo();
 	SetVirtualCode(pShortcut->m_bVirtualKey,(pShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode)?TRUE:FALSE);
 	if (!(pShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode))
 		SetHotKeyForShortcut(pShortcut);
@@ -6880,6 +6932,14 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CShortcut:
 				pAction->m_nMenuCommand=m_pPossibleMenuCommands[0];
 			break;
 		}
+	case CShortcut::CKeyboardAction::ShowHideDialog:
+		pAction->m_nDialogCommand=(CShortcut::CKeyboardAction::ActionShowHideDialog)SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+		if ((int)pAction->m_nActivateControl==CB_ERR)
+			pAction->m_nDialogCommand=CShortcut::CKeyboardAction::ShowDialog;
+		break;
+	default:
+		ASSERT(0);
+		break;
 	};
 
 }
@@ -6961,12 +7021,19 @@ void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CString& str
 	case CShortcut::CKeyboardAction::MenuCommand:
 		str.LoadString(IDS_SHORTCUTMENUCOMMAND);
 		break;
+	case CShortcut::CKeyboardAction::ShowHideDialog:
+		break;
 	}
 
 	// Insert subaction code
 	CString subaction;
 	if (GetSubActionLabel(subaction,nAction,uSubAction))
-		str << " / " << subaction;
+	{
+		if (nAction==CShortcut::CKeyboardAction::ShowHideDialog)
+			str=subaction;
+		else
+			str << " / " << subaction;
+	}
 }
 
 ///////////////////////////////////////////////////////////////
@@ -7017,9 +7084,9 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnInitDialog(HWN
 	if ((m_pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)==CShortcut::sfGlobalHook)
 	{
 		if ((m_pShortcut->m_dwFlags&CShortcut::sfExecuteMask)!=CShortcut::sfExecuteWhenDown)
-			CheckDlgButton(IDC_EXECUTEWHENKEYISDOWN,1);
-		else
 			CheckDlgButton(IDC_EXECUTEWHENKEYISUP,1);
+		else
+			CheckDlgButton(IDC_EXECUTEWHENKEYISDOWN,1);
 
 		if (m_pShortcut->m_dwFlags&CShortcut::sfRemoveKeyDownMessage)
 			CheckDlgButton(IDC_REMOVEDOWNMESSAGE,TRUE);
@@ -7028,13 +7095,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnInitDialog(HWN
 	}
 	else
 	{
-		EnableDlgItem(IDC_EXECUTEWHENSTATIC,FALSE);
-		EnableDlgItem(IDC_EXECUTEWHENKEYISDOWN,FALSE);
-		EnableDlgItem(IDC_EXECUTEWHENKEYISUP,FALSE);
 		CheckDlgButton(IDC_EXECUTEWHENKEYISDOWN,1);
-		EnableDlgItem(IDC_REMOVEMESSAGESTATIC,FALSE);
-		EnableDlgItem(IDC_REMOVEDOWNMESSAGE,FALSE);
-		EnableDlgItem(IDC_REMOVEUPMESSAGE,FALSE);
 	}
 	
 
@@ -7068,6 +7129,13 @@ void CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::EnableItems()
 		EnableDlgItem(IDC_WINDOWCLASS,bEnableWindowAndClass);
 		EnableDlgItem(IDC_STATICWINDOWTITLE,bEnableWindowAndClass);
 		EnableDlgItem(IDC_STATICCLASS,bEnableWindowAndClass);
+
+		EnableDlgItem(IDC_EXECUTEWHENSTATIC,TRUE);
+		EnableDlgItem(IDC_EXECUTEWHENKEYISDOWN,TRUE);
+		EnableDlgItem(IDC_EXECUTEWHENKEYISUP,TRUE);
+		EnableDlgItem(IDC_REMOVEMESSAGESTATIC,TRUE);
+		EnableDlgItem(IDC_REMOVEDOWNMESSAGE,TRUE);
+		EnableDlgItem(IDC_REMOVEUPMESSAGE,TRUE);
 	}
 	else
 	{
@@ -7077,6 +7145,12 @@ void CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::EnableItems()
 		EnableDlgItem(IDC_STATICWINDOWTITLE,FALSE);
 		EnableDlgItem(IDC_STATICCLASS,FALSE);
 
+		EnableDlgItem(IDC_EXECUTEWHENSTATIC,FALSE);
+		EnableDlgItem(IDC_EXECUTEWHENKEYISDOWN,FALSE);
+		EnableDlgItem(IDC_EXECUTEWHENKEYISUP,FALSE);
+		EnableDlgItem(IDC_REMOVEMESSAGESTATIC,FALSE);
+		EnableDlgItem(IDC_REMOVEDOWNMESSAGE,FALSE);
+		EnableDlgItem(IDC_REMOVEUPMESSAGE,FALSE);
 	}
 
 	EnableDlgItem(IDC_WAITMS,IsDlgButtonChecked(IDC_WAITDELAY));
@@ -7176,6 +7250,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnOK()
 		if (IsDlgButtonChecked(IDC_EXECUTEWHENKEYISUP))
 			m_pShortcut->m_dwFlags|=CShortcut::sfExecuteWhenUp;
 
+
 		if (IsDlgButtonChecked(IDC_REMOVEDOWNMESSAGE))
 			m_pShortcut->m_dwFlags|=CShortcut::sfRemoveKeyDownMessage;
 		else
@@ -7186,7 +7261,6 @@ void CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnOK()
 		else
 			m_pShortcut->m_dwFlags&=~CShortcut::sfRemoveKeyUpMessage;
 	}
-	else
 	
 
 	// Setting wait time

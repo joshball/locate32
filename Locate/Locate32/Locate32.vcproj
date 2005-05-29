@@ -437,6 +437,23 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\shortcut.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+						PrecompiledHeaderThrough="HFCLib.h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+						PrecompiledHeaderThrough="HFCLib.h"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\SmallDialogs.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -537,6 +554,12 @@
 			</File>
 			<File
 				RelativePath=".\SettingsDlg.inl">
+			</File>
+			<File
+				RelativePath=".\shortcut.h">
+			</File>
+			<File
+				RelativePath=".\shortcuts.inl">
 			</File>
 			<File
 				RelativePath=".\SmallDialogs.h">
@@ -681,6 +704,9 @@
 		</Filter>
 		<File
 			RelativePath=".\commonres\bmp00004.bmp">
+		</File>
+		<File
+			RelativePath=".\commonres\defaultshortcuts.dat">
 		</File>
 		<File
 			RelativePath=".\commonres\defaulttypeicons.bmp">

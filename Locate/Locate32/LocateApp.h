@@ -97,6 +97,10 @@ public:
 	BOOL StartUpdateStatusNotification();
 	BOOL StopUpdateStatusNotification();
 	
+	BOOL TurnOnShortcuts();
+	BOOL TurnOffShortcuts();
+
+
 
 	BYTE OnAbout();
 	BYTE OnSettings();
@@ -127,9 +131,10 @@ public:
 	
 	CListFP <CSchedule*> m_Schedules;
 
-
-	// For overriding explorer's Ctrl+F and F3
+	// Keyboard shortcuts
+	CArrayFP<CShortcut*> m_aShortcuts;
 	HHOOK m_hHook;
+	
 		
 	friend inline CLocateDlg* GetLocateWnd();
 

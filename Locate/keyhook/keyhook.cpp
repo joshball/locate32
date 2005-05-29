@@ -2,7 +2,16 @@
 Copyright (C) 2004-2005 Janne Huttunen				*/
 
 #include <windows.h>
+
+#include <hfcdef.h>
+#include <hfcarray.h>
+
+#include "../lan_resources.h"
+#include "../locate32/shortcut.h"
 #include "keyhelper.h"
+
+#include "../locate32/shortcuts.inl"
+
 
 //#pragma data_seg(".SHRDATA")
 // Shared variables here
@@ -14,6 +23,9 @@ HHOOK g_hHook=NULL;
 int g_nHookCounter=0;
 HWND g_hTargetWindow=NULL;
 
+PSHORTCUT* g_pShortcuts=NULL;
+DWORD g_nShortcuts=0;
+
 BOOL isstrssame(const char* s1,const char* s2)
 {
 	for (int i=0;s1[i]==s2[i];i++)
@@ -24,8 +36,12 @@ BOOL isstrssame(const char* s1,const char* s2)
 	return FALSE;
 }
 
-HHOOK SetHook(HWND hTargetWindow)
+
+HHOOK SetHook(HWND hTargetWindow,PSHORTCUT* pShortcuts,DWORD nShortcuts)
 {
+	g_pShortcuts=pShortcuts;
+	g_nShortcuts=nShortcuts;
+    
 	if (g_nHookCounter==0)
 	{
 		g_hHook=SetWindowsHookEx(WH_KEYBOARD_LL,HookKeyboardProc,g_hDllInstance,0);
@@ -35,6 +51,11 @@ HHOOK SetHook(HWND hTargetWindow)
 
 	if (g_hHook!=NULL)
 		g_nHookCounter++;
+
+	// Reset sfKeyCurrentlyDown flags
+	for (DWORD i=0;i<g_nShortcuts;i++)
+		g_pShortcuts[i]->m_dwFlags&=~CShortcut::sfKeyCurrentlyDown;
+
 	return g_hHook;
 }
 
@@ -53,8 +74,12 @@ BOOL UnsetHook(HHOOK hHook)
 		g_hHook=NULL;
 		g_hTargetWindow=NULL;
 	}
+
+	g_pShortcuts=NULL;
+	g_nShortcuts=NULL;
 	return TRUE;
 }
+
 	
 
 LRESULT CALLBACK HookKeyboardProc(int code,WPARAM wParam,LPARAM lParam)
@@ -71,89 +96,66 @@ LRESULT CALLBACK HookKeyboardProc(int code,WPARAM wParam,LPARAM lParam)
 		case WM_SYSKEYDOWN:
 			{
 				PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT) lParam;
-				if ((p->vkCode == VK_F3) && ((p->flags & LLKHF_ALTDOWN) == 0))
+
+				for (DWORD i=0;i<g_nShortcuts;i++)
 				{
-					// F3
-					HWND hWnd=GetForegroundWindow();
-	
-					if (hWnd!=NULL)
+					if ((g_pShortcuts[i]->m_dwFlags&CShortcut::sfKeyTypeMask)!=CShortcut::sfGlobalHook)
+						continue;
+					
+					// Checking code
+					if (g_pShortcuts[i]->m_dwFlags&CShortcut::sfVirtualKeyIsScancode)
 					{
-						char szClassName[40];
-						GetClassName(hWnd,szClassName,40);
-						if (isstrssame(szClassName,"ExploreWClass") ||
-							isstrssame(szClassName,"CabinetWClass") ||
-							isstrssame(szClassName,"Progman"))
-						{
-							if (wParam==WM_KEYUP || wParam==WM_SYSKEYUP)
-							{
-								bKeyDown=FALSE;
-								return 1;
-							}
-							else
-							{
-								bKeyDown=TRUE;
-                                PostMessage(g_hTargetWindow,WM_ANOTHERINSTANCE,0,0);
-								return 1;
-							}
-						}
-					}
-				}
-				else if ((p->vkCode == 'F') && ((GetKeyState(VK_CONTROL) & 0x8000) != 0) )
-				{
-					// Ctrl+F
-					HWND hWnd=GetForegroundWindow();
-	
-					if (hWnd!=NULL)
-					{
-						char szClassName[40];
-						GetClassName(hWnd,szClassName,40);
-						if (isstrssame(szClassName,"ExploreWClass") ||
-							isstrssame(szClassName,"CabinetWClass"))
-						{
-							if (wParam==WM_KEYUP || wParam==WM_SYSKEYUP)
-							{
-								bKeyDown=FALSE;
-								return 1;
-							}
-							else
-							{
-								bKeyDown=TRUE;
-                                PostMessage(g_hTargetWindow,WM_ANOTHERINSTANCE,0,0);
-								return 1;
-							}
-						}
-					}
-				}
-				else if (p->vkCode == 'F' && (GetKeyState(VK_LWIN)&0x8000 || GetKeyState(VK_RWIN)&0x8000))
-				{
-					if (wParam==WM_KEYUP || wParam==WM_SYSKEYUP)
-					{
-						bKeyDown=FALSE;
-                        PostMessage(g_hTargetWindow,WM_ANOTHERINSTANCE,0,0);
-						//return 1;
-						break;
+						if (g_pShortcuts[i]->m_bVirtualKey!=p->scanCode)
+							continue;
 					}
 					else
 					{
-						bKeyDown=TRUE;
-						return 1;
+						if (g_pShortcuts[i]->m_bVirtualKey!=p->vkCode)
+							continue;
+					}
+					
+					// Checking modifiers
+					if (!g_pShortcuts[i]->IsModifiersOk(p->flags&LLKHF_ALTDOWN,
+						GetKeyState(VK_CONTROL) & 0x8000,
+						GetKeyState(VK_SHIFT) & 0x8000,
+						(GetKeyState(VK_LWIN)|GetKeyState(VK_RWIN)) & 0x8000))
+						continue;
+					
+					if (!g_pShortcuts[i]->IsForegroundWindowOk(g_hTargetWindow))
+						continue;
+
+                    // Event is confirmed, should do something
+					if (wParam==WM_KEYUP || wParam==WM_SYSKEYUP)
+					{
+						// Key up
+						if (!(g_pShortcuts[i]->m_dwFlags&CShortcut::sfKeyCurrentlyDown))
+                            continue;
+
+						g_pShortcuts[i]->m_dwFlags&=~CShortcut::sfKeyCurrentlyDown;
+
+						
+						if ((g_pShortcuts[i]->m_dwFlags&CShortcut::sfExecuteMask)==CShortcut::sfExecuteWhenUp)
+							PostMessage(g_hTargetWindow,WM_EXECUTESHORTCUT,i,0);
+
+						if (g_pShortcuts[i]->m_dwFlags&CShortcut::sfRemoveKeyDownMessage)
+							return 1;
+					}
+					else
+					{
+						// Key down
+						g_pShortcuts[i]->m_dwFlags|=CShortcut::sfKeyCurrentlyDown;
+						
+						if ((g_pShortcuts[i]->m_dwFlags&CShortcut::sfExecuteMask)==CShortcut::sfExecuteWhenDown)
+							PostMessage(g_hTargetWindow,WM_EXECUTESHORTCUT,i,0);
+
+						if (g_pShortcuts[i]->m_dwFlags&CShortcut::sfRemoveKeyUpMessage)
+							return 1;
 					}
 				}
+
 				break;
 			}
-			if (bKeyDown)
-			{	
-				PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT) lParam;
-				
-				
-				//GetLocateAppWnd()->PostMessage(WM_SETFOCUSFORWINDOW);
-				if (p->vkCode==VK_LWIN || p->vkCode==VK_RWIN)
-				{
-					bKeyDown=FALSE;
-					//return 1;
-				}
-			}
-			break;
+			
 		}
 	}
 	return CallNextHookEx(NULL, code, wParam, lParam);

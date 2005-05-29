@@ -1943,21 +1943,52 @@ BOOL CLocateAppWnd::OnCreateClient(LPCREATESTRUCT lpcs)
 	if (GetLocateApp()->IsStartupFlagSet(CLocateApp::CStartData::startupUpdate))
 		PostMessage(WM_COMMAND,MAKEWPARAM(IDM_GLOBALUPDATEDB,0),NULL);
 	
-	// Turn on explorer's Ctrl+F and F3 overriding
-	CRegKey RegKey;
-	CString Path(IDS_REGPLACE,CommonResource);
-	Path<<"\\General";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
-	{
-		DWORD dwValue=0;
-		RegKey.QueryValue("OverrideExplorer",dwValue);
-		if (dwValue)
-			m_hHook=SetHook(*this);			
-	}
+	TurnOnShortcuts();
+
 	BOOL bRet=CFrameWnd::OnCreateClient(lpcs);
 	if (bDoOpen)
 		OnLocate();
 	return bRet;
+}
+
+BOOL CLocateAppWnd::TurnOnShortcuts()
+{
+	// Stop hooking
+	if (m_hHook!=NULL)
+	{
+		UnsetHook(m_hHook);
+		m_hHook;
+	}
+
+	// Remove old shortcuts
+	m_aShortcuts.RemoveAll();
+
+
+	// Loading new shortcuts
+	if (!CShortcut::LoadShortcuts(m_aShortcuts,CShortcut::loadGlobalHotkey|CShortcut::loadGlobalHook))
+	{
+		if (!CShortcut::GetDefaultShortcuts(m_aShortcuts,CShortcut::loadGlobalHotkey|CShortcut::loadGlobalHook))
+			ShowErrorMessage(IDS_ERRORCANNOTLOADDEFAULTSHORTUCS,IDS_ERROR);
+	}
+
+		
+	
+	m_hHook=SetHook(*this,m_aShortcuts.GetData(),m_aShortcuts.GetSize());			
+
+	return m_hHook!=NULL;
+}
+
+BOOL CLocateAppWnd::TurnOffShortcuts()
+{
+	if (m_hHook!=NULL)
+	{
+		UnsetHook(m_hHook);
+		m_hHook;
+	}
+
+	m_aShortcuts.RemoveAll();
+
+	return NULL;
 }
 
 void CLocateApp::SaveRegistry() const
@@ -2681,6 +2712,7 @@ void CLocateAppWnd::OnDestroy()
 {
 	DebugMessage("void CLocateAppWnd::OnDestroy() START");
 	
+	TurnOffShortcuts();
 	DeleteTaskbarIcon();
 
 	PostQuitMessage(0);
@@ -2694,9 +2726,9 @@ void CLocateAppWnd::OnDestroy()
 		m_pUpdateStatusWnd->DestroyWindow();
 	
 	
-	// Unhookin if necessary
-	if (m_hHook!=NULL)
-		UnsetHook(m_hHook);
+	
+
+
 
 	if (m_pAbout!=NULL)
 	{
@@ -2765,8 +2797,12 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		OnDestroy();
 		return 0;
 	case WM_GETLOCATEDLG:
-		if (m_pLocateDlgThread==NULL)
+		if (wParam==2)
+			return (BOOL)this;
+        if (m_pLocateDlgThread==NULL)
 			return NULL;
+		if (wParam==1)
+			return (BOOL)m_pLocateDlgThread->m_pLocate;
 		if (m_pLocateDlgThread->m_pLocate==NULL)
 			return NULL;
 		return (BOOL)(HWND)*m_pLocateDlgThread->m_pLocate;
@@ -2775,6 +2811,18 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		{
 			delete m_pUpdateStatusWnd;
 			m_pUpdateStatusWnd=NULL;
+		}
+		break;
+	case WM_EXECUTESHORTCUT:
+		if (int(wParam)>=0 && int(wParam)<m_aShortcuts.GetSize())
+		{
+			if (m_aShortcuts[int(wParam)]->m_nDelay>0 && 
+				m_aShortcuts[int(wParam)]->m_nDelay!=-1)
+				SetTimer(ID_SHORTCUTACTIONTIMER+int(wParam),m_aShortcuts[int(wParam)]->m_nDelay);
+			else if (m_aShortcuts[int(wParam)]->m_nDelay==-1 && lParam!=LPARAM(-1))
+				PostMessage(WM_EXECUTESHORTCUT,wParam,LPARAM(-1));
+			else           			
+				m_aShortcuts[int(wParam)]->ExecuteAction();
 		}
 		break;
 	default:
@@ -2921,6 +2969,16 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 	case ID_CHECKSCHEDULES:
 		CheckSchedules();
 		break;
+	default:
+		if (int(wTimerID)>=ID_SHORTCUTACTIONTIMER)
+		{
+			KillTimer(wTimerID);
+
+			if (int(wTimerID)-ID_SHORTCUTACTIONTIMER<m_aShortcuts.GetSize())
+				m_aShortcuts[int(wTimerID)-ID_SHORTCUTACTIONTIMER]->ExecuteAction();
+
+		}
+		break;		
 	}
 }
 

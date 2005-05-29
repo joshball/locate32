@@ -624,18 +624,6 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDM_DEFOPEN:
 		OnMenuCommands(0);
 		break;
-	case IDM_ACTIVATENAMETAB:
-		m_pTabCtrl->SetCurSel(0);
-		SetVisibleWindowInTab();
-		break;
-	case IDM_ACTIVATESIZETAB:
-		m_pTabCtrl->SetCurSel(1);
-		SetVisibleWindowInTab();
-		break;
-	case IDM_ACTIVATEADVANCEDTAB:
-		m_pTabCtrl->SetCurSel(2);
-		SetVisibleWindowInTab();
-		break;
 	case IDM_LOOKINNEWSELECTION:
 	case IDM_LOOKINREMOVESELECTION:
 	case IDM_LOOKINNEXTSELECTION:

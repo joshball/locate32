@@ -1129,6 +1129,8 @@ BEGIN
     IDS_SHORTCUTTODESKTOP   "Do you want the shortcut to be placed on the desktop?"
     IDS_ERRORINVALIDFILEFORMAT "Error loading file %s. Invalid file format."
     IDS_ERRCANNOTFIND       "File '%s' cannot found or invalid file format."
+	IDS_ERRORCANNOTSAVESHORTCUTS "Cannot save shortcuts to registry."
+	IDS_ERRORCANNOTLOADDEFAULTSHORTUCS	"Cannot load default shortcuts."
 END
 
 STRINGTABLE 
@@ -1468,6 +1470,7 @@ BEGIN
 	IDS_SHORTCUTACTIVATECONTROL		"Activate Control"
 	IDS_SHORTCUTACTIVATETAB			"Activate Tab"
 	IDS_SHORTCUTMENUCOMMAND			"Menu Command"
+	IDS_SHORTCUTSHOWHIDEDIALOG		"Show / Hide dialog"
 	IDS_SHORTCUTADDACTION			"New action"
 	IDS_SHORTCUTREMOVEACTION		"Remove action"
 	IDS_SHORTCUTNEXTACTION			"Next action"
@@ -1488,6 +1491,11 @@ BEGIN
 	IDS_SHORTCUTWHERESIZEDATETAB	"Size and date tab"
 	IDS_SHORTCUTWHEREADVANCEDTAB	"Advanced tab"
 	IDS_SHORTCUTWHEREOTHER			"Any other place"
+	IDS_SHORTCUTSDIALOGSHOW			"Show dialog"
+	IDS_SHORTCUTSDIALOGMINIMINZE	"Minimize dialog"
+	IDS_SHORTCUTSDIALOGCLOSE		"Close dialog"
+	IDS_SHORTCUTSDIALOGSHOWORHIDE	"Show / Hide dialog"
+	IDS_SHORTCUTSDIALOGOPENORCLOSE	"Open / Close dialog"
 END
 
 STRINGTABLE
@@ -1498,8 +1506,10 @@ BEGIN
 	IDS_SHORTCUTMENUVIEW			"View / %s"
 	IDS_SHORTCUTMENUVIEWARRANGEICONS "View / Arrange Icons / %s "
 	IDS_SHORTCUTMENUOPTIONS			"Options / %s"
-	IDS_SHORTCUTMENUHELP			"Help/%s"
+	IDS_SHORTCUTMENUHELP			"Help / %s"
 	IDS_SHORTCUTMENUSPECIAL			"File / Special / %s"
+	IDS_SHORTCUTMENUPRESETS			"Presets / %s"
+	IDS_SHORTCUTMENUDIRECTORIES		"Look In Popup / %s"
 END
 
 STRINGTABLE
@@ -1676,7 +1686,7 @@ END
 //
 // Generated from the TEXTINCLUDE 3 resource.
 //
-
+/*
 #ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 #pragma code_page(1252)
@@ -1784,7 +1794,7 @@ BEGIN
 	   "2",											IDM_ACTIVATESIZETAB,		VIRTKEY, ALT,NOINVERT
 	   "3",											IDM_ACTIVATEADVANCEDTAB,	VIRTKEY, ALT,NOINVERT
 END    
-
+*/
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 

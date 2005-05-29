@@ -422,7 +422,9 @@ public:
 	void SetControlPositions(UINT nType,int cx, int cy);
 
 	void OpenFolder(LPCSTR szFolder);
-	
+
+	void OnActivateTab(int nIndex);
+
 protected:
 	void OnOk(BOOL bForceSelectDatabases=FALSE);
 	void OnStop();

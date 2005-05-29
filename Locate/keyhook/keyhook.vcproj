@@ -118,6 +118,9 @@
 			<File
 				RelativePath=".\keyhook.cpp">
 			</File>
+			<File
+				RelativePath="..\Locate32\shortcut.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -128,6 +131,12 @@
 			</File>
 			<File
 				RelativePath=".\resource.h">
+			</File>
+			<File
+				RelativePath="..\Locate32\shortcut.h">
+			</File>
+			<File
+				RelativePath="..\Locate32\shortcuts.inl">
 			</File>
 		</Filter>
 		<Filter

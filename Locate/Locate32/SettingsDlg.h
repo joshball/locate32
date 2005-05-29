@@ -613,6 +613,7 @@ public:
 		void ClearActionFields();
 		void EnableItems();
 		void SetFieldsRelativeToMnemonics();
+		void InsertShortcuts();
 
 
 		static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);

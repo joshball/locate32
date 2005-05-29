@@ -20,6 +20,7 @@ extern LPSTR g_szBuffer;
 
 
 #include "ImageHandler.h"
+#include "shortcut.h"
 #include "keyhelper.h"
 
 
@@ -60,6 +61,10 @@ extern LPSTR g_szBuffer;
 #define ID_SYNCSCHEDULES			7
 #define ID_CHECKSCHEDULES			8
 
+
+// Actual id is 30 <= x < 30+Nshortcuts
+#define ID_SHORTCUTACTIONTIMER		30
+
 #define ID_UPDATESTATUS				1
 #define ID_IDLEEXIT					2
 
@@ -79,6 +84,7 @@ extern LPSTR g_szBuffer;
 #include "SmallDialogs.h"
 #include "AboutDlg.h"
 
+#include "shortcuts.inl"
 #include "LocatedItem.inl"
 #include "LocateDlg.inl"
 #include "SettingsDlg.inl"
@@ -115,9 +121,10 @@ extern LPSTR g_szBuffer;
 #define WM_SYSTEMTRAY				WM_APP+100
 #define WM_ANOTHERINSTANCE			WM_APP+101
 #define WM_UPDATENEEDEDDETAILTS		WM_APP+102 //wParam is item, lParam is pointer to item
-#define WM_REFRESHNOTIFIERHANDLERS	WM_APP+103
-#define WM_GETLOCATEDLG				WM_APP+105
+#define WM_REFRESHNOTIFIERHANDLERS	WM_APP+103 
+#define WM_GETLOCATEDLG				WM_APP+105 // wParam==0: return HWND, wParam==1: return PTR, wParam==2: return PTR to ST
 #define WM_FREEUPDATESTATUSPOINTERS	WM_APP+106
+#define WM_EXECUTESHORTCUT			WM_APP+107 // wParam is index to shortcut 
 
 
 // String copyers

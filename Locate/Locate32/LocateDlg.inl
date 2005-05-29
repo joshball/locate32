@@ -102,7 +102,15 @@ inline void CLocateDlg::ClearMenuVariables()
 		m_hActivePopupMenu=NULL;
 	}
 }
-	
+
+inline void CLocateDlg::OnActivateTab(int nIndex)
+{
+	if (nIndex<0 && nIndex>2)
+		return;
+	m_pTabCtrl->SetCurSel(nIndex);
+	SetVisibleWindowInTab();
+}
+
 inline BOOL CLocateDlg::IsSendToMenu(HMENU hMenu)
 {
 	/*UINT nID=GetMenuItemID(hMenu,0);
