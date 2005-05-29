@@ -480,11 +480,11 @@ BOOL CWnd::SavePosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) const
 	wp.length=sizeof(WINDOWPLACEMENT);
 	GetWindowPlacement(&wp);
 	
-	RegKey.SetValue(lpSubKey,LPCSTR(&wp),sizeof(WINDOWPLACEMENT),REG_BINARY);
+	BOOL bRet=RegKey.SetValue(lpSubKey,LPCSTR(&wp),sizeof(WINDOWPLACEMENT),REG_BINARY)==ERROR_SUCCESS;
 
 	if (lpKey==NULL)
 		RegKey.m_hKey=NULL;
-	return TRUE;
+	return bRet;
 }
 
 ///////////////////////////

@@ -607,12 +607,12 @@ BOOL CListCtrl::SaveColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) con
 	pData[0]=i;
 	iMemCopy(pData+1,ColumnWidths.m_pData,sizeof(int)*i);
 	iMemCopy(pData+1+i,ColumnOrders.m_pData,sizeof(int)*i);
-	RegKey.SetValue(lpSubKey,(LPCSTR)pData,sizeof(int)*(1+2*i),REG_BINARY);
+	BOOL bRet=RegKey.SetValue(lpSubKey,(LPCSTR)pData,sizeof(int)*(1+2*i),REG_BINARY)==ERROR_SUCCESS;
 	RegKey.CloseKey();
 	delete[] pData;
 	if (lpKey==NULL)
 		RegKey.m_hKey=NULL;
-	return TRUE;
+	return bRet;
 }
 
 ///////////////////////////////////////////

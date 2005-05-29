@@ -287,12 +287,12 @@ BOOL CListCtrlEx::SaveColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) c
 	}
 
         
-	RegKey.SetValue(lpSubKey,(LPCSTR)pData,sizeof(int)*(2+2*nColumnCount+nVisibleCount),REG_BINARY);
+	BOOL bRet=RegKey.SetValue(lpSubKey,(LPCSTR)pData,sizeof(int)*(2+2*nColumnCount+nVisibleCount),REG_BINARY)==ERROR_SUCCESS;
 	RegKey.CloseKey();
 	delete[] pData;
 	if (lpKey==NULL)
 		RegKey.m_hKey=NULL;
-	return TRUE;
+	return bRet;
 }
 
 HMENU CListCtrlEx::CreateColumnSelectionMenu(int nFirstID) const

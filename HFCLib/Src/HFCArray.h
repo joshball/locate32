@@ -6,6 +6,21 @@
 #ifndef HFCARRAYS_H
 #define HFCARRAYS_H
 
+// To work without whole HFCLIB
+#ifndef HFCLIB
+class CExceptionObject
+{
+public:
+	CExceptionObject();
+protected:
+	BOOL m_bThrow;
+};
+inline CExceptionObject::CExceptionObject()
+:	m_bThrow(FALSE)
+{
+}
+#endif
+
 // Array template
 
 template<class TYPE>
@@ -656,6 +671,7 @@ void CArrayFAP<TYPE>::Swap(CArrayFAP& src)
 
 
 // Array classes
+#ifdef HFCLIB
 class CCharArray	: public CArray<CHAR>		{};
 class CByteArray	: public CArray<BYTE>		{};
 class CShortArray	: public CArray<SHORT>		{};
@@ -666,5 +682,6 @@ class CUIntArray	: public CArray<UINT>		{};
 class CStringArray	: public CArray<CString>	{};
 class CObArray		: public CArray<CObject>	{};
 class CPtrArray		: public CArray<LPVOID>	{};
+#endif
 
 #endif
