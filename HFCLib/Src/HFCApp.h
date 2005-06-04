@@ -141,6 +141,7 @@ public:
 	
 	HACCEL GetAccelTable() const;
 	void SetAccelTable(HACCEL hAccel);
+	void ClearAccelTables();
 	void LoadAccelTable(LPCSTR lpTable,TypeOfResourceHandle bType=LanguageSpecificResource);
 	void LoadAccelTable(int iTableId,TypeOfResourceHandle bType=LanguageSpecificResource);
 	
@@ -294,6 +295,11 @@ inline BOOL CWinThread::PostThreadMessage(UINT message, WPARAM wParam, LPARAM lP
 {
 	return ::PostThreadMessage(m_nThreadID,message,wParam,lParam);
 }
+
+inline void CWinThread::ClearAccelTables()
+{
+	m_Accels.RemoveAll();
+}	
 
 inline void CWinThread::LoadAccelTable(LPCSTR lpTable,TypeOfResourceHandle bType)
 {

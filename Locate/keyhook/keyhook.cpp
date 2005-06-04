@@ -7,6 +7,7 @@ Copyright (C) 2004-2005 Janne Huttunen				*/
 #include <hfcarray.h>
 
 #include "../lan_resources.h"
+#include "../locate32/messages.h"
 #include "../locate32/shortcut.h"
 #include "keyhelper.h"
 

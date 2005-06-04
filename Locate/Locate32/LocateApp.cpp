@@ -162,6 +162,10 @@ int CLocateApp::ExitInstance()
 	return 0;
 }
 
+INT_PTR CALLBACK CLocateApp::DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
+{
+	return FALSE;
+}
 
 	
 BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
@@ -1962,11 +1966,37 @@ BOOL CLocateAppWnd::TurnOnShortcuts()
 		!(oi.dwMajorVersion>=5 || (oi.dwMajorVersion==4 && oi.wServicePackMajor>=3) ));
 
 	// Loading new shortcuts
-	if (!CShortcut::LoadShortcuts(m_aShortcuts,CShortcut::loadGlobalHotkey|CShortcut::loadGlobalHook))
+	if (!CShortcut::LoadShortcuts(m_aShortcuts,(
+		bCanHook?CShortcut::loadGlobalHotkey:0)|CShortcut::loadGlobalHook))
 	{
         if (!CShortcut::GetDefaultShortcuts(m_aShortcuts,
 			CShortcut::loadGlobalHotkey|(bCanHook?CShortcut::loadGlobalHook:0)))
 			ShowErrorMessage(IDS_ERRORCANNOTLOADDEFAULTSHORTUCS,IDS_ERROR);
+	}
+
+	// Resolving mnemonics
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg!=NULL)
+	{
+		HWND hDialogs[]={*pLocateDlg,pLocateDlg->m_NameDlg,pLocateDlg->m_SizeDateDlg,
+			pLocateDlg->m_AdvancedDlg,NULL};
+		CShortcut::ResolveMnemonics(m_aShortcuts,NULL);
+	}
+	else
+	{
+		HWND hDialogs[5];
+		hDialogs[0]=CreateDialog(GetLanguageSpecificResourceHandle(),
+			MAKEINTRESOURCE(IDD_MAIN),NULL,(DLGPROC)CLocateApp::DummyDialogProc);
+		hDialogs[1]=CreateDialog(GetLanguageSpecificResourceHandle(),
+			MAKEINTRESOURCE(IDD_NAME),hDialogs[0],(DLGPROC)CLocateApp::DummyDialogProc);
+		hDialogs[2]=CreateDialog(GetLanguageSpecificResourceHandle(),
+			MAKEINTRESOURCE(IDD_SIZEDATE),hDialogs[0],(DLGPROC)CLocateApp::DummyDialogProc);
+		hDialogs[3]=CreateDialog(GetLanguageSpecificResourceHandle(),
+			MAKEINTRESOURCE(IDD_ADVANCED),hDialogs[0],(DLGPROC)CLocateApp::DummyDialogProc);
+		hDialogs[4]=NULL;
+		CShortcut::ResolveMnemonics(m_aShortcuts,NULL);
+		for (int i=0;hDialogs[i]!=NULL;i++)
+            ::DestroyWindow(hDialogs[i]);
 	}
 
 	// Count hooks and register hotkeys
@@ -2463,11 +2493,9 @@ BOOL CLocateAppWnd::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		OnLocate();
 		break;
 	case IDM_GLOBALUPDATEDB:
-	case IDM_GLOBALUPDATEDBACCEL:
 		OnUpdate(FALSE);
 		break;
 	case IDM_UPDATEDATABASES:
-	case IDM_UPDATEDATABASESACCEL:
 		OnUpdate(FALSE,LPSTR(-1));
 		break;
 	case IDM_STOPUPDATING:

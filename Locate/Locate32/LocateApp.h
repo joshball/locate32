@@ -349,6 +349,7 @@ protected:
 	static void ChangeAndAlloc(LPSTR& pVar,LPCSTR szText);
 	static void ChangeAndAlloc(LPSTR& pVar,LPCSTR szText,DWORD dwLength);
 
+
 public:
 	
 	const CArray<PDATABASE>& GetDatabases() const { return m_aDatabases; }
@@ -366,6 +367,9 @@ public:
 	void SetStartData(CStartData* pStarData);
 	
 	const CDatabase* GetDatabase(WORD wID) const;
+
+
+	static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);
 };
 
 inline CLocateApp::CStartData::CStartData()

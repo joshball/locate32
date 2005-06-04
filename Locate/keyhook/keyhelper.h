@@ -23,9 +23,6 @@ extern "C" {
 }
 
 
-// Messages
-#define WM_EXECUTESHORTCUT			WM_APP+107 // wParam is index to shortcut 
-#define WM_GETLOCATEDLG				WM_APP+105 // wParam==0: return HWND, wParam==1: return PTR, wParam==2: return PTR to ST
 
 
 

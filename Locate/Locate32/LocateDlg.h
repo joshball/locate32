@@ -425,6 +425,9 @@ public:
 
 	void OnActivateTab(int nIndex);
 
+	void SetShortcuts();
+	void ClearShortcuts();
+
 protected:
 	void OnOk(BOOL bForceSelectDatabases=FALSE);
 	void OnStop();
@@ -437,9 +440,15 @@ protected:
 	void OnSettings() { GetLocateAppWnd()->OnSettings(); }
 	void OnProperties();
 	void OnCopy(BOOL bCut);
-	void OnOpenContainingFolder();
+	void OnOpenFolder(BOOL bContaining);
 	void OnCreateShortcut();
-	void OnDelete();
+	
+	enum DeleteFlag {
+		Recycle = 0,
+		Delete = 1,
+		BasedOnShift = 2
+	};
+	void OnDelete(DeleteFlag DeleteFlag=BasedOnShift);
 	void OnRemoveFromThisList();
 	void OnSelectAll();
 	void OnInvertSelection();
@@ -451,7 +460,8 @@ protected:
 	void OnUpdateLocatedItem();
 	void OnComputeMD5Sums(BOOL bForSameSizeFilesOnly);
 	void OnShowFileInformation();
-
+	void OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo);
+	
 	BOOL SetListStyle(int id,BOOL bInit=FALSE);
 	void SetVisibleWindowInTab();
 	void SaveRegistry();
@@ -655,6 +665,7 @@ protected:
 		~VolumeInformation();
 	};
 	CArrayFP<VolumeInformation*> m_aVolumeInformation;
+	CArrayFP<CShortcut*> m_aShortcuts;
 
 
 	// Accessors

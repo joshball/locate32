@@ -14,7 +14,6 @@ BOOL CLocateDlgThread::InitInstance()
 	CoInitialize(NULL);
 	
 	m_pMainWnd=m_pLocate=new CLocateDlg;
-	LoadAccelTable(IDR_MAINACCEL);
 	m_pLocate->Create(NULL);
 	
 	// Settings transparency
@@ -356,11 +355,11 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	// Refreshing dialog box
 	if ((GetFlags()&fgNameRootFlag)!=fgNameDontAddRoots)
         m_NameDlg.InitDriveBox();
-		
-	// Set acceleration tables for subdialogs
-	GetCurrentWinThread()->SetAccelTableForChilds(m_NameDlg,IDR_NAMEDLGACCEL,TRUE,*this);
-	GetCurrentWinThread()->SetAccelTableForChilds(m_SizeDateDlg,IDR_SIZEDATEDLGACCEL,TRUE,*this);
-	GetCurrentWinThread()->SetAccelTableForChilds(m_AdvancedDlg,IDR_ADVANCEDDLGACCEL,TRUE,*this);
+
+
+
+	// Set acceleration tables for dialogs and subdialogs
+	SetShortcuts();	
 	
 	SetDialogMode(FALSE);
 		
@@ -445,7 +444,6 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		if (::IsWindowEnabled(GetDlgItem(IDC_OK)))
 			OnOk();
 		break;
-	case IDM_FINDUSINGDBSACCEL:
 	case IDM_FINDUSINGDBS:
 		if (::IsWindowEnabled(GetDlgItem(IDC_OK)))
 			OnOk(TRUE);
@@ -507,9 +505,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		OnSelectDetails();
 		break;
 	case IDM_GLOBALUPDATEDB:
-	case IDM_GLOBALUPDATEDBACCEL:
 	case IDM_UPDATEDATABASES:
-	case IDM_UPDATEDATABASESACCEL:
 	case IDM_STOPUPDATING:
 		//CLocateAppWnd handles these
 		GetLocateAppWnd()->SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
@@ -527,19 +523,19 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		DestroyWindow();
 		break;
 	case IDM_CUT:
-		if (GetFocus()==GetDlgItem(IDC_FILELIST))
+		//if (GetFocus()==GetDlgItem(IDC_FILELIST))
 			OnCopy(TRUE);
-		else
-			::SendMessage(GetFocus(),WM_CUT,0,0);
+		//else
+		//	::SendMessage(GetFocus(),WM_CUT,0,0);
 		break;
 	case IDM_COPY:
-		if (GetFocus()==GetDlgItem(IDC_FILELIST))
+		//if (GetFocus()==GetDlgItem(IDC_FILELIST))
 			OnCopy(FALSE);
-		else
-			::SendMessage(GetFocus(),WM_COPY,0,0);
+		//else
+		//	::SendMessage(GetFocus(),WM_COPY,0,0);
 		break;
 	case IDM_OPENCONTAININGFOLDER:
-		OnOpenContainingFolder();
+		OnOpenFolder(TRUE);
 		break;
 	case IDM_CREATESHORTCUT:
 		OnCreateShortcut();
@@ -585,7 +581,6 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		OnShowFileInformation();
 		break;
 	case IDM_CHANGEFILENAME:
-	case IDM_CHANGEFILENAMEACCEL:
 		OnChangeFileName();
 		break;
 	case IDC_NAME:
@@ -631,7 +626,22 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		return m_NameDlg.OnCommand(wID,wNotifyCode,hControl);
 	default:
 		// IDM_ should be in descending order
-		if (wID>=IDM_DEFCOLSELITEM && wID<IDM_DEFCOLSELITEM+1000)
+		if (wID>=IDM_DEFSHORTCUTITEM && wID<IDM_DEFSHORTCUTITEM+m_aShortcuts.GetSize())
+		{
+			CShortcut* pShortcut=m_aShortcuts[wID-IDM_DEFSHORTCUTITEM];
+
+			// Checking Win key state
+			if ((GetKeyState(VK_LWIN)|GetKeyState(VK_RWIN)) & 0x8000)
+			{
+				if (!(pShortcut->m_bModifiers&CShortcut::ModifierWin))
+					break;
+			}
+			else if (pShortcut->m_bModifiers&CShortcut::ModifierWin)
+				break;
+
+			pShortcut->ExecuteAction();
+		}
+		else if (wID>=IDM_DEFCOLSELITEM && wID<IDM_DEFCOLSELITEM+1000)
 			m_pListCtrl->ColumnSelectionMenuProc(wID,IDM_DEFCOLSELITEM);
 		else if (wID>=IDM_DEFSENDTOITEM && wID<IDM_DEFSENDTOITEM+1000)
 			OnSendToCommand(wID);
@@ -1662,9 +1672,14 @@ void CLocateDlg::OnDestroy()
 	if (m_pBackgroundUpdater!=NULL)
 		m_pBackgroundUpdater->Stop();
 
+
 	ChangeClipboardChain(*this,m_hNextClipboardViewer);
 	ClearMenuVariables();
-	
+
+	// Clearing accelerators
+	ClearShortcuts();
+
+
 	SaveDialogTexts();
 	m_NameDlg.DestroyWindow();
 	m_SizeDateDlg.DestroyWindow();
@@ -1680,6 +1695,7 @@ void CLocateDlg::OnDestroy()
 		delete m_pStatusCtrl;
 		m_pStatusCtrl=NULL;
 	}
+
 
 	// Freeing target paths in dwItemData
 	FreeSendToMenuItems(GetSubMenu(GetMenu(),0));
@@ -2069,6 +2085,12 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			DebugMessage("CLocateDlg::WindowProc: message relayed to tooltip control");
 		}
 		break;*/
+	case WM_RESETSHORTCUTS:
+		SetShortcuts();
+		break;
+	case WM_RESULTLISTACTION:
+		OnExecuteResultAction((CAction::ActionResultList)wParam,(void*)lParam);
+        break;
 #ifdef _DEBUG
 	case WM_SYSCOMMAND:
 		if (wParam==0x76)
@@ -2141,6 +2163,41 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 #endif
 	}
 	return CDialog::WindowProc(msg,wParam,lParam);
+}
+
+void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo)
+{
+	switch (m_nResultAction)
+	{
+	case CAction::Execute:
+		break;
+	case CAction::Copy:
+		OnCopy(TRUE);
+		break;
+	case CAction::Cut:
+		OnCopy(FALSE);
+		break;
+	case CAction::MoveToRecybleBin:
+		OnDelete(Recycle);
+		break;
+	case CAction::DeleteFile:
+		OnDelete(Delete);
+		break;
+	case CAction::OpenContextMenu:
+		
+		break;
+	case CAction::OpenFolder:
+		OnOpenFolder(FALSE);
+		break;
+	case CAction::OpenContainingFolder:
+		OnOpenFolder(TRUE);
+		break;
+	case CAction::Properties:
+		OnProperties();
+		break;
+	case CAction::ShowSpecialMenu:
+		break;
+	}
 }
 
 void CLocateDlg::OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpmis)
@@ -3145,120 +3202,137 @@ void CLocateDlg::OnRefresh()
 	m_pListCtrl->UpdateWindow();
 }	
 		
-void CLocateDlg::OnDelete()
+void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag)
 {
-	if (GetFocus()==GetDlgItem(IDC_FILELIST))
+	if (DeleteFlag==BasedOnShift)
 	{
-		CWaitCursor wait;
-		CArray<CLocatedItem*> aItems;
-		int nBufferLength=1; // For buffer length
-		
-		// Resolving files
-		int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
-		while (iItem!=-1)
-		{
-			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-			LPCSTR szPath=pItem->GetPath();
-			if (CFile::IsFile(szPath))
-			{
-				aItems.Add(pItem);
-				nBufferLength+=pItem->GetPathLen()+1;
-			}
-			else if (CFile::IsDirectory(szPath))
-			{
-				aItems.Add(pItem);
-				nBufferLength+=pItem->GetPathLen()+1;
-			}
-			iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
-		}
-		
-		if (aItems.GetSize()==0) // No files
-			return;
+		if (HIBYTE(GetKeyState(VK_SHIFT)))
+			DeleteFlag=Delete;
+		else
+			DeleteFlag=Recycle;
+	}
 
-		// Filling OPSTRUCT fields
-		SHFILEOPSTRUCT fo;
-		fo.hwnd=*this;
-		fo.wFunc=FO_DELETE;
-		fo.pTo=NULL;
+	CWaitCursor wait;
+	CArray<CLocatedItem*> aItems;
+	int nBufferLength=1; // For buffer length
+	
+	// Resolving files
+	int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+	while (iItem!=-1)
+	{
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
+		LPCSTR szPath=pItem->GetPath();
+		if (CFile::IsFile(szPath))
+		{
+			aItems.Add(pItem);
+			nBufferLength+=pItem->GetPathLen()+1;
+		}
+		else if (CFile::IsDirectory(szPath))
+		{
+			aItems.Add(pItem);
+			nBufferLength+=pItem->GetPathLen()+1;
+		}
+		iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
+	}
+	
+	if (aItems.GetSize()==0) // No files
+		return;
+
+	// Filling OPSTRUCT fields
+	SHFILEOPSTRUCT fo;
+	fo.hwnd=*this;
+	fo.wFunc=FO_DELETE;
+	fo.pTo=NULL;
+
+	switch (DeleteFlag)
+	{
+	case Delete:
+		fo.fFlags=0;
+		break;
+	case Recycle:
+		fo.fFlags=FOF_ALLOWUNDO;
+		break;
+	default:
 		if (HIBYTE(GetKeyState(VK_SHIFT)))
 			fo.fFlags=0;
 		else
 			fo.fFlags=FOF_ALLOWUNDO;
-
-		// Creating file buffer: file1\0file2\0...filen\0\0
-		BYTE* pFiles=new BYTE[nBufferLength];
-		fo.pFrom=LPCSTR(pFiles);
-		for (int i=0;i<aItems.GetSize();i++)
-		{
-			sMemCopy(pFiles,aItems.GetAt(i)->GetPath(),aItems.GetAt(i)->GetPathLen()+1);
-			pFiles+=aItems.GetAt(i)->GetPathLen()+1;
-		}
-		*pFiles='\0';
-		
-		StopBackgroundOperations();
-		
-		
-		// Delete files
-		int iRet=SHFileOperation(&fo);
-
-		
-		delete[] (BYTE*)fo.pFrom;
-
-		
-		
-		if (iRet==0)
-		{
-			// Error maybe occur we don't clear this
-			if (m_pListTooltips!=NULL)
-				DeleteTooltipTools();
-			
-			// Removing deleted items from list
-			int iItem;
-			int iSeekStart=-1;
-			while ((iItem=m_pListCtrl->GetNextItem(iSeekStart,LVNI_SELECTED))!=-1)
-			{
-				CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-				LPCSTR szPath=pItem->GetPath();
-			
-				if (CFile::IsFile(szPath))
-				{
-					iSeekStart=iItem;
-					continue;
-				}
-				else if (CFile::IsDirectory(szPath))
-				{
-					iSeekStart=iItem;
-					continue;
-				}
-
-				
-				m_pListCtrl->SetItemData(iItem,NULL);
-				delete pItem;
-				// File or directory do not exist, deleting it
-				m_pListCtrl->DeleteItem(iItem);
-			}
-		}
-
-		StartBackgroundOperations();
-
-		// Todo: change this code to check items which are in deleted folders and
-		// remove them		
-		int nItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
-		while(nItem!=-1)
-		{
-			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
-			pItem->CheckIfDeleted();
-			ASSERT(m_pBackgroundUpdater!=NULL);
-			//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,CLocateDlg::Needed)",m_pBackgroundUpdater,pItem,nItem);
-					
-			m_pBackgroundUpdater->AddToUpdateList(pItem,nItem,CLocateDlg::Needed);			
-			nItem=m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
-		}
-		m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount());
-		m_pListCtrl->UpdateWindow();
-		m_pBackgroundUpdater->StopWaiting();
-		
+		break;
 	}
+	// Creating file buffer: file1\0file2\0...filen\0\0
+	BYTE* pFiles=new BYTE[nBufferLength];
+	fo.pFrom=LPCSTR(pFiles);
+	for (int i=0;i<aItems.GetSize();i++)
+	{
+		sMemCopy(pFiles,aItems.GetAt(i)->GetPath(),aItems.GetAt(i)->GetPathLen()+1);
+		pFiles+=aItems.GetAt(i)->GetPathLen()+1;
+	}
+	*pFiles='\0';
+	
+	StopBackgroundOperations();
+	
+	
+	// Delete files
+	int iRet=SHFileOperation(&fo);
+
+	
+	delete[] (BYTE*)fo.pFrom;
+
+	
+	
+	if (iRet==0)
+	{
+		// Error maybe occur we don't clear this
+		if (m_pListTooltips!=NULL)
+			DeleteTooltipTools();
+		
+		// Removing deleted items from list
+		int iItem;
+		int iSeekStart=-1;
+		while ((iItem=m_pListCtrl->GetNextItem(iSeekStart,LVNI_SELECTED))!=-1)
+		{
+			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
+			LPCSTR szPath=pItem->GetPath();
+		
+			if (CFile::IsFile(szPath))
+			{
+				iSeekStart=iItem;
+				continue;
+			}
+			else if (CFile::IsDirectory(szPath))
+			{
+				iSeekStart=iItem;
+				continue;
+			}
+
+			
+			m_pListCtrl->SetItemData(iItem,NULL);
+			delete pItem;
+			// File or directory do not exist, deleting it
+			m_pListCtrl->DeleteItem(iItem);
+		}
+	}
+
+	StartBackgroundOperations();
+
+	// Todo: change this code to check items which are in deleted folders and
+	// remove them		
+	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
+	while(nItem!=-1)
+	{
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+		pItem->CheckIfDeleted();
+		ASSERT(m_pBackgroundUpdater!=NULL);
+		//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,CLocateDlg::Needed)",m_pBackgroundUpdater,pItem,nItem);
+				
+		m_pBackgroundUpdater->AddToUpdateList(pItem,nItem,CLocateDlg::Needed);			
+		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
+	}
+	m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount());
+	m_pListCtrl->UpdateWindow();
+	m_pBackgroundUpdater->StopWaiting();
+	
+
 }
 
 void CLocateDlg::OnRemoveFromThisList()
@@ -3385,30 +3459,35 @@ void CLocateDlg::OnCopy(BOOL bCut)
 	CloseClipboard();
 }
 		
-void CLocateDlg::OnOpenContainingFolder()
+void CLocateDlg::OnOpenFolder(BOOL bContaining)
 {
 	CWaitCursor wait;
 	
 
 	// Retrieving folders
-	CArray<LPSTR> aFolders;
+	CArray<LPCSTR> aFolders;
 	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED|LVNI_ALL);
 	while (nItem!=-1)
 	{
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
 		
-		BOOL bFound=FALSE;
-		for (int i=0;i<aFolders.GetSize();i++)
+		if (bContaining || pItem->IsFolder())
 		{
-			if (strcmp(aFolders[i],pItem->GetParent())==0)
-			{
-				bFound=TRUE;
-				break;
-			}
-		}
-		if (!bFound)
-				aFolders.Add(pItem->GetParent());
+			LPCSTR pPath=bContaining?pItem->GetParent():pItem->GetPath();
+			
 
+			BOOL bFound=FALSE;
+			for (int i=0;i<aFolders.GetSize();i++)
+			{
+				if (strcmp(aFolders[i],pPath)==0)
+				{
+					bFound=TRUE;
+					break;
+				}
+			}
+			if (!bFound)
+				aFolders.Add(pPath);
+		}
         
 		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED|LVNI_ALL);
 	}
@@ -4562,6 +4641,9 @@ void CLocateDlg::OnChangeFileName()
 
 void CLocateDlg::OnChangeFileNameCase()
 {
+	if (m_pListCtrl->GetNextItem(-1,LVNI_SELECTED)==-1)
+		return;
+
 	CChangeCaseDlg cd;
 	if (cd.DoModal(*this))
 	{
@@ -5947,6 +6029,236 @@ void CLocateDlg::OnPresetsSelection(int nPreset)
 
 }
 
+void CLocateDlg::SetShortcuts()
+{
+	CLocateDlgThread* pLocateDlgThread=GetLocateAppWnd()->m_pLocateDlgThread;
+	// This function should not be called from other thread than dialog's thread
+	// (to be sure that m_Accels is not accessed during this call
+	ASSERT(GetCurrentThread()!=*pLocateDlgThread);
+	
+
+	// Clear accel tables
+	ClearShortcuts();
+
+	// Loading shortcuts
+	if (!CShortcut::LoadShortcuts(m_aShortcuts,CShortcut::loadLocal))
+	{
+        if (!CShortcut::GetDefaultShortcuts(m_aShortcuts,CShortcut::loadLocal))
+			return;
+	}
+
+	HWND hDialogs[]={*this,m_NameDlg,m_SizeDateDlg,m_AdvancedDlg,NULL};
+	CShortcut::ResolveMnemonics(m_aShortcuts,hDialogs);
+
+	// Cointing items
+	UINT nResultListAccels=0,nNameDlgAccels=0,nSizeDateDlgAccels=0,nAdvancedDlgAccels=0,nOtherAccels=0;
+	for (int i=0;i<m_aShortcuts.GetSize();i++)
+	{
+		ASSERT((m_aShortcuts[i]->m_dwFlags&CShortcut::sfKeyTypeMask)==CShortcut::sfLocal);
+
+		if (m_aShortcuts[i]->m_wWherePressed&CShortcut::wpResultList)
+			nResultListAccels++;
+		if (m_aShortcuts[i]->m_wWherePressed&CShortcut::wpNameTab)
+			nNameDlgAccels++;
+		if (m_aShortcuts[i]->m_wWherePressed&CShortcut::wpSizeDateTab)
+			nSizeDateDlgAccels++;
+		if (m_aShortcuts[i]->m_wWherePressed&CShortcut::wpAdvancedTab)
+			nAdvancedDlgAccels++;
+		if (m_aShortcuts[i]->m_wWherePressed&CShortcut::wpElsewhere)
+			nOtherAccels++;
+	}
+
+	// Creating result list accels
+	if (nResultListAccels>0)
+	{
+		ASSERT(m_pListCtrl!=NULL);
+
+
+		ACCEL* pAccels=new ACCEL[nResultListAccels];
+		int j=0;
+		for (int i=0;i<m_aShortcuts.GetSize();i++)
+		{
+			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpResultList))
+				continue;
+			
+			pAccels[j].key=m_aShortcuts[i]->m_bVirtualKey;
+			pAccels[j].fVirt=FNOINVERT|FVIRTKEY;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
+				pAccels[j].fVirt|=FALT;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
+				pAccels[j].fVirt|=FCONTROL;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
+				pAccels[j].fVirt|=FSHIFT;
+			pAccels[j].cmd=IDM_DEFSHORTCUTITEM+i;
+
+			j++;
+		}
+		HACCEL hAccel=CreateAcceleratorTable(pAccels,nResultListAccels);
+		pLocateDlgThread->SetAccelTableForWindow(*m_pListCtrl,hAccel,FALSE,*this);
+		delete[] pAccels;
+	}
+
+	// Creating name dlg accels
+	if (nNameDlgAccels>0)
+	{
+		ASSERT((HWND)m_NameDlg!=NULL);
+
+		ACCEL* pAccels=new ACCEL[nNameDlgAccels];
+		int j=0;
+		for (int i=0;i<m_aShortcuts.GetSize();i++)
+		{
+			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpNameTab))
+				continue;
+			
+			pAccels[j].key=m_aShortcuts[i]->m_bVirtualKey;
+			pAccels[j].fVirt=FNOINVERT|FVIRTKEY;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
+				pAccels[j].fVirt|=FALT;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
+				pAccels[j].fVirt|=FCONTROL;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
+				pAccels[j].fVirt|=FSHIFT;
+			pAccels[j].cmd=IDM_DEFSHORTCUTITEM+i;
+
+			j++;
+		}
+		HACCEL hAccel=CreateAcceleratorTable(pAccels,nNameDlgAccels);
+		pLocateDlgThread->SetAccelTableForWindow(m_NameDlg,hAccel,FALSE,*this);
+		pLocateDlgThread->SetAccelTableForChilds(m_NameDlg,hAccel,FALSE,*this);
+		delete[] pAccels;
+	}
+
+	// Creating size and date dlg accels
+	if (nSizeDateDlgAccels>0)
+	{
+		ASSERT((HWND)m_SizeDateDlg!=NULL);
+
+		ACCEL* pAccels=new ACCEL[nSizeDateDlgAccels];
+		int j=0;
+		for (int i=0;i<m_aShortcuts.GetSize();i++)
+		{
+			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpSizeDateTab))
+				continue;
+			
+			pAccels[j].key=m_aShortcuts[i]->m_bVirtualKey;
+			pAccels[j].fVirt=FNOINVERT|FVIRTKEY;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
+				pAccels[j].fVirt|=FALT;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
+				pAccels[j].fVirt|=FCONTROL;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
+				pAccels[j].fVirt|=FSHIFT;
+			pAccels[j].cmd=IDM_DEFSHORTCUTITEM+i;
+
+			j++;
+		}
+		HACCEL hAccel=CreateAcceleratorTable(pAccels,nSizeDateDlgAccels);
+		pLocateDlgThread->SetAccelTableForWindow(m_SizeDateDlg,hAccel,FALSE,*this);
+		pLocateDlgThread->SetAccelTableForChilds(m_SizeDateDlg,hAccel,FALSE,*this);
+		delete[] pAccels;
+	}
+
+	// Creating advanced dlg accels
+	if (nAdvancedDlgAccels>0)
+	{
+		ASSERT((HWND)m_AdvancedDlg!=NULL);
+
+		ACCEL* pAccels=new ACCEL[nAdvancedDlgAccels];
+		int j=0;
+		for (int i=0;i<m_aShortcuts.GetSize();i++)
+		{
+			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpAdvancedTab))
+				continue;
+			
+			pAccels[j].key=m_aShortcuts[i]->m_bVirtualKey;
+			pAccels[j].fVirt=FNOINVERT|FVIRTKEY;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
+				pAccels[j].fVirt|=FALT;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
+				pAccels[j].fVirt|=FCONTROL;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
+				pAccels[j].fVirt|=FSHIFT;
+			pAccels[j].cmd=IDM_DEFSHORTCUTITEM+i;
+
+			j++;
+		}
+		HACCEL hAccel=CreateAcceleratorTable(pAccels,nAdvancedDlgAccels);
+		pLocateDlgThread->SetAccelTableForWindow(m_AdvancedDlg,hAccel,FALSE,*this);
+		pLocateDlgThread->SetAccelTableForChilds(m_AdvancedDlg,hAccel,FALSE,*this);
+		delete[] pAccels;
+	}
+
+	// Creating other accels	
+	if (nOtherAccels>0)
+	{
+		ACCEL* pAccels=new ACCEL[nOtherAccels];
+		int j=0;
+		for (int i=0;i<m_aShortcuts.GetSize();i++)
+		{
+			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpElsewhere))
+				continue;
+			
+			pAccels[j].key=m_aShortcuts[i]->m_bVirtualKey;
+			pAccels[j].fVirt=FNOINVERT|FVIRTKEY;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
+				pAccels[j].fVirt|=FALT;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
+				pAccels[j].fVirt|=FCONTROL;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
+				pAccels[j].fVirt|=FSHIFT;
+			pAccels[j].cmd=IDM_DEFSHORTCUTITEM+i;
+
+			j++;
+		}
+		HACCEL hAccel=CreateAcceleratorTable(pAccels,nOtherAccels);
+		pLocateDlgThread->SetAccelTableForWindow(*this,hAccel,FALSE,*this);
+		delete[] pAccels;
+	}
+
+	
+
+	//LoadAccelTable(IDR_MAINACCEL);
+
+/*	GetCurrentWinThread()->SetAccelTableForChilds(m_NameDlg,IDR_NAMEDLGACCEL,TRUE,*this);
+	GetCurrentWinThread()->SetAccelTableForChilds(m_SizeDateDlg,IDR_SIZEDATEDLGACCEL,TRUE,*this);
+	GetCurrentWinThread()->SetAccelTableForChilds(m_AdvancedDlg,IDR_ADVANCEDDLGACCEL,TRUE,*this);*/
+}
+
+void CLocateDlg::ClearShortcuts()
+{
+	CLocateDlgThread* pLocateDlgThread=GetLocateAppWnd()->m_pLocateDlgThread;
+	// This function should not be called from other thread than dialog's thread
+	// (to be sure that m_Accels is not accessed during this call
+	ASSERT(GetCurrentThread()!=*pLocateDlgThread);
+	
+	// Name dlg accel
+	HACCEL hAccel=pLocateDlgThread->GetAccelTableForWindow(m_NameDlg);
+	if (hAccel!=NULL)
+		DestroyAcceleratorTable(hAccel);
+	
+	// Size and date dlg accel
+	hAccel=pLocateDlgThread->GetAccelTableForWindow(m_SizeDateDlg);
+	if (hAccel!=NULL)
+		DestroyAcceleratorTable(hAccel);
+	
+	// Advanced dialog accel
+	hAccel=pLocateDlgThread->GetAccelTableForWindow(m_AdvancedDlg);
+	if (hAccel!=NULL)
+		DestroyAcceleratorTable(hAccel);
+	
+	// Result list accel
+	if (m_pListCtrl!=NULL)
+	{
+		hAccel=pLocateDlgThread->GetAccelTableForWindow(*m_pListCtrl);
+		if (hAccel!=NULL)
+			DestroyAcceleratorTable(hAccel);
+	}
+
+	pLocateDlgThread->ClearAccelTables();
+	m_aShortcuts.RemoveAll();
+
+}
+	
 void CLocateDlg::CSavePresetDlg::OnOK()
 {
 	GetDlgItemText(IDC_EDIT,m_sReturnedPreset);
@@ -8475,3 +8787,5 @@ void CLocateDlg::CAdvancedDlg::FileType::ExtractIconFromPath()
 	if (hIcon==NULL)
 		hIcon=GetLocateDlg()->m_AdvancedDlg.m_hDefaultTypeIcon;
 }
+
+

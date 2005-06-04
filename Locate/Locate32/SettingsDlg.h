@@ -596,7 +596,7 @@ public:
 		
 		void OnNewShortcut();
 		void OnRemoveShortcut();
-		void OnReset();
+		void OnResetToDefaults();
 		void OnAdvanced();
 		void OnAddAction();
 		void OnRemoveAction();
@@ -608,21 +608,20 @@ public:
 
 		void SetFieldsForShortcut(CShortcut* pShortcut);
 		void SaveFieldsForShortcut(CShortcut* pShortcut);
-		void SetFieldsForAction(CShortcut::CKeyboardAction* pAction);
-		void SaveFieldsForAction(CShortcut::CKeyboardAction* pAction);
+		void SetFieldsForAction(CAction* pAction);
+		void SaveFieldsForAction(CAction* pAction);
 		void ClearActionFields();
 		void EnableItems();
 		void SetFieldsRelativeToMnemonics();
 		void InsertShortcuts();
 
 
-		static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);
 		
 		void FormatKeyLabel(BYTE bKey,BYTE bModifiers,BOOL bScancode,CString& str) const;
-		void FormatActionLabel(CString& str,CShortcut::CKeyboardAction::Action nAction,UINT uSubAction) const;
-		BOOL GetSubActionLabel(CString& str,CShortcut::CKeyboardAction::Action nAction,UINT uSubAction) const;
-		UINT IndexToSubAction(CShortcut::CKeyboardAction::Action nAction,UINT nIndex) const;
-		UINT SubActionToIndex(CShortcut::CKeyboardAction::Action nAction,UINT nSubAction) const;
+		void FormatActionLabel(CString& str,CAction::Action nAction,UINT uSubAction) const;
+		BOOL GetSubActionLabel(CString& str,CAction::Action nAction,UINT uSubAction) const;
+		UINT IndexToSubAction(CAction::Action nAction,UINT nIndex) const;
+		UINT SubActionToIndex(CAction::Action nAction,UINT nSubAction) const;
 
 		void SetVirtualCode(BYTE bCode,BOOL bScanCode);
 		BYTE GetVirtualCode(BOOL bScanCode) const;
@@ -657,8 +656,8 @@ public:
 		CShortcut* m_pCurrentShortcut;
 		int m_nCurrentAction;
 		
-		CShortcut::CKeyboardAction::ActionActivateControls* m_pPossibleControls;
-		CShortcut::CKeyboardAction::ActionMenuCommands* m_pPossibleMenuCommands;
+		CAction::ActionActivateControls* m_pPossibleControls;
+		CAction::ActionMenuCommands* m_pPossibleMenuCommands;
 		VirtualKeyName* m_pVirtualKeyNames;
 
 		HWND hDialogs[5];	

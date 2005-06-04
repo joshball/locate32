@@ -5,15 +5,41 @@
 #pragma once
 #endif
 
-inline CShortcut::CKeyboardAction::CKeyboardAction()
-:	m_nAction(ActivateControl),	m_nActivateControl(FindNow)
+inline CAction::CAction()
+:	m_nAction(ActivateControl),	m_nActivateControl(FindNow),m_pExtraInfo(NULL)
 {
 }
 
-inline CShortcut::CKeyboardAction::~CKeyboardAction()
+inline CAction::~CAction()
+{
+	switch (m_nAction)
+	{
+	case ResultListItems:
+		if (m_nResultList==Execute && m_pExtraInfo!=NULL)
+			delete[] m_szVerb;
+		break;
+	case Advanced:
+		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage ) &&
+			m_pSendMessage!=NULL)
+			delete[] m_pSendMessage;
+		break;
+	}
+}
+
+inline CAction::SendMessageInfo::SendMessageInfo()
+:	nMessage(0),szWindow(NULL),szWParam(NULL),szLParam(NULL)
 {
 }
 
+inline CAction::SendMessageInfo::~SendMessageInfo()
+{
+	if (szWindow!=NULL)
+		delete[] szWindow;
+	if (szWParam!=NULL)
+		delete[] szWParam;
+	if (szLParam!=NULL)
+		delete[] szLParam;
+}
 
 inline BYTE CShortcut::GetHotkeyModifiers() const
 {
@@ -26,16 +52,51 @@ inline void CShortcut::SetHotkeyModifiers(BYTE bHotkeyModifier)
 }
 
 inline CShortcut::CShortcut(void* pVoid)
+:	m_dwFlags(sfDefault),m_pClass(NULL),m_pTitle(NULL) // This initializes union
 {
 }
 
-inline CShortcut::CKeyboardAction::CKeyboardAction(void* pVoid)
+inline CAction::CAction(void* pVoid)
+:	m_pExtraInfo(NULL)
 {
 }
 
-inline DWORD CShortcut::CKeyboardAction::GetDataLength() const
+inline DWORD CAction::GetDataLength() const
 {
-	return sizeof(CKeyboardAction)+2;
+	DWORD dwLength=sizeof(CAction)+2;
+	
+	switch (m_nAction)
+	{
+	case ResultListItems:
+		if (m_nResultList==Execute && m_szVerb!=NULL)
+			dwLength+=(DWORD)strlen(m_szVerb)+1;
+		break;
+	case Advanced:
+		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage ) &&
+			m_pSendMessage!=NULL)
+			dwLength+=m_pSendMessage->GetDataLength();
+		break;
+	}
+
+	return dwLength;
+}
+
+
+inline DWORD CAction::SendMessageInfo::GetDataLength() const
+{
+	DWORD dwLength=sizeof(WORD)+sizeof(DWORD)+3; // 3*'\0'
+
+	if (szWindow!=NULL)
+		dwLength+=(DWORD)strlen(szWindow); // '\0' already included
+	
+
+	if (szWParam!=NULL)
+		dwLength+=(DWORD)strlen(szWParam); // '\0' already included
+
+	if (szLParam!=NULL)
+		dwLength+=(DWORD)strlen(szLParam); // '\0' already included
+
+	return dwLength;
 }
 
 inline BOOL CShortcut::IsModifiersOk(BOOL bAltDown,BOOL bControlDown,BOOL bShiftDown,BOOL bWinDown) const
@@ -118,7 +179,7 @@ inline void CShortcut::ExecuteAction()
 }
 
 
-inline void CShortcut::CKeyboardAction::DoActivateTab()
+inline void CAction::DoActivateTab()
 {
 	if (GetLocateAppWnd()->m_pLocateDlgThread==NULL)
 		return;
@@ -126,6 +187,27 @@ inline void CShortcut::CKeyboardAction::DoActivateTab()
 	GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->OnActivateTab((int)m_nActivateTab);
 }
 
+
+inline void CAction::DoResultListItems()
+{
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg==NULL)
+		return;
+	pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_szVerb);
+}
+
+#endif
+
+#ifdef HFCLIB
+inline void CShortcut::ResolveMnemonics(CArrayFP<CShortcut*>& aShortcuts,HWND* hDialogs)
+{
+	for (int i=0;i<aShortcuts.GetSize();i++)
+	{
+		if (aShortcuts[i]->m_dwFlags&CShortcut::sfUseMemonic)
+			aShortcuts[i]->m_bVirtualKey=aShortcuts[i]->GetMnemonicForAction(hDialogs);
+	}
+
+}
 #endif
 
 #endif

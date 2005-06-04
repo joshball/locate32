@@ -313,6 +313,8 @@ BOOL CSettingsProperties::SaveSettings()
 		ShowErrorMessage(IDS_ERRORCANNOTSAVESHORTCUTS,IDS_ERROR);
 	}
 	GetLocateAppWnd()->PostMessage(WM_RESETSHORTCUTS);
+	if (GetLocateDlg()!=NULL)
+		GetLocateDlg()->PostMessage(WM_RESETSHORTCUTS);
 	
     
 	// Default flags
@@ -5439,10 +5441,6 @@ BOOL CALLBACK COptionsPropertyPage::DefaultColorProc(BASICPARAMS* pParams)
 ////////////////////////////////////////
 
 
-INT_PTR CALLBACK CSettingsProperties::CKeyboardShortcutsPage::DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam)
-{
-	return FALSE;
-}
 
 CSettingsProperties::CKeyboardShortcutsPage::CKeyboardShortcutsPage()
 :	CPropertyPage(IDD_KEYBOARDSHORTCUTS,IDS_SHORTCUTSETTINGS),
@@ -5450,8 +5448,8 @@ CSettingsProperties::CKeyboardShortcutsPage::CKeyboardShortcutsPage()
 	m_ToolBarBitmapsDisabled(NULL),m_ToolBarBitmapsHot(NULL),
 	m_pCurrentShortcut(NULL)
 {
-	m_pPossibleControls=CShortcut::CKeyboardAction::GetPossibleControlValues();
-	m_pPossibleMenuCommands=CShortcut::CKeyboardAction::GetPossibleMenuCommands();
+	m_pPossibleControls=CAction::GetPossibleControlValues();
+	m_pPossibleMenuCommands=CAction::GetPossibleMenuCommands();
 	m_pVirtualKeyNames=GetVirtualKeyNames();
 
 	CLocateDlg* pLocateDlg=GetLocateDlg();
@@ -5465,10 +5463,14 @@ CSettingsProperties::CKeyboardShortcutsPage::CKeyboardShortcutsPage()
 	}
 	else
 	{
-		hDialogs[0]=CreateDialog(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDD_MAIN),NULL,(DLGPROC)DummyDialogProc);
-		hDialogs[1]=CreateDialog(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDD_NAME),hDialogs[0],(DLGPROC)DummyDialogProc);
-		hDialogs[2]=CreateDialog(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDD_SIZEDATE),hDialogs[0],(DLGPROC)DummyDialogProc);
-		hDialogs[3]=CreateDialog(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDD_ADVANCED),hDialogs[0],(DLGPROC)DummyDialogProc);
+		hDialogs[0]=CreateDialog(GetLanguageSpecificResourceHandle(),
+			MAKEINTRESOURCE(IDD_MAIN),NULL,(DLGPROC)CLocateApp::DummyDialogProc);
+		hDialogs[1]=CreateDialog(GetLanguageSpecificResourceHandle(),
+			MAKEINTRESOURCE(IDD_NAME),hDialogs[0],(DLGPROC)CLocateApp::DummyDialogProc);
+		hDialogs[2]=CreateDialog(GetLanguageSpecificResourceHandle(),
+			MAKEINTRESOURCE(IDD_SIZEDATE),hDialogs[0],(DLGPROC)CLocateApp::DummyDialogProc);
+		hDialogs[3]=CreateDialog(GetLanguageSpecificResourceHandle(),
+			MAKEINTRESOURCE(IDD_ADVANCED),hDialogs[0],(DLGPROC)CLocateApp::DummyDialogProc);
 		hDialogs[4]=NULL;
 	}
 
@@ -5531,10 +5533,12 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_pToolBar->SetWindowPos(HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);
 
 	
-	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_SHORTCUTACTIVATECONTROL));
-	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_SHORTCUTACTIVATETAB));
-	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_SHORTCUTMENUCOMMAND));
-	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_SHORTCUTSHOWHIDEDIALOG));
+	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATACTIVATECONTROL));
+	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATACTIVATETAB));
+	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATMENUCOMMAND));
+	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATSHOWHIDEDIALOG));
+	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATTRESULTLIST));
+	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATADVANCED));
 	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,0,0);
 	
 	
@@ -5588,7 +5592,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::InsertSubActions()
 	
 	SendDlgItemMessage(IDC_SUBACTION,CB_RESETCONTENT,0,0);
 
-	CShortcut::CKeyboardAction::Action nAction=(CShortcut::CKeyboardAction::Action)SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL,0,0);
+	CAction::Action nAction=(CAction::Action)SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL,0,0);
 	if ((INT)nAction==CB_ERR)
 		return;
 
@@ -5613,58 +5617,74 @@ void CSettingsProperties::CKeyboardShortcutsPage::InsertSubActions()
 	}
 }
 
-UINT CSettingsProperties::CKeyboardShortcutsPage::IndexToSubAction(CShortcut::CKeyboardAction::Action nAction,UINT nIndex) const
+UINT CSettingsProperties::CKeyboardShortcutsPage::IndexToSubAction(CAction::Action nAction,UINT nIndex) const
 {
 	switch (nAction)
 	{
-	case CShortcut::CKeyboardAction::ActivateControl:
-		if (m_pPossibleControls[nIndex]==CShortcut::CKeyboardAction::NullControl)
+	case CAction::ActivateControl:
+		if (m_pPossibleControls[nIndex]==CAction::NullControl)
 			return (UINT)-1;
 		return m_pPossibleControls[nIndex];
-	case CShortcut::CKeyboardAction::ActivateTab:
-		if (nIndex>CShortcut::CKeyboardAction::ActivateTabsLast)
+	case CAction::ActivateTab:
+		if (nIndex>CAction::ActivateTabsLast)
 			return (UINT)-1;
 		return nIndex;
-	case CShortcut::CKeyboardAction::MenuCommand:
-		if (m_pPossibleMenuCommands[nIndex]==CShortcut::CKeyboardAction::NullMenuCommand)
+	case CAction::MenuCommand:
+		if (m_pPossibleMenuCommands[nIndex]==CAction::NullMenuCommand)
 			return (UINT)-1;
 		return m_pPossibleMenuCommands[nIndex];
-	case CShortcut::CKeyboardAction::ShowHideDialog:
-		if (nIndex>CShortcut::CKeyboardAction::ShowHideDialogLast)
+	case CAction::ShowHideDialog:
+		if (nIndex>CAction::ShowHideDialogLast)
+			return (UINT)-1;
+		return nIndex;
+	case CAction::ResultListItems:
+		if (nIndex>CAction::ResultListLast)
+			return (UINT)-1;
+		return nIndex;
+	case CAction::Advanced:
+		if (nIndex>CAction::AdvancedLast)
 			return (UINT)-1;
 		return nIndex;
 	}
 	return (UINT)-1;
 }
 
-UINT CSettingsProperties::CKeyboardShortcutsPage::SubActionToIndex(CShortcut::CKeyboardAction::Action nAction,UINT nSubAction) const
+UINT CSettingsProperties::CKeyboardShortcutsPage::SubActionToIndex(CAction::Action nAction,UINT nSubAction) const
 {
 	switch (nAction)
 	{
-	case CShortcut::CKeyboardAction::ActivateControl:
+	case CAction::ActivateControl:
 		{
-			for (int nIndex=0;m_pPossibleControls[nIndex]!=CShortcut::CKeyboardAction::NullControl;nIndex++)
+			for (int nIndex=0;m_pPossibleControls[nIndex]!=CAction::NullControl;nIndex++)
 			{
 				if (m_pPossibleControls[nIndex]==nSubAction)
 					return nIndex;
 			}
 			return (UINT)-1;
 		}
-	case CShortcut::CKeyboardAction::ActivateTab:
-		if (nSubAction>CShortcut::CKeyboardAction::ActivateTabsLast)
+	case CAction::ActivateTab:
+		if (nSubAction>CAction::ActivateTabsLast)
 			return (UINT)-1;
 		return nSubAction;
-	case CShortcut::CKeyboardAction::MenuCommand:
+	case CAction::MenuCommand:
 		{
-			for (int nIndex=0;m_pPossibleMenuCommands[nIndex]!=CShortcut::CKeyboardAction::NullMenuCommand;nIndex++)
+			for (int nIndex=0;m_pPossibleMenuCommands[nIndex]!=CAction::NullMenuCommand;nIndex++)
 			{
 				if (m_pPossibleMenuCommands[nIndex]==nSubAction)
 					return nIndex;
 			}
 			return (UINT)-1;
 		}
-	case CShortcut::CKeyboardAction::ShowHideDialog:
-		if (nSubAction>CShortcut::CKeyboardAction::ShowHideDialogLast)
+	case CAction::ShowHideDialog:
+		if (nSubAction>CAction::ShowHideDialogLast)
+			return (UINT)-1;
+		return nSubAction;
+	case CAction::ResultListItems:
+		if (nSubAction>CAction::ResultListLast)
+			return (UINT)-1;
+		return nSubAction;
+	case CAction::Advanced:
+		if (nSubAction>CAction::AdvancedLast)
 			return (UINT)-1;
 		return nSubAction;
 	default:
@@ -5675,11 +5695,11 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::SubActionToIndex(CShortcut::CK
 	
 }
 
-BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str,CShortcut::CKeyboardAction::Action nAction,UINT uSubAction) const
+BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str,CAction::Action nAction,UINT uSubAction) const
 {
 	switch (nAction)
 	{
-        case CShortcut::CKeyboardAction::ActivateControl:
+        case CAction::ActivateControl:
 		{
 			// Check which dialog contains control
 			WORD wControlID=HIWORD(uSubAction);
@@ -5716,7 +5736,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str
 			}
 			return FALSE;
 		}
-	case CShortcut::CKeyboardAction::ActivateTab:
+	case CAction::ActivateTab:
 		{
 			switch (uSubAction)
 			{
@@ -5738,7 +5758,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str
 				str.DelChar(nIndex);
 			return TRUE;
 		}
-	case CShortcut::CKeyboardAction::MenuCommand:
+	case CAction::MenuCommand:
 		{
 			char szLabel[1000];
 			MENUITEMINFO mii;
@@ -5758,8 +5778,8 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str
 				break;
 			case IDS_SHORTCUTMENUFILEITEM:
 				hMenu=hPopupMenu;
-				if (uSubAction==CShortcut::CKeyboardAction::FileOpenContainingFolder ||
-					uSubAction==CShortcut::CKeyboardAction::FileRemoveFromThisList)
+				if (uSubAction==CAction::FileOpenContainingFolder ||
+					uSubAction==CAction::FileRemoveFromThisList)
 					nSubMenu=SUBMENU_EXTRACONTEXTMENUITEMS;
 				else
 					nSubMenu=SUBMENU_FILEMENU;
@@ -5807,34 +5827,78 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str
 			}
 			return FALSE;
 		}
-	case CShortcut::CKeyboardAction::ShowHideDialog:
+	case CAction::ShowHideDialog:
+		switch (uSubAction)
 		{
-			switch (uSubAction)
-			{
-			case 0:
-				str.LoadString(IDS_SHORTCUTSDIALOGSHOW);
-				break;
-			case 1:
-				str.LoadString(IDS_SHORTCUTSDIALOGMINIMINZE);
-				break;
-			case 2:
-				str.LoadString(IDS_SHORTCUTSDIALOGCLOSE);
-				break;
-			case 3:
-				str.LoadString(IDS_SHORTCUTSDIALOGSHOWORHIDE);
-				break;
-			case 4:
-				str.LoadString(IDS_SHORTCUTSDIALOGOPENORCLOSE);
-				break;
-			default:
-				return FALSE;
-			}
-
-			int nIndex;
-			while ((nIndex=str.Find("&&"))!=-1)
-				str.DelChar(nIndex);
-			return TRUE;
+		case 0:
+			str.LoadString(IDS_ACTIONSWDIALOGSHOW);
+			break;
+		case 1:
+			str.LoadString(IDS_ACTIONSWDIALOGMINIMINZE);
+			break;
+		case 2:
+			str.LoadString(IDS_ACTIONSWDIALOGCLOSE);
+			break;
+		case 3:
+			str.LoadString(IDS_ACTIONSWDIALOGSHOWORHIDE);
+			break;
+		case 4:
+			str.LoadString(IDS_ACTIONSWDIALOGOPENORCLOSE);
+			break;
+		default:
+			return FALSE;
 		}
+		break;
+	case CAction::ResultListItems:
+		switch (uSubAction)
+		{
+		case 0:
+			str.LoadString(IDS_ACTIONRESITEMEXECUTE);
+			break;
+		case 1:
+			str.LoadString(IDS_ACTIONRESITEMCOPY);
+			break;
+		case 2:
+			str.LoadString(IDS_ACTIONRESITEMCUT);
+			break;
+		case 3:
+			str.LoadString(IDS_ACTIONRESITEMRECYCLE);
+			break;
+		case 4:
+			str.LoadString(IDS_ACTIONRESITEMDELETE);
+			break;
+		case 5:
+			str.LoadString(IDS_ACTIONRESITEMOPENCONTEXTMENU);
+			break;
+		case 6:
+			str.LoadString(IDS_ACTIONRESITEMOPENFOLDER);
+			break;
+		case 7:
+			str.LoadString(IDS_ACTIONRESITEMOPENCONTFOLDER);
+			break;
+		case 8:
+			str.LoadString(IDS_ACTIONRESITEMPROPERTIES);
+			break;
+		case 9:
+			str.LoadString(IDS_ACTIONRESITEMSPECIALMENU);
+			break;
+		default:
+			return FALSE;
+		}
+		break;
+	case CAction::Advanced:
+		switch (uSubAction)
+		{
+		case 0:
+			str.LoadString(IDS_ACTIONADVSENDMESSAGE);
+			break;
+		case 1:
+			str.LoadString(IDS_ACTIONADVPOSTMESSAGE);
+			break;
+		default:
+			return FALSE;
+		}
+		break;
 	default:
 		ASSERT(0);
 		return FALSE;
@@ -6027,7 +6091,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(LV_DISPINFO 
 			else if (pLvdi->item.state&LVIS_SELECTED)
 			{
 				int nCurSel=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
-				CShortcut::CKeyboardAction::Action nAction=(CShortcut::CKeyboardAction::Action)SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL);
+				CAction::Action nAction=(CAction::Action)SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL);
 				UINT nSubAction=0;
 				if ((nSubAction=IndexToSubAction(nAction,nCurSel))!=UINT(-1))
 				{
@@ -6094,7 +6158,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnCommand(WORD wID,WORD wNotif
 		ItemUpOrDown(wID==IDC_UP);
 		break;
 	case IDC_RESET:
-		OnReset();
+		OnResetToDefaults();
 		break;
 	case IDC_ADVANCED:
 		OnAdvanced();
@@ -6459,11 +6523,15 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnNewShortcut()
 	li.lParam=LPARAM(new CShortcut);
 	li.stateMask=li.state=LVIS_SELECTED;
 	
-	m_pList->InsertItem(&li);
+	int nItem=m_pList->InsertItem(&li);
 	
+	if (nItem!=-1)
+		m_pList->EnsureVisible(nItem,FALSE);
+
 	EnableItems();
 
 	SetFocus(IDC_SHORTCUTKEY);
+
 }
 
 void CSettingsProperties::CKeyboardShortcutsPage::OnRemoveShortcut()
@@ -6483,7 +6551,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnRemoveShortcut()
 	EnableItems();
 }
 
-void CSettingsProperties::CKeyboardShortcutsPage::OnReset()
+void CSettingsProperties::CKeyboardShortcutsPage::OnResetToDefaults()
 {
 	m_pList->DeleteAllItems();
 
@@ -6568,7 +6636,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnAddAction()
 	SaveFieldsForAction(m_pCurrentShortcut->m_apActions[m_nCurrentAction]);
 
     // Creating new action
-	m_pCurrentShortcut->m_apActions.Add(new CShortcut::CKeyboardAction);
+	m_pCurrentShortcut->m_apActions.Add(new CAction);
 
 	// Activating it
 	m_nCurrentAction=m_pCurrentShortcut->m_apActions.GetSize()-1;
@@ -6632,7 +6700,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnSwapAction(BOOL bWithNext)
 
 	// Swapping
 	int m_nAnotherAction=m_nCurrentAction+(bWithNext?+1:-1);
-	CShortcut::CKeyboardAction* pTmp=m_pCurrentShortcut->m_apActions[m_nAnotherAction];
+	CAction* pTmp=m_pCurrentShortcut->m_apActions[m_nAnotherAction];
 	m_pCurrentShortcut->m_apActions[m_nAnotherAction]=m_pCurrentShortcut->m_apActions[m_nCurrentAction];
 	m_pCurrentShortcut->m_apActions[m_nCurrentAction]=pTmp;
 
@@ -6870,7 +6938,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForShortcut(CShortcu
 
 }
 
-void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CShortcut::CKeyboardAction* pAction)
+void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pAction)
 {
 	ASSERT(m_pCurrentShortcut!=NULL);
 	ASSERT(m_nCurrentAction>=0 && m_nCurrentAction<m_pCurrentShortcut->m_apActions.GetSize());
@@ -6890,14 +6958,14 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CShortcut::
 	InsertSubActions(); 
 }
 
-void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CShortcut::CKeyboardAction* pAction)
+void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* pAction)
 {
 	// Setting action
-	pAction->m_nAction=(CShortcut::CKeyboardAction::Action)SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL);
+	pAction->m_nAction=(CAction::Action)SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL);
 	
 	switch (pAction->m_nAction)
 	{
-	case CShortcut::CKeyboardAction::ActivateControl:
+	case CAction::ActivateControl:
 		{
 			int nCurSel=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
 			if (nCurSel!=CB_ERR)
@@ -6906,12 +6974,11 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CShortcut:
 				pAction->m_nActivateControl=m_pPossibleControls[0];
 			break;
 		}
-	case CShortcut::CKeyboardAction::ActivateTab:
-		pAction->m_nActivateControl=(CShortcut::CKeyboardAction::ActionActivateControls)SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+		pAction->m_nActivateControl=(CAction::ActionActivateControls)SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
 		if ((int)pAction->m_nActivateControl==CB_ERR)
-			pAction->m_nActivateControl=CShortcut::CKeyboardAction::FindNow;
+			pAction->m_nActivateControl=CAction::FindNow;
 		break;
-	case CShortcut::CKeyboardAction::MenuCommand:
+	case CAction::MenuCommand:
 		{
 			int nCurSel=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
 			if (nCurSel!=CB_ERR)
@@ -6920,14 +6987,22 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CShortcut:
 				pAction->m_nMenuCommand=m_pPossibleMenuCommands[0];
 			break;
 		}
-	case CShortcut::CKeyboardAction::ShowHideDialog:
-		pAction->m_nDialogCommand=(CShortcut::CKeyboardAction::ActionShowHideDialog)SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
-		if ((int)pAction->m_nActivateControl==CB_ERR)
-			pAction->m_nDialogCommand=CShortcut::CKeyboardAction::ShowDialog;
+	case CAction::ActivateTab:
+	case CAction::ShowHideDialog:
+	case CAction::ResultListItems:
+		pAction->m_nSubAction=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+		if ((int)pAction->m_nSubAction==CB_ERR)
+			pAction->m_nSubAction=0;
+		break;
+	case CAction::Advanced:
+		pAction->m_nAdvanced=(CAction::ActionAdvanced)SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+		if ((int)pAction->m_nAdvanced==CB_ERR)
+			pAction->m_nAdvanced=CAction::SendMessage;
 		break;
 	default:
 		ASSERT(0);
 		break;
+	
 	};
 
 }
@@ -6995,21 +7070,25 @@ void CSettingsProperties::CKeyboardShortcutsPage::FormatKeyLabel(BYTE bKey,BYTE 
 		str << (int) bKey;
 }
 
-void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CString& str,CShortcut::CKeyboardAction::Action nAction,UINT uSubAction) const
+void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CString& str,CAction::Action nAction,UINT uSubAction) const
 {
 	// Insert action code
 	switch (nAction)
 	{
-	case CShortcut::CKeyboardAction::ActivateControl:
-		str.LoadString(IDS_SHORTCUTACTIVATECONTROL);
+	case CAction::ActivateControl:
+		str.LoadString(IDS_ACTIONCATACTIVATECONTROL);
 		break;
-	case CShortcut::CKeyboardAction::ActivateTab:
-		str.LoadString(IDS_SHORTCUTACTIVATETAB);
+	case CAction::ActivateTab:
+		str.LoadString(IDS_ACTIONCATACTIVATETAB);
 		break;
-	case CShortcut::CKeyboardAction::MenuCommand:
-		str.LoadString(IDS_SHORTCUTMENUCOMMAND);
+	case CAction::MenuCommand:
+		str.LoadString(IDS_ACTIONCATMENUCOMMAND);
 		break;
-	case CShortcut::CKeyboardAction::ShowHideDialog:
+	case CAction::ShowHideDialog:
+		break;
+	case CAction::ResultListItems:
+		break;
+	case CAction::Advanced:
 		break;
 	}
 
@@ -7017,7 +7096,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CString& str
 	CString subaction;
 	if (GetSubActionLabel(subaction,nAction,uSubAction))
 	{
-		if (nAction==CShortcut::CKeyboardAction::ShowHideDialog)
+		if (str.IsEmpty())
 			str=subaction;
 		else
 			str << " / " << subaction;

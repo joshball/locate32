@@ -25,11 +25,11 @@
 #ifndef KEYHOOK_EXPORTS
 CShortcut::CShortcut()
 :	m_dwFlags(sfDefault),m_nDelay(0),
-	m_pClass(NULL),m_pTitle(NULL),
-	m_bModifiers(0),m_bVirtualKey(0)
+	m_bModifiers(0),m_bVirtualKey(0),
+	m_pClass(NULL),m_pTitle(NULL) // This initializes union
 {
 	// At least one action is needed
-	m_apActions.Add(new CKeyboardAction);
+	m_apActions.Add(new CAction);
 
 	if ((m_dwFlags&sfKeyTypeMask)==sfLocal)
 		m_wWherePressed=wpDefault;
@@ -48,7 +48,7 @@ CShortcut::CShortcut(CShortcut& rCopyFrom)
 	}
 
 	for (int i=0;i<m_apActions.GetSize();i++)
-		m_apActions[i]=new CKeyboardAction(*m_apActions[i]);
+		m_apActions[i]=new CAction(*m_apActions[i]);
 }
 	
 
@@ -246,7 +246,7 @@ CShortcut* CShortcut::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
 	CopyMemory(pShortcut,pData+sizeof(WORD),sizeof(CShortcut));	
 	dwUsed=sizeof(WORD)+sizeof(CShortcut);
 	pData+=sizeof(WORD)+sizeof(CShortcut);
-	dwDataLen-=dwUsed;
+	dwDataLen-=sizeof(WORD)+sizeof(CShortcut);
 
 	if ((pShortcut->m_dwFlags&sfKeyTypeMask)!=sfLocal) // Load class and title 
 	{
@@ -292,7 +292,7 @@ CShortcut* CShortcut::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
 	
     for (DWORD i=0;i<dwActions;i++)
 	{
-		CKeyboardAction* pAction=CKeyboardAction::FromData(pData,dwDataLen,dwLen);
+		CAction* pAction=CAction::FromData(pData,dwDataLen,dwLen);
 
 		if (pAction==NULL)
 		{
@@ -309,28 +309,181 @@ CShortcut* CShortcut::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
 	return pShortcut;
 }
 
-CShortcut::CKeyboardAction* CShortcut::CKeyboardAction::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
+CAction* CAction::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
 {
-	if (dwDataLen<sizeof(CKeyboardAction)+sizeof(WORD))
+	if (dwDataLen<sizeof(CAction)+sizeof(WORD))
 		return NULL;
 	
 	if (*((WORD*)pData)!=0xFFEC)
 		return NULL;
 
+	CAction* pAction=new CAction((void*)NULL);
+	CopyMemory(pAction,pData+sizeof(WORD),sizeof(CAction));	
+	pData+=sizeof(WORD)+sizeof(CAction);
+	dwUsed=sizeof(WORD)+sizeof(CAction);
+	dwDataLen-=sizeof(WORD)+sizeof(CAction);
+
+	switch (pAction->m_nAction)
+	{
+	case ResultListItems:
+		if (pAction->m_nResultList==Execute && pAction->m_szVerb!=NULL)
+		{
+			DWORD dwLen;
+
+			for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
+
+			if (dwLen==dwDataLen)
+			{
+				delete pAction;
+				return NULL;
+			}
+
+			dwLen++;
+			pAction->m_szVerb=new char[dwLen];
+            CopyMemory(pAction->m_szVerb,pData,dwLen);
+			dwUsed+=dwLen;
+			pData+=dwLen;
+			dwDataLen-=dwLen;
+		}
+		break;
+	case Advanced:
+		if ((pAction->m_nAdvanced==SendMessage || pAction->m_nAdvanced==PostMessage) && 			
+			pAction->m_pSendMessage!=NULL)
+		{
+			DWORD dwLen;
+
+			pAction->m_pSendMessage=SendMessageInfo::FromData(pData,dwDataLen,dwLen);
+
+			if (pAction->m_pSendMessage==NULL)
+			{
+				delete pAction;
+				return NULL;
+			}
 	
-	CKeyboardAction* pAction=new CKeyboardAction((void*)NULL);
-	CopyMemory(pAction,pData+sizeof(WORD),sizeof(CKeyboardAction));	
-	dwUsed=sizeof(WORD)+sizeof(CKeyboardAction);
+			pData+=dwLen;
+			dwUsed+=dwLen;
+			dwDataLen-=dwLen;
+		}
+		break;
+	}
 	
 	return pAction;
 }
-	
-DWORD CShortcut::CKeyboardAction::GetData(BYTE* pData) const
+
+CAction::SendMessageInfo* CAction::SendMessageInfo::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
 {
-	*((WORD*)pData)=0xFFEC;
-	CopyMemory(pData+sizeof(WORD),this,sizeof(CKeyboardAction));
+	if (dwDataLen<sizeof(WORD)+sizeof(DWORD)+sizeof(3))
+		return NULL;
 	
-	return sizeof(CKeyboardAction)+2;
+	if (*((WORD*)pData)!=0xFFEB)
+		return NULL;
+
+	SendMessageInfo* pSendMessage=new SendMessageInfo;
+	
+	// Set nMessage
+	pSendMessage->nMessage=*((DWORD*)(pData+2));
+	
+	pData+=sizeof(DWORD)+sizeof(WORD);
+	dwUsed+=sizeof(DWORD)+sizeof(WORD);
+	dwDataLen-=sizeof(DWORD)+sizeof(WORD);
+
+	
+	// Set szWindow
+	DWORD dwLen;
+	for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
+	if (dwLen==dwDataLen)
+	{
+		delete pSendMessage;
+		return NULL;
+	}
+	dwLen++;
+	if (dwLen>1)
+	{
+		pSendMessage->szWindow=new char[dwLen];
+		CopyMemory(pSendMessage->szWindow,pData,dwLen);
+	}
+	else
+		pSendMessage->szWindow=NULL;
+
+	dwUsed+=dwLen;
+	pData+=dwLen;
+	dwDataLen-=dwLen;
+
+	// Set szParam
+	for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
+	if (dwLen==dwDataLen)
+	{
+		delete pSendMessage;
+		return NULL;
+	}
+	dwLen++;
+	if (dwLen>1)
+	{
+		pSendMessage->szWParam=new char[dwLen];
+		CopyMemory(pSendMessage->szWParam,pData,dwLen);
+	}
+	else
+		pSendMessage->szWParam=NULL;
+
+	dwUsed+=dwLen;
+	pData+=dwLen;
+	dwDataLen-=dwLen;
+
+
+	// Set szLParam
+	for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
+	if (dwLen==dwDataLen)
+	{
+		delete pSendMessage;
+		return NULL;
+	}
+	dwLen++;
+	if (dwLen>1)
+	{
+		pSendMessage->szLParam=new char[dwLen];
+		CopyMemory(pSendMessage->szLParam,pData,dwLen);
+	}
+	else
+		pSendMessage->szLParam=NULL;
+
+	dwUsed+=dwLen;
+	pData+=dwLen;
+	dwDataLen-=dwLen;
+
+
+	return pSendMessage;
+}
+
+DWORD CAction::GetData(BYTE* pData_) const
+{
+	BYTE* pData=pData_;
+	DWORD dwUsed;
+	*((WORD*)pData)=0xFFEC;
+	CopyMemory(pData+sizeof(WORD),this,sizeof(CAction));
+	pData+=sizeof(CAction)+sizeof(WORD);
+	
+
+	switch (m_nAction)
+	{
+	case ResultListItems:
+		if (m_nResultList==Execute && m_szVerb!=NULL)
+		{
+			dwUsed=istrlen(m_szVerb)+1;
+			CopyMemory(pData,m_szVerb,dwUsed);
+			pData+=dwUsed;
+		}
+		break;
+	case Advanced:
+		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage) && 			
+			m_pSendMessage!=NULL)
+		{
+			dwUsed=m_pSendMessage->GetData(pData);
+			pData+=dwUsed;
+		}
+		break;
+	}
+
+	return DWORD(pData-pData_);
 }
 
 
@@ -386,9 +539,9 @@ char CShortcut::GetMnemonicForAction(HWND* hDialogs) const
 
 	for (int i=0;i<m_apActions.GetSize();i++)
 	{
-		CShortcut::CKeyboardAction* pAction=m_apActions[i];
+		CAction* pAction=m_apActions[i];
 
-		if (pAction->m_nAction==CShortcut::CKeyboardAction::ActivateControl)
+		if (pAction->m_nAction==CAction::ActivateControl)
 		{
 			for (int j=0;hDialogs[j]!=NULL;j++)
 			{	
@@ -409,6 +562,7 @@ char CShortcut::GetMnemonicForAction(HWND* hDialogs) const
 						{
 							char cRet=pText[k+1];
 							delete[] pText;
+							CharUpperBuff(&cRet,1);
 							return cRet;
 						}
 					}
@@ -423,7 +577,7 @@ char CShortcut::GetMnemonicForAction(HWND* hDialogs) const
 	return 0;
 }
 
-void CShortcut::CKeyboardAction::ExecuteAction()
+void CAction::ExecuteAction()
 {
 	switch (m_nAction)
 	{
@@ -439,10 +593,19 @@ void CShortcut::CKeyboardAction::ExecuteAction()
 	case ShowHideDialog:
 		DoShowHideDialog();
 		break;
+	case ResultListItems:
+		DoResultListItems();
+		break;
+	case Advanced:
+		DoAdvanced();
+		break;
+	default:
+		ASSERT(0);
+		break;
 	}
 }
 
-void CShortcut::CKeyboardAction::DoActivateControl()
+void CAction::DoActivateControl()
 {
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL)
@@ -463,7 +626,7 @@ void CShortcut::CKeyboardAction::DoActivateControl()
 }
 
 
-void CShortcut::CKeyboardAction::DoMenuCommand()
+void CAction::DoMenuCommand()
 {
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL)
@@ -472,7 +635,7 @@ void CShortcut::CKeyboardAction::DoMenuCommand()
 	pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nMenuCommand),0),0);
 }
 
-void CShortcut::CKeyboardAction::DoShowHideDialog()
+void CAction::DoShowHideDialog()
 {
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	
@@ -516,6 +679,11 @@ void CShortcut::CKeyboardAction::DoShowHideDialog()
 			GetLocateAppWnd()->OnLocate();
 		break;
 	}
+}
+
+
+void CAction::DoAdvanced()
+{
 }
 
 #endif
@@ -591,4 +759,43 @@ BOOL CShortcut::DoClassOrTitleMatch(LPCSTR pClass,LPCSTR pCondition)
 	}
 }
 
+DWORD CAction::SendMessageInfo::GetData(BYTE* pData_) const
+{
+	BYTE* pData=pData_;
+	
+	*((WORD*)pData)=0xFFEB;
+	pData+=sizeof(WORD);
+    *((DWORD*)pData)=nMessage;
+	pData+=sizeof(DWORD);
 
+	if (szWindow!=NULL)
+	{
+        size_t dwUsed=strlen(szWindow)+1;
+		CopyMemory(pData,szWindow,dwUsed);
+		pData+=dwUsed;
+	}
+	else
+		*(pData++)='\0';
+		
+	
+	if (szWParam!=NULL)
+	{
+        size_t dwUsed=strlen(szWParam)+1;
+		CopyMemory(pData,szWParam,dwUsed);
+		pData+=dwUsed;
+	}
+	else
+		*(pData++)='\0';
+	
+	if (szLParam!=NULL)
+	{
+        size_t dwUsed=strlen(szLParam)+1;
+		CopyMemory(pData,szLParam,dwUsed);
+		pData+=dwUsed;
+	}
+	else
+		*(pData++)='\0';
+	
+
+	return DWORD(pData-pData_);
+}
