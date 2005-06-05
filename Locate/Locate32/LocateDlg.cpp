@@ -36,7 +36,6 @@ BOOL CLocateDlgThread::InitInstance()
 		}
 	}
 
-	m_pLocate->SetMenu(LoadMenu(IDR_MAINMENU));
 	return TRUE;
 }
 
@@ -222,27 +221,10 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 
 	CDialog::OnInitDialog(hwndFocus);
 	
-	CMenu menu(GetSubMenu(GetMenu(),2));
-
-	
-	m_Menu.LoadMenu(IDR_POPUPMENU);
-	
-	if (((CLocateApp*)GetApp())->m_wComCtrlVersion<0x0600) // Disabling features
-	{
-		menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_GRAYED|MF_BYCOMMAND);
-		m_Menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_GRAYED|MF_BYCOMMAND);
-	}
-
 	m_hNextClipboardViewer=SetClipboardViewer(*this);
 
 	m_CircleBitmap.LoadBitmap(IDB_CIRCLE);
-	if (menu.GetSafeHmenu()!=NULL)
-	{
-		menu.SetMenuItemBitmaps(0,MF_BYPOSITION,NULL,&m_CircleBitmap);
-		menu.SetMenuItemBitmaps(1,MF_BYPOSITION,NULL,&m_CircleBitmap);
-		menu.SetMenuItemBitmaps(2,MF_BYPOSITION,NULL,&m_CircleBitmap);
-		menu.SetMenuItemBitmaps(3,MF_BYPOSITION,NULL,&m_CircleBitmap);
-	}
+	
 	m_pTabCtrl=new CTabCtrl(GetDlgItem(IDC_TAB));
 	m_pListCtrl=new CListCtrlEx(GetDlgItem(IDC_FILELIST));
 	m_pStatusCtrl=new CStatusBarCtrl(GetDlgItem(IDC_STATUS));
@@ -357,6 +339,11 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
         m_NameDlg.InitDriveBox();
 
 
+	// Check default shortcut integrity
+#ifdef _DEBUG
+	CArrayFP<CShortcut*> aDefaultShortcuts;
+	ASSERT(CShortcut::GetDefaultShortcuts(aDefaultShortcuts,CShortcut::loadAll));
+#endif
 
 	// Set acceleration tables for dialogs and subdialogs
 	SetShortcuts();	
@@ -437,7 +424,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDC_RETURN:
 		if (GetFocus()==*m_pListCtrl)
 		{
-			OnMenuCommands(0);
+			OnExecuteFile(NULL);
 			break;
 		}
 	case IDC_OK:
@@ -617,7 +604,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		OnProperties();
 		break;
 	case IDM_DEFOPEN:
-		OnMenuCommands(0);
+		OnExecuteFile(NULL);
 		break;
 	case IDM_LOOKINNEWSELECTION:
 	case IDM_LOOKINREMOVESELECTION:
@@ -626,27 +613,30 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		return m_NameDlg.OnCommand(wID,wNotifyCode,hControl);
 	default:
 		// IDM_ should be in descending order
-		if (wID>=IDM_DEFSHORTCUTITEM && wID<IDM_DEFSHORTCUTITEM+m_aShortcuts.GetSize())
+		if (wID>=IDM_DEFSHORTCUTITEM && wID<IDM_DEFSHORTCUTITEM+m_aActiveShortcuts.GetSize())
 		{
-			CShortcut* pShortcut=m_aShortcuts[wID-IDM_DEFSHORTCUTITEM];
+			CShortcut** pShortcutList=m_aActiveShortcuts[wID-IDM_DEFSHORTCUTITEM];
 
-			// Checking Win key state
-			if ((GetKeyState(VK_LWIN)|GetKeyState(VK_RWIN)) & 0x8000)
+			while (*pShortcutList!=NULL)
 			{
-				if (!(pShortcut->m_bModifiers&CShortcut::ModifierWin))
-					break;
+				// Checking Win key state
+				if ((GetKeyState(VK_LWIN)|GetKeyState(VK_RWIN)) & 0x8000)
+				{
+					if (pShortcutList[0]->m_bModifiers&CShortcut::ModifierWin)
+						pShortcutList[0]->ExecuteAction();
+				}
+				else if (!(pShortcutList[0]->m_bModifiers&CShortcut::ModifierWin))
+					pShortcutList[0]->ExecuteAction();
+	
+				pShortcutList++;
 			}
-			else if (pShortcut->m_bModifiers&CShortcut::ModifierWin)
-				break;
-
-			pShortcut->ExecuteAction();
 		}
 		else if (wID>=IDM_DEFCOLSELITEM && wID<IDM_DEFCOLSELITEM+1000)
 			m_pListCtrl->ColumnSelectionMenuProc(wID,IDM_DEFCOLSELITEM);
 		else if (wID>=IDM_DEFSENDTOITEM && wID<IDM_DEFSENDTOITEM+1000)
 			OnSendToCommand(wID);
-		else if (wID>=IDM_DEFCONTEXTITEM && wID<IDM_DEFCONTEXTITEM+1000)
-			OnMenuCommands(wID);
+		else if (m_pActiveContextMenu!=NULL && wID>=IDM_DEFCONTEXTITEM && wID<IDM_DEFCONTEXTITEM+1000)
+			OnContextMenuCommands(wID);
 		else if (wID>=IDM_DEFUPDATEDBITEM && wID<IDM_DEFUPDATEDBITEM+1000)
 			GetLocateAppWnd()->SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
 		break;
@@ -1674,7 +1664,7 @@ void CLocateDlg::OnDestroy()
 
 
 	ChangeClipboardChain(*this,m_hNextClipboardViewer);
-	ClearMenuVariables();
+	
 
 	// Clearing accelerators
 	ClearShortcuts();
@@ -1698,8 +1688,12 @@ void CLocateDlg::OnDestroy()
 
 
 	// Freeing target paths in dwItemData
-	FreeSendToMenuItems(GetSubMenu(GetMenu(),0));
-	m_Menu.DestroyMenu();
+	ClearMenuVariables();
+	HMENU hOldMenu=GetMenu();
+	FreeSendToMenuItems(GetSubMenu(hOldMenu,0));
+	::DestroyMenu(hOldMenu);
+	m_Menu.DestroyMenu(); // Destroy submenu
+	
 
 	if (m_pListCtrl!=NULL)
 	{
@@ -1905,7 +1899,8 @@ void CLocateDlg::OnSize(UINT nType, int cx, int cy)
 			{
 				ChangeBackgroundOperationsPriority(FALSE);
 				//StartBackgroundOperations();
-				m_pBackgroundUpdater->StopWaiting();
+				if (m_pBackgroundUpdater!=NULL)
+					m_pBackgroundUpdater->StopWaiting();
 			}
 		}
 		SetControlPositions(nType,cx,cy);
@@ -2138,7 +2133,7 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 						}
 					}
 				}
-				delete[] pData;
+				free(pData);
 			}
 		}
 		else if (wParam==0x77)
@@ -2170,12 +2165,13 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 	switch (m_nResultAction)
 	{
 	case CAction::Execute:
+		OnExecuteFile((LPCSTR)pExtraInfo);
 		break;
 	case CAction::Copy:
-		OnCopy(TRUE);
+		OnCopy(FALSE);
 		break;
 	case CAction::Cut:
-		OnCopy(FALSE);
+		OnCopy(TRUE);
 		break;
 	case CAction::MoveToRecybleBin:
 		OnDelete(Recycle);
@@ -2184,8 +2180,23 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 		OnDelete(Delete);
 		break;
 	case CAction::OpenContextMenu:
-		
-		break;
+	case CAction::OpenContextMenuSimple:
+		{
+			m_hActivePopupMenu=CreateFileContextMenu(NULL,m_nResultAction==CAction::OpenContextMenuSimple);
+			if (pExtraInfo!=NULL)
+			{
+	            TrackPopupMenu(m_hActivePopupMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,
+					((POINT*)pExtraInfo)->x,((POINT*)pExtraInfo)->y,0,*this,NULL);	
+			}
+			else
+			{
+				POINT pos;
+				GetCursorPos(&pos);
+				TrackPopupMenu(m_hActivePopupMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,
+					pos.x,pos.y,0,*this,NULL);	
+			}
+			break;
+		}
 	case CAction::OpenFolder:
 		OnOpenFolder(FALSE);
 		break;
@@ -2196,6 +2207,18 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 		OnProperties();
 		break;
 	case CAction::ShowSpecialMenu:
+		if (pExtraInfo!=NULL)
+		{
+			TrackPopupMenu(::GetSubMenu(m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),SUBMENU_SPECIALMENU),TPM_LEFTALIGN|TPM_RIGHTBUTTON,
+				((POINT*)pExtraInfo)->x,((POINT*)pExtraInfo)->y,0,*this,NULL);	
+		}
+		else
+		{
+			POINT pos;
+			GetCursorPos(&pos);
+			TrackPopupMenu(::GetSubMenu(m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),SUBMENU_SPECIALMENU),TPM_LEFTALIGN|TPM_RIGHTBUTTON,
+				pos.x,pos.y,0,*this,NULL);	
+		}
 		break;
 	}
 }
@@ -2249,13 +2272,16 @@ void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 		m_pListCtrl->GetItemRect(iItem,&rect,LVIR_BOUNDS);
 		if (rect.left<=pt.x && rect.right>=pt.y && rect.top<=pt.y && rect.bottom>=pt.y)
 		{
-			m_hActivePopupMenu=CreateFileContextMenu(NULL);
-			TrackPopupMenu(m_hActivePopupMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,pos.x,pos.y,0,*this,NULL);	
+			// Todo: insert correct action here
+			OnExecuteResultAction(CAction::OpenContextMenu,(void*)&pos);
+			
 			bFound=TRUE;
 			break;
 		}
 		iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
 	}
+
+
 	if (!bFound)
 	{
 		HWND hHeader=m_pListCtrl->GetHeader();
@@ -2264,6 +2290,8 @@ void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 
 		if (rc.IsPtInRect(pos))
 		{
+			// Show context menu for header
+
 			HMENU hColMenu=m_pListCtrl->CreateColumnSelectionMenu(IDM_DEFCOLSELITEM);
 			CString text(IDS_SELECTDETAILS);
 			
@@ -2639,10 +2667,16 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 				break;
 			CWaitCursor wait;
 			m_ClickWait=TRUE;
-			OnMenuCommands(0);
+
+			// TODO: Insert correct action
+			OnExecuteResultAction(CAction::Execute,NULL);
+
 			SetTimer(ID_CLICKWAIT,700,NULL);
 			break;
 		}
+	/*case NM_RCLICK: // WM_CONTEXTMENU handles this
+		OnExecuteResultAction(CAction::OpenContextMenu,NULL);
+		break;*/
 	case LVN_COLUMNCLICK:
 		SortItems(DetailType(m_pListCtrl->GetColumnIDFromSubItem(pNm->iSubItem)));
 		break;
@@ -3046,7 +3080,67 @@ void CLocateDlg::DisableItems()
 	m_AdvancedDlg.EnableItems(FALSE);
 }
 
-void CLocateDlg::OnMenuCommands(WORD wID)
+void CLocateDlg::OnContextMenuCommands(WORD wID)
+{
+	CWaitCursor wait;
+	if (m_pListCtrl->GetSelectedCount()==0)
+		return;
+
+	ASSERT(wID>=IDM_DEFCONTEXTITEM && m_pActiveContextMenu!=NULL);
+
+	CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_pListCtrl->GetNextItem(-1,LVNI_SELECTED));
+	
+	if (!pItem->IsFolder() && !CFile::IsFile(pItem->GetPath()))
+		return;
+	if (pItem->IsFolder() && !CFile::IsDirectory(pItem->GetPath()))
+		return;
+
+	
+	char szName[100];
+	m_pActiveContextMenu->pContextMenu->GetCommandString(wID-IDM_DEFCONTEXTITEM,GCS_VERBA,NULL,
+		szName,100);
+	DebugFormatMessage("Running context verb: %s",szName);
+	
+	// Overriding these command, works better
+	if (strcmp(szName,"copy")==0)
+	{
+		OnCopy(FALSE);
+		ClearMenuVariables();
+		return;
+	}
+	else if (strcmp(szName,"cut")==0)
+	{
+		OnCopy(TRUE);
+		ClearMenuVariables();
+		return;
+	}
+	else if (strcmp(szName,"link")==0)
+	{
+		OnCreateShortcut();
+		ClearMenuVariables();
+		return;
+	}
+	else if (strcmp(szName,"delete")==0)
+	{
+		OnDelete();
+		ClearMenuVariables();
+		return;
+	}
+	
+	CMINVOKECOMMANDINFO cii;
+	cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
+	cii.fMask=0;
+	cii.hwnd=*this;
+	cii.lpVerb=(LPCSTR)MAKELONG(wID-IDM_DEFCONTEXTITEM,0);
+	cii.lpParameters=NULL;
+	cii.lpDirectory=pItem->GetParent();
+	cii.nShow=SW_SHOWDEFAULT;
+	m_pActiveContextMenu->pContextMenu->InvokeCommand(&cii);
+	ClearMenuVariables();
+
+}
+
+void CLocateDlg::OnExecuteFile(LPCSTR szVerb)
 {
 	CWaitCursor wait;
 	if (m_pListCtrl->GetSelectedCount()==0)
@@ -3059,94 +3153,44 @@ void CLocateDlg::OnMenuCommands(WORD wID)
 	if (pItem->IsFolder() && !CFile::IsDirectory(pItem->GetPath()))
 		return;
 
-	if (wID>=IDM_DEFCONTEXTITEM && m_pActiveContextMenu!=NULL)
+	int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+	while (iItem!=-1)
 	{
-		char szName[100];
-		m_pActiveContextMenu->pContextMenu->GetCommandString(wID-IDM_DEFCONTEXTITEM,GCS_VERBA,NULL,
-			szName,100);
-		DebugFormatMessage("Running context verb: %s",szName);
-		
-		// Overriding these command, works better
-		if (strcmp(szName,"copy")==0)
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
+		if (pItem->IsFolder())
+			OpenFolder(pItem->GetPath());
+		else if (int(ShellExecute(*this,szVerb,pItem->GetPath(),NULL,NULL,SW_SHOW))<=32)
 		{
-			OnCopy(FALSE);
-			ClearMenuVariables();
-			return;
-		}
-		else if (strcmp(szName,"cut")==0)
-		{
-			OnCopy(TRUE);
-			ClearMenuVariables();
-			return;
-		}
-		else if (strcmp(szName,"link")==0)
-		{
-			OnCreateShortcut();
-			ClearMenuVariables();
-			return;
-		}
-		else if (strcmp(szName,"delete")==0)
-		{
-			OnDelete();
-			ClearMenuVariables();
-			return;
-		}
-		
-		CMINVOKECOMMANDINFO cii;
-		cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
-		cii.fMask=0;
-		cii.hwnd=*this;
-		cii.lpVerb=(LPCSTR)MAKELONG(wID-IDM_DEFCONTEXTITEM,0);
-		cii.lpParameters=NULL;
-		cii.lpDirectory=pItem->GetParent();
-		cii.nShow=SW_SHOWDEFAULT;
-		m_pActiveContextMenu->pContextMenu->InvokeCommand(&cii);
-		ClearMenuVariables();
-	}
-	else if (wID==0)
-	{
-		// Executing default item
-
-		int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
-		while (iItem!=-1)
-		{
-			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-			if (pItem->IsFolder())
-				OpenFolder(pItem->GetPath());
-			else if (int(ShellExecute(*this,NULL,pItem->GetPath(),NULL,NULL,SW_SHOW))<=32)
+			CArrayFP<CString*> aFile;
+			aFile.Add(new CString(pItem->GetPath()));
+			ContextMenuStuff* pContextMenuStuff=GetContextMenuForFiles(pItem->GetParent(),aFile);
+			if (pContextMenuStuff!=NULL)
 			{
-				CArrayFP<CString*> aFile;
-				aFile.Add(new CString(pItem->GetPath()));
-				ContextMenuStuff* pContextMenuStuff=GetContextMenuForFiles(pItem->GetParent(),aFile);
-				if (pContextMenuStuff!=NULL)
-				{
-					CMINVOKECOMMANDINFO cii;
-					cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
-					cii.fMask=0;
-					cii.hwnd=*this;
-					cii.lpVerb=0;
-					cii.lpParameters=NULL;
-					cii.lpDirectory=NULL;
-					cii.nShow=SW_SHOWDEFAULT;
-					HMENU hMenu=CreatePopupMenu();
-					pContextMenuStuff->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
-					pContextMenuStuff->pContextMenu->InvokeCommand(&cii);
-					
-					delete pContextMenuStuff;
-					DestroyMenu(hMenu);
-				}
+				CMINVOKECOMMANDINFO cii;
+				cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
+				cii.fMask=0;
+				cii.hwnd=*this;
+				cii.lpVerb=szVerb;
+				cii.lpParameters=NULL;
+				cii.lpDirectory=NULL;
+				cii.nShow=SW_SHOWDEFAULT;
+				HMENU hMenu=CreatePopupMenu();
+				pContextMenuStuff->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
+				pContextMenuStuff->pContextMenu->InvokeCommand(&cii);
+				
+				delete pContextMenuStuff;
+				DestroyMenu(hMenu);
 			}
-			iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
 		}
+		iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
 	}
-	else
-		DebugFormatMessage("CLocateDlg::OnMenuCommands(): wID is invalid=%d",wID);
-
 }
 
 void CLocateDlg::OnProperties()
 {
-	
+	if (m_pListCtrl->GetSelectedCount()==0)
+		return;
+
 	CWaitCursor wait;
 	if (m_pActiveContextMenu!=NULL)
 	{
@@ -3159,7 +3203,59 @@ void CLocateDlg::OnProperties()
 		cii.lpDirectory=NULL;
 		cii.nShow=SW_SHOWDEFAULT;
 		m_pActiveContextMenu->pContextMenu->InvokeCommand(&cii);
+		return;
 	}
+	
+	CArrayFP<CString*> aFiles;
+	CArray<LPCSTR> aParents;
+	
+	aParents;
+	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+	while (nItem!=-1)
+	{
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+        if (pItem!=NULL)
+		{
+			int i;          
+			aFiles.Add(new CString(pItem->GetPath()));		
+		
+			for (i=0;i<aParents.GetSize();i++)
+			{
+				if (strcmp(aParents[i],pItem->GetParent())==0)
+					break;
+			}
+
+			if (aParents.GetSize()==i)
+				aParents.Add(pItem->GetParent());
+		}
+
+		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+	}
+
+	
+	ContextMenuStuff* pContextMenuStuff=GetContextMenuForFiles(aParents[0],aFiles);
+	if (pContextMenuStuff!=NULL)
+	{
+		CMINVOKECOMMANDINFO cii;
+		cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
+		cii.fMask=0;
+		cii.hwnd=*this;
+		cii.lpVerb="properties";
+		cii.lpParameters=NULL;
+		cii.lpDirectory=NULL;
+		cii.nShow=SW_SHOWDEFAULT;
+		HMENU hMenu=CreatePopupMenu();
+		pContextMenuStuff->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
+		pContextMenuStuff->pContextMenu->InvokeCommand(&cii);
+		
+		delete pContextMenuStuff;
+		DestroyMenu(hMenu);
+		return;
+	}
+
+	
+
+	
 }
 
 void CLocateDlg::OnAutoArrange()
@@ -3357,8 +3453,22 @@ BOOL CLocateDlg::CheckClipboard()
 	
 	OpenClipboard();
 	
-	if (IsClipboardFormatAvailable(nPreferredDropEffectFormat))
+	while (IsClipboardFormatAvailable(nPreferredDropEffectFormat))
 	{
+		HANDLE hData=GetClipboardData(nPreferredDropEffectFormat);
+		if (hData==NULL)
+			break;
+
+		BYTE* pData=(BYTE*)GlobalLock(hData);
+		if (pData==NULL)
+			break;
+        
+		BYTE bDropEffect=*pData;
+        GlobalUnlock(hData);        		
+
+		if (!(bDropEffect&DROPEFFECT_MOVE))
+			break;
+
 		if (IsClipboardFormatAvailable(CF_HDROP))
 		{
 			HANDLE hData=GetClipboardData(CF_HDROP);
@@ -3375,6 +3485,9 @@ BOOL CLocateDlg::CheckClipboard()
 				}
 			}
 		}
+
+
+		break;
 	}
 	CloseClipboard();
 	
@@ -3464,36 +3577,49 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining)
 	CWaitCursor wait;
 	
 
-	// Retrieving folders
-	CArray<LPCSTR> aFolders;
-	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED|LVNI_ALL);
-	while (nItem!=-1)
+	if (bContaining)
 	{
-		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
-		
-		if (bContaining || pItem->IsFolder())
+        // Retrieving folders
+		CArray<LPCSTR> aFolders;
+		int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+		while (nItem!=-1)
 		{
-			LPCSTR pPath=bContaining?pItem->GetParent():pItem->GetPath();
+			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
 			
-
-			BOOL bFound=FALSE;
-			for (int i=0;i<aFolders.GetSize();i++)
+			if (pItem!=NULL)
 			{
-				if (strcmp(aFolders[i],pPath)==0)
+				BOOL bFound=FALSE;
+				for (int i=0;i<aFolders.GetSize();i++)
 				{
-					bFound=TRUE;
-					break;
+					if (strcmp(aFolders[i],pItem->GetParent())==0)
+					{
+						bFound=TRUE;
+						break;
+					}
 				}
+				if (!bFound)
+					aFolders.Add(pItem->GetParent());
 			}
-			if (!bFound)
-				aFolders.Add(pPath);
+	        
+			nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
 		}
-        
-		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED|LVNI_ALL);
-	}
 
-	for (int i=0;i<aFolders.GetSize();i++)
-		OpenFolder(aFolders[i]);
+		for (int i=0;i<aFolders.GetSize();i++)
+			OpenFolder(aFolders[i]);
+	}
+	else
+	{
+		int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+		while (nItem!=-1)
+		{
+			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+			
+			if (pItem!=NULL && pItem->IsFolder())
+				OpenFolder(pItem->GetPath());
+			
+			nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+		}
+	}
 }
 
 void CLocateDlg::OpenFolder(LPCSTR szFolder)
@@ -3734,7 +3860,7 @@ void CLocateDlg::OnInitFileMenu(HMENU hPopupMenu)
 	{
 		EnableMenuItem(hPopupMenu,IDM_CREATESHORTCUT,MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hPopupMenu,IDM_DELETE,MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hPopupMenu,IDM_PROPERTIES,m_pActiveContextMenu!=NULL?MF_BYCOMMAND|MF_ENABLED:MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(hPopupMenu,IDM_PROPERTIES,MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hPopupMenu,IDM_OPENCONTAININGFOLDER,MF_BYCOMMAND|MF_ENABLED);
 	}
 	else
@@ -3876,7 +4002,7 @@ BOOL CLocateDlg::InsertMenuItemsFromTemplate(HMENU hMenu,HMENU hTemplate,UINT uS
 	parent=szPath;
 }*/
 
-HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
+HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,BOOL bSimple)
 {
 	ClearMenuVariables();
 
@@ -3898,112 +4024,115 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu)
 		InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_FILEMENU),0);
 	}
 	
-	// Creating context menu for file items
-	CArrayFP<CString*> aFiles;
-	CString sParent; // For checking that are files in same folder
-	
-	// Checking first item
-	int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
-	CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-	if (!pItem->IsItemShortcut())
+	if (!bSimple)
 	{
-		sParent=pItem->GetParent();
-		//GetFirstParent(sParent,pItem->GetParent());
-		aFiles.Add(new CString(pItem->GetPath()));
-	}
-	else
-	{
-		// If item is shortcut, check parent
-	    CString* pStr=new CString;
-		GetShortcutTarget(pItem->GetPath(),pStr->GetBuffer(MAX_PATH));
-		pStr->FreeExtra();
-        
-		sParent.Copy(*pStr,pStr->FindLast('\\'));
-        //GetFirstParent(sParent,*pStr);		
+		// Creating context menu for file items
+		CArrayFP<CString*> aFiles;
+		CString sParent; // For checking that are files in same folder
 		
-		aFiles.Add(pStr);
-	}
-	
-	// Checking other items
-	iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
-	while (iItem!=-1)
-	{
-		pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-		if (pItem->IsItemShortcut())
+		// Checking first item
+		int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
+		if (!pItem->IsItemShortcut())
+		{
+			sParent=pItem->GetParent();
+			//GetFirstParent(sParent,pItem->GetParent());
+			aFiles.Add(new CString(pItem->GetPath()));
+		}
+		else
 		{
 			// If item is shortcut, check parent
 			CString* pStr=new CString;
-			GetShortcutTarget(pItem->GetPath(),pStr->GetBuffer(_MAX_PATH));
-
-			if (strncmp(sParent,*pStr,pStr->FindLast('\\'))!=0)
-			{
-				delete pStr;
-				break;
-			}
+			GetShortcutTarget(pItem->GetPath(),pStr->GetBuffer(MAX_PATH));
 			pStr->FreeExtra();
+	        
+			sParent.Copy(*pStr,pStr->FindLast('\\'));
+			//GetFirstParent(sParent,*pStr);		
+			
 			aFiles.Add(pStr);
 		}
-		else
-		{
-			// If parent is same, break
-			if (sParent.Compare(pItem->GetParent())!=0)
-				break;
-			aFiles.Add(new CString(pItem->GetPath()));
-		}
+		
+		// Checking other items
 		iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
-	}
-
-	// This creates pointers to IContextMenu interfaces
-	// This is possible, if files are in same folder, 
-	if (iItem==-1)
-		m_pActiveContextMenu=GetContextMenuForFiles(sParent,aFiles);
-
-
-
-	if (m_pActiveContextMenu!=NULL)
-	{
-		// IContextMenu interface has created succesfully,
-		// so they can insert their own menu items
-
-		HRESULT hRes;
-		if (hFileMenu==NULL)
+		while (iItem!=-1)
 		{
-			hFileMenu=CreatePopupMenu();
-
-			if (HIBYTE(GetKeyState(VK_SHIFT)))
+			pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
+			if (pItem->IsItemShortcut())
 			{
-				//hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-				//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY|CMF_EXTENDEDVERBS);
-				hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
-					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_EXTENDEDVERBS);
+				// If item is shortcut, check parent
+				CString* pStr=new CString;
+				GetShortcutTarget(pItem->GetPath(),pStr->GetBuffer(_MAX_PATH));
 
+				if (strncmp(sParent,*pStr,pStr->FindLast('\\'))!=0)
+				{
+					delete pStr;
+					break;
+				}
+				pStr->FreeExtra();
+				aFiles.Add(pStr);
 			}
 			else
 			{
-				//hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-				//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY);
-				hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
-					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE);
+				// If parent is same, break
+				if (sParent.Compare(pItem->GetParent())!=0)
+					break;
+				aFiles.Add(new CString(pItem->GetPath()));
 			}
-		}
-		else
-		{
-			hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
-				IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_VERBSONLY);
-			//hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
-			//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL);
-		}
-		if (SUCCEEDED(hRes))
-		{
-			InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
-			return hFileMenu;
+			iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
 		}
 
-		// Didn't succee, so freeing pointer
-		delete m_pActiveContextMenu;
-		m_pActiveContextMenu=NULL;
+		// This creates pointers to IContextMenu interfaces
+		// This is possible, if files are in same folder, 
+		if (iItem==-1)
+			m_pActiveContextMenu=GetContextMenuForFiles(sParent,aFiles);
+
+
+
+		if (m_pActiveContextMenu!=NULL)
+		{
+			// IContextMenu interface has created succesfully,
+			// so they can insert their own menu items
+
+			HRESULT hRes;
+			if (hFileMenu==NULL)
+			{
+				hFileMenu=CreatePopupMenu();
+
+				if (HIBYTE(GetKeyState(VK_SHIFT)))
+				{
+					//hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
+					//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY|CMF_EXTENDEDVERBS);
+					hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
+						IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_EXTENDEDVERBS);
+
+				}
+				else
+				{
+					//hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
+					//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY);
+					hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
+						IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE);
+				}
+			}
+			else
+			{
+				hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
+					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_VERBSONLY);
+				//hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
+				//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL);
+			}
+			if (SUCCEEDED(hRes))
+			{
+				InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
+				return hFileMenu;
+			}
+
+			// Didn't succee, so freeing pointer
+			delete m_pActiveContextMenu;
+			m_pActiveContextMenu=NULL;
+		}
 	}
-	
+
 	if (hFileMenu==NULL)
 	{
 		hFileMenu=CreatePopupMenu();
@@ -5015,6 +5144,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	CRegKey RegKey;
 	CComboBoxEx LookIn(GetDlgItem(IDC_LOOKIN));
 	CString temp;
+	CLocateDlg* pLocateDlg=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate;
 
 	DebugFormatMessage("CNameDlg::InitDriveBox BEGIN, items in list %d",LookIn.GetCount());
 
@@ -5185,9 +5315,9 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	}
 
 	
-	if ((GetLocateDlg()->GetFlags()&CLocateDlg::fgNameRootFlag)!=CLocateDlg::fgNameDontAddRoots)
+	if ((pLocateDlg->GetFlags()&CLocateDlg::fgNameRootFlag)!=CLocateDlg::fgNameDontAddRoots)
 	{
-		if ((GetLocateDlg()->GetFlags()&CLocateDlg::fgNameRootFlag)==CLocateDlg::fgNameAddEnabledRoots)
+		if ((pLocateDlg->GetFlags()&CLocateDlg::fgNameRootFlag)==CLocateDlg::fgNameAddEnabledRoots)
 		{
 			// Currently aRoots contains all roots
 			aRoots.RemoveAll();
@@ -5835,7 +5965,7 @@ void CLocateDlg::OnPresets()
 	int nPresets=0;
 
 
-	CLocateDlg::InsertMenuItemsFromTemplate(hMenu,GetLocateDlg()->m_Menu.GetSubMenu(SUBMENU_PRESETSELECTION),0);
+	CLocateDlg::InsertMenuItemsFromTemplate(hMenu,m_Menu.GetSubMenu(SUBMENU_PRESETSELECTION),0);
 	
 	
 	CRegKey RegKey;
@@ -6029,6 +6159,45 @@ void CLocateDlg::OnPresetsSelection(int nPreset)
 
 }
 
+void CLocateDlg::SetMenus()
+{
+	HMENU hOldMenu=GetMenu();
+	HMENU hMenu=::LoadMenu(IDR_MAINMENU);
+    	
+	ClearMenuVariables();
+	FreeSendToMenuItems(GetSubMenu(GetMenu(),0));
+	
+
+	// Load popup menus
+	if ((HMENU)m_Menu!=NULL)
+		m_Menu.DestroyMenu();
+	m_Menu.LoadMenu(IDR_POPUPMENU);
+	ASSERT(::GetSubMenu(m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),SUBMENU_SPECIALMENU)!=NULL);
+
+
+	HMENU hSubMenu=GetSubMenu(hMenu,2);
+	if (GetLocateApp()->m_wComCtrlVersion<0x0600) // Disabling features
+	{
+		::EnableMenuItem(hSubMenu,IDM_ALIGNTOGRID,MF_GRAYED|MF_BYCOMMAND);
+		::EnableMenuItem(hSubMenu,IDM_ALIGNTOGRID,MF_GRAYED|MF_BYCOMMAND);
+	}
+
+	if (hSubMenu!=NULL)
+	{
+		::SetMenuItemBitmaps(hSubMenu,0,MF_BYPOSITION,NULL,m_CircleBitmap);
+		::SetMenuItemBitmaps(hSubMenu,1,MF_BYPOSITION,NULL,m_CircleBitmap);
+		::SetMenuItemBitmaps(hSubMenu,2,MF_BYPOSITION,NULL,m_CircleBitmap);
+		::SetMenuItemBitmaps(hSubMenu,3,MF_BYPOSITION,NULL,m_CircleBitmap);
+	}
+
+	CShortcut::ModifyMenus(m_aShortcuts,hMenu,m_Menu);
+
+	SetMenu(hMenu);
+	if (hOldMenu!=NULL)
+		DestroyMenu(hOldMenu);
+}
+	
+
 void CLocateDlg::SetShortcuts()
 {
 	CLocateDlgThread* pLocateDlgThread=GetLocateAppWnd()->m_pLocateDlgThread;
@@ -6044,7 +6213,10 @@ void CLocateDlg::SetShortcuts()
 	if (!CShortcut::LoadShortcuts(m_aShortcuts,CShortcut::loadLocal))
 	{
         if (!CShortcut::GetDefaultShortcuts(m_aShortcuts,CShortcut::loadLocal))
+		{
+			SetMenus();
 			return;
+		}
 	}
 
 	HWND hDialogs[]={*this,m_NameDlg,m_SizeDateDlg,m_AdvancedDlg,NULL};
@@ -6073,25 +6245,56 @@ void CLocateDlg::SetShortcuts()
 	{
 		ASSERT(m_pListCtrl!=NULL);
 
-
 		ACCEL* pAccels=new ACCEL[nResultListAccels];
-		int j=0;
+		
+
+		int nAccels=0;
 		for (int i=0;i<m_aShortcuts.GetSize();i++)
 		{
 			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpResultList))
 				continue;
 			
-			pAccels[j].key=m_aShortcuts[i]->m_bVirtualKey;
-			pAccels[j].fVirt=FNOINVERT|FVIRTKEY;
+			pAccels[nAccels].fVirt=FNOINVERT|FVIRTKEY;
 			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
-				pAccels[j].fVirt|=FALT;
+				pAccels[nAccels].fVirt|=FALT;
 			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
-				pAccels[j].fVirt|=FCONTROL;
+				pAccels[nAccels].fVirt|=FCONTROL;
 			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
-				pAccels[j].fVirt|=FSHIFT;
-			pAccels[j].cmd=IDM_DEFSHORTCUTITEM+i;
+				pAccels[nAccels].fVirt|=FSHIFT;
 
-			j++;
+			// Check whether accel already listed
+			for (int k=0;k<nAccels;k++)
+			{
+				if (pAccels[k].key==m_aShortcuts[i]->m_bVirtualKey &&
+					pAccels[k].fVirt==pAccels[nAccels].fVirt)
+				{
+					UINT nAlreadyInList;
+					for (nAlreadyInList=0;m_aActiveShortcuts[k][nAlreadyInList]!=NULL;nAlreadyInList++);
+
+                    CShortcut** pList=new CShortcut*[nAlreadyInList+2];
+					CopyMemory(pList,m_aActiveShortcuts[k],sizeof(CShortcut*)*nAlreadyInList);
+					pList[nAlreadyInList++]=m_aShortcuts[i];
+					pList[nAlreadyInList]=NULL;
+
+					delete[] m_aActiveShortcuts[k];
+					m_aActiveShortcuts[k]=pList;
+
+					continue;
+				}
+			}
+
+
+			// Registering new active shortcut
+			CShortcut** pList=new CShortcut*[2];
+			pList[0]=m_aShortcuts[i];
+			pList[1]=NULL;
+
+			pAccels[nAccels].key=m_aShortcuts[i]->m_bVirtualKey;
+			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+m_aActiveShortcuts.GetSize();
+			m_aActiveShortcuts.Add(pList);
+			
+
+			nAccels++;
 		}
 		HACCEL hAccel=CreateAcceleratorTable(pAccels,nResultListAccels);
 		pLocateDlgThread->SetAccelTableForWindow(*m_pListCtrl,hAccel,FALSE,*this);
@@ -6104,23 +6307,57 @@ void CLocateDlg::SetShortcuts()
 		ASSERT((HWND)m_NameDlg!=NULL);
 
 		ACCEL* pAccels=new ACCEL[nNameDlgAccels];
-		int j=0;
+		int nFirstActive=m_aActiveShortcuts.GetSize();
+
+		int nAccels=0;
 		for (int i=0;i<m_aShortcuts.GetSize();i++)
 		{
 			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpNameTab))
 				continue;
-			
-			pAccels[j].key=m_aShortcuts[i]->m_bVirtualKey;
-			pAccels[j].fVirt=FNOINVERT|FVIRTKEY;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
-				pAccels[j].fVirt|=FALT;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
-				pAccels[j].fVirt|=FCONTROL;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
-				pAccels[j].fVirt|=FSHIFT;
-			pAccels[j].cmd=IDM_DEFSHORTCUTITEM+i;
 
-			j++;
+			
+			pAccels[nAccels].fVirt=FNOINVERT|FVIRTKEY;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
+				pAccels[nAccels].fVirt|=FALT;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
+				pAccels[nAccels].fVirt|=FCONTROL;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
+				pAccels[nAccels].fVirt|=FSHIFT;
+			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+i;
+			
+			// Check whether accel already listed
+			for (int k=0;k<nAccels;k++)
+			{
+				if (pAccels[k].key==m_aShortcuts[i]->m_bVirtualKey &&
+					pAccels[k].fVirt==pAccels[nAccels].fVirt)
+				{
+					UINT nAlreadyInList;
+					for (nAlreadyInList=0;m_aActiveShortcuts[nFirstActive+k][nAlreadyInList]!=NULL;nAlreadyInList++);
+
+                    CShortcut** pList=new CShortcut*[nAlreadyInList+2];
+					CopyMemory(pList,m_aActiveShortcuts[nFirstActive+k],sizeof(CShortcut*)*nAlreadyInList);
+					pList[nAlreadyInList++]=m_aShortcuts[i];
+					pList[nAlreadyInList]=NULL;
+
+					delete[] m_aActiveShortcuts[nFirstActive+k];
+					m_aActiveShortcuts[nFirstActive+k]=pList;
+
+					continue;
+				}
+			}
+
+
+			// Registering new active shortcut
+			CShortcut** pList=new CShortcut*[2];
+			pList[0]=m_aShortcuts[i];
+			pList[1]=NULL;
+
+			pAccels[nAccels].key=m_aShortcuts[i]->m_bVirtualKey;
+			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+m_aActiveShortcuts.GetSize();
+			m_aActiveShortcuts.Add(pList);
+			
+
+			nAccels++;
 		}
 		HACCEL hAccel=CreateAcceleratorTable(pAccels,nNameDlgAccels);
 		pLocateDlgThread->SetAccelTableForWindow(m_NameDlg,hAccel,FALSE,*this);
@@ -6134,23 +6371,58 @@ void CLocateDlg::SetShortcuts()
 		ASSERT((HWND)m_SizeDateDlg!=NULL);
 
 		ACCEL* pAccels=new ACCEL[nSizeDateDlgAccels];
-		int j=0;
+
+		int nFirstActive=m_aActiveShortcuts.GetSize();
+
+		int nAccels=0;
 		for (int i=0;i<m_aShortcuts.GetSize();i++)
 		{
 			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpSizeDateTab))
 				continue;
-			
-			pAccels[j].key=m_aShortcuts[i]->m_bVirtualKey;
-			pAccels[j].fVirt=FNOINVERT|FVIRTKEY;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
-				pAccels[j].fVirt|=FALT;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
-				pAccels[j].fVirt|=FCONTROL;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
-				pAccels[j].fVirt|=FSHIFT;
-			pAccels[j].cmd=IDM_DEFSHORTCUTITEM+i;
 
-			j++;
+			
+			pAccels[nAccels].fVirt=FNOINVERT|FVIRTKEY;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
+				pAccels[nAccels].fVirt|=FALT;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
+				pAccels[nAccels].fVirt|=FCONTROL;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
+				pAccels[nAccels].fVirt|=FSHIFT;
+			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+i;
+			
+			// Check whether accel already listed
+			for (int k=0;k<nAccels;k++)
+			{
+				if (pAccels[k].key==m_aShortcuts[i]->m_bVirtualKey &&
+					pAccels[k].fVirt==pAccels[nAccels].fVirt)
+				{
+					UINT nAlreadyInList;
+					for (nAlreadyInList=0;m_aActiveShortcuts[nFirstActive+k][nAlreadyInList]!=NULL;nAlreadyInList++);
+
+                    CShortcut** pList=new CShortcut*[nAlreadyInList+2];
+					CopyMemory(pList,m_aActiveShortcuts[nFirstActive+k],sizeof(CShortcut*)*nAlreadyInList);
+					pList[nAlreadyInList++]=m_aShortcuts[i];
+					pList[nAlreadyInList]=NULL;
+
+					delete[] m_aActiveShortcuts[nFirstActive+k];
+					m_aActiveShortcuts[nFirstActive+k]=pList;
+
+					continue;
+				}
+			}
+
+
+			// Registering new active shortcut
+			CShortcut** pList=new CShortcut*[2];
+			pList[0]=m_aShortcuts[i];
+			pList[1]=NULL;
+
+			pAccels[nAccels].key=m_aShortcuts[i]->m_bVirtualKey;
+			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+m_aActiveShortcuts.GetSize();
+			m_aActiveShortcuts.Add(pList);
+			
+
+			nAccels++;
 		}
 		HACCEL hAccel=CreateAcceleratorTable(pAccels,nSizeDateDlgAccels);
 		pLocateDlgThread->SetAccelTableForWindow(m_SizeDateDlg,hAccel,FALSE,*this);
@@ -6164,23 +6436,59 @@ void CLocateDlg::SetShortcuts()
 		ASSERT((HWND)m_AdvancedDlg!=NULL);
 
 		ACCEL* pAccels=new ACCEL[nAdvancedDlgAccels];
-		int j=0;
+
+		int nFirstActive=m_aActiveShortcuts.GetSize();
+
+
+		int nAccels=0;
 		for (int i=0;i<m_aShortcuts.GetSize();i++)
 		{
 			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpAdvancedTab))
 				continue;
-			
-			pAccels[j].key=m_aShortcuts[i]->m_bVirtualKey;
-			pAccels[j].fVirt=FNOINVERT|FVIRTKEY;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
-				pAccels[j].fVirt|=FALT;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
-				pAccels[j].fVirt|=FCONTROL;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
-				pAccels[j].fVirt|=FSHIFT;
-			pAccels[j].cmd=IDM_DEFSHORTCUTITEM+i;
 
-			j++;
+			
+			pAccels[nAccels].fVirt=FNOINVERT|FVIRTKEY;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
+				pAccels[nAccels].fVirt|=FALT;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
+				pAccels[nAccels].fVirt|=FCONTROL;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
+				pAccels[nAccels].fVirt|=FSHIFT;
+			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+i;
+			
+			// Check whether accel already listed
+			for (int k=0;k<nAccels;k++)
+			{
+				if (pAccels[k].key==m_aShortcuts[i]->m_bVirtualKey &&
+					pAccels[k].fVirt==pAccels[nAccels].fVirt)
+				{
+					UINT nAlreadyInList;
+					for (nAlreadyInList=0;m_aActiveShortcuts[nFirstActive+k][nAlreadyInList]!=NULL;nAlreadyInList++);
+
+                    CShortcut** pList=new CShortcut*[nAlreadyInList+2];
+					CopyMemory(pList,m_aActiveShortcuts[nFirstActive+k],sizeof(CShortcut*)*nAlreadyInList);
+					pList[nAlreadyInList++]=m_aShortcuts[i];
+					pList[nAlreadyInList]=NULL;
+
+					delete[] m_aActiveShortcuts[nFirstActive+k];
+					m_aActiveShortcuts[nFirstActive+k]=pList;
+
+					continue;
+				}
+			}
+
+
+			// Registering new active shortcut
+			CShortcut** pList=new CShortcut*[2];
+			pList[0]=m_aShortcuts[i];
+			pList[1]=NULL;
+
+			pAccels[nAccels].key=m_aShortcuts[i]->m_bVirtualKey;
+			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+m_aActiveShortcuts.GetSize();
+			m_aActiveShortcuts.Add(pList);
+			
+
+			nAccels++;
 		}
 		HACCEL hAccel=CreateAcceleratorTable(pAccels,nAdvancedDlgAccels);
 		pLocateDlgThread->SetAccelTableForWindow(m_AdvancedDlg,hAccel,FALSE,*this);
@@ -6192,36 +6500,67 @@ void CLocateDlg::SetShortcuts()
 	if (nOtherAccels>0)
 	{
 		ACCEL* pAccels=new ACCEL[nOtherAccels];
-		int j=0;
+
+		int nFirstActive=m_aActiveShortcuts.GetSize();
+
+		int nAccels=0;
 		for (int i=0;i<m_aShortcuts.GetSize();i++)
 		{
 			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpElsewhere))
 				continue;
-			
-			pAccels[j].key=m_aShortcuts[i]->m_bVirtualKey;
-			pAccels[j].fVirt=FNOINVERT|FVIRTKEY;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
-				pAccels[j].fVirt|=FALT;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
-				pAccels[j].fVirt|=FCONTROL;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
-				pAccels[j].fVirt|=FSHIFT;
-			pAccels[j].cmd=IDM_DEFSHORTCUTITEM+i;
 
-			j++;
+			
+			pAccels[nAccels].fVirt=FNOINVERT|FVIRTKEY;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
+				pAccels[nAccels].fVirt|=FALT;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
+				pAccels[nAccels].fVirt|=FCONTROL;
+			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
+				pAccels[nAccels].fVirt|=FSHIFT;
+			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+i;
+			
+			// Check whether accel already listed
+			for (int k=0;k<nAccels;k++)
+			{
+				if (pAccels[k].key==m_aShortcuts[i]->m_bVirtualKey &&
+					pAccels[k].fVirt==pAccels[nAccels].fVirt)
+				{
+					UINT nAlreadyInList;
+					for (nAlreadyInList=0;m_aActiveShortcuts[nFirstActive+k][nAlreadyInList]!=NULL;nAlreadyInList++);
+
+                    CShortcut** pList=new CShortcut*[nAlreadyInList+2];
+					CopyMemory(pList,m_aActiveShortcuts[nFirstActive+k],sizeof(CShortcut*)*nAlreadyInList);
+					pList[nAlreadyInList++]=m_aShortcuts[i];
+					pList[nAlreadyInList]=NULL;
+
+					delete[] m_aActiveShortcuts[nFirstActive+k];
+					m_aActiveShortcuts[nFirstActive+k]=pList;
+
+					continue;
+				}
+			}
+
+
+			// Registering new active shortcut
+			CShortcut** pList=new CShortcut*[2];
+			pList[0]=m_aShortcuts[i];
+			pList[1]=NULL;
+
+			pAccels[nAccels].key=m_aShortcuts[i]->m_bVirtualKey;
+			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+m_aActiveShortcuts.GetSize();
+			m_aActiveShortcuts.Add(pList);
+			
+
+			nAccels++;
 		}
 		HACCEL hAccel=CreateAcceleratorTable(pAccels,nOtherAccels);
 		pLocateDlgThread->SetAccelTableForWindow(*this,hAccel,FALSE,*this);
+		pLocateDlgThread->SetAccelTableForChilds(*this,hAccel,TRUE,*this);
 		delete[] pAccels;
 	}
 
-	
 
-	//LoadAccelTable(IDR_MAINACCEL);
-
-/*	GetCurrentWinThread()->SetAccelTableForChilds(m_NameDlg,IDR_NAMEDLGACCEL,TRUE,*this);
-	GetCurrentWinThread()->SetAccelTableForChilds(m_SizeDateDlg,IDR_SIZEDATEDLGACCEL,TRUE,*this);
-	GetCurrentWinThread()->SetAccelTableForChilds(m_AdvancedDlg,IDR_ADVANCEDDLGACCEL,TRUE,*this);*/
+	SetMenus();
 }
 
 void CLocateDlg::ClearShortcuts()
@@ -6256,6 +6595,7 @@ void CLocateDlg::ClearShortcuts()
 
 	pLocateDlgThread->ClearAccelTables();
 	m_aShortcuts.RemoveAll();
+	m_aActiveShortcuts.RemoveAll();
 
 }
 	
@@ -7981,8 +8321,9 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			SendDlgItemMessage(IDC_FILETYPE,CB_SETCURSEL,0);
 			EnableDlgItem(IDC_FILETYPE,FALSE);
 			
-			GetLocateDlg()->m_NameDlg.EnableDlgItem(IDC_TYPE,FALSE);
-			GetLocateDlg()->m_NameDlg.SetDlgItemText(IDC_TYPE,szEmpty);
+			CLocateDlg* pLocateDlg=GetLocateDlg();
+			pLocateDlg->m_NameDlg.EnableDlgItem(IDC_TYPE,FALSE);
+			pLocateDlg->m_NameDlg.SetDlgItemText(IDC_TYPE,szEmpty);
 			
 			ChangeEnableStateForCheck();
 		}
@@ -8167,7 +8508,7 @@ DWORD CLocateDlg::CAdvancedDlg::OnOk(CLocater* pLocater)
 			dwDataLength=istrlen(LPCSTR(str)+7)+1;
             if (dwDataLength>1)
 			{
-				pData=new BYTE[dwDataLength+1];
+				pData=(BYTE*)malloc(dwDataLength+1);
 				sMemCopy(pData,LPCSTR(str)+7,dwDataLength);
 				dwFlags|=LOCATE_REGULAREXPRESSIONSEARCH;
 			}
@@ -8178,7 +8519,7 @@ DWORD CLocateDlg::CAdvancedDlg::OnOk(CLocater* pLocater)
 
 		pLocater->SetAdvanced(dwFlags,pData,dwDataLength,GetLocateDlg()->m_dwMaxFoundFiles==0?-1:GetLocateDlg()->m_dwMaxFoundFiles);
 		if (pData!=NULL)
-			delete[] pData;
+			free(pData);
 	}
 	else
 		pLocater->SetAdvanced(dwFlags,NULL,0,GetLocateDlg()->m_dwMaxFoundFiles==0?-1:GetLocateDlg()->m_dwMaxFoundFiles);

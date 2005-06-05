@@ -219,7 +219,7 @@ if str begins with "hex:" or "bin:" following data will be hex data e.g:
 
 */
 
-BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,DWORD* pdwDataLength)
+BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength)
 {
 	if (pStr[0]=='\0')
 		return NULL;
@@ -227,7 +227,7 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,DWORD* pdwDataLength)
 	if (_1stcontain2nd(pStr,"int:"))
 	{
 		pStr+=4;
-		BYTE* pRet=new BYTE[4];
+		BYTE* pRet=(BYTE*)pMalloc(4);
 		*((DWORD*)pRet)=DWORD(_readnum(10,pStr));
 		if (pdwDataLength!=NULL)
 			*pdwDataLength=4;
@@ -240,7 +240,7 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,DWORD* pdwDataLength)
 		if (*pStr!=':')
 			return NULL;
 		pStr++;
-		BYTE* pRet=new BYTE[4];
+		BYTE* pRet=(BYTE*)pMalloc(4);
 		*((DWORD*)pRet)=DWORD(_readnum(base,pStr));
 		if (pdwDataLength!=NULL)
 			*pdwDataLength=4;
@@ -253,7 +253,7 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,DWORD* pdwDataLength)
 		if (*pStr!=':')
 			return NULL;
 		pStr++;
-		BYTE* pRet=new BYTE[2];
+		BYTE* pRet=(BYTE*)pMalloc(2);
 		*((WORD*)pRet)=WORD(_readnum(base,pStr));
 		if (pdwDataLength!=NULL)
 			*pdwDataLength=2;
@@ -266,7 +266,7 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,DWORD* pdwDataLength)
 		if (*pStr!=':')
 			return NULL;
 		pStr++;
-		BYTE* pRet=new BYTE[2];
+		BYTE* pRet=(BYTE*)pMalloc(2);
 		*pRet=BYTE(_readnum(base,pStr));
 		if (pdwDataLength!=NULL)
 			*pdwDataLength=1;
@@ -298,7 +298,7 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,DWORD* pdwDataLength)
 		if (i==0)
 			return NULL;
 			
-		BYTE* pRet=new BYTE[max(i,2)];
+		BYTE* pRet=(BYTE*)pMalloc(max(i,2));
 
 		for (i=0;*pStr!='\0';i++)
 		{
@@ -346,7 +346,7 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,DWORD* pdwDataLength)
 		if (int(dwStrLen)<=0)
 			return NULL;
 
-		pRet=new BYTE[dwStrLen];
+		pRet=(BYTE*)pMalloc(dwStrLen);
 		int i;
 		for (i=0;*pStr!='\0';i++,pStr++)
 		{
@@ -392,7 +392,7 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,DWORD* pdwDataLength)
 			return NULL;
 		
 		BYTE* pRet;
-		pRet=new BYTE[dwStrLen];
+		pRet=(BYTE*)pMalloc(dwStrLen);
 		int i;
 		for (i=0;*pStr!='\0';i++,pStr++)
 		{
@@ -441,7 +441,7 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,DWORD* pdwDataLength)
 			return NULL;
 	
 		WCHAR* pRet;
-		pRet=(WCHAR*)new BYTE[dwStrLen*2];
+		pRet=(WCHAR*)pMalloc(dwStrLen*2);
 
 
 		int i;
@@ -487,7 +487,7 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,DWORD* pdwDataLength)
 			return NULL;
 		
 		BYTE* pRet;
-		pRet=new BYTE[dwStrLen];
+		pRet=(BYTE*)pMalloc(dwStrLen);
 		dMemCopy(pRet,pStr,dwStrLen);
 		if (pdwDataLength!=NULL)
 			*pdwDataLength=dwStrLen;

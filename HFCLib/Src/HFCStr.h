@@ -99,7 +99,8 @@ int strcasecmp(LPCTSTR,LPCTSTR);
 #endif
 int strcasencmp(LPCTSTR s1,LPCTSTR s2,DWORD n);
 int _readnum(int base,LPCSTR& str,DWORD length=DWORD(-1));
-BYTE* dataparser(LPCSTR pString,DWORD dwStrLen,DWORD* pdwDataLength=NULL);
+
+BYTE* dataparser(LPCSTR pString,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength=NULL);
 BYTE* dataparser2(LPCSTR pStr,DWORD* pdwDataLength);
 BOOL IsCharNumeric(char cChar,BYTE bBase);
 

@@ -6,8 +6,11 @@
 class CAction {
 public:
 	CAction();
+	CAction(CAction& rCopyFrom);
 	~CAction();
-
+	
+	
+	void CAction::ClearExtraInfo();
 
 	enum Action {
 		ActivateControl = 0,
@@ -21,6 +24,11 @@ public:
 	enum ActionActivateControls { // First is control to be activated, second is for memonics
 		NullControl = 0,
 		
+		// Next and previous control
+		NextControl = MAKELONG(IDC_PTAB,~IDS_KEYNEXTCONTROL),
+		PrevControl = MAKELONG(IDC_PUNTAB,~IDS_KEYPREVCONTROL),
+
+
 		// Dialog itself
 		FindNow = MAKELONG(IDC_OK,IDC_OK),
 		Stop = MAKELONG(IDC_STOP,IDC_STOP),
@@ -36,10 +44,10 @@ public:
 		Browse = MAKELONG(IDC_BROWSE,IDC_BROWSE),
 
 		// Size and Data
-		MinimumSize = MAKELONG(IDC_MINIMUMSIZE,IDC_CHECKMINIMUMSIZE),
-		MaximumSize = MAKELONG(IDC_MAXIMUMSIZE,IDC_CHECKMAXIMUMSIZE),
-		MinimumDate = MAKELONG(IDC_MINDATE,IDC_CHECKMINDATE),
-		MaximumDate = MAKELONG(IDC_MAXDATE,IDC_CHECKMAXDATE),
+		MinimumSize = MAKELONG(IDC_CHECKMINIMUMSIZE,IDC_CHECKMINIMUMSIZE),
+		MaximumSize = MAKELONG(IDC_CHECKMAXIMUMSIZE,IDC_CHECKMAXIMUMSIZE),
+		MinimumDate = MAKELONG(IDC_CHECKMINDATE,IDC_CHECKMINDATE),
+		MaximumDate = MAKELONG(IDC_CHECKMAXDATE,IDC_CHECKMAXDATE),
 		
 		// Advanced
 		CheckFilesOrFolders = MAKELONG(IDC_CHECK,IDC_CHECKSTATIC),
@@ -53,7 +61,8 @@ public:
 	};
 
 	static ActionActivateControls* GetPossibleControlValues() {
-		ActionActivateControls a[]={FindNow,Stop,NewSearch,ResultList,
+		ActionActivateControls a[]={NextControl,PrevControl,
+			FindNow,Stop,NewSearch,ResultList,
 			Presets,Name,Type,LookIn,MoreDirectories,Browse,
             MinimumSize,MaximumSize,MinimumDate,MaximumDate,
 			CheckFilesOrFolders,MatchWholeName,ReplaceSpaces,
@@ -164,10 +173,11 @@ public:
 		MoveToRecybleBin = 3,
 		DeleteFile = 4,
 		OpenContextMenu = 5,
-		OpenFolder = 6,
-		OpenContainingFolder = 7,
-		Properties = 8,
-		ShowSpecialMenu = 9,			
+		OpenContextMenuSimple = 6,
+		OpenFolder = 7,
+		OpenContainingFolder = 8,
+		Properties = 9,
+		ShowSpecialMenu = 10,			
 		
 		ResultListLast = ShowSpecialMenu
 	};
@@ -191,6 +201,7 @@ public:
 
 	struct SendMessageInfo {
 		SendMessageInfo();
+		SendMessageInfo(SendMessageInfo& rCopyFrom);
 		~SendMessageInfo(); 
 
 		DWORD GetData(BYTE* pData) const;
@@ -210,6 +221,11 @@ public:
 		SendMessageInfo* m_pSendMessage; // with, Advanced::SendMessage and Advanced::PostMessage
 	};
 		
+	// highest bit = 1 : mainmenu
+	// highest bit = 0 : supmenu
+	// other bits = nSubMenu
+	static BYTE GetMenuAndSubMenu(ActionMenuCommands nMenuCommand);
+	
 protected:
 	DWORD GetData(BYTE* pData) const;
 	DWORD GetDataLength() const;
@@ -236,6 +252,8 @@ public:
 	CShortcut(CShortcut& rCopyFrom);
 	~CShortcut();
 
+	void ClearExtraInfo();
+
 	BYTE GetHotkeyModifiers() const;
 	void SetHotkeyModifiers(BYTE nHotkeyModifier);
 	char GetMnemonicForAction(HWND* hDialogs) const;
@@ -243,6 +261,7 @@ public:
 	static BYTE HotkeyModifiersToModifiers(BYTE bHotkeyModifiers);
 	static BYTE ModifiersToHotkeyModifiers(BYTE bModifiers);
 
+		
 	enum LoadShortcuts {
 		loadLocal =  0x1,
 		loadGlobalHotkey = 0x2,
@@ -251,12 +270,22 @@ public:
 		loadAll = loadLocal|loadGlobalHotkey|loadGlobalHook
 	};
 
+	struct VirtualKeyName {
+		BYTE bKey;
+		LPSTR pName;
+		int iFriendlyNameId;
+	};
+
 #ifdef HFCLIB
 	static BOOL LoadShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadFlag=loadAll);
 	static BOOL SaveShortcuts(const CArrayFP<CShortcut*>& aShortcuts);
 	static BOOL GetDefaultShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadFlag=loadAll);
 	static void ResolveMnemonics(CArrayFP<CShortcut*>& aShortcuts,HWND* hDialogs);
+	static void ModifyMenus(CArrayFP<CShortcut*>& aShortcuts,HMENU hMainMenu,HMENU hSubMenu);
 	
+	static VirtualKeyName* GetVirtualKeyNames();
+	void FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,CString& str) const;
+	static void FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,BYTE bKey,BYTE bModifiers,BOOL bScancode,CString& str);
 #endif
 
 	BOOL IsModifiersOk(BOOL bAltDown,BOOL bControlDown,BOOL bShiftDown,BOOL bWinDown) const;

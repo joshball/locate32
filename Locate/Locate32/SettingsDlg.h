@@ -559,16 +559,9 @@ public:
 			void OnOK();
 			void EnableItems();
 
-			
-
 			CShortcut* m_pShortcut;
 		};
 
-		struct VirtualKeyName {
-			BYTE bKey;
-			LPSTR pName;
-			int iFriendlyNameId;
-		};
 
 
 	public:
@@ -617,7 +610,6 @@ public:
 
 
 		
-		void FormatKeyLabel(BYTE bKey,BYTE bModifiers,BOOL bScancode,CString& str) const;
 		void FormatActionLabel(CString& str,CAction::Action nAction,UINT uSubAction) const;
 		BOOL GetSubActionLabel(CString& str,CAction::Action nAction,UINT uSubAction) const;
 		UINT IndexToSubAction(CAction::Action nAction,UINT nIndex) const;
@@ -631,7 +623,6 @@ public:
 		void SetHotKey(BYTE bKey,BYTE bModifiers);
 		
 
-		VirtualKeyName* GetVirtualKeyNames();
 
 
 
@@ -658,7 +649,7 @@ public:
 		
 		CAction::ActionActivateControls* m_pPossibleControls;
 		CAction::ActionMenuCommands* m_pPossibleMenuCommands;
-		VirtualKeyName* m_pVirtualKeyNames;
+		CShortcut::VirtualKeyName* m_pVirtualKeyNames;
 
 		HWND hDialogs[5];	
 		HMENU hMainMenu;

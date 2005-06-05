@@ -215,9 +215,9 @@ public:
 	virtual ~CWinApp();
 	
 
-	CString GetCmdLine() const { return m_lpCmdLine; }
-	CString GetAppName() const { return m_pszAppName; }
-	CString GetExeName() const { return m_pszExeName; }
+	LPCSTR GetCmdLine() const { return m_lpCmdLine; }
+	LPCSTR GetAppName() const { return m_pszAppName; }
+	LPCSTR GetExeName() const { return m_pszExeName; }
 	void SetMainWnd(CWnd* pWnd);
 	int GetCmdShow() { return m_nCmdShow; }
 		

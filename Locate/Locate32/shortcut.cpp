@@ -1,6 +1,5 @@
 
 #ifndef KEYHOOK_EXPORTS
-
 // Included to Locate
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -19,10 +18,116 @@
 
 #endif
 
+static BOOL _ContainString(LPCSTR s1,LPCSTR s2,size_t s2len) // Is s2 in the s1
+{
+
+
+    BOOL bBreakIfNotMatch;
+	if (s2[0]=='*')
+	{
+		if (s2len==1)
+			return TRUE;
+		s2++;
+		bBreakIfNotMatch=FALSE;
+	}
+	else
+		bBreakIfNotMatch=TRUE;
+
+	while (*s1!='\0')
+	{
+		for (size_t i=0;;i++)
+		{
+			// is s1 too short?
+			if (s1[i]=='\0')
+			{
+				if (s2len<=i)
+					return TRUE;
+				return s2[i]=='*' && s2len<=i+1;
+			}
+			// string differ
+			if (s1[i]!=s2[i])
+			{
+				if (s2[i]=='?')
+					continue;
+				
+				if (s2[i]=='*')
+				{
+					if (s2len<=i+1)
+						return TRUE;
+					s2+=i+1;
+					s1+=i-1;
+					bBreakIfNotMatch=FALSE;
+					break;
+				}
+				break;
+			}
+		}
+		if (bBreakIfNotMatch)
+			return FALSE;
+		s1++;
+	}
+	return FALSE;
+}
+
+#ifndef KEYHOOK_EXPORTS
+
+
+BOOL __ContainString(LPCSTR s1,LPCSTR s2) // Is s2 in the s1
+{
+
+	BOOL bBreakIfNotMatch;
+	if (s2[0]=='*')
+	{
+		if (s2[1]=='\0')
+			return TRUE;
+		s2++;
+		bBreakIfNotMatch=FALSE;
+	}
+	else
+		bBreakIfNotMatch=TRUE;
+
+	while (*s1!='\0')
+	{
+		for (int i=0;;i++)
+		{
+			// is s1 too short?
+			if (s1[i]=='\0')
+			{
+				if (s2[i]=='\0')
+					return TRUE;
+				return s2[i]=='*' && s2[i+1]=='\0';
+			}
+			// string differ
+			if (s1[i]!=s2[i])
+			{
+				if (s2[i]=='?')
+					continue;
+				
+				if (s2[i]=='*')
+				{
+					if (s2[i+1]=='\0')
+						return TRUE;
+					s2+=i+1;
+					s1+=i-1;
+					bBreakIfNotMatch=FALSE;
+					break;
+				}
+				break;
+			}
+		}
+		if (bBreakIfNotMatch)
+			return FALSE;
+		s1++;
+	}
+	return FALSE;
+}
+
+
+
 /////////////////////////////////////////////
 // CShortcut
 
-#ifndef KEYHOOK_EXPORTS
+
 CShortcut::CShortcut()
 :	m_dwFlags(sfDefault),m_nDelay(0),
 	m_bModifiers(0),m_bVirtualKey(0),
@@ -52,7 +157,7 @@ CShortcut::CShortcut(CShortcut& rCopyFrom)
 }
 	
 
-CShortcut::~CShortcut()
+void CShortcut::ClearExtraInfo()
 {
 	if ((m_dwFlags&sfKeyTypeMask)!=sfLocal)
 	{
@@ -61,7 +166,8 @@ CShortcut::~CShortcut()
 		if (m_pTitle!=NULL)
 			delete[] m_pTitle;
 	}
-	m_apActions.RemoveAll();
+	
+	m_pClass=NULL;m_pTitle=NULL;
 }
 
 BYTE CShortcut::HotkeyModifiersToModifiers(BYTE bHotkeyModifier)
@@ -494,8 +600,10 @@ BOOL CShortcut::GetDefaultShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadF
 	// This code saves currently saved shortcuts to correct file
 	// Uncommend and run once
 
+	
 	/*
 	// BEGIN 
+	{
 	LPCSTR szFile="C:\\My Documents\\Programming\\C\\Locate\\Locate32\\commonres\\defaultshortcuts.dat";
 	CRegKey RegKey;
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)!=ERROR_SUCCESS)
@@ -516,14 +624,45 @@ BOOL CShortcut::GetDefaultShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadF
 	catch (...)
 	{
 	}
+	}
 	// END
 	*/
+	
+
+	// Check file
+	int nIndex=LastCharIndex(GetLocateApp()->GetExeName(),'\\')+1;
+	char szPath[MAX_PATH];
+	CopyMemory(szPath,GetLocateApp()->GetExeName(),nIndex);
+	CopyMemory(szPath+nIndex,"defshrtc.dat",13);
+    
+	CFile File(TRUE);
+	BYTE* pData=NULL;
+	DWORD dwLength;
+	try {
+		File.Open(szPath,CFile::defRead);
+		dwLength=File.GetLength();
+		pData=new BYTE[dwLength];
+		File.Read(pData,dwLength);
+		File.Close();
+		BOOL bRet=LoadShortcuts(pData,dwLength,aShortcuts,bLoadFlag);
+		delete[] pData;
+		
+		if (bRet)
+            return TRUE;
+	}
+	catch (...)
+	{
+		if (pData!=NULL)
+			delete[] pData;
+	}
+
+
 
 	HRSRC hRsrc=FindResource(GetInstanceHandle(),MAKEINTRESOURCE(IDR_DEFAULTSHORTCUTS),"DATA");
     if (hRsrc==NULL)
 		return FALSE;
     	
-	DWORD dwLength=SizeofResource(GetInstanceHandle(),hRsrc);
+	dwLength=SizeofResource(GetInstanceHandle(),hRsrc);
 	if (dwLength<4)
 		return FALSE;
 
@@ -577,6 +716,42 @@ char CShortcut::GetMnemonicForAction(HWND* hDialogs) const
 	return 0;
 }
 
+CAction::CAction(CAction& rCopyFrom)
+{
+	CopyMemory(this,&rCopyFrom,sizeof(CAction));
+
+	switch (m_nAction)
+	{
+	case ResultListItems:
+		if (m_nResultList==Execute && m_szVerb!=NULL)
+			m_szVerb=alloccopy(m_szVerb);
+		break;
+	case Advanced:
+		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage ) &&
+			m_pSendMessage!=NULL)
+			m_pSendMessage=new SendMessageInfo(*m_pSendMessage);
+		break;
+	}
+	
+}
+
+void CAction::ClearExtraInfo()
+{
+	switch (m_nAction)
+	{
+	case ResultListItems:
+		if (m_nResultList==Execute && m_pExtraInfo!=NULL)
+			delete[] m_szVerb;
+		break;
+	case Advanced:
+		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage ) &&
+			m_pSendMessage!=NULL)
+			delete m_pSendMessage;
+		break;
+	}
+	m_pExtraInfo=NULL;
+}
+
 void CAction::ExecuteAction()
 {
 	switch (m_nAction)
@@ -610,19 +785,11 @@ void CAction::DoActivateControl()
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL)
 		return;
-
-	HWND hControl=pLocateDlg->GetDlgItem(LOWORD(m_nActivateControl));
-	if (hControl==0)
-		hControl=pLocateDlg->m_NameDlg.GetDlgItem(LOWORD(m_nActivateControl));
-	if (hControl==0)
-		hControl=pLocateDlg->m_SizeDateDlg.GetDlgItem(LOWORD(m_nActivateControl));
-	if (hControl==0)
-		hControl=pLocateDlg->m_AdvancedDlg.GetDlgItem(LOWORD(m_nActivateControl));
 	
-	if (hControl==0)
-		return;
-	
-	pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nActivateControl),1),0);
+	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
+		pLocateDlg->OnCommand(LOWORD(m_nActivateControl),1,NULL);
+	else
+		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nActivateControl),1),0);
 }
 
 
@@ -632,7 +799,10 @@ void CAction::DoMenuCommand()
 	if (pLocateDlg==NULL)
 		return;
 
-	pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nMenuCommand),0),0);
+	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
+		pLocateDlg->OnCommand(LOWORD(m_nMenuCommand),0,NULL);
+	else
+		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nMenuCommand),0),0);
 }
 
 void CAction::DoShowHideDialog()
@@ -682,83 +852,189 @@ void CAction::DoShowHideDialog()
 }
 
 
-void CAction::DoAdvanced()
+void * __cdecl gmalloc(size_t size) { return GlobalAlloc(GPTR,size+1); }
+BOOL CALLBACK WindowEnumProc(HWND hwnd,LPARAM lParam)
 {
-}
-
-#endif
-
-static BOOL _ContainString(LPCSTR s1,LPCSTR s2,size_t s2len) // Is s2 in the s1
-{
-#ifdef _DEBUG
-	LPCSTR orig1=s1,orig2=s2;
-#endif 
-
-    BOOL bBreakIfNotMatch;
-	if (s2[0]=='*')
+	if  (((LPSTR*)lParam)[0]!=NULL)
 	{
-		if (s2len==1)
-			return TRUE;
-		s2++;
-		bBreakIfNotMatch=FALSE;
-	}
-	else
-		bBreakIfNotMatch=TRUE;
-
-	while (*s1!='\0')
-	{
-		for (size_t i=0;;i++)
+		// Class is specified
+		char szClass[200];
+		if (GetClassName(hwnd,szClass,200)>0)
 		{
-			// is s1 too short?
-			if (s1[i]=='\0')
-			{
-				if (s2len<=i)
-					return TRUE;
-				return s2[i]=='*' && s2len<=i+1;
-			}
-			// string differ
-			if (s1[i]!=s2[i])
-			{
-				if (s2[i]=='?')
-					continue;
-				
-				if (s2[i]=='*')
-				{
-					if (s2len<=i+1)
-						return TRUE;
-					s2+=i+1;
-					s1+=i-1;
-					bBreakIfNotMatch=FALSE;
-					break;
-				}
-				break;
-			}
+			if (!__ContainString(szClass,((LPSTR*)lParam)[0]))
+				return TRUE;
 		}
-		if (bBreakIfNotMatch)
-			return FALSE;
-		s1++;
+		else if (((LPSTR*)lParam)[0][0]!='*' || ((LPSTR*)lParam)[0][1]!='\0')
+			return TRUE;
 	}
+
+	if  (((LPSTR*)lParam)[1]!=NULL)
+	{
+		// Title is specified
+		char szTitle[400];
+		if (GetWindowText(hwnd,szTitle,400)>0)
+		{
+			if (!__ContainString(szTitle,((LPSTR*)lParam)[1]))
+				return TRUE;
+		}
+		else if (((LPSTR*)lParam)[1][0]!='*' || ((LPSTR*)lParam)[1][1]!='\0')
+			return TRUE;
+	}
+
+
+	((HWND*)lParam)[2]=hwnd;
 	return FALSE;
 }
 
-BOOL CShortcut::DoClassOrTitleMatch(LPCSTR pClass,LPCSTR pCondition)
+void CAction::DoAdvanced()
 {
-	int nIndex;
-    
-	for (;;)
+
+	BOOL bFreeWParam=FALSE,bFreeLParam=FALSE;
+	
+	HWND hWnd=NULL;
+	WPARAM wParam=NULL,lParam=NULL;
+
+	if (m_pSendMessage->szWindow[0]=='0')
 	{
-		for (nIndex=0;pCondition[nIndex]!='\0' && pCondition[nIndex]!='|';nIndex++);
-		
-		if (_ContainString(pClass,pCondition,nIndex))
-			return TRUE;
-
-        if (pCondition[nIndex]=='\0')
-			return FALSE;
-
-        pCondition+=nIndex+1;
+		if (m_pSendMessage->szWindow[1]=='x' || 
+			m_pSendMessage->szWindow[1]=='X')
+		{
+			// Hex value
+			LPSTR szTemp;
+			hWnd=(HWND)strtoul(m_pSendMessage->szWindow+2,&szTemp,16);
+		}
 	}
+	else if (strcasecmp(m_pSendMessage->szWindow,"HWND_BROADCAST")==0)
+		hWnd=HWND_BROADCAST;
+	else if (GetLocateDlg()!=NULL && strcasecmp(m_pSendMessage->szWindow,"LOCATEDLG")==0)
+		hWnd=*GetLocateDlg();
+	else if (strcasecmp(m_pSendMessage->szWindow,"LOCATEST")==0)
+		hWnd=*GetLocateAppWnd();
+	else if (strncmp(m_pSendMessage->szWindow,"Find",4)==0)
+	{
+		int nIndex=FirstCharIndex(m_pSendMessage->szWindow,'(');
+		if (nIndex!=-1)
+		{
+			LPCSTR pText=m_pSendMessage->szWindow+nIndex+1;
+			LPSTR pClassAndWindow[3]={NULL,NULL,NULL};
+			
+			nIndex=FirstCharIndex(pText,',');
+			if (nIndex==-1)
+			{
+				nIndex=FirstCharIndex(pText,')');
+				if (nIndex==-1)
+					pClassAndWindow[0]=alloccopy(pText);
+				else
+					pClassAndWindow[0]=alloccopy(pText,nIndex);
+			}
+			else
+			{
+				pClassAndWindow[0]=alloccopy(pText,nIndex);
+				pText+=nIndex+1;
+
+				nIndex=FirstCharIndex(pText,')');
+				pClassAndWindow[1]=alloccopy(pText,nIndex);
+			}
+
+			EnumWindows(WindowEnumProc,LPARAM(pClassAndWindow));
+
+			// Third cell is handle to window
+			hWnd=(HWND)pClassAndWindow[2];
+
+			delete[] pClassAndWindow[0];
+			if (pClassAndWindow[1])
+				delete[] pClassAndWindow[1];
+		}
+	}
+	
+
+
+	// Parse wParam
+	if (m_pSendMessage->szWParam!=NULL)
+	{
+		if (m_pSendMessage->szWParam[0]=='0')
+		{
+			if (m_pSendMessage->szWParam[1]=='x' || 
+				m_pSendMessage->szWParam[1]=='X')
+			{
+				// Hex value
+				LPSTR szTemp;
+				wParam=(WPARAM)strtoul(m_pSendMessage->szWParam+2,&szTemp,16);
+			}
+			else if (m_pSendMessage->szWParam[1]!='\0')
+			{
+				DWORD dwLength;
+				wParam=(WPARAM)dataparser(m_pSendMessage->szWParam,istrlen(m_pSendMessage->szWParam),gmalloc,&dwLength);
+				*((BYTE*)wParam+dwLength)=0;
+				bFreeWParam=TRUE;
+			}
+		}
+		else if ((wParam=atoi(m_pSendMessage->szWParam))==0)
+		{
+			DWORD dwLength;
+			wParam=(WPARAM)dataparser(m_pSendMessage->szWParam,istrlen(m_pSendMessage->szWParam),gmalloc,&dwLength);
+			*((BYTE*)wParam+dwLength)=0;
+			bFreeWParam=TRUE;
+		}
+	}
+
+	// Parse lParam
+	if (m_pSendMessage->szLParam!=NULL)
+	{
+		if (m_pSendMessage->szLParam[0]=='0')
+		{
+			if (m_pSendMessage->szLParam[1]=='x' || 
+				m_pSendMessage->szLParam[1]=='X')
+			{
+				// Hex value
+				LPSTR szTemp;
+				lParam=(WPARAM)strtoul(m_pSendMessage->szLParam+2,&szTemp,16);
+			}
+			else if (m_pSendMessage->szLParam[1]!='\0')
+			{
+				DWORD dwLength;
+				lParam=(WPARAM)dataparser(m_pSendMessage->szLParam,istrlen(m_pSendMessage->szLParam),gmalloc,&dwLength);
+				*((BYTE*)lParam+dwLength)=0;
+				bFreeLParam=TRUE;
+			}
+		}
+		else if ((lParam=atoi(m_pSendMessage->szLParam))==0)
+		{
+			DWORD dwLength;
+			lParam=(WPARAM)dataparser(m_pSendMessage->szLParam,istrlen(m_pSendMessage->szLParam),gmalloc,&dwLength);
+			*((BYTE*)lParam+dwLength)=0;
+            bFreeLParam=TRUE;
+		}
+	}
+
+	if (hWnd!=NULL)
+	{
+		if (m_nAdvanced==PostMessage)
+			::PostMessage(hWnd,m_pSendMessage->nMessage,wParam,lParam);
+		else
+			::SendMessage(hWnd,m_pSendMessage->nMessage,wParam,lParam);
+	}
+
+	if (bFreeWParam)
+		GlobalFree((HANDLE)wParam);
+	if (bFreeLParam)
+		GlobalFree((HANDLE)lParam);
+
 }
 
+
+CAction::SendMessageInfo::SendMessageInfo(SendMessageInfo& rCopyFrom)
+{
+	CopyMemory(this,&rCopyFrom,sizeof(SendMessageInfo));
+
+	if (szWindow!=NULL)
+		szWindow=alloccopy(szWindow);
+	if (szWParam!=NULL)
+		szWParam=alloccopy(szWParam);
+	if (szLParam!=NULL)
+		szLParam=alloccopy(szLParam);
+}
+		
 DWORD CAction::SendMessageInfo::GetData(BYTE* pData_) const
 {
 	BYTE* pData=pData_;
@@ -798,4 +1074,248 @@ DWORD CAction::SendMessageInfo::GetData(BYTE* pData_) const
 	
 
 	return DWORD(pData-pData_);
+}
+
+void CShortcut::ModifyMenus(CArrayFP<CShortcut*>& aShortcuts,HMENU hMainMenu,HMENU hSubMenu)
+{
+	VirtualKeyName* pVirtKeyNames=GetVirtualKeyNames();
+
+	for (int i=0;i<aShortcuts.GetSize();i++)
+	{
+		// Check whether it is menu item
+		for (int a=0;a<aShortcuts[i]->m_apActions.GetSize();a++)
+		{
+			CAction* pAction=aShortcuts[i]->m_apActions[a];
+
+			if (pAction->m_nAction==CAction::MenuCommand)
+			{
+				BYTE bSubMenu=CAction::GetMenuAndSubMenu(pAction->m_nMenuCommand);
+				HMENU hMenu=GetSubMenu((bSubMenu&128)?hMainMenu:hSubMenu,bSubMenu&~128);
+
+				MENUITEMINFO mii;
+				mii.cbSize=sizeof(MENUITEMINFO);
+				mii.fMask=MIIM_FTYPE|MIIM_STRING;
+				mii.cch=0;
+				if (!GetMenuItemInfo(hMenu,LOWORD(pAction->m_nMenuCommand),FALSE,&mii))
+					continue;
+
+				if (mii.fType!=MFT_STRING)
+					continue;
+
+				CString Title,Key;
+				mii.dwTypeData=Title.GetBuffer(mii.cch++);
+				if (!GetMenuItemInfo(hMenu,LOWORD(pAction->m_nMenuCommand),FALSE,&mii))
+					continue;
+
+				if (Title.FindFirst('\t')!=-1)
+					continue;
+
+				aShortcuts[i]->FormatKeyLabel(pVirtKeyNames,Key);
+								
+				Title << '\t' << Key;
+				mii.dwTypeData=Title.GetBuffer();
+				
+				SetMenuItemInfo(hMenu,LOWORD(pAction->m_nMenuCommand),FALSE,&mii);
+
+
+			}
+
+		}
+	}
+
+	delete[] pVirtKeyNames;
+}
+
+
+
+BYTE CAction::GetMenuAndSubMenu(CAction::ActionMenuCommands nMenuCommand)
+{
+	switch (HIWORD(nMenuCommand))
+	{
+	case IDS_SHORTCUTMENUFILENOITEM:
+		return SUBMENU_FILEMENUNOITEMS;
+	case IDS_SHORTCUTMENUFILEITEM:
+		if (nMenuCommand==CAction::FileOpenContainingFolder ||
+			nMenuCommand==CAction::FileRemoveFromThisList)
+			return SUBMENU_EXTRACONTEXTMENUITEMS;
+		else
+			return SUBMENU_FILEMENU;
+	case IDS_SHORTCUTMENUEDIT:
+		return 128|1;
+		break;
+	case IDS_SHORTCUTMENUVIEW:
+	case IDS_SHORTCUTMENUVIEWARRANGEICONS:
+		return 128|2;
+	case IDS_SHORTCUTMENUOPTIONS:
+		return 128|3;		
+	case IDS_SHORTCUTMENUHELP:
+		return 128|4;
+	case IDS_SHORTCUTMENUSPECIAL:
+		return SUBMENU_EXTRACONTEXTMENUITEMS;
+	case IDS_SHORTCUTMENUPRESETS:
+		return SUBMENU_PRESETSELECTION;
+	case IDS_SHORTCUTMENUDIRECTORIES:
+		return SUBMENU_MULTIDIRSELECTION;
+	}
+
+	return 0;
+}
+
+void CShortcut::FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,BYTE bKey,BYTE bModifiers,BOOL bScancode,CString& str)
+{
+	if (bKey==0)
+	{
+		str.LoadString(IDS_SHORTCUTNONE);
+		return;
+	}
+
+
+	// Formatting modifiers
+	if (bModifiers&MOD_WIN)
+		str.LoadString(IDS_SHORTCUTMODEXT);
+	else
+		str.Empty();
+	if (bModifiers&MOD_CONTROL)
+		str.AddString(IDS_SHORTCUTMODCTRL);
+	if (bModifiers&MOD_ALT)
+		str.AddString(IDS_SHORTCUTMODALT);
+	if (bModifiers&MOD_SHIFT)
+		str.AddString(IDS_SHORTCUTMODSHIFT);
+	
+	if (bScancode)
+	{
+		CString str2;
+		str2.Format(IDS_SHORTCUTSCANCODE,(int)bKey);
+		str << str2;
+		return;
+	}
+
+	for (int i=0;pVirtualKeyNames[i].bKey!=0 && pVirtualKeyNames[i].bKey!=bKey;i++);
+	if (pVirtualKeyNames[i].iFriendlyNameId!=0)
+	{
+		str.AddString(pVirtualKeyNames[i].iFriendlyNameId);
+		return;
+	}
+
+	BYTE pKeyState[256];
+	ZeroMemory(pKeyState,256);
+
+	WORD wChar;
+	int nRet=ToAscii(bKey,0,pKeyState,&wChar,0);
+	if (nRet==1)
+	{
+		CharUpperBuff((LPSTR)&wChar,1);
+		str << char(wChar);
+	}
+	else if (nRet==2)
+	{
+		CharUpperBuff((LPSTR)&wChar,2);
+		str << (LPSTR(&wChar))[0] << (LPSTR(&wChar))[0];
+	}
+	else if (pVirtualKeyNames[i].pName!=NULL)
+		str << pVirtualKeyNames[i].pName;
+	else
+		str << (int) bKey;
+}
+
+
+CShortcut::VirtualKeyName* CShortcut::GetVirtualKeyNames()
+{
+	VirtualKeyName aVirtualKeys[]={
+		{VK_BACK,"VK_BACK",IDS_KEYBACKSPACE},
+		{VK_ESCAPE,"VK_ESCAPE",IDS_KEYESC},
+		{VK_TAB,"VK_TAB",IDS_KEYTAB},
+		{VK_CAPITAL,"VK_CAPITAL",IDS_KEYCAPSLOCK},
+		{VK_RETURN,"VK_RETURN",IDS_KEYENTER},
+		{VK_SPACE,"VK_SPACE",IDS_KEYSPACE},
+		{VK_PRIOR,"VK_PRIOR",IDS_KEYPAGEUP},
+		{VK_NEXT,"VK_NEXT",IDS_KEYPAGEDOWN},
+		{VK_END,"VK_END",IDS_KEYEND},
+		{VK_HOME,"VK_HOME",IDS_KEYHOME},
+		{VK_LEFT,"VK_LEFT",IDS_KEYLEFT},
+		{VK_UP,"VK_UP",IDS_KEYUP},
+		{VK_RIGHT,"VK_RIGHT",IDS_KEYRIGHT},
+		{VK_DOWN,"VK_DOWN",IDS_KEYDOWN},
+		{VK_SNAPSHOT,"VK_SNAPSHOT",IDS_KEYPRINTSCREEN},
+		{VK_SCROLL,"VK_SCROLL",IDS_KEYSCROLLLOCK},
+		{VK_PAUSE,"VK_PAUSE",IDS_KEYPAUSE},
+		{VK_INSERT,"VK_INSERT",IDS_KEYINS},
+		{VK_DELETE,"VK_DELETE",IDS_KEYDEL},
+		{VK_NUMLOCK,"VK_NUMLOCK",IDS_KEYNUMLOCK},
+		{VK_NUMPAD0,"VK_NUMPAD0",IDS_KEYNUM0},
+		{VK_NUMPAD1,"VK_NUMPAD1",IDS_KEYNUM1},
+		{VK_NUMPAD2,"VK_NUMPAD2",IDS_KEYNUM2},
+		{VK_NUMPAD3,"VK_NUMPAD3",IDS_KEYNUM3},
+		{VK_NUMPAD4,"VK_NUMPAD4",IDS_KEYNUM4},
+		{VK_NUMPAD5,"VK_NUMPAD5",IDS_KEYNUM5},
+		{VK_NUMPAD6,"VK_NUMPAD6",IDS_KEYNUM6},
+		{VK_NUMPAD7,"VK_NUMPAD7",IDS_KEYNUM7},
+		{VK_NUMPAD8,"VK_NUMPAD8",IDS_KEYNUM8},
+		{VK_NUMPAD9,"VK_NUMPAD9",IDS_KEYNUM9},
+		{VK_MULTIPLY,"VK_MULTIPLY",IDS_KEYNUMMUL},
+		{VK_ADD,"VK_ADD",IDS_KEYNUMADD},
+		{VK_SEPARATOR,"VK_SEPARATOR",0},
+		{VK_SUBTRACT,"VK_SUBTRACT",IDS_KEYNUMSUB},
+		{VK_DECIMAL,"VK_DECIMAL",IDS_KEYNUMDECIMAL},
+		{VK_DIVIDE,"VK_DIVIDE",IDS_KEYNUMDIV},
+		{VK_F1,"VK_F1",IDS_KEYF1},
+		{VK_F2,"VK_F2",IDS_KEYF2},
+		{VK_F3,"VK_F3",IDS_KEYF3},
+		{VK_F4,"VK_F4",IDS_KEYF4},
+		{VK_F5,"VK_F5",IDS_KEYF5},
+		{VK_F6,"VK_F6",IDS_KEYF6},
+		{VK_F7,"VK_F7",IDS_KEYF7},
+		{VK_F8,"VK_F8",IDS_KEYF8},
+		{VK_F9,"VK_F9",IDS_KEYF9},
+		{VK_F10,"VK_F10",IDS_KEYF10},
+		{VK_F11,"VK_F11",IDS_KEYF11},
+		{VK_F12,"VK_F12",IDS_KEYF12},
+		{VK_F13,"VK_F13",IDS_KEYF13},
+		{VK_F14,"VK_F14",IDS_KEYF14},
+		{VK_F15,"VK_F15",0},
+		{VK_F16,"VK_F16",0},
+		{VK_F17,"VK_F17",0},
+		{VK_F18,"VK_F18",0},
+		{VK_F19,"VK_F19",0},
+		{VK_F20,"VK_F20",0},
+		{VK_F21,"VK_F21",0},
+		{VK_F22,"VK_F22",0},
+		{VK_F23,"VK_F23",0},
+		{VK_F24,"VK_F24",0}
+	};
+
+	VirtualKeyName* pRet=new VirtualKeyName[sizeof(aVirtualKeys)/sizeof(VirtualKeyName)+1];
+
+	for (int i=0;i<sizeof(aVirtualKeys)/sizeof(VirtualKeyName);i++)
+	{
+		pRet[i].bKey=aVirtualKeys[i].bKey;
+		pRet[i].pName=alloccopy(aVirtualKeys[i].pName);
+		pRet[i].iFriendlyNameId=aVirtualKeys[i].iFriendlyNameId;
+	}
+	pRet[i].bKey=0;
+	pRet[i].pName=NULL;
+	pRet[i].iFriendlyNameId=0;
+    return pRet;
+}
+
+
+#endif
+
+
+BOOL CShortcut::DoClassOrTitleMatch(LPCSTR pClass,LPCSTR pCondition)
+{
+	int nIndex;
+    
+	for (;;)
+	{
+		for (nIndex=0;pCondition[nIndex]!='\0' && pCondition[nIndex]!='|';nIndex++);
+		
+		if (_ContainString(pClass,pCondition,nIndex))
+			return TRUE;
+
+        if (pCondition[nIndex]=='\0')
+			return FALSE;
+
+        pCondition+=nIndex+1;
+	}
 }

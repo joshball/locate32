@@ -12,19 +12,9 @@ inline CAction::CAction()
 
 inline CAction::~CAction()
 {
-	switch (m_nAction)
-	{
-	case ResultListItems:
-		if (m_nResultList==Execute && m_pExtraInfo!=NULL)
-			delete[] m_szVerb;
-		break;
-	case Advanced:
-		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage ) &&
-			m_pSendMessage!=NULL)
-			delete[] m_pSendMessage;
-		break;
-	}
+	ClearExtraInfo();
 }
+
 
 inline CAction::SendMessageInfo::SendMessageInfo()
 :	nMessage(0),szWindow(NULL),szWParam(NULL),szLParam(NULL)
@@ -54,6 +44,13 @@ inline void CShortcut::SetHotkeyModifiers(BYTE bHotkeyModifier)
 inline CShortcut::CShortcut(void* pVoid)
 :	m_dwFlags(sfDefault),m_pClass(NULL),m_pTitle(NULL) // This initializes union
 {
+}
+
+
+inline CShortcut::~CShortcut()
+{
+	ClearExtraInfo();
+	m_apActions.RemoveAll();
 }
 
 inline CAction::CAction(void* pVoid)
@@ -193,12 +190,14 @@ inline void CAction::DoResultListItems()
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL)
 		return;
-	pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_szVerb);
+
+	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
+		pLocateDlg->OnExecuteResultAction(m_nResultList,m_pExtraInfo);
+	else
+		pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_pExtraInfo);
 }
 
-#endif
 
-#ifdef HFCLIB
 inline void CShortcut::ResolveMnemonics(CArrayFP<CShortcut*>& aShortcuts,HWND* hDialogs)
 {
 	for (int i=0;i<aShortcuts.GetSize();i++)
@@ -208,6 +207,12 @@ inline void CShortcut::ResolveMnemonics(CArrayFP<CShortcut*>& aShortcuts,HWND* h
 	}
 
 }
+
+inline void CShortcut::FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,CString& str) const
+{
+    FormatKeyLabel(pVirtualKeyNames,m_bVirtualKey,m_bModifiers,(m_dwFlags&CShortcut::sfVirtualKeyIsScancode)?TRUE:FALSE,str);
+}
+
 #endif
 
 #endif

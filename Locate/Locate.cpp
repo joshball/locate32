@@ -425,14 +425,14 @@ int main (int argc,char * argv[])
             		else if (argv[i][3]==':')
 					{
 	            		if (pContainData!=NULL)
-							delete[] pContainData;
+							free(pContainData);
 						dwFlags&=~LOCATE_REGULAREXPRESSIONSEARCH;
             			pContainData=dataparser(argv[i]+4,&dwContainDataLength);
 					}
             		else
 					{
 	            		if (pContainData!=NULL)
-							delete[] pContainData;
+							free(pContainData);
             			dwFlags&=~LOCATE_REGULAREXPRESSIONSEARCH;
             			pContainData=dataparser(argv[i]+3,&dwContainDataLength);
 					}
@@ -442,7 +442,7 @@ int main (int argc,char * argv[])
 					
 						dwFlags|=LOCATE_REGULAREXPRESSIONSEARCH;
             			if (pContainData!=NULL)
-							delete[] pContainData;
+							free(pContainData);
 					
 						int j=argv[i][3]==':'?4:3;
 						if (argv[i][j]=='\0')
@@ -711,6 +711,6 @@ int main (int argc,char * argv[])
 
 
 	if (pContainData!=NULL)
-		delete[] pContainData;
+		free(pContainData);
 	return 0;
 }

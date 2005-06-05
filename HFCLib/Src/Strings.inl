@@ -667,6 +667,10 @@ inline int readnum(int base,LPCSTR szString,DWORD length=DWORD(-1))
 	return _readnum(base,szString,length);
 }
 
+inline BYTE* dataparser(LPCSTR pString,DWORD dwStrLen,DWORD* pdwDataLength=NULL)
+{
+	return dataparser(pString,dwStrLen,malloc,pdwDataLength);
+}
 inline BYTE* dataparser(const CString& str,DWORD* pdwDataLength=NULL)
 {
 	return dataparser(LPCSTR(str),str.GetLength(),pdwDataLength);
@@ -678,4 +682,6 @@ inline BYTE* dataparser(LPCSTR str,DWORD* pdwDataLength=NULL)
 	dstrlen(str,dwStrLen);
 	return dataparser(str,dwStrLen,pdwDataLength);
 }
+
+
 #endif

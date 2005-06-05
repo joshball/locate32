@@ -441,8 +441,7 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 			{
 				if (pStartData->m_aDatabases.GetSize()==0)
 				{
-					CString& sExe=GetApp()->GetExeName();
-					pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,sExe,sExe.FindLast('\\')+1));
+					pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,GetApp()->GetExeName(),LastCharIndex(GetApp()->GetExeName(),'\\')+1));
 					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy("DEFAULTX"));
 					pStartData->m_aDatabases[0]->SetThreadId(0);
 					pStartData->m_nStartup|=CStartData::startupDatabasesOverridden;
@@ -488,8 +487,7 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 					{
 						if (pStartData->m_aDatabases.GetSize()==0)
 						{
-							CString& sExe=GetApp()->GetExeName();
-							pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,sExe,sExe.FindLast('\\')+1));
+							pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,GetApp()->GetExeName(),LastCharIndex(GetApp()->GetExeName(),'\\')+1));
 							pStartData->m_aDatabases[0]->SetNamePtr(alloccopy("DEFAULTX"));
 							pStartData->m_aDatabases[0]->SetThreadId(0);
 							pStartData->m_nStartup|=CStartData::startupDatabasesOverridden;
@@ -769,8 +767,8 @@ BYTE CLocateApp::CheckDatabases()
 		CDatabase* pDatabase=CDatabase::FromOldStyleDatabase(HKCU,"Software\\Update\\Database");
 		if (pDatabase==NULL)
 		{
-			CString& sExe=GetApp()->GetExeName();
-			pDatabase=CDatabase::FromDefaults(TRUE,sExe,sExe.FindLast('\\')+1); // Nothing else can be done?
+			pDatabase=CDatabase::FromDefaults(TRUE,GetApp()->GetExeName(),
+				LastCharIndex(GetApp()->GetExeName(),'\\')+1); // Nothing else can be done?
 		}
 		else
 		{
@@ -1758,7 +1756,7 @@ BOOL CLocateApp::SetLanguageSpecifigHandles()
 	if (LangFile.IsEmpty())
 		LangFile="lan_en.dll";
 
-	CString Path(GetApp()->GetExeName(),GetApp()->GetExeName().FindLast('\\')+1);
+	CString Path(GetApp()->GetExeName(),LastCharIndex(GetApp()->GetExeName(),'\\')+1);
 	
 	
 
@@ -2905,7 +2903,7 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			{	
 				char szAppLine[257];
 				GlobalGetAtomName((ATOM)lParam,szAppLine,256);
-				if (GetApp()->GetAppName().CompareNoCase(szAppLine)==0)
+				if (strcasecmp(GetApp()->GetAppName(),szAppLine)==0)
 				{
 					if (wParam==1 || wParam==2) // Installing (1) or UnInstalling (2)...
 						DestroyWindow();

@@ -230,6 +230,8 @@ typedef HFCERROR (*HFCERRCALLBACK)(
     HFCERROR nError,DWORD dwData
     );
 
+typedef void * (__cdecl *MALLOC_FUNC)(size_t);
+
 
 #define HFC_FIRSTDEFERROR			(HFCERROR)0x0
 #define HFC_FIRSTMEMERROR			(HFCERROR)0x10000

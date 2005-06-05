@@ -376,7 +376,9 @@ public:
 	void OnInitMainMenu(HMENU hPopupMenu,UINT nIndex);
 	void OnInitFileMenu(HMENU hPopupMenu);
 	void OnInitSendToMenu(HMENU hPopupMenu);
-
+	
+	void OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo);
+	
 	void SortItems(DetailType nColumn,BYTE bDescending=-1); // bDescending:0=ascending order, 1=desc, -1=default
 
 	static UINT AddSendToMenuItems(HMENU hMenu,CString& sSendToPath,UINT wStartID);
@@ -389,7 +391,7 @@ public:
 	static int CALLBACK ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	static int SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSorting);
 	void SetSortArrowToHeader(DetailType nColumn,BOOL bRemove,BOOL bDownArrow);
-	HMENU CreateFileContextMenu(HMENU hFileMenu);
+	HMENU CreateFileContextMenu(HMENU hFileMenu,BOOL bSimple=FALSE);
 	ContextMenuStuff* GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CString*>& aFiles);
 	
 
@@ -427,12 +429,14 @@ public:
 
 	void SetShortcuts();
 	void ClearShortcuts();
+	void SetMenus();
 
 protected:
 	void OnOk(BOOL bForceSelectDatabases=FALSE);
 	void OnStop();
 	void OnNewSearch();
-	void OnMenuCommands(WORD wID);
+	void OnContextMenuCommands(WORD wID);
+	void OnExecuteFile(LPCSTR szVerb);
 	void OnSendToCommand(WORD wID);
 	void OnAutoArrange();
 	void OnAlignToGrid();
@@ -460,7 +464,6 @@ protected:
 	void OnUpdateLocatedItem();
 	void OnComputeMD5Sums(BOOL bForSameSizeFilesOnly);
 	void OnShowFileInformation();
-	void OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo);
 	
 	BOOL SetListStyle(int id,BOOL bInit=FALSE);
 	void SetVisibleWindowInTab();
@@ -667,6 +670,12 @@ protected:
 	CArrayFP<VolumeInformation*> m_aVolumeInformation;
 	CArrayFP<CShortcut*> m_aShortcuts;
 
+	// if WM_COMMAND with wID~IDM_DEFSHORTCUTITEM is got,
+	// m_aActiveShortcuts[wID~IDM_DEFSHORTCUTITEM] is NULL terminated list 
+	// to shortcuts which should be executed
+	CArrayFAP<CShortcut**> m_aActiveShortcuts; 
+
+
 
 	// Accessors
 public:
@@ -700,12 +709,10 @@ public:
 inline CLocateDlg* GetLocateDlg()
 {
 	extern CLocateApp theApp;
-	CLocateAppWnd* pLocateAppWnd=(CLocateAppWnd*)theApp.GetMainWnd();
-	if (pLocateAppWnd==NULL)
+	
+	if (theApp.m_AppWnd.m_pLocateDlgThread==NULL)
 		return NULL;
-	if (pLocateAppWnd->m_pLocateDlgThread==NULL)
-		return NULL;
-	return pLocateAppWnd->m_pLocateDlgThread->m_pLocate;
+	return theApp.m_AppWnd.m_pLocateDlgThread->m_pLocate;
 }
 
 

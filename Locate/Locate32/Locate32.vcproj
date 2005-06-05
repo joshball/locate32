@@ -587,6 +587,9 @@
 				RelativePath="commonres\bmp00003.bmp">
 			</File>
 			<File
+				RelativePath=".\commonres\bmp00004.bmp">
+			</File>
+			<File
 				RelativePath="commonres\circle.bmp">
 			</File>
 			<File
@@ -596,7 +599,16 @@
 				RelativePath="commonres\dbfile.ico">
 			</File>
 			<File
+				RelativePath=".\commonres\defaultshortcuts.dat">
+			</File>
+			<File
 				RelativePath="commonres\DEFAULTT.BMP">
+			</File>
+			<File
+				RelativePath=".\commonres\defaulttypeicons.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\deftypei.bmp">
 			</File>
 			<File
 				RelativePath="commonres\deletedf.ico">
@@ -635,6 +647,39 @@
 				RelativePath="commonres\idb_lani.ico">
 			</File>
 			<File
+				RelativePath=".\commonres\invalidf.ico">
+			</File>
+			<File
+				RelativePath=".\commonres\invalidfico.ico">
+			</File>
+			<File
+				RelativePath=".\commonres\keybitd.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\keybith.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\keybitn.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\lanim1.ico">
+			</File>
+			<File
+				RelativePath=".\commonres\lanim2.ico">
+			</File>
+			<File
+				RelativePath=".\commonres\lanim3.ico">
+			</File>
+			<File
+				RelativePath=".\commonres\lanim4.ico">
+			</File>
+			<File
+				RelativePath=".\commonres\lanim5.ico">
+			</File>
+			<File
+				RelativePath=".\commonres\lanim6.ico">
+			</File>
+			<File
 				RelativePath="commonres\LENS.ICO">
 			</File>
 			<File
@@ -650,7 +695,49 @@
 				RelativePath="commonres\saverestoolbarbitmaps.bmp">
 			</File>
 			<File
+				RelativePath=".\commonres\saverestoolbarbitmapshot.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\shortcut.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\shortcutactionsbitmaps.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\shortcutactionsbitmapsdisabled.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\shortcutactionsbitmapshot.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\sresbitd.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\sresbith.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\sresbitn.bmp">
+			</File>
+			<File
 				RelativePath=".\commonres\toolbarb.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\toolbarbitmaps.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\toolbarbitmapsdisabled.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\toolbitd.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\toolbith.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\toolbitn.bmp">
+			</File>
+			<File
+				RelativePath=".\commonres\uanim1.ico">
 			</File>
 			<File
 				RelativePath="commonres\uanim10.ico">
@@ -701,97 +788,10 @@
 			<File
 				RelativePath=".\HFCDebug.log">
 			</File>
+			<File
+				RelativePath="..\..\Install\Locate2\Readme.txt">
+			</File>
 		</Filter>
-		<File
-			RelativePath=".\commonres\bmp00004.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\defaultshortcuts.dat">
-		</File>
-		<File
-			RelativePath=".\commonres\defaulttypeicons.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\deftypei.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\invalidf.ico">
-		</File>
-		<File
-			RelativePath=".\commonres\invalidfico.ico">
-		</File>
-		<File
-			RelativePath=".\commonres\keybitd.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\keybith.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\keybitn.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\lanim1.ico">
-		</File>
-		<File
-			RelativePath=".\commonres\lanim2.ico">
-		</File>
-		<File
-			RelativePath=".\commonres\lanim3.ico">
-		</File>
-		<File
-			RelativePath=".\commonres\lanim4.ico">
-		</File>
-		<File
-			RelativePath=".\commonres\lanim5.ico">
-		</File>
-		<File
-			RelativePath=".\commonres\lanim6.ico">
-		</File>
-		<File
-			RelativePath="..\..\Install\Locate2\Readme.txt">
-		</File>
-		<File
-			RelativePath=".\commonres\saverestoolbarbitmapshot.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\shortcut.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\shortcutactionsbitmaps.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\shortcutactionsbitmapsdisabled.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\shortcutactionsbitmapshot.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\sresbitd.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\sresbith.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\sresbitn.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\toolbarbitmaps.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\toolbarbitmapsdisabled.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\toolbitd.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\toolbith.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\toolbitn.bmp">
-		</File>
-		<File
-			RelativePath=".\commonres\uanim1.ico">
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

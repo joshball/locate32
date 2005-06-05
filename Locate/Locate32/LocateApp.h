@@ -368,8 +368,10 @@ public:
 	
 	const CDatabase* GetDatabase(WORD wID) const;
 
-
 	static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);
+
+	friend CLocateAppWnd* GetLocateAppWnd();
+	friend CLocateDlg* GetLocateDlg();
 };
 
 inline CLocateApp::CStartData::CStartData()
@@ -434,7 +436,7 @@ inline CLocateApp* GetLocateApp()
 inline CLocateAppWnd* GetLocateAppWnd()
 {
 	extern CLocateApp theApp;
-	return (CLocateAppWnd*)theApp.GetMainWnd();
+	return (CLocateAppWnd*)&theApp.m_AppWnd;
 }
 
 inline CLocateAppWnd::CLocateAppWnd()

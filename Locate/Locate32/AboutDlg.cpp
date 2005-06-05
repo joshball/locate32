@@ -66,9 +66,9 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 #endif
 			SetDlgItemText(IDC_COPYRIGHT,str);
 		}
-		UINT iDataLength=GetFileVersionInfoSize(GetApp()->GetExeName().GetBuffer(),NULL);
+		UINT iDataLength=GetFileVersionInfoSize(GetApp()->GetExeName(),NULL);
 		BYTE* pData=new BYTE[iDataLength];
-		GetFileVersionInfo(GetApp()->GetExeName().GetBuffer(),NULL,iDataLength,pData);
+		GetFileVersionInfo(GetApp()->GetExeName(),NULL,iDataLength,pData);
 		VOID* pTranslations,* pProductVersion=NULL;
 		VerQueryValue(pData,"VarFileInfo\\Translation",&pTranslations,&iDataLength);
 		char szTranslation[100];
