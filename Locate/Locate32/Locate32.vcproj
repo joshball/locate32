@@ -547,6 +547,9 @@
 				RelativePath="LocateDlg.inl">
 			</File>
 			<File
+				RelativePath=".\messages.h">
+			</File>
+			<File
 				RelativePath=".\ResultsDialogs.h">
 			</File>
 			<File

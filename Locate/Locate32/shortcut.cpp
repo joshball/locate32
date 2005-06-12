@@ -415,66 +415,126 @@ CShortcut* CShortcut::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
 	return pShortcut;
 }
 
-CAction* CAction::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
+CSubAction* CSubAction::FromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
 {
-	if (dwDataLen<sizeof(CAction)+sizeof(WORD))
+	if (dwDataLen<sizeof(WORD))
+		return NULL;
+
+	if (*((WORD*)pData)!=0xFFEA)
 		return NULL;
 	
-	if (*((WORD*)pData)!=0xFFEC)
-		return NULL;
-
-	CAction* pAction=new CAction((void*)NULL);
-	CopyMemory(pAction,pData+sizeof(WORD),sizeof(CAction));	
-	pData+=sizeof(WORD)+sizeof(CAction);
-	dwUsed=sizeof(WORD)+sizeof(CAction);
-	dwDataLen-=sizeof(WORD)+sizeof(CAction);
-
-	switch (pAction->m_nAction)
+	CSubAction* pSubAction=new CSubAction((void*)NULL);
+	dwUsed=pSubAction->FillFromData(nAction,pData+sizeof(WORD),dwDataLen-sizeof(WORD));
+	if (dwUsed==0)
 	{
-	case ResultListItems:
-		if (pAction->m_nResultList==Execute && pAction->m_szVerb!=NULL)
+		delete pSubAction;
+		return NULL;
+	}
+
+
+	dwUsed+=sizeof(WORD);
+	return pSubAction;
+}
+	
+DWORD CSubAction::FillFromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen)
+{
+	if (dwDataLen<2*sizeof(DWORD))
+		return 0;
+	
+	DWORD dwUsed=0;
+		
+	
+	m_nSubAction=*((DWORD*)(pData));
+	m_pExtraInfo=*((void**)(pData+sizeof(DWORD)));
+
+	pData+=2*sizeof(DWORD);
+	dwUsed=2*sizeof(DWORD);
+	dwDataLen-=2*sizeof(DWORD);
+
+	switch (nAction)
+	{
+	case CAction::ResultListItems:
+		if (m_nResultList==Execute && m_szVerb!=NULL)
 		{
 			DWORD dwLen;
 
 			for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
 
 			if (dwLen==dwDataLen)
-			{
-				delete pAction;
-				return NULL;
-			}
+				return 0;
 
 			dwLen++;
-			pAction->m_szVerb=new char[dwLen];
-            CopyMemory(pAction->m_szVerb,pData,dwLen);
+			m_szVerb=new char[dwLen];
+            CopyMemory(m_szVerb,pData,dwLen);
+			dwUsed+=dwLen;
+			pData+=dwLen;
+			dwDataLen-=dwLen;
+		}
+		else if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
+		{
+			DWORD dwLen;
+
+			for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
+
+			if (dwLen==dwDataLen)
+				return 0;
+			
+			dwLen++;
+			m_szCommand=new char[dwLen];
+            CopyMemory(m_szCommand,pData,dwLen);
 			dwUsed+=dwLen;
 			pData+=dwLen;
 			dwDataLen-=dwLen;
 		}
 		break;
-	case Advanced:
-		if ((pAction->m_nAdvanced==SendMessage || pAction->m_nAdvanced==PostMessage) && 			
-			pAction->m_pSendMessage!=NULL)
+	case CAction::Advanced:
+		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage) && 			
+			m_pSendMessage!=NULL)
 		{
 			DWORD dwLen;
 
-			pAction->m_pSendMessage=SendMessageInfo::FromData(pData,dwDataLen,dwLen);
+			m_pSendMessage=SendMessageInfo::FromData(pData,dwDataLen,dwLen);
 
-			if (pAction->m_pSendMessage==NULL)
-			{
-				delete pAction;
-				return NULL;
-			}
-	
+			if (m_pSendMessage==NULL)
+				return 0;
+			
 			pData+=dwLen;
 			dwUsed+=dwLen;
 			dwDataLen-=dwLen;
 		}
 		break;
 	}
+	return dwUsed;
+}
 	
+
+CAction* CAction::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
+{
+	if (dwDataLen<sizeof(DWORD)+sizeof(WORD))
+		return NULL;
+	
+	if (*((WORD*)pData)!=0xFFEC)
+		return NULL;
+	
+	CAction* pAction=new CAction((void*)NULL);
+	pAction->m_dwAction=*((DWORD*)(pData+sizeof(WORD)));
+		
+	dwUsed=pAction->FillFromData(pAction->m_dwAction,
+		pData+sizeof(WORD)+sizeof(DWORD),dwDataLen-sizeof(WORD)-sizeof(DWORD));
+	if (dwUsed==0)
+	{
+		delete pAction;
+		return NULL;
+	}
+
+	dwUsed+=sizeof(WORD)+sizeof(DWORD);
+
 	return pAction;
 }
+
+
+
+	
 
 CAction::SendMessageInfo* CAction::SendMessageInfo::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
 {
@@ -560,30 +620,44 @@ CAction::SendMessageInfo* CAction::SendMessageInfo::FromData(const BYTE* pData,D
 	return pSendMessage;
 }
 
-DWORD CAction::GetData(BYTE* pData_) const
+
+
+DWORD CSubAction::GetData(DWORD nAction,BYTE* pData_,BOOL bHeader) const
 {
 	BYTE* pData=pData_;
-	DWORD dwUsed;
-	*((WORD*)pData)=0xFFEC;
-	CopyMemory(pData+sizeof(WORD),this,sizeof(CAction));
-	pData+=sizeof(CAction)+sizeof(WORD);
+	
+	if (bHeader)
+	{
+		*((WORD*)pData)=0xFFEA;
+		pData+=sizeof(WORD);
+	}
+
+	*((DWORD*)pData)=m_nSubAction;
+	*((void**)(pData+sizeof(DWORD)))=m_pExtraInfo;
+	pData+=2*sizeof(DWORD);
 	
 
-	switch (m_nAction)
+	switch (nAction)
 	{
-	case ResultListItems:
+	case CAction::ResultListItems:
 		if (m_nResultList==Execute && m_szVerb!=NULL)
 		{
-			dwUsed=istrlen(m_szVerb)+1;
+			DWORD dwUsed=istrlen(m_szVerb)+1;
 			CopyMemory(pData,m_szVerb,dwUsed);
 			pData+=dwUsed;
 		}
+		else if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
+		{
+			DWORD dwUsed=istrlen(m_szCommand)+1;
+			CopyMemory(pData,m_szCommand,dwUsed);
+			pData+=dwUsed;
+		}
 		break;
-	case Advanced:
+	case CAction::Advanced:
 		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage) && 			
 			m_pSendMessage!=NULL)
 		{
-			dwUsed=m_pSendMessage->GetData(pData);
+			DWORD dwUsed=m_pSendMessage->GetData(pData);
 			pData+=dwUsed;
 		}
 		break;
@@ -716,17 +790,19 @@ char CShortcut::GetMnemonicForAction(HWND* hDialogs) const
 	return 0;
 }
 
-CAction::CAction(CAction& rCopyFrom)
+void CSubAction::GetCopyFrom(DWORD nAction,CSubAction& rCopyFrom)
 {
-	CopyMemory(this,&rCopyFrom,sizeof(CAction));
+	CopyMemory(this,&rCopyFrom,sizeof(CSubAction));
 
-	switch (m_nAction)
+	switch (nAction)
 	{
-	case ResultListItems:
+	case CAction::ResultListItems:
 		if (m_nResultList==Execute && m_szVerb!=NULL)
 			m_szVerb=alloccopy(m_szVerb);
+		if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
+			m_szCommand=alloccopy(m_szCommand);
 		break;
-	case Advanced:
+	case CAction::Advanced:
 		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage ) &&
 			m_pSendMessage!=NULL)
 			m_pSendMessage=new SendMessageInfo(*m_pSendMessage);
@@ -735,15 +811,17 @@ CAction::CAction(CAction& rCopyFrom)
 	
 }
 
-void CAction::ClearExtraInfo()
+void CSubAction::ClearExtraInfo(DWORD nAction)
 {
-	switch (m_nAction)
+	switch (nAction)
 	{
-	case ResultListItems:
+	case CAction::ResultListItems:
 		if (m_nResultList==Execute && m_pExtraInfo!=NULL)
 			delete[] m_szVerb;
+		else if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
+			delete[] m_szCommand;			
 		break;
-	case Advanced:
+	case CAction::Advanced:
 		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage ) &&
 			m_pSendMessage!=NULL)
 			delete m_pSendMessage;
@@ -780,7 +858,7 @@ void CAction::ExecuteAction()
 	}
 }
 
-void CAction::DoActivateControl()
+void CSubAction::DoActivateControl()
 {
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL)
@@ -793,7 +871,7 @@ void CAction::DoActivateControl()
 }
 
 
-void CAction::DoMenuCommand()
+void CSubAction::DoMenuCommand()
 {
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL)
@@ -805,7 +883,7 @@ void CAction::DoMenuCommand()
 		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nMenuCommand),0),0);
 }
 
-void CAction::DoShowHideDialog()
+void CSubAction::DoShowHideDialog()
 {
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	
@@ -852,6 +930,26 @@ void CAction::DoShowHideDialog()
 }
 
 
+
+void CSubAction::DoResultListItems()
+{
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	
+	if (m_nResultList==ExecuteCommand)
+	{
+		CLocateDlg::ExecuteCommand(m_szCommand);
+		return;
+	}
+		
+	if (pLocateDlg==NULL)
+		return;
+
+	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
+		pLocateDlg->OnExecuteResultAction(m_nResultList,m_pExtraInfo);
+	else
+		pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_pExtraInfo);
+}
+
 void * __cdecl gmalloc(size_t size) { return GlobalAlloc(GPTR,size+1); }
 BOOL CALLBACK WindowEnumProc(HWND hwnd,LPARAM lParam)
 {
@@ -886,8 +984,11 @@ BOOL CALLBACK WindowEnumProc(HWND hwnd,LPARAM lParam)
 	return FALSE;
 }
 
-void CAction::DoAdvanced()
+void CSubAction::DoAdvanced()
 {
+
+
+	// Send/Post Message
 
 	BOOL bFreeWParam=FALSE,bFreeLParam=FALSE;
 	
@@ -1023,7 +1124,7 @@ void CAction::DoAdvanced()
 }
 
 
-CAction::SendMessageInfo::SendMessageInfo(SendMessageInfo& rCopyFrom)
+CSubAction::SendMessageInfo::SendMessageInfo(SendMessageInfo& rCopyFrom)
 {
 	CopyMemory(this,&rCopyFrom,sizeof(SendMessageInfo));
 
@@ -1035,7 +1136,7 @@ CAction::SendMessageInfo::SendMessageInfo(SendMessageInfo& rCopyFrom)
 		szLParam=alloccopy(szLParam);
 }
 		
-DWORD CAction::SendMessageInfo::GetData(BYTE* pData_) const
+DWORD CSubAction::SendMessageInfo::GetData(BYTE* pData_) const
 {
 	BYTE* pData=pData_;
 	
@@ -1128,7 +1229,7 @@ void CShortcut::ModifyMenus(CArrayFP<CShortcut*>& aShortcuts,HMENU hMainMenu,HME
 
 
 
-BYTE CAction::GetMenuAndSubMenu(CAction::ActionMenuCommands nMenuCommand)
+BYTE CSubAction::GetMenuAndSubMenu(CAction::ActionMenuCommands nMenuCommand)
 {
 	switch (HIWORD(nMenuCommand))
 	{
@@ -1296,6 +1397,86 @@ CShortcut::VirtualKeyName* CShortcut::GetVirtualKeyNames()
 	pRet[i].pName=NULL;
 	pRet[i].iFriendlyNameId=0;
     return pRet;
+}
+
+int CSubAction::GetActivateTabsActionLabelStringId(CAction::ActionActivateTabs uSubAction)
+{
+	switch (uSubAction)
+	{
+	case NameAndLocationTab:
+		return IDS_NAME;
+	case SizeAndDataTab:
+		return IDS_SIZEDATE;
+	case AdvancedTab:
+		return IDS_ADVANCED;
+	default:
+		return 0;
+	}
+}
+	
+int CSubAction::GetShowHideDialogActionLabelStringId(CAction::ActionShowHideDialog uSubAction)
+{
+	switch (uSubAction)
+	{
+	case ShowDialog:
+		return IDS_ACTIONSWDIALOGSHOW;
+	case MinimizeDialog:
+		return IDS_ACTIONSWDIALOGMINIMINZE;
+	case CloseDialog:
+		return IDS_ACTIONSWDIALOGCLOSE;
+	case ShowOrHideDialog:
+		return IDS_ACTIONSWDIALOGSHOWORHIDE;
+	case OpenOrCloseDialog:
+		return IDS_ACTIONSWDIALOGOPENORCLOSE;
+	default:
+		return 0;
+	}
+}
+
+int CSubAction::GetResultItemActionLabelStringId(CAction::ActionResultList uSubAction)
+{
+	switch (uSubAction)
+	{
+	case Execute:
+		return IDS_ACTIONRESITEMEXECUTE;
+	case Copy:
+		return IDS_ACTIONRESITEMCOPY;
+	case Cut:
+		return IDS_ACTIONRESITEMCUT;
+	case MoveToRecybleBin:
+		return IDS_ACTIONRESITEMRECYCLE;
+	case DeleteFile:
+		return IDS_ACTIONRESITEMDELETE;
+	case OpenContextMenu:
+		return IDS_ACTIONRESITEMOPENCONTEXTMENU;
+	case OpenContextMenuSimple:
+		return IDS_ACTIONRESITEMOPENCONTEXTMENUSIMPLE;
+	case OpenFolder:
+		return IDS_ACTIONRESITEMOPENFOLDER;
+	case OpenContainingFolder:
+		return IDS_ACTIONRESITEMOPENCONTFOLDER;
+	case Properties:
+		return IDS_ACTIONRESITEMPROPERTIES;
+	case ShowSpecialMenu:
+		return IDS_ACTIONRESITEMSPECIALMENU;
+	case ExecuteCommand:
+		return IDS_ACTIONRESITEMEXECUTECOMMAND;
+	default:
+		return 0;
+	}
+}
+
+int CSubAction::GetAdvancedActionStringLabelId(CAction::ActionAdvanced uSubAction)
+{
+	switch (uSubAction)
+	{
+	case CAction::SendMessage:
+		return IDS_ACTIONADVSENDMESSAGE;
+	case CAction::PostMessage:
+		return IDS_ACTIONADVPOSTMESSAGE;
+	default:
+		return 0;
+	}
 }
 
 

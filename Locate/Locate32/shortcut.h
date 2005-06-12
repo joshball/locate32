@@ -1,25 +1,15 @@
 #ifndef SHORTCUT_H
 #define SHORTCUT_H
 
-// Action
 // Actions
-class CAction {
+class CSubAction {
 public:
-	CAction();
-	CAction(CAction& rCopyFrom);
-	~CAction();
-	
-	
-	void CAction::ClearExtraInfo();
+	CSubAction();
+	CSubAction(DWORD nSubAction);
+	CSubAction(DWORD nAction,CSubAction& rCopyFrom);
 
-	enum Action {
-		ActivateControl = 0,
-		ActivateTab = 1,
-		MenuCommand = 2,
-		ShowHideDialog = 3,
-		ResultListItems = 4,
-		Advanced = 5
-	} m_nAction;
+	void GetCopyFrom(DWORD nAction,CSubAction& rCopyFrom);	
+	void ClearExtraInfo(DWORD nAction);
 
 	enum ActionActivateControls { // First is control to be activated, second is for memonics
 		NullControl = 0,
@@ -178,8 +168,9 @@ public:
 		OpenContainingFolder = 8,
 		Properties = 9,
 		ShowSpecialMenu = 10,			
+		ExecuteCommand = 11,
 		
-		ResultListLast = ShowSpecialMenu
+		ResultListLast = ExecuteCommand
 	};
 
 	enum ActionAdvanced {
@@ -190,7 +181,7 @@ public:
 	};
 		
 	union { // Action specifig type
-		UINT m_nSubAction;
+		DWORD m_nSubAction;
 		ActionActivateControls m_nActivateControl;
 		ActionActivateTabs m_nActivateTab;
 		ActionMenuCommands m_nMenuCommand;
@@ -209,7 +200,7 @@ public:
 		static SendMessageInfo* FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed);
 		
 		LPSTR szWindow;
-		UINT nMessage;
+		DWORD nMessage;
 		LPSTR szWParam;
 		LPSTR szLParam;
 	};
@@ -219,13 +210,64 @@ public:
 		void* m_pExtraInfo;	
 		LPSTR m_szVerb; // with, ResultListItems::Execute, NULL means default
 		SendMessageInfo* m_pSendMessage; // with, Advanced::SendMessage and Advanced::PostMessage
+		LPSTR m_szCommand;
 	};
-		
+
 	// highest bit = 1 : mainmenu
 	// highest bit = 0 : supmenu
 	// other bits = nSubMenu
 	static BYTE GetMenuAndSubMenu(ActionMenuCommands nMenuCommand);
+
+	static int GetActivateTabsActionLabelStringId(ActionActivateTabs uSubAction);
+	static int GetShowHideDialogActionLabelStringId(ActionShowHideDialog uSubAction);
+	static int GetResultItemActionLabelStringId(ActionResultList uSubAction);
+	static int GetAdvancedActionStringLabelId(ActionAdvanced uSubAction);
+
+	void DoActivateControl();
+	void DoActivateTab();
+	void DoMenuCommand();
+    void DoShowHideDialog();
+	void DoResultListItems();
+	void DoAdvanced();
+
+
+	DWORD GetData(DWORD nAction,BYTE* pData,BOOL bHeader=TRUE) const;
+	DWORD GetDataLength(DWORD nAction,BOOL bHeader=TRUE) const;
 	
+	static CSubAction* FromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed);
+	
+protected:
+	DWORD FillFromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen);
+	CSubAction(void* pVoid); // Empty constructor
+};
+
+class CAction : public CSubAction {
+public:
+	CAction();
+	CAction(CAction& rCopyFrom);
+	~CAction();
+	
+	void ClearExtraInfo();
+
+
+	enum Action {
+		ActivateControl = 0,
+		ActivateTab = 1,
+		MenuCommand = 2,
+		ShowHideDialog = 3,
+		ResultListItems = 4,
+		Advanced = 5
+	};
+	
+	union {
+        Action m_nAction;
+		DWORD m_dwAction; // Make sure that action takes four bytes
+	};
+
+	
+
+		
+
 protected:
 	DWORD GetData(BYTE* pData) const;
 	DWORD GetDataLength() const;
@@ -234,12 +276,7 @@ protected:
 	CAction(void* pVoid); // Empty constructor
 
 	void ExecuteAction();
-	void DoActivateControl();
-	void DoActivateTab();
-	void DoMenuCommand();
-    void DoShowHideDialog();
-	void DoResultListItems();
-	void DoAdvanced();
+
 
 	friend class CShortcut;
 
@@ -347,7 +384,7 @@ public:
 			LPSTR m_pTitle; // NULL=none
 		};
 	};
-	UINT m_nDelay; // 0=none, -1=post, otherwise it is delay in ms
+	DWORD m_nDelay; // 0=none, -1=post, otherwise it is delay in ms
 	
 	
 	

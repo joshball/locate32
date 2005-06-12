@@ -254,7 +254,7 @@
 #define IDC_CUSTOMDRIVES                1049
 #define IDC_SYSTEMSETTINGS              1049
 #define IDC_PTAB                        1050
-#define IDC_SINGLECLICK                 1050
+#define IDC_POINTTOSELECT               1050
 #define IDC_PUNTAB                      1051
 #define IDC_USE                         1052
 #define IDC_FILE                        1053
@@ -367,6 +367,7 @@
 #define IDC_LANGUAGE                    1148
 #define IDC_USEWITHCONSOLEAPPS          1149
 #define IDC_MATCHCASE2                  1149
+#define IDC_STATICWHEN					1150
 #define IDC_IMAGE                       1150
 #define IDC_ABOUTBANNER                 1150
 #define IDC_COLUMNS                     1151
@@ -375,6 +376,7 @@
 #define IDC_SPIN1                       1153
 #define IDC_THREADSPIN                  1153
 #define IDC_DBINFO                      1154
+#define IDC_WHEN						1154
 #define IDC_DETAILS                     1155
 #define IDC_LIST                        1156
 #define IDC_LABELS                      1157
@@ -470,6 +472,8 @@
 #define IDC_WPARAM						1229
 #define IDC_STATICLPARAM				1230
 #define IDC_LPARAM						1231
+#define IDC_STATICCOMMAND				1232
+#define IDC_COMMAND						1233
 #define IDS_LASTERROR                   1900
 #define IDS_LASTERRORUNKNOWN            1901
 #define IDS_LASTERRORINVALIDDB          1902
@@ -754,6 +758,7 @@
 #define IDS_ACTIONRESITEMOPENCONTFOLDER	5728
 #define IDS_ACTIONRESITEMPROPERTIES		5729
 #define IDS_ACTIONRESITEMSPECIALMENU	5730
+#define IDS_ACTIONRESITEMEXECUTECOMMAND	5731
 #define IDS_ACTIONADVSENDMESSAGE		5740
 #define IDS_ACTIONADVPOSTMESSAGE		5741
 #define IDS_KEYRESULTLIST               5590
@@ -797,10 +802,16 @@
 #define IDS_MINUTELYEVERYXMINUTE        7011
 #define IDS_LASTRUN                     7100
 #define IDS_LASTRUNNEVER                7101
+#define IDS_DETAILLEFTCLICK				7300
+#define IDS_DETAILLEFTDBLCLICK			7301
+#define IDS_DETAILRIGHTCLICK			7302
+#define IDS_DETAILRIGHTDBLCLICK			7303
+#define IDS_DETAILMIDDLECLICK			7304
+#define IDS_DETAILMIDDLEDLBCLICK		7305
 #define IDS_EXPLORERLOCATE              8000
 #define IDS_EXPLORERUPDATE              8001
 #define IDC_NEVERUNDERLINE              11024
-#define IDC_DOUBLECLICK                 11025
+#define IDC_CLICKTOSELECT               11025
 #define IDC_ICONS                       12297
 #define IDS_SYSWIN32S                   27001
 #define IDS_SYSWIN95                    27002

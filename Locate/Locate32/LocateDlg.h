@@ -74,9 +74,22 @@ public:
 		MD5sum=19,
 		LastType=19,
 
+		TypeCount=LastType+1,
 
 		Needed=255
 	};
+
+	enum ResultListAction {
+		LeftMouseButtonClick = 0,
+		LeftMouseButtonDblClick = 1,
+		RightMouseButtonClick = 2,
+		RightMouseButtonDblClick = 3,
+		MiddleMouseButtonClick = 4,
+		MiddleMouseButtonDblClick = 5,
+
+		ListActionCount = 6
+	};
+
 	
 public:
 	class CNameDlg : public CDialog  
@@ -322,6 +335,8 @@ public:
 		};
 		BYTE m_dwFlags;
 
+		CSubAction* m_aResultListActions[TypeCount];
+
 #ifdef _DEBUG
 	public:
 		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
@@ -377,7 +392,8 @@ public:
 	void OnInitFileMenu(HMENU hPopupMenu);
 	void OnInitSendToMenu(HMENU hPopupMenu);
 	
-	void OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo);
+	void OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo,int nItem=-1,DetailType nDetail=Title);
+	static void ExecuteCommand(LPCSTR szCommand,int nItem=-1);
 	
 	void SortItems(DetailType nColumn,BYTE bDescending=-1); // bDescending:0=ascending order, 1=desc, -1=default
 
@@ -389,10 +405,12 @@ public:
 	//void EnsureFocus();
 	BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
 	static int CALLBACK ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+
 	static int SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSorting);
 	void SetSortArrowToHeader(DetailType nColumn,BOOL bRemove,BOOL bDownArrow);
-	HMENU CreateFileContextMenu(HMENU hFileMenu,BOOL bSimple=FALSE);
+	HMENU CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pSelectedItems,int nSelectedItems,BOOL bSimple=FALSE);
 	ContextMenuStuff* GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CString*>& aFiles);
+	CLocatedItem** GetSeletedItems(int& nItems,int nIncludeIfNoneSeleted=-1);
 	
 
 
@@ -431,28 +449,21 @@ public:
 	void ClearShortcuts();
 	void SetMenus();
 
+	void LoadResultlistActions();
+	void SaveResultlistActions();
+	void ClearResultlistActions();
+
 protected:
 	void OnOk(BOOL bForceSelectDatabases=FALSE);
 	void OnStop();
 	void OnNewSearch();
 	void OnContextMenuCommands(WORD wID);
-	void OnExecuteFile(LPCSTR szVerb);
 	void OnSendToCommand(WORD wID);
 	void OnAutoArrange();
 	void OnAlignToGrid();
 	void OnRefresh();
 	void OnSettings() { GetLocateAppWnd()->OnSettings(); }
-	void OnProperties();
-	void OnCopy(BOOL bCut);
-	void OnOpenFolder(BOOL bContaining);
-	void OnCreateShortcut();
-	
-	enum DeleteFlag {
-		Recycle = 0,
-		Delete = 1,
-		BasedOnShift = 2
-	};
-	void OnDelete(DeleteFlag DeleteFlag=BasedOnShift);
+	void OnProperties(int nItem=1);
 	void OnRemoveFromThisList();
 	void OnSelectAll();
 	void OnInvertSelection();
@@ -465,6 +476,18 @@ protected:
 	void OnComputeMD5Sums(BOOL bForSameSizeFilesOnly);
 	void OnShowFileInformation();
 	
+	void OnExecuteFile(LPCSTR szVerb,int nItem=-1);
+	void OnCopy(BOOL bCut,int nItem=1);
+	void OnOpenFolder(BOOL bContaining,int nItem=-1);
+	void OnCreateShortcut();
+	enum DeleteFlag {
+		Recycle = 0,
+		Delete = 1,
+		BasedOnShift = 2
+	};
+	void OnDelete(DeleteFlag DeleteFlag=BasedOnShift,int nItem=-1);
+	
+
 	BOOL SetListStyle(int id,BOOL bInit=FALSE);
 	void SetVisibleWindowInTab();
 	void SaveRegistry();
@@ -536,8 +559,8 @@ public:
 		fgLVExtensionFlag=fgLVAlwaysShowExtensions|fgLVHideKnownExtensions|fgLVNeverShowExtensions,
 		
 		fgLVStyleSystemDefine=0x00001000,
-		fgLVStyleSingleClick=0x00002000,
-		fgLVStyleDoubleClick=0x00000000,
+		fgLVStylePointToSelect=0x00002000,
+		fgLVStyleClickToSelect=0x00000000,
 		fgLVStyleClickFlag=0x00003000,
 		fgLVStyleNeverUnderline=0x00000000,
 		fgLVStyleUnderLine=0x00004000,
@@ -674,6 +697,8 @@ protected:
 	// m_aActiveShortcuts[wID~IDM_DEFSHORTCUTITEM] is NULL terminated list 
 	// to shortcuts which should be executed
 	CArrayFAP<CShortcut**> m_aActiveShortcuts; 
+
+	CSubAction* m_aResultListActions[TypeCount][ListActionCount];
 
 
 

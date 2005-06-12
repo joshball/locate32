@@ -675,7 +675,9 @@ public:
 	DWORD QueryValue(LPCTSTR lpszValueName,LPTSTR lpbData,DWORD cbData,LPDWORD lpdwType=NULL) const;	
 	BOOL QueryValue(LPCTSTR lpszValueName,CString& strData) const;	
 	BOOL QueryValue(LPCTSTR lpszValueName,DWORD& dwData) const;	
+	
 	DWORD QueryValueLength(LPCTSTR lpszValueName) const;
+	DWORD QueryValueLength(LPCTSTR lpszValueName,BOOL& bIsOk) const;
 
 	LONG SetValue(LPCTSTR lpValueName,LPCTSTR lpData,DWORD cbData,DWORD dwType=REG_BINARY);
 	BOOL SetValue(LPCTSTR lpValueName,CString& strData);

@@ -358,6 +358,20 @@ inline DWORD CRegKey::QueryValueLength(LPCTSTR lpszValueName) const
 	return ::RegQueryValueEx(m_hKey,(LPSTR)lpszValueName,NULL,NULL,NULL,&nLength)==ERROR_SUCCESS?nLength:0;
 }
 
+inline DWORD CRegKey::QueryValueLength(LPCTSTR lpszValueName,BOOL& bIsOk) const
+{
+	DWORD nLength=0;
+	if (::RegQueryValueEx(m_hKey,(LPSTR)lpszValueName,NULL,NULL,NULL,&nLength)==ERROR_SUCCESS)
+	{
+		bIsOk=TRUE;
+		return nLength;
+	}
+
+	bIsOk=FALSE;
+    return 0;
+
+}
+
 inline LONG CRegKey::SetValue(LPCTSTR lpValueName,LPCTSTR lpData,DWORD cbData,DWORD dwType)
 {
 	return ::RegSetValueEx(m_hKey,lpValueName,0,dwType,(CONST BYTE*)lpData,cbData);

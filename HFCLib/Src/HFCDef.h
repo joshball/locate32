@@ -305,9 +305,19 @@ typedef void * (__cdecl *MALLOC_FUNC)(size_t);
 // CInputDialog
 #define ID_DONTALLOWEMPTY	0x1
 #define ID_NOCANCELBUTTON	0x2
-
 #endif
 
+// For CListCtrlEx
+#ifdef _INC_COMMCTRL
+struct NMHDR_MOUSE : public NMHDR,LVHITTESTINFO {};
+
+#define NMX_CLICK					NM_FIRST-220U // This is area for property sheets
+#define NMX_DBLCLICK				NM_FIRST-221U 
+#define NMX_RCLICK					NM_FIRST-222U 
+#define NMX_RDBLCLICK				NM_FIRST-223U 
+#define NMX_MCLICK					NM_FIRST-224U 
+#define NMX_MDBLCLICK				NM_FIRST-225U 
+#endif 
 
 extern LPCSTR				szEmpty;
 extern LPCSTR				szError;

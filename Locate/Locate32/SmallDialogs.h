@@ -17,10 +17,12 @@ public:
 	virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 
 	void OnOK();
+	void OnCancel();
 
 	BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
-	void DisableItems();
+	void EnableItems();
 	BOOL ItemUpOrDown(BOOL bUp);
+
 
 	struct ColumnItem 
 	{
@@ -36,16 +38,21 @@ public:
 			Center=LVCFMT_CENTER
 		} m_nAlign;
 
-		ColumnItem(int nCol,CLocateDlg::DetailType nType,int nWidth,Align nAlign);
+		ColumnItem(int nCol,CLocateDlg::DetailType nType,int nWidth,Align nAlign,CSubAction** pActions);
+
+		CSubAction** m_pActions;
 
 	};
 
-
+	void SaveActionFields(ColumnItem* pColumn);
+	void SetActionFields(ColumnItem* pColumn);
+	
 public:	
 	CIntArray m_aSelectedCols; // In order
 	CIntArray m_aIDs;
 	CIntArray m_aWidths;
 	CArray<ColumnItem::Align> m_aAligns;
+	CArray<CSubAction**> m_aActions;
 
 private:
 	CListCtrl* m_pList;

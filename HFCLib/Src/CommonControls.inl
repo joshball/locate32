@@ -2224,4 +2224,6 @@ inline HFONT CDateTimeCtrl::GetMonthCalFont() const
 	return (HFONT)::SendMessage(m_hWnd,DTM_GETMCFONT,0,0);
 }
 
+
+
 #endif

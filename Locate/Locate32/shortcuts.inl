@@ -5,9 +5,30 @@
 #pragma once
 #endif
 
-inline CAction::CAction()
-:	m_nAction(ActivateControl),	m_nActivateControl(FindNow),m_pExtraInfo(NULL)
+inline CSubAction::CSubAction()
+:	m_nActivateControl(FindNow),m_pExtraInfo(NULL)
 {
+}
+
+inline CSubAction::CSubAction(DWORD nSubAction)
+:	m_nSubAction(nSubAction),m_pExtraInfo(NULL)
+{
+}
+
+inline CSubAction::CSubAction(DWORD nAction,CSubAction& rCopyFrom)
+{
+	GetCopyFrom(nAction,rCopyFrom);
+}
+
+
+inline CAction::CAction()
+:	m_nAction(ActivateControl)
+{
+}
+
+inline void CAction::ClearExtraInfo()
+{
+	CSubAction::ClearExtraInfo(m_nAction);
 }
 
 inline CAction::~CAction()
@@ -15,6 +36,11 @@ inline CAction::~CAction()
 	ClearExtraInfo();
 }
 
+inline CAction::CAction(CAction& rCopyFrom)
+:	m_dwAction(rCopyFrom.m_dwAction)
+{
+	GetCopyFrom(m_dwAction,rCopyFrom);
+}
 
 inline CAction::SendMessageInfo::SendMessageInfo()
 :	nMessage(0),szWindow(NULL),szWParam(NULL),szLParam(NULL)
@@ -53,22 +79,29 @@ inline CShortcut::~CShortcut()
 	m_apActions.RemoveAll();
 }
 
-inline CAction::CAction(void* pVoid)
+inline CSubAction::CSubAction(void* pVoid)
 :	m_pExtraInfo(NULL)
 {
 }
 
-inline DWORD CAction::GetDataLength() const
+inline CAction::CAction(void* pVoid)
+:	CSubAction(pVoid)
 {
-	DWORD dwLength=sizeof(CAction)+2;
+}
+
+inline DWORD CSubAction::GetDataLength(DWORD nAction,BOOL bHeader) const
+{
+	DWORD dwLength=(bHeader?sizeof(WORD):0)+2*sizeof(DWORD);
 	
-	switch (m_nAction)
+	switch (nAction)
 	{
-	case ResultListItems:
+	case CAction::ResultListItems:
 		if (m_nResultList==Execute && m_szVerb!=NULL)
 			dwLength+=(DWORD)strlen(m_szVerb)+1;
+		else if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
+			dwLength+=(DWORD)strlen(m_szCommand)+1;
 		break;
-	case Advanced:
+	case CAction::Advanced:
 		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage ) &&
 			m_pSendMessage!=NULL)
 			dwLength+=m_pSendMessage->GetDataLength();
@@ -76,6 +109,18 @@ inline DWORD CAction::GetDataLength() const
 	}
 
 	return dwLength;
+}
+
+inline DWORD CAction::GetData(BYTE* pData) const
+{
+	*((WORD*)pData)=0xFFEC;
+	*((DWORD*)(pData+sizeof(WORD)))=m_dwAction;
+	return CSubAction::GetData(m_dwAction,pData+sizeof(WORD)+sizeof(DWORD),FALSE)+sizeof(WORD)+sizeof(DWORD);
+}
+
+inline DWORD CAction::GetDataLength() const
+{
+	return sizeof(WORD)+sizeof(DWORD)+CSubAction::GetDataLength(m_nAction,FALSE);
 }
 
 
@@ -176,7 +221,7 @@ inline void CShortcut::ExecuteAction()
 }
 
 
-inline void CAction::DoActivateTab()
+inline void CSubAction::DoActivateTab()
 {
 	if (GetLocateAppWnd()->m_pLocateDlgThread==NULL)
 		return;
@@ -185,17 +230,7 @@ inline void CAction::DoActivateTab()
 }
 
 
-inline void CAction::DoResultListItems()
-{
-	CLocateDlg* pLocateDlg=GetLocateDlg();
-	if (pLocateDlg==NULL)
-		return;
 
-	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
-		pLocateDlg->OnExecuteResultAction(m_nResultList,m_pExtraInfo);
-	else
-		pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_pExtraInfo);
-}
 
 
 inline void CShortcut::ResolveMnemonics(CArrayFP<CShortcut*>& aShortcuts,HWND* hDialogs)

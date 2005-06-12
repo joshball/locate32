@@ -9,6 +9,7 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 {
 	ASSERT(m_aIDs.GetSize()==m_aWidths.GetSize());
 
+	
 	m_pList=new CListCtrl(GetDlgItem(IDC_COLUMNS));
 	m_pList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES,LVS_EX_CHECKBOXES);
 	m_pList->InsertColumn(0,"",LVCFMT_LEFT,250);
@@ -20,7 +21,7 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 			LPARAM(new ColumnItem(m_aSelectedCols[nItem],
 			(CLocateDlg::DetailType)m_aIDs[m_aSelectedCols[nItem]],
 			m_aWidths[m_aSelectedCols[nItem]],
-			m_aAligns[m_aSelectedCols[nItem]])));
+			m_aAligns[m_aSelectedCols[nItem]],m_aActions[m_aSelectedCols[nItem]])));
 		m_pList->SetCheckState(nItem,TRUE);
 	}
 
@@ -30,19 +31,138 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 		{
 			m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem++,
 				LPSTR_TEXTCALLBACK,0,0,0,LPARAM(new ColumnItem(i,
-				(CLocateDlg::DetailType)m_aIDs[i],m_aWidths[i],m_aAligns[i])));
+				(CLocateDlg::DetailType)m_aIDs[i],m_aWidths[i],m_aAligns[i],m_aActions[i])));
 			m_pList->SetCheckState(nItem,FALSE);
 		}
 	}
+
 	
 	CSpinButtonCtrl spin(GetDlgItem(IDC_SPIN));
 	spin.SetRange(10,10000);
 	spin.SetBuddy(GetDlgItem(IDC_WIDTH));
 	
-	DisableItems();
+	SendDlgItemMessage(IDC_WHEN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DETAILLEFTCLICK));
+	SendDlgItemMessage(IDC_WHEN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DETAILLEFTDBLCLICK));
+	SendDlgItemMessage(IDC_WHEN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DETAILRIGHTCLICK));
+	SendDlgItemMessage(IDC_WHEN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DETAILRIGHTDBLCLICK));
+	SendDlgItemMessage(IDC_WHEN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DETAILMIDDLECLICK));
+	SendDlgItemMessage(IDC_WHEN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DETAILMIDDLEDLBCLICK));
+	SendDlgItemMessage(IDC_WHEN,CB_SETCURSEL,0);
+	
+	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_NONE));
+	for (UINT uSubItem=0;;uSubItem++)
+	{
+        CString Title;
+		int nID=CAction::GetResultItemActionLabelStringId((CAction::ActionResultList)uSubItem);
+		if (nID==0)
+			break;
+
+		Title.LoadString(nID);
+		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)Title);
+	}
+	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,0);
+
+	// Insert verbs
+	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DEFAULT));
+	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"open");
+	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"edit");
+	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"explore");
+	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"find");
+	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"print");
+	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
+
+	EnableItems();
 	
 	return CDialog::OnInitDialog(hwndFocus);
 }
+
+void CSelectColumndDlg::SaveActionFields(ColumnItem* pColumn)
+{
+	int nWhen=SendDlgItemMessage(IDC_WHEN,CB_GETCURSEL);
+	ASSERT(nWhen!=CB_ERR);
+
+	int nAction=SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL);
+	ASSERT(nAction!=CB_ERR);
+
+	if (nAction==0)
+	{
+		if (pColumn->m_pActions[nWhen]!=NULL)
+		{
+			delete pColumn->m_pActions[nWhen];
+			pColumn->m_pActions[nWhen]=NULL;
+		}
+	}
+	else
+	{
+		if (pColumn->m_pActions[nWhen]==NULL)
+			pColumn->m_pActions[nWhen]=new CSubAction(nAction-1);
+		else
+		{
+			pColumn->m_pActions[nWhen]->m_nSubAction=nAction-1;
+			pColumn->m_pActions[nWhen]->ClearExtraInfo(CAction::ResultListItems);
+		}
+
+		if (pColumn->m_pActions[nWhen]->m_nResultList==CAction::Execute)
+		{
+			int nSelection=SendDlgItemMessage(IDC_VERB,CB_GETCURSEL);
+			if (nSelection==CB_ERR)
+			{
+				UINT nLen=GetDlgItemTextLength(IDC_VERB);
+				pColumn->m_pActions[nWhen]->m_szVerb=new char[nLen+1];
+				GetDlgItemText(IDC_VERB,pColumn->m_pActions[nWhen]->m_szVerb,nLen+1);
+			}
+			else if (nSelection!=0)
+			{
+				UINT nLen=SendDlgItemMessage(IDC_VERB,CB_GETLBTEXTLEN,nSelection,0);
+				pColumn->m_pActions[nWhen]->m_szVerb=new char[nLen+1];
+				SendDlgItemMessage(IDC_VERB,CB_GETLBTEXT,nSelection,LPARAM(pColumn->m_pActions[nWhen]->m_szVerb));
+			}
+		}
+		else if (pColumn->m_pActions[nWhen]->m_nResultList==CAction::ExecuteCommand)
+		{
+			// Get command
+			UINT nLen=GetDlgItemTextLength(IDC_COMMAND);
+			if (nLen>0)
+			{
+				pColumn->m_pActions[nWhen]->m_szCommand=new char[nLen+1];
+				GetDlgItemText(IDC_COMMAND,pColumn->m_pActions[nWhen]->m_szCommand,nLen+1);
+			}
+		}
+	}
+}
+	
+void CSelectColumndDlg::SetActionFields(ColumnItem* pColumn)
+{
+	int nWhen=SendDlgItemMessage(IDC_WHEN,CB_GETCURSEL);
+	ASSERT(nWhen!=CB_ERR);
+
+	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);;
+	SetDlgItemText(IDC_COMMAND,szEmpty);
+
+
+	if (pColumn->m_pActions[nWhen]==NULL)
+		SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,0); // 0 = none
+	else
+	{
+        SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,pColumn->m_pActions[nWhen]->m_nSubAction+1);
+		
+        if (pColumn->m_pActions[nWhen]->m_nResultList==CSubAction::Execute)
+		{
+			if (pColumn->m_pActions[nWhen]->m_szVerb==NULL)
+				SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
+			else
+			{
+				SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,-1,0);
+				SetDlgItemText(IDC_VERB,pColumn->m_pActions[nWhen]->m_szVerb);
+			}
+		}
+		else if (pColumn->m_pActions[nWhen]->m_nResultList==CSubAction::ExecuteCommand && pColumn->m_pActions[nWhen]->m_szCommand!=NULL)
+			SetDlgItemText(IDC_COMMAND,pColumn->m_pActions[nWhen]->m_szCommand);
+		
+	}
+
+}
+
 
 BOOL CSelectColumndDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
@@ -53,7 +173,7 @@ BOOL CSelectColumndDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		break;
 	case IDCANCEL:
 	case IDC_CANCEL:
-		EndDialog(0);
+		OnCancel();
 		break;
 	case IDC_SHOW:
 	case IDC_HIDE:
@@ -118,7 +238,52 @@ BOOL CSelectColumndDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 
 		}
 		break;
+	case IDC_WHEN:
+		if (wNotifyCode==CBN_SELCHANGE)
+		{
+			int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+			ASSERT(nItem!=-1);
+
+			ColumnItem* pItem=(ColumnItem*)m_pList->GetItemData(nItem);
+			if (pItem==NULL)
+				break;
+
+			SetActionFields(pItem);
+
+			EnableItems();
+		}
+		break;
+	case IDC_ACTION:
+		if (wNotifyCode==CBN_SELCHANGE)
+		{
+			int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+			ASSERT(nItem!=-1);
+
+			ColumnItem* pItem=(ColumnItem*)m_pList->GetItemData(nItem);
+			if (pItem==NULL)
+				break;
+
+			SaveActionFields(pItem);
+			
+			EnableItems();
+		}
+		break;
+	case IDC_COMMAND:
+	case IDC_VERB:
+		if (wNotifyCode==CBN_SELCHANGE || wNotifyCode==CBN_EDITCHANGE)
+		{
+			int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+			ASSERT(nItem!=-1);
+
+			ColumnItem* pItem=(ColumnItem*)m_pList->GetItemData(nItem);
+			if (pItem==NULL)
+				break;
+
+			SaveActionFields(pItem);
+		}
+		break;
 	}
+
 	return CDialog::OnCommand(wID,wNotifyCode,hControl);
 }
 
@@ -203,6 +368,7 @@ BOOL CSelectColumndDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 				EnableDlgItem(IDC_SHOW,TRUE);
 				EnableDlgItem(IDC_HIDE,FALSE);
 			}
+			break;
 		}
 		else if (pNm->uOldState&(1<<12))		
 		{
@@ -211,55 +377,100 @@ BOOL CSelectColumndDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 				EnableDlgItem(IDC_SHOW,FALSE);
 				EnableDlgItem(IDC_HIDE,TRUE);
 			}
+			break;
 		}
-		if (pNm->uNewState&LVIS_SELECTED)
+		
+		if (pNm->uNewState&LVIS_SELECTED && !(pNm->uOldState&LVIS_SELECTED))
 		{
+			// Item is selected
 			ColumnItem* pItem=(ColumnItem*)pNm->lParam;
 			if (pItem==NULL)
 				break;
 				
-			BOOL bChecked=m_pList->GetCheckState(pNm->iItem);
-			EnableDlgItem(IDC_SHOW,!bChecked);
-			EnableDlgItem(IDC_HIDE,bChecked);
+			
 
-            EnableDlgItem(IDC_UP,m_pList->GetNextItem(pNm->iItem,LVNI_ABOVE)!=-1);
-			EnableDlgItem(IDC_DOWN,m_pList->GetNextItem(pNm->iItem,LVNI_BELOW)!=-1);
-
-			EnableDlgItem(IDC_TEXT,TRUE);
-			EnableDlgItem(IDC_WIDTH,TRUE);
 			::InvalidateRect(GetDlgItem(IDC_SPIN),NULL,TRUE);
 			SendDlgItemMessage(IDC_SPIN,UDM_SETPOS,0,pItem->m_nWidth);
 
-			EnableDlgItem(IDC_ALIGN,TRUE);
-			EnableDlgItem(IDC_LEFT,TRUE);
-			EnableDlgItem(IDC_RIGHT,TRUE);
-			EnableDlgItem(IDC_CENTER,TRUE);
 
 			CheckDlgButton(IDC_LEFT,pItem->m_nAlign==ColumnItem::Left);
 			CheckDlgButton(IDC_RIGHT,pItem->m_nAlign==ColumnItem::Right);
 			CheckDlgButton(IDC_CENTER,pItem->m_nAlign==ColumnItem::Center);
+
+			SendDlgItemMessage(IDC_WHEN,CB_SETCURSEL,0);
+			SetActionFields(pItem);
 		}
-		else if (pNm->uOldState&LVNI_SELECTED)
-			DisableItems();
+		else if (!(pNm->uNewState&LVIS_SELECTED) && (pNm->uOldState&LVIS_SELECTED))
+		{
+			// Item is deselected
+			ColumnItem* pItem=(ColumnItem*)pNm->lParam;
+			if (pItem==NULL)
+				break;
+			
+			SaveActionFields(pItem);
+		}
+		
+		EnableItems();
 		break;
 	}
 	return FALSE;
 }
 
-void CSelectColumndDlg::DisableItems()
+void CSelectColumndDlg::EnableItems()
 {
-	EnableDlgItem(IDC_HIDE,FALSE);
-	EnableDlgItem(IDC_SHOW,FALSE);
-	EnableDlgItem(IDC_UP,FALSE);
-	EnableDlgItem(IDC_DOWN,FALSE);
-	EnableDlgItem(IDC_TEXT,FALSE);
-	EnableDlgItem(IDC_WIDTH,FALSE);
+	ShowState ssCommand=swHide,ssVerb=swHide;
+	
+	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+	
+	EnableDlgItem(IDC_TEXT,nItem!=-1);
+	EnableDlgItem(IDC_WIDTH,nItem!=-1);
+	
+	if (nItem!=-1)
+	{
+        EnableDlgItem(IDC_UP,m_pList->GetNextItem(nItem,LVNI_ABOVE)!=-1);
+		EnableDlgItem(IDC_DOWN,m_pList->GetNextItem(nItem,LVNI_BELOW)!=-1);
+
+		BOOL bChecked=m_pList->GetCheckState(nItem);
+		EnableDlgItem(IDC_SHOW,!bChecked);
+		EnableDlgItem(IDC_HIDE,bChecked);
+
+		int nAction=SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL);
+		if (nAction==CSubAction::Execute+1)
+			ssVerb=swShow;
+		else if (nAction==CSubAction::ExecuteCommand+1)
+			ssCommand=swShow;
+
+	}
+	else
+	{
+		EnableDlgItem(IDC_UP,FALSE);
+		EnableDlgItem(IDC_DOWN,FALSE);
+
+		EnableDlgItem(IDC_HIDE,FALSE);
+		EnableDlgItem(IDC_SHOW,FALSE);
+	}
+
+
+	
 	::InvalidateRect(GetDlgItem(IDC_SPIN),NULL,TRUE);
 
-	EnableDlgItem(IDC_ALIGN,FALSE);
-	EnableDlgItem(IDC_LEFT,FALSE);
-	EnableDlgItem(IDC_RIGHT,FALSE);
-	EnableDlgItem(IDC_CENTER,FALSE);
+	EnableDlgItem(IDC_ALIGN,nItem!=-1);
+	EnableDlgItem(IDC_LEFT,nItem!=-1);
+	EnableDlgItem(IDC_RIGHT,nItem!=-1);
+	EnableDlgItem(IDC_CENTER,nItem!=-1);
+
+	EnableDlgItem(IDC_STATICACTIONS,nItem!=-1);
+	EnableDlgItem(IDC_STATICWHEN,nItem!=-1);
+	EnableDlgItem(IDC_WHEN,nItem!=-1);
+	EnableDlgItem(IDC_STATICACTION,nItem!=-1);
+	EnableDlgItem(IDC_ACTION,nItem!=-1);
+
+	ShowDlgItem(IDC_STATICCOMMAND,ssCommand);
+	ShowDlgItem(IDC_COMMAND,ssCommand);
+
+	ShowDlgItem(IDC_STATICVERB,ssVerb);
+	ShowDlgItem(IDC_VERB,ssVerb);
+
 	
 }
 
@@ -267,7 +478,20 @@ void CSelectColumndDlg::OnOK()
 {
 	m_aSelectedCols.RemoveAll();
 	
-    int nIndex=m_pList->GetNextItem(-1,LVNI_ALL);
+	ASSERT(m_aWidths.GetSize()==m_pList->GetItemCount());
+	ASSERT(m_aAligns.GetSize()==m_pList->GetItemCount());
+	ASSERT(m_aActions.GetSize()==m_pList->GetItemCount());
+
+	int nIndex=m_pList->GetNextItem(-1,LVNI_SELECTED);
+	if (nIndex!=-1)
+	{
+		// Save current state
+		ColumnItem* pColumnItem=(ColumnItem*)m_pList->GetItemData(nIndex);
+		if (pColumnItem!=NULL)
+			SaveActionFields(pColumnItem);
+	}
+
+    nIndex=m_pList->GetNextItem(-1,LVNI_ALL);
 	if (nIndex==-1)
 	{
 		ShowErrorMessage(IDS_ERRORNOCOLUMNSSELECTED,IDS_ERROR,MB_OK|MB_ICONINFORMATION);
@@ -279,13 +503,25 @@ void CSelectColumndDlg::OnOK()
 		ColumnItem* pItem=(ColumnItem*)m_pList->GetItemData(nIndex);
 		m_aWidths[pItem->m_nCol]=pItem->m_nWidth; // Setting width
 		m_aAligns[pItem->m_nCol]=pItem->m_nAlign; // Setting align
-		
+		m_aActions[pItem->m_nCol]=pItem->m_pActions;
+
 		if (m_pList->GetCheckState(nIndex))
 			m_aSelectedCols.Add(pItem->m_nCol);
 		nIndex=m_pList->GetNextItem(nIndex,LVNI_ALL);
 	}
 
+	
+
 	EndDialog(1);
+}
+
+void CSelectColumndDlg::OnCancel()
+{
+	for (int i=0;i<m_aActions.GetSize();i++)
+		delete[] m_aActions[i];
+	m_aActions.RemoveAll();
+
+	EndDialog(0);
 }
 
 ///////////////////////////////////////////////////////////

@@ -60,6 +60,7 @@ extern "C" void __declspec(dllexport) __cdecl GetLocateLanguageFileInfo(
 
 /* Standard DllMain function, this does nothing but sets hInstance */
 
+extern "C"
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)
 {
 	hInstance=hinstDLL;

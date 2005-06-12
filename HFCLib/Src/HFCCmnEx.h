@@ -13,6 +13,7 @@ class CListCtrlEx	:	public CListCtrl
 public:
 	CListCtrlEx();
 	CListCtrlEx(HWND hWnd);
+	virtual ~CListCtrlEx();
 
 	BOOL Create(DWORD dwStyle,const RECT* rect,HWND hParentWnd,UINT nID);
 
@@ -89,6 +90,9 @@ private:
 	CArrayFP<COLUMNDATA*> aColumns;
 	CIntArray aSubItems;
 	
+	static LRESULT CALLBACK SubclassProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam,
+		UINT_PTR uIdSubclass,DWORD_PTR dwRefData);
+
 };
 
 #include "CommonControlsEx.inl"

@@ -11,6 +11,6 @@
 #define WM_EXECUTESHORTCUT			WM_APP+107 // wParam is index to shortcut 
 #define WM_RESETSHORTCUTS			WM_APP+108
 #define WM_RESULTLISTACTION			WM_APP+109
-
+#define WM_GETSELECTEDITEMPATH		WM_APP+110
 
 #endif

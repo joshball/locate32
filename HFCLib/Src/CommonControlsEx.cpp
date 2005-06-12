@@ -155,6 +155,12 @@ enum CListCtrlExFlags {
 	cefJustifyMask=0x3
 };
 
+CListCtrlEx::~CListCtrlEx()
+{
+	if (m_hWnd!=NULL)
+		RemoveWindowSubclass(m_hWnd,SubclassProc,0);
+}
+
 BOOL CListCtrlEx::LoadColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey)
 {
 	CRegKey RegKey;
@@ -436,22 +442,8 @@ BOOL CListCtrlEx::GetColumnOrderArray(int iCount,LPINT pi) const
 	return TRUE;
 }
 
-int CListCtrlEx::GetColumnWidth(int nCol) const
-{
-	if (aColumns[nCol]->bFlags&COLUMNDATA::FlagVisible)
-		return CListCtrl::GetColumnWidth(GetVisibleColumnFromSubItem(aColumns[nCol]->lc.iSubItem));
-	else
-		return aColumns[nCol]->lc.cx;
-}
 
-BOOL CListCtrlEx::SetColumnWidth(int nCol, int cx)
-{
-	if (aColumns[nCol]->bFlags&COLUMNDATA::FlagVisible)
-		return CListCtrl::SetColumnWidth(GetVisibleColumnFromSubItem(aColumns[nCol]->lc.iSubItem),cx);
-	else
-		aColumns[nCol]->lc.cx=cx;
-	return TRUE;
-}
+
 
 BOOL CListCtrlEx::SetColumnWidthArray(int iCount,LPINT pi)
 {
@@ -477,33 +469,7 @@ BOOL CListCtrlEx::GetColumnWidthArray(int iCount,LPINT pi) const
 	return TRUE;
 }
 
-int CListCtrlEx::GetColumnFromID(int nID) const
-{
-	for (int i=0;i<aColumns.GetSize();i++)
-	{
-		if (aColumns[i]->nID==nID)
-			return i;
-	}
-	return -1;
-}
 
-BOOL CListCtrlEx::GetColumnIDArray(int iCount,LPINT pi) const
-{
-	for (int i=min(aColumns.GetSize(),iCount)-1;i>=0;i--)
-		pi[i]=aColumns[i]->nID;
-	return TRUE;
-}
-
-int CListCtrlEx::GetColumnFromSubItem(int nSubItem) const
-{
-	for (int i=0;i<aColumns.GetSize();i++)
-	{
-		if (aColumns[i]->bFlags&COLUMNDATA::FlagVisible &&
-			aColumns[i]->lc.iSubItem==nSubItem)
-			return i;
-	}
-	return -1;
-}
 
 BOOL CListCtrlEx::GetColumn(int nCol, LV_COLUMN* pColumn) const
 {
@@ -575,5 +541,46 @@ BOOL CListCtrlEx::SetColumn(int nCol, const LV_COLUMN* pColumn)
 	}
 }
 
+LRESULT CALLBACK CListCtrlEx::SubclassProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam,
+										   UINT_PTR uIdSubclass,DWORD_PTR dwRefData)
+{
+	LRESULT lRes=DefSubclassProc(hwnd,uMsg,wParam,lParam);
+	NMHDR_MOUSE nm;
+	
+	switch (uMsg)
+	{
+	case WM_LBUTTONDOWN:
+		nm.code=NMX_CLICK;
+		break;
+	case WM_LBUTTONDBLCLK:
+		nm.code=NMX_DBLCLICK;
+		break;
+	case WM_RBUTTONDOWN:
+		nm.code=NMX_RCLICK;
+		break;
+	case WM_RBUTTONDBLCLK:
+		nm.code=NMX_RDBLCLICK;
+		break;
+	case WM_MBUTTONDOWN:
+		nm.code=NMX_MCLICK;
+		break;
+	case WM_MBUTTONDBLCLK:
+		nm.code=NMX_MDBLCLICK;
+		break;
+	default:
+		return lRes;
+	}
+	
+	nm.pt.x=LOWORD(lParam);
+	nm.pt.y=HIWORD(lParam);
+	
+	if (::SendMessage(hwnd,LVM_SUBITEMHITTEST,0,(LPARAM)&nm.pt)!=-1)
+	{
+		nm.hwndFrom=hwnd;
+		nm.idFrom=::GetWindowLong(hwnd,GWL_ID);
+		::SendMessage((HWND)::GetWindowLongPtr(hwnd,GWL_HWNDPARENT),WM_NOTIFY,nm.idFrom,(LPARAM)&nm);	
+	}
+	return lRes;
+}
 
 #endif

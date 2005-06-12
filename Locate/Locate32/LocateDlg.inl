@@ -5,6 +5,20 @@
 #pragma once
 #endif
 
+inline CLocateDlg::CLocateDlg()
+:	CDialog(IDD_MAIN),m_dwFlags(fgDefault),m_dwExtraFlags(efDefault),m_nSorting(BYTE(-1)),
+	m_nMaxYMinimized(0),m_nMaxYMaximized(0),m_nLargeY(354),
+	m_ClickWait(FALSE),m_hSendToListFont(NULL),m_hActivePopupMenu(NULL),
+	m_pListCtrl(NULL),m_pTabCtrl(NULL),m_pStatusCtrl(NULL),m_pListTooltips(NULL),
+	m_pLocater(NULL),m_pBackgroundUpdater(NULL),m_pActiveContextMenu(NULL),
+	m_pLocateAnimBitmaps(NULL),m_pUpdateAnimBitmaps(NULL),
+	m_pFileNotificationsThread(NULL),m_dwMaxFoundFiles(0),
+	m_pImageHandler(NULL),m_iTooltipItem(-1),m_iTooltipSubItem(-1),m_bTooltipActive(FALSE),
+	m_hLastFocus(NULL),m_WaitEvery30(10),m_WaitEvery60(20)
+{
+	ZeroMemory(m_aResultListActions,TypeCount*ListActionCount*sizeof(void*));
+}
+
 inline CLocateDlg::CNameDlg::CNameDlg()
 :	CDialog(IDD_NAME),m_nMaxBrowse(DEFAULT_NUMBEROFDIRECTORIES),
 	m_pBrowse(NULL),m_pMultiDirs(NULL)
@@ -316,5 +330,20 @@ inline CLocateDlg::ContextMenuStuff::~ContextMenuStuff()
 
 }
 
+
+inline void CLocateDlg::ClearResultlistActions()
+{
+	for (int iCol=0;iCol<TypeCount;iCol++)
+	{
+		for (int iAct=0;iAct<ListActionCount;iAct++)
+		{
+			if (m_aResultListActions[iCol][iAct]!=NULL)
+			{
+				delete m_aResultListActions[iCol][iAct];
+				m_aResultListActions[iCol][iAct]=NULL;
+			}
+		}
+	}
+}
 
 #endif
