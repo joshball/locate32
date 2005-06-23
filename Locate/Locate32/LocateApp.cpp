@@ -3184,7 +3184,7 @@ BOOL CLocateAppWnd::SaveSchedules()
 		if (pSchedules==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOC);
-			DebugMessage("LocateAppWnd::OnDestroy(): Cannot allocate memory.");
+			//DebugMessage("LocateAppWnd::OnDestroy(): Cannot allocate memory.");
 		}
 		pSchedules[0]=sizeof(CSchedule);
 		pSchedules[1]=2; //version
@@ -3195,7 +3195,7 @@ BOOL CLocateAppWnd::SaveSchedules()
 		pPos=m_Schedules.GetHeadPosition();
 		while (pPos!=NULL)
 		{
-			DebugFormatMessage("SCHEDULE: type %d",m_Schedules.GetAt(pPos)->m_nType);
+			//DebugFormatMessage("SCHEDULE: type %d",m_Schedules.GetAt(pPos)->m_nType);
 			pPtr+=m_Schedules.GetAt(pPos)->GetData(pPtr);
 			pPos=m_Schedules.GetNextPosition(pPos);
 		}
@@ -3206,12 +3206,12 @@ BOOL CLocateAppWnd::SaveSchedules()
 		char* pTmpData=new char[dwTmpDataLen*2+2];
 		for (DWORD i=0;i<dwTmpDataLen;i++)
 			sprintf(pTmpData+i*2,"%02X",pSchedules[i]);
-		DebugFormatMessage("SCHEDULES(length=%d): %s",dwTmpDataLen,pTmpData);
+		//DebugFormatMessage("SCHEDULES(length=%d): %s",dwTmpDataLen,pTmpData);
 		delete[] pTmpData;
 #endif
 		delete[] pSchedules;
 	}
-	DebugMessage("CLocateAppWnd::SaveSchedules() END");
+	//DebugMessage("CLocateAppWnd::SaveSchedules() END");
 	return TRUE;
 }
 	
