@@ -852,9 +852,6 @@ void CLocatedItem::UpdateShortFilePath()
 
 void CLocatedItem::SetToDeleted()
 {
-	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
-		return;
-
 	ItemDebugMessage("CLocatedItem::SetToDeleted BEGIN");
 	
 	char szBuffer[80];

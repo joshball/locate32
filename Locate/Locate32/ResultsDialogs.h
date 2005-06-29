@@ -17,6 +17,7 @@ public:
 
 	BOOL Create(CListCtrl* pList,int* pDetails,int nDetails);
 	BOOL SaveToFile(LPCSTR szFile) const;
+	BOOL SaveToHtmlFile(LPCSTR szFile) const;
 
 private:
 	DWORD m_dwFlags;

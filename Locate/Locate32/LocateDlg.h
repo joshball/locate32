@@ -32,7 +32,6 @@ public:
 
 	virtual BOOL OnThreadMessage(MSG* pMsg);
 
-
 public:
 	CLocateDlg* m_pLocate;
 

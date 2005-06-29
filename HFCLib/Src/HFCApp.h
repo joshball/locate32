@@ -144,6 +144,9 @@ public:
 	void ClearAccelTables();
 	void LoadAccelTable(LPCSTR lpTable,TypeOfResourceHandle bType=LanguageSpecificResource);
 	void LoadAccelTable(int iTableId,TypeOfResourceHandle bType=LanguageSpecificResource);
+
+	void RegisterDialog(HWND hDialog);
+	void UnRegisterDialog(HWND hDialog);
 	
 	int GetThreadPriority() const;
 	BOOL SetThreadPriority(int nPriority);
@@ -181,7 +184,7 @@ public:
 	BOOL SetAccelTableForChilds(HWND hParent,LPCSTR lpTable,BOOL bDontChangeIfExist=FALSE,HWND hWndTo=(HWND)-1,DWORD dwStyleFlags=WS_CHILD,TypeOfResourceHandle bType=LanguageSpecificResource); // if hWndTo=NULL message will be sent to child
 	BOOL SetAccelTableForChilds(HWND hParent,int iTableId,BOOL bDontChangeIfExist=FALSE,HWND hWndTo=(HWND)-1,DWORD dwStyleFlags=WS_CHILD,TypeOfResourceHandle bType=LanguageSpecificResource); // if hWndTo=NULL message will be sent to child
 	
-private:
+protected:
 	class CAccelNode
 	{
 	public:
@@ -192,6 +195,7 @@ private:
 		HWND hWndTo;
 	};
 	CArray<CAccelNode> m_Accels;
+	CArray<HWND> m_Dialogs;
 	MSG m_currentMessage;
 
 public:
@@ -331,6 +335,28 @@ inline BOOL CWinThread::SetAccelTableForChilds(HWND hParent,int iTableId,BOOL bD
 	return SetAccelTableForChilds(hParent,LoadAccelerators(GetResourceHandle(bType),MAKEINTRESOURCE(iTableId)),bDontChangeIfExist,hWndTo,dwStyleFlags);
 }
 
+inline void CWinThread::RegisterDialog(HWND hDialog)
+{
+	for (int i=0;i<m_Dialogs.GetSize();i++)
+	{
+		if (m_Dialogs[i]==hDialog)
+			return;
+	}
+	m_Dialogs.Add(hDialog);
+}
+
+inline void CWinThread::UnRegisterDialog(HWND hDialog)
+{
+	for (int i=0;i<m_Dialogs.GetSize();i++)
+	{
+		if (m_Dialogs[i]==hDialog)
+		{
+			m_Dialogs.RemoveAt(i);
+			return;
+		}
+	}
+}
+
 inline void CWinApp::SetMainWnd(CWnd* pWnd)
 {
 	m_pMainWnd=pWnd;
@@ -357,5 +383,6 @@ inline BOOL CDialog::EndDialog(int nResult) const
 	return ::EndDialog(m_hWnd,nResult);
 }
 
+	
 #endif
 #endif

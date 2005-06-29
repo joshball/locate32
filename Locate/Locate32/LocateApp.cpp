@@ -2633,35 +2633,57 @@ BYTE CLocateAppWnd::OnSettings()
 
 BYTE CLocateAppWnd::OnLocate()
 {
+	DebugMessage("CLocateAppWnd::OnLocate() BEGIN");
 	GetLocateApp()->ClearStartupFlag(CLocateApp::CStartData::startupExitAfterUpdating);
 	
 	// Refreshing icon
 	SetUpdateStatusInformation(m_pUpdateAnimIcons!=NULL?m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]:NULL);
 	
+	
 	if (m_pLocateDlgThread==NULL)
 	{
+		DebugMessage("CLocateAppWnd::OnLocate() 1a");
+
 		// Hiding LocateST
 		if (GetFocus()==NULL)
 			ForceForegroundAndFocus();
 		
+		DebugMessage("CLocateAppWnd::OnLocate() 1b");
+
 		m_pLocateDlgThread=new CLocateDlgThread;
 		m_pLocateDlgThread->CreateThread();
+
+		DebugMessage("CLocateAppWnd::OnLocate() 1c");
+
 
 		while (m_pLocateDlgThread->m_pLocate==NULL)
 			Sleep(10);
 		while (m_pLocateDlgThread->m_pLocate->GetHandle()==NULL)
 			Sleep(10);
 
+		DebugMessage("CLocateAppWnd::OnLocate() 1d");
+
 		ShowWindow(swHide);
 
+		DebugMessage("CLocateAppWnd::OnLocate() 1e");
+		
 		m_pLocateDlgThread->m_pLocate->ForceForegroundAndFocus();
+
+		
+
 		
 	}
 	else
 	{
+		DebugMessage("CLocateAppWnd::OnLocate() 2a");
+
 		ForceForegroundAndFocus();
 		
+		DebugMessage("CLocateAppWnd::OnLocate() 2b");
+
 		CLocateDlg* pLocateDlg=GetLocateDlg();
+
+		DebugNumMessage("CLocateAppWnd::OnLocate() 2c %X",DWORD(pLocateDlg));
 
 		// Restore dialog if needed
 		WINDOWPLACEMENT wp;
@@ -2670,10 +2692,17 @@ BYTE CLocateAppWnd::OnLocate()
 		if (wp.showCmd!=SW_MAXIMIZE)
             pLocateDlg->ShowWindow(swRestore);
 
+		DebugMessage("CLocateAppWnd::OnLocate() 2d");
+
+
 		pLocateDlg->BringWindowToTop();
+
+		DebugMessage("CLocateAppWnd::OnLocate() 2e");
+
 		pLocateDlg->ForceForegroundAndFocus();
 	}
 
+	DebugMessage("CLocateAppWnd::OnLocate() END");
 	return TRUE;
 }
 

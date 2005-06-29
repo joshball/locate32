@@ -163,8 +163,32 @@ DWORD CWinThread::ModalLoop()
 			if (OnThreadMessage(&m_currentMessage))
 				continue;
 			
+			
+
+
 			switch (m_currentMessage.message)
 			{
+			case WM_NCDESTROY:
+				for (nAccel=0;nAccel<m_Accels.GetSize();nAccel++)
+				{
+					if (m_Accels[nAccel].hWnd==m_currentMessage.hwnd)
+					{
+						m_Accels.RemoveAt(nAccel);
+						break;
+					}
+				}
+				for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
+				{
+					if (m_Dialogs[nAccel]==m_currentMessage.hwnd)
+					{
+						m_Dialogs.RemoveAt(nAccel);
+						break;
+					}
+				}
+				
+				TranslateMessage(&m_currentMessage);
+				DispatchMessage(&m_currentMessage);
+				break;
 			case WM_KEYDOWN:
 			case WM_KEYUP:
 			case WM_SYSKEYDOWN:
@@ -186,20 +210,47 @@ DWORD CWinThread::ModalLoop()
 					{
 						if (!TranslateAccelerator(m_Accels[nAccel].hWndTo,hAccel,&m_currentMessage))
 						{
-							TranslateMessage(&m_currentMessage);
-							DispatchMessage(&m_currentMessage);
+							// Check dialog messages
+							for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
+							{
+								if (IsDialogMessage(m_Dialogs[nAccel],&m_currentMessage))
+									break;
+							}
+							if (nAccel==m_Dialogs.GetSize())
+							{			
+								TranslateMessage(&m_currentMessage);
+								DispatchMessage(&m_currentMessage);
+							}
 						}
 					}
 					else
 					{
-						TranslateMessage(&m_currentMessage);
-						DispatchMessage(&m_currentMessage);
+						// Check dialog messages
+						for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
+						{
+							if (IsDialogMessage(m_Dialogs[nAccel],&m_currentMessage))
+								break;
+						}
+						if (nAccel==m_Dialogs.GetSize())
+						{			
+							TranslateMessage(&m_currentMessage);
+							DispatchMessage(&m_currentMessage);
+						}
 					}
 					break;
 				}
 			default:
-				TranslateMessage(&m_currentMessage);
-				DispatchMessage(&m_currentMessage);
+				// Check dialog messages
+				for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
+				{
+					if (IsDialogMessage(m_Dialogs[nAccel],&m_currentMessage))
+						break;
+				}
+				if (nAccel==m_Dialogs.GetSize())
+				{			
+					TranslateMessage(&m_currentMessage);
+					DispatchMessage(&m_currentMessage);
+				}
 				break;
 			}
 			if (m_currentMessage.message!=WM_PAINT && m_currentMessage.message!=0x0118)

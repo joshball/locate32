@@ -118,6 +118,225 @@ BOOL CResults::Create(CListCtrl* pList,int* pDetails,int nDetails)
 	return TRUE;
 }
 
+BOOL CResults::SaveToHtmlFile(LPCSTR szFile) const
+{
+	// Opening files
+	CFile outFile(szFile,CFile::defWrite,TRUE);
+	CFile tmpFile(m_sTempFile,CFile::defRead,TRUE);
+	CString str;
+	
+	/* Header section BEGIN */
+	{
+		char pStr[]="<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n";
+		outFile.Write(pStr,sizeof(pStr)-1);
+	}
+	{
+		char pStr[]="<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n";
+		outFile.Write(pStr,sizeof(pStr)-1);
+	}
+	{
+		char pStr[]="<meta http-equiv=\"Content-Type\" content=\"text/html; charset=iso-8859-1\" />\n<style type=\"text/css\">\n";
+		outFile.Write(pStr,sizeof(pStr)-1);
+	}
+	{
+		char pStr[]="body { font-size: 11pt; }\ntable { border-style: none; margin-left: -10pt;} \n";
+		outFile.Write(pStr,sizeof(pStr)-1);
+	}
+	{
+		char pStr[]="td { spacing: 10pt 2pt; padding: 1pt 10pt;}\n#databasetable_header { font-size: 12pt; font-weight: bold;}\n";
+		outFile.Write(pStr,sizeof(pStr)-1);
+	}
+	{
+		char pStr[]="#resulttable_header { font-size: 12pt; font-weight: bold;}\n</style>\n";
+		outFile.Write(pStr,sizeof(pStr)-1);
+	}
+	{
+		char pStr[]="<link rel=\"stylesheet\" href=\"loc_res.css\" type=\"text/css\" />\n<title>";
+		outFile.Write(pStr,sizeof(pStr)-1);
+	}
+	str.LoadString(IDS_SAVERESULTSTITLE);
+	outFile.Write(str);
+
+	{
+		char pStr[]="</title>\n</head>\n<body>\n<div id=\"header\">\n<h1>";
+		outFile.Write(pStr,sizeof(pStr)-1);
+	}
+
+	str.LoadString(IDS_SAVERESULTSTITLE2);
+	outFile.Write(str);
+
+	{
+		char pStr[]="</h1>\n<ul>\n<li id=\"head_results\">";
+		outFile.Write(pStr,sizeof(pStr)-1);
+	}
+
+	str.Format(IDS_SAVERESULTSHEADER,m_nResults,m_nFiles,m_nDirectories);
+	outFile.Write(str);
+	outFile.Write("</li>\n",6);
+
+	/* Header section END */
+
+	/* Date section BEGIN */
+	
+	if (m_dwFlags&RESULT_INCLUDEDATE)
+	{
+		{
+			char pStr[]="<li id=\"head_date\">";
+			outFile.Write(pStr,sizeof(pStr)-1);
+		}
+
+		char szDate[200];
+		str.LoadString(IDS_SAVERESULTSDATE);
+		outFile.Write(str);
+		DWORD dwLength=GetDateFormat(NULL,DATE_SHORTDATE,NULL,NULL,szDate,200);
+        szDate[dwLength-1]=' ';
+		outFile.Write(szDate,dwLength);
+		dwLength=GetTimeFormat(NULL,0,NULL,NULL,szDate,200)-1;
+		outFile.Write(szDate,dwLength);
+		{
+			char pStr[]="</li>\n";
+			outFile.Write(pStr,sizeof(pStr)-1);
+		}
+	}
+	/* Date section END */
+	
+	/* Description section BEGIN */
+	if (m_dwFlags&RESULT_INCLUDEDESCRIPTION)
+	{
+		{
+			char pStr[]="<li id=\"head_description\">";
+			outFile.Write(pStr,sizeof(pStr)-1);
+		}
+
+		outFile.Write(m_strDescription);
+
+		{
+			char pStr[]="</li>\n";
+			outFile.Write(pStr,sizeof(pStr)-1);
+		}
+	}
+	/* Description section END */
+	
+	/* Database section BEGIN */
+	if (m_dwFlags&RESULT_INCLUDEDBINFO && m_aFromDatabases.GetSize()>0)
+	{
+		{
+			char pStr[]="<li id=\"head_databases\">";
+			outFile.Write(pStr,sizeof(pStr)-1);
+		}
+		
+		str.LoadString(IDS_SAVERESULTSDBCAPTION);
+		outFile.Write(str);
+		{
+			char pStr[]="\n<table id=\"databasetable\">\n<tr id=\"databasetable_header\">\n</td><td>";
+			outFile.Write(pStr,sizeof(pStr)-1);
+		}
+		str.LoadString(IDS_SAVERESULTSDBNAME);
+		outFile.Write(str);
+		outFile.Write("</td><td>",9);
+		str.LoadString(IDS_SAVERESULTSDBCREATOR);
+		outFile.Write(str);
+		outFile.Write("</td><td>",9);
+		str.LoadString(IDS_SAVERESULTSDBDESCRIPTION);
+		outFile.Write(str);
+		outFile.Write("</td><td>",9);
+		str.LoadString(IDS_SAVERESULTSDBFILE);
+		outFile.Write(str);
+		outFile.Write("</td></tr>\n",11);
+		
+		
+		
+		for (int i=0;i<m_aFromDatabases.GetSize();i++)
+		{
+			const CDatabase* pDatabase=GetLocateApp()->GetDatabase(m_aFromDatabases[i]);
+
+			outFile.Write("<tr><td>",8);
+			outFile.Write(pDatabase->GetName(),strlen(pDatabase->GetName()));
+			outFile.Write("</td><td>",9);
+			outFile.Write(pDatabase->GetCreator(),strlen(pDatabase->GetCreator()));
+			outFile.Write("</td><td>",9);
+			outFile.Write(pDatabase->GetDescription(),strlen(pDatabase->GetDescription()));
+			outFile.Write("</td><td>",9);
+			outFile.Write(pDatabase->GetArchiveName(),strlen(pDatabase->GetArchiveName()));
+			outFile.Write("</td></tr>",10);
+
+		}
+		
+		{
+			char pStr[]="</table>\n</li>\n";
+			outFile.Write(pStr,sizeof(pStr)-1);
+		}
+		
+
+	}
+	{
+		char pStr[]="</ul>\n</div>\n";
+		outFile.Write(pStr,sizeof(pStr)-1);
+	}
+
+	/* Database section END */
+	
+
+	/* Results section BEGIN  */
+	{
+		char pStr[]="<div id=\"resultlist\">\n<table id=\"resulttable\">\n";
+		outFile.Write(pStr,sizeof(pStr)-1);
+	}
+	
+	if (m_dwFlags&RESULT_INCLUDELABELS && m_nDetails>0)
+	{
+		{
+			char pStr[]="<tr id=\"resulttable_header\">\n";
+			outFile.Write(pStr,sizeof(pStr)-1);
+		}
+
+		for (int i=0;i<m_nDetails-1;i++)
+		{
+			outFile.Write("<td>",4);
+			
+			str.LoadString(IDS_LISTNAME+m_pDetails[i],LanguageSpecificResource);
+			outFile.Write(str);
+			outFile.Write("</td>",5);
+		}
+		
+		outFile.Write("\n</tr>\n",7);
+	}
+
+	for (int nRes=0;nRes<m_nResults;nRes++)
+	{
+		outFile.Write("<tr>",4);
+		DWORD dwLength;
+			
+		for (int i=0;i<m_nDetails;i++)
+		{
+			outFile.Write("<td>",4);
+
+			// Reading length and data
+			tmpFile.Read(dwLength);
+			
+			if (dwLength>0)
+			{
+				char* szBuffer=new char[dwLength];
+				tmpFile.Read(szBuffer,dwLength);
+				outFile.Write(szBuffer,dwLength);
+				delete[] szBuffer;
+			}
+			outFile.Write("</td>",5);			
+		}
+
+		outFile.Write("</tr>\n",6);
+	}
+	
+	{
+		char pStr[]="</table>\n</div>\n</body>\n</html>\n";
+		outFile.Write(pStr,sizeof(pStr)-1);
+	}
+	
+	/* Results section END */
+	
+	return TRUE;
+}
+
 BOOL CResults::SaveToFile(LPCSTR szFile) const
 {
 	// Opening files
@@ -129,24 +348,25 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 		CString str;
 		str.Format(IDS_SAVERESULTSHEADER,m_nResults,m_nFiles,m_nDirectories);
 		outFile.Write(str);
+		outFile.Write("\r\n",2);
 	}
 
 
-	
+
 	// Checking width of labels if necessary
 	CAllocArrayTmpl<CString> pLabels(max(m_nDetails,1));
 
 	if (m_dwFlags&RESULT_INCLUDELABELS)
 	{
-	    for (int i=0;i<m_nDetails;i++)
+		for (int i=0;i<m_nDetails;i++)
 		{
 			pLabels[i].LoadString(IDS_LISTNAME+m_pDetails[i],LanguageSpecificResource);
-			
+		    
 			if (pLabels[i].GetLength()>m_pLengths[i])
-				m_pLengths[i]=pLabels[i].GetLength();
+					m_pLengths[i]=pLabels[i].GetLength();
 		}
 	}
-	
+
 	// Checking the fields tallest length
 	DWORD dwMaxLength=0;
 	for (int i=0;i<m_nDetails;i++)
@@ -154,31 +374,31 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 		if (m_pLengths[i]>dwMaxLength)
 			dwMaxLength=m_pLengths[i];
 	}
-	
+
 	// Initializing buffers
 	CAllocArrayTmpl<BYTE> szBuffer(dwMaxLength+3,TRUE);
 	CAllocArrayTmpl<BYTE> szSpaces(dwMaxLength+2,TRUE);
 	dMemSet(szSpaces,' ',dwMaxLength+2);
-	
+
 	if (m_dwFlags&RESULT_INCLUDEDATE)
 	{
 		char szDate[200];
 		outFile.Write(CString(IDS_SAVERESULTSDATE));
 		DWORD dwLength=GetDateFormat(NULL,DATE_SHORTDATE,NULL,NULL,szDate,200);
-        szDate[dwLength]=' ';
+		szDate[dwLength-1]=' ';
 		outFile.Write(szDate,dwLength);
-		dwLength=GetTimeFormat(NULL,0,NULL,NULL,szDate,200);
+		dwLength=GetTimeFormat(NULL,0,NULL,NULL,szDate,200)-1;
 		szDate[dwLength++]='\r';
 		szDate[dwLength++]='\n';
 		outFile.Write(szDate,dwLength);
 	}
-	
+
 	if (m_dwFlags&RESULT_INCLUDEDESCRIPTION)
 	{
 		outFile.Write(m_strDescription);
 		outFile.Write("\r\n",2);
 	}
-	
+
 	if (m_dwFlags&RESULT_INCLUDEDBINFO && m_aFromDatabases.GetSize()>0)
 	{
 		CString str(IDS_SAVERESULTSDBCAPTION);
@@ -203,26 +423,26 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 		for (i=0;i<m_nDetails-1;i++)
 		{
 			outFile.Write((LPCSTR)pLabels[i],pLabels[i].GetLength());
-			outFile.Write(szSpaces,m_pLengths[i]-pLabels[i].GetLength()+2);			
+			outFile.Write(szSpaces,m_pLengths[i]-pLabels[i].GetLength()+2);
 		}
 
 		outFile.Write(pLabels[i]);
 		outFile.Write("\r\n",2);
 	}
-	
-    if (m_nDetails==0)
+
+	if (m_nDetails==0)
 		return TRUE;
 
 	// Saving data to files
 	for (int nRes=0;nRes<m_nResults;nRes++)
 	{
 		DWORD dwLength;
-			
+		    
 		for (i=0;i<m_nDetails-1;i++)
 		{
 			// Reading length and data
 			tmpFile.Read(dwLength);
-            tmpFile.Read(szBuffer,dwLength);
+			tmpFile.Read(szBuffer,dwLength);
 
 			outFile.Write(szBuffer,dwLength);
 			outFile.Write(szSpaces,m_pLengths[i]-dwLength+2);
@@ -235,7 +455,7 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 		szBuffer[dwLength++]='\n';
 		outFile.Write(szBuffer,dwLength);
 	}
-    
+
 	return TRUE;
 }
 
@@ -251,7 +471,7 @@ CSaveResultsDlg::CSaveResultsDlg()
 	else
 		SetTemplate(IDD_RESULTSAVEDIALOG);
 	CString str;
-	str.LoadString(IDS_TXTFILTERS);
+	str.LoadString(IDS_SAVERESULTSFILTERS);
 	m_strFilter=new char[str.GetLength()+1];
 	sMemCopy(m_strFilter,(LPCSTR)str,str.GetLength()+1);
 	str.LoadString(IDS_SAVERESULTS);

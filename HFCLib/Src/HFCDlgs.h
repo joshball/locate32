@@ -188,6 +188,7 @@ public:
 	CString GetFileName() const;
 	CString GetFileExt() const;
 	CString GetFileTitle() const;
+	int GetFilterIndex() const;
 	BOOL GetReadOnlyPref() const;
 
 	POSITION GetStartPosition() const;
@@ -797,6 +798,11 @@ inline void CFileDialog::HideControl(int nID)
 	::SendMessage(::GetParent(m_hWnd),CDM_HIDECONTROL,nID,0);
 }
 
+inline int CFileDialog::GetFilterIndex() const
+{
+	return m_pofn->nFilterIndex;
+}
+	
 ///////////////////////////
 // Class CFontDialog
 

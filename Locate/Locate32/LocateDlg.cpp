@@ -35,6 +35,8 @@ BOOL CLocateDlgThread::InitInstance()
 		}
 	}
 
+	
+	RegisterDialog(*m_pLocate);
 	return TRUE;
 }
 
@@ -577,10 +579,12 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		// This is to ensure that these conrols get focus e.g. when alt+n is pressed
 		return m_AdvancedDlg.SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
 	case IDC_PTAB:
-		::SetFocus(GetNextDlgTabItem(GetFocus(),FALSE));
+		DefDlgProc(*this,WM_NEXTDLGCTL,FALSE,0);
+		//::SetFocus(GetNextDlgTabItem(GetFocus(),FALSE));
 		break;
 	case IDC_PUNTAB:
-		::SetFocus(GetNextDlgTabItem(GetFocus(),TRUE));
+		DefDlgProc(*this,WM_NEXTDLGCTL,TRUE,0);
+		//::SetFocus(GetNextDlgTabItem(GetFocus(),TRUE));
 		break;
 	case IDM_SAVERESULT:
 		OnSaveResults();
@@ -891,8 +895,9 @@ void CLocateDlg::StartBackgroundOperations()
 	if (m_pBackgroundUpdater==NULL)
 		m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
 
-	if ((GetExtraFlags()&efItemUpdatingMask)==efDisableItemUpdating)
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
 		return;
+
 
 	if (GetExtraFlags()&efEnableFSTracking)
 	{
@@ -2922,7 +2927,8 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 			{
 			// Title and parent are special since they have icons
 			case DetailType::Title:
-				if (pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon())
+				if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
+					(pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon()))
 				{
 					if (m_pBackgroundUpdater==NULL)
 						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
@@ -2948,7 +2954,8 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 				}
 				break;
 			case DetailType::InFolder:
-				if (pItem->ShouldUpdateParentIcon())
+				if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
+					pItem->ShouldUpdateParentIcon())
 				{
 					if (m_pBackgroundUpdater==NULL)
 						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
@@ -2965,8 +2972,9 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 				break;
 			default:
 				ASSERT (nDetail<=DetailType::LastType);
-				
-				if (pItem->ShouldUpdateByDetail(nDetail))
+		
+				if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
+					pItem->ShouldUpdateByDetail(nDetail))
 				{
 					if (m_pBackgroundUpdater==NULL)
 						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
@@ -4110,6 +4118,9 @@ void CLocateDlg::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
 			CreateFileContextMenu(hPopupMenu,pItems,nSelectedItems);
 			delete[] pItems;
 		}
+		else
+			CreateFileContextMenu(hPopupMenu,NULL,0);
+			
 
 		// Enable items
 		OnInitFileMenu(hPopupMenu);
@@ -4304,19 +4315,6 @@ BOOL CLocateDlg::InsertMenuItemsFromTemplate(HMENU hMenu,HMENU hTemplate,UINT uS
 	return TRUE;
 }
 
-/*void GetFirstParent(CString& parent,LPCSTR szPath)
-{
-	int i=FirstCharIndex(szPath,'\\')+1;
-	while (i!=0)
-	{
-		parent.Copy(szPath,i);
-		if (CFile::IsDirectory(parent))
-			return;
-		i=NextCharIndex(szPath,'\\',i)+1;
-	}		
-	parent=szPath;
-}*/
-
 HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,int nItems,BOOL bSimple)
 {
 	ClearMenuVariables();
@@ -4331,7 +4329,7 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 			DeleteMenu(hFileMenu,i,MF_BYPOSITION);
 		
 		// Copying menu from template menu in resource
-		if (m_pListCtrl->GetNextItem(-1,LVNI_SELECTED)==-1)
+		if (nItems==0)
 		{
 			InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_FILEMENUNOITEMS),0);
 			return hFileMenu;
@@ -4999,7 +4997,10 @@ void CLocateDlg::OnSaveResults()
 		// Initializing results
 		CResults Results(SaveResultsDlg.m_nFlags,SaveResultsDlg.m_strDescription,TRUE);
 		Results.Create(m_pListCtrl,SaveResultsDlg.m_aDetails,SaveResultsDlg.m_aDetails.GetSize());
-		Results.SaveToFile(SaveResultsDlg.GetFileName());
+		if (SaveResultsDlg.GetFilterIndex()==2)
+			Results.SaveToHtmlFile(SaveResultsDlg.GetFileName());
+		else
+			Results.SaveToFile(SaveResultsDlg.GetFileName());
 	}
 	catch (CFileException ex)
 	{
