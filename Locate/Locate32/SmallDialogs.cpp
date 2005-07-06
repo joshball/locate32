@@ -282,6 +282,12 @@ BOOL CSelectColumndDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			SaveActionFields(pItem);
 		}
 		break;
+	case IDC_RESET:
+		OnReset();
+		break;
+	case IDC_RESETACTIONS:
+		OnResetActions();
+		break;
 	}
 
 	return CDialog::OnCommand(wID,wNotifyCode,hControl);
@@ -523,6 +529,72 @@ void CSelectColumndDlg::OnCancel()
 
 	EndDialog(0);
 }
+
+void CSelectColumndDlg::OnReset()
+{
+	m_pList->DeleteAllItems();
+
+
+	CLocateDlg::ViewDetails* pDetails=CLocateDlg::GetDefaultDetails();
+
+	int nItem=0,i;
+	for (i=0;i<CLocateDlg::TypeCount;i++)
+	{
+		if (pDetails[i].bShow)
+		{
+			if (m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem,LPSTR_TEXTCALLBACK,0,0,0,
+				LPARAM(new ColumnItem(i,CLocateDlg::DetailType(i),pDetails[i].nWidth,
+				(ColumnItem::Align)pDetails[i].nAlign,m_aActions[i])))>=0)
+			{
+				m_pList->SetCheckState(nItem++,TRUE);
+			}
+		}
+	}
+	for (i=0;i<CLocateDlg::TypeCount;i++)
+	{
+		if (!pDetails[i].bShow)
+		{
+			if (m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem,LPSTR_TEXTCALLBACK,0,0,0,
+				LPARAM(new ColumnItem(i,CLocateDlg::DetailType(i),pDetails[i].nWidth,
+				(ColumnItem::Align)pDetails[i].nAlign,m_aActions[i])))>0)
+			{
+				m_pList->SetCheckState(nItem++,FALSE);
+			}
+		}
+	}
+
+	delete[] pDetails;
+
+	EnableItems();
+}
+
+void CSelectColumndDlg::OnResetActions()
+{
+	for (int i=0;i<m_aActions.GetSize();i++)
+	{
+		for (int j=0;j<CLocateDlg::ListActionCount;j++)
+		{
+			if (m_aActions[i][j]!=NULL)
+			{
+				delete m_aActions[i][j];
+				m_aActions[i][j]=NULL;
+			}
+		}
+	}
+	
+	GetLocateDlg()->SetDefaultActions(m_aActions);
+
+	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+	if (nItem!=-1)
+	{
+		ColumnItem* pItem=(ColumnItem*)m_pList->GetItemData(nItem);
+		if (pItem!=NULL)
+			SetActionFields(pItem);
+	}
+
+	EnableItems();
+}
+
 
 ///////////////////////////////////////////////////////////
 // CSelectDatabasesDlg

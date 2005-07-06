@@ -45,7 +45,6 @@ public:
 		friend CSettingsProperties;
 		CSettingsProperties* m_pSettings;
 	
-		
 
 #ifdef _DEBUG
 	public:
@@ -308,6 +307,7 @@ public:
 			void EnableItems();
 
 			CShortcut* m_pShortcut;
+
 		};
 
 
@@ -347,6 +347,7 @@ public:
 		void OnChangeItem(NMLISTVIEW *pNm);
 		void OnChangingItem(NMLISTVIEW *pNm);
 
+		CAction::Action GetSelectedAction() const;
 		void SetFieldsForShortcut(CShortcut* pShortcut);
 		void SaveFieldsForShortcut(CShortcut* pShortcut);
 		void SetFieldsForAction(CAction* pAction);

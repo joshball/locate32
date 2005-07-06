@@ -834,6 +834,8 @@ void CAction::ExecuteAction()
 {
 	switch (m_nAction)
 	{
+	case None:
+		break;
 	case ActivateControl:
 		DoActivateControl();
 		break;

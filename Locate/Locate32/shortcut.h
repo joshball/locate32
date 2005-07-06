@@ -251,6 +251,8 @@ public:
 
 
 	enum Action {
+		None = -1,
+
 		ActivateControl = 0,
 		ActivateTab = 1,
 		MenuCommand = 2,

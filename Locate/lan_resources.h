@@ -397,6 +397,7 @@
 #define IDC_RESET                       1168
 #define IDC_UPDATE2                     1169
 #define IDC_OVERRIDETXT                 1169
+#define IDC_RESETACTIONS                1170
 #define IDC_STOPIFROOTUNAVAILABLE       1172
 #define IDC_THREADSLABEL                1172
 #define IDC_SENTENCECASE                1173

@@ -133,4 +133,12 @@ inline void CSettingsProperties::CKeyboardShortcutsPage::GetHotKeyForShortcut(CS
     pShortcut->SetHotkeyModifiers(HIBYTE(wKey));
 }
 
+inline CAction::Action CSettingsProperties::CKeyboardShortcutsPage::GetSelectedAction() const
+{
+	int nAction=(CAction::Action)SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL,0,0);
+	if ((INT)nAction==CB_ERR || nAction==0)
+		return CAction::None;
+	
+	return (CAction::Action)(nAction-1);
+}
 #endif

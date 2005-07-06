@@ -22,7 +22,7 @@ inline CSubAction::CSubAction(DWORD nAction,CSubAction& rCopyFrom)
 
 
 inline CAction::CAction()
-:	m_nAction(ActivateControl)
+:	m_nAction(None)
 {
 }
 

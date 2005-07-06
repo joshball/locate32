@@ -159,7 +159,7 @@ LRESULT CALLBACK HookKeyboardProc(int code,WPARAM wParam,LPARAM lParam)
 			
 		}
 	}
-	return CallNextHookEx(NULL, code, wParam, lParam);
+	return CallNextHookEx(g_hHook, code, wParam, lParam);
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL,DWORD fdwReason,LPVOID lpvReserved)

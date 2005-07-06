@@ -368,6 +368,15 @@ private:
 
 	};
 
+	struct ViewDetails {
+		/* DetailType nDetail; */
+		int nString;
+		BOOL bShow;
+		int nAlign;
+		int nWidth;
+	};
+
+    static ViewDetails* GetDefaultDetails();
 	
 public:
 
@@ -451,6 +460,7 @@ public:
 	void LoadResultlistActions();
 	void SaveResultlistActions();
 	void ClearResultlistActions();
+	void SetDefaultActions(CSubAction*** pActions) const;
 
 protected:
 	void OnOk(BOOL bForceSelectDatabases=FALSE);
@@ -716,6 +726,7 @@ public:
 	friend class CLocateDlgThread;
 	friend class CCheckFileNotificationsThread;
 	friend class CBackgroundUpdater;
+	friend class CSelectColumndDlg;
 
 #ifdef _DEBUG
 public:

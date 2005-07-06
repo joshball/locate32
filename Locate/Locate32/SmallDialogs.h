@@ -23,6 +23,9 @@ public:
 	void EnableItems();
 	BOOL ItemUpOrDown(BOOL bUp);
 
+	void OnReset();
+	void OnResetActions();
+
 
 	struct ColumnItem 
 	{

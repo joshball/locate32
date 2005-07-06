@@ -4066,6 +4066,7 @@ CSettingsProperties::CKeyboardShortcutsPage::CKeyboardShortcutsPage()
 
 CSettingsProperties::CKeyboardShortcutsPage::~CKeyboardShortcutsPage()
 {
+
 	delete[] m_pPossibleControls;
 	delete[] m_pPossibleMenuCommands;
 
@@ -4140,6 +4141,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	}
 
 	// Inserc action categories
+	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_NONE));
 	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATACTIVATECONTROL));
 	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATACTIVATETAB));
 	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATMENUCOMMAND));
@@ -4167,6 +4169,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	EnableItems();
 
 
+		
 	return FALSE;
 }
 
@@ -4197,9 +4200,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::InsertSubActions()
 	
 	SendDlgItemMessage(IDC_SUBACTION,CB_RESETCONTENT,0,0);
 
-	CAction::Action nAction=(CAction::Action)SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL,0,0);
-	if ((INT)nAction==CB_ERR)
-		return;
+	CAction::Action nAction=GetSelectedAction();
+	
 
 	UINT nSubAction;
 	for (int nIndex=0;(nSubAction=IndexToSubAction(nAction,nIndex))!=(UINT)-1;nIndex++)
@@ -4227,6 +4229,8 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::IndexToSubAction(CAction::Acti
 {
 	switch (nAction)
 	{
+	case CAction::None:
+		break;
 	case CAction::ActivateControl:
 		if (m_pPossibleControls[nIndex]==CAction::NullControl)
 			return (UINT)-1;
@@ -4259,6 +4263,8 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::SubActionToIndex(CAction::Acti
 {
 	switch (nAction)
 	{
+	case CAction::None:
+		return (UINT)-1;
 	case CAction::ActivateControl:
 		{
 			for (int nIndex=0;m_pPossibleControls[nIndex]!=CAction::NullControl;nIndex++)
@@ -4305,7 +4311,10 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str
 {
 	switch (nAction)
 	{
-        case CAction::ActivateControl:
+	case CAction::None:
+		str.LoadString(IDS_NONE);
+		return TRUE;
+	case CAction::ActivateControl:
 		{
 			// Check which dialog contains control
 			WORD wControlID=HIWORD(uSubAction);
@@ -4427,6 +4436,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnDestroy()
 {
 	CPropertyPage::OnDestroy();
 
+	
+
 	if (m_pList!=NULL)
 	{
 		m_pList->SaveColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Shortcuts Settings List Widths");
@@ -4465,6 +4476,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnTimer(DWORD wTimerID)
 
 BOOL CSettingsProperties::CKeyboardShortcutsPage::OnNotify(int idCtrl,LPNMHDR pnmh)
 {
+	ASSERT(idCtrl==pnmh->idFrom);
+	
 	switch (idCtrl)
 	{
 	case IDC_KEYLIST:
@@ -4506,6 +4519,8 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnNotify(int idCtrl,LPNMHDR pn
 	return CPropertyPage::OnNotify(idCtrl,pnmh);
 }
 
+
+		
 
 BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 {
@@ -4579,13 +4594,19 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(LV_DISPINFO 
 			else if (pLvdi->item.state&LVIS_SELECTED)
 			{
 				int nCurSel=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
-				CAction::Action nAction=(CAction::Action)SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL);
 				UINT nSubAction=0;
+				CAction::Action nAction=GetSelectedAction();
+				if (nAction==CAction::None)
+				{
+					m_Buffer.LoadString(IDS_NONE);
+					break;
+				}
 				if ((nSubAction=IndexToSubAction(nAction,nCurSel))!=UINT(-1))
 				{
 					FormatActionLabel(m_Buffer,nAction,nSubAction);
 					break;
 				}
+				
 				m_Buffer.LoadString(IDS_UNKNOWN);
 			}				
 			else
@@ -5182,8 +5203,12 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 		nOther=m_pList->GetNextItem(nItem,LVNI_BELOW);
 		EnableDlgItem(IDC_DOWN,nOther!=-1 && nOther!=nItem);
 
-		switch ((CAction::Action)SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL))
+		switch (GetSelectedAction())
 		{
+		case CAction::None:
+			EnableDlgItem(IDC_STATICSUBACTION,FALSE);
+			EnableDlgItem(IDC_SUBACTION,FALSE);
+			break;
 		case CAction::ResultListItems:
 			{
 				INT nSubItem=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
@@ -5396,7 +5421,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 		SetDlgItemText(IDC_STATICACTIONS,CString(IDS_SHORTCUTACTION));
 
 	// Setting action, InsertSubActions does selection of subaction
-	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,pAction->m_nAction);
+	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,pAction->m_nAction+1);
 	InsertSubActions();
 
 	// Clear sub action fields fisrt
@@ -5446,10 +5471,13 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 	pAction->ClearExtraInfo();
 	
 	// Setting action
-	pAction->m_nAction=(CAction::Action)SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL);
+	pAction->m_nAction=GetSelectedAction();;
 	
 	switch (pAction->m_nAction)
 	{
+	case CAction::None:
+		pAction->m_nSubAction=0;
+		break;
 	case CAction::ActivateControl:
 		{
 			int nCurSel=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
@@ -5565,6 +5593,9 @@ void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CString& str
 	// Insert action code
 	switch (nAction)
 	{
+	case CAction::None:
+		str.LoadString(IDS_NONE);
+		return;
 	case CAction::ActivateControl:
 		str.LoadString(IDS_ACTIONCATACTIVATECONTROL);
 		break;

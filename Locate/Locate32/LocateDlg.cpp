@@ -190,6 +190,36 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 	return FALSE;
 }
 
+CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
+{
+	ViewDetails aDetails[]={
+		{/*Title,*/IDS_LISTNAME,TRUE,LVCFMT_LEFT,200},
+		{/*InFolder,*/IDS_LISTINFOLDER,TRUE,LVCFMT_LEFT,300},
+		{/*FullPath,*/IDS_LISTFULLPATH,FALSE,LVCFMT_LEFT,300},
+		{/*ShortFileName,*/IDS_LISTSHORTFILENAME,FALSE,LVCFMT_LEFT,200},
+		{/*ShortFilePath,*/IDS_LISTSHORTFILEPATH,FALSE,LVCFMT_LEFT,300},
+		{/*FileSize,*/IDS_LISTSIZE,TRUE,LVCFMT_RIGHT,70},
+		{/*FileType,*/IDS_LISTTYPE,TRUE,LVCFMT_LEFT,130},
+		{/*DateModified,*/IDS_LISTMODIFIED,TRUE,LVCFMT_LEFT,100},
+		{/*DateCreated,*/IDS_LISTCREATED,FALSE,LVCFMT_LEFT,100},
+		{/*DateAccessed,*/IDS_LISTACCESSED,FALSE,LVCFMT_LEFT,100},
+		{/*Attributes,*/IDS_LISTATTRIBUTES,FALSE,LVCFMT_LEFT,70},
+		{/*ImageDimensions,*/IDS_LISTIMAGEINFO,FALSE,LVCFMT_LEFT,150},
+		{/*Owner,*/IDS_LISTOWNER,FALSE,LVCFMT_LEFT,130},
+		{/*Database,*/IDS_LISTDATABASE,FALSE,LVCFMT_LEFT,70},
+		{/*DatabaseDescription,*/IDS_LISTDATABASEDESC,FALSE,LVCFMT_LEFT,150},
+		{/*DatabaseArchive,*/IDS_LISTDATABASEFILE,FALSE,LVCFMT_LEFT,150},
+		{/*VolumeLabel,*/IDS_LISTVOLUMELABEL,FALSE,LVCFMT_LEFT,100},
+		{/*VolumeSerial,*/IDS_LISTVOLUMESERIAL,FALSE,LVCFMT_LEFT,90},
+		{/*VOlumeFileSystem,*/IDS_LISTVOLUMEFILESYSTEM,FALSE,LVCFMT_LEFT,90},
+		{/*MD5sum,*/IDS_LISTMD5SUM,FALSE,LVCFMT_LEFT,100}
+	};
+
+	ViewDetails* pRet=new ViewDetails[sizeof(aDetails)/sizeof(ViewDetails)];
+	CopyMemory(pRet,aDetails,sizeof(aDetails));
+	return pRet;
+}
+
 BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 {
 	ShowDlgItem(IDC_FILELIST,swHide);
@@ -253,28 +283,14 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 		m_pTabCtrl->InsertItem(2,&ti);
 	}
 
-	
-	m_pListCtrl->InsertColumn(Title,IDS_LISTNAME,TRUE,LVCFMT_LEFT,200,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(InFolder,IDS_LISTINFOLDER,TRUE,LVCFMT_LEFT,300,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(FullPath,IDS_LISTFULLPATH,FALSE,LVCFMT_LEFT,300,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(ShortFileName,IDS_LISTSHORTFILENAME,FALSE,LVCFMT_LEFT,200,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(ShortFilePath,IDS_LISTSHORTFILEPATH,FALSE,LVCFMT_LEFT,300,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(FileSize,IDS_LISTSIZE,TRUE,LVCFMT_RIGHT,70,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(FileType,IDS_LISTTYPE,TRUE,LVCFMT_LEFT,130,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(DateModified,IDS_LISTMODIFIED,TRUE,LVCFMT_LEFT,100,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(DateCreated,IDS_LISTCREATED,FALSE,LVCFMT_LEFT,100,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(DateAccessed,IDS_LISTACCESSED,FALSE,LVCFMT_LEFT,100,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(Attributes,IDS_LISTATTRIBUTES,FALSE,LVCFMT_LEFT,70,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(ImageDimensions,IDS_LISTIMAGEINFO,FALSE,LVCFMT_LEFT,150,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(Owner,IDS_LISTOWNER,FALSE,LVCFMT_LEFT,130,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(Database,IDS_LISTDATABASE,FALSE,LVCFMT_LEFT,70,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(DatabaseDescription,IDS_LISTDATABASEDESC,FALSE,LVCFMT_LEFT,150,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(DatabaseArchive,IDS_LISTDATABASEFILE,FALSE,LVCFMT_LEFT,150,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(VolumeLabel,IDS_LISTVOLUMELABEL,FALSE,LVCFMT_LEFT,100,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(VolumeSerial,IDS_LISTVOLUMESERIAL,FALSE,LVCFMT_LEFT,90,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(VOlumeFileSystem,IDS_LISTVOLUMEFILESYSTEM,FALSE,LVCFMT_LEFT,90,LanguageSpecificResource);
-	m_pListCtrl->InsertColumn(MD5sum,IDS_LISTMD5SUM,FALSE,LVCFMT_LEFT,100,LanguageSpecificResource);
-	
+	ViewDetails* pDetails=GetDefaultDetails();
+	for (int i=0;i<TypeCount;i++)
+	{
+		m_pListCtrl->InsertColumn(DetailType(i),pDetails[i].nString,
+			pDetails[i].bShow,pDetails[i].nAlign,pDetails[i].nWidth,LanguageSpecificResource);
+	}
+	delete[] pDetails;
+
 	m_pListCtrl->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP,LVS_EX_HEADERDRAGDROP);
 	m_pListCtrl->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General","ListWidths");
 
@@ -6962,6 +6978,8 @@ void CLocateDlg::LoadResultlistActions()
 		DWORD dwLength=RegKey.QueryValueLength("ResultListActions",bOk);
 		if (bOk)
 		{
+			DebugNumMessage("CLocateDlg::LoadResultlistActions(): ResultListActions length: %d",dwLength);
+
 			if (dwLength==0)
 				return;
 
@@ -7004,12 +7022,21 @@ void CLocateDlg::LoadResultlistActions()
 		}
 	}
 
-
-	// Set defaults
-	m_aResultListActions[Title][
-		GetFlags()&fgLVStylePointToSelect?LeftMouseButtonClick:LeftMouseButtonDblClick]=new CSubAction(CSubAction::Execute);
-	m_aResultListActions[Title][RightMouseButtonClick]=new CSubAction(CSubAction::OpenContextMenu);
+	CSubAction*** ppActions=new CSubAction**[TypeCount];
+	for (int i=0;i<TypeCount;i++)
+		ppActions[i]=m_aResultListActions[i];
+	SetDefaultActions(ppActions);
+	delete[] ppActions;
 }
+
+void CLocateDlg::SetDefaultActions(CSubAction*** pActions) const
+{
+	pActions[Title][
+		GetFlags()&fgLVStylePointToSelect?LeftMouseButtonClick:LeftMouseButtonDblClick]=new CSubAction(CSubAction::Execute);
+	pActions[Title][RightMouseButtonClick]=new CSubAction(CSubAction::OpenContextMenu);
+}
+
+
 
 void CLocateDlg::SaveResultlistActions()
 {
@@ -7045,10 +7072,13 @@ void CLocateDlg::SaveResultlistActions()
 
 	ASSERT(DWORD(pPtr-pData)==dwLength);
 
-	
+	DebugNumMessage("CLocateDlg::SaveResultlistActions(): ResultListActions length: %d",dwLength);
+
+
 	CRegKey RegKey;
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defWrite)==ERROR_SUCCESS)
 	{
+		
 		RegKey.SetValue("ResultListActions",LPCSTR(pData),dwLength,REG_BINARY);
 		RegKey.CloseKey();
 	}
