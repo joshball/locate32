@@ -5992,7 +5992,6 @@ BOOL CLocateDlg::CNameDlg::OnOk(CString& sName,CArray<LPSTR>& aExtensions,CArray
 	CString Buffer;
 	CComboBox Name(GetDlgItem(IDC_NAME));
 	CComboBox Type(GetDlgItem(IDC_TYPE));
-	CString sType;
 	
 	// Setting recent combobox for name
 	GetDlgItemText(IDC_NAME,sName);
@@ -6010,9 +6009,12 @@ BOOL CLocateDlg::CNameDlg::OnOk(CString& sName,CArray<LPSTR>& aExtensions,CArray
 
 	
 	// Setting recent combobox for type
-	GetDlgItemText(IDC_TYPE,sType);
-	if (::IsWindowEnabled(GetDlgItem(IDC_TYPE)))
+	if (!GetLocateDlg()->m_AdvancedDlg.IsDlgButtonChecked(IDC_USEWHOLEPATH))
 	{
+		CString sType;
+		GetDlgItemText(IDC_TYPE,sType);
+	
+
 		if (Type.GetCurSel()==0) // Empty extension
 			aExtensions.Add(allocempty());
 		else

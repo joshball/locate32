@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   Updatedb.exe v2.99.5.7030 */
+   Updatedb.exe v2.99.5.7100 */
 
 #include <HFCLib.h>
 #include "locatedb/locatedb.h"
@@ -7,9 +7,9 @@
 #include "lan_resources.h"
 
 #ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 3.0 beta 5.7030";
+		LPCSTR szVersionStr="updtdb32 3.0 beta 5.7100";
 #else
-		LPCSTR szVersionStr="updatedb 3.0 beta 5.7030";
+		LPCSTR szVersionStr="updatedb 3.0 beta 5.7100";
 #endif
 
 
@@ -62,14 +62,7 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 		if (!nQuiet)
 		{
 			CString msg;
-
-			if (strncmp(pUpdater->GetCurrentDatabaseName(),"PARAMX",6)==0 ||
-				strncmp(pUpdater->GetCurrentDatabaseName(),"DEFAULTX",8)==0)
-				msg.Format(IDS_UPDATEDB32UPDATINGDATABASE2,pUpdater->GetCurrentDatabaseFile());
-					
-			else
-			    msg.Format(IDS_UPDATEDB32UPDATINGDATABASE,pUpdater->GetCurrentDatabaseName(),pUpdater->GetCurrentDatabaseFile());
-			
+			msg.Format(IDS_UPDATEDB32UPDATINGDATABASE,pUpdater->GetCurrentDatabaseName(),pUpdater->GetCurrentDatabaseFile());
 			if (pUpdater->IsIncrementUpdate())
 				msg.AddString(IDS_UPDATEDB32INCREMENTALUPDATE);
 			puts(msg);
@@ -81,7 +74,7 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 		{
 			if (pUpdater->GetCurrentRoot()!=NULL)
 				printf(CString(IDS_UPDATEDB32SCANNING),(LPCSTR)pUpdater->GetCurrentRoot()->m_Path);
-			else	
+			else
 				printf("%s %s\n",(LPCSTR)CString(IDS_UPDATEDB32WRITINGDB),pUpdater->GetCurrentDatabaseName());
 		}
 		break;
@@ -343,7 +336,7 @@ int main (int argc,char ** argv)
 						aDatabases[0]->SetNamePtr(alloccopy("PARAMX"));
 						aDatabases[0]->SetArchiveNamePtr(alloccopy(szFile));
 					}
-					else if (CDatabase::FindByFile(aDatabases,szFile)==NULL)
+					else 
 					{
 						CDatabase* pDatabase=CDatabase::FromFile(szFile);
 						if (pDatabase!=NULL)
@@ -353,6 +346,8 @@ int main (int argc,char ** argv)
 							pDatabase->SetThreadId(wCurrentThread);
 						}
 					}
+					
+
 			
 				}
 				break;
@@ -418,7 +413,7 @@ int main (int argc,char ** argv)
 	// First, check that there is database 
 	if (aDatabases.GetSize()==0)
 		CDatabase::LoadFromRegistry(HKCU,"Software\\Update\\Databases",aDatabases);   
-	else if (aDatabases.GetSize()==1 && strncmp(aDatabases.GetLast()->GetName(),"DEFAULTX",8)==0)
+	else if (aDatabases.GetSize()==1 && strncmp(aDatabases[0]->GetName(),"DEFAULTX",8)==0)
 	{
 		aDatabases.RemoveAll();
 		CDatabase::LoadFromRegistry(HKCU,"Software\\Update\\Databases",aDatabases);   
@@ -440,8 +435,56 @@ int main (int argc,char ** argv)
 	{
 		if (!aDatabases[i]->IsGloballyUpdated())
 			aDatabases.RemoveAt(i);
-		else
+		else 
+		{
+			if ((strncmp(aDatabases[i]->GetName(),"PARAMX",6)==0 ||
+				strncmp(aDatabases[i]->GetName(),"DEFAULTX",8)==0))
+			{
+				BOOL bNameChanged=FALSE;
+				if (aDatabases[i]->GetRoots()==0)
+				{
+					CDatabaseInfo* pDatabaseInfo=CDatabaseInfo::GetFromFile(aDatabases[i]->GetArchiveName());
+					if (pDatabaseInfo!=NULL)
+					{
+						CDatabase* pDatabase;
+						if (!pDatabaseInfo->szExtra2.IsEmpty())
+							pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->szExtra2);
+						if (pDatabase==NULL && !pDatabaseInfo->szExtra1.IsEmpty())
+							pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->szExtra1);
+						
+						printf(CString(IDS_UPDATEDB32USINGEXISTINGSETTINGS),
+							aDatabases[i]->GetArchiveName(),pDatabase->GetName());
+						
+						pDatabase->SetArchiveType(aDatabases[i]->GetArchiveType());
+						pDatabase->SetArchiveName(aDatabases[i]->GetArchiveName());
+						
+						delete aDatabases[i];
+						aDatabases[i]=pDatabase;
+
+						delete pDatabaseInfo;
+						bNameChanged=TRUE;
+					}
+				}
+
+				if (!bNameChanged)
+				{
+					int nFirst=LastCharIndex(aDatabases[i]->GetArchiveName(),'\\')+1;
+					int nLength=LastCharIndex(aDatabases[i]->GetArchiveName()+nFirst,'.');
+					if (nLength==-1)
+						nLength=istrlen(aDatabases[i]->GetArchiveName()+nFirst);
+
+					char* pName=new char[nLength+1];
+					CopyMemory(pName,aDatabases[i]->GetArchiveName()+nFirst,nLength);
+					pName[nLength]='\0';
+
+
+					aDatabases[i]->SetNamePtr(pName);
+				}
+			}
+
+			
 			i++;
+		}
 	}
 
 	// Starting to update

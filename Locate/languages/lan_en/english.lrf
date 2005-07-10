@@ -25,7 +25,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2005 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 beta 5.7030
+FILEVERSION=3.0 beta 5.7100
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -967,6 +967,7 @@ STRUPDATEDB_UPDATINGDATABASE2=Updating database %s
 STRUPDATEDB_SCANNING=Scanning %s
 STRUPDATEDB_WRITINGDB=Writing database
 STRUPDATEDB_LOADEDCANNOTBECHANGED=The properties of loaded database '%s' cannot be changed
+STRUPDATEDB_USINGEXISTINGSETTINGS=File '%s' is database named '%s', using its settings.
 
 ###################################################
 # Strings for locate.exe

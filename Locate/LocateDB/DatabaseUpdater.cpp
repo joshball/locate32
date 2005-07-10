@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   database updater v2.99.5.7030                 */
+   database updater v2.99.5.7100                 */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -122,7 +122,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 					if (m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::StopIfUnuavailable))
 						throw ueFolderUnavailable; // Next database
 				}
-				else if (ueResult!=ueSuccess && ueResult!=ueFolderUnavailable)
+				else if (ueResult!=ueSuccess)
 					throw ueResult;
 				
 				m_dwFiles+=m_pCurrentRoot->m_dwFiles;
@@ -277,7 +277,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 
 			// Writing root directory datas
 			m_pCurrentRoot=m_aDatabases[m_dwCurrentDatabase]->m_pFirstRoot;
-			while (m_pCurrentRoot!=NULL && ueResult==ueSuccess)
+			while (m_pCurrentRoot!=NULL && (ueResult==ueSuccess || ueResult==ueFolderUnavailable))
 			{
 				sStatus=statusWritingDB;
 				

@@ -2,7 +2,7 @@
 #include <conio.h>
 #include "lrestool.h"
 
-#define COPYRIGHTTEXT "lrestool v 2.1.5.2050 (C) 2003-2005 Janne Huttunen: language resource tool\n\n"
+#define COPYRIGHTTEXT "lrestool v 2.1.5.7100 (C) 2003-2005 Janne Huttunen: language resource tool\n\n"
 
 
 FILE* _stderr=stderr;

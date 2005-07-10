@@ -45,9 +45,7 @@ BOOL CIdentifiers::LoadFromRCFile(LPCSTR szFile,BOOL bShowFound)
 		// Finding identified and merging
 		PIDENTIFIER pNew=FindIdentifier(name);
 		
-		if (pNew!=NULL)
-			printf("Identified %s is already found in base file.\n",LPCSTR(name));
-		else
+		if (pNew==NULL)
 		{
 			pNew=AddTail();
 			pNew->name.Swap(name);
