@@ -2943,8 +2943,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 			{
 			// Title and parent are special since they have icons
 			case DetailType::Title:
-				if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
-					(pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon()))
+				if (pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon())
 				{
 					if (m_pBackgroundUpdater==NULL)
 						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
@@ -2970,8 +2969,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 				}
 				break;
 			case DetailType::InFolder:
-				if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
-					pItem->ShouldUpdateParentIcon())
+				if (pItem->ShouldUpdateParentIcon())
 				{
 					if (m_pBackgroundUpdater==NULL)
 						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
@@ -3704,32 +3702,20 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 	// Todo: change this code to check items which are in deleted folders and
 	// remove them		
 	iItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
-	if (iItem==-1)
+	while(iItem!=-1)
 	{
-		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
 		pItem->CheckIfDeleted();
 		ASSERT(m_pBackgroundUpdater!=NULL);
 		//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,CLocateDlg::Needed)",m_pBackgroundUpdater,pItem,nItem);
 				
-		m_pBackgroundUpdater->AddToUpdateList(pItem,nItem,CLocateDlg::Needed);			
+		m_pBackgroundUpdater->AddToUpdateList(pItem,iItem,CLocateDlg::Needed);			
+		iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
 	}
-	else
-	{
-		while(iItem!=-1)
-		{
-			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-			pItem->CheckIfDeleted();
-			ASSERT(m_pBackgroundUpdater!=NULL);
-			//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,CLocateDlg::Needed)",m_pBackgroundUpdater,pItem,nItem);
-					
-			m_pBackgroundUpdater->AddToUpdateList(pItem,iItem,CLocateDlg::Needed);			
-			iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
-		}
-	}
+
 	m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount());
 	m_pListCtrl->UpdateWindow();
 	m_pBackgroundUpdater->StopWaiting();
-	
 
 }
 
