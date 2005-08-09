@@ -264,7 +264,8 @@ BOOL WaitForWindow(CWnd* pWnd,DWORD dwMilliseconds)
 BOOL ForceForegroundAndFocus(HWND hWindow)
 {
 	static long dwInProc = 0;
-
+	DebugFormatMessage("ForceForegroundAndFocus BEGIN, dwInProc=%X hWindow=%X",DWORD(&dwInProc),DWORD(hWindow));
+	
     if (dwInProc == 0) {
 		InterlockedIncrement(&dwInProc);
 		
@@ -272,23 +273,40 @@ BOOL ForceForegroundAndFocus(HWND hWindow)
 		DWORD dwForegoundThread,dwCurrentThreadId;
 		BOOL bDetach=FALSE;
 
+		DebugNumMessage("hForeground=%X",DWORD(hForeground));
+	
+
 		if (hForeground!=NULL)
 		{
+	
 			dwForegoundThread=GetWindowThreadProcessId(hForeground,NULL);
-			dwCurrentThreadId=GetWindowThreadProcessId(hWindow,NULL);;
-			
+			DebugNumMessage("dwForegoundThread=%X",DWORD(dwForegoundThread));
+			dwCurrentThreadId=GetWindowThreadProcessId(hWindow,NULL);
+			DebugNumMessage("dwCurrentThreadId=%X",DWORD(dwCurrentThreadId));
+				
 			if (dwForegoundThread!=dwCurrentThreadId)
+			{
 				bDetach=AttachThreadInput(dwCurrentThreadId,dwForegoundThread,TRUE);
+				DebugNumMessage("bDetach=%d",bDetach);
+			}
 		}
 
 		SetForegroundWindow(hWindow);
+		DebugMessage("1");
 		BringWindowToTop(hWindow);
+		DebugMessage("2");
 		SetFocus(hWindow);
+		DebugMessage("3");
 		
 		if (bDetach)
+		{
+			DebugMessage("4");
 			AttachThreadInput(dwCurrentThreadId,dwForegoundThread,FALSE);
+			DebugMessage("5");
+		}
 
 		InterlockedDecrement(&dwInProc);
+		DebugMessage("6");
 		return TRUE;
 	}
 	return FALSE;

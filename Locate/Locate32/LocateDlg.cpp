@@ -3473,16 +3473,15 @@ void CLocateDlg::OnProperties(int nItem)
 	{
 	    if (pItems[i]!=NULL)
 		{
-			int i;          
 			aFiles.Add(new CString(pItems[i]->GetPath()));		
 		
-			for (i=0;i<aParents.GetSize();i++)
+			for (int j=0;j<aParents.GetSize();j++)
 			{
-				if (strcmp(aParents[i],pItems[i]->GetParent())==0)
+				if (strcmp(aParents[j],pItems[i]->GetParent())==0)
 					break;
 			}
 
-			if (aParents.GetSize()==i)
+			if (j==aParents.GetSize())
 				aParents.Add(pItems[i]->GetParent());
 		}
 	}

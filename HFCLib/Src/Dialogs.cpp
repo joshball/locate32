@@ -494,7 +494,7 @@ BOOL CInputDialog::OnClose()
 BOOL CALLBACK CAppData::CommonDialogProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
 	CCommonDialog* Wnd;
-	if (uMsg==WM_INITDIALOG)
+	if (uMsg==WM_INITDIALOG && lParam!=NULL)
 	{
 		switch (((DWORD*)lParam)[0])
 		{
@@ -505,6 +505,7 @@ BOOL CALLBACK CAppData::CommonDialogProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARA
 			break;
 #else		
 		case sizeof (OPENFILENAME):
+		case OPENFILENAME_SIZE_VERSION_400:
 			Wnd=(CCommonDialog*)((OPENFILENAME*)lParam)->lCustData;
 			break;
 #endif		
@@ -523,11 +524,19 @@ BOOL CALLBACK CAppData::CommonDialogProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARA
 		case sizeof (FINDREPLACE):
 			Wnd=(CCommonDialog*)((FINDREPLACE*)lParam)->lCustData;
 			break;
+		default: 
+			ASSERT(0);
+			return FALSE;
 		}
+		
+		if (Wnd==NULL)
+			return FALSE;
+		
 		Wnd->SetHandle(hWnd);
 		SetWindowLong(hWnd,GWL_USERDATA,(LONG)Wnd);
 		return Wnd->OnInitDialog((HWND)wParam);
 	}
+	
 	Wnd=(CCommonDialog*)GetWindowLong(hWnd,GWL_USERDATA);
 	if (Wnd!=NULL && uMsg==WM_COMMAND)
 	{
@@ -565,17 +574,8 @@ CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCTSTR lpszDefExt,
 						 LPCTSTR lpszFileName,DWORD dwFlags,LPCTSTR lpszFilter)
 :	CCommonDialog(),m_bOpenFileDialog(bOpenFileDialog)
 {
-#if (_WIN32_WINNT >= 0x0500)
-	m_pofn=(OPENFILENAME*)new char[sizeof(OPENFILENAME)];
-	if (m_pofn==NULL)
-	{
-		SetHFCError(HFC_CANNOTALLOC);
-		return;
-	}		
-	iMemSet(m_pofn,0,sizeof(OPENFILENAME));
-	m_pofn->lStructSize=sizeof(OPENFILENAME);
-	
-#else
+	DebugMessage("CFileDialog::CFileDialog BEGIN");
+#if (_WIN32_WINNT < 0x0500)
 	m_pofn=(OPENFILENAME*)new char[sizeof(OPENFILENAME)+16];
 	if (m_pofn==NULL)
 	{
@@ -583,10 +583,25 @@ CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCTSTR lpszDefExt,
 		return;
 	}		
 	iMemSet(m_pofn,0,sizeof(OPENFILENAME)+16);
+	m_pofn->lStructSize=sizeof(OPENFILENAME);
+#else
+	m_pofn=(OPENFILENAME*)new char[sizeof(OPENFILENAME)];
+	if (m_pofn==NULL)
+	{
+		SetHFCError(HFC_CANNOTALLOC);
+		return;
+	}		
+	iMemSet(m_pofn,0,sizeof(OPENFILENAME));
 	if (GetSystemFeaturesFlag()&(efWin2000|efWinXP))
+	{
+		DebugMessage("CFileDialog::CFileDialog: m_pofn->lStructSize=sizeof(OPENFILENAME)");
 		m_pofn->lStructSize=sizeof(OPENFILENAME);
-	else
-		m_pofn->lStructSize=sizeof(OPENFILENAME_SIZE_VERSION_400);
+	}
+    else
+	{
+		DebugMessage("CFileDialog::CFileDialog: m_pofn->lStructSize=sizeof(OPENFILENAME_SIZE_VERSION_400)");
+		m_pofn->lStructSize=OPENFILENAME_SIZE_VERSION_400;
+	}
 	
 #endif
 	m_pofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
@@ -603,6 +618,7 @@ CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCTSTR lpszDefExt,
 	if (m_szFileName==NULL)
 	{
 		SetHFCError(HFC_CANNOTALLOC);
+		DebugMessage("CFileDialog::CFileDialog END ERR1");
 		return;
 	}
 	m_pofn->nMaxFile=_MAX_PATH;
@@ -643,6 +659,7 @@ CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCTSTR lpszDefExt,
 		if (m_pofn->lpstrDefExt==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOC);
+			DebugMessage("CFileDialog::CFileDialog END ERR2");
 			return;
 		}
 		if (m_pofn->lpstrDefExt!=NULL)
@@ -650,6 +667,8 @@ CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCTSTR lpszDefExt,
 	}
 	else
 		m_pofn->lpstrDefExt=NULL;
+
+	DebugMessage("CFileDialog::CFileDialog END");
 }
 
 CFileDialog::~CFileDialog()
@@ -669,22 +688,27 @@ CFileDialog::~CFileDialog()
 
 BOOL CFileDialog::EnableFeatures(DWORD nFlags)
 {
-#if !(_WIN32_WINNT >= 0x0500)
 	if (nFlags==efCheck)
 		nFlags=GetSystemFeaturesFlag();
+
+#if (_WIN32_WINNT >= 0x0500)
 	if (nFlags&(efWin2000|efWinME) && m_pofn!=NULL)
-		m_pofn->lStructSize=sizeof(OPENFILENAME)+2*sizeof(DWORD)+sizeof(void*);
-#endif
-	if (nFlags==efCheck)
-		nFlags=GetSystemFeaturesFlag();
-	if (nFlags&(efWin2000|efWinME) && m_pofn!=NULL)
+	{
 		m_pofn->lStructSize=sizeof(OPENFILENAME);
+	}
+#else
+	if (nFlags&(efWin2000|efWinME) && m_pofn!=NULL)
+	{
+		m_pofn->lStructSize=sizeof(OPENFILENAME)+2*sizeof(DWORD)+sizeof(void*);
+	}
+#endif
 	return TRUE;
 }
 
 BOOL CFileDialog::DoModal(HWND hParentWnd)
 {
-	BOOL OnError;
+	
+	BOOL bError;
 	int i;
 	m_pofn->hwndOwner=hParentWnd;
 	m_pofn->lpstrFilter=m_strFilter;
@@ -699,17 +723,20 @@ BOOL CFileDialog::DoModal(HWND hParentWnd)
 	if (hParentWnd!=NULL)
 		::EnableWindow(hParentWnd,FALSE);
 	
+	
 	if (m_bOpenFileDialog)
-		OnError=::GetOpenFileName(m_pofn);
+		bError=::GetOpenFileName(m_pofn);
 	else
-		OnError=::GetSaveFileName(m_pofn);
+		bError=::GetSaveFileName(m_pofn);
+
+	
 	m_hWnd=NULL;
 	if (hParentWnd!=NULL)
 	{
 		::EnableWindow(hParentWnd,TRUE);
 		::SetFocus(hParentWnd);
 	}
-	return OnError;	
+	return bError;	
 }
 
 CString CFileDialog::GetPathName() const

@@ -2661,14 +2661,14 @@ BYTE CLocateAppWnd::OnLocate()
 		while (m_pLocateDlgThread->m_pLocate->GetHandle()==NULL)
 			Sleep(10);
 
-		DebugMessage("CLocateAppWnd::OnLocate() 1d");
-
 		ShowWindow(swHide);
 
-		DebugMessage("CLocateAppWnd::OnLocate() 1e");
+		DebugNumMessage("CLocateAppWnd::OnLocate() 1e, pLocate=%X",DWORD(m_pLocateDlgThread->m_pLocate));
+		DebugNumMessage("CLocateAppWnd::OnLocate() 1e, hWnd=%X",DWORD(m_pLocateDlgThread->m_pLocate->GetHandle()));
 		
 		m_pLocateDlgThread->m_pLocate->ForceForegroundAndFocus();
 
+		DebugMessage("CLocateAppWnd::OnLocate() 1f");
 		
 
 		

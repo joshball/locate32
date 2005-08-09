@@ -477,10 +477,16 @@ BOOL CSettingsProperties::SaveSettings()
 				Path << '\\';
 			Path<<"Locate32 Autorun.lnk";
 			
-			if (IsFlagSet(settingsStartLocateAtStartup) && !CFile::IsFile(Path))
-				CreateShortcut(Path,GetApp()->GetExeName(),""," /S");
-			else if (CFile::IsFile(Path))
-				DeleteFile(Path);
+			if (IsFlagSet(settingsStartLocateAtStartup))
+			{
+				if (!CFile::IsFile(Path))
+					CreateShortcut(Path,GetApp()->GetExeName(),""," /S");
+			}
+			else 
+			{
+				if (CFile::IsFile(Path))
+					DeleteFile(Path);
+			}
 
 		}	
 	}
@@ -2574,11 +2580,12 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnCommand(WOR
 	return FALSE;
 }
 
+
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnBrowse()
 {
 	// Set wait cursor
 	CWaitCursor wait;
-	
+
 	// Initializing file name dialog
 	CString Temp,Title;
 	Temp.LoadString(IDS_DATABASEFILTERS);
@@ -2587,11 +2594,11 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnBrowse()
 	fd.EnableFeatures();
 	Title.LoadString(IDS_SELECTDATABASE);
 	fd.m_pofn->lpstrTitle=Title;
-	
+
 	// Ask file name
 	if (!fd.DoModal(*this))
 		return;
-
+	
 	// Check filename and set
 	Temp=fd.GetPathName();
 	int i=Temp.Find('*');
@@ -2600,11 +2607,11 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnBrowse()
 	else
 	{
 		if (Temp[i-1]=='.')
-			i--;
+		i--;
 		Title.Copy(Temp,i);
 		SetDlgItemText(IDC_DBFILE,Title);
 	}
-	
+
 	// Set focus to file name edit box
 	SetFocus(IDC_DBFILE);
 	SendDlgItemMessage(IDC_DBFILE,EM_SETSEL,0,-1);
@@ -2627,7 +2634,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	li.iItem=m_pList->GetItemCount();
 
 	CString Temp;
-	char szLabel[20],szFileSystem[20];
+	char szLabel[20],szFileSystem[20]="";
 	switch (nType)
 	{
 	case DRIVE_FIXED:
@@ -2652,27 +2659,31 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	}
 
 	// Resolving label
-	UINT nOldMode=SetErrorMode(SEM_FAILCRITICALERRORS);
 	
-	DWORD dwTemp;
-	if (!GetVolumeInformation(szDrive,szLabel,20,&dwTemp,&dwTemp,&dwTemp,szFileSystem,20))
+	
+	if (nType==DRIVE_REMOVABLE)
+        LoadString(IDS_FLOPPYSTRING,szLabel,20);
+	else
 	{
-		switch (nType)
+		DWORD dwTemp;
+		UINT nOldMode=SetErrorMode(SEM_FAILCRITICALERRORS);
+	
+		if (!GetVolumeInformation(szDrive,szLabel,20,&dwTemp,&dwTemp,&dwTemp,szFileSystem,20))
 		{
-		case DRIVE_REMOVABLE:
-			LoadString(IDS_FLOPPYSTRING,szLabel,20);
-			break;
-		case DRIVE_CDROM:
-			LoadString(IDS_CDROMSTRING,szLabel,20);
-			break;
-		default:	
-			szLabel[0]='\0';
-			break;
+			switch (nType)
+			{
+			case DRIVE_CDROM:
+				LoadString(IDS_CDROMSTRING,szLabel,20);
+				break;
+			default:	
+				szLabel[0]='\0';
+				break;
+			}
+			szFileSystem[0]='\0';
 		}
-		szFileSystem[0]='\0';
-	}
 
-	SetErrorMode(nOldMode);
+		SetErrorMode(nOldMode);
+	}
 
 	// Resolving icon,
 	SHFILEINFO fi;
