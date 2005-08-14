@@ -265,6 +265,7 @@ public:
 	CRebarCtrl();
 	CRebarCtrl(HWND hWnd);
 	BOOL Create(DWORD dwStyle,const RECT* rect,HWND hParentWnd,UINT nID);
+	BOOL CreateEx(DWORD dwStyle,const RECT* rect,HWND hParentWnd,UINT nID,DWORD dwExStyle);
 
 public:
 	int InsertBand(int nBand,const REBARBANDINFO* rbi);
@@ -278,7 +279,39 @@ public:
 	
 	int GetBandCount() const;
 	int GetRowCount() const;
+	int GetBarHeight() const;
 	int GetRowHeight(int nRow) const;
+
+	void GetBandBorders(int nBand,RECT& rc) const;
+	//void GetBandMargins(PMARGINS margins) const;
+
+
+	COLORREF GetBackColor() const;
+	COLORREF SetBackColor(COLORREF col);
+
+	BOOL GetColorScheme(LPCOLORSCHEME lpcs) const;
+	void SetColorScheme(const LPCOLORSCHEME lpcs);
+	
+	int IdToIndex(UINT nBandID) const;
+	void MaximizeBand(int nBand,BOOL bIdeal=FALSE);
+	void MinimizeBand(int nBand);
+
+	void MoveBand(int nFrom,int nTo);
+	BOOL ShowBand(int nBand,BOOL bShow);
+
+	BOOL SizeToRect(RECT& rc);
+	BOOL GetRect(int nBand,RECT& rc);
+
+	
+	IDropTarget* GetDropTarget() const;
+	void BeginDrag(int nBand,WORD wCorX=WORD(-1),WORD wCorY=WORD(-1));
+	void DrawMove(WORD wCorX=WORD(-1),WORD wCorY=WORD(-1));
+	void EndDrag();
+
+	HWND GetTooltips() const;
+	void SetTooltips(HWND hwnd);
+
+	void SetWindowTheme(LPWSTR pwStr);
 
 };
 

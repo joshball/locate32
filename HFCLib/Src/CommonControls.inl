@@ -544,6 +544,13 @@ inline BOOL CRebarCtrl::Create(DWORD dwStyle,const RECT* rect,HWND hWndParent,UI
       hWndParent,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
+inline BOOL CRebarCtrl::CreateEx(DWORD dwStyle,const RECT* rect,HWND hWndParent,UINT nID,DWORD dwExStyle)
+{
+	return (m_hWnd=CreateWindowEx(dwExStyle,REBARCLASSNAME,szEmpty,
+      dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
+      hWndParent,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+}
+
 inline int CRebarCtrl::InsertBand(int nBand,const REBARBANDINFO* rbi)
 {
 	return (int)::SendMessage(m_hWnd,RB_INSERTBAND,(WPARAM)nBand,(LPARAM)rbi);
@@ -588,6 +595,115 @@ inline int CRebarCtrl::GetRowHeight(int nRow) const
 {
 	return (int)::SendMessage(m_hWnd,RB_GETROWHEIGHT,nRow,0);
 }
+
+inline void CRebarCtrl::GetBandBorders(int nBand,RECT& rc) const
+{
+	::SendMessage(m_hWnd,RB_GETBARHEIGHT,0,LPARAM(&rc));
+}
+
+/*inline void CRebarCtrl::GetBandMargins(PMARGINS margins) const
+{
+	return (int)::SendMessage(m_hWnd,RB_GETBANDMARGINS,0,LPARAM(margins));
+}*/
+
+inline int CRebarCtrl::GetBarHeight() const
+{
+	return (int)::SendMessage(m_hWnd,RB_GETBARHEIGHT,0,0);
+}
+
+inline void CRebarCtrl::BeginDrag(int nBand,WORD wCorX,WORD wCorY)
+{
+	::SendMessage(m_hWnd,RB_GETBKCOLOR,nBand,MAKELPARAM(wCorX,wCorY));
+}
+	
+inline void CRebarCtrl::DrawMove(WORD wCorX,WORD wCorY)
+{
+	::SendMessage(m_hWnd,RB_DRAGMOVE,0,MAKELPARAM(wCorX,wCorY));
+}
+
+inline void CRebarCtrl::EndDrag()
+{
+	::SendMessage(m_hWnd,RB_ENDDRAG,0,0);
+}
+
+
+inline COLORREF CRebarCtrl::GetBackColor() const
+{
+	return (COLORREF)::SendMessage(m_hWnd,RB_GETBKCOLOR,0,0);
+}
+
+inline COLORREF CRebarCtrl::SetBackColor(COLORREF col)
+{
+	return (COLORREF)::SendMessage(m_hWnd,RB_SETBKCOLOR,0,LPARAM(col));
+}
+
+inline void CRebarCtrl::SetColorScheme(LPCOLORSCHEME lpcs)
+{
+	::SendMessage(m_hWnd,RB_SETCOLORSCHEME,0,LPARAM(lpcs));
+}
+
+inline BOOL  CRebarCtrl::GetColorScheme(LPCOLORSCHEME lpcs) const
+{
+	return (BOOL)::SendMessage(m_hWnd,RB_GETCOLORSCHEME,0,LPARAM(lpcs));
+}
+
+inline IDropTarget* CRebarCtrl::GetDropTarget() const
+{
+	IDropTarget* pDropTarget;
+	::SendMessage(m_hWnd,RB_GETDROPTARGET,0,(LPARAM)&pDropTarget);
+	return pDropTarget;
+}
+
+inline int CRebarCtrl::IdToIndex(UINT nBandID) const
+{
+	return (int)::SendMessage(m_hWnd,RB_IDTOINDEX,nBandID,0);
+}
+
+inline void CRebarCtrl::MaximizeBand(int nBand,BOOL bIdeal)
+{
+	::SendMessage(m_hWnd,RB_MAXIMIZEBAND,nBand,bIdeal);
+}
+
+inline void CRebarCtrl::MinimizeBand(int nBand)
+{
+	::SendMessage(m_hWnd,RB_MINIMIZEBAND,nBand,0);
+}
+
+inline void CRebarCtrl::MoveBand(int nFrom,int nTo)
+{
+	::SendMessage(m_hWnd,RB_MOVEBAND,nFrom,nTo);
+}
+
+inline BOOL CRebarCtrl::ShowBand(int nBand,BOOL bShow)
+{
+	return (BOOL)::SendMessage(m_hWnd,RB_SHOWBAND,nBand,bShow);
+}
+
+inline BOOL CRebarCtrl::SizeToRect(RECT& rc)
+{
+	return (BOOL)::SendMessage(m_hWnd,RB_SIZETORECT,0,LPARAM(&rc));
+}
+
+inline BOOL CRebarCtrl::GetRect(int nBand,RECT& rc)
+{
+	return (BOOL)::SendMessage(m_hWnd,RB_GETRECT,0,LPARAM(& rc));
+}
+
+inline HWND CRebarCtrl::GetTooltips() const
+{
+	return (HWND)::SendMessage(m_hWnd,RB_GETTOOLTIPS,0,0);
+}
+
+inline void CRebarCtrl::SetTooltips(HWND hwnd)
+{
+	::SendMessage(m_hWnd,RB_SETTOOLTIPS,0,LPARAM(hwnd));
+}
+
+inline void CRebarCtrl::SetWindowTheme(LPWSTR pwStr)
+{
+	::SendMessage(m_hWnd,RB_SETWINDOWTHEME,0,LPARAM(pwStr));
+}
+
 
 ///////////////////////////
 // Class CToolBarCtrl

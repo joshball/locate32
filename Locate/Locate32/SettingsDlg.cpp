@@ -2607,7 +2607,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnBrowse()
 	else
 	{
 		if (Temp[i-1]=='.')
-		i--;
+			i--;
 		Title.Copy(Temp,i);
 		SetDlgItemText(IDC_DBFILE,Title);
 	}
