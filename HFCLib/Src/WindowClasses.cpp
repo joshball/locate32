@@ -843,6 +843,7 @@ int CMDIChildWnd::OnCreate(LPCREATESTRUCT lpcs)
 void CMDIChildWnd::OnMDIActivate(HWND hAct,HWND hDeAct)
 {
 	UpdateClientEdge();
+	WindowProc(WM_MDIACTIVATE,WPARAM(hAct),LPARAM(hDeAct));
 }
 
 int CMDIChildWnd::OnMouseActivate(HWND hDesktopWnd,UINT nHitTest,UINT message)
