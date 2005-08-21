@@ -20,7 +20,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;SHELLDLL_EXPORTS;_LOGGING"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;SHELLDLL_EXPORTS,_LOGGING"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -34,11 +34,9 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/loc_shex.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="LocateShellExtension.Def"
 				GenerateDebugInformation="TRUE"
 				ProgramDatabaseFile="$(OutDir)/shelldll.pdb"
 				SubSystem="2"
-				SupportUnloadOfDelayLoadedDLL="TRUE"
 				ImportLibrary="$(OutDir)/shelldll.lib"
 				TargetMachine="1"/>
 			<Tool
@@ -70,7 +68,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;SHELLDLL_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;SHELLDLL_EXPORTS,_LOGGING"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -84,12 +82,10 @@
 				AdditionalOptions="-def:LocateShellExtension.Def"
 				OutputFile="$(OutDir)/loc_shex.dll"
 				LinkIncremental="1"
-				ModuleDefinitionFile="LocateShellExtension.Def"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				SupportUnloadOfDelayLoadedDLL="TRUE"
 				ImportLibrary="$(OutDir)/shelldll.lib"
 				TargetMachine="1"/>
 			<Tool

@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="7.10"
-	Name="shelldll"
-	ProjectGUID="{A6A844B3-DD81-46E9-A215-9478E4241982}"
-	RootNamespace="shelldll"
+	Name="FindExtension"
+	ProjectGUID="{48A8C3A7-F42D-4918-AE7A-C86E23462705}"
+	RootNamespace="FindExtension"
 	Keyword="Win32Proj">
 	<Platforms>
 		<Platform
@@ -32,14 +32,14 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/loc_shex.dll"
+				OutputFile="$(OutDir)/loc_fndx.dll"
 				LinkIncremental="2"
-				ModuleDefinitionFile="LocateShellExtension.Def"
+				ModuleDefinitionFile="FindExtension.Def"
 				GenerateDebugInformation="TRUE"
-				ProgramDatabaseFile="$(OutDir)/shelldll.pdb"
+				ProgramDatabaseFile="$(OutDir)/FindExtension.pdb"
 				SubSystem="2"
 				SupportUnloadOfDelayLoadedDLL="TRUE"
-				ImportLibrary="$(OutDir)/shelldll.lib"
+				ImportLibrary="$(OutDir)/FindExtension.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -80,17 +80,15 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				RegisterOutput="FALSE"
-				AdditionalOptions="-def:LocateShellExtension.Def"
-				OutputFile="$(OutDir)/loc_shex.dll"
+				OutputFile="$(OutDir)/loc_fndx.dll"
 				LinkIncremental="1"
-				ModuleDefinitionFile="LocateShellExtension.Def"
+				ModuleDefinitionFile="FindExtension.Def"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				SupportUnloadOfDelayLoadedDLL="TRUE"
-				ImportLibrary="$(OutDir)/shelldll.lib"
+				ImportLibrary="$(OutDir)/FindExtension.lib"
 				TargetMachine="1"/>
 			<Tool
 				Name="VCMIDLTool"/>
@@ -122,13 +120,13 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<File
-				RelativePath=".\CtxMenu.Cpp">
+				RelativePath=".\CtxMenuHandler.Cpp">
 			</File>
 			<File
-				RelativePath=".\LocateShellExtension.Cpp">
+				RelativePath=".\FindExtension.Cpp">
 			</File>
 			<File
-				RelativePath=".\LocateShellExtension.Def">
+				RelativePath=".\FindExtension.Def">
 			</File>
 		</Filter>
 		<Filter
@@ -136,7 +134,7 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
-				RelativePath=".\LocateShellExtension.h">
+				RelativePath=".\FindExtension.h">
 			</File>
 			<File
 				RelativePath=".\resource.h">
@@ -146,6 +144,9 @@
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
+			<File
+				RelativePath=".\res\icon.ico">
+			</File>
 			<File
 				RelativePath=".\shelldll.rc">
 			</File>
