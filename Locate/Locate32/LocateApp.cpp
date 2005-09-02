@@ -505,6 +505,30 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 		case 'l':
 			switch(lpCmdLine[++idx])
 			{
+			case 'P':
+				idx++;
+				if (lpCmdLine[idx]==':')
+					idx++;
+				
+				while (lpCmdLine[idx]==' ') idx++;
+				if (lpCmdLine[idx]!='\"')
+				{
+					temp=FirstCharIndex(lpCmdLine+idx,' ');
+					ChangeAndAlloc(pStartData->m_pLoadPreset,lpCmdLine+idx,temp);
+					if (temp<0)
+						return TRUE;
+					idx+=temp;
+				}
+				else
+				{
+					idx++;
+					temp=FirstCharIndex(lpCmdLine+idx,'\"');
+					ChangeAndAlloc(pStartData->m_pLoadPreset,lpCmdLine+idx,temp);
+					if (temp<0)
+						return TRUE;
+					idx+=temp+1;
+				}
+				break;				
 			case 'n': // set number of maximum found files
 				{
 					idx++;

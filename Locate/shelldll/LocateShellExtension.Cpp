@@ -26,7 +26,9 @@
 #define INITGUID
 #include <initguid.h>
 #include <shlguid.h>
+#include "../lan_resources.h"
 #include "LocateShellExtension.h"
+
 #pragma data_seg()
 
 //
@@ -75,10 +77,9 @@ DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
     if (dwReason == DLL_PROCESS_ATTACH)
     {
-        
         // Extension DLL one-time initialization
-
         g_hmodThisDll = hInstance;
+
 
 		ODS("In DLLMain, DLL_PROCESS_ATTACH\r\n");
     }

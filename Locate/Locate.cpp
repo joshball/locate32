@@ -566,11 +566,14 @@ int main (int argc,char * argv[])
 		HGLOBAL hGlobal=LoadResource(GetLanguageSpecificResourceHandle(),hRc);
 		fprintf(stderr,(LPCSTR)LockResource(hGlobal));
 		
+		FreeLibrary(GetLanguageSpecificResourceHandle());
 		return 1;
 	}
 	else if (helps==2)
 	{
 		puts(szVersionStr);
+
+		FreeLibrary(GetLanguageSpecificResourceHandle());
 		return 1;
 	}
 
@@ -712,5 +715,7 @@ int main (int argc,char * argv[])
 
 	if (pContainData!=NULL)
 		free(pContainData);
+
+	FreeLibrary(GetLanguageSpecificResourceHandle());
 	return 0;
 }

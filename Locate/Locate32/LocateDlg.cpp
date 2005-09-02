@@ -109,6 +109,8 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 					tii.lpszText  = LPSTR_TEXTCALLBACK;
 				
 					tii.lParam = m_pLocate->m_pListCtrl->GetItemData(ht.iItem);
+					DebugNumMessage("tii.lParam is now %X",tii.lParam);
+					
 				
 					m_pLocate->m_pListTooltips->AddTool(&tii);
 					m_pLocate->m_pListTooltips->SetMaxTipWidth(400);
@@ -156,6 +158,8 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 						tii.hinst  = NULL;
 						tii.lpszText  = LPSTR_TEXTCALLBACK;
 						tii.lParam = m_pLocate->m_pListCtrl->GetItemData(ht.iItem);
+						DebugNumMessage("tii.lParam is now %X (2)",tii.lParam);
+
 						m_pLocate->GetClientRect(&tii.rect);
 						m_pLocate->m_pListTooltips->AddTool(&tii);
 				
@@ -184,6 +188,7 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 		{
 			if (m_pLocate->m_iTooltipItem!=-1)
 				m_pLocate->DeleteTooltipTools();
+
 			m_pLocate->m_pListTooltips->RelayEvent(pMsg);			
 		}
 	}
@@ -384,6 +389,12 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	if (m_dwFlags&fgDialogRememberFields)
 		LoadDialogTexts();
 	
+
+	// Load shortcuts and actions
+	SetShortcuts();	
+	LoadResultlistActions();
+
+
 	// Taking command line parameters to use
 	if (GetLocateApp()->GetStartData()!=NULL)
 	{
@@ -391,9 +402,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 		GetLocateApp()->ClearStartData();
 	}
 
-	// Load shortcuts and actions
-	SetShortcuts();	
-	LoadResultlistActions();
+	
 
 
 
@@ -2739,6 +2748,10 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 			switch (pnmh->code)
 			{
 			case TTN_GETDISPINFO:
+				DebugNumMessage("CLocateDlg::OnNotify; TTN_GETDISPINFO, ((NMTTDISPINFO*)pnmh)->lParam=%X",((NMTTDISPINFO*)pnmh)->lParam);
+				DebugFormatMessage("pnmh->idFrom=%X, filelist=%X/%X",pnmh->idFrom,IDC_FILELIST,(DWORD)(HWND)*m_pListCtrl);
+				DebugFormatMessage("flags ((NMTTDISPINFO*)pnmh)->uFlags=%X",((NMTTDISPINFO*)pnmh)->uFlags);
+				
 				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))==DetailType::Title)
 				{
 					((NMTTDISPINFO*)pnmh)->hinst=NULL;
@@ -2753,14 +2766,21 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 				else
 				{
 					CLocatedItem* pItem=(CLocatedItem*)((NMTTDISPINFO*)pnmh)->lParam;
-					((NMTTDISPINFO*)pnmh)->lpszText=pItem->GetDetailText(
-						DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem)));
+					if (pItem!=NULL)
+					{
+						((NMTTDISPINFO*)pnmh)->lpszText=pItem->GetDetailText(
+							DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem)));
+					}
+					else
+						((NMTTDISPINFO*)pnmh)->lpszText=(LPSTR)szEmpty;
+
 				}
 				break;
 			case TTN_SHOW:
+				DebugMessage("CLocateDlg::OnNotify; TTN_SHOW");
+
 				m_bTooltipActive=TRUE;
-				DebugMessage("TTN_SHOW");
-				
+
 				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))!=DetailType::Title)
 				{
 					CRect rc;
@@ -2783,8 +2803,8 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 				}
 				return 0;				
 			case TTN_POP:
+				DebugMessage("CLocateDlg::OnNotify; TTN_POP");
 				m_bTooltipActive=FALSE;
-				DebugMessage("TTN_POP");
 				break;
 			case NM_CUSTOMDRAW:
 				return CDRF_DODEFAULT;
@@ -5382,10 +5402,16 @@ void CLocateDlg::OnSelectDetails()
 
 void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)
 {
+	// Loading preset first
+	if (pStartData->m_pLoadPreset!=NULL)
+		LoadPreset(pStartData->m_pLoadPreset);
+
+    // Set fields	
 	m_NameDlg.SetStartData(pStartData);
 	m_SizeDateDlg.SetStartData(pStartData);
 	m_AdvancedDlg.SetStartData(pStartData);
 
+	// Set sorting
 	if (pStartData->m_nSorting!=BYTE(-1))
 	{
 		if (m_dwFlags&fgLargeMode && 
@@ -6502,6 +6528,42 @@ void CLocateDlg::OnPresetsSelection(int nPreset)
 
 	if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 		return;
+
+	m_NameDlg.LoadControlStates(PresetKey);
+	m_NameDlg.EnableItems(TRUE);
+
+	m_SizeDateDlg.LoadControlStates(PresetKey);
+	m_SizeDateDlg.EnableItems(TRUE);
+
+	m_AdvancedDlg.LoadControlStates(PresetKey);
+	m_AdvancedDlg.EnableItems(TRUE);
+
+}
+
+void CLocateDlg::LoadPreset(LPCSTR szPreset)
+{
+	CRegKey RegKey,PresetKey;
+	CString Path,Name;
+	Path.LoadString(IDS_REGPLACE,CommonResource);
+	Path<<"\\Dialogs\\SearchPresets";
+
+	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+		return;
+	
+	for (int nPreset=0;;nPreset++) 
+	{
+		char szBuffer[30];
+		wsprintf(szBuffer,"Preset %03d",nPreset);
+
+		if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+			return;
+
+		if (PresetKey.QueryValue("",Name))
+		{
+			if (Name.Compare(szPreset)==0)
+				break;
+		}
+	} 
 
 	m_NameDlg.LoadControlStates(PresetKey);
 	m_NameDlg.EnableItems(TRUE);

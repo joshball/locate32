@@ -1698,6 +1698,11 @@ END
 
 STRINGTABLE 
 BEGIN
+    IDS_EXTLOCATEMENU		"Locate32..."
+END
+
+STRINGTABLE 
+BEGIN
     IDS_YES                 "Yes"
     IDS_NO                  "No"
     IDS_DOCUMENTFOLDERS     "Document Folders"

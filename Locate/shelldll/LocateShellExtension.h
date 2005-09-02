@@ -56,31 +56,19 @@ class CLocateShellExtension : public IContextMenu,
 protected:
     ULONG        m_cRef;
     LPDATAOBJECT m_pDataObj;
-    //char         m_szFileUserClickedOn[MAX_PATH];
-
+    
     STDMETHODIMP DoGAKMenu1(HWND hParent,
                             LPCSTR pszWorkingDir,
                             LPCSTR pszCmd,
                             LPCSTR pszParam,
                             int iShowCmd);
 
-    STDMETHODIMP DoGAKMenu2(HWND hParent,
-                            LPCSTR pszWorkingDir,
-                            LPCSTR pszCmd,
-                            LPCSTR pszParam,
-                            int iShowCmd);
+	enum Flags {
+		fSubMenu = 0x1,
 
-    STDMETHODIMP DoGAKMenu3(HWND hParent,
-                            LPCSTR pszWorkingDir,
-                            LPCSTR pszCmd,
-                            LPCSTR pszParam,
-                            int iShowCmd);
-
-    STDMETHODIMP DoGAKMenu4(HWND hParent,
-                            LPCSTR pszWorkingDir,
-                            LPCSTR pszCmd,
-                            LPCSTR pszParam,
-                            int iShowCmd);
+		fDidnSuccess = 0x8000, // Used by ReadSettingsFromRegistry if failed
+		fDefaults = 0
+	};
 public:
     CLocateShellExtension();
     ~CLocateShellExtension();
@@ -110,6 +98,9 @@ public:
                                        LPDATAOBJECT pDataObj,
                                        HKEY hKeyID);
 
+
+	int InsertMenuItems(HMENU hMenu,UINT nStartIndex,UINT idCmdFirst,UINT& nHighestUsedID);
+	DWORD ReadSettingsFromRegistry();
     
     /*//IPersistFile methods
     STDMETHODIMP GetClassID(LPCLSID lpClassID);

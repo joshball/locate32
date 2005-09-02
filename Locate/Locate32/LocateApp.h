@@ -208,6 +208,7 @@ public:
 		LPSTR m_pStartString;
 		LPSTR m_pTypeString;
 		LPSTR m_pFindText;
+		LPSTR m_pLoadPreset;
 		DWORD m_nStatus;
 		DWORD m_nPriority;
 		BYTE m_nStartup;
@@ -382,7 +383,7 @@ inline CLocateApp::CStartData::CStartData()
     m_cMaxDateType(0),m_cMinDateType(0),
     m_nSorting(BYTE(-1)),m_nPriority(priorityDontChange),
 	m_pStartPath(NULL),m_pStartString(NULL),
-	m_pTypeString(NULL),m_pFindText(NULL)
+	m_pTypeString(NULL),m_pFindText(NULL),m_pLoadPreset(NULL)
 { 
 }
 
@@ -396,6 +397,9 @@ inline CLocateApp::CStartData::~CStartData()
 		delete[] m_pTypeString;
 	if (m_pFindText!=NULL)
 		delete[] m_pFindText;
+	if (m_pLoadPreset!=NULL)
+		delete[] m_pLoadPreset;
+
 }
 
 inline void CLocateApp::SetStartData(CStartData* pStarData)

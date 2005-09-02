@@ -16,10 +16,47 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <shlobj.h>
-
+#include "../lan_resources.h"
 #include "LocateShellExtension.h"
+#include "resource.h"
 
-#define ARRAYSIZE(x) (sizeof(x)/sizeof(x[0]))
+extern HINSTANCE g_hmodThisDll;
+
+HMODULE GetLanguageResource()
+{
+	HKEY hKey;
+	LPSTR lanFile=NULL;
+	if (RegOpenKeyEx(HKEY_CURRENT_USER,"Software\\Update\\Locate32",0,KEY_READ,&hKey)==ERROR_SUCCESS)
+	{
+		DWORD lLength;
+		if (RegQueryValueEx(hKey,"Language",0,NULL,NULL,&lLength)==ERROR_SUCCESS)
+		{
+			lanFile=new char[lLength+1];
+			if (RegQueryValueEx(hKey,"Language",0,NULL,(LPBYTE)lanFile,&lLength)!=ERROR_SUCCESS)
+			{
+				delete[] lanFile;
+				lanFile=NULL;
+			}
+		}
+		RegCloseKey(hKey);
+	}
+
+
+	char szPath[MAX_PATH];
+	int nLen=GetModuleFileName(g_hmodThisDll,szPath,MAX_PATH);
+	for (nLen--;nLen>=0 && szPath[nLen]!='\\';nLen--);
+	nLen++;
+    
+	if (lanFile==NULL)
+		strcpy(szPath+nLen,"lan_en.dll");
+	else
+	{
+        strcpy(szPath+nLen,lanFile);
+		delete[] lanFile;
+	}
+
+	return LoadLibrary(szPath);
+}
 
 //
 //  FUNCTION: CShellExt::QueryContextMenu(HMENU, UINT, UINT, UINT, UINT)
@@ -46,67 +83,94 @@ STDMETHODIMP CLocateShellExtension::QueryContextMenu(HMENU hMenu,
                                          UINT idCmdLast,
                                          UINT uFlags)
 {
-    ODS("CShellExt::QueryContextMenu()\r\n");
-
-    UINT idCmd = idCmdFirst;
-    char szMenuText[64];
-    char szMenuText2[64];
-    char szMenuText3[64];
-    char szMenuText4[64];
-    BOOL bAppendItems=TRUE;
-
-    if ((uFlags & 0x000F) == CMF_NORMAL)  //Check == here, since CMF_NORMAL=0
-    {
-        ODS("CMF_NORMAL...\r\n");
-        lstrcpyn(szMenuText, "&New .GAK menu 1, Normal File", ARRAYSIZE(szMenuText));
-        lstrcpyn(szMenuText2, "&New .GAK menu 2, Normal File", ARRAYSIZE(szMenuText2));
-        lstrcpyn(szMenuText3, "&New .GAK menu 3, Normal File", ARRAYSIZE(szMenuText3));
-        lstrcpyn(szMenuText4, "&New .GAK menu 4, Normal File", ARRAYSIZE(szMenuText4));
-    }
-    else
-        if (uFlags & CMF_VERBSONLY)
-        {
-            ODS("CMF_VERBSONLY...\r\n");
-            lstrcpyn(szMenuText, "&New .GAK menu 1, Shortcut File", ARRAYSIZE(szMenuText));
-            lstrcpyn(szMenuText2, "N&ew .GAK menu 2, Shortcut File", ARRAYSIZE(szMenuText2));
-            lstrcpyn(szMenuText3, "&New .GAK menu 3, Shortcut File", ARRAYSIZE(szMenuText3));
-            lstrcpyn(szMenuText4, "&New .GAK menu 4, Shortcut File", ARRAYSIZE(szMenuText4));
-        }
-    else
-        if (uFlags & CMF_EXPLORE)
-        {
-            ODS("CMF_EXPLORE...\r\n");
-            lstrcpyn(szMenuText, "&New .GAK menu 1, Normal File right click in Explorer", ARRAYSIZE(szMenuText));
-            lstrcpyn(szMenuText2, "N&ew .GAK menu 2, Normal File right click in Explorer", ARRAYSIZE(szMenuText2));
-            lstrcpyn(szMenuText3, "&New .GAK menu 3, Normal File right click in Explorer", ARRAYSIZE(szMenuText3));
-            lstrcpyn(szMenuText4, "&New .GAK menu 4, Normal File right click in Explorer", ARRAYSIZE(szMenuText4));
-        }
-    else
-        if (uFlags & CMF_DEFAULTONLY)
-        {
-            ODS("CMF_DEFAULTONLY...\r\n");
-            bAppendItems = FALSE;
-        }
-    else
-        {
-            char szTemp[32];
-
-            wsprintf(szTemp, "uFlags==>%d\r\n", uFlags);
-            ODS("CMF_default...\r\n");
-            ODS(szTemp);
-            bAppendItems = FALSE;
-        }
-
-    if (bAppendItems)
-    {
-		InsertMenu(hMenu,indexMenu++,MF_STRING|MF_BYPOSITION,idCmd++,szMenuText);
-		return ResultFromShort(idCmd-idCmdFirst); //Must return number of menu
-                                                  //items we added.
+#ifdef _LOGGING
+	char szTemp[100];
+    wsprintf(szTemp, "CShellExt::QueryContextMenu(), uFlags==>%d\r\n", uFlags);
+    ODS(szTemp);
+#endif    
+	
+	if (uFlags & CMF_DEFAULTONLY)
+	{
+		ODS("CMF_DEFAULTONLY...\r\n");
+			return NOERROR;
 	}
+    
+	HMODULE hLanDll=GetLanguageResource();
+	if (hLanDll==NULL)
+		return NOERROR;
 
-	return NOERROR;
+	DWORD dwSettings=ReadSettingsFromRegistry();
+
+	if (dwSettings&fSubMenu)
+	{
+		HMENU hSubMenu=CreatePopupMenu();
+		UINT uHighestId=0;
+		if (InsertMenuItems(hSubMenu,0,idCmdFirst,uHighestId))
+		{
+			MENUITEMINFO mii;
+			char szTitle[200];
+			LoadString(hLanDll,IDS_EXTLOCATEMENU,szTitle,200);
+
+			mii.cbSize=sizeof(MENUITEMINFO);
+			mii.fMask=MIIM_SUBMENU|MIIM_TYPE;
+			mii.fType=MFT_STRING;
+			mii.dwTypeData=szTitle;
+			mii.hSubMenu=hSubMenu;
+			InsertMenuItem(hMenu,indexMenu,TRUE,&mii);
+
+			FreeLibrary(hLanDll);
+			return ResultFromShort(uHighestId+1-idCmdFirst);
+		}
+		
+		DestroyMenu(hSubMenu);
+		FreeLibrary(hLanDll);
+		return NOERROR;	
+	}
+	else
+	{
+		UINT uHighestId=0;
+		if (InsertMenuItems(hMenu,indexMenu,idCmdFirst,uHighestId))
+		{
+			FreeLibrary(hLanDll);
+			return ResultFromShort(uHighestId+1-idCmdFirst);
+		}
+		FreeLibrary(hLanDll);
+		return NOERROR;
+	}
 }
 
+//
+//  FUNCTION: CShellExt::ReadSettingsFromRegistry()
+//
+//  PURPOSE: Reads settings from registry
+//
+//  RETURN VALUE:
+//	  flags
+//
+//
+
+DWORD CLocateShellExtension::ReadSettingsFromRegistry()
+{
+
+	char szRegpath[200];
+	LoadString(g_hmodThisDll,IDS_REGPLACE,szRegpath,200);
+
+	HKEY hKey;
+	
+	if (RegOpenKeyEx(HKEY_CURRENT_USER,szRegpath,0,KEY_READ,&hKey)!=ERROR_SUCCESS)
+		return fDidnSuccess|fDefaults;
+
+    DWORD dwData=fDefaults,dwLength=sizeof(DWORD);
+
+	LONG lRet=RegQueryValueEx(hKey,"Flags",NULL,NULL,(LPBYTE)&dwData,&dwLength);
+	
+	RegCloseKey(hKey);
+
+	if (lRet!=ERROR_SUCCESS || dwLength!=sizeof(DWORD))
+		return fDidnSuccess|fDefaults;
+	return dwData;
+}
+    
 //
 //  FUNCTION: CShellExt::InvokeCommand(LPCMINVOKECOMMANDINFO)
 //
@@ -146,34 +210,69 @@ STDMETHODIMP CLocateShellExtension::InvokeCommand(LPCMINVOKECOMMANDINFO lpcmi)
                                 lpcmi->nShow);
                 break;
 
-            case 1:
-                hr = DoGAKMenu2(lpcmi->hwnd,
-                                lpcmi->lpDirectory,
-                                lpcmi->lpVerb,
-                                lpcmi->lpParameters,
-                                lpcmi->nShow);
-                break;
-
-            case 2:
-                hr = DoGAKMenu3(lpcmi->hwnd,
-                                lpcmi->lpDirectory,
-                                lpcmi->lpVerb,
-                                lpcmi->lpParameters,
-                                lpcmi->nShow);
-                break;
-
-            case 3:
-                hr = DoGAKMenu4(lpcmi->hwnd,
-                                lpcmi->lpDirectory,
-                                lpcmi->lpVerb,
-                                lpcmi->lpParameters,
-                                lpcmi->nShow);
-                break;
+           
         }
     }
     return hr;
 }
 
+//
+//  FUNCTION: CShellExt::InsertMenuItems(HMENU hMenu,int nStartID)
+//
+//  PURPOSE: Creates menu items
+//
+//  RETURN VALUE: how many items are inserted
+
+int CLocateShellExtension::InsertMenuItems(HMENU hMenu,UINT nStartIndex,UINT idCmdFirst,UINT& nHighestUsedID)
+{
+	ODS("CShellExt::InsertMenuItems()\r\n");
+	
+	IEnumFORMATETC* pEnumerator;
+	if (m_pDataObj==NULL)
+		return 0;
+
+	/*if (m_pDataObj->EnumFormatEtc(DATADIR_GET,&pEnumerator)==S_OK)
+	{
+		ODS("Starting enumerating FormatEtcs\r\n");
+		
+		FORMATETC FormatEtc;
+		OpenClipboard(NULL);
+		EmptyClipboard();
+
+		while (pEnumerator->Next(1,&FormatEtc,NULL)==S_OK)
+		{
+			char szText[1000],szFormat[1000];
+			GetClipboardFormatName(FormatEtc.cfFormat,szFormat,1000);
+			wsprintf(szText,"szFormat=%d (%s) tymed=%d\r\n",FormatEtc.cfFormat,szFormat,FormatEtc.tymed);
+			ODS(szText);
+			
+			FormatEtc.tymed=TYMED_HGLOBAL;
+			STGMEDIUM med;
+			if (m_pDataObj->GetData(&FormatEtc,&med)==S_OK)
+				SetClipboardData(FormatEtc.cfFormat,med.hGlobal);
+
+		}
+
+		CloseClipboard();
+		pEnumerator->Release();
+		ODS("Ended enumerating FormatEtcs\r\n");
+	}*/
+
+
+	
+
+	MENUITEMINFO mii;
+	mii.cbSize=sizeof(MENUITEMINFO);
+	mii.fMask=MIIM_ID|MIIM_TYPE;
+	mii.fType=MFT_STRING;
+	mii.dwTypeData="Shellext Test";
+	mii.wID=idCmdFirst;
+    InsertMenuItem(hMenu,nStartIndex,TRUE,&mii);
+
+	nHighestUsedID=mii.wID;
+	
+	return 1;
+}
 
 //
 //  FUNCTION: CShellExt::InvokeCommand(LPCMINVOKECOMMANDINFO)
@@ -198,25 +297,32 @@ STDMETHODIMP CLocateShellExtension::GetCommandString(UINT_PTR idCmd,
 {
     ODS("CShellExt::GetCommandString()\r\n");
 
-    switch (idCmd)
-    {
-        case 0:
-            lstrcpyn(pszName, "New menu item number 1", cchMax);
-            break;
+	HMODULE hLanDll=GetLanguageResource();
+	if (hLanDll==NULL)
+		return NOERROR;
 
-        case 1:
-            lstrcpyn(pszName, "New menu item number 2", cchMax);
-            break;
+	if (uFlags&GCS_UNICODE)
+	{
+        switch (idCmd)
+		{
+	        case 0:
+				LoadStringW(hLanDll,IDS_EXTLOCATEMENU,(LPWSTR)pszName,cchMax);
+				break;
+	
+		}
+	}
+	else
+	{
+        switch (idCmd)
+		{
+	        case 0:
+				LoadString(hLanDll,IDS_EXTLOCATEMENU,pszName,cchMax);
+				break;
+	
+		}
+	}
 
-        case 2:
-            lstrcpyn(pszName, "New menu item number 3", cchMax);
-            break;
-
-        case 3:
-            lstrcpyn(pszName, "New menu item number 4", cchMax);
-            break;
-    }
-
+	FreeLibrary(hLanDll);
     return NOERROR;
 }
 
@@ -233,41 +339,3 @@ STDMETHODIMP CLocateShellExtension::DoGAKMenu1(HWND hParent,
     return NOERROR;
 }
 
-STDMETHODIMP CLocateShellExtension::DoGAKMenu2(HWND hParent,
-                                   LPCSTR pszWorkingDir,
-                                   LPCSTR pszCmd,
-                                   LPCSTR pszParam,
-                                   int iShowCmd)
-{
-    ODS("CShellExt::DoGAKMenu2()\r\n");
-
-    MessageBox(hParent, "Menu item 2!", "Shell Extension Sample", MB_OK);
-
-    return NOERROR;
-}
-
-STDMETHODIMP CLocateShellExtension::DoGAKMenu3(HWND hParent,
-                                   LPCSTR pszWorkingDir,
-                                   LPCSTR pszCmd,
-                                   LPCSTR pszParam,
-                                   int iShowCmd)
-{
-    ODS("CShellExt::DoGAKMenu3()\r\n");
-
-    MessageBox(hParent, "Menu item 3!", "Shell Extension Sample", MB_OK);
-
-    return NOERROR;
-}
-
-STDMETHODIMP CLocateShellExtension::DoGAKMenu4(HWND hParent,
-                                   LPCSTR pszWorkingDir,
-                                   LPCSTR pszCmd,
-                                   LPCSTR pszParam,
-                                   int iShowCmd)
-{
-    ODS("CShellExt::DoGAKMenu4()\r\n");
-
-    MessageBox(hParent, "Menu item 4!", "Shell Extension Sample", MB_OK);
-
-    return NOERROR;
-}

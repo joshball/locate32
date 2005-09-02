@@ -511,6 +511,7 @@ protected:
 	void OnPresets();
 	void OnPresetsSave();
 	void OnPresetsSelection(int nPreset);
+	void LoadPreset(LPCSTR szPreset);
 	static DWORD CheckExistenceOfPreset(LPCSTR szName,DWORD* pdwPresets); // Returns index to preset or FFFFFFFF
 
 	

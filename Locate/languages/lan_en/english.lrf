@@ -980,3 +980,8 @@ STRLOCATE_CANNOTOPEN=Error: Cannot open database file '%s'.
 STRLOCATE_CANNOTREAD=Error: Cannot read database file '%s'.
 STRLOCATE_INVALIDDATABASE=Error: Invalid database file '%s'.
 
+###################################################
+# Strings for shell extension.exe
+###################################################
+STREXT_LOCATEMENU=Locate32...
+

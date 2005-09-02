@@ -852,6 +852,7 @@
 #define IDS_LOCATECANNOTOPEN            31004
 #define IDS_LOCATECANNOTREAD            31005
 #define IDS_LOCATEINVALIDDATABASE       31006
+#define IDS_EXTLOCATEMENU				32001
 #define IDM_CLOSE                       40001
 #define IDM_CREATESHORTCUT              40002
 #define IDM_DELETE                      40003

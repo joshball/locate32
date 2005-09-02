@@ -1,6 +1,8 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
 // Used by shelldll.rc
+//
+#define IDS_REGPLACE                    7
 
 // Next default values for new objects
 // 

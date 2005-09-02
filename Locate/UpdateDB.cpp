@@ -406,6 +406,8 @@ int main (int argc,char ** argv)
 		HGLOBAL hGlobal=LoadResource(GetLanguageSpecificResourceHandle(),hRc);
 			
 		fprintf(stderr,(LPCSTR)LockResource(hGlobal));
+
+		FreeLibrary(GetLanguageSpecificResourceHandle());
 		return 1;
     }
 
@@ -490,7 +492,10 @@ int main (int argc,char ** argv)
 	// Starting to update
 	WORD dwTheads=CDatabase::CheckIDs(aDatabases);
     if (dwTheads==0)
+	{
+		FreeLibrary(GetLanguageSpecificResourceHandle());
 		return FALSE;
+	}
 	if (dwTheads==1)
 	{
 		CDatabaseUpdater Updater(aDatabases,aDatabases.GetSize(),UpdateProc);
@@ -514,6 +519,8 @@ int main (int argc,char ** argv)
 		while (ppUpdaters!=NULL)
 			Sleep(100);
 	}
+
+	FreeLibrary(GetLanguageSpecificResourceHandle());
 	return 1;
 }
 
