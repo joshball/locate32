@@ -25,7 +25,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2005 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 beta 5.7100
+FILEVERSION=3.0 beta 5.9030
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -979,6 +979,11 @@ STRLOCATE_UNKNOWNERROR=Error: Unknown error.
 STRLOCATE_CANNOTOPEN=Error: Cannot open database file '%s'.
 STRLOCATE_CANNOTREAD=Error: Cannot read database file '%s'.
 STRLOCATE_INVALIDDATABASE=Error: Invalid database file '%s'.
+STRLOCATE_VERBOSESTR=searching strings: 
+STRLOCATE_VERBOSESEXT=with extensions: 
+STRLOCATE_VERBOSEDIR=from directories:
+STRLOCATE_VERBOSEREG=searching regular expression '%s'
+STRLOCATE_VERBOSEFOUNDFILES=number of found fiels: %d
 
 ###################################################
 # Strings for shell extension.exe

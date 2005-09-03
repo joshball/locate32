@@ -26,10 +26,16 @@
 #define INITGUID
 #include <initguid.h>
 #include <shlguid.h>
+
+#pragma data_seg()
+
+
 #include "../lan_resources.h"
 #include "LocateShellExtension.h"
 
-#pragma data_seg()
+#define _CONSOLE
+#include <hfclib.h>
+
 
 //
 // Global variables
@@ -37,6 +43,7 @@
 UINT      g_cRefThisDll = 0;    // Reference count of this DLL.
 HINSTANCE g_hmodThisDll = NULL; // Handle to this DLL itself.
 
+/*
 #ifdef _LOGGING
 HANDLE hOutput=NULL;
 
@@ -71,6 +78,7 @@ void DebugMessage(LPCSTR szMessage)
 
 }
 #endif
+*/
 
 extern "C" int APIENTRY
 DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
@@ -80,21 +88,15 @@ DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
         // Extension DLL one-time initialization
         g_hmodThisDll = hInstance;
 
+		StartDebugLogging();
 
-		ODS("In DLLMain, DLL_PROCESS_ATTACH\r\n");
+		ODS("In DLLMain, DLL_PROCESS_ATTACH");
     }
     else if (dwReason == DLL_PROCESS_DETACH)
     {
-        ODS("In DLLMain, DLL_PROCESS_DETACH\r\n");
+        ODS("In DLLMain, DLL_PROCESS_DETACH");
 
-#ifdef _LOGGING		
-		if (hOutput!=NULL)
-		{
-			DebugMessage("End of logging");
-			CloseHandle(hOutput);
-			hOutput=NULL;
-		}
-#endif
+		EndDebugLogging();
     }
 
     return 1;   // ok
@@ -106,14 +108,14 @@ DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 
 STDAPI DllCanUnloadNow(void)
 {
-    ODS("In DLLCanUnloadNow\r\n");
+    ODS("In DLLCanUnloadNow");
 
     return (g_cRefThisDll == 0 ? S_OK : S_FALSE);
 }
 
 STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppvOut)
 {
-    ODS("In DllGetClassObject\r\n");
+    ODS("In DllGetClassObject");
 
     *ppvOut = NULL;
 
@@ -129,7 +131,7 @@ STDAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppvOut)
 
 CShellExtClassFactory::CShellExtClassFactory()
 {
-    ODS("CShellExtClassFactory::CShellExtClassFactory()\r\n");
+    ODS("CShellExtClassFactory::CShellExtClassFactory()");
 
     m_cRef = 0L;
 
@@ -144,7 +146,7 @@ CShellExtClassFactory::~CShellExtClassFactory()
 STDMETHODIMP CShellExtClassFactory::QueryInterface(REFIID riid,
                                                    LPVOID FAR *ppv)
 {
-    ODS("CShellExtClassFactory::QueryInterface()\r\n");
+    ODS("CShellExtClassFactory::QueryInterface()");
 
     *ppv = NULL;
 
@@ -164,7 +166,7 @@ STDMETHODIMP CShellExtClassFactory::QueryInterface(REFIID riid,
 
 STDMETHODIMP_(ULONG) CShellExtClassFactory::AddRef()
 {
-    ODS("CShellExtClassFactory::AddRef()\r\n");
+    ODS("CShellExtClassFactory::AddRef()");
 
 	char szNum[100];
 	wsprintf(szNum,"m_cRef is after this call %d",m_cRef+1);
@@ -175,7 +177,7 @@ STDMETHODIMP_(ULONG) CShellExtClassFactory::AddRef()
 
 STDMETHODIMP_(ULONG) CShellExtClassFactory::Release()
 {
-	ODS("CShellExtClassFactory::Release()\r\n");
+	ODS("CShellExtClassFactory::Release()");
 
 	char szNum[100];
 	wsprintf(szNum,"m_cRef is after this call %d",m_cRef-1);
@@ -194,7 +196,7 @@ STDMETHODIMP CShellExtClassFactory::CreateInstance(LPUNKNOWN pUnkOuter,
                                                       REFIID riid,
                                                       LPVOID *ppvObj)
 {
-    ODS("CShellExtClassFactory::CreateInstance()\r\n");
+    ODS("CShellExtClassFactory::CreateInstance()");
 
     *ppvObj = NULL;
 
@@ -224,7 +226,7 @@ STDMETHODIMP CShellExtClassFactory::LockServer(BOOL fLock)
 // *********************** CShellExt *************************
 CLocateShellExtension::CLocateShellExtension()
 {
-    ODS("CShellExt::CShellExt()\r\n");
+    ODS("CShellExt::CShellExt()");
 
     m_cRef = 0L;
     m_pDataObj = NULL;
@@ -246,13 +248,13 @@ STDMETHODIMP CLocateShellExtension::QueryInterface(REFIID riid, LPVOID FAR *ppv)
 
     if (IsEqualIID(riid, IID_IShellExtInit) || IsEqualIID(riid, IID_IUnknown))
     {
-        ODS("CShellExt::QueryInterface()==>IID_IShellExtInit\r\n");
+        ODS("CShellExt::QueryInterface()==>IID_IShellExtInit");
 
         *ppv = (LPSHELLEXTINIT)this;
     }
     else if (IsEqualIID(riid, IID_IContextMenu))
     {
-        ODS("CShellExt::QueryInterface()==>IID_IContextMenu\r\n");
+        ODS("CShellExt::QueryInterface()==>IID_IContextMenu");
 
         *ppv = (LPCONTEXTMENU)this;
     }
@@ -276,7 +278,7 @@ STDMETHODIMP CLocateShellExtension::QueryInterface(REFIID riid, LPVOID FAR *ppv)
         return NOERROR;
     }
 
-    ODS("CShellExt::QueryInterface()==>Unknown Interface!\r\n");
+    ODS("CShellExt::QueryInterface()==>Unknown Interface!");
 
     return E_NOINTERFACE;
 }
@@ -284,7 +286,7 @@ STDMETHODIMP CLocateShellExtension::QueryInterface(REFIID riid, LPVOID FAR *ppv)
 STDMETHODIMP_(ULONG) CLocateShellExtension::AddRef()
 {
 	
-    ODS("CShellExt::AddRef()\r\n");
+    ODS("CShellExt::AddRef()");
 
 	char szNum[100];
 	wsprintf(szNum,"m_cRef is after this call %d",m_cRef+1);
@@ -295,7 +297,7 @@ STDMETHODIMP_(ULONG) CLocateShellExtension::AddRef()
 
 STDMETHODIMP_(ULONG) CLocateShellExtension::Release()
 {
-    ODS("CShellExt::Release()\r\n");
+    ODS("CShellExt::Release()");
 
 	char szNum[100];
 	wsprintf(szNum,"m_cRef is after this call %d",m_cRef-1);

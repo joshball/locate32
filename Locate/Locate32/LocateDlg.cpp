@@ -107,11 +107,8 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 					tii.uId    = (UINT)pMsg->hwnd;
 					tii.hinst  = NULL;
 					tii.lpszText  = LPSTR_TEXTCALLBACK;
-				
-					tii.lParam = m_pLocate->m_pListCtrl->GetItemData(ht.iItem);
-					DebugNumMessage("tii.lParam is now %X",tii.lParam);
+					tii.lParam = 0;
 					
-				
 					m_pLocate->m_pListTooltips->AddTool(&tii);
 					m_pLocate->m_pListTooltips->SetMaxTipWidth(400);
 
@@ -157,8 +154,7 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 						tii.uId    = (UINT)pMsg->hwnd;
 						tii.hinst  = NULL;
 						tii.lpszText  = LPSTR_TEXTCALLBACK;
-						tii.lParam = m_pLocate->m_pListCtrl->GetItemData(ht.iItem);
-						DebugNumMessage("tii.lParam is now %X (2)",tii.lParam);
+						tii.lParam = 0;
 
 						m_pLocate->GetClientRect(&tii.rect);
 						m_pLocate->m_pListTooltips->AddTool(&tii);
@@ -2749,14 +2745,15 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 			{
 			case TTN_GETDISPINFO:
 				DebugNumMessage("CLocateDlg::OnNotify; TTN_GETDISPINFO, ((NMTTDISPINFO*)pnmh)->lParam=%X",((NMTTDISPINFO*)pnmh)->lParam);
-				DebugFormatMessage("pnmh->idFrom=%X, filelist=%X/%X",pnmh->idFrom,IDC_FILELIST,(DWORD)(HWND)*m_pListCtrl);
-				DebugFormatMessage("flags ((NMTTDISPINFO*)pnmh)->uFlags=%X",((NMTTDISPINFO*)pnmh)->uFlags);
 				
+				if (m_iTooltipItem==-1)
+					break;
+
+				((NMTTDISPINFO*)pnmh)->hinst=NULL;
 				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))==DetailType::Title)
 				{
-					((NMTTDISPINFO*)pnmh)->hinst=NULL;
 						
-					CLocatedItem* pItem=(CLocatedItem*)((NMTTDISPINFO*)pnmh)->lParam;
+					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_iTooltipItem);
 					
 					if (pItem!=NULL)
 						((NMTTDISPINFO*)pnmh)->lpszText=pItem->GetToolTipText();
@@ -2765,7 +2762,7 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 				}
 				else
 				{
-					CLocatedItem* pItem=(CLocatedItem*)((NMTTDISPINFO*)pnmh)->lParam;
+					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_iTooltipItem);
 					if (pItem!=NULL)
 					{
 						((NMTTDISPINFO*)pnmh)->lpszText=pItem->GetDetailText(

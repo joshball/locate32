@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   locate.exe v2.99.5.7100                 */
+   locate.exe v2.99.5.9030                 */
 
-const char* szVersionStr="locate 3.0 beta 5.7100";
+const char* szVersionStr="locate 3.0 beta 5.9030";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -211,6 +211,38 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 }
 #endif
 
+void showverbose(LPCSTR* ppStrings,UINT nStrings,LPCSTR* ppExtensions,UINT nExtension,LPCSTR* ppDirectories,UINT nDirectories)
+{
+	if (nStrings>0)
+	{
+		printf(CString(IDS_LOCATEVERBOSESTR));
+		printf(ppStrings[0]);
+
+		for (UINT i=1;i<nStrings;i++)
+			printf(", %s",ppStrings[i]);
+		putchar('\n');
+	}
+
+	if (nExtension>0)
+	{
+		printf(CString(IDS_LOCATEVERBOSEEXT));
+		printf(ppExtensions[0]);
+
+		for (UINT i=1;i<nExtension;i++)
+			printf(", %s",ppExtensions[i]);
+		putchar('\n');
+	}
+
+
+	if (nDirectories>0)
+	{
+		printf(CString(IDS_LOCATEVERBOSEDIR));
+		for (UINT i=0;i<nDirectories;i++)
+			printf("%s\n",ppDirectories[i]);
+	}
+	putchar('\n');
+}
+
 int main (int argc,char * argv[])
 {
 #ifdef _DEBUG
@@ -236,7 +268,10 @@ int main (int argc,char * argv[])
 	}
 
 	CArrayFP<CDatabase*> aDatabases;
-	int helps=0;
+	struct {
+		BYTE helps:3;
+		BYTE verbose:1;
+	} options={0,0};
 
 	DWORD dwMinSize=DWORD(-1);
 	DWORD dwMaxSize=DWORD(-1);
@@ -245,6 +280,7 @@ int main (int argc,char * argv[])
 
 	DWORD dwMaxFoundFiles=DWORD(-1);
 	DWORD dwFlags=LOCATE_FILENAMES|LOCATE_CONTAINTEXTISMATCHCASE;
+	DWORD dwExtraFlags=0;
 	BYTE* pContainData=NULL;
 	DWORD dwContainDataLength=0;
 
@@ -328,10 +364,30 @@ int main (int argc,char * argv[])
 					if (i>=argc-1)
 						aDirectories.Add(allocempty());
 					else
-						aDirectories.Add(alloccopy(argv[++i]));
+					{
+						++i;
+						if (argv[i][0]=='.' && argv[i][1]=='\0')
+						{
+							char* pPath=new char[MAX_PATH];
+							GetCurrentDirectory(MAX_PATH,pPath);
+							aDirectories.Add(pPath);
+						}
+						else
+							aDirectories.Add(alloccopy(argv[i]));
+					}
 				}
                 else
-                    aDirectories.Add(alloccopy(argv[i]+2));
+				{
+					int j=argv[i][2]==':'?3:2;
+					if (argv[i][j]=='.' && argv[i][j+1]=='\0')
+					{
+						char* pPath=new char[MAX_PATH];
+						GetCurrentDirectory(MAX_PATH,pPath);
+						aDirectories.Add(pPath);
+					}
+					else
+						aDirectories.Add(alloccopy(argv[i]+j));
+				}
 				break;
 			case 't':
 			case 'T':
@@ -353,12 +409,15 @@ int main (int argc,char * argv[])
 				dwFlags|=LOCATE_CHECKWHOLEPATH;
 				break;
 			case 'v':
-				helps=2;
+				options.verbose=1;
+				break;
+			case 'V':
+				options.helps=2;
 				break;
 			case '?':
 			case 'h':
 			case 'H':
-				helps=1;
+				options.helps=1;
 				break;
 			case 'l':
 			case 'L':
@@ -558,7 +617,7 @@ int main (int argc,char * argv[])
 	
 
    
-	if (helps==1)
+	if (options.helps==1)
 	{
 		fprintf(stderr,"%s\n",szVersionStr);
 		
@@ -569,7 +628,7 @@ int main (int argc,char * argv[])
 		FreeLibrary(GetLanguageSpecificResourceHandle());
 		return 1;
 	}
-	else if (helps==2)
+	else if (options.helps==2)
 	{
 		puts(szVersionStr);
 
@@ -614,8 +673,23 @@ int main (int argc,char * argv[])
 
 	locater.SetFunctions(LocateProc,LocateFoundProc,NULL);
 
+	
 	if (dwFlags&LOCATE_REGULAREXPRESSION)
 	{
+		if (options.verbose)
+		{
+			printf(CString(IDS_LOCATEVERBOSEREG),(LPCSTR)String);
+			putchar(' ');
+
+			if (aDirectories.GetSize()>0)
+			{
+				printf(CString(IDS_LOCATEVERBOSEDIR));
+				for (int i=0;i<aDirectories.GetSize();i++)
+					printf("%s\n",aDirectories[i]);
+			}
+			putchar('\n');
+		}
+
 		locater.LocateFiles(FALSE,String,
 			(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
@@ -634,6 +708,14 @@ int main (int argc,char * argv[])
 			}
 
 			LPCSTR s=String;
+
+			if (options.verbose)
+			{
+				showverbose(&s,1,
+					(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+					(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+			}
+
 			locater.LocateFiles(FALSE,&s,1,
 				(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
 				(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
@@ -642,7 +724,7 @@ int main (int argc,char * argv[])
 		{
 			// Separate strings
 			
-			CArrayFAP<LPSTR> m_aStrings;
+			CArrayFAP<LPSTR> aStrings;
 			LPCSTR pStr=String;
 			BOOL bContinue=TRUE;
 
@@ -658,7 +740,7 @@ int main (int argc,char * argv[])
 				if (nIndex>0)
 				{
 					if (dwMainFlags&flagWholeWord)
-						m_aStrings.Add(alloccopy(pStr,nIndex));
+						aStrings.Add(alloccopy(pStr,nIndex));
 					else
 					{
 						// Inserting '*'
@@ -686,7 +768,7 @@ int main (int argc,char * argv[])
 							else
 								pTemp[nIndex]='\0';
 						}
-						m_aStrings.Add(pTemp);
+						aStrings.Add(pTemp);
 
 
 					}
@@ -697,7 +779,14 @@ int main (int argc,char * argv[])
 			
 			}
 
-			locater.LocateFiles(FALSE,(LPCSTR*)m_aStrings.GetData(),m_aStrings.GetSize(),
+			if (options.verbose)
+			{
+				showverbose((LPCSTR*)aStrings.GetData(),aStrings.GetSize(),
+					(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+					(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+			}
+
+			locater.LocateFiles(FALSE,(LPCSTR*)aStrings.GetData(),aStrings.GetSize(),
 				(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
 				(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
 
@@ -707,11 +796,22 @@ int main (int argc,char * argv[])
 	
 	}
 	else
+	{
+		if (options.verbose)
+		{
+			showverbose(NULL,0,
+				(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+				(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+		}
+
 		locater.LocateFiles(FALSE,NULL,0,
 			(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
 			(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+	}
 
 
+	if (options.verbose)
+		printf(CString(IDS_LOCATEVERBOSEFOUNDFILES),locater.GetFoundFiles());
 
 	if (pContainData!=NULL)
 		free(pContainData);

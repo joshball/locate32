@@ -28,4 +28,5 @@ parameters:
     -lR:TEXT    same as above but TEXT is regular expression
     -lw         match whole name only
     -lrn        don't replace spaces with asterisk
+    -v			verbose mode, information about search
     -h          help, this screen

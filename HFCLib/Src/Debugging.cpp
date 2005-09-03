@@ -152,6 +152,127 @@ void DebugMessage(LPCSTR msg)
 #endif
 }
 
+#define LINELEN	16
+
+static int formhexline(char* line,BYTE* pData,size_t datalen)
+{
+	if (datalen==0)
+		return 0;
+
+    if (datalen>LINELEN)
+		datalen=LINELEN;
+
+	size_t i;
+	char* ptr=line;
+	for (i=0;i<datalen;i++)
+	{
+		if (i==LINELEN/2)
+			*(ptr++)=' ';
+		
+		ptr+=sprintf(ptr,"%02X ",pData[i]);
+	}
+	for (;i<LINELEN;i++)
+	{
+		if (i==LINELEN/2)
+			*(ptr++)=' ';
+		*(ptr++)=' ';
+		*(ptr++)=' ';
+		*(ptr++)=' ';
+	}
+	*(ptr++)=' ';
+	*(ptr++)=' ';
+
+	
+	for (i=0;i<datalen;i++)
+	{
+		if (IsCharAlphaNumeric(pData[i]))
+			*(ptr++)=pData[i];
+		else
+			*(ptr++)='.';
+	}
+
+	*(ptr++)='\r';
+	*(ptr++)='\n';
+	*(ptr++)='\0';
+	return datalen;
+}
+
+
+void DebugHexDump(LPCSTR desc,BYTE* pData,size_t datalen)
+{
+#ifdef WIN32
+	if (nLoggingType==LOGGING_FILE)
+	{
+		if (hLogFile==NULL)
+		{
+			StartDebugLogging();
+			if (hLogFile==NULL)
+				return;
+		}
+		char szBufr[2000];
+		SYSTEMTIME st;
+		DWORD writed;
+		GetLocalTime(&st);
+		int len=wsprintf(szBufr,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X HEXDUMP %s len=%d:\r\n",
+			st.wYear%100,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond,
+			st.wMilliseconds,GetCurrentThreadId(),desc,datalen);
+        WriteFile(hLogFile,szBufr,len,&writed,NULL);
+		
+		char line[3*LINELEN+LINELEN+10];
+		int ret;
+		size_t index=0;
+		while ((ret=formhexline(line,pData,datalen)))
+		{
+			char indstr[12];
+			size_t ret2=wsprintf(indstr,"%08X ",index);
+			
+			WriteFile(hLogFile,indstr,ret2,&writed,NULL);
+            WriteFile(hLogFile,line,strlen(line),&writed,NULL);
+            			
+			pData+=ret;
+			datalen-=ret;
+			index+=ret;
+		}
+		
+		FlushFileBuffers(hLogFile);
+	}
+#else
+	if (nLoggingType==LOGGING_FILE)
+	{
+		if (hLogFile==NULL)
+		{
+			StartDebugLogging();
+			if (hLogFile==NULL)
+				return;
+		}
+		char szBufr[2000];
+		time_t ct=time(NULL);
+		struct tm* Time=localtime(&ct);
+		int len=sprintf(szBufr,"%4d.%2d.%2d %2d:%2d.%2d.%3d HEX: %s\r\n",
+			Time->tm_year+1900,Time->tm_mon+1,Time->tm_mday,Time->tm_hour,Time->tm_min,Time->tm_sec,0,desc);
+		fwrite(szBufr,1,len,(FILE*)hLogFile);
+
+		char line[3*LINELEN+LINELEN+10];
+		int ret;
+		size_t index=0;
+		while ((ret=formhexline(line,pData,datalen)))
+		{
+			char indstr[12];
+			size_t ret2=wsprintf(indstr,"%08X ",index);
+			
+			WriteFile(hLogFile,indstr,ret2,&writed,NULL);
+            WriteFile(hLogFile,line,strlen(line),&writed,NULL);
+            			
+			pData+=ret;
+			datalen-=ret;
+			index+=ret;
+		}
+
+		fflush((FILE*)hLogFile);
+	}
+#endif
+}
+
 #ifdef WIN32
 void DebugWndMessage(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {

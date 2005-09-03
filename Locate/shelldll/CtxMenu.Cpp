@@ -20,7 +20,128 @@
 #include "LocateShellExtension.h"
 #include "resource.h"
 
+#define _CONSOLE
+#include <hfclib.h>
+
 extern HINSTANCE g_hmodThisDll;
+
+INT IsDirectory(LPCTSTR szDirectoryName)
+{
+#ifdef WIN32
+	HANDLE hFind;
+	WIN32_FIND_DATA fd;
+	int ret=TRUE;
+	if (szDirectoryName[0]=='\0')
+		return 0;
+	if (szDirectoryName[1]=='\0')
+		return 0;
+	if (szDirectoryName[2]=='\0')
+		return 0;
+	if (szDirectoryName[1]==':' && szDirectoryName[2]=='\\' && szDirectoryName[3]=='\0')
+	{
+		switch (GetDriveType(szDirectoryName))
+		{
+		case DRIVE_UNKNOWN:
+		case DRIVE_NO_ROOT_DIR:
+			return 0;
+		case DRIVE_FIXED:
+			return 1;
+		default:
+			return 2;
+		}
+	}
+	
+	// Taking last '\\' 
+	LPSTR szPath;
+	DWORD dwPathLen;
+	dstrlen(szDirectoryName,dwPathLen);
+	if (szDirectoryName[dwPathLen-1]=='\\' && dwPathLen>3)
+	{
+		szPath=new char[dwPathLen+5];
+		CopyMemory(szPath,szDirectoryName,--dwPathLen);
+		szPath[dwPathLen]='\0';
+	}
+	else
+		szPath=LPSTR(szDirectoryName);
+
+	hFind=FindFirstFile(szPath,&fd);
+	if (hFind!=INVALID_HANDLE_VALUE)
+	{
+		while (!(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) && ret)
+			ret=FindNextFile(hFind,&fd);
+	
+		if (szPath!=szDirectoryName)
+			delete[] szPath;
+
+		FindClose(hFind);	
+		if (ret)
+		{
+			if (szDirectoryName[0]=='\\')
+			{
+				if (szDirectoryName[1]=='\\')
+					return 2;
+				switch (GetDriveType(NULL))
+				{
+				case DRIVE_UNKNOWN:
+				case DRIVE_NO_ROOT_DIR:
+					return 0;
+				case DRIVE_FIXED:
+					return 1;
+				default:
+					return 2;
+				}
+ 
+			}
+			if (szDirectoryName[1]==':' && szDirectoryName[2]=='\\')
+			{
+				char szTemp[4]="X:\\";
+				szTemp[0]=szDirectoryName[0];
+
+				switch (GetDriveType(szTemp))
+				{
+				case DRIVE_UNKNOWN:
+					return 0;
+				case DRIVE_FIXED:
+					return 1;
+				default:
+					return 2;
+				}
+			}
+		}
+		return 0;
+	}
+	else if (szDirectoryName[0]=='\\' && szDirectoryName[1]=='\\')
+	{
+		// UNC share name
+		if (szPath==szDirectoryName)
+		{
+			szPath=new char[dwPathLen+5];
+			CopyMemory(szPath,szDirectoryName,dwPathLen);
+		}		
+		CopyMemory(szPath+dwPathLen,"\\*.*",5);
+
+		hFind=FindFirstFile(szPath,&fd);
+		delete[] szPath;
+		if (hFind==INVALID_HANDLE_VALUE)
+			return 0;
+		// Is this really needed, e.g. \\pc\c$ does not have '.' in directory list
+		//ret=1;
+		//while ((fd.cFileName[0]!='.' || fd.cFileName[1]!='\0') && ret==1)
+		//	ret=FindNextFile(hFind,&fd);
+		FindClose(hFind);
+		//return ret?2:0;
+		return 2;
+	}
+	
+	
+	if (szPath!=szDirectoryName)
+		delete[] szPath;
+	return 0;
+#else
+	struct ffblk fd;
+	return !findfirst(szDirectoryName,&fd,FA_DIREC);
+#endif
+}
 
 HMODULE GetLanguageResource()
 {
@@ -85,13 +206,13 @@ STDMETHODIMP CLocateShellExtension::QueryContextMenu(HMENU hMenu,
 {
 #ifdef _LOGGING
 	char szTemp[100];
-    wsprintf(szTemp, "CShellExt::QueryContextMenu(), uFlags==>%d\r\n", uFlags);
+    wsprintf(szTemp, "CShellExt::QueryContextMenu(), uFlags==>%d", uFlags);
     ODS(szTemp);
 #endif    
 	
 	if (uFlags & CMF_DEFAULTONLY)
 	{
-		ODS("CMF_DEFAULTONLY...\r\n");
+		ODS("CMF_DEFAULTONLY...");
 			return NOERROR;
 	}
     
@@ -188,7 +309,7 @@ DWORD CLocateShellExtension::ReadSettingsFromRegistry()
 
 STDMETHODIMP CLocateShellExtension::InvokeCommand(LPCMINVOKECOMMANDINFO lpcmi)
 {
-    ODS("CShellExt::InvokeCommand()\r\n");
+    ODS("CShellExt::InvokeCommand()	");
 
     HRESULT hr = E_INVALIDARG;
 
@@ -225,53 +346,203 @@ STDMETHODIMP CLocateShellExtension::InvokeCommand(LPCMINVOKECOMMANDINFO lpcmi)
 
 int CLocateShellExtension::InsertMenuItems(HMENU hMenu,UINT nStartIndex,UINT idCmdFirst,UINT& nHighestUsedID)
 {
-	ODS("CShellExt::InsertMenuItems()\r\n");
+	ODS("CShellExt::InsertMenuItems()");
 	
-	IEnumFORMATETC* pEnumerator;
 	if (m_pDataObj==NULL)
 		return 0;
 
-	/*if (m_pDataObj->EnumFormatEtc(DATADIR_GET,&pEnumerator)==S_OK)
+	CArrayFAP<LPSTR> aNetworkResources,aDirectories,aFiles;
+    
+	FORMATETC FormatEtc;
+	STGMEDIUM med;
+	FormatEtc.cfFormat=RegisterClipboardFormat(CFSTR_SHELLIDLIST);
+	FormatEtc.ptd=NULL;
+	FormatEtc.dwAspect=DVASPECT_CONTENT;
+	FormatEtc.lindex=-1;
+    FormatEtc.tymed=TYMED_HGLOBAL;
+	
+	if (m_pDataObj->GetData(&FormatEtc,&med)==S_OK)
 	{
-		ODS("Starting enumerating FormatEtcs\r\n");
+		// May be computer?
+		IShellFolder *psf;
+	
 		
-		FORMATETC FormatEtc;
-		OpenClipboard(NULL);
-		EmptyClipboard();
-
-		while (pEnumerator->Next(1,&FormatEtc,NULL)==S_OK)
+		if (!SUCCEEDED(SHGetDesktopFolder(&psf)))
 		{
-			char szText[1000],szFormat[1000];
-			GetClipboardFormatName(FormatEtc.cfFormat,szFormat,1000);
-			wsprintf(szText,"szFormat=%d (%s) tymed=%d\r\n",FormatEtc.cfFormat,szFormat,FormatEtc.tymed);
-			ODS(szText);
-			
-			FormatEtc.tymed=TYMED_HGLOBAL;
-			STGMEDIUM med;
-			if (m_pDataObj->GetData(&FormatEtc,&med)==S_OK)
-				SetClipboardData(FormatEtc.cfFormat,med.hGlobal);
-
+			DebugMessage("No IShellFolder interface");
+			return 0;
 		}
+		
+		// Retrieving data from item id list
+		BYTE* pData=(BYTE*)GlobalLock(med.hGlobal);
+		
+		UINT nFiles=((int*)pData)[0];
+		UINT i,nLines=1,nSubIDListLen,nIDListLen;
+		char szPath[_MAX_PATH];
 
-		CloseClipboard();
-		pEnumerator->Release();
-		ODS("Ended enumerating FormatEtcs\r\n");
-	}*/
+		nSubIDListLen=GetIDListSize((LPITEMIDLIST)(pData+((int*)pData)[1]))-2;
+		
+		for (i=0;i<nFiles;i++)
+		{
+			nIDListLen=GetIDListSize((LPITEMIDLIST)(pData+((int*)pData)[2+i]));
+
+			// Constructing IDList from parent item and item
+            LPITEMIDLIST pItemIDList=(LPITEMIDLIST)new BYTE[nSubIDListLen+nIDListLen+2];
+			CopyMemory((BYTE*)pItemIDList,(LPCSTR)(pData+((int*)pData)[1]),nSubIDListLen);
+			CopyMemory((BYTE*)(pItemIDList)+nSubIDListLen,(LPCSTR)(pData+((int*)pData)[2+i]),nIDListLen);
+			
+			if (SHGetPathFromIDList(pItemIDList,szPath))
+			{
+				if (IsDirectory(szPath))
+					aDirectories.Add(alloccopy(szPath));
+				else
+					aFiles.Add(alloccopy(szPath));
+			}
+			else
+			{
+				DebugHexDump("idlist",(BYTE*)pItemIDList,nSubIDListLen+nIDListLen);
+				
+				
+				if (GetDisplayNameFromIDList(pItemIDList,szPath,MAX_PATH))
+				{
+					if (szPath[0]!='\\' && szPath[1]!='\\')
+					{
+						DebugFormatMessage("Cannot add item %s",szPath);
+					}
+					else
+						aNetworkResources.Add(alloccopy(szPath));
+				}
+			}
+			
+			delete[] (BYTE*)pItemIDList;
+		}
+		
+		GlobalUnlock(med.hGlobal);
+		if (med.pUnkForRelease==NULL)
+            GlobalFree(med.hGlobal);
+		else 
+			med.pUnkForRelease->Release();
+	
+		psf->Release();
+	}
+	else 
+	{
+		FormatEtc.cfFormat=CF_HDROP;
+		if (m_pDataObj->GetData(&FormatEtc,&med)==S_OK)
+		{
+			LPDROPFILES df=(LPDROPFILES)GlobalLock(med.hGlobal);
+			if (df->fWide)
+			{
+				LPWSTR lpPtr=(LPWSTR)((BYTE*)df+df->pFiles);
+				DWORD nLen;
+				while (nLen=wcslen(lpPtr))
+				{
+					LPSTR lpFile=alloccopyWtoA(lpPtr,nLen);
+					
+					if (IsDirectory(lpFile))
+						aDirectories.Add(lpFile);
+					else
+						aFiles.Add(lpFile);
+					
+					lpPtr+=nLen+1;
+				}
+			}
+			else
+			{
+				LPSTR lpPtr=(LPSTR)df+df->pFiles;
+				DWORD nLen;
+				while (nLen=strlen(lpPtr))
+				{
+					LPSTR lpFile=alloccopy(lpPtr,nLen);					
+
+					if (IsDirectory(lpFile))
+						aDirectories.Add(lpFile);
+					else
+						aFiles.Add(lpFile);
+
+					lpPtr+=nLen+1;
+				}
+			}	
+			
+			GlobalUnlock(med.hGlobal);
+			
+			if (med.pUnkForRelease==NULL)
+                GlobalFree(med.hGlobal);
+			else 
+				med.pUnkForRelease->Release();
+		}
+	}
 
 
 	
 
+	
 	MENUITEMINFO mii;
 	mii.cbSize=sizeof(MENUITEMINFO);
 	mii.fMask=MIIM_ID|MIIM_TYPE;
 	mii.fType=MFT_STRING;
-	mii.dwTypeData="Shellext Test";
+	mii.dwTypeData="Files:";
 	mii.wID=idCmdFirst;
-    InsertMenuItem(hMenu,nStartIndex,TRUE,&mii);
+    InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+
+	for (int i=0;i<aFiles.GetSize();i++)
+	{
+		mii.wID++;
+		mii.dwTypeData=aFiles[i];
+		InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+	}
+
+	mii.wID++;
+	mii.dwTypeData="Directories:";
+	InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+	
+	for (int i=0;i<aDirectories.GetSize();i++)
+	{
+		mii.wID++;
+		mii.dwTypeData=aDirectories[i];
+		InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+	}
+
+
+	mii.wID++;
+	mii.dwTypeData="Other:";
+	InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+	
+	for (int i=0;i<aNetworkResources.GetSize();i++)
+	{
+		mii.wID++;
+		mii.dwTypeData=aNetworkResources[i];
+		InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+	}
+
+	mii.wID++;
+	mii.dwTypeData="Net resources:";
+	InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+	
+	FormatEtc.cfFormat=RegisterClipboardFormat(CFSTR_NETRESOURCES);
+	if (m_pDataObj->GetData(&FormatEtc,&med)==S_OK)
+	{
+		NRESARRAY* array=(NRESARRAY*)GlobalLock(med.hGlobal);
+		DebugHexDump("got netresource",(BYTE*)array,GlobalSize(med.hGlobal));
+
+		for (DWORD i=0;i<array->cItems;i++)
+		{
+			mii.dwTypeData=LPSTR(array)+UINT(array->nr[i].lpRemoteName);
+			mii.wID++;
+			InsertMenuItemW(hMenu,nStartIndex++,TRUE,(LPMENUITEMINFOW)&mii);
+		}
+
+		GlobalUnlock(med.hGlobal);
+			
+		if (med.pUnkForRelease==NULL)
+            GlobalFree(med.hGlobal);
+		else 
+			med.pUnkForRelease->Release();
+	}
 
 	nHighestUsedID=mii.wID;
 	
-	return 1;
+	return mii.wID-idCmdFirst+1;
 }
 
 //
@@ -295,7 +566,7 @@ STDMETHODIMP CLocateShellExtension::GetCommandString(UINT_PTR idCmd,
                                          LPSTR pszName,
                                          UINT cchMax)
 {
-    ODS("CShellExt::GetCommandString()\r\n");
+    ODS("CShellExt::GetCommandString()");
 
 	HMODULE hLanDll=GetLanguageResource();
 	if (hLanDll==NULL)
@@ -332,7 +603,7 @@ STDMETHODIMP CLocateShellExtension::DoGAKMenu1(HWND hParent,
                                    LPCSTR pszParam,
                                    int iShowCmd)
 {
-    ODS("CShellExt::DoGAKMenu1()\r\n");
+    ODS("CShellExt::DoGAKMenu1()");
 
     MessageBox(hParent, "Menu item 1!", "Shell Extension Sample", MB_OK);
 

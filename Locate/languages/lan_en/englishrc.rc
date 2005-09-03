@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,7100
- PRODUCTVERSION 2,99,5,7100
+ FILEVERSION 2,99,5,9030
+ PRODUCTVERSION 2,99,5,9030
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,7 +44,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.7100"
+            VALUE "FileVersion", "3.0 beta 5.9030"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
@@ -1694,6 +1694,11 @@ BEGIN
 	IDS_LOCATECANNOTOPEN		"Error: Cannot open database file '%s'.\n"
 	IDS_LOCATECANNOTREAD		"Error: Cannot read database file '%s'.\n"
 	IDS_LOCATEINVALIDDATABASE	"Error: Invalid database file '%s'.\n"
+	IDS_LOCATEVERBOSESTR		"searching strings: "
+	IDS_LOCATEVERBOSEEXT		"with extensions: "
+	IDS_LOCATEVERBOSEDIR		"from directories:\n"
+	IDS_LOCATEVERBOSEREG		"searching regular expression '%s'"
+	IDS_LOCATEVERBOSEFOUNDFILES	"\nnumber of found fiels: %d\n"
 END
 
 STRINGTABLE 

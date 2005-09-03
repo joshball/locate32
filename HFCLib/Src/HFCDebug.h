@@ -47,6 +47,7 @@ void Assert(BOOL bIsOK,int line,char* file);
 #ifdef _DEBUG_LOGGING
 void StartDebugLogging();
 void DebugMessage(LPCSTR msg);
+void DebugHexDump(LPCSTR desc,BYTE* pData,size_t datalen);
 void DebugWndMessage(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
 void DebugNumMessage(LPCSTR text,DWORD num);
 void DebugFormatMessage(LPCSTR text,...);
@@ -55,6 +56,7 @@ LPCSTR GetDebugLoggingFile();
 #else
 #define StartDebugLogging()
 #define DebugMessage(_a)
+#define DebugHexDump(_a,_b,_c)
 #define DebugWndMessage(_a,_b,_c,_d)
 #define DebugNumMessage(_a,_b)
 #define DebugFormatMessage
