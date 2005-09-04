@@ -54,13 +54,14 @@ void DebugFormatMessage(LPCSTR text,...);
 void EndDebugLogging();
 LPCSTR GetDebugLoggingFile();
 #else
-#define StartDebugLogging()
-#define DebugMessage(_a)
-#define DebugHexDump(_a,_b,_c)
-#define DebugWndMessage(_a,_b,_c,_d)
-#define DebugNumMessage(_a,_b)
-#define DebugFormatMessage
-#define EndDebugLogging()
+inline void StartDebugLogging() {}
+inline void DebugMessage(LPCSTR msg)  {}
+inline void DebugHexDump(LPCSTR desc,BYTE* pData,size_t datalen)  {}
+inline void DebugWndMessage(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)  {}
+inline void DebugNumMessage(LPCSTR text,DWORD num)  {}
+inline void DebugFormatMessage(LPCSTR text,...)  {}
+inline void EndDebugLogging()  {}
+inline LPCSTR GetDebugLoggingFile() {}
 #endif
 
 #endif

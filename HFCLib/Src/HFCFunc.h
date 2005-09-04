@@ -187,15 +187,10 @@ inline int LoadString(UINT uID,LPSTR lpBuffer,int nBufferMax,TypeOfResourceHandl
 	return (int)::LoadStringA(GetResourceHandle(bType),uID,lpBuffer,nBufferMax);
 }
 #ifdef DEF_WCHAR
-inline int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax)
-{
-	return (int)::LoadStringW(GetLanguageSpecificResourceHandle(),uID,lpBuffer,nBufferMax);
-}
-inline int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax,TypeOfResourceHandle bType)
-{
-	return (int)::LoadStringW(GetResourceHandle(bType),uID,lpBuffer,nBufferMax);
-}
+int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax,TypeOfResourceHandle bType);
+int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax);
 #endif
+
 
 #endif
 
@@ -216,6 +211,7 @@ HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget);
 HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath=NULL);
 BOOL RunRegistryCommand(HKEY hKey,LPCSTR szFile);
 DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,char* szName,DWORD dwBufferLen);
+BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,UINT nBufferLen);
 #endif
 
 // Variable manipulation

@@ -436,8 +436,10 @@ public:
 	HIMAGELIST SetImageList(HIMAGELIST hImageList,int nImageListType);
 	int GetItemCount() const;
 	BOOL GetItem(LV_ITEM* pItem) const;
+	BOOL GetItem(LV_ITEMW* pItem) const;
+	BOOL SetItem(const LV_ITEMW* pItem);
 	BOOL SetItem(const LV_ITEM* pItem);
-	BOOL SetItem(int nItem, int nSubItem, UINT nMask, LPCTSTR lpszItem,
+	BOOL SetItem(int nItem, int nSubItem, UINT nMask, LPCSTR lpszItem,
 		int nImage, UINT nState, UINT nStateMask, LPARAM lParam);
 	UINT GetCallbackMask() const;
 	BOOL SetCallbackMask(UINT nMask);
@@ -476,6 +478,7 @@ public:
 	UINT GetSelectedCount() const;
 
 	int InsertItem(const LV_ITEM* pItem);
+	int InsertItem(const LV_ITEMW* pItem);
 	int InsertItem(int nItem, LPCTSTR lpszItem);
 	int InsertItem(int nItem, LPCTSTR lpszItem, int nImage);
 	BOOL DeleteItem(int nItem);

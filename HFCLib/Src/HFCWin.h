@@ -588,7 +588,8 @@ public:
 	HICON GetIcon(BOOL bBigIcon) const;
 	BOOL OpenClipboard();
 		
-	int MessageBox(LPCTSTR lpText,LPCTSTR lpCaption=NULL,UINT uType=MB_OK);
+	int MessageBox(LPCSTR lpText,LPCSTR lpCaption=NULL,UINT uType=MB_OK);
+	int MessageBox(LPCWSTR lpText,LPCWSTR lpCaption=NULL,UINT uType=MB_OK);
 	
 	void CenterWindow();
 

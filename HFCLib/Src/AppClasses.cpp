@@ -65,12 +65,16 @@ CWinThread::~CWinThread()
 		{
 			POSITION pPos=GetAppData()->m_pThreads->Find(this);
 			if (pPos==NULL)
+			{
 				DebugMessage("CWinThread::~CWinThread(): Thread not found from m_pThreads");
+			}
 			else
 				GetAppData()->m_pThreads->RemoveAt(pPos);
 		}
 		else
+		{
 			DebugMessage("CWinThread::~CWinThread(): m_pThread is NULL");
+		}
 	}		
 	m_hThread=NULL;
 }

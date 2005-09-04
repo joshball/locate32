@@ -407,6 +407,17 @@ BOOL CFileException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 	return TRUE;
 }
 
-/* virtual */ CFileException::~CFileException()
+
+HFCERROR COleException::GetHFCErrorCode() const
 {
+	return HFC_OLEERROR;
+}
+
+BOOL COleException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
+{
+	char text[1000];
+	wsprintf(text,"OLE error code=%X facility=%X severity=%s HRESULT=%X",LOWORD(m_hresError),(DWORD(m_hresError)>>16)&0x4F,SUCCEEDED(m_hresError)?"succeeded":"failed",m_hresError);
+
+	lstrcpyn(lpszError,text,nMaxError-1);
+	return TRUE;
 }

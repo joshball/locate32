@@ -144,13 +144,26 @@ CFile::CFile(FILE* pFile,BOOL bThrowExceptions)
 {
 }
 
-CFile::CFile(LPCTSTR lpszFileName,int nOpenFlags,CFileException* e)
+CFile::CFile(LPCSTR lpszFileName,int nOpenFlags,CFileException* e)
 :	m_hFile(HANDLE(hFileNull)),m_bCloseOnDelete(FALSE)
 {
 	Open(lpszFileName,nOpenFlags,e);
 }
 
-CFile::CFile(LPCTSTR lpszFileName,int nOpenFlags,bThrowExceptions)
+CFile::CFile(LPCWSTR lpszFileName,int nOpenFlags,CFileException* e)
+:	m_hFile(HANDLE(hFileNull)),m_bCloseOnDelete(FALSE)
+{
+	Open(lpszFileName,nOpenFlags,e);
+}
+
+CFile::CFile(LPCSTR lpszFileName,int nOpenFlags,bThrowExceptions)
+:	m_hFile(HANDLE(hFileNull)),m_bCloseOnDelete(FALSE),
+	CExceptionObject(bThrowExceptions)
+{
+	Open(lpszFileName,nOpenFlags,e);
+}
+
+CFile::CFile(LPCWSTR lpszFileName,int nOpenFlags,bThrowExceptions)
 :	m_hFile(HANDLE(hFileNull)),m_bCloseOnDelete(FALSE),
 	CExceptionObject(bThrowExceptions)
 {
@@ -214,7 +227,7 @@ CString CFile::GetFilePath() const
 #endif
 }
 
-BOOL CFile::Open(LPCTSTR lpszFileName, int nOpenFlags,CFileException* pError)
+BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError)
 {
 	if (m_bCloseOnDelete)
 		Close();
@@ -377,6 +390,91 @@ BOOL CFile::Open(LPCTSTR lpszFileName, int nOpenFlags,CFileException* pError)
 #endif
 }
 
+#ifdef DEF_WCHAR
+
+BOOL CFile::Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError)
+{
+	if (m_bCloseOnDelete)
+		Close();
+	m_bCloseOnDelete=TRUE;
+	m_nOpenFlags=nOpenFlags;
+	
+	// Obtaining full path name
+	LPSTR szTemp;
+	char szAnsiPath[MAX_PATH];
+	WideCharToMultiByte(CP_ACP,0,lpszFileName,-1,szAnsiPath,MAX_PATH,NULL,NULL);
+
+	DWORD dwLength=GetFullPathName(szAnsiPath,MAX_PATH,m_strFileName.GetBuffer(MAX_PATH),&szTemp);
+    if (dwLength==0)
+		m_strFileName=lpszFileName;
+	else if (dwLength>MAX_PATH)
+		dwLength=GetFullPathName(szAnsiPath,dwLength+2,m_strFileName.GetBuffer(dwLength+2),&szTemp);
+	m_strFileName.FreeExtra(dwLength);
+	
+
+	DWORD dwShare;
+	switch (nOpenFlags&shareFlags)
+	{
+	case shareCompat:
+		dwShare=0;
+		break;
+	case shareDenyWrite:
+		dwShare=FILE_SHARE_READ;
+		break;
+	case shareDenyRead:
+		dwShare=FILE_SHARE_WRITE;
+		break;
+	case shareDenyNone:
+		dwShare=FILE_SHARE_WRITE|FILE_SHARE_READ;
+		break;
+	default:
+		if (m_bThrow)
+			throw CException(CException::invalidParameter);
+		dwShare=0;
+		break;
+	}
+
+
+	if ((nOpenFlags&openFlags)==0)
+	{
+		if (nOpenFlags&modeWrite)
+			nOpenFlags|=openCreateAlways;
+		else
+			nOpenFlags|=openExisting;
+	}
+
+	if (nOpenFlags&otherInherit)
+	{
+		SECURITY_ATTRIBUTES sa;
+		sa.nLength=sizeof(sa);
+		sa.lpSecurityDescriptor=NULL;
+		sa.bInheritHandle=TRUE;
+		m_hFile=::CreateFileW(lpszFileName,nOpenFlags&modeFlags,dwShare,&sa,nOpenFlags&openFlags,FILE_ATTRIBUTE_NORMAL,NULL);
+	}
+	else
+		m_hFile=::CreateFileW(lpszFileName,nOpenFlags&modeFlags,dwShare,NULL,nOpenFlags&openFlags,FILE_ATTRIBUTE_NORMAL,NULL);
+
+	
+	if (m_hFile==INVALID_HANDLE_VALUE)
+	{
+		SetHFCError(HFC_CANNOTOPEN);
+		if (pError!=NULL)
+		{
+			pError->m_lOsError = ::GetLastError();
+			pError->m_cause = CFileException::OsErrorToException(pError->m_lOsError);
+			pError->m_strFileName = lpszFileName;
+			if (m_bThrow)
+				throw *pError;
+		}
+		else if (m_bThrow)
+			throw CFileException(CFileException::OsErrorToException(::GetLastError()),::GetLastError(),m_strFileName);
+		return FALSE;
+	}
+	else if (pError!=NULL)
+		pError->m_cause=CException::none;
+	return TRUE;
+}
+#endif
 
 BOOL CFile::GetStatus(LPCTSTR lpszFileName,CFileStatus& rStatus)
 {

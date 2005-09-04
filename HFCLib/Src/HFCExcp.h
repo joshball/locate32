@@ -22,6 +22,7 @@ public:
 		corruptData=9,
 		invalidParameter=10,
 		noAccess=11,
+		oleError=12,
 		unknown=0xFFFF
 	};
 
@@ -89,7 +90,7 @@ public:
 	CFileException(exceptionCode cause = CFileException::none, LPCSTR lpszArchiveName = NULL);
 	CFileException(CException::exceptionCode cause, LPCSTR lpszArchiveName = NULL);
 #endif
-	virtual ~CFileException();
+	//virtual ~CFileException();
 
 	virtual HFCERROR GetHFCErrorCode() const;
 
@@ -101,7 +102,20 @@ public:
 	virtual BOOL GetErrorMessage(LPTSTR lpszError,UINT nMaxError);
 };
 
+#ifdef WIN32
+class COleException : public CException
+{
+public:
+	HRESULT m_hresError;
+	
 
+	COleException(HRESULT hresError);
+	//virtual ~COleException();
+
+	virtual HFCERROR GetHFCErrorCode() const;
+	virtual BOOL GetErrorMessage(LPTSTR lpszError,UINT nMaxError);
+};
+#endif
 
 #ifdef WIN32
 inline CException::CException(CException::exceptionCode cause,LONG lOsError)
@@ -132,7 +146,12 @@ inline CFileException::CFileException(CException::exceptionCode cause,LPCSTR lps
 }
 #endif
 
-
+#ifdef WIN32
+inline COleException::COleException(HRESULT hresError)
+:	CException(CException::oleError),m_hresError(hresError)
+{
+}
+#endif
 
 #endif
 

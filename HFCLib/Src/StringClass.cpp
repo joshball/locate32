@@ -3985,7 +3985,7 @@ void CStringW::Format(UINT nFormatID,...)
 		return;
 	}
 
-	::LoadStringW(GetLanguageSpecificResourceHandle(),nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN);
+	::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN);
 
 	m_nDataLen=vswprintf(temp,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
@@ -4019,7 +4019,7 @@ void CStringW::FormatEx(UINT nFormatID,...)
 		return;
 	}
 
-	::LoadStringW(GetLanguageSpecificResourceHandle(),nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN);
+	::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN);
 
 	m_nDataLen=vswprintfex(temp,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
@@ -4053,7 +4053,7 @@ void CStringW::FormatC(UINT nFormatID,...)
 		return;
 	}
 
-	::LoadStringW(GetCommonResourceHandle(),nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN);
+	::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,CommonResource);
 
 	m_nDataLen=vswprintf(temp,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
@@ -4087,7 +4087,7 @@ void CStringW::FormatExC(UINT nFormatID,...)
 		return;
 	}
 
-	::LoadStringW(GetCommonResourceHandle(),nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN);
+	::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,CommonResource);
 
 	m_nDataLen=vswprintfex(temp,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
@@ -4238,7 +4238,7 @@ BOOL CStringW::LoadString(UINT nID)
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return FALSE;
 	}
-	m_nDataLen=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
+	m_nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData!=NULL)
@@ -4263,7 +4263,7 @@ BOOL CStringW::LoadString(UINT nID,TypeOfResourceHandle bType)
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return FALSE;
 	}
-	m_nDataLen=::LoadStringW(GetResourceHandle(bType),nID,szBuffer,STR_LOADSTRINGBUFLEN);
+	m_nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,bType);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData!=NULL)
@@ -4288,7 +4288,7 @@ BOOL CStringW::AddString(UINT nID)
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return FALSE;
 	}
-	int nStrLen=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
+	int nStrLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN);
 	if (nStrLen+m_nDataLen>=m_nAllocLen)
 	{
 		LPWSTR temp=m_pData;
@@ -4318,7 +4318,7 @@ BOOL CStringW::AddString(UINT nID,TypeOfResourceHandle bType)
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return FALSE;
 	}
-	int nStrLen=::LoadStringW(GetResourceHandle(bType),nID,szBuffer,STR_LOADSTRINGBUFLEN);
+	int nStrLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,bType);
 	if (nStrLen+m_nDataLen>=m_nAllocLen)
 	{
 		LPWSTR temp=m_pData;

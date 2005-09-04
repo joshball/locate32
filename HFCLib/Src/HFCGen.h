@@ -194,6 +194,10 @@ public:
 	CFile(HANDLE hFile,BOOL bThrowExceptions=FALSE);
 	CFile(LPCSTR lpszFileName,int nOpenFlags,CFileException* e);
 	CFile(LPCSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions=FALSE);
+#ifdef DEF_WCHAR
+	CFile(LPCWSTR lpszFileName,int nOpenFlags,CFileException* e);
+	CFile(LPCWSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions=FALSE);
+#endif
 
 #ifndef WIN32
 	CFile(FILE* pFile,BOOL bThrowExceptions=FALSE);
@@ -218,18 +222,19 @@ public:
 	virtual CString GetFilePath() const;
 	virtual void SetFilePath(LPCTSTR lpszNewName);
 
-	virtual BOOL Open(LPCTSTR lpszFileName, int nOpenFlags,
-		CFileException* pError = NULL);
-	BOOL OpenRead(LPCTSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defRead,pError); }
-	BOOL OpenWrite(LPCTSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defWrite,pError); }
+	virtual BOOL Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError = NULL);
+#ifdef DEF_WCHAR
+	virtual BOOL Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError = NULL);
+#endif	
+	BOOL OpenRead(LPCSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defRead,pError); }
+	BOOL OpenRead(LPCWSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defRead,pError); }
+	BOOL OpenWrite(LPCSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defWrite,pError); }
+	BOOL OpenWrite(LPCWSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defWrite,pError); }
 
-	static BYTE Rename(LPCTSTR lpszOldName,
-				LPCTSTR lpszNewName);
-	static BYTE Remove(LPCTSTR lpszFileName);
-	static BOOL GetStatus(LPCTSTR lpszFileName,
-				CFileStatus& rStatus);
-	static BYTE SetStatus(LPCTSTR lpszFileName,
-				const CFileStatus& status);
+	static BYTE Rename(LPCSTR lpszOldName,LPCSTR lpszNewName);
+	static BYTE Remove(LPCSTR lpszFileName);
+	static BOOL GetStatus(LPCSTR lpszFileName,CFileStatus& rStatus);
+	static BYTE SetStatus(LPCSTR lpszFileName,const CFileStatus& status);
 
 	DWORD SeekToEnd() { return this->Seek(0,end); }
 	BYTE SeekToBegin() { return this->Seek(0,begin)>0; }

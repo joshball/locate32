@@ -1406,23 +1406,6 @@ BOOL CFolderDialog::DoModal(HWND hOwner)
 	return TRUE;
 }
 
-LPITEMIDLIST CFolderDialog::GetFolder() const
-{
-	return m_lpil;
-}
-
-BOOL CFolderDialog::GetFolder(CString& Folder) const
-{
-	if (!SHGetPathFromIDList(m_lpil,Folder.GetBuffer(_MAX_PATH)))
-		return FALSE;
-	Folder.FreeExtra();
-	return TRUE;
-}
-
-BOOL CFolderDialog::GetFolder(LPSTR szFolder) const
-{
-	return SHGetPathFromIDList(m_lpil,szFolder);
-}
 
 BOOL CFolderDialog::GetDisplayName(CString& strDisplayName) const
 {
@@ -1430,6 +1413,8 @@ BOOL CFolderDialog::GetDisplayName(CString& strDisplayName) const
 	strDisplayName.FreeExtra();
 	return TRUE;
 }
+
+
 
 BOOL CFolderDialog::GetDisplayName(LPSTR szDisplayName,DWORD nSize)
 {
@@ -1445,6 +1430,8 @@ BOOL CFolderDialog::GetDisplayName(LPSTR szDisplayName,DWORD nSize)
 		iMemCopy(szDisplayName,(LPCSTR)m_strDisplayName,m_strDisplayName.GetLength()+1);
 	return TRUE;
 }
+
+
 
 BOOL CFolderDialog::EnableOK(BOOL bEnable)
 {

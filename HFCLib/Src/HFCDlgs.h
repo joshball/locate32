@@ -350,7 +350,9 @@ public:
 	BOOL DoModal(HWND hOwner=NULL);
 	LPITEMIDLIST GetFolder() const;
 	BOOL GetFolder(CString& Folder) const;
+	BOOL GetFolder(CStringW& Folder) const;
 	BOOL GetFolder(LPSTR szFolder) const;
+	BOOL GetFolder(LPWSTR szFolder) const;
 	BOOL GetDisplayName(CString& strDisplayName) const;
 	BOOL GetDisplayName(LPSTR szDisplayName,DWORD nSize);
 	int GetImage() const { return m_bi.iImage; } 
@@ -1290,6 +1292,36 @@ inline void COptionsPropertyPage::Item::FreeText(LPWSTR pText) const
 
 
 
+inline LPITEMIDLIST CFolderDialog::GetFolder() const
+{
+	return m_lpil;
+}
+
+inline BOOL CFolderDialog::GetFolder(CString& Folder) const
+{
+	if (!SHGetPathFromIDList(m_lpil,Folder.GetBuffer(_MAX_PATH)))
+		return FALSE;
+	Folder.FreeExtra();
+	return TRUE;
+}
+
+inline BOOL CFolderDialog::GetFolder(CStringW& Folder) const
+{
+	if (!SHGetPathFromIDListW(m_lpil,Folder.GetBuffer(_MAX_PATH)))
+		return FALSE;
+	Folder.FreeExtra();
+	return TRUE;
+}
+
+inline BOOL CFolderDialog::GetFolder(LPSTR szFolder) const
+{
+	return SHGetPathFromIDList(m_lpil,szFolder);
+}
+
+inline BOOL CFolderDialog::GetFolder(LPWSTR szFolder) const
+{
+	return SHGetPathFromIDListW(m_lpil,szFolder);
+}
 
 #endif
 #endif

@@ -1479,9 +1479,14 @@ inline BOOL CWnd::OpenClipboard()
 	return ::OpenClipboard(m_hWnd);
 }
 	
-inline int CWnd::MessageBox(LPCTSTR lpText,LPCTSTR lpCaption,UINT uType)
+inline int CWnd::MessageBox(LPCSTR lpText,LPCSTR lpCaption,UINT uType)
 {
-	return ::MessageBox(m_hWnd,lpText,lpCaption,uType);
+	return ::MessageBoxA(m_hWnd,lpText,lpCaption,uType);
+}
+
+inline int CWnd::MessageBox(LPCWSTR lpText,LPCWSTR lpCaption,UINT uType)
+{
+	return ::MessageBoxW(m_hWnd,lpText,lpCaption,uType);
 }
 
 inline int CWnd::ReportSystemError(LPCSTR szTitle,DWORD dwError,DWORD dwExtra,LPCSTR szPrefix)

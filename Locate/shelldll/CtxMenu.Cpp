@@ -13,33 +13,40 @@
 
 #define INC_OLE2        // WIN32, get ole2 from windows.h
 
-#include <windows.h>
+#define _CONSOLE
+#include <hfclib.h>
 #include <windowsx.h>
 #include <shlobj.h>
 #include "../lan_resources.h"
 #include "LocateShellExtension.h"
 #include "resource.h"
 
-#define _CONSOLE
-#include <hfclib.h>
+#include "shlwapi.h"
+#pragma comment(lib, "shlwapi.lib")
 
 extern HINSTANCE g_hmodThisDll;
 
-INT IsDirectory(LPCTSTR szDirectoryName)
+INT IsDirectory(LPCWSTR szDirectoryName)
 {
-#ifdef WIN32
+	
+
 	HANDLE hFind;
-	WIN32_FIND_DATA fd;
+	WIN32_FIND_DATAW fd;
+	
 	int ret=TRUE;
-	if (szDirectoryName[0]=='\0')
+	
+	if (szDirectoryName[0]==L'\0')
 		return 0;
-	if (szDirectoryName[1]=='\0')
+	
+	if (szDirectoryName[1]==L'\0')
 		return 0;
-	if (szDirectoryName[2]=='\0')
+	
+	if (szDirectoryName[2]==L'\0')
 		return 0;
-	if (szDirectoryName[1]==':' && szDirectoryName[2]=='\\' && szDirectoryName[3]=='\0')
+	
+	if (szDirectoryName[1]==L':' && szDirectoryName[2]==L'\\' && szDirectoryName[3]==L'\0')
 	{
-		switch (GetDriveType(szDirectoryName))
+		switch (GetDriveTypeW(szDirectoryName))
 		{
 		case DRIVE_UNKNOWN:
 		case DRIVE_NO_ROOT_DIR:
@@ -51,24 +58,28 @@ INT IsDirectory(LPCTSTR szDirectoryName)
 		}
 	}
 	
+	
+
 	// Taking last '\\' 
-	LPSTR szPath;
+	LPWSTR szPath;
 	DWORD dwPathLen;
 	dstrlen(szDirectoryName,dwPathLen);
-	if (szDirectoryName[dwPathLen-1]=='\\' && dwPathLen>3)
+	if (szDirectoryName[dwPathLen-1]==L'\\' && dwPathLen>3)
 	{
-		szPath=new char[dwPathLen+5];
-		CopyMemory(szPath,szDirectoryName,--dwPathLen);
+		szPath=new WCHAR[dwPathLen+5];
+		CopyMemory(szPath,szDirectoryName,(--dwPathLen)*2);
 		szPath[dwPathLen]='\0';
 	}
 	else
-		szPath=LPSTR(szDirectoryName);
+		szPath=LPWSTR(szDirectoryName);
 
-	hFind=FindFirstFile(szPath,&fd);
+	
+
+	hFind=FindFirstFileW(szPath,&fd);
 	if (hFind!=INVALID_HANDLE_VALUE)
 	{
 		while (!(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) && ret)
-			ret=FindNextFile(hFind,&fd);
+			ret=FindNextFileW(hFind,&fd);
 	
 		if (szPath!=szDirectoryName)
 			delete[] szPath;
@@ -76,9 +87,9 @@ INT IsDirectory(LPCTSTR szDirectoryName)
 		FindClose(hFind);	
 		if (ret)
 		{
-			if (szDirectoryName[0]=='\\')
+			if (szDirectoryName[0]==L'\\')
 			{
-				if (szDirectoryName[1]=='\\')
+				if (szDirectoryName[1]==L'\\')
 					return 2;
 				switch (GetDriveType(NULL))
 				{
@@ -92,12 +103,12 @@ INT IsDirectory(LPCTSTR szDirectoryName)
 				}
  
 			}
-			if (szDirectoryName[1]==':' && szDirectoryName[2]=='\\')
+			if (szDirectoryName[1]==L':' && szDirectoryName[2]==L'\\')
 			{
-				char szTemp[4]="X:\\";
+				WCHAR szTemp[4]=L"X:\\";
 				szTemp[0]=szDirectoryName[0];
 
-				switch (GetDriveType(szTemp))
+				switch (GetDriveTypeW(szTemp))
 				{
 				case DRIVE_UNKNOWN:
 					return 0;
@@ -110,17 +121,18 @@ INT IsDirectory(LPCTSTR szDirectoryName)
 		}
 		return 0;
 	}
-	else if (szDirectoryName[0]=='\\' && szDirectoryName[1]=='\\')
+	else if (szDirectoryName[0]==L'\\' && szDirectoryName[1]==L'\\')
 	{
+		
 		// UNC share name
 		if (szPath==szDirectoryName)
 		{
-			szPath=new char[dwPathLen+5];
-			CopyMemory(szPath,szDirectoryName,dwPathLen);
+			szPath=new WCHAR[dwPathLen+5];
+			CopyMemory(szPath,szDirectoryName,dwPathLen*2);
 		}		
-		CopyMemory(szPath+dwPathLen,"\\*.*",5);
+		CopyMemory(szPath+dwPathLen,L"\\*.*",5*2);
 
-		hFind=FindFirstFile(szPath,&fd);
+		hFind=FindFirstFileW(szPath,&fd);
 		delete[] szPath;
 		if (hFind==INVALID_HANDLE_VALUE)
 			return 0;
@@ -134,13 +146,10 @@ INT IsDirectory(LPCTSTR szDirectoryName)
 	}
 	
 	
+	
 	if (szPath!=szDirectoryName)
 		delete[] szPath;
 	return 0;
-#else
-	struct ffblk fd;
-	return !findfirst(szDirectoryName,&fd,FA_DIREC);
-#endif
 }
 
 HMODULE GetLanguageResource()
@@ -351,195 +360,51 @@ int CLocateShellExtension::InsertMenuItems(HMENU hMenu,UINT nStartIndex,UINT idC
 	if (m_pDataObj==NULL)
 		return 0;
 
-	CArrayFAP<LPSTR> aNetworkResources,aDirectories,aFiles;
-    
-	FORMATETC FormatEtc;
-	STGMEDIUM med;
-	FormatEtc.cfFormat=RegisterClipboardFormat(CFSTR_SHELLIDLIST);
-	FormatEtc.ptd=NULL;
-	FormatEtc.dwAspect=DVASPECT_CONTENT;
-	FormatEtc.lindex=-1;
-    FormatEtc.tymed=TYMED_HGLOBAL;
 	
-	if (m_pDataObj->GetData(&FormatEtc,&med)==S_OK)
-	{
-		// May be computer?
-		IShellFolder *psf;
 	
-		
-		if (!SUCCEEDED(SHGetDesktopFolder(&psf)))
-		{
-			DebugMessage("No IShellFolder interface");
-			return 0;
-		}
-		
-		// Retrieving data from item id list
-		BYTE* pData=(BYTE*)GlobalLock(med.hGlobal);
-		
-		UINT nFiles=((int*)pData)[0];
-		UINT i,nLines=1,nSubIDListLen,nIDListLen;
-		char szPath[_MAX_PATH];
-
-		nSubIDListLen=GetIDListSize((LPITEMIDLIST)(pData+((int*)pData)[1]))-2;
-		
-		for (i=0;i<nFiles;i++)
-		{
-			nIDListLen=GetIDListSize((LPITEMIDLIST)(pData+((int*)pData)[2+i]));
-
-			// Constructing IDList from parent item and item
-            LPITEMIDLIST pItemIDList=(LPITEMIDLIST)new BYTE[nSubIDListLen+nIDListLen+2];
-			CopyMemory((BYTE*)pItemIDList,(LPCSTR)(pData+((int*)pData)[1]),nSubIDListLen);
-			CopyMemory((BYTE*)(pItemIDList)+nSubIDListLen,(LPCSTR)(pData+((int*)pData)[2+i]),nIDListLen);
-			
-			if (SHGetPathFromIDList(pItemIDList,szPath))
-			{
-				if (IsDirectory(szPath))
-					aDirectories.Add(alloccopy(szPath));
-				else
-					aFiles.Add(alloccopy(szPath));
-			}
-			else
-			{
-				DebugHexDump("idlist",(BYTE*)pItemIDList,nSubIDListLen+nIDListLen);
-				
-				
-				if (GetDisplayNameFromIDList(pItemIDList,szPath,MAX_PATH))
-				{
-					if (szPath[0]!='\\' && szPath[1]!='\\')
-					{
-						DebugFormatMessage("Cannot add item %s",szPath);
-					}
-					else
-						aNetworkResources.Add(alloccopy(szPath));
-				}
-			}
-			
-			delete[] (BYTE*)pItemIDList;
-		}
-		
-		GlobalUnlock(med.hGlobal);
-		if (med.pUnkForRelease==NULL)
-            GlobalFree(med.hGlobal);
-		else 
-			med.pUnkForRelease->Release();
-	
-		psf->Release();
-	}
-	else 
-	{
-		FormatEtc.cfFormat=CF_HDROP;
-		if (m_pDataObj->GetData(&FormatEtc,&med)==S_OK)
-		{
-			LPDROPFILES df=(LPDROPFILES)GlobalLock(med.hGlobal);
-			if (df->fWide)
-			{
-				LPWSTR lpPtr=(LPWSTR)((BYTE*)df+df->pFiles);
-				DWORD nLen;
-				while (nLen=wcslen(lpPtr))
-				{
-					LPSTR lpFile=alloccopyWtoA(lpPtr,nLen);
-					
-					if (IsDirectory(lpFile))
-						aDirectories.Add(lpFile);
-					else
-						aFiles.Add(lpFile);
-					
-					lpPtr+=nLen+1;
-				}
-			}
-			else
-			{
-				LPSTR lpPtr=(LPSTR)df+df->pFiles;
-				DWORD nLen;
-				while (nLen=strlen(lpPtr))
-				{
-					LPSTR lpFile=alloccopy(lpPtr,nLen);					
-
-					if (IsDirectory(lpFile))
-						aDirectories.Add(lpFile);
-					else
-						aFiles.Add(lpFile);
-
-					lpPtr+=nLen+1;
-				}
-			}	
-			
-			GlobalUnlock(med.hGlobal);
-			
-			if (med.pUnkForRelease==NULL)
-                GlobalFree(med.hGlobal);
-			else 
-				med.pUnkForRelease->Release();
-		}
-	}
-
 
 	
 
 	
-	MENUITEMINFO mii;
-	mii.cbSize=sizeof(MENUITEMINFO);
+	MENUITEMINFOW mii;
+	mii.cbSize=sizeof(MENUITEMINFOW);
 	mii.fMask=MIIM_ID|MIIM_TYPE;
 	mii.fType=MFT_STRING;
-	mii.dwTypeData="Files:";
+	mii.dwTypeData=L"Files:";
 	mii.wID=idCmdFirst;
-    InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+    InsertMenuItemW(hMenu,nStartIndex++,TRUE,&mii);
 
-	for (int i=0;i<aFiles.GetSize();i++)
+	for (int i=0;i<m_aFiles.GetSize();i++)
 	{
 		mii.wID++;
-		mii.dwTypeData=aFiles[i];
-		InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+		mii.dwTypeData=m_aFiles[i];
+		InsertMenuItemW(hMenu,nStartIndex++,TRUE,&mii);
 	}
 
 	mii.wID++;
-	mii.dwTypeData="Directories:";
-	InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+	mii.dwTypeData=L"Directories:";
+	InsertMenuItemW(hMenu,nStartIndex++,TRUE,&mii);
 	
-	for (int i=0;i<aDirectories.GetSize();i++)
+	for (int i=0;i<m_aDirectories.GetSize();i++)
 	{
 		mii.wID++;
-		mii.dwTypeData=aDirectories[i];
-		InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+		mii.dwTypeData=m_aDirectories[i];
+		InsertMenuItemW(hMenu,nStartIndex++,TRUE,&mii);
 	}
 
 
 	mii.wID++;
-	mii.dwTypeData="Other:";
-	InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+	mii.dwTypeData=L"Computers:";
+	InsertMenuItemW(hMenu,nStartIndex++,TRUE,&mii);
 	
-	for (int i=0;i<aNetworkResources.GetSize();i++)
+	for (int i=0;i<m_aComputers.GetSize();i++)
 	{
 		mii.wID++;
-		mii.dwTypeData=aNetworkResources[i];
-		InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
+		mii.dwTypeData=m_aComputers[i];
+		InsertMenuItemW(hMenu,nStartIndex++,TRUE,&mii);
 	}
 
-	mii.wID++;
-	mii.dwTypeData="Net resources:";
-	InsertMenuItem(hMenu,nStartIndex++,TRUE,&mii);
 	
-	FormatEtc.cfFormat=RegisterClipboardFormat(CFSTR_NETRESOURCES);
-	if (m_pDataObj->GetData(&FormatEtc,&med)==S_OK)
-	{
-		NRESARRAY* array=(NRESARRAY*)GlobalLock(med.hGlobal);
-		DebugHexDump("got netresource",(BYTE*)array,GlobalSize(med.hGlobal));
-
-		for (DWORD i=0;i<array->cItems;i++)
-		{
-			mii.dwTypeData=LPSTR(array)+UINT(array->nr[i].lpRemoteName);
-			mii.wID++;
-			InsertMenuItemW(hMenu,nStartIndex++,TRUE,(LPMENUITEMINFOW)&mii);
-		}
-
-		GlobalUnlock(med.hGlobal);
-			
-		if (med.pUnkForRelease==NULL)
-            GlobalFree(med.hGlobal);
-		else 
-			med.pUnkForRelease->Release();
-	}
-
 	nHighestUsedID=mii.wID;
 	
 	return mii.wID-idCmdFirst+1;

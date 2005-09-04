@@ -184,11 +184,10 @@ public:
 			
 			BOOL EnableRemoveButton();
 			int AddDriveToList(LPSTR szDrive);
-			int AddDirectoryToListWithVerify(LPCSTR szPath,int iLength=-1);
-			int AddDirectoryToList(LPCSTR szPath,int iLength=-1);
-			int AddComputerToList(LPCSTR szName);
-			int AddComputerToList(LPITEMIDLIST lpiil);
-
+			int AddDirectoryToListWithVerify(LPCWSTR szPath,int iLength=-1);
+			int AddDirectoryToList(LPCWSTR szPath,int iLength=-1);
+			int AddComputerToList(LPCWSTR szName);
+			
 		public:
 			BOOL m_bDontEditName;
 			

@@ -33,6 +33,7 @@ inline size_t istrlen(const char* str)
 	return len;
 }
 
+
 #ifdef DEF_WCHAR
 inline size_t istrlenw(const WCHAR* str)
 {
@@ -89,14 +90,22 @@ inline int swprintfex( wchar_t *buffer, const wchar_t *format,...)
 ////////////////////////////////////////
 // String functions
 
-BYTE ContainString(LPCTSTR,LPCTSTR);
-int FirstCharIndex(LPCTSTR,const TCHAR);
-int LastCharIndex(LPCTSTR,const TCHAR);
-int NextCharIndex(LPCTSTR,const TCHAR,int);
-LPTSTR strntcpy(LPTSTR,LPCTSTR,size_t);
+BYTE ContainString(LPCSTR,LPCSTR);
+int FirstCharIndex(LPCSTR,const CHAR);
+int LastCharIndex(LPCSTR,const CHAR);
+int NextCharIndex(LPCSTR,const CHAR,int);
+
+#ifdef DEF_WCHAR
+BYTE ContainString(LPCWSTR,LPCWSTR);
+int FirstCharIndex(LPCWSTR,const WCHAR);
+int LastCharIndex(LPCWSTR,const WCHAR);
+int NextCharIndex(LPCWSTR,const WCHAR,int);
+#endif
+
 #ifdef WIN32
 int strcasecmp(LPCTSTR,LPCTSTR);
 #endif
+
 int strcasencmp(LPCTSTR s1,LPCTSTR s2,DWORD n);
 int _readnum(int base,LPCSTR& str,DWORD length=DWORD(-1));
 

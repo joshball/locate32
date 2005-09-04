@@ -244,4 +244,98 @@ DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,char* szName,DWORD dwBufferLen
 	}
 	return 0;
 }
+
+
+
+BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,UINT nBufferLen)
+{
+	CStringW file(szFolder);
+	if (file.LastChar()!=L'\\')
+		file << L'\\';
+	file << L"desktop.ini";
+
+	WCHAR cls[300];
+	if (!GetPrivateProfileStringW(L".ShellClassInfo",L"CLSID2",szwEmpty,cls,300,file))
+		return FALSE;
+
+	if (wcscmp(cls,L"{0AFACED1-E828-11D1-9187-B532F1E9575D}")!=0)
+		return FALSE; // Folder shortcut
+
+	
+	IShellLink* psl;
+	if (!SUCCEEDED(CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl)))
+		return FALSE;
+
+	IPersistFile* ppf;
+	if (!SUCCEEDED(psl->QueryInterface(IID_IPersistFile,(void**)&ppf)))
+	{
+		psl->Release();
+		return FALSE;
+	}
+
+	IShellFolder* psf;
+	if (!SUCCEEDED(SHGetDesktopFolder(&psf)))
+	{
+		ppf->Release();
+		psl->Release();
+		return FALSE;
+	}
+
+	file=szFolder;
+	if (file.LastChar()!=L'\\')
+		file << L'\\';
+	file << L"target.lnk";
+
+
+	BOOL bRet=FALSE;
+
+	if (SUCCEEDED(ppf->Load(file,0)))
+	{
+		LPITEMIDLIST il;
+		if (SUCCEEDED(psl->GetIDList(&il)))
+		{
+			STRRET str;
+			if (SHGetPathFromIDListW(il,szTarget))
+				bRet=2;
+			else
+			{
+				SHDESCRIPTIONID di;
+				if (SUCCEEDED(SHGetDataFromIDList(psf,il,SHGDFIL_DESCRIPTIONID,&di,sizeof(SHDESCRIPTIONID))))
+				{
+                    if (di.clsid==CLSID_NetworkPlaces)
+					{		
+						if (SUCCEEDED(psf->GetDisplayNameOf(il,SHGDN_NORMAL | SHGDN_FORPARSING,&str)))
+						{
+							switch (str.uType)
+							{
+							case STRRET_CSTR:
+								if (str.cStr[0]=='\\' && str.cStr[1]=='\\')
+									bRet=MultiByteToWideChar(CP_ACP,0,str.cStr,-1,szTarget,nBufferLen)>0?1:0;
+								break;
+							case STRRET_WSTR:
+								if (str.pOleStr[0]==L'\\' && str.pOleStr[1]==L'\\')
+								{
+									UINT nlen=istrlenw(str.pOleStr);
+									if (nBufferLen<nlen)
+										nlen=nBufferLen-1;
+									CopyMemory(szTarget,str.pOleStr,nlen);
+									szTarget[nlen]='\0';
+									bRet=1;
+								}			
+								break;
+							}
+						}
+					}
+				}
+			}
+			
+		}
+	}
+	
+	psf->Release();
+	ppf->Release();
+	psl->Release();
+	return bRet;
+}
+
 #endif

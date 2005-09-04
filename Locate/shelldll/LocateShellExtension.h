@@ -57,7 +57,11 @@ protected:
     ULONG        m_cRef;
     LPDATAOBJECT m_pDataObj;
     
-    STDMETHODIMP DoGAKMenu1(HWND hParent,
+	CArrayFAP<LPWSTR> m_aComputers;
+	CArrayFAP<LPWSTR> m_aDirectories;
+	CArrayFAP<LPWSTR> m_aFiles;
+    
+	STDMETHODIMP DoGAKMenu1(HWND hParent,
                             LPCSTR pszWorkingDir,
                             LPCSTR pszCmd,
                             LPCSTR pszParam,
@@ -79,7 +83,11 @@ public:
     STDMETHODIMP_(ULONG)    Release();
 
     //IShell members
-    STDMETHODIMP            QueryContextMenu(HMENU hMenu,
+	STDMETHODIMP			Initialize(LPCITEMIDLIST pIDFolder,
+                                   LPDATAOBJECT pDataObj,
+                                   HKEY hRegKey);
+
+	STDMETHODIMP            QueryContextMenu(HMENU hMenu,
                                              UINT indexMenu,
                                              UINT idCmdFirst,
                                              UINT idCmdLast,
@@ -92,45 +100,9 @@ public:
                                              UINT FAR *reserved,
                                              LPSTR pszName,
                                              UINT cchMax);
-
-    //IShellExtInit methods
-    STDMETHODIMP            Initialize(LPCITEMIDLIST pIDFolder,
-                                       LPDATAOBJECT pDataObj,
-                                       HKEY hKeyID);
-
-
+private:
+    DWORD ReadSettingsFromRegistry();
 	int InsertMenuItems(HMENU hMenu,UINT nStartIndex,UINT idCmdFirst,UINT& nHighestUsedID);
-	DWORD ReadSettingsFromRegistry();
-    
-    /*//IPersistFile methods
-    STDMETHODIMP GetClassID(LPCLSID lpClassID);
-
-    STDMETHODIMP IsDirty();
-
-    STDMETHODIMP Load(LPCOLESTR lpszFileName, DWORD grfMode);
-
-    STDMETHODIMP Save(LPCOLESTR lpszFileName, BOOL fRemember);
-
-    STDMETHODIMP SaveCompleted(LPCOLESTR lpszFileName);
-
-    STDMETHODIMP GetCurFile(LPOLESTR FAR* lplpszFileName);*/
-
-    /*//IShellPropSheetExt methods
-    STDMETHODIMP AddPages(LPFNADDPROPSHEETPAGE lpfnAddPage, LPARAM lParam);
-
-    STDMETHODIMP ReplacePage(UINT uPageID,
-                             LPFNADDPROPSHEETPAGE lpfnReplaceWith,
-                             LPARAM lParam);*/
-
-    //ICopyHook method
-    /*
-	STDMETHODIMP_(UINT) CopyCallback(HWND hwnd,
-                                     UINT wFunc,
-                                     UINT wFlags,
-                                     LPCSTR pszSrcFile,
-                                     DWORD dwSrcAttribs,
-                                     LPCSTR pszDestFile,
-                                     DWORD dwDestAttribs);*/
 
 };
 typedef CLocateShellExtension *LPCSHELLEXT;

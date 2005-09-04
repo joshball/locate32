@@ -26,7 +26,7 @@ int strcasecmp(LPCTSTR s1,LPCTSTR s2)
 }
 #endif
 
-int strcasencmp(LPCTSTR s1,LPCTSTR s2,DWORD n)
+int strcasencmp(LPCSTR s1,LPCSTR s2,DWORD n)
 {
 	if (int(n)<1)
 		return 0;
@@ -37,10 +37,10 @@ int strcasencmp(LPCTSTR s1,LPCTSTR s2,DWORD n)
 	for (DWORD n1=0;n1<n && s1[n1]!='\0';n1++);
 	for (DWORD n2=0;n2<n && s2[n2]!='\0';n2++);
 
-	tmp1=new TCHAR[n+1];
+	tmp1=new CHAR[n+1];
 	if (tmp1==NULL)
 		SetHFCError(HFC_CANNOTALLOC);
-	tmp2=new TCHAR[n+1];
+	tmp2=new CHAR[n+1];
 	if (tmp2==NULL)
 		SetHFCError(HFC_CANNOTALLOC);
 	dMemCopy(tmp1,s1,n1);
@@ -56,7 +56,38 @@ int strcasencmp(LPCTSTR s1,LPCTSTR s2,DWORD n)
 	return ret;
 }
 
-BYTE ContainString(LPCTSTR string,LPCTSTR pattern)
+int strcasencmp(LPCWSTR s1,LPCWSTR s2,DWORD n)
+{
+	if (int(n)<1)
+		return 0;
+
+	WCHAR *tmp1,*tmp2;	
+	int ret;
+
+	for (DWORD n1=0;n1<n && s1[n1]!='\0';n1++);
+	for (DWORD n2=0;n2<n && s2[n2]!='\0';n2++);
+
+	tmp1=new WCHAR[n+1];
+	if (tmp1==NULL)
+		SetHFCError(HFC_CANNOTALLOC);
+	tmp2=new WCHAR[n+1];
+	if (tmp2==NULL)
+		SetHFCError(HFC_CANNOTALLOC);
+	dMemCopy(tmp1,s1,n1*2);
+	dMemCopy(tmp2,s2,n2*2);
+    
+	tmp1[n1]='\0';
+	tmp2[n2]='\0';
+	CharLowerW(tmp1);
+	CharLowerW(tmp2);
+	ret=wcscmp(tmp1,tmp2);
+	delete[] tmp1;
+	delete[] tmp2;
+	return ret;
+}
+
+
+BYTE ContainString(LPCSTR string,LPCSTR pattern)
 {
    unsigned int i,j=0;
    for (i=0;i<strlen(string);i++)
@@ -71,7 +102,22 @@ BYTE ContainString(LPCTSTR string,LPCTSTR pattern)
    return 0;
 }
 
-int FirstCharIndex(LPCTSTR str,const TCHAR ch)
+BYTE ContainString(LPCWSTR string,LPCWSTR pattern)
+{
+   unsigned int i,j=0;
+   for (i=0;i<istrlenw(string);i++)
+   {
+      j=0;
+      while ((string[i+j]==pattern[j] || pattern[j]==L'?') && string[i+j]!=L'\0' ) j++;
+      if (pattern[j]==L'\0')
+         return 1;
+      if (pattern[j]==L'*')
+         return ContainString(&(string[j+i+1]),&(pattern[j+1]));
+   }
+   return 0;
+}
+
+int FirstCharIndex(LPCSTR str,const CHAR ch)
 {
 	int i;
 	for (i=0;str[i]!='\0';i++)
@@ -82,7 +128,18 @@ int FirstCharIndex(LPCTSTR str,const TCHAR ch)
 	return -1;
 }
 
-int LastCharIndex(LPCTSTR str,const TCHAR ch)
+int FirstCharIndex(LPCWSTR str,const WCHAR ch)
+{
+	int i;
+	for (i=0;str[i]!=L'\0';i++)
+	{
+		if (str[i]==ch)
+			return i;
+	}
+	return -1;
+}
+
+int LastCharIndex(LPCSTR str,const CHAR ch)
 {
 	int i,ret=-1;
 	for (i=0;str[i]!='\0';i++)
@@ -93,7 +150,18 @@ int LastCharIndex(LPCTSTR str,const TCHAR ch)
 	return ret;
 }
 
-int NextCharIndex(LPCTSTR str,const TCHAR ch,int oldidx)
+int LastCharIndex(LPCWSTR str,const WCHAR ch)
+{
+	int i,ret=-1;
+	for (i=0;str[i]!=L'\0';i++)
+	{
+		if (str[i]==ch)
+			ret=i;
+	}
+	return ret;
+}
+
+int NextCharIndex(LPCSTR str,const CHAR ch,int oldidx)
 {
    int i;
    for (i=oldidx+1;str[i]!='\0';i++)
@@ -104,13 +172,15 @@ int NextCharIndex(LPCTSTR str,const TCHAR ch,int oldidx)
    return -1;
 }
 
-LPTSTR strntcpy(LPTSTR dst,LPCTSTR src,size_t max)
+int NextCharIndex(LPCWSTR str,const WCHAR ch,int oldidx)
 {
-   UINT p;
-   for (p=0;p<max && src[p]!='\0';p++)
-       dst[p]=src[p];
-   dst[p]='\0';
-   return dst;
+   int i;
+   for (i=oldidx+1;str[i]!=L'\0';i++)
+   {
+      if (str[i]==ch)
+         return i;
+   }
+   return -1;
 }
 
 static int _getbase(LPCSTR& str)
@@ -936,5 +1006,34 @@ int vswprintfex( wchar_t *buffer, const wchar_t *format, va_list argList )
 			*(out++)=*(in++);
 	}
 	return int(out-buffer);
+}
+#endif
+
+
+#ifdef DEF_WCHAR
+int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax)
+{
+	if (!IsFullUnicodeSupport())
+	{
+		char* pStr=new char[nBufferMax+1];
+		int nRet=::LoadStringA(GetLanguageSpecificResourceHandle(),uID,pStr,nBufferMax);
+		MultiByteToWideChar(CP_ACP,0,pStr,nRet+1,lpBuffer,nBufferMax);
+		delete[] pStr;
+		return nRet;
+	}
+	return (int)::LoadStringW(GetLanguageSpecificResourceHandle(),uID,lpBuffer,nBufferMax);
+}
+
+int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax,TypeOfResourceHandle bType)
+{
+	if (!IsFullUnicodeSupport())
+	{
+		char* pStr=new char[nBufferMax+1];
+		int nRet=::LoadStringA(GetResourceHandle(bType),uID,pStr,nBufferMax);
+		MultiByteToWideChar(CP_ACP,0,pStr,nRet+1,lpBuffer,nBufferMax);
+		delete[] pStr;
+		return nRet;
+	}
+	return (int)::LoadStringW(GetResourceHandle(bType),uID,lpBuffer,nBufferMax);
 }
 #endif

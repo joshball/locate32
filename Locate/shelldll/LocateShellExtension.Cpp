@@ -12,11 +12,15 @@
 
 #define INC_OLE2        // WIN32, get ole2 from windows.h
 
-#include <windows.h>
+#define _CONSOLE
+#include <hfclib.h>
 #include <windowsx.h>
 #include <shlobj.h>
 
 #define ResultFromShort(i)  ResultFromScode(MAKE_SCODE(SEVERITY_SUCCESS, 0, (USHORT)(i)))
+
+#include "shlwapi.h"
+#pragma comment(lib, "shlwapi.lib")
 
 
 //
@@ -33,9 +37,7 @@
 #include "../lan_resources.h"
 #include "LocateShellExtension.h"
 
-#define _CONSOLE
-#include <hfclib.h>
-
+extern INT IsDirectory(LPCWSTR szDirectoryName);
 
 //
 // Global variables
@@ -43,42 +45,7 @@
 UINT      g_cRefThisDll = 0;    // Reference count of this DLL.
 HINSTANCE g_hmodThisDll = NULL; // Handle to this DLL itself.
 
-/*
-#ifdef _LOGGING
-HANDLE hOutput=NULL;
 
-void DebugMessage(LPCSTR szMessage)
-{
-	if (hOutput==NULL)
-	{
-		hOutput=CreateFile("c:\\lshex-deb.log",GENERIC_WRITE,
-			FILE_SHARE_READ,NULL,
-			OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL,NULL);
-		if (hOutput!=INVALID_HANDLE_VALUE)
-		{
-			SetFilePointer(hOutput,0,NULL,FILE_END);
-			DWORD dwWrite;
-			WriteFile(hOutput,"Logging started\r\n",17,&dwWrite,NULL);
-		}
-		else
-		{
-			hOutput=NULL;
-			return;
-		}
-	}
-
-	DWORD dwWritten;
-	DWORD dwLen=(DWORD)strlen(szMessage);
-	WriteFile(hOutput,szMessage,dwLen,&dwWritten,NULL);
-	
-	if (dwLen>0 && szMessage[dwLen-1]!='\n')
-		WriteFile(hOutput,"\r\n",2,&dwWritten,NULL);
-
-	FlushFileBuffers(hOutput);
-
-}
-#endif
-*/
 
 extern "C" int APIENTRY
 DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
@@ -316,73 +283,165 @@ STDMETHODIMP CLocateShellExtension::Initialize(LPCITEMIDLIST pIDFolder,
                                    LPDATAOBJECT pDataObj,
                                    HKEY hRegKey)
 {
-	char text[2000],szPath[MAX_PATH];
+	DebugFormatMessage("CLocateShellExtension::Initialize(%X,%X,%X)",pIDFolder,pDataObj,hRegKey);
 
-	wsprintf(text,"CLocateShellExtension::Initialize(%X,%X,%X)",pIDFolder,pDataObj,hRegKey);
-	DebugMessage(text);
+	if (pDataObj==NULL)
+		return E_INVALIDARG;
 
-
-	if (SHGetPathFromIDList(pIDFolder,szPath))
+	FORMATETC FormatEtc;
+	STGMEDIUM med;
+	FormatEtc.cfFormat=RegisterClipboardFormat(CFSTR_SHELLIDLIST);
+	FormatEtc.ptd=NULL;
+	FormatEtc.dwAspect=DVASPECT_CONTENT;
+	FormatEtc.lindex=-1;
+    FormatEtc.tymed=TYMED_HGLOBAL;
+	
+	if (pDataObj->GetData(&FormatEtc,&med)==S_OK)
 	{
-		wsprintf(text,"szIDFolder=%s",szPath);
-		DebugMessage(text);
-	}
-	else
-	{
-		DebugMessage("Cannot retrieve path from id list");
-	}
-
-
-	FORMATETC fe;
-	fe.cfFormat=CF_HDROP;
-	fe.ptd=NULL;
-	fe.dwAspect=DVASPECT_CONTENT;
-	fe.lindex=-1;
-	fe.tymed=TYMED_HGLOBAL;
-
-	if (pDataObj->QueryGetData(&fe)==S_OK)
-	{
-		STGMEDIUM med;
-		if (pDataObj->GetData(&fe,&med)==S_OK)
+		// May be computer?
+		IShellFolder *psf;
+		if (!SUCCEEDED(SHGetDesktopFolder(&psf)))
 		{
-			int nCount=DragQueryFile((HDROP)med.hGlobal,0xFFFFFFFF,szPath,MAX_PATH);
-			for (int i=0;i<nCount;i++)
+			DebugMessage("No IShellFolder interface");
+			return E_FAIL;
+		}
+		
+		// Retrieving data from item id list
+		BYTE* pData=(BYTE*)GlobalLock(med.hGlobal);
+		
+		UINT nFiles=((int*)pData)[0];
+		UINT i,nLines=1,nSubIDListLen,nIDListLen;
+		WCHAR szPath[_MAX_PATH];
+
+		nSubIDListLen=GetIDListSize((LPITEMIDLIST)(pData+((int*)pData)[1]))-2;
+		
+		for (i=0;i<nFiles;i++)
+		{
+			nIDListLen=GetIDListSize((LPITEMIDLIST)(pData+((int*)pData)[2+i]));
+
+			// Constructing IDList from parent item and item
+            LPITEMIDLIST pItemIDList=(LPITEMIDLIST)new BYTE[nSubIDListLen+nIDListLen+2];
+			CopyMemory((BYTE*)pItemIDList,(LPCSTR)(pData+((int*)pData)[1]),nSubIDListLen);
+			CopyMemory((BYTE*)(pItemIDList)+nSubIDListLen,(LPCSTR)(pData+((int*)pData)[2+i]),nIDListLen);
+			
+			if (SHGetPathFromIDListW(pItemIDList,szPath))
 			{
-				if (DragQueryFile((HDROP)med.hGlobal,i,szPath,MAX_PATH))
-					DebugMessage(szPath);
+				DebugFormatMessage("SHGetPathFromIDListW gives %s",(LPCSTR)CString(szPath));
+
+				if (IsDirectory(szPath))
+				{
+					WCHAR szTarget[MAX_PATH];
+					switch (GetNethoodTarget(szPath,szTarget,MAX_PATH))
+					{
+					case 1:
+						m_aComputers.Add(alloccopy(szTarget));
+						break;
+					case 2:
+						m_aDirectories.Add(alloccopy(szTarget));
+						break;
+					case 0:
+						m_aDirectories.Add(alloccopy(szPath));
+						break;
+					}
+				}
 				else
-					ODS("DragQueryFile failed");
+					m_aFiles.Add(alloccopy(szPath));
 			}
+			else
+			{
+				DebugHexDump("idlist",(BYTE*)pItemIDList,nSubIDListLen+nIDListLen);
+				
+				STRRET str;
+				if (SUCCEEDED(psf->GetDisplayNameOf(pItemIDList,SHGDN_NORMAL|SHGDN_FORPARSING,&str)))
+				{
+					if (SUCCEEDED(StrRetToBufW(&str,pItemIDList,szPath,MAX_PATH)))
+					{
+						if (szPath[0]!='\\' && szPath[1]!='\\')
+							DebugFormatMessage("Cannot add item %s",szPath);
+						else
+							m_aComputers.Add(alloccopy(szPath));
+					}
+					else
+						DebugMessage("StrRetToStr failed");
+				}
+				else
+					DebugMessage("GetDisplayNameOf failed");
 
-			GlobalFree(med.hGlobal);
+			}
+			
+			delete[] (BYTE*)pItemIDList;
 		}
-		else
-		{
-			ODS("GetData failed");
-		}
+		
+		GlobalUnlock(med.hGlobal);
+		if (med.pUnkForRelease==NULL)
+            GlobalFree(med.hGlobal);
+		else 
+			med.pUnkForRelease->Release();
+	
+		psf->Release();
 	}
-	else
+	else 
 	{
-		ODS("QueryGetData failed");
+		FormatEtc.cfFormat=CF_HDROP;
+		if (m_pDataObj->GetData(&FormatEtc,&med)==S_OK)
+		{
+			LPDROPFILES df=(LPDROPFILES)GlobalLock(med.hGlobal);
+			if (df->fWide)
+			{
+				LPWSTR lpPtr=(LPWSTR)((BYTE*)df+df->pFiles);
+				DWORD nLen;
+				while (nLen=wcslen(lpPtr))
+				{
+					DebugFormatMessage("HDROP contains file %s",(LPCSTR)CString(lpPtr));
+					if (IsDirectory(lpPtr))
+					{
+						WCHAR szTarget[MAX_PATH];
+						switch (GetNethoodTarget(lpPtr,szTarget,MAX_PATH))
+						{
+						case 1:
+							m_aComputers.Add(alloccopy(szTarget));
+							break;
+						case 2:
+							m_aDirectories.Add(alloccopy(szTarget));
+							break;
+						case 0:
+							m_aDirectories.Add(alloccopy(lpPtr,nLen));
+							break;
+						}
+					}
+					else
+						m_aFiles.Add(alloccopy(lpPtr,nLen));
+					
+					lpPtr+=nLen+1;
+				}
+			}
+			else
+			{
+				LPSTR lpPtr=(LPSTR)df+df->pFiles;
+				DWORD nLen;
+				while (nLen=strlen(lpPtr))
+				{
+					LPWSTR lpFile=alloccopyAtoW(lpPtr,nLen);					
+
+					if (IsDirectory(lpFile))
+						m_aDirectories.Add(lpFile);
+					else
+						m_aFiles.Add(lpFile);
+
+					lpPtr+=nLen+1;
+				}
+			}	
+			
+			GlobalUnlock(med.hGlobal);
+			
+			if (med.pUnkForRelease==NULL)
+                GlobalFree(med.hGlobal);
+			else 
+				med.pUnkForRelease->Release();
+		}
 	}
 
-
-	if (hRegKey!=NULL)
-	{
-		LONG cb=MAX_PATH;
-		if (RegQueryValue(hRegKey,"",szPath,&cb)==ERROR_SUCCESS)
-		{
-			ODS("RegKey:");
-			ODS(szPath);
-		}
-		else
-		{
-			ODS("RegQueryValue failed");
-		}
-	}
-
-
-
+	
     // Initialize can be called more than once
 
     if (m_pDataObj)

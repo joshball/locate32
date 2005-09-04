@@ -458,53 +458,53 @@ BEGIN
                     15
 END
 
-IDD_DATABASEDIALOG DIALOGEX 0, 0, 264, 329
+IDD_DATABASEDIALOG DIALOGEX 0, 0, 274, 345
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Database"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    CONTROL         "&Enable",IDC_ENABLE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,11,58,11
-    CONTROL         "Update &Globally",IDC_GLOBALUPDATE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,76,11,88,11
-    CONTROL         "&Incremental Update",IDC_INCREMENTALUPDATE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,166,11,89,11
-	LTEXT           "&Name:",IDC_STATIC,7,31,44,9
-    EDITTEXT        IDC_NAME,50,28,125,14,ES_AUTOHSCROLL
-    RTEXT           "T&hread:",IDC_STATIC,176,32,47,10
-    COMBOBOX        IDC_USEDTHREAD,225,30,32,52,CBS_DROPDOWNLIST | CBS_SORT | 
+    GROUPBOX        "Database settings:",IDC_STATIC,2,0,270,88
+    CONTROL         "&Enable",IDC_ENABLE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,11,58,11
+    RTEXT           "T&hread:",IDC_STATIC,182,11,47,11
+    COMBOBOX        IDC_USEDTHREAD,233,9,32,52,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Update &Globally",IDC_GLOBALUPDATE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,76,11,88,11
+    LTEXT           "&Name:",IDC_STATIC,7,31,44,9
+    EDITTEXT        IDC_NAME,50,28,148,14,ES_AUTOHSCROLL
     LTEXT           "&File:",IDC_STATIC,7,50,34,9
-    EDITTEXT        IDC_DBFILE,50,47,140,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "&Browse",IDC_BROWSE,198,46,60,14
-    LTEXT           "Crea&tor:",IDC_STATIC,7,81,126,9
-    EDITTEXT        IDC_CREATOR,6,92,251,14,ES_AUTOHSCROLL
-    LTEXT           "D&escription:",IDC_STATIC,7,111,148,8
-    EDITTEXT        IDC_DESCRIPTION,6,122,251,38,ES_MULTILINE | 
+    EDITTEXT        IDC_DBFILE,50,47,148,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "&Browse",IDC_BROWSE,205,46,60,14
+    CONTROL         "&Do not owerwrite existing data (e.g, use for cataloguing CD-ROMs)",
+                    IDC_INCREMENTALUPDATE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,67,256,11
+    GROUPBOX        "Information:",IDC_STATIC,2,91,270,94
+    LTEXT           "Crea&tor:",IDC_STATIC,7,101,126,9
+    EDITTEXT        IDC_CREATOR,7,112,257,14,ES_AUTOHSCROLL
+    LTEXT           "D&escription:",IDC_STATIC,7,131,148,8
+    EDITTEXT        IDC_DESCRIPTION,7,142,257,38,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_VSCROLL
-    CONTROL         "Check &local drives",IDC_LOCALDRIVES,
-                    "Button",BS_AUTORADIOBUTTON,7,179,105,10
-    CONTROL         "&Custom",IDC_CUSTOMDRIVES,"Button",
-                    BS_AUTORADIOBUTTON,129,179,70,10
+    GROUPBOX        "Include:",IDC_STATIC,2,187,270,140
+    CONTROL         "Check &local drives",IDC_LOCALDRIVES,"Button",
+                    BS_AUTORADIOBUTTON,7,200,105,10
+    CONTROL         "&Custom",IDC_CUSTOMDRIVES,"Button",BS_AUTORADIOBUTTON,
+                    129,200,70,10
+    LTEXT           "Drives and Directories:",8,8,230,106,8
+    PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,129,227,65,13
+    PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,199,227,65,13
     CONTROL         "&Stop if root unavailable",IDC_STOPIFROOTUNAVAILABLE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,194,160,10
-    PUSHBUTTON      "&Exclude Directories",IDC_EXCLUDEDIRECTORIES,173,191,85,
-                    13
-    LTEXT           "Drives and Directories:",8,8,209,106,8
-    PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,123,206,65,
-                    13
-    PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,193,206,65,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,213,160,10
+    PUSHBUTTON      "&Exclude Directories",IDC_EXCLUDEDIRECTORIES,179,211,85,
                     13
     CONTROL         "",IDC_FOLDERS,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SHAREIMAGELISTS | LVS_NOSORTHEADER | 
-                    WS_BORDER | WS_TABSTOP,7,220,251,82
-    PUSHBUTTON      "OK",IDC_OK,123,312,65,13
-    PUSHBUTTON      "Cancel",IDC_CANCEL,193,312,65,13
-    GROUPBOX        "Database settings:",IDC_STATIC,2,0,
-                    261,67
-    GROUPBOX        "Information:",IDC_STATIC,2,71,261,94
-    GROUPBOX        "Include:",IDC_STATIC,2,167,261,141
+                    WS_BORDER | WS_TABSTOP,7,241,257,82
+    PUSHBUTTON      "OK",IDC_OK,123,329,65,13
+    PUSHBUTTON      "Cancel",IDC_CANCEL,193,329,65,13
 END
+
+
 
 IDD_EXCLUDEDIRECTORIES DIALOGEX 0, 0, 264, 178
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU

@@ -1336,9 +1336,20 @@ inline BOOL CListCtrl::GetItem(LV_ITEM* pItem) const
 	return ::SendMessage(m_hWnd,LVM_GETITEM,0,(LPARAM)pItem);
 }
 
+
+inline BOOL CListCtrl::GetItem(LV_ITEMW* pItem) const
+{
+	return ::SendMessage(m_hWnd,LVM_GETITEMW,0,(LPARAM)pItem);
+}
+
 inline BOOL CListCtrl::SetItem(const LV_ITEM* pItem)
 {
 	return ::SendMessage(m_hWnd,LVM_SETITEM,0,(LPARAM)pItem);
+}
+
+inline BOOL CListCtrl::SetItem(const LV_ITEMW* pItem)
+{
+	return ::SendMessage(m_hWnd,LVM_SETITEMW,0,(LPARAM)pItem);
 }
 
 inline UINT CListCtrl::GetCallbackMask() const
@@ -1459,6 +1470,11 @@ inline UINT CListCtrl::GetSelectedCount() const
 inline int CListCtrl::InsertItem(const LV_ITEM* pItem)
 {
 	return ::SendMessage(m_hWnd,LVM_INSERTITEM,0,(LPARAM)pItem);
+}
+
+inline int CListCtrl::InsertItem(const LV_ITEMW* pItem)
+{
+	return ::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)pItem);
 }
 
 inline BOOL CListCtrl::DeleteItem(int nItem)

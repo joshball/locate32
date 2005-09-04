@@ -2257,12 +2257,12 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 				if (pPtr[0]=='\\' && pPtr[1]=='\\')
 				{
 					if (!CFile::IsDirectory(pPtr))
-						AddComputerToList(pPtr);
+						AddComputerToList(CStringW(pPtr));
 					else
-						AddDirectoryToList(pPtr,dwLength);
+						AddDirectoryToList(CStringW(pPtr),dwLength);
 				}			
 				else
-					AddDirectoryToList(pPtr,dwLength);
+					AddDirectoryToList(CStringW(pPtr),dwLength);
 			}
 			else if (pPtr[1]==':')
 			{
@@ -2495,7 +2495,6 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 	EndDialog(1);
 }
 
-
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 {
 	CWaitCursor wait;
@@ -2505,12 +2504,115 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 	if (fd.DoModal(*this))
 	{
 		// Insert folder to list
-		CString Folder;
-		if (!fd.GetFolder(Folder))
-			AddComputerToList(fd.m_lpil);
+		CStringW Folder;
+		if (fd.GetFolder(Folder))
+		{
+			WCHAR szNetHood[MAX_PATH];
+			switch (GetNethoodTarget(Folder,szNetHood,MAX_PATH))
+			{
+			case 1:
+				AddComputerToList(szNetHood);
+				break;
+			case 2:
+				AddDirectoryToListWithVerify(szNetHood);
+				break;
+			case 0:
+				AddDirectoryToListWithVerify(Folder);
+				break;
+			}
+		}
 		else
-			AddDirectoryToListWithVerify(Folder);
+		{
+			// Checking type of folder
+			IShellFolder *psf=NULL;
+
+			try {
+				HRESULT hRes=SHGetDesktopFolder(&psf);
+	            if (!SUCCEEDED(hRes))
+					throw COleException(hRes);
+
+					
+				SHDESCRIPTIONID di;
+				hRes=SHGetDataFromIDList(psf,fd.m_lpil,SHGDFIL_DESCRIPTIONID,&di,sizeof(SHDESCRIPTIONID));
+				if (!SUCCEEDED(hRes))
+					throw COleException(hRes);
+
+				
+			
+				if (di.clsid==CLSID_NetworkPlaces)
+				{			
+					STRRET str;
+					hRes=psf->GetDisplayNameOf(fd.m_lpil,SHGDN_NORMAL | SHGDN_FORPARSING,&str);
+					
+					if (!SUCCEEDED(hRes))
+						throw COleException(hRes);
+
+								
+					switch (str.uType)
+					{
+					case STRRET_CSTR:
+						if (str.cStr[0]!='\\' && str.cStr[1]!='\\')
+						{
+							if (str.cStr[0]==':' && str.cStr[1]==':')
+								ShowErrorMessage(IDS_ERRORCANNOTADDITEM,IDS_ERROR,MB_ICONERROR|MB_OK);
+							else
+							{
+								CString s;
+								s.Format(IDS_ERRORCANNOTADDITEM2,str.cStr);
+								MessageBox(s,CString(IDS_ERROR),MB_ICONERROR|MB_OK);
+							}
+							return;
+						}
+						AddComputerToList(CStringW(str.cStr));
+						break;
+					case STRRET_WSTR:
+						if (str.pOleStr[0]!=L'\\' && str.pOleStr[1]!=L'\\')
+						{
+							if (str.pOleStr[0]==L':' && str.pOleStr[1]==L':')
+								ShowErrorMessage(IDS_ERRORCANNOTADDITEM,IDS_ERROR,MB_ICONERROR|MB_OK);
+							else
+							{
+								CStringW s;
+								s.Format(IDS_ERRORCANNOTADDITEM2,str.pOleStr);
+								MessageBox(s,CStringW(IDS_ERROR),MB_ICONERROR|MB_OK);
+							}
+							return;
+						}
+						AddComputerToList(str.pOleStr);
+						break;
+					default:
+						throw CException(CException::unknown);
+					}
+				}
+                else
+					throw FALSE;
+
+
 		
+			}
+			catch (COleException exp)
+			{
+	#ifdef _DEBUG_LOGGING
+				char error[1000];
+				exp.GetErrorMessage(error,1000);
+				DebugFormatMessage("CDatabaseDialog::OnAddFolder() throwed OLE exception: %s",error);
+	#endif
+				ShowErrorMessage(IDS_ERRORCANNOTADDITEM,IDS_ERROR,MB_ICONERROR|MB_OK);
+			}
+			catch (...)
+			{
+				DebugMessage("CDatabaseDialog::OnAddFolder() throwed unknown exception");
+
+				ShowErrorMessage(IDS_ERRORCANNOTADDITEM,IDS_ERROR,MB_ICONERROR|MB_OK);
+			}
+
+			if (psf!=NULL)
+				psf->Release();
+
+			
+			
+		}
+
 		// Setting focus to list
 		m_pList->SetFocus();
 	}
@@ -2740,9 +2842,9 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	return li.iItem;
 }
 
-int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryToListWithVerify(LPCSTR szFolder,int iLength)
+int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryToListWithVerify(LPCWSTR szFolder,int iLength)
 {
-	CString rFolder(szFolder,iLength);
+	CStringW rFolder(szFolder,iLength);
 
 	// Checks  wherther rPath is OK i.e. removes \ at end
 	// Further, checks whether folder is already in list 
@@ -2753,11 +2855,11 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 	while (rFolder.LastChar()=='\\')
 		rFolder.DelLastChar();
 
-	LVITEM li;
+	LVITEMW li;
 	li.iItem=m_pList->GetNextItem(-1,LVNI_ALL);
 	while (li.iItem!=-1)
 	{
-		char szPath[MAX_PATH];
+		WCHAR szPath[MAX_PATH];
 		li.mask=LVIF_TEXT;
 		li.iSubItem=1;
 		li.pszText=szPath;
@@ -2765,9 +2867,9 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 		m_pList->GetItem(&li);
 		if (rFolder.CompareNoCase(szPath)==0)
 		{
-			CString str;
-			str.Format(IDS_FOLDEREXIST,(LPCSTR)rFolder);
-			MessageBox(str,CString(IDS_ADDFOLDER),MB_ICONINFORMATION|MB_OK);
+			CStringW str;
+			str.Format(IDS_FOLDEREXIST,(LPCWSTR)rFolder);
+			MessageBox(str,CStringW(IDS_ADDFOLDER),MB_ICONINFORMATION|MB_OK);
 			m_pList->SetFocus();
 			m_pList->SetCheckState(li.iItem,TRUE);
 			m_pList->EnsureVisible(li.iItem,FALSE);
@@ -2782,29 +2884,28 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 }
 
 		
-int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryToList(LPCSTR szPath,int iLength)
+int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryToList(LPCWSTR szPath,int iLength)
 {
 	if (iLength==-1)
 		dstrlen(szPath,iLength);
 	
-	char szLabel[20],szFileSystem[20];
+	WCHAR szLabel[20],szFileSystem[20];
 	
 	// Resolving label
-	UINT nOldMode=SetErrorMode(SEM_FAILCRITICALERRORS);
 	DWORD dwTemp;
-	LVITEM li;
+	LVITEMW li;
 	li.iItem=m_pList->GetItemCount();
 
-	CString Drive;
+	CStringW Drive;
 	if (szPath[1]==':')
 		Drive << szPath[0] << ":\\";
 	else
 	{
-		int nIndex=FirstCharIndex(szPath,'\\');
-		if (nIndex==-1 || szPath[nIndex+1]!='\\')
+		int nIndex=FirstCharIndex(szPath,L'\\');
+		if (nIndex==-1 || szPath[nIndex+1]!=L'\\')
 			return -1;
 		
-		nIndex=NextCharIndex(szPath,'\\',nIndex+1);
+		nIndex=NextCharIndex(szPath,L'\\',nIndex+1);
 		if (nIndex==-1)
 		{
 			Drive.Copy(szPath,iLength);
@@ -2813,55 +2914,84 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 		else
 			Drive.Copy(szPath,nIndex+1);
 	}
-	if (!GetVolumeInformation(Drive,szLabel,20,&dwTemp,&dwTemp,&dwTemp,szFileSystem,20))
-		szFileSystem[0]='\0';
-	SetErrorMode(nOldMode);
-
-	// Resolving icon,
-	SHFILEINFO fi;
-	if (SHGetFileInfo(szPath,0,&fi,sizeof(SHFILEINFO),SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+	
+	
+	
+	UINT nOldMode=SetErrorMode(SEM_FAILCRITICALERRORS);
+	if (IsFullUnicodeSupport())
 	{
-		
-		// Label
-		li.mask=LVIF_TEXT|LVIF_IMAGE;
-		li.iImage=fi.iIcon;
-		li.iSubItem=0;
-		li.pszText=fi.szDisplayName;
-		m_pList->InsertItem(&li);
-
-		// Path
-		li.mask=LVIF_TEXT;
-		li.iSubItem=1;
-		li.pszText=const_cast<LPSTR>(szPath);
-		m_pList->SetItem(&li);
-		
-		// Type
-		LoadString(IDS_VOLUMETYPEDIRECTORY,szLabel,20);
-		li.pszText=szLabel;
-		li.iSubItem=2;
-		m_pList->SetItem(&li);
-		
-		// FS
-		li.pszText=szFileSystem;
-		li.iSubItem=3;
-		m_pList->SetItem(&li);
+		if (!GetVolumeInformationW(Drive,szLabel,20,&dwTemp,&dwTemp,&dwTemp,szFileSystem,20))
+			szFileSystem[0]='\0';
 	}
 	else
 	{
-		// Label
-		li.mask=LVIF_TEXT|LVIF_IMAGE;
-		li.iImage=DEL_IMAGE;
-		li.iSubItem=0;
-		li.pszText=const_cast<LPSTR>(szEmpty);
-		m_pList->InsertItem(&li);
+		CHAR szLabelA[20],szFileSystemA[20];
+		if (!GetVolumeInformation(CString(Drive),szLabelA,20,&dwTemp,&dwTemp,&dwTemp,szFileSystemA,20))
+			szFileSystem[0]=L'\0';
+		else
+			MultiByteToWideChar(CP_ACP,0,szFileSystemA,-1,szFileSystem,20);
+			
+	}
+	SetErrorMode(nOldMode);
 
-		// Path
-		li.mask=LVIF_TEXT;
-		li.iSubItem=1;
-		li.pszText=const_cast<LPSTR>(szPath);
-		m_pList->SetItem(&li);
+	// Resolving icon,
+	li.mask=LVIF_TEXT|LVIF_IMAGE;
+	li.iSubItem=0;
+		
+	if (IsFullUnicodeSupport())
+	{
+		SHFILEINFOW fi;
+	    if (SHGetFileInfoW(szPath,0,&fi,sizeof(SHFILEINFOW),SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+		{
+			// Label
+			li.iImage=fi.iIcon;
+			li.pszText=fi.szDisplayName;
+		}
+		else
+		{
+			// Label
+			li.iImage=DEL_IMAGE;
+			li.pszText=const_cast<LPWSTR>(szwEmpty);
+		}
+		m_pList->InsertItem(&li);
+	}
+	else
+	{
+		SHFILEINFO fi;
+		if (SHGetFileInfo(CString(szPath),0,&fi,sizeof(SHFILEINFO),SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+		{
+			// Label
+			li.iImage=fi.iIcon;
+			CStringW str(fi.szDisplayName);
+			li.pszText=str.GiveBuffer();
+			m_pList->InsertItem(&li);
+		}
+		else
+		{
+			// Label
+			li.iImage=DEL_IMAGE;
+			li.pszText=const_cast<LPWSTR>(szwEmpty);
+			m_pList->InsertItem(&li);
+		}		
 	}
 	
+	// Path
+	li.mask=LVIF_TEXT;
+	li.iSubItem=1;
+	li.pszText=const_cast<LPWSTR>(szPath);
+	m_pList->SetItem(&li);
+
+	// Type
+	LoadString(IDS_VOLUMETYPEDIRECTORY,szLabel,20);
+	li.pszText=szLabel;
+	li.iSubItem=2;
+	m_pList->SetItem(&li);
+	
+	// FS
+	li.pszText=szFileSystem;
+	li.iSubItem=3;
+	m_pList->SetItem(&li);
+
 	m_pList->SetCheckState(li.iItem,TRUE);
 	return li.iItem;
 }
@@ -2891,39 +3021,20 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::EnableRemoveB
 
 
 
-int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToList(LPITEMIDLIST lpiil)
+
+
+
+int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToList(LPCWSTR szName)
 {
-	char szName[500];
-	if (!GetDisplayNameFromIDList(lpiil,szName,500))
-		return -1;
-
-
-	// if szName does not start with "\\", name is not server
-	if (szName[0]!='\\' && szName[1]!='\\')
-	{
-		CString str;
-		if (szName[0]==':' && szName[1]==':')
-			str.LoadString(IDS_ERRORCANNOTADDITEM);
-		else
-			str.Format(IDS_ERRORCANNOTADDITEM2,szName);
-		MessageBox(str,CString(IDS_ERROR),MB_ICONERROR|MB_OK);
-		return -1;
-	}
-
-	return AddComputerToList(szName);
-}
-
-int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToList(LPCSTR szName)
-{
-	char szLabel[100];
+	WCHAR szLabel[100];
 	
 	// Resolving label
-	LVITEM li;
+	LVITEMW li;
 	li.iItem=m_pList->GetItemCount();
 
 	// Resolving icon,
-	SHFILEINFO fi;
-	if (SHGetFileInfo(szName,0,&fi,sizeof(SHFILEINFO),SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+	SHFILEINFOW fi;
+	if (SHGetFileInfoW(szName,0,&fi,sizeof(SHFILEINFO),SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
 		li.iImage=fi.iIcon;
 	else
 		return -1;
@@ -2938,7 +3049,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToL
 	// Path
 	li.mask=LVIF_TEXT;
 	li.iSubItem=1;
-	li.pszText=const_cast<LPSTR>(szName);
+	li.pszText=const_cast<LPWSTR>(szName);
 	m_pList->SetItem(&li);
 	
 	// Type
