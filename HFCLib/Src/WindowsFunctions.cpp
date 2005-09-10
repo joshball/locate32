@@ -26,7 +26,7 @@ BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		return Wnd->OnNcCreate((LPCREATESTRUCT)lParam);
 	}
 	Wnd=(CWnd*)GetWindowLong(hWnd,GWL_USERDATA);
-	if (Wnd!=NULL)
+    if (Wnd!=NULL)
 	{
 		switch(msg)
 		{
@@ -119,6 +119,7 @@ BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		case WM_NCACTIVATE:
 			return Wnd->OnNcActivate((BOOL)wParam);
 		case WM_NCDESTROY:
+			DebugNumMessage("WM_NCDESTROY, Wnd=%X",DWORD(Wnd));
 			Wnd->OnNcDestroy();
 			return 0;
 		case WM_NOTIFY:

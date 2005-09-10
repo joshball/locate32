@@ -212,6 +212,8 @@ BOOL CLocater::LocatingProc()
 	InterlockedExchange(&m_lForceQuit,FALSE);
 #endif
 	m_dwFoundFiles=0;
+	m_dwFoundDirectories=0;
+
 	m_pProc(m_dwData,Initializing,ueStillWorking,0,this);
 	DWORD nPathLen;
 
@@ -291,17 +293,24 @@ BOOL CLocater::LocatingProc()
 				// There is directories in which files should be
 
 				dbFile->Read(dwBlockSize);
+
+				LocaterDebugMessage("CLocater::LocatingProc() block size readed A");
+
 				while (dwBlockSize>0
 	#ifdef WIN32
 					&& !m_lForceQuit
 	#endif
 				)
 				{
-					m_pProc(m_dwData,RootChanged,ueStillWorking,m_dwFoundFiles,this);
+					LocaterDebugMessage("CLocater::LocatingProc() new root");
+
+					m_pProc(m_dwData,RootChanged,ueStillWorking,0,this);
 					
 					// Reading type data
+					LocaterDebugMessage("CLocater::LocatingProc() read block");
 					dbFile->Read(m_bCurrentRootType);
-								
+					LocaterDebugMessage("CLocater::LocatingProc() block readed");
+			
 					
 					// Reading path
 					{
@@ -322,7 +331,9 @@ BOOL CLocater::LocatingProc()
 	#endif
 						dwBlockSize-=nPathLen+1+1; // second 1 is type
 					}
+					
 					ValidType vtType=IsRootValid(nPathLen);
+					LocaterDebugNumMessage("CLocater::LocatingProc() vtType=%X",DWORD(vtType));
 					
 					if (vtType!=NoValidFolders)
 					{
@@ -349,7 +360,7 @@ BOOL CLocater::LocatingProc()
 						pPoint+=2*sizeof(DWORD);
 
 						// Telling that volume information is available
-						m_pProc(m_dwData,RootInformationAvail,ueStillWorking,m_dwFoundFiles,this);
+						m_pProc(m_dwData,RootInformationAvail,ueStillWorking,0,this);
 					
 						// OK, now we are beginning of folder data
 						if (vtType==ValidFolders)
@@ -361,6 +372,7 @@ BOOL CLocater::LocatingProc()
 					else // Skipping root
 						dbFile->Seek(dwBlockSize,CFile::current);
 				
+					LocaterDebugMessage("CLocater::LocatingProc() reading next root");
 				
 					// New root
 					m_wCurrentRootIndex++;
@@ -371,6 +383,8 @@ BOOL CLocater::LocatingProc()
 			{
 				// No restrinctions about directories
 				dbFile->Read(dwBlockSize);
+
+				LocaterDebugMessage("CLocater::LocatingProc() block size readed B");
 				
 				while (dwBlockSize>0
 	#ifdef WIN32
@@ -378,7 +392,9 @@ BOOL CLocater::LocatingProc()
 	#endif
 				)
 				{
-					m_pProc(m_dwData,RootChanged,ueStillWorking,m_dwFoundFiles,this);
+					LocaterDebugMessage("CLocater::LocatingProc() 1");
+
+					m_pProc(m_dwData,RootChanged,ueStillWorking,0,this);
 				
 					// Reading type data
 					dbFile->Read(m_bCurrentRootType);
@@ -403,6 +419,8 @@ BOOL CLocater::LocatingProc()
 					pPoint=szBuffer=new BYTE[dwBlockSize];
 					dbFile->Read(szBuffer,dwBlockSize);
 
+					LocaterDebugMessage("CLocater::LocatingProc() 2");
+
 					// Resolving volume name 
 					m_szVolumeName=(LPCSTR)pPoint;
 					for (;*pPoint!='\0';pPoint++);
@@ -416,16 +434,20 @@ BOOL CLocater::LocatingProc()
 					m_szFileSystem=(LPCSTR)pPoint;
 					for (;*pPoint!='\0';pPoint++);
 					pPoint++;
+
+					LocaterDebugMessage("CLocater::LocatingProc() 3");
 					
 					// Skipping the number of files and directories
 					pPoint+=2*sizeof(DWORD);
 
 					// Telling that volume information is available
-					m_pProc(m_dwData,RootInformationAvail,ueStillWorking,m_dwFoundFiles,this);
+					m_pProc(m_dwData,RootInformationAvail,ueStillWorking,0,this);
 					
 					// OK, now we are at the beginning of folder data
 					CheckFolder(nPathLen);
 					
+					LocaterDebugMessage("CLocater::LocatingProc() reading next root");
+
 					// New root
 					m_wCurrentRootIndex++;
 					dbFile->Read(dwBlockSize);
@@ -449,7 +471,7 @@ BOOL CLocater::LocatingProc()
 				if (m_pCurrentDatabase!=NULL)
 					DebugFormatMessage("FILEOPEN/BADPATH/NOTFOUND: %s",m_pCurrentDatabase->szArchive);
 #endif
-				m_pProc(m_dwData,ErrorOccured,ueResult=ueOpen,m_dwFoundFiles,this);
+				m_pProc(m_dwData,ErrorOccured,ueResult=ueOpen,0,this);
 				break;
 			case CFileException::readFault:
 			case CFileException::fileCorrupt:
@@ -460,7 +482,7 @@ BOOL CLocater::LocatingProc()
 				if (m_pCurrentDatabase!=NULL)
 					DebugFormatMessage("READFAULT/CORRUPT/SHARING/LOCK: %s",m_pCurrentDatabase->szArchive);
 #endif
-				m_pProc(m_dwData,ErrorOccured,ueResult=ueRead,m_dwFoundFiles,this);
+				m_pProc(m_dwData,ErrorOccured,ueResult=ueRead,0,this);
 				break;
 			case CFileException::endOfFile:
 			case CFileException::badSeek:
@@ -469,15 +491,15 @@ BOOL CLocater::LocatingProc()
 				if (m_pCurrentDatabase!=NULL)
 					DebugFormatMessage("EOF/BADSEEK/INVALID: %s",m_pCurrentDatabase->szArchive);
 #endif
-				m_pProc(m_dwData,ErrorOccured,ueResult=ueInvalidDatabase,m_dwFoundFiles,this);
+				m_pProc(m_dwData,ErrorOccured,ueResult=ueInvalidDatabase,0,this);
 				break;
 			default:
 #ifdef _DEBUG
 				if (m_pCurrentDatabase!=NULL)
 					DebugFormatMessage("UNKNOWN: %s",m_pCurrentDatabase->szArchive);
 #endif
-				m_pProc(m_dwData,ErrorOccured,ueResult=ueInvalidDatabase,m_dwFoundFiles,this);
-				m_pProc(m_dwData,ErrorOccured,ueResult=ueUnknown,m_dwFoundFiles,this);
+				m_pProc(m_dwData,ErrorOccured,ueResult=ueInvalidDatabase,0,this);
+				m_pProc(m_dwData,ErrorOccured,ueResult=ueUnknown,0,this);
 				break;
 			}
 		}
@@ -486,13 +508,13 @@ BOOL CLocater::LocatingProc()
 			switch (ex.m_cause)
 			{
 			case CException::cannotAllocate:
-				m_pProc(m_dwData,ErrorOccured,ueResult=ueAlloc,m_dwFoundFiles,this);
+				m_pProc(m_dwData,ErrorOccured,ueResult=ueAlloc,0,this);
 				break;
 			case CException::none:
 				// No error, LocateFoundProc returned FALSE
 				break;
 			default:
-				m_pProc(m_dwData,ErrorOccured,ueResult=ueUnknown,m_dwFoundFiles,this);
+				m_pProc(m_dwData,ErrorOccured,ueResult=ueUnknown,0,this);
 				break;
 			}
 		}
@@ -501,11 +523,11 @@ BOOL CLocater::LocatingProc()
 			if (ue==ueLimitReached)
 				ueResult=ueLimitReached;
 			else if (ue!=ueSuccess && ue!=ueStillWorking && ue!=ueFolderUnavailable)
-				m_pProc(m_dwData,ErrorOccured,ueResult=ue,m_dwFoundFiles,this);
+				m_pProc(m_dwData,ErrorOccured,ueResult=ue,0,this);
 		}
 		catch (...)
 		{
-			m_pProc(m_dwData,ErrorOccured,ueResult=ueUnknown,m_dwFoundFiles,this);
+			m_pProc(m_dwData,ErrorOccured,ueResult=ueUnknown,0,this);
 		}
 		
 		
@@ -524,8 +546,8 @@ BOOL CLocater::LocatingProc()
 		dbFile=NULL;
 	}
 	
-	m_pProc(m_dwData,FinishedLocating,ueResult,m_dwFoundFiles,this);
-	m_pProc(m_dwData,ClassShouldDelete,ueResult,m_dwFoundFiles,this);
+	m_pProc(m_dwData,FinishedLocating,ueResult,0,this);
+	m_pProc(m_dwData,ClassShouldDelete,ueResult,0,this);
 	
 	// This class is deleted in the previous call, do not access this
 	
@@ -727,11 +749,11 @@ BOOL CLocater::StopLocating()
 				bRet=::GetExitCodeThread(hThread,&status);
 			}
 			
-			m_pProc(m_dwData,FinishedDatabase,ueStopped,m_dwFoundFiles,this);
-			m_pProc(m_dwData,FinishedLocating,ueStopped,m_dwFoundFiles,this);
+			m_pProc(m_dwData,FinishedDatabase,ueStopped,0,this);
+			m_pProc(m_dwData,FinishedLocating,ueStopped,0,this);
 			
 			if (m_hThread!=NULL)
-				m_pProc(m_dwData,ClassShouldDelete,ueStopped,m_dwFoundFiles,this);
+				m_pProc(m_dwData,ClassShouldDelete,ueStopped,0,this);
 			
 		}
 	}
@@ -1122,9 +1144,9 @@ inline BOOL CLocater::IsFileAdvancedWhatAreWeLookingFor() const
 		CopyMemory(szPath+GetCurrentPathLen()+1,GetFileName(),GetFileNameLen()+1);
 		
 		// Searching
-		m_pProc(m_dwData,SearchingStarted,ueStillWorking,m_dwFoundFiles,this);
+		m_pProc(m_dwData,SearchingStarted,ueStillWorking,0,this);
 		BOOL bRet=m_pContentSearcher->Search(szPath);
-		m_pProc(m_dwData,SearchingEnded,ueSuccess,m_dwFoundFiles,this);
+		m_pProc(m_dwData,SearchingEnded,ueSuccess,0,this);
 		m_pContentSearcher->CloseFile();
 		return bRet;
 	}
@@ -1275,8 +1297,8 @@ void CLocater::CheckFolder(DWORD nPathLen)
 						if (!m_pCurrentFoundProc(m_dwData,TRUE,this))
 							throw CException(CException::none);
 
-						m_dwFoundFiles++;
-						if (m_dwFoundFiles>=m_dwMaxFoundFiles)
+						m_dwFoundDirectories++;
+						if (m_dwFoundFiles+m_dwFoundDirectories>=m_dwMaxFoundFiles)
 							throw ueLimitReached;
 					}
 				}
@@ -1309,7 +1331,7 @@ void CLocater::CheckFolder(DWORD nPathLen)
 							throw CException(CException::none);
 						
 						m_dwFoundFiles++;
-						if (m_dwFoundFiles>=m_dwMaxFoundFiles)
+						if (m_dwFoundFiles+m_dwFoundDirectories>=m_dwMaxFoundFiles)
 							throw ueLimitReached;
 					}
 				}

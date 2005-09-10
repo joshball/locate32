@@ -141,7 +141,7 @@ void GetFromDB(char* own,char* szPath)
 #endif
 */
     
-BOOL CALLBACK LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ue,DWORD dwFoundFiles,const CLocater* pLocater)
+BOOL CALLBACK LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ue,DWORD dwInfo,const CLocater* pLocater)
 {          
 	switch (crReason)
 	{
@@ -811,7 +811,7 @@ int main (int argc,char * argv[])
 
 
 	if (options.verbose)
-		printf(CString(IDS_LOCATEVERBOSEFOUNDFILES),locater.GetFoundFiles());
+		printf(CString(IDS_LOCATEVERBOSEFOUNDFILES),locater.GetNumberOfResults());
 
 	if (pContainData!=NULL)
 		free(pContainData);

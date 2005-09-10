@@ -69,6 +69,7 @@ extern LPSTR g_szBuffer;
 #define ID_IDLEEXIT					2
 
 
+
 // Include other files
 #include "Debugging.h"
 

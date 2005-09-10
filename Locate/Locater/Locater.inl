@@ -297,9 +297,19 @@ inline DWORD CLocater::GetCurrentPathLen() const
 	return dwCurrentPathLen;
 }
 	
-inline DWORD CLocater::GetFoundFiles() const
+inline DWORD CLocater::GetNumberOfResults() const
+{
+	return m_dwFoundFiles+m_dwFoundDirectories;
+}
+
+inline DWORD CLocater::GetNumberOfFoundFiles() const
 {
 	return m_dwFoundFiles;
+}
+
+inline DWORD CLocater::GetNumberOfFoundDirectories() const
+{
+	return m_dwFoundDirectories;
 }
 
 inline BYTE CLocater::GetFolderAttributes() const

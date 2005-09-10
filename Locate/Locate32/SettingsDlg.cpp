@@ -782,6 +782,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CLocateDlg::fgLVDontShowHiddenFiles,&m_pSettings->m_dwLocateDialogFlags),
 		CreateCheckBox(IDS_ADVSETNODOUBLERESULTS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLVNoDoubleItems,&m_pSettings->m_dwLocateDialogFlags),
+		CreateCheckBox(IDS_ADVSETFOLDERSFIRST,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVFoldersFirst,&m_pSettings->m_dwLocateDialogFlags),
 		CreateComboBox(IDS_ADVSETSHOWDATESINFORMAT,DateFormatComboProc,0,0),
 		CreateComboBox(IDS_ADVSETSHOWTIMESINFORMAT,TimeFormatComboProc,0,0),
 		CreateListBox(IDS_ADVSETSHOWFILESIZESINFORMAT,FileSizeListProc,0,&m_pSettings->m_nFileSizeFormat),
@@ -2590,15 +2592,15 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 
 		
 			}
+	#ifdef _DEBUG_LOGGING
 			catch (COleException exp)
 			{
-	#ifdef _DEBUG_LOGGING
 				char error[1000];
 				exp.GetErrorMessage(error,1000);
 				DebugFormatMessage("CDatabaseDialog::OnAddFolder() throwed OLE exception: %s",error);
-	#endif
 				ShowErrorMessage(IDS_ERRORCANNOTADDITEM,IDS_ERROR,MB_ICONERROR|MB_OK);
 			}
+	#endif
 			catch (...)
 			{
 				DebugMessage("CDatabaseDialog::OnAddFolder() throwed unknown exception");

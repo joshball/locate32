@@ -15,9 +15,8 @@ public:
 		NullControl = 0,
 		
 		// Next and previous control
-		NextControl = MAKELONG(IDC_PTAB,~IDS_KEYNEXTCONTROL),
-		PrevControl = MAKELONG(IDC_PUNTAB,~IDS_KEYPREVCONTROL),
-
+		NextControl = MAKELONG(IDC_NEXTCONTROL,~IDS_KEYNEXTCONTROL),
+		PrevControl = MAKELONG(IDC_PREVCONTROL,~IDS_KEYPREVCONTROL),
 
 		// Dialog itself
 		FindNow = MAKELONG(IDC_OK,IDC_OK),
@@ -142,8 +141,10 @@ public:
 		NameAndLocationTab = 0,
 		SizeAndDataTab = 1,
 		AdvancedTab = 2,
+		NextTab = 3,
+		PrevTab = 4,
 
-		ActivateTabsLast = AdvancedTab
+		ActivateTabsLast = PrevTab
 	};
 
 	enum ActionShowHideDialog {

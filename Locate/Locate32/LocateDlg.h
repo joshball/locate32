@@ -5,6 +5,8 @@
 #pragma once
 #endif 
 
+#define LOCATEDIALOG_TABS	3
+
 // This should be in SmallDialogs.h, but SmallDialog.h needs LocateDlg.h to be specified
 class CSavePresetDlg: public CDialog  
 {
@@ -151,7 +153,7 @@ public:
 		
 	public:
 		BOOL OnOk(CString& sName,CArray<LPSTR>& aExtensions,CArrayFAP<LPSTR>& aDirectories);
-		void OnClear();
+		void OnClear(BOOL bInitial=FALSE);
 
 		void OnMoreDirectories();
 		void OnLookInNewSelection();
@@ -161,6 +163,8 @@ public:
 		void LookInChangeSelection(int nCurrentSelection,int nNewSelection);
 
 
+		BOOL IsChanged();
+		void HilightTab(BOOL bHilight);
 
 		BOOL SetPath(LPCTSTR szPath);
 
@@ -230,7 +234,7 @@ public:
 		
 	public:
 		BOOL OnOk(CLocater* pLocater);
-		void OnClear();
+		void OnClear(BOOL bInitial=FALSE);
 		
 		void EnableItems(BOOL bEnable);
 		BOOL LookOnlyFiles() const;
@@ -238,6 +242,10 @@ public:
 
 		void LoadControlStates(CRegKey& RegKey);
 		void SaveControlStates(CRegKey& RegKey);
+
+		BOOL IsChanged();
+		void HilightTab(BOOL bHilight);
+
 
 #ifdef _DEBUG
 	public:
@@ -260,6 +268,10 @@ public:
 		virtual void OnDestroy();
 		virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 		
+		BOOL IsChanged();
+		void HilightTab(BOOL bHilight);
+
+
 	public:
 		// Return codes for OnOk
 		enum {
@@ -269,7 +281,7 @@ public:
 			flagUseWholePath=0x8
 		};
 		DWORD OnOk(CLocater* pLocater);
-		void OnClear();
+		void OnClear(BOOL bInitial=FALSE);
 		
 		void EnableItems(BOOL bEnable);
 
@@ -381,6 +393,8 @@ private:
 public:
 
 	CLocateDlg();
+	virtual ~CLocateDlg();
+
 	virtual BOOL OnInitDialog(HWND hwndFocus);
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 	virtual BOOL OnClose();
@@ -450,8 +464,10 @@ public:
 	void SetControlPositions(UINT nType,int cx, int cy);
 
 	void OpenFolder(LPCSTR szFolder);
-
+	
 	void OnActivateTab(int nIndex);
+	void OnActivateNextTab(BOOL bPrev=FALSE);
+	void HilightTab(int nTab,int nID,BOOL bHilight);
 
 	void SetShortcuts();
 	void ClearShortcuts();
@@ -555,8 +571,9 @@ public:
 		fgLVDontShowHiddenFiles=0x00000040,
 		fgLVDontShowTooltips=0x00010000,
 		fgLVNoDoubleItems=0x00020000,
+		fgLVFoldersFirst=0x00080000,
 		fgLVComputeMD5Sums=0x00040000,
-		fgLVShowFlag=0x000700F0,
+		fgLVShowFlag=0x000F00F0,
 		
 		fgLVUseGetFileTitle=0x00000000,
 		fgLVUseOwnMethod=0x00000100,
@@ -577,8 +594,8 @@ public:
 		fgLVStyleAlwaysUnderline=0x00008000|fgLVStyleUnderLine,
 		fgLVStyleUnderlineFlag=0x00008000|fgLVStyleUnderLine,
 		fgLVStyleFlag=0x0000F000,
-		fgLVFlag=0x0007FFF0,
-		fgLVSave=0x0007FFF0,
+		fgLVFlag=0x000FFFF0,
+		fgLVSave=0x000FFFF0,
 			
 		// Name tab
 		fgNameMultibleDirectories=0x04000000,

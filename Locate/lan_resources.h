@@ -39,8 +39,11 @@
 #define IDS_LOCATINGFAILED              27
 #define IDS_LOCATINGCANCELLED           28
 #define IDS_SEARCHINGFROMFILE           29
+#define IDS_NORESULTS					30
+#define IDS_ITEMSFOUND					31
 #define IDS_FILESFOUND                  32
 #define IDS_DELETEDFILE                 33
+#define IDS_DIRECTORIESFOUND            34
 #define IDS_UNKNOWNTYPE                 35
 #define IDS_DIRECTORYTYPE               36
 #define IDS_TITLE                       37
@@ -253,11 +256,13 @@
 #define IDC_LOCALDRIVES                 1048
 #define IDC_CUSTOMDRIVES                1049
 #define IDC_SYSTEMSETTINGS              1049
-#define IDC_PTAB                        1050
+#define IDC_NEXTCONTROL                 1050
 #define IDC_POINTTOSELECT               1050
-#define IDC_PUNTAB                      1051
+#define IDC_PREVCONTROL                 1051
 #define IDC_USE                         1052
 #define IDC_FILE                        1053
+#define IDC_NEXTTAB						1054
+#define IDC_PREVTAB						1055
 #define IDC_WRITEINI                    1056
 #define IDC_CREATOR                     1057
 #define IDC_POINTUNDERLINE              1057
@@ -658,6 +663,7 @@
 #define IDS_ADVSETFILESIZEFORMATKBNOUNITS 5472
 #define IDS_ADVSETFILESIZEFORMATMB      5473
 #define IDS_ADVSETFILESIZEFORMATMBNOUNITS 5474
+#define IDS_ADVSETFOLDERSFIRST			5475
 #define IDS_SHORTCUTADDACTION           5506
 #define IDS_SHORTCUTREMOVEACTION        5507
 #define IDS_SHORTCUTNEXTACTION          5508
@@ -773,6 +779,8 @@
 #define IDS_KEYTEXTHELPBUTTON           5592
 #define IDS_KEYNEXTCONTROL				5593
 #define IDS_KEYPREVCONTROL				5594
+#define IDS_KEYNEXTTAB					5595
+#define IDS_KEYPREVTAB					5596
 #define IDS_SCHEDULEUPDATE              5901
 #define IDS_MINUTELY                    5909
 #define IDS_HOURLY                      5910

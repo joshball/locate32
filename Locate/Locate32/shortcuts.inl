@@ -225,8 +225,13 @@ inline void CSubAction::DoActivateTab()
 {
 	if (GetLocateAppWnd()->m_pLocateDlgThread==NULL)
 		return;
-	
-	GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->OnActivateTab((int)m_nActivateTab);
+
+	if (m_nActivateTab==PrevTab)
+		GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->OnActivateNextTab(TRUE);
+	else if (m_nActivateTab==NextTab)
+		GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->OnActivateNextTab(FALSE);
+	else
+		GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->OnActivateTab((int)m_nActivateTab);
 }
 
 

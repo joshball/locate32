@@ -33,13 +33,6 @@ CLocateApp::~CLocateApp()
 
 BOOL CLocateApp::InitInstance()
 {
-	BYTE text[100];
-	for (int i=0;i<100;i++)
-		text[i]=i;
-
-	DebugHexDump("test",text,100);
-
-
 	CWinApp::InitInstance();
 
 	DebugNumMessage("CLocateApp::InitInstance(), thread is 0x%X",GetCurrentThreadId());

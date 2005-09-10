@@ -12,6 +12,7 @@
 
 
 #define LocaterDebugMessage(a) DebugMessage(a)
+#define LocaterDebugNumMessage(a,b) DebugNumMessage(a,b)
 #define LocaterDebugMessage5(a,b,c,d,e,f,g) DebugFormatMessage(a,b,c,d,e,f,g)
 
 //#define LocaterDebugMessage(a)
@@ -173,8 +174,11 @@ public:
 
 	LPCSTR GetCurrentPath() const;
 	DWORD GetCurrentPathLen() const;
-	DWORD GetFoundFiles() const;
-
+	
+	DWORD GetNumberOfResults() const;
+	DWORD GetNumberOfFoundFiles() const;
+	DWORD GetNumberOfFoundDirectories() const;
+	
 	WORD GetCurrentDatabaseID() const;
 	LPCSTR GetCurrentDatabaseName() const;
 	LPCSTR GetCurrentDatabaseFile() const;
@@ -263,6 +267,8 @@ private:
 
 private:
 	DWORD m_dwFoundFiles;
+	DWORD m_dwFoundDirectories;
+
 #ifdef WIN32
 	HANDLE m_hThread;
 	volatile LONG m_lForceQuit;

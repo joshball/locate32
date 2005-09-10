@@ -16,6 +16,8 @@ inline CLocateDlg::CLocateDlg()
 	m_pImageHandler(NULL),m_iTooltipItem(-1),m_iTooltipSubItem(-1),m_bTooltipActive(FALSE),
 	m_hLastFocus(NULL),m_WaitEvery30(10),m_WaitEvery60(20)
 {
+	DebugNumMessage("CLocateDlg::CLocateDlg() this is %X",DWORD(this));
+
 	ZeroMemory(m_aResultListActions,TypeCount*ListActionCount*sizeof(void*));
 }
 
@@ -95,6 +97,14 @@ inline CLocateDlg::CSizeDateDlg::CSizeDateDlg()
 {
 }
 
+inline BOOL CLocateDlg::CSizeDateDlg::IsChanged()
+{
+	return (IsDlgButtonChecked(IDC_CHECKMINIMUMSIZE)||
+			IsDlgButtonChecked(IDC_CHECKMAXIMUMSIZE) ||
+			IsDlgButtonChecked(IDC_CHECKMINDATE) ||
+			IsDlgButtonChecked(IDC_CHECKMAXDATE));
+}
+
 inline CLocateDlg::CAdvancedDlg::CAdvancedDlg()
 :	CDialog(IDD_ADVANCED),m_hTypeUpdaterThread(NULL),m_hDefaultTypeIcon(NULL),m_dwFlags(0)
 {
@@ -119,8 +129,22 @@ inline void CLocateDlg::ClearMenuVariables()
 
 inline void CLocateDlg::OnActivateTab(int nIndex)
 {
-	if (nIndex<0 && nIndex>2)
+	if (nIndex<0 && nIndex>=LOCATEDIALOG_TABS)
 		return;
+	m_pTabCtrl->SetCurSel(nIndex);
+	SetVisibleWindowInTab();
+}
+
+inline void CLocateDlg::OnActivateNextTab(BOOL bPrev)
+{
+	int nIndex=m_pTabCtrl->GetCurSel()+(bPrev?-1:1);
+
+
+	if (nIndex<0)
+		nIndex=LOCATEDIALOG_TABS-1;
+	else if (nIndex>=LOCATEDIALOG_TABS)
+		nIndex=0;
+	
 	m_pTabCtrl->SetCurSel(nIndex);
 	SetVisibleWindowInTab();
 }
@@ -344,6 +368,21 @@ inline void CLocateDlg::ClearResultlistActions()
 			}
 		}
 	}
+}
+
+inline void CLocateDlg::CNameDlg::HilightTab(BOOL bHilight)
+{
+	GetLocateDlg()->HilightTab(0,IDS_NAME,bHilight);
+}
+
+inline void CLocateDlg::CSizeDateDlg::HilightTab(BOOL bHilight)
+{
+	GetLocateDlg()->HilightTab(1,IDS_SIZEDATE,bHilight);
+}
+
+inline void CLocateDlg::CAdvancedDlg::HilightTab(BOOL bHilight)
+{
+	GetLocateDlg()->HilightTab(2,IDS_ADVANCED,bHilight);
 }
 
 #endif

@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,9030
- PRODUCTVERSION 2,99,5,9030
+ FILEVERSION 2,99,5,9100
+ PRODUCTVERSION 2,99,5,9100
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.9030"
+            VALUE "FileVersion", "3.0 beta 5.9100"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.7100"
+            VALUE "ProductVersion", "3.0 beta 5.9100"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -125,14 +125,14 @@ BEGIN
                     9,11
     COMBOBOX        IDC_MAXSIZETYPE,152+0,18,36,52,CBS_DROPDOWNLIST | 
                     WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Filedate at &least:",IDC_CHECKMINDATE,"Button",
+    CONTROL         "Files n&ewer than:",IDC_CHECKMINDATE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,6,35,67+0,10
     CONTROL         "",IDC_MINDATE,"SysDateTimePick32",WS_DISABLED | 
                     WS_GROUP | WS_TABSTOP,75+0,34,54,12,WS_EX_NOPARENTNOTIFY | 
                     WS_EX_CLIENTEDGE
     COMBOBOX        IDC_MINTYPE,134+0,34,55,52,CBS_DROPDOWNLIST | WS_DISABLED | 
                     WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Filedate at &most:",IDC_CHECKMAXDATE,"Button",BS_AUTOCHECKBOX | 
+    CONTROL         "Files &older than:",IDC_CHECKMAXDATE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,6,50,67+0,10
     CONTROL         "",IDC_MAXDATE,
                     "SysDateTimePick32",WS_DISABLED | WS_GROUP | WS_TABSTOP,
@@ -1106,6 +1106,9 @@ END
 STRINGTABLE 
 BEGIN
     IDS_FILESFOUND          "%d file(s) found"
+    IDS_DIRECTORIESFOUND    "%d directories found"
+    IDS_ITEMSFOUND          "%d files and %d directories found"
+	IDS_NORESULTS	        "No results"
     IDS_DELETEDFILE         "Deleted / Moved / Offline file"
     IDS_UNKNOWNTYPE         "File"
     IDS_DIRECTORYTYPE       "Directory"
@@ -1483,6 +1486,7 @@ BEGIN
 	IDS_ADVSETDONTSHOWHIDDENFILES	"Don't show hidden and system files"
 	IDS_ADVSETDONTSHOWTOOLTIPS		"Don't show tooltips"
 	IDS_ADVSETNODOUBLERESULTS		"Show found files only once"
+	IDS_ADVSETFOLDERSFIRST			"Show folders first"
 	IDS_ADVSETUSEPROGRAMFORFOLDERS	"Use other program to open folders"
 	IDS_ADVSETOPENFOLDERWITH		"Program (path=%d):"
 	IDS_ADVSETCOMPUTEMD5SUMS		"Compute MD5 sums (slow)"
@@ -1577,6 +1581,8 @@ STRINGTABLE
 BEGIN
 	IDS_KEYNEXTCONTROL				"Next control"
 	IDS_KEYPREVCONTROL				"Previous control"
+	IDS_KEYNEXTTAB					"Next tab"
+	IDS_KEYPREVTAB					"Previous tab"
 	IDS_KEYRESULTLIST				"Result list"
 	IDS_KEYMOREDIRECTORIES			"More Directories button"
 	IDS_KEYTEXTHELPBUTTON			"Containing Text Help"

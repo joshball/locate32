@@ -1411,6 +1411,10 @@ int CSubAction::GetActivateTabsActionLabelStringId(CAction::ActionActivateTabs u
 		return IDS_SIZEDATE;
 	case AdvancedTab:
 		return IDS_ADVANCED;
+	case NextTab:
+		return IDS_KEYNEXTTAB;
+	case PrevTab:
+		return IDS_KEYPREVTAB;
 	default:
 		return 0;
 	}
