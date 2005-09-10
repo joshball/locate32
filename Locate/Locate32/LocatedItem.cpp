@@ -1124,14 +1124,16 @@ LPSTR CLocatedItem::GetToolTipText() const
 		if (IsFolder())
 		{
 			CString str(IDS_TOOLTIPFORDIRECTORYDELETED);
-			g_szBuffer=new char[str.GetLength()+GetPathLen()+istrlen(GetType())+2];
-			sprintfex(g_szBuffer,str,GetName(),GetParent(),GetType());
+			int nLen=str.GetLength()+GetPathLen()+istrlen(GetType())+2;
+			g_szBuffer=new char[nLen];
+			sprintfex(g_szBuffer,nLen,str,GetName(),GetParent(),GetType());
 		}
 		else
 		{
 			CString str(IDS_TOOLTIPFORFILEDELETED);
-			g_szBuffer=new char[str.GetLength()+GetPathLen()+istrlen(GetType())+2];
-			sprintfex(g_szBuffer,str,GetName(),GetParent(),GetType());
+			int nLen=str.GetLength()+GetPathLen()+istrlen(GetType())+2;
+			g_szBuffer=new char[nLen];
+			sprintfex(g_szBuffer,nLen,str,GetName(),GetParent(),GetType());
 		}
 		return g_szBuffer;
 	}
@@ -1148,20 +1150,22 @@ LPSTR CLocatedItem::GetToolTipText() const
 	{
 		CString str(IDS_TOOLTIPFORDIRECTORY);
 		
-		g_szBuffer=new char[str.GetLength()+GetPathLen()+istrlen(GetType())+istrlen(szDate)+2];
-		sprintfex(g_szBuffer,str,GetName(),GetParent(),GetType(),szDate);
+		int nLen=str.GetLength()+GetPathLen()+istrlen(GetType())+istrlen(szDate)+2;
+		g_szBuffer=new char[nLen];
+		sprintfex(g_szBuffer,nLen,str,GetName(),GetParent(),GetType(),szDate);
 	}
 	else
 	{
 		CString str(IDS_TOOLTIPFORFILE);
 		
-		g_szBuffer=new char[str.GetLength()+GetPathLen()+istrlen(GetType())+istrlen(szDate)+25];
+		int nLen=str.GetLength()+GetPathLen()+istrlen(GetType())+istrlen(szDate)+25;
+		g_szBuffer=new char[nLen];
 		
 		char szSize[25];
 
 		if (GetFileSize()>LONGLONG(1024*1024*1024)) // Over 1 Gb
 		{
-			int nLength=sprintf(szSize,"%1.2f",double(GetFileSize())/(1024*1024*1024));
+			int nLength=StringCbPrintf(szSize,25,"%1.2f",double(GetFileSize())/(1024*1024*1024));
 			while (szSize[nLength-1]=='0')
 				nLength--;
 			if (szSize[nLength-1]=='.')
@@ -1170,7 +1174,7 @@ LPSTR CLocatedItem::GetToolTipText() const
 		}	
 		else if (GetFileSize()>LONGLONG(1024*1024)) // Over 1 Mb
 		{
-			int nLength=sprintf(szSize,"%1.2f",double(GetFileSize())/(1024*1024));
+			int nLength=StringCbPrintf(szSize,25,"%1.2f",double(GetFileSize())/(1024*1024));
 			while (szSize[nLength-1]=='0')
 				nLength--;
 			if (szSize[nLength-1]=='.')
@@ -1179,7 +1183,7 @@ LPSTR CLocatedItem::GetToolTipText() const
 		}	
 		else if (GetFileSize()>LONGLONG(1024)) // Over 1 Gb
 		{
-			int nLength=sprintf(szSize,"%1.2f",double(GetFileSize())/(1024));
+			int nLength=StringCbPrintf(szSize,25,"%1.2f",double(GetFileSize())/(1024));
 			while (szSize[nLength-1]=='0')
 				nLength--;
 			if (szSize[nLength-1]=='.')
@@ -1188,11 +1192,12 @@ LPSTR CLocatedItem::GetToolTipText() const
 		}	
 		else
 		{
-			int nLength=sprintf(szSize,"%d",GetFileSizeLo());
+			int nLength=StringCbPrintf(szSize,25,"%d",GetFileSizeLo());
 			::LoadString(IDS_BYTES,szSize+nLength,25-nLength);
 		}
 		
-		sprintfex(g_szBuffer,str,GetName(),GetParent(),GetType(),szDate,szSize);
+
+		sprintfex(g_szBuffer,nLen,str,GetName(),GetParent(),GetType(),szDate,szSize);
 	}
 
 	delete[] szDate;

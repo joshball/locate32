@@ -9,7 +9,7 @@
 
 
 #ifdef _DEBUG
-void MsgToText(DWORD msg,LPSTR text);
+void MsgToText(DWORD msg,LPSTR text,size_t maxlen);
 
 void AddDebugMenuItems(HWND hWnd);
 void AddDebugNote(HWND hWndParent);
@@ -28,7 +28,7 @@ void Assert(BOOL bIsOK,int line,char* file);
 
 #else
 
-#define MsgToText(_a,_b)
+#define MsgToText(_a,_b,_c)
 #define AddDebugMenuItems(_a)
 #define AddDebugNote(_a)
 #define ViewAllocators(_a)

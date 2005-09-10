@@ -1574,11 +1574,12 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCSTR szName)
 		
 		if (szName!=NULL)
 		{
-			char* szText=new char[15+istrlen(szName)];
+			int nLen=15+istrlen(szName);
+			char* szText=new char[nLen];
 			if (iOverwriteItem>=0)
-				wsprintf(szText,"Preset %03d:%s",iOverwriteItem,szName);
+				StringCbPrintf(szText,nLen,"Preset %03d:%s",iOverwriteItem,szName);
 			else
-				wsprintf(szText,"Preset %03d:%s",SendDlgItemMessage(IDC_PRESETS,CB_GETCOUNT)-2,szName);
+				StringCbPrintf(szText,nLen,"Preset %03d:%s",SendDlgItemMessage(IDC_PRESETS,CB_GETCOUNT)-2,szName);
 
 			RegKey.SetValue(szText,pData,dwLength,REG_BINARY);
 		}
@@ -1860,7 +1861,7 @@ BOOL CRemovePresetDlg::OnInitDialog(HWND hwndFocus)
 
 	for (int nPreset=0;nPreset<1000;nPreset++)
 	{
-		wsprintf(szBuffer,"Preset %03d",nPreset);
+		StringCbPrintf(szBuffer,30,"Preset %03d",nPreset);
 
 		if (RegKey2.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 			break;
@@ -1928,7 +1929,7 @@ void CRemovePresetDlg::OnOK()
 	}
 	
 	char szKeyName[30];
-	wsprintf(szKeyName,"Preset %03d",nSelection);
+	StringCbPrintf(szKeyName,30,"Preset %03d",nSelection);
 
 	if ((lErr=RegKey.DeleteKey(szKeyName))!=ERROR_SUCCESS)
 	{
@@ -1939,12 +1940,12 @@ void CRemovePresetDlg::OnOK()
     for (nSelection++;;nSelection++)
 	{
 		char szRenameKey[30];
-		wsprintf(szRenameKey,"Preset %03d",nSelection);
+		StringCbPrintf(szRenameKey,30,"Preset %03d",nSelection);
 		
 		if (RegKey.RenameSubKey(szRenameKey,szKeyName)!=ERROR_SUCCESS)
 			break;
 	
-		strcpy(szKeyName,szRenameKey);
+		StringCbCopy(szKeyName,30,szRenameKey);
 	}
 
 	EndDialog(1);

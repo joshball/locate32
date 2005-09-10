@@ -5,21 +5,53 @@
 #include "HFCLib.h"
 
 #ifdef WIN32
-int strcasecmp(LPCTSTR s1,LPCTSTR s2)
+int strcasecmp(LPCSTR s1,LPCSTR s2)
 {
-	TCHAR *tmp1,*tmp2;	
+	CHAR *tmp1,*tmp2;	
 	int ret;
-	tmp1=new TCHAR[strlen(s1)+2];
+	size_t nLen1=istrlen(s1);
+	size_t nLen2=istrlen(s2);
+	
+	tmp1=new CHAR[nLen1+2];
 	if (tmp1==NULL)
 		SetHFCError(HFC_CANNOTALLOC);
-	tmp2=new TCHAR[strlen(s2)+2];
+	CopyMemory(tmp1,s1,nLen1+1);
+	
+	tmp2=new CHAR[nLen2+2];
 	if (tmp2==NULL)
 		SetHFCError(HFC_CANNOTALLOC);
-	strcpy(tmp1,s1);
-	strcpy(tmp2,s2);
-	CharLower(tmp1);
-	CharLower(tmp2);
+	CopyMemory(tmp2,s2,nLen1+1);
+	
+	CharLowerBuff(tmp1,nLen1);
+	CharLowerBuff(tmp2,nLen2);
 	ret=strcmp(tmp1,tmp2);
+	delete[] tmp1;
+	delete[] tmp2;
+	return ret;
+}
+#endif
+
+#ifdef DEF_WCHAR
+int strcasecmp(LPCWSTR s1,LPCWSTR s2)
+{
+	WCHAR *tmp1,*tmp2;	
+	int ret;
+	size_t nLen1=istrlenw(s1);
+	size_t nLen2=istrlenw(s2);
+	
+	tmp1=new WCHAR[nLen1+2];
+	if (tmp1==NULL)
+		SetHFCError(HFC_CANNOTALLOC);
+	CopyMemory(tmp1,s1,nLen1*2+2);
+	
+	tmp2=new WCHAR[nLen2+2];
+	if (tmp2==NULL)
+		SetHFCError(HFC_CANNOTALLOC);
+	CopyMemory(tmp2,s2,nLen1*2+2);
+	
+	CharLowerBuffW(tmp1,nLen1);
+	CharLowerBuffW(tmp2,nLen2);
+	ret=wcscmp(tmp1,tmp2);
 	delete[] tmp1;
 	delete[] tmp2;
 	return ret;
@@ -876,10 +908,11 @@ inline void* va_getarg(va_list argList,int count)
 
 
 
-int vsprintfex( char *buffer, const char *format, va_list argList )
+int vsprintfex( char *buffer, size_t buffersize,const char *format, va_list argList )
 {
-	char* out=buffer;
+	int ptr=0;
 	const char* in=format;
+	LPSTR end;
 
 	int nNextArg=0;
 
@@ -908,7 +941,9 @@ int vsprintfex( char *buffer, const char *format, va_list argList )
 				pTemp[0]='%';
 				CopyMemory(pTemp+1,in,length);
 				pTemp[length+1]='\0';
-				out+=sprintf(out,pTemp,va_getarg(argList,nNextArg));
+				if (StringCbPrintfExA(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg))!=S_OK)
+					return 0;
+                ptr=end-buffer;
 				delete[] pTemp;
 
 				if (in[length]=='\0')
@@ -926,7 +961,9 @@ int vsprintfex( char *buffer, const char *format, va_list argList )
 				pTemp[0]='%';
 				CopyMemory(pTemp+1,in,index);
 				pTemp[index+1]='\0';
-				out+=sprintf(out,pTemp,va_getarg(argList,nNextArg));
+				if (StringCbPrintfExA(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg))!=S_OK)
+					return 0;
+                ptr=end-buffer;
 				delete[] pTemp;
 				
 				if (in[index]=='\0')
@@ -936,17 +973,18 @@ int vsprintfex( char *buffer, const char *format, va_list argList )
 			}
 		}
 		else
-			*(out++)=*(in++);
+			buffer[ptr++]=*(in++);
 	}
-	return int(out-buffer);
+	return ptr;
 }
 
 
 #ifdef DEF_WCHAR
-int vswprintfex( wchar_t *buffer, const wchar_t *format, va_list argList )
+int vswprintfex( wchar_t *buffer, size_t buffersize, const wchar_t *format, va_list argList )
 {
-	wchar_t* out=buffer;
+	int ptr=0;
 	const wchar_t* in=format;
+	LPWSTR end;
 
 	int nNextArg=0;
 
@@ -975,7 +1013,9 @@ int vswprintfex( wchar_t *buffer, const wchar_t *format, va_list argList )
 				pTemp[0]=L'%';
 				MemCopyW(pTemp+1,in,length);
 				pTemp[length+1]=L'\0';
-				out+=swprintf(out,pTemp,va_getarg(argList,nNextArg));
+				if (StringCbPrintfExW(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg))!=S_OK)
+					return 0;
+                ptr=end-buffer;
 				delete[] pTemp;
 
 				if (in[length]==L'\0')
@@ -993,7 +1033,12 @@ int vswprintfex( wchar_t *buffer, const wchar_t *format, va_list argList )
 				pTemp[0]='%';
 				MemCopyW(pTemp+1,in,index);
 				pTemp[index+1]=L'\0';
-				out+=swprintf(out,pTemp,va_getarg(argList,nNextArg));
+				
+                
+				if (StringCbPrintfExW(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg))!=S_OK)
+					return 0;
+                ptr=end-buffer;
+
 				delete[] pTemp;
 				
 				if (in[index]==L'\0')
@@ -1003,9 +1048,9 @@ int vswprintfex( wchar_t *buffer, const wchar_t *format, va_list argList )
 			}
 		}
 		else
-			*(out++)=*(in++);
+			buffer[ptr++]=*(in++);
 	}
-	return int(out-buffer);
+	return ptr;
 }
 #endif
 

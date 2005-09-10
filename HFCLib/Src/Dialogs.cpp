@@ -570,120 +570,384 @@ void CCommonDialog::OnCancel()
 // Class CFileDialog
 ///////////////////////////
 
-CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCTSTR lpszDefExt,
-						 LPCTSTR lpszFileName,DWORD dwFlags,LPCTSTR lpszFilter)
-:	CCommonDialog(),m_bOpenFileDialog(bOpenFileDialog)
+
+void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCSTR lpszFilter)
 {
-	DebugMessage("CFileDialog::CFileDialog BEGIN");
+	DebugMessage("CFileDialog::Init BEGIN");
+
+	if (IsFullUnicodeSupport())
+	{
+
 #if (_WIN32_WINNT < 0x0500)
-	m_pofn=(OPENFILENAME*)new char[sizeof(OPENFILENAME)+16];
-	if (m_pofn==NULL)
-	{
-		SetHFCError(HFC_CANNOTALLOC);
-		return;
-	}		
-	iMemSet(m_pofn,0,sizeof(OPENFILENAME)+16);
-	m_pofn->lStructSize=sizeof(OPENFILENAME);
+		m_pwofn=(OPENFILENAMEW*)new char[sizeof(OPENFILENAMEW)+16];
+		if (m_pwofn==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return;
+		}		
+		iMemSet(m_pwofn,0,sizeof(OPENFILENAMEW)+16);
+		m_pwofn->lStructSize=sizeof(OPENFILENAME);
 #else
-	m_pofn=(OPENFILENAME*)new char[sizeof(OPENFILENAME)];
-	if (m_pofn==NULL)
-	{
-		SetHFCError(HFC_CANNOTALLOC);
-		return;
-	}		
-	iMemSet(m_pofn,0,sizeof(OPENFILENAME));
-	if (GetSystemFeaturesFlag()&(efWin2000|efWinXP))
-	{
-		DebugMessage("CFileDialog::CFileDialog: m_pofn->lStructSize=sizeof(OPENFILENAME)");
-		m_pofn->lStructSize=sizeof(OPENFILENAME);
-	}
-    else
-	{
-		DebugMessage("CFileDialog::CFileDialog: m_pofn->lStructSize=sizeof(OPENFILENAME_SIZE_VERSION_400)");
-		m_pofn->lStructSize=OPENFILENAME_SIZE_VERSION_400;
-	}
-	
+		m_pwofn=(OPENFILENAMEW*)new char[sizeof(OPENFILENAMEW)];
+		if (m_pwofn==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return;
+		}		
+		iMemSet(m_pwofn,0,sizeof(OPENFILENAMEW));
+		if (GetSystemFeaturesFlag()&(efWin2000|efWinXP))
+		{
+			DebugMessage("CFileDialog::CFileDialog: m_pwofn->lStructSize=sizeof(OPENFILENAMEW)");
+			m_pwofn->lStructSize=sizeof(OPENFILENAMEW);
+		}
+		else
+		{
+			DebugMessage("CFileDialog::CFileDialog: m_pwofn->lStructSize=sizeof(OPENFILENAME_SIZE_VERSION_400W)");
+			m_pwofn->lStructSize=OPENFILENAME_SIZE_VERSION_400W;
+		}
 #endif
-	m_pofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
-	m_pofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
-	m_pofn->lCustData=(DWORD)this;
-	m_pofn->lpstrFileTitle=m_szFileTitle;
-	m_szFileTitle[0]='\0';
-	m_pofn->nMaxFileTitle=64;
-	m_pofn->hInstance=GetLanguageSpecificResourceHandle();
-	m_pofn->lpstrCustomFilter=NULL;
-	m_pofn->nMaxCustFilter=0;
-	
-	m_szFileName=new TCHAR[_MAX_PATH];
-	if (m_szFileName==NULL)
-	{
-		SetHFCError(HFC_CANNOTALLOC);
-		DebugMessage("CFileDialog::CFileDialog END ERR1");
-		return;
+
+
+		m_pwofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
+		m_pwofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+		m_pwofn->lCustData=(DWORD)this;
+		m_pwofn->lpstrFileTitle=new WCHAR[65];
+		m_pwofn->lpstrFileTitle[0]='\0';
+		m_pwofn->nMaxFileTitle=64;
+		m_pwofn->hInstance=GetLanguageSpecificResourceHandle();
+		m_pwofn->lpstrCustomFilter=NULL;
+		m_pwofn->nMaxCustFilter=0;
+		
+		m_pwFileName=new WCHAR[MAX_PATH];
+		if (m_pwFileName==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			DebugMessage("CFileDialog::CFileDialog END ERR1");
+			return;
+		}
+		m_pwofn->nMaxFile=MAX_PATH;
+		m_pwofn->lpstrFile=m_pwFileName;
+		if (lpszFileName!=NULL)
+		{
+			int nRet=istrlen(lpszFileName);
+			if (nRet>MAX_PATH-2)
+				nRet=MAX_PATH-2;
+            
+			MultiByteToWideChar(CP_ACP,0,lpszFileName,nRet,m_pwFileName,nRet);
+			m_pwFileName[nRet]='\0';
+			m_pwFileName[nRet+1]='\0';
+
+		}
+		else
+		{
+			m_pwFileName[0]='\0';
+			m_pwFileName[1]='\0';
+		}
+
+		if (lpszFilter!=NULL)
+			m_pwFilter=alloccopyAtoW(lpszFilter);
+		else
+			m_pwFilter=NULL;
+		
+		m_pwofn->nFilterIndex=0;
+		m_pwofn->lpstrInitialDir=NULL;
+		m_pwofn->lpstrTitle=NULL;
+		m_pwofn->lpTemplateName=NULL;
+		if (lpszDefExt!=NULL)
+			m_pwofn->lpstrDefExt=alloccopyAtoW(lpszDefExt);
+		else
+			m_pwofn->lpstrDefExt=NULL;
 	}
-	m_pofn->nMaxFile=_MAX_PATH;
-	m_pofn->lpstrFile=m_szFileName;
-	if (lpszFileName!=NULL)
-		strcpy(m_szFileName,lpszFileName);
 	else
 	{
-		m_szFileName[0]='\0';
-		m_szFileName[1]='\0';
-	}
-
-	if (lpszFilter!=NULL)
-	{
-		DWORD iFilterLen;
-		dstrlen(lpszFilter,iFilterLen);
-
-		m_strFilter=new TCHAR[iFilterLen+2];
-		if (m_strFilter==NULL)
+#if (_WIN32_WINNT < 0x0500)
+		m_pofn=(OPENFILENAME*)new char[sizeof(OPENFILENAME)+16];
+		if (m_pofn==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOC);
 			return;
-		}
-		iMemCopy(m_strFilter,lpszFilter,iFilterLen+1);
-	}
-	else
-		m_strFilter=NULL;
-	
-	m_pofn->nFilterIndex=0;
-	m_pofn->lpstrInitialDir=NULL;
-	m_pofn->lpstrTitle=NULL;
-	m_pofn->lpTemplateName=NULL;
-	if (lpszDefExt!=NULL)
-	{
-		DWORD iExtLen;
-		dstrlen(lpszDefExt,iExtLen);
-		m_pofn->lpstrDefExt=new char [iExtLen+2];
-		if (m_pofn->lpstrDefExt==NULL)
+		}		
+		iMemSet(m_pofn,0,sizeof(OPENFILENAME)+16);
+		m_pofn->lStructSize=sizeof(OPENFILENAME);
+#else
+		m_pofn=(OPENFILENAME*)new char[sizeof(OPENFILENAME)];
+		if (m_pofn==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOC);
-			DebugMessage("CFileDialog::CFileDialog END ERR2");
+			return;
+		}		
+		iMemSet(m_pofn,0,sizeof(OPENFILENAME));
+		if (GetSystemFeaturesFlag()&(efWin2000|efWinXP))
+		{
+			DebugMessage("CFileDialog::CFileDialog: m_pofn->lStructSize=sizeof(OPENFILENAME)");
+			m_pofn->lStructSize=sizeof(OPENFILENAME);
+		}
+		else
+		{
+			DebugMessage("CFileDialog::CFileDialog: m_pofn->lStructSize=sizeof(OPENFILENAME_SIZE_VERSION_400)");
+			m_pofn->lStructSize=OPENFILENAME_SIZE_VERSION_400;
+		}
+#endif
+
+
+		m_pofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
+		m_pofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+		m_pofn->lCustData=(DWORD)this;
+		m_pofn->lpstrFileTitle=new char[65];
+		m_pofn->lpstrFileTitle[0]='\0';
+		m_pofn->nMaxFileTitle=64;
+		m_pofn->hInstance=GetLanguageSpecificResourceHandle();
+		m_pofn->lpstrCustomFilter=NULL;
+		m_pofn->nMaxCustFilter=0;
+		
+		m_pFileName=new CHAR[MAX_PATH];
+		if (m_pFileName==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			DebugMessage("CFileDialog::CFileDialog END ERR1");
 			return;
 		}
-		if (m_pofn->lpstrDefExt!=NULL)
-			iMemCopy((LPSTR)m_pofn->lpstrDefExt,lpszDefExt,iExtLen+1);
+		m_pofn->nMaxFile=MAX_PATH;
+		if (lpszFileName!=NULL)
+		{
+			int nLen=istrlen(lpszFileName);
+			if (nLen>=MAX_PATH-1)
+				nLen=MAX_PATH-2;
+			MemCopy(m_pFileName,lpszFileName,nLen+1);
+			m_pFileName[nLen+1]='\0';
+		}
+		else
+		{
+			m_pFileName[0]='\0';
+			m_pFileName[1]='\0';
+		}
+		m_pofn->lpstrFile=m_pFileName;
+		
+
+		if (lpszFilter!=NULL)
+			m_pFilter=alloccopy(lpszFilter);
+		else
+			m_pFilter=NULL;
+		
+		m_pofn->nFilterIndex=0;
+		m_pofn->lpstrInitialDir=NULL;
+		m_pofn->lpstrTitle=NULL;
+		m_pofn->lpTemplateName=NULL;
+		
+		if (lpszDefExt!=NULL)
+			m_pofn->lpstrDefExt=alloccopy(lpszDefExt);
+		else
+			m_pofn->lpstrDefExt=NULL;
+	}
+	DebugMessage("CFileDialog::CFileDialog END");
+}
+
+
+void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPCWSTR lpszFilter)
+{
+	DebugMessage("CFileDialog::Init BEGIN");
+	
+	if (IsFullUnicodeSupport())
+	{
+
+#if (_WIN32_WINNT < 0x0500)
+		m_pwofn=(OPENFILENAMEW*)new char[sizeof(OPENFILENAMEW)+16];
+		if (m_pwofn==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return;
+		}		
+		iMemSet(m_pwofn,0,sizeof(OPENFILENAMEW)+16);
+		m_pwofn->lStructSize=sizeof(OPENFILENAME);
+#else
+		m_pwofn=(OPENFILENAMEW*)new char[sizeof(OPENFILENAMEW)];
+		if (m_pwofn==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return;
+		}		
+		iMemSet(m_pwofn,0,sizeof(OPENFILENAMEW));
+		if (GetSystemFeaturesFlag()&(efWin2000|efWinXP))
+		{
+			DebugMessage("CFileDialog::CFileDialog: m_pwofn->lStructSize=sizeof(OPENFILENAMEW)");
+			m_pwofn->lStructSize=sizeof(OPENFILENAMEW);
+		}
+		else
+		{
+			DebugMessage("CFileDialog::CFileDialog: m_pwofn->lStructSize=sizeof(OPENFILENAME_SIZE_VERSION_400W)");
+			m_pwofn->lStructSize=OPENFILENAME_SIZE_VERSION_400W;
+		}
+#endif
+
+
+		m_pwofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
+		m_pwofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+		m_pwofn->lCustData=(DWORD)this;
+		m_pwofn->lpstrFileTitle=new WCHAR[65];
+		m_pwofn->lpstrFileTitle[0]='\0';
+		m_pwofn->nMaxFileTitle=64;
+		m_pwofn->hInstance=GetLanguageSpecificResourceHandle();
+		m_pwofn->lpstrCustomFilter=NULL;
+		m_pwofn->nMaxCustFilter=0;
+		
+		m_pwFileName=new WCHAR[MAX_PATH];
+		if (m_pwFileName==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			DebugMessage("CFileDialog::CFileDialog END ERR1");
+			return;
+		}
+		m_pwofn->nMaxFile=MAX_PATH;
+		if (lpszFileName!=NULL)
+		{
+			int nRet=istrlenw(lpszFileName);
+			if (nRet>MAX_PATH-2)
+				nRet=MAX_PATH-2;
+				
+			MemCopyW(m_pwFileName,lpszFileName,nRet);
+			m_pwFileName[nRet]='\0';
+			m_pwFileName[nRet+1]='\0';
+		}
+		else
+		{
+			m_pwFileName[0]='\0';
+			m_pwFileName[1]='\0';
+		}
+		m_pwofn->lpstrFile=m_pwFileName;
+		
+
+		if (lpszFilter!=NULL)
+			m_pwFilter=alloccopy(lpszFilter);
+		else
+			m_pwFilter=NULL;
+		
+		m_pwofn->nFilterIndex=0;
+		m_pwofn->lpstrInitialDir=NULL;
+		m_pwofn->lpstrTitle=NULL;
+		m_pwofn->lpTemplateName=NULL;
+		if (lpszDefExt!=NULL)
+			m_pwofn->lpstrDefExt=alloccopy(lpszDefExt);
+		else
+			m_pwofn->lpstrDefExt=NULL;
 	}
 	else
-		m_pofn->lpstrDefExt=NULL;
+	{
+#if (_WIN32_WINNT < 0x0500)
+		m_pofn=(OPENFILENAME*)new char[sizeof(OPENFILENAME)+16];
+		if (m_pofn==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return;
+		}		
+		iMemSet(m_pofn,0,sizeof(OPENFILENAME)+16);
+		m_pofn->lStructSize=sizeof(OPENFILENAME);
+#else
+		m_pofn=(OPENFILENAME*)new char[sizeof(OPENFILENAME)];
+		if (m_pofn==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return;
+		}		
+		iMemSet(m_pofn,0,sizeof(OPENFILENAME));
+		if (GetSystemFeaturesFlag()&(efWin2000|efWinXP))
+		{
+			DebugMessage("CFileDialog::CFileDialog: m_pofn->lStructSize=sizeof(OPENFILENAME)");
+			m_pofn->lStructSize=sizeof(OPENFILENAME);
+		}
+		else
+		{
+			DebugMessage("CFileDialog::CFileDialog: m_pofn->lStructSize=sizeof(OPENFILENAME_SIZE_VERSION_400)");
+			m_pofn->lStructSize=OPENFILENAME_SIZE_VERSION_400;
+		}
+#endif
 
+
+		m_pofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
+		m_pofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+		m_pofn->lCustData=(DWORD)this;
+		m_pofn->lpstrFileTitle=new char[65];
+		m_pofn->lpstrFileTitle[0]='\0';
+		m_pofn->nMaxFileTitle=64;
+		m_pofn->hInstance=GetLanguageSpecificResourceHandle();
+		m_pofn->lpstrCustomFilter=NULL;
+		m_pofn->nMaxCustFilter=0;
+		
+		m_pFileName=new CHAR[MAX_PATH];
+		if (m_pFileName==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			DebugMessage("CFileDialog::CFileDialog END ERR1");
+			return;
+		}
+		m_pofn->nMaxFile=MAX_PATH;
+		m_pofn->lpstrFile=m_pFileName;
+		if (lpszFileName!=NULL)
+		{
+			int nLen=istrlenw(lpszFileName);
+			if (nLen>=MAX_PATH-1)
+				nLen=MAX_PATH-2;
+			WideCharToMultiByte(CP_ACP,0,lpszFileName,nLen+1,m_pFileName,nLen+1,NULL,NULL);
+			m_pFileName[nLen+1]='\0';
+		}
+		else
+		{
+			m_pFileName[0]='\0';
+			m_pFileName[1]='\0';
+		}
+
+		if (lpszFilter!=NULL)
+			m_pFilter=alloccopyWtoA(lpszFilter);
+		else
+			m_pFilter=NULL;
+		
+		m_pofn->nFilterIndex=0;
+		m_pofn->lpstrInitialDir=NULL;
+		m_pofn->lpstrTitle=NULL;
+		m_pofn->lpTemplateName=NULL;
+		
+		if (lpszDefExt!=NULL)
+			m_pofn->lpstrDefExt=alloccopyWtoA(lpszDefExt);
+		else
+			m_pofn->lpstrDefExt=NULL;
+	}
 	DebugMessage("CFileDialog::CFileDialog END");
 }
 
 CFileDialog::~CFileDialog()
 {
-	if (m_pofn!=NULL)
+	if (IsFullUnicodeSupport())
 	{
-		if (m_pofn->lpstrDefExt!=NULL)
-			delete[] (LPSTR)m_pofn->lpstrDefExt;
-		delete[] (char*)m_pofn;
-		m_pofn=NULL;
+		if (m_pwofn!=NULL)
+		{
+			if (m_pwofn->lpstrTitle!=NULL)
+				delete[] (LPWSTR)m_pwofn->lpstrTitle;
+			if (m_pwofn->lpstrDefExt!=NULL)
+				delete[] (LPWSTR)m_pwofn->lpstrDefExt;
+			delete[] (CHAR*)m_pwofn;
+			m_pwofn=NULL;
+		}
+		if (m_pwFilter!=NULL)
+			delete[] m_pwFilter;
+		if (m_pwFileName!=NULL)
+			delete[] m_pwFileName;
 	}
-	if (m_strFilter!=NULL)
-		delete[] m_strFilter;
-	if (m_szFileName!=NULL)
-		delete[] m_szFileName;
+	else
+	{
+		if (m_pofn!=NULL)
+		{
+			if (m_pofn->lpstrTitle!=NULL)
+				delete[] (LPSTR)m_pofn->lpstrTitle;
+			if (m_pofn->lpstrDefExt!=NULL)
+				delete[] (LPSTR)m_pofn->lpstrDefExt;
+			delete[] (char*)m_pofn;
+			m_pofn=NULL;
+		}
+		if (m_pFilter!=NULL)
+			delete[] m_pFilter;
+		if (m_pFileName!=NULL)
+			delete[] m_pFileName;
+	}
+	
 }
 
 BOOL CFileDialog::EnableFeatures(DWORD nFlags)
@@ -691,45 +955,85 @@ BOOL CFileDialog::EnableFeatures(DWORD nFlags)
 	if (nFlags==efCheck)
 		nFlags=GetSystemFeaturesFlag();
 
+	if (IsFullUnicodeSupport())
+	{
 #if (_WIN32_WINNT >= 0x0500)
-	if (nFlags&(efWin2000|efWinME) && m_pofn!=NULL)
-	{
-		m_pofn->lStructSize=sizeof(OPENFILENAME);
-	}
+		if (nFlags&(efWin2000|efWinME) && m_pofn!=NULL)
+		{
+			m_pwofn->lStructSize=sizeof(OPENFILENAMEW);
+		}
 #else
-	if (nFlags&(efWin2000|efWinME) && m_pofn!=NULL)
-	{
-		m_pofn->lStructSize=sizeof(OPENFILENAME)+2*sizeof(DWORD)+sizeof(void*);
-	}
+		if (nFlags&(efWin2000|efWinME) && m_pofn!=NULL)
+		{
+			m_pwofn->lStructSize=sizeof(OPENFILENAMEW)+2*sizeof(DWORD)+sizeof(void*);
+		}
 #endif
+	}
+	else
+	{
+#if (_WIN32_WINNT >= 0x0500)
+		if (nFlags&(efWin2000|efWinME) && m_pofn!=NULL)
+		{
+			m_pofn->lStructSize=sizeof(OPENFILENAME);
+		}
+#else
+		if (nFlags&(efWin2000|efWinME) && m_pofn!=NULL)
+		{
+			m_pofn->lStructSize=sizeof(OPENFILENAME)+2*sizeof(DWORD)+sizeof(void*);
+		}
+#endif
+	}
 	return TRUE;
 }
 
 BOOL CFileDialog::DoModal(HWND hParentWnd)
 {
-	
 	BOOL bError;
 	int i;
-	m_pofn->hwndOwner=hParentWnd;
-	m_pofn->lpstrFilter=m_strFilter;
-	if (m_strFilter!=NULL)
-	{
-		for (i=0;m_strFilter[i]!='\0';i++)
-		{
-			if (m_strFilter[i]=='|')
-				m_strFilter[i]='\0';
-		}
-	}
+		
 	if (hParentWnd!=NULL)
 		::EnableWindow(hParentWnd,FALSE);
 	
-	
-	if (m_bOpenFileDialog)
-		bError=::GetOpenFileName(m_pofn);
+	if (IsFullUnicodeSupport())
+	{
+		m_pwofn->hwndOwner=hParentWnd;
+		m_pwofn->lpstrFilter=m_pwFilter;
+		if (m_pwFilter!=NULL)
+		{
+			for (i=0;m_pwFilter[i]!='\0';i++)
+			{
+				if (m_pwFilter[i]=='|')
+					m_pwFilter[i]='\0';
+			}
+		}
+		
+		
+		if (m_bOpenFileDialog)
+			bError=::GetOpenFileNameW(m_pwofn);
+		else
+			bError=::GetSaveFileNameW(m_pwofn);
+	}
 	else
-		bError=::GetSaveFileName(m_pofn);
+	{
+		m_pofn->hwndOwner=hParentWnd;
+		m_pofn->lpstrFilter=m_pFilter;
+		if (m_pFilter!=NULL)
+		{
+			for (i=0;m_pFilter[i]!='\0';i++)
+			{
+				if (m_pFilter[i]=='|')
+					m_pFilter[i]='\0';
+			}
+		}
+		
+		
+		if (m_bOpenFileDialog)
+			bError=::GetOpenFileName(m_pofn);
+		else
+			bError=::GetSaveFileName(m_pofn);
+	}
 
-	
+
 	m_hWnd=NULL;
 	if (hParentWnd!=NULL)
 	{
@@ -739,82 +1043,208 @@ BOOL CFileDialog::DoModal(HWND hParentWnd)
 	return bError;	
 }
 
-CString CFileDialog::GetPathName() const
+
+BOOL CFileDialog::GetFilePath(CString& name) const
 {
-	if (m_hWnd!=NULL)
+	if (IsFullUnicodeSupport())
 	{
-		CString path;
-		if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,(WPARAM)_MAX_PATH,(LPARAM)path.GetBuffer(_MAX_PATH))<0)
-			path.Empty();
-		if (!path.IsEmpty())
+		if (m_hWnd!=NULL)
 		{
-			if (::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,(WPARAM)_MAX_PATH,(LPARAM)path.GetBuffer())<0)
-				path.Empty();
+			WCHAR path[MAX_PATH];
+			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
 			else
-				path.FreeExtra();
-		}		
-		return path;
-	}
-	return m_pofn->lpstrFile;
-}
-
-CString CFileDialog::GetFileName() const
-{
-	if (m_hWnd!=NULL)
-	{
-		CString name;
-		if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,_MAX_PATH,(LPARAM)name.GetBuffer(_MAX_PATH))<0)
-			name.Empty();
-		else
-			name.FreeExtra();
-		return name;
-	}
-	return (m_szFileName+m_pofn->nFileOffset);
-}
-
-CString CFileDialog::GetFileExt() const
-{
-	if (m_hWnd!=NULL)
-	{
-		CString ext;
-		if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,_MAX_PATH,(LPARAM)ext.GetBuffer(_MAX_PATH))<0)
-			ext.Empty();
-		else
-		{
-			ext.FreeExtra();
-			int pos=ext.FindLast('.');
-			if (pos>=0)
-				return ((LPCSTR)ext+pos);	
+				name.Copy(path,nRet-1);
 		}
-		return ext;
+		else
+			name=m_pwFileName;
 	}
-	return (m_szFileName+m_pofn->nFileExtension);
+	else
+	{
+		if (m_hWnd!=NULL)
+		{
+			CHAR path[MAX_PATH];
+			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				name.Copy(path,nRet-1);
+		}
+		else
+			name=m_pFileName;
+	}
+	return TRUE;
 }
+
+BOOL CFileDialog::GetFileName(CString& name) const
+{
+	if (IsFullUnicodeSupport())
+	{
+		if (m_hWnd!=NULL)
+		{
+			WCHAR path[MAX_PATH];
+			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				name.Copy(path,nRet-1);
+		}
+		else
+			name=m_pwFileName;
+	}
+	else
+	{
+		if (m_hWnd!=NULL)
+		{
+			CHAR path[MAX_PATH];
+			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				name.Copy(path,nRet-1);
+		}
+		else
+			name=m_pFileName;
+	}
+	return TRUE;
+}
+
+
+
+BOOL CFileDialog::GetFileExt(CString& ext) const
+{
+	if (IsFullUnicodeSupport())
+	{
+		if (m_hWnd!=NULL)
+		{
+			WCHAR path[MAX_PATH];
+			if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path)<0)
+				return FALSE;
+			else
+				ext=path+LastCharIndex(path,'.')+1;
+		}
+		else
+			ext=m_pwFileName+LastCharIndex(m_pwFileName,'.')+1;
+	}
+	else
+	{
+		if (m_hWnd!=NULL)
+		{
+			CHAR path[MAX_PATH];
+			if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path)<0)
+				ext.Empty();
+			else
+				ext=path+LastCharIndex(path,'.')+1;
+			ext=m_pFileName+LastCharIndex(m_pFileName,'.')+1;
+		}
+	}
+	return TRUE;
+}
+
+#ifdef DEF_WCHAR
+BOOL CFileDialog::GetFilePath(CStringW& name) const
+{
+	if (IsFullUnicodeSupport())
+	{
+		if (m_hWnd!=NULL)
+		{
+			WCHAR path[MAX_PATH];
+			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				name.Copy(path,nRet-1);
+		}
+		else
+			name=m_pwFileName;
+	}
+	else
+	{
+		if (m_hWnd!=NULL)
+		{
+			CHAR path[MAX_PATH];
+			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				name.Copy(path,nRet-1);
+		}
+		else
+			name=m_pFileName;
+	}
+	return TRUE;
+}
+
+BOOL CFileDialog::GetFileName(CStringW& name) const
+{
+	if (IsFullUnicodeSupport())
+	{
+		if (m_hWnd!=NULL)
+		{
+			WCHAR path[MAX_PATH];
+			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				name.Copy(path,nRet-1);
+		}
+		else
+			name=m_pwFileName+m_pofn->nFileOffset;
+	}
+	else
+	{
+		if (m_hWnd!=NULL)
+		{
+			CHAR path[MAX_PATH];
+			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				name.Copy(path,nRet-1);
+		}
+		else
+			name=m_pFileName+m_pofn->nFileOffset;
+	}
+	return TRUE;
+}
+
+BOOL CFileDialog::GetFileExt(CStringW& ext) const
+{
+	if (IsFullUnicodeSupport())
+	{
+		if (m_hWnd!=NULL)
+		{
+			WCHAR path[MAX_PATH];
+			if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path)<0)
+				return FALSE;
+			else
+				ext=path+LastCharIndex(path,'.')+1;
+		}
+		else
+			ext=m_pwFileName+LastCharIndex(m_pwFileName,'.')+1;
+	}
+	else
+	{
+		if (m_hWnd!=NULL)
+		{
+			CHAR path[MAX_PATH];
+			if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path)<0)
+				ext.Empty();
+			else
+				ext=path+LastCharIndex(path,'.')+1;
+			ext=m_pFileName+LastCharIndex(m_pFileName,'.')+1;
+		}
+	}
+	return TRUE;
+}
+#endif
 
 BOOL CFileDialog::GetReadOnlyPref() const
 {
 	if (m_pofn->Flags&OFN_READONLY)
 		return TRUE;
 	return FALSE;
-}
-
-POSITION CFileDialog::GetStartPosition() const
-{
-	if (m_szFileName==NULL)
-		return NULL;
-	if (m_szFileName[0]=='\0')
-		return NULL;
-	return (POSITION)m_szFileName;
-}
-
-CString CFileDialog::GetNextPathName(POSITION& pos) const
-{
-	CString Path((LPTSTR)pos);
-	if (Path.IsEmpty())
-		pos=NULL;
-	else
-		pos+=Path.GetLength()+1;
-	return Path;
 }
 
 void CFileDialog::SetTemplate(LPCTSTR lpID,TypeOfResourceHandle bType)
@@ -827,43 +1257,127 @@ void CFileDialog::SetTemplate(LPCTSTR lpID,TypeOfResourceHandle bType)
 		m_pofn->Flags|=OFN_ENABLETEMPLATE;
 }
 
-CString CFileDialog::GetFolderPath() const
+BOOL CFileDialog::GetFolderPath(CString& name) const
 {
-	CString path;
-	if (m_hWnd!=NULL)
+	if (IsFullUnicodeSupport())
 	{
-		if (::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,_MAX_PATH,(LPARAM)path.GetBuffer(_MAX_PATH))>=0)
-			path.FreeExtra();	
+		if (m_hWnd!=NULL)
+		{
+			WCHAR path[MAX_PATH];
+			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				name.Copy(path,nRet-1);
+		}
 		else
-			path.Empty();
-		return path;
+			name.Copy(m_pwFileName,m_pofn->nFileOffset);
 	}
-	path.Copy(m_szFileName,m_pofn->nFileOffset);
-	return path;
+	else
+	{
+		if (m_hWnd!=NULL)
+		{
+			CHAR path[MAX_PATH];
+			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				name.Copy(path,nRet-1);
+		}
+		else
+			name.Copy(m_pFileName,m_pofn->nFileOffset);
+	}
+	return TRUE;
 }
+
+#ifdef DEF_WCHAR
+BOOL CFileDialog::GetFolderPath(CStringW& name) const
+{
+	if (IsFullUnicodeSupport())
+	{
+		if (m_hWnd!=NULL)
+		{
+			WCHAR path[MAX_PATH];
+			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				name.Copy(path,nRet-1);
+		}
+		else
+			name.Copy(m_pwFileName,m_pofn->nFileOffset);
+	}
+	else
+	{
+		if (m_hWnd!=NULL)
+		{
+			CHAR path[MAX_PATH];
+			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				name.Copy(path,nRet-1);
+		}
+		else
+			name.Copy(m_pFileName,m_pofn->nFileOffset);
+	}
+	return TRUE;
+}
+#endif
 
 void CFileDialog::SetDefExt(LPCSTR lpsz)
 {
-	if (m_hWnd!=NULL)
+	if (IsFullUnicodeSupport())
 	{
-		::SendMessage(::GetParent(m_hWnd),CDM_SETDEFEXT,0,(LPARAM)lpsz);
-		return;
-	}
-	if (m_pofn->lpstrDefExt!=NULL)
-		delete[] (LPSTR)m_pofn->lpstrDefExt;
-	m_pofn->lpstrDefExt=new char [strlen(lpsz)+2];
-	if (m_pofn->lpstrDefExt==NULL)
-	{
-		SetHFCError(HFC_CANNOTALLOC);
-		return;
-	}
-	if (lpsz!=NULL)
-	{
-		if (m_pofn->lpstrDefExt!=NULL)
-			strcpy((LPSTR)m_pofn->lpstrDefExt,lpsz);
+		if (m_hWnd!=NULL)
+		{
+			::SendMessage(::GetParent(m_hWnd),CDM_SETDEFEXT,0,(LPARAM)(LPCWSTR)CStringW(lpsz));
+			return;
+		}
+
+		if (m_pwofn->lpstrDefExt!=NULL)
+			delete[] (LPWSTR)m_pwofn->lpstrDefExt;
+		
+		if (lpsz!=NULL)
+		{
+			size_t nLen=istrlen(lpsz)+1;
+			m_pwofn->lpstrDefExt=new WCHAR[nLen];
+			if (m_pwofn->lpstrDefExt==NULL)
+			{
+				SetHFCError(HFC_CANNOTALLOC);
+				return;
+			}
+			MultiByteToWideChar(CP_ACP,0,lpsz,nLen,(LPWSTR)m_pwofn->lpstrDefExt,nLen);
+		}
+		else
+			m_pwofn->lpstrDefExt=NULL;
 	}
 	else
-		m_pofn->lpstrDefExt=NULL;
+	{
+		if (m_hWnd!=NULL)
+		{
+			::SendMessage(::GetParent(m_hWnd),CDM_SETDEFEXT,0,(LPARAM)lpsz);
+			return;
+		}
+
+		if (m_pofn->lpstrDefExt!=NULL)
+			delete[] (LPSTR)m_pofn->lpstrDefExt;
+		
+		if (lpsz!=NULL)
+		{
+			size_t nLen=istrlen(lpsz)+1;
+			m_pofn->lpstrDefExt=new char[nLen];
+			if (m_pwofn->lpstrDefExt==NULL)
+			{
+				SetHFCError(HFC_CANNOTALLOC);
+				return;
+			}
+			CopyMemory((LPSTR)m_pofn->lpstrDefExt,lpsz,nLen);
+		}
+		else
+			m_pwofn->lpstrDefExt=NULL;
+	}
+
 }
 
 UINT CFileDialog::OnShareViolation(LPCTSTR lpszPathName)
@@ -1005,7 +1519,7 @@ void CFontDialog::GetCharFormat(CHARFORMAT& cf) const
 	cf.crTextColor=m_cf.rgbColors;
 	cf.bCharSet=m_lf.lfCharSet;
 	cf.bPitchAndFamily=m_lf.lfPitchAndFamily;
-	strcpy(cf.szFaceName,m_lf.lfFaceName);
+	StringCbCopy(cf.szFaceName,LF_FACESIZE,m_lf.lfFaceName);
 }
 
 DWORD CFontDialog::FillInLogFont(const CHARFORMAT& cf)
@@ -1035,7 +1549,7 @@ DWORD CFontDialog::FillInLogFont(const CHARFORMAT& cf)
 	if (cf.dwMask&CFM_FACE)
 	{
 		m_lf.lfPitchAndFamily=cf.bPitchAndFamily;
-		strcpy(m_lf.lfFaceName,cf.szFaceName);
+		StringCbCopy(m_lf.lfFaceName,LF_FACESIZE,cf.szFaceName);
 	}
 	else
 	{
@@ -1327,8 +1841,8 @@ BOOL CFindReplaceDialog::Create(BOOL bFindDialogOnly,LPCTSTR lpszFindWhat,LPCTST
 {
 	m_fr.hwndOwner=hParentWnd;
 	m_fr.Flags=dwFlags|FR_ENABLEHOOK;
-	strcpy(m_szFindWhat,lpszFindWhat);
-	strcpy(m_szReplaceWith,lpszReplaceWith);
+	StringCbCopy(m_szFindWhat,128,lpszFindWhat);
+	StringCbCopy(m_szReplaceWith,128,lpszReplaceWith);
 	if (bFindDialogOnly)
 		m_hWnd=FindText(&m_fr);
 	else

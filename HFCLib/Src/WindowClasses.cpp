@@ -108,7 +108,7 @@ int CWnd::ShowErrorMessage(UINT nIDMsgStr,UINT nIDTitleStr,UINT uType) const
 	if (nIDTitleStr)
 		LoadString(nIDTitleStr,title,100);
 	else
-		strcpy(title,szError);
+		StringCbCopy(title,100,szError);
 	return ::MessageBox(m_hWnd,msg,title,uType);
 }
 #endif

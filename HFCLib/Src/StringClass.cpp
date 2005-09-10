@@ -345,7 +345,7 @@ CString& CString::Copy(const BYTE* str)
 	for (m_nDataLen=0;str[m_nDataLen]!='\0';m_nDataLen++); // dstrlen
 	m_pData=new char[m_nAllocLen=m_nDataLen+1];
 	sMemCopy(m_pData,str,m_nDataLen);
-	m_pData[m_nDataLen]=L'\0';
+	m_pData[m_nDataLen]='\0';
 
 	return *this;
 }
@@ -1726,16 +1726,27 @@ void CString::Swap(CString& str)
 	m_nBase=tempbase;
 }
 
-
-void CString::Format(LPCSTR lpszFormat,...)
+void CString::Format(LPCSTR lpszFormat,va_list argList)
 {
-	va_list argList;
-	va_start(argList,lpszFormat);
-	
-	LPSTR temp=new CHAR[STR_LOADSTRINGBUFLEN];
-	
-	m_nDataLen=vsprintf(temp,lpszFormat,argList);
-	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
+	int nBufferSize=1024;
+	LPSTR temp;
+	LPSTR end;
+	for (;;)
+	{
+		temp=new char[nBufferSize];
+		HRESULT hRet=StringCbVPrintfEx(temp,nBufferSize,&end,NULL,STRSAFE_IGNORE_NULLS,lpszFormat,argList);
+        
+		if (hRet==S_OK)
+			break;
+		if (hRet!=STRSAFE_E_INSUFFICIENT_BUFFER)
+			return;
+
+		delete[] temp;
+		nBufferSize*=2;
+	}
+
+	m_nDataLen=DWORD(end)-DWORD(temp);
+    if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData!=NULL)
 			delete[] m_pData;
@@ -1744,6 +1755,15 @@ void CString::Format(LPCSTR lpszFormat,...)
 	sMemCopy(m_pData,temp,m_nDataLen+1);
 	
 	delete[] temp;
+}
+	
+
+void CString::Format(LPCSTR lpszFormat,...)
+{
+	va_list argList;
+	va_start(argList,lpszFormat);
+	
+	Format(lpszFormat,argList);
 	va_end(argList);
 }
 
@@ -1754,7 +1774,7 @@ void CString::FormatEx(LPCSTR lpszFormat,...)
 	
 	LPSTR temp=new CHAR[STR_LOADSTRINGBUFLEN];
 	
-	m_nDataLen=vsprintfex(temp,lpszFormat,argList);
+	m_nDataLen=vsprintfex(temp,STR_LOADSTRINGBUFLEN,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData!=NULL)
@@ -1776,40 +1796,26 @@ void CString::Format(UINT nFormatID,...)
 	va_list argList;
 	va_start(argList,nFormatID);
 	
-	LPSTR temp=new CHAR[STR_LOADSTRINGBUFLEN];
 	LPSTR lpszFormat=new CHAR[STR_LOADSTRINGBUFLEN];
-	if (temp==NULL || lpszFormat==NULL)
+	if (lpszFormat==NULL)
 	{
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return;
 	}
-	m_nDataLen=::LoadStringA(GetLanguageSpecificResourceHandle(),nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN);
+	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
 		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete lpszFormat;
 			lpszFormat=new CHAR[i*STR_LOADSTRINGBUFLEN];
-			m_nDataLen=::LoadStringA(GetLanguageSpecificResourceHandle(),nFormatID,lpszFormat,i*STR_LOADSTRINGBUFLEN);
+			m_nDataLen=::LoadString(nFormatID,lpszFormat,i*STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 		}
 	}
 	
-	m_nDataLen=vsprintf(temp,lpszFormat,argList);
-	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
-	{
-		if (m_pData!=NULL)
-			delete[] m_pData;
-		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
-		if (m_pData==NULL)
-		{
-			SetHFCError(HFC_CANNOTALLOCATE);
-			return;
-		}
-	}
-	sMemCopy(m_pData,temp,m_nDataLen+1);
-	
+	Format(lpszFormat,argList);
 	delete[] lpszFormat;
-	delete[] temp;
+	
 	va_end(argList);
 }
 
@@ -1825,18 +1831,18 @@ void CString::FormatEx(UINT nFormatID,...)
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return;
 	}
-	m_nDataLen=::LoadStringA(GetLanguageSpecificResourceHandle(),nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN);
+	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
 		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete lpszFormat;
 			lpszFormat=new CHAR[i*STR_LOADSTRINGBUFLEN];
-			m_nDataLen=::LoadStringA(GetLanguageSpecificResourceHandle(),nFormatID,lpszFormat,i*STR_LOADSTRINGBUFLEN);
+			m_nDataLen=::LoadString(nFormatID,lpszFormat,i*STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 		}
 	}
 	
-	m_nDataLen=vsprintfex(temp,lpszFormat,argList);
+	m_nDataLen=vsprintfex(temp,STR_LOADSTRINGBUFLEN,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData!=NULL)
@@ -1860,40 +1866,27 @@ void CString::FormatC(UINT nFormatID,...)
 	va_list argList;
 	va_start(argList,nFormatID);
 	
-	LPSTR temp=new CHAR[STR_LOADSTRINGBUFLEN];
+	char temp[STR_LOADSTRINGBUFLEN];
 	LPSTR lpszFormat=new CHAR[STR_LOADSTRINGBUFLEN];
 	if (temp==NULL || lpszFormat==NULL)
 	{
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return;
 	}
-	m_nDataLen=::LoadStringA(GetCommonResourceHandle(),nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN);
+	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
 		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete lpszFormat;
 			lpszFormat=new CHAR[i*STR_LOADSTRINGBUFLEN];
-			m_nDataLen=::LoadStringA(GetCommonResourceHandle(),nFormatID,lpszFormat,i*STR_LOADSTRINGBUFLEN);
+			m_nDataLen=::LoadString(nFormatID,lpszFormat,i*STR_LOADSTRINGBUFLEN,CommonResource);
 		}
 	}
 	
-	m_nDataLen=vsprintf(temp,lpszFormat,argList);
-	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
-	{
-		if (m_pData!=NULL)
-			delete[] m_pData;
-		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
-		if (m_pData==NULL)
-		{
-			SetHFCError(HFC_CANNOTALLOCATE);
-			return;
-		}
-	}
-	sMemCopy(m_pData,temp,m_nDataLen+1);
-	
+	Format(lpszFormat,argList);
 	delete[] lpszFormat;
-	delete[] temp;
+	
 	va_end(argList);
 }
 
@@ -1910,18 +1903,18 @@ void CString::FormatExC(UINT nFormatID,...)
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return;
 	}
-	m_nDataLen=::LoadStringA(GetCommonResourceHandle(),nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN);
+	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
 		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete lpszFormat;
 			lpszFormat=new CHAR[i*STR_LOADSTRINGBUFLEN];
-			m_nDataLen=::LoadStringA(GetCommonResourceHandle(),nFormatID,lpszFormat,i*STR_LOADSTRINGBUFLEN);
+			m_nDataLen=::LoadString(nFormatID,lpszFormat,i*STR_LOADSTRINGBUFLEN,CommonResource);
 		}
 	}
 	
-	m_nDataLen=vsprintfex(temp,lpszFormat,argList);
+	m_nDataLen=vsprintfex(temp,STR_LOADSTRINGBUFLEN,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData!=NULL)
@@ -2516,7 +2509,8 @@ CStringW& CStringW::Copy(LPCWSTR str)
 		delete[] m_pData;
 	sstrlenW(str,m_nDataLen);
 	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+1];
-	sMemCopyW(m_pData,str,m_nDataLen);
+	sMemCopyW(m_pData,str,m_nDataLen+1);
+	
 	return *this;
 }
 
@@ -3910,33 +3904,44 @@ void CStringW::Swap(CStringW& str)
 }
 
 
+void CStringW::Format(LPCWSTR lpszFormat,va_list argList)
+{
+	int nBufferSize=1024;
+	LPWSTR temp;
+	LPWSTR end;
+	for (;;)
+	{
+		temp=new WCHAR[nBufferSize];
+		HRESULT hRet=StringCbVPrintfExW(temp,nBufferSize,&end,NULL,STRSAFE_IGNORE_NULLS,lpszFormat,argList);
+        
+		if (hRet==S_OK)
+			break;
+		if (hRet!=STRSAFE_E_INSUFFICIENT_BUFFER)
+			return;
+
+		delete[] temp;
+		nBufferSize*=2;
+	}
+
+	m_nDataLen=(DWORD(end)-DWORD(temp))/sizeof(WCHAR);
+    if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
+	{
+		if (m_pData!=NULL)
+			delete[] m_pData;
+		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+	}
+	sMemCopyW(m_pData,temp,m_nDataLen+1);
+	
+	delete[] temp;
+}
+	
+
 void CStringW::Format(LPCWSTR lpszFormat,...)
 {
 	va_list argList;
 	va_start(argList,lpszFormat);
 	
-	LPWSTR temp=new WCHAR[STR_LOADSTRINGBUFLEN];
-	if (temp==NULL)
-	{	
-		SetHFCError(HFC_CANNOTALLOCATE);
-		return;
-	}
-
-	m_nDataLen=vswprintf(temp,lpszFormat,argList);
-	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
-	{
-		if (m_pData==NULL)
-			delete[] m_pData;
-		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
-		if (m_pData==NULL)
-		{	
-			SetHFCError(HFC_CANNOTALLOCATE);
-			return;
-		}
-	}
-	sMemCopyW(m_pData,temp,m_nDataLen+1);
-	
-	delete[] temp;
+	Format(lpszFormat,argList);
 	va_end(argList);
 }
 
@@ -3952,7 +3957,7 @@ void CStringW::FormatEx(LPCWSTR lpszFormat,...)
 		return;
 	}
 
-	m_nDataLen=vswprintfex(temp,lpszFormat,argList);
+	m_nDataLen=vswprintfex(temp,STR_LOADSTRINGBUFLEN,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData==NULL)
@@ -3977,32 +3982,26 @@ void CStringW::Format(UINT nFormatID,...)
 	va_list argList;
 	va_start(argList,nFormatID);
 	
-	LPWSTR temp=new WCHAR[STR_LOADSTRINGBUFLEN];
 	LPWSTR lpszFormat=new WCHAR[STR_LOADSTRINGBUFLEN];
-	if (temp==NULL || lpszFormat==NULL)
-	{	
+	if (lpszFormat==NULL)
+	{
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return;
 	}
-
-	::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN);
-
-	m_nDataLen=vswprintf(temp,lpszFormat,argList);
-	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
+	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
+	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		if (m_pData==NULL)
-			delete[] m_pData;
-		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
-		if (m_pData==NULL)
-		{	
-			SetHFCError(HFC_CANNOTALLOCATE);
-			return;
+		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		{
+			delete lpszFormat;
+			lpszFormat=new WCHAR[i*STR_LOADSTRINGBUFLEN];
+			m_nDataLen=::LoadString(nFormatID,lpszFormat,i*STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 		}
 	}
-	sMemCopyW(m_pData,temp,m_nDataLen+1);
 	
+	Format(lpszFormat,argList);
 	delete[] lpszFormat;
-	delete[] temp;
+	
 	va_end(argList);
 }
 
@@ -4011,17 +4010,27 @@ void CStringW::FormatEx(UINT nFormatID,...)
 	va_list argList;
 	va_start(argList,nFormatID);
 	
-	LPWSTR temp=new WCHAR[STR_LOADSTRINGBUFLEN];
+	
 	LPWSTR lpszFormat=new WCHAR[STR_LOADSTRINGBUFLEN];
-	if (temp==NULL || lpszFormat==NULL)
-	{	
+	if (lpszFormat==NULL)
+	{
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return;
 	}
+	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
+	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
+	{
+		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		{
+			delete lpszFormat;
+			lpszFormat=new WCHAR[i*STR_LOADSTRINGBUFLEN];
+			m_nDataLen=::LoadString(nFormatID,lpszFormat,i*STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
+		}
+	}
 
-	::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN);
-
-	m_nDataLen=vswprintfex(temp,lpszFormat,argList);
+	
+	LPWSTR temp=new WCHAR[STR_LOADSTRINGBUFLEN];
+	m_nDataLen=vswprintfex(temp,STR_LOADSTRINGBUFLEN,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData==NULL)
@@ -4045,32 +4054,26 @@ void CStringW::FormatC(UINT nFormatID,...)
 	va_list argList;
 	va_start(argList,nFormatID);
 	
-	LPWSTR temp=new WCHAR[STR_LOADSTRINGBUFLEN];
 	LPWSTR lpszFormat=new WCHAR[STR_LOADSTRINGBUFLEN];
-	if (temp==NULL || lpszFormat==NULL)
-	{	
+	if (lpszFormat==NULL)
+	{
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return;
 	}
-
-	::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,CommonResource);
-
-	m_nDataLen=vswprintf(temp,lpszFormat,argList);
-	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
+	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,CommonResource);
+	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		if (m_pData==NULL)
-			delete[] m_pData;
-		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
-		if (m_pData==NULL)
-		{	
-			SetHFCError(HFC_CANNOTALLOCATE);
-			return;
+		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		{
+			delete lpszFormat;
+			lpszFormat=new WCHAR[i*STR_LOADSTRINGBUFLEN];
+			m_nDataLen=::LoadString(nFormatID,lpszFormat,i*STR_LOADSTRINGBUFLEN,CommonResource);
 		}
 	}
-	sMemCopyW(m_pData,temp,m_nDataLen+1);
 	
+	Format(lpszFormat,argList);
 	delete[] lpszFormat;
-	delete[] temp;
+	
 	va_end(argList);
 }
 
@@ -4079,17 +4082,27 @@ void CStringW::FormatExC(UINT nFormatID,...)
 	va_list argList;
 	va_start(argList,nFormatID);
 	
-	LPWSTR temp=new WCHAR[STR_LOADSTRINGBUFLEN];
+	
 	LPWSTR lpszFormat=new WCHAR[STR_LOADSTRINGBUFLEN];
-	if (temp==NULL || lpszFormat==NULL)
-	{	
+	if (lpszFormat==NULL)
+	{
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return;
 	}
+	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,CommonResource);
+	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
+	{
+		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		{
+			delete lpszFormat;
+			lpszFormat=new WCHAR[i*STR_LOADSTRINGBUFLEN];
+			m_nDataLen=::LoadString(nFormatID,lpszFormat,i*STR_LOADSTRINGBUFLEN,CommonResource);
+		}
+	}
 
-	::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,CommonResource);
 
-	m_nDataLen=vswprintfex(temp,lpszFormat,argList);
+	LPWSTR temp=new WCHAR[STR_LOADSTRINGBUFLEN];
+	m_nDataLen=vswprintfex(temp,STR_LOADSTRINGBUFLEN,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData==NULL)

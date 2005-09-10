@@ -72,7 +72,7 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 		VOID* pTranslations,* pProductVersion=NULL;
 		VerQueryValue(pData,"VarFileInfo\\Translation",&pTranslations,&iDataLength);
 		char szTranslation[100];
-		wsprintf(szTranslation,"\\StringFileInfo\\%4X%4X\\ProductVersion",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
+		StringCbPrintf(szTranslation,100,"\\StringFileInfo\\%4X%4X\\ProductVersion",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
 		for (int i=0;szTranslation[i]!='\0';i++)
 		{
 			if (szTranslation[i]==' ')

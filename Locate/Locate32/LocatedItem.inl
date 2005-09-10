@@ -47,7 +47,7 @@ inline LPSTR CLocatedItem::FormatImageInformation() const
 		if (g_szBuffer!=NULL)
 			delete[] g_szBuffer;
 		g_szBuffer=new char[30];
-		wsprintf(g_szBuffer,"%dx%d",dim.cx,dim.cy);
+		StringCbPrintf(g_szBuffer,30,"%dx%d",dim.cx,dim.cy);
 		return g_szBuffer;
 	}
     return const_cast<LPSTR>(szEmpty);	

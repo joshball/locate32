@@ -56,7 +56,7 @@ int PASCAL WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 			{
 				DebugMessage("WinMain(): Cannot allocate pApp->m_pExeName");
 			}
-			strcpy(GetAppData()->pAppClass->m_pszExeName,pExeName);
+			CopyMemory(GetAppData()->pAppClass->m_pszExeName,pExeName,len+1);
 			delete[] pExeName;
 		}
 		StartDebugLogging();

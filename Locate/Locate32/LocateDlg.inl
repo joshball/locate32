@@ -254,7 +254,7 @@ inline CLocateDlg::VolumeInformation::VolumeInformation(WORD wDB_,WORD wRootID_,
 	if (dwVolumeSerial!=0 && dwVolumeSerial!=DWORD(-1))
 	{
 		szVolumeSerial=new char[12];
-		wsprintf(szVolumeSerial,"%0X-%0X",HIWORD(dwVolumeSerial),LOWORD(dwVolumeSerial));
+		StringCbPrintf(szVolumeSerial,12,"%0X-%0X",HIWORD(dwVolumeSerial),LOWORD(dwVolumeSerial));
 	}
 	else
 		szVolumeSerial=NULL;

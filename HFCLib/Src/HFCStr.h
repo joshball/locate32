@@ -54,23 +54,23 @@ inline size_t istrlenw(const WCHAR* str)
 #define dparseto4(str,len,ch1,ch2,ch3,ch4)	for (len=0;(str)[len]!=(ch1) && (str)[len]!=(ch2) && (str)[len]!=(ch3) && (str)[len]!=(ch4);len++)
 
 // Extended sprintf style handlers
-int vsprintfex( char *buffer, const char *format, va_list argptr );
-inline int sprintfex( char *buffer, const char *format,...)
+int vsprintfex( char *buffer, size_t buffersize, const char *format, va_list argptr );
+inline int sprintfex( char *buffer, size_t buffersize, const char *format,...)
 {
 	va_list argList;
 	va_start(argList,format);
-	int nRet=vsprintfex(buffer,format,argList);
+	int nRet=vsprintfex(buffer,buffersize,format,argList);
 	va_end(argList);
 	return nRet;
 }
 
 #ifdef DEF_WCHAR
-int vswprintfex( wchar_t *buffer, const wchar_t *format, va_list argptr );
-inline int swprintfex( wchar_t *buffer, const wchar_t *format,...)
+int vswprintfex( wchar_t *buffer, size_t buffersize, const wchar_t *format, va_list argptr );
+inline int swprintfex( wchar_t *buffer, size_t buffersize, const wchar_t *format,...)
 {
 	va_list argList;
 	va_start(argList,format);
-	int nRet=vswprintfex(buffer,format,argList);
+	int nRet=vswprintfex(buffer,buffersize,format,argList);
 	va_end(argList);
 	return nRet;
 }
@@ -237,6 +237,7 @@ public:
 	void Swap(CString& str);
 
 	void Format(LPCSTR lpszFormat,...);
+	void Format(LPCSTR lpszFormat,va_list);
 	void FormatEx(LPCSTR lpszFormat,...);
 
 #ifdef DEF_RESOURCES
@@ -447,6 +448,7 @@ public:
 	void Swap(CStringW& str);
 
 	void Format(LPCWSTR lpszFormat,...);
+	void Format(LPCWSTR lpszFormat,va_list);
 	void FormatEx(LPCWSTR lpszFormat,...);
 
 #ifdef DEF_RESOURCES

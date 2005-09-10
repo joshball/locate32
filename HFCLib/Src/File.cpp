@@ -197,7 +197,7 @@ BOOL CFile::GetStatus(CFileStatus& rStatus) const
 	rStatus.m_size=find.ff_fsize;
 	rStatus.m_attribute=find.ff_attrib;
 #endif
-	strcpy(rStatus.m_szFullName,m_strFileName);
+	StringCbCopy(rStatus.m_szFullName,MAX_PATH,m_strFileName);
 	return TRUE;
 }
 
@@ -1431,9 +1431,9 @@ BOOL CFile::IsSubDirectory(LPCSTR szSubDir,LPCSTR szPath)
 	char sSubDir[MAX_PATH],sPath[MAX_PATH];
 #ifdef WIN32
 	if (!GetShortPathName(szSubDir,sSubDir,MAX_PATH))
-		strcpy(sSubDir,szSubDir);
+		StringCbCopy(sSubDir,MAX_PATH,szSubDir);
 	if (!GetShortPathName(szPath,sPath,MAX_PATH))
-		strcpy(sPath,szPath);
+		StringCbCopy(sPath,MAX_PATH,szPath);
 #else
 	{
 		char* p1;

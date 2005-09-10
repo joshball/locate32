@@ -114,7 +114,7 @@ BOOL CException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 		
 		
 		char szTmp2[100];
-		DWORD dwLen=wsprintf(szTmp2," OS err: %d",m_lOsError);
+		DWORD dwLen=StringCbPrintf(szTmp2,100," OS err: %d",m_lOsError);
 		if (msglen+dwLen<nMaxError)
 			iMemCopy(lpszError+msglen,szTmp2,dwLen+1);
 	}
@@ -132,7 +132,7 @@ int CException::ReportError(UINT nType,UINT nMessageID)
 			return LoadString(nMessageID,msg,1000);
 		else
 #endif
-		strcpy(msg,"No error message is available.");
+		StringCbCopy(msg,1000,"No error message is available.");
 	}
 	return MessageBox(GetActiveWindow(),msg,"File Error",nType);	
 }
@@ -393,13 +393,13 @@ BOOL CFileException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 		else if (!m_strFileName.IsEmpty())
 		{
 			fMemCopy(lpszError+len," path: ",7);
-			strcpy(lpszError+len+7,m_strFileName);
+			StringCbCopy(lpszError+len+7,nMaxError-len-7,m_strFileName);
 			len+=m_strFileName.GetLength()+7;
 		}
 
 
 		char szTmp2[100];
-		DWORD dwLen=wsprintf(szTmp2," OS err: %d",m_lOsError);
+		DWORD dwLen=StringCbPrintf(szTmp2,100," OS err: %d",m_lOsError);
 		if (len+dwLen<nMaxError)
 			iMemCopy(lpszError+len,szTmp2,dwLen+1);
 
@@ -416,7 +416,7 @@ HFCERROR COleException::GetHFCErrorCode() const
 BOOL COleException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 {
 	char text[1000];
-	wsprintf(text,"OLE error code=%X facility=%X severity=%s HRESULT=%X",LOWORD(m_hresError),(DWORD(m_hresError)>>16)&0x4F,SUCCEEDED(m_hresError)?"succeeded":"failed",m_hresError);
+	StringCbPrintf(text,1000,"OLE error code=%X facility=%X severity=%s HRESULT=%X",LOWORD(m_hresError),(DWORD(m_hresError)>>16)&0x4F,SUCCEEDED(m_hresError)?"succeeded":"failed",m_hresError);
 
 	lstrcpyn(lpszError,text,nMaxError-1);
 	return TRUE;

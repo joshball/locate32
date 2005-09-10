@@ -104,7 +104,7 @@ public:
 	CTime m_atime;
 	LONG m_size;
 	DWORD m_attribute;
-	TCHAR m_szFullName[_MAX_PATH];
+	TCHAR m_szFullName[MAX_PATH];
 };
 
 class CObject

@@ -479,8 +479,8 @@ public:
 	LRESULT SendMessage(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::SendMessage(m_hWnd,uMsg,wParam,lParam); }
 	BOOL IsDialogMessage(LPMSG lpMsg) { return ::IsDialogMessage(m_hWnd,lpMsg); }
 
-	BOOL SetWindowText(LPCTSTR lpsz) {return ::SetWindowText(m_hWnd,lpsz); }
-	int GetWindowText(LPTSTR lpString,int nMaxCount) const { return ::GetWindowText(m_hWnd,lpString,nMaxCount); }
+	BOOL SetWindowText(LPCSTR lpsz) {return ::SetWindowText(m_hWnd,lpsz); }
+	int GetWindowText(LPSTR lpString,int nMaxCount) const { return ::GetWindowText(m_hWnd,lpString,nMaxCount); }
 	int GetWindowText(CStringA& str) const;
 	int GetWindowTextLength() const { return ::GetWindowTextLength(m_hWnd); }
 	void SetFont(HFONT hFont,BOOL bRedraw=TRUE) { ::SendMessage(m_hWnd,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(bRedraw,0)); }
@@ -603,6 +603,8 @@ public:
 
 #ifdef DEF_WCHAR
 	//widechar support
+	BOOL SetWindowText(LPCWSTR lpsz) {return ::SetWindowTextW(m_hWnd,lpsz); }
+	int GetWindowText(LPWSTR lpString,int nMaxCount) const { return ::GetWindowTextW(m_hWnd,lpString,nMaxCount); }
 	int GetWindowText(CStringW& str) const;
 	UINT GetDlgItemText(int nIDDlgItem,CStringW& str);
 	

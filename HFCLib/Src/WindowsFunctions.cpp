@@ -332,8 +332,9 @@ int ReportSystemError(HWND hWnd,LPCSTR szTitle,DWORD dwError,DWORD dwExtra,LPCST
 		if (szPrefix==NULL)
 			szPrefix="%s (%d)";
 
-		char* pMessage=new char[dwLength+istrlen(szPrefix)+20];
-		wsprintf(pMessage,szPrefix,szBuffer,dwExtra);
+		dwLength+=+istrlen(szPrefix)+20;
+		char* pMessage=new char[dwLength];
+		StringCbPrintf(pMessage,dwLength,szPrefix,szBuffer,dwExtra);
 		nRet=MessageBox(hWnd,pMessage,szTitle,MB_OK|MB_ICONERROR);
 		delete[] pMessage;
 	}

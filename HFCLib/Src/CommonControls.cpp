@@ -176,7 +176,7 @@ void CToolTipCtrl::UpdateTipText(LPCTSTR lpszText,HWND hWnd,UINT nIDTool)
 	ti.hwnd=hWnd;
 	ti.uId=nIDTool;
 	ti.lpszText=ti.szText;
-	strcpy(ti.szText,lpszText);
+	StringCbCopy(ti.szText,256,lpszText);
 	::SendMessage(m_hWnd,TTM_UPDATETIPTEXT,0,(LPARAM)&ti);
 }
 

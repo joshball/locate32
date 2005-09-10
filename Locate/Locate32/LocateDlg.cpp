@@ -4339,7 +4339,7 @@ UINT CLocateDlg::AddSendToMenuItems(HMENU hMenu,CString& sSendToPath,UINT wStart
 			Path=sSendToPath;
 			Path << '\\' << Find.GetFileName();
 			mi.dwItemData=(DWORD)new CHAR[Path.GetLength()+2];
-			strcpy((LPSTR)mi.dwItemData,Path);
+			MemCopy((LPSTR)mi.dwItemData,Path,Path.GetLength()+1);
 			if (Find.IsDirectory())
 			{
 				mi.hSubMenu=CreateMenu();
@@ -5083,10 +5083,13 @@ void CLocateDlg::OnSaveResults()
 		// Initializing results
 		CResults Results(SaveResultsDlg.m_nFlags,SaveResultsDlg.m_strDescription,TRUE);
 		Results.Create(m_pListCtrl,SaveResultsDlg.m_aDetails,SaveResultsDlg.m_aDetails.GetSize());
+
+		CString File;
+		SaveResultsDlg.GetFilePath(File);
 		if (SaveResultsDlg.GetFilterIndex()==2)
-			Results.SaveToHtmlFile(SaveResultsDlg.GetFileName());
+			Results.SaveToHtmlFile(File);
 		else
-			Results.SaveToFile(SaveResultsDlg.GetFileName());
+			Results.SaveToFile(File);
 	}
 	catch (CFileException ex)
 	{
@@ -6568,7 +6571,7 @@ void CLocateDlg::OnPresets()
 
 		for (int j=0;j<1000;j++)
 		{
-			wsprintf(szBuffer,"Preset %03d",j);
+			StringCbPrintf(szBuffer,30,"Preset %03d",j);
 
 			if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 				break;
@@ -6655,7 +6658,7 @@ DWORD CLocateDlg::CheckExistenceOfPreset(LPCSTR szName,DWORD* pdwPresets) // Ret
 
 	for (nPreset=0;nPreset<1000;nPreset++)
 	{
-		wsprintf(szBuffer,"Preset %03d",nPreset);
+		StringCbPrintf(szBuffer,30,"Preset %03d",nPreset);
 
 		if (RegKey2.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 			break;
@@ -6699,7 +6702,7 @@ void CLocateDlg::OnPresetsSave()
 		return;
 
 	char szKeyName[30];
-	wsprintf(szKeyName,"Preset %03d",dwID);
+	StringCbPrintf(szKeyName,30,"Preset %03d",dwID);
 
 	// Deleting key if it exists
 	MainKey.DeleteKey(szKeyName);
@@ -6724,7 +6727,7 @@ void CLocateDlg::OnPresetsSelection(int nPreset)
 		return;
 
 	char szBuffer[30];
-	wsprintf(szBuffer,"Preset %03d",nPreset);
+	StringCbPrintf(szBuffer,30,"Preset %03d",nPreset);
 
 	if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 		return;
@@ -6753,7 +6756,7 @@ void CLocateDlg::LoadPreset(LPCSTR szPreset)
 	for (int nPreset=0;;nPreset++) 
 	{
 		char szBuffer[30];
-		wsprintf(szBuffer,"Preset %03d",nPreset);
+		StringCbPrintf(szBuffer,30,"Preset %03d",nPreset);
 
 		if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 			return;
@@ -7393,8 +7396,9 @@ void CLocateDlg::CNameDlg::OnMoreDirectories()
 		else
 			mii.fMask=MIIM_TYPE|MIIM_ID;
 
-		char* pString=new char[10+istrlen(m_pMultiDirs[i]->pTitleOrDirectory)];
-		wsprintf(pString,"%d: %s",i+1,m_pMultiDirs[i]->pTitleOrDirectory);
+		int nLen=10+istrlen(m_pMultiDirs[i]->pTitleOrDirectory);
+		char* pString=new char[nLen];
+		StringCbPrintf(pString,nLen,"%d: %s",i+1,m_pMultiDirs[i]->pTitleOrDirectory);
 		mii.dwTypeData=pString;
 	
 		if (InsertMenuItem(hMenu,i,TRUE,&mii))
@@ -7452,7 +7456,7 @@ void CLocateDlg::CNameDlg::LookInChangeSelection(int nCurrentSelection,int nNewS
 	m_pMultiDirs[nNewSelection]->bSelected=TRUE;
 
 	char szName[10];
-	wsprintf(szName,"#%d",nNewSelection+1);
+	StringCbPrintf(szName,10,"#%d",nNewSelection+1);
 	SetDlgItemText(IDC_MOREDIRECTORIES,szName);
 }
 
@@ -7538,7 +7542,7 @@ void CLocateDlg::CNameDlg::OnLookInNewSelection()
 	SelectByLParam(MAKELPARAM(Everywhere,Original));
 
 	char szName[10];
-	wsprintf(szName,"#%d",nDirs);
+	StringCbPrintf(szName,10,"#%d",nDirs);
 	SetDlgItemText(IDC_MOREDIRECTORIES,szName);
 
 	HilightTab(TRUE);
@@ -7579,7 +7583,7 @@ void CLocateDlg::CNameDlg::OnLookInRemoveSelection()
 	m_pMultiDirs[nCurrentSelection]->bSelected=TRUE;
 
 	char szName[10];
-	wsprintf(szName,"#%d",nCurrentSelection+1);
+	StringCbPrintf(szName,10,"#%d",nCurrentSelection+1);
 	SetDlgItemText(IDC_MOREDIRECTORIES,szName);
 
 	HilightTab(IsChanged());
@@ -8246,7 +8250,7 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 
 			for (int i=aSelections.GetSize()-1;i>=0;i--)
 			{
-				wsprintf(szName,"Name/LookIn%04d",aSelections[i]);
+				StringCbPrintf(szName,200,"Name/LookIn%04d",aSelections[i]);
 				
 				LONG lLength=RegKey.QueryValueLength(szName);
 				char* pData=new char[lLength+1];
@@ -8414,7 +8418,7 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 	{
 		for (int i=0;m_pMultiDirs[i]!=NULL;i++)
 		{
-			wsprintf(szName,"Name/LookIn%04d",i);
+			StringCbPrintf(szName,200,"Name/LookIn%04d",i);
 					
 			if (m_pMultiDirs[i]->bSelected)
 			{

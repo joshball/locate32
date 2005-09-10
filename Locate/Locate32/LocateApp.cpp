@@ -1,8 +1,8 @@
+#include "shlwapi.h"
 #include <HFCLib.h>
 #include "Locate32.h"
 
 #include "wfext.h"
-#include "shlwapi.h"
 
 CLocateApp::CLocateApp()
 :	CWinApp("LOCATE32"),m_nDelImage(0),m_nStartup(0),
@@ -1220,7 +1220,7 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 			else
 			{
 				bDigits=1;
-				sprintf(szRet,"%1.1f",double(num)/1024);
+				StringCbPrintf(szRet,40,"%1.1f",double(num)/1024);
 			}
 
 			LoadString(IDS_GB,szUnit,10);
@@ -1234,7 +1234,7 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 			else
 			{
 				bDigits=1;
-				sprintf(szRet,"%1.1f",double(num)/1024);
+				StringCbPrintf(szRet,40,"%1.1f",double(num)/1024);
 			}
 
 			LoadString(IDS_GB,szUnit,10);
@@ -1248,7 +1248,7 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 			else
 			{
 				bDigits=1;
-				sprintf(szRet,"%1.1f",double(num)/1024);
+				StringCbPrintf(szRet,40,"%1.1f",double(num)/1024);
 			}
 
 			LoadString(IDS_MB,szUnit,10);
@@ -1260,7 +1260,7 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 			else
 			{
 				bDigits=1;
-				sprintf(szRet,"%1.1f",double(dwFileSizeLo)/1024);
+				StringCbPrintf(szRet,40,"%1.1f",double(dwFileSizeLo)/1024);
 			}
 			
 			LoadString(IDS_KB,szUnit,10);
@@ -1297,12 +1297,12 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 		else if (dwFileSizeLo<1024)
 		{
 			bDigits=3;
-			sprintf(szRet,"%1.3f",((double)dwFileSizeLo)/1024);
+			StringCbPrintf(szRet,40,"%1.3f",((double)dwFileSizeLo)/1024);
 		}
 		else
 		{
 			bDigits=1;
-			sprintf(szRet,"%1.1f",((double)dwFileSizeLo)/1024);
+			StringCbPrintf(szRet,40,"%1.1f",((double)dwFileSizeLo)/1024);
 		}
 		break;
 	case fsfMegaBytesMegaBytes:
@@ -1318,12 +1318,12 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 		else if (dwFileSizeLo<1048576)
 		{
 			bDigits=3;
-			sprintf(szRet,"%1.3f",((double)dwFileSizeLo)/1048576);
+			StringCbPrintf(szRet,40,"%1.3f",((double)dwFileSizeLo)/1048576);
 		}
 		else
 		{
 			bDigits=1;
-			sprintf(szRet,"%1.1f",((double)dwFileSizeLo)/1048576);
+			StringCbPrintf(szRet,40,"%1.1f",((double)dwFileSizeLo)/1048576);
 		}		
 		break;
 	}
@@ -1367,7 +1367,7 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 	if (!(m_nFileSizeFormat==fsfBytesNoUnit || 
 		m_nFileSizeFormat==fsfKiloBytesNoUnit|| 
 		m_nFileSizeFormat==fsfMegaBytesMegaBytesNoUnit))
-		strcat(szRet,szUnit);
+		StringCbCat(szRet,40,szUnit);
 
 	return szRet;
 }
@@ -2290,7 +2290,7 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 				{
 					char szTemp[54];
 					LoadString(IDS_NOTIFYUPDATINGDBS,szTemp,54);
-					wsprintf(nid.szTip,szTemp,(int)wRunning,(int)wThreads);
+					StringCbPrintf(nid.szTip,64,szTemp,(int)wRunning,(int)wThreads);
 				}
 				else
 				{
@@ -2356,14 +2356,14 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 			{
 				char szTemp[54];
                 LoadString(IDS_NOTIFYUPDATINGDBS,szTemp,54);
-				wsprintf(nid.szTip,szTemp,(int)wRunning,(int)wThreads);
+				StringCbPrintf(nid.szTip,64,szTemp,(int)wRunning,(int)wThreads);
 			}
 		}
 		else
 		{
 			// Only one thread
 			if (pRootInfos[0].pRoot==NULL) // Is writing database
-				wsprintf(nid.szTip,(LPCSTR)CString(IDS_UPDATINGWRITINGDATABASE));
+				StringCbPrintf(nid.szTip,64,(LPCSTR)CString(IDS_UPDATINGWRITINGDATABASE));
 			else
 			{
 				char szBuf[50];
@@ -2380,7 +2380,7 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 					pRoot[34]='.';
 					pRoot[35]='\0';
 				}
-				wsprintf(nid.szTip,szBuf,pRoot);
+				StringCbPrintf(nid.szTip,64,szBuf,pRoot);
 			}
 		}
 
@@ -3158,7 +3158,7 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 #ifdef _DEBUG
 			char* pTmpData=new char[nKeyLen*2+2];
 			for (DWORD i=0;i<nKeyLen;i++)
-				sprintf(pTmpData+i*2,"%02X",pSchedules[i]);
+				StringCbPrintf(pTmpData+i*2,3,"%02X",pSchedules[i]);
 			DebugFormatMessage("SCHEDULES(length=%d): %s",nKeyLen,pTmpData);
 			delete[] pTmpData;
 #endif
@@ -3258,7 +3258,7 @@ BOOL CLocateAppWnd::SaveSchedules()
 		DWORD dwTmpDataLen=sizeof(CSchedule)*m_Schedules.GetCount()+6;
 		char* pTmpData=new char[dwTmpDataLen*2+2];
 		for (DWORD i=0;i<dwTmpDataLen;i++)
-			sprintf(pTmpData+i*2,"%02X",pSchedules[i]);
+			StringCbPrintf(pTmpData+i*2,3,"%02X",pSchedules[i]);
 		//DebugFormatMessage("SCHEDULES(length=%d): %s",dwTmpDataLen,pTmpData);
 		delete[] pTmpData;
 #endif
@@ -3519,7 +3519,7 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 		szExtra=pUpdater->GetCurrentDatabaseName();
 		break;
 	default:
-		sprintf(error+nLabelLength,"%d",(int)ueError);
+		StringCbPrintf(error+nLabelLength,300-nLabelLength,"%d",(int)ueError);
 		break;
 	}
 
@@ -3527,8 +3527,9 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 	int nLength;
 	if (szExtra!=NULL)
 	{
-		szNewPtr=new char[istrlen(error)+istrlen(szExtra)+1];
-		nLength=wsprintf(szNewPtr,error,szExtra);
+		int iLen=istrlen(error)+istrlen(szExtra)+1;
+		szNewPtr=new char[iLen];
+		nLength=StringCbPrintf(szNewPtr,iLen,error,szExtra);
 	}
 	else
 	    szNewPtr=alloccopy(error,nLength=istrlen(error));
@@ -3643,7 +3644,7 @@ void CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(LOGFONT* pTextFont,LOGFONT
 		//pTextFont->lfClipPrecision=CLIP_DEFAULT_PRECIS;
 		//pTextFont->lfQuality=DEFAULT_QUALITY;
 		//pTextFont->lfPitchAndFamily=DEFAULT_PITCH|FF_DONTCARE;
-		strcpy(pTextFont->lfFaceName,"Tahoma");
+		StringCbCopy(pTextFont->lfFaceName,LF_FACESIZE,"Tahoma");
 	}
 
 	if (pTitleFont!=NULL)
@@ -3656,7 +3657,7 @@ void CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(LOGFONT* pTextFont,LOGFONT
 		//pTitleFont->lfClipPrecision=CLIP_DEFAULT_PRECIS;
 		//pTitleFont->lfQuality=DEFAULT_QUALITY;
 		//pTitleFont->lfPitchAndFamily=DEFAULT_PITCH|FF_DONTCARE;
-		strcpy(pTitleFont->lfFaceName,"Tahoma");
+		StringCbCopy(pTitleFont->lfFaceName,LF_FACESIZE,"Tahoma");
 	}
 }
 

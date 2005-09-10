@@ -461,7 +461,7 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 
 
 CSaveResultsDlg::CSaveResultsDlg()
-:	CFileDialog(FALSE,"*",szEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,NULL),
+:	CFileDialog(FALSE,"*",szEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,IDS_SAVERESULTSFILTERS),
 	m_nFlags(IDC_TITLE|RESULT_INCLUDEDATE|RESULT_INCLUDELABELS),m_pList(NULL)
 {
 	DWORD nFlags=GetSystemFeaturesFlag();
@@ -470,15 +470,10 @@ CSaveResultsDlg::CSaveResultsDlg()
 		SetTemplate(IDD_RESULTSAVEDIALOG2000);
 	else
 		SetTemplate(IDD_RESULTSAVEDIALOG);
-	CString str;
-	str.LoadString(IDS_SAVERESULTSFILTERS);
-	m_strFilter=new char[str.GetLength()+1];
-	sMemCopy(m_strFilter,(LPCSTR)str,str.GetLength()+1);
-	str.LoadString(IDS_SAVERESULTS);
-	m_pofn->lpstrTitle=new char[str.GetLength()+1];
-	if (m_pofn->lpstrTitle!=NULL)
-		sMemCopy((void*)m_pofn->lpstrTitle,(LPCSTR)str,str.GetLength()+1);
 
+	
+	SetFileTitle(CString(IDS_SAVERESULTS));
+	
 	// Setting default details
 	m_aDetails.Add(CLocateDlg::DetailType::FullPath);
 	m_aDetails.Add(CLocateDlg::DetailType::FileSize);

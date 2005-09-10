@@ -71,7 +71,7 @@ BOOL CFont::CreatePointFont(int nPointSize,LPCTSTR lpszFaceName,HDC hDC)
 	iMemSet(&logFont, 0, sizeof(LOGFONT));
 	logFont.lfCharSet = DEFAULT_CHARSET;
 	logFont.lfHeight = nPointSize;
-	strcpy(logFont.lfFaceName,lpszFaceName);
+	StringCbCopy(logFont.lfFaceName,32,lpszFaceName);
 	return CreatePointFontIndirect(&logFont, hDC);
 }
 

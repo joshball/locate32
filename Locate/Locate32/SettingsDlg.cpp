@@ -1,6 +1,6 @@
+#include <shlwapi.h>
 #include <HFCLib.h>
 #include "Locate32.h"
-#include <shlwapi.h>
 
 inline BOOL operator==(const SYSTEMTIME& s1,const SYSTEMTIME& s2)
 {
@@ -1759,7 +1759,9 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 
 	// First, check whether file is database and read information
 	CDatabase* pDatabase;
-	CDatabaseInfo* pDatabaseInfo=CDatabaseInfo::GetFromFile(fd.GetPathName());
+	CString Path;
+	fd.GetFilePath(Path);
+	CDatabaseInfo* pDatabaseInfo=CDatabaseInfo::GetFromFile(Path);
 	if (pDatabaseInfo!=NULL)
 	{
 		if (!pDatabaseInfo->szExtra2.IsEmpty())
@@ -1770,7 +1772,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 		if (pDatabase!=NULL)
 		{
 			pDatabase->SetArchiveType(CDatabase::archiveFile);
-			pDatabase->SetArchiveName(fd.GetPathName());
+			pDatabase->SetArchiveName(Path);
 		}
 	}
 	else
@@ -1780,7 +1782,9 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 		BOOL bError=FALSE;
 
 		try {
-			pFile=new CFile(fd.GetPathName(),CFile::defRead,TRUE);
+			CString Path;
+			fd.GetFilePath(Path);
+			pFile=new CFile(Path,CFile::defRead,TRUE);
 
 			DWORD dwLength=pFile->GetLength();
 			pFileContent=new char[dwLength+1];
@@ -1804,8 +1808,9 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 
 	if (pDatabase==NULL)
 	{
-		CString msg;
-		msg.Format(IDS_UNABLEREADSETTINGS,(LPCSTR)fd.GetPathName());
+		CString msg,path;
+		fd.GetFilePath(path);
+		msg.Format(IDS_UNABLEREADSETTINGS,(LPCSTR)path);
 		MessageBox(msg,Title,MB_OK|MB_ICONERROR);
 		return;
 	}
@@ -1842,7 +1847,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 		pCurFile=pDatabase->GetArchiveName();
 
 	// Initializing file name dialog
-	CString Title;
+	CString Title,Path;
 	
 	CFileDialog fd(FALSE,"*",pCurFile,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,CString(IDS_EXPORTDATABASEFILTERS));
 	fd.EnableFeatures();
@@ -1853,14 +1858,15 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 	// Ask file name
 	if (!fd.DoModal(*this))
 		return;
+	fd.GetFilePath(Path);
 	
-	if (CFile::IsFile(fd.GetPathName()))
+	if (CFile::IsFile(Path))
 	{
-		if (pDatabase->SaveExtraBlockToDbFile(fd.GetPathName()))
+		if (pDatabase->SaveExtraBlockToDbFile(Path))
 			return;
 
 		CString msg;
-		msg.Format(IDS_FILEISNOTDATABASE,LPCSTR(fd.GetPathName()));
+		msg.Format(IDS_FILEISNOTDATABASE,LPCSTR(Path));
 		if (MessageBox(msg,Title,MB_ICONQUESTION|MB_YESNO)==IDNO)
 			return;			
 	}
@@ -1870,7 +1876,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 	DWORD dwExtraLen=istrlen(pExtra);
 
 	try {
-		pFile=new CFile(fd.GetPathName(),CFile::defWrite,TRUE);
+		pFile=new CFile(Path,CFile::defWrite,TRUE);
 		pFile->Write(pExtra,dwExtraLen);
 	}
 	catch (...)
@@ -2704,7 +2710,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnBrowse()
 		return;
 	
 	// Check filename and set
-	Temp=fd.GetPathName();
+	fd.GetFilePath(Temp);
 	int i=Temp.Find('*');
 	if (i==-1)
 		SetDlgItemText(IDC_DBFILE,Temp);

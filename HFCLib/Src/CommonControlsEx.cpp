@@ -533,9 +533,7 @@ BOOL CListCtrlEx::SetColumn(int nCol, const LV_COLUMN* pColumn)
 				delete[] aColumns[nCol]->pStrTitle;
 
 			aColumns[nCol]->bFlags&=~DWORD(COLUMNDATA::FlagTitleIsResource);
-            
-			aColumns[nCol]->pStrTitle=new char[max(strlen(pColumn->pszText+1)+1,2)];
-			strcpy(aColumns[nCol]->pStrTitle,pColumn->pszText);
+			aColumns[nCol]->pStrTitle=alloccopy(pColumn->pszText);
 		}
 		return TRUE;
 	}

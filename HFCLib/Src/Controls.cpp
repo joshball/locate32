@@ -747,7 +747,7 @@ static void clear(LPHEXVIEWCTRL ctrl)
 
 static BYTE GetString(LPHEXVIEWCTRL ctrl,CString& str,DWORD nStartPos)
 {
-	char szBuf[4];
+	char szBuf[5];
 	DWORD nLen=ctrl->nDataLen-nStartPos;
 	DWORD i;
 	BYTE ret=noError;
@@ -762,7 +762,7 @@ static BYTE GetString(LPHEXVIEWCTRL ctrl,CString& str,DWORD nStartPos)
 	str.MakeUpper();
 	for (i=0;i<nLen;i++)
 	{
-		wsprintf(szBuf,"%02X ",(int)ctrl->pData[nStartPos+i]);
+		StringCbPrintf(szBuf,5,"%02X ",(int)ctrl->pData[nStartPos+i]);
 		str << szBuf;
 		if (i==ctrl->nHalfLine)
 			str << ' ';

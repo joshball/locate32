@@ -6,13 +6,13 @@
 
 // Library variables
 
-#define  HFCVERSIONMS		MAKEVERSION(5,33)
-#define  HFCVERSIONLS		MAKEVERSION(5,9040)
+#define  HFCVERSIONMS		MAKEVERSION(5,40)
+#define  HFCVERSIONLS		MAKEVERSION(5,9100)
 
 #ifdef _DEBUG
-#define  HFCVERSIONSTR		"HFC Library (DEBUG) v5.33.5.9040";
+#define  HFCVERSIONSTR		"HFC Library (DEBUG) v5.40.5.9100";
 #else
-#define  HFCVERSIONSTR		"HFC Library v5.33.5.9040";
+#define  HFCVERSIONSTR		"HFC Library v5.40.5.9100";
 #endif
 
 LPCSTR szEmpty="";
@@ -74,94 +74,96 @@ DWORD GetHFCLibFlags(void)
 
 
 #ifdef _DEBUG
-void MsgToText(DWORD msg,LPSTR text)
+void MsgToText(DWORD msg,LPSTR text,size_t maxlen)
 {
+#ifdef WIN32
 	switch (msg)
 	{
-#ifdef WIN32
 	case WM_ACTIVATE:
-		strcpy(text,"WM_ACTIVATE");
+		StringCbCopy(text,maxlen,"WM_ACTIVATE");
 		break;
 	case WM_ACTIVATEAPP:
-		strcpy(text,"WM_ACTIVATEAPP");
+		StringCbCopy(text,maxlen,"WM_ACTIVATEAPP");
 		break;
 	case WM_CANCELMODE:
-		strcpy(text,"WM_CANCELMODE");
+		StringCbCopy(text,maxlen,"WM_CANCELMODE");
 		break;
 	case WM_CAPTURECHANGED:
-		strcpy(text,"WM_CAPTURECHANGED");
+		StringCbCopy(text,maxlen,"WM_CAPTURECHANGED");
 		break;
 	case WM_CHAR:
-		strcpy(text,"WM_CHAR");
+		StringCbCopy(text,maxlen,"WM_CHAR");
 		break;
 	case WM_CLOSE:
-		strcpy(text,"WM_CLOSE");
+		StringCbCopy(text,maxlen,"WM_CLOSE");
 		break;
 	case WM_CREATE:
-		strcpy(text,"WM_CREATE");
+		StringCbCopy(text,maxlen,"WM_CREATE");
 		break;
 	case WM_COMMAND:
-		strcpy(text,"WM_COMMAND");
+		StringCbCopy(text,maxlen,"WM_COMMAND");
 		break;
 	case WM_DESTROY:
-		strcpy(text,"WM_DESTROY");
+		StringCbCopy(text,maxlen,"WM_DESTROY");
 		break;
 	case WM_DRAWITEM:
-		strcpy(text,"WM_DRAWITEM");
+		StringCbCopy(text,maxlen,"WM_DRAWITEM");
 		break;
 	case WM_DROPFILES:
-		strcpy(text,"WM_DROPFILES");
+		StringCbCopy(text,maxlen,"WM_DROPFILES");
 		break;
 	case WM_GETICON:
-		strcpy(text,"WM_GETICON");
+		StringCbCopy(text,maxlen,"WM_GETICON");
 		break;
 	case WM_HSCROLL:
-		strcpy(text,"WM_HSCROLL");
+		StringCbCopy(text,maxlen,"WM_HSCROLL");
 		break;
 	case WM_KEYDOWN:
-		strcpy(text,"WM_KEYDOWN");
+		StringCbCopy(text,maxlen,"WM_KEYDOWN");
 		break;
 	case WM_KEYUP:
-		strcpy(text,"WM_KEYUP");
+		StringCbCopy(text,maxlen,"WM_KEYUP");
 		break;
 	case WM_KILLFOCUS:
-		strcpy(text,"WM_KILLFOCUS");
+		StringCbCopy(text,maxlen,"WM_KILLFOCUS");
 		break;
 	case WM_MENUSELECT:
-		strcpy(text,"WM_MENUSELECT");
+		StringCbCopy(text,maxlen,"WM_MENUSELECT");
 		break;
 	case WM_MOUSEMOVE:
-		strcpy(text,"WM_MOUSEMOVE");
+		StringCbCopy(text,maxlen,"WM_MOUSEMOVE");
 		break;
 	case WM_MOVE:
-		strcpy(text,"WM_MOVE");
+		StringCbCopy(text,maxlen,"WM_MOVE");
 		break;
 	case WM_NOTIFY:
-		strcpy(text,"WM_NOTIFY");
+		StringCbCopy(text,maxlen,"WM_NOTIFY");
 		break;
 	case WM_PAINT:
-		strcpy(text,"WM_PAINT");
+		StringCbCopy(text,maxlen,"WM_PAINT");
 		break;
 	case WM_SETICON:
-		strcpy(text,"WM_SETICON");
+		StringCbCopy(text,maxlen,"WM_SETICON");
 		break;
 	case WM_SIZE:
-		strcpy(text,"WM_SIZE");
+		StringCbCopy(text,maxlen,"WM_SIZE");
 		break;
 	case WM_SIZING:
-		strcpy(text,"WM_SIZING");
+		StringCbCopy(text,maxlen,"WM_SIZING");
 		break;
 	case WM_TIMER:
-		strcpy(text,"WM_TIMER");
+		StringCbCopy(text,maxlen,"WM_TIMER");
 		break;
 	case WM_VSCROLL:
-		strcpy(text,"WM_VSCROLL");
+		StringCbCopy(text,maxlen,"WM_VSCROLL");
 		break;
-#endif
 	default:
-		sprintf(text,"%lX",msg);
+		StringCbPrintf(text,maxlen,"%lX",msg);
 		break;
 	}
+#else
+	sprintf(text,"%lX",msg);
+#endif
 }
 
 #endif

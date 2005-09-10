@@ -63,6 +63,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <strsafe.h>
 #include "HFCDef.h"
 
 ///////////////////////////////////////////////
@@ -204,6 +205,7 @@ class CObject;
 	#pragma comment(lib, "kernel32.lib")
 	#pragma comment(lib, "user32.lib")
 	#pragma comment(lib, "gdi32.lib")
+	#pragma comment(lib, "strsafe.lib")
 #ifndef HFC_DISABLECOMDLG32
 	#pragma comment(lib, "comdlg32.lib")
 #endif

@@ -63,7 +63,7 @@ void StartDebugLogging()
 			DWORD verMS=GetHFCLibVerMS();
 			DWORD verLS=GetHFCLibVerLS();
 			DWORD verFlags=GetHFCLibFlags();
-			sprintf(Text,"HFCLIB: LOGGING STARTED. HFCLIB Ver: %d.%d.%d.%d  %s %s %s",
+			StringCbPrintf(Text,400,"HFCLIB: LOGGING STARTED. HFCLIB Ver: %d.%d.%d.%d  %s %s %s",
 				HIWORD(verMS),LOWORD(verMS),HIWORD(verLS),LOWORD(verLS),(verFlags&HFCFLAG_DEBUG?"DEBUG":"RELEASE"),(verFlags&HFCFLAG_DLL?"DLL":"STATIC"),(verFlags&HFCFLAG_WIN32?"WIN32":"DOS")); 
 			DebugMessage(Text);
 			
@@ -73,7 +73,7 @@ void StartDebugLogging()
 			{
 				if (pAppData->pAppClass!=NULL)
 				{
-					sprintf(Text,"APP: %s EXE: %s",
+					StringCbPrintf(Text,400,"APP: %s EXE: %s",
 						LPCSTR(pAppData->pAppClass->GetAppName()),
 						LPCSTR(pAppData->pAppClass->GetExeName())); 
 					DebugMessage(Text);
@@ -126,7 +126,7 @@ void DebugMessage(LPCSTR msg)
 		SYSTEMTIME st;
 		DWORD writed;
 		GetLocalTime(&st);
-		int len=wsprintf(szBufr,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X: %s\r\n",
+		int len=StringCbPrintf (szBufr,2000,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X: %s\r\n",
 			st.wYear%100,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond,
 			st.wMilliseconds,GetCurrentThreadId(),msg);
 		WriteFile(hLogFile,szBufr,len,&writed,NULL);
@@ -169,7 +169,7 @@ static int formhexline(char* line,BYTE* pData,size_t datalen)
 		if (i==LINELEN/2)
 			*(ptr++)=' ';
 		
-		ptr+=sprintf(ptr,"%02X ",pData[i]);
+		ptr+=StringCbPrintf(ptr,5,"%02X ",pData[i]);
 	}
 	for (;i<LINELEN;i++)
 	{
@@ -213,7 +213,7 @@ void DebugHexDump(LPCSTR desc,BYTE* pData,size_t datalen)
 		SYSTEMTIME st;
 		DWORD writed;
 		GetLocalTime(&st);
-		int len=wsprintf(szBufr,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X HEXDUMP %s len=%d:\r\n",
+		int len=StringCbPrintf (szBufr,2000,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X HEXDUMP %s len=%d:\r\n",
 			st.wYear%100,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond,
 			st.wMilliseconds,GetCurrentThreadId(),desc,datalen);
         WriteFile(hLogFile,szBufr,len,&writed,NULL);
@@ -224,7 +224,7 @@ void DebugHexDump(LPCSTR desc,BYTE* pData,size_t datalen)
 		while ((ret=formhexline(line,pData,datalen)))
 		{
 			char indstr[12];
-			size_t ret2=wsprintf(indstr,"%08X ",index);
+			size_t ret2=StringCbPrintf(indstr,12,"%08X ",index);
 			
 			WriteFile(hLogFile,indstr,ret2,&writed,NULL);
             WriteFile(hLogFile,line,strlen(line),&writed,NULL);
@@ -280,8 +280,8 @@ void DebugWndMessage(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 	{
 		char buf[2000];
 		char buf2[100];
-		MsgToText(msg,buf2);
-		sprintf(buf,"HWND: %lX MSG: %s WPARAM: %lX LPARAM: %lX",(DWORD)hWnd,buf2,(DWORD)wParam,(DWORD)lParam);
+		MsgToText(msg,buf2,100);
+		StringCbPrintf(buf,2000,"HWND: %lX MSG: %s WPARAM: %lX LPARAM: %lX",(DWORD)hWnd,buf2,(DWORD)wParam,(DWORD)lParam);
 		DebugMessage(buf);
 	}
 }
@@ -293,7 +293,7 @@ void DebugNumMessage(LPCSTR text,DWORD num)
 	if (nLoggingType==LOGGING_FILE)
 	{
 		char buf[2000];
-		sprintf(buf,text,num);
+		StringCbPrintf(buf,2000,text,num);
 		DebugMessage(buf);
 	}
 }
@@ -306,7 +306,7 @@ void DebugFormatMessage(LPCSTR text,...)
 		va_start(argList,text);
 		
 		char buf[2000];
-		vsprintf(buf,text,argList);
+		StringCbVPrintf(buf,2000,text,argList);
 		DebugMessage(buf);
 	}
 }
@@ -524,7 +524,7 @@ LRESULT CALLBACK AddDebugNoteWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lP
 
 					if (!fd.DoModal(hWnd))
 						break;
-					File=fd.GetPathName();
+					fd.GetFilePath(File);
 					CRegKey RegKey;
 					if(RegKey.OpenKey(HKLM,"Software\\HFC\\Notify files",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 					{

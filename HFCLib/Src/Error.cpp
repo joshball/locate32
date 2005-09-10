@@ -74,7 +74,7 @@ HFCERROR StdHFCErrorCallbackMsgBox(HFCERROR nError,DWORD dwData)
 	if (nError!=HFC_NOERROR)
 	{
 		char text[1000];
-		sprintf(text,"Code %X:%s",(DWORD)nError,GetStdErrorStr(nError));
+		StringCbPrintf(text,1000,"Code %X:%s",(DWORD)nError,GetStdErrorStr(nError));
 		MessageBox((HWND)dwData,text,"HFC Error",MB_ICONERROR|MB_OK);
 	}
 	return nError;

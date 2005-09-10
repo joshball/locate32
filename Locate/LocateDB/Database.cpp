@@ -706,7 +706,7 @@ LPSTR CDatabase::GetValidKey(DWORD dwUniqueNum) const
 		if (dwUniqueNum>0)
 		{
 			char* key=new char[25];
-			wsprintf(key,"db%d",dwUniqueNum);
+			StringCbPrintf(key,25,"db%d",dwUniqueNum);
 			return key;            
 		}
 		else

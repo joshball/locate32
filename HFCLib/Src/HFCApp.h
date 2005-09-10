@@ -60,7 +60,8 @@ private:
 	friend HINSTANCE GetLanguageSpecificResourceHandle();
 #endif
 #ifdef DEF_WINDOWS
-	friend CFileDialog::CFileDialog(BOOL,LPCTSTR,LPCTSTR,DWORD,LPCTSTR);
+	friend void CFileDialog::Init(LPCSTR,LPCSTR,DWORD,LPCSTR);
+	friend void CFileDialog::Init(LPCWSTR,LPCWSTR,DWORD,LPCWSTR);
 	friend CFontDialog::CFontDialog(LPLOGFONT,DWORD,HDC);
 	friend CFontDialog::CFontDialog(const CHARFORMAT&,DWORD,HDC);
 	friend void CPropertyPage::Construct(LPCTSTR,UINT,TypeOfResourceHandle);

@@ -173,34 +173,61 @@ protected:
 class CFileDialog : public CCommonDialog
 {
 public:
+#ifdef DEF_WCHAR
+	union {
+		OPENFILENAME* m_pofn;
+		OPENFILENAMEW* m_pwofn;
+	};
+#else
 	OPENFILENAME* m_pofn;
+#endif
 
-	CFileDialog(BOOL bOpenFileDialog,LPCTSTR lpszDefExt=NULL,
-		LPCTSTR lpszFileName=NULL,
-		DWORD dwFlags=OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT,
-		LPCTSTR lpszFilter=NULL);
+	CFileDialog(BOOL bOpenFileDialog,LPCSTR lpszDefExt=NULL,LPCSTR lpszFileName=NULL,
+		DWORD dwFlags=OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT,	LPCSTR lpszFilter=NULL);
+	CFileDialog(BOOL bOpenFileDialog,LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,	UINT uFilterId);
 	virtual ~CFileDialog();
 
 	BOOL EnableFeatures(DWORD nFlags=efCheck);
 	BOOL DoModal(HWND hParentWnd=NULL);
 
-	CString GetPathName() const;
-	CString GetFileName() const;
-	CString GetFileExt() const;
-	CString GetFileTitle() const;
+	BOOL GetFilePath(CString& sPath) const;
+	BOOL GetFileName(CString& sFileName) const;
+	BOOL GetFileExt(CString& sFileExt) const;
+	void GetFileTitle(CString& sFileTitle) const;
+	void GetFileTitle(LPSTR pFileTitle,size_t nMaxLen) const;
+	
+	void SetFileTitle(LPCSTR szTitle);
+
+	void SetTitle(LPCSTR szTitle);
+	
 	int GetFilterIndex() const;
 	BOOL GetReadOnlyPref() const;
-
-	POSITION GetStartPosition() const;
-	CString GetNextPathName(POSITION& pos) const;
 
 	void SetTemplate(UINT nID,TypeOfResourceHandle bType=LanguageSpecificResource);
 	void SetTemplate(LPCTSTR lpID,TypeOfResourceHandle bType=LanguageSpecificResource);
 
-	CString GetFolderPath() const;
+	BOOL GetFolderPath(CString& sFolderPath) const;
 	void SetControlText(int nID,LPCSTR lpsz);
 	void HideControl(int nID);
 	void SetDefExt(LPCSTR lpsz);
+
+#ifdef DEF_WCHAR
+	CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,LPCWSTR lpszFileName=NULL,
+		DWORD dwFlags=OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT,	LPCWSTR lpszFilter=NULL);
+	CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,UINT uFilterId);	
+
+	
+	BOOL GetFilePath(CStringW& sPath) const;
+	BOOL GetFileName(CStringW& sFileName) const;
+	BOOL GetFileExt(CStringW& sFileExt) const;
+	void GetFileTitle(CStringW& sFileTitle) const;
+	void GetFileTitle(LPWSTR pFileTitle,size_t nMaxLen) const;
+	BOOL GetFolderPath(CStringW& sFolderPath) const;
+	void SetFileTitle(LPCWSTR szTitle);
+	
+	void SetTitle(LPCWSTR szTitle);
+	
+#endif
 
 protected:
 	virtual UINT OnShareViolation(LPCTSTR lpszPathName);
@@ -210,11 +237,21 @@ protected:
 	virtual void OnFolderChange();
 	virtual void OnTypeChange();
 
+	void Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCSTR lpszFilter);
+#ifdef DEF_WCHAR
+	void Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPCWSTR lpszFilter);
+#endif
+
 protected:
 	BOOL m_bOpenFileDialog;
-	LPTSTR m_strFilter;
-	TCHAR m_szFileTitle[64];
-	LPTSTR m_szFileName;
+	union {
+		LPSTR m_pFilter;
+		LPWSTR m_pwFilter;
+	};
+	union {
+        LPSTR m_pFileName;
+		LPWSTR m_pwFileName;
+	};
 
 	virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 };
@@ -780,9 +817,65 @@ inline void CPropertySheet::SetWizardButtons(DWORD dwFlags)
 ///////////////////////////
 // Class CFileDialog
 
-inline CString CFileDialog::GetFileTitle() const
+inline CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCSTR lpszDefExt,
+						 LPCSTR lpszFileName,DWORD dwFlags,LPCSTR lpszFilter)
+:	CCommonDialog(),m_bOpenFileDialog(bOpenFileDialog)
 {
-	return m_szFileTitle;
+	Init(lpszDefExt,lpszFileName,dwFlags,lpszFilter);
+}
+
+inline CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,
+						 LPCWSTR lpszFileName,DWORD dwFlags,LPCWSTR lpszFilter)
+:	CCommonDialog(),m_bOpenFileDialog(bOpenFileDialog)
+{
+	Init(lpszDefExt,lpszFileName,dwFlags,lpszFilter);
+}
+
+inline CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCSTR lpszDefExt,
+						 LPCSTR lpszFileName,DWORD dwFlags,UINT nFilderID)
+:	CCommonDialog(),m_bOpenFileDialog(bOpenFileDialog)
+{
+	Init(lpszDefExt,lpszFileName,dwFlags,CString(nFilderID));
+}
+
+inline CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,
+						 LPCWSTR lpszFileName,DWORD dwFlags,UINT nFilderID)
+:	CCommonDialog(),m_bOpenFileDialog(bOpenFileDialog)
+{
+	Init(lpszDefExt,lpszFileName,dwFlags,CStringW(nFilderID));
+}
+
+inline void CFileDialog::GetFileTitle(CString& sFileTitle) const
+{
+	if (IsFullUnicodeSupport())	
+		sFileTitle=m_pwofn->lpstrFileTitle;
+	else
+		sFileTitle=m_pofn->lpstrFileTitle;
+}
+
+inline void CFileDialog::GetFileTitle(LPSTR pFileTitle,size_t nMaxLen) const
+{
+	if (IsFullUnicodeSupport())	
+		WideCharToMultiByte(CP_ACP,0,m_pwofn->lpstrFileTitle,-1,pFileTitle,nMaxLen,NULL,NULL);
+	else
+		StringCbCopy(pFileTitle,nMaxLen-1,m_pofn->lpstrFileTitle);
+}
+
+
+inline void CFileDialog::GetFileTitle(CStringW& sFileTitle) const
+{
+	if (IsFullUnicodeSupport())	
+		sFileTitle=m_pwofn->lpstrFileTitle;
+	else
+		sFileTitle=m_pofn->lpstrFileTitle;
+}
+
+inline void CFileDialog::GetFileTitle(LPWSTR pFileTitle,size_t nMaxLen) const
+{
+	if (IsFullUnicodeSupport())	
+		StringCbCopyW(pFileTitle,nMaxLen*2,m_pwofn->lpstrFileTitle);
+	else
+		MultiByteToWideChar(CP_ACP,0,m_pofn->lpstrFileTitle,-1,pFileTitle,nMaxLen);
 }
 
 inline void CFileDialog::SetTemplate(UINT nID,TypeOfResourceHandle bType)
@@ -804,7 +897,58 @@ inline int CFileDialog::GetFilterIndex() const
 {
 	return m_pofn->nFilterIndex;
 }
+
+inline void CFileDialog::SetFileTitle(LPCSTR pFileTitle)
+{
+	if (IsFullUnicodeSupport())	
+		MultiByteToWideChar(CP_ACP,0,pFileTitle,-1,m_pwofn->lpstrFileTitle,64);
+	else
+		StringCbCopy(m_pofn->lpstrFileTitle,64,pFileTitle);
+}
+
+inline void CFileDialog::SetTitle(LPCSTR pFileTitle)
+{
+	if (IsFullUnicodeSupport())	
+	{
+		if (m_pwofn->lpstrTitle!=NULL)
+			delete[] m_pwofn->lpstrTitle;
+		m_pwofn->lpstrTitle=alloccopyAtoW(pFileTitle);
+	}
+	else
+	{
+		if (m_pwofn->lpstrTitle!=NULL)
+			delete[] m_pwofn->lpstrTitle;
+		m_pofn->lpstrTitle=alloccopy(pFileTitle);
+	}
+}
+#ifdef DEF_WCHAR
+inline void CFileDialog::SetFileTitle(LPCWSTR pFileTitle)
+{
+	if (IsFullUnicodeSupport())	
+		StringCbCopyW(m_pwofn->lpstrFileTitle,64,pFileTitle);
+	else
+		WideCharToMultiByte(CP_ACP,0,pFileTitle,-1,m_pofn->lpstrFileTitle,64,NULL,NULL);
 	
+}
+
+
+inline void CFileDialog::SetTitle(LPCWSTR pFileTitle)
+{
+	if (IsFullUnicodeSupport())	
+	{
+		if (m_pwofn->lpstrTitle!=NULL)
+			delete[] m_pwofn->lpstrTitle;
+		m_pwofn->lpstrTitle=alloccopy(pFileTitle);
+	}
+	else
+	{
+		if (m_pwofn->lpstrTitle!=NULL)
+			delete[] m_pwofn->lpstrTitle;
+		m_pofn->lpstrTitle=alloccopyWtoA(pFileTitle);
+	}
+}
+#endif
+
 ///////////////////////////
 // Class CFontDialog
 
