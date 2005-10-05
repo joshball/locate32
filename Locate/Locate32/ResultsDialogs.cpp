@@ -76,8 +76,6 @@ BOOL CResults::Create(CListCtrl* pList,int* pDetails,int nDetails)
 			for (int i=0;i<nDetails;i++)
 			{
 				// Updating if necessary
-				
-				// TODO: Temporarely disabled
 				if (pItem->ShouldUpdateByDetail((CLocateDlg::DetailType)m_pDetails[i]))
 					pItem->UpdateByDetail((CLocateDlg::DetailType)m_pDetails[i]);
 				
@@ -290,7 +288,7 @@ BOOL CResults::SaveToHtmlFile(LPCSTR szFile) const
 			outFile.Write(pStr,sizeof(pStr)-1);
 		}
 
-		for (int i=0;i<m_nDetails-1;i++)
+		for (int i=0;i<m_nDetails;i++)
 		{
 			outFile.Write("<td>",4);
 			
@@ -461,7 +459,7 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 
 
 CSaveResultsDlg::CSaveResultsDlg()
-:	CFileDialog(FALSE,"*",szEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,IDS_SAVERESULTSFILTERS),
+:	CFileDialog(FALSE,L"*",szwEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,IDS_SAVERESULTSFILTERS),
 	m_nFlags(IDC_TITLE|RESULT_INCLUDEDATE|RESULT_INCLUDELABELS),m_pList(NULL)
 {
 	DWORD nFlags=GetSystemFeaturesFlag();
@@ -472,7 +470,7 @@ CSaveResultsDlg::CSaveResultsDlg()
 		SetTemplate(IDD_RESULTSAVEDIALOG);
 
 	
-	SetFileTitle(CString(IDS_SAVERESULTS));
+	SetTitle(CString(IDS_SAVERESULTS));
 	
 	// Setting default details
 	m_aDetails.Add(CLocateDlg::DetailType::FullPath);
@@ -551,10 +549,12 @@ BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
 
 	// Inserting details to list view and checking selected
 	int nItem;
+	CString Title;
 	for (nItem=0;nItem<m_aDetails.GetSize();nItem++)
 	{
+		Title.LoadString(IDS_LISTNAME+m_aDetails[nItem],LanguageSpecificResource);
 		m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem,
-			LPSTR_TEXTCALLBACK,0,0,0,LPARAM(m_aDetails[nItem]));
+			Title,0,0,0,LPARAM(m_aDetails[nItem]));
 		m_pList->SetCheckState(nItem,TRUE);
 	}
 
@@ -562,8 +562,9 @@ BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
 	{
 		if (m_aDetails.Find(nDetail)==-1)
 		{
+			Title.LoadString(IDS_LISTNAME+nDetail,LanguageSpecificResource);
 			m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem++,
-				LPSTR_TEXTCALLBACK,0,0,0,LPARAM(nDetail));
+				Title,0,0,0,LPARAM(nDetail));
 			m_pList->SetCheckState(nItem,FALSE);
 		}
 	}

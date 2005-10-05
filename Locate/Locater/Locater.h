@@ -243,7 +243,6 @@ private:
 	DWORD m_dwVolumeSerial;
 	LPCSTR m_szFileSystem;
 
-	
 
 private:
 	// Advanced

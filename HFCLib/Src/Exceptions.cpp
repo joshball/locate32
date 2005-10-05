@@ -393,7 +393,11 @@ BOOL CFileException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 		else if (!m_strFileName.IsEmpty())
 		{
 			fMemCopy(lpszError+len," path: ",7);
+#ifdef DEF_WCHAR
+			WideCharToMultiByte(CP_ACP,0,(LPCWSTR)m_strFileName,m_strFileName.GetLength()+1,lpszError+len+7,nMaxError-len-7,NULL,NULL);
+#else
 			StringCbCopy(lpszError+len+7,nMaxError-len-7,m_strFileName);
+#endif
 			len+=m_strFileName.GetLength()+7;
 		}
 

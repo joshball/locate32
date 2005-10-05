@@ -494,6 +494,7 @@ public:
 	int InsertColumn(int nCol, const LV_COLUMN* pColumn);
 	int InsertColumn(int nCol, LPCTSTR lpszColumnHeading,
 		int nFormat = LVCFMT_LEFT, int nWidth = -1, int nSubItem = -1);
+	inline int GetColumnCount() const;
 	BOOL DeleteColumn(int nCol);
 	HIMAGELIST CreateDragImage(int nItem, LPPOINT lpPoint);
 	BOOL Update(int nItem);
@@ -598,7 +599,10 @@ public:
 	UINT GetItemState(HTREEITEM hItem,UINT nStateMask) const;
 	DWORD GetItemData(HTREEITEM hItem) const;
 	BOOL SetItem(TV_ITEM* pItem);
-	BOOL SetItem(HTREEITEM hItem,UINT nMask,LPCTSTR lpszItem,int nImage,
+	BOOL SetItem(TV_ITEMW* pItem);
+	BOOL SetItem(HTREEITEM hItem,UINT nMask,LPCSTR lpszItem,int nImage,
+		int nSelectedImage,UINT nState=0,UINT nStateMask=0, LPARAM lParam=0);
+	BOOL SetItem(HTREEITEM hItem,UINT nMask,LPCWSTR lpszItem,int nImage,
 		int nSelectedImage,UINT nState=0,UINT nStateMask=0, LPARAM lParam=0);
 	BOOL SetItemText(HTREEITEM hItem,LPCSTR lpszItem);
 	BOOL SetItemText(HTREEITEM hItem,LPCWSTR lpszItem);

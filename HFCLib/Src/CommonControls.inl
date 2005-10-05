@@ -1527,6 +1527,15 @@ inline int CListCtrl::InsertColumn(int nCol, const LV_COLUMN* pColumn)
 	return ::SendMessage(m_hWnd,LVM_INSERTCOLUMN,nCol,(LPARAM)pColumn);
 }
 
+
+inline int CListCtrl::GetColumnCount() const
+{
+	LV_COLUMN lc;
+	lc.mask=LVCF_WIDTH;
+	for (int iCount=0;::SendMessage(m_hWnd,LVM_GETCOLUMN,(WPARAM)iCount,(LPARAM)&lc);iCount++);
+	return iCount;
+}
+
 inline BOOL CListCtrl::DeleteColumn(int nCol)
 {
 	return ::SendMessage(m_hWnd,LVM_DELETECOLUMN,nCol,0);
@@ -1917,6 +1926,11 @@ inline BOOL CTreeCtrl::GetItem(TV_ITEM* pItem) const
 inline BOOL CTreeCtrl::SetItem(TV_ITEM* pItem)
 {
 	return ::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)pItem);
+}
+
+inline BOOL CTreeCtrl::SetItem(TV_ITEMW* pItem)
+{
+	return ::SendMessage(m_hWnd,TVM_SETITEMW,0,(LPARAM)pItem);
 }
 
 inline BOOL CTreeCtrl::ItemHasChildren(HTREEITEM hItem) const

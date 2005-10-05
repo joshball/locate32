@@ -399,7 +399,6 @@ BOOL CLocater::LocatingProc()
 					// Reading type data
 					dbFile->Read(m_bCurrentRootType);
 								
-					BOOL bReadRoot=TRUE;
 					// Reading path
 					{
 						BYTE cTemp;

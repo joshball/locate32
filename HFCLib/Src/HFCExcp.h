@@ -80,21 +80,29 @@ public:
 	};
 
 	
-
+	CFileException(exceptionCode cause = CFileException::none, LONG lOsError = -1);
 #ifdef WIN32
-	CFileException(exceptionCode cause = CFileException::none, LONG lOsError = -1,
-		LPCTSTR lpszArchiveName = NULL);
-	CFileException(CException::exceptionCode cause, LONG lOsError = -1,
-		LPCTSTR lpszArchiveName = NULL);
+	CFileException(exceptionCode cause,LONG lOsError,LPCSTR lpszArchiveName);
+	CFileException(CException::exceptionCode cause,LONG lOsError,LPCSTR lpszArchiveName);
 #else
-	CFileException(exceptionCode cause = CFileException::none, LPCSTR lpszArchiveName = NULL);
-	CFileException(CException::exceptionCode cause, LPCSTR lpszArchiveName = NULL);
+	CFileException(exceptionCode cause, LPCSTR lpszArchiveName);
+	CFileException(CException::exceptionCode cause,LPCSTR lpszArchiveName);
 #endif
+
+#ifdef DEF_WCHAR
+	CFileException(exceptionCode cause,LONG lOsError,LPCWSTR lpszArchiveName);
+	CFileException(CException::exceptionCode cause,LONG lOsError,LPCWSTR lpszArchiveName);
+#endif
+
 	//virtual ~CFileException();
 
 	virtual HFCERROR GetHFCErrorCode() const;
 
+#ifdef DEF_WCHAR
+	CStringW m_strFileName;
+#else
 	CString m_strFileName;
+#endif
 
 #ifdef WIN32
 	static CException::exceptionCode OsErrorToException(LONG lOsError);
@@ -123,15 +131,17 @@ inline CException::CException(CException::exceptionCode cause,LONG lOsError)
 {
 }
 
-inline CFileException::CFileException(CFileException::exceptionCode cause,LONG lOsError,LPCTSTR lpszArchiveName)
+inline CFileException::CFileException(CFileException::exceptionCode cause,LONG lOsError)
 :	CException((CException::exceptionCode)cause,lOsError)
 {
-	m_strFileName=lpszArchiveName;
 }
-inline CFileException::CFileException(CException::exceptionCode cause,LONG lOsError,LPCTSTR lpszArchiveName)
-:	CException(cause,lOsError)
+inline CFileException::CFileException(CFileException::exceptionCode cause,LONG lOsError,LPCSTR lpszArchiveName)
+:	CException((CException::exceptionCode)cause,lOsError),m_strFileName(lpszArchiveName)
 {
-	m_strFileName=lpszArchiveName;
+}
+inline CFileException::CFileException(CException::exceptionCode cause,LONG lOsError,LPCSTR lpszArchiveName)
+:	CException(cause,lOsError),m_strFileName(lpszArchiveName)
+{
 }
 #else
 inline CFileException::CFileException(CFileException::exceptionCode cause,LPCSTR lpszArchiveName)
@@ -143,6 +153,16 @@ inline CFileException::CFileException(CException::exceptionCode cause,LPCSTR lps
 :	CException(cause)
 {
         m_strFileName=lpszArchiveName;
+}
+#endif
+#ifdef DEF_WCHAR
+inline CFileException::CFileException(CFileException::exceptionCode cause,LONG lOsError,LPCWSTR lpszArchiveName)
+:	CException((CException::exceptionCode)cause,lOsError),m_strFileName(lpszArchiveName)
+{
+}
+inline CFileException::CFileException(CException::exceptionCode cause,LONG lOsError,LPCWSTR lpszArchiveName)
+:	CException(cause,lOsError),m_strFileName(lpszArchiveName)
+{
 }
 #endif
 

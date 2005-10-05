@@ -434,7 +434,7 @@ public:
 	ContextMenuStuff* GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CString*>& aFiles);
 	CLocatedItem** GetSeletedItems(int& nItems,int nIncludeIfNoneSeleted=-1);
 	
-
+	void InitTooltips();
 
 	void ClearMenuVariables();     
 	static int GetSendToMenuPos(HMENU hMenu);

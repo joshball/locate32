@@ -571,6 +571,33 @@ void CLocatedItem::UpdateFileSizeAndTime()
 
 	if (hFile==INVALID_HANDLE_VALUE)
 	{
+		if (GetLastError()==ERROR_SHARING_VIOLATION)
+		{
+			// Another method to query information
+			WIN32_FIND_DATA fd;
+			HANDLE hFind=FindFirstFile(GetPath(),&fd);
+			if (hFind!=INVALID_HANDLE_VALUE)
+			{
+				dwFileSize=fd.nFileSizeLow;
+				bFileSizeHi=(BYTE)fd.nFileSizeHigh;
+
+
+				FILETIME ft2;
+				FileTimeToLocalFileTime(&fd.ftLastWriteTime,&ft2);
+				FileTimeToDosDateTime(&ft2,&wModifiedDate,&wModifiedTime);
+				FileTimeToLocalFileTime(&fd.ftCreationTime,&ft2);
+				FileTimeToDosDateTime(&ft2,&wCreatedDate,&wCreatedTime);
+				FileTimeToLocalFileTime(&fd.ftLastAccessTime,&ft2);
+				FileTimeToDosDateTime(&ft2,&wAccessedDate,&wAccessedTime);
+	
+				dwFlags|=LITEM_TIMEDATEOK|LITEM_FILESIZEOK;
+
+				FindClose(hFind);
+				return;
+			}
+		}
+
+
 		SetToDeleted();
 		return;
 	}

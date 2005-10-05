@@ -29,7 +29,9 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_dwLocateDialogExtraFlags(CLocateDlg::efDefault),
 	m_bDefaultFlag(defaultDefault),	m_dwSettingsFlags(settingsDefault),
 	m_nNumberOfDirectories(DEFAULT_NUMBEROFDIRECTORIES),
-	m_nTransparency(0),m_nToolTipTransparency(0)
+	m_nTransparency(0),m_nToolTipTransparency(0),
+	m_dwTooltipDelayAutopop(DWORD(-1)),
+	m_dwTooltipDelayInitial(DWORD(-1))
 {
 	m_pGeneral=new CGeneralSettingsPage;
 	m_pAdvanced=new CAdvancedSettingsPage;
@@ -181,6 +183,12 @@ BOOL CSettingsProperties::LoadSettings()
 
 		if (RegKey.QueryValue("Transparency",nTemp))
 			m_nTransparency=min(nTemp,255);
+
+
+		if (RegKey.QueryValue("TooltipDelayAutopop",m_dwTooltipDelayAutopop))
+			m_dwSettingsFlags|=settingsSetTooltipDelays;
+		if (RegKey.QueryValue("TooltipDelayInitial",m_dwTooltipDelayInitial))
+			m_dwSettingsFlags|=settingsSetTooltipDelays;
 	}
 
 	// m_bAdvancedAndContextMenuFlag
@@ -255,6 +263,13 @@ BOOL CSettingsProperties::LoadSettings()
 			CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(NULL,&m_lToolTipTitleFont);
 		
 	}
+
+	// Retrieve tooltip default times
+	if (m_dwTooltipDelayAutopop==DWORD(-1))
+		m_dwTooltipDelayAutopop=GetDoubleClickTime()*10;
+	if (m_dwTooltipDelayInitial==DWORD(-1))
+		m_dwTooltipDelayInitial=GetDoubleClickTime();
+
 	return TRUE;
 }
 
@@ -275,10 +290,40 @@ BOOL CSettingsProperties::SaveSettings()
 		
 		RegKey.SetValue("DateFormat",m_DateFormat);
 		RegKey.SetValue("TimeFormat",m_TimeFormat);
+
+
+		// Default flags
+		RegKey.SetValue("Default CheckIn",m_bDefaultFlag&defaultCheckInFlag);
+		RegKey.SetValue("Default MatchWholeName",m_bDefaultFlag&defaultWholeName?1:0);
+		RegKey.SetValue("Default DataMatchCase",m_bDefaultFlag&defaultMatchCase?1:0);
+		RegKey.SetValue("Default ReplaceSpaces",m_bDefaultFlag&defaultReplaceSpaces?1:0);
+		RegKey.SetValue("Default UseWholePath",m_bDefaultFlag&defaultUseWholePath?1:0);
+
+		// Overrinding explorer for opening folders
+		RegKey.SetValue("Use other program to open folders",(DWORD)IsFlagSet(settingsUseOtherProgramsToOpenFolders));
+		RegKey.SetValue("Open folders with",m_OpenFoldersWith);
+
+		RegKey.SetValue("Transparency",m_nTransparency);
+
+		if (m_dwSettingsFlags&settingsSetTooltipDelays)
+		{
+			RegKey.SetValue("TooltipDelayAutopop",m_dwTooltipDelayAutopop);
+			RegKey.SetValue("TooltipDelayInitial",m_dwTooltipDelayInitial);
+		}
+		else
+		{
+			RegKey.DeleteValue("TooltipDelayAutopop");
+			RegKey.DeleteValue("TooltipDelayInitial");
+		}
 	}
+
+
 	((CLocateApp*)GetApp())->m_strDateFormat=m_DateFormat;
 	((CLocateApp*)GetApp())->m_strTimeFormat=m_TimeFormat;
 	((CLocateApp*)GetApp())->m_nFileSizeFormat=m_nFileSizeFormat;
+
+
+
 
 	Path.LoadString(IDS_REGPLACE,CommonResource);
 	Path<<"\\Recent Strings";
@@ -317,25 +362,7 @@ BOOL CSettingsProperties::SaveSettings()
 		GetLocateDlg()->PostMessage(WM_RESETSHORTCUTS);
 	
     
-	// Default flags
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defWrite)==ERROR_SUCCESS)
-	{
-		RegKey.SetValue("Default CheckIn",m_bDefaultFlag&defaultCheckInFlag);
-		RegKey.SetValue("Default MatchWholeName",m_bDefaultFlag&defaultWholeName?1:0);
-		RegKey.SetValue("Default DataMatchCase",m_bDefaultFlag&defaultMatchCase?1:0);
-		RegKey.SetValue("Default ReplaceSpaces",m_bDefaultFlag&defaultReplaceSpaces?1:0);
-		RegKey.SetValue("Default UseWholePath",m_bDefaultFlag&defaultUseWholePath?1:0);
-
-		// Overrinding explorer for opening folders
-		RegKey.SetValue("Use other program to open folders",(DWORD)IsFlagSet(settingsUseOtherProgramsToOpenFolders));
-		RegKey.SetValue("Open folders with",m_OpenFoldersWith);
-
-		RegKey.SetValue("Transparency",m_nTransparency);
-	}
-
 	
-
-
 	// Insert/Remove context menu items
 	
 	// Locate... on My Computer
@@ -767,6 +794,13 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL
 	};
 
+	Item* TooltipDelayItems[]={
+		CreateNumeric(IDS_ADVSETSHOWTOOLTIPDELAY,DefaultNumericProc,
+			MAKELONG(0,1000000),&m_pSettings->m_dwTooltipDelayInitial),
+		CreateNumeric(IDS_ADVSETSHOWTOOLTIPDURATION,DefaultNumericProc,
+			MAKELONG(0,1000000),&m_pSettings->m_dwTooltipDelayAutopop),
+		NULL
+	};
 	Item* FileViewItems[]={
 		CreateRadioBox(IDS_ADVSETUSEGETTITLE,NULL,DefaultRadioBoxProc,
 			MAKELONG(CLocateDlg::fgLVUseGetFileTitle,CLocateDlg::fgLVMethodFlag),&m_pSettings->m_dwLocateDialogFlags),
@@ -778,6 +812,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CLocateDlg::fgLVShowFileTypes,&m_pSettings->m_dwLocateDialogFlags),
 		CreateCheckBox(IDS_ADVSETDONTSHOWTOOLTIPS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLVDontShowTooltips,&m_pSettings->m_dwLocateDialogFlags),
+		CreateCheckBox(IDS_ADVSETSETTOOLTIPDELAYS,TooltipDelayItems,DefaultCheckBoxProc,
+			CSettingsProperties::settingsSetTooltipDelays,&m_pSettings->m_dwSettingsFlags),
 		CreateCheckBox(IDS_ADVSETDONTSHOWHIDDENFILES,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLVDontShowHiddenFiles,&m_pSettings->m_dwLocateDialogFlags),
 		CreateCheckBox(IDS_ADVSETNODOUBLERESULTS,NULL,DefaultCheckBoxProc,
@@ -1748,10 +1784,10 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 	
 	// Initializing file name dialog
 	CString Title;
-	CFileDialog fd(TRUE,"*","",OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,CString(IDS_IMPORTDATABASEFILTERS));
+	CFileDialog fd(TRUE,L"*",szwEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,IDS_IMPORTDATABASEFILTERS);
 	fd.EnableFeatures();
-	Title.LoadString(IDS_IMPORTDATABASESETTINGS);
-	fd.m_pofn->lpstrTitle=Title;
+	fd.SetTitle(CStringW(IDS_IMPORTDATABASESETTINGS));
+	
 	
 	// Ask file name
 	if (!fd.DoModal(*this))
@@ -1849,10 +1885,10 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 	// Initializing file name dialog
 	CString Title,Path;
 	
-	CFileDialog fd(FALSE,"*",pCurFile,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,CString(IDS_EXPORTDATABASEFILTERS));
+	CFileDialog fd(FALSE,"*",pCurFile,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,
+		IDS_EXPORTDATABASEFILTERS);
 	fd.EnableFeatures();
-	Title.LoadString(IDS_EXPORTDATABASESETTINGS);
-	fd.m_pofn->lpstrTitle=Title;
+	fd.SetTitle(CStringW(IDS_EXPORTDATABASESETTINGS));
 	
 	
 	// Ask file name
@@ -2697,29 +2733,28 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnBrowse()
 	CWaitCursor wait;
 
 	// Initializing file name dialog
-	CString Temp,Title;
-	Temp.LoadString(IDS_DATABASEFILTERS);
-	GetDlgItemText(IDC_DBFILE,Title);
-	CFileDialog fd(FALSE,"*",Title,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,Temp);
-	fd.EnableFeatures();
-	Title.LoadString(IDS_SELECTDATABASE);
-	fd.m_pofn->lpstrTitle=Title;
+	CStringW File;
+	GetDlgItemText(IDC_DBFILE,File);
 
+	CFileDialog fd(FALSE,L"*",File,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,IDS_DATABASEFILTERS);
+	fd.EnableFeatures();
+	fd.SetTitle(CString(IDS_SELECTDATABASE));
+	
 	// Ask file name
 	if (!fd.DoModal(*this))
 		return;
 	
 	// Check filename and set
-	fd.GetFilePath(Temp);
-	int i=Temp.Find('*');
+	fd.GetFilePath(File);
+	int i=File.Find('*');
 	if (i==-1)
-		SetDlgItemText(IDC_DBFILE,Temp);
+		SetDlgItemText(IDC_DBFILE,File);
 	else
 	{
-		if (Temp[i-1]=='.')
+		if (File[i-1]=='.')
 			i--;
-		Title.Copy(Temp,i);
-		SetDlgItemText(IDC_DBFILE,Title);
+		File.FreeExtra(i);
+		SetDlgItemText(IDC_DBFILE,File);
 	}
 
 	// Set focus to file name edit box

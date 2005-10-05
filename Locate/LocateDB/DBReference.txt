@@ -45,7 +45,7 @@ DIRECTORY STRUCTURE:
 0x0  = End     Data length     Dir name     dir name 
 0x10 = File					    length
 0x80 = Direc. actual size    
-+attrib        = this + 4
++attrib        = this + 1 (type is not countet)
 
   DWORD       WORD	    WORD       
 XXXXXXXX      XXXX      XXXX         XXXX....XXX..X     00

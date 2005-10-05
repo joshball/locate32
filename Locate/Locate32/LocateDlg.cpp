@@ -1,6 +1,7 @@
 #include <HFCLib.h>
 #include "Locate32.h"
-
+#include <uxtheme.h>
+#include <tmschema.h>
 CBufferAllocator<BYTE*,2000,BUFFERALLOC_EXTRALEN> FileTypeAllocator;	
 
 LPSTR g_szBuffer=NULL; 
@@ -376,13 +377,8 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 
 
 	// Setting tooltips
-	if (!(GetFlags()&fgLVDontShowTooltips))
-	{
-		m_pListTooltips=new CToolTipCtrl;
-		m_pListTooltips->Create(*this);
-		m_pListTooltips->SetFont(m_pListCtrl->GetFont());
-	}
-
+	InitTooltips();
+	
 	// Enabling multidirectory support if needed
 	m_NameDlg.EnableMultiDirectorySupport(GetFlags()&fgNameMultibleDirectories?TRUE:FALSE);
 	
@@ -796,29 +792,9 @@ BOOL CLocateDlg::UpdateSettings()
 	m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount());
 	SetListSelStyle();
 
-	
-    // Update tooltip setting	
-	if (m_dwFlags&fgLVDontShowTooltips)
-	{
-		if (m_pListTooltips!=NULL)
-		{
-			//m_pListCtrl->SetToolTips(NULL);
-			m_pListTooltips->DestroyToolTipCtrl();
-			delete m_pListTooltips;
-			m_pListTooltips=NULL;
-		}
-	}
-	else if (m_pListTooltips==NULL)
-	{
-		m_pListTooltips=new CToolTipCtrl;
-		m_pListTooltips->Create(*this);
-		m_pListTooltips->SetFont(m_pListCtrl->GetFont());
-		
-		m_iTooltipItem=-1;
-		m_iTooltipSubItem=-1;
-		m_bTooltipActive=FALSE;
-	}
-
+	// Update tooltip setting	
+	InitTooltips();
+    
 	if (m_NameDlg.EnableMultiDirectorySupport(GetFlags()&fgNameMultibleDirectories?TRUE:FALSE))
 	{
 		// This trick causes OnSize call
@@ -1033,6 +1009,56 @@ void CLocateDlg::SetDialogMode(BOOL bLarge)
 				g_szBuffer=NULL;
 			}
 			m_pListCtrl->ShowWindow(CWndCtrl::swHide);
+		}
+	}
+}
+
+void CLocateDlg::InitTooltips()
+{
+    if (m_dwFlags&fgLVDontShowTooltips)
+	{
+		if (m_pListTooltips!=NULL)
+		{
+			//m_pListCtrl->SetToolTips(NULL);
+			m_pListTooltips->DestroyToolTipCtrl();
+			delete m_pListTooltips;
+			m_pListTooltips=NULL;
+		}
+	}
+	else 
+	{
+		if (m_pListTooltips==NULL)
+		{
+			m_pListTooltips=new CToolTipCtrl;
+			m_pListTooltips->Create(*this);
+			m_pListTooltips->SetFont(m_pListCtrl->GetFont());
+			
+			m_iTooltipItem=-1;
+			m_iTooltipSubItem=-1;
+			m_bTooltipActive=FALSE;
+		}
+
+		// Set delay times
+		CRegKey RegKey;
+		if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+		{
+			DWORD dwDelay;
+			if (RegKey.QueryValue("TooltipDelayAutopop",dwDelay))
+				m_pListTooltips->SetDelayTime(dwDelay,CToolTipCtrl::autoPop);
+			else
+				m_pListTooltips->SetDelayTime(UINT(-1),CToolTipCtrl::autoPop);
+
+			if (RegKey.QueryValue("TooltipDelayInitial",dwDelay))
+			{
+				m_pListTooltips->SetDelayTime(dwDelay,CToolTipCtrl::initial);
+				m_pListTooltips->SetDelayTime(dwDelay/5,CToolTipCtrl::reshow);
+			}
+			else
+			{
+				m_pListTooltips->SetDelayTime(UINT(-1),CToolTipCtrl::initial);
+				m_pListTooltips->SetDelayTime(UINT(-1),CToolTipCtrl::reshow);
+			}
+
 		}
 	}
 }
@@ -2473,43 +2499,43 @@ void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 	}
 
 	
-	LVHITTESTINFO ht;
-	ht.pt=pos;
-	m_pListCtrl->ScreenToClient(&ht.pt);
-	if (m_pListCtrl->SubItemHitTest(&ht)==-1)
+
+	HWND hHeader=m_pListCtrl->GetHeader();
+	::GetWindowRect(hHeader,&rect);
+	if (rect.IsPtInRect(pos))
 	{
-		// Not any file item
+		// Show context menu for header
 
-		HWND hHeader=m_pListCtrl->GetHeader();
-		CRect rc;
-		::GetWindowRect(hHeader,&rc);
-
-		if (rc.IsPtInRect(pos))
-		{
-			// Show context menu for header
-
-			HMENU hColMenu=m_pListCtrl->CreateColumnSelectionMenu(IDM_DEFCOLSELITEM);
-			CString text(IDS_SELECTDETAILS);
-			
-			MENUITEMINFO mii;
-			mii.cbSize=sizeof(MENUITEMINFO);
-			// Inserting separator
-			mii.fMask=MIIM_TYPE;
-			mii.fType=MFT_SEPARATOR;
-			InsertMenuItem(hColMenu,WORD(-1),FALSE,&mii);
-			mii.fMask=MIIM_ID|MIIM_TYPE;
-			mii.fType=MFT_STRING;
-			mii.dwTypeData=text.GetBuffer();
-			mii.wID=IDM_SELECTDETAILS;
-			InsertMenuItem(hColMenu,WORD(-1),FALSE,&mii);
-			
-			TrackPopupMenu(hColMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,pos.x,pos.y,0,*this,NULL);	
-			DestroyMenu(hColMenu);
-		}
-		else
-			TrackPopupMenu(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),TPM_LEFTALIGN|TPM_RIGHTBUTTON,pos.x,pos.y,0,*this,NULL);	
+		HMENU hColMenu=m_pListCtrl->CreateColumnSelectionMenu(IDM_DEFCOLSELITEM);
+		CString text(IDS_SELECTDETAILS);
+		
+		MENUITEMINFO mii;
+		mii.cbSize=sizeof(MENUITEMINFO);
+		// Inserting separator
+		mii.fMask=MIIM_TYPE;
+		mii.fType=MFT_SEPARATOR;
+		InsertMenuItem(hColMenu,WORD(-1),FALSE,&mii);
+		mii.fMask=MIIM_ID|MIIM_TYPE;
+		mii.fType=MFT_STRING;
+		mii.dwTypeData=text.GetBuffer();
+		mii.wID=IDM_SELECTDETAILS;
+		InsertMenuItem(hColMenu,WORD(-1),FALSE,&mii);
+		
+		TrackPopupMenu(hColMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,pos.x,pos.y,0,*this,NULL);	
+		DestroyMenu(hColMenu);
 	}
-	CDialog::OnContextMenu(hWnd,pos);
+	else
+	{
+		LVHITTESTINFO ht;
+		ht.pt=pos;
+		m_pListCtrl->ScreenToClient(&ht.pt);
+		if (m_pListCtrl->SubItemHitTest(&ht)==-1)
+		{
+			// Not any file item
+			TrackPopupMenu(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),TPM_LEFTALIGN|TPM_RIGHTBUTTON,pos.x,pos.y,0,*this,NULL);	
+		}
+		CDialog::OnContextMenu(hWnd,pos);
+	}
 }	
 
 void CLocateDlg::OnDrawClipboard()
@@ -3911,7 +3937,16 @@ void CLocateDlg::OnCopy(BOOL bCut,int nItem)
 	// Closing clipboard
 	CloseClipboard();
 }
-		
+	
+
+struct FolderInfo{
+	CString sFolder;
+	CArrayFAP<LPCWSTR> aItems;
+
+	FolderInfo(LPCSTR szFolder) { sFolder=szFolder;}
+	
+};
+
 void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 {
 	CWaitCursor wait;
@@ -3934,31 +3969,135 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 		{	
 			DWORD dwTemp=0;
 			RegKey.QueryValue("Use other program to open folders",dwTemp);
+			RegKey.CloseKey();
+
 			if (!dwTemp)	
 			{
-				CString sArg;
-				SHELLEXECUTEINFO sxi;
-				sxi.cbSize=sizeof(SHELLEXECUTEINFO);
-				sxi.fMask=SEE_MASK_NOCLOSEPROCESS;
-				sxi.hwnd=*this;
-				sxi.lpVerb="open";
-				sxi.lpFile="explorer.exe";
-				sxi.lpDirectory=szEmpty;
-				sxi.nShow=SW_SHOWNORMAL;
-					
-				for (int i=0;i<nSelectedItems;i++)
+				// No program specified, using explorer
+				HRESULT(STDAPICALLTYPE * pSHOpenFolderAndSelectItems)(LPCITEMIDLIST,UINT,LPCITEMIDLIST*,DWORD)=
+					(HRESULT(STDAPICALLTYPE *)(LPCITEMIDLIST,UINT,LPCITEMIDLIST*,DWORD))GetProcAddress(GetModuleHandle("shell32.dll"),"SHOpenFolderAndSelectItems");
+				
+				if (pSHOpenFolderAndSelectItems!=NULL)
 				{
-					sArg.Format("/e,/select,\"%s\"",pItems[i]->GetPath());
-					sxi.lpParameters=sArg;
-					ShellExecuteEx(&sxi);
+					CArrayFP<FolderInfo*> aFolders;
+					int i;
+
+					// Sorting folders
+					for (i=0;i<nSelectedItems;i++)
+					{
+						int j;
+						for (j=0;j<aFolders.GetSize();j++)
+						{
+							if (aFolders[j]->sFolder.Compare(pItems[i]->GetParent())==0)
+							{
+								aFolders[j]->aItems.Add(alloccopyAtoW(pItems[i]->GetName()));
+								break;
+							}
+						}
+
+						if (j==aFolders.GetSize())
+						{
+							aFolders.Add(new FolderInfo(pItems[i]->GetParent()));
+							aFolders.GetLast()->aItems.Add(alloccopyAtoW(pItems[i]->GetName()));
+						}
+					}
+
+					// Initializing pDesktopFolder
+					IShellFolder *pDesktopFolder,*pParentFolder;
+					IMalloc *pMalloc;
+
+					LPITEMIDLIST pParentIDList;
+					HRESULT hRes=SHGetDesktopFolder(&pDesktopFolder);
+					if (!SUCCEEDED(hRes))
+						return;
+
+					hRes=SHGetMalloc(&pMalloc);
+					if (!SUCCEEDED(hRes))
+						pMalloc=NULL;
+
+					
+					// Open folders
+					for (i=0;i<aFolders.GetSize();i++)
+					{
+						CStringW sFolder(aFolders[i]->sFolder);
+
+
+						if (sFolder[1]==':' && sFolder[2]=='\0')
+							sFolder << L'\\';
+	
+						// Getting ID list of parent
+						hRes=pDesktopFolder->ParseDisplayName(*this,NULL,(LPOLESTR)(LPCWSTR)sFolder,NULL,&pParentIDList,NULL);
+						if (!SUCCEEDED(hRes))
+							continue;
+						
+						// Querying IShellFolder interface for parent
+						hRes=pDesktopFolder->BindToObject(pParentIDList,NULL,IID_IShellFolder,(void**)&pParentFolder);
+						if (!SUCCEEDED(hRes))
+						{
+							if (pMalloc!=NULL)
+								pMalloc->Free(pParentIDList);
+							continue;
+						}
+						
+
+                        // Querying id lists for files
+						LPCITEMIDLIST* pItemPids=new LPCITEMIDLIST[aFolders[i]->aItems.GetSize()];
+                        for (int j=0;j<aFolders[i]->aItems.GetSize();j++)
+						{
+							hRes=pParentFolder->ParseDisplayName(*this,NULL,(LPOLESTR)aFolders[i]->aItems[j],NULL,(LPITEMIDLIST*)&pItemPids[j],NULL);
+							if (!SUCCEEDED(hRes))
+								pItemPids[j]=NULL;
+						}
+
+
+						// Opening folder and selecting items
+						hRes=pSHOpenFolderAndSelectItems(pParentIDList,aFolders[i]->aItems.GetSize(),pItemPids,0);
+
+						// Free 
+						if (pMalloc!=NULL)
+						{
+							for (int j=0;j<aFolders[i]->aItems.GetSize();j++)
+								pMalloc->Free((void*)pItemPids[j]);
+
+							pMalloc->Free(pParentIDList);
+						}
+						pParentFolder->Release();
+
+
+
+					}
+
+					pDesktopFolder->Release();
+					if (pMalloc!=NULL)
+						pMalloc->Release();
+					
 				}
+				else
+				{
+					CString sArg;
+					SHELLEXECUTEINFO sxi;
+					sxi.cbSize=sizeof(SHELLEXECUTEINFO);
+					sxi.fMask=SEE_MASK_NOCLOSEPROCESS;
+					sxi.hwnd=*this;
+					sxi.lpVerb="open";
+					sxi.lpFile="explorer.exe";
+					sxi.lpDirectory=szEmpty;
+					sxi.nShow=SW_SHOWNORMAL;
+						
+					for (int i=0;i<nSelectedItems;i++)
+					{
+						sArg.Format("/e,/select,\"%s\"",pItems[i]->GetPath());
+						sxi.lpParameters=sArg;
+						ShellExecuteEx(&sxi);
+					}
 
 
+					
+				}
 				delete[] pItems;
 				return;
 			}
-
-			RegKey.CloseKey();
+			
 		}
 
         // Retrieving folders
@@ -4717,6 +4856,48 @@ void CLocateDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 			}		
 			break;
 		}
+	/*case IDC_TAB:
+		if (lpdis->itemAction==ODA_DRAWENTIRE)
+		{
+	
+			HMODULE hUxTheme=GetModuleHandle("uxtheme.dll");
+			if (hUxTheme!=NULL)
+			{
+				HRESULT(STDAPICALLTYPE *pDrawThemeParentBackground)(HWND hwnd,HDC hdc, RECT *prc);
+				HRESULT(STDAPICALLTYPE *pDrawThemeEdge)(HANDLE,HDC,int,int,const RECT*,UINT,UINT, RECT *);
+				HRESULT(STDAPICALLTYPE *pDrawThemeBackground)(HANDLE,HDC,int,int,const RECT*,const RECT*);
+				HANDLE(STDAPICALLTYPE * pOpenThemeData)(HWND,LPCWSTR);
+				HRESULT(STDAPICALLTYPE * pCloseThemeData)(HANDLE);
+
+				pDrawThemeParentBackground=(HRESULT(STDAPICALLTYPE *)(HWND hwnd,HDC hdc, RECT *prc))GetProcAddress(hUxTheme,"DrawThemeParentBackground");
+				pDrawThemeEdge=(HRESULT(STDAPICALLTYPE *)(HANDLE,HDC,int,int,const RECT*,UINT,UINT, RECT *))GetProcAddress(hUxTheme,"DrawThemeEdge");
+				pDrawThemeBackground=(HRESULT(STDAPICALLTYPE *)(HANDLE,HDC,int,int,const RECT*,const RECT*))GetProcAddress(hUxTheme,"DrawThemeBackground");
+				pOpenThemeData=(HANDLE(STDAPICALLTYPE*)(HWND,LPCWSTR))GetProcAddress(hUxTheme,"OpenThemeData");
+				pCloseThemeData=(HRESULT(STDAPICALLTYPE *)(HANDLE))GetProcAddress(GetModuleHandle("uxtheme.dll"),"CloseThemeData");
+		
+			
+				if (pDrawThemeParentBackground!=NULL)
+					pDrawThemeParentBackground(lpdis->hwndItem,lpdis->hDC,&lpdis->rcItem);
+
+				if (pOpenThemeData!=NULL)
+				{
+					HANDLE hTheme=pOpenThemeData(lpdis->hwndItem,L"tab");
+					if (hTheme!=NULL)
+					{
+						if (pDrawThemeBackground!=NULL)
+							pDrawThemeBackground(hTheme,lpdis->hDC,TABP_TOPTABITEMBOTHEDGE,(lpdis->itemState)&ODS_HOTLIGHT?TTIBES_HOT:TIBES_NORMAL,&lpdis->rcItem,NULL);
+						
+						//if (pDrawThemeEdge!=NULL)
+						//	pDrawThemeEdge(hTheme,lpdis->hDC,TABP_TABITEMBOTHEDGE,TIBES_NORMAL,&lpdis->rcItem,EDGE_SUNKEN,BF_RECT,NULL);
+
+						if (pCloseThemeData!=NULL)
+							pCloseThemeData(hTheme);
+					}
+				}
+
+			}
+			
+		}*/
 	}
 }
 
@@ -6020,7 +6201,7 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			break;
 		case CBN_EDITCHANGE:
 			GetLocateDlg()->m_AdvancedDlg.ChangeEnableStateForCheck();
-			HilightTab(GetDlgItemTextLength(IDC_TYPE)>0);
+			HilightTab(IsChanged());
 			break;
 		case CBN_SETFOCUS:
 			::SendMessage(hControl,CB_SETEDITSEL,0,MAKELPARAM(0,-1));

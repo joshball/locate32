@@ -707,6 +707,7 @@ LONG CRegKey::CopyKey(HKEY hSource,HKEY hDestination)
      return lRet;   
 }
 
+
 LONG CRegKey::RenameSubKey(HKEY hKey,LPCSTR szOldName,LPCSTR szNewName)
 {
 	HKEY hSource,hDestination;
@@ -735,8 +736,35 @@ LONG CRegKey::RenameSubKey(HKEY hKey,LPCSTR szOldName,LPCSTR szNewName)
 	return lRet;
 }
 
+LONG CRegKey::RenameSubKey(HKEY hKey,LPCWSTR szOldName,LPCWSTR szNewName)
+{
+	HKEY hSource,hDestination;
+	
+	LONG lErr=RegOpenKeyExW(hKey,szOldName,0,KEY_READ,&hSource);
+	if (lErr!=ERROR_SUCCESS)
+		return lErr;
+	
 
-LONG CRegKey::OpenKey(HKEY hKey,LPCTSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+	lErr=RegCreateKeyExW(hKey,szNewName,0,NULL,0,KEY_ALL_ACCESS,NULL,&hDestination,NULL);
+	if (lErr!=ERROR_SUCCESS)
+	{
+		RegCloseKey(hSource);
+		return lErr;
+	}
+
+	LONG lRet=CopyKey(hSource,hDestination);
+	RegCloseKey(hSource);
+	RegCloseKey(hDestination);
+
+    if (lRet==ERROR_SUCCESS)
+	{
+		RegDeleteKeyW(hKey,szOldName);
+		return ERROR_SUCCESS;
+	}
+	return lRet;
+}
+
+LONG CRegKey::OpenKey(HKEY hKey,LPCSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
 	REGSAM  samDesired=0;
 	DWORD  fdwOptions;
@@ -791,7 +819,51 @@ LONG CRegKey::CloseKey()
 	return ERROR_SUCCESS;
 }
 
-BOOL CRegKey::QueryValue(LPCTSTR lpszValueName,CString& strData) const
+LONG CRegKey::OpenKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+	REGSAM  samDesired=0;
+	DWORD  fdwOptions;
+	LONG ret;
+	if (m_hKey!=NULL)
+		RegCloseKey(m_hKey);
+	if (fStatus==samAll)
+		samDesired=KEY_ALL_ACCESS;
+	else
+	{
+		if (fStatus&samCreateLink)
+			samDesired|=KEY_CREATE_LINK;
+		if (fStatus&samCreateSubkey)
+			samDesired|=KEY_CREATE_SUB_KEY;
+		if (fStatus&samEnumerateSubkeys)
+			samDesired|=KEY_ENUMERATE_SUB_KEYS;
+		if (fStatus&samExecute)
+			samDesired|=KEY_EXECUTE;
+		if (fStatus&samNotify)
+			samDesired|=KEY_NOTIFY;
+		if (fStatus&samQueryValue)
+			samDesired|=KEY_QUERY_VALUE;
+		if (fStatus&samSetValue)
+			samDesired|=KEY_SET_VALUE;
+	}
+	if (fStatus&optionVolatile)
+		fdwOptions=REG_OPTION_VOLATILE;
+	else
+		fdwOptions=REG_OPTION_NON_VOLATILE;
+	if (fStatus&openExist)
+		ret=RegOpenKeyExW(hKey,lpszSubKey,0,samDesired,&m_hKey);
+	else
+	{
+		DWORD type;
+		ret=RegCreateKeyExW(hKey,lpszSubKey,0,NULL,fdwOptions,samDesired,lpSecurityAttributes,&m_hKey,&type); 
+	}
+	if (ret!=ERROR_SUCCESS)
+		m_hKey=NULL;
+	return ret;
+}
+
+
+
+BOOL CRegKey::QueryValue(LPCSTR lpszValueName,CString& strData) const
 {
 	DWORD dwLength=0;
 	DWORD dwType=REG_SZ;
@@ -821,7 +893,38 @@ BOOL CRegKey::QueryValue(LPCTSTR lpszValueName,CString& strData) const
 	return TRUE;
 }
 
-BOOL CRegKey::EnumKey(DWORD iSubkey,CString& strName,LPTSTR lpszClass,LPDWORD lpcchClass,PFILETIME lpftLastWrite) const
+BOOL CRegKey::QueryValue(LPCWSTR lpszValueName,CStringW& strData) const
+{
+	DWORD dwLength=0;
+	DWORD dwType=REG_SZ;
+	if (::RegQueryValueExW(m_hKey,(LPWSTR)lpszValueName,NULL,&dwType,NULL,&dwLength)!=ERROR_SUCCESS)
+	{
+		strData.Empty();
+		return FALSE;
+	}
+
+	if (dwType!=REG_SZ && dwType!=REG_EXPAND_SZ)
+	{
+		strData.Empty();
+		return FALSE;
+	}
+
+	if (dwLength<=1)
+	{
+		strData.Empty();
+		return TRUE;
+	}
+
+
+	if (::RegQueryValueEx(m_hKey,(LPSTR)lpszValueName,NULL,NULL,(LPBYTE)strData.GetBuffer(dwLength/2-1),&dwLength)!=ERROR_SUCCESS)
+	{
+		strData.Empty();
+		return FALSE;
+	}
+	return TRUE;
+}
+
+BOOL CRegKey::EnumKey(DWORD iSubkey,CString& strName,LPSTR lpszClass,LPDWORD lpcchClass,PFILETIME lpftLastWrite) const
 {
 	DWORD cb=50,cb2=cb;
 	LONG ret=::RegEnumKeyEx(m_hKey,iSubkey,strName.GetBuffer(cb),&cb2,0,lpszClass,lpcchClass,lpftLastWrite);
@@ -839,6 +942,28 @@ BOOL CRegKey::EnumValue(DWORD iValue,CString& strName,LPDWORD lpdwType,LPBYTE lp
 {
 	DWORD cb=2048;
 	LONG ret=::RegEnumValue(m_hKey,iValue,strName.GetBuffer(2048),&cb,0,lpdwType,lpbData,lpcbData);
+	strName.FreeExtra();
+	return ret==ERROR_SUCCESS;
+}
+
+BOOL CRegKey::EnumKey(DWORD iSubkey,CStringW& strName,LPWSTR lpszClass,LPDWORD lpcchClass,PFILETIME lpftLastWrite) const
+{
+	DWORD cb=100,cb2=cb;
+	LONG ret=::RegEnumKeyExW(m_hKey,iSubkey,strName.GetBuffer(cb/2),&cb2,0,lpszClass,lpcchClass,lpftLastWrite);
+	while (ret==ERROR_MORE_DATA)
+	{
+		cb+=100;
+		cb2=cb;
+		ret=::RegEnumKeyExW(m_hKey,iSubkey,strName.GetBuffer(cb/2),&cb2,0,lpszClass,lpcchClass,lpftLastWrite);
+	}
+	strName.FreeExtra(cb2);
+	return ret==ERROR_SUCCESS;
+}
+
+BOOL CRegKey::EnumValue(DWORD iValue,CStringW& strName,LPDWORD lpdwType,LPBYTE lpbData,LPDWORD lpcbData) const
+{
+	DWORD cb=2048;
+	LONG ret=::RegEnumValueW(m_hKey,iValue,strName.GetBuffer(2048/2),&cb,0,lpdwType,lpbData,lpcbData);
 	strName.FreeExtra();
 	return ret==ERROR_SUCCESS;
 }
@@ -865,5 +990,27 @@ BOOL CRegKey::DeleteKey(HKEY hKey,LPCSTR szKey)
 	return TRUE;
 }
 
+
+BOOL CRegKey::DeleteKey(HKEY hKey,LPCWSTR szKey)
+{
+	HKEY hSubKey;
+	FILETIME ft;
+	DWORD cb;
+	WCHAR szSubKey[200];
+	if (RegOpenKeyExW(hKey,szKey,0,
+		KEY_ENUMERATE_SUB_KEYS|KEY_SET_VALUE,&hSubKey)!=ERROR_SUCCESS)
+		return TRUE;	
+	for(;;)
+	{
+		cb=400;
+		if (RegEnumKeyExW(hSubKey,0,szSubKey,&cb,NULL,
+			NULL,NULL,&ft)==ERROR_NO_MORE_ITEMS)
+			break;
+		DeleteKey(hSubKey,szSubKey);
+	}
+	RegCloseKey(hSubKey);
+	RegDeleteKeyW(hKey,szKey);
+	return TRUE;
+}
 
 #endif

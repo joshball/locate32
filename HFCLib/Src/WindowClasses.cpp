@@ -352,9 +352,9 @@ int CWnd::GetWindowText(CStringW& str) const
 
 UINT CWnd::GetDlgItemText(int nIDDlgItem,CStringW& str)
 {
-	UINT len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
-	len=::GetDlgItemTextW(m_hWnd,nIDDlgItem,str.GetBuffer(len),len+1);
-	str.FreeExtra();
+	HWND hCtrl=::GetDlgItem(m_hWnd,nIDDlgItem);
+	UINT len=(UINT)::SendMessage(hCtrl,WM_GETTEXTLENGTH,0,0);
+	len=::GetWindowTextW(hCtrl,str.GetBuffer(len),len+1);
 	return len;
 }
 

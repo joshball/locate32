@@ -1726,7 +1726,7 @@ void CString::Swap(CString& str)
 	m_nBase=tempbase;
 }
 
-void CString::Format(LPCSTR lpszFormat,va_list argList)
+void CString::FormatV(LPCSTR lpszFormat,va_list argList)
 {
 	int nBufferSize=1024;
 	LPSTR temp;
@@ -1763,7 +1763,7 @@ void CString::Format(LPCSTR lpszFormat,...)
 	va_list argList;
 	va_start(argList,lpszFormat);
 	
-	Format(lpszFormat,argList);
+	FormatV(lpszFormat,argList);
 	va_end(argList);
 }
 
@@ -1813,7 +1813,7 @@ void CString::Format(UINT nFormatID,...)
 		}
 	}
 	
-	Format(lpszFormat,argList);
+	FormatV(lpszFormat,argList);
 	delete[] lpszFormat;
 	
 	va_end(argList);
@@ -1884,7 +1884,7 @@ void CString::FormatC(UINT nFormatID,...)
 		}
 	}
 	
-	Format(lpszFormat,argList);
+	FormatV(lpszFormat,argList);
 	delete[] lpszFormat;
 	
 	va_end(argList);
@@ -3904,7 +3904,7 @@ void CStringW::Swap(CStringW& str)
 }
 
 
-void CStringW::Format(LPCWSTR lpszFormat,va_list argList)
+void CStringW::FormatV(LPCWSTR lpszFormat,va_list argList)
 {
 	int nBufferSize=1024;
 	LPWSTR temp;
@@ -3941,7 +3941,7 @@ void CStringW::Format(LPCWSTR lpszFormat,...)
 	va_list argList;
 	va_start(argList,lpszFormat);
 	
-	Format(lpszFormat,argList);
+	FormatV(lpszFormat,argList);
 	va_end(argList);
 }
 
@@ -3999,7 +3999,7 @@ void CStringW::Format(UINT nFormatID,...)
 		}
 	}
 	
-	Format(lpszFormat,argList);
+	FormatV(lpszFormat,argList);
 	delete[] lpszFormat;
 	
 	va_end(argList);
@@ -4071,7 +4071,7 @@ void CStringW::FormatC(UINT nFormatID,...)
 		}
 	}
 	
-	Format(lpszFormat,argList);
+	FormatV(lpszFormat,argList);
 	delete[] lpszFormat;
 	
 	va_end(argList);

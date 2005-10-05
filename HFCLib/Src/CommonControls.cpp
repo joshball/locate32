@@ -581,33 +581,41 @@ BOOL CListCtrl::SaveColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) con
 		return FALSE;
 	LVCOLUMN lc;
 	fMemSet(&lc,0,sizeof(LVCOLUMN));
-	lc.mask=LVCF_WIDTH|LVCF_ORDER;
-	CIntArray ColumnWidths;
-	CIntArray ColumnOrders;
-	for (int i=0;;i++)
-	{
-		if (!GetColumn(i,&lc))
-			break;
-		ColumnWidths.Add(lc.cx);
-		ColumnOrders.Add(lc.iOrder);
-	}
-	if (i==0)
+	lc.mask=LVCF_WIDTH;
+	
+	int nColumns=GetColumnCount();
+	if (nColumns==0)
 	{
 		if (lpKey==NULL)
 			RegKey.m_hKey=NULL;
 		return FALSE;
 	}
-	int* pData=new int[1+2*i];
+	
+	int* pData=new int[1+2*nColumns];
 	if (pData==NULL)
 	{
 		if (lpKey==NULL)
 			RegKey.m_hKey=NULL;
 		return FALSE;
 	}
-	pData[0]=i;
-	iMemCopy(pData+1,ColumnWidths.m_pData,sizeof(int)*i);
-	iMemCopy(pData+1+i,ColumnOrders.m_pData,sizeof(int)*i);
-	BOOL bRet=RegKey.SetValue(lpSubKey,(LPCSTR)pData,sizeof(int)*(1+2*i),REG_BINARY)==ERROR_SUCCESS;
+	pData[0]=nColumns;
+	
+
+	for (int i=0;i<nColumns;i++)
+	{
+		if (::SendMessage(m_hWnd,LVM_GETCOLUMN,i,LPARAM(&lc)))
+			pData[1+i]=lc.cx;
+		else
+			pData[1+i]=100;
+	}
+	
+	if (!::SendMessage(m_hWnd,LVM_GETCOLUMNORDERARRAY,nColumns,LPARAM(pData+1+nColumns)))
+	{
+		for (int i=0;i<nColumns;i++)
+			pData[1+nColumns+i]=i;
+	}
+
+	BOOL bRet=RegKey.SetValue(lpSubKey,(LPCSTR)pData,sizeof(int)*(1+2*nColumns),REG_BINARY)==ERROR_SUCCESS;
 	RegKey.CloseKey();
 	delete[] pData;
 	if (lpKey==NULL)
@@ -663,7 +671,7 @@ DWORD CTreeCtrl::GetItemData(HTREEITEM hItem) const
 	return ti.lParam;
 }
 
-BOOL CTreeCtrl::SetItem(HTREEITEM hItem,UINT nMask,LPCTSTR lpszItem,int nImage,int nSelectedImage,UINT nState,UINT nStateMask,LPARAM lParam)
+BOOL CTreeCtrl::SetItem(HTREEITEM hItem,UINT nMask,LPCSTR lpszItem,int nImage,int nSelectedImage,UINT nState,UINT nStateMask,LPARAM lParam)
 {
 	TV_ITEM ti;
 	ti.mask=nMask;
@@ -676,6 +684,21 @@ BOOL CTreeCtrl::SetItem(HTREEITEM hItem,UINT nMask,LPCTSTR lpszItem,int nImage,i
 	ti.cChildren=0;
 	ti.lParam=lParam;
 	return ::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)&ti);
+}
+
+BOOL CTreeCtrl::SetItem(HTREEITEM hItem,UINT nMask,LPCWSTR lpszItem,int nImage,int nSelectedImage,UINT nState,UINT nStateMask,LPARAM lParam)
+{
+	TV_ITEMW ti;
+	ti.mask=nMask;
+	ti.hItem=hItem;
+	ti.state=nState;
+	ti.stateMask=nStateMask;
+	ti.pszText=(LPWSTR)lpszItem;
+	ti.iImage=nImage;
+	ti.iSelectedImage=nSelectedImage;
+	ti.cChildren=0;
+	ti.lParam=lParam;
+	return ::SendMessage(m_hWnd,TVM_SETITEMW,0,(LPARAM)&ti);
 }
 
 BOOL CTreeCtrl::SetItemText(HTREEITEM hItem,LPCSTR lpszItem)

@@ -237,9 +237,10 @@ public:
 	void Swap(CString& str);
 
 	void Format(LPCSTR lpszFormat,...);
-	void Format(LPCSTR lpszFormat,va_list);
 	void FormatEx(LPCSTR lpszFormat,...);
 
+	void FormatV(LPCSTR lpszFormat,va_list);
+	
 #ifdef DEF_RESOURCES
 	CString(int nID);
 	CString(int nID,TypeOfResourceHandle bType);
@@ -448,7 +449,7 @@ public:
 	void Swap(CStringW& str);
 
 	void Format(LPCWSTR lpszFormat,...);
-	void Format(LPCWSTR lpszFormat,va_list);
+	void FormatV(LPCWSTR lpszFormat,va_list);
 	void FormatEx(LPCWSTR lpszFormat,...);
 
 #ifdef DEF_RESOURCES

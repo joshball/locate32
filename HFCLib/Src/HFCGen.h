@@ -663,12 +663,14 @@ public:
 
 	CRegKey();
 	CRegKey(HKEY hKey);
-	CRegKey(HKEY hKey,LPCTSTR lpszSubKey,DWORD fStatus=CRegKey::defWrite,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+	CRegKey(HKEY hKey,LPCSTR lpszSubKey,DWORD fStatus=CRegKey::defWrite,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
 	virtual ~CRegKey();
 
-	LONG OpenKey(HKEY hKey,LPCTSTR lpszSubKey,DWORD fStatus=CRegKey::createNew|CRegKey::samAll,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
-	BOOL OpenRead(HKEY hKey,LPCTSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defRead,NULL)==ERROR_SUCCESS; }
-	BOOL OpenWrite(HKEY hKey,LPCTSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defWrite,NULL)==ERROR_SUCCESS; }
+	LONG OpenKey(HKEY hKey,LPCSTR lpszSubKey,DWORD fStatus=CRegKey::createNew|CRegKey::samAll,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+	BOOL OpenRead(HKEY hKey,LPCSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defRead,NULL)==ERROR_SUCCESS; }
+	BOOL OpenWrite(HKEY hKey,LPCSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defWrite,NULL)==ERROR_SUCCESS; }
+	
+	
 	LONG CloseKey();
 	LONG UnLoadKey(LPCTSTR lpszSubKey);
 	BYTE FlushKey();
@@ -677,24 +679,27 @@ public:
 	HKEY GetHandleKey() const;
 	operator HKEY() const;
 
-	DWORD QueryValue(LPCTSTR lpszValueName,LPTSTR lpbData,DWORD cbData,LPDWORD lpdwType=NULL) const;	
-	BOOL QueryValue(LPCTSTR lpszValueName,CString& strData) const;	
-	BOOL QueryValue(LPCTSTR lpszValueName,DWORD& dwData) const;	
+	DWORD QueryValue(LPCSTR lpszValueName,LPSTR lpbData,DWORD cbData,LPDWORD lpdwType=NULL) const;	
+	BOOL QueryValue(LPCSTR lpszValueName,CString& strData) const;	
+	BOOL QueryValue(LPCSTR lpszValueName,DWORD& dwData) const;	
 	
-	DWORD QueryValueLength(LPCTSTR lpszValueName) const;
-	DWORD QueryValueLength(LPCTSTR lpszValueName,BOOL& bIsOk) const;
-
-	LONG SetValue(LPCTSTR lpValueName,LPCTSTR lpData,DWORD cbData,DWORD dwType=REG_BINARY);
-	BOOL SetValue(LPCTSTR lpValueName,CString& strData);
-	LONG SetValue(LPCTSTR lpValueName,LPCSTR strData);
-	BOOL SetValue(LPCTSTR lpValueName,DWORD dwData);
+	DWORD QueryValueLength(LPCSTR lpszValueName=NULL) const;
+	DWORD QueryValueLength(LPCSTR lpszValueName,BOOL& bIsOk) const;
+	
+	LONG SetValue(LPCSTR lpValueName,LPCTSTR lpData,DWORD cbData,DWORD dwType=REG_BINARY);
+	BOOL SetValue(LPCSTR lpValueName,CString& strData);
+	LONG SetValue(LPCSTR lpValueName,LPCSTR strData);
+	BOOL SetValue(LPCSTR lpValueName,DWORD dwData);
+	
 	
 
-	DWORD EnumKey(DWORD iSubkey,LPTSTR lpszName,DWORD cchName,LPTSTR lpszClass=NULL,LPDWORD lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
-	BOOL EnumKey(DWORD iSubkey,CString& strName,LPTSTR lpszClass=NULL,LPDWORD lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
-	DWORD EnumValue(DWORD iValue,LPTSTR lpszValue,DWORD cchValue,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,LPDWORD lpcbData=0) const;
+	DWORD EnumKey(DWORD iSubkey,LPSTR lpszName,DWORD cchName,LPSTR lpszClass=NULL,LPDWORD lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
+	BOOL EnumKey(DWORD iSubkey,CString& strName,LPSTR lpszClass=NULL,LPDWORD lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
+	DWORD EnumValue(DWORD iValue,LPSTR lpszValue,DWORD cchValue,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,LPDWORD lpcbData=0) const;
 	BOOL EnumValue(DWORD iValue,CString& strName,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,LPDWORD lpcbData=0) const;
 	
+	
+
 	LONG DeleteKey(LPCSTR lpszSubKey);
 	LONG DeleteValue(LPCSTR lpszValue); // does not remove subkeys on WinNT
 	static BOOL DeleteKey(HKEY hKey,LPCSTR szKey); // Removes also subkeys
@@ -702,10 +707,10 @@ public:
 	LONG GetKeySecurity(SECURITY_INFORMATION SecInf,PSECURITY_DESCRIPTOR pSecDesc,LPDWORD lpcbSecDesc) const;
 	LONG SetKeySecurity(SECURITY_INFORMATION si,PSECURITY_DESCRIPTOR psd);
 
-	LONG LoadKey(LPCTSTR lpszSubKey,LPCTSTR lpszFile);
-	LONG SaveKey(LPCTSTR lpszFile,LPSECURITY_ATTRIBUTES lpsa);
-	LONG ReplaceKey(LPCTSTR lpSubKey,LPCTSTR lpNewFile,LPCTSTR lpOldFile);
-	LONG RestoreKey(LPCTSTR lpszFile,DWORD fdw);
+	LONG LoadKey(LPCSTR lpszSubKey,LPCSTR lpszFile);
+	LONG SaveKey(LPCSTR lpszFile,LPSECURITY_ATTRIBUTES lpsa);
+	LONG ReplaceKey(LPCSTR lpSubKey,LPCSTR lpNewFile,LPCSTR lpOldFile);
+	LONG RestoreKey(LPCSTR lpszFile,DWORD fdw);
 
 	
 	static LONG CopyKey(HKEY hSource,HKEY hDestination);
@@ -718,6 +723,46 @@ public:
 	LONG QueryInfoKey(LPTSTR lpszClass,LPDWORD lpcchClass,LPDWORD lpcSubKeys,LPDWORD lpcchMaxSubkey,
 		LPDWORD lpcchMaxClass,LPDWORD lpcValues,LPDWORD lpcchMaxValueName,LPDWORD lpcbMaxValueData,
 		LPDWORD lpcbSecurityDescriptor,PFILETIME lpftLastWriteTime) const;
+
+#ifdef DEF_WCHAR
+	CRegKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus=CRegKey::defWrite,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+
+	LONG OpenKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus=CRegKey::createNew|CRegKey::samAll,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+	BOOL OpenRead(HKEY hKey,LPCWSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defRead,NULL)==ERROR_SUCCESS; }
+	BOOL OpenWrite(HKEY hKey,LPCWSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defWrite,NULL)==ERROR_SUCCESS; }
+	
+	DWORD QueryValue(LPCWSTR lpszValueName,LPWSTR lpbData,DWORD cbData,LPDWORD lpdwType=NULL) const;	
+	BOOL QueryValue(LPCWSTR lpszValueName,CStringW& strData) const;	
+	BOOL QueryValue(LPCWSTR lpszValueName,DWORD& dwData) const;	
+	
+	DWORD QueryValueLength(LPCWSTR lpszValueName) const;
+	DWORD QueryValueLength(LPCWSTR lpszValueName,BOOL& bIsOk) const;
+
+	LONG SetValue(LPCWSTR lpValueName,LPCSTR lpData,DWORD cbData,DWORD dwType=REG_BINARY);
+	BOOL SetValue(LPCWSTR lpValueName,CStringW& strData);
+	LONG SetValue(LPCWSTR lpValueName,LPCWSTR strData);
+	BOOL SetValue(LPCWSTR lpValueName,DWORD dwData);
+
+	DWORD EnumKey(DWORD iSubkey,LPWSTR lpszName,DWORD cchName,LPWSTR lpszClass=NULL,LPDWORD lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
+	BOOL EnumKey(DWORD iSubkey,CStringW& strName,LPWSTR lpszClass=NULL,LPDWORD lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
+	DWORD EnumValue(DWORD iValue,LPWSTR lpszValue,DWORD cchValue,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,LPDWORD lpcbData=0) const;
+	BOOL EnumValue(DWORD iValue,CStringW& strName,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,LPDWORD lpcbData=0) const;
+
+	LONG DeleteKey(LPCWSTR lpszSubKey);
+	LONG DeleteValue(LPCWSTR lpszValue); // does not remove subkeys on WinNT
+	static BOOL DeleteKey(HKEY hKey,LPCWSTR szKey); // Removes also subkeys
+
+	LONG LoadKey(LPCWSTR lpszSubKey,LPCWSTR lpszFile);
+	LONG SaveKey(LPCWSTR lpszFile,LPSECURITY_ATTRIBUTES lpsa);
+	LONG ReplaceKey(LPCWSTR lpSubKey,LPCWSTR lpNewFile,LPCWSTR lpOldFile);
+	LONG RestoreKey(LPCWSTR lpszFile,DWORD fdw);
+
+	static LONG RenameSubKey(HKEY hKey,LPCWSTR szOldName,LPCWSTR szNewName);
+	
+	LONG RenameSubKey(LPCWSTR szOldName,LPCWSTR szNewName);
+
+#endif
+
 };
 
 #endif

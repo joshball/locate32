@@ -20,7 +20,7 @@ int strcasecmp(LPCSTR s1,LPCSTR s2)
 	tmp2=new CHAR[nLen2+2];
 	if (tmp2==NULL)
 		SetHFCError(HFC_CANNOTALLOC);
-	CopyMemory(tmp2,s2,nLen1+1);
+	CopyMemory(tmp2,s2,nLen2+1);
 	
 	CharLowerBuff(tmp1,nLen1);
 	CharLowerBuff(tmp2,nLen2);
@@ -47,7 +47,7 @@ int strcasecmp(LPCWSTR s1,LPCWSTR s2)
 	tmp2=new WCHAR[nLen2+2];
 	if (tmp2==NULL)
 		SetHFCError(HFC_CANNOTALLOC);
-	CopyMemory(tmp2,s2,nLen1*2+2);
+	CopyMemory(tmp2,s2,nLen2*2+2);
 	
 	CharLowerBuffW(tmp1,nLen1);
 	CharLowerBuffW(tmp2,nLen2);

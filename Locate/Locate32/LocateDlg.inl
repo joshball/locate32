@@ -14,7 +14,7 @@ inline CLocateDlg::CLocateDlg()
 	m_pLocateAnimBitmaps(NULL),m_pUpdateAnimBitmaps(NULL),
 	m_pFileNotificationsThread(NULL),m_dwMaxFoundFiles(0),
 	m_pImageHandler(NULL),m_iTooltipItem(-1),m_iTooltipSubItem(-1),m_bTooltipActive(FALSE),
-	m_hLastFocus(NULL),m_WaitEvery30(10),m_WaitEvery60(20)
+	m_hLastFocus(NULL),m_WaitEvery30(0),m_WaitEvery60(0)
 {
 	DebugNumMessage("CLocateDlg::CLocateDlg() this is %X",DWORD(this));
 

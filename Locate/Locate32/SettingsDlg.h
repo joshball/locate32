@@ -444,6 +444,8 @@ public:
 		
 		settingsIsUsedDatabaseChanged=0x4,
 		settingsDatabasesOverridden=0x10,
+
+		settingsSetTooltipDelays=0x40,
 		
 		
 		settingsDefault=settingsUseLanguageWithConsoleApps
@@ -488,6 +490,10 @@ public:
 	COLORREF m_cToolTipBackColor;
 	LOGFONT m_lToolTipTextFont;
 	LOGFONT m_lToolTipTitleFont;
+
+	DWORD m_dwTooltipDelayInitial;
+	DWORD m_dwTooltipDelayAutopop;
+	
 
 private:
 	CGeneralSettingsPage* m_pGeneral;

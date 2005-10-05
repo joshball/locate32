@@ -72,6 +72,8 @@ typedef double				DOUBLE;
 #define TRUE				1
 #define FALSE				0
 
+
+
 typedef struct tagRECT
 {
     LONG    left;
@@ -138,6 +140,12 @@ typedef __FREEDATA* FREEDATA;
 
 typedef FLOAT				*PFLOAT;
 typedef DOUBLE				*PDOUBLE;
+
+#define STRNULL				((LPSTR)NULL)
+#define CSTRNULL			((LPCSTR)NULL)
+#define WSTRNULL			((LPWSTR)NULL)
+#define CWSTRNULL			((LPCWSTR)NULL)
+
 
 
 #define RGBSET(r,g,b)       (((RGB)((BYTE)(b))) | ((RGB)((BYTE)(g) << 8)) | ((RGB)((BYTE)(r) << 16)))

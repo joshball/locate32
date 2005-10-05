@@ -74,7 +74,7 @@ CDatabase* CDatabase::FromName(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szName,int iNa
 	{
 		if (RegKey2.OpenKey(RegKey,key,CRegKey::defRead)==ERROR_SUCCESS)
 		{
-			DWORD dwLength=RegKey2.QueryValueLength(NULL);
+			DWORD dwLength=RegKey2.QueryValueLength();
 			if (dwLength>1)
 			{
 				CAllocArrayTmpl<CHAR> pName(dwLength);
@@ -211,7 +211,7 @@ CDatabase* CDatabase::FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	if (RegKey.OpenKey(hKeyRoot,Path,CRegKey::defRead)!=ERROR_SUCCESS)
 		return NULL;
 
-	DWORD dwLength=RegKey.QueryValueLength(NULL);
+	DWORD dwLength=RegKey.QueryValueLength();
 	if (int(dwLength)<=1)
 		return NULL;
 
