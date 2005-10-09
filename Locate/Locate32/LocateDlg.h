@@ -375,7 +375,6 @@ private:
 
 		LPITEMIDLIST pParentIDList;
 		LPITEMIDLIST* apidl;
-		BYTE** apcidl;
 		int nIDlistCount;
 
 	};

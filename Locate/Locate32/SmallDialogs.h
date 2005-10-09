@@ -121,6 +121,9 @@ public:
 
 	void SelectDatabases(char* pNames); // pNames is double zero terminated array of strins
 		
+	void SetThreadPriority(int nThreadPriority);
+	int GetThreadPriority() const;
+
 public:
 	enum Flags {
 		flagDisablePresets=0x1,
@@ -130,16 +133,19 @@ public:
 		flagGlobalIsSelected=0x10,
 		flagCustomIsSelected=0x20,
 		flagLasestIsSelected=0x30,
-		flagSelectedMask=0x30
+		flagSelectedMask=0x30,
+		flagEnablePriority=0x40
 	};
 	const CArray<PDATABASE>& m_rOrigDatabases;
 	CArray<PDATABASE>& m_rSelectedDatabases;
 	LPSTR m_pRegKey;
 	BYTE m_bFlags;
 	LPSTR m_pSelectDatabases;
-
+    
 	int m_nThreadsCurrently;
-	CListCtrl* m_pList;
+    CListCtrl* m_pList;
+
+	int m_nThreadPriority;
 
 };
 

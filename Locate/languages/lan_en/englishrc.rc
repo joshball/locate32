@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,9100
- PRODUCTVERSION 2,99,5,9100
+ FILEVERSION 2,99,5,10100
+ PRODUCTVERSION 2,99,5,10100
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.9100"
+            VALUE "FileVersion", "3.0 beta 5.10100"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.9100"
+            VALUE "ProductVersion", "3.0 beta 5.10100"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -287,11 +287,14 @@ BEGIN
                     IDC_ENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,110,
                     50,11
     CONTROL         "&Update only at this time",
-                    IDC_ATTHISTIME,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,60,
+                    IDC_ATTHISTIME,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,
                     110,160,11
     CONTROL         "&Delete After Run",
                     IDC_DELETEAFTERRUN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    7,123,210,11
+                    7,124,70,10
+    LTEXT           "Thread Priority:",IDC_THREADPRIORITYLABEL,80,125,50,10
+	COMBOBOX        IDC_THREADPRIORITY,130,122,75,98,CBS_DROPDOWNLIST |  
+                    WS_VSCROLL | WS_TABSTOP | CBS_HASSTRINGS
     LTEXT           "week(s) on:",
                     IDC_WEEKS,77,50,40,9
     CONTROL         "Da&y",IDC_MDAY,
@@ -702,7 +705,7 @@ END
 
 
 
-IDD_SELECTDATABASES DIALOGEX 160, 100, 265, 295
+IDD_SELECTDATABASES DIALOGEX 160, 100, 265, 293
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Select databases:"
@@ -724,8 +727,11 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP | CBS_HASSTRINGS
     PUSHBUTTON      "&Save",IDC_SAVE,175,249,39,13
     PUSHBUTTON      "&Delete",IDC_DELETE,219,249,39,13
-    DEFPUSHBUTTON   "OK",IDC_OK,149,274,50,14
-    PUSHBUTTON      "Cancel",IDC_CANCEL,208,274,50,14
+    LTEXT           "Thread priority:",IDC_THREADPRIORITYLABEL,7,274,50,10    
+	COMBOBOX        IDC_THREADPRIORITY,59,272,75,98,CBS_DROPDOWNLIST |  
+                    WS_VSCROLL | WS_TABSTOP | CBS_HASSTRINGS
+    DEFPUSHBUTTON   "OK",IDC_OK,149,272,50,14
+    PUSHBUTTON      "Cancel",IDC_CANCEL,208,272,50,14
 END
 
 IDD_CHANGECASE DIALOGEX 100, 100, 202, 97
@@ -1499,6 +1505,7 @@ BEGIN
 	IDS_ADVSETSETTOOLTIPDELAYS		"Set tooltip delay times"
 	IDS_ADVSETSHOWTOOLTIPDELAY		"Delay until tooltip appears (ms):"
 	IDS_ADVSETSHOWTOOLTIPDURATION	"Tooltip remains visible (ms):"
+	IDS_ADVSETUPDATETHREADPRIORITY	"Thread priority:"
 END
 
 STRINGTABLE
@@ -1711,21 +1718,27 @@ BEGIN
 END
 
 STRINGTABLE 
-BEGIN
-    IDS_EXTLOCATEMENU		"Locate32..."
+BEGIN	
+    IDS_EXTLOCATEMENU			"Locate32..."
 END
 
 STRINGTABLE 
 BEGIN
-    IDS_YES                 "Yes"
-    IDS_NO                  "No"
-    IDS_DOCUMENTFOLDERS     "Document Folders"
-    IDS_GETFOLDER           "Get Folder:"
-	IDS_EVERYWERE			"Everywhere"
-	IDS_ROOTS				"Directories in included in databases:"
-	IDS_LOOKIN				"Look In:"
-	IDS_LOOKINCONTRADICTION "You have chosen ""Everywhere"" and also other directories which leads to conflict. Do you want ignore ""Everywhere""? Otherwise, press ""No"" to ignore other choices."
-	IDS_NOEXTENSION			"(no extension)"
+    IDS_YES						"Yes"
+    IDS_NO						"No"
+    IDS_DOCUMENTFOLDERS			"Document Folders"
+    IDS_GETFOLDER				"Get Folder:"
+	IDS_EVERYWERE				"Everywhere"
+	IDS_ROOTS					"Directories in included in databases:"
+	IDS_LOOKIN					"Look In:"
+	IDS_LOOKINCONTRADICTION		"You have chosen ""Everywhere"" and also other directories which leads to conflict. Do you want ignore ""Everywhere""? Otherwise, press ""No"" to ignore other choices."
+	IDS_NOEXTENSION				"(no extension)"
+	IDS_PRIORITYHIGH			"high"
+	IDS_PRIORITYABOVENORMAL		"above normal"
+	IDS_PRIORITYNORMAL			"normal"
+	IDS_PRIORITYBELOWNORMAL		"below normal"
+	IDS_PRIORITYLOW				"low"
+	IDS_PRIORITYIDLE			"idle"
 END
 
 STRINGTABLE 

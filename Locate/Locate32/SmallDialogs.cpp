@@ -666,6 +666,46 @@ BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 		EnableDlgItem(IDC_DELETE,FALSE);
 	}
 
+	if (m_bFlags&flagEnablePriority)
+	{
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYHIGH));		
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYABOVENORMAL));		
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYNORMAL));		
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYBELOWNORMAL));		
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYLOW));		
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYIDLE));	
+
+		switch (m_nThreadPriority)
+		{
+		case THREAD_PRIORITY_HIGHEST:
+            SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,0);
+			break;
+		case THREAD_PRIORITY_ABOVE_NORMAL:
+            SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,1);
+			break;
+		case THREAD_PRIORITY_NORMAL:
+            SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,2);
+			break;
+		case THREAD_PRIORITY_BELOW_NORMAL:
+            SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,3);
+			break;
+		case THREAD_PRIORITY_LOWEST:
+            SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,4);
+			break;
+		case THREAD_PRIORITY_IDLE:
+            SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,5);
+			break;
+		default:
+		    SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,2);
+			break;
+		}
+	}
+	else
+	{
+		ShowDlgItem(IDC_THREADPRIORITY,swHide);
+		ShowDlgItem(IDC_THREADPRIORITYLABEL,swHide);
+	}
+
 	m_pList->LoadColumnsState(HKCU,m_pRegKey,"Database List Widths");
 	
 	LoadPresets();
@@ -775,6 +815,33 @@ void CSelectDatabasesDlg::OnOK()
 	// Saves last set
 	if (!(m_bFlags&flagDisablePresets))
 		SavePreset(NULL);
+
+	// Retrieve priority
+	if (m_bFlags&flagEnablePriority)
+	{
+		switch (SendDlgItemMessage(IDC_THREADPRIORITY,CB_GETCURSEL))
+		{
+		case 0:
+			m_nThreadPriority=THREAD_PRIORITY_HIGHEST;
+            break;
+		case 1:
+            m_nThreadPriority=THREAD_PRIORITY_ABOVE_NORMAL;
+            break;
+		case 3:
+			m_nThreadPriority=THREAD_PRIORITY_BELOW_NORMAL;
+            break;
+		case 4:
+            m_nThreadPriority=THREAD_PRIORITY_LOWEST;
+            break;
+		case 5:
+            m_nThreadPriority=THREAD_PRIORITY_IDLE;
+            break;
+		default:
+		    m_nThreadPriority=THREAD_PRIORITY_NORMAL;
+            break;
+		}
+	}
+	
 
 	// Get the first item
 	int nNext;

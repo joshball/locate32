@@ -437,6 +437,8 @@ STDMETHODIMP CLocateShellExtension::GetCommandString(UINT_PTR idCmd,
 	if (hLanDll==NULL)
 		return NOERROR;
 
+#error GCS_HELPTEXTA ??
+
 	if (uFlags&GCS_UNICODE)
 	{
         switch (idCmd)

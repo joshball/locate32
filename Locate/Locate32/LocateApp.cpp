@@ -1805,7 +1805,7 @@ BOOL CLocateApp::SetLanguageSpecifigHandles()
 }
 
 
-BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg)
+BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg,int nThreadPriority)
 {
 	if (IsUpdating())
 		return FALSE;
@@ -1840,7 +1840,7 @@ BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg)
     
 	// Starting
 	for (wThread=0;wThread<wThreads;wThread++)
-		m_ppUpdaters[wThread]->Update(TRUE);
+		m_ppUpdaters[wThread]->Update(TRUE,nThreadPriority);
 	
 	
 	ReleaseUpdatersPointer();
@@ -2737,7 +2737,7 @@ DWORD WINAPI CLocateAppWnd::KillUpdaterProc(LPVOID lpParameter)
 
 
 
-BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases)
+BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases,int nThreadPriority)
 {
 	if (!GetLocateApp()->IsUpdating())
 	{
@@ -2746,18 +2746,19 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases)
 			CArrayFP<PDATABASE> aDatabases;
 			CSelectDatabasesDlg dbd(GetLocateApp()->GetDatabases(),aDatabases,
 				(GetLocateApp()->GetStartupFlags()&CLocateApp::CStartData::startupDatabasesOverridden?CSelectDatabasesDlg::flagDisablePresets:0)|
-				CSelectDatabasesDlg::flagShowThreads|CSelectDatabasesDlg::flagSetUpdateState,
+				CSelectDatabasesDlg::flagShowThreads|CSelectDatabasesDlg::flagSetUpdateState|CSelectDatabasesDlg::flagEnablePriority,
 				CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\SelectDatabases/Update");
+			dbd.SetThreadPriority(nThreadPriority);
 			if (!dbd.DoModal(m_pLocateDlgThread!=NULL?HWND(*GetLocateDlg()):HWND(*this)))
                 return FALSE;
 			if (GetLocateApp()->IsUpdating())
 				return FALSE;
-			if (!GetLocateApp()->GlobalUpdate(&aDatabases))
+			if (!GetLocateApp()->GlobalUpdate(&aDatabases,dbd.GetThreadPriority()))
 				return FALSE;
 		}
 		else if (pDatabases==NULL)
 		{
-			if (!GetLocateApp()->GlobalUpdate(NULL))
+			if (!GetLocateApp()->GlobalUpdate(NULL,nThreadPriority))
 				return FALSE;
 		}
 		else
@@ -2788,7 +2789,7 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases)
 
 			if (aDatabases.GetSize()==0)
 				return FALSE;
-			if (!GetLocateApp()->GlobalUpdate(&aDatabases))
+			if (!GetLocateApp()->GlobalUpdate(&aDatabases,nThreadPriority))
 				return FALSE;
 		}
 
@@ -3177,7 +3178,7 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 			}	
 			else if (pSchedules[1]==2)
 			{
-				if (nKeyLen>=6 && pSchedules[0]==sizeof(CSchedule))
+				if (nKeyLen>=6 && pSchedules[0]==SCHEDULE_V2_LEN)
 				{
 					BYTE* pPtr=pSchedules+6;
 					for (DWORD n=0;n<*(DWORD*)(pSchedules+2);n++)
@@ -3187,6 +3188,21 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 
 						DebugFormatMessage("SCHEDULEV2: type=%d",((CSchedule*)pPtr)->m_nType);
 						m_Schedules.AddTail(new CSchedule(pPtr,2));
+					}
+				}
+			}
+			else if (pSchedules[1]==3)
+			{
+				if (nKeyLen>=6 && pSchedules[0]==SCHEDULE_V3_LEN)
+				{
+					BYTE* pPtr=pSchedules+6;
+					for (DWORD n=0;n<*(DWORD*)(pSchedules+2);n++)
+					{
+						if (pPtr+sizeof(CSchedule)>=pSchedules+nKeyLen)
+							break;
+
+						DebugFormatMessage("SCHEDULEV3: type=%d",((CSchedule*)pPtr)->m_nType);
+						m_Schedules.AddTail(new CSchedule(pPtr,3));
 					}
 				}
 			}
@@ -3240,7 +3256,7 @@ BOOL CLocateAppWnd::SaveSchedules()
 			//DebugMessage("LocateAppWnd::OnDestroy(): Cannot allocate memory.");
 		}
 		pSchedules[0]=sizeof(CSchedule);
-		pSchedules[1]=2; //version
+		pSchedules[1]=3; //version
 		*(DWORD*)(pSchedules+2)=m_Schedules.GetCount();
 		
 		
@@ -3299,7 +3315,7 @@ void CLocateAppWnd::CheckSchedules()
 				if (pSchedule->m_nType==CSchedule::typeAtStartup)
 					pSchedule->m_bFlags|=CSchedule::flagRunnedAtStartup;
 				
-				OnUpdate(FALSE,pSchedule->m_pDatabases);
+				OnUpdate(FALSE,pSchedule->m_pDatabases,pSchedule->m_nThreadPriority);
 				
 				if (pSchedule->m_bFlags&CSchedule::flagDeleteAfterRun)
 				{

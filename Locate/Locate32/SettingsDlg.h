@@ -68,6 +68,7 @@ public:
 
 		static BOOL CALLBACK TimeFormatComboProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK DateFormatComboProc(COptionsPropertyPage::BASICPARAMS* pParams);
+		static BOOL CALLBACK UpdateThreadPriorityProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK FileSizeListProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK LimitResultsCheckBoxProc(COptionsPropertyPage::BASICPARAMS* pParams); 
 	
@@ -416,6 +417,7 @@ public:
 	
 	DWORD m_nMaximumFoundFiles;
 	DWORD m_nNumberOfDirectories; // Directoried in NameDlg 
+	int  m_nUpdateThreadPriority;
 	
 	CString m_TimeFormat;
 	CString m_DateFormat;

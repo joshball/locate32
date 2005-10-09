@@ -24,7 +24,7 @@ inline BOOL operator!=(const SYSTEMTIME& s1,const SYSTEMTIME& s2)
 
 CSettingsProperties::CSettingsProperties(HWND hParent)
 :	CPropertySheet(IDS_SETTINGS,hParent,0),
-	m_nMaximumFoundFiles(0),
+	m_nMaximumFoundFiles(0),m_nUpdateThreadPriority(THREAD_PRIORITY_NORMAL),
 	m_dwLocateDialogFlags(CLocateDlg::fgDefault),
 	m_dwLocateDialogExtraFlags(CLocateDlg::efDefault),
 	m_bDefaultFlag(defaultDefault),	m_dwSettingsFlags(settingsDefault),
@@ -103,6 +103,7 @@ BOOL CSettingsProperties::LoadSettings()
 		RegKey.QueryValue("Program StatusExtra",temp);
 		m_dwLocateDialogExtraFlags&=~CLocateDlg::efSave;
 		m_dwLocateDialogExtraFlags|=temp&CLocateDlg::efSave;
+
 
 	}
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Recent Strings",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
@@ -189,6 +190,9 @@ BOOL CSettingsProperties::LoadSettings()
 			m_dwSettingsFlags|=settingsSetTooltipDelays;
 		if (RegKey.QueryValue("TooltipDelayInitial",m_dwTooltipDelayInitial))
 			m_dwSettingsFlags|=settingsSetTooltipDelays;
+
+		if (RegKey.QueryValue("Update Process Priority",nTemp))
+			m_nUpdateThreadPriority=nTemp;
 	}
 
 	// m_bAdvancedAndContextMenuFlag
@@ -315,6 +319,10 @@ BOOL CSettingsProperties::SaveSettings()
 			RegKey.DeleteValue("TooltipDelayAutopop");
 			RegKey.DeleteValue("TooltipDelayInitial");
 		}
+
+
+		RegKey.SetValue("Update Process Priority",(DWORD)m_nUpdateThreadPriority);
+
 	}
 
 
@@ -948,6 +956,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			DefaultCheckBoxProc,CLocateApp::pfShowNonCriticalErrors,&m_pSettings->m_dwProgramFlags),
 		CreateCheckBox(IDS_ADVSETSHOWUPDATESTATUSTOOLTIP,StatusTooltipItems,
 			DefaultCheckBoxProc,CLocateApp::pfEnableUpdateTooltip,&m_pSettings->m_dwProgramFlags),
+		CreateListBox(IDS_ADVSETUPDATETHREADPRIORITY,UpdateThreadPriorityProc,0,&m_pSettings->m_nUpdateThreadPriority),
 		NULL
 	};
 	
@@ -988,6 +997,78 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::LimitResultsCheckBoxPr
 	case BASICPARAMS::ChangingValue:
 		break;
 	}
+	return TRUE;
+}
+
+BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateThreadPriorityProc(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch(pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
+		{
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYHIGH));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYABOVENORMAL));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYNORMAL));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYBELOWNORMAL));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYLOW));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYIDLE));		
+		}
+		break;
+	case BASICPARAMS::Get:
+		switch ( *((int*)pParams->lParam))
+		{
+		case THREAD_PRIORITY_HIGHEST:
+            pParams->lValue=0;
+			break;
+		case THREAD_PRIORITY_ABOVE_NORMAL:
+            pParams->lValue=1;
+			break;
+		case THREAD_PRIORITY_NORMAL:
+            pParams->lValue=2;
+			break;
+		case THREAD_PRIORITY_BELOW_NORMAL:
+            pParams->lValue=3;
+			break;
+		case THREAD_PRIORITY_LOWEST:
+            pParams->lValue=4;
+			break;
+		case THREAD_PRIORITY_IDLE:
+            pParams->lValue=5;
+			break;
+		default:
+			pParams->lValue=2;
+			break;
+		}
+		break;
+	case BASICPARAMS::Set:
+		break;
+	case BASICPARAMS::Apply:
+		switch (((COMBOAPPLYPARAMS*)pParams)->nCurSel)
+		{
+		case 0:
+            *((int*)pParams->lParam)=THREAD_PRIORITY_HIGHEST;
+			break;
+		case 1:
+            *((int*)pParams->lParam)=THREAD_PRIORITY_ABOVE_NORMAL;
+			break;
+		case 2:
+            *((int*)pParams->lParam)=THREAD_PRIORITY_NORMAL;
+			break;
+		case 3:
+            *((int*)pParams->lParam)=THREAD_PRIORITY_BELOW_NORMAL;
+			break;
+		case 4:
+            *((int*)pParams->lParam)=THREAD_PRIORITY_LOWEST;
+			break;
+		case 5:
+            *((int*)pParams->lParam)=THREAD_PRIORITY_IDLE;
+			break;
+		}
+		break;
+	case BASICPARAMS::ChangingValue:
+		break;
+	}		
 	return TRUE;
 }
 	
@@ -3673,6 +3754,40 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 	else
 		txt.LoadString(IDS_LASTRUNNEVER);
 	
+	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYHIGH));		
+	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYABOVENORMAL));		
+	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYNORMAL));		
+	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYBELOWNORMAL));		
+	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYLOW));		
+	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYIDLE));	
+
+	switch (m_pSchedule->m_nThreadPriority)
+	{
+	case THREAD_PRIORITY_HIGHEST:
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,0);
+		break;
+	case THREAD_PRIORITY_ABOVE_NORMAL:
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,1);
+		break;
+	case THREAD_PRIORITY_NORMAL:
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,2);
+		break;
+	case THREAD_PRIORITY_BELOW_NORMAL:
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,3);
+		break;
+	case THREAD_PRIORITY_LOWEST:
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,4);
+		break;
+	case THREAD_PRIORITY_IDLE:
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,5);
+		break;
+	default:
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,2);
+		break;
+	}
+		
+
+
 #ifdef _DEBUG
 	CString txt2;
 	txt2.Format(" F:%X STD:%d.%d.%d STT: %d:%d:",m_pSchedule->m_bFlags,
@@ -3920,6 +4035,29 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnOK()
 	case CSchedule::typeAtStartup:
 		break;
 	}
+
+	switch (SendDlgItemMessage(IDC_THREADPRIORITY,CB_GETCURSEL))
+	{
+	case 0:
+		m_pSchedule->m_nThreadPriority=THREAD_PRIORITY_HIGHEST;
+        break;
+	case 1:
+        m_pSchedule->m_nThreadPriority=THREAD_PRIORITY_ABOVE_NORMAL;
+        break;
+	case 3:
+		m_pSchedule->m_nThreadPriority=THREAD_PRIORITY_BELOW_NORMAL;
+        break;
+	case 4:
+        m_pSchedule->m_nThreadPriority=THREAD_PRIORITY_LOWEST;
+        break;
+	case 5:
+        m_pSchedule->m_nThreadPriority=THREAD_PRIORITY_IDLE;
+        break;
+	default:
+		m_pSchedule->m_nThreadPriority=THREAD_PRIORITY_NORMAL;
+        break;
+	}
+
 	EndDialog(1);
 	return TRUE;
 }

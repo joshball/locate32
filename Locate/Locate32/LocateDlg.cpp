@@ -3420,36 +3420,75 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 	if (pItem->IsFolder() && !CFile::IsDirectory(pItem->GetPath()))
 		return;
 
-	
-	char szName[100];
-	m_pActiveContextMenu->pContextMenu->GetCommandString(wID-IDM_DEFCONTEXTITEM,GCS_VERBA,NULL,
-		szName,100);
-	DebugFormatMessage("Running context verb: %s",szName);
-	
-	// Overriding these command, works better
-	if (strcmp(szName,"copy")==0)
+	if (IsFullUnicodeSupport())
 	{
-		OnCopy(FALSE);
-		ClearMenuVariables();
-		return;
+		WCHAR szName[221];  
+		if (m_pActiveContextMenu->pContextMenu->GetCommandString(wID-IDM_DEFCONTEXTITEM,
+			GCS_VERBW,NULL,(LPSTR)szName,200)!=NOERROR)
+			szName[0]=L'\0';
+
+		// Overriding these command, works better
+		if (wcscmp(szName,L"copy")==0)
+		{
+			OnCopy(FALSE);
+			ClearMenuVariables();
+			return;
+		}
+		else if (wcscmp(szName,L"cut")==0)
+		{
+			OnCopy(TRUE);
+			ClearMenuVariables();
+			return;
+		}
+		else if (wcscmp(szName,L"link")==0)
+		{
+			OnCreateShortcut();
+			ClearMenuVariables();
+			return;
+		}
+		else if (wcscmp(szName,L"delete")==0)
+		{
+			OnDelete();
+			ClearMenuVariables();
+			return;
+		}
 	}
-	else if (strcmp(szName,"cut")==0)
+	else
 	{
-		OnCopy(TRUE);
-		ClearMenuVariables();
-		return;
-	}
-	else if (strcmp(szName,"link")==0)
-	{
-		OnCreateShortcut();
-		ClearMenuVariables();
-		return;
-	}
-	else if (strcmp(szName,"delete")==0)
-	{
-		OnDelete();
-		ClearMenuVariables();
-		return;
+		char szName[401];   // Some stupid context menu handlers tries to put help text as UNICODE anyway
+		if (m_pActiveContextMenu->pContextMenu->GetCommandString(wID-IDM_DEFCONTEXTITEM,
+			GCS_VERBA,NULL,szName,200)!=NOERROR)
+		{
+			szName[0]='\0';
+			szName[1]='\0';
+		}
+
+		// Overriding these command, works better
+		if (strcmp(szName,"copy")==0)
+		{
+			OnCopy(FALSE);
+			ClearMenuVariables();
+			return;
+		}
+		else if (strcmp(szName,"cut")==0)
+		{
+			OnCopy(TRUE);
+			ClearMenuVariables();
+			return;
+		}
+		else if (strcmp(szName,"link")==0)
+		{
+			OnCreateShortcut();
+			ClearMenuVariables();
+			return;
+		}
+		else if (strcmp(szName,"delete")==0)
+		{
+			OnDelete();
+			ClearMenuVariables();
+			return;
+		}
+		
 	}
 	
 	CMINVOKECOMMANDINFO cii;
@@ -3461,6 +3500,7 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 	cii.lpDirectory=pItem->GetParent();
 	cii.nShow=SW_SHOWDEFAULT;
 	m_pActiveContextMenu->pContextMenu->InvokeCommand(&cii);
+	
 	ClearMenuVariables();
 
 }

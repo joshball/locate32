@@ -2,6 +2,8 @@
 #define DATA_H
 
 #define SCHEDULE_V1_LEN		0x20
+#define SCHEDULE_V2_LEN		0x24
+#define SCHEDULE_V3_LEN		0x28
 
 class CSchedule
 {
@@ -132,6 +134,7 @@ public:
 	STIME m_tStartTime;
 	STIME m_tLastStartTime; // If flagRunned is not set, these are 
 	SDATE m_tLastStartDate; // time and date when CSchedule is created
+
 	union
 	{
 		SMINUTELYTYPE m_tMinutely;
@@ -142,6 +145,7 @@ public:
 		SDATE m_dStartDate;
 	};
 	char* m_pDatabases;
+	int m_nThreadPriority;
 
 	DWORD GetDataLen() const;
 	DWORD GetData(BYTE* pData) const;

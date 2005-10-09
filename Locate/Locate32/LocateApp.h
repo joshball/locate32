@@ -112,6 +112,7 @@ public:
 	//  otherwise Use databases in pDatabase array which is 
 	//  double zero terminated seqeuence of strings
 	BYTE OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases=NULL); 
+	BYTE OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases,int nThreadPriority); 
 
 	static DWORD WINAPI KillUpdaterProc(LPVOID lpParameter);
     
@@ -296,7 +297,7 @@ public:
 	CDatabaseUpdater*** GetUpdatersPointerPtr();
 	void ReleaseUpdatersPointer();
 	
-	BOOL GlobalUpdate(CArray<PDATABASE>* paDatabases=NULL);
+	BOOL GlobalUpdate(CArray<PDATABASE>* paDatabases=NULL,int nThreadPriority=THREAD_PRIORITY_NORMAL);
 
 	// Database menu functions
 	static BOOL IsDatabaseMenu(HMENU hMenu);
@@ -543,6 +544,17 @@ inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,LPCSTR s
 		szSize.cx=rc.Width();
 	if (szSize.cy<rc.Height())
 		szSize.cy=rc.Height();
+}
+
+inline BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases)
+{
+	DWORD nThreadPriority=THREAD_PRIORITY_NORMAL;
+
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+		RegKey.QueryValue("Update Process Priority",nThreadPriority);
+	
+	return OnUpdate(bStopIfProcessing,pDatabases,(int)nThreadPriority);
 }
 
 extern FASTALLOCATORTYPE Allocation;

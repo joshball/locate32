@@ -5,7 +5,8 @@
 // CSchedule
 
 CSchedule::CSchedule()
-:	m_bFlags(flagEnabled|flagRunnedAtStartup),m_nType(typeDaily),m_pDatabases(NULL)
+:	m_bFlags(flagEnabled|flagRunnedAtStartup),m_nType(typeDaily),m_pDatabases(NULL),
+	m_nThreadPriority(THREAD_PRIORITY_NORMAL)
 {
 	SYSTEMTIME st;
 	GetLocalTime(&st);
@@ -13,6 +14,15 @@ CSchedule::CSchedule()
 	m_tLastStartDate=st;
 	m_tLastStartTime=st;
 	m_tDaily.wEvery=1;
+
+
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+	{
+		DWORD dwTemp;
+		if (RegKey.QueryValue("Update Process Priority",dwTemp))
+			m_nThreadPriority=(int)dwTemp;
+	}
 }
 
 CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
@@ -21,12 +31,36 @@ CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
 	{
 		sMemCopy(this,pData,SCHEDULE_V1_LEN);
 		m_pDatabases=NULL;
+		m_nThreadPriority=THREAD_PRIORITY_NORMAL;
 		pData+=SCHEDULE_V1_LEN;
 	}
 	else if (nVersion==2)
 	{
-		sMemCopy(this,pData,sizeof(CSchedule));
-		pData+=sizeof(CSchedule);
+		sMemCopy(this,pData,SCHEDULE_V2_LEN);
+		m_nThreadPriority=THREAD_PRIORITY_NORMAL;
+		pData+=SCHEDULE_V2_LEN;
+		if (m_pDatabases==NULL)
+		{
+			pData++;
+			return;
+		}
+        DWORD dwLength=1;
+        BYTE* pOrig=pData;
+        while (*pData!='\0')
+		{
+			int iStrLen=istrlen(LPSTR(pData))+1;
+			dwLength+=iStrLen;
+			pData+=iStrLen;
+		}
+		pData++;
+
+		m_pDatabases=new char[dwLength];
+		CopyMemory(m_pDatabases,pOrig,dwLength);
+	}
+	else if (nVersion==3)
+	{
+		sMemCopy(this,pData,SCHEDULE_V3_LEN);
+		pData+=SCHEDULE_V3_LEN;
 		if (m_pDatabases==NULL)
 		{
 			pData++;

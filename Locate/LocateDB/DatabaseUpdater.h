@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   database updater v2.99.5.7100                */
+   database updater v2.99.5.10100                */
 
 #if !defined(DATABASEUPDATER_H)
 #define DATABASEUPDATER_H
@@ -154,7 +154,7 @@ public:
 	void SetExtras(LPCSTR szExtra1,LPCSTR szExtra2);
 
 #ifdef WIN32
-	UpdateError Update(BOOL bThreaded=FALSE);
+	UpdateError Update(BOOL bThreaded=FALSE,int nThreadPriority=THREAD_PRIORITY_NORMAL);
 
 	BOOL StopUpdating(BOOL bForce=TRUE);
 	void CouldStop();

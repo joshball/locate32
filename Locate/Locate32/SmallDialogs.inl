@@ -22,7 +22,8 @@ inline CSelectColumndDlg::ColumnItem::ColumnItem(int nCol,CLocateDlg::DetailType
 inline CSelectDatabasesDlg::CSelectDatabasesDlg(const CArray<PDATABASE>& rOrigDatabases,CArray<PDATABASE>& rSelectedDatabases,BYTE bFlags,LPCSTR szRegKey)
 :	CDialog(IDD_SELECTDATABASES),
 	m_rOrigDatabases(rOrigDatabases),m_rSelectedDatabases(rSelectedDatabases),
-	m_pList(NULL),m_bFlags(bFlags),m_nThreadsCurrently(1),m_pSelectDatabases(NULL)
+	m_pList(NULL),m_bFlags(bFlags),m_nThreadsCurrently(1),m_pSelectDatabases(NULL),
+	m_nThreadPriority(THREAD_PRIORITY_NORMAL)
 {
 	if (szRegKey!=NULL)
 		m_pRegKey=alloccopy(szRegKey);
@@ -57,6 +58,18 @@ inline BOOL CSelectDatabasesDlg::EnableItem(CDatabase* pDatabase,BOOL bEnable)
 	}
 	return TRUE;	
 }
+
+inline void CSelectDatabasesDlg::SetThreadPriority(int nThreadPriority)
+{
+	m_nThreadPriority=nThreadPriority;
+}
+
+
+inline int CSelectDatabasesDlg::GetThreadPriority() const
+{
+	return m_nThreadPriority;
+}
+
 
 ///////////////////////////////////////////////////////////
 // CSavePresetDlg

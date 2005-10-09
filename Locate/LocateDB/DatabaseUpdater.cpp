@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   database updater v2.99.5.7100                 */
+   database updater v2.99.5.10100                 */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -396,15 +396,22 @@ DWORD WINAPI CDatabaseUpdater::UpdateThreadProc(LPVOID lpParameter)
 
 // Start updating database
 #ifdef WIN32
-UpdateError CDatabaseUpdater::Update(BOOL bThreaded)
+UpdateError CDatabaseUpdater::Update(BOOL bThreaded,int nThreadPriority)
 {
 	m_pProc(m_dwData,Initializing,ueSuccess,this);
 	if (bThreaded)
 	{
 		DWORD dwThreadID;
 		DebugNumMessage("CDatabaseUpdater::Update this=%X",DWORD(this));
-		m_hThread=CreateThread(NULL,0,UpdateThreadProc,this,0,&dwThreadID);
-		return m_hThread!=NULL?ueSuccess:ueCannotCreateThread;
+		m_hThread=CreateThread(NULL,0,UpdateThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
+		
+		if (m_hThread!=NULL)
+		{
+			SetThreadPriority(m_hThread,nThreadPriority);
+			ResumeThread(m_hThread);
+			return ueSuccess;
+		}
+        return ueCannotCreateThread;
 	}
 	else
 		return UpdatingProc();

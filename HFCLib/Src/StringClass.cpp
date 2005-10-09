@@ -4193,7 +4193,7 @@ CStringW::CStringW(UINT nID)
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return;
 	}
-	m_nDataLen=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
+	m_nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
 		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
@@ -4223,7 +4223,7 @@ CStringW::CStringW(UINT nID,TypeOfResourceHandle bType)
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return;
 	}
-	m_nDataLen=::LoadStringW(GetResourceHandle(bType),nID,szBuffer,STR_LOADSTRINGBUFLEN);
+	m_nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,bType);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
 		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
