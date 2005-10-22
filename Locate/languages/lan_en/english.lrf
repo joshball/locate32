@@ -25,7 +25,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2005 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 beta 5.10100
+FILEVERSION=3.0 beta 5.10220
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -92,6 +92,7 @@ DLGNAME_NAMED=&Named:
 DLGNAME_EXTENSIONS=Ex&tensions:
 DLGNAME_LOOKIN=&Look in:
 DLGNAME_BROWSE=&Browse...
+DLGNAME_NOSUBDIRECTORIES=&No subdirectories
 STRNAME_DOCUMENTFOLDERS=Document Folders
 STRNAME_GETFOLDER=Get Folder:
 STRNAME_EVERYWHERE=Everywhere
@@ -179,7 +180,7 @@ DLGGENERALSETTINGS_CLOSETOSYSTEMTRAY=&Leave program background when dialog is cl
 DLGGENERALSETTINGS_MATCHWHOLEFILENAME=M&atch whole file name
 DLGGENERALSETTINGS_CHECKIN=&Check in:
 DLGGENERALSETTINGS_REPLACESPACES=R&eplace spaces
-DLGGENERALSETTINGS_TEXTISCASESENSITIVE=&Text is case sensitive
+DLGGENERALSETTINGS_TEXTISCASESENSITIVE=&Match case (for ""File containing text"")
 DLGGENERALSETTINGS_USEWHOLEPATH=Use &whole path
 
 # Advanced page
@@ -929,8 +930,8 @@ STRERROR_UNKNOWNOS=Unknown error. Latest OS error: %s
 STRERROR_UNKNOWNASWRITINGDB=State: writing database to file '%s'.
 STRERROR_UNKNOWNASSCANNINGROOT=State: scanning root '%s'.
 STRERROR_CANNOTWRITEINCREMENTALLY=Cannot write database '%s' incrementally, trying full update?
-STRERROR_CANNOTSAVESHORTCUTS=Cannot save shortcuts to registry.
-STRERROR_CANNOTLOADDEFAULTSHORTCUTS=Cannot load default shortcuts.
+STRERROR_CANNOTSAVESHORTCUTS=Cannot save keyboard shortcuts to the registry.
+STRERROR_CANNOTLOADDEFAULTSHORTCUTS=Cannot load default keyboard shortcuts.
 
 
 STRERROR_LASTERROR=Error:
@@ -1003,7 +1004,7 @@ STRLOCATE_VERBOSESTR=searching strings:
 STRLOCATE_VERBOSESEXT=with extensions: 
 STRLOCATE_VERBOSEDIR=from directories:
 STRLOCATE_VERBOSEREG=searching regular expression '%s'
-STRLOCATE_VERBOSEFOUNDFILES=number of found fiels: %d
+STRLOCATE_VERBOSEFOUNDFILES=number of found files: %d
 
 ###################################################
 # Strings for shell extension.exe

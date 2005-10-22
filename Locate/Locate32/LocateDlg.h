@@ -208,6 +208,7 @@ public:
 
 		WORD m_nFieldLeft;
 		WORD m_nButtonWidth;
+		WORD m_nCheckWidth;
 		WORD m_nBrowseTop;
 		WORD m_nMoreDirsTop;
 		BYTE m_nMoreDirsWidth;
@@ -438,8 +439,7 @@ public:
 	void ClearMenuVariables();     
 	static int GetSendToMenuPos(HMENU hMenu);
 	BOOL CheckClipboard();
-	void EnableItems();
-	void DisableItems();
+	void EnableItems(BOOL bEnable=TRUE);
 	void ResetFileNotificators();
 	void StartBackgroundOperations();
 	void StopBackgroundOperations();

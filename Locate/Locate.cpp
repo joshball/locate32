@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   locate.exe v2.99.5.10100                 */
+   locate.exe v2.99.5.10220                 */
 
-const char* szVersionStr="locate 3.0 beta 5.10100";
+const char* szVersionStr="locate 3.0 beta 5.10220";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -22,7 +22,8 @@ enum {
 	flagWholeWord=0x1,
 	flagReplaceSpaces=0x2,
 	flagShowWhatAreWeLookingFor=0x4,
-	flagOutputIsPaged=0x8
+	flagOutputIsPaged=0x8,
+	flagNoSubDirectories=0x10
 };
 BYTE dwMainFlags=flagReplaceSpaces;
 
@@ -418,6 +419,12 @@ int main (int argc,char * argv[])
 			case 'h':
 			case 'H':
 				options.helps=1;
+				break;
+			case 'R':
+				if (argv[i][2]=='n' || argv[i][2]=='N')
+					dwFlags|=LOCATE_NOSUBDIRECTORIES;
+				else
+					dwFlags&=~LOCATE_NOSUBDIRECTORIES;
 				break;
 			case 'l':
 			case 'L':

@@ -1091,7 +1091,6 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 {
 	DlgDebugMessage("CLocateDlg::OnOk BEGIN");
 	
-	
 	CWaitCursor wait;
 	CString Name,Title;
 	CArrayFAP<LPSTR> aExtensions,aDirectories,aNames;
@@ -1287,6 +1286,11 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 		(m_pLocater->GetAdvancedFlags()&(LOCATE_FILENAMES|LOCATE_FOLDERNAMES))!=LOCATE_FOLDERNAMES)
 		m_pLocater->AddAdvancedFlags(LOCATE_EXTENSIONWITHNAME);
 
+	// Subdirectories
+	if (m_NameDlg.IsDlgButtonChecked(IDC_NOSUBDIRECTORIES))
+		m_pLocater->AddAdvancedFlags(LOCATE_NOSUBDIRECTORIES);
+
+
 	// Set funtion pointers
 	m_pLocater->SetFunctions(LocateProc,LocateFoundProc,DWORD(this));
 	
@@ -1328,6 +1332,10 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 	// LocateFoundProc uses UpdateList
 	StartBackgroundOperations();
 
+	// Save last focus
+	m_hLastFocus=GetFocus();
+
+
 	// Starting location
 	if (!(nRet&CAdvancedDlg::flagNameIsRegularExpression))
 	{
@@ -1337,7 +1345,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 	}
 	else
 		m_pLocater->LocateFiles(TRUE,Name,(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
-
+	
 	DlgDebugMessage("CLocateDlg::OnOk END");
 	
 }
@@ -1356,13 +1364,15 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 			return FALSE;
 		}
 
-		// Disabling items
-		((CLocateDlg*)dwParam)->DisableItems();
+		// Disabling items and give focus to to whole dialog
+		((CLocateDlg*)dwParam)->SendMessage(WM_ENABLEITEMS,FALSE);
+
 		
 		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(szEmpty,0,0);
 		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(CString(IDS_LOCATING),1,0);
 		((CLocateDlg*)dwParam)->StartLocateAnimation();
 
+		
 		// Selecting path column
 		((CLocateDlg*)dwParam)->m_pListCtrl->SendMessage(LVM_FIRST+140/* LVM_SETSELECTEDCOLUMN */,1,0);
 		
@@ -1374,7 +1384,8 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 	{
 		((CLocateDlg*)dwParam)->StopLocateAnimation();
 		((CLocateDlg*)dwParam)->EnableItems();
-		
+
+		((CLocateDlg*)dwParam)->SendMessage(WM_ENABLEITEMS,TRUE);
 
 		if (ueCode==ueStopped)
 		{
@@ -2181,6 +2192,12 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 
 
 		}
+		return 0;
+	case WM_ENABLEITEMS:
+		EnableItems(wParam);
+		return 0;
+	case WM_SETITEMFOCUS:
+		::SetFocus((HWND)wParam);
 		return 0;
 #ifdef _DEBUG
 	case WM_SYSCOMMAND:
@@ -3365,45 +3382,49 @@ void CLocateDlg::SetSystemImagelists(CListCtrl* pList,HICON* phIcon)
 		*phIcon=ImageList_ExtractIcon(NULL,hList,DEF_IMAGE);
 }
 
-void CLocateDlg::EnableItems()
+void CLocateDlg::EnableItems(BOOL bEnable)
 {
 	CButton OK(GetDlgItem(IDC_OK));
 	CButton Stop(GetDlgItem(IDC_STOP));
-	OK.EnableWindow(TRUE);
-	OK.SetButtonStyle(BS_DEFPUSHBUTTON);
-	Stop.SetButtonStyle(BS_PUSHBUTTON);
-	Stop.EnableWindow(FALSE);
-	EnableDlgItem(IDC_PRESETS,TRUE);
-	m_NameDlg.EnableItems(TRUE);
-	m_SizeDateDlg.EnableItems(TRUE);
-	m_AdvancedDlg.EnableItems(TRUE);
+	OK.EnableWindow(bEnable);
+	OK.SetButtonStyle(bEnable?BS_DEFPUSHBUTTON:BS_PUSHBUTTON);
+	Stop.SetButtonStyle(bEnable?BS_PUSHBUTTON:BS_DEFPUSHBUTTON);
+	Stop.EnableWindow(!bEnable);
+	EnableDlgItem(IDC_PRESETS,bEnable);
+	m_NameDlg.EnableItems(bEnable);
+	m_SizeDateDlg.EnableItems(bEnable);
+	m_AdvancedDlg.EnableItems(bEnable);
 
-	if (m_pListCtrl->GetItemCount())
+	if (bEnable)
 	{
-		SetFocus();
-		m_pListCtrl->SetItemState(0,LVIS_SELECTED,LVIS_SELECTED);
+		if (GetFocus()==NULL)
+		{
+			// Give focus to the selected tab
+			switch (m_pTabCtrl->GetCurSel())
+			{
+			case 0:
+				m_NameDlg.SetFocus();
+				break;
+			case 1:
+				m_SizeDateDlg.SetFocus();
+				break;
+			case 2:
+				m_AdvancedDlg.SetFocus();
+				break;
+			}
+			
+			
+			if (m_hLastFocus!=NULL)
+			{
+				PostMessage(WM_SETITEMFOCUS,(WPARAM)::GetParent(m_hLastFocus));
+				PostMessage(WM_SETITEMFOCUS,(WPARAM)m_hLastFocus);
+				m_hLastFocus=NULL;
+			}
+		}
 	}
-	else if (m_pTabCtrl->GetCurSel()==0)
-	{
-		m_NameDlg.SetFocus();
-		::SetFocus(m_NameDlg.GetDlgItem(IDC_NAME));
-	}
-
 }
 
-void CLocateDlg::DisableItems()
-{
-	CButton OK(GetDlgItem(IDC_OK));
-	CButton Stop(GetDlgItem(IDC_STOP));
-	OK.SetButtonStyle(BS_PUSHBUTTON);
-	OK.EnableWindow(FALSE);
-	Stop.EnableWindow(TRUE);
-	Stop.SetButtonStyle(BS_DEFPUSHBUTTON);
-	EnableDlgItem(IDC_PRESETS,FALSE);
-	m_NameDlg.EnableItems(FALSE);
-	m_SizeDateDlg.EnableItems(FALSE);
-	m_AdvancedDlg.EnableItems(FALSE);
-}
+
 
 void CLocateDlg::OnContextMenuCommands(WORD wID)
 {
@@ -5741,6 +5762,10 @@ BOOL CLocateDlg::CNameDlg::OnInitDialog(HWND hwndFocus)
 	m_nButtonWidth=WORD(rc2.right-rc2.left);
 	m_nBrowseTop=WORD(rc2.top-rc1.top);
 
+	::GetWindowRect(GetDlgItem(IDC_NOSUBDIRECTORIES),&rc2);
+	m_nCheckWidth=WORD(rc2.right-rc2.left);
+	
+
 	::GetWindowRect(GetDlgItem(IDC_MOREDIRECTORIES),&rc2);	
 	m_nMoreDirsTop=WORD(rc2.top-rc1.top);
 	m_nMoreDirsWidth=BYTE(rc2.right-rc2.left);
@@ -6517,8 +6542,6 @@ BOOL CLocateDlg::CNameDlg::OnOk(CString& sName,CArray<LPSTR>& aExtensions,CArray
 		return FALSE;
 
 	
-	// Setting focus
-	SetFocus(IDC_NAME);
 	
 	DlgDebugMessage("CLocateDlg::CNameDlg::OnOk END");
 	return TRUE;
@@ -7818,6 +7841,7 @@ void CLocateDlg::CNameDlg::OnSize(UINT nType, int cx, int cy)
 	::GetWindowRect(GetDlgItem(IDC_NAME),&rc);
 	SetDlgItemPos(IDC_NAME,HWND_BOTTOM,0,0,cx-m_nFieldLeft-8,rc.Height(),SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
 	SetDlgItemPos(IDC_TYPE,HWND_BOTTOM,0,0,cx-m_nFieldLeft-8,rc.Height(),SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
+	SetDlgItemPos(IDC_NOSUBDIRECTORIES,HWND_BOTTOM,cx-m_nButtonWidth-m_nCheckWidth-12,m_nBrowseTop+3,0,0,SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOZORDER);
 	SetDlgItemPos(IDC_BROWSE,HWND_BOTTOM,cx-m_nButtonWidth-8,m_nBrowseTop,0,0,SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOZORDER);
 
 	if (GetLocateDlg()->GetFlags()&CLocateDlg::fgNameMultibleDirectories)
@@ -8021,7 +8045,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCSTR pFolder,DWORD dwLength,BO
 				{
 					char cDrive=(char)HIWORD(lParam);
 					CharLowerBuff(&cDrive,1);
-					if (cDrive==FolderLower[0])
+					if (cDrive==FolderLower[0] && bAlsoSet)
 					{
 						LookIn.SetCurSel(i);
 						LookIn.SetItemText(-1,LookIn.GetItemText(i));
@@ -8031,6 +8055,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCSTR pFolder,DWORD dwLength,BO
 			}
 		}
 
+		
 		// Check whether folder already exists in other directory list
 		for (int i=0;i<m_nMaxBrowse;i++)
 		{
@@ -8051,16 +8076,26 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCSTR pFolder,DWORD dwLength,BO
 		
 		m_pBrowse[0].Copy(pFolder,dwLength);
 
+		
+		// If selection is on, following code may mess it
+		int nCurSel=LookIn.GetCurSel();
+		LookIn.SetCurSel(-1);
+
+
+		// Removing old items from list
+		ci.mask=CBEIF_LPARAM;
 		for (ci.iItem=LookIn.GetCount()-1;ci.iItem>=0;ci.iItem--)
 		{
-			ci.mask=CBEIF_LPARAM;
 			LookIn.GetItem(&ci);
 			if (static_cast<TypeOfItem>(LOWORD(ci.lParam))!=Custom)
 				break;
 			LookIn.DeleteItem(ci.iItem);
 		}
 		
+		// Adding new items
 		int nSel=++ci.iItem;
+		ci.iIndent=0;
+		ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 		for (i=0;i<m_nMaxBrowse;i++)
 		{
 			if (m_pBrowse[i].IsEmpty())
@@ -8070,9 +8105,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCSTR pFolder,DWORD dwLength,BO
 			SHGetFileInfo(m_pBrowse[i],0,&fi,sizeof(SHFILEINFO),SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 			ci.iSelectedImage=fi.iIcon;
 			ci.pszText=m_pBrowse[i].GetBuffer();
-			ci.iIndent=0;
 			ci.lParam=MAKELPARAM(Custom,i);
-			ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 			LookIn.InsertItem(&ci);
 			ci.iItem++;
 		}
@@ -8082,6 +8115,10 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCSTR pFolder,DWORD dwLength,BO
 			LookIn.SetCurSel(nSel);
 			LookIn.SetItemText(-1,LookIn.GetItemText(nSel));
 		}
+		else
+			LookIn.SetCurSel(nCurSel);
+		
+			
 	}
 	return TRUE;		
 }
@@ -8581,6 +8618,14 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 		}
 	}
 
+
+	DWORD dwTemp;
+	if (!RegKey.QueryValue("Name/NoSubDirectories",dwTemp))
+		dwTemp=0;
+	CheckDlgButton(IDC_NOSUBDIRECTORIES,dwTemp);
+
+
+
 	HilightTab(IsChanged());
 }
 
@@ -8601,6 +8646,7 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 		RegKey.SetValue("Name/Type",str);
 	}
 	
+	
 	// Lookin Combo
 	
 	// Deleting old items
@@ -8612,6 +8658,8 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 		else
 			i++;
 	}
+
+
 
 	CComboBoxEx LookInEx(GetDlgItem(IDC_LOOKIN));
 		
@@ -8686,6 +8734,11 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 
 		}
 	}
+
+
+	// No subdirectories
+	RegKey.SetValue("Name/NoSubDirectories",IsDlgButtonChecked(IDC_NOSUBDIRECTORIES));
+
 }
 
 
@@ -8948,24 +9001,24 @@ void CLocateDlg::CSizeDateDlg::OnClear(BOOL bInitial)
 
 void CLocateDlg::CSizeDateDlg::EnableItems(BOOL bEnable_)
 {
-	EnableDlgItem(IDC_CHECKMINIMUMSIZE,TRUE);
+	EnableDlgItem(IDC_CHECKMINIMUMSIZE,bEnable_);
 	BOOL bEnable=bEnable_ && IsDlgButtonChecked(IDC_CHECKMINIMUMSIZE);
 	EnableDlgItem(IDC_MINIMUMSIZE,bEnable);
 	EnableDlgItem(IDC_MINIMUMSIZESPIN,bEnable);
 	EnableDlgItem(IDC_MINSIZETYPE,bEnable);
 	
-	EnableDlgItem(IDC_CHECKMAXIMUMSIZE,TRUE);
+	EnableDlgItem(IDC_CHECKMAXIMUMSIZE,bEnable_);
 	bEnable=bEnable_ && IsDlgButtonChecked(IDC_CHECKMAXIMUMSIZE);
 	EnableDlgItem(IDC_MAXIMUMSIZE,bEnable);
 	EnableDlgItem(IDC_MAXIMUMSIZESPIN,bEnable);
 	EnableDlgItem(IDC_MAXSIZETYPE,bEnable);
 	
-	EnableDlgItem(IDC_CHECKMINDATE,TRUE);
+	EnableDlgItem(IDC_CHECKMINDATE,bEnable_);
 	bEnable=bEnable_ && IsDlgButtonChecked(IDC_CHECKMINDATE);
 	EnableDlgItem(IDC_MINDATE,bEnable);
 	EnableDlgItem(IDC_MINTYPE,bEnable);
 	
-	EnableDlgItem(IDC_CHECKMAXDATE,TRUE);
+	EnableDlgItem(IDC_CHECKMAXDATE,bEnable_);
 	bEnable=bEnable_ && IsDlgButtonChecked(IDC_CHECKMAXDATE);
 	EnableDlgItem(IDC_MAXDATE,bEnable);
 	EnableDlgItem(IDC_MAXTYPE,bEnable);
@@ -9687,6 +9740,9 @@ void CLocateDlg::CAdvancedDlg::SetStartData(const CLocateApp::CStartData* pStart
 void CLocateDlg::CAdvancedDlg::EnableItems(BOOL bEnable)
 {
 	EnableDlgItem(IDC_MATCHWHOLENAME,bEnable);
+	EnableDlgItem(IDC_REPLACESPACES,bEnable);
+	EnableDlgItem(IDC_USEWHOLEPATH,bEnable);
+
 
 	EnableDlgItem(IDC_FILETYPE,bEnable);
 

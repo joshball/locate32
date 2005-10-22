@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,10100
- PRODUCTVERSION 2,99,5,10100
+ FILEVERSION 2,99,5,10220
+ PRODUCTVERSION 2,99,5,10220
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.10100"
+            VALUE "FileVersion", "3.0 beta 5.10220"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.10100"
+            VALUE "ProductVersion", "3.0 beta 5.10220"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -102,6 +102,8 @@ BEGIN
                     CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | WS_TABSTOP,50,52,
                     145,110
 	PUSHBUTTON      "#1",IDC_MOREDIRECTORIES,136,52,20,14
+    CONTROL         "&No subdirectories",IDC_NOSUBDIRECTORIES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,20,70,80,10
     PUSHBUTTON      "&Browse...",IDC_BROWSE,76,70,60,14,BS_NOTIFY
 END
 
@@ -350,8 +352,8 @@ BEGIN
                     WS_TABSTOP
     CONTROL         "R&eplace spaces",IDC_REPLACESPACES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,234,100,10
-    CONTROL         "&Text is case sensitive",IDC_MATCHCASE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,113,234,117,10
+    CONTROL         "&Match case (for ""File containing text"")",IDC_MATCHCASE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,113,234,147,10
 	CONTROL         "Use &whole path",IDC_USEWHOLEPATH,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,251,100,10
     
@@ -1170,8 +1172,8 @@ BEGIN
     IDS_SHORTCUTTODESKTOP   "Do you want the shortcut to be placed on the desktop?"
     IDS_ERRORINVALIDFILEFORMAT "Error loading file %s. Invalid file format."
     IDS_ERRCANNOTFIND       "File '%s' cannot found or invalid file format."
-	IDS_ERRORCANNOTSAVESHORTCUTS "Cannot save shortcuts to registry."
-	IDS_ERRORCANNOTLOADDEFAULTSHORTUCS	"Cannot load default shortcuts."
+	IDS_ERRORCANNOTSAVESHORTCUTS "Cannot save keyboard shortcuts to the registry."
+	IDS_ERRORCANNOTLOADDEFAULTSHORTUCS	"Cannot load default keyboard shortcuts."
 END
 
 STRINGTABLE 
@@ -1714,7 +1716,7 @@ BEGIN
 	IDS_LOCATEVERBOSEEXT		"with extensions: "
 	IDS_LOCATEVERBOSEDIR		"from directories:\n"
 	IDS_LOCATEVERBOSEREG		"searching regular expression '%s'"
-	IDS_LOCATEVERBOSEFOUNDFILES	"\nnumber of found fiels: %d\n"
+	IDS_LOCATEVERBOSEFOUNDFILES	"\nnumber of found files: %d\n"
 END
 
 STRINGTABLE 

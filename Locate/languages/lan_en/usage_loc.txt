@@ -1,5 +1,5 @@
 
-usage: locate [-s] [-p path] [-t type] [-r] [-R] [-d dbfile] [-D dbname] [-h] file
+usage: locate [-s] [-p path] [-t type] [-r] [-d dbfile] [-D dbname] [-h] file
 
 parameters:
     -s          pause after page
@@ -8,6 +8,8 @@ parameters:
     -r          'file' is interpreted as regular expression
     -w          use whole path, not just file name
     -t          set extension
+	-R			search subdirectories 
+	-Rn			don't search subdirectories
     -d file     set database file
     -D name     uses database named 'name'
     -lm:SIZE    set minimum size to SIZE, eg -lms:100k

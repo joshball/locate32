@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   database locater v2.99.5.10100               */
+   database locater v2.99.5.10220               */
 
 #if !defined(LOCATER_H)
 #define LOCATER_H
@@ -32,6 +32,7 @@ typedef BOOL (CALLBACK* LOCATEFOUNDPROC)(DWORD dwParam,BOOL bFolder,const CLocat
 #define LOCATE_FILENAMES				0x0001
 #define LOCATE_FOLDERNAMES				0x0002
 #define LOCATE_MINCREATIONDATE			0x0020
+#define LOCATE_NOSUBDIRECTORIES			0x0010
 #define LOCATE_MINACCESSDATE			0x0040
 #define LOCATE_MAXCREATIONDATE			0x0080
 #define LOCATE_MAXACCESSDATE			0x0100

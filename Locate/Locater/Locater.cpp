@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2005 Janne Huttunen
-   database locater v2.99.5.10100                 */
+   database locater v2.99.5.10220                 */
 
 #include <HFCLib.h>
 
@@ -1305,9 +1305,15 @@ void CLocater::CheckFolder(DWORD nPathLen)
 
 			szCurrentPath[nPathLen]='\\';
 			sMemCopy(szCurrentPath+nPathLen+1,pPoint,dwNameLen+1);
-			pPoint+=9+dwNameLen;
 			
-			CheckFolder(nPathLen+dwNameLen+1);
+			if (m_aDirectories.GetSize()>0 && m_dwFlags&LOCATE_NOSUBDIRECTORIES)
+				pPoint+=*((DWORD*)(pPoint-5))-6;
+			else
+			{
+				pPoint+=9+dwNameLen;
+				CheckFolder(nPathLen+dwNameLen+1);
+			}
+
 			
 			// Putting these back to correct ones
 			szCurrentPath[nPathLen]='\0';

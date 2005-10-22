@@ -12,5 +12,7 @@
 #define WM_RESETSHORTCUTS			WM_APP+108
 #define WM_RESULTLISTACTION			WM_APP+109
 #define WM_GETSELECTEDITEMPATH		WM_APP+110
+#define WM_ENABLEITEMS				WM_APP+111
+#define WM_SETITEMFOCUS				WM_APP+112 // wParam is handle to window
 
 #endif

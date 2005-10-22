@@ -209,6 +209,7 @@
 #define IDC_MOREDIRECTORIES             1009
 #define IDC_LOOKIN                      1010
 #define IDC_BROWSE                      1011
+#define IDC_NOSUBDIRECTORIES			1012
 #define IDC_FRAME                       1012
 #define IDS_CANNOTREADDRIVE             1012
 #define IDC_UPDATENOW                   1012

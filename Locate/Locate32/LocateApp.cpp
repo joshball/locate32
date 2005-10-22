@@ -1,5 +1,5 @@
-#include "shlwapi.h"
 #include <HFCLib.h>
+#include "shlwapi.h"
 #include "Locate32.h"
 
 #include "wfext.h"
