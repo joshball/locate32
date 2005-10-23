@@ -593,7 +593,7 @@ public:
 
 
 	COptionsPropertyPage();
-	COptionsPropertyPage(const OPTIONPAGE* pOptionPage);
+	COptionsPropertyPage(const COptionsPropertyPage::OPTIONPAGE* pOptionPage);
 	
 	void Construct(const OPTIONPAGE* pOptionPage);
 	
@@ -1126,11 +1126,13 @@ inline int CInputDialog::GetInputText(CString& text) const
 inline COptionsPropertyPage::COptionsPropertyPage()
 :	m_pTree(NULL),m_pItems(NULL)
 {
+	DebugMessage("COptionsPropertyPage::COptionsPropertyPage()");
 }
 
-inline COptionsPropertyPage::COptionsPropertyPage(const OPTIONPAGE* pOptionPage)
+inline COptionsPropertyPage::COptionsPropertyPage(const COptionsPropertyPage::OPTIONPAGE* pOptionPage)
 :	m_pTree(NULL),m_pItems(NULL)
 {
+	DebugMessage("COptionsPropertyPage::COptionsPropertyPage(const OPTIONPAGE* pOptionPage)");
 	Construct(pOptionPage);
 }
 

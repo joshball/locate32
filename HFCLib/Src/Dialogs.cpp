@@ -2024,17 +2024,21 @@ void COptionsPropertyPage::Construct(const OPTIONPAGE* pOptionPage)
 		pOptionPage->dwFlags&OPTIONPAGE::opCaptionIsID?pOptionPage->nIDCaption:0,
 		LanguageSpecificResource);
 
+	
 	if (!(pOptionPage->dwFlags&OPTIONPAGE::opCaptionIsID))
 	{
 		m_psp.pszTitle=pOptionPage->lpszCaption;
 		m_psp.dwFlags|=PSP_USETITLE;
 	}
 	m_nTreeID=pOptionPage->nTreeCtrlID;
-
+	
+	
 	if (pOptionPage->dwFlags&OPTIONPAGE::opChangeIsID)
 		m_ChangeText.LoadString(pOptionPage->nIDChangeText);
 	else
 		m_ChangeText=pOptionPage->lpszChangeText;
+
+	
 }
 
 BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)

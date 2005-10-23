@@ -114,9 +114,12 @@ BOOL CException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 		
 		
 		char szTmp2[100];
-		DWORD dwLen=StringCbPrintf(szTmp2,100," OS err: %d",m_lOsError);
-		if (msglen+dwLen<nMaxError)
-			iMemCopy(lpszError+msglen,szTmp2,dwLen+1);
+		if (StringCbPrintf(szTmp2,100," OS err: %d",m_lOsError)==S_OK)
+		{
+			size_t dwLen=strlen(szTmp2);
+			if (msglen+dwLen<nMaxError)
+				iMemCopy(lpszError+msglen,szTmp2,dwLen+1);
+		}
 	}
 	return TRUE;
 }
@@ -403,9 +406,12 @@ BOOL CFileException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 
 
 		char szTmp2[100];
-		DWORD dwLen=StringCbPrintf(szTmp2,100," OS err: %d",m_lOsError);
-		if (len+dwLen<nMaxError)
-			iMemCopy(lpszError+len,szTmp2,dwLen+1);
+		if (StringCbPrintf(szTmp2,100," OS err: %d",m_lOsError)==S_OK)
+		{
+			size_t dwLen=strlen(szTmp2);
+			if (len+dwLen<nMaxError)
+				iMemCopy(lpszError+len,szTmp2,dwLen+1);
+		}
 
 	}
 	return TRUE;

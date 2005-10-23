@@ -126,10 +126,10 @@ void DebugMessage(LPCSTR msg)
 		SYSTEMTIME st;
 		DWORD writed;
 		GetLocalTime(&st);
-		int len=StringCbPrintf (szBufr,2000,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X: %s\r\n",
+		if (StringCbPrintf (szBufr,2000,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X: %s\r\n",
 			st.wYear%100,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond,
-			st.wMilliseconds,GetCurrentThreadId(),msg);
-		WriteFile(hLogFile,szBufr,len,&writed,NULL);
+			st.wMilliseconds,GetCurrentThreadId(),msg)==S_OK )
+			WriteFile(hLogFile,szBufr,strlen(szBufr),&writed,NULL);
 		FlushFileBuffers(hLogFile);
 	}
 #else
@@ -169,7 +169,10 @@ static int formhexline(char* line,BYTE* pData,size_t datalen)
 		if (i==LINELEN/2)
 			*(ptr++)=' ';
 		
-		ptr+=StringCbPrintf(ptr,5,"%02X ",pData[i]);
+		StringCbPrintf(ptr,5,"%02X ",pData[i]);
+		while(*ptr!='\0')
+			ptr++;
+			
 	}
 	for (;i<LINELEN;i++)
 	{
@@ -213,10 +216,10 @@ void DebugHexDump(LPCSTR desc,BYTE* pData,size_t datalen)
 		SYSTEMTIME st;
 		DWORD writed;
 		GetLocalTime(&st);
-		int len=StringCbPrintf (szBufr,2000,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X HEXDUMP %s len=%d:\r\n",
+		if (StringCbPrintf (szBufr,2000,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X HEXDUMP %s len=%d:\r\n",
 			st.wYear%100,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond,
-			st.wMilliseconds,GetCurrentThreadId(),desc,datalen);
-        WriteFile(hLogFile,szBufr,len,&writed,NULL);
+			st.wMilliseconds,GetCurrentThreadId(),desc,datalen)==S_OK)
+            WriteFile(hLogFile,szBufr,strlen(szBufr),&writed,NULL);
 		
 		char line[3*LINELEN+LINELEN+10];
 		int ret;
@@ -224,10 +227,9 @@ void DebugHexDump(LPCSTR desc,BYTE* pData,size_t datalen)
 		while ((ret=formhexline(line,pData,datalen)))
 		{
 			char indstr[12];
-			size_t ret2=StringCbPrintf(indstr,12,"%08X ",index);
-			
-			WriteFile(hLogFile,indstr,ret2,&writed,NULL);
-            WriteFile(hLogFile,line,strlen(line),&writed,NULL);
+			if (StringCbPrintf(indstr,12,"%08X ",index)==S_OK)
+				WriteFile(hLogFile,indstr,strlen(indstr),&writed,NULL);
+			WriteFile(hLogFile,line,strlen(line),&writed,NULL);
             			
 			pData+=ret;
 			datalen-=ret;

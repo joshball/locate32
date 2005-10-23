@@ -303,6 +303,12 @@ public:
 
 	friend class CStringW;
 #endif
+
+#ifdef _DEBUG_LOGGING
+	void DebugDumpInfo();
+#else
+	void DebugDumpInfo() {};
+#endif
 };
 
 

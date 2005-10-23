@@ -1192,7 +1192,8 @@ LPSTR CLocatedItem::GetToolTipText() const
 
 		if (GetFileSize()>LONGLONG(1024*1024*1024)) // Over 1 Gb
 		{
-			int nLength=StringCbPrintf(szSize,25,"%1.2f",double(GetFileSize())/(1024*1024*1024));
+			StringCbPrintf(szSize,25,"%1.2f",double(GetFileSize())/(1024*1024*1024));
+			size_t nLength=strlen(szSize);
 			while (szSize[nLength-1]=='0')
 				nLength--;
 			if (szSize[nLength-1]=='.')
@@ -1201,7 +1202,8 @@ LPSTR CLocatedItem::GetToolTipText() const
 		}	
 		else if (GetFileSize()>LONGLONG(1024*1024)) // Over 1 Mb
 		{
-			int nLength=StringCbPrintf(szSize,25,"%1.2f",double(GetFileSize())/(1024*1024));
+			StringCbPrintf(szSize,25,"%1.2f",double(GetFileSize())/(1024*1024));
+			size_t nLength=strlen(szSize);
 			while (szSize[nLength-1]=='0')
 				nLength--;
 			if (szSize[nLength-1]=='.')
@@ -1210,7 +1212,8 @@ LPSTR CLocatedItem::GetToolTipText() const
 		}	
 		else if (GetFileSize()>LONGLONG(1024)) // Over 1 Gb
 		{
-			int nLength=StringCbPrintf(szSize,25,"%1.2f",double(GetFileSize())/(1024));
+			StringCbPrintf(szSize,25,"%1.2f",double(GetFileSize())/(1024));
+			size_t nLength=strlen(szSize);
 			while (szSize[nLength-1]=='0')
 				nLength--;
 			if (szSize[nLength-1]=='.')

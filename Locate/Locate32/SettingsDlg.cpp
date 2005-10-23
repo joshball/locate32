@@ -40,6 +40,7 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_pAutoUpdate=new CAutoUpdateSettingsPage;
 	m_pKeyboardShortcuts=new CKeyboardShortcutsPage;
 	
+	
 	AddPage((CPropertyPage*)m_pGeneral);
 	AddPage((CPropertyPage*)m_pAdvanced);
 	AddPage((CPropertyPage*)m_pLanguage);
@@ -47,19 +48,25 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	AddPage((CPropertyPage*)m_pAutoUpdate);
 	AddPage((CPropertyPage*)m_pKeyboardShortcuts);
 	
+	
 	m_pGeneral->m_pSettings=m_pAdvanced->m_pSettings=this;
 	m_pLanguage->m_pSettings=m_pAutoUpdate->m_pSettings=this;
 	m_pDatabases->m_pSettings=m_pKeyboardShortcuts->m_pSettings=this;
 
+
+
 	m_psh.dwFlags|=PSH_NOAPPLYNOW|PSH_NOCONTEXTHELP;
 
 	CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(&m_lToolTipTextFont,&m_lToolTipTitleFont);
+
+
 
 	m_cToolTipBackColor=GetSysColor(COLOR_INFOBK);
 	m_cToolTipTextColor=GetSysColor(COLOR_INFOTEXT);
 	m_cToolTipTitleColor=GetSysColor(COLOR_INFOTEXT);
 	m_cToolTipErrorColor=GetSysColor(COLOR_INFOTEXT);
 
+	DebugMessage("CSettingsProperties::CSettingsProperties END");
 }
 
 CSettingsProperties::~CSettingsProperties()
@@ -77,7 +84,8 @@ CSettingsProperties::~CSettingsProperties()
 
 BOOL CSettingsProperties::LoadSettings()
 {
-	//DebugMessage("CSettingsProperties::LoadSettings()");
+	DebugMessage("CSettingsProperties::LoadSettings()");
+	
 	CRegKey RegKey;
 	
 	m_DateFormat=((CLocateApp*)GetApp())->m_strDateFormat;
@@ -280,7 +288,8 @@ BOOL CSettingsProperties::LoadSettings()
 
 BOOL CSettingsProperties::SaveSettings()
 {
-	//DebugMessage("CSettingsProperties::SaveSettings()");
+	DebugMessage("CSettingsProperties::SaveSettings()");
+	
 	CRegKey RegKey;
 	CString Path;
 	

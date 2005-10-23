@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,10220
- PRODUCTVERSION 2,99,5,10220
+ FILEVERSION 2,99,5,10230
+ PRODUCTVERSION 2,99,5,10230
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.10220"
+            VALUE "FileVersion", "3.0 beta 5.10230"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.10220"
+            VALUE "ProductVersion", "3.0 beta 5.10230"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -73,17 +73,17 @@ EXSTYLE WS_EX_CONTROLPARENT
 CAPTION "Locate: All Files"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
+    CONTROL         "Tab",IDC_TAB,"SysTabControl32",WS_TABSTOP/*|TCS_OWNERDRAWFIXED*/ ,7,7,216,17
+    CONTROL         "",IDC_FRAME,"Static",SS_ETCHEDHORZ,1,0,285,1
     DEFPUSHBUTTON   "F&ind Now",IDC_OK,233,16,50,14
     PUSHBUTTON      "Sto&p",IDC_STOP,233,34,50,14,WS_DISABLED
     PUSHBUTTON      "Ne&w Search",IDC_NEWSEARCH,233,51,50,14
-    CONTROL         "",IDC_FRAME,"Static",SS_ETCHEDHORZ,1,0,285,1
+	PUSHBUTTON      "Presets",IDC_PRESETS,233-0,80,31+0,14
     CONTROL         "",IDC_FILELIST,"SysListView32",LVS_REPORT |  
                     LVS_SHAREIMAGELISTS | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | 
                     WS_BORDER,1,115,282,1,WS_EX_CLIENTEDGE
     CONTROL         "",IDC_STATUS,"msctls_statusbar32",WS_CLIPSIBLINGS | 
                     0x113,1,113,283,6,WS_EX_NOPARENTNOTIFY
-    CONTROL         "Tab",IDC_TAB,"SysTabControl32",WS_TABSTOP/*|TCS_OWNERDRAWFIXED*/ ,7,7,216,17
-	PUSHBUTTON      "Presets",IDC_PRESETS,233-0,80,31+0,14
 END
 
 IDD_NAME DIALOGEX 9, 21, 211, 88

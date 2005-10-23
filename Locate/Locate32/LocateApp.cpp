@@ -1989,7 +1989,7 @@ BOOL CLocateAppWnd::TurnOnShortcuts()
 
 	// Loading new shortcuts
 	if (!CShortcut::LoadShortcuts(m_aShortcuts,(
-		bCanHook?CShortcut::loadGlobalHotkey:0)|CShortcut::loadGlobalHook))
+		bCanHook?CShortcut::loadGlobalHook:0)|CShortcut::loadGlobalHotkey))
 	{
         if (!CShortcut::GetDefaultShortcuts(m_aShortcuts,
 			CShortcut::loadGlobalHotkey|(bCanHook?CShortcut::loadGlobalHook:0)))
@@ -2603,18 +2603,29 @@ BYTE CLocateAppWnd::OnAbout()
 
 BYTE CLocateAppWnd::OnSettings()
 {
+	DebugMessage("CLocateAppWnd::OnSettings() 1");
+
 	GetLocateApp()->ClearStartupFlag(CLocateApp::CStartData::startupExitAfterUpdating);
 	
+	DebugMessage("CLocateAppWnd::OnSettings() 2");
+
 	if (m_pSettings==NULL)
 	{
+		DebugMessage("CLocateAppWnd::OnSettings() 3");
+
 		// Creating new settings dialog
 		if (GetLocateDlg()==NULL)
 			m_pSettings=new CSettingsProperties(NULL);
 		else
 			m_pSettings=new CSettingsProperties(*GetLocateDlg());
 
+		DebugMessage("CLocateAppWnd::OnSettings() 4");
+
 		// Loading settings
 		m_pSettings->LoadSettings();
+
+		DebugMessage("CLocateAppWnd::OnSettings() 5");
+
 		
 		// Opening dialog
 		m_pSettings->DoModal();
@@ -3540,12 +3551,13 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 	}
 
 	LPSTR szNewPtr;
-	int nLength;
+	size_t nLength;
 	if (szExtra!=NULL)
 	{
 		int iLen=istrlen(error)+istrlen(szExtra)+1;
 		szNewPtr=new char[iLen];
-		nLength=StringCbPrintf(szNewPtr,iLen,error,szExtra);
+		StringCbPrintf(szNewPtr,iLen,error,szExtra);
+		nLength=strlen(szNewPtr);
 	}
 	else
 	    szNewPtr=alloccopy(error,nLength=istrlen(error));

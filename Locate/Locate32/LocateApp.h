@@ -299,6 +299,8 @@ public:
 	
 	BOOL GlobalUpdate(CArray<PDATABASE>* paDatabases=NULL,int nThreadPriority=THREAD_PRIORITY_NORMAL);
 
+
+
 	// Database menu functions
 	static BOOL IsDatabaseMenu(HMENU hMenu);
 	void OnInitDatabaseMenu(HMENU hPopupMenu);

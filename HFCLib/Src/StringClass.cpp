@@ -173,7 +173,6 @@ CString::CString(const CStringW& str)
 		m_pData=NULL;
 		m_nDataLen=0;
 		m_nAllocLen=0;
-		m_nBase=10;
 	}
 }
 
@@ -2184,6 +2183,7 @@ BOOL CString::LoadString(UINT nID)
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return FALSE;
 	}
+
 	m_nDataLen=::LoadStringA(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
@@ -2194,10 +2194,9 @@ BOOL CString::LoadString(UINT nID)
 			m_nDataLen=::LoadStringA(GetLanguageSpecificResourceHandle(),nID,szBuffer,i*STR_LOADSTRINGBUFLEN);
 		}
 	}
-	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
+	
+	if (m_pData==NULL)
 	{
-		if (m_pData!=NULL)
-			delete[] m_pData;
 		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{
@@ -2205,8 +2204,21 @@ BOOL CString::LoadString(UINT nID)
 			return FALSE;
 		}
 	}
+	else if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
+	{
+		delete[] m_pData;
+		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		if (m_pData==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOCATE);
+			return FALSE;
+		}
+	}
+	
 	sMemCopy(m_pData,szBuffer,m_nDataLen+1);
+	
 	delete[] szBuffer;
+	
 	return TRUE;
 }
 BOOL CString::LoadString(UINT nID,TypeOfResourceHandle bType)
@@ -2228,10 +2240,19 @@ BOOL CString::LoadString(UINT nID,TypeOfResourceHandle bType)
 			m_nDataLen=::LoadStringA(GetResourceHandle(bType),nID,szBuffer,i*STR_LOADSTRINGBUFLEN);
 		}
 	}
-	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
+
+	if (m_pData==NULL)
 	{
-		if (m_pData!=NULL)
-			delete[] m_pData;
+		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		if (m_pData==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOCATE);
+			return FALSE;
+		}
+	}
+	else if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
+	{
+		delete[] m_pData;
 		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{
@@ -4355,4 +4376,13 @@ BOOL CStringW::AddString(UINT nID,TypeOfResourceHandle bType)
 
 #endif
 
+#endif
+
+
+#ifdef _DEBUG_LOGGING
+void CString::DebugDumpInfo()
+{
+	DebugFormatMessage("String info: m_pData=%X m_nDataLen=%d m_nAllocLen=%d m_bBase=%d",
+		m_pData,m_nDataLen,m_nAllocLen,m_nBase);
+}
 #endif

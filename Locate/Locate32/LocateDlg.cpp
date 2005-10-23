@@ -436,12 +436,10 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
 	switch(wID)
 	{
-	case IDC_RETURN:
-		if (GetFocus()==*m_pListCtrl)
-		{
-			OnExecuteFile(NULL);
-			break;
-		}
+	case IDC_FILELIST:
+		if (hControl==NULL && wNotifyCode==1 && GetFlags()&fgLargeMode) // Accelerator
+			SetFocus(IDC_FILELIST);
+		break;
 	case IDC_OK:
 		if (::IsWindowEnabled(GetDlgItem(IDC_OK)))
 			OnOk();
@@ -1386,6 +1384,9 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 		((CLocateDlg*)dwParam)->EnableItems();
 
 		((CLocateDlg*)dwParam)->SendMessage(WM_ENABLEITEMS,TRUE);
+
+		if (((CLocateDlg*)dwParam)->m_pListCtrl->GetItemCount()>0)
+			((CLocateDlg*)dwParam)->m_pListCtrl->SetItemState(0,LVIS_SELECTED,LVIS_SELECTED);
 
 		if (ueCode==ueStopped)
 		{
@@ -8170,6 +8171,7 @@ void CLocateDlg::CNameDlg::EnableItems(BOOL bEnable)
 		!GetLocateDlg()->m_AdvancedDlg.IsDlgButtonChecked(IDC_USEWHOLEPATH));
 	EnableDlgItem(IDC_LOOKIN,bEnable);
 	EnableDlgItem(IDC_MOREDIRECTORIES,bEnable);
+	EnableDlgItem(IDC_NOSUBDIRECTORIES,bEnable);
 	EnableDlgItem(IDC_BROWSE,bEnable);
 }
 
