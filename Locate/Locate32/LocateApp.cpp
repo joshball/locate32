@@ -1,5 +1,4 @@
 #include <HFCLib.h>
-#include "shlwapi.h"
 #include "Locate32.h"
 
 #include "wfext.h"
@@ -34,6 +33,9 @@ CLocateApp::~CLocateApp()
 BOOL CLocateApp::InitInstance()
 {
 	CWinApp::InitInstance();
+
+	//extern BOOL bIsFullUnicodeSupport;
+	//bIsFullUnicodeSupport=FALSE;
 
 	DebugNumMessage("CLocateApp::InitInstance(), thread is 0x%X",GetCurrentThreadId());
 
@@ -2603,30 +2605,19 @@ BYTE CLocateAppWnd::OnAbout()
 
 BYTE CLocateAppWnd::OnSettings()
 {
-	DebugMessage("CLocateAppWnd::OnSettings() 1");
-
 	GetLocateApp()->ClearStartupFlag(CLocateApp::CStartData::startupExitAfterUpdating);
 	
-	DebugMessage("CLocateAppWnd::OnSettings() 2");
-
 	if (m_pSettings==NULL)
 	{
-		DebugMessage("CLocateAppWnd::OnSettings() 3");
-
 		// Creating new settings dialog
 		if (GetLocateDlg()==NULL)
 			m_pSettings=new CSettingsProperties(NULL);
 		else
 			m_pSettings=new CSettingsProperties(*GetLocateDlg());
 
-		DebugMessage("CLocateAppWnd::OnSettings() 4");
-
 		// Loading settings
 		m_pSettings->LoadSettings();
 
-		DebugMessage("CLocateAppWnd::OnSettings() 5");
-
-		
 		// Opening dialog
 		m_pSettings->DoModal();
 		
@@ -2655,6 +2646,8 @@ BYTE CLocateAppWnd::OnSettings()
 		// Freeing memory
 		delete m_pSettings;
 		m_pSettings=NULL;
+
+		
 	}
 	else
 	{

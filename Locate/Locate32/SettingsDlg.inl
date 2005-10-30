@@ -49,23 +49,19 @@ inline CSettingsProperties::CAdvancedSettingsPage::CAdvancedSettingsPage()
 {	
 	DebugMessage("CSettingsProperties::CAdvancedSettingsPage::CAdvancedSettingsPage()"); 
 
-
 	OPTIONPAGE op;
 	op.dwFlags=COptionsPropertyPage::OPTIONPAGE::opCaptionIsID|
 		COptionsPropertyPage::OPTIONPAGE::opTemplateIsID|
 		COptionsPropertyPage::OPTIONPAGE::opChangeIsID;
-		
+	
+	
 	
 	op.nIDTemplate=IDD_ADVANCEDSETTINGS;
 	op.nIDCaption=IDS_ADVANCEDSETTINGS;
 	op.nTreeCtrlID=IDC_SETTINGS;
 	op.nIDChangeText=IDS_ADVSETCHANGE;
-
 	
-
 	Construct(&op);
-	
-	
 }
 
 inline CSettingsProperties::CLanguageSettingsPage::CLanguageSettingsPage()

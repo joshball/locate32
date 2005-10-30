@@ -97,7 +97,7 @@ BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 			return FALSE;
 #ifdef DEF_RESOURCES
 		case WM_MDIACTIVATE:
-			((CMDIChildWnd*)Wnd)->OnMDIActivate((HWND)wParam,(HWND)lParam);
+			((CMDIChildWnd*)Wnd)->OnMDIActivate((HWND)lParam,(HWND)wParam);
 			return 0;
 #endif
 		case WM_MEASUREITEM:

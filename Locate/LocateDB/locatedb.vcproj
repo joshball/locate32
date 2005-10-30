@@ -213,6 +213,23 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\DatabaseModifier.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="hfclib.h"/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="hfclib.h"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath=".\DatabaseUpdater.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -269,6 +286,9 @@
 			</File>
 			<File
 				RelativePath=".\DatabaseInfo.h">
+			</File>
+			<File
+				RelativePath=".\DatabaseModifier.h">
 			</File>
 			<File
 				RelativePath=".\DatabaseUpdater.h">

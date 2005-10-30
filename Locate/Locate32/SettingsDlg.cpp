@@ -1,4 +1,3 @@
-#include <shlwapi.h>
 #include <HFCLib.h>
 #include "Locate32.h"
 
@@ -15,7 +14,6 @@ inline BOOL operator!=(const SYSTEMTIME& s1,const SYSTEMTIME& s2)
 		s1.wHour==s2.wHour && s1.wMinute==s2.wMinute && s1.wSecond==s2.wSecond &&
 		s1.wMilliseconds==s2.wMilliseconds);
 }
-
 
 
 ////////////////////////////////////////
@@ -66,7 +64,7 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_cToolTipTitleColor=GetSysColor(COLOR_INFOTEXT);
 	m_cToolTipErrorColor=GetSysColor(COLOR_INFOTEXT);
 
-	DebugMessage("CSettingsProperties::CSettingsProperties END");
+
 }
 
 CSettingsProperties::~CSettingsProperties()
@@ -984,7 +982,6 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 void CSettingsProperties::CAdvancedSettingsPage::OnCancel()
 {
 	m_pSettings->SetFlags(CSettingsProperties::settingsCancelled);
-
 	COptionsPropertyPage::OnCancel();
 }
 
@@ -4723,11 +4720,15 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str
 BOOL CSettingsProperties::CKeyboardShortcutsPage::OnApply()
 {
 	CPropertyPage::OnApply();
+	
+	DebugMessage("CKeyboardShortcutsPage::OnApply() BEGIN");
 
 	if (m_pCurrentShortcut!=NULL)
 		SaveFieldsForShortcut(m_pCurrentShortcut);
 
 	m_pSettings->m_aShortcuts.RemoveAll();
+	
+	DebugMessage("CKeyboardShortcutsPage::OnApply() 1");
 	
 	int nItem=m_pList->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
@@ -4740,12 +4741,16 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnApply()
 		}
 		nItem=m_pList->GetNextItem(nItem,LVNI_ALL);
 	}
+
+	DebugMessage("CKeyboardShortcutsPage::OnApply() END");
 	
 	return TRUE;
 }
 
 void CSettingsProperties::CKeyboardShortcutsPage::OnDestroy()
 {
+	DebugMessage("CKeyboardShortcutsPage::OnDestroy() BEGIN");
+
 	CPropertyPage::OnDestroy();
 
 	
@@ -4769,6 +4774,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnDestroy()
 		m_pWherePressedList=NULL;
 	}
 
+	DebugMessage("CKeyboardShortcutsPage::OnDestroy() END");
 }
 		
 void CSettingsProperties::CKeyboardShortcutsPage::OnCancel()
@@ -5295,10 +5301,20 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnRemoveShortcut()
 
 void CSettingsProperties::CKeyboardShortcutsPage::OnResetToDefaults()
 {
+	m_pCurrentShortcut=NULL;
 	m_pList->DeleteAllItems();
 
 	m_pSettings->m_aShortcuts.RemoveAll();
-	if (!CShortcut::GetDefaultShortcuts(m_pSettings->m_aShortcuts))
+
+	OSVERSIONINFOEX oi;
+	oi.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);
+	BOOL bRet=GetVersionEx((LPOSVERSIONINFO) &oi);
+	BOOL bCanHook=!(bRet && oi.dwPlatformId!=VER_PLATFORM_WIN32_NT ||
+		!(oi.dwMajorVersion>=5 || (oi.dwMajorVersion==4 && oi.wServicePackMajor>=3) ));
+
+
+	if (!CShortcut::GetDefaultShortcuts(m_pSettings->m_aShortcuts,
+		CShortcut::loadLocal|CShortcut::loadGlobalHotkey|(bCanHook?CShortcut::loadGlobalHook:0)))
 	{
 		ShowErrorMessage(IDS_ERRORCANNOTLOADDEFAULTSHORTUCS,IDS_ERROR);
 		m_pSettings->m_aShortcuts.RemoveAll();

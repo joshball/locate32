@@ -17,6 +17,7 @@
 #include "Database.h"
 #include "DatabaseUpdater.h"
 #include "DatabaseInfo.h"
+#include "DatabaseModifier.h"
 
 
 #endif

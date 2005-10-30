@@ -813,7 +813,7 @@ HTREEITEM CTreeCtrl::InsertItem(LPCWSTR lpszItem,int nImage,int nSelectedImage,H
 	return (HTREEITEM)::SendMessage(m_hWnd,TVM_INSERTITEMW,0,(LPARAM)&is);
 }
 
-HTREEITEM CTreeCtrl::HitTest(CPoint pt,UINT* pFlags) const
+HTREEITEM CTreeCtrl::HitTest(const POINT& pt,UINT* pFlags) const
 {
 	TV_HITTESTINFO hi;
 	iMemCopy(&hi.pt,&pt,sizeof(POINT));

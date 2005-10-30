@@ -2017,6 +2017,112 @@ BOOL CFolderDialog::OnValidateFailed(LPITEMIDLIST lpil)
 //#define sMemCopyW	MemCopyW
 
 
+COptionsPropertyPage::Item::Item(
+	ItemType nType_,Item* pParent_,Item** pChilds_,LPWSTR pString_,
+	CALLBACKPROC pProc_,DWORD wParam_,void* lParam_)
+:	nType(nType_),pParent(pParent_),pData(NULL),bEnabled(TRUE),
+	wParam(wParam_),lParam(lParam_),pProc(pProc_),
+	m_nStateIcon(-1),hControl(NULL),hControl2(NULL)
+{
+	if (pString_!=NULL)
+		pString=alloccopy(pString_);
+	else 
+		pString=NULL;
+	
+	if (pChilds_!=NULL)
+	{
+		for (int i=0;pChilds_[i]!=NULL;i++);
+		if (i>0)
+		{
+			pChilds=new Item*[i+1];
+			CopyMemory(pChilds,pChilds_,sizeof(Item*)*(i+1));
+			return;
+		}
+	}
+	pChilds=NULL;
+}
+
+COptionsPropertyPage::Item::Item(
+	ItemType nType_,Item* pParent_,Item** pChilds_,UINT nStringID,
+	CALLBACKPROC pProc_,DWORD wParam_,void* lParam_)
+:	nType(nType_),pParent(pParent_),pData(NULL),bEnabled(TRUE),
+	wParam(wParam_),lParam(lParam_),pProc(pProc_),
+	m_nStateIcon(-1),hControl(NULL),hControl2(NULL)
+{
+	int nCurLen=50;
+	int iLength;
+	
+	if (!IsFullUnicodeSupport())
+	{
+		// Non-unicode
+		char* szText=new char[nCurLen];
+		while ((iLength=::LoadString(GetResourceHandle(LanguageSpecificResource),nStringID,szText,nCurLen)+1)>=nCurLen)
+		{
+			delete[] szText;
+			nCurLen+=50;
+			szText=new char[nCurLen];
+		}
+		pString=new WCHAR[iLength];
+		MemCopyAtoW(pString,szText,iLength);
+		delete[] szText;
+	}
+	else
+	{
+		// Unicode
+		WCHAR* szText=new WCHAR[nCurLen];
+		while ((iLength=::LoadStringW(GetResourceHandle(LanguageSpecificResource),nStringID,szText,nCurLen)+1)>=nCurLen)
+		{
+			delete[] szText;
+			nCurLen+=50;
+			szText=new WCHAR[nCurLen];
+		}
+		pString=new WCHAR[iLength];
+		MemCopyW(pString,szText,iLength);
+		delete[] szText;
+	}
+
+	if (pChilds_!=NULL)
+	{
+		for (int i=0;pChilds_[i]!=NULL;i++);
+		if (i>0)
+		{
+			pChilds=new Item*[i+1];
+			CopyMemory(pChilds,pChilds_,sizeof(Item*)*(i+1));
+			return;
+		}
+	}
+	pChilds=NULL;
+
+	
+
+}
+
+
+COptionsPropertyPage::Item::~Item()
+{
+	if (pChilds!=NULL)
+	{
+		for (int i=0;pChilds[i]!=NULL;i++)
+			delete pChilds[i];
+		delete[] pChilds;
+	}
+	if (pString!=NULL)
+		delete[] pString;
+
+	switch (nType)
+	{
+	case Combo:
+	case Edit:
+		if (pData!=NULL)
+			delete[] pData;
+		break;
+	case Font:
+		if (pLogFont!=NULL)
+			delete pLogFont;
+		break;
+	}
+}
+
 void COptionsPropertyPage::Construct(const OPTIONPAGE* pOptionPage)
 {
 	CPropertyPage::Construct(pOptionPage->dwFlags&OPTIONPAGE::opTemplateIsID?
@@ -2024,21 +2130,20 @@ void COptionsPropertyPage::Construct(const OPTIONPAGE* pOptionPage)
 		pOptionPage->dwFlags&OPTIONPAGE::opCaptionIsID?pOptionPage->nIDCaption:0,
 		LanguageSpecificResource);
 
-	
+
 	if (!(pOptionPage->dwFlags&OPTIONPAGE::opCaptionIsID))
 	{
 		m_psp.pszTitle=pOptionPage->lpszCaption;
 		m_psp.dwFlags|=PSP_USETITLE;
 	}
 	m_nTreeID=pOptionPage->nTreeCtrlID;
-	
-	
+
+
 	if (pOptionPage->dwFlags&OPTIONPAGE::opChangeIsID)
 		m_ChangeText.LoadString(pOptionPage->nIDChangeText);
 	else
 		m_ChangeText=pOptionPage->lpszChangeText;
 
-	
 }
 
 BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
@@ -2323,16 +2428,18 @@ BOOL COptionsPropertyPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 				HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
 				if (hItem==NULL)
 					break;
+				
 				Item* pItem=(Item*)m_pTree->GetItemData(hItem);
 				if (pItem==NULL)
 					break;
 				if (pItem->hControl!=hControl)
 					break;
-
+				
 				if (pItem->nType==Item::Numeric)
 					SetNumericValue(pItem);
 				else if (pItem->nType==Item::Edit)
 					SetTextValue(pItem);
+				
 				break;
 			}
 		case EN_SETFOCUS:
@@ -2435,6 +2542,7 @@ BOOL COptionsPropertyPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			break;
 		}
 	}
+
 	return FALSE;
 }
 
@@ -2473,19 +2581,20 @@ void COptionsPropertyPage::OnDestroy()
 {
 	CPropertyPage::OnDestroy();
 
-	if (m_pTree!=NULL)
-	{
-		delete m_pTree;
-		m_pTree=NULL;
-	}
-
 	if (m_pItems!=NULL)
 	{
 		for (int i=0;m_pItems[i]!=NULL;i++)
 			delete m_pItems[i];
 		delete[] m_pItems;
 	}
+
+	if (m_pTree!=NULL)
+	{
+		delete m_pTree;
+		m_pTree=NULL;
+	}
 }
+
 	
 void COptionsPropertyPage::OnActivate(WORD fActive,BOOL fMinimized,HWND hwnd)
 {
@@ -2636,6 +2745,7 @@ BOOL COptionsPropertyPage::OnNotify(int idCtrl,LPNMHDR pnmh)
 			SetWindowLong(dwlMsgResult,bRet);
 		return bRet;
 	}			
+	
 	return CPropertyPage::OnNotify(idCtrl,pnmh);
 }
 
@@ -2921,6 +3031,8 @@ BOOL COptionsPropertyPage::SetNumericValue(Item* pItem)
 
 BOOL COptionsPropertyPage::SetTextValue(Item* pItem)
 {
+	
+
 	CHANGINGVALPARAMS cp;
 	int iTextLen,iCurSel;
 	switch (pItem->nType)
@@ -2948,6 +3060,9 @@ BOOL COptionsPropertyPage::SetTextValue(Item* pItem)
 		::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(cp.pNewData));
 		break;
 	}
+	
+	
+
 	// Asking wheter value can be changed
 	if (pItem->pProc!=NULL)
 	{
@@ -2960,8 +3075,12 @@ BOOL COptionsPropertyPage::SetTextValue(Item* pItem)
 			return FALSE;
 		}
 	}
+
+	
 	if (pItem->pData!=NULL)
 		delete[] pItem->pData;
+
+	
 	pItem->pData=cp.pNewData;
 	if (pItem->pProc!=NULL)
 	{
@@ -2969,6 +3088,7 @@ BOOL COptionsPropertyPage::SetTextValue(Item* pItem)
 		cp.pData=cp.pData;
 		pItem->pProc(&cp);
 	}
+	
 	return TRUE;
 }
 
@@ -3365,6 +3485,7 @@ BOOL CALLBACK COptionsPropertyPage::DefaultEditStrProc(BASICPARAMS* pParams)
 	case BASICPARAMS::Initialize:
 		break;
 	case BASICPARAMS::Get:
+		ASSERT(pParams->pData==NULL);
 		pParams->pData=alloccopy(*(CString*)pParams->lParam);
 		break;
 	case BASICPARAMS::Set:

@@ -641,7 +641,7 @@ private:
 	void UncheckOtherRadioButtons(HTREEITEM hItem,HTREEITEM hParent);
 	void CallApply(Item** pItems);
 	
-private:
+protected:
 	CTreeCtrl* m_pTree;
 	mutable CImageList m_Images;
 	Item** m_pItems;
@@ -1126,118 +1126,14 @@ inline int CInputDialog::GetInputText(CString& text) const
 inline COptionsPropertyPage::COptionsPropertyPage()
 :	m_pTree(NULL),m_pItems(NULL)
 {
-	DebugMessage("COptionsPropertyPage::COptionsPropertyPage()");
 }
 
 inline COptionsPropertyPage::COptionsPropertyPage(const COptionsPropertyPage::OPTIONPAGE* pOptionPage)
 :	m_pTree(NULL),m_pItems(NULL)
 {
-	DebugMessage("COptionsPropertyPage::COptionsPropertyPage(const OPTIONPAGE* pOptionPage)");
 	Construct(pOptionPage);
 }
 
-inline COptionsPropertyPage::Item::Item(
-	ItemType nType_,Item* pParent_,Item** pChilds_,LPWSTR pString_,
-	CALLBACKPROC pProc_,DWORD wParam_,void* lParam_)
-:	nType(nType_),pParent(pParent_),bChecked(0),bEnabled(TRUE),
-	wParam(wParam_),lParam(lParam_),pProc(pProc_),
-	m_nStateIcon(-1),hControl(NULL),hControl2(NULL)
-{
-	if (pString_!=NULL)
-		pString=alloccopy(pString_);
-	else 
-		pString=NULL;
-	
-	if (pChilds_!=NULL)
-	{
-		for (int i=0;pChilds_[i]!=NULL;i++);
-		if (i>0)
-		{
-			pChilds=new Item*[i+1];
-			CopyMemory(pChilds,pChilds_,sizeof(Item*)*(i+1));
-			return;
-		}
-	}
-	pChilds=NULL;
-}
-
-inline COptionsPropertyPage::Item::Item(
-	ItemType nType_,Item* pParent_,Item** pChilds_,UINT nStringID,
-	CALLBACKPROC pProc_,DWORD wParam_,void* lParam_)
-:	nType(nType_),pParent(pParent_),bChecked(0),bEnabled(TRUE),
-	wParam(wParam_),lParam(lParam_),pProc(pProc_),
-	m_nStateIcon(-1),hControl(NULL),hControl2(NULL)
-{
-	int nCurLen=50;
-	int iLength;
-	
-	if (!IsFullUnicodeSupport())
-	{
-		// Non-unicode
-		char* szText=new char[nCurLen];
-		while ((iLength=::LoadString(GetResourceHandle(LanguageSpecificResource),nStringID,szText,nCurLen)+1)>=nCurLen)
-		{
-			delete[] szText;
-			nCurLen+=50;
-			szText=new char[nCurLen];
-		}
-		pString=new WCHAR[iLength];
-		MemCopyAtoW(pString,szText,iLength);
-		delete[] szText;
-	}
-	else
-	{
-		// Unicode
-		WCHAR* szText=new WCHAR[nCurLen];
-		while ((iLength=::LoadStringW(GetResourceHandle(LanguageSpecificResource),nStringID,szText,nCurLen)+1)>=nCurLen)
-		{
-			delete[] szText;
-			nCurLen+=50;
-			szText=new WCHAR[nCurLen];
-		}
-		pString=new WCHAR[iLength];
-		MemCopyW(pString,szText,iLength);
-		delete[] szText;
-	}
-
-	if (pChilds_!=NULL)
-	{
-		for (int i=0;pChilds_[i]!=NULL;i++);
-		if (i>0)
-		{
-			pChilds=new Item*[i+1];
-			CopyMemory(pChilds,pChilds_,sizeof(Item*)*(i+1));
-			return;
-		}
-	}
-	pChilds=NULL;
-}
-
-
-inline COptionsPropertyPage::Item::~Item()
-{
-	if (pChilds!=NULL)
-	{
-		for (int i=0;pChilds[i]!=NULL;i++)
-			delete pChilds[i];
-		delete[] pChilds;
-	}
-	if (pString!=NULL)
-		delete[] pString;
-
-	switch (nType)
-	{
-	case Combo:
-	case Edit:
-		if (pData!=NULL)
-			delete[] pData;
-		break;
-	case Font:
-		if (pLogFont!=NULL)
-			delete pLogFont;
-		break;
-	}
-}
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRoot(LPWSTR szText,Item** pChilds)
 {
@@ -1381,6 +1277,7 @@ inline void COptionsPropertyPage::Item::GetValuesFromBasicParams(const COptionsP
 		if (pData!=NULL)
 			delete[] pData;
 		pData=pParams->pData;
+		DebugFormatMessage("GetValuesFromBasicParams, pData=%X",pData);
 		break;
 	case Color:
 		cColor=pParams->cColor;

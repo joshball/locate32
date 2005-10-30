@@ -12,21 +12,21 @@ inline LPSTR alloccopy(LPCSTR szString)
 {
 	DWORD nLength;
 	dstrlen(szString,nLength);
-	char* psz=new char[nLength+1];
+	char* psz=new char[max(nLength+1,2)];
 	CopyMemory(psz,szString,nLength);
 	psz[nLength]='\0';
 	return psz;
 }
 inline LPSTR alloccopy(LPCSTR szString,DWORD dwLength)
 {
-	char* psz=new char[dwLength+1];
+	char* psz=new char[max(dwLength+1,2)];
 	CopyMemory(psz,szString,dwLength);
 	psz[dwLength]='\0';
 	return psz;
 }
 inline LPSTR allocempty()
 {
-	char* psz=new char[1];
+	char* psz=new char[2];
 	*psz='\0';
 	return psz;
 }

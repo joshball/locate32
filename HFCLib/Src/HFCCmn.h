@@ -642,7 +642,7 @@ public:
 	BOOL SelectDropTarget(HTREEITEM hItem);
 	BOOL SelectSetFirstVisible(HTREEITEM hItem);
 	HWND EditLabel(HTREEITEM hItem);
-	HTREEITEM HitTest(CPoint pt,UINT* pFlags=NULL) const;
+	HTREEITEM HitTest(const POINT& pt,UINT* pFlags=NULL) const;
 	HTREEITEM HitTest(TV_HITTESTINFO* pHitTestInfo) const;
 	HIMAGELIST CreateDragImage(HTREEITEM hItem);
 	BOOL SortChildren(HTREEITEM hItem);
