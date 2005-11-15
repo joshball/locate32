@@ -2,7 +2,10 @@
 #include "Locate32.h"
 #include <uxtheme.h>
 #include <tmschema.h>
-CBufferAllocator<BYTE*,2000,BUFFERALLOC_EXTRALEN> FileTypeAllocator;	
+
+CAllocator FileTypeAllocator;
+//CBufferAllocator<BYTE*,2000,BUFFERALLOC_EXTRALEN> FileTypeAllocator;	
+//CBufferAllocatorThreadSafe<BYTE*,2000,BUFFERALLOC_EXTRALEN> FileTypeAllocator;	
 
 LPSTR g_szBuffer=NULL; 
 
@@ -385,8 +388,10 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	// Loading texts which are used at last time
 	if (m_dwFlags&fgDialogRememberFields)
 		LoadDialogTexts();
-	
 
+	// Sorting
+	SetSorting();
+	
 	// Load shortcuts and actions
 	SetShortcuts();	
 	LoadResultlistActions();
@@ -975,20 +980,12 @@ void CLocateDlg::SetDialogMode(BOOL bLarge)
 		
 			ShowDlgItem(IDC_FILELIST,swShow);
 			ShowDlgItem(IDC_STATUS,swShow);
-
-			// Set arrows of listbox header
-			if (m_nSorting!=BYTE(-1))
-				SetSortArrowToHeader(DetailType(m_nSorting&127),FALSE,m_nSorting&128);
 		}
 	}
 	else
 	{
 		if (m_dwFlags&fgLargeMode)
 		{
-			SetSortArrowToHeader(DetailType(m_nSorting&127),TRUE,FALSE);
-			Sleep(10);
-			m_nSorting=BYTE(-1);
-
 			CRect rect;
 			m_dwFlags&=~fgLargeMode;
 			m_pListCtrl->SetStyle(m_pListCtrl->GetStyle()&~WS_TABSTOP);
@@ -1181,6 +1178,8 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 		else
 		{
 			DWORD i=0;
+			UINT nIndex;
+
 			if (nRet&CAdvancedDlg::flagReplaceSpaces)
 			{
 				// Replacing spaces with asterisks
@@ -1202,8 +1201,8 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 			}
 
 			// Separate strings
-			int nIndex=Name.FindFirst(',');
-			if (nIndex==-1)
+			for (nIndex=0;Name[nIndex]!=',' && Name[nIndex]!=';' && nIndex<Name.GetLength();nIndex++);
+			if (nIndex==Name.GetLength())
 			{
 				// Only one string
 				if (!(nRet&CAdvancedDlg::flagMatchCase))
@@ -1223,11 +1222,8 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 
 				while (bContinue)
 				{
-					if (nIndex==-1)
-					{
+					if (pStr[nIndex]=='\0')
 						bContinue=FALSE;
-						nIndex=istrlen(pStr);
-					}
 
 					if (nIndex>0)
 					{
@@ -1266,7 +1262,8 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 						}
 
 						pStr+=nIndex+1;
-						nIndex=FirstCharIndex(pStr,',');
+						for (nIndex=0;pStr[nIndex]!=',' && pStr[nIndex]!=';' && pStr[nIndex]!='\0';nIndex++);
+						
 					}
 				}
 			}			
@@ -1372,8 +1369,16 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 
 		
 		// Selecting path column
-		((CLocateDlg*)dwParam)->m_pListCtrl->SendMessage(LVM_FIRST+140/* LVM_SETSELECTEDCOLUMN */,1,0);
+		int nColumn;
+		if (((CLocateDlg*)dwParam)->m_nSorting==BYTE(-1))
+			nColumn=((CLocateDlg*)dwParam)->m_pListCtrl->GetVisibleColumn(((CLocateDlg*)dwParam)->m_pListCtrl->GetColumnFromID(InFolder));
+		else
+			nColumn=((CLocateDlg*)dwParam)->m_pListCtrl->GetVisibleColumn(((CLocateDlg*)dwParam)->m_pListCtrl->GetColumnFromID(((CLocateDlg*)dwParam)->m_nSorting&127));
 		
+		if (nColumn!=-1)
+			((CLocateDlg*)dwParam)->m_pListCtrl->SendMessage(LVM_FIRST+140/* LVM_SETSELECTEDCOLUMN */,nColumn,0);
+
+
 		// Clearing volume information
 		((CLocateDlg*)dwParam)->m_aVolumeInformation.RemoveAll();
 		return TRUE;
@@ -1381,12 +1386,8 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 	case FinishedLocating:
 	{
 		((CLocateDlg*)dwParam)->StopLocateAnimation();
-		((CLocateDlg*)dwParam)->EnableItems();
-
 		((CLocateDlg*)dwParam)->SendMessage(WM_ENABLEITEMS,TRUE);
 
-		if (((CLocateDlg*)dwParam)->m_pListCtrl->GetItemCount()>0)
-			((CLocateDlg*)dwParam)->m_pListCtrl->SetItemState(0,LVIS_SELECTED,LVIS_SELECTED);
 
 		if (ueCode==ueStopped)
 		{
@@ -1563,7 +1564,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLoca
 	}
 
 	LV_ITEM li;
-	li.mask=LVIF_TEXT|LVIF_STATE|LVIF_IMAGE|LVIF_PARAM;
+	li.mask=LVIF_TEXT|LVIF_IMAGE|LVIF_PARAM;
 	li.iSubItem=0;
 	li.iImage=I_IMAGECALLBACK;
 	li.lParam=(LPARAM)new CLocatedItem(bFolder,pLocater);
@@ -1575,14 +1576,13 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLoca
 
 	// To prevent drawing error
 	DWORD dwResults=pLocater->GetNumberOfResults();
+	
 	if (dwResults%60==59)
 		Sleep(((CLocateDlg*)dwParam)->m_WaitEvery60);
 	else if (dwResults%30==29)
 		Sleep(((CLocateDlg*)dwParam)->m_WaitEvery30);
 
-	li.state=0;
-	li.stateMask=0;
-
+	
 	if (((CLocateDlg*)dwParam)->m_nSorting==BYTE(-1))
 	{
 		//li.iItem=((CLocateDlg*)dwParam)->m_pListCtrl->GetItemCount();
@@ -1600,6 +1600,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLoca
 	
 	((CLocateDlg*)dwParam)->m_pListCtrl->InsertItem(&li);
 
+	
 	DbcDebugMessage("CLocateDlg::LocateFoundProc END");
 	return TRUE;
 }
@@ -1687,7 +1688,11 @@ void CLocateDlg::OnNewSearch()
 		DeleteTooltipTools();
 	SetDialogMode(FALSE);
 
-		
+	// Sorting
+	SetSorting();
+	
+    
+	// Clear dialogs
 	m_NameDlg.OnClear(FALSE);
 	m_SizeDateDlg.OnClear(FALSE);
 	m_AdvancedDlg.OnClear(FALSE);
@@ -1709,7 +1714,12 @@ void CLocateDlg::OnNewSearch()
 
 BOOL CLocateDlg::OnClose()
 {
-	DebugMessage("CLocateDlg::OnClose");
+	if (GetFlags()&fgDialogCloseMinimizesDialog)
+	{
+		ShowWindow(swMinimize);
+		return 1;
+	}
+
 	CDialog::OnClose();
 	DestroyWindow();
 	return 1;
@@ -2014,6 +2024,7 @@ LRESULT CALLBACK CLocateDlg::DebugWindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,L
 		break;
 	case WM_TIMER:
 	{
+		int nCPU=int(100*GetCpuTime());
 		CString str;
 		CLocateDlg* pDlg=GetLocateDlg();
 		if (pDlg->m_pBackgroundUpdater!=NULL)
@@ -2035,6 +2046,8 @@ LRESULT CALLBACK CLocateDlg::DebugWindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,L
 		}
 		else
 			str << "\r\nFileNotifications is not running";
+
+		str << "\r\nCpu time: " << nCPU;
 
 		::SetDlgItemText(hwnd,100,LPCSTR(str));
 		break;
@@ -2284,7 +2297,10 @@ CLocatedItem** CLocateDlg::GetSeletedItems(int& nItems,int nIncludeIfNoneSeleted
 		if (nIncludeIfNoneSeleted!=-1)
             pRet[0]=(CLocatedItem*)m_pListCtrl->GetItemData(nIncludeIfNoneSeleted);
 		else
+		{
+			nItems=0;
 			pRet[0]=NULL;
+		}
 		return pRet;
 	}
 
@@ -2477,6 +2493,95 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 	case CAction::ExecuteCommand:
 		ExecuteCommand((LPCSTR)pExtraInfo,nItem);
 		break;
+	case CAction::SelectFile:
+		{
+			int nItem,nSelectedItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+			
+			switch ((CAction::SelectFileType)(DWORD)pExtraInfo)
+			{
+			case CAction::NextFile:
+				if ((m_pListCtrl->GetStyle()&LVS_TYPEMASK)!=LVS_REPORT)
+				{
+					nItem=m_pListCtrl->GetNextItem(nSelectedItem,LVNI_TORIGHT);
+					if (nItem==nSelectedItem)
+						nItem=m_pListCtrl->GetNextItem(nSelectedItem,LVNI_BELOW);
+				}
+				else
+					nItem=m_pListCtrl->GetNextItem(nSelectedItem,LVNI_BELOW);
+				break;
+			case CAction::PrevFile:
+				if ((m_pListCtrl->GetStyle()&LVS_TYPEMASK)!=LVS_REPORT)
+				{
+					nItem=m_pListCtrl->GetNextItem(nSelectedItem,LVNI_TOLEFT);
+					if (nItem==nSelectedItem)
+						nItem=m_pListCtrl->GetNextItem(nSelectedItem,LVNI_ABOVE);
+				}
+				else
+					nItem=m_pListCtrl->GetNextItem(nSelectedItem,LVNI_ABOVE);
+				break;
+			case CAction::NextNonDeletedFile:
+				nItem=nSelectedItem;
+				for (;;)
+				{
+					// Next item
+					if ((m_pListCtrl->GetStyle()&LVS_TYPEMASK)!=LVS_REPORT)
+					{
+						nItem=m_pListCtrl->GetNextItem(nItem,LVNI_TORIGHT);
+						if (nItem==nSelectedItem)
+							nItem=m_pListCtrl->GetNextItem(nItem,LVNI_BELOW);
+					}
+					else
+						nItem=m_pListCtrl->GetNextItem(nItem,LVNI_BELOW);
+
+					if (nItem==-1|| nSelectedItem==nItem)
+						return;
+
+					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+					if (pItem!=NULL)
+					{
+						if (!pItem->IsDeleted())
+							break;
+                   	}                    								
+				}
+				break;
+			case CAction::PrevNonDeletedFile:
+				nItem=nSelectedItem;
+				for (;;)
+				{
+					// Next item
+					if ((m_pListCtrl->GetStyle()&LVS_TYPEMASK)!=LVS_REPORT)
+					{
+						nItem=m_pListCtrl->GetNextItem(nItem,LVNI_TOLEFT);
+						if (nItem==nSelectedItem)
+							nItem=m_pListCtrl->GetNextItem(nItem,LVNI_ABOVE);
+					}
+					else
+						nItem=m_pListCtrl->GetNextItem(nItem,LVNI_ABOVE);
+
+					if (nItem==-1|| nSelectedItem==nItem)
+						return;
+
+					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+					if (pItem!=NULL)
+					{
+						if (!pItem->IsDeleted())
+							break;
+                   	}                    								
+				}
+				break;
+			}
+
+			if (nItem==-1 || nSelectedItem==nItem)
+				return;
+			
+			if (nSelectedItem!=-1)
+				m_pListCtrl->SetItemState(nSelectedItem,0,LVIS_SELECTED|LVIS_FOCUSED);
+			m_pListCtrl->SetItemState(nItem,LVIS_SELECTED|LVIS_FOCUSED,LVIS_SELECTED|LVIS_FOCUSED);
+			
+			break;
+
+
+		} 
 	}
 }
 
@@ -2508,6 +2613,37 @@ void CLocateDlg::OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpmis)
 void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 {
 	CRect rect;
+		
+	if (DWORD(pos.x)==0xffff && DWORD(pos.y)==0xffff)
+	{
+		// Key
+		GetCursorPos(&pos);
+
+		int nSelectedItems;
+		CLocatedItem** pSelectedItems=GetSeletedItems(nSelectedItems);
+		if (nSelectedItems>0)
+		{
+			ClearMenuVariables();
+
+			m_hActivePopupMenu=CreateFileContextMenu(NULL,pSelectedItems,nSelectedItems);
+			if (m_hActivePopupMenu!=NULL)
+			{
+				TrackPopupMenu(m_hActivePopupMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,
+					pos.x,pos.y,0,*this,NULL);	
+			}
+		}
+		else
+		{	
+			TrackPopupMenu(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),TPM_LEFTALIGN|TPM_RIGHTBUTTON,
+				pos.x,pos.y,0,*this,NULL);	
+		}
+
+		delete pSelectedItems;
+
+		return;			
+	}
+
+
 	m_pListCtrl->GetWindowRect(&rect);
 	//Checking whether mouse is in the list control's area
 	if (!rect.IsPtInRect(pos))
@@ -2523,7 +2659,7 @@ void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 	if (rect.IsPtInRect(pos))
 	{
 		// Show context menu for header
-
+		
 		HMENU hColMenu=m_pListCtrl->CreateColumnSelectionMenu(IDM_DEFCOLSELITEM);
 		CString text(IDS_SELECTDETAILS);
 		
@@ -2547,6 +2683,7 @@ void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 		LVHITTESTINFO ht;
 		ht.pt=pos;
 		m_pListCtrl->ScreenToClient(&ht.pt);
+		
 		if (m_pListCtrl->SubItemHitTest(&ht)==-1)
 		{
 			// Not any file item
@@ -2792,7 +2929,7 @@ void CLocateDlg::SetVisibleWindowInTab()
 
 BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 {
-	DebugFormatMessage("%X->CLocateDlg::OnNotify(%d,%X)",DWORD(this),idCtrl,DWORD(pnmh));
+	//DebugFormatMessage("%X->CLocateDlg::OnNotify(%d,%X)",DWORD(this),idCtrl,DWORD(pnmh));
 
 	switch (idCtrl)
 	{
@@ -2814,7 +2951,7 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 			switch (pnmh->code)
 			{
 			case TTN_GETDISPINFO:
-				DebugNumMessage("CLocateDlg::OnNotify; TTN_GETDISPINFO, ((NMTTDISPINFO*)pnmh)->lParam=%X",((NMTTDISPINFO*)pnmh)->lParam);
+				//DebugNumMessage("CLocateDlg::OnNotify; TTN_GETDISPINFO, ((NMTTDISPINFO*)pnmh)->lParam=%X",((NMTTDISPINFO*)pnmh)->lParam);
 				
 				if (m_iTooltipItem==-1)
 					break;
@@ -2880,7 +3017,7 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 		break;
 	}
 
-	DebugMessage("CLocateDlg::OnNotify exit");
+	//DebugMessage("CLocateDlg::OnNotify exit");
 	return CDialog::OnNotify(idCtrl,pnmh);
 }
 
@@ -2893,6 +3030,8 @@ void CLocateDlg::SetSortArrowToHeader(DetailType nType,BOOL bRemove,BOOL bDownAr
 		return;
 
 	int nColumn=m_pListCtrl->GetVisibleColumn(m_pListCtrl->GetColumnFromID(nType));
+	if (nColumn==-1)
+		return;
 
 	HWND hHeader=m_pListCtrl->GetHeader();
 	HDITEM hi;
@@ -3018,7 +3157,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 			break;
 		}
 	case LVN_COLUMNCLICK:
-		SortItems(DetailType(m_pListCtrl->GetColumnIDFromSubItem(pNm->iSubItem)));
+		SortItems(DetailType(m_pListCtrl->GetColumnIDFromSubItem(pNm->iSubItem)),-1,TRUE);
 		break;
 	case LVN_GETDISPINFO:
 		{
@@ -3106,37 +3245,94 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 	return FALSE;
 }
 
-
-
-void CLocateDlg::SortItems(DetailType nColumn,BYTE bDescending)
+void CLocateDlg::SetSorting(BYTE bSorting)
 {
-	DebugFormatMessage("CLocateDlg::SortItems(%X,%d) BEGIN",int(nColumn),bDescending);
+	if (bSorting==BYTE(-2))
+	{
+		CRegKey RegKey;
+		bSorting=BYTE(-1);
+		
+		if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+		{
+			DWORD nTemp=BYTE(-1);
+			if (RegKey.QueryValue("Default Sorting",nTemp))
+				bSorting=(BYTE)nTemp;
+		}
+	}
 
+
+	if (bSorting==m_nSorting)
+		return;
+
+	if ((m_nSorting&127)!=(bSorting&127))
+	{
+		// Not same column, remove arrow
+		SetSortArrowToHeader(DetailType(m_nSorting&127),TRUE,FALSE); 
+	}
+
+	m_nSorting=bSorting;
+	
+	SetSortArrowToHeader(DetailType(bSorting&127),FALSE,(bSorting&128)?TRUE:FALSE);
+}
+
+void CLocateDlg::SortItems(DetailType nDetail,BYTE bDescending,BOOL bNoneIsPossible)
+{
+	DebugFormatMessage("CLocateDlg::SortItems(%X,%d) BEGIN",int(nDetail),bDescending);
+
+	// no sorting: m_nSorting=0xFF
+	// descent=m_nSorting&128
+	// detail=m_nSorting&127
 
 	
 	CWaitCursor wait;
-	if ((m_nSorting&127)!=nColumn && (m_nSorting&127)<100)
-		SetSortArrowToHeader(DetailType(m_nSorting&127),TRUE,FALSE); // Removing old arrow
-	if (bDescending==BYTE(-1))
-		bDescending=(m_nSorting&128)==0 && (m_nSorting&127)==nColumn;
 
-	SetSortArrowToHeader(nColumn,FALSE,bDescending);
+	if ((m_nSorting&127)!=nDetail)
+	{
+		// Not same column, remove arrow
+		SetSortArrowToHeader(DetailType(m_nSorting&127),TRUE,FALSE); 
+	}
+
+	// Toggle?        
+	if (bDescending==BYTE(-1))
+	{
+		if ((m_nSorting&127)!=nDetail) // Different columnt, always ascending
+			bDescending=FALSE;
+		else if (bNoneIsPossible && m_nSorting&128)
+		{
+			// Disable sorting
+
+			// Remove arrow
+			SetSortArrowToHeader(DetailType(m_nSorting&127),TRUE,FALSE); 
+
+			m_nSorting=BYTE(-1);	
+			return;
+		}
+		else
+			bDescending=(m_nSorting&128)==0;
+	}
+
+	SetSortArrowToHeader(nDetail,FALSE,bDescending);
 
 	if (!bDescending)
 	{ 
-		DebugFormatMessage("Going to sort(1), nColumn is %X",LPARAM(nColumn));
-		BOOL bRet=m_pListCtrl->SortItems(ListViewCompareProc,(LPARAM)(nColumn));
+		// Ascending
+		DebugFormatMessage("Going to sort(1), nColumn is %X",LPARAM(nDetail));
+		BOOL bRet=m_pListCtrl->SortItems(ListViewCompareProc,(LPARAM)(nDetail));
 		DebugFormatMessage("bRet=%X",bRet);
-		m_nSorting=nColumn&127;
+		m_nSorting=nDetail&127;
 	}
 	else
 	{
-		DebugFormatMessage("Going to sort(2), nColumn is %X",LPARAM(nColumn));
-		BOOL bRet=m_pListCtrl->SortItems(ListViewCompareProc,(LPARAM)(nColumn|128));
+		// Descending
+		DebugFormatMessage("Going to sort(2), nColumn is %X",LPARAM(nDetail));
+		BOOL bRet=m_pListCtrl->SortItems(ListViewCompareProc,(LPARAM)(nDetail|128));
 		DebugFormatMessage("bRet=%X",bRet);
-		m_nSorting=nColumn|128;
+		m_nSorting=nDetail|128;
 	}
-	m_pListCtrl->SendMessage(LVM_FIRST+140/* LVM_SETSELECTEDCOLUMN */,nColumn,0);
+
+	int nColumn=m_pListCtrl->GetVisibleColumn(m_pListCtrl->GetColumnFromID(nDetail));
+	if (nColumn!=-1)
+		m_pListCtrl->SendMessage(LVM_FIRST+140/* LVM_SETSELECTEDCOLUMN */,nColumn,0);
 
 	DebugMessage("CLocateDlg::SortItems END");
 }
@@ -3398,28 +3594,43 @@ void CLocateDlg::EnableItems(BOOL bEnable)
 
 	if (bEnable)
 	{
-		if (GetFocus()==NULL)
+		if ((GetFlags()&fgLVActivateFirstResult) && m_pListCtrl->GetItemCount()>0 &&
+			m_pListCtrl->GetSelectedCount()==0)
 		{
-			// Give focus to the selected tab
-			switch (m_pTabCtrl->GetCurSel())
+			if (GetFocus()==NULL)
 			{
-			case 0:
-				m_NameDlg.SetFocus();
-				break;
-			case 1:
-				m_SizeDateDlg.SetFocus();
-				break;
-			case 2:
-				m_AdvancedDlg.SetFocus();
-				break;
+				int nItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
+				if (nItem!=-1)
+					m_pListCtrl->SetItemState(nItem,LVIS_SELECTED|LVIS_FOCUSED,LVIS_SELECTED|LVIS_FOCUSED);
+
+				PostMessage(WM_SETITEMFOCUS,(WPARAM)(HWND)*m_pListCtrl);
 			}
-			
-			
-			if (m_hLastFocus!=NULL)
+		}
+		else
+		{
+			if (GetFocus()==NULL)
 			{
-				PostMessage(WM_SETITEMFOCUS,(WPARAM)::GetParent(m_hLastFocus));
-				PostMessage(WM_SETITEMFOCUS,(WPARAM)m_hLastFocus);
-				m_hLastFocus=NULL;
+				// Give focus to the selected tab
+				switch (m_pTabCtrl->GetCurSel())
+				{
+				case 0:
+					m_NameDlg.SetFocus();
+					break;
+				case 1:
+					m_SizeDateDlg.SetFocus();
+					break;
+				case 2:
+					m_AdvancedDlg.SetFocus();
+					break;
+				}
+				
+				
+				if (m_hLastFocus!=NULL)
+				{
+					PostMessage(WM_SETITEMFOCUS,(WPARAM)::GetParent(m_hLastFocus));
+					PostMessage(WM_SETITEMFOCUS,(WPARAM)m_hLastFocus);
+					m_hLastFocus=NULL;
+				}
 			}
 		}
 	}
@@ -5735,7 +5946,7 @@ void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)
 			}
 		}
 		else
-			m_nSorting=pStartData->m_nSorting;
+			SetSorting(pStartData->m_nSorting);
 	}
 
 	if (pStartData->m_dwMaxFoundFiles!=DWORD(-1))
@@ -6542,7 +6753,8 @@ BOOL CLocateDlg::CNameDlg::OnOk(CString& sName,CArray<LPSTR>& aExtensions,CArray
 	else if (!GetDirectoriesForActiveSelection(aDirectories,NULL,(GetKeyState(VK_CONTROL)&0x8000)?TRUE:FALSE))
 		return FALSE;
 
-	
+	// Saves searches
+	SaveRegistry();
 	
 	DlgDebugMessage("CLocateDlg::CNameDlg::OnOk END");
 	return TRUE;
@@ -9272,6 +9484,8 @@ BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 
 void CLocateDlg::CAdvancedDlg::AddBuildInFileTypes()
 {
+	DebugMessage("CAdvancedDlg::AddBuildInFileTypes() BEGIN");
+
 	if (m_dwFlags&fgBuildInTypesAdded)
 		return;
 
@@ -9313,6 +9527,8 @@ void CLocateDlg::CAdvancedDlg::AddBuildInFileTypes()
 	il.DeleteImageList();
 
 	m_dwFlags|=fgBuildInTypesAdded;
+
+	DebugMessage("CAdvancedDlg::AddBuildInFileTypes() END");
 }
 
 BOOL CLocateDlg::CAdvancedDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
@@ -9343,6 +9559,7 @@ BOOL CLocateDlg::CAdvancedDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 
 BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
+	DebugFormatMessage("%X->OnCommand(%d,%d,%X)",DWORD(this),wID,wNotifyCode,hControl);
 	switch (wID)
 	{
 	case IDC_TEXTHELP:
@@ -9404,6 +9621,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		HilightTab(IsChanged());
 		break;
 	case IDC_FILETYPE:
+		DebugFormatMessage("IDC_FILETYPE, wNotifuCode=%d, hControl=%X this=%X",wNotifyCode,hControl,this);
 		switch (wNotifyCode)
 		{
 		case 1: // Accel or CBN_SELCHANGE
@@ -9425,9 +9643,10 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 						break;
 					}
 
-					char* pEx=new char[ft->dwExtensionLength];
+			
+					char* pEx=new char[max(ft->dwExtensionLength,2)];
 					sMemCopy(pEx,ft->szExtensions,ft->dwExtensionLength);
-					
+					DebugMessage("7");
 					for (int i=0;pEx[i]!='\0' || pEx[i+1]!='\0';i++)
 					{
 						if (pEx[i]=='\0')
@@ -9559,6 +9778,9 @@ BOOL CLocateDlg::CAdvancedDlg::IsChanged()
 
 void CLocateDlg::CAdvancedDlg::ReArrangeAllocatedData()
 {
+	//TODO: Buffered allocator does not work
+	/*
+
 	int nCount=SendDlgItemMessage(IDC_FILETYPE,CB_GETCOUNT)-1;
 	void*** pBlocks=new void**[nCount*2];
 	FileType** pft=new FileType*[nCount];
@@ -9582,6 +9804,7 @@ void CLocateDlg::CAdvancedDlg::ReArrangeAllocatedData()
 	FileTypeAllocator.ReArrange(pBlocks,nCount*2);
 	delete[] pBlocks;
 	delete[] pft;
+	*/
 }
 
 void CLocateDlg::CAdvancedDlg::OnSize(UINT nType, int cx, int cy)
@@ -10018,6 +10241,8 @@ void CLocateDlg::CAdvancedDlg::UpdateTypeList()
 
 int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCSTR szKey,DWORD dwKeyLength,CArray<FileType*>& aFileTypes)
 {
+	DebugFormatMessage("CAdvancedDlg::AddTypeToList(szKey=%s) ",szKey);
+
 	CRegKey RegKey;
 	if (RegKey.OpenKey(HKCR,szKey,CRegKey::openExist|CRegKey::samQueryValue|CRegKey::samExecute)!=ERROR_SUCCESS)
 		return CB_ERR;
@@ -10026,6 +10251,7 @@ int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCSTR szKey,DWORD dwKeyLength,CArra
 	if (dwLength<=1)
 		return CB_ERR;
 
+	
 	char* szType=(char*)FileTypeAllocator.Allocate(dwLength);
 	RegKey.QueryValue("",szType,dwLength);
 	CharLower(szType);
@@ -10036,15 +10262,18 @@ int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCSTR szKey,DWORD dwKeyLength,CArra
 		{
 			pType->AddExtension(szKey+1,dwKeyLength);
 			FileTypeAllocator.Free(szType);
+			DebugMessage("AddTypeToList: 1err");
 			return -2;
 		}
 	}
-	
+
 	if (RegKey.OpenKey(HKCR,szType,CRegKey::openExist|CRegKey::samQueryValue|CRegKey::samExecute)!=ERROR_SUCCESS)
 	{
 		FileTypeAllocator.Free(szType);
+		DebugMessage("AddTypeToList: 3err");
 		return CB_ERR;
 	}
+
 	
 	dwLength=RegKey.QueryValueLength("");
 	if (dwLength<=1)
@@ -10052,6 +10281,7 @@ int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCSTR szKey,DWORD dwKeyLength,CArra
 		FileTypeAllocator.Free(szType);
 		return CB_ERR;
 	}
+
 	
 	char* szTitle=(char*)FileTypeAllocator.Allocate(dwLength);
 	RegKey.QueryValue("",szTitle,dwLength);
@@ -10059,11 +10289,15 @@ int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCSTR szKey,DWORD dwKeyLength,CArra
 	pType->AddExtension(szKey+1,dwKeyLength);
 	aFileTypes.Add(pType);
 	pType->SetIcon(RegKey);
+
+	
 	return SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(pType));
 }
 
 int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCSTR pTypeAndExtensions)
 {
+	DebugFormatMessage("CAdvancedDlg::AddTypeToList(pTypeAndExtensions=%s) ",pTypeAndExtensions);
+
 	CRegKey RegKey;
 	
 	DWORD dwLength;

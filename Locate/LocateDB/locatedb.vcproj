@@ -228,6 +228,13 @@
 						UsePrecompiledHeader="3"
 						PrecompiledHeaderThrough="hfclib.h"/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release(log)|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="3"
+						PrecompiledHeaderThrough="hfclib.h"/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\DatabaseUpdater.cpp">

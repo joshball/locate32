@@ -920,13 +920,33 @@ void CSubAction::DoShowHideDialog()
 			WINDOWPLACEMENT wp;
 			wp.length=sizeof(WINDOWPLACEMENT);
 			pLocateDlg->GetWindowPlacement(&wp);
-			if (wp.showCmd!=SW_SHOWMINIMIZED &&wp.showCmd!=SW_HIDE)
+			if (wp.showCmd!=SW_SHOWMINIMIZED && wp.showCmd!=SW_HIDE)
 				pLocateDlg->PostMessage(WM_CLOSE);
 			else
 				GetLocateAppWnd()->OnLocate();
 		}
 		else
 			GetLocateAppWnd()->OnLocate();
+		break;
+	case RestoreDialog:
+		if (pLocateDlg!=NULL)
+			pLocateDlg->ShowWindow(CWnd::swRestore);
+		break;
+	case MaximizeDialog:
+		if (pLocateDlg!=NULL)
+			pLocateDlg->ShowWindow(CWnd::swMaximize);
+		break;
+	case MaximizeOrRestoreDialog:
+		if (pLocateDlg!=NULL)
+		{
+			WINDOWPLACEMENT wp;
+			wp.length=sizeof(WINDOWPLACEMENT);
+			pLocateDlg->GetWindowPlacement(&wp);
+			if (wp.showCmd!=SW_SHOWMAXIMIZED)
+				pLocateDlg->ShowWindow(CWnd::swMaximize);
+			else
+				pLocateDlg->ShowWindow(CWnd::swRestore);
+		}
 		break;
 	}
 }
@@ -946,9 +966,9 @@ void CSubAction::DoResultListItems()
 	if (pLocateDlg==NULL)
 		return;
 
-	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
+	/*if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
 		pLocateDlg->OnExecuteResultAction(m_nResultList,m_pExtraInfo);
-	else
+	else*/
 		pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_pExtraInfo);
 }
 
@@ -1434,6 +1454,12 @@ int CSubAction::GetShowHideDialogActionLabelStringId(CAction::ActionShowHideDial
 		return IDS_ACTIONSWDIALOGSHOWORHIDE;
 	case OpenOrCloseDialog:
 		return IDS_ACTIONSWDIALOGOPENORCLOSE;
+	case RestoreDialog:
+		return IDS_ACTIONSWDIALOGRESTORE;
+	case MaximizeDialog:
+		return IDS_ACTIONSWDIALOGMAXIMIZE;
+	case MaximizeOrRestoreDialog:
+		return IDS_ACTIONSWDIALOMAXIMIZEORRESTORE;
 	default:
 		return 0;
 	}
@@ -1467,6 +1493,8 @@ int CSubAction::GetResultItemActionLabelStringId(CAction::ActionResultList uSubA
 		return IDS_ACTIONRESITEMSPECIALMENU;
 	case ExecuteCommand:
 		return IDS_ACTIONRESITEMEXECUTECOMMAND;
+	case SelectFile:
+		return IDS_ACTIONRESITEMSELECTFILE;
 	default:
 		return 0;
 	}

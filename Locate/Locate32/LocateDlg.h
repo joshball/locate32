@@ -45,8 +45,9 @@ public:
 #endif
 };
 
-
-extern CBufferAllocator<BYTE*,2000,BUFFERALLOC_EXTRALEN> FileTypeAllocator;
+extern CAllocator FileTypeAllocator;
+//extern CBufferAllocator<BYTE*,2000,BUFFERALLOC_EXTRALEN> FileTypeAllocator;
+//extern CBufferAllocatorThreadSafe<BYTE*,2000,BUFFERALLOC_EXTRALEN> FileTypeAllocator;	
 
 class CLocateDlg : public CDialog  
 {
@@ -417,7 +418,8 @@ public:
 	void OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo,int nItem=-1,DetailType nDetail=Title);
 	static void ExecuteCommand(LPCSTR szCommand,int nItem=-1);
 	
-	void SortItems(DetailType nColumn,BYTE bDescending=-1); // bDescending:0=ascending order, 1=desc, -1=default
+	void SortItems(DetailType nDetail,BYTE bDescending=-1,BOOL bNoneIsPossible=FALSE); // bDescending:0=ascending order, 1=desc, -1=default
+	void SetSorting(BYTE bSorting=BYTE(-2)); // bSorting==BYTE(-2): default
 
 	static UINT AddSendToMenuItems(HMENU hMenu,CString& sSendToPath,UINT wStartID);
 	static void FreeSendToMenuItems(HMENU hMenu);
@@ -429,7 +431,7 @@ public:
 	static int CALLBACK ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
 	static int SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSorting);
-	void SetSortArrowToHeader(DetailType nColumn,BOOL bRemove,BOOL bDownArrow);
+	void SetSortArrowToHeader(DetailType nDetail,BOOL bRemove,BOOL bDownArrow);
 	HMENU CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pSelectedItems,int nSelectedItems,BOOL bSimple=FALSE);
 	ContextMenuStuff* GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CString*>& aFiles);
 	CLocatedItem** GetSeletedItems(int& nItems,int nIncludeIfNoneSeleted=-1);
@@ -557,11 +559,12 @@ public:
 		fgLargeMode=0x00000001,
 		fgDialogRememberFields=0x0000002,
 		fgDialogMinimizeToST=0x00000004,
+		fgDialogCloseMinimizesDialog=0x20000000,
 		fgDialogLeaveLocateBackground=0x00000008,
 		fgDialogLargeModeOnly=0x40000000,
 		fgDialogTopMost=0x80000000,
-		fgDialogFlag=0xC000000F,
-		fgDialogSave=0xC000000E, // mask to using when saving to registry
+		fgDialogFlag=0xE000000F,
+		fgDialogSave=0xE000000E, // mask to using when saving to registry
 				
 		// File list
 		fgLVShowIcons=0x00000010,
@@ -571,8 +574,9 @@ public:
 		fgLVDontShowTooltips=0x00010000,
 		fgLVNoDoubleItems=0x00020000,
 		fgLVFoldersFirst=0x00080000,
+		fgLVActivateFirstResult=0x00100000,
 		fgLVComputeMD5Sums=0x00040000,
-		fgLVShowFlag=0x000F00F0,
+		fgLVShowFlag=0x001F00F0,
 		
 		fgLVUseGetFileTitle=0x00000000,
 		fgLVUseOwnMethod=0x00000100,
@@ -593,8 +597,8 @@ public:
 		fgLVStyleAlwaysUnderline=0x00008000|fgLVStyleUnderLine,
 		fgLVStyleUnderlineFlag=0x00008000|fgLVStyleUnderLine,
 		fgLVStyleFlag=0x0000F000,
-		fgLVFlag=0x000FFFF0,
-		fgLVSave=0x000FFFF0,
+		fgLVFlag=0x001FFFF0,
+		fgLVSave=0x001FFFF0,
 			
 		// Name tab
 		fgNameMultibleDirectories=0x04000000,

@@ -63,13 +63,34 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,0);
 
 	// Insert verbs
-	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DEFAULT));
+	if (IsFullUnicodeSupport())
+	{
+		SendDlgItemMessageW(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_DEFAULT));
+		// Insert "next/prev file"s
+		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMNEXTFILE));
+		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMPREVFILE));
+		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMNEXTNONDELETEDFILE));
+		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMPREVNONDELETEDFILE));
+	}
+	else
+	{
+		SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DEFAULT));
+		// Insert "next/prev file"s
+		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMNEXTFILE));
+		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMPREVFILE));
+		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMNEXTNONDELETEDFILE));
+		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMPREVNONDELETEDFILE));
+	}
+
 	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"open");
 	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"edit");
 	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"explore");
 	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"find");
 	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"print");
+	
+	
 	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
+	SendDlgItemMessage(IDC_WHICHFILE,CB_SETCURSEL,0,0);
 
 	EnableItems();
 	
@@ -128,6 +149,12 @@ void CSelectColumndDlg::SaveActionFields(ColumnItem* pColumn)
 				GetDlgItemText(IDC_COMMAND,pColumn->m_pActions[nWhen]->m_szCommand,nLen+1);
 			}
 		}
+		else if (pColumn->m_pActions[nWhen]->m_nResultList==CAction::SelectFile)
+		{
+			pColumn->m_pActions[nWhen]->m_nSelectFileType=(CSubAction::SelectFileType)SendDlgItemMessage(IDC_WHICHFILE,CB_GETCURSEL);
+			if (int(pColumn->m_pActions[nWhen]->m_nSelectFileType)==CB_ERR)
+				pColumn->m_pActions[nWhen]->m_nSelectFileType=CSubAction::NextFile;
+		}
 	}
 }
 	
@@ -136,7 +163,8 @@ void CSelectColumndDlg::SetActionFields(ColumnItem* pColumn)
 	int nWhen=SendDlgItemMessage(IDC_WHEN,CB_GETCURSEL);
 	ASSERT(nWhen!=CB_ERR);
 
-	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);;
+	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
+	SendDlgItemMessage(IDC_WHICHFILE,CB_SETCURSEL,0,0);;
 	SetDlgItemText(IDC_COMMAND,szEmpty);
 
 
@@ -158,7 +186,8 @@ void CSelectColumndDlg::SetActionFields(ColumnItem* pColumn)
 		}
 		else if (pColumn->m_pActions[nWhen]->m_nResultList==CSubAction::ExecuteCommand && pColumn->m_pActions[nWhen]->m_szCommand!=NULL)
 			SetDlgItemText(IDC_COMMAND,pColumn->m_pActions[nWhen]->m_szCommand);
-		
+		else if (pColumn->m_pActions[nWhen]->m_nResultList==CSubAction::SelectFile)
+			SendDlgItemMessage(IDC_WHICHFILE,CB_SETCURSEL,pColumn->m_pActions[nWhen]->m_nSelectFileType);	
 	}
 
 }
@@ -270,6 +299,7 @@ BOOL CSelectColumndDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		break;
 	case IDC_COMMAND:
 	case IDC_VERB:
+	case IDC_WHICHFILE:
 		if (wNotifyCode==CBN_SELCHANGE || wNotifyCode==CBN_EDITCHANGE)
 		{
 			int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
@@ -424,7 +454,7 @@ BOOL CSelectColumndDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 
 void CSelectColumndDlg::EnableItems()
 {
-	ShowState ssCommand=swHide,ssVerb=swHide;
+	ShowState ssCommand=swHide,ssVerb=swHide,ssWhichFile=swHide;
 	
 	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
 	
@@ -445,6 +475,8 @@ void CSelectColumndDlg::EnableItems()
 			ssVerb=swShow;
 		else if (nAction==CSubAction::ExecuteCommand+1)
 			ssCommand=swShow;
+		else if (nAction==CSubAction::SelectFile+1)
+			ssWhichFile=swShow;
 
 	}
 	else
@@ -477,6 +509,8 @@ void CSelectColumndDlg::EnableItems()
 	ShowDlgItem(IDC_STATICVERB,ssVerb);
 	ShowDlgItem(IDC_VERB,ssVerb);
 
+	ShowDlgItem(IDC_STATICWHICHFILE,ssWhichFile);
+	ShowDlgItem(IDC_WHICHFILE,ssWhichFile);
 	
 }
 

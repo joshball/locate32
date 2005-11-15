@@ -5,7 +5,7 @@
 // CSchedule
 
 CSchedule::CSchedule()
-:	m_bFlags(flagEnabled|flagRunnedAtStartup),m_nType(typeDaily),m_pDatabases(NULL),
+:	m_bFlags(flagEnabled),m_nType(typeDaily),m_pDatabases(NULL),
 	m_nThreadPriority(THREAD_PRIORITY_NORMAL)
 {
 	SYSTEMTIME st;
@@ -83,8 +83,6 @@ CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
 	
 	if (m_tLastStartDate.wYear<1900) // There is something wrong
 		GetCurrentDateAndTime(&m_tLastStartDate,&m_tLastStartTime);
-	if (m_nType==typeAtStartup)
-		m_bFlags&=~flagRunnedAtStartup;
 }
 
 DWORD CSchedule::GetDataLen() const
@@ -729,8 +727,6 @@ DWORD CSchedule::WhenShouldRun(STIME& tTime,SDATE& tDate,UINT nDayOfWeek) const
 			return (DWORD)-1;
 		break;		
 	case typeAtStartup: // Checked 140103, OK
-		if (!(m_bFlags&flagRunnedAtStartup))
-			return 0;
 		return (DWORD)-1;
 	}
 	return (DWORD)-1;

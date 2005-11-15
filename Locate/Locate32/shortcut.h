@@ -153,8 +153,11 @@ public:
 		CloseDialog = 2,
 		ShowOrHideDialog = 3,
 		OpenOrCloseDialog = 4,
+		RestoreDialog = 5,
+		MaximizeDialog = 6,
+		MaximizeOrRestoreDialog = 7,
 
-		ShowHideDialogLast = OpenOrCloseDialog
+		ShowHideDialogLast = MaximizeOrRestoreDialog
 	};
 
 	enum ActionResultList { 
@@ -170,8 +173,9 @@ public:
 		Properties = 9,
 		ShowSpecialMenu = 10,			
 		ExecuteCommand = 11,
+		SelectFile = 12,
 		
-		ResultListLast = ExecuteCommand
+		ResultListLast = SelectFile
 	};
 
 	enum ActionAdvanced {
@@ -206,12 +210,19 @@ public:
 		LPSTR szLParam;
 	};
 
+	enum SelectFileType {
+		NextFile=0,
+		PrevFile=1,
+		NextNonDeletedFile=2,
+		PrevNonDeletedFile=3
+	};
 
 	union { // Extra action data
 		void* m_pExtraInfo;	
 		LPSTR m_szVerb; // with, ResultListItems::Execute, NULL means default
 		SendMessageInfo* m_pSendMessage; // with, Advanced::SendMessage and Advanced::PostMessage
 		LPSTR m_szCommand;
+		SelectFileType m_nSelectFileType;
 	};
 
 	// highest bit = 1 : mainmenu

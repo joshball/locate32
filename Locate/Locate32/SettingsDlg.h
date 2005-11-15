@@ -480,7 +480,8 @@ public:
 	DWORD m_dwSettingsFlags;
 	BYTE m_bAdvancedAndContextMenuFlag;
 	BYTE m_bDefaultFlag;
-	
+	BYTE m_bSorting;
+
 	CString m_strLangFile;
 	DWORD m_nTransparency;
     

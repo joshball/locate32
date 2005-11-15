@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,10230
- PRODUCTVERSION 2,99,5,10230
+ FILEVERSION 2,99,5,11140
+ PRODUCTVERSION 2,99,5,11140
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.10230"
+            VALUE "FileVersion", "3.0 beta 5.11140"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.10230"
+            VALUE "ProductVersion", "3.0 beta 5.11140"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -143,7 +143,7 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Spin2",IDC_MINIMUMSIZESPIN,"msctls_updown32",
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,139,6,10,12
-   LTEXT           "Size and date will be looked from database. If database does not contain size and dateinformation, these options will be ignored.",IDC_STATIC,5,71-(0),225+(0),16+(0)
+   LTEXT           "Size and date are looked up from the database. If the database does not contain size and dateinformation, these options will be ignored.",IDC_STATIC,5,71-(0),225+(0),16+(0)
 END
 
 IDD_ADVANCED DIALOGEX 9, 21, 221, 88
@@ -334,28 +334,36 @@ BEGIN
                     8,93,252,10
     LTEXT           "This option has only effect to that how result list items are selects. To specify how files are opened, use 'Select Details' dialog (View menu).",
                     IDC_STATIC,8,93,272,30
-	GROUPBOX        "Dialogs",IDC_STATIC,2,135,281,137
-    CONTROL         "&Remember states of controls",IDC_REMEMBERSTATES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,8,166,207,10
+	GROUPBOX        "Locate dialog:",IDC_STATIC,2,135,281,79
     CONTROL         "&Minimize to system tray",IDC_MINIMIZETOSYSTEMTRAY,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,151,207,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,151,157,10
+    CONTROL         "&Close button minimizes window",IDC_CLOSEBUTTONMINIMIZESWINDOW,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,166,207,10
+    CONTROL         "&Remember states of controls",IDC_REMEMBERSTATES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,8,181,207,10
     CONTROL         "&Leave program background when dialog is closed",
                     IDC_CLOSETOSYSTEMTRAY,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,8,182,222,10
-    LTEXT           "Defaults (states after ""New Search"" button is pressed):",
-                    IDC_STATIC,8,201,222,10
+                    WS_TABSTOP,8,197,222,10
+	GROUPBOX        "Defaults (states after ""New Search"" button is pressed):",IDC_STATIC,2,221,281,79
+	LTEXT           "&Sorting:",IDC_STATIC,8,237,54,10
+    COMBOBOX        IDC_SORTING,48,235,87,76,CBS_DROPDOWNLIST| WS_VSCROLL | 
+                    WS_TABSTOP   
+	CONTROL         "Ascending",IDC_ASCENDINGORDER,"Button",
+                    BS_AUTORADIOBUTTON,142,237,57,10
+    CONTROL         "Descending",IDC_DESCENDINGORDER,"Button",
+                    BS_AUTORADIOBUTTON,209,237,57,10
     CONTROL         "M&atch whole file name",
                     IDC_MATCHWHOLEFILENAMEONLY,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,8,217,95,10
-    LTEXT           "&Check in:",IDC_STATIC,113,219,40,10
-    COMBOBOX        IDC_CHECKIN,153,215,87,76,CBS_DROPDOWNLIST| WS_VSCROLL | 
+                    WS_TABSTOP,8,255,95,10
+    LTEXT           "&Check in:",IDC_STATIC,123,255,54,10
+    COMBOBOX        IDC_CHECKIN,168,252,87,76,CBS_DROPDOWNLIST| WS_VSCROLL | 
                     WS_TABSTOP
-    CONTROL         "R&eplace spaces",IDC_REPLACESPACES,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,234,100,10
+    CONTROL         "R&eplace spaces with '*'",IDC_REPLACESPACES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,270,100,10
     CONTROL         "&Match case (for ""File containing text"")",IDC_MATCHCASE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,113,234,147,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,123,270,147,10
 	CONTROL         "Use &whole path",IDC_USEWHOLEPATH,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,251,100,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,286,100,10
     
 END
 
@@ -559,7 +567,7 @@ IDD_KEYBOARDSHORTCUTS DIALOGEX 0, 0, 287, 301
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Schortcuts:",IDC_STATIC,2,0,283,153
+    GROUPBOX        "Shortcuts:",IDC_STATIC,2,0,283,153
     LTEXT           "Assigned:",IDC_STATIC,8,13,42,10
     PUSHBUTTON      "New",IDC_NEW,66,11,41,12
     PUSHBUTTON      "Remove",IDC_REMOVE,112,11,41,12
@@ -613,6 +621,9 @@ BEGIN
     EDITTEXT        IDC_LPARAM,236,279,42,12,ES_AUTOHSCROLL
 	LTEXT           "Command (file path=%d, parent=%p):",IDC_STATICCOMMAND,8,281,120,8
     EDITTEXT        IDC_COMMAND,135,279,144,12,ES_AUTOHSCROLL
+	LTEXT           "File:",IDC_STATICWHICHFILE,115,281,41,9
+    COMBOBOX        IDC_WHICHFILE,158,279,122,119,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
     
 END
 
@@ -702,6 +713,8 @@ BEGIN
     EDITTEXT        IDC_COMMAND,140,290,134,12,ES_AUTOHSCROLL
 	DEFPUSHBUTTON   "OK",IDC_OK,171,314,50,14
     PUSHBUTTON      "Cancel",IDC_CANCEL,225,314,50,14
+	LTEXT           "&File:",IDC_STATICWHICHFILE,140,292,32,8
+    COMBOBOX        IDC_WHICHFILE,176,290,95,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 
@@ -1090,7 +1103,7 @@ BEGIN
 	IDS_NOTIFYINITIALIZING  "initializing"
 	IDS_NOTIFYFINISHING		"finishing"
 	IDS_UPDATINGSCANNINGROOT "scanning "
-    IDS_LOCATINGSUCCESS     "Locating success"
+    IDS_LOCATINGSUCCESS     "Locating finished"
 	IDS_LOCATINGLIMITREACHED "Results limit reached"
     IDS_LOCATING            "Locating files..."
     IDS_LOCATINGFAILED      "Locating failed"
@@ -1283,6 +1296,7 @@ END
 
 STRINGTABLE 
 BEGIN
+	IDS_NOSORTNG			"No sorting"
     IDS_DATABASENAME        "Name"
 	IDS_DATABASEFILE        "Database File"
 	IDS_GLOBALUPDATE        "Update globally"
@@ -1495,6 +1509,7 @@ BEGIN
 	IDS_ADVSETDONTSHOWTOOLTIPS		"Don't show tooltips"
 	IDS_ADVSETNODOUBLERESULTS		"Show found files only once"
 	IDS_ADVSETFOLDERSFIRST			"Show folders first"
+	IDS_ADVSETACTIVATEFIRSTITEM		"Activate the first found item after search is completed"
 	IDS_ADVSETUSEPROGRAMFORFOLDERS	"Use other program to open folders"
 	IDS_ADVSETOPENFOLDERWITH		"Program (path=%d):"
 	IDS_ADVSETCOMPUTEMD5SUMS		"Compute MD5 sums (slow)"
@@ -1564,6 +1579,9 @@ BEGIN
 	IDS_ACTIONSWDIALOGCLOSE				"Close dialog"
 	IDS_ACTIONSWDIALOGSHOWORHIDE		"Show / Hide dialog"
 	IDS_ACTIONSWDIALOGOPENORCLOSE		"Open / Close dialog"
+	IDS_ACTIONSWDIALOGRESTORE			"Restore dialog"
+	IDS_ACTIONSWDIALOGMAXIMIZE			"Maximize dialog"
+	IDS_ACTIONSWDIALOMAXIMIZEORRESTORE	"Maximize / Restore dialog"
 	IDS_ACTIONRESITEMEXECUTE			"Execute item"
 	IDS_ACTIONRESITEMCOPY				"Copy file (to clipboard)"
 	IDS_ACTIONRESITEMCUT				"Cut file (to clipboard)"
@@ -1576,9 +1594,13 @@ BEGIN
 	IDS_ACTIONRESITEMPROPERTIES			"Show Properties"
 	IDS_ACTIONRESITEMSPECIALMENU		"Open special menu"
 	IDS_ACTIONRESITEMEXECUTECOMMAND		"Execute Command"
+	IDS_ACTIONRESITEMSELECTFILE			"Select File"
+	IDS_ACTIONRESITEMNEXTFILE			"Next file"
+	IDS_ACTIONRESITEMPREVFILE			"Previous file"
+	IDS_ACTIONRESITEMNEXTNONDELETEDFILE	"Next non-deleted file"
+	IDS_ACTIONRESITEMPREVNONDELETEDFILE	"Previous non-deleted file"
 	IDS_ACTIONADVSENDMESSAGE			"Send message"
 	IDS_ACTIONADVPOSTMESSAGE			"Post message"
-	
 END
 
 
@@ -1731,7 +1753,7 @@ BEGIN
     IDS_DOCUMENTFOLDERS			"Document Folders"
     IDS_GETFOLDER				"Get Folder:"
 	IDS_EVERYWERE				"Everywhere"
-	IDS_ROOTS					"Directories in included in databases:"
+	IDS_ROOTS					"Directories included in databases:"
 	IDS_LOOKIN					"Look In:"
 	IDS_LOOKINCONTRADICTION		"You have chosen ""Everywhere"" and also other directories which leads to conflict. Do you want ignore ""Everywhere""? Otherwise, press ""No"" to ignore other choices."
 	IDS_NOEXTENSION				"(no extension)"

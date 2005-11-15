@@ -2,6 +2,91 @@
 #include "Locate32.h"
 
 #include "wfext.h"
+#include <pdh.h>
+
+#pragma comment(lib, "pdh.lib")
+
+
+DOUBLE GetCpuTime()
+{
+	HQUERY hQuery;
+	HCOUNTER* pCounter=(HCOUNTER *)GlobalAlloc(GPTR, sizeof(HCOUNTER));;
+	PDH_FMT_COUNTERVALUE FmtValue;
+
+	HMODULE hModule=LoadLibrary("pdh.dll");
+	if (hModule==NULL)
+		return -1;
+    	
+	PDH_STATUS (*pDdhOpenQueryW)(LPCWSTR,DWORD_PTR,PDH_HQUERY*)=
+		(PDH_STATUS (*)(LPCWSTR,DWORD_PTR,PDH_HQUERY*))GetProcAddress(hModule,"PdhOpenQueryW");
+
+	PDH_STATUS (*pPdhAddCounterW)(PDH_HQUERY,LPCWSTR,DWORD_PTR,PDH_HCOUNTER*)=
+		(PDH_STATUS (*)(PDH_HQUERY,LPCWSTR,DWORD_PTR,PDH_HCOUNTER*))GetProcAddress(hModule,"PdhAddCounterW");
+	PDH_STATUS (*pPdhCollectQueryData)(PDH_HQUERY)=
+		(PDH_STATUS (*)(PDH_HQUERY))GetProcAddress(hModule,"PdhCollectQueryData");
+	PDH_STATUS (*pPdhGetFormattedCounterValue)(PDH_HCOUNTER,DWORD,LPDWORD,PPDH_FMT_COUNTERVALUE)=
+		(PDH_STATUS (*)(PDH_HCOUNTER,DWORD,LPDWORD,PPDH_FMT_COUNTERVALUE))GetProcAddress(hModule,"PdhGetFormattedCounterValue");
+	PDH_STATUS (*pDdhCloseQuery)(PDH_HQUERY)=
+		(PDH_STATUS (*)(PDH_HQUERY))GetProcAddress(hModule,"PdhCloseQuery");
+
+	if (pDdhOpenQueryW==NULL || pPdhAddCounterW==NULL || 
+		pPdhCollectQueryData==NULL || pPdhGetFormattedCounterValue==NULL ||
+		pDdhCloseQuery==NULL)
+	{
+		FreeLibrary(hModule);
+		GlobalFree(pCounter);
+		return -1;
+	}
+
+
+	if (pDdhOpenQueryW(NULL, 0, &hQuery)!=NULL)
+	{
+		pDdhCloseQuery(hQuery);
+		FreeLibrary(hModule);
+		GlobalFree(pCounter);
+		return -1;
+	}
+
+	if (pPdhAddCounterW(hQuery, L"\\Processor(_Total)\\% Processor Time", 0, pCounter)!=ERROR_SUCCESS)
+	{
+		pDdhCloseQuery(hQuery);
+		FreeLibrary(hModule);
+		GlobalFree(pCounter);
+		return -1;
+	}
+
+	if(pPdhCollectQueryData(hQuery)!=ERROR_SUCCESS)
+	{
+		pDdhCloseQuery(hQuery);
+		FreeLibrary(hModule);
+		GlobalFree(pCounter);
+		return -1;
+	}
+
+	Sleep(500);
+	if(pPdhCollectQueryData(hQuery)!=ERROR_SUCCESS)
+	{
+		pDdhCloseQuery(hQuery);
+		FreeLibrary(hModule);
+		GlobalFree(pCounter);
+		return -1;
+	}
+
+	if (pPdhGetFormattedCounterValue(*pCounter, PDH_FMT_DOUBLE, NULL, &FmtValue)!=ERROR_SUCCESS)
+	{
+		pDdhCloseQuery(hQuery);
+		FreeLibrary(hModule);
+		GlobalFree(pCounter);
+		return -1;
+	}
+
+	pDdhCloseQuery(hQuery);
+	
+	FreeLibrary(hModule);
+	GlobalFree(pCounter);
+
+	return FmtValue.doubleValue;
+}
 
 CLocateApp::CLocateApp()
 :	CWinApp("LOCATE32"),m_nDelImage(0),m_nStartup(0),
@@ -34,6 +119,7 @@ BOOL CLocateApp::InitInstance()
 {
 	CWinApp::InitInstance();
 
+	
 	//extern BOOL bIsFullUnicodeSupport;
 	//bIsFullUnicodeSupport=FALSE;
 
@@ -1942,6 +2028,8 @@ int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 
 	// Set schedules
 	SetSchedules();
+	RunStartupSchedules();
+
 	SetMenuDefaultItem(m_Menu.GetSubMenu(0),IDM_OPENLOCATE,FALSE);
 	
 	// Setting icons
@@ -1954,6 +2042,7 @@ int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 
 	return CFrameWnd::OnCreate(lpcs);
 }
+
 
 BOOL CLocateAppWnd::OnCreateClient(LPCREATESTRUCT lpcs)
 {
@@ -3132,6 +3221,8 @@ DWORD CLocateAppWnd::OnAnotherInstance(ATOM aCommandLine)
 				GetLocateDlg()->SetStartData(pStartData);
 				GetLocateDlg()->ShowWindow(swRestore);
 				GetLocateDlg()->SetActiveWindow();
+				m_pLocateDlgThread->m_pLocate->ForceForegroundAndFocus();
+
 				delete pStartData;
 			}
 			else
@@ -3316,9 +3407,53 @@ void CLocateAppWnd::CheckSchedules()
 				sMemCopy(&pSchedule->m_tLastStartTime,&tCurTime,sizeof(CSchedule::STIME));
 				
 				pSchedule->m_bFlags|=CSchedule::flagRunned;
-				if (pSchedule->m_nType==CSchedule::typeAtStartup)
-					pSchedule->m_bFlags|=CSchedule::flagRunnedAtStartup;
+								
+				OnUpdate(FALSE,pSchedule->m_pDatabases,pSchedule->m_nThreadPriority);
 				
+				if (pSchedule->m_bFlags&CSchedule::flagDeleteAfterRun)
+				{
+					POSITION pTmp=m_Schedules.GetNextPosition(pPos);
+					delete pSchedule;
+					m_Schedules.RemoveAt(pPos);
+					pPos=pTmp;
+					continue;
+				}
+			}
+		}
+		pPos=m_Schedules.GetNextPosition(pPos);
+	}
+	if (bSchedulesChanged)
+		SaveSchedules();
+}
+
+void CLocateAppWnd::RunStartupSchedules()
+{
+	if (GetLocateApp()->IsUpdating())
+		return;
+	
+	CSchedule::STIME tCurTime;
+	CSchedule::SDATE tCurDate;
+	
+	DWORD nNext=(DWORD)-1;
+	UINT nDayOfWeek;
+	CSchedule::GetCurrentDateAndTime(&tCurDate,&tCurTime,&nDayOfWeek);
+	BOOL bSchedulesChanged=FALSE;	
+
+	POSITION pPos=m_Schedules.GetHeadPosition();
+	while (pPos!=NULL)
+	{
+		CSchedule* pSchedule=m_Schedules.GetAt(pPos);
+		if (pSchedule!=NULL)
+		{
+			if (pSchedule->m_nType==CSchedule::typeAtStartup)
+			{
+				bSchedulesChanged=TRUE;
+				
+				sMemCopy(&pSchedule->m_tLastStartDate,&tCurDate,sizeof(CSchedule::SDATE));
+				sMemCopy(&pSchedule->m_tLastStartTime,&tCurTime,sizeof(CSchedule::STIME));
+				
+				pSchedule->m_bFlags|=CSchedule::flagRunned;
+								
 				OnUpdate(FALSE,pSchedule->m_pDatabases,pSchedule->m_nThreadPriority);
 				
 				if (pSchedule->m_bFlags&CSchedule::flagDeleteAfterRun)

@@ -117,6 +117,7 @@ inline void CCheckFileNotificationsThread::FileCreated(LPCSTR szFile,DWORD dwLen
 		nItem=pLocateDlg->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
 	}
 
+	BkgDebugMessage("File created ENF");
 }
 
 inline void CCheckFileNotificationsThread::FileModified(LPCSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg)
@@ -143,6 +144,7 @@ inline void CCheckFileNotificationsThread::FileModified(LPCSTR szFile,DWORD dwLe
 		}
 		nItem=pLocateDlg->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
 	}
+	BkgDebugMessage("File modified END");
 }
 
 inline void CCheckFileNotificationsThread::FileDeleted(LPCSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg)
@@ -172,6 +174,8 @@ inline void CCheckFileNotificationsThread::FileDeleted(LPCSTR szFile,DWORD dwLen
 		}
 		nItem=pLocateDlg->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
 	}
+
+	BkgDebugMessage("File deleted END");
 }
 
 
@@ -240,14 +244,20 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 							}
 							delete[] szFile;
 							
+							BkgDebugMessage("CCheckFileNotificationsThread::RunningProc() 1");
+							
 							if (pStruct->NextEntryOffset==0)
 								break;
 							*((char**)&pStruct)+=pStruct->NextEntryOffset;
+
+							BkgDebugMessage("CCheckFileNotificationsThread::RunningProc() 2");
 						}		
 					}
 				}
 			}
 			
+			BkgDebugMessage("CCheckFileNotificationsThread::RunningProc() Coing to listen changes");
+
 			// Coing to listen changes
 			BOOL bRet=m_pReadDirectoryChangesW(pChangeData->hDir,pChangeData->pBuffer,CHANGE_BUFFER_LEN,TRUE,
 				FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|
@@ -320,6 +330,7 @@ BOOL CCheckFileNotificationsThread::RunningProcOld()
 
 void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCSTR szRoot,CLocateDlg* pLocateDlg)
 {
+	BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot BEGIN");
 	// Updating changed items by checking all items
 	if (szRoot[1]=='\0')
 	{
@@ -368,6 +379,8 @@ void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCSTR szRoot,CLocateDlg* 
 			nItem=pLocateDlg->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
 		}
 	}
+
+	DebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot END");
 }
 
 DWORD WINAPI CCheckFileNotificationsThread::NotificationThreadProc(LPVOID lpParameter)
@@ -720,6 +733,9 @@ inline BOOL CBackgroundUpdater::RunningProc()
 		
 		DWORD nRet=WaitForMultipleObjects(2,m_phEvents,FALSE,500);
 		InterlockedExchange(&m_lIsWaiting,FALSE);
+
+		BkgDebugFormatMessage4("CBackgroundUpdater::RunningProc(): Woked, nRet=%d.",nRet,0,0,0);
+
 
 		if (nRet==WAIT_TIMEOUT)
 			continue;

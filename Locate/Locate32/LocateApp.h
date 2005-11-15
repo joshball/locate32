@@ -11,6 +11,8 @@ class CSettingsProperties;
 class CUpdateThread;
 class CLocateDlgThread;
 
+DOUBLE GetCpuTime();
+
 class CLocateAppWnd : public CFrameWnd
 {
 public:
@@ -93,6 +95,7 @@ public:
 	DWORD SetSchedules(CList<CSchedule*>* pSchedules=NULL);
 	BOOL SaveSchedules();
 	void CheckSchedules();
+	void RunStartupSchedules();
 
 	BOOL StartUpdateStatusNotification();
 	BOOL StopUpdateStatusNotification();

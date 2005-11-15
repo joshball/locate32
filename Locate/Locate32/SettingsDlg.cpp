@@ -25,7 +25,8 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_nMaximumFoundFiles(0),m_nUpdateThreadPriority(THREAD_PRIORITY_NORMAL),
 	m_dwLocateDialogFlags(CLocateDlg::fgDefault),
 	m_dwLocateDialogExtraFlags(CLocateDlg::efDefault),
-	m_bDefaultFlag(defaultDefault),	m_dwSettingsFlags(settingsDefault),
+	m_bDefaultFlag(defaultDefault),m_bSorting(BYTE(-1)),
+	m_dwSettingsFlags(settingsDefault),
 	m_nNumberOfDirectories(DEFAULT_NUMBEROFDIRECTORIES),
 	m_nTransparency(0),m_nToolTipTransparency(0),
 	m_dwTooltipDelayAutopop(DWORD(-1)),
@@ -183,6 +184,10 @@ BOOL CSettingsProperties::LoadSettings()
 		if (nTemp) m_bDefaultFlag|=defaultUseWholePath;
 
 
+		if (RegKey.QueryValue("Default Sorting",nTemp))
+			m_bSorting=(BYTE)nTemp;		
+
+
 		// Overrinding explorer for opening folders
 		RegKey.QueryValue("Use other program to open folders",nTemp);
 		SetFlags(settingsUseOtherProgramsToOpenFolders,nTemp);
@@ -309,7 +314,8 @@ BOOL CSettingsProperties::SaveSettings()
 		RegKey.SetValue("Default DataMatchCase",m_bDefaultFlag&defaultMatchCase?1:0);
 		RegKey.SetValue("Default ReplaceSpaces",m_bDefaultFlag&defaultReplaceSpaces?1:0);
 		RegKey.SetValue("Default UseWholePath",m_bDefaultFlag&defaultUseWholePath?1:0);
-
+		RegKey.SetValue("Default Sorting",DWORD(m_bSorting));
+			
 		// Overrinding explorer for opening folders
 		RegKey.SetValue("Use other program to open folders",(DWORD)IsFlagSet(settingsUseOtherProgramsToOpenFolders));
 		RegKey.SetValue("Open folders with",m_OpenFoldersWith);
@@ -593,6 +599,11 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnInitDialog(HWND hwndFocus)
 	// Minimize to ST
 	if (m_pSettings->m_dwLocateDialogFlags&CLocateDlg::fgDialogMinimizeToST)
 		CheckDlgButton(IDC_MINIMIZETOSYSTEMTRAY,1);
+	if (m_pSettings->m_dwLocateDialogFlags&CLocateDlg::fgDialogCloseMinimizesDialog)
+		CheckDlgButton(IDC_CLOSEBUTTONMINIMIZESWINDOW,1);
+
+	
+
 	// Close to ST
 	if (GetLocateApp()->IsStartupFlagSet(CLocateApp::CStartData::startupLeaveBackground))
 	{
@@ -602,7 +613,33 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnInitDialog(HWND hwndFocus)
 	else if (m_pSettings->m_dwLocateDialogFlags&CLocateDlg::fgDialogLeaveLocateBackground)
 		CheckDlgButton(IDC_CLOSETOSYSTEMTRAY,1);
 	
+	// Adding details to sorting box
+	if (IsFullUnicodeSupport())
+	{
+		SendDlgItemMessageW(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_NOSORTNG));
+		for (int iDetail=0;iDetail<=CLocateDlg::LastType;iDetail++)
+			SendDlgItemMessageW(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_LISTNAME+iDetail));
+	}
+	else
+	{
+		SendDlgItemMessage(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_NOSORTNG));
+		for (int iDetail=0;iDetail<=CLocateDlg::LastType;iDetail++)
+			SendDlgItemMessage(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_LISTNAME+iDetail));
+	}	
+	
 	// Defaults
+	if (m_pSettings->m_bSorting!=BYTE(-1))
+	{
+		SendDlgItemMessage(IDC_SORTING,CB_SETCURSEL,(m_pSettings->m_bSorting&127)+1);
+		CheckDlgButton((m_pSettings->m_bSorting&128)?IDC_DESCENDINGORDER:IDC_ASCENDINGORDER,TRUE);
+	}
+	else
+	{
+		SendDlgItemMessage(IDC_SORTING,CB_SETCURSEL,0);
+		CheckDlgButton(IDC_ASCENDINGORDER,TRUE);
+	}
+
+
 	if (IsFullUnicodeSupport())
 	{
 		SendDlgItemMessageW(IDC_CHECKIN,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_FILENAMESONLY));
@@ -655,7 +692,7 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnCommand(WORD wID,WORD wNotifyC
 BOOL CSettingsProperties::CGeneralSettingsPage::OnApply()
 {
 	m_pSettings->m_dwLocateDialogFlags&=~(CLocateDlg::fgLVStyleFlag|CLocateDlg::fgDialogLeaveLocateBackground|
-		CLocateDlg::fgDialogRememberFields|CLocateDlg::fgDialogMinimizeToST);
+		CLocateDlg::fgDialogRememberFields|CLocateDlg::fgDialogMinimizeToST|CLocateDlg::fgDialogCloseMinimizesDialog);
 
 	// Setting tree view mouse behaviour
 	if (IsDlgButtonChecked(IDC_SYSTEMSETTINGS))
@@ -678,6 +715,9 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnApply()
 	// Minimize to system tray
 	if (IsDlgButtonChecked(IDC_MINIMIZETOSYSTEMTRAY))
 		m_pSettings->m_dwLocateDialogFlags|=CLocateDlg::fgDialogMinimizeToST;
+	// Close minimizes window
+	if (IsDlgButtonChecked(IDC_CLOSEBUTTONMINIMIZESWINDOW))
+		m_pSettings->m_dwLocateDialogFlags|=CLocateDlg::fgDialogCloseMinimizesDialog;
 	// Load file types from registry
 	if (!GetLocateApp()->IsStartupFlagSet(CLocateApp::CStartData::startupLeaveBackground))
 	{
@@ -685,7 +725,17 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnApply()
 			m_pSettings->m_dwLocateDialogFlags|=CLocateDlg::fgDialogLeaveLocateBackground;
 	}
 		
-	// Defaults:
+	// Defaults
+	int nSel=SendDlgItemMessage(IDC_SORTING,CB_GETCURSEL);
+	if (nSel<=0)
+		m_pSettings->m_bSorting=BYTE(-1);
+	else
+	{
+		m_pSettings->m_bSorting=nSel-1;
+		if (IsDlgButtonChecked(IDC_DESCENDINGORDER))
+			m_pSettings->m_bSorting|=128;
+	}
+
 	m_pSettings->m_bDefaultFlag=(BYTE)SendDlgItemMessage(IDC_CHECKIN,CB_GETCURSEL);
 	if (IsDlgButtonChecked(IDC_MATCHWHOLEFILENAMEONLY))
 		m_pSettings->m_bDefaultFlag|=CSettingsProperties::defaultWholeName;
@@ -835,6 +885,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CLocateDlg::fgLVNoDoubleItems,&m_pSettings->m_dwLocateDialogFlags),
 		CreateCheckBox(IDS_ADVSETFOLDERSFIRST,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLVFoldersFirst,&m_pSettings->m_dwLocateDialogFlags),
+		CreateCheckBox(IDS_ADVSETACTIVATEFIRSTITEM,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVActivateFirstResult,&m_pSettings->m_dwLocateDialogFlags),
 		CreateComboBox(IDS_ADVSETSHOWDATESINFORMAT,DateFormatComboProc,0,0),
 		CreateComboBox(IDS_ADVSETSHOWTIMESINFORMAT,TimeFormatComboProc,0,0),
 		CreateListBox(IDS_ADVSETSHOWFILESIZESINFORMAT,FileSizeListProc,0,&m_pSettings->m_nFileSizeFormat),
@@ -4449,27 +4501,58 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 		RegKey.CloseKey();
 	}
 
-	// Inserc action categories
-	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_NONE));
-	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATACTIVATECONTROL));
-	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATACTIVATETAB));
-	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATMENUCOMMAND));
-	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATSHOWHIDEDIALOG));
-	if (dwActivate)
-		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATTRESULTLIST));
-	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATADVANCED));
-	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,0,0);
+	if (IsFullUnicodeSupport())
+	{
+		// Insert action categories
+		SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_NONE));
+		SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONCATACTIVATECONTROL));
+		SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONCATACTIVATETAB));
+		SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONCATMENUCOMMAND));
+		SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONCATSHOWHIDEDIALOG));
+		if (dwActivate)
+			SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONCATTRESULTLIST));
+		SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONCATADVANCED));
 
+		SendDlgItemMessageW(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_DEFAULT));
+
+		// Insert "next/prev file"s
+		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMNEXTFILE));
+		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMPREVFILE));
+		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMNEXTNONDELETEDFILE));
+		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMPREVNONDELETEDFILE));
+	}
+	else
+	{
+		// Insert action categories
+		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_NONE));
+		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATACTIVATECONTROL));
+		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATACTIVATETAB));
+		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATMENUCOMMAND));
+		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATSHOWHIDEDIALOG));
+		if (dwActivate)
+			SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATTRESULTLIST));
+		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATADVANCED));
+
+		SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DEFAULT));
+		
+		// Insert "next/prev file"s
+		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMNEXTFILE));
+		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMPREVFILE));
+		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMNEXTNONDELETEDFILE));
+		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMPREVNONDELETEDFILE));
+	}
 
 	// Insert verbs
-	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DEFAULT));
 	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"open");
 	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"edit");
 	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"explore");
 	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"find");
 	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"print");
-	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
 
+	// Current selections
+	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,0,0);
+	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
+	SendDlgItemMessage(IDC_WHICHFILE,CB_SETCURSEL,0,0);
 
 	// Inserting items
 	InsertShortcuts();
@@ -5479,10 +5562,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	// Enable/disable static group box
 	EnableDlgItem(IDC_STATICSHORTCUT,nItem!=-1);
 	
-	// Enable/disable shortcut
-	EnableDlgItem(IDC_HOTKEYRADIO,nItem!=-1);
-	EnableDlgItem(IDC_CODERADIO,nItem!=-1);
-
+	
 
 
 	// Enable/disable advanced button
@@ -5496,7 +5576,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	EnableDlgItem(IDC_STATICSUBACTION,nItem!=-1); // Subaction static text
 	EnableDlgItem(IDC_SUBACTION,nItem!=-1); // Subaction combo
 
-	ShowState ssVerb=swHide,ssMessage=swHide,ssCommand=swHide;
+	ShowState ssVerb=swHide,ssMessage=swHide,ssCommand=swHide,ssWhichFile=swHide;
 	
 	if (nItem!=-1)
 	{
@@ -5507,6 +5587,9 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 		EnableDlgItem(IDC_FROMMNEMONIC,m_pCurrentShortcut->GetMnemonicForAction(hDialogs)!=0);
 		
 		BOOL bCodeChecked=IsDlgButtonChecked(IDC_CODERADIO);	
+		// Enable/disable shortcut
+		EnableDlgItem(IDC_HOTKEYRADIO,!(m_pCurrentShortcut->m_dwFlags&CShortcut::sfUseMemonic));
+		EnableDlgItem(IDC_CODERADIO,!(m_pCurrentShortcut->m_dwFlags&CShortcut::sfUseMemonic));
 		EnableDlgItem(IDC_SHORTCUTKEY,!bCodeChecked && !(m_pCurrentShortcut->m_dwFlags&CShortcut::sfUseMemonic));
 		EnableDlgItem(IDC_CODE,bCodeChecked && !(m_pCurrentShortcut->m_dwFlags&CShortcut::sfUseMemonic));
 		EnableDlgItem(IDC_MODCTRL,bCodeChecked && !(m_pCurrentShortcut->m_dwFlags&CShortcut::sfUseMemonic));
@@ -5540,10 +5623,18 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 		case CAction::ResultListItems:
 			{
 				INT nSubItem=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
-				if (nSubItem==CAction::Execute)
+				switch (nSubItem)
+				{
+				case CAction::Execute:
 					ssVerb=swShow;
-				else if (nSubItem==CAction::ExecuteCommand)
-					ssCommand=swShow;
+					break;
+				case CAction::ExecuteCommand:
+                    ssCommand=swShow;
+					break;
+				case CAction::SelectFile:
+					ssWhichFile=swShow;
+					break;
+				}
                 break;
 			}
 		case CAction::Advanced:
@@ -5557,6 +5648,9 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	}
 	else
 	{
+		EnableDlgItem(IDC_HOTKEYRADIO,FALSE);
+		EnableDlgItem(IDC_CODERADIO,FALSE);
+		
 		EnableDlgItem(IDC_SHORTCUTKEY,FALSE);
 		EnableDlgItem(IDC_CODE,FALSE);
 		EnableDlgItem(IDC_MODCTRL,FALSE);
@@ -5588,6 +5682,10 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 
 	ShowDlgItem(IDC_STATICCOMMAND,ssCommand);
 	ShowDlgItem(IDC_COMMAND,ssCommand);
+
+	ShowDlgItem(IDC_STATICWHICHFILE,ssWhichFile);
+	ShowDlgItem(IDC_WHICHFILE,ssWhichFile);
+
 }
 
 void CSettingsProperties::CKeyboardShortcutsPage::OnChangeItem(NMLISTVIEW *pNm)
@@ -5753,12 +5851,13 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 	InsertSubActions();
 
 	// Clear sub action fields fisrt
-	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);;
+	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
 	SetDlgItemText(IDC_WINDOW,szEmpty);
 	SetDlgItemInt(IDC_MESSAGE,0,FALSE);
 	SetDlgItemText(IDC_WPARAM,szEmpty);
 	SetDlgItemText(IDC_LPARAM,szEmpty);
 	SetDlgItemText(IDC_COMMAND,szEmpty);
+	SendDlgItemMessage(IDC_WHICHFILE,CB_SETCURSEL,0,0);
 
 
 	switch (pAction->m_nAction)
@@ -5776,6 +5875,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 		}
 		else if (pAction->m_nResultList==CAction::ExecuteCommand && pAction->m_szCommand!=NULL)
 			SetDlgItemText(IDC_COMMAND,pAction->m_szCommand);
+		else if (pAction->m_nResultList==CAction::SelectFile)
+			SendDlgItemMessage(IDC_WHICHFILE,CB_SETCURSEL,pAction->m_nSelectFileType);	
 		break;
 	case CAction::Advanced:
 		if ((pAction->m_nAdvanced==CAction::SendMessage || pAction->m_nAdvanced==CAction::PostMessage) &&
@@ -5859,6 +5960,12 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 				pAction->m_szCommand=new char[nLen+1];
 				GetDlgItemText(IDC_COMMAND,pAction->m_szCommand,nLen+1);
 			}
+		}
+		else if (pAction->m_nResultList==CAction::SelectFile)
+		{
+			pAction->m_nSelectFileType=(CSubAction::SelectFileType)SendDlgItemMessage(IDC_WHICHFILE,CB_GETCURSEL);
+			if (int(pAction->m_nSelectFileType)==CB_ERR)
+				pAction->m_nSelectFileType=CSubAction::NextFile;
 		}
 		break;
 	case CAction::Advanced:

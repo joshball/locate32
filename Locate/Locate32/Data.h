@@ -21,7 +21,6 @@ public:
 		flagEnabled = 0x1,
 		flagDeleteAfterRun = 0x2,
 		flagRunned = 0x4,
-		flagRunnedAtStartup = 0x8,
 		flagAtThisTime = 0x10
 	};
 	struct STIME
