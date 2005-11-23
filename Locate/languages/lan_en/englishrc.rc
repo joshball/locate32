@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,11140
- PRODUCTVERSION 2,99,5,11140
+ FILEVERSION 2,99,5,11230
+ PRODUCTVERSION 2,99,5,11230
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.11140"
+            VALUE "FileVersion", "3.0 beta 5.11230"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.11140"
+            VALUE "ProductVersion", "3.0 beta 5.11230"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1302,7 +1302,7 @@ BEGIN
 	IDS_GLOBALUPDATE        "Update globally"
 	IDS_THREADID            "Thread"
 	IDS_DATABASECREATOR		"Creator"
-	IDS_DATABASEDESCRIPTION	"Desciption"
+	IDS_DATABASEDESCRIPTION	"Description"
 	IDS_THREADNAME			"Thread %d"
 	IDS_DELETEDATABASE		"Delete database"
 	IDS_DELETEDATABASEQUESTION	"Do you want also delete database file '%s'?"

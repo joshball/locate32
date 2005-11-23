@@ -743,9 +743,18 @@ inline BOOL CBackgroundUpdater::RunningProc()
 			break;
 		else if (nRet==WAIT_OBJECT_0+1)
 		{
-			RECT rcListClient;
-			m_pList->GetClientRect(&rcListClient);
-			BOOL bDetail=(GetLocateDlg()->m_pListCtrl->GetStyle()&LVS_TYPEMASK)==LVS_REPORT;
+			RECT rcViewRect;
+			DWORD nListStyle=m_pList->GetStyle()&LVS_TYPEMASK;
+			m_pList->GetClientRect(&rcViewRect);
+			
+
+
+			int nIconSizeX,nIconSizeY;
+			ImageList_GetIconSize(
+				m_pList->GetImageList(nListStyle==LVS_ICON?LVSIL_NORMAL:LVSIL_SMALL),
+				&nIconSizeX,&nIconSizeY);
+
+			
 			BkgDebugNumMessage("CBackgroundUpdater::RunningProc(): Waked. %d item to be updated",m_aUpdateList.GetSize());
 
 			for (;;)
@@ -769,15 +778,29 @@ inline BOOL CBackgroundUpdater::RunningProc()
 				{
 					Item* pItem=aUpdateList.GetAt(i);
 
+					DebugFormatMessage("Checking whether item %s needs to be updated ",pItem->m_pItem->GetName());
+
 					POINT pt;
 					if (m_pList->GetItemPosition(pItem->m_iItem,&pt))
 					{
+						DebugFormatMessage("step two for %s, pt.x=%d, pt.y=%d, (%d,%d,%d,%d)",
+							pItem->m_pItem->GetName(),pt.x,pt.y,
+							rcViewRect.left,rcViewRect.right,rcViewRect.top,rcViewRect.bottom);
+
 						// X axes does not need to be checked when report mode is on
-						if (pt.y >= 0 && pt.y<=rcListClient.bottom &&
-							(bDetail || (pt.x >= 0 && pt.x<=rcListClient.right)))
+						POINT ptOrigin;
+						if (!m_pList->GetOrigin(&ptOrigin))
+						{
+							ptOrigin.x=0;
+							ptOrigin.y=0;
+						}
+
+						if (pt.y >= ptOrigin.y-nIconSizeY && pt.y<=rcViewRect.bottom+ptOrigin.y &&
+							(nListStyle==LVS_REPORT || (pt.x >= ptOrigin.x-nIconSizeX && pt.x<=rcViewRect.right+ptOrigin.x)))
 						{
 							BOOL bReDraw=FALSE;
 							
+							DebugFormatMessage("Refreshing %s",pItem->m_pItem->GetName());
 							pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
 
 							if (bReDraw)

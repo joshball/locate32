@@ -32,9 +32,11 @@ extern DEBUGALLOCATORTYPE DebugAlloc;
 
 #ifdef DEBUGMSG_ITEMS
 #define ItemDebugMessage(a)						DebugMessage(a)
+#define ItemDebugFormatMessage1(a,b1)			DebugFormatMessage(a,b1)
 #define ItemDebugFormatMessage4(a,b1,b2,b3,b4)	DebugFormatMessage(a,b1,b2,b3,b4)
 #else
 #define ItemDebugMessage(a) 
+#define ItemDebugFormatMessage1(a,b1)
 #define ItemDebugFormatMessage4(a,b1,b2,b3,b4)
 #endif
 

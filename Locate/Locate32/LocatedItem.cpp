@@ -417,6 +417,7 @@ void CLocatedItem::UpdateType()
 				return;
 			}
 			iIcon=fi.iIcon;
+			DebugFormatMessage("dwFlags|=LITEM_ICONOK by UpdateType for %s",GetPath());
 			dwFlags|=LITEM_ICONOK;
 		}
 		else if (!SHGetFileInfo(GetPath(),0,&fi,sizeof(SHFILEINFO),SHGFI_TYPENAME))
@@ -902,6 +903,7 @@ void CLocatedItem::SetToDeleted()
 
 	dwFlags&=~LITEM_PARENTICONOK;
 	dwFlags|=LITEM_ICONOK|LITEM_TYPEOK|LITEM_TIMEDATEOK|LITEM_FILESIZEOK;
+	DebugFormatMessage("dwFlags|=LITEM_ICONOK by SetToDeleted for %s",GetPath());
 
 	ItemDebugMessage("CLocatedItem::SetToDeleted END");
 }

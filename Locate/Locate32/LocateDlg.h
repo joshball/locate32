@@ -515,6 +515,7 @@ protected:
 	
 
 	BOOL SetListStyle(int id,BOOL bInit=FALSE);
+	void SetMenuCheckMarkForListStyle();
 	void SetVisibleWindowInTab();
 	void SaveRegistry();
 	void LoadRegistry();

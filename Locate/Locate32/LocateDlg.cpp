@@ -674,25 +674,6 @@ BOOL CLocateDlg::SetListStyle(int id,BOOL bInit)
 	case 0:
 		if ((dwStyle & LVS_TYPEMASK)!=LVS_ICON || bInit)
 		{
-			menu.CheckMenuItem(IDM_LARGEICONS,MF_BYCOMMAND|MF_CHECKED);
-			menu.CheckMenuItem(IDM_SMALLICONS,MF_BYCOMMAND|MF_UNCHECKED);
-			menu.CheckMenuItem(IDM_LIST,MF_BYCOMMAND|MF_UNCHECKED);
-			menu.CheckMenuItem(IDM_DETAILS,MF_BYCOMMAND|MF_UNCHECKED);
-			menu.EnableMenuItem(IDM_LINEUPICONS,MF_BYCOMMAND|MF_ENABLED);
-			menu.EnableMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_ENABLED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LARGEICONS,MF_BYCOMMAND|MF_CHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_SMALLICONS,MF_BYCOMMAND|MF_UNCHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LIST,MF_BYCOMMAND|MF_UNCHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_DETAILS,MF_BYCOMMAND|MF_UNCHECKED);
-			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LINEUPICONS,MF_BYCOMMAND|MF_ENABLED);
-			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_ENABLED);
-			
-			if (((CLocateApp*)GetApp())->m_wComCtrlVersion>=0x0600)
-			{
-				menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_ENABLED);
-				EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_ENABLED);
-			}
-			
 			m_pListCtrl->SetStyle((dwStyle & ~LVS_TYPEMASK)|LVS_ICON);
 			m_pListCtrl->Arrange(LVA_DEFAULT);
 		}
@@ -700,25 +681,6 @@ BOOL CLocateDlg::SetListStyle(int id,BOOL bInit)
 	case 1:
 		if ((dwStyle & LVS_TYPEMASK)!=LVS_SMALLICON || bInit)
 		{
-			menu.CheckMenuItem(IDM_LARGEICONS,MF_BYCOMMAND|MF_UNCHECKED);
-			menu.CheckMenuItem(IDM_SMALLICONS,MF_BYCOMMAND|MF_CHECKED);
-			menu.CheckMenuItem(IDM_LIST,MF_BYCOMMAND|MF_UNCHECKED);
-			menu.CheckMenuItem(IDM_DETAILS,MF_BYCOMMAND|MF_UNCHECKED);
-			menu.EnableMenuItem(IDM_LINEUPICONS,MF_BYCOMMAND|MF_ENABLED);
-			menu.EnableMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_ENABLED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LARGEICONS,MF_BYCOMMAND|MF_UNCHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_SMALLICONS,MF_BYCOMMAND|MF_CHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LIST,MF_BYCOMMAND|MF_UNCHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_DETAILS,MF_BYCOMMAND|MF_UNCHECKED);
-			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LINEUPICONS,MF_BYCOMMAND|MF_ENABLED);
-			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_ENABLED);
-
-			if (((CLocateApp*)GetApp())->m_wComCtrlVersion>=0x0600)
-			{
-				menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_ENABLED);
-				EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_ENABLED);
-			}
-
 			m_pListCtrl->SetStyle((dwStyle & ~LVS_TYPEMASK)|LVS_SMALLICON);
 			m_pListCtrl->Arrange(LVA_DEFAULT);
 		}
@@ -726,49 +688,72 @@ BOOL CLocateDlg::SetListStyle(int id,BOOL bInit)
 	case 2:
 		if ((dwStyle  &LVS_TYPEMASK)!=LVS_LIST || bInit)
 		{
-			menu.CheckMenuItem(IDM_LARGEICONS,MF_BYCOMMAND|MF_UNCHECKED);
-			menu.CheckMenuItem(IDM_SMALLICONS,MF_BYCOMMAND|MF_UNCHECKED);
-			menu.CheckMenuItem(IDM_LIST,MF_BYCOMMAND|MF_CHECKED);
-			menu.CheckMenuItem(IDM_DETAILS,MF_BYCOMMAND|MF_UNCHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LARGEICONS,MF_BYCOMMAND|MF_UNCHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_SMALLICONS,MF_BYCOMMAND|MF_UNCHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LIST,MF_BYCOMMAND|MF_CHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_DETAILS,MF_BYCOMMAND|MF_UNCHECKED);
-			
-			menu.EnableMenuItem(IDM_LINEUPICONS,MF_BYCOMMAND|MF_GRAYED);
-			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LINEUPICONS,MF_BYCOMMAND|MF_GRAYED);
-			menu.EnableMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_GRAYED);
-			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_GRAYED);
-			menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
-			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
-			
 			m_pListCtrl->SetStyle((dwStyle & ~LVS_TYPEMASK)|LVS_LIST);
 			m_pListCtrl->Arrange(LVA_DEFAULT);
 		}
 		break;
 	case 3:
 		if ((dwStyle & LVS_TYPEMASK)!=LVS_REPORT || bInit)
-		{
-			menu.CheckMenuItem(IDM_LARGEICONS,MF_BYCOMMAND|MF_UNCHECKED);
-			menu.CheckMenuItem(IDM_SMALLICONS,MF_BYCOMMAND|MF_UNCHECKED);
-			menu.CheckMenuItem(IDM_LIST,MF_BYCOMMAND|MF_UNCHECKED);
-			menu.CheckMenuItem(IDM_DETAILS,MF_BYCOMMAND|MF_CHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LARGEICONS,MF_BYCOMMAND|MF_UNCHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_SMALLICONS,MF_BYCOMMAND|MF_UNCHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LIST,MF_BYCOMMAND|MF_UNCHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_DETAILS,MF_BYCOMMAND|MF_CHECKED);
-
-			menu.EnableMenuItem(IDM_LINEUPICONS,MF_BYCOMMAND|MF_GRAYED);
-			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LINEUPICONS,MF_BYCOMMAND|MF_GRAYED);
-			menu.EnableMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_GRAYED);
-			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_GRAYED);
-			menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
-			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
 			m_pListCtrl->SetStyle((dwStyle & ~LVS_TYPEMASK)|LVS_REPORT);
-		}
 		break;
 	}
+
+	SetMenuCheckMarkForListStyle();
 	return TRUE;
+}
+
+void CLocateDlg::SetMenuCheckMarkForListStyle()
+{
+	ASSERT(m_pListCtrl!=NULL);
+
+	CMenu menu(GetMenu());
+
+	DWORD dwListStyle=m_pListCtrl->GetStyle()&LVS_TYPEMASK;
+
+
+	// Check marks for menu
+	menu.CheckMenuItem(IDM_LARGEICONS,MF_BYCOMMAND|(dwListStyle==LVS_ICON?MF_CHECKED:MF_UNCHECKED));
+	menu.CheckMenuItem(IDM_SMALLICONS,MF_BYCOMMAND|(dwListStyle==LVS_SMALLICON?MF_CHECKED:MF_UNCHECKED));
+	menu.CheckMenuItem(IDM_LIST,MF_BYCOMMAND|(dwListStyle==LVS_LIST?MF_CHECKED:MF_UNCHECKED));
+	menu.CheckMenuItem(IDM_DETAILS,MF_BYCOMMAND|(dwListStyle==LVS_REPORT?MF_CHECKED:MF_UNCHECKED));
+	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LARGEICONS,MF_BYCOMMAND|(dwListStyle==LVS_ICON?MF_CHECKED:MF_UNCHECKED));
+	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_SMALLICONS,MF_BYCOMMAND|(dwListStyle==LVS_SMALLICON?MF_CHECKED:MF_UNCHECKED));
+	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LIST,MF_BYCOMMAND|(dwListStyle==LVS_LIST?MF_CHECKED:MF_UNCHECKED));
+	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_DETAILS,MF_BYCOMMAND|(dwListStyle==LVS_REPORT?MF_CHECKED:MF_UNCHECKED));
+			
+	
+	// Enable/disable "Line up icons" and "Auto arrange"
+	if (dwListStyle==LVS_LIST || dwListStyle==LVS_REPORT)
+	{
+		menu.EnableMenuItem(IDM_LINEUPICONS,MF_BYCOMMAND|MF_GRAYED);
+		menu.EnableMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LINEUPICONS,MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_GRAYED);
+	
+		menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
+	}
+	else
+	{
+		menu.EnableMenuItem(IDM_LINEUPICONS,MF_BYCOMMAND|MF_ENABLED);
+		menu.EnableMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_ENABLED);
+
+		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LINEUPICONS,MF_BYCOMMAND|MF_ENABLED);
+		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_ENABLED);
+
+		if (((CLocateApp*)GetApp())->m_wComCtrlVersion>=0x0600)
+		{
+			menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_ENABLED);
+			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_ENABLED);
+		}
+		else
+		{
+			menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
+			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
+		}
+	}
+			
+	
 }
 
 BOOL CLocateDlg::UpdateSettings()
@@ -1780,6 +1765,11 @@ void CLocateDlg::OnDestroy()
 	m_Menu.DestroyMenu(); // Destroy submenu
 	
 
+	
+
+	SaveRegistry();
+	ISDLGTHREADOK
+
 	if (m_pListCtrl!=NULL)
 	{
 		if ((m_pListCtrl->GetStyle() & LVS_TYPEMASK)==LVS_REPORT)
@@ -1793,9 +1783,6 @@ void CLocateDlg::OnDestroy()
 		delete m_pListTooltips;
 		m_pListTooltips=NULL;
 	}
-
-	SaveRegistry();
-	ISDLGTHREADOK
 	if (g_szBuffer!=NULL)
 	{
 		delete[] g_szBuffer;
@@ -2024,7 +2011,7 @@ LRESULT CALLBACK CLocateDlg::DebugWindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,L
 		break;
 	case WM_TIMER:
 	{
-		int nCPU=int(100*GetCpuTime());
+		//int nCPU=int(100*GetCpuTime());
 		CString str;
 		CLocateDlg* pDlg=GetLocateDlg();
 		if (pDlg->m_pBackgroundUpdater!=NULL)
@@ -2047,7 +2034,7 @@ LRESULT CALLBACK CLocateDlg::DebugWindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,L
 		else
 			str << "\r\nFileNotifications is not running";
 
-		str << "\r\nCpu time: " << nCPU;
+		//str << "\r\nCpu time: " << nCPU;
 
 		::SetDlgItemText(hwnd,100,LPCSTR(str));
 		break;
@@ -2737,8 +2724,27 @@ void CLocateDlg::SaveRegistry()
 		if (m_dwFlags&fgLargeMode && wp.showCmd!=SW_MAXIMIZE)
 			m_nLargeY=rect.bottom-rect.top;
 		RegKey.SetValue("LargeCY",(LPCTSTR)&m_nLargeY,4,REG_DWORD);
-		for (temp=0;menu.GetMenuState(temp,MF_BYPOSITION)!=MF_CHECKED && temp<3;temp++);
-		RegKey.SetValue("ListView",(LPCTSTR)&temp,4,REG_DWORD);
+		
+		
+
+		//for (temp=0;menu.GetMenuState(temp,MF_BYPOSITION)!=MF_CHECKED && temp<3;temp++);
+		switch (m_pListCtrl->GetStyle()&LVS_TYPEMASK)
+		{
+		case LVS_ICON:
+			temp=0;
+			break;
+		case LVS_SMALLICON:
+			temp=1;
+			break;
+		case LVS_LIST:
+			temp=2;
+			break;
+		default:
+			temp=3;
+			break;
+		}
+
+		RegKey.SetValue("ListView",temp);
 		if (menu.GetMenuState(IDM_AUTOARRANGE,MF_BYCOMMAND)==MF_CHECKED)
 			temp=1;
 		else
@@ -2879,7 +2885,7 @@ void CLocateDlg::SaveDialogTexts()
 	CString Path;
 	Path.LoadString(IDS_REGPLACE,CommonResource);
 	Path<<"\\Dialogs";
-	if(RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll|CRegKey::samEnumerateSubkeys)==ERROR_SUCCESS)
+	if(RegKey.OpenKey(HKCU,Path,CRegKey::defWrite)==ERROR_SUCCESS)
 	{
 		m_NameDlg.SaveControlStates(RegKey);
 		m_SizeDateDlg.SaveControlStates(RegKey);
@@ -3164,6 +3170,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 			CLocatedItem* pItem=(CLocatedItem*)pLvdi->item.lParam;
 			if (pItem==NULL)
 				break;
+
 			
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(pLvdi->item.iSubItem));
 
@@ -3176,8 +3183,12 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 					if (m_pBackgroundUpdater==NULL)
 						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
 					
-					//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,Title)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
+					
+					DebugFormatMessage("Calling AddToUpdateList with nDetail=Title for %s",pItem->GetName());
+						
+
 					m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Title);
+					
 					if (m_pLocater==NULL) // Locating in process
 						m_pBackgroundUpdater->StopWaiting();
 				}
@@ -7272,6 +7283,8 @@ void CLocateDlg::SetMenus()
 	SetMenu(hMenu);
 	if (hOldMenu!=NULL)
 		DestroyMenu(hOldMenu);
+
+	SetMenuCheckMarkForListStyle();
 }
 	
 

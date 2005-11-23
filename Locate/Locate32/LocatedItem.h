@@ -236,6 +236,7 @@ inline void CLocatedItem::UpdateIcon()
 	else
     	iIcon=GetLocateApp()->m_nDefImage;
 
+	DebugFormatMessage("dwFlags|=LITEM_ICONOK by UpdateIcon for %s",GetPath());
 	dwFlags|=LITEM_ICONOK;
 }
 
