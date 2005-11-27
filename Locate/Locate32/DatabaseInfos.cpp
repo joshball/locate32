@@ -213,11 +213,15 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 				li.pszText=di->aRootFolders.GetAt(i)->sVolumeName.GetBuffer();
 				m_pList->SetItem(&li);
 
-				li.iSubItem=3;
-				Temp.Format("%0X-%0X",HIWORD(di->aRootFolders.GetAt(i)->dwVolumeSerial),
-					LOWORD(di->aRootFolders.GetAt(i)->dwVolumeSerial));
-				li.pszText=Temp.GetBuffer();
-				m_pList->SetItem(&li);
+				if (di->aRootFolders.GetAt(i)->dwVolumeSerial!=0 &&
+					di->aRootFolders.GetAt(i)->dwVolumeSerial!=0xFFFF)
+				{
+					li.iSubItem=3;
+					Temp.Format("%0X-%0X",HIWORD(di->aRootFolders.GetAt(i)->dwVolumeSerial),
+						LOWORD(di->aRootFolders.GetAt(i)->dwVolumeSerial));
+					li.pszText=Temp.GetBuffer();
+					m_pList->SetItem(&li);
+				}
 
 				li.iSubItem=4;
 				li.pszText=di->aRootFolders.GetAt(i)->sFileSystem.GetBuffer();

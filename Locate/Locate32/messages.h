@@ -14,5 +14,6 @@
 #define WM_GETSELECTEDITEMPATH		WM_APP+110
 #define WM_ENABLEITEMS				WM_APP+111
 #define WM_SETITEMFOCUS				WM_APP+112 // wParam is handle to window
+#define WM_CLOSEDIALOG				WM_APP+113 
 
 #endif

@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,11230
- PRODUCTVERSION 2,99,5,11230
+ FILEVERSION 2,99,5,11270
+ PRODUCTVERSION 2,99,5,11270
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.11230"
+            VALUE "FileVersion", "3.0 beta 5.11270"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.11230"
+            VALUE "ProductVersion", "3.0 beta 5.11270"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -93,10 +93,10 @@ FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     LTEXT           "&Named:",IDC_NAMESTATIC,5,14,43,11
     COMBOBOX        IDC_NAME,50,12,145,53,CBS_DROPDOWN | WS_VSCROLL | 
-                    WS_TABSTOP
+                    WS_TABSTOP | CBS_AUTOHSCROLL 
     LTEXT           "Ex&tensions:",IDC_TYPESTATIC,5,35,43,10
     COMBOBOX        IDC_TYPE,50,34,145,53,CBS_DROPDOWN | WS_VSCROLL | 
-                    WS_TABSTOP
+                    WS_TABSTOP | CBS_AUTOHSCROLL 
     LTEXT           "&Look in:",IDC_LOOKINSTATIC,5,55,43,10
     CONTROL         "",IDC_LOOKIN,"ComboBoxEx32",CBS_DROPDOWN | 
                     CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | WS_TABSTOP,50,52,
@@ -433,6 +433,10 @@ BEGIN
     PUSHBUTTON      "&Edit",IDC_EDIT,236,42,43,14,
                     WS_DISABLED
     PUSHBUTTON      "&Delete",IDC_DELETE,236,59,43,14,
+                    WS_DISABLED
+    PUSHBUTTON      "&Up",IDC_UP,236,76,43,14,
+                    WS_DISABLED
+    PUSHBUTTON      "D&own",IDC_DOWN,236,93,43,14,
                     WS_DISABLED
     GROUPBOX        "Schedule:",IDC_STATIC,2,3,283,
                     292
@@ -1482,6 +1486,8 @@ BEGIN
 	IDS_ADVSETTOOLTIPTITLEFONT		"Title font:"
 	IDS_ADVSETTOOLTIPTEXTFONT		"Text font:"
 	IDS_ADVSETTOOLTIPTRANSPARENCY	"Transparency (0-255):"
+	IDS_ADVSETUSECUSTOMFONTINRESULTLIST "Use custom font"
+	IDS_ADVSETRESULTLISTFONT		"Font:"
 END
 	
 STRINGTABLE
@@ -1496,7 +1502,7 @@ BEGIN
 	IDS_ADVSETALWAYSSHOWEXT			"Always show file extensions"
 	IDS_ADVSETHIDEEXTFORKNOWN		"Hide file extensions for known types"
 	IDS_ADVSETNEVERSHOWEXT			"Never show extensions"
-	IDS_ADVSETDIALOGS				"Dialogs"
+	IDS_ADVSETDIALOGS				"Locate dialog"
 	IDS_ADVSETLOADTYPES				"Load file types from registry (""Type of file"" combo)"
 	IDS_ADVSETLARGEMODEONLY			"Result list is always shown"
 	IDS_ADVSETNUMBEROFDIRECTORIES	"Number of saved folders:"
@@ -1523,6 +1529,8 @@ BEGIN
 	IDS_ADVSETSHOWTOOLTIPDELAY		"Delay until tooltip appears (ms):"
 	IDS_ADVSETSHOWTOOLTIPDURATION	"Tooltip remains visible (ms):"
 	IDS_ADVSETUPDATETHREADPRIORITY	"Thread priority:"
+	IDS_ADVSETMISCELLANEOUS			"Miscellaneous"
+	IDS_ADVSETDONTSHOWEXTINRENAME	"Don't show an extension in the rename dialog"
 END
 
 STRINGTABLE

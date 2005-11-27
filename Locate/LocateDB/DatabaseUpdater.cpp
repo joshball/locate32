@@ -174,9 +174,12 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 						break;
 					}
 				}
-				DebugMessage("CDatabaseUpdater::UpdatingProc(): trying to open database");
-				dbFile=new CFile(m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
-					CFile::defWrite|CFile::otherStrNullTerminated,TRUE);
+				else
+				{
+					DebugMessage("CDatabaseUpdater::UpdatingProc(): trying to open database");
+					dbFile=new CFile(m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
+						CFile::defWrite|CFile::otherStrNullTerminated,TRUE);
+				}
 				break;
 			default:
 				throw CFileException(CFileException::notImplemented,
@@ -1084,8 +1087,18 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 					{
 						nro=(NETRESOURCE*)GlobalAlloc(GPTR,cbBuffer);
 						dwRet=WNetEnumResource(hEnum,&dwEntries,nro,&cbBuffer);
-						if (dwRet!=ERROR_MORE_DATA && dwRet!=NOERROR)
+						if (dwRet==ERROR_NO_MORE_ITEMS)
 							break;
+
+						if (dwRet!=ERROR_MORE_DATA && dwRet!=NOERROR)
+						{
+                            if (m_pFirstRoot==NULL)
+								tmp=m_pFirstRoot=new CRootDirectory(pPtr,dwLength);
+							else
+								tmp=tmp->m_pNext=new CRootDirectory(pPtr,dwLength);
+
+							break;
+						}
 
 						for (DWORD i=0;i<dwEntries;i++)
 						{

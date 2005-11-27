@@ -56,6 +56,19 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 
 	m_psh.dwFlags|=PSH_NOAPPLYNOW|PSH_NOCONTEXTHELP;
 
+	int nDeviceCaps;
+	{
+		// Getting device caps
+		HDC hScreenDC=::GetDC(NULL);
+		nDeviceCaps=::GetDeviceCaps(hScreenDC,LOGPIXELSY);
+		::ReleaseDC(NULL,hScreenDC);
+	}
+	ZeroMemory(&m_lResultListFont,sizeof(LOGFONT));
+	m_lResultListFont.lfHeight=-MulDiv(9, nDeviceCaps, 72);
+	m_lResultListFont.lfWeight=FW_NORMAL;
+	StringCbCopy(m_lResultListFont.lfFaceName,LF_FACESIZE,"Tahoma");
+	
+
 	CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(&m_lToolTipTextFont,&m_lToolTipTitleFont);
 
 
@@ -204,6 +217,11 @@ BOOL CSettingsProperties::LoadSettings()
 
 		if (RegKey.QueryValue("Update Process Priority",nTemp))
 			m_nUpdateThreadPriority=nTemp;
+
+
+		if (RegKey.QueryValue("ResultListFont",(LPSTR)&m_lResultListFont,sizeof(LOGFONT))==sizeof(LOGFONT))
+			m_dwSettingsFlags|=settingsUseCustomResultListFont;
+
 	}
 
 	// m_bAdvancedAndContextMenuFlag
@@ -285,6 +303,18 @@ BOOL CSettingsProperties::LoadSettings()
 	if (m_dwTooltipDelayInitial==DWORD(-1))
 		m_dwTooltipDelayInitial=GetDoubleClickTime();
 
+
+
+	// Update status tooltip
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Misc",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		DWORD dwTemp=0;;
+		RegKey.QueryValue("NoExtensionInRename",dwTemp);
+		if (dwTemp)
+			m_dwSettingsFlags|=settingsDontShowExtensionInRenameDialog;
+	}
+			
+	
 	return TRUE;
 }
 
@@ -335,6 +365,14 @@ BOOL CSettingsProperties::SaveSettings()
 
 
 		RegKey.SetValue("Update Process Priority",(DWORD)m_nUpdateThreadPriority);
+
+
+
+
+		if (m_dwSettingsFlags&settingsUseCustomResultListFont)
+			RegKey.SetValue("ResultListFont",(LPSTR)&m_lResultListFont,sizeof(LOGFONT));
+		else
+			RegKey.DeleteValue("ResultListFont");
 
 	}
 
@@ -553,6 +591,15 @@ BOOL CSettingsProperties::SaveSettings()
 		RegKey.SetValue("ErrorColor",(DWORD)m_cToolTipErrorColor);
 		RegKey.SetValue("BackColor",(DWORD)m_cToolTipBackColor);
 	}
+
+	// Misc settings
+	Path.LoadString(IDS_REGPLACE,CommonResource);
+	Path<<"\\Misc";
+	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	{
+		RegKey.SetValue("NoExtensionInRename",m_dwSettingsFlags&settingsDontShowExtensionInRenameDialog?1:0);
+	}
+		
 	
 	return TRUE;
 }
@@ -866,7 +913,13 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			MAKELONG(0,1000000),&m_pSettings->m_dwTooltipDelayAutopop),
 		NULL
 	};
+	Item* ResultListFontItems[]={
+		CreateFont(IDS_ADVSETRESULTLISTFONT,DefaultFontProc,NULL,&m_pSettings->m_lResultListFont),
+		NULL
+	};
 	Item* FileViewItems[]={
+		CreateCheckBox(IDS_ADVSETUSECUSTOMFONTINRESULTLIST,ResultListFontItems,DefaultCheckBoxProc,
+			CSettingsProperties::settingsUseCustomResultListFont,&m_pSettings->m_dwSettingsFlags),
 		CreateRadioBox(IDS_ADVSETUSEGETTITLE,NULL,DefaultRadioBoxProc,
 			MAKELONG(CLocateDlg::fgLVUseGetFileTitle,CLocateDlg::fgLVMethodFlag),&m_pSettings->m_dwLocateDialogFlags),
 		CreateRadioBox(IDS_ADVSETUSEOWNMETHODFORTITLE,TitleMethodItems,DefaultRadioBoxProc,
@@ -1019,11 +1072,18 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL
 	};
 	
+	Item* MiscItems[]={
+		CreateCheckBox(IDS_ADVSETDONTSHOWEXTINRENAME,NULL,DefaultCheckBoxProc,
+			CSettingsProperties::settingsDontShowExtensionInRenameDialog,&m_pSettings->m_dwSettingsFlags),
+		NULL
+	};
 
+	
 	Item* Parents[]={
 		CreateRoot(IDS_ADVSETRESULTS,ResultsItems),
 		CreateRoot(IDS_ADVSETDIALOGS,DialogItems),
 		CreateRoot(IDS_ADVSETUPDATEPROCESS,UpdateProcessItems),
+		CreateRoot(IDS_ADVSETMISCELLANEOUS,MiscItems),
 		CreateRoot(IDS_ADVSETSYSTEM,SystemItems),
 		NULL};
 
@@ -3441,6 +3501,27 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnInitDialog(HWND hwndFocus)
 	return FALSE;
 }
 
+void CSettingsProperties::CAutoUpdateSettingsPage::EnableItems()
+{
+	int nCurSel=m_pSchedules->GetCurSel();
+	if (nCurSel==-1)
+	{
+		EnableDlgItem(IDC_EDIT,FALSE);
+		EnableDlgItem(IDC_DELETE,FALSE);
+
+		EnableDlgItem(IDC_DOWN,FALSE);
+		EnableDlgItem(IDC_UP,FALSE);
+	}
+	else
+	{
+		EnableDlgItem(IDC_EDIT,TRUE);
+		EnableDlgItem(IDC_DELETE,TRUE);	
+
+		EnableDlgItem(IDC_DOWN,nCurSel!=m_pSchedules->GetCount()-1);
+		EnableDlgItem(IDC_UP,nCurSel!=0);
+	}
+}
+
 BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
 	CPropertyPage::OnCommand(wID,wNotifyCode,hControl);
@@ -3457,6 +3538,8 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnCommand(WORD wID,WORD wNoti
 			}
 			else
 				delete sud.m_pSchedule;
+
+			EnableItems();
 			break;
 		}
 	case IDC_DELETE:
@@ -3467,11 +3550,9 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnCommand(WORD wID,WORD wNoti
 			CSchedule* tmp=(CSchedule*)m_pSchedules->GetItemData(nCurSel);
 			m_pSchedules->DeleteString(nCurSel);
 			m_pSettings->m_Schedules.RemoveAt(m_pSettings->m_Schedules.Find(tmp));
-			
-			
-			nCurSel=m_pSchedules->GetCurSel();
-			EnableDlgItem(IDC_EDIT,nCurSel!=-1);
-			EnableDlgItem(IDC_DELETE,nCurSel!=-1);
+
+			EnableItems();
+						
 			break;
 		}
 	case IDC_EDIT:
@@ -3488,18 +3569,16 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnCommand(WORD wID,WORD wNoti
 	case IDC_UPDATES:
 		if (wNotifyCode==LBN_SELCHANGE)
 		{
-			
 			CString txt;
+			EnableItems();
+
 			int nCurSel=m_pSchedules->GetCurSel();
 			if (nCurSel==-1)
-			{
-				EnableDlgItem(IDC_EDIT,FALSE);
-				EnableDlgItem(IDC_DELETE,FALSE);
 				break;
-			}
-			EnableDlgItem(IDC_EDIT,TRUE);
-			EnableDlgItem(IDC_DELETE,TRUE);
+		
 			CSchedule* pSchedule=(CSchedule*)m_pSchedules->GetItemData(nCurSel);
+			if (pSchedule==NULL)
+				break;
 			if (pSchedule->m_bFlags&CSchedule::flagRunned)
 			{
 				SYSTEMTIME st;
@@ -3520,6 +3599,47 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnCommand(WORD wID,WORD wNoti
 			SetDlgItemText(IDC_LASTRUN,(LPCSTR)txt);
 		}
 		break;
+	case IDC_UP:
+	case IDC_DOWN:
+		{
+			int nSelItem=m_pSchedules->GetCurSel();
+			int nAltItem=nSelItem+(wID==IDC_DOWN?1:-1);
+
+
+
+			if (nSelItem==-1 ||
+				(wID==IDC_UP && nSelItem==0) ||
+				(wID==IDC_DOWN && nSelItem==m_pSchedules->GetCount()-1))
+				break;
+			
+			CSchedule* pSchedule=(CSchedule*)m_pSchedules->GetItemData(nSelItem);
+			CSchedule* pAltSchedule=(CSchedule*)m_pSchedules->GetItemData(nAltItem);
+
+			if (pSchedule==NULL || pAltSchedule==NULL)
+				break;
+            
+			POSITION pPos=m_pSettings->m_Schedules.Find(pSchedule);
+			POSITION pAltPos=m_pSettings->m_Schedules.Find(pAltSchedule);
+
+			if (pPos==NULL || pAltPos==NULL)
+				break;
+            
+			m_pSettings->m_Schedules.SetAt(pPos,pAltSchedule);
+			m_pSchedules->SetItemData(nSelItem,DWORD(pAltSchedule));
+			
+			m_pSettings->m_Schedules.SetAt(pAltPos,pSchedule);
+			m_pSchedules->SetItemData(nAltItem,DWORD(pSchedule));
+
+			m_pSchedules->UpdateWindow();
+			m_pSchedules->InvalidateRect(NULL,TRUE);
+			m_pSchedules->SetCurSel(nAltItem);
+			
+			EnableItems();
+
+			break;
+		}
+
+
 	}
 	return FALSE;
 }

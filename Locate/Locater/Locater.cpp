@@ -288,7 +288,7 @@ BOOL CLocater::LocatingProc()
 			// Reading root data
 			LocaterDebugMessage("CLocater::LocatingProc() READINGROOTDATA");
 			
-			if (m_aDirectories.GetSize())
+			if (m_aDirectories.GetSize()>0)
 			{
 				// There is directories in which files should be
 

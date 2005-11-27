@@ -473,6 +473,7 @@ public:
 	void SetShortcuts();
 	void ClearShortcuts();
 	void SetMenus();
+	void SetResultListFont();
 
 	void LoadResultlistActions();
 	void SaveResultlistActions();
@@ -672,6 +673,7 @@ protected:
 	
 	CMenu m_Menu;
 	HFONT m_hSendToListFont;
+	HFONT m_hDialogFont;
 
 	CBitmap m_CircleBitmap;
 	HICON* m_pLocateAnimBitmaps;

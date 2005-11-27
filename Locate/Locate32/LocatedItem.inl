@@ -222,5 +222,237 @@ inline void CLocatedItem::CheckIfDeleted()
 }
 
 
+inline CLocatedItem::CLocatedItem(BOOL bFolder,const CLocater* pLocater)
+:	szTitle(NULL),szType(NULL),dwFlags(0),pFirstExtraInfo(NULL)
+{
+	if (bFolder)
+		SetFolder(pLocater);
+	else
+		SetFile(pLocater);
+}
+
+inline CLocatedItem::~CLocatedItem()
+{
+	ClearData();
+}
+
+inline void CLocatedItem::OemtoAnsi()
+{
+	GetPath();
+	OemToChar(szPath,szPath);
+}
+
+inline void CLocatedItem::UpdateIcon()
+{
+	SHFILEINFO fi;
+	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
+	{
+        if (SHGetFileInfo(GetPath(),0,&fi,sizeof(SHFILEINFO),/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
+		{
+			iIcon=fi.iIcon;
+			DebugFormatMessage("CLocatedItem::UpdateIcon(): iIcon for %s is %d",GetName(),iIcon);
+			
+		}
+		else
+		{
+			iIcon=GetLocateApp()->m_nDelImage;
+			DebugFormatMessage("CLocatedItem::UpdateIcon(): failed to get icon, iIcon for %s is %d",GetName(),iIcon);
+		}
+	}
+	else if (IsDeleted())
+	{
+		iIcon=GetLocateApp()->m_nDelImage;
+		DebugFormatMessage("CLocatedItem::UpdateIcon(): use deleted icon %d for %s",iIcon,GetName());
+	}
+	else
+	{
+		iIcon=GetLocateApp()->m_nDefImage;
+		DebugFormatMessage("CLocatedItem::UpdateIcon(): use default icon %d for %s",iIcon,GetName());
+	}
+
+	dwFlags|=LITEM_ICONOK;
+}
+
+inline void CLocatedItem::UpdateParentIcon()
+{
+	SHFILEINFO fi;
+	LPSTR szParent=GetParent();
+	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
+	{
+		if (szParent[1]==':' && szParent[2]=='\0')
+		{
+			char szDrive[]="X:\\";
+			szDrive[0]=szParent[0];
+			if (SHGetFileInfo(szDrive,0,&fi,sizeof(SHFILEINFO),/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
+				iParentIcon=fi.iIcon;
+			else
+				iParentIcon=((CLocateApp*)GetApp())->m_nDelImage;
+		}
+		else
+		{
+			if (SHGetFileInfo(GetParent(),0,&fi,sizeof(SHFILEINFO),/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
+				iParentIcon=fi.iIcon;
+			else
+				iParentIcon=((CLocateApp*)GetApp())->m_nDelImage;
+		}
+	}
+	else if (IsDeleted())
+		iIcon=GetLocateApp()->m_nDelImage;
+	else
+    	iIcon=GetLocateApp()->m_nDefImage;
+
+	dwFlags|=LITEM_PARENTICONOK;
+}
+
+
+inline void CLocatedItem::ReFresh(CArray<CLocateDlg::DetailType>& aDetails,BOOL& bReDraw)
+{
+	ItemDebugFormatMessage4("CLocatedItem::ReFresh BEGIN, item=%s flags=%X",GetName(),GetFlags(),0,0);
+
+	//TODO: More optimal code may exists
+	for (int i=0;i<aDetails.GetSize();i++)
+	{
+		ItemDebugFormatMessage4("CLocatedItem::ReFresh 1, item=%s flags=%X nDetail=%X su=%d",
+			GetName(),GetFlags(),DWORD(aDetails[i]),ShouldUpdateByDetail(aDetails[i]));
+		if (ShouldUpdateByDetail(aDetails[i]))
+		{
+			UpdateByDetail(aDetails[i]);
+			bReDraw=TRUE;
+		}
+		ItemDebugFormatMessage4("CLocatedItem::ReFresh 2, item=%s flags=%X nDetail=%X su=%d",
+			GetName(),GetFlags(),DWORD(aDetails[i]),ShouldUpdateByDetail(aDetails[i]));
+	}
+
+	ItemDebugFormatMessage4("CLocatedItem::ReFresh END, item=%s flags=%X",GetName(),GetFlags(),0,0);
+}
+
+inline void CLocatedItem::ReFresh(CArray<CLocateDlg::DetailType>& aDetails,int* pUpdated)
+{
+	ItemDebugFormatMessage4("CLocatedItem::ReFresh BEGIN, item=%s flags=%X",GetName(),GetFlags(),0,0);
+	
+	int iUpdatedCount=0;
+
+	//TODO: More optimal code may exists
+	for (int i=0;i<aDetails.GetSize();i++)
+	{
+		ItemDebugFormatMessage4("CLocatedItem::ReFresh 1, item=%s flags=%X nDetail=%X su=%d",
+			GetName(),GetFlags(),DWORD(aDetails[i]),ShouldUpdateByDetail(aDetails[i]));
+		if (ShouldUpdateByDetail(aDetails[i]))
+		{
+			UpdateByDetail(aDetails[i]);
+			pUpdated[iUpdatedCount++]=i;
+		}
+		ItemDebugFormatMessage4("CLocatedItem::ReFresh 2, item=%s flags=%X nDetail=%X su=%d",
+			GetName(),GetFlags(),DWORD(aDetails[i]),ShouldUpdateByDetail(aDetails[i]));
+	}
+
+	pUpdated[iUpdatedCount]=-1;
+	ItemDebugFormatMessage4("CLocatedItem::ReFresh END, item=%s flags=%X",GetName(),GetFlags(),0,0);
+}
+
+inline BOOL CLocatedItem::GetImageDimensions(SIZE& dim) const
+{
+	ExtraInfo* pInfo=GetFieldForType(CLocateDlg::DetailType::ImageDimensions);
+	if (pInfo!=NULL)
+	{
+		dim=pInfo->szImageDimension;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+inline int CLocatedItem::GetImageDimensionsProduct() const
+{
+	ExtraInfo* pInfo=GetFieldForType(CLocateDlg::DetailType::ImageDimensions);
+	if (pInfo!=NULL)
+		return pInfo->szImageDimension.cx*pInfo->szImageDimension.cy;
+	return 0;
+}
+
+inline LPSTR CLocatedItem::GetExtraText(CLocateDlg::DetailType nDetail) const
+{
+	ExtraInfo* pInfo=GetFieldForType(nDetail);
+	if (pInfo!=NULL)
+		return pInfo->szText;
+	return NULL;
+}
+
+inline void CLocatedItem::ExtraSetUpdateWhenFileSizeChanged()
+{
+	ExtraInfo* pTmp=pFirstExtraInfo;
+	while (pTmp!=NULL)
+	{
+		switch (pTmp->nType)
+		{
+		case CLocateDlg::DetailType::Owner:
+		case CLocateDlg::DetailType::ImageDimensions:
+            pTmp->bShouldUpdate=TRUE;
+			break;
+		case CLocateDlg::DetailType::MD5sum:
+			if (GetLocateDlg()->GetFlags()&CLocateDlg::fgLVComputeMD5Sums)
+				pTmp->bShouldUpdate=TRUE;
+			break;
+		}
+		pTmp=pTmp->pNext;
+	}
+}
+
+inline void CLocatedItem::DeleteAllExtraFields()
+{
+    while (pFirstExtraInfo!=NULL)
+	{
+		ExtraInfo*pTmp=pFirstExtraInfo;
+		pFirstExtraInfo=pTmp->pNext;
+		delete pTmp;
+	}
+} 
+
+
+inline CLocatedItem::ExtraInfo::ExtraInfo(CLocateDlg::DetailType nType_)
+:	nType(nType_),pNext(NULL),szText(NULL),bShouldUpdate(TRUE)
+{
+}
+
+inline CLocatedItem::ExtraInfo::~ExtraInfo()
+{
+	switch (nType)
+	{
+	case CLocateDlg::DetailType::ShortFileName:
+	case CLocateDlg::DetailType::ShortFilePath:
+	case CLocateDlg::DetailType::Owner:
+	case CLocateDlg::DetailType::MD5sum:
+		if (szText!=NULL && szText!=szEmpty)
+			Allocation.Free(szText);
+		break;
+	}
+}
+
+
+inline CLocatedItem::ExtraInfo* CLocatedItem::GetFieldForType(CLocateDlg::DetailType nType) const
+{
+	ExtraInfo* pTmp=pFirstExtraInfo;
+	while (pTmp!=NULL)
+	{
+		if (pTmp->nType==nType)
+			return pTmp;
+		pTmp=pTmp->pNext;
+	}
+	return NULL;
+}
+
+
+
+inline CLocatedItem::ExtraInfo* CLocatedItem::CreateExtraInfoField(CLocateDlg::DetailType nType)
+{
+	/* First check if field already exists */
+	ExtraInfo* pField=GetFieldForType(nType);
+	if (pField==NULL)
+	{
+		pField=new ExtraInfo(nType);
+		pField->pNext=pFirstExtraInfo;
+		pFirstExtraInfo=pField;
+	}
+	return pField;
+}
 
 #endif

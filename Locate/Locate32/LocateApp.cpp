@@ -2236,6 +2236,14 @@ void CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootI
 	// Retrieving information
 	wRunning=0;
 	ppUpdaters=GetLocateApp()->GetUpdatersPointer();
+	if (ppUpdaters==NULL)
+	{
+		wThreads=0;
+		delete[] pRootInfos;
+		pRootInfos=NULL;
+		return;
+	}
+
 	for (WORD i=0;i<wThreads;i++)
 	{
 		if (IS_UPDATER_EXITED(ppUpdaters[i]))
@@ -2291,6 +2299,8 @@ void CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootI
 void CLocateAppWnd::FreeRootInfos(WORD wThreads,RootInfo* pRootInfos)
 {
 	// Freeing memory
+	if (pRootInfos==NULL)
+		return;
 	for (int i=0;i<wThreads;i++)
 	{
 		if (pRootInfos[i].pName!=NULL)
@@ -2945,7 +2955,7 @@ void CLocateAppWnd::OnDestroy()
 
 		if (m_pLocateDlgThread->IsRunning())
 		{
-			GetLocateDlg()->PostMessage(WM_CLOSE);
+			GetLocateDlg()->PostMessage(WM_CLOSEDIALOG);
 			
 			if (m_pLocateDlgThread!=NULL)
 			{

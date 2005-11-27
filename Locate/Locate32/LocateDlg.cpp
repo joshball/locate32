@@ -358,7 +358,11 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	ASSERT(CShortcut::GetDefaultShortcuts(aDefaultShortcuts,CShortcut::loadAll));
 #endif
 
+	// Set dialog more
 	SetDialogMode(FALSE);
+
+	// Set result list font
+	SetResultListFont();
 		
 	// Setting topmost mode if needed
 	if (GetFlags()&fgDialogTopMost)
@@ -433,9 +437,33 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_NameDlg.SetFocus();
 	m_NameDlg.SetFocus(IDC_NAME);
 	
+	
 	return FALSE;
 }
 
+void CLocateDlg::SetResultListFont()
+{
+	if (m_hDialogFont==NULL)
+		m_hDialogFont=m_pListCtrl->GetFont();
+
+	
+	HFONT hOldFont=m_pListCtrl->GetFont();
+	HFONT hNewFont=m_hDialogFont;
+
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+	{
+		LOGFONT lFont;
+		if (RegKey.QueryValue("ResultListFont",(LPSTR)&lFont,sizeof(LOGFONT))==sizeof(LOGFONT))
+			hNewFont=CreateFontIndirect(&lFont);
+		
+	}
+	
+	m_pListCtrl->SetFont(hNewFont);
+
+	if (hOldFont!=m_hDialogFont)
+		DeleteObject(hOldFont);
+}
 
 BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
@@ -782,6 +810,12 @@ BOOL CLocateDlg::UpdateSettings()
 
 	// Update tooltip setting	
 	InitTooltips();
+
+	// Set result list font
+	SetResultListFont();
+
+
+
     
 	if (m_NameDlg.EnableMultiDirectorySupport(GetFlags()&fgNameMultibleDirectories?TRUE:FALSE))
 	{
@@ -2142,19 +2176,6 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 	case WM_SETICON:
 		DefWindowProc(*this,msg,wParam,lParam);
 		break;
-/*	case WM_LBUTTONDOWN: 
-	case WM_LBUTTONUP: 
-	case WM_MBUTTONDOWN: 
-	case WM_MBUTTONUP: 
-	case WM_MOUSEMOVE: 
-	case WM_RBUTTONDOWN: 
-	case WM_RBUTTONUP:
-		if (m_pListTooltips!=NULL)
-		{
-			//m_pListTooltips->RelayEvent((MSG*)GetLocateAppWnd()->m_pLocateDlgThread->GetCurrentMessage());
-			DebugMessage("CLocateDlg::WindowProc: message relayed to tooltip control");
-		}
-		break;*/
 	case WM_RESETSHORTCUTS:
 		SetShortcuts();
 		break;
@@ -2200,6 +2221,12 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 	case WM_SETITEMFOCUS:
 		::SetFocus((HWND)wParam);
 		return 0;
+	case WM_CLOSEDIALOG:
+		DestroyWindow();
+		break;
+	case WM_SETFONT:
+		m_hDialogFont=HFONT(wParam);
+		break;
 #ifdef _DEBUG
 	case WM_SYSCOMMAND:
 		if (wParam==0x76)
@@ -2706,9 +2733,7 @@ void CLocateDlg::SaveRegistry()
 	Path.LoadString(IDS_REGPLACE,CommonResource);
 	Path<<"\\General";
 
-			
-
-	if(RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	if(RegKey.OpenKey(HKCU,Path,CRegKey::defWrite)==ERROR_SUCCESS)
 	{
 		CRect rect;
 		CMenu menu(GetSubMenu(GetMenu(),2));
@@ -2716,7 +2741,7 @@ void CLocateDlg::SaveRegistry()
 		RegKey.SetValue("Program StatusExtra",m_dwExtraFlags&efSave);
 		
 		SavePosition(RegKey,NULL,"Position");
-
+		
 		GetWindowRect(&rect);
 		WINDOWPLACEMENT wp;
 		wp.length=sizeof(WINDOWPLACEMENT);
@@ -2755,7 +2780,9 @@ void CLocateDlg::SaveRegistry()
 		else
 			temp=0;
 		RegKey.SetValue("AlignToGrid",(LPCTSTR)&temp,4,REG_DWORD);
+	
 	}
+
 }
 
 void CLocateDlg::LoadRegistry()
@@ -3184,7 +3211,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
 					
 					
-					DebugFormatMessage("Calling AddToUpdateList with nDetail=Title for %s",pItem->GetName());
+					DebugFormatMessage("LVN_GETDISPINFO: Calling AddToUpdateList with nDetail=Title for %s",pItem->GetName());
 						
 
 					m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Title);
@@ -3199,6 +3226,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 					pLvdi->item.pszText=pItem->GetName();
 				
 				pLvdi->item.iImage=pItem->GetIcon();
+				DebugFormatMessage("LVN_GETDISPINFO: icon set to %d for item %s",pLvdi->item.iImage,pItem->GetName());
 
 				if (pItem->GetAttributes()&(LITEMATTRIB_CUTTED|LITEMATTRIB_HIDDEN))
 				{
@@ -4261,7 +4289,7 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 				HRESULT(STDAPICALLTYPE * pSHOpenFolderAndSelectItems)(LPCITEMIDLIST,UINT,LPCITEMIDLIST*,DWORD)=
 					(HRESULT(STDAPICALLTYPE *)(LPCITEMIDLIST,UINT,LPCITEMIDLIST*,DWORD))GetProcAddress(GetModuleHandle("shell32.dll"),"SHOpenFolderAndSelectItems");
 				
-				if (pSHOpenFolderAndSelectItems!=NULL)
+				if (pSHOpenFolderAndSelectItems!=NULL && 0)
 				{
 					CArrayFP<FolderInfo*> aFolders;
 					int i;
@@ -4370,9 +4398,14 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 						
 					for (int i=0;i<nSelectedItems;i++)
 					{
-						sArg.Format("/e,/select,\"%s\"",pItems[i]->GetPath());
-						sxi.lpParameters=sArg;
-						ShellExecuteEx(&sxi);
+						if (pItems[i]->IsDeleted())
+							OpenFolder(pItems[i]->GetParent());
+						else
+						{
+                            sArg.Format("/e,/select,\"%s\"",pItems[i]->GetPath());
+							sxi.lpParameters=sArg;
+							ShellExecuteEx(&sxi);
+						}
 					}
 
 
@@ -5626,16 +5659,33 @@ void CLocateDlg::OnChangeFileName()
 {
 	CChangeFilenameDlg fnd;
 	
+	CRegKey RegKey;
+	BOOL bNoExtension=FALSE;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Misc",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		DWORD dwTemp=0;;
+		RegKey.QueryValue("NoExtensionInRename",dwTemp);
+		if (dwTemp)
+			bNoExtension=TRUE;
+	}
+
 	int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
 	while (iItem!=-1)
 	{
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
 		if (pItem!=NULL)
 		{
-			fnd.m_sFileName.Copy(pItem->GetName(),pItem->GetNameLen());
+			DWORD sNameLen=pItem->GetNameLen();
+			if (bNoExtension && pItem->GetExtensionLength()!=0)
+				sNameLen-=pItem->GetExtensionLength()+1;
+                        			
+			fnd.m_sFileName.Copy(pItem->GetName(),sNameLen);
 			if (fnd.DoModal(*this))
 			{
-				pItem->ChangeName(fnd.m_sFileName,fnd.m_sFileName.GetLength());
+				if (bNoExtension && pItem->GetExtensionLength()!=0)
+					fnd.m_sFileName<<(pItem->GetExtension()-1);
+				if (fnd.m_sFileName.Compare(pItem->GetName())!=0)
+					pItem->ChangeName(fnd.m_sFileName,fnd.m_sFileName.GetLength());
 				m_pListCtrl->RedrawItems(iItem,iItem);
 			}
 		}

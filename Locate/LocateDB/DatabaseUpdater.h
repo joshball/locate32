@@ -311,7 +311,10 @@ inline WORD CDatabaseUpdater::GetProgressStatus() const
 	if (dwDirectoriesCurrently>m_aDatabases[m_dwCurrentDatabase]->m_dwExpectedDirectories)
 		return 990;
 
-    return WORD((dwDirectoriesCurrently*1000)/m_aDatabases[m_dwCurrentDatabase]->m_dwExpectedDirectories);
+	if (m_aDatabases[m_dwCurrentDatabase]->m_dwExpectedDirectories>0)
+		return WORD((dwDirectoriesCurrently*1000)/m_aDatabases[m_dwCurrentDatabase]->m_dwExpectedDirectories);
+
+	return WORD(-1);
 }
 
 inline LPCSTR CDatabaseUpdater::GetCurrentRootPath() const

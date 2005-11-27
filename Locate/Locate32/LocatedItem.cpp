@@ -1115,8 +1115,12 @@ void CLocatedItem::ChangeName(LPCSTR szNewName,int iLength)
 	if (iLength==-1)
 		iLength=istrlen(szNewName);
 
+	if (szTitle!=szName && szTitle!=NULL)
+		Allocation.Free(szTitle);
+	szTitle=NULL;
+
 	DWORD dwDirectoryLen=DWORD(szName-szPath);
-	szPath=(char*)Allocation.AllocateFast(dwDirectoryLen+iLength+1);
+	szPath=(char*)Allocation.AllocateFast(dwDirectoryLen+iLength+2);
 	
 	// Copying directory
 	CopyMemory(szPath,szOldPath,dwDirectoryLen);
@@ -1133,8 +1137,11 @@ void CLocatedItem::ChangeName(LPCSTR szNewName,int iLength)
 		bExtensionPos=bNameLength;
 
 	MoveFile(szOldPath,szPath);
-	Allocation.Free(szOldPath);
 	
+	
+	szTitle=szName;
+
+	Allocation.Free(szOldPath);
 
 	AddFlags(LITEM_FILENAMEOK);
 	RemoveFlags(LITEM_TITLEOK);

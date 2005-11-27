@@ -250,6 +250,8 @@ public:
 		virtual void OnDestroy();
 		virtual BOOL OnApply();
 		virtual void OnCancel();
+
+		void EnableItems();
 				
 	public:
 		class CCheduledUpdateDlg : public CDialog
@@ -419,6 +421,9 @@ public:
 	DWORD m_nNumberOfDirectories; // Directoried in NameDlg 
 	int  m_nUpdateThreadPriority;
 	
+	LOGFONT m_lResultListFont;
+	
+
 	CString m_TimeFormat;
 	CString m_DateFormat;
 	CLocateApp::FileSizeFormats m_nFileSizeFormat;
@@ -437,19 +442,16 @@ public:
 
 	// General settings flags	
 	enum SettingsFlags {
-		settingsCancelled=0x1,
-		
-		settingsUseLanguageWithConsoleApps=0x2,
-		
-		settingsStartLocateAtStartup=0x20,
-		settingsUseOtherProgramsToOpenFolders=0x8,
-		
-		settingsIsUsedDatabaseChanged=0x4,
-		settingsDatabasesOverridden=0x10,
-
-		settingsSetTooltipDelays=0x40,
-		
-		
+		settingsCancelled=0x0001,
+		settingsUseLanguageWithConsoleApps=0x0002,
+		settingsIsUsedDatabaseChanged=0x0004,
+		settingsUseOtherProgramsToOpenFolders=0x0008,
+		settingsDatabasesOverridden=0x0010,
+		settingsStartLocateAtStartup=0x0020,
+		settingsSetTooltipDelays=0x0040,
+		settingsUseCustomResultListFont=0x0080,
+		settingsDontShowExtensionInRenameDialog=0x0100,
+				
 		settingsDefault=settingsUseLanguageWithConsoleApps
 	};
 

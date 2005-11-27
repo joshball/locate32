@@ -160,7 +160,7 @@ inline CLocater::ValidType CLocater::IsFolderValid(DWORD nPathLen)
 				if (_strfcmp(*m_aDirectories.GetAt(i),szCurrentPathLower,nPathLen))
 					return SomeValidFolders;
 			}
-			else
+			else if (m_aDirectories.GetAt(i)->GetLength()==nPathLen)
 			{
 				if (_strfcmp(*m_aDirectories.GetAt(i),szCurrentPathLower,
 					m_aDirectories.GetAt(i)->GetLength()))
