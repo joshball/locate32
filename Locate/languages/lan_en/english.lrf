@@ -227,6 +227,7 @@ STRADVANCEDSETTINGS_DONTADDANYROOTS=Don't add directories (except local drives) 
 STRADVANCEDSETTINGS_MULTIPLEDIRECTORIES=Possible to choose more than one directory
 STRADVANCEDSETTINGS_LOADTYPEFROMREGISTRY=Load file types from registry (""Type of file"" combo)
 STRADVANCEDSETTINGS_SYSTEM=System
+STRADVANCEDSETTINGS_NODELAYEDUPDATING=Show icon, title and other information before locating is finished
 STRADVANCEDSETTINGS_USEGETTITLE=Use GetFileTitle function to formulate a file titles
 STRADVANCEDSETTINGS_USEOWNMETHODFORTITLE=Use own method to generate file titles
 STRADVANCEDSETTINGS_SHOWTYPEICONS=Show type specified icons

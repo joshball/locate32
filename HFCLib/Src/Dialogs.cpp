@@ -2163,7 +2163,7 @@ BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
 	// Counting items
 	for (int iItems=0;pItems[iItems]!=NULL;iItems++);
 	
-	m_pItems=new Item*[iItems+1];
+	m_pItems=new Item*[max(iItems+1,2)];
 	m_pItems[iItems]=NULL;
 	CopyMemory(m_pItems,pItems,sizeof(Item*)*(iItems+1));
 	return InsertItemsToTree(NULL,m_pItems,NULL);
@@ -3063,7 +3063,7 @@ BOOL COptionsPropertyPage::SetTextValue(Item* pItem)
 		break;
 	default:
 		iTextLen=::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,0,0)+1;
-		cp.pNewData=new char[iTextLen];
+		cp.pNewData=new char[max(iTextLen,2)];
 		::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(cp.pNewData));
 		break;
 	}

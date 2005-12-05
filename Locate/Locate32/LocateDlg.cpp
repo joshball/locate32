@@ -782,6 +782,17 @@ void CLocateDlg::SetMenuCheckMarkForListStyle()
 	}
 			
 	
+	if (m_pListCtrl->GetStyle()&LVS_AUTOARRANGE)
+	{
+		menu.CheckMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_CHECKED);
+		CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_CHECKED);
+	}
+
+	if (m_pListCtrl->GetExtendedListViewStyle()&LVS_EX_SNAPTOGRID)
+	{
+		menu.CheckMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_CHECKED);
+		CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_CHECKED);
+	}
 }
 
 BOOL CLocateDlg::UpdateSettings()
@@ -1791,6 +1802,9 @@ void CLocateDlg::OnDestroy()
 	}
 
 
+	SaveRegistry();
+	ISDLGTHREADOK
+
 	// Freeing target paths in dwItemData
 	ClearMenuVariables();
 	HMENU hOldMenu=GetMenu();
@@ -1801,8 +1815,6 @@ void CLocateDlg::OnDestroy()
 
 	
 
-	SaveRegistry();
-	ISDLGTHREADOK
 
 	if (m_pListCtrl!=NULL)
 	{
@@ -2736,18 +2748,21 @@ void CLocateDlg::SaveRegistry()
 	if(RegKey.OpenKey(HKCU,Path,CRegKey::defWrite)==ERROR_SUCCESS)
 	{
 		CRect rect;
-		CMenu menu(GetSubMenu(GetMenu(),2));
+		//CMenu menu(GetSubMenu(GetMenu(),2));
+		CMenu menu(GetMenu());
 		RegKey.SetValue("Program Status",m_dwFlags&fgSave);
 		RegKey.SetValue("Program StatusExtra",m_dwExtraFlags&efSave);
 		
 		SavePosition(RegKey,NULL,"Position");
 		
-		GetWindowRect(&rect);
+		//GetWindowRect(&rect);
 		WINDOWPLACEMENT wp;
 		wp.length=sizeof(WINDOWPLACEMENT);
 		GetWindowPlacement(&wp);
-		if (m_dwFlags&fgLargeMode && wp.showCmd!=SW_MAXIMIZE)
-			m_nLargeY=rect.bottom-rect.top;
+		
+		if (m_dwFlags&fgLargeMode)
+			m_nLargeY=wp.rcNormalPosition.bottom-wp.rcNormalPosition.top;;
+
 		RegKey.SetValue("LargeCY",(LPCTSTR)&m_nLargeY,4,REG_DWORD);
 		
 		
@@ -2770,16 +2785,8 @@ void CLocateDlg::SaveRegistry()
 		}
 
 		RegKey.SetValue("ListView",temp);
-		if (menu.GetMenuState(IDM_AUTOARRANGE,MF_BYCOMMAND)==MF_CHECKED)
-			temp=1;
-		else
-			temp=0;
-		RegKey.SetValue("AutoArrange",(LPCTSTR)&temp,4,REG_DWORD);
-		if (menu.GetMenuState(IDM_ALIGNTOGRID,MF_BYCOMMAND)==MF_CHECKED)
-			temp=1;
-		else
-			temp=0;
-		RegKey.SetValue("AlignToGrid",(LPCTSTR)&temp,4,REG_DWORD);
+		RegKey.SetValue("AutoArrange",(m_pListCtrl->GetStyle()&LVS_AUTOARRANGE)?1L:0L);
+		RegKey.SetValue("AlignToGrid",(m_pListCtrl->GetExtendedListViewStyle()&LVS_EX_SNAPTOGRID)?1L:0L);
 	
 	}
 
@@ -2839,20 +2846,12 @@ void CLocateDlg::LoadRegistry()
 		temp=0;
 		RegKey.QueryValue("AutoArrange",temp);
 		if (temp)
-		{
-			menu.CheckMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_CHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_CHECKED);
 			m_pListCtrl->SetStyle(m_pListCtrl->GetStyle()|LVS_AUTOARRANGE);
-		}
 		temp=0;
 		RegKey.QueryValue("AlignToGrid",temp);
 		if (temp)
-		{
-			menu.CheckMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_CHECKED);
-			CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_CHECKED);
-			m_pListCtrl->SetExtendedListViewStyle(0x00080000 /*LVS_EX_SNAPTOGRID*/,0x00080000);
-		}
-
+			m_pListCtrl->SetExtendedListViewStyle(LVS_EX_SNAPTOGRID,LVS_EX_SNAPTOGRID);
+		
 		temp=3;
 		RegKey.QueryValue("ListView",temp);
 		SetListStyle(LOBYTE(temp)&3,TRUE);
@@ -3201,71 +3200,125 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 			
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(pLvdi->item.iSubItem));
 
-			switch (nDetail)
+			if (GetFlags()&fgLVNoDelayedUpdate) 
 			{
-			// Title and parent are special since they have icons
-			case DetailType::Title:
-				if (pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon())
+				// Update detail instantaneously
+
+				switch (nDetail)
 				{
-					if (m_pBackgroundUpdater==NULL)
-						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
-					
-					
-					DebugFormatMessage("LVN_GETDISPINFO: Calling AddToUpdateList with nDetail=Title for %s",pItem->GetName());
-						
+				// Title and parent are special since they have icons
+				case DetailType::Title:
+					if (pItem->ShouldUpdateTitle())
+						pItem->UpdateTitle();
+					if (pItem->ShouldUpdateIcon())
+                        pItem->UpdateIcon();
 
-					m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Title);
+					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
+					if (pItem->GetTitle()!=NULL)
+						pLvdi->item.pszText=pItem->GetTitle();
+					else
+						pLvdi->item.pszText=pItem->GetName();
 					
-					if (m_pLocater==NULL) // Locating in process
-						m_pBackgroundUpdater->StopWaiting();
+					pLvdi->item.iImage=pItem->GetIcon();
+
+					if (pItem->GetAttributes()&(LITEMATTRIB_CUTTED|LITEMATTRIB_HIDDEN))
+					{
+						pLvdi->item.mask|=LVIF_STATE;
+						pLvdi->item.state=LVIS_CUT;
+						pLvdi->item.stateMask=LVIS_CUT;
+					}
+					break;
+				case DetailType::InFolder:
+					if (pItem->ShouldUpdateParentIcon())
+						pItem->UpdateParentIcon();
+
+					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
+					pLvdi->item.pszText=pItem->GetParent();
+					pLvdi->item.iImage=pItem->GetParentIcon();
+					break;
+				default:
+					ASSERT (nDetail<=DetailType::LastType);
+			
+					if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
+						pItem->ShouldUpdateByDetail(nDetail))
+						pItem->UpdateByDetail(nDetail);
+					pLvdi->item.mask=LVIF_TEXT;
+					pLvdi->item.pszText=pItem->GetDetailText(nDetail);
+					break;
 				}
-
-				if (pItem->GetTitle()!=NULL)
-					pLvdi->item.pszText=pItem->GetTitle();
-				else
-					pLvdi->item.pszText=pItem->GetName();
 				
-				pLvdi->item.iImage=pItem->GetIcon();
-				DebugFormatMessage("LVN_GETDISPINFO: icon set to %d for item %s",pLvdi->item.iImage,pItem->GetName());
-
-				if (pItem->GetAttributes()&(LITEMATTRIB_CUTTED|LITEMATTRIB_HIDDEN))
+			}
+			else
+			{
+				// Delayed updating
+				switch (nDetail)
 				{
-					pLvdi->item.mask|=LVIF_STATE;
-					pLvdi->item.state=LVIS_CUT;
-					pLvdi->item.stateMask=LVIS_CUT;
-				}
-				break;
-			case DetailType::InFolder:
-				if (pItem->ShouldUpdateParentIcon())
-				{
-					if (m_pBackgroundUpdater==NULL)
-						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+				// Title and parent are special since they have icons
+				case DetailType::Title:
+					if (pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon())
+					{
+						if (m_pBackgroundUpdater==NULL)
+							m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+						
+						
+						DebugFormatMessage("LVN_GETDISPINFO: Calling AddToUpdateList with nDetail=Title for %s",pItem->GetName());
+							
 
-					//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,InFolder)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
-					m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,InFolder);
-					if (m_pLocater==NULL) // Locating is not in process
-						m_pBackgroundUpdater->StopWaiting();
-				}
-
-				pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
-				pLvdi->item.pszText=pItem->GetParent();
-				pLvdi->item.iImage=pItem->GetParentIcon();
-				break;
-			default:
-				ASSERT (nDetail<=DetailType::LastType);
-		
-				if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
-					pItem->ShouldUpdateByDetail(nDetail))
-				{
-					if (m_pBackgroundUpdater==NULL)
-						m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
-					//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,%d)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem,DWORD(nDetail));
+						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Title);
+						
+						if (m_pLocater==NULL) // Locating in process
+							m_pBackgroundUpdater->StopWaiting();
+					}
 					
-					m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,nDetail);
-					if (m_pLocater==NULL) // Locating is not in process
-						m_pBackgroundUpdater->StopWaiting();
+					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
+					if (pItem->GetTitle()!=NULL)
+						pLvdi->item.pszText=pItem->GetTitle();
+					else
+						pLvdi->item.pszText=pItem->GetName();
+					pLvdi->item.iImage=pItem->GetIcon();
+					DebugFormatMessage("LVN_GETDISPINFO: icon set to %d for item %s",pLvdi->item.iImage,pItem->GetName());
+
+					if (pItem->GetAttributes()&(LITEMATTRIB_CUTTED|LITEMATTRIB_HIDDEN))
+					{
+						pLvdi->item.mask|=LVIF_STATE;
+						pLvdi->item.state=LVIS_CUT;
+						pLvdi->item.stateMask=LVIS_CUT;
+					}
+					break;
+				case DetailType::InFolder:
+					if (pItem->ShouldUpdateParentIcon())
+					{
+						if (m_pBackgroundUpdater==NULL)
+							m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+
+						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,InFolder)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
+						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,InFolder);
+						if (m_pLocater==NULL) // Locating is not in process
+							m_pBackgroundUpdater->StopWaiting();
+					}
+
+					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
+					pLvdi->item.pszText=pItem->GetParent();
+					pLvdi->item.iImage=pItem->GetParentIcon();
+					break;
+				default:
+					ASSERT (nDetail<=DetailType::LastType);
+			
+					if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
+						pItem->ShouldUpdateByDetail(nDetail))
+					{
+						if (m_pBackgroundUpdater==NULL)
+							m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,%d)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem,DWORD(nDetail));
+						
+						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,nDetail);
+						if (m_pLocater==NULL) // Locating is not in process
+							m_pBackgroundUpdater->StopWaiting();
+					}
+					pLvdi->item.mask=LVIF_TEXT;
+					pLvdi->item.pszText=pItem->GetDetailText(nDetail);
+					break;
 				}
-				pLvdi->item.pszText=pItem->GetDetailText(nDetail);
 			}
 			break;
 		}
@@ -3896,34 +3949,37 @@ void CLocateDlg::OnProperties(int nItem)
 void CLocateDlg::OnAutoArrange()
 {
 	CMenu menu(GetMenu());
-	if (menu.GetMenuState(IDM_AUTOARRANGE,MF_BYCOMMAND)==MF_UNCHECKED)
-	{
-		menu.CheckMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_CHECKED);
-		CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_CHECKED);
-		m_pListCtrl->SetStyle(m_pListCtrl->GetStyle()|LVS_AUTOARRANGE);
-	}
-	else
+	if (m_pListCtrl->GetStyle()&LVS_AUTOARRANGE)
 	{
 		menu.CheckMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_UNCHECKED);
 		CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_UNCHECKED);
 		m_pListCtrl->SetStyle(m_pListCtrl->GetStyle()&~LVS_AUTOARRANGE);
+	}
+	else
+	{
+		menu.CheckMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_CHECKED);
+		CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_CHECKED);
+		m_pListCtrl->SetStyle(m_pListCtrl->GetStyle()|LVS_AUTOARRANGE);
 	}
 }
 
 void CLocateDlg::OnAlignToGrid()
 {
 	CMenu menu(GetMenu());
-	if (menu.GetMenuState(IDM_ALIGNTOGRID,MF_BYCOMMAND)==MF_UNCHECKED)
-	{
-		menu.CheckMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_CHECKED);
-		CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_CHECKED);
-		m_pListCtrl->SetExtendedListViewStyle(0x00080000 /*LVS_EX_SNAPTOGRID*/,0x00080000);
-	}
-	else
+
+	if (m_pListCtrl->GetExtendedListViewStyle()&LVS_EX_SNAPTOGRID)
 	{
 		menu.CheckMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_UNCHECKED);
 		CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_UNCHECKED);
-		m_pListCtrl->SetExtendedListViewStyle(0,0x00080000 /*LVS_EX_SNAPTOGRID*/);
+		m_pListCtrl->SetExtendedListViewStyle(LVS_EX_SNAPTOGRID,0);
+	}
+	else
+	{
+		menu.CheckMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_CHECKED);
+		CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_CHECKED);
+		m_pListCtrl->SetExtendedListViewStyle(LVS_EX_SNAPTOGRID,LVS_EX_SNAPTOGRID);
+		m_pListCtrl->Arrange(LVA_SNAPTOGRID);
+		
 	}
 }
 
@@ -4289,7 +4345,7 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 				HRESULT(STDAPICALLTYPE * pSHOpenFolderAndSelectItems)(LPCITEMIDLIST,UINT,LPCITEMIDLIST*,DWORD)=
 					(HRESULT(STDAPICALLTYPE *)(LPCITEMIDLIST,UINT,LPCITEMIDLIST*,DWORD))GetProcAddress(GetModuleHandle("shell32.dll"),"SHOpenFolderAndSelectItems");
 				
-				if (pSHOpenFolderAndSelectItems!=NULL && 0)
+				if (pSHOpenFolderAndSelectItems!=NULL)
 				{
 					CArrayFP<FolderInfo*> aFolders;
 					int i;

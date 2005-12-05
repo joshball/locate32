@@ -920,6 +920,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	Item* FileViewItems[]={
 		CreateCheckBox(IDS_ADVSETUSECUSTOMFONTINRESULTLIST,ResultListFontItems,DefaultCheckBoxProc,
 			CSettingsProperties::settingsUseCustomResultListFont,&m_pSettings->m_dwSettingsFlags),
+		CreateCheckBox(IDS_ADVSETNODELAYEDUPDATING,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVNoDelayedUpdate,&m_pSettings->m_dwLocateDialogFlags),
 		CreateRadioBox(IDS_ADVSETUSEGETTITLE,NULL,DefaultRadioBoxProc,
 			MAKELONG(CLocateDlg::fgLVUseGetFileTitle,CLocateDlg::fgLVMethodFlag),&m_pSettings->m_dwLocateDialogFlags),
 		CreateRadioBox(IDS_ADVSETUSEOWNMETHODFORTITLE,TitleMethodItems,DefaultRadioBoxProc,

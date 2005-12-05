@@ -1448,6 +1448,7 @@ STRINGTABLE
 BEGIN
 	IDS_ADVSETRESULTS				"Results"
 	IDS_ADVSETRESULTSLIST			"Result list"
+	IDS_ADVSETNODELAYEDUPDATING		"Show icon, title and other information before locating is finished"
 	IDS_ADVSETSHOWDATESINFORMAT		"Show dates in format:"
 	IDS_ADVSETSHOWTIMESINFORMAT		"Show times in format:"
 	IDS_ADVSETSHOWFILESIZESINFORMAT	"Show file sizes as:"

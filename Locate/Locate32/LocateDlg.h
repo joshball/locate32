@@ -577,8 +577,9 @@ public:
 		fgLVNoDoubleItems=0x00020000,
 		fgLVFoldersFirst=0x00080000,
 		fgLVActivateFirstResult=0x00100000,
+		fgLVNoDelayedUpdate=0x00200000,
 		fgLVComputeMD5Sums=0x00040000,
-		fgLVShowFlag=0x001F00F0,
+		fgLVShowFlag=0x003F00F0,
 		
 		fgLVUseGetFileTitle=0x00000000,
 		fgLVUseOwnMethod=0x00000100,
@@ -599,8 +600,8 @@ public:
 		fgLVStyleAlwaysUnderline=0x00008000|fgLVStyleUnderLine,
 		fgLVStyleUnderlineFlag=0x00008000|fgLVStyleUnderLine,
 		fgLVStyleFlag=0x0000F000,
-		fgLVFlag=0x001FFFF0,
-		fgLVSave=0x001FFFF0,
+		fgLVFlag=0x003FFFF0,
+		fgLVSave=0x003FFFF0,
 			
 		// Name tab
 		fgNameMultibleDirectories=0x04000000,
