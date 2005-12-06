@@ -450,7 +450,9 @@ public:
 	BOOL GetFileClassID(CString& file,CLSID& clsid,LPCSTR szType); 
 	BOOL SendFiles(CString& dst,CListCtrl* pList,CLSID& clsid);
 	
-	BYTE BeginDragFiles(CListCtrl* pList);
+	void BeginDragFiles(CListCtrl* pList);
+
+
 	BOOL ResolveSystemLVStatus();
 	BOOL SetListSelStyle();
 	BOOL UpdateSettings();
@@ -659,6 +661,7 @@ public:
 	CNameDlg m_NameDlg;
 	CSizeDateDlg m_SizeDateDlg;
 	CAdvancedDlg m_AdvancedDlg;
+	CFileTarget* m_pDropTarget;
 
 	CToolTipCtrl* m_pListTooltips;
 	int m_iTooltipItem;

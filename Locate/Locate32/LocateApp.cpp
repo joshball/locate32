@@ -207,7 +207,7 @@ BOOL CLocateApp::InitInstance()
 	
 	// Initializing COM 
 	CoInitialize(NULL);
-
+	
 	
 	// Load date and time format strings from registry	
 	LoadRegistry();
@@ -2541,7 +2541,32 @@ BOOL CLocateAppWnd::StartUpdateStatusNotification()
 		BOOL(WINAPI * pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD)=(BOOL(WINAPI *)(HWND,COLORREF,BYTE,DWORD))GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes");
 	
 		BYTE nTransparency=0;
-		DWORD dwExtra=WS_EX_TOOLWINDOW|WS_EX_NOACTIVATE|WS_EX_TOPMOST;
+		DWORD dwExtra=WS_EX_TOOLWINDOW|WS_EX_NOACTIVATE;
+		
+		if ((CLocateApp::GetProgramFlags()&CLocateApp::pfUpdateTooltipTopmostMask)==
+			CLocateApp::pfUpdateTooltipAlwaysTopmost)
+			dwExtra|=WS_EX_TOPMOST;
+		else if((CLocateApp::GetProgramFlags()&CLocateApp::pfUpdateTooltipTopmostMask)!=
+			CLocateApp::pfUpdateTooltipNeverTopmost)
+		{
+			// Depends on foreground window
+			HWND hForegroundWindow=GetForegroundWindow();
+			if (hForegroundWindow==NULL)
+				dwExtra|=WS_EX_TOPMOST;
+			else
+			{
+				LONG dwStyle=::GetWindowLong(hForegroundWindow,GWL_STYLE);
+				if (dwStyle&WS_MAXIMIZE)
+				{
+					if ((CLocateApp::GetProgramFlags()&CLocateApp::pfUpdateTooltipTopmostMask)==
+						CLocateApp::pfUpdateTooltipNoTopmostWhdnForegroundWndInFullScreen &&
+						dwStyle&WS_CAPTION)
+						dwExtra|=WS_EX_TOPMOST;
+				}
+				else
+					dwExtra|=WS_EX_TOPMOST;
+      		}
+		}
 
 		if (pSetLayeredWindowAttributes!=NULL)
 		{
@@ -3538,6 +3563,7 @@ CLocateAppWnd::CUpdateStatusWnd::~CUpdateStatusWnd()
 int CLocateAppWnd::CUpdateStatusWnd::OnCreate(LPCREATESTRUCT lpcs)
 {
 	SetTimer(ID_UPDATESTATUS,500,NULL);
+	SetTimer(ID_CHECKFOREGROUNDWND,100,NULL);
 	return CFrameWnd::OnCreate(lpcs);
 }
 
@@ -3565,6 +3591,9 @@ void CLocateAppWnd::CUpdateStatusWnd::OnTimer(DWORD wTimerID)
 	case ID_IDLEEXIT:
 		KillTimer(ID_IDLEEXIT);
 		CWnd::DestroyWindow();
+		break;
+	case ID_CHECKFOREGROUNDWND:
+		CheckForegroundWindow();
 		break;
 	}
 }
@@ -4034,6 +4063,55 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 	m_WindowSize=szSize;
 }
 
+void CLocateAppWnd::CUpdateStatusWnd::Update()
+{
+	WORD wThreads,wRunning;
+	RootInfo* pRootInfos;
+	GetLocateAppWnd()->GetRootInfos(wThreads,wRunning,pRootInfos);
+	Update(wThreads,wRunning,pRootInfos);
+	CLocateAppWnd::FreeRootInfos(wThreads,pRootInfos);
+}
+
+void CLocateAppWnd::CUpdateStatusWnd::CheckForegroundWindow()
+{		
+	// Check window status
+    if ((CLocateApp::GetProgramFlags()&CLocateApp::pfUpdateTooltipTopmostMask)==
+		CLocateApp::pfUpdateTooltipNoTopmostWhenForegroundWndMaximized ||
+		(CLocateApp::GetProgramFlags()&CLocateApp::pfUpdateTooltipTopmostMask)==
+		CLocateApp::pfUpdateTooltipNoTopmostWhdnForegroundWndInFullScreen)
+	{
+		BOOL bTopMost=FALSE;
+		HWND hForegroundWindow=GetForegroundWindow();
+
+		if (hForegroundWindow==NULL)
+			bTopMost=TRUE;
+		else
+		{
+			LONG dwStyle=::GetWindowLong(hForegroundWindow,GWL_STYLE);
+			if (dwStyle&WS_MAXIMIZE)
+			{
+				if ((CLocateApp::GetProgramFlags()&CLocateApp::pfUpdateTooltipTopmostMask)==
+					CLocateApp::pfUpdateTooltipNoTopmostWhdnForegroundWndInFullScreen &&
+					dwStyle&WS_CAPTION)
+					bTopMost=TRUE;
+			}
+			else
+				bTopMost=TRUE;
+      	}
+
+		if (GetExStyle()&WS_EX_TOPMOST)
+		{
+			if (!bTopMost)
+			{
+                SetWindowPos(HWND_NOTOPMOST,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE);
+				::SetWindowPos(hForegroundWindow,*this,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE);
+			}
+		}
+		else if (bTopMost)
+			SetWindowPos(HWND_TOPMOST,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE);
+		
+	}
+}
 
 void CLocateAppWnd::CUpdateStatusWnd::Update(WORD wThreads,WORD wRunning,RootInfo* pRootInfos)
 {
@@ -4073,6 +4151,7 @@ void CLocateAppWnd::CUpdateStatusWnd::IdleClose()
 BOOL CLocateAppWnd::CUpdateStatusWnd::DestroyWindow()
 {
 	KillTimer(ID_IDLEEXIT);
+	KillTimer(ID_CHECKFOREGROUNDWND);
 	GetLocateAppWnd()->m_pUpdateStatusWnd=NULL;
 	CWnd::DestroyWindow();
 	return TRUE;

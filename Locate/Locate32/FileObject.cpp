@@ -571,6 +571,7 @@ HRESULT STDMETHODCALLTYPE CFileSource::GiveFeedback(DWORD dwEffect)
 	return DRAGDROP_S_USEDEFAULTCURSORS;
 }
 
+
 HRESULT STDMETHODCALLTYPE CFileTarget::DragEnter(IDataObject __RPC_FAR *pDataObj,
 		DWORD grfKeyState,POINTL pt,DWORD __RPC_FAR *pdwEffect)
 {
@@ -582,7 +583,34 @@ HRESULT STDMETHODCALLTYPE CFileTarget::DragEnter(IDataObject __RPC_FAR *pDataObj
 		FormatEtc.dwAspect=DVASPECT_CONTENT;
 		FormatEtc.lindex=-1;
 		FormatEtc.tymed=TYMED_HGLOBAL;
-		if (pDataObj->QueryGetData(&FormatEtc)==S_OK)
+		if (pDataObj->QueryGetData(&FormatEtc)!=S_OK)
+		{
+			*pdwEffect=DROPEFFECT_NONE;
+			return S_OK;
+		}
+
+		m_pDataObjectInWindow=pDataObj;
+		m_pDataObjectInWindow->AddRef();
+
+		*pdwEffect=DROPEFFECT_MOVE;
+		return S_OK;			
+	}
+	*pdwEffect=DROPEFFECT_NONE;
+	return S_OK;
+}
+
+HRESULT STDMETHODCALLTYPE CFileTarget::DragOver(DWORD grfKeyState,
+		POINTL pt,DWORD __RPC_FAR *pdwEffect)
+{
+	if (m_pDataObjectInWindow!=NULL && grfKeyState&MK_LBUTTON)
+	{
+		FORMATETC FormatEtc;
+		FormatEtc.cfFormat=RegisterClipboardFormat("Locate Item positions");
+		FormatEtc.ptd=NULL;
+		FormatEtc.dwAspect=DVASPECT_CONTENT;
+		FormatEtc.lindex=-1;
+		FormatEtc.tymed=TYMED_HGLOBAL;
+		if (m_pDataObjectInWindow->QueryGetData(&FormatEtc)==S_OK)
 		{
 			*pdwEffect=DROPEFFECT_MOVE;
 			return S_OK;
@@ -592,15 +620,13 @@ HRESULT STDMETHODCALLTYPE CFileTarget::DragEnter(IDataObject __RPC_FAR *pDataObj
 	return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CFileTarget::DragOver(DWORD grfKeyState,
-		POINTL pt,DWORD __RPC_FAR *pdwEffect)
-{
-	*pdwEffect=DROPEFFECT_MOVE;
-	return S_OK;
-}
-
 HRESULT STDMETHODCALLTYPE CFileTarget::DragLeave(void)
 {
+	if (m_pDataObjectInWindow!=NULL)
+	{
+		m_pDataObjectInWindow->Release();
+		m_pDataObjectInWindow=NULL;
+	}
 	return S_OK;
 }
 
@@ -608,6 +634,17 @@ HRESULT STDMETHODCALLTYPE CFileTarget::Drop(IDataObject __RPC_FAR *pDataObj,
 		DWORD grfKeyState,POINTL pt,DWORD __RPC_FAR *pdwEffect)
 {
 	DebugMessage("CFileTarget::Drop(IDataObject __RPC_FAR *pDataObj,DWORD grfKeyState,POINTL pt,DWORD __RPC_FAR *pdwEffect)");
+	
+	if (m_pDataObjectInWindow!=NULL)
+	{
+		ASSERT(m_pDataObjectInWindow==pDataObj);
+
+		m_pDataObjectInWindow->Release();
+		m_pDataObjectInWindow=NULL;
+	}
+
+	
+	
 	CListCtrl* pList=GetLocateDlg()->m_pListCtrl;
 	if (pList->GetStyle()&LVS_REPORT)
 		return S_OK;

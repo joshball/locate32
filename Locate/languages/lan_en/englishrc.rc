@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,11270
- PRODUCTVERSION 2,99,5,11270
+ FILEVERSION 2,99,5,12060
+ PRODUCTVERSION 2,99,5,12060
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.11270"
+            VALUE "FileVersion", "3.0 beta 5.12060"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.11270"
+            VALUE "ProductVersion", "3.0 beta 5.12060"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1487,6 +1487,10 @@ BEGIN
 	IDS_ADVSETTOOLTIPTITLEFONT		"Title font:"
 	IDS_ADVSETTOOLTIPTEXTFONT		"Text font:"
 	IDS_ADVSETTOOLTIPTRANSPARENCY	"Transparency (0-255):"
+	IDS_ADVSETTOOLTIPALWAYSONTOP	"Tooltip window always on top"
+	IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTMAXIMIZED	"Tooltip on top if foreground window is not maximized"
+	IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTFULLSCREEN	"Tooltip on top if foreground window is not in fullscreen mode"
+	IDS_ADVSETTOOLTIPNEVERONTOP		"Tooltip window not on top"
 	IDS_ADVSETUSECUSTOMFONTINRESULTLIST "Use custom font"
 	IDS_ADVSETRESULTLISTFONT		"Font:"
 END

@@ -12,7 +12,7 @@ inline CLocateDlg::CLocateDlg()
 	m_pListCtrl(NULL),m_pTabCtrl(NULL),m_pStatusCtrl(NULL),m_pListTooltips(NULL),
 	m_pLocater(NULL),m_pBackgroundUpdater(NULL),m_pActiveContextMenu(NULL),
 	m_pLocateAnimBitmaps(NULL),m_pUpdateAnimBitmaps(NULL),
-	m_pFileNotificationsThread(NULL),m_dwMaxFoundFiles(0),
+	m_pFileNotificationsThread(NULL),m_dwMaxFoundFiles(0),m_pDropTarget(NULL),
 	m_pImageHandler(NULL),m_iTooltipItem(-1),m_iTooltipSubItem(-1),m_bTooltipActive(FALSE),
 	m_hLastFocus(NULL),m_WaitEvery30(0),m_WaitEvery60(0),m_hDialogFont(NULL)
 {

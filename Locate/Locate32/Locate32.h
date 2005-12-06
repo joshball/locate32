@@ -67,6 +67,8 @@ extern LPSTR g_szBuffer;
 
 #define ID_UPDATESTATUS				1
 #define ID_IDLEEXIT					2
+#define ID_CHECKFOREGROUNDWND		3
+
 
 
 

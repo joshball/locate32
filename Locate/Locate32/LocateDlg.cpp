@@ -304,6 +304,14 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_pListCtrl->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP,LVS_EX_HEADERDRAGDROP);
 	m_pListCtrl->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General","ListWidths");
 
+	// Initializing drop target
+	OleInitialize(NULL);
+	m_pDropTarget=new CFileTarget;
+	m_pDropTarget->AutoDelete();
+	m_pDropTarget->AddRef();
+	RegisterDragDrop(*m_pListCtrl,m_pDropTarget);
+
+
 
 	// Creating windows
 	m_NameDlg.Create(*this);
@@ -1815,7 +1823,12 @@ void CLocateDlg::OnDestroy()
 
 	
 
+	// Relasing drop target
+	RevokeDragDrop(*m_pListCtrl);
+	m_pDropTarget->Release(); //This deletes class
+	OleUninitialize();
 
+	    
 	if (m_pListCtrl!=NULL)
 	{
 		if ((m_pListCtrl->GetStyle() & LVS_TYPEMASK)==LVS_REPORT)
@@ -5394,57 +5407,62 @@ BOOL CLocateDlg::SendFiles(CString& dst,CListCtrl* pList,CLSID& clsid)
 	return SUCCEEDED(hres);
 }
 
-BYTE CLocateDlg::BeginDragFiles(CListCtrl* pList)
+void CLocateDlg::BeginDragFiles(CListCtrl* pList)
 {
 	DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList) BEGIN");
-	
-	OleInitialize(NULL);
-
-	CFileTarget* pTarget=new CFileTarget;
-	pTarget->AutoDelete();
-	pTarget->AddRef();
-	RegisterDragDrop(*m_pListCtrl,pTarget);
-	CFileObject* pfo=new CFileObject;
-	pfo->AutoDelete();
-	pfo->AddRef();
-	CFileSource fs;
-	DWORD nEffect;
-	pfo->SetFiles(pList);
-	
-	DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): DoDragDrop is about to be called");
-	HRESULT hRes=DoDragDrop(pfo,&fs,DROPEFFECT_COPY|DROPEFFECT_MOVE|DROPEFFECT_LINK|DROPEFFECT_SCROLL,&nEffect);
-	DebugFormatMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): DoDragDrop returned %X",hRes);
-	
-	// Updating selected items
-	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
-	while (nItem!=-1)
 	{
-		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
-		DebugFormatMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): updating item %X",pItem);
-	
-		// Just disabling flags, let background thread do the rest
-		pItem->RemoveFlags(LITEM_COULDCHANGE);
-		DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): removed flags");
-	
-		if (m_pBackgroundUpdater!=NULL)
+		// Initializing COM objects
+		CFileObject* pfo=new CFileObject;
+		CFileSource* pfs=new CFileSource;
+		
+		pfo->AutoDelete();
+		pfo->AddRef();
+		pfo->SetFiles(pList);
+
+		pfs->AutoDelete();
+		pfs->AddRef();
+		
+		// Inserting selected items to array
+		int i=0,nSelectedItems=pList->GetSelectedCount();
+		int* pSelectedItems=new int[max(nSelectedItems,2)];
+		int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+		while (nItem!=-1 && i<nSelectedItems)
 		{
-			m_pBackgroundUpdater->AddToUpdateList(pItem,nItem,Needed);
-
-			DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): calling m_pBackgroundUpdater->StopWaiting()");
-			m_pBackgroundUpdater->StopWaiting();
+			pSelectedItems[i++]=nItem;
+			nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
 		}
-		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
-	}
-	pfo->Release();
+		ASSERT(nSelectedItems==i); // If didn't get all selected items
+        
+		
+
+		DWORD nEffect;
+		DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): DoDragDrop is about to be called");
+		HRESULT hRes=DoDragDrop(pfo,pfs,DROPEFFECT_COPY|DROPEFFECT_MOVE|DROPEFFECT_LINK|DROPEFFECT_SCROLL,&nEffect);
+		DebugFormatMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): DoDragDrop returned %X",hRes);
+
+		pfo->Release();
+		pfs->Release();
+
+		for (int i=0;i<nSelectedItems;i++)
+		{
+			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(pSelectedItems[i]);
+			DebugFormatMessage("CLocateDlg::WM_UPDATEITEMS: updating item %X",pItem);
+	        
+			// Just disabling flags, let background thread do the rest
+			pItem->RemoveFlags(LITEM_COULDCHANGE);
+			DebugMessage("CLocateDlg::WM_UPDATEITEMS: removed flags");
+
+			if (m_pBackgroundUpdater!=NULL)
+			{
+				m_pBackgroundUpdater->AddToUpdateList(pItem,pSelectedItems[i],Needed);
 	
-
-	DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): calling RevokeDragDrop(*m_pListCtrl)");
-	RevokeDragDrop(*m_pListCtrl);
-	pTarget->Release();
-
-	OleUninitialize();
-	DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList) END");
-	return TRUE;
+				DebugMessage("CLocateDlg::WM_UPDATEITEMS: calling m_pBackgroundUpdater->StopWaiting()");
+				m_pBackgroundUpdater->StopWaiting();
+			}
+		}
+		
+		delete[] pSelectedItems;
+	}
 }
 
 

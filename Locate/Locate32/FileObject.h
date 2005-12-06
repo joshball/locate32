@@ -87,6 +87,9 @@ public:
 class CFileTarget : public CCoDropTarget
 {
 public:
+	CFileTarget();
+	virtual ~CFileTarget();
+
 	virtual HRESULT STDMETHODCALLTYPE DragEnter(IDataObject __RPC_FAR *pDataObj,
 		DWORD grfKeyState,POINTL pt,DWORD __RPC_FAR *pdwEffect);
 	virtual HRESULT STDMETHODCALLTYPE DragOver(DWORD grfKeyState,
@@ -100,6 +103,8 @@ public:
 	void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
 	void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
 #endif
+
+	IDataObject* m_pDataObjectInWindow;
 };
 
 
@@ -122,5 +127,19 @@ inline CFileObject::~CFileObject()
 	DebugFormatMessage("FileObject %X destroyed.",(DWORD)this);
 }
 
+
+inline CFileTarget::CFileTarget()
+:	m_pDataObjectInWindow(NULL)
+{
+}
+
+inline CFileTarget::~CFileTarget()
+{
+	if (m_pDataObjectInWindow!=NULL)
+	{
+		m_pDataObjectInWindow->Release();
+		m_pDataObjectInWindow=NULL;
+	}
+}
 
 #endif

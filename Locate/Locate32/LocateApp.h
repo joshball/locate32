@@ -45,6 +45,7 @@ public:
 		void Update(WORD wThreads,WORD wRunning,RootInfo* pRootInfos);
 		void IdleClose();
 		virtual BOOL DestroyWindow();
+		void CheckForegroundWindow();
 
 		void SetFonts();
 		void SetPosition();
@@ -248,12 +249,18 @@ public:
 		
 		// Tooltip
 		pfEnableUpdateTooltip = 0x10, // Option
-		pfTooltipMask = 0x30,
-		pfTooltipDefault = pfEnableUpdateTooltip,
-		pfTooltipSave = pfEnableUpdateTooltip,
+		pfUpdateTooltipNeverTopmost = 0,
+		pfUpdateTooltipAlwaysTopmost = 0x20, // Option
+		pfUpdateTooltipNoTopmostWhenForegroundWndMaximized = 0x40, // Option
+		pfUpdateTooltipNoTopmostWhdnForegroundWndInFullScreen = 0x60, // Option
+		pfUpdateTooltipTopmostMask = 0x60,
+		pfTooltipMask = 0x70,
+
+		pfTooltipDefault = pfEnableUpdateTooltip|pfUpdateTooltipAlwaysTopmost,
+		pfTooltipSave = pfEnableUpdateTooltip|pfUpdateTooltipTopmostMask,
 
 		// Filesize/time/date format
-		pfFormatUseLocaleFormat = 0x4,
+		pfFormatUseLocaleFormat = 0x4, // Option
 		pfFormatMask = 0x4,
 		pfFormatDefault = pfFormatUseLocaleFormat,
 		pfFormatSave = pfFormatUseLocaleFormat,
@@ -527,14 +534,6 @@ inline DWORD CLocateApp::GetProgramFlags()
 }
 
 
-inline void CLocateAppWnd::CUpdateStatusWnd::Update()
-{
-	WORD wThreads,wRunning;
-	RootInfo* pRootInfos;
-	GetLocateAppWnd()->GetRootInfos(wThreads,wRunning,pRootInfos);
-	Update(wThreads,wRunning,pRootInfos);
-	CLocateAppWnd::FreeRootInfos(wThreads,pRootInfos);
-}
 
 inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,CString& str,CSize& szSize)
 {

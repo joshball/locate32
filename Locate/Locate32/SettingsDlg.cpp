@@ -1049,6 +1049,14 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateColor(IDS_ADVSETTOOLTIPBACKCOLOR,DefaultColorProc,NULL,&m_pSettings->m_cToolTipBackColor),
 		CreateFont(IDS_ADVSETTOOLTIPTEXTFONT,DefaultFontProc,NULL,&m_pSettings->m_lToolTipTextFont),
 		CreateFont(IDS_ADVSETTOOLTIPTITLEFONT,DefaultFontProc,NULL,&m_pSettings->m_lToolTipTitleFont),
+		CreateRadioBox(IDS_ADVSETTOOLTIPALWAYSONTOP,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateApp::pfUpdateTooltipAlwaysTopmost,CLocateApp::pfUpdateTooltipTopmostMask),&m_pSettings->m_dwProgramFlags),
+		CreateRadioBox(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTMAXIMIZED,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateApp::pfUpdateTooltipNoTopmostWhenForegroundWndMaximized,CLocateApp::pfUpdateTooltipTopmostMask),&m_pSettings->m_dwProgramFlags),
+		CreateRadioBox(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTFULLSCREEN,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateApp::pfUpdateTooltipNoTopmostWhdnForegroundWndInFullScreen,CLocateApp::pfUpdateTooltipTopmostMask),&m_pSettings->m_dwProgramFlags),
+		CreateRadioBox(IDS_ADVSETTOOLTIPNEVERONTOP,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateApp::pfUpdateTooltipNeverTopmost,CLocateApp::pfUpdateTooltipTopmostMask),&m_pSettings->m_dwProgramFlags),
 		NULL, // For transparency
 		NULL
 	};
@@ -1057,7 +1065,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		// Needs at least Win2k
 		DialogItems[4]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nTransparency);
-		StatusTooltipItems[6]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
+		StatusTooltipItems[10]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nToolTipTransparency);
 
 	}

@@ -1,5 +1,5 @@
 
-usage: locate [-s] [-p path] [-t type] [-r] [-d dbfile] [-D dbname] [-h] file
+usage: locate [-s] [-p path] [-t type] [-d dbfile] [-r] [-D dbname] [-h] file
 
 parameters:
     -s          pause after page
