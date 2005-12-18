@@ -51,6 +51,9 @@ extern LPSTR g_szBuffer;
 
 // Defaults:
 #define DEFAULT_NUMBEROFDIRECTORIES		4
+#define DEFAULT_NUMBEROFNAMES			10
+#define DEFAULT_NUMBEROFTYPES			10
+
 
 // Timer IDs
 #define ID_REDRAWITEMS				1

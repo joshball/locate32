@@ -28,6 +28,8 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_bDefaultFlag(defaultDefault),m_bSorting(BYTE(-1)),
 	m_dwSettingsFlags(settingsDefault),
 	m_nNumberOfDirectories(DEFAULT_NUMBEROFDIRECTORIES),
+	m_nNumberOfNames(DEFAULT_NUMBEROFNAMES),
+	m_nNumberOfTypes(DEFAULT_NUMBEROFTYPES),
 	m_nTransparency(0),m_nToolTipTransparency(0),
 	m_dwTooltipDelayAutopop(DWORD(-1)),
 	m_dwTooltipDelayInitial(DWORD(-1))
@@ -127,7 +129,11 @@ BOOL CSettingsProperties::LoadSettings()
 
 	}
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Recent Strings",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
 		RegKey.QueryValue("NumberOfDirectories",m_nNumberOfDirectories);
+		RegKey.QueryValue("NumberOfNames",m_nNumberOfNames);
+		RegKey.QueryValue("NumberOfTypes",m_nNumberOfTypes);
+	}
 
 	// Initializing values
 	if (GetLocateDlg()==NULL)
@@ -387,7 +393,12 @@ BOOL CSettingsProperties::SaveSettings()
 	Path.LoadString(IDS_REGPLACE,CommonResource);
 	Path<<"\\Recent Strings";
 	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	{
 		RegKey.SetValue("NumberOfDirectories",m_nNumberOfDirectories);
+		RegKey.SetValue("NumberOfNames",m_nNumberOfNames);
+		RegKey.SetValue("NumberOfTypes",m_nNumberOfTypes);
+	}
+
 	Path.LoadString(IDS_REGPLACE,CommonResource);
 	Path<<"\\Locate";
 	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
@@ -395,7 +406,7 @@ BOOL CSettingsProperties::SaveSettings()
 	if (GetLocateDlg()!=NULL)
 	{
 		GetLocateDlg()->SetMaxFoundFiles(m_nMaximumFoundFiles);
-		GetLocateDlg()->m_NameDlg.ChangeNumberOfDirectories(m_nNumberOfDirectories);
+		GetLocateDlg()->m_NameDlg.ChangeNumberOfItemsInLists(m_nNumberOfNames,m_nNumberOfTypes,m_nNumberOfDirectories);
 	}
 
 	
@@ -1033,9 +1044,13 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	Item* DialogItems[]={
 		CreateCheckBox(IDS_ADVSETLARGEMODEONLY,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgDialogLargeModeOnly,&m_pSettings->m_dwLocateDialogFlags),
+		CreateNumeric(IDS_ADVSETNUMBEROFNAMES,DefaultNumericProc,
+			MAKELONG(0,256),&m_pSettings->m_nNumberOfNames),
+		CreateNumeric(IDS_ADVSETNUMBEROFTYPES,DefaultNumericProc,
+			MAKELONG(0,256),&m_pSettings->m_nNumberOfTypes),
+		CreateRoot(IDS_ADVSETLOOKINCOMBO,LookInItems),
 		CreateCheckBox(IDS_ADVSETLOADTYPES,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLoadRegistryTypes,&m_pSettings->m_dwLocateDialogFlags),
-		CreateRoot(IDS_ADVSETLOOKINCOMBO,LookInItems),
 		CreateCheckBox(IDS_ADVSETTOPMOST,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgDialogTopMost,&m_pSettings->m_dwLocateDialogFlags),
 		NULL, // For transparency
@@ -1049,14 +1064,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateColor(IDS_ADVSETTOOLTIPBACKCOLOR,DefaultColorProc,NULL,&m_pSettings->m_cToolTipBackColor),
 		CreateFont(IDS_ADVSETTOOLTIPTEXTFONT,DefaultFontProc,NULL,&m_pSettings->m_lToolTipTextFont),
 		CreateFont(IDS_ADVSETTOOLTIPTITLEFONT,DefaultFontProc,NULL,&m_pSettings->m_lToolTipTitleFont),
-		CreateRadioBox(IDS_ADVSETTOOLTIPALWAYSONTOP,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateApp::pfUpdateTooltipAlwaysTopmost,CLocateApp::pfUpdateTooltipTopmostMask),&m_pSettings->m_dwProgramFlags),
-		CreateRadioBox(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTMAXIMIZED,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateApp::pfUpdateTooltipNoTopmostWhenForegroundWndMaximized,CLocateApp::pfUpdateTooltipTopmostMask),&m_pSettings->m_dwProgramFlags),
-		CreateRadioBox(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTFULLSCREEN,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateApp::pfUpdateTooltipNoTopmostWhdnForegroundWndInFullScreen,CLocateApp::pfUpdateTooltipTopmostMask),&m_pSettings->m_dwProgramFlags),
-		CreateRadioBox(IDS_ADVSETTOOLTIPNEVERONTOP,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateApp::pfUpdateTooltipNeverTopmost,CLocateApp::pfUpdateTooltipTopmostMask),&m_pSettings->m_dwProgramFlags),
+		CreateListBox(IDS_ADVSETTOOLTIPWINDOWPOSITION,UpdateTooltipPositionProc,0,&m_pSettings->m_dwProgramFlags),
+		CreateListBox(IDS_ADVSETTOOLTIPWINDOWONTOP,UpdateTooltipTopmostProc,0,&m_pSettings->m_dwProgramFlags),
 		NULL, // For transparency
 		NULL
 	};
@@ -1065,7 +1074,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		// Needs at least Win2k
 		DialogItems[4]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nTransparency);
-		StatusTooltipItems[10]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
+		StatusTooltipItems[8]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nToolTipTransparency);
 
 	}
@@ -1199,7 +1208,127 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateThreadPriorityPr
 	}		
 	return TRUE;
 }
-	
+
+BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateTooltipPositionProc(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch(pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
+		{
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPPOSNEARCLOCK));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPPOSUPPERLEFT));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPPOSUPPERRIGHT));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPPOSLOWERLEFT));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPPOSLOWERRIGHT));		
+			
+		}
+		break;
+	case BASICPARAMS::Get:
+		switch ((*((DWORD*)pParams->lParam))&CLocateApp::pfUpdateTooltipPositionMask)
+		{
+		case CLocateApp::pfUpdateTooltipPositionUpLeft:
+            pParams->lValue=1;
+			break;
+		case CLocateApp::pfUpdateTooltipPositionUpRight:
+            pParams->lValue=2;
+			break;
+		case CLocateApp::pfUpdateTooltipPositionDownLeft:
+            pParams->lValue=3;
+			break;
+		case CLocateApp::pfUpdateTooltipPositionDownRight:
+            pParams->lValue=4;
+			break;
+		default:
+			pParams->lValue=0;
+			break;
+		}
+		break;
+	case BASICPARAMS::Set:
+		break;
+	case BASICPARAMS::Apply:
+		(*((DWORD*)pParams->lParam))&=~CLocateApp::pfUpdateTooltipPositionMask;
+		switch (((COMBOAPPLYPARAMS*)pParams)->nCurSel)
+		{
+		case 0:
+            *((int*)pParams->lParam)|=CLocateApp::pfUpdateTooltipPositionDefault;
+			break;
+		case 1:
+            *((int*)pParams->lParam)|=CLocateApp::pfUpdateTooltipPositionUpLeft;
+			break;
+		case 2:
+            *((int*)pParams->lParam)|=CLocateApp::pfUpdateTooltipPositionUpRight;
+			break;
+		case 3:
+            *((int*)pParams->lParam)|=CLocateApp::pfUpdateTooltipPositionDownLeft;
+			break;
+		case 4:
+            *((int*)pParams->lParam)|=CLocateApp::pfUpdateTooltipPositionDownRight;
+			break;
+		}
+		break;
+	case BASICPARAMS::ChangingValue:
+		break;
+	}		
+	return TRUE;
+}
+
+BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateTooltipTopmostProc(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch(pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
+		{
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPALWAYSONTOP));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTMAXIMIZED));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTFULLSCREEN));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPNEVERONTOP));		
+		}
+		break;
+	case BASICPARAMS::Get:
+		switch ((*((DWORD*)pParams->lParam))&CLocateApp::pfUpdateTooltipTopmostMask)
+		{
+		case CLocateApp::pfUpdateTooltipNoTopmostWhenForegroundWndMaximized:
+            pParams->lValue=1;
+			break;
+		case CLocateApp::pfUpdateTooltipNoTopmostWhdnForegroundWndInFullScreen:
+            pParams->lValue=2;
+			break;
+		case CLocateApp::pfUpdateTooltipNeverTopmost:
+            pParams->lValue=3;
+			break;
+		default:
+			pParams->lValue=0;
+			break;
+		}
+		break;
+	case BASICPARAMS::Set:
+		break;
+	case BASICPARAMS::Apply:
+		(*((DWORD*)pParams->lParam))&=~CLocateApp::pfUpdateTooltipTopmostMask;
+		switch (((COMBOAPPLYPARAMS*)pParams)->nCurSel)
+		{
+		case 0:
+            *((int*)pParams->lParam)|=CLocateApp::pfUpdateTooltipAlwaysTopmost;
+			break;
+		case 1:
+            *((int*)pParams->lParam)|=CLocateApp::pfUpdateTooltipNoTopmostWhenForegroundWndMaximized;
+			break;
+		case 2:
+            *((int*)pParams->lParam)|=CLocateApp::pfUpdateTooltipNoTopmostWhdnForegroundWndInFullScreen;
+			break;
+		case 3:
+            *((int*)pParams->lParam)|=CLocateApp::pfUpdateTooltipNeverTopmost;
+			break;
+		}
+		break;
+	case BASICPARAMS::ChangingValue:
+		break;
+	}		
+	return TRUE;
+}
+
 BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::TimeFormatComboProc(COptionsPropertyPage::BASICPARAMS* pParams)
 {
 	switch(pParams->crReason)

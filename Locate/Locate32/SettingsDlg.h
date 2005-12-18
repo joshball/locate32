@@ -71,7 +71,9 @@ public:
 		static BOOL CALLBACK UpdateThreadPriorityProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK FileSizeListProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK LimitResultsCheckBoxProc(COptionsPropertyPage::BASICPARAMS* pParams); 
-	
+		static BOOL CALLBACK UpdateTooltipPositionProc(COptionsPropertyPage::BASICPARAMS* pParams);
+		static BOOL CALLBACK UpdateTooltipTopmostProc(COptionsPropertyPage::BASICPARAMS* pParams);
+		
 
 		static BOOL CALLBACK EnumDateFormatsProc(LPTSTR lpDateFormatString);
 		static BOOL CALLBACK EnumTimeFormatsProc(LPTSTR lpDateFormatString);
@@ -418,6 +420,8 @@ public:
 	DWORD m_dwProgramFlags; // Used with CLocateAppWnd::ProgramFlags
 	
 	DWORD m_nMaximumFoundFiles;
+	DWORD m_nNumberOfNames; // Directoried in NameDlg 
+	DWORD m_nNumberOfTypes; // Directoried in NameDlg 
 	DWORD m_nNumberOfDirectories; // Directoried in NameDlg 
 	int  m_nUpdateThreadPriority;
 	

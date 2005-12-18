@@ -1582,7 +1582,14 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 				//pLocateDlg->ResetFileNotificators();
 				pLocateDlg->PostMessage(WM_REFRESHNOTIFIERHANDLERS);
 			}
-		
+		}
+		break;
+	}
+	case FinishedDatabase:
+	{
+		CLocateDlg* pLocateDlg=GetLocateDlg();
+		if (pLocateDlg!=NULL)
+		{
 			if (ueCode==ueStopped)
 			{
 				CString str;
@@ -3932,6 +3939,9 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 	CPoint ptUpperLeft;
 	CSize szSize;
 	
+	::GetWindowRect(hDesktop,&rcDesktopRect);
+	POINT ptDesktopCenter={(rcDesktopRect.left+rcDesktopRect.right)/2,(rcDesktopRect.top+rcDesktopRect.bottom)/2};
+	
 	// Computing width and height
 	if (m_WindowSize.cx==0 && m_WindowSize.cy==0)
 	{
@@ -4021,44 +4031,56 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 	else
 		szSize=m_WindowSize;
 
-	// Checking where tray window is
-	::GetWindowRect(hDesktop,&rcDesktopRect);
-	if (hShellTrayWnd==NULL)
-	{
-		// Default
-		ptUpperLeft.x=rcDesktopRect.right-szSize.cx-10;
-		ptUpperLeft.y=rcDesktopRect.bottom-szSize.cy-30;
-		return;
-	}
-
-    ::GetWindowRect(hShellTrayWnd,&rcTrayRect);
-	POINT ptDesktopCenter={(rcDesktopRect.left+rcDesktopRect.right)/2,(rcDesktopRect.top+rcDesktopRect.bottom)/2};
+	// This is postion to where tooltip is placed
+	DWORD nPosition=CLocateApp::pfUpdateTooltipPositionDownRight;
 	
-	if (rcTrayRect.top>ptDesktopCenter.y)
+	// Checking where tray window is
+	if (hShellTrayWnd!=NULL)
 	{
-		// Bottom
-		ptUpperLeft.x=rcTrayRect.right-szSize.cx-1;
-		ptUpperLeft.y=rcTrayRect.top-szSize.cy-1;
-	}
-	else if (rcTrayRect.bottom<ptDesktopCenter.y)
-	{
-		// Top
-		ptUpperLeft.x=rcTrayRect.right-szSize.cx-1;
-		ptUpperLeft.y=rcTrayRect.bottom+1;
-	}
-	else if (rcTrayRect.right<ptDesktopCenter.x)
-	{
-		// Left
-		ptUpperLeft.y=rcDesktopRect.bottom-szSize.cy-1;
-		ptUpperLeft.x=rcTrayRect.right+1;
-	}
-	else
-	{
-		// Right
-		ptUpperLeft.y=rcDesktopRect.bottom-szSize.cy-1;
-		ptUpperLeft.x=rcTrayRect.left-szSize.cx-1;
+		::GetWindowRect(hShellTrayWnd,&rcTrayRect);
+	
+		// Resolvinf position near clock and removing tray are from rcDekstopRect
+		if (rcTrayRect.top>ptDesktopCenter.y)
+		{
+			// Tray is on bottom
+			nPosition=CLocateApp::pfUpdateTooltipPositionDownRight;
+			rcDesktopRect.bottom=rcTrayRect.top;
+		}
+		else if (rcTrayRect.bottom<ptDesktopCenter.y)
+		{
+			// Tray is on top
+			nPosition=CLocateApp::pfUpdateTooltipPositionUpRight;
+			rcDesktopRect.top=rcTrayRect.bottom;
+		}
+		else if (rcTrayRect.right<ptDesktopCenter.x)
+		{
+			// Tray is on left
+			nPosition=CLocateApp::pfUpdateTooltipPositionDownLeft;
+			rcDesktopRect.left=rcTrayRect.right;
+		}
+		else
+		{
+			// Tray is on right
+			nPosition=CLocateApp::pfUpdateTooltipPositionDownRight;
+			rcDesktopRect.right=rcTrayRect.left;
+		}
 	}
 
+	if ((GetLocateApp()->GetProgramFlags()&CLocateApp::pfUpdateTooltipPositionMask)!=CLocateApp::pfUpdateTooltipPositionDefault)
+		nPosition=GetLocateApp()->GetProgramFlags()&CLocateApp::pfUpdateTooltipPositionMask;
+
+	if ((nPosition&CLocateApp::pfUpdateTooltipPositionDown)==CLocateApp::pfUpdateTooltipPositionDown)
+		ptUpperLeft.y=rcDesktopRect.bottom-szSize.cy-2;
+	else
+		ptUpperLeft.y=rcDesktopRect.top+2;
+	
+	if ((nPosition&CLocateApp::pfUpdateTooltipPositionRight)==CLocateApp::pfUpdateTooltipPositionRight)
+		ptUpperLeft.x=rcDesktopRect.right-szSize.cx-2;
+	else
+		ptUpperLeft.x=rcDesktopRect.left+2;
+
+
+		
 	SetWindowPos(HWND_TOP,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOZORDER|SWP_NOACTIVATE);
 	m_WindowSize=szSize;
 }

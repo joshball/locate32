@@ -23,6 +23,8 @@ inline CLocateDlg::CLocateDlg()
 
 inline CLocateDlg::CNameDlg::CNameDlg()
 :	CDialog(IDD_NAME),m_nMaxBrowse(DEFAULT_NUMBEROFDIRECTORIES),
+	m_nMaxNamesInList(DEFAULT_NUMBEROFNAMES),
+	m_nMaxTypesInList(DEFAULT_NUMBEROFTYPES),
 	m_pBrowse(NULL),m_pMultiDirs(NULL)
 {
 }

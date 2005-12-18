@@ -5750,7 +5750,7 @@ void CLocateDlg::OnChangeFileName()
 		if (pItem!=NULL)
 		{
 			DWORD sNameLen=pItem->GetNameLen();
-			if (bNoExtension && pItem->GetExtensionLength()!=0)
+			if (bNoExtension && pItem->GetExtensionLength()!=0 && !pItem->IsFolder())
 				sNameLen-=pItem->GetExtensionLength()+1;
                         			
 			fnd.m_sFileName.Copy(pItem->GetName(),sNameLen);
@@ -6122,8 +6122,34 @@ BOOL CLocateDlg::CNameDlg::OnInitDialog(HWND hwndFocus)
 	return FALSE;
 }
 
-void CLocateDlg::CNameDlg::ChangeNumberOfDirectories(int iNumberOfDirectories)
+void CLocateDlg::CNameDlg::ChangeNumberOfItemsInLists(int iNumberOfNames,int iNumberOfTypes,int iNumberOfDirectories)
 {
+	if (iNumberOfNames<=0)
+	{
+		SendDlgItemMessage(IDC_NAME,CB_RESETCONTENT,0,0);
+		m_nMaxNamesInList=0;
+	}
+	else if (iNumberOfNames!=m_nMaxNamesInList)
+	{
+		while (SendDlgItemMessage(IDC_NAME,CB_GETCOUNT,0,0)>iNumberOfNames)
+			SendDlgItemMessage(IDC_NAME,CB_DELETESTRING,iNumberOfNames);
+		m_nMaxNamesInList=iNumberOfNames;
+	}
+
+	if (iNumberOfTypes<=0)
+	{
+		SendDlgItemMessage(IDC_TYPE,CB_RESETCONTENT,0,0);
+		SendDlgItemMessage(IDC_TYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_NOEXTENSION));
+		m_nMaxTypesInList=0;
+	}
+	else if (iNumberOfTypes!=m_nMaxTypesInList)
+	{
+		while (SendDlgItemMessage(IDC_TYPE,CB_GETCOUNT,0,0)>iNumberOfTypes+1)
+			SendDlgItemMessage(IDC_TYPE,CB_DELETESTRING,iNumberOfTypes+1);
+		m_nMaxTypesInList=iNumberOfTypes;
+	}
+
+
 	if (iNumberOfDirectories<=0)
 	{
 		if (m_pBrowse!=NULL)
@@ -6139,41 +6165,41 @@ void CLocateDlg::CNameDlg::ChangeNumberOfDirectories(int iNumberOfDirectories)
 				}
 			}
 			
-			for (i=0;i<m_nMaxBrowse;i++)
+			for (i=0;i<int(m_nMaxBrowse);i++)
 				m_pBrowse[i].Empty();
 			delete[] m_pBrowse;
 			m_pBrowse=NULL;
 		}
 		m_nMaxBrowse=0;
-		return;
 	}
-	if (iNumberOfDirectories==m_nMaxBrowse)
-		return;
-
-	CString* pBrowseNew=new CString[iNumberOfDirectories];
-	for (int i=0;i<iNumberOfDirectories && i<m_nMaxBrowse;i++)
-		pBrowseNew[i].Swap(m_pBrowse[i]);
-	
-	if (iNumberOfDirectories<m_nMaxBrowse)
+	else if (iNumberOfDirectories!=m_nMaxBrowse)
 	{
-		for (;i<m_nMaxBrowse;i++)
-			m_pBrowse[i].Empty();
-
-		// Removing items from combobox
-		CComboBoxEx LookIn(GetDlgItem(IDC_LOOKIN));
-		for (i=0;i<LookIn.GetCount();i++)
+		CString* pBrowseNew=new CString[iNumberOfDirectories];
+		for (int i=0;i<iNumberOfDirectories && i<int(m_nMaxBrowse);i++)
+			pBrowseNew[i].Swap(m_pBrowse[i]);
+		
+		if (iNumberOfDirectories<int(m_nMaxBrowse))
 		{
-			LPARAM lParam=LookIn.GetItemData(i);
-			if (HIWORD(lParam)>=iNumberOfDirectories && LOWORD(lParam)==Custom)
+			for (;i<int(m_nMaxBrowse);i++)
+				m_pBrowse[i].Empty();
+
+			// Removing items from combobox
+			CComboBoxEx LookIn(GetDlgItem(IDC_LOOKIN));
+			for (i=0;i<LookIn.GetCount();i++)
 			{
-				LookIn.DeleteItem(i);
-				i--;
+				LPARAM lParam=LookIn.GetItemData(i);
+				if (HIWORD(lParam)>=iNumberOfDirectories && LOWORD(lParam)==Custom)
+				{
+					LookIn.DeleteItem(i);
+					i--;
+				}
 			}
 		}
+		delete[] m_pBrowse;
+		m_pBrowse=pBrowseNew;
+		m_nMaxBrowse=iNumberOfDirectories;
 	}
-	delete[] m_pBrowse;
-	m_pBrowse=pBrowseNew;
-	m_nMaxBrowse=iNumberOfDirectories;
+
 }
 
 BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
@@ -6455,7 +6481,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	if (m_pBrowse!=NULL) // NULL is possible is locate is just closing
 	{
 		// Remembered directories
-		for (j=0;j<m_nMaxBrowse;j++)
+		for (j=0;j<int(m_nMaxBrowse);j++)
 		{
 			if (m_pBrowse[j].IsEmpty())
 				break;;
@@ -6761,7 +6787,7 @@ void CLocateDlg::CNameDlg::OnDestroy()
 
 	if (m_pBrowse!=NULL)
 	{
-		for (int i=0;i<m_nMaxBrowse;i++)
+		for (DWORD i=0;i<m_nMaxBrowse;i++)
 			m_pBrowse[i].Empty();
 		delete[] m_pBrowse;
 		m_pBrowse=NULL;
@@ -6769,7 +6795,7 @@ void CLocateDlg::CNameDlg::OnDestroy()
 
 	if (m_pMultiDirs!=NULL)
 	{
-		for (int i=0;m_pMultiDirs[i]!=NULL;i++)
+		for (DWORD i=0;m_pMultiDirs[i]!=NULL;i++)
 			delete m_pMultiDirs[i];
 		delete[] m_pMultiDirs;
 		m_pMultiDirs=NULL;
@@ -6796,8 +6822,8 @@ BOOL CLocateDlg::CNameDlg::OnOk(CString& sName,CArray<LPSTR>& aExtensions,CArray
 	Name.InsertString(0,sName);
 	Name.SetText(sName);
 
-	if (Name.GetCount()>10)
-		Name.DeleteString(10);
+	if (Name.GetCount()>int(m_nMaxNamesInList))
+		Name.DeleteString(m_nMaxNamesInList);
 
 	
 	// Setting recent combobox for type
@@ -6820,8 +6846,8 @@ BOOL CLocateDlg::CNameDlg::OnOk(CString& sName,CArray<LPSTR>& aExtensions,CArray
 
 			Type.InsertString(1,sType); // 0 == (none)
 			Type.SetText(sType);
-			if (Type.GetCount()>10)
-				Type.DeleteString(10);
+			if (Type.GetCount()>int(m_nMaxTypesInList)+1)
+				Type.DeleteString(m_nMaxTypesInList+1);
 
 			// Parsing extensions
 			LPCSTR pType=sType;
@@ -8243,14 +8269,20 @@ void CLocateDlg::CNameDlg::SaveRegistry() const
 	
 	Path.LoadString(IDS_REGPLACE,CommonResource);
 	Path<<"\\Recent Strings";
-	if(RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	if(RegKey.OpenKey(HKCU,Path,CRegKey::defWrite)==ERROR_SUCCESS)
 	{
 		CComboBox Name(GetDlgItem(IDC_NAME));
 		CComboBox Type(GetDlgItem(IDC_TYPE));
 		CString buffer;
 		CString bfr;
-		int i;
+		int i=0;
+
+		// Remove existing items
+		while(RegKey.EnumValue(0,buffer))
+			RegKey.DeleteValue(buffer);
 		
+	
+		RegKey.SetValue("NumberOfNames",m_nMaxNamesInList);
 		for (i=Name.GetCount()-1;i>=0;i--)
 		{
 			bfr="Name";
@@ -8259,30 +8291,18 @@ void CLocateDlg::CNameDlg::SaveRegistry() const
 			RegKey.SetValue(bfr,buffer);
 		}
 		
-		for (i=Name.GetCount()-1;i<10;i++)
-		{
-			bfr="Name";
-			bfr<<(int)i;
-			RegKey.DeleteKey(bfr);
-		}
 	
+		RegKey.SetValue("NumberOfTypes",m_nMaxTypesInList);
 		for (i=Type.GetCount()-1;i>0;i--) // 0 is (none)
 		{
 			bfr="Type";
-			bfr<<int(i);
+			bfr<<int(i-1);
 			Type.GetLBText(i,buffer);
 			RegKey.SetValue(bfr,buffer);
 		}
 		
-		for (i=Type.GetCount()-1;i<10;i++)
-		{
-			bfr="Type";
-			bfr<<(int)i;
-			RegKey.DeleteKey(bfr);
-		}
-
 		RegKey.SetValue("NumberOfDirectories",m_nMaxBrowse);
-		for (i=0;i<m_nMaxBrowse;i++)
+		for (i=0;i<int(m_nMaxBrowse);i++)
 		{
 			bfr="Directory";
 			bfr<<(int)i;
@@ -8315,14 +8335,26 @@ void CLocateDlg::CNameDlg::LoadRegistry()
 		CString name;
 		CString buffer;
 		
-		for (i=0;i<10;i++)
+		RegKey.QueryValue("NumberOfNames",m_nMaxNamesInList);
+		if (m_nMaxNamesInList>255)
+			m_nMaxNamesInList=DEFAULT_NUMBEROFNAMES;
+
+		RegKey.QueryValue("NumberOfTypes",m_nMaxTypesInList);
+		if (m_nMaxTypesInList>255)
+			m_nMaxTypesInList=DEFAULT_NUMBEROFTYPES;
+
+		RegKey.QueryValue("NumberOfDirectories",m_nMaxBrowse);
+		if (m_nMaxBrowse>255)
+			m_nMaxBrowse=DEFAULT_NUMBEROFDIRECTORIES;
+
+		for (i=0;i<m_nMaxNamesInList;i++)
 		{
 			name="Name";
 			name<<(int)i;
 			if (RegKey.QueryValue((LPCSTR)name,buffer))
 				NameCombo.AddString(buffer);
 		}
-		for (i=0;i<10;i++)
+		for (i=0;i<m_nMaxTypesInList;i++)
 		{
 			name="Type";
 			name<<(int)i;
@@ -8330,14 +8362,11 @@ void CLocateDlg::CNameDlg::LoadRegistry()
 				TypeCombo.AddString(buffer);
 		}
 
-		RegKey.QueryValue("NumberOfDirectories",(LPSTR)&m_nMaxBrowse,sizeof(int));
-		if (m_nMaxBrowse<0)
-			m_nMaxBrowse=4;
-
+		
 		if (m_nMaxBrowse>0)
 			m_pBrowse=new CString[m_nMaxBrowse];
 
-		for (int i=0;i<m_nMaxBrowse;i++)
+		for (DWORD i=0;i<m_nMaxBrowse;i++)
 		{
 			name="Directory";
 			name<<(int)i;
@@ -8407,14 +8436,14 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCSTR pFolder,DWORD dwLength,BO
 
 		
 		// Check whether folder already exists in other directory list
-		for (int i=0;i<m_nMaxBrowse;i++)
+		for (DWORD i=0;i<m_nMaxBrowse;i++)
 		{
 			CString str(m_pBrowse[i]);
 			str.MakeLower();
 			if (str.Compare(FolderLower)==0)
 			{
 				// Deleting previous one
-				for (int j=i+1;j<m_nMaxBrowse;j++)
+				for (DWORD j=i+1;j<m_nMaxBrowse;j++)
 					m_pBrowse[j-1].Swap(m_pBrowse[j]);
 				m_pBrowse[m_nMaxBrowse-1].Empty();
 			}

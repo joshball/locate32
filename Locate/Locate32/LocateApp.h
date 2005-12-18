@@ -254,10 +254,20 @@ public:
 		pfUpdateTooltipNoTopmostWhenForegroundWndMaximized = 0x40, // Option
 		pfUpdateTooltipNoTopmostWhdnForegroundWndInFullScreen = 0x60, // Option
 		pfUpdateTooltipTopmostMask = 0x60,
-		pfTooltipMask = 0x70,
+		pfUpdateTooltipPositionDefault = 0x00,
+		pfUpdateTooltipPositionUp = 0x080,
+		pfUpdateTooltipPositionDown = 0x180,
+		pfUpdateTooltipPositionLeft = 0x080,
+		pfUpdateTooltipPositionRight = 0x280,
+		pfUpdateTooltipPositionUpLeft = pfUpdateTooltipPositionUp|pfUpdateTooltipPositionLeft,
+		pfUpdateTooltipPositionUpRight = pfUpdateTooltipPositionUp|pfUpdateTooltipPositionRight,
+		pfUpdateTooltipPositionDownLeft = pfUpdateTooltipPositionDown|pfUpdateTooltipPositionLeft,
+		pfUpdateTooltipPositionDownRight = pfUpdateTooltipPositionDown|pfUpdateTooltipPositionRight,
+		pfUpdateTooltipPositionMask = 0x0380,
+        pfTooltipMask = 0x3F0,
 
-		pfTooltipDefault = pfEnableUpdateTooltip|pfUpdateTooltipAlwaysTopmost,
-		pfTooltipSave = pfEnableUpdateTooltip|pfUpdateTooltipTopmostMask,
+		pfTooltipDefault = pfEnableUpdateTooltip|pfUpdateTooltipAlwaysTopmost|pfUpdateTooltipPositionDefault,
+		pfTooltipSave = pfEnableUpdateTooltip|pfUpdateTooltipTopmostMask|pfUpdateTooltipPositionMask,
 
 		// Filesize/time/date format
 		pfFormatUseLocaleFormat = 0x4, // Option

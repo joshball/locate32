@@ -172,7 +172,7 @@ public:
 		void EnableItems(BOOL bEnable=TRUE);
 		BOOL InitDriveBox(BYTE nFirstTime=FALSE);
 		void SetStartData(const CLocateApp::CStartData* pStartData);
-		void ChangeNumberOfDirectories(int iNumberOfDirectories);
+		void ChangeNumberOfItemsInLists(int iNumberOfNames,int iNumberOfTypes,int iNumberOfDirectories);
 		
 		BOOL EnableMultiDirectorySupport(BOOL bEnable);
 		BOOL SelectByLParam(LPARAM lParam);
@@ -205,7 +205,7 @@ public:
 
 	public:
 		CString* m_pBrowse;
-		int m_nMaxBrowse;
+		DWORD m_nMaxBrowse;
 
 		WORD m_nFieldLeft;
 		WORD m_nButtonWidth;
@@ -214,6 +214,9 @@ public:
 		WORD m_nMoreDirsTop;
 		BYTE m_nMoreDirsWidth;
 		
+		DWORD m_nMaxNamesInList;
+		DWORD m_nMaxTypesInList;
+
 #ifdef _DEBUG
 	public:
 		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
