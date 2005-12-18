@@ -9796,32 +9796,34 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			else
 			{
 				ChangeEnableStateForCheck();
-				FileType* ft;
+				FileType* ft=NULL;
 				int nSel=SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL);
 				if (nSel!=CB_ERR)
 				{
 					ft=(FileType*)SendDlgItemMessage(IDC_FILETYPE,CB_GETITEMDATA,nSel);
 					if (ft==NULL || ft==(FileType*)szEmpty)
 					{
-						GetLocateDlg()->m_NameDlg.EnableDlgItem(IDC_TYPE,TRUE);
-						
-						HilightTab(TRUE);
-						break;
+						ft=NULL;
+						if (!GetLocateDlg()->m_NameDlg.IsDlgItemEnabled(IDC_TYPE))
+							GetLocateDlg()->m_NameDlg.SetDlgItemText(IDC_TYPE,"");
 					}
-
-			
-					char* pEx=new char[max(ft->dwExtensionLength,2)];
-					sMemCopy(pEx,ft->szExtensions,ft->dwExtensionLength);
-					DebugMessage("7");
-					for (int i=0;pEx[i]!='\0' || pEx[i+1]!='\0';i++)
+					else
 					{
-						if (pEx[i]=='\0')
-							pEx[i]=' ';
+						char* pEx=new char[max(ft->dwExtensionLength,2)];
+						sMemCopy(pEx,ft->szExtensions,ft->dwExtensionLength);
+						DebugMessage("7");
+						for (int i=0;pEx[i]!='\0' || pEx[i+1]!='\0';i++)
+						{
+							if (pEx[i]=='\0')
+								pEx[i]=' ';
+						}
+						GetLocateDlg()->m_NameDlg.SetDlgItemText(IDC_TYPE,pEx);
+						delete[] pEx;
 					}
-					GetLocateDlg()->m_NameDlg.SetDlgItemText(IDC_TYPE,pEx);
-					delete[] pEx;
+					
 				}
 				GetLocateDlg()->m_NameDlg.EnableDlgItem(IDC_TYPE,ft==NULL);
+				
 			}
 			HilightTab(IsChanged());
 			break;
