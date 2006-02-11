@@ -5,7 +5,7 @@
 #ifndef HFCMEMORY_INL
 #define HFCMEMORY_INL
 
-inline void iMemCopy(LPVOID dst,LPCVOID src,DWORD len) // Exactly same as MemCopy()
+inline void iMemCopy(LPVOID dst,LPCVOID src,UINT len) // Exactly same as MemCopy()
 {
 #ifdef WIN32
 	__asm
@@ -43,13 +43,13 @@ inline void iMemCopy(LPVOID dst,LPCVOID src,DWORD len) // Exactly same as MemCop
 #endif
 }
 
-inline void fMemCopy(void* dst,const void* src,DWORD len) // faster when src is very short
+inline void fMemCopy(void* dst,const void* src,SIZE_T len) // faster when src is very short
 {
-	for (register UINT i=0;i<len;i++)
+	for (register SIZE_T i=0;i<len;i++)
 		((BYTE*)dst)[i]=((BYTE*)src)[i];
 }
 
-inline void iMemSet(LPVOID pDst,BYTE nByte,DWORD nCount) // exactly same as MemSet()
+inline void iMemSet(LPVOID pDst,BYTE nByte,UINT nCount) // exactly same as MemSet()
 {
 #ifdef WIN32
 	__asm
@@ -95,9 +95,9 @@ inline void iMemSet(LPVOID pDst,BYTE nByte,DWORD nCount) // exactly same as MemS
 #endif
 }
 
-inline void fMemSet(void* dst,BYTE byte,DWORD count) // faster when count is small
+inline void fMemSet(void* dst,BYTE byte,SIZE_T count) // faster when count is small
 {
-	for (register UINT i=0;i<count;i++)
+	for (register SIZE_T i=0;i<count;i++)
 		((BYTE*)dst)[i]=byte;
 }
 
@@ -143,7 +143,7 @@ inline void CAllocator::DebugInformation(CString& str)
 inline CString CAllocator::GetAllocatorID() const
 {
 	CString id;
-	id.Format("CAllocator on 0x%X",DWORD(this));
+	id.Format("CAllocator on 0x%X",(void*)(this));
 	return id;
 }
 #endif
@@ -775,7 +775,7 @@ inline void CGlobalAlloc::Lock()
 		m_pData=(BYTE*)GlobalLock(m_hGlobal);
 }
 
-inline DWORD CGlobalAlloc::GetSize() const
+inline SIZE_T CGlobalAlloc::GetSize() const
 {
 	return GlobalSize(m_hGlobal);
 }
@@ -824,7 +824,7 @@ inline BOOL CHeap::IsAllocated()
 	return m_hHeap!=NULL;
 }
 
-inline UINT CHeap::Compact(attributes nAttributes)
+inline SIZE_T CHeap::Compact(attributes nAttributes)
 {
 	return HeapCompact(m_hHeap,nAttributes);
 }

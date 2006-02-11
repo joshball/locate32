@@ -31,7 +31,7 @@ BOOL CLocateDlgThread::InitInstance()
 			{
 				if (dwTransparency>0)
 				{
-					m_pLocate->SetWindowLong(CWnd::WindowLongIndex::gwlExStyle,WS_EX_CONTROLPARENT|WS_EX_LAYERED);
+					m_pLocate->SetWindowLong(CWnd::gwlExStyle,WS_EX_CONTROLPARENT|WS_EX_LAYERED);
 					pSetLayeredWindowAttributes(*m_pLocate,0,BYTE(255-min(dwTransparency,255)),LWA_ALPHA);
 				}
 			}				
@@ -101,7 +101,7 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 				// Deleting previous tools
 				m_pLocate->DeleteTooltipTools();
 
-				if (CLocateDlg::DetailType(m_pLocate->m_pListCtrl->GetColumnIDFromSubItem(ht.iSubItem))==CLocateDlg::DetailType::Title)
+				if (CLocateDlg::DetailType(m_pLocate->m_pListCtrl->GetColumnIDFromSubItem(ht.iSubItem))==CLocateDlg::Title)
 				{
 					TOOLINFO tii;
 					tii.cbSize = TTTOOLINFOA_V2_SIZE;
@@ -145,7 +145,7 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 					delete[] pText;
 					
 					// InFolder need also space for icon
-					if (CLocateDlg::DetailType(m_pLocate->m_pListCtrl->GetColumnIDFromSubItem(ht.iSubItem))==CLocateDlg::DetailType::InFolder)
+					if (CLocateDlg::DetailType(m_pLocate->m_pListCtrl->GetColumnIDFromSubItem(ht.iSubItem))==CLocateDlg::InFolder)
 						nWidth+=rc2.Width()+5;
 
 					if (nWidth>rc.Width())
@@ -516,19 +516,19 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		SetListStyle(3);
 		break;
 	case IDM_ARRANGENAME:
-		SortItems(DetailType::Title);
+		SortItems(Title);
 		break;
 	case IDM_ARRANGEFOLDER:
-		SortItems(DetailType::InFolder);
+		SortItems(InFolder);
 		break;
 	case IDM_ARRANGETYPE:
-		SortItems(DetailType::FileType);
+		SortItems(FileType);
 		break;
 	case IDM_ARRANGESIZE:
-		SortItems(DetailType::FileSize);
+		SortItems(FileSize);
 		break;
 	case IDM_ARRANGEDATE:
-		SortItems(DetailType::DateModified);
+		SortItems(DateModified);
 		break;
 	case IDM_AUTOARRANGE:
 		OnAutoArrange();
@@ -3002,7 +3002,7 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 					break;
 
 				((NMTTDISPINFO*)pnmh)->hinst=NULL;
-				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))==DetailType::Title)
+				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))==Title)
 				{
 						
 					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_iTooltipItem);
@@ -3030,13 +3030,13 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 
 				m_bTooltipActive=TRUE;
 
-				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))!=DetailType::Title)
+				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))!=Title)
 				{
 					CRect rc;
 					m_pListCtrl->GetSubItemRect(m_iTooltipItem,m_iTooltipSubItem,LVIR_LABEL,&rc);
 					m_pListCtrl->ClientToScreen(&rc);
                                      
-					if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))==DetailType::InFolder)
+					if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))==InFolder)
 					{
 						CRect rc2;
 						m_pListCtrl->GetSubItemRect(m_iTooltipItem,m_iTooltipSubItem,LVIR_ICON,&rc2);
@@ -3071,7 +3071,7 @@ void CLocateDlg::SetSortArrowToHeader(DetailType nType,BOOL bRemove,BOOL bDownAr
 	if (((CLocateApp*)GetApp())->m_wComCtrlVersion<0x0600)
 		return;
 
-	if (int(nType)>int(DetailType::LastType))
+	if (int(nType)>int(LastType))
 		return;
 
 	int nColumn=m_pListCtrl->GetVisibleColumn(m_pListCtrl->GetColumnFromID(nType));
@@ -3220,7 +3220,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 				switch (nDetail)
 				{
 				// Title and parent are special since they have icons
-				case DetailType::Title:
+				case Title:
 					if (pItem->ShouldUpdateTitle())
 						pItem->UpdateTitle();
 					if (pItem->ShouldUpdateIcon())
@@ -3241,7 +3241,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 						pLvdi->item.stateMask=LVIS_CUT;
 					}
 					break;
-				case DetailType::InFolder:
+				case InFolder:
 					if (pItem->ShouldUpdateParentIcon())
 						pItem->UpdateParentIcon();
 
@@ -3250,7 +3250,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 					pLvdi->item.iImage=pItem->GetParentIcon();
 					break;
 				default:
-					ASSERT (nDetail<=DetailType::LastType);
+					ASSERT (nDetail<=LastType);
 			
 					if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
 						pItem->ShouldUpdateByDetail(nDetail))
@@ -3267,7 +3267,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 				switch (nDetail)
 				{
 				// Title and parent are special since they have icons
-				case DetailType::Title:
+				case Title:
 					if (pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon())
 					{
 						if (m_pBackgroundUpdater==NULL)
@@ -3298,7 +3298,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 						pLvdi->item.stateMask=LVIS_CUT;
 					}
 					break;
-				case DetailType::InFolder:
+				case InFolder:
 					if (pItem->ShouldUpdateParentIcon())
 					{
 						if (m_pBackgroundUpdater==NULL)
@@ -3315,7 +3315,7 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 					pLvdi->item.iImage=pItem->GetParentIcon();
 					break;
 				default:
-					ASSERT (nDetail<=DetailType::LastType);
+					ASSERT (nDetail<=LastType);
 			
 					if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
 						pItem->ShouldUpdateByDetail(nDetail))
@@ -3451,7 +3451,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 	DetailType nDetail=DetailType(lParamSort&127);
 	switch (nDetail)
 	{
-	case DetailType::Title:
+	case Title:
 		if (pItem1->ShouldUpdateTitle())
 			pItem1->UpdateTitle();
 		if (pItem2->ShouldUpdateTitle())
@@ -3459,15 +3459,15 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		if (lParamSort&128)
 			return lstrcmpi(pItem2->GetTitle(),pItem1->GetTitle());
 		return lstrcmpi(pItem1->GetTitle(),pItem2->GetTitle());
-	case DetailType::InFolder:
+	case InFolder:
 		if (lParamSort&128)
 			return lstrcmpi(pItem2->GetParent(),pItem1->GetParent());
 		return lstrcmpi(pItem1->GetParent(),pItem2->GetParent());
-	case DetailType::FullPath:
+	case FullPath:
 		if (lParamSort&128)
 			return lstrcmpi(pItem2->GetPath(),pItem1->GetPath());
 		return lstrcmpi(pItem1->GetPath(),pItem2->GetPath());
-	case DetailType::FileSize:
+	case FileSize:
 		if (pItem1->ShouldUpdateFileSize())
 			pItem1->UpdateFileSizeAndTime();
 		if (pItem2->ShouldUpdateFileSize())
@@ -3496,7 +3496,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			return lParamSort&128?1:-1;
 		else
 			return lParamSort&128?-1:1;
-	case DetailType::FileType:
+	case FileType:
 		if (pItem1->ShouldUpdateType())
 			pItem1->UpdateType();
 		if (pItem2->ShouldUpdateType())
@@ -3504,7 +3504,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		if (lParamSort&128)
 			return lstrcmpi(pItem2->GetType(),pItem1->GetType());
 		return lstrcmpi(pItem1->GetType(),pItem2->GetType());
-	case DetailType::DateModified:
+	case DateModified:
 		if (pItem1->ShouldUpdateTimeAndDate())
 			pItem1->UpdateFileSizeAndTime();
 		if (pItem2->ShouldUpdateTimeAndDate())
@@ -3524,7 +3524,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			return lParamSort&128?1:-1;
 		else
 			return lParamSort&128?-1:1;
-	case DetailType::DateCreated:
+	case DateCreated:
 		if (pItem1->ShouldUpdateTimeAndDate())
 			pItem1->UpdateFileSizeAndTime();
 		if (pItem2->ShouldUpdateTimeAndDate())
@@ -3544,7 +3544,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			return lParamSort&128?1:-1;
 		else
 			return lParamSort&128?-1:1;
-	case DetailType::DateAccessed:
+	case DateAccessed:
 		if (pItem1->ShouldUpdateTimeAndDate())
 			pItem1->UpdateFileSizeAndTime();
 		if (pItem2->ShouldUpdateTimeAndDate())
@@ -3564,7 +3564,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			return lParamSort&128?1:-1;
 		else
 			return lParamSort&128?-1:1;
-	case DetailType::Attributes:
+	case Attributes:
 		if (pItem1->ShouldUpdateAttributes())
 			pItem1->UpdateAttributes();
 		if (pItem2->ShouldUpdateAttributes())
@@ -3581,7 +3581,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		if (lParamSort&128)
 			return int(pItem2->GetAttributes())-int(pItem1->GetAttributes());
 		return int(pItem1->GetAttributes())-int(pItem2->GetAttributes());
-	case DetailType::ImageDimensions:
+	case ImageDimensions:
 		if (pItem1->ShouldUpdateExtra(ImageDimensions))
 			pItem1->UpdateDimensions();
 		if (pItem2->ShouldUpdateExtra(ImageDimensions))
@@ -3593,10 +3593,10 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			return lParamSort&128?1:-1;
 		else
 			return lParamSort&128?-1:1;
-	case DetailType::Owner:
-	case DetailType::ShortFileName:	
-	case DetailType::ShortFilePath:
-	case DetailType::MD5sum:
+	case Owner:
+	case ShortFileName:	
+	case ShortFilePath:
+	case MD5sum:
 		{
 			if (pItem1->ShouldUpdateExtra(nDetail))
 				pItem1->UpdateByDetail(nDetail);
@@ -3619,7 +3619,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 				return lstrcmpi(pText2,pText1);
 			return lstrcmpi(pText1,pText2);
 		}
-	case DetailType::Database:
+	case Database:
 		if (lParamSort&128)
 		{
 			return lstrcmpi(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetName(),
@@ -3627,7 +3627,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		}
 		return lstrcmpi(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetName(),
 			GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetName());
-	case DetailType::DatabaseDescription:
+	case DatabaseDescription:
 		if (lParamSort&128)
 		{
 			return lstrcmpi(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetDescription(),
@@ -3635,7 +3635,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		}
 		return lstrcmpi(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetDescription(),
 			GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetDescription());
-	case DetailType::DatabaseArchive:
+	case DatabaseArchive:
 		if (lParamSort&128)
 		{
 			return lstrcmpi(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetArchiveName(),
@@ -3643,7 +3643,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		}
 		return lstrcmpi(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetArchiveName(),
 			GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetArchiveName());
-	case DetailType::VolumeLabel:
+	case VolumeLabel:
 		if (lParamSort&128)
 		{
 			return lstrcmpi(CLocateDlg::GetVolumeLabel(pItem2->GetDatabaseID(),pItem2->GetRootID()),
@@ -3651,7 +3651,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		}
 		return lstrcmpi(CLocateDlg::GetVolumeLabel(pItem1->GetDatabaseID(),pItem1->GetRootID()),
 			CLocateDlg::GetVolumeLabel(pItem2->GetDatabaseID(),pItem2->GetRootID()));
-	case DetailType::VolumeSerial:
+	case VolumeSerial:
 		if (lParamSort&128)
 		{
 			return lstrcmpi(CLocateDlg::GetVolumeSerial(pItem2->GetDatabaseID(),pItem2->GetRootID()),
@@ -3659,7 +3659,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		}
 		return lstrcmpi(CLocateDlg::GetVolumeSerial(pItem1->GetDatabaseID(),pItem1->GetRootID()),
 			CLocateDlg::GetVolumeSerial(pItem2->GetDatabaseID(),pItem2->GetRootID()));
-	case DetailType::VOlumeFileSystem:
+	case VOlumeFileSystem:
 		if (lParamSort&128)
 		{
 			return lstrcmpi(CLocateDlg::GetVolumeFileSystem(pItem2->GetDatabaseID(),pItem2->GetRootID()),
@@ -3924,7 +3924,8 @@ void CLocateDlg::OnProperties(int nItem)
 		{
 			aFiles.Add(new CString(pItems[i]->GetPath()));		
 		
-			for (int j=0;j<aParents.GetSize();j++)
+			int j;
+			for (j=0;j<aParents.GetSize();j++)
 			{
 				if (strcmp(aParents[j],pItems[i]->GetParent())==0)
 					break;
@@ -5338,7 +5339,7 @@ BOOL CLocateDlg::GetFileClassID(CString& file,CLSID& clsid,LPCSTR szType)
 	BaseKey.QueryValue(szEmpty,Key);
 	if (Key.IsEmpty())
 		return FALSE;
-	WORD olestr[50];
+	WCHAR olestr[50];
 	MultiByteToWideChar(CP_ACP,0,Key,Key.GetLength()+1,olestr,50);
 	return CLSIDFromString(olestr,&clsid)==NOERROR;
 }
@@ -5966,7 +5967,7 @@ void CLocateDlg::OnShowFileInformation()
 	{
 		CString str;
 		char number[200];
-		_ui64toa(llTotalSize,number,10);
+		_ui64toa_s(llTotalSize,number,200,10);
         str.FormatEx(IDS_FILEINFORMATIONFMT,dwFiles,dwDirectories,number);
 		MessageBox(str,CString(IDS_FILEINFORMATION),MB_OK|MB_ICONINFORMATION);
 	}
@@ -6165,7 +6166,7 @@ void CLocateDlg::CNameDlg::ChangeNumberOfItemsInLists(int iNumberOfNames,int iNu
 				}
 			}
 			
-			for (i=0;i<int(m_nMaxBrowse);i++)
+			for (int i=0;i<int(m_nMaxBrowse);i++)
 				m_pBrowse[i].Empty();
 			delete[] m_pBrowse;
 			m_pBrowse=NULL;
@@ -6175,7 +6176,8 @@ void CLocateDlg::CNameDlg::ChangeNumberOfItemsInLists(int iNumberOfNames,int iNu
 	else if (iNumberOfDirectories!=m_nMaxBrowse)
 	{
 		CString* pBrowseNew=new CString[iNumberOfDirectories];
-		for (int i=0;i<iNumberOfDirectories && i<int(m_nMaxBrowse);i++)
+		int i;
+		for (i=0;i<iNumberOfDirectories && i<int(m_nMaxBrowse);i++)
 			pBrowseNew[i].Swap(m_pBrowse[i]);
 		
 		if (iNumberOfDirectories<int(m_nMaxBrowse))
@@ -6415,7 +6417,8 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 				CharUpperBuff(&cDrive,1);
 				
 				// Checking whether drive is already added
-				for (int j=0;j<aCurrentlyAddedDrives.GetSize() && cDrive!=aCurrentlyAddedDrives[j];j++);
+				int j;
+				for (j=0;j<aCurrentlyAddedDrives.GetSize() && cDrive!=aCurrentlyAddedDrives[j];j++);
 				
 				if (j<aCurrentlyAddedDrives.GetSize())
 				{
@@ -6481,7 +6484,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	if (m_pBrowse!=NULL) // NULL is possible is locate is just closing
 	{
 		// Remembered directories
-		for (j=0;j<int(m_nMaxBrowse);j++)
+		for (int j=0;j<int(m_nMaxBrowse);j++)
 		{
 			if (m_pBrowse[j].IsEmpty())
 				break;;
@@ -6837,7 +6840,7 @@ BOOL CLocateDlg::CNameDlg::OnOk(CString& sName,CArray<LPSTR>& aExtensions,CArray
 			aExtensions.Add(allocempty());
 		else
 		{
-			for (i=Type.GetCount()-1;i>=1;i--)
+			for (int i=Type.GetCount()-1;i>=1;i--)
 			{
 				Type.GetLBText(i,Buffer);
 				if (sType.CompareNoCase(Buffer)==0)
@@ -6854,7 +6857,8 @@ BOOL CLocateDlg::CNameDlg::OnOk(CString& sName,CArray<LPSTR>& aExtensions,CArray
 			for (;pType[0]==' ';pType++);
 			while (*pType!='\0')
 			{
-				for (DWORD nLength=0;pType[nLength]!='\0' && pType[nLength]!=' ';nLength++);		
+				DWORD nLength;
+				for (nLength=0;pType[nLength]!='\0' && pType[nLength]!=' ';nLength++);		
 				aExtensions.Add(alloccopy(pType,nLength));
 				pType+=nLength;
 				for (;pType[0]==' ';pType++);
@@ -8005,7 +8009,8 @@ void CLocateDlg::CNameDlg::OnMoreDirectories()
 	mii.wID=IDM_DEFMENUITEM;
 	mii.fType=MFT_STRING;
 	CString str;
-	for (int i=0;m_pMultiDirs[i]!=NULL;i++)
+	int i;
+	for (i=0;m_pMultiDirs[i]!=NULL;i++)
 	{
 		if (m_pMultiDirs[i]->bSelected)
 		{
@@ -8086,8 +8091,8 @@ void CLocateDlg::CNameDlg::OnLookInNextSelection(BOOL bNext)
 		return;
 
 	// Getting current selection
-	int nCurrentSelection=-1,nSelection;
-	for (int nDirs=0;m_pMultiDirs[nDirs]!=NULL;nDirs++)
+	int nCurrentSelection=-1,nSelection,nDirs;
+	for (nDirs=0;m_pMultiDirs[nDirs]!=NULL;nDirs++)
 	{
 		if (m_pMultiDirs[nDirs]->bSelected)
 			nCurrentSelection=nDirs;
@@ -8118,8 +8123,8 @@ void CLocateDlg::CNameDlg::OnLookInSelection(int nSelection)
 	if (m_pMultiDirs==NULL)
 		return;
 
-	int nCurrentSelection=-1;
-	for (int nDirs=0;m_pMultiDirs[nDirs]!=NULL;nDirs++)
+	int nCurrentSelection=-1,nDirs;
+	for (nDirs=0;m_pMultiDirs[nDirs]!=NULL;nDirs++)
 	{
 		if (m_pMultiDirs[nDirs]->bSelected)
 			nCurrentSelection=nDirs;
@@ -8139,8 +8144,8 @@ void CLocateDlg::CNameDlg::OnLookInNewSelection()
 	if (m_pMultiDirs==NULL)
 		return;
 
-	int nSelected=0;
-	for (int nDirs=0;m_pMultiDirs[nDirs]!=NULL;nDirs++)
+	int nSelected=0,nDirs;
+	for (nDirs=0;m_pMultiDirs[nDirs]!=NULL;nDirs++)
 	{
 		if (m_pMultiDirs[nDirs]->bSelected)
 		{
@@ -8173,8 +8178,8 @@ void CLocateDlg::CNameDlg::OnLookInRemoveSelection()
 	if (m_pMultiDirs==NULL)
 		return;
 	
-	int nCurrentSelection=-1;
-	for (int nDirs=0;m_pMultiDirs[nDirs]!=NULL;nDirs++)
+	int nCurrentSelection=-1,nDirs;
+	for (nDirs=0;m_pMultiDirs[nDirs]!=NULL;nDirs++)
 	{
 		if (m_pMultiDirs[nDirs]->bSelected)
 			nCurrentSelection=nDirs;
@@ -8417,7 +8422,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCSTR pFolder,DWORD dwLength,BO
 		CComboBoxEx LookIn(GetDlgItem(IDC_LOOKIN));
 		if (dwLength==2 && pFolder[1]==':')
 		{
-			for (i=0;i<LookIn.GetCount();i++)
+			for (int i=0;i<LookIn.GetCount();i++)
 			{
 				LPARAM lParam=LookIn.GetItemData(i);
 				if (static_cast<TypeOfItem>(LOWORD(lParam))!=Drive)
@@ -8450,7 +8455,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCSTR pFolder,DWORD dwLength,BO
 		}
 
 		// moving previous folders one down
-		for (i=m_nMaxBrowse-1;i>0;i--)
+		for (int i=m_nMaxBrowse-1;i>0;i--)
 			m_pBrowse[i].Swap(m_pBrowse[i-1]);
 		
 		m_pBrowse[0].Copy(pFolder,dwLength);
@@ -8475,7 +8480,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCSTR pFolder,DWORD dwLength,BO
 		int nSel=++ci.iItem;
 		ci.iIndent=0;
 		ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
-		for (i=0;i<m_nMaxBrowse;i++)
+		for (DWORD i=0;i<m_nMaxBrowse;i++)
 		{
 			if (m_pBrowse[i].IsEmpty())
 				break;
@@ -8867,7 +8872,8 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 	
 
         // Sorting, bubble sort
-		for (int i=0;i<aSelections.GetSize();i++)
+		int i;
+		for (i=0;i<aSelections.GetSize();i++)
 		{
 			for (int j=0;j<i;j++)
 			{
@@ -8895,8 +8901,8 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 				RegKey.QueryValue(szName,pData,lLength);
 					
 					
-				if (*((WORD*)pData)==CNameDlg::TypeOfItem::NotSelected ||
-					(*((WORD*)pData)==CNameDlg::TypeOfItem::Custom && lLength>4))
+				if (*((WORD*)pData)==CNameDlg::NotSelected ||
+					(*((WORD*)pData)==CNameDlg::Custom && lLength>4))
 				{
 					pData[lLength]='\0';
 					SelectByCustomName(pData+4);
@@ -8927,8 +8933,8 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 			RegKey.QueryValue(szName,pData,lLength);
 			
 			
-			if (*((WORD*)pData)==CNameDlg::TypeOfItem::NotSelected ||
-				(*((WORD*)pData)==CNameDlg::TypeOfItem::Custom && lLength>4))
+			if (*((WORD*)pData)==CNameDlg::NotSelected ||
+				(*((WORD*)pData)==CNameDlg::Custom && lLength>4))
 			{
 				pData[lLength]='\0';
 				SelectByCustomName(pData+4);
@@ -8972,8 +8978,8 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 		
 			char* pData=new char[lLength+1];
 			RegKey.QueryValue("Name/LookIn",pData,lLength);
-			if (*((WORD*)pData)==CNameDlg::TypeOfItem::NotSelected ||
-				(*((WORD*)pData)==CNameDlg::TypeOfItem::Custom && lLength>4))
+			if (*((WORD*)pData)==CNameDlg::NotSelected ||
+				(*((WORD*)pData)==CNameDlg::Custom && lLength>4))
 			{
 				// Data is REG_BINARY so '\' is not added by default
 				pData[lLength]='\0';
@@ -9046,12 +9052,12 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 	if (m_pMultiDirs==NULL)
 	{
 		int nCurSel=LookInEx.GetCurSel();
-		LPARAM lParam=MAKELPARAM(TypeOfItem::NotSelected,0);
+		LPARAM lParam=MAKELPARAM(NotSelected,0);
 		if (nCurSel!=CB_ERR)
             lParam=LookInEx.GetItemData(nCurSel);
 			
-		if (LOWORD(lParam)==TypeOfItem::NotSelected || 
-			LOWORD(lParam)==TypeOfItem::Custom)
+		if (LOWORD(lParam)==NotSelected || 
+			LOWORD(lParam)==Custom)
 		{
 			LookInEx.GetItemText(-1,str.GetBuffer(2000),2000);
 			str.FreeExtra();
@@ -9073,12 +9079,12 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 			{
 				// Current selection
 				int nCurSel=LookInEx.GetCurSel();
-				LPARAM lParam=MAKELPARAM(TypeOfItem::NotSelected,0);
+				LPARAM lParam=MAKELPARAM(NotSelected,0);
 				if (nCurSel!=CB_ERR)
 					lParam=LookInEx.GetItemData(nCurSel);
 				
-				if (LOWORD(lParam)==TypeOfItem::NotSelected || 
-					LOWORD(lParam)==TypeOfItem::Custom)
+				if (LOWORD(lParam)==NotSelected || 
+					LOWORD(lParam)==Custom)
 				{
 					LookInEx.GetItemText(-1,str.GetBuffer(2000),2000);
 					str.FreeExtra();
@@ -9101,7 +9107,7 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 				dstrlen(m_pMultiDirs[i]->pTitleOrDirectory,dwLength);
 				
 				char* pData=new char[dwLength+4];
-				*((DWORD*)pData)=DWORD(TypeOfItem::Custom);
+				*((DWORD*)pData)=DWORD(Custom);
 				CopyMemory(pData+4,m_pMultiDirs[i]->pTitleOrDirectory,dwLength);
 				RegKey.SetValue(szName,pData,dwLength+4,REG_BINARY);
 			}
@@ -9716,7 +9722,7 @@ BOOL CLocateDlg::CAdvancedDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		else if (ft2->szType==NULL) // ft2 is buildin
 			return 1;
 
-		return stricmp(
+		return _stricmp(
 			((FileType*)((COMPAREITEMSTRUCT*)lParam)->itemData1)->szTitle,
 			((FileType*)((COMPAREITEMSTRUCT*)lParam)->itemData2)->szTitle);
 	}
@@ -10020,7 +10026,7 @@ DWORD CLocateDlg::CAdvancedDlg::OnOk(CLocater* pLocater)
 		
 		DWORD dwDataLength;
 		BYTE* pData=NULL;
-		if (strnicmp(str,"regexp:",7)==0)
+		if (_strnicmp(str,"regexp:",7)==0)
 		{
 			dwDataLength=istrlen(LPCSTR(str)+7)+1;
             if (dwDataLength>1)
@@ -10643,7 +10649,8 @@ void CLocateDlg::CAdvancedDlg::FileType::ExtractIconFromPath()
 
 	int iIndex=0;
 
-	for (char* szIconIndex=szIconPath;*szIconIndex!=',' && *szIconIndex!='\0';szIconIndex++);
+	char* szIconIndex;
+	for (szIconIndex=szIconPath;*szIconIndex!=',' && *szIconIndex!='\0';szIconIndex++);
 	if (*szIconIndex!='\0')
 	{
 		iIndex=atoi(szIconIndex+1);

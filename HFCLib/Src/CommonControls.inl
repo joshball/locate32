@@ -1531,8 +1531,9 @@ inline int CListCtrl::InsertColumn(int nCol, const LV_COLUMN* pColumn)
 inline int CListCtrl::GetColumnCount() const
 {
 	LV_COLUMN lc;
+	int iCount;
 	lc.mask=LVCF_WIDTH;
-	for (int iCount=0;::SendMessage(m_hWnd,LVM_GETCOLUMN,(WPARAM)iCount,(LPARAM)&lc);iCount++);
+	for (iCount=0;::SendMessage(m_hWnd,LVM_GETCOLUMN,(WPARAM)iCount,(LPARAM)&lc);iCount++);
 	return iCount;
 }
 

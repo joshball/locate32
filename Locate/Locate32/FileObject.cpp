@@ -384,7 +384,8 @@ HGLOBAL CFileObject::GetHDrop()
 	if (osvi.dwPlatformId==VER_PLATFORM_WIN32_NT)
 	{
 		// Win2000/XP needs Unicode
-		for (int i=0;i<m_Files.GetSize();i++)
+		int i;
+		for (i=0;i<m_Files.GetSize();i++)
 			nDataLength+=(m_Files[i]->GetLength()+1)*2;
 		hGlobal=GlobalAlloc(GPTR,nDataLength);
 		BYTE* pLock=(BYTE*)GlobalLock(hGlobal);
@@ -418,7 +419,7 @@ HGLOBAL CFileObject::GetHDrop()
 		((DROPFILES*)hGlobal)->fWide=FALSE;
 		((DROPFILES*)hGlobal)->pFiles=sizeof(DROPFILES);
 		LPSTR pDst=(LPSTR)hGlobal+sizeof(DROPFILES);
-		for (i=0;i<m_Files.GetSize();i++)
+		for (int i=0;i<m_Files.GetSize();i++)
 		{
 			DebugFormatMessage("HDROP: file: %s",(LPCSTR)*m_Files[i]);
 			sMemCopy(pDst,(LPCSTR)*m_Files[i],m_Files[i]->GetLength()+1);

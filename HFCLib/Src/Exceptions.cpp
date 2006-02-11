@@ -4,7 +4,7 @@
 
 #include "HFCLib.h"
 
-HFCERROR ExceptionErrorFunc(HFCERROR nError,DWORD dwData)
+HFCERROR ExceptionErrorFunc(HFCERROR nError,SIZE_T dwData)
 {
 	switch ((DWORD)nError)
 	{
@@ -105,8 +105,7 @@ BOOL CException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 
 	if (nMaxError<=msglen)
 	{
-		strncpy(lpszError,msg,nMaxError-1);
-		lpszError[nMaxError-1]='\0';
+		StringCbCopy(lpszError,nMaxError-1,msg);
 	}
 	else
 	{

@@ -17,13 +17,15 @@ inline LPSTR alloccopy(LPCSTR szString)
 	psz[nLength]='\0';
 	return psz;
 }
-inline LPSTR alloccopy(LPCSTR szString,DWORD dwLength)
+
+inline LPSTR alloccopy(LPCSTR szString,SIZE_T dwLength)
 {
 	char* psz=new char[max(dwLength+1,2)];
 	CopyMemory(psz,szString,dwLength);
 	psz[dwLength]='\0';
 	return psz;
 }
+
 inline LPSTR allocempty()
 {
 	char* psz=new char[2];
@@ -41,13 +43,15 @@ inline LPWSTR alloccopy(LPCWSTR szString)
 		psz[i]=szString[i];
 	return psz;
 }
-inline LPWSTR alloccopy(LPCWSTR szString,DWORD dwLength)
+
+inline LPWSTR alloccopy(LPCWSTR szString,SIZE_T dwLength)
 {
 	WCHAR* psz=new WCHAR[dwLength+1];
-	for (register int i=dwLength;i>=0;i--)
+	for (register SIZE_T i=dwLength;i>=0;i--)
 		psz[i]=szString[i];
 	return psz;
 }
+
 inline LPSTR alloccopyWtoA(LPCWSTR szString)
 {
 	DWORD dwLength;
@@ -56,13 +60,15 @@ inline LPSTR alloccopyWtoA(LPCWSTR szString)
 	MemCopyWtoA(psz,szString,dwLength+1);
 	return psz;
 }
-inline LPSTR alloccopyWtoA(LPCWSTR szString,DWORD dwLength)
+
+inline LPSTR alloccopyWtoA(LPCWSTR szString,SIZE_T dwLength)
 {
 	CHAR* psz=new CHAR[dwLength+1];
 	MemCopyWtoA(psz,szString,dwLength);
 	psz[dwLength]=L'\0';
 	return psz;
 }
+
 inline LPWSTR alloccopyAtoW(LPCSTR szString)
 {
 	DWORD dwLength;
@@ -71,7 +77,8 @@ inline LPWSTR alloccopyAtoW(LPCSTR szString)
 	MemCopyAtoW(psz,szString,dwLength+1);
 	return psz;
 }
-inline LPWSTR alloccopyAtoW(LPCSTR szString,DWORD dwLength)
+
+inline LPWSTR alloccopyAtoW(LPCSTR szString,SIZE_T dwLength)
 {
 	WCHAR* psz=new WCHAR[dwLength+1];
 	MemCopyAtoW(psz,szString,dwLength);
@@ -190,7 +197,7 @@ inline CString& CString::SetBase(BYTE nBase)
 	return *this;
 }
 
-inline CHAR CString::GetAt(DWORD nIndex) const
+inline CHAR CString::GetAt(ULONG_PTR nIndex) const
 {
 	if (nIndex<m_nAllocLen && m_pData!=NULL)
 		return m_pData[nIndex];
@@ -198,9 +205,17 @@ inline CHAR CString::GetAt(DWORD nIndex) const
 		return 0;
 }
 
-inline CHAR CString::operator[](DWORD nIndex) const
+inline CHAR CString::operator[](ULONG_PTR nIndex) const
 {
 	if (nIndex<m_nAllocLen && m_pData!=NULL)
+		return m_pData[nIndex];
+	else
+		return 0;
+}
+
+inline CHAR CString::operator[](LONG_PTR nIndex) const
+{
+	if ((ULONG_PTR)nIndex<m_nAllocLen && m_pData!=NULL)
 		return m_pData[nIndex];
 	else
 		return 0;
@@ -213,6 +228,9 @@ inline CHAR CString::operator[](int nIndex) const
 	else
 		return 0;
 }
+
+
+
 
 inline CHAR CString::operator[](UINT nIndex) const
 {
@@ -568,7 +586,7 @@ inline const CStringW& CStringW::operator=(LPCWSTR str)
 
 inline const CStringW& CStringW::operator=(unsigned short * str)
 {
-	return Copy(str);
+	return Copy((LPWSTR)str);
 }
 
 inline BOOL CStringW::operator==(LPCWSTR str)
@@ -662,21 +680,21 @@ inline int chartonum(char ch)
 }
 
 // szString will not change
-inline int readnum(int base,LPCSTR szString,DWORD length=DWORD(-1))
+inline int readnum(int base,LPCSTR szString,SIZE_T length=SIZE_T(-1))
 {
 	return _readnum(base,szString,length);
 }
 
-inline BYTE* dataparser(LPCSTR pString,DWORD dwStrLen,DWORD* pdwDataLength=NULL)
+inline BYTE* dataparser(LPCSTR pString,SIZE_T dwStrLen,SIZE_T* pdwDataLength=NULL)
 {
 	return dataparser(pString,dwStrLen,malloc,pdwDataLength);
 }
-inline BYTE* dataparser(const CString& str,DWORD* pdwDataLength=NULL)
+inline BYTE* dataparser(const CString& str,SIZE_T* pdwDataLength=NULL)
 {
 	return dataparser(LPCSTR(str),str.GetLength(),pdwDataLength);
 }
 
-inline BYTE* dataparser(LPCSTR str,DWORD* pdwDataLength=NULL)
+inline BYTE* dataparser(LPCSTR str,SIZE_T* pdwDataLength=NULL)
 {
 	DWORD dwStrLen;
 	dstrlen(str,dwStrLen);

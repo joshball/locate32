@@ -45,14 +45,14 @@ Buffer/count	1st				2nd				3rd
 */
 // Memory copiers
 
-void MemCopy(LPVOID dst,LPCVOID src,DWORD len);
+void MemCopy(LPVOID dst,LPCVOID src,UINT len);
 #define dMemCopy(dst,src,len) \
 {for (register UINT __i_=0;__i_<(len);__i_++) \
 ((BYTE*)(dst))[__i_]=((BYTE*)(src))[__i_];}
 
 // Memory setters
 
-void MemSet(LPVOID dst,BYTE byte,DWORD count);
+void MemSet(LPVOID dst,BYTE byte,UINT count);
 #define dMemSet(dst,byte,count) \
 {for (register UINT __i_=0;__i_<(count);__i_++) \
 ((BYTE*)(dst))[__i_]=(BYTE)(byte);}
@@ -63,13 +63,13 @@ void MemSet(LPVOID dst,BYTE byte,DWORD count);
 class CAlloc : public CExceptionObject
 {
 public:
-	CAlloc(DWORD nSize) { m_pData=new BYTE[nSize]; if (m_bThrow && m_pData==NULL) throw CException(CException::cannotAllocate); }
+	CAlloc(SIZE_T nSize) { m_pData=new BYTE[nSize]; if (m_bThrow && m_pData==NULL) throw CException(CException::cannotAllocate); }
 	CAlloc(BYTE* pData) { m_pData=pData; }
 	~CAlloc() { if (m_pData!=NULL) delete[] m_pData; }
 	
 	void Free() { if (m_pData!=NULL) delete[] m_pData; m_pData=NULL; }
 	BOOL IsAllocated() const { return m_pData!=NULL; }
-	void ReAlloc(DWORD nSize) { Free(); m_pData=new BYTE[nSize];  if (m_bThrow && m_pData==NULL) throw CException(CException::cannotAllocate); }
+	void ReAlloc(SIZE_T nSize) { Free(); m_pData=new BYTE[nSize];  if (m_bThrow && m_pData==NULL) throw CException(CException::cannotAllocate); }
 	
 	operator BYTE*() { return m_pData; }
 	operator LPCSTR() const { return (LPCSTR)m_pData; }
@@ -113,8 +113,8 @@ template<class TYPE>
 class CAllocArrayTmpl : public CExceptionObject
 {
 public:
-	CAllocArrayTmpl(DWORD dwSize) { m_pData=new TYPE[dwSize];  }
-	CAllocArrayTmpl(DWORD dwSize,BOOL bThrow) { m_pData=new TYPE[dwSize]; m_bThrow=bThrow; if (m_bThrow && m_pData==NULL) throw CException(CException::cannotAllocate); }
+	CAllocArrayTmpl(SIZE_T dwSize) { m_pData=new TYPE[dwSize];  }
+	CAllocArrayTmpl(SIZE_T dwSize,BOOL bThrow) { m_pData=new TYPE[dwSize]; m_bThrow=bThrow; if (m_bThrow && m_pData==NULL) throw CException(CException::cannotAllocate); }
 	CAllocArrayTmpl(TYPE* pData) { m_pData=pData; }
 	~CAllocArrayTmpl() { if (m_pData!=NULL) delete[] m_pData; }
 	
@@ -127,10 +127,10 @@ public:
 	TYPE* operator ->() {return m_pData; }
 	TYPE operator[](int nIndex) const { return m_pData[nIndex]; }
 	TYPE& operator[](int nIndex) { return m_pData[nIndex]; }
-	TYPE operator[](UINT nIndex) const { return m_pData[nIndex]; }
-	TYPE& operator[](UINT nIndex) { return m_pData[nIndex]; }
-	TYPE operator[](DWORD nIndex) const { return m_pData[nIndex]; }
-	TYPE& operator[](DWORD nIndex) { return m_pData[nIndex]; }
+	TYPE operator[](LONG_PTR nIndex) const { return m_pData[nIndex]; }
+	TYPE& operator[](LONG_PTR nIndex) { return m_pData[nIndex]; }
+	TYPE operator[](ULONG_PTR nIndex) const { return m_pData[nIndex]; }
+	TYPE& operator[](ULONG_PTR nIndex) { return m_pData[nIndex]; }
 	
 	operator FREEDATA() { FREEDATA pRet=(FREEDATA)m_pData; m_pData=NULL; return pRet; }
 
@@ -159,15 +159,15 @@ public:
 	};
 
 
-	CGlobalAlloc(DWORD nSize,allocFlags nFlags=moveable);
-	CGlobalAlloc(HGLOBAL hGlobal,allocFlags nFlags=allocFlags::ptr);
+	CGlobalAlloc(SIZE_T nSize,allocFlags nFlags=moveable);
+	CGlobalAlloc(HGLOBAL hGlobal,allocFlags nFlags=ptr);
 	~CGlobalAlloc();
 	
-	BOOL Alloc(DWORD nSize,allocFlags nFlags=moveable);
-	BOOL ReAlloc(DWORD nSize,allocFlags nFlags=moveable);
+	BOOL Alloc(SIZE_T nSize,allocFlags nFlags=moveable);
+	BOOL ReAlloc(SIZE_T nSize,allocFlags nFlags=moveable);
 	void Free();
 	BOOL IsAllocated() const;
-	DWORD GetSize() const;
+	SIZE_T GetSize() const;
 	
 	void Lock();
 	void Unlock();
@@ -233,7 +233,7 @@ public:
 		CHeapBlock(HANDLE hHeap,attributes nAttributes);
 		~CHeapBlock();
 		
-		DWORD GetSize();
+		SIZE_T GetSize();
 		BOOL Free();
 		BOOL Release() { Free(); delete this; }
 
@@ -253,20 +253,20 @@ public:
 
 
 	CHeap();
-	CHeap(DWORD dwInitialSize,DWORD dwMaximumSize,attributes nAttributes=attributes::none);
+	CHeap(SIZE_T dwInitialSize,SIZE_T dwMaximumSize,attributes nAttributes=none);
 	~CHeap();
 	
-	BOOL Create(DWORD dwInitialSize,DWORD dwMaximumSize,attributes nAttributes=attributes::none);
+	BOOL Create(SIZE_T dwInitialSize,SIZE_T dwMaximumSize,attributes nAttributes=none);
 	BOOL Destroy();
 	BOOL IsAllocated();
 
-	UINT Compact(attributes nAttributes=attributes::none);
+	SIZE_T Compact(attributes nAttributes=none);
 	BOOL Lock();
 	BOOL Unlock();
-	BOOL Validate(LPCVOID lpBlock=NULL,attributes nAttributes=attributes::none);
+	BOOL Validate(LPCVOID lpBlock=NULL,attributes nAttributes=none);
 	BOOL Walk(LPPROCESS_HEAP_ENTRY lpEntry);
 
-	CHeapBlock* Alloc(DWORD nSize,attributes nAttributes=attributes::none);
+	CHeapBlock* Alloc(SIZE_T nSize,attributes nAttributes=none);
 	
 	static CHeap GetProcessHeap();
 
@@ -351,12 +351,12 @@ public:
 
 	DEBUGVIRTUAL void FreeAll();
 	
-	DEBUGVIRTUAL BYTE* Allocate(DWORD size);
-	DEBUGVIRTUAL BYTE* AllocateFast(DWORD size);
+	DEBUGVIRTUAL BYTE* Allocate(SIZE_T size);
+	DEBUGVIRTUAL BYTE* AllocateFast(SIZE_T size);
 	DEBUGVIRTUAL void Free(void* pBlock);
 
 #ifdef _DEBUG
-	BYTE* Allocate(DWORD size,int line,char* szFile);
+	BYTE* Allocate(SIZE_T size,int line,char* szFile);
 #endif
 	
 	DEBUGVIRTUAL void DebugInformation(CString& str);
@@ -372,11 +372,11 @@ public:
 
 	DEBUGVIRTUAL void FreeAll();
 	
-	DEBUGVIRTUAL BYTE* Allocate(DWORD size);
-	DEBUGVIRTUAL BYTE* AllocateFast(DWORD size);
+	DEBUGVIRTUAL BYTE* Allocate(SIZE_T size);
+	DEBUGVIRTUAL BYTE* AllocateFast(SIZE_T size);
 
 #ifdef _DEBUG
-	BYTE* Allocate(DWORD size,int line,char* szFile);
+	BYTE* Allocate(SIZE_T size,int line,char* szFile);
 #endif
 	
 	DEBUGVIRTUAL void Free(void* pBlock);
@@ -389,7 +389,7 @@ public:
 	{
 		ALLOC* pNext;
 		ALLOC* pPrev;
-		DWORD dwLength;
+		SIZE_T dwLength;
 		char* szFile;
 		int line;
 	};
@@ -399,7 +399,7 @@ public:
 };
 
 
-template <class OUTTYPE,DWORD ALLOC_SIZE,DWORD EXTRA_ALLOC> 
+template <class OUTTYPE,SIZE_T ALLOC_SIZE,SIZE_T EXTRA_ALLOC> 
 class CBufferAllocator : public CAllocator
 {
 public:
@@ -410,19 +410,19 @@ public:
 
 public:
 	// Allocators
-	DEBUGVIRTUAL BYTE* Allocate(DWORD size);
-	OUTTYPE Allocate2(DWORD size) { return (OUTTYPE)Allocate(size); }
-	DEBUGVIRTUAL OUTTYPE AllocateFast(DWORD size); // Faster allocation, does not check unallocated memory
+	DEBUGVIRTUAL BYTE* Allocate(SIZE_T size);
+	OUTTYPE Allocate2(SIZE_T size) { return (OUTTYPE)Allocate(size); }
+	DEBUGVIRTUAL OUTTYPE AllocateFast(SIZE_T size); // Faster allocation, does not check unallocated memory
 	
 #ifdef _DEBUG
-	BYTE* Allocate(DWORD size,int line,char* szFile);
+	BYTE* Allocate(SIZE_T size,int line,char* szFile);
 #endif
 
 	// Free
 	DEBUGVIRTUAL void Free(void* pBlock);
 	
 	BOOL IsPointerAllocated(const void* pBlock) const { return GetAlloc(pBlock)!=NULL; } 
-	DWORD GetAllocSize(const void* pBlock) const { return ((DWORD*)pBlock)[-1]&~(1<<31); }
+	SIZE_T GetAllocSize(const void* pBlock) const { return ((DWORD*)pBlock)[-1]&~(1<<31); }
 
 	void ReArrange(void** pBlocks[],int nBlocks);
 
@@ -438,14 +438,14 @@ protected:
 	struct ALLOC
 	{
 	public:
-		DWORD dwLength;
+		SIZE_T dwLength;
 		DWORD dwAllocations;
-		DWORD dwFreeSpace;
+		SIZE_T dwFreeSpace;
 		BYTE* pPtr;
 
-		DWORD GetFree() const { return dwFreeSpace; }
+		SIZE_T GetFree() const { return dwFreeSpace; }
 
-		BYTE* AllocBlock(DWORD size)
+		BYTE* AllocBlock(SIZE_T size)
 		{
 			size+=EXTRA_ALLOC;
 
@@ -506,7 +506,7 @@ protected:
 			return NULL;
 		}
 
-		BYTE* AllocBlockFromEnd(DWORD size)
+		BYTE* AllocBlockFromEnd(SIZE_T size)
 		{
 			size+=EXTRA_ALLOC;
 
@@ -569,7 +569,7 @@ protected:
 		return pAlloc;
 	}
 
-	ALLOC* NewAlloc(DWORD size,ALLOC* pNext=NULL)
+	ALLOC* NewAlloc(SIZE_T size,ALLOC* pNext=NULL)
 	{
 		ALLOC* pAlloc=(ALLOC*)new BYTE[size+sizeof(ALLOC)+sizeof(DWORD)];
 		pAlloc->dwFreeSpace=pAlloc->dwLength=size+sizeof(ALLOC)+2*sizeof(DWORD);
@@ -593,9 +593,9 @@ public:
 	CBufferAllocatorThreadSafe();
 	~CBufferAllocatorThreadSafe();
 
-	DEBUGVIRTUAL BYTE* Allocate(DWORD size);
-	OUTTYPE Allocate2(DWORD size) { return (OUTTYPE)Allocate(size); }
-	OUTTYPE AllocateFast(DWORD size); // Faster allocation, does not check unallocated memory
+	DEBUGVIRTUAL BYTE* Allocate(SIZE_T size);
+	OUTTYPE Allocate2(SIZE_T size) { return (OUTTYPE)Allocate(size); }
+	OUTTYPE AllocateFast(SIZE_T size); // Faster allocation, does not check unallocated memory
 
 	DEBUGVIRTUAL void Free(void* pBlock);
 

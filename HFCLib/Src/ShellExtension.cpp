@@ -64,7 +64,7 @@ HRESULT CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc,LPCS
 		hres=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
 		if (SUCCEEDED(hres))
 		{
-			WORD wsz[MAX_PATH];
+			WCHAR wsz[MAX_PATH];
 			hres=psl->SetPath(pszLink);
 			if (SUCCEEDED(hres))
 			{
@@ -105,7 +105,7 @@ HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath)
 		hres=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
 		if (SUCCEEDED(hres))
 		{
-			WORD wsz[MAX_PATH];
+			WCHAR wsz[MAX_PATH];
 			MultiByteToWideChar(CP_ACP,0,pszShortcutFile,-1,wsz,MAX_PATH);
 			hres=ppf->Load(wsz,STGM_READ);
 			if (SUCCEEDED(hres))
@@ -134,7 +134,7 @@ HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget)
 		hres=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
 		if (SUCCEEDED(hres))
 		{
-			WORD wsz[MAX_PATH];
+			WCHAR wsz[MAX_PATH];
 			MultiByteToWideChar(CP_ACP,0,pszShortcutFile,-1,wsz,MAX_PATH);
 			hres=ppf->Load(wsz,STGM_READ);
 			if (SUCCEEDED(hres))
@@ -197,7 +197,7 @@ BOOL RunRegistryCommand(HKEY hKey,LPCTSTR szFile)
 	return TRUE;
 }
 
-DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,char* szName,DWORD dwBufferLen)
+DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,char* szName,SIZE_T dwBufferLen)
 {
 	// May be computer?
 	IShellFolder *psf;
@@ -247,7 +247,7 @@ DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,char* szName,DWORD dwBufferLen
 
 
 
-BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,UINT nBufferLen)
+BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,SIZE_T nBufferLen)
 {
 	CStringW file(szFolder);
 	if (file.LastChar()!=L'\\')

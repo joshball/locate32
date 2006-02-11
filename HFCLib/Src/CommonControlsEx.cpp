@@ -406,10 +406,11 @@ void CListCtrlEx::RemoveSubitem(int nSubItem)
 
 BOOL CListCtrlEx::SetColumnOrderArray(int iCount,LPINT pi)
 {
+	int i,j;
 	// First show/hide correct columns
-	for (int i=0;i<aColumns.GetSize();i++)
+	for (i=0;i<aColumns.GetSize();i++)
 	{
-		for (int j=0;j<iCount;j++)
+		for (j=0;j<iCount;j++)
 		{
 			if (pi[j]==i)
 				break;
@@ -420,7 +421,7 @@ BOOL CListCtrlEx::SetColumnOrderArray(int iCount,LPINT pi)
 			HideColumn(i);
 	}
 	
-	for (int i=0;i<iCount;i++)
+	for (i=0;i<iCount;i++)
 		pi[i]=GetVisibleColumn(pi[i]);		
 
 	CListCtrl::SetColumnOrderArray(iCount,pi);

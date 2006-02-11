@@ -634,7 +634,9 @@ BOOL CALLBACK HFCControls::Ctrl3DStaticProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 		ctrl->nBufferLen=0;
 		ctrl->nAllocLen=0;
 		SetWindowLong(hWnd,GWL_USERDATA,(LONG)ctrl);
-		for (DWORD i=0;temp[i]!='\0';i++)
+		
+		DWORD i;
+		for (i=0;temp[i]!='\0';i++)
 		{
 			switch(temp[i])
 			{
@@ -684,7 +686,8 @@ BOOL CALLBACK HFCControls::Ctrl3DStaticProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 			if (ctrl->szText!=NULL)
 				delete[] ctrl->szText;
 			BYTE* temp=(BYTE*)lParam;
-			for (DWORD i=0;temp[i]!='\0';i++)
+			DWORD i;
+			for (i=0;temp[i]!='\0';i++)
 			{
 				switch(temp[i])
 				{
@@ -745,14 +748,14 @@ static void clear(LPHEXVIEWCTRL ctrl)
 	ctrl->nLines=0;
 }
 
-static BYTE GetString(LPHEXVIEWCTRL ctrl,CString& str,DWORD nStartPos)
+static BYTE GetString(LPHEXVIEWCTRL ctrl,CString& str,SIZE_T nStartPos)
 {
 	char szBuf[5];
-	DWORD nLen=ctrl->nDataLen-nStartPos;
-	DWORD i;
+	SIZE_T nLen=ctrl->nDataLen-nStartPos;
+	SIZE_T i;
 	BYTE ret=noError;
 	
-	if (nLen<=0)
+	if (INT(nLen)<=0)
 		return noMoreLines;
 	if (nLen>ctrl->nBytesPerLine)
 		nLen=ctrl->nBytesPerLine;

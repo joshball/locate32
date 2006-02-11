@@ -212,7 +212,7 @@ void CSchedule::GetString(CStringA& str) const
 			break;
 		}
 	case typeMonthly:
-		if (m_tMonthly.nType==CSchedule::SMONTHLYTYPE::Type::Day)
+		if (m_tMonthly.nType==CSchedule::SMONTHLYTYPE::Day)
 			str.Format(IDS_MONTHLYEVERYDAY,(LPCSTR)time,(int)m_tMonthly.bDay);
 		else
 		{
@@ -406,7 +406,7 @@ void CSchedule::GetString(CStringW& str) const
 			break;
 		}
 	case typeMonthly:
-		if (m_tMonthly.nType==CSchedule::SMONTHLYTYPE::Type::Day)
+		if (m_tMonthly.nType==CSchedule::SMONTHLYTYPE::Day)
 			str.FormatEx(IDS_MONTHLYEVERYDAY,(LPCWSTR)time,(int)m_tMonthly.bDay);
 		else
 		{
@@ -641,7 +641,7 @@ DWORD CSchedule::WhenShouldRun(STIME& tTime,SDATE& tDate,UINT nDayOfWeek) const
 				tDate.bMonth==m_tLastStartDate.bMonth)
 				return (DWORD)-1;
 
-			if (m_tMonthly.nType==CSchedule::SMONTHLYTYPE::Type::Day)
+			if (m_tMonthly.nType==CSchedule::SMONTHLYTYPE::Day)
 			{
 				if (m_tMonthly.bDay==tDate.bDay)
 				{

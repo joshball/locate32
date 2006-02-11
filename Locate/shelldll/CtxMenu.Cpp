@@ -178,10 +178,10 @@ HMODULE GetLanguageResource()
 	nLen++;
     
 	if (lanFile==NULL)
-		strcpy(szPath+nLen,"lan_en.dll");
+		StringCbCopy(szPath+nLen,MAX_PATH-nLen,"lan_en.dll");
 	else
 	{
-        strcpy(szPath+nLen,lanFile);
+        StringCbCopy(szPath+nLen,MAX_PATH-nLen,lanFile);
 		delete[] lanFile;
 	}
 

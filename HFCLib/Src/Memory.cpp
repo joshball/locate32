@@ -4,7 +4,7 @@
 
 #include "HFCLib.h"
 
-void MemCopy(LPVOID dst,LPCVOID src,DWORD len)
+void MemCopy(LPVOID dst,LPCVOID src,UINT len)
 {
 #ifdef WIN32
 	__asm
@@ -42,7 +42,7 @@ void MemCopy(LPVOID dst,LPCVOID src,DWORD len)
 #endif
 }
 
-void MemSet(LPVOID pDst,BYTE nByte,DWORD nCount)
+void MemSet(LPVOID pDst,BYTE nByte,UINT nCount)
 {
 #ifdef WIN32
 	__asm

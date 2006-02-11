@@ -22,7 +22,8 @@ CDatabase::CDatabase(CDatabase& src)
 	
 	if (m_szRoots!=NULL)
 	{
-		for (DWORD iLength=0;m_szRoots[iLength]!='\0' || m_szRoots[iLength+1]!='\0';iLength++);
+		DWORD iLength;
+		for (iLength=0;m_szRoots[iLength]!='\0' || m_szRoots[iLength+1]!='\0';iLength++);
 		iLength+=2;
         m_szRoots=new char[iLength];
 		sMemCopy(m_szRoots,src.m_szRoots,iLength);
@@ -123,7 +124,7 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,const PDATABASE* ppDa
 		pKey[nDigits]='_';
         
         // Formating number
-		itoa(i+1,pNum,10);
+		_itoa_s(i+1,pNum,nDigits+1,10);
 		ASSERT(strlen(pNum)<=size_t(nDigits));
 
 		dstrlen(pNum,dwLength);
@@ -171,7 +172,8 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 
 	if (m_szRoots!=NULL)
 	{
-		for (int i=0;m_szRoots[i]!='\0' || m_szRoots[i+1]!='\0';i++);
+		int i;
+		for (i=0;m_szRoots[i]!='\0' || m_szRoots[i+1]!='\0';i++);
 		RegKey.SetValue("Roots",m_szRoots,i+2,REG_MULTI_SZ);
 	}
 	else
@@ -673,7 +675,8 @@ void CDatabase::CheckValidNames(PDATABASE* ppDatabases,int nDatabases)
 	
 BOOL CDatabase::IsNameValid(LPCSTR szName)
 {
-	for (int i=0;szName[i]!='\0';i++)
+	int i;
+	for (i=0;szName[i]!='\0';i++)
 	{
 		if (!ISVALIDFORNAME(szName[i]))
 			return FALSE;
@@ -683,8 +686,8 @@ BOOL CDatabase::IsNameValid(LPCSTR szName)
 
 void CDatabase::MakeNameValid(LPSTR szName)
 {
-	int j=0;
-	for (int i=0;szName[i]!='\0';i++)
+	int i,j=0;
+	for (i=0;szName[i]!='\0';i++)
 	{
 		if (ISVALIDFORNAME(szName[i]))
 			szName[j++]=szName[i];
@@ -714,7 +717,8 @@ LPSTR CDatabase::GetValidKey(DWORD dwUniqueNum) const
 	}
 
 	char* key=new char[dwValid+1];
-	for (int i=0,j=0;m_szName[i]!='\0';i++)
+	int i,j;
+	for (i=0,j=0;m_szName[i]!='\0';i++)
 	{
 		if (ISVALIDFORKEY(m_szName[i]))
 			key[j++]=m_szName[i];
@@ -725,9 +729,9 @@ LPSTR CDatabase::GetValidKey(DWORD dwUniqueNum) const
 
 WORD CDatabase::CheckIDs(PDATABASE* ppDatabases,int nDatabases)
 {
-	int nCurrentlyMustBe=0;
+	int nCurrentlyMustBe=0,index;
 	
-	for (int index=0;index<nDatabases;index++)
+	for (index=0;index<nDatabases;index++)
 	{
 		if (ppDatabases[index]->m_wID==0)
 			ppDatabases[index]->m_wID=GetUniqueIndex(ppDatabases,nDatabases);
@@ -786,7 +790,8 @@ void CDatabase::SetRoots(LPSTR* pRoots,int nCount)
 	DWORD dwBufferSize=0;
 	DWORD* dwLengths=new DWORD[nCount];
 
-	for (int i=0;i<nCount;i++)
+	int i;
+	for (i=0;i<nCount;i++)
 	{
 		dstrlen(pRoots[i],dwLengths[i]);
 		dwBufferSize+=++dwLengths[i];
@@ -973,7 +978,8 @@ void CDatabase::AddLocalRoots()
 	{
 		CIntArray aLengths;
 		DWORD dwDataLength=0;
-		for (int i=0;i<aLocalRoots.GetSize();i++)
+		int i;
+		for (i=0;i<aLocalRoots.GetSize();i++)
 		{
 			int iLength;
 			dstrlen(aLocalRoots[i],iLength);

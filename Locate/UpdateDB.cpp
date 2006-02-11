@@ -503,9 +503,11 @@ int main (int argc,char ** argv)
 	}
 	else
 	{
+		WORD wThread;
+
 		ppUpdaters=new CDatabaseUpdater*[dwTheads+1];
 
-		for (WORD wThread=0;wThread<dwTheads;wThread++)
+		for (wThread=0;wThread<dwTheads;wThread++)
 		{
 			ppUpdaters[wThread]=new CDatabaseUpdater(aDatabases,aDatabases.GetSize(),							
 				UpdateProc,wThread,(DWORD)0);

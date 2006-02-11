@@ -517,7 +517,7 @@ BOOL CFile::GetStatus(LPCTSTR lpszFileName,CFileStatus& rStatus)
 	return TRUE;
 }
 
-BYTE  CFile::SetStatus(LPCTSTR lpszFileName,const CFileStatus& status)
+BOOL  CFile::SetStatus(LPCTSTR lpszFileName,const CFileStatus& status)
 {
 #ifdef WIN32
 	HANDLE hFile;
@@ -546,12 +546,11 @@ BYTE  CFile::SetStatus(LPCTSTR lpszFileName,const CFileStatus& status)
 	return TRUE;
 #endif
 }
-
-LONG CFile::Seek(LONG lOff,DWORD nFrom,CFileException* pError)
-{
 #ifdef WIN32
-	DWORD dwNew=::SetFilePointer(m_hFile,lOff,NULL,(DWORD)nFrom);
-	if (dwNew  == (DWORD)-1)
+LONG_PTR CFile::Seek(ULONG_PTR lOff, ULONG_PTR nFrom,CFileException* pError,LONG* pHighPos)
+{
+	LONG_PTR dwNew=::SetFilePointer(m_hFile,lOff,pHighPos,(DWORD)nFrom);
+	if (dwNew  == (LONG_PTR)-1)
 	{
 		SetHFCError(HFC_BADSEEK);
 		if (pError != NULL)
@@ -567,8 +566,11 @@ LONG CFile::Seek(LONG lOff,DWORD nFrom,CFileException* pError)
 		return FALSE;
 	}
 	return dwNew;
+}
 #else
-	DWORD ret=fseek((FILE*)m_hFile,lOff,nFrom);
+LONG_PTR CFile::Seek(ULONG_PTR lOff,ULONG_PTR nFrom,CFileException* pError)
+{
+	LONG_PTR ret=fseek((FILE*)m_hFile,lOff,nFrom);
 	if (ret)
 	{
 		SetHFCError(HFC_BADSEEK);
@@ -584,18 +586,23 @@ LONG CFile::Seek(LONG lOff,DWORD nFrom,CFileException* pError)
 		return FALSE;
 	}
 	return TRUE;
-#endif
 }
+#endif
 
 #ifdef WIN32
-BYTE CFile::SetLength(DWORD dwNewLen)
+BOOL CFile::SetLength(DWORD dwNewLen,LONG* pHigh)
 {
-	this->Seek((LONG)dwNewLen,(UINT)begin);
+	this->Seek((LONG)dwNewLen,(UINT)begin,NULL,pHigh);
 	return ::SetEndOfFile(m_hFile);
+}
+BOOL CFile::SetLength(ULONGLONG dwNewLen)
+{
+	LONG l=(LONG)(dwNewLen>>32);
+	return SetLength((SIZE_T)dwNewLen,&l);
 }
 #endif
 
-UINT CFile::Read(void* lpBuf, UINT nCount,CFileException* pError)
+SIZE_T CFile::Read(void* lpBuf, SIZE_T nCount,CFileException* pError)
 {
 	if (nCount == 0)
 		return 0;
@@ -919,7 +926,7 @@ BOOL CFile::Read(CStringW& str,CFileException* pError)
 }
 #endif
 
-BOOL CFile::Write(const void* lpBuf, UINT nCount,CFileException* pError)
+BOOL CFile::Write(const void* lpBuf, ULONG_PTR nCount,CFileException* pError)
 {
 	if (nCount == 0)
 		return TRUE;
@@ -959,7 +966,8 @@ BOOL CFile::Write(const void* lpBuf, UINT nCount,CFileException* pError)
 	return TRUE;
 #endif
 }
-BYTE CFile::Close()
+
+BOOL CFile::Close()
 {
 	BOOL bError = FALSE;
 	if (m_hFile != FILE_NULL)
@@ -991,15 +999,24 @@ BOOL CFile::IsEndOfFile() const
 #endif
 }
 
-
-DWORD CFile::GetLength() const
-{
 #ifdef WIN32
-	return ::GetFileSize(m_hFile,NULL);
-#else
-	return filelength(fileno((FILE*)m_hFile));
-#endif
+SIZE_T CFile::GetLength(PSIZE_T pHigh) const
+{
+	return ::GetFileSize(m_hFile,pHigh);
 }
+ULONGLONG CFile::GetLength64() const
+{
+	SIZE_T high;
+	SIZE_T low=::GetFileSize(m_hFile,&high);
+
+	return (((ULONGLONG)high)<<32)|((ULONGLONG)low);
+}
+#else
+SIZE_T CFile::GetLength() const
+{
+	return filelength(fileno((FILE*)m_hFile));
+}
+#endif
 
 #ifdef WIN32
 void CFile::LockRange(DWORD dwPos, DWORD dwCount)
@@ -1013,7 +1030,7 @@ void CFile::UnlockRange(DWORD dwPos, DWORD dwCount)
 }
 #endif
 
-BYTE CFile::Flush()
+BOOL CFile::Flush()
 {
 #ifdef WIN32
 	return ::FlushFileBuffers(m_hFile);
@@ -1022,10 +1039,13 @@ BYTE CFile::Flush()
 #endif
 }
 
-DWORD CFile::GetPosition() const
+
+	
+
+ULONG_PTR CFile::GetPosition(PLONG pHigh) const
 {
 #ifdef WIN32
-	DWORD dwPos=::SetFilePointer(m_hFile,0,NULL,FILE_CURRENT);
+	DWORD dwPos=::SetFilePointer(m_hFile,0,pHigh,FILE_CURRENT);
 	if (dwPos==(DWORD)-1)
 	{
 		SetHFCError(HFC_ERROR);
@@ -1040,7 +1060,25 @@ DWORD CFile::GetPosition() const
 }
 
 
-BYTE CFile::IsFile(LPCTSTR szFileName)
+
+#ifdef WIN32
+ULONGLONG CFile::GetPosition64() const
+{
+	LONG high;
+	DWORD dwPos=::SetFilePointer(m_hFile,0,&high,FILE_CURRENT);
+	if (dwPos==(DWORD)-1)
+	{
+		SetHFCError(HFC_ERROR);
+		if (m_bThrow)
+			throw CFileException(CFileException::badSeek,GetLastError(),m_strFileName);
+		return 0;
+	}
+	return (((ULONGLONG)high)<<32)|((ULONGLONG)dwPos);
+}
+#endif
+
+
+BOOL CFile::IsFile(LPCTSTR szFileName)
 {
 	if (szFileName[0]=='\0')
 		return FALSE;
@@ -1286,7 +1324,8 @@ BOOL CFile::IsValidPath(LPCSTR szPath,BOOL bAsDirectory)
 	for(;;)
 	{
 		// Next '\\' or '\0'
-        for (int i=nStart+1;szPath[i]!='\0' && szPath[i]!='\\';i++);
+        int i;
+		for (i=nStart+1;szPath[i]!='\0' && szPath[i]!='\\';i++);
 			
 		if (szPath[i]=='\0')
 		{
@@ -1371,8 +1410,9 @@ BOOL CFile::CreateDirectoryRecursive(LPCSTR szPath,LPSECURITY_ATTRIBUTES plSecur
 	for(;;)
 	{
 		// Next '\\' or '\0'
-        for (int i=nStart+1;szPath[i]!='\0' && szPath[i]!='\\';i++);
-			
+		int i;
+        for (i=nStart+1;szPath[i]!='\0' && szPath[i]!='\\';i++);
+					
 		if (szPath[i]=='\0')
 			return CreateDirectory(szPath,NULL);
 

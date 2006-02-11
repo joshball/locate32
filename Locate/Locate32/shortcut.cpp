@@ -1313,7 +1313,8 @@ void CShortcut::FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,BYTE bKey,BYTE b
 		return;
 	}
 
-	for (int i=0;pVirtualKeyNames[i].bKey!=0 && pVirtualKeyNames[i].bKey!=bKey;i++);
+	int i;
+	for (i=0;pVirtualKeyNames[i].bKey!=0 && pVirtualKeyNames[i].bKey!=bKey;i++);
 	if (pVirtualKeyNames[i].iFriendlyNameId!=0)
 	{
 		str.AddString(pVirtualKeyNames[i].iFriendlyNameId);
@@ -1409,7 +1410,8 @@ CShortcut::VirtualKeyName* CShortcut::GetVirtualKeyNames()
 
 	VirtualKeyName* pRet=new VirtualKeyName[sizeof(aVirtualKeys)/sizeof(VirtualKeyName)+1];
 
-	for (int i=0;i<sizeof(aVirtualKeys)/sizeof(VirtualKeyName);i++)
+	int i;
+	for (i=0;i<sizeof(aVirtualKeys)/sizeof(VirtualKeyName);i++)
 	{
 		pRet[i].bKey=aVirtualKeys[i].bKey;
 		pRet[i].pName=alloccopy(aVirtualKeys[i].pName);

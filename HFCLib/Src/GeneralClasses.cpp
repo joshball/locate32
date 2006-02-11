@@ -102,15 +102,15 @@ CTime::CTime(const FILETIME& fileTime, int nDST)
 CTime::operator SYSTEMTIME() const
 {
 	SYSTEMTIME st;
-	struct tm* Time;
-	Time=localtime(&m_time);
-	st.wYear=Time->tm_year+1900;
-	st.wMonth=Time->tm_mon+1;
-	st.wDayOfWeek=Time->tm_wday;
-	st.wDay=Time->tm_mday;
-	st.wHour=Time->tm_hour;
-	st.wMinute=Time->tm_min;
-	st.wSecond=Time->tm_sec;
+	struct tm Time;
+	localtime_s(&Time,&m_time);
+	st.wYear=Time.tm_year+1900;
+	st.wMonth=Time.tm_mon+1;
+	st.wDayOfWeek=Time.tm_wday;
+	st.wDay=Time.tm_mday;
+	st.wHour=Time.tm_hour;
+	st.wMinute=Time.tm_min;
+	st.wSecond=Time.tm_sec;
 	st.wMilliseconds=msec;
 	return st;
 }
@@ -120,15 +120,15 @@ CTime::operator FILETIME() const
 	FILETIME ft;
 	FILETIME localTime;
 	SYSTEMTIME st;
-	struct tm* Time;
-	Time=localtime(&m_time);
-	st.wYear=Time->tm_year+1900;
-	st.wMonth=Time->tm_mon+1;
-	st.wDayOfWeek=Time->tm_wday;
-	st.wDay=Time->tm_mday;
-	st.wHour=Time->tm_hour;
-	st.wMinute=Time->tm_min;
-	st.wSecond=Time->tm_sec;
+	struct tm Time;
+	localtime_s(&Time,&m_time);
+	st.wYear=Time.tm_year+1900;
+	st.wMonth=Time.tm_mon+1;
+	st.wDayOfWeek=Time.tm_wday;
+	st.wDay=Time.tm_mday;
+	st.wHour=Time.tm_hour;
+	st.wMinute=Time.tm_min;
+	st.wSecond=Time.tm_sec;
 	st.wMilliseconds=msec;
 	SystemTimeToFileTime(&st,&localTime);
 	LocalFileTimeToFileTime(&localTime,&ft);
@@ -182,95 +182,102 @@ struct tm* CTime::GetGmtTm(struct tm* ptm) const
 {
 	if (ptm!=NULL)
 	{
-		*ptm=*gmtime(&m_time);
+		if (gmtime_s(ptm,&m_time)!=0)
+			return NULL;
 		return ptm;
 	}
-	else
-		return gmtime(&m_time);
+	return NULL;
 }
 
 struct tm* CTime::GetLocalTm(struct tm* ptm) const
 {
 	if (ptm!=NULL)
 	{
-		struct tm* Time=localtime(&m_time);
-		if (Time==NULL)
+		if (localtime_s(ptm,&m_time)!=0)
 			return NULL;
-		*ptm=*Time;
 		return ptm;
 	}
-	else
-		return localtime(&m_time);
+	return NULL;
 }
 
 int CTime::GetYear() const
 {
-	struct tm* Time;
-	Time=localtime(&m_time);
-	return Time->tm_year+1900;
+	struct tm Time;
+	if (localtime_s(&Time,&m_time)!=0)
+		return 0;
+	return Time.tm_year+1900;
 }
 
 int CTime::GetMonth() const
 {
-	struct tm* Time;
-	Time=localtime(&m_time);
-	return Time->tm_mon+1;
+	struct tm Time;
+	if (localtime_s(&Time,&m_time)!=0)
+		return 0;
+	return Time.tm_mon+1;
 }
 
 int CTime::GetDay() const
 {
-	struct tm* Time;
-	Time=localtime(&m_time);
-	return Time->tm_mday;
+	struct tm Time;
+	if (localtime_s(&Time,&m_time)!=0)
+		return 0;
+	return Time.tm_mday;
 }
 
 int CTime::GetHour() const
 {
-	struct tm* Time;
-	Time=localtime(&m_time);
-	return Time->tm_hour;
+	struct tm Time;
+	if (localtime_s(&Time,&m_time)!=0)
+		return 0;
+	return Time.tm_hour;
 }
 
 int CTime::GetMinute() const
 {
-	struct tm* Time;
-	Time=localtime(&m_time);
-	return Time->tm_min;
+	struct tm Time;
+	if (localtime_s(&Time,&m_time)!=0)
+		return 0;
+	return Time.tm_min;
 }
 
 int CTime::GetSecond() const
 {
-	struct tm* Time;
-	Time=localtime(&m_time);
-	return Time->tm_sec;
+	struct tm Time;
+	if (localtime_s(&Time,&m_time)!=0)
+		return 0;
+	return Time.tm_sec;
 }
 
 int CTime::GetDayOfWeek() const
 {
-	struct tm* Time;
-	Time=localtime(&m_time);
-	return Time->tm_wday;
+	struct tm Time;
+	if (localtime_s(&Time,&m_time)!=0)
+		return 0;
+	return Time.tm_wday;
 }
 
 WORD CTime::DayOfYear() const
 {
-	struct tm* Time;
-	Time=localtime(&m_time);
-	return DayOfYear(Time->tm_mday,Time->tm_mon,Time->tm_year+1900);
+	struct tm Time;
+	if (localtime_s(&Time,&m_time)!=0)
+		return 0;
+	return DayOfYear(Time.tm_mday,Time.tm_mon,Time.tm_year+1900);
 }
 
 DWORD CTime::GetIndex() const
 {
-	struct tm* Time;
-	Time=localtime(&m_time);
-	return ((Time->tm_year+1900-1)*365+LeapYears(Time->tm_year+1900-1)+DayOfYear());
+	struct tm Time;
+	if (localtime_s(&Time,&m_time)!=0)
+		return 0;
+	return ((Time.tm_year+1900-1)*365+LeapYears(Time.tm_year+1900-1)+DayOfYear());
 }
 
 BYTE CTime::GetWeek(BYTE nFirstIsMonday) const
 {
-	struct tm* Time;
-	Time=localtime(&m_time);
-	return GetWeek(Time->tm_mday,Time->tm_mon,Time->tm_year+1900,nFirstIsMonday);
+	struct tm Time;
+	if (localtime_s(&Time,&m_time)!=0)
+		return 0;
+	return GetWeek(Time.tm_mday,Time.tm_mon,Time.tm_year+1900,nFirstIsMonday);
 }
 
 BYTE CTime::GetWeek(WORD nDay,WORD nMonth,WORD nYear,BYTE nFirstIsMonday)
@@ -290,9 +297,10 @@ BYTE CTime::GetWeek(WORD nDay,WORD nMonth,WORD nYear,BYTE nFirstIsMonday)
 	
 BYTE CTime::GetDaysInMonth() const
 {
-	struct tm* Time;
-	Time=localtime(&m_time);
-	return GetDaysInMonth(Time->tm_mon,Time->tm_year+1900);
+	struct tm Time;
+	if (localtime_s(&Time,&m_time)!=0)
+		return 0;
+	return GetDaysInMonth(Time.tm_mon,Time.tm_year+1900);
 }
 	
 WORD CTime::DayOfYear(WORD nDay,WORD nMonth,WORD nYear)
@@ -539,7 +547,11 @@ BOOL CTime::operator>=(CTime Time) const
 CStringA CTime::Format(LPCSTR pFormat) const
 {
 	CStringA str;
-	strftime(str.GetBuffer(1000),1000,pFormat,localtime(&m_time));
+	struct tm Time;
+	if (localtime_s(&Time,&m_time))
+		return szEmpty;
+
+	strftime(str.GetBuffer(1000),1000,pFormat,&Time);
 	str.FreeExtra();
 	return str;
 }
@@ -547,7 +559,11 @@ CStringA CTime::Format(LPCSTR pFormat) const
 CStringA CTime::FormatGmt(LPCSTR pFormat) const
 {
 	CStringA str;
-	strftime(str.GetBuffer(1000),1000,pFormat,gmtime(&m_time));
+	struct tm Time;
+	if (gmtime_s(&Time,&m_time))
+		return szEmpty;
+
+	strftime(str.GetBuffer(1000),1000,pFormat,&Time);
 	str.FreeExtra();
 	return str;
 }
@@ -556,8 +572,12 @@ CStringA CTime::FormatGmt(LPCSTR pFormat) const
 CStringA CTime::Format(UINT nFormatID) const
 {
 	CStringA str,str2;
+	struct tm Time;
+	if (localtime_s(&Time,&m_time))
+		return szEmpty;
+
 	str2.LoadString(nFormatID);
-	strftime(str.GetBuffer(1000),1000,str2,localtime(&m_time));
+	strftime(str.GetBuffer(1000),1000,str2,&Time);
 	str.FreeExtra();
 	return str;
 }
@@ -565,8 +585,12 @@ CStringA CTime::Format(UINT nFormatID) const
 CStringA CTime::FormatGmt(UINT nFormatID) const
 {
 	CStringA str,str2;
+	struct tm Time;
+	if (gmtime_s(&Time,&m_time))
+		return szEmpty;
+
 	str2.LoadString(nFormatID);
-	strftime(str.GetBuffer(1000),1000,str2,gmtime(&m_time));
+	strftime(str.GetBuffer(1000),1000,str2,&Time);
 	str.FreeExtra();
 	return str;
 }
@@ -576,7 +600,11 @@ CStringA CTime::FormatGmt(UINT nFormatID) const
 CStringW CTime::Format(LPCWSTR pFormat) const
 {
 	CStringW str;
-	wcsftime(str.GetBuffer(1000),1000,pFormat,localtime(&m_time));
+	struct tm Time;
+	if (localtime_s(&Time,&m_time))
+		return szEmpty;
+
+	wcsftime(str.GetBuffer(1000),1000,pFormat,&Time);
 	str.FreeExtra();
 	return str;
 }
@@ -584,7 +612,11 @@ CStringW CTime::Format(LPCWSTR pFormat) const
 CStringW CTime::FormatGmt(LPCWSTR pFormat) const
 {
 	CStringW str;
-	wcsftime(str.GetBuffer(1000),1000,pFormat,gmtime(&m_time));
+	struct tm Time;
+	if (localtime_s(&Time,&m_time))
+		return szEmpty;
+
+	wcsftime(str.GetBuffer(1000),1000,pFormat,&Time);
 	str.FreeExtra();
 	return str;
 }
@@ -594,8 +626,12 @@ CStringW CTime::FormatGmt(LPCWSTR pFormat) const
 CStringW CTime::FormatW(UINT nFormatID) const
 {
 	CStringW str,str2;
+	struct tm Time;
+	if (localtime_s(&Time,&m_time))
+		return szEmpty;
+
 	str2.LoadString(nFormatID);
-	wcsftime(str.GetBuffer(1000),1000,str2,localtime(&m_time));
+	wcsftime(str.GetBuffer(1000),1000,str2,&Time);
 	str.FreeExtra();
 	return str;
 }
@@ -603,8 +639,12 @@ CStringW CTime::FormatW(UINT nFormatID) const
 CStringW CTime::FormatGmtW(UINT nFormatID) const
 {
 	CStringW str,str2;
+	struct tm Time;
+	if (gmtime_s(&Time,&m_time))
+		return szEmpty;
+
 	str2.LoadString(nFormatID);
-	wcsftime(str.GetBuffer(1000),1000,str2,gmtime(&m_time));
+	wcsftime(str.GetBuffer(1000),1000,str2,&Time);
 	str.FreeExtra();
 	return str;
 }

@@ -103,7 +103,8 @@ BOOL CResults::Create(CListCtrl* pList,int* pDetails,int nDetails)
 
 			// Checking database IDs
 			WORD wID=pItem->GetDatabaseID();
-			for (int i=m_aFromDatabases.GetSize()-1;i>=0;i--)
+			int i;
+			for (i=m_aFromDatabases.GetSize()-1;i>=0;i--)
 			{
 				if (m_aFromDatabases[i]==wID)
 					break;
@@ -418,6 +419,7 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 
 	if (m_dwFlags&RESULT_INCLUDELABELS && m_nDetails>0)
 	{
+		int i;
 		for (i=0;i<m_nDetails-1;i++)
 		{
 			outFile.Write((LPCSTR)pLabels[i],pLabels[i].GetLength());
@@ -436,7 +438,7 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 	{
 		DWORD dwLength;
 		    
-		for (i=0;i<m_nDetails-1;i++)
+		for (int i=0;i<m_nDetails-1;i++)
 		{
 			// Reading length and data
 			tmpFile.Read(dwLength);
@@ -473,9 +475,9 @@ CSaveResultsDlg::CSaveResultsDlg()
 	SetTitle(CString(IDS_SAVERESULTS));
 	
 	// Setting default details
-	m_aDetails.Add(CLocateDlg::DetailType::FullPath);
-	m_aDetails.Add(CLocateDlg::DetailType::FileSize);
-	m_aDetails.Add(CLocateDlg::DetailType::DateModified);
+	m_aDetails.Add(CLocateDlg::FullPath);
+	m_aDetails.Add(CLocateDlg::FileSize);
+	m_aDetails.Add(CLocateDlg::DateModified);
 }
 
 CSaveResultsDlg::~CSaveResultsDlg()
@@ -558,7 +560,7 @@ BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
 		m_pList->SetCheckState(nItem,TRUE);
 	}
 
-	for (int nDetail=0;nDetail<=CLocateDlg::DetailType::LastType;nDetail++)
+	for (int nDetail=0;nDetail<=CLocateDlg::LastType;nDetail++)
 	{
 		if (m_aDetails.Find(nDetail)==-1)
 		{
@@ -650,7 +652,7 @@ BOOL CSaveResultsDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 	{
 	case LVN_GETDISPINFO:
 		{
-			if (pLvdi->item.lParam<=CLocateDlg::DetailType::LastType)
+			if (pLvdi->item.lParam<=CLocateDlg::LastType)
 			{
 				m_strBuffer.LoadString(IDS_LISTNAME+pLvdi->item.lParam,LanguageSpecificResource);
 				pLvdi->item.pszText=m_strBuffer.GetBuffer();

@@ -41,21 +41,11 @@ extern "C" void __declspec(dllexport) __cdecl GetLocateLanguageFileInfo(
 {
 	// Retrieving description from version resource
 	if (!GetVersionText("FileDescription",szDescription,dwMaxDescriptionLength))
-	{
-		if (dwMaxDescriptionLength>=22)
-			dwMaxDescriptionLength=22;
-		strncpy(szDescription,"English language file",dwMaxDescriptionLength-1);
-		szDescription[dwMaxDescriptionLength-1]='\0';
-	}
+		strcpy_s(szDescription,dwMaxDescriptionLength,"English language file");
 
 	// Retrieving language from version resource
 	if (!GetVersionText("ProvidesLanguage",szLanguage,dwMaxDescriptionLength))
-	{
-		if (dwMaxLanguageLength>=8)
-			dwMaxLanguageLength=8;
-		strncpy(szLanguage,"English",dwMaxLanguageLength-1);
-		szLanguage[dwMaxLanguageLength-1]='\0';
-	}
+		strcpy_s(szLanguage,dwMaxLanguageLength,"English");
 }
 
 /* Standard DllMain function, this does nothing but sets hInstance */
@@ -133,10 +123,7 @@ BOOL GetVersionText(
 	}
 	
 	// Copying information from pProductVersion to szText
-	if (dwMaxTextLen>=iDataLength)
-		dwMaxTextLen=iDataLength;
-	strncpy(szText,(LPCSTR)pProductVersion,dwMaxTextLen-1);
-    szText[dwMaxTextLen-1]='\0';
+	strcpy_s(szText,dwMaxTextLen,(LPCSTR)pProductVersion);
 	
 	delete[] pData;
 	return TRUE;

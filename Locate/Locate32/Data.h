@@ -108,7 +108,7 @@ public:
 	{
 	public:
 		static DWORD GetIndex(const SDATE& tDate) { return CTime::GetIndex(tDate.bDay,tDate.bMonth,tDate.wYear); }
-		static GetDayOfWeek(const SDATE& tDate) { return CTime::GetDayOfWeek(tDate.bDay,tDate.bMonth,tDate.wYear); }
+		static int GetDayOfWeek(const SDATE& tDate) { return CTime::GetDayOfWeek(tDate.bDay,tDate.bMonth,tDate.wYear); }
 
 		static int GetWeekIndex(int nDayIndex,BOOL bMondayIsFisrt);
 		static int GetWeekIndex(BYTE bDay,BYTE bMonth,WORD wYear,BOOL bMondayIsFirst);

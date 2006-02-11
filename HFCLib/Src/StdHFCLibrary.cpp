@@ -10,7 +10,7 @@ BOOL bIsFullUnicodeSupport=(GetVersion()&0x80000000)?FALSE:TRUE;
 
 void CAppData::stdfunc()
 {
-	strncpy(LPSTR(szEmpty),"",0);
+	(LPSTR(szEmpty))[0]='\0';
 }
 
 

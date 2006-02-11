@@ -27,11 +27,11 @@ HFCERROR SetHFCError2(HFCERROR nErr,int line,char* file);
 HFCERROR GetHFCError(void);
 HFCERRCALLBACK SetHFCErrorCallback(HFCERRCALLBACK pfCallbackFunc,DWORD dwData);
 LPCSTR GetStdErrorStr(HFCERROR nError);
-HFCERROR ExceptionErrorFunc(HFCERROR nError,DWORD dwData);
+HFCERROR ExceptionErrorFunc(HFCERROR nError,SIZE_T dwData);
 void SysErrorMessage(CString& str,DWORD dwSystemError);
-HFCERROR StdHFCErrorCallbackStdout(HFCERROR nError,DWORD dwData);
-HFCERROR StdHFCErrorCallbackStderr(HFCERROR nError,DWORD dwData);
-HFCERROR StdHFCErrorCallbackMsgBox(HFCERROR nError,DWORD dwData);
+HFCERROR StdHFCErrorCallbackStdout(HFCERROR nError,SIZE_T dwData);
+HFCERROR StdHFCErrorCallbackStderr(HFCERROR nError,SIZE_T dwData);
+HFCERROR StdHFCErrorCallbackMsgBox(HFCERROR nError,SIZE_T dwData);
 
 
 //Only tests if HFC Library works correctly, returning nonzero if OK

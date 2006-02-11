@@ -1,158 +1,242 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8,00"
 	Name="Locate32"
-	SccProjectName=""
-	SccLocalPath="">
+	ProjectGUID="{0D7BB147-3B10-4F5B-987C-E1B2518FC2F4}"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\Release"
 			IntermediateDirectory=".\Release"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Release/Locate32.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="..\keyhook;..;..\..\ImageHandler;..\LocateDb;..\Locater"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS,HFC_MTLIBS"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="2"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\Release/Locate32.pch"
 				AssemblerListingLocation=".\Release/"
 				ObjectFile=".\Release/"
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386 /NODEFAULTLIB:LIBC"
-				AdditionalDependencies="odbc32.lib odbccp32.lib "
-				OutputFile=".\Release/Locate32.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				ProgramDatabaseFile=".\Release/Locate32.pdb"
-				GenerateMapFile="TRUE"
-				MapFileName=".\Release/Locate32.map"
-				MapExports="TRUE"
-				MapLines="TRUE"
-				SubSystem="2"/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Release/Locate32.tlb"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG,LANG_EN"
-				Culture="1033"/>
+				Culture="1033"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386 /NODEFAULTLIB:LIBC"
+				AdditionalDependencies="odbc32.lib odbccp32.lib"
+				OutputFile=".\Release/Locate32.exe"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				ProgramDatabaseFile=".\Release/Locate32.pdb"
+				GenerateMapFile="true"
+				MapFileName=".\Release/Locate32.map"
+				MapExports="true"
+				SubSystem="2"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory=".\Debug"
 			IntermediateDirectory=".\Debug"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="_DEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Debug/Locate32.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\keyhook;..;..\..\ImageHandler;..\LocateDb;..\Locater"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS,HFC_MTLIBS"
-				ExceptionHandling="TRUE"
+				ExceptionHandling="1"
 				RuntimeLibrary="1"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\Debug/Locate32.pch"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="4"/>
+				SuppressStartupBanner="true"
+				DebugInformationFormat="4"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="_DEBUG,LANG_EN"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 /NODEFAULTLIB:LIBCMT"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
 				OutputFile=".\Debug/Locate32d.exe"
-				SuppressStartupBanner="TRUE"
-				GenerateDebugInformation="TRUE"
+				SuppressStartupBanner="true"
+				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/Locate32.pdb"
-				GenerateMapFile="TRUE"
+				GenerateMapFile="true"
 				MapFileName=".\Debug/Locate32.map"
-				SubSystem="2"/>
+				SubSystem="2"
+			/>
 			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Debug/Locate32.tlb"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCPostBuildEventTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCPreBuildEventTool"/>
+				Name="VCXDCMakeTool"
+			/>
 			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCBscMakeTool"
+			/>
 			<Tool
-				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG,LANG_EN"
-				Culture="1033"/>
+				Name="VCFxCopTool"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCAppVerifierTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCWebDeploymentTool"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release(Log)|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Release/Locate32.tlb"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="..\keyhook;..;..\..\ImageHandler;..\LocateDb;..\Locater"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS,HFC_MTLIBS,_DEBUG_LOGGING"
-				StringPooling="TRUE"
-				RuntimeLibrary="4"
-				EnableFunctionLevelLinking="TRUE"
+				StringPooling="true"
+				RuntimeLibrary="0"
+				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough="HFCLib.h"
 				PrecompiledHeaderFile=".\Release(Log)/Locate32.pch"
@@ -160,50 +244,57 @@
 				ObjectFile=".\Release(Log)/"
 				ProgramDataBaseFileName=".\Release(Log)/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="odbc32.lib odbccp32.lib "
-				OutputFile=".\Release(Log)/Locate32l.exe"
-				LinkIncremental="1"
-				SuppressStartupBanner="TRUE"
-				IgnoreDefaultLibraryNames="LIBC"
-				ProgramDatabaseFile=".\Release(Log)/Locate32.pdb"
-				GenerateMapFile="TRUE"
-				MapFileName=".\Release(Log)/Locate32l.map"
-				MapExports="TRUE"
-				MapLines="TRUE"
-				SubSystem="2"/>
-			<Tool
-				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="TRUE"
-				SuppressStartupBanner="TRUE"
-				TargetEnvironment="1"
-				TypeLibraryName=".\Release/Locate32.tlb"/>
-			<Tool
-				Name="VCPostBuildEventTool"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
 			<Tool
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG,LANG_EN"
-				Culture="1033"/>
+				Culture="1033"
+			/>
 			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
-				Name="VCXMLDataGeneratorTool"/>
+				Name="VCLinkerTool"
+				AdditionalOptions="/MACHINE:I386"
+				AdditionalDependencies="odbc32.lib odbccp32.lib"
+				OutputFile=".\Release(Log)/Locate32l.exe"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				IgnoreDefaultLibraryNames="LIBC"
+				ProgramDatabaseFile=".\Release(Log)/Locate32.pdb"
+				GenerateMapFile="true"
+				MapFileName=".\Release(Log)/Locate32l.map"
+				MapExports="true"
+				SubSystem="2"
+			/>
 			<Tool
-				Name="VCWebDeploymentTool"/>
+				Name="VCALinkTool"
+			/>
 			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
+				Name="VCManifestTool"
+			/>
 			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -211,588 +302,772 @@
 	<Files>
 		<Filter
 			Name="Sources"
-			Filter="cpp">
+			Filter="cpp"
+			>
 			<File
-				RelativePath=".\AboutDlg.cpp">
+				RelativePath=".\AboutDlg.cpp"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release(Log)|Win32">
+					Name="Release(Log)|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Background.cpp">
+				RelativePath=".\Background.cpp"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release(Log)|Win32">
+					Name="Release(Log)|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\Data.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="DatabaseInfos.cpp">
+				RelativePath=".\Data.cpp"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release(Log)|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\FileObject.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release(Log)|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\LocateApp.cpp">
+				RelativePath="DatabaseInfos.cpp"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release(Log)|Win32">
+					Name="Release(Log)|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\LocatedItem.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release(Log)|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\LocateDlg.cpp">
+				RelativePath=".\FileObject.cpp"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release(Log)|Win32">
+					Name="Release(Log)|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\ResultsDialogs.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release(Log)|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\SettingsDlg.cpp">
+				RelativePath=".\LocateApp.cpp"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release(Log)|Win32">
+					Name="Release(Log)|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\shortcut.cpp">
+				RelativePath=".\LocatedItem.cpp"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release(Log)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\LocateDlg.cpp"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release(Log)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ResultsDialogs.cpp"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release(Log)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\SettingsDlg.cpp"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release(Log)|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\shortcut.cpp"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\SmallDialogs.cpp">
+				RelativePath=".\SmallDialogs.cpp"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release(Log)|Win32">
+					Name="Release(Log)|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Std.cpp">
+				RelativePath=".\Std.cpp"
+				>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release(Log)|Win32">
+					Name="Release(Log)|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="0"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
-			Filter="h">
+			Filter="h"
+			>
 			<File
-				RelativePath=".\AboutDlg.h">
+				RelativePath=".\AboutDlg.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Background.h">
+				RelativePath=".\Background.h"
+				>
 			</File>
 			<File
-				RelativePath="commonres.h">
+				RelativePath="commonres.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Data.h">
+				RelativePath=".\Data.h"
+				>
 			</File>
 			<File
-				RelativePath="DatabaseInfos.h">
+				RelativePath="DatabaseInfos.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Debugging.h">
+				RelativePath=".\Debugging.h"
+				>
 			</File>
 			<File
-				RelativePath=".\FileObject.h">
+				RelativePath=".\FileObject.h"
+				>
 			</File>
 			<File
-				RelativePath="..\lan_resources.h">
+				RelativePath="..\lan_resources.h"
+				>
 			</File>
 			<File
-				RelativePath=".\Locate32.h">
+				RelativePath=".\Locate32.h"
+				>
 			</File>
 			<File
-				RelativePath=".\LocateApp.h">
+				RelativePath=".\LocateApp.h"
+				>
 			</File>
 			<File
-				RelativePath=".\LocatedItem.h">
+				RelativePath=".\LocatedItem.h"
+				>
 			</File>
 			<File
-				RelativePath="LocatedItem.inl">
+				RelativePath="LocatedItem.inl"
+				>
 			</File>
 			<File
-				RelativePath=".\LocateDlg.h">
+				RelativePath=".\LocateDlg.h"
+				>
 			</File>
 			<File
-				RelativePath="LocateDlg.inl">
+				RelativePath="LocateDlg.inl"
+				>
 			</File>
 			<File
-				RelativePath=".\messages.h">
+				RelativePath=".\messages.h"
+				>
 			</File>
 			<File
-				RelativePath=".\ResultsDialogs.h">
+				RelativePath=".\ResultsDialogs.h"
+				>
 			</File>
 			<File
-				RelativePath=".\SettingsDlg.h">
+				RelativePath=".\SettingsDlg.h"
+				>
 			</File>
 			<File
-				RelativePath=".\SettingsDlg.inl">
+				RelativePath=".\SettingsDlg.inl"
+				>
 			</File>
 			<File
-				RelativePath=".\shortcut.h">
+				RelativePath=".\shortcut.h"
+				>
 			</File>
 			<File
-				RelativePath=".\shortcuts.inl">
+				RelativePath=".\shortcuts.inl"
+				>
 			</File>
 			<File
-				RelativePath=".\SmallDialogs.h">
+				RelativePath=".\SmallDialogs.h"
+				>
 			</File>
 			<File
-				RelativePath=".\SmallDialogs.inl">
+				RelativePath=".\SmallDialogs.inl"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
-			Filter="rc bmp ico wav">
+			Filter="rc bmp ico wav"
+			>
 			<File
-				RelativePath="commonres\aboutbanner.bmp">
+				RelativePath="commonres\aboutbanner.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\advancedsettingsbitmap.bmp">
+				RelativePath=".\commonres\advancedsettingsbitmap.bmp"
+				>
 			</File>
 			<File
-				RelativePath="commonres\bmp00001.bmp">
+				RelativePath="commonres\bmp00001.bmp"
+				>
 			</File>
 			<File
-				RelativePath="commonres\bmp00002.bmp">
+				RelativePath="commonres\bmp00002.bmp"
+				>
 			</File>
 			<File
-				RelativePath="commonres\bmp00003.bmp">
+				RelativePath="commonres\bmp00003.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\bmp00004.bmp">
+				RelativePath=".\commonres\bmp00004.bmp"
+				>
 			</File>
 			<File
-				RelativePath="commonres\circle.bmp">
+				RelativePath="commonres\circle.bmp"
+				>
 			</File>
 			<File
-				RelativePath="commonres.rc">
+				RelativePath="commonres.rc"
+				>
 			</File>
 			<File
-				RelativePath="commonres\dbfile.ico">
+				RelativePath="commonres\dbfile.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\defaultshortcuts.dat">
+				RelativePath=".\commonres\defaultshortcuts.dat"
+				>
 			</File>
 			<File
-				RelativePath="commonres\DEFAULTT.BMP">
+				RelativePath="commonres\DEFAULTT.BMP"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\defaulttypeicons.bmp">
+				RelativePath=".\commonres\defaulttypeicons.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\deftypei.bmp">
+				RelativePath=".\commonres\deftypei.bmp"
+				>
 			</File>
 			<File
-				RelativePath="commonres\deletedf.ico">
+				RelativePath="commonres\deletedf.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\file.ico">
+				RelativePath="commonres\file.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\files.ico">
+				RelativePath="commonres\files.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\helptext.txt">
+				RelativePath=".\commonres\helptext.txt"
+				>
 			</File>
 			<File
-				RelativePath="commonres\ico00001.ico">
+				RelativePath="commonres\ico00001.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\ico00002.ico">
+				RelativePath="commonres\ico00002.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\icon1.ico">
+				RelativePath="commonres\icon1.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\icon2.ico">
+				RelativePath="commonres\icon2.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\icon3.ico">
+				RelativePath="commonres\icon3.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\icon4.ico">
+				RelativePath="commonres\icon4.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\icon6.ico">
+				RelativePath="commonres\icon6.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\idb_lani.ico">
+				RelativePath="commonres\idb_lani.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\invalidf.ico">
+				RelativePath=".\commonres\invalidf.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\invalidfico.ico">
+				RelativePath=".\commonres\invalidfico.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\keybitd.bmp">
+				RelativePath=".\commonres\keybitd.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\keybith.bmp">
+				RelativePath=".\commonres\keybith.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\keybitn.bmp">
+				RelativePath=".\commonres\keybitn.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\lanim1.ico">
+				RelativePath=".\commonres\lanim1.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\lanim2.ico">
+				RelativePath=".\commonres\lanim2.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\lanim3.ico">
+				RelativePath=".\commonres\lanim3.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\lanim4.ico">
+				RelativePath=".\commonres\lanim4.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\lanim5.ico">
+				RelativePath=".\commonres\lanim5.ico"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\lanim6.ico">
+				RelativePath=".\commonres\lanim6.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\LENS.ICO">
+				RelativePath="commonres\LENS.ICO"
+				>
 			</File>
 			<File
-				RelativePath="commonres\manifest">
+				RelativePath="commonres\manifest"
+				>
 			</File>
 			<File
-				RelativePath="commonres\no.ico">
+				RelativePath="commonres\no.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\saverest.bmp">
+				RelativePath="commonres\saverest.bmp"
+				>
 			</File>
 			<File
-				RelativePath="commonres\saverestoolbarbitmaps.bmp">
+				RelativePath="commonres\saverestoolbarbitmaps.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\saverestoolbarbitmapshot.bmp">
+				RelativePath=".\commonres\saverestoolbarbitmapshot.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\shortcut.bmp">
+				RelativePath=".\commonres\shortcut.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\shortcutactionsbitmaps.bmp">
+				RelativePath=".\commonres\shortcutactionsbitmaps.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\shortcutactionsbitmapsdisabled.bmp">
+				RelativePath=".\commonres\shortcutactionsbitmapsdisabled.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\shortcutactionsbitmapshot.bmp">
+				RelativePath=".\commonres\shortcutactionsbitmapshot.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\sresbitd.bmp">
+				RelativePath=".\commonres\sresbitd.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\sresbith.bmp">
+				RelativePath=".\commonres\sresbith.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\sresbitn.bmp">
+				RelativePath=".\commonres\sresbitn.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\toolbarb.bmp">
+				RelativePath=".\commonres\toolbarb.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\toolbarbitmaps.bmp">
+				RelativePath=".\commonres\toolbarbitmaps.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\toolbarbitmapsdisabled.bmp">
+				RelativePath=".\commonres\toolbarbitmapsdisabled.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\toolbitd.bmp">
+				RelativePath=".\commonres\toolbitd.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\toolbith.bmp">
+				RelativePath=".\commonres\toolbith.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\toolbitn.bmp">
+				RelativePath=".\commonres\toolbitn.bmp"
+				>
 			</File>
 			<File
-				RelativePath=".\commonres\uanim1.ico">
+				RelativePath=".\commonres\uanim1.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\uanim10.ico">
+				RelativePath="commonres\uanim10.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\uanim11.ico">
+				RelativePath="commonres\uanim11.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\uanim12.ico">
+				RelativePath="commonres\uanim12.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\uanim13.ico">
+				RelativePath="commonres\uanim13.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\uanim2.ico">
+				RelativePath="commonres\uanim2.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\uanim3.ico">
+				RelativePath="commonres\uanim3.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\uanim4.ico">
+				RelativePath="commonres\uanim4.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\uanim5.ico">
+				RelativePath="commonres\uanim5.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\uanim6.ico">
+				RelativePath="commonres\uanim6.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\uanim7.ico">
+				RelativePath="commonres\uanim7.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\uanim8.ico">
+				RelativePath="commonres\uanim8.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\uanim9.ico">
+				RelativePath="commonres\uanim9.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\updtdb32.ico">
+				RelativePath="commonres\updtdb32.ico"
+				>
 			</File>
 			<File
-				RelativePath="commonres\yes.ico">
+				RelativePath="commonres\yes.ico"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Documents"
-			Filter="">
+			>
 			<File
-				RelativePath=".\HFCDebug.log">
+				RelativePath=".\HFCDebug.log"
+				>
 			</File>
 			<File
-				RelativePath="..\..\Install\Locate2\Readme.txt">
+				RelativePath="..\..\Install\Locate2\Readme.txt"
+				>
 			</File>
 		</Filter>
 	</Files>

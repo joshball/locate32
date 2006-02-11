@@ -44,7 +44,7 @@ inline size_t istrlenw(const WCHAR* str)
 #endif
 
 #define dreplacech(str,from,to) \
-	{ for (register UINT i=0;(str)[i]!='\0';i++) if ((str)[i]==(from)) (str)[i]=(to); }
+	{ for (register LONG_PTR i=0;(str)[i]!='\0';i++) if ((str)[i]==(from)) (str)[i]=(to); }
 #define dwreplacech(str,from,to)	dreplacech(str,from,to)
 
 #define dparseto(str,len,ch)				for (len=0;(str)[len]!=(ch);len++)
@@ -54,8 +54,8 @@ inline size_t istrlenw(const WCHAR* str)
 #define dparseto4(str,len,ch1,ch2,ch3,ch4)	for (len=0;(str)[len]!=(ch1) && (str)[len]!=(ch2) && (str)[len]!=(ch3) && (str)[len]!=(ch4);len++)
 
 // Extended sprintf style handlers
-int vsprintfex( char *buffer, size_t buffersize, const char *format, va_list argptr );
-inline int sprintfex( char *buffer, size_t buffersize, const char *format,...)
+int vsprintfex( char *buffer, SIZE_T buffersize, const char *format, va_list argptr );
+inline int sprintfex( char *buffer, SIZE_T buffersize, const char *format,...)
 {
 	va_list argList;
 	va_start(argList,format);
@@ -65,8 +65,8 @@ inline int sprintfex( char *buffer, size_t buffersize, const char *format,...)
 }
 
 #ifdef DEF_WCHAR
-int vswprintfex( wchar_t *buffer, size_t buffersize, const wchar_t *format, va_list argptr );
-inline int swprintfex( wchar_t *buffer, size_t buffersize, const wchar_t *format,...)
+int vswprintfex( wchar_t *buffer, SIZE_T buffersize, const wchar_t *format, va_list argptr );
+inline int swprintfex( wchar_t *buffer, SIZE_T buffersize, const wchar_t *format,...)
 {
 	va_list argList;
 	va_start(argList,format);
@@ -90,16 +90,16 @@ inline int swprintfex( wchar_t *buffer, size_t buffersize, const wchar_t *format
 ////////////////////////////////////////
 // String functions
 
-BYTE ContainString(LPCSTR,LPCSTR);
-int FirstCharIndex(LPCSTR,const CHAR);
-int LastCharIndex(LPCSTR,const CHAR);
-int NextCharIndex(LPCSTR,const CHAR,int);
+BOOL ContainString(LPCSTR,LPCSTR);
+LONG_PTR FirstCharIndex(LPCSTR,const CHAR);
+LONG_PTR LastCharIndex(LPCSTR,const CHAR);
+LONG_PTR NextCharIndex(LPCSTR,const CHAR,LONG_PTR);
 
 #ifdef DEF_WCHAR
-BYTE ContainString(LPCWSTR,LPCWSTR);
-int FirstCharIndex(LPCWSTR,const WCHAR);
-int LastCharIndex(LPCWSTR,const WCHAR);
-int NextCharIndex(LPCWSTR,const WCHAR,int);
+BOOL ContainString(LPCWSTR,LPCWSTR);
+LONG_PTR FirstCharIndex(LPCWSTR,const WCHAR);
+LONG_PTR LastCharIndex(LPCWSTR,const WCHAR);
+LONG_PTR NextCharIndex(LPCWSTR,const WCHAR,LONG_PTR);
 #endif
 
 #ifdef WIN32
@@ -107,10 +107,10 @@ int strcasecmp(LPCTSTR,LPCTSTR);
 #endif
 
 int strcasencmp(LPCTSTR s1,LPCTSTR s2,DWORD n);
-int _readnum(int base,LPCSTR& str,DWORD length=DWORD(-1));
+int _readnum(int base,LPCSTR& str,SIZE_T length=SIZE_T(-1));
 
-BYTE* dataparser(LPCSTR pString,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength=NULL);
-BYTE* dataparser2(LPCSTR pStr,DWORD* pdwDataLength);
+BYTE* dataparser(LPCSTR pString,SIZE_T dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength=NULL);
+BYTE* dataparser2(LPCSTR pStr,SIZE_T* pdwDataLength);
 BOOL IsCharNumeric(char cChar,BYTE bBase);
 
 
@@ -122,14 +122,14 @@ class CString
 {
 protected:
 	LPSTR m_pData;
-	DWORD m_nDataLen;
-	DWORD m_nAllocLen;
+	SIZE_T m_nDataLen;
+	SIZE_T m_nAllocLen;
 	BYTE m_nBase;
 public:
 //Constructors
 	CString();
 	CString(const CString& str);
-	CString(CHAR ch,DWORD nRepeat=1);
+	CString(CHAR ch,SIZE_T nRepeat=1);
 	CString(LPCSTR lpsz);
 	CString(LPCSTR lpsz,DWORD nLength);
 	CString(const unsigned char * lpsz);
@@ -137,7 +137,7 @@ public:
 
 public:
 //Attributes & Operations
-	DWORD GetLength() const { return m_nDataLen; }
+	SIZE_T GetLength() const { return m_nDataLen; }
 	BOOL IsEmpty() const { return (m_pData==NULL || !m_nDataLen); }
 	void Empty();
 
@@ -145,13 +145,15 @@ public:
 	BYTE GetBase() { return m_nBase; }
 
 	CHAR GetAt(DWORD nIndex) const;
-	CHAR operator[](DWORD nIndex) const;
-	CHAR& operator[](DWORD nIndex);
+	CHAR operator[](LONG_PTR nIndex) const;
+	CHAR& operator[](LONG_PTR nIndex);
+	CHAR operator[](ULONG_PTR nIndex) const;
+	CHAR& operator[](ULONG_PTR nIndex);
 	CHAR operator[](int nIndex) const;
 	CHAR& operator[](int nIndex);
 	CHAR operator[](UINT nIndex) const;
 	CHAR& operator[](UINT nIndex);
-	void SetAt(DWORD nIndex,CHAR ch);
+	void SetAt(ULONG_PTR nIndex,CHAR ch);
 	
 	inline operator LPCSTR() const	{ if (m_pData==NULL)	return szEmpty;	return m_pData;}
 	LPSTR GetPCHData() const { return m_pData; } // Use with caution, may be null
@@ -160,9 +162,9 @@ public:
 
 
 	CString& Copy(LPCSTR src);
-	CString& Copy(LPCSTR src,int iLength);
+	CString& Copy(LPCSTR src,SIZE_T iLength);
 	CString& Copy(const BYTE* src);
-	CString& Copy(const BYTE* src,int iLength);
+	CString& Copy(const BYTE* src,SIZE_T iLength);
 
 	
 	const CString& operator=(const CString& str);
@@ -188,7 +190,7 @@ public:
 	CString& operator<<(DWORD iNum);
 	CString& operator<<(int iNum);
 
-	void Append(LPCSTR str,int iLength=-1);
+	void Append(LPCSTR str,SIZE_T iLength=SIZE_T(-1));
     void Append(const CString& str);
     void Append(CHAR ch);
 
@@ -197,12 +199,12 @@ public:
 
 	BOOL operator==(const CString& str);
 	BOOL operator==(LPCSTR str);
-	BYTE ContainString(LPCSTR str,DWORD start=0);
+	BOOL ContainString(LPCSTR str,ULONG_PTR start=0);
 
-	CString Mid(DWORD nFirst,DWORD nCount) const;
-	CString Mid(DWORD nFirst) const;
-	CString Left(DWORD nCount) const;
-	CString Right(DWORD nCount) const;
+	CString Mid(ULONG_PTR nFirst,ULONG_PTR nCount) const;
+	CString Mid(ULONG_PTR nFirst) const;
+	CString Left(SIZE_T nCount) const;
+	CString Right(SIZE_T nCount) const;
 	CHAR LastChar() const;
 	void DelLastChar();
 
@@ -210,26 +212,26 @@ public:
 	void MakeLower();
 	void MakeReverse();
 
-	int Find(CHAR ch) const;
-	int FindOneOf(LPCSTR lpszCharSet) const;
-	int FindFirst(CHAR ch) const;
-	int FindLast(CHAR ch) const;
-	int FindNext(CHAR ch,int idx) const;
-	int Find(LPCSTR lpszSub) const;
+	LONG_PTR Find(CHAR ch) const;
+	LONG_PTR FindOneOf(LPCSTR lpszCharSet) const;
+	LONG_PTR FindFirst(CHAR ch) const;
+	LONG_PTR FindLast(CHAR ch) const;
+	LONG_PTR FindNext(CHAR ch,LONG_PTR idx) const;
+	LONG_PTR Find(LPCSTR lpszSub) const;
 
-	LPSTR GetBuffer(int nMinBufLength=-1,BYTE bStoreData=FALSE);
-	int GetAllocLength() const { return m_nAllocLen; }
-	void FreeExtra(int nNewLength=-1); // Call after GetBuffer()
+	LPSTR GetBuffer(SIZE_T nMinBufLength=SIZE_T(-1),BOOL bStoreData=FALSE);
+	SIZE_T GetAllocLength() const { return m_nAllocLen; }
+	void FreeExtra(SIZE_T nNewLength=SIZE_T(-1)); // Call after GetBuffer()
 	void Compact(); // Makes memory usage as small as possible
 					// don't call after GetBuffer()
 	LPSTR GiveBuffer();
 	
 	
 		
-	BOOL InsChar(DWORD idx,CHAR ch);
-	BOOL Insert(DWORD idx,CHAR ch) { return InsChar(idx,ch); }
-	BOOL DelChar(DWORD idx);
-	BOOL Delete(DWORD idx,int nCount=1);
+	BOOL InsChar(ULONG_PTR idx,CHAR ch);
+	BOOL Insert(ULONG_PTR idx,CHAR ch) { return InsChar(idx,ch); }
+	BOOL DelChar(ULONG_PTR idx);
+	BOOL Delete(ULONG_PTR idx,SIZE_T nCount=1);
 	void ReplaceChars(char from,char to);
 
 	void Trim(); // Deletes spaces from begin and end
@@ -271,10 +273,10 @@ public:
 
 	CString(const CStringW& str);
 	CString(LPCWSTR lpsz);
-	CString(WCHAR ch,DWORD nRepeat=1);
+	CString(WCHAR ch,SIZE_T nRepeat=1);
 	
 	CString& Copy(LPCWSTR src);
-	CString& Copy(LPCWSTR src,int iLength);
+	CString& Copy(LPCWSTR src,SIZE_T iLength);
 
 	const CString& operator=(const CStringW& str);
 	const CString& operator=(WCHAR ch);
@@ -283,7 +285,7 @@ public:
 	const CString& operator+=(WCHAR ch);
 	const CString& operator+=(LPCWSTR str);
 
-	void Append(LPCWSTR str,int iLength=-1);
+	void Append(LPCWSTR str,SIZE_T iLength=SIZE_T(-1));
 	void Append(const CStringW& str);
 	void Append(WCHAR ch);
 
@@ -321,27 +323,27 @@ class CStringW
 {
 protected:
 	LPWSTR m_pData;
-	DWORD m_nDataLen;
-	DWORD m_nAllocLen;
+	SIZE_T m_nDataLen;
+	SIZE_T m_nAllocLen;
 	BYTE m_nBase;
 public:
 //Constructors
 	CStringW();
 	CStringW(const CStringW& str);
-	CStringW(WCHAR ch,DWORD nRepeat=1);
+	CStringW(WCHAR ch,SIZE_T nRepeat=1);
 	CStringW(LPCWSTR lpsz);
 	CStringW(LPCWSTR lpsz,DWORD nLength);
 	CStringW(const short * lpsz);
 	
 	CStringW(const CString& str);
-	CStringW(CHAR ch,DWORD nRepeat=1);
+	CStringW(CHAR ch,SIZE_T nRepeat=1);
 	CStringW(LPCSTR lpsz);
 	
 	~CStringW();
 
 public:
 //Attributes & Operations
-	DWORD GetLength() const { return m_nDataLen; }
+	SIZE_T GetLength() const { return m_nDataLen; }
 	BOOL IsEmpty() const { return (m_pData==NULL || !m_nDataLen); }
 	void Empty();
 
@@ -349,24 +351,26 @@ public:
 	BYTE GetBase() { return m_nBase; }
 
 	WCHAR GetAt(DWORD nIndex) const;
-	WCHAR operator[](DWORD nIndex) const;
-	WCHAR& operator[](DWORD nIndex);
+	WCHAR operator[](LONG_PTR nIndex) const;
+	WCHAR& operator[](LONG_PTR nIndex);
+	WCHAR operator[](ULONG_PTR nIndex) const;
+	WCHAR& operator[](ULONG_PTR nIndex);
 	WCHAR operator[](int nIndex) const;
 	WCHAR& operator[](int nIndex);
 	WCHAR operator[](UINT nIndex) const;
 	WCHAR& operator[](UINT nIndex);
-	void SetAt(DWORD nIndex,WCHAR ch);
+	void SetAt(ULONG_PTR nIndex,WCHAR ch);
 	operator LPCWSTR() const;
 	LPWSTR GetPCHData() const { return m_pData; } // Use with caution, may be null
 	operator FREEDATA();  // use delete[] (LPWSTR) pObject to release memory
 	void TakeBack(FREEDATA pData);
 
 	CStringW& Copy(LPCSTR src);
-	CStringW& Copy(LPCSTR src,int iLength);
+	CStringW& Copy(LPCSTR src,SIZE_T iLength);
 	CStringW& Copy(const BYTE* src);
-	CStringW& Copy(const BYTE* src,int iLength);
+	CStringW& Copy(const BYTE* src,SIZE_T iLength);
 	CStringW& Copy(LPCWSTR src);
-	CStringW& Copy(LPCWSTR src,int iLength);
+	CStringW& Copy(LPCWSTR src,SIZE_T iLength);
 	
 	const CStringW& operator=(const CStringW& str);
 	const CStringW& operator=(WCHAR ch);
@@ -387,8 +391,8 @@ public:
 	const CStringW& operator+=(CHAR ch);
 	const CStringW& operator+=(LPCSTR str);
 	
-	void Append(LPCSTR str,int iLength=-1);
-    void Append(LPCWSTR str,int iLength=-1);
+	void Append(LPCSTR str,SIZE_T iLength=SIZE_T(-1));
+    void Append(LPCWSTR str,SIZE_T iLength=SIZE_T(-1));
     void Append(const CString& str);
     void Append(const CStringW& str);
     void Append(CHAR ch);
@@ -419,12 +423,12 @@ public:
 	BOOL operator==(LPCWSTR str);
 	BOOL operator==(const CString& str);
 	BOOL operator==(LPCSTR str);
-	BYTE ContainString(LPCWSTR str,DWORD start=0);
+	BOOL ContainString(LPCWSTR str,ULONG_PTR start=0);
 
-	CStringW Mid(DWORD nFirst,DWORD nCount) const;
-	CStringW Mid(DWORD nFirst) const;
-	CStringW Left(DWORD nCount) const;
-	CStringW Right(DWORD nCount) const;
+	CStringW Mid(ULONG_PTR nFirst,SIZE_T nCount) const;
+	CStringW Mid(ULONG_PTR nFirst) const;
+	CStringW Left(SIZE_T nCount) const;
+	CStringW Right(SIZE_T nCount) const;
 	WCHAR LastChar() const;
 	void DelLastChar();
 
@@ -432,23 +436,23 @@ public:
 	void MakeLower();
 	void MakeReverse();
 
-	int Find(WCHAR ch) const;
-	int FindOneOf(LPCWSTR lpszCharSet) const;
-	int FindFirst(WCHAR ch) const;
-	int FindLast(WCHAR ch) const;
-	int FindNext(WCHAR ch,int idx) const;
-	int Find(LPCWSTR lpszSub) const;
+	LONG_PTR Find(WCHAR ch) const;
+	LONG_PTR FindOneOf(LPCWSTR lpszCharSet) const;
+	LONG_PTR FindFirst(WCHAR ch) const;
+	LONG_PTR FindLast(WCHAR ch) const;
+	LONG_PTR FindNext(WCHAR ch,LONG_PTR idx) const;
+	LONG_PTR Find(LPCWSTR lpszSub) const;
 
-	LPWSTR GetBuffer(int nMinBufLength=-1,BYTE bStoreData=FALSE);
-	void FreeExtra(int nNewLength=-1);
-	int GetAllocLength() const { return m_nAllocLen; }
+	LPWSTR GetBuffer(SIZE_T nMinBufLength=SIZE_T(-1),BOOL bStoreData=FALSE);
+	void FreeExtra(SIZE_T nNewLength=SIZE_T(-1));
+	SIZE_T GetAllocLength() const { return m_nAllocLen; }
 	void Compact();
 	LPWSTR GiveBuffer(); 
 
-	BOOL InsChar(DWORD idx,WCHAR ch);
-	BOOL Insert(DWORD idx,WCHAR ch) { return InsChar(idx,ch); }
-	BOOL DelChar(DWORD idx);
-	BOOL Delete(DWORD idx,int nCount=1);
+	BOOL InsChar(ULONG_PTR idx,WCHAR ch);
+	BOOL Insert(ULONG_PTR idx,WCHAR ch) { return InsChar(idx,ch); }
+	BOOL DelChar(ULONG_PTR idx);
+	BOOL Delete(ULONG_PTR idx,SIZE_T nCount=1);
 	void ReplaceChars(char from,char to);
 	void Trim(); // Deletes spaces from begin and end
 

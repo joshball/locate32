@@ -2031,7 +2031,8 @@ COptionsPropertyPage::Item::Item(
 	
 	if (pChilds_!=NULL)
 	{
-		for (int i=0;pChilds_[i]!=NULL;i++);
+		int i;
+		for (i=0;pChilds_[i]!=NULL;i++);
 		if (i>0)
 		{
 			pChilds=new Item*[i+1];
@@ -2083,7 +2084,8 @@ COptionsPropertyPage::Item::Item(
 
 	if (pChilds_!=NULL)
 	{
-		for (int i=0;pChilds_[i]!=NULL;i++);
+		int i;
+		for (i=0;pChilds_[i]!=NULL;i++);
 		if (i>0)
 		{
 			pChilds=new Item*[i+1];
@@ -2161,7 +2163,8 @@ BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
 		return FALSE;
 	
 	// Counting items
-	for (int iItems=0;pItems[iItems]!=NULL;iItems++);
+	int iItems;
+	for (iItems=0;pItems[iItems]!=NULL;iItems++);
 	
 	m_pItems=new Item*[max(iItems+1,2)];
 	m_pItems[iItems]=NULL;
@@ -2280,7 +2283,7 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 					pItems[i]->pProc(&bp);
 				}
 				char szText[100];
-				itoa(pItems[i]->lValue,szText,10);
+				_itoa_s(pItems[i]->lValue,szText,100,10);
 				::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(szText));
 			}
 			break;
@@ -3225,7 +3228,7 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 		if (hControl!=NULL && !bActive)
 		{
 			WCHAR szText[100];
-			_itow(lValue,szText,10);
+			_itow_s(lValue,szText,100,10);
 			int iLength=istrlenw(szText)+1;
 			int iLabelLen=istrlenw(pString);
 			

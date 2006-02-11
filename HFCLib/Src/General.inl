@@ -416,12 +416,12 @@ inline LONG CRegKey::SetValue(LPCSTR lpValueName,LPCTSTR lpData,DWORD cbData,DWO
 
 inline BOOL CRegKey::SetValue(LPCSTR lpValueName,CString& strData)
 {
-	return ::RegSetValueEx(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)(LPCTSTR)strData,strData.GetLength()+1)==ERROR_SUCCESS;
+	return ::RegSetValueEx(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)(LPCTSTR)strData,(DWORD)strData.GetLength()+1)==ERROR_SUCCESS;
 }
 
 inline LONG CRegKey::SetValue(LPCSTR lpValueName,LPCSTR strData)
 {
-	return ::RegSetValueEx(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)strData,strlen(strData)+1);
+	return ::RegSetValueEx(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)strData,(DWORD)strlen(strData)+1);
 }
 	
 inline BOOL CRegKey::SetValue(LPCSTR lpValueName,DWORD dwData)
@@ -436,12 +436,12 @@ inline LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCSTR lpData,DWORD cbData,DWO
 
 inline BOOL CRegKey::SetValue(LPCWSTR lpValueName,CStringW& strData)
 {
-	return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)(LPCWSTR)strData,strData.GetLength()+1)==ERROR_SUCCESS;
+	return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)(LPCWSTR)strData,(DWORD)strData.GetLength()+1)==ERROR_SUCCESS;
 }
 
 inline LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData)
 {
-	return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)strData,(wcslen(strData)+1)*2);
+	return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)strData,(DWORD)((wcslen(strData)+1)*2));
 }
 	
 inline BOOL CRegKey::SetValue(LPCWSTR lpValueName,DWORD dwData)

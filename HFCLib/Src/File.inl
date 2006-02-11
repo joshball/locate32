@@ -73,7 +73,7 @@ inline void CFile::SetFilePath(LPCTSTR lpszNewName)
 }
 
 
-inline BYTE CFile::Rename(LPCTSTR lpszOldName,LPCTSTR lpszNewName)
+inline BOOL CFile::Rename(LPCTSTR lpszOldName,LPCTSTR lpszNewName)
 {
 #ifdef WIN32
 	return ::MoveFile(lpszOldName,lpszNewName);
@@ -82,7 +82,7 @@ inline BYTE CFile::Rename(LPCTSTR lpszOldName,LPCTSTR lpszNewName)
 #endif
 }
 
-inline BYTE CFile::Remove(LPCTSTR lpszFileName)
+inline BOOL CFile::Remove(LPCTSTR lpszFileName)
 {
 #ifdef WIN32
 	return ::DeleteFile(lpszFileName);
@@ -347,7 +347,7 @@ inline CSearchHexFromFile::CSearchHexFromFile(LPCSTR szString,BOOL bMatchCase)
 	dstrlen(szString,dwLength);
 #ifdef WIN32
 	pSearchValue=new BYTE[dwLength];
-	for (register int i=dwLength-1;i>=0;i--)
+	for (register LONG_PTR i=dwLength-1;i>=0;i--)
 		pSearchValue[i]=szString[i];
 	if (!bMatchCase)
 		CharLowerBuff(LPSTR(pSearchValue),dwLength);
@@ -375,7 +375,7 @@ inline CSearchHexFromFile::CSearchHexFromFile(LPCSTR szString,DWORD dwLength,BOO
 #ifdef WIN32
 	// Setting data
 	pSearchValue=new BYTE[this->dwLength=dwLength];
-	for (register int i=this->dwLength-1;i>=0;i--)
+	for (register LONG_PTR i=this->dwLength-1;i>=0;i--)
 		pSearchValue[i]=szString[i];
 	if (!bMatchCase)
 		CharLowerBuff(LPSTR(pSearchValue),dwLength);

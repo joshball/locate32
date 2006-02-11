@@ -59,16 +59,16 @@ inline LPSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) con
 	
 	switch (nDetailType)
 	{
-	case CLocateDlg::DetailType::Title:
+	case CLocateDlg::Title:
 		if (GetTitle()!=NULL)
 			return GetTitle();
 		else
 			return GetName();		
-	case CLocateDlg::DetailType::InFolder:
+	case CLocateDlg::InFolder:
 		return GetParent();
-	case CLocateDlg::DetailType::FullPath:
+	case CLocateDlg::FullPath:
 		return GetPath();
-	case CLocateDlg::DetailType::FileSize:
+	case CLocateDlg::FileSize:
 		ISDLGTHREADOK
 		if (GetFileSizeLo()==DWORD(-1))
 			return const_cast<LPSTR>(szEmpty);
@@ -76,53 +76,53 @@ inline LPSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) con
 			delete[] g_szBuffer;
 		return (g_szBuffer=((CLocateApp*)GetApp())->FormatFileSizeString(
 			GetFileSizeLo(),GetFileSizeHi()));
-	case CLocateDlg::DetailType::FileType:
+	case CLocateDlg::FileType:
 		if (GetType()==NULL)
 			return const_cast<LPSTR>(szEmpty);
 		return GetType();
-	case CLocateDlg::DetailType::DateModified:
+	case CLocateDlg::DateModified:
 		ISDLGTHREADOK
 		if (g_szBuffer!=NULL)
 			delete[] g_szBuffer;
 		return (g_szBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
 			GetModifiedDate(),GetModifiedTime()));
-	case CLocateDlg::DetailType::DateCreated:
+	case CLocateDlg::DateCreated:
 		ISDLGTHREADOK
 		if (g_szBuffer!=NULL)
 			delete[] g_szBuffer;
 		return (g_szBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
 			GetCreatedDate(),GetCreatedTime()));
-	case CLocateDlg::DetailType::DateAccessed:
+	case CLocateDlg::DateAccessed:
 		ISDLGTHREADOK
 		if (g_szBuffer!=NULL)
 			delete[] g_szBuffer;
 		return (g_szBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
 			GetAccessedDate(),GetAccessedTime()));
-	case CLocateDlg::DetailType::Attributes:
+	case CLocateDlg::Attributes:
 		return FormatAttributes();				
-	case CLocateDlg::DetailType::Owner:
-	case CLocateDlg::DetailType::ShortFileName:
-	case CLocateDlg::DetailType::ShortFilePath:
-	case CLocateDlg::DetailType::MD5sum:
+	case CLocateDlg::Owner:
+	case CLocateDlg::ShortFileName:
+	case CLocateDlg::ShortFilePath:
+	case CLocateDlg::MD5sum:
 		{
 			LPSTR ret=GetExtraText(nDetailType);
 			if (ret==NULL)
 				return const_cast<LPSTR>(szEmpty);
 			return ret;
 		}
-	case CLocateDlg::DetailType::ImageDimensions:
+	case CLocateDlg::ImageDimensions:
 		return FormatImageInformation();				
-	case CLocateDlg::DetailType::Database:
+	case CLocateDlg::Database:
 		return const_cast<LPSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetName());
-	case CLocateDlg::DetailType::DatabaseDescription:
+	case CLocateDlg::DatabaseDescription:
 		return const_cast<LPSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetDescription());
-	case CLocateDlg::DetailType::DatabaseArchive:
+	case CLocateDlg::DatabaseArchive:
 		return const_cast<LPSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetArchiveName());
-	case CLocateDlg::DetailType::VolumeLabel:
+	case CLocateDlg::VolumeLabel:
 		return const_cast<LPSTR>(CLocateDlg::GetVolumeLabel(GetDatabaseID(),GetRootID()));
-	case CLocateDlg::DetailType::VolumeSerial:
+	case CLocateDlg::VolumeSerial:
 		return const_cast<LPSTR>(CLocateDlg::GetVolumeSerial(GetDatabaseID(),GetRootID()));
-	case CLocateDlg::DetailType::VOlumeFileSystem:
+	case CLocateDlg::VOlumeFileSystem:
 		return const_cast<LPSTR>(CLocateDlg::GetVolumeFileSystem(GetDatabaseID(),GetRootID()));
 	}
 	return const_cast<LPSTR>(szEmpty);
@@ -352,7 +352,7 @@ inline void CLocatedItem::ReFresh(CArray<CLocateDlg::DetailType>& aDetails,int* 
 
 inline BOOL CLocatedItem::GetImageDimensions(SIZE& dim) const
 {
-	ExtraInfo* pInfo=GetFieldForType(CLocateDlg::DetailType::ImageDimensions);
+	ExtraInfo* pInfo=GetFieldForType(CLocateDlg::ImageDimensions);
 	if (pInfo!=NULL)
 	{
 		dim=pInfo->szImageDimension;
@@ -363,7 +363,7 @@ inline BOOL CLocatedItem::GetImageDimensions(SIZE& dim) const
 
 inline int CLocatedItem::GetImageDimensionsProduct() const
 {
-	ExtraInfo* pInfo=GetFieldForType(CLocateDlg::DetailType::ImageDimensions);
+	ExtraInfo* pInfo=GetFieldForType(CLocateDlg::ImageDimensions);
 	if (pInfo!=NULL)
 		return pInfo->szImageDimension.cx*pInfo->szImageDimension.cy;
 	return 0;
@@ -384,11 +384,11 @@ inline void CLocatedItem::ExtraSetUpdateWhenFileSizeChanged()
 	{
 		switch (pTmp->nType)
 		{
-		case CLocateDlg::DetailType::Owner:
-		case CLocateDlg::DetailType::ImageDimensions:
+		case CLocateDlg::Owner:
+		case CLocateDlg::ImageDimensions:
             pTmp->bShouldUpdate=TRUE;
 			break;
-		case CLocateDlg::DetailType::MD5sum:
+		case CLocateDlg::MD5sum:
 			if (GetLocateDlg()->GetFlags()&CLocateDlg::fgLVComputeMD5Sums)
 				pTmp->bShouldUpdate=TRUE;
 			break;
@@ -417,10 +417,10 @@ inline CLocatedItem::ExtraInfo::~ExtraInfo()
 {
 	switch (nType)
 	{
-	case CLocateDlg::DetailType::ShortFileName:
-	case CLocateDlg::DetailType::ShortFilePath:
-	case CLocateDlg::DetailType::Owner:
-	case CLocateDlg::DetailType::MD5sum:
+	case CLocateDlg::ShortFileName:
+	case CLocateDlg::ShortFilePath:
+	case CLocateDlg::Owner:
+	case CLocateDlg::MD5sum:
 		if (szText!=NULL && szText!=szEmpty)
 			Allocation.Free(szText);
 		break;

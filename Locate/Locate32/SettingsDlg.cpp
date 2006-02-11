@@ -2332,7 +2332,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(LV_DISPINFO 
 				if (g_szBuffer!=NULL)
 					delete[] g_szBuffer;
 				g_szBuffer=new char[20];
-				itoa(pDatabase->GetThreadId()+1,g_szBuffer,10);
+				_itoa_s(pDatabase->GetThreadId()+1,g_szBuffer,20,10);
 				pLvdi->item.pszText=g_szBuffer;
 				break;
 			}
@@ -2584,7 +2584,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	for (int i=1;i<=m_nMaximumNumbersOfThreads;i++)
 	{
 		char num[5];
-		itoa(i,num,10);
+		_itoa_s(i,num,5,10);
 		SendDlgItemMessage(IDC_USEDTHREAD,CB_ADDSTRING,0,LPARAM(num));
 	}
 
@@ -4195,7 +4195,8 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnDatabas
 				delete[] m_pSchedule->m_pDatabases;
 			
 			DWORD dwLength=1;
-			for (int i=0;i<aDatabases.GetSize();i++)
+			int i=0;
+			for (i=0;i<aDatabases.GetSize();i++)
 				dwLength+=istrlen(aDatabases[i]->GetName())+1;
 
 			m_pSchedule->m_pDatabases=new char[dwLength];
@@ -4329,14 +4330,14 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnOK()
 	case CSchedule::typeMonthly:
 		if (IsDlgButtonChecked(IDC_MDAY))
 		{
-			m_pSchedule->m_tMonthly.nType=CSchedule::SMONTHLYTYPE::Type::Day;
+			m_pSchedule->m_tMonthly.nType=CSchedule::SMONTHLYTYPE::Day;
 			m_pSchedule->m_tMonthly.bDay=GetDlgItemInt(IDC_MEVERY);
 			if ((int)m_pSchedule->m_tMonthly.bDay<1)
 				m_pSchedule->m_tMonthly.bDay=1;
 		}
 		else
 		{
-			m_pSchedule->m_tMonthly.nType=CSchedule::SMONTHLYTYPE::Type::WeekDay;
+			m_pSchedule->m_tMonthly.nType=CSchedule::SMONTHLYTYPE::WeekDay;
 			m_pSchedule->m_tMonthly.nWeek=(CSchedule::SMONTHLYTYPE::Week)SendDlgItemMessage(IDC_MTYPE,CB_GETCURSEL);
 			m_pSchedule->m_tMonthly.bDay=(BYTE)SendDlgItemMessage(IDC_MDAYS,CB_GETCURSEL);
 		}

@@ -854,7 +854,8 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 				{
 					if (pItem->ShouldUpdateByDetail((CLocateDlg::DetailType)type))
 					{
-                        for (int j=pListItem->m_aDetails.GetSize()-1;j>=0;j--)
+						int j;
+                        for (j=pListItem->m_aDetails.GetSize()-1;j>=0;j--)
 						{
 							if (pListItem->m_aDetails[j]==(CLocateDlg::DetailType)type)
 								break;
@@ -871,7 +872,8 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 			{
 				BkgDebugFormatMessage("CBackgroundUpdater::AddToUpdateList checking wheter detail %d exists",nDetail);
 					
-				for (int j=pListItem->m_aDetails.GetSize()-1;j>=0;j--)
+				int j;
+				for (j=pListItem->m_aDetails.GetSize()-1;j>=0;j--)
 				{
 					if (pListItem->m_aDetails[j]==nDetail)
 						break;

@@ -1,312 +1,459 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="7.10"
+	Version="8,00"
 	Name="HFCLib32"
-	SccProjectName="&quot;$/HFCLib32&quot;, BHAAAAAA"
-	SccLocalPath="..\">
+	ProjectGUID="{31D2AE48-CEF3-4388-BF48-93D25691FB81}"
+	>
 	<Platforms>
 		<Platform
-			Name="Win32"/>
+			Name="Win32"
+		/>
 	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory=".\Debug"
 			IntermediateDirectory=".\Debug"
 			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/I."
 				Optimization="0"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS,HFC_NOFORCELIBS,HFC_COMPILE"
-				RuntimeLibrary="5"
-				UsePrecompiledHeader="3"
+				RuntimeLibrary="1"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="hfclib.h"
 				PrecompiledHeaderFile=".\Debug/HFCLib32.pch"
 				AssemblerListingLocation=".\Debug/"
 				ObjectFile=".\Debug/"
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="1"/>
+				SuppressStartupBanner="true"
+				DebugInformationFormat="1"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				Culture="1035"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="Debug\HFCLib32d.lib"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Copying Library..."
-				CommandLine="copy Debug\HFCLib32d.lib D:\Progra~1\HFC\Lib"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				Culture="1035"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				CommandLine="copy Debug\HFCLib32d.lib D:\Progra~1\HFC\Lib"
+			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory=".\Release"
 			IntermediateDirectory=".\Release"
 			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/I."
 				InlineFunctionExpansion="1"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS,HFC_NOFORCELIBS,HFC_COMPILE"
-				StringPooling="TRUE"
-				RuntimeLibrary="4"
-				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="3"
+				StringPooling="true"
+				RuntimeLibrary="0"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="hfclib.h"
 				PrecompiledHeaderFile=".\Release/HFCLib32.pch"
 				AssemblerListingLocation=".\Release/"
 				ObjectFile=".\Release/"
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\Release\HFCLib32.lib"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Copying Library..."
-				CommandLine="copy Release\HFCLib32.lib D:\Progra~1\HFC\Lib"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				Culture="1033"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				CommandLine="copy Release\HFCLib32.lib D:\Progra~1\HFC\Lib"
+			/>
 		</Configuration>
 		<Configuration
 			Name="RelLogging|Win32"
 			OutputDirectory=".\RelLogging"
 			IntermediateDirectory=".\RelLogging"
 			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/I."
 				InlineFunctionExpansion="1"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS,HFC_NOFORCELIBS,HFC_COMPILE,_DEBUG_LOGGING"
-				StringPooling="TRUE"
-				RuntimeLibrary="4"
-				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="3"
+				StringPooling="true"
+				RuntimeLibrary="0"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="hfclib.h"
 				PrecompiledHeaderFile=".\RelLogging/HFCLib32.pch"
 				AssemblerListingLocation=".\RelLogging/"
 				ObjectFile=".\RelLogging/"
 				ProgramDataBaseFileName=".\RelLogging/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\RelLogging\HFCLib32l.lib"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Copying Library..."
-				CommandLine="copy RelLogging\HFCLib32l.lib D:\Progra~1\HFC\Lib"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				Culture="1033"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				CommandLine="copy RelLogging\HFCLib32l.lib D:\Progra~1\HFC\Lib"
+			/>
 		</Configuration>
 		<Configuration
 			Name="ReleaseMT|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/I."
 				InlineFunctionExpansion="1"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS,HFC_NOFORCELIBS,HFC_COMPILE,HFC_MTLIBS"
-				StringPooling="TRUE"
+				StringPooling="true"
 				RuntimeLibrary="0"
-				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="3"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="hfclib.h"
 				PrecompiledHeaderFile=".\ReleaseMT/HFCLib32.pch"
 				AssemblerListingLocation=".\ReleaseMT/"
 				ObjectFile=".\ReleaseMT/"
 				ProgramDataBaseFileName=".\ReleaseMT/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\ReleaseMT\HFCLib32m.lib"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Copying Library..."
-				CommandLine="copy ReleaseMT\HFCLib32m.lib D:\Progra~1\HFC\Lib"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				Culture="1033"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				CommandLine="copy ReleaseMT\HFCLib32m.lib D:\Progra~1\HFC\Lib"
+			/>
 		</Configuration>
 		<Configuration
 			Name="DebugMT|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/I."
 				Optimization="0"
 				PreprocessorDefinitions="WIN32,_DEBUG,_WINDOWS,HFC_NOFORCELIBS,HFC_COMPILE,HFC_MTLIBS"
 				RuntimeLibrary="1"
-				UsePrecompiledHeader="3"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="hfclib.h"
 				PrecompiledHeaderFile=".\DebugMT/HFCLib32.pch"
 				AssemblerListingLocation=".\DebugMT/"
 				ObjectFile=".\DebugMT/"
 				ProgramDataBaseFileName=".\DebugMT/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"
-				DebugInformationFormat="1"/>
+				SuppressStartupBanner="true"
+				DebugInformationFormat="1"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				Culture="1035"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="DebugMT\HFCLib32md.lib"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Copying Library..."
-				CommandLine="copy DebugMT\HFCLib32md.lib D:\Progra~1\HFC\Lib"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				Culture="1035"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				CommandLine="copy DebugMT\HFCLib32md.lib D:\Progra~1\HFC\Lib"
+			/>
 		</Configuration>
 		<Configuration
 			Name="RelLoggingMT|Win32"
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			UseOfMFC="0"
-			ATLMinimizesCRunTimeLibraryUsage="FALSE">
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/I."
 				InlineFunctionExpansion="1"
 				PreprocessorDefinitions="WIN32,NDEBUG,_WINDOWS,HFC_NOFORCELIBS,HFC_COMPILE,_DEBUG_LOGGING"
-				StringPooling="TRUE"
-				RuntimeLibrary="4"
-				EnableFunctionLevelLinking="TRUE"
-				UsePrecompiledHeader="3"
+				StringPooling="true"
+				RuntimeLibrary="0"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="hfclib.h"
 				PrecompiledHeaderFile=".\RelLoggingMT/HFCLib32.pch"
 				AssemblerListingLocation=".\RelLoggingMT/"
 				ObjectFile=".\RelLoggingMT/"
 				ProgramDataBaseFileName=".\RelLoggingMT/"
 				WarningLevel="3"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCCustomBuildTool"/>
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile=".\RelLoggingMT\HFCLib32ml.lib"
-				SuppressStartupBanner="TRUE"/>
+				SuppressStartupBanner="true"
+			/>
 			<Tool
-				Name="VCMIDLTool"/>
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Copying Library..."
-				CommandLine="copy RelLoggingMT\HFCLib32ml.lib D:\Progra~1\HFC\Lib"/>
-			<Tool
-				Name="VCPreBuildEventTool"/>
-			<Tool
-				Name="VCPreLinkEventTool"/>
-			<Tool
-				Name="VCResourceCompilerTool"
-				Culture="1033"/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"/>
-			<Tool
-				Name="VCManagedWrapperGeneratorTool"/>
-			<Tool
-				Name="VCAuxiliaryManagedWrapperGeneratorTool"/>
+				CommandLine="copy RelLoggingMT\HFCLib32ml.lib D:\Progra~1\HFC\Lib"
+			/>
 		</Configuration>
 	</Configurations>
 	<References>
@@ -314,1364 +461,1761 @@
 	<Files>
 		<Filter
 			Name="Sources"
-			Filter="cpp">
+			Filter="cpp"
+			>
 			<File
-				RelativePath="..\Src\AppClasses.cpp">
+				RelativePath="..\Src\AppClasses.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\BaseClasses.cpp">
+				RelativePath="..\Src\BaseClasses.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\Src\BaseWindowFunctions.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLoggingMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\COM.cpp">
+				RelativePath="..\Src\BaseWindowFunctions.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\Src\CommonControls.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLoggingMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\CommonControlsEx.cpp">
+				RelativePath="..\Src\COM.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\Src\Controls.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLoggingMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\Converting.cpp">
+				RelativePath="..\Src\CommonControls.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\Src\Crypting.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLoggingMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\Debugging.cpp">
+				RelativePath="..\Src\CommonControlsEx.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\Src\Dialogs.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLoggingMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\Error.cpp">
+				RelativePath="..\Src\Controls.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\Src\Exceptions.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLoggingMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\File.cpp">
+				RelativePath="..\Src\Converting.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\Src\GeneralClasses.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLoggingMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\MainFunctions.cpp">
+				RelativePath="..\Src\Crypting.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\Src\MathClasses.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLoggingMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\MathFunctions.cpp">
+				RelativePath="..\Src\Debugging.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\Src\Memory.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLoggingMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\ShellExtension.cpp">
+				RelativePath="..\Src\Dialogs.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\StdHFCLibrary.cpp">
+				RelativePath="..\Src\Error.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLogging|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLoggingMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\Exceptions.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLogging|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLoggingMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\File.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLogging|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLoggingMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\GeneralClasses.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLogging|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLoggingMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\MainFunctions.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLogging|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLoggingMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\MathClasses.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLogging|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLoggingMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\MathFunctions.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLogging|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLoggingMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\Memory.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLogging|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLoggingMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\ShellExtension.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLogging|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLoggingMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\StdHFCLibrary.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\StringClass.cpp">
+				RelativePath="..\Src\StringClass.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\Src\Strings.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLoggingMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\System.cpp">
+				RelativePath="..\Src\Strings.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\Src\VB.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLoggingMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\WindowClasses.cpp">
+				RelativePath="..\Src\System.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\Src\WindowControls.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="DebugMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLoggingMT|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\WindowsFunctions.cpp">
+				RelativePath="..\Src\VB.cpp"
+				>
 				<FileConfiguration
-					Name="Debug|Win32">
+					Name="Debug|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32">
+					Name="Release|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLogging|Win32">
+					Name="RelLogging|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseMT|Win32">
+					Name="ReleaseMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="DebugMT|Win32">
+					Name="DebugMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="RelLoggingMT|Win32">
+					Name="RelLoggingMT|Win32"
+					>
 					<Tool
 						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="3"
-						PrecompiledHeaderThrough="HFCLib.h"/>
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\WindowClasses.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLogging|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLoggingMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\WindowControls.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLogging|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLoggingMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\WindowsFunctions.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLogging|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="RelLoggingMT|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="2"
+						PrecompiledHeaderThrough="HFCLib.h"
+					/>
 				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
-			Filter="h">
+			Filter="h"
+			>
 			<File
-				RelativePath="..\Src\HFCApp.h">
+				RelativePath="..\Src\HFCApp.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCArray.h">
+				RelativePath="..\Src\HFCArray.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCCmn.h">
+				RelativePath="..\Src\HFCCmn.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCCmnEx.h">
+				RelativePath="..\Src\HFCCmnEx.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCCom.h">
+				RelativePath="..\Src\HFCCom.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCCtrl.h">
+				RelativePath="..\Src\HFCCtrl.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCDebug.h">
+				RelativePath="..\Src\HFCDebug.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCDef.h">
+				RelativePath="..\Src\HFCDef.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCDlgs.h">
+				RelativePath="..\Src\HFCDlgs.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCExcp.h">
+				RelativePath="..\Src\HFCExcp.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCFunc.h">
+				RelativePath="..\Src\HFCFunc.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCGen.h">
+				RelativePath="..\Src\HFCGen.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCLib.h">
+				RelativePath="..\Src\HFCLib.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCList.h">
+				RelativePath="..\Src\HFCList.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCMath.h">
+				RelativePath="..\Src\HFCMath.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCMem.h">
+				RelativePath="..\Src\HFCMem.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCNmsp.h">
+				RelativePath="..\Src\HFCNmsp.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCRc.h">
+				RelativePath="..\Src\HFCRc.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCStr.h">
+				RelativePath="..\Src\HFCStr.h"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\HFCWin.h">
+				RelativePath="..\Src\HFCWin.h"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Inline Files"
-			Filter="inl">
+			Filter="inl"
+			>
 			<File
-				RelativePath="..\Src\CommonControls.inl">
+				RelativePath="..\Src\CommonControls.inl"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\CommonControlsEx.inl">
+				RelativePath="..\Src\CommonControlsEx.inl"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\Controls.inl">
+				RelativePath="..\Src\Controls.inl"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\File.inl">
+				RelativePath="..\Src\File.inl"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\GdiObject.inl">
+				RelativePath="..\Src\GdiObject.inl"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\General.inl">
+				RelativePath="..\Src\General.inl"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\Math.inl">
+				RelativePath="..\Src\Math.inl"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\Memory.inl">
+				RelativePath="..\Src\Memory.inl"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\Strings.inl">
+				RelativePath="..\Src\Strings.inl"
+				>
 			</File>
 			<File
-				RelativePath="..\Src\Windows.inl">
+				RelativePath="..\Src\Windows.inl"
+				>
 			</File>
 		</Filter>
 	</Files>

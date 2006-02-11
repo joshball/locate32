@@ -973,9 +973,9 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 
 	// Retrieving flags
 	if (pDatabase->IsFlagged(CDatabase::flagStopIfRootUnavailable))
-		m_nFlags|=DBFlags::StopIfUnuavailable;
+		m_nFlags|=StopIfUnuavailable;
 	if (pDatabase->IsFlagged(CDatabase::flagIncrementalUpdate))
-		m_nFlags|=DBFlags::IncrementalUpdate;
+		m_nFlags|=IncrementalUpdate;
 	
 
 	LPCSTR pPtr=pDatabase->GetRoots();
@@ -1199,7 +1199,8 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCSTR* ppExclu
 	// First, check that directory names are valid
 	LPSTR* ppExcludedDirectories=new LPSTR[max(nExcludedDirectories,2)];
 	DWORD* pdwExcludedDirectoriesLen=new DWORD[max(nExcludedDirectories,2)];
-	for (int i=0,j=0;i<nExcludedDirectories;i++)
+	int i,j;
+	for (i=0,j=0;i<nExcludedDirectories;i++)
 	{
 		if (ppExcludedDirs[i][0]=='\0')
 			continue;

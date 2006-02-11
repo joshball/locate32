@@ -136,7 +136,7 @@ STDMETHODIMP_(ULONG) CShellExtClassFactory::AddRef()
     ODS("CShellExtClassFactory::AddRef()");
 
 	char szNum[100];
-	wsprintf(szNum,"m_cRef is after this call %d",m_cRef+1);
+	StringCbPrintf(szNum,100,"m_cRef is after this call %d",m_cRef+1);
 	DebugMessage(szNum);
 
 	return ++m_cRef;
@@ -147,7 +147,7 @@ STDMETHODIMP_(ULONG) CShellExtClassFactory::Release()
 	ODS("CShellExtClassFactory::Release()");
 
 	char szNum[100];
-	wsprintf(szNum,"m_cRef is after this call %d",m_cRef-1);
+	StringCbPrintf(szNum,100,"m_cRef is after this call %d",m_cRef-1);
 	DebugMessage(szNum);
 
     if (--m_cRef)
@@ -256,7 +256,7 @@ STDMETHODIMP_(ULONG) CLocateShellExtension::AddRef()
     ODS("CShellExt::AddRef()");
 
 	char szNum[100];
-	wsprintf(szNum,"m_cRef is after this call %d",m_cRef+1);
+	StringCbPrintf(szNum,100,"m_cRef is after this call %d",m_cRef+1);
 	DebugMessage(szNum);
     
 	return ++m_cRef;
@@ -267,7 +267,7 @@ STDMETHODIMP_(ULONG) CLocateShellExtension::Release()
     ODS("CShellExt::Release()");
 
 	char szNum[100];
-	wsprintf(szNum,"m_cRef is after this call %d",m_cRef-1);
+	StringCbPrintf(szNum,100,"m_cRef is after this call %d",m_cRef-1);
 	DebugMessage(szNum);
 
     if (--m_cRef)
@@ -389,7 +389,7 @@ STDMETHODIMP CLocateShellExtension::Initialize(LPCITEMIDLIST pIDFolder,
 			if (df->fWide)
 			{
 				LPWSTR lpPtr=(LPWSTR)((BYTE*)df+df->pFiles);
-				DWORD nLen;
+				SIZE_T nLen;
 				while (nLen=wcslen(lpPtr))
 				{
 					DebugFormatMessage("HDROP contains file %s",(LPCSTR)CString(lpPtr));
@@ -418,7 +418,7 @@ STDMETHODIMP CLocateShellExtension::Initialize(LPCITEMIDLIST pIDFolder,
 			else
 			{
 				LPSTR lpPtr=(LPSTR)df+df->pFiles;
-				DWORD nLen;
+				SIZE_T nLen;
 				while (nLen=strlen(lpPtr))
 				{
 					LPWSTR lpFile=alloccopyAtoW(lpPtr,nLen);					

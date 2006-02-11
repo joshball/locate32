@@ -1092,7 +1092,7 @@ BOOL CSelectDatabasesDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 				if (g_szBuffer!=NULL)
 					delete[] g_szBuffer;
 				g_szBuffer=new char[20];
-				itoa(pDatabase->GetThreadId()+1,g_szBuffer,10);
+				_itoa_s(pDatabase->GetThreadId()+1,g_szBuffer,20,10);
 				pLvdi->item.pszText=g_szBuffer;
 				break;
 			}

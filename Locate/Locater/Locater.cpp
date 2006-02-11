@@ -147,7 +147,8 @@ void CSearchRegExpFromFile::OpenFile(LPCSTR szFile)
 	if (hFile!=NULL)
 		fclose((FILE*)hFile);
 
-	hFile=(HANDLE)fopen(szFile,"rt");
+	if (fopen_s((FILE**)&hFile,szFile,"rt")!=0)
+		hFile=NULL;
 
 }
 

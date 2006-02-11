@@ -1283,19 +1283,19 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 			LoadString(IDS_KB,szUnit,10);
 			
 			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
-			_ui64toa(uiFileSize/1024,szRet,10);
+			_ui64toa_s(uiFileSize/1024,szRet,40,10);
 		}
 		else if (dwFileSizeLo<1024)
 		{
 			LoadString(IDS_BYTES,szUnit,10);
 			
-			ultoa(dwFileSizeLo,szRet,10);
+			_ultoa_s(dwFileSizeLo,szRet,40,10);
 		}
 		else
 		{
 			LoadString(IDS_KB,szUnit,10);
 			
-			ultoa((dwFileSizeLo/1024)+(dwFileSizeLo%1024==0?0:1),szRet,10);
+			_ultoa_s((dwFileSizeLo/1024)+(dwFileSizeLo%1024==0?0:1),szRet,40,10);
 		}
 		break;
 	case fsfBestUnit:
@@ -1304,7 +1304,7 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 			DWORD num=DWORD(((((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo))/(1024*1024));
 
 			if (num>=10*1024)
-				ultoa(num/1024,szRet,10);
+				_ultoa_s(num/1024,szRet,40,10);
 			else
 			{
 				bDigits=1;
@@ -1318,7 +1318,7 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 			DWORD num=dwFileSizeLo/(1024*1024);
 
 			if (num>=10*1024)
-				ultoa(num/1024,szRet,10);
+				_ultoa_s(num/1024,szRet,40,10);
 			else
 			{
 				bDigits=1;
@@ -1332,7 +1332,7 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 			DWORD num=dwFileSizeLo/1024;
 			
 			if (num>=10*1024)
-				ultoa(num/1024,szRet,10);
+				_ultoa_s(num/1024,szRet,40,10);
 			else
 			{
 				bDigits=1;
@@ -1344,7 +1344,7 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 		else if (dwFileSizeLo>1024) // As KB
 		{
 			if (dwFileSizeLo>=10*1024)
-				ultoa(dwFileSizeLo/1024,szRet,10);
+				_ultoa_s(dwFileSizeLo/1024,szRet,40,10);
 			else
 			{
 				bDigits=1;
@@ -1355,7 +1355,7 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 		}
 		else // As B
 		{
-			ultoa(dwFileSizeLo,szRet,10);
+			_ultoa_s(dwFileSizeLo,szRet,40,10);
 		
 			LoadString(IDS_BYTES,szUnit,10);
 		}		
@@ -1366,10 +1366,10 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 		if (bFileSizeHi>0)
 		{
 			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
-			_ui64toa(uiFileSize,szRet,10);
+			_ui64toa_s(uiFileSize,szRet,40,10);
 		}
 		else
-			ultoa(dwFileSizeLo,szRet,10);
+			_ultoa_s(dwFileSizeLo,szRet,40,10);
 		
 		break;
 	case fsfKiloBytes:
@@ -1378,10 +1378,10 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 		if (bFileSizeHi>0)
 		{
 			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
-			_ui64toa(uiFileSize/1024,szRet,10);
+			_ui64toa_s(uiFileSize/1024,szRet,40,10);
 		}
 		else if (dwFileSizeLo>10*1024)
-			ultoa(dwFileSizeLo/1024,szRet,10);
+			_ultoa_s(dwFileSizeLo/1024,szRet,40,10);
 		else if (dwFileSizeLo<1024)
 		{
 			bDigits=3;
@@ -1399,10 +1399,10 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 		if (bFileSizeHi>0)
 		{
 			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
-			_ui64toa(uiFileSize/1048576,szRet,10);
+			_ui64toa_s(uiFileSize/1048576,szRet,40,10);
 		}
 		else if (dwFileSizeLo>10*1048576)
-			ultoa(dwFileSizeLo/1048576,szRet,10);
+			_ultoa_s(dwFileSizeLo/1048576,szRet,40,10);
 		else if (dwFileSizeLo<1048576)
 		{
 			bDigits=3;
@@ -1507,7 +1507,8 @@ void CLocateApp::SetDatabases(const CArray<CDatabase*>& rDatabases)
 {
 	m_aDatabases.RemoveAll();
 
-	for (int i=0;i<rDatabases.GetSize();i++)
+	int i;
+	for (i=0;i<rDatabases.GetSize();i++)
 		m_aDatabases.Add(new CDatabase(*rDatabases[i]));
 
 	if (i>0)
@@ -1665,6 +1666,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 					
 					// ... and constucting notification message:
 					// checking wheter all are stopped, or cancelled 
+					int i;
 					for (i=0;(*pppUpdaters)[i]!=NULL;i++)
 					{
 						if (GET_UPDATER_CODE((*pppUpdaters)[i])!=ueStopped)
@@ -1926,7 +1928,8 @@ BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg,int nThreadPrior
 	
 	m_ppUpdaters=new CDatabaseUpdater*[wThreads+1];
 	
-	for (WORD wThread=0;wThread<wThreads;wThread++)
+	WORD wThread;
+	for (wThread=0;wThread<wThreads;wThread++)
 	{
 		m_ppUpdaters[wThread]=new CDatabaseUpdater(*paDatabases,paDatabases->GetSize(),
 			UpdateProc,wThread,(DWORD)m_pMainWnd);
@@ -2480,7 +2483,8 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 				LPSTR pRoot=pRootInfos[0].pRoot;
 
 				// Cutting to 35 characters
-				for (int i=0;i<35 && pRoot[i]!='\0';i++); 
+				int i;
+				for (i=0;i<35 && pRoot[i]!='\0';i++); 
 				if (i==35)
 				{
 					pRoot[32]='.';
@@ -3964,7 +3968,8 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 		CDatabaseUpdater** ppUpdaters=GetLocateApp()->GetUpdatersPointer();
 		if (ppUpdaters!=NULL)
 		{
-			for (WORD wThreads=0;ppUpdaters[wThreads]!=NULL;wThreads++);
+			WORD wThreads;
+			for (wThreads=0;ppUpdaters[wThreads]!=NULL;wThreads++);
 
             CLocateAppWnd::RootInfo ri;
 			for (int i=0;ppUpdaters[i]!=NULL;i++)

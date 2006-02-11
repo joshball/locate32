@@ -313,7 +313,7 @@ BOOL ForceForegroundAndFocus(HWND hWindow)
 	return FALSE;
 }
 
-int ReportSystemError(HWND hWnd,LPCSTR szTitle,DWORD dwError,DWORD dwExtra,LPCSTR szPrefix)
+int ReportSystemError(HWND hWnd,LPCSTR szTitle,DWORD dwError,SIZE_T dwExtra,LPCSTR szPrefix)
 {
 	if (dwError==DWORD(-1))
 		dwError=GetLastError();

@@ -65,9 +65,10 @@ int strcasencmp(LPCSTR s1,LPCSTR s2,DWORD n)
 
 	TCHAR *tmp1,*tmp2;	
 	int ret;
+	DWORD n1,n2;
 
-	for (DWORD n1=0;n1<n && s1[n1]!='\0';n1++);
-	for (DWORD n2=0;n2<n && s2[n2]!='\0';n2++);
+	for (n1=0;n1<n && s1[n1]!='\0';n1++);
+	for (n2=0;n2<n && s2[n2]!='\0';n2++);
 
 	tmp1=new CHAR[n+1];
 	if (tmp1==NULL)
@@ -95,9 +96,10 @@ int strcasencmp(LPCWSTR s1,LPCWSTR s2,DWORD n)
 
 	WCHAR *tmp1,*tmp2;	
 	int ret;
+	DWORD n1,n2;
 
-	for (DWORD n1=0;n1<n && s1[n1]!='\0';n1++);
-	for (DWORD n2=0;n2<n && s2[n2]!='\0';n2++);
+	for (n1=0;n1<n && s1[n1]!='\0';n1++);
+	for (n2=0;n2<n && s2[n2]!='\0';n2++);
 
 	tmp1=new WCHAR[n+1];
 	if (tmp1==NULL)
@@ -119,7 +121,7 @@ int strcasencmp(LPCWSTR s1,LPCWSTR s2,DWORD n)
 }
 
 
-BYTE ContainString(LPCSTR string,LPCSTR pattern)
+BOOL ContainString(LPCSTR string,LPCSTR pattern)
 {
    unsigned int i,j=0;
    for (i=0;i<strlen(string);i++)
@@ -134,7 +136,7 @@ BYTE ContainString(LPCSTR string,LPCSTR pattern)
    return 0;
 }
 
-BYTE ContainString(LPCWSTR string,LPCWSTR pattern)
+BOOL ContainString(LPCWSTR string,LPCWSTR pattern)
 {
    unsigned int i,j=0;
    for (i=0;i<istrlenw(string);i++)
@@ -149,9 +151,9 @@ BYTE ContainString(LPCWSTR string,LPCWSTR pattern)
    return 0;
 }
 
-int FirstCharIndex(LPCSTR str,const CHAR ch)
+LONG_PTR FirstCharIndex(LPCSTR str,const CHAR ch)
 {
-	int i;
+	LONG_PTR i;
 	for (i=0;str[i]!='\0';i++)
 	{
 		if (str[i]==ch)
@@ -160,9 +162,9 @@ int FirstCharIndex(LPCSTR str,const CHAR ch)
 	return -1;
 }
 
-int FirstCharIndex(LPCWSTR str,const WCHAR ch)
+LONG_PTR FirstCharIndex(LPCWSTR str,const WCHAR ch)
 {
-	int i;
+	LONG_PTR i;
 	for (i=0;str[i]!=L'\0';i++)
 	{
 		if (str[i]==ch)
@@ -171,9 +173,9 @@ int FirstCharIndex(LPCWSTR str,const WCHAR ch)
 	return -1;
 }
 
-int LastCharIndex(LPCSTR str,const CHAR ch)
+LONG_PTR LastCharIndex(LPCSTR str,const CHAR ch)
 {
-	int i,ret=-1;
+	LONG_PTR i,ret=-1;
 	for (i=0;str[i]!='\0';i++)
 	{
 		if (str[i]==ch)
@@ -182,9 +184,9 @@ int LastCharIndex(LPCSTR str,const CHAR ch)
 	return ret;
 }
 
-int LastCharIndex(LPCWSTR str,const WCHAR ch)
+LONG_PTR LastCharIndex(LPCWSTR str,const WCHAR ch)
 {
-	int i,ret=-1;
+	LONG_PTR i,ret=-1;
 	for (i=0;str[i]!=L'\0';i++)
 	{
 		if (str[i]==ch)
@@ -193,9 +195,9 @@ int LastCharIndex(LPCWSTR str,const WCHAR ch)
 	return ret;
 }
 
-int NextCharIndex(LPCSTR str,const CHAR ch,int oldidx)
+LONG_PTR NextCharIndex(LPCSTR str,const CHAR ch,LONG_PTR oldidx)
 {
-   int i;
+   LONG_PTR i;
    for (i=oldidx+1;str[i]!='\0';i++)
    {
       if (str[i]==ch)
@@ -204,9 +206,9 @@ int NextCharIndex(LPCSTR str,const CHAR ch,int oldidx)
    return -1;
 }
 
-int NextCharIndex(LPCWSTR str,const WCHAR ch,int oldidx)
+LONG_PTR NextCharIndex(LPCWSTR str,const WCHAR ch,LONG_PTR oldidx)
 {
-   int i;
+   LONG_PTR i;
    for (i=oldidx+1;str[i]!=L'\0';i++)
    {
       if (str[i]==ch)
@@ -244,7 +246,7 @@ static int _getbase(LPCSTR& str)
 }
 
 // szString will change
-int _readnum(int base,LPCSTR& str,DWORD length)
+int _readnum(int base,LPCSTR& str,SIZE_T length)
 {
 	int num=0;
 	BOOL bToNegative=FALSE;
@@ -321,7 +323,7 @@ if str begins with "hex:" or "bin:" following data will be hex data e.g:
 
 */
 
-BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength)
+BYTE* dataparser(LPCSTR pStr,SIZE_T dwStrLen,MALLOC_FUNC pMalloc,SIZE_T* pdwDataLength)
 {
 	if (pStr[0]=='\0')
 		return NULL;
@@ -364,7 +366,7 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLe
 	else if (_1stcontain2nd(pStr,"byte"))
 	{
 		pStr+=4;		
-			int base=_getbase(pStr);
+		int base=_getbase(pStr);
 		if (*pStr!=':')
 			return NULL;
 		pStr++;
@@ -377,7 +379,7 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLe
 	else if (_1stcontain2nd(pStr,"hex:") || _1stcontain2nd(pStr,"bin:"))
 	{
 		pStr+=4;
-		DWORD i=0;
+		SIZE_T i=0;
 		
 		// Calculating reqiured size
 		for (LPCSTR pStr2=pStr;*pStr2!='\0';i++)
@@ -449,7 +451,7 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLe
 			return NULL;
 
 		pRet=(BYTE*)pMalloc(dwStrLen);
-		int i;
+		SIZE_T i;
 		for (i=0;*pStr!='\0';i++,pStr++)
 		{
 			if (*pStr=='\\' && pStr[1]!='\0')
@@ -632,9 +634,9 @@ if str is:
   "byte16(12)", *(BYTE*)data will be 0x12 and *pdwDataLength will be 1
 */
 
-inline void _allocmore(BYTE*& pStr,BYTE*& pStrPtr,DWORD& nAllocLen,DWORD nRequired)
+inline void _allocmore(BYTE*& pStr,BYTE*& pStrPtr,SIZE_T& nAllocLen,SIZE_T nRequired)
 {
-	DWORD nLen=DWORD(pStrPtr-pStr);
+	SIZE_T nLen=SIZE_T(pStrPtr-pStr);
 	if (nAllocLen<nLen+nRequired)
 	{
 		BYTE* pNewPtr=new BYTE[nAllocLen=nLen+nRequired+10];
@@ -645,14 +647,14 @@ inline void _allocmore(BYTE*& pStr,BYTE*& pStrPtr,DWORD& nAllocLen,DWORD nRequir
 	}
 }
 
-BYTE* dataparser2(LPCSTR pStr,DWORD* pdwDataLength)
+BYTE* dataparser2(LPCSTR pStr,SIZE_T* pdwDataLength)
 {
 	if (pStr[0]=='\0')
 		return NULL;
 	
 	BYTE* pData=new BYTE[10];
 	BYTE* pDataPtr=pData;
-	DWORD nAllocLen=10;
+	SIZE_T nAllocLen=10;
 
 	// Removing spaces 
 	while (*pStr==' ') pStr++;
@@ -908,13 +910,13 @@ inline void* va_getarg(va_list argList,int count)
 
 
 
-int vsprintfex( char *buffer, size_t buffersize,const char *format, va_list argList )
+int vsprintfex( char *buffer, SIZE_T buffersize,const char *format, va_list argList )
 {
 	int ptr=0;
 	const char* in=format;
 	LPSTR end;
 
-	int nNextArg=0;
+	int nNextArg=0,index,length;
 
     while (*in!='\0')
 	{
@@ -923,7 +925,7 @@ int vsprintfex( char *buffer, size_t buffersize,const char *format, va_list argL
 			in++;
 			
 			// Finding first non number
-			for(int index=0;in[index]>='0' && in[index]<='9';index++);
+			for(index=0;in[index]>='0' && in[index]<='9';index++);
 
 			// Now index points to nonnumberic character
 			if (in[index]==':')
@@ -935,7 +937,7 @@ int vsprintfex( char *buffer, size_t buffersize,const char *format, va_list argL
                 
 				// finding next '%'
 				in+=index+1;
-				for (int length=0;in[length]!='\0' && in[length]!='%';length++);
+				for (length=0;in[length]!='\0' && in[length]!='%';length++);
 
 				char* pTemp=new char[length+2];
 				pTemp[0]='%';
@@ -980,13 +982,13 @@ int vsprintfex( char *buffer, size_t buffersize,const char *format, va_list argL
 
 
 #ifdef DEF_WCHAR
-int vswprintfex( wchar_t *buffer, size_t buffersize, const wchar_t *format, va_list argList )
+int vswprintfex( wchar_t *buffer, SIZE_T buffersize, const wchar_t *format, va_list argList )
 {
 	int ptr=0;
 	const wchar_t* in=format;
 	LPWSTR end;
 
-	int nNextArg=0;
+	int nNextArg=0,index,length;
 
     while (*in!='\0')
 	{
@@ -995,7 +997,7 @@ int vswprintfex( wchar_t *buffer, size_t buffersize, const wchar_t *format, va_l
 			in++;
 			
 			// Finding first non number
-			for(int index=0;in[index]>=L'0' && in[index]<=L'9';index++);
+			for(index=0;in[index]>=L'0' && in[index]<=L'9';index++);
 
 			// Now index points to nonnumberic character
 			if (in[index]==L':')
@@ -1007,7 +1009,7 @@ int vswprintfex( wchar_t *buffer, size_t buffersize, const wchar_t *format, va_l
                 
 				// finding next '%'
 				in+=index+1;
-				for (int length=0;in[length]!=L'\0' && in[length]!=L'%';length++);
+				for (length=0;in[length]!=L'\0' && in[length]!=L'%';length++);
 
 				wchar_t* pTemp=new wchar_t[length+2];
 				pTemp[0]=L'%';

@@ -154,7 +154,7 @@ void DebugMessage(LPCSTR msg)
 
 #define LINELEN	16
 
-static int formhexline(char* line,BYTE* pData,size_t datalen)
+static int formhexline(char* line,BYTE* pData,SIZE_T datalen)
 {
 	if (datalen==0)
 		return 0;
@@ -162,7 +162,7 @@ static int formhexline(char* line,BYTE* pData,size_t datalen)
     if (datalen>LINELEN)
 		datalen=LINELEN;
 
-	size_t i;
+	SIZE_T i;
 	char* ptr=line;
 	for (i=0;i<datalen;i++)
 	{
@@ -201,7 +201,7 @@ static int formhexline(char* line,BYTE* pData,size_t datalen)
 }
 
 
-void DebugHexDump(LPCSTR desc,BYTE* pData,size_t datalen)
+void DebugHexDump(LPCSTR desc,BYTE* pData,SIZE_T datalen)
 {
 #ifdef WIN32
 	if (nLoggingType==LOGGING_FILE)
