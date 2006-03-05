@@ -1,8 +1,9 @@
 #include <windows.h>
+#include <stdio.h>
 
 /* 
 An example of source code for locate32 language file 
-Copyright (C) 2003-2004 Janne Huttunen <jmhuttun@venda.uku.fi>
+Copyright (C) 2003-2006 Janne Huttunen <jmhuttun@venda.uku.fi>
 */
 
 
@@ -44,7 +45,7 @@ extern "C" void __declspec(dllexport) __cdecl GetLocateLanguageFileInfo(
 		strcpy_s(szDescription,dwMaxDescriptionLength,"English language file");
 
 	// Retrieving language from version resource
-	if (!GetVersionText("ProvidesLanguage",szLanguage,dwMaxDescriptionLength))
+	if (!GetVersionText("ProvidesLanguage",szLanguage,dwMaxLanguageLength))
 		strcpy_s(szLanguage,dwMaxLanguageLength,"English");
 }
 
@@ -88,7 +89,7 @@ BOOL GetVersionText(
 	UINT iDataLength=GetFileVersionInfoSize(szModulePath,NULL);
 	if (iDataLength<2)
 		return FALSE;
-	BYTE* pData=new BYTE[iDataLength];
+	BYTE* pData=new BYTE[iDataLength+2];
 	if (pData==NULL)
 		return FALSE;
 
@@ -99,7 +100,8 @@ BOOL GetVersionText(
 	}
 	
 	VOID* pTranslations,* pProductVersion=NULL;
-	char szTranslation[100];
+	char szTranslation[200];
+	
 	
 	// Checking first translation block
 	if (!VerQueryValue(pData,"VarFileInfo\\Translation",&pTranslations,&iDataLength))
@@ -107,13 +109,14 @@ BOOL GetVersionText(
 		delete[] pData;
 		return FALSE;
 	}
-	wsprintf(szTranslation,"\\StringFileInfo\\%04X%04X\\%s",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1],szBlock);
+	sprintf_s(szTranslation,200,"\\StringFileInfo\\%04X%04X\\%s",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1],szBlock);
+	
 	
 	
 	if (!VerQueryValue(pData,szTranslation,&pProductVersion,&iDataLength))
 	{
 		// Checking english if nothing else does not found
-		wsprintf(szTranslation,"\\StringFileInfo\\040904b0\\%s",szBlock);
+		sprintf_s(szTranslation,200,"\\StringFileInfo\\040904b0\\%s",szBlock);
 		
 		if (!VerQueryValue(pData,szTranslation,&pProductVersion,&iDataLength))
 		{
@@ -121,6 +124,8 @@ BOOL GetVersionText(
 			return FALSE;
 		}
 	}
+
+
 	
 	// Copying information from pProductVersion to szText
 	strcpy_s(szText,dwMaxTextLen,(LPCSTR)pProductVersion);

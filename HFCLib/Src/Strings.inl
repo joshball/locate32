@@ -10,8 +10,7 @@
 // copyers with allocation
 inline LPSTR alloccopy(LPCSTR szString)
 {
-	DWORD nLength;
-	dstrlen(szString,nLength);
+	SIZE_T nLength=istrlen(szString);
 	char* psz=new char[max(nLength+1,2)];
 	CopyMemory(psz,szString,nLength);
 	psz[nLength]='\0';
@@ -36,8 +35,7 @@ inline LPSTR allocempty()
 #ifdef DEF_WCHAR
 inline LPWSTR alloccopy(LPCWSTR szString)
 {
-	DWORD nLength;
-	dstrlen(szString,nLength);
+	SIZE_T nLength=istrlenw(szString);
 	WCHAR* psz=new WCHAR[nLength+1];
 	for (register int i=nLength;i>=0;i--)
 		psz[i]=szString[i];
@@ -54,8 +52,7 @@ inline LPWSTR alloccopy(LPCWSTR szString,SIZE_T dwLength)
 
 inline LPSTR alloccopyWtoA(LPCWSTR szString)
 {
-	DWORD dwLength;
-	dstrlen(szString,dwLength);
+	SIZE_T dwLength=istrlenw(szString);
 	CHAR* psz=new CHAR[dwLength+1];
 	MemCopyWtoA(psz,szString,dwLength+1);
 	return psz;
@@ -71,8 +68,7 @@ inline LPSTR alloccopyWtoA(LPCWSTR szString,SIZE_T dwLength)
 
 inline LPWSTR alloccopyAtoW(LPCSTR szString)
 {
-	DWORD dwLength;
-	dstrlen(szString,dwLength);
+	SIZE_T dwLength=istrlen(szString);
 	WCHAR* psz=new WCHAR[dwLength+1];
 	MemCopyAtoW(psz,szString,dwLength+1);
 	return psz;
@@ -93,22 +89,6 @@ inline LPWSTR allocemptyW()
 }
 #endif
 
-// String length
-inline UINT fstrlen(LPCSTR str)
-{
-	register UINT i=0;
-	for (;str[i]!='\0';i++);
-	return i;
-}
-
-#ifdef DEF_WCHAR
-inline UINT fwstrlen(LPCWSTR str)
-{
-	register UINT i=0;
-	for (;str[i]!='\0';i++);
-	return i;
-}
-#endif
 
 
 // char replacers
@@ -163,21 +143,7 @@ inline CString::~CString()
 		delete[] m_pData;
 }
 
-inline CString::operator FREEDATA()
-{
-	FREEDATA ret=(FREEDATA)m_pData;
-	m_pData=NULL;
-	m_nDataLen=0;
-	m_nAllocLen=0;
-	return ret;
-}
 
-inline void CString::TakeBack(FREEDATA pData)
-{
-	m_pData=(LPSTR)pData;
-	for (m_nDataLen=0;m_pData[m_nDataLen]!='\0';m_nDataLen++);
-	m_nAllocLen=m_nDataLen+1;
-}
 
 inline void CString::Empty()
 {
@@ -495,22 +461,6 @@ inline CStringW::operator LPCWSTR() const
 	return m_pData;
 }
 
-inline CStringW::operator FREEDATA()
-{
-	FREEDATA ret=(FREEDATA)m_pData;
-	m_pData=NULL;
-	m_nDataLen=0;
-	m_nAllocLen=0;
-	return ret;
-}
-
-inline void CStringW::TakeBack(FREEDATA pData)
-{
-	m_pData=(LPWSTR)pData;
-	for (m_nDataLen=0;m_pData[m_nDataLen]!='\0';m_nDataLen++);
-	m_nAllocLen=m_nDataLen+1;
-}
-
 inline CStringW CStringW::operator+(const CStringW& str)
 {
 	CStringW temp(m_pData);
@@ -696,9 +646,7 @@ inline BYTE* dataparser(const CString& str,SIZE_T* pdwDataLength=NULL)
 
 inline BYTE* dataparser(LPCSTR str,SIZE_T* pdwDataLength=NULL)
 {
-	DWORD dwStrLen;
-	dstrlen(str,dwStrLen);
-	return dataparser(str,dwStrLen,pdwDataLength);
+	return dataparser(str,istrlen(str),pdwDataLength);
 }
 
 

@@ -31,8 +31,7 @@ CListCtrlEx::COLUMNDATA::COLUMNDATA(int nID_,int nWidth,int nFormat,LPCSTR pTitl
 		lc.mask|=LVCF_WIDTH;
 	}
 
-	DWORD dwTitleLen;
-	dstrlen(pTitle,dwTitleLen);
+	SIZE_T dwTitleLen=istrlen(pTitle);
 	pStrTitle=new char[max(dwTitleLen+1,2)];
 	dMemCopy(pStrTitle,pTitle,dwTitleLen+1);
 }
@@ -44,8 +43,7 @@ CListCtrlEx::COLUMNDATA::COLUMNDATA(int nID_,const LVCOLUMN* _lc)
 
 	if (lc.mask&LVCF_TEXT)
 	{
-		DWORD dwTitleLen;
-		dstrlen(_lc->pszText,dwTitleLen);
+		SIZE_T dwTitleLen=istrlen(_lc->pszText);
 		pStrTitle=new char[max(dwTitleLen+1,2)];
 		dMemCopy(pStrTitle,_lc->pszText,dwTitleLen+1);
 	}

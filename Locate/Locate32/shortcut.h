@@ -28,10 +28,11 @@ public:
 		// Name and Location
 		Name = MAKELONG(IDC_NAME,IDC_NAMESTATIC),
 		Type = MAKELONG(IDC_TYPE,IDC_TYPESTATIC),
-        LookIn= MAKELONG(IDC_LOOKIN,IDC_LOOKINSTATIC),
+        LookIn = MAKELONG(IDC_LOOKIN,IDC_LOOKINSTATIC),
 		MoreDirectories = MAKELONG(IDC_MOREDIRECTORIES,~IDS_KEYMOREDIRECTORIES),
+		NoSubdirectories = MAKELONG(IDC_NOSUBDIRECTORIES,IDC_NOSUBDIRECTORIES),
 		Browse = MAKELONG(IDC_BROWSE,IDC_BROWSE),
-
+		
 		// Size and Data
 		MinimumSize = MAKELONG(IDC_CHECKMINIMUMSIZE,IDC_CHECKMINIMUMSIZE),
 		MaximumSize = MAKELONG(IDC_CHECKMAXIMUMSIZE,IDC_CHECKMAXIMUMSIZE),
@@ -52,7 +53,7 @@ public:
 	static ActionActivateControls* GetPossibleControlValues() {
 		ActionActivateControls a[]={NextControl,PrevControl,
 			FindNow,Stop,NewSearch,ResultList,
-			Presets,Name,Type,LookIn,MoreDirectories,Browse,
+			Presets,Name,Type,LookIn,MoreDirectories,NoSubdirectories,Browse,
             MinimumSize,MaximumSize,MinimumDate,MaximumDate,
 			CheckFilesOrFolders,MatchWholeName,ReplaceSpaces,
             UseWholePath,TypeOfFile,ContainingText,
@@ -76,6 +77,7 @@ public:
 		FileStopUpdating = MAKELONG(IDM_STOPUPDATING,IDS_SHORTCUTMENUFILENOITEM),
 		FileDatabaseInfo = MAKELONG(IDM_DATABASEINFO,IDS_SHORTCUTMENUFILENOITEM),
 		FileClose = MAKELONG(IDM_CLOSE,IDS_SHORTCUTMENUFILENOITEM),
+		FileExit = MAKELONG(IDM_EXIT,IDS_SHORTCUTMENUFILENOITEM),
 		SpecialCopyPathToClibboard = MAKELONG(IDM_COPYPATHTOCB,IDS_SHORTCUTMENUSPECIAL),
 		SpecialCopyShortPathToClibboard = MAKELONG(IDM_COPYSHORTPATHTOCB,IDS_SHORTCUTMENUSPECIAL),
 		SpecialChangeFileName = MAKELONG(IDM_CHANGEFILENAME,IDS_SHORTCUTMENUSPECIAL),
@@ -122,7 +124,7 @@ public:
 		ActionMenuCommands a[]={FileOpenContainingFolder,FileRemoveFromThisList,
 			FileCreateShortcut,FileDelete,FileProperties,FileSaveResults,
             FileFindUsingDatabase,FileUpdateDatabases,FileUpdateSelectedDatabase,
-            FileStopUpdating,FileDatabaseInfo,FileClose,SpecialCopyPathToClibboard,
+            FileStopUpdating,FileDatabaseInfo,FileClose,FileExit,SpecialCopyPathToClibboard,
 			SpecialCopyShortPathToClibboard,SpecialChangeFileName,SpecialChangeCase,
 			SpecialForceUpdate,SpecialComputeMD5Sum,SpecialComputeMD5SumsForSameSizeFiles,
 			EditCut,EditCopy,EditSelectAll,EditInvertSelection,ViewLargeIcons,ViewSmallIcons,
@@ -337,11 +339,13 @@ public:
 	static VirtualKeyName* GetVirtualKeyNames();
 	void FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,CString& str) const;
 	static void FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,BYTE bKey,BYTE bModifiers,BOOL bScancode,CString& str);
+
+
 #endif
 
 	BOOL IsModifiersOk(BOOL bAltDown,BOOL bControlDown,BOOL bShiftDown,BOOL bWinDown) const;
-	BOOL IsForegroundWindowOk(HWND hSystemTrayWnd) const;
-
+	BOOL IsWhenAndWhereSatisfied(HWND hSystemTrayWnd) const;
+	
 	void ExecuteAction();
 
 	// Flags
@@ -380,18 +384,18 @@ public:
 		ModifierWin = MOD_WIN,
 		ModifierShift = MOD_SHIFT
 	};
-	enum WherePresssed {
-		wpResultList = 0x0001,
-		wpNameTab = 0x0002,
-		wpSizeDateTab = 0x0004,
-		wpAdvancedTab = 0x0008,
-		wpElsewhere = 0x0010,
-
-		wpDefault = wpResultList|wpNameTab|wpSizeDateTab|wpSizeDateTab|wpAdvancedTab|wpElsewhere
+	enum WhenPresssed {
+		wpFocusInResultList = 0x0001,
+		wpFocusNotInResultList = 0x0010,
+		wpNameTabShown = 0x0002,
+		wpSizeDateTabShown = 0x0004,
+		wpAdvancedTabShown = 0x0008,
+		
+		wpDefault = wpFocusInResultList|wpFocusNotInResultList|wpNameTabShown|wpSizeDateTabShown|wpAdvancedTabShown
 
 	};
 	union {
-		WORD m_wWherePressed; // Where pressed, combination of values of WherePressed enum
+		WORD m_wWhenPressed; // When pressed, combination of values of WherePressed enum
 
 		struct {
 			LPSTR m_pClass; // NULL=none, -1==locate dialog

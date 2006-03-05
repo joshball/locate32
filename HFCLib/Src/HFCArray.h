@@ -73,7 +73,6 @@ public:
 	void Swap(CArray& src);
 
 	TYPE* GiveBuffer();
-	operator FREEDATA(); // use delete[] (TYPE*) to release data
 
 public:
 	TYPE* m_pData;
@@ -446,14 +445,6 @@ inline TYPE* CArray<TYPE>::GiveBuffer()
 	return pRet;
 }
 
-template<class TYPE>
-inline CArray<TYPE>::operator FREEDATA()
-{
-	FREEDATA pRet=(FREEDATA)m_pData;
-	m_pData=NULL;
-	m_nSize=0;
-	return pRet;
-}
 
 template<class TYPE>
 class CArrayFP : public CArray<TYPE>

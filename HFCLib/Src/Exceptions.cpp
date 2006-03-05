@@ -100,8 +100,7 @@ BOOL CException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 		msg="Unknown error.";
 		break;
 	}
-	DWORD msglen;
-	dstrlen(msg,msglen);
+	SIZE_T msglen=istrlen(msg);
 
 	if (nMaxError<=msglen)
 	{
@@ -381,7 +380,7 @@ BOOL CFileException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 	default:
 		return CException::GetErrorMessage(lpszError,nMaxError);
 	}
-	len=fstrlen(msg);
+	len=istrlen(msg);
 	if (nMaxError<=len)
 	{
 		iMemCopy(lpszError,msg,nMaxError-1);

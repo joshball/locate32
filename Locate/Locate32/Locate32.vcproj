@@ -1077,6 +1077,10 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\commonres\locate32.ico"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

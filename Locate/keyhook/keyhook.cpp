@@ -122,7 +122,7 @@ LRESULT CALLBACK HookKeyboardProc(int code,WPARAM wParam,LPARAM lParam)
 						(GetKeyState(VK_LWIN)|GetKeyState(VK_RWIN)) & 0x8000))
 						continue;
 					
-					if (!g_pShortcuts[i]->IsForegroundWindowOk(g_hTargetWindow))
+					if (!g_pShortcuts[i]->IsWhenAndWhereSatisfied(g_hTargetWindow))
 						continue;
 
                     // Event is confirmed, should do something

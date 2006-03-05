@@ -47,7 +47,7 @@ public:
 		~CRootDirectory();
 	
 		UpdateError ScanRoot(volatile LONG& lForceQuit);
-		UpdateError ScanFolder(LPSTR szFolder,DWORD nFolderNameLength,volatile LONG& lForceQuit);
+		UpdateError ScanFolder(LPSTR szFolder,SIZE_T nFolderNameLength,volatile LONG& lForceQuit);
 		UpdateError Write(CFile* dbFile);
 
 	public:
@@ -109,7 +109,7 @@ public:
 		CDatabase::ArchiveType m_nArchiveType;
 		
 		LPSTR m_szName;
-		DWORD m_dwNameLength;
+		SIZE_T m_dwNameLength;
 
 		CString m_sAuthor;
 		CString m_sComment;

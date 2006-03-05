@@ -174,43 +174,6 @@ inline BOOL CShortcut::IsModifiersOk(BOOL bAltDown,BOOL bControlDown,BOOL bShift
 	return TRUE;
 }
 
-inline BOOL CShortcut::IsForegroundWindowOk(HWND hSystemTrayWnd)  const
-{
-	if ((m_dwFlags&sfKeyTypeMask)==sfLocal)
-		return FALSE;
-
-	if (m_pClass==NULL && m_pTitle==NULL)
-		return TRUE;
-
-	HWND hWnd=GetForegroundWindow();
-	if (hWnd==NULL)
-		return FALSE;
-
-	// Checking class 
-	if (m_pClass!=NULL)
-	{
-        if (m_pClass==LPCSTR(-1))
-			return HWND(SendMessage(hSystemTrayWnd,WM_GETLOCATEDLG,0,0))==hWnd;
-		
-
-		char szClassName[200];
-		GetClassName(hWnd,szClassName,200);
-
-		if (!DoClassOrTitleMatch(szClassName,m_pClass))
-			return FALSE;
-	}
-
-	// Checking class name
-	if (m_pTitle!=NULL)
-	{
-		char szTitleName[200];
-		GetWindowText(hWnd,szTitleName,200);
-		
-		if (!DoClassOrTitleMatch(szTitleName,m_pTitle))
-			return FALSE;
-	}
-	return TRUE;
-}
 
 #ifndef KEYHOOK_EXPORTS
 
@@ -233,10 +196,6 @@ inline void CSubAction::DoActivateTab()
 	else
 		GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->OnActivateTab((int)m_nActivateTab);
 }
-
-
-
-
 
 inline void CShortcut::ResolveMnemonics(CArrayFP<CShortcut*>& aShortcuts,HWND* hDialogs)
 {

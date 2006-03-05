@@ -81,8 +81,7 @@ public:
 	operator HANDLE*() { return (HANDLE*)m_pData; }
 	operator void*() { return (void*)m_pData; }
 
-	operator FREEDATA() { FREEDATA pRet=(FREEDATA)m_pData; m_pData=NULL; return pRet; }
-
+	
 public:
 	BYTE* m_pData;
 };
@@ -103,8 +102,7 @@ public:
 	operator TYPE*() { return m_pData; }
 	TYPE* operator ->() {return m_pData; }
 
-	operator FREEDATA() { FREEDATA pRet=(FREEDATA)m_pData; m_pData=NULL; return pRet; }
-
+	
 public:
 	TYPE* m_pData;
 };
@@ -132,8 +130,7 @@ public:
 	TYPE operator[](ULONG_PTR nIndex) const { return m_pData[nIndex]; }
 	TYPE& operator[](ULONG_PTR nIndex) { return m_pData[nIndex]; }
 	
-	operator FREEDATA() { FREEDATA pRet=(FREEDATA)m_pData; m_pData=NULL; return pRet; }
-
+	
 public:
 	TYPE* m_pData;
 };
@@ -187,8 +184,7 @@ public:
 	operator void*() { Lock(); return (void*)m_pData; }
 	HGLOBAL GetGlobal() const { return m_hGlobal;};
 
-	operator FREEDATA() { FREEDATA pRet=(FREEDATA)m_hGlobal; m_hGlobal=NULL; return pRet; } // use GlobalFree((HGLOBAL)pObject) to release memory
-
+	
 public:
 	BYTE* m_pData;
 	HGLOBAL m_hGlobal;
@@ -270,8 +266,7 @@ public:
 	
 	static CHeap GetProcessHeap();
 
-	operator FREEDATA() { FREEDATA pRet=(FREEDATA)m_hHeap; m_hHeap=NULL; return pRet; } // use ::HeapDestroy() to release memery
-
+	
 private:
 	CHeap(HANDLE hHeap) { m_hHeap=hHeap; m_bDestroy=FALSE; }
 

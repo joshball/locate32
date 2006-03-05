@@ -231,8 +231,7 @@ DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,char* szName,SIZE_T dwBufferLe
 	{
 	case STRRET_CSTR:
 		{
-			DWORD dwLength;
-			dstrlen(str.cStr,dwLength);
+			SIZE_T dwLength=istrlen(str.cStr);
 			if (dwLength>dwBufferLen-1)
 				dwLength=dwBufferLen-1;
 			CopyMemory(szName,str.cStr,dwLength);

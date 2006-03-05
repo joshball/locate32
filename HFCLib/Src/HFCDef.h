@@ -129,15 +129,6 @@ struct __POSITION { void* pPosition; };
 typedef __POSITION* POSITION;
 
 
-struct __FREEDATA { BYTE pData[1]; };
-typedef __FREEDATA* FREEDATA;
-#define BREAKDATA(pdata)				(FREEDATA)(pdata)
-#define BREAKDATA2(pdata,type)			(type)(FREEDATA)(pdata)
-#define BREAKDATAB(pdata)				(BYTE*)BREAKDATA(pdata)
-#define BREAKDATASTR(pdata)				(LPSTR)BREAKDATA(pdata)
-#define BREAKDATACSTR(pdata)			(LPCSTR)BREAKDATA(pdata)
-#define BREAKOBJECTDATA(pObject)		(FREEDATA)(pObject)
-
 typedef FLOAT				*PFLOAT;
 typedef DOUBLE				*PDOUBLE;
 

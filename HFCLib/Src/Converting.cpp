@@ -21,8 +21,7 @@ void IntToBin(UINT num,LPTSTR szBuffer,UINT bits)
 UINT BinToInt(LPCTSTR szBuffer)
 {
 	UINT num=0,i;
-	DWORD len;
-	dstrlen(szBuffer,len);
+	SIZE_T len=istrlen(szBuffer);
 
     for (i=0;i<len;i++)
 	{

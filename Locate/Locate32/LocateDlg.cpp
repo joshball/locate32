@@ -469,6 +469,12 @@ void CLocateDlg::SetResultListFont()
 	
 	m_pListCtrl->SetFont(hNewFont);
 
+	if (m_pListTooltips!=NULL)
+	{
+		if (m_pListTooltips->GetFont()==hOldFont)
+			m_pListTooltips->SetFont(hNewFont);
+	}
+
 	if (hOldFont!=m_hDialogFont)
 		DeleteObject(hOldFont);
 }
@@ -562,6 +568,9 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		}
 	case IDM_CLOSE:
 		DestroyWindow();
+		break;
+	case IDM_EXIT:
+		GetLocateAppWnd()->PostMessage(WM_COMMAND,IDM_EXIT,NULL);
 		break;
 	case IDM_CUT:
 		OnCopy(TRUE);
@@ -673,10 +682,16 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 				if ((GetKeyState(VK_LWIN)|GetKeyState(VK_RWIN)) & 0x8000)
 				{
 					if (pShortcutList[0]->m_bModifiers&CShortcut::ModifierWin)
-						pShortcutList[0]->ExecuteAction();
+					{
+						if (pShortcutList[0]->IsWhenAndWhereSatisfied(*this))
+							pShortcutList[0]->ExecuteAction();
+					}
 				}
 				else if (!(pShortcutList[0]->m_bModifiers&CShortcut::ModifierWin))
-					pShortcutList[0]->ExecuteAction();
+				{
+					if (pShortcutList[0]->IsWhenAndWhereSatisfied(*this))
+						pShortcutList[0]->ExecuteAction();
+				}
 	
 				pShortcutList++;
 			}
@@ -4859,11 +4874,10 @@ UINT CLocateDlg::AddSendToMenuItems(HMENU hMenu,CString& sSendToPath,UINT wStart
 	bErr=Find.FindFile(Path);
 	while (bErr)
 	{
-		Path=Find.GetFileName();
+		Find.GetFileName(Path);
 		if (Path[0]!='.' && !Find.IsSystem() && !Find.IsHidden())
 		{
-			Path=sSendToPath;
-			Path << '\\' << Find.GetFileName();
+			Find.GetFilePath(Path);
 			mi.dwItemData=(DWORD)new CHAR[Path.GetLength()+2];
 			MemCopy((LPSTR)mi.dwItemData,Path,Path.GetLength()+1);
 			if (Find.IsDirectory())
@@ -5966,9 +5980,47 @@ void CLocateDlg::OnShowFileInformation()
 	if (dwFiles>0 || dwDirectories>0)
 	{
 		CString str;
-		char number[200];
+		char number[200],*numberfmt=NULL;
+
 		_ui64toa_s(llTotalSize,number,200,10);
-        str.FormatEx(IDS_FILEINFORMATIONFMT,dwFiles,dwDirectories,number);
+		CRegKey RegKey;
+		if (RegKey.OpenKey(HKCU,"Control Panel\\International",CRegKey::defRead)==ERROR_SUCCESS)
+		{
+			numberfmt=new char[200];
+			char szTemp[10]=".",szTemp2[10]=" ";
+
+			NUMBERFMT fmt;
+			
+			// Defaults;
+			fmt.NumDigits=0; 
+			fmt.LeadingZero=1;
+			fmt.Grouping=3; 
+			fmt.lpDecimalSep=szTemp; 
+			fmt.lpThousandSep=szTemp2; 
+			fmt.NegativeOrder=1; 
+			
+			if (RegKey.QueryValue("iLZero",szTemp,10)>1)
+				fmt.LeadingZero=atoi(szTemp);
+			if (RegKey.QueryValue("sGrouping",szTemp,10)>1)
+				fmt.Grouping=atoi(szTemp);
+			RegKey.QueryValue("sDecimal",szTemp,10);
+			RegKey.QueryValue("sThousand",szTemp2,10);
+
+			
+			if (GetNumberFormat(LOCALE_USER_DEFAULT,0,number,&fmt,numberfmt,200)==0)
+			{
+				numberfmt=NULL;
+				delete[] numberfmt;
+			}
+		}
+
+		if (numberfmt!=NULL)
+		{
+			str.FormatEx(IDS_FILEINFORMATIONFMT,dwFiles,dwDirectories,numberfmt);
+			delete[] numberfmt;
+		}
+		else
+			str.FormatEx(IDS_FILEINFORMATIONFMT,dwFiles,dwDirectories,number);
 		MessageBox(str,CString(IDS_FILEINFORMATION),MB_OK|MB_ICONINFORMATION);
 	}
 }
@@ -7076,7 +7128,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPSTR>& aDirectories,
 							szDir[nLength-2]='\0';
 							nLength--;
 						}
-						AddDirectoryToList(aDirectories,FREEDATA(szDir));
+						AddDirectoryToListTakePtr(aDirectories,szDir);
 						
 						nLength=RegKey.QueryValueLength("Personal");
 						szDir=new char[nLength];
@@ -7086,7 +7138,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPSTR>& aDirectories,
 							szDir[nLength-2]='\0';
 							nLength--;
 						}
-						AddDirectoryToList(aDirectories,FREEDATA(szDir));
+						AddDirectoryToListTakePtr(aDirectories,szDir);
 						
 					}
 					break;
@@ -7104,7 +7156,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPSTR>& aDirectories,
 							szDir[nLength-2]='\0';
 							nLength--;
 						}
-						AddDirectoryToList(aDirectories,FREEDATA(szDir));
+						AddDirectoryToListTakePtr(aDirectories,szDir);
 					}
 					break;
 				}
@@ -7121,7 +7173,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPSTR>& aDirectories,
 							szDir[nLength-2]='\0';
 							nLength--;
 						}
-						AddDirectoryToList(aDirectories,FREEDATA(szDir));
+						AddDirectoryToListTakePtr(aDirectories,szDir);
 					}
 					break;
 				}
@@ -7149,7 +7201,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPSTR>& aDirectories,
 			szDir[0]=static_cast<char>(HIWORD(lParam));
 			szDir[1]=':';
 			szDir[2]='\0';
-			AddDirectoryToList(aDirectories,FREEDATA(szDir));
+			AddDirectoryToListTakePtr(aDirectories,szDir);
 			break;
 		}
 	case Custom:
@@ -7467,35 +7519,29 @@ void CLocateDlg::SetShortcuts()
 	CShortcut::ResolveMnemonics(m_aShortcuts,hDialogs);
 
 	// Cointing items
-	UINT nResultListAccels=0,nNameDlgAccels=0,nSizeDateDlgAccels=0,nAdvancedDlgAccels=0,nOtherAccels=0;
+	UINT nInResultListAccels=0,nNotInResultListAccels=0;
 	for (int i=0;i<m_aShortcuts.GetSize();i++)
 	{
 		ASSERT((m_aShortcuts[i]->m_dwFlags&CShortcut::sfKeyTypeMask)==CShortcut::sfLocal);
 
-		if (m_aShortcuts[i]->m_wWherePressed&CShortcut::wpResultList)
-			nResultListAccels++;
-		if (m_aShortcuts[i]->m_wWherePressed&CShortcut::wpNameTab)
-			nNameDlgAccels++;
-		if (m_aShortcuts[i]->m_wWherePressed&CShortcut::wpSizeDateTab)
-			nSizeDateDlgAccels++;
-		if (m_aShortcuts[i]->m_wWherePressed&CShortcut::wpAdvancedTab)
-			nAdvancedDlgAccels++;
-		if (m_aShortcuts[i]->m_wWherePressed&CShortcut::wpElsewhere)
-			nOtherAccels++;
+		if (m_aShortcuts[i]->m_wWhenPressed&CShortcut::wpFocusInResultList)
+			nInResultListAccels++;
+		if (m_aShortcuts[i]->m_wWhenPressed&CShortcut::wpFocusNotInResultList)
+			nNotInResultListAccels++;
 	}
 
 	// Creating result list accels
-	if (nResultListAccels>0)
+	if (nInResultListAccels>0)
 	{
 		ASSERT(m_pListCtrl!=NULL);
 
-		ACCEL* pAccels=new ACCEL[nResultListAccels];
+		ACCEL* pAccels=new ACCEL[nInResultListAccels];
 		
 
 		int nAccels=0;
 		for (int i=0;i<m_aShortcuts.GetSize();i++)
 		{
-			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpResultList))
+			if (!(m_aShortcuts[i]->m_wWhenPressed&CShortcut::wpFocusInResultList))
 				continue;
 			
 			pAccels[nAccels].fVirt=FNOINVERT|FVIRTKEY;
@@ -7540,23 +7586,23 @@ void CLocateDlg::SetShortcuts()
 
 			nAccels++;
 		}
-		HACCEL hAccel=CreateAcceleratorTable(pAccels,nResultListAccels);
+		HACCEL hAccel=CreateAcceleratorTable(pAccels,nInResultListAccels);
 		pLocateDlgThread->SetAccelTableForWindow(*m_pListCtrl,hAccel,FALSE,*this);
 		delete[] pAccels;
 	}
 
-	// Creating name dlg accels
-	if (nNameDlgAccels>0)
+	// Creating accels for other controls
+	if (nNotInResultListAccels>0)
 	{
 		ASSERT((HWND)m_NameDlg!=NULL);
 
-		ACCEL* pAccels=new ACCEL[nNameDlgAccels];
+		ACCEL* pAccels=new ACCEL[nNotInResultListAccels];
 		int nFirstActive=m_aActiveShortcuts.GetSize();
 
 		int nAccels=0;
 		for (int i=0;i<m_aShortcuts.GetSize();i++)
 		{
-			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpNameTab))
+			if (!(m_aShortcuts[i]->m_wWhenPressed&CShortcut::wpFocusNotInResultList))
 				continue;
 
 			
@@ -7603,203 +7649,17 @@ void CLocateDlg::SetShortcuts()
 
 			nAccels++;
 		}
-		HACCEL hAccel=CreateAcceleratorTable(pAccels,nNameDlgAccels);
-		pLocateDlgThread->SetAccelTableForWindow(m_NameDlg,hAccel,FALSE,*this);
-		pLocateDlgThread->SetAccelTableForChilds(m_NameDlg,hAccel,FALSE,*this);
-		delete[] pAccels;
-	}
-
-	// Creating size and date dlg accels
-	if (nSizeDateDlgAccels>0)
-	{
-		ASSERT((HWND)m_SizeDateDlg!=NULL);
-
-		ACCEL* pAccels=new ACCEL[nSizeDateDlgAccels];
-
-		int nFirstActive=m_aActiveShortcuts.GetSize();
-
-		int nAccels=0;
-		for (int i=0;i<m_aShortcuts.GetSize();i++)
-		{
-			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpSizeDateTab))
-				continue;
-
-			
-			pAccels[nAccels].fVirt=FNOINVERT|FVIRTKEY;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
-				pAccels[nAccels].fVirt|=FALT;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
-				pAccels[nAccels].fVirt|=FCONTROL;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
-				pAccels[nAccels].fVirt|=FSHIFT;
-			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+i;
-			
-			// Check whether accel already listed
-			for (int k=0;k<nAccels;k++)
-			{
-				if (pAccels[k].key==m_aShortcuts[i]->m_bVirtualKey &&
-					pAccels[k].fVirt==pAccels[nAccels].fVirt)
-				{
-					UINT nAlreadyInList;
-					for (nAlreadyInList=0;m_aActiveShortcuts[nFirstActive+k][nAlreadyInList]!=NULL;nAlreadyInList++);
-
-                    CShortcut** pList=new CShortcut*[nAlreadyInList+2];
-					CopyMemory(pList,m_aActiveShortcuts[nFirstActive+k],sizeof(CShortcut*)*nAlreadyInList);
-					pList[nAlreadyInList++]=m_aShortcuts[i];
-					pList[nAlreadyInList]=NULL;
-
-					delete[] m_aActiveShortcuts[nFirstActive+k];
-					m_aActiveShortcuts[nFirstActive+k]=pList;
-
-					continue;
-				}
-			}
-
-
-			// Registering new active shortcut
-			CShortcut** pList=new CShortcut*[2];
-			pList[0]=m_aShortcuts[i];
-			pList[1]=NULL;
-
-			pAccels[nAccels].key=m_aShortcuts[i]->m_bVirtualKey;
-			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+m_aActiveShortcuts.GetSize();
-			m_aActiveShortcuts.Add(pList);
-			
-
-			nAccels++;
-		}
-		HACCEL hAccel=CreateAcceleratorTable(pAccels,nSizeDateDlgAccels);
-		pLocateDlgThread->SetAccelTableForWindow(m_SizeDateDlg,hAccel,FALSE,*this);
-		pLocateDlgThread->SetAccelTableForChilds(m_SizeDateDlg,hAccel,FALSE,*this);
-		delete[] pAccels;
-	}
-
-	// Creating advanced dlg accels
-	if (nAdvancedDlgAccels>0)
-	{
-		ASSERT((HWND)m_AdvancedDlg!=NULL);
-
-		ACCEL* pAccels=new ACCEL[nAdvancedDlgAccels];
-
-		int nFirstActive=m_aActiveShortcuts.GetSize();
-
-
-		int nAccels=0;
-		for (int i=0;i<m_aShortcuts.GetSize();i++)
-		{
-			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpAdvancedTab))
-				continue;
-
-			
-			pAccels[nAccels].fVirt=FNOINVERT|FVIRTKEY;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
-				pAccels[nAccels].fVirt|=FALT;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
-				pAccels[nAccels].fVirt|=FCONTROL;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
-				pAccels[nAccels].fVirt|=FSHIFT;
-			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+i;
-			
-			// Check whether accel already listed
-			for (int k=0;k<nAccels;k++)
-			{
-				if (pAccels[k].key==m_aShortcuts[i]->m_bVirtualKey &&
-					pAccels[k].fVirt==pAccels[nAccels].fVirt)
-				{
-					UINT nAlreadyInList;
-					for (nAlreadyInList=0;m_aActiveShortcuts[nFirstActive+k][nAlreadyInList]!=NULL;nAlreadyInList++);
-
-                    CShortcut** pList=new CShortcut*[nAlreadyInList+2];
-					CopyMemory(pList,m_aActiveShortcuts[nFirstActive+k],sizeof(CShortcut*)*nAlreadyInList);
-					pList[nAlreadyInList++]=m_aShortcuts[i];
-					pList[nAlreadyInList]=NULL;
-
-					delete[] m_aActiveShortcuts[nFirstActive+k];
-					m_aActiveShortcuts[nFirstActive+k]=pList;
-
-					continue;
-				}
-			}
-
-
-			// Registering new active shortcut
-			CShortcut** pList=new CShortcut*[2];
-			pList[0]=m_aShortcuts[i];
-			pList[1]=NULL;
-
-			pAccels[nAccels].key=m_aShortcuts[i]->m_bVirtualKey;
-			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+m_aActiveShortcuts.GetSize();
-			m_aActiveShortcuts.Add(pList);
-			
-
-			nAccels++;
-		}
-		HACCEL hAccel=CreateAcceleratorTable(pAccels,nAdvancedDlgAccels);
-		pLocateDlgThread->SetAccelTableForWindow(m_AdvancedDlg,hAccel,FALSE,*this);
-		pLocateDlgThread->SetAccelTableForChilds(m_AdvancedDlg,hAccel,FALSE,*this);
-		delete[] pAccels;
-	}
-
-	// Creating other accels	
-	if (nOtherAccels>0)
-	{
-		ACCEL* pAccels=new ACCEL[nOtherAccels];
-
-		int nFirstActive=m_aActiveShortcuts.GetSize();
-
-		int nAccels=0;
-		for (int i=0;i<m_aShortcuts.GetSize();i++)
-		{
-			if (!(m_aShortcuts[i]->m_wWherePressed&CShortcut::wpElsewhere))
-				continue;
-
-			
-			pAccels[nAccels].fVirt=FNOINVERT|FVIRTKEY;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierAlt)
-				pAccels[nAccels].fVirt|=FALT;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierControl)
-				pAccels[nAccels].fVirt|=FCONTROL;
-			if (m_aShortcuts[i]->m_bModifiers&CShortcut::ModifierShift)
-				pAccels[nAccels].fVirt|=FSHIFT;
-			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+i;
-			
-			// Check whether accel already listed
-			for (int k=0;k<nAccels;k++)
-			{
-				if (pAccels[k].key==m_aShortcuts[i]->m_bVirtualKey &&
-					pAccels[k].fVirt==pAccels[nAccels].fVirt)
-				{
-					UINT nAlreadyInList;
-					for (nAlreadyInList=0;m_aActiveShortcuts[nFirstActive+k][nAlreadyInList]!=NULL;nAlreadyInList++);
-
-                    CShortcut** pList=new CShortcut*[nAlreadyInList+2];
-					CopyMemory(pList,m_aActiveShortcuts[nFirstActive+k],sizeof(CShortcut*)*nAlreadyInList);
-					pList[nAlreadyInList++]=m_aShortcuts[i];
-					pList[nAlreadyInList]=NULL;
-
-					delete[] m_aActiveShortcuts[nFirstActive+k];
-					m_aActiveShortcuts[nFirstActive+k]=pList;
-
-					continue;
-				}
-			}
-
-
-			// Registering new active shortcut
-			CShortcut** pList=new CShortcut*[2];
-			pList[0]=m_aShortcuts[i];
-			pList[1]=NULL;
-
-			pAccels[nAccels].key=m_aShortcuts[i]->m_bVirtualKey;
-			pAccels[nAccels].cmd=IDM_DEFSHORTCUTITEM+m_aActiveShortcuts.GetSize();
-			m_aActiveShortcuts.Add(pList);
-			
-
-			nAccels++;
-		}
-		HACCEL hAccel=CreateAcceleratorTable(pAccels,nOtherAccels);
+		HACCEL hAccel=CreateAcceleratorTable(pAccels,nNotInResultListAccels);
+		
 		pLocateDlgThread->SetAccelTableForWindow(*this,hAccel,FALSE,*this);
 		pLocateDlgThread->SetAccelTableForChilds(*this,hAccel,TRUE,*this);
+		pLocateDlgThread->SetAccelTableForWindow(m_NameDlg,hAccel,FALSE,*this);
+		pLocateDlgThread->SetAccelTableForChilds(m_NameDlg,hAccel,FALSE,*this);
+		pLocateDlgThread->SetAccelTableForWindow(m_SizeDateDlg,hAccel,FALSE,*this);
+		pLocateDlgThread->SetAccelTableForChilds(m_SizeDateDlg,hAccel,FALSE,*this);
+		pLocateDlgThread->SetAccelTableForWindow(m_AdvancedDlg,hAccel,FALSE,*this);
+		pLocateDlgThread->SetAccelTableForChilds(m_AdvancedDlg,hAccel,FALSE,*this);
+		
 		delete[] pAccels;
 	}
 
@@ -8723,8 +8583,7 @@ void CLocateDlg::CNameDlg::DirSelection::SetValuesFromControl(HWND hControl,cons
 	if (nCurSel==-1)
 	{
 		// No selection, custom
-		DWORD dwLength;
-		dstrlen(szTitle,dwLength);
+		SIZE_T dwLength=istrlen(szTitle);
 
 		if (dwLength<MAX_PATH+9)
 		{
@@ -9103,8 +8962,7 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 			}
 			else if (m_pMultiDirs[i]->nType==Custom)
 			{	
-				DWORD dwLength;
-				dstrlen(m_pMultiDirs[i]->pTitleOrDirectory,dwLength);
+				SIZE_T dwLength=istrlen(m_pMultiDirs[i]->pTitleOrDirectory);
 				
 				char* pData=new char[dwLength+4];
 				*((DWORD*)pData)=DWORD(Custom);
@@ -9273,6 +9131,12 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			HilightTab(IsChanged());
 		}
 		break;
+	case IDC_MINIMUMSIZE:
+	case IDC_MAXIMUMSIZE:
+		if (wNotifyCode==EN_SETFOCUS)
+			::SendMessage(hControl,EM_SETSEL,0,MAKELPARAM(0,-1));
+		break;
+		
 	}
 	return FALSE;
 }
@@ -10257,7 +10121,7 @@ void CLocateDlg::CAdvancedDlg::OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpMe
 			::GetTextExtentPoint32(hDC,byex,byex.GetLength(),&sz);
 		}
 		else
-			::GetTextExtentPoint32(hDC,((FileType*)lpMeasureItemStruct->itemData)->szTitle,fstrlen(((FileType*)lpMeasureItemStruct->itemData)->szTitle),&sz);
+			::GetTextExtentPoint32(hDC,((FileType*)lpMeasureItemStruct->itemData)->szTitle,strlen(((FileType*)lpMeasureItemStruct->itemData)->szTitle),&sz);
 
 		lpMeasureItemStruct->itemHeight=max(sz.cy+1,16);
 		lpMeasureItemStruct->itemWidth=sz.cx+18;
@@ -10392,8 +10256,7 @@ void CLocateDlg::CAdvancedDlg::SaveControlStates(CRegKey& RegKey)
 		RegKey.SetValue("Advanced/TypeOfFile",DWORD(nCurSel));
 	else
 	{
-		DWORD dwLength;
-		dstrlen(pType->szType,dwLength);
+		SIZE_T dwLength=istrlen(pType->szType);
 		char* szData=new char[++dwLength+pType->dwExtensionLength];
 		sMemCopy(szData,pType->szType,dwLength);
 		sMemCopy(szData+dwLength,pType->szExtensions,pType->dwExtensionLength);
@@ -10459,7 +10322,7 @@ int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCSTR szKey,DWORD dwKeyLength,CArra
 	
 	char* szTitle=(char*)FileTypeAllocator.Allocate(dwLength);
 	RegKey.QueryValue("",szTitle,dwLength);
-	FileType* pType=new FileType(FREEDATA(szType),FREEDATA(szTitle));
+	FileType* pType=new FileType(szType,szTitle);
 	pType->AddExtension(szKey+1,dwKeyLength);
 	aFileTypes.Add(pType);
 	pType->SetIcon(RegKey);
@@ -10474,8 +10337,7 @@ int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCSTR pTypeAndExtensions)
 
 	CRegKey RegKey;
 	
-	DWORD dwLength;
-	dstrlen(pTypeAndExtensions,dwLength);
+	SIZE_T dwLength=istrlen(pTypeAndExtensions);
 	if (dwLength==0)
 		return CB_ERR;
 	char* szType=(char*)FileTypeAllocator.Allocate(++dwLength);
@@ -10497,10 +10359,10 @@ int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCSTR pTypeAndExtensions)
     char* szTitle=(char*)FileTypeAllocator.Allocate(dwLength);
 	RegKey.QueryValue("",szTitle,dwLength);
 	
-	FileType* pFileType=new FileType(FREEDATA(szType),FREEDATA(szTitle));
+	FileType* pFileType=new FileType(szType,szTitle);
 	while (*pTypeAndExtensions!='\0')
 	{
-        dstrlen(pTypeAndExtensions,dwLength);
+        dwLength=istrlen(pTypeAndExtensions);
 		pFileType->AddExtension(pTypeAndExtensions,dwLength++);
 		pTypeAndExtensions+=dwLength;
 	}
@@ -10544,22 +10406,22 @@ DWORD WINAPI CLocateDlg::CAdvancedDlg::UpdaterProc(CLocateDlg::CAdvancedDlg* pAd
 CLocateDlg::CAdvancedDlg::FileType::FileType(LPCSTR& szBuildIn,HIMAGELIST hImageList)
 :	szType(NULL),szIconPath(NULL)
 {
-	DWORD dwLength;
+	
 	
 	// First string is title
-	dstrlen(szBuildIn,dwLength);
+	SIZE_T dwLength=istrlen(szBuildIn);
 	szTitle=(char*)FileTypeAllocator.Allocate(++dwLength);
 	sMemCopy(szTitle,szBuildIn,dwLength);
 	szBuildIn+=dwLength;
 	
 	// Next string is extension
-	dstrlen(szBuildIn,dwLength);
+	dwLength=istrlen(szBuildIn);
 	dwExtensionLength=(++dwLength)+1;
 	szExtensions=(char*)FileTypeAllocator.Allocate(dwExtensionLength);
 	sMemCopy(szExtensions,szBuildIn,dwLength);
 	szExtensions[dwLength]='\0';
 	szBuildIn+=dwLength;
-	dreplacech(szExtensions,' ','\0');
+	replacech(szExtensions,' ','\0');
 	
 	// Third is icon index, if available
 	if (*szBuildIn!='\0')

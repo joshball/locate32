@@ -427,8 +427,7 @@ void CLocatedItem::UpdateType()
 			return;
 		}
 		
-		DWORD dwTypeLen;
-		dstrlen(fi.szTypeName,dwTypeLen);
+		SIZE_T dwTypeLen=istrlen(fi.szTypeName);
 		
 		szType=(char*)Allocation.Allocate(++dwTypeLen);
 		sMemCopy(szType,fi.szTypeName,dwTypeLen);

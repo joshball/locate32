@@ -15,6 +15,7 @@
 #include "../lan_resources.h"
 #include "../locate32/shortcut.h"
 #include "../keyhook/keyhelper.h"
+#include "../locate32/messages.h"
 
 #endif
 
@@ -137,7 +138,7 @@ CShortcut::CShortcut()
 	m_apActions.Add(new CAction);
 
 	if ((m_dwFlags&sfKeyTypeMask)==sfLocal)
-		m_wWherePressed=wpDefault;
+		m_wWhenPressed=wpDefault;
 }
 
 CShortcut::CShortcut(CShortcut& rCopyFrom)
@@ -1515,9 +1516,7 @@ int CSubAction::GetAdvancedActionStringLabelId(CAction::ActionAdvanced uSubActio
 	}
 }
 
-
 #endif
-
 
 BOOL CShortcut::DoClassOrTitleMatch(LPCSTR pClass,LPCSTR pCondition)
 {
@@ -1535,4 +1534,65 @@ BOOL CShortcut::DoClassOrTitleMatch(LPCSTR pClass,LPCSTR pCondition)
 
         pCondition+=nIndex+1;
 	}
+}
+
+BOOL CShortcut::IsWhenAndWhereSatisfied(HWND hSystemTrayWnd)  const
+{
+	if ((m_dwFlags&sfKeyTypeMask)==sfLocal)
+	{
+#ifndef KEYHOOK_EXPORTS
+		CLocateDlg* pLocateDlg=GetLocateDlg();
+		if (pLocateDlg!=NULL)
+		{
+			switch (pLocateDlg->m_pTabCtrl->GetCurSel())
+			{
+			case 0: // Name tab
+				if (m_wWhenPressed&wpNameTabShown)
+					return TRUE;
+				break;
+			case 1: // Size and Date tab
+				if (m_wWhenPressed&wpSizeDateTabShown)
+					return TRUE;
+				break;
+			case 2: // Advanced tab
+				if (m_wWhenPressed&wpAdvancedTabShown)
+					return TRUE;
+				break;
+			}
+		}
+#endif
+		return FALSE;
+	}
+
+	if (m_pClass==NULL && m_pTitle==NULL)
+		return TRUE;
+
+	HWND hWnd=GetForegroundWindow();
+	if (hWnd==NULL)
+		return FALSE;
+
+	// Checking class 
+	if (m_pClass!=NULL)
+	{
+        if (m_pClass==LPCSTR(-1))
+			return HWND(SendMessage(hSystemTrayWnd,WM_GETLOCATEDLG,0,0))==hWnd;
+		
+
+		char szClassName[200];
+		GetClassName(hWnd,szClassName,200);
+
+		if (!DoClassOrTitleMatch(szClassName,m_pClass))
+			return FALSE;
+	}
+
+	// Checking class name
+	if (m_pTitle!=NULL)
+	{
+		char szTitleName[200];
+		GetWindowText(hWnd,szTitleName,200);
+		
+		if (!DoClassOrTitleMatch(szTitleName,m_pTitle))
+			return FALSE;
+	}
+	return TRUE;
 }

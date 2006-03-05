@@ -103,11 +103,11 @@ public:
 	static BOOL SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,const CArray<PDATABASE>& aDatabases);
 	static BOOL SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,const PDATABASE* ppDatabases,int nDatabases);
 
-	static CDatabase* FromName(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szName,int dwNameLength=-1);
+	static CDatabase* FromName(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szName,SIZE_T dwNameLength=-1);
 	static CDatabase* FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey);
 	static CDatabase* FromFile(LPCSTR szFileName,int dwNameLength=-1);
     static CDatabase* FromOldStyleDatabase(HKEY hKeyRoot,LPCSTR szPath);
-	static CDatabase* FromDefaults(BOOL bDefaultFileName,LPCSTR szAppDir,int iAppDirLength);
+	static CDatabase* FromDefaults(BOOL bDefaultFileName,LPCSTR szAppDir,SIZE_T iAppDirLength);
 	static CDatabase* FromExtraBlock(LPCSTR szExtraBlock);
 	
 	static void CheckValidNames(CArray<PDATABASE>& aDatabases);
@@ -119,17 +119,17 @@ public:
 	
 	static BOOL IsNameValid(LPCSTR szName);
 	static void MakeNameValid(LPSTR szName);
-	static LPSTR GetCorrertFileName(LPCSTR szFileName,int dwNameLength=-1);
+	static LPSTR GetCorrertFileName(LPCSTR szFileName,SIZE_T dwNameLength=-1);
 
 	static WORD GetUniqueIndex(CArray<PDATABASE>& aDatabases);
 	static WORD GetUniqueIndex(PDATABASE* ppDatabases,int nDatabases);
 
 
-	static CDatabase* FindByName(CArray<PDATABASE>& aDatabases,LPCSTR szName,int iLength=-1);
-	static CDatabase* FindByName(PDATABASE* ppDatabases,int nDatabases,LPCSTR szName,int iLength=1);
+	static CDatabase* FindByName(CArray<PDATABASE>& aDatabases,LPCSTR szName,SIZE_T iLength=-1);
+	static CDatabase* FindByName(PDATABASE* ppDatabases,int nDatabases,LPCSTR szName,SIZE_T iLength=1);
 
-	static CDatabase* FindByFile(CArray<PDATABASE>& aDatabases,LPCSTR szFile,int iLength=-1);
-	static CDatabase* FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCSTR szFile,int iLength=1);
+	static CDatabase* FindByFile(CArray<PDATABASE>& aDatabases,LPCSTR szFile,SIZE_T iLength=-1);
+	static CDatabase* FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCSTR szFile,SIZE_T iLength=1);
 
 	static void GetLogicalDrives(CArrayFAP<LPSTR>* paRoots);
 
@@ -337,12 +337,12 @@ inline void CDatabase::SetRoots(CArray<LPSTR>& aRoots)
 	return SetRoots(aRoots,aRoots.GetSize());
 }
 
-inline CDatabase* CDatabase::FindByName(CArray<PDATABASE>& aDatabases,LPCSTR szName,int iLength)
+inline CDatabase* CDatabase::FindByName(CArray<PDATABASE>& aDatabases,LPCSTR szName,SIZE_T iLength)
 {
 	return FindByName(aDatabases,aDatabases.GetSize(),szName,iLength);
 }
 
-inline CDatabase* CDatabase::FindByFile(CArray<PDATABASE>& aDatabases,LPCSTR szFile,int iLength)
+inline CDatabase* CDatabase::FindByFile(CArray<PDATABASE>& aDatabases,LPCSTR szFile,SIZE_T iLength)
 {
 	return FindByFile(aDatabases,aDatabases.GetSize(),szFile,iLength);
 }

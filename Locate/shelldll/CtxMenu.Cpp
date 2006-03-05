@@ -62,12 +62,12 @@ INT IsDirectory(LPCWSTR szDirectoryName)
 
 	// Taking last '\\' 
 	LPWSTR szPath;
-	DWORD dwPathLen;
-	dstrlen(szDirectoryName,dwPathLen);
+	SIZE_T dwPathLen=istrlenw(szDirectoryName);
 	if (szDirectoryName[dwPathLen-1]==L'\\' && dwPathLen>3)
 	{
 		szPath=new WCHAR[dwPathLen+5];
-		CopyMemory(szPath,szDirectoryName,(--dwPathLen)*2);
+		--dwPathLen;
+		MemCopyW(szPath,szDirectoryName,dwPathLen);
 		szPath[dwPathLen]='\0';
 	}
 	else

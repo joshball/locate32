@@ -2050,6 +2050,9 @@ int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 	nHFCInstallationMessage=RegisterWindowMessage("HFCINSTALLMESSAGE");
 	nTaskbarCreated=RegisterWindowMessage("TaskbarCreated");
 
+
+	SetTimer(ID_ENSUREVISIBLEICON,2000,NULL);
+	
 	return CFrameWnd::OnCreate(lpcs);
 }
 
@@ -2965,6 +2968,7 @@ void CLocateAppWnd::OnDestroy()
 	m_Menu.DestroyMenu();
 
 	KillTimer(ID_CHECKSCHEDULES);
+	KillTimer(ID_ENSUREVISIBLEICON);
 	
 	// Ensure that update animation and status window are stopped
 	StopUpdateStatusNotification();
@@ -3062,7 +3066,7 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 	case WM_HOTKEY:
 		if (int(wParam)>=0 && int(wParam)<m_aShortcuts.GetSize())
 		{
-			if (!m_aShortcuts[int(wParam)]->IsForegroundWindowOk(*this))
+			if (!m_aShortcuts[int(wParam)]->IsWhenAndWhereSatisfied(*this))
 				break;
 
 			if (m_aShortcuts[int(wParam)]->m_nDelay>0 && 
@@ -3232,6 +3236,19 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 		SetTimer(ID_CHECKSCHEDULES,1000,NULL);
 	case ID_CHECKSCHEDULES:
 		CheckSchedules();
+		break;
+	case ID_ENSUREVISIBLEICON:
+		{
+			// Check icon
+			NOTIFYICONDATA nid;
+			nid.cbSize=NOTIFYICONDATA_V1_SIZE;
+			nid.hWnd=*this;
+			nid.uID=10000;
+			nid.uFlags=0;
+			
+			if (!Shell_NotifyIcon(NIM_MODIFY,&nid))
+				AddTaskbarIcon();
+		}
 		break;
 	default:
 		if (int(wTimerID)>=ID_SHORTCUTACTIONTIMER)

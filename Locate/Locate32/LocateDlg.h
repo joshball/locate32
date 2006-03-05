@@ -187,7 +187,7 @@ public:
 
 		static void AddDirectoryToList(CArray<LPSTR>& aDirectories,LPCSTR szDirectory);
 		static void AddDirectoryToList(CArray<LPSTR>& aDirectories,LPCSTR szDirectory,DWORD dwLength);
-		static void AddDirectoryToList(CArray<LPSTR>& aDirectories,FREEDATA szDirectory);
+		static void AddDirectoryToListTakePtr(CArray<LPSTR>& aDirectories,LPSTR szDirectory);
 		
 		BOOL CheckAndAddDirectory(LPCSTR pFolder,DWORD dwLength,BOOL bAlsoSet=TRUE,BOOL bNoWarning=FALSE);
 
@@ -314,7 +314,7 @@ public:
 			
 
 			FileType();
-			FileType(FREEDATA frType,FREEDATA frTitle);
+			FileType(LPSTR frType,LPSTR frTitle); // This constructod owns pointers
 			FileType(LPCSTR& szBuildIn,HIMAGELIST hImageList);
 			~FileType();
 			

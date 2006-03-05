@@ -2219,8 +2219,7 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
         			
 		if (!IsFullUnicodeSupport())
 		{
-			DWORD iStrLen;
-			dstrlen(pItems[i]->pString,iStrLen);
+			SIZE_T iStrLen=istrlenw(pItems[i]->pString);
 			tisa.itemex.pszText=new char [iStrLen+2];
 			MemCopyWtoA(tisa.itemex.pszText,pItems[i]->pString,iStrLen+1);
 			tisa.itemex.cChildren=pItems[i]->pChilds==0?0:1;
@@ -2362,8 +2361,7 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 		{
 			if (!IsFullUnicodeSupport())
 			{
-				DWORD iStrLen;
-				dstrlen(pCurText,iStrLen);
+				SIZE_T iStrLen=istrlenw(pCurText);
 				tisa.itemex.pszText=new char[iStrLen+2];
 				MemCopyWtoA(tisa.itemex.pszText,pCurText,iStrLen+1);
 				m_pTree->SetItemText(tisa.hInsertAfter,tisa.itemex.pszText);
@@ -2821,8 +2819,7 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi,NMTREEVIEW *pNm
 				WCHAR* pText=pItem->GetText(FALSE);
 				if (!IsFullUnicodeSupport())
 				{
-					DWORD iStrLen;
-					dstrlen(pText,iStrLen);
+					SIZE_T iStrLen=istrlenw(pText);
 					char* paText=new char [iStrLen+2];
                     MemCopyWtoA(paText,pText,iStrLen+1);
 					m_pTree->SetItemText(pNm->itemOld.hItem,paText);
@@ -2852,8 +2849,7 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi,NMTREEVIEW *pNm
 				WCHAR* pText=pItem->GetText(TRUE);
 				if (!IsFullUnicodeSupport())
 				{
-					DWORD iStrLen;
-					dstrlen(pText,iStrLen);
+					SIZE_T iStrLen=istrlenw(pText);
 					char* paText=new char [iStrLen+2];
                     MemCopyWtoA(paText,pText,iStrLen+1);
 					m_pTree->SetItemText(pNm->itemNew.hItem,paText);

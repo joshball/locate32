@@ -187,8 +187,8 @@ public:
 			
 			BOOL EnableRemoveButton();
 			int AddDriveToList(LPSTR szDrive);
-			int AddDirectoryToListWithVerify(LPCWSTR szPath,int iLength=-1);
-			int AddDirectoryToList(LPCWSTR szPath,int iLength=-1);
+			int AddDirectoryToListWithVerify(LPCWSTR szPath,SIZE_T iLength=-1);
+			int AddDirectoryToList(LPCWSTR szPath,SIZE_T iLength=-1);
 			int AddComputerToList(LPCWSTR szName);
 			
 		public:
@@ -391,7 +391,7 @@ public:
 		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
 #endif
 	private:
-		CListCtrl* m_pList,*m_pWherePressedList;
+		CListCtrl* m_pList,*m_pWhenPressedList;
 		CToolBarCtrl* m_pToolBar;
 		CImageList m_ToolBarBitmaps;
 		CImageList m_ToolBarBitmapsDisabled;

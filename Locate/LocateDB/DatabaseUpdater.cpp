@@ -627,7 +627,7 @@ inline DWORD _FindGetFileSizeHi(FIND_DATA* fd)
 }
 #endif
 
-UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nLength,volatile LONG& lForceQuit)
+UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T nLength,volatile LONG& lForceQuit)
 {
 	if (m_aExcludedDirectories.GetSize()>0)
 	{
@@ -660,7 +660,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 	
 	HFIND hFind=_FindFirstFile(szFolder,&fd);
 	
-	DWORD dwTemp;
+	SIZE_T sTemp;
 
 	if (!VALID_HFIND(hFind))
 		return ueFolderUnavailable;
@@ -680,8 +680,8 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 			{
 				// Get the length of directory name and checks that length is 
 				// less than MAX_PATH, otherwise ignore
-				dstrlen(_FindGetName(&fd),dwTemp);
-				if (nLength+dwTemp+1<MAX_PATH)
+				sTemp=istrlen(_FindGetName(&fd));
+				if (nLength+sTemp+1<MAX_PATH)
 				{
 					
 					// Check whether new buffer is needed
@@ -722,8 +722,8 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 					_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+3);
 					pPoint+=sizeof(WORD)*4;
 				
-					ScanFolder(szFolder,nLength+1+dwTemp,lForceQuit);
-					szFolder[nLength+1+dwTemp]='\0';
+					ScanFolder(szFolder,nLength+1+sTemp,lForceQuit);
+					szFolder[nLength+1+sTemp]='\0';
 					*pPoint='\0';
 					pPoint++;
 
@@ -756,11 +756,10 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 			}
 			else
 			{
-				DWORD dwTemp;
 				// File name
-				dstrlen(_FindGetName(&fd),dwTemp);
+				SIZE_T sTemp=istrlen(_FindGetName(&fd));
 				
-				if(nLength+dwTemp+1<MAX_PATH)
+				if(nLength+sTemp+1<MAX_PATH)
 				{
 					if (pPoint+275>pCurrentBuffer->pData+BFSIZE)
 					{
@@ -774,7 +773,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 					pPoint++;
 				
 					// File name length
-					pPoint[0]=(BYTE)(dwTemp>255?255:dwTemp); 
+					pPoint[0]=(BYTE)(sTemp>255?255:sTemp); 
 					// Extension position (or 0 if no extension)
 					for (pPoint[1]=pPoint[0]-1;pPoint[1]>0 && _FindGetName(&fd)[pPoint[1]]!='.';pPoint[1]--); 
 
@@ -962,12 +961,11 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 	m_nArchiveType(pDatabase->GetArchiveType()),m_pFirstRoot(NULL),m_nFlags(0),
 	m_szExtra1(NULL),m_szExtra2(NULL)
 {
-	DWORD dwTemp;
-	sstrlen(pDatabase->GetArchiveName(),dwTemp);
+	SIZE_T dwTemp=istrlen(pDatabase->GetArchiveName());
 	m_szArchive=new char[dwTemp+1];
 	CopyMemory(m_szArchive,pDatabase->GetArchiveName(),dwTemp+1);
 
-	sstrlen(pDatabase->GetName(),m_dwNameLength);
+	m_dwNameLength=istrlen(pDatabase->GetName());
 	m_szName=new char[m_dwNameLength+1];
 	CopyMemory(m_szName,pDatabase->GetName(),m_dwNameLength+1);
 
@@ -1030,8 +1028,7 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 			
 		while (*pPtr!='\0')
 		{
-			DWORD dwLength;
-			dstrlen(pPtr,dwLength);
+			SIZE_T dwLength=istrlen(pPtr);
 
 			if ((dwLength==2 || dwLength==3) && pPtr[1]==':') // Root is drive
 			{
@@ -1147,8 +1144,7 @@ CDatabaseUpdater::DBArchive::DBArchive(LPCSTR szArchiveName,CDatabase::ArchiveTy
 	m_szName(NULL),m_dwNameLength(0),m_nFlags(nFlags),
 	m_szExtra1(NULL),m_szExtra2(NULL)
 {
-	DWORD dwTemp;
-	dstrlen(szArchiveName,dwTemp);
+	SIZE_T dwTemp=istrlen(szArchiveName);
 	m_szArchive=new char[dwTemp+1];
 	sMemCopy(m_szArchive,szArchiveName,dwTemp+1);
 

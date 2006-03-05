@@ -63,6 +63,7 @@ extern LPSTR g_szBuffer;
 #define ID_UPDATEANIM				6
 #define ID_SYNCSCHEDULES			7
 #define ID_CHECKSCHEDULES			8
+#define ID_ENSUREVISIBLEICON		9
 
 
 // Actual id is 30 <= x < 30+Nshortcuts

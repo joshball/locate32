@@ -313,7 +313,6 @@ public:
 	void SetErrorProc(MATRIXERRORPROC pErrorProc,DWORD dwData);
 
 	operator TYPE*() const { return pMatrix; }
-	operator FREEDATA() { FREEDATA pRet=(FREEDATA)pMatrix; pMatrix=NULL; return pRet; } // use delete[] (TYPE*) to release memory
 	
 	void SetAt(UINT m,UINT n,TYPE nValue);
 	TYPE& GetAt(UINT m,UINT n);

@@ -143,13 +143,13 @@ inline BOOL CFile::Write(char ch,CFileException* pError)
 
 inline BOOL CFile::Write(LPCSTR szNullTerminatedString,CFileException* pError) 
 { 
-	return this->Write(szNullTerminatedString,fstrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0),pError); 
+	return this->Write(szNullTerminatedString,istrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0),pError); 
 }
 
 #ifdef DEF_WCHAR
 inline BOOL CFile::Write(LPCWSTR szNullTerminatedString,CFileException* pError) 
 { 
-	return this->Write(szNullTerminatedString,2*fwstrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?2:0),pError); 
+	return this->Write(szNullTerminatedString,2*istrlenw(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?2:0),pError); 
 }
 #endif
 
@@ -176,12 +176,21 @@ inline CFileFind::~CFileFind()
 	Close();
 }
 
-inline CString CFileFind::GetFileName() const
+inline void CFileFind::GetFileName(LPSTR szName,SIZE_T nMaxLen) const
 {
 #ifdef WIN32
-	return m_fd.cFileName;
+	strcpy_s(szName,nMaxLen,m_fd.cFileName);
 #else
-	return m_fd.ff_name;
+	strcpy_s(szName,nMaxLen,m_fd.ff_name);
+#endif
+}
+
+inline void CFileFind::GetFileName(CString& name) const
+{
+#ifdef WIN32
+	name=m_fd.cFileName;
+#else
+	name=m_fd.ff_name;
 #endif
 }
 
@@ -193,6 +202,8 @@ inline DWORD CFileFind::GetFileSize() const
 	return m_fd.ff_fsize;
 #endif
 }
+
+
 
 inline BOOL CFileFind::GetLastWriteTime(FILETIME& rTimeStamp) const
 {
@@ -344,7 +355,7 @@ inline CSearchHexFromFile::CSearchHexFromFile(LPCSTR szString,BOOL bMatchCase)
 	this->bMatchCase=bMatchCase;
 
 	// Setting data
-	dstrlen(szString,dwLength);
+	dwLength=istrlen(szString);
 #ifdef WIN32
 	pSearchValue=new BYTE[dwLength];
 	for (register LONG_PTR i=dwLength-1;i>=0;i--)

@@ -1610,7 +1610,9 @@ void CSettingsProperties::CLanguageSettingsPage::FindLanguages()
 
     while (bRet)
 	{
-		HINSTANCE hLib=LoadLibrary(ff.GetFilePath());
+		char szPathTemp[MAX_PATH];
+		ff.GetFilePath(szPathTemp,MAX_PATH);
+		HINSTANCE hLib=LoadLibrary(szPathTemp);
         if (hLib!=NULL)
 		{
 			LANGCALL pFunc=(LANGCALL)GetProcAddress(hLib,"GetLocateLanguageFileInfo");
@@ -1620,10 +1622,10 @@ void CSettingsProperties::CLanguageSettingsPage::FindLanguages()
 			{
 				LanguageItem* pli=new LanguageItem;
 				pFunc(pli->Language.GetBuffer(200),200,pli->Description.GetBuffer(1000),1000);
-				pli->File=ff.GetFileName();
+				ff.GetFileName(pli->File);
 				li.lParam=(LPARAM)pli;
 				li.iSubItem=0;
-				if (m_pSettings->m_strLangFile.CompareNoCase(ff.GetFileName())==0)
+				if (m_pSettings->m_strLangFile.CompareNoCase(pli->File)==0)
 				{
 					li.state=LVIS_SELECTED;
 					nLastSel=li.iItem;
@@ -2631,8 +2633,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 
 		while (*pPtr!='\0')
 		{
-			DWORD dwLength;
-			dstrlen(pPtr,dwLength);
+			SIZE_T dwLength=istrlen(pPtr);
 
 			if (dwLength>2)
 			{
@@ -2835,8 +2836,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 			li.pszText=szPath;
 			li.cchTextMax=MAX_PATH;
 			m_pList->GetItem(&li);
-			DWORD nPathLen;
-			dstrlen(szPath,nPathLen);
+			SIZE_T nPathLen=istrlen(szPath);
 			for (int i=0;i<aRoots.GetSize();i++)
 			{
 				LPSTR pAddedPath=aRoots.GetAt(i);
@@ -3209,8 +3209,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 
 		while (*pPtr!='\0')
 		{
-			DWORD dwLength;
-			dstrlen(pPtr,dwLength);
+			SIZE_T dwLength=istrlen(pPtr);
 
 			// Check if selected
 			if (strcasecmp(pPtr,szDrive)==0)
@@ -3223,7 +3222,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	return li.iItem;
 }
 
-int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryToListWithVerify(LPCWSTR szFolder,int iLength)
+int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryToListWithVerify(LPCWSTR szFolder,SIZE_T iLength)
 {
 	CStringW rFolder(szFolder,iLength);
 
@@ -3265,10 +3264,10 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 }
 
 		
-int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryToList(LPCWSTR szPath,int iLength)
+int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryToList(LPCWSTR szPath,SIZE_T iLength)
 {
-	if (iLength==-1)
-		dstrlen(szPath,iLength);
+	if (iLength==SIZE_T(-1))
+		iLength=istrlenw(szPath);
 	
 	WCHAR szLabel[20],szFileSystem[20];
 	
@@ -4741,15 +4740,15 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_pToolBar->SetWindowPos(HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);
 
 	
-	m_pWherePressedList=new CListCtrl(GetDlgItem(IDC_WHEREPRESSED));
-	m_pWherePressedList->InsertColumn(0,"",LVCFMT_LEFT,150);
-	m_pWherePressedList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES,LVS_EX_CHECKBOXES);
+	m_pWhenPressedList=new CListCtrl(GetDlgItem(IDC_WHENPRESSED));
+	m_pWhenPressedList->InsertColumn(0,"",LVCFMT_LEFT,150);
+	m_pWhenPressedList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES,LVS_EX_CHECKBOXES);
 	
-	m_pWherePressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,0,CString(IDS_SHORTCUTWHERERESULTLIST),0,0,0,CShortcut::wpResultList);
-	m_pWherePressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,1,CString(IDS_SHORTCUTWHERENAMETAB),0,0,0,CShortcut::wpNameTab);
-	m_pWherePressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,2,CString(IDS_SHORTCUTWHERESIZEDATETAB),0,0,0,CShortcut::wpSizeDateTab);
-	m_pWherePressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,3,CString(IDS_SHORTCUTWHEREADVANCEDTAB),0,0,0,CShortcut::wpAdvancedTab);
-	m_pWherePressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,4,CString(IDS_SHORTCUTWHEREOTHER),0,0,0,CShortcut::wpElsewhere);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,0,CString(IDS_SHORTCUTWHENFOCUSINRESULTLIST),0,0,0,CShortcut::wpFocusInResultList);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,1,CString(IDS_SHORTCUTWHENFOCUSNOTINRESULTLIST),0,0,0,CShortcut::wpFocusNotInResultList);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,2,CString(IDS_SHORTCUTWHENNAMETABSHOWN),0,0,0,CShortcut::wpNameTabShown);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,3,CString(IDS_SHORTCUTWHENSIZEDATETABSHOWN),0,0,0,CShortcut::wpSizeDateTabShown);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,4,CString(IDS_SHORTCUTWHENADVANCEDTABSHOWN),0,0,0,CShortcut::wpAdvancedTabShown);
 	
 	
 	// Check wheter Advanced items should be added
@@ -5111,10 +5110,10 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnDestroy()
 		m_pToolBar=NULL;
 	}
 
-	if (m_pWherePressedList!=NULL)
+	if (m_pWhenPressedList!=NULL)
 	{
-		delete m_pWherePressedList;
-		m_pWherePressedList=NULL;
+		delete m_pWhenPressedList;
+		m_pWhenPressedList=NULL;
 	}
 
 	DebugMessage("CKeyboardShortcutsPage::OnDestroy() END");
@@ -5306,7 +5305,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::WherePressedNotifyHandler(LV_D
 		break;
 	case LVN_ITEMCHANGED:
 		if (pNm->uNewState&LVIS_SELECTED)
-			m_pWherePressedList->SetItemState(pNm->iItem,0,LVIS_SELECTED);
+			m_pWhenPressedList->SetItemState(pNm->iItem,0,LVIS_SELECTED);
 		break;
 	}
 	return TRUE;
@@ -6026,17 +6025,17 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForShortcut(CShortcut
 	ASSERT(pShortcut->m_apActions.GetSize()>0);
 	SetFieldsForAction(pShortcut->m_apActions[0]);
 
-	int nItem=m_pWherePressedList->GetNextItem(-1,LVNI_ALL);
+	int nItem=m_pWhenPressedList->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
 	{
 		if ((pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)==CShortcut::sfLocal)
 		{
-			CShortcut::WherePresssed wpMask=(CShortcut::WherePresssed)m_pWherePressedList->GetItemData(nItem);
-			m_pWherePressedList->SetCheckState(nItem,(pShortcut->m_wWherePressed&wpMask)?TRUE:FALSE);
+			CShortcut::WhenPresssed wpMask=(CShortcut::WhenPresssed)m_pWhenPressedList->GetItemData(nItem);
+			m_pWhenPressedList->SetCheckState(nItem,(pShortcut->m_wWhenPressed&wpMask)?TRUE:FALSE);
 		}
 		else
-			m_pWherePressedList->SetCheckState(nItem,TRUE);
-			nItem=m_pWherePressedList->GetNextItem(nItem,LVNI_ALL);
+			m_pWhenPressedList->SetCheckState(nItem,TRUE);
+			nItem=m_pWhenPressedList->GetNextItem(nItem,LVNI_ALL);
 	}
 
 }
@@ -6074,18 +6073,18 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForShortcut(CShortcu
 
 	if ((pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)==CShortcut::sfLocal)
 	{
-		int nItem=m_pWherePressedList->GetNextItem(-1,LVNI_ALL);
+		int nItem=m_pWhenPressedList->GetNextItem(-1,LVNI_ALL);
 		while (nItem!=-1)
 		{	
-			CShortcut::WherePresssed wpMask=(CShortcut::WherePresssed)m_pWherePressedList->GetItemData(nItem);
+			CShortcut::WhenPresssed wpMask=(CShortcut::WhenPresssed)m_pWhenPressedList->GetItemData(nItem);
 			
-			if (m_pWherePressedList->GetCheckState(nItem))
-				pShortcut->m_wWherePressed|=wpMask;
+			if (m_pWhenPressedList->GetCheckState(nItem))
+				pShortcut->m_wWhenPressed|=wpMask;
 			else
-				pShortcut->m_wWherePressed&=~wpMask;
+				pShortcut->m_wWhenPressed&=~wpMask;
 
 			
-			nItem=m_pWherePressedList->GetNextItem(nItem,LVNI_ALL);
+			nItem=m_pWhenPressedList->GetNextItem(nItem,LVNI_ALL);
 		}
 	}
 

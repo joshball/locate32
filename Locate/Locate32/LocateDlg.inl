@@ -79,17 +79,17 @@ inline void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPSTR>& aDirectories
 	aDirectories.Add(alloccopy(szDirectory,dwLength));
 }
 
-inline void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPSTR>& aDirectories,FREEDATA szDirectory)
+inline void CLocateDlg::CNameDlg::AddDirectoryToListTakePtr(CArray<LPSTR>& aDirectories,LPSTR szDirectory)
 {
 	for (int i=0;i<aDirectories.GetSize();i++)
 	{
 		if (strcmp(aDirectories[i],LPCSTR(szDirectory))==0)
 		{
-			delete[] (LPSTR)szDirectory;
+			delete[] szDirectory;
 			return;
 		}
 	}
-	aDirectories.Add(LPSTR(szDirectory));
+	aDirectories.Add(szDirectory);
 }
 
 
@@ -233,8 +233,8 @@ inline CLocateDlg::CAdvancedDlg::FileType::FileType()
 {
 }
 			
-inline CLocateDlg::CAdvancedDlg::FileType::FileType(FREEDATA frType,FREEDATA frTitle)
-:	szExtensions(NULL),szTitle(LPSTR(frTitle)),szType(LPSTR(frType)),szIconPath(NULL),hIcon(NULL)
+inline CLocateDlg::CAdvancedDlg::FileType::FileType(LPSTR frType,LPSTR frTitle)
+:	szExtensions(NULL),szTitle(frTitle),szType(frType),szIconPath(NULL),hIcon(NULL)
 {
 }
 

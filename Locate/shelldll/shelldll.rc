@@ -65,8 +65,8 @@ LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,1,5,8280
- PRODUCTVERSION 0,1,5,8280
+ FILEVERSION 0,1,6,3050
+ PRODUCTVERSION 0,1,6,3050
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -82,12 +82,12 @@ BEGIN
         BLOCK "080004b0"
         BEGIN
             VALUE "FileDescription", "Locate shell extension"
-            VALUE "FileVersion", "0, 1, 5, 8280"
+            VALUE "FileVersion", "0, 1, 6, 3050"
             VALUE "InternalName", "shelldll"
-            VALUE "LegalCopyright", "Copyright (C) 2005 Janne Huttunen"
+            VALUE "LegalCopyright", "Copyright (C) 2006 Janne Huttunen"
             VALUE "OriginalFilename", "loc_shex.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "0, 1, 5, 8280"
+            VALUE "ProductVersion", "0, 1, 6, 3050"
         END
     END
     BLOCK "VarFileInfo"

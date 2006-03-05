@@ -1129,8 +1129,7 @@ INT CFile::IsDirectory(LPCTSTR szDirectoryName)
 	
 	// Taking last '\\' 
 	LPSTR szPath;
-	DWORD dwPathLen;
-	dstrlen(szDirectoryName,dwPathLen);
+	SIZE_T dwPathLen=istrlen(szDirectoryName);
 	if (szDirectoryName[dwPathLen-1]=='\\' && dwPathLen>3)
 	{
 		szPath=new char[dwPathLen+5];
@@ -1451,9 +1450,9 @@ BOOL CFile::IsSamePath(LPCSTR szDir1,LPCSTR szDir2)
 	return strcasecmp(path1,path2)==0;	
 #else
 	char path1[MAX_PATH],path2[MAX_PATH];
-	int nRet1,nRet2;
-	dstrlen(szDir1,nRet1);
-	dstrlen(szDir2,nRet2);
+	SIZE_T nRet1,nRet2;
+	nRet1=istrlen(szDir1);
+	nRet2=istrlen(szDir2);
 
 	iMemCopy(path1,szDir1,nRet1);
 	iMemCopy(path2,szDir2,nRet2);
@@ -1574,35 +1573,48 @@ BOOL CFileFind::FindNextFile()
 #endif
 }
 
-CString CFileFind::GetFilePath() const
+
+
+void CFileFind::GetFilePath(LPSTR szPath,SIZE_T nMaxLen) const
 {
-	CString str(strRoot);
+	memcpy_s(szPath,nMaxLen,strRoot,strRoot.GetLength());
+
 #ifdef WIN32
-	str<<m_fd.cFileName;
+	strcpy_s(szPath+strRoot.GetLength(),nMaxLen-strRoot.GetLength(),m_fd.cFileName);
 #else
-	str<<m_fd.ff_name;
+	strcpy_s(szPath+strRoot.GetLength(),nMaxLen-strRoot.GetLength(),m_fd.ff_name);
 #endif
-	return str;
+}
+
+void CFileFind::GetFilePath(CString& path) const
+{
+	path=strRoot;
+#ifdef WIN32
+	path<<m_fd.cFileName;
+#else
+	path<<m_fd.ff_name;
+#endif
 }
 
 #ifdef WIN32
 
-CString CFileFind::GetFileTitle() const
+SIZE_T CFileFind::GetFileTitle(CString title) const
 {
 	CString temp(strRoot);
 	temp << m_fd.cFileName;
-	CString title;
-	::GetFileTitle(temp,title.GetBuffer(_MAX_PATH),_MAX_PATH);
+	SIZE_T len=::GetFileTitle(temp,title.GetBuffer(_MAX_PATH),_MAX_PATH);
 	title.FreeExtra();
-	return title;
+	return len;
 }
 
-CString CFileFind::GetFileURL() const
+SIZE_T CFileFind::GetFileTitle(LPSTR szFileTitle,SIZE_T nMaxLen) const
 {
-	CString url("file://");
-	url << strRoot << m_fd.cFileName;
-	return url;
+	CString temp(strRoot);
+	temp << m_fd.cFileName;
+	return ::GetFileTitle(temp,szFileTitle,(WORD)min(nMaxLen,0xFFFF));
 }
+
+
 #endif
 
 #ifndef WIN32

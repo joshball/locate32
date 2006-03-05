@@ -516,8 +516,7 @@ inline CDatabaseUpdater*** CLocateApp::GetUpdatersPointerPtr()
 
 inline void CLocateApp::ChangeAndAlloc(LPSTR& pVar,LPCSTR szText)
 {
-	DWORD dwLength;
-	dstrlen(szText,dwLength);
+	SIZE_T dwLength=istrlen(szText);
 	if (pVar!=NULL)
 		delete[] pVar;
 	pVar=new char [dwLength+1];

@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2005 Janne Huttunen
-   Updatedb.exe v2.99.5.10100 */
+/* Copyright (c) 1997-2006 Janne Huttunen
+   Updatedb.exe v2.99.6.3050 */
 
 #include <HFCLib.h>
 #include "locatedb/locatedb.h"
@@ -7,9 +7,9 @@
 #include "lan_resources.h"
 
 #ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 3.0 beta 5.10100";
+		LPCSTR szVersionStr="updtdb32 3.0 beta 6.3050";
 #else
-		LPCSTR szVersionStr="updatedb 3.0 beta 5.10100";
+		LPCSTR szVersionStr="updatedb 3.0 beta 6.3050";
 #endif
 
 

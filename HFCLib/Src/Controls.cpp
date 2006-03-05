@@ -76,8 +76,7 @@ BOOL CALLBACK HFCControls::Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 		}
 		SetWindowLong(hWnd,GWL_USERDATA,(LONG)ctrl);
 		LPCSTR temp=(LPCSTR)((CREATESTRUCT*)lParam)->lpszName;
-		DWORD templen;
-		dstrlen(temp,templen);
+		SIZE_T templen=istrlen(temp);
 		ctrl->szText=new char[templen+2];
 		if (ctrl->szText==NULL)
 		{
@@ -488,8 +487,7 @@ BOOL CALLBACK HFCControls::Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 			if (ctrl->szText!=NULL)
 				delete[] ctrl->szText;
 			LPCSTR temp=(LPCSTR)lParam;
-			DWORD templen;
-			dstrlen(temp,templen);
+			SIZE_T templen=istrlen(temp);
 			ctrl->szText=new char[templen+2];
 			if (ctrl->szText==NULL)
 			{

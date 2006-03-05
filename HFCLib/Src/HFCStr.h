@@ -21,37 +21,61 @@ inline BOOL IsFullUnicodeSupport()
 #endif
 }
 #endif
-// len is parameter! Works with WCHAR and BYTE too!
-#define dstrlen(str,len)			for (len=0;(str)[len]!='\0';len++)
-#define dwstrlen(str,len)			dstrlen(str,len)
-#define dstrlento(str,len,ch)		for (len=0;(str)[len]!='\0' && (str)[len]!=(ch);len++)
 
-inline size_t istrlen(const char* str)
+inline SIZE_T istrlen(const char* str)
 {
-	size_t len;
+	SIZE_T len;
 	for (len=0;(str)[len]!='\0';len++);
 	return len;
 }
 
 
 #ifdef DEF_WCHAR
-inline size_t istrlenw(const WCHAR* str)
+inline SIZE_T istrlenw(const WCHAR* str)
 {
-	size_t len;
+	SIZE_T len;
 	for (len=0;(str)[len]!=L'\0';len++);
 	return len;
 }
 #endif
 
-#define dreplacech(str,from,to) \
-	{ for (register LONG_PTR i=0;(str)[i]!='\0';i++) if ((str)[i]==(from)) (str)[i]=(to); }
-#define dwreplacech(str,from,to)	dreplacech(str,from,to)
+inline SIZE_T parseto(LPCSTR str,CHAR ch)
+{
+	SIZE_T len;
+	for (len=0;(str)[len]!=(ch);len++);
+	return len;
+}
 
-#define dparseto(str,len,ch)				for (len=0;(str)[len]!=(ch);len++)
-#define dwparseto(str,len,ch)				dparseto(str,len,ch)
-#define dparseto2(str,len,ch1,ch2)			for (len=0;(str)[len]!=(ch1) && (str)[len]!=(ch2);len++)
-#define dparseto3(str,len,ch1,ch2,ch3)		for (len=0;(str)[len]!=(ch1) && (str)[len]!=(ch2) && (str)[len]!=(ch3);len++)
-#define dparseto4(str,len,ch1,ch2,ch3,ch4)	for (len=0;(str)[len]!=(ch1) && (str)[len]!=(ch2) && (str)[len]!=(ch3) && (str)[len]!=(ch4);len++)
+#ifdef DEF_WCHAR
+inline SIZE_T parseto(LPCWSTR str,WCHAR ch)
+{
+	SIZE_T len;
+	for (len=0;(str)[len]!=(ch);len++);
+	return len;
+}
+#endif
+
+inline SIZE_T parseto2(LPCSTR str,CHAR ch1,CHAR ch2)
+{
+	SIZE_T len;
+	for (len=0;str[len]!=ch1 && str[len]!=ch2;len++);
+	return len;
+}
+
+inline SIZE_T parseto3(LPCSTR str,CHAR ch1,CHAR ch2,CHAR ch3)
+{
+	SIZE_T len;
+	for (len=0;str[len]!=ch1 && str[len]!=ch2 && str[len]!=ch3;len++);
+	return len;
+}
+
+inline SIZE_T parseto4(LPCSTR str,CHAR ch1,CHAR ch2,CHAR ch3,CHAR ch4)
+{
+	SIZE_T len;
+	for (len=0;str[len]!=ch1 && str[len]!=ch2 && str[len]!=ch3 && str[len]!=ch4;len++);
+	return len;
+}
+
 
 // Extended sprintf style handlers
 int vsprintfex( char *buffer, SIZE_T buffersize, const char *format, va_list argptr );
@@ -157,9 +181,7 @@ public:
 	
 	inline operator LPCSTR() const	{ if (m_pData==NULL)	return szEmpty;	return m_pData;}
 	LPSTR GetPCHData() const { return m_pData; } // Use with caution, may be null
-	operator FREEDATA(); // use delete[] (LPSTR) pObject to release memory
-	void TakeBack(FREEDATA pData);
-
+	
 
 	CString& Copy(LPCSTR src);
 	CString& Copy(LPCSTR src,SIZE_T iLength);
@@ -362,9 +384,7 @@ public:
 	void SetAt(ULONG_PTR nIndex,WCHAR ch);
 	operator LPCWSTR() const;
 	LPWSTR GetPCHData() const { return m_pData; } // Use with caution, may be null
-	operator FREEDATA();  // use delete[] (LPWSTR) pObject to release memory
-	void TakeBack(FREEDATA pData);
-
+	
 	CStringW& Copy(LPCSTR src);
 	CStringW& Copy(LPCSTR src,SIZE_T iLength);
 	CStringW& Copy(const BYTE* src);

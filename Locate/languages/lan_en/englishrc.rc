@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,5,12180
- PRODUCTVERSION 2,99,5,12180
+ FILEVERSION 2,99,6,3050
+ PRODUCTVERSION 2,99,6,3050
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 5.12180"
+            VALUE "FileVersion", "3.0 beta 6.3050"
             VALUE "InternalName", "lan_en"
-            VALUE "LegalCopyright", "Copyright © 1997-2005 Janne Huttunen"
+            VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 5.12180"
+            VALUE "ProductVersion", "3.0 beta 6.3050"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -78,7 +78,7 @@ BEGIN
     DEFPUSHBUTTON   "F&ind Now",IDC_OK,233,16,50,14
     PUSHBUTTON      "Sto&p",IDC_STOP,233,34,50,14,WS_DISABLED
     PUSHBUTTON      "Ne&w Search",IDC_NEWSEARCH,233,51,50,14
-	PUSHBUTTON      "Presets",IDC_PRESETS,233-0,80,31+0,14
+	PUSHBUTTON      "&Presets",IDC_PRESETS,233-0,80,31+0,14
     CONTROL         "",IDC_FILELIST,"SysListView32",LVS_REPORT |  
                     LVS_SHAREIMAGELISTS | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | 
                     WS_BORDER,1,115,282,1,WS_EX_CLIENTEDGE
@@ -102,7 +102,7 @@ BEGIN
                     CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | WS_TABSTOP,50,52,
                     145,110
 	PUSHBUTTON      "#1",IDC_MOREDIRECTORIES,136,52,20,14
-    CONTROL         "&No subdirectories",IDC_NOSUBDIRECTORIES,"Button",
+    CONTROL         "No &subdirectories",IDC_NOSUBDIRECTORIES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,20,70,80,10
     PUSHBUTTON      "&Browse...",IDC_BROWSE,76,70,60,14,BS_NOTIFY
 END
@@ -598,8 +598,8 @@ BEGIN
                     WS_TABSTOP,210,187,27,8
     CONTROL         "Win",IDC_MODWIN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     244,187,27,8
-    LTEXT           "Where pressed:",IDC_STATICWHEREPRESSED,9,206,57,22
-    CONTROL         "",IDC_WHEREPRESSED,"SysListView32",LVS_REPORT | 
+    LTEXT           "Pressed when:",IDC_STATICWHENPRESSED,9,206,57,22
+    CONTROL         "",IDC_WHENPRESSED,"SysListView32",LVS_REPORT | 
                     LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | 
                     WS_BORDER | WS_TABSTOP,69,203,129,26,WS_EX_STATICEDGE
     PUSHBUTTON      "Advanced",IDC_ADVANCED,236,205,39,13
@@ -908,6 +908,7 @@ BEGIN
         MENUITEM "D&atabase Info", IDM_DATABASEINFO
         MENUITEM SEPARATOR
         MENUITEM "&Close",       IDM_CLOSE
+        MENUITEM "E&xit",       IDM_EXIT
     END
     POPUP "Default File Menu no items"
     BEGIN
@@ -926,6 +927,7 @@ BEGIN
         MENUITEM "D&atabase Info", IDM_DATABASEINFO
         MENUITEM SEPARATOR
         MENUITEM "&Close",       IDM_CLOSE
+        MENUITEM "E&xit",       IDM_EXIT
     END
     POPUP "Default Context Menu (empty)"
     BEGIN
@@ -1568,11 +1570,11 @@ BEGIN
 	IDS_SHORTCUTMODALT				"Alt+"
 	IDS_SHORTCUTMODSHIFT			"Shift+"
 	IDS_SHORTCUTSCANCODE			"%d (scancode)"
-	IDS_SHORTCUTWHERERESULTLIST		"Result list"
-	IDS_SHORTCUTWHERENAMETAB		"Name tab"
-	IDS_SHORTCUTWHERESIZEDATETAB	"Size and date tab"
-	IDS_SHORTCUTWHEREADVANCEDTAB	"Advanced tab"
-	IDS_SHORTCUTWHEREOTHER			"Any other place"
+	IDS_SHORTCUTWHENFOCUSINRESULTLIST	"Focus in the result list"
+	IDS_SHORTCUTWHENFOCUSNOTINRESULTLIST	"Focus not in the result list"
+	IDS_SHORTCUTWHENNAMETABSHOWN	"Name tab shown"
+	IDS_SHORTCUTWHENSIZEDATETABSHOWN	"Size and date tab shown"
+	IDS_SHORTCUTWHENADVANCEDTABSHOWN "Advanced tab shown"
 END
 
 STRINGTABLE

@@ -21,9 +21,9 @@ COLORREF GetSystemColor(LPCSTR szKey)
 				szBuffer[i]=0;
 		}
 		rgb.rgbtRed=atoi(szBuffer);
-		i=fstrlen(szBuffer)+1;
+		i=istrlen(szBuffer)+1;
 		rgb.rgbtGreen=atoi(szBuffer+i);
-		i+=fstrlen(szBuffer+i)+1;
+		i+=istrlen(szBuffer+i)+1;
 		rgb.rgbtBlue=atoi(szBuffer+i);
 		return RGB(rgb.rgbtRed,rgb.rgbtGreen,rgb.rgbtBlue);	
 	}

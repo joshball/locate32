@@ -329,13 +329,16 @@ public:
 	BOOL FindFile(LPCTSTR pstrName=NULL);
 	BOOL FindNextFile();
 	
-	CString GetFileName() const;
+	void GetFileName(LPSTR szName,SIZE_T nMaxLen) const;
+	void GetFileName(CString& name) const;
+	void GetFilePath(LPSTR szPath,SIZE_T nMaxLen) const;
+	void GetFilePath(CString& path) const;
 	SIZE_T GetFileSize() const;
-	CString GetFilePath() const;
 	
 #ifdef WIN32
-	CString GetFileTitle() const;
-	CString GetFileURL() const;
+	SIZE_T GetFileTitle(CString title) const;
+	SIZE_T GetFileTitle(LPSTR szFileTitle,SIZE_T nMaxLen) const;
+
 #endif
 
 #ifdef WIN32
@@ -491,8 +494,6 @@ public:
 	operator HGDIOBJ() const;
 	HGDIOBJ GetSafeHandle() const;
 	
-	FREEDATA BreakData() { FREEDATA pRet=(FREEDATA)m_hObject; m_hObject=NULL; return pRet; } // use DestroyObject() to release memery
-	void TakeBack(FREEDATA pData) { m_hObject=(HGDIOBJ)pData; }
 	
 	int GetObject(int nCount,LPVOID lpObject) const;
 	DWORD GetObjectType() const;

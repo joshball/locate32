@@ -81,8 +81,7 @@ BOOL CResults::Create(CListCtrl* pList,int* pDetails,int nDetails)
 				
 				// Retrieving detail text
 				LPSTR szDetail=pItem->GetDetailText((CLocateDlg::DetailType)m_pDetails[i]);
-				DWORD dwLength;
-				dstrlen(szDetail,dwLength);
+				SIZE_T dwLength=istrlen(szDetail);
 
 				// Checking length
 				if (dwLength>m_pLengths[i])
