@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2005 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2006 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 
@@ -47,7 +47,7 @@ void Assert(BOOL bIsOK,int line,char* file);
 #ifdef _DEBUG_LOGGING
 void StartDebugLogging();
 void DebugMessage(LPCSTR msg);
-void DebugHexDump(LPCSTR desc,BYTE* pData,size_t datalen);
+void DebugHexDump(LPCSTR desc,BYTE* pData,SIZE_T datalen);
 void DebugWndMessage(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
 void DebugNumMessage(LPCSTR text,DWORD num);
 void DebugFormatMessage(LPCSTR text,...);
@@ -56,7 +56,7 @@ LPCSTR GetDebugLoggingFile();
 #else
 inline void StartDebugLogging() {}
 inline void DebugMessage(LPCSTR msg)  {}
-inline void DebugHexDump(LPCSTR desc,BYTE* pData,size_t datalen)  {}
+inline void DebugHexDump(LPCSTR desc,BYTE* pData,SIZE_T datalen)  {}
 inline void DebugWndMessage(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)  {}
 inline void DebugNumMessage(LPCSTR text,DWORD num)  {}
 inline void DebugFormatMessage(LPCSTR text,...)  {}

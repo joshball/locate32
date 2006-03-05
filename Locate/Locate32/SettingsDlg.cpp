@@ -3996,7 +3996,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 
 	if (m_pSchedule->m_nType==CSchedule::typeMonthly)
 	{
-		if (m_pSchedule->m_tMonthly.nType==CSchedule::SMONTHLYTYPE::Type::Day)
+		if (m_pSchedule->m_tMonthly.nType==CSchedule::SMONTHLYTYPE::Day)
 		{
 			CheckDlgButton(IDC_MDAY,BST_CHECKED);
 			OnCommand(IDC_MDAY,CBN_SELCHANGE,NULL);

@@ -13,13 +13,13 @@
 #define INC_OLE2        // WIN32, get ole2 from windows.h
 
 #define _CONSOLE
+#include "shlwapi.h"
 #include <hfclib.h>
 #include <windowsx.h>
 #include <shlobj.h>
 
 #define ResultFromShort(i)  ResultFromScode(MAKE_SCODE(SEVERITY_SUCCESS, 0, (USHORT)(i)))
 
-#include "shlwapi.h"
 #pragma comment(lib, "shlwapi.lib")
 
 

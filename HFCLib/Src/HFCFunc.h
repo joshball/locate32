@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2005 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2006 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 
@@ -211,7 +211,7 @@ HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget);
 HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath=NULL);
 BOOL RunRegistryCommand(HKEY hKey,LPCSTR szFile);
 DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,char* szName,DWORD dwBufferLen);
-BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,UINT nBufferLen);
+BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,SIZE_T nBufferLen);
 #endif
 
 // Variable manipulation

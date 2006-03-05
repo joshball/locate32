@@ -5,19 +5,19 @@
 
 // Including pcre
 #include <pcre.h>
-#ifdef HFC_MTLIBS
-#pragma comment(lib, "libpcremt.lib")
+#ifdef _DEBUG
+#pragma comment(lib, "libpcred.lib")
 #else
 #pragma comment(lib, "libpcre.lib")
 #endif
-/*extern "C" void *(*pcre_malloc)(size_t);
-extern "C" void  (*pcre_free)(void *);
-extern "C" void *(*pcre_stack_malloc)(size_t);
-extern "C" void  (*pcre_stack_free)(void *);
-extern "C" int   (*pcre_callout)(pcre_callout_block *);*/
 
-
-
+/*
+extern "C" void *(*pcre_malloc)(size_t) = malloc;
+extern "C" void  (*pcre_free)(void *) = free;
+extern "C" void *(*pcre_stack_malloc)(size_t) = malloc;
+extern "C" void  (*pcre_stack_free)(void *) = free;
+extern "C" int   (*pcre_callout)(pcre_callout_block *) = NULL;
+*/
 
 #include "Locater.h"
 
@@ -29,12 +29,11 @@ extern "C" int   (*pcre_callout)(pcre_callout_block *);*/
 
 void InitLocaterLibrary()
 {
-
-	pcre_malloc = malloc;
+	/*pcre_malloc = malloc;
 	pcre_free = free;
 	pcre_stack_malloc = malloc;
 	pcre_stack_free = free;
-	pcre_callout = NULL;
+	pcre_callout = NULL;*/
 }
 
 class CSearchRegExpFromFile : public CSearchFromFile

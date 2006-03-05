@@ -14,6 +14,7 @@
 #define INC_OLE2        // WIN32, get ole2 from windows.h
 
 #define _CONSOLE
+#include "shlwapi.h"
 #include <hfclib.h>
 #include <windowsx.h>
 #include <shlobj.h>
@@ -21,7 +22,6 @@
 #include "LocateShellExtension.h"
 #include "resource.h"
 
-#include "shlwapi.h"
 #pragma comment(lib, "shlwapi.lib")
 
 extern HINSTANCE g_hmodThisDll;
@@ -215,7 +215,8 @@ STDMETHODIMP CLocateShellExtension::QueryContextMenu(HMENU hMenu,
 {
 #ifdef _LOGGING
 	char szTemp[100];
-    wsprintf(szTemp, "CShellExt::QueryContextMenu(), uFlags==>%d", uFlags);
+    
+	sprintf_s(szTemp, 100,"CShellExt::QueryContextMenu(), uFlags==>%d", uFlags);
     ODS(szTemp);
 #endif    
 	
@@ -436,10 +437,9 @@ STDMETHODIMP CLocateShellExtension::GetCommandString(UINT_PTR idCmd,
 	HMODULE hLanDll=GetLanguageResource();
 	if (hLanDll==NULL)
 		return NOERROR;
+	
 
-#error GCS_HELPTEXTA ??
-
-	if (uFlags&GCS_UNICODE)
+	if (uFlags==GCS_HELPTEXTW)
 	{
         switch (idCmd)
 		{
@@ -449,7 +449,7 @@ STDMETHODIMP CLocateShellExtension::GetCommandString(UINT_PTR idCmd,
 	
 		}
 	}
-	else
+	else if (uFlags==GCS_HELPTEXTA)
 	{
         switch (idCmd)
 		{
@@ -458,6 +458,11 @@ STDMETHODIMP CLocateShellExtension::GetCommandString(UINT_PTR idCmd,
 				break;
 	
 		}
+	}
+	else
+	{
+		pszName[0]='\0';
+		pszName[1]='\0';
 	}
 
 	FreeLibrary(hLanDll);

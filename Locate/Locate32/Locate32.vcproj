@@ -4,6 +4,7 @@
 	Version="8,00"
 	Name="Locate32"
 	ProjectGUID="{0D7BB147-3B10-4F5B-987C-E1B2518FC2F4}"
+	RootNamespace="Locate32"
 	>
 	<Platforms>
 		<Platform
@@ -87,6 +88,8 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="$(ProjectDir)commonres\manifest"
+				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -180,6 +183,8 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="$(ProjectDir)commonres\manifest"
+				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -276,6 +281,8 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				AdditionalManifestFiles="$(ProjectDir)commonres\manifest"
+				EmbedManifest="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"

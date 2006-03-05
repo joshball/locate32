@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2005 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2006 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -10,7 +10,7 @@ BOOL bIsFullUnicodeSupport=(GetVersion()&0x80000000)?FALSE:TRUE;
 
 void CAppData::stdfunc()
 {
-	(LPSTR(szEmpty))[0]='\0';
+	bIsFullUnicodeSupport=(GetVersion()&0x80000000)?FALSE:TRUE;
 }
 
 

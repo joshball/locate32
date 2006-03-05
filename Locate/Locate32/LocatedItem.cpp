@@ -2,8 +2,8 @@
 #include "Locate32.h"
 
 #include <md5.h>
-#ifdef HFC_MTLIBS
-#pragma comment(lib, "libmd5mt.lib")
+#ifdef _DEBUG
+#pragma comment(lib, "libmd5d.lib")
 #else
 #pragma comment(lib, "libmd5.lib")
 #endif
@@ -140,41 +140,41 @@ void CLocatedItem::UpdateByDetail(CLocateDlg::DetailType nDetail)
 {
 	switch(nDetail)
 	{
-	case CLocateDlg::DetailType::FullPath:
+	case CLocateDlg::FullPath:
 		UpdateFilename();
 		break;
-	case CLocateDlg::DetailType::Title:
+	case CLocateDlg::Title:
 		UpdateTitle();
 		UpdateIcon();
 		break;
-	case CLocateDlg::DetailType::InFolder:
+	case CLocateDlg::InFolder:
 		UpdateParentIcon();
 		break;
-	case CLocateDlg::DetailType::FileSize:
-	case CLocateDlg::DetailType::DateModified:
-	case CLocateDlg::DetailType::DateCreated:
-	case CLocateDlg::DetailType::DateAccessed:
+	case CLocateDlg::FileSize:
+	case CLocateDlg::DateModified:
+	case CLocateDlg::DateCreated:
+	case CLocateDlg::DateAccessed:
 		UpdateFileSizeAndTime();
 		break;
-	case CLocateDlg::DetailType::FileType:
+	case CLocateDlg::FileType:
 		UpdateType();
 		break;
-	case CLocateDlg::DetailType::Attributes:
+	case CLocateDlg::Attributes:
 		UpdateAttributes();
 		break;
-	case CLocateDlg::DetailType::ImageDimensions:
+	case CLocateDlg::ImageDimensions:
 		UpdateDimensions();
 		break;
-	case CLocateDlg::DetailType::Owner:
+	case CLocateDlg::Owner:
 		UpdateOwner();
 		break;
-	case CLocateDlg::DetailType::ShortFileName:
+	case CLocateDlg::ShortFileName:
 		UpdateShortFileName();
 		break;
-	case CLocateDlg::DetailType::ShortFilePath:
+	case CLocateDlg::ShortFilePath:
 		UpdateShortFilePath();
 		break;
-	case CLocateDlg::DetailType::MD5sum:
+	case CLocateDlg::MD5sum:
 		ComputeMD5sum();
 		break;
 	}	
@@ -186,28 +186,28 @@ BOOL CLocatedItem::ShouldUpdateByDetail(CLocateDlg::DetailType nDetail) const
 {
 	switch(nDetail)
 	{
-	case CLocateDlg::DetailType::FullPath:
+	case CLocateDlg::FullPath:
 		return ShouldUpdateFilename();
-	case CLocateDlg::DetailType::Database:
-	case CLocateDlg::DetailType::DatabaseDescription:
-	case CLocateDlg::DetailType::DatabaseArchive:
-	case CLocateDlg::DetailType::VolumeLabel:
-	case CLocateDlg::DetailType::VolumeSerial:
-	case CLocateDlg::DetailType::VOlumeFileSystem:
+	case CLocateDlg::Database:
+	case CLocateDlg::DatabaseDescription:
+	case CLocateDlg::DatabaseArchive:
+	case CLocateDlg::VolumeLabel:
+	case CLocateDlg::VolumeSerial:
+	case CLocateDlg::VOlumeFileSystem:
 		return FALSE;
-	case CLocateDlg::DetailType::Title:
+	case CLocateDlg::Title:
 		return ShouldUpdateTitle() || ShouldUpdateIcon();
-	case CLocateDlg::DetailType::InFolder:
+	case CLocateDlg::InFolder:
 		return ShouldUpdateParentIcon();
-	case CLocateDlg::DetailType::FileSize:
+	case CLocateDlg::FileSize:
 		return ShouldUpdateFileSize();
-	case CLocateDlg::DetailType::DateModified:
-	case CLocateDlg::DetailType::DateCreated:
-	case CLocateDlg::DetailType::DateAccessed:
+	case CLocateDlg::DateModified:
+	case CLocateDlg::DateCreated:
+	case CLocateDlg::DateAccessed:
 		return ShouldUpdateTimeAndDate();
-	case CLocateDlg::DetailType::FileType:
+	case CLocateDlg::FileType:
 		return ShouldUpdateType();
-	case CLocateDlg::DetailType::Attributes:
+	case CLocateDlg::Attributes:
 		return ShouldUpdateAttributes();
 	default:
 		return ShouldUpdateExtra(nDetail);
@@ -348,7 +348,8 @@ void CLocatedItem::UpdateTitle()
 		if (GetLocateDlg()->GetFlags()&CLocateDlg::fgLV1stCharUpper)
 		{
 			BOOL bAllUpper=TRUE;
-			for (DWORD i=0;szTitle[i]!='\0';i++)
+			DWORD i;
+			for (i=0;szTitle[i]!='\0';i++)
 			{
 				if (!IsCharUpper(szTitle[i]))
 				{
@@ -635,7 +636,7 @@ void CLocatedItem::UpdateDimensions()
 	if (GetLocateDlg()->m_pImageHandler==NULL)
 		return;
 
-	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::DetailType::ImageDimensions);
+	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::ImageDimensions);
 	pField->bShouldUpdate=FALSE;
 
 	SIZE dim;
@@ -657,7 +658,7 @@ void CLocatedItem::ComputeMD5sum(BOOL bForce)
 
 	ItemDebugMessage("CLocatedItem::ComputeMD5sum BEGIN");
 
-	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::DetailType::MD5sum);
+	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::MD5sum);
 	pField->bShouldUpdate=FALSE;
 
 	if (!bForce && !(GetLocateDlg()->GetFlags()&CLocateDlg::fgLVComputeMD5Sums))
@@ -732,7 +733,7 @@ void CLocatedItem::UpdateOwner()
 	
 	ItemDebugMessage("CLocatedItem::UpdateOwner BEGIN");
 	
-	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::DetailType::Owner);
+	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::Owner);
 	pField->bShouldUpdate=FALSE;
 
 	if (IsDeleted())
@@ -810,7 +811,7 @@ void CLocatedItem::UpdateShortFileName()
 
 	ItemDebugFormatMessage4("CLocatedItem::UpdateShortFileName BEGIN %s",GetPath(),0,0,0);
 	
-	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::DetailType::ShortFileName);
+	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::ShortFileName);
 	pField->bShouldUpdate=FALSE;
 
 	if (IsDeleted())
@@ -828,7 +829,8 @@ void CLocatedItem::UpdateShortFileName()
 		return;
 	}
 
-	for (int nStart=nLength-1;nStart>=0 && szShortPath[nStart]!='\\';nStart--);
+	int nStart;
+	for (nStart=nLength-1;nStart>=0 && szShortPath[nStart]!='\\';nStart--);
 	if (nStart>0)
 		nStart++;
     nLength-=nStart;
@@ -849,7 +851,7 @@ void CLocatedItem::UpdateShortFilePath()
 
 	ItemDebugMessage("CLocatedItem::UpdateShortFilePath BEGIN");
 	
-	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::DetailType::ShortFilePath);
+	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::ShortFilePath);
 	pField->bShouldUpdate=FALSE;
 	if (IsDeleted())
 		return;

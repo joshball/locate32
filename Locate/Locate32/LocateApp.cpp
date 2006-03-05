@@ -3997,7 +3997,7 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 				EnlargeSizeForText(dc,str,szThisLine);
 					
 				
-				LPCSTR szFile=NULL;
+				LPSTR szFile=NULL;
 				CDatabase::ArchiveType nArchiveType;
 				CDatabaseUpdater::CRootDirectory* pRoot;
 				ri.dwNumberOfDatabases=ppUpdaters[i]->GetNumberOfDatabases();

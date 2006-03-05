@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2005 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2006 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 
@@ -175,23 +175,11 @@ class CObject;
 #if defined (WIN32) && !defined (HFC_NOFORCELIBS)
 	#ifndef _CONSOLE
 		#if defined(_DEBUG)
-			#if defined HFC_MTLIBS
-				#pragma comment(lib,"HFCLib32md.lib")
-			#else
-				#pragma comment(lib,"HFCLib32d.lib")
-			#endif
+			#pragma comment(lib,"HFCLib32d.lib")
 		#elif defined(_DEBUG_LOGGING)
-			#if defined HFC_MTLIBS
-				#pragma comment(lib,"HFCLib32ml.lib")
-			#else
-				#pragma comment(lib,"HFCLib32l.lib")
-			#endif
+			#pragma comment(lib,"HFCLib32l.lib")
 		#else 
-			#if defined HFC_MTLIBS
-				#pragma comment(lib,"HFCLib32m.lib")
-			#else
-				#pragma comment(lib,"HFCLib32.lib")
-			#endif
+			#pragma comment(lib,"HFCLib32.lib")
 		#endif
 	#else
 		#if defined(_DEBUG)

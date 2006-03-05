@@ -167,7 +167,7 @@ public:
 	LPCSTR GetCurrentRootPath() const;
 	LPSTR GetCurrentRootPathStr() const;
 
-	BOOL EnumDatabases(int iDatabase,LPCSTR& szName,LPCSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot);
+	BOOL EnumDatabases(int iDatabase,LPSTR& szName,LPSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot);
 	
 	const LPCSTR GetCurrentDatabaseName() const;
 	const LPCSTR GetCurrentDatabaseFile() const;
@@ -365,7 +365,7 @@ inline BOOL CDatabaseUpdater::IsIncrementUpdate() const
 	return m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::IncrementalUpdate);
 }
 
-inline BOOL CDatabaseUpdater::EnumDatabases(int iDatabase,LPCSTR& szName,LPCSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot)
+inline BOOL CDatabaseUpdater::EnumDatabases(int iDatabase,LPSTR& szName,LPSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot)
 {
 	if (iDatabase<0 || iDatabase>=m_aDatabases.GetSize())
 		return FALSE;

@@ -145,7 +145,7 @@ STDMETHODIMP CFindExtension::OpenLocate(HWND hParent,
 			nLast=i;
 	}
 
-    strcpy(szPath+nLast+1,"locate32.exe");
+    strcpy_s(szPath+nLast+1,MAX_PATH-nLast-1,"locate32.exe");
 
 	// Just execute command
 	PROCESS_INFORMATION pi;
