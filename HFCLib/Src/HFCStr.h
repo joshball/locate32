@@ -155,7 +155,7 @@ public:
 	CString(const CString& str);
 	CString(CHAR ch,SIZE_T nRepeat=1);
 	CString(LPCSTR lpsz);
-	CString(LPCSTR lpsz,DWORD nLength);
+	CString(LPCSTR lpsz,SIZE_T nLength);
 	CString(const unsigned char * lpsz);
 	~CString();
 

@@ -12,8 +12,7 @@ inline LPSTR alloccopy(LPCSTR szString)
 {
 	SIZE_T nLength=istrlen(szString);
 	char* psz=new char[max(nLength+1,2)];
-	CopyMemory(psz,szString,nLength);
-	psz[nLength]='\0';
+	CopyMemory(psz,szString,nLength+1);
 	return psz;
 }
 
@@ -37,7 +36,7 @@ inline LPWSTR alloccopy(LPCWSTR szString)
 {
 	SIZE_T nLength=istrlenw(szString);
 	WCHAR* psz=new WCHAR[nLength+1];
-	for (register int i=nLength;i>=0;i--)
+	for (register SIZE_T i=0;i<=nLength;i++)
 		psz[i]=szString[i];
 	return psz;
 }
@@ -45,8 +44,9 @@ inline LPWSTR alloccopy(LPCWSTR szString)
 inline LPWSTR alloccopy(LPCWSTR szString,SIZE_T dwLength)
 {
 	WCHAR* psz=new WCHAR[dwLength+1];
-	for (register SIZE_T i=dwLength;i>=0;i--)
+	for (register SIZE_T i=0;i<dwLength;i++)
 		psz[i]=szString[i];
+	psz[dwLength]=L'\0';
 	return psz;
 }
 
@@ -54,7 +54,8 @@ inline LPSTR alloccopyWtoA(LPCWSTR szString)
 {
 	SIZE_T dwLength=istrlenw(szString);
 	CHAR* psz=new CHAR[dwLength+1];
-	MemCopyWtoA(psz,szString,dwLength+1);
+	MemCopyWtoA(psz,szString,dwLength);
+	psz[dwLength]='\0';
 	return psz;
 }
 

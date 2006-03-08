@@ -96,9 +96,12 @@ CString::CString(LPCSTR lpsz)
 	}
 }
 
-CString::CString(LPCSTR lpsz,DWORD nLength)
+CString::CString(LPCSTR lpsz,SIZE_T nLength)
 :	m_nBase(10)
 {
+	if (nLength==SIZE_T(-1))
+		nLength=istrlen(lpsz);
+
 	if (lpsz==NULL || nLength<=0)
 	{
 		m_pData=NULL;
