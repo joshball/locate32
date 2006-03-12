@@ -1253,73 +1253,85 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 				}
 			}
 
-			// Separate strings
-			for (nIndex=0;Name[nIndex]!=',' && Name[nIndex]!=';' && nIndex<Name.GetLength();nIndex++);
-			if (nIndex==Name.GetLength())
+			
+			LPCSTR pStr=Name;
+			
+			for(;;)
 			{
-				// Only one string
-				if (!(nRet&CAdvancedDlg::flagMatchCase))
+				// Check whether parenthes are used
+				BOOL bParenthes=FALSE;
+				for (nIndex=0;pStr[nIndex]==' ';nIndex++);
+				if (pStr[nIndex]=='\"')
 				{
-					// Insert asterisks to begin and end of name
-					if (Name[0]!='*')
-						Name.InsChar(0,'*');
-					if (Name.LastChar()!='*')
-						Name << '*';
+					// Parenthes on use
+					bParenthes=TRUE;
+					pStr+=nIndex+1;
+					for (nIndex=0;pStr[nIndex]!='\"' && pStr[nIndex]!='\0';nIndex++);
 				}
-				aNames.Add(alloccopy(Name,Name.GetLength()));
-			}
-			else
-			{
-				LPCSTR pStr=Name;
-				BOOL bContinue=TRUE;
-
-				while (bContinue)
+				else
 				{
-					if (pStr[nIndex]=='\0')
-						bContinue=FALSE;
+					for (nIndex=0;pStr[nIndex]!=',' && pStr[nIndex]!=';' && pStr[nIndex]!='\0';nIndex++);
+				}
+		
 
-					if (nIndex>0)
+				if (nIndex>0)
+				{
+					if (nRet&CAdvancedDlg::flagMatchCase)
+						aNames.Add(alloccopy(pStr,nIndex));
+					else
 					{
-						if (nRet&CAdvancedDlg::flagMatchCase)
-							aNames.Add(alloccopy(pStr,nIndex));
-						else
+						// Inserting '*'
+						char* pTemp=new char[nIndex+3];
+						if (pStr[0]!='*')
 						{
-							// Inserting '*'
-							char* pTemp=new char[nIndex+3];
-							if (pStr[0]!='*')
-							{
-								pTemp[0]='*';
-								sMemCopy(pTemp+1,pStr,nIndex);
-								if (pStr[nIndex-1]!='*')
-								{	
-									pTemp[nIndex+1]='*';
-									pTemp[nIndex+2]='\0';
-								}
-								else
-									pTemp[nIndex+1]='\0';
+							pTemp[0]='*';
+							sMemCopy(pTemp+1,pStr,nIndex);
+							if (pStr[nIndex-1]!='*')
+							{	
+								pTemp[nIndex+1]='*';
+								pTemp[nIndex+2]='\0';
 							}
 							else
-							{
-								sMemCopy(pTemp,pStr,nIndex);
-								if (pStr[nIndex-1]!='*')
-								{	
-									pTemp[nIndex]='*';
-									pTemp[nIndex+1]='\0';
-								}
-								else
-									pTemp[nIndex]='\0';
-							}
-							aNames.Add(pTemp);
-
-
+								pTemp[nIndex+1]='\0';
 						}
+						else
+						{
+							sMemCopy(pTemp,pStr,nIndex);
+							if (pStr[nIndex-1]!='*')
+							{	
+								pTemp[nIndex]='*';
+								pTemp[nIndex+1]='\0';
+							}
+							else
+								pTemp[nIndex]='\0';
+						}
+						aNames.Add(pTemp);
+
+
+					}
+	
+					if (bParenthes)
+					{
+						if (pStr[nIndex]!='\"')
+							break;
 
 						pStr+=nIndex+1;
-						for (nIndex=0;pStr[nIndex]!=',' && pStr[nIndex]!=';' && pStr[nIndex]!='\0';nIndex++);
-						
+						while (*pStr==' ')
+							pStr++;
+
+						if (*pStr!=',')
+							break;
+
+						pStr++;
 					}
-				}
-			}			
+					else
+					{
+						if (pStr[nIndex]=='\0')
+							break;
+						pStr+=nIndex+1;	
+					}
+				}				
+			}
 		}
 	}
 	

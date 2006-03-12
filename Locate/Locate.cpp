@@ -630,7 +630,8 @@ int main (int argc,char * argv[])
 		
 		HRSRC hRc=FindResource(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDR_LOCATEHELP),"HELPTEXT");
 		HGLOBAL hGlobal=LoadResource(GetLanguageSpecificResourceHandle(),hRc);
-		fprintf(stderr,(LPCSTR)LockResource(hGlobal));
+		LPCSTR szString=(LPCSTR)LockResource(hGlobal);
+		fputs(szString,stderr);
 		
 		FreeLibrary(GetLanguageSpecificResourceHandle());
 		return 1;
