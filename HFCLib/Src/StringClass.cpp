@@ -4121,14 +4121,14 @@ CStringW::CStringW(int nID)
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return;
 	}
-	m_nDataLen=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
+	m_nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
 		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete szBuffer;
 			szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];
-			m_nDataLen=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,i*STR_LOADSTRINGBUFLEN);
+			m_nDataLen=::LoadString(nID,szBuffer,i*STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 		}
 	}
 	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
@@ -4151,14 +4151,14 @@ CStringW::CStringW(int nID,TypeOfResourceHandle bType)
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return;
 	}
-	m_nDataLen=::LoadStringW(GetResourceHandle(bType),nID,szBuffer,STR_LOADSTRINGBUFLEN);
+	m_nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,bType);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
 		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete szBuffer;
 			szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];
-			m_nDataLen=::LoadStringW(GetResourceHandle(bType),nID,szBuffer,i*STR_LOADSTRINGBUFLEN);
+			m_nDataLen=::LoadString(nID,szBuffer,i*STR_LOADSTRINGBUFLEN,bType);
 		}
 	}
 	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
@@ -4189,7 +4189,7 @@ CStringW::CStringW(UINT nID)
 		{
 			delete szBuffer;
 			szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];
-			m_nDataLen=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,i*STR_LOADSTRINGBUFLEN);
+			m_nDataLen=::LoadString(nID,szBuffer,i*STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 		}
 	}
 	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
@@ -4219,7 +4219,7 @@ CStringW::CStringW(UINT nID,TypeOfResourceHandle bType)
 		{
 			delete szBuffer;
 			szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];
-			m_nDataLen=::LoadStringW(GetResourceHandle(bType),nID,szBuffer,i*STR_LOADSTRINGBUFLEN);
+			m_nDataLen=::LoadString(nID,szBuffer,i*STR_LOADSTRINGBUFLEN,bType);
 		}
 	}
 	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
@@ -4240,7 +4240,7 @@ BOOL CStringW::LoadString(UINT nID)
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return FALSE;
 	}
-	m_nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN);
+	m_nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData!=NULL)

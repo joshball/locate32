@@ -205,12 +205,17 @@ LONGLONG GetDiskFreeSpace(LPCSTR szDrive);
 #ifdef WIN32
 LPITEMIDLIST GetFileIDList(LPCSTR lpszFileName);
 LPITEMIDLIST GetFolderIDList(LPCSTR lpszFileName);
+DWORD_PTR GetFileInfo(LPCSTR pszPath,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags);
+DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags);
+DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags);
+DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags);
 DWORD GetIDListSize(LPITEMIDLIST lpil);
 HRESULT CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc=NULL,LPCSTR pszParams=NULL);
 HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget);
 HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath=NULL);
 BOOL RunRegistryCommand(HKEY hKey,LPCSTR szFile);
-DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,char* szName,DWORD dwBufferLen);
+DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen);
+DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,DWORD dwBufferLen);
 BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,SIZE_T nBufferLen);
 #endif
 
@@ -261,4 +266,27 @@ inline DWORD WaitForMutex(HANDLE hMutex,DWORD dwTimeOut=5000)
 }
 
 
+#endif
+
+
+#ifdef WIN32
+inline DWORD_PTR GetFileInfo(LPCSTR pszPath,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags)
+{
+	return SHGetFileInfo(pszPath,dwFileAttributes,psfi,sizeof(SHFILEINFO),uFlags);
+}
+
+inline DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags)
+{
+	return SHGetFileInfoW(pszPath,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags);
+}
+
+inline DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags)
+{
+	return SHGetFileInfo((LPCSTR)piil,dwFileAttributes,psfi,sizeof(SHFILEINFO),uFlags|SHGFI_PIDL);
+}
+
+inline DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags)
+{
+	return SHGetFileInfoW((LPCWSTR)piil,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags|SHGFI_PIDL);
+}
 #endif

@@ -69,16 +69,21 @@ UINT CWnd::GetDlgItemText(int nIDDlgItem,CStringA& str) const
 	return len;
 }
 
-UINT CWnd::GetText(LPTSTR lpszText,UINT cchTextMax)
+UINT CWnd::GetText(LPSTR lpszText,UINT cchTextMax) const
 {
 	return ::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText);
 }
 
-UINT CWnd::GetText(CStringA& str)
+UINT CWnd::GetText(CStringA& str) const
 {
 	UINT len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
 	len=::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)len+1,(LPARAM)str.GetBuffer(len));
 	return len;
+}
+
+UINT CWnd::GetTextLength() const
+{
+	return ::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
 }
 
 BOOL CWnd::SetText(LPCSTR lpsz)
@@ -88,7 +93,7 @@ BOOL CWnd::SetText(LPCSTR lpsz)
 
 BOOL CWnd::SetText(LPCWSTR lpsz)
 {
-	return ::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz);
+	return ::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz);
 }
 
 void CWnd::CenterWindow()
@@ -358,16 +363,16 @@ UINT CWnd::GetDlgItemText(int nIDDlgItem,CStringW& str)
 	return len;
 }
 
-UINT CWnd::GetText(CStringW& str)
+UINT CWnd::GetText(CStringW& str) const
 {
-	UINT len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
+	UINT len=::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0);
 	LPWSTR text=new WCHAR[len];
 	if (text==NULL)
 	{
 		SetHFCError(HFC_CANNOTALLOC);
 		return FALSE;
 	}
-	len=::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
+	len=::SendMessageW(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
 	str=text;
 	delete[] text;
 	return len;

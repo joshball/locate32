@@ -32,3 +32,5 @@ parameters:
     -lrn        don't replace spaces with asterisk
     -v			verbose mode, information about search
     -h          help, this screen
+
+EOF

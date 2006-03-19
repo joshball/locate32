@@ -29,10 +29,10 @@ inline CLocateDlg::CNameDlg::CNameDlg()
 {
 }
 
-inline WORD CLocateDlg::CNameDlg::ComputeChecksumFromDir(LPCSTR szDir)
+inline WORD CLocateDlg::CNameDlg::ComputeChecksumFromDir(LPCWSTR szDir)
 {				
 	WORD wCheksum=0;
-	for (int j=0;szDir[j]!='\0';j++)
+	for (int j=0;szDir[j]!=L'\0';j++)
 		wCheksum+=WORD(szDir[j]*(j+1));
 	return wCheksum;
 }
@@ -56,34 +56,34 @@ inline void CLocateDlg::CNameDlg::DirSelection::FreeData()
 	}
 }
 
-inline void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPSTR>& aDirectories,LPCSTR szDirectory)
+inline void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory)
 {
 	for (int i=0;i<aDirectories.GetSize();i++)
 	{
-		if (strcmp(aDirectories[i],szDirectory)==0)
+		if (wcscmp(aDirectories[i],szDirectory)==0)
 			return;
 	}
 	aDirectories.Add(alloccopy(szDirectory));
 }
 
-inline void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPSTR>& aDirectories,LPCSTR szDirectory,DWORD dwLength)
+inline void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,DWORD dwLength)
 {
 	for (int i=0;i<aDirectories.GetSize();i++)
 	{
-		if (strncmp(aDirectories[i],szDirectory,dwLength)==0)
+		if (wcsncmp(aDirectories[i],szDirectory,dwLength)==0)
 		{
-			if (aDirectories[i][dwLength]=='\0')
+			if (aDirectories[i][dwLength]==L'\0')
 				return;
 		}
 	}
 	aDirectories.Add(alloccopy(szDirectory,dwLength));
 }
 
-inline void CLocateDlg::CNameDlg::AddDirectoryToListTakePtr(CArray<LPSTR>& aDirectories,LPSTR szDirectory)
+inline void CLocateDlg::CNameDlg::AddDirectoryToListTakePtr(CArray<LPWSTR>& aDirectories,LPWSTR szDirectory)
 {
 	for (int i=0;i<aDirectories.GetSize();i++)
 	{
-		if (strcmp(aDirectories[i],LPCSTR(szDirectory))==0)
+		if (wcscmp(aDirectories[i],LPCWSTR(szDirectory))==0)
 		{
 			delete[] szDirectory;
 			return;

@@ -127,10 +127,15 @@ LONG_PTR NextCharIndex(LPCWSTR,const WCHAR,LONG_PTR);
 #endif
 
 #ifdef WIN32
-int strcasecmp(LPCTSTR,LPCTSTR);
+int strcasecmp(LPCSTR,LPCTSTR);
+#endif
+int strcasencmp(LPCSTR s1,LPCSTR s2,DWORD n);
+
+#ifdef DEF_WCHAR
+int strcasecmp(LPCWSTR,LPCWSTR);
+int strcasencmp(LPCWSTR s1,LPCWSTR s2,DWORD n);
 #endif
 
-int strcasencmp(LPCTSTR s1,LPCTSTR s2,DWORD n);
 int _readnum(int base,LPCSTR& str,SIZE_T length=SIZE_T(-1));
 
 BYTE* dataparser(LPCSTR pString,SIZE_T dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength=NULL);

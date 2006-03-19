@@ -25,3 +25,5 @@ With 'str:' and 'uni:' you can use:
 '\t': tabulatur
 '\b': bell
 '\XX': hex byte 'XX', for example \FF
+
+EOF

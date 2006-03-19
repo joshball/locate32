@@ -2070,9 +2070,30 @@ inline CComboBoxEx::CComboBoxEx(HWND hWnd)
 	CEdit::m_hWnd=(HWND)::SendMessage(hWnd,CBEM_GETEDITCONTROL,0,0);
 }
 
+inline void CComboBoxEx::AssignToDlgItem(HWND hDialog,int nID)
+{ 
+	CCommonCtrl::m_hWnd=::GetDlgItem(hDialog,nID); 
+	CComboBox::m_hWnd=(HWND)::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETCOMBOCONTROL,0,0);
+	CEdit::m_hWnd=(HWND)::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETEDITCONTROL,0,0);
+}
+
+inline void CComboBoxEx::SetHandle(HWND hWnd) 
+{
+	CCommonCtrl::m_hWnd=hWnd; 
+	CComboBox::m_hWnd=(HWND)::SendMessage(hWnd,CBEM_GETCOMBOCONTROL,0,0);
+	CEdit::m_hWnd=(HWND)::SendMessage(hWnd,CBEM_GETEDITCONTROL,0,0);
+}
+	
+	
+
 inline int CComboBoxEx::InsertItem(const COMBOBOXEXITEM* pItem)
 {
 	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_INSERTITEM,0,(LPARAM)pItem);
+}
+
+inline int CComboBoxEx::InsertItem(const COMBOBOXEXITEMW* pItem)
+{
+	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_INSERTITEMW,0,(LPARAM)pItem);
 }
 
 inline HIMAGELIST CComboBoxEx::GetImageList() const
@@ -2090,9 +2111,19 @@ inline BOOL CComboBoxEx::GetItem(COMBOBOXEXITEM* pItem) const
 	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETITEM,0,(LPARAM)pItem);
 }
 
+inline BOOL CComboBoxEx::GetItem(COMBOBOXEXITEMW* pItem) const
+{
+	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETITEMW,0,(LPARAM)pItem);
+}
+
 inline BOOL CComboBoxEx::SetItem(const COMBOBOXEXITEM* pItem)
 {
 	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_SETITEM,0,(LPARAM)pItem);
+}
+
+inline BOOL CComboBoxEx::SetItem(const COMBOBOXEXITEMW* pItem)
+{
+	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_SETITEMW,0,(LPARAM)pItem);
 }
 
 inline BOOL CComboBoxEx::DeleteItem(int nItem)

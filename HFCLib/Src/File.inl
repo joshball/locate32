@@ -361,7 +361,7 @@ inline CSearchHexFromFile::CSearchHexFromFile(LPCSTR szString,BOOL bMatchCase)
 	for (register LONG_PTR i=dwLength-1;i>=0;i--)
 		pSearchValue[i]=szString[i];
 	if (!bMatchCase)
-		CharLowerBuff(LPSTR(pSearchValue),dwLength);
+		CharLowerBuff(LPSTR(pSearchValue),(DWORD)dwLength);
 #else
 	if (!bMatchCase)
 	{

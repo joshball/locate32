@@ -53,6 +53,7 @@ DWORD GetIDListSize(LPITEMIDLIST lpil)
 	return nSize+2;
 }
 
+
 HRESULT CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc,LPCSTR pszParams)
 {
 	HRESULT hres;
@@ -197,7 +198,7 @@ BOOL RunRegistryCommand(HKEY hKey,LPCTSTR szFile)
 	return TRUE;
 }
 
-DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,char* szName,SIZE_T dwBufferLen)
+DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,SIZE_T dwBufferLen)
 {
 	// May be computer?
 	IShellFolder *psf;
@@ -230,20 +231,56 @@ DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,char* szName,SIZE_T dwBufferLe
 	switch (str.uType)
 	{
 	case STRRET_CSTR:
-		{
-			SIZE_T dwLength=istrlen(str.cStr);
-			if (dwLength>dwBufferLen-1)
-				dwLength=dwBufferLen-1;
-			CopyMemory(szName,str.cStr,dwLength);
-			szName[dwLength];
-			return dwLength+1;
-		}
+		StringCbCopy(szName,dwBufferLen,str.cStr);
+		return istrlen(szName);
 	case STRRET_WSTR:
-		return WideCharToMultiByte(CP_ACP,0,str.pOleStr,wcslen(str.pOleStr)+1,szName,299,NULL,NULL);
+		return WideCharToMultiByte(CP_ACP,0,str.pOleStr,wcslen(str.pOleStr)+1,szName,dwBufferLen,NULL,NULL);
 	}
 	return 0;
 }
 
+#ifdef DEF_WCHAR
+DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,SIZE_T dwBufferLen)
+{
+	// May be computer?
+	IShellFolder *psf;
+	
+	if (!SUCCEEDED(SHGetDesktopFolder(&psf)))
+		return 0;
+
+	SHDESCRIPTIONID di;
+	if (!SUCCEEDED(SHGetDataFromIDList(psf,lpiil,SHGDFIL_DESCRIPTIONID,&di,sizeof(SHDESCRIPTIONID))))
+	{
+		psf->Release();
+		return 0;
+	}
+
+	if (di.clsid!=CLSID_NetworkPlaces)
+	{
+		psf->Release();
+		return 0;
+	}
+
+	STRRET str;
+	if (!SUCCEEDED(psf->GetDisplayNameOf(lpiil,SHGDN_NORMAL | SHGDN_FORPARSING,&str)))
+	{
+		psf->Release();
+		return 0;
+	}
+	psf->Release();
+
+
+	switch (str.uType)
+	{
+	case STRRET_CSTR:
+		return MultiByteToWideChar(CP_ACP,0,str.cStr,-1,szName,dwBufferLen);
+	case STRRET_WSTR:
+		StringCbCopyW(szName,dwBufferLen,str.pOleStr);
+		return wcslen(szName);
+	}
+	return 0;
+}
+#endif
 
 
 BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,SIZE_T nBufferLen)

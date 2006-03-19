@@ -296,7 +296,10 @@ public:
 	virtual BOOL Close();
 
 	static BOOL IsFile(LPCTSTR szFileName);
-	static INT IsDirectory(LPCTSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
+	static INT IsDirectory(LPCSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
+#ifdef DEF_WCHAR
+	static INT IsDirectory(LPCWSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
+#endif
 	static BOOL IsValidFileName(LPCSTR szFile,LPSTR szShortName=NULL); // Parent directory must exist
 	static BOOL IsValidPath(LPCSTR szPath,BOOL bAsDirectory=FALSE);
 
@@ -704,7 +707,7 @@ public:
 	SIZE_T QueryValueLength(LPCSTR lpszValueName=NULL) const;
 	SIZE_T QueryValueLength(LPCSTR lpszValueName,BOOL& bIsOk) const;
 	
-	LONG SetValue(LPCSTR lpValueName,LPCTSTR lpData,SIZE_T cbData,DWORD dwType=REG_BINARY);
+	LONG SetValue(LPCSTR lpValueName,LPCSTR lpData,SIZE_T cbData,DWORD dwType=REG_BINARY);
 	BOOL SetValue(LPCSTR lpValueName,CString& strData);
 	LONG SetValue(LPCSTR lpValueName,LPCSTR strData);
 	BOOL SetValue(LPCSTR lpValueName,DWORD dwData);

@@ -48,6 +48,7 @@ public:
 
 	HWND GetHandle() const { return m_hWnd; }
 	void SetHandle(HWND hWnd) { m_hWnd=hWnd; }
+	void AssignToDlgItem(HWND hDialog,int nID) { m_hWnd=::GetDlgItem(hDialog,nID); }
 	operator HWND() const { return m_hWnd; }
 	
 	BOOL operator==(const CWnd& wnd) const { return (m_hWnd==wnd.m_hWnd); }
@@ -135,8 +136,9 @@ public:
 	BOOL EnableWindow(BOOL bEnable=TRUE) { return ::EnableWindow(m_hWnd,bEnable); }
 	HWND SetFocus() const { return ::SetFocus(m_hWnd); }
 	
-	UINT GetText(LPTSTR lpszText,UINT cchTextMax) { return ::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText); }
-	UINT GetText(CStringA& str);
+	UINT GetTextLength() const { return ::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0); } 
+	UINT GetText(LPTSTR lpszText,UINT cchTextMax) const { return ::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText); } 
+	UINT GetText(CStringA& str) const;
 	BOOL SetText(LPCSTR lpsz) { return ::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); }
 
 #ifdef DEF_WCHAR
@@ -144,8 +146,8 @@ public:
 	int GetWindowText(LPWSTR lpString,int nMaxCount) const { return ::GetWindowTextW(m_hWnd,lpString,nMaxCount); }
 	
 	//widechar support
-	UINT GetText(CStringW& str);
-	BOOL SetText(LPCWSTR lpsz) { return ::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); }
+	UINT GetText(CStringW& str) const;
+	BOOL SetText(LPCWSTR lpsz) { return ::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); }
 #endif
 
 	friend class CWnd;
@@ -387,8 +389,8 @@ public:
 	int SetItemData(int nIndex, DWORD dwItemData);
 	void* GetItemDataPtr(int nIndex) const;
 	int SetItemDataPtr(int nIndex, void* pData);
-	int GetLBText(int nIndex, LPTSTR lpszText) const;
-	void GetLBText(int nIndex, CStringA& rString) const;
+	int GetLBText(int nIndex, LPSTR lpszText) const;
+	int GetLBText(int nIndex, CStringA& rString) const;
 	int GetLBTextLen(int nIndex) const;
 
 	int SetItemHeight(int nIndex, UINT cyItemHeight);
@@ -416,7 +418,8 @@ public:
 	void Paste();
 
 #ifdef DEF_WCHAR
-	void GetLBText(int nIndex, CStringW& rString) const;
+	int GetLBText(int nIndex, LPWSTR lpszText) const;
+	int GetLBText(int nIndex, CStringW& rString) const;
 	int FindStringExact(int nIndexStart, LPCWSTR lpszFind) const;
 	int AddString(LPCWSTR lpszString);
 	int InsertString(int nIndex, LPCWSTR lpszString);

@@ -919,10 +919,17 @@ inline int CComboBox::SetItemDataPtr(int nIndex, void* pData)
 	return ::SendMessage(m_hWnd,CB_SETITEMDATA,nIndex,(LPARAM)pData);
 }
 
-inline int CComboBox::GetLBText(int nIndex, LPTSTR lpszText) const
+inline int CComboBox::GetLBText(int nIndex, LPSTR lpszText) const
 { 
 	return ::SendMessage(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)lpszText);
 }
+
+#ifdef DEF_WCHAR
+inline int CComboBox::GetLBText(int nIndex, LPWSTR lpszText) const
+{ 
+	return ::SendMessageW(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)lpszText);
+}
+#endif
 
 inline int CComboBox::GetLBTextLen(int nIndex) const
 {
@@ -978,15 +985,9 @@ inline void CComboBox::ShowDropDown(BOOL bShowIt)
 
 inline int CComboBox::AddString(LPCSTR lpszString)
 {
-	return ::SendMessage(m_hWnd,CB_ADDSTRING,0,(LPARAM)lpszString);
+	return ::SendMessageA(m_hWnd,CB_ADDSTRING,0,(LPARAM)lpszString);
 }
 
-#ifdef DEF_WCHAR
-inline int CComboBox::AddString(LPCWSTR lpszString)
-{
-	return ::SendMessage(m_hWnd,CB_ADDSTRING,0,(LPARAM)lpszString);
-}
-#endif
 
 inline int CComboBox::DeleteString(UINT nIndex)
 {
@@ -995,15 +996,9 @@ inline int CComboBox::DeleteString(UINT nIndex)
 
 inline int CComboBox::InsertString(int nIndex,LPCSTR lpszString)
 {
-	return ::SendMessage(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)lpszString);
+	return ::SendMessageA(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)lpszString);
 }
 
-#ifdef DEF_WCHAR
-inline int CComboBox::InsertString(int nIndex,LPCWSTR lpszString)
-{
-	return ::SendMessage(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)lpszString);
-}
-#endif
 
 inline void CComboBox::ResetContent()
 {
@@ -1012,39 +1007,22 @@ inline void CComboBox::ResetContent()
 
 inline int CComboBox::Dir(UINT attr, LPCSTR lpszWildCard)
 {
-	return ::SendMessage(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)lpszWildCard);
+	return ::SendMessageA(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)lpszWildCard);
 }
 
-#ifdef DEF_WCHAR
-inline int CComboBox::Dir(UINT attr, LPCWSTR lpszWildCard)
-{
-	return ::SendMessage(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)lpszWildCard);
-}
-#endif
+
 
 inline int CComboBox::FindString(int nStartAfter, LPCSTR lpszString) const
 {
-	return ::SendMessage(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
+	return ::SendMessageA(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
 }
 
-#ifdef DEF_WCHAR
-inline int CComboBox::FindString(int nStartAfter, LPCWSTR lpszString) const
-{
-	return ::SendMessage(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
-}
-#endif
+
 
 inline int CComboBox::SelectString(int nStartAfter, LPCSTR lpszString)
 {
-	return ::SendMessage(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
+	return ::SendMessageA(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
 }
-
-#ifdef DEF_WCHAR
-inline int CComboBox::SelectString(int nStartAfter, LPCWSTR lpszString)
-{
-	return ::SendMessage(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
-}
-#endif
 
 inline void CComboBox::Clear()
 {

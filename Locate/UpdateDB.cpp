@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   Updatedb.exe v2.99.6.3050 */
+   Updatedb.exe v2.99.6.3190 */
 
 #include <HFCLib.h>
 #include "locatedb/locatedb.h"
@@ -7,9 +7,9 @@
 #include "lan_resources.h"
 
 #ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 3.0 beta 6.3050";
+		LPCSTR szVersionStr="updtdb32 3.0 beta 6.3190";
 #else
-		LPCSTR szVersionStr="updatedb 3.0 beta 6.3050";
+		LPCSTR szVersionStr="updatedb 3.0 beta 6.3190";
 #endif
 
 
@@ -397,16 +397,26 @@ int main (int argc,char ** argv)
     if (helps==1)
     {
 #ifdef WIN32
-		fprintf(stderr,"%s\n",szVersionStr);
+		fprintf(stdout,"%s\n",szVersionStr);
 #else
-        fprintf(stderr,"%s\nusage updatedb",szVersionStr);
+        fprintf(stdout,"%s\nusage updatedb",szVersionStr);
 #endif
 
 		HRSRC hRc=FindResource(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDR_UPDATEDBHELP),"HELPTEXT");
 		HGLOBAL hGlobal=LoadResource(GetLanguageSpecificResourceHandle(),hRc);
-			
-		fprintf(stderr,(LPCSTR)LockResource(hGlobal));
+		LPCSTR pStr=(LPCSTR)LockResource(hGlobal);
 
+		// Counting length
+		int len;
+		for (len=0;pStr[len]!='\0';len++)
+		{
+			if (pStr[len]=='E' && pStr[len+1]=='O' && pStr[len+2]=='F')
+				break;
+		}
+
+
+		fwrite(pStr,1,len,stdout);
+		
 		FreeLibrary(GetLanguageSpecificResourceHandle());
 		return 1;
     }

@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2005 Janne Huttunen
-   database locater v2.99.5.10220               */
+/* Copyright (c) 1997-2006 Janne Huttunen
+   database locater v2.99.6.3190               */
 
 #if !defined(LOCATER_H)
 #define LOCATER_H
@@ -97,6 +97,9 @@ public:
 	BOOL LocateFiles(BOOL bThreaded,LPCSTR* szName,DWORD dwNames,
 		LPCSTR* szExtensions,DWORD nExtensions,
 		LPCSTR* szDirectories,DWORD nDirectories); 
+	BOOL LocateFiles(BOOL bThreaded,LPCWSTR* szName,DWORD dwNames,
+		LPCWSTR* szExtensions,DWORD nExtensions,
+		LPCWSTR* szDirectories,DWORD nDirectories); 
 	BOOL LocateFiles(BOOL bThreaded,LPCSTR szRegExp,
 		LPCSTR* szDirectories,DWORD nDirectories); 
 
@@ -131,6 +134,7 @@ private:
 	void CheckFolder(DWORD nPathLen);
 
 	BOOL SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCSTR* szDirectories,DWORD nDirectories);
+	BOOL SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCWSTR* szDirectories,DWORD nDirectories);
 		
 	BOOL IsFileNameWhatAreWeLookingFor() const;
 	BOOL IsFolderNameWhatAreWeLookingFor() const;

@@ -578,8 +578,9 @@ public:
 	BOOL SetDlgItemInt(int idControl,UINT uValue,BOOL fSigned=TRUE) const;
 	BOOL SetDlgItemText(int idControl,LPCSTR lpsz) const;	
 	
-	virtual UINT GetText(LPTSTR lpszText,UINT cchTextMax);
-	virtual UINT GetText(CStringA& str);
+	virtual UINT GetText(LPTSTR lpszText,UINT cchTextMax) const;
+	virtual UINT GetText(CStringA& str) const;
+	virtual UINT GetTextLength() const;
 	virtual BOOL SetText(LPCSTR lpsz);
 
 	void DragAcceptFiles(BOOL bAccept);
@@ -612,7 +613,7 @@ public:
 	BOOL SetDlgItemText(int idControl,LPCWSTR lpsz) const;	
 	
 	virtual BOOL SetText(LPCWSTR lpsz);
-	virtual UINT GetText(CStringW& str);
+	virtual UINT GetText(CStringW& str) const;
 	
 	BOOL PostMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::PostMessageW(m_hWnd,uMsg,wParam,lParam); }
 	LRESULT SendMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::SendMessageW(m_hWnd,uMsg,wParam,lParam); }

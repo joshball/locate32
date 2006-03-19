@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2005 Janne Huttunen
-   database locater v2.99.5.10220                 */
+/* Copyright (c) 1997-2006 Janne Huttunen
+   database locater v2.99.6.3190                 */
 
 #include <HFCLib.h>
 
@@ -636,6 +636,30 @@ inline BOOL CLocater::SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCSTR* szDi
 		return LocatingProc();
 }
 
+inline BOOL CLocater::SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCWSTR* szDirectories,DWORD nDirectories)
+{
+	for (DWORD i=0;i<nDirectories;i++)
+	{
+		CString* pTmp=new CString(szDirectories[i]);
+		while (pTmp->LastChar()=='\\')
+			pTmp->DelChar(pTmp->GetLength()-1);
+		m_aDirectories.Add(pTmp);
+	}
+	
+#ifdef WIN32
+	if (bThreaded)
+	{
+		DWORD dwThreadID;
+		LocaterDebugMessage("CLocater::LocateFiles CREATING THREAD");
+		m_hThread=CreateThread(NULL,0,CLocater::LocateThreadProc,this,0,&dwThreadID);
+		LocaterDebugMessage("CLocater::LocateFiles CREATING THREAD OK?");
+		return m_hThread!=NULL;
+	}
+	else
+#endif
+		return LocatingProc();
+}
+
 void CLocater::SetAdvanced(DWORD dwFlags,BYTE* pContainData,DWORD dwContainDataLength,
 						   DWORD dwMaxFoundFiles)
 {
@@ -661,6 +685,27 @@ void CLocater::SetAdvanced(DWORD dwFlags,BYTE* pContainData,DWORD dwContainDataL
 BOOL CLocater::LocateFiles(BOOL bThreaded,LPCSTR* szNames,DWORD nNames,
 								LPCSTR* szExtensions,DWORD nExtensions,
 								LPCSTR* szDirectories,DWORD nDirectories)
+{
+
+	DWORD i;
+	for (i=0;i<nNames;i++)
+	{
+		if (szNames[i]!=NULL && szNames[i][0]!='\0')
+		{
+			CString* pName=new CString(szNames[i]);
+			pName->MakeLower();
+            m_aNames.Add(pName);
+		}
+	}
+	for (i=0;i<nExtensions;i++)
+		m_aExtensions.Add(new CString(szExtensions[i]));
+
+	return SetDirectoriesAndStartToLocate(bThreaded,szDirectories,nDirectories);	
+}
+
+BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR* szNames,DWORD nNames,
+								LPCWSTR* szExtensions,DWORD nExtensions,
+								LPCWSTR* szDirectories,DWORD nDirectories)
 {
 
 	DWORD i;
@@ -1013,7 +1058,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 	else
 	{	
 	
-		if (m_aNames.GetSize()==0 && m_aExtensions.GetSize())
+		if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
 			return TRUE;
 
 		// Checking extension first

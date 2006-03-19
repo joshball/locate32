@@ -659,13 +659,16 @@ public:
 	BOOL Create(DWORD dwStyle, const RECT* rect, HWND hParentWnd, UINT nID);
 	
 	int InsertItem(const COMBOBOXEXITEM* pItem);
+	int InsertItem(const COMBOBOXEXITEMW* pItem);
 	int InsertItem(LPCSTR pszText,int iImage=-1,int iSelectedImage=-1,int iOverlay=-1,int iIndent=0,LPARAM lParam=0,UINT mask=0);
 	int InsertItem(LPCWSTR pszText,int iImage=-1,int iSelectedImage=-1,int iOverlay=-1,int iIndent=0,LPARAM lParam=0,UINT mask=0);
 	
 	HIMAGELIST GetImageList() const;
 	HIMAGELIST SetImageList(HIMAGELIST hImageList);
 	BOOL GetItem(COMBOBOXEXITEM* pItem) const;
+	BOOL GetItem(COMBOBOXEXITEMW* pItem) const;
 	BOOL SetItem(const COMBOBOXEXITEM* pItem);
+	BOOL SetItem(const COMBOBOXEXITEMW* pItem);
 	BOOL DeleteItem(int nItem);
 	HWND GetComboControl() const;
 	HWND GetEditControl() const;
@@ -692,7 +695,8 @@ public:
 	BOOL HasEditChanged() const;
 
 	HWND GetHandle() const { return CCommonCtrl::m_hWnd; }
-	void SetHandle(HWND hWnd) { CCommonCtrl::m_hWnd=hWnd; }
+	void SetHandle(HWND hWnd);
+	void AssignToDlgItem(HWND hDialog,int nID);
 	
 	BOOL DestroyWindow() {return CCommonCtrl::DestroyWindow();}
 	

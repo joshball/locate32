@@ -1,7 +1,7 @@
-/* Copyright (c) 1997-2005 Janne Huttunen
-   locate.exe v2.99.6.3050                 */
+/* Copyright (c) 1997-2006 Janne Huttunen
+   locate.exe v2.99.6.3190                 */
 
-const char* szVersionStr="locate 3.0 beta 6.3050";
+const char* szVersionStr="locate 3.0 beta 6.3190";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -626,12 +626,22 @@ int main (int argc,char * argv[])
    
 	if (options.helps==1)
 	{
-		fprintf(stderr,"%s\n",szVersionStr);
+		fprintf(stdout,"%s\n",szVersionStr);
 		
 		HRSRC hRc=FindResource(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDR_LOCATEHELP),"HELPTEXT");
 		HGLOBAL hGlobal=LoadResource(GetLanguageSpecificResourceHandle(),hRc);
-		LPCSTR szString=(LPCSTR)LockResource(hGlobal);
-		fputs(szString,stderr);
+		LPCSTR pStr=(LPCSTR)LockResource(hGlobal);
+		
+		// Counting length
+		int len;
+		for (len=0;pStr[len]!='\0';len++)
+		{
+			if (pStr[len]=='E' && pStr[len+1]=='O' && pStr[len+2]=='F')
+				break;
+		}
+
+
+		fwrite(pStr,1,len,stdout);
 		
 		FreeLibrary(GetLanguageSpecificResourceHandle());
 		return 1;

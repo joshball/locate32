@@ -1101,7 +1101,7 @@ BOOL CFile::IsFile(LPCTSTR szFileName)
 #endif
 }
 
-INT CFile::IsDirectory(LPCTSTR szDirectoryName)
+INT CFile::IsDirectory(LPCSTR szDirectoryName)
 {
 #ifdef WIN32
 	HANDLE hFind;
@@ -1217,6 +1217,124 @@ INT CFile::IsDirectory(LPCTSTR szDirectoryName)
 	return !findfirst(szDirectoryName,&fd,FA_DIREC);
 #endif
 }
+
+#ifdef DEF_WCHAR
+INT CFile::IsDirectory(LPCWSTR szDirectoryName)
+{
+	if (!IsFullUnicodeSupport())
+		return CFile::IsDirectory(CString(szDirectoryName));
+
+
+	HANDLE hFind;
+	WIN32_FIND_DATAW fd;
+	int ret=TRUE;
+	if (szDirectoryName[0]==L'\0')
+		return 0;
+	if (szDirectoryName[1]==L'\0')
+		return 0;
+	if (szDirectoryName[2]==L'\0')
+		return 0;
+	if (szDirectoryName[1]==L':' && szDirectoryName[2]==L'\\' && szDirectoryName[3]==L'\0')
+	{
+		switch (GetDriveTypeW(szDirectoryName))
+		{
+		case DRIVE_UNKNOWN:
+		case DRIVE_NO_ROOT_DIR:
+			return 0;
+		case DRIVE_FIXED:
+			return 1;
+		default:
+			return 2;
+		}
+	}
+	
+	// Taking last '\\' 
+	LPWSTR szPath;
+	SIZE_T dwPathLen=istrlenw(szDirectoryName);
+	if (szDirectoryName[dwPathLen-1]==L'\\' && dwPathLen>3)
+	{
+		szPath=new WCHAR[dwPathLen+5];
+		iMemCopy(szPath,szDirectoryName,--dwPathLen);
+		szPath[dwPathLen]=L'\0';
+	}
+	else
+		szPath=LPWSTR(szDirectoryName);
+
+	hFind=FindFirstFileW(szPath,&fd);
+	if (hFind!=INVALID_HANDLE_VALUE)
+	{
+		while (!(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) && ret)
+			ret=FindNextFileW(hFind,&fd);
+	
+		if (szPath!=szDirectoryName)
+			delete[] szPath;
+
+		FindClose(hFind);	
+		if (ret)
+		{
+			if (szDirectoryName[0]==L'\\')
+			{
+				if (szDirectoryName[1]==L'\\')
+					return 2;
+				switch (GetDriveType(NULL))
+				{
+				case DRIVE_UNKNOWN:
+				case DRIVE_NO_ROOT_DIR:
+					return 0;
+				case DRIVE_FIXED:
+					return 1;
+				default:
+					return 2;
+				}
+ 
+			}
+			if (szDirectoryName[1]==':' && szDirectoryName[2]==L'\\')
+			{
+				WCHAR szTemp[4]=L"X:\\";
+				szTemp[0]=szDirectoryName[0];
+
+				switch (GetDriveTypeW(szTemp))
+				{
+				case DRIVE_UNKNOWN:
+					return 0;
+				case DRIVE_FIXED:
+					return 1;
+				default:
+					return 2;
+				}
+			}
+		}
+		return 0;
+	}
+	else if (szDirectoryName[0]==L'\\' && szDirectoryName[1]==L'\\')
+	{
+		// UNC share name
+		if (szPath==szDirectoryName)
+		{
+			szPath=new WCHAR[dwPathLen+5];
+			MemCopyW(szPath,szDirectoryName,dwPathLen);
+		}		
+		MemCopyW(szPath+dwPathLen,L"\\*.*",5);
+
+		hFind=FindFirstFileW(szPath,&fd);
+		delete[] szPath;
+		if (hFind==INVALID_HANDLE_VALUE)
+			return 0;
+		// Is this really needed, e.g. \\pc\c$ does not have '.' in directory list
+		//ret=1;
+		//while ((fd.cFileName[0]!='.' || fd.cFileName[1]!='\0') && ret==1)
+		//	ret=FindNextFile(hFind,&fd);
+		FindClose(hFind);
+		//return ret?2:0;
+		return 2;
+	}
+	
+	
+	if (szPath!=szDirectoryName)
+		delete[] szPath;
+	return 0;
+}
+#endif
 
 BOOL CFile::IsValidFileName(LPCSTR szFile,LPSTR szShortName)
 {

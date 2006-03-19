@@ -74,7 +74,7 @@ void CWndCtrl::MapWindowPoints(HWND hwndTo, LPRECT lpRect) const
 	lpRect->bottom=pt.y;
 }
 
-UINT CWndCtrl::GetText(CStringA& str)
+UINT CWndCtrl::GetText(CStringA& str) const
 {
 	UINT len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
 	len=::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)len+1,(LPARAM)str.GetBuffer(len));
@@ -82,16 +82,16 @@ UINT CWndCtrl::GetText(CStringA& str)
 }
 
 #ifdef DEF_WCHAR
-UINT CWndCtrl::GetText(CStringW& str)
+UINT CWndCtrl::GetText(CStringW& str) const
 {
-	UINT len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+	UINT len=::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
 	LPWSTR text=new WCHAR[len];
 	if (text==NULL)
 	{
 		SetHFCError(HFC_CANNOTALLOC);
 		return FALSE;
 	}
-	len=::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
+	len=::SendMessageW(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
 	str.Copy(text,len);
 	delete[] text;
 	return len;
@@ -103,32 +103,111 @@ UINT CWndCtrl::GetText(CStringW& str)
 // Class CComboBox
 ///////////////////////////
 
-void CComboBox::GetLBText(int nIndex, CStringA& rString) const
+
+int CComboBox::GetLBText(int nIndex, CStringA& rString) const
 {
-	LPSTR pointer=new CHAR [::SendMessage(m_hWnd,CB_GETLBTEXTLEN,(WPARAM)nIndex,0)+2];
+	int nLen=::SendMessage(m_hWnd,CB_GETLBTEXTLEN,(WPARAM)nIndex,0);
+	if (nLen==CB_ERR)
+		return CB_ERR;
+	LPSTR pointer=new CHAR [nLen+2];
 	if (pointer==NULL)
 	{
 		SetHFCError(HFC_CANNOTALLOC);
-		return;
+		return CB_ERR;
 	}
-	::SendMessage(m_hWnd,CB_GETLBTEXT,(WPARAM)nIndex,(LPARAM)pointer);
+	if (::SendMessage(m_hWnd,CB_GETLBTEXT,(WPARAM)nIndex,(LPARAM)pointer)==CB_ERR)
+	{
+		delete[] pointer;
+		return CB_ERR;
+	}
 	rString=pointer;
 	delete[] pointer;
+	return rString.GetLength();
 }
 
 #ifdef DEF_WCHAR
-void CComboBox::GetLBText(int nIndex, CStringW& rString) const
+int CComboBox::GetLBText(int nIndex, CStringW& rString) const
 {
-	LPWSTR pointer=new WCHAR [::SendMessage(m_hWnd,CB_GETLBTEXTLEN,(WPARAM)nIndex,0)+2];
-	if (pointer==NULL)
+	int nLen=::SendMessage(m_hWnd,CB_GETLBTEXTLEN,(WPARAM)nIndex,0);
+	if (nLen==CB_ERR)
+		return CB_ERR;
+
+	if (IsFullUnicodeSupport())
 	{
-		SetHFCError(HFC_CANNOTALLOC);
-		return;
+		LPWSTR pointer=new WCHAR [nLen+2];
+		if (pointer==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return CB_ERR;
+		}
+		if (::SendMessageW(m_hWnd,CB_GETLBTEXT,(WPARAM)nIndex,(LPARAM)pointer)==CB_ERR)
+		{
+			delete[] pointer;
+			return CB_ERR;
+		}
+		rString.Copy(pointer,nLen);
+		delete[] pointer;
+		return rString.GetLength();
 	}
-	::SendMessage(m_hWnd,CB_GETLBTEXT,(WPARAM)nIndex,(LPARAM)pointer);
-	rString=pointer;
-	delete[] pointer;
+	else
+	{
+		LPSTR pointer=new CHAR [nLen+2];
+		if (pointer==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return CB_ERR;
+		}
+		if (::SendMessageA(m_hWnd,CB_GETLBTEXT,(WPARAM)nIndex,(LPARAM)pointer)==CB_ERR)
+		{
+			delete[] pointer;
+			return CB_ERR;
+		}
+		rString.Copy(pointer,nLen);
+		delete[] pointer;
+		return rString.GetLength();
+	}
 }
+
+int CComboBox::FindString(int nStartAfter, LPCWSTR lpszString) const
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
+	else
+		return ::SendMessageA(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)CString(lpszString));
+}
+
+int CComboBox::AddString(LPCWSTR lpszString)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,CB_ADDSTRING,0,(LPARAM)lpszString);
+	else
+		return ::SendMessageA(m_hWnd,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(lpszString));
+}
+
+int CComboBox::InsertString(int nIndex,LPCWSTR lpszString)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)lpszString);
+	else
+		return ::SendMessageA(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)(LPCSTR)CString(lpszString));
+}
+
+int CComboBox::Dir(UINT attr, LPCWSTR lpszWildCard)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)lpszWildCard);
+	else
+		return ::SendMessageA(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)(LPCSTR)CString(lpszWildCard));
+}
+
+int CComboBox::SelectString(int nStartAfter, LPCWSTR lpszString)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
+	else
+		return ::SendMessageA(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)CString(lpszString));
+}
+
 #endif
 
 ///////////////////////////

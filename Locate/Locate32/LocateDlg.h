@@ -23,6 +23,66 @@ public:
 	CString m_sReturnedPreset;
 };
 
+class CComboBoxAutoComplete : public CComboBox
+{
+public:
+	CComboBoxAutoComplete();
+	CComboBoxAutoComplete(HWND hWnd);
+	~CComboBoxAutoComplete();
+
+	void EnableAutoComplete(BOOL bEnable);
+	BOOL IsAutoCompleteEnabled() const;
+
+	int GetCount() const;
+	int GetCurSel() const;
+	int SetCurSel(int nSelect);
+	int GetTopIndex() const;
+	int SetTopIndex(int nIndex);
+	
+	int GetLBText(int nIndex, LPSTR lpszText) const;
+	int GetLBText(int nIndex, CStringA& rString) const;
+	int GetLBTextLen(int nIndex) const;
+
+	int FindStringExact(int nIndexStart, LPCSTR lpszFind) const;
+	BOOL GetDroppedState() const;
+
+	void ShowDropDown(BOOL bShowIt = TRUE);
+
+	int AddString(LPCSTR lpszString);
+	int DeleteString(UINT nIndex);
+	int InsertString(int nIndex, LPCSTR lpszString);
+	void ResetContent();
+	
+	int FindString(int nStartAfter,LPCSTR lpszString) const;
+	int SelectString(int nStartAfter,LPCSTR lpszString);
+
+	BOOL HandleOnCommand(WORD wNotifyCode);
+
+#ifdef DEF_WCHAR
+	int GetLBText(int nIndex, LPWSTR lpszText) const;
+	int GetLBText(int nIndex, CStringW& rString) const;
+	int FindStringExact(int nIndexStart, LPCWSTR lpszFind) const;
+	int AddString(LPCWSTR lpszString);
+	int InsertString(int nIndex, LPCWSTR lpszString);
+	int FindString(int nStartAfter,LPCWSTR lpszString) const;
+	int SelectString(int nStartAfter,LPCWSTR lpszString);
+#endif
+
+
+private:
+	struct ACDATA {
+		enum ACFLags {
+			afAutoCompleting = 0x1
+		};
+		BYTE bFlags;
+
+		CArrayFAP<LPWSTR> aItems;	
+		CIntArray aItemsInList;
+
+	};	
+
+	ACDATA* m_pACData;
+};
 
 class CLocateDlgThread : public CWinThread  
 {
@@ -128,8 +188,8 @@ public:
 			~DirSelection();
 
 			void FreeData();
-			void SetValuesFromControl(HWND hControl,const CString* pBrowse,int nBrowseDirs);
-			LPARAM GetLParam(const CString* pBrowse,int nBrowseDirs) const;
+			void SetValuesFromControl(HWND hControl,const CStringW* pBrowse,int nBrowseDirs);
+			LPARAM GetLParam(const CStringW* pBrowse,int nBrowseDirs) const;
 			
 
 			CLocateDlg::CNameDlg::TypeOfItem nType;
@@ -138,7 +198,7 @@ public:
 				EveryWhereType nEverywhereType;
 				char cDriveLetter;
 			};
-			LPSTR pTitleOrDirectory;
+			LPWSTR pTitleOrDirectory;
 			BYTE bSelected:1;
 		};
 
@@ -153,7 +213,7 @@ public:
 		virtual void OnSize(UINT nType, int cx, int cy);	
 		
 	public:
-		BOOL OnOk(CString& sName,CArray<LPSTR>& aExtensions,CArrayFAP<LPSTR>& aDirectories);
+		BOOL OnOk(CStringW& sName,CArray<LPWSTR>& aExtensions,CArrayFAP<LPWSTR>& aDirectories);
 		void OnClear(BOOL bInitial=FALSE);
 
 		void OnMoreDirectories();
@@ -167,7 +227,7 @@ public:
 		BOOL IsChanged();
 		void HilightTab(BOOL bHilight);
 
-		BOOL SetPath(LPCTSTR szPath);
+		BOOL SetPath(LPCSTR szPath);
 
 		void EnableItems(BOOL bEnable=TRUE);
 		BOOL InitDriveBox(BYTE nFirstTime=FALSE);
@@ -176,22 +236,22 @@ public:
 		
 		BOOL EnableMultiDirectorySupport(BOOL bEnable);
 		BOOL SelectByLParam(LPARAM lParam);
-		BOOL SelectByRootName(LPCSTR szDirectory);
-		BOOL SelectByCustomName(LPCSTR szDirectory);
-		DWORD GetCurrentlySelectedComboItem(CComboBoxEx& LookIn) const;
+		BOOL SelectByRootName(LPCWSTR szDirectory);
+		BOOL SelectByCustomName(LPCWSTR szDirectory);
+		DWORD GetCurrentlySelectedComboItem() const;
 
-		BOOL GetDirectoriesForActiveSelection(CArray<LPSTR>& aDirectories,TypeOfItem* pType=NULL,BOOL bNoWarningIfNotExists=FALSE);
-		BOOL GetDirectoriesFromCustomText(CArray<LPSTR>& aDirectories,LPCSTR szCustomText,DWORD dwLength,BOOL bCurrentSelection,BOOL bNoWarningIfNotExists=FALSE);
-		BOOL GetDirectoriesFromLParam(CArray<LPSTR>& aDirectories,LPARAM lParam);
-		BOOL GetDirectoriesForSelection(CArray<LPSTR>& aDirectories,const DirSelection* pSelection,BOOL bNoWarnings=FALSE);
+		BOOL GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDirectories,TypeOfItem* pType=NULL,BOOL bNoWarningIfNotExists=FALSE);
+		BOOL GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirectories,LPCWSTR szCustomText,DWORD dwLength,BOOL bCurrentSelection,BOOL bNoWarningIfNotExists=FALSE);
+		BOOL GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories,LPARAM lParam);
+		BOOL GetDirectoriesForSelection(CArray<LPWSTR>& aDirectories,const DirSelection* pSelection,BOOL bNoWarnings=FALSE);
 
-		static void AddDirectoryToList(CArray<LPSTR>& aDirectories,LPCSTR szDirectory);
-		static void AddDirectoryToList(CArray<LPSTR>& aDirectories,LPCSTR szDirectory,DWORD dwLength);
-		static void AddDirectoryToListTakePtr(CArray<LPSTR>& aDirectories,LPSTR szDirectory);
+		static void AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory);
+		static void AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,DWORD dwLength);
+		static void AddDirectoryToListTakePtr(CArray<LPWSTR>& aDirectories,LPWSTR szDirectory);
 		
-		BOOL CheckAndAddDirectory(LPCSTR pFolder,DWORD dwLength,BOOL bAlsoSet=TRUE,BOOL bNoWarning=FALSE);
+		BOOL CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,BOOL bAlsoSet=TRUE,BOOL bNoWarning=FALSE);
 
-		static WORD ComputeChecksumFromDir(LPCSTR szDir);
+		static WORD ComputeChecksumFromDir(LPCWSTR szDir);
 
 		void LoadControlStates(CRegKey& RegKey);
 		void SaveControlStates(CRegKey& RegKey);
@@ -204,7 +264,7 @@ public:
 		void LoadRegistry();
 
 	public:
-		CString* m_pBrowse;
+		CStringW* m_pBrowse;
 		DWORD m_nMaxBrowse;
 
 		WORD m_nFieldLeft;
@@ -226,6 +286,11 @@ public:
 
 	
 		DirSelection** m_pMultiDirs;
+
+		CComboBox m_Name;
+		CComboBox m_Type;
+		CComboBoxEx m_LookIn;
+	
 
 	};
 
@@ -692,6 +757,7 @@ protected:
 
 	DWORD m_nLargeY;
 	BYTE m_nButtonWidth;
+	char m_nPresetsButtonOffset;
 	BYTE m_nPresetsButtonWidth;
 	BYTE m_nPresetsButtonHeight;
 
