@@ -10025,7 +10025,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			}
 			else
 			{
-				ChangeEnableStateForCheck();
+				
 				FileType* ft=NULL;
 				int nSel=SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL);
 				if (nSel!=CB_ERR)
@@ -10053,7 +10053,8 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 					
 				}
 				GetLocateDlg()->m_NameDlg.m_Type.EnableWindow(ft==NULL);
-				
+				ChangeEnableStateForCheck();
+			
 			}
 			HilightTab(IsChanged());
 			break;
@@ -10102,9 +10103,15 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		}		
 		break;
 	case IDC_CHECK:
-		if (hControl==NULL && wNotifyCode==1 && IsDlgItemEnabled(IDC_CHECK)) // Accelerator
-			SetFocus(IDC_CHECK);
-		HilightTab(IsChanged());
+		switch (wNotifyCode)
+		{
+		case CBN_SELCHANGE:
+			if (hControl==NULL && wNotifyCode==1 && IsDlgItemEnabled(IDC_CHECK)) // Accelerator
+				SetFocus(IDC_CHECK);
+			else
+				HilightTab(IsChanged());
+			break;
+		}
 		break;
 	case IDC_REPLACESPACES:
 	case IDC_MATCHWHOLENAME:
@@ -10409,7 +10416,7 @@ void CLocateDlg::CAdvancedDlg::ChangeEnableStateForCheck()
 		EnableDlgItem(IDC_CHECK,TRUE);
 	else
 	{
-		// TODO: Mieti tämä
+		// TODO: Mieti tämä, lisäksi 
 
 		//SendDlgItemMessage(IDC_CHECK,CB_SETCURSEL,0);
 		EnableDlgItem(IDC_CHECK,FALSE);
