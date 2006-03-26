@@ -10,6 +10,7 @@ class CCheckFileNotificationsThread;
 class CBackgroundUpdater;
 
 extern LPSTR g_szBuffer; 
+extern LPWSTR g_szwBuffer; 
 
 
 #include "commonres.h"

@@ -374,4 +374,46 @@ BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,SIZE_T nBufferLen)
 	return bRet;
 }
 
+DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags)
+{
+	if (IsFullUnicodeSupport())
+		return SHGetFileInfoW(pszPath,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags);
+
+	SHFILEINFO fi;
+	DWORD_PTR ret=SHGetFileInfoA(CString(pszPath),dwFileAttributes,&fi,sizeof(SHFILEINFO),uFlags);
+	if (ret==0)
+		return 0;
+
+	if (uFlags&SHGFI_DISPLAYNAME)
+		MultiByteToWideChar(CP_ACP,0,fi.szDisplayName,-1,psfi->szDisplayName,MAX_PATH);
+	if (uFlags&SHGFI_TYPENAME)
+		MultiByteToWideChar(CP_ACP,0,fi.szTypeName,-1,psfi->szTypeName,80);
+	
+	psfi->hIcon=fi.hIcon;
+	psfi->iIcon=fi.iIcon;
+	psfi->dwAttributes=fi.dwAttributes;
+	return ret;	
+}
+
+DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags)
+{
+	if (IsFullUnicodeSupport())
+		return SHGetFileInfoW((LPCWSTR)piil,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags|SHGFI_PIDL);
+
+	SHFILEINFO fi;
+	DWORD_PTR ret=SHGetFileInfoA((LPCSTR)piil,dwFileAttributes,&fi,sizeof(SHFILEINFO),uFlags|SHGFI_PIDL);
+	if (ret==0)
+		return 0;
+
+	if (uFlags&SHGFI_DISPLAYNAME)
+		MultiByteToWideChar(CP_ACP,0,fi.szDisplayName,-1,psfi->szDisplayName,MAX_PATH);
+	if (uFlags&SHGFI_TYPENAME)
+		MultiByteToWideChar(CP_ACP,0,fi.szTypeName,-1,psfi->szTypeName,80);
+	
+	psfi->hIcon=fi.hIcon;
+	psfi->iIcon=fi.iIcon;
+	psfi->dwAttributes=fi.dwAttributes;
+	return ret;	
+}
+
 #endif

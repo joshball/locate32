@@ -233,7 +233,7 @@ inline CLocateDlg::CAdvancedDlg::FileType::FileType()
 {
 }
 			
-inline CLocateDlg::CAdvancedDlg::FileType::FileType(LPSTR frType,LPSTR frTitle)
+inline CLocateDlg::CAdvancedDlg::FileType::FileType(LPWSTR frType,LPWSTR frTitle)
 :	szExtensions(NULL),szTitle(frTitle),szType(frType),szIconPath(NULL),hIcon(NULL)
 {
 }

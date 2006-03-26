@@ -912,15 +912,31 @@ CString CComboBoxEx::GetItemText(int nItem) const
 
 CStringW CComboBoxEx::GetItemTextW(int nItem) const
 {
-	CStringW str;
-	COMBOBOXEXITEMW ce;
-	ce.iItem=nItem;
-	ce.cchTextMax=2000;
-	ce.pszText=str.GetBuffer(2000);
-	ce.mask=CBEIF_TEXT;
-	::SendMessageW(CCommonCtrl::m_hWnd,CBEM_GETITEMW,0,(LPARAM)&ce);
-	str.FreeExtra();
-	return str;
+	if (IsFullUnicodeSupport())
+	{
+		CStringW str;
+		COMBOBOXEXITEMW ce;
+		ce.iItem=nItem;
+		ce.cchTextMax=2000;
+		ce.pszText=str.GetBuffer(2000);
+		ce.mask=CBEIF_TEXT;
+		::SendMessageW(CCommonCtrl::m_hWnd,CBEM_GETITEMW,0,(LPARAM)&ce);
+		str.FreeExtra();
+		return str;
+	}
+	else
+	{
+		CString str;
+		COMBOBOXEXITEM ce;
+		ce.iItem=nItem;
+		ce.cchTextMax=2000;
+		ce.pszText=str.GetBuffer(2000);
+		ce.mask=CBEIF_TEXT;
+		::SendMessageA(CCommonCtrl::m_hWnd,CBEM_GETITEMA,0,(LPARAM)&ce);
+		str.FreeExtra();
+
+		return CStringW(str);
+	}
 }
 
 int CComboBoxEx::GetItemText(int nItem,LPSTR lpszText,int nLen) const
@@ -935,12 +951,29 @@ int CComboBoxEx::GetItemText(int nItem,LPSTR lpszText,int nLen) const
 
 int CComboBoxEx::GetItemText(int nItem,LPWSTR lpszText,int nLen) const
 {
-	COMBOBOXEXITEMW ce;
-	ce.iItem=nItem;
-	ce.cchTextMax=nLen;
-	ce.pszText=lpszText;
-	ce.mask=CBEIF_TEXT;
-	return ::SendMessageW(CCommonCtrl::m_hWnd,CBEM_GETITEMW,0,(LPARAM)&ce);
+	if (IsFullUnicodeSupport())
+	{
+		COMBOBOXEXITEMW ce;
+		ce.iItem=nItem;
+		ce.cchTextMax=nLen;
+		ce.pszText=lpszText;
+		ce.mask=CBEIF_TEXT;
+		return ::SendMessageW(CCommonCtrl::m_hWnd,CBEM_GETITEMW,0,(LPARAM)&ce);
+	}
+	else
+	{
+		COMBOBOXEXITEM ce;
+		ce.iItem=nItem;
+		ce.cchTextMax=nLen;
+		ce.pszText=new char[nLen+1];
+		ce.mask=CBEIF_TEXT;
+		int nRet=::SendMessageA(CCommonCtrl::m_hWnd,CBEM_GETITEMA,0,(LPARAM)&ce);
+
+		if (nRet)
+			MultiByteToWideChar(CP_ACP,0,ce.pszText,-1,lpszText,nLen);
+		delete[] ce.pszText;
+		return nRet;
+	}
 }
 
 BOOL CComboBoxEx::SetItemText(int nItem,LPCSTR lpszText)
@@ -949,16 +982,29 @@ BOOL CComboBoxEx::SetItemText(int nItem,LPCSTR lpszText)
 	ce.pszText=(LPSTR)lpszText;
 	ce.iItem=nItem;
 	ce.mask=CBEIF_TEXT;
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_SETITEM,0,(LPARAM)&ce);
+	return ::SendMessageA(CCommonCtrl::m_hWnd,CBEM_SETITEMA,0,(LPARAM)&ce);
 }
+
 
 BOOL CComboBoxEx::SetItemText(int nItem,LPCWSTR lpszText)
 {
-	COMBOBOXEXITEMW ce;
-	ce.pszText=(LPWSTR)lpszText;
-	ce.iItem=nItem;
-	ce.mask=CBEIF_TEXT;
-	return ::SendMessageW(CCommonCtrl::m_hWnd,CBEM_SETITEMW,0,(LPARAM)&ce);
+	if (IsFullUnicodeSupport())
+	{
+		COMBOBOXEXITEMW ce;
+		ce.pszText=(LPWSTR)lpszText;
+		ce.iItem=nItem;
+		ce.mask=CBEIF_TEXT;
+		return ::SendMessageW(CCommonCtrl::m_hWnd,CBEM_SETITEMW,0,(LPARAM)&ce);
+	}
+	else
+	{
+		COMBOBOXEXITEM ce;
+		CString str(lpszText);
+		ce.pszText=(LPSTR)(LPCSTR)str;
+		ce.iItem=nItem;
+		ce.mask=CBEIF_TEXT;
+		return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_SETITEM,0,(LPARAM)&ce);
+	}
 }
 
 DWORD CComboBoxEx::GetItemData(int nIndex) const

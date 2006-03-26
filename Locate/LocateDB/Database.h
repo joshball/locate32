@@ -41,10 +41,10 @@ public:
 	
 
 	WORD GetID() const;
-	LPCSTR GetName() const;
-	LPCSTR GetCreator() const;
-	LPCSTR GetDescription() const;
-	LPCSTR GetRoots() const;
+	LPCWSTR GetName() const;
+	LPCWSTR GetCreator() const;
+	LPCWSTR GetDescription() const;
+	LPCWSTR GetRoots() const;
 	void GetRoots(CArray<LPSTR>& aRoots) const;
 	WORD GetFlags() const;
 	WORD GetThreadId() const;
@@ -52,14 +52,14 @@ public:
 	void SetFlags(WORD wFlags);
 	void SetThreadId(WORD wThreadID);
 
-	void SetNamePtr(LPSTR szName);
-	void SetCreatorPtr(LPSTR szCreator);
-	void SetDescriptionPtr(LPSTR szDescription);
+	void SetNamePtr(LPWSTR szName);
+	void SetCreatorPtr(LPWSTR szCreator);
+	void SetDescriptionPtr(LPWSTR szDescription);
 
-	void SetRootsPtr(LPSTR szRoots);
-	void SetRoots(CArray<LPSTR>& aRoots);
-	void SetRoots(LPSTR* pRoots,int nCount);
-	void AddRoot(LPCSTR pRoot);
+	void SetRootsPtr(LPWSTR szRoots);
+	void SetRoots(CArray<LPWSTR>& aRoots);
+	void SetRoots(LPWSTR* pRoots,int nCount);
+	void AddRoot(LPCWSTR pRoot);
 	void AddLocalRoots();
 
 	BOOL IsEnabled() const;
@@ -72,17 +72,17 @@ public:
 	void UpdateGlobally(BOOL bUpdate=TRUE);
 
 	ArchiveType GetArchiveType() const;
-	LPCSTR GetArchiveName() const;
+	LPCWSTR GetArchiveName() const;
 
-	void SetArchiveName(LPCSTR szArchiveName);
-	void SetArchiveNamePtr(LPSTR szArchiveName);
+	void SetArchiveName(LPCWSTR szArchiveName);
+	void SetArchiveNamePtr(LPWSTR szArchiveName);
 	void SetArchiveType(ArchiveType nType);
 
-	LPSTR GetValidKey(DWORD dwUniqueNum=0) const; // free returned pointer with delete[]
+	LPWSTR GetValidKey(DWORD dwUniqueNum=0) const; // free returned pointer with delete[]
 
-	const CArrayFAP<LPSTR>& GetExcludedDirectories() const;
-	void SetExcludedDirectories(const CArrayFAP<LPSTR>& aExcludedDirectories);
-	BOOL AddExcludedDirectory(LPCSTR szDirectory);
+	const CArrayFAP<LPWSTR>& GetExcludedDirectories() const;
+	void SetExcludedDirectories(const CArrayFAP<LPWSTR>& aExcludedDirectories);
+	BOOL AddExcludedDirectory(LPCWSTR szDirectory);
 
 
 	BOOL IsFileNamesOEM() const;
@@ -93,7 +93,7 @@ private:
 	BOOL SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey);
 
 public:
-	LPSTR ConstructExtraBlock() const;
+	LPWSTR ConstructExtraBlock() const;
 	BOOL SaveExtraBlockToDbFile(LPCSTR szArchive);
 
 
@@ -105,10 +105,10 @@ public:
 
 	static CDatabase* FromName(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szName,SIZE_T dwNameLength=-1);
 	static CDatabase* FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey);
-	static CDatabase* FromFile(LPCSTR szFileName,int dwNameLength=-1);
+	static CDatabase* FromFile(LPCWSTR szFileName,int dwNameLength=-1);
     static CDatabase* FromOldStyleDatabase(HKEY hKeyRoot,LPCSTR szPath);
-	static CDatabase* FromDefaults(BOOL bDefaultFileName,LPCSTR szAppDir,SIZE_T iAppDirLength);
-	static CDatabase* FromExtraBlock(LPCSTR szExtraBlock);
+	static CDatabase* FromDefaults(BOOL bDefaultFileName,LPCWSTR szAppDir,SIZE_T iAppDirLength);
+	static CDatabase* FromExtraBlock(LPCWSTR szExtraBlock);
 	
 	static void CheckValidNames(CArray<PDATABASE>& aDatabases);
 	static void CheckValidNames(PDATABASE* ppDatabases,int nDatabases);
@@ -117,39 +117,39 @@ public:
 	static WORD CheckIDs(CArray<PDATABASE>& aDatabases);
 	static WORD CheckIDs(PDATABASE* ppDatabases,int nDatabases);
 	
-	static BOOL IsNameValid(LPCSTR szName);
-	static void MakeNameValid(LPSTR szName);
-	static LPSTR GetCorrertFileName(LPCSTR szFileName,SIZE_T dwNameLength=-1);
+	static BOOL IsNameValid(LPCWSTR szName);
+	static void MakeNameValid(LPWSTR szName);
+	static LPWSTR GetCorrertFileName(LPCWSTR szFileName,SIZE_T dwNameLength=-1);
 
 	static WORD GetUniqueIndex(CArray<PDATABASE>& aDatabases);
 	static WORD GetUniqueIndex(PDATABASE* ppDatabases,int nDatabases);
 
 
-	static CDatabase* FindByName(CArray<PDATABASE>& aDatabases,LPCSTR szName,SIZE_T iLength=-1);
-	static CDatabase* FindByName(PDATABASE* ppDatabases,int nDatabases,LPCSTR szName,SIZE_T iLength=1);
+	static CDatabase* FindByName(CArray<PDATABASE>& aDatabases,LPCWSTR szName,SIZE_T iLength=-1);
+	static CDatabase* FindByName(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szName,SIZE_T iLength=1);
 
-	static CDatabase* FindByFile(CArray<PDATABASE>& aDatabases,LPCSTR szFile,SIZE_T iLength=-1);
-	static CDatabase* FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCSTR szFile,SIZE_T iLength=1);
+	static CDatabase* FindByFile(CArray<PDATABASE>& aDatabases,LPCWSTR szFile,SIZE_T iLength=-1);
+	static CDatabase* FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szFile,SIZE_T iLength=1);
 
-	static void GetLogicalDrives(CArrayFAP<LPSTR>* paRoots);
+	static void GetLogicalDrives(CArrayFAP<LPWSTR>* paRoots);
 
 private:
-	LPSTR m_szName;
+	LPWSTR m_szName;
 	WORD m_wFlags;
 	WORD m_wThread;
 	WORD m_wID;
 
-	LPSTR m_szCreator;    
-	LPSTR m_szDescription;
+	LPWSTR m_szCreator;    
+	LPWSTR m_szDescription;
 
-	LPSTR m_szRoots; // Roots included, NULL means all local
+	LPWSTR m_szRoots; // Roots included, NULL means all local
 	
 	// Archive type, at that moment only file is supported
 	// in future, possiple types may be tcp/ip stream, SQL, ...
 	ArchiveType m_ArchiveType;
-	LPSTR m_szArchiveName;
+	LPWSTR m_szArchiveName;
 
-	CArrayFAP<LPSTR> m_aExcludedDirectories;
+	CArrayFAP<LPWSTR> m_aExcludedDirectories;
 };
 
 
@@ -176,27 +176,27 @@ inline CDatabase::~CDatabase()
 		delete[] m_szRoots;
 }
 
-inline LPCSTR CDatabase::GetName() const 
+inline LPCWSTR CDatabase::GetName() const 
 { 
 	return m_szName; 
 }
 
-inline LPCSTR CDatabase::GetRoots() const 
+inline LPCWSTR CDatabase::GetRoots() const 
 { 
 	return m_szRoots; 
 }
 
-inline LPCSTR CDatabase::GetCreator() const 
+inline LPCWSTR CDatabase::GetCreator() const 
 {
 	if (m_szCreator==NULL)
-		return szEmpty;
+		return szwEmpty;
 	return m_szCreator; 
 }
 
-inline LPCSTR CDatabase::GetDescription() const 
+inline LPCWSTR CDatabase::GetDescription() const 
 { 
 	if (m_szDescription==NULL)
-		return szEmpty;
+		return szwEmpty;
 	return m_szDescription; 
 }
 
@@ -215,7 +215,7 @@ inline CDatabase::ArchiveType CDatabase::GetArchiveType() const
 	return m_ArchiveType; 
 }
 
-inline LPCSTR CDatabase::GetArchiveName() const 
+inline LPCWSTR CDatabase::GetArchiveName() const 
 { 
 	return m_szArchiveName; 
 }
@@ -285,35 +285,35 @@ inline BOOL CDatabase::IsGloballyUpdated() const
 	return (m_wFlags&flagGlobalUpdate)?1:0;
 }
 
-inline void CDatabase::SetNamePtr(LPSTR szName)
+inline void CDatabase::SetNamePtr(LPWSTR szName)
 {
 	if (m_szName!=NULL)
 		delete[] m_szName;
 	m_szName=szName;
 }
 
-inline void CDatabase::SetCreatorPtr(LPSTR szCreator)
+inline void CDatabase::SetCreatorPtr(LPWSTR szCreator)
 {
 	if (m_szCreator!=NULL)
 		delete[] m_szCreator;
 	m_szCreator=szCreator;
 }
 
-inline void CDatabase::SetDescriptionPtr(LPSTR szDescription)
+inline void CDatabase::SetDescriptionPtr(LPWSTR szDescription)
 {
 	if (m_szDescription!=NULL)
 		delete[] m_szDescription;
 	m_szDescription=szDescription;
 }
 
-inline void CDatabase::SetArchiveName(LPCSTR szArchiveName)
+inline void CDatabase::SetArchiveName(LPCWSTR szArchiveName)
 {
 	if (m_szArchiveName!=NULL)
 		delete[] m_szArchiveName;
 	m_szArchiveName=alloccopy(szArchiveName);
 }
 
-inline void CDatabase::SetArchiveNamePtr(LPSTR szArchiveName)
+inline void CDatabase::SetArchiveNamePtr(LPWSTR szArchiveName)
 {
 	if (m_szArchiveName!=NULL)
 		delete[] m_szArchiveName;
@@ -325,24 +325,24 @@ inline void CDatabase::SetArchiveType(ArchiveType nType)
 	m_ArchiveType=nType;
 }
 
-inline void CDatabase::SetRootsPtr(LPSTR szRoots)
+inline void CDatabase::SetRootsPtr(LPWSTR szRoots)
 {
 	if (m_szRoots!=NULL)
 		delete[] m_szRoots;
 	m_szRoots=szRoots;
 }
 
-inline void CDatabase::SetRoots(CArray<LPSTR>& aRoots)
+inline void CDatabase::SetRoots(CArray<LPWSTR>& aRoots)
 {
 	return SetRoots(aRoots,aRoots.GetSize());
 }
 
-inline CDatabase* CDatabase::FindByName(CArray<PDATABASE>& aDatabases,LPCSTR szName,SIZE_T iLength)
+inline CDatabase* CDatabase::FindByName(CArray<PDATABASE>& aDatabases,LPCWSTR szName,SIZE_T iLength)
 {
 	return FindByName(aDatabases,aDatabases.GetSize(),szName,iLength);
 }
 
-inline CDatabase* CDatabase::FindByFile(CArray<PDATABASE>& aDatabases,LPCSTR szFile,SIZE_T iLength)
+inline CDatabase* CDatabase::FindByFile(CArray<PDATABASE>& aDatabases,LPCWSTR szFile,SIZE_T iLength)
 {
 	return FindByFile(aDatabases,aDatabases.GetSize(),szFile,iLength);
 }
@@ -380,19 +380,19 @@ inline void CDatabase::SetFlag(DatabaseFlags nFlag,BOOL bSet)
 		m_wFlags&=~WORD(nFlag);
 }
 
-inline const CArrayFAP<LPSTR>& CDatabase::GetExcludedDirectories() const
+inline const CArrayFAP<LPWSTR>& CDatabase::GetExcludedDirectories() const
 {
 	return m_aExcludedDirectories;
 }
 
-inline void CDatabase::SetExcludedDirectories(const CArrayFAP<LPSTR>& aExcludedDirectories)
+inline void CDatabase::SetExcludedDirectories(const CArrayFAP<LPWSTR>& aExcludedDirectories)
 {
 	m_aExcludedDirectories.RemoveAll();
 	for (int i=0;i<aExcludedDirectories.GetSize();i++)
 		m_aExcludedDirectories.Add(alloccopy(aExcludedDirectories[i]));
 }
 
-inline BOOL CDatabase::AddExcludedDirectory(LPCSTR szDirectory)
+inline BOOL CDatabase::AddExcludedDirectory(LPCWSTR szDirectory)
 {
 	if (szDirectory[1]!=':' || szDirectory[2]!='\0')
 	{

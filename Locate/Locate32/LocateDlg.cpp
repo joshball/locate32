@@ -348,11 +348,11 @@ int CComboBoxAutoComplete::SelectString(int nStartAfter,LPCWSTR lpszString)
 
 
 
-CAllocator FileTypeAllocator;
 //CBufferAllocator<BYTE*,2000,BUFFERALLOC_EXTRALEN> FileTypeAllocator;	
 //CBufferAllocatorThreadSafe<BYTE*,2000,BUFFERALLOC_EXTRALEN> FileTypeAllocator;	
 
 LPSTR g_szBuffer=NULL; 
+LPWSTR g_szwBuffer=NULL; 
 
 BOOL CLocateDlgThread::InitInstance()
 {
@@ -3353,7 +3353,7 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 	switch (idCtrl)
 	{
 	case IDC_FILELIST:
-		ListNotifyHandler((LV_DISPINFO*)pnmh,(NMLISTVIEW*)pnmh);
+		ListNotifyHandler((NMLISTVIEW*)pnmh);
 		break;
 	case IDC_TAB:
 		if (pnmh->code==TCN_SELCHANGE)
@@ -3469,9 +3469,9 @@ void CLocateDlg::SetSortArrowToHeader(DetailType nType,BOOL bRemove,BOOL bDownAr
 }
 
 	
-BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
+BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 {
-	switch(pLvdi->hdr.code)
+	switch(pNm->hdr.code)
 	{
 	case NMX_CLICK:
 		{
@@ -3578,8 +3578,143 @@ BOOL CLocateDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 	case LVN_COLUMNCLICK:
 		SortItems(DetailType(m_pListCtrl->GetColumnIDFromSubItem(pNm->iSubItem)),-1,TRUE);
 		break;
-	case LVN_GETDISPINFO:
+	/*case LVN_GETDISPINFOW:
 		{
+			LV_DISPINFOW *pLvdi=(LV_DISPINFOW*)pNm;
+
+			CLocatedItem* pItem=(CLocatedItem*)pLvdi->item.lParam;
+			if (pItem==NULL)
+				break;
+
+			
+			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(pLvdi->item.iSubItem));
+
+			if (GetFlags()&fgLVNoDelayedUpdate) 
+			{
+				// Update detail instantaneously
+
+				switch (nDetail)
+				{
+				// Title and parent are special since they have icons
+				case Title:
+					if (pItem->ShouldUpdateTitle())
+						pItem->UpdateTitle();
+					if (pItem->ShouldUpdateIcon())
+                        pItem->UpdateIcon();
+
+					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
+					if (pItem->GetTitle()!=NULL)
+						pLvdi->item.pszText=pItem->GetTitle();
+					else
+						pLvdi->item.pszText=pItem->GetName();
+					
+					pLvdi->item.iImage=pItem->GetIcon();
+
+					if (pItem->GetAttributes()&(LITEMATTRIB_CUTTED|LITEMATTRIB_HIDDEN))
+					{
+						pLvdi->item.mask|=LVIF_STATE;
+						pLvdi->item.state=LVIS_CUT;
+						pLvdi->item.stateMask=LVIS_CUT;
+					}
+					break;
+				case InFolder:
+					if (pItem->ShouldUpdateParentIcon())
+						pItem->UpdateParentIcon();
+
+					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
+					pLvdi->item.pszText=pItem->GetParent();
+					pLvdi->item.iImage=pItem->GetParentIcon();
+					break;
+				default:
+					ASSERT (nDetail<=LastType);
+			
+					if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
+						pItem->ShouldUpdateByDetail(nDetail))
+						pItem->UpdateByDetail(nDetail);
+					pLvdi->item.mask=LVIF_TEXT;
+					pLvdi->item.pszText=pItem->GetDetailText(nDetail);
+					break;
+				}
+				
+			}
+			else
+			{
+				// Delayed updating
+				switch (nDetail)
+				{
+				// Title and parent are special since they have icons
+				case Title:
+					if (pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon())
+					{
+						if (m_pBackgroundUpdater==NULL)
+							m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+						
+						
+						DebugFormatMessage("LVN_GETDISPINFO: Calling AddToUpdateList with nDetail=Title for %s",pItem->GetName());
+							
+
+						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Title);
+						
+						if (m_pLocater==NULL) // Locating in process
+							m_pBackgroundUpdater->StopWaiting();
+					}
+					
+					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
+					if (pItem->GetTitle()!=NULL)
+						pLvdi->item.pszText=pItem->GetTitle();
+					else
+						pLvdi->item.pszText=pItem->GetName();
+					pLvdi->item.iImage=pItem->GetIcon();
+					DebugFormatMessage("LVN_GETDISPINFO: icon set to %d for item %s",pLvdi->item.iImage,pItem->GetName());
+
+					if (pItem->GetAttributes()&(LITEMATTRIB_CUTTED|LITEMATTRIB_HIDDEN))
+					{
+						pLvdi->item.mask|=LVIF_STATE;
+						pLvdi->item.state=LVIS_CUT;
+						pLvdi->item.stateMask=LVIS_CUT;
+					}
+					break;
+				case InFolder:
+					if (pItem->ShouldUpdateParentIcon())
+					{
+						if (m_pBackgroundUpdater==NULL)
+							m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+
+						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,InFolder)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
+						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,InFolder);
+						if (m_pLocater==NULL) // Locating is not in process
+							m_pBackgroundUpdater->StopWaiting();
+					}
+
+					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
+					pLvdi->item.pszText=pItem->GetParent();
+					pLvdi->item.iImage=pItem->GetParentIcon();
+					break;
+				default:
+					ASSERT (nDetail<=LastType);
+			
+					if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
+						pItem->ShouldUpdateByDetail(nDetail))
+					{
+						if (m_pBackgroundUpdater==NULL)
+							m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,%d)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem,DWORD(nDetail));
+						
+						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,nDetail);
+						if (m_pLocater==NULL) // Locating is not in process
+							m_pBackgroundUpdater->StopWaiting();
+					}
+					pLvdi->item.mask=LVIF_TEXT;
+					pLvdi->item.pszText=pItem->GetDetailText(nDetail);
+					break;
+				}
+			}
+			break;
+		}*/
+	case LVN_GETDISPINFOA:
+		{
+			LV_DISPINFOA *pLvdi=(LV_DISPINFOA*)pNm;
+
 			CLocatedItem* pItem=(CLocatedItem*)pLvdi->item.lParam;
 			if (pItem==NULL)
 				break;
@@ -6776,9 +6911,18 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 
 		szBuf[0]=aRoots.GetAt(j)[0];
 		CharUpperW(szBuf);
-		if (GetDriveTypeW(szBuf)<2)
-			continue;
 		
+		if (IsFullUnicodeSupport())
+		{
+			if (GetDriveTypeW(szBuf)<2)
+				continue;
+		}
+		else
+		{
+			if (GetDriveType(CString(szBuf))<2)
+				continue;
+		}
+
 		// Checking whether drive exists
 		for (int k=0;k<j;k++)
 		{
@@ -6808,7 +6952,6 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 		m_LookIn.InsertItem(&ci);
 
-		DebugFormatMessage("DriveList: drive %s added, j=%d",aRoots.GetAt(j),j);
 	}
 
 	
@@ -6936,7 +7079,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	if (lParam!=LPARAM(-1))
 	{
 		m_LookIn.SetCurSel(nSelection);
-		m_LookIn.SetItemText(-1,m_LookIn.GetItemText(nSelection));
+		m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(nSelection));
 	}
 
 	DebugMessage("CNameDlg::InitDriveBox END");
@@ -7358,25 +7501,13 @@ DWORD CLocateDlg::CNameDlg::GetCurrentlySelectedComboItem() const
 	
 	if (nCurSel!=DWORD(CB_ERR))
 	{
-		if (IsFullUnicodeSupport())
-		{
-			WCHAR szTmp1[MAX_PATH],szTmp2[MAX_PATH];
-			m_LookIn.GetItemText(nCurSel,szTmp1,MAX_PATH);
-			m_LookIn.GetItemText(-1,szTmp2,MAX_PATH);
-			DebugNumMessage("CNameDlg::GetCurrentlySelectedComboItem UC: wcscmp(szTmp1,szTmp2)=%d",wcscmp(szTmp1,szTmp2));
-			if (wcscmp(szTmp1,szTmp2)!=0)
-				nCurSel=DWORD(CB_ERR);
-		}
-		else
-		{
-			char szTmp1[MAX_PATH],szTmp2[MAX_PATH];
-			m_LookIn.GetItemText(nCurSel,szTmp1,MAX_PATH);
-			m_LookIn.GetItemText(-1,szTmp2,MAX_PATH);
-			DebugNumMessage("CNameDlg::GetCurrentlySelectedComboItem: szTmp1=%s",DWORD(szTmp1));
-			DebugNumMessage("CNameDlg::GetCurrentlySelectedComboItem: szTmp2=%s",DWORD(szTmp2));
-			if (strcmp(szTmp1,szTmp2)!=0)
-				nCurSel=DWORD(CB_ERR);
-		}
+		WCHAR szTmp1[MAX_PATH],szTmp2[MAX_PATH];
+		m_LookIn.GetItemText(nCurSel,szTmp1,MAX_PATH);
+		m_LookIn.GetItemText(-1,szTmp2,MAX_PATH);
+		
+		DebugNumMessage("CNameDlg::GetCurrentlySelectedComboItem UC: wcscmp(szTmp1,szTmp2)=%d",wcscmp(szTmp1,szTmp2));
+		if (wcscmp(szTmp1,szTmp2)!=0)
+			nCurSel=DWORD(CB_ERR);
 	}	
 
 	return nCurSel;
@@ -8607,6 +8738,8 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 {
 	CStringW FolderLower(pFolder,dwLength);
 	FolderLower.MakeLower();
+
+	DebugFormatMessage("Directory to add: %s",(LPCSTR)CString(FolderLower));
 
 	COMBOBOXEXITEMW ci;
 	SHFILEINFOW fi;
@@ -9851,7 +9984,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 	}
 	
 	// Adding (by extension)
-	SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(szEmpty));
+	SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(szwEmpty));
 	OnClear(TRUE);
 	
 	RECT rc1,rc2;
@@ -9867,12 +10000,13 @@ BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 
 void CLocateDlg::CAdvancedDlg::AddBuildInFileTypes()
 {
+
 	DebugMessage("CAdvancedDlg::AddBuildInFileTypes() BEGIN");
 
 	if (m_dwFlags&fgBuildInTypesAdded)
 		return;
 
-	CString strTypes;
+	CStringW strTypes;
 	CRegKey RegKey;
 	DWORD bRet=FALSE;
 
@@ -9880,9 +10014,9 @@ void CLocateDlg::CAdvancedDlg::AddBuildInFileTypes()
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Locate",
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.QueryValue("Load Buildin Types",bRet);
+		RegKey.QueryValue(L"Load Buildin Types",bRet);
 		if (bRet)
-			RegKey.QueryValue("Buildin Types",strTypes);
+			RegKey.QueryValue(L"Buildin Types",strTypes);
 	}
 
 	// Saving buildin types to registry
@@ -9894,18 +10028,18 @@ void CLocateDlg::CAdvancedDlg::AddBuildInFileTypes()
 			CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
 			if (!bRet)		
-				RegKey.SetValue("Load Buildin Types",DWORD(0));
-			RegKey.SetValue("Buildin Types",strTypes);
+				RegKey.SetValue(L"Load Buildin Types",DWORD(0));
+			RegKey.SetValue(L"Buildin Types",strTypes);
 		}			
 	}
 	RegKey.CloseKey();
 
 	// This is not very best way to do this
-	strTypes.ReplaceChars('|','\0');
-	LPCSTR pPtr=strTypes;
+	strTypes.ReplaceChars(L'|',L'\0');
+	LPCWSTR pPtr=strTypes;
 	CImageList il;
 	il.Create(IDB_DEFAULTTYPEICONS,16,0,RGB(255,0,255));
-	while (*pPtr!='\0')
+	while (*pPtr!=L'\0')
 		SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(new FileType(pPtr,il)));
 	il.DeleteImageList();
 
@@ -9921,9 +10055,9 @@ BOOL CLocateDlg::CAdvancedDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		FileType* ft1=((FileType*)((COMPAREITEMSTRUCT*)lParam)->itemData1);
 		FileType* ft2=((FileType*)((COMPAREITEMSTRUCT*)lParam)->itemData2);
 
-		if (ft1==NULL || ft1==(FileType*)szEmpty)
+		if (ft1==NULL || ft1==(FileType*)szwEmpty)
 			return -1;
-		if (ft2==NULL || ft2==(FileType*)szEmpty)
+		if (ft2==NULL || ft2==(FileType*)szwEmpty)
 			return 1;
 		if (ft1->szType==NULL)
 		{
@@ -9933,7 +10067,7 @@ BOOL CLocateDlg::CAdvancedDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		else if (ft2->szType==NULL) // ft2 is buildin
 			return 1;
 
-		return _stricmp(
+		return _wcsicmp(
 			((FileType*)((COMPAREITEMSTRUCT*)lParam)->itemData1)->szTitle,
 			((FileType*)((COMPAREITEMSTRUCT*)lParam)->itemData2)->szTitle);
 	}
@@ -10025,13 +10159,13 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			}
 			else
 			{
-				
+				CComboBox FileTypeCombo(GetDlgItem(IDC_FILETYPE));
 				FileType* ft=NULL;
-				int nSel=SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL);
+				int nSel=FileTypeCombo.GetCurSel();
 				if (nSel!=CB_ERR)
 				{
-					ft=(FileType*)SendDlgItemMessage(IDC_FILETYPE,CB_GETITEMDATA,nSel);
-					if (ft==NULL || ft==(FileType*)szEmpty)
+					ft=(FileType*)FileTypeCombo.GetItemData(nSel);
+					if (ft==NULL || ft==(FileType*)szwEmpty)
 					{
 						ft=NULL;
 						if (!GetLocateDlg()->m_NameDlg.m_Type.IsWindowEnabled())
@@ -10039,13 +10173,12 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 					}
 					else
 					{
-						char* pEx=new char[max(ft->dwExtensionLength,2)];
-						sMemCopy(pEx,ft->szExtensions,ft->dwExtensionLength);
-						DebugMessage("7");
-						for (int i=0;pEx[i]!='\0' || pEx[i+1]!='\0';i++)
+						WCHAR* pEx=new WCHAR[max(ft->dwExtensionLength,2)];
+						MemCopyW(pEx,ft->szExtensions,ft->dwExtensionLength);
+						for (int i=0;pEx[i]!=L'\0' || pEx[i+1]!=L'\0';i++)
 						{
-							if (pEx[i]=='\0')
-								pEx[i]=' ';
+							if (pEx[i]==L'\0')
+								pEx[i]=L' ';
 						}
 						GetLocateDlg()->m_NameDlg.m_Type.SetText(pEx);
 						delete[] pEx;
@@ -10441,7 +10574,7 @@ void CLocateDlg::CAdvancedDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 		
 		if (lpdis->itemID==0)
 		{
-			ASSERT(lpdis->itemData==LPARAM(szEmpty));
+			ASSERT(lpdis->itemData==LPARAM(szwEmpty));
 			Text.LoadString(IDS_BYEXTENSION);
 		}
 		else
@@ -10490,8 +10623,15 @@ void CLocateDlg::CAdvancedDlg::OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpMe
 			::GetTextExtentPoint32(hDC,byex,byex.GetLength(),&sz);
 		}
 		else
-			::GetTextExtentPoint32(hDC,((FileType*)lpMeasureItemStruct->itemData)->szTitle,strlen(((FileType*)lpMeasureItemStruct->itemData)->szTitle),&sz);
-
+		{
+			if (IsFullUnicodeSupport())
+				::GetTextExtentPoint32W(hDC,((FileType*)lpMeasureItemStruct->itemData)->szTitle,istrlenw(((FileType*)lpMeasureItemStruct->itemData)->szTitle),&sz);
+			else
+			{
+				CString str(((FileType*)lpMeasureItemStruct->itemData)->szTitle);
+				::GetTextExtentPoint32(hDC,str,str.GetLength(),&sz);
+			}
+		}
 		lpMeasureItemStruct->itemHeight=max(sz.cy+1,16);
 		lpMeasureItemStruct->itemWidth=sz.cx+18;
 
@@ -10575,8 +10715,8 @@ void CLocateDlg::CAdvancedDlg::LoadControlStates(CRegKey& RegKey)
 
 	DWORD dwType;
 	DWORD dwLength=RegKey.QueryValueLength("Advanced/TypeOfFile");
-	char* pData=new char[dwLength];
-	RegKey.QueryValue("Advanced/TypeOfFile",pData,dwLength,&dwType);
+	BYTE* pData=new BYTE[dwLength];
+	RegKey.QueryValue("Advanced/TypeOfFile",(LPSTR)pData,dwLength,&dwType);
 	if (dwType==REG_DWORD && dwLength==sizeof(DWORD))
 	{
 		if (*((int*)pData)>0)
@@ -10621,15 +10761,15 @@ void CLocateDlg::CAdvancedDlg::SaveControlStates(CRegKey& RegKey)
 	// Type box
 	int nCurSel=SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL);
 	FileType* pType=(FileType*)SendDlgItemMessage(IDC_FILETYPE,CB_GETITEMDATA,nCurSel);
-	if (pType==NULL || pType==(CAdvancedDlg::FileType*)szEmpty || pType->szType==NULL)
+	if (pType==NULL || pType==(CAdvancedDlg::FileType*)szwEmpty || pType->szType==NULL)
 		RegKey.SetValue("Advanced/TypeOfFile",DWORD(nCurSel));
 	else
 	{
-		SIZE_T dwLength=istrlen(pType->szType);
-		char* szData=new char[++dwLength+pType->dwExtensionLength];
-		sMemCopy(szData,pType->szType,dwLength);
-		sMemCopy(szData+dwLength,pType->szExtensions,pType->dwExtensionLength);
-        RegKey.SetValue("Advanced/TypeOfFile",szData,dwLength+pType->dwExtensionLength,REG_BINARY);
+		SIZE_T dwLength=istrlenw(pType->szType);
+		WCHAR* szData=new WCHAR[++dwLength+pType->dwExtensionLength];
+		MemCopyW(szData,pType->szType,dwLength);
+		MemCopyW(szData+dwLength,pType->szExtensions,pType->dwExtensionLength);
+        RegKey.SetValue("Advanced/TypeOfFile",(LPCSTR)szData,(dwLength+pType->dwExtensionLength)*2,REG_BINARY);
 		delete[] szData;
 	}
 }
@@ -10642,57 +10782,53 @@ void CLocateDlg::CAdvancedDlg::UpdateTypeList()
 	AddBuildInFileTypes();
 
 	if (!(m_dwFlags&fgOtherTypeAdded) && GetLocateDlg()->m_dwFlags&CLocateDlg::fgLoadRegistryTypes)
-		m_hTypeUpdaterThread=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)UpdaterProc,this,0,0);
+	{
+		DWORD dwID;
+		m_hTypeUpdaterThread=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)UpdaterProc,this,0,&dwID);
+
+		if (m_hTypeUpdaterThread==NULL)
+			DebugFormatMessage("m_hTypeUpdaterThread==NULL, last error=%d",GetLastError());
+	}
 }
 
-int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCSTR szKey,DWORD dwKeyLength,CArray<FileType*>& aFileTypes)
+int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCWSTR szKey,CArray<FileType*>& aFileTypes)
 {
-	DebugFormatMessage("CAdvancedDlg::AddTypeToList(szKey=%s) ",szKey);
+	DebugFormatMessage("CAdvancedDlg::AddTypeToList(szKey=%s) ",(LPCSTR)CString(szKey));
 
 	CRegKey RegKey;
 	if (RegKey.OpenKey(HKCR,szKey,CRegKey::openExist|CRegKey::samQueryValue|CRegKey::samExecute)!=ERROR_SUCCESS)
 		return CB_ERR;
 
-	DWORD dwLength=RegKey.QueryValueLength("");
-	if (dwLength<=1)
+	CStringW sType,sTitle;
+	if (!RegKey.QueryValue(L"",sType))
 		return CB_ERR;
+	sType.MakeLower();
 
-	
-	char* szType=(char*)FileTypeAllocator.Allocate(dwLength);
-	RegKey.QueryValue("",szType,dwLength);
-	CharLower(szType);
 	for (int i=0;i<aFileTypes.GetSize();i++)
 	{
 		FileType* pType=aFileTypes.GetAt(i);
-		if (strcmp(pType->szType,szType)==0)
+		if (sType.Compare(pType->szType)==0)
 		{
-			pType->AddExtension(szKey+1,dwKeyLength);
-			FileTypeAllocator.Free(szType);
+			pType->AddExtension(szKey+1,istrlenw(szKey));
 			DebugMessage("AddTypeToList: 1err");
 			return -2;
 		}
 	}
 
-	if (RegKey.OpenKey(HKCR,szType,CRegKey::openExist|CRegKey::samQueryValue|CRegKey::samExecute)!=ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCR,sType,CRegKey::openExist|CRegKey::samQueryValue|CRegKey::samExecute)!=ERROR_SUCCESS)
 	{
-		FileTypeAllocator.Free(szType);
 		DebugMessage("AddTypeToList: 3err");
 		return CB_ERR;
 	}
 
 	
-	dwLength=RegKey.QueryValueLength("");
-	if (dwLength<=1)
-	{
-		FileTypeAllocator.Free(szType);
+	if (!RegKey.QueryValue(L"",sTitle))
 		return CB_ERR;
-	}
+	if (sTitle.IsEmpty())
+		return CB_ERR;
 
-	
-	char* szTitle=(char*)FileTypeAllocator.Allocate(dwLength);
-	RegKey.QueryValue("",szTitle,dwLength);
-	FileType* pType=new FileType(szType,szTitle);
-	pType->AddExtension(szKey+1,dwKeyLength);
+	FileType* pType=new FileType(alloccopy(sType,sType.GetLength()),alloccopy(sTitle,sTitle.GetLength()));
+	pType->AddExtension(szKey+1,istrlenw(szKey));
 	aFileTypes.Add(pType);
 	pType->SetIcon(RegKey);
 
@@ -10700,67 +10836,85 @@ int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCSTR szKey,DWORD dwKeyLength,CArra
 	return SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(pType));
 }
 
-int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCSTR pTypeAndExtensions)
+int CLocateDlg::CAdvancedDlg::AddTypeToList(BYTE* pTypeAndExtensions)
 {
-	DebugFormatMessage("CAdvancedDlg::AddTypeToList(pTypeAndExtensions=%s) ",pTypeAndExtensions);
-
 	CRegKey RegKey;
 	
-	SIZE_T dwLength=istrlen(pTypeAndExtensions);
+	SIZE_T dwLength=istrlenw((LPCWSTR)pTypeAndExtensions);
 	if (dwLength==0)
 		return CB_ERR;
-	char* szType=(char*)FileTypeAllocator.Allocate(++dwLength);
-	CopyMemory(szType,pTypeAndExtensions,dwLength);
-	pTypeAndExtensions+=dwLength;
+	WCHAR* szType=new WCHAR[++dwLength];
+	MemCopyW(szType,(LPCWSTR)pTypeAndExtensions,dwLength);
+	pTypeAndExtensions+=dwLength*2;
 	
 	if (RegKey.OpenKey(HKCR,szType,CRegKey::openExist|CRegKey::samQueryValue|CRegKey::samExecute)!=ERROR_SUCCESS)
 	{
-		FileTypeAllocator.Free(szType);
+		delete[] szType;
 		return CB_ERR;
 	}
 	
-	dwLength=RegKey.QueryValueLength("");
-	if (dwLength<=1)
+	CStringW sTitle;
+	if (!RegKey.QueryValue(L"",sTitle))
 	{
-		FileTypeAllocator.Free(szType);
+		delete szType;
 		return CB_ERR;
 	}
-    char* szTitle=(char*)FileTypeAllocator.Allocate(dwLength);
-	RegKey.QueryValue("",szTitle,dwLength);
 	
-	FileType* pFileType=new FileType(szType,szTitle);
-	while (*pTypeAndExtensions!='\0')
+	FileType* pFileType=new FileType(szType,sTitle.GiveBuffer());
+	while (*pTypeAndExtensions!=L'\0')
 	{
-        dwLength=istrlen(pTypeAndExtensions);
-		pFileType->AddExtension(pTypeAndExtensions,dwLength++);
-		pTypeAndExtensions+=dwLength;
+        dwLength=istrlenw((LPCWSTR)pTypeAndExtensions);
+		pFileType->AddExtension((LPCWSTR)pTypeAndExtensions,dwLength++);
+		pTypeAndExtensions+=dwLength*2;
 	}
 	
 	pFileType->SetIcon(RegKey);
+
 	return SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(pFileType));
 }
 
 DWORD WINAPI CLocateDlg::CAdvancedDlg::UpdaterProc(CLocateDlg::CAdvancedDlg* pAdvancedDlg)
 {
+	DebugMessage("CLocateDlg::CAdvancedDlg::UpdaterProc BEGIN");
+
 	CArray<FileType*> aFileTypes;
 
 	for (int i=pAdvancedDlg->SendDlgItemMessage(IDC_FILETYPE,CB_GETCOUNT)-1;i>=0;i--)
 	{
 		FileType* pParam=(FileType*)pAdvancedDlg->SendDlgItemMessage(IDC_FILETYPE,CB_GETITEMDATA,i);
-		if (pParam!=NULL && pParam!=(FileType*)szEmpty && pParam->szType!=NULL)
+		if (pParam!=NULL && pParam!=(FileType*)szwEmpty && pParam->szType!=NULL)
 			aFileTypes.Add(pParam);
 	}
 
-	char szKey[1000];
-	DWORD dwIndex=0,dwKeyLength=1000;
-	while (RegEnumKeyEx(HKCR,dwIndex,szKey,&dwKeyLength,NULL,NULL,NULL,NULL)==ERROR_SUCCESS)
+	if (IsFullUnicodeSupport())
 	{
-		if (szKey[0]=='.') // Is Extension
-			pAdvancedDlg->AddTypeToList(szKey,dwKeyLength,aFileTypes);
+		WCHAR szKey[1000];
+		DWORD dwIndex=0,dwKeyLength=1000;
+		while (RegEnumKeyExW(HKCR,dwIndex,szKey,&dwKeyLength,NULL,NULL,NULL,NULL)==ERROR_SUCCESS)
+		{
+			if (szKey[0]==L'.') // Is Extension
+				pAdvancedDlg->AddTypeToList(szKey,aFileTypes);
 
-		dwIndex++;
-		dwKeyLength=1000;
+			dwIndex++;
+			dwKeyLength=1000;
+		}
+	}
+	else
+	{
+		CHAR szKey[1000];
+		DWORD dwIndex=0,dwKeyLength=1000;
+		DebugMessage("Enumerating the root of HKCR");
+		while (RegEnumKeyEx(HKCR,dwIndex,szKey,&dwKeyLength,NULL,NULL,NULL,NULL)==ERROR_SUCCESS)
+		{
+			DebugFormatMessage("find %s",szKey);
+			if (szKey[0]=='.') // Is Extension
+				pAdvancedDlg->AddTypeToList(CStringW(szKey),aFileTypes);
 
+			dwIndex++;
+			dwKeyLength=1000;
+		}
+		DebugMessage("Enumerating the root of END");
+		
 	}
 	pAdvancedDlg->m_dwFlags|=fgOtherTypeAdded;
 
@@ -10769,34 +10923,36 @@ DWORD WINAPI CLocateDlg::CAdvancedDlg::UpdaterProc(CLocateDlg::CAdvancedDlg* pAd
 	
 	if (!pAdvancedDlg->SendDlgItemMessage(IDC_FILETYPE,CB_GETDROPPEDSTATE))
 		pAdvancedDlg->ReArrangeAllocatedData(); // Drop down is closed, arranging data
+	
+	DebugMessage("CLocateDlg::CAdvancedDlg::UpdaterProc END");
 	return 0;
 }
 
-CLocateDlg::CAdvancedDlg::FileType::FileType(LPCSTR& szBuildIn,HIMAGELIST hImageList)
+CLocateDlg::CAdvancedDlg::FileType::FileType(LPCWSTR& szBuildIn,HIMAGELIST hImageList)
 :	szType(NULL),szIconPath(NULL)
 {
 	
 	
 	// First string is title
-	SIZE_T dwLength=istrlen(szBuildIn);
-	szTitle=(char*)FileTypeAllocator.Allocate(++dwLength);
-	sMemCopy(szTitle,szBuildIn,dwLength);
+	SIZE_T dwLength=istrlenw(szBuildIn);
+	szTitle=new WCHAR[++dwLength];
+	MemCopyW(szTitle,szBuildIn,dwLength);
 	szBuildIn+=dwLength;
 	
 	// Next string is extension
-	dwLength=istrlen(szBuildIn);
+	dwLength=istrlenw(szBuildIn);
 	dwExtensionLength=(++dwLength)+1;
-	szExtensions=(char*)FileTypeAllocator.Allocate(dwExtensionLength);
-	sMemCopy(szExtensions,szBuildIn,dwLength);
-	szExtensions[dwLength]='\0';
+	szExtensions=new WCHAR[dwExtensionLength];
+	MemCopyW(szExtensions,szBuildIn,dwLength);
+	szExtensions[dwLength]=L'\0';
 	szBuildIn+=dwLength;
-	replacech(szExtensions,' ','\0');
+	replacech(szExtensions,L' ',L'\0');
 	
 	// Third is icon index, if available
-	if (*szBuildIn!='\0')
+	if (*szBuildIn!=L'\0')
 	{
-		hIcon=ImageList_ExtractIcon(NULL,hImageList,atoi(szBuildIn));
-		for (;*szBuildIn!='\0';szBuildIn++);
+		hIcon=ImageList_ExtractIcon(NULL,hImageList,_wtoi(szBuildIn));
+		for (;*szBuildIn!=L'\0';szBuildIn++);
 	}
 	else
 		hIcon=GetLocateDlg()->m_AdvancedDlg.m_hDefaultTypeIcon;
@@ -10807,35 +10963,34 @@ CLocateDlg::CAdvancedDlg::FileType::FileType(LPCSTR& szBuildIn,HIMAGELIST hImage
 CLocateDlg::CAdvancedDlg::FileType::~FileType()
 {
 	if (szType!=NULL)
-		FileTypeAllocator.Free(szType);
+		delete[] szType;
 	if (szTitle!=NULL)
-		FileTypeAllocator.Free(szTitle);
+		delete[] szTitle;
 	if (szExtensions!=NULL)
-		FileTypeAllocator.Free(szExtensions);
+		delete[] szExtensions;
 	if (hIcon!=NULL && hIcon!=GetLocateDlg()->m_AdvancedDlg.m_hDefaultTypeIcon)
 		DestroyIcon(hIcon);
 	if (szIconPath!=NULL)
 		delete[] szIconPath;
 }
 
-void CLocateDlg::CAdvancedDlg::FileType::AddExtension(LPCSTR szExtension,DWORD dwNewExtensionLength)
+void CLocateDlg::CAdvancedDlg::FileType::AddExtension(LPCWSTR szExtension,DWORD dwNewExtensionLength)
 {
 	if (szExtensions==NULL)
 	{
 		dwExtensionLength=dwNewExtensionLength+1;
-		szExtensions=(char*)FileTypeAllocator.Allocate(dwExtensionLength);
-		sMemCopy(szExtensions,szExtension,dwNewExtensionLength);
-		szExtensions[dwNewExtensionLength]='\0';
+		szExtensions=new WCHAR[dwExtensionLength];
+		MemCopyW(szExtensions,szExtension,dwNewExtensionLength);
+		szExtensions[dwNewExtensionLength]=L'\0';
 	}
 	else
 	{
-		char* szNewExtensions;
-		szNewExtensions=(char*)FileTypeAllocator.Allocate(dwExtensionLength+dwNewExtensionLength);
-		sMemCopy(szNewExtensions,szExtensions,dwExtensionLength);
-		sMemCopy(szNewExtensions+dwExtensionLength-1,szExtension,dwNewExtensionLength);
+		WCHAR* szNewExtensions=new WCHAR[dwExtensionLength+dwNewExtensionLength];
+		MemCopyW(szNewExtensions,szExtensions,dwExtensionLength);
+		MemCopyW(szNewExtensions+dwExtensionLength-1,szExtension,dwNewExtensionLength);
 		dwExtensionLength+=dwNewExtensionLength;
-		szNewExtensions[dwExtensionLength-1]='\0';
-		FileTypeAllocator.Free(szExtensions);
+		szNewExtensions[dwExtensionLength-1]=L'\0';
+		delete[] szExtensions;
 		szExtensions=szNewExtensions;
 	}
 }
@@ -10855,13 +11010,11 @@ void CLocateDlg::CAdvancedDlg::FileType::SetIcon(CRegKey& rKey,BOOL toHandle)
 	
 	if (RegKey.OpenKey(rKey,"DefaultIcon",CRegKey::openExist|CRegKey::samQueryValue|CRegKey::samExecute)!=ERROR_SUCCESS)
 		return;
-	DWORD dwLength=RegKey.QueryValueLength("");
-	if (dwLength<2)
+	CStringW sIconPath;
+	if (!RegKey.QueryValue(L"",sIconPath))
 		return;
 
-	szIconPath=new char[dwLength+1];
-	if (RegKey.QueryValue("",szIconPath,dwLength+1)<2)
-		return;
+	szIconPath=alloccopy(sIconPath,sIconPath.GetLength());
 
 	if (toHandle)
 		ExtractIconFromPath();
@@ -10880,25 +11033,42 @@ void CLocateDlg::CAdvancedDlg::FileType::ExtractIconFromPath()
 
 	int iIndex=0;
 
-	char* szIconIndex;
-	for (szIconIndex=szIconPath;*szIconIndex!=',' && *szIconIndex!='\0';szIconIndex++);
-	if (*szIconIndex!='\0')
+	WCHAR* szIconIndex;
+	for (szIconIndex=szIconPath;*szIconIndex!=L',' && *szIconIndex!=L'\0';szIconIndex++);
+	if (*szIconIndex!=L'\0')
 	{
-		iIndex=atoi(szIconIndex+1);
-		*szIconIndex='\0';
+		iIndex=_wtoi(szIconIndex+1);
+		*szIconIndex=L'\0';
 	}
 
-	char szExpanded[MAX_PATH];
-	if (ExpandEnvironmentStrings(szIconPath,szExpanded,MAX_PATH)==0)
+	if (IsFullUnicodeSupport())
 	{
-		// Error
-		hIcon=GetLocateDlg()->m_AdvancedDlg.m_hDefaultTypeIcon;
-		return;
+		WCHAR szExpanded[MAX_PATH];
+		if (ExpandEnvironmentStringsW(szIconPath,szExpanded,MAX_PATH)==0)
+		{
+			// Error
+			hIcon=GetLocateDlg()->m_AdvancedDlg.m_hDefaultTypeIcon;
+			return;
+		}
+		
+		ExtractIconExW(szExpanded,iIndex,NULL,&hIcon,1);
+		if (hIcon==NULL)
+			hIcon=GetLocateDlg()->m_AdvancedDlg.m_hDefaultTypeIcon;
 	}
-	
-	ExtractIconEx(szExpanded,iIndex,NULL,&hIcon,1);
-	if (hIcon==NULL)
-		hIcon=GetLocateDlg()->m_AdvancedDlg.m_hDefaultTypeIcon;
+	else
+	{
+		char szExpanded[MAX_PATH];
+		if (ExpandEnvironmentStrings(CString(szIconPath),szExpanded,MAX_PATH)==0)
+		{
+			// Error
+			hIcon=GetLocateDlg()->m_AdvancedDlg.m_hDefaultTypeIcon;
+			return;
+		}
+		
+		ExtractIconEx(szExpanded,iIndex,NULL,&hIcon,1);
+		if (hIcon==NULL)
+			hIcon=GetLocateDlg()->m_AdvancedDlg.m_hDefaultTypeIcon;
+	}
 }
 
 

@@ -1072,7 +1072,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	if (GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes")!=NULL)
 	{
 		// Needs at least Win2k
-		DialogItems[4]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
+		DialogItems[6]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nTransparency);
 		StatusTooltipItems[8]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nToolTipTransparency);

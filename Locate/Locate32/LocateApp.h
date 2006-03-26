@@ -304,8 +304,8 @@ public:
 	void LoadRegistry();
 	BOOL UpdateSettings();
 
-	LPSTR FormatDateAndTimeString(WORD wDate,WORD wTime=WORD(-1));
-	LPSTR FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) const;
+	LPWSTR FormatDateAndTimeString(WORD wDate,WORD wTime=WORD(-1));
+	LPWSTR FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) const;
 	BOOL SetLanguageSpecifigHandles();
 
 

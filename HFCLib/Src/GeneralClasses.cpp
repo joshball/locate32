@@ -1207,30 +1207,18 @@ BOOL CRegKey::SetValue(LPCWSTR lpValueName,CStringW& strData)
 	if (IsFullUnicodeSupport())
 		return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)(LPCWSTR)strData,(DWORD)strData.GetLength()*2+1)==ERROR_SUCCESS;
 	else
-	{
-		CString strA;
-		if (::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)(LPCWSTR)strData,(DWORD)strData.GetLength()+1)==ERROR_SUCCESS)
-		{
-			strData=strA;
-			return TRUE;
-		}
-		return FALSE;
-	}
+		return ::RegSetValueExA(m_hKey,CString(lpValueName),0,REG_SZ,(CONST BYTE*)(LPCSTR)CString(strData),(DWORD)strData.GetLength()+1)==ERROR_SUCCESS;
 }
 
 
 LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData)
 {
 	if (IsFullUnicodeSupport())
-		return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)strData,(DWORD)((wcslen(strData)*2+1)*2));
+		return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)strData,(DWORD)((wcslen(strData)+1)*2));
 	else
 	{
-		DWORD nLength=wcslen(strData)+1;
-		char* pText=new char[nLength];
-		MemCopyWtoA(pText,strData,nLength);
-		BOOL bRet=::RegSetValueExA(m_hKey,CString(lpValueName),0,REG_SZ,(CONST BYTE*)pText,nLength);
-		delete[] pText;
-		return bRet;
+		CString aData(strData);
+		return ::RegSetValueExA(m_hKey,CString(lpValueName),0,REG_SZ,(CONST BYTE*)(LPCSTR)aData,(DWORD)((aData.GetLength()+1)));
 	}
 }
 	

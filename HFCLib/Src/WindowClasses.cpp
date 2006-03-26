@@ -93,7 +93,32 @@ BOOL CWnd::SetText(LPCSTR lpsz)
 
 BOOL CWnd::SetText(LPCWSTR lpsz)
 {
-	return ::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz);
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz);
+	return ::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)CString(lpsz));
+}
+
+BOOL CWnd::SetWindowText(LPCWSTR lpsz)
+{
+	if (IsFullUnicodeSupport())
+		return ::SetWindowTextW(m_hWnd,lpsz);
+	return ::SetWindowText(m_hWnd,CString(lpsz));
+}
+
+int CWnd::GetWindowText(LPWSTR lpString,int nMaxCount) const
+{
+	if (IsFullUnicodeSupport())
+		return ::GetWindowTextW(m_hWnd,lpString,nMaxCount); 
+
+	char* pText=new char[nMaxCount+2];
+	int ret=::GetWindowTextA(m_hWnd,pText,nMaxCount);
+	if (ret!=0)
+	{
+		MultiByteToWideChar(CP_ACP,0,pText,ret,lpString,nMaxCount);
+		lpString[ret]=L'\0';
+	}
+	delete pText;
+	return ret;
 }
 
 void CWnd::CenterWindow()

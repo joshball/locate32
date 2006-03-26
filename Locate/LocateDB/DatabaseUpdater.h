@@ -100,27 +100,27 @@ public:
 
 		BOOL IsFlagged(DBFlags flag);
 		void SetFlag(DBFlags flag,BOOL bSet=TRUE);
-		void ParseExcludedDirectories(const LPCSTR* ppExcludedDirectories,int nExcludedDirectories);
+		void ParseExcludedDirectories(const LPCWSTR* ppExcludedDirectories,int nExcludedDirectories);
 		
 
 	protected:
 
-		LPSTR m_szArchive;
+		LPWSTR m_szArchive;
 		CDatabase::ArchiveType m_nArchiveType;
 		
-		LPSTR m_szName;
+		LPWSTR m_szName;
 		SIZE_T m_dwNameLength;
 
-		CString m_sAuthor;
-		CString m_sComment;
+		CStringW m_sAuthor;
+		CStringW m_sComment;
 		CRootDirectory* m_pFirstRoot;
 
 		BYTE m_nFlags;
 
 		friend CDatabaseUpdater;
 
-		LPSTR m_szExtra1;
-		LPSTR m_szExtra2;
+		LPWSTR m_szExtra1;
+		LPWSTR m_szExtra2;
 		
 		// For progress estimation
 		DWORD m_dwExpectedDirectories;
@@ -167,11 +167,11 @@ public:
 	LPCSTR GetCurrentRootPath() const;
 	LPSTR GetCurrentRootPathStr() const;
 
-	BOOL EnumDatabases(int iDatabase,LPSTR& szName,LPSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot);
+	BOOL EnumDatabases(int iDatabase,LPWSTR& szName,LPWSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot);
 	
-	const LPCSTR GetCurrentDatabaseName() const;
-	const LPCSTR GetCurrentDatabaseFile() const;
-	LPSTR GetCurrentDatabaseNameStr() const;
+	const LPCWSTR GetCurrentDatabaseName() const;
+	const LPCWSTR GetCurrentDatabaseFile() const;
+	LPWSTR GetCurrentDatabaseNameStr() const;
 	
 	DWORD GetNumberOfDatabases() const;
 	DWORD GetCurrentDatabase() const;
@@ -185,7 +185,7 @@ public:
 
 private:
 
-	static CFile* OpenDatabaseFileForIncrementalUpdate(LPCSTR szArchive,DWORD dwFiles,DWORD dwDirectories);
+	static CFile* OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,DWORD dwFiles,DWORD dwDirectories);
 
 	CArrayFP<DBArchive*> m_aDatabases;
 	DWORD m_dwCurrentDatabase;
@@ -331,29 +331,29 @@ inline LPSTR CDatabaseUpdater::GetCurrentRootPathStr() const
 	return pStr;
 }
 
-inline const LPCSTR CDatabaseUpdater::GetCurrentDatabaseName() const
+inline const LPCWSTR CDatabaseUpdater::GetCurrentDatabaseName() const
 {
 	if (m_dwCurrentDatabase==DWORD(-1))
 		return NULL;
 	return m_aDatabases[m_dwCurrentDatabase]->m_szName;
 }
 
-inline const LPCSTR CDatabaseUpdater::GetCurrentDatabaseFile() const
+inline const LPCWSTR CDatabaseUpdater::GetCurrentDatabaseFile() const
 {
 	if (m_dwCurrentDatabase==DWORD(-1))
 		return NULL;
 	return m_aDatabases[m_dwCurrentDatabase]->m_szArchive;
 }
 
-inline LPSTR CDatabaseUpdater::GetCurrentDatabaseNameStr() const
+inline LPWSTR CDatabaseUpdater::GetCurrentDatabaseNameStr() const
 {
 	if (m_dwCurrentDatabase==DWORD(-1))
 		return 0;
 	
-	LPSTR szRet=new char[m_aDatabases[m_dwCurrentDatabase]->m_dwNameLength+1];
-	ASSERT(strlen(m_aDatabases[m_dwCurrentDatabase]->m_szName)==m_aDatabases[m_dwCurrentDatabase]->m_dwNameLength);
+	LPWSTR szRet=new WCHAR[m_aDatabases[m_dwCurrentDatabase]->m_dwNameLength+1];
+	ASSERT(istrlenw(m_aDatabases[m_dwCurrentDatabase]->m_szName)==m_aDatabases[m_dwCurrentDatabase]->m_dwNameLength);
 	
-	CopyMemory(szRet,m_aDatabases[m_dwCurrentDatabase]->m_szName,m_aDatabases[m_dwCurrentDatabase]->m_dwNameLength+1);
+	MemCopyW(szRet,m_aDatabases[m_dwCurrentDatabase]->m_szName,m_aDatabases[m_dwCurrentDatabase]->m_dwNameLength+1);
 	return szRet;
 }
 
@@ -365,7 +365,7 @@ inline BOOL CDatabaseUpdater::IsIncrementUpdate() const
 	return m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::IncrementalUpdate);
 }
 
-inline BOOL CDatabaseUpdater::EnumDatabases(int iDatabase,LPSTR& szName,LPSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot)
+inline BOOL CDatabaseUpdater::EnumDatabases(int iDatabase,LPWSTR& szName,LPWSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot)
 {
 	if (iDatabase<0 || iDatabase>=m_aDatabases.GetSize())
 		return FALSE;

@@ -84,18 +84,83 @@ UINT CWndCtrl::GetText(CStringA& str) const
 #ifdef DEF_WCHAR
 UINT CWndCtrl::GetText(CStringW& str) const
 {
-	UINT len=::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
-	LPWSTR text=new WCHAR[len];
+	if (IsFullUnicodeSupport())
+	{
+		UINT len=::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+		LPWSTR text=new WCHAR[len];
+		if (text==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return FALSE;
+		}
+		len=::SendMessageW(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
+		str.Copy(text,len);
+		delete[] text;
+		return len;
+	}
+	
+	UINT len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+	LPSTR text=new CHAR[len];
 	if (text==NULL)
 	{
 		SetHFCError(HFC_CANNOTALLOC);
 		return FALSE;
 	}
-	len=::SendMessageW(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
+	len=::SendMessageA(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text); 
 	str.Copy(text,len);
 	delete[] text;
 	return len;
 }
+ 
+BOOL CWndCtrl::SetText(LPCWSTR lpsz)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); 
+	return ::SendMessageA(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)CString(lpsz)); 
+}
+
+BOOL CWndCtrl::SetWindowText(LPCWSTR lpsz) 
+{
+	if (IsFullUnicodeSupport())
+		return ::SetWindowTextW(m_hWnd,lpsz); 
+	return ::SetWindowTextA(m_hWnd,CString(lpsz)); 
+}
+
+
+int CWndCtrl::GetWindowText(LPWSTR lpString,int nMaxCount) const 
+{
+	if (IsFullUnicodeSupport())
+		return ::GetWindowTextW(m_hWnd,lpString,nMaxCount); 
+
+	char* pText=new char[nMaxCount+2];
+	int ret=::GetWindowTextA(m_hWnd,pText,nMaxCount);
+	if (ret!=0)
+	{
+		MultiByteToWideChar(CP_ACP,0,pText,ret,lpString,nMaxCount);
+		lpString[ret]=L'\0';
+	}
+	delete pText;
+	return ret;
+}
+
+UINT CWndCtrl::GetText(LPWSTR lpszText,UINT cchTextMax) const
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,WM_GETTEXT,cchTextMax*2,(LPARAM)lpszText); 
+
+	int nLen=::SendMessageA(m_hWnd,WM_GETTEXTLENGTH,0,0);
+	char* pText=new char[nLen+2];
+	int ret=::SendMessageA(m_hWnd,WM_GETTEXT,(nLen+2)*2,(LPARAM)pText);
+	if (ret!=0)
+	{
+		MultiByteToWideChar(CP_ACP,0,pText,ret,lpszText,cchTextMax);
+		lpszText[ret]=L'\0';
+	}
+	delete pText;
+	return ret;
+}
+
+	
 #endif
 
 

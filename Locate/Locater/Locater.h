@@ -68,7 +68,7 @@ class CLocater
 {
 public:
 	CLocater();
-	CLocater(LPCSTR szDatabaseFile);
+	CLocater(LPCWSTR szDatabaseFile);
 	CLocater(const PDATABASE* pDatabases,int nDatabases);
 	CLocater(const CDatabase* pDatabases,int nDatabases);
 	CLocater(const CArray<PDATABASE>& aDatabases);
@@ -76,7 +76,7 @@ public:
 
 	~CLocater();
 	
-	void SetDatabases(LPCSTR szDatabaseFile);
+	void SetDatabases(LPCWSTR szDatabaseFile);
 	void SetDatabases(const PDATABASE* pDatabases,int nDatabases);
 	void SetDatabases(const CDatabase* pDatabases,int nDatabases);
 	void SetDatabases(const CArray<PDATABASE>& aDatabases);
@@ -185,17 +185,18 @@ public:
 	DWORD GetNumberOfFoundDirectories() const;
 	
 	WORD GetCurrentDatabaseID() const;
-	LPCSTR GetCurrentDatabaseName() const;
-	LPCSTR GetCurrentDatabaseFile() const;
-	BOOL IsCurrentDatabaseNamesOEM() const;
+	LPCWSTR GetCurrentDatabaseName() const;
+	LPCWSTR GetCurrentDatabaseFile() const;
+	BOOL IsCurrentDatabaseOEM() const;
+	BOOL IsCurrentDatabaseUnicode() const;
 	WORD GetCurrentDatabaseRootID() const;
 	BYTE GetCurrentDatabaseRootType() const;
-	LPCSTR GetCurrentDatabaseVolumeLabel() const;
+	LPCWSTR GetCurrentDatabaseVolumeLabel() const;
 	DWORD GetCurrentDatabaseVolumeSerial() const;
-	LPCSTR GetCurrentDatabaseFileSystem() const;
+	LPCWSTR GetCurrentDatabaseFileSystem() const;
 	
 	// allocates memory to szName & copies database name to szName
-	void GetCurrentDatabaseName(LPSTR& szName) const; 
+	void GetCurrentDatabaseName(LPWSTR& szName) const; 
 
 	DWORD GetNumberOfDatabases() const;
 
@@ -220,13 +221,13 @@ private:
 
 	//  Needed information from CDatabase
 	struct DBArchive {
-		DBArchive(LPCSTR szName,CDatabase::ArchiveType nArchiveType,LPCSTR szArchive,WORD wID,BOOL bEnable);
+		DBArchive(LPCWSTR szName,CDatabase::ArchiveType nArchiveType,LPCWSTR szArchive,WORD wID,BOOL bEnable);
 		~DBArchive();
 		
-		LPSTR szName;
+		LPWSTR szName;
 		DWORD dwNameLength;
 
-		LPSTR szArchive;
+		LPWSTR szArchive;
 		CDatabase::ArchiveType nArchiveType;
 
 		LOCATEFOUNDPROC m_pFoundProc;
@@ -235,6 +236,7 @@ private:
 
 		BYTE bEnable:1;
 		BYTE bOEM:1;
+		BYTE bUnicode:1;
 
 	};
 	CArrayFP<DBArchive*> m_aDatabases;
@@ -244,9 +246,9 @@ private:
 	
 	// Volume information
 	BYTE m_bCurrentRootType;
-	LPCSTR m_szVolumeName;
+	LPCWSTR m_szVolumeName;
 	DWORD m_dwVolumeSerial;
-	LPCSTR m_szFileSystem;
+	LPCWSTR m_szFileSystem;
 
 
 private:

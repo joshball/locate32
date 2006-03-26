@@ -927,7 +927,19 @@ inline int CComboBox::GetLBText(int nIndex, LPSTR lpszText) const
 #ifdef DEF_WCHAR
 inline int CComboBox::GetLBText(int nIndex, LPWSTR lpszText) const
 { 
-	return ::SendMessageW(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)lpszText);
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)lpszText);
+
+	int nLen=::SendMessageA(m_hWnd,CB_GETLBTEXTLEN,nIndex,0);
+	char* pText=new char[nLen+2];
+	int ret=::SendMessageA(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)pText);
+	if (ret!=0)
+	{
+		MultiByteToWideChar(CP_ACP,0,pText,ret,lpszText,ret+2);
+		lpszText[ret]=L'\0';
+	}
+	delete pText;
+	return ret;
 }
 #endif
 

@@ -275,18 +275,9 @@ inline DWORD_PTR GetFileInfo(LPCSTR pszPath,DWORD dwFileAttributes,SHFILEINFO *p
 	return SHGetFileInfo(pszPath,dwFileAttributes,psfi,sizeof(SHFILEINFO),uFlags);
 }
 
-inline DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags)
-{
-	return SHGetFileInfoW(pszPath,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags);
-}
-
 inline DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags)
 {
 	return SHGetFileInfo((LPCSTR)piil,dwFileAttributes,psfi,sizeof(SHFILEINFO),uFlags|SHGFI_PIDL);
 }
 
-inline DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags)
-{
-	return SHGetFileInfoW((LPCWSTR)piil,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags|SHGFI_PIDL);
-}
 #endif

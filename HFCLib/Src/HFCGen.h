@@ -295,9 +295,10 @@ public:
 	virtual BOOL Flush();
 	virtual BOOL Close();
 
-	static BOOL IsFile(LPCTSTR szFileName);
+	static BOOL IsFile(LPCSTR szFileName);
 	static INT IsDirectory(LPCSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
 #ifdef DEF_WCHAR
+	static BOOL IsFile(LPCWSTR szFileName);
 	static INT IsDirectory(LPCWSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
 #endif
 	static BOOL IsValidFileName(LPCSTR szFile,LPSTR szShortName=NULL); // Parent directory must exist

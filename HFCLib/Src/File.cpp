@@ -394,6 +394,9 @@ BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError)
 
 BOOL CFile::Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError)
 {
+	if (!IsFullUnicodeSupport())
+		return Open(CString(lpszFileName),nOpenFlags,pError);
+
 	if (m_bCloseOnDelete)
 		Close();
 	m_bCloseOnDelete=TRUE;
@@ -1078,7 +1081,7 @@ ULONGLONG CFile::GetPosition64() const
 #endif
 
 
-BOOL CFile::IsFile(LPCTSTR szFileName)
+BOOL CFile::IsFile(LPCSTR szFileName)
 {
 	if (szFileName[0]=='\0')
 		return FALSE;
@@ -1219,6 +1222,32 @@ INT CFile::IsDirectory(LPCSTR szDirectoryName)
 }
 
 #ifdef DEF_WCHAR
+BOOL CFile::IsFile(LPCWSTR szFileName)
+{
+	if (!IsFullUnicodeSupport())
+		return CFile::IsFile(CString(szFileName));
+
+	if (szFileName[0]==L'\0')
+		return FALSE;
+#ifdef WIN32
+	HANDLE hFind;
+	WIN32_FIND_DATAW fd;
+	int ret=TRUE;
+	hFind=FindFirstFileW(szFileName,&fd);
+	if (hFind!=INVALID_HANDLE_VALUE)
+	{
+		while (fd.dwFileAttributes==FILE_ATTRIBUTE_DIRECTORY && ret)
+			ret=FindNextFileW(hFind,&fd);
+		FindClose(hFind);	
+		return ret;
+	}
+	return FALSE;
+#else
+	struct ffblk fd;
+	return !findfirst(szFileName,&fd,FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_ARCH);
+#endif
+}
+
 INT CFile::IsDirectory(LPCWSTR szDirectoryName)
 {
 	if (!IsFullUnicodeSupport())

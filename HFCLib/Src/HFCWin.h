@@ -604,8 +604,8 @@ public:
 
 #ifdef DEF_WCHAR
 	//widechar support
-	BOOL SetWindowText(LPCWSTR lpsz) {return ::SetWindowTextW(m_hWnd,lpsz); }
-	int GetWindowText(LPWSTR lpString,int nMaxCount) const { return ::GetWindowTextW(m_hWnd,lpString,nMaxCount); }
+	BOOL SetWindowText(LPCWSTR lpsz);
+	int GetWindowText(LPWSTR lpString,int nMaxCount) const;
 	int GetWindowText(CStringW& str) const;
 	UINT GetDlgItemText(int nIDDlgItem,CStringW& str);
 	

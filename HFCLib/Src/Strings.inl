@@ -576,17 +576,6 @@ inline CStringW CStringW::Right(DWORD nCount) const
 	return CStringW(&m_pData[m_nDataLen-nCount]);
 }
 
-inline void CStringW::MakeUpper()
-{
-	if (m_pData!=NULL)
-		CharUpperW(m_pData);
-}
-
-inline void CStringW::MakeLower()
-{
-	if (m_pData!=NULL)
-		CharLowerW(m_pData);
-}
 
 inline WCHAR CStringW::LastChar() const
 {

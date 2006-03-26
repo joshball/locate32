@@ -137,17 +137,18 @@ public:
 	HWND SetFocus() const { return ::SetFocus(m_hWnd); }
 	
 	UINT GetTextLength() const { return ::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0); } 
-	UINT GetText(LPTSTR lpszText,UINT cchTextMax) const { return ::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText); } 
+	UINT GetText(LPSTR lpszText,UINT cchTextMax) const { return ::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText); } 
 	UINT GetText(CStringA& str) const;
 	BOOL SetText(LPCSTR lpsz) { return ::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); }
 
 #ifdef DEF_WCHAR
-	BOOL SetWindowText(LPCWSTR lpsz) {return ::SetWindowTextW(m_hWnd,lpsz); }
-	int GetWindowText(LPWSTR lpString,int nMaxCount) const { return ::GetWindowTextW(m_hWnd,lpString,nMaxCount); }
+	BOOL SetWindowText(LPCWSTR lpsz);
+	int GetWindowText(LPWSTR lpString,int nMaxCount) const;
 	
 	//widechar support
 	UINT GetText(CStringW& str) const;
-	BOOL SetText(LPCWSTR lpsz) { return ::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); }
+	UINT GetText(LPWSTR lpszText,UINT cchTextMax) const;
+	BOOL SetText(LPCWSTR lpsz);
 #endif
 
 	friend class CWnd;

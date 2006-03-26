@@ -64,10 +64,10 @@ public:
 	void ChangeName(LPCSTR szNewName,int iLength=-1);
 
 private:
-	LPSTR szTitle;
-	LPSTR szName;
-	mutable LPSTR szPath;
-	LPSTR szType;
+	LPWSTR szTitle;
+	LPWSTR szName;
+	mutable LPWSTR szPath;
+	LPWSTR szType;
 	int iIcon;
 	int iParentIcon;
 
@@ -79,7 +79,7 @@ private:
 	WORD wAccessedDate;
 	WORD wAccessedTime;
 	DWORD dwFileSize;
-	BYTE bFileSizeHi;
+	WORD wFileSizeHi;
 	BYTE bExtensionPos;
 	BYTE bAttribs;
 	BYTE bNameLength;
@@ -128,16 +128,16 @@ public:
 	BOOL IsArchive() const { return bAttribs&LITEMATTRIB_ARCHIVE; }
 	BOOL IsCutted() const { return bAttribs&LITEMATTRIB_CUTTED; }
 
-	LPSTR GetName() const { return szName; }
+	LPWSTR GetName() const { return szName; }
 	DWORD GetNameLen() const { return bNameLength; }
-	LPSTR GetPath() const { szName[-1]='\\'; return szPath; }
+	LPWSTR GetPath() const { szName[-1]=L'\\'; return szPath; }
 	DWORD GetPathLen() const { return bNameLength+DWORD(szName-szPath); }
-	LPSTR GetParent() const { szName[-1]='\0'; return szPath; }
-	LPSTR GetTitle() const { return szTitle; }
-	LPSTR GetType() const { return szType; }
+	LPWSTR GetParent() const { szName[-1]=L'\0'; return szPath; }
+	LPWSTR GetTitle() const { return szTitle; }
+	LPWSTR GetType() const { return szType; }
 	
-	LPSTR GetDetailText(CLocateDlg::DetailType nDetailType) const;
-	LPSTR GetToolTipText() const;
+	LPWSTR GetDetailText(CLocateDlg::DetailType nDetailType) const;
+	LPWSTR GetToolTipText() const;
 
 
 	int GetIcon() const { return iIcon; }
@@ -149,21 +149,21 @@ public:
 	WORD GetAccessedDate() const { return wAccessedDate; }
 	WORD GetAccessedTime() const { return wAccessedTime; }
 	DWORD GetFileSizeLo() const { return dwFileSize; }
-	DWORD GetFileSizeHi() const { return bFileSizeHi; }
-	LONGLONG GetFileSize() const { return ((LONGLONG)bFileSizeHi)<<32|(LONGLONG)dwFileSize; }
-	LPSTR GetExtension() const { return szName+bExtensionPos; }
+	DWORD GetFileSizeHi() const { return wFileSizeHi; }
+	LONGLONG GetFileSize() const { return ((LONGLONG)wFileSizeHi)<<32|(LONGLONG)dwFileSize; }
+	LPWSTR GetExtension() const { return szName+bExtensionPos; }
 	DWORD GetExtensionLength() const { return bNameLength-bExtensionPos; }
 
 	BOOL GetImageDimensions(SIZE& dim) const;
 	int GetImageDimensionsProduct() const;
-	LPSTR GetExtraText(CLocateDlg::DetailType nDetailType) const; 
+	LPWSTR GetExtraText(CLocateDlg::DetailType nDetailType) const; 
 	void ExtraSetUpdateWhenFileSizeChanged();
 	void DeleteAllExtraFields();
     BOOL IsItemShortcut() const;
 
-	LPSTR FormatAttributes() const;
-	LPSTR FormatOwner() const;
-	LPSTR FormatImageInformation() const;
+	LPWSTR FormatAttributes() const;
+	LPWSTR FormatOwner() const;
+	LPWSTR FormatImageInformation() const;
 
 private:
 	
@@ -177,7 +177,7 @@ private:
 		CLocateDlg::DetailType nType;
 		union {
 			SIZE szImageDimension;
-			char* szText;
+			WCHAR* szText;
 		};
 		BYTE bShouldUpdate;
 

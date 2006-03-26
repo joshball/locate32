@@ -105,7 +105,6 @@ public:
 #endif
 };
 
-extern CAllocator FileTypeAllocator;
 //extern CBufferAllocator<BYTE*,2000,BUFFERALLOC_EXTRALEN> FileTypeAllocator;
 //extern CBufferAllocatorThreadSafe<BYTE*,2000,BUFFERALLOC_EXTRALEN> FileTypeAllocator;	
 
@@ -369,34 +368,28 @@ public:
 	private:
 		struct FileType
 		{
-			char* szExtensions;
-			char* szTitle;
-			char* szType;
+			WCHAR* szExtensions;
+			WCHAR* szTitle;
+			WCHAR* szType;
 			DWORD dwExtensionLength;
 			
 			HICON hIcon;
-			LPSTR szIconPath;
+			LPWSTR szIconPath;
 			
 
 			FileType();
-			FileType(LPSTR frType,LPSTR frTitle); // This constructod owns pointers
-			FileType(LPCSTR& szBuildIn,HIMAGELIST hImageList);
+			FileType(LPWSTR frType,LPWSTR frTitle); // This constructod owns pointers
+			FileType(LPCWSTR& szBuildIn,HIMAGELIST hImageList);
 			~FileType();
 			
-			void AddExtension(LPCSTR szExtension,DWORD dwExtensionLength);
+			void AddExtension(LPCWSTR szExtension,DWORD dwExtensionLength);
 			void SetIcon(CRegKey& rKey,BOOL toHandle=FALSE);
 			void ExtractIconFromPath();
 
-		private:
-			
-		public:
-			inline void* operator new(size_t size) { return FileTypeAllocator.AllocateFast(size); }
-			inline void operator delete(void* pObject) { FileTypeAllocator.Free(pObject); }
-			inline void operator delete(void* pObject,size_t size) { FileTypeAllocator.Free(pObject); }
 		};
 
-		int AddTypeToList(LPCSTR szKey,DWORD dwKeyLength,CArray<FileType*>& aFileTypes);
-		int AddTypeToList(LPCSTR pTypeAndExtensions);
+		int AddTypeToList(LPCWSTR szKey,CArray<FileType*>& aFileTypes);
+		int AddTypeToList(BYTE* pTypeAndExtensions);
 		
 	private:
 		HANDLE m_hTypeUpdaterThread;
@@ -495,7 +488,7 @@ public:
 	static BOOL InsertMenuItemsFromTemplate(HMENU hMenu,HMENU hTemplate,UINT uStartPosition,int nDefaultItem=-1);
 	
 	//void EnsureFocus();
-	BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
+	BOOL ListNotifyHandler(NMLISTVIEW *pNm);
 	static int CALLBACK ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
 	static int SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSorting);

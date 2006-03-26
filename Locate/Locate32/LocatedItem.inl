@@ -6,35 +6,35 @@
 #endif
 
 
-inline LPSTR CLocatedItem::FormatAttributes() const
+inline LPWSTR CLocatedItem::FormatAttributes() const
 {
 	if (!IsDeleted())
 	{
 		ISDLGTHREADOK
-		if (g_szBuffer!=NULL)
-			delete[] g_szBuffer;
-		g_szBuffer=new char[10];
+		if (g_szwBuffer!=NULL)
+			delete[] g_szwBuffer;
+		g_szwBuffer=new WCHAR[10];
 
-		LPSTR pPtr=g_szBuffer;
+		LPWSTR pPtr=g_szwBuffer;
 
 		if (IsFolder())
-			*(pPtr++)='D';
+			*(pPtr++)=L'D';
 		if (GetAttributes()&LITEMATTRIB_READONLY)
-			*(pPtr++)='R';
+			*(pPtr++)=L'R';
 		if (GetAttributes()&LITEMATTRIB_HIDDEN)
-			*(pPtr++)='H';
+			*(pPtr++)=L'H';
 		if (GetAttributes()&LITEMATTRIB_SYSTEM)
-			*(pPtr++)='S';
+			*(pPtr++)=L'S';
 		if (GetAttributes()&LITEMATTRIB_ARCHIVE)
-			*(pPtr++)='A';
-		*pPtr='\0';
-		return g_szBuffer;
+			*(pPtr++)=L'A';
+		*pPtr=L'\0';
+		return g_szwBuffer;
 	}
-	return const_cast<LPSTR>(szEmpty);
+	return const_cast<LPWSTR>(szwEmpty);
 }
 
 
-inline LPSTR CLocatedItem::FormatImageInformation() const
+inline LPWSTR CLocatedItem::FormatImageInformation() const
 {
 	ISDLGTHREADOK
 
@@ -42,19 +42,19 @@ inline LPSTR CLocatedItem::FormatImageInformation() const
 	if (GetImageDimensions(dim))
 	{
 		if (dim.cx==0 || dim.cy==0)
-			return const_cast<LPSTR>(szEmpty);	
+			return const_cast<LPWSTR>(szwEmpty);	
 		
-		if (g_szBuffer!=NULL)
-			delete[] g_szBuffer;
-		g_szBuffer=new char[30];
-		StringCbPrintf(g_szBuffer,30,"%dx%d",dim.cx,dim.cy);
-		return g_szBuffer;
+		if (g_szwBuffer!=NULL)
+			delete[] g_szwBuffer;
+		g_szwBuffer=new WCHAR[30];
+		StringCbPrintfW(g_szwBuffer,30,L"%dx%d",dim.cx,dim.cy);
+		return g_szwBuffer;
 	}
-    return const_cast<LPSTR>(szEmpty);	
+    return const_cast<LPWSTR>(szwEmpty);	
 }
 
 
-inline LPSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) const
+inline LPWSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) const
 {
 	
 	switch (nDetailType)
@@ -71,32 +71,32 @@ inline LPSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) con
 	case CLocateDlg::FileSize:
 		ISDLGTHREADOK
 		if (GetFileSizeLo()==DWORD(-1))
-			return const_cast<LPSTR>(szEmpty);
-		if (g_szBuffer!=NULL)
-			delete[] g_szBuffer;
-		return (g_szBuffer=((CLocateApp*)GetApp())->FormatFileSizeString(
+			return const_cast<LPWSTR>(szwEmpty);
+		if (g_szwBuffer!=NULL)
+			delete[] g_szwBuffer;
+		return (g_szwBuffer=((CLocateApp*)GetApp())->FormatFileSizeString(
 			GetFileSizeLo(),GetFileSizeHi()));
 	case CLocateDlg::FileType:
 		if (GetType()==NULL)
-			return const_cast<LPSTR>(szEmpty);
+			return const_cast<LPWSTR>(szwEmpty);
 		return GetType();
 	case CLocateDlg::DateModified:
 		ISDLGTHREADOK
-		if (g_szBuffer!=NULL)
-			delete[] g_szBuffer;
-		return (g_szBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
+		if (g_szwBuffer!=NULL)
+			delete[] g_szwBuffer;
+		return (g_szwBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
 			GetModifiedDate(),GetModifiedTime()));
 	case CLocateDlg::DateCreated:
 		ISDLGTHREADOK
-		if (g_szBuffer!=NULL)
-			delete[] g_szBuffer;
-		return (g_szBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
+		if (g_szwBuffer!=NULL)
+			delete[] g_szwBuffer;
+		return (g_szwBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
 			GetCreatedDate(),GetCreatedTime()));
 	case CLocateDlg::DateAccessed:
 		ISDLGTHREADOK
-		if (g_szBuffer!=NULL)
-			delete[] g_szBuffer;
-		return (g_szBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
+		if (g_szwBuffer!=NULL)
+			delete[] g_szwBuffer;
+		return (g_szwBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
 			GetAccessedDate(),GetAccessedTime()));
 	case CLocateDlg::Attributes:
 		return FormatAttributes();				
@@ -105,27 +105,27 @@ inline LPSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) con
 	case CLocateDlg::ShortFilePath:
 	case CLocateDlg::MD5sum:
 		{
-			LPSTR ret=GetExtraText(nDetailType);
+			LPWSTR ret=GetExtraText(nDetailType);
 			if (ret==NULL)
-				return const_cast<LPSTR>(szEmpty);
+				return const_cast<LPWSTR>(szwEmpty);
 			return ret;
 		}
 	case CLocateDlg::ImageDimensions:
 		return FormatImageInformation();				
 	case CLocateDlg::Database:
-		return const_cast<LPSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetName());
+		return const_cast<LPWSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetName());
 	case CLocateDlg::DatabaseDescription:
-		return const_cast<LPSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetDescription());
+		return const_cast<LPWSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetDescription());
 	case CLocateDlg::DatabaseArchive:
-		return const_cast<LPSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetArchiveName());
+		return const_cast<LPWSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetArchiveName());
 	case CLocateDlg::VolumeLabel:
-		return const_cast<LPSTR>(CLocateDlg::GetVolumeLabel(GetDatabaseID(),GetRootID()));
+		return const_cast<LPWSTR>(CLocateDlg::GetVolumeLabel(GetDatabaseID(),GetRootID()));
 	case CLocateDlg::VolumeSerial:
-		return const_cast<LPSTR>(CLocateDlg::GetVolumeSerial(GetDatabaseID(),GetRootID()));
+		return const_cast<LPWSTR>(CLocateDlg::GetVolumeSerial(GetDatabaseID(),GetRootID()));
 	case CLocateDlg::VOlumeFileSystem:
-		return const_cast<LPSTR>(CLocateDlg::GetVolumeFileSystem(GetDatabaseID(),GetRootID()));
+		return const_cast<LPWSTR>(CLocateDlg::GetVolumeFileSystem(GetDatabaseID(),GetRootID()));
 	}
-	return const_cast<LPSTR>(szEmpty);
+	return const_cast<LPWSTR>(szwEmpty);
 }
 
 
@@ -275,22 +275,22 @@ inline void CLocatedItem::UpdateIcon()
 
 inline void CLocatedItem::UpdateParentIcon()
 {
-	SHFILEINFO fi;
-	LPSTR szParent=GetParent();
+	SHFILEINFOW fi;
+	LPWSTR szParent=GetParent();
 	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
 	{
 		if (szParent[1]==':' && szParent[2]=='\0')
 		{
-			char szDrive[]="X:\\";
+			WCHAR szDrive[]="X:\\";
 			szDrive[0]=szParent[0];
-			if (SHGetFileInfo(szDrive,0,&fi,sizeof(SHFILEINFO),/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
+			if (GetFileInfo(szDrive,0,&fi,/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
 				iParentIcon=fi.iIcon;
 			else
 				iParentIcon=((CLocateApp*)GetApp())->m_nDelImage;
 		}
 		else
 		{
-			if (SHGetFileInfo(GetParent(),0,&fi,sizeof(SHFILEINFO),/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
+			if (GetFileInfo(GetParent(),0,&fi,/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
 				iParentIcon=fi.iIcon;
 			else
 				iParentIcon=((CLocateApp*)GetApp())->m_nDelImage;

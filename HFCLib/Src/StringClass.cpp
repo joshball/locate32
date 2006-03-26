@@ -4342,6 +4342,30 @@ BOOL CStringW::AddString(UINT nID,TypeOfResourceHandle bType)
 	return TRUE;
 }
 
+void CStringW::MakeUpper()
+{
+	if (m_pData==NULL)
+		return;
+
+	if (IsFullUnicodeSupport())
+		CharUpperW(m_pData);
+	else
+		_wcsupr_s(m_pData,m_nAllocLen);
+	
+}
+
+void CStringW::MakeLower()
+{
+	if (m_pData==NULL)
+		return;
+
+	if (IsFullUnicodeSupport())
+		CharLowerW(m_pData);
+	else
+		_wcslwr_s(m_pData,m_nAllocLen);
+	
+}
+
 #endif
 
 #endif

@@ -28,7 +28,7 @@ CLOCATERINITIALIATIONS
 {
 }
 
-inline CLocater::CLocater(LPCSTR szDatabaseFile)
+inline CLocater::CLocater(LPCWSTR szDatabaseFile)
 CLOCATERINITIALIATIONS
 {
 	SetDatabases(szDatabaseFile);
@@ -74,10 +74,10 @@ inline void CLocater::SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC* pFoundProcs
 	m_dwData=dwParam;
 }
 
-inline void CLocater::SetDatabases(LPCSTR szDatabaseFile)
+inline void CLocater::SetDatabases(LPCWSTR szDatabaseFile)
 {
 	m_aDatabases.RemoveAll();
-	m_aDatabases.Add(new DBArchive("custom",CDatabase::archiveFile,szDatabaseFile,0,TRUE));
+	m_aDatabases.Add(new DBArchive(L"custom",CDatabase::archiveFile,szDatabaseFile,0,TRUE));
 }
 
 inline void CLocater::SetDatabases(const PDATABASE* pDatabases,int nDatabases)
@@ -357,12 +357,10 @@ inline void CLocater::CouldStop()
 #endif
 
 
-inline CLocater::DBArchive::DBArchive(LPCSTR szName_,CDatabase::ArchiveType nArchiveType_,LPCSTR szArchive_,WORD wID_,BOOL bEnable_)
-:	nArchiveType(nArchiveType_),wID(wID_),bEnable(bEnable_),bOEM(FALSE)
+inline CLocater::DBArchive::DBArchive(LPCWSTR szName_,CDatabase::ArchiveType nArchiveType_,LPCWSTR szArchive_,WORD wID_,BOOL bEnable_)
+:	nArchiveType(nArchiveType_),wID(wID_),bEnable(bEnable_),bOEM(FALSE),bUnicode(FALSE)
 {
-	dwNameLength=strlen(szName_)+1;
-	szName=new char[dwNameLength];
-	sMemCopy(szName,szName_,dwNameLength);
+	szName=alloccopy(szName_);
 	szArchive=alloccopy(szArchive_);
 }
 
@@ -384,23 +382,27 @@ inline WORD CLocater::GetCurrentDatabaseRootID() const
 	return m_wCurrentRootIndex;
 }	
 	
-inline LPCSTR CLocater::GetCurrentDatabaseName() const
+inline LPCWSTR CLocater::GetCurrentDatabaseName() const
 {
 	return m_pCurrentDatabase->szName;
 }
 
-inline void CLocater::GetCurrentDatabaseName(LPSTR& szName) const
+inline void CLocater::GetCurrentDatabaseName(LPWSTR& szName) const
 {
-	szName=new char[m_pCurrentDatabase->dwNameLength];
-	sMemCopy(szName,m_pCurrentDatabase->szName,m_pCurrentDatabase->dwNameLength);
+	szName=alloccopy(m_pCurrentDatabase->szName,m_pCurrentDatabase->dwNameLength);
 }
 
-inline BOOL CLocater::IsCurrentDatabaseNamesOEM() const
+inline BOOL CLocater::IsCurrentDatabaseOEM() const
 {
 	return m_pCurrentDatabase->bOEM;
 }
 
-inline LPCSTR CLocater::GetCurrentDatabaseFile() const
+inline BOOL CLocater::IsCurrentDatabaseUnicode() const
+{
+	return m_pCurrentDatabase->bUnicode;
+}
+
+inline LPCWSTR CLocater::GetCurrentDatabaseFile() const
 {
 	return m_pCurrentDatabase->szArchive;
 }
@@ -415,7 +417,7 @@ inline BYTE CLocater::GetCurrentDatabaseRootType() const
 	return m_bCurrentRootType;
 }
 
-inline LPCSTR CLocater::GetCurrentDatabaseVolumeLabel() const
+inline LPCWSTR CLocater::GetCurrentDatabaseVolumeLabel() const
 {
 	return m_szVolumeName;
 }
@@ -425,7 +427,7 @@ inline DWORD CLocater::GetCurrentDatabaseVolumeSerial() const
 	return m_dwVolumeSerial;
 }
 
-inline LPCSTR CLocater::GetCurrentDatabaseFileSystem() const
+inline LPCWSTR CLocater::GetCurrentDatabaseFileSystem() const
 {
 	return m_szFileSystem;
 }

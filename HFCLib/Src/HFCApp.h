@@ -374,7 +374,14 @@ inline int CDialog::DoModal(HWND hWndParent,TypeOfResourceHandle bType)
 
 inline BOOL CDialog::Create(HWND hWndParent,TypeOfResourceHandle bType)
 {
-	return (m_hWnd=::CreateDialogParam(GetResourceHandle(bType),m_lpszTemplateName,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this))!=NULL;
+	if (IsFullUnicodeSupport())
+	{
+		if (IS_INTRESOURCE(m_lpszTemplateName))
+			return (m_hWnd=::CreateDialogParamW(GetResourceHandle(bType),(LPCWSTR)m_lpszTemplateName,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this))!=NULL;
+		CStringW tmp(m_lpszTemplateName);
+		return (m_hWnd=::CreateDialogParamW(GetResourceHandle(bType),tmp,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this))!=NULL;
+	}
+	return (m_hWnd=::CreateDialogParamA(GetResourceHandle(bType),m_lpszTemplateName,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this))!=NULL;
 }
 
 inline BOOL CDialog::EndDialog(int nResult) const

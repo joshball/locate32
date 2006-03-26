@@ -2006,6 +2006,41 @@ BOOL CFolderDialog::OnValidateFailed(LPITEMIDLIST lpil)
 	return TRUE;
 }
 
+
+BOOL CFolderDialog::GetFolder(CStringW& Folder) const
+{
+	if (IsFullUnicodeSupport())
+	{
+		if (!SHGetPathFromIDListW(m_lpil,Folder.GetBuffer(_MAX_PATH)))
+			return FALSE;
+		Folder.FreeExtra();
+		return TRUE;
+	}
+	else
+	{
+		char szFolderA[MAX_PATH];
+		if (!SHGetPathFromIDListA(m_lpil,szFolderA))
+			return FALSE;
+		Folder=szFolderA;
+		return TRUE;
+	}
+	
+}
+
+BOOL CFolderDialog::GetFolder(LPWSTR szFolder) const
+{
+	if (IsFullUnicodeSupport())
+		return SHGetPathFromIDListW(m_lpil,szFolder);
+	else
+	{
+		char szFolderA[MAX_PATH];
+		if (!SHGetPathFromIDListA(m_lpil,szFolderA))
+			return FALSE;
+		MultiByteToWideChar(CP_ACP,0,szFolderA,-1,szFolder,MAX_PATH);
+		return TRUE;
+	}
+}
+
 ///////////////////////////
 // Class COptionsPropertyPage
 ///////////////////////////

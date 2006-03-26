@@ -44,34 +44,34 @@ protected:
 	CDatabaseInfo();
 
 	BOOL GetInfo(const CDatabase* pDatabase);
-	BOOL GetInfo(CDatabase::ArchiveType nArchiveType,LPCSTR szArchivePath);
+	BOOL GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchivePath);
 
 public:
 	BYTE bVersion;
 	BYTE bLongFilenames;
 	BYTE bAnsi;
-	CString sCreator;
-	CString sDescription;
+	CStringW sCreator;
+	CStringW sDescription;
 	CTime tCreationTime;
 	DWORD dwNumberOfFiles;
 	DWORD dwNumberOfDirectories;
 	CArrayFP<CRoot*> aRootFolders;
 	DWORD dwFileSize;
 
-	CString szExtra1;
-	CString szExtra2;
+	CStringW szExtra1;
+	CStringW szExtra2;
 
 public:
 	static CDatabaseInfo* GetFromDatabase(const CDatabase* pDatabase);
-	static CDatabaseInfo* GetFromFile(LPCSTR szArchivePath);
+	static CDatabaseInfo* GetFromFile(LPCWSTR szArchivePath);
 
 		
-	static BOOL GetRootsFromDatabase(CArray<LPSTR>& aRoots,const CDatabase* pDatabase);
+	//static BOOL GetRootsFromDatabase(CArray<LPSTR>& aRoots,const CDatabase* pDatabase);
 	static BOOL GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase* pDatabase);
 	
 	// Fonctions do not clear aRoots
-	static BOOL GetRootsFromDatabases(CArray<LPSTR>& aRoots,const PDATABASE* pDatabases,int nDatabases,BOOL bOnlyEnabled=FALSE);
-	static BOOL GetRootsFromDatabases(CArray<LPSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled=FALSE);
+	//static BOOL GetRootsFromDatabases(CArray<LPSTR>& aRoots,const PDATABASE* pDatabases,int nDatabases,BOOL bOnlyEnabled=FALSE);
+	//static BOOL GetRootsFromDatabases(CArray<LPSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled=FALSE);
 	static BOOL GetRootsFromDatabases(CArray<LPWSTR>& aRoots,const PDATABASE* pDatabases,int nDatabases,BOOL bOnlyEnabled=FALSE);
 	static BOOL GetRootsFromDatabases(CArray<LPWSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled=FALSE);
 
@@ -95,7 +95,7 @@ inline CDatabaseInfo* CDatabaseInfo::GetFromDatabase(const CDatabase* pDatabase)
 	return pRet;
 }
 
-inline CDatabaseInfo* CDatabaseInfo::GetFromFile(LPCSTR szArchivePath)
+inline CDatabaseInfo* CDatabaseInfo::GetFromFile(LPCWSTR szArchivePath)
 {
 	CDatabaseInfo* pRet=new CDatabaseInfo;
 	
@@ -112,10 +112,10 @@ inline BOOL CDatabaseInfo::GetInfo(const CDatabase* pDatabase)
 	return GetInfo(pDatabase->GetArchiveType(),pDatabase->GetArchiveName());
 } 
 
-inline BOOL CDatabaseInfo::GetRootsFromDatabases(CArray<LPSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled)
+/*inline BOOL CDatabaseInfo::GetRootsFromDatabases(CArray<LPSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled)
 {
 	return GetRootsFromDatabases(aRoots,aDatabases,aDatabases.GetSize(),bOnlyEnabled);
-}
+}*/
 
 inline BOOL CDatabaseInfo::GetRootsFromDatabases(CArray<LPWSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled)
 {

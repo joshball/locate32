@@ -1348,23 +1348,12 @@ inline BOOL CFolderDialog::GetFolder(CString& Folder) const
 	return TRUE;
 }
 
-inline BOOL CFolderDialog::GetFolder(CStringW& Folder) const
-{
-	if (!SHGetPathFromIDListW(m_lpil,Folder.GetBuffer(_MAX_PATH)))
-		return FALSE;
-	Folder.FreeExtra();
-	return TRUE;
-}
-
 inline BOOL CFolderDialog::GetFolder(LPSTR szFolder) const
 {
 	return SHGetPathFromIDList(m_lpil,szFolder);
 }
 
-inline BOOL CFolderDialog::GetFolder(LPWSTR szFolder) const
-{
-	return SHGetPathFromIDListW(m_lpil,szFolder);
-}
+
 
 #endif
 #endif

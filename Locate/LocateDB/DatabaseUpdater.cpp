@@ -217,9 +217,9 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 		#endif
 				DWORD dwExtraSize1=1,dwExtraSize2=1;
 				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
-					dwExtraSize1+=istrlen(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1);
+					dwExtraSize1+=istrlenw(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1);
 				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
-					dwExtraSize2+=istrlen(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2);
+					dwExtraSize2+=istrlenw(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2);
 				
 				// Writing header size
 				dbFile->Write(DWORD(
@@ -961,11 +961,11 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 	m_nArchiveType(pDatabase->GetArchiveType()),m_pFirstRoot(NULL),m_nFlags(0),
 	m_szExtra1(NULL),m_szExtra2(NULL)
 {
-	SIZE_T dwTemp=istrlen(pDatabase->GetArchiveName());
+	SIZE_T dwTemp=istrlenw(pDatabase->GetArchiveName());
 	m_szArchive=new char[dwTemp+1];
 	CopyMemory(m_szArchive,pDatabase->GetArchiveName(),dwTemp+1);
 
-	m_dwNameLength=istrlen(pDatabase->GetName());
+	m_dwNameLength=istrlenw(pDatabase->GetName());
 	m_szName=new char[m_dwNameLength+1];
 	CopyMemory(m_szName,pDatabase->GetName(),m_dwNameLength+1);
 
@@ -976,7 +976,7 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 		m_nFlags|=IncrementalUpdate;
 	
 
-	LPCSTR pPtr=pDatabase->GetRoots();
+	LPCWSTR pPtr=pDatabase->GetRoots();
 	if (pPtr==NULL)
 	{
 		char drive[3]="X:";
