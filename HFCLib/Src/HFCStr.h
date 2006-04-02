@@ -143,6 +143,7 @@ BYTE* dataparser2(LPCSTR pStr,SIZE_T* pdwDataLength);
 BOOL IsCharNumeric(char cChar,BYTE bBase);
 
 
+
 //////////////////////////////////////////////////
 // Class CString
 
@@ -507,7 +508,44 @@ public:
 
 };
 
+
+//////////////////////////////////////////////////
+// Conversion classes
+class W2A 
+{
+private:
+	char* pAStr;
+
+public:
+	W2A(LPCWSTR sA);
+	W2A(LPCWSTR sA,SIZE_T len);
+	W2A(LPCWSTR sA,int len);
+	W2A(CStringW& sA);
+
+	~W2A();
+
+	operator LPCSTR() const;
+};
+
+class A2W 
+{
+private:
+	WCHAR* pWStr;
+
+public:
+	A2W(LPCSTR sA);
+	A2W(LPCSTR sA,SIZE_T len);
+	A2W(LPCSTR sA,int len);
+	A2W(CString& sA);
+
+	~A2W();
+
+	operator LPCWSTR() const;
+};
+
+
 #endif
+
 
 #include "Strings.inl"
 

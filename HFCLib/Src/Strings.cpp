@@ -112,8 +112,16 @@ int strcasencmp(LPCWSTR s1,LPCWSTR s2,DWORD n)
     
 	tmp1[n1]='\0';
 	tmp2[n2]='\0';
-	CharLowerW(tmp1);
-	CharLowerW(tmp2);
+	if (IsFullUnicodeSupport())
+	{
+		CharLowerW(tmp1);
+		CharLowerW(tmp2);
+	}
+	else
+	{
+		_wcslwr_s(tmp1,n+1);
+		_wcslwr_s(tmp2,n+1);
+	}
 	ret=wcscmp(tmp1,tmp2);
 	delete[] tmp1;
 	delete[] tmp2;

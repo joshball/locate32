@@ -380,7 +380,7 @@ DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,U
 		return SHGetFileInfoW(pszPath,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags);
 
 	SHFILEINFO fi;
-	DWORD_PTR ret=SHGetFileInfoA(CString(pszPath),dwFileAttributes,&fi,sizeof(SHFILEINFO),uFlags);
+	DWORD_PTR ret=SHGetFileInfoA(W2A(pszPath),dwFileAttributes,&fi,sizeof(SHFILEINFO),uFlags);
 	if (ret==0)
 		return 0;
 

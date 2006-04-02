@@ -343,7 +343,7 @@ BOOL CLocater::LocatingProc()
 						dbFile->Read(szBuffer,dwBlockSize);
 
 						// Resolving volume name 
-						m_szVolumeName=(LPCSTR)pPoint;
+						m_sVolumeName=(LPCSTR)pPoint;
 						for (;*pPoint!='\0';pPoint++);
 						pPoint++;
 					
@@ -352,7 +352,7 @@ BOOL CLocater::LocatingProc()
 						pPoint+=sizeof(DWORD); // 1 == '\0' in volumename
 					
 						// Resolving file system
-						m_szFileSystem=(LPCSTR)pPoint;
+						m_sFileSystem=(LPCSTR)pPoint;
 						for (;*pPoint!='\0';pPoint++);
 						pPoint++;
 
@@ -421,18 +421,16 @@ BOOL CLocater::LocatingProc()
 					LocaterDebugMessage("CLocater::LocatingProc() 2");
 
 					// Resolving volume name 
-					m_szVolumeName=(LPCSTR)pPoint;
-					for (;*pPoint!='\0';pPoint++);
-					pPoint++;
+					m_sVolumeName=(LPCSTR)pPoint;
+					pPoint+=m_sVolumeName.GetLength()+1;
 					
 					// Resolving volume serial
 					m_dwVolumeSerial=*((DWORD*)pPoint);
 					pPoint+=sizeof(DWORD); // 1 == '\0' in volumename
 					
 					// Resolving file system
-					m_szFileSystem=(LPCSTR)pPoint;
-					for (;*pPoint!='\0';pPoint++);
-					pPoint++;
+					m_sFileSystem=(LPCSTR)pPoint;
+					pPoint+=m_sFileSystem.GetLength()+1;
 
 					LocaterDebugMessage("CLocater::LocatingProc() 3");
 					

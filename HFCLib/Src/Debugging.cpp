@@ -34,7 +34,7 @@ void StartDebugLogging()
 	CString File("HFCDebug.log");
 	if (RegKey.OpenKey(HKCU,"Software\\HFCLib\\Debuging",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.QueryValue("Type",(LPSTR)&nLoggingType,4);
+		RegKey.QueryValue("Type",nLoggingType);
 		RegKey.QueryValue("File",File);
 		RegKey.CloseKey();
 	}
@@ -151,6 +151,7 @@ void DebugMessage(LPCSTR msg)
 	}
 #endif
 }
+
 
 #define LINELEN	16
 
@@ -312,6 +313,56 @@ void DebugFormatMessage(LPCSTR text,...)
 		DebugMessage(buf);
 	}
 }
+
+#ifdef DEF_WCHAR
+void DebugMessage(LPCWSTR msg)
+{
+	if (nLoggingType==LOGGING_FILE)
+	{
+		if (hLogFile==NULL)
+		{
+			StartDebugLogging();
+			if (hLogFile==NULL)
+				return;
+		}
+		char szBufr[2000];
+		char* msgA=alloccopyWtoA(msg);
+		SYSTEMTIME st;
+		DWORD writed;
+		GetLocalTime(&st);
+		if (StringCbPrintf (szBufr,2000,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X: %s\r\n",
+			st.wYear%100,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond,
+			st.wMilliseconds,GetCurrentThreadId(),msgA)==S_OK )
+			WriteFile(hLogFile,szBufr,strlen(szBufr),&writed,NULL);
+		FlushFileBuffers(hLogFile);
+		delete[] msgA;
+	}
+}
+
+void DebugNumMessage(LPCWSTR text,DWORD num)
+{
+	if (nLoggingType==LOGGING_FILE)
+	{
+		char buf[2000];
+		StringCbPrintf(buf,2000,(LPCSTR)W2A(text),num);
+		DebugMessage(buf);
+	}
+}
+
+
+void DebugFormatMessage(LPCWSTR text,...)
+{
+	if (nLoggingType==LOGGING_FILE)
+	{
+		va_list argList;
+		va_start(argList,text);
+		
+		WCHAR buf[2000];
+		StringCbVPrintfW(buf,2000,text,argList);
+		DebugMessage(buf);
+	}
+}
+#endif
 
 void EndDebugLogging()
 {

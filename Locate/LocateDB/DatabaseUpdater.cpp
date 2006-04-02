@@ -9,8 +9,8 @@
 #include "fcntl.h"
 #endif
 
-CDatabaseUpdater::CDatabaseUpdater(LPCSTR szDatabaseFile,LPCSTR szAuthor,LPCSTR szComment,
-		LPCSTR* pszRoots,DWORD nNumberOfRoots,UPDATEPROC pProc,DWORD dwParam)
+CDatabaseUpdater::CDatabaseUpdater(LPCWSTR szDatabaseFile,LPCWSTR szAuthor,LPCWSTR szComment,
+		LPCWSTR* pszRoots,DWORD nNumberOfRoots,UPDATEPROC pProc,DWORD dwParam)
 :	m_pCurrentRoot(NULL),sStatus(statusInitializing),m_dwFiles(0),m_dwDirectories(0),
 	m_pProc(pProc),m_dwData(dwParam),m_dwCurrentDatabase(DWORD(-1)),dbFile(NULL)
 #ifdef WIN32	
@@ -108,7 +108,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 	#endif
 				)
 			{
-				DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): m_pCurrentRoot=%X path=%s",DWORD(m_pCurrentRoot),LPCSTR(m_pCurrentRoot->m_Path));
+				DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): m_pCurrentRoot=%X path=%s",DWORD(m_pCurrentRoot),(LPCSTR)CString(m_pCurrentRoot->m_Path));
 							
 				sStatus=statusScanning;
 				m_pProc(m_dwData,RootChanged,ueResult,this);
@@ -492,7 +492,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanRoot(volatile LONG& lForceQuit
 
 	// Scanning folder
 	char szPath[MAX_PATH+20];
-	sMemCopy(szPath,(LPCSTR)m_Path,m_Path.GetLength()+1);
+	MemCopyWtoA(szPath,(LPCWSTR)m_Path,m_Path.GetLength()+1);
 	
 	DebugMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: started to scan root folder");
 	UpdateError ueResult=ScanFolder(szPath,m_Path.GetLength(),lForceQuit);
@@ -632,14 +632,12 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 	if (m_aExcludedDirectories.GetSize()>0)
 	{
 		// Checking whether directory is excluded
-		char* pLowerFolder=new char [nLength+1];
-		CopyMemory(pLowerFolder,szFolder,nLength);
-		pLowerFolder[nLength]='\0';
-		CharLower(pLowerFolder);
+		WCHAR* pLowerFolder=alloccopyAtoW(szFolder,nLength);
+		MakeLower(pLowerFolder);
 
 		for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
 		{
-			if (strcmp(m_aExcludedDirectories[i],pLowerFolder)==0)
+			if (wcscmp(m_aExcludedDirectories[i],pLowerFolder)==0)
 			{
 				delete[] pLowerFolder;
 				return ueSuccess;
@@ -842,6 +840,42 @@ inline BYTE _GetDriveType(CString& sPath)
 	}
 	return nType;
 }
+
+inline BYTE _GetDriveType(CStringW& sPath)
+{
+	BYTE nType;
+	UINT nDriveType;
+	if (IsFullUnicodeSupport())
+		nDriveType=GetDriveTypeW(sPath+L'\\');
+	else
+		nDriveType=GetDriveTypeA(W2A(sPath)+'\\');
+	
+	switch (nDriveType)
+	{
+	case DRIVE_UNKNOWN:
+		nType=0x00;
+		break;
+	case DRIVE_NO_ROOT_DIR:
+		nType=0xF0;
+		break;
+	case DRIVE_REMOVABLE:
+		nType=0x20;
+		break;
+	case DRIVE_FIXED:
+		nType=0x10;
+		break;
+	case DRIVE_REMOTE:
+		nType=0x40;
+		break;
+	case DRIVE_CDROM:
+		nType=0x30;
+		break;
+	case DRIVE_RAMDISK:
+		nType=0x50;
+		break;
+	}
+	return nType;
+}
 #endif
 
 UpdateError CDatabaseUpdater::CRootDirectory::Write(CFile* dbFile)
@@ -861,15 +895,15 @@ UpdateError CDatabaseUpdater::CRootDirectory::Write(CFile* dbFile)
 		DWORD dwTemp;
 		UINT nOldMode=SetErrorMode(SEM_FAILCRITICALERRORS);
 		BOOL nRet;
-		if (m_Path[0]!='\\')
+		if (m_Path[0]!=L'\\')
 		{
 			char szDrive[4]="X:\\";
-			szDrive[0]=m_Path[0];
+			WideCharToMultiByte(CP_ACP,0,(LPCWSTR)m_Path,1,szDrive,1,NULL,NULL);
 			nRet=GetVolumeInformation(szDrive,sVolumeName.GetBuffer(20),20,&dwSerial,
 				&dwTemp,&dwTemp,sFSName.GetBuffer(20),20);
 		}
 		else // network, UNC path
-			nRet=GetVolumeInformation(m_Path,sVolumeName.GetBuffer(20),20,&dwSerial,
+			nRet=GetVolumeInformation(W2A(m_Path),sVolumeName.GetBuffer(20),20,&dwSerial,
 				&dwTemp,&dwTemp,sFSName.GetBuffer(20),20);
 		
 		if (nRet)
@@ -961,13 +995,8 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 	m_nArchiveType(pDatabase->GetArchiveType()),m_pFirstRoot(NULL),m_nFlags(0),
 	m_szExtra1(NULL),m_szExtra2(NULL)
 {
-	SIZE_T dwTemp=istrlenw(pDatabase->GetArchiveName());
-	m_szArchive=new char[dwTemp+1];
-	CopyMemory(m_szArchive,pDatabase->GetArchiveName(),dwTemp+1);
-
-	m_dwNameLength=istrlenw(pDatabase->GetName());
-	m_szName=new char[m_dwNameLength+1];
-	CopyMemory(m_szName,pDatabase->GetName(),m_dwNameLength+1);
+	m_szArchive=alloccopy(pDatabase->GetArchiveName());
+	m_szName=alloccopy(pDatabase->GetName());
 
 	// Retrieving flags
 	if (pDatabase->IsFlagged(CDatabase::flagStopIfRootUnavailable))
@@ -979,28 +1008,56 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 	LPCWSTR pPtr=pDatabase->GetRoots();
 	if (pPtr==NULL)
 	{
-		char drive[3]="X:";
-		
 #ifdef WIN32
-		DWORD dwBufferLen=GetLogicalDriveStrings(0,NULL)+1;
-		char* szDrives=new char[dwBufferLen];
-		GetLogicalDriveStrings(dwBufferLen,szDrives);
-
-
+		WCHAR drive[3]=L"X:";
 		CRootDirectory* tmp;
-		for (int i=0;szDrives[i*4]!='\0';i++)
+			
+		if (IsFullUnicodeSupport())
 		{
-			if (GetDriveType(szDrives+i*4)==DRIVE_FIXED)
+			DWORD dwBufferLen=GetLogicalDriveStringsW(0,NULL)+1;
+			WCHAR* szDrives=new WCHAR[dwBufferLen];
+			GetLogicalDriveStringsW(dwBufferLen,szDrives);
+
+			for (int i=0;szDrives[i*4]!=L'\0';i++)
 			{
-				drive[0]=szDrives[i*4];
-				
-				if (m_pFirstRoot==NULL)
-					tmp=m_pFirstRoot=new CRootDirectory(drive);
-				else
-					tmp=tmp->m_pNext=new CRootDirectory(drive);
+				if (GetDriveTypeW(szDrives+i*4)==DRIVE_FIXED)
+				{
+					drive[0]=szDrives[i*4];
+					
+					if (m_pFirstRoot==NULL)
+						tmp=m_pFirstRoot=new CRootDirectory(drive);
+					else
+						tmp=tmp->m_pNext=new CRootDirectory(drive);
+				}
 			}
+			delete[] szDrives;
+
 		}
+		else
+		{
+			DWORD dwBufferLen=GetLogicalDriveStringsA(0,NULL)+1;
+			CHAR* szDrives=new CHAR[dwBufferLen];
+			GetLogicalDriveStringsA(dwBufferLen,szDrives);
+			
+			for (int i=0;szDrives[i*4]!='\0';i++)
+			{
+				if (GetDriveTypeA(szDrives+i*4)==DRIVE_FIXED)
+				{
+					MultiByteToWideChar(CP_ACP,0,szDrives+i*4,1,drive,1);
+					
+					if (m_pFirstRoot==NULL)
+						tmp=m_pFirstRoot=new CRootDirectory(drive);
+					else
+						tmp=tmp->m_pNext=new CRootDirectory(drive);
+				}
+			}
+			delete[] szDrives;
+		}
+
+
+
 #else
+		char drive[3]="X:";
 		char szDrives[27];
 		getlocaldrives(szDrives);
 		for (int i=0;i<27;i++)
@@ -1015,24 +1072,25 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 					tmp=tmp->m_pNext=new CRootDirectory(drive);
 			}
 		}
+		delete[] szDrives;
 #endif
         
 		if (m_pFirstRoot!=NULL)
 			tmp->m_pNext=NULL;
 		
-		delete[] szDrives;
+		
 	}
 	else
 	{
 		CRootDirectory* tmp;
 			
-		while (*pPtr!='\0')
+		while (*pPtr!=L'\0')
 		{
-			SIZE_T dwLength=istrlen(pPtr);
+			SIZE_T dwLength=istrlenw(pPtr);
 
-			if ((dwLength==2 || dwLength==3) && pPtr[1]==':') // Root is drive
+			if ((dwLength==2 || dwLength==3) && pPtr[1]==L':') // Root is drive
 			{
-				char root[]="X:\\";
+				WCHAR root[]=L"X:\\";
 				root[0]=pPtr[0];
 				if (m_pFirstRoot==NULL)
 					tmp=m_pFirstRoot=new CRootDirectory(root,dwLength);
@@ -1052,21 +1110,37 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 				{
 					// May be computer, since it is not directory
 					// So retrieve shares
-					DWORD dwEntries=-1,cbBuffer=16384;
-						
-					NETRESOURCE nr;
-					nr.dwScope=RESOURCE_CONNECTED;
-					nr.dwType=RESOURCETYPE_DISK;
-					nr.dwDisplayType=RESOURCEDISPLAYTYPE_SHARE;
-					nr.dwUsage=RESOURCEUSAGE_CONTAINER;
-					nr.lpLocalName=NULL;
-					nr.lpRemoteName=const_cast<LPSTR>(pPtr);
-					nr.lpComment=NULL;
-					nr.lpProvider=NULL;
-
+					DWORD dwEntries=-1,cbBuffer=16384,dwRet;
 					HANDLE hEnum;
-					DWORD dwRet=WNetOpenEnum(RESOURCE_GLOBALNET,RESOURCETYPE_DISK,0,&nr,&hEnum);
-										
+					
+					if (IsFullUnicodeSupport())
+					{
+						NETRESOURCEW nr;
+						nr.dwScope=RESOURCE_CONNECTED;
+						nr.dwType=RESOURCETYPE_DISK;
+						nr.dwDisplayType=RESOURCEDISPLAYTYPE_SHARE;
+						nr.dwUsage=RESOURCEUSAGE_CONTAINER;
+						nr.lpLocalName=NULL;
+						nr.lpRemoteName=const_cast<LPWSTR>(pPtr);
+						nr.lpComment=NULL;
+						nr.lpProvider=NULL;
+						dwRet=WNetOpenEnumW(RESOURCE_GLOBALNET,RESOURCETYPE_DISK,0,&nr,&hEnum);
+					}
+					else
+					{
+						NETRESOURCE nr;
+						nr.dwScope=RESOURCE_CONNECTED;
+						nr.dwType=RESOURCETYPE_DISK;
+						nr.dwDisplayType=RESOURCEDISPLAYTYPE_SHARE;
+						nr.dwUsage=RESOURCEUSAGE_CONTAINER;
+						nr.lpLocalName=NULL;
+						nr.lpRemoteName=alloccopyWtoA(pPtr);
+						nr.lpComment=NULL;
+						nr.lpProvider=NULL;
+						dwRet=WNetOpenEnumA(RESOURCE_GLOBALNET,RESOURCETYPE_DISK,0,&nr,&hEnum);
+						delete[] nr.lpRemoteName;
+					}
+
 					if (dwRet!=NOERROR)
 					{
 						if (m_pFirstRoot==NULL)
@@ -1077,36 +1151,70 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 						pPtr+=dwLength+1;
 						continue;
 					}
-						
-					NETRESOURCE* nro;
-						
-					for(;;)
+
+
+					if (IsFullUnicodeSupport())
 					{
-						nro=(NETRESOURCE*)GlobalAlloc(GPTR,cbBuffer);
-						dwRet=WNetEnumResource(hEnum,&dwEntries,nro,&cbBuffer);
-						if (dwRet==ERROR_NO_MORE_ITEMS)
-							break;
-
-						if (dwRet!=ERROR_MORE_DATA && dwRet!=NOERROR)
+						NETRESOURCEW* nro;
+							
+						for(;;)
 						{
-                            if (m_pFirstRoot==NULL)
-								tmp=m_pFirstRoot=new CRootDirectory(pPtr,dwLength);
-							else
-								tmp=tmp->m_pNext=new CRootDirectory(pPtr,dwLength);
+							nro=(NETRESOURCEW*)GlobalAlloc(GPTR,cbBuffer);
+							dwRet=WNetEnumResourceW(hEnum,&dwEntries,nro,&cbBuffer);
+							if (dwRet==ERROR_NO_MORE_ITEMS)
+								break;
 
-							break;
-						}
+							if (dwRet!=ERROR_MORE_DATA && dwRet!=NOERROR)
+							{
+								if (m_pFirstRoot==NULL)
+									tmp=m_pFirstRoot=new CRootDirectory(pPtr,dwLength);
+								else
+									tmp=tmp->m_pNext=new CRootDirectory(pPtr,dwLength);
 
-						for (DWORD i=0;i<dwEntries;i++)
-						{
-							if (m_pFirstRoot==NULL)
-								tmp=m_pFirstRoot=new CRootDirectory(nro[i].lpRemoteName);
-							else
-								tmp=tmp->m_pNext=new CRootDirectory(nro[i].lpRemoteName);
+								break;
+							}
+
+							for (DWORD i=0;i<dwEntries;i++)
+							{
+								if (m_pFirstRoot==NULL)
+									tmp=m_pFirstRoot=new CRootDirectory(nro[i].lpRemoteName);
+								else
+									tmp=tmp->m_pNext=new CRootDirectory(nro[i].lpRemoteName);
+							}
+							GlobalFree((HGLOBAL)nro);
 						}
-						GlobalFree((HGLOBAL)nro);
 					}
-						
+					else
+					{
+						NETRESOURCE* nro;
+							
+						for(;;)
+						{
+							nro=(NETRESOURCE*)GlobalAlloc(GPTR,cbBuffer);
+							dwRet=WNetEnumResource(hEnum,&dwEntries,nro,&cbBuffer);
+							if (dwRet==ERROR_NO_MORE_ITEMS)
+								break;
+
+							if (dwRet!=ERROR_MORE_DATA && dwRet!=NOERROR)
+							{
+								if (m_pFirstRoot==NULL)
+									tmp=m_pFirstRoot=new CRootDirectory(pPtr,dwLength);
+								else
+									tmp=tmp->m_pNext=new CRootDirectory(pPtr,dwLength);
+
+								break;
+							}
+
+							for (DWORD i=0;i<dwEntries;i++)
+							{
+								if (m_pFirstRoot==NULL)
+									tmp=m_pFirstRoot=new CRootDirectory(A2W(nro[i].lpRemoteName));
+								else
+									tmp=tmp->m_pNext=new CRootDirectory(A2W(nro[i].lpRemoteName));
+							}
+							GlobalFree((HGLOBAL)nro);
+						}
+					}
 					WNetCloseEnum(hEnum);	
 				}
 			}
@@ -1137,17 +1245,15 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 	m_szExtra2=pDatabase->ConstructExtraBlock();
 }
 		
-CDatabaseUpdater::DBArchive::DBArchive(LPCSTR szArchiveName,CDatabase::ArchiveType nArchiveType,
-											  LPCSTR szAuthor,LPCSTR szComment,LPCSTR* pszRoots,DWORD nNumberOfRoots,BYTE nFlags,
-											  LPCSTR* ppExcludedDirectories,int nExcludedDirectories)
+CDatabaseUpdater::DBArchive::DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveType nArchiveType,
+											  LPCWSTR szAuthor,LPCWSTR szComment,LPCWSTR* pszRoots,DWORD nNumberOfRoots,BYTE nFlags,
+											  LPCWSTR* ppExcludedDirectories,int nExcludedDirectories)
 :	m_sAuthor(szAuthor),m_sComment(szComment),m_nArchiveType(nArchiveType),
 	m_szName(NULL),m_dwNameLength(0),m_nFlags(nFlags),
 	m_szExtra1(NULL),m_szExtra2(NULL)
 {
-	SIZE_T dwTemp=istrlen(szArchiveName);
-	m_szArchive=new char[dwTemp+1];
-	sMemCopy(m_szArchive,szArchiveName,dwTemp+1);
-
+	m_szArchive=alloccopy(szArchiveName);
+	
 	if (nNumberOfRoots==0)
 	{
 		m_pFirstRoot=NULL;
@@ -1190,27 +1296,27 @@ CDatabaseUpdater::DBArchive::~DBArchive()
 }
 
 
-void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCSTR* ppExcludedDirs,int nExcludedDirectories)
+void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCWSTR* ppExcludedDirs,int nExcludedDirectories)
 {
 	// First, check that directory names are valid
-	LPSTR* ppExcludedDirectories=new LPSTR[max(nExcludedDirectories,2)];
+	LPWSTR* ppExcludedDirectories=new LPWSTR[max(nExcludedDirectories,2)];
 	DWORD* pdwExcludedDirectoriesLen=new DWORD[max(nExcludedDirectories,2)];
 	int i,j;
 	for (i=0,j=0;i<nExcludedDirectories;i++)
 	{
-		if (ppExcludedDirs[i][0]=='\0')
+		if (ppExcludedDirs[i][0]==L'\0')
 			continue;
-		if (ppExcludedDirs[i][1]=='\0')
+		if (ppExcludedDirs[i][1]==L'\0')
 			continue;
 
-		if (ppExcludedDirs[i][1]==':' && ppExcludedDirs[i][2]=='\0')
+		if (ppExcludedDirs[i][1]==L':' && ppExcludedDirs[i][2]==L'\0')
 		{
-			ppExcludedDirectories[j]=new char[3];
+			ppExcludedDirectories[j]=new WCHAR[3];
 			ppExcludedDirectories[j][0]=ppExcludedDirs[i][0];
-			CharLowerBuff(ppExcludedDirectories[j],1);
 			ppExcludedDirectories[j][1]=':';
 			ppExcludedDirectories[j][2]='\0';
-
+			MakeLower(ppExcludedDirectories[j]);
+			
 			pdwExcludedDirectoriesLen[j]=2;
 		
 			j++;
@@ -1218,19 +1324,18 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCSTR* ppExclu
 		}
 
 
-		char szBuffer[400];
-        int nRet=GetFullPathName(ppExcludedDirs[i],400,szBuffer,NULL);
+		WCHAR szBuffer[400];
+		int nRet=CFile::GetFullPathName(ppExcludedDirs[i],400,szBuffer,NULL);
 
 		if (!nRet)
 			continue;
 
-		if (szBuffer[nRet-1]=='\\')
-			szBuffer[--nRet]='\0';
+		if (szBuffer[nRet-1]==L'\\')
+			szBuffer[--nRet]=L'\0';
 
-		CharLower(szBuffer);
+		MakeLower(szBuffer);
 		pdwExcludedDirectoriesLen[j]=nRet;
 		ppExcludedDirectories[j++]=alloccopy(szBuffer,nRet);
-
 	}
 	nExcludedDirectories=j;
 
@@ -1246,10 +1351,8 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCSTR* ppExclu
 			nRootLength--;
 
 		// Copying text to another buffer to get lowercase version
-		char* pLowerRoot=new char[nRootLength+1];
-		CopyMemory(pLowerRoot,LPCSTR(pRoot->m_Path),nRootLength);
-		pLowerRoot[nRootLength]='\0';
-		CharLower(pLowerRoot);
+		WCHAR* pLowerRoot=alloccopy(pRoot->m_Path,nRootLength);
+		MakeLower(pLowerRoot);
 
 		BOOL bDeleteRoot=FALSE;
 
@@ -1260,7 +1363,7 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCSTR* ppExclu
 				continue;
 
 			// Beginning of paths are not same
-			if (strncmp(pLowerRoot,ppExcludedDirectories[i],nRootLength)!=0)
+			if (wcsncmp(pLowerRoot,ppExcludedDirectories[i],nRootLength)!=0)
 				continue;
 			
 			if (nRootLength==pdwExcludedDirectoriesLen[i])
@@ -1309,7 +1412,7 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCSTR* ppExclu
 	delete[] pdwExcludedDirectoriesLen;
 }
 
-CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCSTR szArchive,DWORD dwFiles,DWORD dwDirectories)
+CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,DWORD dwFiles,DWORD dwDirectories)
 {
 	DebugFormatMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): BEGIN, archive='%s'",szArchive);
 	

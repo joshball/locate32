@@ -291,7 +291,7 @@ BOOL CListCtrlEx::SaveColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) c
 	}
 
         
-	BOOL bRet=RegKey.SetValue(lpSubKey,(LPCSTR)pData,sizeof(int)*(2+2*nColumnCount+nVisibleCount),REG_BINARY)==ERROR_SUCCESS;
+	BOOL bRet=RegKey.SetValue(lpSubKey,(LPSTR)pData,sizeof(int)*(2+2*nColumnCount+nVisibleCount),REG_BINARY)==ERROR_SUCCESS;
 	RegKey.CloseKey();
 	delete[] pData;
 	if (lpKey==NULL)

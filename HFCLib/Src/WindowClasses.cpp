@@ -95,14 +95,14 @@ BOOL CWnd::SetText(LPCWSTR lpsz)
 {
 	if (IsFullUnicodeSupport())
 		return ::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz);
-	return ::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)CString(lpsz));
+	return ::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)W2A(lpsz));
 }
 
 BOOL CWnd::SetWindowText(LPCWSTR lpsz)
 {
 	if (IsFullUnicodeSupport())
 		return ::SetWindowTextW(m_hWnd,lpsz);
-	return ::SetWindowText(m_hWnd,CString(lpsz));
+	return ::SetWindowText(m_hWnd,W2A(lpsz));
 }
 
 int CWnd::GetWindowText(LPWSTR lpString,int nMaxCount) const
@@ -510,7 +510,7 @@ BOOL CWnd::SavePosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) const
 	wp.length=sizeof(WINDOWPLACEMENT);
 	GetWindowPlacement(&wp);
 	
-	BOOL bRet=RegKey.SetValue(lpSubKey,LPCSTR(&wp),sizeof(WINDOWPLACEMENT),REG_BINARY)==ERROR_SUCCESS;
+	BOOL bRet=RegKey.SetValue(lpSubKey,LPSTR(&wp),sizeof(WINDOWPLACEMENT),REG_BINARY)==ERROR_SUCCESS;
 
 	if (lpKey==NULL)
 		RegKey.m_hKey=NULL;

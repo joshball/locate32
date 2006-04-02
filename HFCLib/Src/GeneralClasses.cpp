@@ -779,7 +779,7 @@ LONG CRegKey::RenameSubKey(HKEY hKey,LPCSTR szOldName,LPCSTR szNewName)
 LONG CRegKey::RenameSubKey(HKEY hKey,LPCWSTR szOldName,LPCWSTR szNewName)
 {
 	if (!IsFullUnicodeSupport())
-		return RenameSubKey(hKey,CString(szOldName),CString(szNewName));
+		return RenameSubKey(hKey,W2A(szOldName),W2A(szNewName));
 
 	HKEY hSource,hDestination;
 	
@@ -865,7 +865,7 @@ LONG CRegKey::CloseKey()
 LONG CRegKey::OpenKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
 	if (!IsFullUnicodeSupport())
-		return OpenKey(hKey,CString(lpszSubKey),fStatus,lpSecurityAttributes);
+		return OpenKey(hKey,W2A(lpszSubKey),fStatus,lpSecurityAttributes);
 
 	REGSAM  samDesired=0;
 	DWORD  fdwOptions;
@@ -944,7 +944,7 @@ BOOL CRegKey::QueryValue(LPCWSTR lpszValueName,CStringW& strData) const
 	if (!IsFullUnicodeSupport())
 	{
 		CString strA;
-		if (QueryValue(CString(lpszValueName),strA))
+		if (QueryValue(W2A(lpszValueName),strA))
 		{
 			strData=strA;
 			return TRUE;
@@ -1141,7 +1141,7 @@ DWORD CRegKey::QueryValueLength(LPCWSTR lpszValueName,BOOL& bIsOk) const
 	if (IsFullUnicodeSupport())
 		lRet=::RegQueryValueExW(m_hKey,(LPWSTR)lpszValueName,NULL,NULL,NULL,&nLength);
 	else
-		lRet=::RegQueryValueExA(m_hKey,(LPSTR)(LPCSTR)CString(lpszValueName),NULL,NULL,NULL,&nLength);
+		lRet=::RegQueryValueExA(m_hKey,(LPSTR)(LPCSTR)W2A(lpszValueName),NULL,NULL,NULL,&nLength);
 		
 	if (lRet==ERROR_SUCCESS)
 	{
@@ -1180,7 +1180,7 @@ BOOL CRegKey::DeleteKey(HKEY hKey,LPCSTR szKey)
 BOOL CRegKey::DeleteKey(HKEY hKey,LPCWSTR szKey)
 {
 	if (!IsFullUnicodeSupport())
-		return DeleteKey(hKey,CString(szKey));
+		return DeleteKey(hKey,W2A(szKey));
 
 	HKEY hSubKey;
 	FILETIME ft;
@@ -1207,7 +1207,7 @@ BOOL CRegKey::SetValue(LPCWSTR lpValueName,CStringW& strData)
 	if (IsFullUnicodeSupport())
 		return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)(LPCWSTR)strData,(DWORD)strData.GetLength()*2+1)==ERROR_SUCCESS;
 	else
-		return ::RegSetValueExA(m_hKey,CString(lpValueName),0,REG_SZ,(CONST BYTE*)(LPCSTR)CString(strData),(DWORD)strData.GetLength()+1)==ERROR_SUCCESS;
+		return ::RegSetValueExA(m_hKey,W2A(lpValueName),0,REG_SZ,(CONST BYTE*)(LPCSTR)W2A(strData),(DWORD)strData.GetLength()+1)==ERROR_SUCCESS;
 }
 
 
@@ -1218,8 +1218,116 @@ LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData)
 	else
 	{
 		CString aData(strData);
-		return ::RegSetValueExA(m_hKey,CString(lpValueName),0,REG_SZ,(CONST BYTE*)(LPCSTR)aData,(DWORD)((aData.GetLength()+1)));
+		return ::RegSetValueExA(m_hKey,W2A(lpValueName),0,REG_SZ,(CONST BYTE*)(LPCSTR)aData,(DWORD)((aData.GetLength()+1)));
 	}
 }
 	
+DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpData,DWORD cbData,LPDWORD lpdwType) const
+{
+	if (IsFullUnicodeSupport())
+		return ::RegQueryValueExW(m_hKey,(LPWSTR)lpszValueName,NULL,lpdwType,(LPBYTE)lpData,&cbData)==ERROR_SUCCESS?cbData:0;
+	else
+	{
+		CString sValueName(lpszValueName);
+		DWORD dwType,dwDataLen;
+		if (::RegQueryValueExA(m_hKey,sValueName,NULL,&dwType,NULL,&dwDataLen)!=ERROR_SUCCESS)
+			return 0;
+
+		switch (dwType)
+		{
+		case REG_SZ:
+		case REG_EXPAND_SZ:
+			{
+				char* pDataA=new char[dwDataLen+1];
+				if (::RegQueryValueExA(m_hKey,sValueName,NULL,lpdwType,(LPBYTE)pDataA,&dwDataLen)!=ERROR_SUCCESS)
+				{
+					delete[] pDataA;
+					return 0;
+				}
+					
+				MultiByteToWideChar(CP_ACP,0,pDataA,dwDataLen,lpData,cbData);
+				if (cbData<dwDataLen)
+					lpData[cbData-1]=L'\0';
+				delete[] pDataA;
+				return min(cbData,dwDataLen);
+			}
+		case REG_MULTI_SZ:
+			{
+				char* pDataA=new char[dwDataLen+1];
+				if (::RegQueryValueExA(m_hKey,sValueName,NULL,lpdwType,(LPBYTE)pDataA,&dwDataLen)!=ERROR_SUCCESS)
+				{
+					delete[] pDataA;
+					return 0;
+				}
+
+				ULONG_PTR ind=0;
+				while (pDataA[ind]!='\0')
+				{
+					SIZE_T nlen=strlen(pDataA+ind);
+					
+					if (ind+nlen+2>cbData)
+					{
+						MemCopyAtoW(lpData+ind,pDataA+ind,cbData-ind-2);
+						lpData[cbData-2]=L'\0';
+						lpData[cbData-1]=L'\0';
+
+						delete[] pDataA;
+						return ERROR_SUCCESS;
+					}
+						
+					MemCopyAtoW(lpData+ind,pDataA+ind,nlen);
+					ind+=nlen;
+					lpData[ind++]=L'\0';
+				}
+				pDataA[ind]=L'\0';
+				delete[] pDataA;
+				return min(cbData,dwDataLen);
+			}
+		default:
+			return ::RegQueryValueExA(m_hKey,sValueName,NULL,lpdwType,(LPBYTE)lpData,&cbData)==ERROR_SUCCESS?cbData:0;
+		}
+	}
+}
+
+LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR lpData,DWORD cbData,DWORD dwType)
+{
+	if (IsFullUnicodeSupport())
+		return ::RegSetValueExW(m_hKey,lpValueName,0,dwType,(CONST BYTE*)lpData,cbData);
+	else
+	{
+		switch (dwType)
+		{
+		case REG_SZ:
+		case REG_EXPAND_SZ:
+			{
+				char* lpDataA=alloccopyWtoA((LPCWSTR)lpData,cbData);
+				LONG lRet=::RegSetValueExA(m_hKey,W2A(lpValueName),0,dwType,(CONST BYTE*)lpDataA,cbData);
+				delete[] lpDataA;
+				return lRet;
+			}
+		case REG_MULTI_SZ:
+			{
+				SIZE_T i;
+				for (i=0;((LPCWSTR)lpData)[i]!='\0' || ((LPCWSTR)lpData)[i+1]!='\0';i++);
+				char* pDataA=new char[i+2];
+				ULONG_PTR ind=0;			
+				while (((LPCWSTR)lpData)[ind]!='\0')
+				{
+					SIZE_T nlen=wcslen(((LPCWSTR)lpData)+ind);
+					MemCopyWtoA(pDataA+ind,((LPCWSTR)lpData)+ind,nlen);
+					ind+=nlen;
+					pDataA[ind++]='\0';
+				}
+				pDataA[ind]='\0';
+				LONG lRet=::RegSetValueExA(m_hKey,W2A(lpValueName),0,dwType,(CONST BYTE*)pDataA,cbData);
+				delete[] pDataA;
+				return lRet;
+			}
+		default:
+			return ::RegSetValueExA(m_hKey,W2A(lpValueName),0,dwType,(CONST BYTE*)lpData,cbData);
+		}
+	}
+}
+
+
 #endif

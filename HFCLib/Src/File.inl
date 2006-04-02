@@ -26,19 +26,35 @@ inline CFile::CFile(HANDLE hFile,BOOL bThrowExceptions)
 {
 }
 
-inline CFile::CFile(LPCTSTR lpszFileName,int nOpenFlags,CFileException* e)
+inline CFile::CFile(LPCSTR lpszFileName,int nOpenFlags,CFileException* e)
 :	m_hFile(FILE_NULL),m_bCloseOnDelete(FALSE)
 {
 	Open(lpszFileName,nOpenFlags,e);
 }
 
-inline CFile::CFile(LPCTSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions)
+inline CFile::CFile(LPCSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions)
 :	m_hFile(FILE_NULL),m_bCloseOnDelete(FALSE),
 	CExceptionObject(bThrowExceptions)
 {
 	Open(lpszFileName,nOpenFlags,NULL);
 }
 #endif
+
+#ifdef DEF_WCHAR
+inline CFile::CFile(LPCWSTR lpszFileName,int nOpenFlags,CFileException* e)
+:	m_hFile(FILE_NULL),m_bCloseOnDelete(FALSE)
+{
+	Open(lpszFileName,nOpenFlags,e);
+}
+
+inline CFile::CFile(LPCWSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions)
+:	m_hFile(FILE_NULL),m_bCloseOnDelete(FALSE),
+	CExceptionObject(bThrowExceptions)
+{
+	Open(lpszFileName,nOpenFlags,NULL);
+}
+#endif
+
 
 inline CFile::~CFile()
 {
@@ -62,18 +78,29 @@ inline CFile::operator FILE*() const
 }
 #endif
 
-inline CString CFile::GetFileName() const
+inline CString CFile::GetFilePath() const
 {
 	return m_strFileName;
 }
 
-inline void CFile::SetFilePath(LPCTSTR lpszNewName)
+inline void CFile::SetFilePath(LPCSTR lpszNewName)
 {
-	m_strFileName=(LPCTSTR)lpszNewName;
+	m_strFileName=lpszNewName;
 }
 
+#ifdef DEF_WCHAR
+inline CStringW CFile::GetFilePathW() const
+{
+	return m_strFileName;
+}
 
-inline BOOL CFile::Rename(LPCTSTR lpszOldName,LPCTSTR lpszNewName)
+inline void CFile::SetFilePath(LPCWSTR lpszNewName)
+{
+	m_strFileName=lpszNewName;
+}
+#endif
+
+inline BOOL CFile::Rename(LPCSTR lpszOldName,LPCSTR lpszNewName)
 {
 #ifdef WIN32
 	return ::MoveFile(lpszOldName,lpszNewName);
@@ -82,7 +109,7 @@ inline BOOL CFile::Rename(LPCTSTR lpszOldName,LPCTSTR lpszNewName)
 #endif
 }
 
-inline BOOL CFile::Remove(LPCTSTR lpszFileName)
+inline BOOL CFile::Remove(LPCSTR lpszFileName)
 {
 #ifdef WIN32
 	return ::DeleteFile(lpszFileName);
@@ -91,6 +118,23 @@ inline BOOL CFile::Remove(LPCTSTR lpszFileName)
 #endif
 }
 
+#ifdef DEF_WCHAR
+inline BOOL CFile::Rename(LPCWSTR lpszOldName,LPCWSTR lpszNewName)
+{
+	if (IsFullUnicodeSupport())
+		return ::MoveFileW(lpszOldName,lpszNewName);
+	else
+		return ::MoveFile(W2A(lpszOldName),W2A(lpszNewName));
+}
+
+inline BOOL CFile::Remove(LPCWSTR lpszFileName)
+{
+	if (IsFullUnicodeSupport())
+		return ::DeleteFileW(lpszFileName);
+	else
+		return ::DeleteFile(W2A(lpszFileName));
+}
+#endif
 
 inline BOOL CFile::Read(BYTE& bNum,CFileException* pError)
 { 
@@ -151,6 +195,80 @@ inline BOOL CFile::Write(LPCWSTR szNullTerminatedString,CFileException* pError)
 { 
 	return this->Write(szNullTerminatedString,2*istrlenw(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?2:0),pError); 
 }
+#endif
+
+inline BOOL CFile::CreateDirectory(LPCSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+	return ::CreateDirectory(lpPathName,lpSecurityAttributes);
+}
+
+inline BOOL CFile::RemoveDirectory(LPCSTR lpPathName)
+{
+	return ::RemoveDirectory(lpPathName);
+}
+
+inline DWORD CFile::GetFullPathName(LPCSTR lpFileName,DWORD nBufferLength,LPSTR lpBuffer,LPTSTR* lpFilePart)
+{
+	return ::GetFullPathName(lpFileName,nBufferLength,lpBuffer,lpFilePart);
+}
+
+inline DWORD CFile::GetShortPathName(LPCSTR lpszLongPath,LPSTR lpszShortPath,DWORD cchBuffer)
+{
+	return ::GetShortPathName(lpszLongPath,lpszShortPath,cchBuffer);
+}
+
+inline DWORD CFile::GetCurrentDirectory(DWORD nBufferLength,LPSTR lpBuffer)
+{
+	return ::GetCurrentDirectory(nBufferLength,lpBuffer);
+}
+
+inline DWORD CFile::GetLongPathName(LPCSTR lpszShortPath,LPSTR lpszLongPath,DWORD cchBuffer)
+{
+	return ::GetLongPathName(lpszShortPath,lpszLongPath,cchBuffer);
+}
+inline DWORD CFile::GetTempPath(DWORD nBufferLength,LPSTR lpBuffer)
+{
+	return ::GetTempPath(nBufferLength,lpBuffer);
+}
+
+inline UINT CFile::GetTempFileName(LPCSTR lpPathName,LPCSTR lpPrefixString,UINT uUnique,LPSTR lpTempFileName)
+{
+	return ::GetTempFileName(lpPathName,lpPrefixString,uUnique,lpTempFileName);
+}
+	
+inline BOOL CFile::MoveFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,DWORD dwFlags)
+{
+	return ::MoveFileEx(lpExistingFileName,lpNewFileName,dwFlags);	
+}
+	
+	
+#ifdef DEF_WCHAR
+inline BOOL CFile::CreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+{
+	if (IsFullUnicodeSupport())
+		return ::CreateDirectoryW(lpPathName,lpSecurityAttributes);
+	else
+		return ::CreateDirectoryA(W2A(lpPathName),lpSecurityAttributes);
+}
+
+inline BOOL CFile::RemoveDirectory(LPCWSTR lpPathName)
+{
+	if (IsFullUnicodeSupport())
+		return ::RemoveDirectoryW(lpPathName);
+	else
+		return ::RemoveDirectoryA(W2A(lpPathName));
+}
+
+inline BOOL CFile::MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,DWORD dwFlags)
+{
+	if (!IsFullUnicodeSupport())
+		return ::MoveFileExW(lpExistingFileName,lpNewFileName,dwFlags);	
+	else
+		return ::MoveFileExA(W2A(lpExistingFileName),W2A(lpNewFileName),dwFlags);	
+}
+
+
+
 #endif
 
 ////////////////////////////////////////

@@ -781,12 +781,12 @@ protected:
 	struct VolumeInformation {
 		WORD wDB;
 		WORD wRootID;
-		LPSTR szVolumeSerial;
-		LPSTR szVolumeLabel;
-		LPSTR szFileSystem;
+		LPWSTR szVolumeSerial;
+		LPWSTR szVolumeLabel;
+		LPWSTR szFileSystem;
 		BYTE bType;
 
-		VolumeInformation(WORD wDB,WORD wRootID,BYTE bType,DWORD dwVolumeSerial,LPCSTR szVolumeLabel,LPCSTR szFileSystem);
+		VolumeInformation(WORD wDB,WORD wRootID,BYTE bType,DWORD dwVolumeSerial,LPCWSTR szVolumeLabel,LPCWSTR szFileSystem);
 		~VolumeInformation();
 	};
 	CArrayFP<VolumeInformation*> m_aVolumeInformation;
@@ -808,9 +808,9 @@ public:
 	DWORD GetMaxFoundFiles() const { return m_dwMaxFoundFiles; }
 	void SetMaxFoundFiles(DWORD dwValue) { m_dwMaxFoundFiles=dwValue; }
 
-	static LPCSTR GetVolumeLabel(WORD wDB,WORD wRootID);
-	static LPCSTR GetVolumeSerial(WORD wDB,WORD wRootID);
-	static LPCSTR GetVolumeFileSystem(WORD wDB,WORD wRootID);
+	static LPCWSTR GetDBVolumeLabel(WORD wDB,WORD wRootID);
+	static LPCWSTR GetDBVolumeSerial(WORD wDB,WORD wRootID);
+	static LPCWSTR GetDBVolumeFileSystem(WORD wDB,WORD wRootID);
 
 
 	friend class CLocateDlgThread;

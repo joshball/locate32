@@ -2629,23 +2629,23 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 		EnableDlgItem(IDC_ADDFOLDER,TRUE);
 		EnableDlgItem(IDC_REMOVEFOLDER,EnableRemoveButton());
 
-		LPCSTR pPtr=m_pDatabase->GetRoots();
+		LPCWSTR pPtr=m_pDatabase->GetRoots();
 
 		while (*pPtr!='\0')
 		{
-			SIZE_T dwLength=istrlen(pPtr);
+			SIZE_T dwLength=istrlenw(pPtr);
 
 			if (dwLength>2)
 			{
 				if (pPtr[0]=='\\' && pPtr[1]=='\\')
 				{
 					if (!CFile::IsDirectory(pPtr))
-						AddComputerToList(CStringW(pPtr));
+						AddComputerToList(pPtr);
 					else
-						AddDirectoryToList(CStringW(pPtr),dwLength);
+						AddDirectoryToList(pPtr,dwLength);
 				}			
 				else
-					AddDirectoryToList(CStringW(pPtr),dwLength);
+					AddDirectoryToList(pPtr,dwLength);
 			}
 			else if (pPtr[1]==':')
 			{
@@ -2945,7 +2945,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 							}
 							return;
 						}
-						AddComputerToList(CStringW(str.cStr));
+						AddComputerToList(A2W(str.cStr));
 						break;
 					case STRRET_WSTR:
 						if (str.pOleStr[0]!=L'\\' && str.pOleStr[1]!=L'\\')
@@ -3306,7 +3306,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 	else
 	{
 		CHAR szLabelA[20],szFileSystemA[20];
-		if (!GetVolumeInformation(CString(Drive),szLabelA,20,&dwTemp,&dwTemp,&dwTemp,szFileSystemA,20))
+		if (!GetVolumeInformation(WtoA(Drive),szLabelA,20,&dwTemp,&dwTemp,&dwTemp,szFileSystemA,20))
 			szFileSystem[0]=L'\0';
 		else
 			MultiByteToWideChar(CP_ACP,0,szFileSystemA,-1,szFileSystem,20);
@@ -3318,43 +3318,21 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 	li.mask=LVIF_TEXT|LVIF_IMAGE;
 	li.iSubItem=0;
 		
-	if (IsFullUnicodeSupport())
+	SHFILEINFOW fi;
+    if (GetFileInfo(szPath,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
 	{
-		SHFILEINFOW fi;
-	    if (SHGetFileInfoW(szPath,0,&fi,sizeof(SHFILEINFOW),SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
-		{
-			// Label
-			li.iImage=fi.iIcon;
-			li.pszText=fi.szDisplayName;
-		}
-		else
-		{
-			// Label
-			li.iImage=DEL_IMAGE;
-			li.pszText=const_cast<LPWSTR>(szwEmpty);
-		}
-		m_pList->InsertItem(&li);
+		// Label
+		li.iImage=fi.iIcon;
+		li.pszText=fi.szDisplayName;
 	}
 	else
 	{
-		SHFILEINFO fi;
-		if (SHGetFileInfo(CString(szPath),0,&fi,sizeof(SHFILEINFO),SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
-		{
-			// Label
-			li.iImage=fi.iIcon;
-			CStringW str(fi.szDisplayName);
-			li.pszText=str.GiveBuffer();
-			m_pList->InsertItem(&li);
-		}
-		else
-		{
-			// Label
-			li.iImage=DEL_IMAGE;
-			li.pszText=const_cast<LPWSTR>(szwEmpty);
-			m_pList->InsertItem(&li);
-		}		
+		// Label
+		li.iImage=DEL_IMAGE;
+		li.pszText=const_cast<LPWSTR>(szwEmpty);
 	}
-	
+	m_pList->InsertItem(&li);
+
 	// Path
 	li.mask=LVIF_TEXT;
 	li.iSubItem=1;

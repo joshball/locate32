@@ -281,7 +281,7 @@ inline CLocateDlg::VolumeInformation::~VolumeInformation()
 		delete[] szVolumeSerial;
 }
 
-inline LPCSTR CLocateDlg::GetVolumeLabel(WORD wDB,WORD wRootID) 
+inline LPCSTR CLocateDlg::GetDBVolumeLabel(WORD wDB,WORD wRootID) 
 {
 	CArrayFP<VolumeInformation*>& aVolumeInformation=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
 
@@ -293,7 +293,7 @@ inline LPCSTR CLocateDlg::GetVolumeLabel(WORD wDB,WORD wRootID)
 	return szEmpty;
 }
 
-inline LPCSTR CLocateDlg::GetVolumeSerial(WORD wDB,WORD wRootID) 
+inline LPCSTR CLocateDlg::GetDBVolumeSerial(WORD wDB,WORD wRootID) 
 {
 	CArrayFP<VolumeInformation*>& aVolumeInformation=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
 
@@ -305,7 +305,7 @@ inline LPCSTR CLocateDlg::GetVolumeSerial(WORD wDB,WORD wRootID)
 	return szEmpty;
 }
 
-inline LPCSTR CLocateDlg::GetVolumeFileSystem(WORD wDB,WORD wRootID) 
+inline LPCSTR CLocateDlg::GetDBVolumeFileSystem(WORD wDB,WORD wRootID) 
 {
 	CArrayFP<VolumeInformation*>& aVolumeInformation=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
 

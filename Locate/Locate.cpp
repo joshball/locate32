@@ -150,16 +150,16 @@ BOOL CALLBACK LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ue,DWO
 		switch (ue)
 		{
 		case ueUnknown:
-			fprintf(stderr,(LPCSTR)CString(IDS_LOCATEUNKNOWNERROR));
+			fwprintf(stderr,(LPCWSTR)CStringW(IDS_LOCATEUNKNOWNERROR));
 			break;
 		case ueOpen:
-			fprintf(stderr,(LPCSTR)CString(IDS_LOCATECANNOTOPEN),pLocater->GetCurrentDatabaseFile());
+			fwprintf(stderr,(LPCWSTR)CStringW(IDS_LOCATECANNOTOPEN),pLocater->GetCurrentDatabaseFile());
 			break;
 		case ueRead:
-			fprintf(stderr,(LPCSTR)CString(IDS_LOCATECANNOTREAD),pLocater->GetCurrentDatabaseFile());
+			fwprintf(stderr,(LPCWSTR)CStringW(IDS_LOCATECANNOTREAD),pLocater->GetCurrentDatabaseFile());
 			break;
 		case ueInvalidDatabase:
-			fprintf(stderr,(LPCSTR)CString(IDS_LOCATEINVALIDDATABASE),pLocater->GetCurrentDatabaseFile());
+			fwprintf(stderr,(LPCWSTR)CStringW(IDS_LOCATEINVALIDDATABASE),pLocater->GetCurrentDatabaseFile());
 			break;
 		}
 		break;
@@ -287,8 +287,8 @@ int main (int argc,char * argv[])
 
 	CString String;
 	
-	CArrayFAP<LPSTR> aDirectories;
-	CArrayFAP<LPSTR> aExtensions;
+	CArrayFAP<LPWSTR> aDirectories;
+	CArrayFAP<LPWSTR> aExtensions;
 	int i;
 	for (i=1;i<argc;i++)
 	{
@@ -314,20 +314,20 @@ int main (int argc,char * argv[])
             case 'd':
 				{
 					// Using database file
-					LPCSTR szFile;
+					CStringW sFile;
 					if (argv[i][2]=='\0')
 					{
 						if (i>=argc-1)
-							szFile="";
+							sFile="";
 						else
-							szFile=argv[++i];
+							sFile=argv[++i];
 					}
 					else
-	                    szFile=(argv[i]+2);
+	                    sFile=(argv[i]+2);
 	
-					if (CDatabase::FindByFile(aDatabases,szFile)==NULL)
+					if (CDatabase::FindByFile(aDatabases,sFile)==NULL)
 					{
-						CDatabase* pDatabase=CDatabase::FromFile(szFile);
+						CDatabase* pDatabase=CDatabase::FromFile(sFile);
 						if (pDatabase!=NULL)
 							aDatabases.Add(pDatabase);
 					}
@@ -335,21 +335,21 @@ int main (int argc,char * argv[])
 				}
 			case 'D':
 				{
-					LPCSTR szName;
+					CStringW sName;
 					if (argv[i][2]=='\0')
 					{
 						if (i>=argc-1)
-							szName="";
+							sName="";
 						else
-							szName=argv[++i];
+							sName=argv[++i];
 					}
 					else
-	                    szName=(argv[i]+2);
+	                    sName=(argv[i]+2);
 	
-					if (CDatabase::FindByName(aDatabases,szName)==NULL)
+					if (CDatabase::FindByName(aDatabases,sName)==NULL)
 					{
 						CDatabase* pDatabase=CDatabase::FromName(HKCU,
-							"Software\\Update\\Databases",szName);
+							"Software\\Update\\Databases",sName);
 						if (pDatabase!=NULL)
 						{
 							pDatabase->SetThreadId(0);
@@ -363,18 +363,18 @@ int main (int argc,char * argv[])
                 if (argv[i][2]=='\0')
 				{
 					if (i>=argc-1)
-						aDirectories.Add(allocempty());
+						aDirectories.Add(allocemptyW());
 					else
 					{
 						++i;
 						if (argv[i][0]=='.' && argv[i][1]=='\0')
 						{
-							char* pPath=new char[MAX_PATH];
-							GetCurrentDirectory(MAX_PATH,pPath);
+							WCHAR* pPath=new WCHAR[MAX_PATH];
+							CFile::GetCurrentDirectory(MAX_PATH,pPath);
 							aDirectories.Add(pPath);
 						}
 						else
-							aDirectories.Add(alloccopy(argv[i]));
+							aDirectories.Add(alloccopyAtoW(argv[i]));
 					}
 				}
                 else
@@ -382,12 +382,12 @@ int main (int argc,char * argv[])
 					int j=argv[i][2]==':'?3:2;
 					if (argv[i][j]=='.' && argv[i][j+1]=='\0')
 					{
-						char* pPath=new char[MAX_PATH];
-						GetCurrentDirectory(MAX_PATH,pPath);
+						WCHAR* pPath=new WCHAR[MAX_PATH];
+						CFile::GetCurrentDirectory(MAX_PATH,pPath);
 						aDirectories.Add(pPath);
 					}
 					else
-						aDirectories.Add(alloccopy(argv[i]+j));
+						aDirectories.Add(alloccopyAtoW(argv[i]+j));
 				}
 				break;
 			case 't':
@@ -395,12 +395,12 @@ int main (int argc,char * argv[])
                 if (argv[i][2]=='\0')
 				{
 					if (i>=argc-1)
-						aExtensions.Add(allocempty());
+						aExtensions.Add(allocemptyW());
 					else
-						aExtensions.Add(alloccopy(argv[++i]));
+						aExtensions.Add(alloccopyAtoW(argv[++i]));
 				}
                 else
-                    aExtensions.Add(alloccopy(argv[i]+2));
+                    aExtensions.Add(alloccopyAtoW(argv[i]+2));
 				break;
 			case 'r':
 				dwFlags|=LOCATE_REGULAREXPRESSION;
@@ -664,7 +664,7 @@ int main (int argc,char * argv[])
 	{
 		CDatabase* pDatabase=CDatabase::FromOldStyleDatabase(HKCU,"Software\\Update\\Database");
 		if (pDatabase==NULL)
-			pDatabase=CDatabase::FromDefaults(TRUE,argv[0],LastCharIndex(argv[0],'\\')+1); // Nothing else can be done?
+			pDatabase=CDatabase::FromDefaults(TRUE,A2W(argv[0]),LastCharIndex(argv[0],'\\')+1); // Nothing else can be done?
 		aDatabases.Add(pDatabase);
 	}
 	CDatabase::CheckValidNames(aDatabases);

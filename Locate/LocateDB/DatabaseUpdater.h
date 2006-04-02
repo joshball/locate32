@@ -41,8 +41,8 @@ public:
 	class CRootDirectory
 	{
 	private:
-		CRootDirectory(LPCSTR szPath);
-		CRootDirectory(LPCSTR szPath,int iPathLen);
+		CRootDirectory(LPCWSTR szPath);
+		CRootDirectory(LPCWSTR szPath,int iPathLen);
 		
 		~CRootDirectory();
 	
@@ -51,7 +51,7 @@ public:
 		UpdateError Write(CFile* dbFile);
 
 	public:
-		CString m_Path;
+		CStringW m_Path;
 		DWORD m_dwFiles;
 		DWORD m_dwDirectories;
 	
@@ -74,7 +74,7 @@ public:
 		
 
 		// Excluded directories
-		CArray<LPSTR> m_aExcludedDirectories; 
+		CArray<LPWSTR> m_aExcludedDirectories; 
 
 		friend CDatabaseUpdater;
 		friend DBArchive;
@@ -86,9 +86,9 @@ public:
 	class DBArchive {
 	public:
 		DBArchive();
-		DBArchive(LPCSTR szArchiveName,CDatabase::ArchiveType nArchiveType,
-			LPCSTR szAuthor,LPCSTR szComment,LPCSTR* pszRoots,DWORD nNumberOfRoots,BYTE nFlags,
-			LPCSTR* ppExcludedDirectories,int nExcludedDirectories);
+		DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveType nArchiveType,
+			LPCWSTR szAuthor,LPCWSTR szComment,LPCWSTR* pszRoots,DWORD nNumberOfRoots,BYTE nFlags,
+			LPCWSTR* ppExcludedDirectories,int nExcludedDirectories);
 		DBArchive(const CDatabase* pDatabase);
 		~DBArchive();
 
@@ -137,8 +137,8 @@ protected:
 	UpdateError UpdatingProc();
 
 public:
-	CDatabaseUpdater(LPCSTR szDatabaseFile,LPCSTR szAuthor,LPCSTR szComment,
-		LPCSTR* pszRoots,DWORD nNumberOfRoots,
+	CDatabaseUpdater(LPCWSTR szDatabaseFile,LPCWSTR szAuthor,LPCWSTR szComment,
+		LPCWSTR* pszRoots,DWORD nNumberOfRoots,
 		UPDATEPROC pProc,DWORD dwParam=0);	
 					// Scan strings of pszRoots
 
@@ -164,8 +164,8 @@ public:
 #endif
 
 	const CRootDirectory* GetCurrentRoot() const;
-	LPCSTR GetCurrentRootPath() const;
-	LPSTR GetCurrentRootPathStr() const;
+	LPCWSTR GetCurrentRootPath() const;
+	LPWSTR GetCurrentRootPathStr() const;
 
 	BOOL EnumDatabases(int iDatabase,LPWSTR& szName,LPWSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot);
 	
@@ -226,12 +226,12 @@ private:
 
 typedef CDatabaseUpdater* PDATABASEUPDATER;
 
-inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCSTR szPath)
+inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath)
 :	m_Path(szPath),m_dwFiles(0),m_dwDirectories(0),m_pFirstBuffer(NULL)
 {
 }
 
-inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCSTR szPath,int iLength)
+inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,int iLength)
 :	m_Path(szPath,iLength),m_dwFiles(0),m_dwDirectories(0),m_pFirstBuffer(NULL)
 {
 }
@@ -317,18 +317,18 @@ inline WORD CDatabaseUpdater::GetProgressStatus() const
 	return WORD(-1);
 }
 
-inline LPCSTR CDatabaseUpdater::GetCurrentRootPath() const
+inline LPCWSTR CDatabaseUpdater::GetCurrentRootPath() const
 {
 	if (m_pCurrentRoot==NULL)
 		return NULL;
 	return m_pCurrentRoot->m_Path;
 }
 
-inline LPSTR CDatabaseUpdater::GetCurrentRootPathStr() const
+inline LPWSTR CDatabaseUpdater::GetCurrentRootPathStr() const
 {
-	char* pStr=new char[m_pCurrentRoot->m_Path.GetLength()+1];
-	CopyMemory(pStr,(LPCSTR)m_pCurrentRoot->m_Path,m_pCurrentRoot->m_Path.GetLength()+1);
-	return pStr;
+	if (m_pCurrentRoot==NULL)
+		return NULL;
+	return alloccopy(m_pCurrentRoot->m_Path,m_pCurrentRoot->m_Path.GetLength());
 }
 
 inline const LPCWSTR CDatabaseUpdater::GetCurrentDatabaseName() const

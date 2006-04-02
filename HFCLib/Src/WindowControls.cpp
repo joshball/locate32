@@ -116,14 +116,14 @@ BOOL CWndCtrl::SetText(LPCWSTR lpsz)
 {
 	if (IsFullUnicodeSupport())
 		return ::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); 
-	return ::SendMessageA(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)CString(lpsz)); 
+	return ::SendMessageA(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)W2A(lpsz)); 
 }
 
 BOOL CWndCtrl::SetWindowText(LPCWSTR lpsz) 
 {
 	if (IsFullUnicodeSupport())
 		return ::SetWindowTextW(m_hWnd,lpsz); 
-	return ::SetWindowTextA(m_hWnd,CString(lpsz)); 
+	return ::SetWindowTextA(m_hWnd,W2A(lpsz)); 
 }
 
 
@@ -238,7 +238,7 @@ int CComboBox::FindString(int nStartAfter, LPCWSTR lpszString) const
 	if (IsFullUnicodeSupport())
 		return ::SendMessageW(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
 	else
-		return ::SendMessageA(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)CString(lpszString));
+		return ::SendMessageA(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)W2A(lpszString));
 }
 
 int CComboBox::AddString(LPCWSTR lpszString)
@@ -246,7 +246,7 @@ int CComboBox::AddString(LPCWSTR lpszString)
 	if (IsFullUnicodeSupport())
 		return ::SendMessageW(m_hWnd,CB_ADDSTRING,0,(LPARAM)lpszString);
 	else
-		return ::SendMessageA(m_hWnd,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(lpszString));
+		return ::SendMessageA(m_hWnd,CB_ADDSTRING,0,(LPARAM)(LPCSTR)W2A(lpszString));
 }
 
 int CComboBox::InsertString(int nIndex,LPCWSTR lpszString)
@@ -254,7 +254,7 @@ int CComboBox::InsertString(int nIndex,LPCWSTR lpszString)
 	if (IsFullUnicodeSupport())
 		return ::SendMessageW(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)lpszString);
 	else
-		return ::SendMessageA(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)(LPCSTR)CString(lpszString));
+		return ::SendMessageA(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)(LPCSTR)W2A(lpszString));
 }
 
 int CComboBox::Dir(UINT attr, LPCWSTR lpszWildCard)
@@ -262,7 +262,7 @@ int CComboBox::Dir(UINT attr, LPCWSTR lpszWildCard)
 	if (IsFullUnicodeSupport())
 		return ::SendMessageW(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)lpszWildCard);
 	else
-		return ::SendMessageA(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)(LPCSTR)CString(lpszWildCard));
+		return ::SendMessageA(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)(LPCSTR)W2A(lpszWildCard));
 }
 
 int CComboBox::SelectString(int nStartAfter, LPCWSTR lpszString)
@@ -270,7 +270,7 @@ int CComboBox::SelectString(int nStartAfter, LPCWSTR lpszString)
 	if (IsFullUnicodeSupport())
 		return ::SendMessageW(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
 	else
-		return ::SendMessageA(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)CString(lpszString));
+		return ::SendMessageA(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)W2A(lpszString));
 }
 
 #endif

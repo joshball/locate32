@@ -246,9 +246,9 @@ private:
 	
 	// Volume information
 	BYTE m_bCurrentRootType;
-	LPCWSTR m_szVolumeName;
 	DWORD m_dwVolumeSerial;
-	LPCWSTR m_szFileSystem;
+	CStringW m_sVolumeName;
+	CStringW m_sFileSystem;
 
 
 private:

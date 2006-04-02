@@ -5,7 +5,7 @@
 #include "Locatedb.h"
 
 
-BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCSTR szArchivePath)
+BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchivePath)
 {
 	sCreator.Empty();
 	sDescription.Empty();
@@ -150,7 +150,7 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCSTR szArchive
 }
 
 
-
+/*
 BOOL CDatabaseInfo::GetRootsFromDatabases(CArray<LPSTR>& aRoots,const PDATABASE* pDatabases,int nDatabases,BOOL bOnlyEnabled)
 {
 	for (int nDB=0;nDB<nDatabases;nDB++)
@@ -184,7 +184,7 @@ BOOL CDatabaseInfo::GetRootsFromDatabases(CArray<LPSTR>& aRoots,const PDATABASE*
 			aRoots.Add(aDBRoots[i]);
 	}		
 	return TRUE;
-}
+}*/
 
 BOOL CDatabaseInfo::GetRootsFromDatabases(CArray<LPWSTR>& aRoots,const PDATABASE* pDatabases,int nDatabases,BOOL bOnlyEnabled)
 {
@@ -220,7 +220,7 @@ BOOL CDatabaseInfo::GetRootsFromDatabases(CArray<LPWSTR>& aRoots,const PDATABASE
 	}		
 	return TRUE;
 }
-
+/*
 BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPSTR>& aRoots,const CDatabase* pDatabase)
 {
 	BYTE* szBuffer=NULL;
@@ -331,6 +331,7 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPSTR>& aRoots,const CDatabase* 
 		delete[] szBuffer;
 	return bRet;
 }
+*/
 
 BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase* pDatabase)
 {
@@ -403,26 +404,26 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 		case CFileException::fileOpen:
 		case CFileException::badPath:
 		case CFileException::fileNotFound:
-			DebugFormatMessage("GetRootsFromDatabase:FILEOPEN/BADPATH/NOTFOUND: %s",
-				pDatabase->GetArchiveName()!=NULL?pDatabase->GetArchiveName():"");
+			DebugFormatMessage(L"GetRootsFromDatabase:FILEOPEN/BADPATH/NOTFOUND: %s",
+				pDatabase->GetArchiveName()!=NULL?pDatabase->GetArchiveName():L"");
 			break;
 		case CFileException::readFault:
 		case CFileException::fileCorrupt:
 		case CFileException::sharingViolation:
 		case CFileException::lockViolation:
 		case CFileException::accessDenied:
-			DebugFormatMessage("GetRootsFromDatabase:READFAULT/CORRUPT/SHARING/LOCK: %s",
-				pDatabase->GetArchiveName()!=NULL?pDatabase->GetArchiveName():"");
+			DebugFormatMessage(L"GetRootsFromDatabase:READFAULT/CORRUPT/SHARING/LOCK: %s",
+				pDatabase->GetArchiveName()!=NULL?pDatabase->GetArchiveName():L"");
 			break;
 		case CFileException::endOfFile:
 		case CFileException::badSeek:
 		case CFileException::invalidFile:
-			DebugFormatMessage("GetRootsFromDatabase:EOF/BADSEEK/INVALID: %s",
-				pDatabase->GetArchiveName()!=NULL?pDatabase->GetArchiveName():"");
+			DebugFormatMessage(L"GetRootsFromDatabase:EOF/BADSEEK/INVALID: %s",
+				pDatabase->GetArchiveName()!=NULL?pDatabase->GetArchiveName():L"");
 			break;
 		default:
-			DebugFormatMessage("GetRootsFromDatabase:UNKNOWN: %s",
-				pDatabase->GetArchiveName()!=NULL?pDatabase->GetArchiveName():"");
+			DebugFormatMessage(L"GetRootsFromDatabase:UNKNOWN: %s",
+				pDatabase->GetArchiveName()!=NULL?pDatabase->GetArchiveName():L"");
 			break;
 		}
 #endif
@@ -431,8 +432,8 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 	}
 	catch (...)
 	{
-		DebugFormatMessage("GetRootsFromDatabase: Unknown error, %s",
-			pDatabase->GetArchiveName()!=NULL?pDatabase->GetArchiveName():"");
+		DebugFormatMessage(L"GetRootsFromDatabase: Unknown error, %s",
+			pDatabase->GetArchiveName()!=NULL?pDatabase->GetArchiveName():L"");
 		bRet=FALSE;
 	}
 
@@ -444,7 +445,7 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 }
 
 
-BOOL CDatabaseInfo::ReadFilesAndDirectoriesCount(CDatabase::ArchiveType nArchiveType,LPCSTR szArchive,DWORD& dwFiles,DWORD& dwDirectories)
+BOOL CDatabaseInfo::ReadFilesAndDirectoriesCount(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchive,DWORD& dwFiles,DWORD& dwDirectories)
 {
 	CFile* dbFile=NULL;
 	BOOL bRet=TRUE;

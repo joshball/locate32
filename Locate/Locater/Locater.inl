@@ -419,7 +419,7 @@ inline BYTE CLocater::GetCurrentDatabaseRootType() const
 
 inline LPCWSTR CLocater::GetCurrentDatabaseVolumeLabel() const
 {
-	return m_szVolumeName;
+	return m_sVolumeName;
 }
 
 inline DWORD CLocater::GetCurrentDatabaseVolumeSerial() const
@@ -429,7 +429,7 @@ inline DWORD CLocater::GetCurrentDatabaseVolumeSerial() const
 
 inline LPCWSTR CLocater::GetCurrentDatabaseFileSystem() const
 {
-	return m_szFileSystem;
+	return m_sFileSystem;
 }
 	
 #endif

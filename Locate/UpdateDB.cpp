@@ -73,9 +73,9 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 		if (!nQuiet)
 		{
 			if (pUpdater->GetCurrentRoot()!=NULL)
-				printf(CString(IDS_UPDATEDB32SCANNING),(LPCSTR)pUpdater->GetCurrentRoot()->m_Path);
+				wprintf(CStringW(IDS_UPDATEDB32SCANNING),(LPCWSTR)pUpdater->GetCurrentRoot()->m_Path);
 			else
-				printf("%s %s\n",(LPCSTR)CString(IDS_UPDATEDB32WRITINGDB),pUpdater->GetCurrentDatabaseName());
+				wprintf(L"%s %s\n",(LPCWSTR)CStringW(IDS_UPDATEDB32WRITINGDB),pUpdater->GetCurrentDatabaseName());
 		}
 		break;
 	case ErrorOccured:
@@ -97,8 +97,8 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 				fprintf(stderr,CString(IDS_UPDATEDB32ALLOCATEMEM));
 				break;
 			case ueFolderUnavailable:
-				fprintf(stderr,CString(IDS_UPDATEDB32ROOTUNAVAILABLE),
-					pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():"(NULL)");
+				fwprintf(stderr,CStringW(IDS_UPDATEDB32ROOTUNAVAILABLE),
+					pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():L"(NULL)");
 				break;
 			case ueCannotIncrement:
 				{
@@ -187,8 +187,8 @@ int main (int argc,char ** argv)
 	
 	WORD wCurrentThread=0;
 
-	aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],LastCharIndex(argv[0],'\\')+1));
-	aDatabases[0]->SetNamePtr(alloccopy("DEFAULTX"));
+	aDatabases.Add(CDatabase::FromDefaults(TRUE,A2W(argv[0]),LastCharIndex(argv[0],'\\')+1));
+	aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 	aDatabases[0]->SetThreadId(wCurrentThread);
 
     int i,helps=0;
@@ -204,110 +204,110 @@ int main (int argc,char ** argv)
 			{
 			case 'l':
 			case 'L':
-				if (strncmp(aDatabases.GetLast()->GetName(),"PARAMX",6)!=0 && 
-					strncmp(aDatabases.GetLast()->GetName(),"DEFAULTX",8)!=0)
-					printf(CString(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
+				if (wcsncmp(aDatabases.GetLast()->GetName(),L"PARAMX",6)!=0 && 
+					wcsncmp(aDatabases.GetLast()->GetName(),L"DEFAULTX",8)!=0)
+					wprintf(CStringW(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
 				else if (argv[i][2]=='1')
 				{
 					aDatabases.GetLast()->AddLocalRoots();
-					aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
+					aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
 				}
 				else 
 				{
-					CString* pStr;
-					if (argv[i][2]=='\0' && i+1<argc)
-						pStr=new CString(argv[++i]);
+					CStringW* pStr;
+					if (argv[i][2]==L'\0' && i+1<argc)
+						pStr=new CStringW(argv[++i]);
 					else
-						pStr=new CString(argv[i]+2);
+						pStr=new CStringW(argv[i]+2);
 					
-					if ((*pStr)[0]=='\"')
+					if ((*pStr)[0]==L'\"')
 						pStr->DelChar(0);
-					if (pStr->LastChar()=='\"')
+					if (pStr->LastChar()==L'\"')
 						pStr->DelLastChar();
-					while (pStr->LastChar()=='\\')
+					while (pStr->LastChar()==L'\\')
 						pStr->DelLastChar();
 					
 					if (pStr->GetLength()>1)
 					{
 						if ((*pStr)[1]==':' && pStr->GetLength()==2)
-							aDatabases.GetLast()->AddRoot(alloccopy(*pStr));
+							aDatabases.GetLast()->AddRoot(pStr->GiveBuffer());
 						else if (CFile::IsDirectory(*pStr))
-							aDatabases.GetLast()->AddRoot(alloccopy(*pStr));
+							aDatabases.GetLast()->AddRoot(pStr->GiveBuffer());
 						else
-							fprintf(stderr,CString(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCSTR)*pStr);
+							fwprintf(stderr,CStringW(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
 					}
 					else
-						fprintf(stderr,CString(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCSTR)*pStr);
+						fwprintf(stderr,CStringW(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
 					delete pStr;
 
-					aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
+					aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
 				}
 				break;
 			case 'e':
 			case 'E':
-				if (strncmp(aDatabases.GetLast()->GetName(),"PARAMX",6)!=0 && 
-					strncmp(aDatabases.GetLast()->GetName(),"DEFAULTX",8)!=0)
-					printf(CString(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
+				if (wcsncmp(aDatabases.GetLast()->GetName(),L"PARAMX",6)!=0 && 
+					wcsncmp(aDatabases.GetLast()->GetName(),L"DEFAULTX",8)!=0)
+					wprintf(CStringW(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
 				else 
 				{
-					CString* pStr;
+					CStringW* pStr;
 					if (argv[i][2]=='\0' && i+1<argc)
-						pStr=new CString(argv[++i]);
+						pStr=new CStringW(argv[++i]);
 					else
-						pStr=new CString(argv[i]+2);
+						pStr=new CStringW(argv[i]+2);
 					
-					if ((*pStr)[0]=='\"')
+					if ((*pStr)[0]==L'\"')
 						pStr->DelChar(0);
-					if (pStr->LastChar()=='\"')
+					if (pStr->LastChar()==L'\"')
 						pStr->DelLastChar();
-					while (pStr->LastChar()=='\\')
+					while (pStr->LastChar()==L'\\')
 						pStr->DelLastChar();
 					
 					if (pStr->GetLength()>1)
 					{
 						if (!aDatabases.GetLast()->AddExcludedDirectory(*pStr))
-							fprintf(stderr,CString(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCSTR)*pStr);
+							fwprintf(stderr,CStringW(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
 					}
 					else
-						fprintf(stderr,CString(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCSTR)*pStr);
+						fwprintf(stderr,CStringW(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
 					delete pStr;
 
-					aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
+					aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
 				}
 				break;
 			case 't':
 			case 'T':
-				if (strncmp(aDatabases.GetLast()->GetName(),"PARAMX",6)!=0 &&
-					strncmp(aDatabases.GetLast()->GetName(),"DEFAULTX",8)!=0)
-					printf(CString(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
-				else if (argv[i][2]=='c' || argv[i][2]=='C')
+				if (wcsncmp(aDatabases.GetLast()->GetName(),L"PARAMX",6)!=0 &&
+					wcsncmp(aDatabases.GetLast()->GetName(),L"DEFAULTX",8)!=0)
+					wprintf(CStringW(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
+				else if (argv[i][2]==L'c' || argv[i][2]==L'C')
 				{
-                       if (argv[i][3]=='\0')
-                           aDatabases.GetLast()->SetCreatorPtr(alloccopy(argv[++i]));
+                       if (argv[i][3]==L'\0')
+                           aDatabases.GetLast()->SetCreatorPtr(alloccopyAtoW(argv[++i]));
                        else
-                           aDatabases.GetLast()->SetCreatorPtr(alloccopy(argv[i]+2));
+                           aDatabases.GetLast()->SetCreatorPtr(alloccopyAtoW(argv[i]+2));
 
-					   aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
+					   aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
 				}
-				else if (argv[i][2]=='d' || argv[i][2]=='D')
+				else if (argv[i][2]==L'd' || argv[i][2]==L'D')
 				{
-                       if (argv[i][3]=='\0')
-                           aDatabases.GetLast()->SetDescriptionPtr(alloccopy(argv[++i]));
+                       if (argv[i][3]==L'\0')
+                           aDatabases.GetLast()->SetDescriptionPtr(alloccopyAtoW(argv[++i]));
                        else
-                           aDatabases.GetLast()->SetDescriptionPtr(alloccopy(argv[i]+2));
+                           aDatabases.GetLast()->SetDescriptionPtr(alloccopyAtoW(argv[i]+2));
 
-					   aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
+					   aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
 				}
 				break;
 			case 'i':
 			case 'I':
-				if (strncmp(aDatabases.GetLast()->GetName(),"PARAMX",6)!=0 &&
-					strncmp(aDatabases.GetLast()->GetName(),"DEFAULTX",8)!=0)
-					printf(CString(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
+				if (wcsncmp(aDatabases.GetLast()->GetName(),L"PARAMX",6)!=0 &&
+					wcsncmp(aDatabases.GetLast()->GetName(),L"DEFAULTX",8)!=0)
+					wprintf(CStringW(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
 				else
 				{
                     aDatabases.GetLast()->SetFlag(CDatabase::flagIncrementalUpdate,TRUE);
-					aDatabases.GetLast()->SetNamePtr(alloccopy("PARAMX"));
+					aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
 				}
 				break;
 			case 'N':
@@ -325,24 +325,24 @@ int main (int argc,char ** argv)
 			case 'd':
 				{
 					// Using database file
-					LPCSTR szFile;
+					CStringW sFile;
 					if (argv[i][2]=='\0')
-						szFile=argv[++i];
+						sFile=argv[++i];
 					else
-						szFile=(argv[i]+2);
+						sFile=(argv[i]+2);
 					
-					if (aDatabases.GetSize()==1 && strcmp(aDatabases[0]->GetName(),"DEFAULTX")==0)
+					if (aDatabases.GetSize()==1 && wcscmp(aDatabases[0]->GetName(),L"DEFAULTX")==0)
 					{
-						aDatabases[0]->SetNamePtr(alloccopy("PARAMX"));
-						aDatabases[0]->SetArchiveNamePtr(alloccopy(szFile));
+						aDatabases[0]->SetNamePtr(alloccopy(L"PARAMX"));
+						aDatabases[0]->SetArchiveNamePtr(sFile.GiveBuffer());
 					}
 					else 
 					{
-						CDatabase* pDatabase=CDatabase::FromFile(szFile);
+						CDatabase* pDatabase=CDatabase::FromFile(sFile,sFile.GetLength());
 						if (pDatabase!=NULL)
 						{
                             aDatabases.Add(pDatabase);
-							pDatabase->SetNamePtr(alloccopy("PARAMX"));
+							pDatabase->SetNamePtr(alloccopy(L"PARAMX"));
 							pDatabase->SetThreadId(wCurrentThread);
 						}
 					}
@@ -354,22 +354,22 @@ int main (int argc,char ** argv)
 			case 'D':
 				{
 					// Loading database 'name' from registry, cannot be changed 
-					LPCSTR szName;
+					CStringW sName;
 					if (argv[i][2]=='\0')
-						szName=argv[++i];
+						sName=argv[++i];
 					else
-						szName=(argv[i]+2);
+						sName=(argv[i]+2);
 
-					if (CDatabase::FindByName(aDatabases,szName)==NULL)
+					if (CDatabase::FindByName(aDatabases,sName,sName.GetLength())==NULL)
 					{
 						CDatabase* pDatabase=CDatabase::FromName(HKCU,
-							"Software\\Update\\Databases",szName);
+							"Software\\Update\\Databases",sName);
 
 						if (pDatabase!=NULL)
 						{
 							pDatabase->SetFlag(CDatabase::flagGlobalUpdate);
 							// Is only default loaded
-							if (aDatabases.GetSize()==1 && strcmp(aDatabases[0]->GetName(),"DEFAULTX")==0)
+							if (aDatabases.GetSize()==1 && wcscmp(aDatabases[0]->GetName(),L"DEFAULTX")==0)
 							{
 								delete aDatabases[0];
 								aDatabases[0]=pDatabase;
@@ -425,7 +425,7 @@ int main (int argc,char ** argv)
 	// First, check that there is database 
 	if (aDatabases.GetSize()==0)
 		CDatabase::LoadFromRegistry(HKCU,"Software\\Update\\Databases",aDatabases);   
-	else if (aDatabases.GetSize()==1 && strncmp(aDatabases[0]->GetName(),"DEFAULTX",8)==0)
+	else if (aDatabases.GetSize()==1 && wcsncmp(aDatabases[0]->GetName(),L"DEFAULTX",8)==0)
 	{
 		aDatabases.RemoveAll();
 		CDatabase::LoadFromRegistry(HKCU,"Software\\Update\\Databases",aDatabases);   
@@ -433,8 +433,8 @@ int main (int argc,char ** argv)
 		// No registry values?
 		if (aDatabases.GetSize()==0)
 		{
-			aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],LastCharIndex(argv[0],'\\')+1));
-			aDatabases[0]->SetNamePtr(alloccopy("DEFAULTX"));
+			aDatabases.Add(CDatabase::FromDefaults(TRUE,A2W(argv[0]),LastCharIndex(argv[0],'\\')+1));
+			aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 		}
 	}
 		
@@ -449,8 +449,8 @@ int main (int argc,char ** argv)
 			aDatabases.RemoveAt(i);
 		else 
 		{
-			if ((strncmp(aDatabases[i]->GetName(),"PARAMX",6)==0 ||
-				strncmp(aDatabases[i]->GetName(),"DEFAULTX",8)==0))
+			if ((wcsncmp(aDatabases[i]->GetName(),L"PARAMX",6)==0 ||
+				wcsncmp(aDatabases[i]->GetName(),L"DEFAULTX",8)==0))
 			{
 				BOOL bNameChanged=FALSE;
 				if (aDatabases[i]->GetRoots()==0)
@@ -464,7 +464,7 @@ int main (int argc,char ** argv)
 						if (pDatabase==NULL && !pDatabaseInfo->szExtra1.IsEmpty())
 							pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->szExtra1);
 						
-						printf(CString(IDS_UPDATEDB32USINGEXISTINGSETTINGS),
+						wprintf(CStringW(IDS_UPDATEDB32USINGEXISTINGSETTINGS),
 							aDatabases[i]->GetArchiveName(),pDatabase->GetName());
 						
 						pDatabase->SetArchiveType(aDatabases[i]->GetArchiveType());
@@ -480,17 +480,14 @@ int main (int argc,char ** argv)
 
 				if (!bNameChanged)
 				{
-					int nFirst=LastCharIndex(aDatabases[i]->GetArchiveName(),'\\')+1;
-					int nLength=LastCharIndex(aDatabases[i]->GetArchiveName()+nFirst,'.');
-					if (nLength==-1)
-						nLength=istrlen(aDatabases[i]->GetArchiveName()+nFirst);
+					ULONG_PTR nFirst=LastCharIndex(aDatabases[i]->GetArchiveName(),'\\')+1;
+					SIZE_T nLength=LastCharIndex(aDatabases[i]->GetArchiveName()+nFirst,'.');
+					if (nLength==SIZE_T(-1))
+						nLength=istrlenw(aDatabases[i]->GetArchiveName()+nFirst);
 
-					char* pName=new char[nLength+1];
-					CopyMemory(pName,aDatabases[i]->GetArchiveName()+nFirst,nLength);
-					pName[nLength]='\0';
+					
 
-
-					aDatabases[i]->SetNamePtr(pName);
+					aDatabases[i]->SetNamePtr(alloccopy(aDatabases[i]->GetArchiveName()+nFirst,nLength));
 				}
 			}
 
@@ -533,6 +530,7 @@ int main (int argc,char ** argv)
 	}
 
 	FreeLibrary(GetLanguageSpecificResourceHandle());
+
 	return 1;
 }
 

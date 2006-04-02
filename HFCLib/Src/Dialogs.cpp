@@ -1331,7 +1331,7 @@ void CFileDialog::SetDefExt(LPCSTR lpsz)
 	{
 		if (m_hWnd!=NULL)
 		{
-			::SendMessage(::GetParent(m_hWnd),CDM_SETDEFEXT,0,(LPARAM)(LPCWSTR)CStringW(lpsz));
+			::SendMessage(::GetParent(m_hWnd),CDM_SETDEFEXT,0,(LPARAM)(LPCWSTR)A2W(lpsz));
 			return;
 		}
 

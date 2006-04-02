@@ -119,11 +119,11 @@ inline LPWSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) co
 	case CLocateDlg::DatabaseArchive:
 		return const_cast<LPWSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetArchiveName());
 	case CLocateDlg::VolumeLabel:
-		return const_cast<LPWSTR>(CLocateDlg::GetVolumeLabel(GetDatabaseID(),GetRootID()));
+		return const_cast<LPWSTR>(CLocateDlg::GetDBVolumeLabel(GetDatabaseID(),GetRootID()));
 	case CLocateDlg::VolumeSerial:
-		return const_cast<LPWSTR>(CLocateDlg::GetVolumeSerial(GetDatabaseID(),GetRootID()));
+		return const_cast<LPWSTR>(CLocateDlg::GetDBVolumeSerial(GetDatabaseID(),GetRootID()));
 	case CLocateDlg::VOlumeFileSystem:
-		return const_cast<LPWSTR>(CLocateDlg::GetVolumeFileSystem(GetDatabaseID(),GetRootID()));
+		return const_cast<LPWSTR>(CLocateDlg::GetDBVolumeFileSystem(GetDatabaseID(),GetRootID()));
 	}
 	return const_cast<LPWSTR>(szwEmpty);
 }
@@ -236,18 +236,20 @@ inline CLocatedItem::~CLocatedItem()
 	ClearData();
 }
 
+/*
 inline void CLocatedItem::OemtoAnsi()
 {
 	GetPath();
 	OemToChar(szPath,szPath);
 }
+*/
 
 inline void CLocatedItem::UpdateIcon()
 {
-	SHFILEINFO fi;
+	SHFILEINFOW fi;
 	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
 	{
-        if (SHGetFileInfo(GetPath(),0,&fi,sizeof(SHFILEINFO),/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
+        if (GetFileInfo(GetPath(),0,&fi,/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
 		{
 			iIcon=fi.iIcon;
 			DebugFormatMessage("CLocatedItem::UpdateIcon(): iIcon for %s is %d",GetName(),iIcon);
@@ -279,9 +281,9 @@ inline void CLocatedItem::UpdateParentIcon()
 	LPWSTR szParent=GetParent();
 	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
 	{
-		if (szParent[1]==':' && szParent[2]=='\0')
+		if (szParent[1]==L':' && szParent[2]==L'\0')
 		{
-			WCHAR szDrive[]="X:\\";
+			WCHAR szDrive[]=L"X:\\";
 			szDrive[0]=szParent[0];
 			if (GetFileInfo(szDrive,0,&fi,/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
 				iParentIcon=fi.iIcon;
@@ -369,7 +371,7 @@ inline int CLocatedItem::GetImageDimensionsProduct() const
 	return 0;
 }
 
-inline LPSTR CLocatedItem::GetExtraText(CLocateDlg::DetailType nDetail) const
+inline LPWSTR CLocatedItem::GetExtraText(CLocateDlg::DetailType nDetail) const
 {
 	ExtraInfo* pInfo=GetFieldForType(nDetail);
 	if (pInfo!=NULL)

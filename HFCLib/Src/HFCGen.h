@@ -206,7 +206,7 @@ public:
 	
 	HANDLE m_hFile;
 	BOOL m_bCloseOnDelete;
-	CString m_strFileName;
+	CStringW m_strFileName;
 	int m_nOpenFlags;
 
 	operator HANDLE() const;
@@ -223,14 +223,17 @@ public:
 #endif
 
 	BOOL GetStatus(CFileStatus& rStatus) const;
-	virtual CString GetFileName() const;
 	virtual CString GetFileTitle() const;
 	virtual CString GetFilePath() const;
-	virtual void SetFilePath(LPCTSTR lpszNewName);
+	virtual void SetFilePath(LPCSTR lpszNewName);
 
 	virtual BOOL Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError = NULL);
 #ifdef DEF_WCHAR
 	virtual BOOL Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError = NULL);
+
+	virtual CStringW GetFilePathW() const;
+	virtual CStringW GetFileTitleW() const;
+	virtual void SetFilePath(LPCWSTR lpszNewName);
 #endif	
 	BOOL OpenRead(LPCSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defRead,pError); }
 	BOOL OpenRead(LPCWSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defRead,pError); }
@@ -238,6 +241,7 @@ public:
 	BOOL OpenWrite(LPCWSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defWrite,pError); }
 
 	static BOOL Rename(LPCSTR lpszOldName,LPCSTR lpszNewName);
+	static BOOL MoveFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,DWORD dwFlags=0);	
 	static BOOL Remove(LPCSTR lpszFileName);
 	static BOOL GetStatus(LPCSTR lpszFileName,CFileStatus& rStatus);
 	static BOOL SetStatus(LPCSTR lpszFileName,const CFileStatus& status);
@@ -297,21 +301,52 @@ public:
 
 	static BOOL IsFile(LPCSTR szFileName);
 	static INT IsDirectory(LPCSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
-#ifdef DEF_WCHAR
-	static BOOL IsFile(LPCWSTR szFileName);
-	static INT IsDirectory(LPCWSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
-#endif
 	static BOOL IsValidFileName(LPCSTR szFile,LPSTR szShortName=NULL); // Parent directory must exist
 	static BOOL IsValidPath(LPCSTR szPath,BOOL bAsDirectory=FALSE);
 
-	static BOOL IsSamePath(LPCSTR szDir1,LPCSTR szDir2);
-	static BOOL IsSubDirectory(LPCSTR szSubDir,LPCSTR szPath);
-
 	// Last '//' is not counted, if exists
 	static DWORD ParseExistingPath(LPCSTR szPath);
-	static BOOL CreateDirectoryRecursive(LPCSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes);
 
+#ifdef DEF_WCHAR
+	static BOOL Rename(LPCWSTR lpszOldName,LPCWSTR lpszNewName);
+	static BOOL MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,DWORD dwFlags=0);	
+	static BOOL Remove(LPCWSTR lpszFileName);
 	
+	static BOOL IsFile(LPCWSTR szFileName);
+	static INT IsDirectory(LPCWSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
+	static BOOL IsValidFileName(LPCWSTR szFile,LPWSTR szShortName=NULL); // Parent directory must exist
+	static BOOL IsValidPath(LPCWSTR szPath,BOOL bAsDirectory=FALSE);
+
+	// Last '//' is not counted, if exists
+	static DWORD ParseExistingPath(LPCWSTR szPath);
+	
+#endif
+	
+	static BOOL IsSamePath(LPCSTR szDir1,LPCSTR szDir2);
+	static BOOL IsSubDirectory(LPCSTR szSubDir,LPCSTR szPath);
+	static BOOL CreateDirectory(LPCSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+	static BOOL RemoveDirectory(LPCSTR lpPathName);
+	static DWORD GetFullPathName(LPCSTR lpFileName,DWORD nBufferLength,LPSTR lpBuffer,LPSTR* lpFilePart);
+	static DWORD GetShortPathName(LPCSTR lpszLongPath,LPSTR lpszShortPath,DWORD cchBuffer);
+	static DWORD GetCurrentDirectory(DWORD nBufferLength,LPSTR lpBuffer);
+	static DWORD GetLongPathName(LPCSTR lpszShortPath,LPSTR lpszLongPath,DWORD cchBuffer);
+	static DWORD GetTempPath(DWORD nBufferLength,LPSTR lpBuffer);
+	static UINT GetTempFileName(LPCSTR lpPathName,LPCSTR lpPrefixString,UINT uUnique,LPSTR lpTempFileName);
+	static BOOL CreateDirectoryRecursive(LPCSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes);
+	
+#ifdef DEF_WCHAR
+	static BOOL IsSamePath(LPCWSTR szDir1,LPCWSTR szDir2);
+	static BOOL IsSubDirectory(LPCWSTR szSubDir,LPCWSTR szPath);
+	static BOOL CreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+	static BOOL RemoveDirectory(LPCWSTR lpPathName);
+	static DWORD GetFullPathName(LPCWSTR lpFileName,DWORD nBufferLength,LPWSTR lpBuffer,LPWSTR* lpFilePart);
+	static DWORD GetShortPathName(LPCWSTR lpszLongPath,LPWSTR lpszShortPath,DWORD cchBuffer);
+	static DWORD GetCurrentDirectory(DWORD nBufferLength,LPWSTR lpBuffer);
+	static DWORD GetLongPathName(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer);
+	static DWORD GetTempPath(DWORD nBufferLength,LPWSTR lpBuffer);
+	static UINT GetTempFileName(LPCWSTR lpPathName,LPCWSTR lpPrefixString,UINT uUnique,LPWSTR lpTempFileName);
+	static BOOL CreateDirectoryRecursive(LPCWSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes);
+#endif	
 };
 
 class CFileFind : public CObject
@@ -753,14 +788,14 @@ public:
 	BOOL OpenRead(HKEY hKey,LPCWSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defRead,NULL)==ERROR_SUCCESS; }
 	BOOL OpenWrite(HKEY hKey,LPCWSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defWrite,NULL)==ERROR_SUCCESS; }
 	
-	DWORD QueryValue(LPCWSTR lpszValueName,LPWSTR lpbData,SIZE_T cbData,LPDWORD lpdwType=NULL) const;	
+	DWORD QueryValue(LPCWSTR lpszValueName,LPWSTR lpData,SIZE_T cbData,LPDWORD lpdwType=NULL) const;	
 	BOOL QueryValue(LPCWSTR lpszValueName,CStringW& strData) const;	
 	BOOL QueryValue(LPCWSTR lpszValueName,DWORD& dwData) const;	
 	
 	SIZE_T QueryValueLength(LPCWSTR lpszValueName) const;
 	SIZE_T QueryValueLength(LPCWSTR lpszValueName,BOOL& bIsOk) const;
 
-	LONG SetValue(LPCWSTR lpValueName,LPCSTR lpData,SIZE_T cbData,DWORD dwType=REG_BINARY);
+	LONG SetValue(LPCWSTR lpValueName,LPCWSTR lpData,SIZE_T cbData,DWORD dwType=REG_BINARY);
 	BOOL SetValue(LPCWSTR lpValueName,CStringW& strData);
 	LONG SetValue(LPCWSTR lpValueName,LPCWSTR strData);
 	BOOL SetValue(LPCWSTR lpValueName,DWORD dwData);

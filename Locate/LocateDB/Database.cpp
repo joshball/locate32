@@ -23,9 +23,9 @@ CDatabase::CDatabase(CDatabase& src)
 	if (m_szRoots!=NULL)
 	{
 		DWORD iLength;
-		for (iLength=0;m_szRoots[iLength]!='\0' || m_szRoots[iLength+1]!='\0';iLength++);
+		for (iLength=0;m_szRoots[iLength]!=L'\0' || m_szRoots[iLength+1]!=L'\0';iLength++);
 		iLength+=2;
-        m_szRoots=new char[iLength];
+        m_szRoots=new WCHAR[iLength];
 		sMemCopy(m_szRoots,src.m_szRoots,iLength);
 	}
 
@@ -57,7 +57,7 @@ BOOL CDatabase::LoadFromRegistry(HKEY hKeyRoot,LPCSTR szPath,CArray<CDatabase*>&
 	return TRUE;
 }
 
-CDatabase* CDatabase::FromName(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szName,SIZE_T iNameLength)
+CDatabase* CDatabase::FromName(HKEY hKeyRoot,LPCSTR szPath,LPCWSTR szName,SIZE_T iNameLength)
 {
 	CRegKey RegKey,RegKey2;
 	CString Path(szPath);
@@ -68,7 +68,7 @@ CDatabase* CDatabase::FromName(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szName,SIZE_T 
 		return NULL;
 
 	if (iNameLength==SIZE_T(-1))
-		iNameLength=istrlen(szName);
+		iNameLength=istrlenw(szName);
 
     CString key;
 	for (int i=0;RegKey.EnumKey(i,key);i++)
@@ -78,8 +78,8 @@ CDatabase* CDatabase::FromName(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szName,SIZE_T 
 			DWORD dwLength=RegKey2.QueryValueLength();
 			if (dwLength>1)
 			{
-				CAllocArrayTmpl<CHAR> pName(dwLength);
-				RegKey2.QueryValue(NULL,(LPSTR)pName,dwLength);
+				CAllocArrayTmpl<WCHAR> pName(dwLength);
+				RegKey2.QueryValue(L"",pName,dwLength);
                 
 				if (strcasencmp(pName,szName,iNameLength)==0)
 					return CDatabase::FromKey(RegKey,"",key);		
@@ -155,17 +155,17 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 
 	RegKey.SetValue("ArchiveType",DWORD(m_ArchiveType));
 	if (m_szArchiveName!=NULL)
-		RegKey.SetValue("ArchiveName",m_szArchiveName);
+		RegKey.SetValue(L"ArchiveName",m_szArchiveName);
 	else
 		RegKey.SetValue("ArchiveName",szEmpty);
 
 	if (m_szCreator!=NULL)
-		RegKey.SetValue("Creator",m_szCreator);
+		RegKey.SetValue(L"Creator",m_szCreator);
 	else
 		RegKey.SetValue("Creator",szEmpty);
 
 	if (m_szDescription!=NULL)
-		RegKey.SetValue("Description",m_szDescription);
+		RegKey.SetValue(L"Description",m_szDescription);
 	else
 		RegKey.SetValue("Description",szEmpty);
 
@@ -173,7 +173,8 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	{
 		int i;
 		for (i=0;m_szRoots[i]!='\0' || m_szRoots[i+1]!='\0';i++);
-		RegKey.SetValue("Roots",m_szRoots,i+2,REG_MULTI_SZ);
+		RegKey.SetValue(L"Roots",m_szRoots,i+2,REG_MULTI_SZ);
+		
 	}
 	else
 		RegKey.SetValue("Roots",szEmpty);
@@ -181,22 +182,22 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	// Excluded directories
 	DWORD dwLength=1;
 	for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
-		dwLength+=istrlen(m_aExcludedDirectories[i])+1;
+		dwLength+=istrlenw(m_aExcludedDirectories[i])+1;
 
-	char* pString=new char[dwLength+1];
-	char* pPtr=pString;
+	WCHAR* pString=new WCHAR[dwLength+1];
+	LPWSTR pPtr=pString;
 	for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
 	{
 		if (i>0)
-			*(pPtr++)=';';
+			*(pPtr++)=L';';
 
-		int iLength=istrlen(m_aExcludedDirectories[i]);
-		CopyMemory(pPtr,m_aExcludedDirectories[i],iLength);
+		int iLength=istrlenw(m_aExcludedDirectories[i]);
+		MemCopyW(pPtr,m_aExcludedDirectories[i],iLength);
 		pPtr+=iLength;
 	}
-	*pPtr='\0';
+	*pPtr=L'\0';
 		
-	RegKey.SetValue("Excluded Directories",pString);
+	RegKey.SetValue(L"Excluded Directories",pString);
     delete[] pString;
 	return TRUE;
 }
@@ -219,8 +220,8 @@ CDatabase* CDatabase::FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	CDatabase* pDatabase=new CDatabase;
 	
 	// Copying name
-	pDatabase->m_szName=new char[dwLength];
-	RegKey.QueryValue("",pDatabase->m_szName,dwLength);
+	pDatabase->m_szName=new WCHAR[dwLength];
+	RegKey.QueryValue(L"",pDatabase->m_szName,dwLength);
 		
 	// Retrieving flags and archive type
 	DWORD dwTemp=0;
@@ -238,45 +239,45 @@ CDatabase* CDatabase::FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	dwLength=RegKey.QueryValueLength("ArchiveName");
 	if (dwLength>1)
 	{
-		pDatabase->m_szArchiveName=new char[dwLength];
-		RegKey.QueryValue("ArchiveName",pDatabase->m_szArchiveName,dwLength);
+		pDatabase->m_szArchiveName=new WCHAR[dwLength];
+		RegKey.QueryValue(L"ArchiveName",pDatabase->m_szArchiveName,dwLength);
 	}
 
     // Copying creator info
-	dwLength=RegKey.QueryValueLength("Creator");
+	dwLength=RegKey.QueryValueLength(L"Creator");
 	if (dwLength>1)
 	{
-		pDatabase->m_szCreator=new char[dwLength];
-		RegKey.QueryValue("Creator",pDatabase->m_szCreator,dwLength);
+		pDatabase->m_szCreator=new WCHAR[dwLength];
+		RegKey.QueryValue(L"Creator",pDatabase->m_szCreator,dwLength);
 	}
 
 	// Copying description
 	dwLength=RegKey.QueryValueLength("Description");
 	if (dwLength>1)
 	{
-		pDatabase->m_szDescription=new char[dwLength];
-		RegKey.QueryValue("Description",pDatabase->m_szDescription,dwLength);
+		pDatabase->m_szDescription=new WCHAR[dwLength];
+		RegKey.QueryValue(L"Description",pDatabase->m_szDescription,dwLength);
 	}
 
 	// Copying roots
-	dwLength=RegKey.QueryValueLength("Roots");
+	dwLength=RegKey.QueryValueLength(L"Roots");
 	if (dwLength>1)
 	{
-		pDatabase->m_szRoots=new char[dwLength];
-		RegKey.QueryValue("Roots",pDatabase->m_szRoots,dwLength);
+		pDatabase->m_szRoots=new WCHAR[dwLength];
+		RegKey.QueryValue(L"Roots",pDatabase->m_szRoots,dwLength);
 	}
 
 	// Excluded directories
 	dwLength=RegKey.QueryValueLength("Excluded Directories");
 	if (dwLength>1)
 	{
-		LPSTR pString=new char[dwLength];
-		RegKey.QueryValue("Excluded Directories",pString,dwLength);
+		LPWSTR pString=new WCHAR[dwLength];
+		RegKey.QueryValue(L"Excluded Directories",pString,dwLength);
 
-		LPCSTR pPtr=pString;
-		while (*pPtr!='\0')
+		LPCWSTR pPtr=pString;
+		while (*pPtr!=L'\0')
 		{
-			int nIndex=FirstCharIndex(pPtr,';');
+			int nIndex=FirstCharIndex(pPtr,L';');
 			if (nIndex!=-1)
 			{
 				pDatabase->m_aExcludedDirectories.Add(alloccopy(pPtr,nIndex));
@@ -312,44 +313,44 @@ CDatabase* CDatabase::FromOldStyleDatabase(HKEY hKeyRoot,LPCSTR szPath)
 	CDatabase* pDatabase=new CDatabase;
 	
 	pDatabase->m_ArchiveType=CDatabase::archiveFile;
-	pDatabase->m_szArchiveName=new char[dwLength];
-	RegKey.QueryValue("DatabaseFile",pDatabase->m_szArchiveName,dwLength);
+	pDatabase->m_szArchiveName=new WCHAR[dwLength];
+	RegKey.QueryValue(L"DatabaseFile",pDatabase->m_szArchiveName,dwLength);
 
 	
 	// Setting name to "default"
-	pDatabase->m_szName=new char[8];
-	sMemCopy(pDatabase->m_szName,"default",8);
+	pDatabase->m_szName=new WCHAR[8];
+	MemCopyW(pDatabase->m_szName,L"default",8);
 	
 	// Copying creator info
 	dwLength=RegKey.QueryValueLength("Default Creator");
 	if (dwLength>1)
 	{
-		pDatabase->m_szCreator=new char[dwLength];
-		RegKey.QueryValue("Default Creator",pDatabase->m_szCreator,dwLength);
+		pDatabase->m_szCreator=new WCHAR[dwLength];
+		RegKey.QueryValue(L"Default Creator",pDatabase->m_szCreator,dwLength);
 	}
 	
 	// Copying description
 	dwLength=RegKey.QueryValueLength("Default Description");
 	if (dwLength>1)
 	{
-		pDatabase->m_szDescription=new char[dwLength];
-		RegKey.QueryValue("Default Description",pDatabase->m_szDescription,dwLength);
+		pDatabase->m_szDescription=new WCHAR[dwLength];
+		RegKey.QueryValue(L"Default Description",pDatabase->m_szDescription,dwLength);
 	}
 
 	// Copying roots
-	dwLength=RegKey.QueryValueLength("Drives");
+	dwLength=RegKey.QueryValueLength(L"Drives");
 	if (dwLength>1)
 	{
-		pDatabase->m_szRoots=new char[dwLength];
-		RegKey.QueryValue("Drives",pDatabase->m_szRoots,dwLength);
+		pDatabase->m_szRoots=new WCHAR[dwLength];
+		RegKey.QueryValue(L"Drives",pDatabase->m_szRoots,dwLength);
 	}
 	
 	return pDatabase;
 }
 
-CDatabase* CDatabase::FromFile(LPCSTR szFileName,int dwNameLength)
+CDatabase* CDatabase::FromFile(LPCWSTR szFileName,int dwNameLength)
 {
-	LPSTR szFile=GetCorrertFileName(szFileName,dwNameLength);
+	LPWSTR szFile=GetCorrertFileName(szFileName,dwNameLength);
 	if (szFile==NULL)
 		return NULL;
 
@@ -357,8 +358,8 @@ CDatabase* CDatabase::FromFile(LPCSTR szFileName,int dwNameLength)
 
 	
 	
-	pDatabase->m_szName=new char[6];
-	sMemCopy(pDatabase->m_szName,"param",6);
+	pDatabase->m_szName=new WCHAR[6];
+	MemCopyW(pDatabase->m_szName,L"param",6);
 
 	pDatabase->m_ArchiveType=archiveFile;
 	pDatabase->m_szArchiveName=szFile;
@@ -366,23 +367,23 @@ CDatabase* CDatabase::FromFile(LPCSTR szFileName,int dwNameLength)
 	return pDatabase;
 }
 
-CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName,LPCSTR szAppDir,SIZE_T iAppDirLength)
+CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName,LPCWSTR szAppDir,SIZE_T iAppDirLength)
 {
 	CDatabase* pDatabase=new CDatabase; // This default dwFlags and description and drives to NULL
 
-	pDatabase->m_szName=new char[8];
-	sMemCopy(pDatabase->m_szName,"default",8);
+	pDatabase->m_szName=new WCHAR[8];
+	MemCopyW(pDatabase->m_szName,L"default",8);
 
 	pDatabase->m_ArchiveType=CDatabase::archiveFile;
 	
 	if (bDefaultFileName)
 	{
 		if (iAppDirLength==SIZE_T(-1))
-			iAppDirLength=istrlen(szAppDir);
+			iAppDirLength=istrlenw(szAppDir);
 
-		pDatabase->m_szArchiveName=new char[iAppDirLength+10];
-		CopyMemory(pDatabase->m_szArchiveName,szAppDir,iAppDirLength);
-		CopyMemory(pDatabase->m_szArchiveName+iAppDirLength,"files.dbs",10);
+		pDatabase->m_szArchiveName=new WCHAR[iAppDirLength+10];
+		MemCopyW(pDatabase->m_szArchiveName,szAppDir,iAppDirLength);
+		MemCopyW(pDatabase->m_szArchiveName+iAppDirLength,L"files.dbs",10);
 
 	}
 	else
@@ -394,63 +395,63 @@ CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName,LPCSTR szAppDir,SIZE_T 
  $$LDBSET$T:0000$F:E1G1S0I0$N:local$AF:C:\Utils\db\files.dbs$C:jmj@iik$D:All local files$R:1$$
 */
 
-CDatabase* CDatabase::FromExtraBlock(LPCSTR szExtraBlock)
+CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 {
 	
 	for (int i=0;szExtraBlock[i]!='\0';i++)
 	{
 		// Finding "$$LDBSET$"
-		if (strncmp(szExtraBlock+i,"$$LDBSET$",9)!=0)
+		if (wcsncmp(szExtraBlock+i,L"$$LDBSET$",9)!=0)
 			continue;
 		
         // Found
-		LPCSTR pPtr=szExtraBlock+i+9;
+		LPCWSTR pPtr=szExtraBlock+i+9;
         int length,keylen;
 
 		CDatabase* pDatabase=new CDatabase;
-		CArrayFAP<LPSTR> aRoots;
+		CArrayFAP<LPWSTR> aRoots;
 		
 
 		for (;;)
 		{
 			// Counting field length
-            for (length=0;pPtr[length]!='$' && pPtr[length]!='$';length++);
+            for (length=0;pPtr[length]!=L'$' && pPtr[length]!=L'$';length++);
 			if (length==0)
 				break;
 
 			// Find ':'
-			for (keylen=0;keylen<length && pPtr[keylen]!=':';keylen++);
-			if (pPtr[keylen]!=':')
+			for (keylen=0;keylen<length && pPtr[keylen]!=L':';keylen++);
+			if (pPtr[keylen]!=L':')
 			{
 				// Not correct field
 				pPtr+=length+1;
 				continue;
 			}
-			CString sValue(pPtr+keylen+1,length-keylen-1);
+			CStringW sValue(pPtr+keylen+1,length-keylen-1);
 
 			switch (*pPtr)
 			{
-			case 'T': // Thread
-			case 't': 
+			case L'T': // Thread
+			case L't': 
 				{
 					// Checking zeroes
 					int i;
 					for (i=0;sValue[i]=='0';i++);
-					LPSTR pTemp;
-					pDatabase->m_wThread=(WORD)strtoul(LPCSTR(sValue)+i,&pTemp,16);
+					LPWSTR pTemp;
+					pDatabase->m_wThread=(WORD)wcstoul(LPCWSTR(sValue)+i,&pTemp,16);
                     break;
 				}
-			case 'F': // Flags
-			case 'f':
+			case L'F': // Flags
+			case L'f':
 				{
-					LPCSTR pTemp=sValue;
-					while (*pTemp!='\0')
+					LPCWSTR pTemp=sValue;
+					while (*pTemp!=L'\0')
 					{
 						switch (*(pTemp++))
 						{
-						case 'E':
-						case 'e':
-							if (*pTemp=='1')
+						case L'E':
+						case L'e':
+							if (*pTemp==L'1')
 							{
 								pDatabase->m_wFlags|=flagEnabled;
 								pTemp++;
@@ -463,14 +464,14 @@ CDatabase* CDatabase::FromExtraBlock(LPCSTR szExtraBlock)
 							else
 								pDatabase->m_wFlags|=flagEnabled;
 							break;
-						case 'G':
-						case 'g':
-							if (*pTemp=='1')
+						case L'G':
+						case L'g':
+							if (*pTemp==L'1')
 							{
 								pDatabase->m_wFlags|=flagGlobalUpdate;
 								pTemp++;
 							}
-							else if (*pTemp=='0')
+							else if (*pTemp==L'0')
 							{
 								pDatabase->m_wFlags&=~flagGlobalUpdate;
 								pTemp++;
@@ -479,14 +480,14 @@ CDatabase* CDatabase::FromExtraBlock(LPCSTR szExtraBlock)
 								pDatabase->m_wFlags|=flagGlobalUpdate;
 							break;
 							break;
-						case 'S':
-						case 's':
-							if (*pTemp=='1')
+						case L'S':
+						case L's':
+							if (*pTemp==L'1')
 							{
 								pDatabase->m_wFlags|=flagStopIfRootUnavailable;
 								pTemp++;
 							}
-							else if (*pTemp=='0')
+							else if (*pTemp==L'0')
 							{
 								pDatabase->m_wFlags&=~flagStopIfRootUnavailable;
 								pTemp++;
@@ -494,14 +495,14 @@ CDatabase* CDatabase::FromExtraBlock(LPCSTR szExtraBlock)
 							else
 								pDatabase->m_wFlags|=flagStopIfRootUnavailable;
 							break;
-						case 'I':
-						case 'i':
-							if (*pTemp=='1')
+						case L'I':
+						case L'i':
+							if (*pTemp==L'1')
 							{
 								pDatabase->m_wFlags|=flagIncrementalUpdate;
 								pTemp++;
 							}
-							else if (*pTemp=='0')
+							else if (*pTemp==L'0')
 							{
 								pDatabase->m_wFlags&=~flagIncrementalUpdate;
 								pTemp++;
@@ -513,36 +514,36 @@ CDatabase* CDatabase::FromExtraBlock(LPCSTR szExtraBlock)
 					}
 					break;
 				}
-			case 'N': // Name
-			case 'n':
+			case L'N': // Name
+			case L'n':
 				pDatabase->m_szName=sValue.GiveBuffer();
 				break;
-			case 'A': // Archive
-			case 'a':
-				if (pPtr[1]=='F')
+			case L'A': // Archive
+			case L'a':
+				if (pPtr[1]==L'F')
 				{
 					// File:
 					pDatabase->m_ArchiveType=CDatabase::archiveFile;
 					pDatabase->m_szArchiveName=sValue.GiveBuffer();
 				}
 				break;
-			case 'C': // Creator
-			case 'c':
+			case L'C': // Creator
+			case L'c':
 				pDatabase->m_szCreator=sValue.GiveBuffer();
 				break;
-			case 'D': // Description
-			case 'd':
+			case L'D': // Description
+			case L'd':
 				pDatabase->m_szDescription=sValue.GiveBuffer();
 				break;
-			case 'R':
-			case 'r':
-				if (sValue.Compare("1")==0)
+			case L'R':
+			case L'r':
+				if (sValue.Compare(L"1")==0)
 					aRoots.RemoveAll();
 				else
 					aRoots.Add(sValue.GiveBuffer());
 				break;
-			case 'E':
-			case 'e':
+			case L'E':
+			case L'e':
                 pDatabase->m_aExcludedDirectories.Add(sValue.GiveBuffer());
 				break;
 			}
@@ -558,19 +559,20 @@ CDatabase* CDatabase::FromExtraBlock(LPCSTR szExtraBlock)
 	return NULL;
 }
 
-LPSTR CDatabase::GetCorrertFileName(LPCSTR szFileName,SIZE_T dwNameLength)
+LPWSTR CDatabase::GetCorrertFileName(LPCWSTR szFileName,SIZE_T dwNameLength)
 {
 	if (dwNameLength==SIZE_T(-1))
-		dwNameLength=istrlen(szFileName);
+		dwNameLength=istrlenw(szFileName);
 	
-	LPSTR szFile;
-	if (szFileName[0]!='\\' && szFileName[1]!=':')
+	LPWSTR szFile;
+	if (szFileName[0]!=L'\\' && szFileName[1]!=L':')
 	{
 		DWORD dwLength=GetCurrentDirectory(0,NULL);
         if (dwLength==0)
 			return NULL;
-		szFile=new char[dwLength+dwNameLength+2];
-		GetCurrentDirectory(dwLength,szFile);
+	
+		szFile=new WCHAR[dwLength+dwNameLength+2];
+		CFile::GetCurrentDirectory(dwLength,szFile);
 		dwLength--;
 		if (szFile[dwLength-1]!='\\')
 			szFile[dwLength++]='\\';
@@ -579,9 +581,9 @@ LPSTR CDatabase::GetCorrertFileName(LPCSTR szFileName,SIZE_T dwNameLength)
 	}
 	else
 	{
-		szFile=new char[dwNameLength+1];
-		sMemCopy(szFile,szFileName,DWORD(dwNameLength));
-		szFile[dwNameLength]='\0';
+		szFile=new WCHAR[dwNameLength+1];
+		MemCopyW(szFile,szFileName,DWORD(dwNameLength));
+		szFile[dwNameLength]=L'\0';
 	}
 
 	// Checking whether file exists
@@ -597,7 +599,7 @@ void CDatabase::CheckDoubleNames(PDATABASE* ppDatabases,int nDatabases)
 {
 	for (int i=1;i<nDatabases;i++)
 	{
-		SIZE_T dwLength=istrlen(ppDatabases[i]->m_szName);
+		SIZE_T dwLength=istrlenw(ppDatabases[i]->m_szName);
 		
 		for (int j=0;j<i;j++)
 		{
@@ -611,26 +613,26 @@ void CDatabase::CheckDoubleNames(PDATABASE* ppDatabases,int nDatabases)
 						ppDatabases[i]->m_szName[dwLength-2]++;
 					else
 					{
-						char* tmp=new char[dwLength+2];
-						sMemCopy(tmp,ppDatabases[i]->m_szName,dwLength-1);
+						WCHAR* tmp=new WCHAR[dwLength+2];
+						MemCopyW(tmp,ppDatabases[i]->m_szName,dwLength-1);
 						delete[] ppDatabases[i]->m_szName;
-						tmp[dwLength-1]='1';
-						tmp[dwLength]='0';
-						tmp[dwLength+1]='\0';
+						tmp[dwLength-1]=L'1';
+						tmp[dwLength]=L'0';
+						tmp[dwLength+1]=L'\0';
 						ppDatabases[i]->m_szName=tmp;
 					}
 				}
 				else
 				{
-					char* tmp=new char[dwLength+2];
-					sMemCopy(tmp,ppDatabases[i]->m_szName,dwLength);
-					tmp[dwLength++]='1';
-                    tmp[dwLength]='\0';
+					WCHAR* tmp=new WCHAR[dwLength+2];
+					MemCopyW(tmp,ppDatabases[i]->m_szName,dwLength);
+					tmp[dwLength++]=L'1';
+                    tmp[dwLength]=L'\0';
 					delete[] ppDatabases[i]->m_szName;
                     ppDatabases[i]->m_szName=tmp;
 				}
 				
-				dwLength=istrlen(ppDatabases[i]->m_szName);
+				dwLength=istrlenw(ppDatabases[i]->m_szName);
 				j=-1;
 			}			
 		}
@@ -648,9 +650,7 @@ void CDatabase::CheckValidNames(PDATABASE* ppDatabases,int nDatabases)
 			MakeNameValid(ppDatabases[i]->m_szName);
 			
 			// Unallocaling unnecessary memory
-			SIZE_T dwLength=istrlen(ppDatabases[i]->m_szName);
-			char* pNew=new char[++dwLength];
-			sMemCopy(pNew,ppDatabases[i]->m_szName,dwLength);
+			WCHAR* pNew=alloccopy(ppDatabases[i]->m_szName);
 			delete[] ppDatabases[i]->m_szName;
 			ppDatabases[i]->m_szName=pNew;
 		}
@@ -659,21 +659,21 @@ void CDatabase::CheckValidNames(PDATABASE* ppDatabases,int nDatabases)
 
 
 #define ISVALIDFORNAME(a) \
-	( (a)!='\\' && (a)!='\"' && (a)!='\'' )
+	( (a)!=L'\\' && (a)!=L'\"' && (a)!=L'\'' )
 
 #define ISVALIDFORKEY(a) \
-	( ((a)>='0' && (a)<='9') || \
-	  ((a)>='a' && (a)<='z') || \
-	  ((a)>='A' && (a)<='A') || \
-	  (a)==' ' || \
-	  (a)=='#' || \
-	  (a)=='-' || \
-	  (a)=='_' )
+	( ((a)>=L'0' && (a)<=L'9') || \
+	  ((a)>=L'a' && (a)<=L'z') || \
+	  ((a)>=L'A' && (a)<=L'A') || \
+	  (a)==L' ' || \
+	  (a)==L'#' || \
+	  (a)==L'-' || \
+	  (a)==L'_' )
 	
-BOOL CDatabase::IsNameValid(LPCSTR szName)
+BOOL CDatabase::IsNameValid(LPCWSTR szName)
 {
 	int i;
-	for (i=0;szName[i]!='\0';i++)
+	for (i=0;szName[i]!=L'\0';i++)
 	{
 		if (!ISVALIDFORNAME(szName[i]))
 			return FALSE;
@@ -681,15 +681,15 @@ BOOL CDatabase::IsNameValid(LPCSTR szName)
 	return i>0;
 }
 
-void CDatabase::MakeNameValid(LPSTR szName)
+void CDatabase::MakeNameValid(LPWSTR szName)
 {
 	int i,j=0;
-	for (i=0;szName[i]!='\0';i++)
+	for (i=0;szName[i]!=L'\0';i++)
 	{
 		if (ISVALIDFORNAME(szName[i]))
 			szName[j++]=szName[i];
 	}
-	szName[j]='\0';
+	szName[j]=L'\0';
 }
 
 LPSTR CDatabase::GetValidKey(DWORD dwUniqueNum) const
@@ -713,12 +713,12 @@ LPSTR CDatabase::GetValidKey(DWORD dwUniqueNum) const
 			return alloccopy("db");
 	}
 
-	char* key=new char[dwValid+1];
+	CHAR* key=new char[dwValid+1];
 	int i,j;
 	for (i=0,j=0;m_szName[i]!='\0';i++)
 	{
 		if (ISVALIDFORKEY(m_szName[i]))
-			key[j++]=m_szName[i];
+			MemCopyWtoA(key+(j++),m_szName+i,1);
 	}
 	key[j]='\0';
 	return key;
@@ -755,23 +755,21 @@ WORD CDatabase::CheckIDs(PDATABASE* ppDatabases,int nDatabases)
 	return nCurrentlyMustBe;
 }
 
-void CDatabase::GetRoots(CArray<LPSTR>& aRoots) const
+void CDatabase::GetRoots(CArray<LPWSTR>& aRoots) const
 {
 	if (m_szRoots!=NULL)
 	{
-		LPCSTR pPtr=m_szRoots;
-		while (*pPtr!='\0')
+		LPCWSTR pPtr=m_szRoots;
+		while (*pPtr!=L'\0')
 		{
-			SIZE_T dwLength=istrlen(pPtr);
-			LPSTR pStr=new char[++dwLength];
-			sMemCopy(pStr,pPtr,dwLength);
-			aRoots.Add(pStr);
+			SIZE_T dwLength=istrlenw(pPtr);
+			aRoots.Add(alloccopy(pPtr,dwLength));
 			pPtr+=dwLength;
 		}
 	}
 }
 
-void CDatabase::SetRoots(LPSTR* pRoots,int nCount)
+void CDatabase::SetRoots(LPWSTR* pRoots,int nCount)
 {
 	if (m_szRoots!=NULL)
 		delete[] m_szRoots;
@@ -789,30 +787,30 @@ void CDatabase::SetRoots(LPSTR* pRoots,int nCount)
 	int i;
 	for (i=0;i<nCount;i++)
 	{
-		dwLengths[i]=istrlen(pRoots[i]);
+		dwLengths[i]=istrlenw(pRoots[i]);
 		dwBufferSize+=++dwLengths[i];
 	}
 	
-	m_szRoots=new char[dwBufferSize+1];
-	LPSTR pPtr=m_szRoots;
+	m_szRoots=new WCHAR[dwBufferSize+1];
+	LPWSTR pPtr=m_szRoots;
 	for (i=0;i<nCount;i++)
 	{
-		sMemCopy(pPtr,pRoots[i],dwLengths[i]);
+		MemCopyW(pPtr,pRoots[i],dwLengths[i]);
 		pPtr+=dwLengths[i];
 	}
-	*pPtr='\0';
+	*pPtr=L'\0';
 
 	delete[] dwLengths;
 }
 
-CDatabase* CDatabase::FindByName(PDATABASE* ppDatabases,int nDatabases,LPCSTR szName,SIZE_T iLength)
+CDatabase* CDatabase::FindByName(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szName,SIZE_T iLength)
 {
-	CString sName(szName,iLength);
+	CStringW sName(szName,iLength);
 	sName.MakeLower();
 
 	for (int i=0;i<nDatabases;i++)
 	{
-		CString str(ppDatabases[i]->GetName());
+		CStringW str(ppDatabases[i]->GetName());
 		str.MakeLower();        
 
 		if (sName.Compare(str)==0)
@@ -821,51 +819,51 @@ CDatabase* CDatabase::FindByName(PDATABASE* ppDatabases,int nDatabases,LPCSTR sz
 	return NULL;
 }
 
-CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCSTR szFile,SIZE_T iLength)
+CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szFile,SIZE_T iLength)
 {
-	char* pPath1=NULL;
-	char szPath1[MAX_PATH]; 
+	WCHAR* pPath1=NULL;
+	WCHAR szPath1[MAX_PATH]; 
 
 	if (iLength==0)
 		return NULL;
 
 	DWORD dwRet;
 
-	if (szFile[0]!='\\' && szFile[1]!=':')
+	if (szFile[0]!=L'\\' && szFile[1]!=L':')
 	{
 		if (iLength==SIZE_T(-1))
-			iLength=istrlen(szFile);
+			iLength=istrlenw(szFile);
 			
 		SIZE_T dwLength=GetCurrentDirectory(0,NULL);
 		if (dwLength==0)
 			return NULL;
        
-		pPath1=new char[dwLength+iLength+2];
-		GetCurrentDirectory(dwLength,pPath1);
+		pPath1=new WCHAR[dwLength+iLength+2];
+		CFile::GetCurrentDirectory(dwLength,pPath1);
 		dwLength--;
-		if (pPath1[dwLength-1]!='\\')
-			pPath1[dwLength++]='\\';
+		if (pPath1[dwLength-1]!=L'\\')
+			pPath1[dwLength++]=L'\\';
 
-		sMemCopy(pPath1+dwLength,szFile,DWORD(iLength));
-		pPath1[dwLength+iLength]='\0';
+		MemCopyW(pPath1+dwLength,szFile,DWORD(iLength));
+		pPath1[dwLength+iLength]=L'\0';
 
-		dwRet=GetShortPathName(pPath1,szPath1,MAX_PATH);
+		dwRet=CFile::GetShortPathName(pPath1,szPath1,MAX_PATH);
 	}
 	else if (iLength!=-1)
 	{
-		pPath1=new char[iLength+1];
-		sMemCopy(pPath1,szFile,DWORD(iLength));
-		pPath1[iLength]='\0';
-		dwRet=GetShortPathName(pPath1,szPath1,MAX_PATH);
+		pPath1=new WCHAR[iLength+1];
+		MemCopyW(pPath1,szFile,DWORD(iLength));
+		pPath1[iLength]=L'\0';
+		dwRet=CFile::GetShortPathName(pPath1,szPath1,MAX_PATH);
 	}
 	else
-		dwRet=GetShortPathName(szFile,szPath1,MAX_PATH);
+		dwRet=CFile::GetShortPathName(szFile,szPath1,MAX_PATH);
 	
 	// File does not exists
 	if (dwRet==0)
 	{
 		if (pPath1==NULL)
-			pPath1=const_cast<LPSTR>(szFile);
+			pPath1=const_cast<LPWSTR>(szFile);
 		
 		for (int i=0;i<nDatabases;i++)
 		{
@@ -888,8 +886,8 @@ CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCSTR sz
 		delete[] pPath1;
 	for (int i=0;i<nDatabases;i++)
 	{
-		char szPath2[MAX_PATH];
-		dwRet=GetShortPathName(ppDatabases[i]->m_szArchiveName,szPath2,MAX_PATH);
+		WCHAR szPath2[MAX_PATH];
+		dwRet=CFile::GetShortPathName(ppDatabases[i]->m_szArchiveName,szPath2,MAX_PATH);
 
 		if (dwRet!=NULL)
 		{
@@ -967,7 +965,7 @@ BOOL CDatabase::IsFileNamesOEM() const
 
 void CDatabase::AddLocalRoots()
 {
-	CArrayFAP<LPSTR> aLocalRoots;
+	CArrayFAP<LPWSTR> aLocalRoots;
 	GetLogicalDrives(&aLocalRoots);
 
 	if (m_szRoots==NULL)
@@ -977,18 +975,18 @@ void CDatabase::AddLocalRoots()
 		int i;
 		for (i=0;i<aLocalRoots.GetSize();i++)
 		{
-			SIZE_T iLength=istrlen(aLocalRoots[i]);
+			SIZE_T iLength=istrlenw(aLocalRoots[i]);
 			aLengths.Add(++iLength);
 			dwDataLength+=iLength;
 		}
-		m_szRoots=new char[++dwDataLength];
-		LPSTR ptr=m_szRoots;
+		m_szRoots=new WCHAR[++dwDataLength];
+		LPWSTR ptr=m_szRoots;
 		for (i=0;i<aLocalRoots.GetSize();i++)
 		{
 			CopyMemory(ptr,aLocalRoots[i],aLengths[i]);
 			ptr+=aLengths[i];
 		}
-		*ptr='\0';
+		*ptr=L'\0';
 		return;
 	}
 
@@ -996,16 +994,16 @@ void CDatabase::AddLocalRoots()
 		AddRoot(aLocalRoots[i]);
 }
 
-void CDatabase::AddRoot(LPCSTR pRoot)
+void CDatabase::AddRoot(LPCWSTR pRoot)
 {
-	SIZE_T dwLength=istrlen(pRoot);
+	SIZE_T dwLength=istrlenw(pRoot);
 	
 	if (m_szRoots==NULL)
 	{
-		m_szRoots=new char[dwLength+2];
-		CopyMemory(m_szRoots,pRoot,dwLength);
-		m_szRoots[dwLength++]='\0';
-		m_szRoots[dwLength++]='\0';
+		m_szRoots=new WCHAR[dwLength+2];
+		MemCopyW(m_szRoots,pRoot,dwLength);
+		m_szRoots[dwLength++]=L'\0';
+		m_szRoots[dwLength++]=L'\0';
 		return;
 	}
 	
@@ -1018,9 +1016,9 @@ void CDatabase::AddRoot(LPCSTR pRoot)
 	}
 	dwDataLength++;
 
-	LPSTR pNew=new char[dwDataLength+dwLength+2];
-    CopyMemory(pNew,m_szRoots,dwDataLength);
-	CopyMemory(pNew+dwDataLength,pRoot,dwLength);
+	LPWSTR pNew=new WCHAR[dwDataLength+dwLength+2];
+    MemCopyW(pNew,m_szRoots,dwDataLength);
+	MemCopyW(pNew+dwDataLength,pRoot,dwLength);
 	dwDataLength+=dwLength;
 	pNew[dwDataLength++]='\0';
 	pNew[dwDataLength++]='\0';
@@ -1031,24 +1029,48 @@ void CDatabase::AddRoot(LPCSTR pRoot)
 
 #ifdef WIN32
 
-void CDatabase::GetLogicalDrives(CArrayFAP<LPSTR>* paRoots)
+void CDatabase::GetLogicalDrives(CArrayFAP<LPWSTR>* paRoots)
 {
 	paRoots->RemoveAll();
 	DWORD dwBufferLen=GetLogicalDriveStrings(0,NULL)+1;
-	char* szDrives=new char[dwBufferLen];
-	GetLogicalDriveStrings(dwBufferLen,szDrives);
-	for (int i=0;szDrives[i*4]!='\0';i++)
+	
+	if (IsFullUnicodeSupport())
 	{
-		if (GetDriveType(szDrives+i*4)==DRIVE_FIXED)
+		WCHAR* szDrives=new WCHAR[dwBufferLen];
+		GetLogicalDriveStringsW(dwBufferLen,szDrives);
+
+		for (int i=0;szDrives[i*4]!=L'\0';i++)
 		{
-			char* tmp=new char[3];
-			tmp[0]=szDrives[i*4];
-			tmp[1]=':';
-			tmp[2]='\0';
-			paRoots->Add(tmp);
+			if (GetDriveTypeW(szDrives+i*4)==DRIVE_FIXED)
+			{
+				WCHAR* tmp=new WCHAR[3];
+				tmp[0]=szDrives[i*4];
+				tmp[1]=':';
+				tmp[2]='\0';
+				paRoots->Add(tmp);
+			}
 		}
+		delete[] szDrives;
 	}
-	delete[] szDrives;
+	else
+	{
+		CHAR* szDrives=new CHAR[dwBufferLen];
+		GetLogicalDriveStrings(dwBufferLen,szDrives);
+
+		for (int i=0;szDrives[i*4]!='\0';i++)
+		{
+			if (GetDriveTypeA(szDrives+i*4)==DRIVE_FIXED)
+			{
+				WCHAR* tmp=new WCHAR[3];
+				MemCopyAtoW(tmp,szDrives+i*4,1);
+				tmp[1]=L':';
+				tmp[2]=L'\0';
+				paRoots->Add(tmp);
+			}
+		}
+		delete[] szDrives;
+	}
+
 }
 
 #else
@@ -1174,104 +1196,104 @@ void CDatabase::ReadIniFile(BYTE* pData,CArrayFAP<LPSTR>* paRoots,CString* pCrea
 
 #endif
 
-LPSTR CDatabase::ConstructExtraBlock() const
+LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 {
-	CString str;
-	str.Format("$$LDBSET$T:%04X$",m_wThread);
+	CStringW str;
+	str.Format(L"$$LDBSET$T:%04X$",m_wThread);
 	
 	// Flags
 	if (m_wFlags!=0)
 	{
-		str << "F:";
+		str << L"F:";
 		
 		if (m_wFlags&flagEnabled)
-			str << "E1";
+			str << L"E1";
 		else
-			str << "E0";
+			str << L"E0";
 		if (m_wFlags&flagGlobalUpdate)
-			str << "G1";
+			str << L"G1";
 		else
-			str << "G0";
+			str << L"G0";
 		if (m_wFlags&flagStopIfRootUnavailable)
-			str << "S1";
+			str << L"S1";
 		else
-			str << "S0";
+			str << L"S0";
 		if (m_wFlags&flagIncrementalUpdate)
-			str << "I1";
+			str << L"I1";
 		else
-			str << "I0";
+			str << L"I0";
 		
-		str << '$';
+		str << L'$';
 	}
 
 	if (m_szName!=NULL)
 	{
 		// Name
-		str << "N:";
-		for (int i=0;m_szName[i]!='\0';i++)
+		str << L"N:";
+		for (int i=0;m_szName[i]!=L'\0';i++)
 		{
-			if (m_szName[i]=='$')
-				str << '\\';
+			if (m_szName[i]==L'$')
+				str << L'\\';
 			str << m_szName[i];
 		}
-		str << '$';
+		str << L'$';
 	}
 
 	if (m_ArchiveType==archiveFile && m_szArchiveName!=NULL)
 	{
 		// Archive file
-		str << "AF:";
-		for (int i=0;m_szArchiveName[i]!='\0';i++)
+		str << L"AF:";
+		for (int i=0;m_szArchiveName[i]!=L'\0';i++)
 		{
-			if (m_szArchiveName[i]=='$')
-				str << '\\';
+			if (m_szArchiveName[i]==L'$')
+				str << L'\\';
 			str << m_szArchiveName[i];
 		}
-		str << '$';
+		str << L'$';
 	}
 
 	if (m_szCreator!=NULL)
 	{
 		// Creator
-		str << "C:";
-		for (int i=0;m_szCreator[i]!='\0';i++)
+		str << L"C:";
+		for (int i=0;m_szCreator[i]!=L'\0';i++)
 		{
-			if (m_szCreator[i]=='$')
-				str << '\\';
+			if (m_szCreator[i]==L'$')
+				str << L'\\';
 			str << m_szCreator[i];
 		}
-		str << '$';
+		str << L'$';
 	}
 	if (m_szDescription!=NULL)
 	{
 		// Description
-		str << "D:";
-		for (int i=0;m_szDescription[i]!='\0';i++)
+		str << L"D:";
+		for (int i=0;m_szDescription[i]!=L'\0';i++)
 		{
-			if (m_szDescription[i]=='$')
-				str << '\\';
+			if (m_szDescription[i]==L'$')
+				str << L'\\';
 			str << m_szDescription[i];
 		}
-		str << '$';
+		str << L'$';
 	}
 
 	// Roots
 	if (m_szRoots==NULL)
-		str << "R:1$";
+		str << L"R:1$";
 	else
 	{
-		LPSTR pStr=m_szRoots;
-		while (*pStr!='\0')
+		LPWSTR pStr=m_szRoots;
+		while (*pStr!=L'\0')
 		{
-			str << "R:";
-			while (*pStr!='\0')
+			str << L"R:";
+			while (*pStr!=L'\0')
 			{
-				if (*pStr=='$')
-					str << '$';
+				if (*pStr==L'$')
+					str << L'$';
 				str << *pStr;
 				pStr++;
 			}
-			str << '$';
+			str << L'$';
 			pStr++;
 		}
 	}
@@ -1279,38 +1301,42 @@ LPSTR CDatabase::ConstructExtraBlock() const
 	// Excluded directories
 	for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
 	{
-		str << "E:";
-		for (int j=0;m_aExcludedDirectories[i][j]!='\0';j++)
+		str << L"E:";
+		for (int j=0;m_aExcludedDirectories[i][j]!=L'\0';j++)
 		{
-			if (m_aExcludedDirectories[i][j]=='$')
-				str << '\\';
+			if (m_aExcludedDirectories[i][j]==L'$')
+				str << L'\\';
 			str << m_aExcludedDirectories[i][j];
 		}
-		str << '$';
+		str << L'$';
 	
 	}
 
-	str << '$';
+	str << L'$';
 	str.FreeExtra();
+
+	if (pdwLen!=NULL)
+		*pdwLen=str.GetLength();
 	return str.GiveBuffer();
 }
 
 
 
-BOOL CDatabase::SaveExtraBlockToDbFile(LPCSTR szArchive)
+BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 {
 	
 	CFile *pInFile=NULL,*pOutFile=NULL;
 	char* szBuffer=NULL;
 
-	LPSTR szExtra=ConstructExtraBlock();
-	DWORD iExtraLen=istrlen(szExtra)+1;
+	LPWSTR szExtra=ConstructExtraBlock();
+	DWORD iExtraLen=istrlenw(szExtra)+1;
 
 	// Constructing temp file name	
-	char szTempFile[MAX_PATH];
+	WCHAR szTempFile[MAX_PATH];
 	{
-		CString CurPath(szArchive,LastCharIndex(szArchive,'\\'));
-		if (!GetTempFileName(CurPath,"_dbtmp",0,szTempFile))
+		CStringW CurPath(szArchive,LastCharIndex(szArchive,L'\\'));
+		
+		if (!CFile::GetTempFileName(CurPath,L"_dbtmp",0,szTempFile))
 			return FALSE;
 	}
 
@@ -1391,8 +1417,8 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCSTR szArchive)
 		pInFile->Close();
 		pOutFile->Close();
 
-        DeleteFile(szArchive);
-		MoveFile(szTempFile,szArchive);
+		CFile::Remove(szArchive);
+		CFile::MoveFile(szTempFile,szArchive);
 	}
 	catch (...)
 	{
@@ -1409,6 +1435,6 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCSTR szArchive)
 
 	
 	// Delete temp file 
-	DeleteFile(szTempFile);
+	CFile::Remove(szTempFile);
 	return bRet;
 }

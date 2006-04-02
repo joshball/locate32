@@ -3458,8 +3458,16 @@ int CStringW::CompareNoCase(LPCWSTR lpsz) const
 	}
 	sMemCopyW(tmp1,m_pData,m_nDataLen+1);
 	sMemCopyW(tmp2,lpsz,ret+1);
-	::CharLowerW(tmp1);
-	::CharLowerW(tmp2);
+	if (IsFullUnicodeSupport())
+	{
+		::CharLowerW(tmp1);
+		::CharLowerW(tmp2);
+	}
+	else
+	{
+		_wcslwr_s(tmp1,m_nDataLen+2);
+		_wcslwr_s(tmp2,ret+2);
+	}
 	ret=wcscmp(tmp1,tmp2);
 	delete[] tmp1;
 	delete[] tmp2;

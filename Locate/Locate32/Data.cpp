@@ -303,99 +303,43 @@ void CSchedule::GetString(CStringW& str) const
 			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Monday)
 			{
 				WCHAR szDate[10];
-				/*st.wYear=1999;
-				st.wMonth=8;
-				st.wDay=2;
-				if (!GetDateFormatW(LOCALE_USER_DEFAULT,0,&st,L"ddd",szDate,10))
-				{*/
-					LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_MON,szDate,10);
-					//szDate[3]='\0';
-					//CharLowerW(szDate);
-				//}
+				LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_MON,szDate,10);
 				days << szDate << L' ';
 			}
 			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Tuesday)
 			{
 				WCHAR szDate[10];
-				/*st.wYear=1999;
-				st.wMonth=8;
-				st.wDay=3;
-				if (!GetDateFormatW(LOCALE_USER_DEFAULT,0,&st,L"ddd",szDate,10))
-				{*/
-					LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_TUE,szDate,10);
-					//szDate[3]='\0';
-					//CharLowerW(szDate);
-				//}
+				LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_TUE,szDate,10);
 				days << szDate << L' ';
 			}
 			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Wednesday)
 			{
 				WCHAR szDate[10];
-				/*st.wYear=1999;
-				st.wMonth=8;
-				st.wDay=4;
-				if (!GetDateFormatW(LOCALE_USER_DEFAULT,0,&st,L"ddd",szDate,10))
-				{*/
-					LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_WED,szDate,10);
-					//szDate[3]='\0';
-					//CharLowerW(szDate);
-				//}
+				LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_WED,szDate,10);
 				days << szDate << L' ';
 			}
 			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Thursday)
 			{
 				WCHAR szDate[10];
-				/*st.wYear=1999;
-				st.wMonth=8;
-				st.wDay=5;
-				if (!GetDateFormatW(LOCALE_USER_DEFAULT,0,&st,L"ddd",szDate,10))
-				{*/
-					LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_THU,szDate,10);
-					//szDate[3]='\0';
-					//CharLowerW(szDate);
-				//}
+				LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_THU,szDate,10);
 				days << szDate << L' ';
 			}
 			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Friday)
 			{
 				WCHAR szDate[10];
-				/*st.wYear=1999;
-				st.wMonth=8;
-				st.wDay=6;
-				if (!GetDateFormatW(LOCALE_USER_DEFAULT,0,&st,L"ddd",szDate,10))
-				{*/
-					LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_FRI,szDate,10);
-					//szDate[3]='\0';
-					//CharLowerW(szDate);
-				//}
+				LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_FRI,szDate,10);
 				days << szDate << L' ';
 			}
 			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Saturday)
 			{
 				WCHAR szDate[10];
-				/*st.wYear=1999;
-				st.wMonth=8;
-				st.wDay=7;
-				if (!GetDateFormatW(LOCALE_USER_DEFAULT,0,&st,L"ddd",szDate,10))
-				{*/
-					LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_SAT,szDate,10);
-					//szDate[3]='\0';
-					//CharLowerW(szDate);
-				//}
+				LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_SAT,szDate,10);
 				days << szDate << L' ';
 			}
 			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Sunday)
 			{
 				WCHAR szDate[10];
-				/*st.wYear=1999;
-				st.wMonth=8;
-				st.wDay=1;
-				if (!GetDateFormatW(LOCALE_USER_DEFAULT,0,&st,L"ddd",szDate,10))
-				{*/
-					LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_SUN,szDate,10);
-					//szDate[3]='\0';
-					//CharLowerW(szDate);
-				//}
+				LoadStringW(GetResourceHandle(LanguageSpecificResource),IDS_SUN,szDate,10);
 				days << szDate << L' ';
 			}
 			

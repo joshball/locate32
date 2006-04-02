@@ -205,7 +205,7 @@ int CComboBoxAutoComplete::FindStringExact(int nIndex, LPCSTR lpszFind) const
 
 	for (;nIndex<m_pACData->aItems.GetSize();nIndex++)
 	{
-		if (wcscmp(m_pACData->aItems[nIndex],CStringW(lpszFind))==0)
+		if (wcscmp(m_pACData->aItems[nIndex],A2W(lpszFind))==0)
 			return nIndex;
 	}
 	return -1;
@@ -5648,7 +5648,7 @@ CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent
 			szPath=((LPCSTR)*aFiles[i])+aFiles[i]->FindLast('\\')+1;
 
 		
-		hRes=pcs->pParentFolder->ParseDisplayName(*this,NULL,(LPOLESTR)(LPCWSTR)CStringW(szPath),NULL,&pcs->apidl[i],NULL);
+		hRes=pcs->pParentFolder->ParseDisplayName(*this,NULL,(LPOLESTR)(LPCWSTR)A2W(szPath),NULL,&pcs->apidl[i],NULL);
 		if (!SUCCEEDED(hRes))
 			pcs->apidl[i]=NULL;
 
@@ -6919,7 +6919,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		}
 		else
 		{
-			if (GetDriveType(CString(szBuf))<2)
+			if (GetDriveType(WtoA(szBuf))<2)
 				continue;
 		}
 
@@ -8739,7 +8739,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 	CStringW FolderLower(pFolder,dwLength);
 	FolderLower.MakeLower();
 
-	DebugFormatMessage("Directory to add: %s",(LPCSTR)CString(FolderLower));
+	DebugFormatMessage(L"Directory to add: %s",(LPCWSTR)FolderLower);
 
 	COMBOBOXEXITEMW ci;
 	SHFILEINFOW fi;
@@ -10908,7 +10908,7 @@ DWORD WINAPI CLocateDlg::CAdvancedDlg::UpdaterProc(CLocateDlg::CAdvancedDlg* pAd
 		{
 			DebugFormatMessage("find %s",szKey);
 			if (szKey[0]=='.') // Is Extension
-				pAdvancedDlg->AddTypeToList(CStringW(szKey),aFileTypes);
+				pAdvancedDlg->AddTypeToList(A2W(szKey),aFileTypes);
 
 			dwIndex++;
 			dwKeyLength=1000;
@@ -11058,7 +11058,7 @@ void CLocateDlg::CAdvancedDlg::FileType::ExtractIconFromPath()
 	else
 	{
 		char szExpanded[MAX_PATH];
-		if (ExpandEnvironmentStrings(CString(szIconPath),szExpanded,MAX_PATH)==0)
+		if (ExpandEnvironmentStrings(WtoA(szIconPath),szExpanded,MAX_PATH)==0)
 		{
 			// Error
 			hIcon=GetLocateDlg()->m_AdvancedDlg.m_hDefaultTypeIcon;

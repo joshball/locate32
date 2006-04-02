@@ -11,14 +11,14 @@
 inline LPSTR alloccopy(LPCSTR szString)
 {
 	SIZE_T nLength=istrlen(szString);
-	char* psz=new char[max(nLength+1,2)];
+	char* psz=new char[max(nLength,1)+1];
 	CopyMemory(psz,szString,nLength+1);
 	return psz;
 }
 
 inline LPSTR alloccopy(LPCSTR szString,SIZE_T dwLength)
 {
-	char* psz=new char[max(dwLength+1,2)];
+	char* psz=new char[max(dwLength,1)+1];
 	CopyMemory(psz,szString,dwLength);
 	psz[dwLength]='\0';
 	return psz;
@@ -35,7 +35,7 @@ inline LPSTR allocempty()
 inline LPWSTR alloccopy(LPCWSTR szString)
 {
 	SIZE_T nLength=istrlenw(szString);
-	WCHAR* psz=new WCHAR[nLength+1];
+	WCHAR* psz=new WCHAR[max(nLength,1)+1];
 	for (register SIZE_T i=0;i<=nLength;i++)
 		psz[i]=szString[i];
 	return psz;
@@ -43,7 +43,7 @@ inline LPWSTR alloccopy(LPCWSTR szString)
 
 inline LPWSTR alloccopy(LPCWSTR szString,SIZE_T dwLength)
 {
-	WCHAR* psz=new WCHAR[dwLength+1];
+	WCHAR* psz=new WCHAR[max(dwLength,1)+1];
 	for (register SIZE_T i=0;i<dwLength;i++)
 		psz[i]=szString[i];
 	psz[dwLength]=L'\0';
@@ -53,15 +53,14 @@ inline LPWSTR alloccopy(LPCWSTR szString,SIZE_T dwLength)
 inline LPSTR alloccopyWtoA(LPCWSTR szString)
 {
 	SIZE_T dwLength=istrlenw(szString);
-	CHAR* psz=new CHAR[dwLength+1];
-	MemCopyWtoA(psz,szString,dwLength);
-	psz[dwLength]='\0';
+	CHAR* psz=new CHAR[max(dwLength,1)+1];
+	MemCopyWtoA(psz,szString,dwLength+1);
 	return psz;
 }
 
 inline LPSTR alloccopyWtoA(LPCWSTR szString,SIZE_T dwLength)
 {
-	CHAR* psz=new CHAR[dwLength+1];
+	CHAR* psz=new CHAR[max(dwLength,1)+1];
 	MemCopyWtoA(psz,szString,dwLength);
 	psz[dwLength]=L'\0';
 	return psz;
@@ -70,27 +69,64 @@ inline LPSTR alloccopyWtoA(LPCWSTR szString,SIZE_T dwLength)
 inline LPWSTR alloccopyAtoW(LPCSTR szString)
 {
 	SIZE_T dwLength=istrlen(szString);
-	WCHAR* psz=new WCHAR[dwLength+1];
+	WCHAR* psz=new WCHAR[max(dwLength,1)+1];
 	MemCopyAtoW(psz,szString,dwLength+1);
 	return psz;
 }
 
 inline LPWSTR alloccopyAtoW(LPCSTR szString,SIZE_T dwLength)
 {
-	WCHAR* psz=new WCHAR[dwLength+1];
+	WCHAR* psz=new WCHAR[max(dwLength,1)+1];
 	MemCopyAtoW(psz,szString,dwLength);
 	psz[dwLength]='\0';
 	return psz;
 }
 inline LPWSTR allocemptyW()
 {
-	WCHAR* psz=new WCHAR[1];
+	WCHAR* psz=new WCHAR[2];
 	*psz=L'\0';
 	return psz;
 }
+
+
 #endif
 
 
+inline void MakeLower(LPSTR szStr)
+{
+#ifdef WIN32
+	CharLower(szStr);
+#else
+	strlwr(szStr);
+#endif
+}
+
+inline void MakeUpper(LPSTR szStr)
+{
+#ifdef WIN32
+	CharUpper(szStr);
+#else
+	strupr(szStr);
+#endif
+}
+
+#ifdef DEF_WCHAR
+inline void MakeLower(LPWSTR szStr)
+{
+	if (IsFullUnicodeSupport())
+		CharLowerW(szStr);
+	else
+		_wcslwr_s(szStr,istrlenw(szStr)+1);
+}
+
+inline void MakeUpper(LPWSTR szStr)
+{
+	if (IsFullUnicodeSupport())
+		CharLowerW(szStr);
+	else
+		_wcsupr_s(szStr,istrlenw(szStr)+1);
+}
+#endif
 
 // char replacers
 inline void replacech(LPSTR str,char from,char to)
@@ -639,5 +675,70 @@ inline BYTE* dataparser(LPCSTR str,SIZE_T* pdwDataLength=NULL)
 	return dataparser(str,istrlen(str),pdwDataLength);
 }
 
+
+
+
+
+
+inline W2A::W2A(LPCWSTR sA)
+{
+	pAStr=alloccopyWtoA(sA);
+}
+
+inline W2A::W2A(LPCWSTR sA,SIZE_T len)
+{
+	pAStr=alloccopyWtoA(sA,len);
+}
+
+inline W2A::W2A(LPCWSTR sA,int len)
+{
+	pAStr=alloccopyWtoA(sA,len);
+}
+
+inline W2A::W2A(CStringW& sA)
+{
+	pAStr=alloccopyWtoA(sA,sA.GetLength());
+}
+
+
+inline W2A::~W2A()
+{
+	delete pAStr;
+}
+
+inline W2A::operator LPCSTR() const
+{
+	return pAStr;
+}
+
+inline A2W::A2W(LPCSTR sA)
+{
+	pWStr=alloccopyAtoW(sA);
+}
+
+inline A2W::A2W(LPCSTR sA,SIZE_T len)
+{
+	pWStr=alloccopyAtoW(sA,len);
+}
+
+inline A2W::A2W(LPCSTR sA,int len)
+{
+	pWStr=alloccopyAtoW(sA,len);
+}
+
+inline A2W::A2W(CString& sA)
+{
+	pWStr=alloccopyAtoW(sA,sA.GetLength());
+}
+
+inline A2W::~A2W()
+{
+	delete pWStr;
+}
+
+inline A2W::operator LPCWSTR() const
+{
+	return pWStr;
+}
 
 #endif

@@ -358,22 +358,16 @@ inline BOOL CRegKey::QueryValue(LPCSTR lpszValueName,DWORD& dwData) const
 	return ::RegQueryValueEx(m_hKey,lpszValueName,NULL,NULL,LPBYTE(&dwData),&cb)==ERROR_SUCCESS?cb==4:FALSE;
 }
 
-inline DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpbData,DWORD cbData,LPDWORD lpdwType) const
-{
-	if (IsFullUnicodeSupport())
-		return ::RegQueryValueExW(m_hKey,(LPWSTR)lpszValueName,NULL,lpdwType,(LPBYTE)lpbData,&cbData)==ERROR_SUCCESS?cbData:0;
-	else
-		return ::RegQueryValueExA(m_hKey,CString(lpszValueName),NULL,lpdwType,(LPBYTE)lpbData,&cbData)==ERROR_SUCCESS?cbData:0;
-}
-
+#ifdef DEF_WCHAR
 inline BOOL CRegKey::QueryValue(LPCWSTR lpszValueName,DWORD& dwData) const
 {
 	DWORD cb=sizeof(DWORD);
 	if (IsFullUnicodeSupport())
 		return ::RegQueryValueExW(m_hKey,lpszValueName,NULL,NULL,LPBYTE(&dwData),&cb)==ERROR_SUCCESS?cb==4:FALSE;
 	else
-		return ::RegQueryValueExA(m_hKey,CString(lpszValueName),NULL,NULL,LPBYTE(&dwData),&cb)==ERROR_SUCCESS?cb==4:FALSE;
+		return ::RegQueryValueExA(m_hKey,W2A(lpszValueName),NULL,NULL,LPBYTE(&dwData),&cb)==ERROR_SUCCESS?cb==4:FALSE;
 }
+#endif
 
 inline DWORD CRegKey::QueryValueLength(LPCSTR lpszValueName) const
 {
@@ -401,12 +395,12 @@ inline DWORD CRegKey::QueryValueLength(LPCWSTR lpszValueName) const
 	if (IsFullUnicodeSupport())
 		return ::RegQueryValueExW(m_hKey,(LPWSTR)lpszValueName,NULL,NULL,NULL,&nLength)==ERROR_SUCCESS?nLength:0;
 	else
-		return ::RegQueryValueExA(m_hKey,(LPSTR)(LPCSTR)CString(lpszValueName),NULL,NULL,NULL,&nLength)==ERROR_SUCCESS?nLength:0;
+		return ::RegQueryValueExA(m_hKey,(LPSTR)(LPCSTR)W2A(lpszValueName),NULL,NULL,NULL,&nLength)==ERROR_SUCCESS?nLength:0;
 }
 
 
 
-inline LONG CRegKey::SetValue(LPCSTR lpValueName,LPCTSTR lpData,DWORD cbData,DWORD dwType)
+inline LONG CRegKey::SetValue(LPCSTR lpValueName,LPCSTR lpData,DWORD cbData,DWORD dwType)
 {
 	return ::RegSetValueEx(m_hKey,lpValueName,0,dwType,(CONST BYTE*)lpData,cbData);
 }
@@ -426,13 +420,7 @@ inline BOOL CRegKey::SetValue(LPCSTR lpValueName,DWORD dwData)
 	return ::RegSetValueEx(m_hKey,lpValueName,0,REG_DWORD,(CONST BYTE*)&dwData,sizeof(DWORD))==ERROR_SUCCESS;
 }
 
-inline LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCSTR lpData,DWORD cbData,DWORD dwType)
-{
-	if (IsFullUnicodeSupport())
-		return ::RegSetValueExW(m_hKey,lpValueName,0,dwType,(CONST BYTE*)lpData,cbData);
-	else
-		return ::RegSetValueExA(m_hKey,CString(lpValueName),0,dwType,(CONST BYTE*)lpData,cbData);
-}
+
 
 
 inline BOOL CRegKey::SetValue(LPCWSTR lpValueName,DWORD dwData)
@@ -440,7 +428,7 @@ inline BOOL CRegKey::SetValue(LPCWSTR lpValueName,DWORD dwData)
 	if (IsFullUnicodeSupport())
 		return ::RegSetValueExW(m_hKey,lpValueName,0,REG_DWORD,(CONST BYTE*)&dwData,sizeof(DWORD))==ERROR_SUCCESS;
 	else
-		return ::RegSetValueExA(m_hKey,CString(lpValueName),0,REG_DWORD,(CONST BYTE*)&dwData,sizeof(DWORD))==ERROR_SUCCESS;
+		return ::RegSetValueExA(m_hKey,W2A(lpValueName),0,REG_DWORD,(CONST BYTE*)&dwData,sizeof(DWORD))==ERROR_SUCCESS;
 }
 
 
@@ -473,7 +461,7 @@ inline LONG CRegKey::DeleteKey(LPCWSTR lpszSubKey)
 	if (IsFullUnicodeSupport())
 		return ::RegDeleteKeyW(m_hKey,lpszSubKey);
 	else
-		return ::RegDeleteKeyA(m_hKey,CString(lpszSubKey));
+		return ::RegDeleteKeyA(m_hKey,W2A(lpszSubKey));
 }
 
 inline LONG CRegKey::DeleteValue(LPCWSTR lpszValue)
@@ -481,7 +469,7 @@ inline LONG CRegKey::DeleteValue(LPCWSTR lpszValue)
 	if (IsFullUnicodeSupport())
 		return ::RegDeleteValueW(m_hKey,lpszValue);
 	else
-		return ::RegDeleteValueA(m_hKey,CString(lpszValue));
+		return ::RegDeleteValueA(m_hKey,W2A(lpszValue));
 }
 
 inline LONG CRegKey::GetKeySecurity(SECURITY_INFORMATION SecInf,PSECURITY_DESCRIPTOR pSecDesc,LPDWORD lpcbSecDesc) const
@@ -509,7 +497,7 @@ inline LONG CRegKey::LoadKey(LPCWSTR lpszSubKey,LPCWSTR lpszFile)
 	if (IsFullUnicodeSupport())
 		return ::RegLoadKeyW(m_hKey,lpszSubKey,lpszFile);
 	else
-		return ::RegLoadKeyA(m_hKey,CString(lpszSubKey),CString(lpszFile));
+		return ::RegLoadKeyA(m_hKey,W2A(lpszSubKey),W2A(lpszFile));
 
 }
 
@@ -518,7 +506,7 @@ inline LONG CRegKey::SaveKey(LPCWSTR lpszFile,LPSECURITY_ATTRIBUTES lpsa)
 	if (IsFullUnicodeSupport())
 		return ::RegSaveKeyW(m_hKey,lpszFile,lpsa);
 	else
-		return ::RegSaveKeyA(m_hKey,CString(lpszFile),lpsa);
+		return ::RegSaveKeyA(m_hKey,W2A(lpszFile),lpsa);
 
 }
 
@@ -537,7 +525,7 @@ inline LONG CRegKey::ReplaceKey(LPCWSTR lpSubKey,LPCWSTR lpNewFile,LPCWSTR lpOld
 	if (IsFullUnicodeSupport())
 		return ::RegReplaceKeyW(m_hKey,lpSubKey,lpNewFile,lpOldFile);
 	else
-		return ::RegReplaceKeyA(m_hKey,CString(lpSubKey),CString(lpNewFile),CString(lpOldFile));
+		return ::RegReplaceKeyA(m_hKey,W2A(lpSubKey),W2A(lpNewFile),W2A(lpOldFile));
 }
 
 inline LONG CRegKey::RestoreKey(LPCWSTR lpszFile,DWORD fdw)
@@ -545,7 +533,7 @@ inline LONG CRegKey::RestoreKey(LPCWSTR lpszFile,DWORD fdw)
 	if (IsFullUnicodeSupport())
 		return ::RegRestoreKeyW(m_hKey,lpszFile,fdw);
 	else
-		return ::RegRestoreKeyA(m_hKey,CString(lpszFile),fdw);
+		return ::RegRestoreKeyA(m_hKey,W2A(lpszFile),fdw);
 }
 
 inline LONG CRegKey::NotifyChangeKeyValue(BOOL fWatchSubTree,DWORD fdwNotifyFilter,HANDLE hEvent,BOOL fAsync)

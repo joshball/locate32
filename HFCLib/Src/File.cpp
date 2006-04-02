@@ -197,7 +197,7 @@ BOOL CFile::GetStatus(CFileStatus& rStatus) const
 	rStatus.m_size=find.ff_fsize;
 	rStatus.m_attribute=find.ff_attrib;
 #endif
-	StringCbCopy(rStatus.m_szFullName,MAX_PATH,m_strFileName);
+	StringCbCopy(rStatus.m_szFullName,MAX_PATH,W2A(m_strFileName));
 	return TRUE;
 }
 
@@ -205,27 +205,46 @@ BOOL CFile::GetStatus(CFileStatus& rStatus) const
 CString CFile::GetFileTitle() const
 {
 #ifdef WIN32
-	CString str;
-	::GetFileTitle(m_strFileName,str.GetBuffer(2000),2000);
-	str.FreeExtra();
+	if (IsFullUnicodeSupport())
+	{
+		WCHAR szTitle[2000];
+		::GetFileTitleW(m_strFileName,szTitle,2000);
+		return szTitle;
+	}
+	else
+	{
+		char szTitle[2000];
+		::GetFileTitleA(W2A(m_strFileName),szTitle,2000);
+		return szTitle;
+
+	}
+	
 #else
 	CString str(m_strFileName+LastCharIndex(m_strFileName,'\\')+1);
-#endif
 	return str;
+#endif
 }
 
-CString CFile::GetFilePath() const
+#ifdef DEF_WCHAR
+CStringW CFile::GetFileTitleW() const
 {
-#ifdef WIN32
-	LPTSTR temp;
-	CString str;
-	GetFullPathName(m_strFileName,2000,str.GetBuffer(2000),&temp);
-	str.FreeExtra();
-	return str;
-#else
-	return m_strFileName;	
-#endif
+	if (IsFullUnicodeSupport())
+	{
+		WCHAR szTitle[2000];
+		::GetFileTitleW(m_strFileName,szTitle,2000);
+		return szTitle;
+	}
+	else
+	{
+		char szTitle[2000];
+		::GetFileTitleA(W2A(m_strFileName),szTitle,2000);
+		return szTitle;
+	}
+
+
 }
+#endif
+
 
 BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError)
 {
@@ -236,14 +255,16 @@ BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError)
 #ifdef WIN32
 	
 	// Obtaining full path name
-	LPSTR szTemp;
-	DWORD dwLength=GetFullPathName(lpszFileName,MAX_PATH,m_strFileName.GetBuffer(MAX_PATH),&szTemp);
-    if (dwLength==0)
-		m_strFileName=lpszFileName;
-	else if (dwLength>MAX_PATH)
-		dwLength=GetFullPathName(lpszFileName,dwLength+2,m_strFileName.GetBuffer(dwLength+2),&szTemp);
-	m_strFileName.FreeExtra(dwLength);
-	
+	{
+		LPSTR szTemp;
+		char szFullPathA[MAX_PATH];
+		DWORD dwLength=::GetFullPathName(lpszFileName,MAX_PATH,szFullPathA,&szTemp);
+		if (dwLength==0)
+			m_strFileName=lpszFileName;
+		else
+			m_strFileName.Copy(lpszFileName,dwLength);
+	}
+    
 
 	DWORD dwShare;
 	switch (nOpenFlags&shareFlags)
@@ -395,7 +416,7 @@ BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError)
 BOOL CFile::Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError)
 {
 	if (!IsFullUnicodeSupport())
-		return Open(CString(lpszFileName),nOpenFlags,pError);
+		return Open(W2A(lpszFileName),nOpenFlags,pError);
 
 	if (m_bCloseOnDelete)
 		Close();
@@ -403,15 +424,12 @@ BOOL CFile::Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError)
 	m_nOpenFlags=nOpenFlags;
 	
 	// Obtaining full path name
-	LPSTR szTemp;
-	char szAnsiPath[MAX_PATH];
-	WideCharToMultiByte(CP_ACP,0,lpszFileName,-1,szAnsiPath,MAX_PATH,NULL,NULL);
-
-	DWORD dwLength=GetFullPathName(szAnsiPath,MAX_PATH,m_strFileName.GetBuffer(MAX_PATH),&szTemp);
+	LPWSTR szTemp;
+	DWORD dwLength=GetFullPathNameW(lpszFileName,MAX_PATH,m_strFileName.GetBuffer(MAX_PATH),&szTemp);
     if (dwLength==0)
 		m_strFileName=lpszFileName;
 	else if (dwLength>MAX_PATH)
-		dwLength=GetFullPathName(szAnsiPath,dwLength+2,m_strFileName.GetBuffer(dwLength+2),&szTemp);
+		dwLength=GetFullPathNameW(lpszFileName,dwLength+2,m_strFileName.GetBuffer(dwLength+2),&szTemp);
 	m_strFileName.FreeExtra(dwLength);
 	
 
@@ -1225,7 +1243,7 @@ INT CFile::IsDirectory(LPCSTR szDirectoryName)
 BOOL CFile::IsFile(LPCWSTR szFileName)
 {
 	if (!IsFullUnicodeSupport())
-		return CFile::IsFile(CString(szFileName));
+		return CFile::IsFile(W2A(szFileName));
 
 	if (szFileName[0]==L'\0')
 		return FALSE;
@@ -1251,7 +1269,7 @@ BOOL CFile::IsFile(LPCWSTR szFileName)
 INT CFile::IsDirectory(LPCWSTR szDirectoryName)
 {
 	if (!IsFullUnicodeSupport())
-		return CFile::IsDirectory(CString(szDirectoryName));
+		return CFile::IsDirectory(W2A(szDirectoryName));
 
 
 	HANDLE hFind;
@@ -1400,6 +1418,55 @@ BOOL CFile::IsValidFileName(LPCSTR szFile,LPSTR szShortName)
 #endif
 }
 
+#ifdef DEF_WCHAR
+BOOL CFile::IsValidFileName(LPCWSTR szFile,LPWSTR szShortName)
+{
+	if (szFile[0]==L'\0')
+		return FALSE;
+	if (CFile::IsFile(szFile))
+	{
+		if (szShortName!=NULL)
+		{
+			if (IsFullUnicodeSupport())
+				GetShortPathNameW(szFile,szShortName,_MAX_PATH);
+			else
+			{
+				char szShortPathA[MAX_PATH];
+				GetShortPathName(W2A(szFile),szShortPathA,_MAX_PATH);
+				MultiByteToWideChar(CP_ACP,0,szShortPathA,-1,szShortName,MAX_PATH);
+			}
+		}
+
+		return TRUE;
+	}
+	HANDLE hFile;
+	if (IsFullUnicodeSupport())
+		hFile=CreateFileW(szFile,GENERIC_WRITE,
+			FILE_SHARE_READ,NULL,CREATE_ALWAYS,
+			FILE_ATTRIBUTE_NORMAL,NULL);
+	else
+		hFile=CreateFileA(W2A(szFile),GENERIC_WRITE,
+			FILE_SHARE_READ,NULL,CREATE_ALWAYS,
+			FILE_ATTRIBUTE_NORMAL,NULL);
+
+	if (hFile==INVALID_HANDLE_VALUE)
+		return FALSE;
+	CloseHandle(hFile);
+	if (szShortName!=NULL)
+	{	
+		if (IsFullUnicodeSupport())
+			GetShortPathNameW(szFile,szShortName,_MAX_PATH);
+		else
+		{
+			char szShortPathA[MAX_PATH];
+			GetShortPathName(W2A(szFile),szShortPathA,_MAX_PATH);
+			MultiByteToWideChar(CP_ACP,0,szShortPathA,-1,szShortName,MAX_PATH);
+		}
+	}	
+	CFile::Remove(szFile);
+	return TRUE;
+}
+#endif
 
 // Last '//' is not counted, if exists
 DWORD CFile::ParseExistingPath(LPCSTR szPath)
@@ -1535,6 +1602,153 @@ BOOL CFile::IsValidPath(LPCSTR szPath,BOOL bAsDirectory)
 	return bRet;
 }
 
+#ifdef DEF_WCHAR
+// Last '//' is not counted, if exists
+DWORD CFile::ParseExistingPath(LPCWSTR szPath)
+{
+	DWORD dwLength=wcslen(szPath);
+
+	if (dwLength<2)
+		return 0;
+	if (dwLength==2 || dwLength==3)
+	{
+		if (szPath[1]==':')
+		{
+			if (IsFullUnicodeSupport())
+			{
+				WCHAR szTemp[]=L"X:\\";
+				szTemp[0]=szPath[0];
+				return GetDriveTypeW(szTemp)==DRIVE_NO_ROOT_DIR?0:2;
+			}
+			else
+			{
+				CHAR szTemp[]="X:\\";
+				MemCopyWtoA(szTemp,szPath,1);
+				return GetDriveTypeA(szTemp)==DRIVE_NO_ROOT_DIR?0:2;
+			}
+		}
+		return 0;
+	}
+	
+	char* pTempPath=new char[dwLength+2];
+	CopyMemory(pTempPath,szPath,dwLength+1);
+	if (pTempPath[dwLength-1]!='\\')
+	{
+		pTempPath[dwLength]='\\';
+		pTempPath[++dwLength]='\0';
+	}
+	
+	while (!IsDirectory(pTempPath))
+	{
+		dwLength--;
+		while (dwLength>0 && pTempPath[dwLength]=='\\')
+			dwLength--;
+
+		// Findling next '\\'
+		while (dwLength>0 && pTempPath[dwLength]!='\\')
+			dwLength--;
+        if (dwLength==0)
+		{
+			delete[] pTempPath;
+			return 0;
+		}
+
+		pTempPath[dwLength+1]='\0';
+	}
+
+	while (dwLength>0 && pTempPath[dwLength-1]=='\\')
+		dwLength--;
+	delete[] pTempPath;
+	return dwLength;
+}
+
+BOOL CFile::IsValidPath(LPCWSTR szPath,BOOL bAsDirectory)
+{
+	if (!IsFullUnicodeSupport())
+		return CFile::IsValidPath(W2A(szPath),bAsDirectory);
+
+	BOOL bRet=FALSE;
+
+	int nExisting=ParseExistingPath(szPath);
+	if (nExisting==0)
+		return FALSE;
+
+	if (szPath[nExisting]!='\\')
+	{
+		if (szPath[nExisting]!='\0')
+			return FALSE; // Should not be possible
+		return TRUE;
+	}
+
+	int nStart=nExisting,nFirstNonExisting=-1;
+	for(;;)
+	{
+		// Next '\\' or '\0'
+        int i;
+		for (i=nStart+1;szPath[i]!='\0' && szPath[i]!='\\';i++);
+			
+		if (szPath[i]=='\0')
+		{
+			// Is possible to create file?
+			if (bAsDirectory)
+			{
+				if (CreateDirectoryW(szPath,NULL))
+				{
+					bRet=TRUE;
+					RemoveDirectoryW(szPath);
+				}
+			}
+			else	
+			{
+				HANDLE hFile=CreateFileW(szPath,GENERIC_WRITE,
+					FILE_SHARE_READ,NULL,CREATE_ALWAYS,
+					FILE_ATTRIBUTE_NORMAL,NULL);
+				if (hFile!=INVALID_HANDLE_VALUE)
+				{
+					CloseHandle(hFile);
+					DeleteFileW(szPath);
+
+					bRet=TRUE;
+				}
+			}
+			break;
+		}
+
+		WCHAR* pTemp=new WCHAR[i+2];
+		MemCopyW(pTemp,szPath,i);
+		pTemp[i]=L'\0';
+
+		if (!CreateDirectoryW(pTemp,NULL))
+		{
+			delete[] pTemp;
+			break;
+		}
+
+		delete[] pTemp;
+		nStart=i;
+
+	}
+	
+	// Removing created directories
+	while (nStart>nExisting)
+	{
+		for (;szPath[nStart]!=L'\\' && nExisting<nStart;nStart--);
+
+		if (nStart<=nExisting)
+			break;
+
+		WCHAR* pTemp=new WCHAR[nStart+2];
+		MemCopyW(pTemp,szPath,nStart);
+		pTemp[nStart]=L'\0';
+		RemoveDirectoryW(pTemp);
+		delete[] pTemp;
+        
+		nStart--;
+	}
+
+	return bRet;
+}
+#endif
 BOOL CFile::CreateDirectoryRecursive(LPCSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes)
 {
 	BOOL bRet=FALSE;
@@ -1611,6 +1825,7 @@ BOOL CFile::IsSamePath(LPCSTR szDir1,LPCSTR szDir2)
 #endif
 }
 
+
 // Checking whether szSubDir is sub directory of the szPath
 BOOL CFile::IsSubDirectory(LPCSTR szSubDir,LPCSTR szPath)
 {
@@ -1673,6 +1888,206 @@ BOOL CFile::IsSubDirectory(LPCSTR szSubDir,LPCSTR szPath)
 	return strcasecmp(sSubDir,sPath)==0;
 }
 
+#ifdef DEF_WCHAR
+BOOL CFile::CreateDirectoryRecursive(LPCWSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes)
+{
+	if (!IsFullUnicodeSupport())
+		return CreateDirectoryRecursive(W2A(szPath),plSecurityAttributes);
+
+	BOOL bRet=FALSE;
+
+	int nExisting=ParseExistingPath(szPath);
+	if (nExisting==0)
+		return FALSE;
+
+	if (szPath[nExisting]!=L'\\')
+	{
+		if (szPath[nExisting]!=L'\0')
+			return FALSE; // Should not be possible
+		return TRUE;
+	}
+
+
+
+	int nStart=nExisting,nFirstNonExisting=-1;
+	for(;;)
+	{
+		// Next '\\' or '\0'
+		int i;
+        for (i=nStart+1;szPath[i]!='\0' && szPath[i]!='\\';i++);
+					
+		if (szPath[i]=='\0')
+			return CreateDirectoryW(szPath,NULL);
+
+		WCHAR* pTemp=new WCHAR[i+2];
+		MemCopyW(pTemp,szPath,i);
+		pTemp[i]='\0';
+
+		if (!CreateDirectory(pTemp,NULL))
+		{
+			delete[] pTemp;
+			return FALSE;
+		}
+
+		delete[] pTemp;
+		nStart=i;
+
+	}
+	return TRUE;
+}
+
+
+BOOL CFile::IsSamePath(LPCWSTR szDir1,LPCWSTR szDir2)
+{
+	if (!IsFullUnicodeSupport())
+		return CFile::IsSamePath(W2A(szDir1),W2A(szDir2));
+
+	WCHAR path1[MAX_PATH],path2[MAX_PATH];
+	int nRet1,nRet2;
+	nRet1=GetShortPathNameW(szDir1,path1,MAX_PATH);
+	if (!nRet1)
+		return strcasecmp(szDir1,szDir2)==0;
+	nRet2=GetShortPathNameW(szDir2,path2,MAX_PATH);
+	if (!nRet2 || nRet1<nRet2-1 || nRet1>nRet2+1)
+		return FALSE;
+	if (path1[nRet1-1]==L'\\')
+		path1[nRet1-1]=L'\0';
+	if (path2[nRet2-1]==L'\\')
+		path2[nRet2-1]=L'\0';
+	return strcasecmp(path1,path2)==0;	
+}
+// Checking whether szSubDir is sub directory of the szPath
+BOOL CFile::IsSubDirectory(LPCWSTR szSubDir,LPCWSTR szPath)
+{
+	if (!IsFullUnicodeSupport())
+		return CFile::IsSubDirectory(W2A(szSubDir),W2A(szPath));
+
+	WCHAR sSubDir[MAX_PATH],sPath[MAX_PATH];
+	if (!GetShortPathNameW(szSubDir,sSubDir,MAX_PATH))
+		StringCbCopyW(sSubDir,MAX_PATH,szSubDir);
+	if (!GetShortPathNameW(szPath,sPath,MAX_PATH))
+		StringCbCopyW(sPath,MAX_PATH,szPath);
+    int nSlashes=0,i;
+	// Counting '\\' characters in szPath
+	for (i=0;sPath[i]!=L'\0';i++)
+	{
+		if (sPath[i]==L'\\')
+			nSlashes++;
+	}
+
+	// Break szSubDir after nSlashes pcs of '\\'
+	for (i=0;sSubDir[i]!=L'\0';i++)
+	{
+		if (sSubDir[i]==L'\\')
+		{
+			nSlashes--;
+			if (nSlashes<0)
+				break;
+		}
+	}
+
+	if (nSlashes>=0) // Not enough '\\' directories, cannot be subdir
+		return FALSE;
+	sSubDir[i]='\0';
+
+	return strcasecmp(sSubDir,sPath)==0;
+}
+
+DWORD CFile::GetFullPathName(LPCWSTR lpFileName,DWORD nBufferLength,LPWSTR lpBuffer,LPWSTR* lpFilePart)
+{
+	if (IsFullUnicodeSupport())
+		return ::GetFullPathNameW(lpFileName,nBufferLength,lpBuffer,lpFilePart);
+	else
+	{
+		CHAR sPathA[MAX_PATH+10];
+		CHAR* szTemp;
+		DWORD dwRet=::GetFullPathName(W2A(lpFileName),MAX_PATH+10,sPathA,&szTemp);
+		if (dwRet==0)
+			return 0;
+		MultiByteToWideChar(CP_ACP,0,sPathA,dwRet+1,lpBuffer,nBufferLength);
+		if (lpFilePart!=NULL)
+			*lpFilePart=lpBuffer+DWORD(sPathA-szTemp);
+		return dwRet;
+	}
+}
+
+DWORD CFile::GetShortPathName(LPCWSTR lpszLongPath,LPWSTR lpszShortPath,DWORD cchBuffer)
+{
+	if (IsFullUnicodeSupport())
+		return ::GetShortPathNameW(lpszLongPath,lpszShortPath,cchBuffer);
+	else
+	{
+		CHAR sPathA[MAX_PATH+10];
+		DWORD dwRet=::GetShortPathName(W2A(lpszLongPath),sPathA,MAX_PATH+10);
+		if (dwRet==0)
+			return 0;
+		MultiByteToWideChar(CP_ACP,0,sPathA,dwRet+1,lpszShortPath,cchBuffer);
+		return dwRet;
+	}
+}
+
+DWORD CFile::GetCurrentDirectory(DWORD nBufferLength,LPWSTR lpBuffer)
+{
+	if (IsFullUnicodeSupport())
+		return ::GetCurrentDirectoryW(nBufferLength,lpBuffer);
+	else
+	{
+		CHAR sPathA[MAX_PATH+10];
+		DWORD dwRet=::GetCurrentDirectoryA(MAX_PATH+10,sPathA);
+		if (dwRet==0)
+			return 0;
+		MultiByteToWideChar(CP_ACP,0,sPathA,dwRet+1,lpBuffer,nBufferLength);
+		return dwRet;
+	}
+}
+
+DWORD CFile::GetLongPathName(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer)
+{
+	if (IsFullUnicodeSupport())
+		return ::GetLongPathNameW(lpszShortPath,lpszLongPath,cchBuffer);
+	else
+	{
+		CHAR sPathA[MAX_PATH+10];
+		DWORD dwRet=::GetLongPathNameA(W2A(lpszShortPath),sPathA,MAX_PATH+10);
+		if (dwRet==0)
+			return 0;
+		MultiByteToWideChar(CP_ACP,0,sPathA,dwRet+1,lpszLongPath,cchBuffer);
+		return dwRet;
+	}
+}
+
+DWORD CFile::GetTempPath(DWORD nBufferLength,LPWSTR lpBuffer)
+{
+	if (IsFullUnicodeSupport())
+		return ::GetTempPathW(nBufferLength,lpBuffer);
+	else
+	{
+		CHAR sPathA[MAX_PATH+10];
+		DWORD dwRet=::GetTempPathA(MAX_PATH+10,sPathA);
+		if (dwRet==0)
+			return 0;
+		MultiByteToWideChar(CP_ACP,0,sPathA,dwRet+1,lpBuffer,nBufferLength);
+		return dwRet;
+	}
+}
+
+UINT CFile::GetTempFileName(LPCWSTR lpPathName,LPCWSTR lpPrefixString,UINT uUnique,LPWSTR lpTempFileName)
+{
+	if (IsFullUnicodeSupport())
+		return ::GetTempFileNameW(lpPathName,lpPrefixString,uUnique,lpTempFileName);
+	else
+	{
+		CHAR sPathA[MAX_PATH+10];
+		UINT dwRet=::GetTempFileName(W2A(lpPathName),W2A(lpPrefixString),uUnique,sPathA);
+		if (dwRet==0)
+			return 0;
+		MultiByteToWideChar(CP_ACP,0,sPathA,dwRet+1,lpTempFileName,MAX_PATH);
+		return dwRet;
+	}
+}
+
+
+#endif
 ///////////////////////////////////////////
 // CFileFind
 ///////////////////////////////////////////

@@ -52,6 +52,12 @@ void DebugWndMessage(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
 void DebugNumMessage(LPCSTR text,DWORD num);
 void DebugFormatMessage(LPCSTR text,...);
 void EndDebugLogging();
+#ifdef DEF_WCHAR
+void DebugMessage(LPCWSTR msg);
+void DebugHexDump(LPCWSTR desc,BYTE* pData,SIZE_T datalen);
+void DebugNumMessage(LPCWSTR text,DWORD num);
+void DebugFormatMessage(LPCWSTR text,...);
+#endif
 LPCSTR GetDebugLoggingFile();
 #else
 inline void StartDebugLogging() {}
@@ -62,6 +68,12 @@ inline void DebugNumMessage(LPCSTR text,DWORD num)  {}
 inline void DebugFormatMessage(LPCSTR text,...)  {}
 inline void EndDebugLogging()  {}
 inline LPCSTR GetDebugLoggingFile() {}
+#ifdef DEF_WCHAR
+inline void DebugMessage(LPCWSTR msg)  {}
+inline void DebugHexDump(LPCWSTR desc,BYTE* pData,SIZE_T datalen)  {}
+inline void DebugNumMessage(LPCWSTR text,DWORD num)  {}
+inline void DebugFormatMessage(LPCWSTR text,...)  {}
+#endif
 #endif
 
 #endif

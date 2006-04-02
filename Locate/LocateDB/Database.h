@@ -45,7 +45,7 @@ public:
 	LPCWSTR GetCreator() const;
 	LPCWSTR GetDescription() const;
 	LPCWSTR GetRoots() const;
-	void GetRoots(CArray<LPSTR>& aRoots) const;
+	void GetRoots(CArray<LPWSTR>& aRoots) const;
 	WORD GetFlags() const;
 	WORD GetThreadId() const;
 	
@@ -78,7 +78,7 @@ public:
 	void SetArchiveNamePtr(LPWSTR szArchiveName);
 	void SetArchiveType(ArchiveType nType);
 
-	LPWSTR GetValidKey(DWORD dwUniqueNum=0) const; // free returned pointer with delete[]
+	LPSTR GetValidKey(DWORD dwUniqueNum=0) const; // free returned pointer with delete[]
 
 	const CArrayFAP<LPWSTR>& GetExcludedDirectories() const;
 	void SetExcludedDirectories(const CArrayFAP<LPWSTR>& aExcludedDirectories);
@@ -93,8 +93,8 @@ private:
 	BOOL SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey);
 
 public:
-	LPWSTR ConstructExtraBlock() const;
-	BOOL SaveExtraBlockToDbFile(LPCSTR szArchive);
+	LPWSTR ConstructExtraBlock(DWORD* pdwLen=NULL) const;
+	BOOL SaveExtraBlockToDbFile(LPCWSTR szArchive);
 
 
 public:
@@ -103,7 +103,7 @@ public:
 	static BOOL SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,const CArray<PDATABASE>& aDatabases);
 	static BOOL SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,const PDATABASE* ppDatabases,int nDatabases);
 
-	static CDatabase* FromName(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szName,SIZE_T dwNameLength=-1);
+	static CDatabase* FromName(HKEY hKeyRoot,LPCSTR szPath,LPCWSTR szName,SIZE_T dwNameLength=-1);
 	static CDatabase* FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey);
 	static CDatabase* FromFile(LPCWSTR szFileName,int dwNameLength=-1);
     static CDatabase* FromOldStyleDatabase(HKEY hKeyRoot,LPCSTR szPath);
