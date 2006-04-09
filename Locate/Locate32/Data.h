@@ -143,7 +143,7 @@ public:
 		SMONTHLYTYPE m_tMonthly;
 		SDATE m_dStartDate;
 	};
-	char* m_pDatabases;
+	WCHAR* m_pDatabases;
 	int m_nThreadPriority;
 
 	DWORD GetDataLen() const;
@@ -169,12 +169,12 @@ inline CSchedule::CSchedule(CSchedule* pSchedule)
 		DWORD dwLength=1;
 		while (*m_pDatabases!='\0')
 		{
-			int iStrLen=istrlen(m_pDatabases)+1;
+			int iStrLen=istrlenw(m_pDatabases)+1;
 			dwLength+=iStrLen;
 			m_pDatabases+=iStrLen;
 		}
-		m_pDatabases=new char[dwLength];
-		CopyMemory(m_pDatabases,pSchedule->m_pDatabases,dwLength);
+		m_pDatabases=new WCHAR[dwLength];
+		CopyMemory(m_pDatabases,pSchedule->m_pDatabases,dwLength*2);
 	}
 }
 	

@@ -211,12 +211,12 @@ inline void CLocatedItem::CheckIfDeleted()
 		return;
 	if (IsFolder())
 	{
-		if (!CFile::IsDirectory(GetPath()))
+		if (!FileSystem::IsDirectory(GetPath()))
 			SetToDeleted();
 	}
 	else
 	{
-		if (!CFile::IsFile(GetPath()))
+		if (!FileSystem::IsFile(GetPath()))
 			SetToDeleted();
 	}
 }
@@ -423,7 +423,7 @@ inline CLocatedItem::ExtraInfo::~ExtraInfo()
 	case CLocateDlg::ShortFilePath:
 	case CLocateDlg::Owner:
 	case CLocateDlg::MD5sum:
-		if (szText!=NULL && szText!=szEmpty)
+		if (szText!=NULL && szText!=szwEmpty)
 			Allocation.Free(szText);
 		break;
 	}

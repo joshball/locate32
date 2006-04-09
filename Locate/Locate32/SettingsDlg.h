@@ -138,7 +138,7 @@ public:
 		virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 			
 	protected:
-        BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
+        BOOL ListNotifyHandler(NMLISTVIEW *pNm);
 		static int CALLBACK ThreadSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
 		void OnNew(CDatabase* pDatabaseTempl=NULL);
@@ -186,7 +186,7 @@ public:
 			void OnExcludeDirectories();
 			
 			BOOL EnableRemoveButton();
-			int AddDriveToList(LPSTR szDrive);
+			int AddDriveToList(LPWSTR szDrive);
 			int AddDirectoryToListWithVerify(LPCWSTR szPath,SIZE_T iLength=-1);
 			int AddDirectoryToList(LPCWSTR szPath,SIZE_T iLength=-1);
 			int AddComputerToList(LPCWSTR szName);
@@ -207,7 +207,7 @@ public:
 			{
 			public:
 				CExcludeDirectoryDialog();
-				CExcludeDirectoryDialog(const CArrayFAP<LPSTR>& rDirectories);
+				CExcludeDirectoryDialog(const CArrayFAP<LPWSTR>& rDirectories);
 
 				virtual BOOL OnInitDialog(HWND hwndFocus);
 				virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
@@ -221,7 +221,7 @@ public:
 				void EnableControls();
 
 			public:
-				CArrayFAP<LPSTR> m_aDirectories;
+				CArrayFAP<LPWSTR> m_aDirectories;
 
 				BOOL m_bTextChanged;
 			};
@@ -403,6 +403,8 @@ public:
 		CAction::ActionActivateControls* m_pPossibleControls;
 		CAction::ActionMenuCommands* m_pPossibleMenuCommands;
 		CShortcut::VirtualKeyName* m_pVirtualKeyNames;
+
+		CComboBox m_ActionCombo,m_SubActionCombo,m_VerbCombo,m_WhichFileCombo;
 
 		HWND hDialogs[5];	
 		HMENU hMainMenu;

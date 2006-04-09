@@ -387,17 +387,32 @@ inline CString CString::Right(DWORD nCount) const
 #ifdef DEF_RESOURCES
 inline BOOL CString::AddString(UINT nID)
 {
-	CString str((UINT)nID);
-	*this << str;
+	ID2A str((UINT)nID);
+	*this << (LPCSTR)str;
 	return TRUE;
 }
 
 inline BOOL CString::AddString(UINT nID,TypeOfResourceHandle bType)
 {
-	CString str((UINT)nID,bType);
-	*this << str;
+	ID2A str((UINT)nID,bType);
+	*this << (LPCSTR)str;
 	return TRUE;
 }
+#ifdef DEF_WCHAR
+inline BOOL CStringW::AddString(UINT nID)
+{
+	ID2W str((UINT)nID);
+	*this << (LPCWSTR)str;
+	return TRUE;
+}
+
+inline BOOL CStringW::AddString(UINT nID,TypeOfResourceHandle bType)
+{
+	ID2W str((UINT)nID,bType);
+	*this << (LPCWSTR)str;
+	return TRUE;
+}
+#endif
 #endif
 
 inline CHAR CString::LastChar() const
@@ -678,7 +693,7 @@ inline BYTE* dataparser(LPCSTR str,SIZE_T* pdwDataLength=NULL)
 
 
 
-
+#ifdef DEF_WCHAR
 
 inline W2A::W2A(LPCWSTR sA)
 {
@@ -740,5 +755,31 @@ inline A2W::operator LPCWSTR() const
 {
 	return pWStr;
 }
+
+#endif
+
+
+
+inline ID2A::~ID2A()
+{
+	delete pStr;
+}
+
+inline ID2A::operator LPCSTR() const
+{
+	return pStr;
+}
+
+#ifdef DEF_WCHAR
+inline ID2W::~ID2W()
+{
+	delete pWStr;
+}
+
+inline ID2W::operator LPCWSTR() const
+{
+	return pWStr;
+}
+#endif
 
 #endif

@@ -150,16 +150,16 @@ BOOL CALLBACK LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ue,DWO
 		switch (ue)
 		{
 		case ueUnknown:
-			fwprintf(stderr,(LPCWSTR)CStringW(IDS_LOCATEUNKNOWNERROR));
+			fwprintf(stderr,(LPCWSTR)ID2W(IDS_LOCATEUNKNOWNERROR));
 			break;
 		case ueOpen:
-			fwprintf(stderr,(LPCWSTR)CStringW(IDS_LOCATECANNOTOPEN),pLocater->GetCurrentDatabaseFile());
+			fwprintf(stderr,(LPCWSTR)ID2W(IDS_LOCATECANNOTOPEN),pLocater->GetCurrentDatabaseFile());
 			break;
 		case ueRead:
-			fwprintf(stderr,(LPCWSTR)CStringW(IDS_LOCATECANNOTREAD),pLocater->GetCurrentDatabaseFile());
+			fwprintf(stderr,(LPCWSTR)ID2W(IDS_LOCATECANNOTREAD),pLocater->GetCurrentDatabaseFile());
 			break;
 		case ueInvalidDatabase:
-			fwprintf(stderr,(LPCWSTR)CStringW(IDS_LOCATEINVALIDDATABASE),pLocater->GetCurrentDatabaseFile());
+			fwprintf(stderr,(LPCWSTR)ID2W(IDS_LOCATEINVALIDDATABASE),pLocater->GetCurrentDatabaseFile());
 			break;
 		}
 		break;
@@ -216,7 +216,7 @@ void showverbose(LPCSTR* ppStrings,UINT nStrings,LPCSTR* ppExtensions,UINT nExte
 {
 	if (nStrings>0)
 	{
-		printf(CString(IDS_LOCATEVERBOSESTR));
+		wprintf(ID2W(IDS_LOCATEVERBOSESTR));
 		printf(ppStrings[0]);
 
 		for (UINT i=1;i<nStrings;i++)
@@ -226,7 +226,7 @@ void showverbose(LPCSTR* ppStrings,UINT nStrings,LPCSTR* ppExtensions,UINT nExte
 
 	if (nExtension>0)
 	{
-		printf(CString(IDS_LOCATEVERBOSEEXT));
+		wprintf(ID2W(IDS_LOCATEVERBOSEEXT));
 		printf(ppExtensions[0]);
 
 		for (UINT i=1;i<nExtension;i++)
@@ -237,7 +237,7 @@ void showverbose(LPCSTR* ppStrings,UINT nStrings,LPCSTR* ppExtensions,UINT nExte
 
 	if (nDirectories>0)
 	{
-		printf(CString(IDS_LOCATEVERBOSEDIR));
+		wprintf(ID2W(IDS_LOCATEVERBOSEDIR));
 		for (UINT i=0;i<nDirectories;i++)
 			printf("%s\n",ppDirectories[i]);
 	}
@@ -370,7 +370,7 @@ int main (int argc,char * argv[])
 						if (argv[i][0]=='.' && argv[i][1]=='\0')
 						{
 							WCHAR* pPath=new WCHAR[MAX_PATH];
-							CFile::GetCurrentDirectory(MAX_PATH,pPath);
+							FileSystem::GetCurrentDirectory(MAX_PATH,pPath);
 							aDirectories.Add(pPath);
 						}
 						else
@@ -383,7 +383,7 @@ int main (int argc,char * argv[])
 					if (argv[i][j]=='.' && argv[i][j+1]=='\0')
 					{
 						WCHAR* pPath=new WCHAR[MAX_PATH];
-						CFile::GetCurrentDirectory(MAX_PATH,pPath);
+						FileSystem::GetCurrentDirectory(MAX_PATH,pPath);
 						aDirectories.Add(pPath);
 					}
 					else
@@ -680,7 +680,7 @@ int main (int argc,char * argv[])
 #endif
 	if (dwMainFlags&flagShowWhatAreWeLookingFor)
 	{
-		printf (CString(IDS_LOCATESTRING),(LPCSTR)String);
+		wprintf(ID2W(IDS_LOCATESTRING),(LPCSTR)String);
 		Lines++;
 	}
 	
@@ -696,12 +696,12 @@ int main (int argc,char * argv[])
 	{
 		if (options.verbose)
 		{
-			printf(CString(IDS_LOCATEVERBOSEREG),(LPCSTR)String);
+			wprintf(ID2W(IDS_LOCATEVERBOSEREG),(LPCSTR)String);
 			putchar(' ');
 
 			if (aDirectories.GetSize()>0)
 			{
-				printf(CString(IDS_LOCATEVERBOSEDIR));
+				wprintf(ID2W(IDS_LOCATEVERBOSEDIR));
 				for (int i=0;i<aDirectories.GetSize();i++)
 					printf("%s\n",aDirectories[i]);
 			}
@@ -829,7 +829,7 @@ int main (int argc,char * argv[])
 
 
 	if (options.verbose)
-		printf(CString(IDS_LOCATEVERBOSEFOUNDFILES),locater.GetNumberOfResults());
+		wprintf(ID2W(IDS_LOCATEVERBOSEFOUNDFILES),locater.GetNumberOfResults());
 
 	if (pContainData!=NULL)
 		free(pContainData);

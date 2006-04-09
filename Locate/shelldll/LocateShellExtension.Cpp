@@ -326,7 +326,7 @@ STDMETHODIMP CLocateShellExtension::Initialize(LPCITEMIDLIST pIDFolder,
 			
 			if (SHGetPathFromIDListW(pItemIDList,szPath))
 			{
-				DebugFormatMessage("SHGetPathFromIDListW gives %s",(LPCSTR)CString(szPath));
+				DebugFormatMessage(L"SHGetPathFromIDListW gives %s",szPath);
 
 				if (IsDirectory(szPath))
 				{
@@ -392,7 +392,7 @@ STDMETHODIMP CLocateShellExtension::Initialize(LPCITEMIDLIST pIDFolder,
 				SIZE_T nLen;
 				while (nLen=wcslen(lpPtr))
 				{
-					DebugFormatMessage("HDROP contains file %s",(LPCSTR)CString(lpPtr));
+					DebugFormatMessage(L"HDROP contains file %s",(LPCSTR)(lpPtr));
 					if (IsDirectory(lpPtr))
 					{
 						WCHAR szTarget[MAX_PATH];

@@ -569,7 +569,7 @@ LRESULT CALLBACK AddDebugNoteWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lP
 					if (RegKey.OpenKey(HKLM,"Software\\HFC\\Notify files",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 						RegKey.QueryValue(GetApp()->GetAppName(),File);
 				}
-				if (!CFile::IsValidFileName(File))
+				if (!FileSystem::IsValidFileName(File))
 				{
 					CFileDialog fd(FALSE,"log",NULL,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,"Log files|*.log|Text files|*.txt||");
 					fd.m_pofn->lpstrTitle="Set notify log file";

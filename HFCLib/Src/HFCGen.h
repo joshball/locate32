@@ -240,12 +240,7 @@ public:
 	BOOL OpenWrite(LPCSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defWrite,pError); }
 	BOOL OpenWrite(LPCWSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defWrite,pError); }
 
-	static BOOL Rename(LPCSTR lpszOldName,LPCSTR lpszNewName);
-	static BOOL MoveFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,DWORD dwFlags=0);	
-	static BOOL Remove(LPCSTR lpszFileName);
-	static BOOL GetStatus(LPCSTR lpszFileName,CFileStatus& rStatus);
-	static BOOL SetStatus(LPCSTR lpszFileName,const CFileStatus& status);
-
+	
 	ULONG_PTR SeekToEnd() { return this->Seek(0,end); }
 	BOOL SeekToBegin() { return this->Seek(0,begin)>0; }
 #ifdef WIN32
@@ -299,53 +294,88 @@ public:
 	virtual BOOL Flush();
 	virtual BOOL Close();
 
-	static BOOL IsFile(LPCSTR szFileName);
-	static INT IsDirectory(LPCSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
-	static BOOL IsValidFileName(LPCSTR szFile,LPSTR szShortName=NULL); // Parent directory must exist
-	static BOOL IsValidPath(LPCSTR szPath,BOOL bAsDirectory=FALSE);
+};
 
+namespace FileSystem {
+	#ifndef WIN32
+	BYTE CopyFile(LPCSTR src,LPCSTR dst);
+	#endif
+	LONGLONG GetDiskFreeSpace(LPCSTR szDrive);
+
+
+	BOOL Rename(LPCSTR lpszOldName,LPCSTR lpszNewName);
+	BOOL MoveFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,DWORD dwFlags=0);	
+	BOOL Remove(LPCSTR lpszFileName);
+	BOOL GetStatus(LPCSTR lpszFileName,CFileStatus& rStatus);
+	BOOL SetStatus(LPCSTR lpszFileName,const CFileStatus& status);
+	
+	BOOL IsFile(LPCSTR szFileName);
+	INT IsDirectory(LPCSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
+	BOOL IsValidFileName(LPCSTR szFile,LPSTR szShortName=NULL); // Parent directory must exist
+	BOOL IsValidPath(LPCSTR szPath,BOOL bAsDirectory=FALSE);
+	BOOL IsSamePath(LPCSTR szDir1,LPCSTR szDir2);
+	BOOL IsSubDirectory(LPCSTR szSubDir,LPCSTR szPath);
+	
 	// Last '//' is not counted, if exists
-	static DWORD ParseExistingPath(LPCSTR szPath);
-
-#ifdef DEF_WCHAR
-	static BOOL Rename(LPCWSTR lpszOldName,LPCWSTR lpszNewName);
-	static BOOL MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,DWORD dwFlags=0);	
-	static BOOL Remove(LPCWSTR lpszFileName);
+	DWORD ParseExistingPath(LPCSTR szPath);
 	
-	static BOOL IsFile(LPCWSTR szFileName);
-	static INT IsDirectory(LPCWSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
-	static BOOL IsValidFileName(LPCWSTR szFile,LPWSTR szShortName=NULL); // Parent directory must exist
-	static BOOL IsValidPath(LPCWSTR szPath,BOOL bAsDirectory=FALSE);
+	
+	BOOL CreateDirectory(LPCSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+	BOOL CreateDirectoryRecursive(LPCSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes);
+	BOOL RemoveDirectory(LPCSTR lpPathName);
+	
+	DWORD GetFullPathName(LPCSTR lpFileName,DWORD nBufferLength,LPSTR lpBuffer,LPSTR* lpFilePart);
+	DWORD GetShortPathName(LPCSTR lpszLongPath,LPSTR lpszShortPath,DWORD cchBuffer);
+	DWORD GetCurrentDirectory(DWORD nBufferLength,LPSTR lpBuffer);
+	DWORD GetLongPathName(LPCSTR lpszShortPath,LPSTR lpszLongPath,DWORD cchBuffer);
+	DWORD GetTempPath(DWORD nBufferLength,LPSTR lpBuffer);
+	UINT GetTempFileName(LPCSTR lpPathName,LPCSTR lpPrefixString,UINT uUnique,LPSTR lpTempFileName);
+	
+	UINT GetDriveType(LPCSTR lpRootPathName);
+	DWORD GetLogicalDriveStrings(DWORD nBufferLength,LPSTR lpBuffer);
+	BOOL GetVolumeInformation(LPCSTR lpRootPathName,LPSTR lpVolumeNameBuffer,
+		DWORD nVolumeNameSize,LPDWORD lpVolumeSerialNumber,LPDWORD lpMaximumComponentLength,
+		LPDWORD lpFileSystemFlags,LPSTR lpFileSystemNameBuffer,DWORD nFileSystemNameSize);
 
+
+	
+#ifdef DEF_WCHAR
+	LONGLONG GetDiskFreeSpace(LPCWSTR szDrive);
+
+	BOOL IsFile(LPCWSTR szFileName);
+	INT IsDirectory(LPCWSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
+	BOOL IsValidFileName(LPCWSTR szFile,LPWSTR szShortName=NULL); // Parent directory must exist
+	BOOL IsValidPath(LPCWSTR szPath,BOOL bAsDirectory=FALSE);
+	BOOL IsSamePath(LPCWSTR szDir1,LPCWSTR szDir2);
+	BOOL IsSubDirectory(LPCWSTR szSubDir,LPCWSTR szPath);
+	
 	// Last '//' is not counted, if exists
-	static DWORD ParseExistingPath(LPCWSTR szPath);
+	DWORD ParseExistingPath(LPCWSTR szPath);
+
 	
-#endif
+	BOOL Rename(LPCWSTR lpszOldName,LPCWSTR lpszNewName);
+	BOOL MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,DWORD dwFlags=0);	
+	BOOL Remove(LPCWSTR lpszFileName);
 	
-	static BOOL IsSamePath(LPCSTR szDir1,LPCSTR szDir2);
-	static BOOL IsSubDirectory(LPCSTR szSubDir,LPCSTR szPath);
-	static BOOL CreateDirectory(LPCSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
-	static BOOL RemoveDirectory(LPCSTR lpPathName);
-	static DWORD GetFullPathName(LPCSTR lpFileName,DWORD nBufferLength,LPSTR lpBuffer,LPSTR* lpFilePart);
-	static DWORD GetShortPathName(LPCSTR lpszLongPath,LPSTR lpszShortPath,DWORD cchBuffer);
-	static DWORD GetCurrentDirectory(DWORD nBufferLength,LPSTR lpBuffer);
-	static DWORD GetLongPathName(LPCSTR lpszShortPath,LPSTR lpszLongPath,DWORD cchBuffer);
-	static DWORD GetTempPath(DWORD nBufferLength,LPSTR lpBuffer);
-	static UINT GetTempFileName(LPCSTR lpPathName,LPCSTR lpPrefixString,UINT uUnique,LPSTR lpTempFileName);
-	static BOOL CreateDirectoryRecursive(LPCSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes);
 	
-#ifdef DEF_WCHAR
-	static BOOL IsSamePath(LPCWSTR szDir1,LPCWSTR szDir2);
-	static BOOL IsSubDirectory(LPCWSTR szSubDir,LPCWSTR szPath);
-	static BOOL CreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
-	static BOOL RemoveDirectory(LPCWSTR lpPathName);
-	static DWORD GetFullPathName(LPCWSTR lpFileName,DWORD nBufferLength,LPWSTR lpBuffer,LPWSTR* lpFilePart);
-	static DWORD GetShortPathName(LPCWSTR lpszLongPath,LPWSTR lpszShortPath,DWORD cchBuffer);
-	static DWORD GetCurrentDirectory(DWORD nBufferLength,LPWSTR lpBuffer);
-	static DWORD GetLongPathName(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer);
-	static DWORD GetTempPath(DWORD nBufferLength,LPWSTR lpBuffer);
-	static UINT GetTempFileName(LPCWSTR lpPathName,LPCWSTR lpPrefixString,UINT uUnique,LPWSTR lpTempFileName);
-	static BOOL CreateDirectoryRecursive(LPCWSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes);
+	
+	BOOL CreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+	BOOL RemoveDirectory(LPCWSTR lpPathName);
+	BOOL CreateDirectoryRecursive(LPCWSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes);
+
+	DWORD GetFullPathName(LPCWSTR lpFileName,DWORD nBufferLength,LPWSTR lpBuffer,LPWSTR* lpFilePart);
+	DWORD GetShortPathName(LPCWSTR lpszLongPath,LPWSTR lpszShortPath,DWORD cchBuffer);
+	DWORD GetCurrentDirectory(DWORD nBufferLength,LPWSTR lpBuffer);
+	DWORD GetLongPathName(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer);
+	DWORD GetTempPath(DWORD nBufferLength,LPWSTR lpBuffer);
+	UINT GetTempFileName(LPCWSTR lpPathName,LPCWSTR lpPrefixString,UINT uUnique,LPWSTR lpTempFileName);
+
+
+	UINT GetDriveType(LPCWSTR lpRootPathName);
+	DWORD GetLogicalDriveStrings(DWORD nBufferLength,LPWSTR lpBuffer);
+	BOOL GetVolumeInformation(LPCWSTR lpRootPathName,LPWSTR lpVolumeNameBuffer,
+		DWORD nVolumeNameSize,LPDWORD lpVolumeSerialNumber,LPDWORD lpMaximumComponentLength,
+		LPDWORD lpFileSystemFlags,LPWSTR lpFileSystemNameBuffer,DWORD nFileSystemNameSize);
 #endif	
 };
 

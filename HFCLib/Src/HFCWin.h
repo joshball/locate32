@@ -206,9 +206,10 @@ public:
 		int nTabPositions,LPINT lpnTabStopPositions,int nTabOrigin);
 	CSize TabbedTextOut(int x,int y,const CStringA& str,int nTabPositions,
 		LPINT lpnTabStopPositions,int nTabOrigin);
-	int DrawText(LPCTSTR lpszString,int nCount,LPRECT lpRect,UINT nFormat);
+	int DrawText(LPCSTR lpszString,int nCount,LPRECT lpRect,UINT nFormat);
 	int DrawText(const CStringA& str,LPRECT lpRect,UINT nFormat);
-	CSize GetTextExtent(LPCTSTR lpszString,int nCount) const;
+	
+	CSize GetTextExtent(LPCSTR lpszString,int nCount) const;
 	CSize GetTextExtent(const CStringA& str) const;
 	CSize GetOutputTextExtent(LPCTSTR lpszString,int nCount) const;
 	CSize GetOutputTextExtent(const CStringA& str) const;
@@ -294,7 +295,9 @@ public:
 		const CStringW& str,LPINT lpDxWidths);
 	CSize TabbedTextOut(int x,int y,const CStringW& str,int nTabPositions,
 		LPINT lpnTabStopPositions,int nTabOrigin);
+	int DrawText(LPCWSTR lpszString,int nCount,LPRECT lpRect,UINT nFormat);
 	int DrawText(const CStringW& str,LPRECT lpRect,UINT nFormat);
+	CSize GetTextExtent(LPCWSTR lpszString,int nCount) const;
 	CSize GetTextExtent(const CStringW& str) const;
 	CSize GetOutputTextExtent(const CStringW& str) const;
 	CSize GetTabbedTextExtent(const CStringW& str,
@@ -578,7 +581,7 @@ public:
 	BOOL SetDlgItemInt(int idControl,UINT uValue,BOOL fSigned=TRUE) const;
 	BOOL SetDlgItemText(int idControl,LPCSTR lpsz) const;	
 	
-	virtual UINT GetText(LPTSTR lpszText,UINT cchTextMax) const;
+	virtual UINT GetText(LPSTR lpszText,UINT cchTextMax) const;
 	virtual UINT GetText(CStringA& str) const;
 	virtual UINT GetTextLength() const;
 	virtual BOOL SetText(LPCSTR lpsz);
@@ -613,6 +616,7 @@ public:
 	BOOL SetDlgItemText(int idControl,LPCWSTR lpsz) const;	
 	
 	virtual BOOL SetText(LPCWSTR lpsz);
+	virtual UINT GetText(LPWSTR lpszText,UINT cchTextMax) const;
 	virtual UINT GetText(CStringW& str) const;
 	
 	BOOL PostMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::PostMessageW(m_hWnd,uMsg,wParam,lParam); }

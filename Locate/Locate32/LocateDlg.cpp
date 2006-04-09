@@ -601,42 +601,21 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_pStatusCtrl=new CStatusBarCtrl(GetDlgItem(IDC_STATUS));
 	
 	// Setting tab control labels	
-	if (IsFullUnicodeSupport())
-	{
-		WCHAR Buffer[80];
-		TC_ITEMW ti;
+	WCHAR Buffer[80];
+	TC_ITEMW ti;
 	
-		LoadString(IDS_NAME,Buffer,80);
-		ti.pszText=Buffer;
-		ti.mask=TCIF_TEXT;
-		m_pTabCtrl->InsertItem(0,&ti);
-		LoadString(IDS_SIZEDATE,Buffer,80);
-		ti.pszText=Buffer;
-		ti.mask=TCIF_TEXT;
-		m_pTabCtrl->InsertItem(1,&ti);
-		LoadString(IDS_ADVANCED,Buffer,80);
-		ti.pszText=Buffer;
-		ti.mask=TCIF_TEXT;
-		m_pTabCtrl->InsertItem(2,&ti);
-	}
-	else
-	{
-		CHAR Buffer[80];
-		TC_ITEM ti;
-
-		LoadString(IDS_NAME,Buffer,80);
-		ti.pszText=Buffer;
-		ti.mask=TCIF_TEXT;
-		m_pTabCtrl->InsertItem(0,&ti);
-		LoadString(IDS_SIZEDATE,Buffer,80);
-		ti.pszText=Buffer;
-		ti.mask=TCIF_TEXT;
-		m_pTabCtrl->InsertItem(1,&ti);
-		LoadString(IDS_ADVANCED,Buffer,80);
-		ti.pszText=Buffer;
-		ti.mask=TCIF_TEXT;
-		m_pTabCtrl->InsertItem(2,&ti);
-	}
+	LoadString(IDS_NAME,Buffer,80);
+	ti.pszText=Buffer;
+	ti.mask=TCIF_TEXT;
+	m_pTabCtrl->InsertItem(0,&ti);
+	LoadString(IDS_SIZEDATE,Buffer,80);
+	ti.pszText=Buffer;
+	ti.mask=TCIF_TEXT;
+	m_pTabCtrl->InsertItem(1,&ti);
+	LoadString(IDS_ADVANCED,Buffer,80);
+	ti.pszText=Buffer;
+	ti.mask=TCIF_TEXT;
+	m_pTabCtrl->InsertItem(2,&ti);
 
 	ViewDetails* pDetails=GetDefaultDetails();
 	for (int i=0;i<TypeCount;i++)
@@ -1751,7 +1730,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 	else
-		m_pLocater->LocateFiles(TRUE,CString(Name),(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+		m_pLocater->LocateFiles(TRUE,W2A(Name),(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	
 	DlgDebugMessage("CLocateDlg::OnOk END");
 	
@@ -1767,7 +1746,7 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 	{
 		if (ueCode!=ueStillWorking && ueCode!=ueSuccess) // Initializing failed
 		{
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(CString(IDS_LOCATINGFAILED),1,0);
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2A(IDS_LOCATINGFAILED),1,0);
 			return FALSE;
 		}
 
@@ -1776,7 +1755,7 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 
 		
 		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(szEmpty,0,0);
-		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(CString(IDS_LOCATING),1,0);
+		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2A(IDS_LOCATING),1,0);
 		((CLocateDlg*)dwParam)->StartLocateAnimation();
 
 		
@@ -1803,21 +1782,21 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 
 		if (ueCode==ueStopped)
 		{
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(CString(IDS_LOCATINGCANCELLED),1,0);
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2A(IDS_LOCATINGCANCELLED),1,0);
 			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_WARNING)),2,SBT_OWNERDRAW);
 		}
 		else if (ueCode==ueLimitReached)
 		{
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(CString(IDS_LOCATINGLIMITREACHED),1,0);
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2A(IDS_LOCATINGLIMITREACHED),1,0);
 			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_INFORMATION)),2,SBT_OWNERDRAW);
 		}
 		else if (ueCode!=ueStillWorking && ueCode!=ueSuccess) // Locating failed
 		{
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(CString(IDS_LOCATINGFAILED),1,0);
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2A(IDS_LOCATINGFAILED),1,0);
 			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_ERROR)),2,SBT_OWNERDRAW);
 		}
 		else
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(CString(IDS_LOCATINGSUCCESS),1,0);
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2A(IDS_LOCATINGSUCCESS),1,0);
 		
 
 		((CLocateDlg*)dwParam)->m_pStatusCtrl->InvalidateRect(NULL,TRUE);
@@ -1873,14 +1852,14 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTOPENDB,pLocater->GetCurrentDatabaseFile());
-				((CLocateDlg*)dwParam)->MessageBox(str,CString(IDS_ERROR),MB_ICONERROR|MB_OK);
+				((CLocateDlg*)dwParam)->MessageBox(str,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
 				return FALSE;
 			}
 		case ueRead:
 			{
 				CString str;
 				str.Format(IDS_ERRORCANNOTREADDB,pLocater->GetCurrentDatabaseFile());
-				((CLocateDlg*)dwParam)->MessageBox(str,CString(IDS_ERROR),MB_ICONERROR|MB_OK);
+				((CLocateDlg*)dwParam)->MessageBox(str,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
 				return FALSE;
 			}
 		case ueAlloc:
@@ -1890,7 +1869,7 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 			{
 				CString str;
 				str.Format(IDS_ERRORINVALIDDB,pLocater->GetCurrentDatabaseFile());
-				((CLocateDlg*)dwParam)->MessageBox(str,CString(IDS_ERROR),MB_ICONERROR|MB_OK);
+				((CLocateDlg*)dwParam)->MessageBox(str,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
 				return FALSE;
 			}
 		}
@@ -4272,80 +4251,53 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 
 	CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_pListCtrl->GetNextItem(-1,LVNI_SELECTED));
 	
-	if (!pItem->IsFolder() && !CFile::IsFile(pItem->GetPath()))
+	if (!pItem->IsFolder() && !FileSystem::IsFile(pItem->GetPath()))
 		return;
-	if (pItem->IsFolder() && !CFile::IsDirectory(pItem->GetPath()))
+	if (pItem->IsFolder() && !FileSystem::IsDirectory(pItem->GetPath()))
 		return;
 
+	WCHAR szName[221];  
+	
 	if (IsFullUnicodeSupport())
 	{
-		WCHAR szName[221];  
 		if (m_pActiveContextMenu->pContextMenu->GetCommandString(wID-IDM_DEFCONTEXTITEM,
 			GCS_VERBW,NULL,(LPSTR)szName,200)!=NOERROR)
 			szName[0]=L'\0';
-
-		// Overriding these command, works better
-		if (wcscmp(szName,L"copy")==0)
-		{
-			OnCopy(FALSE);
-			ClearMenuVariables();
-			return;
-		}
-		else if (wcscmp(szName,L"cut")==0)
-		{
-			OnCopy(TRUE);
-			ClearMenuVariables();
-			return;
-		}
-		else if (wcscmp(szName,L"link")==0)
-		{
-			OnCreateShortcut();
-			ClearMenuVariables();
-			return;
-		}
-		else if (wcscmp(szName,L"delete")==0)
-		{
-			OnDelete();
-			ClearMenuVariables();
-			return;
-		}
 	}
 	else
 	{
-		char szName[401];   // Some stupid context menu handlers tries to put help text as UNICODE anyway
+		char szNameA[401];   // Some stupid context menu handlers tries to put help text as UNICODE anyway
 		if (m_pActiveContextMenu->pContextMenu->GetCommandString(wID-IDM_DEFCONTEXTITEM,
-			GCS_VERBA,NULL,szName,200)!=NOERROR)
-		{
-			szName[0]='\0';
-			szName[1]='\0';
-		}
+			GCS_VERBA,NULL,szNameA,200)!=NOERROR)
+			szName[0]=L'\0';
+		else
+			MultiByteToWideChar(CP_ACP,0,szNameA,-1,szName,401);
+	}
 
-		// Overriding these command, works better
-		if (strcmp(szName,"copy")==0)
-		{
-			OnCopy(FALSE);
-			ClearMenuVariables();
-			return;
-		}
-		else if (strcmp(szName,"cut")==0)
-		{
-			OnCopy(TRUE);
-			ClearMenuVariables();
-			return;
-		}
-		else if (strcmp(szName,"link")==0)
-		{
-			OnCreateShortcut();
-			ClearMenuVariables();
-			return;
-		}
-		else if (strcmp(szName,"delete")==0)
-		{
-			OnDelete();
-			ClearMenuVariables();
-			return;
-		}
-		
+	// Overriding these command, works better
+	if (wcscmp(szName,L"copy")==0)
+	{
+		OnCopy(FALSE);
+		ClearMenuVariables();
+		return;
+	}
+	else if (wcscmp(szName,L"cut")==0)
+	{
+		OnCopy(TRUE);
+		ClearMenuVariables();
+		return;
+	}
+	else if (wcscmp(szName,L"link")==0)
+	{
+		OnCreateShortcut();
+		ClearMenuVariables();
+		return;
+	}
+	else if (wcscmp(szName,L"delete")==0)
+	{
+		OnDelete();
+		ClearMenuVariables();
+		return;
 	}
 	
 	CMINVOKECOMMANDINFO cii;
@@ -4374,9 +4326,9 @@ void CLocateDlg::OnExecuteFile(LPCSTR szVerb,int nItem)
 		if (pItems[i]==NULL)
 			continue;
 
-		if (!pItems[i]->IsFolder() && !CFile::IsFile(pItems[i]->GetPath()))
+		if (!pItems[i]->IsFolder() && !FileSystem::IsFile(pItems[i]->GetPath()))
 			continue;
-		if (pItems[i]->IsFolder() && !CFile::IsDirectory(pItems[i]->GetPath()))
+		if (pItems[i]->IsFolder() && !FileSystem::IsDirectory(pItems[i]->GetPath()))
 			continue;
 		
 		if (pItems[i]->IsFolder())
@@ -4547,7 +4499,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 		LPCSTR szPath=pItem->GetPath();
 		if (pItem->IsFolder())
 		{
-			if (CFile::IsDirectory(szPath))
+			if (FileSystem::IsDirectory(szPath))
 			{
                 aItems.Add(pItem);
 				nBufferLength+=pItem->GetPathLen()+1;
@@ -4555,7 +4507,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 		}
 		else
 		{
-			if (CFile::IsFile(szPath))
+			if (FileSystem::IsFile(szPath))
 			{
                 aItems.Add(pItem);
 				nBufferLength+=pItem->GetPathLen()+1;
@@ -4571,7 +4523,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 			LPCSTR szPath=pItem->GetPath();
 			if (pItem->IsFolder())
 			{
-				if (CFile::IsDirectory(szPath))
+				if (FileSystem::IsDirectory(szPath))
 				{
 					aItems.Add(pItem);
 					nBufferLength+=pItem->GetPathLen()+1;
@@ -4579,7 +4531,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 			}
 			else
 			{
-				if (CFile::IsFile(szPath))
+				if (FileSystem::IsFile(szPath))
 				{
 					aItems.Add(pItem);
 					nBufferLength+=pItem->GetPathLen()+1;
@@ -4649,12 +4601,12 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
 			LPCSTR szPath=pItem->GetPath();
 		
-			if (CFile::IsFile(szPath))
+			if (FileSystem::IsFile(szPath))
 			{
 				iSeekStart=iItem;
 				continue;
 			}
-			else if (CFile::IsDirectory(szPath))
+			else if (FileSystem::IsDirectory(szPath))
 			{
 				iSeekStart=iItem;
 				continue;
@@ -5162,7 +5114,7 @@ void CLocateDlg::OnCreateShortcut()
 			while (nItem!=-1)
 			{
 				CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
-				if (CFile::IsFile(pItem->GetPath()))
+				if (FileSystem::IsFile(pItem->GetPath()))
 				{
 					if (!bMsgShowed)
 					{
@@ -5187,7 +5139,7 @@ void CLocateDlg::OnCreateShortcut()
 				
 				if (pItem->ShouldUpdateTitle())
 					pItem->UpdateTitle();
-				hRes=psl->SetDescription(CString(IDS_SHORTCUTTO)+pItem->GetTitle());
+				hRes=psl->SetDescription(ID2A(IDS_SHORTCUTTO)+pItem->GetTitle());
 				if (!SUCCEEDED(hRes))
 				{
 					ppf->Release();
@@ -6186,20 +6138,20 @@ void CLocateDlg::OnSaveResults()
 	{
 		char szError[2000];
 		ex.GetErrorMessage(szError,2000);
-		MessageBox(szError,CString(IDS_ERROR),MB_ICONERROR|MB_OK);
+		MessageBox(szError,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
 	}
 	catch (CException ex)
 	{
 		char szError[2000];
 		ex.GetErrorMessage(szError,2000);
-		MessageBox(szError,CString(IDS_ERROR),MB_ICONERROR|MB_OK);
+		MessageBox(szError,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
 	}
 	catch (...)
 	{
 		char szError[2000];
 		CException ex(CException::unknown,GetLastError());
 		ex.GetErrorMessage(szError,2000);
-		MessageBox(szError,CString(IDS_ERROR),MB_ICONERROR|MB_OK);
+		MessageBox(szError,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
 	}
 }
 
@@ -6525,7 +6477,7 @@ void CLocateDlg::OnShowFileInformation()
 		}
 		else
 			str.FormatEx(IDS_FILEINFORMATIONFMT,dwFiles,dwDirectories,number);
-		MessageBox(str,CString(IDS_FILEINFORMATION),MB_OK|MB_ICONINFORMATION);
+		MessageBox(str,ID2A(IDS_FILEINFORMATION),MB_OK|MB_ICONINFORMATION);
 	}
 }
 
@@ -6700,7 +6652,7 @@ void CLocateDlg::CNameDlg::ChangeNumberOfItemsInLists(int iNumberOfNames,int iNu
 	if (iNumberOfTypes<=0)
 	{
 		m_Type.ResetContent();
-		m_Type.AddString(CString(IDS_NOEXTENSION));
+		m_Type.AddString(ID2A(IDS_NOEXTENSION));
 		m_nMaxTypesInList=0;
 	}
 	else if (iNumberOfTypes!=m_nMaxTypesInList)
@@ -6865,7 +6817,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		RegKey.QueryValue(L"Personal",temp);
 		RegKey.CloseKey();
 	}	
-	if	(CFile::IsDirectory(temp))
+	if	(FileSystem::IsDirectory(temp))
 	{
 		GetFileInfo(temp,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
 		ci.iImage=fi.iIcon;
@@ -6912,17 +6864,9 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		szBuf[0]=aRoots.GetAt(j)[0];
 		CharUpperW(szBuf);
 		
-		if (IsFullUnicodeSupport())
-		{
-			if (GetDriveTypeW(szBuf)<2)
-				continue;
-		}
-		else
-		{
-			if (GetDriveType(WtoA(szBuf))<2)
-				continue;
-		}
-
+		if (FileSystem::GetDriveType(szBuf)<2)
+			continue;
+		
 		// Checking whether drive exists
 		for (int k=0;k<j;k++)
 		{
@@ -7297,59 +7241,29 @@ BOOL CLocateDlg::CNameDlg::IsChanged()
 		
 void CLocateDlg::HilightTab(int nTab,int nID,BOOL bHilight)
 {
-	if (IsFullUnicodeSupport())
-	{
-		TC_ITEMW ti;
-		WCHAR szText[80];
-		ti.mask=TCIF_TEXT;
-		ti.cchTextMax=80;
-		ti.pszText=szText;
+	TC_ITEMW ti;
+	WCHAR szText[80];
+	ti.mask=TCIF_TEXT;
+	ti.cchTextMax=80;
+	ti.pszText=szText;
 		
-		if (!m_pTabCtrl->GetItem(nTab,&ti))
-			return;
-		
-		int nLen=istrlenw(szText);
-		if (nLen==0)
-			nLen=LoadString(nID,szText,80);
+	if (!m_pTabCtrl->GetItem(nTab,&ti))
+		return;
+	
+	int nLen=istrlenw(szText);
+	if (nLen==0)
+		nLen=LoadString(nID,szText,80);
 
-		if (bHilight && szText[nLen-1]!=L'*')
-		{
-			szText[nLen]=L'*';
-			szText[++nLen]=L'\0';
-			m_pTabCtrl->SetItem(nTab,&ti);
-		}
-		else if (!bHilight && szText[nLen-1]==L'*')
-		{
-			szText[nLen-1]=L'\0';
-			m_pTabCtrl->SetItem(nTab,&ti);
-		}
+	if (bHilight && szText[nLen-1]!=L'*')
+	{
+		szText[nLen]=L'*';
+		szText[++nLen]=L'\0';
+		m_pTabCtrl->SetItem(nTab,&ti);
 	}
-	else
+	else if (!bHilight && szText[nLen-1]==L'*')
 	{
-		TC_ITEM ti;
-		char szText[80];
-		ti.mask=TCIF_TEXT;
-		ti.cchTextMax=80;
-		ti.pszText=szText;
-		
-		if (!m_pTabCtrl->GetItem(nTab,&ti))
-			return;
-		
-		int nLen=istrlen(szText);
-		if (nLen==0)
-			nLen=LoadString(nID,szText,80);
-
-		if (bHilight && szText[nLen-1]!='*')
-		{
-			szText[nLen]='*';
-			szText[++nLen]='\0';
-			m_pTabCtrl->SetItem(nTab,&ti);
-		}
-		else if (!bHilight && szText[nLen-1]==L'*')
-		{
-			szText[nLen-1]='\0';
-			m_pTabCtrl->SetItem(nTab,&ti);
-		}
+		szText[nLen-1]=L'\0';
+		m_pTabCtrl->SetItem(nTab,&ti);
 	}
 }
 
@@ -7682,14 +7596,14 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 				}
 			case MyComputer:
 				{
-					DWORD nLength=GetLogicalDriveStrings(0,NULL)+1;
+					DWORD nLength=FileSystem::GetLogicalDriveStrings(0,NULL)+1;
 					if (nLength>=2)
 					{
 						WCHAR* szDrives=new WCHAR[nLength+1];
-						GetLogicalDriveStringsW(nLength,szDrives);
+						FileSystem::GetLogicalDriveStrings(nLength,szDrives);
 						for (LPWSTR szDrive=szDrives;szDrive[0]!=L'\0';szDrive+=4)
 						{
-							if (GetDriveTypeW(szDrive)!=DRIVE_REMOTE)
+							if (FileSystem::GetDriveType(szDrive)!=DRIVE_REMOTE)
 								AddDirectoryToList(aDirectories,szDrive,2);
 						}
 					}
@@ -8346,7 +8260,7 @@ void CLocateDlg::CSavePresetDlg::OnOK()
 		CString msg;
 		msg.Format(IDS_OVERWRITEPRESET,LPCSTR(m_sReturnedPreset));
 
-		if (MessageBox(msg,CString(IDS_PRESETSAVETITLE),MB_YESNO|MB_ICONQUESTION)==IDNO)
+		if (MessageBox(msg,ID2A(IDS_PRESETSAVETITLE),MB_YESNO|MB_ICONQUESTION)==IDNO)
 		{
 			SetFocus(IDC_EDIT);
 			return;
@@ -8678,7 +8592,7 @@ void CLocateDlg::CNameDlg::LoadRegistry()
 	CRegKey RegKey;
 	m_Name.ResetContent();
 	m_Type.ResetContent();
-	m_Type.AddString(CStringW(IDS_NOEXTENSION));
+	m_Type.AddString(ID2W(IDS_NOEXTENSION));
 	
 
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Recent Strings",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
@@ -9010,7 +8924,7 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCTSTR szPath)
 		}
 		else
 		{
-			if (CFile::IsDirectory(szPath)) 
+			if (FileSystem::IsDirectory(szPath)) 
 			{
 				SHFILEINFO fi;
 				COMBOBOXEXITEM ci;
@@ -9958,33 +9872,14 @@ BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 	SendDlgItemMessage(IDC_HELPTOOLBAR,TB_INSERTBUTTON,0,LPARAM(&tb));
 
 	SetLastError(0);
-	if (IsFullUnicodeSupport())
-	{
-		DebugMessage("CAdvancedDlg::OnInitDialog: Adding items to check box, Unicode ítems");
-
-		int nRes=SendDlgItemMessageW(IDC_CHECK,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_FILENAMESONLY));
-		DebugFormatMessage("1: %X le=%X",nRes,GetLastError());
-		nRes=SendDlgItemMessageW(IDC_CHECK,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_FILEANDFOLDERNAMES));
-		DebugFormatMessage("2: %X le=%X",nRes,GetLastError());
-		nRes=SendDlgItemMessageW(IDC_CHECK,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_FOLDERNAMESONLY));
-		DebugFormatMessage("3: %X le=%X",nRes,GetLastError());
-		
-	}
-	else
-	{
-		DebugMessage("CAdvancedDlg::OnInitDialog: Adding items to check box, Multibyte ítems");
-
-		int nRes=SendDlgItemMessage(IDC_CHECK,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_FILENAMESONLY));
-		DebugFormatMessage("1: %X le=%X",nRes,GetLastError());
-		nRes=SendDlgItemMessage(IDC_CHECK,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_FILEANDFOLDERNAMES));
-		DebugFormatMessage("2: %X le=%X",nRes,GetLastError());
-		nRes=SendDlgItemMessage(IDC_CHECK,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_FOLDERNAMESONLY));
-		DebugFormatMessage("3: %X le=%X",nRes,GetLastError());
-		
-	}
+	CComboBox Check(GetDlgItem(IDC_CHECK));
+	Check.AddString(ID2W(IDS_FILENAMESONLY));
+	Check.AddString(ID2W(IDS_FILEANDFOLDERNAMES));
+	Check.AddString(ID2W(IDS_FOLDERNAMESONLY));
 	
+
 	// Adding (by extension)
-	SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(szwEmpty));
+	SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(szEmpty));
 	OnClear(TRUE);
 	
 	RECT rc1,rc2;
@@ -10094,7 +9989,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			}
 
 
-			MessageBox(CString(pStr,len),CString(IDS_HELPINFO),MB_OK|MB_ICONINFORMATION);
+			MessageBox(CString(pStr,len),ID2A(IDS_HELPINFO),MB_OK|MB_ICONINFORMATION);
 			
 			break;
 		}
@@ -10793,7 +10688,7 @@ void CLocateDlg::CAdvancedDlg::UpdateTypeList()
 
 int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCWSTR szKey,CArray<FileType*>& aFileTypes)
 {
-	DebugFormatMessage("CAdvancedDlg::AddTypeToList(szKey=%s) ",(LPCSTR)CString(szKey));
+	DebugFormatMessage("CAdvancedDlg::AddTypeToList(szKey=%s) ",(LPCSTR)ID2A(szKey));
 
 	CRegKey RegKey;
 	if (RegKey.OpenKey(HKCR,szKey,CRegKey::openExist|CRegKey::samQueryValue|CRegKey::samExecute)!=ERROR_SUCCESS)

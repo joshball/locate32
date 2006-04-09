@@ -572,7 +572,7 @@ LPWSTR CDatabase::GetCorrertFileName(LPCWSTR szFileName,SIZE_T dwNameLength)
 			return NULL;
 	
 		szFile=new WCHAR[dwLength+dwNameLength+2];
-		CFile::GetCurrentDirectory(dwLength,szFile);
+		FileSystem::GetCurrentDirectory(dwLength,szFile);
 		dwLength--;
 		if (szFile[dwLength-1]!='\\')
 			szFile[dwLength++]='\\';
@@ -587,7 +587,7 @@ LPWSTR CDatabase::GetCorrertFileName(LPCWSTR szFileName,SIZE_T dwNameLength)
 	}
 
 	// Checking whether file exists
-	if (!CFile::IsValidFileName(szFile))
+	if (!FileSystem::IsValidFileName(szFile))
 	{
 		delete[] szFile;
 		return NULL;
@@ -839,7 +839,7 @@ CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR s
 			return NULL;
        
 		pPath1=new WCHAR[dwLength+iLength+2];
-		CFile::GetCurrentDirectory(dwLength,pPath1);
+		FileSystem::GetCurrentDirectory(dwLength,pPath1);
 		dwLength--;
 		if (pPath1[dwLength-1]!=L'\\')
 			pPath1[dwLength++]=L'\\';
@@ -847,17 +847,17 @@ CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR s
 		MemCopyW(pPath1+dwLength,szFile,DWORD(iLength));
 		pPath1[dwLength+iLength]=L'\0';
 
-		dwRet=CFile::GetShortPathName(pPath1,szPath1,MAX_PATH);
+		dwRet=FileSystem::GetShortPathName(pPath1,szPath1,MAX_PATH);
 	}
 	else if (iLength!=-1)
 	{
 		pPath1=new WCHAR[iLength+1];
 		MemCopyW(pPath1,szFile,DWORD(iLength));
 		pPath1[iLength]=L'\0';
-		dwRet=CFile::GetShortPathName(pPath1,szPath1,MAX_PATH);
+		dwRet=FileSystem::GetShortPathName(pPath1,szPath1,MAX_PATH);
 	}
 	else
-		dwRet=CFile::GetShortPathName(szFile,szPath1,MAX_PATH);
+		dwRet=FileSystem::GetShortPathName(szFile,szPath1,MAX_PATH);
 	
 	// File does not exists
 	if (dwRet==0)
@@ -867,7 +867,7 @@ CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR s
 		
 		for (int i=0;i<nDatabases;i++)
 		{
-			if (!CFile::IsFile(ppDatabases[i]->m_szArchiveName))
+			if (!FileSystem::IsFile(ppDatabases[i]->m_szArchiveName))
 			{
 				if (strcasecmp(pPath1,ppDatabases[i]->m_szArchiveName)==0)
 				{
@@ -887,7 +887,7 @@ CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR s
 	for (int i=0;i<nDatabases;i++)
 	{
 		WCHAR szPath2[MAX_PATH];
-		dwRet=CFile::GetShortPathName(ppDatabases[i]->m_szArchiveName,szPath2,MAX_PATH);
+		dwRet=FileSystem::GetShortPathName(ppDatabases[i]->m_szArchiveName,szPath2,MAX_PATH);
 
 		if (dwRet!=NULL)
 		{
@@ -1034,43 +1034,21 @@ void CDatabase::GetLogicalDrives(CArrayFAP<LPWSTR>* paRoots)
 	paRoots->RemoveAll();
 	DWORD dwBufferLen=GetLogicalDriveStrings(0,NULL)+1;
 	
-	if (IsFullUnicodeSupport())
+	WCHAR* szDrives=new WCHAR[dwBufferLen];
+	FileSystem::GetLogicalDriveStrings(dwBufferLen,szDrives);
+
+	for (int i=0;szDrives[i*4]!=L'\0';i++)
 	{
-		WCHAR* szDrives=new WCHAR[dwBufferLen];
-		GetLogicalDriveStringsW(dwBufferLen,szDrives);
-
-		for (int i=0;szDrives[i*4]!=L'\0';i++)
+		if (FileSystem::GetDriveType(szDrives+i*4)==DRIVE_FIXED)
 		{
-			if (GetDriveTypeW(szDrives+i*4)==DRIVE_FIXED)
-			{
-				WCHAR* tmp=new WCHAR[3];
-				tmp[0]=szDrives[i*4];
-				tmp[1]=':';
-				tmp[2]='\0';
-				paRoots->Add(tmp);
-			}
+			WCHAR* tmp=new WCHAR[3];
+			tmp[0]=szDrives[i*4];
+			tmp[1]=':';
+			tmp[2]='\0';
+			paRoots->Add(tmp);
 		}
-		delete[] szDrives;
 	}
-	else
-	{
-		CHAR* szDrives=new CHAR[dwBufferLen];
-		GetLogicalDriveStrings(dwBufferLen,szDrives);
-
-		for (int i=0;szDrives[i*4]!='\0';i++)
-		{
-			if (GetDriveTypeA(szDrives+i*4)==DRIVE_FIXED)
-			{
-				WCHAR* tmp=new WCHAR[3];
-				MemCopyAtoW(tmp,szDrives+i*4,1);
-				tmp[1]=L':';
-				tmp[2]=L'\0';
-				paRoots->Add(tmp);
-			}
-		}
-		delete[] szDrives;
-	}
-
+	delete[] szDrives;
 }
 
 #else
@@ -1336,7 +1314,7 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 	{
 		CStringW CurPath(szArchive,LastCharIndex(szArchive,L'\\'));
 		
-		if (!CFile::GetTempFileName(CurPath,L"_dbtmp",0,szTempFile))
+		if (!FileSystem::GetTempFileName(CurPath,L"_dbtmp",0,szTempFile))
 			return FALSE;
 	}
 
@@ -1417,8 +1395,8 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 		pInFile->Close();
 		pOutFile->Close();
 
-		CFile::Remove(szArchive);
-		CFile::MoveFile(szTempFile,szArchive);
+		FileSystem::Remove(szArchive);
+		FileSystem::MoveFile(szTempFile,szArchive);
 	}
 	catch (...)
 	{
@@ -1435,6 +1413,6 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 
 	
 	// Delete temp file 
-	CFile::Remove(szTempFile);
+	FileSystem::Remove(szTempFile);
 	return bRet;
 }

@@ -51,7 +51,6 @@ inline CSettingsProperties::CAdvancedSettingsPage::CAdvancedSettingsPage()
 
 	OPTIONPAGE op;
 	op.dwFlags=COptionsPropertyPage::OPTIONPAGE::opCaptionIsID|
-		COptionsPropertyPage::OPTIONPAGE::opTemplateIsID|
 		COptionsPropertyPage::OPTIONPAGE::opChangeIsID;
 	
 	
@@ -84,7 +83,7 @@ inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDir
 {
 }
 
-inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::CExcludeDirectoryDialog(const CArrayFAP<LPSTR>& rDirectories)
+inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::CExcludeDirectoryDialog(const CArrayFAP<LPWSTR>& rDirectories)
 :	CDialog(IDD_EXCLUDEDIRECTORIES),m_bTextChanged(TRUE)
 {
 	for (int i=0;i<rDirectories.GetSize();i++)

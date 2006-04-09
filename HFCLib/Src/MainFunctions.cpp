@@ -10,9 +10,9 @@
 #define  HFCVERSIONLS		MAKEVERSION(6,4020)
 
 #ifdef _DEBUG
-#define  HFCVERSIONSTR		"HFC Library (DEBUG) v5.41.6.4020";
+#define  HFCVERSIONSTR		"HFC Library (DEBUG) v5.99.6.4090";
 #else
-#define  HFCVERSIONSTR		"HFC Library v5.41.6.4020";
+#define  HFCVERSIONSTR		"HFC Library v5.99.6.4090";
 #endif
 
 LPCSTR szEmpty="";

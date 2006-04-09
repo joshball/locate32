@@ -381,7 +381,20 @@ CSize CDC::TabbedTextOut(int x,int y,const CStringW& str,int nTabPositions,
 CSize CDC::GetTextExtent(const CStringW& str) const
 {
 	CSize sz;
-	::GetTextExtentPoint32W(m_hDC,(LPCWSTR)str,str.GetLength()+1,&sz);
+	if (IsFullUnicodeSupport())
+		::GetTextExtentPoint32W(m_hDC,(LPCWSTR)str,str.GetLength()+1,&sz);
+	else
+		::GetTextExtentPoint32A(m_hDC,W2A(str),str.GetLength()+1,&sz);
+	return sz;
+}
+
+inline CSize CDC::GetTextExtent(LPCWSTR lpszString,int nCount) const
+{
+	CSize sz;
+	if (IsFullUnicodeSupport())
+		::GetTextExtentPoint32W(m_hDC,lpszString,nCount,&sz);
+	else
+		::GetTextExtentPoint32(m_hDC,W2A(lpszString),nCount,&sz);
 	return sz;
 }
 
@@ -429,10 +442,28 @@ CSize CDC::GetOutputTabbedTextExtent(const CStringW& str,
 	return sz;
 }
 
+int CDC::DrawText(LPCWSTR lpszString,int nCount,LPRECT lpRect,UINT nFormat)
+{
+	if (IsFullUnicodeSupport())
+		return ::DrawTextW(m_hDC,lpszString,nCount,lpRect,nFormat);
+	else
+		return ::DrawTextA(m_hDC,W2A(lpszString),nCount,lpRect,nFormat);
+}
+
 int CDC::GetTextFace(CStringW& rString) const
 {
-	int ret=::GetTextFaceW(m_hDC,2000,rString.GetBuffer(2000));
-	rString.FreeExtra();
+	int ret;
+	if (IsFullUnicodeSupport())
+	{
+		ret=::GetTextFaceW(m_hDC,2000,rString.GetBuffer(2000));
+		rString.FreeExtra();
+	}
+	else
+	{
+		char szFace[2000];
+		ret=::GetTextFaceA(m_hDC,2000,szFace);
+		rString.Copy(szFace,ret);
+	}
 	return ret;
 }
 

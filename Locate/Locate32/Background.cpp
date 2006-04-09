@@ -344,9 +344,9 @@ void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCSTR szRoot,CLocateDlg* 
 			CLocatedItem* pItem=(CLocatedItem*)pLocateDlg->m_pListCtrl->GetItemData(nItem);
 			
 			// Checking whether path is in changed volume
-			LPCSTR szPath=pItem->GetPath();
+			LPCWSTR szPath=pItem->GetPath();
 			if ((szPath[0]==szDriveLower || szPath[0]==szDriveUpper) &&
-				szPath[1]==':')
+				szPath[1]==L':')
 			{
 				// Just disabling flags, let background thread do the rest
 				if (pItem->RemoveFlagsForChanged())
@@ -365,10 +365,10 @@ void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCSTR szRoot,CLocateDlg* 
 			CLocatedItem* pItem=(CLocatedItem*)pLocateDlg->m_pListCtrl->GetItemData(nItem);
 			if (pItem->GetPathLen()>=dwLength)
 			{
-				LPSTR szPath=alloccopy(pItem->GetPath(),pItem->GetPathLen());
-				CharLower(szPath);
+				LPWSTR szPath=alloccopy(pItem->GetPath(),pItem->GetPathLen());
+				MakeLower(szPath);
 	                
-				if (strncmp(szPath,szRoot,dwLength)==0)
+				if (wcsncmp(szPath,szRoot,dwLength)==0)
 				{
 					// Just disabling flags, let background thread do the rest
 					if (pItem->RemoveFlagsForChanged())
@@ -535,7 +535,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 #endif
 			
 
-			BkgDebugFormatMessage4("Type of %s is 0x%X",szDrive,GetDriveType(szRoot),0,0);
+			BkgDebugFormatMessage4("Type of %s is 0x%X",szDrive,FileSystem::GetDriveType(szRoot),0,0);
 			m_pHandles[m_nHandles]=FindFirstChangeNotification(szDrive,TRUE,
 				FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
 			BkgDebugFormatMessage4("FindFirstChangeNotification1,%d returned: 0x%X, drive is %s, GetLastError()=0x%X",i,m_pHandles[m_nHandles],szDrive,GetLastError());

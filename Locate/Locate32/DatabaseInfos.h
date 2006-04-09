@@ -31,11 +31,9 @@ public:
 };
 
 inline CDatabaseInfos::CDatabaseInfoPage::CDatabaseInfoPage(const CDatabase* pDatabase)
-:	CPropertyPage(IDD_DATABASEINFO),m_pList(NULL),m_bOldDB(FALSE),
+:	CPropertyPage(IDD_DATABASEINFO,pDatabase->GetName()),m_pList(NULL),m_bOldDB(FALSE),
 	m_pDatabase(pDatabase)
 {
-	m_psp.pszTitle=pDatabase->GetName();
-	m_psp.dwFlags|=PSP_USETITLE;
 }
 
 #endif

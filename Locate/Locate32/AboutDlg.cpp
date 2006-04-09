@@ -44,28 +44,15 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 	
 	// Creating copyright and version strings
 	{
-		if (IsFullUnicodeSupport())
-		{
-			CStringW str;
+		CStringW str;
 #ifdef _DEBUG
-			str.Format(L"%s © 1997-2006 Janne Huttunen\nTHIS IS DEBUG VERSION, %s %s",
-				(LPCWSTR)CStringW(IDS_COPYRIGHT),(LPCWSTR)CStringW(__DATE__),(LPCWSTR)CStringW(__TIME__));
+		str.Format(L"%s © 1997-2006 Janne Huttunen\nTHIS IS DEBUG VERSION, %s %s",
+			(LPCWSTR)ID2W(IDS_COPYRIGHT),(LPCWSTR)A2W(__DATE__),(LPCWSTR)A2W(__TIME__));
 #else
-			str.Format(L"%s © 1997-2006 Janne Huttunen",(LPCWSTR)CStringW(IDS_COPYRIGHT));
+		str.Format(L"%s © 1997-2006 Janne Huttunen",(LPCWSTR)ID2W(IDS_COPYRIGHT));
 #endif
-			SetDlgItemText(IDC_COPYRIGHT,str);
-		}
-		else
-		{
-			CString str;
-#ifdef _DEBUG
-			str.Format("%s © 1997-2005 Janne Huttunen\nTHIS IS DEBUG VERSION, %s %s",
-				(LPCSTR)CString(IDS_COPYRIGHT),__DATE__,__TIME__);
-#else
-			str.Format("%s © 1997-2005 Janne Huttunen",(LPCSTR)CString(IDS_COPYRIGHT));
-#endif
-			SetDlgItemText(IDC_COPYRIGHT,str);
-		}
+		SetDlgItemText(IDC_COPYRIGHT,str);
+
 		UINT iDataLength=GetFileVersionInfoSize(GetApp()->GetExeName(),NULL);
 		BYTE* pData=new BYTE[iDataLength];
 		GetFileVersionInfo(GetApp()->GetExeName(),NULL,iDataLength,pData);

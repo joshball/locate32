@@ -108,7 +108,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 	#endif
 				)
 			{
-				DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): m_pCurrentRoot=%X path=%s",DWORD(m_pCurrentRoot),(LPCSTR)CString(m_pCurrentRoot->m_Path));
+				DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): m_pCurrentRoot=%X path=%s",DWORD(m_pCurrentRoot),(LPCSTR)W2A(m_pCurrentRoot->m_Path));
 							
 				sStatus=statusScanning;
 				m_pProc(m_dwData,RootChanged,ueResult,this);
@@ -813,68 +813,46 @@ BYTE _GetDriveType(LPCSTR szPath)
 #else
 inline BYTE _GetDriveType(CString& sPath)
 {
-	BYTE nType;
-	switch (GetDriveType(sPath+'\\'))
+	switch (FileSystem::GetDriveType(sPath+'\\'))
 	{
 	case DRIVE_UNKNOWN:
-		nType=0x00;
-		break;
+		return 0x00;
 	case DRIVE_NO_ROOT_DIR:
-		nType=0xF0;
-		break;
+		return 0xF0;
 	case DRIVE_REMOVABLE:
-		nType=0x20;
-		break;
+		return 0x20;
 	case DRIVE_FIXED:
-		nType=0x10;
-		break;
+		return 0x10;
 	case DRIVE_REMOTE:
-		nType=0x40;
-		break;
+		return 0x40;
 	case DRIVE_CDROM:
-		nType=0x30;
-		break;
+		return 0x30;
 	case DRIVE_RAMDISK:
-		nType=0x50;
-		break;
+		return 0x50;
 	}
-	return nType;
+	return 0;
 }
 
 inline BYTE _GetDriveType(CStringW& sPath)
 {
-	BYTE nType;
-	UINT nDriveType;
-	if (IsFullUnicodeSupport())
-		nDriveType=GetDriveTypeW(sPath+L'\\');
-	else
-		nDriveType=GetDriveTypeA(W2A(sPath)+'\\');
-	
-	switch (nDriveType)
+	switch (FileSystem::GetDriveType(sPath+L'\\'))
 	{
 	case DRIVE_UNKNOWN:
-		nType=0x00;
-		break;
+		return 0x00;
 	case DRIVE_NO_ROOT_DIR:
-		nType=0xF0;
-		break;
+		return 0xF0;
 	case DRIVE_REMOVABLE:
-		nType=0x20;
-		break;
+		return 0x20;
 	case DRIVE_FIXED:
-		nType=0x10;
-		break;
+		return 0x10;
 	case DRIVE_REMOTE:
-		nType=0x40;
-		break;
+		return 0x40;
 	case DRIVE_CDROM:
-		nType=0x30;
-		break;
+		return 0x30;
 	case DRIVE_RAMDISK:
-		nType=0x50;
-		break;
+		return 0x50;
 	}
-	return nType;
+	return 0;
 }
 #endif
 
@@ -1012,47 +990,24 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 		WCHAR drive[3]=L"X:";
 		CRootDirectory* tmp;
 			
-		if (IsFullUnicodeSupport())
-		{
-			DWORD dwBufferLen=GetLogicalDriveStringsW(0,NULL)+1;
-			WCHAR* szDrives=new WCHAR[dwBufferLen];
-			GetLogicalDriveStringsW(dwBufferLen,szDrives);
+		DWORD dwBufferLen=GetLogicalDriveStrings(0,NULL)+1;
+		WCHAR* szDrives=new WCHAR[dwBufferLen];
+		FileSystem::GetLogicalDriveStrings(dwBufferLen,szDrives);
 
-			for (int i=0;szDrives[i*4]!=L'\0';i++)
-			{
-				if (GetDriveTypeW(szDrives+i*4)==DRIVE_FIXED)
-				{
-					drive[0]=szDrives[i*4];
-					
-					if (m_pFirstRoot==NULL)
-						tmp=m_pFirstRoot=new CRootDirectory(drive);
-					else
-						tmp=tmp->m_pNext=new CRootDirectory(drive);
-				}
-			}
-			delete[] szDrives;
-
-		}
-		else
+		for (int i=0;szDrives[i*4]!=L'\0';i++)
 		{
-			DWORD dwBufferLen=GetLogicalDriveStringsA(0,NULL)+1;
-			CHAR* szDrives=new CHAR[dwBufferLen];
-			GetLogicalDriveStringsA(dwBufferLen,szDrives);
-			
-			for (int i=0;szDrives[i*4]!='\0';i++)
+			if (FileSystem::GetDriveType(szDrives+i*4)==DRIVE_FIXED)
 			{
-				if (GetDriveTypeA(szDrives+i*4)==DRIVE_FIXED)
-				{
-					MultiByteToWideChar(CP_ACP,0,szDrives+i*4,1,drive,1);
-					
-					if (m_pFirstRoot==NULL)
-						tmp=m_pFirstRoot=new CRootDirectory(drive);
-					else
-						tmp=tmp->m_pNext=new CRootDirectory(drive);
-				}
+				drive[0]=szDrives[i*4];
+				
+				if (m_pFirstRoot==NULL)
+					tmp=m_pFirstRoot=new CRootDirectory(drive);
+				else
+					tmp=tmp->m_pNext=new CRootDirectory(drive);
 			}
-			delete[] szDrives;
 		}
+		delete[] szDrives;
+
 
 
 
@@ -1099,7 +1054,7 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 			}
 			else if (pPtr[0]=='\\' && pPtr[1]=='\\')
 			{
-				if (CFile::IsDirectory(pPtr))
+				if (FileSystem::IsDirectory(pPtr))
 				{
 					if (m_pFirstRoot==NULL)
 						tmp=m_pFirstRoot=new CRootDirectory(pPtr,dwLength);
@@ -1325,7 +1280,7 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCWSTR* ppExcl
 
 
 		WCHAR szBuffer[400];
-		int nRet=CFile::GetFullPathName(ppExcludedDirs[i],400,szBuffer,NULL);
+		int nRet=FileSystem::GetFullPathName(ppExcludedDirs[i],400,szBuffer,NULL);
 
 		if (!nRet)
 			continue;

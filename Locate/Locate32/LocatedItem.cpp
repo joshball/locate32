@@ -438,7 +438,7 @@ void CLocatedItem::UpdateType()
 	// File/folder does not exist
 	if (IsFolder())
 	{
-		if (!CFile::IsDirectory(GetPath()))
+		if (!FileSystem::IsDirectory(GetPath()))
 		{
 			SetToDeleted();
 			return;
@@ -452,7 +452,7 @@ void CLocatedItem::UpdateType()
 	}
 	else
 	{
-		if (!CFile::IsFile(GetPath()))
+		if (!FileSystem::IsFile(GetPath()))
 		{
 			SetToDeleted();
 			return;

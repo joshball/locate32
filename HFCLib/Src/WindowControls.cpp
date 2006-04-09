@@ -143,6 +143,23 @@ int CWndCtrl::GetWindowText(LPWSTR lpString,int nMaxCount) const
 	return ret;
 }
 
+int CWndCtrl::GetWindowText(CStringW& str) const
+{
+	if (IsFullUnicodeSupport())
+	{
+		int len=::GetWindowTextLengthW(m_hWnd);
+		len=::GetWindowTextW(m_hWnd,str.GetBuffer(len),len+1);
+		return len;
+	}
+
+	int len=::GetWindowTextLength(m_hWnd);
+	char* pText=new char[len+2];
+	::GetWindowTextA(m_hWnd,pText,len+1);
+	str.Copy(pText,len);
+	delete[] pText;
+	return len;	
+}
+
 UINT CWndCtrl::GetText(LPWSTR lpszText,UINT cchTextMax) const
 {
 	if (IsFullUnicodeSupport())

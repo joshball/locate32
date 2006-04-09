@@ -11,9 +11,14 @@
 class CDialog : public CWnd
 {
 protected:
-	LPCTSTR m_lpszTemplateName;
+	union {
+		LPCSTR m_lpszTemplateName;
+		LPCWSTR m_lpszTemplateNameW;
+	};
+
 public:
-	CDialog(LPCTSTR lpTemplate);
+	CDialog(LPCSTR lpTemplate);
+	CDialog(LPCWSTR lpTemplate);
 	CDialog(int iTemplate);
 	virtual ~CDialog();
 	
@@ -34,15 +39,20 @@ class CPropertyPage : public CDialog
 public:
 	CPropertyPage();
 	CPropertyPage(HWND hWnd);
-	CPropertyPage(UINT nIDTemplate,UINT nIDCaption=0);
-	CPropertyPage(LPCTSTR lpszTemplateName,UINT nIDCaption=0);
+	CPropertyPage(UINT nIDTemplate,UINT nIDCaption=0,TypeOfResourceHandle bType=LanguageSpecificResource);
+	CPropertyPage(UINT nIDTemplate,LPCSTR lpszCaption,TypeOfResourceHandle bType=LanguageSpecificResource);
+	CPropertyPage(UINT nIDTemplate,LPCWSTR lpszCaption,TypeOfResourceHandle bType=LanguageSpecificResource);
+	CPropertyPage(LPCSTR lpszTemplateName,UINT nIDCaption=0,TypeOfResourceHandle bType=LanguageSpecificResource);
+	CPropertyPage(LPCSTR lpszTemplateName,LPCSTR lpszCaption,TypeOfResourceHandle bType=LanguageSpecificResource);
+	CPropertyPage(LPCWSTR lpszTemplateName,UINT nIDCaption=0,TypeOfResourceHandle bType=LanguageSpecificResource);
+	CPropertyPage(LPCWSTR lpszTemplateName,LPCWSTR lpszCaption,TypeOfResourceHandle bType=LanguageSpecificResource);
+	virtual ~CPropertyPage();
 	
-	void Construct(UINT nIDTemplate,UINT nIDCaption=0,
-		TypeOfResourceHandle bType=LanguageSpecificResource);
-	void Construct(LPCTSTR lpszTemplateName,UINT nIDCaption=0,
-		TypeOfResourceHandle bType=LanguageSpecificResource);
 	
-	PROPSHEETPAGE m_psp;
+	void Construct(UINT nIDCaption=0,TypeOfResourceHandle bType=LanguageSpecificResource);
+	void Construct(LPCSTR szCaption,TypeOfResourceHandle bType=LanguageSpecificResource);
+	void Construct(LPCWSTR szCaption,TypeOfResourceHandle bType=LanguageSpecificResource);
+	
 	operator HPROPSHEETPAGE() const;
 
 	void CancelToClose();
@@ -65,7 +75,13 @@ public:
 	virtual BOOL OnWizardFinish();
 
 protected:
-	CString m_strCaption;
+	union {
+		PROPSHEETPAGE m_psp;
+		PROPSHEETPAGEW m_pspw;
+	};
+
+	
+protected:
 	BOOL m_bFirstSetActive;
 
 	virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
@@ -79,18 +95,18 @@ public:
 	CPropertySheet();
 	CPropertySheet(HWND hWnd);
 	CPropertySheet(UINT nIDCaption,HWND hParentWnd=NULL,UINT iSelectPage=0);
-	CPropertySheet(LPCTSTR pszCaption,HWND hParentWnd=NULL,UINT iSelectPage=0);
+	CPropertySheet(LPCSTR pszCaption,HWND hParentWnd=NULL,UINT iSelectPage=0);
+	CPropertySheet(LPCWSTR pszCaption,HWND hParentWnd=NULL,UINT iSelectPage=0);
 	virtual ~CPropertySheet();
 
 	void Construct(UINT nIDCaption,HWND hParentWnd=NULL,UINT iSelectPage=0);
-	void Construct(LPCTSTR pszCaption,HWND hParentWnd=NULL,UINT iSelectPage=0);
+	void Construct(LPCSTR pszCaption,HWND hParentWnd=NULL,UINT iSelectPage=0);
+	void Construct(LPCWSTR pszCaption,HWND hParentWnd=NULL,UINT iSelectPage=0);
 
 	BOOL Create(HWND hParentWnd=NULL,DWORD dwStyle=(DWORD)-1,DWORD dwExStyle=0);
 	void EnableStackedTabs(BOOL bStacked);
 
 public:
-	PROPSHEETHEADER m_psh;
-
 	int GetPageCount() const;
 	HWND GetActivePage() const;
 	int GetActiveIndex() const;
@@ -99,11 +115,13 @@ public:
 
 	BOOL SetActivePage(int nPage);
 	BOOL SetActivePage(CPropertyPage* pPage);
-	void SetTitle(LPCTSTR lpszText,UINT nStyle=0);
+	void SetTitle(LPCSTR lpszText,UINT nStyle=0);
+	void SetTitle(LPCWSTR lpszText,UINT nStyle=0);
 	HWND GetTabControl() const;
 
 	void SetWizardMode();
-	void SetFinishText(LPCTSTR lpszText);
+	void SetFinishText(LPCSTR lpszText);
+	void SetFinishText(LPCWSTR lpszText);
 	void SetWizardButtons(DWORD dwFlags);
 
 public:
@@ -119,8 +137,14 @@ public:
 	virtual BOOL OnInitDialog(HWND hwndFocus);
 	
 protected:
+	union {
+		PROPSHEETHEADER m_psh;
+		PROPSHEETHEADERW m_pshw;
+	};
+	
+protected:
+
 	CPtrArray m_pages;
-	CString m_strCaption;
 	HWND m_hParentWnd;
 	BOOL m_bStacked;
 	
@@ -583,7 +607,6 @@ public:
 		UINT nTreeCtrlID;
 
 		enum OptionPageFlags {
-			opTemplateIsID=0x1,
 			opCaptionIsID=0x2,
 			opChangeIsID=0x4
 		};
@@ -593,9 +616,9 @@ public:
 
 
 	COptionsPropertyPage();
-	COptionsPropertyPage(const COptionsPropertyPage::OPTIONPAGE* pOptionPage);
+	COptionsPropertyPage(const COptionsPropertyPage::OPTIONPAGE* pOptionPage,TypeOfResourceHandle bType=LanguageSpecificResource);
 	
-	void Construct(const OPTIONPAGE* pOptionPage);
+	void Construct(const OPTIONPAGE* pOptionPage,TypeOfResourceHandle bType=LanguageSpecificResource);
 	
 
 	virtual BOOL OnApply();
@@ -661,19 +684,12 @@ protected:
 /////////////////////////////////////////////////
 // CDialog
 
-inline CDialog::CDialog(LPCTSTR lpTemplate)
-	: CWnd(NULL),m_lpszTemplateName(lpTemplate)
-{
-}
 
 inline CDialog::CDialog(int iTemplate)
 	: CWnd(NULL),m_lpszTemplateName(MAKEINTRESOURCE(iTemplate))
 {
 }
 
-inline CDialog::~CDialog()
-{
-}
 
 /////////////////////////////////////////////////
 // CPropertyPage
@@ -681,33 +697,61 @@ inline CDialog::~CDialog()
 inline CPropertyPage::CPropertyPage()
 :	CDialog(0),m_bFirstSetActive(FALSE)
 {
+	m_psp.pszTitle=NULL;
 }
 
 inline CPropertyPage::CPropertyPage(HWND hWnd)
 :	CDialog(0),m_bFirstSetActive(FALSE)
 {
+	m_psp.pszTitle=NULL;
 }
 
-inline CPropertyPage::CPropertyPage(UINT nIDTemplate,UINT nIDCaption)
+inline CPropertyPage::CPropertyPage(UINT nIDTemplate,UINT nIDCaption,TypeOfResourceHandle bType)
 :	CDialog(nIDTemplate)
 {
-	Construct(MAKEINTRESOURCE(nIDTemplate),nIDCaption);
+	Construct(nIDCaption,bType);
 }
 
-inline CPropertyPage::CPropertyPage(LPCTSTR lpszTemplateName,UINT nIDCaption)
+inline CPropertyPage::CPropertyPage(UINT nIDTemplate,LPCSTR lpszCaption,TypeOfResourceHandle bType)
+:	CDialog(nIDTemplate)
+{
+	Construct(lpszCaption,bType);
+}
+
+
+inline CPropertyPage::CPropertyPage(UINT nIDTemplate,LPCWSTR lpszCaption,TypeOfResourceHandle bType)
+:	CDialog(nIDTemplate)
+{
+	Construct(lpszCaption,bType);
+}
+
+inline CPropertyPage::CPropertyPage(LPCSTR lpszTemplateName,UINT nIDCaption,TypeOfResourceHandle bType)
 :	CDialog(lpszTemplateName)
 {
-	Construct(lpszTemplateName,nIDCaption);
+	Construct(nIDCaption,bType);
+}
+
+inline CPropertyPage::CPropertyPage(LPCSTR lpszTemplateName,LPCSTR lpszCaption,TypeOfResourceHandle bType)
+:	CDialog(lpszTemplateName)
+{
+	Construct(lpszCaption,bType);
+}
+
+inline CPropertyPage::CPropertyPage(LPCWSTR lpszTemplateName,UINT nIDCaption,TypeOfResourceHandle bType)
+:	CDialog(lpszTemplateName)
+{
+	Construct(nIDCaption,bType);
+}
+
+inline CPropertyPage::CPropertyPage(LPCWSTR lpszTemplateName,LPCWSTR lpszCaption,TypeOfResourceHandle bType)
+:	CDialog(lpszTemplateName)
+{
+	Construct(lpszCaption,bType);
 }
 
 inline CPropertyPage::operator HPROPSHEETPAGE() const
 {
 	return (HPROPSHEETPAGE) m_hWnd;
-}
-
-inline void CPropertyPage::Construct(UINT nIDTemplate,UINT nIDCaption,TypeOfResourceHandle bType)
-{
-	Construct(MAKEINTRESOURCE(nIDTemplate),nIDCaption,bType);
 }
 
 inline void CPropertyPage::CancelToClose()
@@ -740,12 +784,15 @@ inline CPropertySheet::CPropertySheet(HWND hWnd)
 
 inline CPropertySheet::CPropertySheet(UINT nIDCaption,HWND hParentWnd,UINT iSelectPage)
 {
-	if (nIDCaption)
-		m_strCaption.LoadString(nIDCaption);
-	Construct((LPCTSTR)NULL,hParentWnd,iSelectPage);
+	Construct(nIDCaption,hParentWnd,iSelectPage);
 }
 
-inline CPropertySheet::CPropertySheet(LPCTSTR pszCaption,HWND hParentWnd,UINT iSelectPage)
+inline CPropertySheet::CPropertySheet(LPCSTR pszCaption,HWND hParentWnd,UINT iSelectPage)
+{
+	Construct(pszCaption,hParentWnd,iSelectPage);
+}
+
+inline CPropertySheet::CPropertySheet(LPCWSTR pszCaption,HWND hParentWnd,UINT iSelectPage)
 {
 	Construct(pszCaption,hParentWnd,iSelectPage);
 }
@@ -1124,14 +1171,14 @@ inline int CInputDialog::GetInputText(CString& text) const
 // Class COptionsPropertyPage
 
 inline COptionsPropertyPage::COptionsPropertyPage()
-:	m_pTree(NULL),m_pItems(NULL)
+:	m_pTree(NULL),m_pItems(NULL),CPropertyPage()
 {
 }
 
-inline COptionsPropertyPage::COptionsPropertyPage(const COptionsPropertyPage::OPTIONPAGE* pOptionPage)
-:	m_pTree(NULL),m_pItems(NULL)
+inline COptionsPropertyPage::COptionsPropertyPage(const COptionsPropertyPage::OPTIONPAGE* pOptionPage,TypeOfResourceHandle bType)
+:	m_pTree(NULL),m_pItems(NULL),CPropertyPage(pOptionPage->lpszTemplateName)
 {
-	Construct(pOptionPage);
+	Construct(pOptionPage,bType);
 }
 
 

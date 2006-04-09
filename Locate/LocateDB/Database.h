@@ -362,7 +362,7 @@ inline BOOL CDatabase::DoDatabaseFileExist() const
 	switch (m_ArchiveType)
 	{
 	case archiveFile:
-		return CFile::IsFile(m_szArchiveName);
+		return FileSystem::IsFile(m_szArchiveName);
 	}
 	return FALSE;
 }
@@ -396,7 +396,7 @@ inline BOOL CDatabase::AddExcludedDirectory(LPCWSTR szDirectory)
 {
 	if (szDirectory[1]!=':' || szDirectory[2]!='\0')
 	{
-		if (!CFile::IsDirectory(szDirectory))
+		if (!FileSystem::IsDirectory(szDirectory))
 			return FALSE;	
 	}
 	

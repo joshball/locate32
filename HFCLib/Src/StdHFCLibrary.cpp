@@ -42,25 +42,8 @@ int PASCAL WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 		SetResourceHandle(hInstance,SetBoth);
 		GetAppData()->pAppClass->m_lpCmdLine=lpszCmdLine;
 		GetAppData()->pAppClass->m_nCmdShow=nCmdShow;
-		{
-			TCHAR *pExeName;
-			DWORD len;
-			pExeName=new TCHAR[_MAX_PATH];
-			if (pExeName==NULL)
-			{
-				DebugMessage("WinMain(): Cannot allocate pExeName");
-			}
-			len=GetModuleFileName(hInstance,pExeName,_MAX_PATH);
-			GetAppData()->pAppClass->m_pszExeName=new TCHAR[len+2];
-			if (GetAppData()->pAppClass->m_pszExeName==NULL)
-			{
-				DebugMessage("WinMain(): Cannot allocate pApp->m_pExeName");
-			}
-			CopyMemory(GetAppData()->pAppClass->m_pszExeName,pExeName,len+1);
-			delete[] pExeName;
-		}
+		
 		StartDebugLogging();
-		DebugMessage(GetAppData()->pAppClass->m_pszExeName);
 		GetAppData()->pAppClass->InitApplication();
 		if (GetAppData()->pAppClass->InitInstance())
 			GetAppData()->pAppClass->ModalLoop();	

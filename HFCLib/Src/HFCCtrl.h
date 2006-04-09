@@ -144,6 +144,7 @@ public:
 #ifdef DEF_WCHAR
 	BOOL SetWindowText(LPCWSTR lpsz);
 	int GetWindowText(LPWSTR lpString,int nMaxCount) const;
+	int GetWindowText(CStringW& str) const;
 	
 	//widechar support
 	UINT GetText(CStringW& str) const;

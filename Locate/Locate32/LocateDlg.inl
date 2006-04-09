@@ -250,13 +250,13 @@ inline void CLocateDlg::RemoveResultsFromList()
 	m_aVolumeInformation.RemoveAll();
 }
 			
-inline CLocateDlg::VolumeInformation::VolumeInformation(WORD wDB_,WORD wRootID_,BYTE bType_,DWORD dwVolumeSerial,LPCSTR szVolumeLabel,LPCSTR szFileSystem)
+inline CLocateDlg::VolumeInformation::VolumeInformation(WORD wDB_,WORD wRootID_,BYTE bType_,DWORD dwVolumeSerial,LPCWSTR szVolumeLabel,LPCWSTR szFileSystem)
 :	wDB(wDB_),wRootID(wRootID_),bType(bType_)
 {
 	if (dwVolumeSerial!=0 && dwVolumeSerial!=DWORD(-1))
 	{
-		szVolumeSerial=new char[12];
-		StringCbPrintf(szVolumeSerial,12,"%0X-%0X",HIWORD(dwVolumeSerial),LOWORD(dwVolumeSerial));
+		szVolumeSerial=new WCHAR[12];
+		StringCbPrintfW(szVolumeSerial,12,L"%0X-%0X",HIWORD(dwVolumeSerial),LOWORD(dwVolumeSerial));
 	}
 	else
 		szVolumeSerial=NULL;
@@ -281,40 +281,40 @@ inline CLocateDlg::VolumeInformation::~VolumeInformation()
 		delete[] szVolumeSerial;
 }
 
-inline LPCSTR CLocateDlg::GetDBVolumeLabel(WORD wDB,WORD wRootID) 
+inline LPCWSTR CLocateDlg::GetDBVolumeLabel(WORD wDB,WORD wRootID) 
 {
 	CArrayFP<VolumeInformation*>& aVolumeInformation=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
 
 	for (int i=0;i<aVolumeInformation.GetSize();i++)
 	{
 		if (aVolumeInformation[i]->wDB==wDB && aVolumeInformation[i]->wRootID==wRootID)
-			return aVolumeInformation[i]->szVolumeLabel!=NULL?aVolumeInformation[i]->szVolumeLabel:szEmpty;
+			return aVolumeInformation[i]->szVolumeLabel!=NULL?aVolumeInformation[i]->szVolumeLabel:szwEmpty;
 	}
-	return szEmpty;
+	return szwEmpty;
 }
 
-inline LPCSTR CLocateDlg::GetDBVolumeSerial(WORD wDB,WORD wRootID) 
+inline LPCWSTR CLocateDlg::GetDBVolumeSerial(WORD wDB,WORD wRootID) 
 {
 	CArrayFP<VolumeInformation*>& aVolumeInformation=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
 
 	for (int i=0;i<aVolumeInformation.GetSize();i++)
 	{
 		if (aVolumeInformation[i]->wDB==wDB && aVolumeInformation[i]->wRootID==wRootID)
-			return aVolumeInformation[i]->szVolumeSerial!=NULL?aVolumeInformation[i]->szVolumeSerial:szEmpty;
+			return aVolumeInformation[i]->szVolumeSerial!=NULL?aVolumeInformation[i]->szVolumeSerial:szwEmpty;
 	}
-	return szEmpty;
+	return szwEmpty;
 }
 
-inline LPCSTR CLocateDlg::GetDBVolumeFileSystem(WORD wDB,WORD wRootID) 
+inline LPCWSTR CLocateDlg::GetDBVolumeFileSystem(WORD wDB,WORD wRootID) 
 {
 	CArrayFP<VolumeInformation*>& aVolumeInformation=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
 
 	for (int i=0;i<aVolumeInformation.GetSize();i++)
 	{
 		if (aVolumeInformation[i]->wDB==wDB && aVolumeInformation[i]->wRootID==wRootID)
-			return aVolumeInformation[i]->szFileSystem!=NULL?aVolumeInformation[i]->szFileSystem:szEmpty;
+			return aVolumeInformation[i]->szFileSystem!=NULL?aVolumeInformation[i]->szFileSystem:szwEmpty;
 	}
-	return szEmpty;
+	return szwEmpty;
 }
 
 inline CLocateDlg::ContextMenuStuff::ContextMenuStuff()

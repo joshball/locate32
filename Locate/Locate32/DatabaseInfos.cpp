@@ -67,17 +67,17 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 	
 		if (di->bVersion>=20)
 		{
-			m_pList->InsertColumn(0,CString(IDS_VOLUMEPATH),LVCFMT_LEFT,100,0);
-			m_pList->InsertColumn(1,CString(IDS_VOLUMETYPE),LVCFMT_LEFT,50,1);
-			m_pList->InsertColumn(2,CString(IDS_VOLUMELABEL),LVCFMT_LEFT,80,2);
-			m_pList->InsertColumn(3,CString(IDS_VOLUMESERIAL),LVCFMT_LEFT,70,3);
-			m_pList->InsertColumn(4,CString(IDS_VOLUMEFILESYSTEM),LVCFMT_LEFT,55,4);
-			m_pList->InsertColumn(5,CString(IDS_VOLUMEFILES),LVCFMT_RIGHT,50,5);
-			m_pList->InsertColumn(6,CString(IDS_VOLUMEDIRECTORIES),LVCFMT_RIGHT,50,6);
+			m_pList->InsertColumn(0,ID2A(IDS_VOLUMEPATH),LVCFMT_LEFT,100,0);
+			m_pList->InsertColumn(1,ID2A(IDS_VOLUMETYPE),LVCFMT_LEFT,50,1);
+			m_pList->InsertColumn(2,ID2A(IDS_VOLUMELABEL),LVCFMT_LEFT,80,2);
+			m_pList->InsertColumn(3,ID2A(IDS_VOLUMESERIAL),LVCFMT_LEFT,70,3);
+			m_pList->InsertColumn(4,ID2A(IDS_VOLUMEFILESYSTEM),LVCFMT_LEFT,55,4);
+			m_pList->InsertColumn(5,ID2A(IDS_VOLUMEFILES),LVCFMT_RIGHT,50,5);
+			m_pList->InsertColumn(6,ID2A(IDS_VOLUMEDIRECTORIES),LVCFMT_RIGHT,50,6);
 		}
 		else
 		{
-			m_pList->InsertColumn(0,CString(IDS_VOLUMEPATH),LVCFMT_LEFT,300,0);
+			m_pList->InsertColumn(0,ID2A(IDS_VOLUMEPATH),LVCFMT_LEFT,300,0);
 			m_bOldDB=TRUE;
 		}
 
@@ -154,8 +154,8 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 			break;
 		default:
 			temp.Format(IDS_DBVERSIONNEW,di->bVersion,
-				di->bLongFilenames?(LPCSTR)CString(IDS_YES):(LPCSTR)CString(IDS_NO),
-				di->bAnsi?(LPCSTR)CString(IDS_NO):(LPCSTR)CString(IDS_YES));
+				di->bLongFilenames?(LPCSTR)ID2A(IDS_YES):(LPCSTR)ID2A(IDS_NO),
+				di->bAnsi?(LPCSTR)ID2A(IDS_NO):(LPCSTR)ID2A(IDS_YES));
 			break;
 		}
 		SetDlgItemText(IDC_VERSION,temp);

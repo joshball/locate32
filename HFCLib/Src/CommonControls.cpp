@@ -293,6 +293,61 @@ CSize CTabCtrl::SetItemSize(CSize size)
 	return temp;
 }
 
+#ifdef DEF_WCHAR
+BOOL CTabCtrl::GetItem(int nItem,TC_ITEMW* pTabCtrlItem) const
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,TCM_GETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+	else if (pTabCtrlItem->mask&TCIF_TEXT && pTabCtrlItem->pszText!=NULL)
+	{
+		WCHAR* pText=pTabCtrlItem->pszText;
+		pTabCtrlItem->pszText=(WCHAR*)new CHAR[pTabCtrlItem->cchTextMax+1];
+		BOOL bRet=::SendMessageA(m_hWnd,TCM_GETITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+		if (bRet)
+			MultiByteToWideChar(CP_ACP,0,(char*)pTabCtrlItem->pszText,-1,pText,pTabCtrlItem->cchTextMax);
+		delete[] pTabCtrlItem->pszText;
+		pTabCtrlItem->pszText=pText;
+		return bRet;
+	}
+	else
+		return ::SendMessageA(m_hWnd,TCM_GETITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+}
+
+BOOL CTabCtrl::SetItem(int nItem,TC_ITEMW* pTabCtrlItem)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,TCM_SETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+	else if (pTabCtrlItem->mask&TCIF_TEXT && pTabCtrlItem->pszText!=NULL)
+	{
+		WCHAR* pText=pTabCtrlItem->pszText;
+		pTabCtrlItem->pszText=(WCHAR*)alloccopyWtoA(pText);
+		BOOL bRet=::SendMessageA(m_hWnd,TCM_SETITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+		delete[] pTabCtrlItem->pszText;
+		pTabCtrlItem->pszText=pText;
+		return bRet;
+	}
+	else
+		return ::SendMessageA(m_hWnd,TCM_SETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+	
+}
+
+BOOL CTabCtrl::InsertItem(int nItem,TC_ITEMW* pTabCtrlItem)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,TCM_INSERTITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+	else if (pTabCtrlItem->mask&TCIF_TEXT && pTabCtrlItem->pszText!=NULL)
+	{
+		WCHAR* pText=pTabCtrlItem->pszText;
+		pTabCtrlItem->pszText=(WCHAR*)alloccopyWtoA(pText);
+		BOOL bRet=::SendMessageA(m_hWnd,TCM_INSERTITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+		delete[] pTabCtrlItem->pszText;
+		pTabCtrlItem->pszText=pText;
+		return bRet;
+	}
+	else
+		return ::SendMessageA(m_hWnd,TCM_INSERTITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+}
+#endif
 
 ///////////////////////////////////////////
 // CRichEditCtrl

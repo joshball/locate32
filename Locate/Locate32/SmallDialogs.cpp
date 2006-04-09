@@ -41,57 +41,47 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 	spin.SetRange(10,10000);
 	spin.SetBuddy(GetDlgItem(IDC_WIDTH));
 	
-	SendDlgItemMessage(IDC_WHEN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DETAILLEFTCLICK));
-	SendDlgItemMessage(IDC_WHEN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DETAILLEFTDBLCLICK));
-	SendDlgItemMessage(IDC_WHEN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DETAILRIGHTCLICK));
-	SendDlgItemMessage(IDC_WHEN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DETAILRIGHTDBLCLICK));
-	SendDlgItemMessage(IDC_WHEN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DETAILMIDDLECLICK));
-	SendDlgItemMessage(IDC_WHEN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DETAILMIDDLEDLBCLICK));
-	SendDlgItemMessage(IDC_WHEN,CB_SETCURSEL,0);
+
+	m_ActionCombo.AssignToDlgItem(*this,IDC_ACTION);
+	m_WhenCombo.AssignToDlgItem(*this,IDC_WHEN);
+	m_WhichFileCombo.AssignToDlgItem(*this,IDC_WHICHFILE);
+	m_VerbCombo.AssignToDlgItem(*this,IDC_VERB);
+
 	
-	SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_NONE));
+	m_ActionCombo.AddString(ID2W(IDS_NONE));
 	for (UINT uSubItem=0;;uSubItem++)
 	{
-        CString Title;
 		int nID=CAction::GetResultItemActionLabelStringId((CAction::ActionResultList)uSubItem);
 		if (nID==0)
 			break;
 
-		Title.LoadString(nID);
-		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)Title);
+		m_ActionCombo.AddString(ID2W(nID));
 	}
-	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,0);
-
+	m_ActionCombo.SetCurSel(0);
+	
+	m_WhenCombo.AddString(ID2W(IDS_DETAILLEFTCLICK));
+	m_WhenCombo.AddString(ID2W(IDS_DETAILLEFTDBLCLICK));
+	m_WhenCombo.AddString(ID2W(IDS_DETAILRIGHTCLICK));
+	m_WhenCombo.AddString(ID2W(IDS_DETAILRIGHTDBLCLICK));
+	m_WhenCombo.AddString(ID2W(IDS_DETAILMIDDLECLICK));
+	m_WhenCombo.AddString(ID2W(IDS_DETAILMIDDLEDLBCLICK));
+	m_WhenCombo.SetCurSel(0);
+	
 	// Insert verbs
-	if (IsFullUnicodeSupport())
-	{
-		SendDlgItemMessageW(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_DEFAULT));
-		// Insert "next/prev file"s
-		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMNEXTFILE));
-		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMPREVFILE));
-		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMNEXTNONDELETEDFILE));
-		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMPREVNONDELETEDFILE));
-	}
-	else
-	{
-		SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DEFAULT));
-		// Insert "next/prev file"s
-		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMNEXTFILE));
-		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMPREVFILE));
-		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMNEXTNONDELETEDFILE));
-		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMPREVNONDELETEDFILE));
-	}
+	m_VerbCombo.AddString(ID2W(IDS_DEFAULT));
+	m_VerbCombo.AddString("open");
+	m_VerbCombo.AddString("edit");
+	m_VerbCombo.AddString("explore");
+	m_VerbCombo.AddString("find");
+	m_VerbCombo.AddString("print");
+	m_VerbCombo.SetCurSel(0);
 
-	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"open");
-	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"edit");
-	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"explore");
-	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"find");
-	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"print");
-	
-	
-	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
-	SendDlgItemMessage(IDC_WHICHFILE,CB_SETCURSEL,0,0);
-
+	// Insert "next/prev file"s
+	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMNEXTFILE));
+	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMPREVFILE));
+	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMNEXTNONDELETEDFILE));
+	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMPREVNONDELETEDFILE));
+	m_WhichFileCombo.SetCurSel(0);
 	EnableItems();
 	
 	return CDialog::OnInitDialog(hwndFocus);
@@ -99,10 +89,10 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 
 void CSelectColumndDlg::SaveActionFields(ColumnItem* pColumn)
 {
-	int nWhen=SendDlgItemMessage(IDC_WHEN,CB_GETCURSEL);
+	int nWhen=m_WhenCombo.GetCurSel();
 	ASSERT(nWhen!=CB_ERR);
 
-	int nAction=SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL);
+	int nAction=m_ActionCombo.GetCurSel();
 	ASSERT(nAction!=CB_ERR);
 
 	if (nAction==0)
@@ -125,18 +115,18 @@ void CSelectColumndDlg::SaveActionFields(ColumnItem* pColumn)
 
 		if (pColumn->m_pActions[nWhen]->m_nResultList==CAction::Execute)
 		{
-			int nSelection=SendDlgItemMessage(IDC_VERB,CB_GETCURSEL);
+			int nSelection=m_VerbCombo.GetCurSel();
 			if (nSelection==CB_ERR)
 			{
-				UINT nLen=GetDlgItemTextLength(IDC_VERB);
+				UINT nLen=m_VerbCombo.GetTextLength();
 				pColumn->m_pActions[nWhen]->m_szVerb=new char[nLen+1];
-				GetDlgItemText(IDC_VERB,pColumn->m_pActions[nWhen]->m_szVerb,nLen+1);
+				m_VerbCombo.GetText(pColumn->m_pActions[nWhen]->m_szVerb,nLen+1);
 			}
 			else if (nSelection!=0)
 			{
-				UINT nLen=SendDlgItemMessage(IDC_VERB,CB_GETLBTEXTLEN,nSelection,0);
+				UINT nLen=m_VerbCombo.GetLBTextLen(nSelection);
 				pColumn->m_pActions[nWhen]->m_szVerb=new char[nLen+1];
-				SendDlgItemMessage(IDC_VERB,CB_GETLBTEXT,nSelection,LPARAM(pColumn->m_pActions[nWhen]->m_szVerb));
+				m_VerbCombo.GetLBText(nSelection,pColumn->m_pActions[nWhen]->m_szVerb);
 			}
 		}
 		else if (pColumn->m_pActions[nWhen]->m_nResultList==CAction::ExecuteCommand)
@@ -151,7 +141,7 @@ void CSelectColumndDlg::SaveActionFields(ColumnItem* pColumn)
 		}
 		else if (pColumn->m_pActions[nWhen]->m_nResultList==CAction::SelectFile)
 		{
-			pColumn->m_pActions[nWhen]->m_nSelectFileType=(CSubAction::SelectFileType)SendDlgItemMessage(IDC_WHICHFILE,CB_GETCURSEL);
+			pColumn->m_pActions[nWhen]->m_nSelectFileType=(CSubAction::SelectFileType)m_WhichFileCombo.GetCurSel();
 			if (int(pColumn->m_pActions[nWhen]->m_nSelectFileType)==CB_ERR)
 				pColumn->m_pActions[nWhen]->m_nSelectFileType=CSubAction::NextFile;
 		}
@@ -160,34 +150,34 @@ void CSelectColumndDlg::SaveActionFields(ColumnItem* pColumn)
 	
 void CSelectColumndDlg::SetActionFields(ColumnItem* pColumn)
 {
-	int nWhen=SendDlgItemMessage(IDC_WHEN,CB_GETCURSEL);
+	int nWhen=m_WhenCombo.GetCurSel();;
 	ASSERT(nWhen!=CB_ERR);
 
-	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
-	SendDlgItemMessage(IDC_WHICHFILE,CB_SETCURSEL,0,0);;
+	m_VerbCombo.SetCurSel(0);
+	m_WhichFileCombo.SetCurSel(0);
 	SetDlgItemText(IDC_COMMAND,szEmpty);
 
 
 	if (pColumn->m_pActions[nWhen]==NULL)
-		SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,0); // 0 = none
+		m_ActionCombo.SetCurSel(0); // 0 = none
 	else
 	{
-        SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,pColumn->m_pActions[nWhen]->m_nSubAction+1);
+        m_ActionCombo.SetCurSel(pColumn->m_pActions[nWhen]->m_nSubAction+1);
 		
         if (pColumn->m_pActions[nWhen]->m_nResultList==CSubAction::Execute)
 		{
 			if (pColumn->m_pActions[nWhen]->m_szVerb==NULL)
-				SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
+				m_VerbCombo.SetCurSel(0);
 			else
 			{
-				SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,-1,0);
-				SetDlgItemText(IDC_VERB,pColumn->m_pActions[nWhen]->m_szVerb);
+				m_VerbCombo.SetCurSel(-1);
+				m_VerbCombo.SetText(pColumn->m_pActions[nWhen]->m_szVerb);
 			}
 		}
 		else if (pColumn->m_pActions[nWhen]->m_nResultList==CSubAction::ExecuteCommand && pColumn->m_pActions[nWhen]->m_szCommand!=NULL)
 			SetDlgItemText(IDC_COMMAND,pColumn->m_pActions[nWhen]->m_szCommand);
 		else if (pColumn->m_pActions[nWhen]->m_nResultList==CSubAction::SelectFile)
-			SendDlgItemMessage(IDC_WHICHFILE,CB_SETCURSEL,pColumn->m_pActions[nWhen]->m_nSelectFileType);	
+			m_WhichFileCombo.SetCurSel(pColumn->m_pActions[nWhen]->m_nSelectFileType);	
 	}
 
 }
@@ -433,7 +423,7 @@ BOOL CSelectColumndDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 			CheckDlgButton(IDC_RIGHT,pItem->m_nAlign==ColumnItem::Right);
 			CheckDlgButton(IDC_CENTER,pItem->m_nAlign==ColumnItem::Center);
 
-			SendDlgItemMessage(IDC_WHEN,CB_SETCURSEL,0);
+			m_WhenCombo.SetCurSel(0);
 			SetActionFields(pItem);
 		}
 		else if (!(pNm->uNewState&LVIS_SELECTED) && (pNm->uOldState&LVIS_SELECTED))
@@ -470,7 +460,7 @@ void CSelectColumndDlg::EnableItems()
 		EnableDlgItem(IDC_SHOW,!bChecked);
 		EnableDlgItem(IDC_HIDE,bChecked);
 
-		int nAction=SendDlgItemMessage(IDC_ACTION,CB_GETCURSEL);
+		int nAction=m_ActionCombo.GetCurSel();
 		if (nAction==CSubAction::Execute+1)
 			ssVerb=swShow;
 		else if (nAction==CSubAction::ExecuteCommand+1)
@@ -499,18 +489,18 @@ void CSelectColumndDlg::EnableItems()
 
 	EnableDlgItem(IDC_STATICACTIONS,nItem!=-1);
 	EnableDlgItem(IDC_STATICWHEN,nItem!=-1);
-	EnableDlgItem(IDC_WHEN,nItem!=-1);
+	m_WhenCombo.EnableWindow(nItem!=-1);
 	EnableDlgItem(IDC_STATICACTION,nItem!=-1);
-	EnableDlgItem(IDC_ACTION,nItem!=-1);
+	m_ActionCombo.EnableWindow(nItem!=-1);
 
 	ShowDlgItem(IDC_STATICCOMMAND,ssCommand);
 	ShowDlgItem(IDC_COMMAND,ssCommand);
 
 	ShowDlgItem(IDC_STATICVERB,ssVerb);
-	ShowDlgItem(IDC_VERB,ssVerb);
+	m_VerbCombo.ShowWindow((CWndCtrl::ShowState)ssVerb);
 
 	ShowDlgItem(IDC_STATICWHICHFILE,ssWhichFile);
-	ShowDlgItem(IDC_WHICHFILE,ssWhichFile);
+	m_WhichFileCombo.ShowWindow((CWndCtrl::ShowState)ssWhichFile);
 	
 }
 
@@ -651,15 +641,18 @@ BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 	
 	CenterWindow();
 
+
+	m_PresetCombo.AssignToDlgItem(*this,IDC_PRESETS);
+
 	// Creating list control
-	m_pList=new CListCtrl(GetDlgItem(IDC_DATABASES));
-	m_pList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES|LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT,
+	m_List.AssignToDlgItem(*this,IDC_DATABASES);
+	m_List.SetExtendedListViewStyle(LVS_EX_CHECKBOXES|LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT,
 		LVS_EX_CHECKBOXES|LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT);
 	
-	m_pList->InsertColumn(0,CString(IDS_DATABASENAME),LVCFMT_LEFT,100,0);
-	m_pList->InsertColumn(1,CString(IDS_DATABASEFILE),LVCFMT_LEFT,130,0);
-	m_pList->InsertColumn(2,CString(IDS_DATABASECREATOR),LVCFMT_LEFT,70,0);
-	m_pList->InsertColumn(3,CString(IDS_DATABASEDESCRIPTION),LVCFMT_LEFT,100,0);
+	m_List.InsertColumn(0,ID2A(IDS_DATABASENAME),LVCFMT_LEFT,100,0);
+	m_List.InsertColumn(1,ID2A(IDS_DATABASEFILE),LVCFMT_LEFT,130,0);
+	m_List.InsertColumn(2,ID2A(IDS_DATABASECREATOR),LVCFMT_LEFT,70,0);
+	m_List.InsertColumn(3,ID2A(IDS_DATABASEDESCRIPTION),LVCFMT_LEFT,100,0);
 	
 	if (!(m_bFlags&flagShowThreads))
 	{
@@ -672,17 +665,17 @@ BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 
 		CRect rect;
 		::GetWindowRect(GetDlgItem(IDC_DATABASES),&rect);
-		::SetWindowPos(GetDlgItem(IDC_DATABASES),NULL,0,0,
-			rect.Width(),rect.Height()+28,SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
+		SetDlgItemPos(IDC_DATABASES,NULL,0,0,rect.Width(),rect.Height()+28,
+			SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
 		
 	}
 	else 
 	{
 		if (((CLocateApp*)GetApp())->m_wComCtrlVersion<0x0600)
 		{
-			m_pList->InsertColumn(4,CString(IDS_THREADID),LVCFMT_LEFT,40,0);
+			m_List.InsertColumn(4,ID2A(IDS_THREADID),LVCFMT_LEFT,40,0);
 			int oa[]={3,0,1,2};
-			m_pList->SetColumnOrderArray(4,oa);
+			m_List.SetColumnOrderArray(4,oa);
 		}
 
 		// Setting threads counter
@@ -694,7 +687,7 @@ BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 	if (m_bFlags&flagDisablePresets)
 	{
 		EnableDlgItem(IDC_PRESETSLABEL,FALSE);
-		EnableDlgItem(IDC_PRESETS,FALSE);
+		m_PresetCombo.EnableWindow(FALSE);
 		EnableDlgItem(IDC_PRESETSLABEL,FALSE);
 		EnableDlgItem(IDC_SAVE,FALSE);
 		EnableDlgItem(IDC_DELETE,FALSE);
@@ -702,12 +695,12 @@ BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 
 	if (m_bFlags&flagEnablePriority)
 	{
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYHIGH));		
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYABOVENORMAL));		
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYNORMAL));		
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYBELOWNORMAL));		
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYLOW));		
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYIDLE));	
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYHIGH));		
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYABOVENORMAL));		
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYNORMAL));		
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYBELOWNORMAL));		
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYLOW));		
+		SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYIDLE));	
 
 		switch (m_nThreadPriority)
 		{
@@ -740,7 +733,7 @@ BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 		ShowDlgItem(IDC_THREADPRIORITYLABEL,swHide);
 	}
 
-	m_pList->LoadColumnsState(HKCU,m_pRegKey,"Database List Widths");
+	m_List.LoadColumnsState(HKCU,m_pRegKey,"Database List Widths");
 	
 	LoadPresets();
 
@@ -763,7 +756,7 @@ BOOL CSelectDatabasesDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDC_DOWN:
 	case IDC_UP:
 		if (ItemUpOrDown(wID==IDC_UP))
-			SendDlgItemMessage(IDC_PRESETS,CB_SETCURSEL,CUSTOM_PRESET);
+			m_PresetCombo.SetCurSel(CUSTOM_PRESET);
 		break;
 	case IDC_SAVE:
 		{
@@ -788,7 +781,7 @@ BOOL CSelectDatabasesDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	return FALSE;
 }
 
-void CSelectDatabasesDlg::SelectDatabases(char* pNames)
+void CSelectDatabasesDlg::SelectDatabases(LPCWSTR pNames)
 {
 	if (m_pSelectDatabases!=NULL)
 		delete[] m_pSelectDatabases;
@@ -801,15 +794,14 @@ void CSelectDatabasesDlg::SelectDatabases(char* pNames)
 	}
 	
 	DWORD dwLength=1;
-	LPSTR pPtr=pNames;
+	LPCWSTR pPtr=pNames;
 	while (*pPtr!='\0')
 	{
-		int iStrLen=istrlen(pPtr)+1;
+		int iStrLen=istrlenw(pPtr)+1;
 		dwLength+=iStrLen;
 		pPtr+=iStrLen;
 	}
-	m_pSelectDatabases=new char[dwLength];
-	CopyMemory(m_pSelectDatabases,pNames,dwLength);
+	m_pSelectDatabases=alloccopy(pNames,dwLength);
 }
 
 BOOL CSelectDatabasesDlg::OnClose()
@@ -821,12 +813,7 @@ BOOL CSelectDatabasesDlg::OnClose()
 
 void CSelectDatabasesDlg::OnDestroy()
 {
-	if (m_pList!=NULL)
-	{
-		m_pList->SaveColumnsState(HKCU,m_pRegKey,"Database List Widths");
-		delete m_pList;
-		m_pList=NULL;
-	}
+	m_List.SaveColumnsState(HKCU,m_pRegKey,"Database List Widths");
 
 	CDialog::OnDestroy();
 }
@@ -836,7 +823,7 @@ BOOL CSelectDatabasesDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 	switch (idCtrl)
 	{
 	case IDC_DATABASES:
-		return ListNotifyHandler((LV_DISPINFO*)pnmh,(NMLISTVIEW*)pnmh);
+		return ListNotifyHandler((NMLISTVIEW*)pnmh);
 	}
 	return CDialog::OnNotify(idCtrl,pnmh);
 }
@@ -879,9 +866,9 @@ void CSelectDatabasesDlg::OnOK()
 
 	// Get the first item
 	int nNext;
-	int nItem=m_pList->GetNextItem(-1,LVNI_ALL);
+	int nItem=m_List.GetNextItem(-1,LVNI_ALL);
 
-	while ((nNext=m_pList->GetNextItem(nItem,LVNI_ABOVE))!=-1)
+	while ((nNext=m_List.GetNextItem(nItem,LVNI_ABOVE))!=-1)
 	{
 		if (nNext==nItem)
 			break; // This should not be like that, why is it?
@@ -890,7 +877,7 @@ void CSelectDatabasesDlg::OnOK()
 	
 	while (nItem!=-1)
 	{
-		PDATABASE pDatabase=(PDATABASE)m_pList->GetItemData(nItem);
+		PDATABASE pDatabase=(PDATABASE)m_List.GetItemData(nItem);
 		ASSERT(pDatabase!=NULL);
 
 		if (m_bFlags&flagReturnNotSelected || IsItemEnabled(pDatabase))
@@ -898,16 +885,16 @@ void CSelectDatabasesDlg::OnOK()
 			DebugFormatMessage("Database %s is selected",pDatabase->GetName());
 
 			m_rSelectedDatabases.Add(pDatabase);
-			m_pList->SetItemData(nItem,NULL);
+			m_List.SetItemData(nItem,NULL);
 		}
 
-		nNext=m_pList->GetNextItem(nItem,LVNI_BELOW);
+		nNext=m_List.GetNextItem(nItem,LVNI_BELOW);
 		if (nNext==nItem)
 			break;
 		nItem=nNext;
 	}
 
-	int nCurSel=SendDlgItemMessage(IDC_PRESETS,CB_GETCURSEL);
+	int nCurSel=m_PresetCombo.GetCurSel();
 	DebugFormatMessage("Selection: %d",nCurSel);
 	m_bFlags&=~flagSelectedMask;
 	switch (nCurSel)
@@ -1039,25 +1026,25 @@ void CSelectDatabasesDlg::OnPresetCombo()
 		InsertSelected();
 	else
 	{
-		int nTextLen=SendDlgItemMessage(IDC_PRESETS,CB_GETLBTEXTLEN,nCurSel);
+		int nTextLen=m_PresetCombo.GetLBTextLen(nCurSel);
 		if (nTextLen==CB_ERR)
 			return;
-		char* pText=new char[nTextLen+1];
-        if (SendDlgItemMessage(IDC_PRESETS,CB_GETLBTEXT,nCurSel,LPARAM(pText))!=CB_ERR)
+		WCHAR* pText=new WCHAR[nTextLen+1];
+		if (m_PresetCombo.GetLBText(nCurSel,pText))
 			LoadPreset(pText);
 		delete[] pText;
 	}
 }
 
-BOOL CSelectDatabasesDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
+BOOL CSelectDatabasesDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 {
-	switch(pLvdi->hdr.code)
+	switch(pNm->hdr.code)
 	{
 	case LVN_ITEMCHANGED:
 		if (pNm->lParam!=NULL && (pNm->uNewState&0x00002000)!=(pNm->uOldState&0x00002000))
 		{
-			if (EnableItem((CDatabase*)pNm->lParam,m_pList->GetCheckState(pNm->iItem)))
-				SendDlgItemMessage(IDC_PRESETS,CB_SETCURSEL,CUSTOM_PRESET);
+			if (EnableItem((CDatabase*)pNm->lParam,m_List.GetCheckState(pNm->iItem)))
+				m_PresetCombo.SetCurSel(CUSTOM_PRESET);
 		}
 		break;
 	case NM_CLICK:
@@ -1067,8 +1054,45 @@ BOOL CSelectDatabasesDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 		if (pNm->lParam!=NULL)
 			delete (CDatabase*)pNm->lParam;
 		break;
-	case LVN_GETDISPINFO:
+	case LVN_GETDISPINFOA:
 		{
+			LV_DISPINFO *pLvdi=(LV_DISPINFO *)pNm;
+
+			CDatabase* pDatabase=(CDatabase*)pLvdi->item.lParam;
+			if (pDatabase==NULL)
+				break;
+				
+			ISDLGTHREADOK
+			if (g_szBuffer!=NULL)
+				delete[] g_szBuffer;
+				
+			switch (pLvdi->item.iSubItem)
+			{
+			case 0:
+				g_szBuffer=alloccopyWtoA(pDatabase->GetName());
+				break;
+			case 1:
+				g_szBuffer=alloccopyWtoA(pDatabase->GetArchiveName());
+				break;
+			case 2:
+				g_szBuffer=alloccopyWtoA(pDatabase->GetCreator());
+				break;
+			case 3:
+				g_szBuffer=alloccopyWtoA(pDatabase->GetDescription());
+				break;
+			case 4:
+				g_szBuffer=new char[20];
+				_itoa_s(pDatabase->GetThreadId()+1,g_szBuffer,20,10);
+				break;
+			}
+			pLvdi->item.pszText=g_szBuffer;
+				
+			break;
+		}
+	case LVN_GETDISPINFOW:
+		{
+			LV_DISPINFOW *pLvdi=(LV_DISPINFOW *)pNm;
+
 			CDatabase* pDatabase=(CDatabase*)pLvdi->item.lParam;
 			if (pDatabase==NULL)
 				break;
@@ -1076,24 +1100,24 @@ BOOL CSelectDatabasesDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 			switch (pLvdi->item.iSubItem)
 			{
 			case 0:
-				pLvdi->item.pszText=const_cast<LPSTR>(pDatabase->GetName());
+				pLvdi->item.pszText=const_cast<LPWSTR>(pDatabase->GetName());
 				break;
 			case 1:
-				pLvdi->item.pszText=const_cast<LPSTR>(pDatabase->GetArchiveName());
+				pLvdi->item.pszText=const_cast<LPWSTR>(pDatabase->GetArchiveName());
 				break;
 			case 2:
-				pLvdi->item.pszText=const_cast<LPSTR>(pDatabase->GetCreator());
+				pLvdi->item.pszText=const_cast<LPWSTR>(pDatabase->GetCreator());
 				break;
 			case 3:
-				pLvdi->item.pszText=const_cast<LPSTR>(pDatabase->GetDescription());
+				pLvdi->item.pszText=const_cast<LPWSTR>(pDatabase->GetDescription());
 				break;
 			case 4:
 				ISDLGTHREADOK
-				if (g_szBuffer!=NULL)
-					delete[] g_szBuffer;
-				g_szBuffer=new char[20];
-				_itoa_s(pDatabase->GetThreadId()+1,g_szBuffer,20,10);
-				pLvdi->item.pszText=g_szBuffer;
+				if (g_szwBuffer!=NULL)
+					delete[] g_szwBuffer;
+				g_szwBuffer=new WCHAR[20];
+				_itow_s(pDatabase->GetThreadId()+1,g_szwBuffer,20,10);
+				pLvdi->item.pszText=g_szwBuffer;
 				break;
 			}
 			break;
@@ -1105,11 +1129,11 @@ BOOL CSelectDatabasesDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
 
 BOOL CSelectDatabasesDlg::ItemUpOrDown(BOOL bUp)
 {
-	int nSelected=m_pList->GetNextItem(-1,LVNI_SELECTED);
+	int nSelected=m_List.GetNextItem(-1,LVNI_SELECTED);
 	ASSERT(nSelected!=-1);
-	CDatabase* pSelected=(CDatabase*)m_pList->GetItemData(nSelected);
+	CDatabase* pSelected=(CDatabase*)m_List.GetItemData(nSelected);
 	
-	int nOther=m_pList->GetNextItem(nSelected,bUp?LVNI_ABOVE:LVNI_BELOW);
+	int nOther=m_List.GetNextItem(nSelected,bUp?LVNI_ABOVE:LVNI_BELOW);
 	if (nOther==-1 || nOther==nSelected)
 	{
 		if (!(m_bFlags&flagShowThreads))
@@ -1121,7 +1145,7 @@ BOOL CSelectDatabasesDlg::ItemUpOrDown(BOOL bUp)
 		return FALSE;
 	}
 
-	CDatabase* pOther=(CDatabase*)m_pList->GetItemData(nOther);
+	CDatabase* pOther=(CDatabase*)m_List.GetItemData(nOther);
 	if (m_bFlags&flagShowThreads && pOther->GetThreadId()!=pSelected->GetThreadId())
 	{
 		ASSERT(bUp?pSelected->GetThreadId()>0:pSelected->GetThreadId()<m_nThreadsCurrently-1);
@@ -1129,26 +1153,26 @@ BOOL CSelectDatabasesDlg::ItemUpOrDown(BOOL bUp)
 	}
 
 	// This is working in this dialog! Wou
-	LPARAM pParam=m_pList->GetItemData(nSelected);
-	m_pList->SetItemData(nSelected,m_pList->GetItemData(nOther));
-	m_pList->SetItemData(nOther,pParam);
-	UINT nState=m_pList->GetItemState(nSelected,0xFFFFFFFF);
-	m_pList->SetItemState(nSelected,m_pList->GetItemState(nOther,0xFFFFFFFF),0xFFFFFFFF);
-	m_pList->SetItemState(nOther,nState,0xFFFFFFFF);
+	LPARAM pParam=m_List.GetItemData(nSelected);
+	m_List.SetItemData(nSelected,m_List.GetItemData(nOther));
+	m_List.SetItemData(nOther,pParam);
+	UINT nState=m_List.GetItemState(nSelected,0xFFFFFFFF);
+	m_List.SetItemState(nSelected,m_List.GetItemState(nOther,0xFFFFFFFF),0xFFFFFFFF);
+	m_List.SetItemState(nOther,nState,0xFFFFFFFF);
 
-	m_pList->EnsureVisible(nOther,FALSE);
-	m_pList->RedrawItems(min(nSelected,nOther),max(nSelected,nOther));
+	m_List.EnsureVisible(nOther,FALSE);
+	m_List.RedrawItems(min(nSelected,nOther),max(nSelected,nOther));
 
-	m_pList->UpdateWindow();
+	m_List.UpdateWindow();
 	
 	EnableButtons();
-	m_pList->SetFocus();
+	m_List.SetFocus();
 	return TRUE;
 }	
 
 BOOL CSelectDatabasesDlg::InsertDatabases()
 {
-	m_pList->DeleteAllItems();
+	m_List.DeleteAllItems();
 
 	// Counting highest thread
 	if (m_bFlags&flagShowThreads)
@@ -1186,7 +1210,7 @@ BOOL CSelectDatabasesDlg::InsertDatabases()
 			pDatabase->SetThreadId(0);
 		}
 
-		m_pList->SetCheckState(m_pList->InsertItem(&li),IsItemEnabled(pDatabase));
+		m_List.SetCheckState(m_List.InsertItem(&li),IsItemEnabled(pDatabase));
 	}
 
 	return TRUE;
@@ -1199,19 +1223,19 @@ BOOL CSelectDatabasesDlg::InsertSelected()
 
 	InsertDatabases();
 
-	int nItem=m_pList->GetNextItem(-1,LVNI_ALL);
+	int nItem=m_List.GetNextItem(-1,LVNI_ALL);
 	
 	while (nItem!=-1)
 	{
-		CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(nItem);
+		CDatabase* pDatabase=(CDatabase*)m_List.GetItemData(nItem);
 		if (pDatabase!=NULL)
 		{
 			BOOL bFound=FALSE;
-			LPSTR pPtr=m_pSelectDatabases;
-			while (*pPtr!='\0')
+			LPWSTR pPtr=m_pSelectDatabases;
+			while (*pPtr!=L'\0')
 			{
-				int iStrLen=istrlen(pPtr)+1;
-				if (strncmp(pPtr,pDatabase->GetName(),iStrLen)==0)
+				int iStrLen=istrlenw(pPtr)+1;
+				if (wcsncmp(pPtr,pDatabase->GetName(),iStrLen)==0)
 				{
 					bFound=TRUE;
 					break;
@@ -1219,10 +1243,10 @@ BOOL CSelectDatabasesDlg::InsertSelected()
 				pPtr+=iStrLen;
 			}
 			EnableItem(pDatabase,bFound);
-			m_pList->SetCheckState(nItem,bFound);
+			m_List.SetCheckState(nItem,bFound);
 		}
 
-		nItem=m_pList->GetNextItem(nItem,LVNI_ALL);
+		nItem=m_List.GetNextItem(nItem,LVNI_ALL);
 	}
 	return TRUE;
 }
@@ -1231,7 +1255,7 @@ BOOL CSelectDatabasesDlg::InsertSelected()
 BOOL CSelectDatabasesDlg::InsertDatabases(WORD wCount,WORD wThreads,const WORD* pwDatabaseIDs,const WORD* pwThreads,
 										  WORD wSelectedCount,const WORD* pwSelectedIds)
 {
-	m_pList->DeleteAllItems();
+	m_List.DeleteAllItems();
 
 	ChangeNumberOfThreads(wThreads);
 	SendDlgItemMessage(IDC_THREADSPIN,UDM_SETPOS,0,MAKELONG(m_nThreadsCurrently,0));
@@ -1279,7 +1303,7 @@ BOOL CSelectDatabasesDlg::InsertDatabases(WORD wCount,WORD wThreads,const WORD* 
 			li.iGroupId=0;
 			pDatabase->SetThreadId(0);
 		}
-		li.iItem=m_pList->InsertItem(&li);
+		li.iItem=m_List.InsertItem(&li);
 
 		BOOL bSelected=FALSE;
 		for (int j=0;j<wSelectedCount;j++)
@@ -1292,7 +1316,7 @@ BOOL CSelectDatabasesDlg::InsertDatabases(WORD wCount,WORD wThreads,const WORD* 
 		}
 
 		EnableItem(pDatabase,bSelected);
-		m_pList->SetCheckState(li.iItem,bSelected);
+		m_List.SetCheckState(li.iItem,bSelected);
 		li.iItem++;
 	}
 
@@ -1313,10 +1337,10 @@ BOOL CSelectDatabasesDlg::InsertDatabases(WORD wCount,WORD wThreads,const WORD* 
 				li.iGroupId=0;
 				pDatabase->SetThreadId(0);
 			}
-			li.iItem=m_pList->InsertItem(&li);
+			li.iItem=m_List.InsertItem(&li);
 
 			EnableItem(pDatabase,FALSE);
-			m_pList->SetCheckState(li.iItem,FALSE);
+			m_List.SetCheckState(li.iItem,FALSE);
 			li.iItem++;
 		}
 	}
@@ -1327,10 +1351,10 @@ BOOL CSelectDatabasesDlg::InsertDatabases(WORD wCount,WORD wThreads,const WORD* 
 
 void CSelectDatabasesDlg::EnableThreadGroups(int nThreadGroups)
 {
-	if (m_pList->IsGroupViewEnabled())
+	if (m_List.IsGroupViewEnabled())
 		return;
 
-	m_pList->EnableGroupView(TRUE);
+	m_List.EnableGroupView(TRUE);
 	m_nThreadsCurrently=nThreadGroups;
 	
 	// Creating groups
@@ -1347,34 +1371,34 @@ void CSelectDatabasesDlg::EnableThreadGroups(int nThreadGroups)
 		str.Format(IDS_THREADNAME,lg.iGroupId+1);
 		lg.pszHeader=str.GetBuffer();
 
-		m_pList->InsertGroup(lg.iGroupId,&lg);
+		m_List.InsertGroup(lg.iGroupId,&lg);
 	}
 
 	// Setting groups IDs
 	LVITEM li;
 	li.mask=LVIF_GROUPID;
-	li.iItem=m_pList->GetNextItem(-1,LVNI_ALL);
+	li.iItem=m_List.GetNextItem(-1,LVNI_ALL);
 	li.iSubItem=0;
 	while (li.iItem!=-1)
 	{
-		CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(li.iItem);
+		CDatabase* pDatabase=(CDatabase*)m_List.GetItemData(li.iItem);
 		ASSERT(pDatabase!=NULL);
 
 		li.iGroupId=pDatabase->GetThreadId();
 		
-		m_pList->SetItem(&li);
-		li.iItem=m_pList->GetNextItem(li.iItem,LVNI_ALL);
+		m_List.SetItem(&li);
+		li.iItem=m_List.GetNextItem(li.iItem,LVNI_ALL);
 	}
 
 }
 
 void CSelectDatabasesDlg::RemoveThreadGroups()
 {
-	if (!m_pList->IsGroupViewEnabled())
+	if (!m_List.IsGroupViewEnabled())
 		return;
 
-	m_pList->RemoveAllGroups();
-	m_pList->EnableGroupView(FALSE);
+	m_List.RemoveAllGroups();
+	m_List.EnableGroupView(FALSE);
 }
 
 void CSelectDatabasesDlg::ChangeNumberOfThreads(int nThreads)
@@ -1409,20 +1433,20 @@ void CSelectDatabasesDlg::ChangeNumberOfThreads(int nThreads)
 				str.Format(IDS_THREADNAME,lg.iGroupId+1);
 				lg.pszHeader=str.GetBuffer();
 
-				m_pList->InsertGroup(lg.iGroupId,&lg);
+				m_List.InsertGroup(lg.iGroupId,&lg);
 			}
 		
 		}
 		m_nThreadsCurrently=nThreads;
-		m_pList->RedrawItems(0,m_pList->GetItemCount());
+		m_List.RedrawItems(0,m_List.GetItemCount());
 	}
 	else if (nThreads<m_nThreadsCurrently)
 	{
 		// Ensuring that there is no any items with higher thread ID than available
-		int nItem=m_pList->GetNextItem(-1,LVNI_ALL);
+		int nItem=m_List.GetNextItem(-1,LVNI_ALL);
 		while (nItem!=-1)
 		{
-			CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(nItem);
+			CDatabase* pDatabase=(CDatabase*)m_List.GetItemData(nItem);
 			ASSERT(pDatabase!=NULL);
 
 			if (pDatabase->GetThreadId()>=nThreads)
@@ -1434,9 +1458,9 @@ void CSelectDatabasesDlg::ChangeNumberOfThreads(int nThreads)
 				li.iSubItem=0;
 				li.mask=LVIF_GROUPID;
 				li.iGroupId=nThreads-1;
-				m_pList->SetItem(&li);
+				m_List.SetItem(&li);
 			}
-			nItem=m_pList->GetNextItem(nItem,LVNI_ALL);
+			nItem=m_List.GetNextItem(nItem,LVNI_ALL);
 		}
 
 
@@ -1448,12 +1472,12 @@ void CSelectDatabasesDlg::ChangeNumberOfThreads(int nThreads)
 			{
 				// Removing unused thread groups
 				while (m_nThreadsCurrently>nThreads)
-					m_pList->RemoveGroup(--m_nThreadsCurrently);
+					m_List.RemoveGroup(--m_nThreadsCurrently);
 			}
 		}
 		m_nThreadsCurrently=nThreads;
 
-		m_pList->RedrawItems(0,m_pList->GetItemCount());
+		m_List.RedrawItems(0,m_List.GetItemCount());
 	}
 }
 
@@ -1473,35 +1497,35 @@ BOOL CSelectDatabasesDlg::IncreaseThread(int nItem,CDatabase* pDatabase,BOOL bDe
 		li.iItem=nItem;
 		li.iSubItem=0;
 		li.iGroupId=pDatabase->GetThreadId();
-		m_pList->SetItem(&li);
+		m_List.SetItem(&li);
 	}
 	else
-		m_pList->RedrawItems(nItem,nItem);
+		m_List.RedrawItems(nItem,nItem);
 	
-	m_pList->EnsureVisible(nItem,FALSE);
-	m_pList->SetFocus();
+	m_List.EnsureVisible(nItem,FALSE);
+	m_List.SetFocus();
 	EnableButtons();
 	return TRUE;
 }
 
 void CSelectDatabasesDlg::EnableButtons()
 {
-	int nSelectedItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+	int nSelectedItem=m_List.GetNextItem(-1,LVNI_SELECTED);
 	
 	if (nSelectedItem!=-1)
 	{
-		CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(nSelectedItem);
+		CDatabase* pDatabase=(CDatabase*)m_List.GetItemData(nSelectedItem);
 		ASSERT(pDatabase!=NULL);
 
 		// Checking item above
-		int nAnother=m_pList->GetNextItem(nSelectedItem,LVNI_ABOVE);
+		int nAnother=m_List.GetNextItem(nSelectedItem,LVNI_ABOVE);
 		if (nAnother==-1 || nAnother==nSelectedItem)
 			EnableDlgItem(IDC_UP,pDatabase->GetThreadId()>0);
 		else
 			EnableDlgItem(IDC_UP,TRUE);
 		
 		// Checking item below
-		nAnother=m_pList->GetNextItem(nSelectedItem,LVNI_BELOW);
+		nAnother=m_List.GetNextItem(nSelectedItem,LVNI_BELOW);
 		if (nAnother==-1 || nAnother==nSelectedItem)
 			EnableDlgItem(IDC_DOWN,pDatabase->GetThreadId()<m_nThreadsCurrently-1); 
 		else
@@ -1517,15 +1541,16 @@ void CSelectDatabasesDlg::EnableButtons()
 
 void CSelectDatabasesDlg::LoadPresets()
 {
-	SendDlgItemMessage(IDC_PRESETS,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRESETCUSTOM));
-	SendDlgItemMessage(IDC_PRESETS,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRESETGLOBAL));
-	SendDlgItemMessage(IDC_PRESETS,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRESETLATEST));
+	m_PresetCombo.AddString(ID2W(IDS_PRESETCUSTOM));
+	m_PresetCombo.AddString(ID2W(IDS_PRESETGLOBAL));
+	m_PresetCombo.AddString(ID2W(IDS_PRESETLATEST));
+	
 	if (m_pSelectDatabases!=NULL)
-		SendDlgItemMessage(IDC_PRESETS,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRESETSELECTED));
+		m_PresetCombo.AddString(ID2W(IDS_PRESETSELECTED));
 	
 	if (m_bFlags&flagDisablePresets)
 	{
-		SendDlgItemMessage(IDC_PRESETS,CB_SETCURSEL,CUSTOM_PRESET);
+		m_PresetCombo.SetCurSel(CUSTOM_PRESET);
 		return;
 	}
 
@@ -1533,15 +1558,15 @@ void CSelectDatabasesDlg::LoadPresets()
 	CRegKey RegKey;
 	if (RegKey.OpenKey(HKCU,m_pRegKey,CRegKey::openExist|CRegKey::samRead|CRegKey::samQueryValue)==ERROR_SUCCESS)
 	{
-		CString sName;
+		CStringW sName;
 		for (int i=0;RegKey.EnumValue(i,sName)>0;i++)
 		{
-			if (strncmp(sName,"Preset ",7)==0)
+			if (wcsncmp(sName,L"Preset ",7)==0)
 			{
 				DWORD nIndex=sName.FindFirst(':')+1;
 				
 				if (nIndex>0 &&  nIndex<sName.GetLength()) 
-					SendDlgItemMessage(IDC_PRESETS,CB_ADDSTRING,0,(LPARAM)(LPCSTR(sName)+nIndex));
+					m_PresetCombo.AddString(LPCWSTR(sName)+nIndex);
 			}
 		}
 	}
@@ -1563,7 +1588,7 @@ void CSelectDatabasesDlg::LoadPresets()
 	}
 }
 
-BOOL CSelectDatabasesDlg::SavePreset(LPCSTR szName)
+BOOL CSelectDatabasesDlg::SavePreset(LPCWSTR szName)
 {
 	
 	// First, check whether name already exists
@@ -1571,13 +1596,13 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCSTR szName)
 
 	if (szName!=NULL)
 	{
-		if (szName[0]=='\0' ||  
-			strcmp(szName,"Database List Widths")==0 || 
-			strcmp(szName,"LastPreset")==0)
+		if (szName[0]==L'\0' ||  
+			wcscmp(szName,L"Database List Widths")==0 || 
+			wcscmp(szName,L"LastPreset")==0)
 		{
 			CString str;
-			str.Format(IDS_PRESETNAMENOTVALID,szName);
-			MessageBox(str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+			str.Format(IDS_PRESETNAMENOTVALID,W2A(szName));
+			MessageBox(str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
 			return FALSE;
 		}
 
@@ -1585,18 +1610,18 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCSTR szName)
 		// First item is global, second is last
 		for (int i=SendDlgItemMessage(IDC_PRESETS,CB_GETCOUNT)-1;i>=2;i--)
 		{
-			int nItemTextLength=SendDlgItemMessage(IDC_PRESETS,CB_GETLBTEXTLEN,i);
+			int nItemTextLength=m_PresetCombo.GetLBTextLen(i);
 			if (nItemTextLength==CB_ERR)
 				continue;
 
-            LPCSTR pItemText=new char[nItemTextLength+1];
-            if (SendDlgItemMessage(IDC_PRESETS,CB_GETLBTEXT,i,LPARAM(pItemText))!=CB_ERR)
+            LPWSTR pItemText=new WCHAR[nItemTextLength+1];
+			if (m_PresetCombo.GetLBText(i,pItemText)!=CB_ERR)
 			{
 				if (strcasecmp(pItemText,szName)==0)
 				{
 					CString str;
 					str.Format(IDS_OVERWRITEPRESET,szName);
-					if (MessageBox(str,CString(IDS_PRESETSAVETITLE),MB_YESNO)==IDNO)
+					if (MessageBox(str,ID2A(IDS_PRESETSAVETITLE),MB_YESNO)==IDNO)
 						return FALSE;
 					
 					iOverwriteItem=i-(m_pSelectDatabases!=NULL?4:3);
@@ -1626,15 +1651,15 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCSTR szName)
 		// selected DB (WORD)
 		
 		// Get enabled databases
-		WORD* pThreads=new WORD[m_pList->GetItemCount()];
-		WORD* pIDs=new WORD[m_pList->GetItemCount()];
+		WORD* pThreads=new WORD[m_List.GetItemCount()];
+		WORD* pIDs=new WORD[m_List.GetItemCount()];
         CWordArray aSelected;
 
 		int nDatabases=0;
 		// Get the first item
 		int nNext;
-		int nItem=m_pList->GetNextItem(-1,LVNI_ALL);
-		while ((nNext=m_pList->GetNextItem(nItem,LVNI_ABOVE))!=-1)
+		int nItem=m_List.GetNextItem(-1,LVNI_ALL);
+		while ((nNext=m_List.GetNextItem(nItem,LVNI_ABOVE))!=-1)
 		{
 			if (nNext==nItem)
 				break; // This should not be like that, why is it?
@@ -1643,7 +1668,7 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCSTR szName)
 		// Now we have top index
 		while (nItem!=-1)
 		{
-			PDATABASE pDatabase=(PDATABASE)m_pList->GetItemData(nItem);
+			PDATABASE pDatabase=(PDATABASE)m_List.GetItemData(nItem);
 			if (pDatabase!=NULL)
 			{
 				pIDs[nDatabases]=pDatabase->GetID();
@@ -1654,7 +1679,7 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCSTR szName)
 					aSelected.Add(pDatabase->GetID());
 			}
 
-			nNext=m_pList->GetNextItem(nItem,LVNI_BELOW);
+			nNext=m_List.GetNextItem(nItem,LVNI_BELOW);
 			if (nNext==nItem)
 				break;
 			nItem=nNext;
@@ -1675,14 +1700,14 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCSTR szName)
 		
 		if (szName!=NULL)
 		{
-			int nLen=15+istrlen(szName);
-			char* szText=new char[nLen];
+			int nLen=15+istrlenw(szName);
+			WCHAR* szText=new WCHAR[nLen];
 			if (iOverwriteItem>=0)
-				StringCbPrintf(szText,nLen,"Preset %03d:%s",iOverwriteItem,szName);
+				StringCbPrintfW(szText,nLen,L"Preset %03d:%s",iOverwriteItem,szName);
 			else
-				StringCbPrintf(szText,nLen,"Preset %03d:%s",SendDlgItemMessage(IDC_PRESETS,CB_GETCOUNT)-2,szName);
+				StringCbPrintfW(szText,nLen,L"Preset %03d:%s",m_PresetCombo.GetCount()-2,szName);
 
-			RegKey.SetValue(szText,pData,dwLength,REG_BINARY);
+			RegKey.SetValue(szText,(LPCWSTR)pData,dwLength,REG_BINARY);
 		}
 		else
 			RegKey.SetValue("LastPreset",pData,dwLength,REG_BINARY);
@@ -1709,25 +1734,25 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCSTR szName)
 	return TRUE;
 }
 
-BOOL CSelectDatabasesDlg::LoadPreset(LPCSTR szName)
+BOOL CSelectDatabasesDlg::LoadPreset(LPCWSTR szName)
 {
 	CRegKey RegKey;
 	if (RegKey.OpenKey(HKCU,m_pRegKey,CRegKey::openExist|CRegKey::samRead|CRegKey::samQueryValue)!=ERROR_SUCCESS)
 		return FALSE;
 
-	CString sName;
+	CStringW sName;
 	if (szName!=NULL)
 	{
 		BOOL bFound=FALSE;
 		for (int i=0;RegKey.EnumValue(i,sName)>0;i++)
 		{
-			if (strncmp(sName,"Preset ",7)==0)
+			if (wcsncmp(sName,L"Preset ",7)==0)
 			{
 				DWORD nIndex=sName.FindFirst(':')+1;
 				
 				if (nIndex>0 &&  nIndex<sName.GetLength()) 
 				{
-					if (strcasecmp(LPCSTR(sName)+nIndex,szName)==0)
+					if (strcasecmp(LPCWSTR(sName)+nIndex,szName)==0)
 					{
 						bFound=TRUE;
 						break;
@@ -1739,14 +1764,14 @@ BOOL CSelectDatabasesDlg::LoadPreset(LPCSTR szName)
 			return FALSE;
 	}
 	else
-		sName="LastPreset";
+		sName=L"LastPreset";
 
 	DWORD dwLength=RegKey.QueryValueLength(sName);
     if (dwLength<2 || dwLength%2==1)
 		return FALSE;
 
 	WORD* pData=new WORD[dwLength>>1];
-	if (RegKey.QueryValue(sName,(LPSTR)pData,dwLength))
+	if (RegKey.QueryValue(sName,(LPWSTR)pData,dwLength))
 	{	
 		WORD wDatabases=pData[0];
 		if (sizeof(WORD)*(3+2*wDatabases+pData[2])!=dwLength)
@@ -1802,7 +1827,7 @@ void CSavePresetDlg::OnOK()
 		CString msg;
 		msg.Format(IDS_PRESETNAMENOTVALID,LPCSTR(m_sReturnedPreset));
 
-		MessageBox(msg,CString(IDS_PRESETSAVETITLE),MB_OK|MB_ICONEXCLAMATION);
+		MessageBox(msg,ID2A(IDS_PRESETSAVETITLE),MB_OK|MB_ICONEXCLAMATION);
 		SetFocus(IDC_EDIT);
 	}
 	else
@@ -1819,7 +1844,7 @@ void CSavePresetDlg::OnCancel()
 
 void CSelectDatabasesDlg::CSavePresetDlg::OnOK()
 {
-	CString sName;
+	CStringW sName;
 	
     GetDlgItemText(IDC_EDIT,sName);
 	
@@ -1909,11 +1934,11 @@ BOOL CChangeFilenameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDC_OK:
 		if (GetDlgItemText(IDC_EDIT,m_sFileName)>0)
 		{
-			if (!CFile::IsValidFileName(m_sFileName))
+			if (!FileSystem::IsValidFileName(m_sFileName))
 			{
 				CString msg;
 				msg.Format(IDS_INVALIDFILENAME,(LPCSTR)m_sFileName);
-				MessageBox(msg,CString(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
+				MessageBox(msg,ID2A(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
                 break;
 			}
 			EndDialog(1);

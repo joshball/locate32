@@ -194,12 +194,6 @@ int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax);
 
 #endif
 
-// File operations
-//BYTE IsFile(LPCTSTR);
-#ifndef WIN32
-BYTE CopyFile(LPCSTR src,LPCSTR dst);
-#endif
-LONGLONG GetDiskFreeSpace(LPCSTR szDrive);
 
 // Shell functions
 #ifdef WIN32

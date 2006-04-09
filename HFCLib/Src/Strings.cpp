@@ -4,6 +4,8 @@
 
 #include "HFCLib.h"
 
+#define STR_LOADSTRINGBUFLEN			1024
+
 #ifdef WIN32
 int strcasecmp(LPCSTR s1,LPCSTR s2)
 {
@@ -1091,4 +1093,102 @@ int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax,TypeOfResourceHandle bTyp
 	}
 	return (int)::LoadStringW(GetResourceHandle(bType),uID,lpBuffer,nBufferMax);
 }
+#endif
+
+
+
+LPSTR allocstring(UINT nID,TypeOfResourceHandle bType)
+{
+	LPSTR szBuffer;
+	szBuffer=new CHAR[STR_LOADSTRINGBUFLEN];
+	if (szBuffer==NULL)
+	{
+		SetHFCError(HFC_CANNOTALLOCATE);
+		return FALSE;
+	}
+	UINT nDataLen=::LoadStringA(GetResourceHandle(bType),nID,szBuffer,STR_LOADSTRINGBUFLEN);
+	if (nDataLen>=STR_LOADSTRINGBUFLEN-2)
+	{
+		for (DWORD i=2;nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		{
+			delete[] szBuffer;
+			szBuffer=new CHAR[i*STR_LOADSTRINGBUFLEN];
+			nDataLen=::LoadStringA(GetResourceHandle(bType),nID,szBuffer,i*STR_LOADSTRINGBUFLEN);
+		}
+	}
+
+	char* pText=new char[nDataLen+1];
+	MemCopy(pText,szBuffer,nDataLen+1);
+	delete[] szBuffer;
+	return pText;
+}
+
+ID2A::ID2A(UINT nID,TypeOfResourceHandle bType)
+{
+	pStr=new CHAR[STR_LOADSTRINGBUFLEN];
+	if (pStr==NULL)
+	{
+		SetHFCError(HFC_CANNOTALLOCATE);
+		return;
+	}
+	UINT nDataLen=::LoadStringA(GetResourceHandle(bType),nID,pStr,STR_LOADSTRINGBUFLEN);
+	if (nDataLen>=STR_LOADSTRINGBUFLEN-2)
+	{
+		for (DWORD i=2;nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		{
+			delete[] pStr;
+			pStr=new CHAR[i*STR_LOADSTRINGBUFLEN];
+			nDataLen=::LoadStringA(GetResourceHandle(bType),nID,pStr,i*STR_LOADSTRINGBUFLEN);
+		}
+	}
+}
+
+#ifdef DEF_WCHAR
+LPWSTR allocstringW(UINT nID,TypeOfResourceHandle bType)
+{
+	LPWSTR szBuffer;
+	szBuffer=new WCHAR[STR_LOADSTRINGBUFLEN];
+	if (szBuffer==NULL)
+	{
+		SetHFCError(HFC_CANNOTALLOCATE);
+		return FALSE;
+	}
+	UINT nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,bType);
+	if (nDataLen>=STR_LOADSTRINGBUFLEN-2)
+	{
+		for (DWORD i=2;nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		{
+			delete[] szBuffer;
+			szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];
+			nDataLen=::LoadString(nID,szBuffer,i*STR_LOADSTRINGBUFLEN,bType);
+		}
+	}
+
+	WCHAR* pText=new WCHAR[nDataLen+1];
+	MemCopy(pText,szBuffer,(nDataLen+1)*2);
+	delete[] szBuffer;
+	return pText;
+}
+
+
+ID2W::ID2W(UINT nID,TypeOfResourceHandle bType)
+{
+	pWStr=new WCHAR[STR_LOADSTRINGBUFLEN];
+	if (pWStr==NULL)
+	{
+		SetHFCError(HFC_CANNOTALLOCATE);
+		return;
+	}
+	UINT nDataLen=::LoadString(nID,pWStr,STR_LOADSTRINGBUFLEN,bType);
+	if (nDataLen>=STR_LOADSTRINGBUFLEN-2)
+	{
+		for (DWORD i=2;nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		{
+			delete[] pWStr;
+			pWStr=new WCHAR[i*STR_LOADSTRINGBUFLEN];
+			nDataLen=::LoadString(nID,pWStr,i*STR_LOADSTRINGBUFLEN,bType);
+		}
+	}
+}
+
 #endif

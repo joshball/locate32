@@ -22,7 +22,7 @@ inline CSelectColumndDlg::ColumnItem::ColumnItem(int nCol,CLocateDlg::DetailType
 inline CSelectDatabasesDlg::CSelectDatabasesDlg(const CArray<PDATABASE>& rOrigDatabases,CArray<PDATABASE>& rSelectedDatabases,BYTE bFlags,LPCSTR szRegKey)
 :	CDialog(IDD_SELECTDATABASES),
 	m_rOrigDatabases(rOrigDatabases),m_rSelectedDatabases(rSelectedDatabases),
-	m_pList(NULL),m_bFlags(bFlags),m_nThreadsCurrently(1),m_pSelectDatabases(NULL),
+	m_bFlags(bFlags),m_nThreadsCurrently(1),m_pSelectDatabases(NULL),
 	m_nThreadPriority(THREAD_PRIORITY_NORMAL)
 {
 	if (szRegKey!=NULL)

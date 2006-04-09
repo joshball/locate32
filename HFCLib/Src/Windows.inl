@@ -150,12 +150,13 @@ inline CPoint CDC::SetViewportOrg(const POINT& point)
 	return pt;
 }
 
-inline int CDC::DrawText(LPCTSTR lpszString,int nCount,LPRECT lpRect,UINT nFormat)
+inline int CDC::DrawText(LPCSTR lpszString,int nCount,LPRECT lpRect,UINT nFormat)
 {
 	return ::DrawText(m_hDC,lpszString,nCount,lpRect,nFormat);
 }
 
-inline CSize CDC::GetTextExtent(LPCTSTR lpszString,int nCount) const
+
+inline CSize CDC::GetTextExtent(LPCSTR lpszString,int nCount) const
 {
 	CSize sz;
 	::GetTextExtentPoint32(m_hDC,lpszString,nCount,&sz);
@@ -1406,10 +1407,6 @@ inline UINT CWnd::GetDlgItemInt(int nIDDlgItem,BOOL* lpTranslated,BOOL bSigned) 
 {
 	return ::GetDlgItemInt(m_hWnd,nIDDlgItem,lpTranslated,bSigned);
 }
-inline UINT CWnd::GetDlgItemText(int nIDDlgItem,LPWSTR lpString,int nMaxCount) const
-{
-	return ::GetDlgItemTextW(m_hWnd,nIDDlgItem,lpString,nMaxCount);
-}
 inline UINT CWnd::GetDlgItemText(int nIDDlgItem,LPSTR lpString,int nMaxCount) const
 {
 	return ::GetDlgItemText(m_hWnd,nIDDlgItem,lpString,nMaxCount);
@@ -1456,7 +1453,10 @@ inline BOOL CWnd::SetDlgItemText(int idControl,LPCSTR lpsz) const
 
 inline BOOL CWnd::SetDlgItemText(int idControl,LPCWSTR lpsz) const
 {
-	return ::SetDlgItemTextW(m_hWnd,idControl,lpsz);
+	if (IsFullUnicodeSupport())
+		return ::SetDlgItemTextW(m_hWnd,idControl,lpsz);
+	else
+		return ::SetDlgItemText(m_hWnd,idControl,W2A(lpsz));
 }
 
 inline void CWnd::DragAcceptFiles(BOOL bAccept)
@@ -1486,7 +1486,10 @@ inline int CWnd::MessageBox(LPCSTR lpText,LPCSTR lpCaption,UINT uType)
 
 inline int CWnd::MessageBox(LPCWSTR lpText,LPCWSTR lpCaption,UINT uType)
 {
-	return ::MessageBoxW(m_hWnd,lpText,lpCaption,uType);
+	if (IsFullUnicodeSupport())
+		return ::MessageBoxW(m_hWnd,lpText,lpCaption,uType);
+	else
+		return ::MessageBoxA(m_hWnd,W2A(lpText),W2A(lpCaption),uType);
 }
 
 inline int CWnd::ReportSystemError(LPCSTR szTitle,DWORD dwError,DWORD dwExtra,LPCSTR szPrefix)

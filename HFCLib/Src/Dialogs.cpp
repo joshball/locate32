@@ -10,6 +10,38 @@
 // Class CDialog
 ///////////////////////////
 
+CDialog::CDialog(LPCSTR lpTemplate)
+	: CWnd(NULL)
+{
+	if (IS_INTRESOURCE(lpTemplate))
+		m_lpszTemplateName=MAKEINTRESOURCE(lpTemplate);
+	else if (IsFullUnicodeSupport())
+		m_lpszTemplateNameW=alloccopyAtoW(lpTemplate);
+	else
+		m_lpszTemplateName=alloccopy(lpTemplate);
+}
+
+CDialog::CDialog(LPCWSTR lpTemplate)
+	: CWnd(NULL)
+{
+	if (IS_INTRESOURCE(lpTemplate))
+		m_lpszTemplateName=MAKEINTRESOURCE(lpTemplate);
+	else if (IsFullUnicodeSupport())
+		m_lpszTemplateNameW=alloccopy(lpTemplate);
+	else
+		m_lpszTemplateName=alloccopyWtoA(lpTemplate);
+}
+
+CDialog::~CDialog()
+{
+	if (m_lpszTemplateName!=NULL && !IS_INTRESOURCE(m_lpszTemplateName))
+	{
+		if (IsFullUnicodeSupport())
+			delete[] m_lpszTemplateNameW;
+		else
+			delete[] m_lpszTemplateName;
+	}
+}
 
 BOOL CDialog::OnInitDialog(HWND hwndFocus)
 {
@@ -27,9 +59,24 @@ BOOL CDialog::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 	return FALSE;
 }
 
+
 ///////////////////////////////////////////
 // CPropertyPage
 ///////////////////////////////////////////
+
+CPropertyPage::~CPropertyPage()
+{
+	if (IsFullUnicodeSupport())
+	{
+		if (m_pspw.pszTitle!=NULL)
+			delete[] m_pspw.pszTitle;
+	}
+	else
+	{
+		if (m_psp.pszTitle!=NULL)
+			delete[] m_psp.pszTitle;
+	}
+}
 
 /*
 UINT CALLBACK PropertySheetPageProc(HWND hWnd,UINT uMsg,LPPROPSHEETPAGE  ppsp)
@@ -45,25 +92,124 @@ UINT CALLBACK PropertySheetPageProc(HWND hWnd,UINT uMsg,LPPROPSHEETPAGE  ppsp)
 }
 */
 
-void CPropertyPage::Construct(LPCTSTR lpszTemplateName,UINT nIDCaption,TypeOfResourceHandle bType)
+void CPropertyPage::Construct(UINT nIDCaption,TypeOfResourceHandle bType)
 {
-	iMemSet(&m_psp,0,sizeof(PROPSHEETPAGE));
-	m_psp.dwSize=sizeof(PROPSHEETPAGE);
-	m_psp.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
-	if (lpszTemplateName!=NULL)
-		m_psp.hInstance=GetResourceHandle(bType);
-	m_psp.pszTemplate=lpszTemplateName;
-	m_psp.pfnDlgProc=(DLGPROC)CAppData::PropPageWndProc;
-	m_psp.lParam=(LPARAM)this;
-	if (nIDCaption)
+	if (IsFullUnicodeSupport())
 	{
-		m_strCaption.LoadString(nIDCaption);
-		m_psp.pszTitle=m_strCaption;
-		m_psp.dwFlags|=PSP_USETITLE;
+		iMemSet(&m_pspw,0,sizeof(PROPSHEETPAGEW));
+		m_pspw.dwSize=sizeof(PROPSHEETPAGEW);
+		m_pspw.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
+		if (m_lpszTemplateNameW!=NULL)
+		{
+			m_pspw.hInstance=GetResourceHandle(bType);
+			m_pspw.pszTemplate=m_lpszTemplateNameW;
+		}
+		m_pspw.pfnDlgProc=(DLGPROC)CAppData::PropPageWndProc;
+		m_pspw.lParam=(LPARAM)this;
+		if (nIDCaption)
+		{
+			m_pspw.pszTitle=allocstringW(nIDCaption);
+			m_pspw.dwFlags|=PSP_USETITLE;
+		}
+		m_pspw.pfnCallback=NULL; //PropertySheetPageProc;
+		m_bFirstSetActive=TRUE;
 	}
-	m_psp.pfnCallback=NULL; //PropertySheetPageProc;
-	m_lpszTemplateName=m_psp.pszTemplate;
-	m_bFirstSetActive=TRUE;
+	else
+	{
+		iMemSet(&m_psp,0,sizeof(PROPSHEETPAGE));
+		m_psp.dwSize=sizeof(PROPSHEETPAGE);
+		m_psp.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
+		if (m_lpszTemplateName!=NULL)
+		{
+			m_psp.hInstance=GetResourceHandle(bType);
+			m_psp.pszTemplate=m_lpszTemplateName;
+		}
+		m_psp.pfnDlgProc=(DLGPROC)CAppData::PropPageWndProc;
+		m_psp.lParam=(LPARAM)this;
+		if (nIDCaption)
+		{
+			m_psp.pszTitle=allocstring(nIDCaption);
+			m_psp.dwFlags|=PSP_USETITLE;
+		}
+		m_psp.pfnCallback=NULL; //PropertySheetPageProc;
+		m_bFirstSetActive=TRUE;
+	}
+}
+
+void CPropertyPage::Construct(LPCSTR szTitle,TypeOfResourceHandle bType)
+{
+	if (IsFullUnicodeSupport())
+	{
+		iMemSet(&m_pspw,0,sizeof(PROPSHEETPAGEW));
+		m_pspw.dwSize=sizeof(PROPSHEETPAGEW);
+		m_pspw.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
+		if (m_lpszTemplateNameW!=NULL)
+		{
+			m_pspw.hInstance=GetResourceHandle(bType);
+			m_pspw.pszTemplate=m_lpszTemplateNameW;
+		}
+		m_pspw.pfnDlgProc=(DLGPROC)CAppData::PropPageWndProc;
+		m_pspw.lParam=(LPARAM)this;
+		m_pspw.pszTitle=alloccopyAtoW(szTitle);
+		m_pspw.dwFlags|=PSP_USETITLE;
+		m_pspw.pfnCallback=NULL; //PropertySheetPageProc;
+		m_bFirstSetActive=TRUE;
+	}
+	else
+	{
+		iMemSet(&m_psp,0,sizeof(PROPSHEETPAGE));
+		m_psp.dwSize=sizeof(PROPSHEETPAGE);
+		m_psp.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
+		if (m_lpszTemplateName!=NULL)
+		{
+			m_psp.hInstance=GetResourceHandle(bType);
+			m_psp.pszTemplate=m_lpszTemplateName;
+		}
+		m_psp.pfnDlgProc=(DLGPROC)CAppData::PropPageWndProc;
+		m_psp.lParam=(LPARAM)this;
+		m_psp.pszTitle=alloccopy(szTitle);
+		m_psp.dwFlags|=PSP_USETITLE;
+		m_psp.pfnCallback=NULL; //PropertySheetPageProc;
+		m_bFirstSetActive=TRUE;
+	}
+}
+
+void CPropertyPage::Construct(LPCWSTR szTitle,TypeOfResourceHandle bType)
+{
+	if (IsFullUnicodeSupport())
+	{
+		iMemSet(&m_pspw,0,sizeof(PROPSHEETPAGEW));
+		m_pspw.dwSize=sizeof(PROPSHEETPAGEW);
+		m_pspw.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
+		if (m_lpszTemplateNameW!=NULL)
+		{
+			m_pspw.hInstance=GetResourceHandle(bType);
+			m_pspw.pszTemplate=m_lpszTemplateNameW;
+		}
+		m_pspw.pfnDlgProc=(DLGPROC)CAppData::PropPageWndProc;
+		m_pspw.lParam=(LPARAM)this;
+		m_pspw.pszTitle=alloccopy(szTitle);
+		m_pspw.dwFlags|=PSP_USETITLE;
+		m_pspw.pfnCallback=NULL; //PropertySheetPageProc;
+		m_bFirstSetActive=TRUE;
+	}
+	else
+	{
+		iMemSet(&m_psp,0,sizeof(PROPSHEETPAGE));
+		m_psp.dwSize=sizeof(PROPSHEETPAGE);
+		m_psp.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
+		if (m_lpszTemplateName!=NULL)
+		{
+			m_psp.hInstance=GetResourceHandle(bType);
+			m_psp.pszTemplate=m_lpszTemplateName;
+		}
+		m_psp.pfnDlgProc=(DLGPROC)CAppData::PropPageWndProc;
+		m_psp.lParam=(LPARAM)this;
+		m_psp.pszTitle=alloccopyWtoA(szTitle);
+		m_psp.dwFlags|=PSP_USETITLE;
+		m_psp.pfnCallback=NULL; //PropertySheetPageProc;
+		m_bFirstSetActive=TRUE;
+	}
 }
 
 void CPropertyPage::SetModified(BOOL bChanged)
@@ -204,25 +350,75 @@ CPropertySheet::~CPropertySheet()
 
 void CPropertySheet::Construct(UINT nIDCaption,HWND hParentWnd,UINT iSelectPage)
 {
-	if (nIDCaption)
-		m_strCaption.LoadString(nIDCaption);
-	Construct((LPCTSTR)NULL,hParentWnd,iSelectPage);
+	Construct(ID2W(nIDCaption),hParentWnd,iSelectPage);
 }
 
-void CPropertySheet::Construct(LPCTSTR pszCaption,HWND hParentWnd,UINT iSelectPage)
+void CPropertySheet::Construct(LPCSTR pszCaption,HWND hParentWnd,UINT iSelectPage)
 {
-	if (pszCaption!=NULL)
-		m_strCaption=pszCaption;
+	if (IsFullUnicodeSupport())
+	{
+		iMemSet(&m_pshw,0,sizeof(PROPSHEETHEADERW));
+		m_pshw.dwSize=PROPSHEETHEADERW_V1_SIZE; //sizeof(PROPSHEETHEADER);
+		
+		if (pszCaption!=NULL)
+			m_pshw.pszCaption=alloccopyAtoW(pszCaption);
+		else
+			DebugMessage("CPropertySheet::Construct(): pszCaption==NULL");
+		m_pshw.dwFlags=PSH_DEFAULT;
+		m_pshw.nStartPage=iSelectPage;
+		m_pshw.pfnCallback=NULL;
+		m_bStacked=TRUE;
+		m_hParentWnd=hParentWnd;
+	}
 	else
-		DebugMessage("CPropertySheet::Construct(): pszCaption==NULL");
-	iMemSet(&m_psh,0,sizeof(PROPSHEETHEADER));
-	m_psh.dwSize=PROPSHEETHEADER_V1_SIZE; //sizeof(PROPSHEETHEADER);
-	m_psh.dwFlags=PSH_DEFAULT;
-	m_psh.pszCaption=m_strCaption;
-	m_psh.nStartPage=iSelectPage;
-	m_psh.pfnCallback=NULL;
-	m_bStacked=TRUE;
-	m_hParentWnd=hParentWnd;
+	{
+		iMemSet(&m_psh,0,sizeof(PROPSHEETHEADER));
+		m_psh.dwSize=PROPSHEETHEADER_V1_SIZE; //sizeof(PROPSHEETHEADER);
+		
+		if (pszCaption!=NULL)
+			m_psh.pszCaption=alloccopy(pszCaption);
+		else
+			DebugMessage("CPropertySheet::Construct(): pszCaption==NULL");
+		m_psh.dwFlags=PSH_DEFAULT;
+		m_psh.nStartPage=iSelectPage;
+		m_psh.pfnCallback=NULL;
+		m_bStacked=TRUE;
+		m_hParentWnd=hParentWnd;
+	}
+}
+
+void CPropertySheet::Construct(LPCWSTR pszCaption,HWND hParentWnd,UINT iSelectPage)
+{
+	if (IsFullUnicodeSupport())
+	{
+		iMemSet(&m_pshw,0,sizeof(PROPSHEETHEADERW));
+		m_pshw.dwSize=PROPSHEETHEADERW_V1_SIZE; //sizeof(PROPSHEETHEADER);
+		
+		if (pszCaption!=NULL)
+			m_pshw.pszCaption=alloccopy(pszCaption);
+		else
+			DebugMessage("CPropertySheet::Construct(): pszCaption==NULL");
+		m_pshw.dwFlags=PSH_DEFAULT;
+		m_pshw.nStartPage=iSelectPage;
+		m_pshw.pfnCallback=NULL;
+		m_bStacked=TRUE;
+		m_hParentWnd=hParentWnd;
+	}
+	else
+	{
+		iMemSet(&m_psh,0,sizeof(PROPSHEETHEADERW));
+		m_psh.dwSize=PROPSHEETHEADER_V1_SIZE; //sizeof(PROPSHEETHEADER);
+		
+		if (pszCaption!=NULL)
+			m_psh.pszCaption=alloccopyWtoA(pszCaption);
+		else
+			DebugMessage("CPropertySheet::Construct(): pszCaption==NULL");
+		m_psh.dwFlags=PSH_DEFAULT;
+		m_psh.nStartPage=iSelectPage;
+		m_psh.pfnCallback=NULL;
+		m_bStacked=TRUE;
+		m_hParentWnd=hParentWnd;
+	}
 }
 
 BOOL CPropertySheet::Create(HWND hParentWnd,DWORD dwStyle,DWORD dwExStyle)
@@ -288,17 +484,56 @@ BOOL CPropertySheet::SetActivePage(CPropertyPage* pPage)
 	return FALSE;
 }
 
-void CPropertySheet::SetTitle(LPCTSTR lpszText,UINT nStyle)
+void CPropertySheet::SetTitle(LPCSTR lpszText,UINT nStyle)
 {
-	if (m_hWnd==NULL)
+	if (IsFullUnicodeSupport())
 	{
-		m_strCaption=lpszText;
-		m_psh.pszCaption=m_strCaption;
-		m_psh.dwFlags&=~PSH_PROPTITLE;
-		m_psh.dwFlags|=nStyle;
+		if (m_pshw.pszCaption!=NULL)
+			delete[] m_pshw.pszCaption;
+		m_pshw.pszCaption=lpszText!=NULL?alloccopyAtoW(lpszText):NULL;
+		m_pshw.dwFlags&=~PSH_PROPTITLE;
+		m_pshw.dwFlags|=nStyle;
+		
+		if (m_hWnd!=NULL)
+			::SendMessageW(m_hWnd,PSM_SETTITLEW,nStyle,(LPARAM)(LPCWSTR)A2W(lpszText));
 	}
 	else
-		::SendMessage(m_hWnd,PSM_SETTITLE,nStyle,(LPARAM)lpszText);
+	{
+		if (m_psh.pszCaption!=NULL)
+			delete[] m_psh.pszCaption;
+		m_psh.pszCaption=lpszText!=NULL?alloccopy(lpszText):NULL;
+		m_psh.dwFlags&=~PSH_PROPTITLE;
+		m_psh.dwFlags|=nStyle;
+		
+		if (m_hWnd!=NULL)
+			::SendMessageA(m_hWnd,PSM_SETTITLEA,nStyle,(LPARAM)(LPCSTR)(lpszText));
+	}
+}
+
+void CPropertySheet::SetTitle(LPCWSTR lpszText,UINT nStyle)
+{
+	if (IsFullUnicodeSupport())
+	{
+		if (m_pshw.pszCaption!=NULL)
+			delete[] m_pshw.pszCaption;
+		m_pshw.pszCaption=lpszText!=NULL?alloccopy(lpszText):NULL;
+		m_pshw.dwFlags&=~PSH_PROPTITLE;
+		m_pshw.dwFlags|=nStyle;
+		
+		if (m_hWnd!=NULL)
+			::SendMessageW(m_hWnd,PSM_SETTITLEW,nStyle,(LPARAM)(LPCWSTR)(lpszText));
+	}
+	else
+	{
+		if (m_psh.pszCaption!=NULL)
+			delete[] m_psh.pszCaption;
+		m_psh.pszCaption=lpszText!=NULL?alloccopyWtoA(lpszText):NULL;
+		m_psh.dwFlags&=~PSH_PROPTITLE;
+		m_psh.dwFlags|=nStyle;
+		
+		if (m_hWnd!=NULL)
+			::SendMessageA(m_hWnd,PSM_SETTITLEA,nStyle,(LPARAM)(LPCSTR)W2A(lpszText));
+	}
 }
 
 int CPropertySheet::DoModal()
@@ -2160,19 +2395,15 @@ COptionsPropertyPage::Item::~Item()
 	}
 }
 
-void COptionsPropertyPage::Construct(const OPTIONPAGE* pOptionPage)
+void COptionsPropertyPage::Construct(const OPTIONPAGE* pOptionPage,TypeOfResourceHandle bType)
 {
-	CPropertyPage::Construct(pOptionPage->dwFlags&OPTIONPAGE::opTemplateIsID?
-		MAKEINTRESOURCE(pOptionPage->nIDTemplate):pOptionPage->lpszTemplateName,
-		pOptionPage->dwFlags&OPTIONPAGE::opCaptionIsID?pOptionPage->nIDCaption:0,
-		LanguageSpecificResource);
 
 
-	if (!(pOptionPage->dwFlags&OPTIONPAGE::opCaptionIsID))
-	{
-		m_psp.pszTitle=pOptionPage->lpszCaption;
-		m_psp.dwFlags|=PSP_USETITLE;
-	}
+	if (pOptionPage->dwFlags&OPTIONPAGE::opCaptionIsID)
+		CPropertyPage::Construct(pOptionPage->nIDCaption,bType);
+	else
+		CPropertyPage::Construct(pOptionPage->lpszCaption,bType);
+
 	m_nTreeID=pOptionPage->nTreeCtrlID;
 
 

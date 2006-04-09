@@ -111,6 +111,8 @@ inline int swprintfex( wchar_t *buffer, SIZE_T buffersize, const wchar_t *format
 	MultiByteToWideChar(CP_ACP,0,(LPCSTR)(src),(int)(len),(LPWSTR)(dst),(int)(len))
 #endif
 
+
+
 ////////////////////////////////////////
 // String functions
 
@@ -141,6 +143,13 @@ int _readnum(int base,LPCSTR& str,SIZE_T length=SIZE_T(-1));
 BYTE* dataparser(LPCSTR pString,SIZE_T dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength=NULL);
 BYTE* dataparser2(LPCSTR pStr,SIZE_T* pdwDataLength);
 BOOL IsCharNumeric(char cChar,BYTE bBase);
+
+LPSTR allocstring(UINT nID,TypeOfResourceHandle bType=LanguageSpecificResource);
+#ifdef DEF_WCHAR
+LPWSTR allocstringW(UINT nID,TypeOfResourceHandle bType=LanguageSpecificResource);
+#endif
+
+
 
 
 
@@ -543,6 +552,27 @@ public:
 	operator LPCWSTR() const;
 };
 
+class ID2A
+{
+private:
+	CHAR* pStr;
+
+public:
+	ID2A(UINT nID,TypeOfResourceHandle bType=LanguageSpecificResource);
+	~ID2A();
+	operator LPCSTR() const;
+};
+
+class ID2W
+{
+private:
+	WCHAR* pWStr;
+
+public:
+	ID2W(UINT nID,TypeOfResourceHandle bType=LanguageSpecificResource);
+	~ID2W();
+	operator LPCWSTR() const;
+};
 
 #endif
 

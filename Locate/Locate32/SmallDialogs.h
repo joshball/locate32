@@ -59,6 +59,7 @@ public:
 
 private:
 	CListCtrl* m_pList;
+	CComboBox m_ActionCombo,m_WhenCombo,m_WhichFileCombo,m_VerbCombo;
 };
 
 
@@ -89,7 +90,7 @@ public:
 	virtual BOOL OnClose();
 	virtual void OnDestroy();
 	virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
-	BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
+	BOOL ListNotifyHandler(NMLISTVIEW *pNm);
     
 	void OnOK();
 	void OnThreads();
@@ -103,8 +104,8 @@ public:
 	BOOL InsertSelected();
 	
 	void LoadPresets();
-	BOOL LoadPreset(LPCSTR szName);
-	BOOL SavePreset(LPCSTR szName);
+	BOOL LoadPreset(LPCWSTR szName);
+	BOOL SavePreset(LPCWSTR szName);
 
 	static BOOL CheckRegistryIntegrity(CRegKey& RegKey);
 
@@ -119,7 +120,7 @@ public:
 	BOOL IsItemEnabled(const CDatabase* pDatabase);
 	BOOL EnableItem(CDatabase* pDatabase,BOOL bEnable);
 
-	void SelectDatabases(char* pNames); // pNames is double zero terminated array of strins
+	void SelectDatabases(LPCWSTR pNames); // pNames is double zero terminated array of strins
 		
 	void SetThreadPriority(int nThreadPriority);
 	int GetThreadPriority() const;
@@ -140,10 +141,11 @@ public:
 	CArray<PDATABASE>& m_rSelectedDatabases;
 	LPSTR m_pRegKey;
 	BYTE m_bFlags;
-	LPSTR m_pSelectDatabases;
+	LPWSTR m_pSelectDatabases;
     
 	int m_nThreadsCurrently;
-    CListCtrl* m_pList;
+    CListCtrl m_List;
+	CComboBox m_PresetCombo;
 
 	int m_nThreadPriority;
 

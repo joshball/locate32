@@ -132,14 +132,28 @@ void CWnd::CenterWindow()
 #ifdef DEF_RESOURCES
 int CWnd::ShowErrorMessage(UINT nIDMsgStr,UINT nIDTitleStr,UINT uType) const
 {
-	char title[100];
-	char msg[1000];
-	LoadString(nIDMsgStr,msg,1000);
-	if (nIDTitleStr)
-		LoadString(nIDTitleStr,title,100);
+	if (IsFullUnicodeSupport())
+	{
+		WCHAR title[100];
+		WCHAR msg[1000];
+		LoadStringW(GetLanguageSpecificResourceHandle(),nIDMsgStr,msg,1000);
+		if (nIDTitleStr)
+			LoadStringW(GetLanguageSpecificResourceHandle(),nIDTitleStr,title,100);
+		else
+			StringCbCopyW(title,100,szwError);
+		return ::MessageBoxW(m_hWnd,msg,title,uType);
+	}
 	else
-		StringCbCopy(title,100,szError);
-	return ::MessageBox(m_hWnd,msg,title,uType);
+	{
+		char title[100];
+		char msg[1000];
+		LoadString(nIDMsgStr,msg,1000);
+		if (nIDTitleStr)
+			LoadString(nIDTitleStr,title,100);
+		else
+			StringCbCopy(title,100,szError);
+		return ::MessageBox(m_hWnd,msg,title,uType);
+	}
 }
 #endif
 
@@ -375,33 +389,100 @@ BOOL CWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 #ifdef DEF_WCHAR
 int CWnd::GetWindowText(CStringW& str) const
 {
-	int len=::GetWindowTextLengthW(m_hWnd);
-	len=::GetWindowTextW(m_hWnd,str.GetBuffer(len),len+1);
-	return len;
+	if (IsFullUnicodeSupport())
+	{
+		int len=::GetWindowTextLengthW(m_hWnd);
+		len=::GetWindowTextW(m_hWnd,str.GetBuffer(len),len+1);
+		return len;
+	}
+
+	int len=::GetWindowTextLength(m_hWnd);
+	char* pText=new char[len+2];
+	::GetWindowTextA(m_hWnd,pText,len+1);
+	str.Copy(pText,len);
+	delete[] pText;
+	return len;	
 }
 
 UINT CWnd::GetDlgItemText(int nIDDlgItem,CStringW& str)
 {
 	HWND hCtrl=::GetDlgItem(m_hWnd,nIDDlgItem);
 	UINT len=(UINT)::SendMessage(hCtrl,WM_GETTEXTLENGTH,0,0);
-	len=::GetWindowTextW(hCtrl,str.GetBuffer(len),len+1);
+	
+	if (IsFullUnicodeSupport())
+		return ::GetWindowTextW(hCtrl,str.GetBuffer(len),len+1);
+
+
+	char* pText=new char[len+2];
+	::GetWindowTextA(hCtrl,pText,len+1);
+	str.Copy(pText,len);
+	delete[] pText;
 	return len;
+}
+
+UINT CWnd::GetText(LPWSTR lpszText,UINT cchTextMax) const
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,WM_GETTEXT,cchTextMax*2,(LPARAM)lpszText); 
+
+	int nLen=::SendMessageA(m_hWnd,WM_GETTEXTLENGTH,0,0);
+	char* pText=new char[nLen+2];
+	int ret=::SendMessageA(m_hWnd,WM_GETTEXT,(nLen+2)*2,(LPARAM)pText);
+	if (ret!=0)
+	{
+		MultiByteToWideChar(CP_ACP,0,pText,ret,lpszText,cchTextMax);
+		lpszText[ret]=L'\0';
+	}
+	delete pText;
+	return ret;
 }
 
 UINT CWnd::GetText(CStringW& str) const
 {
-	UINT len=::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0);
-	LPWSTR text=new WCHAR[len];
+	if (IsFullUnicodeSupport())
+	{
+		UINT len=::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+		LPWSTR text=new WCHAR[len];
+		if (text==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return FALSE;
+		}
+		len=::SendMessageW(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
+		str.Copy(text,len);
+		delete[] text;
+		return len;
+	}
+	
+	UINT len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+	LPSTR text=new CHAR[len];
 	if (text==NULL)
 	{
 		SetHFCError(HFC_CANNOTALLOC);
 		return FALSE;
 	}
-	len=::SendMessageW(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
-	str=text;
+	len=::SendMessageA(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text); 
+	str.Copy(text,len);
 	delete[] text;
 	return len;
 }
+
+UINT CWnd::GetDlgItemText(int nIDDlgItem,LPWSTR lpString,int nMaxCount) const
+{
+	if (IsFullUnicodeSupport())
+		return ::GetDlgItemTextW(m_hWnd,nIDDlgItem,lpString,nMaxCount); 
+
+	char* pText=new char[nMaxCount+2];
+	int ret=::GetDlgItemTextA(m_hWnd,nIDDlgItem,pText,nMaxCount);
+	if (ret!=0)
+	{
+		MultiByteToWideChar(CP_ACP,0,pText,ret,lpString,nMaxCount);
+		lpString[ret]=L'\0';
+	}
+	delete pText;
+	return ret;
+}
+
 #endif
 
 BOOL CWnd::LoadPosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey,DWORD fFlags)

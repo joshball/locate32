@@ -100,41 +100,6 @@ inline void CFile::SetFilePath(LPCWSTR lpszNewName)
 }
 #endif
 
-inline BOOL CFile::Rename(LPCSTR lpszOldName,LPCSTR lpszNewName)
-{
-#ifdef WIN32
-	return ::MoveFile(lpszOldName,lpszNewName);
-#else
-	return (BYTE)_rename(lpszOldName,lpszNewName);	
-#endif
-}
-
-inline BOOL CFile::Remove(LPCSTR lpszFileName)
-{
-#ifdef WIN32
-	return ::DeleteFile(lpszFileName);
-#else
-	return (BYTE)::remove(lpszFileName);
-#endif
-}
-
-#ifdef DEF_WCHAR
-inline BOOL CFile::Rename(LPCWSTR lpszOldName,LPCWSTR lpszNewName)
-{
-	if (IsFullUnicodeSupport())
-		return ::MoveFileW(lpszOldName,lpszNewName);
-	else
-		return ::MoveFile(W2A(lpszOldName),W2A(lpszNewName));
-}
-
-inline BOOL CFile::Remove(LPCWSTR lpszFileName)
-{
-	if (IsFullUnicodeSupport())
-		return ::DeleteFileW(lpszFileName);
-	else
-		return ::DeleteFile(W2A(lpszFileName));
-}
-#endif
 
 inline BOOL CFile::Read(BYTE& bNum,CFileException* pError)
 { 
@@ -197,53 +162,112 @@ inline BOOL CFile::Write(LPCWSTR szNullTerminatedString,CFileException* pError)
 }
 #endif
 
-inline BOOL CFile::CreateDirectory(LPCSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+////////////////////////////////////////
+// namespace FileSystem
+
+inline BOOL FileSystem::Rename(LPCSTR lpszOldName,LPCSTR lpszNewName)
+{
+#ifdef WIN32
+	return ::MoveFile(lpszOldName,lpszNewName);
+#else
+	return (BYTE)_rename(lpszOldName,lpszNewName);	
+#endif
+}
+
+inline BOOL FileSystem::Remove(LPCSTR lpszFileName)
+{
+#ifdef WIN32
+	return ::DeleteFile(lpszFileName);
+#else
+	return (BYTE)::remove(lpszFileName);
+#endif
+}
+
+#ifdef DEF_WCHAR
+inline BOOL FileSystem::Rename(LPCWSTR lpszOldName,LPCWSTR lpszNewName)
+{
+	if (IsFullUnicodeSupport())
+		return ::MoveFileW(lpszOldName,lpszNewName);
+	else
+		return ::MoveFile(W2A(lpszOldName),W2A(lpszNewName));
+}
+
+inline BOOL FileSystem::Remove(LPCWSTR lpszFileName)
+{
+	if (IsFullUnicodeSupport())
+		return ::DeleteFileW(lpszFileName);
+	else
+		return ::DeleteFile(W2A(lpszFileName));
+}
+#endif
+
+inline BOOL FileSystem::CreateDirectory(LPCSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
 	return ::CreateDirectory(lpPathName,lpSecurityAttributes);
 }
 
-inline BOOL CFile::RemoveDirectory(LPCSTR lpPathName)
+inline BOOL FileSystem::RemoveDirectory(LPCSTR lpPathName)
 {
 	return ::RemoveDirectory(lpPathName);
 }
 
-inline DWORD CFile::GetFullPathName(LPCSTR lpFileName,DWORD nBufferLength,LPSTR lpBuffer,LPTSTR* lpFilePart)
+inline DWORD FileSystem::GetFullPathName(LPCSTR lpFileName,DWORD nBufferLength,LPSTR lpBuffer,LPTSTR* lpFilePart)
 {
 	return ::GetFullPathName(lpFileName,nBufferLength,lpBuffer,lpFilePart);
 }
 
-inline DWORD CFile::GetShortPathName(LPCSTR lpszLongPath,LPSTR lpszShortPath,DWORD cchBuffer)
+inline DWORD FileSystem::GetShortPathName(LPCSTR lpszLongPath,LPSTR lpszShortPath,DWORD cchBuffer)
 {
 	return ::GetShortPathName(lpszLongPath,lpszShortPath,cchBuffer);
 }
 
-inline DWORD CFile::GetCurrentDirectory(DWORD nBufferLength,LPSTR lpBuffer)
+inline DWORD FileSystem::GetCurrentDirectory(DWORD nBufferLength,LPSTR lpBuffer)
 {
 	return ::GetCurrentDirectory(nBufferLength,lpBuffer);
 }
 
-inline DWORD CFile::GetLongPathName(LPCSTR lpszShortPath,LPSTR lpszLongPath,DWORD cchBuffer)
+inline DWORD FileSystem::GetLongPathName(LPCSTR lpszShortPath,LPSTR lpszLongPath,DWORD cchBuffer)
 {
 	return ::GetLongPathName(lpszShortPath,lpszLongPath,cchBuffer);
 }
-inline DWORD CFile::GetTempPath(DWORD nBufferLength,LPSTR lpBuffer)
+inline DWORD FileSystem::GetTempPath(DWORD nBufferLength,LPSTR lpBuffer)
 {
 	return ::GetTempPath(nBufferLength,lpBuffer);
 }
 
-inline UINT CFile::GetTempFileName(LPCSTR lpPathName,LPCSTR lpPrefixString,UINT uUnique,LPSTR lpTempFileName)
+inline UINT FileSystem::GetTempFileName(LPCSTR lpPathName,LPCSTR lpPrefixString,UINT uUnique,LPSTR lpTempFileName)
 {
 	return ::GetTempFileName(lpPathName,lpPrefixString,uUnique,lpTempFileName);
 }
 	
-inline BOOL CFile::MoveFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,DWORD dwFlags)
+inline BOOL FileSystem::MoveFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,DWORD dwFlags)
 {
 	return ::MoveFileEx(lpExistingFileName,lpNewFileName,dwFlags);	
 }
 	
+inline UINT FileSystem::GetDriveType(LPCSTR lpRootPathName)
+{
+	return ::GetDriveType(lpRootPathName);
+}
+
+inline DWORD FileSystem::GetLogicalDriveStrings(DWORD nBufferLength,LPSTR lpBuffer)
+{
+	return ::GetLogicalDriveStringsA(nBufferLength,lpBuffer);
+}
+
+inline BOOL FileSystem::GetVolumeInformation(LPCSTR lpRootPathName,LPSTR lpVolumeNameBuffer,
+		DWORD nVolumeNameSize,LPDWORD lpVolumeSerialNumber,LPDWORD lpMaximumComponentLength,
+		LPDWORD lpFileSystemFlags,LPSTR lpFileSystemNameBuffer,DWORD nFileSystemNameSize)
+{
+	return ::GetVolumeInformation(lpRootPathName,lpVolumeNameBuffer,
+		nVolumeNameSize,lpVolumeSerialNumber,lpMaximumComponentLength,
+		lpFileSystemFlags,lpFileSystemNameBuffer,nFileSystemNameSize);
+}
+
+
 	
 #ifdef DEF_WCHAR
-inline BOOL CFile::CreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+inline BOOL FileSystem::CreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
 	if (IsFullUnicodeSupport())
 		return ::CreateDirectoryW(lpPathName,lpSecurityAttributes);
@@ -251,7 +275,7 @@ inline BOOL CFile::CreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES lpSe
 		return ::CreateDirectoryA(W2A(lpPathName),lpSecurityAttributes);
 }
 
-inline BOOL CFile::RemoveDirectory(LPCWSTR lpPathName)
+inline BOOL FileSystem::RemoveDirectory(LPCWSTR lpPathName)
 {
 	if (IsFullUnicodeSupport())
 		return ::RemoveDirectoryW(lpPathName);
@@ -259,7 +283,7 @@ inline BOOL CFile::RemoveDirectory(LPCWSTR lpPathName)
 		return ::RemoveDirectoryA(W2A(lpPathName));
 }
 
-inline BOOL CFile::MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,DWORD dwFlags)
+inline BOOL FileSystem::MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,DWORD dwFlags)
 {
 	if (!IsFullUnicodeSupport())
 		return ::MoveFileExW(lpExistingFileName,lpNewFileName,dwFlags);	
@@ -267,7 +291,65 @@ inline BOOL CFile::MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,DWO
 		return ::MoveFileExA(W2A(lpExistingFileName),W2A(lpNewFileName),dwFlags);	
 }
 
+inline UINT FileSystem::GetDriveType(LPCWSTR lpRootPathName)
+{
+	if (IsFullUnicodeSupport())
+		return ::GetDriveTypeW(lpRootPathName);
+	else
+		return ::GetDriveTypeA(W2A(lpRootPathName));
+}
 
+inline DWORD FileSystem::GetLogicalDriveStrings(DWORD nBufferLength,LPWSTR lpBuffer)
+{
+	if (IsFullUnicodeSupport())
+		return ::GetLogicalDriveStringsW(nBufferLength,lpBuffer);
+	else
+	{
+		DWORD nLen=::GetLogicalDriveStringsA(0,NULL)+1;
+		if (nLen==0)
+			return 0;
+		CHAR* pBuffer=new CHAR[nLen+1];
+		nLen=::GetLogicalDriveStringsA(nLen,pBuffer);
+		MultiByteToWideChar(CP_ACP,0,pBuffer,nLen+1,lpBuffer,nBufferLength);
+		delete[] pBuffer;
+		return nLen;
+	}
+}
+
+inline BOOL FileSystem::GetVolumeInformation(LPCWSTR lpRootPathName,LPWSTR lpVolumeNameBuffer,
+		DWORD nVolumeNameSize,LPDWORD lpVolumeSerialNumber,LPDWORD lpMaximumComponentLength,
+		LPDWORD lpFileSystemFlags,LPWSTR lpFileSystemNameBuffer,DWORD nFileSystemNameSize)
+{
+	if (IsFullUnicodeSupport())
+		return ::GetVolumeInformationW(lpRootPathName,lpVolumeNameBuffer,
+			nVolumeNameSize,lpVolumeSerialNumber,lpMaximumComponentLength,
+			lpFileSystemFlags,lpFileSystemNameBuffer,nFileSystemNameSize);
+	else
+	{
+		char* lpVolumeNameBufferA=NULL,*lpFileSystemNameBufferA=NULL;
+		if (lpVolumeNameBuffer!=NULL)
+			lpVolumeNameBufferA=new char[max(nVolumeNameSize,2)];
+		if (lpFileSystemNameBuffer!=NULL)
+			lpFileSystemNameBufferA=new char[max(nFileSystemNameSize,2)];
+		BOOL bRet=::GetVolumeInformationA(W2A(lpRootPathName),lpVolumeNameBufferA,
+			nVolumeNameSize,lpVolumeSerialNumber,lpMaximumComponentLength,
+			lpFileSystemFlags,lpFileSystemNameBufferA,nFileSystemNameSize);
+		
+		if (lpVolumeNameBufferA!=NULL)
+		{
+			if (bRet)			
+				MultiByteToWideChar(CP_ACP,0,lpVolumeNameBufferA,-1,lpVolumeNameBuffer,nVolumeNameSize);
+			delete[] lpVolumeNameBufferA;
+		}
+		if (lpFileSystemNameBufferA!=NULL)
+		{
+			if (bRet)			
+				MultiByteToWideChar(CP_ACP,0,lpFileSystemNameBufferA,-1,lpFileSystemNameBuffer,nFileSystemNameSize);
+			delete[] lpFileSystemNameBufferA;
+		}
+		return bRet;
+	}
+}
 
 #endif
 

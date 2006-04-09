@@ -274,7 +274,7 @@ BOOL CSettingsProperties::LoadSettings()
 				Path << '\\';
 			Path<<"Locate32 Autorun.lnk";
 			
-			SetFlags(settingsStartLocateAtStartup,CFile::IsFile(Path));
+			SetFlags(settingsStartLocateAtStartup,FileSystem::IsFile(Path));
 			
 		}
 	}
@@ -446,7 +446,7 @@ BOOL CSettingsProperties::SaveSettings()
 	{
 		if (RegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
-			RegKey.SetValue("",CString(IDS_EXPLORERLOCATE));
+			RegKey.SetValue("",ID2A(IDS_EXPLORERLOCATE));
 			CRegKey CommandKey;
 			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
@@ -468,7 +468,7 @@ BOOL CSettingsProperties::SaveSettings()
 	{
 		if (RegKey.OpenKey(HKCR,"CLSID\\{450D8FBA-AD25-11D0-98A8-0800361B1103}\\shell\\locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
-			RegKey.SetValue("",CString(IDS_EXPLORERLOCATE));
+			RegKey.SetValue("",ID2A(IDS_EXPLORERLOCATE));
 			CRegKey CommandKey;
 			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
@@ -490,7 +490,7 @@ BOOL CSettingsProperties::SaveSettings()
 	{
 		if (RegKey.OpenKey(HKCR,"Drive\\shell\\locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
-			RegKey.SetValue("",CString(IDS_EXPLORERLOCATE));
+			RegKey.SetValue("",ID2A(IDS_EXPLORERLOCATE));
 			CRegKey CommandKey;
 			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
@@ -512,7 +512,7 @@ BOOL CSettingsProperties::SaveSettings()
 	{
 		if (RegKey.OpenKey(HKCR,"Directory\\shell\\locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
-			RegKey.SetValue("",CString(IDS_EXPLORERLOCATE));
+			RegKey.SetValue("",ID2A(IDS_EXPLORERLOCATE));
 			CRegKey CommandKey;
 			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
@@ -534,7 +534,7 @@ BOOL CSettingsProperties::SaveSettings()
 	{
 		if (RegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\updatedb",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
-			RegKey.SetValue("",CString(IDS_EXPLORERUPDATE));
+			RegKey.SetValue("",ID2A(IDS_EXPLORERUPDATE));
 			CRegKey CommandKey;
 			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
@@ -576,13 +576,13 @@ BOOL CSettingsProperties::SaveSettings()
 			
 			if (IsFlagSet(settingsStartLocateAtStartup))
 			{
-				if (!CFile::IsFile(Path))
+				if (!FileSystem::IsFile(Path))
 					CreateShortcut(Path,GetApp()->GetExeName(),""," /S");
 			}
 			else 
 			{
-				if (CFile::IsFile(Path))
-					DeleteFile(Path);
+				if (FileSystem::IsFile(Path))
+					FileSystem::Remove(Path);
 			}
 
 		}	
@@ -674,15 +674,15 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnInitDialog(HWND hwndFocus)
 	// Adding details to sorting box
 	if (IsFullUnicodeSupport())
 	{
-		SendDlgItemMessageW(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_NOSORTNG));
+		SendDlgItemMessageW(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)ID2W(IDS_NOSORTNG));
 		for (int iDetail=0;iDetail<=CLocateDlg::LastType;iDetail++)
-			SendDlgItemMessageW(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_LISTNAME+iDetail));
+			SendDlgItemMessageW(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)ID2W(IDS_LISTNAME+iDetail));
 	}
 	else
 	{
-		SendDlgItemMessage(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_NOSORTNG));
+		SendDlgItemMessage(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_NOSORTNG));
 		for (int iDetail=0;iDetail<=CLocateDlg::LastType;iDetail++)
-			SendDlgItemMessage(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_LISTNAME+iDetail));
+			SendDlgItemMessage(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_LISTNAME+iDetail));
 	}	
 	
 	// Defaults
@@ -697,20 +697,11 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnInitDialog(HWND hwndFocus)
 		CheckDlgButton(IDC_ASCENDINGORDER,TRUE);
 	}
 
-
-	if (IsFullUnicodeSupport())
-	{
-		SendDlgItemMessageW(IDC_CHECKIN,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_FILENAMESONLY));
-		SendDlgItemMessageW(IDC_CHECKIN,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_FILEANDFOLDERNAMES));
-		SendDlgItemMessageW(IDC_CHECKIN,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_FOLDERNAMESONLY));
-	}
-	else
-	{
-		SendDlgItemMessage(IDC_CHECKIN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_FILENAMESONLY));
-		SendDlgItemMessage(IDC_CHECKIN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_FILEANDFOLDERNAMES));
-		SendDlgItemMessage(IDC_CHECKIN,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_FOLDERNAMESONLY));
-	}
-	SendDlgItemMessage(IDC_CHECKIN,CB_SETCURSEL,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultCheckInFlag);
+	CComboBox Checkin(GetDlgItem(IDC_CHECKIN));
+	Checkin.AddString(ID2W(IDS_FILENAMESONLY));
+	Checkin.AddString(ID2W(IDS_FILEANDFOLDERNAMES));
+	Checkin.AddString(ID2W(IDS_FOLDERNAMESONLY));
+	Checkin.SetCurSel(m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultCheckInFlag);
 	
 	CheckDlgButton(IDC_MATCHWHOLEFILENAMEONLY,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultWholeName);
 	CheckDlgButton(IDC_REPLACESPACES,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultReplaceSpaces);
@@ -1144,12 +1135,12 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateThreadPriorityPr
 	case BASICPARAMS::Initialize:
 		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
 		{
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYHIGH));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYABOVENORMAL));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYNORMAL));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYBELOWNORMAL));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYLOW));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYIDLE));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYHIGH));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYABOVENORMAL));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYNORMAL));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYBELOWNORMAL));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYLOW));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYIDLE));		
 		}
 		break;
 	case BASICPARAMS::Get:
@@ -1216,11 +1207,11 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateTooltipPositionP
 	case BASICPARAMS::Initialize:
 		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
 		{
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPPOSNEARCLOCK));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPPOSUPPERLEFT));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPPOSUPPERRIGHT));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPPOSLOWERLEFT));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPPOSLOWERRIGHT));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPPOSNEARCLOCK));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPPOSUPPERLEFT));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPPOSUPPERRIGHT));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPPOSLOWERLEFT));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPPOSLOWERRIGHT));		
 			
 		}
 		break;
@@ -1280,10 +1271,10 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateTooltipTopmostPr
 	case BASICPARAMS::Initialize:
 		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
 		{
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPALWAYSONTOP));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTMAXIMIZED));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTFULLSCREEN));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETTOOLTIPNEVERONTOP));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPALWAYSONTOP));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTMAXIMIZED));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTFULLSCREEN));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPNEVERONTOP));		
 		}
 		break;
 	case BASICPARAMS::Get:
@@ -1341,7 +1332,7 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::TimeFormatComboProc(CO
 			EnumTimeFormats(EnumTimeFormatsProc,LOCALE_USER_DEFAULT,0);
 			//EnumDateFormats(DateFormatsProc,LOCALE_USER_DEFAULT,DATE_SHORTDATE);
 		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETSYSTEMDEFAULT));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETSYSTEMDEFAULT));		
 			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_SETCURSEL,0,0);		
 	
 			for (int i=0;i<((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer.GetSize();i++)
@@ -1381,7 +1372,7 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::DateFormatComboProc(CO
 			((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer.RemoveAll();
 			EnumDateFormats(EnumDateFormatsProc,LOCALE_USER_DEFAULT,DATE_SHORTDATE);
 		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSETSYSTEMDEFAULT));		
+			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETSYSTEMDEFAULT));		
 			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_SETCURSEL,0,0);		
 
 			for (int i=0;i<((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer.GetSize();i++)
@@ -1477,9 +1468,9 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnInitDialog(HWND hwndFocus)
 
 	m_pList=new CListCtrl(GetDlgItem(IDC_LANGUAGE));
 
-	m_pList->InsertColumn(0,CString(IDS_LANGUAGE),LVCFMT_LEFT,130);
-	m_pList->InsertColumn(1,CString(IDS_LANGUAGEFILE),LVCFMT_LEFT,80);
-	m_pList->InsertColumn(2,CString(IDS_LANGUAGEDESC),LVCFMT_LEFT,100);
+	m_pList->InsertColumn(0,ID2A(IDS_LANGUAGE),LVCFMT_LEFT,130);
+	m_pList->InsertColumn(1,ID2A(IDS_LANGUAGEFILE),LVCFMT_LEFT,80);
+	m_pList->InsertColumn(2,ID2A(IDS_LANGUAGEDESC),LVCFMT_LEFT,100);
 	
 	m_pList->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT ,LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT );
 	m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Language Settings List Widths");
@@ -1657,12 +1648,12 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnInitDialog(HWND hwndFocus)
 	m_pList=new CListCtrl(GetDlgItem(IDC_DATABASES));
 	m_pList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES|LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT,
 		LVS_EX_CHECKBOXES|LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT);
-	m_pList->InsertColumn(0,CString(IDS_DATABASENAME),LVCFMT_LEFT,100,0);
-	m_pList->InsertColumn(1,CString(IDS_DATABASEFILE),LVCFMT_LEFT,130,0);
-	m_pList->InsertColumn(2,CString(IDS_GLOBALUPDATE),LVCFMT_LEFT,70,0);
+	m_pList->InsertColumn(0,ID2A(IDS_DATABASENAME),LVCFMT_LEFT,100,0);
+	m_pList->InsertColumn(1,ID2A(IDS_DATABASEFILE),LVCFMT_LEFT,130,0);
+	m_pList->InsertColumn(2,ID2A(IDS_GLOBALUPDATE),LVCFMT_LEFT,70,0);
 	if (((CLocateApp*)GetApp())->m_wComCtrlVersion<0x0600)
 	{
-		m_pList->InsertColumn(3,CString(IDS_THREADID),LVCFMT_LEFT,40,0);
+		m_pList->InsertColumn(3,ID2A(IDS_THREADID),LVCFMT_LEFT,40,0);
 		int oa[]={3,0,1,2};
 		m_pList->SetColumnOrderArray(4,oa);
 	}
@@ -1924,13 +1915,13 @@ void CSettingsProperties::CDatabasesSettingsPage::OnRemove()
 	CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(nItem);
 	if (pDatabase->GetArchiveType()==CDatabase::archiveFile)
 	{
-		if (CFile::IsFile(pDatabase->GetArchiveName()))
+		if (FileSystem::IsFile(pDatabase->GetArchiveName()))
 		{
 			CString str;
 			str.Format(IDS_DELETEDATABASEQUESTION,pDatabase->GetArchiveName());
-			int nRet=MessageBox(str,CString(IDS_DELETEDATABASE),MB_ICONQUESTION|MB_YESNO);
+			int nRet=MessageBox(str,ID2A(IDS_DELETEDATABASE),MB_ICONQUESTION|MB_YESNO);
 			if (nRet==IDYES)
-				DeleteFile(pDatabase->GetArchiveName());
+				FileSystem::Remove(pDatabase->GetArchiveName());
 		}
 	}
 	m_pList->DeleteItem(nItem);
@@ -2062,8 +2053,8 @@ void CSettingsProperties::CDatabasesSettingsPage::OnRestore()
 		CDatabase* pDatabase=CDatabase::FromOldStyleDatabase(HKCU,"Software\\Update\\Database");
 		if (pDatabase==NULL)
 		{
-			pDatabase=CDatabase::FromDefaults(TRUE,GetApp()->GetExeName(),
-				LastCharIndex(GetApp()->GetExeName(),'\\')+1); // Nothing else can be done?
+			CStringW sApp(GetApp()->GetExeNameW());
+			pDatabase=CDatabase::FromDefaults(TRUE,sApp,sApp.FindLast(L'\\')+1); // Nothing else can be done?
 		}
 		else
 		{
@@ -2112,7 +2103,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnNotify(int idCtrl,LPNMHDR pn
 	switch (idCtrl)
 	{
 	case IDC_DATABASES:
-		return ListNotifyHandler((LV_DISPINFO*)pnmh,(NMLISTVIEW*)pnmh);
+		return ListNotifyHandler((NMLISTVIEW*)pnmh);
 	}
 	return CPropertyPage::OnNotify(idCtrl,pnmh);
 }
@@ -2126,7 +2117,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 	CString Title;
 	CFileDialog fd(TRUE,L"*",szwEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,IDS_IMPORTDATABASEFILTERS);
 	fd.EnableFeatures();
-	fd.SetTitle(CStringW(IDS_IMPORTDATABASESETTINGS));
+	fd.SetTitle(ID2W(IDS_IMPORTDATABASESETTINGS));
 	
 	
 	// Ask file name
@@ -2135,7 +2126,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 
 	// First, check whether file is database and read information
 	CDatabase* pDatabase;
-	CString Path;
+	CStringW Path;
 	fd.GetFilePath(Path);
 	CDatabaseInfo* pDatabaseInfo=CDatabaseInfo::GetFromFile(Path);
 	if (pDatabaseInfo!=NULL)
@@ -2174,7 +2165,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 		}
         
 		if (!bError)
-			pDatabase=CDatabase::FromExtraBlock(pFileContent);
+			pDatabase=CDatabase::FromExtraBlock(A2W(pFileContent));
 
 		if (pFile!=NULL)
 			delete pFile;
@@ -2193,7 +2184,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 
 	if (pDatabase->GetThreadId()>=m_nThreadsCurrently)
 	{
-		if (MessageBox(CString(IDS_INCREASETHREADCOUNT),Title,MB_ICONQUESTION|MB_YESNO)==IDYES)
+		if (MessageBox(ID2A(IDS_INCREASETHREADCOUNT),Title,MB_ICONQUESTION|MB_YESNO)==IDYES)
 		{
 			ChangeNumberOfThreads(pDatabase->GetThreadId()+1);
 			SetDlgItemInt(IDC_THREADS,pDatabase->GetThreadId()+1,FALSE);
@@ -2218,17 +2209,16 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 	// Set wait cursor
 	CWaitCursor wait;
 	
-	LPCSTR pCurFile=szEmpty;
+	LPCWSTR pCurFile=szwEmpty;
 	if (pDatabase->GetArchiveType()==CDatabase::archiveFile)
 		pCurFile=pDatabase->GetArchiveName();
 
 	// Initializing file name dialog
-	CString Title,Path;
-	
-	CFileDialog fd(FALSE,"*",pCurFile,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,
+	CStringW Path;
+	CFileDialog fd(FALSE,L"*",pCurFile,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,
 		IDS_EXPORTDATABASEFILTERS);
 	fd.EnableFeatures();
-	fd.SetTitle(CStringW(IDS_EXPORTDATABASESETTINGS));
+	fd.SetTitle(ID2W(IDS_EXPORTDATABASESETTINGS));
 	
 	
 	// Ask file name
@@ -2236,20 +2226,20 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 		return;
 	fd.GetFilePath(Path);
 	
-	if (CFile::IsFile(Path))
+	if (FileSystem::IsFile(Path))
 	{
 		if (pDatabase->SaveExtraBlockToDbFile(Path))
 			return;
 
-		CString msg;
-		msg.Format(IDS_FILEISNOTDATABASE,LPCSTR(Path));
-		if (MessageBox(msg,Title,MB_ICONQUESTION|MB_YESNO)==IDNO)
+		CStringW msg;
+		msg.Format(IDS_FILEISNOTDATABASE,LPCWSTR(Path));
+		if (MessageBox(msg,ID2W(IDS_EXPORTDATABASESETTINGS),MB_ICONQUESTION|MB_YESNO)==IDNO)
 			return;			
 	}
 
 	CFile* pFile=NULL;
-	LPSTR pExtra=pDatabase->ConstructExtraBlock();
-	DWORD dwExtraLen=istrlen(pExtra);
+	LPWSTR pExtra=pDatabase->ConstructExtraBlock();
+	DWORD dwExtraLen=istrlenw(pExtra);
 
 	try {
 		pFile=new CFile(Path,CFile::defWrite,TRUE);
@@ -2257,7 +2247,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 	}
 	catch (...)
 	{
-		MessageBox(CString(IDS_CANNOTWRITESETTINGS),Title,MB_ICONERROR|MB_OK);
+		MessageBox(ID2A(IDS_CANNOTWRITESETTINGS),szError,MB_ICONERROR|MB_OK);
 	}
 	if (pFile!=NULL)
 		delete pFile;
@@ -2265,9 +2255,9 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
     
 }
 
-BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
+BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *pNm)
 {
-	switch(pLvdi->hdr.code)
+	switch(pNm->hdr.code)
 	{
 	case LVN_ITEMCHANGING:
 		if (m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
@@ -2297,8 +2287,50 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(LV_DISPINFO 
 		if (pNm->lParam!=NULL)
 			delete (CDatabase*)pNm->lParam;
 		break;
-	case LVN_GETDISPINFO:
+	case LVN_GETDISPINFOA:
 		{
+			LV_DISPINFO *pLvdi=(LV_DISPINFO*)pNm;
+
+			CDatabase* pDatabase=(CDatabase*)pLvdi->item.lParam;
+			if (pDatabase==NULL)
+				break;
+				
+			ISDLGTHREADOK
+			if (g_szBuffer!=NULL)
+				delete[] g_szBuffer;
+			
+			switch (pLvdi->item.iSubItem)
+			{
+			case 0:
+				if (!m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
+					pLvdi->item.pszText=alloccopyWtoA(pDatabase->GetName());
+				else
+				{
+					g_szBuffer=new char[40];
+					LoadString(IDS_COMMANDLINEARGUMENT,g_szBuffer,40);
+					pLvdi->item.pszText=g_szBuffer;
+				}
+				break;
+			case 1:
+				pLvdi->item.pszText=alloccopyWtoA(pDatabase->GetArchiveName());
+				break;
+			case 2:
+				g_szBuffer=new char[100];
+				LoadString(pDatabase->IsGloballyUpdated()?IDS_YES:IDS_NO,g_szBuffer,100);
+				pLvdi->item.pszText=g_szBuffer;
+				break;
+			case 3:
+				g_szBuffer=new char[20];
+				_itoa_s(pDatabase->GetThreadId()+1,g_szBuffer,20,10);
+				pLvdi->item.pszText=g_szBuffer;
+				break;
+			}
+			break;
+		}
+	case LVN_GETDISPINFOW:
+		{
+			LV_DISPINFOW *pLvdi=(LV_DISPINFOW*)pNm;
+
 			CDatabase* pDatabase=(CDatabase*)pLvdi->item.lParam;
 			if (pDatabase==NULL)
 				break;
@@ -2307,35 +2339,35 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(LV_DISPINFO 
 			{
 			case 0:
 				if (!m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
-					pLvdi->item.pszText=const_cast<LPSTR>(pDatabase->GetName());
+					pLvdi->item.pszText=const_cast<LPWSTR>(pDatabase->GetName());
 				else
 				{
 					ISDLGTHREADOK
-					if (g_szBuffer!=NULL)
-						delete[] g_szBuffer;
-					g_szBuffer=new char[40];
-					LoadString(IDS_COMMANDLINEARGUMENT,g_szBuffer,40);
-					pLvdi->item.pszText=g_szBuffer;
+					if (g_szwBuffer!=NULL)
+						delete[] g_szwBuffer;
+					g_szwBuffer=new WCHAR[40];
+					LoadString(IDS_COMMANDLINEARGUMENT,g_szwBuffer,40);
+					pLvdi->item.pszText=g_szwBuffer;
 				}
 				break;
 			case 1:
-				pLvdi->item.pszText=const_cast<LPSTR>(pDatabase->GetArchiveName());
+				pLvdi->item.pszText=const_cast<LPWSTR>(pDatabase->GetArchiveName());
 				break;
 			case 2:
 				ISDLGTHREADOK
-				if (g_szBuffer!=NULL)
-					delete[] g_szBuffer;
-				g_szBuffer=new char[100];
-				LoadString(pDatabase->IsGloballyUpdated()?IDS_YES:IDS_NO,g_szBuffer,100);
-				pLvdi->item.pszText=g_szBuffer;
+				if (g_szwBuffer!=NULL)
+					delete[] g_szwBuffer;
+				g_szwBuffer=new WCHAR[100];
+				LoadString(pDatabase->IsGloballyUpdated()?IDS_YES:IDS_NO,g_szwBuffer,100);
+				pLvdi->item.pszText=g_szwBuffer;
 				break;
 			case 3:
 				ISDLGTHREADOK
-				if (g_szBuffer!=NULL)
-					delete[] g_szBuffer;
-				g_szBuffer=new char[20];
-				_itoa_s(pDatabase->GetThreadId()+1,g_szBuffer,20,10);
-				pLvdi->item.pszText=g_szBuffer;
+				if (g_szwBuffer!=NULL)
+					delete[] g_szwBuffer;
+				g_szwBuffer=new WCHAR[20];
+				_itow_s(pDatabase->GetThreadId()+1,g_szwBuffer,20,10);
+				pLvdi->item.pszText=g_szwBuffer;
 				break;
 			}
 			break;
@@ -2577,10 +2609,10 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	CLocateDlg::SetSystemImagelists(m_pList);
 	m_pList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES|LVS_EX_HEADERDRAGDROP,
 		LVS_EX_CHECKBOXES|LVS_EX_HEADERDRAGDROP);
-	m_pList->InsertColumn(0,CString(IDS_VOLUMELABEL),LVCFMT_LEFT,95,0);
-	m_pList->InsertColumn(1,CString(IDS_VOLUMEPATH),LVCFMT_LEFT,75,1);
-	m_pList->InsertColumn(2,CString(IDS_VOLUMETYPE),LVCFMT_LEFT,70,2);
-	m_pList->InsertColumn(3,CString(IDS_VOLUMEFILESYSTEM),LVCFMT_LEFT,65,3);
+	m_pList->InsertColumn(0,ID2A(IDS_VOLUMELABEL),LVCFMT_LEFT,95,0);
+	m_pList->InsertColumn(1,ID2A(IDS_VOLUMEPATH),LVCFMT_LEFT,75,1);
+	m_pList->InsertColumn(2,ID2A(IDS_VOLUMETYPE),LVCFMT_LEFT,70,2);
+	m_pList->InsertColumn(3,ID2A(IDS_VOLUMEFILESYSTEM),LVCFMT_LEFT,65,3);
 	m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Database Dialog List Widths");
 	
 	for (int i=1;i<=m_nMaximumNumbersOfThreads;i++)
@@ -2594,7 +2626,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	if (m_bDontEditName)
 	{
 		EnableDlgItem(IDC_NAME,FALSE);
-		SetDlgItemText(IDC_NAME,CString(IDS_COMMANDLINEARGUMENT));
+		SetDlgItemText(IDC_NAME,ID2A(IDS_COMMANDLINEARGUMENT));
 	}
 	else
 		SetDlgItemText(IDC_NAME,m_pDatabase->GetName());
@@ -2613,9 +2645,9 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	if (nLength<2)
 		return FALSE;
 
-	char* szDrives=new char[nLength+1];
-	GetLogicalDriveStrings(nLength,szDrives);
-	for (LPSTR szDrive=szDrives;szDrive[0]!='\0';szDrive+=4)
+	WCHAR* szDrives=new WCHAR[nLength+1];
+	FileSystem::GetLogicalDriveStrings(nLength,szDrives);
+	for (LPWSTR szDrive=szDrives;szDrive[0]!=L'\0';szDrive+=4)
 		AddDriveToList(szDrive);
 	delete[] szDrives;
 
@@ -2639,7 +2671,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 			{
 				if (pPtr[0]=='\\' && pPtr[1]=='\\')
 				{
-					if (!CFile::IsDirectory(pPtr))
+					if (!FileSystem::IsDirectory(pPtr))
 						AddComputerToList(pPtr);
 					else
 						AddDirectoryToList(pPtr,dwLength);
@@ -2650,10 +2682,9 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 			else if (pPtr[1]==':')
 			{
 				// Checking whether we point unavailable drive
-				
-				char root[]="X:\\";
+				WCHAR root[]=L"X:\\";
 				root[0]=pPtr[0];
-				UINT uRet=GetDriveType(root);
+				UINT uRet=FileSystem::GetDriveType(root);
 				if (uRet==DRIVE_UNKNOWN || uRet==DRIVE_NO_ROOT_DIR)
 					AddDriveToList(root); // Unavailable
 				
@@ -2716,16 +2747,16 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 
 	// Setting name
 	int iLength=GetDlgItemTextLength(IDC_NAME)+1;
-	char* pText=new char[iLength];
+	WCHAR* pText=new WCHAR[iLength];
 	GetDlgItemText(IDC_NAME,pText,iLength);
 	
 	if (!m_bDontEditName)
 	{
-		if (strncmp(pText,"DEFAULTX",8)==0 || strncmp(pText,"PARAMX",6)==0)
+		if (wcsncmp(pText,L"DEFAULTX",8)==0 || wcsncmp(pText,L"PARAMX",6)==0)
 		{
 			CString msg;
 			msg.Format(IDS_INVALIDDBNAME,pText);
-			MessageBox(msg,CString(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
+			MessageBox(msg,ID2A(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
 			SetFocus(IDC_NAME);
 			delete[] pText;
 			return;
@@ -2734,7 +2765,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 		{
 			CString msg;
 			msg.Format(IDS_INVALIDDBNAME,pText);
-			MessageBox(msg,CString(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
+			MessageBox(msg,ID2A(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
 			SetFocus(IDC_NAME);
 			delete[] pText;
 			return;
@@ -2743,7 +2774,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 		{
 			CString msg;
 			msg.Format(IDS_NAMEALREADYEXISTS,pText);
-			MessageBox(msg,CString(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
+			MessageBox(msg,ID2A(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
 			SetFocus(IDC_NAME);
 			delete[] pText;
 			return;
@@ -2759,20 +2790,20 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 	{
 		CString msg;
 		msg.Format(IDS_INVALIDFILENAME,"");
-		MessageBox(msg,CString(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
+		MessageBox(msg,ID2A(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
 		SetFocus(IDC_DBFILE);
 		return;
 	}
-	pText=new char[iLength];
+	pText=new WCHAR[iLength];
 	GetDlgItemText(IDC_DBFILE,pText,iLength);
 	m_pDatabase->SetArchiveNamePtr(CDatabase::GetCorrertFileName(pText));
 	
 	if (m_pDatabase->GetArchiveName()==NULL)
 	{
 		// Path was not ok, is this intended
-		CString msg;
+		CStringW msg;
 		msg.Format(IDS_INVALIDFILENAMEISOK,pText);
-		if (MessageBox(msg,CString(IDS_DATABASESETTINGS),MB_YESNO|MB_ICONINFORMATION)==IDNO)
+		if (MessageBox(msg,ID2W(IDS_DATABASESETTINGS),MB_YESNO|MB_ICONINFORMATION)==IDNO)
 		{
 			SetFocus(IDC_DBFILE);
 			delete[] pText;
@@ -2786,22 +2817,22 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 
 	if (CDatabase::FindByFile(m_aOtherDatabases,m_pDatabase->GetArchiveName())!=NULL)
 	{
-		CString msg;
+		CStringW msg;
 		msg.Format(IDS_FILEALREADYEXISTS,m_pDatabase->GetArchiveName());
-		MessageBox(msg,CString(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
+		MessageBox(msg,ID2W(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
 		SetFocus(IDC_DBFILE);
 		return;
 	}
 	
     // Setting creator
 	iLength=GetDlgItemTextLength(IDC_CREATOR)+1;
-	pText=new char[iLength];
+	pText=new WCHAR[iLength];
 	GetDlgItemText(IDC_CREATOR,pText,iLength);
 	m_pDatabase->SetCreatorPtr(pText);
 
 	// Setting description
 	iLength=GetDlgItemTextLength(IDC_DESCRIPTION)+1;
-	pText=new char[iLength];
+	pText=new WCHAR[iLength];
 	GetDlgItemText(IDC_DESCRIPTION,pText,iLength);
 	m_pDatabase->SetDescriptionPtr(pText);
 
@@ -2816,9 +2847,9 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
     
 	if (IsDlgButtonChecked(IDC_CUSTOMDRIVES))
 	{
-		CArrayFAP<LPSTR> aRoots;
+		CArrayFAP<LPWSTR> aRoots;
 		
-		LVITEM li;
+		LVITEMW li;
 		li.iItem=m_pList->GetNextItem(-1,LVNI_ALL);
 		while (li.iItem!=-1)
 		{
@@ -2830,29 +2861,29 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 			}
 			
 			BOOL bDoNotAdd=FALSE;
-			char* szPath=new char[MAX_PATH];
+			WCHAR* szPath=new WCHAR[MAX_PATH];
 			li.mask=LVIF_TEXT;
 			li.iSubItem=1;
 			li.pszText=szPath;
 			li.cchTextMax=MAX_PATH;
 			m_pList->GetItem(&li);
-			SIZE_T nPathLen=istrlen(szPath);
+			SIZE_T nPathLen=istrlenw(szPath);
 			for (int i=0;i<aRoots.GetSize();i++)
 			{
-				LPSTR pAddedPath=aRoots.GetAt(i);
-				if (CFile::IsSubDirectory(szPath,pAddedPath))
+				LPWSTR pAddedPath=aRoots.GetAt(i);
+				if (FileSystem::IsSubDirectory(szPath,pAddedPath))
 				{
-					CString str;
+					CStringW str;
 					str.Format(IDS_SUBFOLDER,szPath,pAddedPath,szPath);
-					MessageBox(str,CString(IDS_DATABASESETTINGS),MB_ICONINFORMATION|MB_OK);
+					MessageBox(str,ID2W(IDS_DATABASESETTINGS),MB_ICONINFORMATION|MB_OK);
 					bDoNotAdd=TRUE;
 					break;
 				}
-				else if (CFile::IsSubDirectory(pAddedPath,szPath))
+				else if (FileSystem::IsSubDirectory(pAddedPath,szPath))
 				{
-					CString str;
+					CStringW str;
 					str.Format(IDS_SUBFOLDER,pAddedPath,szPath,pAddedPath);
-					MessageBox(str,CString(IDS_DATABASESETTINGS),MB_ICONINFORMATION|MB_OK);
+					MessageBox(str,ID2W(IDS_DATABASESETTINGS),MB_ICONINFORMATION|MB_OK);
 					aRoots.RemoveAt(i--);
 					continue;
 				}
@@ -2941,7 +2972,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 							{
 								CString s;
 								s.Format(IDS_ERRORCANNOTADDITEM2,str.cStr);
-								MessageBox(s,CString(IDS_ERROR),MB_ICONERROR|MB_OK);
+								MessageBox(s,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
 							}
 							return;
 						}
@@ -2956,7 +2987,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 							{
 								CStringW s;
 								s.Format(IDS_ERRORCANNOTADDITEM2,str.pOleStr);
-								MessageBox(s,CStringW(IDS_ERROR),MB_ICONERROR|MB_OK);
+								MessageBox(s,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
 							}
 							return;
 						}
@@ -3076,7 +3107,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnBrowse()
 
 	CFileDialog fd(FALSE,L"*",File,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,IDS_DATABASEFILTERS);
 	fd.EnableFeatures();
-	fd.SetTitle(CString(IDS_SELECTDATABASE));
+	fd.SetTitle(ID2A(IDS_SELECTDATABASE));
 	
 	// Ask file name
 	if (!fd.DoModal(*this))
@@ -3108,16 +3139,16 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnExcludeDire
 		m_pDatabase->SetExcludedDirectories(edd.m_aDirectories);
 }
 
-int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList(LPSTR szDrive)
+int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList(LPWSTR szDrive)
 {
-	DWORD nType=GetDriveType(szDrive);
-	DebugFormatMessage("CSettingsProperties::CDatabaseSettingsPage::AddDriveToList(%s),type:%X",szDrive,nType);
+	DWORD nType=FileSystem::GetDriveType(szDrive);
+	DebugFormatMessage(L"CSettingsProperties::CDatabaseSettingsPage::AddDriveToList(%s),type:%X",szDrive,nType);
 
-	LVITEM li;
+	LVITEMW li;
 	li.iItem=m_pList->GetItemCount();
 
-	CString Temp;
-	char szLabel[20],szFileSystem[20]="";
+	CStringW Temp;
+	WCHAR szLabel[20],szFileSystem[20]=L"";
 	switch (nType)
 	{
 	case DRIVE_FIXED:
@@ -3151,7 +3182,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 		DWORD dwTemp;
 		UINT nOldMode=SetErrorMode(SEM_FAILCRITICALERRORS);
 	
-		if (!GetVolumeInformation(szDrive,szLabel,20,&dwTemp,&dwTemp,&dwTemp,szFileSystem,20))
+		if (!FileSystem::GetVolumeInformation(szDrive,szLabel,20,&dwTemp,&dwTemp,&dwTemp,szFileSystem,20))
 		{
 			switch (nType)
 			{
@@ -3169,8 +3200,8 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	}
 
 	// Resolving icon,
-	SHFILEINFO fi;
-	if (SHGetFileInfo(szDrive,0,&fi,sizeof(SHFILEINFO),SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+	SHFILEINFOW fi;
+	if (GetFileInfo(szDrive,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
 		li.iImage=fi.iIcon;
 	else
 		li.iImage=DEL_IMAGE;
@@ -3183,7 +3214,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	// Path
 	li.mask=LVIF_TEXT;
 	li.iSubItem=1;
-	szDrive[2]='\0';
+	szDrive[2]=L'\0';
 	li.pszText=szDrive;
 	m_pList->SetItem(&li);
 	
@@ -3205,11 +3236,11 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	}
 	else
 	{
-		LPCSTR pPtr=m_pDatabase->GetRoots();
+		LPCWSTR pPtr=m_pDatabase->GetRoots();
 
 		while (*pPtr!='\0')
 		{
-			SIZE_T dwLength=istrlen(pPtr);
+			SIZE_T dwLength=istrlenw(pPtr);
 
 			// Check if selected
 			if (strcasecmp(pPtr,szDrive)==0)
@@ -3249,7 +3280,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 		{
 			CStringW str;
 			str.Format(IDS_FOLDEREXIST,(LPCWSTR)rFolder);
-			MessageBox(str,CStringW(IDS_ADDFOLDER),MB_ICONINFORMATION|MB_OK);
+			MessageBox(str,ID2W(IDS_ADDFOLDER),MB_ICONINFORMATION|MB_OK);
 			m_pList->SetFocus();
 			m_pList->SetCheckState(li.iItem,TRUE);
 			m_pList->EnsureVisible(li.iItem,FALSE);
@@ -3298,20 +3329,8 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 	
 	
 	UINT nOldMode=SetErrorMode(SEM_FAILCRITICALERRORS);
-	if (IsFullUnicodeSupport())
-	{
-		if (!GetVolumeInformationW(Drive,szLabel,20,&dwTemp,&dwTemp,&dwTemp,szFileSystem,20))
-			szFileSystem[0]='\0';
-	}
-	else
-	{
-		CHAR szLabelA[20],szFileSystemA[20];
-		if (!GetVolumeInformation(WtoA(Drive),szLabelA,20,&dwTemp,&dwTemp,&dwTemp,szFileSystemA,20))
-			szFileSystem[0]=L'\0';
-		else
-			MultiByteToWideChar(CP_ACP,0,szFileSystemA,-1,szFileSystem,20);
-			
-	}
+	if (!FileSystem::GetVolumeInformation(Drive,szLabel,20,&dwTemp,&dwTemp,&dwTemp,szFileSystem,20))
+		szFileSystem[0]='\0';
 	SetErrorMode(nOldMode);
 
 	// Resolving icon,
@@ -3527,7 +3546,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	if (!GetFullPathName(pText,400,sDirectory.GetBuffer(400),NULL))
 	{
 		CString str;
-		MessageBox(str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+		MessageBox(str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
 		delete[] pText;
 		return FALSE;	
 	}
@@ -3535,11 +3554,11 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	sDirectory.FreeExtra();
 
 
-	if (!CFile::IsDirectory(sDirectory))
+	if (!FileSystem::IsDirectory(sDirectory))
 	{
 		CString str;
 		str.Format(IDS_ERRORDIRECTORYNOTFOUND,LPCSTR(sDirectory));
-		MessageBox(str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+		MessageBox(str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
 		return FALSE;
 	}
 
@@ -3805,20 +3824,10 @@ void CSettingsProperties::CAutoUpdateSettingsPage::OnDrawItem(UINT idCtl,LPDRAWI
 		dc.DrawState(CPoint(rc.left,rc.top),CSize(16,16),hIcon,DST_ICON);
 		rc.left+=16;
 		rc.top++;
-		if (!IsFullUnicodeSupport())
-		{
-            // Windows 9x
-			CStringA str;
-			pSchedule->GetString(str);
-			dc.DrawText(str,&rc,DT_LEFT|DT_VCENTER);
-		}
-		else
-		{
-            // Windows NT
-			CStringW str;
-			pSchedule->GetString(str);
-			dc.DrawText(str,&rc,DT_LEFT|DT_VCENTER);
-		}
+	
+		CStringW str;
+		pSchedule->GetString(str);
+		dc.DrawText(str,&rc,DT_LEFT|DT_VCENTER);
 
 		dc.SelectObject(hOldPen);
 		dc.SelectObject(hOldBrush);
@@ -3834,21 +3843,12 @@ void CSettingsProperties::CAutoUpdateSettingsPage::OnMeasureItem(int nIDCtl,LPME
 		{
 			CDC dc(this);
 			CSize sz;
-			if (!IsFullUnicodeSupport())
-			{
-				// Windows 9x
-				CStringA str;
-				((CSchedule*)lpMeasureItemStruct->itemData)->GetString(str);
-				sz=dc.GetTextExtent(str);
-			}
-			else
-			{
-				// Windows NT
-				CStringW str;
-				((CSchedule*)lpMeasureItemStruct->itemData)->GetString(str);
-				sz=dc.GetTextExtent(str);
-			}
-            lpMeasureItemStruct->itemWidth=sz.cx+2;
+			CStringW str;
+			
+			((CSchedule*)lpMeasureItemStruct->itemData)->GetString(str);
+			sz=dc.GetTextExtent(str);
+			
+			lpMeasureItemStruct->itemWidth=sz.cx+2;
 			lpMeasureItemStruct->itemHeight=max(sz.cy,16)+3;
 			break;
 		}
@@ -4048,12 +4048,12 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 	else
 		txt.LoadString(IDS_LASTRUNNEVER);
 	
-	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYHIGH));		
-	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYABOVENORMAL));		
-	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYNORMAL));		
-	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYBELOWNORMAL));		
-	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYLOW));		
-	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_PRIORITYIDLE));	
+	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYHIGH));		
+	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYABOVENORMAL));		
+	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYNORMAL));		
+	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYBELOWNORMAL));		
+	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYLOW));		
+	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYIDLE));	
 
 	switch (m_pSchedule->m_nThreadPriority)
 	{
@@ -4174,14 +4174,14 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnDatabas
 			DWORD dwLength=1;
 			int i=0;
 			for (i=0;i<aDatabases.GetSize();i++)
-				dwLength+=istrlen(aDatabases[i]->GetName())+1;
+				dwLength+=istrlenw(aDatabases[i]->GetName())+1;
 
-			m_pSchedule->m_pDatabases=new char[dwLength];
-			LPSTR pPtr=m_pSchedule->m_pDatabases;
+			m_pSchedule->m_pDatabases=new WCHAR[dwLength];
+			LPWSTR pPtr=m_pSchedule->m_pDatabases;
 			for (i=0;i<aDatabases.GetSize();i++)
 			{
-				int iStrlen=istrlen(aDatabases[i]->GetName())+1;
-				CopyMemory(pPtr,aDatabases[i]->GetName(),iStrlen);
+				int iStrlen=istrlenw(aDatabases[i]->GetName())+1;
+				MemCopyW(pPtr,aDatabases[i]->GetName(),iStrlen);
 				pPtr+=iStrlen;
 			}
 			*pPtr='\0';
@@ -4688,9 +4688,9 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 
 	m_pList=new CListCtrl(GetDlgItem(IDC_KEYLIST));
 
-	m_pList->InsertColumn(0,CString(IDS_SHORTCUTLISTLABELSHORTCUT),LVCFMT_LEFT,80);
-	m_pList->InsertColumn(1,CString(IDS_SHORTCUTLISTLABELTYPE),LVCFMT_LEFT,60);
-	m_pList->InsertColumn(2,CString(IDS_SHORTCUTLISTLABELACTION),LVCFMT_LEFT,200);
+	m_pList->InsertColumn(0,ID2A(IDS_SHORTCUTLISTLABELSHORTCUT),LVCFMT_LEFT,80);
+	m_pList->InsertColumn(1,ID2A(IDS_SHORTCUTLISTLABELTYPE),LVCFMT_LEFT,60);
+	m_pList->InsertColumn(2,ID2A(IDS_SHORTCUTLISTLABELACTION),LVCFMT_LEFT,200);
 	
 	m_pList->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT ,LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT );
 	m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Shortcuts Settings List Widths");
@@ -4722,11 +4722,11 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_pWhenPressedList->InsertColumn(0,"",LVCFMT_LEFT,150);
 	m_pWhenPressedList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES,LVS_EX_CHECKBOXES);
 	
-	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,0,CString(IDS_SHORTCUTWHENFOCUSINRESULTLIST),0,0,0,CShortcut::wpFocusInResultList);
-	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,1,CString(IDS_SHORTCUTWHENFOCUSNOTINRESULTLIST),0,0,0,CShortcut::wpFocusNotInResultList);
-	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,2,CString(IDS_SHORTCUTWHENNAMETABSHOWN),0,0,0,CShortcut::wpNameTabShown);
-	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,3,CString(IDS_SHORTCUTWHENSIZEDATETABSHOWN),0,0,0,CShortcut::wpSizeDateTabShown);
-	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,4,CString(IDS_SHORTCUTWHENADVANCEDTABSHOWN),0,0,0,CShortcut::wpAdvancedTabShown);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,0,ID2A(IDS_SHORTCUTWHENFOCUSINRESULTLIST),0,0,0,CShortcut::wpFocusInResultList);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,1,ID2A(IDS_SHORTCUTWHENFOCUSNOTINRESULTLIST),0,0,0,CShortcut::wpFocusNotInResultList);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,2,ID2A(IDS_SHORTCUTWHENNAMETABSHOWN),0,0,0,CShortcut::wpNameTabShown);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,3,ID2A(IDS_SHORTCUTWHENSIZEDATETABSHOWN),0,0,0,CShortcut::wpSizeDateTabShown);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,4,ID2A(IDS_SHORTCUTWHENADVANCEDTABSHOWN),0,0,0,CShortcut::wpAdvancedTabShown);
 	
 	
 	// Check wheter Advanced items should be added
@@ -4738,58 +4738,42 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 		RegKey.CloseKey();
 	}
 
-	if (IsFullUnicodeSupport())
-	{
-		// Insert action categories
-		SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_NONE));
-		SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONCATACTIVATECONTROL));
-		SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONCATACTIVATETAB));
-		SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONCATMENUCOMMAND));
-		SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONCATSHOWHIDEDIALOG));
-		if (dwActivate)
-			SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONCATTRESULTLIST));
-		SendDlgItemMessageW(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONCATADVANCED));
+	m_ActionCombo.AssignToDlgItem(*this,IDC_ACTION);
+	m_SubActionCombo.AssignToDlgItem(*this,IDC_SUBACTION);
+	m_VerbCombo.AssignToDlgItem(*this,IDC_VERB);
+	m_WhichFileCombo.AssignToDlgItem(*this,IDC_WHICHFILE);
 
-		SendDlgItemMessageW(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_DEFAULT));
+	// Insert action categories
+	m_ActionCombo.AddString(ID2W(IDS_NONE));
+	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATACTIVATECONTROL));
+	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATACTIVATETAB));
+	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATMENUCOMMAND));
+	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATSHOWHIDEDIALOG));
 
-		// Insert "next/prev file"s
-		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMNEXTFILE));
-		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMPREVFILE));
-		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMNEXTNONDELETEDFILE));
-		SendDlgItemMessageW(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)CStringW(IDS_ACTIONRESITEMPREVNONDELETEDFILE));
-	}
-	else
-	{
-		// Insert action categories
-		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_NONE));
-		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATACTIVATECONTROL));
-		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATACTIVATETAB));
-		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATMENUCOMMAND));
-		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATSHOWHIDEDIALOG));
-		if (dwActivate)
-			SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATTRESULTLIST));
-		SendDlgItemMessage(IDC_ACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONCATADVANCED));
+	if (dwActivate)
+		m_ActionCombo.AddString(ID2W(IDS_ACTIONCATTRESULTLIST));
+	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATADVANCED));
 
-		SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_DEFAULT));
-		
-		// Insert "next/prev file"s
-		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMNEXTFILE));
-		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMPREVFILE));
-		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMNEXTNONDELETEDFILE));
-		SendDlgItemMessage(IDC_WHICHFILE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ACTIONRESITEMPREVNONDELETEDFILE));
-	}
+	m_VerbCombo.AddString(ID2W(IDS_DEFAULT));
+
+	// Insert "next/prev file"s
+	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMNEXTFILE));
+	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMPREVFILE));
+	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMNEXTNONDELETEDFILE));
+	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMPREVNONDELETEDFILE));
+
 
 	// Insert verbs
-	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"open");
-	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"edit");
-	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"explore");
-	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"find");
-	SendDlgItemMessage(IDC_VERB,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"print");
+	m_VerbCombo.AddString("open");
+	m_VerbCombo.AddString("edit");
+	m_VerbCombo.AddString("explore");
+	m_VerbCombo.AddString("find");
+	m_VerbCombo.AddString("print");
 
 	// Current selections
-	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,0,0);
-	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
-	SendDlgItemMessage(IDC_WHICHFILE,CB_SETCURSEL,0,0);
+	m_ActionCombo.SetCurSel(0);
+	m_VerbCombo.SetCurSel(0);
+	m_WhichFileCombo.SetCurSel(0);
 
 	// Inserting items
 	InsertShortcuts();
@@ -4827,7 +4811,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::InsertSubActions()
 	ASSERT(m_pCurrentShortcut!=NULL);
 	ASSERT(m_nCurrentAction>=0 && m_nCurrentAction<m_pCurrentShortcut->m_apActions.GetSize());
 	
-	SendDlgItemMessage(IDC_SUBACTION,CB_RESETCONTENT,0,0);
+	m_SubActionCombo.ResetContent();
 
 	CAction::Action nAction=GetSelectedAction();
 	
@@ -4837,19 +4821,18 @@ void CSettingsProperties::CKeyboardShortcutsPage::InsertSubActions()
 	{
 		CString Title;
 		if (GetSubActionLabel(Title,nAction,nSubAction))
-			SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)Title);
+			m_SubActionCombo.AddString(Title);
 		else
-			SendDlgItemMessage(IDC_SUBACTION,CB_ADDSTRING,0,(LPARAM)(LPCSTR)"Unknown");
+			m_SubActionCombo.AddString("Unknown");
 	}
 
-			
-	SendDlgItemMessage(IDC_SUBACTION,CB_SETCURSEL,0);
+	m_SubActionCombo.SetCurSel(0);
 
 	if (m_pCurrentShortcut->m_apActions[m_nCurrentAction]->m_nAction==nAction)
 	{
 		UINT nIndex=SubActionToIndex(nAction,m_pCurrentShortcut->m_apActions[m_nCurrentAction]->m_nSubAction);
 		if (nIndex!=(UINT)-1)
-			SendDlgItemMessage(IDC_SUBACTION,CB_SETCURSEL,nIndex);
+			m_SubActionCombo.SetCurSel(nIndex);
 	}
 }
 
@@ -5231,7 +5214,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(LV_DISPINFO 
 				m_Buffer.LoadString(IDS_SHORTCUTMULTIPLEACTIONS);
 			else if (pLvdi->item.state&LVIS_SELECTED)
 			{
-				int nCurSel=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+				int nCurSel=m_SubActionCombo.GetCurSel();
 				UINT nSubAction=0;
 				CAction::Action nAction=GetSelectedAction();
 				if (nAction==CAction::None)
@@ -5723,7 +5706,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnAddAction()
 	EnableItems();
 	RefreshShortcutListLabels();
 
-	SetFocus(IDC_ACTION);
+	m_ActionCombo.SetFocus();
 }
 
 void CSettingsProperties::CKeyboardShortcutsPage::OnRemoveAction()
@@ -5809,9 +5792,9 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	EnableDlgItem(IDC_STATICACTIONS,nItem!=-1); // Groupbox
 	EnableDlgItem(IDC_ACTIONTOOLBAR,nItem!=-1); // Toolbar
 	EnableDlgItem(IDC_STATICACTION,nItem!=-1); // Action static text
-	EnableDlgItem(IDC_ACTION,nItem!=-1); // Action combo
+	m_ActionCombo.EnableWindow(nItem!=-1); // Action combo
 	EnableDlgItem(IDC_STATICSUBACTION,nItem!=-1); // Subaction static text
-	EnableDlgItem(IDC_SUBACTION,nItem!=-1); // Subaction combo
+	m_SubActionCombo.EnableWindow(nItem!=-1); // Subaction combo
 
 	ShowState ssVerb=swHide,ssMessage=swHide,ssCommand=swHide,ssWhichFile=swHide;
 	
@@ -5855,12 +5838,11 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 		{
 		case CAction::None:
 			EnableDlgItem(IDC_STATICSUBACTION,FALSE);
-			EnableDlgItem(IDC_SUBACTION,FALSE);
+			m_SubActionCombo.EnableWindow(FALSE);
 			break;
 		case CAction::ResultListItems:
 			{
-				INT nSubItem=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
-				switch (nSubItem)
+				switch (m_SubActionCombo.GetCurSel())
 				{
 				case CAction::Execute:
 					ssVerb=swShow;
@@ -5876,7 +5858,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 			}
 		case CAction::Advanced:
 			{
-				INT nSubItem=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+				INT nSubItem=m_SubActionCombo.GetCurSel();
 				if (nSubItem==CAction::SendMessage || nSubItem==CAction::PostMessage)
 					ssMessage=swShow;
 				break;
@@ -5906,7 +5888,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	}
 
 	ShowDlgItem(IDC_STATICVERB,ssVerb);
-	ShowDlgItem(IDC_VERB,ssVerb);
+	m_VerbCombo.ShowWindow((CWndCtrl::ShowState)ssVerb);
 		
 	ShowDlgItem(IDC_STATICWINDOW,ssMessage);
 	ShowDlgItem(IDC_WINDOW,ssMessage);
@@ -5921,7 +5903,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	ShowDlgItem(IDC_COMMAND,ssCommand);
 
 	ShowDlgItem(IDC_STATICWHICHFILE,ssWhichFile);
-	ShowDlgItem(IDC_WHICHFILE,ssWhichFile);
+	m_WhichFileCombo.ShowWindow((CWndCtrl::ShowState)ssWhichFile);
 
 }
 
@@ -6081,20 +6063,20 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 		SetDlgItemText(IDC_STATICACTIONS,str);
 	}
 	else
-		SetDlgItemText(IDC_STATICACTIONS,CString(IDS_SHORTCUTACTION));
+		SetDlgItemText(IDC_STATICACTIONS,ID2A(IDS_SHORTCUTACTION));
 
 	// Setting action, InsertSubActions does selection of subaction
-	SendDlgItemMessage(IDC_ACTION,CB_SETCURSEL,pAction->m_nAction+1);
+	m_ActionCombo.SetCurSel(pAction->m_nAction+1);
 	InsertSubActions();
 
 	// Clear sub action fields fisrt
-	SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
+	m_VerbCombo.SetCurSel(0);
 	SetDlgItemText(IDC_WINDOW,szEmpty);
 	SetDlgItemInt(IDC_MESSAGE,0,FALSE);
 	SetDlgItemText(IDC_WPARAM,szEmpty);
 	SetDlgItemText(IDC_LPARAM,szEmpty);
 	SetDlgItemText(IDC_COMMAND,szEmpty);
-	SendDlgItemMessage(IDC_WHICHFILE,CB_SETCURSEL,0,0);
+	m_WhichFileCombo.SetCurSel(0);
 
 
 	switch (pAction->m_nAction)
@@ -6103,17 +6085,17 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 		if (pAction->m_nResultList==CAction::Execute)
 		{
 			if (pAction->m_szVerb==NULL)
-				SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,0,0);
+				m_VerbCombo.SetCurSel(0);
 			else
 			{
-				SendDlgItemMessage(IDC_VERB,CB_SETCURSEL,-1,0);
-				SetDlgItemText(IDC_VERB,pAction->m_szVerb);
+				m_VerbCombo.SetCurSel(-1);
+				m_VerbCombo.SetText(pAction->m_szVerb);
 			}
 		}
 		else if (pAction->m_nResultList==CAction::ExecuteCommand && pAction->m_szCommand!=NULL)
 			SetDlgItemText(IDC_COMMAND,pAction->m_szCommand);
 		else if (pAction->m_nResultList==CAction::SelectFile)
-			SendDlgItemMessage(IDC_WHICHFILE,CB_SETCURSEL,pAction->m_nSelectFileType);	
+			m_WhichFileCombo.SetCurSel(pAction->m_nSelectFileType);	
 		break;
 	case CAction::Advanced:
 		if ((pAction->m_nAdvanced==CAction::SendMessage || pAction->m_nAdvanced==CAction::PostMessage) &&
@@ -6146,7 +6128,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 		break;
 	case CAction::ActivateControl:
 		{
-			int nCurSel=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+			int nCurSel=m_SubActionCombo.GetCurSel();
 			if (nCurSel!=CB_ERR)
 				pAction->m_nActivateControl=m_pPossibleControls[nCurSel];
 			else
@@ -6155,7 +6137,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 		}
 	case CAction::MenuCommand:
 		{
-			int nCurSel=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+			int nCurSel=m_SubActionCombo.GetCurSel();
 			if (nCurSel!=CB_ERR)
 				pAction->m_nMenuCommand=m_pPossibleMenuCommands[nCurSel];
 			else
@@ -6164,28 +6146,28 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 		}
 	case CAction::ActivateTab:
 	case CAction::ShowHideDialog:
-		pAction->m_nSubAction=SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+		pAction->m_nSubAction=m_SubActionCombo.GetCurSel();
 		if ((int)pAction->m_nSubAction==CB_ERR)
 			pAction->m_nSubAction=0;
 		break;
 	case CAction::ResultListItems:
-		pAction->m_nResultList=(CAction::ActionResultList)SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+		pAction->m_nResultList=(CAction::ActionResultList)m_SubActionCombo.GetCurSel();
 		if ((int)pAction->m_nResultList==CB_ERR)
 			pAction->m_nResultList=CAction::Execute;
 		else if (pAction->m_nResultList==CAction::Execute)
 		{
-			int nSelection=SendDlgItemMessage(IDC_VERB,CB_GETCURSEL);
+			int nSelection=m_VerbCombo.GetCurSel();
 			if (nSelection==CB_ERR)
 			{
-				UINT nLen=GetDlgItemTextLength(IDC_VERB);
+				UINT nLen=m_VerbCombo.GetTextLength();
 				pAction->m_szVerb=new char[nLen+1];
-				GetDlgItemText(IDC_VERB,pAction->m_szVerb,nLen+1);
+				m_VerbCombo.GetText(pAction->m_szVerb,nLen+1);
 			}
 			else if (nSelection!=0)
 			{
-				UINT nLen=SendDlgItemMessage(IDC_VERB,CB_GETLBTEXTLEN,nSelection,0);
+				UINT nLen=m_VerbCombo.GetLBTextLen(nSelection);
 				pAction->m_szVerb=new char[nLen+1];
-				SendDlgItemMessage(IDC_VERB,CB_GETLBTEXT,nSelection,LPARAM(pAction->m_szVerb));
+				m_VerbCombo.GetLBText(nSelection,pAction->m_szVerb);
 			}
 		}
 		else if (pAction->m_nResultList==CAction::ExecuteCommand)
@@ -6200,13 +6182,13 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 		}
 		else if (pAction->m_nResultList==CAction::SelectFile)
 		{
-			pAction->m_nSelectFileType=(CSubAction::SelectFileType)SendDlgItemMessage(IDC_WHICHFILE,CB_GETCURSEL);
+			pAction->m_nSelectFileType=(CSubAction::SelectFileType)m_WhichFileCombo.GetCurSel();
 			if (int(pAction->m_nSelectFileType)==CB_ERR)
 				pAction->m_nSelectFileType=CSubAction::NextFile;
 		}
 		break;
 	case CAction::Advanced:
-		pAction->m_nAdvanced=(CAction::ActionAdvanced)SendDlgItemMessage(IDC_SUBACTION,CB_GETCURSEL);
+		pAction->m_nAdvanced=(CAction::ActionAdvanced)m_SubActionCombo.GetCurSel();
 		if ((int)pAction->m_nAdvanced==CB_ERR)
 			pAction->m_nAdvanced=CAction::SendMessage;
 
@@ -6256,7 +6238,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 void CSettingsProperties::CKeyboardShortcutsPage::ClearActionFields()
 {
 	// Change groupbox title
-	SetDlgItemText(IDC_STATICACTIONS,CString(IDS_SHORTCUTACTION));
+	SetDlgItemText(IDC_STATICACTIONS,ID2A(IDS_SHORTCUTACTION));
 }
 
 
@@ -6304,15 +6286,15 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnInitDialog(HWN
 	CDialog::OnInitDialog(hwndFocus);
 
 	// Adding items to combo
-	SendDlgItemMessage(IDC_TYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSHORTCUTLOCAL));
-	SendDlgItemMessage(IDC_TYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSHORTCUTGLOBALHOTKEY));
+	SendDlgItemMessage(IDC_TYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSHORTCUTLOCAL));
+	SendDlgItemMessage(IDC_TYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSHORTCUTGLOBALHOTKEY));
 
 	OSVERSIONINFOEX oi;
 	oi.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);
 	BOOL bRet=GetVersionEx((LPOSVERSIONINFO) &oi);
 	if (!(bRet && oi.dwPlatformId!=VER_PLATFORM_WIN32_NT ||
 		!(oi.dwMajorVersion>=5 || (oi.dwMajorVersion==4 && oi.wServicePackMajor>=3) )))
-		SendDlgItemMessage(IDC_TYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)CString(IDS_ADVSHORTCUTGLOBALHOOK));
+		SendDlgItemMessage(IDC_TYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSHORTCUTGLOBALHOOK));
 
 	// Set where
 	switch (m_pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)

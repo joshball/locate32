@@ -73,9 +73,9 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 		if (!nQuiet)
 		{
 			if (pUpdater->GetCurrentRoot()!=NULL)
-				wprintf(CStringW(IDS_UPDATEDB32SCANNING),(LPCWSTR)pUpdater->GetCurrentRoot()->m_Path);
+				wprintf(ID2W(IDS_UPDATEDB32SCANNING),(LPCWSTR)pUpdater->GetCurrentRoot()->m_Path);
 			else
-				wprintf(L"%s %s\n",(LPCWSTR)CStringW(IDS_UPDATEDB32WRITINGDB),pUpdater->GetCurrentDatabaseName());
+				wprintf(L"%s %s\n",(LPCWSTR)ID2W(IDS_UPDATEDB32WRITINGDB),pUpdater->GetCurrentDatabaseName());
 		}
 		break;
 	case ErrorOccured:
@@ -84,20 +84,20 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 			switch (ueCode)
 			{
 			case ueAlloc:
-				fprintf(stderr,CString(IDS_UPDATEDB32ALLOCATEMEM));
+				fwprintf(stderr,ID2W(IDS_UPDATEDB32ALLOCATEMEM));
 				break;
 			case ueOpen:
 			case ueCreate:
-				fprintf(stderr,CString(IDS_UPDATEDB32CANNOTCREATEFILE),(LPCSTR)pUpdater->GetCurrentDatabaseFile());
+				fwprintf(stderr,ID2W(IDS_UPDATEDB32CANNOTCREATEFILE),(LPCSTR)pUpdater->GetCurrentDatabaseFile());
 				break;
 			case ueWrite:
-				fprintf(stderr,CString(IDS_UPDATEDB32CANNOTWRITE),(LPCSTR)pUpdater->GetCurrentDatabaseFile());
+				fwprintf(stderr,ID2W(IDS_UPDATEDB32CANNOTWRITE),(LPCSTR)pUpdater->GetCurrentDatabaseFile());
 				break;
 			case ueUnknown:
-				fprintf(stderr,CString(IDS_UPDATEDB32ALLOCATEMEM));
+				fwprintf(stderr,ID2W(IDS_UPDATEDB32ALLOCATEMEM));
 				break;
 			case ueFolderUnavailable:
-				fwprintf(stderr,CStringW(IDS_UPDATEDB32ROOTUNAVAILABLE),
+				fwprintf(stderr,ID2W(IDS_UPDATEDB32ROOTUNAVAILABLE),
 					pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():L"(NULL)");
 				break;
 			case ueCannotIncrement:
@@ -105,7 +105,7 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 					int ch;
 					do
 					{
-						fprintf(stderr,CString(IDS_UPDATEDB32CANNOTUPDATEINCREMENTALLY),pUpdater->GetCurrentDatabaseFile());
+						fwprintf(stderr,ID2W(IDS_UPDATEDB32CANNOTUPDATEINCREMENTALLY),pUpdater->GetCurrentDatabaseFile());
 						ch=getc(stdin);
 					}
 					while (ch!='Y' && ch!='y' && ch!='N' && ch!='n');
@@ -206,7 +206,7 @@ int main (int argc,char ** argv)
 			case 'L':
 				if (wcsncmp(aDatabases.GetLast()->GetName(),L"PARAMX",6)!=0 && 
 					wcsncmp(aDatabases.GetLast()->GetName(),L"DEFAULTX",8)!=0)
-					wprintf(CStringW(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
+					wprintf(ID2W(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
 				else if (argv[i][2]=='1')
 				{
 					aDatabases.GetLast()->AddLocalRoots();
@@ -231,13 +231,13 @@ int main (int argc,char ** argv)
 					{
 						if ((*pStr)[1]==':' && pStr->GetLength()==2)
 							aDatabases.GetLast()->AddRoot(pStr->GiveBuffer());
-						else if (CFile::IsDirectory(*pStr))
+						else if (FileSystem::IsDirectory(*pStr))
 							aDatabases.GetLast()->AddRoot(pStr->GiveBuffer());
 						else
-							fwprintf(stderr,CStringW(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
+							fwprintf(stderr,ID2W(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
 					}
 					else
-						fwprintf(stderr,CStringW(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
+						fwprintf(stderr,ID2W(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
 					delete pStr;
 
 					aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
@@ -247,7 +247,7 @@ int main (int argc,char ** argv)
 			case 'E':
 				if (wcsncmp(aDatabases.GetLast()->GetName(),L"PARAMX",6)!=0 && 
 					wcsncmp(aDatabases.GetLast()->GetName(),L"DEFAULTX",8)!=0)
-					wprintf(CStringW(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
+					wprintf(ID2W(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
 				else 
 				{
 					CStringW* pStr;
@@ -266,10 +266,10 @@ int main (int argc,char ** argv)
 					if (pStr->GetLength()>1)
 					{
 						if (!aDatabases.GetLast()->AddExcludedDirectory(*pStr))
-							fwprintf(stderr,CStringW(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
+							fwprintf(stderr,ID2W(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
 					}
 					else
-						fwprintf(stderr,CStringW(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
+						fwprintf(stderr,ID2W(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
 					delete pStr;
 
 					aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
@@ -279,7 +279,7 @@ int main (int argc,char ** argv)
 			case 'T':
 				if (wcsncmp(aDatabases.GetLast()->GetName(),L"PARAMX",6)!=0 &&
 					wcsncmp(aDatabases.GetLast()->GetName(),L"DEFAULTX",8)!=0)
-					wprintf(CStringW(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
+					wprintf(ID2W(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
 				else if (argv[i][2]==L'c' || argv[i][2]==L'C')
 				{
                        if (argv[i][3]==L'\0')
@@ -303,7 +303,7 @@ int main (int argc,char ** argv)
 			case 'I':
 				if (wcsncmp(aDatabases.GetLast()->GetName(),L"PARAMX",6)!=0 &&
 					wcsncmp(aDatabases.GetLast()->GetName(),L"DEFAULTX",8)!=0)
-					wprintf(CStringW(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
+					wprintf(ID2W(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
 				else
 				{
                     aDatabases.GetLast()->SetFlag(CDatabase::flagIncrementalUpdate,TRUE);
@@ -464,7 +464,7 @@ int main (int argc,char ** argv)
 						if (pDatabase==NULL && !pDatabaseInfo->szExtra1.IsEmpty())
 							pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->szExtra1);
 						
-						wprintf(CStringW(IDS_UPDATEDB32USINGEXISTINGSETTINGS),
+						wprintf(ID2W(IDS_UPDATEDB32USINGEXISTINGSETTINGS),
 							aDatabases[i]->GetArchiveName(),pDatabase->GetName());
 						
 						pDatabase->SetArchiveType(aDatabases[i]->GetArchiveType());

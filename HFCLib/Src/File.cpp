@@ -4,11 +4,11 @@
 
 #include "HFCLib.h"
 
-LONGLONG GetDiskFreeSpace(LPCSTR szDrive)
+LONGLONG FileSystem::GetDiskFreeSpace(LPCSTR szDrive)
 {
 #ifdef WIN32
 	ULARGE_INTEGER i64FreeBytesToCaller;
-	BOOL (CALLBACK *pGetDiskFreeSpaceEx)(LPCTSTR lpDirectoryName,
+	BOOL (CALLBACK *pGetDiskFreeSpaceEx)(LPCSTR lpDirectoryName,
 		PULARGE_INTEGER lpFreeBytesAvailable,PULARGE_INTEGER lpTotalNumberOfBytes,
 		PULARGE_INTEGER lpTotalNumberOfFreeBytes);
 	*((FARPROC*)&pGetDiskFreeSpaceEx) = GetProcAddress( GetModuleHandle("kernel32.dll"),
@@ -22,7 +22,7 @@ LONGLONG GetDiskFreeSpace(LPCSTR szDrive)
 	else
 	{
 		DWORD nSectors,nBytes,nFreeClusters,nTolalClusters;
-		if (!GetDiskFreeSpace(szDrive,&nSectors,
+		if (!::GetDiskFreeSpace(szDrive,&nSectors,
 			&nBytes,&nFreeClusters,&nTolalClusters))
 			return 0;
 		i64FreeBytesToCaller.QuadPart=nBytes*nSectors*nFreeClusters;
@@ -40,30 +40,41 @@ LONGLONG GetDiskFreeSpace(LPCSTR szDrive)
 #endif
 }
 
-/* OBSOLETE, use CFile::IsFile
-BYTE IsFile(LPCTSTR File)
+
+#ifdef DEF_WCHAR
+LONGLONG FileSystem::GetDiskFreeSpace(LPCWSTR szDrive)
 {
-	HANDLE hFile;
-#ifdef WIN32
-	hFile=CreateFile(File,0,
-		FILE_SHARE_READ,NULL,OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL,NULL);
-	if (hFile==INVALID_HANDLE_VALUE)
-		return FALSE;
-	CloseHandle(hFile);
-#else
-	hFile=(FILE*)fopen(File,"rb");
-	if (hFile==NULL)
-		return FALSE;
-	fclose((FILE*)hFile);
-#endif
-	return TRUE;
+	if (!IsFullUnicodeSupport())
+		return FileSystem::GetDiskFreeSpace(W2A(szDrive));
+
+	ULARGE_INTEGER i64FreeBytesToCaller;
+	BOOL (CALLBACK *pGetDiskFreeSpaceExW)(LPCWSTR lpDirectoryName,
+		PULARGE_INTEGER lpFreeBytesAvailable,PULARGE_INTEGER lpTotalNumberOfBytes,
+		PULARGE_INTEGER lpTotalNumberOfFreeBytes);
+	*((FARPROC*)&pGetDiskFreeSpaceExW) = GetProcAddress( GetModuleHandle("kernel32.dll"),
+                         "GetDiskFreeSpaceExW");
+	if (pGetDiskFreeSpaceExW!=NULL)
+	{
+		ULARGE_INTEGER i64TotalBytes,i64FreeBytes;
+		if (!pGetDiskFreeSpaceExW(szDrive,&i64FreeBytesToCaller,&i64TotalBytes,&i64FreeBytes))
+			return 0;
+	}
+	else
+	{
+		DWORD nSectors,nBytes,nFreeClusters,nTolalClusters;
+		if (!GetDiskFreeSpaceW(szDrive,&nSectors,
+			&nBytes,&nFreeClusters,&nTolalClusters))
+			return 0;
+		i64FreeBytesToCaller.QuadPart=nBytes*nSectors*nFreeClusters;
+	}
+	return i64FreeBytesToCaller.QuadPart;
 }
-*/
+#endif
+
 
 #ifndef WIN32
 
-BYTE CopyFile(LPCTSTR src,LPCTSTR dst)
+BYTE FileSystem::CopyFile(LPCTSTR src,LPCTSTR dst)
 {
 	LPSTR buffer;
 	FILE *fp;
@@ -497,76 +508,6 @@ BOOL CFile::Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError)
 }
 #endif
 
-BOOL CFile::GetStatus(LPCTSTR lpszFileName,CFileStatus& rStatus)
-{
-#ifdef WIN32
-	HANDLE hFile;
-	BY_HANDLE_FILE_INFORMATION fi;
-	LPTSTR temp;
-	if (!GetFullPathName(lpszFileName,_MAX_PATH,rStatus.m_szFullName,&temp))
-		return FALSE;
-	
-	hFile=CreateFile(rStatus.m_szFullName,0,
-		FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL,NULL);
-	if (hFile==INVALID_HANDLE_VALUE)
-		return FALSE;
-	
-	if (!GetFileInformationByHandle(hFile,&fi))
-	{
-		CloseHandle(hFile);
-		return FALSE;
-	}
-	CloseHandle(hFile);
-	rStatus.m_ctime=fi.ftCreationTime;
-	rStatus.m_mtime=fi.ftLastWriteTime;
-	rStatus.m_atime=fi.ftLastAccessTime;
-	rStatus.m_size=fi.nFileSizeLow;
-	rStatus.m_attribute=fi.dwFileAttributes;
-#else
-	struct ffblk find;
-	if (findfirst(lpszFileName,&find,FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_LABEL|FA_DIREC|FA_ARCH))
-		return FALSE;
-	CTime tim(find.ff_fdate,find.ff_ftime);
-	rStatus.m_ctime=tim;
-	rStatus.m_mtime=tim;
-	rStatus.m_atime=tim;
-	rStatus.m_size=find.ff_fsize;
-	rStatus.m_attribute=find.ff_attrib;
-	strcpy(rStatus.m_szFullName,lpszFileName);
-#endif
-	return TRUE;
-}
-
-BOOL  CFile::SetStatus(LPCTSTR lpszFileName,const CFileStatus& status)
-{
-#ifdef WIN32
-	HANDLE hFile;
-	hFile=CreateFile(lpszFileName,GENERIC_WRITE,
-		FILE_SHARE_READ,NULL,OPEN_EXISTING,
-		status.m_attribute,NULL);
-	if (hFile==INVALID_HANDLE_VALUE)
-		return FALSE;
-	if (!SetFileTime(hFile,&((FILETIME)status.m_ctime),&((FILETIME)status.m_atime),&((FILETIME)status.m_mtime)))
-	{
-		CloseHandle(hFile);
-		return FALSE;
-	}
-	CloseHandle(hFile);
-	return SetFileAttributes(lpszFileName,status.m_attribute);
-#else
-	UINT ftime,fdate;
-	FILE* fp=fopen(lpszFileName,"ab");
-	if (fp==NULL)
-		return FALSE;
-	fdate=(status.m_ctime.GetYear()-80)<<9+status.m_ctime.GetMonth()<<5+status.m_ctime.GetDay();
-	ftime=status.m_ctime.GetHour()<<11+status.m_ctime.GetMinute()<<5+status.m_ctime.GetSecond()>>1;
-	_dos_setfileattr(lpszFileName,status.m_attribute);
-	_dos_setftime(fileno(fp),fdate,ftime);
-	fclose(fp);
-	return TRUE;
-#endif
-}
 #ifdef WIN32
 LONG_PTR CFile::Seek(ULONG_PTR lOff, ULONG_PTR nFrom,CFileException* pError,LONG* pHighPos)
 {
@@ -1098,8 +1039,11 @@ ULONGLONG CFile::GetPosition64() const
 }
 #endif
 
+///////////////////////////////////////////
+// namespace FileSystem
+///////////////////////////////////////////
 
-BOOL CFile::IsFile(LPCSTR szFileName)
+BOOL FileSystem::IsFile(LPCSTR szFileName)
 {
 	if (szFileName[0]=='\0')
 		return FALSE;
@@ -1122,7 +1066,7 @@ BOOL CFile::IsFile(LPCSTR szFileName)
 #endif
 }
 
-INT CFile::IsDirectory(LPCSTR szDirectoryName)
+INT FileSystem::IsDirectory(LPCSTR szDirectoryName)
 {
 #ifdef WIN32
 	HANDLE hFind;
@@ -1176,7 +1120,7 @@ INT CFile::IsDirectory(LPCSTR szDirectoryName)
 			{
 				if (szDirectoryName[1]=='\\')
 					return 2;
-				switch (GetDriveType(NULL))
+				switch (::GetDriveType(NULL))
 				{
 				case DRIVE_UNKNOWN:
 				case DRIVE_NO_ROOT_DIR:
@@ -1240,10 +1184,10 @@ INT CFile::IsDirectory(LPCSTR szDirectoryName)
 }
 
 #ifdef DEF_WCHAR
-BOOL CFile::IsFile(LPCWSTR szFileName)
+BOOL FileSystem::IsFile(LPCWSTR szFileName)
 {
 	if (!IsFullUnicodeSupport())
-		return CFile::IsFile(W2A(szFileName));
+		return FileSystem::IsFile(W2A(szFileName));
 
 	if (szFileName[0]==L'\0')
 		return FALSE;
@@ -1266,10 +1210,10 @@ BOOL CFile::IsFile(LPCWSTR szFileName)
 #endif
 }
 
-INT CFile::IsDirectory(LPCWSTR szDirectoryName)
+INT FileSystem::IsDirectory(LPCWSTR szDirectoryName)
 {
 	if (!IsFullUnicodeSupport())
-		return CFile::IsDirectory(W2A(szDirectoryName));
+		return FileSystem::IsDirectory(W2A(szDirectoryName));
 
 
 	HANDLE hFind;
@@ -1323,7 +1267,7 @@ INT CFile::IsDirectory(LPCWSTR szDirectoryName)
 			{
 				if (szDirectoryName[1]==L'\\')
 					return 2;
-				switch (GetDriveType(NULL))
+				switch (::GetDriveType(NULL))
 				{
 				case DRIVE_UNKNOWN:
 				case DRIVE_NO_ROOT_DIR:
@@ -1383,12 +1327,12 @@ INT CFile::IsDirectory(LPCWSTR szDirectoryName)
 }
 #endif
 
-BOOL CFile::IsValidFileName(LPCSTR szFile,LPSTR szShortName)
+BOOL FileSystem::IsValidFileName(LPCSTR szFile,LPSTR szShortName)
 {
 #ifdef WIN32
 	if (szFile[0]=='\0')
 		return FALSE;
-	if (CFile::IsFile(szFile))
+	if (FileSystem::IsFile(szFile))
 	{
 		if (szShortName!=NULL)
 			GetShortPathName(szFile,szShortName,_MAX_PATH);
@@ -1419,20 +1363,20 @@ BOOL CFile::IsValidFileName(LPCSTR szFile,LPSTR szShortName)
 }
 
 #ifdef DEF_WCHAR
-BOOL CFile::IsValidFileName(LPCWSTR szFile,LPWSTR szShortName)
+BOOL FileSystem::IsValidFileName(LPCWSTR szFile,LPWSTR szShortName)
 {
 	if (szFile[0]==L'\0')
 		return FALSE;
-	if (CFile::IsFile(szFile))
+	if (FileSystem::IsFile(szFile))
 	{
 		if (szShortName!=NULL)
 		{
 			if (IsFullUnicodeSupport())
-				GetShortPathNameW(szFile,szShortName,_MAX_PATH);
+				::GetShortPathNameW(szFile,szShortName,_MAX_PATH);
 			else
 			{
 				char szShortPathA[MAX_PATH];
-				GetShortPathName(W2A(szFile),szShortPathA,_MAX_PATH);
+				::GetShortPathName(W2A(szFile),szShortPathA,_MAX_PATH);
 				MultiByteToWideChar(CP_ACP,0,szShortPathA,-1,szShortName,MAX_PATH);
 			}
 		}
@@ -1455,21 +1399,21 @@ BOOL CFile::IsValidFileName(LPCWSTR szFile,LPWSTR szShortName)
 	if (szShortName!=NULL)
 	{	
 		if (IsFullUnicodeSupport())
-			GetShortPathNameW(szFile,szShortName,_MAX_PATH);
+			::GetShortPathNameW(szFile,szShortName,_MAX_PATH);
 		else
 		{
 			char szShortPathA[MAX_PATH];
-			GetShortPathName(W2A(szFile),szShortPathA,_MAX_PATH);
+			::GetShortPathName(W2A(szFile),szShortPathA,_MAX_PATH);
 			MultiByteToWideChar(CP_ACP,0,szShortPathA,-1,szShortName,MAX_PATH);
 		}
 	}	
-	CFile::Remove(szFile);
+	FileSystem::Remove(szFile);
 	return TRUE;
 }
 #endif
 
 // Last '//' is not counted, if exists
-DWORD CFile::ParseExistingPath(LPCSTR szPath)
+DWORD FileSystem::ParseExistingPath(LPCSTR szPath)
 {
 	DWORD dwLength=strlen(szPath);
 
@@ -1518,7 +1462,7 @@ DWORD CFile::ParseExistingPath(LPCSTR szPath)
 	return dwLength;
 }
 
-BOOL CFile::IsValidPath(LPCSTR szPath,BOOL bAsDirectory)
+BOOL FileSystem::IsValidPath(LPCSTR szPath,BOOL bAsDirectory)
 {
 	BOOL bRet=FALSE;
 
@@ -1604,7 +1548,7 @@ BOOL CFile::IsValidPath(LPCSTR szPath,BOOL bAsDirectory)
 
 #ifdef DEF_WCHAR
 // Last '//' is not counted, if exists
-DWORD CFile::ParseExistingPath(LPCWSTR szPath)
+DWORD FileSystem::ParseExistingPath(LPCWSTR szPath)
 {
 	DWORD dwLength=wcslen(szPath);
 
@@ -1662,10 +1606,10 @@ DWORD CFile::ParseExistingPath(LPCWSTR szPath)
 	return dwLength;
 }
 
-BOOL CFile::IsValidPath(LPCWSTR szPath,BOOL bAsDirectory)
+BOOL FileSystem::IsValidPath(LPCWSTR szPath,BOOL bAsDirectory)
 {
 	if (!IsFullUnicodeSupport())
-		return CFile::IsValidPath(W2A(szPath),bAsDirectory);
+		return FileSystem::IsValidPath(W2A(szPath),bAsDirectory);
 
 	BOOL bRet=FALSE;
 
@@ -1749,7 +1693,7 @@ BOOL CFile::IsValidPath(LPCWSTR szPath,BOOL bAsDirectory)
 	return bRet;
 }
 #endif
-BOOL CFile::CreateDirectoryRecursive(LPCSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes)
+BOOL FileSystem::CreateDirectoryRecursive(LPCSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes)
 {
 	BOOL bRet=FALSE;
 
@@ -1793,7 +1737,7 @@ BOOL CFile::CreateDirectoryRecursive(LPCSTR szPath,LPSECURITY_ATTRIBUTES plSecur
 	return TRUE;
 }
 
-BOOL CFile::IsSamePath(LPCSTR szDir1,LPCSTR szDir2)
+BOOL FileSystem::IsSamePath(LPCSTR szDir1,LPCSTR szDir2)
 {
 #ifdef WIN32
 	char path1[MAX_PATH],path2[MAX_PATH];
@@ -1827,7 +1771,7 @@ BOOL CFile::IsSamePath(LPCSTR szDir1,LPCSTR szDir2)
 
 
 // Checking whether szSubDir is sub directory of the szPath
-BOOL CFile::IsSubDirectory(LPCSTR szSubDir,LPCSTR szPath)
+BOOL FileSystem::IsSubDirectory(LPCSTR szSubDir,LPCSTR szPath)
 {
 	char sSubDir[MAX_PATH],sPath[MAX_PATH];
 #ifdef WIN32
@@ -1889,7 +1833,7 @@ BOOL CFile::IsSubDirectory(LPCSTR szSubDir,LPCSTR szPath)
 }
 
 #ifdef DEF_WCHAR
-BOOL CFile::CreateDirectoryRecursive(LPCWSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes)
+BOOL FileSystem::CreateDirectoryRecursive(LPCWSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes)
 {
 	if (!IsFullUnicodeSupport())
 		return CreateDirectoryRecursive(W2A(szPath),plSecurityAttributes);
@@ -1937,10 +1881,10 @@ BOOL CFile::CreateDirectoryRecursive(LPCWSTR szPath,LPSECURITY_ATTRIBUTES plSecu
 }
 
 
-BOOL CFile::IsSamePath(LPCWSTR szDir1,LPCWSTR szDir2)
+BOOL FileSystem::IsSamePath(LPCWSTR szDir1,LPCWSTR szDir2)
 {
 	if (!IsFullUnicodeSupport())
-		return CFile::IsSamePath(W2A(szDir1),W2A(szDir2));
+		return FileSystem::IsSamePath(W2A(szDir1),W2A(szDir2));
 
 	WCHAR path1[MAX_PATH],path2[MAX_PATH];
 	int nRet1,nRet2;
@@ -1957,10 +1901,10 @@ BOOL CFile::IsSamePath(LPCWSTR szDir1,LPCWSTR szDir2)
 	return strcasecmp(path1,path2)==0;	
 }
 // Checking whether szSubDir is sub directory of the szPath
-BOOL CFile::IsSubDirectory(LPCWSTR szSubDir,LPCWSTR szPath)
+BOOL FileSystem::IsSubDirectory(LPCWSTR szSubDir,LPCWSTR szPath)
 {
 	if (!IsFullUnicodeSupport())
-		return CFile::IsSubDirectory(W2A(szSubDir),W2A(szPath));
+		return FileSystem::IsSubDirectory(W2A(szSubDir),W2A(szPath));
 
 	WCHAR sSubDir[MAX_PATH],sPath[MAX_PATH];
 	if (!GetShortPathNameW(szSubDir,sSubDir,MAX_PATH))
@@ -1993,7 +1937,7 @@ BOOL CFile::IsSubDirectory(LPCWSTR szSubDir,LPCWSTR szPath)
 	return strcasecmp(sSubDir,sPath)==0;
 }
 
-DWORD CFile::GetFullPathName(LPCWSTR lpFileName,DWORD nBufferLength,LPWSTR lpBuffer,LPWSTR* lpFilePart)
+DWORD FileSystem::GetFullPathName(LPCWSTR lpFileName,DWORD nBufferLength,LPWSTR lpBuffer,LPWSTR* lpFilePart)
 {
 	if (IsFullUnicodeSupport())
 		return ::GetFullPathNameW(lpFileName,nBufferLength,lpBuffer,lpFilePart);
@@ -2011,7 +1955,7 @@ DWORD CFile::GetFullPathName(LPCWSTR lpFileName,DWORD nBufferLength,LPWSTR lpBuf
 	}
 }
 
-DWORD CFile::GetShortPathName(LPCWSTR lpszLongPath,LPWSTR lpszShortPath,DWORD cchBuffer)
+DWORD FileSystem::GetShortPathName(LPCWSTR lpszLongPath,LPWSTR lpszShortPath,DWORD cchBuffer)
 {
 	if (IsFullUnicodeSupport())
 		return ::GetShortPathNameW(lpszLongPath,lpszShortPath,cchBuffer);
@@ -2026,7 +1970,7 @@ DWORD CFile::GetShortPathName(LPCWSTR lpszLongPath,LPWSTR lpszShortPath,DWORD cc
 	}
 }
 
-DWORD CFile::GetCurrentDirectory(DWORD nBufferLength,LPWSTR lpBuffer)
+DWORD FileSystem::GetCurrentDirectory(DWORD nBufferLength,LPWSTR lpBuffer)
 {
 	if (IsFullUnicodeSupport())
 		return ::GetCurrentDirectoryW(nBufferLength,lpBuffer);
@@ -2041,7 +1985,7 @@ DWORD CFile::GetCurrentDirectory(DWORD nBufferLength,LPWSTR lpBuffer)
 	}
 }
 
-DWORD CFile::GetLongPathName(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer)
+DWORD FileSystem::GetLongPathName(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer)
 {
 	if (IsFullUnicodeSupport())
 		return ::GetLongPathNameW(lpszShortPath,lpszLongPath,cchBuffer);
@@ -2056,7 +2000,7 @@ DWORD CFile::GetLongPathName(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cch
 	}
 }
 
-DWORD CFile::GetTempPath(DWORD nBufferLength,LPWSTR lpBuffer)
+DWORD FileSystem::GetTempPath(DWORD nBufferLength,LPWSTR lpBuffer)
 {
 	if (IsFullUnicodeSupport())
 		return ::GetTempPathW(nBufferLength,lpBuffer);
@@ -2071,7 +2015,7 @@ DWORD CFile::GetTempPath(DWORD nBufferLength,LPWSTR lpBuffer)
 	}
 }
 
-UINT CFile::GetTempFileName(LPCWSTR lpPathName,LPCWSTR lpPrefixString,UINT uUnique,LPWSTR lpTempFileName)
+UINT FileSystem::GetTempFileName(LPCWSTR lpPathName,LPCWSTR lpPrefixString,UINT uUnique,LPWSTR lpTempFileName)
 {
 	if (IsFullUnicodeSupport())
 		return ::GetTempFileNameW(lpPathName,lpPrefixString,uUnique,lpTempFileName);
@@ -2088,6 +2032,78 @@ UINT CFile::GetTempFileName(LPCWSTR lpPathName,LPCWSTR lpPrefixString,UINT uUniq
 
 
 #endif
+
+BOOL FileSystem::GetStatus(LPCTSTR lpszFileName,CFileStatus& rStatus)
+{
+#ifdef WIN32
+	HANDLE hFile;
+	BY_HANDLE_FILE_INFORMATION fi;
+	LPTSTR temp;
+	if (!GetFullPathName(lpszFileName,_MAX_PATH,rStatus.m_szFullName,&temp))
+		return FALSE;
+	
+	hFile=CreateFile(rStatus.m_szFullName,0,
+		FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,NULL);
+	if (hFile==INVALID_HANDLE_VALUE)
+		return FALSE;
+	
+	if (!GetFileInformationByHandle(hFile,&fi))
+	{
+		CloseHandle(hFile);
+		return FALSE;
+	}
+	CloseHandle(hFile);
+	rStatus.m_ctime=fi.ftCreationTime;
+	rStatus.m_mtime=fi.ftLastWriteTime;
+	rStatus.m_atime=fi.ftLastAccessTime;
+	rStatus.m_size=fi.nFileSizeLow;
+	rStatus.m_attribute=fi.dwFileAttributes;
+#else
+	struct ffblk find;
+	if (findfirst(lpszFileName,&find,FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_LABEL|FA_DIREC|FA_ARCH))
+		return FALSE;
+	CTime tim(find.ff_fdate,find.ff_ftime);
+	rStatus.m_ctime=tim;
+	rStatus.m_mtime=tim;
+	rStatus.m_atime=tim;
+	rStatus.m_size=find.ff_fsize;
+	rStatus.m_attribute=find.ff_attrib;
+	strcpy(rStatus.m_szFullName,lpszFileName);
+#endif
+	return TRUE;
+}
+
+BOOL  FileSystem::SetStatus(LPCTSTR lpszFileName,const CFileStatus& status)
+{
+#ifdef WIN32
+	HANDLE hFile;
+	hFile=CreateFile(lpszFileName,GENERIC_WRITE,
+		FILE_SHARE_READ,NULL,OPEN_EXISTING,
+		status.m_attribute,NULL);
+	if (hFile==INVALID_HANDLE_VALUE)
+		return FALSE;
+	if (!SetFileTime(hFile,&((FILETIME)status.m_ctime),&((FILETIME)status.m_atime),&((FILETIME)status.m_mtime)))
+	{
+		CloseHandle(hFile);
+		return FALSE;
+	}
+	CloseHandle(hFile);
+	return SetFileAttributes(lpszFileName,status.m_attribute);
+#else
+	UINT ftime,fdate;
+	FILE* fp=fopen(lpszFileName,"ab");
+	if (fp==NULL)
+		return FALSE;
+	fdate=(status.m_ctime.GetYear()-80)<<9+status.m_ctime.GetMonth()<<5+status.m_ctime.GetDay();
+	ftime=status.m_ctime.GetHour()<<11+status.m_ctime.GetMinute()<<5+status.m_ctime.GetSecond()>>1;
+	_dos_setfileattr(lpszFileName,status.m_attribute);
+	_dos_setftime(fileno(fp),fdate,ftime);
+	fclose(fp);
+	return TRUE;
+#endif
+}
+
 ///////////////////////////////////////////
 // CFileFind
 ///////////////////////////////////////////

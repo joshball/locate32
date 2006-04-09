@@ -62,7 +62,9 @@ private:
 #ifdef DEF_WINDOWS
 	friend class CFileDialog;
 	friend class CFontDialog;
-	friend void CPropertyPage::Construct(LPCTSTR,UINT,TypeOfResourceHandle);
+	friend void CPropertyPage::Construct(UINT,TypeOfResourceHandle);
+	friend void CPropertyPage::Construct(LPCSTR,TypeOfResourceHandle);
+	friend void CPropertyPage::Construct(LPCWSTR,TypeOfResourceHandle);
 	friend CColorDialog::CColorDialog(COLORREF,DWORD);
 	friend CPageSetupDialog::CPageSetupDialog(DWORD);
 	friend CPrintDialog::CPrintDialog(BOOL,DWORD);
@@ -210,8 +212,7 @@ public:
 	LPTSTR m_lpCmdLine;
 	int m_nCmdShow;
 	LPCTSTR m_pszAppName;
-	LPTSTR m_pszExeName;
-
+	
 public:
 	CWinApp(LPCTSTR lpszAppName);
 	
@@ -220,7 +221,9 @@ public:
 
 	LPCSTR GetCmdLine() const { return m_lpCmdLine; }
 	LPCSTR GetAppName() const { return m_pszAppName; }
-	LPCSTR GetExeName() const { return m_pszExeName; }
+	CString GetExeName() const;
+	CStringW GetExeNameW() const;
+
 	void SetMainWnd(CWnd* pWnd);
 	int GetCmdShow() { return m_nCmdShow; }
 		
@@ -369,19 +372,18 @@ inline CWnd* GetMainWnd()
 
 inline int CDialog::DoModal(HWND hWndParent,TypeOfResourceHandle bType)
 {
-	return DialogBoxParam(GetResourceHandle(bType),m_lpszTemplateName,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this);
+	if (IsFullUnicodeSupport())
+		return DialogBoxParamW(GetResourceHandle(bType),m_lpszTemplateNameW,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this);
+	else
+		return DialogBoxParam(GetResourceHandle(bType),m_lpszTemplateName,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this);
 }
 
 inline BOOL CDialog::Create(HWND hWndParent,TypeOfResourceHandle bType)
 {
 	if (IsFullUnicodeSupport())
-	{
-		if (IS_INTRESOURCE(m_lpszTemplateName))
-			return (m_hWnd=::CreateDialogParamW(GetResourceHandle(bType),(LPCWSTR)m_lpszTemplateName,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this))!=NULL;
-		CStringW tmp(m_lpszTemplateName);
-		return (m_hWnd=::CreateDialogParamW(GetResourceHandle(bType),tmp,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this))!=NULL;
-	}
-	return (m_hWnd=::CreateDialogParamA(GetResourceHandle(bType),m_lpszTemplateName,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this))!=NULL;
+		return (m_hWnd=::CreateDialogParamW(GetResourceHandle(bType),m_lpszTemplateNameW,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this))!=NULL;
+	else
+		return (m_hWnd=::CreateDialogParamA(GetResourceHandle(bType),m_lpszTemplateName,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this))!=NULL;
 }
 
 inline BOOL CDialog::EndDialog(int nResult) const

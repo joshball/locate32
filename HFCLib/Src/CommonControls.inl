@@ -1116,20 +1116,6 @@ inline BOOL CTabCtrl::GetItemRect(int nItem,LPRECT lpRect) const
 	return ::SendMessage(m_hWnd,TCM_GETITEMRECT,(WPARAM)nItem,(LPARAM)lpRect);
 }
 
-#ifdef DEF_WCHAR
-inline BOOL CTabCtrl::GetItem(int nItem,TC_ITEMW* pTabCtrlItem) const
-{
-	return ::SendMessageW(m_hWnd,TCM_GETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
-}
-inline BOOL CTabCtrl::SetItem(int nItem,TC_ITEMW* pTabCtrlItem)
-{
-	return ::SendMessageW(m_hWnd,TCM_SETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
-}
-inline BOOL CTabCtrl::InsertItem(int nItem,TC_ITEMW* pTabCtrlItem)
-{
-	return ::SendMessageW(m_hWnd,TCM_INSERTITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
-}
-#endif
 
 inline int CTabCtrl::GetCurSel() const
 {

@@ -42,7 +42,6 @@ COLORREF GetSystemColor(LPCSTR szKey)
 CWinApp::CWinApp(LPCTSTR lpszAppName)
 :	m_pszAppName(lpszAppName)
 {
-	m_pszExeName=NULL;
 	GetAppData()->pAppClass=this;
 	GetAppData()->hCommonResourceHandle=NULL;
 	GetAppData()->hLanguageSpecificResourceHandle=NULL;
@@ -51,6 +50,28 @@ CWinApp::CWinApp(LPCTSTR lpszAppName)
 	m_nThreadID=GetCurrentThreadId();
 }
 
+CString CWinApp::GetExeName() const
+{
+	DWORD len;
+	CHAR szExeName[MAX_PATH];
+	len=GetModuleFileName(GetInstanceHandle(),szExeName,MAX_PATH);
+	return CString(szExeName,len);
+}
+
+CStringW CWinApp::GetExeNameW() const
+{
+	if (IsFullUnicodeSupport())
+	{
+		DWORD len;
+		WCHAR szExeName[MAX_PATH];
+		len=GetModuleFileNameW(GetInstanceHandle(),szExeName,MAX_PATH);
+		return CStringW(szExeName,len);
+	}
+
+	return CStringW(GetExeName());
+}
+
+		
 BOOL CWinApp::InitApplication()
 {
 	return FALSE;
@@ -60,10 +81,6 @@ CWinApp::~CWinApp()
 {
 	m_hThread=NULL;
 	m_nThreadID=0;
-	if (m_pszExeName!=NULL)
-		delete[] m_pszExeName;
-	else
-		DebugMessage("CWinApp::~CWinApp(): m_pszExeName was NULL");
 	EndDebugLogging();
 }
 

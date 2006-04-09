@@ -44,7 +44,7 @@ void CResults::Close()
 	}
 	if (!m_sTempFile.IsEmpty())
 	{
-		DeleteFile(m_sTempFile);
+		FileSystem::Remove(m_sTempFile);
 		m_sTempFile.Empty();
 	}
 }
@@ -381,7 +381,7 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 	if (m_dwFlags&RESULT_INCLUDEDATE)
 	{
 		char szDate[200];
-		outFile.Write(CString(IDS_SAVERESULTSDATE));
+		outFile.Write(ID2A(IDS_SAVERESULTSDATE));
 		DWORD dwLength=GetDateFormat(NULL,DATE_SHORTDATE,NULL,NULL,szDate,200);
 		szDate[dwLength-1]=' ';
 		outFile.Write(szDate,dwLength);
@@ -471,7 +471,7 @@ CSaveResultsDlg::CSaveResultsDlg()
 		SetTemplate(IDD_RESULTSAVEDIALOG);
 
 	
-	SetTitle(CString(IDS_SAVERESULTS));
+	SetTitle(ID2W(IDS_SAVERESULTS));
 	
 	// Setting default details
 	m_aDetails.Add(CLocateDlg::FullPath);
