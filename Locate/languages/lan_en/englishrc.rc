@@ -228,7 +228,7 @@ BEGIN
 END
 
 
-IDD_SCHEDULEDUPDATE DIALOGEX 0, 0, 230, 156
+IDD_SCHEDULEDUPDATE DIALOGEX 0, 0, 230, 170
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Scheduled update"
 FONT 8, "Tahoma", 0, 0, 0x1
@@ -283,20 +283,6 @@ BEGIN
                     WS_TABSTOP
     COMBOBOX        IDC_MDAYS,99,73,48,87,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
-    LTEXT           "of the month(s)",
-                    IDC_OFTHEMONTHS2,153,73,54,12,SS_CENTERIMAGE
-    CONTROL         "&Enabled",
-                    IDC_ENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,110,
-                    50,11
-    CONTROL         "&Update only at this time",
-                    IDC_ATTHISTIME,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,
-                    110,160,11
-    CONTROL         "&Delete After Run",
-                    IDC_DELETEAFTERRUN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    7,124,70,10
-    LTEXT           "Thread Priority:",IDC_THREADPRIORITYLABEL,80,125,50,10
-	COMBOBOX        IDC_THREADPRIORITY,130,122,75,98,CBS_DROPDOWNLIST |  
-                    WS_VSCROLL | WS_TABSTOP | CBS_HASSTRINGS
     LTEXT           "week(s) on:",
                     IDC_WEEKS,77,50,40,9
     CONTROL         "Da&y",IDC_MDAY,
@@ -308,8 +294,22 @@ BEGIN
     CONTROL         "",IDC_ONCETIME,"SysDateTimePick32",WS_TABSTOP,76,48,99,
                     12,WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE
     LTEXT           "&Run on:",IDC_RUNON,15,50,47,9
-    LTEXT           "",IDC_LASTRUN,7,141,168,13
-    PUSHBUTTON      "Databases",IDC_DATABASES,178,140,48,14
+    LTEXT           "of the month(s)",
+                    IDC_OFTHEMONTHS2,153,73,54,12,SS_CENTERIMAGE
+    CONTROL         "&Enabled",
+                    IDC_ENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,110,
+                    50,11
+    CONTROL         "&Update only at this time",
+                    IDC_ATTHISTIME,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,80,
+                    110,160,11
+    CONTROL         "&Delete After Run",
+                    IDC_DELETEAFTERRUN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    7,124,100,10
+    LTEXT           "Thread Priority:",IDC_THREADPRIORITYLABEL,8,139,70,10
+	COMBOBOX        IDC_THREADPRIORITY,80,137,75,98,CBS_DROPDOWNLIST |  
+                    WS_VSCROLL | WS_TABSTOP | CBS_HASSTRINGS
+    PUSHBUTTON      "Databases",IDC_DATABASES,178,137,48,14
+	LTEXT           "",IDC_LASTRUN,8,156,168,13
 END
 
 
