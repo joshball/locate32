@@ -477,7 +477,7 @@ public:
 	void OnInitSendToMenu(HMENU hPopupMenu);
 	
 	void OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo,int nItem=-1,DetailType nDetail=Title);
-	static void ExecuteCommand(LPCSTR szCommand,int nItem=-1);
+	static void ExecuteCommand(LPCWSTR szCommand,int nItem=-1);
 	
 	void SortItems(DetailType nDetail,BYTE bDescending=-1,BOOL bNoneIsPossible=FALSE); // bDescending:0=ascending order, 1=desc, -1=default
 	void SetSorting(BYTE bSorting=BYTE(-2)); // bSorting==BYTE(-2): default
@@ -494,7 +494,7 @@ public:
 	static int SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSorting);
 	void SetSortArrowToHeader(DetailType nDetail,BOOL bRemove,BOOL bDownArrow);
 	HMENU CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pSelectedItems,int nSelectedItems,BOOL bSimple=FALSE);
-	ContextMenuStuff* GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CString*>& aFiles);
+	ContextMenuStuff* GetContextMenuForFiles(LPCWSTR szParent,CArrayFP<CStringW*>& aFiles);
 	CLocatedItem** GetSeletedItems(int& nItems,int nIncludeIfNoneSeleted=-1);
 	
 	void InitTooltips();
@@ -508,8 +508,8 @@ public:
 	void StopBackgroundOperations();
 	void ChangeBackgroundOperationsPriority(BOOL bLower);
 
-	BOOL GetFileClassID(CString& file,CLSID& clsid,LPCSTR szType); 
-	BOOL SendFiles(CString& dst,CListCtrl* pList,CLSID& clsid);
+	BOOL GetFileClassID(LPCWSTR file,CLSID& clsid,LPCWSTR szType); 
+	BOOL SendFiles(CStringW& dst,CListCtrl* pList,CLSID& clsid);
 	
 	void BeginDragFiles(CListCtrl* pList);
 
@@ -527,7 +527,7 @@ public:
 	void SaveDialogTexts();
 	void SetControlPositions(UINT nType,int cx, int cy);
 
-	void OpenFolder(LPCSTR szFolder);
+	void OpenFolder(LPCWSTR szFolder);
 	
 	void OnActivateTab(int nIndex);
 	void OnActivateNextTab(BOOL bPrev=FALSE);
@@ -566,7 +566,7 @@ protected:
 	void OnComputeMD5Sums(BOOL bForSameSizeFilesOnly);
 	void OnShowFileInformation();
 	
-	void OnExecuteFile(LPCSTR szVerb,int nItem=-1);
+	void OnExecuteFile(LPCWSTR szVerb,int nItem=-1);
 	void OnCopy(BOOL bCut,int nItem=1);
 	void OnOpenFolder(BOOL bContaining,int nItem=-1);
 	void OnCreateShortcut();

@@ -221,9 +221,9 @@ public:
 
 	union { // Extra action data
 		void* m_pExtraInfo;	
-		LPSTR m_szVerb; // with, ResultListItems::Execute, NULL means default
+		LPWSTR m_szVerb; // with, ResultListItems::Execute, NULL means default
 		SendMessageInfo* m_pSendMessage; // with, Advanced::SendMessage and Advanced::PostMessage
-		LPSTR m_szCommand;
+		LPWSTR m_szCommand;
 		SelectFileType m_nSelectFileType;
 	};
 

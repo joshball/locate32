@@ -3524,12 +3524,13 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	
 	m_aDirectories.RemoveAll();
 
-	int nCount=SendDlgItemMessage(IDC_DIRECTORIES,LB_GETCOUNT);
+	CListBox Directories(GetDlgItem(IDC_DIRECTORIES));
+	int nCount=Directories.GetCount();
 	for (int i=0;i<nCount;i++)
 	{
-		int iLength=SendDlgItemMessage(IDC_DIRECTORIES,LB_GETTEXTLEN,i)+1;
-		char* pText=new char[max(iLength,2)];
-		SendDlgItemMessage(IDC_DIRECTORIES,LB_GETTEXT,i,LPARAM(pText));
+		int iLength=Directories.GetTextLen(i)+1;
+		WCHAR* pText=new WCHAR[max(iLength,2)];
+		Directories.GetText(i,pText);
 		m_aDirectories.Add(pText);
 	}
 
@@ -3539,41 +3540,41 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 {
 	m_bTextChanged=FALSE;
 
-	CString sDirectory;
-	int iLength=GetDlgItemTextLength(IDC_DIRECTORYNAME);
-	char* pText=new char[iLength+1];
-	GetDlgItemText(IDC_DIRECTORYNAME,pText,iLength+1);
-	if (!GetFullPathName(pText,400,sDirectory.GetBuffer(400),NULL))
+	CStringW sDirectoryPre,sDirectory;
+	CEdit DirectoryName(GetDlgItem(IDC_DIRECTORYNAME));
+	CListBox Directories(GetDlgItem(IDC_DIRECTORIES));
+	
+	DirectoryName.GetText(sDirectoryPre);
+	if (!FileSystem::GetFullPathName(sDirectoryPre,400,sDirectory.GetBuffer(400),NULL))
 	{
-		CString str;
-		MessageBox(str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
-		delete[] pText;
+		CStringW str;
+		str.Format(IDS_ERRORDIRECTORYNOTFOUND,LPCWSTR(sDirectory));
+		MessageBox(str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
 		return FALSE;	
 	}
-	delete[] pText;
 	sDirectory.FreeExtra();
 
 
 	if (!FileSystem::IsDirectory(sDirectory))
 	{
-		CString str;
-		str.Format(IDS_ERRORDIRECTORYNOTFOUND,LPCSTR(sDirectory));
-		MessageBox(str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+		CStringW str;
+		str.Format(IDS_ERRORDIRECTORYNOTFOUND,LPCWSTR(sDirectory));
+		MessageBox(str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
 		return FALSE;
 	}
 
-	CString sLower(sDirectory);
-	sLower.MakeLower();
+	sDirectoryPre=sDirectory;
+	sDirectoryPre.MakeLower();
 
 	
-	for (int i=SendDlgItemMessage(IDC_DIRECTORIES,LB_GETCOUNT)-1;i>=0;i--)
+	for (int i=Directories.GetCount()-1;i>=0;i--)
 	{
-		int iLength=SendDlgItemMessage(IDC_DIRECTORIES,LB_GETTEXTLEN,i);
-        char* szText=new char[iLength+2];
-		SendDlgItemMessage(IDC_DIRECTORIES,LB_GETTEXT,i,(LPARAM)szText);
-		CharLower(szText);
+		int iLength=Directories.GetTextLen(i);
+        WCHAR* szText=new WCHAR[iLength+2];
+		Directories.GetText(i,szText);
+		MakeLower(szText);
 
-		if (sLower.Compare(szText)==0)
+		if (sDirectoryPre.Compare(szText)==0)
 		{
 			if (bShowErrorMessageIfExists)
 				ShowErrorMessage(IDS_ALREADYEXCLUDED,IDS_ERROR);
@@ -3581,7 +3582,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 		}		
 	}
     
-	SendDlgItemMessage(IDC_DIRECTORIES,LB_ADDSTRING,0,(LPARAM)(LPCSTR)sDirectory);
+	Directories.AddString(sDirectory);
 
 	SetFocus(IDC_DIRECTORIES);
 	EnableControls();
@@ -3608,7 +3609,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	if (fd.DoModal(*this))
 	{
 		// Insert folder to list
-		CString Folder;
+		CStringW Folder;
 		if (!fd.GetFolder(Folder))
 			ShowErrorMessage(IDS_CANNOTEXCLUDESELECTED,IDS_ERROR);
 		else
@@ -6160,13 +6161,13 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 			if (nSelection==CB_ERR)
 			{
 				UINT nLen=m_VerbCombo.GetTextLength();
-				pAction->m_szVerb=new char[nLen+1];
+				pAction->m_szVerb=new WCHAR[nLen+1];
 				m_VerbCombo.GetText(pAction->m_szVerb,nLen+1);
 			}
 			else if (nSelection!=0)
 			{
 				UINT nLen=m_VerbCombo.GetLBTextLen(nSelection);
-				pAction->m_szVerb=new char[nLen+1];
+				pAction->m_szVerb=new WCHAR[nLen+1];
 				m_VerbCombo.GetLBText(nSelection,pAction->m_szVerb);
 			}
 		}
@@ -6176,7 +6177,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 			UINT nLen=GetDlgItemTextLength(IDC_COMMAND);
 			if (nLen>0)
 			{
-				pAction->m_szCommand=new char[nLen+1];
+				pAction->m_szCommand=new WCHAR[nLen+1];
 				GetDlgItemText(IDC_COMMAND,pAction->m_szCommand,nLen+1);
 			}
 		}

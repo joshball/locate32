@@ -119,13 +119,13 @@ void CSelectColumndDlg::SaveActionFields(ColumnItem* pColumn)
 			if (nSelection==CB_ERR)
 			{
 				UINT nLen=m_VerbCombo.GetTextLength();
-				pColumn->m_pActions[nWhen]->m_szVerb=new char[nLen+1];
+				pColumn->m_pActions[nWhen]->m_szVerb=new WCHAR[nLen+1];
 				m_VerbCombo.GetText(pColumn->m_pActions[nWhen]->m_szVerb,nLen+1);
 			}
 			else if (nSelection!=0)
 			{
 				UINT nLen=m_VerbCombo.GetLBTextLen(nSelection);
-				pColumn->m_pActions[nWhen]->m_szVerb=new char[nLen+1];
+				pColumn->m_pActions[nWhen]->m_szVerb=new WCHAR[nLen+1];
 				m_VerbCombo.GetLBText(nSelection,pColumn->m_pActions[nWhen]->m_szVerb);
 			}
 		}
@@ -135,7 +135,7 @@ void CSelectColumndDlg::SaveActionFields(ColumnItem* pColumn)
 			UINT nLen=GetDlgItemTextLength(IDC_COMMAND);
 			if (nLen>0)
 			{
-				pColumn->m_pActions[nWhen]->m_szCommand=new char[nLen+1];
+				pColumn->m_pActions[nWhen]->m_szCommand=new WCHAR[nLen+1];
 				GetDlgItemText(IDC_COMMAND,pColumn->m_pActions[nWhen]->m_szCommand,nLen+1);
 			}
 		}

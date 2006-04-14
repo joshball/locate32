@@ -336,8 +336,8 @@ public:
 	void* GetItemDataPtr(int nIndex) const;
 	int SetItemDataPtr(int nIndex,void* pData);
 	int GetItemRect(int nIndex,LPRECT lpRect) const;
-	int GetText(int nIndex,LPTSTR lpszBuffer) const;
-	void GetText(int nIndex,CString& rString) const;
+	int GetText(int nIndex,LPSTR lpszBuffer) const;
+	int GetText(int nIndex,CString& rString) const;
 	int GetTextLen(int nIndex) const;
 
 	void SetColumnWidth(int cxWidth);
@@ -347,19 +347,30 @@ public:
 
 	int SetItemHeight(int nIndex,UINT cyItemHeight);
 	int GetItemHeight(int nIndex) const;
-	int FindStringExact(int nIndexStart,LPCTSTR lpszFind) const;
+	int FindStringExact(int nIndexStart,LPCSTR lpszFind) const;
 	int GetCaretIndex() const;
 	int SetCaretIndex(int nIndex,BOOL bScroll=TRUE);
 
 	int AddString(LPCTSTR lpszItem);
 	int DeleteString(UINT nIndex);
-	int InsertString(int nIndex,LPCTSTR lpszItem);
+	int InsertString(int nIndex,LPCSTR lpszItem);
 	void ResetContent();
-	int Dir(UINT attr,LPCTSTR lpszWildCard);
+	int Dir(UINT attr,LPCSTR lpszWildCard);
 
-	int FindString(int nStartAfter,LPCTSTR lpszItem) const;
-	int SelectString(int nStartAfter,LPCTSTR lpszItem);
+	int FindString(int nStartAfter,LPCSTR lpszItem) const;
+	int SelectString(int nStartAfter,LPCSTR lpszItem);
 	int SelItemRange(BOOL bSelect,int nFirstItem,int nLastItem);
+
+#ifdef DEF_WCHAR
+	int Dir(UINT attr,LPCWSTR lpszWildCard);
+	int GetText(int nIndex,LPWSTR lpszBuffer) const;
+	int GetText(int nIndex,CStringW& rString) const;
+	int AddString(LPCWSTR lpszItem);
+	int InsertString(int nIndex,LPCWSTR lpszItem);
+	int FindString(int nStartAfter,LPCWSTR lpszItem) const;
+	int FindStringExact(int nIndexStart,LPCWSTR lpszFind) const;
+	int SelectString(int nStartAfter,LPCWSTR lpszItem);
+#endif
 };
 
 class CComboBox : public CWndCtrl

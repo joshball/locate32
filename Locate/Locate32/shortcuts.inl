@@ -97,9 +97,9 @@ inline DWORD CSubAction::GetDataLength(DWORD nAction,BOOL bHeader) const
 	{
 	case CAction::ResultListItems:
 		if (m_nResultList==Execute && m_szVerb!=NULL)
-			dwLength+=(DWORD)strlen(m_szVerb)+1;
+			dwLength+=(DWORD)(wcslen(m_szVerb)+1)*2;
 		else if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
-			dwLength+=(DWORD)strlen(m_szCommand)+1;
+			dwLength+=(DWORD)(wcslen(m_szCommand)+1)*2;
 		break;
 	case CAction::Advanced:
 		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage ) &&

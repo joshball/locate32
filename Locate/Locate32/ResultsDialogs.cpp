@@ -80,8 +80,8 @@ BOOL CResults::Create(CListCtrl* pList,int* pDetails,int nDetails)
 					pItem->UpdateByDetail((CLocateDlg::DetailType)m_pDetails[i]);
 				
 				// Retrieving detail text
-				LPSTR szDetail=pItem->GetDetailText((CLocateDlg::DetailType)m_pDetails[i]);
-				SIZE_T dwLength=istrlen(szDetail);
+				LPWSTR szDetail=pItem->GetDetailText((CLocateDlg::DetailType)m_pDetails[i]);
+				SIZE_T dwLength=istrlenw(szDetail);
 
 				// Checking length
 				if (dwLength>m_pLengths[i])
@@ -89,7 +89,7 @@ BOOL CResults::Create(CListCtrl* pList,int* pDetails,int nDetails)
 				
 				//Writing detail ot temp file
 				tmpFile.Write(dwLength);
-				tmpFile.Write(szDetail,dwLength);
+				tmpFile.Write((LPCSTR)W2A(szDetail),dwLength);
 			}
 			m_nResults++;
 			if (!pItem->IsDeleted())
@@ -249,13 +249,13 @@ BOOL CResults::SaveToHtmlFile(LPCSTR szFile) const
 			const CDatabase* pDatabase=GetLocateApp()->GetDatabase(m_aFromDatabases[i]);
 
 			outFile.Write("<tr><td>",8);
-			outFile.Write(pDatabase->GetName(),strlen(pDatabase->GetName()));
+			outFile.Write((LPCSTR)W2A(pDatabase->GetName()),istrlenw(pDatabase->GetName()));
 			outFile.Write("</td><td>",9);
-			outFile.Write(pDatabase->GetCreator(),strlen(pDatabase->GetCreator()));
+			outFile.Write((LPCSTR)W2A(pDatabase->GetCreator()),istrlenw(pDatabase->GetCreator()));
 			outFile.Write("</td><td>",9);
-			outFile.Write(pDatabase->GetDescription(),strlen(pDatabase->GetDescription()));
+			outFile.Write((LPCSTR)W2A(pDatabase->GetDescription()),istrlenw(pDatabase->GetDescription()));
 			outFile.Write("</td><td>",9);
-			outFile.Write(pDatabase->GetArchiveName(),strlen(pDatabase->GetArchiveName()));
+			outFile.Write((LPCSTR)W2A(pDatabase->GetArchiveName()),istrlenw(pDatabase->GetArchiveName()));
 			outFile.Write("</td></tr>",10);
 
 		}

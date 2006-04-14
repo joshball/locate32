@@ -598,12 +598,6 @@ inline BOOL CListBox::Create(DWORD dwStyle,const RECT* rect,HWND hParentWnd,UINT
 		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
-inline void CListBox::GetText(int nIndex,CString& rString) const
-{
-	::SendMessage(m_hWnd,LB_GETTEXT,(WPARAM)nIndex,(LPARAM)rString.GetBuffer(::SendMessage(m_hWnd,LB_GETTEXTLEN,nIndex,0)+2));
-	rString.FreeExtra();
-}
-
 inline int CListBox::GetCount() const
 {
 	return ::SendMessage(m_hWnd,LB_GETCOUNT,0,0);
@@ -709,7 +703,7 @@ inline int CListBox::GetItemRect(int nIndex,LPRECT lpRect) const
 	return ::SendMessage(m_hWnd,LB_GETITEMRECT,(WPARAM)nIndex,(LPARAM)lpRect);
 }
 
-inline int CListBox::GetText(int nIndex,LPTSTR lpszBuffer) const
+inline int CListBox::GetText(int nIndex,LPSTR lpszBuffer) const
 {
 	return ::SendMessage(m_hWnd,LB_GETTEXT,(WPARAM)nIndex,(LPARAM)lpszBuffer);
 }
@@ -749,7 +743,7 @@ inline int CListBox::GetItemHeight(int nIndex) const
 	return ::SendMessage(m_hWnd,LB_GETITEMHEIGHT,(WPARAM)nIndex,0);
 }
 
-inline int CListBox::FindStringExact(int nIndexStart,LPCTSTR lpszFind) const
+inline int CListBox::FindStringExact(int nIndexStart,LPCSTR lpszFind) const
 {
 	return ::SendMessage(m_hWnd,LB_FINDSTRINGEXACT,(WPARAM)nIndexStart,(LPARAM)lpszFind);
 }
@@ -764,17 +758,19 @@ inline int CListBox::SetCaretIndex(int nIndex,BOOL bScroll)
 	return ::SendMessage(m_hWnd,LB_SETCARETINDEX,nIndex,MAKELPARAM(bScroll,0));
 }
 
-inline int CListBox::AddString(LPCTSTR lpszItem)
+inline int CListBox::AddString(LPCSTR lpszItem)
 {
 	return ::SendMessage(m_hWnd,LB_ADDSTRING,0,(LPARAM)lpszItem);
 }
+
+
 
 inline int CListBox::DeleteString(UINT nIndex)
 {
 	return ::SendMessage(m_hWnd,LB_DELETESTRING,nIndex,0);
 }
 
-inline int CListBox::InsertString(int nIndex,LPCTSTR lpszItem)
+inline int CListBox::InsertString(int nIndex,LPCSTR lpszItem)
 {
 	return ::SendMessage(m_hWnd,LB_INSERTSTRING,nIndex,(LPARAM)lpszItem);
 }
@@ -784,17 +780,17 @@ inline void CListBox::ResetContent()
 	::SendMessage(m_hWnd,LB_RESETCONTENT,0,0);
 }
 
-inline int CListBox::Dir(UINT attr,LPCTSTR lpszWildCard)
+inline int CListBox::Dir(UINT attr,LPCSTR lpszWildCard)
 {
 	return ::SendMessage(m_hWnd,LB_DIR,attr,(LPARAM)lpszWildCard);
 }
 
-inline int CListBox::FindString(int nStartAfter,LPCTSTR lpszItem) const
+inline int CListBox::FindString(int nStartAfter,LPCSTR lpszItem) const
 {
 	return ::SendMessage(m_hWnd,LB_FINDSTRING,nStartAfter,(LPARAM)lpszItem);
 }
 
-inline int CListBox::SelectString(int nStartAfter,LPCTSTR lpszItem)
+inline int CListBox::SelectString(int nStartAfter,LPCSTR lpszItem)
 {
 	return ::SendMessage(m_hWnd,LB_SELECTSTRING,nStartAfter,(LPARAM)lpszItem);
 }
@@ -803,6 +799,51 @@ inline int CListBox::SelItemRange(BOOL bSelect,int nFirstItem,int nLastItem)
 {
 	return ::SendMessage(m_hWnd,LB_SELITEMRANGE,bSelect,MAKELPARAM(nFirstItem,nLastItem));
 }
+
+#ifdef DEF_WCHAR
+inline int CListBox::FindStringExact(int nIndexStart,LPCWSTR lpszFind) const
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,LB_FINDSTRINGEXACT,(WPARAM)nIndexStart,(LPARAM)lpszFind);
+	else
+		return ::SendMessage(m_hWnd,LB_FINDSTRINGEXACT,(WPARAM)nIndexStart,(LPARAM)(LPCSTR)W2A(lpszFind));
+}
+inline int CListBox::AddString(LPCWSTR lpszItem)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,LB_ADDSTRING,0,(LPARAM)lpszItem);
+	else
+		return ::SendMessage(m_hWnd,LB_ADDSTRING,0,(LPARAM)(LPCSTR)W2A(lpszItem));
+}
+inline int CListBox::InsertString(int nIndex,LPCWSTR lpszItem)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,LB_INSERTSTRING,nIndex,(LPARAM)lpszItem);
+	else
+		return ::SendMessage(m_hWnd,LB_INSERTSTRING,nIndex,(LPARAM)(LPCSTR)W2A(lpszItem));
+}
+inline int CListBox::FindString(int nStartAfter,LPCWSTR lpszItem) const
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,LB_FINDSTRING,nStartAfter,(LPARAM)lpszItem);
+	else
+		return ::SendMessage(m_hWnd,LB_FINDSTRING,nStartAfter,(LPARAM)(LPCSTR)W2A(lpszItem));
+}
+inline int CListBox::Dir(UINT attr,LPCWSTR lpszWildCard)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,LB_DIR,attr,(LPARAM)lpszWildCard);
+	else
+		return ::SendMessage(m_hWnd,LB_DIR,attr,(LPARAM)(LPCSTR)W2A(lpszWildCard));
+}
+inline int CListBox::SelectString(int nStartAfter,LPCWSTR lpszItem)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,LB_SELECTSTRING,nStartAfter,(LPARAM)lpszItem);
+	else
+		return ::SendMessage(m_hWnd,LB_SELECTSTRING,nStartAfter,(LPARAM)(LPCSTR)W2A(lpszItem));
+}
+#endif
 
 ///////////////////////////
 // Class CComboBox
@@ -924,24 +965,7 @@ inline int CComboBox::GetLBText(int nIndex, LPSTR lpszText) const
 	return ::SendMessage(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)lpszText);
 }
 
-#ifdef DEF_WCHAR
-inline int CComboBox::GetLBText(int nIndex, LPWSTR lpszText) const
-{ 
-	if (IsFullUnicodeSupport())
-		return ::SendMessageW(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)lpszText);
 
-	int nLen=::SendMessageA(m_hWnd,CB_GETLBTEXTLEN,nIndex,0);
-	char* pText=new char[nLen+2];
-	int ret=::SendMessageA(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)pText);
-	if (ret!=0)
-	{
-		MultiByteToWideChar(CP_ACP,0,pText,ret,lpszText,ret+2);
-		lpszText[ret]=L'\0';
-	}
-	delete pText;
-	return ret;
-}
-#endif
 
 inline int CComboBox::GetLBTextLen(int nIndex) const
 {

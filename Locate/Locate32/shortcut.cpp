@@ -459,32 +459,32 @@ DWORD CSubAction::FillFromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen)
 		{
 			DWORD dwLen;
 
-			for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
+			for (dwLen=0;dwLen<dwDataLen && ((LPCWSTR)pData)[dwLen]!='\0';dwLen++);
 
 			if (dwLen==dwDataLen)
 				return 0;
 
 			dwLen++;
-			m_szVerb=new char[dwLen];
-            CopyMemory(m_szVerb,pData,dwLen);
-			dwUsed+=dwLen;
-			pData+=dwLen;
+			m_szVerb=new WCHAR[dwLen];
+            MemCopyW(m_szVerb,pData,dwLen);
+			dwUsed+=dwLen*2;
+			pData+=dwLen*2;
 			dwDataLen-=dwLen;
 		}
 		else if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
 		{
 			DWORD dwLen;
 
-			for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
+			for (dwLen=0;dwLen<dwDataLen && ((LPCWSTR)pData)[dwLen]!='\0';dwLen++);
 
 			if (dwLen==dwDataLen)
 				return 0;
 			
 			dwLen++;
-			m_szCommand=new char[dwLen];
-            CopyMemory(m_szCommand,pData,dwLen);
-			dwUsed+=dwLen;
-			pData+=dwLen;
+			m_szCommand=new WCHAR[dwLen];
+            MemCopyW(m_szCommand,pData,dwLen);
+			dwUsed+=dwLen*2;
+			pData+=dwLen*2;
 			dwDataLen-=dwLen;
 		}
 		break;
@@ -643,15 +643,15 @@ DWORD CSubAction::GetData(DWORD nAction,BYTE* pData_,BOOL bHeader) const
 	case CAction::ResultListItems:
 		if (m_nResultList==Execute && m_szVerb!=NULL)
 		{
-			DWORD dwUsed=istrlen(m_szVerb)+1;
-			CopyMemory(pData,m_szVerb,dwUsed);
-			pData+=dwUsed;
+			DWORD dwUsed=istrlenw(m_szVerb)+1;
+			MemCopyW(pData,m_szVerb,dwUsed);
+			pData+=dwUsed*2;
 		}
 		else if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
 		{
-			DWORD dwUsed=istrlen(m_szCommand)+1;
-			CopyMemory(pData,m_szCommand,dwUsed);
-			pData+=dwUsed;
+			DWORD dwUsed=istrlenw(m_szCommand)+1;
+			MemCopyW(pData,m_szCommand,dwUsed);
+			pData+=dwUsed*2;
 		}
 		break;
 	case CAction::Advanced:

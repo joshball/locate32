@@ -180,7 +180,90 @@ UINT CWndCtrl::GetText(LPWSTR lpszText,UINT cchTextMax) const
 	
 #endif
 
+///////////////////////////
+// Class CListBox
+///////////////////////////
+int CListBox::GetText(int nIndex, CStringA& rString) const
+{
+	int nLen=::SendMessage(m_hWnd,LB_GETTEXTLEN,(WPARAM)nIndex,0);
+	if (nLen==CB_ERR)
+		return CB_ERR;
+	LPSTR pointer=new CHAR [nLen+2];
+	if (pointer==NULL)
+	{
+		SetHFCError(HFC_CANNOTALLOC);
+		return CB_ERR;
+	}
+	if (::SendMessage(m_hWnd,LB_GETTEXT,(WPARAM)nIndex,(LPARAM)pointer)==CB_ERR)
+	{
+		delete[] pointer;
+		return CB_ERR;
+	}
+	rString=pointer;
+	delete[] pointer;
+	return rString.GetLength();
+}
 
+#ifdef DEF_WCHAR
+int CListBox::GetText(int nIndex, LPWSTR lpszText) const
+{ 
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,LB_GETTEXT,nIndex,(LPARAM)lpszText);
+
+	int nLen=::SendMessageA(m_hWnd,LB_GETTEXTLEN,nIndex,0);
+	char* pText=new char[nLen+2];
+	int ret=::SendMessageA(m_hWnd,LB_GETTEXT,nIndex,(LPARAM)pText);
+	if (ret!=0)
+	{
+		MultiByteToWideChar(CP_ACP,0,pText,ret,lpszText,ret+2);
+		lpszText[ret]=L'\0';
+	}
+	delete pText;
+	return ret;
+}
+
+int CListBox::GetText(int nIndex, CStringW& rString) const
+{
+	int nLen=::SendMessage(m_hWnd,LB_GETTEXTLEN,(WPARAM)nIndex,0);
+	if (nLen==CB_ERR)
+		return CB_ERR;
+
+	if (IsFullUnicodeSupport())
+	{
+		LPWSTR pointer=new WCHAR [nLen+2];
+		if (pointer==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return CB_ERR;
+		}
+		if (::SendMessageW(m_hWnd,LB_GETTEXT,(WPARAM)nIndex,(LPARAM)pointer)==CB_ERR)
+		{
+			delete[] pointer;
+			return CB_ERR;
+		}
+		rString.Copy(pointer,nLen);
+		delete[] pointer;
+		return rString.GetLength();
+	}
+	else
+	{
+		LPSTR pointer=new CHAR [nLen+2];
+		if (pointer==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return CB_ERR;
+		}
+		if (::SendMessageA(m_hWnd,LB_GETTEXT,(WPARAM)nIndex,(LPARAM)pointer)==CB_ERR)
+		{
+			delete[] pointer;
+			return CB_ERR;
+		}
+		rString.Copy(pointer,nLen);
+		delete[] pointer;
+		return rString.GetLength();
+	}
+}
+#endif
 ///////////////////////////
 // Class CComboBox
 ///////////////////////////
@@ -208,6 +291,22 @@ int CComboBox::GetLBText(int nIndex, CStringA& rString) const
 }
 
 #ifdef DEF_WCHAR
+int CComboBox::GetLBText(int nIndex, LPWSTR lpszText) const
+{ 
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)lpszText);
+
+	int nLen=::SendMessageA(m_hWnd,CB_GETLBTEXTLEN,nIndex,0);
+	char* pText=new char[nLen+2];
+	int ret=::SendMessageA(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)pText);
+	if (ret!=0)
+	{
+		MultiByteToWideChar(CP_ACP,0,pText,ret,lpszText,ret+2);
+		lpszText[ret]=L'\0';
+	}
+	delete pText;
+	return ret;
+}
 int CComboBox::GetLBText(int nIndex, CStringW& rString) const
 {
 	int nLen=::SendMessage(m_hWnd,CB_GETLBTEXTLEN,(WPARAM)nIndex,0);

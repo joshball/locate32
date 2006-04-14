@@ -1959,7 +1959,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLoca
 	li.iSubItem=0;
 	li.iImage=I_IMAGECALLBACK;
 	li.lParam=(LPARAM)new CLocatedItem(bFolder,pLocater);
-	if (pLocater->IsCurrentDatabaseNamesOEM())
+	if (pLocater->IsCurrentDatabaseOEM())
 		((CLocatedItem*)li.lParam)->OemtoAnsi();
 	if (li.lParam==NULL)
 		return FALSE;
@@ -2709,17 +2709,17 @@ CLocatedItem** CLocateDlg::GetSeletedItems(int& nItems,int nIncludeIfNoneSeleted
 }
 
 
-void CLocateDlg::ExecuteCommand(LPCSTR szCommand,int nItem)
+void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 {
 	if (szCommand==NULL)
 		return;
 	
-	int nIndexToPercent=nIndexToPercent=FirstCharIndex(szCommand,'%');
-	if (nIndexToPercent==-1 || (szCommand[nIndexToPercent+1]!='d' && szCommand[nIndexToPercent+1]!='p'))
+	int nIndexToPercent=nIndexToPercent=FirstCharIndex(szCommand,L'%');
+	if (nIndexToPercent==-1 || (szCommand[nIndexToPercent+1]!=L'd' && szCommand[nIndexToPercent+1]!=L'p'))
 	{
 		// Just execute command
 		PROCESS_INFORMATION pi;
-		STARTUPINFO si;
+		STARTUPINFO si; // Ansi and Unicode versions are same
 		si.cb=sizeof(STARTUPINFO);
 		si.lpReserved=NULL;
 		si.cbReserved2=0;
@@ -2729,13 +2729,23 @@ void CLocateDlg::ExecuteCommand(LPCSTR szCommand,int nItem)
 		si.dwFlags=STARTF_USESHOWWINDOW;
 		si.wShowWindow=SW_SHOWDEFAULT;
 		
-		if (CreateProcess(NULL,LPSTR(szCommand),NULL,
-			NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
-			NULL,NULL,&si,&pi))
+		if (IsFullUnicodeSupport())
 		{
-			CloseHandle(pi.hThread);
-			CloseHandle(pi.hProcess);
+			if (!CreateProcessW(NULL,LPWSTR(szCommand),NULL,
+				NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
+				NULL,NULL,(STARTUPINFOW*)&si,&pi))
+				return;
 		}
+		else
+		{
+			if (!CreateProcess(NULL,(LPSTR)(LPCSTR)W2A(szCommand),NULL,
+				NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
+				NULL,NULL,&si,&pi))
+				return;
+		}
+
+		CloseHandle(pi.hThread);
+		CloseHandle(pi.hProcess);
 		return;		
 	}
 
@@ -2751,14 +2761,14 @@ void CLocateDlg::ExecuteCommand(LPCSTR szCommand,int nItem)
 		if (pItems[i]!=NULL)
 		{
 			int nIndex=nIndexToPercent;
-			LPSTR pCommand=(LPSTR)szCommand;
+			LPWSTR pCommand=(LPWSTR)szCommand;
 		
 			// Replace %d with item path
 			do
 			{
 				int nLen;
-				LPCSTR pPath;
-                if (pCommand[nIndex+1]=='d')
+				LPCWSTR pPath;
+                if (pCommand[nIndex+1]==L'd')
 				{
 					nLen=pItems[i]->GetPathLen();
 					pPath=pItems[i]->GetPath();
@@ -2766,16 +2776,16 @@ void CLocateDlg::ExecuteCommand(LPCSTR szCommand,int nItem)
 				else 
 				{
 					pPath=pItems[i]->GetParent();
-					nLen=istrlen(pPath);					
+					nLen=istrlenw(pPath);					
 				}
 
 
 
-				UINT nCommandLen=istrlen(pCommand);
-				LPSTR pNewCommand=new char[nCommandLen-2+nLen+1];
-				CopyMemory(pNewCommand,pCommand,nIndex);
-				CopyMemory(pNewCommand+nIndex,pPath,nLen);
-				CopyMemory(pNewCommand+nIndex+nLen,pCommand+nIndex+2,nCommandLen-nIndex-2+1);
+				UINT nCommandLen=istrlenw(pCommand);
+				LPWSTR pNewCommand=new WCHAR[nCommandLen-2+nLen+1];
+				MemCopyW(pNewCommand,pCommand,nIndex);
+				MemCopyW(pNewCommand+nIndex,pPath,nLen);
+				MemCopyW(pNewCommand+nIndex+nLen,pCommand+nIndex+2,nCommandLen-nIndex-2+1);
 
 
 				if (pCommand!=szCommand)
@@ -2783,11 +2793,11 @@ void CLocateDlg::ExecuteCommand(LPCSTR szCommand,int nItem)
 
 				pCommand=pNewCommand;
 			}
-			while ((nIndex=FirstCharIndex(pCommand,'%'))!=-1 && (pCommand[nIndex+1]=='d' || pCommand[nIndex+1]=='p'));
+			while ((nIndex=FirstCharIndex(pCommand,L'%'))!=-1 && (pCommand[nIndex+1]==L'd' || pCommand[nIndex+1]==L'p'));
 	
 			// Execute command
 			PROCESS_INFORMATION pi;
-			STARTUPINFO si;
+			STARTUPINFO si;// Ansi and Unicode versions are same
 			si.cb=sizeof(STARTUPINFO);
 			si.lpReserved=NULL;
 			si.cbReserved2=0;
@@ -2797,13 +2807,28 @@ void CLocateDlg::ExecuteCommand(LPCSTR szCommand,int nItem)
 			si.dwFlags=STARTF_USESHOWWINDOW;
 			si.wShowWindow=SW_SHOWDEFAULT;
 			
-			if (CreateProcess(NULL,pCommand,NULL,
-				NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
-				NULL,NULL,&si,&pi))
+			if (IsFullUnicodeSupport())
 			{
-				CloseHandle(pi.hThread);
-				CloseHandle(pi.hProcess);
+				if (CreateProcessW(NULL,pCommand,NULL,
+					NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
+					NULL,NULL,(STARTUPINFOW*)&si,&pi))
+				{
+					CloseHandle(pi.hThread);
+					CloseHandle(pi.hProcess);
+				}
 			}
+			else
+			{
+				if (CreateProcess(NULL,(LPSTR)(LPCSTR)W2A(pCommand),NULL,
+					NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
+					NULL,NULL,&si,&pi))
+				{
+					CloseHandle(pi.hThread);
+					CloseHandle(pi.hProcess);
+				}
+			}
+
+		
 
 			if (pCommand!=szCommand)
 				delete[] pCommand;
@@ -2818,7 +2843,7 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 	switch (m_nResultAction)
 	{
 	case CAction::Execute:
-		OnExecuteFile((LPCSTR)pExtraInfo,nItem);
+		OnExecuteFile((LPCWSTR)pExtraInfo,nItem);
 		break;
 	case CAction::Copy:
 		OnCopy(FALSE,nItem);
@@ -2883,7 +2908,7 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 		}
 		break;
 	case CAction::ExecuteCommand:
-		ExecuteCommand((LPCSTR)pExtraInfo,nItem);
+		ExecuteCommand((LPCWSTR)pExtraInfo,nItem);
 		break;
 	case CAction::SelectFile:
 		{
@@ -3348,7 +3373,7 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 
 			switch (pnmh->code)
 			{
-			case TTN_GETDISPINFO:
+			case TTN_GETDISPINFOA:
 				//DebugNumMessage("CLocateDlg::OnNotify; TTN_GETDISPINFO, ((NMTTDISPINFO*)pnmh)->lParam=%X",((NMTTDISPINFO*)pnmh)->lParam);
 				
 				if (m_iTooltipItem==-1)
@@ -3359,9 +3384,13 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 				{
 						
 					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_iTooltipItem);
-					
 					if (pItem!=NULL)
-						((NMTTDISPINFO*)pnmh)->lpszText=pItem->GetToolTipText();
+					{
+						if (g_szBuffer!=NULL)
+							delete[] g_szBuffer;
+						g_szBuffer=alloccopyWtoA((LPCWSTR)pItem->GetToolTipText());
+						((NMTTDISPINFO*)pnmh)->lpszText=g_szBuffer;
+					}
 					else
 						((NMTTDISPINFO*)pnmh)->lpszText=(LPSTR)szEmpty;
 				}
@@ -3370,11 +3399,45 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_iTooltipItem);
 					if (pItem!=NULL)
 					{
-						((NMTTDISPINFO*)pnmh)->lpszText=pItem->GetDetailText(
-							DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem)));
+						if (g_szBuffer!=NULL)
+							delete[] g_szBuffer;
+						
+						g_szBuffer=alloccopyWtoA((LPCWSTR)pItem->GetDetailText(
+							DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))));
+						((NMTTDISPINFO*)pnmh)->lpszText=g_szBuffer;
 					}
 					else
 						((NMTTDISPINFO*)pnmh)->lpszText=(LPSTR)szEmpty;
+
+				}
+				break;
+			case TTN_GETDISPINFOW:
+				//DebugNumMessage("CLocateDlg::OnNotify; TTN_GETDISPINFO, ((NMTTDISPINFO*)pnmh)->lParam=%X",((NMTTDISPINFO*)pnmh)->lParam);
+				
+				if (m_iTooltipItem==-1)
+					break;
+
+				((NMTTDISPINFOW*)pnmh)->hinst=NULL;
+				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))==Title)
+				{
+						
+					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_iTooltipItem);
+					
+					if (pItem!=NULL)
+						((NMTTDISPINFOW*)pnmh)->lpszText=pItem->GetToolTipText();
+					else
+						((NMTTDISPINFOW*)pnmh)->lpszText=(LPWSTR)szEmpty;
+				}
+				else
+				{
+					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_iTooltipItem);
+					if (pItem!=NULL)
+					{
+						((NMTTDISPINFOW*)pnmh)->lpszText=pItem->GetDetailText(
+							DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem)));
+					}
+					else
+						((NMTTDISPINFOW*)pnmh)->lpszText=(LPWSTR)szwEmpty;
 
 				}
 				break;
@@ -3557,9 +3620,9 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 	case LVN_COLUMNCLICK:
 		SortItems(DetailType(m_pListCtrl->GetColumnIDFromSubItem(pNm->iSubItem)),-1,TRUE);
 		break;
-	/*case LVN_GETDISPINFOW:
+	case LVN_GETDISPINFOA:
 		{
-			LV_DISPINFOW *pLvdi=(LV_DISPINFOW*)pNm;
+			LV_DISPINFOA *pLvdi=(LV_DISPINFOA*)pNm;
 
 			CLocatedItem* pItem=(CLocatedItem*)pLvdi->item.lParam;
 			if (pItem==NULL)
@@ -3571,6 +3634,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			if (GetFlags()&fgLVNoDelayedUpdate) 
 			{
 				// Update detail instantaneously
+				if (g_szBuffer!=NULL)
+					delete[] g_szBuffer;
 
 				switch (nDetail)
 				{
@@ -3583,9 +3648,9 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
 					if (pItem->GetTitle()!=NULL)
-						pLvdi->item.pszText=pItem->GetTitle();
+						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetTitle());
 					else
-						pLvdi->item.pszText=pItem->GetName();
+						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetName());
 					
 					pLvdi->item.iImage=pItem->GetIcon();
 
@@ -3601,7 +3666,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						pItem->UpdateParentIcon();
 
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
-					pLvdi->item.pszText=pItem->GetParent();
+					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetParent());
 					pLvdi->item.iImage=pItem->GetParentIcon();
 					break;
 				default:
@@ -3611,7 +3676,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						pItem->ShouldUpdateByDetail(nDetail))
 						pItem->UpdateByDetail(nDetail);
 					pLvdi->item.mask=LVIF_TEXT;
-					pLvdi->item.pszText=pItem->GetDetailText(nDetail);
+					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetDetailText(nDetail));
 					break;
 				}
 				
@@ -3640,9 +3705,9 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
 					if (pItem->GetTitle()!=NULL)
-						pLvdi->item.pszText=pItem->GetTitle();
+						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetTitle());
 					else
-						pLvdi->item.pszText=pItem->GetName();
+						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetName());
 					pLvdi->item.iImage=pItem->GetIcon();
 					DebugFormatMessage("LVN_GETDISPINFO: icon set to %d for item %s",pLvdi->item.iImage,pItem->GetName());
 
@@ -3666,7 +3731,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					}
 
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
-					pLvdi->item.pszText=pItem->GetParent();
+					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetParent());
 					pLvdi->item.iImage=pItem->GetParentIcon();
 					break;
 				default:
@@ -3684,15 +3749,15 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 							m_pBackgroundUpdater->StopWaiting();
 					}
 					pLvdi->item.mask=LVIF_TEXT;
-					pLvdi->item.pszText=pItem->GetDetailText(nDetail);
+					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetDetailText(nDetail));
 					break;
 				}
 			}
 			break;
-		}*/
-	case LVN_GETDISPINFOA:
+		}
+	case LVN_GETDISPINFOW:
 		{
-			LV_DISPINFOA *pLvdi=(LV_DISPINFOA*)pNm;
+			LV_DISPINFOW *pLvdi=(LV_DISPINFOW*)pNm;
 
 			CLocatedItem* pItem=(CLocatedItem*)pLvdi->item.lParam;
 			if (pItem==NULL)
@@ -3935,7 +4000,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 	CLocatedItem* pItem1=(CLocatedItem*)lParam1;
 	CLocatedItem* pItem2=(CLocatedItem*)lParam2;
 
-
+	// Todo check whether _wcsicmp is OK replacement for lstrcmpi
 	DetailType nDetail=DetailType(lParamSort&127);
 	switch (nDetail)
 	{
@@ -3945,16 +4010,16 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		if (pItem2->ShouldUpdateTitle())
 			pItem2->UpdateTitle();
 		if (lParamSort&128)
-			return lstrcmpi(pItem2->GetTitle(),pItem1->GetTitle());
-		return lstrcmpi(pItem1->GetTitle(),pItem2->GetTitle());
+			return _wcsicmp(pItem2->GetTitle(),pItem1->GetTitle());
+		return _wcsicmp(pItem1->GetTitle(),pItem2->GetTitle());
 	case InFolder:
 		if (lParamSort&128)
-			return lstrcmpi(pItem2->GetParent(),pItem1->GetParent());
-		return lstrcmpi(pItem1->GetParent(),pItem2->GetParent());
+			return _wcsicmp(pItem2->GetParent(),pItem1->GetParent());
+		return _wcsicmp(pItem1->GetParent(),pItem2->GetParent());
 	case FullPath:
 		if (lParamSort&128)
-			return lstrcmpi(pItem2->GetPath(),pItem1->GetPath());
-		return lstrcmpi(pItem1->GetPath(),pItem2->GetPath());
+			return _wcsicmp(pItem2->GetPath(),pItem1->GetPath());
+		return _wcsicmp(pItem1->GetPath(),pItem2->GetPath());
 	case FileSize:
 		if (pItem1->ShouldUpdateFileSize())
 			pItem1->UpdateFileSizeAndTime();
@@ -3990,8 +4055,8 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		if (pItem2->ShouldUpdateType())
 			pItem2->UpdateType();
 		if (lParamSort&128)
-			return lstrcmpi(pItem2->GetType(),pItem1->GetType());
-		return lstrcmpi(pItem1->GetType(),pItem2->GetType());
+			return _wcsicmp(pItem2->GetType(),pItem1->GetType());
+		return _wcsicmp(pItem1->GetType(),pItem2->GetType());
 	case DateModified:
 		if (pItem1->ShouldUpdateTimeAndDate())
 			pItem1->UpdateFileSizeAndTime();
@@ -4091,8 +4156,8 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			if (pItem2->ShouldUpdateExtra(nDetail))
 				pItem2->UpdateByDetail(nDetail);
 	
-			LPCSTR pText1=pItem1->GetExtraText(nDetail);
-			LPCSTR pText2=pItem2->GetExtraText(nDetail);
+			LPCWSTR pText1=pItem1->GetExtraText(nDetail);
+			LPCWSTR pText2=pItem2->GetExtraText(nDetail);
 
 			if (pText2==NULL)
 			{
@@ -4104,57 +4169,57 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 				return lParamSort&128?1:-1;
 			
 			if (lParamSort&128)
-				return lstrcmpi(pText2,pText1);
-			return lstrcmpi(pText1,pText2);
+				return _wcsicmp(pText2,pText1);
+			return _wcsicmp(pText1,pText2);
 		}
 	case Database:
 		if (lParamSort&128)
 		{
-			return lstrcmpi(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetName(),
+			return _wcsicmp(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetName(),
 				GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetName());
 		}
-		return lstrcmpi(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetName(),
+		return _wcsicmp(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetName(),
 			GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetName());
 	case DatabaseDescription:
 		if (lParamSort&128)
 		{
-			return lstrcmpi(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetDescription(),
+			return _wcsicmp(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetDescription(),
 				GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetDescription());
 		}
-		return lstrcmpi(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetDescription(),
+		return _wcsicmp(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetDescription(),
 			GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetDescription());
 	case DatabaseArchive:
 		if (lParamSort&128)
 		{
-			return lstrcmpi(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetArchiveName(),
+			return _wcsicmp(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetArchiveName(),
 				GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetArchiveName());
 		}
-		return lstrcmpi(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetArchiveName(),
+		return _wcsicmp(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetArchiveName(),
 			GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetArchiveName());
 	case VolumeLabel:
 		if (lParamSort&128)
 		{
-			return lstrcmpi(CLocateDlg::GetVolumeLabel(pItem2->GetDatabaseID(),pItem2->GetRootID()),
-				CLocateDlg::GetVolumeLabel(pItem1->GetDatabaseID(),pItem1->GetRootID()));
+			return _wcsicmp(CLocateDlg::GetDBVolumeLabel(pItem2->GetDatabaseID(),pItem2->GetRootID()),
+				CLocateDlg::GetDBVolumeLabel(pItem1->GetDatabaseID(),pItem1->GetRootID()));
 		}
-		return lstrcmpi(CLocateDlg::GetVolumeLabel(pItem1->GetDatabaseID(),pItem1->GetRootID()),
-			CLocateDlg::GetVolumeLabel(pItem2->GetDatabaseID(),pItem2->GetRootID()));
+		return _wcsicmp(CLocateDlg::GetDBVolumeLabel(pItem1->GetDatabaseID(),pItem1->GetRootID()),
+			CLocateDlg::GetDBVolumeLabel(pItem2->GetDatabaseID(),pItem2->GetRootID()));
 	case VolumeSerial:
 		if (lParamSort&128)
 		{
-			return lstrcmpi(CLocateDlg::GetVolumeSerial(pItem2->GetDatabaseID(),pItem2->GetRootID()),
-				CLocateDlg::GetVolumeSerial(pItem1->GetDatabaseID(),pItem1->GetRootID()));
+			return _wcsicmp(CLocateDlg::GetDBVolumeSerial(pItem2->GetDatabaseID(),pItem2->GetRootID()),
+				CLocateDlg::GetDBVolumeSerial(pItem1->GetDatabaseID(),pItem1->GetRootID()));
 		}
-		return lstrcmpi(CLocateDlg::GetVolumeSerial(pItem1->GetDatabaseID(),pItem1->GetRootID()),
-			CLocateDlg::GetVolumeSerial(pItem2->GetDatabaseID(),pItem2->GetRootID()));
+		return _wcsicmp(CLocateDlg::GetDBVolumeSerial(pItem1->GetDatabaseID(),pItem1->GetRootID()),
+			CLocateDlg::GetDBVolumeSerial(pItem2->GetDatabaseID(),pItem2->GetRootID()));
 	case VOlumeFileSystem:
 		if (lParamSort&128)
 		{
-			return lstrcmpi(CLocateDlg::GetVolumeFileSystem(pItem2->GetDatabaseID(),pItem2->GetRootID()),
-				CLocateDlg::GetVolumeFileSystem(pItem1->GetDatabaseID(),pItem1->GetRootID()));
+			return _wcsicmp(CLocateDlg::GetDBVolumeFileSystem(pItem2->GetDatabaseID(),pItem2->GetRootID()),
+				CLocateDlg::GetDBVolumeFileSystem(pItem1->GetDatabaseID(),pItem1->GetRootID()));
 		}
-		return lstrcmpi(CLocateDlg::GetVolumeFileSystem(pItem1->GetDatabaseID(),pItem1->GetRootID()),
-			CLocateDlg::GetVolumeFileSystem(pItem2->GetDatabaseID(),pItem2->GetRootID()));
+		return _wcsicmp(CLocateDlg::GetDBVolumeFileSystem(pItem1->GetDatabaseID(),pItem1->GetRootID()),
+			CLocateDlg::GetDBVolumeFileSystem(pItem2->GetDatabaseID(),pItem2->GetRootID()));
 	}
 	
 	return 0;
@@ -4300,21 +4365,23 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 		return;
 	}
 	
-	CMINVOKECOMMANDINFO cii;
-	cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
-	cii.fMask=0;
+	CMINVOKECOMMANDINFOEX cii;
+	cii.cbSize=sizeof(CMINVOKECOMMANDINFOEX);
+	cii.fMask=CMIC_MASK_UNICODE;
 	cii.hwnd=*this;
 	cii.lpVerb=(LPCSTR)MAKELONG(wID-IDM_DEFCONTEXTITEM,0);
+	cii.lpVerbW=(LPCWSTR)MAKELONG(wID-IDM_DEFCONTEXTITEM,0);
 	cii.lpParameters=NULL;
-	cii.lpDirectory=pItem->GetParent();
+	cii.lpParametersW=NULL;
+	cii.lpDirectoryW=pItem->GetParent();
 	cii.nShow=SW_SHOWDEFAULT;
-	m_pActiveContextMenu->pContextMenu->InvokeCommand(&cii);
+	m_pActiveContextMenu->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
 	
 	ClearMenuVariables();
 
 }
 
-void CLocateDlg::OnExecuteFile(LPCSTR szVerb,int nItem)
+void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 {
 	CWaitCursor wait;
 
@@ -4333,27 +4400,39 @@ void CLocateDlg::OnExecuteFile(LPCSTR szVerb,int nItem)
 		
 		if (pItems[i]->IsFolder())
 			OpenFolder(pItems[i]->GetPath());
-		else if (int(ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,NULL,SW_SHOW))<=32)
+		else 
 		{
-			CArrayFP<CString*> aFile;
-			aFile.Add(new CString(pItems[i]->GetPath()));
-			ContextMenuStuff* pContextMenuStuff=GetContextMenuForFiles(pItems[i]->GetParent(),aFile);
-			if (pContextMenuStuff!=NULL)
+			int nRet;
+			if (IsFullUnicodeSupport())
+				nRet=(int)ShellExecuteW(*this,szVerb,pItems[i]->GetPath(),NULL,NULL,SW_SHOW);
+			else
+				nRet=(int)ShellExecuteA(*this,szVerb==NULL?NULL:(LPCSTR)W2A(szVerb),W2A(pItems[i]->GetPath()),NULL,NULL,SW_SHOW);
+
+			if (nRet<=32)
 			{
-				CMINVOKECOMMANDINFO cii;
-				cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
-				cii.fMask=0;
-				cii.hwnd=*this;
-				cii.lpVerb=szVerb;
-				cii.lpParameters=NULL;
-				cii.lpDirectory=NULL;
-				cii.nShow=SW_SHOWDEFAULT;
-				HMENU hMenu=CreatePopupMenu();
-				pContextMenuStuff->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
-				pContextMenuStuff->pContextMenu->InvokeCommand(&cii);
-				
-				delete pContextMenuStuff;
-				DestroyMenu(hMenu);
+				CArrayFP<CStringW*> aFile;
+				aFile.Add(new CStringW(pItems[i]->GetPath()));
+				ContextMenuStuff* pContextMenuStuff=GetContextMenuForFiles(pItems[i]->GetParent(),aFile);
+				if (pContextMenuStuff!=NULL)
+				{
+					CMINVOKECOMMANDINFOEX cii;
+					cii.cbSize=sizeof(CMINVOKECOMMANDINFOEX);
+					cii.fMask=CMIC_MASK_UNICODE;
+					cii.hwnd=*this;
+					cii.lpVerb=NULL;
+					cii.lpVerbW=szVerb;
+					cii.lpParameters=NULL;
+					cii.lpParametersW=NULL;
+					cii.lpDirectory=NULL;
+					cii.lpDirectoryW=NULL;
+					cii.nShow=SW_SHOWDEFAULT;
+					HMENU hMenu=CreatePopupMenu();
+					pContextMenuStuff->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
+					pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
+					
+					delete pContextMenuStuff;
+					DestroyMenu(hMenu);
+				}
 			}
 		}
 		
@@ -4382,8 +4461,8 @@ void CLocateDlg::OnProperties(int nItem)
 		return;
 	}
 	
-	CArrayFP<CString*> aFiles;
-	CArray<LPCSTR> aParents;
+	CArrayFP<CStringW*> aFiles;
+	CArray<LPCWSTR> aParents;
 	
 	int nItems;
 	CLocatedItem** pItems=GetSeletedItems(nItems,nItem);
@@ -4393,12 +4472,12 @@ void CLocateDlg::OnProperties(int nItem)
 	{
 	    if (pItems[i]!=NULL)
 		{
-			aFiles.Add(new CString(pItems[i]->GetPath()));		
+			aFiles.Add(new CStringW(pItems[i]->GetPath()));		
 		
 			int j;
 			for (j=0;j<aParents.GetSize();j++)
 			{
-				if (strcmp(aParents[j],pItems[i]->GetParent())==0)
+				if (wcscmp(aParents[j],pItems[i]->GetParent())==0)
 					break;
 			}
 
@@ -4496,7 +4575,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 			return;
 
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
-		LPCSTR szPath=pItem->GetPath();
+		LPCWSTR szPath=pItem->GetPath();
 		if (pItem->IsFolder())
 		{
 			if (FileSystem::IsDirectory(szPath))
@@ -4520,7 +4599,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 		while (iItem!=-1)
 		{
 			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-			LPCSTR szPath=pItem->GetPath();
+			LPCWSTR szPath=pItem->GetPath();
 			if (pItem->IsFolder())
 			{
 				if (FileSystem::IsDirectory(szPath))
@@ -4599,7 +4678,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 		while ((iItem=m_pListCtrl->GetNextItem(iSeekStart,LVNI_SELECTED))!=-1)
 		{
 			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-			LPCSTR szPath=pItem->GetPath();
+			LPCWSTR szPath=pItem->GetPath();
 		
 			if (FileSystem::IsFile(szPath))
 			{
@@ -4793,10 +4872,10 @@ void CLocateDlg::OnCopy(BOOL bCut,int nItem)
 	
 
 struct FolderInfo{
-	CString sFolder;
+	CStringW sFolder;
 	CArrayFAP<LPCWSTR> aItems;
 
-	FolderInfo(LPCSTR szFolder) { sFolder=szFolder;}
+	FolderInfo(LPCWSTR szFolder) { sFolder=szFolder;}
 	
 };
 
@@ -4843,7 +4922,7 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 						{
 							if (aFolders[j]->sFolder.Compare(pItems[i]->GetParent())==0)
 							{
-								aFolders[j]->aItems.Add(alloccopyAtoW(pItems[i]->GetName()));
+								aFolders[j]->aItems.Add(alloccopy(pItems[i]->GetName()));
 								break;
 							}
 						}
@@ -4851,7 +4930,7 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 						if (j==aFolders.GetSize())
 						{
 							aFolders.Add(new FolderInfo(pItems[i]->GetParent()));
-							aFolders.GetLast()->aItems.Add(alloccopyAtoW(pItems[i]->GetName()));
+							aFolders.GetLast()->aItems.Add(alloccopy(pItems[i]->GetName()));
 						}
 					}
 
@@ -4959,7 +5038,7 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 		}
 
         // Retrieving folders
-		CArray<LPCSTR> aFolders;
+		CArray<LPCWSTR> aFolders;
 		
 		for (int i=0;i<nSelectedItems;i++)
 		{
@@ -4969,7 +5048,7 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 				BOOL bFound=FALSE;
 				for (int j=0;i<aFolders.GetSize();i++)
 				{
-					if (strcmp(aFolders[j],pItems[i]->GetParent())==0)
+					if (wcscmp(aFolders[j],pItems[i]->GetParent())==0)
 					{
 						bFound=TRUE;
 						break;
@@ -4996,7 +5075,7 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 	delete[] pItems;
 }
 
-void CLocateDlg::OpenFolder(LPCSTR szFolder)
+void CLocateDlg::OpenFolder(LPCWSTR szFolder)
 {
 	CString sProgram;
 	
@@ -5012,16 +5091,28 @@ void CLocateDlg::OpenFolder(LPCSTR szFolder)
 	
 	if (sProgram.IsEmpty())
 	{
-		SHELLEXECUTEINFO sxi;
+		SHELLEXECUTEINFOW sxi;
 		sxi.cbSize=sizeof(SHELLEXECUTEINFO);
 		sxi.fMask=SEE_MASK_NOCLOSEPROCESS;
 		sxi.hwnd=*this;
-		sxi.lpVerb="open";
-		sxi.lpFile=szFolder;
-		sxi.lpParameters=szEmpty;
-		sxi.lpDirectory=szEmpty;
 		sxi.nShow=SW_SHOWNORMAL;
-		ShellExecuteEx(&sxi);	
+		sxi.lpParameters=szwEmpty;
+		sxi.lpDirectory=szwEmpty;
+			
+		if (IsFullUnicodeSupport())		
+		{
+			sxi.lpVerb=L"open";
+			sxi.lpFile=szFolder;
+			ShellExecuteExW(&sxi);	
+		}
+		else
+		{
+			sxi.lpVerb=(LPWSTR)"open";
+			sxi.lpFile=(LPWSTR)alloccopyWtoA(szFolder);
+			ShellExecuteEx((SHELLEXECUTEINFOA*)&sxi);	
+			delete[] (LPSTR)sxi.lpFile;
+		}
+		
 	}
 	else
 	{
@@ -5069,6 +5160,7 @@ void CLocateDlg::OpenFolder(LPCSTR szFolder)
 }
 
 typedef HRESULT (__stdcall * PFNSHGETFOLDERPATHA)(HWND, int, HANDLE, DWORD, LPSTR);  // "SHGetFolderPathA"
+typedef HRESULT (__stdcall * PFNSHGETFOLDERPATHW)(HWND, int, HANDLE, DWORD, LPWSTR);  // "SHGetFolderPathW"
 
 void CLocateDlg::OnCreateShortcut()
 {
@@ -5076,90 +5168,181 @@ void CLocateDlg::OnCreateShortcut()
 		return;
 	
 	CWaitCursor wait;
-	
-	// Resolving desktop path
-	CString sDesktopPathTmp;
-	CStringW sDesktopPath;
 
-	PFNSHGETFOLDERPATHA pGetFolderPath=(PFNSHGETFOLDERPATHA)GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetFolderPathA");
-	if (pGetFolderPath!=NULL)
-		pGetFolderPath(*this,CSIDL_DESKTOPDIRECTORY,NULL,SHGFP_TYPE_CURRENT,sDesktopPathTmp.GetBuffer(MAX_PATH));
-	else
+	if (IsFullUnicodeSupport())
 	{
-		CRegKey RegKey;
-		if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
-			RegKey.QueryValue("Desktop",sDesktopPathTmp);
-		if (sDesktopPathTmp.IsEmpty())
-			return;
-	}
-	sDesktopPathTmp.FreeExtra();
-	sDesktopPath=sDesktopPathTmp;
-	if (sDesktopPath[sDesktopPath.GetLength()-1]!=L'\\')
-		sDesktopPath<<L'\\';
-	
-	// Creating instance to shell link handler
-	IShellLink* psl;
-    HRESULT hRes=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl);
-	if (SUCCEEDED(hRes))
-	{
-		// Creating instance to PersistFile interface
-		IPersistFile* ppf;
-		hRes=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
+		// Resolving desktop path
+		CStringW sDesktopPathTmp,sDesktopPath;
+
+		PFNSHGETFOLDERPATHW pGetFolderPath=(PFNSHGETFOLDERPATHW)GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetFolderPathA");
+		if (pGetFolderPath!=NULL)
+			pGetFolderPath(*this,CSIDL_DESKTOPDIRECTORY,NULL,SHGFP_TYPE_CURRENT,sDesktopPathTmp.GetBuffer(MAX_PATH));
+		else
+		{
+			CRegKey RegKey;
+			if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+				RegKey.QueryValue(L"Desktop",sDesktopPathTmp);
+			if (sDesktopPathTmp.IsEmpty())
+				return;
+		}
+		sDesktopPathTmp.FreeExtra();
+		sDesktopPath=sDesktopPathTmp;
+		if (sDesktopPath[sDesktopPath.GetLength()-1]!=L'\\')
+			sDesktopPath<<L'\\';
+		
+		// Creating instance to shell link handler
+		IShellLinkW* psl;
+		HRESULT hRes=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(void**)&psl);
 		
 		if (SUCCEEDED(hRes))
 		{
-			int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
-			BOOL bMsgShowed=FALSE;
-		
-			while (nItem!=-1)
-			{
-				CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
-				if (FileSystem::IsFile(pItem->GetPath()))
-				{
-					if (!bMsgShowed)
-					{
-						if (ShowErrorMessage(IDS_SHORTCUTTODESKTOP,IDS_SHORTCUT,MB_YESNO|MB_ICONQUESTION)==IDNO)
-						{
-							psl->Release();
-							ppf->Release();
-							return;
-						}
-						bMsgShowed=TRUE;
-					}
-				}
+			// Creating instance to PersistFile interface
+			IPersistFile* ppf;
+			hRes=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
 			
-				// Setting link path
-				hRes=psl->SetPath(pItem->GetPath());
-				if (!SUCCEEDED(hRes))
+			if (SUCCEEDED(hRes))
+			{
+				int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+				BOOL bMsgShowed=FALSE;
+			
+				while (nItem!=-1)
 				{
-					ppf->Release();
-					psl->Release();
-					return;
-				}
+					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+					if (FileSystem::IsFile(pItem->GetPath()))
+					{
+						if (!bMsgShowed)
+						{
+							if (ShowErrorMessage(IDS_SHORTCUTTODESKTOP,IDS_SHORTCUT,MB_YESNO|MB_ICONQUESTION)==IDNO)
+							{
+								psl->Release();
+								ppf->Release();
+								return;
+							}
+							bMsgShowed=TRUE;
+						}
+					}
 				
-				if (pItem->ShouldUpdateTitle())
-					pItem->UpdateTitle();
-				hRes=psl->SetDescription(ID2A(IDS_SHORTCUTTO)+pItem->GetTitle());
-				if (!SUCCEEDED(hRes))
-				{
-					ppf->Release();
-					psl->Release();
-					return;
+					// Setting link path
+					hRes=psl->SetPath(pItem->GetPath());
+					if (!SUCCEEDED(hRes))
+					{
+						ppf->Release();
+						psl->Release();
+						return;
+					}
+					
+					if (pItem->ShouldUpdateTitle())
+						pItem->UpdateTitle();
+					hRes=psl->SetDescription(CStringW(IDS_SHORTCUTTO)+pItem->GetTitle());
+					if (!SUCCEEDED(hRes))
+					{
+						ppf->Release();
+						psl->Release();
+						return;
+					}
+					
+					hRes=ppf->Save(sDesktopPath+pItem->GetTitle()+L".lnk",TRUE);    
+					if (!SUCCEEDED(hRes))
+					{
+						ppf->Release();
+						psl->Release();
+						return;
+					}
+					
+					nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
 				}
-				
-				hRes=ppf->Save(sDesktopPath+pItem->GetTitle()+L".lnk",TRUE);    
-				if (!SUCCEEDED(hRes))
-				{
-					ppf->Release();
-					psl->Release();
-					return;
-				}
-				
-				nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+				ppf->Release();
 			}
-			ppf->Release();
+			psl->Release();
 		}
-		psl->Release();
+	}
+	else
+	{
+		// Resolving desktop path
+		CString sDesktopPathTmp;
+		CStringW sDesktopPath;
+		
+		PFNSHGETFOLDERPATHA pGetFolderPath=(PFNSHGETFOLDERPATHA)GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetFolderPathA");
+		if (pGetFolderPath!=NULL)
+			pGetFolderPath(*this,CSIDL_DESKTOPDIRECTORY,NULL,SHGFP_TYPE_CURRENT,sDesktopPathTmp.GetBuffer(MAX_PATH));
+		else
+		{
+			CRegKey RegKey;
+			if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+				RegKey.QueryValue("Desktop",sDesktopPathTmp);
+			if (sDesktopPathTmp.IsEmpty())
+				return;
+		}
+		sDesktopPathTmp.FreeExtra();
+		sDesktopPath=sDesktopPathTmp;
+		if (sDesktopPath[sDesktopPath.GetLength()-1]!=L'\\')
+			sDesktopPath<<L'\\';
+
+
+		IShellLink* psl;
+		HRESULT hRes=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl);
+		
+		if (SUCCEEDED(hRes))
+		{
+			// Creating instance to PersistFile interface
+			IPersistFile* ppf;
+			hRes=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
+			
+			if (SUCCEEDED(hRes))
+			{
+				int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+				BOOL bMsgShowed=FALSE;
+			
+				while (nItem!=-1)
+				{
+					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+					if (FileSystem::IsFile(pItem->GetPath()))
+					{
+						if (!bMsgShowed)
+						{
+							if (ShowErrorMessage(IDS_SHORTCUTTODESKTOP,IDS_SHORTCUT,MB_YESNO|MB_ICONQUESTION)==IDNO)
+							{
+								psl->Release();
+								ppf->Release();
+								return;
+							}
+							bMsgShowed=TRUE;
+						}
+					}
+				
+					// Setting link path
+					hRes=psl->SetPath(W2A(pItem->GetPath()));
+					if (!SUCCEEDED(hRes))
+					{
+						ppf->Release();
+						psl->Release();
+						return;
+					}
+					
+					if (pItem->ShouldUpdateTitle())
+						pItem->UpdateTitle();
+					hRes=psl->SetDescription(CString(IDS_SHORTCUTTO)+pItem->GetTitle());
+					if (!SUCCEEDED(hRes))
+					{
+						ppf->Release();
+						psl->Release();
+						return;
+					}
+					
+					hRes=ppf->Save(sDesktopPath+pItem->GetTitle()+L".lnk",TRUE);    
+					if (!SUCCEEDED(hRes))
+					{
+						ppf->Release();
+						psl->Release();
+						return;
+					}
+					
+					nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+				}
+				ppf->Release();
+			}
+			psl->Release();
+		}
 	}
 }
 
@@ -5422,8 +5605,8 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 	if (!bSimple)
 	{
 		// Creating context menu for file items
-		CArrayFP<CString*> aFiles;
-		CString sParent; // For checking that are files in same folder
+		CArrayFP<CStringW*> aFiles;
+		CStringW sParent; // For checking that are files in same folder
 		
 		// Checking first item
 		int i=0;
@@ -5436,16 +5619,16 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 		{
 			sParent=pItems[i]->GetParent();
 			//GetFirstParent(sParent,pItem->GetParent());
-			aFiles.Add(new CString(pItems[i]->GetPath()));
+			aFiles.Add(new CStringW(pItems[i]->GetPath()));
 		}
 		else
 		{
 			// If item is shortcut, check parent
-			CString* pStr=new CString;
+			CStringW* pStr=new CStringW;
 			GetShortcutTarget(pItems[i]->GetPath(),pStr->GetBuffer(MAX_PATH));
 			pStr->FreeExtra();
 		       
-			sParent.Copy(*pStr,pStr->FindLast('\\'));
+			sParent.Copy(*pStr,pStr->FindLast(L'\\'));
 			//GetFirstParent(sParent,*pStr);		
 			
 			aFiles.Add(pStr);
@@ -5461,10 +5644,10 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 				if (pItems[i]->IsItemShortcut())
 				{
 					// If item is shortcut, check parent
-					CString* pStr=new CString;
+					CStringW* pStr=new CStringW;
 					GetShortcutTarget(pItems[i]->GetPath(),pStr->GetBuffer(_MAX_PATH));
 
-					if (strncmp(sParent,*pStr,pStr->FindLast('\\'))!=0)
+					if (wcsncmp(sParent,*pStr,pStr->FindLast(L'\\'))!=0)
 					{
 						delete pStr;
 						break;
@@ -5477,7 +5660,7 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 					// If parent is same, break
 					if (sParent.Compare(pItems[i]->GetParent())!=0)
 						break;
-					aFiles.Add(new CString(pItems[i]->GetPath()));
+					aFiles.Add(new CStringW(pItems[i]->GetPath()));
 				}
 			}
 		}
@@ -5549,7 +5732,7 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 	
 }
 	
-CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent,CArrayFP<CString*>& aFiles)
+CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForFiles(LPCWSTR szParent,CArrayFP<CStringW*>& aFiles)
 {
 	ASSERT(aFiles.GetSize()!=0);
 
@@ -5592,15 +5775,15 @@ CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForFiles(LPCSTR szParent
 
 	for (int i=0;i<aFiles.GetSize();i++)
 	{
-		LPCSTR szPath;
+		LPCWSTR szPath;
 
-		if ((*aFiles[i])[dwCutFileNames]=='\\')
-			szPath=((LPCSTR)*aFiles[i])+dwCutFileNames+1;
+		if ((*aFiles[i])[dwCutFileNames]==L'\\')
+			szPath=((LPCWSTR)*aFiles[i])+dwCutFileNames+1;
 		else
-			szPath=((LPCSTR)*aFiles[i])+aFiles[i]->FindLast('\\')+1;
+			szPath=((LPCWSTR)*aFiles[i])+aFiles[i]->FindLast(L'\\')+1;
 
 		
-		hRes=pcs->pParentFolder->ParseDisplayName(*this,NULL,(LPOLESTR)(LPCWSTR)A2W(szPath),NULL,&pcs->apidl[i],NULL);
+		hRes=pcs->pParentFolder->ParseDisplayName(*this,NULL,(LPOLESTR)szPath,NULL,&pcs->apidl[i],NULL);
 		if (!SUCCEEDED(hRes))
 			pcs->apidl[i]=NULL;
 
@@ -5761,8 +5944,7 @@ void CLocateDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 void CLocateDlg::OnSendToCommand(WORD wID)
 {
 	CWaitCursor wait;
-	CString SendToPath;
-	CString m_nSelectedFiles;
+	CStringW SendToPath;
 	CRegKey BaseKey;
 	MENUITEMINFO mii;
 	CLSID clsid;
@@ -5774,8 +5956,8 @@ void CLocateDlg::OnSendToCommand(WORD wID)
 	else
 		GetMenuItemInfo(GetSubMenu(GetMenu(),0),wID,FALSE,&mii);
 
-	SendToPath=(LPCSTR)mii.dwItemData;
-	if (GetFileClassID(SendToPath,clsid,"DropHandler"))
+	SendToPath=(LPCWSTR)mii.dwItemData;
+	if (GetFileClassID(SendToPath,clsid,L"DropHandler"))
 		SendFiles(SendToPath,m_pListCtrl,clsid);
 }
 	
@@ -5793,25 +5975,25 @@ void CLocateDlg::FreeSendToMenuItems(HMENU hMenu)
 	}
 }
 
-BOOL CLocateDlg::GetFileClassID(CString& file,CLSID& clsid,LPCSTR szType)
+BOOL CLocateDlg::GetFileClassID(LPCWSTR file,CLSID& clsid,LPCWSTR szType)
 {
 	CRegKey BaseKey;
-	CString Key;
-	int i=file.FindLast('.');
+	CStringW Key;
+	int i=LastCharIndex(file,L'.');
 	if (i>=0)
-		Key=(LPCSTR)file+i;
+		Key=file+i;
+	else
+		Key='*';
 	if (BaseKey.OpenKey(HKCR,Key,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 		return FALSE;
-	BaseKey.QueryValue(szEmpty,Key);
-	Key << "\\ShellEx\\" << szType;
+	BaseKey.QueryValue(L"",Key);
+	Key << L"\\ShellEx\\" << szType;
 	if (BaseKey.OpenKey(HKCR,Key,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 		return FALSE;
-	BaseKey.QueryValue(szEmpty,Key);
+	BaseKey.QueryValue(L"",Key);
 	if (Key.IsEmpty())
 		return FALSE;
-	WCHAR olestr[50];
-	MultiByteToWideChar(CP_ACP,0,Key,Key.GetLength()+1,olestr,50);
-	return CLSIDFromString(olestr,&clsid)==NOERROR;
+	return CLSIDFromString((LPCWSTR)Key,&clsid)==NOERROR;
 }
 
 BOOL CLocateDlg::SendFiles(CString& dst,CListCtrl* pList,CLSID& clsid)
