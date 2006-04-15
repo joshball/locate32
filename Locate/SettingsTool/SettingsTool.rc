@@ -68,9 +68,77 @@ END
 STRINGTABLE 
 BEGIN
     IDS_APP_TITLE           "SettingsTool"
+    IDS_SAVESETTINGS        "Save settings"
+    IDS_RESTORESETTINGS     "Restore settings"
+    IDS_SAVEFILTER          "Registry backup|*.opt|Registry script|*.reg|"
+    IDS_RESTOREFILTER       "Registry backups|*.opt|All Files|*|"
+    IDS_ERROR               "Error"
+    IDS_ERRORCANNOTOPENKEY  "Cannot open registry key. Locate is not installed? System error: %s"
+    IDS_ERRORCANNOTEXPORTSETTINGS "Cannot export settings. System error: %s"
+    IDS_ERRORREGEDITFAILED  "Regedit returned error."
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_REMOVESETTINGS      "Remove settings"
+    IDS_WANTBACKUP          "Do you want make a backup of your settings?"
+    IDS_ERRORCANNOTOPENKEY2 "Cannot open registry key. System error: %s"
+    IDS_ERRORCANNOTDELETEKEY "Cannot remove settings. System error: %s"
+    IDS_ERRORCANNOTCREATEKEY "Cannot create registry key. System error: %s"
+    IDS_ERRORCANNOTRESTOREKEY "Cannot restore settings. System error: %s"
 END
 
 #endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Finnish resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FIN)
+#ifdef _WIN32
+LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,6,4150
+ PRODUCTVERSION 1,0,6,4150
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080004b0"
+        BEGIN
+            VALUE "FileDescription", "Settings import and export tool for Locate"
+            VALUE "FileVersion", "1, 0, 6, 4150"
+            VALUE "InternalName", "SetTool"
+            VALUE "LegalCopyright", "Copyright (C) 2006 Janne Huttunen"
+            VALUE "OriginalFilename", "SetTool"
+            VALUE "ProductName", "SetTool"
+            VALUE "ProductVersion", "1, 0, 6, 4150"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x800, 1200
+    END
+END
+
+#endif    // Finnish resources
 /////////////////////////////////////////////////////////////////////////////
 
 
