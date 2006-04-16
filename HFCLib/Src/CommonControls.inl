@@ -330,7 +330,7 @@ inline BOOL CStatusBarCtrl::Create(DWORD dwStyle,const RECT* rect,HWND hWndParen
       hWndParent,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
-inline BOOL CStatusBarCtrl::SetText(LPCTSTR lpszText,int nPane,int nType)
+inline BOOL CStatusBarCtrl::SetText(LPCSTR lpszText,int nPane,int nType)
 {
 	return ::SendMessage(m_hWnd,SB_SETTEXT,(WPARAM)nPane|nType,(LPARAM)lpszText); 
 }
@@ -385,9 +385,9 @@ inline BOOL CStatusBarCtrl::SetTipText(int n,LPCSTR szText)
 	return ::SendMessage(m_hWnd,SB_SETTIPTEXT,n,(LPARAM)szText);
 }
 
-inline BOOL CStatusBarCtrl::GetTipText(int n,LPSTR szText) const
+inline BOOL CStatusBarCtrl::GetTipText(int n,LPSTR szText,SIZE_T nSize) const
 {
-	return ::SendMessage(m_hWnd,SB_GETTIPTEXT,n,(LPARAM)szText);
+	return ::SendMessage(m_hWnd,SB_GETTIPTEXT,MAKEWPARAM(n,nSize),(LPARAM)szText);
 }
 
 inline BOOL CStatusBarCtrl::SetUnicodeFormat(int nFormat)
@@ -399,6 +399,24 @@ inline BOOL CStatusBarCtrl::GetUnicodeFormat() const
 {
 	return ::SendMessage(m_hWnd,SB_GETUNICODEFORMAT,0,0);
 }
+
+#ifdef DEF_WCHAR
+inline BOOL CStatusBarCtrl::SetText(LPCWSTR lpszText,int nPane,int nType)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,SB_SETTEXTW,(WPARAM)nPane|nType,(LPARAM)lpszText); 
+	else
+		return ::SendMessage(m_hWnd,SB_SETTEXTA,(WPARAM)nPane|nType,(LPARAM)(LPCSTR)W2A(lpszText)); 
+}
+inline BOOL CStatusBarCtrl::SetTipText(int n,LPCWSTR szText)
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,SB_SETTIPTEXTW,n,(LPARAM)szText);
+	else
+		return ::SendMessage(m_hWnd,SB_SETTIPTEXTA,n,(LPARAM)(LPCSTR)W2A(szText));
+}
+
+#endif
 
 ///////////////////////////
 // Class CToolTipCtrl

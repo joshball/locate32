@@ -25,7 +25,7 @@ LPITEMIDLIST GetFileIDList(LPCSTR lpszFileName)
 
 LPITEMIDLIST GetFolderIDList(LPCSTR lpszFileName)
 {
-	TCHAR szFolder[_MAX_PATH];
+	CHAR szFolder[_MAX_PATH];
 	LPITEMIDLIST ret=NULL;
 	HRESULT hres;
 	IShellLink *psl;
@@ -65,23 +65,24 @@ HRESULT CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc,LPCS
 		hres=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
 		if (SUCCEEDED(hres))
 		{
-			WCHAR wsz[MAX_PATH];
 			hres=psl->SetPath(pszLink);
 			if (SUCCEEDED(hres))
 			{
-				char szWDir[MAX_PATH];
-				int nIndex;
-				if (pszDesc!=NULL)
-					psl->SetDescription(pszDesc);
-				if (pszParams!=NULL)
-					psl->SetArguments(pszParams);
-				nIndex=LastCharIndex(pszLink,'\\');
+				int nIndex=LastCharIndex(pszLink,'\\');
 				if (nIndex>=0)
 				{
+					char szWDir[MAX_PATH];
 					iMemCopy(szWDir,pszLink,nIndex);
 					szWDir[nIndex]='\0';
 					psl->SetWorkingDirectory(szWDir);
 				}
+
+				if (pszDesc!=NULL)
+					psl->SetDescription(pszDesc);
+				if (pszParams!=NULL)
+					psl->SetArguments(pszParams);
+				
+				WCHAR wsz[MAX_PATH];
 				MultiByteToWideChar(CP_ACP,0,pszShortcutFile,-1,wsz,MAX_PATH);
 				hres=ppf->Save(wsz,TRUE);    
 			}
@@ -122,7 +123,7 @@ HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath)
 	return hres;
 }
 
-HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget)
+HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,SIZE_T nBufSize)
 {
 	HRESULT hres;  
 	IShellLink* psl;
@@ -139,13 +140,243 @@ HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget)
 			MultiByteToWideChar(CP_ACP,0,pszShortcutFile,-1,wsz,MAX_PATH);
 			hres=ppf->Load(wsz,STGM_READ);
 			if (SUCCEEDED(hres))
-				hres=psl->GetPath(pszTarget,MAX_PATH,(WIN32_FIND_DATA*)&wfd,0);
+				hres=psl->GetPath(pszTarget,nBufSize,(WIN32_FIND_DATA*)&wfd,0);
 			ppf->Release();
 		}
 		psl->Release();  
 	}
 	return hres;
 }
+
+#ifdef DEF_WCHAR
+LPITEMIDLIST GetFileIDList(LPCWSTR lpszFileName)
+{
+	LPITEMIDLIST ret=NULL;
+	HRESULT hres;
+		
+	if (IsFullUnicodeSupport())
+	{
+		IShellLinkW *psl;
+		hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(LPVOID*)&psl);
+		if (SUCCEEDED(hres))
+		{
+			hres=psl->SetPath(lpszFileName);
+			if (SUCCEEDED(hres))
+				psl->GetIDList(&ret);
+			psl->Release();
+		}
+	}
+	else
+	{
+		IShellLink *psl;
+		hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(LPVOID*)&psl);
+		if (SUCCEEDED(hres))
+		{
+			hres=psl->SetPath(W2A(lpszFileName));
+			if (SUCCEEDED(hres))
+				psl->GetIDList(&ret);
+			psl->Release();
+		}
+	}
+	return ret;
+}
+
+LPITEMIDLIST GetFolderIDList(LPCWSTR lpszFileName)
+{
+	WCHAR szFolder[MAX_PATH];
+	int temp=LastCharIndex(lpszFileName,'\\')+1;
+	MemCopyW(szFolder,lpszFileName,temp);
+	szFolder[temp]='\0';
+	return GetFileIDList(szFolder);
+}
+
+HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc,LPCWSTR pszParams)
+{
+	HRESULT hres;
+	
+	if (IsFullUnicodeSupport())
+	{
+		IShellLinkW* psl;
+		hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(void**)&psl);
+		if (SUCCEEDED(hres))
+		{
+			IPersistFile* ppf;
+			hres=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
+			if (SUCCEEDED(hres))
+			{
+				hres=psl->SetPath(pszLink);
+				if (SUCCEEDED(hres))
+				{
+					
+					int nIndex=LastCharIndex(pszLink,'\\');
+					if (nIndex>=0)
+					{
+						WCHAR szWDir[MAX_PATH];
+						MemCopyW(szWDir,pszLink,nIndex);
+						szWDir[nIndex]='\0';
+						psl->SetWorkingDirectory(szWDir);
+					}
+										
+					if (pszDesc!=NULL)
+						psl->SetDescription(pszDesc);
+					if (pszParams!=NULL)
+						psl->SetArguments(pszParams);
+					
+					hres=ppf->Save(pszShortcutFile,TRUE);    
+				}
+				ppf->Release(); 
+			}
+			psl->Release();
+		}
+	}
+	else
+	{
+		IShellLink* psl;
+		hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl);
+		if (SUCCEEDED(hres))
+		{
+			IPersistFile* ppf;
+			hres=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
+			if (SUCCEEDED(hres))
+			{
+				hres=psl->SetPath(W2A(pszLink));
+				if (SUCCEEDED(hres))
+				{
+					int nIndex=LastCharIndex(pszLink,'\\');
+					if (nIndex>=0)
+					{
+						char szWDir[MAX_PATH];
+						WideCharToMultiByte(CP_ACP,0,pszLink,nIndex,szWDir,MAX_PATH,0,0);
+						szWDir[nIndex]='\0';
+						psl->SetWorkingDirectory(szWDir);
+					}
+
+					if (pszDesc!=NULL)
+						psl->SetDescription(W2A(pszDesc));
+					if (pszParams!=NULL)
+						psl->SetArguments(W2A(pszParams));
+
+					hres=ppf->Save(pszShortcutFile,TRUE);    
+				}
+				ppf->Release(); 
+			}
+			psl->Release();
+		}
+	}
+	return hres;
+}
+
+HRESULT ResolveShortcut(HWND hWnd,LPCWSTR pszShortcutFile,LPWSTR pszPath)
+{
+	HRESULT hres;  
+	pszPath[0]='\0';
+
+	if (IsFullUnicodeSupport())
+	{
+		IShellLinkW* psl;
+		WIN32_FIND_DATAW wfd;
+		
+		hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(void**)&psl);
+		if (SUCCEEDED(hres))
+		{
+			IPersistFile* ppf;
+			hres=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
+			if (SUCCEEDED(hres))
+			{
+				hres=ppf->Load(pszShortcutFile,STGM_READ);
+				if (SUCCEEDED(hres))
+				{
+					hres=psl->Resolve(hWnd,SLR_ANY_MATCH);
+					if (pszPath!=NULL && SUCCEEDED(hres))
+						hres=psl->GetPath(pszPath,MAX_PATH,(WIN32_FIND_DATAW*)&wfd,0);
+				}
+				ppf->Release();
+			}
+			psl->Release();  
+		}
+	}
+	else
+	{
+		IShellLink* psl;
+		WIN32_FIND_DATA wfd;
+		
+		hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl);
+		if (SUCCEEDED(hres))
+		{
+			IPersistFile* ppf;
+			hres=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
+			if (SUCCEEDED(hres))
+			{
+				hres=ppf->Load(pszShortcutFile,STGM_READ);
+				if (SUCCEEDED(hres))
+				{
+					hres=psl->Resolve(hWnd,SLR_ANY_MATCH);
+					if (pszPath!=NULL && SUCCEEDED(hres))
+					{
+						char szPathA[MAX_PATH];
+						hres=psl->GetPath(szPathA,MAX_PATH,(WIN32_FIND_DATA*)&wfd,0);
+						if (SUCCEEDED(hres))
+							MultiByteToWideChar(CP_ACP,0,szPathA,-1,pszPath,MAX_PATH);
+					}
+				}
+				ppf->Release();
+			}
+			psl->Release();  
+		}
+	}
+	
+	return hres;
+}
+
+HRESULT GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,SIZE_T nBufSize)
+{
+	HRESULT hres;
+	if (IsFullUnicodeSupport())
+	{
+		IShellLinkW* psl;
+		WIN32_FIND_DATAW wfd;
+
+		hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(void**)&psl);
+		if (SUCCEEDED(hres))
+		{
+			IPersistFile* ppf;
+			hres=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
+			if (SUCCEEDED(hres))
+			{
+				hres=ppf->Load(pszShortcutFile,STGM_READ);
+				if (SUCCEEDED(hres))
+					hres=psl->GetPath(pszTarget,nBufSize,(WIN32_FIND_DATAW*)&wfd,0);
+				ppf->Release();
+			}
+			psl->Release();  
+		}
+	}
+	else
+	{
+		IShellLinkA* psl;
+		WIN32_FIND_DATA wfd;
+
+		hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkA,(void**)&psl);
+		if (SUCCEEDED(hres))
+		{
+			IPersistFile* ppf;
+			hres=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
+			if (SUCCEEDED(hres))
+			{
+				char* pTargetTmp=new char[nBufSize+2];
+				hres=ppf->Load(pszShortcutFile,STGM_READ);
+				if (SUCCEEDED(hres))
+					hres=psl->GetPath(pTargetTmp,nBufSize,(WIN32_FIND_DATA*)&wfd,0);
+				MultiByteToWideChar(CP_ACP,0,pTargetTmp,-1,pszTarget,nBufSize);
+				delete[] pTargetTmp;
+				ppf->Release();
+			}
+			psl->Release();  
+		}
+	}
+	return hres;
+}
+#endif
 
 
 BOOL RunRegistryCommand(HKEY hKey,LPCTSTR szFile)

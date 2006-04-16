@@ -211,6 +211,12 @@ inline BOOL FileSystem::RemoveDirectory(LPCSTR lpPathName)
 	return ::RemoveDirectory(lpPathName);
 }
 
+inline DWORD FileSystem::GetFileAttributes(LPCSTR lpFileName)
+{
+	return ::GetFileAttributesA(lpFileName);
+}
+
+
 inline DWORD FileSystem::GetFullPathName(LPCSTR lpFileName,DWORD nBufferLength,LPSTR lpBuffer,LPTSTR* lpFilePart)
 {
 	return ::GetFullPathName(lpFileName,nBufferLength,lpBuffer,lpFilePart);
@@ -240,6 +246,11 @@ inline UINT FileSystem::GetTempFileName(LPCSTR lpPathName,LPCSTR lpPrefixString,
 	return ::GetTempFileName(lpPathName,lpPrefixString,uUnique,lpTempFileName);
 }
 	
+inline short FileSystem::GetFileTitle(LPCSTR lpszFile,LPSTR lpszTitle,WORD cbBuf)
+{
+	return ::GetFileTitle(lpszFile,lpszTitle,cbBuf);
+}
+	
 inline BOOL FileSystem::MoveFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,DWORD dwFlags)
 {
 	return ::MoveFileEx(lpExistingFileName,lpNewFileName,dwFlags);	
@@ -263,6 +274,28 @@ inline BOOL FileSystem::GetVolumeInformation(LPCSTR lpRootPathName,LPSTR lpVolum
 		nVolumeNameSize,lpVolumeSerialNumber,lpMaximumComponentLength,
 		lpFileSystemFlags,lpFileSystemNameBuffer,nFileSystemNameSize);
 }
+
+
+
+inline BOOL FileSystem::GetFileSecurity(LPCSTR lpFileName,SECURITY_INFORMATION RequestedInformation,
+	PSECURITY_DESCRIPTOR pSecurityDescriptor,DWORD nLength,LPDWORD lpnLengthNeeded)
+{
+	return ::GetFileSecurity(lpFileName,RequestedInformation,pSecurityDescriptor,nLength,lpnLengthNeeded);
+}
+
+inline BOOL FileSystem::LookupAccountName(LPCSTR lpSystemName,LPCSTR lpAccountName,PSID Sid,
+	LPDWORD cbSid,LPSTR ReferencedDomainName,LPDWORD cchReferencedDomainName,
+	PSID_NAME_USE peUse)
+{
+	return ::LookupAccountName(lpSystemName,lpAccountName,Sid,cbSid,ReferencedDomainName,cchReferencedDomainName,peUse);
+}
+
+inline BOOL FileSystem::LookupAccountSid(LPCSTR lpSystemName,PSID lpSid,LPSTR lpName,LPDWORD cchName,
+	LPSTR lpReferencedDomainName,LPDWORD cchReferencedDomainName,PSID_NAME_USE peUse)
+{
+	return ::LookupAccountSid(lpSystemName,lpSid,lpName,cchName,lpReferencedDomainName,cchReferencedDomainName,peUse);
+}
+
 
 
 	
@@ -299,57 +332,23 @@ inline UINT FileSystem::GetDriveType(LPCWSTR lpRootPathName)
 		return ::GetDriveTypeA(W2A(lpRootPathName));
 }
 
-inline DWORD FileSystem::GetLogicalDriveStrings(DWORD nBufferLength,LPWSTR lpBuffer)
+inline DWORD FileSystem::GetFileAttributes(LPCWSTR lpFileName)
 {
 	if (IsFullUnicodeSupport())
-		return ::GetLogicalDriveStringsW(nBufferLength,lpBuffer);
+		return ::GetFileAttributesW(lpFileName);
 	else
-	{
-		DWORD nLen=::GetLogicalDriveStringsA(0,NULL)+1;
-		if (nLen==0)
-			return 0;
-		CHAR* pBuffer=new CHAR[nLen+1];
-		nLen=::GetLogicalDriveStringsA(nLen,pBuffer);
-		MultiByteToWideChar(CP_ACP,0,pBuffer,nLen+1,lpBuffer,nBufferLength);
-		delete[] pBuffer;
-		return nLen;
-	}
+		return ::GetFileAttributesA(W2A(lpFileName));
 }
 
-inline BOOL FileSystem::GetVolumeInformation(LPCWSTR lpRootPathName,LPWSTR lpVolumeNameBuffer,
-		DWORD nVolumeNameSize,LPDWORD lpVolumeSerialNumber,LPDWORD lpMaximumComponentLength,
-		LPDWORD lpFileSystemFlags,LPWSTR lpFileSystemNameBuffer,DWORD nFileSystemNameSize)
+inline BOOL FileSystem::GetFileSecurity(LPCWSTR lpFileName,SECURITY_INFORMATION RequestedInformation,
+	PSECURITY_DESCRIPTOR pSecurityDescriptor,DWORD nLength,LPDWORD lpnLengthNeeded)
 {
 	if (IsFullUnicodeSupport())
-		return ::GetVolumeInformationW(lpRootPathName,lpVolumeNameBuffer,
-			nVolumeNameSize,lpVolumeSerialNumber,lpMaximumComponentLength,
-			lpFileSystemFlags,lpFileSystemNameBuffer,nFileSystemNameSize);
+		return ::GetFileSecurityW(lpFileName,RequestedInformation,pSecurityDescriptor,nLength,lpnLengthNeeded);
 	else
-	{
-		char* lpVolumeNameBufferA=NULL,*lpFileSystemNameBufferA=NULL;
-		if (lpVolumeNameBuffer!=NULL)
-			lpVolumeNameBufferA=new char[max(nVolumeNameSize,2)];
-		if (lpFileSystemNameBuffer!=NULL)
-			lpFileSystemNameBufferA=new char[max(nFileSystemNameSize,2)];
-		BOOL bRet=::GetVolumeInformationA(W2A(lpRootPathName),lpVolumeNameBufferA,
-			nVolumeNameSize,lpVolumeSerialNumber,lpMaximumComponentLength,
-			lpFileSystemFlags,lpFileSystemNameBufferA,nFileSystemNameSize);
-		
-		if (lpVolumeNameBufferA!=NULL)
-		{
-			if (bRet)			
-				MultiByteToWideChar(CP_ACP,0,lpVolumeNameBufferA,-1,lpVolumeNameBuffer,nVolumeNameSize);
-			delete[] lpVolumeNameBufferA;
-		}
-		if (lpFileSystemNameBufferA!=NULL)
-		{
-			if (bRet)			
-				MultiByteToWideChar(CP_ACP,0,lpFileSystemNameBufferA,-1,lpFileSystemNameBuffer,nFileSystemNameSize);
-			delete[] lpFileSystemNameBufferA;
-		}
-		return bRet;
-	}
+		return ::GetFileSecurityA(W2A(lpFileName),RequestedInformation,pSecurityDescriptor,nLength,lpnLengthNeeded);
 }
+
 
 #endif
 

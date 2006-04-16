@@ -27,16 +27,15 @@ BOOL CImageList::DeleteImageList()
 // Class CStatusBarCtrl
 ///////////////////////////
 
-CString CStatusBarCtrl::GetText(int nPane,int* pType) const
+BOOL CStatusBarCtrl::GetText(CString& str,int nPane,int* pType) const
 {
-	CString str;
 	int ret=::SendMessage(m_hWnd,SB_GETTEXT,(WPARAM)nPane,(LPARAM)str.GetBuffer(LOWORD(::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0))));
 	if (pType!=NULL)
 		*pType=HIWORD(ret);
-	return str;
+	return ret;
 }
 
-int CStatusBarCtrl::GetText(LPTSTR lpszText,int nPane,int* pType) const
+int CStatusBarCtrl::GetText(LPSTR lpszText,int nPane,int* pType) const
 {
 	int ret=::SendMessage(m_hWnd,SB_GETTEXT,(WPARAM)nPane,(LPARAM)lpszText);	
 	if (pType!=NULL)
@@ -51,6 +50,61 @@ int CStatusBarCtrl::GetTextLength(int nPane,int* pType) const
 		*pType=HIWORD(ret);
 	return LOWORD(ret);
 }
+
+#ifdef DEF_WCHAR
+BOOL CStatusBarCtrl::GetText(CStringW& str,int nPane,int* pType) const
+{
+	int ret;
+	SIZE_T len=::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0);
+	
+	if (IsFullUnicodeSupport())
+		ret=::SendMessageW(m_hWnd,SB_GETTEXTW,(WPARAM)nPane,(LPARAM)str.GetBuffer(len));
+	else
+	{
+		char* pText=new char[len+2];
+		ret=::SendMessageA(m_hWnd,SB_GETTEXTA,(WPARAM)nPane,(LPARAM)pText);
+		str.Copy(pText,len);
+		delete[] pText;
+	}
+
+	if (pType!=NULL)
+		*pType=HIWORD(ret);
+	return ret;
+}
+
+int CStatusBarCtrl::GetText(LPWSTR lpszText,int nPane,int* pType) const
+{
+	int ret;
+	if (IsFullUnicodeSupport())
+		ret=::SendMessageW(m_hWnd,SB_GETTEXTW,(WPARAM)nPane,(LPARAM)lpszText);	
+	else
+	{
+		SIZE_T len=::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0);
+		char* pText=new char[len+2];
+		ret=::SendMessageA(m_hWnd,SB_GETTEXTA,(WPARAM)nPane,(LPARAM)pText);
+		if (ret)
+			MultiByteToWideChar(CP_ACP,0,pText,len+1,lpszText,len+1);
+		delete[] pText;
+	}
+	if (pType!=NULL)
+		*pType=HIWORD(ret);
+	return LOWORD(ret);
+}
+
+BOOL CStatusBarCtrl::GetTipText(int n,LPWSTR szText,SIZE_T nBufLen) const
+{
+	if (IsFullUnicodeSupport())
+		return ::SendMessageW(m_hWnd,SB_GETTIPTEXTW,MAKEWPARAM(n,nBufLen),(LPARAM)szText);
+	
+	char* pText=new char[nBufLen+2];
+	int ret=::SendMessageW(m_hWnd,SB_GETTIPTEXTW,MAKEWPARAM(n,nBufLen),(LPARAM)pText);
+	if (ret)
+		MultiByteToWideChar(CP_ACP,0,pText,-1,szText,nBufLen);
+	delete[] pText;
+	return ret;
+}
+
+#endif
 
 ///////////////////////////
 // Class CToolTipCtrl

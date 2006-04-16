@@ -876,7 +876,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::Write(CFile* dbFile)
 		if (m_Path[0]!=L'\\')
 		{
 			char szDrive[4]="X:\\";
-			WideCharToMultiByte(CP_ACP,0,(LPCWSTR)m_Path,1,szDrive,1,NULL,NULL);
+			szDrive[0]=W2Ac(m_Path[0]);
 			nRet=GetVolumeInformation(szDrive,sVolumeName.GetBuffer(20),20,&dwSerial,
 				&dwTemp,&dwTemp,sFSName.GetBuffer(20),20);
 		}

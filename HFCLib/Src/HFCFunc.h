@@ -200,17 +200,25 @@ int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax);
 LPITEMIDLIST GetFileIDList(LPCSTR lpszFileName);
 LPITEMIDLIST GetFolderIDList(LPCSTR lpszFileName);
 DWORD_PTR GetFileInfo(LPCSTR pszPath,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags);
-DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags);
-DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags);
 DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags);
 DWORD GetIDListSize(LPITEMIDLIST lpil);
 HRESULT CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc=NULL,LPCSTR pszParams=NULL);
-HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget);
+HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,SIZE_T nBufSize);
 HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath=NULL);
 BOOL RunRegistryCommand(HKEY hKey,LPCSTR szFile);
 DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen);
 DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,DWORD dwBufferLen);
 BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,SIZE_T nBufferLen);
+
+#ifdef DEF_WCHAR
+LPITEMIDLIST GetFileIDList(LPCWSTR lpszFileName);
+LPITEMIDLIST GetFolderIDList(LPCWSTR lpszFileName);
+DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags);
+DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags);
+HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc=NULL,LPCWSTR pszParams=NULL);
+HRESULT GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,SIZE_T nBufSize);
+#endif
+
 #endif
 
 // Variable manipulation

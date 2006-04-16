@@ -276,7 +276,7 @@ BOOL CLocater::LocatingProc()
 				m_pCurrentDatabase->szArchive);
 
 			// Setting OEM info
-			m_pCurrentDatabase->bOEM=!(szBuffer[10]&0x10);
+			//m_pCurrentDatabase->bOEM=!(szBuffer[10]&0x10);
 
 			// Skipping database header
 			DWORD dwBlockSize;
@@ -324,11 +324,7 @@ BOOL CLocater::LocatingProc()
 						}
 						szCurrentPath[nPathLen]='\0';
 						szCurrentPathLower[nPathLen]='\0';
-	#ifdef WIN32
-						CharLower(szCurrentPathLower);
-	#else
-						strlwr(szCurrentPathLower);
-	#endif
+						MakeLower(szCurrentPathLower);
 						dwBlockSize-=nPathLen+1+1; // second 1 is type
 					}
 					
@@ -845,11 +841,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 		sMemCopy(szName+dwCurrentPathLen+1,GetFileName(),GetFileNameLen());
 		szName[dwPathLen]='\0';
 
-	#ifdef WIN32
-		CharLowerBuff(szName,dwPathLen);
-	#else 
-		strlwr(szName);
-	#endif	
+		MakeLower(szName,dwPathLen);
 
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
@@ -916,16 +908,10 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 
 					if (szExtension==NULL)
 					{
-			#ifdef WIN32
 						// Copying extension to buffer
 						szExtension=new char[dwExtensionLen];
 						sMemCopy(szExtension,GetFileName()+GetFileExtensionPos()+1,dwExtensionLen);
-						CharLowerBuff(szExtension,dwExtensionLen);
-			#else
-						szExtension=new char[dwExtensionLen+1];
-						sMemCopy(szExtension,GetFileName()+GetFileExtensionPos()+1,dwExtensionLen+1);
-						strlwr(szExtension);
-			#endif
+						MakeLower(szExtension,dwExtensionLen);
 					}
 					
 					if (_strncmp(szExtension,*m_aExtensions[i],dwExtensionLen))
@@ -964,11 +950,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 		char* szName=new char[dwNameLength+2];
 		sMemCopy(szName,GetFileName(),dwNameLength);
 		szName[dwNameLength]='\0';
-	#ifdef WIN32
-		CharLowerBuff(szName,dwNameLength);
-	#else 
-		strlwr(szName);
-	#endif	
+		MakeLower(szName,dwNameLength);
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
 			if (m_aNames[i]->LastChar()=='.')
@@ -1036,11 +1018,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 		sMemCopy(szName+dwCurrentPathLen+1,GetFolderName(),GetFolderNameLen());
 		szName[dwPathLen]='\0';
 
-	#ifdef WIN32
-		CharLowerBuff(szName,dwPathLen);
-	#else 
-		strlwr(szName);
-	#endif	
+		MakeLower(szName);
 
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
@@ -1077,15 +1055,9 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 					continue;
 
 				// Copying extension to buffer
-	#ifdef WIN32
 				char* szExtension=new char[dwExtensionLen];
 				sMemCopy(szExtension,GetFolderName()+dwExtensionPos,dwExtensionLen);
-				CharLowerBuff(szExtension,dwExtensionLen);
-	#else
-				char* szExtension=new char[dwExtensionLen+1];
-				sMemCopy(szExtension,GetFolderName()+dwExtensionPos,dwExtensionLen+1);
-				strlwr(szExtension);
-	#endif
+				MakeLower(szExtension,dwExtensionLen);
 				if (_strncmp(szExtension,*m_aExtensions[i],dwExtensionLen))
 				{
 					delete[] szExtension;
@@ -1110,11 +1082,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 		char* szName=new char[GetFolderNameLen()+1];
 		sMemCopy(szName,GetFolderName(),GetFolderNameLen());
 		szName[GetFolderNameLen()]='\0';
-	#ifdef WIN32
-		CharLower(szName);
-	#else
-		strlwr(szName);
-	#endif		
+		MakeLower(szName);
 
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
@@ -1266,11 +1234,7 @@ void CLocater::LocateValidFolder(DWORD nPathLen)
 				pPath[j]=pPoint[j];
 				pPathLower[j]=pPoint[j];
 			}
-#ifdef WIN32
-			CharLower(pPathLower);
-#else
-			strlwr(pPathLower);
-#endif
+			MakeLower(pPathLower);
 
 			ValidType vtType=IsFolderValid(nPathLen+dwNameLen+1);			
 

@@ -388,7 +388,7 @@ CSize CDC::GetTextExtent(const CStringW& str) const
 	return sz;
 }
 
-inline CSize CDC::GetTextExtent(LPCWSTR lpszString,int nCount) const
+CSize CDC::GetTextExtent(LPCWSTR lpszString,int nCount) const
 {
 	CSize sz;
 	if (IsFullUnicodeSupport())

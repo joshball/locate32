@@ -236,13 +236,7 @@ inline CLocatedItem::~CLocatedItem()
 	ClearData();
 }
 
-/*
-inline void CLocatedItem::OemtoAnsi()
-{
-	GetPath();
-	OemToChar(szPath,szPath);
-}
-*/
+
 
 inline void CLocatedItem::UpdateIcon()
 {

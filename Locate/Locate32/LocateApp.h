@@ -18,8 +18,8 @@ class CLocateAppWnd : public CFrameWnd
 public:
 	
 	struct RootInfo {
-		LPSTR pName;
-		LPSTR pRoot;
+		LPWSTR pName;
+		LPWSTR pRoot;
 		DWORD dwNumberOfDatabases;
 		DWORD dwCurrentDatabase;
 		WORD wProgressState;
@@ -50,14 +50,14 @@ public:
 		void SetFonts();
 		void SetPosition();
 		void FormatErrorForStatusTooltip(UpdateError ueError,CDatabaseUpdater* pUpdater);
-		void FormatStatusTextLine(CString& str,const CLocateAppWnd::RootInfo& pRootInfo,int nThreadID=-1,int nThreads=1);
-		static void EnlargeSizeForText(CDC& dc,CString& str,CSize& szSize);
-		static void EnlargeSizeForText(CDC& dc,LPCSTR szText,int nLength,CSize& szSize);
+		void FormatStatusTextLine(CStringW& str,const CLocateAppWnd::RootInfo& pRootInfo,int nThreadID=-1,int nThreads=1);
+		static void EnlargeSizeForText(CDC& dc,CStringW& str,CSize& szSize);
+		static void EnlargeSizeForText(CDC& dc,LPCWSTR szText,int nLength,CSize& szSize);
 		static void FillFontStructs(LOGFONT* pTextFont,LOGFONT* pTitleFont);
 
 			
-		CString sStatusText;
-		CArrayFAP<LPSTR> m_aErrors;
+		CStringW sStatusText;
+		CArrayFAP<LPWSTR> m_aErrors;
 		
 		CFont m_TitleFont,m_Font;
 		CSize m_WindowSize;
@@ -115,8 +115,8 @@ public:
 	//  0xFFFFFFFF: Select databases
 	//  otherwise Use databases in pDatabase array which is 
 	//  double zero terminated seqeuence of strings
-	BYTE OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases=NULL); 
-	BYTE OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases,int nThreadPriority); 
+	BYTE OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases=NULL); 
+	BYTE OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThreadPriority); 
 
 	static DWORD WINAPI KillUpdaterProc(LPVOID lpParameter);
     
@@ -209,11 +209,11 @@ public:
 		CStartData();
 		~CStartData();
 
-		LPSTR m_pStartPath;
-		LPSTR m_pStartString;
-		LPSTR m_pTypeString;
-		LPSTR m_pFindText;
-		LPSTR m_pLoadPreset;
+		LPWSTR m_pStartPath;
+		LPWSTR m_pStartString;
+		LPWSTR m_pTypeString;
+		LPWSTR m_pFindText;
+		LPWSTR m_pLoadPreset;
 		DWORD m_nStatus;
 		DWORD m_nPriority;
 		BYTE m_nStartup;
@@ -296,7 +296,7 @@ protected:
 	BYTE SetDeleteAndDefaultImage();
 	
 public:
-	static BOOL ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData);
+	static BOOL ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData);
 
 	static BOOL ChechOtherInstances();
 	
@@ -346,14 +346,15 @@ public:
 	int m_nDriveImage;
 
 	// Date & Time format string
-	CString m_strDateFormat;
-	CString m_strTimeFormat;
+	CStringW m_strDateFormat;
+	CStringW m_strTimeFormat;
 	FileSizeFormats m_nFileSizeFormat;
 
 
-	DWORD(WINAPI* m_pGetLongPathName)(LPCSTR,LPSTR,DWORD);
+	DWORD(WINAPI* m_pGetLongPathName)(LPCWSTR,LPWSTR,DWORD);
 
-	static DWORD WINAPI GetLongPathName(LPCSTR lpszShortPath,LPSTR lpszLongPath,DWORD cchBuffer);
+	static DWORD WINAPI GetLongPathName(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer);
+	static DWORD WINAPI GetLongPathNameNoUni(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer);
 
 
 protected:
@@ -370,8 +371,8 @@ protected:
 	CArrayFP<CDatabase*> m_aDatabases;
 	mutable CDatabase* m_pLastDatabase;
 
-	static void ChangeAndAlloc(LPSTR& pVar,LPCSTR szText);
-	static void ChangeAndAlloc(LPSTR& pVar,LPCSTR szText,DWORD dwLength);
+	static void ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText);
+	static void ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText,DWORD dwLength);
 
 
 public:
@@ -514,25 +515,24 @@ inline CDatabaseUpdater*** CLocateApp::GetUpdatersPointerPtr()
 }
 	
 
-inline void CLocateApp::ChangeAndAlloc(LPSTR& pVar,LPCSTR szText)
+inline void CLocateApp::ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText)
 {
-	SIZE_T dwLength=istrlen(szText);
+	SIZE_T dwLength=istrlenw(szText);
 	if (pVar!=NULL)
 		delete[] pVar;
-	pVar=new char [dwLength+1];
-	CopyMemory(pVar,szText,dwLength);
-	pVar[dwLength]='\0';
+	pVar=new WCHAR [dwLength+1];
+	MemCopyW(pVar,szText,dwLength+1);
 }
 
-inline void CLocateApp::ChangeAndAlloc(LPSTR& pVar,LPCSTR szText,DWORD dwLength)
+inline void CLocateApp::ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText,DWORD dwLength)
 {
 	if (dwLength==DWORD(-1))
-		dwLength=istrlen(szText);
+		dwLength=istrlenw(szText);
 	
 	if (pVar!=NULL)
 		delete[] pVar;
-	pVar=new char [dwLength+1];
-	CopyMemory(pVar,szText,dwLength);
+	pVar=new WCHAR [dwLength+1];
+	MemCopyW(pVar,szText,dwLength);
 	pVar[dwLength]='\0';
 }
 
@@ -544,12 +544,12 @@ inline DWORD CLocateApp::GetProgramFlags()
 
 
 
-inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,CString& str,CSize& szSize)
+inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,CStringW& str,CSize& szSize)
 {
 	EnlargeSizeForText(dc,str,str.GetLength(),szSize);
 }
 
-inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,LPCSTR szText,int nLength,CSize& szSize)
+inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,LPCWSTR szText,int nLength,CSize& szSize)
 {
 	CRect rc(0,0,0,0);
 	dc.DrawText(szText,nLength,&rc,DT_SINGLELINE|DT_CALCRECT);
@@ -559,7 +559,7 @@ inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,LPCSTR s
 		szSize.cy=rc.Height();
 }
 
-inline BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases)
+inline BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases)
 {
 	DWORD nThreadPriority=THREAD_PRIORITY_NORMAL;
 

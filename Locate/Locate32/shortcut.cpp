@@ -776,7 +776,7 @@ char CShortcut::GetMnemonicForAction(HWND* hDialogs) const
 						{
 							char cRet=pText[k+1];
 							delete[] pText;
-							CharUpperBuff(&cRet,1);
+							MakeUpper(&cRet,1);
 							return cRet;
 						}
 					}
@@ -1329,12 +1329,12 @@ void CShortcut::FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,BYTE bKey,BYTE b
 	int nRet=ToAscii(bKey,0,pKeyState,&wChar,0);
 	if (nRet==1)
 	{
-		CharUpperBuff((LPSTR)&wChar,1);
+		MakeUpper((LPSTR)&wChar,1);
 		str << char(wChar);
 	}
 	else if (nRet==2)
 	{
-		CharUpperBuff((LPSTR)&wChar,2);
+		MakeUpper((LPSTR)&wChar,2);
 		str << (LPSTR(&wChar))[0] << (LPSTR(&wChar))[0];
 	}
 	else if (pVirtualKeyNames[i].pName!=NULL)

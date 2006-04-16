@@ -172,7 +172,7 @@ inline CLocateDlgThread::CLocateDlgThread()
 }
 
 inline CLocateDlg::ImageHandlerDll::ImageHandlerDll()
-:	pGetImageDimensionsA(NULL),uToken(0)
+:	pGetImageDimensionsW(NULL),uToken(0)
 {
 	DWORD bLoadDll=TRUE;
 	{
@@ -202,8 +202,8 @@ inline CLocateDlg::ImageHandlerDll::ImageHandlerDll()
 			hModule=NULL;
 			return;
 		}
-		pGetImageDimensionsA=(IH_GETIMAGEDIMENSIONSA)GetProcAddress(hModule,"GetImageDimensionsA");
-		if (pGetImageDimensionsA==NULL)
+		pGetImageDimensionsW=(IH_GETIMAGEDIMENSIONSW)GetProcAddress(hModule,"GetImageDimensionsW");
+		if (pGetImageDimensionsW==NULL)
 		{
 			FreeLibrary(hModule);
 			hModule=NULL;
@@ -238,11 +238,7 @@ inline CLocateDlg::CAdvancedDlg::FileType::FileType(LPWSTR frType,LPWSTR frTitle
 {
 }
 
-inline DWORD CLocateApp::GetLongPathName(LPCSTR lpszShortPath,LPSTR lpszLongPath,DWORD cchBuffer)
-{
-	LPSTR pTemp;
-	return GetFullPathName(lpszShortPath,cchBuffer,lpszLongPath,&pTemp);
-}
+
 
 inline void CLocateDlg::RemoveResultsFromList()
 {

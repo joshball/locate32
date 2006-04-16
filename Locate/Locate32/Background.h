@@ -21,10 +21,10 @@ public:
 	BOOL RunningProcNew();
 	BOOL RunningProcOld();
 
-	void FileCreated(LPCSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg);
-	void FileModified(LPCSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg);
-	void FileDeleted(LPCSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg);
-	void UpdateItemsInRoot(LPCSTR szRoot,CLocateDlg* pLocateDlg);
+	void FileCreated(LPCWSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg);
+	void FileModified(LPCWSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg);
+	void FileDeleted(LPCWSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg);
+	void UpdateItemsInRoot(LPCWSTR szRoot,CLocateDlg* pLocateDlg);
 
 protected:
 	BOOL CreateHandlesOld();
@@ -46,12 +46,12 @@ public:
 		OVERLAPPED ol;
 		HANDLE hDir;
 		BYTE* pBuffer;
-		char* szRoot;
+		WCHAR* szRoot;
 		DWORD dwRootLength;
 
 	};
 	union {
-		LPSTR* m_pRoots;
+		LPWSTR* m_pRoots;
 		DIRCHANGEDATA** m_pChangeDatas;
 	};
 	

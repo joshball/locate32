@@ -5481,7 +5481,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetVirtualCode(BYTE bCode,BOOL
 		{
 			char text[]="\"X\"";
 			text[1]=BYTE(wChar);
-			CharUpperBuff(text+1,1);
+			MakeUpper(text+1,1);
 			SetDlgItemText(IDC_CODE,text);
 			return;
 		}

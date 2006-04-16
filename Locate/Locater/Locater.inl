@@ -252,9 +252,9 @@ inline DWORD CLocater::GetFileSizeLo() const
 	return *(DWORD*)(pPoint+pPoint[1]+4);
 }
 
-inline BYTE CLocater::GetFileSizeHi() const
+inline WORD CLocater::GetFileSizeHi() const
 {
-	return *(pPoint+pPoint[1]+4+sizeof(DWORD));
+	return WORD(*(pPoint+pPoint[1]+4+sizeof(DWORD)));
 }
 
 inline WORD CLocater::GetFileModifiedTime() const
@@ -358,7 +358,7 @@ inline void CLocater::CouldStop()
 
 
 inline CLocater::DBArchive::DBArchive(LPCWSTR szName_,CDatabase::ArchiveType nArchiveType_,LPCWSTR szArchive_,WORD wID_,BOOL bEnable_)
-:	nArchiveType(nArchiveType_),wID(wID_),bEnable(bEnable_),bOEM(FALSE),bUnicode(FALSE)
+:	nArchiveType(nArchiveType_),wID(wID_),bEnable(bEnable_),bUnicode(FALSE)
 {
 	szName=alloccopy(szName_);
 	szArchive=alloccopy(szArchive_);
@@ -390,11 +390,6 @@ inline LPCWSTR CLocater::GetCurrentDatabaseName() const
 inline void CLocater::GetCurrentDatabaseName(LPWSTR& szName) const
 {
 	szName=alloccopy(m_pCurrentDatabase->szName,m_pCurrentDatabase->dwNameLength);
-}
-
-inline BOOL CLocater::IsCurrentDatabaseOEM() const
-{
-	return m_pCurrentDatabase->bOEM;
 }
 
 inline BOOL CLocater::IsCurrentDatabaseUnicode() const

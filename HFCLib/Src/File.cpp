@@ -2030,10 +2030,118 @@ UINT FileSystem::GetTempFileName(LPCWSTR lpPathName,LPCWSTR lpPrefixString,UINT 
 	}
 }
 
+DWORD FileSystem::GetLogicalDriveStrings(DWORD nBufferLength,LPWSTR lpBuffer)
+{
+	if (IsFullUnicodeSupport())
+		return ::GetLogicalDriveStringsW(nBufferLength,lpBuffer);
+	else
+	{
+		DWORD nLen=::GetLogicalDriveStringsA(0,NULL)+1;
+		if (nLen==0)
+			return 0;
+		CHAR* pBuffer=new CHAR[nLen+1];
+		nLen=::GetLogicalDriveStringsA(nLen,pBuffer);
+		MultiByteToWideChar(CP_ACP,0,pBuffer,nLen+1,lpBuffer,nBufferLength);
+		delete[] pBuffer;
+		return nLen;
+	}
+}
 
+BOOL FileSystem::GetVolumeInformation(LPCWSTR lpRootPathName,LPWSTR lpVolumeNameBuffer,
+		DWORD nVolumeNameSize,LPDWORD lpVolumeSerialNumber,LPDWORD lpMaximumComponentLength,
+		LPDWORD lpFileSystemFlags,LPWSTR lpFileSystemNameBuffer,DWORD nFileSystemNameSize)
+{
+	if (IsFullUnicodeSupport())
+		return ::GetVolumeInformationW(lpRootPathName,lpVolumeNameBuffer,
+			nVolumeNameSize,lpVolumeSerialNumber,lpMaximumComponentLength,
+			lpFileSystemFlags,lpFileSystemNameBuffer,nFileSystemNameSize);
+	else
+	{
+		char* lpVolumeNameBufferA=NULL,*lpFileSystemNameBufferA=NULL;
+		if (lpVolumeNameBuffer!=NULL)
+			lpVolumeNameBufferA=new char[max(nVolumeNameSize,2)];
+		if (lpFileSystemNameBuffer!=NULL)
+			lpFileSystemNameBufferA=new char[max(nFileSystemNameSize,2)];
+		BOOL bRet=::GetVolumeInformationA(W2A(lpRootPathName),lpVolumeNameBufferA,
+			nVolumeNameSize,lpVolumeSerialNumber,lpMaximumComponentLength,
+			lpFileSystemFlags,lpFileSystemNameBufferA,nFileSystemNameSize);
+		
+		if (lpVolumeNameBufferA!=NULL)
+		{
+			if (bRet)			
+				MultiByteToWideChar(CP_ACP,0,lpVolumeNameBufferA,-1,lpVolumeNameBuffer,nVolumeNameSize);
+			delete[] lpVolumeNameBufferA;
+		}
+		if (lpFileSystemNameBufferA!=NULL)
+		{
+			if (bRet)			
+				MultiByteToWideChar(CP_ACP,0,lpFileSystemNameBufferA,-1,lpFileSystemNameBuffer,nFileSystemNameSize);
+			delete[] lpFileSystemNameBufferA;
+		}
+		return bRet;
+	}
+}
+
+short FileSystem::GetFileTitle(LPCWSTR lpszFile,LPWSTR lpszTitle,WORD cbBuf)
+{
+	if (IsFullUnicodeSupport())
+		return ::GetFileTitleW(lpszFile,lpszTitle,cbBuf);
+	else
+	{
+		char* pBuf=new char[cbBuf+2];
+		short sRet=::GetFileTitle(W2A(lpszFile),pBuf,cbBuf);
+		if (sRet==0)
+			MultiByteToWideChar(CP_ACP,0,pBuf,-1,lpszTitle,cbBuf);
+		delete[] pBuf;
+		return sRet;
+	}
+}
+
+BOOL FileSystem::LookupAccountName(LPCWSTR lpSystemName,LPCWSTR lpAccountName,PSID Sid,
+	LPDWORD cbSid,LPWSTR ReferencedDomainName,LPDWORD cchReferencedDomainName,
+	PSID_NAME_USE peUse)
+{
+	if (IsFullUnicodeSupport())
+		return ::LookupAccountNameW(lpSystemName,lpAccountName,Sid,cbSid,ReferencedDomainName,cchReferencedDomainName,peUse);
+	else
+	{
+		DWORD dwReferencedOrig=*cchReferencedDomainName;
+		char* aReferencedDomainName=new char[dwReferencedOrig+2];
+		BOOL bRet=::LookupAccountNameA(W2A(lpSystemName),W2A(lpAccountName),Sid,cbSid,aReferencedDomainName,cchReferencedDomainName,peUse);
+		if (bRet && dwReferencedOrig>0)
+			MultiByteToWideChar(CP_ACP,0,aReferencedDomainName,*cchReferencedDomainName,ReferencedDomainName,dwReferencedOrig);
+		delete[] aReferencedDomainName;
+		return bRet;
+	}
+}
+
+BOOL FileSystem::LookupAccountSid(LPCWSTR lpSystemName,PSID lpSid,LPWSTR lpName,LPDWORD cchName,
+	LPWSTR lpReferencedDomainName,LPDWORD cchReferencedDomainName,PSID_NAME_USE peUse)
+{
+	if (IsFullUnicodeSupport())
+		return ::LookupAccountSidW(lpSystemName,lpSid,lpName,cchName,lpReferencedDomainName,cchReferencedDomainName,peUse);
+	else
+	{
+		DWORD dwNameOrig=*cchName,dwReferencedOrig=*cchReferencedDomainName;
+
+		char* aName=new char[dwNameOrig+2];
+		char* aReferencedDomainName=new char[dwReferencedOrig+2];
+		BOOL bRet=::LookupAccountSidA(W2A(lpSystemName),lpSid,aName,cchName,aReferencedDomainName,cchReferencedDomainName,peUse);
+		if (bRet)
+		{
+			if (dwNameOrig>0)
+				MultiByteToWideChar(CP_ACP,0,aName,*cchName,lpName,dwNameOrig);
+			if (dwReferencedOrig>0)
+				MultiByteToWideChar(CP_ACP,0,aReferencedDomainName,*cchReferencedDomainName,lpReferencedDomainName,dwReferencedOrig);
+		}
+		delete[] aReferencedDomainName;
+		delete[] aName;
+		return bRet;
+	}
+}
 #endif
 
-BOOL FileSystem::GetStatus(LPCTSTR lpszFileName,CFileStatus& rStatus)
+BOOL FileSystem::GetStatus(LPCSTR lpszFileName,CFileStatus& rStatus)
 {
 #ifdef WIN32
 	HANDLE hFile;
@@ -2074,7 +2182,7 @@ BOOL FileSystem::GetStatus(LPCTSTR lpszFileName,CFileStatus& rStatus)
 	return TRUE;
 }
 
-BOOL  FileSystem::SetStatus(LPCTSTR lpszFileName,const CFileStatus& status)
+BOOL  FileSystem::SetStatus(LPCSTR lpszFileName,const CFileStatus& status)
 {
 #ifdef WIN32
 	HANDLE hFile;

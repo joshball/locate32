@@ -1490,8 +1490,8 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 	// If dialog is not large mode, change it
 	SetDialogMode(TRUE);
 	// Clearing possible exclamation icons
-	m_pStatusCtrl->SetText(0,2,0);
-	m_pStatusCtrl->SetText(0,3,0);
+	m_pStatusCtrl->SetText("",2,0);
+	m_pStatusCtrl->SetText("",3,0);
 	
 	
 	// Resolving Name and Type
@@ -1928,7 +1928,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLoca
 			szPath[nPathLen++]='\\';
 			sMemCopy(szPath+nPathLen,pLocater->GetFileName(),pLocater->GetFileNameLen()+1);
 		}
-		CharLower(szPath);
+		MakeLower(szPath);
 
 		
 		CListCtrl* pList=((CLocateDlg*)dwParam)->m_pListCtrl;
@@ -1941,7 +1941,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLoca
 				ASSERT(pItem->GetPathLen()<MAX_PATH);
 
 				sMemCopy(szPath2,pItem->GetPath(),pItem->GetPathLen()+1);
-				CharLower(szPath2);
+				MakeLower(szPath2);
 			
 				
 				if (strcmp(szPath,szPath2)==0)
@@ -1959,8 +1959,6 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLoca
 	li.iSubItem=0;
 	li.iImage=I_IMAGECALLBACK;
 	li.lParam=(LPARAM)new CLocatedItem(bFolder,pLocater);
-	if (pLocater->IsCurrentDatabaseOEM())
-		((CLocatedItem*)li.lParam)->OemtoAnsi();
 	if (li.lParam==NULL)
 		return FALSE;
 	li.pszText=LPSTR_TEXTCALLBACK;
@@ -5625,7 +5623,7 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 		{
 			// If item is shortcut, check parent
 			CStringW* pStr=new CStringW;
-			GetShortcutTarget(pItems[i]->GetPath(),pStr->GetBuffer(MAX_PATH));
+			GetShortcutTarget(pItems[i]->GetPath(),pStr->GetBuffer(MAX_PATH),MAX_PATH);
 			pStr->FreeExtra();
 		       
 			sParent.Copy(*pStr,pStr->FindLast(L'\\'));
@@ -5645,7 +5643,7 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 				{
 					// If item is shortcut, check parent
 					CStringW* pStr=new CStringW;
-					GetShortcutTarget(pItems[i]->GetPath(),pStr->GetBuffer(_MAX_PATH));
+					GetShortcutTarget(pItems[i]->GetPath(),pStr->GetBuffer(_MAX_PATH),MAX_PATH);
 
 					if (wcsncmp(sParent,*pStr,pStr->FindLast(L'\\'))!=0)
 					{
@@ -5986,6 +5984,7 @@ BOOL CLocateDlg::GetFileClassID(LPCWSTR file,CLSID& clsid,LPCWSTR szType)
 		Key='*';
 	if (BaseKey.OpenKey(HKCR,Key,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 		return FALSE;
+	Key.Empty();
 	BaseKey.QueryValue(L"",Key);
 	Key << L"\\ShellEx\\" << szType;
 	if (BaseKey.OpenKey(HKCR,Key,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
@@ -5993,10 +5992,10 @@ BOOL CLocateDlg::GetFileClassID(LPCWSTR file,CLSID& clsid,LPCWSTR szType)
 	BaseKey.QueryValue(L"",Key);
 	if (Key.IsEmpty())
 		return FALSE;
-	return CLSIDFromString((LPCWSTR)Key,&clsid)==NOERROR;
+	return CLSIDFromString((LPWSTR)(LPCWSTR)Key,&clsid)==NOERROR;
 }
 
-BOOL CLocateDlg::SendFiles(CString& dst,CListCtrl* pList,CLSID& clsid)
+BOOL CLocateDlg::SendFiles(CStringW& dst,CListCtrl* pList,CLSID& clsid)
 {
 	OleInitialize(NULL);
 
@@ -6211,7 +6210,7 @@ BOOL CLocateDlg::StopLocateAnimation()
 		delete[] m_pLocateAnimBitmaps;
 		m_pLocateAnimBitmaps=NULL;
 		if (m_pStatusCtrl!=NULL)
-			m_pStatusCtrl->SetText(NULL,2,SBT_OWNERDRAW);
+			m_pStatusCtrl->SetText(STRNULL,2,SBT_OWNERDRAW);
 	}
 	return TRUE;
 }
@@ -6252,7 +6251,7 @@ BOOL CLocateDlg::StopUpdateAnimation()
 		delete[] m_pUpdateAnimBitmaps;
 		m_pUpdateAnimBitmaps=NULL;
 		if (m_pStatusCtrl!=NULL)
-			m_pStatusCtrl->SetText(NULL,3,SBT_OWNERDRAW);
+			m_pStatusCtrl->SetText(STRNULL,3,SBT_OWNERDRAW);
 	}
 	return TRUE;
 }
@@ -6339,7 +6338,7 @@ void CLocateDlg::OnSaveResults()
 
 void CLocateDlg::OnCopyPathToClipboard(BOOL bShortPath)
 {
-	CString Text;
+	CStringW Text;
 
 	int nItems=0;
 	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
@@ -6348,13 +6347,13 @@ void CLocateDlg::OnCopyPathToClipboard(BOOL bShortPath)
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
 
 		if (nItems>0)
-			Text << "\r\n";
+			Text << L"\r\n";
 		if (!bShortPath)
 			Text<<pItem->GetPath();
 		else
 		{
-			char szPath[MAX_PATH];
-			if (GetShortPathName(pItem->GetPath(),szPath,MAX_PATH))
+			WCHAR szPath[MAX_PATH];
+			if (FileSystem::GetShortPathName(pItem->GetPath(),szPath,MAX_PATH))
 				Text<<szPath;
 			else
 				Text<<pItem->GetPath();
@@ -6362,23 +6361,48 @@ void CLocateDlg::OnCopyPathToClipboard(BOOL bShortPath)
         nItems++;
 		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
 	}
-    
-	HGLOBAL hMem=GlobalAlloc(GHND,Text.GetLength()+1);
-	if (hMem==NULL)
+  
+
+	if (IsFullUnicodeSupport())
 	{
-		ShowErrorMessage(IDS_ERRORCANNOTALLOCATE);
-		return;
+		HGLOBAL hMem=GlobalAlloc(GHND,(Text.GetLength()+1)*2);
+		if (hMem==NULL)
+		{
+			ShowErrorMessage(IDS_ERRORCANNOTALLOCATE);
+			return;
+		}
+		
+		BYTE* pData=(BYTE*)GlobalLock(hMem);
+		MemCopyW(pData,LPCWSTR(Text),Text.GetLength()+1);
+		GlobalUnlock(hMem);
+
+		if (OpenClipboard())
+		{
+			EmptyClipboard();
+			SetClipboardData(CF_UNICODETEXT,hMem);
+			CloseClipboard();
+		}
 	}
-
-	BYTE* pData=(BYTE*)GlobalLock(hMem);
-	CopyMemory(pData,LPCSTR(Text),Text.GetLength()+1);
-	GlobalUnlock(hMem);
-
-	if (OpenClipboard())
+	else
 	{
-		EmptyClipboard();
-		SetClipboardData(CF_TEXT,hMem);
-		CloseClipboard();
+		HGLOBAL hMem=GlobalAlloc(GHND,Text.GetLength()+1);
+		if (hMem==NULL)
+		{
+			ShowErrorMessage(IDS_ERRORCANNOTALLOCATE);
+			return;
+		}
+
+		BYTE* pData=(BYTE*)GlobalLock(hMem);
+		WideCharToMultiByte(CP_ACP,0,LPCWSTR(Text),Text.GetLength()+1,(LPSTR)pData,Text.GetLength()+1,NULL,NULL);
+		GlobalUnlock(hMem);
+
+		if (OpenClipboard())
+		{
+			EmptyClipboard();
+			SetClipboardData(CF_TEXT,hMem);
+			CloseClipboard();
+		}
+
 	}
 }
 
@@ -6436,8 +6460,8 @@ void CLocateDlg::OnChangeFileNameCase()
             if (pItem!=NULL)
 			{
 				int iLength;
-				CString sOldName(pItem->GetName());
-				LPSTR szName=pItem->GetName();
+				CStringW sOldName(pItem->GetName());
+				LPWSTR szName=pItem->GetName();
 
 				if (!cd.bForExtension)
 				{
@@ -6451,43 +6475,44 @@ void CLocateDlg::OnChangeFileNameCase()
 				switch (cd.nSelectedCase)
 				{
 				case CChangeCaseDlg::Sentence:
-					CharLowerBuff(szName+1,iLength-1);
-					CharUpperBuff(szName,1);
+					MakeLower(szName+1,iLength-1);
+					MakeUpper(szName,1);
 					break;
 				case CChangeCaseDlg::Uppercase:
-					CharUpperBuff(szName,iLength);
+					MakeUpper(szName,iLength);
 					break;
 				case CChangeCaseDlg::Lowercase:
-					CharLowerBuff(szName,iLength);
+					MakeLower(szName,iLength);
 					break;
 				case CChangeCaseDlg::Title:
 					for (int i=0;i<iLength;)
 					{
-						CharUpperBuff(szName+(i++),1);
+						MakeUpper(szName+(i++),1);
 						
 						int nIndex=FirstCharIndex(szName+i,' ');
 						if (nIndex==-1)
 						{
-							CharLowerBuff(szName+i,iLength-i);
+							MakeLower(szName+i,iLength-i);
 							break;
 						}
                         						
-						CharLowerBuff(szName+i,nIndex);
+						MakeLower(szName+i,nIndex);
                         i+=nIndex+1;                        
 					}
 					break;
 				case CChangeCaseDlg::Toggle:
 					for (int i=0;i<iLength;i++)
 					{
+						// Todo: check these in Win9X
 						if (IsCharUpper(szName[i]))
-							CharLowerBuff(szName+i,1);
+							MakeLower(szName+i,1);
 						else if (IsCharLower(szName[i]))
-							CharUpperBuff(szName+i,1);
+							MakeUpper(szName+i,1);
 					}
 					break;
 				}
 
-				MoveFile(pItem->GetPath(),pItem->GetPath());
+				FileSystem::MoveFile(pItem->GetPath(),pItem->GetPath());
 				pItem->RemoveFlags(LITEM_TITLEOK|LITEM_FILENAMEOK);
 				m_pListCtrl->RedrawItems(iItem,iItem);
 				
@@ -7044,7 +7069,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 			continue;
 
 		szBuf[0]=aRoots.GetAt(j)[0];
-		CharUpperW(szBuf);
+		MakeUpper(szBuf);
 		
 		if (FileSystem::GetDriveType(szBuf)<2)
 			continue;
@@ -7053,7 +7078,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		for (int k=0;k<j;k++)
 		{
 			WCHAR cDrive=aRoots.GetAt(k)[0];
-			CharUpperBuffW(&cDrive,1);
+			MakeUpper(&cDrive,1);
 
 			if (cDrive==szBuf[0])
 			{
@@ -7102,7 +7127,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 					aCurrentlyAddedDrives.Add((char)HIWORD(ci.lParam));
 			}
 			// Make drives upper
-			CharUpperBuff(aCurrentlyAddedDrives.GetData(),aCurrentlyAddedDrives.GetSize());
+			MakeUpper(aCurrentlyAddedDrives.GetData(),aCurrentlyAddedDrives.GetSize());
 		}
 		
 		for (int i=0;i<aRoots.GetSize();)
@@ -7111,7 +7136,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 			if (pRoot[1]==L':' && pRoot[2]==L'\0')
 			{
 				WCHAR cDrive=pRoot[0];
-				CharUpperBuffW(&cDrive,1);
+				MakeUpper(&cDrive,1);
 				
 				// Checking whether drive is already added
 				int j;
@@ -7778,7 +7803,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 				}
 			case MyComputer:
 				{
-					DWORD nLength=FileSystem::GetLogicalDriveStrings(0,NULL)+1;
+					DWORD nLength=GetLogicalDriveStrings(0,NULL)+1;
 					if (nLength>=2)
 					{
 						WCHAR* szDrives=new WCHAR[nLength+1];
@@ -8016,25 +8041,26 @@ void CLocateDlg::OnPresetsSelection(int nPreset)
 
 }
 
-void CLocateDlg::LoadPreset(LPCSTR szPreset)
+void CLocateDlg::LoadPreset(LPCWSTR szPreset)
 {
 	CRegKey RegKey,PresetKey;
-	CString Path,Name;
+	CStringW Path,Name;
 	Path.LoadString(IDS_REGPLACE,CommonResource);
 	Path<<"\\Dialogs\\SearchPresets";
 
 	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 		return;
 	
+	// Finding registry entry for the preset
 	for (int nPreset=0;;nPreset++) 
 	{
-		char szBuffer[30];
+		CHAR szBuffer[30];
 		StringCbPrintf(szBuffer,30,"Preset %03d",nPreset);
 
 		if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 			return;
 
-		if (PresetKey.QueryValue("",Name))
+		if (PresetKey.QueryValue(L"",Name))
 		{
 			if (Name.Compare(szPreset)==0)
 				break;
@@ -8874,7 +8900,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 				if (static_cast<TypeOfItem>(LOWORD(lParam))!=Drive)
 				{
 					WCHAR cDrive=(WCHAR)HIWORD(lParam);
-					CharLowerBuffW(&cDrive,1);
+					MakeLower(&cDrive,1);
 					if (cDrive==FolderLower[0] && bAlsoSet)
 					{
 						m_LookIn.SetCurSel(i);
@@ -9052,13 +9078,13 @@ void CLocateDlg::CNameDlg::SetStartData(const CLocateApp::CStartData* pStartData
 		SetPath(pStartData->m_pStartPath);
 }
 
-BOOL CLocateDlg::CNameDlg::SetPath(LPCTSTR szPath)
+BOOL CLocateDlg::CNameDlg::SetPath(LPCWSTR szPath)
 {
-	CString temp;
-	LPTSTR tmp;
-	int ret=atoi(szPath);
+	WCHAR temp[MAX_PATH];
+	LPWSTR tmp;
+	int ret=_wtoi(szPath);
 	
-	if ((ret>0 && ret<=4) || szPath[0]=='0')
+	if ((ret>0 && ret<=4) || szPath[0]==L'0')
 	{
 		LPARAM lParam;
 		if (ret==0)
@@ -9071,20 +9097,19 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCTSTR szPath)
 			if (m_LookIn.GetItemData(i)==lParam)
 			{
 				m_LookIn.SetCurSel(i);
-				m_LookIn.SetItemText(-1,m_LookIn.GetItemText(i));
+				m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(i));
 				return TRUE;
 			}
 		}
 		return FALSE;	
 	}
 
-	ret=GetFullPathName(szPath,_MAX_PATH,temp.GetBuffer(_MAX_PATH),&tmp);
+	ret=FileSystem::GetFullPathName(szPath,MAX_PATH,temp,&tmp);
 	if (ret>1)
 	{
-		temp.FreeExtra();
 		if (ret<4)
 		{
-			temp.MakeUpper();
+			MakeUpper(temp);
 			if (temp[1]==':')
 			{
 				COMBOBOXEXITEM ci;
@@ -9097,7 +9122,7 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCTSTR szPath)
 					if ((char)HIWORD(ci.lParam)==temp[0])
 					{
 						m_LookIn.SetCurSel(ci.iItem);
-						m_LookIn.SetItemText(-1,m_LookIn.GetItemText(ci.iItem));
+						m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(ci.iItem));
 						break;
 					}
 				}
@@ -9108,14 +9133,14 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCTSTR szPath)
 		{
 			if (FileSystem::IsDirectory(szPath)) 
 			{
-				SHFILEINFO fi;
-				COMBOBOXEXITEM ci;
+				SHFILEINFOW fi;
+				COMBOBOXEXITEMW ci;
 				m_pBrowse[0]=temp;
-				SHGetFileInfo((LPCTSTR)temp,0,&fi,sizeof(SHFILEINFO),SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+				GetFileInfo(temp,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
 				ci.iImage=fi.iIcon;
-				SHGetFileInfo((LPCTSTR)temp,0,&fi,sizeof(SHFILEINFO),SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+				GetFileInfo(temp,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 				ci.iSelectedImage=fi.iIcon;
-				ci.pszText=(LPSTR)(LPCSTR)temp;
+				ci.pszText=(LPWSTR)temp;
 				ci.iItem=m_LookIn.GetCount();
 				ci.iIndent=0;
 				ci.lParam=MAKELPARAM(Custom,0);
@@ -10870,7 +10895,7 @@ void CLocateDlg::CAdvancedDlg::UpdateTypeList()
 
 int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCWSTR szKey,CArray<FileType*>& aFileTypes)
 {
-	DebugFormatMessage("CAdvancedDlg::AddTypeToList(szKey=%s) ",(LPCSTR)ID2A(szKey));
+	DebugFormatMessage(L"CAdvancedDlg::AddTypeToList(szKey=%s) ",szKey);
 
 	CRegKey RegKey;
 	if (RegKey.OpenKey(HKCR,szKey,CRegKey::openExist|CRegKey::samQueryValue|CRegKey::samExecute)!=ERROR_SUCCESS)
@@ -11135,7 +11160,7 @@ void CLocateDlg::CAdvancedDlg::FileType::ExtractIconFromPath()
 	else
 	{
 		char szExpanded[MAX_PATH];
-		if (ExpandEnvironmentStrings(WtoA(szIconPath),szExpanded,MAX_PATH)==0)
+		if (ExpandEnvironmentStrings(W2A(szIconPath),szExpanded,MAX_PATH)==0)
 		{
 			// Error
 			hIcon=GetLocateDlg()->m_AdvancedDlg.m_hDefaultTypeIcon;

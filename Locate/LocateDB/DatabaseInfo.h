@@ -66,12 +66,9 @@ public:
 	static CDatabaseInfo* GetFromFile(LPCWSTR szArchivePath);
 
 		
-	//static BOOL GetRootsFromDatabase(CArray<LPSTR>& aRoots,const CDatabase* pDatabase);
 	static BOOL GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase* pDatabase);
 	
 	// Fonctions do not clear aRoots
-	//static BOOL GetRootsFromDatabases(CArray<LPSTR>& aRoots,const PDATABASE* pDatabases,int nDatabases,BOOL bOnlyEnabled=FALSE);
-	//static BOOL GetRootsFromDatabases(CArray<LPSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled=FALSE);
 	static BOOL GetRootsFromDatabases(CArray<LPWSTR>& aRoots,const PDATABASE* pDatabases,int nDatabases,BOOL bOnlyEnabled=FALSE);
 	static BOOL GetRootsFromDatabases(CArray<LPWSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled=FALSE);
 

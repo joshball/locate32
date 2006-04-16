@@ -226,7 +226,7 @@ public:
 		BOOL IsChanged();
 		void HilightTab(BOOL bHilight);
 
-		BOOL SetPath(LPCSTR szPath);
+		BOOL SetPath(LPCWSTR szPath);
 
 		void EnableItems(BOOL bEnable=TRUE);
 		BOOL InitDriveBox(BYTE nFirstTime=FALSE);
@@ -593,7 +593,7 @@ protected:
 	void OnPresets();
 	void OnPresetsSave();
 	void OnPresetsSelection(int nPreset);
-	void LoadPreset(LPCSTR szPreset);
+	void LoadPreset(LPCWSTR szPreset);
 	static DWORD CheckExistenceOfPreset(LPCSTR szName,DWORD* pdwPresets); // Returns index to preset or FFFFFFFF
 
 	
@@ -612,7 +612,7 @@ public:
 		
 		BOOL IsLoaded();
 		HMODULE hModule;
-		IH_GETIMAGEDIMENSIONSA pGetImageDimensionsA;
+		IH_GETIMAGEDIMENSIONSW pGetImageDimensionsW;
 		ULONG uToken;
 	};
 	ImageHandlerDll* m_pImageHandler;

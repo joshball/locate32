@@ -1936,9 +1936,9 @@ BOOL CChangeFilenameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		{
 			if (!FileSystem::IsValidFileName(m_sFileName))
 			{
-				CString msg;
-				msg.Format(IDS_INVALIDFILENAME,(LPCSTR)m_sFileName);
-				MessageBox(msg,ID2A(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
+				CStringW msg;
+				msg.Format(IDS_INVALIDFILENAME,(LPCWSTR)m_sFileName);
+				MessageBox(msg,ID2W(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
                 break;
 			}
 			EndDialog(1);

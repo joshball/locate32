@@ -59,9 +59,8 @@ public:
 	void ComputeMD5sum(BOOL bForce=FALSE);
 
 	void SetToDeleted();
-	void OemtoAnsi();
-
-	void ChangeName(LPCSTR szNewName,int iLength=-1);
+	
+	void ChangeName(LPCWSTR szNewName,int iLength=-1);
 
 private:
 	LPWSTR szTitle;

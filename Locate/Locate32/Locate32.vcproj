@@ -73,10 +73,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 /NODEFAULTLIB:LIBC"
-				AdditionalDependencies="odbc32.lib odbccp32.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib locater.lib locatedb.lib"
 				OutputFile=".\Release/Locate32.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\Locater\Release;..\LocateDB\Release"
 				ProgramDatabaseFile=".\Release/Locate32.pdb"
 				GenerateMapFile="true"
 				MapFileName=".\Release/Locate32.map"
@@ -169,9 +170,10 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386 /NODEFAULTLIB:LIBCMT"
-				AdditionalDependencies="odbc32.lib odbccp32.lib"
+				AdditionalDependencies="odbc32.lib odbccp32.lib locaterd.lib locatedbd.lib"
 				OutputFile=".\Debug/Locate32d.exe"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\Locater\Debug;..\LocateDB\Debug"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\Debug/Locate32.pdb"
 				GenerateMapFile="true"
@@ -933,6 +935,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\commonres\locate32.ico"
+				>
+			</File>
+			<File
 				RelativePath="commonres\manifest"
 				>
 			</File>
@@ -1077,10 +1083,6 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\commonres\locate32.ico"
-			>
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

@@ -89,11 +89,11 @@ BOOL CCheckFileNotificationsThread::Stop()
 #endif
 }
 
-inline void CCheckFileNotificationsThread::FileCreated(LPCSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg)
+inline void CCheckFileNotificationsThread::FileCreated(LPCWSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg)
 {
-	BkgDebugNumMessage("File created: %s",DWORD(szFile));
+	BkgDebugNumMessage("File created: %S",DWORD(szFile));
 
-	char szPath[MAX_PATH];
+	WCHAR szPath[MAX_PATH];
 	int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
 	{
@@ -104,9 +104,9 @@ inline void CCheckFileNotificationsThread::FileCreated(LPCSTR szFile,DWORD dwLen
 			{
 				if (pItem->IsDeleted())
 				{
-					CopyMemory(szPath,pItem->GetPath(),pItem->GetPathLen()+1);
-					CharLowerBuff(szPath,pItem->GetPathLen());
-					if (strncmp(szPath,szFile,dwLength)==0)
+					MemCopyW(szPath,pItem->GetPath(),pItem->GetPathLen()+1);
+					MakeLower(szPath,pItem->GetPathLen());
+					if (wcsncmp(szPath,szFile,dwLength)==0)
 					{
 						if (pItem->RemoveFlagsForChanged())
 							pLocateDlg->PostMessage(WM_UPDATENEEDEDDETAILTS,WPARAM(nItem),LPARAM(pItem));
@@ -120,11 +120,11 @@ inline void CCheckFileNotificationsThread::FileCreated(LPCSTR szFile,DWORD dwLen
 	BkgDebugMessage("File created ENF");
 }
 
-inline void CCheckFileNotificationsThread::FileModified(LPCSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg)
+inline void CCheckFileNotificationsThread::FileModified(LPCWSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg)
 {
-	BkgDebugNumMessage("File modified: %s",DWORD(szFile));
+	BkgDebugNumMessage("File modified: %S",DWORD(szFile));
 
-	char szPath[MAX_PATH];
+	WCHAR szPath[MAX_PATH];
 	int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
 	{
@@ -133,9 +133,9 @@ inline void CCheckFileNotificationsThread::FileModified(LPCSTR szFile,DWORD dwLe
 		{
 			if (pItem->GetPathLen()==dwLength)
 			{
-				CopyMemory(szPath,pItem->GetPath(),pItem->GetPathLen()+1);
-				CharLowerBuff(szPath,pItem->GetPathLen());
-			    if (strncmp(szPath,szFile,dwLength)==0)
+				MemCopyW(szPath,pItem->GetPath(),pItem->GetPathLen()+1);
+				MakeLower(szPath,pItem->GetPathLen());
+			    if (wcsncmp(szPath,szFile,dwLength)==0)
 				{
 					if (pItem->RemoveFlagsForChanged())
 						pLocateDlg->PostMessage(WM_UPDATENEEDEDDETAILTS,WPARAM(nItem),LPARAM(pItem));
@@ -147,11 +147,11 @@ inline void CCheckFileNotificationsThread::FileModified(LPCSTR szFile,DWORD dwLe
 	BkgDebugMessage("File modified END");
 }
 
-inline void CCheckFileNotificationsThread::FileDeleted(LPCSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg)
+inline void CCheckFileNotificationsThread::FileDeleted(LPCWSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg)
 {
-	BkgDebugNumMessage("File deleted: %s",DWORD(szFile));
+	BkgDebugNumMessage("File deleted: %S",DWORD(szFile));
 
-	char szPath[MAX_PATH];
+	WCHAR szPath[MAX_PATH];
 	int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
 	{
@@ -162,9 +162,9 @@ inline void CCheckFileNotificationsThread::FileDeleted(LPCSTR szFile,DWORD dwLen
 			{
 				if (!pItem->IsDeleted())
 				{
-					CopyMemory(szPath,pItem->GetPath(),pItem->GetPathLen()+1);
-					CharLowerBuff(szPath,pItem->GetPathLen());
-					if (strncmp(szPath,szFile,dwLength)==0)
+					MemCopyW(szPath,pItem->GetPath(),pItem->GetPathLen()+1);
+					MakeLower(szPath,pItem->GetPathLen());
+					if (wcsncmp(szPath,szFile,dwLength)==0)
 					{
 						pItem->SetToDeleted();
 						pLocateDlg->PostMessage(WM_UPDATENEEDEDDETAILTS,WPARAM(nItem),LPARAM(pItem));
@@ -220,13 +220,12 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 						while (1)
 						{
 							DWORD dwLength=pStruct->FileNameLength/2;
-							char* szFile=new char[pChangeData->dwRootLength+dwLength+2];
-							CopyMemory(szFile,pChangeData->szRoot,pChangeData->dwRootLength);
-							WideCharToMultiByte(CP_ACP,0,pStruct->FileName,dwLength,
-								szFile+pChangeData->dwRootLength,dwLength+2,NULL,NULL);
+							WCHAR* szFile=new WCHAR[pChangeData->dwRootLength+dwLength+2];
+							MemCopyW(szFile,pChangeData->szRoot,pChangeData->dwRootLength);
+							MemCopyW(szFile+pChangeData->dwRootLength,pStruct->FileName,dwLength);
 							dwLength+=pChangeData->dwRootLength;
 							szFile[dwLength]='\0';
-							CharLowerBuff(szFile,dwLength);
+							MakeLower(szFile,dwLength);
 
 							switch(pStruct->Action)
 							{
@@ -328,15 +327,15 @@ BOOL CCheckFileNotificationsThread::RunningProcOld()
 	return FALSE;
 }
 
-void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCSTR szRoot,CLocateDlg* pLocateDlg)
+void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCWSTR szRoot,CLocateDlg* pLocateDlg)
 {
 	BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot BEGIN");
 	// Updating changed items by checking all items
 	if (szRoot[1]=='\0')
 	{
-		char szDriveLower=szRoot[0];
-		char szDriveUpper=szRoot[0];
-		CharUpperBuff(&szDriveUpper,1);
+		WCHAR szDriveLower=szRoot[0];
+		WCHAR szDriveUpper=szRoot[0];
+		MakeUpper(&szDriveUpper,1);
 
 		int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 		while (nItem!=-1)
@@ -357,7 +356,7 @@ void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCSTR szRoot,CLocateDlg* 
 	}
 	else
 	{
-		DWORD dwLength=istrlen(szRoot);
+		DWORD dwLength=istrlenw(szRoot);
 
 		int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 		while (nItem!=-1)
@@ -396,7 +395,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 	
 	ASSERT(m_pHandles==NULL);
 
-	CArrayFAP<LPSTR> aRoots;
+	CArrayFAP<LPWSTR> aRoots;
 	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases());
 	
     m_pHandles=new HANDLE[aRoots.GetSize()+2];
@@ -413,7 +412,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 
 	for (int i=0;i<aRoots.GetSize();i++)
 	{
-		const LPSTR szRoot=aRoots.GetAt(i);
+		const LPWSTR szRoot=aRoots.GetAt(i);
 
 #ifdef _DEBUG_LOGGING
 		// If logging is on, do not use change notifications for root containing log file
@@ -423,19 +422,16 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 			if (szRoot[1]==':' && szRoot[2]=='\0')
 			{
 				char szDrive[]="X:\\";
-				szDrive[0]=szRoot[0];
-				CharLowerBuff(szDrive,1);
+				szDrive[0]=W2Ac(szRoot[0]);
+				MakeLower(szDrive,1);
 				if (szDrive[0]==pLogFile[0] && pLogFile[1]==':')
 					continue;
 			}
 			else
 			{
-				DWORD dwLength=istrlen(szRoot);
-                char* szPath=new char[dwLength+2];
-				CopyMemory(szPath,szRoot,dwLength+1);
-                CharLower(szPath);
-
-				BOOL bSame=strncmp(szPath,pLogFile,dwLength)==0;
+				char* szPath=alloccopyWtoA(szRoot);
+				MakeLower(szPath);
+				BOOL bSame=strcmp(szPath,pLogFile)==0;
 				delete[] szPath;
                 if (bSame)
 					continue;
@@ -450,8 +446,13 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 			pChangeData->pBuffer=new BYTE[CHANGE_BUFFER_LEN];
 		}
 
-		pChangeData->hDir=CreateFile(szRoot,FILE_LIST_DIRECTORY,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
-			NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED,NULL);
+		if (IsFullUnicodeSupport())
+			pChangeData->hDir=CreateFileW(szRoot,FILE_LIST_DIRECTORY,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
+				NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED,NULL);
+		else
+			pChangeData->hDir=CreateFile(W2A(szRoot),FILE_LIST_DIRECTORY,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
+				NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED,NULL);
+
 		if (pChangeData->hDir==INVALID_HANDLE_VALUE)
 			continue;
 
@@ -465,18 +466,18 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 				
 		if (bRet)
 		{
-			pChangeData->dwRootLength=istrlen(szRoot);
+			pChangeData->dwRootLength=istrlenw(szRoot);
 			if (szRoot[pChangeData->dwRootLength-1]=='\\')
 			{
-				pChangeData->szRoot=new char[pChangeData->dwRootLength+4];
-				CopyMemory(pChangeData->szRoot,szRoot,pChangeData->dwRootLength+1);
-				CharLowerBuff(pChangeData->szRoot,pChangeData->dwRootLength);
+				pChangeData->szRoot=new WCHAR[pChangeData->dwRootLength+4];
+				MemCopyW(pChangeData->szRoot,szRoot,pChangeData->dwRootLength+1);
+				MakeLower(pChangeData->szRoot,pChangeData->dwRootLength);
 			}
 			else
 			{
-				pChangeData->szRoot=new char[pChangeData->dwRootLength+4];
-				CopyMemory(pChangeData->szRoot,szRoot,pChangeData->dwRootLength);
-				CharLowerBuff(pChangeData->szRoot,pChangeData->dwRootLength);
+				pChangeData->szRoot=new WCHAR[pChangeData->dwRootLength+4];
+				MemCopyW(pChangeData->szRoot,szRoot,pChangeData->dwRootLength);
+				MakeLower(pChangeData->szRoot,pChangeData->dwRootLength);
 				pChangeData->szRoot[pChangeData->dwRootLength++]='\\';
 				pChangeData->szRoot[pChangeData->dwRootLength]='\0';
 			}
@@ -503,11 +504,11 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 
 	BkgDebugMessage("CCheckFileNotificationsThread::CreateHandlesOld() BEGIN");
 	
-	CArrayFAP<LPSTR> aRoots;
+	CArrayFAP<LPWSTR> aRoots;
 	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases());
 	
 	m_pHandles=new HANDLE[aRoots.GetSize()+1];
-	m_pRoots=new LPSTR[aRoots.GetSize()+1];
+	m_pRoots=new LPWSTR[aRoots.GetSize()+1];
 	
 	ASSERT(m_pHandles!=NULL);
 
@@ -517,18 +518,18 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 	m_nHandles=1;
 	for (int i=0;i<aRoots.GetSize();i++)
 	{
-		const LPSTR szRoot=aRoots.GetAt(i);
+		const LPWSTR szRoot=aRoots.GetAt(i);
 		if (szRoot[1]==':' && szRoot[2]=='\0')
 		{
 			char szDrive[]="X:\\";
-			szDrive[0]=szRoot[0];
+			szDrive[0]=W2Ac(szRoot[0]);
 			
 #ifdef _DEBUG_LOGGING
 			// If logging is on, do not use change notifications for root containing log file
 			LPCSTR pLogFile=GetDebugLoggingFile();
 			if (pLogFile!=NULL)
 			{
-				CharLowerBuff(szDrive,1);
+				MakeLower(szDrive,1);
 				if (szDrive[0]==pLogFile[0] && pLogFile[1]==':')
 					continue;
 			}			
@@ -541,10 +542,10 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 			BkgDebugFormatMessage4("FindFirstChangeNotification1,%d returned: 0x%X, drive is %s, GetLastError()=0x%X",i,m_pHandles[m_nHandles],szDrive,GetLastError());
 			if (m_pHandles[m_nHandles]!=INVALID_HANDLE_VALUE)
 			{
-				m_pRoots[m_nHandles]=new char[2];
+				m_pRoots[m_nHandles]=new WCHAR[2];
 				m_pRoots[m_nHandles][0]=szRoot[0];
 				m_pRoots[m_nHandles][1]='\0';
-				CharLowerBuff(m_pRoots[m_nHandles],1);
+				MakeLower(m_pRoots[m_nHandles],1);
 				m_nHandles++;
 			}
 		}
@@ -556,25 +557,27 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 			LPCSTR pLogFile=GetDebugLoggingFile();
 			if (pLogFile!=NULL)
 			{
-				DWORD dwLength=istrlen(szRoot);
-                char* szPath=new char[dwLength+1];
-				CopyMemory(szPath,szRoot,dwLength+1);
-                CharLower(szPath);
+				char* szPath=alloccopyWtoA(szRoot);
+                MakeLower(szPath);
 
-				BOOL bSame=strncmp(szPath,pLogFile,dwLength)==0;
+				BOOL bSame=strcmp(szPath,pLogFile)==0;
 				delete[] szPath;
                 if (bSame)
 					continue;
 			}			
 #endif
-			
-			m_pHandles[m_nHandles]=FindFirstChangeNotification(szRoot,TRUE,
-				FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
-			BkgDebugFormatMessage4("FindFirstChangeNotification2,%d returned: 0x%X, drive is %s, GetLastError()=0x%X",i,m_pHandles[m_nHandles],szRoot,GetLastError());
+			if (IsFullUnicodeSupport())
+				m_pHandles[m_nHandles]=FindFirstChangeNotificationW(szRoot,TRUE,
+					FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
+			else
+				m_pHandles[m_nHandles]=FindFirstChangeNotification(W2A(szRoot),TRUE,
+					FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
+				
+			BkgDebugFormatMessage4("FindFirstChangeNotification2,%d returned: 0x%X, drive is %S, GetLastError()=0x%X",i,m_pHandles[m_nHandles],szRoot,GetLastError());
 			if (m_pHandles[m_nHandles]!=INVALID_HANDLE_VALUE)
 			{
 				m_pRoots[m_nHandles]=alloccopy(szRoot);
-				CharLower(m_pRoots[m_nHandles]);
+				MakeLower(m_pRoots[m_nHandles]);
 				m_nHandles++;
 			}
 		}

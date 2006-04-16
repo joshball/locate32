@@ -54,8 +54,8 @@ CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
 		}
 		pData++;
 
-		m_pDatabases=new char[dwLength];
-		CopyMemory(m_pDatabases,pOrig,dwLength);
+		m_pDatabases=new WCHAR[dwLength];
+		MemCopyAtoW(m_pDatabases,pOrig,dwLength);
 	}
 	else if (nVersion==3)
 	{
@@ -76,8 +76,8 @@ CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
 		}
 		pData++;
 
-		m_pDatabases=new char[dwLength];
-		CopyMemory(m_pDatabases,pOrig,dwLength);
+		m_pDatabases=new WCHAR[dwLength];
+		MemCopyAtoW(m_pDatabases,pOrig,dwLength);
 	}
 		
 	
@@ -91,10 +91,10 @@ DWORD CSchedule::GetDataLen() const
 		return sizeof(CSchedule)+1;
     	
 	DWORD dwLength=sizeof(CSchedule)+1;
-	LPSTR pPtr=m_pDatabases;
+	LPWSTR pPtr=m_pDatabases;
 	while (*pPtr!='\0')
 	{
-        int iStrLen=istrlen(pPtr)+1;
+        int iStrLen=istrlenw(pPtr)+1;
 		dwLength+=iStrLen;
 		pPtr+=iStrLen;
 	}
@@ -112,11 +112,11 @@ DWORD CSchedule::GetData(BYTE* pData) const
 	}
 	
 	DWORD dwLength=sizeof(CSchedule)+1;
-	LPSTR pPtr=m_pDatabases;
+	LPWSTR pPtr=m_pDatabases;
 	while (*pPtr!='\0')
 	{
-		int iStrLen=istrlen(pPtr)+1;
-		CopyMemory(pData,pPtr,iStrLen);
+		int iStrLen=istrlenw(pPtr)+1;
+		MemCopyWtoA(pData,pPtr,iStrLen);
         dwLength+=iStrLen;
 		pPtr+=iStrLen;
 		pData+=iStrLen;

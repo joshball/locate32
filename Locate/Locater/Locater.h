@@ -127,7 +127,6 @@ public:
 	DWORD AddAdvancedFlags(DWORD dwNewFlag);
     DWORD RemoveAdvancedFlags(DWORD dwRemoveFlag);
 
-	//BOOL IsFileNamesOEM() const;
 
 private:
 	void LocateValidFolder(DWORD nPathLen);
@@ -167,7 +166,7 @@ public:
 	DWORD GetFileNameLen() const;
 	BYTE GetFileExtensionPos() const;
 	DWORD GetFileSizeLo() const;
-	BYTE GetFileSizeHi() const;
+	WORD GetFileSizeHi() const;
 	WORD GetFileModifiedTime() const;
 	WORD GetFileModifiedDate() const;
 	WORD GetFileCreatedDate() const;
@@ -187,7 +186,6 @@ public:
 	WORD GetCurrentDatabaseID() const;
 	LPCWSTR GetCurrentDatabaseName() const;
 	LPCWSTR GetCurrentDatabaseFile() const;
-	BOOL IsCurrentDatabaseOEM() const;
 	BOOL IsCurrentDatabaseUnicode() const;
 	WORD GetCurrentDatabaseRootID() const;
 	BYTE GetCurrentDatabaseRootType() const;
@@ -235,7 +233,6 @@ private:
 		WORD wID;
 
 		BYTE bEnable:1;
-		BYTE bOEM:1;
 		BYTE bUnicode:1;
 
 	};
@@ -298,5 +295,6 @@ private:
 #define sstrlenW				dwstrlen
 
 #include "Locater.inl"
+
 
 #endif

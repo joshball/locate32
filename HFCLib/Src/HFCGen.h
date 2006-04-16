@@ -331,14 +331,25 @@ namespace FileSystem {
 	DWORD GetTempPath(DWORD nBufferLength,LPSTR lpBuffer);
 	UINT GetTempFileName(LPCSTR lpPathName,LPCSTR lpPrefixString,UINT uUnique,LPSTR lpTempFileName);
 	
+	short GetFileTitle(LPCSTR lpszFile,LPSTR lpszTitle,WORD cbBuf);
+	DWORD GetFileAttributes(LPCSTR lpFileName);
+
 	UINT GetDriveType(LPCSTR lpRootPathName);
 	DWORD GetLogicalDriveStrings(DWORD nBufferLength,LPSTR lpBuffer);
 	BOOL GetVolumeInformation(LPCSTR lpRootPathName,LPSTR lpVolumeNameBuffer,
 		DWORD nVolumeNameSize,LPDWORD lpVolumeSerialNumber,LPDWORD lpMaximumComponentLength,
 		LPDWORD lpFileSystemFlags,LPSTR lpFileSystemNameBuffer,DWORD nFileSystemNameSize);
 
+	BOOL GetFileSecurity(LPCSTR lpFileName,SECURITY_INFORMATION RequestedInformation,
+		PSECURITY_DESCRIPTOR pSecurityDescriptor,DWORD nLength,LPDWORD lpnLengthNeeded);
+	BOOL LookupAccountName(LPCSTR lpSystemName,LPCSTR lpAccountName,PSID Sid,
+		LPDWORD cbSid,LPSTR ReferencedDomainName,LPDWORD cchReferencedDomainName,
+		PSID_NAME_USE peUse);
+	BOOL LookupAccountSid(LPCSTR lpSystemName,PSID lpSid,LPSTR lpName,LPDWORD cchName,
+		LPSTR lpReferencedDomainName,LPDWORD cchReferencedDomainName,PSID_NAME_USE peUse);
 
-	
+
+
 #ifdef DEF_WCHAR
 	LONGLONG GetDiskFreeSpace(LPCWSTR szDrive);
 
@@ -370,13 +381,30 @@ namespace FileSystem {
 	DWORD GetTempPath(DWORD nBufferLength,LPWSTR lpBuffer);
 	UINT GetTempFileName(LPCWSTR lpPathName,LPCWSTR lpPrefixString,UINT uUnique,LPWSTR lpTempFileName);
 
+	short GetFileTitle(LPCWSTR lpszFile,LPWSTR lpszTitle,WORD cbBuf);
+	DWORD GetFileAttributes(LPCWSTR lpFileName);
+
 
 	UINT GetDriveType(LPCWSTR lpRootPathName);
 	DWORD GetLogicalDriveStrings(DWORD nBufferLength,LPWSTR lpBuffer);
 	BOOL GetVolumeInformation(LPCWSTR lpRootPathName,LPWSTR lpVolumeNameBuffer,
 		DWORD nVolumeNameSize,LPDWORD lpVolumeSerialNumber,LPDWORD lpMaximumComponentLength,
 		LPDWORD lpFileSystemFlags,LPWSTR lpFileSystemNameBuffer,DWORD nFileSystemNameSize);
+
+
+
+	BOOL GetFileSecurity(LPCWSTR lpFileName,SECURITY_INFORMATION RequestedInformation,
+		PSECURITY_DESCRIPTOR pSecurityDescriptor,DWORD nLength,LPDWORD lpnLengthNeeded);
+	BOOL LookupAccountName(LPCWSTR lpSystemName,LPCWSTR lpAccountName,PSID Sid,
+		LPDWORD cbSid,LPWSTR ReferencedDomainName,LPDWORD cchReferencedDomainName,
+		PSID_NAME_USE peUse);
+	BOOL LookupAccountSid(LPCWSTR lpSystemName,PSID lpSid,LPWSTR lpName,LPDWORD cchName,
+		LPWSTR lpReferencedDomainName,LPDWORD cchReferencedDomainName,PSID_NAME_USE peUse);
+
 #endif	
+
+
+
 };
 
 class CFileFind : public CObject

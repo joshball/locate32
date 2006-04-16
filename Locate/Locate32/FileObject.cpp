@@ -136,13 +136,13 @@ HRESULT STDMETHODCALLTYPE CFileObject::GetData(FORMATETC *pformatetcIn,STGMEDIUM
 		{
 			int len=m_Files[0]->GetLength();
 			pmedium->hGlobal=GlobalAlloc(GMEM_DDESHARE|GMEM_FIXED,len+2);
-			sMemCopy((LPSTR)pmedium->hGlobal,(LPCSTR)*m_Files[0],len+1);
+			WideCharToMultiByte(CP_ACP,0,(LPCWSTR)*m_Files[0],len+1,(LPSTR)pmedium->hGlobal,len+2,NULL,0);
 		}
 		else if (strcasecmp(CFSTR_FILENAMEW,szFormat)==0)
 		{
 			int len=m_Files[0]->GetLength();
-			pmedium->hGlobal=GlobalAlloc(GMEM_DDESHARE|GMEM_FIXED,len*2+4);
-			MultiByteToWideChar(CP_ACP,0,(LPCSTR)*m_Files[0],-1,(LPWSTR)pmedium->hGlobal,len+4);
+			pmedium->hGlobal=GlobalAlloc(GMEM_DDESHARE|GMEM_FIXED,len*2+2);
+			MemCopyW((LPWSTR)pmedium->hGlobal,(LPCWSTR)*m_Files[0],len+1);
 		}
 		else if (strcasecmp(CFSTR_FILENAMEMAPA,szFormat)==0)
 			pmedium->hGlobal=GetFileNameMapA();
@@ -266,7 +266,7 @@ HRESULT STDMETHODCALLTYPE CFileObject::SetData(FORMATETC *pformatetc,STGMEDIUM *
 		for (int i=DragQueryFile((HDROP)pmedium->hGlobal,0xFFFFFFFF,NULL,0)-1;i>=0;i--)
 		{
 			DragQueryFile((HDROP)pmedium->hGlobal,i,szPath,_MAX_PATH);
-			m_Files.Add(new CString(szPath));
+			m_Files.Add(new CStringW(szPath));
 		}
 		DragFinish((HDROP)pmedium->hGlobal);
 	}
@@ -274,25 +274,25 @@ HRESULT STDMETHODCALLTYPE CFileObject::SetData(FORMATETC *pformatetc,STGMEDIUM *
 	{
 		char szFormat[100];
 		GetClipboardFormatName(pformatetc->cfFormat,szFormat,100);
-		if (strcasecmp(CFSTR_FILENAME,szFormat)==0)
+		if (_stricmp(CFSTR_FILENAME,szFormat)==0)
 		{
 			m_Files.RemoveAll();
 			m_Points.RemoveAll();
-			m_Files.Add(new CString((LPCSTR)pmedium->hGlobal));
+			m_Files.Add(new CStringW((LPCSTR)pmedium->hGlobal));
 		}
-		else if (strcasecmp(CFSTR_FILENAMEW,szFormat)==0)
+		else if (_stricmp(CFSTR_FILENAMEW,szFormat)==0)
 		{
 			m_Files.RemoveAll();
 			m_Points.RemoveAll();
-			m_Files.Add(new CString((LPCWSTR)pmedium->hGlobal));
+			m_Files.Add(new CStringW((LPCWSTR)pmedium->hGlobal));
 		}
-		else if (strcasecmp(CFSTR_TARGETCLSID,szFormat)==0)
+		else if (_stricmp(CFSTR_TARGETCLSID,szFormat)==0)
 			return S_OK;
-		else if (strcasecmp(CFSTR_LOGICALPERFORMEDDROPEFFECT,szFormat)==0)
+		else if (_stricmp(CFSTR_LOGICALPERFORMEDDROPEFFECT,szFormat)==0)
 			return S_OK;
-		else if (strcasecmp(CFSTR_PERFORMEDDROPEFFECT,szFormat)==0)
+		else if (_stricmp(CFSTR_PERFORMEDDROPEFFECT,szFormat)==0)
 			return S_OK;
-		else if (strcasecmp(CFSTR_PREFERREDDROPEFFECT,szFormat)==0)
+		else if (_stricmp(CFSTR_PREFERREDDROPEFFECT,szFormat)==0)
 			return S_OK;
 		else
 			return DV_E_FORMATETC;
@@ -338,11 +338,11 @@ HRESULT STDMETHODCALLTYPE CFileObject::EnumDAdvise(IEnumSTATDATA** ppenumAdvise)
 	return E_NOTIMPL;
 }
 
-BYTE CFileObject::SetFile(LPCSTR szFile)
+BYTE CFileObject::SetFile(LPCWSTR szFile)
 {
 	m_Files.RemoveAll();
 	m_Points.RemoveAll();
-	m_Files.Add(new CString(szFile));
+	m_Files.Add(new CStringW(szFile));
 	return TRUE;
 }
 
@@ -358,7 +358,7 @@ BYTE CFileObject::SetFiles(CListCtrl* pList)
 		CLocatedItem* pData=(CLocatedItem*)pList->GetItemData(nItem);
 		if (pData!=NULL)
 		{
-			m_Files.Add(new CString(pData->GetPath()));
+			m_Files.Add(new CStringW(pData->GetPath()));
 			if (bGetPoints)
 			{
 				CPoint* pt=new CPoint;
@@ -374,14 +374,10 @@ BYTE CFileObject::SetFiles(CListCtrl* pList)
 
 HGLOBAL CFileObject::GetHDrop()
 {
-	OSVERSIONINFO osvi;
-	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&osvi);
-	
 	HGLOBAL hGlobal;
 	DWORD nDataLength=sizeof(DROPFILES)+2;
 	
-	if (osvi.dwPlatformId==VER_PLATFORM_WIN32_NT)
+	if (IsFullUnicodeSupport())
 	{
 		// Win2000/XP needs Unicode
 		int i;
@@ -397,13 +393,13 @@ HGLOBAL CFileObject::GetHDrop()
 		GetCursorPos(&((DROPFILES*)pLock)->pt);
 		((DROPFILES*)pLock)->fWide=TRUE;
 		((DROPFILES*)pLock)->pFiles=sizeof(DROPFILES);
-		LPSTR pDst=(LPSTR)pLock+sizeof(DROPFILES);
+		LPWSTR pDst=(LPWSTR)(pLock+sizeof(DROPFILES));
 		for (i=0;i<m_Files.GetSize();i++)
 		{
-			MemCopyAtoW(pDst,*m_Files[i],m_Files[i]->GetLength()+1);
-			pDst+=(m_Files[i]->GetLength()+1)*2;
+			MemCopyW(pDst,*m_Files[i],m_Files[i]->GetLength()+1);
+			pDst+=m_Files[i]->GetLength()+1;
 		}
-		*pDst='\0';
+		*pDst=L'\0';
 		
 		GlobalUnlock(hGlobal);
 	}
@@ -421,8 +417,8 @@ HGLOBAL CFileObject::GetHDrop()
 		LPSTR pDst=(LPSTR)hGlobal+sizeof(DROPFILES);
 		for (int i=0;i<m_Files.GetSize();i++)
 		{
-			DebugFormatMessage("HDROP: file: %s",(LPCSTR)*m_Files[i]);
-			sMemCopy(pDst,(LPCSTR)*m_Files[i],m_Files[i]->GetLength()+1);
+			DebugFormatMessage(L"HDROP: file: %s",(LPCWSTR)*m_Files[i]);
+			MemCopyWtoA(pDst,(LPCWSTR)*m_Files[i],m_Files[i]->GetLength()+1);
 			pDst+=m_Files[i]->GetLength()+1;
 		}
 		*pDst='\0';
@@ -438,7 +434,7 @@ HGLOBAL CFileObject::GetFileNameA()
 		return NULL;
 
 	HGLOBAL hGlobal=GlobalAlloc(GPTR,m_Files.GetAt(0)->GetLength()+1);
-	sMemCopy((LPSTR)hGlobal,m_Files.GetAt(0)->GetBuffer(),m_Files.GetAt(0)->GetLength()+1);
+	MemCopyWtoA((LPSTR)hGlobal,m_Files.GetAt(0)->GetBuffer(),m_Files.GetAt(0)->GetLength()+1);
 	return hGlobal;
 }
 
@@ -448,7 +444,7 @@ HGLOBAL CFileObject::GetFileNameW()
 		return NULL;
 
 	HGLOBAL hGlobal=GlobalAlloc(GPTR,(m_Files.GetAt(0)->GetLength()+1)*2);
-	MemCopyAtoW((LPSTR)hGlobal,m_Files.GetAt(0)->GetBuffer(),m_Files.GetAt(0)->GetLength()+1);
+	MemCopyW((LPWSTR)hGlobal,m_Files.GetAt(0)->GetBuffer(),m_Files.GetAt(0)->GetLength()+1);
 	return hGlobal;
 }
 
@@ -526,10 +522,10 @@ HGLOBAL CFileObject::GetFileNameMapA()
 	LPSTR pDst=(LPSTR)hGlobal;
 	for (i=0;i<m_Files.GetSize();i++)
 	{
-		sMemCopy(pDst,(LPCSTR)(*m_Files[i])+pNameStartPos[i],m_Files[i]->GetLength()+1-pNameStartPos[i]);
+		MemCopyWtoA(pDst,(LPCWSTR)(*m_Files[i])+pNameStartPos[i],m_Files[i]->GetLength()+1-pNameStartPos[i]);
 		pDst+=m_Files[i]->GetLength()+1-pNameStartPos[i];
 	}
-	*pDst='\0';
+	*pDst=L'\0';
 	delete[] pNameStartPos;
 	return hGlobal;
 }
@@ -550,7 +546,7 @@ HGLOBAL CFileObject::GetFileNameMapW()
 	LPWSTR pDst=(LPWSTR)hGlobal;
 	for (i=0;i<m_Files.GetSize();i++)
 	{
-		MultiByteToWideChar(CP_ACP,0,(LPCSTR)(*m_Files[i])+pNameStartPos[i],-1,pDst,m_Files[i]->GetLength()+1-pNameStartPos[i]);
+		MemCopyW(pDst,(LPCWSTR)(*m_Files[i])+pNameStartPos[i],m_Files[i]->GetLength()+1-pNameStartPos[i]);
 		pDst+=m_Files[i]->GetLength()+1-pNameStartPos[i];
 	}
 	*pDst='\0';

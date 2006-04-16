@@ -179,7 +179,7 @@ public:
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 	virtual BOOL OnClose();
 
-	CString m_sFileName;
+	CStringW m_sFileName;
 };
 
 class CRemovePresetDlg: public CDialog  

@@ -101,9 +101,9 @@ public:
 	BOOL Create(DWORD dwStyle,const RECT* rect,HWND hWndParent,UINT nID);
 
 public:
-	BOOL SetText(LPCTSTR lpszText,int nPane,int nType);
-	CString GetText(int nPane,int* pType=NULL) const;
-	int GetText(LPTSTR lpszText,int nPane,int* pType=NULL) const;
+	BOOL SetText(LPCSTR lpszText,int nPane,int nType);
+	BOOL GetText(CString& sText,int nPane,int* pType=NULL) const;
+	int GetText(LPSTR lpszText,int nPane,int* pType=NULL) const;
 	int GetTextLength(int nPane,int* pType=NULL) const;
 	BOOL SetParts(int nParts,int* pWidths);
 	int GetParts(int nParts,int* pParts) const;
@@ -115,9 +115,18 @@ public:
 	BOOL SetIcon(int nPane,HICON hIcon);
 	HICON GetIcon(int nPane) const;
 	BOOL SetTipText(int n,LPCSTR szText);
-	BOOL GetTipText(int n,LPSTR szText) const;
+	BOOL GetTipText(int n,LPSTR szText,SIZE_T nBufLen) const;
 	BOOL SetUnicodeFormat(int nFormat);
 	BOOL GetUnicodeFormat() const;
+
+#ifdef DEF_WCHAR
+	BOOL SetText(LPCWSTR lpszText,int nPane,int nType);
+	BOOL GetText(CStringW& sText,int nPane,int* pType=NULL) const;
+	int GetText(LPWSTR lpszText,int nPane,int* pType=NULL) const;
+	BOOL SetTipText(int n,LPCWSTR szText);
+	BOOL GetTipText(int n,LPWSTR szText,SIZE_T nBufLen) const;
+#endif
+
 };
 
 class CToolInfo : public tagTOOLINFOA

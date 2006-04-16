@@ -91,6 +91,40 @@ inline LPWSTR allocemptyW()
 
 #endif
 
+inline char W2Ac(WCHAR ch)
+{
+	char ret=0;
+	WideCharToMultiByte(CP_ACP,0,&ch,1,&ret,1,NULL,NULL);
+	return ret;
+}
+
+#ifdef DEF_WCHAR
+inline WCHAR A2Wc(char ch)
+{
+	WCHAR ret=0;
+	MultiByteToWideChar(CP_ACP,0,&ch,1,&ret,1);
+	return ret;
+}
+
+inline BOOL IsCharLower(WCHAR ch)
+{
+	if (IsFullUnicodeSupport())
+		return IsCharLowerW(ch);
+	else
+		return iswlower(ch);
+}
+
+inline BOOL IsCharUpper(WCHAR ch)
+{
+	if (IsFullUnicodeSupport())
+		return IsCharUpperW(ch);
+	else
+		return iswupper(ch);
+}
+
+#endif
+
+
 
 inline void MakeLower(LPSTR szStr)
 {
@@ -109,6 +143,33 @@ inline void MakeUpper(LPSTR szStr)
 	strupr(szStr);
 #endif
 }
+inline void MakeLower(LPSTR szStr,DWORD cchLength)
+{
+#ifdef WIN32
+	CharLowerBuff(szStr,cchLength);
+#else
+	char* pTmp=new char[cchLength+2];
+	MemCopy(pTmp,szStr,cchLength);
+	pTmp[cchLength];
+	strlwr(pTmp);
+	MemCopy(szStr,pTmp,cchLength);
+	delete[] pTmp;
+#endif
+}
+inline void MakeUpper(LPSTR szStr,DWORD cchLength)
+{
+#ifdef WIN32
+	CharUpperBuff(szStr,cchLength);
+#else
+	char* pTmp=new char[cchLength+2];
+	MemCopy(pTmp,szStr,cchLength);
+	pTmp[cchLength];
+	strupr(pTmp);
+	MemCopy(szStr,pTmp,cchLength);
+	delete[] pTmp;
+#endif
+}
+
 
 #ifdef DEF_WCHAR
 inline void MakeLower(LPWSTR szStr)
@@ -118,13 +179,37 @@ inline void MakeLower(LPWSTR szStr)
 	else
 		_wcslwr_s(szStr,istrlenw(szStr)+1);
 }
+inline void MakeLower(LPWSTR szStr,DWORD cchLength)
+{
+	if (IsFullUnicodeSupport())
+		CharLowerBuffW(szStr,cchLength);
+	else
+	{
+		WCHAR* pTemp=alloccopy(szStr,cchLength);
+		_wcslwr_s(pTemp,cchLength+1);
+		CopyMemory(szStr,pTemp,cchLength*2);
+		delete[] pTemp;
+	}
+}
 
 inline void MakeUpper(LPWSTR szStr)
 {
 	if (IsFullUnicodeSupport())
-		CharLowerW(szStr);
+		CharUpperW(szStr);
 	else
 		_wcsupr_s(szStr,istrlenw(szStr)+1);
+}
+inline void MakeUpper(LPWSTR szStr,DWORD cchLength)
+{
+	if (IsFullUnicodeSupport())
+		CharUpperBuffW(szStr,cchLength);
+	else
+	{
+		WCHAR* pTemp=alloccopy(szStr,cchLength);
+		_wcsupr_s(pTemp,cchLength+1);
+		CopyMemory(szStr,pTemp,cchLength*2);
+		delete[] pTemp;
+	}
 }
 #endif
 

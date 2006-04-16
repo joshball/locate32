@@ -136,13 +136,22 @@ BOOL CLocateApp::InitInstance()
 	// Initializing locater library
 	InitLocaterLibrary();
 
-	m_pGetLongPathName=(DWORD(WINAPI *)(LPCSTR,LPSTR,DWORD))GetProcAddress(GetModuleHandle("kernel32.dll"),"GetLongPathNameA");
-	if (m_pGetLongPathName==NULL)
-		m_pGetLongPathName=CLocateApp::GetLongPathName;
+	if (!IsFullUnicodeSupport())
+		m_pGetLongPathName=CLocateApp::GetLongPathNameNoUni;
+	else 
+	{
+		m_pGetLongPathName=(DWORD(WINAPI *)(LPCWSTR,LPWSTR,DWORD))GetProcAddress(GetModuleHandle("kernel32.dll"),"GetLongPathNameW");
+		if (m_pGetLongPathName==NULL)
+			m_pGetLongPathName=CLocateApp::GetLongPathName;
+	}
 
 	// Handling command line arguments
 	DebugFormatMessage("CommandLine: %s",m_lpCmdLine);
-	ParseParameters(m_lpCmdLine,m_pStartData);
+	//if (IsFullUnicodeSupport())
+	//	ParseParameters(GetCommandLineW(),m_pStartData);
+	//else
+		ParseParameters(A2W(m_lpCmdLine),m_pStartData);
+		
 	m_nStartup=m_pStartData->m_nStartup;
 	
 	// If databases are specified by command line, use it
@@ -255,8 +264,25 @@ INT_PTR CALLBACK CLocateApp::DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wPara
 	return FALSE;
 }
 
+DWORD CLocateApp::GetLongPathName(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer)
+{
+	LPWSTR pTemp;
+	return GetFullPathNameW(lpszShortPath,cchBuffer,lpszLongPath,&pTemp);
+}
+
+DWORD CLocateApp::GetLongPathNameNoUni(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer)
+{
+	LPSTR pTmp;
+	CHAR sPathA[MAX_PATH+10];
+	DWORD dwRet=::GetFullPathNameA(W2A(lpszShortPath),MAX_PATH+10,sPathA,&pTmp);
 	
-BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
+	if (dwRet==0)
+		return 0;
+	MultiByteToWideChar(CP_ACP,0,sPathA,dwRet+1,lpszLongPath,cchBuffer);
+	return dwRet;
+}	
+
+BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 {
 	int idx=0,temp;
 	while (lpCmdLine[idx]==' ') idx++;
@@ -299,7 +325,7 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 					*(char*)(lpCmdLine+idx+temp)='\0'; // Setting line end for 
 				int nLength=0;
 
-				char szPath[MAX_PATH+10];
+				WCHAR szPath[MAX_PATH+10];
 				nLength=GetLocateApp()->m_pGetLongPathName(lpCmdLine+idx,szPath,MAX_PATH+10);
 				ChangeAndAlloc(pStartData->m_pStartPath,szPath,nLength);
 								
@@ -316,7 +342,7 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 					*(char*)(lpCmdLine+idx+temp)='\0'; // Setting line end for 
 				int nLength;
 
-				char szPath[MAX_PATH+10];
+				WCHAR szPath[MAX_PATH+10];
 				nLength=GetLocateApp()->m_pGetLongPathName(lpCmdLine+idx,szPath,200);
 				ChangeAndAlloc(pStartData->m_pStartPath,szPath,nLength);
 				if (temp<0)
@@ -329,13 +355,26 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 		case 'C':
 			{
 				OpenClipboard(NULL);
-				HANDLE hData=GetClipboardData(CF_TEXT);
+				
+				
+				HANDLE hData=GetClipboardData(CF_UNICODETEXT);
 				if (hData!=NULL)
 				{
-					LPCSTR szLine=(LPCSTR)GlobalLock(hData);
+					LPCWSTR szLine=(LPCWSTR)GlobalLock(hData);
 					if (szLine!=NULL)
 						ChangeAndAlloc(pStartData->m_pStartString,szLine);
 					GlobalUnlock(hData);
+				}
+				else
+				{
+					hData=GetClipboardData(CF_TEXT);
+					if (hData!=NULL)
+					{
+						LPCSTR szLine=(LPCSTR)GlobalLock(hData);
+						if (szLine!=NULL)
+							ChangeAndAlloc(pStartData->m_pStartString,A2W(szLine));
+						GlobalUnlock(hData);
+					}
 				}
 				CloseClipboard();
 				idx++;
@@ -418,9 +457,9 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 			if (lpCmdLine[idx]!='\"')
 			{
 				temp=FirstCharIndex(lpCmdLine+idx,' ');
-				if (pStartData->m_aDatabases.GetSize()==1 && strcmp(pStartData->m_aDatabases[0]->GetName(),"DEFAULTX")==0)
+				if (pStartData->m_aDatabases.GetSize()==1 && wcscmp(pStartData->m_aDatabases[0]->GetName(),L"DEFAULTX")==0)
 				{
-					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy("PARAMX"));
+					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"PARAMX"));
 					if (temp!=-1)
 						pStartData->m_aDatabases[0]->SetArchiveNamePtr(alloccopy(lpCmdLine+idx,temp));
 					else
@@ -443,9 +482,9 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 			{
 				idx++;
 				temp=FirstCharIndex(lpCmdLine+idx,'\"');
-				if (pStartData->m_aDatabases.GetSize()==1 && strcmp(pStartData->m_aDatabases[0]->GetName(),"DEFAULTX")==0)
+				if (pStartData->m_aDatabases.GetSize()==1 && wcscmp(pStartData->m_aDatabases[0]->GetName(),L"DEFAULTX")==0)
 				{
-					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy("PARAMX"));
+					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"PARAMX"));
 					if (temp!=-1)
 						pStartData->m_aDatabases[0]->SetArchiveNamePtr(alloccopy(lpCmdLine+idx,temp));
 					else
@@ -529,14 +568,14 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 			{
 				if (pStartData->m_aDatabases.GetSize()==0)
 				{
-					pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,GetApp()->GetExeName(),LastCharIndex(GetApp()->GetExeName(),'\\')+1));
-					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy("DEFAULTX"));
+					pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,GetApp()->GetExeNameW(),LastCharIndex(GetApp()->GetExeName(),'\\')+1));
+					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 					pStartData->m_aDatabases[0]->SetThreadId(0);
 					pStartData->m_nStartup|=CStartData::startupDatabasesOverridden;
 					pStartData->m_aDatabases.GetLast()->AddLocalRoots();
 				}
-				else if (strncmp(pStartData->m_aDatabases.GetLast()->GetName(),"PARAMX",6)==0 || 
-					strncmp(pStartData->m_aDatabases.GetLast()->GetName(),"DEFAULTX",8)==0)
+				else if (wcsncmp(pStartData->m_aDatabases.GetLast()->GetName(),L"PARAMX",6)==0 || 
+					wcsncmp(pStartData->m_aDatabases.GetLast()->GetName(),L"DEFAULTX",8)==0)
 					pStartData->m_aDatabases.GetLast()->AddLocalRoots();
 				
 				while (lpCmdLine[idx]!=' ') idx++;
@@ -545,7 +584,7 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 			{
 				while (lpCmdLine[idx]==' ') idx++;
 				
-				CString Directory;
+				CStringW Directory;
 				if (lpCmdLine[idx]!='\"')
 				{
 					Directory.Copy(lpCmdLine+idx,FirstCharIndex(lpCmdLine+idx,' '));
@@ -565,7 +604,7 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 					
 				if (Directory.GetLength()>1)
 				{
-					LPCSTR pDir=NULL;
+					LPCWSTR pDir=NULL;
 					if (Directory[1]==':' && Directory.GetLength()==2)
 						pDir=alloccopy(Directory);
 					else if (FileSystem::IsDirectory(Directory))
@@ -575,14 +614,14 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 					{
 						if (pStartData->m_aDatabases.GetSize()==0)
 						{
-							pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,GetApp()->GetExeName(),LastCharIndex(GetApp()->GetExeName(),'\\')+1));
-							pStartData->m_aDatabases[0]->SetNamePtr(alloccopy("DEFAULTX"));
+							pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,GetApp()->GetExeNameW(),LastCharIndex(GetApp()->GetExeName(),'\\')+1));
+							pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 							pStartData->m_aDatabases[0]->SetThreadId(0);
 							pStartData->m_nStartup|=CStartData::startupDatabasesOverridden;
 							pStartData->m_aDatabases.GetLast()->AddRoot(pDir);
 						}
-						else if (strncmp(pStartData->m_aDatabases.GetLast()->GetName(),"PARAMX",6)==0 || 
-							strncmp(pStartData->m_aDatabases.GetLast()->GetName(),"DEFAULTX",8)==0)
+						else if (wcsncmp(pStartData->m_aDatabases.GetLast()->GetName(),L"PARAMX",6)==0 || 
+							wcsncmp(pStartData->m_aDatabases.GetLast()->GetName(),L"DEFAULTX",8)==0)
 							pStartData->m_aDatabases.GetLast()->AddRoot(pDir);
 						else
 							delete[] pDir;
@@ -624,9 +663,9 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 						idx++;
 					while (lpCmdLine[idx]==' ') idx++;
 					temp=FirstCharIndex(lpCmdLine+idx,' ');
-					CString str(lpCmdLine+idx,temp);
+					CStringW str(lpCmdLine+idx,temp);
 					
-					int val=atoi(str);
+					int val=_wtoi(str);
 					if (val!=0)
 						pStartData->m_dwMaxFoundFiles=val;
 					else if (str.Compare("0")==0)
@@ -723,14 +762,14 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 						idx++;
 					while (lpCmdLine[idx]==' ') idx++;
 					temp=FirstCharIndex(lpCmdLine+idx,' ');
-					CString str(lpCmdLine+idx,temp);
+					CStringW str(lpCmdLine+idx,temp);
 					while ((str.LastChar()<'0' || str.LastChar()>'9') && !str.IsEmpty())
 					{
-						pStartData->m_cMinSizeType=str.LastChar();
+						pStartData->m_cMinSizeType=W2Ac(str.LastChar());
 						str.DelLastChar();
 					}
 					
-					int val=atoi(str);
+					int val=_wtoi(str);
 					if (val!=0)
 						pStartData->m_dwMinFileSize=val;
 					else if (str.Compare("0")==0)
@@ -749,14 +788,14 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 						idx++;
 					while (lpCmdLine[idx]==' ') idx++;
 					temp=FirstCharIndex(lpCmdLine+idx,' ');
-					CString str(lpCmdLine+idx,temp);
+					CStringW str(lpCmdLine+idx,temp);
 					while ((str.LastChar()<'0' || str.LastChar()>'9') && !str.IsEmpty())
 					{
-						pStartData->m_cMaxSizeType=str.LastChar();
+						pStartData->m_cMaxSizeType=W2Ac(str.LastChar());
 						str.DelLastChar();
 					}
 					
-					int val=atoi(str);
+					int val=_wtoi(str);
 					if (val!=0)
 						pStartData->m_dwMaxFileSize=val;
 					else if (str.Compare("0")==0)
@@ -775,7 +814,7 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
                     int nLength=LastCharIndex(lpCmdLine+idx,' ');
 					if (nLength<0)
 					{
-						nLength=strlen(lpCmdLine+idx);
+						nLength=wcslen(lpCmdLine+idx);
 						if (nLength<7)
                             return TRUE;
 					}
@@ -785,33 +824,33 @@ BOOL CLocateApp::ParseParameters(LPCTSTR lpCmdLine,CStartData* pStartData)
 						break;
 					}
 
-					char szBuf[]="XX";
+					WCHAR szBuf[]=L"XX";
 					szBuf[0]=lpCmdLine[idx+1];
 					szBuf[1]=lpCmdLine[idx+2];
-					WORD bYear=atoi(szBuf);
+					WORD bYear=_wtoi(szBuf);
 					if (bYear<60)
 						bYear+=2000;
 					else
 						bYear+=1900;
 					szBuf[0]=lpCmdLine[idx+3];
 					szBuf[1]=lpCmdLine[idx+4];
-					BYTE bMonth=atoi(szBuf);
+					BYTE bMonth=_wtoi(szBuf);
 					if (bMonth<1 || bMonth>12)
 						bMonth=1;
 					szBuf[0]=lpCmdLine[idx+5];
 					szBuf[1]=lpCmdLine[idx+6];
-					BYTE bDay=atoi(szBuf);
+					BYTE bDay=_wtoi(szBuf);
 					if (bDay<1 || bDay>CTime::GetDaysInMonth(bMonth,bYear))
 						bDay=1;					
 					
-					if (isupper(lpCmdLine[idx])) // max date
+					if (IsCharUpper(lpCmdLine[idx])) // max date
 					{
-						pStartData->m_cMaxDateType=lpCmdLine[idx];
+						pStartData->m_cMaxDateType=W2Ac(lpCmdLine[idx]);
 						pStartData->m_dwMaxDate=(bYear<<16)|(bMonth<<8)|(bDay);
 					}
 					else
 					{
-						pStartData->m_cMinDateType=lpCmdLine[idx];
+						pStartData->m_cMinDateType=W2Ac(lpCmdLine[idx]);
 						pStartData->m_dwMinDate=(bYear<<16)|(bMonth<<8)|(bDay);
 					}
 					idx+=nLength;
@@ -879,8 +918,8 @@ BYTE CLocateApp::CheckDatabases()
 		CDatabase* pDatabase=CDatabase::FromOldStyleDatabase(HKCU,"Software\\Update\\Database");
 		if (pDatabase==NULL)
 		{
-			pDatabase=CDatabase::FromDefaults(TRUE,GetApp()->GetExeName(),
-				LastCharIndex(GetApp()->GetExeName(),'\\')+1); // Nothing else can be done?
+			pDatabase=CDatabase::FromDefaults(TRUE,GetApp()->GetExeNameW(),
+				LastCharIndex(GetApp()->GetExeNameW(),L'\\')+1); // Nothing else can be done?
 		}
 		else
 		{
@@ -959,6 +998,7 @@ BOOL CLocateApp::ChechOtherInstances()
 	HWND hWnd=FindWindow("LOCATEAPPST","Locate ST");
 	if (hWnd!=NULL)
 	{
+		// TODO: Unicode
 		ATOM aCommandLine=GlobalAddAtom(GetApp()->GetCmdLine());
 		::SendMessage(hWnd,WM_ANOTHERINSTANCE,0,(LPARAM)aCommandLine);
 		if (aCommandLine!=NULL)
@@ -970,7 +1010,7 @@ BOOL CLocateApp::ChechOtherInstances()
 
 
 	
-LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
+LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 {
 	DWORD dwLength=2;
 	
@@ -994,9 +1034,21 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 			st.wMonth=DOSDATETOMONTH(wDate);
 			st.wYear=DOSDATETOYEAR(wDate);
 
-			GetDateFormat(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,
-				NULL,m_strDateFormat.GetBuffer(1000),1000);
-			m_strDateFormat.FreeExtra();
+			if (IsFullUnicodeSupport())
+			{
+				GetDateFormatW(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,
+					NULL,m_strDateFormat.GetBuffer(1000),1000);
+				m_strDateFormat.FreeExtra();
+			}
+			else
+			{
+				char szFormat[1000];
+				GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,
+					NULL,szFormat,1000);
+				m_strDateFormat=szFormat;
+			}
+
+			
 
 			dwLength+=m_strDateFormat.GetLength();
 		}
@@ -1016,9 +1068,21 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 			st.wMinute=DOSTIMETOMINUTE(wTime);
 			st.wSecond=DOSTIMETOSECOND(wTime);
 			st.wMilliseconds=0;
-			GetTimeFormat(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,
-				NULL,m_strTimeFormat.GetBuffer(1000),1000);
-			m_strTimeFormat.FreeExtra();
+			
+			if (IsFullUnicodeSupport())
+			{
+				GetTimeFormatW(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,
+					NULL,m_strTimeFormat.GetBuffer(1000),1000);
+				m_strTimeFormat.FreeExtra();
+			}
+			else
+			{
+				char szTimeFormat[1000];
+				GetTimeFormat(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,
+					NULL,szTimeFormat,1000);
+				m_strTimeFormat=szTimeFormat;
+
+			}
 
 			dwLength+=m_strTimeFormat.GetLength();
 		}
@@ -1028,8 +1092,8 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 		
 	}
 
-	LPSTR szRet=new char[dwLength];
-	LPSTR pPtr=szRet;
+	LPWSTR szRet=new WCHAR[dwLength];
+	LPWSTR pPtr=szRet;
 
 	//Formatting date
     if (wDate!=WORD(-1))
@@ -1038,11 +1102,11 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 		{
 			switch (m_strDateFormat[i])
 			{
-			case 'd':
+			case L'd':
 				if (m_strDateFormat[i+1]=='d') // "dd" , "ddd" and "dddd" will not be handled
 				{
-					pPtr[0]=DOSDATETODAY(wDate)/10+'0';
-					pPtr[1]=DOSDATETODAY(wDate)%10+'0';
+					pPtr[0]=DOSDATETODAY(wDate)/10+L'0';
+					pPtr[1]=DOSDATETODAY(wDate)%10+L'0';
 					pPtr+=2;
 					i++;
 				}
@@ -1050,22 +1114,22 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 				{
 					if (DOSDATETODAY(wDate)>9)
 					{
-						pPtr[0]=DOSDATETODAY(wDate)/10+'0';
-						pPtr[1]=DOSDATETODAY(wDate)%10+'0';
+						pPtr[0]=DOSDATETODAY(wDate)/10+L'0';
+						pPtr[1]=DOSDATETODAY(wDate)%10+L'0';
 						pPtr+=2;
 					}
 					else
 					{
-						*pPtr=DOSDATETODAY(wDate)+'0';
+						*pPtr=DOSDATETODAY(wDate)+L'0';
 						pPtr++;
 					}
 				}
 				break;
-			case 'M':
-				if (m_strDateFormat[i+1]=='M') // "MM", "MMM" & "MMMM" will not be handled
+			case L'M':
+				if (m_strDateFormat[i+1]==L'M') // "MM", "MMM" & "MMMM" will not be handled
 				{
-					pPtr[0]=DOSDATETOMONTH(wDate)/10+'0';
-					pPtr[1]=DOSDATETOMONTH(wDate)%10+'0';
+					pPtr[0]=DOSDATETOMONTH(wDate)/10+L'0';
+					pPtr[1]=DOSDATETOMONTH(wDate)%10+L'0';
 					pPtr+=2;
 					i++;
 				}
@@ -1073,27 +1137,27 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 				{
 					if (DOSDATETOMONTH(wDate)>9)
 					{
-						pPtr[0]=DOSDATETOMONTH(wDate)/10+'0';
-						pPtr[1]=DOSDATETOMONTH(wDate)%10+'0';
+						pPtr[0]=DOSDATETOMONTH(wDate)/10+L'0';
+						pPtr[1]=DOSDATETOMONTH(wDate)%10+L'0';
 						pPtr+=2;
 					}
 					else
 					{
-						*pPtr=DOSDATETOMONTH(wDate)+'0';
+						*pPtr=DOSDATETOMONTH(wDate)+L'0';
 						pPtr++;
 					}
 				}
 				break;
-			case 'y':
-				if (m_strDateFormat[i+1]=='y')
+			case L'y':
+				if (m_strDateFormat[i+1]==L'y')
 				{
-					if (m_strDateFormat[i+2]=='y') // "yyy" & "yyyy"
+					if (m_strDateFormat[i+2]==L'y') // "yyy" & "yyyy"
 					{
-						pPtr[0]=DOSDATETOYEAR(wDate)/1000+'0';
-						pPtr[1]=(DOSDATETOYEAR(wDate)/100)%10+'0';
-						pPtr[2]=(DOSDATETOYEAR(wDate)/10)%10+'0';
-						pPtr[3]=DOSDATETOYEAR(wDate)%10+'0';
-						if (m_strDateFormat[i+3]=='y')
+						pPtr[0]=DOSDATETOYEAR(wDate)/1000+L'0';
+						pPtr[1]=(DOSDATETOYEAR(wDate)/100)%10+L'0';
+						pPtr[2]=(DOSDATETOYEAR(wDate)/10)%10+L'0';
+						pPtr[3]=DOSDATETOYEAR(wDate)%10+L'0';
+						if (m_strDateFormat[i+3]==L'y')
 							i+=3;
 						else
 							i+=2;
@@ -1101,8 +1165,8 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 					}
 					else // "yy"
 					{
-						pPtr[0]=(DOSDATETOYEAR(wDate)/10)%10+'0';
-						pPtr[1]=DOSDATETOYEAR(wDate)%10+'0';
+						pPtr[0]=(DOSDATETOYEAR(wDate)/10)%10+L'0';
+						pPtr[1]=DOSDATETOYEAR(wDate)%10+L'0';
 						pPtr+=2;
 						i++;
 					}			
@@ -1111,18 +1175,18 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 				{
 					if (DOSDATETOYEAR(wDate)/1000>9)
 					{
-						pPtr[0]=(DOSDATETOYEAR(wDate)/10)%10+'0';
-						pPtr[1]=DOSDATETOYEAR(wDate)%10+'0';
+						pPtr[0]=(DOSDATETOYEAR(wDate)/10)%10+L'0';
+						pPtr[1]=DOSDATETOYEAR(wDate)%10+L'0';
 						pPtr+=2;
 					}
 					else
 					{
-						*pPtr=DOSDATETOYEAR(wDate)%10+'0';
+						*pPtr=DOSDATETOYEAR(wDate)%10+L'0';
 						pPtr++;
 					}
 				}
 				break;
-			case '\'':
+			case L'\'':
 				continue;
 			default:
 				*pPtr=m_strDateFormat[i];
@@ -1142,11 +1206,11 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 		{
 			switch (m_strTimeFormat[i])
 			{
-			case 'h':
-				if (m_strTimeFormat[i+1]=='h')
+			case L'h':
+				if (m_strTimeFormat[i+1]==L'h')
 				{
-					pPtr[0]=DOSTIMETO12HOUR(wTime)/10+'0';
-					pPtr[1]=DOSTIMETO12HOUR(wTime)%10+'0';
+					pPtr[0]=DOSTIMETO12HOUR(wTime)/10+L'0';
+					pPtr[1]=DOSTIMETO12HOUR(wTime)%10+L'0';
 					pPtr+=2;
 					i++;
 				}
@@ -1154,22 +1218,22 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 				{
 					if (DOSTIMETO12HOUR(wTime)>9)
 					{
-						pPtr[0]=DOSTIMETO12HOUR(wTime)/10+'0';
-						pPtr[1]=DOSTIMETO12HOUR(wTime)%10+'0';
+						pPtr[0]=DOSTIMETO12HOUR(wTime)/10+L'0';
+						pPtr[1]=DOSTIMETO12HOUR(wTime)%10+L'0';
 						pPtr+=2;
 					}
 					else
 					{
-						*pPtr=DOSTIMETO12HOUR(wTime)%10+'0';
+						*pPtr=DOSTIMETO12HOUR(wTime)%10+L'0';
 						pPtr++;
 					}
 				}
 				break;
-			case 'H':
-				if (m_strTimeFormat[i+1]=='H')
+			case L'H':
+				if (m_strTimeFormat[i+1]==L'H')
 				{
-					pPtr[0]=DOSTIMETO24HOUR(wTime)/10+'0';
-					pPtr[1]=DOSTIMETO24HOUR(wTime)%10+'0';
+					pPtr[0]=DOSTIMETO24HOUR(wTime)/10+L'0';
+					pPtr[1]=DOSTIMETO24HOUR(wTime)%10+L'0';
 					pPtr+=2;
 					i++;
 				}
@@ -1177,22 +1241,22 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 				{
 					if (DOSTIMETO24HOUR(wTime)>9)
 					{
-						pPtr[0]=DOSTIMETO24HOUR(wTime)/10+'0';
-						pPtr[1]=DOSTIMETO24HOUR(wTime)%10+'0';
+						pPtr[0]=DOSTIMETO24HOUR(wTime)/10+L'0';
+						pPtr[1]=DOSTIMETO24HOUR(wTime)%10+L'0';
 						pPtr+=2;
 					}
 					else
 					{
-						*pPtr=DOSTIMETO24HOUR(wTime)%10+'0';
+						*pPtr=DOSTIMETO24HOUR(wTime)%10+L'0';
 						pPtr++;
 					}
 				}
 				break;
-			case 'm':
-				if (m_strTimeFormat[i+1]=='m')
+			case L'm':
+				if (m_strTimeFormat[i+1]==L'm')
 				{
-					pPtr[0]=DOSTIMETOMINUTE(wTime)/10+'0';
-					pPtr[1]=DOSTIMETOMINUTE(wTime)%10+'0';
+					pPtr[0]=DOSTIMETOMINUTE(wTime)/10+L'0';
+					pPtr[1]=DOSTIMETOMINUTE(wTime)%10+L'0';
 					pPtr+=2;
 					i++;
 				}
@@ -1200,22 +1264,22 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 				{
 					if (DOSTIMETOMINUTE(wTime)>9)
 					{
-						pPtr[0]=DOSTIMETOMINUTE(wTime)/10+'0';
-						pPtr[1]=DOSTIMETOMINUTE(wTime)%10+'0';
+						pPtr[0]=DOSTIMETOMINUTE(wTime)/10+L'0';
+						pPtr[1]=DOSTIMETOMINUTE(wTime)%10+L'0';
 						pPtr+=2;
 					}
 					else
 					{
-						*pPtr=DOSTIMETOMINUTE(wTime)%10+'0';
+						*pPtr=DOSTIMETOMINUTE(wTime)%10+L'0';
 						pPtr++;
 					}
 				}
 				break;
-			case 's':
-				if (m_strTimeFormat[i+1]=='s')
+			case L's':
+				if (m_strTimeFormat[i+1]==L's')
 				{
-					pPtr[0]=DOSTIMETOSECOND(wTime)/10+'0';
-					pPtr[1]=DOSTIMETOSECOND(wTime)%10+'0';
+					pPtr[0]=DOSTIMETOSECOND(wTime)/10+L'0';
+					pPtr[1]=DOSTIMETOSECOND(wTime)%10+L'0';
 					pPtr+=2;
 					i++;
 				}
@@ -1223,25 +1287,25 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 				{
 					if (DOSTIMETOSECOND(wTime)>9)
 					{
-						pPtr[0]=DOSTIMETOSECOND(wTime)/10+'0';
-						pPtr[1]=DOSTIMETOSECOND(wTime)%10+'0';
+						pPtr[0]=DOSTIMETOSECOND(wTime)/10+L'0';
+						pPtr[1]=DOSTIMETOSECOND(wTime)%10+L'0';
 						pPtr+=2;
 					}
 					else
 					{
-						*pPtr=DOSTIMETOSECOND(wTime)%10+'0';
+						*pPtr=DOSTIMETOSECOND(wTime)%10+L'0';
 						pPtr++;
 					}
 				}
 				break;
 			case 't':
 				{
-					char szAMPM[10];
+					WCHAR szAMPM[10];
 					LoadString(DOSTIMETO24HOUR(wTime)>11?IDS_PM:IDS_AM,szAMPM,10);
 					
-					if (m_strTimeFormat[i+1]=='t')
+					if (m_strTimeFormat[i+1]==L't')
 					{
-						for (char* ptr=szAMPM;*ptr!='\0';ptr++,pPtr++)
+						for (WCHAR* ptr=szAMPM;*ptr!=L'\0';ptr++,pPtr++)
 							*pPtr=*ptr;
 						i++;
 					}
@@ -1249,7 +1313,7 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 						*pPtr=szAMPM[0];
 				}
 				break;
-			case '\'':
+			case L'\'':
 				continue;
 			default:
 				*pPtr=m_strTimeFormat[i];
@@ -1259,7 +1323,7 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 		}
 	}
 
-	*pPtr='\0';
+	*pPtr=L'\0';
 
 	if (fFlags&fDateIsDefault)
 		m_strDateFormat.Empty();
@@ -1268,10 +1332,10 @@ LPSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 	return szRet;
 }
 
-LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) const
+LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) const
 {
- 	char* szRet=new char[40];
-	char szUnit[10];
+ 	WCHAR* szRet=new WCHAR[40];
+	WCHAR szUnit[10];
 	BOOL bDigits=0;
 		
 
@@ -1283,19 +1347,19 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 			LoadString(IDS_KB,szUnit,10);
 			
 			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
-			_ui64toa_s(uiFileSize/1024,szRet,40,10);
+			_ui64tow_s(uiFileSize/1024,szRet,40,10);
 		}
 		else if (dwFileSizeLo<1024)
 		{
 			LoadString(IDS_BYTES,szUnit,10);
 			
-			_ultoa_s(dwFileSizeLo,szRet,40,10);
+			_ultow_s(dwFileSizeLo,szRet,40,10);
 		}
 		else
 		{
 			LoadString(IDS_KB,szUnit,10);
 			
-			_ultoa_s((dwFileSizeLo/1024)+(dwFileSizeLo%1024==0?0:1),szRet,40,10);
+			_ultow_s((dwFileSizeLo/1024)+(dwFileSizeLo%1024==0?0:1),szRet,40,10);
 		}
 		break;
 	case fsfBestUnit:
@@ -1304,11 +1368,11 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 			DWORD num=DWORD(((((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo))/(1024*1024));
 
 			if (num>=10*1024)
-				_ultoa_s(num/1024,szRet,40,10);
+				_ultow_s(num/1024,szRet,40,10);
 			else
 			{
 				bDigits=1;
-				StringCbPrintf(szRet,40,"%1.1f",double(num)/1024);
+				StringCbPrintfW(szRet,40,L"%1.1f",double(num)/1024);
 			}
 
 			LoadString(IDS_GB,szUnit,10);
@@ -1318,11 +1382,11 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 			DWORD num=dwFileSizeLo/(1024*1024);
 
 			if (num>=10*1024)
-				_ultoa_s(num/1024,szRet,40,10);
+				_ultow_s(num/1024,szRet,40,10);
 			else
 			{
 				bDigits=1;
-				StringCbPrintf(szRet,40,"%1.1f",double(num)/1024);
+				StringCbPrintfW(szRet,40,L"%1.1f",double(num)/1024);
 			}
 
 			LoadString(IDS_GB,szUnit,10);
@@ -1332,11 +1396,11 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 			DWORD num=dwFileSizeLo/1024;
 			
 			if (num>=10*1024)
-				_ultoa_s(num/1024,szRet,40,10);
+				_ultow_s(num/1024,szRet,40,10);
 			else
 			{
 				bDigits=1;
-				StringCbPrintf(szRet,40,"%1.1f",double(num)/1024);
+				StringCbPrintfW(szRet,40,L"%1.1f",double(num)/1024);
 			}
 
 			LoadString(IDS_MB,szUnit,10);
@@ -1344,18 +1408,18 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 		else if (dwFileSizeLo>1024) // As KB
 		{
 			if (dwFileSizeLo>=10*1024)
-				_ultoa_s(dwFileSizeLo/1024,szRet,40,10);
+				_ultow_s(dwFileSizeLo/1024,szRet,40,10);
 			else
 			{
 				bDigits=1;
-				StringCbPrintf(szRet,40,"%1.1f",double(dwFileSizeLo)/1024);
+				StringCbPrintfW(szRet,40,L"%1.1f",double(dwFileSizeLo)/1024);
 			}
 			
 			LoadString(IDS_KB,szUnit,10);
 		}
 		else // As B
 		{
-			_ultoa_s(dwFileSizeLo,szRet,40,10);
+			_ultow_s(dwFileSizeLo,szRet,40,10);
 		
 			LoadString(IDS_BYTES,szUnit,10);
 		}		
@@ -1366,10 +1430,10 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 		if (bFileSizeHi>0)
 		{
 			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
-			_ui64toa_s(uiFileSize,szRet,40,10);
+			_ui64tow_s(uiFileSize,szRet,40,10);
 		}
 		else
-			_ultoa_s(dwFileSizeLo,szRet,40,10);
+			_ultow_s(dwFileSizeLo,szRet,40,10);
 		
 		break;
 	case fsfKiloBytes:
@@ -1378,19 +1442,19 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 		if (bFileSizeHi>0)
 		{
 			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
-			_ui64toa_s(uiFileSize/1024,szRet,40,10);
+			_ui64tow_s(uiFileSize/1024,szRet,40,10);
 		}
 		else if (dwFileSizeLo>10*1024)
-			_ultoa_s(dwFileSizeLo/1024,szRet,40,10);
+			_ultow_s(dwFileSizeLo/1024,szRet,40,10);
 		else if (dwFileSizeLo<1024)
 		{
 			bDigits=3;
-			StringCbPrintf(szRet,40,"%1.3f",((double)dwFileSizeLo)/1024);
+			StringCbPrintfW(szRet,40,L"%1.3f",((double)dwFileSizeLo)/1024);
 		}
 		else
 		{
 			bDigits=1;
-			StringCbPrintf(szRet,40,"%1.1f",((double)dwFileSizeLo)/1024);
+			StringCbPrintfW(szRet,40,L"%1.1f",((double)dwFileSizeLo)/1024);
 		}
 		break;
 	case fsfMegaBytesMegaBytes:
@@ -1399,19 +1463,19 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 		if (bFileSizeHi>0)
 		{
 			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
-			_ui64toa_s(uiFileSize/1048576,szRet,40,10);
+			_ui64tow_s(uiFileSize/1048576,szRet,40,10);
 		}
 		else if (dwFileSizeLo>10*1048576)
-			_ultoa_s(dwFileSizeLo/1048576,szRet,40,10);
+			_ultow_s(dwFileSizeLo/1048576,szRet,40,10);
 		else if (dwFileSizeLo<1048576)
 		{
 			bDigits=3;
-			StringCbPrintf(szRet,40,"%1.3f",((double)dwFileSizeLo)/1048576);
+			StringCbPrintfW(szRet,40,L"%1.3f",((double)dwFileSizeLo)/1048576);
 		}
 		else
 		{
 			bDigits=1;
-			StringCbPrintf(szRet,40,"%1.1f",((double)dwFileSizeLo)/1048576);
+			StringCbPrintfW(szRet,40,L"%1.1f",((double)dwFileSizeLo)/1048576);
 		}		
 		break;
 	}
@@ -1421,41 +1485,70 @@ LPSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) con
 		CRegKey RegKey;
 		if (RegKey.OpenKey(HKCU,"Control Panel\\International",CRegKey::defRead)==ERROR_SUCCESS)
 		{
-			char* szRet2=new char[50];
-			char szTemp[10]=".",szTemp2[10]=" ";
-
-			NUMBERFMT fmt;
-			
-			// Defaults;
-			fmt.NumDigits=bDigits; 
-			fmt.LeadingZero=1;
-			fmt.Grouping=3; 
-			fmt.lpDecimalSep=szTemp; 
-			fmt.lpThousandSep=szTemp2; 
-			fmt.NegativeOrder=1; 
-			
-			if (RegKey.QueryValue("iLZero",szTemp,10)>1)
-				fmt.LeadingZero=atoi(szTemp);
-			if (RegKey.QueryValue("sGrouping",szTemp,10)>1)
-				fmt.Grouping=atoi(szTemp);
-			RegKey.QueryValue("sDecimal",szTemp,10);
-			RegKey.QueryValue("sThousand",szTemp2,10);
-
-			
-			if (GetNumberFormat(LOCALE_USER_DEFAULT,0,szRet,&fmt,szRet2,50)>0)
+			if (IsFullUnicodeSupport())
 			{
-				delete[] szRet;
-				szRet=szRet2;
+				WCHAR* szFormattedStr=new WCHAR[50];
+				WCHAR szTemp[10]=L".",szTemp2[10]=L" ";
+
+				NUMBERFMTW fmt;
+			
+				// Defaults;
+				fmt.NumDigits=bDigits; 
+				fmt.LeadingZero=1;
+				fmt.Grouping=3; 
+				fmt.lpDecimalSep=szTemp; 
+				fmt.lpThousandSep=szTemp2; 
+				fmt.NegativeOrder=1; 
+				
+				if (RegKey.QueryValue(L"iLZero",szTemp,10)>1)
+					fmt.LeadingZero=_wtoi(szTemp);
+				if (RegKey.QueryValue(L"sGrouping",szTemp,10)>1)
+					fmt.Grouping=_wtoi(szTemp);
+				RegKey.QueryValue(L"sDecimal",szTemp,10);
+				RegKey.QueryValue(L"sThousand",szTemp2,10);
+
+				
+				if (GetNumberFormatW(LOCALE_USER_DEFAULT,0,szRet,&fmt,szFormattedStr,50)>0)
+				{
+					delete[] szRet;
+					szRet=szFormattedStr;
+				}
+				else
+					delete[] szFormattedStr;
 			}
 			else
-				delete[] szRet2;
+			{
+				char szFormattedStr[50];
+				char szTemp[10]=".",szTemp2[10]=" ";
+
+				NUMBERFMT fmt;
+			
+				// Defaults;
+				fmt.NumDigits=bDigits; 
+				fmt.LeadingZero=1;
+				fmt.Grouping=3; 
+				fmt.lpDecimalSep=szTemp; 
+				fmt.lpThousandSep=szTemp2; 
+				fmt.NegativeOrder=1; 
+				
+				if (RegKey.QueryValue("iLZero",szTemp,10)>1)
+					fmt.LeadingZero=atoi(szTemp);
+				if (RegKey.QueryValue("sGrouping",szTemp,10)>1)
+					fmt.Grouping=atoi(szTemp);
+				RegKey.QueryValue("sDecimal",szTemp,10);
+				RegKey.QueryValue("sThousand",szTemp2,10);
+
+				
+				if (GetNumberFormat(LOCALE_USER_DEFAULT,0,W2A(szRet),&fmt,szFormattedStr,50)>0)
+					szRet=alloccopyAtoW(szFormattedStr);
+			}
 		}
 	}
 
 	if (!(m_nFileSizeFormat==fsfBytesNoUnit || 
 		m_nFileSizeFormat==fsfKiloBytesNoUnit|| 
 		m_nFileSizeFormat==fsfMegaBytesMegaBytesNoUnit))
-		StringCbCat(szRet,40,szUnit);
+		StringCbCatW(szRet,40,szUnit);
 
 	return szRet;
 }
@@ -1593,28 +1686,28 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 		{
 			if (ueCode==ueStopped)
 			{
-				CString str;
+				CStringW str;
 				str.Format(IDS_UPDATINGDATABASE2,
 					pUpdater->GetCurrentDatabaseName(),
-					(LPCSTR)ID2A(IDS_UPDATINGCANCELLED2));
+					(LPCWSTR)ID2W(IDS_UPDATINGCANCELLED2));
 
 				pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
 				return FALSE;
 			}
 			else if (ueCode!=ueSuccess)
 			{
-				CString str;
+				CStringW str;
 				str.Format(IDS_UPDATINGDATABASE2,
 					pUpdater->GetCurrentDatabaseName(),
-					(LPCSTR)ID2A(IDS_UPDATINGFAILED));
+					(LPCWSTR)ID2W(IDS_UPDATINGFAILED));
 
 				pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
 				return FALSE;
 			}
-			CString str;
+			CStringW str;
 			str.Format(IDS_UPDATINGDATABASE2,
 				pUpdater->GetCurrentDatabaseName(),
-				(LPCSTR)ID2A(IDS_UPDATINGDONE));
+				(LPCWSTR)ID2W(IDS_UPDATINGDONE));
 
 			pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
 		}
@@ -1662,7 +1755,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 				{
 					pLocateDlg->StopUpdateAnimation();
 					
-					CString str;
+					CStringW str;
 					
 					// ... and constucting notification message:
 					// checking wheter all are stopped, or cancelled 
@@ -1683,7 +1776,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 					else
 					{
 						// All succeeded or some updaters failed/interrupted
-                        CString str2;
+                        CStringW str2;
 						str.LoadString(IDS_UPDATINGENDED);
 						int added=0;
 							
@@ -1695,25 +1788,25 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 								break;
 							case ueStopped:
 								if (added>0)
-									str2 << ", ";
+									str2 << L", ";
 								str2 << ID2A(IDS_UPDATINGTHREAD);
-								str2 << ' ' << (int)(i+1) << ": ";
+								str2 << ' ' << (int)(i+1) << L": ";
 								str2 << ID2A(IDS_UPDATINGCANCELLED2);
 								added++;
 								break;
 							case ueFolderUnavailable:
 								if (added>0)
-									str2 << ", ";
+									str2 << L", ";
 								str2 << ID2A(IDS_UPDATINGTHREAD);
-								str2 << ' ' << (int)(i+1) << ": ";
+								str2 << ' ' << (int)(i+1) << L": ";
 								str2 << ID2A(IDS_UPDATINGUNAVAILABLEROOT);
 								added++;
 								break;
 							default:
 								if (added>0)
-									str2 << ", ";
+									str2 << L", ";
 								str2 << ID2A(IDS_UPDATINGTHREAD);
-								str2 << ' ' << (int)(i+1) << ": ";
+								str2 << ' ' << (int)(i+1) << L": ";
 								str2 << ID2A(IDS_UPDATINGFAILED);
 								added++;
 								break;
@@ -1725,7 +1818,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 						else
 						{
 							pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),3,SBT_OWNERDRAW);
-							str << ' ' << str2;
+							str << L' ' << str2;
 						}
 						pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
 					}
@@ -1765,32 +1858,64 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 		case ueUnknown:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				char* pError;
-
-				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
-					GetLastError(),LANG_USER_DEFAULT,(LPSTR)&pError,0,NULL))
+				if (IsFullUnicodeSupport())
 				{
-					CString str,state;
-					if (pUpdater->GetCurrentRoot()==NULL)
-						state.Format(IDS_ERRORUNKNOWNWRITEDB,pUpdater->GetCurrentDatabaseFile());
-					else
-						state.Format(IDS_ERRORUNKNOWNSCANROOT,pUpdater->GetCurrentRootPath());
-					
-					
-					str.Format(IDS_ERRORUNKNOWNOS,pError);
-					while (str.LastChar()=='\n' || str.LastChar()=='\r')
-						str.DelLastChar();
-					str << state;
-					
-					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-						str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
-					LocalFree(pError);
+					WCHAR* pError;
 
-					
+					if (FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
+						GetLastError(),LANG_USER_DEFAULT,(LPWSTR)&pError,0,NULL))
+					{
+						CStringW str,state;
+						if (pUpdater->GetCurrentRoot()==NULL)
+							state.Format(IDS_ERRORUNKNOWNWRITEDB,pUpdater->GetCurrentDatabaseFile());
+						else
+							state.Format(IDS_ERRORUNKNOWNSCANROOT,pUpdater->GetCurrentRootPath());
+						
+						
+						str.Format(IDS_ERRORUNKNOWNOS,pError);
+						while (str.LastChar()=='\n' || str.LastChar()=='\r')
+							str.DelLastChar();
+						str << state;
+						
+						::MessageBoxW(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
+							str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+						LocalFree(pError);
+
+						
+					}
+					else
+						::MessageBoxW(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
+							ID2W(IDS_ERRORUNKNOWN),ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
 				}
 				else
-					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-						ID2A(IDS_ERRORUNKNOWN),ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+				{
+					CHAR* pError;
+
+					if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
+						GetLastError(),LANG_USER_DEFAULT,(LPSTR)&pError,0,NULL))
+					{
+						CString str,state;
+						if (pUpdater->GetCurrentRoot()==NULL)
+							state.Format(IDS_ERRORUNKNOWNWRITEDB,W2A(pUpdater->GetCurrentDatabaseFile()));
+						else
+							state.Format(IDS_ERRORUNKNOWNSCANROOT,W2A(pUpdater->GetCurrentRootPath()));
+						
+						
+						str.Format(IDS_ERRORUNKNOWNOS,pError);
+						while (str.LastChar()=='\n' || str.LastChar()=='\r')
+							str.DelLastChar();
+						str << state;
+						
+						::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
+							str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+						LocalFree(pError);
+
+						
+					}
+					else
+						::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
+							ID2A(IDS_ERRORUNKNOWN),ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+				}
 				return FALSE;
 			}
 			break;
@@ -1798,27 +1923,54 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 		case ueOpen:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				CString str;
-				str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+				if (IsFullUnicodeSupport())
+				{
+					CStringW str;
+					str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
+					::MessageBoxW(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+				}
+				else
+				{
+					CString str;
+					str.Format(IDS_ERRORCANNOTOPENDB,W2A(pUpdater->GetCurrentDatabaseFile()));
+					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+				}
 				return FALSE;
 			}
 			break;
 		case ueRead:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				CString str;
-				str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
-				return FALSE;
+				if (IsFullUnicodeSupport())
+				{
+					CStringW str;
+					str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
+					::MessageBoxW(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+				}
+				else
+				{
+					CString str;
+					str.Format(IDS_ERRORCANNOTREADDB,W2A(pUpdater->GetCurrentDatabaseFile()));
+					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+				}
 			}
 			break;
 		case ueWrite:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				CString str;
-				str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+				if (IsFullUnicodeSupport())
+				{
+					CStringW str;
+					str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
+					::MessageBoxW(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+				}
+				else
+				{
+					CString str;
+					str.Format(IDS_ERRORCANNOTWRITEDB,W2A(pUpdater->GetCurrentDatabaseFile()));
+					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+				}
+				
                 return FALSE;
 			}
 			break;
@@ -1833,17 +1985,26 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
 				CString str;
-				str.Format(IDS_ERRORINVALIDDB,pUpdater->GetCurrentDatabaseName());
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,CString(IDS_ERROR),MB_OK|MB_ICONERROR);
+				str.Format(IDS_ERRORINVALIDDB,W2A(pUpdater->GetCurrentDatabaseName()));
+				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
 				return FALSE;
 			}
 			break;
 		case ueFolderUnavailable:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowNonCriticalErrors)
 			{
-				CString str;
-				str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():"");
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+				if (IsFullUnicodeSupport())
+				{
+					CStringW str;
+					str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():L"");
+					::MessageBoxW(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+				}
+				else
+				{
+					CString str;
+					str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?W2A(pUpdater->GetCurrentRootPath()):"");
+					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+				}
 				return FALSE;
 			}
 			break;
@@ -1851,8 +2012,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowNonCriticalErrors)
 			{
 				CString str;
-				str.Format(IDS_ERRORCANNOTWRITEINCREMENTALLY,pUpdater->GetCurrentDatabaseName());
-				
+				str.Format(IDS_ERRORCANNOTWRITEINCREMENTALLY,W2A(pUpdater->GetCurrentDatabaseName()));
 				return ::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
 			}
 			return TRUE;
@@ -1994,9 +2154,9 @@ void CLocateApp::OnDatabaseMenuItem(WORD wID)
 
 	ASSERT(iDB>=0 && iDB<m_aDatabases.GetSize());
 
-	DWORD dwLength=istrlen(m_aDatabases[iDB]->GetName());
-	LPSTR pDatabaseName=new char[dwLength+2];
-	sMemCopy(pDatabaseName,m_aDatabases[iDB]->GetName(),dwLength);
+	DWORD dwLength=istrlenw(m_aDatabases[iDB]->GetName());
+	LPWSTR pDatabaseName=new WCHAR[dwLength+2];
+	MemCopyW(pDatabaseName,m_aDatabases[iDB]->GetName(),dwLength);
 	pDatabaseName[dwLength]='\0';
 	pDatabaseName[dwLength+1]='\0';
 
@@ -2182,8 +2342,8 @@ void CLocateApp::SaveRegistry() const
 	{
 		RegKey.SetValue("General Flags",m_dwProgramFlags&pfSave);
 
-		RegKey.SetValue("DateFormat",m_strDateFormat);
-		RegKey.SetValue("TimeFormat",m_strTimeFormat);
+		RegKey.SetValue(L"DateFormat",m_strDateFormat);
+		RegKey.SetValue(L"TimeFormat",m_strTimeFormat);
 		RegKey.SetValue("SizeFormat",(DWORD)m_nFileSizeFormat);
 	}
 
@@ -2210,8 +2370,8 @@ void CLocateApp::LoadRegistry()
 
 
 
-		RegKey.QueryValue("DateFormat",m_strDateFormat);
-		RegKey.QueryValue("TimeFormat",m_strTimeFormat);
+		RegKey.QueryValue(L"DateFormat",m_strDateFormat);
+		RegKey.QueryValue(L"TimeFormat",m_strTimeFormat);
 		RegKey.QueryValue("SizeFormat",*((DWORD*)&m_nFileSizeFormat));
 
 	}
@@ -2274,7 +2434,7 @@ void CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootI
 			if (ppUpdaters[i]->GetCurrentDatabaseName()==NULL)
 			{
 				// Not started yet
-				pRootInfos[i].pName=allocempty();
+				pRootInfos[i].pName=allocemptyW();
 				pRootInfos[i].pRoot=NULL;
 
 				if (ppUpdaters[i]->GetStatus()==CDatabaseUpdater::statusFinishing)
@@ -2332,13 +2492,13 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 {
 	DebugFormatMessage("CLocateAppWnd::SetUpdateStatusInformation: BEGIN, hIcon=%X, uTip=%d",DWORD(hIcon),uTip);
 
-	NOTIFYICONDATA nid;
-	ZeroMemory(&nid,sizeof(NOTIFYICONDATA));
+	NOTIFYICONDATAW nid;
+	ZeroMemory(&nid,sizeof(NOTIFYICONDATAW));
 	
 	if (GetLocateApp()->m_wShellDllVersion>=0x0500)
-		nid.cbSize=sizeof(NOTIFYICONDATA);
+		nid.cbSize=sizeof(NOTIFYICONDATAW);
 	else
-		nid.cbSize=sizeof(NOTIFYICONDATA_V1_SIZE);
+		nid.cbSize=NOTIFYICONDATAW_V1_SIZE;
 
 	nid.hWnd=*this;
 	nid.uID=1000;
@@ -2367,15 +2527,15 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 			if (((CLocateApp*)GetApp())->m_wShellDllVersion>=0x0500 &&	wThreads<10)
 			{
 				// Loading string
-				char szThread[20];
+				WCHAR szThread[20];
 				int iThreadLen=LoadString(IDS_NOTIFYTHREAD,szThread,20);
-				char szCaption[30];
+				WCHAR szCaption[30];
 				int iCaptionLen=LoadString(IDS_NOTIFYUPDATINGDBS2,szCaption,30);
-                char szDone[20];
+                WCHAR szDone[20];
 				int iDoneLen=LoadString(IDS_NOTIFYDONE,szDone,20);
-				char szWriting[25];
+				WCHAR szWriting[25];
 				int iWritingLen=LoadString(IDS_NOTIFYWRITINGDATABASE,szWriting,25);
-				char szInitializing[25];
+				WCHAR szInitializing[25];
 				int iInitializingLen=LoadString(IDS_NOTIFYINITIALIZING,szInitializing,25);
 
 				// Computing required length for string
@@ -2392,24 +2552,24 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 						iRequired+=iInitializingLen;
 					else
 					{
-						iRequired+=istrlen(pRootInfos[i].pName);
+						iRequired+=istrlenw(pRootInfos[i].pName);
 						if (pRootInfos[i].pRoot==NULL)
 							iRequiredForRoots+=iWritingLen+2;
 						else
-                        	iRequiredForRoots+=istrlen(pRootInfos[i].pRoot)+2;
+                        	iRequiredForRoots+=istrlenw(pRootInfos[i].pRoot)+2;
 					}
 				}
 				
 				if (iRequired>=MAXTIPTEXTLENGTH)
 				{
-					char szTemp[54];
+					WCHAR szTemp[54];
 					LoadString(IDS_NOTIFYUPDATINGDBS,szTemp,54);
-					StringCbPrintf(nid.szTip,64,szTemp,(int)wRunning,(int)wThreads);
+					StringCbPrintfW(nid.szTip,64,szTemp,(int)wRunning,(int)wThreads);
 				}
 				else
 				{
-					LPSTR pPtr=nid.szTip;
-					CopyMemory(pPtr,szCaption,iCaptionLen);
+					LPWSTR pPtr=nid.szTip;
+					StringCbCopyNW(pPtr,128,szCaption,iCaptionLen);
 					pPtr+=iCaptionLen;
 
 					for (int i=0;i<wThreads;i++)
@@ -2425,18 +2585,18 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
                         
 						if (pRootInfos[i].pName==NULL)
 						{
-							CopyMemory(pPtr,szDone,iDoneLen);
+							MemCopyW(pPtr,szDone,iDoneLen);
 							pPtr+=iDoneLen;
 						}
 						else if (pRootInfos[i].pName[0]=='\0')
 						{
-							CopyMemory(pPtr,szInitializing,iInitializingLen);
+							MemCopyW(pPtr,szInitializing,iInitializingLen);
 							pPtr+=iInitializingLen;
 						}
 						else
 						{
-							int iLen=istrlen(pRootInfos[i].pName);
-							CopyMemory(pPtr,pRootInfos[i].pName,iLen);
+							int iLen=istrlenw(pRootInfos[i].pName);
+							MemCopyW(pPtr,pRootInfos[i].pName,iLen);
 							pPtr+=iLen;
 							if (iRequired+iRequiredForRoots<MAXTIPTEXTLENGTH)
 							{
@@ -2444,13 +2604,13 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 								*(pPtr++)=' ';
 								if (pRootInfos[i].pRoot==NULL)
 								{
-									CopyMemory(pPtr,szWriting,iWritingLen);
+									MemCopyW(pPtr,szWriting,iWritingLen);
 									pPtr+=iWritingLen;
 								}
 								else
 								{
-									int iLen=istrlen(pRootInfos[i].pRoot);
-									CopyMemory(pPtr,pRootInfos[i].pRoot,iLen);
+									int iLen=istrlenw(pRootInfos[i].pRoot);
+									MemCopyW(pPtr,pRootInfos[i].pRoot,iLen);
 									pPtr+=iLen;
 								}
 							}
@@ -2468,22 +2628,22 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 			}
 			else
 			{
-				char szTemp[54];
+				WCHAR szTemp[54];
                 LoadString(IDS_NOTIFYUPDATINGDBS,szTemp,54);
-				StringCbPrintf(nid.szTip,64,szTemp,(int)wRunning,(int)wThreads);
+				StringCbPrintfW(nid.szTip,64,szTemp,(int)wRunning,(int)wThreads);
 			}
 		}
 		else
 		{
 			// Only one thread
 			if (pRootInfos[0].pRoot==NULL) // Is writing database
-				StringCbPrintf(nid.szTip,64,(LPCSTR)ID2A(IDS_UPDATINGWRITINGDATABASE));
+				StringCbPrintfW(nid.szTip,64,(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
 			else
 			{
-				char szBuf[50];
+				WCHAR szBuf[50];
 				LoadString(IDS_NOTIFYUPDATING,szBuf,50);
 			
-				LPSTR pRoot=pRootInfos[0].pRoot;
+				LPWSTR pRoot=pRootInfos[0].pRoot;
 
 				// Cutting to 35 characters
 				int i;
@@ -2495,7 +2655,7 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 					pRoot[34]='.';
 					pRoot[35]='\0';
 				}
-				StringCbPrintf(nid.szTip,64,szBuf,pRoot);
+				StringCbPrintfW(nid.szTip,64,szBuf,pRoot);
 			}
 		}
 
@@ -2511,7 +2671,7 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 	
 	DebugMessage("CLocateAppWnd::SetUpdateStatusInformation: END");
 	
-	return Shell_NotifyIcon(NIM_MODIFY,&nid);
+	return Shell_NotifyIconW(NIM_MODIFY,&nid);
 }
 
 
@@ -2658,7 +2818,7 @@ BOOL CLocateAppWnd::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		OnUpdate(FALSE);
 		break;
 	case IDM_UPDATEDATABASES:
-		OnUpdate(FALSE,LPSTR(-1));
+		OnUpdate(FALSE,LPWSTR(-1));
 		break;
 	case IDM_STOPUPDATING:
 		// Stopping updating quite nicely
@@ -2879,11 +3039,11 @@ DWORD WINAPI CLocateAppWnd::KillUpdaterProc(LPVOID lpParameter)
 
 
 
-BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases,int nThreadPriority)
+BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThreadPriority)
 {
 	if (!GetLocateApp()->IsUpdating())
 	{
-		if (pDatabases==LPSTR(-1))
+		if (pDatabases==LPWSTR(-1))
 		{
 			CArrayFP<PDATABASE> aDatabases;
 			CSelectDatabasesDlg dbd(GetLocateApp()->GetDatabases(),aDatabases,
@@ -2909,12 +3069,12 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPSTR pDatabases,int nThread
 			const CArray<PDATABASE>& aGlobalDatabases=GetLocateApp()->GetDatabases();
 			for (int i=0;i<aGlobalDatabases.GetSize();i++)
 			{
-				LPSTR pPtr=pDatabases;
+				LPWSTR pPtr=pDatabases;
 				BOOL bFound=FALSE;
 				while (*pPtr!=NULL)
 				{
-					int iStrLen=istrlen(pPtr)+1;
-					if (strncmp(pPtr,aGlobalDatabases[i]->GetName(),iStrLen)==0)
+					int iStrLen=istrlenw(pPtr)+1;
+					if (wcsncmp(pPtr,aGlobalDatabases[i]->GetName(),iStrLen)==0)
 					{
 						bFound=TRUE;
 						break;
@@ -3269,8 +3429,16 @@ DWORD CLocateAppWnd::OnAnotherInstance(ATOM aCommandLine)
 		OnLocate();
 	else
 	{
-		char szCmdLine[257];
-		GlobalGetAtomName(aCommandLine,szCmdLine,256);
+		WCHAR szCmdLine[2000];
+		if (IsFullUnicodeSupport())
+			GlobalGetAtomNameW(aCommandLine,szCmdLine,2000);
+		else
+		{
+			char szCmdLineA[1000];
+			GlobalGetAtomName(aCommandLine,szCmdLineA,2000);
+			MultiByteToWideChar(CP_ACP,0,szCmdLineA,-1,szCmdLine,2000);
+		}			
+
 		CLocateApp::CStartData* pStartData=new CLocateApp::CStartData;
 		CLocateApp::ParseParameters(szCmdLine,pStartData);
 		if (pStartData->m_nStartup&CLocateApp::CStartData::startupDoNotOpenDialog &&
@@ -3651,7 +3819,7 @@ void CLocateAppWnd::CUpdateStatusWnd::OnPaint()
 
 	
     // Drawing title
-	LPCSTR pPtr=sStatusText;
+	LPCWSTR pPtr=sStatusText;
 	int nLength=FirstCharIndex(pPtr,'\n');
 	rc2=rcClient;
 	dc.SetTextColor(m_cTitleColor);
@@ -3701,10 +3869,10 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 	}
 
 	// Now, change pointer to null, if someone is accesing pointer, it may have enough time to read
-	char error[300];
+	WCHAR error[300];
 	int nLabelLength=LoadString(IDS_LASTERROR,error,200);
 
-	LPCSTR szExtra=NULL;
+	LPCWSTR szExtra=NULL;
 
 	switch(ueError)
 	{
@@ -3741,21 +3909,21 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 		szExtra=pUpdater->GetCurrentDatabaseName();
 		break;
 	default:
-		StringCbPrintf(error+nLabelLength,300-nLabelLength,"%d",(int)ueError);
+		StringCbPrintfW(error+nLabelLength,300-nLabelLength,L"%d",(int)ueError);
 		break;
 	}
 
-	LPSTR szNewPtr;
+	LPWSTR szNewPtr;
 	size_t nLength;
 	if (szExtra!=NULL)
 	{
-		int iLen=istrlen(error)+istrlen(szExtra)+1;
-		szNewPtr=new char[iLen];
-		StringCbPrintf(szNewPtr,iLen,error,szExtra);
-		nLength=strlen(szNewPtr);
+		int iLen=istrlenw(error)+istrlenw(szExtra)+1;
+		szNewPtr=new WCHAR[iLen];
+		StringCbPrintfW(szNewPtr,iLen,error,szExtra);
+		nLength=wcslen(szNewPtr);
 	}
 	else
-	    szNewPtr=alloccopy(error,nLength=istrlen(error));
+	    szNewPtr=alloccopy(error,nLength=istrlenw(error));
 
 	m_aErrors.Add(szNewPtr);
 
@@ -3777,17 +3945,17 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 }
 
 
-void CLocateAppWnd::CUpdateStatusWnd::FormatStatusTextLine(CString& str,const CLocateAppWnd::RootInfo& pRootInfo,int nThreadID,int nThreads)
+void CLocateAppWnd::CUpdateStatusWnd::FormatStatusTextLine(CStringW& str,const CLocateAppWnd::RootInfo& pRootInfo,int nThreadID,int nThreads)
 {
 	// #X  thread number
 	if (nThreadID!=-1)
-		str << '#' << (int)nThreadID;
+		str << L'#' << (int)nThreadID;
 
 	if (pRootInfo.pName==NULL)
 	{
 		// Finished
 		if (nThreadID!=-1)
-			str << ": ";
+			str << L": ";
 
 		switch (pRootInfo.ueError)
 		{
@@ -3803,11 +3971,11 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatStatusTextLine(CString& str,const CL
 			break;
 		}
 	}
-	else if (pRootInfo.pName[0]=='\0')
+	else if (pRootInfo.pName[0]==L'\0')
 	{
 		// Initializing/finishing
 		if (nThreadID!=-1)
-			str << ": ";
+			str << L": ";
 
 		if (pRootInfo.ueError==ueSuccess)
 			str.AddString(IDS_NOTIFYFINISHING);
@@ -3819,28 +3987,28 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatStatusTextLine(CString& str,const CL
 		if (pRootInfo.dwNumberOfDatabases>1)
 		{
 			if (nThreadID!=-1)
-                str << ' ';
-			str << (int)(pRootInfo.dwCurrentDatabase+1) << '/' << (int)pRootInfo.dwNumberOfDatabases << ": ";
+                str << L' ';
+			str << (int)(pRootInfo.dwCurrentDatabase+1) << L'/' << (int)pRootInfo.dwNumberOfDatabases << L": ";
 		}
 		else if (nThreadID!=-1)
-			str << ": ";
+			str << L": ";
 		str.AddString(IDS_UPDATINGUPDATING);
 		str << pRootInfo.pName;
 
 		
 		if (pRootInfo.pRoot==NULL)
 		{
-			str << ": ";
+			str << L": ";
 			str.AddString(IDS_NOTIFYWRITINGDATABASE);
 		}
 		else
 		{
 			if (pRootInfo.wProgressState!=WORD(-1))
 			{
-				str << ' ' << (int)((int)(pRootInfo.wProgressState)/10) << '%';
+				str << L' ' << (int)((int)(pRootInfo.wProgressState)/10) << L'%';
 			}
 
-			str << ": ";
+			str << L": ";
 			str.AddString(IDS_UPDATINGSCANNINGROOT);
 			str << pRootInfo.pRoot;
 		}
@@ -3972,7 +4140,7 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 		dc.SetMapMode(MM_TEXT);
 
 		// Checking how much space title will take
-		CString str(IDS_UPDATINGTOOLTIPTITLE);
+		CStringW str(IDS_UPDATINGTOOLTIPTITLE);
 		dc.SelectObject(m_TitleFont);
 		szSize=dc.GetTextExtent(str);	
 		
@@ -4004,7 +4172,7 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 				CSize szThisLine=dc.GetTextExtent(str);
 				
 				// Cheking how much space "initializing/finished" will take
-				ri.pName=(LPSTR)szEmpty;
+				ri.pName=(LPWSTR)szwEmpty;
 				str.Empty();
 				ri.ueError=ueStillWorking;
 				FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
@@ -4014,7 +4182,7 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 				EnlargeSizeForText(dc,str,szThisLine);
 					
 				
-				LPSTR szFile=NULL;
+				LPWSTR szFile=NULL;
 				CDatabase::ArchiveType nArchiveType;
 				CDatabaseUpdater::CRootDirectory* pRoot;
 				ri.dwNumberOfDatabases=ppUpdaters[i]->GetNumberOfDatabases();
@@ -4176,7 +4344,7 @@ void CLocateAppWnd::CUpdateStatusWnd::Update(WORD wThreads,WORD wRunning,RootInf
 
 	for (WORD i=0;i<wThreads;i++)
 	{
-		sStatusText << '\n';
+		sStatusText << L'\n';
 		FormatStatusTextLine(sStatusText,pRootInfos[i],wThreads>1?i+1:-1,wThreads);
 	}
 	
