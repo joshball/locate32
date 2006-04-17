@@ -16,12 +16,7 @@
 #define OUTPUT(len)
 #endif
 
-#define sMemCopy(dst,src,len)	CopyMemory(dst,src,len)
-#define sMemZero(dst,len)		ZeroMemory(dst,len)
-#define sMemSet(dst,val,len)	iMemSet(dst,val,len)
 
-#define sMemCopyW				iMemCopyW
-#define sstrlenW				dwstrlen
 
 CString::CString(const CString& str)
 :	m_nBase(10)
@@ -2040,7 +2035,7 @@ CString::CString(UINT nID,TypeOfResourceHandle bType)
 CString::CString(int nID,BOOL bLoadAsUnicode)
 :	m_nBase(10)
 {
-	if (bLoadAsUnicode && IsFullUnicodeSupport())
+	if (bLoadAsUnicode && IsUnicodeSystem())
 	{
 		LPWSTR szBuffer;
 		szBuffer=new WCHAR[STR_LOADSTRINGBUFLEN];
@@ -2100,7 +2095,7 @@ CString::CString(int nID,BOOL bLoadAsUnicode)
 CString::CString(UINT nID,BOOL bLoadAsUnicode)
 :	m_nBase(10)
 {
-	if (bLoadAsUnicode && IsFullUnicodeSupport())
+	if (bLoadAsUnicode && IsUnicodeSystem())
 	{
 		LPWSTR szBuffer;
 		szBuffer=new WCHAR[STR_LOADSTRINGBUFLEN];
@@ -3458,7 +3453,7 @@ int CStringW::CompareNoCase(LPCWSTR lpsz) const
 	}
 	sMemCopyW(tmp1,m_pData,m_nDataLen+1);
 	sMemCopyW(tmp2,lpsz,ret+1);
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		::CharLowerW(tmp1);
 		::CharLowerW(tmp2);
@@ -3624,6 +3619,7 @@ void CStringW::MakeReverse()
 	m_pData=pchNewData;
 }
 
+
 LONG_PTR CStringW::Find(WCHAR ch) const
 {
 	if (m_pData==NULL)
@@ -3696,10 +3692,10 @@ LONG_PTR CStringW::Find(LPCWSTR lpszSub) const
 {
 	if (m_pData==NULL)
 		return -1;
-	if (wcsstr(m_pData,lpszSub)!=NULL)
-		return TRUE;
-	else
-		return FALSE;
+	LPWSTR pret=wcsstr(m_pData,lpszSub);
+	if (pret!=NULL)
+		return (int)(pret-m_pData);
+	return -1;
 }
 
 LPWSTR CStringW::GetBuffer(SIZE_T nMinBufLength,BOOL bStoreData)
@@ -3719,7 +3715,7 @@ LPWSTR CStringW::GetBuffer(SIZE_T nMinBufLength,BOOL bStoreData)
 		}
 		return m_pData;
 	}
-	if ((DWORD)nMinBufLength>m_nAllocLen)
+	if ((DWORD)nMinBufLength>=m_nAllocLen)
 	{
 		if (bStoreData && m_pData!=NULL)
 		{
@@ -4295,7 +4291,7 @@ void CStringW::MakeUpper()
 	if (m_pData==NULL)
 		return;
 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		CharUpperW(m_pData);
 	else
 		_wcsupr_s(m_pData,m_nAllocLen);
@@ -4307,7 +4303,7 @@ void CStringW::MakeLower()
 	if (m_pData==NULL)
 		return;
 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		CharLowerW(m_pData);
 	else
 		_wcslwr_s(m_pData,m_nAllocLen);
