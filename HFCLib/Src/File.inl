@@ -186,7 +186,7 @@ inline BOOL FileSystem::Remove(LPCSTR lpszFileName)
 #ifdef DEF_WCHAR
 inline BOOL FileSystem::Rename(LPCWSTR lpszOldName,LPCWSTR lpszNewName)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::MoveFileW(lpszOldName,lpszNewName);
 	else
 		return ::MoveFile(W2A(lpszOldName),W2A(lpszNewName));
@@ -194,7 +194,7 @@ inline BOOL FileSystem::Rename(LPCWSTR lpszOldName,LPCWSTR lpszNewName)
 
 inline BOOL FileSystem::Remove(LPCWSTR lpszFileName)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::DeleteFileW(lpszFileName);
 	else
 		return ::DeleteFile(W2A(lpszFileName));
@@ -302,7 +302,7 @@ inline BOOL FileSystem::LookupAccountSid(LPCSTR lpSystemName,PSID lpSid,LPSTR lp
 #ifdef DEF_WCHAR
 inline BOOL FileSystem::CreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::CreateDirectoryW(lpPathName,lpSecurityAttributes);
 	else
 		return ::CreateDirectoryA(W2A(lpPathName),lpSecurityAttributes);
@@ -310,7 +310,7 @@ inline BOOL FileSystem::CreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES
 
 inline BOOL FileSystem::RemoveDirectory(LPCWSTR lpPathName)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::RemoveDirectoryW(lpPathName);
 	else
 		return ::RemoveDirectoryA(W2A(lpPathName));
@@ -318,7 +318,7 @@ inline BOOL FileSystem::RemoveDirectory(LPCWSTR lpPathName)
 
 inline BOOL FileSystem::MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,DWORD dwFlags)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		return ::MoveFileExW(lpExistingFileName,lpNewFileName,dwFlags);	
 	else
 		return ::MoveFileExA(W2A(lpExistingFileName),W2A(lpNewFileName),dwFlags);	
@@ -326,7 +326,7 @@ inline BOOL FileSystem::MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileNam
 
 inline UINT FileSystem::GetDriveType(LPCWSTR lpRootPathName)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetDriveTypeW(lpRootPathName);
 	else
 		return ::GetDriveTypeA(W2A(lpRootPathName));
@@ -334,7 +334,7 @@ inline UINT FileSystem::GetDriveType(LPCWSTR lpRootPathName)
 
 inline DWORD FileSystem::GetFileAttributes(LPCWSTR lpFileName)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetFileAttributesW(lpFileName);
 	else
 		return ::GetFileAttributesA(W2A(lpFileName));
@@ -343,7 +343,7 @@ inline DWORD FileSystem::GetFileAttributes(LPCWSTR lpFileName)
 inline BOOL FileSystem::GetFileSecurity(LPCWSTR lpFileName,SECURITY_INFORMATION RequestedInformation,
 	PSECURITY_DESCRIPTOR pSecurityDescriptor,DWORD nLength,LPDWORD lpnLengthNeeded)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetFileSecurityW(lpFileName,RequestedInformation,pSecurityDescriptor,nLength,lpnLengthNeeded);
 	else
 		return ::GetFileSecurityA(W2A(lpFileName),RequestedInformation,pSecurityDescriptor,nLength,lpnLengthNeeded);
@@ -378,7 +378,11 @@ inline CFileFind::~CFileFind()
 inline void CFileFind::GetFileName(LPSTR szName,SIZE_T nMaxLen) const
 {
 #ifdef WIN32
-	strcpy_s(szName,nMaxLen,m_fd.cFileName);
+	if (IsUnicodeSystem())
+		WideCharToMultiByte(CP_ACP,0,m_fdw.cFileName,-1,szName,nMaxLen,0,0);
+	else
+		strcpy_s(szName,nMaxLen,m_fd.cFileName);
+
 #else
 	strcpy_s(szName,nMaxLen,m_fd.ff_name);
 #endif
@@ -387,7 +391,10 @@ inline void CFileFind::GetFileName(LPSTR szName,SIZE_T nMaxLen) const
 inline void CFileFind::GetFileName(CString& name) const
 {
 #ifdef WIN32
-	name=m_fd.cFileName;
+	if (IsUnicodeSystem())
+		name=m_fdw.cFileName;
+	else
+		name=m_fd.cFileName;
 #else
 	name=m_fd.ff_name;
 #endif
@@ -525,8 +532,28 @@ inline BOOL CFileFind::IsTemporary() const
 {
 	return MatchesMask(FILE_ATTRIBUTE_TEMPORARY);
 }
-
 #endif
+
+
+#ifdef DEF_WCHAR
+inline void CFileFind::GetFileName(LPWSTR szName,SIZE_T nMaxLen) const
+{
+	if (IsUnicodeSystem())
+		StringCbCopyW(szName,nMaxLen,m_fdw.cFileName);
+	else
+		MultiByteToWideChar(CP_ACP,0,m_fd.cFileName,-1,szName,nMaxLen);
+	
+}
+
+inline void CFileFind::GetFileName(CStringW& name) const
+{
+	if (IsUnicodeSystem())
+		name=m_fdw.cFileName;
+	else
+		name=m_fd.cFileName;
+}
+#endif
+
 
 
 ////////////////////////////////////////

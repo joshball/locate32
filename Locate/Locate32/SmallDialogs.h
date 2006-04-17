@@ -19,7 +19,7 @@ public:
 	void OnOK();
 	void OnCancel();
 
-	BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
+	BOOL ListNotifyHandler(NMLISTVIEW *pNm);
 	void EnableItems();
 	BOOL ItemUpOrDown(BOOL bUp);
 
@@ -33,7 +33,7 @@ public:
 		CLocateDlg::DetailType m_nType;
 		int m_nCol;
 		int m_nWidth;
-		CString m_strName;
+		CStringW m_strName;
 
 		enum Align {
 			Left=LVCFMT_LEFT,

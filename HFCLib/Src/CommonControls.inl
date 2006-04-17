@@ -403,14 +403,14 @@ inline BOOL CStatusBarCtrl::GetUnicodeFormat() const
 #ifdef DEF_WCHAR
 inline BOOL CStatusBarCtrl::SetText(LPCWSTR lpszText,int nPane,int nType)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,SB_SETTEXTW,(WPARAM)nPane|nType,(LPARAM)lpszText); 
 	else
 		return ::SendMessage(m_hWnd,SB_SETTEXTA,(WPARAM)nPane|nType,(LPARAM)(LPCSTR)W2A(lpszText)); 
 }
 inline BOOL CStatusBarCtrl::SetTipText(int n,LPCWSTR szText)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,SB_SETTIPTEXTW,n,(LPARAM)szText);
 	else
 		return ::SendMessage(m_hWnd,SB_SETTIPTEXTA,n,(LPARAM)(LPCSTR)W2A(szText));
@@ -1341,19 +1341,11 @@ inline BOOL CListCtrl::GetItem(LV_ITEM* pItem) const
 }
 
 
-inline BOOL CListCtrl::GetItem(LV_ITEMW* pItem) const
-{
-	return ::SendMessage(m_hWnd,LVM_GETITEMW,0,(LPARAM)pItem);
-}
+
 
 inline BOOL CListCtrl::SetItem(const LV_ITEM* pItem)
 {
 	return ::SendMessage(m_hWnd,LVM_SETITEM,0,(LPARAM)pItem);
-}
-
-inline BOOL CListCtrl::SetItem(const LV_ITEMW* pItem)
-{
-	return ::SendMessage(m_hWnd,LVM_SETITEMW,0,(LPARAM)pItem);
 }
 
 inline UINT CListCtrl::GetCallbackMask() const
@@ -1381,7 +1373,7 @@ inline BOOL CListCtrl::GetItemPosition(int nItem, LPPOINT lpPoint) const
 	return ::SendMessage(m_hWnd,LVM_GETITEMPOSITION,(WPARAM)nItem,(LPARAM)lpPoint);
 }
 
-inline int CListCtrl::GetStringWidth(LPCTSTR lpsz) const
+inline int CListCtrl::GetStringWidth(LPCSTR lpsz) const
 {
 	return ::SendMessage(m_hWnd,LVM_GETSTRINGWIDTH,0,(LPARAM)lpsz);
 }
@@ -1476,10 +1468,7 @@ inline int CListCtrl::InsertItem(const LV_ITEM* pItem)
 	return ::SendMessage(m_hWnd,LVM_INSERTITEM,0,(LPARAM)pItem);
 }
 
-inline int CListCtrl::InsertItem(const LV_ITEMW* pItem)
-{
-	return ::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)pItem);
-}
+
 
 inline BOOL CListCtrl::DeleteItem(int nItem)
 {
@@ -1817,6 +1806,48 @@ inline int CListCtrl::SortGroups(PFNLVGROUPCOMPARE pfnGroupCompare,void* plv)
 	return ListView_SortGroups(m_hWnd,pfnGroupCompare,plv);
 }
 
+#ifdef DEF_WCHAR
+inline BOOL CListCtrl::GetColumn(int nCol, LV_COLUMNW* pColumn) const
+{
+	return ::SendMessage(m_hWnd,LVM_GETCOLUMNW,(WPARAM)nCol,(LPARAM)pColumn);
+}
+
+inline BOOL CListCtrl::SetColumn(int nCol, const LV_COLUMNW* pColumn)
+{
+	return ::SendMessage(m_hWnd,LVM_SETCOLUMNW,(WPARAM)nCol,(LPARAM)pColumn);
+}
+
+inline int CListCtrl::InsertColumn(int nCol, const LV_COLUMNW* pColumn)
+{
+	return ::SendMessage(m_hWnd,LVM_INSERTCOLUMNW,nCol,(LPARAM)pColumn);
+}
+
+
+
+inline BOOL CListCtrl::GetItem(LV_ITEMW* pItem) const
+{
+	return ::SendMessage(m_hWnd,LVM_GETITEMW,0,(LPARAM)pItem);
+}
+
+inline BOOL CListCtrl::SetItem(const LV_ITEMW* pItem)
+{
+	return ::SendMessage(m_hWnd,LVM_SETITEMW,0,(LPARAM)pItem);
+}
+
+
+inline int CListCtrl::InsertItem(const LV_ITEMW* pItem)
+{
+	return ::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)pItem);
+}
+
+
+inline int CListCtrl::GetStringWidth(LPCWSTR lpsz) const
+{
+	return ::SendMessage(m_hWnd,LVM_GETSTRINGWIDTHW,0,(LPARAM)lpsz);
+}
+
+
+#endif
 
 ///////////////////////////////////////////
 // CTreeCtrl

@@ -26,7 +26,7 @@ CDatabase::CDatabase(CDatabase& src)
 		for (iLength=0;m_szRoots[iLength]!=L'\0' || m_szRoots[iLength+1]!=L'\0';iLength++);
 		iLength+=2;
         m_szRoots=new WCHAR[iLength];
-		sMemCopy(m_szRoots,src.m_szRoots,iLength);
+		MemCopyW(m_szRoots,src.m_szRoots,iLength);
 	}
 
 	for (int i=0;i<src.m_aExcludedDirectories.GetSize();i++)
@@ -173,7 +173,7 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	{
 		int i;
 		for (i=0;m_szRoots[i]!='\0' || m_szRoots[i+1]!='\0';i++);
-		RegKey.SetValue(L"Roots",m_szRoots,i+2,REG_MULTI_SZ);
+		RegKey.SetValue(L"Roots",m_szRoots,i+1,REG_MULTI_SZ);
 		
 	}
 	else
@@ -983,7 +983,7 @@ void CDatabase::AddLocalRoots()
 		LPWSTR ptr=m_szRoots;
 		for (i=0;i<aLocalRoots.GetSize();i++)
 		{
-			CopyMemory(ptr,aLocalRoots[i],aLengths[i]);
+			MemCopyW(ptr,aLocalRoots[i],aLengths[i]);
 			ptr+=aLengths[i];
 		}
 		*ptr=L'\0';
@@ -1009,7 +1009,7 @@ void CDatabase::AddRoot(LPCWSTR pRoot)
 	
 	// Counting previous data length;
 	DWORD dwDataLength;
-	for (dwDataLength=0;m_szRoots[dwDataLength]!='\0' || m_szRoots[dwDataLength+1]!='\0';dwDataLength++)
+	for (dwDataLength=0;m_szRoots[dwDataLength]!=L'\0' || m_szRoots[dwDataLength+1]!=L'\0';dwDataLength++)
 	{
 		if (strcasecmp(m_szRoots+dwDataLength,pRoot)==0)
 			return; // Already exist

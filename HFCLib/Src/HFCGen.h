@@ -412,18 +412,24 @@ class CFileFind : public CObject
 public:
 #ifdef WIN32
 	HANDLE m_hFind;
-	WIN32_FIND_DATA m_fd;
+	union {
+		WIN32_FIND_DATA m_fd;
+#ifdef DEF_WCHAR
+		WIN32_FIND_DATAW m_fdw;
+#endif
+	};
+
 #else
 	struct ffblk m_fd;
 #endif
-	CString strRoot;
+	CStringW strRoot;
 
 public:
 	CFileFind();
 	~CFileFind();
 
 	void Close();
-	BOOL FindFile(LPCTSTR pstrName=NULL);
+	BOOL FindFile(LPCSTR pstrName=NULL);
 	BOOL FindNextFile();
 	
 	void GetFileName(LPSTR szName,SIZE_T nMaxLen) const;
@@ -433,9 +439,8 @@ public:
 	SIZE_T GetFileSize() const;
 	
 #ifdef WIN32
-	SIZE_T GetFileTitle(CString title) const;
-	SIZE_T GetFileTitle(LPSTR szFileTitle,SIZE_T nMaxLen) const;
-
+	BOOL GetFileTitle(CString& title) const;
+	BOOL GetFileTitle(LPSTR szFileTitle,SIZE_T nMaxLen) const;
 #endif
 
 #ifdef WIN32
@@ -462,6 +467,17 @@ public:
 #ifdef WIN32
 	BOOL IsTemporary() const;
 	BOOL IsCompressed() const;
+#endif
+
+#ifdef DEF_WCHAR
+	BOOL FindFile(LPCWSTR pstrName);
+	void GetFileName(LPWSTR szName,SIZE_T nMaxLen) const;
+	void GetFileName(CStringW& name) const;
+	void GetFilePath(LPWSTR szPath,SIZE_T nMaxLen) const;
+	void GetFilePath(CStringW& path) const;
+
+	BOOL GetFileTitle(CStringW& title) const;
+	BOOL GetFileTitle(LPWSTR szFileTitle,SIZE_T nMaxLen) const;
 #endif
 };
 
@@ -846,15 +862,15 @@ public:
 	BOOL OpenRead(HKEY hKey,LPCWSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defRead,NULL)==ERROR_SUCCESS; }
 	BOOL OpenWrite(HKEY hKey,LPCWSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defWrite,NULL)==ERROR_SUCCESS; }
 	
-	DWORD QueryValue(LPCWSTR lpszValueName,LPWSTR lpData,SIZE_T cbData,LPDWORD lpdwType=NULL) const;	
+	DWORD QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,SIZE_T cbStrLen) const;	
 	BOOL QueryValue(LPCWSTR lpszValueName,CStringW& strData) const;	
 	BOOL QueryValue(LPCWSTR lpszValueName,DWORD& dwData) const;	
 	
 	SIZE_T QueryValueLength(LPCWSTR lpszValueName) const;
 	SIZE_T QueryValueLength(LPCWSTR lpszValueName,BOOL& bIsOk) const;
 
-	LONG SetValue(LPCWSTR lpValueName,LPCWSTR lpData,SIZE_T cbData,DWORD dwType=REG_BINARY);
 	BOOL SetValue(LPCWSTR lpValueName,CStringW& strData);
+	LONG SetValue(LPCWSTR lpValueName,LPCWSTR strData,SIZE_T cbDataAsChars,DWORD dwType=REG_SZ);
 	LONG SetValue(LPCWSTR lpValueName,LPCWSTR strData);
 	BOOL SetValue(LPCWSTR lpValueName,DWORD dwData);
 

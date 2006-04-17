@@ -1,6 +1,6 @@
 #include <hfclib.h>
 
-#define DATA_LENGTH		50
+#define DATA_LENGTH		100
 #define COUNT			1000000
 
 int main (void)
@@ -8,7 +8,7 @@ int main (void)
 	fprintf(stdout,"Generating data.\n");
 	fflush(stdout);
 
-	srand(time(NULL));
+	srand((UINT)time(NULL));
 
 	BYTE initval=rand()%240+1;
 
@@ -293,28 +293,9 @@ int main (void)
 	fprintf(stdout,"\tistrlen:    %4d\n",dwStop-dwStart);
 	fflush(stdout);
 
-    // fstrlen
-	dwStart=GetTickCount();
-	for (int i=0;i<COUNT;i++)
-	{
-		dwLength=fstrlen(pData);
-		dwLength=fstrlen(pData2);
-	}
-	dwStop=GetTickCount();
-	fprintf(stdout,"\tfstrlen:    %4d\n",dwStop-dwStart);
-	fflush(stdout);
 
     	
-	// dstrlen
-	dwStart=GetTickCount();
-	for (int i=0;i<COUNT;i++)
-	{
-		dstrlen(pData,dwLength);
-		dstrlen(pData2,dwLength);
-	}
-	dwStop=GetTickCount();
-	fprintf(stdout,"\tdstrlen:    %4d\n",dwStop-dwStart);
-	fflush(stdout);
+
 
     	
 	delete[] pData;

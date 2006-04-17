@@ -44,7 +44,7 @@ LONGLONG FileSystem::GetDiskFreeSpace(LPCSTR szDrive)
 #ifdef DEF_WCHAR
 LONGLONG FileSystem::GetDiskFreeSpace(LPCWSTR szDrive)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		return FileSystem::GetDiskFreeSpace(W2A(szDrive));
 
 	ULARGE_INTEGER i64FreeBytesToCaller;
@@ -216,7 +216,7 @@ BOOL CFile::GetStatus(CFileStatus& rStatus) const
 CString CFile::GetFileTitle() const
 {
 #ifdef WIN32
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		WCHAR szTitle[2000];
 		::GetFileTitleW(m_strFileName,szTitle,2000);
@@ -239,7 +239,7 @@ CString CFile::GetFileTitle() const
 #ifdef DEF_WCHAR
 CStringW CFile::GetFileTitleW() const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		WCHAR szTitle[2000];
 		::GetFileTitleW(m_strFileName,szTitle,2000);
@@ -426,7 +426,7 @@ BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError)
 
 BOOL CFile::Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		return Open(W2A(lpszFileName),nOpenFlags,pError);
 
 	if (m_bCloseOnDelete)
@@ -1186,7 +1186,7 @@ INT FileSystem::IsDirectory(LPCSTR szDirectoryName)
 #ifdef DEF_WCHAR
 BOOL FileSystem::IsFile(LPCWSTR szFileName)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		return FileSystem::IsFile(W2A(szFileName));
 
 	if (szFileName[0]==L'\0')
@@ -1212,7 +1212,7 @@ BOOL FileSystem::IsFile(LPCWSTR szFileName)
 
 INT FileSystem::IsDirectory(LPCWSTR szDirectoryName)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		return FileSystem::IsDirectory(W2A(szDirectoryName));
 
 
@@ -1371,7 +1371,7 @@ BOOL FileSystem::IsValidFileName(LPCWSTR szFile,LPWSTR szShortName)
 	{
 		if (szShortName!=NULL)
 		{
-			if (IsFullUnicodeSupport())
+			if (IsUnicodeSystem())
 				::GetShortPathNameW(szFile,szShortName,_MAX_PATH);
 			else
 			{
@@ -1384,7 +1384,7 @@ BOOL FileSystem::IsValidFileName(LPCWSTR szFile,LPWSTR szShortName)
 		return TRUE;
 	}
 	HANDLE hFile;
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		hFile=CreateFileW(szFile,GENERIC_WRITE,
 			FILE_SHARE_READ,NULL,CREATE_ALWAYS,
 			FILE_ATTRIBUTE_NORMAL,NULL);
@@ -1398,7 +1398,7 @@ BOOL FileSystem::IsValidFileName(LPCWSTR szFile,LPWSTR szShortName)
 	CloseHandle(hFile);
 	if (szShortName!=NULL)
 	{	
-		if (IsFullUnicodeSupport())
+		if (IsUnicodeSystem())
 			::GetShortPathNameW(szFile,szShortName,_MAX_PATH);
 		else
 		{
@@ -1558,7 +1558,7 @@ DWORD FileSystem::ParseExistingPath(LPCWSTR szPath)
 	{
 		if (szPath[1]==':')
 		{
-			if (IsFullUnicodeSupport())
+			if (IsUnicodeSystem())
 			{
 				WCHAR szTemp[]=L"X:\\";
 				szTemp[0]=szPath[0];
@@ -1608,7 +1608,7 @@ DWORD FileSystem::ParseExistingPath(LPCWSTR szPath)
 
 BOOL FileSystem::IsValidPath(LPCWSTR szPath,BOOL bAsDirectory)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		return FileSystem::IsValidPath(W2A(szPath),bAsDirectory);
 
 	BOOL bRet=FALSE;
@@ -1835,7 +1835,7 @@ BOOL FileSystem::IsSubDirectory(LPCSTR szSubDir,LPCSTR szPath)
 #ifdef DEF_WCHAR
 BOOL FileSystem::CreateDirectoryRecursive(LPCWSTR szPath,LPSECURITY_ATTRIBUTES plSecurityAttributes)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		return CreateDirectoryRecursive(W2A(szPath),plSecurityAttributes);
 
 	BOOL bRet=FALSE;
@@ -1883,7 +1883,7 @@ BOOL FileSystem::CreateDirectoryRecursive(LPCWSTR szPath,LPSECURITY_ATTRIBUTES p
 
 BOOL FileSystem::IsSamePath(LPCWSTR szDir1,LPCWSTR szDir2)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		return FileSystem::IsSamePath(W2A(szDir1),W2A(szDir2));
 
 	WCHAR path1[MAX_PATH],path2[MAX_PATH];
@@ -1903,7 +1903,7 @@ BOOL FileSystem::IsSamePath(LPCWSTR szDir1,LPCWSTR szDir2)
 // Checking whether szSubDir is sub directory of the szPath
 BOOL FileSystem::IsSubDirectory(LPCWSTR szSubDir,LPCWSTR szPath)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		return FileSystem::IsSubDirectory(W2A(szSubDir),W2A(szPath));
 
 	WCHAR sSubDir[MAX_PATH],sPath[MAX_PATH];
@@ -1939,7 +1939,7 @@ BOOL FileSystem::IsSubDirectory(LPCWSTR szSubDir,LPCWSTR szPath)
 
 DWORD FileSystem::GetFullPathName(LPCWSTR lpFileName,DWORD nBufferLength,LPWSTR lpBuffer,LPWSTR* lpFilePart)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetFullPathNameW(lpFileName,nBufferLength,lpBuffer,lpFilePart);
 	else
 	{
@@ -1957,7 +1957,7 @@ DWORD FileSystem::GetFullPathName(LPCWSTR lpFileName,DWORD nBufferLength,LPWSTR 
 
 DWORD FileSystem::GetShortPathName(LPCWSTR lpszLongPath,LPWSTR lpszShortPath,DWORD cchBuffer)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetShortPathNameW(lpszLongPath,lpszShortPath,cchBuffer);
 	else
 	{
@@ -1972,7 +1972,7 @@ DWORD FileSystem::GetShortPathName(LPCWSTR lpszLongPath,LPWSTR lpszShortPath,DWO
 
 DWORD FileSystem::GetCurrentDirectory(DWORD nBufferLength,LPWSTR lpBuffer)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetCurrentDirectoryW(nBufferLength,lpBuffer);
 	else
 	{
@@ -1987,7 +1987,7 @@ DWORD FileSystem::GetCurrentDirectory(DWORD nBufferLength,LPWSTR lpBuffer)
 
 DWORD FileSystem::GetLongPathName(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetLongPathNameW(lpszShortPath,lpszLongPath,cchBuffer);
 	else
 	{
@@ -2002,7 +2002,7 @@ DWORD FileSystem::GetLongPathName(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWOR
 
 DWORD FileSystem::GetTempPath(DWORD nBufferLength,LPWSTR lpBuffer)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetTempPathW(nBufferLength,lpBuffer);
 	else
 	{
@@ -2017,7 +2017,7 @@ DWORD FileSystem::GetTempPath(DWORD nBufferLength,LPWSTR lpBuffer)
 
 UINT FileSystem::GetTempFileName(LPCWSTR lpPathName,LPCWSTR lpPrefixString,UINT uUnique,LPWSTR lpTempFileName)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetTempFileNameW(lpPathName,lpPrefixString,uUnique,lpTempFileName);
 	else
 	{
@@ -2032,7 +2032,7 @@ UINT FileSystem::GetTempFileName(LPCWSTR lpPathName,LPCWSTR lpPrefixString,UINT 
 
 DWORD FileSystem::GetLogicalDriveStrings(DWORD nBufferLength,LPWSTR lpBuffer)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetLogicalDriveStringsW(nBufferLength,lpBuffer);
 	else
 	{
@@ -2051,7 +2051,7 @@ BOOL FileSystem::GetVolumeInformation(LPCWSTR lpRootPathName,LPWSTR lpVolumeName
 		DWORD nVolumeNameSize,LPDWORD lpVolumeSerialNumber,LPDWORD lpMaximumComponentLength,
 		LPDWORD lpFileSystemFlags,LPWSTR lpFileSystemNameBuffer,DWORD nFileSystemNameSize)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetVolumeInformationW(lpRootPathName,lpVolumeNameBuffer,
 			nVolumeNameSize,lpVolumeSerialNumber,lpMaximumComponentLength,
 			lpFileSystemFlags,lpFileSystemNameBuffer,nFileSystemNameSize);
@@ -2084,7 +2084,7 @@ BOOL FileSystem::GetVolumeInformation(LPCWSTR lpRootPathName,LPWSTR lpVolumeName
 
 short FileSystem::GetFileTitle(LPCWSTR lpszFile,LPWSTR lpszTitle,WORD cbBuf)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetFileTitleW(lpszFile,lpszTitle,cbBuf);
 	else
 	{
@@ -2101,7 +2101,7 @@ BOOL FileSystem::LookupAccountName(LPCWSTR lpSystemName,LPCWSTR lpAccountName,PS
 	LPDWORD cbSid,LPWSTR ReferencedDomainName,LPDWORD cchReferencedDomainName,
 	PSID_NAME_USE peUse)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::LookupAccountNameW(lpSystemName,lpAccountName,Sid,cbSid,ReferencedDomainName,cchReferencedDomainName,peUse);
 	else
 	{
@@ -2118,7 +2118,7 @@ BOOL FileSystem::LookupAccountName(LPCWSTR lpSystemName,LPCWSTR lpAccountName,PS
 BOOL FileSystem::LookupAccountSid(LPCWSTR lpSystemName,PSID lpSid,LPWSTR lpName,LPDWORD cchName,
 	LPWSTR lpReferencedDomainName,LPDWORD cchReferencedDomainName,PSID_NAME_USE peUse)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::LookupAccountSidW(lpSystemName,lpSid,lpName,cchName,lpReferencedDomainName,cchReferencedDomainName,peUse);
 	else
 	{
@@ -2227,16 +2227,28 @@ void CFileFind::Close()
 }
 #endif
 
-BOOL CFileFind::FindFile(LPCTSTR pstrName)
+BOOL CFileFind::FindFile(LPCSTR pstrName)
 {
 	strRoot.Copy(pstrName,LastCharIndex(pstrName,'\\')+1);
 #ifdef WIN32
 	if (m_hFind!=NULL)
 		::FindClose(m_hFind);
-	if (pstrName!=NULL)
-		m_hFind=::FindFirstFile(pstrName,&m_fd);
+	
+	if (IsUnicodeSystem())
+	{
+		if (pstrName!=NULL)
+			m_hFind=::FindFirstFileW(A2W(pstrName),&m_fdw);
+		else
+			m_hFind=::FindFirstFileW(L"*.*",&m_fdw);
+	}
 	else
-		m_hFind=::FindFirstFile("*.*",&m_fd);
+	{
+		if (pstrName!=NULL)
+			m_hFind=::FindFirstFile(pstrName,&m_fd);
+		else
+			m_hFind=::FindFirstFile("*.*",&m_fd);
+	}
+	
 	if (m_hFind==INVALID_HANDLE_VALUE)
 		return FALSE;
 	return TRUE;
@@ -2248,35 +2260,47 @@ BOOL CFileFind::FindFile(LPCTSTR pstrName)
 #endif
 }
 
+
 BOOL CFileFind::FindNextFile()
 {
 #ifdef WIN32
 	if (m_hFind==NULL)
 		return FindFile();
-	return ::FindNextFile(m_hFind,&m_fd);
+	if (IsUnicodeSystem())
+		return ::FindNextFileW(m_hFind,&m_fdw);
+	else
+		return ::FindNextFileA(m_hFind,&m_fd);
 #else
 	return !findnext(&m_fd);
 #endif
 }
 
-
-
 void CFileFind::GetFilePath(LPSTR szPath,SIZE_T nMaxLen) const
 {
-	memcpy_s(szPath,nMaxLen,strRoot,strRoot.GetLength());
-
 #ifdef WIN32
-	strcpy_s(szPath+strRoot.GetLength(),nMaxLen-strRoot.GetLength(),m_fd.cFileName);
+	int nRet=WideCharToMultiByte(CP_ACP,0,(LPCWSTR)strRoot,strRoot.GetLength(),szPath,nMaxLen,0,0);
+
+	if (IsUnicodeSystem())
+		WideCharToMultiByte(CP_ACP,0,m_fdw.cFileName,-1,szPath+nRet,nMaxLen-nRet,0,0);
+	else
+		StringCbCopy(szPath+nRet,nMaxLen-nRet,m_fd.cFileName);
 #else
+	memcpy_s(szPath,nMaxLen,strRoot,strRoot.GetLength());
 	strcpy_s(szPath+strRoot.GetLength(),nMaxLen-strRoot.GetLength(),m_fd.ff_name);
 #endif
 }
+
+
+
 
 void CFileFind::GetFilePath(CString& path) const
 {
 	path=strRoot;
 #ifdef WIN32
-	path<<m_fd.cFileName;
+	if (IsUnicodeSystem())
+		path<<m_fdw.cFileName;
+	else
+		path<<m_fd.cFileName;
 #else
 	path<<m_fd.ff_name;
 #endif
@@ -2284,20 +2308,63 @@ void CFileFind::GetFilePath(CString& path) const
 
 #ifdef WIN32
 
-SIZE_T CFileFind::GetFileTitle(CString title) const
+BOOL CFileFind::GetFileTitle(CString& title) const
 {
-	CString temp(strRoot);
-	temp << m_fd.cFileName;
-	SIZE_T len=::GetFileTitle(temp,title.GetBuffer(_MAX_PATH),_MAX_PATH);
-	title.FreeExtra();
-	return len;
+
+	if (IsUnicodeSystem())
+	{
+		WCHAR szTitle[MAX_PATH],szPath[MAX_PATH];
+		StringCbCopyNW(szPath,MAX_PATH,strRoot,strRoot.GetLength());
+		StringCbCopyW(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fdw.cFileName);
+		SIZE_T len=::GetFileTitleW(szPath,szTitle,MAX_PATH);
+		if (len==0)
+			title=szTitle;
+		else
+		{
+			title.Empty();
+			return FALSE;
+		}
+	}
+	else
+	{
+		CHAR szPath[MAX_PATH];
+		WideCharToMultiByte(CP_ACP,0,strRoot,strRoot.GetLength(),szPath,MAX_PATH,0,0);
+		StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName);
+		SIZE_T len=::GetFileTitle(szPath,title.GetBuffer(MAX_PATH),MAX_PATH);
+		
+		if (len==0)
+			title.FreeExtra();
+		else
+		{
+			title.Empty();
+			return FALSE;
+		}
+	}
+
+	return TRUE;
 }
 
-SIZE_T CFileFind::GetFileTitle(LPSTR szFileTitle,SIZE_T nMaxLen) const
+BOOL CFileFind::GetFileTitle(LPSTR szFileTitle,SIZE_T nMaxLen) const
 {
-	CString temp(strRoot);
-	temp << m_fd.cFileName;
-	return ::GetFileTitle(temp,szFileTitle,(WORD)min(nMaxLen,0xFFFF));
+	if (IsUnicodeSystem())
+	{
+		WCHAR szTitle[MAX_PATH],szPath[MAX_PATH];
+		StringCbCopyNW(szPath,MAX_PATH,strRoot,strRoot.GetLength());
+		StringCbCopyW(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fdw.cFileName);
+		short ret=::GetFileTitleW(szPath,szTitle,MAX_PATH);
+		if (ret!=0)
+			return FALSE;
+		
+		WideCharToMultiByte(CP_ACP,0,szTitle,-1,szFileTitle,nMaxLen,0,0);
+		return TRUE;
+	}
+	else
+	{
+		CHAR szPath[MAX_PATH];
+		WideCharToMultiByte(CP_ACP,0,strRoot,strRoot.GetLength(),szPath,MAX_PATH,0,0);
+		StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName);
+		return ::GetFileTitle(szPath,szFileTitle,(WORD)min(nMaxLen,0xFFFF))==0;
+	}
 }
 
 
@@ -2318,6 +2385,116 @@ BOOL CFileFind::GetFileTime(CTime& refTime) const
 	refTime.msec=0;
 	refTime.m_time=mktime(&lt);
 	return TRUE;
+}
+#endif
+
+
+#ifdef DEF_WCHAR
+void CFileFind::GetFilePath(CStringW& path) const
+{
+	path=strRoot;
+	if (IsUnicodeSystem())
+		path<<m_fdw.cFileName;
+	else
+		path<<m_fd.cFileName;
+}
+
+BOOL CFileFind::FindFile(LPCWSTR pstrName)
+{
+	strRoot.Copy(pstrName,LastCharIndex(pstrName,'\\')+1);
+	if (m_hFind!=NULL)
+		::FindClose(m_hFind);
+	
+	if (IsUnicodeSystem())
+	{
+		if (pstrName!=NULL)
+			m_hFind=::FindFirstFileW(pstrName,&m_fdw);
+		else
+			m_hFind=::FindFirstFileW(L"*.*",&m_fdw);
+	}
+	else
+	{
+		if (pstrName!=NULL)
+			m_hFind=::FindFirstFile(W2A(pstrName),&m_fd);
+		else
+			m_hFind=::FindFirstFile("*.*",&m_fd);
+	}
+		
+	if (m_hFind==INVALID_HANDLE_VALUE)
+		return FALSE;
+	return TRUE;
+}
+
+void CFileFind::GetFilePath(LPWSTR szPath,SIZE_T nMaxLen) const
+{
+	StringCbCopyNW(szPath,nMaxLen,(LPCWSTR)strRoot,strRoot.GetLength());
+	if (IsUnicodeSystem())	
+		StringCbCopyW(szPath+strRoot.GetLength(),nMaxLen-strRoot.GetLength(),m_fdw.cFileName);
+	else
+		MultiByteToWideChar(CP_ACP,0,m_fd.cFileName,-1,szPath+strRoot.GetLength(),nMaxLen-strRoot.GetLength());
+}
+
+
+BOOL CFileFind::GetFileTitle(CStringW& title) const
+{
+
+	if (IsUnicodeSystem())
+	{
+		WCHAR szPath[MAX_PATH];
+		StringCbCopyNW(szPath,MAX_PATH,strRoot,strRoot.GetLength());
+		StringCbCopyW(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fdw.cFileName);
+		short ret=::GetFileTitleW(szPath,title.GetBuffer(),MAX_PATH);
+		if (ret==0)
+			title.FreeExtra();
+		else
+		{
+			title.Empty();
+			return FALSE;
+		}
+	}
+	else
+	{
+		CHAR szPath[MAX_PATH],szTitle[MAX_PATH];
+		WideCharToMultiByte(CP_ACP,0,strRoot,strRoot.GetLength(),szPath,MAX_PATH,0,0);
+		StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName);
+		short ret=::GetFileTitle(szPath,szTitle,MAX_PATH);
+		
+		if (ret==0)
+			title=szTitle;
+		else
+		{
+			title.Empty();
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+
+BOOL CFileFind::GetFileTitle(LPWSTR szFileTitle,SIZE_T nMaxLen) const
+{
+
+	if (IsUnicodeSystem())
+	{
+		WCHAR szPath[MAX_PATH];
+		StringCbCopyNW(szPath,MAX_PATH,strRoot,strRoot.GetLength());
+		StringCbCopyW(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fdw.cFileName);
+		return ::GetFileTitleW(szPath,szFileTitle,(WORD)min(nMaxLen,0xFFFF))==0;
+	}
+	else
+	{
+		CHAR szPath[MAX_PATH],szTitle[MAX_PATH];
+		WideCharToMultiByte(CP_ACP,0,strRoot,strRoot.GetLength(),szPath,MAX_PATH,0,0);
+		StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName);
+		short ret=::GetFileTitle(szPath,szTitle,MAX_PATH);
+		if (ret!=0)
+			return FALSE;
+		MultiByteToWideChar(CP_ACP,0,szTitle,-1,szFileTitle,nMaxLen);
+		return TRUE;
+	}
+
+	
 }
 #endif
 

@@ -803,42 +803,42 @@ inline int CListBox::SelItemRange(BOOL bSelect,int nFirstItem,int nLastItem)
 #ifdef DEF_WCHAR
 inline int CListBox::FindStringExact(int nIndexStart,LPCWSTR lpszFind) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,LB_FINDSTRINGEXACT,(WPARAM)nIndexStart,(LPARAM)lpszFind);
 	else
 		return ::SendMessage(m_hWnd,LB_FINDSTRINGEXACT,(WPARAM)nIndexStart,(LPARAM)(LPCSTR)W2A(lpszFind));
 }
 inline int CListBox::AddString(LPCWSTR lpszItem)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,LB_ADDSTRING,0,(LPARAM)lpszItem);
 	else
 		return ::SendMessage(m_hWnd,LB_ADDSTRING,0,(LPARAM)(LPCSTR)W2A(lpszItem));
 }
 inline int CListBox::InsertString(int nIndex,LPCWSTR lpszItem)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,LB_INSERTSTRING,nIndex,(LPARAM)lpszItem);
 	else
 		return ::SendMessage(m_hWnd,LB_INSERTSTRING,nIndex,(LPARAM)(LPCSTR)W2A(lpszItem));
 }
 inline int CListBox::FindString(int nStartAfter,LPCWSTR lpszItem) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,LB_FINDSTRING,nStartAfter,(LPARAM)lpszItem);
 	else
 		return ::SendMessage(m_hWnd,LB_FINDSTRING,nStartAfter,(LPARAM)(LPCSTR)W2A(lpszItem));
 }
 inline int CListBox::Dir(UINT attr,LPCWSTR lpszWildCard)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,LB_DIR,attr,(LPARAM)lpszWildCard);
 	else
 		return ::SendMessage(m_hWnd,LB_DIR,attr,(LPARAM)(LPCSTR)W2A(lpszWildCard));
 }
 inline int CListBox::SelectString(int nStartAfter,LPCWSTR lpszItem)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,LB_SELECTSTRING,nStartAfter,(LPARAM)lpszItem);
 	else
 		return ::SendMessage(m_hWnd,LB_SELECTSTRING,nStartAfter,(LPARAM)(LPCSTR)W2A(lpszItem));

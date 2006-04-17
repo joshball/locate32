@@ -618,6 +618,8 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_pTabCtrl->InsertItem(2,&ti);
 
 	ViewDetails* pDetails=GetDefaultDetails();
+	if (IsUnicodeSystem())
+		m_pListCtrl->SetUnicodeFormat(TRUE);
 	for (int i=0;i<TypeCount;i++)
 	{
 		m_pListCtrl->InsertColumn(DetailType(i),pDetails[i].nString,
@@ -1599,7 +1601,6 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 					for (nIndex=0;pStr[nIndex]!=L',' && pStr[nIndex]!=L';' && pStr[nIndex]!=L'\0';nIndex++);
 				}
 		
-
 				if (nIndex>0)
 				{
 					if (nRet&CAdvancedDlg::flagMatchCase)
@@ -1636,27 +1637,27 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 
 					}
 	
-					if (bParenthes)
-					{
-						if (pStr[nIndex]!=L'\"')
-							break;
-
-						pStr+=nIndex+1;
-						while (*pStr==L' ')
-							pStr++;
-
-						if (*pStr!=L',')
-							break;
-
-						pStr++;
-					}
-					else
-					{
-						if (pStr[nIndex]=='\0')
-							break;
-						pStr+=nIndex+1;	
-					}
+			
 				}				
+
+				if (bParenthes)
+				{
+					if (pStr[nIndex]!=L'\"')
+						break;
+					pStr+=nIndex+1;
+
+					while (*pStr==L' ')
+						pStr++;
+					if (*pStr!=L',')
+						break;
+					pStr++;
+				}
+				else
+				{
+					if (pStr[nIndex]=='\0')
+						break;
+					pStr+=nIndex+1;	
+				}
 			}
 		}
 	}
@@ -1827,7 +1828,7 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 		break;
 	}
 	case SearchingEnded:
-		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(szEmpty,0,0);
+		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(STRNULL,0,0);
 		break;
 	case ClassShouldDelete:
 		delete pLocater;
@@ -2727,7 +2728,7 @@ void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 		si.dwFlags=STARTF_USESHOWWINDOW;
 		si.wShowWindow=SW_SHOWDEFAULT;
 		
-		if (IsFullUnicodeSupport())
+		if (IsUnicodeSystem())
 		{
 			if (!CreateProcessW(NULL,LPWSTR(szCommand),NULL,
 				NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
@@ -2805,7 +2806,7 @@ void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 			si.dwFlags=STARTF_USESHOWWINDOW;
 			si.wShowWindow=SW_SHOWDEFAULT;
 			
-			if (IsFullUnicodeSupport())
+			if (IsUnicodeSystem())
 			{
 				if (CreateProcessW(NULL,pCommand,NULL,
 					NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
@@ -3010,12 +3011,11 @@ void CLocateDlg::OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpmis)
 		if (m_pActiveContextMenu!=NULL && lpmis->itemID<IDM_DEFSENDTOITEM)
 			return;
 		
-		char szTitle[_MAX_PATH];
+		WCHAR szTitle[_MAX_PATH];
 		CDC dc(this);
-		CSize sz;
 		HGDIOBJ hOld=dc.SelectObject(m_hSendToListFont);
-		GetFileTitle((LPCSTR)lpmis->itemData,szTitle,_MAX_PATH);
-		GetTextExtentPoint32(dc,szTitle,strlen(szTitle),&sz);
+		FileSystem::GetFileTitle((LPCWSTR)lpmis->itemData,szTitle,MAX_PATH);
+		CSize sz=dc.GetTextExtent(szTitle,wcslen(szTitle));
 		lpmis->itemWidth=40+sz.cx;
 		if (sz.cy>16)
 			lpmis->itemHeight=sz.cy+4;
@@ -3075,23 +3075,23 @@ void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 	{
 		// Show context menu for header
 		
-		HMENU hColMenu=m_pListCtrl->CreateColumnSelectionMenu(IDM_DEFCOLSELITEM);
-		CString text(IDS_SELECTDETAILS);
+		CMenu ColMenu(m_pListCtrl->CreateColumnSelectionMenu(IDM_DEFCOLSELITEM));
+		CStringW text(IDS_SELECTDETAILS);
 		
-		MENUITEMINFO mii;
-		mii.cbSize=sizeof(MENUITEMINFO);
+		MENUITEMINFOW mii;
+		mii.cbSize=sizeof(MENUITEMINFOW);
 		// Inserting separator
 		mii.fMask=MIIM_TYPE;
 		mii.fType=MFT_SEPARATOR;
-		InsertMenuItem(hColMenu,WORD(-1),FALSE,&mii);
+		ColMenu.InsertMenu(WORD(-1),FALSE,&mii);
 		mii.fMask=MIIM_ID|MIIM_TYPE;
 		mii.fType=MFT_STRING;
 		mii.dwTypeData=text.GetBuffer();
 		mii.wID=IDM_SELECTDETAILS;
-		InsertMenuItem(hColMenu,WORD(-1),FALSE,&mii);
+		ColMenu.InsertMenu(WORD(-1),FALSE,&mii);
 		
-		TrackPopupMenu(hColMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,pos.x,pos.y,0,*this,NULL);	
-		DestroyMenu(hColMenu);
+		TrackPopupMenu(ColMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,pos.x,pos.y,0,*this,NULL);	
+		ColMenu.DestroyMenu();
 	}
 	else
 	{
@@ -4321,7 +4321,7 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 
 	WCHAR szName[221];  
 	
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_pActiveContextMenu->pContextMenu->GetCommandString(wID-IDM_DEFCONTEXTITEM,
 			GCS_VERBW,NULL,(LPSTR)szName,200)!=NOERROR)
@@ -4401,7 +4401,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 		else 
 		{
 			int nRet;
-			if (IsFullUnicodeSupport())
+			if (IsUnicodeSystem())
 				nRet=(int)ShellExecuteW(*this,szVerb,pItems[i]->GetPath(),NULL,NULL,SW_SHOW);
 			else
 				nRet=(int)ShellExecuteA(*this,szVerb==NULL?NULL:(LPCSTR)W2A(szVerb),W2A(pItems[i]->GetPath()),NULL,NULL,SW_SHOW);
@@ -5097,7 +5097,7 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder)
 		sxi.lpParameters=szwEmpty;
 		sxi.lpDirectory=szwEmpty;
 			
-		if (IsFullUnicodeSupport())		
+		if (IsUnicodeSystem())		
 		{
 			sxi.lpVerb=L"open";
 			sxi.lpFile=szFolder;
@@ -5167,7 +5167,7 @@ void CLocateDlg::OnCreateShortcut()
 	
 	CWaitCursor wait;
 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		// Resolving desktop path
 		CStringW sDesktopPathTmp,sDesktopPath;
@@ -5405,7 +5405,7 @@ void CLocateDlg::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
 	{
 		// Database menu, deleting previous menu items and inserting 
 		// new ones database items
-		GetLocateApp()->OnInitDatabaseMenu(hPopupMenu);
+		GetLocateApp()->OnInitDatabaseMenu(CMenu(hPopupMenu));
 	}
 }
 	
@@ -5468,13 +5468,13 @@ void CLocateDlg::OnInitSendToMenu(HMENU hPopupMenu)
 	for(int i=GetMenuItemCount(hPopupMenu)-1;i>=0;i--)
 		DeleteMenu(hPopupMenu,i,MF_BYPOSITION);
 
-	CString SendToPath;
+	CStringW SendToPath;
 	
 	// Resolving Send To -directory location
 	CRegKey RegKey;
 	if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.QueryValue("SendTo",SendToPath);
+		RegKey.QueryValue(L"SendTo",SendToPath);
 		RegKey.CloseKey();
 	}
 
@@ -5491,40 +5491,42 @@ void CLocateDlg::OnInitSendToMenu(HMENU hPopupMenu)
 	else
 		m_hSendToListFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
-	AddSendToMenuItems(hPopupMenu,SendToPath,IDM_DEFSENDTOITEM);
+	AddSendToMenuItems(CMenu(hPopupMenu),SendToPath,IDM_DEFSENDTOITEM);
 }
 
-UINT CLocateDlg::AddSendToMenuItems(HMENU hMenu,CString& sSendToPath,UINT wStartID)
+UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,CStringW& sSendToPath,UINT wStartID)
 {
-	CString Path(sSendToPath);
+	CStringW Path(sSendToPath);
 	CFileFind Find;
-	MENUITEMINFO mi;
+	MENUITEMINFOW mi;
 	BOOL bErr;
 	
-	mi.cbSize=sizeof(MENUITEMINFO);
-	Path << "\\*.*";
+	mi.cbSize=sizeof(MENUITEMINFOW);
+	Path << L"\\*.*";
 	mi.fMask=MIIM_DATA|MIIM_ID|MIIM_STATE|MIIM_TYPE|MIIM_SUBMENU;
 	mi.fType=MFT_OWNERDRAW;
 	mi.fState=MFS_ENABLED;
 	mi.wID=wStartID;
-	mi.dwTypeData=(LPSTR)hMenu;
+	//mi.dwTypeData=(LPWSTR)(HMENU)Menu;
 	bErr=Find.FindFile(Path);
 	while (bErr)
 	{
 		Find.GetFileName(Path);
-		if (Path[0]!='.' && !Find.IsSystem() && !Find.IsHidden())
+		if (Path[0]!=L'.' && !Find.IsSystem() && !Find.IsHidden())
 		{
 			Find.GetFilePath(Path);
-			mi.dwItemData=(DWORD)new CHAR[Path.GetLength()+2];
-			MemCopy((LPSTR)mi.dwItemData,Path,Path.GetLength()+1);
+			mi.dwItemData=(DWORD)new WCHAR[Path.GetLength()+2];
+			MemCopyW((LPWSTR)mi.dwItemData,Path,Path.GetLength()+1);
 			if (Find.IsDirectory())
 			{
-				mi.hSubMenu=CreateMenu();
-				mi.wID+=AddSendToMenuItems(mi.hSubMenu,Path,mi.wID);
+				CMenu Menu;
+				Menu.CreateMenu();
+				mi.wID+=AddSendToMenuItems(Menu,Path,mi.wID);
+				mi.hSubMenu=Menu;
 			}
 			else
 				mi.hSubMenu=NULL;
-			InsertMenuItem(hMenu,mi.wID,FALSE,&mi);
+			Menu.InsertMenu(mi.wID,FALSE,&mi);
 			mi.wID++;
 		}
 		bErr=Find.FindNextFile();
@@ -5534,22 +5536,24 @@ UINT CLocateDlg::AddSendToMenuItems(HMENU hMenu,CString& sSendToPath,UINT wStart
 	{
 		// Inserting default menu items
 		Path.LoadString(IDS_EMPTY);
-		mi.dwTypeData=(LPSTR)(LPCSTR)Path;
+		mi.dwTypeData=(LPWSTR)(LPCWSTR)Path;
 		mi.dwItemData=0;
 		mi.fState=MFS_GRAYED;
 		mi.fType=MFT_STRING;
-		InsertMenuItem(hMenu,mi.wID,FALSE,&mi);
+		Menu.InsertMenu(mi.wID,FALSE,&mi);
 		mi.wID++;
 	}
 	return mi.wID-wStartID;
 }
 
-BOOL CLocateDlg::InsertMenuItemsFromTemplate(HMENU hMenu,HMENU hTemplate,UINT uStartPosition,int nDefaultItem)
+BOOL CLocateDlg::InsertMenuItemsFromTemplate(CMenu& Menu,HMENU hTemplate,UINT uStartPosition,int nDefaultItem)
 {
-	MENUITEMINFO mii;
-	char szName[1000];
-	mii.cbSize=sizeof(MENUITEMINFO);
-	int nMenuLength=GetMenuItemCount(hTemplate);
+	CMenu Template(hTemplate);
+
+	MENUITEMINFOW mii;
+	WCHAR szName[1000];
+	mii.cbSize=sizeof(MENUITEMINFOW);
+	int nMenuLength=Template.GetMenuItemCount();
 	for (int i=0;i<nMenuLength;i++)
 	{
 		mii.fMask=MIIM_ID|MIIM_TYPE|MIIM_STATE|MIIM_SUBMENU;
@@ -5557,7 +5561,7 @@ BOOL CLocateDlg::InsertMenuItemsFromTemplate(HMENU hMenu,HMENU hTemplate,UINT uS
 		mii.cch=1000;
 		
 		// Checking whether popupmenu is popup menu or item
-		if (!GetMenuItemInfo(hTemplate,i,TRUE,&mii))
+		if (!Template.GetMenuItemInfo(i,TRUE,&mii))
 			return FALSE;
 
 		if (mii.wID==nDefaultItem)
@@ -5566,13 +5570,14 @@ BOOL CLocateDlg::InsertMenuItemsFromTemplate(HMENU hMenu,HMENU hTemplate,UINT uS
 		if (mii.hSubMenu!=NULL)
 		{
 			// It is popup menu
-            HMENU hNewMenu=CreatePopupMenu();
-			if (!InsertMenuItemsFromTemplate(hNewMenu,mii.hSubMenu,0))
+            CMenu NewMenu;
+			NewMenu.CreatePopupMenu();
+			if (!InsertMenuItemsFromTemplate(NewMenu,CMenu(mii.hSubMenu),0))
 				return FALSE;
-			mii.hSubMenu=hNewMenu;		
+			mii.hSubMenu=NewMenu;		
 		}
 		
-		if (!InsertMenuItem(hMenu,i+uStartPosition,TRUE,&mii))
+		if (!Menu.InsertMenu(i+uStartPosition,TRUE,&mii))
 			return FALSE;
 	}
 	return TRUE;
@@ -5584,20 +5589,22 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 	
 	if (hFileMenu!=NULL)
 	{
+		CMenu FileMenu(hFileMenu);
+
 		// Freeing memyry in SentToMenuItems
-		FreeSendToMenuItems(hFileMenu);
+		FreeSendToMenuItems(FileMenu);
 		
 		// Removing all items
-		for (int i=GetMenuItemCount(hFileMenu)-1;i>=0;i--)
-			DeleteMenu(hFileMenu,i,MF_BYPOSITION);
+		for (int i=FileMenu.GetMenuItemCount()-1;i>=0;i--)
+			FileMenu.DeleteMenu(i,MF_BYPOSITION);
 		
 		// Copying menu from template menu in resource
 		if (nItems==0)
 		{
-			InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_FILEMENUNOITEMS),0);
+			InsertMenuItemsFromTemplate(FileMenu,m_Menu.GetSubMenu(SUBMENU_FILEMENUNOITEMS),0);
 			return hFileMenu;
 		}
-		InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_FILEMENU),0);
+		InsertMenuItemsFromTemplate(FileMenu,m_Menu.GetSubMenu(SUBMENU_FILEMENU),0);
 	}
 	
 	if (!bSimple)
@@ -5705,7 +5712,7 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 			}
 			if (SUCCEEDED(hRes))
 			{
-				InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
+				InsertMenuItemsFromTemplate(CMenu(hFileMenu),m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
 				return hFileMenu;
 			}
 
@@ -5717,12 +5724,14 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 
 	if (hFileMenu==NULL)
 	{
-		hFileMenu=CreatePopupMenu();
-		InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN),0,IDM_DEFOPEN);
-		InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
+		CMenu FileMenu;
+		FileMenu.CreatePopupMenu();
+		InsertMenuItemsFromTemplate(FileMenu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN),0,IDM_DEFOPEN);
+		InsertMenuItemsFromTemplate(FileMenu,m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
+		return FileMenu;
 	}
 	else
-		InsertMenuItemsFromTemplate(hFileMenu,m_Menu.GetSubMenu(SUBMENU_OPENITEMFORFILEMENU),0);
+		InsertMenuItemsFromTemplate(CMenu(hFileMenu),m_Menu.GetSubMenu(SUBMENU_OPENITEMFORFILEMENU),0);
 		
 			
 
@@ -5861,10 +5870,10 @@ void CLocateDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 				dc.SelectObject(oldbrush);
 				dc.SelectObject(oldpen);
 			}
-			SHFILEINFO fi;
+			SHFILEINFOW fi;
 			fi.hIcon=NULL;
 			HGDIOBJ hOld=dc.SelectObject(m_hSendToListFont);
-			SHGetFileInfo((LPCSTR)(lpdis->itemData),0,&fi,sizeof(SHFILEINFO),SHGFI_DISPLAYNAME|SHGFI_ICON|SHGFI_SMALLICON);
+			GetFileInfo((LPCWSTR)(lpdis->itemData),0,&fi,SHGFI_DISPLAYNAME|SHGFI_ICON|SHGFI_SMALLICON);
 			dc.SetTextColor(forecolor);
 			dc.SetBkColor(backcolor);
 			if (fi.hIcon!=NULL)
@@ -6363,7 +6372,7 @@ void CLocateDlg::OnCopyPathToClipboard(BOOL bShortPath)
 	}
   
 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		HGLOBAL hMem=GlobalAlloc(GHND,(Text.GetLength()+1)*2);
 		if (hMem==NULL)
@@ -7545,7 +7554,7 @@ BOOL CLocateDlg::CNameDlg::OnOk(CStringW& sName,CArray<LPWSTR>& aExtensions,CArr
 
 			// Parsing extensions
 			LPCWSTR pType=sType;
-			for (;pType[0]==' ';pType++);
+			for (;pType[0]==L' ';pType++);
 			while (*pType!=L'\0')
 			{
 				DWORD nLength;
@@ -7843,11 +7852,13 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 
 void CLocateDlg::OnPresets()
 {
-	HMENU hMenu=CreatePopupMenu();
+	CMenu Menu;
 	int nPresets=0;
 
+	Menu.CreatePopupMenu();
+	
 
-	CLocateDlg::InsertMenuItemsFromTemplate(hMenu,m_Menu.GetSubMenu(SUBMENU_PRESETSELECTION),0);
+	CLocateDlg::InsertMenuItemsFromTemplate(Menu,m_Menu.GetSubMenu(SUBMENU_PRESETSELECTION),0);
 	
 	
 	CRegKey RegKey;
@@ -7857,11 +7868,11 @@ void CLocateDlg::OnPresets()
 	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		CRegKey PresetKey;
-		char szBuffer[30];
+		WCHAR szBuffer[30];
 		
 		// Creating preset menu list
-		MENUITEMINFO mii;
-		mii.cbSize=sizeof(MENUITEMINFO);
+		MENUITEMINFOW mii;
+		mii.cbSize=sizeof(MENUITEMINFOW);
 		mii.wID=IDM_DEFMENUITEM;
 		mii.fType=MFT_STRING;
 		mii.fMask=MIIM_TYPE|MIIM_ID;
@@ -7869,13 +7880,13 @@ void CLocateDlg::OnPresets()
 
 		for (int j=0;j<1000;j++)
 		{
-			StringCbPrintf(szBuffer,30,"Preset %03d",j);
+			StringCbPrintfW(szBuffer,30,L"Preset %03d",j);
 
 			if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 				break;
 
-			CString sCurrentName;
-			if (!PresetKey.QueryValue("",sCurrentName))
+			CStringW sCurrentName;
+			if (!PresetKey.QueryValue(WSTRNULL,sCurrentName))
 				continue;
 
 			
@@ -7883,7 +7894,7 @@ void CLocateDlg::OnPresets()
 			mii.dwTypeData=sCurrentName.GetBuffer();
 			mii.wID=IDM_DEFMENUITEM+j;
 			
-			InsertMenuItem(hMenu,nPresets,TRUE,&mii);
+			Menu.InsertMenu(nPresets,TRUE,&mii);
 
             PresetKey.CloseKey();
 			nPresets++;
@@ -7901,17 +7912,17 @@ void CLocateDlg::OnPresets()
 		mii.fType=MFT_SEPARATOR;
 		mii.dwTypeData=NULL;
 		mii.fMask=MIIM_TYPE;
-		InsertMenuItem(hMenu,nPresets,TRUE,&mii);
+		Menu.InsertMenu(nPresets,TRUE,&mii);
 	}
 	else	
-		EnableMenuItem(hMenu,IDM_PRESETREMOVE,MF_BYCOMMAND|MF_GRAYED);
+		Menu.EnableMenuItem(IDM_PRESETREMOVE,MF_BYCOMMAND|MF_GRAYED);
 
 	RECT rcButton;
 	::GetWindowRect(GetDlgItem(IDC_PRESETS),&rcButton);
 		
 	SetForegroundWindow();
-	int wID=TrackPopupMenu(hMenu,TPM_LEFTALIGN|TPM_LEFTBUTTON|TPM_NONOTIFY|TPM_RETURNCMD,rcButton.left,rcButton.bottom,0,*this,NULL);	
-	DestroyMenu(hMenu);
+	int wID=TrackPopupMenu(Menu,TPM_LEFTALIGN|TPM_LEFTBUTTON|TPM_NONOTIFY|TPM_RETURNCMD,rcButton.left,rcButton.bottom,0,*this,NULL);	
+	Menu.DestroyMenu();
 
 	switch (wID)
 	{
@@ -8483,17 +8494,19 @@ void CLocateDlg::CNameDlg::OnMoreDirectories()
 	if (m_pMultiDirs==NULL)
 		return;
 
-	HMENU hMenu=CreatePopupMenu();
-
-	CLocateDlg::InsertMenuItemsFromTemplate(hMenu,GetLocateDlg()->m_Menu.GetSubMenu(SUBMENU_MULTIDIRSELECTION),0);
-	
+	CMenu Menu;
+	CStringW str;
 	MENUITEMINFOW mii;
+	
+	Menu.CreatePopupMenu();
+
+	CLocateDlg::InsertMenuItemsFromTemplate(Menu,GetLocateDlg()->m_Menu.GetSubMenu(SUBMENU_MULTIDIRSELECTION),0);
+	
 	mii.cbSize=sizeof(MENUITEMINFOW);
 	// Inserting separator
 	mii.fMask=MIIM_TYPE|MIIM_ID;
 	mii.wID=IDM_DEFMENUITEM;
 	mii.fType=MFT_STRING;
-	CStringW str;
 	int i;
 	for (i=0;m_pMultiDirs[i]!=NULL;i++)
 	{
@@ -8511,21 +8524,21 @@ void CLocateDlg::CNameDlg::OnMoreDirectories()
 		StringCbPrintfW(pString,nLen*2,L"%d: %s",i+1,m_pMultiDirs[i]->pTitleOrDirectory);
 		mii.dwTypeData=pString;
 	
-		if (InsertMenuItemW(hMenu,i,TRUE,&mii))
+		if (Menu.InsertMenu(i,TRUE,&mii))
 			mii.wID++;
 
 		delete[] pString;
 	}
 
 	if (i==1) // Only one item, disabling remove
-		EnableMenuItem(hMenu,IDM_LOOKINREMOVESELECTION,MF_BYCOMMAND|MF_GRAYED);
+		Menu.EnableMenuItem(IDM_LOOKINREMOVESELECTION,MF_BYCOMMAND|MF_GRAYED);
 
 	RECT rcButton;
 	::GetWindowRect(GetDlgItem(IDC_MOREDIRECTORIES),&rcButton);
 		
 	SetForegroundWindow();
-	int wID=TrackPopupMenu(hMenu,TPM_LEFTALIGN|TPM_LEFTBUTTON|TPM_NONOTIFY|TPM_RETURNCMD,rcButton.left,rcButton.bottom,0,*this,NULL);	
-	DestroyMenu(hMenu);
+	int wID=TrackPopupMenu(Menu,TPM_LEFTALIGN|TPM_LEFTBUTTON|TPM_NONOTIFY|TPM_RETURNCMD,rcButton.left,rcButton.bottom,0,*this,NULL);	
+	Menu.DestroyMenu();
 
 	switch (wID)
 	{
@@ -9588,6 +9601,8 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 BOOL CLocateDlg::CSizeDateDlg::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
+	
+	// Set spins
 	SendDlgItemMessage(IDC_MINIMUMSIZESPIN,UDM_SETBUDDY,(WPARAM)GetDlgItem(IDC_MINIMUMSIZE),0);
 	SendDlgItemMessage(IDC_MAXIMUMSIZESPIN,UDM_SETBUDDY,(WPARAM)GetDlgItem(IDC_MAXIMUMSIZE),0);
 	SendDlgItemMessage(IDC_MINIMUMSIZESPIN,UDM_SETRANGE,0,MAKELPARAM(UD_MAXVAL,0));
@@ -9606,25 +9621,31 @@ BOOL CLocateDlg::CSizeDateDlg::OnInitDialog(HWND hwndFocus)
 	};
 	SendDlgItemMessage(IDC_MINIMUMSIZESPIN,UDM_SETACCEL,10,(LPARAM)ua);
 	SendDlgItemMessage(IDC_MAXIMUMSIZESPIN,UDM_SETACCEL,10,(LPARAM)ua);
-	CString str;
+
+	CComboBox Min(GetDlgItem(IDC_MINTYPE)),Max(GetDlgItem(IDC_MAXTYPE));
+	CStringW str;
 	str.LoadString(IDS_MODIFIED);
-	SendDlgItemMessage(IDC_MINTYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
-	SendDlgItemMessage(IDC_MAXTYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
+	Min.AddString(str);
+	Max.AddString(str);
 	str.LoadString(IDS_CREATED);
-	SendDlgItemMessage(IDC_MINTYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
-	SendDlgItemMessage(IDC_MAXTYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
+	Min.AddString(str);
+	Max.AddString(str);
 	str.LoadString(IDS_LASTACCESSED);
-	SendDlgItemMessage(IDC_MINTYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
-	SendDlgItemMessage(IDC_MAXTYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
+	Min.AddString(str);
+	Max.AddString(str);
+	
+	Min.AssignToDlgItem(*this,IDC_MINSIZETYPE);
+	Max.AssignToDlgItem(*this,IDC_MAXSIZETYPE);
 	str.LoadString(IDS_SIZEBYTES);
-	SendDlgItemMessage(IDC_MINSIZETYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
-	SendDlgItemMessage(IDC_MAXSIZETYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
+	Min.AddString(str);
+	Max.AddString(str);
 	str.LoadString(IDS_SIZEKB);
-	SendDlgItemMessage(IDC_MINSIZETYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
-	SendDlgItemMessage(IDC_MAXSIZETYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
+	Min.AddString(str);
+	Max.AddString(str);
 	str.LoadString(IDS_SIZEMB);
-	SendDlgItemMessage(IDC_MINSIZETYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
-	SendDlgItemMessage(IDC_MAXSIZETYPE,CB_ADDSTRING,0,(LPARAM)(LPCSTR)str);
+	Min.AddString(str);
+	Max.AddString(str);
+	
 	OnClear(TRUE);
 	return FALSE;
 }
@@ -10086,7 +10107,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 	
 
 	// Adding (by extension)
-	SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(szEmpty));
+	SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(szwEmpty));
 	OnClear(TRUE);
 	
 	RECT rc1,rc2;
@@ -10665,14 +10686,15 @@ void CLocateDlg::CAdvancedDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 	if (idCtl==IDC_FILETYPE && lpdis->itemID!=CB_ERR)
 	{
 		CRect rc(lpdis->rcItem);
+		CDC dc(lpdis->hDC);
 		HBRUSH hHighLight=GetSysColorBrush(COLOR_HIGHLIGHT);
-		CString Text;
+		CStringW Text;
 		
 		// Drawing background
 		if (lpdis->itemState&ODS_DISABLED)
-			FillRect(lpdis->hDC,&lpdis->rcItem,GetSysColorBrush(COLOR_3DFACE));
+			dc.FillRect(&lpdis->rcItem,GetSysColorBrush(COLOR_3DFACE));
 		else
-			FillRect(lpdis->hDC,&lpdis->rcItem,GetSysColorBrush(COLOR_WINDOW));
+			dc.FillRect(&lpdis->rcItem,GetSysColorBrush(COLOR_WINDOW));
 		
 		if (lpdis->itemID==0)
 		{
@@ -10685,27 +10707,26 @@ void CLocateDlg::CAdvancedDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 			if (((FileType*)lpdis->itemData)->hIcon==NULL)
 				((FileType*)lpdis->itemData)->ExtractIconFromPath();
 
-			DrawIconEx(lpdis->hDC,rc.left,rc.top,((FileType*)lpdis->itemData)->hIcon,
+			dc.DrawIcon(rc.left,rc.top,((FileType*)lpdis->itemData)->hIcon,
 				16,16,0,lpdis->itemAction&ODA_FOCUS?hHighLight:NULL,DI_NORMAL);
 		}
 		
-		SetBkMode(lpdis->hDC,TRANSPARENT);
+		dc.SetBkMode(TRANSPARENT);
 		rc.left+=18;
 				
 		if (lpdis->itemState&ODS_DISABLED)
-			SetTextColor(lpdis->hDC,GetSysColor(COLOR_GRAYTEXT));
+			dc.SetTextColor(GetSysColor(COLOR_GRAYTEXT));
 		else if (lpdis->itemAction&ODA_FOCUS)
 		{
 			// Filling text shade
-			SIZE sz;
-			SetTextColor(lpdis->hDC,GetSysColor(COLOR_HIGHLIGHTTEXT));
-			GetTextExtentPoint32(lpdis->hDC,Text,Text.GetLength(),&sz);
-			FillRect(lpdis->hDC,&CRect(rc.left,rc.top+1,rc.left+sz.cx+1,rc.bottom-1),hHighLight);
+			dc.SetTextColor(GetSysColor(COLOR_HIGHLIGHTTEXT));
+			CSize sz=dc.GetTextExtent(Text);
+			dc.FillRect(&CRect(rc.left,rc.top+1,rc.left+sz.cx+1,rc.bottom-1),hHighLight);
 		}
 		else
-			SetTextColor(lpdis->hDC,GetSysColor(COLOR_WINDOWTEXT));
+			dc.SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
 			
-		DrawText(lpdis->hDC,Text,Text.GetLength(),&rc,DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+		dc.DrawText(Text,Text.GetLength(),&rc,DT_LEFT|DT_SINGLELINE|DT_VCENTER);
 	}
 }
 
@@ -10715,29 +10736,15 @@ void CLocateDlg::CAdvancedDlg::OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpMe
 		
 	if (nIDCtl==IDC_FILETYPE)
 	{
-		HWND hWnd=GetDlgItem(IDC_FILETYPE);
-		HDC hDC=::GetDC(hWnd);
+		CDC dc(&CWnd(GetDlgItem(IDC_FILETYPE)));
 		
-		SIZE sz;
+		CSize sz;
 		if (lpMeasureItemStruct->itemID==0)
-		{
-			CString byex(IDS_BYEXTENSION);
-			::GetTextExtentPoint32(hDC,byex,byex.GetLength(),&sz);
-		}
+			sz=dc.GetTextExtent(CStringW(IDS_BYEXTENSION));
 		else
-		{
-			if (IsFullUnicodeSupport())
-				::GetTextExtentPoint32W(hDC,((FileType*)lpMeasureItemStruct->itemData)->szTitle,istrlenw(((FileType*)lpMeasureItemStruct->itemData)->szTitle),&sz);
-			else
-			{
-				CString str(((FileType*)lpMeasureItemStruct->itemData)->szTitle);
-				::GetTextExtentPoint32(hDC,str,str.GetLength(),&sz);
-			}
-		}
+			sz=dc.GetTextExtent(((FileType*)lpMeasureItemStruct->itemData)->szTitle,istrlenw(((FileType*)lpMeasureItemStruct->itemData)->szTitle));
 		lpMeasureItemStruct->itemHeight=max(sz.cy+1,16);
 		lpMeasureItemStruct->itemWidth=sz.cx+18;
-
-		::ReleaseDC(hWnd,hDC);
 	}
 }
 
@@ -10988,7 +10995,7 @@ DWORD WINAPI CLocateDlg::CAdvancedDlg::UpdaterProc(CLocateDlg::CAdvancedDlg* pAd
 			aFileTypes.Add(pParam);
 	}
 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		WCHAR szKey[1000];
 		DWORD dwIndex=0,dwKeyLength=1000;
@@ -11143,7 +11150,7 @@ void CLocateDlg::CAdvancedDlg::FileType::ExtractIconFromPath()
 		*szIconIndex=L'\0';
 	}
 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		WCHAR szExpanded[MAX_PATH];
 		if (ExpandEnvironmentStringsW(szIconPath,szExpanded,MAX_PATH)==0)

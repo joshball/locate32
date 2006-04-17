@@ -894,7 +894,7 @@ inline CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,
 
 inline void CFileDialog::GetFileTitle(CString& sFileTitle) const
 {
-	if (IsFullUnicodeSupport())	
+	if (IsUnicodeSystem())	
 		sFileTitle=m_pwofn->lpstrFileTitle;
 	else
 		sFileTitle=m_pofn->lpstrFileTitle;
@@ -902,7 +902,7 @@ inline void CFileDialog::GetFileTitle(CString& sFileTitle) const
 
 inline void CFileDialog::GetFileTitle(LPSTR pFileTitle,size_t nMaxLen) const
 {
-	if (IsFullUnicodeSupport())	
+	if (IsUnicodeSystem())	
 		WideCharToMultiByte(CP_ACP,0,m_pwofn->lpstrFileTitle,-1,pFileTitle,nMaxLen,NULL,NULL);
 	else
 		StringCbCopy(pFileTitle,nMaxLen-1,m_pofn->lpstrFileTitle);
@@ -911,7 +911,7 @@ inline void CFileDialog::GetFileTitle(LPSTR pFileTitle,size_t nMaxLen) const
 
 inline void CFileDialog::GetFileTitle(CStringW& sFileTitle) const
 {
-	if (IsFullUnicodeSupport())	
+	if (IsUnicodeSystem())	
 		sFileTitle=m_pwofn->lpstrFileTitle;
 	else
 		sFileTitle=m_pofn->lpstrFileTitle;
@@ -919,7 +919,7 @@ inline void CFileDialog::GetFileTitle(CStringW& sFileTitle) const
 
 inline void CFileDialog::GetFileTitle(LPWSTR pFileTitle,size_t nMaxLen) const
 {
-	if (IsFullUnicodeSupport())	
+	if (IsUnicodeSystem())	
 		StringCbCopyW(pFileTitle,nMaxLen*2,m_pwofn->lpstrFileTitle);
 	else
 		MultiByteToWideChar(CP_ACP,0,m_pofn->lpstrFileTitle,-1,pFileTitle,nMaxLen);
@@ -947,7 +947,7 @@ inline int CFileDialog::GetFilterIndex() const
 
 inline void CFileDialog::SetFileTitle(LPCSTR pFileTitle)
 {
-	if (IsFullUnicodeSupport())	
+	if (IsUnicodeSystem())	
 		MultiByteToWideChar(CP_ACP,0,pFileTitle,-1,m_pwofn->lpstrFileTitle,64);
 	else
 		StringCbCopy(m_pofn->lpstrFileTitle,64,pFileTitle);
@@ -955,7 +955,7 @@ inline void CFileDialog::SetFileTitle(LPCSTR pFileTitle)
 
 inline void CFileDialog::SetTitle(LPCSTR pFileTitle)
 {
-	if (IsFullUnicodeSupport())	
+	if (IsUnicodeSystem())	
 	{
 		if (m_pwofn->lpstrTitle!=NULL)
 			delete[] m_pwofn->lpstrTitle;
@@ -971,7 +971,7 @@ inline void CFileDialog::SetTitle(LPCSTR pFileTitle)
 #ifdef DEF_WCHAR
 inline void CFileDialog::SetFileTitle(LPCWSTR pFileTitle)
 {
-	if (IsFullUnicodeSupport())	
+	if (IsUnicodeSystem())	
 		StringCbCopyW(m_pwofn->lpstrFileTitle,64,pFileTitle);
 	else
 		WideCharToMultiByte(CP_ACP,0,pFileTitle,-1,m_pofn->lpstrFileTitle,64,NULL,NULL);
@@ -981,7 +981,7 @@ inline void CFileDialog::SetFileTitle(LPCWSTR pFileTitle)
 
 inline void CFileDialog::SetTitle(LPCWSTR pFileTitle)
 {
-	if (IsFullUnicodeSupport())	
+	if (IsUnicodeSystem())	
 	{
 		if (m_pwofn->lpstrTitle!=NULL)
 			delete[] m_pwofn->lpstrTitle;

@@ -672,7 +672,7 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnInitDialog(HWND hwndFocus)
 		CheckDlgButton(IDC_CLOSETOSYSTEMTRAY,1);
 	
 	// Adding details to sorting box
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		SendDlgItemMessageW(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)ID2W(IDS_NOSORTNG));
 		for (int iDetail=0;iDetail<=CLocateDlg::LastType;iDetail++)
@@ -1468,9 +1468,11 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnInitDialog(HWND hwndFocus)
 
 	m_pList=new CListCtrl(GetDlgItem(IDC_LANGUAGE));
 
-	m_pList->InsertColumn(0,ID2A(IDS_LANGUAGE),LVCFMT_LEFT,130);
-	m_pList->InsertColumn(1,ID2A(IDS_LANGUAGEFILE),LVCFMT_LEFT,80);
-	m_pList->InsertColumn(2,ID2A(IDS_LANGUAGEDESC),LVCFMT_LEFT,100);
+	m_pList->SetUnicodeFormat(TRUE);
+	
+	m_pList->InsertColumn(0,ID2W(IDS_LANGUAGE),LVCFMT_LEFT,130);
+	m_pList->InsertColumn(1,ID2W(IDS_LANGUAGEFILE),LVCFMT_LEFT,80);
+	m_pList->InsertColumn(2,ID2W(IDS_LANGUAGEDESC),LVCFMT_LEFT,100);
 	
 	m_pList->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT ,LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT );
 	m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Language Settings List Widths");
@@ -1529,22 +1531,48 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnNotify(int idCtrl,LPNMHDR pnm
 	switch (idCtrl)
 	{
 	case IDC_LANGUAGE:
-		ListNotifyHandler((LV_DISPINFO*)pnmh,(NMLISTVIEW*)pnmh);
+		ListNotifyHandler((NMLISTVIEW*)pnmh);
 		break;
 	}
 	return CPropertyPage::OnNotify(idCtrl,pnmh);
 }
 
 
-BOOL CSettingsProperties::CLanguageSettingsPage::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
+BOOL CSettingsProperties::CLanguageSettingsPage::ListNotifyHandler(NMLISTVIEW *pNm)
 {
-	switch(pLvdi->hdr.code)
+	switch(pNm->hdr.code)
 	{
 	case LVN_DELETEITEM:
 		delete (LanguageItem*)pNm->lParam;
 		break;
 	case LVN_GETDISPINFO:
 		{
+			LV_DISPINFO *pLvdi=(LV_DISPINFO *)pNm;
+			LanguageItem* li=(LanguageItem*)pLvdi->item.lParam;
+            if (li==NULL)
+				break;
+			
+			pLvdi->item.mask=LVIF_TEXT|LVIF_DI_SETITEM;
+
+			if (g_szBuffer!=NULL)
+				delete[] g_szBuffer;
+			switch (pLvdi->item.iSubItem)
+			{
+			case 0:
+				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->Language,li->Language.GetLength());
+				break;
+			case 1:
+				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->File,li->File.GetLength());
+				break;
+			case 2:
+				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->Description,li->Description.GetLength());
+				break;
+			}
+			break;
+		}
+	case LVN_GETDISPINFOW:
+		{
+			LV_DISPINFOW *pLvdi=(LV_DISPINFOW *)pNm;
 			LanguageItem* li=(LanguageItem*)pLvdi->item.lParam;
             if (li==NULL)
 				break;
@@ -1585,9 +1613,14 @@ void CSettingsProperties::CLanguageSettingsPage::FindLanguages()
 		DWORD /* IN  */ dwMaxLanguageLength,
 		LPSTR /* OUT */ szDescription,
 		DWORD /* IN  */ dwMaxDescriptionLength);
+	typedef void  (*LANGCALLW)(
+		LPWSTR /* OUT */ szLanguage,
+		DWORD /* IN  */ dwMaxLanguageLength,
+		LPWSTR /* OUT */ szDescription,
+		DWORD /* IN  */ dwMaxDescriptionLength);
 
-	CString Path(GetApp()->GetExeName(),LastCharIndex(GetApp()->GetExeName(),'\\')+1);
-	Path<<"*.dll";
+	CStringW Path(GetApp()->GetExeNameW(),LastCharIndex(GetApp()->GetExeName(),'\\')+1);
+	Path<<L"*.dll";
 
 	
 	LVITEM li;
@@ -1609,10 +1642,39 @@ void CSettingsProperties::CLanguageSettingsPage::FindLanguages()
 			LANGCALL pFunc=(LANGCALL)GetProcAddress(hLib,"GetLocateLanguageFileInfo");
 			if (pFunc==NULL) // Watcom style
 				pFunc=(LANGCALL)GetProcAddress(hLib,"_GetLocateLanguageFileInfo");
-			if (pFunc!=NULL)
+			LANGCALLW pFuncW=(LANGCALLW)GetProcAddress(hLib,"GetLocateLanguageFileInfoW");
+			if (pFuncW==NULL) // Watcom style
+				pFuncW=(LANGCALLW)GetProcAddress(hLib,"_GetLocateLanguageFileInfoW");
+
+			if (pFuncW!=NULL && IsUnicodeSystem())
 			{
 				LanguageItem* pli=new LanguageItem;
-				pFunc(pli->Language.GetBuffer(200),200,pli->Description.GetBuffer(1000),1000);
+				pFuncW(pli->Language.GetBuffer(200),200,pli->Description.GetBuffer(1000),1000);
+				pli->Language.FreeExtra();
+				pli->Description.FreeExtra();
+
+				ff.GetFileName(pli->File);
+				li.lParam=(LPARAM)pli;
+				li.iSubItem=0;
+				if (m_pSettings->m_strLangFile.CompareNoCase(pli->File)==0)
+				{
+					li.state=LVIS_SELECTED;
+					nLastSel=li.iItem;
+				}
+				else
+					li.state=0;
+
+				m_pList->InsertItem(&li);
+				li.iItem++;
+			}
+			else if (pFunc!=NULL)
+			{
+				LanguageItem* pli=new LanguageItem;
+				char szLanguage[200],szDescription[1000];
+				pFunc(szLanguage,200,szDescription,1000);
+				pli->Language=szLanguage;
+				pli->Description=szDescription;
+				
 				ff.GetFileName(pli->File);
 				li.lParam=(LPARAM)pli;
 				li.iSubItem=0;
@@ -2303,7 +2365,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 			{
 			case 0:
 				if (!m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
-					pLvdi->item.pszText=alloccopyWtoA(pDatabase->GetName());
+					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pDatabase->GetName());
 				else
 				{
 					g_szBuffer=new char[40];
@@ -2312,7 +2374,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 				}
 				break;
 			case 1:
-				pLvdi->item.pszText=alloccopyWtoA(pDatabase->GetArchiveName());
+				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pDatabase->GetArchiveName());
 				break;
 			case 2:
 				g_szBuffer=new char[100];
@@ -2725,15 +2787,15 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnNotify(int 
 	switch (idCtrl)
 	{
 	case IDC_FOLDERS:
-		ListNotifyHandler((LV_DISPINFO*)pnmh,(NMLISTVIEW*)pnmh);
+		ListNotifyHandler((NMLISTVIEW*)pnmh);
 		break;
 	}
 	return CDialog::OnNotify(idCtrl,pnmh);
 }
 
-BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
+BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::ListNotifyHandler(NMLISTVIEW *pNm)
 {
-	switch(pLvdi->hdr.code)
+	switch(pNm->hdr.code)
 	{
 	case NM_CLICK:
 		EnableDlgItem(IDC_REMOVEFOLDER,EnableRemoveButton());
@@ -4820,11 +4882,11 @@ void CSettingsProperties::CKeyboardShortcutsPage::InsertSubActions()
 	UINT nSubAction;
 	for (int nIndex=0;(nSubAction=IndexToSubAction(nAction,nIndex))!=(UINT)-1;nIndex++)
 	{
-		CString Title;
+		CStringW Title;
 		if (GetSubActionLabel(Title,nAction,nSubAction))
 			m_SubActionCombo.AddString(Title);
 		else
-			m_SubActionCombo.AddString("Unknown");
+			m_SubActionCombo.AddString(ID2W(IDS_UNKNOWN));
 	}
 
 	m_SubActionCombo.SetCurSel(0);
@@ -4920,7 +4982,7 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::SubActionToIndex(CAction::Acti
 	
 }
 
-BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str,CAction::Action nAction,UINT uSubAction) const
+BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& str,CAction::Action nAction,UINT uSubAction) const
 {
 	switch (nAction)
 	{
@@ -4941,20 +5003,18 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str
 			else if (wControlID!=0)
 			{
 				// Checking wheter dialog contains control 
-				HWND hControl=NULL;
+				CWndCtrl Control;
 				for (int i=0;hDialogs[i]!=NULL;i++)
 				{
-					hControl=::GetDlgItem(hDialogs[i],wControlID);
-					if (hControl!=NULL)
+					Control.AssignToDlgItem(hDialogs[i],wControlID);
+					if (HWND(Control)!=NULL)
 						break;
 				}
 
-				if (hControl!=NULL)
+				if (HWND(Control)!=NULL)
 				{
-					DWORD dwTextLen=::GetWindowTextLength(hControl);
 					int nIndex;
-					
-					::GetWindowText(hControl,str.GetBuffer(dwTextLen),dwTextLen+1);
+					Control.GetWindowText(str);
 					while ((nIndex=str.Find('&'))!=-1)
 						str.DelChar(nIndex);
 					
@@ -4970,31 +5030,33 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CString& str
 				(CAction::ActionActivateTabs)IndexToSubAction(CAction::ActivateTab,uSubAction)));		
 
 			int nIndex;
-			while ((nIndex=str.Find("&&"))!=-1)
+			while ((nIndex=str.Find(L"&&"))!=-1)
 				str.DelChar(nIndex);
 			return TRUE;
 		}
 	case CAction::MenuCommand:
 		{
-			char szLabel[1000];
-			MENUITEMINFO mii;
+			WCHAR szLabel[1000];
+			MENUITEMINFOW mii;
+			BYTE nSubMenu=CAction::GetMenuAndSubMenu((CAction::ActionMenuCommands)uSubAction);
+			CMenu SubMenu(GetSubMenu((nSubMenu&128)?hMainMenu:hPopupMenu,nSubMenu&~128));
 			
-			mii.cbSize=sizeof(MENUITEMINFO);
+			mii.cbSize=sizeof(MENUITEMINFOW);
 			mii.fMask=MIIM_ID|MIIM_TYPE;
 			mii.dwTypeData=szLabel;
 			mii.cch=1000;
 				
-			BYTE nSubMenu=CAction::GetMenuAndSubMenu((CAction::ActionMenuCommands)uSubAction);
-			BOOL bRet=GetMenuItemInfo(GetSubMenu((nSubMenu&128)?hMainMenu:hPopupMenu,nSubMenu&~128),LOWORD(uSubAction),FALSE,&mii);
+			
+			BOOL bRet=SubMenu.GetMenuItemInfo(LOWORD(uSubAction),FALSE,&mii);
 
 			if (bRet && mii.fType==MFT_STRING)
 			{
 				str.Format((INT)HIWORD(uSubAction),szLabel);
-				int nIndex=str.FindFirst('\t');
+				int nIndex=str.FindFirst(L'\t');
 				if (nIndex!=-1)
 					str.FreeExtra(nIndex);
 
-				while ((nIndex=str.Find('&'))!=-1)
+				while ((nIndex=str.Find(L'&'))!=-1)
                     str.DelChar(nIndex);
 				return TRUE;
 			}
@@ -5103,39 +5165,73 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnNotify(int idCtrl,LPNMHDR pn
 	switch (idCtrl)
 	{
 	case IDC_KEYLIST:
-		ListNotifyHandler((LV_DISPINFO*)pnmh,(NMLISTVIEW*)pnmh);
+		ListNotifyHandler((NMLISTVIEW*)pnmh);
 		break;
 	case IDC_WHEREPRESSED:
-		WherePressedNotifyHandler((LV_DISPINFO*)pnmh,(NMLISTVIEW*)pnmh);
+		WherePressedNotifyHandler((NMLISTVIEW*)pnmh);
 		break;
 	default:
 		if (pnmh->code==TTN_NEEDTEXT)
 		{
+			if (g_szBuffer!=NULL)
+				delete[] g_szBuffer;
+
 			switch (pnmh->idFrom)
 			{
 			case IDC_ADDACTION:
-				m_Buffer.LoadString(IDS_SHORTCUTADDACTION);
+				g_szBuffer=allocstring(IDS_SHORTCUTADDACTION);
 				break;
 			case IDC_REMOVEACTION:
-				m_Buffer.LoadString(IDS_SHORTCUTREMOVEACTION);
+				g_szBuffer=allocstring(IDS_SHORTCUTREMOVEACTION);
 				break;
 			case IDC_NEXT:
-				m_Buffer.LoadString(IDS_SHORTCUTNEXTACTION);
+				g_szBuffer=allocstring(IDS_SHORTCUTNEXTACTION);
 				break;
 			case IDC_PREV:
-				m_Buffer.LoadString(IDS_SHORTCUTPREVACTION);
+				g_szBuffer=allocstring(IDS_SHORTCUTPREVACTION);
 				break;
 			case IDC_SWAPWITHPREVIOUS:
-				m_Buffer.LoadString(IDS_SHORTCUTSWAPWITHPREVIOUS);
+				g_szBuffer=allocstring(IDS_SHORTCUTSWAPWITHPREVIOUS);
 				break;
 			case IDC_SWAPWITHNEXT:
-				m_Buffer.LoadString(IDS_SHORTCUTSWAPWITHNEXT);
+				g_szBuffer=allocstring(IDS_SHORTCUTSWAPWITHNEXT);
 				break;
 			default:
-				m_Buffer.LoadString(IDS_UNKNOWN);
+				g_szBuffer=allocstring(IDS_UNKNOWN);
 				break;
 			}
-			((LPTOOLTIPTEXT)pnmh)->lpszText=m_Buffer.GiveBuffer();				
+			((LPTOOLTIPTEXT)pnmh)->lpszText=g_szBuffer;				
+		}
+		else if (pnmh->code==TTN_NEEDTEXTW)
+		{
+			if (g_szwBuffer!=NULL)
+				delete[] g_szwBuffer;
+
+			switch (pnmh->idFrom)
+			{
+			case IDC_ADDACTION:
+				g_szwBuffer=allocstringW(IDS_SHORTCUTADDACTION);
+				break;
+			case IDC_REMOVEACTION:
+				g_szwBuffer=allocstringW(IDS_SHORTCUTREMOVEACTION);
+				break;
+			case IDC_NEXT:
+				g_szwBuffer=allocstringW(IDS_SHORTCUTNEXTACTION);
+				break;
+			case IDC_PREV:
+				g_szwBuffer=allocstringW(IDS_SHORTCUTPREVACTION);
+				break;
+			case IDC_SWAPWITHPREVIOUS:
+				g_szwBuffer=allocstringW(IDS_SHORTCUTSWAPWITHPREVIOUS);
+				break;
+			case IDC_SWAPWITHNEXT:
+				g_szwBuffer=allocstringW(IDS_SHORTCUTSWAPWITHNEXT);
+				break;
+			default:
+				g_szwBuffer=allocstringW(IDS_UNKNOWN);
+				break;
+			}
+			((LPTOOLTIPTEXTW)pnmh)->lpszText=g_szwBuffer;				
 		}
 	}
 	return CPropertyPage::OnNotify(idCtrl,pnmh);
@@ -5144,105 +5240,228 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnNotify(int idCtrl,LPNMHDR pn
 
 		
 
-BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
+BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *pNm)
 {
-	switch(pLvdi->hdr.code)
+	switch(pNm->hdr.code)
 	{
 	case LVN_DELETEITEM:
 		if (pNm->lParam!=NULL)
 			delete (CShortcut*)pNm->lParam;
 		break;
 	case LVN_GETDISPINFO:
-		//CShortcut* pShortcut=(CShortcut*)pLvdi->item.lParam;
-        if (pLvdi->item.lParam==NULL)
-			break;
-		
-		// Retrieving state
-		pLvdi->item.mask=LVIF_STATE;
-		pLvdi->item.stateMask=LVIS_SELECTED;
-		m_pList->GetItem(&pLvdi->item);
-		pLvdi->item.mask=LVIF_TEXT;
-
-		switch (pLvdi->item.iSubItem)
 		{
-		case 0:// Shortcut
-			if (pLvdi->item.state&LVIS_SELECTED)
+			LV_DISPINFO *pLvdi=(LV_DISPINFO *)pNm;
+			//CShortcut* pShortcut=(CShortcut*)pLvdi->item.lParam;
+			if (pLvdi->item.lParam==NULL)
+				break;
+			if (g_szBuffer!=NULL)
+				delete[] g_szBuffer;
+			
+			// Retrieving state
+			pLvdi->item.mask=LVIF_STATE;
+			pLvdi->item.stateMask=LVIS_SELECTED;
+			m_pList->GetItem(&pLvdi->item);
+			pLvdi->item.mask=LVIF_TEXT;
+
+			switch (pLvdi->item.iSubItem)
 			{
-				// Item is selected and not overrided, retrieving shortcut from hotkey control
-				if (IsDlgButtonChecked(IDC_HOTKEYRADIO))
+			case 0:// Shortcut
+				if (pLvdi->item.state&LVIS_SELECTED)
 				{
-					WORD wKey=(WORD)SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_GETHOTKEY,0,0);
-					CShortcut::FormatKeyLabel(m_pVirtualKeyNames,LOBYTE(wKey),CShortcut::HotkeyModifiersToModifiers(HIBYTE(wKey)),
-						(m_pCurrentShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode)?TRUE:FALSE,m_Buffer);
+					// Item is selected and not overrided, retrieving shortcut from hotkey control
+					if (IsDlgButtonChecked(IDC_HOTKEYRADIO))
+					{
+						CStringW Buffer;
+						WORD wKey=(WORD)SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_GETHOTKEY,0,0);
+						CShortcut::FormatKeyLabel(m_pVirtualKeyNames,LOBYTE(wKey),CShortcut::HotkeyModifiersToModifiers(HIBYTE(wKey)),
+							(m_pCurrentShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode)?TRUE:FALSE,Buffer);
+						g_szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
+					}
+					else
+					{
+						BOOL bScancode=(m_pCurrentShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode)?TRUE:FALSE;
+						BYTE bVKey=GetVirtualCode(m_pCurrentShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode);
+						BYTE bModifiers=0;
+							
+						if (IsDlgButtonChecked(IDC_MODCTRL))
+							bModifiers|=CShortcut::ModifierControl;
+						if (IsDlgButtonChecked(IDC_MODALT))
+							bModifiers|=CShortcut::ModifierAlt;
+						if (IsDlgButtonChecked(IDC_MODSHIFT))
+							bModifiers|=CShortcut::ModifierShift;
+						if (IsDlgButtonChecked(IDC_MODWIN))
+							bModifiers|=CShortcut::ModifierWin;
+						CStringW Buffer;
+						CShortcut::FormatKeyLabel(m_pVirtualKeyNames,bVKey,bModifiers,bScancode,Buffer);
+						g_szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
+					}
 				}
 				else
 				{
-					BOOL bScancode=(m_pCurrentShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode)?TRUE:FALSE;
-					BYTE bVKey=GetVirtualCode(m_pCurrentShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode);
-					BYTE bModifiers=0;
-						
-					if (IsDlgButtonChecked(IDC_MODCTRL))
-						bModifiers|=CShortcut::ModifierControl;
-					if (IsDlgButtonChecked(IDC_MODALT))
-						bModifiers|=CShortcut::ModifierAlt;
-					if (IsDlgButtonChecked(IDC_MODSHIFT))
-						bModifiers|=CShortcut::ModifierShift;
-					if (IsDlgButtonChecked(IDC_MODWIN))
-						bModifiers|=CShortcut::ModifierWin;
+					CStringW Buffer;
+					((CShortcut*)pLvdi->item.lParam)->FormatKeyLabel(m_pVirtualKeyNames,Buffer);
+					g_szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
+				}
+				break;
+			case 1: // Type
+				switch (((CShortcut*)pLvdi->item.lParam)->m_dwFlags&CShortcut::sfKeyTypeMask)
+				{
+				case CShortcut::sfGlobalHotkey:
+					g_szBuffer=allocstring(IDS_ADVSHORTCUTGLOBALHOTKEY);
+					break;
+				case CShortcut::sfGlobalHook:
+					g_szBuffer=allocstring(IDS_ADVSHORTCUTGLOBALHOOK);
+					break;
+				case CShortcut::sfLocal:
+					g_szBuffer=allocstring(IDS_ADVSHORTCUTLOCAL);
+					break;
+				}
+				break;
+			case 2: // Action
+				if (((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize()>1)
+					g_szBuffer=allocstring(IDS_SHORTCUTMULTIPLEACTIONS);
+				else if (pLvdi->item.state&LVIS_SELECTED)
+				{
+					int nCurSel=m_SubActionCombo.GetCurSel();
+					UINT nSubAction=0;
+					CAction::Action nAction=GetSelectedAction();
+					if (nAction==CAction::None)
+					{
+						g_szBuffer=allocstring(IDS_NONE);
+						break;
+					}
+					if ((nSubAction=IndexToSubAction(nAction,nCurSel))!=UINT(-1))
+					{
+						CStringW Buffer;
+						FormatActionLabel(Buffer,nAction,nSubAction);
+						g_szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
+						break;
+					}
 					
-					CShortcut::FormatKeyLabel(m_pVirtualKeyNames,bVKey,bModifiers,bScancode,m_Buffer);
-				}
-			}
-			else
-				((CShortcut*)pLvdi->item.lParam)->FormatKeyLabel(m_pVirtualKeyNames,m_Buffer);
-			break;
-		case 1: // Type
-			switch (((CShortcut*)pLvdi->item.lParam)->m_dwFlags&CShortcut::sfKeyTypeMask)
-			{
-			case CShortcut::sfGlobalHotkey:
-				m_Buffer.LoadString(IDS_ADVSHORTCUTGLOBALHOTKEY);
-				break;
-			case CShortcut::sfGlobalHook:
-				m_Buffer.LoadString(IDS_ADVSHORTCUTGLOBALHOOK);
-				break;
-			case CShortcut::sfLocal:
-				m_Buffer.LoadString(IDS_ADVSHORTCUTLOCAL);
-				break;
-			}
-			break;
-		case 2: // Action
-			if (((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize()>1)
-				m_Buffer.LoadString(IDS_SHORTCUTMULTIPLEACTIONS);
-			else if (pLvdi->item.state&LVIS_SELECTED)
-			{
-				int nCurSel=m_SubActionCombo.GetCurSel();
-				UINT nSubAction=0;
-				CAction::Action nAction=GetSelectedAction();
-				if (nAction==CAction::None)
+					g_szBuffer=allocstring(IDS_UNKNOWN);
+				}				
+				else
 				{
-					m_Buffer.LoadString(IDS_NONE);
-					break;
+					CStringW Buffer;
+					FormatActionLabel(Buffer,(CAction::Action)((CShortcut*)pLvdi->item.lParam)->m_apActions[0]->m_nAction,
+						((CShortcut*)pLvdi->item.lParam)->m_apActions[0]->m_nSubAction);
+					g_szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
 				}
-				if ((nSubAction=IndexToSubAction(nAction,nCurSel))!=UINT(-1))
-				{
-					FormatActionLabel(m_Buffer,nAction,nSubAction);
-					break;
-				}
-				
-				m_Buffer.LoadString(IDS_UNKNOWN);
-			}				
-			else
-			{
-				FormatActionLabel(m_Buffer,(CAction::Action)((CShortcut*)pLvdi->item.lParam)->m_apActions[0]->m_nAction,
-					((CShortcut*)pLvdi->item.lParam)->m_apActions[0]->m_nSubAction);
+				break;
+			default:
+				g_szBuffer=allocstring(IDS_UNKNOWN);
+				break;
 			}
-			break;
-		default:
-			m_Buffer.LoadString(IDS_UNKNOWN);
+			pLvdi->item.pszText=g_szBuffer;
 			break;
 		}
-		pLvdi->item.pszText=m_Buffer.GiveBuffer();
-		break;
+	case LVN_GETDISPINFOW:
+		{
+			LV_DISPINFOW *pLvdi=(LV_DISPINFOW *)pNm;
+			//CShortcut* pShortcut=(CShortcut*)pLvdi->item.lParam;
+			if (pLvdi->item.lParam==NULL)
+				break;
+			if (g_szwBuffer!=NULL)
+				delete[] g_szwBuffer;
+			
+			// Retrieving state
+			pLvdi->item.mask=LVIF_STATE;
+			pLvdi->item.stateMask=LVIS_SELECTED;
+			m_pList->GetItem(&pLvdi->item);
+			pLvdi->item.mask=LVIF_TEXT;
+
+			switch (pLvdi->item.iSubItem)
+			{
+			case 0:// Shortcut
+				if (pLvdi->item.state&LVIS_SELECTED)
+				{
+					// Item is selected and not overrided, retrieving shortcut from hotkey control
+					if (IsDlgButtonChecked(IDC_HOTKEYRADIO))
+					{
+						WORD wKey=(WORD)SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_GETHOTKEY,0,0);
+						CStringW Buffer;
+						CShortcut::FormatKeyLabel(m_pVirtualKeyNames,LOBYTE(wKey),CShortcut::HotkeyModifiersToModifiers(HIBYTE(wKey)),
+							(m_pCurrentShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode)?TRUE:FALSE,Buffer);
+						g_szwBuffer=Buffer.GiveBuffer();
+					}
+					else
+					{
+						BOOL bScancode=(m_pCurrentShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode)?TRUE:FALSE;
+						BYTE bVKey=GetVirtualCode(m_pCurrentShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode);
+						BYTE bModifiers=0;
+							
+						if (IsDlgButtonChecked(IDC_MODCTRL))
+							bModifiers|=CShortcut::ModifierControl;
+						if (IsDlgButtonChecked(IDC_MODALT))
+							bModifiers|=CShortcut::ModifierAlt;
+						if (IsDlgButtonChecked(IDC_MODSHIFT))
+							bModifiers|=CShortcut::ModifierShift;
+						if (IsDlgButtonChecked(IDC_MODWIN))
+							bModifiers|=CShortcut::ModifierWin;
+						CStringW Buffer;
+						CShortcut::FormatKeyLabel(m_pVirtualKeyNames,bVKey,bModifiers,bScancode,Buffer);
+						g_szwBuffer=Buffer.GiveBuffer();
+					}
+				}
+				else
+				{
+					CStringW Buffer;
+					((CShortcut*)pLvdi->item.lParam)->FormatKeyLabel(m_pVirtualKeyNames,Buffer);
+					g_szwBuffer=Buffer.GiveBuffer();
+				}
+				break;
+			case 1: // Type
+				switch (((CShortcut*)pLvdi->item.lParam)->m_dwFlags&CShortcut::sfKeyTypeMask)
+				{
+				case CShortcut::sfGlobalHotkey:
+					g_szwBuffer=allocstringW(IDS_ADVSHORTCUTGLOBALHOTKEY);
+					break;
+				case CShortcut::sfGlobalHook:
+					g_szwBuffer=allocstringW(IDS_ADVSHORTCUTGLOBALHOOK);
+					break;
+				case CShortcut::sfLocal:
+					g_szwBuffer=allocstringW(IDS_ADVSHORTCUTLOCAL);
+					break;
+				}
+				break;
+			case 2: // Action
+				if (((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize()>1)
+					g_szwBuffer=allocstringW(IDS_SHORTCUTMULTIPLEACTIONS);
+				else if (pLvdi->item.state&LVIS_SELECTED)
+				{
+					int nCurSel=m_SubActionCombo.GetCurSel();
+					UINT nSubAction=0;
+					CAction::Action nAction=GetSelectedAction();
+					if (nAction==CAction::None)
+					{
+						g_szwBuffer=allocstringW(IDS_NONE);
+						break;
+					}
+					if ((nSubAction=IndexToSubAction(nAction,nCurSel))!=UINT(-1))
+					{
+						CStringW Buffer;
+						FormatActionLabel(Buffer,nAction,nSubAction);
+						g_szwBuffer=Buffer.GiveBuffer();
+						break;
+					}
+					
+					g_szwBuffer=allocstringW(IDS_UNKNOWN);
+				}				
+				else
+				{
+					CStringW Buffer;
+					FormatActionLabel(Buffer,(CAction::Action)((CShortcut*)pLvdi->item.lParam)->m_apActions[0]->m_nAction,
+						((CShortcut*)pLvdi->item.lParam)->m_apActions[0]->m_nSubAction);
+					g_szwBuffer=Buffer.GiveBuffer();
+				}
+				break;
+			default:
+				g_szwBuffer=allocstringW(IDS_UNKNOWN);
+				break;
+			}
+			pLvdi->item.pszText=g_szwBuffer;
+			break;
+		}
 	case LVN_ITEMCHANGED:
 		OnChangeItem(pNm);
 		break;
@@ -5253,9 +5472,9 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(LV_DISPINFO 
 	return TRUE;
 }
 
-BOOL CSettingsProperties::CKeyboardShortcutsPage::WherePressedNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
+BOOL CSettingsProperties::CKeyboardShortcutsPage::WherePressedNotifyHandler(NMLISTVIEW *pNm)
 {
-	switch(pLvdi->hdr.code)
+	switch(pNm->hdr.code)
 	{
 	case LVN_ITEMCHANGING:
 		if (pNm->uNewState&LVIS_SELECTED && !(pNm->uOldState&LVIS_SELECTED))
@@ -6243,7 +6462,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::ClearActionFields()
 }
 
 
-void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CString& str,CAction::Action nAction,UINT uSubAction) const
+void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CStringW& str,CAction::Action nAction,UINT uSubAction) const
 {
 	// Insert action code
 	switch (nAction)
@@ -6269,13 +6488,13 @@ void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CString& str
 	}
 
 	// Insert subaction code
-	CString subaction;
+	CStringW subaction;
 	if (GetSubActionLabel(subaction,nAction,uSubAction))
 	{
 		if (str.IsEmpty())
 			str=subaction;
 		else
-			str << '/' << subaction;
+			str << L'/' << subaction;
 	}
 }
 

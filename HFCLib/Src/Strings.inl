@@ -34,18 +34,16 @@ inline LPSTR allocempty()
 #ifdef DEF_WCHAR
 inline LPWSTR alloccopy(LPCWSTR szString)
 {
-	SIZE_T nLength=istrlenw(szString);
-	WCHAR* psz=new WCHAR[max(nLength,1)+1];
-	for (register SIZE_T i=0;i<=nLength;i++)
-		psz[i]=szString[i];
+	SIZE_T nLength=istrlenw(szString)+1;
+	WCHAR* psz=new WCHAR[max(nLength,2)];
+	CopyMemory(psz,szString,nLength<<1);
 	return psz;
 }
 
 inline LPWSTR alloccopy(LPCWSTR szString,SIZE_T dwLength)
 {
 	WCHAR* psz=new WCHAR[max(dwLength,1)+1];
-	for (register SIZE_T i=0;i<dwLength;i++)
-		psz[i]=szString[i];
+	CopyMemory(psz,szString,dwLength<<1);
 	psz[dwLength]=L'\0';
 	return psz;
 }
@@ -70,7 +68,7 @@ inline LPWSTR alloccopyAtoW(LPCSTR szString)
 {
 	SIZE_T dwLength=istrlen(szString);
 	WCHAR* psz=new WCHAR[max(dwLength,1)+1];
-	MemCopyAtoW(psz,szString,dwLength+1);
+	MultiByteToWideChar(CP_ACP,0,szString,dwLength+1,psz,dwLength+1);
 	return psz;
 }
 
@@ -108,7 +106,7 @@ inline WCHAR A2Wc(char ch)
 
 inline BOOL IsCharLower(WCHAR ch)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return IsCharLowerW(ch);
 	else
 		return iswlower(ch);
@@ -116,7 +114,7 @@ inline BOOL IsCharLower(WCHAR ch)
 
 inline BOOL IsCharUpper(WCHAR ch)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return IsCharUpperW(ch);
 	else
 		return iswupper(ch);
@@ -174,14 +172,14 @@ inline void MakeUpper(LPSTR szStr,DWORD cchLength)
 #ifdef DEF_WCHAR
 inline void MakeLower(LPWSTR szStr)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		CharLowerW(szStr);
 	else
 		_wcslwr_s(szStr,istrlenw(szStr)+1);
 }
 inline void MakeLower(LPWSTR szStr,DWORD cchLength)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		CharLowerBuffW(szStr,cchLength);
 	else
 	{
@@ -194,14 +192,14 @@ inline void MakeLower(LPWSTR szStr,DWORD cchLength)
 
 inline void MakeUpper(LPWSTR szStr)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		CharUpperW(szStr);
 	else
 		_wcsupr_s(szStr,istrlenw(szStr)+1);
 }
 inline void MakeUpper(LPWSTR szStr,DWORD cchLength)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		CharUpperBuffW(szStr,cchLength);
 	else
 	{

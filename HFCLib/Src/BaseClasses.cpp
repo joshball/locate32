@@ -381,7 +381,7 @@ CSize CDC::TabbedTextOut(int x,int y,const CStringW& str,int nTabPositions,
 CSize CDC::GetTextExtent(const CStringW& str) const
 {
 	CSize sz;
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		::GetTextExtentPoint32W(m_hDC,(LPCWSTR)str,str.GetLength()+1,&sz);
 	else
 		::GetTextExtentPoint32A(m_hDC,W2A(str),str.GetLength()+1,&sz);
@@ -391,7 +391,7 @@ CSize CDC::GetTextExtent(const CStringW& str) const
 CSize CDC::GetTextExtent(LPCWSTR lpszString,int nCount) const
 {
 	CSize sz;
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		::GetTextExtentPoint32W(m_hDC,lpszString,nCount,&sz);
 	else
 		::GetTextExtentPoint32(m_hDC,W2A(lpszString),nCount,&sz);
@@ -442,18 +442,11 @@ CSize CDC::GetOutputTabbedTextExtent(const CStringW& str,
 	return sz;
 }
 
-int CDC::DrawText(LPCWSTR lpszString,int nCount,LPRECT lpRect,UINT nFormat)
-{
-	if (IsFullUnicodeSupport())
-		return ::DrawTextW(m_hDC,lpszString,nCount,lpRect,nFormat);
-	else
-		return ::DrawTextA(m_hDC,W2A(lpszString),nCount,lpRect,nFormat);
-}
 
 int CDC::GetTextFace(CStringW& rString) const
 {
 	int ret;
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		ret=::GetTextFaceW(m_hDC,2000,rString.GetBuffer(2000));
 		rString.FreeExtra();
@@ -517,20 +510,113 @@ int CMenu::GetMenuString(UINT nIDItem, CStringA& rString, UINT nFlags) const
 }
 
 #ifdef DEF_WCHAR
+int CMenu::GetMenuString(UINT nIDItem, LPWSTR lpString, int nMaxCount, UINT nFlags) const
+{
+	if (IsUnicodeSystem())
+		return ::GetMenuStringW(m_hMenu,nIDItem,lpString,nMaxCount,nFlags);
+	else
+	{
+		char* aString=new char[nMaxCount+2];
+		int ret=::GetMenuStringA(m_hMenu,nIDItem,aString,nMaxCount,nFlags);
+		MultiByteToWideChar(CP_ACP,0,aString,ret+1,lpString,nMaxCount);
+		delete[] aString;
+		return ret;
+	}
+}
+
 int CMenu::GetMenuString(UINT nIDItem, CStringW& rString, UINT nFlags) const
 {
 	int len=::GetMenuString(m_hMenu,nIDItem,NULL,0,nFlags);
-	LPWSTR szBuffer=new WCHAR[len+2];
-	if (szBuffer!=NULL)
+	if (IsUnicodeSystem())
 	{
-		DebugMessage("CMenu::GetMenuString(): szBuffer is NULL");
-		SetHFCError(HFC_CANNOTALLOC);
-		return -1;
+		LPWSTR szBuffer=new WCHAR[len+2];
+		if (szBuffer!=NULL)
+		{
+			DebugMessage("CMenu::GetMenuString(): szBuffer is NULL");
+			SetHFCError(HFC_CANNOTALLOC);
+			return -1;
+		}
+		len=::GetMenuStringW(m_hMenu,nIDItem,szBuffer,len+1,nFlags);
+		if (len>0)
+			rString=szBuffer;	
+		else
+			rString.Empty();
+		delete[] szBuffer;
 	}
-	len=::GetMenuStringW(m_hMenu,nIDItem,szBuffer,len+1,nFlags);
-	rString=szBuffer;	
-	delete[] szBuffer;
+	else
+	{
+		LPSTR szBuffer=new CHAR[len+2];
+		if (szBuffer!=NULL)
+		{
+			DebugMessage("CMenu::GetMenuString(): szBuffer is NULL");
+			SetHFCError(HFC_CANNOTALLOC);
+			return -1;
+		}
+		len=::GetMenuStringA(m_hMenu,nIDItem,szBuffer,len+1,nFlags);
+		if (len>0)
+			rString=szBuffer;	
+		else
+			rString.Empty();
+		delete[] szBuffer;
+	}
 	return len;
+}
+
+BOOL CMenu::InsertMenu(UINT nItem,BOOL fByPosition,LPMENUITEMINFOW lpmii)
+{
+	if (IsUnicodeSystem())
+		return ::InsertMenuItemW(m_hMenu,nItem,fByPosition,lpmii);
+
+	if (lpmii->fMask&MIIM_STRING || (lpmii->fMask&MIIM_TYPE && lpmii->fType&MFT_STRING))
+	{
+		LPWSTR sTemp=lpmii->dwTypeData;
+		lpmii->dwTypeData=(LPWSTR)alloccopyWtoA(sTemp);
+		BOOL bRet=::InsertMenuItemA(m_hMenu,nItem,fByPosition,(MENUITEMINFOA*)lpmii);
+		delete[] (LPSTR)lpmii->dwTypeData;
+		lpmii->dwTypeData=sTemp;
+		return bRet;
+	}
+	else
+		return ::InsertMenuItemA(m_hMenu,nItem,fByPosition,(MENUITEMINFOA*)lpmii);
+}
+
+BOOL CMenu::SetMenuItemInfo(UINT uItem,BOOL fByPosition,LPMENUITEMINFOW lpmii)
+{
+	if (IsUnicodeSystem())
+		return ::SetMenuItemInfoW(m_hMenu,uItem,fByPosition,lpmii);
+		
+	if (lpmii->fMask&MIIM_STRING || (lpmii->fMask&MIIM_TYPE && lpmii->fType&MFT_STRING))
+	{
+		LPWSTR sTemp=lpmii->dwTypeData;
+		lpmii->dwTypeData=(LPWSTR)alloccopyWtoA(sTemp);
+		BOOL bRet=::SetMenuItemInfoA(m_hMenu,uItem,fByPosition,(MENUITEMINFOA*)lpmii);
+		delete[] (LPSTR)lpmii->dwTypeData;
+		lpmii->dwTypeData=sTemp;
+		return bRet;
+	}
+	else
+		return ::SetMenuItemInfoA(m_hMenu,uItem,fByPosition,(MENUITEMINFOA*)lpmii);
+}
+
+BOOL CMenu::GetMenuItemInfo(UINT uItem,BOOL fByPosition,LPMENUITEMINFOW lpmii) const
+{
+	if (IsUnicodeSystem())
+		return ::GetMenuItemInfoW(m_hMenu,uItem,fByPosition,lpmii);
+
+	if (lpmii->fMask&MIIM_STRING || (lpmii->fMask&MIIM_TYPE && lpmii->fType&MFT_STRING))
+	{
+		LPWSTR sTemp=lpmii->dwTypeData;
+		lpmii->dwTypeData=(LPWSTR)new char[lpmii->cch+2];
+		BOOL bRet=::GetMenuItemInfoA(m_hMenu,uItem,fByPosition,(MENUITEMINFOA*)lpmii);
+		if (bRet)
+			MultiByteToWideChar(CP_ACP,0,(LPSTR)lpmii->dwTypeData,-1,sTemp,lpmii->cch);
+		delete[] (LPSTR)lpmii->dwTypeData;
+		lpmii->dwTypeData=sTemp;
+		return bRet;
+	}
+	else
+		return ::SetMenuItemInfoA(m_hMenu,uItem,fByPosition,(MENUITEMINFOA*)lpmii);
+
 }
 #endif
 

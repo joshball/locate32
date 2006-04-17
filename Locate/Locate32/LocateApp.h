@@ -323,7 +323,7 @@ public:
 
 	// Database menu functions
 	static BOOL IsDatabaseMenu(HMENU hMenu);
-	void OnInitDatabaseMenu(HMENU hPopupMenu);
+	void OnInitDatabaseMenu(CMenu& PopupMenu);
 	void OnDatabaseMenuItem(WORD wID);
 	static int GetDatabaseMenuIndex(HMENU hPopupMenu);
 
@@ -569,8 +569,5 @@ inline BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases)
 	
 	return OnUpdate(bStopIfProcessing,pDatabases,(int)nThreadPriority);
 }
-
-extern FASTALLOCATORTYPE Allocation;
-
 
 #endif

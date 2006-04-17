@@ -154,7 +154,7 @@ LPITEMIDLIST GetFileIDList(LPCWSTR lpszFileName)
 	LPITEMIDLIST ret=NULL;
 	HRESULT hres;
 		
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		IShellLinkW *psl;
 		hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(LPVOID*)&psl);
@@ -194,7 +194,7 @@ HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc,L
 {
 	HRESULT hres;
 	
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		IShellLinkW* psl;
 		hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(void**)&psl);
@@ -271,7 +271,7 @@ HRESULT ResolveShortcut(HWND hWnd,LPCWSTR pszShortcutFile,LPWSTR pszPath)
 	HRESULT hres;  
 	pszPath[0]='\0';
 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		IShellLinkW* psl;
 		WIN32_FIND_DATAW wfd;
@@ -331,7 +331,7 @@ HRESULT ResolveShortcut(HWND hWnd,LPCWSTR pszShortcutFile,LPWSTR pszPath)
 HRESULT GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,SIZE_T nBufSize)
 {
 	HRESULT hres;
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		IShellLinkW* psl;
 		WIN32_FIND_DATAW wfd;
@@ -607,7 +607,7 @@ BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,SIZE_T nBufferLen)
 
 DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return SHGetFileInfoW(pszPath,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags);
 
 	SHFILEINFO fi;
@@ -628,7 +628,7 @@ DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,U
 
 DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return SHGetFileInfoW((LPCWSTR)piil,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags|SHGFI_PIDL);
 
 	SHFILEINFO fi;

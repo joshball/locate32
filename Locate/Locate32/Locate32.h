@@ -137,7 +137,6 @@ extern LPWSTR g_szwBuffer;
 #define sMemSet(dst,val,len)	iMemSet(dst,val,len)
 #define sstrlen(str,len)		dstrlen(str,len)
 
-#define sMemCopyW				iMemCopyW
 #define sstrlenW				dwstrlen
 
 

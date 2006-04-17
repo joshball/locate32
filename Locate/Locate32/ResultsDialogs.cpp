@@ -640,21 +640,38 @@ BOOL CSaveResultsDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 	switch (idCtrl)
 	{
 	case IDC_DETAILS:
-		return ListNotifyHandler((LV_DISPINFO*)pnmh,(NMLISTVIEW*)pnmh);
+		return ListNotifyHandler((NMLISTVIEW*)pnmh);
 	}
 	return CFileDialog::OnNotify(idCtrl,pnmh);
 }
 
-BOOL CSaveResultsDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
+BOOL CSaveResultsDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 {
-	switch(pLvdi->hdr.code)
+	switch(pNm->hdr.code)
 	{
 	case LVN_GETDISPINFO:
 		{
+			LV_DISPINFO *pLvdi=(LV_DISPINFO *)pNm;
 			if (pLvdi->item.lParam<=CLocateDlg::LastType)
 			{
-				m_strBuffer.LoadString(IDS_LISTNAME+pLvdi->item.lParam,LanguageSpecificResource);
-				pLvdi->item.pszText=m_strBuffer.GetBuffer();
+				if (g_szBuffer!=NULL)
+					delete[] g_szBuffer;
+
+				g_szBuffer=allocstring(IDS_LISTNAME+pLvdi->item.lParam,LanguageSpecificResource);
+				pLvdi->item.pszText=g_szBuffer;
+			}
+			break;
+		}
+	case LVN_GETDISPINFOW:
+		{
+			LV_DISPINFOW *pLvdi=(LV_DISPINFOW*)pNm;
+			if (pLvdi->item.lParam<=CLocateDlg::LastType)
+			{
+				if (g_szwBuffer!=NULL)
+					delete[] g_szwBuffer;
+
+				g_szwBuffer=allocstringW(IDS_LISTNAME+pLvdi->item.lParam,LanguageSpecificResource);
+				pLvdi->item.pszText=g_szwBuffer;
 			}
 			break;
 		}

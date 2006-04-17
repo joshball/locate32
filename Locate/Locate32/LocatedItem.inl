@@ -418,7 +418,7 @@ inline CLocatedItem::ExtraInfo::~ExtraInfo()
 	case CLocateDlg::Owner:
 	case CLocateDlg::MD5sum:
 		if (szText!=NULL && szText!=szwEmpty)
-			Allocation.Free(szText);
+			delete[] szText;
 		break;
 	}
 }

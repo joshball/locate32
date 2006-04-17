@@ -10,8 +10,21 @@
 ////////////////////////////////////////
 // Definitions
 
+#define sMemCopy(dst,src,len)	CopyMemory(dst,src,len)
+#define sMemZero(dst,len)		ZeroMemory(dst,len)
+#define sMemSet(dst,val,len)	iMemSet(dst,val,len)
+
+#define sMemCopyW				MemCopyW
+#define sstrlenW				dwstrlen
+
+
+////////////////////////////////////////
+// Functions
+
+
+
 #ifdef DEF_WCHAR
-inline BOOL IsFullUnicodeSupport()
+inline BOOL IsUnicodeSystem()
 {
 #ifdef MICROSOFT_LAYER_FOR_UNICODE 
 	return TRUE;
@@ -102,7 +115,7 @@ inline int swprintfex( wchar_t *buffer, SIZE_T buffersize, const wchar_t *format
 
 #ifdef DEF_WCHAR
 #define MemCopyW(dst,src,len) \
-	MemCopy((dst),(src),(len)*sizeof(WCHAR))
+	sMemCopy((dst),(src),(len)*sizeof(WCHAR))
 #define iMemCopyW(dst,src,len) \
 	iMemCopy((dst),(src),(len)*sizeof(WCHAR))
 #define MemCopyWtoA(dst,src,len) \

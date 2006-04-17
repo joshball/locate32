@@ -631,6 +631,17 @@ inline BOOL CDC::DrawIcon(const POINT& point,HICON hIcon)
 	return ::DrawIcon(m_hDC,point.x,point.y,hIcon);
 }
 
+inline BOOL CDC::DrawIcon(int xLeft,int yTop,HICON hIcon,int cxWidth, int cyWidth,UINT istepIfAniCur,HBRUSH hbrFlickerFreeDraw,UINT diFlags)
+{
+	return ::DrawIconEx(m_hDC,xLeft,yTop,hIcon,cxWidth,cyWidth,istepIfAniCur,hbrFlickerFreeDraw,diFlags);
+}
+
+
+inline BOOL CDC::DrawIcon(const POINT& point,HICON hIcon,const SIZE& sz,UINT istepIfAniCur,HBRUSH hbrFlickerFreeDraw,UINT diFlags)
+{
+	return ::DrawIconEx(m_hDC,point.x,point.y,hIcon,sz.cx,sz.cy,istepIfAniCur,hbrFlickerFreeDraw,diFlags);
+}
+
 inline BOOL CDC::DrawState(const POINT& pt,const SIZE& size,HGDIOBJ hGdiObj,UINT nFlags,HBRUSH hBrush)
 {
 	return ::DrawState(m_hDC,hBrush,NULL,(LPARAM)hGdiObj,0,pt.x,pt.y,size.cx,size.cy,nFlags);
@@ -641,16 +652,16 @@ inline BOOL CDC::DrawState(const CPoint& pt,const CSize& size,CBitmap* pBitmap,U
 	return ::DrawState(m_hDC,hBrush,NULL,(LPARAM)(pBitmap==NULL?NULL:(HBITMAP)*pBitmap),0,pt.x,pt.y,size.cx,size.cy,nFlags|DST_BITMAP);
 }
 
-inline BOOL CDC::DrawState(const CPoint& pt,const CSize& size,LPCTSTR lpszText,UINT nFlags,BOOL bPrefixText,int nTextLen,HBRUSH hBrush)
-{
-	return ::DrawState(m_hDC,hBrush,NULL,(LPARAM)lpszText,0,pt.x,pt.y,size.cx,size.cy,nFlags|(bPrefixText?DST_PREFIXTEXT:DST_TEXT));
-}
-
 inline BOOL CDC::DrawState(const CPoint& pt,const CSize& size,DRAWSTATEPROC lpDrawProc,LPARAM lData,UINT nFlags,HBRUSH hBrush)
 {
 	return ::DrawState(m_hDC,hBrush,lpDrawProc,lData,0,pt.x,pt.y,size.cx,size.cy,nFlags|DST_COMPLEX);
 }
 	
+inline BOOL CDC::DrawState(const CPoint& pt,const CSize& size,LPCSTR lpszText,UINT nFlags,BOOL bPrefixText,int nTextLen,HBRUSH hBrush)
+{
+	return ::DrawState(m_hDC,hBrush,NULL,(LPARAM)lpszText,0,pt.x,pt.y,size.cx,size.cy,nFlags|(bPrefixText?DST_PREFIXTEXT:DST_TEXT));
+}
+
 inline BOOL CDC::Chord(int x1,int y1,int x2,int y2,int x3,int y3,int x4,int y4)
 {
 	return ::Chord(m_hDC,x1,y1,x2,y2,x3,y3,x4,y4);
@@ -792,12 +803,7 @@ inline BOOL CDC::TextOut(int x,int y,const CStringA& str)
 	return ::TextOutA(m_hDC,x,y,(LPCSTR)str,str.GetLength());
 }
 
-#ifdef DEF_WCHAR
-inline BOOL CDC::TextOut(int x,int y,const CStringW& str)
-{
-	return ::TextOutW(m_hDC,x,y,(LPCWSTR)str,str.GetLength());
-}
-#endif
+
 
 inline BOOL CDC::ExtTextOut(int x,int y,UINT nOptions,LPCRECT lpRect,
 	const CString& str,LPINT lpDxWidths)
@@ -805,25 +811,11 @@ inline BOOL CDC::ExtTextOut(int x,int y,UINT nOptions,LPCRECT lpRect,
 	return ::ExtTextOutA(m_hDC,x,y,nOptions,lpRect,(LPCSTR)str,str.GetLength(),lpDxWidths);
 }
 
-#ifdef DEF_WCHAR
-inline BOOL CDC::ExtTextOut(int x,int y,UINT nOptions,LPCRECT lpRect,
-	const CStringW& str,LPINT lpDxWidths)
-{
-	return ::ExtTextOutW(m_hDC,x,y,nOptions,lpRect,(LPCWSTR)str,str.GetLength(),lpDxWidths);
-}
-#endif
-
 inline int CDC::DrawText(const CString& str,LPRECT lpRect,UINT nFormat)
 {
 	return ::DrawTextA(m_hDC,(LPCSTR)str,str.GetLength(),lpRect,nFormat);
 }
 
-#ifdef DEF_WCHAR
-inline int CDC::DrawText(const CStringW& str,LPRECT lpRect,UINT nFormat)
-{
-	return ::DrawTextW(m_hDC,(LPCWSTR)str,str.GetLength(),lpRect,nFormat);
-}
-#endif
 
 inline UINT CDC::GetTextAlign() const
 {
@@ -1048,6 +1040,48 @@ inline BOOL CDC::SelectClipPath(int nMode)
 	return ::SelectClipPath(m_hDC,nMode);
 }
 
+#ifdef DEF_WCHAR
+inline BOOL CDC::ExtTextOut(int x,int y,UINT nOptions,LPCRECT lpRect,
+	LPCWSTR lpszString,UINT nCount,LPINT lpDxWidths)
+{
+	if (IsUnicodeSystem())
+		return ::ExtTextOutW(m_hDC,x,y,nOptions,lpRect,lpszString,nCount,lpDxWidths);
+	else
+		return ::ExtTextOutA(m_hDC,x,y,nOptions,lpRect,W2A(lpszString),nCount,lpDxWidths);
+}
+
+inline int CDC::DrawText(LPCWSTR lpszString,int nCount,LPRECT lpRect,UINT nFormat)
+{
+	if (IsUnicodeSystem())
+		return ::DrawTextW(m_hDC,lpszString,nCount,lpRect,nFormat);
+	else
+		return ::DrawTextA(m_hDC,W2A(lpszString),nCount,lpRect,nFormat);
+}
+
+inline BOOL CDC::DrawState(const CPoint& pt,const CSize& size,LPCWSTR lpszText,UINT nFlags,BOOL bPrefixText,int nTextLen,HBRUSH hBrush)
+{
+	if (IsUnicodeSystem())
+		return ::DrawStateW(m_hDC,hBrush,NULL,(LPARAM)lpszText,0,pt.x,pt.y,size.cx,size.cy,nFlags|(bPrefixText?DST_PREFIXTEXT:DST_TEXT));
+	else
+		return ::DrawStateA(m_hDC,hBrush,NULL,(LPARAM)(LPCSTR)W2A(lpszText),0,pt.x,pt.y,size.cx,size.cy,nFlags|(bPrefixText?DST_PREFIXTEXT:DST_TEXT));
+}
+
+inline BOOL CDC::TextOut(int x,int y,const CStringW& str)
+{
+	return ::TextOutW(m_hDC,x,y,(LPCWSTR)str,str.GetLength());
+}
+
+inline BOOL CDC::ExtTextOut(int x,int y,UINT nOptions,LPCRECT lpRect,
+	const CStringW& str,LPINT lpDxWidths)
+{
+	return ExtTextOut(x,y,nOptions,lpRect,str,str.GetLength(),lpDxWidths);
+}
+
+inline int CDC::DrawText(const CStringW& str,LPRECT lpRect,UINT nFormat)
+{
+	return DrawText((LPCWSTR)str,str.GetLength(),lpRect,nFormat);
+}
+#endif
 ///////////////////////////
 // Class CMenu
 
@@ -1102,10 +1136,6 @@ inline BOOL CMenu::LoadMenu(UINT nIDResource)
 }
 #endif
 
-inline HMENU CMenu::GetSafeHmenu() const
-{
-	return m_hMenu;
-}
 
 inline CMenu::operator HMENU() const
 {
@@ -1123,8 +1153,7 @@ inline BOOL CMenu::TrackPopupMenu(UINT nFlags, int x, int y,
 	return ::TrackPopupMenu(m_hMenu,nFlags,x,y,0,hWnd,lpRect);
 }
 
-inline BOOL CMenu::AppendMenu(UINT nFlags, UINT nIDNewItem,
-				LPCTSTR lpszNewItem)
+inline BOOL CMenu::AppendMenu(UINT nFlags, UINT nIDNewItem,LPCSTR lpszNewItem)
 {
 	return ::AppendMenu(m_hMenu,nFlags,nIDNewItem,lpszNewItem);
 }
@@ -1159,7 +1188,7 @@ inline UINT CMenu::GetMenuState(UINT nID, UINT nFlags) const
 	return ::GetMenuState(m_hMenu,nID,nFlags);
 }
 
-inline int CMenu::GetMenuString(UINT nIDItem, LPTSTR lpString, int nMaxCount, UINT nFlags) const
+inline int CMenu::GetMenuString(UINT nIDItem, LPSTR lpString, int nMaxCount, UINT nFlags) const
 {
 	return ::GetMenuString(m_hMenu,nIDItem,lpString,nMaxCount,nFlags);
 }
@@ -1169,7 +1198,7 @@ inline HMENU CMenu::GetSubMenu(int nPos) const
 	return ::GetSubMenu(m_hMenu,nPos);
 }
 
-inline BOOL CMenu::InsertMenu(UINT nPosition, UINT nFlags, UINT nIDNewItem,LPCTSTR lpszNewItem)
+inline BOOL CMenu::InsertMenu(UINT nPosition, UINT nFlags, UINT nIDNewItem,LPCSTR lpszNewItem)
 {
 	return ::InsertMenu(m_hMenu,nPosition,nFlags,nIDNewItem,lpszNewItem);
 }
@@ -1184,7 +1213,7 @@ inline BOOL CMenu::InsertMenu(UINT nItem,BOOL fByPosition,LPMENUITEMINFO lpmii)
 	return ::InsertMenuItem(m_hMenu,nItem,fByPosition,lpmii);
 }
 	
-inline BOOL CMenu::ModifyMenu(UINT nPosition, UINT nFlags, UINT nIDNewItem, LPCTSTR lpszNewItem)
+inline BOOL CMenu::ModifyMenu(UINT nPosition, UINT nFlags, UINT nIDNewItem, LPCSTR lpszNewItem)
 {
 	return ::ModifyMenu(m_hMenu,nPosition,nFlags,nIDNewItem,lpszNewItem);
 }
@@ -1231,6 +1260,35 @@ inline BOOL CMenu::SetMenuDefaultItem(UINT uItem,UINT fByPos)
 	return ::SetMenuDefaultItem(m_hMenu,uItem,fByPos);
 }
 
+#ifdef DEF_WCHAR
+inline BOOL CMenu::AppendMenu(UINT nFlags, UINT nIDNewItem,LPCWSTR lpszNewItem)
+{
+	if (IsUnicodeSystem())
+		return ::AppendMenuW(m_hMenu,nFlags,nIDNewItem,lpszNewItem);
+	else
+		return ::AppendMenuA(m_hMenu,nFlags,nIDNewItem,W2A(lpszNewItem));
+}
+
+inline BOOL CMenu::InsertMenu(UINT nPosition, UINT nFlags, UINT nIDNewItem,LPCWSTR lpszNewItem)
+{
+	if (IsUnicodeSystem())
+		return ::InsertMenuW(m_hMenu,nPosition,nFlags,nIDNewItem,lpszNewItem);
+	else
+		return ::InsertMenuA(m_hMenu,nPosition,nFlags,nIDNewItem,W2A(lpszNewItem));
+}
+
+inline BOOL CMenu::ModifyMenu(UINT nPosition, UINT nFlags, UINT nIDNewItem, LPCWSTR lpszNewItem)
+{
+	if (IsUnicodeSystem())
+		return ::ModifyMenuW(m_hMenu,nPosition,nFlags,nIDNewItem,lpszNewItem);
+	else
+		return ::ModifyMenuA(m_hMenu,nPosition,nFlags,nIDNewItem,W2A(lpszNewItem));
+}
+
+
+
+
+#endif
 ////////////////////////////////////////
 // CWnd 
 
@@ -1453,7 +1511,7 @@ inline BOOL CWnd::SetDlgItemText(int idControl,LPCSTR lpsz) const
 
 inline BOOL CWnd::SetDlgItemText(int idControl,LPCWSTR lpsz) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SetDlgItemTextW(m_hWnd,idControl,lpsz);
 	else
 		return ::SetDlgItemText(m_hWnd,idControl,W2A(lpsz));
@@ -1486,7 +1544,7 @@ inline int CWnd::MessageBox(LPCSTR lpText,LPCSTR lpCaption,UINT uType)
 
 inline int CWnd::MessageBox(LPCWSTR lpText,LPCWSTR lpCaption,UINT uType)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::MessageBoxW(m_hWnd,lpText,lpCaption,uType);
 	else
 		return ::MessageBoxA(m_hWnd,W2A(lpText),W2A(lpCaption),uType);

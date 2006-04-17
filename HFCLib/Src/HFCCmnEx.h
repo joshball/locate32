@@ -8,6 +8,9 @@
 
 #if defined(DEF_WINDOWS) && defined(DEF_RESOURCES)
 
+
+#ifdef DEF_WCHAR
+
 class CListCtrlEx	:	public CListCtrl
 {
 public:
@@ -17,11 +20,14 @@ public:
 
 	BOOL Create(DWORD dwStyle,const RECT* rect,HWND hParentWnd,UINT nID);
 
-	int InsertColumn(int nID,LPCTSTR lpszColumnHeading,BOOL bShow,int nFormat = LVCFMT_LEFT, 
+	int InsertColumn(int nID,LPCSTR lpszColumnHeading,BOOL bShow,int nFormat = LVCFMT_LEFT, 
+		int nWidth = -1);
+	int InsertColumn(int nID,LPCWSTR lpszColumnHeading,BOOL bShow,int nFormat = LVCFMT_LEFT, 
 		int nWidth = -1);
 	int InsertColumn(int nID,int nTitleID,BOOL bShow,int nFormat = LVCFMT_LEFT, 
 		int nWidth = -1,TypeOfResourceHandle bType=LanguageSpecificResource);
 	int InsertColumn(int nID,BOOL bShow,const LVCOLUMN* lc);
+	int InsertColumn(int nID,BOOL bShow,const LVCOLUMNW* lc);
 	BOOL DeleteColumn(int nCol);
 
 
@@ -47,6 +53,9 @@ public:
 	
 	BOOL GetColumn(int nCol, LV_COLUMN* pColumn) const;
 	BOOL SetColumn(int nCol, const LV_COLUMN* pColumn);
+	BOOL GetColumn(int nCol, LV_COLUMNW* pColumn) const;
+	BOOL SetColumn(int nCol, const LV_COLUMNW* pColumn);
+	
 	int GetColumnWidth(int nCol) const;
 	BOOL SetColumnWidth(int nCol, int cx);
 
@@ -57,7 +66,7 @@ public:
 	BOOL LoadColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey);
 	BOOL SaveColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) const;
 
-	CString GetColumnTitle(int nCol);
+	BOOL GetColumnTitle(CString& sTitle,int nCol);
 
 	int GetVisibleColumn(int nCol) const; // Return id for actual column index in ListCtrl
 	int GetVisibleColumnFromSubItem(int nSubItem) const;
@@ -68,7 +77,9 @@ private:
 	struct COLUMNDATA {
 		COLUMNDATA(int nID,int nWidth,int nFormat,int nTitleID,TypeOfResourceHandle bResourceType);
 		COLUMNDATA(int nID,int nWidth,int nFormat,LPCSTR pTitle);
+		COLUMNDATA(int nID,int nWidth,int nFormat,LPCWSTR pTitle);
 		COLUMNDATA(int nID,const LVCOLUMN* lc);
+		COLUMNDATA(int nID,const LVCOLUMNW* lc);
 		~COLUMNDATA();
 
 		enum {
@@ -82,10 +93,10 @@ private:
 				WORD nTitleID;
 				TypeOfResourceHandle bResourceType;
 			};		
-			LPSTR pStrTitle;
+			LPWSTR pStrTitle;
 		};
 		BYTE bFlags;
-		LVCOLUMN lc;
+		LVCOLUMNW lc;
 	};
 	CArrayFP<COLUMNDATA*> aColumns;
 	CIntArray aSubItems;
@@ -94,6 +105,8 @@ private:
 		UINT_PTR uIdSubclass,DWORD_PTR dwRefData);
 
 };
+
+#endif
 
 #include "CommonControlsEx.inl"
 

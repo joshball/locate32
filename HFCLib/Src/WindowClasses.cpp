@@ -93,21 +93,21 @@ BOOL CWnd::SetText(LPCSTR lpsz)
 
 BOOL CWnd::SetText(LPCWSTR lpsz)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz);
 	return ::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)W2A(lpsz));
 }
 
 BOOL CWnd::SetWindowText(LPCWSTR lpsz)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SetWindowTextW(m_hWnd,lpsz);
 	return ::SetWindowText(m_hWnd,W2A(lpsz));
 }
 
 int CWnd::GetWindowText(LPWSTR lpString,int nMaxCount) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetWindowTextW(m_hWnd,lpString,nMaxCount); 
 
 	char* pText=new char[nMaxCount+2];
@@ -132,7 +132,7 @@ void CWnd::CenterWindow()
 #ifdef DEF_RESOURCES
 int CWnd::ShowErrorMessage(UINT nIDMsgStr,UINT nIDTitleStr,UINT uType) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		WCHAR title[100];
 		WCHAR msg[1000];
@@ -389,7 +389,7 @@ BOOL CWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 #ifdef DEF_WCHAR
 int CWnd::GetWindowText(CStringW& str) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		int len=::GetWindowTextLengthW(m_hWnd);
 		len=::GetWindowTextW(m_hWnd,str.GetBuffer(len),len+1);
@@ -409,7 +409,7 @@ UINT CWnd::GetDlgItemText(int nIDDlgItem,CStringW& str)
 	HWND hCtrl=::GetDlgItem(m_hWnd,nIDDlgItem);
 	UINT len=(UINT)::SendMessage(hCtrl,WM_GETTEXTLENGTH,0,0);
 	
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetWindowTextW(hCtrl,str.GetBuffer(len),len+1);
 
 
@@ -422,7 +422,7 @@ UINT CWnd::GetDlgItemText(int nIDDlgItem,CStringW& str)
 
 UINT CWnd::GetText(LPWSTR lpszText,UINT cchTextMax) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,WM_GETTEXT,cchTextMax*2,(LPARAM)lpszText); 
 
 	int nLen=::SendMessageA(m_hWnd,WM_GETTEXTLENGTH,0,0);
@@ -439,7 +439,7 @@ UINT CWnd::GetText(LPWSTR lpszText,UINT cchTextMax) const
 
 UINT CWnd::GetText(CStringW& str) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		UINT len=::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
 		LPWSTR text=new WCHAR[len];
@@ -469,7 +469,7 @@ UINT CWnd::GetText(CStringW& str) const
 
 UINT CWnd::GetDlgItemText(int nIDDlgItem,LPWSTR lpString,int nMaxCount) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetDlgItemTextW(m_hWnd,nIDDlgItem,lpString,nMaxCount); 
 
 	char* pText=new char[nMaxCount+2];

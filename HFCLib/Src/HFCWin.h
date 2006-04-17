@@ -159,9 +159,12 @@ public:
 	void InvertRect(LPCRECT lpRect);
 	BOOL DrawIcon(int x,int y,HICON hIcon);
 	BOOL DrawIcon(const POINT& point,HICON hIcon);
+	BOOL DrawIcon(int xLeft,int yTop,HICON hIcon,int cxWidth, int cyWidth,UINT istepIfAniCur,HBRUSH hbrFlickerFreeDraw,UINT diFlags);
+	BOOL DrawIcon(const POINT& point,HICON hIcon,const SIZE& sz,UINT istepIfAniCur,HBRUSH hbrFlickerFreeDraw,UINT diFlags);
+
 	BOOL DrawState(const POINT& pt,const SIZE& size,HGDIOBJ hGdiObj,UINT nFlags,HBRUSH hBrush=NULL);
 	BOOL DrawState(const CPoint& pt,const CSize& size,CBitmap* pBitmap,UINT nFlags,HBRUSH hBrush=NULL);
-	BOOL DrawState(const CPoint& pt,const CSize& size,LPCTSTR lpszText,UINT nFlags,BOOL bPrefixText=TRUE,int nTextLen=0,HBRUSH hBrush=NULL);
+	BOOL DrawState(const CPoint& pt,const CSize& size,LPCSTR lpszText,UINT nFlags,BOOL bPrefixText=TRUE,int nTextLen=0,HBRUSH hBrush=NULL);
 	BOOL DrawState(const CPoint& pt,const CSize& size,DRAWSTATEPROC lpDrawProc,LPARAM lData,UINT nFlags,HBRUSH hBrush=NULL);
 	
 	BOOL Chord(int x1,int y1,int x2,int y2,int x3,int y3,int x4,int y4);
@@ -199,7 +202,7 @@ public:
 	BOOL TextOut(int x,int y,const CStringA& str);
 
 	BOOL ExtTextOut(int x,int y,UINT nOptions,LPCRECT lpRect,
-		LPCTSTR lpszString,UINT nCount,LPINT lpDxWidths);
+		LPCSTR lpszString,UINT nCount,LPINT lpDxWidths);
 	BOOL ExtTextOut(int x,int y,UINT nOptions,LPCRECT lpRect,
 		const CStringA& str,LPINT lpDxWidths);
 	CSize TabbedTextOut(int x,int y,LPCTSTR lpszString,int nCount,
@@ -292,9 +295,12 @@ public:
 	//Widechar support
 	BOOL TextOut(int x,int y,const CStringW& str);
 	BOOL ExtTextOut(int x,int y,UINT nOptions,LPCRECT lpRect,
+		LPCWSTR lpszString,UINT nCount,LPINT lpDxWidths);
+	BOOL ExtTextOut(int x,int y,UINT nOptions,LPCRECT lpRect,
 		const CStringW& str,LPINT lpDxWidths);
 	CSize TabbedTextOut(int x,int y,const CStringW& str,int nTabPositions,
 		LPINT lpnTabStopPositions,int nTabOrigin);
+	BOOL DrawState(const CPoint& pt,const CSize& size,LPCWSTR lpszText,UINT nFlags,BOOL bPrefixText=TRUE,int nTextLen=0,HBRUSH hBrush=NULL);
 	int DrawText(LPCWSTR lpszString,int nCount,LPRECT lpRect,UINT nFormat);
 	int DrawText(const CStringW& str,LPRECT lpRect,UINT nFormat);
 	CSize GetTextExtent(LPCWSTR lpszString,int nCount) const;
@@ -330,20 +336,19 @@ public:
 	BOOL CreateMenu();
 	BOOL CreatePopupMenu();
 #ifdef DEF_RESOURCES
-	BOOL LoadMenu(LPCTSTR lpszResourceName);
+	BOOL LoadMenu(LPCSTR lpszResourceName);
 	BOOL LoadMenu(UINT nIDResource);
 #endif
 	BOOL LoadMenuIndirect(const void* lpMenuTemplate);
 	BOOL DestroyMenu();
 	
 	HMENU m_hMenu;
-	HMENU GetSafeHmenu() const;
 	operator HMENU() const;
-
+	
 	BOOL DeleteMenu(UINT nPosition, UINT nFlags);
 	BOOL TrackPopupMenu(UINT nFlags,int x,int y,HWND hWnd,LPCRECT lpRect=0);
 
-	BOOL AppendMenu(UINT nFlags,UINT nIDNewItem=0,LPCTSTR lpszNewItem=NULL);
+	BOOL AppendMenu(UINT nFlags,UINT nIDNewItem=0,LPCSTR lpszNewItem=NULL);
 	BOOL AppendMenu(UINT nFlags,UINT nIDNewItem,const CBitmap* pBmp);
 	UINT CheckMenuItem(UINT nIDCheckItem,UINT nCheck);
 	UINT EnableMenuItem(UINT nIDEnableItem,UINT nEnable);
@@ -351,10 +356,10 @@ public:
 	UINT GetMenuItemID(int nPos) const;
 	UINT GetMenuState(UINT nID,UINT nFlags) const;
 	
-	int GetMenuString(UINT nIDItem,LPTSTR lpString,int nMaxCount,UINT nFlags) const;
+	int GetMenuString(UINT nIDItem,LPSTR lpString,int nMaxCount,UINT nFlags) const;
 	int GetMenuString(UINT nIDItem,CStringA& rString,UINT nFlags) const;
 	HMENU GetSubMenu(int nPos) const;
-	BOOL InsertMenu(UINT nPosition,UINT nFlags,UINT nIDNewItem=0,LPCTSTR lpszNewItem=NULL);
+	BOOL InsertMenu(UINT nPosition,UINT nFlags,UINT nIDNewItem=0,LPCSTR lpszNewItem=NULL);
 	BOOL InsertMenu(UINT nPosition,UINT nFlags,UINT nIDNewItem,const CBitmap* pBmp);
 	BOOL InsertMenu(UINT nItem,BOOL fByPosition,LPMENUITEMINFO lpmii);
 	BOOL ModifyMenu(UINT nPosition,UINT nFlags,UINT nIDNewItem=0,LPCTSTR lpszNewItem=NULL);
@@ -369,7 +374,16 @@ public:
 	BOOL SetMenuDefaultItem(UINT uItem,UINT fByPos);
 #ifdef DEF_WCHAR
 	// For widechar support
+	int GetMenuString(UINT nIDItem,LPWSTR lpString,int nMaxCount,UINT nFlags) const;
 	int GetMenuString(UINT nIDItem,CStringW& rString,UINT nFlags) const;
+	
+	BOOL AppendMenu(UINT nFlags,UINT nIDNewItem,LPCWSTR lpszNewItem);
+	BOOL InsertMenu(UINT nPosition,UINT nFlags,UINT nIDNewItem,LPCWSTR lpszNewItem);
+	BOOL ModifyMenu(UINT nPosition,UINT nFlags,UINT nIDNewItem,LPCWSTR lpszNewItem);
+	BOOL InsertMenu(UINT nItem,BOOL fByPosition,LPMENUITEMINFOW lpmii);
+	BOOL GetMenuItemInfo(UINT uItem,BOOL fByPosition,LPMENUITEMINFOW lpmii) const;
+	BOOL SetMenuItemInfo(UINT uItem,BOOL fByPosition,LPMENUITEMINFOW lpmii);
+
 #endif
 };
 

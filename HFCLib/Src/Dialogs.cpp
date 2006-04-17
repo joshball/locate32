@@ -15,7 +15,7 @@ CDialog::CDialog(LPCSTR lpTemplate)
 {
 	if (IS_INTRESOURCE(lpTemplate))
 		m_lpszTemplateName=MAKEINTRESOURCE(lpTemplate);
-	else if (IsFullUnicodeSupport())
+	else if (IsUnicodeSystem())
 		m_lpszTemplateNameW=alloccopyAtoW(lpTemplate);
 	else
 		m_lpszTemplateName=alloccopy(lpTemplate);
@@ -26,7 +26,7 @@ CDialog::CDialog(LPCWSTR lpTemplate)
 {
 	if (IS_INTRESOURCE(lpTemplate))
 		m_lpszTemplateName=MAKEINTRESOURCE(lpTemplate);
-	else if (IsFullUnicodeSupport())
+	else if (IsUnicodeSystem())
 		m_lpszTemplateNameW=alloccopy(lpTemplate);
 	else
 		m_lpszTemplateName=alloccopyWtoA(lpTemplate);
@@ -36,7 +36,7 @@ CDialog::~CDialog()
 {
 	if (m_lpszTemplateName!=NULL && !IS_INTRESOURCE(m_lpszTemplateName))
 	{
-		if (IsFullUnicodeSupport())
+		if (IsUnicodeSystem())
 			delete[] m_lpszTemplateNameW;
 		else
 			delete[] m_lpszTemplateName;
@@ -66,7 +66,7 @@ BOOL CDialog::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 
 CPropertyPage::~CPropertyPage()
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_pspw.pszTitle!=NULL)
 			delete[] m_pspw.pszTitle;
@@ -94,7 +94,7 @@ UINT CALLBACK PropertySheetPageProc(HWND hWnd,UINT uMsg,LPPROPSHEETPAGE  ppsp)
 
 void CPropertyPage::Construct(UINT nIDCaption,TypeOfResourceHandle bType)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		iMemSet(&m_pspw,0,sizeof(PROPSHEETPAGEW));
 		m_pspw.dwSize=sizeof(PROPSHEETPAGEW);
@@ -138,7 +138,7 @@ void CPropertyPage::Construct(UINT nIDCaption,TypeOfResourceHandle bType)
 
 void CPropertyPage::Construct(LPCSTR szTitle,TypeOfResourceHandle bType)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		iMemSet(&m_pspw,0,sizeof(PROPSHEETPAGEW));
 		m_pspw.dwSize=sizeof(PROPSHEETPAGEW);
@@ -176,7 +176,7 @@ void CPropertyPage::Construct(LPCSTR szTitle,TypeOfResourceHandle bType)
 
 void CPropertyPage::Construct(LPCWSTR szTitle,TypeOfResourceHandle bType)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		iMemSet(&m_pspw,0,sizeof(PROPSHEETPAGEW));
 		m_pspw.dwSize=sizeof(PROPSHEETPAGEW);
@@ -355,7 +355,7 @@ void CPropertySheet::Construct(UINT nIDCaption,HWND hParentWnd,UINT iSelectPage)
 
 void CPropertySheet::Construct(LPCSTR pszCaption,HWND hParentWnd,UINT iSelectPage)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		iMemSet(&m_pshw,0,sizeof(PROPSHEETHEADERW));
 		m_pshw.dwSize=PROPSHEETHEADERW_V1_SIZE; //sizeof(PROPSHEETHEADER);
@@ -389,7 +389,7 @@ void CPropertySheet::Construct(LPCSTR pszCaption,HWND hParentWnd,UINT iSelectPag
 
 void CPropertySheet::Construct(LPCWSTR pszCaption,HWND hParentWnd,UINT iSelectPage)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		iMemSet(&m_pshw,0,sizeof(PROPSHEETHEADERW));
 		m_pshw.dwSize=PROPSHEETHEADERW_V1_SIZE; //sizeof(PROPSHEETHEADER);
@@ -486,7 +486,7 @@ BOOL CPropertySheet::SetActivePage(CPropertyPage* pPage)
 
 void CPropertySheet::SetTitle(LPCSTR lpszText,UINT nStyle)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_pshw.pszCaption!=NULL)
 			delete[] m_pshw.pszCaption;
@@ -512,7 +512,7 @@ void CPropertySheet::SetTitle(LPCSTR lpszText,UINT nStyle)
 
 void CPropertySheet::SetTitle(LPCWSTR lpszText,UINT nStyle)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_pshw.pszCaption!=NULL)
 			delete[] m_pshw.pszCaption;
@@ -540,7 +540,11 @@ int CPropertySheet::DoModal()
 {
 	BuildPropPageArray();
 	m_psh.hwndParent=m_hParentWnd;
-	return ::PropertySheet(&m_psh);
+	if (IsUnicodeSystem())
+		return ::PropertySheetW(&m_pshw);
+	else
+		return ::PropertySheet(&m_psh);
+
 }
 
 void CPropertySheet::EndDialog(int nEndID)
@@ -566,7 +570,10 @@ void CPropertySheet::BuildPropPageArray()
 	for (int i=0;i<m_pages.GetSize();i++)
 	{
 		CPropertyPage* pPage=(CPropertyPage*)m_pages.GetAt(i);
-		m_psh.phpage[i]=CreatePropertySheetPage(&pPage->m_psp);
+		if (IsUnicodeSystem())
+			m_psh.phpage[i]=CreatePropertySheetPageW(&pPage->m_pspw);
+		else
+			m_psh.phpage[i]=CreatePropertySheetPageA(&pPage->m_psp);
 	}
 	m_psh.nPages=m_pages.GetSize();
 }
@@ -810,7 +817,7 @@ void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCST
 {
 	DebugMessage("CFileDialog::Init BEGIN");
 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 
 #if (_WIN32_WINNT < 0x0500)
@@ -982,7 +989,7 @@ void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPC
 {
 	DebugMessage("CFileDialog::Init BEGIN");
 	
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 
 #if (_WIN32_WINNT < 0x0500)
@@ -1150,7 +1157,7 @@ void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPC
 
 CFileDialog::~CFileDialog()
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_pwofn!=NULL)
 		{
@@ -1190,7 +1197,7 @@ BOOL CFileDialog::EnableFeatures(DWORD nFlags)
 	if (nFlags==efCheck)
 		nFlags=GetSystemFeaturesFlag();
 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 #if (_WIN32_WINNT >= 0x0500)
 		if (nFlags&(efWin2000|efWinME) && m_pofn!=NULL)
@@ -1229,7 +1236,7 @@ BOOL CFileDialog::DoModal(HWND hParentWnd)
 	if (hParentWnd!=NULL)
 		::EnableWindow(hParentWnd,FALSE);
 	
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		m_pwofn->hwndOwner=hParentWnd;
 		m_pwofn->lpstrFilter=m_pwFilter;
@@ -1281,7 +1288,7 @@ BOOL CFileDialog::DoModal(HWND hParentWnd)
 
 BOOL CFileDialog::GetFilePath(CString& name) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_hWnd!=NULL)
 		{
@@ -1314,7 +1321,7 @@ BOOL CFileDialog::GetFilePath(CString& name) const
 
 BOOL CFileDialog::GetFileName(CString& name) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_hWnd!=NULL)
 		{
@@ -1349,7 +1356,7 @@ BOOL CFileDialog::GetFileName(CString& name) const
 
 BOOL CFileDialog::GetFileExt(CString& ext) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_hWnd!=NULL)
 		{
@@ -1380,7 +1387,7 @@ BOOL CFileDialog::GetFileExt(CString& ext) const
 #ifdef DEF_WCHAR
 BOOL CFileDialog::GetFilePath(CStringW& name) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_hWnd!=NULL)
 		{
@@ -1413,7 +1420,7 @@ BOOL CFileDialog::GetFilePath(CStringW& name) const
 
 BOOL CFileDialog::GetFileName(CStringW& name) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_hWnd!=NULL)
 		{
@@ -1446,7 +1453,7 @@ BOOL CFileDialog::GetFileName(CStringW& name) const
 
 BOOL CFileDialog::GetFileExt(CStringW& ext) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_hWnd!=NULL)
 		{
@@ -1494,7 +1501,7 @@ void CFileDialog::SetTemplate(LPCTSTR lpID,TypeOfResourceHandle bType)
 
 BOOL CFileDialog::GetFolderPath(CString& name) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_hWnd!=NULL)
 		{
@@ -1528,7 +1535,7 @@ BOOL CFileDialog::GetFolderPath(CString& name) const
 #ifdef DEF_WCHAR
 BOOL CFileDialog::GetFolderPath(CStringW& name) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_hWnd!=NULL)
 		{
@@ -1562,7 +1569,7 @@ BOOL CFileDialog::GetFolderPath(CStringW& name) const
 
 void CFileDialog::SetDefExt(LPCSTR lpsz)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (m_hWnd!=NULL)
 		{
@@ -2244,7 +2251,7 @@ BOOL CFolderDialog::OnValidateFailed(LPITEMIDLIST lpil)
 
 BOOL CFolderDialog::GetFolder(CStringW& Folder) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		if (!SHGetPathFromIDListW(m_lpil,Folder.GetBuffer(_MAX_PATH)))
 			return FALSE;
@@ -2264,7 +2271,7 @@ BOOL CFolderDialog::GetFolder(CStringW& Folder) const
 
 BOOL CFolderDialog::GetFolder(LPWSTR szFolder) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return SHGetPathFromIDListW(m_lpil,szFolder);
 	else
 	{
@@ -2323,7 +2330,7 @@ COptionsPropertyPage::Item::Item(
 	int nCurLen=50;
 	int iLength;
 	
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 	{
 		// Non-unicode
 		char* szText=new char[nCurLen];
@@ -2453,7 +2460,7 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 		TVINSERTSTRUCTW tisw;
 	};
 	
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 	{
 		// Windows 9x
 		tisa.hInsertAfter=TVI_LAST;
@@ -2483,7 +2490,7 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 				pItems[i]->GetValuesFromBasicParams(&bp);
 		}
         			
-		if (!IsFullUnicodeSupport())
+		if (!IsUnicodeSystem())
 		{
 			SIZE_T iStrLen=istrlenw(pItems[i]->pString);
 			tisa.itemex.pszText=new char [iStrLen+2];
@@ -2505,17 +2512,17 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 
 
 		if (pItems[i]->pChilds!=NULL)
-			InsertItemsToTree(!IsFullUnicodeSupport()?tisa.hInsertAfter:tisw.hInsertAfter,pItems[i]->pChilds,pItems[i]);
+			InsertItemsToTree(!IsUnicodeSystem()?tisa.hInsertAfter:tisw.hInsertAfter,pItems[i]->pChilds,pItems[i]);
 
 		// Type specified actions
 		switch (pItems[i]->nType)
 		{
 		case Item::RadioBox:
 			if (pItems[i]->bChecked)
-				hSelectedRadioItem=!IsFullUnicodeSupport()?tisa.hInsertAfter:tisw.hInsertAfter;
+				hSelectedRadioItem=!IsUnicodeSystem()?tisa.hInsertAfter:tisw.hInsertAfter;
 			// Continuing
 		case Item::CheckBox:
-			EnableChilds(!IsFullUnicodeSupport()?tisa.hInsertAfter:tisw.hInsertAfter,pItems[i]->bChecked);
+			EnableChilds(!IsUnicodeSystem()?tisa.hInsertAfter:tisw.hInsertAfter,pItems[i]->bChecked);
 			break;
 		case Item::Edit:
             pItems[i]->hControl=CreateWindow("EDIT","",
@@ -2625,7 +2632,7 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 		LPWSTR pCurText=pItems[i]->GetText();
 		if (pCurText!=pItems[i]->pString)
 		{
-			if (!IsFullUnicodeSupport())
+			if (!IsUnicodeSystem())
 			{
 				SIZE_T iStrLen=istrlenw(pCurText);
 				tisa.itemex.pszText=new char[iStrLen+2];
@@ -3083,7 +3090,7 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi,NMTREEVIEW *pNm
 				
 				// Setting text
 				WCHAR* pText=pItem->GetText(FALSE);
-				if (!IsFullUnicodeSupport())
+				if (!IsUnicodeSystem())
 				{
 					SIZE_T iStrLen=istrlenw(pText);
 					char* paText=new char [iStrLen+2];
@@ -3113,7 +3120,7 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi,NMTREEVIEW *pNm
 				// Changing text
 				// Setting text
 				WCHAR* pText=pItem->GetText(TRUE);
-				if (!IsFullUnicodeSupport())
+				if (!IsUnicodeSystem())
 				{
 					SIZE_T iStrLen=istrlenw(pText);
 					char* paText=new char [iStrLen+2];
@@ -3524,7 +3531,7 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 			}
 			else
 			{
-				if (!IsFullUnicodeSupport())
+				if (!IsUnicodeSystem())
 				{
 					// 9x
 					char* pTemp=new char[iLength+2];
@@ -3549,7 +3556,7 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 			MemCopyW(pText,pString,iLabelLen);
 			pText[iLabelLen++]=' ';
 				
-			if (!IsFullUnicodeSupport())
+			if (!IsUnicodeSystem())
 			{
 				// 9x
 				char* pTemp=new char[iLength+2];

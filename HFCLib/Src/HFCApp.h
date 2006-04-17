@@ -372,7 +372,7 @@ inline CWnd* GetMainWnd()
 
 inline int CDialog::DoModal(HWND hWndParent,TypeOfResourceHandle bType)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return DialogBoxParamW(GetResourceHandle(bType),m_lpszTemplateNameW,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this);
 	else
 		return DialogBoxParam(GetResourceHandle(bType),m_lpszTemplateName,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this);
@@ -380,7 +380,7 @@ inline int CDialog::DoModal(HWND hWndParent,TypeOfResourceHandle bType)
 
 inline BOOL CDialog::Create(HWND hWndParent,TypeOfResourceHandle bType)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return (m_hWnd=::CreateDialogParamW(GetResourceHandle(bType),m_lpszTemplateNameW,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this))!=NULL;
 	else
 		return (m_hWnd=::CreateDialogParamA(GetResourceHandle(bType),m_lpszTemplateName,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this))!=NULL;

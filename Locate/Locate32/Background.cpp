@@ -446,7 +446,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 			pChangeData->pBuffer=new BYTE[CHANGE_BUFFER_LEN];
 		}
 
-		if (IsFullUnicodeSupport())
+		if (IsUnicodeSystem())
 			pChangeData->hDir=CreateFileW(szRoot,FILE_LIST_DIRECTORY,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
 				NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED,NULL);
 		else
@@ -566,7 +566,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 					continue;
 			}			
 #endif
-			if (IsFullUnicodeSupport())
+			if (IsUnicodeSystem())
 				m_pHandles[m_nHandles]=FindFirstChangeNotificationW(szRoot,TRUE,
 					FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
 			else

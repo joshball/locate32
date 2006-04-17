@@ -60,7 +60,7 @@ CString CWinApp::GetExeName() const
 
 CStringW CWinApp::GetExeNameW() const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		DWORD len;
 		WCHAR szExeName[MAX_PATH];

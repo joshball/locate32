@@ -181,10 +181,7 @@ private:
 		BYTE bShouldUpdate;
 
 		ExtraInfo* pNext;
-	public:
-		void* operator new(size_t size) { return Allocation.AllocateFast(size); }
-		void operator delete(void* pObject) { Allocation.Free(pObject); }
-		void operator delete(void* pObject,size_t size) { Allocation.Free(pObject); }
+	
 	};
 	ExtraInfo* pFirstExtraInfo;
 
@@ -193,11 +190,6 @@ private:
 	ExtraInfo* GetFieldForType(CLocateDlg::DetailType nType) const;
 	
 
-public:
-	// Overloaded operators, for fast allocating
-	void* operator new(size_t size) { return Allocation.AllocateFast(size); }
-	void operator delete(void* pObject) { Allocation.Free(pObject); }
-	void operator delete(void* pObject,size_t size) { Allocation.Free(pObject); }
 };
 
 

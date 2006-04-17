@@ -482,10 +482,10 @@ public:
 	void SortItems(DetailType nDetail,BYTE bDescending=-1,BOOL bNoneIsPossible=FALSE); // bDescending:0=ascending order, 1=desc, -1=default
 	void SetSorting(BYTE bSorting=BYTE(-2)); // bSorting==BYTE(-2): default
 
-	static UINT AddSendToMenuItems(HMENU hMenu,CString& sSendToPath,UINT wStartID);
+	static UINT AddSendToMenuItems(CMenu& Menu,CStringW& sSendToPath,UINT wStartID);
 	static void FreeSendToMenuItems(HMENU hMenu);
 	static BOOL IsSendToMenu(HMENU hMenu);
-	static BOOL InsertMenuItemsFromTemplate(HMENU hMenu,HMENU hTemplate,UINT uStartPosition,int nDefaultItem=-1);
+	static BOOL InsertMenuItemsFromTemplate(CMenu& Menu,HMENU hTemplate,UINT uStartPosition,int nDefaultItem=-1);
 	
 	//void EnsureFocus();
 	BOOL ListNotifyHandler(NMLISTVIEW *pNm);

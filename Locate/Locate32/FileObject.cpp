@@ -377,7 +377,7 @@ HGLOBAL CFileObject::GetHDrop()
 	HGLOBAL hGlobal;
 	DWORD nDataLength=sizeof(DROPFILES)+2;
 	
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		// Win2000/XP needs Unicode
 		int i;

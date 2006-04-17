@@ -21,10 +21,12 @@ void CLocatedItem::SetFolder(const CLocater* pLocater)
 	// Setting path, name and extension
 	DWORD nPathLen=pLocater->GetCurrentPathLen();
 	bNameLength=BYTE(pLocater->GetFolderNameLen());
-	szPath=(WCHAR*)Allocation.AllocateFast((nPathLen+bNameLength+2)*2);
+	szPath=new WCHAR[nPathLen+bNameLength+2];
+	
 	MemCopyAtoW(szPath,pLocater->GetCurrentPath(),nPathLen);
 	szName=szPath+(++nPathLen);
 	MemCopyAtoW(szName,pLocater->GetFolderName(),DWORD(bNameLength)+1);
+	
 	for (bExtensionPos=bNameLength-1; szName[bExtensionPos-1]!='.' && bExtensionPos>0 ;bExtensionPos--);
 	if (bExtensionPos==0)
 		bExtensionPos=bNameLength;
@@ -71,10 +73,10 @@ void CLocatedItem::SetFile(const CLocater* pLocater)
 	// Setting path, name and extension
 	DWORD nPathLen=pLocater->GetCurrentPathLen();
 	bNameLength=BYTE(pLocater->GetFileNameLen());
-	szPath=(WCHAR*)Allocation.AllocateFast(nPathLen+bNameLength+2);
-	sMemCopy(szPath,pLocater->GetCurrentPath(),nPathLen);
+	szPath=new WCHAR[nPathLen+bNameLength+2];
+	MemCopyAtoW(szPath,pLocater->GetCurrentPath(),nPathLen);
 	szName=szPath+(++nPathLen);
-	sMemCopy(szName,pLocater->GetFileName(),DWORD(bNameLength)+1);
+	MemCopyAtoW(szName,pLocater->GetFileName(),DWORD(bNameLength)+1);
 	bExtensionPos=pLocater->GetFileExtensionPos();
 	if (bExtensionPos==0)
 		bExtensionPos=bNameLength;
@@ -118,16 +120,17 @@ void CLocatedItem::ClearData()
 	//ItemDebugMessage("CLocatedItem::ClearData BEGIN");
 
 	if (szTitle!=NULL && szTitle!=szName)
-		Allocation.Free(szTitle);
+		delete[] szTitle;
+		
 	szTitle=NULL;
 	if (szPath!=NULL)
 	{
-		Allocation.Free(szPath);
+		delete[] szPath;
 		szPath=NULL;
 	}
 	if (szType!=NULL)
 	{
-		Allocation.Free(szType);
+		delete[] szType;
 		szType=NULL;
 	}
 	
@@ -228,12 +231,12 @@ void CLocatedItem::UpdateFilename()
 			szFullPath[DWORD(szName-szPath)+bExtensionPos]=='\0'));
 
         //This fixes case
-		CopyMemory(szPath,szFullPath,dwLength);
+		MemCopyW(szPath,szFullPath,dwLength);
 	}
 	else if (dwLength>0)
 	{
-        Allocation.Free(szPath);
-		szPath=(WCHAR*)Allocation.AllocateFast((dwLength+2)*2);
+		delete[] szPath;
+		szPath=new WCHAR[dwLength+2];
 		MemCopyW(szPath,szFullPath,dwLength+1);
         
 		szName=szPath+LastCharIndex(szPath,L'\\')+1;
@@ -256,7 +259,7 @@ void CLocatedItem::UpdateTitle()
 	ItemDebugFormatMessage4("CLocatedItem::UpdateTitle1: ShouldUpdate=%d",ShouldUpdateTitle(),0,0,0);
 
 	if (szTitle!=szName && szTitle!=NULL)
-		Allocation.Free(szTitle);
+		delete[] szTitle;
 	
 	if (!(dwFlags&LITEM_FILENAMEOK))
 		UpdateFilename();
@@ -266,12 +269,12 @@ void CLocatedItem::UpdateTitle()
 		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
 			return;
 		
-		szTitle=(WCHAR*)Allocation.Allocate((bNameLength+1)*2);
+		szTitle=new WCHAR[bNameLength+1];
 		WORD nLen=FileSystem::GetFileTitle(GetPath(),szTitle,bNameLength+1);
 		if (nLen!=0)
 		{
-			Allocation.Free(szTitle);
-			szTitle=(WCHAR*)Allocation.Allocate(nLen*2);
+			delete[] szTitle;
+			szTitle=new WCHAR[nLen];
 			FileSystem::GetFileTitle(GetPath(),szTitle,nLen);
 		}
 	}
@@ -320,12 +323,13 @@ void CLocatedItem::UpdateTitle()
 									if (nLength)
 									{
 										if (szType!=NULL)
-											Allocation.Free(szType);
-										szType=(WCHAR*)Allocation.Allocate(nLength*2);
+											delete[] szType;
+											
+										szType=new WCHAR[nLength];
 										if (RegKey.QueryValue(L"",szType,nLength))
 											dwFlags|=LITEM_TYPEOK;
 										else
-											Allocation.Free(szType);
+											delete[] szType;
 									}
 								}
 								RegKey.CloseKey();
@@ -340,7 +344,7 @@ void CLocatedItem::UpdateTitle()
 				}			
 			}
 		case CLocateDlg::fgLVNeverShowExtensions:
-			szTitle=(WCHAR*)Allocation.Allocate(bExtensionPos*2);
+			szTitle=new WCHAR[bExtensionPos];
 			MemCopyW(szTitle,GetName(),DWORD(bExtensionPos)-1);
 			szTitle[bExtensionPos-1]=L'\0';
 			break;
@@ -362,7 +366,7 @@ void CLocatedItem::UpdateTitle()
 			{
 				if (szTitle==szName)
 				{
-					szTitle=(WCHAR*)Allocation.Allocate((i+1)*2);
+					szTitle=new WCHAR[i+1];
 					MemCopyW(szTitle,szName,i+1);
 				}
 				MakeLower(szTitle+1,i-1);
@@ -379,7 +383,8 @@ void CLocatedItem::UpdateType()
 	ItemDebugMessage("CLocatedItem::UpdateType BEGIN");
 	
 	if (szType!=NULL)
-		Allocation.Free(szType);
+		delete[] szType;
+		
 
 
 	if (!(GetLocateDlg()->GetFlags()&CLocateDlg::fgLVShowFileTypes))
@@ -391,13 +396,13 @@ void CLocatedItem::UpdateType()
 		if (IsFolder())
 		{
 			dwLength=LoadString(IDS_DIRECTORYTYPE,buf,300);
-			szType=(LPWSTR)Allocation.Allocate((dwLength+1)*2);
+			szType=new WCHAR[dwLength+1];
 			MemCopyW(szType,buf,dwLength+1);
 		}
 		else
 		{
 			dwLength=LoadString(IDS_UNKNOWNTYPE,buf,300)+1;		
-			szType=(LPWSTR)Allocation.Allocate((GetExtensionLength()+dwLength+1)*2);
+			szType=new WCHAR[GetExtensionLength()+dwLength+1];
 			MemCopyW(szType,GetExtension(),GetExtensionLength());
 			szType[GetExtensionLength()]=L' ';
 			MemCopyW(szType+GetExtensionLength()+1,buf,dwLength);
@@ -430,7 +435,7 @@ void CLocatedItem::UpdateType()
 		
 		SIZE_T dwTypeLen=istrlenw(fi.szTypeName);
 		
-		szType=(WCHAR*)Allocation.Allocate((++dwTypeLen)*2);
+		szType=new WCHAR[++dwTypeLen];
 		MemCopyW(szType,fi.szTypeName,dwTypeLen);
 		dwFlags|=LITEM_TYPEOK;
 		return;
@@ -446,7 +451,7 @@ void CLocatedItem::UpdateType()
 		}
 		WCHAR szBuffer[80];
 		DWORD dwTextLen=LoadString(IDS_DIRECTORYTYPE,szBuffer,80)+1;
-		szType=(WCHAR*)Allocation.Allocate(dwTextLen*2);
+		szType=new WCHAR[dwTextLen];
 		MemCopyW(szType,szBuffer,dwTextLen);
 		dwFlags|=LITEM_TYPEOK;
 		return;
@@ -475,14 +480,14 @@ void CLocatedItem::UpdateType()
 				DWORD nLength=RegKey.QueryValueLength("");
 				if (nLength)
 				{
-					szType=(WCHAR*)Allocation.Allocate(nLength*2);
+					szType=new WCHAR[nLength];
 					if (RegKey.QueryValue(L"",szType,nLength))
 					{
 						dwFlags|=LITEM_TYPEOK;
 						return;
 					}
 					else
-						Allocation.Free(szType);
+						delete[] szType;
 
 				}
 				RegKey.CloseKey();
@@ -495,17 +500,15 @@ void CLocatedItem::UpdateType()
 
 	if (bExtensionPos!=bNameLength)
 	{
-		szType=(WCHAR*)Allocation.Allocate((dwTextLen+GetExtensionLength()+1)*2);
+		szType=new WCHAR[dwTextLen+GetExtensionLength()+1];
 		MemCopyW(szType,GetExtension(),GetExtensionLength());
 		MakeUpper(szType,GetExtensionLength());
-		szType[GetExtensionLength()]=' ';
+		szType[GetExtensionLength()]=L' ';
 		MemCopyW(szType+GetExtensionLength()+1,szBuffer,dwTextLen);
 	}
 	else // No extension
-	{
-		szType=(WCHAR*)Allocation.Allocate(dwTextLen*2);
-		MemCopyW(szType,szBuffer,dwTextLen);
-	}
+		szType=alloccopy(szBuffer,dwTextLen);
+	
 	dwFlags|=LITEM_TYPEOK;
 
 	ItemDebugMessage("CLocatedItem::UpdateType END");
@@ -549,7 +552,7 @@ void CLocatedItem::UpdateFileSizeAndTime()
 			WIN32_FIND_DATAW fdw; // The beginning of the structures are equal
 		};
 		HANDLE hFind;
-		if (IsFullUnicodeSupport())	
+		if (IsUnicodeSystem())	
 			hFind=FindFirstFileW(GetPath(),&fdw);
 		else
 			hFind=FindFirstFileA(W2A(GetPath()),&fd);
@@ -577,7 +580,7 @@ void CLocatedItem::UpdateFileSizeAndTime()
 	}
 
 	HANDLE hFile;
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		hFile=CreateFileW(GetPath(),0,FILE_SHARE_READ|FILE_SHARE_WRITE,
 			NULL,OPEN_EXISTING,0,NULL);
 	else
@@ -594,7 +597,7 @@ void CLocatedItem::UpdateFileSizeAndTime()
 				WIN32_FIND_DATAW fdw; // The beginning of the structures are equal
 			};
 			HANDLE hFind;
-			if (IsFullUnicodeSupport())	
+			if (IsUnicodeSystem())	
 				hFind=FindFirstFileW(GetPath(),&fdw);
 			else
 				hFind=FindFirstFileA(W2A(GetPath()),&fd);
@@ -687,7 +690,7 @@ void CLocatedItem::ComputeMD5sum(BOOL bForce)
 		
 	if (pField->szText!=NULL)
 	{
-		Allocation.Free(pField->szText);
+		delete[] pField->szText;
 		pField->szText=NULL;
 	}
 
@@ -731,7 +734,7 @@ void CLocatedItem::ComputeMD5sum(BOOL bForce)
 	{
 		md5_finish(&state, digest);
 
-		pField->szText=(WCHAR*)Allocation.AllocateFast((2*16+1)*2);
+		pField->szText=new WCHAR[2*16+1];
 
 		for (int i=0;i<16;i++)
 		{
@@ -762,7 +765,7 @@ void CLocatedItem::UpdateOwner()
 
 	if (pField->szText!=NULL)
 	{
-		Allocation.Free(pField->szText);
+		delete[] pField->szText;
 		pField->szText=NULL;
 	}
 			
@@ -796,9 +799,9 @@ void CLocatedItem::UpdateOwner()
 	SID_NAME_USE sUse;
 	
 	BOOL bRet;
-	if (szPath[0]=='\\' && szPath[1]=='\\')
+	if (szPath[0]==L'\\' && szPath[1]==L'\\')
 	{
-		DWORD dwLength=2+FirstCharIndex(szPath+2,'\\');
+		DWORD dwLength=2+FirstCharIndex(szPath+2,L'\\');
 		WCHAR* szServer=new WCHAR[dwLength+1];
 		MemCopyW(szServer,szPath,dwLength);
 		szServer[dwLength]='\0';
@@ -810,11 +813,11 @@ void CLocatedItem::UpdateOwner()
 
 	if (bRet)
 	{
-		pField->szText=(WCHAR*)Allocation.AllocateFast((dwOwnerLen+dwDomainLen+2)*2);
+		pField->szText=new WCHAR[dwOwnerLen+dwDomainLen+2];
 		if (dwDomainLen>0)
 		{
 			MemCopyW(pField->szText,szDomain,dwDomainLen);
-			pField->szText[dwDomainLen]='\\';
+			pField->szText[dwDomainLen]=L'\\';
 			MemCopyW(pField->szText+dwDomainLen+1,szOwner,dwOwnerLen+1);                
 		}
 		else
@@ -843,9 +846,8 @@ void CLocatedItem::UpdateShortFileName()
 	if (nLength==0)
 	{
 		if (pField->szText!=NULL)
-			Allocation.Free(pField->szText); 
-		pField->szText=(WCHAR*)Allocation.Allocate(2);
-		pField->szText[0]='\0';
+			delete[] pField->szText; 
+		pField->szText=allocemptyW();
 		ItemDebugMessage("CLocatedItem::UpdateShortFileName END2");
 		return;
 	}
@@ -857,10 +859,9 @@ void CLocatedItem::UpdateShortFileName()
     nLength-=nStart;
 
 	if (pField->szText!=NULL)
-		Allocation.Free(pField->szText); 
+		delete[] pField->szText; 
 
-	pField->szText=(WCHAR*)Allocation.AllocateFast((nLength+1)*2);
-	sMemCopy(pField->szText,szShortPath+nStart,nLength+1);
+	pField->szText=alloccopy(szShortPath+nStart,nLength);
 
 	ItemDebugMessage("CLocatedItem::UpdateShortFileName END");
 }
@@ -882,20 +883,18 @@ void CLocatedItem::UpdateShortFilePath()
 	if (nLength==0)
 	{
 		if (pField->szText!=NULL)
-			Allocation.Free(pField->szText); 
+			delete[] pField->szText; 
 
-		pField->szText=(WCHAR*)Allocation.AllocateFast(2);
-		pField->szText[0]='\0';
+		pField->szText=allocemptyW();
 		ItemDebugMessage("CLocatedItem::UpdateShortFilePath END2");
 	}
 	
 
 
 	if (pField->szText!=NULL)
-		Allocation.Free(pField->szText); 
+		delete[] pField->szText; 
 
-	pField->szText=(WCHAR*)Allocation.AllocateFast((nLength+1)*2);
-	sMemCopy(pField->szText,szShortPath,nLength+1);
+	pField->szText=alloccopy(szShortPath,nLength);
 
 	ItemDebugMessage("CLocatedItem::UpdateShortFilePath END");
 }
@@ -908,10 +907,8 @@ void CLocatedItem::SetToDeleted()
 	WCHAR szBuffer[80];
 	DWORD dwLength=LoadString(IDS_DELETEDFILE,szBuffer,80)+1;
 	if (szType!=NULL)
-		Allocation.Free(szType);
-	szType=(WCHAR*)Allocation.Allocate(dwLength*2);
-	MemCopyW(szType,szBuffer,dwLength);
-
+		delete[] szType;
+	szType=alloccopy(szBuffer,dwLength);
 	iIcon=DEL_IMAGE;
 	
 	dwFileSize=DWORD(-1);
@@ -937,7 +934,7 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
 		return FALSE;
 
-	ItemDebugFormatMessage4("CLocatedItem::RemoveFlagsForChanged BEGIN, item:%s, flags already=%X",GetPath(),dwFlags,0,0);
+	ItemDebugFormatMessage4("CLocatedItem::RemoveFlagsForChanged BEGIN, item:%S, flags already=%X",GetPath(),dwFlags,0,0);
 	
 
 	union {
@@ -947,7 +944,7 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 	
 	// Checking whether file is available
 	HANDLE hFind;
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		hFind=FindFirstFileW(GetPath(),&fdw);
 	else
 		hFind=FindFirstFile(W2A(GetPath()),&fd);
@@ -986,8 +983,8 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 	}
 	else if (dwLength>0)
 	{
-        Allocation.Free(szPath);
-		szPath=(WCHAR*)Allocation.AllocateFast((dwLength+2)*2);
+        delete[] szPath;
+		szPath=new WCHAR[dwLength+2];
 		MemCopyW(szPath,szFullPath,dwLength+1);
         
 		szName=szPath+LastCharIndex(szPath,L'\\')+1;
@@ -1147,11 +1144,11 @@ void CLocatedItem::ChangeName(LPCWSTR szNewName,int iLength)
 		iLength=istrlenw(szNewName);
 
 	if (szTitle!=szName && szTitle!=NULL)
-		Allocation.Free(szTitle);
+		delete[] szTitle;
 	szTitle=NULL;
 
 	DWORD dwDirectoryLen=DWORD(szName-szPath);
-	szPath=(WCHAR*)Allocation.AllocateFast(dwDirectoryLen+iLength+2);
+	szPath=new WCHAR[dwDirectoryLen+iLength+2];
 	
 	// Copying directory
 	MemCopyW(szPath,szOldPath,dwDirectoryLen);
@@ -1172,7 +1169,7 @@ void CLocatedItem::ChangeName(LPCWSTR szNewName,int iLength)
 	
 	szTitle=szName;
 
-	Allocation.Free(szOldPath);
+	delete[] szOldPath;
 
 	AddFlags(LITEM_FILENAMEOK);
 	RemoveFlags(LITEM_TITLEOK);

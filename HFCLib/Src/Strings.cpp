@@ -114,7 +114,7 @@ int strcasencmp(LPCWSTR s1,LPCWSTR s2,DWORD n)
     
 	tmp1[n1]='\0';
 	tmp2[n2]='\0';
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		CharLowerW(tmp1);
 		CharLowerW(tmp2);
@@ -1070,7 +1070,7 @@ int vswprintfex( wchar_t *buffer, SIZE_T buffersize, const wchar_t *format, va_l
 #ifdef DEF_WCHAR
 int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 	{
 		char* pStr=new char[nBufferMax+1];
 		int nRet=::LoadStringA(GetLanguageSpecificResourceHandle(),uID,pStr,nBufferMax);
@@ -1083,7 +1083,7 @@ int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax)
 
 int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax,TypeOfResourceHandle bType)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 	{
 		char* pStr=new char[nBufferMax+1];
 		int nRet=::LoadStringA(GetResourceHandle(bType),uID,pStr,nBufferMax);

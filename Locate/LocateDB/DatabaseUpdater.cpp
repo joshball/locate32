@@ -974,7 +974,8 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 	m_szExtra1(NULL),m_szExtra2(NULL)
 {
 	m_szArchive=alloccopy(pDatabase->GetArchiveName());
-	m_szName=alloccopy(pDatabase->GetName());
+	m_dwNameLength=wcslen(pDatabase->GetName());
+	m_szName=alloccopy(pDatabase->GetName(),m_dwNameLength);
 
 	// Retrieving flags
 	if (pDatabase->IsFlagged(CDatabase::flagStopIfRootUnavailable))
@@ -1068,7 +1069,7 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 					DWORD dwEntries=-1,cbBuffer=16384,dwRet;
 					HANDLE hEnum;
 					
-					if (IsFullUnicodeSupport())
+					if (IsUnicodeSystem())
 					{
 						NETRESOURCEW nr;
 						nr.dwScope=RESOURCE_CONNECTED;
@@ -1108,7 +1109,7 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 					}
 
 
-					if (IsFullUnicodeSupport())
+					if (IsUnicodeSystem())
 					{
 						NETRESOURCEW* nro;
 							

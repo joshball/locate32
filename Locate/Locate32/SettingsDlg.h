@@ -99,7 +99,7 @@ public:
 		virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 		virtual void OnTimer(DWORD wTimerID); 
 			
-		BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
+		BOOL ListNotifyHandler(NMLISTVIEW *pNm);
 				
 	protected:
 		friend CSettingsProperties;
@@ -108,9 +108,9 @@ public:
 		void FindLanguages();
         
 		struct LanguageItem {
-			CString Language;
-			CString File;
-			CString Description;
+			CStringW Language;
+			CStringW File;
+			CStringW Description;
 		};
 
 
@@ -175,7 +175,7 @@ public:
 			virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 			virtual BOOL OnClose();
 			
-			BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
+			BOOL ListNotifyHandler(NMLISTVIEW *pNm);
 		
 		protected:
 			
@@ -328,8 +328,8 @@ public:
 		virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 		virtual void OnTimer(DWORD wTimerID); 
 			
-		BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
-		BOOL WherePressedNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
+		BOOL ListNotifyHandler(NMLISTVIEW *pNm);
+		BOOL WherePressedNotifyHandler(NMLISTVIEW *pNm);
 		BOOL ItemUpOrDown(BOOL bUp);
 
 		void InsertSubActions();
@@ -363,8 +363,8 @@ public:
 
 
 		
-		void FormatActionLabel(CString& str,CAction::Action nAction,UINT uSubAction) const;
-		BOOL GetSubActionLabel(CString& str,CAction::Action nAction,UINT uSubAction) const;
+		void FormatActionLabel(CStringW& str,CAction::Action nAction,UINT uSubAction) const;
+		BOOL GetSubActionLabel(CStringW& str,CAction::Action nAction,UINT uSubAction) const;
 		UINT IndexToSubAction(CAction::Action nAction,UINT nIndex) const;
 		UINT SubActionToIndex(CAction::Action nAction,UINT nSubAction) const;
 
@@ -411,7 +411,6 @@ public:
 		HMENU hPopupMenu;
 
 
-		CString m_Buffer;
 
 	};
 

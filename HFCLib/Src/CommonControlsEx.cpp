@@ -31,30 +31,62 @@ CListCtrlEx::COLUMNDATA::COLUMNDATA(int nID_,int nWidth,int nFormat,LPCSTR pTitl
 		lc.mask|=LVCF_WIDTH;
 	}
 
-	SIZE_T dwTitleLen=istrlen(pTitle);
-	pStrTitle=new char[max(dwTitleLen+1,2)];
-	dMemCopy(pStrTitle,pTitle,dwTitleLen+1);
+	pStrTitle=alloccopyAtoW(pTitle);
+}
+
+CListCtrlEx::COLUMNDATA::COLUMNDATA(int nID_,int nWidth,int nFormat,LPCWSTR pTitle)
+:	bFlags(0),nID(nID_)
+{
+	lc.mask=LVCF_FMT;
+	lc.fmt=nFormat;
+	if (nWidth>=0)
+	{
+		lc.cx=nWidth;
+		lc.mask|=LVCF_WIDTH;
+	}
+
+	pStrTitle=alloccopy(pTitle);
 }
 
 CListCtrlEx::COLUMNDATA::COLUMNDATA(int nID_,const LVCOLUMN* _lc)
 :	bFlags(0),nID(nID_)
 {
-	dMemCopy(&lc,_lc,sizeof(LVCOLUMN));
+	MemCopy(&lc,_lc,sizeof(LVCOLUMN));
 
 	if (lc.mask&LVCF_TEXT)
-	{
-		SIZE_T dwTitleLen=istrlen(_lc->pszText);
-		pStrTitle=new char[max(dwTitleLen+1,2)];
-		dMemCopy(pStrTitle,_lc->pszText,dwTitleLen+1);
-	}
+		pStrTitle=alloccopyAtoW(_lc->pszText);
 	else
 	{
-		pStrTitle=new char[2];
+		pStrTitle=new WCHAR[2];
 		pStrTitle[0]='\0';
 	}
 }
 
-int CListCtrlEx::InsertColumn(int nID,LPCTSTR lpszColumnHeading,BOOL bShow,int nFormat,int nWidth)
+CListCtrlEx::COLUMNDATA::COLUMNDATA(int nID_,const LVCOLUMNW* _lc)
+:	bFlags(0),nID(nID_)
+{
+	MemCopy(&lc,_lc,sizeof(LVCOLUMN));
+
+	if (lc.mask&LVCF_TEXT)
+		pStrTitle=alloccopy(_lc->pszText);
+	else
+	{
+		pStrTitle=new WCHAR[2];
+		pStrTitle[0]='\0';
+	}
+}
+
+int CListCtrlEx::InsertColumn(int nID,LPCSTR lpszColumnHeading,BOOL bShow,int nFormat,int nWidth)
+{
+	COLUMNDATA* pNew=new COLUMNDATA(nID,nWidth,nFormat,lpszColumnHeading);
+    aColumns.Add(pNew);
+
+	if (bShow)
+		ShowColumn(aColumns.GetSize()-1);
+	return aColumns.GetSize()-1;
+}
+
+int CListCtrlEx::InsertColumn(int nID,LPCWSTR lpszColumnHeading,BOOL bShow,int nFormat,int nWidth)
 {
 	COLUMNDATA* pNew=new COLUMNDATA(nID,nWidth,nFormat,lpszColumnHeading);
     aColumns.Add(pNew);
@@ -75,6 +107,16 @@ int CListCtrlEx::InsertColumn(int nID,int nTitleID,BOOL bShow,int nFormat,int nW
 }
 
 int CListCtrlEx::InsertColumn(int nID,BOOL bShow,const LVCOLUMN* lc)
+{
+	COLUMNDATA* pNew=new COLUMNDATA(nID,lc);
+	aColumns.Add(pNew);
+
+	if (bShow)
+		ShowColumn(aColumns.GetSize()-1);
+	return aColumns.GetSize()-1;
+}
+
+int CListCtrlEx::InsertColumn(int nID,BOOL bShow,const LVCOLUMNW* lc)
 {
 	COLUMNDATA* pNew=new COLUMNDATA(nID,lc);
 	aColumns.Add(pNew);
@@ -107,7 +149,7 @@ BOOL CListCtrlEx::ShowColumn(int nCol)
 
 	if (aColumns[nCol]->bFlags&COLUMNDATA::FlagTitleIsResource)
 	{
-		CString txt(UINT(aColumns[nCol]->nTitleID),aColumns[nCol]->bResourceType);
+		CStringW txt(UINT(aColumns[nCol]->nTitleID),aColumns[nCol]->bResourceType);
 		aColumns[nCol]->lc.pszText=txt.GiveBuffer();
 	}
 	else
@@ -303,29 +345,58 @@ HMENU CListCtrlEx::CreateColumnSelectionMenu(int nFirstID) const
 {
 	HMENU hMenu=CreatePopupMenu();
 
-	MENUITEMINFO mii;
-	mii.cbSize=sizeof(MENUITEMINFO);
-	mii.fMask=MIIM_STATE|MIIM_ID|MIIM_TYPE;
-	mii.fType=MFT_STRING;
-	for (int i=0;i<aColumns.GetSize();i++)
+	if (IsUnicodeSystem())
 	{
-		if (aColumns[i]->bFlags&COLUMNDATA::FlagTitleIsResource)
+		MENUITEMINFOW mii;
+		mii.cbSize=sizeof(MENUITEMINFOW);
+		mii.fMask=MIIM_STATE|MIIM_ID|MIIM_TYPE;
+		mii.fType=MFT_STRING;
+		for (int i=0;i<aColumns.GetSize();i++)
 		{
-			CString txt(UINT(aColumns[i]->nTitleID),aColumns[i]->bResourceType);
-			mii.dwTypeData=txt.GiveBuffer();
+			if (aColumns[i]->bFlags&COLUMNDATA::FlagTitleIsResource)
+			{
+				CStringW txt(UINT(aColumns[i]->nTitleID),aColumns[i]->bResourceType);
+				mii.dwTypeData=txt.GiveBuffer();
+			}
+			else
+				mii.dwTypeData=aColumns[i]->pStrTitle;
+			mii.wID=nFirstID+aColumns[i]->nID;
+			if (aColumns[i]->bFlags&COLUMNDATA::FlagVisible)
+				mii.fState=MFS_CHECKED;
+			else
+				mii.fState=MFS_ENABLED;
+			InsertMenuItemW(hMenu,i,TRUE,&mii);
+			if (aColumns[i]->bFlags&COLUMNDATA::FlagTitleIsResource)
+				delete[] (char*) mii.dwTypeData;
+		
+			mii.wID++;
 		}
-		else
-			mii.dwTypeData=aColumns[i]->pStrTitle;
-		mii.wID=nFirstID+aColumns[i]->nID;
-		if (aColumns[i]->bFlags&COLUMNDATA::FlagVisible)
-			mii.fState=MFS_CHECKED;
-		else
-			mii.fState=MFS_ENABLED;
-		InsertMenuItem(hMenu,i,TRUE,&mii);
-		if (aColumns[i]->bFlags&COLUMNDATA::FlagTitleIsResource)
+	}
+	else
+	{
+		MENUITEMINFO mii;
+		mii.cbSize=sizeof(MENUITEMINFO);
+		mii.fMask=MIIM_STATE|MIIM_ID|MIIM_TYPE;
+		mii.fType=MFT_STRING;
+		for (int i=0;i<aColumns.GetSize();i++)
+		{
+			if (aColumns[i]->bFlags&COLUMNDATA::FlagTitleIsResource)
+			{
+				CString txt(UINT(aColumns[i]->nTitleID),aColumns[i]->bResourceType);
+				mii.dwTypeData=txt.GiveBuffer();
+			}
+			else
+				mii.dwTypeData=alloccopyWtoA(aColumns[i]->pStrTitle);
+			mii.wID=nFirstID+aColumns[i]->nID;
+			if (aColumns[i]->bFlags&COLUMNDATA::FlagVisible)
+				mii.fState=MFS_CHECKED;
+			else
+				mii.fState=MFS_ENABLED;
+			InsertMenuItem(hMenu,i,TRUE,&mii);
+			
 			delete[] (char*) mii.dwTypeData;
-	
-		mii.wID++;
+			mii.wID++;
+		}
 	}
 	return hMenu;		
 }
@@ -368,14 +439,17 @@ int CListCtrlEx::GetVisibleColumnFromSubItem(int nSubItem) const
 	return -1;
 }
 
-CString CListCtrlEx::GetColumnTitle(int nCol)
+BOOL CListCtrlEx::GetColumnTitle(CString& sTitle,int nCol)
 {
-	ASSERT(nCol>=0);
+	if (nCol<0 || nCol>=aColumns.GetSize())
+		return FALSE;
+	
 
 	if (aColumns[nCol]->bFlags&COLUMNDATA::FlagTitleIsResource)
-		return CString(UINT(aColumns[nCol]->nTitleID),aColumns[nCol]->bResourceType);
+		sTitle.LoadStringA(UINT(aColumns[nCol]->nTitleID),aColumns[nCol]->bResourceType);
 	else
-		return CString(aColumns[nCol]->pStrTitle);
+		sTitle=aColumns[nCol]->pStrTitle;
+	return TRUE;
 }
 
 
@@ -490,21 +564,81 @@ BOOL CListCtrlEx::GetColumn(int nCol, LV_COLUMN* pColumn) const
 		{
 			if (aColumns[nCol]->bFlags&COLUMNDATA::FlagTitleIsResource)
 			{
-				::LoadString(GetResourceHandle(aColumns[nCol]->bResourceType),
-					aColumns[nCol]->nTitleID,pColumn->pszText,pColumn->cchTextMax);
+				::LoadString(aColumns[nCol]->nTitleID,pColumn->pszText,
+					pColumn->cchTextMax,aColumns[nCol]->bResourceType);
 			}
 			else
+				WideCharToMultiByte(CP_ACP,0,aColumns[nCol]->pStrTitle,-1,pColumn->pszText,pColumn->cchTextMax,0,0);
+		}
+		return TRUE;
+	}
+}
+
+BOOL CListCtrlEx::GetColumn(int nCol, LV_COLUMNW* pColumn) const
+{
+	if (aColumns[nCol]->bFlags&COLUMNDATA::FlagVisible)
+		return CListCtrl::GetColumn(GetVisibleColumnFromSubItem(aColumns[nCol]->lc.iSubItem),pColumn);
+	else
+	{
+		if (pColumn->mask&LVCF_ORDER)
+			pColumn->iOrder=-1;
+		if (pColumn->mask&LVCF_IMAGE)
+			pColumn->iImage=aColumns[nCol]->lc.mask&LVCF_IMAGE?aColumns[nCol]->lc.iImage:0;
+		if (pColumn->mask&LVCF_WIDTH)
+			pColumn->cx=aColumns[nCol]->lc.mask&LVCF_WIDTH?aColumns[nCol]->lc.cx:100;
+		if (pColumn->mask&LVCF_SUBITEM)
+			pColumn->iSubItem=-1;
+		if (pColumn->mask&LVCF_FMT)
+			pColumn->fmt=aColumns[nCol]->lc.mask&LVCF_FMT?aColumns[nCol]->lc.fmt:LVCFMT_LEFT;
+		if (pColumn->mask&LVCF_TEXT)
+		{
+			if (aColumns[nCol]->bFlags&COLUMNDATA::FlagTitleIsResource)
 			{
-				int nLength=max(strlen(aColumns[nCol]->pStrTitle),size_t(pColumn->cchTextMax-1));
-				strncmp(pColumn->pszText,aColumns[nCol]->pStrTitle,nLength);
-				pColumn->pszText[nLength]='\0';
+				::LoadString(aColumns[nCol]->nTitleID,pColumn->pszText,
+					pColumn->cchTextMax,aColumns[nCol]->bResourceType);
 			}
+			else
+				StringCbCopyW(pColumn->pszText,pColumn->cchTextMax,aColumns[nCol]->pStrTitle);
 		}
 		return TRUE;
 	}
 }
 
 BOOL CListCtrlEx::SetColumn(int nCol, const LV_COLUMN* pColumn)
+{
+	if (aColumns[nCol]->bFlags&COLUMNDATA::FlagVisible)
+		return CListCtrl::SetColumn(GetVisibleColumnFromSubItem(aColumns[nCol]->lc.iSubItem),pColumn);
+	else
+	{
+		if (pColumn->mask&LVCF_IMAGE)
+		{
+			aColumns[nCol]->lc.mask|=LVCF_IMAGE;
+			aColumns[nCol]->lc.iImage=pColumn->iImage;
+		}
+		if (pColumn->mask&LVCF_WIDTH)
+		{
+			aColumns[nCol]->lc.mask|=LVCF_WIDTH;
+			aColumns[nCol]->lc.cx=pColumn->cx;
+		}
+		if (pColumn->mask&LVCF_FMT)
+		{
+			aColumns[nCol]->lc.mask|=LVCF_FMT;
+			aColumns[nCol]->lc.fmt=pColumn->fmt;
+		}
+		if (pColumn->mask&LVCF_TEXT)
+		{
+			if (!(aColumns[nCol]->bFlags&COLUMNDATA::FlagTitleIsResource) &&
+				aColumns[nCol]->pStrTitle!=NULL)
+				delete[] aColumns[nCol]->pStrTitle;
+
+			aColumns[nCol]->bFlags&=~DWORD(COLUMNDATA::FlagTitleIsResource);
+			aColumns[nCol]->pStrTitle=alloccopyAtoW(pColumn->pszText);
+		}
+		return TRUE;
+	}
+}
+
+BOOL CListCtrlEx::SetColumn(int nCol, const LV_COLUMNW* pColumn)
 {
 	if (aColumns[nCol]->bFlags&COLUMNDATA::FlagVisible)
 		return CListCtrl::SetColumn(GetVisibleColumnFromSubItem(aColumns[nCol]->lc.iSubItem),pColumn);

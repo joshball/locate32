@@ -1214,32 +1214,32 @@ void CShortcut::ModifyMenus(CArrayFP<CShortcut*>& aShortcuts,HMENU hMainMenu,HME
 			if (pAction->m_nAction==CAction::MenuCommand)
 			{
 				BYTE bSubMenu=CAction::GetMenuAndSubMenu(pAction->m_nMenuCommand);
-				HMENU hMenu=GetSubMenu((bSubMenu&128)?hMainMenu:hSubMenu,bSubMenu&~128);
+				CMenu Menu(GetSubMenu((bSubMenu&128)?hMainMenu:hSubMenu,bSubMenu&~128));
 
-				MENUITEMINFO mii;
-				mii.cbSize=sizeof(MENUITEMINFO);
+				MENUITEMINFOW mii;
+				mii.cbSize=sizeof(MENUITEMINFOW);
 				mii.fMask=MIIM_FTYPE|MIIM_STRING;
 				mii.cch=0;
-				if (!GetMenuItemInfo(hMenu,LOWORD(pAction->m_nMenuCommand),FALSE,&mii))
+				if (!Menu.GetMenuItemInfo(LOWORD(pAction->m_nMenuCommand),FALSE,&mii))
 					continue;
 
 				if (mii.fType!=MFT_STRING)
 					continue;
 
-				CString Title,Key;
+				CStringW Title,Key;
 				mii.dwTypeData=Title.GetBuffer(mii.cch++);
-				if (!GetMenuItemInfo(hMenu,LOWORD(pAction->m_nMenuCommand),FALSE,&mii))
+				if (!Menu.GetMenuItemInfo(LOWORD(pAction->m_nMenuCommand),FALSE,&mii))
 					continue;
 
-				if (Title.FindFirst('\t')!=-1)
+				if (Title.FindFirst(L'\t')!=-1)
 					continue;
 
 				aShortcuts[i]->FormatKeyLabel(pVirtKeyNames,Key);
 								
-				Title << '\t' << Key;
+				Title << L'\t' << Key;
 				mii.dwTypeData=Title.GetBuffer();
 				
-				SetMenuItemInfo(hMenu,LOWORD(pAction->m_nMenuCommand),FALSE,&mii);
+				Menu.SetMenuItemInfo(LOWORD(pAction->m_nMenuCommand),FALSE,&mii);
 
 
 			}
@@ -1285,7 +1285,7 @@ BYTE CSubAction::GetMenuAndSubMenu(CAction::ActionMenuCommands nMenuCommand)
 	return 0;
 }
 
-void CShortcut::FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,BYTE bKey,BYTE bModifiers,BOOL bScancode,CString& str)
+void CShortcut::FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,BYTE bKey,BYTE bModifiers,BOOL bScancode,CStringW& str)
 {
 	if (bKey==0)
 	{
@@ -1308,7 +1308,7 @@ void CShortcut::FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,BYTE bKey,BYTE b
 	
 	if (bScancode)
 	{
-		CString str2;
+		CStringW str2;
 		str2.Format(IDS_SHORTCUTSCANCODE,(int)bKey);
 		str << str2;
 		return;

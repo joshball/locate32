@@ -365,17 +365,30 @@ BOOL CSelectColumndDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 	switch (idCtrl)
 	{
 	case IDC_COLUMNS:
-		return ListNotifyHandler((LV_DISPINFO*)pnmh,(NMLISTVIEW*)pnmh);
+		return ListNotifyHandler((NMLISTVIEW*)pnmh);
 	}
 	return CDialog::OnNotify(idCtrl,pnmh);
 }
 
-BOOL CSelectColumndDlg::ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm)
+BOOL CSelectColumndDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 {
-	switch(pLvdi->hdr.code)
+	switch(pNm->hdr.code)
 	{
 	case LVN_GETDISPINFO:
 		{
+			LV_DISPINFO *pLvdi=(LV_DISPINFO *)pNm;
+			ColumnItem* pItem=(ColumnItem*)pLvdi->item.lParam;
+			if (pItem==NULL)
+				break;
+			if (g_szBuffer!=NULL)
+				delete[] g_szBuffer;
+			g_szBuffer=alloccopyWtoA(pItem->m_strName,pItem->m_strName.GetLength());
+			pLvdi->item.pszText=g_szBuffer;
+			break;
+		}
+	case LVN_GETDISPINFOW:
+		{
+			LV_DISPINFOW *pLvdi=(LV_DISPINFOW*)pNm;
 			ColumnItem* pItem=(ColumnItem*)pLvdi->item.lParam;
 			if (pItem==NULL)
 				break;

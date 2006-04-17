@@ -84,7 +84,7 @@ UINT CWndCtrl::GetText(CStringA& str) const
 #ifdef DEF_WCHAR
 UINT CWndCtrl::GetText(CStringW& str) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		UINT len=::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
 		LPWSTR text=new WCHAR[len];
@@ -114,14 +114,14 @@ UINT CWndCtrl::GetText(CStringW& str) const
  
 BOOL CWndCtrl::SetText(LPCWSTR lpsz)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); 
 	return ::SendMessageA(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)W2A(lpsz)); 
 }
 
 BOOL CWndCtrl::SetWindowText(LPCWSTR lpsz) 
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SetWindowTextW(m_hWnd,lpsz); 
 	return ::SetWindowTextA(m_hWnd,W2A(lpsz)); 
 }
@@ -129,7 +129,7 @@ BOOL CWndCtrl::SetWindowText(LPCWSTR lpsz)
 
 int CWndCtrl::GetWindowText(LPWSTR lpString,int nMaxCount) const 
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::GetWindowTextW(m_hWnd,lpString,nMaxCount); 
 
 	char* pText=new char[nMaxCount+2];
@@ -145,7 +145,7 @@ int CWndCtrl::GetWindowText(LPWSTR lpString,int nMaxCount) const
 
 int CWndCtrl::GetWindowText(CStringW& str) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		int len=::GetWindowTextLengthW(m_hWnd);
 		len=::GetWindowTextW(m_hWnd,str.GetBuffer(len),len+1);
@@ -162,7 +162,7 @@ int CWndCtrl::GetWindowText(CStringW& str) const
 
 UINT CWndCtrl::GetText(LPWSTR lpszText,UINT cchTextMax) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,WM_GETTEXT,cchTextMax*2,(LPARAM)lpszText); 
 
 	int nLen=::SendMessageA(m_hWnd,WM_GETTEXTLENGTH,0,0);
@@ -207,7 +207,7 @@ int CListBox::GetText(int nIndex, CStringA& rString) const
 #ifdef DEF_WCHAR
 int CListBox::GetText(int nIndex, LPWSTR lpszText) const
 { 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,LB_GETTEXT,nIndex,(LPARAM)lpszText);
 
 	int nLen=::SendMessageA(m_hWnd,LB_GETTEXTLEN,nIndex,0);
@@ -228,7 +228,7 @@ int CListBox::GetText(int nIndex, CStringW& rString) const
 	if (nLen==CB_ERR)
 		return CB_ERR;
 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		LPWSTR pointer=new WCHAR [nLen+2];
 		if (pointer==NULL)
@@ -293,7 +293,7 @@ int CComboBox::GetLBText(int nIndex, CStringA& rString) const
 #ifdef DEF_WCHAR
 int CComboBox::GetLBText(int nIndex, LPWSTR lpszText) const
 { 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)lpszText);
 
 	int nLen=::SendMessageA(m_hWnd,CB_GETLBTEXTLEN,nIndex,0);
@@ -313,7 +313,7 @@ int CComboBox::GetLBText(int nIndex, CStringW& rString) const
 	if (nLen==CB_ERR)
 		return CB_ERR;
 
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		LPWSTR pointer=new WCHAR [nLen+2];
 		if (pointer==NULL)
@@ -351,7 +351,7 @@ int CComboBox::GetLBText(int nIndex, CStringW& rString) const
 
 int CComboBox::FindString(int nStartAfter, LPCWSTR lpszString) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
 	else
 		return ::SendMessageA(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)W2A(lpszString));
@@ -359,7 +359,7 @@ int CComboBox::FindString(int nStartAfter, LPCWSTR lpszString) const
 
 int CComboBox::AddString(LPCWSTR lpszString)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,CB_ADDSTRING,0,(LPARAM)lpszString);
 	else
 		return ::SendMessageA(m_hWnd,CB_ADDSTRING,0,(LPARAM)(LPCSTR)W2A(lpszString));
@@ -367,7 +367,7 @@ int CComboBox::AddString(LPCWSTR lpszString)
 
 int CComboBox::InsertString(int nIndex,LPCWSTR lpszString)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)lpszString);
 	else
 		return ::SendMessageA(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)(LPCSTR)W2A(lpszString));
@@ -375,7 +375,7 @@ int CComboBox::InsertString(int nIndex,LPCWSTR lpszString)
 
 int CComboBox::Dir(UINT attr, LPCWSTR lpszWildCard)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)lpszWildCard);
 	else
 		return ::SendMessageA(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)(LPCSTR)W2A(lpszWildCard));
@@ -383,7 +383,7 @@ int CComboBox::Dir(UINT attr, LPCWSTR lpszWildCard)
 
 int CComboBox::SelectString(int nStartAfter, LPCWSTR lpszString)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
 	else
 		return ::SendMessageA(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)W2A(lpszString));

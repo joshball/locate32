@@ -53,7 +53,7 @@ public:
 	virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 	
-	BOOL ListNotifyHandler(LV_DISPINFO *pLvdi,NMLISTVIEW *pNm);
+	BOOL ListNotifyHandler(NMLISTVIEW *pNm);
 	BOOL ItemUpOrDown(BOOL bUp);
 	
 public:
@@ -64,7 +64,6 @@ public:
 private:
 	CListCtrl* m_pList;
 	CImageList m_ToolbarIL,m_ToolbarILHover,m_ToolbarILDisabled;
-	CString m_strBuffer;
 
 #ifdef _DEBUG
 public:

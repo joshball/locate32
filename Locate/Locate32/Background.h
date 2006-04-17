@@ -100,12 +100,6 @@ public:
 		Item(CLocatedItem* pItem, int iItem);
 		Item(CLocatedItem* pItem, int iItem,CLocateDlg::DetailType nDetail);
 		
-
-	public:
-		// Overloaded operators, for fast allocating
-		void* operator new(size_t size) { return Allocation.Allocate(size); }
-		void operator delete(void* pObject) { Allocation.Free(pObject); }
-		void operator delete(void* pObject,size_t size) { Allocation.Free(pObject); }
 	};
 	
 	CListCtrl* m_pList;

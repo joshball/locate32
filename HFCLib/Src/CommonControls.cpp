@@ -57,7 +57,7 @@ BOOL CStatusBarCtrl::GetText(CStringW& str,int nPane,int* pType) const
 	int ret;
 	SIZE_T len=::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0);
 	
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		ret=::SendMessageW(m_hWnd,SB_GETTEXTW,(WPARAM)nPane,(LPARAM)str.GetBuffer(len));
 	else
 	{
@@ -75,7 +75,7 @@ BOOL CStatusBarCtrl::GetText(CStringW& str,int nPane,int* pType) const
 int CStatusBarCtrl::GetText(LPWSTR lpszText,int nPane,int* pType) const
 {
 	int ret;
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		ret=::SendMessageW(m_hWnd,SB_GETTEXTW,(WPARAM)nPane,(LPARAM)lpszText);	
 	else
 	{
@@ -93,7 +93,7 @@ int CStatusBarCtrl::GetText(LPWSTR lpszText,int nPane,int* pType) const
 
 BOOL CStatusBarCtrl::GetTipText(int n,LPWSTR szText,SIZE_T nBufLen) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,SB_GETTIPTEXTW,MAKEWPARAM(n,nBufLen),(LPARAM)szText);
 	
 	char* pText=new char[nBufLen+2];
@@ -350,7 +350,7 @@ CSize CTabCtrl::SetItemSize(CSize size)
 #ifdef DEF_WCHAR
 BOOL CTabCtrl::GetItem(int nItem,TC_ITEMW* pTabCtrlItem) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,TCM_GETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 	else if (pTabCtrlItem->mask&TCIF_TEXT && pTabCtrlItem->pszText!=NULL)
 	{
@@ -369,7 +369,7 @@ BOOL CTabCtrl::GetItem(int nItem,TC_ITEMW* pTabCtrlItem) const
 
 BOOL CTabCtrl::SetItem(int nItem,TC_ITEMW* pTabCtrlItem)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,TCM_SETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 	else if (pTabCtrlItem->mask&TCIF_TEXT && pTabCtrlItem->pszText!=NULL)
 	{
@@ -387,7 +387,7 @@ BOOL CTabCtrl::SetItem(int nItem,TC_ITEMW* pTabCtrlItem)
 
 BOOL CTabCtrl::InsertItem(int nItem,TC_ITEMW* pTabCtrlItem)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,TCM_INSERTITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 	else if (pTabCtrlItem->mask&TCIF_TEXT && pTabCtrlItem->pszText!=NULL)
 	{
@@ -513,9 +513,8 @@ BOOL CListCtrl::SetItemState(int nItem, UINT nState, UINT nMask)
 	return ::SendMessage(m_hWnd,LVM_SETITEMSTATE,nItem,(LPARAM)&li);
 }	
 
-CString CListCtrl::GetItemText(int nItem, int nSubItem) const
+BOOL CListCtrl::GetItemText(CString& str,int nItem, int nSubItem) const
 {
-	CString str;
 	LV_ITEM li;
 	ZeroMemory(&li,sizeof(LV_ITEM));
 	li.mask=LVIF_TEXT;
@@ -525,7 +524,7 @@ CString CListCtrl::GetItemText(int nItem, int nSubItem) const
 	li.cchTextMax=1000;
 	::SendMessage(m_hWnd,LVM_GETITEMTEXT,nItem,(LPARAM)&li);
 	str.FreeExtra();
-	return str;
+	return TRUE;
 }
 	
 int CListCtrl::GetItemText(int nItem, int nSubItem, LPTSTR lpszText, int nLen) const
@@ -571,7 +570,7 @@ DWORD CListCtrl::GetItemData(int nItem) const
 	return li.lParam;
 }
 
-int CListCtrl::InsertItem(int nItem, LPCTSTR lpszItem)
+int CListCtrl::InsertItem(int nItem, LPCSTR lpszItem)
 {
 	LV_ITEM li;
 	li.mask=LVIF_TEXT;
@@ -581,7 +580,7 @@ int CListCtrl::InsertItem(int nItem, LPCTSTR lpszItem)
 	return ::SendMessage(m_hWnd,LVM_INSERTITEM,0,(LPARAM)&li);
 }
 
-int CListCtrl::InsertItem(int nItem, LPCTSTR lpszItem, int nImage)
+int CListCtrl::InsertItem(int nItem, LPCSTR lpszItem, int nImage)
 {
 	LV_ITEM li;
 	li.mask=LVIF_TEXT|LVIF_IMAGE;
@@ -604,7 +603,7 @@ int CListCtrl::HitTest(POINT pt, UINT* pFlags) const
 	return lh.iItem;
 }
 
-int CListCtrl::InsertColumn(int nCol, LPCTSTR lpszColumnHeading,
+int CListCtrl::InsertColumn(int nCol, LPCSTR lpszColumnHeading,
 	int nFormat, int nWidth, int nSubItem)
 {
 	LV_COLUMN lc;
@@ -731,6 +730,115 @@ BOOL CListCtrl::SaveColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) con
 		RegKey.m_hKey=NULL;
 	return bRet;
 }
+
+
+#ifdef DEF_WCHAR
+BOOL CListCtrl::SetItem(int nItem, int nSubItem, UINT nMask, LPCWSTR lpszItem,
+	int nImage, UINT nState, UINT nStateMask, LPARAM lParam)
+{
+	LV_ITEMW li;
+	li.mask=nMask;
+	li.iItem=nItem;
+	li.iSubItem=nSubItem;
+	li.state=nState;
+	li.stateMask=nStateMask;
+	li.pszText=(LPWSTR)lpszItem;
+	li.iImage=nImage;
+	li.lParam=lParam;
+	return ::SendMessage(m_hWnd,LVM_SETITEMW,0,(LPARAM)&li);
+}
+
+int CListCtrl::InsertColumn(int nCol, LPCWSTR lpszColumnHeading,
+	int nFormat, int nWidth, int nSubItem)
+{
+	LV_COLUMNW lc;
+	lc.mask=LVCF_TEXT|LVCF_FMT;
+    lc.fmt=nFormat;
+	if (nWidth>=0)
+	{
+		lc.mask|=LVCF_WIDTH;
+		lc.cx=nWidth;
+	}
+	lc.pszText=(LPWSTR)lpszColumnHeading;
+	if (nSubItem>=0)
+	{
+		lc.mask|=LVCF_SUBITEM;
+		lc.iSubItem=nSubItem;
+	}
+	return ::SendMessage(m_hWnd,LVM_INSERTCOLUMNW,nCol,(LPARAM)&lc);
+}
+
+int CListCtrl::InsertItem(UINT nMask, int nItem, LPCWSTR lpszItem, UINT nState,
+	UINT nStateMask,int nImage, LPARAM lParam)
+{
+	LV_ITEMW li;
+	li.mask=nMask;
+	li.iImage=nImage;
+	li.iItem=nItem;
+	li.state=nState;
+	li.stateMask=nStateMask;
+	li.iSubItem=0;
+	li.pszText=(LPWSTR)lpszItem;
+	li.lParam=lParam;
+	return ::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)&li);
+}
+
+BOOL CListCtrl::GetItemText(CStringW& str,int nItem, int nSubItem) const
+{
+	LV_ITEMW li;
+	li.mask=LVIF_TEXT;
+	li.iItem=nItem;
+	li.iSubItem=nSubItem;
+	li.pszText=str.GetBuffer(1000);
+	li.cchTextMax=1000;
+	::SendMessage(m_hWnd,LVM_GETITEMTEXTW,nItem,(LPARAM)&li);
+	str.FreeExtra();
+	return TRUE;
+}
+	
+int CListCtrl::GetItemText(int nItem, int nSubItem, LPWSTR lpszText, int nLen) const
+{
+	LV_ITEMW li;
+	li.mask=LVIF_TEXT;
+	li.iItem=nItem;
+	li.iSubItem=nSubItem;
+	li.pszText=lpszText;
+	li.cchTextMax=nLen;
+	return ::SendMessage(m_hWnd,LVM_GETITEMTEXTW,nItem,(LPARAM)&li);
+}
+
+BOOL CListCtrl::SetItemText(int nItem, int nSubItem, LPCWSTR lpszText)
+{
+	LV_ITEMW li;
+	li.mask=LVIF_TEXT;
+	li.iItem=nItem;
+	li.iSubItem=nSubItem;
+	li.pszText=(LPWSTR)lpszText;
+	return ::SendMessage(m_hWnd,LVM_SETITEMTEXTW,nItem,(LPARAM)&li);
+}
+
+
+int CListCtrl::InsertItem(int nItem, LPCWSTR lpszItem)
+{
+	LV_ITEMW li;
+	li.mask=LVIF_TEXT;
+	li.iItem=nItem;
+	li.pszText=(LPWSTR)lpszItem;
+	li.iSubItem=0;
+	return ::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)&li);
+}
+
+int CListCtrl::InsertItem(int nItem, LPCWSTR lpszItem, int nImage)
+{
+	LV_ITEMW li;
+	li.mask=LVIF_TEXT|LVIF_IMAGE;
+	li.iImage=nImage;
+	li.iItem=nItem;
+	li.iSubItem=0;
+	li.pszText=(LPWSTR)lpszItem;
+	return ::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)&li);
+}
+#endif
 
 ///////////////////////////////////////////
 // CTreeCtrl
@@ -1021,7 +1129,7 @@ CString CComboBoxEx::GetItemText(int nItem) const
 
 CStringW CComboBoxEx::GetItemTextW(int nItem) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		CStringW str;
 		COMBOBOXEXITEMW ce;
@@ -1060,7 +1168,7 @@ int CComboBoxEx::GetItemText(int nItem,LPSTR lpszText,int nLen) const
 
 int CComboBoxEx::GetItemText(int nItem,LPWSTR lpszText,int nLen) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		COMBOBOXEXITEMW ce;
 		ce.iItem=nItem;
@@ -1097,7 +1205,7 @@ BOOL CComboBoxEx::SetItemText(int nItem,LPCSTR lpszText)
 
 BOOL CComboBoxEx::SetItemText(int nItem,LPCWSTR lpszText)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		COMBOBOXEXITEMW ce;
 		ce.pszText=(LPWSTR)lpszText;

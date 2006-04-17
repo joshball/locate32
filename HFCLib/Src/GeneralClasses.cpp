@@ -778,7 +778,7 @@ LONG CRegKey::RenameSubKey(HKEY hKey,LPCSTR szOldName,LPCSTR szNewName)
 
 LONG CRegKey::RenameSubKey(HKEY hKey,LPCWSTR szOldName,LPCWSTR szNewName)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		return RenameSubKey(hKey,W2A(szOldName),W2A(szNewName));
 
 	HKEY hSource,hDestination;
@@ -864,7 +864,7 @@ LONG CRegKey::CloseKey()
 
 LONG CRegKey::OpenKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		return OpenKey(hKey,W2A(lpszSubKey),fStatus,lpSecurityAttributes);
 
 	REGSAM  samDesired=0;
@@ -941,7 +941,7 @@ BOOL CRegKey::QueryValue(LPCSTR lpszValueName,CString& strData) const
 
 BOOL CRegKey::QueryValue(LPCWSTR lpszValueName,CStringW& strData) const
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 	{
 		CString strA;
 		if (QueryValue(W2A(lpszValueName),strA))
@@ -1005,7 +1005,7 @@ BOOL CRegKey::EnumValue(DWORD iValue,CString& strName,LPDWORD lpdwType,LPBYTE lp
 
 BOOL CRegKey::EnumKey(DWORD iSubkey,CStringW& strName,LPWSTR lpszClass,LPDWORD lpcchClass,PFILETIME lpftLastWrite) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		DWORD cb=100,cb2=cb;
 		LONG ret=::RegEnumKeyExW(m_hKey,iSubkey,strName.GetBuffer(cb/2),&cb2,0,lpszClass,lpcchClass,lpftLastWrite);
@@ -1066,7 +1066,7 @@ BOOL CRegKey::EnumKey(DWORD iSubkey,CStringW& strName,LPWSTR lpszClass,LPDWORD l
 
 DWORD CRegKey::EnumKey(DWORD iSubkey,LPWSTR lpszName,DWORD cchName,LPWSTR lpszClass,LPDWORD lpcchClass,PFILETIME lpftLastWrite) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::RegEnumKeyExW(m_hKey,iSubkey,lpszName,&cchName,0,lpszClass,lpcchClass,lpftLastWrite)==ERROR_SUCCESS?cchName+1:0;
 	else
 	{
@@ -1100,7 +1100,7 @@ DWORD CRegKey::EnumKey(DWORD iSubkey,LPWSTR lpszName,DWORD cchName,LPWSTR lpszCl
 
 BOOL CRegKey::EnumValue(DWORD iValue,CStringW& strName,LPDWORD lpdwType,LPBYTE lpbData,LPDWORD lpcbData) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 	{
 		DWORD cb=2048;
 		LONG ret=::RegEnumValueW(m_hKey,iValue,strName.GetBuffer(2048/2),&cb,0,lpdwType,lpbData,lpcbData);
@@ -1119,7 +1119,7 @@ BOOL CRegKey::EnumValue(DWORD iValue,CStringW& strName,LPDWORD lpdwType,LPBYTE l
 
 inline DWORD CRegKey::EnumValue(DWORD iValue,LPWSTR lpszValue,DWORD cchValue,LPDWORD lpdwType,LPBYTE lpbData,LPDWORD lpcbData) const
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::RegEnumValueW(m_hKey,iValue,lpszValue,&cchValue,0,lpdwType,lpbData,lpcbData)==ERROR_SUCCESS?cchValue+1:0;
 	else
 	{
@@ -1138,7 +1138,7 @@ DWORD CRegKey::QueryValueLength(LPCWSTR lpszValueName,BOOL& bIsOk) const
 {
 	DWORD nLength=0;
 	LONG lRet;
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		lRet=::RegQueryValueExW(m_hKey,(LPWSTR)lpszValueName,NULL,NULL,NULL,&nLength);
 	else
 		lRet=::RegQueryValueExA(m_hKey,(LPSTR)(LPCSTR)W2A(lpszValueName),NULL,NULL,NULL,&nLength);
@@ -1179,7 +1179,7 @@ BOOL CRegKey::DeleteKey(HKEY hKey,LPCSTR szKey)
 
 BOOL CRegKey::DeleteKey(HKEY hKey,LPCWSTR szKey)
 {
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		return DeleteKey(hKey,W2A(szKey));
 
 	HKEY hSubKey;
@@ -1204,7 +1204,7 @@ BOOL CRegKey::DeleteKey(HKEY hKey,LPCWSTR szKey)
 
 BOOL CRegKey::SetValue(LPCWSTR lpValueName,CStringW& strData)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)(LPCWSTR)strData,(DWORD)strData.GetLength()*2+1)==ERROR_SUCCESS;
 	else
 		return ::RegSetValueExA(m_hKey,W2A(lpValueName),0,REG_SZ,(CONST BYTE*)(LPCSTR)W2A(strData),(DWORD)strData.GetLength()+1)==ERROR_SUCCESS;
@@ -1213,7 +1213,7 @@ BOOL CRegKey::SetValue(LPCWSTR lpValueName,CStringW& strData)
 
 LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData)
 {
-	if (IsFullUnicodeSupport())
+	if (IsUnicodeSystem())
 		return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)strData,(DWORD)((wcslen(strData)+1)*2));
 	else
 	{
@@ -1222,15 +1222,24 @@ LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData)
 	}
 }
 	
-DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpData,DWORD cbData,LPDWORD lpdwType) const
+DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,SIZE_T cbData) const
 {
-	if (IsFullUnicodeSupport())
-		return ::RegQueryValueExW(m_hKey,(LPWSTR)lpszValueName,NULL,lpdwType,(LPBYTE)lpData,&cbData)==ERROR_SUCCESS?cbData:0;
+	if (IsUnicodeSystem())
+	{
+		cbData*=2;
+		DWORD dwType;
+		if (::RegQueryValueExW(m_hKey,(LPWSTR)lpszValueName,NULL,&dwType,(LPBYTE)lpStr,&cbData)!=ERROR_SUCCESS)
+			return 0;
+		if (dwType!=REG_SZ && dwType!=REG_EXPAND_SZ && REG_MULTI_SZ)
+			return 0;
+		return cbData/2;
+	}
 	else
 	{
-		CString sValueName(lpszValueName);
+		W2A aValue(lpszValueName);
+
 		DWORD dwType,dwDataLen;
-		if (::RegQueryValueExA(m_hKey,sValueName,NULL,&dwType,NULL,&dwDataLen)!=ERROR_SUCCESS)
+		if (::RegQueryValueExA(m_hKey,aValue,NULL,&dwType,NULL,&dwDataLen)!=ERROR_SUCCESS)
 			return 0;
 
 		switch (dwType)
@@ -1239,22 +1248,22 @@ DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpData,DWORD cbData,LPDWO
 		case REG_EXPAND_SZ:
 			{
 				char* pDataA=new char[dwDataLen+1];
-				if (::RegQueryValueExA(m_hKey,sValueName,NULL,lpdwType,(LPBYTE)pDataA,&dwDataLen)!=ERROR_SUCCESS)
+				if (::RegQueryValueExA(m_hKey,aValue,NULL,NULL,(LPBYTE)pDataA,&dwDataLen)!=ERROR_SUCCESS)
 				{
 					delete[] pDataA;
 					return 0;
 				}
 					
-				MultiByteToWideChar(CP_ACP,0,pDataA,dwDataLen,lpData,cbData);
+				MultiByteToWideChar(CP_ACP,0,pDataA,dwDataLen,lpStr,cbData);
 				if (cbData<dwDataLen)
-					lpData[cbData-1]=L'\0';
+					lpStr[cbData-1]=L'\0';
 				delete[] pDataA;
 				return min(cbData,dwDataLen);
 			}
 		case REG_MULTI_SZ:
 			{
 				char* pDataA=new char[dwDataLen+1];
-				if (::RegQueryValueExA(m_hKey,sValueName,NULL,lpdwType,(LPBYTE)pDataA,&dwDataLen)!=ERROR_SUCCESS)
+				if (::RegQueryValueExA(m_hKey,aValue,NULL,NULL,(LPBYTE)pDataA,&dwDataLen)!=ERROR_SUCCESS)
 				{
 					delete[] pDataA;
 					return 0;
@@ -1267,32 +1276,36 @@ DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpData,DWORD cbData,LPDWO
 					
 					if (ind+nlen+2>cbData)
 					{
-						MemCopyAtoW(lpData+ind,pDataA+ind,cbData-ind-2);
-						lpData[cbData-2]=L'\0';
-						lpData[cbData-1]=L'\0';
+						MemCopyAtoW(lpStr+ind,pDataA+ind,cbData-ind-2);
+						lpStr[cbData-2]=L'\0';
+						lpStr[cbData-1]=L'\0';
 
 						delete[] pDataA;
 						return ERROR_SUCCESS;
 					}
 						
-					MemCopyAtoW(lpData+ind,pDataA+ind,nlen);
+					MemCopyAtoW(lpStr+ind,pDataA+ind,nlen);
 					ind+=nlen;
-					lpData[ind++]=L'\0';
+					lpStr[ind++]=L'\0';
 				}
-				pDataA[ind]=L'\0';
+				lpStr[ind]=L'\0';
 				delete[] pDataA;
 				return min(cbData,dwDataLen);
 			}
 		default:
-			return ::RegQueryValueExA(m_hKey,sValueName,NULL,lpdwType,(LPBYTE)lpData,&cbData)==ERROR_SUCCESS?cbData:0;
+			return FALSE;
 		}
 	}
 }
 
-LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR lpData,DWORD cbData,DWORD dwType)
+LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData,SIZE_T cbDataAsChars,DWORD dwType)
 {
-	if (IsFullUnicodeSupport())
-		return ::RegSetValueExW(m_hKey,lpValueName,0,dwType,(CONST BYTE*)lpData,cbData);
+	if (IsUnicodeSystem())
+	{
+		if (dwType==REG_SZ || dwType==REG_EXPAND_SZ || dwType==REG_MULTI_SZ)
+			cbDataAsChars*=2;
+		return ::RegSetValueExW(m_hKey,lpValueName,0,dwType,(CONST BYTE*)strData,cbDataAsChars);
+	}
 	else
 	{
 		switch (dwType)
@@ -1300,31 +1313,31 @@ LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR lpData,DWORD cbData,DWORD dwT
 		case REG_SZ:
 		case REG_EXPAND_SZ:
 			{
-				char* lpDataA=alloccopyWtoA((LPCWSTR)lpData,cbData);
-				LONG lRet=::RegSetValueExA(m_hKey,W2A(lpValueName),0,dwType,(CONST BYTE*)lpDataA,cbData);
+				char* lpDataA=alloccopyWtoA((LPCWSTR)strData,cbDataAsChars);
+				LONG lRet=::RegSetValueExA(m_hKey,W2A(lpValueName),0,dwType,(CONST BYTE*)lpDataA,cbDataAsChars);
 				delete[] lpDataA;
 				return lRet;
 			}
 		case REG_MULTI_SZ:
 			{
 				SIZE_T i;
-				for (i=0;((LPCWSTR)lpData)[i]!='\0' || ((LPCWSTR)lpData)[i+1]!='\0';i++);
+				for (i=0;(((LPCWSTR)strData)[i]!='\0' || ((LPCWSTR)strData)[i+1]!='\0') && i<cbDataAsChars;i++);
 				char* pDataA=new char[i+2];
 				ULONG_PTR ind=0;			
-				while (((LPCWSTR)lpData)[ind]!='\0')
+				while (((LPCWSTR)strData)[ind]!='\0' && ind<cbDataAsChars)
 				{
-					SIZE_T nlen=wcslen(((LPCWSTR)lpData)+ind);
-					MemCopyWtoA(pDataA+ind,((LPCWSTR)lpData)+ind,nlen);
+					SIZE_T nlen=wcslen(((LPCWSTR)strData)+ind);
+					MemCopyWtoA(pDataA+ind,((LPCWSTR)strData)+ind,nlen);
 					ind+=nlen;
 					pDataA[ind++]='\0';
 				}
 				pDataA[ind]='\0';
-				LONG lRet=::RegSetValueExA(m_hKey,W2A(lpValueName),0,dwType,(CONST BYTE*)pDataA,cbData);
+				LONG lRet=::RegSetValueExA(m_hKey,W2A(lpValueName),0,dwType,(CONST BYTE*)pDataA,cbDataAsChars);
 				delete[] pDataA;
 				return lRet;
 			}
 		default:
-			return ::RegSetValueExA(m_hKey,W2A(lpValueName),0,dwType,(CONST BYTE*)lpData,cbData);
+			return ::RegSetValueExA(m_hKey,W2A(lpValueName),0,dwType,(CONST BYTE*)strData,cbDataAsChars);
 		}
 	}
 }

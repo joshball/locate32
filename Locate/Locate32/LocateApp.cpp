@@ -136,7 +136,7 @@ BOOL CLocateApp::InitInstance()
 	// Initializing locater library
 	InitLocaterLibrary();
 
-	if (!IsFullUnicodeSupport())
+	if (!IsUnicodeSystem())
 		m_pGetLongPathName=CLocateApp::GetLongPathNameNoUni;
 	else 
 	{
@@ -147,7 +147,7 @@ BOOL CLocateApp::InitInstance()
 
 	// Handling command line arguments
 	DebugFormatMessage("CommandLine: %s",m_lpCmdLine);
-	//if (IsFullUnicodeSupport())
+	//if (IsUnicodeSystem())
 	//	ParseParameters(GetCommandLineW(),m_pStartData);
 	//else
 		ParseParameters(A2W(m_lpCmdLine),m_pStartData);
@@ -1034,7 +1034,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 			st.wMonth=DOSDATETOMONTH(wDate);
 			st.wYear=DOSDATETOYEAR(wDate);
 
-			if (IsFullUnicodeSupport())
+			if (IsUnicodeSystem())
 			{
 				GetDateFormatW(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,
 					NULL,m_strDateFormat.GetBuffer(1000),1000);
@@ -1069,7 +1069,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 			st.wSecond=DOSTIMETOSECOND(wTime);
 			st.wMilliseconds=0;
 			
-			if (IsFullUnicodeSupport())
+			if (IsUnicodeSystem())
 			{
 				GetTimeFormatW(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,
 					NULL,m_strTimeFormat.GetBuffer(1000),1000);
@@ -1485,7 +1485,7 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 		CRegKey RegKey;
 		if (RegKey.OpenKey(HKCU,"Control Panel\\International",CRegKey::defRead)==ERROR_SUCCESS)
 		{
-			if (IsFullUnicodeSupport())
+			if (IsUnicodeSystem())
 			{
 				WCHAR* szFormattedStr=new WCHAR[50];
 				WCHAR szTemp[10]=L".",szTemp2[10]=L" ";
@@ -1641,7 +1641,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 		CLocateDlg* pLocateDlg=GetLocateDlg();
 		if (pLocateDlg!=NULL)
 		{
-			CString str;
+			CStringW str;
 
 			if (pUpdater->GetCurrentRoot()!=NULL)
 			{
@@ -1653,7 +1653,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			{
 				str.Format(IDS_UPDATINGDATABASE2,
 					pUpdater->GetCurrentDatabaseName(),
-					(LPCSTR)ID2A(IDS_UPDATINGWRITINGDATABASE));
+					(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
 			}
 			
 			pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
@@ -1789,25 +1789,25 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 							case ueStopped:
 								if (added>0)
 									str2 << L", ";
-								str2 << ID2A(IDS_UPDATINGTHREAD);
+								str2 << ID2W(IDS_UPDATINGTHREAD);
 								str2 << ' ' << (int)(i+1) << L": ";
-								str2 << ID2A(IDS_UPDATINGCANCELLED2);
+								str2 << ID2W(IDS_UPDATINGCANCELLED2);
 								added++;
 								break;
 							case ueFolderUnavailable:
 								if (added>0)
 									str2 << L", ";
-								str2 << ID2A(IDS_UPDATINGTHREAD);
+								str2 << ID2W(IDS_UPDATINGTHREAD);
 								str2 << ' ' << (int)(i+1) << L": ";
-								str2 << ID2A(IDS_UPDATINGUNAVAILABLEROOT);
+								str2 << ID2W(IDS_UPDATINGUNAVAILABLEROOT);
 								added++;
 								break;
 							default:
 								if (added>0)
 									str2 << L", ";
-								str2 << ID2A(IDS_UPDATINGTHREAD);
+								str2 << ID2W(IDS_UPDATINGTHREAD);
 								str2 << ' ' << (int)(i+1) << L": ";
-								str2 << ID2A(IDS_UPDATINGFAILED);
+								str2 << ID2W(IDS_UPDATINGFAILED);
 								added++;
 								break;
 							}
@@ -1858,7 +1858,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 		case ueUnknown:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				if (IsFullUnicodeSupport())
+				if (IsUnicodeSystem())
 				{
 					WCHAR* pError;
 
@@ -1923,7 +1923,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 		case ueOpen:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				if (IsFullUnicodeSupport())
+				if (IsUnicodeSystem())
 				{
 					CStringW str;
 					str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
@@ -1941,7 +1941,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 		case ueRead:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				if (IsFullUnicodeSupport())
+				if (IsUnicodeSystem())
 				{
 					CStringW str;
 					str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
@@ -1958,7 +1958,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 		case ueWrite:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				if (IsFullUnicodeSupport())
+				if (IsUnicodeSystem())
 				{
 					CStringW str;
 					str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
@@ -1993,7 +1993,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 		case ueFolderUnavailable:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowNonCriticalErrors)
 			{
-				if (IsFullUnicodeSupport())
+				if (IsUnicodeSystem())
 				{
 					CStringW str;
 					str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():L"");
@@ -2112,15 +2112,15 @@ BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg,int nThreadPrior
 	return TRUE;
 }
 
-void CLocateApp::OnInitDatabaseMenu(HMENU hPopupMenu)
+void CLocateApp::OnInitDatabaseMenu(CMenu& PopupMenu)
 {
 	// Removing existing items
-	for(int i=GetMenuItemCount(hPopupMenu)-1;i>=0;i--)
-		DeleteMenu(hPopupMenu,i,MF_BYPOSITION);
+	for(int i=PopupMenu.GetMenuItemCount()-1;i>=0;i--)
+		PopupMenu.DeleteMenu(i,MF_BYPOSITION);
 
-	CString title;
-	MENUITEMINFO mi;
-	mi.cbSize=sizeof(MENUITEMINFO);
+	CStringW title;
+	MENUITEMINFOW mi;
+	mi.cbSize=sizeof(MENUITEMINFOW);
 	mi.fMask=MIIM_DATA|MIIM_ID|MIIM_STATE|MIIM_TYPE;
 	mi.wID=IDM_DEFUPDATEDBITEM;
 	mi.fType=MFT_STRING;
@@ -2130,21 +2130,21 @@ void CLocateApp::OnInitDatabaseMenu(HMENU hPopupMenu)
 	{
 		// Inserting default items
 		title.LoadString(IDS_EMPTY);
-		mi.dwTypeData=(LPSTR)(LPCSTR)title;
+		mi.dwTypeData=(LPWSTR)(LPCWSTR)title;
 		mi.dwItemData=0;
 		mi.fState=MFS_GRAYED;
-		InsertMenuItem(hPopupMenu,mi.wID,FALSE,&mi);
+		PopupMenu.InsertMenu(mi.wID,FALSE,&mi);
 		return;
 	}
 
 	// Starting to insert database items 
 	for (int i=0;i<m_aDatabases.GetSize();i++)
 	{
-		title.Format("&%d: %s",i+1,m_aDatabases[i]->GetName());
-		mi.dwTypeData=(LPSTR)(LPCSTR)title;
+		title.Format(L"&%d: %s",i+1,m_aDatabases[i]->GetName());
+		mi.dwTypeData=(LPWSTR)(LPCWSTR)title;
 		mi.dwItemData=m_aDatabases[i]->GetID();
 		mi.wID=IDM_DEFUPDATEDBITEM+i;
-		InsertMenuItem(hPopupMenu,mi.wID,FALSE,&mi);
+		PopupMenu.InsertMenu(mi.wID,FALSE,&mi);
 	}	
 }
 
@@ -2620,8 +2620,8 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 					
 					// Checking that space is correctly calculated
 					ASSERT(iRequired+iRequiredForRoots<MAXTIPTEXTLENGTH?
-						DWORD(pPtr)-DWORD(nid.szTip)==iRequired+iRequiredForRoots:
-						DWORD(pPtr)-DWORD(nid.szTip)==iRequired);
+						DWORD(pPtr-nid.szTip)==iRequired+iRequiredForRoots:
+						DWORD(pPtr-nid.szTip)==iRequired);
 
 					*pPtr='\0';
 				}
@@ -2793,7 +2793,7 @@ void CLocateAppWnd::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
 		return;
 
 	if (CLocateApp::IsDatabaseMenu(hPopupMenu))
-		GetLocateApp()->OnInitDatabaseMenu(hPopupMenu);
+		GetLocateApp()->OnInitDatabaseMenu(CMenu(hPopupMenu));
 	else if (hPopupMenu==m_Menu.GetSubMenu(0))
 	{
 		int iDatabaseMenu=CLocateApp::GetDatabaseMenuIndex(hPopupMenu);
@@ -3430,7 +3430,7 @@ DWORD CLocateAppWnd::OnAnotherInstance(ATOM aCommandLine)
 	else
 	{
 		WCHAR szCmdLine[2000];
-		if (IsFullUnicodeSupport())
+		if (IsUnicodeSystem())
 			GlobalGetAtomNameW(aCommandLine,szCmdLine,2000);
 		else
 		{
@@ -4372,7 +4372,6 @@ BOOL CLocateAppWnd::CUpdateStatusWnd::DestroyWindow()
 #ifdef _DEBUG
 DEBUGALLOCATORTYPE DebugAlloc;
 #endif
-FASTALLOCATORTYPE Allocation;
 
 CLocateApp theApp;
 

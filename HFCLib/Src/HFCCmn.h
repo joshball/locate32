@@ -445,8 +445,6 @@ public:
 	HIMAGELIST SetImageList(HIMAGELIST hImageList,int nImageListType);
 	int GetItemCount() const;
 	BOOL GetItem(LV_ITEM* pItem) const;
-	BOOL GetItem(LV_ITEMW* pItem) const;
-	BOOL SetItem(const LV_ITEMW* pItem);
 	BOOL SetItem(const LV_ITEM* pItem);
 	BOOL SetItem(int nItem, int nSubItem, UINT nMask, LPCSTR lpszItem,
 		int nImage, UINT nState, UINT nStateMask, LPARAM lParam);
@@ -456,7 +454,7 @@ public:
 	BOOL GetItemRect(int nItem, LPRECT lpRect, UINT nCode) const;
 	BOOL SetItemPosition(int nItem, POINT pt);
 	BOOL GetItemPosition(int nItem, LPPOINT lpPoint) const;
-	int GetStringWidth(LPCTSTR lpsz) const;
+	int GetStringWidth(LPCSTR lpsz) const;
 	HWND GetEditControl() const;
 	HWND GetHeader() const;
 	
@@ -478,18 +476,20 @@ public:
 	UINT GetCheckState(int nItem) const;
 	void SetCheckState(int nItem,UINT nState);
 
-	CString GetItemText(int nItem, int nSubItem) const;
-	int GetItemText(int nItem, int nSubItem, LPTSTR lpszText, int nLen) const;
-	BOOL SetItemText(int nItem, int nSubItem, LPCTSTR lpszText);
+	BOOL GetItemText(CString& sText,int nItem, int nSubItem) const;
+	int GetItemText(int nItem, int nSubItem, LPSTR lpszText, int nLen) const;
+	BOOL SetItemText(int nItem, int nSubItem, LPCSTR lpszText);
 	void SetItemCount(int nItems,DWORD dwFlags=0);
 	BOOL SetItemData(int nItem, DWORD dwData);
 	DWORD GetItemData(int nItem) const;
 	UINT GetSelectedCount() const;
 
 	int InsertItem(const LV_ITEM* pItem);
-	int InsertItem(const LV_ITEMW* pItem);
-	int InsertItem(int nItem, LPCTSTR lpszItem);
-	int InsertItem(int nItem, LPCTSTR lpszItem, int nImage);
+	int InsertItem(int nItem, LPCSTR lpszItem);
+	int InsertItem(int nItem, LPCSTR lpszItem, int nImage);
+	int InsertItem(UINT nMask, int nItem, LPCSTR lpszItem, UINT nState,
+		UINT nStateMask,int nImage, LPARAM lParam);
+	
 	BOOL DeleteItem(int nItem);
 	BOOL DeleteAllItems();
 	int FindItem(LV_FINDINFO* pFindInfo, int nStart = -1) const;
@@ -501,15 +501,14 @@ public:
 	BOOL Arrange(UINT nCode);
 	HWND EditLabel(int nItem);
 	int InsertColumn(int nCol, const LV_COLUMN* pColumn);
-	int InsertColumn(int nCol, LPCTSTR lpszColumnHeading,
+	int InsertColumn(int nCol, LPCSTR lpszColumnHeading,
 		int nFormat = LVCFMT_LEFT, int nWidth = -1, int nSubItem = -1);
 	inline int GetColumnCount() const;
 	BOOL DeleteColumn(int nCol);
 	HIMAGELIST CreateDragImage(int nItem, LPPOINT lpPoint);
 	BOOL Update(int nItem);
 	BOOL SortItems(PFNLVCOMPARE pfnCompare, DWORD dwData);
-	int InsertItem(UINT nMask, int nItem, LPCTSTR lpszItem, UINT nState,
-		UINT nStateMask,int nImage, LPARAM lParam);
+	
 //Extendet
 	DWORD GetItemSpacing(int fSmall) const;
 	BOOL GetISearchString(LPSTR lpsz) const;
@@ -573,6 +572,30 @@ public:
 
 	int SortGroups(PFNLVGROUPCOMPARE pfnGroupCompare,void* plv);
     
+#ifdef DEF_WCHAR
+	BOOL GetColumn(int nCol, LV_COLUMNW* pColumn) const;
+	BOOL SetColumn(int nCol, const LV_COLUMNW* pColumn);
+	int InsertColumn(int nCol, const LV_COLUMNW* pColumn);
+	int InsertColumn(int nCol, LPCWSTR lpszColumnHeading,
+		int nFormat = LVCFMT_LEFT, int nWidth = -1, int nSubItem = -1);
+	
+	BOOL GetItem(LV_ITEMW* pItem) const;
+	BOOL SetItem(const LV_ITEMW* pItem);
+	BOOL SetItem(int nItem, int nSubItem, UINT nMask, LPCWSTR lpszItem,
+		int nImage, UINT nState, UINT nStateMask, LPARAM lParam);
+	int InsertItem(const LV_ITEMW* pItem);
+	int InsertItem(int nItem, LPCWSTR lpszItem);
+	int InsertItem(int nItem, LPCWSTR lpszItem, int nImage);
+	int InsertItem(UINT nMask, int nItem, LPCWSTR lpszItem, UINT nState,
+		UINT nStateMask,int nImage, LPARAM lParam);
+	
+
+	int GetStringWidth(LPCWSTR lpsz) const;
+	BOOL GetItemText(CStringW& sText,int nItem, int nSubItem) const;
+	int GetItemText(int nItem, int nSubItem, LPWSTR lpszText, int nLen) const;
+	BOOL SetItemText(int nItem, int nSubItem, LPCWSTR lpszText);
+#endif
+
 protected:
 	void RemoveImageList(int nImageList);
 };

@@ -207,7 +207,7 @@ inline void CShortcut::ResolveMnemonics(CArrayFP<CShortcut*>& aShortcuts,HWND* h
 
 }
 
-inline void CShortcut::FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,CString& str) const
+inline void CShortcut::FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,CStringW& str) const
 {
     FormatKeyLabel(pVirtualKeyNames,m_bVirtualKey,m_bModifiers,(m_dwFlags&CShortcut::sfVirtualKeyIsScancode)?TRUE:FALSE,str);
 }

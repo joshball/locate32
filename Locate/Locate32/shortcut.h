@@ -337,8 +337,8 @@ public:
 	static void ModifyMenus(CArrayFP<CShortcut*>& aShortcuts,HMENU hMainMenu,HMENU hSubMenu);
 	
 	static VirtualKeyName* GetVirtualKeyNames();
-	void FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,CString& str) const;
-	static void FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,BYTE bKey,BYTE bModifiers,BOOL bScancode,CString& str);
+	void FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,CStringW& str) const;
+	static void FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,BYTE bKey,BYTE bModifiers,BOOL bScancode,CStringW& str);
 
 
 #endif
