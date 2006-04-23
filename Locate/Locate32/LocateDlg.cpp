@@ -7257,7 +7257,7 @@ BOOL CLocateDlg::CNameDlg::SelectByLParam(LPARAM lParam)
 		if (ci.lParam==lParam)
 		{
 			m_LookIn.SetCurSel(ci.iItem);
-			m_LookIn.SetItemText(-1,m_LookIn.GetItemText(ci.iItem));
+			m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(ci.iItem));
 			return TRUE;
 		}
 	}
@@ -9305,7 +9305,8 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForSelection(CArray<LPWSTR>& aDirectori
 	case Custom:
 		return GetDirectoriesFromCustomText(aDirectories,pSelection->pTitleOrDirectory,istrlenw(pSelection->pTitleOrDirectory),pSelection->bSelected,bNoWarnings);
 	case Root:
-		return aDirectories.Add(alloccopy(pSelection->pTitleOrDirectory));
+		aDirectories.Add(alloccopy(pSelection->pTitleOrDirectory));
+		return TRUE;
 	default:
 		return FALSE;
 	}
@@ -9362,7 +9363,7 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 		}
 
 		delete[] m_pMultiDirs;
-		if (aSelections.GetSize())
+		if (aSelections.GetSize()>0)
 		{
 			m_pMultiDirs=new DirSelection*[aSelections.GetSize()+1];
 			m_pMultiDirs[aSelections.GetSize()]=NULL;
@@ -10716,14 +10717,18 @@ void CLocateDlg::CAdvancedDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 				
 		if (lpdis->itemState&ODS_DISABLED)
 			dc.SetTextColor(GetSysColor(COLOR_GRAYTEXT));
-		else if (lpdis->itemAction&ODA_FOCUS)
+		else if (lpdis->itemAction&ODA_FOCUS ||
+			lpdis->itemState&ODS_SELECTED)
 		{
 			// Filling text shade
 			dc.SetTextColor(GetSysColor(COLOR_HIGHLIGHTTEXT));
 			CSize sz=dc.GetTextExtent(Text);
 			dc.FillRect(&CRect(rc.left,rc.top+1,rc.left+sz.cx+1,rc.bottom-1),hHighLight);
+
+			if (lpdis->itemState&ODS_FOCUS && !(lpdis->itemState&ODS_NOFOCUSRECT))
+				dc.DrawFocusRect(&CRect(rc.left,rc.top+1,rc.left+sz.cx+1,rc.bottom-1));
 		}
-		else
+		else 
 			dc.SetTextColor(GetSysColor(COLOR_WINDOWTEXT));
 			
 		dc.DrawText(Text,Text.GetLength(),&rc,DT_LEFT|DT_SINGLELINE|DT_VCENTER);

@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   database updater v2.99.6.3190                 */
+   database updater v2.99.6.4230                 */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -233,18 +233,20 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				);
 
 				// Writing author
-				dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_sAuthor);
+				dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_sAuthor),
+					m_aDatabases[m_dwCurrentDatabase]->m_sAuthor.GetLength()+1);
 		
 				// Writing comments
-				dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_sComment);
+				dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_sComment),
+					m_aDatabases[m_dwCurrentDatabase]->m_sComment.GetLength()+1);
 				
 				// Writing free data
 				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
-					dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1,dwExtraSize1);
+					dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1,dwExtraSize1),dwExtraSize1);
 				else
 					dbFile->Write((BYTE)0);
 				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
-					dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2,dwExtraSize2);
+					dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2,dwExtraSize2),dwExtraSize2);
 				else
 					dbFile->Write((BYTE)0);
 				
@@ -936,7 +938,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::Write(CFile* dbFile)
 	dbFile->Write(nType);
 
 	// Writing path
-	dbFile->Write(m_Path);
+	dbFile->Write(W2A(m_Path));
 
 	// Writing volume name
 	dbFile->Write(sVolumeName);

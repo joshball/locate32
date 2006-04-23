@@ -2405,6 +2405,7 @@ COptionsPropertyPage::Item::~Item()
 void COptionsPropertyPage::Construct(const OPTIONPAGE* pOptionPage,TypeOfResourceHandle bType)
 {
 
+	m_lpszTemplateName=pOptionPage->lpszTemplateName;
 
 	if (pOptionPage->dwFlags&OPTIONPAGE::opCaptionIsID)
 		CPropertyPage::Construct(pOptionPage->nIDCaption,bType);
@@ -2418,6 +2419,7 @@ void COptionsPropertyPage::Construct(const OPTIONPAGE* pOptionPage,TypeOfResourc
 		m_ChangeText.LoadString(pOptionPage->nIDChangeText);
 	else
 		m_ChangeText=pOptionPage->lpszChangeText;
+
 
 }
 

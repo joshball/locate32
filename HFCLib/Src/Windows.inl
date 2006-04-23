@@ -166,7 +166,7 @@ inline CSize CDC::GetTextExtent(LPCSTR lpszString,int nCount) const
 inline CSize CDC::GetTextExtent(const CStringA& str) const
 {
 	CSize sz;
-	::GetTextExtentPoint32A(m_hDC,(LPCSTR)str,str.GetLength()+1,&sz);
+	::GetTextExtentPoint32A(m_hDC,(LPCSTR)str,str.GetLength(),&sz);
 	return sz;
 }
 

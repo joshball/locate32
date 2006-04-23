@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   database updater v2.99.6.3190                  */
+   database updater v2.99.6.4230                  */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -244,7 +244,7 @@ CDatabase* CDatabase::FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	}
 
     // Copying creator info
-	dwLength=RegKey.QueryValueLength(L"Creator");
+	dwLength=RegKey.QueryValueLength("Creator");
 	if (dwLength>1)
 	{
 		pDatabase->m_szCreator=new WCHAR[dwLength];
@@ -260,11 +260,12 @@ CDatabase* CDatabase::FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	}
 
 	// Copying roots
-	dwLength=RegKey.QueryValueLength(L"Roots");
+	dwLength=RegKey.QueryValueLength("Roots");
 	if (dwLength>1)
 	{
-		pDatabase->m_szRoots=new WCHAR[dwLength];
+		pDatabase->m_szRoots=new WCHAR[dwLength+1];
 		RegKey.QueryValue(L"Roots",pDatabase->m_szRoots,dwLength);
+		pDatabase->m_szRoots[dwLength]='\0';
 	}
 
 	// Excluded directories

@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   database updater v2.99.6.3190                  */
+   database updater v2.99.6.4230                  */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -15,7 +15,7 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 	BOOL bRet=TRUE;
 
 	CFile* dbFile=NULL;
-
+	
 	try
 	{
 		switch (nArchiveType)
@@ -53,16 +53,23 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 			delete[] szBuffer;
 			szBuffer=NULL;
 
+			CString strA;
+
 			// Reading header size
 			dbFile->Read(dwTemp);
 
 			// Reading creator and description
-			dbFile->Read(sCreator);
-			dbFile->Read(sDescription);
+			dbFile->Read(strA);
+			sCreator=strA;
+
+			dbFile->Read(strA);
+			sDescription=strA;
 
 			// Reading extra data, for future use
-			dbFile->Read(szExtra1);
-			dbFile->Read(szExtra2);
+			dbFile->Read(strA);
+			szExtra1=strA;
+			dbFile->Read(strA);
+			szExtra2=strA;
 
 			// Reading time
 			dbFile->Read(dwTemp);
@@ -81,12 +88,18 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 				
 				// Reading type and path
 				dbFile->Read((BYTE*)&pRoot->rtType,1);
-				dbFile->Read(pRoot->sPath);
+				
+				dbFile->Read(strA);
+				pRoot->sPath=strA;
 				
 				// Reading volume name and serial and filesystem
-				dbFile->Read(pRoot->sVolumeName);
+				dbFile->Read(strA);
+				pRoot->sVolumeName=strA;
+				
 				dbFile->Read(pRoot->dwVolumeSerial);
-				dbFile->Read(pRoot->sFileSystem);
+				
+				dbFile->Read(strA);
+				pRoot->sFileSystem=strA;
 
 				// Reading number of files and directories
 				dbFile->Read(pRoot->dwNumberOfFiles);
@@ -119,9 +132,12 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 				break;
 			}				
 			
+			CString strA;
 			// Reading creator and description
-			dbFile->Read(sCreator);
-			dbFile->Read(sDescription);
+			dbFile->Read(strA);
+			sCreator=strA;
+			dbFile->Read(strA);
+			sDescription=strA;
 			
 			// Resolving drives
 			CString sDrives;

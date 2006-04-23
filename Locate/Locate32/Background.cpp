@@ -290,7 +290,7 @@ BOOL CCheckFileNotificationsThread::RunningProcOld()
 			break;
 		else if (nRet>WAIT_OBJECT_0 && nRet<WAIT_OBJECT_0+m_nHandles)
 		{
-			BkgDebugFormatMessage4("Something is changed in %s",m_pRoots[nRet-WAIT_OBJECT_0],0,0,0);
+			BkgDebugFormatMessage4("Something is changed in %S",m_pRoots[nRet-WAIT_OBJECT_0],0,0,0);
 
 			CLocateDlg* pLocateDlg=GetLocateDlg();
 			

@@ -4,6 +4,7 @@
 	Version="8,00"
 	Name="locatedb"
 	ProjectGUID="{89CEC2B5-509A-4C18-ADA3-E4CFD01AEE50}"
+	RootNamespace="locatedb"
 	>
 	<Platforms>
 		<Platform

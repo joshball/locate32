@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   Updatedb.exe v2.99.6.3190 */
+   Updatedb.exe v2.99.6.4230 */
 
 #include <HFCLib.h>
 #include "locatedb/locatedb.h"
@@ -7,9 +7,9 @@
 #include "lan_resources.h"
 
 #ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 3.0 beta 6.3190";
+		LPCSTR szVersionStr="updtdb32 3.0 beta 6.4230";
 #else
-		LPCSTR szVersionStr="updatedb 3.0 beta 6.3190";
+		LPCSTR szVersionStr="updatedb 3.0 beta 6.4230";
 #endif
 
 
@@ -61,11 +61,11 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 	case StartedDatabase:
 		if (!nQuiet)
 		{
-			CString msg;
+			CStringW msg;
 			msg.Format(IDS_UPDATEDB32UPDATINGDATABASE,pUpdater->GetCurrentDatabaseName(),pUpdater->GetCurrentDatabaseFile());
 			if (pUpdater->IsIncrementUpdate())
 				msg.AddString(IDS_UPDATEDB32INCREMENTALUPDATE);
-			puts(msg);
+			_putws(msg);
 			
 		}
 		break;
