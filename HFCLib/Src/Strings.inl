@@ -31,6 +31,15 @@ inline LPSTR allocempty()
 	return psz;
 }
 
+inline LPSTR alloccopymulti(LPCSTR szMultiString)
+{
+	SIZE_T nTotLen;
+	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
+	char* psz=new char[nTotLen];
+	CopyMemory(psz,szMultiString,++nTotLen);
+	return psz;
+}
+
 #ifdef DEF_WCHAR
 inline LPWSTR alloccopy(LPCWSTR szString)
 {
@@ -45,6 +54,15 @@ inline LPWSTR alloccopy(LPCWSTR szString,SIZE_T dwLength)
 	WCHAR* psz=new WCHAR[max(dwLength,1)+1];
 	CopyMemory(psz,szString,dwLength<<1);
 	psz[dwLength]=L'\0';
+	return psz;
+}
+
+inline LPWSTR alloccopymulti(LPCWSTR szMultiString)
+{
+	SIZE_T nTotLen;
+	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
+	WCHAR* psz=new WCHAR[nTotLen];
+	CopyMemory(psz,szMultiString,(++nTotLen)<<1);
 	return psz;
 }
 
@@ -79,6 +97,25 @@ inline LPWSTR alloccopyAtoW(LPCSTR szString,SIZE_T dwLength)
 	psz[dwLength]='\0';
 	return psz;
 }
+
+inline LPSTR alloccopymultiWtoA(LPCWSTR szMultiString)
+{
+	SIZE_T nTotLen;
+	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
+	char* psz=new char[nTotLen];
+	MemCopyWtoA(psz,szMultiString,(++nTotLen)<<1);
+	return psz;
+}
+
+inline LPWSTR alloccopymultiAtoW(LPCSTR szMultiString)
+{
+	SIZE_T nTotLen;
+	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
+	WCHAR* psz=new WCHAR[nTotLen];
+	MemCopyAtoW(psz,szMultiString,(++nTotLen)<<1);
+	return psz;
+}
+
 inline LPWSTR allocemptyW()
 {
 	WCHAR* psz=new WCHAR[2];

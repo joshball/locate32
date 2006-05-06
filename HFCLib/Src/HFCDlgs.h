@@ -467,7 +467,7 @@ public:
 		// Output
 		union {
 			BOOL bChecked;
-			LPSTR pData;
+			LPWSTR pData;
 			LONG lValue;
 			COLORREF cColor;
 			LOGFONT* pLogFont;
@@ -487,7 +487,7 @@ public:
 	struct CHANGINGVALPARAMS : public BASICPARAMS {
 		union {
 			NewState nNewState;
-			LPSTR pNewData;
+			LPWSTR pNewData;
 			LONG lNewValue;
 			COLORREF cNewColor;
 			LOGFONT* pNewLogFont;
@@ -516,6 +516,9 @@ public:
 
 	// lParam is pointer to string class which will be set
 	static BOOL CALLBACK DefaultEditStrProc(BASICPARAMS* pParams); 
+
+	// lParam is pointer to CStringW which will be set
+	static BOOL CALLBACK DefaultEditStrWProc(BASICPARAMS* pParams); 
 
 	// lParam is pointer to COLORREF which will be set
 	static BOOL CALLBACK DefaultColorProc(BASICPARAMS* pParams); 
@@ -552,7 +555,7 @@ public:
 		// Data
 		union {
 			BOOL bChecked;
-			LPSTR pData;
+			LPWSTR pData;
 			LONG lValue;
 			COLORREF cColor;
 			LOGFONT* pLogFont;
@@ -653,7 +656,7 @@ public:
 
 private:
     BOOL InsertItemsToTree(HTREEITEM hParent,Item** pItems,Item* pParent=NULL);
-	BOOL TreeNotifyHandler(NMTVDISPINFO *pTvdi,NMTREEVIEW *pNm);
+	BOOL TreeNotifyHandler(NMTVDISPINFO *pTvdi);
 	BOOL SetCheckState(HTREEITEM hItem,Item* pItem,NewState nNewState);
 	BOOL SetNumericValue(Item* pItem);
 	BOOL SetTextValue(Item* pItem);
@@ -669,7 +672,7 @@ protected:
 	mutable CImageList m_Images;
 	Item** m_pItems;
 	UINT m_nTreeID;
-	CString m_ChangeText;
+	CStringW m_ChangeText;
 		
 };
 
@@ -1379,7 +1382,8 @@ inline void COptionsPropertyPage::Item::FreeText(LPWSTR pText) const
 }
 
 
-
+///////////////////////////
+// Class CFolderDialog
 
 
 inline LPITEMIDLIST CFolderDialog::GetFolder() const

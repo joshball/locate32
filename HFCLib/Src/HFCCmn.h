@@ -129,12 +129,6 @@ public:
 
 };
 
-class CToolInfo : public tagTOOLINFOA
-{
-public:
-	TCHAR szText[256];
-};
-
 class CToolTipCtrl : public CCommonCtrl
 {
 public:
@@ -155,6 +149,9 @@ public:
 	BOOL GetToolInfo(LPTOOLINFO lpToolInfo,HWND hWnd,UINT nIDTool=0) const;
 	void SetToolInfo(LPTOOLINFO lpToolInfo);
 	void SetToolRect(HWND hWnd,UINT nIDTool,LPCRECT lpRect);
+	
+	
+
 	int GetToolCount() const;
 	BOOL GetCurrentTool(LPTOOLINFO lpToolInfo) const;
 
@@ -162,7 +159,7 @@ public:
 #ifdef DEF_RESOURCES
 	BOOL AddTool(HWND hWnd,UINT nIDText,LPCRECT lpRectTool=NULL,UINT nIDTool=0,LPARAM lParam=0);
 #endif
-	BOOL AddTool(HWND hWnd,LPCTSTR lpszText=LPSTR_TEXTCALLBACK,LPCRECT lpRectTool=NULL,UINT nIDTool=0,LPARAM lParam=0);
+	BOOL AddTool(HWND hWnd,LPCSTR lpszText=LPSTR_TEXTCALLBACK,LPCRECT lpRectTool=NULL,UINT nIDTool=0,LPARAM lParam=0);
 	BOOL AddTool(LPTOOLINFO lpToolInfo);
 	BOOL AdjustRect(LPRECT lpRect,BOOL fLarger);
 	
@@ -173,7 +170,6 @@ public:
 	BOOL HitTest(HWND hWnd,LPPOINT pt,LPTOOLINFO lpToolInfo) const;
 	void RelayEvent(LPMSG lpMsg);
 	void SetDelayTime(UINT nDelay,Duration nDuration=automatic);
-	void UpdateTipText(LPCTSTR lpszText,HWND hWnd,UINT nIDTool=0);
 	
 	void GetMargin(LPRECT lprc) const;
 	void SetMargin(LPCRECT lprc);
@@ -183,16 +179,32 @@ public:
 	BOOL EnumTools(UINT iTool,LPTOOLINFO lpToolInfo) const;
 	void Pop();
 
+	void UpdateTipText(LPCSTR lpszText,HWND hWnd,UINT nIDTool=0);
+	
 #ifdef DEF_RESOURCES
 	void UpdateTipText(UINT nIDText,HWND hWnd,UINT nIDTool=0);
 #endif
 
 public:
-	void FillInToolInfo(LPTOOLINFO ti,HWND hWnd,UINT nIDTool) const;
 	BOOL DestroyToolTipCtrl();
 
 	BOOL TrackActivate(BOOL bStart,LPTOOLINFO lpToolInfo);
 	BOOL TrackPosition(int xPos,int yPos);
+
+#ifdef DEF_WCHAR
+	void NewToolRect(LPTOOLINFOW lpToolInfo);
+	void GetText(CStringW& str,HWND hWnd,UINT nIDTool=0) const;
+	BOOL GetToolInfo(LPTOOLINFOW lpToolInfo,HWND hWnd,UINT nIDTool=0) const;
+	void SetToolInfo(LPTOOLINFOW lpToolInfo);
+	BOOL GetCurrentTool(LPTOOLINFOW lpToolInfo) const;
+	BOOL AddTool(HWND hWnd,LPCWSTR lpszText,LPCRECT lpRectTool=NULL,UINT nIDTool=0,LPARAM lParam=0);
+	BOOL AddTool(LPTOOLINFOW lpToolInfo);
+	void UpdateTipText(LPCWSTR lpszText,HWND hWnd,UINT nIDTool=0);
+	BOOL EnumTools(UINT iTool,LPTOOLINFOW lpToolInfo) const;
+	void DelTool(LPTOOLINFOW lpToolInfo);
+	
+#endif
+
 protected:
 	friend class CWnd;
 	friend class CToolBarCtrl;

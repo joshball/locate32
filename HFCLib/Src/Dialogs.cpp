@@ -2286,6 +2286,7 @@ BOOL CFolderDialog::GetFolder(LPWSTR szFolder) const
 ///////////////////////////
 // Class COptionsPropertyPage
 ///////////////////////////
+
 #define IDC_EDITCONTROLFORSELECTEDITEM  1300
 #define IDC_SPINCONTROLFORSELECTEDITEM  1301
 #define IDC_COMBOCONTROLFORSELECTEDITEM 1302
@@ -2430,6 +2431,8 @@ BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
 		m_pTree=new CTreeCtrl(GetDlgItem(IDC_SETTINGS));
 		m_Images.Create(IDB_OPTIONSPROPERTYPAGEBITMAPS,16,256,RGB(255,255,255),IMAGE_BITMAP,LR_SHARED|LR_CREATEDIBSECTION);
 		m_pTree->SetImageList(m_Images,TVSIL_STATE);
+		if (IsUnicodeSystem())
+			m_pTree->SetUnicodeFormat(TRUE);
 
 		
 	}
@@ -2540,7 +2543,12 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 				pItems[i]->pProc(&bp);
 			}
 			if (pItems[i]->pData!=NULL)
-				::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(pItems[i]->pData));
+			{
+				if (IsUnicodeSystem())
+					::SendMessageW(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(pItems[i]->pData));
+				else
+					::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM((LPCSTR)W2A(pItems[i]->pData)));
+			}
 			break;
 		case Item::Numeric:
 			{
@@ -2556,9 +2564,18 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 					bp.hControl=pItems[i]->hControl;
 					pItems[i]->pProc(&bp);
 				}
-				char szText[100];
-				_itoa_s(pItems[i]->lValue,szText,100,10);
-				::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(szText));
+				if (IsUnicodeSystem())
+				{
+					WCHAR szText[100];
+					_itow_s(pItems[i]->lValue,szText,100,10);
+					::SendMessageW(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(szText));
+				}
+				else
+				{
+					char szText[100];
+					_itoa_s(pItems[i]->lValue,szText,100,10);
+					::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(szText));
+				}
 			}
 			break;
 		case Item::List:
@@ -2598,12 +2615,22 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 				int nFind=::SendMessage(pItems[i]->hControl,CB_FINDSTRINGEXACT,0,LPARAM(pItems[i]->pData));
 				::SendMessage(pItems[i]->hControl,CB_SETCURSEL,nFind,0);
 				if (nFind==CB_ERR)
-					::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(pItems[i]->pData));
+				{
+					if (IsUnicodeSystem())
+						::SendMessageW(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(pItems[i]->pData));
+					else
+						::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM((LPCSTR)W2A(pItems[i]->pData)));
+				}
 			}
 			break;
 		case Item::Font:
-			pItems[i]->hControl=CreateWindow("BUTTON",m_ChangeText,BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW,
-				10,10,100,13,*this,(HMENU)IDC_FONTBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+			if (IsUnicodeSystem())
+				pItems[i]->hControl=CreateWindowW(L"BUTTON",m_ChangeText,BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW,
+					10,10,100,13,*this,(HMENU)IDC_FONTBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+			else
+				pItems[i]->hControl=CreateWindow("BUTTON",W2A(m_ChangeText),BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW,
+					10,10,100,13,*this,(HMENU)IDC_FONTBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+
 			::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
 
 			// Initializing
@@ -2615,8 +2642,13 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 			}
 			break;
 		case Item::Color:
-			pItems[i]->hControl=CreateWindow("BUTTON",m_ChangeText,BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW,
-				10,10,100,13,*this,(HMENU)IDC_COLORBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+			if (IsUnicodeSystem())
+				pItems[i]->hControl=CreateWindowW(L"BUTTON",m_ChangeText,BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW,
+					10,10,100,13,*this,(HMENU)IDC_COLORBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+			else
+				pItems[i]->hControl=CreateWindow("BUTTON",W2A(m_ChangeText),BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW,
+					10,10,100,13,*this,(HMENU)IDC_COLORBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+
 			::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
 
 			// Initializing
@@ -3023,7 +3055,7 @@ BOOL COptionsPropertyPage::OnNotify(int idCtrl,LPNMHDR pnmh)
 	if (idCtrl==m_nTreeID)
 	{
 		CPropertyPage::OnNotify(idCtrl,pnmh);
-		BOOL bRet=TreeNotifyHandler((NMTVDISPINFO*)pnmh,(NMTREEVIEW*)pnmh);
+		BOOL bRet=TreeNotifyHandler((NMTVDISPINFO*)pnmh);
 		if (bRet)
 			SetWindowLong(dwlMsgResult,bRet);
 		return bRet;
@@ -3032,12 +3064,12 @@ BOOL COptionsPropertyPage::OnNotify(int idCtrl,LPNMHDR pnmh)
 	return CPropertyPage::OnNotify(idCtrl,pnmh);
 }
 
-BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi,NMTREEVIEW *pNm)
+BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 {
-	switch (pNm->hdr.code)
+	switch (pTvdi->hdr.code)
 	{
 	case TVN_KEYDOWN:
-		if (((NMTVKEYDOWN*)pNm)->wVKey==VK_SPACE)
+		if (((NMTVKEYDOWN*)pTvdi)->wVKey==VK_SPACE)
 		{
 			HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
 			if (hItem==NULL)
@@ -3064,148 +3096,160 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi,NMTREEVIEW *pNm
 				break;
 			if (pItem->nType==Item::RadioBox || pItem->nType==Item::CheckBox)
 			{
-				if (pItem->bEnabled && (ht.flags&TVHT_ONITEMSTATEICON || pNm->hdr.code==NM_DBLCLK))
+				if (pItem->bEnabled && (ht.flags&TVHT_ONITEMSTATEICON || pTvdi->hdr.code==NM_DBLCLK))
 					SetCheckState(hItem,pItem,Toggle);
 			}
 			break;
 		}
-	case TVN_SELCHANGING:
-		// Checking if selection cannot be vhanged
-		if (pNm->itemNew.lParam!=NULL)
+	case TVN_SELCHANGINGA:
+	case TVN_SELCHANGINGW:
 		{
-			if (!((Item*)pNm->itemNew.lParam)->bEnabled)
-				return TRUE;
-		}
+			NMTREEVIEWA *pNm=(NMTREEVIEWA*)pTvdi;
+			// Procedure does not access to any LPTSTR elements of NMTREEVIEWW,
+			// so no need for different unicode implementation
 
-		// Hiding control for previous item
-		if (pNm->itemOld.lParam!=NULL)
-		{
-			Item* pItem=(Item*)pNm->itemOld.lParam;
-			if (pItem->hControl!=NULL)
+			// Checking if selection cannot be changed
+			if (pNm->itemNew.lParam!=NULL)
 			{
-				// Hiding window and ensuring that that part of tree is redrawn
-				RECT rc;
-				::GetWindowRect(pItem->hControl,&rc);
-				::ShowWindow(pItem->hControl,SW_HIDE);
-				m_pTree->ScreenToClient(&rc);
-				::InvalidateRect(*m_pTree,&rc,FALSE);
-				
-				// Setting text
-				WCHAR* pText=pItem->GetText(FALSE);
-				if (!IsUnicodeSystem())
-				{
-					SIZE_T iStrLen=istrlenw(pText);
-					char* paText=new char [iStrLen+2];
-                    MemCopyWtoA(paText,pText,iStrLen+1);
-					m_pTree->SetItemText(pNm->itemOld.hItem,paText);
-					delete[] paText;
-				
-				}
-				else
-					m_pTree->SetItemText(pNm->itemOld.hItem,pText);
-				pItem->FreeText(pText);
-				
-				// Deleting another control
-				if (pItem->hControl2!=NULL)
-				{
-					::DestroyWindow(pItem->hControl2);
-					pItem->hControl2=NULL;
-				}
+				if (!((Item*)pNm->itemNew.lParam)->bEnabled)
+					return TRUE;
 			}
-		}
-		// Showing control for previous item
-		if (pNm->itemNew.lParam!=NULL)
-		{
-			Item* pItem=(Item*)pNm->itemNew.lParam;
-			if (pItem->hControl!=NULL)
+
+			// Hiding control for previous item
+			if (pNm->itemOld.lParam!=NULL)
 			{
-				// Changing text
-				// Setting text
-				WCHAR* pText=pItem->GetText(TRUE);
-				if (!IsUnicodeSystem())
+				Item* pItem=(Item*)pNm->itemOld.lParam;
+				if (pItem->hControl!=NULL)
 				{
-					SIZE_T iStrLen=istrlenw(pText);
-					char* paText=new char [iStrLen+2];
-                    MemCopyWtoA(paText,pText,iStrLen+1);
-					m_pTree->SetItemText(pNm->itemNew.hItem,paText);
-					delete[] paText;
-				
-				}
-				else
-					m_pTree->SetItemText(pNm->itemNew.hItem,pText);
-				
-				
-				// Show control
-				::ShowWindow(((Item*)pNm->itemNew.lParam)->hControl,SW_SHOW);
-                
-				// Moving it
-				RECT rc;
-				m_pTree->GetItemRect(pNm->itemNew.hItem,&rc,TRUE);
-				m_pTree->ClientToScreen(&rc);
-				ScreenToClient(&rc);
-				
-				int nWidth=60; // 60 is for numeric
-				if (pItem->nType==Item::Font || pItem->nType==Item::Color) 
-				{
-					CDC dc(this);
-					HGDIOBJ hOldFont=dc.SelectObject((HFONT)SendMessage(WM_GETFONT));
-					CSize sz=dc.GetTextExtent(m_ChangeText);
-					nWidth=sz.cx+10;
-					dc.SelectObject(hOldFont);
-				}
-				else if (pItem->nType!=Item::Numeric)
-				{
-					RECT rcTree;
-					m_pTree->GetClientRect(&rcTree);
-					nWidth=rcTree.right-rc.right;
-				}
-				::SetWindowPos(pItem->hControl,HWND_TOP,0,0,nWidth,20,SWP_SHOWWINDOW|SWP_NOMOVE);
-
-
-				
-				if (pItem->nType==Item::Numeric)
-				{
-					// Creating Up/Down control
-					pItem->hControl2=CreateWindow("msctls_updown32","",
-						UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_ARROWKEYS|WS_TABSTOP|WS_CHILDWINDOW|WS_VISIBLE,
-						rc.right+20,rc.top-1,10,10,*this,(HMENU)IDC_SPINCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
-					::SendMessage(pItem->hControl2,UDM_SETBUDDY,WPARAM(pItem->hControl),NULL);
+					// Hiding window and ensuring that that part of tree is redrawn
+					RECT rc;
+					::GetWindowRect(pItem->hControl,&rc);
+					::ShowWindow(pItem->hControl,SW_HIDE);
+					m_pTree->ScreenToClient(&rc);
+					::InvalidateRect(*m_pTree,&rc,FALSE);
 					
-					if (pItem->pProc!=NULL)
+					// Setting text
+					WCHAR* pText=pItem->GetText(FALSE);
+					if (!IsUnicodeSystem())
 					{
-						SPINPOXPARAMS spb;
-						spb.iLow=0;
-						spb.iHigh=MAXLONG;
-						pItem->SetValuesForBasicParams(&spb);
-						spb.crReason=SPINPOXPARAMS::SetSpinRange;
-						spb.pPage=this;
-						pItem->pProc(&spb);
-						::SendMessage(pItem->hControl2,UDM_SETRANGE32,spb.iLow,spb.iHigh);
+						SIZE_T iStrLen=istrlenw(pText);
+						char* paText=new char [iStrLen+2];
+						MemCopyWtoA(paText,pText,iStrLen+1);
+						m_pTree->SetItemText(pNm->itemOld.hItem,paText);
+						delete[] paText;
+					
 					}
 					else
-						::SendMessage(pItem->hControl2,UDM_SETRANGE32,0,MAXLONG);
-
-					::SetWindowPos(pItem->hControl2,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
+						m_pTree->SetItemText(pNm->itemOld.hItem,pText);
+					pItem->FreeText(pText);
+					
+					// Deleting another control
+					if (pItem->hControl2!=NULL)
+					{
+						::DestroyWindow(pItem->hControl2);
+						pItem->hControl2=NULL;
+					}
 				}
-
-				PostMessage(WM_FOCUSSELITEMCONTROL);
 			}
+			// Showing control for previous item
+			if (pNm->itemNew.lParam!=NULL)
+			{
+				Item* pItem=(Item*)pNm->itemNew.lParam;
+				if (pItem->hControl!=NULL)
+				{
+					// Changing text
+					// Setting text
+					WCHAR* pText=pItem->GetText(TRUE);
+					if (!IsUnicodeSystem())
+					{
+						SIZE_T iStrLen=istrlenw(pText);
+						char* paText=new char [iStrLen+2];
+						MemCopyWtoA(paText,pText,iStrLen+1);
+						m_pTree->SetItemText(pNm->itemNew.hItem,paText);
+						delete[] paText;
+					
+					}
+					else
+						m_pTree->SetItemText(pNm->itemNew.hItem,pText);
+					
+					
+					// Show control
+					::ShowWindow(((Item*)pNm->itemNew.lParam)->hControl,SW_SHOW);
+	                
+					// Moving it
+					RECT rc;
+					m_pTree->GetItemRect(pNm->itemNew.hItem,&rc,TRUE);
+					m_pTree->ClientToScreen(&rc);
+					ScreenToClient(&rc);
+					
+					int nWidth=60; // 60 is for numeric
+					if (pItem->nType==Item::Font || pItem->nType==Item::Color) 
+					{
+						CDC dc(this);
+						HGDIOBJ hOldFont=dc.SelectObject((HFONT)SendMessage(WM_GETFONT));
+						CSize sz=dc.GetTextExtent(m_ChangeText);
+						nWidth=sz.cx+10;
+						dc.SelectObject(hOldFont);
+					}
+					else if (pItem->nType!=Item::Numeric)
+					{
+						RECT rcTree;
+						m_pTree->GetClientRect(&rcTree);
+						nWidth=rcTree.right-rc.right;
+					}
+					::SetWindowPos(pItem->hControl,HWND_TOP,0,0,nWidth,20,SWP_SHOWWINDOW|SWP_NOMOVE);
+
+
+					
+					if (pItem->nType==Item::Numeric)
+					{
+						// Creating Up/Down control
+						pItem->hControl2=CreateWindow("msctls_updown32","",
+							UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_ARROWKEYS|WS_TABSTOP|WS_CHILDWINDOW|WS_VISIBLE,
+							rc.right+20,rc.top-1,10,10,*this,(HMENU)IDC_SPINCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+						::SendMessage(pItem->hControl2,UDM_SETBUDDY,WPARAM(pItem->hControl),NULL);
+						
+						if (pItem->pProc!=NULL)
+						{
+							SPINPOXPARAMS spb;
+							spb.iLow=0;
+							spb.iHigh=MAXLONG;
+							pItem->SetValuesForBasicParams(&spb);
+							spb.crReason=SPINPOXPARAMS::SetSpinRange;
+							spb.pPage=this;
+							pItem->pProc(&spb);
+							::SendMessage(pItem->hControl2,UDM_SETRANGE32,spb.iLow,spb.iHigh);
+						}
+						else
+							::SendMessage(pItem->hControl2,UDM_SETRANGE32,0,MAXLONG);
+
+						::SetWindowPos(pItem->hControl2,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
+					}
+
+					PostMessage(WM_FOCUSSELITEMCONTROL);
+				}
+			}
+			break;
 		}
-		break;
-	case TVN_SELCHANGED:
+	case TVN_SELCHANGEDA:
+	case TVN_SELCHANGEDW:
 		/*if (pNm->itemNew.lParam!=NULL)
 		{
 			if (((Item*)pNm->itemNew.lParam)->hControl!=NULL)
 				::SetFocus(((Item*)pNm->itemNew.lParam)->hControl);
 		}*/
 		break;
-	case TVN_ITEMEXPANDING:
-		if (pNm->action==TVE_COLLAPSE || pNm->action==TVE_TOGGLE)
+	case TVN_ITEMEXPANDINGA:
+		if (((NMTREEVIEWA*)pTvdi)->action==TVE_COLLAPSE || ((NMTREEVIEWA*)pTvdi)->action==TVE_TOGGLE)
+			return TRUE;
+		return FALSE;
+	case TVN_ITEMEXPANDINGW:
+		if (((NMTREEVIEWW*)pTvdi)->action==TVE_COLLAPSE || ((NMTREEVIEWW*)pTvdi)->action==TVE_TOGGLE)
 			return TRUE;
 		return FALSE;
 	case NM_CUSTOMDRAW:
 		{
-			NMTVCUSTOMDRAW* pCustomDraw=(NMTVCUSTOMDRAW*)pNm;
+			NMTVCUSTOMDRAW* pCustomDraw=(NMTVCUSTOMDRAW*)pTvdi;
 			if (pCustomDraw->nmcd.dwDrawStage==CDDS_PREPAINT)
 				return CDRF_NOTIFYITEMDRAW|CDRF_NOTIFYPOSTPAINT;
 			else if (pCustomDraw->nmcd.dwDrawStage==CDDS_POSTPAINT)
@@ -3324,21 +3368,51 @@ BOOL COptionsPropertyPage::SetTextValue(Item* pItem)
 		if (iCurSel!=CB_ERR)
 		{
 			iTextLen=::SendMessage(pItem->hControl,CB_GETLBTEXTLEN,iCurSel,0)+2;			
-			cp.pNewData=new char[iTextLen];
-			::SendMessage(pItem->hControl,CB_GETLBTEXT,iCurSel,LPARAM(cp.pNewData));
+			cp.pNewData=new WCHAR[iTextLen];
+				
+			if (IsUnicodeSystem())
+				::SendMessageW(pItem->hControl,CB_GETLBTEXT,iCurSel,LPARAM(cp.pNewData));
+			else
+			{
+				char* pAText=new char[iTextLen];
+				::SendMessage(pItem->hControl,CB_GETLBTEXT,iCurSel,LPARAM(pAText));
+				MultiByteToWideChar(CP_ACP,0,pAText,-1,cp.pNewData,iTextLen);
+				delete[] pAText;
+			}			
 		}
 		else
 		{
 			iTextLen=::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,iCurSel,0)+2;			
-			cp.pNewData=new char[iTextLen];
-			::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(cp.pNewData));
+			cp.pNewData=new WCHAR[iTextLen];
+			
+			
+			if (IsUnicodeSystem())
+				::SendMessageW(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(cp.pNewData));
+			else
+			{
+				char* pAText=new char[iTextLen];
+				::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(pAText));
+				MultiByteToWideChar(CP_ACP,0,pAText,-1,cp.pNewData,iTextLen);
+				delete[] pAText;
+			}		
+			
+			
 		}
 
 		break;
 	default:
 		iTextLen=::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,0,0)+1;
-		cp.pNewData=new char[max(iTextLen,2)];
-		::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(cp.pNewData));
+		cp.pNewData=new WCHAR[max(iTextLen,2)];
+		if (IsUnicodeSystem())
+			::SendMessageW(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(cp.pNewData));
+		else
+		{
+			char* pAText=new char[iTextLen];
+			::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(pAText));
+			MultiByteToWideChar(CP_ACP,0,pAText,-1,cp.pNewData,iTextLen);
+			delete[] pAText;
+		}	
+		
 		break;
 	}
 	
@@ -3514,10 +3588,10 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
     case Combo:
 		if (hControl!=NULL && !bActive)
 		{
-			int nCurSel=::SendMessage(hControl,CB_GETCURSEL,0,0);
-			int iLength=(nCurSel!=-1)?
-				::SendMessage(hControl,CB_GETLBTEXTLEN,nCurSel,0)+1:
-				::SendMessage(hControl,WM_GETTEXTLENGTH,0,0)+1;
+			CComboBox cb(hControl);
+
+			int nCurSel=cb.GetCurSel();
+			int iLength=(nCurSel!=-1)?cb.GetLBTextLen(nCurSel)+1:cb.GetTextLength()+1;
 			int iLabelLen=istrlenw(pString);
 			
 			WCHAR* pText=new WCHAR[iLabelLen+iLength+2];
@@ -3525,25 +3599,9 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 			pText[iLabelLen++]=' ';
 				
 			if (nCurSel!=-1)
-			{
-				char* pTemp=new char[iLength+2];
-				::SendMessage(hControl,CB_GETLBTEXT,nCurSel,LPARAM(pTemp));
-				MemCopyAtoW(pText+iLabelLen,pTemp,iLength+1);
-				delete[] pTemp;
-			}
+				cb.GetLBText(nCurSel,pText+iLabelLen);
 			else
-			{
-				if (!IsUnicodeSystem())
-				{
-					// 9x
-					char* pTemp=new char[iLength+2];
-					::GetWindowText(hControl,pTemp,iLength);
-					MemCopyAtoW(pText+iLabelLen,pTemp,iLength+1);
-					delete[] pTemp;
-				}
-				else
-					::GetWindowTextW(hControl,pText+iLabelLen,iLength);
-			}
+				cb.GetWindowText(pText+iLabelLen,iLength+1);
 
 			return pText;
 		}
@@ -3772,7 +3830,7 @@ BOOL CALLBACK COptionsPropertyPage::DefaultEditStrProc(BASICPARAMS* pParams)
 		break;
 	case BASICPARAMS::Get:
 		ASSERT(pParams->pData==NULL);
-		pParams->pData=alloccopy(*(CString*)pParams->lParam);
+		pParams->pData=alloccopyAtoW(*(CString*)pParams->lParam);
 		break;
 	case BASICPARAMS::Set:
 		break;
@@ -3781,6 +3839,32 @@ BOOL CALLBACK COptionsPropertyPage::DefaultEditStrProc(BASICPARAMS* pParams)
 			((CString*)pParams->lParam)->Empty();
 		else
 			((CString*)pParams->lParam)->Copy(pParams->pData);
+		break;
+	case BASICPARAMS::ChangingValue:
+		break;
+	}		
+	return TRUE;
+}
+
+// lParam is pointer to CStringW which will be set
+BOOL CALLBACK COptionsPropertyPage::DefaultEditStrWProc(BASICPARAMS* pParams)
+{
+	DebugMessage("DefaultEditStrWProc");
+	switch(pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		break;
+	case BASICPARAMS::Get:
+		ASSERT(pParams->pData==NULL);
+		pParams->pData=alloccopy(*(CStringW*)pParams->lParam);
+		break;
+	case BASICPARAMS::Set:
+		break;
+	case BASICPARAMS::Apply:
+		if (pParams->pData==NULL)
+			((CStringW*)pParams->lParam)->Empty();
+		else
+			((CStringW*)pParams->lParam)->Copy(pParams->pData);
 		break;
 	case BASICPARAMS::ChangingValue:
 		break;

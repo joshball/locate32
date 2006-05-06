@@ -462,10 +462,7 @@ inline void CToolTipCtrl::Activate(BOOL bActivate)
 	::SendMessage(m_hWnd,TTM_ACTIVATE,0,0);
 }
 
-inline BOOL CToolTipCtrl::GetCurrentTool(LPTOOLINFO lpToolInfo) const
-{
-	return ::SendMessage(m_hWnd,TTM_GETCURRENTTOOL,0,LPARAM(lpToolInfo));
-}
+
 
 inline void CToolTipCtrl::RelayEvent(LPMSG lpMsg)
 {
@@ -530,7 +527,6 @@ inline void CToolTipCtrl::Pop()
 
 inline void CToolTipCtrl::SetToolInfo(LPTOOLINFO lpToolInfo)
 {
-	lpToolInfo->cbSize=sizeof(TOOLINFO);
 	::SendMessage(m_hWnd,TTM_SETTOOLINFO,0,(LPARAM)lpToolInfo);
 }
 
@@ -539,6 +535,38 @@ inline BOOL CToolTipCtrl::AddTool(LPTOOLINFO lpToolInfo)
 	return ::SendMessage(m_hWnd,TTM_ADDTOOL,0,(LPARAM)lpToolInfo);
 }
 	
+
+#ifdef DEF_WCHAR
+inline void CToolTipCtrl::NewToolRect(LPTOOLINFOW lpToolInfo)
+{
+	::SendMessage(m_hWnd,TTM_NEWTOOLRECTW,0,(LPARAM)lpToolInfo);
+}
+
+inline BOOL CToolTipCtrl::AddTool(LPTOOLINFOW lpToolInfo)
+{
+	return ::SendMessage(m_hWnd,TTM_ADDTOOLW,0,(LPARAM)lpToolInfo);
+}
+
+inline void CToolTipCtrl::SetToolInfo(LPTOOLINFOW lpToolInfo)
+{
+	::SendMessage(m_hWnd,TTM_SETTOOLINFOW,0,(LPARAM)lpToolInfo);
+}
+
+inline BOOL CToolTipCtrl::GetCurrentTool(LPTOOLINFOW lpToolInfo) const
+{
+	return ::SendMessage(m_hWnd,TTM_GETCURRENTTOOLW,0,LPARAM(lpToolInfo));
+}
+
+inline void CToolTipCtrl::DelTool(LPTOOLINFOW lpToolInfo)
+{
+	::SendMessage(m_hWnd,TTM_DELTOOLW,0,(LPARAM)lpToolInfo);
+}
+
+inline BOOL CToolTipCtrl::EnumTools(UINT iTool,LPTOOLINFOW lpToolInfo) const
+{
+	return ::SendMessage(m_hWnd,TTM_ENUMTOOLSW,iTool,(LPARAM)lpToolInfo);
+}
+#endif
 
 
 ///////////////////////////

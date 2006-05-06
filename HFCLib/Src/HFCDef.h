@@ -6,6 +6,8 @@
 #ifndef HFCDEF_H
 #define HFCDEF_H
 
+typedef int					BOOL;
+
 #ifndef WIN32
 
 #define FAR					far

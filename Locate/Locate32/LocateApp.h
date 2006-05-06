@@ -33,9 +33,12 @@ public:
 		virtual ~CUpdateStatusWnd();
 	
 		virtual int OnCreate(LPCREATESTRUCT lpcs);
+		virtual void OnDestroy();
 		virtual void OnNcDestroy();
 		virtual void OnTimer(DWORD wTimerID);
 		virtual void OnPaint();
+		virtual void OnMouseMove(UINT fwKeys,WORD xPos,WORD yPos);
+	
 		virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 	
 		
@@ -68,6 +71,15 @@ public:
 		COLORREF m_cBackColor;
 		
 		HANDLE m_hUpdateMutex;
+
+
+		// Mouse move
+		struct MouseMove {
+			SHORT nStartPointX; // Point in client in which cursor is pressed
+			SHORT nStartPointY;
+		};
+		MouseMove* m_pMouseMove;
+
 	};
 
 public:
@@ -259,12 +271,13 @@ public:
 		pfUpdateTooltipPositionDown = 0x180,
 		pfUpdateTooltipPositionLeft = 0x080,
 		pfUpdateTooltipPositionRight = 0x280,
+		pfUpdateTooltipPositionLastPosition = 0x400,
 		pfUpdateTooltipPositionUpLeft = pfUpdateTooltipPositionUp|pfUpdateTooltipPositionLeft,
 		pfUpdateTooltipPositionUpRight = pfUpdateTooltipPositionUp|pfUpdateTooltipPositionRight,
 		pfUpdateTooltipPositionDownLeft = pfUpdateTooltipPositionDown|pfUpdateTooltipPositionLeft,
 		pfUpdateTooltipPositionDownRight = pfUpdateTooltipPositionDown|pfUpdateTooltipPositionRight,
-		pfUpdateTooltipPositionMask = 0x0380,
-        pfTooltipMask = 0x3F0,
+		pfUpdateTooltipPositionMask = 0x0780,
+        pfTooltipMask = 0x7F0,
 
 		pfTooltipDefault = pfEnableUpdateTooltip|pfUpdateTooltipAlwaysTopmost|pfUpdateTooltipPositionDefault,
 		pfTooltipSave = pfEnableUpdateTooltip|pfUpdateTooltipTopmostMask|pfUpdateTooltipPositionMask,

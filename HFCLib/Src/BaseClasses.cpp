@@ -382,9 +382,9 @@ CSize CDC::GetTextExtent(const CStringW& str) const
 {
 	CSize sz;
 	if (IsUnicodeSystem())
-		::GetTextExtentPoint32W(m_hDC,(LPCWSTR)str,str.GetLength()+1,&sz);
+		::GetTextExtentPoint32W(m_hDC,(LPCWSTR)str,str.GetLength(),&sz);
 	else
-		::GetTextExtentPoint32A(m_hDC,W2A(str),str.GetLength()+1,&sz);
+		::GetTextExtentPoint32A(m_hDC,W2A(str),str.GetLength(),&sz);
 	return sz;
 }
 

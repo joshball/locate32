@@ -1241,6 +1241,9 @@ DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,SIZE_T cbData) cons
 		DWORD dwType,dwDataLen;
 		if (::RegQueryValueExA(m_hKey,aValue,NULL,&dwType,NULL,&dwDataLen)!=ERROR_SUCCESS)
 			return 0;
+		
+		if (lpStr==NULL)
+			return dwDataLen;
 
 		switch (dwType)
 		{

@@ -647,4 +647,51 @@ DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi
 	return ret;	
 }
 
+
+int FileOperation(LPSHFILEOPSTRUCTW lpFileOp)
+{
+	if (IsUnicodeSystem())
+		return SHFileOperationW(lpFileOp);
+
+	LPCWSTR pFrom=lpFileOp->pFrom;
+	LPCWSTR pTo=lpFileOp->pTo;
+	LPCWSTR pProgressTitle=lpFileOp->fFlags&FOF_SIMPLEPROGRESS?lpFileOp->lpszProgressTitle:NULL;
+
+	if (pFrom!=NULL)
+		lpFileOp->pFrom=(LPCWSTR)alloccopymultiWtoA(pFrom);
+
+	if (pTo!=NULL)
+	{
+		if (lpFileOp->fFlags&FOF_MULTIDESTFILES)
+			lpFileOp->pTo=(LPCWSTR)alloccopymultiWtoA(pTo);
+		else
+			lpFileOp->pTo=(LPCWSTR)alloccopyWtoA(pTo,istrlenw(pTo)+1);
+	}
+
+	if (pProgressTitle!=NULL)
+		lpFileOp->lpszProgressTitle=(LPCWSTR)alloccopyWtoA(pProgressTitle);
+
+	int nRet=SHFileOperationA((LPSHFILEOPSTRUCTA)lpFileOp);
+	
+	if (pFrom!=NULL)
+	{
+		delete[] (LPSTR)lpFileOp->pFrom;
+		lpFileOp->pFrom=pFrom;
+	}
+
+	if (pTo!=NULL)
+	{
+		delete[] (LPSTR)lpFileOp->pTo;
+		lpFileOp->pTo=pTo;
+	}
+
+	if (pProgressTitle!=NULL)
+	{
+		delete[] (LPSTR)lpFileOp->lpszProgressTitle;
+		lpFileOp->lpszProgressTitle=pProgressTitle;
+	}
+
+	return nRet;
+}
+
 #endif

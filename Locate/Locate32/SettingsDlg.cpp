@@ -16,6 +16,7 @@ inline BOOL operator!=(const SYSTEMTIME& s1,const SYSTEMTIME& s2)
 }
 
 
+
 ////////////////////////////////////////
 // CSettingsProperties
 ////////////////////////////////////////
@@ -210,7 +211,7 @@ BOOL CSettingsProperties::LoadSettings()
 		// Overrinding explorer for opening folders
 		RegKey.QueryValue("Use other program to open folders",nTemp);
 		SetFlags(settingsUseOtherProgramsToOpenFolders,nTemp);
-		RegKey.QueryValue("Open folders with",m_OpenFoldersWith);
+		RegKey.QueryValue(L"Open folders with",m_OpenFoldersWith);
 
 		if (RegKey.QueryValue("Transparency",nTemp))
 			m_nTransparency=min(nTemp,255);
@@ -340,8 +341,8 @@ BOOL CSettingsProperties::SaveSettings()
 		RegKey.SetValue("Program StatusExtra",m_dwLocateDialogExtraFlags&CLocateDlg::efSave);
 		RegKey.SetValue("General Flags",m_dwProgramFlags&CLocateApp::pfSave);
 		
-		RegKey.SetValue("DateFormat",m_DateFormat);
-		RegKey.SetValue("TimeFormat",m_TimeFormat);
+		RegKey.SetValue(L"DateFormat",m_DateFormat);
+		RegKey.SetValue(L"TimeFormat",m_TimeFormat);
 
 
 		// Default flags
@@ -354,7 +355,7 @@ BOOL CSettingsProperties::SaveSettings()
 			
 		// Overrinding explorer for opening folders
 		RegKey.SetValue("Use other program to open folders",(DWORD)IsFlagSet(settingsUseOtherProgramsToOpenFolders));
-		RegKey.SetValue("Open folders with",m_OpenFoldersWith);
+		RegKey.SetValue(L"Open folders with",m_OpenFoldersWith);
 
 		RegKey.SetValue("Transparency",m_nTransparency);
 
@@ -904,7 +905,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL
 	};
 	Item* OtherExplorerProgram[]={
-		CreateEdit(IDS_ADVSETOPENFOLDERWITH,DefaultEditStrProc,0,&m_pSettings->m_OpenFoldersWith),
+		CreateEdit(IDS_ADVSETOPENFOLDERWITH,DefaultEditStrWProc,0,&m_pSettings->m_OpenFoldersWith),
 		NULL
 	};
 
@@ -942,6 +943,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CLocateDlg::fgLVNoDoubleItems,&m_pSettings->m_dwLocateDialogFlags),
 		CreateCheckBox(IDS_ADVSETFOLDERSFIRST,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLVFoldersFirst,&m_pSettings->m_dwLocateDialogFlags),
+		CreateCheckBox(IDS_ADVSETFULLROWSELECT,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVSelectFullRow,&m_pSettings->m_dwLocateDialogFlags),
 		CreateCheckBox(IDS_ADVSETACTIVATEFIRSTITEM,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLVActivateFirstResult,&m_pSettings->m_dwLocateDialogFlags),
 		CreateComboBox(IDS_ADVSETSHOWDATESINFORMAT,DateFormatComboProc,0,0),
@@ -1207,12 +1210,14 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateTooltipPositionP
 	case BASICPARAMS::Initialize:
 		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
 		{
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPPOSNEARCLOCK));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPPOSUPPERLEFT));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPPOSUPPERRIGHT));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPPOSLOWERLEFT));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPPOSLOWERRIGHT));		
-			
+			CComboBox cb(((INITIALIZEPARAMS*)pParams)->hControl);
+
+			cb.AddString(ID2W(IDS_ADVSETTOOLTIPPOSNEARCLOCK));		
+			cb.AddString(ID2W(IDS_ADVSETTOOLTIPPOSUPPERLEFT));		
+			cb.AddString(ID2W(IDS_ADVSETTOOLTIPPOSUPPERRIGHT));		
+			cb.AddString(ID2W(IDS_ADVSETTOOLTIPPOSLOWERLEFT));		
+			cb.AddString(ID2W(IDS_ADVSETTOOLTIPPOSLOWERRIGHT));		
+			cb.AddString(ID2W(IDS_ADVSETTOOLTIPPOSLASTPOSITION));		
 		}
 		break;
 	case BASICPARAMS::Get:
@@ -1229,6 +1234,9 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateTooltipPositionP
 			break;
 		case CLocateApp::pfUpdateTooltipPositionDownRight:
             pParams->lValue=4;
+			break;
+		case CLocateApp::pfUpdateTooltipPositionLastPosition:
+			pParams->lValue=5;
 			break;
 		default:
 			pParams->lValue=0;
@@ -1256,6 +1264,9 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateTooltipPositionP
 		case 4:
             *((int*)pParams->lParam)|=CLocateApp::pfUpdateTooltipPositionDownRight;
 			break;
+		case 5:
+			*((int*)pParams->lParam)|=CLocateApp::pfUpdateTooltipPositionLastPosition;
+			break;
 		}
 		break;
 	case BASICPARAMS::ChangingValue:
@@ -1271,10 +1282,12 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateTooltipTopmostPr
 	case BASICPARAMS::Initialize:
 		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
 		{
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPALWAYSONTOP));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTMAXIMIZED));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTFULLSCREEN));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETTOOLTIPNEVERONTOP));		
+			CComboBox cb(((INITIALIZEPARAMS*)pParams)->hControl);
+			
+			cb.AddString(ID2W(IDS_ADVSETTOOLTIPALWAYSONTOP));		
+			cb.AddString(ID2W(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTMAXIMIZED));		
+			cb.AddString(ID2W(IDS_ADVSETTOOLTIPTOPIFFOREGROUNDNOTFULLSCREEN));		
+			cb.AddString(ID2W(IDS_ADVSETTOOLTIPNEVERONTOP));		
 		}
 		break;
 	case BASICPARAMS::Get:
@@ -5701,6 +5714,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetVirtualCode(BYTE bCode,BOOL
 			char text[]="\"X\"";
 			text[1]=BYTE(wChar);
 			MakeUpper(text+1,1);
+
+			SendDlgItemMessage(IDC_CODE,CB_SETCURSEL,-1);
 			SetDlgItemText(IDC_CODE,text);
 			return;
 		}

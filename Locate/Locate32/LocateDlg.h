@@ -20,7 +20,7 @@ public:
 	virtual void OnCancel();
 
 public:
-	CString m_sReturnedPreset;
+	CStringW m_sReturnedPreset;
 };
 
 class CComboBoxAutoComplete : public CComboBox
@@ -594,7 +594,7 @@ protected:
 	void OnPresetsSave();
 	void OnPresetsSelection(int nPreset);
 	void LoadPreset(LPCWSTR szPreset);
-	static DWORD CheckExistenceOfPreset(LPCSTR szName,DWORD* pdwPresets); // Returns index to preset or FFFFFFFF
+	static DWORD CheckExistenceOfPreset(LPCWSTR szName,DWORD* pdwPresets); // Returns index to preset or FFFFFFFF
 
 	
 
@@ -637,13 +637,16 @@ public:
 		fgLVShowShellType=0x00000080,
 		fgLVDontShowHiddenFiles=0x00000040,
 		fgLVDontShowTooltips=0x00010000,
+		fgLVShowFlag=0x000100F0,
+		
 		fgLVNoDoubleItems=0x00020000,
 		fgLVFoldersFirst=0x00080000,
 		fgLVActivateFirstResult=0x00100000,
 		fgLVNoDelayedUpdate=0x00200000,
 		fgLVComputeMD5Sums=0x00040000,
-		fgLVShowFlag=0x003F00F0,
+		fgLVSelectFullRow=0x00400000,
 		
+
 		fgLVUseGetFileTitle=0x00000000,
 		fgLVUseOwnMethod=0x00000100,
 		fgLVMethodFlag=0x00000100,
@@ -663,8 +666,8 @@ public:
 		fgLVStyleAlwaysUnderline=0x00008000|fgLVStyleUnderLine,
 		fgLVStyleUnderlineFlag=0x00008000|fgLVStyleUnderLine,
 		fgLVStyleFlag=0x0000F000,
-		fgLVFlag=0x003FFFF0,
-		fgLVSave=0x003FFFF0,
+		fgLVFlag=0x007FFFF0,
+		fgLVSave=0x007FFFF0,
 			
 		// Name tab
 		fgNameMultibleDirectories=0x04000000,
@@ -828,7 +831,6 @@ public:
 #endif
 
 
-	
 };
 
 inline CLocateDlg* GetLocateDlg()

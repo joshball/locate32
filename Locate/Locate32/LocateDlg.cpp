@@ -3,6 +3,7 @@
 #include <uxtheme.h>
 #include <tmschema.h>
 
+
 CComboBoxAutoComplete::CComboBoxAutoComplete()
 :	CComboBox(),m_pACData(NULL)
 {
@@ -448,14 +449,14 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 
 				if (CLocateDlg::DetailType(m_pLocate->m_pListCtrl->GetColumnIDFromSubItem(ht.iSubItem))==CLocateDlg::Title)
 				{
-					TOOLINFO tii;
-					tii.cbSize = TTTOOLINFOA_V2_SIZE;
+					TOOLINFOW tii;
+					tii.cbSize = TTTOOLINFOW_V2_SIZE;
 					
 					tii.uFlags = TTF_IDISHWND;
 					tii.hwnd   = *m_pLocate;
 					tii.uId    = (UINT)pMsg->hwnd;
 					tii.hinst  = NULL;
-					tii.lpszText  = LPSTR_TEXTCALLBACK;
+					tii.lpszText  = LPSTR_TEXTCALLBACKW;
 					tii.lParam = 0;
 					
 					m_pLocate->m_pListTooltips->AddTool(&tii);
@@ -472,22 +473,9 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 
 
 					
-					int nBufferLength=100;
-					char* pText;
-					for (;;)
-					{	
-						pText=new char[nBufferLength+2];
-						if (m_pLocate->m_pListCtrl->GetItemText(ht.iItem,ht.iSubItem,pText,nBufferLength)>=nBufferLength-1)
-						{
-							nBufferLength*=2;
-							delete[] pText;
-						}
-						else
-							break;
-					}
-                   
-					int nWidth=m_pLocate->m_pListCtrl->GetStringWidth(pText)+12;
-					delete[] pText;
+					CStringW sText;
+					m_pLocate->m_pListCtrl->GetItemText(sText,ht.iItem,ht.iSubItem);
+					int nWidth=m_pLocate->m_pListCtrl->GetStringWidth(sText)+12;
 					
 					// InFolder need also space for icon
 					if (CLocateDlg::DetailType(m_pLocate->m_pListCtrl->GetColumnIDFromSubItem(ht.iSubItem))==CLocateDlg::InFolder)
@@ -495,14 +483,14 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 
 					if (nWidth>rc.Width())
 					{
-						TOOLINFO tii;
-						tii.cbSize = TTTOOLINFOA_V2_SIZE;
+						TOOLINFOW tii;
+						tii.cbSize = TTTOOLINFOW_V2_SIZE;
 		
 						tii.uFlags = TTF_IDISHWND;
 						tii.hwnd   = *m_pLocate;
 						tii.uId    = (UINT)pMsg->hwnd;
 						tii.hinst  = NULL;
-						tii.lpszText  = LPSTR_TEXTCALLBACK;
+						tii.lpszText  = LPSTR_TEXTCALLBACKW;
 						tii.lParam = 0;
 
 						m_pLocate->GetClientRect(&tii.rect);
@@ -599,6 +587,14 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_pTabCtrl=new CTabCtrl(GetDlgItem(IDC_TAB));
 	m_pListCtrl=new CListCtrlEx(GetDlgItem(IDC_FILELIST));
 	m_pStatusCtrl=new CStatusBarCtrl(GetDlgItem(IDC_STATUS));
+
+	if (IsUnicodeSystem())
+	{
+		m_pTabCtrl->SetUnicodeFormat(TRUE);
+		m_pListCtrl->SetUnicodeFormat(TRUE);
+		m_pStatusCtrl->SetUnicodeFormat(TRUE);
+	}
+	
 	
 	// Setting tab control labels	
 	WCHAR Buffer[80];
@@ -618,8 +614,6 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_pTabCtrl->InsertItem(2,&ti);
 
 	ViewDetails* pDetails=GetDefaultDetails();
-	if (IsUnicodeSystem())
-		m_pListCtrl->SetUnicodeFormat(TRUE);
 	for (int i=0;i<TypeCount;i++)
 	{
 		m_pListCtrl->InsertColumn(DetailType(i),pDetails[i].nString,
@@ -1408,6 +1402,8 @@ void CLocateDlg::InitTooltips()
 			m_pListTooltips=new CToolTipCtrl;
 			m_pListTooltips->Create(*this);
 			m_pListTooltips->SetFont(m_pListCtrl->GetFont());
+			if (IsUnicodeSystem())
+				m_pListCtrl->SetUnicodeFormat(TRUE);
 			
 			m_iTooltipItem=-1;
 			m_iTooltipSubItem=-1;
@@ -2199,6 +2195,11 @@ void CLocateDlg::OnDestroy()
 		delete[] g_szBuffer;
 		g_szBuffer=NULL;
 	}
+	if (g_szwBuffer!=NULL)
+	{
+		delete[] g_szwBuffer;
+		g_szwBuffer=NULL;
+	}
 	if (m_hSendToListFont!=NULL)
 	{
 		DeleteObject(m_hSendToListFont);
@@ -2243,12 +2244,6 @@ void CLocateDlg::OnTimer(DWORD wTimerID)
 	
 	switch (wTimerID)
 	{
-	case ID_CLEARMENUVARS:
-		// This is called in ClearMenuVariables
-		//KillTimer(ID_CLEARMENUVARS);
-
-		ClearMenuVariables();
-		break;
 	case ID_REDRAWITEMS:
 		KillTimer(ID_REDRAWITEMS);
 		m_pListCtrl->InvalidateRect(NULL,FALSE);
@@ -2363,6 +2358,7 @@ void CLocateDlg::OnSize(UINT nType, int cx, int cy)
 			DeleteObject(m_hSendToListFont);
 			m_hSendToListFont=NULL;
 		}
+		ClearMenuVariables();
 
 		// Minimizing to system tray
 		if (m_dwFlags&fgDialogMinimizeToST)
@@ -2497,7 +2493,6 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			DeleteObject(m_hSendToListFont);
 			m_hSendToListFont=NULL;
 		}
-		SetTimer(ID_CLEARMENUVARS,1000);
 		break;
 	case WM_SETTINGCHANGE:
 		if (wParam==0x2a && lParam==NULL) // Possibly shell icon cache is updeted
@@ -4364,18 +4359,19 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 	}
 	
 	CMINVOKECOMMANDINFOEX cii;
+	ZeroMemory(&cii,sizeof(CMINVOKECOMMANDINFOEX));
 	cii.cbSize=sizeof(CMINVOKECOMMANDINFOEX);
 	cii.fMask=CMIC_MASK_UNICODE;
 	cii.hwnd=*this;
 	cii.lpVerb=(LPCSTR)MAKELONG(wID-IDM_DEFCONTEXTITEM,0);
 	cii.lpVerbW=(LPCWSTR)MAKELONG(wID-IDM_DEFCONTEXTITEM,0);
-	cii.lpParameters=NULL;
-	cii.lpParametersW=NULL;
 	cii.lpDirectoryW=pItem->GetParent();
+	cii.lpDirectory=alloccopyWtoA(cii.lpDirectoryW);
 	cii.nShow=SW_SHOWDEFAULT;
 	m_pActiveContextMenu->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
+	delete[] (LPSTR)cii.lpDirectory;
 	
-	ClearMenuVariables();
+	//ClearMenuVariables();
 
 }
 
@@ -4414,19 +4410,17 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 				if (pContextMenuStuff!=NULL)
 				{
 					CMINVOKECOMMANDINFOEX cii;
+					ZeroMemory(&cii,sizeof(CMINVOKECOMMANDINFOEX));
 					cii.cbSize=sizeof(CMINVOKECOMMANDINFOEX);
 					cii.fMask=CMIC_MASK_UNICODE;
 					cii.hwnd=*this;
-					cii.lpVerb=NULL;
 					cii.lpVerbW=szVerb;
-					cii.lpParameters=NULL;
-					cii.lpParametersW=NULL;
-					cii.lpDirectory=NULL;
-					cii.lpDirectoryW=NULL;
+					cii.lpVerb=alloccopyWtoA(szVerb);
 					cii.nShow=SW_SHOWDEFAULT;
 					HMENU hMenu=CreatePopupMenu();
 					pContextMenuStuff->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
 					pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
+					delete[] (LPSTR)cii.lpVerb;
 					
 					delete pContextMenuStuff;
 					DestroyMenu(hMenu);
@@ -4444,20 +4438,7 @@ void CLocateDlg::OnProperties(int nItem)
 	if (m_pListCtrl->GetSelectedCount()==0)
 		return;
 
-	CWaitCursor wait;
-	if (m_pActiveContextMenu!=NULL)
-	{
-		CMINVOKECOMMANDINFO cii;
-		cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
-		cii.fMask=0;
-		cii.hwnd=*this;
-		cii.lpVerb="properties";
-		cii.lpParameters=NULL;
-		cii.lpDirectory=NULL;
-		cii.nShow=SW_SHOWDEFAULT;
-		m_pActiveContextMenu->pContextMenu->InvokeCommand(&cii);
-		return;
-	}
+	
 	
 	CArrayFP<CStringW*> aFiles;
 	CArray<LPCWSTR> aParents;
@@ -4622,8 +4603,9 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 	if (aItems.GetSize()==0) // No files
 		return;
 
+
 	// Filling OPSTRUCT fields
-	SHFILEOPSTRUCT fo;
+	SHFILEOPSTRUCTW fo;
 	fo.hwnd=*this;
 	fo.wFunc=FO_DELETE;
 	fo.pTo=NULL;
@@ -4644,11 +4626,11 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 		break;
 	}
 	// Creating file buffer: file1\0file2\0...filen\0\0
-	BYTE* pFiles=new BYTE[nBufferLength];
-	fo.pFrom=LPCSTR(pFiles);
+	WCHAR* pFiles=new WCHAR[nBufferLength];
+	fo.pFrom=pFiles;
 	for (int i=0;i<aItems.GetSize();i++)
 	{
-		sMemCopy(pFiles,aItems.GetAt(i)->GetPath(),aItems.GetAt(i)->GetPathLen()+1);
+		MemCopyW(pFiles,aItems.GetAt(i)->GetPath(),aItems.GetAt(i)->GetPathLen()+1);
 		pFiles+=aItems.GetAt(i)->GetPathLen()+1;
 	}
 	*pFiles='\0';
@@ -4657,10 +4639,10 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 	
 	
 	// Delete files
-	int iRet=SHFileOperation(&fo);
+	int iRet=FileOperation(&fo);
 
 	
-	delete[] (BYTE*)fo.pFrom;
+	delete[] fo.pFrom;
 
 	
 	
@@ -5002,6 +4984,31 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 						pMalloc->Release();
 					
 				}
+				else if (IsUnicodeSystem())
+				{
+					CStringW sArg;
+					SHELLEXECUTEINFOW sxi;
+					sxi.cbSize=sizeof(SHELLEXECUTEINFOW);
+					sxi.fMask=SEE_MASK_NOCLOSEPROCESS;
+					sxi.hwnd=*this;
+					sxi.lpVerb=L"open";
+					sxi.lpFile=L"explorer.exe";
+					sxi.lpDirectory=szwEmpty;
+					sxi.nShow=SW_SHOWNORMAL;
+						
+					for (int i=0;i<nSelectedItems;i++)
+					{
+						if (pItems[i]->IsDeleted())
+							OpenFolder(pItems[i]->GetParent());
+						else
+						{
+                            sArg.Format(L"/e,/select,\"%s\"",pItems[i]->GetPath());
+							sxi.lpParameters=sArg;
+							ShellExecuteExW(&sxi);
+						}
+					}
+					
+				}
 				else
 				{
 					CString sArg;
@@ -5020,15 +5027,14 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 							OpenFolder(pItems[i]->GetParent());
 						else
 						{
-                            sArg.Format("/e,/select,\"%s\"",pItems[i]->GetPath());
+                            sArg.Format("/e,/select,\"%S\"",pItems[i]->GetPath());
 							sxi.lpParameters=sArg;
 							ShellExecuteEx(&sxi);
 						}
 					}
-
-
 					
 				}
+
 				delete[] pItems;
 				return;
 			}
@@ -6188,6 +6194,7 @@ BOOL CLocateDlg::SetListSelStyle()
 		m_pListCtrl->SetExtendedListViewStyle(
 			LVS_EX_UNDERLINECOLD|LVS_EX_UNDERLINEHOT|LVS_EX_TWOCLICKACTIVATE|LVS_EX_ONECLICKACTIVATE|LVS_EX_TRACKSELECT,0);
 	
+	m_pListCtrl->SetExtendedListViewStyle(LVS_EX_FULLROWSELECT,m_dwFlags&fgLVSelectFullRow?LVS_EX_FULLROWSELECT:0);
 	return TRUE;
 }
 
@@ -7944,9 +7951,26 @@ void CLocateDlg::OnPresets()
 		}
 		break;
 	}
+
+	HWND hFocus=GetFocus();
+	if (hFocus==NULL || hFocus==GetDlgItem(IDC_PRESETS))
+	{
+		switch (m_pTabCtrl->GetCurFocus())
+		{
+		case 0:
+			::SetFocus(m_NameDlg.GetNextDlgTabItem(NULL,FALSE));
+			break;
+		case 1:
+			::SetFocus(m_SizeDateDlg.GetNextDlgTabItem(NULL,FALSE));
+			break;
+		case 2:
+			::SetFocus(m_AdvancedDlg.GetNextDlgTabItem(NULL,FALSE));
+			break;
+		}
+	}
 }
 
-DWORD CLocateDlg::CheckExistenceOfPreset(LPCSTR szName,DWORD* pdwPresets) // Returns index to preset or FFFFFFFF
+DWORD CLocateDlg::CheckExistenceOfPreset(LPCWSTR szName,DWORD* pdwPresets) // Returns index to preset or FFFFFFFF
 {
 	// First, find free indentifier
 	CRegKey RegKey;
@@ -7972,8 +7996,8 @@ DWORD CLocateDlg::CheckExistenceOfPreset(LPCSTR szName,DWORD* pdwPresets) // Ret
 		if (RegKey2.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 			break;
 
-		CString sCurrentName;
-		if (!RegKey2.QueryValue("",sCurrentName))
+		CStringW sCurrentName;
+		if (RegKey2.QueryValue(L"",sCurrentName)>0)
 		{
 			if (sCurrentName.CompareNoCase(szName)==0)
 			{
@@ -8019,7 +8043,7 @@ void CLocateDlg::OnPresetsSave()
 	if (PresetKey.OpenKey(MainKey,szKeyName,CRegKey::createNew|CRegKey::samAll)!=ERROR_SUCCESS)
 		return;
 	
-	PresetKey.SetValue("",PresetDialog.m_sReturnedPreset);
+	PresetKey.SetValue(L"",PresetDialog.m_sReturnedPreset);
 	m_NameDlg.SaveControlStates(PresetKey);
 	m_SizeDateDlg.SaveControlStates(PresetKey);
 	m_AdvancedDlg.SaveControlStates(PresetKey);
@@ -8476,10 +8500,10 @@ void CLocateDlg::CSavePresetDlg::OnOK()
 	DWORD dwID=CLocateDlg::CheckExistenceOfPreset(m_sReturnedPreset,NULL);
 	if (dwID!=DWORD(-1))
 	{
-		CString msg;
-		msg.Format(IDS_OVERWRITEPRESET,LPCSTR(m_sReturnedPreset));
+		CStringW msg;
+		msg.Format(IDS_OVERWRITEPRESET,LPCWSTR(m_sReturnedPreset));
 
-		if (MessageBox(msg,ID2A(IDS_PRESETSAVETITLE),MB_YESNO|MB_ICONQUESTION)==IDNO)
+		if (MessageBox(msg,ID2W(IDS_PRESETSAVETITLE),MB_YESNO|MB_ICONQUESTION)==IDNO)
 		{
 			SetFocus(IDC_EDIT);
 			return;
@@ -9314,18 +9338,28 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForSelection(CArray<LPWSTR>& aDirectori
 
 void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 {
-	CString str;
-	RegKey.QueryValue("Name/Name",str);
+	CStringW str;
+	RegKey.QueryValue(L"Name/Name",str);
 	m_Name.SetText(str);
 
-	DWORD dwDataLength=RegKey.QueryValueLength("Name/Type"),dwType;
-	BYTE* pData=new BYTE[dwDataLength+2];
-	RegKey.QueryValue("Name/Type",(LPSTR)pData,dwDataLength+2,&dwType);
+	DWORD dwDataLength,dwType;
+	dwDataLength=RegKey.QueryValue("Name/Type",NULL,0,&dwType);
+
 	if (dwType==REG_DWORD)
-		m_Type.SetCurSel(*((DWORD*)pData));
+	{
+		DWORD dwSel;
+		RegKey.QueryValue("Name/Type",dwSel);
+		m_Type.SetCurSel(dwSel);
+	}
 	else if (dwType==REG_SZ)
-		m_Type.SetText((LPCSTR)pData);
-	
+	{
+		WCHAR* pData=new WCHAR[dwDataLength+2];
+		if (RegKey.QueryValue(L"Name/Type",pData,dwDataLength+2)>0)
+			m_Type.SetText(pData);	
+		else
+			m_Type.SetText(szEmpty);
+	}
+
 	if (m_pMultiDirs!=NULL)
 	{
 		// Checking how many directories is in list
@@ -9470,7 +9504,7 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 					if (lParam==m_LookIn.GetItemData(i))
 					{
 						m_LookIn.SetCurSel(i);
-						m_LookIn.SetItemText(-1,m_LookIn.GetItemText(i));
+						m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(i));
 						break;
 					}
 				}
@@ -10783,7 +10817,7 @@ void CLocateDlg::CAdvancedDlg::OnDestroy()
 
 void CLocateDlg::CAdvancedDlg::LoadControlStates(CRegKey& RegKey)
 {
-	CString str;
+	CStringW str;
 
 	DWORD dwTemp;
 	// Advanced dialog
@@ -10807,7 +10841,7 @@ void CLocateDlg::CAdvancedDlg::LoadControlStates(CRegKey& RegKey)
 		dwTemp=1;	
 	CheckDlgButton(IDC_DATAMATCHCASE,dwTemp);
 	
-	if (RegKey.QueryValue("Advanced/ContainData",str))
+	if (RegKey.QueryValue(L"Advanced/ContainData",str))
 	{
 		CheckDlgButton(IDC_CONTAINDATACHECK,TRUE);
 		SetDlgItemText(IDC_CONTAINDATA,str);
@@ -10864,9 +10898,9 @@ void CLocateDlg::CAdvancedDlg::SaveControlStates(CRegKey& RegKey)
 	RegKey.SetValue("Advanced/UseWholePath",IsDlgButtonChecked(IDC_USEWHOLEPATH));
 	if (IsDlgButtonChecked(IDC_CONTAINDATACHECK))
 	{
-		CString str;
+		CStringW str;
 		GetDlgItemText(IDC_CONTAINDATA,str);
-		RegKey.SetValue("Advanced/ContainData",str);
+		RegKey.SetValue(L"Advanced/ContainData",str);
 	}
 	else
 		RegKey.DeleteValue("Advanced/ContainData");

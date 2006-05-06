@@ -112,19 +112,20 @@ BOOL CStatusBarCtrl::GetTipText(int n,LPWSTR szText,SIZE_T nBufLen) const
 
 void CToolTipCtrl::GetText(CString& str,HWND hWnd,UINT nIDTool) const
 {
-	CToolInfo ti;
-	ti.cbSize=sizeof (TOOLINFO);
+	TOOLINFO ti;
+	char szText[256];
+	ti.cbSize=TTTOOLINFOA_V1_SIZE;
 	ti.uFlags=0;
 	ti.hwnd=hWnd;
 	ti.uId=nIDTool;
-	ti.lpszText=ti.szText;
+	ti.lpszText=szText;
 	::SendMessage(m_hWnd,TTM_GETTEXT,0,(LPARAM)&ti);
-	str=ti.szText;
+	str=szText;
 }
 
 BOOL CToolTipCtrl::GetToolInfo(LPTOOLINFO pToolInfo,HWND hWnd,UINT nIDTool) const
 {
-	pToolInfo->cbSize=sizeof(TOOLINFO);
+	pToolInfo->cbSize=TTTOOLINFOA_V1_SIZE;
 	pToolInfo->hwnd=hWnd;
 	pToolInfo->uId=nIDTool;
 	return ::SendMessage(m_hWnd,TTM_GETTOOLINFO,0,(LPARAM)pToolInfo);
@@ -132,8 +133,8 @@ BOOL CToolTipCtrl::GetToolInfo(LPTOOLINFO pToolInfo,HWND hWnd,UINT nIDTool) cons
 
 void CToolTipCtrl::SetToolRect(HWND hWnd,UINT nIDTool,LPCRECT lpRect)
 {
-	CToolInfo ti;
-	ti.cbSize=sizeof (TOOLINFO);
+	TOOLINFO ti;
+	ti.cbSize=TTTOOLINFOA_V1_SIZE;
 	ti.uFlags=0;
 	ti.hwnd=hWnd;
 	ti.uId=nIDTool;
@@ -144,33 +145,59 @@ void CToolTipCtrl::SetToolRect(HWND hWnd,UINT nIDTool,LPCRECT lpRect)
 #ifdef DEF_RESOURCES
 BOOL CToolTipCtrl::AddTool(HWND hWnd,UINT nIDText,LPCRECT lpRectTool,UINT nIDTool,LPARAM lParam)
 {
-	TOOLINFO ti;
-	ti.cbSize=sizeof (TOOLINFO);
-	ti.uFlags=TTF_SUBCLASS;
-	ti.hwnd=hWnd;
-	ti.uId=nIDTool;
-	ti.hinst=GetLanguageSpecificResourceHandle();
-	ti.lpszText=MAKEINTRESOURCE(nIDText);
-	ti.lParam=lParam;	
-	if (lpRectTool!=NULL)
-		ti.rect=*lpRectTool;
-	else if (hWnd!=NULL)
-		::GetClientRect(hWnd,&ti.rect);
+	if (IsUnicodeSystem())
+	{
+		TOOLINFOW ti;
+		ti.cbSize=TTTOOLINFOW_V2_SIZE;
+		ti.uFlags=TTF_SUBCLASS;
+		ti.hwnd=hWnd;
+		ti.uId=nIDTool;
+		ti.hinst=GetLanguageSpecificResourceHandle();
+		ti.lpszText=MAKEINTRESOURCEW(nIDText);
+		ti.lParam=lParam;	
+		if (lpRectTool!=NULL)
+			ti.rect=*lpRectTool;
+		else if (hWnd!=NULL)
+			::GetClientRect(hWnd,&ti.rect);
+		else
+		{
+			ti.rect.left=0;
+			ti.rect.right=0;
+			ti.rect.top=0;
+			ti.rect.bottom=0;
+		}
+		return ::SendMessageW(m_hWnd,TTM_ADDTOOLW,0,(LPARAM)&ti);
+	}
 	else
 	{
-		ti.rect.left=0;
-		ti.rect.right=0;
-		ti.rect.top=0;
-		ti.rect.bottom=0;
+		TOOLINFO ti;
+		ti.cbSize=TTTOOLINFOA_V2_SIZE;
+		ti.uFlags=TTF_SUBCLASS;
+		ti.hwnd=hWnd;
+		ti.uId=nIDTool;
+		ti.hinst=GetLanguageSpecificResourceHandle();
+		ti.lpszText=MAKEINTRESOURCE(nIDText);
+		ti.lParam=lParam;	
+		if (lpRectTool!=NULL)
+			ti.rect=*lpRectTool;
+		else if (hWnd!=NULL)
+			::GetClientRect(hWnd,&ti.rect);
+		else
+		{
+			ti.rect.left=0;
+			ti.rect.right=0;
+			ti.rect.top=0;
+			ti.rect.bottom=0;
+		}
+		return ::SendMessage(m_hWnd,TTM_ADDTOOL,0,(LPARAM)&ti);
 	}
-	return ::SendMessage(m_hWnd,TTM_ADDTOOL,0,(LPARAM)&ti);
 }
 #endif
 
-BOOL CToolTipCtrl::AddTool(HWND hWnd,LPCTSTR lpszText,LPCRECT lpRectTool,UINT nIDTool,LPARAM lParam)
+BOOL CToolTipCtrl::AddTool(HWND hWnd,LPCSTR lpszText,LPCRECT lpRectTool,UINT nIDTool,LPARAM lParam)
 {
 	TOOLINFO ti;
-	ti.cbSize=sizeof (TOOLINFO);
+	ti.cbSize=TTTOOLINFOA_V2_SIZE;
 	ti.uFlags=TTF_SUBCLASS;
 	ti.hwnd=hWnd;
 	ti.uId=nIDTool;
@@ -192,8 +219,8 @@ BOOL CToolTipCtrl::AddTool(HWND hWnd,LPCTSTR lpszText,LPCRECT lpRectTool,UINT nI
 
 void CToolTipCtrl::DelTool(HWND hWnd,UINT nIDTool)
 {
-	CToolInfo ti;
-	ti.cbSize=sizeof (TOOLINFO);
+	TOOLINFO ti;
+	ti.cbSize=TTTOOLINFOA_V1_SIZE;
 	ti.uFlags=0;
 	ti.hwnd=hWnd;
 	ti.uId=nIDTool;
@@ -202,8 +229,8 @@ void CToolTipCtrl::DelTool(HWND hWnd,UINT nIDTool)
 
 void CToolTipCtrl::DelTool(HWND hWnd,HWND hToolWnd)
 {
-	CToolInfo ti;
-	ti.cbSize=sizeof (TOOLINFO);
+	TOOLINFO ti;
+	ti.cbSize=TTTOOLINFOA_V1_SIZE;
 	ti.uFlags=TTF_IDISHWND;
 	ti.hwnd=hWnd;
 	ti.uId=(UINT)hToolWnd;
@@ -216,45 +243,114 @@ BOOL CToolTipCtrl::HitTest(HWND hWnd,LPPOINT pt,LPTOOLINFO lpToolInfo) const
 	TTHITTESTINFO hi;
 	hi.hwnd=hWnd;
 	hi.pt=*pt;
-	hi.ti.cbSize=sizeof(TOOLINFO);
+	hi.ti.cbSize=TTTOOLINFOA_V1_SIZE;
 	BOOL nRet=::SendMessage(m_hWnd,TTM_HITTEST,0,(LPARAM)&hi);
 	*lpToolInfo=hi.ti;
 	return nRet;
 }
 
-void CToolTipCtrl::UpdateTipText(LPCTSTR lpszText,HWND hWnd,UINT nIDTool)
+void CToolTipCtrl::UpdateTipText(LPCSTR lpszText,HWND hWnd,UINT nIDTool)
 {
-	CToolInfo ti;
-	ti.cbSize=sizeof (TOOLINFO);
+	TOOLINFO ti;
+	char szText[256];
+	ti.cbSize=TTTOOLINFOA_V1_SIZE;
 	ti.uFlags=TTF_SUBCLASS;
 	ti.hwnd=hWnd;
 	ti.uId=nIDTool;
-	ti.lpszText=ti.szText;
-	StringCbCopy(ti.szText,256,lpszText);
+	ti.lpszText=szText;
+	StringCbCopy(szText,256,lpszText);
 	::SendMessage(m_hWnd,TTM_UPDATETIPTEXT,0,(LPARAM)&ti);
 }
 
 #ifdef DEF_RESOURCES
 void CToolTipCtrl::UpdateTipText(UINT nIDText,HWND hWnd,UINT nIDTool)
 {
-	CToolInfo ti;
-	ti.cbSize=sizeof (TOOLINFO);
-	ti.uFlags=TTF_SUBCLASS;
-	ti.hwnd=hWnd;
-	ti.uId=nIDTool;
-	ti.hinst=GetLanguageSpecificResourceHandle();
-	ti.lpszText=MAKEINTRESOURCE(nIDText);
-	::SendMessage(m_hWnd,TTM_UPDATETIPTEXT,0,(LPARAM)&ti);
+	if (IsUnicodeSystem())
+	{
+		TOOLINFOW ti;
+		ti.cbSize=TTTOOLINFOW_V1_SIZE;
+		ti.uFlags=TTF_SUBCLASS;
+		ti.hwnd=hWnd;
+		ti.uId=nIDTool;
+		ti.hinst=GetLanguageSpecificResourceHandle();
+		ti.lpszText=MAKEINTRESOURCEW(nIDText);
+		::SendMessageW(m_hWnd,TTM_UPDATETIPTEXTW,0,(LPARAM)&ti);
+	}
+	else
+	{
+		TOOLINFO ti;
+		ti.cbSize=TTTOOLINFOA_V1_SIZE;
+		ti.uFlags=TTF_SUBCLASS;
+		ti.hwnd=hWnd;
+		ti.uId=nIDTool;
+		ti.hinst=GetLanguageSpecificResourceHandle();
+		ti.lpszText=MAKEINTRESOURCE(nIDText);
+		::SendMessage(m_hWnd,TTM_UPDATETIPTEXT,0,(LPARAM)&ti);
+	}
 }
 #endif
 
-void CToolTipCtrl::FillInToolInfo(LPTOOLINFO ti,HWND hWnd,UINT nIDTool) const
+
+#ifdef DEF_WCHAR
+void CToolTipCtrl::GetText(CStringW& str,HWND hWnd,UINT nIDTool) const
 {
-	ti->cbSize=sizeof (TOOLINFO);
-	ti->uFlags=TTF_SUBCLASS;
-	ti->hwnd=hWnd;
-	ti->uId=nIDTool;
+	TOOLINFOW ti;
+	WCHAR szText[256];
+	ti.cbSize=TTTOOLINFOW_V1_SIZE;
+	ti.uFlags=0;
+	ti.hwnd=hWnd;
+	ti.uId=nIDTool;
+	ti.lpszText=szText;
+	::SendMessage(m_hWnd,TTM_GETTEXTW,0,(LPARAM)&ti);
+	str=szText;
 }
+
+BOOL CToolTipCtrl::GetToolInfo(LPTOOLINFOW pToolInfo,HWND hWnd,UINT nIDTool) const
+{
+	pToolInfo->cbSize=TTTOOLINFOW_V1_SIZE;
+	pToolInfo->hwnd=hWnd;
+	pToolInfo->uId=nIDTool;
+	return ::SendMessage(m_hWnd,TTM_GETTOOLINFOW,0,(LPARAM)pToolInfo);
+}
+
+BOOL CToolTipCtrl::AddTool(HWND hWnd,LPCWSTR lpszText,LPCRECT lpRectTool,UINT nIDTool,LPARAM lParam)
+{
+	TOOLINFOW ti;
+	ti.cbSize=TTTOOLINFOW_V2_SIZE;
+	ti.uFlags=TTF_SUBCLASS;
+	ti.hwnd=hWnd;
+	ti.uId=nIDTool;
+	ti.lpszText=(LPWSTR)lpszText;
+	ti.lParam=lParam;	
+	if (lpRectTool!=NULL)
+		ti.rect=*lpRectTool;
+	else if (hWnd!=NULL)
+		::GetClientRect(hWnd,&ti.rect);
+	else
+	{
+		ti.rect.left=0;
+		ti.rect.right=0;
+		ti.rect.top=0;
+		ti.rect.bottom=0;
+	}
+	return ::SendMessage(m_hWnd,TTM_ADDTOOLW,0,(LPARAM)&ti);
+}
+
+void CToolTipCtrl::UpdateTipText(LPCWSTR lpszText,HWND hWnd,UINT nIDTool)
+{
+	TOOLINFOW ti;
+	WCHAR szText[256];
+	ti.cbSize=TTTOOLINFOW_V1_SIZE;
+	ti.uFlags=TTF_SUBCLASS;
+	ti.hwnd=hWnd;
+	ti.uId=nIDTool;
+	ti.lpszText=szText;
+	StringCbCopyW(szText,256,lpszText);
+	::SendMessage(m_hWnd,TTM_UPDATETIPTEXTW,0,(LPARAM)&ti);
+}
+
+
+#endif
 
 ///////////////////////////
 // Class CReBarCtrl

@@ -6,6 +6,9 @@
 #endif 
 
 
+
+
+
 class CSettingsProperties : public CPropertySheet  
 {
 public:
@@ -429,11 +432,11 @@ public:
 	LOGFONT m_lResultListFont;
 	
 
-	CString m_TimeFormat;
-	CString m_DateFormat;
+	CStringW m_TimeFormat;
+	CStringW m_DateFormat;
 	CLocateApp::FileSizeFormats m_nFileSizeFormat;
 	
-	CString m_OpenFoldersWith;
+	CStringW m_OpenFoldersWith;
 	
  	// Database
 	CArrayFP<PDATABASE> m_aDatabases;

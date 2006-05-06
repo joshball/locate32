@@ -201,6 +201,7 @@ LPITEMIDLIST GetFileIDList(LPCSTR lpszFileName);
 LPITEMIDLIST GetFolderIDList(LPCSTR lpszFileName);
 DWORD_PTR GetFileInfo(LPCSTR pszPath,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags);
 DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags);
+int FileOperation(LPSHFILEOPSTRUCT lpFileOp);
 DWORD GetIDListSize(LPITEMIDLIST lpil);
 HRESULT CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc=NULL,LPCSTR pszParams=NULL);
 HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,SIZE_T nBufSize);
@@ -215,6 +216,7 @@ LPITEMIDLIST GetFileIDList(LPCWSTR lpszFileName);
 LPITEMIDLIST GetFolderIDList(LPCWSTR lpszFileName);
 DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags);
 DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags);
+int FileOperation(LPSHFILEOPSTRUCTW lpFileOp);
 HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc=NULL,LPCWSTR pszParams=NULL);
 HRESULT GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,SIZE_T nBufSize);
 #endif
@@ -281,5 +283,11 @@ inline DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFO
 {
 	return SHGetFileInfo((LPCSTR)piil,dwFileAttributes,psfi,sizeof(SHFILEINFO),uFlags|SHGFI_PIDL);
 }
+
+inline int FileOperation(LPSHFILEOPSTRUCT lpFileOp)
+{
+	return SHFileOperation(lpFileOp);
+}
+
 
 #endif

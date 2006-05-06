@@ -114,7 +114,6 @@ inline CLocateDlg::CAdvancedDlg::CAdvancedDlg()
 
 inline void CLocateDlg::ClearMenuVariables()
 {
-	KillTimer(ID_CLEARMENUVARS);
 	if (m_pActiveContextMenu!=NULL)
 	{
 		//m_pActiveContextMenu->Release();
@@ -242,6 +241,7 @@ inline CLocateDlg::CAdvancedDlg::FileType::FileType(LPWSTR frType,LPWSTR frTitle
 
 inline void CLocateDlg::RemoveResultsFromList()
 {
+	ClearMenuVariables();
 	m_pListCtrl->DeleteAllItems();
 	m_aVolumeInformation.RemoveAll();
 }

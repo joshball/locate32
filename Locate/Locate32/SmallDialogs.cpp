@@ -1837,10 +1837,10 @@ void CSavePresetDlg::OnOK()
 
 	if (m_sReturnedPreset.IsEmpty())
 	{
-		CString msg;
-		msg.Format(IDS_PRESETNAMENOTVALID,LPCSTR(m_sReturnedPreset));
+		CStringW msg;
+		msg.Format(IDS_PRESETNAMENOTVALID,LPCWSTR(m_sReturnedPreset));
 
-		MessageBox(msg,ID2A(IDS_PRESETSAVETITLE),MB_OK|MB_ICONEXCLAMATION);
+		MessageBox(msg,ID2W(IDS_PRESETSAVETITLE),MB_OK|MB_ICONEXCLAMATION);
 		SetFocus(IDC_EDIT);
 	}
 	else

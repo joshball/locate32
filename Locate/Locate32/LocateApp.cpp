@@ -3706,7 +3706,7 @@ void CLocateAppWnd::RunStartupSchedules()
 ////////////////////////////
 // CLocateAppWnd::CUpdateStatusWnd
 CLocateAppWnd::CUpdateStatusWnd::CUpdateStatusWnd()
-:	CFrameWnd(),m_WindowSize(0,0)
+:	CFrameWnd(),m_WindowSize(0,0),m_pMouseMove(NULL)
 {
 	
 	RegisterWndClass("LOCATEAPPUPDATESTATUS",CS_HREDRAW|CS_VREDRAW,LoadCursor(NULL,IDC_ARROW),
@@ -3761,6 +3761,22 @@ int CLocateAppWnd::CUpdateStatusWnd::OnCreate(LPCREATESTRUCT lpcs)
 	SetTimer(ID_UPDATESTATUS,500,NULL);
 	SetTimer(ID_CHECKFOREGROUNDWND,100,NULL);
 	return CFrameWnd::OnCreate(lpcs);
+}
+
+
+
+void CLocateAppWnd::CUpdateStatusWnd::OnDestroy()
+{
+	CWnd::OnDestroy();
+	if (m_pMouseMove!=NULL)
+	{
+		delete m_pMouseMove;
+		m_pMouseMove=NULL;
+		ReleaseCapture();			
+	}
+
+	SavePosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\Updatestatus","WindowPos");
+
 }
 
 
@@ -4112,11 +4128,46 @@ BOOL CLocateAppWnd::CUpdateStatusWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM l
 			}
 			break;
 		}
+	case WM_LBUTTONDOWN:
+		if (m_pMouseMove==NULL && int(LOWORD(lParam))>0 && int(HIWORD(lParam)))
+		{
+			m_pMouseMove=new MouseMove;
+			m_pMouseMove->nStartPointX=SHORT(LOWORD(lParam));
+			m_pMouseMove->nStartPointY=SHORT(HIWORD(lParam));
+
+			ASSERT(m_pMouseMove->nStartPointX>=0 && m_pMouseMove->nStartPointX<1600);
+			ASSERT(m_pMouseMove->nStartPointY>=0 && m_pMouseMove->nStartPointY<1600);
+
+			SetCapture();
+		}
+		break;
+	case WM_LBUTTONUP:
+		if (m_pMouseMove!=NULL)
+		{
+			delete m_pMouseMove;
+			m_pMouseMove=NULL;
+			ReleaseCapture();			
+		}
+		break;
 	}
 	return CWnd::WindowProc(msg,wParam,lParam);
 }
 
+void CLocateAppWnd::CUpdateStatusWnd::OnMouseMove(UINT fwKeys,WORD xPos,WORD yPos)
+{
+	if (m_pMouseMove!=NULL)// && LONG(xPos)>=0 && LONG(yPos)>=0)
+	{
+		RECT rcWindowRect;
+		GetWindowRect(&rcWindowRect);
 
+		LONG nNewCoordX=rcWindowRect.left+(SHORT(xPos)-m_pMouseMove->nStartPointX);
+		LONG nNewCoordY=rcWindowRect.top+(SHORT(yPos)-m_pMouseMove->nStartPointY);
+		
+
+		SetWindowPos(NULL,nNewCoordX,nNewCoordY,0,0,SWP_NOZORDER|SWP_NOSIZE);
+	}
+}
+	
 void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 {	
 	CRect rcDesktopRect,rcTrayRect;
@@ -4256,8 +4307,18 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 		}
 	}
 
-	if ((GetLocateApp()->GetProgramFlags()&CLocateApp::pfUpdateTooltipPositionMask)!=CLocateApp::pfUpdateTooltipPositionDefault)
+	switch (GetLocateApp()->GetProgramFlags()&CLocateApp::pfUpdateTooltipPositionMask)
+	{
+	case CLocateApp::pfUpdateTooltipPositionDefault:
+		break;
+	case CLocateApp::pfUpdateTooltipPositionLastPosition:
+		if (LoadPosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\Updatestatus","WindowPos",fgOnlyNormalPosition))
+			return;
+		break;
+	default:
 		nPosition=GetLocateApp()->GetProgramFlags()&CLocateApp::pfUpdateTooltipPositionMask;
+		break;
+	}
 
 	if ((nPosition&CLocateApp::pfUpdateTooltipPositionDown)==CLocateApp::pfUpdateTooltipPositionDown)
 		ptUpperLeft.y=rcDesktopRect.bottom-szSize.cy-2;
@@ -4268,7 +4329,6 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 		ptUpperLeft.x=rcDesktopRect.right-szSize.cx-2;
 	else
 		ptUpperLeft.x=rcDesktopRect.left+2;
-
 
 		
 	SetWindowPos(HWND_TOP,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOZORDER|SWP_NOACTIVATE);

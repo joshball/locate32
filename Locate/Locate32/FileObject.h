@@ -40,7 +40,6 @@ public:
 
 	BYTE SetFile(LPCWSTR szFile); 
 	BYTE SetFiles(CListCtrl* pList);
-	CString GetFileName() const { if (m_Files.GetSize()) return *m_Files[0]; else return CString(""); }
 	HGLOBAL GetFileNameA();
 	HGLOBAL GetFileNameW();
 
