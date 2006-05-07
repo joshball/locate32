@@ -2715,7 +2715,7 @@ BOOL CLocateAppWnd::StartUpdateStatusNotification()
 		BOOL(WINAPI * pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD)=(BOOL(WINAPI *)(HWND,COLORREF,BYTE,DWORD))GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes");
 	
 		BYTE nTransparency=0;
-		DWORD dwExtra=WS_EX_TOOLWINDOW|WS_EX_NOACTIVATE;
+		DWORD dwExtra=WS_EX_TOOLWINDOW;
 		
 		if ((CLocateApp::GetProgramFlags()&CLocateApp::pfUpdateTooltipTopmostMask)==
 			CLocateApp::pfUpdateTooltipAlwaysTopmost)
@@ -4129,7 +4129,7 @@ BOOL CLocateAppWnd::CUpdateStatusWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM l
 			break;
 		}
 	case WM_LBUTTONDOWN:
-		if (m_pMouseMove==NULL && int(LOWORD(lParam))>0 && int(HIWORD(lParam)))
+		if (m_pMouseMove==NULL)
 		{
 			m_pMouseMove=new MouseMove;
 			m_pMouseMove->nStartPointX=SHORT(LOWORD(lParam));
@@ -4137,6 +4137,7 @@ BOOL CLocateAppWnd::CUpdateStatusWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM l
 
 			ASSERT(m_pMouseMove->nStartPointX>=0 && m_pMouseMove->nStartPointX<1600);
 			ASSERT(m_pMouseMove->nStartPointY>=0 && m_pMouseMove->nStartPointY<1600);
+
 
 			SetCapture();
 		}
@@ -4155,7 +4156,7 @@ BOOL CLocateAppWnd::CUpdateStatusWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM l
 
 void CLocateAppWnd::CUpdateStatusWnd::OnMouseMove(UINT fwKeys,WORD xPos,WORD yPos)
 {
-	if (m_pMouseMove!=NULL)// && LONG(xPos)>=0 && LONG(yPos)>=0)
+	if (m_pMouseMove!=NULL)
 	{
 		RECT rcWindowRect;
 		GetWindowRect(&rcWindowRect);
@@ -4331,7 +4332,13 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 		ptUpperLeft.x=rcDesktopRect.left+2;
 
 		
-	SetWindowPos(HWND_TOP,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOZORDER|SWP_NOACTIVATE);
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg!=NULL)
+		SetWindowPos(*pLocateDlg,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,0);
+	else
+		SetWindowPos(NULL,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOZORDER);
+
+
 	m_WindowSize=szSize;
 }
 

@@ -2888,6 +2888,9 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 		OnProperties(nItem);
 		break;
 	case CAction::ShowSpecialMenu:
+		if (m_pListCtrl->GetSelectedCount()==0)
+			m_pListCtrl->SetItemState(nItem,LVIS_SELECTED,LVIS_SELECTED);
+
 		if (pExtraInfo!=NULL)
 		{
 			TrackPopupMenu(::GetSubMenu(m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),SUBMENU_SPECIALMENU),TPM_LEFTALIGN|TPM_RIGHTBUTTON,
@@ -3511,7 +3514,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 	case NMX_CLICK:
 		{
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(((NMHDR_MOUSE*)pNm)->iSubItem));
-			if (nDetail>=LastType || nDetail<0)
+			if (nDetail>LastType || nDetail<0)
 				break;
 
 			if (m_aResultListActions[nDetail][LeftMouseButtonClick]!=NULL)
@@ -3528,7 +3531,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				break;
 
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(((NMHDR_MOUSE*)pNm)->iSubItem));
-			if (nDetail>=LastType || nDetail<0)
+			if (nDetail>LastType || nDetail<0)
 				break;
 
 			if (m_aResultListActions[nDetail][LeftMouseButtonDblClick]!=NULL)
@@ -3545,7 +3548,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 	case NMX_RCLICK:
 		{
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(((NMHDR_MOUSE*)pNm)->iSubItem));
-			if (nDetail>=LastType || nDetail<0)
+			if (nDetail>LastType || nDetail<0)
 				break;
 
 			if (m_aResultListActions[nDetail][RightMouseButtonClick]!=NULL)
@@ -3562,7 +3565,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				break;
 
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(((NMHDR_MOUSE*)pNm)->iSubItem));
-			if (nDetail>=LastType || nDetail<0)
+			if (nDetail>LastType || nDetail<0)
 				break;
 
 			if (m_aResultListActions[nDetail][RightMouseButtonDblClick]!=NULL)
@@ -3579,7 +3582,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 	case NMX_MCLICK:
 		{
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(((NMHDR_MOUSE*)pNm)->iSubItem));
-			if (nDetail>=LastType || nDetail<0)
+			if (nDetail>LastType || nDetail<0)
 				break;
 
 			if (m_aResultListActions[nDetail][MiddleMouseButtonClick]!=NULL)
@@ -3596,7 +3599,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				break;
 
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(((NMHDR_MOUSE*)pNm)->iSubItem));
-			if (nDetail>=LastType || nDetail<0)
+			if (nDetail>LastType || nDetail<0)
 				break;
 
 			if (m_aResultListActions[nDetail][MiddleMouseButtonDblClick]!=NULL)
@@ -4415,12 +4418,13 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 					cii.fMask=CMIC_MASK_UNICODE;
 					cii.hwnd=*this;
 					cii.lpVerbW=szVerb;
-					cii.lpVerb=alloccopyWtoA(szVerb);
+					cii.lpVerb=szVerb!=NULL?alloccopyWtoA(szVerb):NULL;
 					cii.nShow=SW_SHOWDEFAULT;
 					HMENU hMenu=CreatePopupMenu();
 					pContextMenuStuff->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
 					pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
-					delete[] (LPSTR)cii.lpVerb;
+					if (szVerb!=NULL)
+						delete[] (LPSTR)cii.lpVerb;
 					
 					delete pContextMenuStuff;
 					DestroyMenu(hMenu);
@@ -6738,7 +6742,7 @@ void CLocateDlg::OnSelectDetails()
 		dlg.m_aActions[iCol]=new CSubAction*[ListActionCount];
 		ZeroMemory(dlg.m_aActions[iCol],ListActionCount*sizeof(CSubAction*));
 			
-		if (dlg.m_aIDs[iCol]>=LastType)
+		if (dlg.m_aIDs[iCol]>LastType)
 			continue;
 		
 		for (int nAct=0;nAct<ListActionCount;nAct++)
@@ -7177,7 +7181,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 			ci.iImage=fi.iIcon;
 			GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 			ci.iImage=fi.iIcon;
-			GetFileInfo(m_pBrowse[0],0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+			GetFileInfo(m_pBrowse!=NULL?m_pBrowse[0]:L"C:\\",0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 			ci.iSelectedImage=fi.iIcon;
 			LoadString(IDS_ROOTS,Buffer,100);
 			ci.pszText=Buffer;

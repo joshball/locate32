@@ -956,14 +956,13 @@ void CSubAction::DoShowHideDialog()
 
 void CSubAction::DoResultListItems()
 {
-	CLocateDlg* pLocateDlg=GetLocateDlg();
-	
 	if (m_nResultList==ExecuteCommand)
 	{
 		CLocateDlg::ExecuteCommand(m_szCommand);
 		return;
 	}
-		
+	
+	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL)
 		return;
 

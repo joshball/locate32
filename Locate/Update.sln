@@ -32,6 +32,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FindExtension", "FindExtens
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SettingsTool", "SettingsTool\SettingsTool.vcproj", "{7E3E55DD-2C36-4C1A-BBC7-C715CD41B9FE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BandObjs", "DeskBar\BandObjs.vcproj", "{6D2285D2-8DB6-46A1-9EF4-8AC828116C0A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -111,6 +113,12 @@ Global
 		{7E3E55DD-2C36-4C1A-BBC7-C715CD41B9FE}.Release(Log)|Win32.Build.0 = Release|Win32
 		{7E3E55DD-2C36-4C1A-BBC7-C715CD41B9FE}.Release|Win32.ActiveCfg = Release|Win32
 		{7E3E55DD-2C36-4C1A-BBC7-C715CD41B9FE}.Release|Win32.Build.0 = Release|Win32
+		{6D2285D2-8DB6-46A1-9EF4-8AC828116C0A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6D2285D2-8DB6-46A1-9EF4-8AC828116C0A}.Debug|Win32.Build.0 = Debug|Win32
+		{6D2285D2-8DB6-46A1-9EF4-8AC828116C0A}.Release(Log)|Win32.ActiveCfg = Release|Win32
+		{6D2285D2-8DB6-46A1-9EF4-8AC828116C0A}.Release(Log)|Win32.Build.0 = Release|Win32
+		{6D2285D2-8DB6-46A1-9EF4-8AC828116C0A}.Release|Win32.ActiveCfg = Release|Win32
+		{6D2285D2-8DB6-46A1-9EF4-8AC828116C0A}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
