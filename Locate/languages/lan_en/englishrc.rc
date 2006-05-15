@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,6,5070
- PRODUCTVERSION 2,99,6,5070
+ FILEVERSION 2,99,6,5130
+ PRODUCTVERSION 2,99,6,5130
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 6.5070"
+            VALUE "FileVersion", "3.0 beta 6.5130"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 6.5070"
+            VALUE "ProductVersion", "3.0 beta 6.5130"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -804,7 +804,8 @@ CAPTION "Enter name"
 FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
     LTEXT           "Enter preset name:",IDC_STATIC,7,7,180,11
-    EDITTEXT        IDC_EDIT,7,20,182,13,ES_AUTOHSCROLL
+  	COMBOBOX        IDC_EDIT,7,20,182,13,CBS_DROPDOWN |  
+                    WS_VSCROLL | WS_TABSTOP | CBS_HASSTRINGS
     DEFPUSHBUTTON   "OK",IDC_OK,40,47,50,14
     PUSHBUTTON      "Cancel",IDC_CANCEL,103,47,50,14
 END
@@ -1713,6 +1714,7 @@ BEGIN
 	IDS_PRESETCUSTOM		"Custom"
 	IDS_PRESETSAVETITLE		"Save preset"
 	IDS_OVERWRITEPRESET		"Item '%s' already found in preset list. Overwrite?"
+	IDS_CHANGEFILENAMEALREADYEXISTS	"A file with name '%s' already exists."
 END
 
 STRINGTABLE 

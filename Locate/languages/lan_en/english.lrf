@@ -25,7 +25,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2006 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 beta 6.5070
+FILEVERSION=3.0 beta 6.5130
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -742,6 +742,7 @@ DLGCHANGEFILENAME_OK=OK
 DLGCHANGEFILENAME_CANCEL=Cancel
 DLGCHANGEFILENAME_FILENAME=Filename:
 DLGCHANGEFILENAME_NOTE=Filename will not be updated to the databases. So file will not be found in following searches until the databases are updated.
+STRCHANGEFILENAME_NAMEALREADYEXISTS=A file with name '%s' already exists.
 
 ###################################################
 # MENUS

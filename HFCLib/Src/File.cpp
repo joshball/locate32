@@ -2030,6 +2030,36 @@ UINT FileSystem::GetTempFileName(LPCWSTR lpPathName,LPCWSTR lpPrefixString,UINT 
 	}
 }
 
+UINT FileSystem::GetWindowsDirectory(LPWSTR lpBuffer,UINT uSize)
+{
+	if (IsUnicodeSystem())
+		return ::GetWindowsDirectoryW(lpBuffer,uSize);
+	else
+	{
+		LPSTR lpBufferA=new char[uSize];
+		UINT uRet=::GetWindowsDirectoryA(lpBufferA,uSize);
+		if (uRet==0)
+			return 0;
+		MultiByteToWideChar(CP_ACP,0,lpBufferA,uRet+1,lpBuffer,uSize);
+		return uRet;
+	}
+}
+
+UINT FileSystem::GetSystemDirectory(LPWSTR lpBuffer,UINT uSize)
+{
+	if (IsUnicodeSystem())
+		return ::GetSystemDirectoryW(lpBuffer,uSize);
+	else
+	{
+		LPSTR lpBufferA=new char[uSize];
+		UINT uRet=::GetSystemDirectoryA(lpBufferA,uSize);
+		if (uRet==0)
+			return 0;
+		MultiByteToWideChar(CP_ACP,0,lpBufferA,uRet+1,lpBuffer,uSize);
+		return uRet;
+	}
+}
+
 DWORD FileSystem::GetLogicalDriveStrings(DWORD nBufferLength,LPWSTR lpBuffer)
 {
 	if (IsUnicodeSystem())

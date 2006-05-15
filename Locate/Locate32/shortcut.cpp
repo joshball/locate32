@@ -705,16 +705,14 @@ BOOL CShortcut::GetDefaultShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadF
 	
 
 	// Check file
-	int nIndex=LastCharIndex(GetLocateApp()->GetExeName(),'\\')+1;
-	char szPath[MAX_PATH];
-	CopyMemory(szPath,GetLocateApp()->GetExeName(),nIndex);
-	CopyMemory(szPath+nIndex,"defshrtc.dat",13);
+	CStringW Path(GetLocateApp()->GetExeNameW());
+	Path.FreeExtra(Path.FindLast(L'\\')+1);
+	Path << L"defshrtc.dat";
     
-	CFile File(TRUE);
 	BYTE* pData=NULL;
 	DWORD dwLength;
 	try {
-		File.Open(szPath,CFile::defRead);
+		CFile File(Path,CFile::defRead,TRUE);
 		dwLength=File.GetLength();
 		pData=new BYTE[dwLength];
 		File.Read(pData,dwLength);

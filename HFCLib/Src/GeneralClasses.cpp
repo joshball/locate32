@@ -1301,6 +1301,9 @@ DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,SIZE_T cbData) cons
 	}
 }
 
+
+
+
 LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData,SIZE_T cbDataAsChars,DWORD dwType)
 {
 	if (IsUnicodeSystem())

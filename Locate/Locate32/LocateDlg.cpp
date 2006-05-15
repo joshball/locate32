@@ -6437,7 +6437,7 @@ void CLocateDlg::OnChangeFileName()
 		DWORD dwTemp=0;;
 		RegKey.QueryValue("NoExtensionInRename",dwTemp);
 		if (dwTemp)
-			bNoExtension=TRUE;
+			fnd.m_dwFlags|=CChangeFilenameDlg::fNoExtension;
 	}
 
 	int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
@@ -6446,15 +6446,11 @@ void CLocateDlg::OnChangeFileName()
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
 		if (pItem!=NULL)
 		{
-			DWORD sNameLen=pItem->GetNameLen();
-			if (bNoExtension && pItem->GetExtensionLength()!=0 && !pItem->IsFolder())
-				sNameLen-=pItem->GetExtensionLength()+1;
-                        			
-			fnd.m_sFileName.Copy(pItem->GetName(),sNameLen);
+			fnd.m_sParent=pItem->GetParent();
+			fnd.m_sFileName.Copy(pItem->GetName(),pItem->GetNameLen());
+
 			if (fnd.DoModal(*this))
 			{
-				if (bNoExtension && pItem->GetExtensionLength()!=0)
-					fnd.m_sFileName<<(pItem->GetExtension()-1);
 				if (fnd.m_sFileName.Compare(pItem->GetName())!=0)
 					pItem->ChangeName(fnd.m_sFileName,fnd.m_sFileName.GetLength());
 				m_pListCtrl->RedrawItems(iItem,iItem);
@@ -7719,7 +7715,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDir
 			ci.cchTextMax=MAX_PATH+10;
 			ci.mask=CBEIF_TEXT;
 			m_LookIn.GetItem(&ci);
-			AddDirectoryToList(aDirectories,szPath);
+			AddDirectoryToList(aDirectories,szPath,FALSE);
 			return TRUE;
 		}
 		else
@@ -7772,7 +7768,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							szDir[nLength-2]='\0';
 							nLength--;
 						}
-						AddDirectoryToListTakePtr(aDirectories,szDir);
+						AddDirectoryToList(aDirectories,szDir,TRUE);
 						
 						nLength=RegKey.QueryValueLength(L"Personal");
 						szDir=new WCHAR[nLength];
@@ -7782,7 +7778,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							szDir[nLength-2]='\0';
 							nLength--;
 						}
-						AddDirectoryToListTakePtr(aDirectories,szDir);
+						AddDirectoryToList(aDirectories,szDir,TRUE);
 						
 					}
 					break;
@@ -7800,7 +7796,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							szDir[nLength-2]=L'\0';
 							nLength--;
 						}
-						AddDirectoryToListTakePtr(aDirectories,szDir);
+						AddDirectoryToList(aDirectories,szDir,TRUE);
 					}
 					break;
 				}
@@ -7817,7 +7813,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							szDir[nLength-2]=L'\0';
 							nLength--;
 						}
-						AddDirectoryToListTakePtr(aDirectories,szDir);
+						AddDirectoryToList(aDirectories,szDir,TRUE);
 					}
 					break;
 				}
@@ -7833,6 +7829,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							if (FileSystem::GetDriveType(szDrive)!=DRIVE_REMOTE)
 								AddDirectoryToList(aDirectories,szDrive,2);
 						}
+						delete[] szDrives;
 					}
 					break;
 				}
@@ -7845,7 +7842,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 			szDir[0]=static_cast<WCHAR>(HIWORD(lParam));
 			szDir[1]=':';
 			szDir[2]=L'\0';
-			AddDirectoryToListTakePtr(aDirectories,szDir);
+			AddDirectoryToList(aDirectories,szDir,TRUE);
 			break;
 		}
 	case Custom:
@@ -7859,6 +7856,66 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 		break;
 	}
 	return TRUE;
+}
+
+
+
+void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory)
+{
+	CStringW sDirectory;
+	int nLength;
+
+
+	// Multiple directories
+	LPCWSTR pPtr=szDirectory;
+	while (*pPtr==';' || *pPtr==' ')
+		pPtr++;
+
+	while (*pPtr!='\0')
+	{
+		// Check how long first string is
+		if (pPtr[0]=='\"')
+		{
+			nLength=FirstCharIndex(pPtr+1,'\"');
+			sDirectory.Copy(pPtr+1,nLength);
+
+			if (nLength!=-1)
+			{
+				for (nLength++;pPtr[nLength]!=';' && pPtr[nLength]!='\0';nLength++);
+			}
+			else
+				nLength=istrlenw(pPtr);
+		}
+		else
+		{
+			nLength=FirstCharIndex(pPtr,';');
+			if (nLength==-1)
+				nLength=istrlenw(pPtr);
+			sDirectory.Copy(pPtr,nLength);
+
+			while (sDirectory.LastChar()==' ')
+				sDirectory.DelLastChar();
+		}
+
+
+		BOOL bFound=FALSE;
+		for (int i=0;i<aDirectories.GetSize();i++)
+		{
+			if (sDirectory.Compare(aDirectories[i])==0)
+			{
+				// Directory already in the list
+				bFound=TRUE;
+			}
+		}
+
+		if (!bFound)
+			aDirectories.Add(sDirectory.GiveBuffer());
+		
+		pPtr+=nLength;
+
+		while (*pPtr==';' || *pPtr==' ')
+			pPtr++;
+	}
 }
 
 void CLocateDlg::OnPresets()
@@ -7891,7 +7948,7 @@ void CLocateDlg::OnPresets()
 
 		for (int j=0;j<1000;j++)
 		{
-			StringCbPrintfW(szBuffer,30,L"Preset %03d",j);
+			StringCbPrintfW(szBuffer,30*sizeof(WCHAR),L"Preset %03d",j);
 
 			if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 				break;
@@ -8502,7 +8559,7 @@ void CLocateDlg::CSavePresetDlg::OnOK()
 	}
 
 	DWORD dwID=CLocateDlg::CheckExistenceOfPreset(m_sReturnedPreset,NULL);
-	if (dwID!=DWORD(-1))
+	if (dwID!=DWORD(-1) && SendDlgItemMessage(IDC_EDIT,CB_GETCURSEL)==CB_ERR)
 	{
 		CStringW msg;
 		msg.Format(IDS_OVERWRITEPRESET,LPCWSTR(m_sReturnedPreset));
@@ -8515,6 +8572,38 @@ void CLocateDlg::CSavePresetDlg::OnOK()
 	}
 		
 	EndDialog(1);
+}
+
+BOOL CLocateDlg::CSavePresetDlg::OnInitDialog(HWND hwndFocus)
+{
+	::CSavePresetDlg::OnInitDialog(hwndFocus);
+	
+	CString Path;
+	CRegKey RegKey,RegKey2;
+	CComboBox Combo(GetDlgItem(IDC_EDIT));
+	char szBuffer[30];
+
+	Path.LoadString(IDS_REGPLACE,CommonResource);
+	Path<<"\\Dialogs\\SearchPresets";
+	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+		return FALSE;
+	
+	
+	
+	for (int nPreset=0;nPreset<1000;nPreset++)
+	{
+		StringCbPrintf(szBuffer,30,"Preset %03d",nPreset);
+
+		if (RegKey2.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+			break;
+
+		CStringW sCurrentName;
+		RegKey2.QueryValue(L"",sCurrentName);
+		Combo.AddString(sCurrentName);
+
+		RegKey2.CloseKey();
+	}	
+	return FALSE;
 }
 
 void CLocateDlg::CNameDlg::OnMoreDirectories()
@@ -8549,7 +8638,7 @@ void CLocateDlg::CNameDlg::OnMoreDirectories()
 
 		int nLen=10+istrlenw(m_pMultiDirs[i]->pTitleOrDirectory);
 		WCHAR* pString=new WCHAR[nLen];
-		StringCbPrintfW(pString,nLen*2,L"%d: %s",i+1,m_pMultiDirs[i]->pTitleOrDirectory);
+		StringCbPrintfW(pString,nLen*sizeof(WCHAR),L"%d: %s",i+1,m_pMultiDirs[i]->pTitleOrDirectory);
 		mii.dwTypeData=pString;
 	
 		if (Menu.InsertMenu(i,TRUE,&mii))

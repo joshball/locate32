@@ -91,6 +91,7 @@ CSettingsProperties::~CSettingsProperties()
 	delete m_pLanguage;
 	delete m_pDatabases;
 	delete m_pAutoUpdate;
+	delete m_pKeyboardShortcuts;
 	
 	m_Schedules.RemoveAll();
 
@@ -249,18 +250,18 @@ BOOL CSettingsProperties::LoadSettings()
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource),
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.QueryValue("Language",m_strLangFile);
+		RegKey.QueryValue(L"Language",m_strLangFile);
 		RegKey.CloseKey();
 	}
 	if (m_strLangFile.IsEmpty())
 	{
-		m_strLangFile="lan_en.dll";
+		m_strLangFile=L"lan_en.dll";
 		SetFlags(settingsUseLanguageWithConsoleApps);
 	}
 	else if (RegKey.OpenKey(HKCU,"Software\\Update",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		CString tmp;
-		RegKey.QueryValue("Language",tmp);
+		CStringW tmp;
+		RegKey.QueryValue(L"Language",tmp);
 		SetFlags(settingsUseLanguageWithConsoleApps,tmp.CompareNoCase(m_strLangFile)==0);
 		RegKey.CloseKey();
 	}
@@ -268,12 +269,12 @@ BOOL CSettingsProperties::LoadSettings()
 	// Checking wheter locate is runned at system startup
 	if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		CString Path;
-		if (RegKey.QueryValue("Startup",Path))
+		CStringW Path;
+		if (RegKey.QueryValue(L"Startup",Path))
 		{
 			if (Path.LastChar()!='\\')
 				Path << '\\';
-			Path<<"Locate32 Autorun.lnk";
+			Path<<L"Locate32 Autorun.lnk";
 			
 			SetFlags(settingsStartLocateAtStartup,FileSystem::IsFile(Path));
 			
@@ -451,9 +452,9 @@ BOOL CSettingsProperties::SaveSettings()
 			CRegKey CommandKey;
 			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
-				CString command;
-				command.Format("\"%s\" /P4",GetApp()->GetExeName());
-				CommandKey.SetValue("",command);
+				CStringW command;
+				command.Format(L"\"%s\" /P4",GetApp()->GetExeNameW());
+				CommandKey.SetValue(L"",command);
 			}
 		}
 	}
@@ -473,9 +474,9 @@ BOOL CSettingsProperties::SaveSettings()
 			CRegKey CommandKey;
 			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
-				CString command;
-				command.Format("\"%s\" /P3",GetApp()->GetExeName());
-				CommandKey.SetValue("",command);
+				CStringW command;
+				command.Format(L"\"%s\" /P3",GetApp()->GetExeNameW());
+				CommandKey.SetValue(L"",command);
 			}
 		}
 	}
@@ -495,9 +496,9 @@ BOOL CSettingsProperties::SaveSettings()
 			CRegKey CommandKey;
 			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
-				CString command;
-				command.Format("\"%s\" /p \"%%1\"",GetApp()->GetExeName());
-				CommandKey.SetValue("",command);
+				CStringW command;
+				command.Format(L"\"%s\" /p \"%%1\"",GetApp()->GetExeNameW());
+				CommandKey.SetValue(L"",command);
 			}
 		}
 	}
@@ -517,9 +518,9 @@ BOOL CSettingsProperties::SaveSettings()
 			CRegKey CommandKey;
 			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
-				CString command;
-				command.Format("\"%s\" /p \"%%1\"",GetApp()->GetExeName());
-				CommandKey.SetValue("",command);
+				CStringW command;
+				command.Format(L"\"%s\" /p \"%%1\"",GetApp()->GetExeNameW());
+				CommandKey.SetValue(L"",command);
 			}
 		}
 	}
@@ -539,10 +540,11 @@ BOOL CSettingsProperties::SaveSettings()
 			CRegKey CommandKey;
 			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
-				CString command(GetApp()->GetExeName(),LastCharIndex(GetApp()->GetExeName(),'\\')+1);
-				command << "updtdb32.exe\"";
-				command.Insert(0,'\"');
-				CommandKey.SetValue("",command);
+				CStringW sExeName(GetApp()->GetExeNameW());
+				CStringW command(sExeName,sExeName.FindLast(L'\\')+1);
+				command << L"updtdb32.exe\"";
+				command.Insert(0,L'\"');
+				CommandKey.SetValue(L"",command);
 			}
 		}
 	}
@@ -551,14 +553,14 @@ BOOL CSettingsProperties::SaveSettings()
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource),
 		CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
-		RegKey.SetValue("Language",m_strLangFile);
+		RegKey.SetValue(L"Language",m_strLangFile);
 		RegKey.CloseKey();
 		
 		if (RegKey.OpenKey(HKCU,"Software\\Update",
 				CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
 			if (IsFlagSet(settingsUseLanguageWithConsoleApps))
-				RegKey.SetValue("Language",m_strLangFile);
+				RegKey.SetValue(L"Language",m_strLangFile);
 			else
 				RegKey.DeleteValue("Language");
 		}
@@ -568,17 +570,17 @@ BOOL CSettingsProperties::SaveSettings()
 	// Creating or deleting shortcut to Startup mene if necessary
 	if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		CString Path;
-		if (RegKey.QueryValue("Startup",Path))
+		CStringW Path;
+		if (RegKey.QueryValue(L"Startup",Path))
 		{
-			if (Path.LastChar()!='\\')
-				Path << '\\';
-			Path<<"Locate32 Autorun.lnk";
+			if (Path.LastChar()!=L'\\')
+				Path << L'\\';
+			Path<<L"Locate32 Autorun.lnk";
 			
 			if (IsFlagSet(settingsStartLocateAtStartup))
 			{
 				if (!FileSystem::IsFile(Path))
-					CreateShortcut(Path,GetApp()->GetExeName(),""," /S");
+					CreateShortcut(Path,GetApp()->GetExeNameW(),L"",L" /S");
 			}
 			else 
 			{
@@ -1504,11 +1506,11 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnApply()
     m_pSettings->SetFlags(settingsUseLanguageWithConsoleApps,IsDlgButtonChecked(IDC_USEWITHCONSOLEAPPS));
 
 	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
-
-	ASSERT(nItem!=-1);
-
-	LanguageItem* pli=(LanguageItem*)m_pList->GetItemData(nItem);
-	m_pSettings->m_strLangFile=pli->File;
+	if (nItem!=-1)
+	{
+		LanguageItem* pli=(LanguageItem*)m_pList->GetItemData(nItem);
+		m_pSettings->m_strLangFile=pli->File;
+	}
 	return TRUE;
 }
 
@@ -1632,7 +1634,8 @@ void CSettingsProperties::CLanguageSettingsPage::FindLanguages()
 		LPWSTR /* OUT */ szDescription,
 		DWORD /* IN  */ dwMaxDescriptionLength);
 
-	CStringW Path(GetApp()->GetExeNameW(),LastCharIndex(GetApp()->GetExeName(),'\\')+1);
+	CStringW Path(GetApp()->GetExeNameW());
+	Path.FreeExtra(Path.FindLast('\\')+1);
 	Path<<L"*.dll";
 
 	
@@ -3521,10 +3524,11 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToL
 BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
+	CListBox List(GetDlgItem(IDC_DIRECTORIES));
 
 	// Inserting strings
 	for (int i=0;i<m_aDirectories.GetSize();i++)
-		SendDlgItemMessage(IDC_DIRECTORIES,LB_ADDSTRING,0,LPARAM(m_aDirectories[i]));
+		List.AddString(m_aDirectories[i]);
 	
 	EnableControls();
 	SetFocus(IDC_DIRECTORYNAME);

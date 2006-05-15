@@ -568,7 +568,8 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			{
 				if (pStartData->m_aDatabases.GetSize()==0)
 				{
-					pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,GetApp()->GetExeNameW(),LastCharIndex(GetApp()->GetExeName(),'\\')+1));
+					CStringW sExeName=GetApp()->GetExeNameW();
+					pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,sExeName,sExeName.FindLast('\\')+1));
 					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 					pStartData->m_aDatabases[0]->SetThreadId(0);
 					pStartData->m_nStartup|=CStartData::startupDatabasesOverridden;
@@ -614,7 +615,8 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					{
 						if (pStartData->m_aDatabases.GetSize()==0)
 						{
-							pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,GetApp()->GetExeNameW(),LastCharIndex(GetApp()->GetExeName(),'\\')+1));
+							CStringW sExeName=GetApp()->GetExeNameW();
+							pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,sExeName,sExeName.FindLast('\\')+1));
 							pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 							pStartData->m_aDatabases[0]->SetThreadId(0);
 							pStartData->m_nStartup|=CStartData::startupDatabasesOverridden;
@@ -940,8 +942,9 @@ BYTE CLocateApp::CheckDatabases()
 BYTE CLocateApp::SetDeleteAndDefaultImage()
 {
 	CRegKey Key;
-	CString Path(GetExeName());
-	Path << ",1";
+	SHFILEINFOW fi;
+	CStringW Path(GetExeNameW());
+	Path << L",1";
 	
 	if (Key.OpenKey(HKCR,".ltmp",CRegKey::createNew|CRegKey::samCreateSubkey|CRegKey::samWrite)!=NOERROR)
 		return FALSE;
@@ -951,44 +954,72 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 	Key.SetValue(szEmpty,"Deleted / Moved File (REMOVE THIS TYPE)",39,REG_SZ);
 	if (Key.OpenKey(HKCR,"LTMPFile\\DefaultIcon",CRegKey::createNew|CRegKey::samCreateSubkey|CRegKey::samWrite)!=NOERROR)
 		return FALSE;
-	Key.SetValue(szEmpty,Path);
+	Key.SetValue(szwEmpty,Path);
 	Key.CloseKey();
-	GetTempPath(_MAX_PATH,Path.GetBuffer(_MAX_PATH));
+
+	FileSystem::GetTempPath(_MAX_PATH,Path.GetBuffer(_MAX_PATH));
 	Path.FreeExtra();
 	if (Path.LastChar()!='\\')
 		Path << '\\';
-	Path << "temp.ltmp";
-	HANDLE hFile=CreateFile(Path,GENERIC_WRITE,
-		FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,
-		OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE,NULL);
-	if (hFile==NULL)
-		return FALSE;
-	SHFILEINFO fi;
-	fi.iIcon=1;
-	SHGetFileInfo(Path,0,&fi,sizeof(SHFILEINFO),SHGFI_ICON|SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
-	m_nDelImage=fi.iIcon;
-	CloseHandle(hFile);
+	Path << L"temp.ltmp";
+
+	try {
+		// Create file
+		CFile File(Path,CFile::defWrite,TRUE);
+		File.Close();
+
+		fi.iIcon=1;
+		GetFileInfo(Path,0,&fi,SHGFI_ICON|SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
+		m_nDelImage=fi.iIcon;
+
+		FileSystem::Remove(Path);
+	}
+	catch(...)
+	{
+	}
 	RegDeleteKey(HKCR,".ltmp");
 	RegDeleteKey(HKCR,"LTMPFile\\DefaultIcon");
 	RegDeleteKey(HKCR,"LTMPFile");
 
-	Path << '2';
-	hFile=CreateFile(Path,GENERIC_WRITE,
-		FILE_SHARE_READ|FILE_SHARE_WRITE,NULL,
-		OPEN_ALWAYS,FILE_ATTRIBUTE_NORMAL|FILE_FLAG_DELETE_ON_CLOSE,NULL);
-	if (hFile==NULL)
-		return FALSE;
-	fi.iIcon=1;
-	SHGetFileInfo(Path,0,&fi,sizeof(SHFILEINFO),SHGFI_ICON|SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
-	m_nDefImage=fi.iIcon;
-	CloseHandle(hFile);
-	
-	GetSystemDirectory(Path.GetBuffer(_MAX_PATH+3),_MAX_PATH);
-	fi.iIcon=1;
-	SHGetFileInfo(Path,0,&fi,sizeof(SHFILEINFO),SHGFI_ICON|SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
-	m_nDirImage=fi.iIcon;
-	SHGetFileInfo(Path.Left(3),0,&fi,sizeof(SHFILEINFO),SHGFI_ICON|SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
-	m_nDriveImage=fi.iIcon;
+	Path << L'2';
+	try {
+		// Create file
+		CFile File(Path,CFile::defWrite,TRUE);
+		File.Close();
+
+		fi.iIcon=1;
+		GetFileInfo(Path,0,&fi,SHGFI_ICON|SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
+		m_nDefImage=fi.iIcon;
+
+		FileSystem::Remove(Path);
+	}
+	catch(...)
+	{
+	}
+
+	if (FileSystem::GetSystemDirectory(Path.GetBuffer(_MAX_PATH+3),_MAX_PATH)>0)
+	{
+		fi.iIcon=1;
+		GetFileInfo(Path,0,&fi,SHGFI_ICON|SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
+		m_nDirImage=fi.iIcon;
+
+		WCHAR szDrives[100];
+		if (FileSystem::GetLogicalDriveStrings(100,szDrives)>0)
+		{
+			LPCWSTR pPtr=szDrives;
+			while (*pPtr!='\0')
+			{
+				if (FileSystem::GetDriveType(pPtr)==DRIVE_FIXED)
+					break;
+
+				pPtr+=istrlenw(pPtr)+1;
+			}
+
+			GetFileInfo(*pPtr!='\0'?pPtr:szDrives,0,&fi,SHGFI_ICON|SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
+			m_nDriveImage=fi.iIcon;
+		}
+		
+	}
 	return TRUE;
 }
 
@@ -1372,7 +1403,7 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 			else
 			{
 				bDigits=1;
-				StringCbPrintfW(szRet,40,L"%1.1f",double(num)/1024);
+				StringCbPrintfW(szRet,40*sizeof(WCHAR),L"%1.1f",double(num)/1024);
 			}
 
 			LoadString(IDS_GB,szUnit,10);
@@ -1386,7 +1417,7 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 			else
 			{
 				bDigits=1;
-				StringCbPrintfW(szRet,40,L"%1.1f",double(num)/1024);
+				StringCbPrintfW(szRet,40*sizeof(WCHAR),L"%1.1f",double(num)/1024);
 			}
 
 			LoadString(IDS_GB,szUnit,10);
@@ -1400,7 +1431,7 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 			else
 			{
 				bDigits=1;
-				StringCbPrintfW(szRet,40,L"%1.1f",double(num)/1024);
+				StringCbPrintfW(szRet,40*sizeof(WCHAR),L"%1.1f",double(num)/1024);
 			}
 
 			LoadString(IDS_MB,szUnit,10);
@@ -1412,7 +1443,7 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 			else
 			{
 				bDigits=1;
-				StringCbPrintfW(szRet,40,L"%1.1f",double(dwFileSizeLo)/1024);
+				StringCbPrintfW(szRet,40*sizeof(WCHAR),L"%1.1f",double(dwFileSizeLo)/1024);
 			}
 			
 			LoadString(IDS_KB,szUnit,10);
@@ -1449,12 +1480,12 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 		else if (dwFileSizeLo<1024)
 		{
 			bDigits=3;
-			StringCbPrintfW(szRet,40,L"%1.3f",((double)dwFileSizeLo)/1024);
+			StringCbPrintfW(szRet,40*sizeof(WCHAR),L"%1.3f",((double)dwFileSizeLo)/1024);
 		}
 		else
 		{
 			bDigits=1;
-			StringCbPrintfW(szRet,40,L"%1.1f",((double)dwFileSizeLo)/1024);
+			StringCbPrintfW(szRet,40*sizeof(WCHAR),L"%1.1f",((double)dwFileSizeLo)/1024);
 		}
 		break;
 	case fsfMegaBytesMegaBytes:
@@ -1470,12 +1501,12 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 		else if (dwFileSizeLo<1048576)
 		{
 			bDigits=3;
-			StringCbPrintfW(szRet,40,L"%1.3f",((double)dwFileSizeLo)/1048576);
+			StringCbPrintfW(szRet,40*sizeof(WCHAR),L"%1.3f",((double)dwFileSizeLo)/1048576);
 		}
 		else
 		{
 			bDigits=1;
-			StringCbPrintfW(szRet,40,L"%1.1f",((double)dwFileSizeLo)/1048576);
+			StringCbPrintfW(szRet,40*sizeof(WCHAR),L"%1.1f",((double)dwFileSizeLo)/1048576);
 		}		
 		break;
 	}
@@ -2027,24 +2058,25 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 BOOL CLocateApp::SetLanguageSpecifigHandles()
 {
 	CRegKey RegKey;
-	CString LangFile;
+	CStringW LangFile;
 	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource),
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.QueryValue("Language",LangFile);
+		RegKey.QueryValue(L"Language",LangFile);
 		RegKey.CloseKey();
 	}
 	if (LangFile.IsEmpty())
-		LangFile="lan_en.dll";
+		LangFile=L"lan_en.dll";
 
-	CString Path(GetApp()->GetExeName(),LastCharIndex(GetApp()->GetExeName(),'\\')+1);
+	CStringW sExeName(GetApp()->GetExeNameW());
+	CStringW Path(sExeName,sExeName.FindLast('\\')+1);
 	
 	
 
-	HINSTANCE hLib=LoadLibrary(Path+LangFile);
+	HINSTANCE hLib=FileSystem::LoadLibrary(Path+LangFile);
 	if (hLib==NULL)
 	{
-		hLib=LoadLibrary(Path+"lan_en.dll");
+		hLib=FileSystem::LoadLibrary(Path+L"lan_en.dll");
 
 		if (hLib==NULL)
 		{
@@ -2564,12 +2596,12 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 				{
 					WCHAR szTemp[54];
 					LoadString(IDS_NOTIFYUPDATINGDBS,szTemp,54);
-					StringCbPrintfW(nid.szTip,64,szTemp,(int)wRunning,(int)wThreads);
+					StringCbPrintfW(nid.szTip,64*sizeof(WCHAR),szTemp,(int)wRunning,(int)wThreads);
 				}
 				else
 				{
 					LPWSTR pPtr=nid.szTip;
-					StringCbCopyNW(pPtr,128,szCaption,iCaptionLen);
+					StringCbCopyNW(pPtr,128*sizeof(WCHAR),szCaption,iCaptionLen);
 					pPtr+=iCaptionLen;
 
 					for (int i=0;i<wThreads;i++)
@@ -2630,14 +2662,14 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 			{
 				WCHAR szTemp[54];
                 LoadString(IDS_NOTIFYUPDATINGDBS,szTemp,54);
-				StringCbPrintfW(nid.szTip,64,szTemp,(int)wRunning,(int)wThreads);
+				StringCbPrintfW(nid.szTip,64*sizeof(WCHAR),szTemp,(int)wRunning,(int)wThreads);
 			}
 		}
 		else
 		{
 			// Only one thread
 			if (pRootInfos[0].pRoot==NULL) // Is writing database
-				StringCbPrintfW(nid.szTip,64,(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
+				StringCbPrintfW(nid.szTip,64*sizeof(WCHAR),(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
 			else
 			{
 				WCHAR szBuf[50];
@@ -2655,7 +2687,7 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 					pRoot[34]='.';
 					pRoot[35]='\0';
 				}
-				StringCbPrintfW(nid.szTip,64,szBuf,pRoot);
+				StringCbPrintfW(nid.szTip,64*sizeof(WCHAR),szBuf,pRoot);
 			}
 		}
 
@@ -3925,7 +3957,7 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 		szExtra=pUpdater->GetCurrentDatabaseName();
 		break;
 	default:
-		StringCbPrintfW(error+nLabelLength,300-nLabelLength,L"%d",(int)ueError);
+		StringCbPrintfW(error+nLabelLength,(300-nLabelLength)*sizeof(WCHAR),L"%d",(int)ueError);
 		break;
 	}
 
@@ -3935,7 +3967,7 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 	{
 		int iLen=istrlenw(error)+istrlenw(szExtra)+1;
 		szNewPtr=new WCHAR[iLen];
-		StringCbPrintfW(szNewPtr,iLen,error,szExtra);
+		StringCbPrintfW(szNewPtr,iLen*sizeof(WCHAR),error,szExtra);
 		nLength=wcslen(szNewPtr);
 	}
 	else
@@ -4165,7 +4197,7 @@ void CLocateAppWnd::CUpdateStatusWnd::OnMouseMove(UINT fwKeys,WORD xPos,WORD yPo
 		LONG nNewCoordY=rcWindowRect.top+(SHORT(yPos)-m_pMouseMove->nStartPointY);
 		
 
-		SetWindowPos(NULL,nNewCoordX,nNewCoordY,0,0,SWP_NOZORDER|SWP_NOSIZE);
+		SetWindowPos(NULL,nNewCoordX,nNewCoordY,0,0,SWP_NOZORDER|SWP_NOSIZE|SWP_NOACTIVATE);
 	}
 }
 	
@@ -4334,9 +4366,9 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 		
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg!=NULL)
-		SetWindowPos(*pLocateDlg,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,0);
+		SetWindowPos(*pLocateDlg,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOACTIVATE);
 	else
-		SetWindowPos(NULL,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOZORDER);
+		SetWindowPos(HWND_TOP,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOZORDER|SWP_NOACTIVATE);
 
 
 	m_WindowSize=szSize;

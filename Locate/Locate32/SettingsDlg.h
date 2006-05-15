@@ -492,7 +492,7 @@ public:
 	BYTE m_bDefaultFlag;
 	BYTE m_bSorting;
 
-	CString m_strLangFile;
+	CStringW m_strLangFile;
 	DWORD m_nTransparency;
     
 	// Update tooltip

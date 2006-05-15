@@ -382,7 +382,7 @@ public:
 	CStringW(const CStringW& str);
 	CStringW(WCHAR ch,SIZE_T nRepeat=1);
 	CStringW(LPCWSTR lpsz);
-	CStringW(LPCWSTR lpsz,DWORD nLength);
+	CStringW(LPCWSTR lpsz,SIZE_T nLength);
 	CStringW(const short * lpsz);
 	
 	CStringW(const CString& str);

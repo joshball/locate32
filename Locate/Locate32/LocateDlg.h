@@ -7,7 +7,7 @@
 
 #define LOCATEDIALOG_TABS	3
 
-// This should be in SmallDialogs.h, but SmallDialog.h needs LocateDlg.h to be specified
+
 class CSavePresetDlg: public CDialog  
 {
 public:
@@ -22,6 +22,7 @@ public:
 public:
 	CStringW m_sReturnedPreset;
 };
+
 
 class CComboBoxAutoComplete : public CComboBox
 {
@@ -245,8 +246,7 @@ public:
 		BOOL GetDirectoriesForSelection(CArray<LPWSTR>& aDirectories,const DirSelection* pSelection,BOOL bNoWarnings=FALSE);
 
 		static void AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory);
-		static void AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,DWORD dwLength);
-		static void AddDirectoryToListTakePtr(CArray<LPWSTR>& aDirectories,LPWSTR szDirectory);
+		static void AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,SIZE_T sLength);
 		
 		BOOL CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,BOOL bAlsoSet=TRUE,BOOL bNoWarning=FALSE);
 
@@ -420,10 +420,27 @@ public:
 	};
 
 private:
+
+	
+	
 	class CSavePresetDlg: public ::CSavePresetDlg  
 	{
 	public:
 		virtual void OnOK();
+		virtual BOOL OnInitDialog(HWND hwndFocus);
+
+	};
+
+	class CRemovePresetDlg: public CDialog  
+	{
+	public:
+		CRemovePresetDlg();
+
+		virtual BOOL OnInitDialog(HWND hwndFocus);
+		virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
+		virtual BOOL OnClose();
+		
+		void OnOK();
 	};
 
 	struct ContextMenuStuff {

@@ -261,6 +261,7 @@ inline UINT FileSystem::GetDriveType(LPCSTR lpRootPathName)
 	return ::GetDriveType(lpRootPathName);
 }
 
+
 inline DWORD FileSystem::GetLogicalDriveStrings(DWORD nBufferLength,LPSTR lpBuffer)
 {
 	return ::GetLogicalDriveStringsA(nBufferLength,lpBuffer);
@@ -296,7 +297,20 @@ inline BOOL FileSystem::LookupAccountSid(LPCSTR lpSystemName,PSID lpSid,LPSTR lp
 	return ::LookupAccountSid(lpSystemName,lpSid,lpName,cchName,lpReferencedDomainName,cchReferencedDomainName,peUse);
 }
 
+inline UINT FileSystem::GetWindowsDirectory(LPSTR lpBuffer,UINT uSize)
+{
+	return ::GetWindowsDirectoryA(lpBuffer,uSize);
+}
 
+inline UINT FileSystem::GetSystemDirectory(LPSTR lpBuffer,UINT uSize)
+{
+	return ::GetSystemDirectoryA(lpBuffer,uSize);
+}
+
+inline HMODULE FileSystem::LoadLibrary(LPCSTR lpFileName)
+{
+	return ::LoadLibraryA(lpFileName);
+}
 
 	
 #ifdef DEF_WCHAR
@@ -347,6 +361,14 @@ inline BOOL FileSystem::GetFileSecurity(LPCWSTR lpFileName,SECURITY_INFORMATION 
 		return ::GetFileSecurityW(lpFileName,RequestedInformation,pSecurityDescriptor,nLength,lpnLengthNeeded);
 	else
 		return ::GetFileSecurityA(W2A(lpFileName),RequestedInformation,pSecurityDescriptor,nLength,lpnLengthNeeded);
+}
+
+inline HMODULE FileSystem::LoadLibrary(LPCWSTR lpFileName)
+{
+	if (IsUnicodeSystem())
+		return ::LoadLibraryW(lpFileName);
+	else
+		return ::LoadLibraryA(W2A(lpFileName));
 }
 
 

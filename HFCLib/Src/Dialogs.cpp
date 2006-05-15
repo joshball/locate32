@@ -566,16 +566,27 @@ void CPropertySheet::BuildPropPageArray()
 	{
 		DebugMessage("CPropertySheet::BuildPropPageArray(): m_psg.ppsp!=NULL");
 	}
-	m_psh.phpage=new HPROPSHEETPAGE[max(2,m_pages.GetSize())];
-	for (int i=0;i<m_pages.GetSize();i++)
+	
+	if (IsUnicodeSystem())
 	{
-		CPropertyPage* pPage=(CPropertyPage*)m_pages.GetAt(i);
-		if (IsUnicodeSystem())
-			m_psh.phpage[i]=CreatePropertySheetPageW(&pPage->m_pspw);
-		else
-			m_psh.phpage[i]=CreatePropertySheetPageA(&pPage->m_psp);
+		m_psh.phpage=new HPROPSHEETPAGE[max(2,m_pages.GetSize())];
+		for (int i=0;i<m_pages.GetSize();i++)
+		{
+			m_psh.phpage[i]=CreatePropertySheetPageW(
+				&((CPropertyPage*)m_pages.GetAt(i))->m_pspw);
+		}
+		m_psh.nPages=m_pages.GetSize();
 	}
-	m_psh.nPages=m_pages.GetSize();
+	else
+	{
+		m_psh.phpage=new HPROPSHEETPAGE[max(2,m_pages.GetSize())];
+		for (int i=0;i<m_pages.GetSize();i++)
+		{
+			m_psh.phpage[i]=CreatePropertySheetPageA(
+				&((CPropertyPage*)m_pages.GetAt(i))->m_psp);
+		}
+		m_psh.nPages=m_pages.GetSize();
+	}
 }
 
 BOOL CPropertySheet::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)

@@ -1219,7 +1219,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 
 		if (GetFileSize()>LONGLONG(1024*1024*1024)) // Over 1 Gb
 		{
-			StringCbPrintfW(szSize,25,L"%1.2f",double(GetFileSize())/(1024*1024*1024));
+			StringCbPrintfW(szSize,25*sizeof(WCHAR),L"%1.2f",double(GetFileSize())/(1024*1024*1024));
 			size_t nLength=istrlenw(szSize);
 			while (szSize[nLength-1]=='0')
 				nLength--;
@@ -1239,7 +1239,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 		}	
 		else if (GetFileSize()>LONGLONG(1024)) // Over 1 Gb
 		{
-			StringCbPrintfW(szSize,25,L"%1.2f",double(GetFileSize())/(1024));
+			StringCbPrintfW(szSize,25*sizeof(WCHAR),L"%1.2f",double(GetFileSize())/(1024));
 			size_t nLength=wcslen(szSize);
 			while (szSize[nLength-1]=='0')
 				nLength--;
@@ -1249,7 +1249,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 		}	
 		else
 		{
-			int nLength=StringCbPrintfW(szSize,25,L"%d",GetFileSizeLo());
+			int nLength=StringCbPrintfW(szSize,25*sizeof(WCHAR),L"%d",GetFileSizeLo());
 			::LoadString(IDS_BYTES,szSize+nLength,25-nLength);
 		}
 		

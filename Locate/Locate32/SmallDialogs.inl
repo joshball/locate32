@@ -99,14 +99,14 @@ inline CChangeCaseDlg::CChangeCaseDlg()
 // CChangeFilenameDlg
 
 inline CChangeFilenameDlg::CChangeFilenameDlg()
-:	CDialog(IDD_CHANGEFILENAME)
+:	CDialog(IDD_CHANGEFILENAME),m_dwFlags(0)
 {
 }
 
 ////////////////////////////////////////////////////////////
-// CRemovePresetDlg
+// CLocateDlg::CRemovePresetDlg
 
-inline CRemovePresetDlg::CRemovePresetDlg()
+inline CLocateDlg::CRemovePresetDlg::CRemovePresetDlg()
 : CDialog(IDD_PRESETREMOVE)
 {
 }

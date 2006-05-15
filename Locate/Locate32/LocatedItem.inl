@@ -47,7 +47,7 @@ inline LPWSTR CLocatedItem::FormatImageInformation() const
 		if (g_szwBuffer!=NULL)
 			delete[] g_szwBuffer;
 		g_szwBuffer=new WCHAR[30];
-		StringCbPrintfW(g_szwBuffer,30,L"%dx%d",dim.cx,dim.cy);
+		StringCbPrintfW(g_szwBuffer,30*sizeof(WCHAR),L"%dx%d",dim.cx,dim.cy);
 		return g_szwBuffer;
 	}
     return const_cast<LPWSTR>(szwEmpty);	

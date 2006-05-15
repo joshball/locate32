@@ -77,8 +77,10 @@ private:
 	public:
 		CSavePresetDlg(CSelectDatabasesDlg* pParent);
 		virtual void OnOK();
+		virtual BOOL OnInitDialog(HWND hwndFocus);
 
 		CSelectDatabasesDlg* m_pParent;
+
 	};
 
 public:
@@ -105,7 +107,7 @@ public:
 	
 	void LoadPresets();
 	BOOL LoadPreset(LPCWSTR szName);
-	BOOL SavePreset(LPCWSTR szName);
+	BOOL SavePreset(LPCWSTR szName,BOOL bAskOverwrite=TRUE);
 
 	static BOOL CheckRegistryIntegrity(CRegKey& RegKey);
 
@@ -146,6 +148,9 @@ public:
 	int m_nThreadsCurrently;
     CListCtrl m_List;
 	CComboBox m_PresetCombo;
+	
+	CString m_Buffer;
+	CStringW m_BufferW;
 
 	int m_nThreadPriority;
 
@@ -179,20 +184,15 @@ public:
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 	virtual BOOL OnClose();
 
+	CStringW m_sParent;
 	CStringW m_sFileName;
+	enum Flags {
+		fNoExtension = 0x0001
+	};
+	DWORD m_dwFlags;
 };
 
-class CRemovePresetDlg: public CDialog  
-{
-public:
-	CRemovePresetDlg();
 
-	virtual BOOL OnInitDialog(HWND hwndFocus);
-	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
-	virtual BOOL OnClose();
-	
-	void OnOK();
-};
 
 
 #include "SmallDialogs.inl"

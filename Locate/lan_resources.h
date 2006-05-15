@@ -853,6 +853,7 @@
 #define IDS_PRESETPARAM                 6105
 #define IDS_PRESETSELECTED              6106
 #define IDS_PRESETCUSTOM                6107
+#define IDS_CHANGEFILENAMEALREADYEXISTS	6200
 #define IDS_DAILYEVERYDAY               7000
 #define IDS_DAILYEVERYXDAYS             7001
 #define IDS_WEEKLYEVERYWEEK             7002

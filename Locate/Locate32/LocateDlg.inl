@@ -56,44 +56,6 @@ inline void CLocateDlg::CNameDlg::DirSelection::FreeData()
 	}
 }
 
-inline void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory)
-{
-	for (int i=0;i<aDirectories.GetSize();i++)
-	{
-		if (wcscmp(aDirectories[i],szDirectory)==0)
-			return;
-	}
-	aDirectories.Add(alloccopy(szDirectory));
-}
-
-inline void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,DWORD dwLength)
-{
-	for (int i=0;i<aDirectories.GetSize();i++)
-	{
-		if (wcsncmp(aDirectories[i],szDirectory,dwLength)==0)
-		{
-			if (aDirectories[i][dwLength]==L'\0')
-				return;
-		}
-	}
-	aDirectories.Add(alloccopy(szDirectory,dwLength));
-}
-
-inline void CLocateDlg::CNameDlg::AddDirectoryToListTakePtr(CArray<LPWSTR>& aDirectories,LPWSTR szDirectory)
-{
-	for (int i=0;i<aDirectories.GetSize();i++)
-	{
-		if (wcscmp(aDirectories[i],LPCWSTR(szDirectory))==0)
-		{
-			delete[] szDirectory;
-			return;
-		}
-	}
-	aDirectories.Add(szDirectory);
-}
-
-
-
 inline CLocateDlg::CSizeDateDlg::CSizeDateDlg()
 :	CDialog(IDD_SIZEDATE)
 {
@@ -237,7 +199,12 @@ inline CLocateDlg::CAdvancedDlg::FileType::FileType(LPWSTR frType,LPWSTR frTitle
 {
 }
 
-
+inline void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,SIZE_T sLen)
+{
+	LPWSTR pDirectories=alloccopy(szDirectory,sLen);
+	AddDirectoryToList(aDirectories,pDirectories);
+	delete[] pDirectories;
+}
 
 inline void CLocateDlg::RemoveResultsFromList()
 {
@@ -252,7 +219,7 @@ inline CLocateDlg::VolumeInformation::VolumeInformation(WORD wDB_,WORD wRootID_,
 	if (dwVolumeSerial!=0 && dwVolumeSerial!=DWORD(-1))
 	{
 		szVolumeSerial=new WCHAR[12];
-		StringCbPrintfW(szVolumeSerial,12,L"%0X-%0X",HIWORD(dwVolumeSerial),LOWORD(dwVolumeSerial));
+		StringCbPrintfW(szVolumeSerial,12*sizeof(WCHAR),L"%0X-%0X",HIWORD(dwVolumeSerial),LOWORD(dwVolumeSerial));
 	}
 	else
 		szVolumeSerial=NULL;

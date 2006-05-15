@@ -348,6 +348,10 @@ namespace FileSystem {
 	BOOL LookupAccountSid(LPCSTR lpSystemName,PSID lpSid,LPSTR lpName,LPDWORD cchName,
 		LPSTR lpReferencedDomainName,LPDWORD cchReferencedDomainName,PSID_NAME_USE peUse);
 
+	UINT GetWindowsDirectory(LPSTR lpBuffer,UINT uSize);
+	UINT GetSystemDirectory(LPSTR lpBuffer,UINT uSize);
+	HMODULE LoadLibrary(LPCSTR lpFileName);
+
 
 
 #ifdef DEF_WCHAR
@@ -400,6 +404,13 @@ namespace FileSystem {
 		PSID_NAME_USE peUse);
 	BOOL LookupAccountSid(LPCWSTR lpSystemName,PSID lpSid,LPWSTR lpName,LPDWORD cchName,
 		LPWSTR lpReferencedDomainName,LPDWORD cchReferencedDomainName,PSID_NAME_USE peUse);
+
+
+
+
+	UINT GetWindowsDirectory(LPWSTR lpBuffer,UINT uSize);
+	UINT GetSystemDirectory(LPWSTR lpBuffer,UINT uSize);
+	HMODULE LoadLibrary(LPCWSTR lpFileName);
 
 #endif	
 
@@ -862,7 +873,8 @@ public:
 	BOOL OpenRead(HKEY hKey,LPCWSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defRead,NULL)==ERROR_SUCCESS; }
 	BOOL OpenWrite(HKEY hKey,LPCWSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defWrite,NULL)==ERROR_SUCCESS; }
 	
-	DWORD QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,SIZE_T cbStrLen) const;	
+	DWORD QueryValue(LPCWSTR lpszValueName,LPSTR lpbData,SIZE_T cbDataLen,LPDWORD lpdwType=NULL) const;	
+	DWORD QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,SIZE_T cbLenAsChars) const;	
 	BOOL QueryValue(LPCWSTR lpszValueName,CStringW& strData) const;	
 	BOOL QueryValue(LPCWSTR lpszValueName,DWORD& dwData) const;	
 	
@@ -870,6 +882,7 @@ public:
 	SIZE_T QueryValueLength(LPCWSTR lpszValueName,BOOL& bIsOk) const;
 
 	BOOL SetValue(LPCWSTR lpValueName,CStringW& strData);
+	LONG SetValue(LPCWSTR lpValueName,LPCSTR lpData,SIZE_T cbData,DWORD dwType=REG_BINARY);
 	LONG SetValue(LPCWSTR lpValueName,LPCWSTR strData,SIZE_T cbDataAsChars,DWORD dwType=REG_SZ);
 	LONG SetValue(LPCWSTR lpValueName,LPCWSTR strData);
 	BOOL SetValue(LPCWSTR lpValueName,DWORD dwData);
