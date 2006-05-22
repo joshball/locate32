@@ -3,7 +3,6 @@
 
 
 #define WM_SYSTEMTRAY				WM_APP+100
-#define WM_ANOTHERINSTANCE			WM_APP+101
 #define WM_UPDATENEEDEDDETAILTS		WM_APP+102 //wParam is item, lParam is pointer to item
 #define WM_REFRESHNOTIFIERHANDLERS	WM_APP+103 
 #define WM_GETLOCATEDLG				WM_APP+105 // wParam==0: return HWND, wParam==1: return PTR, wParam==2: return PTR to ST
@@ -16,5 +15,9 @@
 #define WM_SETITEMFOCUS				WM_APP+112 // wParam is handle to window
 #define WM_CLOSEDIALOG				WM_APP+113 
 
+
+// LOWORD(wParam) for Locate32Communication
+#define LOCATEMSG_ACTIVATEINSTANCE			0
+#define LOCATEMSG_INSTANCEEXITED			1
 
 #endif

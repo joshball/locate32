@@ -96,7 +96,7 @@ public:
 	virtual void OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu);
     virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 	
-	DWORD OnAnotherInstance(ATOM aCommandLine);
+	DWORD OnActivateAnotherInstance(ATOM aCommandLine);
 	DWORD OnSystemTrayMessage(UINT uID,UINT msg);
 	BOOL SetUpdateStatusInformation(HICON hIcon=NULL,UINT uTip=0);
 	void GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootInfos);
@@ -151,8 +151,9 @@ public:
 	// Keyboard shortcuts
 	CArrayFP<CShortcut*> m_aShortcuts;
 	HHOOK m_hHook;
+
+
 	
-		
 	friend inline CLocateDlg* GetLocateWnd();
 
 #ifdef _DEBUG
@@ -162,8 +163,6 @@ public:
 	inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
 #endif
 
-	UINT nHFCInstallationMessage;
-	UINT nTaskbarCreated;
 
 
 };
@@ -308,10 +307,12 @@ protected:
 	BYTE CheckDatabases();
 	BYTE SetDeleteAndDefaultImage();
 	
+	
 public:
 	static BOOL ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData);
+	static BOOL CALLBACK EnumLocateSTWindows(HWND hwnd,LPARAM lParam);
 
-	static BOOL ChechOtherInstances();
+	BOOL ChechOtherInstances();
 	
 	void SaveRegistry() const;
 	void LoadRegistry();
@@ -369,6 +370,12 @@ public:
 	static DWORD WINAPI GetLongPathName(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer);
 	static DWORD WINAPI GetLongPathNameNoUni(LPCWSTR lpszShortPath,LPWSTR lpszLongPath,DWORD cchBuffer);
 
+	UINT m_nInstance;
+
+	// Registered messages
+	static UINT m_nHFCInstallationMessage;
+	static UINT m_nTaskbarCreated;
+	static UINT m_nLocateAppMessage;
 
 protected:
 	CStartData* m_pStartData;
@@ -386,6 +393,7 @@ protected:
 
 	static void ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText);
 	static void ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText,DWORD dwLength);
+
 
 
 public:
@@ -410,6 +418,9 @@ public:
 
 	friend CLocateAppWnd* GetLocateAppWnd();
 	friend CLocateDlg* GetLocateDlg();
+
+
+	
 };
 
 inline CLocateApp::CStartData::CStartData()
@@ -480,22 +491,7 @@ inline CLocateAppWnd* GetLocateAppWnd()
 	return (CLocateAppWnd*)&theApp.m_AppWnd;
 }
 
-inline CLocateAppWnd::CLocateAppWnd()
-:	m_pAbout(NULL),m_pSettings(NULL),
-	m_pLocateDlgThread(NULL),
-	m_pUpdateAnimIcons(NULL),m_hHook(NULL)
-{
-	DebugMessage("CLocateAppWnd::CLocateAppWnd()");
-}
 
-inline CLocateAppWnd::~CLocateAppWnd()
-{
-	DebugMessage("CLocateAppWnd::~CLocateAppWnd()");
-	//m_Schedules.RemoveAll();
-
-	
-
-}
 
 inline BOOL CLocateApp::IsUpdating() const
 {

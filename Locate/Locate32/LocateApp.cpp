@@ -6,6 +6,9 @@
 
 #pragma comment(lib, "pdh.lib")
 
+UINT CLocateApp::m_nHFCInstallationMessage=0;
+UINT CLocateApp::m_nTaskbarCreated=0;
+UINT CLocateApp::m_nLocateAppMessage=0;
 
 DOUBLE GetCpuTime()
 {
@@ -91,7 +94,7 @@ DOUBLE GetCpuTime()
 CLocateApp::CLocateApp()
 :	CWinApp("LOCATE32"),m_nDelImage(0),m_nStartup(0),
 	m_ppUpdaters(NULL),m_pLastDatabase(NULL),m_nFileSizeFormat(fsfOverKBasKB),
-	m_dwProgramFlags(pfDefault)
+	m_dwProgramFlags(pfDefault),m_nInstance(0)
 {
 	DebugMessage("CLocateApp::CLocateApp()");
 	m_pStartData=new CStartData;
@@ -113,6 +116,16 @@ CLocateApp::~CLocateApp()
 		CloseHandle(m_hUpdatersPointerInUse);
 		m_hUpdatersPointerInUse=NULL;
 	}
+}
+
+BOOL CALLBACK CLocateApp::EnumLocateSTWindows(HWND hwnd,LPARAM lParam)
+{
+	char szClass[101];
+	GetClassName(hwnd,szClass,100);
+
+	if (strcmp(szClass,"LOCATEAPPST")==0)
+		++*((DWORD*)lParam);
+	return TRUE;	
 }
 
 BOOL CLocateApp::InitInstance()
@@ -144,6 +157,17 @@ BOOL CLocateApp::InitInstance()
 		if (m_pGetLongPathName==NULL)
 			m_pGetLongPathName=CLocateApp::GetLongPathName;
 	}
+	
+	// Set messages
+	m_nHFCInstallationMessage=RegisterWindowMessage("HFCINSTALLMESSAGE");
+	m_nTaskbarCreated=RegisterWindowMessage("TaskbarCreated");
+	m_nLocateAppMessage=RegisterWindowMessage("Locate32Communication");
+
+	// Enumerate instances
+	EnumWindows(EnumLocateSTWindows,(LPARAM)&m_nInstance);
+
+
+
 
 	// Handling command line arguments
 	DebugFormatMessage("CommandLine: %s",m_lpCmdLine);
@@ -1026,12 +1050,14 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 
 BOOL CLocateApp::ChechOtherInstances()
 {
-	HWND hWnd=FindWindow("LOCATEAPPST","Locate ST");
-	if (hWnd!=NULL)
+	//HWND hWnd=FindWindow("LOCATEAPPST","Locate ST");
+	//if (hWnd!=NULL)
+
+	if (m_nInstance!=0)
 	{
 		// TODO: Unicode
 		ATOM aCommandLine=GlobalAddAtom(GetApp()->GetCmdLine());
-		::SendMessage(hWnd,WM_ANOTHERINSTANCE,0,(LPARAM)aCommandLine);
+		::SendMessage(HWND_BROADCAST,m_nLocateAppMessage,LOCATEMSG_ACTIVATEINSTANCE,(LPARAM)aCommandLine);
 		if (aCommandLine!=NULL)
 			DeleteAtom(aCommandLine);
 		return TRUE;
@@ -2222,6 +2248,23 @@ int CLocateApp::GetDatabaseMenuIndex(HMENU hPopupMenu)
 /////////////////////////////////////////////
 // CLocateAppWnd
 
+CLocateAppWnd::CLocateAppWnd()
+:	m_pAbout(NULL),m_pSettings(NULL),
+	m_pLocateDlgThread(NULL),
+	m_pUpdateAnimIcons(NULL),m_hHook(NULL)
+{
+	DebugMessage("CLocateAppWnd::CLocateAppWnd()");
+}
+
+CLocateAppWnd::~CLocateAppWnd()
+{
+	DebugMessage("CLocateAppWnd::~CLocateAppWnd()");
+	//m_Schedules.RemoveAll();
+
+	
+
+}
+
 int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 {
 	// Loading menu
@@ -2230,7 +2273,7 @@ int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 
 	// Set schedules
 	SetSchedules();
-	RunStartupSchedules();
+	SetTimer(ID_RUNSTARTUPSCHEDULES,500,NULL);
 
 	SetMenuDefaultItem(m_Menu.GetSubMenu(0),IDM_OPENLOCATE,FALSE);
 	
@@ -2239,10 +2282,7 @@ int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 	SetIcon(hIcon,TRUE);
 	SetClassLong(gclHIcon,(LONG)hIcon);
 
-	nHFCInstallationMessage=RegisterWindowMessage("HFCINSTALLMESSAGE");
-	nTaskbarCreated=RegisterWindowMessage("TaskbarCreated");
-
-
+	
 	SetTimer(ID_ENSUREVISIBLEICON,2000,NULL);
 	
 	return CFrameWnd::OnCreate(lpcs);
@@ -2958,8 +2998,11 @@ BYTE CLocateAppWnd::OnSettings()
 			
 			// Set CLocateAppWnd to use new settings
 			GetLocateApp()->UpdateSettings();
-			SetSchedules(m_pSettings->GetSchedules());
-			SaveSchedules();
+			if (GetLocateApp()->m_nInstance==0)
+			{
+				SetSchedules(m_pSettings->GetSchedules());
+				SaveSchedules();
+			}
 			
 			if (GetLocateDlg()!=NULL)
 			{
@@ -3215,8 +3258,12 @@ void CLocateAppWnd::OnDestroy()
 	
 	SaveSchedules();
 	
+	::SendMessage(HWND_BROADCAST,CLocateApp::m_nLocateAppMessage,
+		LOCATEMSG_INSTANCEEXITED,GetLocateApp()->m_nInstance);
+
 	CFrameWnd::OnDestroy();
 	DebugMessage("void CLocateAppWnd::OnDestroy() END");
+
 }
 
 BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
@@ -3225,8 +3272,6 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 	{
 	case WM_SYSTEMTRAY:
 		return OnSystemTrayMessage((UINT)wParam,(UINT)lParam);
-	case WM_ANOTHERINSTANCE:
-		return OnAnotherInstance((ATOM)lParam);
 	case WM_GETICON:
 	case WM_SETICON:
 		DefWindowProc(*this,msg,wParam,lParam);
@@ -3286,7 +3331,7 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		TurnOnShortcuts();
 		break;
 	default:
-		if (msg==nHFCInstallationMessage)
+		if (msg==CLocateApp::m_nHFCInstallationMessage)
 		{
 			if (lParam!=NULL)
 			{	
@@ -3300,8 +3345,26 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			}
 			return (BOOL)(HWND)*this;
 		}
-		else if (msg==nTaskbarCreated)
+		else if (msg==CLocateApp::m_nTaskbarCreated)
 			AddTaskbarIcon();
+		else if (msg==CLocateApp::m_nLocateAppMessage)
+		{
+			switch (LOWORD(wParam))
+			{
+			case LOCATEMSG_ACTIVATEINSTANCE:
+				OnActivateAnotherInstance((ATOM)lParam);
+				break;
+			case LOCATEMSG_INSTANCEEXITED:
+				if (GetLocateApp()->m_nInstance>DWORD(lParam))
+				{
+					GetLocateApp()->m_nInstance--;
+
+					if (GetLocateApp()->m_nInstance==0)
+						SetSchedules();
+				}
+				break;
+			}
+		}
 		break;
 	}
 	return CFrameWnd::WindowProc(msg,wParam,lParam);
@@ -3442,6 +3505,10 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 				AddTaskbarIcon();
 		}
 		break;
+	case ID_RUNSTARTUPSCHEDULES:
+		KillTimer(ID_RUNSTARTUPSCHEDULES);
+		RunStartupSchedules();
+		break;
 	default:
 		if (int(wTimerID)>=ID_SHORTCUTACTIONTIMER)
 		{
@@ -3455,8 +3522,11 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 	}
 }
 
-DWORD CLocateAppWnd::OnAnotherInstance(ATOM aCommandLine)
+DWORD CLocateAppWnd::OnActivateAnotherInstance(ATOM aCommandLine)
 {
+	if (GetLocateApp()->m_nInstance!=0)
+		return 0;
+
 	if (aCommandLine==NULL)
 		OnLocate();
 	else
@@ -3502,6 +3572,9 @@ DWORD CLocateAppWnd::OnAnotherInstance(ATOM aCommandLine)
 		
 DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 {
+	if (GetLocateApp()->m_nInstance!=0)
+		return 0;
+
 	DebugNumMessage("CLocateAppWnd::SetSchedules(0x%X) START",(DWORD)pSchedules);
 	if (pSchedules==NULL)
 	{
@@ -3590,6 +3663,9 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 
 BOOL CLocateAppWnd::SaveSchedules()
 {
+	if (GetLocateApp()->m_nInstance!=0)
+		return 0;
+
 	DebugMessage("CLocateAppWnd::SaveSchedules() START");
 	
 	CRegKey RegKey;
@@ -3708,7 +3784,8 @@ void CLocateAppWnd::RunStartupSchedules()
 		CSchedule* pSchedule=m_Schedules.GetAt(pPos);
 		if (pSchedule!=NULL)
 		{
-			if (pSchedule->m_nType==CSchedule::typeAtStartup)
+			if (pSchedule->m_nType==CSchedule::typeAtStartup && 
+				pSchedule->m_bFlags&CSchedule::flagEnabled)
 			{
 				bSchedulesChanged=TRUE;
 				

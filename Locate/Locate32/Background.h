@@ -212,15 +212,16 @@ inline CBackgroundUpdater::~CBackgroundUpdater()
 {	
 	if (m_hThread!=NULL)
 	{
-		GetLocateDlg()->m_pBackgroundUpdater=NULL;
+		InterlockedExchangePointer(&GetLocateDlg()->m_pBackgroundUpdater,NULL);
 		HANDLE hThread=m_hThread;
+		InterlockedExchangePointer(&m_hThread,NULL);
 		m_hThread=NULL;
 
 		BkgDebugMessage("CBackgroundUpdater::~CBackgroundUpdater()");
 		CloseHandle(hThread);
 	}
 	else
-		GetLocateDlg()->m_pBackgroundUpdater=NULL;
+		InterlockedExchangePointer(&GetLocateDlg()->m_pBackgroundUpdater,NULL);
 	
 	
 	CloseHandle(m_phEvents[0]);
@@ -258,7 +259,8 @@ inline void CBackgroundUpdater::ReleaseUpdaterListPtr()
 
 inline void CBackgroundUpdater::StopWaiting()
 {
-	BkgDebugMessage("CBackgroundUpdater::StopWaiting() BEGIN");
+	ASSERT(this!=NULL);
+
 	if (m_aUpdateList.GetSize()==0)
 	{
 		BkgDebugMessage("CBackgroundUpdater::StopWaiting() END (no wake)");
@@ -271,7 +273,6 @@ inline void CBackgroundUpdater::StopWaiting()
 		SetEvent(m_phEvents[1]);
 
 	InterlockedExchange(&m_lIsWaiting,FALSE);
-	BkgDebugMessage("CBackgroundUpdater::StopWaiting() END");
 	
 }
 

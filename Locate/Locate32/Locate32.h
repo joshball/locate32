@@ -64,6 +64,7 @@ extern LPWSTR g_szwBuffer;
 #define ID_SYNCSCHEDULES			7
 #define ID_CHECKSCHEDULES			8
 #define ID_ENSUREVISIBLEICON		9
+#define ID_RUNSTARTUPSCHEDULES		10
 
 
 // Actual id is 30 <= x < 30+Nshortcuts

@@ -766,6 +766,14 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_NameDlg.SetFocus();
 	m_NameDlg.m_Name.SetFocus();
 	
+	// Make title
+	CStringW title;
+	title.LoadString(IDS_TITLE);
+	title.AddString(IDS_ALLFILES);
+	
+	if (GetLocateApp()->m_nInstance>0)
+		title << L" (" << DWORD(GetLocateApp()->m_nInstance+1) << L')';
+	SetText(title);
 	
 	return FALSE;
 }
@@ -1273,7 +1281,13 @@ void CLocateDlg::StartBackgroundOperations()
 {
 	//DebugMessage("CLocateDlg::StartBackgroundOperations():  BEGIN");
 	if (m_pBackgroundUpdater==NULL)
-		m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+	{
+		CBackgroundUpdater* pTmp=new CBackgroundUpdater(m_pListCtrl);
+		if (m_pBackgroundUpdater==NULL)
+			InterlockedExchangePointer(&m_pBackgroundUpdater,pTmp);
+		else
+			delete pTmp;
+	}
 
 	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
 		return;
@@ -1283,8 +1297,11 @@ void CLocateDlg::StartBackgroundOperations()
 	{
 		if (m_pFileNotificationsThread==NULL)
 		{
-			m_pFileNotificationsThread=new CCheckFileNotificationsThread;
-			//DebugFormatMessage("CLocateDlg::StartBackgroundOperations(): changentfr %X created",m_pFileNotificationsThread);
+			CCheckFileNotificationsThread* pTmp=new CCheckFileNotificationsThread;
+			if (m_pFileNotificationsThread==NULL)
+				InterlockedExchangePointer(&m_pFileNotificationsThread,pTmp);
+			else
+				delete pTmp;
 		}
 		
 		if (m_pListCtrl->GetItemCount()>0)
@@ -1697,7 +1714,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 		if (aExtensions.GetSize()==1)
 		{
 			Title.AddString(IDS_FILESNAMED);
-			Title << "*." << aExtensions[0];
+			Title << L"*." << aExtensions[0];
 		}
 		else
 			Title.AddString(IDS_ALLFILES);
@@ -1707,8 +1724,11 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 		Title.AddString(IDS_FILESNAMED);
 		Title << Name;
 		if (aExtensions.GetSize()==1 && aNames.GetSize()==1)
-			Title << "." << aExtensions[0];
+			Title << L"." << aExtensions[0];
 	}
+
+	if (GetLocateApp()->m_nInstance>0)
+		Title << L" (" << DWORD(GetLocateApp()->m_nInstance+1) << L')';
 	SetText(Title);
 
 
@@ -1830,7 +1850,7 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 		delete pLocater;
 		((CLocateDlg*)dwParam)->m_pLocater=NULL;
 		
-		if (((CLocateDlg*)dwParam)->m_pBackgroundUpdater!=NULL)
+		if (((CLocateDlg*)dwParam)->m_pBackgroundUpdater==NULL)
 			((CLocateDlg*)dwParam)->StartBackgroundOperations();
 		
 		((CLocateDlg*)dwParam)->m_pBackgroundUpdater->StopWaiting();
@@ -2089,10 +2109,15 @@ void CLocateDlg::OnNewSearch()
 		m_NameDlg.ShowWindow(swShow);
 		m_pTabCtrl->SetCurSel(0);
 	}
-	CString title,temp;
+	
+	
+	// Make title
+	CStringW title;
 	title.LoadString(IDS_TITLE);
-	temp.LoadString(IDS_ALLFILES);
-	title << temp;
+	title.AddString(IDS_ALLFILES);
+	
+	if (GetLocateApp()->m_nInstance>0)
+		title << L" (" << DWORD(GetLocateApp()->m_nInstance+1) << L')';
 	SetText(title);
 
 	m_NameDlg.m_Name.SetFocus();
@@ -7715,7 +7740,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDir
 			ci.cchTextMax=MAX_PATH+10;
 			ci.mask=CBEIF_TEXT;
 			m_LookIn.GetItem(&ci);
-			AddDirectoryToList(aDirectories,szPath,FALSE);
+			AddDirectoryToList(aDirectories,szPath);
 			return TRUE;
 		}
 		else
@@ -7768,7 +7793,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							szDir[nLength-2]='\0';
 							nLength--;
 						}
-						AddDirectoryToList(aDirectories,szDir,TRUE);
+						AddDirectoryToList(aDirectories,szDir);
 						
 						nLength=RegKey.QueryValueLength(L"Personal");
 						szDir=new WCHAR[nLength];
@@ -7778,7 +7803,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							szDir[nLength-2]='\0';
 							nLength--;
 						}
-						AddDirectoryToList(aDirectories,szDir,TRUE);
+						AddDirectoryToList(aDirectories,szDir);
 						
 					}
 					break;
@@ -7796,7 +7821,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							szDir[nLength-2]=L'\0';
 							nLength--;
 						}
-						AddDirectoryToList(aDirectories,szDir,TRUE);
+						AddDirectoryToList(aDirectories,szDir);
 					}
 					break;
 				}
@@ -7813,7 +7838,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							szDir[nLength-2]=L'\0';
 							nLength--;
 						}
-						AddDirectoryToList(aDirectories,szDir,TRUE);
+						AddDirectoryToList(aDirectories,szDir,nLength);
 					}
 					break;
 				}
@@ -7842,7 +7867,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 			szDir[0]=static_cast<WCHAR>(HIWORD(lParam));
 			szDir[1]=':';
 			szDir[2]=L'\0';
-			AddDirectoryToList(aDirectories,szDir,TRUE);
+			AddDirectoryToList(aDirectories,szDir);
 			break;
 		}
 	case Custom:

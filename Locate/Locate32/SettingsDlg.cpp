@@ -47,7 +47,8 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	AddPage((CPropertyPage*)m_pAdvanced);
 	AddPage((CPropertyPage*)m_pLanguage);
 	AddPage((CPropertyPage*)m_pDatabases);
-	AddPage((CPropertyPage*)m_pAutoUpdate);
+	if (GetLocateApp()->m_nInstance==0)
+		AddPage((CPropertyPage*)m_pAutoUpdate);
 	AddPage((CPropertyPage*)m_pKeyboardShortcuts);
 	
 	
@@ -170,13 +171,15 @@ BOOL CSettingsProperties::LoadSettings()
 	}
 
 	
-	
-	// Loading schedules
-	POSITION pPos=GetLocateAppWnd()->m_Schedules.GetHeadPosition();
-	while (pPos!=NULL)
+	if (GetLocateApp()->m_nInstance==0)
 	{
-		m_Schedules.AddTail(new CSchedule(GetLocateAppWnd()->m_Schedules.GetAt(pPos)));
-		pPos=GetLocateAppWnd()->m_Schedules.GetNextPosition(pPos);
+		// Loading schedules
+		POSITION pPos=GetLocateAppWnd()->m_Schedules.GetHeadPosition();
+		while (pPos!=NULL)
+		{
+			m_Schedules.AddTail(new CSchedule(GetLocateAppWnd()->m_Schedules.GetAt(pPos)));
+			pPos=GetLocateAppWnd()->m_Schedules.GetNextPosition(pPos);
+		}	
 	}
 
 	// Loading some general settings

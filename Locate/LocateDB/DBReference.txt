@@ -1,83 +1,96 @@
-
 Locate DB fileformat reference for version 20 ((C) 2001-2006 Janne Huttunen)
 
-Order: header + 1. root dir + ... + n. root dir + 00000000
 
-HEADER:
-8xBYTE    2xBYTE   BYTE            DWORD                                                     
-LOCATEDB   XXXX       XX           XXXXXXXX     XX...X\0    XX...X\0    XX...X\0      XX...X\0   
-		  Version  0 = short names  Header        Creator     Comments    Free data I   Free data II
-                   1 = long names	 size                                  Reserved for future use
-				   0x10 = Ansi
-				   0x11 = Ansi + lfn
+1. The content of database is following:
 
-DWORD=FILETIME    DWORD      DWORD
-     XXXX         XXXXXXXX   XXXXXXXX
- Creation time     Number of  Number of
-                    files     directories
+Header
+Second root
+First root directory (e.g. C: drive)
+First root directory 
+...
+Last root directory 
+null (0 as DWORD)
 
 
 
 
 
+2. Format for header:
 
-ROOT DIRECTORY STRUCTURE (e.g. C: drive):
-   DWORD          BYTE                                        DWORD 
-  XXXXXXXX         XX               XX..X\0   XX...X\0       XXXXXXXX
-Data length       Type               Path    Volume name   Volume serial
-actual length  0x00 = Unknown                                 number
-= this + 4     0x10 = Fixed
-               0x20 = Removable (ex. Floppy)
-			   0x30 = CD-Rom
-			   0x40 = Remote (network)
-			   0x50 = Ramdisk
-			   0xF0 = Directory
-
-              DWORD       DWORD        
- XX..X\0     XXXXXXXX    XXXXXXXX      XXX....XXXX....X		  0000
-File system  Number of   Number of      Files and folders
-    name       files    directories
-
-DIRECTORY STRUCTURE:
-
-  BYTE          DWORD           BYTE       
-   XX          XXXXXXXX          XX         XXX...X\0 
-0x0  = End     Data length     Dir name     dir name 
-0x10 = File					    length
-0x80 = Direc. actual size    
-+attrib        = this + 1 (type is not countet)
-
-  DWORD       WORD	    WORD       
-XXXXXXXX      XXXX      XXXX         XXXX....XXX..X     00
-Modified    Created    Accessed		Files and subdirs
-
-FILE DATA STRUCTURE:
-
-  BYTE           BYTE        BYTE                     DWORD + BYTE   
-   XX             XX          XX         XXX...X\0    XXXXXXXXXX    
-0x0  = End     File name   Extension     File name    File size     
-0x10 = File     length    index (or 0)
-0x80 = Direc.
-+ attrib
-
-  DWORD      WORD	     WORD
-XXXXXXXX     XXXX        XXXX
-Modified   Created d. Accessed date
+size 	      description    
+8xBYTE        text "LOCATEDB" as ANSI characters
+2xBYTE 	      version, "20" as ANSI characters
+BYTE          compination of the following: 01h = long file names, 0h = OEM charset, 10h = ANSI charset, 
+              20h = Unicode charset
+DWORD         how many bytes should ignored to skip the rest of header (i.e., the compined 
+              size of the next seven fields, in bytes)
+variable      a null-terminated string specifying creator
+variable      a null-terminated string specifying description
+variable      a null-terminated string for extra information (see the end of file)
+variable      an another null-terminated string for extra information
+DWORD         creation time (FILETIME structure)
+DWORD         the number of files
+DWORD         the number of directories
 
 
 
 
 
-Attrib is compination of following:
-Hidden		0x1
-Readonly	0x2
-Archive		0x4
-System		0x8
+3. Format for root directories:
+
+DWORD         data length (actual length = this value + 4)
+BYTE          type: 0 = unknown, 10h = fixed, 20h = removable (e.g., floppy), 30h = CD-ROM, 40 = Remote (network),
+              50h = Ramdisk, F0h = Directory
+variable      a null-terminated string for path
+variable      a null-terminated string for volume name
+DWORD         volume serial
+variable      a null-terminated string for file system (ANSI string)
+DWORD         the number of files
+DWORD         the number of directories
+variable      the first file or directory in root
+variable      the second file or directory in root
+...
+variable      the last file or directory in root
+DWORD         null (0)
+
+
+3.1 Format for directory
+
+BYTE          type and attribute, the compination of the following: 10h = file
+              80h = directory, hidden = 01h, read only = 02h, archive = 04h, system = 08h
+DWORD         data length (actual length = this value + 1)
+BYTE          the length of directory name          
+varible       directory name as a null-terminated string
+DWORD         modification time (FILETIME)
+WORD          creation date 
+WORD          last accessed date 
+variable      the first file or subdirectory in directory
+variable      the second file or subdirectory in directory
+...
+variable      the last file or subdirectory in directory
+BYTE          null (0)
+
+3.2 Format for file
+
+BYTE          type and attribute, the compination of the following: 10h = file, 
+              (0h no files, 80h = directory), hidden = 01h, read only = 02h, archive = 04h, system = 08h
+BYTE          the length of file name          
+varible       file name as a null-terminated string
+DWORD+BYTE    file size
+DWORD         modification time (FILETIME)
+WORD          creation date 
+WORD          last accessed date 
 
 
 
-Briefly, to read file do following
 
+
+
+4. Notes
+
+- All strings are null-terminated ANSI, Unicode or OEM (old DOS versions) strings depending on the 
+  third field in the header (exceptions are mentioned above). 
+- Briefly, to read file do following
 1. Read header 
 2. While next byte is not zero read root struct as follows:
 	1.  Read fields (e.g. type, path, ...) 
