@@ -39,6 +39,7 @@ enum UpdateError {
 	ueInvalidDatabase = 11,
 	ueLimitReached = 12, // Only for CLocater
 	ueCannotIncrement = 13,
+	ueWrongCharset = 14,
 	ueStillWorking = 0xF000
 };
 

@@ -617,6 +617,7 @@ protected:
 
 	static BOOL CALLBACK LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode,DWORD dwFoundFiles,const CLocater* pLocater);
 	static BOOL CALLBACK LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLocater* pLocater);
+	static BOOL CALLBACK LocateFoundProcW(DWORD dwParam,BOOL bFolder,const CLocater* pLocater);
 
 public:
 	static void SetSystemImagelists(CListCtrl* pList,HICON* phIcon=NULL);

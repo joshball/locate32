@@ -58,19 +58,11 @@ CLOCATERINITIALIATIONS
 	SetDatabases(aDatabases);
 }
 
-inline void CLocater::SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC pFoundProc,DWORD dwParam)
+inline void CLocater::SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC pFoundProc,LOCATEFOUNDPROC pFoundProcW,DWORD dwParam)
 {
 	m_pProc=pProc;
-	for (int i=0;i<m_aDatabases.GetSize();i++)
-		m_aDatabases[i]->m_pFoundProc=pFoundProc;
-	m_dwData=dwParam;
-}
-
-inline void CLocater::SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC* pFoundProcs,DWORD dwParam)
-{
-	m_pProc=pProc;
-	for (int i=0;i<m_aDatabases.GetSize();i++)
-		m_aDatabases[i]->m_pFoundProc=pFoundProcs[i];
+	m_pFoundProc=pFoundProc;
+	m_pFoundProcW=pFoundProcW;
 	m_dwData=dwParam;
 }
 
@@ -133,7 +125,26 @@ inline void CLocater::SetSizeAndDate(DWORD dwFlags,DWORD dwMinSize,DWORD dwMaxSi
 }
 
 
-inline bool _strncmp(const char* p1,const char* p2,int a)
+inline bool _strncmp(const WCHAR* p1,const char* p2,int a)
+{
+	// TODO: check whether ansi and unicode characters are equal 
+	// when ch between 0 and 255, and remove W2Ac
+	for (a--;a>=0;a--)
+		if (p1[a]!=A2Wc(p2[a]))
+			return FALSE;
+	return TRUE;
+}
+
+inline bool _strfcmp(const WCHAR* p1,const char* p2,int a)
+{
+	// TODO: check whether ansi and unicode characters are equal 
+	// when ch between 0 and 255, and remove A2Wc
+	for (a--;p1[a]!='\\';a--)
+		if (p1[a]!=A2Wc(p2[a]))
+			return FALSE;
+	return TRUE;
+}
+inline bool _strncmp(const WCHAR* p1,const WCHAR* p2,int a)
 {
 	for (a--;a>=0;a--)
 		if (p1[a]!=p2[a])
@@ -141,7 +152,7 @@ inline bool _strncmp(const char* p1,const char* p2,int a)
 	return TRUE;
 }
 
-inline bool _strfcmp(const char* p1,const char* p2,int a)
+inline bool _strfcmp(const WCHAR* p1,const WCHAR* p2,int a)
 {
 	for (a--;p1[a]!='\\';a--)
 		if (p1[a]!=p2[a])
@@ -173,6 +184,30 @@ inline CLocater::ValidType CLocater::IsFolderValid(DWORD nPathLen)
 		return ValidFolders;					
 }
 
+inline CLocater::ValidType CLocater::IsFolderValidW(DWORD nPathLen)
+{
+	if (m_aDirectories.GetSize())
+	{
+		for (int i=0;i<m_aDirectories.GetSize();i++)
+		{
+			if (m_aDirectories.GetAt(i)->GetLength()>nPathLen)
+			{
+				if (_strfcmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,nPathLen))
+					return SomeValidFolders;
+			}
+			else if (m_aDirectories.GetAt(i)->GetLength()==nPathLen)
+			{
+				if (_strfcmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,
+					m_aDirectories.GetAt(i)->GetLength()))
+					return ValidFolders;
+			}
+		}
+		return NoValidFolders;
+	}
+	else
+		return ValidFolders;					
+}
+
 inline CLocater::ValidType CLocater::IsRootValid(DWORD nPathLen)
 {
 	for (int i=0;i<m_aDirectories.GetSize();i++)
@@ -192,9 +227,33 @@ inline CLocater::ValidType CLocater::IsRootValid(DWORD nPathLen)
 	return NoValidFolders;
 }
 
+inline CLocater::ValidType CLocater::IsRootValidW(DWORD nPathLen)
+{
+	for (int i=0;i<m_aDirectories.GetSize();i++)
+	{
+		if (m_aDirectories.GetAt(i)->GetLength()>nPathLen)
+		{
+			if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,nPathLen))
+				return SomeValidFolders;
+		}
+		else
+		{
+			if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,
+				m_aDirectories.GetAt(i)->GetLength()))
+				return ValidFolders;
+		}
+	}
+	return NoValidFolders;
+}
+
 inline LPCSTR CLocater::GetFolderName() const
 {
 	return LPCSTR(pPoint);
+}
+
+inline BYTE CLocater::GetFolderAttributes() const
+{
+	return *(pPoint-6);
 }
 
 inline DWORD CLocater::GetFolderNameLen() const
@@ -204,7 +263,7 @@ inline DWORD CLocater::GetFolderNameLen() const
 
 inline WORD CLocater::GetFolderModifiedTime() const
 {
-	return *(WORD*)(pPoint+pPoint[-1]+3);
+	return *(WORD*)(pPoint+pPoint[-1]+1+2);
 }
 
 inline WORD CLocater::GetFolderModifiedDate() const
@@ -214,7 +273,7 @@ inline WORD CLocater::GetFolderModifiedDate() const
 
 inline WORD CLocater::GetFolderCreatedDate() const
 {
-	return *(WORD*)(pPoint+pPoint[-1]+5);
+	return *(WORD*)(pPoint+pPoint[-1]+1+4);
 }
 
 inline WORD CLocater::GetFolderCreatedTime() const
@@ -224,7 +283,7 @@ inline WORD CLocater::GetFolderCreatedTime() const
 
 inline WORD CLocater::GetFolderAccessedDate() const
 {
-	return *(WORD*)(pPoint+pPoint[-1]+7);
+	return *(WORD*)(pPoint+pPoint[-1]+1+4+2);
 }
 
 inline WORD CLocater::GetFolderAccessedTime() const
@@ -232,9 +291,16 @@ inline WORD CLocater::GetFolderAccessedTime() const
 	return WORD(-1);
 }
 
+
+
 inline LPCSTR CLocater::GetFileName() const
 {
 	return LPCSTR(pPoint+3);
+}
+
+inline BYTE CLocater::GetFileAttributes() const
+{
+	return pPoint[0];
 }
 
 inline DWORD CLocater::GetFileNameLen() const
@@ -249,27 +315,28 @@ inline BYTE CLocater::GetFileExtensionPos() const
 
 inline DWORD CLocater::GetFileSizeLo() const
 {
-	return *(DWORD*)(pPoint+pPoint[1]+4);
+	return *(DWORD*)(pPoint+1+1+1+(pPoint[1]+1));
 }
 
 inline WORD CLocater::GetFileSizeHi() const
 {
-	return WORD(*(pPoint+pPoint[1]+4+sizeof(DWORD)));
-}
-
-inline WORD CLocater::GetFileModifiedTime() const
-{
-	return *(WORD*)(pPoint+pPoint[1]+3+4+2+2);
+	return WORD(*(pPoint+1+1+1+(pPoint[1]+1)+sizeof(DWORD)));
 }
 
 inline WORD CLocater::GetFileModifiedDate() const
 {
-	return *(WORD*)(pPoint+pPoint[1]+3+4+2);
+	return *(WORD*)(pPoint+1+1+1+(pPoint[1]+1)+5);
 }
+
+inline WORD CLocater::GetFileModifiedTime() const
+{
+	return *(WORD*)(pPoint+1+1+1+(pPoint[1]+1)+5+2);
+}
+
 
 inline WORD CLocater::GetFileCreatedDate() const
 {
-	return *(WORD*)(pPoint+pPoint[1]+3+4+2+4);
+	return *(WORD*)(pPoint+1+1+1+(pPoint[1]+1)+5+4);
 }
 
 inline WORD CLocater::GetFileCreatedTime() const
@@ -279,7 +346,7 @@ inline WORD CLocater::GetFileCreatedTime() const
 
 inline WORD CLocater::GetFileAccessedDate() const
 {
-	return *(WORD*)(pPoint+pPoint[1]+3+4+2+4+2);
+	return *(WORD*)(pPoint+1+1+1+(pPoint[1]+1)+5+4+2);
 }
 
 inline WORD CLocater::GetFileAccessedTime() const
@@ -287,15 +354,105 @@ inline WORD CLocater::GetFileAccessedTime() const
 	return WORD(-1);
 }
 
-inline LPCSTR CLocater::GetCurrentPath() const
+
+inline BOOL CLocater::HaveFileExtension() const
 {
-	return szCurrentPath;
+	//return GetFileExtensionPos()!=0 ||*GetFileName()[0]=='.';
+	return pPoint[2]!=0 || pPoint[3]=='.';
 }
 
-inline DWORD CLocater::GetCurrentPathLen() const
+
+
+inline LPCWSTR CLocater::GetFolderNameW() const
 {
-	return dwCurrentPathLen;
+	return LPCWSTR(pPoint);
 }
+
+
+inline WORD CLocater::GetFolderModifiedDateW() const
+{
+	return *(WORD*)(pPoint+pPoint[-1]*2+2);
+}
+
+inline WORD CLocater::GetFolderModifiedTimeW() const
+{
+	return *(WORD*)(pPoint+pPoint[-1]*2+2+2);
+}
+
+inline WORD CLocater::GetFolderCreatedDateW() const
+{
+	return *(WORD*)(pPoint+pPoint[-1]*2+2+4);
+}
+
+inline WORD CLocater::GetFolderCreatedTimeW() const
+{
+	return *(WORD*)(pPoint+pPoint[-1]*2+2+4+2);
+}
+
+inline WORD CLocater::GetFolderAccessedDateW() const
+{
+	return *(WORD*)(pPoint+pPoint[-1]*2+2+4+4);
+}
+
+inline WORD CLocater::GetFolderAccessedTimeW() const
+{
+	return *(WORD*)(pPoint+pPoint[-1]*2+2+4+4+2);
+}
+
+inline LPCWSTR CLocater::GetFileNameW() const
+{
+	return LPCWSTR(pPoint+3);
+}
+
+inline DWORD CLocater::GetFileSizeLoW() const
+{
+	return *(DWORD*)(pPoint+1+1+1+(pPoint[1]*2+2));
+}
+
+inline WORD CLocater::GetFileSizeHiW() const
+{
+	return *(WORD*)(pPoint+1+1+1+(pPoint[1]*2+2)+sizeof(DWORD));
+}
+
+inline WORD CLocater::GetFileModifiedDateW() const
+{
+	return *(WORD*)(pPoint+1+1+1+(pPoint[1]*2+2)+6);
+}
+
+inline WORD CLocater::GetFileModifiedTimeW() const
+{
+	return *(WORD*)(pPoint+1+1+1+(pPoint[1]*2+2)+6+2);
+}
+
+
+inline WORD CLocater::GetFileCreatedDateW() const
+{
+	return *(WORD*)(pPoint+1+1+1+(pPoint[1]*2+2)+6+4);
+}
+
+inline WORD CLocater::GetFileCreatedTimeW() const
+{
+	return *(WORD*)(pPoint+1+1+1+(pPoint[1]*2+2)+6+4+2);
+}
+
+inline WORD CLocater::GetFileAccessedDateW() const
+{
+	return *(WORD*)(pPoint+1+1+1+(pPoint[1]*2+2)+6+4+4);
+}
+
+inline WORD CLocater::GetFileAccessedTimeW() const
+{
+	return *(WORD*)(pPoint+1+1+1+(pPoint[1]*2+2)+6+4+4+2);
+}
+
+inline BOOL CLocater::HaveFileExtensionW() const
+{
+	//return GetFileExtensionPos()!=0 ||*GetFileName()[0]=='.';
+	return pPoint[2]!=0 || *LPCWSTR(pPoint+3)==L'.';
+}
+
+
+
 	
 inline DWORD CLocater::GetNumberOfResults() const
 {
@@ -312,21 +469,22 @@ inline DWORD CLocater::GetNumberOfFoundDirectories() const
 	return m_dwFoundDirectories;
 }
 
-inline BYTE CLocater::GetFolderAttributes() const
+inline LPCSTR CLocater::GetCurrentPath() const
 {
-	return *(pPoint-6);
+	return szCurrentPath;
 }
 
-inline BYTE CLocater::GetFileAttributes() const
+inline LPCWSTR CLocater::GetCurrentPathW() const
 {
-	return pPoint[0];
+	return szCurrentPathW;
 }
 
-inline BOOL CLocater::HaveFileExtension() const
+inline DWORD CLocater::GetCurrentPathLen() const
 {
-	//return GetFileExtensionPos()!=0 ||*GetFileName()[0]=='.';
-	return pPoint[2]!=0 || pPoint[3]=='.';
+	return dwCurrentPathLen;
 }
+
+
 
 inline DWORD CLocater::GetAdvancedFlags() const
 {

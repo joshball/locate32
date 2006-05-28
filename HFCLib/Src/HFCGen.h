@@ -499,9 +499,15 @@ public:
 	virtual ~CSearchFromFile();
 	
 	virtual BOOL Search(LPCSTR szFile)=0; // if return value is TRUE if any found
+#ifdef DEF_WCHAR
+	virtual BOOL Search(LPCWSTR szFile)=0; // if return value is TRUE if any found
+#endif
 	virtual ULONG_PTR GetFoundPosition() const=0;
 	
 	virtual void OpenFile(LPCSTR szFile);
+#ifdef DEF_WCHAR
+	virtual void OpenFile(LPCWSTR szFile);
+#endif	
 	virtual void CloseFile();
 
 protected:
@@ -527,9 +533,17 @@ public:
 
 	
 	virtual BOOL Search(LPCSTR szFile); // if return value is TRUE if any found
+#ifdef DEF_WCHAR
+	virtual BOOL Search(LPCWSTR szFile); // if return value is TRUE if any found
+#endif
 	virtual ULONG_PTR GetFoundPosition() const;
+
+	
+
 private:
 
+	BOOL DoSearching();
+	
 	BYTE* pSearchValue;
 	SIZE_T dwLength;
 

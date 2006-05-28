@@ -21,7 +21,8 @@ public:
 		flagEnabled=0x1,
 		flagGlobalUpdate=0x2,
 		flagStopIfRootUnavailable=0x4,
-		flagIncrementalUpdate=0x8
+		flagIncrementalUpdate=0x8,
+		flagAnsiCharset=0x10 // Unicode is default
 	};
 		
 	enum ArchiveType {
@@ -160,6 +161,8 @@ inline CDatabase::CDatabase()
 	m_wFlags(flagEnabled|flagGlobalUpdate),m_wThread(0),
 	m_ArchiveType(archiveFile),m_wID(0)
 {
+	if (!IsUnicodeSystem())
+		m_wFlags|=flagAnsiCharset;
 }
 
 inline CDatabase::~CDatabase()

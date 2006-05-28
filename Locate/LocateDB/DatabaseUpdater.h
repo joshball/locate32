@@ -49,6 +49,13 @@ public:
 		UpdateError ScanFolder(LPSTR szFolder,SIZE_T nFolderNameLength,volatile LONG& lForceQuit);
 		UpdateError Write(CFile* dbFile);
 
+		UpdateError ScanRootW(volatile LONG& lForceQuit);
+		UpdateError ScanFolder(LPWSTR szFolder,SIZE_T nFolderNameLength,volatile LONG& lForceQuit);
+		UpdateError WriteW(CFile* dbFile);
+
+		
+		
+
 	public:
 		CStringW m_Path;
 		DWORD m_dwFiles;
@@ -94,7 +101,8 @@ public:
 	public:
 		enum DBFlags {
 			StopIfUnuavailable = 0x1, // Stops updating if root is unavailable
-			IncrementalUpdate = 0x2 // Incremental update
+			IncrementalUpdate = 0x2, // Incremental update
+			Unicode = 0x4
 		};
 
 		BOOL IsFlagged(DBFlags flag);
@@ -184,7 +192,7 @@ public:
 
 private:
 
-	static CFile* OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,DWORD dwFiles,DWORD dwDirectories);
+	static CFile* OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,DWORD dwFiles,DWORD dwDirectories,BOOL bUnicode);
 
 	CArrayFP<DBArchive*> m_aDatabases;
 	DWORD m_dwCurrentDatabase;

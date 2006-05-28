@@ -285,10 +285,10 @@ int main (int argc,char * argv[])
 	BYTE* pContainData=NULL;
 	DWORD dwContainDataLength=0;
 
-	CString String;
-	
+	CStringW String;
 	CArrayFAP<LPWSTR> aDirectories;
 	CArrayFAP<LPWSTR> aExtensions;
+	
 	int i;
 	for (i=1;i<argc;i++)
 	{

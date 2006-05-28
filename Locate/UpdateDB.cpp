@@ -100,6 +100,20 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 				fwprintf(stderr,ID2W(IDS_UPDATEDB32ROOTUNAVAILABLE),
 					pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():L"(NULL)");
 				break;
+			case ueWrongCharset:
+				{
+					int ch;
+					do
+					{
+						fwprintf(stderr,ID2W(IDS_UPDATEDB32WRONGCHARSETINDB),pUpdater->GetCurrentDatabaseFile());
+						ch=getc(stdin);
+					}
+					while (ch!='Y' && ch!='y' && ch!='N' && ch!='n');
+
+					if (ch!='Y' && ch!='y')
+						return FALSE;
+					return TRUE;
+				}
 			case ueCannotIncrement:
 				{
 					int ch;
@@ -112,6 +126,7 @@ BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode
 
 					if (ch!='Y' && ch!='y')
 						return FALSE;
+					return TRUE;
 				}
 				break;
 			}
@@ -459,10 +474,10 @@ int main (int argc,char ** argv)
 					if (pDatabaseInfo!=NULL)
 					{
 						CDatabase* pDatabase;
-						if (!pDatabaseInfo->szExtra2.IsEmpty())
-							pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->szExtra2);
-						if (pDatabase==NULL && !pDatabaseInfo->szExtra1.IsEmpty())
-							pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->szExtra1);
+						if (!pDatabaseInfo->sExtra2.IsEmpty())
+							pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->sExtra2);
+						if (pDatabase==NULL && !pDatabaseInfo->sExtra1.IsEmpty())
+							pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->sExtra1);
 						
 						wprintf(ID2W(IDS_UPDATEDB32USINGEXISTINGSETTINGS),
 							aDatabases[i]->GetArchiveName(),pDatabase->GetName());

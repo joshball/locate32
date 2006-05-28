@@ -49,27 +49,45 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 			dbFile->Read(szBuffer,2);
 			bVersion+=(szBuffer[0]-'0');
 			bLongFilenames=szBuffer[1]&0x1;
-			bAnsi=szBuffer[1]&0x10?TRUE:FALSE;
+			if (szBuffer[1]&0x20)
+				cCharset=Unicode;
+			else if (szBuffer[1]&0x10)
+				cCharset=Ansi;
+			else
+				cCharset=OEM;
 			delete[] szBuffer;
 			szBuffer=NULL;
 
-			CString strA;
 
 			// Reading header size
 			dbFile->Read(dwTemp);
 
-			// Reading creator and description
-			dbFile->Read(strA);
-			sCreator=strA;
+			if (cCharset==Unicode)
+			{
+				// Reading creator and description
+				dbFile->Read(sCreator);
+				dbFile->Read(sDescription);
+				dbFile->Read(sExtra1);
+				dbFile->Read(sExtra2);
+			}
+			else
+			{
+				CString strA;
+				// Reading creator and description
+				dbFile->Read(strA);
+				sCreator=strA;
 
-			dbFile->Read(strA);
-			sDescription=strA;
+				dbFile->Read(strA);
+				sDescription=strA;
 
-			// Reading extra data, for future use
-			dbFile->Read(strA);
-			szExtra1=strA;
-			dbFile->Read(strA);
-			szExtra2=strA;
+				// Reading extra data, for future use
+				dbFile->Read(strA);
+				sExtra1=strA;
+				dbFile->Read(strA);
+				sExtra2=strA;
+			}
+
+			
 
 			// Reading time
 			dbFile->Read(dwTemp);
@@ -86,30 +104,54 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 			{
 				CRoot* pRoot=new CRoot;
 				
+				DWORD dwSeekLength=dwBlockSize-1-4-4-4;
+
 				// Reading type and path
 				dbFile->Read((BYTE*)&pRoot->rtType,1);
 				
-				dbFile->Read(strA);
-				pRoot->sPath=strA;
-				
-				// Reading volume name and serial and filesystem
-				dbFile->Read(strA);
-				pRoot->sVolumeName=strA;
-				
-				dbFile->Read(pRoot->dwVolumeSerial);
-				
-				dbFile->Read(strA);
-				pRoot->sFileSystem=strA;
+				if (cCharset==Unicode)
+				{
+					dbFile->Read(pRoot->sPath);
+					dbFile->Read(pRoot->sVolumeName);
 
+					dbFile->Read(pRoot->dwVolumeSerial);
+				
+					dbFile->Read(pRoot->sFileSystem);
+
+					dwSeekLength-=(pRoot->sPath.GetLength()+1+
+						pRoot->sVolumeName.GetLength()+1+pRoot->sFileSystem.GetLength()+1)*2;
+
+					
+				}
+				else
+				{
+					CString strA;
+					dbFile->Read(strA);
+					pRoot->sPath=strA;
+				
+					// Reading volume name and serial and filesystem
+					dbFile->Read(strA);
+					pRoot->sVolumeName=strA;
+
+					dbFile->Read(pRoot->dwVolumeSerial);
+				
+					dbFile->Read(strA);
+					pRoot->sFileSystem=strA;
+
+					dwSeekLength-=pRoot->sPath.GetLength()+1+
+						pRoot->sVolumeName.GetLength()+1+pRoot->sFileSystem.GetLength()+1;
+
+				}
+				
+		
 				// Reading number of files and directories
 				dbFile->Read(pRoot->dwNumberOfFiles);
 				dbFile->Read(pRoot->dwNumberOfDirectories);
 					
 				aRootFolders.Add(pRoot);
 
-				dbFile->Seek(dwBlockSize-1-pRoot->sPath.GetLength()-1-
-					pRoot->sVolumeName.GetLength()-1-4-pRoot->sFileSystem.GetLength()-1-4-4,
-					CFile::current);
+				
+				dbFile->Seek(dwSeekLength,CFile::current);
 				dbFile->Read(dwBlockSize);
 			}
 
@@ -121,6 +163,7 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 			delete[] szBuffer;
 			szBuffer=NULL;
 
+			cCharset=OEM;
 			switch (bVersion)
 			{
 			case 2:
@@ -211,7 +254,6 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 	CFile* dbFile=NULL;
 	
 	BOOL bRet=TRUE;
-	CString Temp;
 		
 	try
 	{
@@ -242,29 +284,55 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 			throw CFileException(CFileException::invalidFormat,-1,pDatabase->GetArchiveName());
 		}
 
+		BOOL bUnicode=szBuffer[10]&0x20;
+
 		delete[] szBuffer;
 		szBuffer=NULL;
 
+		// Skipping other header fields
 		DWORD dwBlockSize;
 		dbFile->Read(dwBlockSize);
 		dbFile->Seek(dwBlockSize,CFile::current);
 
 		// Reading drive/directory information
-		dbFile->Read(dwBlockSize);
-		while (dwBlockSize>0)
+		if (bUnicode)
 		{
-			// Reading type and path
-			BYTE bTemp;
-			dbFile->Read(bTemp);
-			dbFile->Read(Temp);
-			aRoots.Add(alloccopyAtoW(Temp,Temp.GetLength()));
-						
-			dbFile->Seek(dwBlockSize-1-Temp.GetLength()-1,
-				CFile::current);
-			
+			CStringW Path;
+			BYTE bPathLen;
+				
 			dbFile->Read(dwBlockSize);
+			while (dwBlockSize>0)
+			{
+				// Reading type and path
+				dbFile->Read(bPathLen);
+				dbFile->Read(Path);
+				aRoots.Add(alloccopy(Path,Path.GetLength()));
+							
+				dbFile->Seek(dwBlockSize-1-(Path.GetLength()+1)*2,
+					CFile::current);
+				
+				dbFile->Read(dwBlockSize);
+			}
 		}
+		else
+		{
+			CString Path;
+			BYTE bPathLen;
 
+			dbFile->Read(dwBlockSize);
+			while (dwBlockSize>0)
+			{
+				// Reading type and path
+				dbFile->Read(bPathLen);
+				dbFile->Read(Path);
+				aRoots.Add(alloccopyAtoW(Path,Path.GetLength()));
+							
+				dbFile->Seek(dwBlockSize-1-(Path.GetLength()+1),
+					CFile::current);
+				
+				dbFile->Read(dwBlockSize);
+			}
+		}
 		dbFile->Close();
 	}
 	catch (CFileException ex)

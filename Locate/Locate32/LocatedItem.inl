@@ -221,15 +221,12 @@ inline void CLocatedItem::CheckIfDeleted()
 	}
 }
 
-
-inline CLocatedItem::CLocatedItem(BOOL bFolder,const CLocater* pLocater)
+inline CLocatedItem::CLocatedItem()
 :	szTitle(NULL),szType(NULL),dwFlags(0),pFirstExtraInfo(NULL)
 {
-	if (bFolder)
-		SetFolder(pLocater);
-	else
-		SetFile(pLocater);
 }
+
+
 
 inline CLocatedItem::~CLocatedItem()
 {

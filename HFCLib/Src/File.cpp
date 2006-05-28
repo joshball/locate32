@@ -2550,6 +2550,28 @@ void CSearchFromFile::OpenFile(LPCSTR szFile)
 
 }
 
+#ifdef DEF_WCHAR
+void CSearchFromFile::OpenFile(LPCWSTR szFile)
+{
+	if (!IsUnicodeSystem())
+	{
+		OpenFile(W2A(szFile));
+		return;
+	}
+
+	if (hFile!=NULL)
+		this->CloseFile();
+	hFile=CreateFileW(szFile,GENERIC_READ,FILE_SHARE_READ,NULL,
+		OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	if (hFile==INVALID_HANDLE_VALUE)
+		hFile=NULL;
+
+	if (hFile==NULL)
+		SetHFCError2(HFC_CANNOTOPEN,__LINE__,__FILE__);
+
+}
+#endif
+
 void CSearchFromFile::CloseFile()
 {
 #ifdef WIN32
@@ -2617,7 +2639,26 @@ BOOL CSearchHexFromFile::Search(LPCSTR szFile)
 		if (hFile==NULL)
 			return FALSE;
 	}
+	return DoSearching();
+}
 
+#ifdef DEF_WCHAR
+BOOL CSearchHexFromFile::Search(LPCWSTR szFile)
+{
+    if (hFile==NULL)
+	{
+		OpenFile(szFile);
+				
+		
+		if (hFile==NULL)
+			return FALSE;
+	}
+	return DoSearching();
+}
+#endif
+
+BOOL CSearchHexFromFile::DoSearching()
+{
 	if (pBuffer==NULL)
 	{
 #ifdef WIN32

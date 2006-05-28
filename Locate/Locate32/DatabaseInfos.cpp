@@ -30,7 +30,8 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnCommand(WORD wID,WORD wNotifyCode,HWND
 
 BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 {
-	CString Drives,temp;
+	CStringW Drives;
+	CStringW Temp;
 	
 	SetDlgItemText(IDC_FILE,m_pDatabase->GetArchiveName());
 
@@ -44,16 +45,15 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 		{
 			SendDlgItemMessage(IDC_DATABASEFILEICON,STM_SETICON,(WPARAM)LoadIcon(IDI_INVALIDDBFILE),0);
 		
-
-			temp.LoadString(IDS_DBNOTVALID);
-			SetDlgItemText(IDC_CREATED,temp);
-			temp.LoadString(IDS_UNKNOWN);
-			SetDlgItemText(IDC_CREATOR,temp);
-			SetDlgItemText(IDC_DESCRIPTION,temp);
-			SetDlgItemText(IDC_FILESIZE,temp);
-			SetDlgItemText(IDC_VERSION,temp);
-			SetDlgItemText(IDC_FILES,temp);
-			SetDlgItemText(IDC_DIRECTORIES,temp);
+			Temp.LoadString(IDS_DBNOTVALID);
+			SetDlgItemText(IDC_CREATED,Temp);
+			Temp.LoadString(IDS_UNKNOWN);
+			SetDlgItemText(IDC_CREATOR,Temp);
+			SetDlgItemText(IDC_DESCRIPTION,Temp);
+			SetDlgItemText(IDC_FILESIZE,Temp);
+			SetDlgItemText(IDC_VERSION,Temp);
+			SetDlgItemText(IDC_FILES,Temp);
+			SetDlgItemText(IDC_DIRECTORIES,Temp);
 			return CDialog::OnInitDialog(hwndFocus);
 		}
 	
@@ -64,20 +64,22 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 		m_pList=new CListCtrl(GetDlgItem(IDC_FOLDERS));
 		CLocateDlg::SetSystemImagelists(m_pList);
 		m_pList->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP,LVS_EX_HEADERDRAGDROP);
+		if (IsUnicodeSystem())
+			m_pList->SetUnicodeFormat(TRUE);
 	
 		if (di->bVersion>=20)
 		{
-			m_pList->InsertColumn(0,ID2A(IDS_VOLUMEPATH),LVCFMT_LEFT,100,0);
-			m_pList->InsertColumn(1,ID2A(IDS_VOLUMETYPE),LVCFMT_LEFT,50,1);
-			m_pList->InsertColumn(2,ID2A(IDS_VOLUMELABEL),LVCFMT_LEFT,80,2);
-			m_pList->InsertColumn(3,ID2A(IDS_VOLUMESERIAL),LVCFMT_LEFT,70,3);
-			m_pList->InsertColumn(4,ID2A(IDS_VOLUMEFILESYSTEM),LVCFMT_LEFT,55,4);
-			m_pList->InsertColumn(5,ID2A(IDS_VOLUMEFILES),LVCFMT_RIGHT,50,5);
-			m_pList->InsertColumn(6,ID2A(IDS_VOLUMEDIRECTORIES),LVCFMT_RIGHT,50,6);
+			m_pList->InsertColumn(0,ID2W(IDS_VOLUMEPATH),LVCFMT_LEFT,100,0);
+			m_pList->InsertColumn(1,ID2W(IDS_VOLUMETYPE),LVCFMT_LEFT,50,1);
+			m_pList->InsertColumn(2,ID2W(IDS_VOLUMELABEL),LVCFMT_LEFT,80,2);
+			m_pList->InsertColumn(3,ID2W(IDS_VOLUMESERIAL),LVCFMT_LEFT,70,3);
+			m_pList->InsertColumn(4,ID2W(IDS_VOLUMEFILESYSTEM),LVCFMT_LEFT,55,4);
+			m_pList->InsertColumn(5,ID2W(IDS_VOLUMEFILES),LVCFMT_RIGHT,50,5);
+			m_pList->InsertColumn(6,ID2W(IDS_VOLUMEDIRECTORIES),LVCFMT_RIGHT,50,6);
 		}
 		else
 		{
-			m_pList->InsertColumn(0,ID2A(IDS_VOLUMEPATH),LVCFMT_LEFT,300,0);
+			m_pList->InsertColumn(0,ID2W(IDS_VOLUMEPATH),LVCFMT_LEFT,300,0);
 			m_bOldDB=TRUE;
 		}
 
@@ -93,78 +95,86 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 		if (di->tCreationTime.m_time>0)
 		{
 			SYSTEMTIME st=di->tCreationTime;
-			int nTemp=GetDateFormat(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,NULL,temp.GetBuffer(200),200);
+			CString tempA;
+			int nTemp=GetDateFormat(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,NULL,tempA.GetBuffer(200),200);
 			if (nTemp>=0)
 			{
-				GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,temp.GetBuffer()+nTemp,200-nTemp);
-				temp[nTemp-1]=' ';
-				SetDlgItemText(IDC_CREATED,temp);
+				GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,tempA.GetBuffer()+nTemp,200-nTemp);
+				tempA[nTemp-1]=' ';
+				SetDlgItemText(IDC_CREATED,tempA);
 			}		
 			else
-			{
-				temp.LoadString(IDS_UNKNOWN);
-				SetDlgItemText(IDC_CREATED,temp);
-			}
+				SetDlgItemText(IDC_CREATED,ID2W(IDS_UNKNOWN));
 		}
 		else
-		{
-			temp.LoadString(IDS_UNKNOWN);
-			SetDlgItemText(IDC_CREATED,temp);
-		}
+			SetDlgItemText(IDC_CREATED,ID2W(IDS_UNKNOWN));
 		
 		// Setting filesize
 		if (di->dwFileSize>50000)
 		{
-			temp=di->dwFileSize/1024;
-			temp.AddString(IDS_KB);
+			Temp=di->dwFileSize/1024;
+			Temp.AddString(IDS_KB);
 		}
 		else
 		{
-			temp=di->dwFileSize;
-			temp.AddString(IDS_BYTES);
+			Temp=di->dwFileSize;
+			Temp.AddString(IDS_BYTES);
 		}
-		SetDlgItemText(IDC_FILESIZE,temp);
+		SetDlgItemText(IDC_FILESIZE,Temp);
 		
 		// Setting number of files and directories
 		if (di->dwNumberOfDirectories!=(DWORD)-1)
-			temp=di->dwNumberOfFiles;
+			Temp=di->dwNumberOfFiles;
 		else
-			temp.LoadString(IDS_UNKNOWN);
-		SetDlgItemText(IDC_FILES,temp);
+			Temp.LoadString(IDS_UNKNOWN);
+		SetDlgItemText(IDC_FILES,Temp);
 		if (di->dwNumberOfDirectories!=(DWORD)-1)
-			temp=di->dwNumberOfDirectories;
+			Temp=di->dwNumberOfDirectories;
 		else
-			temp.LoadString(IDS_UNKNOWN);
-		SetDlgItemText(IDC_DIRECTORIES,temp);
+			Temp.LoadString(IDS_UNKNOWN);
+		SetDlgItemText(IDC_DIRECTORIES,Temp);
 		
 		// Setting version
 		switch (di->bVersion)
 		{
 		case 1:
-			temp.Format(IDS_DBVERSION1,di->bVersion);
+			Temp.Format(IDS_DBVERSION1,di->bVersion);
 			break;
 		case 2:
-			temp.Format(IDS_DBVERSION2,di->bVersion);
+			Temp.Format(IDS_DBVERSION2,di->bVersion);
 			break;
 		case 3:
-			temp.Format(IDS_DBVERSION3,di->bVersion);
+			Temp.Format(IDS_DBVERSIONSFN,di->bVersion);
 			break;
 		case 4:
-			temp.Format(IDS_DBVERSION4,di->bVersion);
+			Temp.Format(IDS_DBVERSIONLFN,di->bVersion);
 			break;
 		default:
-			temp.Format(IDS_DBVERSIONNEW,di->bVersion,
-				di->bLongFilenames?(LPCSTR)ID2A(IDS_YES):(LPCSTR)ID2A(IDS_NO),
-				di->bAnsi?(LPCSTR)ID2A(IDS_NO):(LPCSTR)ID2A(IDS_YES));
+			if (di->bLongFilenames)
+				Temp.Format(IDS_DBVERSIONLFN,di->bVersion);
+			else
+				Temp.Format(IDS_DBVERSIONSFN,di->bVersion);
 			break;
 		}
-		SetDlgItemText(IDC_VERSION,temp);
+		SetDlgItemText(IDC_VERSION,Temp);
+		switch (di->cCharset)
+		{
+		case CDatabaseInfo::OEM:
+			Temp.LoadString(IDS_OEMCHARSET);
+			break;
+		case CDatabaseInfo::Ansi:
+			Temp.LoadString(IDS_ANSICHARSET);
+			break;
+		case CDatabaseInfo::Unicode:
+			Temp.LoadString(IDS_UNICODECHARSET);
+			break;
+		}
+		SetDlgItemText(IDC_CHARSET,Temp);
+
 		
 		// Setting drive/folder information
 		for (int i=0;i<di->aRootFolders.GetSize();i++)
 		{
-			CString Temp;
-
 			switch (di->aRootFolders.GetAt(i)->rtType)
 			{
 			case CDatabaseInfo::Unknown:
@@ -190,11 +200,11 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 				break;
 			}
 
-			LVITEM li;
+			LVITEMW li;
 			li.mask=LVIF_TEXT|LVIF_IMAGE;
 			li.iItem=i;
-			SHFILEINFO fi;
-			if (SHGetFileInfo(di->aRootFolders.GetAt(i)->sPath+'\\',0,&fi,sizeof(SHFILEINFO),SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+			SHFILEINFOW fi;
+			if (GetFileInfo(di->aRootFolders.GetAt(i)->sPath+L'\\',0,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
 				li.iImage=fi.iIcon;
 			else
 				li.iImage=DEL_IMAGE;
@@ -217,7 +227,7 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 					di->aRootFolders.GetAt(i)->dwVolumeSerial!=0xFFFF)
 				{
 					li.iSubItem=3;
-					Temp.Format("%0X-%0X",HIWORD(di->aRootFolders.GetAt(i)->dwVolumeSerial),
+					Temp.Format(L"%0X-%0X",HIWORD(di->aRootFolders.GetAt(i)->dwVolumeSerial),
 						LOWORD(di->aRootFolders.GetAt(i)->dwVolumeSerial));
 					li.pszText=Temp.GetBuffer();
 					m_pList->SetItem(&li);
@@ -246,15 +256,15 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 		// Setting file icon
 		SendDlgItemMessage(IDC_DATABASEFILEICON,STM_SETICON,(WPARAM)LoadIcon(IDI_DELETEDFILE),0);
 		
-		temp.LoadString(IDS_NOTEXIST);
-		SetDlgItemText(IDC_CREATED,temp);
-		temp.LoadString(IDS_UNKNOWN);
-		SetDlgItemText(IDC_CREATOR,temp);
-		SetDlgItemText(IDC_DESCRIPTION,temp);
-		SetDlgItemText(IDC_FILESIZE,temp);
-		SetDlgItemText(IDC_VERSION,temp);
-		SetDlgItemText(IDC_FILES,temp);
-		SetDlgItemText(IDC_DIRECTORIES,temp);
+		Temp.LoadString(IDS_NOTEXIST);
+		SetDlgItemText(IDC_CREATED,Temp);
+		Temp.LoadString(IDS_UNKNOWN);
+		SetDlgItemText(IDC_CREATOR,Temp);
+		SetDlgItemText(IDC_DESCRIPTION,Temp);
+		SetDlgItemText(IDC_FILESIZE,Temp);
+		SetDlgItemText(IDC_VERSION,Temp);
+		SetDlgItemText(IDC_FILES,Temp);
+		SetDlgItemText(IDC_DIRECTORIES,Temp);
 	}
 	
 	return CPropertyPage::OnInitDialog(hwndFocus);

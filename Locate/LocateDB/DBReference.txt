@@ -44,7 +44,7 @@ BYTE          type: 0 = unknown, 10h = fixed, 20h = removable (e.g., floppy), 30
 variable      a null-terminated string for path
 variable      a null-terminated string for volume name
 DWORD         volume serial
-variable      a null-terminated string for file system (ANSI string)
+variable      a null-terminated string for file system 
 DWORD         the number of files
 DWORD         the number of directories
 variable      the first file or directory in root
@@ -62,8 +62,8 @@ DWORD         data length (actual length = this value + 1)
 BYTE          the length of directory name          
 varible       directory name as a null-terminated string
 DWORD         modification time (FILETIME)
-WORD          creation date 
-WORD          last accessed date 
+XWORD         creation date (WORD if ANSI charset, DWORD if Unicode)
+XWORD         last accessed date (WORD if ANSI charset, DWORD if Unicode)
 variable      the first file or subdirectory in directory
 variable      the second file or subdirectory in directory
 ...
@@ -74,12 +74,14 @@ BYTE          null (0)
 
 BYTE          type and attribute, the compination of the following: 10h = file, 
               (0h no files, 80h = directory), hidden = 01h, read only = 02h, archive = 04h, system = 08h
-BYTE          the length of file name          
+BYTE          the length of file name    
+BYTE          index to extension      
 varible       file name as a null-terminated string
-DWORD+BYTE    file size
+DWORD         file size (lo)
+BYTE/WORD     file size (hi) (BYTE if ANSI charset, WORD if Unicode)
 DWORD         modification time (FILETIME)
-WORD          creation date 
-WORD          last accessed date 
+XWORD         creation date (WORD if ANSI charset, DWORD if Unicode)
+XWORD         last accessed date (WORD if ANSI charset, DWORD if Unicode)
 
 
 

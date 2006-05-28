@@ -31,10 +31,10 @@ public:
 			sPath <<':';
 		}
 		
-		CString sPath;
-		CString sVolumeName;
+		CStringW sPath;
+		CStringW sVolumeName;
 		DWORD dwVolumeSerial;
-		CString sFileSystem;
+		CStringW sFileSystem;
 		DWORD dwNumberOfFiles;
 		DWORD dwNumberOfDirectories;
 		RootType rtType;
@@ -49,7 +49,8 @@ protected:
 public:
 	BYTE bVersion;
 	BYTE bLongFilenames;
-	BYTE bAnsi;
+	enum Charset { OEM,	Ansi,Unicode } cCharset;
+		
 	CStringW sCreator;
 	CStringW sDescription;
 	CTime tCreationTime;
@@ -58,8 +59,8 @@ public:
 	CArrayFP<CRoot*> aRootFolders;
 	DWORD dwFileSize;
 
-	CStringW szExtra1;
-	CStringW szExtra2;
+	CStringW sExtra1;
+	CStringW sExtra2;
 
 public:
 	static CDatabaseInfo* GetFromDatabase(const CDatabase* pDatabase);

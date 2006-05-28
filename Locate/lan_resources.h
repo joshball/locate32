@@ -252,6 +252,7 @@
 #define IDC_TARGET                      1030
 #define IDS_ERRORCANNOTLOADDEFAULTSHORTUCS	1030
 #define IDC_TARGETLOCATION              1031
+#define IDS_ERRORDIFFERENTCHARSETINDB	1031
 #define IDC_TARGETTYPE                  1032
 #define IDC_STARTIN                     1033
 #define IDC_RUNMODE                     1035
@@ -279,6 +280,7 @@
 #define IDC_DIRECTORIES                 1060
 #define IDC_ALWAYSUNDERLINE             1061
 #define IDC_DIRECTORYNAMES              1061
+#define IDC_CHARSET						1062
 #define IDC_CHECKMINIMUMSIZE            1062
 #define IDC_CHECKMAXIMUMSIZE            1063
 #define IDC_MINIMUMSIZE                 1064
@@ -462,6 +464,7 @@
 #define IDC_STATICCLASS                 1203
 #define IDC_INCREMENTALUPDATE           1204
 #define IDC_STATICWINDOWTITLE           1204
+#define IDC_UNICODE						1205
 #define IDC_STATICEXECUTAIONOPTIONS     1205
 #define IDC_STATICWAITBEFOREEXECUTE     1206
 #define IDC_VKISSCANCODE                1207
@@ -514,9 +517,12 @@
 #define IDS_DATABASEINFOCAPTION         2030
 #define IDS_DBVERSION1                  2031
 #define IDS_DBVERSION2                  2032
-#define IDS_DBVERSION3                  2033
-#define IDS_DBVERSION4                  2034
+#define IDS_DBVERSIONSFN                2033
+#define IDS_DBVERSIONLFN                2034
 #define IDS_DBVERSIONNEW                2035
+#define IDS_OEMCHARSET					2036
+#define IDS_ANSICHARSET					2037
+#define IDS_UNICODECHARSET				2038
 #define IDI_DATABASEFILEICON            2039
 #define IDS_VOLUMETYPE                  2040
 #define IDS_VOLUMEPATH                  2041
@@ -906,6 +912,7 @@
 #define IDS_UPDATEDB32CANNOTUPDATEINCREMENTALLY 30016
 #define IDS_UPDATEDB32INCREMENTALUPDATE 30017
 #define IDS_UPDATEDB32USINGEXISTINGSETTINGS 30018
+#define IDS_UPDATEDB32WRONGCHARSETINDB	30019
 #define IDS_LOCATEFILENOTFOUND          31001
 #define IDS_LOCATESTRING                31002
 #define IDS_LOCATEUNKNOWNERROR          31003

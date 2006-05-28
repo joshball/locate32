@@ -90,18 +90,17 @@ protected:
 
 public:
 	
-	void SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC pFoundProc,DWORD dwParam=0);
-	void SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC* pFoundProcs,DWORD dwParam=0);
-
+	void SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC pFoundProc,LOCATEFOUNDPROC pFoundProcW,DWORD dwParam=0);
+	
 	// Creates new thread and start to locate files
-	BOOL LocateFiles(BOOL bThreaded,LPCSTR* szName,DWORD dwNames,
+	/*BOOL LocateFiles(BOOL bThreaded,LPCSTR* szName,DWORD dwNames,
 		LPCSTR* szExtensions,DWORD nExtensions,
-		LPCSTR* szDirectories,DWORD nDirectories); 
+		LPCSTR* szDirectories,DWORD nDirectories); */
 	BOOL LocateFiles(BOOL bThreaded,LPCWSTR* szName,DWORD dwNames,
 		LPCWSTR* szExtensions,DWORD nExtensions,
 		LPCWSTR* szDirectories,DWORD nDirectories); 
 	BOOL LocateFiles(BOOL bThreaded,LPCSTR szRegExp,
-		LPCSTR* szDirectories,DWORD nDirectories); 
+		LPCWSTR* szDirectories,DWORD nDirectories); 
 
 
 #if defined(WIN32) & !defined(LOCATER_NOTHREAD)
@@ -131,14 +130,21 @@ public:
 private:
 	void LocateValidFolder(DWORD nPathLen);
 	void CheckFolder(DWORD nPathLen);
+	void LocateValidFolderW(DWORD nPathLen);
+	void CheckFolderW(DWORD nPathLen);
 
-	BOOL SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCSTR* szDirectories,DWORD nDirectories);
+	//BOOL SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCSTR* szDirectories,DWORD nDirectories);
 	BOOL SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCWSTR* szDirectories,DWORD nDirectories);
-		
+	
 	BOOL IsFileNameWhatAreWeLookingFor() const;
+	BOOL IsFileNameWhatAreWeLookingForW() const;
 	BOOL IsFolderNameWhatAreWeLookingFor() const;
+	BOOL IsFolderNameWhatAreWeLookingForW() const;
+	
 	BOOL IsFileAdvancedWhatAreWeLookingFor() const;
+	BOOL IsFileAdvancedWhatAreWeLookingForW() const;
 	BOOL IsFolderAdvancedWhatAreWeLookingFor() const;
+	BOOL IsFolderAdvancedWhatAreWeLookingForW() const;
 
 	
 
@@ -148,7 +154,9 @@ private:
 		ValidFolders
 	};
 	ValidType IsFolderValid(DWORD nPathLen);
+	ValidType IsFolderValidW(DWORD nPathLen);
 	ValidType IsRootValid(DWORD nPathLen);
+	ValidType IsRootValidW(DWORD nPathLen);
 
 public:
 	// These are possible to call only in pFoundProc
@@ -176,9 +184,35 @@ public:
 	BYTE GetFileAttributes() const;
 	BOOL HaveFileExtension() const;
 
+	
+
+	// These are possible to call only in pFoundProcW
+	LPCWSTR GetFolderNameW() const;
+	WORD GetFolderModifiedTimeW() const;
+	WORD GetFolderModifiedDateW() const;
+	WORD GetFolderCreatedDateW() const;
+	WORD GetFolderCreatedTimeW() const;
+	WORD GetFolderAccessedDateW() const;
+	WORD GetFolderAccessedTimeW() const;
+	
+	LPCWSTR GetFileNameW() const;
+	DWORD GetFileSizeLoW() const;
+	WORD GetFileSizeHiW() const;
+	WORD GetFileModifiedTimeW() const;
+	WORD GetFileModifiedDateW() const;
+	WORD GetFileCreatedDateW() const;
+	WORD GetFileCreatedTimeW() const;
+	WORD GetFileAccessedDateW() const;
+	WORD GetFileAccessedTimeW() const;
+	BOOL HaveFileExtensionW() const;
+
+	
+
 	LPCSTR GetCurrentPath() const;
+	LPCWSTR GetCurrentPathW() const;
 	DWORD GetCurrentPathLen() const;
 	
+
 	DWORD GetNumberOfResults() const;
 	DWORD GetNumberOfFoundFiles() const;
 	DWORD GetNumberOfFoundDirectories() const;
@@ -202,8 +236,8 @@ private:
 	// Locate information
 	union {
 		struct {
-			CArrayFP<CString*> m_aNames;
-			CArrayFP<CString*> m_aExtensions;
+			CArrayFP<CStringW*> m_aNames;
+			CArrayFP<CStringW*> m_aExtensions;
 		};
 		struct {
 #ifdef _PCRE_H
@@ -215,7 +249,7 @@ private:
 #endif
 		};
 	};
-	CArrayFP<CString*> m_aDirectories;
+	CArrayFP<CStringW*> m_aDirectories;
 
 	//  Needed information from CDatabase
 	struct DBArchive {
@@ -227,8 +261,6 @@ private:
 
 		LPWSTR szArchive;
 		CDatabase::ArchiveType nArchiveType;
-
-		LOCATEFOUNDPROC m_pFoundProc;
 
 		WORD wID;
 
@@ -263,7 +295,8 @@ private:
 private:
 	// Functions
 	LOCATEPROC m_pProc;
-	LOCATEFOUNDPROC m_pCurrentFoundProc;
+	LOCATEFOUNDPROC m_pFoundProc;
+	LOCATEFOUNDPROC m_pFoundProcW;
 	DWORD m_dwData;
 	CSearchFromFile* m_pContentSearcher;
 	CFile* dbFile;
@@ -279,8 +312,16 @@ private:
 
 	BYTE* szBuffer;
 	BYTE* pPoint;
-	mutable char szCurrentPath[MAX_PATH];
-	char szCurrentPathLower[MAX_PATH];
+	union {
+		mutable char szCurrentPath[MAX_PATH];
+		mutable WCHAR szCurrentPathW[MAX_PATH];
+	};
+	union {
+		char szCurrentPathLower[MAX_PATH];
+		WCHAR szCurrentPathLowerW[MAX_PATH];
+	};
+
+	
 	DWORD dwCurrentPathLen;
 
 };

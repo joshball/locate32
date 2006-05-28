@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,6,5270
- PRODUCTVERSION 2,99,6,5270
+ FILEVERSION 2,99,6,5280
+ PRODUCTVERSION 2,99,6,5280
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 6.5270"
+            VALUE "FileVersion", "3.0 beta 6.5280"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 6.5270"
+            VALUE "ProductVersion", "3.0 beta 6.5280"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -399,22 +399,24 @@ BEGIN
     CONTROL         "",IDC_FRAME3,"Static",SS_ETCHEDHORZ,10,33,226,1
     ICON            0,IDC_DATABASEFILEICON,10,7,20,20
     LTEXT           "",IDC_FILE,50,11,193,18
-    LTEXT           "Contains drives and folders:",IDC_STATIC,
-                    10,132,178,9
-    LTEXT           "Created:",IDC_STATIC,10,86,57,10
-    LTEXT           "",IDC_CREATED,68,86,193,8
-    LTEXT           "File Size:",IDC_STATIC,10,99,57,10
-    LTEXT           "",IDC_FILESIZE,68,99,92,9
-    LTEXT           "Version:",IDC_STATIC,10,112,57,10
-    LTEXT           "",IDC_VERSION,68,112,92,9
-    LTEXT           "",IDC_CREATOR,60,38,183,9
     LTEXT           "Creator:",IDC_STATIC,10,38,50,9
+    LTEXT           "",IDC_CREATOR,60,38,183,9
     LTEXT           "Description:",IDC_STATIC,10,49,50,9
     LTEXT           "",IDC_DESCRIPTION,60,49,183,27
-    LTEXT           "Files:",IDC_STATIC,152,99,46,10
-    LTEXT           "",IDC_FILES,198,99,48,9
-    LTEXT           "Directories:",IDC_STATIC,152,112,46,8
-    LTEXT           "",IDC_DIRECTORIES,198,112,48,9
+    LTEXT           "Created:",IDC_STATIC,10,86,57,10
+    LTEXT           "",IDC_CREATED,68,86,193,8
+    LTEXT           "Version:",IDC_STATIC,10,99,57,10
+    LTEXT           "",IDC_VERSION,68,99,92,9
+	LTEXT           "Character set:",IDC_STATIC,10,112,57,8
+    LTEXT           "",IDC_CHARSET,68,112,92,9
+    LTEXT           "File Size:",IDC_STATIC,152,112,46,10
+    LTEXT           "",IDC_FILESIZE,198,112,48,9
+    LTEXT           "Files:",IDC_STATIC,152,86,46,10
+    LTEXT           "",IDC_FILES,198,86,48,9
+    LTEXT           "Directories:",IDC_STATIC,152,99,46,8
+    LTEXT           "",IDC_DIRECTORIES,198,99,48,9
+    LTEXT           "Contains drives and folders:",IDC_STATIC,
+                    10,132,178,9
     CONTROL         "List1",IDC_FOLDERS,"SysListView32",LVS_REPORT | 
                     LVS_SHAREIMAGELISTS | LVS_NOSORTHEADER | WS_BORDER | 
                     WS_TABSTOP,10,142,226,87
@@ -488,17 +490,20 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
     CONTROL         "Update &Globally",IDC_GLOBALUPDATE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,76,11,88,11
-    LTEXT           "&Name:",IDC_STATIC,7,31,44,9
-    EDITTEXT        IDC_NAME,50,28,148,14,ES_AUTOHSCROLL
-    LTEXT           "&File:",IDC_STATIC,7,50,34,9
-    EDITTEXT        IDC_DBFILE,50,47,148,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "&Browse",IDC_BROWSE,205,46,60,14
+    LTEXT           "&Name:",IDC_STATIC,7,27,44,9
+    EDITTEXT        IDC_NAME,50,25,148,13,ES_AUTOHSCROLL
+    LTEXT           "&File:",IDC_STATIC,7,45,34,9
+    EDITTEXT        IDC_DBFILE,50,43,148,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "&Browse",IDC_BROWSE,205,43,60,14
+    CONTROL         "Use Unicode character set",
+                    IDC_UNICODE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,61,256,11
     CONTROL         "&Do not owerwrite existing data (e.g, use for cataloguing CD-ROMs)",
                     IDC_INCREMENTALUPDATE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,67,256,11
-    GROUPBOX        "Information:",IDC_STATIC,2,91,270,94
-    LTEXT           "Crea&tor:",IDC_STATIC,7,101,126,9
-    EDITTEXT        IDC_CREATOR,7,112,257,14,ES_AUTOHSCROLL
+                    WS_TABSTOP,7,73,256,11
+    GROUPBOX        "Information:",IDC_STATIC,2,93,270,92
+    LTEXT           "Crea&tor:",IDC_STATIC,7,103,126,9
+    EDITTEXT        IDC_CREATOR,7,115,257,14,ES_AUTOHSCROLL
     LTEXT           "D&escription:",IDC_STATIC,7,131,148,8
     EDITTEXT        IDC_DESCRIPTION,7,142,257,38,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_VSCROLL
@@ -1152,7 +1157,6 @@ END
 STRINGTABLE 
 BEGIN
     IDS_DATABASEINFOCAPTION "Database Info:"
-    IDS_DBVERSION1          "%d (Short filenames, no size/date)"
     IDS_DBNOTVALID			"Database is not valid"
 END
 
@@ -1215,6 +1219,7 @@ BEGIN
 	IDS_ERRORDIRECTORYNOTFOUND		"Directory '%s' not found."
 	IDS_ERRORROOTNOTAVAILABLE		"Path '%s' not available."
 	IDS_ERRORCANNOTWRITEINCREMENTALLY	"Cannot write database '%s' incrementally, trying full update?"
+	IDS_ERRORDIFFERENTCHARSETINDB	"Cannot write database '%s' incrementally. The character set in the existing database is not correct. Overwrite database?"
 END
 
 STRINGTABLE 
@@ -1277,11 +1282,14 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_DBVERSION2          "%d (Long filenames, no size/date)"
-    IDS_DBVERSION3          "%d (Short filenames)"
-    IDS_DBVERSION4          "%d (Long filenames)"
-    IDS_DBVERSIONNEW        "%d (LFN: %s OEM: %s)"
-    IDS_VOLUMETYPE          "Type"
+    IDS_DBVERSION1          "%d (Short filenames, no size/date)"
+	IDS_DBVERSION2          "%d (Long filenames, no size/date)"
+    IDS_DBVERSIONSFN        "%d (Short filenames)"
+    IDS_DBVERSIONLFN        "%d (Long filenames)"
+	IDS_OEMCHARSET			"OEM"
+	IDS_ANSICHARSET			"Ansi"
+	IDS_UNICODECHARSET		"Unicode"
+	IDS_VOLUMETYPE          "Type"
     IDS_VOLUMEPATH          "Path"
     IDS_VOLUMELABEL         "Label"
     IDS_VOLUMESERIAL        "Volume Serial"
@@ -1742,6 +1750,7 @@ BEGIN
 	IDS_UPDATEDB32CANNOTCHANGELOADED	"The properties of loaded database '%s' cannot be changed\n"
 	IDS_UPDATEDB32ROOTUNAVAILABLE		"Error: path unavailable: %s.\n"
 	IDS_UPDATEDB32CANNOTUPDATEINCREMENTALLY		"Error: cannot write %s incrementally, trying full update (y/n)?"
+	IDS_UPDATEDB32WRONGCHARSETINDB		"Error: cannot write %s incrementally: the character set in the existing database is not correct. Trying full update (y/n)?"
 	IDS_UPDATEDB32INCREMENTALUPDATE		" (increment update)"
 	IDS_UPDATEDB32USINGEXISTINGSETTINGS	"File '%s' is database named '%s', using its settings.\n"
 END

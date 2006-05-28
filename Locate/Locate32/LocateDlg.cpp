@@ -1679,7 +1679,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 
 
 	// Set funtion pointers
-	m_pLocater->SetFunctions(LocateProc,LocateFoundProc,DWORD(this));
+	m_pLocater->SetFunctions(LocateProc,LocateFoundProc,LocateFoundProcW,DWORD(this));
 	
 	// This is not needed anymore
 	if (bSelectDatabases)
@@ -1734,7 +1734,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 	else
-		m_pLocater->LocateFiles(TRUE,W2A(Name),(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+		m_pLocater->LocateFiles(TRUE,W2A(Name),(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	
 	DlgDebugMessage("CLocateDlg::OnOk END");
 	
@@ -1942,7 +1942,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLoca
 			{
 				ASSERT(pItem->GetPathLen()<MAX_PATH);
 
-				sMemCopy(szPath2,pItem->GetPath(),pItem->GetPathLen()+1);
+				MemCopyWtoA(szPath2,pItem->GetPath(),pItem->GetPathLen()+1);
 				MakeLower(szPath2);
 			
 				
@@ -1960,9 +1960,14 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLoca
 	li.mask=LVIF_TEXT|LVIF_IMAGE|LVIF_PARAM;
 	li.iSubItem=0;
 	li.iImage=I_IMAGECALLBACK;
-	li.lParam=(LPARAM)new CLocatedItem(bFolder,pLocater);
+	li.lParam=(LPARAM)new CLocatedItem;
 	if (li.lParam==NULL)
 		return FALSE;
+	if (bFolder)
+		((CLocatedItem*)li.lParam)->SetFolder(pLocater);
+	else
+		((CLocatedItem*)li.lParam)->SetFile(pLocater);
+
 	li.pszText=LPSTR_TEXTCALLBACK;
 
 	// To prevent drawing error
@@ -1995,6 +2000,120 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLoca
 	DbcDebugMessage("CLocateDlg::LocateFoundProc END");
 	return TRUE;
 }
+
+BOOL CALLBACK CLocateDlg::LocateFoundProcW(DWORD dwParam,BOOL bFolder,const CLocater* pLocater)
+{
+	DbcDebugMessage("CLocateDlg::LocateFoundProcW BEGIN");
+	
+	// Hide system and hidden files if it's wanted
+	if (((CLocateDlg*)dwParam)->GetFlags()&fgLVDontShowHiddenFiles)
+	{
+		if (bFolder)
+		{
+			if (pLocater->GetFolderAttributes()&(LITEMATTRIB_HIDDEN|LITEMATTRIB_SYSTEM))
+				return TRUE;
+		}
+		else if (pLocater->GetFileAttributes()&(LITEMATTRIB_HIDDEN|LITEMATTRIB_SYSTEM))
+			return TRUE;
+	}
+
+	// Check wheter item is already added
+	if (((CLocateDlg*)dwParam)->GetFlags()&fgLVNoDoubleItems)
+	{
+		// Setting path, name and extension
+		WCHAR szPath[MAX_PATH+2],szPath2[MAX_PATH+2];
+
+		if (bFolder)
+		{
+			DWORD nPathLen=pLocater->GetCurrentPathLen();
+
+			ASSERT(pLocater->GetCurrentPathLen()+pLocater->GetFolderNameLen()<MAX_PATH-1);
+
+			MemCopyW(szPath,pLocater->GetCurrentPathW(),nPathLen);
+			szPath[nPathLen++]=L'\\';
+			MemCopyW(szPath+nPathLen,pLocater->GetFolderNameW(),pLocater->GetFolderNameLen()+1);
+		}
+		else
+		{
+			DWORD nPathLen=pLocater->GetCurrentPathLen();
+
+			ASSERT(pLocater->GetCurrentPathLen()+pLocater->GetFileNameLen()<MAX_PATH-1);
+
+			MemCopyW(szPath,pLocater->GetCurrentPathW(),nPathLen);
+			szPath[nPathLen++]='\\';
+			MemCopyW(szPath+nPathLen,pLocater->GetFileNameW(),pLocater->GetFileNameLen()+1);
+		}
+		MakeLower(szPath);
+		
+		CListCtrl* pList=((CLocateDlg*)dwParam)->m_pListCtrl;
+		int nItem=pList->GetNextItem(-1,LVNI_ALL);
+		while (nItem!=-1)
+		{
+			CLocatedItem* pItem=(CLocatedItem*)pList->GetItemData(nItem);
+			if (pItem!=NULL)
+			{
+				ASSERT(pItem->GetPathLen()<MAX_PATH);
+
+				MemCopyW(szPath2,pItem->GetPath(),pItem->GetPathLen()+1);
+				MakeLower(szPath2);
+			
+				
+				if (wcscmp(szPath,szPath2)==0)
+					return TRUE; // Alreafy found
+				
+			}
+			nItem=pList->GetNextItem(nItem,LVNI_ALL);
+		}
+		
+
+	}
+
+	LV_ITEMW li;
+	li.mask=LVIF_TEXT|LVIF_IMAGE|LVIF_PARAM;
+	li.iSubItem=0;
+	li.iImage=I_IMAGECALLBACK;
+	li.lParam=(LPARAM)new CLocatedItem;
+	if (li.lParam==NULL)
+		return FALSE;
+	if (bFolder)
+		((CLocatedItem*)li.lParam)->SetFolderW(pLocater);
+	else
+		((CLocatedItem*)li.lParam)->SetFileW(pLocater);
+
+	li.pszText=LPSTR_TEXTCALLBACKW;
+
+	// To prevent drawing error
+	DWORD dwResults=pLocater->GetNumberOfResults();
+	
+	if (dwResults%60==59)
+		Sleep(((CLocateDlg*)dwParam)->m_WaitEvery60);
+	else if (dwResults%30==29)
+		Sleep(((CLocateDlg*)dwParam)->m_WaitEvery30);
+
+	
+	if (((CLocateDlg*)dwParam)->m_nSorting==BYTE(-1))
+	{
+		//li.iItem=((CLocateDlg*)dwParam)->m_pListCtrl->GetItemCount();
+		if (((CLocateDlg*)dwParam)->GetFlags()&fgLVFoldersFirst && bFolder)
+			li.iItem=pLocater->GetNumberOfFoundDirectories();
+		else
+			li.iItem=dwResults;
+	}
+	else
+	{
+		li.iItem=SortNewItem(((CLocateDlg*)dwParam)->m_pListCtrl,
+			(CLocatedItem*)li.lParam,((CLocateDlg*)dwParam)->m_nSorting);
+	}
+
+	
+	((CLocateDlg*)dwParam)->m_pListCtrl->InsertItem(&li);
+
+	
+	DbcDebugMessage("CLocateDlg::LocateFoundProc END");
+	return TRUE;
+}
+
+
 
 
 int CLocateDlg::SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSorting)

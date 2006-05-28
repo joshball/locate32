@@ -46,9 +46,61 @@ void CLocatedItem::SetFolder(const CLocater* pLocater)
 	wModifiedDate=pLocater->GetFolderModifiedDate();
     wModifiedTime=pLocater->GetFolderModifiedTime();
 	wCreatedDate=pLocater->GetFolderCreatedDate();
-	wCreatedTime=WORD(-1);
+	wCreatedTime=pLocater->GetFolderCreatedTime();
 	wAccessedDate=pLocater->GetFolderAccessedDate();
-    wAccessedTime=WORD(-1);
+    wAccessedTime=pLocater->GetFolderAccessedTime();
+	
+	// Setting attributes
+	bAttribs=pLocater->GetFolderAttributes()&LITEMATTRIB_DBATTRIBFLAG;
+	
+	iIcon=DIR_IMAGE;
+	if (nPathLen<=3)
+		iParentIcon=DRIVE_IMAGE;
+	else
+		iParentIcon=DIR_IMAGE;
+
+
+	ItemDebugMessage("CLocatedItem::SetFolder END");
+}
+
+void CLocatedItem::SetFolderW(const CLocater* pLocater)
+{
+	ItemDebugMessage("CLocatedItem::SetFolderW BEGIN");
+
+	wDatabaseID=pLocater->GetCurrentDatabaseID();
+	wRootID=pLocater->GetCurrentDatabaseRootID();
+	
+	// Setting path, name and extension
+	DWORD nPathLen=pLocater->GetCurrentPathLen();
+	bNameLength=BYTE(pLocater->GetFolderNameLen());
+	szPath=new WCHAR[nPathLen+bNameLength+2];
+	
+	MemCopyW(szPath,pLocater->GetCurrentPathW(),nPathLen);
+	szName=szPath+(++nPathLen);
+	MemCopyW(szName,pLocater->GetFolderNameW(),DWORD(bNameLength)+1);
+	
+	for (bExtensionPos=bNameLength-1; szName[bExtensionPos-1]!='.' && bExtensionPos>0 ;bExtensionPos--);
+	if (bExtensionPos==0)
+		bExtensionPos=bNameLength;
+	
+	// Settig title (maybe)
+	if ((GetLocateDlg()->GetFlags()&(CLocateDlg::fgLVAlwaysShowExtensions|CLocateDlg::fgLV1stCharUpper))==CLocateDlg::fgLVAlwaysShowExtensions)
+	{
+		szTitle=szName;
+		dwFlags|=LITEM_TITLEOK;
+	}
+
+	// Setting file size;
+	dwFileSize=DWORD(-1);
+	wFileSizeHi=0;
+
+	// Setting file time
+	wModifiedDate=pLocater->GetFolderModifiedDateW();
+    wModifiedTime=pLocater->GetFolderModifiedTimeW();
+	wCreatedDate=pLocater->GetFolderCreatedDateW();
+	wCreatedTime=pLocater->GetFolderCreatedTimeW();
+	wAccessedDate=pLocater->GetFolderAccessedDateW();
+    wAccessedTime=pLocater->GetFolderAccessedTimeW();
 	
 	// Setting attributes
 	bAttribs=pLocater->GetFolderAttributes()&LITEMATTRIB_DBATTRIBFLAG;
@@ -112,6 +164,58 @@ void CLocatedItem::SetFile(const CLocater* pLocater)
 		iParentIcon=DIR_IMAGE;
 
 	ItemDebugMessage("CLocatedItem::SetFile END");
+
+}
+
+void CLocatedItem::SetFileW(const CLocater* pLocater)
+{
+	ItemDebugMessage("CLocatedItem::SetFileW BEGIN");
+
+	wDatabaseID=pLocater->GetCurrentDatabaseID();
+	wRootID=pLocater->GetCurrentDatabaseRootID();
+	
+	// Setting path, name and extension
+	DWORD nPathLen=pLocater->GetCurrentPathLen();
+	bNameLength=BYTE(pLocater->GetFileNameLen());
+	szPath=new WCHAR[nPathLen+bNameLength+2];
+	MemCopyW(szPath,pLocater->GetCurrentPathW(),nPathLen);
+	szName=szPath+(++nPathLen);
+	MemCopyW(szName,pLocater->GetFileNameW(),DWORD(bNameLength)+1);
+	bExtensionPos=pLocater->GetFileExtensionPos();
+	if (bExtensionPos==0)
+		bExtensionPos=bNameLength;
+	else
+		bExtensionPos++;
+	
+	// Settig title (maybe)
+	if ((GetLocateDlg()->GetFlags()&(CLocateDlg::fgLVAlwaysShowExtensions|CLocateDlg::fgLV1stCharUpper))==CLocateDlg::fgLVAlwaysShowExtensions)
+	{
+		szTitle=szName;
+		dwFlags|=LITEM_TITLEOK;
+	}
+
+	// Setting file size;
+	dwFileSize=pLocater->GetFileSizeLoW();
+	wFileSizeHi=pLocater->GetFileSizeHiW();
+
+	// Setting file time
+	wModifiedDate=pLocater->GetFileModifiedDateW();
+	wModifiedTime=pLocater->GetFileModifiedTimeW();
+	wCreatedDate=pLocater->GetFileCreatedDateW();
+	wCreatedTime=pLocater->GetFileCreatedTimeW();
+	wAccessedDate=pLocater->GetFileAccessedDateW();
+	wAccessedTime=pLocater->GetFileAccessedTimeW();
+
+	// Setting attributes
+	bAttribs=pLocater->GetFileAttributes()&LITEMATTRIB_DBATTRIBFLAG;
+
+	iIcon=DEF_IMAGE;
+	if (nPathLen<=3)
+		iParentIcon=DRIVE_IMAGE;
+	else
+		iParentIcon=DIR_IMAGE;
+
+	ItemDebugMessage("CLocatedItem::SetFileW END");
 
 }
 

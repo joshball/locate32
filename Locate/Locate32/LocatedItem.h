@@ -31,12 +31,16 @@ class CLocater;
 class CLocatedItem 
 {
 public:
-	CLocatedItem(BOOL bFolder,const CLocater* pLocater);
+	CLocatedItem();
 	~CLocatedItem();
-
-private:
+	
 	void SetFolder(const CLocater* pLocater);
+	void SetFolderW(const CLocater* pLocater);
 	void SetFile(const CLocater* pLocater);
+	void SetFileW(const CLocater* pLocater);
+	
+private:
+	
 	void ClearData();
 
 public:

@@ -2212,10 +2212,10 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 	CDatabaseInfo* pDatabaseInfo=CDatabaseInfo::GetFromFile(Path);
 	if (pDatabaseInfo!=NULL)
 	{
-		if (!pDatabaseInfo->szExtra2.IsEmpty())
-			pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->szExtra2);
-		if (pDatabase==NULL && !pDatabaseInfo->szExtra1.IsEmpty())
-			pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->szExtra1);
+		if (!pDatabaseInfo->sExtra2.IsEmpty())
+			pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->sExtra2);
+		if (pDatabase==NULL && !pDatabaseInfo->sExtra1.IsEmpty())
+			pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->sExtra1);
 
 		if (pDatabase!=NULL)
 		{
@@ -2690,10 +2690,12 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	CLocateDlg::SetSystemImagelists(m_pList);
 	m_pList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES|LVS_EX_HEADERDRAGDROP,
 		LVS_EX_CHECKBOXES|LVS_EX_HEADERDRAGDROP);
-	m_pList->InsertColumn(0,ID2A(IDS_VOLUMELABEL),LVCFMT_LEFT,95,0);
-	m_pList->InsertColumn(1,ID2A(IDS_VOLUMEPATH),LVCFMT_LEFT,75,1);
-	m_pList->InsertColumn(2,ID2A(IDS_VOLUMETYPE),LVCFMT_LEFT,70,2);
-	m_pList->InsertColumn(3,ID2A(IDS_VOLUMEFILESYSTEM),LVCFMT_LEFT,65,3);
+	if (IsUnicodeSystem())
+		m_pList->SetUnicodeFormat(TRUE);
+	m_pList->InsertColumn(0,ID2W(IDS_VOLUMELABEL),LVCFMT_LEFT,95,0);
+	m_pList->InsertColumn(1,ID2W(IDS_VOLUMEPATH),LVCFMT_LEFT,75,1);
+	m_pList->InsertColumn(2,ID2W(IDS_VOLUMETYPE),LVCFMT_LEFT,70,2);
+	m_pList->InsertColumn(3,ID2W(IDS_VOLUMEFILESYSTEM),LVCFMT_LEFT,65,3);
 	m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Database Dialog List Widths");
 	
 	for (int i=1;i<=m_nMaximumNumbersOfThreads;i++)
@@ -2720,7 +2722,12 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	CheckDlgButton(IDC_GLOBALUPDATE,m_pDatabase->IsGloballyUpdated());
 	CheckDlgButton(IDC_STOPIFROOTUNAVAILABLE,m_pDatabase->IsFlagged(CDatabase::flagStopIfRootUnavailable));
 	CheckDlgButton(IDC_INCREMENTALUPDATE,m_pDatabase->IsFlagged(CDatabase::flagIncrementalUpdate));
-		
+	
+	if (IsUnicodeSystem())
+		CheckDlgButton(IDC_UNICODE,!m_pDatabase->IsFlagged(CDatabase::flagAnsiCharset));
+	else
+		EnableDlgItem(IDC_UNICODE,FALSE);
+
 	// Inserting local drives to drive list
 	DWORD nLength=GetLogicalDriveStrings(0,NULL)+1;
 	if (nLength<2)
@@ -2869,9 +2876,9 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 	iLength=GetDlgItemTextLength(IDC_DBFILE)+1;
 	if (iLength==2) // Specified text is too short
 	{
-		CString msg;
+		CStringW msg;
 		msg.Format(IDS_INVALIDFILENAME,"");
-		MessageBox(msg,ID2A(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
+		MessageBox(msg,ID2W(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
 		SetFocus(IDC_DBFILE);
 		return;
 	}
@@ -2922,6 +2929,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 	m_pDatabase->UpdateGlobally(IsDlgButtonChecked(IDC_GLOBALUPDATE));
 	m_pDatabase->SetFlag(CDatabase::flagStopIfRootUnavailable,IsDlgButtonChecked(IDC_STOPIFROOTUNAVAILABLE));
 	m_pDatabase->SetFlag(CDatabase::flagIncrementalUpdate,IsDlgButtonChecked(IDC_INCREMENTALUPDATE));
+	m_pDatabase->SetFlag(CDatabase::flagAnsiCharset,!IsDlgButtonChecked(IDC_UNICODE));
 
 	// Setting thread ID
 	m_pDatabase->SetThreadId((WORD)SendDlgItemMessage(IDC_USEDTHREAD,CB_GETCURSEL));

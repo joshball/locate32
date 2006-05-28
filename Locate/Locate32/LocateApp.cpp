@@ -2073,7 +2073,14 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 				return ::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
 			}
 			return TRUE;
-		}
+		case ueWrongCharset:
+			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowNonCriticalErrors)
+			{
+				CString str;
+				str.Format(IDS_ERRORDIFFERENTCHARSETINDB,W2A(pUpdater->GetCurrentDatabaseName()));
+				return ::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
+			}
+			return TRUE;}
 		break;
 	}
 	

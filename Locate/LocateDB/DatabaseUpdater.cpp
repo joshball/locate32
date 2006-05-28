@@ -91,6 +91,10 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 
 	for (m_dwCurrentDatabase=0;m_dwCurrentDatabase<DWORD(m_aDatabases.GetSize());m_dwCurrentDatabase++)
 	{
+		BOOL bUnicode=m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::Unicode);
+
+
+		// Starting to scan database
 		try {
 			m_pCurrentRoot=m_aDatabases[m_dwCurrentDatabase]->m_pFirstRoot;
 			
@@ -115,7 +119,11 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				
 				
 				// Scannin root
-				ueResult=m_pCurrentRoot->ScanRoot(m_lForceQuit);
+				if (bUnicode)
+					ueResult=m_pCurrentRoot->ScanRootW(m_lForceQuit);
+				else
+					ueResult=m_pCurrentRoot->ScanRoot(m_lForceQuit);
+
 				if (ueResult==ueFolderUnavailable)
 				{
 					m_pProc(m_dwData,ErrorOccured,ueResult,this);
@@ -157,7 +165,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 					
 					dbFile=OpenDatabaseFileForIncrementalUpdate(
 						m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
-						m_dwFiles,m_dwDirectories);
+						m_dwFiles,m_dwDirectories,bUnicode);
 					
 					DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): returns: %X",(DWORD)dbFile);
 					
@@ -168,13 +176,20 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 						if (!m_pProc(m_dwData,ErrorOccured,ueCannotIncrement,this))
 							throw ueStillWorking;
 					}
+					else if (dbFile==(CFile*)-2)
+					{
+						dbFile=NULL;
+						if (!m_pProc(m_dwData,ErrorOccured,ueWrongCharset,this))
+							throw ueStillWorking;
+					}
 					else if (dbFile!=NULL)
 					{
 						bWriteHeader=FALSE;
 						break;
 					}
 				}
-				else
+				
+				if (dbFile==NULL)
 				{
 					DebugMessage("CDatabaseUpdater::UpdatingProc(): trying to open database");
 					dbFile=new CFile(m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
@@ -195,7 +210,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 		#ifdef WIN32
 				// Writing identification, '\17=0x11=0x10|0x1' 0x1 = Long filenames and 0x10 = ANSI
 				dbFile->Write("LOCATEDB20",10);
-				dbFile->Write(BYTE(0x11));
+				dbFile->Write(BYTE(bUnicode?0x21:0x11));
 		#else
 				// Writing identification, '\0x0' = Short filenames and OEM
 				dbFile->Write("LOCATEDB20",10);
@@ -221,35 +236,70 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
 					dwExtraSize2+=istrlenw(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2);
 				
-				// Writing header size
-				dbFile->Write(DWORD(
-					m_aDatabases[m_dwCurrentDatabase]->m_sAuthor.GetLength()+1+ // Author data
-					m_aDatabases[m_dwCurrentDatabase]->m_sComment.GetLength()+1+ // Comments data
-					dwExtraSize1+dwExtraSize2+ // Extra
-					4+ // Time
-					4+ // Number of files
-					4  // Number of directories
-					)
-				);
+				
 
-				// Writing author
-				dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_sAuthor),
-					m_aDatabases[m_dwCurrentDatabase]->m_sAuthor.GetLength()+1);
-		
-				// Writing comments
-				dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_sComment),
-					m_aDatabases[m_dwCurrentDatabase]->m_sComment.GetLength()+1);
-				
-				// Writing free data
-				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
-					dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1,dwExtraSize1),dwExtraSize1);
+				if (bUnicode)
+				{
+					// Writing header size
+					dbFile->Write(DWORD(
+						(m_aDatabases[m_dwCurrentDatabase]->m_sAuthor.GetLength()+1)*2+ // Author data
+						(m_aDatabases[m_dwCurrentDatabase]->m_sComment.GetLength()+1)*2+ // Comments data
+						dwExtraSize1*2+dwExtraSize2*2+ // Extra
+						4+ // Time
+						4+ // Number of files
+						4  // Number of directories
+						)
+					);
+
+					// Writing author
+					dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_sAuthor);
+			
+					// Writing comments
+					dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_sComment);
+					
+					// Writing free data
+					if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
+						dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1,dwExtraSize1*2);
+					else
+						dbFile->Write((WORD)0);
+
+					if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
+						dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2,dwExtraSize2*2);
+					else
+						dbFile->Write((WORD)0);
+				}
 				else
-					dbFile->Write((BYTE)0);
-				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
-					dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2,dwExtraSize2),dwExtraSize2);
-				else
-					dbFile->Write((BYTE)0);
-				
+				{
+					// Writing header size
+					dbFile->Write(DWORD(
+						m_aDatabases[m_dwCurrentDatabase]->m_sAuthor.GetLength()+1+ // Author data
+						m_aDatabases[m_dwCurrentDatabase]->m_sComment.GetLength()+1+ // Comments data
+						dwExtraSize1+dwExtraSize2+ // Extra
+						4+ // Time
+						4+ // Number of files
+						4  // Number of directories
+						)
+					);
+					// Writing author
+					dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_sAuthor),
+						m_aDatabases[m_dwCurrentDatabase]->m_sAuthor.GetLength()+1);
+			
+					// Writing comments
+					dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_sComment),
+						m_aDatabases[m_dwCurrentDatabase]->m_sComment.GetLength()+1);
+					
+					// Writing free data
+					if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
+						dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1,dwExtraSize1),dwExtraSize1);
+					else
+						dbFile->Write((BYTE)0);
+					if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
+						dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2,dwExtraSize2),dwExtraSize2);
+					else
+						dbFile->Write((BYTE)0);
+				}
+
+
 				// Writing filedate
 				{
 					WORD wTime,wDate;
@@ -287,7 +337,10 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				sStatus=statusWritingDB;
 				
 				// Writing root data
-				ueResult=m_pCurrentRoot->Write(dbFile);
+				if (bUnicode)
+					ueResult=m_pCurrentRoot->WriteW(dbFile);
+				else
+					ueResult=m_pCurrentRoot->Write(dbFile);
 
 				m_pCurrentRoot=m_pCurrentRoot->m_pNext;
 			}
@@ -507,19 +560,55 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanRoot(volatile LONG& lForceQuit
 	return ueResult;
 }
 
+UpdateError CDatabaseUpdater::CRootDirectory::ScanRootW(volatile LONG& lForceQuit)
+{
+	DebugFormatMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: scanning root %s",m_Path);
+
+	// Initializing buffer
+	pCurrentBuffer=m_pFirstBuffer=new CBuffer;
+	if (pCurrentBuffer==NULL)
+		throw CException(CException::cannotAllocate);
+
+	pPoint=*pCurrentBuffer;
+
+	ASSERT(m_Path.GetLength()<=MAX_PATH);
+
+	// Scanning folder
+	WCHAR szPath[MAX_PATH+20];
+	MemCopyW(szPath,(LPCWSTR)m_Path,m_Path.GetLength()+1);
+	
+	DebugMessage("CDatabaseUpdater::CRootDirectory::ScanRootW: started to scan root folder");
+	UpdateError ueResult=ScanFolder(szPath,m_Path.GetLength(),lForceQuit);
+	DebugMessage("CDatabaseUpdater::CRootDirectory::ScanRootW: ended to scan root folder");
+	
+	
+	pCurrentBuffer->nLength=pPoint-pCurrentBuffer->pData;
+
+	DebugFormatMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: END scanning root %s",m_Path);
+	return ueResult;
+}
 #ifdef WIN32
 typedef	HANDLE HFIND;
-typedef WIN32_FIND_DATA FIND_DATA;
+typedef WIN32_FIND_DATAA FIND_DATA;
+typedef WIN32_FIND_DATAW FIND_DATAW;
 
 #define VALID_HFIND(h)		((h)!=INVALID_HANDLE_VALUE)
 
 inline HFIND _FindFirstFile(LPCSTR szFolder,FIND_DATA* fd)
 {
-	return FindFirstFile(szFolder,fd);
+	return FindFirstFileA(szFolder,fd);
+}
+inline HFIND _FindFirstFile(LPCWSTR szFolder,FIND_DATAW * fd)
+{
+	return FindFirstFileW(szFolder,fd);
 }
 inline BOOL _FindNextFile(HFIND hFind,FIND_DATA* fd)
 {
-	return FindNextFile(hFind,fd);
+	return FindNextFileA(hFind,fd);
+}
+inline BOOL _FindNextFile(HFIND hFind,FIND_DATAW* fd)
+{
+	return FindNextFileW(hFind,fd);
 }
 inline void _FindClose(HFIND hFind)
 {
@@ -529,7 +618,15 @@ inline BOOL _FindIsFolder(FIND_DATA* fd)
 {
 	return (fd->dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)==FILE_ATTRIBUTE_DIRECTORY;
 }
+inline BOOL _FindIsFolder(FIND_DATAW* fd)
+{
+	return (fd->dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)==FILE_ATTRIBUTE_DIRECTORY;
+}
 inline LPCSTR _FindGetName(FIND_DATA* fd)
+{
+	return fd->cFileName;
+}
+inline LPCWSTR _FindGetName(FIND_DATAW* fd)
 {
 	return fd->cFileName;
 }
@@ -538,6 +635,11 @@ inline BYTE _FindGetAttribFlag(FIND_DATA* fd)
 {
 	return CDatabaseUpdater::GetAttribFlag(fd->dwFileAttributes);
 }
+inline BYTE _FindGetAttribFlag(FIND_DATAW* fd)
+{
+	return CDatabaseUpdater::GetAttribFlag(fd->dwFileAttributes);
+}
+
 
 inline void _FindGetLastWriteDosDateTime(FIND_DATA* fd,WORD* pwDate,WORD* pwTime)
 {
@@ -559,11 +661,41 @@ inline void _FindGetLastAccessDosDate(FIND_DATA* fd,WORD* pwDate)
 	FileTimeToLocalFileTime(&fd->ftLastAccessTime,&ft);
 	FileTimeToDosDateTime(&ft,pwDate,&wTemp);
 }
+
+
+inline void _FindGetLastWriteDosDateTime(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime)
+{
+	FILETIME ft;
+	FileTimeToLocalFileTime(&fd->ftLastWriteTime,&ft);
+	FileTimeToDosDateTime(&ft,pwDate,pwTime);
+}
+inline void _FindGetCreationDosDate(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime)
+{
+	FILETIME ft;
+	FileTimeToLocalFileTime(&fd->ftCreationTime,&ft);
+	FileTimeToDosDateTime(&ft,pwDate,pwTime);
+}
+inline void _FindGetLastAccessDosDate(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime)
+{
+	FILETIME ft;
+	FileTimeToLocalFileTime(&fd->ftLastAccessTime,&ft);
+	FileTimeToDosDateTime(&ft,pwDate,pwTime);
+}
+
 inline DWORD _FindGetFileSizeLo(FIND_DATA* fd)
 {
 	return fd->nFileSizeLow;
 }
+inline DWORD _FindGetFileSizeLo(FIND_DATAW* fd)
+{
+	return fd->nFileSizeLow;
+}
+
 inline DWORD _FindGetFileSizeHi(FIND_DATA* fd)
+{
+	return fd->nFileSizeHigh;
+}
+inline DWORD _FindGetFileSizeHi(FIND_DATAW* fd)
 {
 	return fd->nFileSizeHigh;
 }
@@ -648,11 +780,11 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 		delete[] pLowerFolder;
 	}	
 	
-	szFolder[nLength]='\\';
-	szFolder[nLength+1]='*';
-	szFolder[nLength+2]='.';
-	szFolder[nLength+3]='*';
-	szFolder[nLength+4]='\0';
+	szFolder[nLength++]='\\';
+	szFolder[nLength]='*';
+	szFolder[nLength+1]='.';
+	szFolder[nLength+2]='*';
+	szFolder[nLength+3]='\0';
 
 	
 
@@ -660,7 +792,6 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 	
 	HFIND hFind=_FindFirstFile(szFolder,&fd);
 	
-	SIZE_T sTemp;
 
 	if (!VALID_HFIND(hFind))
 		return ueFolderUnavailable;
@@ -675,13 +806,15 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 				throw ueStopped;
 			}
 
+			SIZE_T sNameLength=istrlen(_FindGetName(&fd));
+			ASSERT(sNameLength<256);
+				
 
 			if (_FindIsFolder(&fd))
 			{
 				// Get the length of directory name and checks that length is 
 				// less than MAX_PATH, otherwise ignore
-				sTemp=istrlen(_FindGetName(&fd));
-				if (nLength+sTemp+1<MAX_PATH)
+				if (nLength+sNameLength<MAX_PATH)
 				{
 					
 					// Check whether new buffer is needed
@@ -703,17 +836,15 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 					
 					
 
-					// Copying cFilename to pPoint and szFolder, and setting *pPoint to name length
-					for (*pPoint=0;_FindGetName(&fd)[*pPoint]!='\0';(*pPoint)++)
-					{
-						szFolder[nLength+1+*pPoint]=_FindGetName(&fd)[*pPoint];
-						pPoint[1+*pPoint]=_FindGetName(&fd)[*pPoint];
-					}
-					// '\0' to end
-					szFolder[nLength+1+*pPoint]='\0';
-					pPoint[1+*pPoint]='\0';
+					// Set file name length
+					*(pPoint++)=(BYTE)sNameLength;
 					
-					pPoint+=*pPoint+1+1;
+					// Copy path
+					sMemCopy(szFolder+nLength,_FindGetName(&fd),sNameLength);
+					sMemCopy(pPoint,_FindGetName(&fd),sNameLength+1);
+
+					// Move pointer
+					pPoint+=sNameLength+1;
 
 
 					// File time
@@ -722,9 +853,9 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 					_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+3);
 					pPoint+=sizeof(WORD)*4;
 				
-					ScanFolder(szFolder,nLength+1+sTemp,lForceQuit);
-					szFolder[nLength+1+sTemp]='\0';
-					*pPoint='\0';
+					ScanFolder(szFolder,nLength+sNameLength,lForceQuit);
+					//szFolder[nLength+sTemp]='\0';
+					*pPoint='\0'; // No more files and directories
 					pPoint++;
 
 					// Calculating directory data size
@@ -757,11 +888,10 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 			else
 			{
 				// File name
-				SIZE_T sTemp=istrlen(_FindGetName(&fd));
 				
-				if(nLength+sTemp+1<MAX_PATH)
+				if(nLength+sNameLength<MAX_PATH)
 				{
-					if (pPoint+275>pCurrentBuffer->pData+BFSIZE)
+					if (pPoint+MAX_PATH+15>pCurrentBuffer->pData+BFSIZE)
 					{
 						// New buffer
 						pCurrentBuffer->nLength=pPoint-pCurrentBuffer->pData;
@@ -769,18 +899,17 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 						pPoint=*pCurrentBuffer;
 					}
 
-					*pPoint=UDBATTRIB_FILE|_FindGetAttribFlag(&fd); // File
-					pPoint++;
-				
+					*(pPoint++)=UDBATTRIB_FILE|_FindGetAttribFlag(&fd); // File
+					
 					// File name length
-					pPoint[0]=(BYTE)(sTemp>255?255:sTemp); 
+					*(pPoint++)=(BYTE)sNameLength; 
 					// Extension position (or 0 if no extension)
-					for (pPoint[1]=pPoint[0]-1;pPoint[1]>0 && _FindGetName(&fd)[pPoint[1]]!='.';pPoint[1]--); 
-
+					for (*pPoint=BYTE(sNameLength)-1;*pPoint>0 && _FindGetName(&fd)[*pPoint]!='.';(*pPoint)--); 
+					pPoint++;
+					
 					// Copying filename
-					sMemCopy(pPoint+2,_FindGetName(&fd),pPoint[0]);
-					pPoint+=((DWORD)pPoint[0])+3;
-					pPoint[-1]='\0';
+					sMemCopy(pPoint,_FindGetName(&fd),sNameLength+1);
+					pPoint+=sNameLength+1;
 					
 					// File size
 					((DWORD*)pPoint)[0]=_FindGetFileSizeLo(&fd);
@@ -793,6 +922,182 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 					_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+3);
 					
 					pPoint+=sizeof(WORD)*4;
+					
+					// Increase files count
+					m_dwFiles++;
+				}
+			}
+		}		
+		if(!_FindNextFile(hFind,&fd))
+			break;
+	}
+	_FindClose(hFind);
+
+	return ueSuccess;
+}
+
+UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,SIZE_T nLength,volatile LONG& lForceQuit)
+{
+	if (m_aExcludedDirectories.GetSize()>0)
+	{
+		// Checking whether directory is excluded
+		WCHAR* pLowerFolder=alloccopy(szFolder,nLength);
+		MakeLower(pLowerFolder);
+
+		for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
+		{
+			if (wcscmp(m_aExcludedDirectories[i],pLowerFolder)==0)
+			{
+				delete[] pLowerFolder;
+				return ueSuccess;
+			}
+		}
+		delete[] pLowerFolder;
+	}	
+	
+	szFolder[nLength++]=L'\\';
+	szFolder[nLength]=L'*';
+	szFolder[nLength+1]=L'.';
+	szFolder[nLength+2]=L'*';
+	szFolder[nLength+3]=L'\0';
+
+	
+
+	FIND_DATAW fd;
+	
+	HFIND hFind=_FindFirstFile(szFolder,&fd);
+	
+
+	if (!VALID_HFIND(hFind))
+		return ueFolderUnavailable;
+
+	for(;;)
+	{
+		if (_FindGetName(&fd)[0]!=L'.' || (_FindGetName(&fd)[1]!=L'\0' && _FindGetName(&fd)[1]!=L'.'))
+		{
+			if (lForceQuit)
+			{
+				_FindClose(hFind);
+				throw ueStopped;
+			}
+
+			SIZE_T sNameLength=istrlenw(_FindGetName(&fd));
+
+			ASSERT(sNameLength<256);
+				
+
+			if (_FindIsFolder(&fd))
+			{
+				// Get the length of directory name and checks that length is 
+				// less than MAX_PATH, otherwise ignore
+				if (nLength+sNameLength<MAX_PATH)
+				{
+					
+					// Check whether new buffer is needed
+					if (pPoint+MAX_PATH*2+14>pCurrentBuffer->pData+BFSIZE)
+					{
+						// New buffer
+						pCurrentBuffer->nLength=pPoint-pCurrentBuffer->pData;
+						pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
+						if (pCurrentBuffer==NULL)
+							throw CException(CException::cannotAllocate);
+						
+						pPoint=*pCurrentBuffer;
+					}
+					
+					*pPoint=UDBATTRIB_DIRECTORY|_FindGetAttribFlag(&fd); // Directory
+					BYTE* pSizePointer=pPoint+1;
+					pPoint+=5;
+
+					
+					
+
+					// Set file name length
+					*(pPoint++)=(BYTE)sNameLength;
+					
+					// Copy path
+					MemCopyW(szFolder+nLength,_FindGetName(&fd),sNameLength);
+					MemCopyW(pPoint,_FindGetName(&fd),sNameLength+1);
+
+					// Move pointer
+					pPoint+=sNameLength*2+2;
+
+
+					// File time
+					_FindGetLastWriteDosDateTime(&fd,(WORD*)pPoint,(WORD*)pPoint+1);
+					_FindGetCreationDosDate(&fd,(WORD*)pPoint+2,(WORD*)pPoint+3);
+					_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+4,(WORD*)pPoint+5);
+					pPoint+=sizeof(WORD)*6;
+				
+					ScanFolder(szFolder,nLength+sNameLength,lForceQuit);
+					//szFolder[nLength+sTemp]='\0';
+					*pPoint='\0'; // No more files and directories
+					pPoint++;
+
+					// Calculating directory data size
+					if (pSizePointer>=pCurrentBuffer->pData && pSizePointer<pCurrentBuffer->pData+BFSIZE)
+						((DWORD*)pSizePointer)[0]=pPoint-pSizePointer;
+					else
+					{
+						// Buffer has changed
+						CBuffer* pTmp=m_pFirstBuffer;
+						
+						// old buffer to pTmp
+						while (pSizePointer<pTmp->pData || pSizePointer>=pTmp->pData+BFSIZE)
+							pTmp=pTmp->pNext;
+						
+						// Decreasing first buffer
+						((LONG*)pSizePointer)[0]=(LONG)pTmp->pData-(LONG)pSizePointer;
+						
+						// Adding length between pCurrentbuffer and pTmp
+						for (;pTmp!=pCurrentBuffer;pTmp=pTmp->pNext)
+							((LONG*)pSizePointer)[0]+=pTmp->nLength;
+
+						// Adding this buffer len
+						((LONG*)pSizePointer)[0]+=pPoint-pCurrentBuffer->pData;
+					}
+
+					// Increase directories count
+					m_dwDirectories++;
+				}
+			}
+			else
+			{
+				// File name
+				
+				if(nLength+sNameLength<MAX_PATH)
+				{
+					if (pPoint+MAX_PATH*2+19>pCurrentBuffer->pData+BFSIZE)
+					{
+						// New buffer
+						pCurrentBuffer->nLength=pPoint-pCurrentBuffer->pData;
+						pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
+						pPoint=*pCurrentBuffer;
+					}
+
+					*(pPoint++)=UDBATTRIB_FILE|_FindGetAttribFlag(&fd); // File
+					
+					// File name length
+					*(pPoint++)=(BYTE)sNameLength; 
+					// Extension position (or 0 if no extension)
+					for (*pPoint=BYTE(sNameLength)-1;*pPoint>0 && _FindGetName(&fd)[*pPoint]!='.';(*pPoint)--); 
+					pPoint++;
+
+					// Copying filename
+					MemCopyW(pPoint,_FindGetName(&fd),sNameLength+1);
+					pPoint+=sNameLength*2+2;
+					
+					// File size
+					*((DWORD*)pPoint)=_FindGetFileSizeLo(&fd);
+					*((WORD*)(pPoint+4))=(WORD)_FindGetFileSizeHi(&fd);
+					pPoint+=6;
+
+					// File time
+					_FindGetLastWriteDosDateTime(&fd,(WORD*)pPoint,(WORD*)pPoint+1);
+					_FindGetCreationDosDate(&fd,(WORD*)pPoint+2,(WORD*)pPoint+3);
+					_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+4,(WORD*)pPoint+4);
+					
+					pPoint+=sizeof(WORD)*6;
 					
 					// Increase files count
 					m_dwFiles++;
@@ -856,6 +1161,28 @@ inline BYTE _GetDriveType(CStringW& sPath)
 	}
 	return 0;
 }
+inline BYTE _GetDriveTypeW(CStringW& sPath)
+{
+	switch (GetDriveTypeW(sPath+L'\\'))
+	{
+	case DRIVE_UNKNOWN:
+		return 0x00;
+	case DRIVE_NO_ROOT_DIR:
+		return 0xF0;
+	case DRIVE_REMOVABLE:
+		return 0x20;
+	case DRIVE_FIXED:
+		return 0x10;
+	case DRIVE_REMOTE:
+		return 0x40;
+	case DRIVE_CDROM:
+		return 0x30;
+	case DRIVE_RAMDISK:
+		return 0x50;
+	}
+	return 0;
+}
+
 #endif
 
 UpdateError CDatabaseUpdater::CRootDirectory::Write(CFile* dbFile)
@@ -970,6 +1297,107 @@ UpdateError CDatabaseUpdater::CRootDirectory::Write(CFile* dbFile)
 	return ueSuccess;
 }
 
+UpdateError CDatabaseUpdater::CRootDirectory::WriteW(CFile* dbFile)
+{
+	CStringW sVolumeName;
+	CStringW sFSName;
+
+	DWORD dwSerial=0;
+	BYTE nType;
+	
+	{
+		if (m_Path.GetLength()==2 || (m_Path[0]==L'\\' && m_Path[1]==L'\\'))
+			nType=_GetDriveTypeW(m_Path);
+		else
+			nType=0xF0;
+
+		// resolving label,fs and serial
+		// Resolving information
+		DWORD dwTemp;
+		UINT nOldMode=SetErrorMode(SEM_FAILCRITICALERRORS);
+		BOOL nRet;
+		if (m_Path[0]!=L'\\')
+		{
+			WCHAR szDrive[4]=L"X:\\";
+			szDrive[0]=m_Path[0];
+			nRet=GetVolumeInformationW(szDrive,sVolumeName.GetBuffer(20),20,&dwSerial,
+				&dwTemp,&dwTemp,sFSName.GetBuffer(20),20);
+		}
+		else // network, UNC path
+			nRet=GetVolumeInformationW(m_Path,sVolumeName.GetBuffer(20),20,&dwSerial,
+				&dwTemp,&dwTemp,sFSName.GetBuffer(20),20);
+		
+		if (nRet)
+		{
+			sVolumeName.FreeExtra();
+			sFSName.FreeExtra();
+		}
+		else
+		{
+			sVolumeName.Empty();
+			sFSName.Empty();
+			dwSerial=0;
+		}
+
+		SetErrorMode(nOldMode);
+	}
+
+	// Calculating data length
+	DWORD nLength=1 // Type
+		+(m_Path.GetLength()+1)*2 // Path
+		+(sVolumeName.GetLength()+1)*2 // Volume name
+		+sizeof(DWORD)	//Serial
+		+(sFSName.GetLength()+1)*2 // Filesystem
+		+2*sizeof(DWORD) // Number of files and directories
+		+2; // End, 0x0000
+	
+	pCurrentBuffer=m_pFirstBuffer;
+	while (pCurrentBuffer!=NULL)
+	{
+		nLength+=pCurrentBuffer->nLength;
+		pCurrentBuffer=pCurrentBuffer->pNext;
+	}
+	
+	// Writing data length
+	dbFile->Write(nLength);
+
+	// Writing volume type
+	dbFile->Write(nType);
+
+	// Writing path
+	dbFile->Write(m_Path);
+
+	// Writing volume name
+	dbFile->Write(sVolumeName);
+
+	// Writing volume serial
+	dbFile->Write(dwSerial);
+
+	// Writing filesystem
+	dbFile->Write(sFSName);
+
+	// Writing number of files and directories
+	dbFile->Write(m_dwFiles);
+	dbFile->Write(m_dwDirectories);
+       
+	// Why?
+	dbFile->Flush();
+
+	while (m_pFirstBuffer!=NULL)
+	{
+		pCurrentBuffer=m_pFirstBuffer->pNext;
+		dbFile->Write(m_pFirstBuffer->pData,m_pFirstBuffer->nLength);
+		delete m_pFirstBuffer;
+		m_pFirstBuffer=pCurrentBuffer;
+	}
+
+	// End mark
+	dbFile->Write((WORD)0);
+
+	return ueSuccess;
+}
+
+
 CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 :	m_sAuthor(pDatabase->GetCreator()),m_sComment(pDatabase->GetDescription()),
 	m_nArchiveType(pDatabase->GetArchiveType()),m_pFirstRoot(NULL),m_nFlags(0),
@@ -984,7 +1412,8 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 		m_nFlags|=StopIfUnuavailable;
 	if (pDatabase->IsFlagged(CDatabase::flagIncrementalUpdate))
 		m_nFlags|=IncrementalUpdate;
-	
+	if (IsUnicodeSystem() && !pDatabase->IsFlagged(CDatabase::flagAnsiCharset))
+		m_nFlags|=Unicode;
 
 	LPCWSTR pPtr=pDatabase->GetRoots();
 	if (pPtr==NULL)
@@ -1212,6 +1641,9 @@ CDatabaseUpdater::DBArchive::DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveT
 {
 	m_szArchive=alloccopy(szArchiveName);
 	
+	if (!IsUnicodeSystem())
+		m_nFlags&=~Unicode;
+
 	if (nNumberOfRoots==0)
 	{
 		m_pFirstRoot=NULL;
@@ -1370,7 +1802,7 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCWSTR* ppExcl
 	delete[] pdwExcludedDirectoriesLen;
 }
 
-CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,DWORD dwFiles,DWORD dwDirectories)
+CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,DWORD dwFiles,DWORD dwDirectories,BOOL bUnicode)
 {
 	DebugFormatMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): BEGIN, archive='%s'",szArchive);
 	
@@ -1408,6 +1840,17 @@ CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,
 				-1,
 #endif
 				szArchive);
+		}
+
+		if ((bUnicode && !(szBuffer[10]&0x20)) ||
+			(!bUnicode && (szBuffer[10]&0x20)))
+		{
+			throw CFileException(CFileException::invalidFormat,
+#ifdef WIN32
+				-1,
+#endif
+				szArchive);
+
 		}
 
 	
@@ -1465,6 +1908,9 @@ CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,
 		case CFileException::readFault:
 			DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): END2");
 			return (CFile*)-1;
+		case CFileException::invalidFormat:
+			DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): END4");
+			return (CFile*)-2;
 		default:
 			DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): END3");
 			return NULL;
