@@ -99,7 +99,7 @@ private:
 		LVCOLUMNW lc;
 	};
 	CArrayFP<COLUMNDATA*> aColumns;
-	CIntArray aSubItems;
+	CIntArray aSubItems; // Contains ID for visible columns
 	
 	static LRESULT CALLBACK SubclassProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam,
 		UINT_PTR uIdSubclass,DWORD_PTR dwRefData);

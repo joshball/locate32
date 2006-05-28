@@ -69,7 +69,7 @@ inline BOOL CButton::Create(LPCTSTR lpszCaption,DWORD dwStyle,const RECT* rect,H
 
 inline UINT CButton::GetState() const
 {
-	return ::SendMessage(m_hWnd,BM_GETSTATE,0,0);
+	return (UINT)::SendMessage(m_hWnd,BM_GETSTATE,0,0);
 }
 
 inline void CButton::SetState(BOOL bHighlight)
@@ -79,7 +79,7 @@ inline void CButton::SetState(BOOL bHighlight)
 
 inline int CButton::GetCheck() const
 {
-	return ::SendMessage(m_hWnd,BM_GETCHECK,0,0);
+	return (int)::SendMessage(m_hWnd,BM_GETCHECK,0,0);
 }
 
 inline void CButton::SetCheck(int nCheck)
@@ -165,7 +165,7 @@ inline void CEdit::SetSel(int iStart,int iEnd)
 
 inline BOOL CEdit::Undo()
 {
-	return ::SendMessage(m_hWnd,EM_UNDO,0,0);
+	return (BOOL)::SendMessage(m_hWnd,EM_UNDO,0,0);
 }
 
 inline void CEdit::Clear()
@@ -217,12 +217,12 @@ inline BOOL CRichEditCtrl::CreateV2(DWORD dwStyle, const RECT* rect, HWND hParen
 
 inline BOOL CRichEditCtrl::CanUndo() const
 {
-	return ::SendMessage(m_hWnd,EM_CANUNDO,0,0);
+	return (BOOL)::SendMessage(m_hWnd,EM_CANUNDO,0,0);
 }
 
 inline BOOL CRichEditCtrl::CanRedo() const
 {
-	return ::SendMessage(m_hWnd,EM_CANREDO,0,0);
+	return (BOOL)::SendMessage(m_hWnd,EM_CANREDO,0,0);
 }
 
 inline UNDONAMEID CRichEditCtrl::GetUndoName() const
@@ -242,7 +242,7 @@ inline int CRichEditCtrl::GetLineCount() const
 
 inline BOOL CRichEditCtrl::GetModify() const
 {
-	return ::SendMessage(m_hWnd,EM_GETMODIFY,0,0);
+	return (BOOL)::SendMessage(m_hWnd,EM_GETMODIFY,0,0);
 }
 
 inline void CRichEditCtrl::SetModify(BOOL bModified)
@@ -267,7 +267,7 @@ inline int CRichEditCtrl::GetLine(int nIndex,LPTSTR lpszBuffer) const
 
 inline BOOL CRichEditCtrl::CanPaste(UINT nFormat) const
 {
-	return ::SendMessage(m_hWnd,EM_CANPASTE,nFormat,0);
+	return (BOOL)::SendMessage(m_hWnd,EM_CANPASTE,nFormat,0);
 }
 
 inline void CRichEditCtrl::GetSel(long& nStartChar,long& nEndChar) const
@@ -358,52 +358,52 @@ inline COLORREF CRichEditCtrl::SetBackgroundColor(BOOL bSysColor,COLORREF cr)
 
 inline BOOL CRichEditCtrl::SetCharFormat(DWORD dwFlags,CHARFORMAT &cf)
 {
-	return ::SendMessage(m_hWnd,EM_SETCHARFORMAT,dwFlags,(LPARAM)&cf);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETCHARFORMAT,dwFlags,(LPARAM)&cf);
 }
 
 inline BOOL CRichEditCtrl::SetCharFormat(DWORD dwFlags,CHARFORMAT2 &cf)
 {
-	return ::SendMessage(m_hWnd,EM_SETCHARFORMAT,dwFlags,(LPARAM)&cf);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETCHARFORMAT,dwFlags,(LPARAM)&cf);
 }
 	
 inline BOOL CRichEditCtrl::SetDefaultCharFormat(CHARFORMAT &cf)
 {
-	return ::SendMessage(m_hWnd,EM_SETCHARFORMAT,0,(LPARAM)&cf);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETCHARFORMAT,0,(LPARAM)&cf);
 }
 
 inline BOOL CRichEditCtrl::SetDefaultCharFormat(CHARFORMAT2 &cf)
 {
-	return ::SendMessage(m_hWnd,EM_SETCHARFORMAT,0,(LPARAM)&cf);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETCHARFORMAT,0,(LPARAM)&cf);
 }
 
 inline BOOL CRichEditCtrl::SetSelectionCharFormat(CHARFORMAT &cf)
 {
-	return ::SendMessage(m_hWnd,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM)&cf);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM)&cf);
 }
 
 inline BOOL CRichEditCtrl::SetSelectionCharFormat(CHARFORMAT2 &cf)
 {
-	return ::SendMessage(m_hWnd,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM)&cf);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM)&cf);
 }
 
 inline BOOL CRichEditCtrl::SetWordCharFormat(CHARFORMAT &cf)
 {
-	return ::SendMessage(m_hWnd,EM_SETCHARFORMAT,SCF_SELECTION|SCF_WORD,(LPARAM)&cf);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETCHARFORMAT,SCF_SELECTION|SCF_WORD,(LPARAM)&cf);
 }
 
 inline DWORD CRichEditCtrl::SetEventMask(DWORD dwEventMask)
 {
-	return ::SendMessage(m_hWnd,EM_SETEVENTMASK,0,(LPARAM)dwEventMask);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETEVENTMASK,0,(LPARAM)dwEventMask);
 }
 
 inline BOOL CRichEditCtrl::SetParaFormat(PARAFORMAT &pf)
 {
-	return ::SendMessage(m_hWnd,EM_SETPARAFORMAT,0,(LPARAM)&pf);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETPARAFORMAT,0,(LPARAM)&pf);
 }
 
 inline BOOL CRichEditCtrl::SetTargetDevice(HDC hDC,long lLineWidth)
 {
-	return ::SendMessage(m_hWnd,EM_SETTARGETDEVICE,(WPARAM)hDC,(LPARAM)lLineWidth);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETTARGETDEVICE,(WPARAM)hDC,(LPARAM)lLineWidth);
 }
 
 inline long CRichEditCtrl::GetTextLength() const
@@ -413,7 +413,7 @@ inline long CRichEditCtrl::GetTextLength() const
 
 inline BOOL CRichEditCtrl::SetReadOnly(BOOL bReadOnly)
 {
-	return ::SendMessage(m_hWnd,EM_SETREADONLY,(WPARAM)bReadOnly,0);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETREADONLY,(WPARAM)bReadOnly,0);
 }
 
 inline int CRichEditCtrl::GetFirstVisibleLine() const
@@ -453,7 +453,7 @@ inline void CRichEditCtrl::SetRect(LPCRECT lpRect)
 
 inline BOOL CRichEditCtrl::DisplayBand(LPRECT pDisplayRect)
 {
-	return ::SendMessage(m_hWnd,EM_DISPLAYBAND,0,(LPARAM)pDisplayRect);
+	return (BOOL)::SendMessage(m_hWnd,EM_DISPLAYBAND,0,(LPARAM)pDisplayRect);
 }
 
 inline long CRichEditCtrl::FindText(DWORD dwFlags,FINDTEXTEX* pFindText) const
@@ -493,12 +493,12 @@ inline long CRichEditCtrl::StreamOut(int nFormat,EDITSTREAM &es)
 
 inline BOOL CRichEditCtrl::Undo()
 {
-	return ::SendMessage(m_hWnd,EM_UNDO,0,0);
+	return (BOOL)::SendMessage(m_hWnd,EM_UNDO,0,0);
 }
 
 inline BOOL CRichEditCtrl::Redo()
 {
-	return ::SendMessage(m_hWnd,EM_REDO,0,0);
+	return (BOOL)::SendMessage(m_hWnd,EM_REDO,0,0);
 }
 
 inline void CRichEditCtrl::Clear()
@@ -526,7 +526,7 @@ inline BOOL CRichEditCtrl::SetTextEx(LPCSTR szText,DWORD dwFlags,UINT codepage)
 	SETTEXTEX ste;
 	ste.flags=dwFlags;
 	ste.codepage=codepage;
-	return ::SendMessage(m_hWnd,EM_SETTEXTEX,(LPARAM)&ste,(LPARAM)szText);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETTEXTEX,(LPARAM)&ste,(LPARAM)szText);
 }
 
 inline BOOL CRichEditCtrl::SetTextEx(LPCWSTR szText,DWORD dwFlags,UINT codepage)
@@ -534,12 +534,12 @@ inline BOOL CRichEditCtrl::SetTextEx(LPCWSTR szText,DWORD dwFlags,UINT codepage)
 	SETTEXTEX ste;
 	ste.flags=dwFlags;
 	ste.codepage=codepage;
-	return ::SendMessage(m_hWnd,EM_SETTEXTEX,(LPARAM)&ste,(LPARAM)szText);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETTEXTEX,(LPARAM)&ste,(LPARAM)szText);
 }
 
 inline BOOL CRichEditCtrl::SetZoom(DWORD nNumerator,DWORD nDenominator)
 {
-	return ::SendMessage(m_hWnd,EM_SETZOOM,nNumerator,nDenominator);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETZOOM,nNumerator,nDenominator);
 }
 
 inline DWORD CRichEditCtrl::SetOptions(DWORD dwOptions,DWORD dwOperation)
@@ -554,7 +554,7 @@ inline DWORD CRichEditCtrl::GetOptions() const
 
 inline BOOL CRichEditCtrl::GetOleInterface(LPVOID* ppOleInterface) const
 {
-	return ::SendMessage(m_hWnd,EM_GETOLEINTERFACE,0,(LPARAM)ppOleInterface);
+	return (BOOL)::SendMessage(m_hWnd,EM_GETOLEINTERFACE,0,(LPARAM)ppOleInterface);
 }
 	
 inline IRichEditOle* CRichEditCtrl::GetOleInterface() const
@@ -567,7 +567,7 @@ inline IRichEditOle* CRichEditCtrl::GetOleInterface() const
 
 inline BOOL CRichEditCtrl::SetOleCallback(IRichEditOleCallback *pOleCallback)
 {
-	return ::SendMessage(m_hWnd,EM_SETOLECALLBACK,0,(LPARAM)pOleCallback);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETOLECALLBACK,0,(LPARAM)pOleCallback);
 }
 
 
@@ -720,7 +720,7 @@ inline void CListBox::SetColumnWidth(int cxWidth)
 
 inline BOOL CListBox::SetTabStops(int nTabStops,LPINT rgTabStops)
 {
-	return ::SendMessage(m_hWnd,LB_SETTABSTOPS,(WPARAM)nTabStops,(LPARAM)rgTabStops);
+	return (BOOL)::SendMessage(m_hWnd,LB_SETTABSTOPS,(WPARAM)nTabStops,(LPARAM)rgTabStops);
 }
 
 inline void CListBox::SetTabStops()
@@ -730,7 +730,7 @@ inline void CListBox::SetTabStops()
 
 inline BOOL CListBox::SetTabStops(const int& cxEachStop)
 {
-	return ::SendMessage(m_hWnd,LB_SETTABSTOPS,(WPARAM)1,(LPARAM)&cxEachStop);
+	return (BOOL)::SendMessage(m_hWnd,LB_SETTABSTOPS,(WPARAM)1,(LPARAM)&cxEachStop);
 }
 
 inline int CListBox::SetItemHeight(int nIndex,UINT cyItemHeight)
@@ -932,12 +932,12 @@ inline DWORD CComboBox::GetEditSel() const
 
 inline BOOL CComboBox::LimitText(int nMaxChars)
 {
-	return ::SendMessage(m_hWnd,CB_LIMITTEXT,nMaxChars,0);
+	return (BOOL)::SendMessage(m_hWnd,CB_LIMITTEXT,nMaxChars,0);
 }
 
 inline BOOL CComboBox::SetEditSel(int nStartChar, int nEndChar)
 {
-	return ::SendMessage(m_hWnd,CB_SETEDITSEL,0,MAKELPARAM(nStartChar,nEndChar));
+	return (BOOL)::SendMessage(m_hWnd,CB_SETEDITSEL,0,MAKELPARAM(nStartChar,nEndChar));
 }
 
 inline DWORD CComboBox::GetItemData(int nIndex) const
@@ -1001,7 +1001,7 @@ inline int CComboBox::SetExtendedUI(BOOL bExtended)
 
 inline BOOL CComboBox::GetExtendedUI() const
 {
-	return ::SendMessage(m_hWnd,CB_GETEXTENDEDUI,0,0);
+	return(BOOL) ::SendMessage(m_hWnd,CB_GETEXTENDEDUI,0,0);
 }
 
 inline void CComboBox::GetDroppedControlRect(LPRECT lprect) const
@@ -1011,7 +1011,7 @@ inline void CComboBox::GetDroppedControlRect(LPRECT lprect) const
 
 inline BOOL CComboBox::GetDroppedState() const
 {
-	return ::SendMessage(m_hWnd,CB_GETDROPPEDSTATE,0,0);
+	return (BOOL)::SendMessage(m_hWnd,CB_GETDROPPEDSTATE,0,0);
 }
 
 inline void CComboBox::ShowDropDown(BOOL bShowIt)

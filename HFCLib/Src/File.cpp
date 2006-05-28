@@ -1245,7 +1245,7 @@ INT FileSystem::IsDirectory(LPCWSTR szDirectoryName)
 	if (szDirectoryName[dwPathLen-1]==L'\\' && dwPathLen>3)
 	{
 		szPath=new WCHAR[dwPathLen+5];
-		iMemCopy(szPath,szDirectoryName,--dwPathLen);
+		MemCopyW(szPath,szDirectoryName,--dwPathLen);
 		szPath[dwPathLen]=L'\0';
 	}
 	else
@@ -1574,8 +1574,8 @@ DWORD FileSystem::ParseExistingPath(LPCWSTR szPath)
 		return 0;
 	}
 	
-	char* pTempPath=new char[dwLength+2];
-	CopyMemory(pTempPath,szPath,dwLength+1);
+	WCHAR* pTempPath=new WCHAR[dwLength+2];
+	MemCopyW(pTempPath,szPath,dwLength+1);
 	if (pTempPath[dwLength-1]!='\\')
 	{
 		pTempPath[dwLength]='\\';

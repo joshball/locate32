@@ -1137,42 +1137,71 @@ void CLocatedItem::DeleteExtraInfoField(CLocateDlg::DetailType nType)
 	}
 }
 
-void CLocatedItem::ChangeName(LPCWSTR szNewName,int iLength)
+void CLocatedItem::ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
 {
-	WCHAR* szOldPath=GetPath();
 	if (iLength==-1)
 		iLength=istrlenw(szNewName);
 
-	if (szTitle!=szName && szTitle!=NULL)
-		delete[] szTitle;
-	szTitle=NULL;
-
 	DWORD dwDirectoryLen=DWORD(szName-szPath);
-	szPath=new WCHAR[dwDirectoryLen+iLength+2];
+	ASSERT(dwDirectoryLen>0);
+
+	WCHAR* szOldPath=GetPath();;
+	WCHAR* szNewPath=new WCHAR[dwDirectoryLen+iLength+2];
 	
 	// Copying directory
-	MemCopyW(szPath,szOldPath,dwDirectoryLen);
-	szName=szPath+dwDirectoryLen;
+	MemCopyW(szNewPath,szOldPath,dwDirectoryLen);
+	MemCopyW(szNewPath+dwDirectoryLen,szNewName,iLength);
+	szNewPath[dwDirectoryLen+iLength]=L'\0';
 	
-	// Copying filename
-	MemCopyW(szName,szNewName,iLength);
-	szName[iLength]=L'\0';
+
+	if (!FileSystem::MoveFile(szOldPath,szNewPath))
+	{
+		
+		CHAR* pError;
+		CStringW str;
+			
+		if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
+			GetLastError(),LANG_USER_DEFAULT,(LPSTR)&pError,0,NULL))
+		{
+			str.Format(IDS_ERRORCANNOTRENAME,(LPCWSTR)A2W(pError));
+			LocalFree(pError);
+		}
+		else
+			str.Format(IDS_ERRORCANNOTRENAME,L"");
+
+		pWnd->MessageBox(str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+
+		delete[] szNewPath;
+		return;
+	}
+
+
+
+
+
+	
+	// Do fileoperation first
+	if (szTitle!=szName && szTitle!=NULL)
+	{
+		WCHAR* pTemp=szTitle;
+		InterlockedExchangePointer(&szTitle,NULL);
+		delete[] pTemp;
+	}
+
+	InterlockedExchangePointer(&szName,szNewPath+dwDirectoryLen);
 	bNameLength=iLength;
+	InterlockedExchangePointer(&szPath,szNewPath);
 	
 	// Finding extension
 	for (bExtensionPos=bNameLength-1; szName[bExtensionPos-1]!=L'.' && bExtensionPos>0 ;bExtensionPos--);
 	if (bExtensionPos==0)
 		bExtensionPos=bNameLength;
 
-	FileSystem::MoveFile(szOldPath,szPath);
-	
-	
-	szTitle=szName;
-
 	delete[] szOldPath;
 
 	AddFlags(LITEM_FILENAMEOK);
-	RemoveFlags(LITEM_TITLEOK);
+	
+	UpdateTitle();
 }
 
 LPWSTR CLocatedItem::GetToolTipText() const

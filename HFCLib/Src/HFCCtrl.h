@@ -136,10 +136,10 @@ public:
 	BOOL EnableWindow(BOOL bEnable=TRUE) { return ::EnableWindow(m_hWnd,bEnable); }
 	HWND SetFocus() const { return ::SetFocus(m_hWnd); }
 	
-	UINT GetTextLength() const { return ::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0); } 
-	UINT GetText(LPSTR lpszText,UINT cchTextMax) const { return ::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText); } 
+	UINT GetTextLength() const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0); } 
+	UINT GetText(LPSTR lpszText,UINT cchTextMax) const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText); } 
 	UINT GetText(CStringA& str) const;
-	BOOL SetText(LPCSTR lpsz) { return ::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); }
+	BOOL SetText(LPCSTR lpsz) { return (BOOL)::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); }
 
 #ifdef DEF_WCHAR
 	BOOL SetWindowText(LPCWSTR lpsz);

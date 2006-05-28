@@ -60,7 +60,7 @@ public:
 
 	void SetToDeleted();
 	
-	void ChangeName(LPCWSTR szNewName,int iLength=-1);
+	void ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength=-1);
 
 private:
 	LPWSTR szTitle;

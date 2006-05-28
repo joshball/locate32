@@ -33,6 +33,17 @@ inline int CListCtrlEx::GetColumnIDFromSubItem(int nSubItem) const
 	return aSubItems[nSubItem];
 }
 
+inline int CListCtrlEx::GetColumnSubItemFromID(int nID) const
+{
+	for (int i=0;i<aSubItems.GetSize();i++)
+	{
+		if (aSubItems[i]==nID)
+			return i;
+	}
+	return -1;
+}
+
+
 inline int CListCtrlEx::GetColumnID(int nCol) const
 {
 	ASSERT(nCol<aColumns.GetSize());

@@ -4,6 +4,7 @@
 	Version="8,00"
 	Name="HFCCon32"
 	ProjectGUID="{6D82EE6E-184C-4528-A264-FD16F6B96545}"
+	RootNamespace="HFCCon32"
 	>
 	<Platforms>
 		<Platform
@@ -53,6 +54,7 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -127,6 +129,7 @@
 				ProgramDataBaseFileName=".\RelLogging/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -199,6 +202,7 @@
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="1"
 			/>
 			<Tool

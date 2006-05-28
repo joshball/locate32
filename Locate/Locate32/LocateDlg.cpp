@@ -1282,11 +1282,8 @@ void CLocateDlg::StartBackgroundOperations()
 	//DebugMessage("CLocateDlg::StartBackgroundOperations():  BEGIN");
 	if (m_pBackgroundUpdater==NULL)
 	{
-		CBackgroundUpdater* pTmp=new CBackgroundUpdater(m_pListCtrl);
-		if (m_pBackgroundUpdater==NULL)
-			InterlockedExchangePointer(&m_pBackgroundUpdater,pTmp);
-		else
-			delete pTmp;
+		InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+		m_pBackgroundUpdater->CreateEventsAndMutex();
 	}
 
 	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
@@ -1296,19 +1293,9 @@ void CLocateDlg::StartBackgroundOperations()
 	if (GetExtraFlags()&efEnableFSTracking)
 	{
 		if (m_pFileNotificationsThread==NULL)
-		{
-			CCheckFileNotificationsThread* pTmp=new CCheckFileNotificationsThread;
-			if (m_pFileNotificationsThread==NULL)
-				InterlockedExchangePointer(&m_pFileNotificationsThread,pTmp);
-			else
-				delete pTmp;
-		}
+			InterlockedExchangePointer(&m_pFileNotificationsThread,new CCheckFileNotificationsThread);
 		
-		if (m_pListCtrl->GetItemCount()>0)
-		{
-			m_pFileNotificationsThread->Start();
-			//m_pBackgroundUpdater->Start();
-		}
+		m_pFileNotificationsThread->Start();
 	}
 	else if (m_pFileNotificationsThread!=NULL)
 		m_pFileNotificationsThread->CouldStop();
@@ -1847,12 +1834,10 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(STRNULL,0,0);
 		break;
 	case ClassShouldDelete:
+		InterlockedExchangePointer(&((CLocateDlg*)dwParam)->m_pLocater,NULL);
 		delete pLocater;
-		((CLocateDlg*)dwParam)->m_pLocater=NULL;
 		
-		if (((CLocateDlg*)dwParam)->m_pBackgroundUpdater==NULL)
-			((CLocateDlg*)dwParam)->StartBackgroundOperations();
-		
+		((CLocateDlg*)dwParam)->StartBackgroundOperations();
 		((CLocateDlg*)dwParam)->m_pBackgroundUpdater->StopWaiting();
 		
 		// To update items, looks like this is only way
@@ -1867,16 +1852,16 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 		case ueOpen:
 		case ueCreate:
 			{
-				CString str;
+				CStringW str;
 				str.Format(IDS_ERRORCANNOTOPENDB,pLocater->GetCurrentDatabaseFile());
-				((CLocateDlg*)dwParam)->MessageBox(str,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
+				((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
 				return FALSE;
 			}
 		case ueRead:
 			{
-				CString str;
+				CStringW str;
 				str.Format(IDS_ERRORCANNOTREADDB,pLocater->GetCurrentDatabaseFile());
-				((CLocateDlg*)dwParam)->MessageBox(str,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
+				((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
 				return FALSE;
 			}
 		case ueAlloc:
@@ -1884,9 +1869,9 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 			break;
 		case ueInvalidDatabase:
 			{
-				CString str;
+				CStringW str;
 				str.Format(IDS_ERRORINVALIDDB,pLocater->GetCurrentDatabaseFile());
-				((CLocateDlg*)dwParam)->MessageBox(str,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
+				((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
 				return FALSE;
 			}
 		}
@@ -3664,6 +3649,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				case Title:
 					if (pItem->ShouldUpdateTitle())
 						pItem->UpdateTitle();
+
 					if (pItem->ShouldUpdateIcon())
                         pItem->UpdateIcon();
 
@@ -3712,7 +3698,10 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					if (pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon())
 					{
 						if (m_pBackgroundUpdater==NULL)
-							m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+						{
+							InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+							m_pBackgroundUpdater->CreateEventsAndMutex();
+						}
 						
 						
 						DebugFormatMessage("LVN_GETDISPINFO: Calling AddToUpdateList with nDetail=Title for %s",pItem->GetName());
@@ -3743,7 +3732,10 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					if (pItem->ShouldUpdateParentIcon())
 					{
 						if (m_pBackgroundUpdater==NULL)
-							m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+						{
+							InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+							m_pBackgroundUpdater->CreateEventsAndMutex();
+						}
 
 						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,InFolder)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,InFolder);
@@ -3762,7 +3754,11 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						pItem->ShouldUpdateByDetail(nDetail))
 					{
 						if (m_pBackgroundUpdater==NULL)
-							m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+						{
+							InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+							m_pBackgroundUpdater->CreateEventsAndMutex();
+						}
+
 						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,%d)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem,DWORD(nDetail));
 						
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,nDetail);
@@ -3845,7 +3841,10 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					if (pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon())
 					{
 						if (m_pBackgroundUpdater==NULL)
-							m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+						{
+							InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+							m_pBackgroundUpdater->CreateEventsAndMutex();
+						}
 						
 						
 						DebugFormatMessage("LVN_GETDISPINFO: Calling AddToUpdateList with nDetail=Title for %s",pItem->GetName());
@@ -3876,7 +3875,11 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					if (pItem->ShouldUpdateParentIcon())
 					{
 						if (m_pBackgroundUpdater==NULL)
-							m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+						{
+							InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+							m_pBackgroundUpdater->CreateEventsAndMutex();
+						}
+
 
 						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,InFolder)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,InFolder);
@@ -3895,7 +3898,11 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						pItem->ShouldUpdateByDetail(nDetail))
 					{
 						if (m_pBackgroundUpdater==NULL)
-							m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+						{
+							InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+							m_pBackgroundUpdater->CreateEventsAndMutex();
+						}
+
 						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,%d)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem,DWORD(nDetail));
 						
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,nDetail);
@@ -6477,7 +6484,11 @@ void CLocateDlg::OnChangeFileName()
 			if (fnd.DoModal(*this))
 			{
 				if (fnd.m_sFileName.Compare(pItem->GetName())!=0)
-					pItem->ChangeName(fnd.m_sFileName,fnd.m_sFileName.GetLength());
+					pItem->ChangeName(this,fnd.m_sFileName,fnd.m_sFileName.GetLength());
+				for (int iColumn=0;iColumn<m_pListCtrl->GetColumnCount();iColumn++)
+					m_pListCtrl->SetItemText(iItem,iColumn,LPSTR_TEXTCALLBACKW);
+
+				m_pListCtrl->Update(iItem);
 				m_pListCtrl->RedrawItems(iItem,iItem);
 			}
 		}

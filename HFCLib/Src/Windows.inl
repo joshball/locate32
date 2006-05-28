@@ -166,7 +166,7 @@ inline CSize CDC::GetTextExtent(LPCSTR lpszString,int nCount) const
 inline CSize CDC::GetTextExtent(const CStringA& str) const
 {
 	CSize sz;
-	::GetTextExtentPoint32A(m_hDC,(LPCSTR)str,str.GetLength(),&sz);
+	::GetTextExtentPoint32A(m_hDC,(LPCSTR)str,(int)str.GetLength(),&sz);
 	return sz;
 }
 
@@ -800,7 +800,7 @@ inline BOOL CDC::SetPixelV(const POINT& point,COLORREF crColor)
 
 inline BOOL CDC::TextOut(int x,int y,const CStringA& str)
 {
-	return ::TextOutA(m_hDC,x,y,(LPCSTR)str,str.GetLength());
+	return ::TextOutA(m_hDC,x,y,(LPCSTR)str,(int)str.GetLength());
 }
 
 
@@ -808,12 +808,12 @@ inline BOOL CDC::TextOut(int x,int y,const CStringA& str)
 inline BOOL CDC::ExtTextOut(int x,int y,UINT nOptions,LPCRECT lpRect,
 	const CString& str,LPINT lpDxWidths)
 {
-	return ::ExtTextOutA(m_hDC,x,y,nOptions,lpRect,(LPCSTR)str,str.GetLength(),lpDxWidths);
+	return ::ExtTextOutA(m_hDC,x,y,nOptions,lpRect,(LPCSTR)str,(int)str.GetLength(),lpDxWidths);
 }
 
 inline int CDC::DrawText(const CString& str,LPRECT lpRect,UINT nFormat)
 {
-	return ::DrawTextA(m_hDC,(LPCSTR)str,str.GetLength(),lpRect,nFormat);
+	return ::DrawTextA(m_hDC,(LPCSTR)str,(int)str.GetLength(),lpRect,nFormat);
 }
 
 
@@ -1068,18 +1068,18 @@ inline BOOL CDC::DrawState(const CPoint& pt,const CSize& size,LPCWSTR lpszText,U
 
 inline BOOL CDC::TextOut(int x,int y,const CStringW& str)
 {
-	return ::TextOutW(m_hDC,x,y,(LPCWSTR)str,str.GetLength());
+	return ::TextOutW(m_hDC,x,y,(LPCWSTR)str,(int)str.GetLength());
 }
 
 inline BOOL CDC::ExtTextOut(int x,int y,UINT nOptions,LPCRECT lpRect,
 	const CStringW& str,LPINT lpDxWidths)
 {
-	return ExtTextOut(x,y,nOptions,lpRect,str,str.GetLength(),lpDxWidths);
+	return ExtTextOut(x,y,nOptions,lpRect,str,(int)str.GetLength(),lpDxWidths);
 }
 
 inline int CDC::DrawText(const CStringW& str,LPRECT lpRect,UINT nFormat)
 {
-	return DrawText((LPCWSTR)str,str.GetLength(),lpRect,nFormat);
+	return DrawText((LPCWSTR)str,(int)str.GetLength(),lpRect,nFormat);
 }
 #endif
 ///////////////////////////
@@ -1393,7 +1393,7 @@ inline BOOL CWnd::EnableScrollBar(int nSBFlags,UINT nArrowFlags)
 
 inline UINT CWnd::SetTimer(UINT idTimer,UINT uTimeout,TIMERPROC tmprc)
 {
-	return ::SetTimer(m_hWnd,idTimer,uTimeout,tmprc);
+	return (UINT)::SetTimer(m_hWnd,(UINT_PTR)idTimer,uTimeout,tmprc);
 }
 
 inline BOOL CWnd::KillTimer(UINT uIDEvent)
@@ -1472,7 +1472,7 @@ inline UINT CWnd::GetDlgItemText(int nIDDlgItem,LPSTR lpString,int nMaxCount) co
 
 inline UINT CWnd::GetDlgItemTextLength(int nIDDlgItem) const
 {
-	return ::SendDlgItemMessage(m_hWnd,nIDDlgItem,WM_GETTEXTLENGTH,0,0);
+	return (UINT)::SendDlgItemMessage(m_hWnd,nIDDlgItem,WM_GETTEXTLENGTH,0,0);
 }
 
 
@@ -1492,29 +1492,29 @@ inline UINT CWnd::IsDlgButtonChecked(int nIDButton) const
 }
 inline LONG CWnd::SendDlgItemMessage(int idControl,UINT uMsg,WPARAM wParam,LPARAM lParam) const
 {
-	return ::SendDlgItemMessageA(m_hWnd,idControl,uMsg,wParam,lParam);
+	return (LONG)::SendDlgItemMessageA(m_hWnd,idControl,uMsg,wParam,lParam);
 }
 inline LONG CWnd::SendDlgItemMessageW(int idControl,UINT uMsg,WPARAM wParam,LPARAM lParam) const
 {
-	return ::SendDlgItemMessageW(m_hWnd,idControl,uMsg,wParam,lParam);
+	return (LONG)::SendDlgItemMessageW(m_hWnd,idControl,uMsg,wParam,lParam);
 }
 
 inline BOOL CWnd::SetDlgItemInt(int idControl,UINT uValue,BOOL fSigned) const
 {
-	return ::SetDlgItemInt(m_hWnd,idControl,uValue,fSigned);
+	return (BOOL)::SetDlgItemInt(m_hWnd,idControl,uValue,fSigned);
 }
 
 inline BOOL CWnd::SetDlgItemText(int idControl,LPCSTR lpsz) const
 {
-	return ::SetDlgItemTextA(m_hWnd,idControl,lpsz);
+	return (BOOL)::SetDlgItemTextA(m_hWnd,idControl,lpsz);
 }
 
 inline BOOL CWnd::SetDlgItemText(int idControl,LPCWSTR lpsz) const
 {
 	if (IsUnicodeSystem())
-		return ::SetDlgItemTextW(m_hWnd,idControl,lpsz);
+		return (BOOL)::SetDlgItemTextW(m_hWnd,idControl,lpsz);
 	else
-		return ::SetDlgItemText(m_hWnd,idControl,W2A(lpsz));
+		return (BOOL)::SetDlgItemText(m_hWnd,idControl,W2A(lpsz));
 }
 
 inline void CWnd::DragAcceptFiles(BOOL bAccept)
@@ -1534,12 +1534,12 @@ inline HICON CWnd::GetIcon(BOOL bBigIcon) const
 
 inline BOOL CWnd::OpenClipboard()
 {
-	return ::OpenClipboard(m_hWnd);
+	return (BOOL)::OpenClipboard(m_hWnd);
 }
 	
 inline int CWnd::MessageBox(LPCSTR lpText,LPCSTR lpCaption,UINT uType)
 {
-	return ::MessageBoxA(m_hWnd,lpText,lpCaption,uType);
+	return (int)::MessageBoxA(m_hWnd,lpText,lpCaption,uType);
 }
 
 inline int CWnd::MessageBox(LPCWSTR lpText,LPCWSTR lpCaption,UINT uType)

@@ -72,6 +72,8 @@ public:
 	~CBackgroundUpdater();
 
 public:
+	void CreateEventsAndMutex();
+
 	BOOL Start();
 	BOOL Stop();
 	void GoToSleep();
@@ -202,37 +204,8 @@ inline CBackgroundUpdater::CBackgroundUpdater(CListCtrl* pList)
 :	m_pList(pList),m_hThread(NULL)
 {
 	BkgDebugMessage("CBackgroundUpdater::CBackgroundUpdater()");
-	m_phEvents[0]=CreateEvent(NULL,TRUE,FALSE,NULL);
-	m_phEvents[1]=CreateEvent(NULL,TRUE,FALSE,NULL);
-
-	m_hUpdateListPtrInUse=CreateMutex(NULL,FALSE,NULL);
 }
 
-inline CBackgroundUpdater::~CBackgroundUpdater()
-{	
-	if (m_hThread!=NULL)
-	{
-		InterlockedExchangePointer(&GetLocateDlg()->m_pBackgroundUpdater,NULL);
-		HANDLE hThread=m_hThread;
-		InterlockedExchangePointer(&m_hThread,NULL);
-		m_hThread=NULL;
-
-		BkgDebugMessage("CBackgroundUpdater::~CBackgroundUpdater()");
-		CloseHandle(hThread);
-	}
-	else
-		InterlockedExchangePointer(&GetLocateDlg()->m_pBackgroundUpdater,NULL);
-	
-	
-	CloseHandle(m_phEvents[0]);
-	CloseHandle(m_phEvents[1]);
-
-	if (m_hUpdateListPtrInUse!=NULL)
-	{
-		CloseHandle(m_hUpdateListPtrInUse);
-		m_hUpdateListPtrInUse=NULL;
-	}
-}
 
 
 inline CArrayFP<CBackgroundUpdater::Item*>* CBackgroundUpdater::GetUpdaterListPtr()

@@ -4,6 +4,7 @@
 	Version="8,00"
 	Name="HFCLib32"
 	ProjectGUID="{31D2AE48-CEF3-4388-BF48-93D25691FB81}"
+	RootNamespace="HFCLib32"
 	>
 	<Platforms>
 		<Platform
@@ -51,6 +52,7 @@
 				ProgramDataBaseFileName=".\Debug/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="1"
 			/>
 			<Tool
@@ -126,6 +128,7 @@
 				ProgramDataBaseFileName=".\Release/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -200,6 +203,7 @@
 				ProgramDataBaseFileName=".\RelLogging/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"

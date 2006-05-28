@@ -206,6 +206,7 @@
 #define IDS_ERRCANNOTFIND               1007
 #define IDC_NAME                        1008
 #define IDS_ERRORCANNOTCREATE           1008
+#define IDS_ERRORCANNOTRENAME           1009
 #define IDC_MOREDIRECTORIES             1009
 #define IDC_LOOKIN                      1010
 #define IDC_BROWSE                      1011

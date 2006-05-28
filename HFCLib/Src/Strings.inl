@@ -84,7 +84,7 @@ inline LPSTR alloccopyWtoA(LPCWSTR szString,SIZE_T dwLength)
 
 inline LPWSTR alloccopyAtoW(LPCSTR szString)
 {
-	SIZE_T dwLength=istrlen(szString);
+	int dwLength=(int)istrlen(szString);
 	WCHAR* psz=new WCHAR[max(dwLength,1)+1];
 	MultiByteToWideChar(CP_ACP,0,szString,dwLength+1,psz,dwLength+1);
 	return psz;

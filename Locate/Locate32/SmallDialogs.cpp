@@ -2011,20 +2011,16 @@ BOOL CChangeFilenameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 				CStringW Path(m_sParent);
 				Path << L'\\' << Name;
 				
-				if (!FileSystem::IsValidFileName(Path))
+			
+				if (m_sFileName.CompareNoCase(Name)!=0)
 				{
-					CStringW msg;
-					msg.Format(IDS_INVALIDFILENAME,(LPCWSTR)m_sFileName);
-					MessageBox(msg,ID2W(IDS_ERROR),MB_OK|MB_ICONINFORMATION);
-					break;
-				}
-
-				if (FileSystem::IsFile(Path))
-				{
-					CStringW msg;
-					msg.Format(IDS_CHANGEFILENAMEALREADYEXISTS,(LPCWSTR)Name);
-					MessageBox(msg,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
-					break;
+					if (FileSystem::IsFile(Path))
+					{
+						CStringW msg;
+						msg.Format(IDS_CHANGEFILENAMEALREADYEXISTS,(LPCWSTR)Name);
+						MessageBox(msg,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+						break;
+					}
 				}
 				m_sFileName=Name;
 				EndDialog(1);

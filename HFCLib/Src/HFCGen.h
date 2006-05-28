@@ -882,8 +882,8 @@ public:
 	SIZE_T QueryValueLength(LPCWSTR lpszValueName,BOOL& bIsOk) const;
 
 	BOOL SetValue(LPCWSTR lpValueName,CStringW& strData);
-	LONG SetValue(LPCWSTR lpValueName,LPCSTR lpData,SIZE_T cbData,DWORD dwType=REG_BINARY);
-	LONG SetValue(LPCWSTR lpValueName,LPCWSTR strData,SIZE_T cbDataAsChars,DWORD dwType=REG_SZ);
+	LONG SetValue(LPCWSTR lpValueName,LPCSTR lpData,DWORD cbData,DWORD dwType=REG_BINARY);
+	LONG SetValue(LPCWSTR lpValueName,LPCWSTR strData,DWORD cbDataAsChars,DWORD dwType=REG_SZ);
 	LONG SetValue(LPCWSTR lpValueName,LPCWSTR strData);
 	BOOL SetValue(LPCWSTR lpValueName,DWORD dwData);
 

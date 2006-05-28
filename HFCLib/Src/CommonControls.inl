@@ -15,17 +15,17 @@ inline CCommonCtrl::CCommonCtrl(HWND hWnd)
 
 inline BOOL CCommonCtrl::SetBkColor(COLORREF bkColor)
 {
-	return ::SendMessage(m_hWnd,CCM_SETBKCOLOR,0,(LPARAM)bkColor);
+	return (BOOL)::SendMessage(m_hWnd,CCM_SETBKCOLOR,0,(LPARAM)bkColor);
 }
 
 inline BOOL CCommonCtrl::SetColorScheme(const COLORSCHEME* pScheme)
 {
-	return ::SendMessage(m_hWnd,CCM_SETCOLORSCHEME,0,(LPARAM)pScheme);
+	return (BOOL)::SendMessage(m_hWnd,CCM_SETCOLORSCHEME,0,(LPARAM)pScheme);
 }
 
 inline BOOL CCommonCtrl::GetColorScheme(COLORSCHEME* pScheme) const
 {
-	return ::SendMessage(m_hWnd,CCM_GETCOLORSCHEME,0,(LPARAM)pScheme);
+	return (BOOL)::SendMessage(m_hWnd,CCM_GETCOLORSCHEME,0,(LPARAM)pScheme);
 }
 
 inline HWND CCommonCtrl::GetDropTarget() const
@@ -35,12 +35,12 @@ inline HWND CCommonCtrl::GetDropTarget() const
 
 inline BOOL CCommonCtrl::SetUnicodeFormat(BOOL nFormat)
 {
-	return ::SendMessage(m_hWnd,CCM_SETUNICODEFORMAT,0,(LPARAM)nFormat);
+	return (BOOL)::SendMessage(m_hWnd,CCM_SETUNICODEFORMAT,0,(LPARAM)nFormat);
 }
 
 inline BOOL CCommonCtrl::GetUnicodeFormat() const
 {
-	return ::SendMessage(m_hWnd,CCM_GETUNICODEFORMAT,0,0);
+	return (BOOL)::SendMessage(m_hWnd,CCM_GETUNICODEFORMAT,0,0);
 }
 
 inline UINT CCommonCtrl::SetVersion(UINT nVersion)
@@ -332,12 +332,12 @@ inline BOOL CStatusBarCtrl::Create(DWORD dwStyle,const RECT* rect,HWND hWndParen
 
 inline BOOL CStatusBarCtrl::SetText(LPCSTR lpszText,int nPane,int nType)
 {
-	return ::SendMessage(m_hWnd,SB_SETTEXT,(WPARAM)nPane|nType,(LPARAM)lpszText); 
+	return (BOOL)::SendMessage(m_hWnd,SB_SETTEXT,(WPARAM)nPane|nType,(LPARAM)lpszText); 
 }
 
 inline BOOL CStatusBarCtrl::SetParts(int nParts,int* pWidths)
 {
-	return ::SendMessage(m_hWnd,SB_SETPARTS,(WPARAM)nParts,(LPARAM)pWidths);
+	return (BOOL)::SendMessage(m_hWnd,SB_SETPARTS,(WPARAM)nParts,(LPARAM)pWidths);
 }
 
 inline int CStatusBarCtrl::GetParts(int nParts,int* pParts) const
@@ -347,7 +347,7 @@ inline int CStatusBarCtrl::GetParts(int nParts,int* pParts) const
 
 inline BOOL CStatusBarCtrl::GetBorders(int* pBorders) const
 {
-	return ::SendMessage(m_hWnd,SB_GETBORDERS,0,(LPARAM)pBorders);
+	return (BOOL)::SendMessage(m_hWnd,SB_GETBORDERS,0,(LPARAM)pBorders);
 }
 
 inline void CStatusBarCtrl::SetMinHeight(int nMin)
@@ -357,22 +357,22 @@ inline void CStatusBarCtrl::SetMinHeight(int nMin)
 
 inline BOOL CStatusBarCtrl::SetSimple(BOOL bSimple)
 {
-	return ::SendMessage(m_hWnd,SB_SIMPLE,(WPARAM)bSimple,0);
+	return (BOOL)::SendMessage(m_hWnd,SB_SIMPLE,(WPARAM)bSimple,0);
 }
 
 inline BOOL CStatusBarCtrl::IsSimple() const
 {
-	return ::SendMessage(m_hWnd,SB_ISSIMPLE,0,0); 
+	return (BOOL)::SendMessage(m_hWnd,SB_ISSIMPLE,0,0); 
 }
 	
 inline BOOL CStatusBarCtrl::GetRect(int nPane,LPRECT lpRect) const
 {
-	return ::SendMessage(m_hWnd,SB_GETRECT,(WPARAM)nPane,(LPARAM)lpRect); 
+	return (BOOL)::SendMessage(m_hWnd,SB_GETRECT,(WPARAM)nPane,(LPARAM)lpRect); 
 }
 
 inline BOOL CStatusBarCtrl::SetIcon(int nPane,HICON hIcon)
 {
-	return ::SendMessage(m_hWnd,SB_SETICON,nPane,(LPARAM)hIcon);
+	return (BOOL)::SendMessage(m_hWnd,SB_SETICON,nPane,(LPARAM)hIcon);
 }
 
 inline HICON CStatusBarCtrl::GetIcon(int nPane) const
@@ -382,38 +382,38 @@ inline HICON CStatusBarCtrl::GetIcon(int nPane) const
 
 inline BOOL CStatusBarCtrl::SetTipText(int n,LPCSTR szText)
 {
-	return ::SendMessage(m_hWnd,SB_SETTIPTEXT,n,(LPARAM)szText);
+	return (BOOL)::SendMessage(m_hWnd,SB_SETTIPTEXT,n,(LPARAM)szText);
 }
 
 inline BOOL CStatusBarCtrl::GetTipText(int n,LPSTR szText,SIZE_T nSize) const
 {
-	return ::SendMessage(m_hWnd,SB_GETTIPTEXT,MAKEWPARAM(n,nSize),(LPARAM)szText);
+	return (BOOL)::SendMessage(m_hWnd,SB_GETTIPTEXT,MAKEWPARAM(n,nSize),(LPARAM)szText);
 }
 
 inline BOOL CStatusBarCtrl::SetUnicodeFormat(int nFormat)
 {
-	return ::SendMessage(m_hWnd,SB_SETUNICODEFORMAT,0,nFormat);
+	return (BOOL)::SendMessage(m_hWnd,SB_SETUNICODEFORMAT,0,nFormat);
 }
 
 inline BOOL CStatusBarCtrl::GetUnicodeFormat() const
 {
-	return ::SendMessage(m_hWnd,SB_GETUNICODEFORMAT,0,0);
+	return (BOOL)::SendMessage(m_hWnd,SB_GETUNICODEFORMAT,0,0);
 }
 
 #ifdef DEF_WCHAR
 inline BOOL CStatusBarCtrl::SetText(LPCWSTR lpszText,int nPane,int nType)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,SB_SETTEXTW,(WPARAM)nPane|nType,(LPARAM)lpszText); 
+		return (BOOL)::SendMessageW(m_hWnd,SB_SETTEXTW,(WPARAM)nPane|nType,(LPARAM)lpszText); 
 	else
-		return ::SendMessage(m_hWnd,SB_SETTEXTA,(WPARAM)nPane|nType,(LPARAM)(LPCSTR)W2A(lpszText)); 
+		return (BOOL)::SendMessage(m_hWnd,SB_SETTEXTA,(WPARAM)nPane|nType,(LPARAM)(LPCSTR)W2A(lpszText)); 
 }
 inline BOOL CStatusBarCtrl::SetTipText(int n,LPCWSTR szText)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,SB_SETTIPTEXTW,n,(LPARAM)szText);
+		return (BOOL)::SendMessageW(m_hWnd,SB_SETTIPTEXTW,n,(LPARAM)szText);
 	else
-		return ::SendMessage(m_hWnd,SB_SETTIPTEXTA,n,(LPARAM)(LPCSTR)W2A(szText));
+		return (BOOL)::SendMessage(m_hWnd,SB_SETTIPTEXTA,n,(LPARAM)(LPCSTR)W2A(szText));
 }
 
 #endif
@@ -449,7 +449,7 @@ inline void CToolTipCtrl::NewToolRect(LPTOOLINFO lpToolInfo)
 	
 inline BOOL CToolTipCtrl::AdjustRect(LPRECT lpRect,BOOL fLarger)
 {
-	return ::SendMessage(m_hWnd,TTM_ADJUSTRECT,fLarger,LPARAM(lpRect));
+	return (BOOL)::SendMessage(m_hWnd,TTM_ADJUSTRECT,fLarger,LPARAM(lpRect));
 }
 
 inline int CToolTipCtrl::GetToolCount() const
@@ -487,12 +487,12 @@ inline void CToolTipCtrl::DelTool(LPTOOLINFO lpToolInfo)
 
 inline BOOL CToolTipCtrl::TrackActivate(BOOL bStart,LPTOOLINFO lpToolInfo)
 {
-	return ::SendMessage(m_hWnd,TTM_TRACKACTIVATE,(WPARAM)bStart,(LPARAM)lpToolInfo);
+	return (BOOL)::SendMessage(m_hWnd,TTM_TRACKACTIVATE,(WPARAM)bStart,(LPARAM)lpToolInfo);
 }
 
 inline BOOL CToolTipCtrl::TrackPosition(int xPos,int yPos)
 {
-	return ::SendMessage(m_hWnd,TTM_TRACKPOSITION,0,MAKELPARAM(xPos,yPos));
+	return (BOOL)::SendMessage(m_hWnd,TTM_TRACKPOSITION,0,MAKELPARAM(xPos,yPos));
 }
 
 inline void CToolTipCtrl::GetMargin(LPRECT lprc) const
@@ -517,7 +517,7 @@ inline int CToolTipCtrl::SetMaxTipWidth(int iWidth)
 
 inline BOOL CToolTipCtrl::EnumTools(UINT iTool,LPTOOLINFO lpToolInfo) const
 {
-	return ::SendMessage(m_hWnd,TTM_ENUMTOOLS,iTool,(LPARAM)lpToolInfo);
+	return (BOOL)::SendMessage(m_hWnd,TTM_ENUMTOOLS,iTool,(LPARAM)lpToolInfo);
 }
 
 inline void CToolTipCtrl::Pop()
@@ -532,7 +532,7 @@ inline void CToolTipCtrl::SetToolInfo(LPTOOLINFO lpToolInfo)
 
 inline BOOL CToolTipCtrl::AddTool(LPTOOLINFO lpToolInfo)
 {
-	return ::SendMessage(m_hWnd,TTM_ADDTOOL,0,(LPARAM)lpToolInfo);
+	return (BOOL)::SendMessage(m_hWnd,TTM_ADDTOOL,0,(LPARAM)lpToolInfo);
 }
 	
 
@@ -544,7 +544,7 @@ inline void CToolTipCtrl::NewToolRect(LPTOOLINFOW lpToolInfo)
 
 inline BOOL CToolTipCtrl::AddTool(LPTOOLINFOW lpToolInfo)
 {
-	return ::SendMessage(m_hWnd,TTM_ADDTOOLW,0,(LPARAM)lpToolInfo);
+	return (BOOL)::SendMessage(m_hWnd,TTM_ADDTOOLW,0,(LPARAM)lpToolInfo);
 }
 
 inline void CToolTipCtrl::SetToolInfo(LPTOOLINFOW lpToolInfo)
@@ -554,7 +554,7 @@ inline void CToolTipCtrl::SetToolInfo(LPTOOLINFOW lpToolInfo)
 
 inline BOOL CToolTipCtrl::GetCurrentTool(LPTOOLINFOW lpToolInfo) const
 {
-	return ::SendMessage(m_hWnd,TTM_GETCURRENTTOOLW,0,LPARAM(lpToolInfo));
+	return (BOOL)::SendMessage(m_hWnd,TTM_GETCURRENTTOOLW,0,LPARAM(lpToolInfo));
 }
 
 inline void CToolTipCtrl::DelTool(LPTOOLINFOW lpToolInfo)
@@ -564,7 +564,7 @@ inline void CToolTipCtrl::DelTool(LPTOOLINFOW lpToolInfo)
 
 inline BOOL CToolTipCtrl::EnumTools(UINT iTool,LPTOOLINFOW lpToolInfo) const
 {
-	return ::SendMessage(m_hWnd,TTM_ENUMTOOLSW,iTool,(LPARAM)lpToolInfo);
+	return (BOOL)::SendMessage(m_hWnd,TTM_ENUMTOOLSW,iTool,(LPARAM)lpToolInfo);
 }
 #endif
 
@@ -766,32 +766,32 @@ inline CToolBarCtrl::CToolBarCtrl(HWND hWnd)
 
 inline BOOL CToolBarCtrl::IsButtonEnabled(int nID) const
 {
-	return ::SendMessage(m_hWnd,TB_ISBUTTONENABLED,(WPARAM)nID,0);
+	return (BOOL)::SendMessage(m_hWnd,TB_ISBUTTONENABLED,(WPARAM)nID,0);
 }
 
 inline BOOL CToolBarCtrl::IsButtonChecked(int nID) const
 {
-	return ::SendMessage(m_hWnd,TB_ISBUTTONCHECKED,(WPARAM)nID,0);
+	return (BOOL)::SendMessage(m_hWnd,TB_ISBUTTONCHECKED,(WPARAM)nID,0);
 }
 
 inline BOOL CToolBarCtrl::IsButtonPressed(int nID) const
 {
-	return ::SendMessage(m_hWnd,TB_ISBUTTONPRESSED,(WPARAM)nID,0);
+	return (BOOL)::SendMessage(m_hWnd,TB_ISBUTTONPRESSED,(WPARAM)nID,0);
 }
 
 inline BOOL CToolBarCtrl::IsButtonHidden(int nID) const
 {
-	return ::SendMessage(m_hWnd,TB_ISBUTTONHIDDEN,(WPARAM)nID,0);
+	return (BOOL)::SendMessage(m_hWnd,TB_ISBUTTONHIDDEN,(WPARAM)nID,0);
 }
 
 inline BOOL CToolBarCtrl::IsButtonIndeterminate(int nID) const
 {
-	return ::SendMessage(m_hWnd,TB_ISBUTTONINDETERMINATE,(WPARAM)nID,0);
+	return (BOOL)::SendMessage(m_hWnd,TB_ISBUTTONINDETERMINATE,(WPARAM)nID,0);
 }
 
 inline BOOL CToolBarCtrl::SetState(int nID,UINT nState)
 {
-	return ::SendMessage(m_hWnd,TB_SETSTATE,(WPARAM)nID,(LPARAM)MAKELONG(nState,0));
+	return (BOOL)::SendMessage(m_hWnd,TB_SETSTATE,(WPARAM)nID,(LPARAM)MAKELONG(nState,0));
 }
 
 inline int CToolBarCtrl::GetState(int nID) const
@@ -801,7 +801,7 @@ inline int CToolBarCtrl::GetState(int nID) const
 
 inline BOOL CToolBarCtrl::GetButton(int nIndex,LPTBBUTTON lpButton) const
 {
-	return ::SendMessage(m_hWnd,TB_GETBUTTON,(WPARAM)nIndex,(LPARAM)lpButton);
+	return (BOOL)::SendMessage(m_hWnd,TB_GETBUTTON,(WPARAM)nIndex,(LPARAM)lpButton);
 }
 
 inline int CToolBarCtrl::GetButtonCount() const
@@ -811,12 +811,12 @@ inline int CToolBarCtrl::GetButtonCount() const
 
 inline BOOL CToolBarCtrl::GetRect(int nID,LPRECT lpRect) const
 {
-	return ::SendMessage(m_hWnd,TB_GETRECT,(WPARAM)nID,(LPARAM)lpRect);
+	return (BOOL)::SendMessage(m_hWnd,TB_GETRECT,(WPARAM)nID,(LPARAM)lpRect);
 }
 	
 inline BOOL CToolBarCtrl::GetItemRect(int nIndex,LPRECT lpRect) const
 {
-	return ::SendMessage(m_hWnd,TB_GETITEMRECT,(WPARAM)nIndex,(LPARAM)lpRect);
+	return (BOOL)::SendMessage(m_hWnd,TB_GETITEMRECT,(WPARAM)nIndex,(LPARAM)lpRect);
 }
 
 inline void CToolBarCtrl::SetButtonStructSize(int nSize)
@@ -826,12 +826,12 @@ inline void CToolBarCtrl::SetButtonStructSize(int nSize)
 
 inline BOOL CToolBarCtrl::SetButtonSize(LPSIZE size)
 {
-	return ::SendMessage(m_hWnd,TB_SETBUTTONSIZE,0,(LPARAM)MAKELONG(size->cx,size->cy));
+	return (BOOL)::SendMessage(m_hWnd,TB_SETBUTTONSIZE,0,(LPARAM)MAKELONG(size->cx,size->cy));
 }
 
 inline BOOL CToolBarCtrl::SetBitmapSize(LPSIZE size)
 {
-	return ::SendMessage(m_hWnd,TB_SETBITMAPSIZE,0,(LPARAM)MAKELONG(size->cx,size->cy));
+	return (BOOL)::SendMessage(m_hWnd,TB_SETBITMAPSIZE,0,(LPARAM)MAKELONG(size->cx,size->cy));
 }
 
 inline HWND CToolBarCtrl::GetToolTips() const
@@ -856,7 +856,7 @@ inline int CToolBarCtrl::GetRows() const
 
 inline BOOL CToolBarCtrl::SetCmdID(int nIndex,UINT nID)
 {
-	return ::SendMessage(m_hWnd,TB_SETCMDID,(WPARAM)nIndex,(LPARAM)nID);
+	return (BOOL)::SendMessage(m_hWnd,TB_SETCMDID,(WPARAM)nIndex,(LPARAM)nID);
 }
 
 inline UINT CToolBarCtrl::GetBitmapFlags() const
@@ -871,42 +871,42 @@ inline HWND CToolBarCtrl::SetParent(HWND hParentNew)
 
 inline BOOL CToolBarCtrl::EnableButton(int nID,BOOL bEnable)
 {
-	return ::SendMessage(m_hWnd,TB_ENABLEBUTTON,(WPARAM)nID,(LPARAM)MAKELONG(bEnable,0));
+	return (BOOL)::SendMessage(m_hWnd,TB_ENABLEBUTTON,(WPARAM)nID,(LPARAM)MAKELONG(bEnable,0));
 }
 
 inline BOOL CToolBarCtrl::CheckButton(int nID,BOOL bCheck)
 {
-	return ::SendMessage(m_hWnd,TB_CHECKBUTTON,(WPARAM)nID,(LPARAM)MAKELONG(bCheck,0));
+	return (BOOL)::SendMessage(m_hWnd,TB_CHECKBUTTON,(WPARAM)nID,(LPARAM)MAKELONG(bCheck,0));
 }
 
 inline BOOL CToolBarCtrl::PressButton(int nID,BOOL bPress)
 {
-	return ::SendMessage(m_hWnd,TB_PRESSBUTTON,(WPARAM)nID,(LPARAM)MAKELONG(bPress,0));
+	return (BOOL)::SendMessage(m_hWnd,TB_PRESSBUTTON,(WPARAM)nID,(LPARAM)MAKELONG(bPress,0));
 }
 
 inline BOOL CToolBarCtrl::HideButton(int nID,BOOL bHide)
 {
-	return ::SendMessage(m_hWnd,TB_HIDEBUTTON,(WPARAM)nID,(LPARAM)MAKELONG(bHide,0));
+	return (BOOL)::SendMessage(m_hWnd,TB_HIDEBUTTON,(WPARAM)nID,(LPARAM)MAKELONG(bHide,0));
 }
 
 inline BOOL CToolBarCtrl::Indeterminate(int nID,BOOL bIndeterminate)
 {
-	return ::SendMessage(m_hWnd,TB_INDETERMINATE,(WPARAM)nID,(LPARAM)MAKELONG(bIndeterminate,0));
+	return (BOOL)::SendMessage(m_hWnd,TB_INDETERMINATE,(WPARAM)nID,(LPARAM)MAKELONG(bIndeterminate,0));
 }
 
 inline BOOL CToolBarCtrl::AddButtons(int nNumButtons,LPTBBUTTON lpButtons)
 {
-	return ::SendMessage(m_hWnd,TB_ADDBUTTONS,(WPARAM)nNumButtons,(LPARAM)lpButtons);
+	return (BOOL)::SendMessage(m_hWnd,TB_ADDBUTTONS,(WPARAM)nNumButtons,(LPARAM)lpButtons);
 }
 
 inline BOOL CToolBarCtrl::InsertButton(int nIndex,LPTBBUTTON lpButton)
 {
-	return ::SendMessage(m_hWnd,TB_INSERTBUTTON,(WPARAM)nIndex,(LPARAM)lpButton);
+	return (BOOL)::SendMessage(m_hWnd,TB_INSERTBUTTON,(WPARAM)nIndex,(LPARAM)lpButton);
 }
 
 inline BOOL CToolBarCtrl::DeleteButton(int nIndex)
 {
-	return ::SendMessage(m_hWnd,TB_DELETEBUTTON,(WPARAM)nIndex,0);
+	return (BOOL)::SendMessage(m_hWnd,TB_DELETEBUTTON,(WPARAM)nIndex,0);
 }
 
 inline UINT CToolBarCtrl::CommandToIndex(UINT nID) const
@@ -938,7 +938,7 @@ inline void CToolBarCtrl::AutoSize()
 
 inline BOOL CToolBarCtrl::SetIndent(int nIndent)
 {
-	return ::SendMessage(m_hWnd,TB_SETINDENT,nIndent,0);
+	return (BOOL)::SendMessage(m_hWnd,TB_SETINDENT,nIndent,0);
 }
 
 inline HIMAGELIST CToolBarCtrl::GetImageList() const
@@ -973,7 +973,7 @@ inline HIMAGELIST CToolBarCtrl::SetDisabledImageList(HIMAGELIST hImageList)
 
 inline BOOL CToolBarCtrl::GetMaxSize(SIZE& rSize) const
 {
-	return ::SendMessage(m_hWnd,TB_GETMAXSIZE,0,(LPARAM)&rSize);
+	return (BOOL)::SendMessage(m_hWnd,TB_GETMAXSIZE,0,(LPARAM)&rSize);
 }
 
 inline HRESULT CToolBarCtrl::GetObject(REFIID rID,void** ppvObject) const
@@ -1070,7 +1070,7 @@ inline BOOL CSpinButtonCtrl::Create(DWORD dwStyle,const RECT* rect,HWND hParentW
 
 inline BOOL CSpinButtonCtrl::SetAccel(int nAccel, UDACCEL* pAccel)
 {
-	return ::SendMessage(m_hWnd,UDM_SETACCEL,(WPARAM)nAccel,(LPARAM)pAccel); 
+	return (BOOL)::SendMessage(m_hWnd,UDM_SETACCEL,(WPARAM)nAccel,(LPARAM)pAccel); 
 }
 
 inline UINT CSpinButtonCtrl::GetAccel(int nAccel, UDACCEL* pAccel) const
@@ -1148,18 +1148,18 @@ inline int CTabCtrl::GetItemCount() const
 
 inline BOOL CTabCtrl::GetItem(int nItem,TC_ITEM* pTabCtrlItem) const
 {
-	return ::SendMessage(m_hWnd,TCM_GETITEM,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+	return (BOOL)::SendMessage(m_hWnd,TCM_GETITEM,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 }
 
 inline BOOL CTabCtrl::SetItem(int nItem,TC_ITEM* pTabCtrlItem)
 {
-	return ::SendMessage(m_hWnd,TCM_SETITEM,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+	return (BOOL)::SendMessage(m_hWnd,TCM_SETITEM,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 }
 
 
 inline BOOL CTabCtrl::GetItemRect(int nItem,LPRECT lpRect) const
 {
-	return ::SendMessage(m_hWnd,TCM_GETITEMRECT,(WPARAM)nItem,(LPARAM)lpRect);
+	return (BOOL)::SendMessage(m_hWnd,TCM_GETITEMRECT,(WPARAM)nItem,(LPARAM)lpRect);
 }
 
 
@@ -1200,17 +1200,17 @@ inline int CTabCtrl::GetCurFocus() const
 
 inline BOOL CTabCtrl::InsertItem(int nItem,TC_ITEM* pTabCtrlItem)
 {
-	return ::SendMessage(m_hWnd,TCM_INSERTITEM,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+	return (BOOL)::SendMessage(m_hWnd,TCM_INSERTITEM,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 }
 
 inline BOOL CTabCtrl::DeleteItem(int nItem)
 {
-	return ::SendMessage(m_hWnd,TCM_DELETEITEM,(WPARAM)nItem,0);
+	return (BOOL)::SendMessage(m_hWnd,TCM_DELETEITEM,(WPARAM)nItem,0);
 }
 
 inline BOOL CTabCtrl::DeleteAllItems()
 {
-	return ::SendMessage(m_hWnd,TCM_DELETEALLITEMS,0,0);
+	return (BOOL)::SendMessage(m_hWnd,TCM_DELETEALLITEMS,0,0);
 }
 
 inline void CTabCtrl::AdjustRect(BOOL bLarger,LPRECT lpRect)
@@ -1255,12 +1255,12 @@ inline int CHeaderCtrl::GetItemCount() const
 
 inline BOOL CHeaderCtrl::GetItem(int nPos, HD_ITEM* pHeaderItem) const
 {
-	return ::SendMessage(m_hWnd,HDM_GETITEM,nPos,(LPARAM)pHeaderItem);
+	return (BOOL)::SendMessage(m_hWnd,HDM_GETITEM,nPos,(LPARAM)pHeaderItem);
 }
 
 inline BOOL CHeaderCtrl::SetItem(int nPos, HD_ITEM* pHeaderItem)
 {
-	return ::SendMessage(m_hWnd,HDM_SETITEM,nPos,(LPARAM)pHeaderItem);
+	return (BOOL)::SendMessage(m_hWnd,HDM_SETITEM,nPos,(LPARAM)pHeaderItem);
 }
 
 inline int CHeaderCtrl::InsertItem(int nPos, HD_ITEM* phdi)
@@ -1270,17 +1270,17 @@ inline int CHeaderCtrl::InsertItem(int nPos, HD_ITEM* phdi)
 
 inline BOOL CHeaderCtrl::DeleteItem(int nPos)
 {
-	return ::SendMessage(m_hWnd,HDM_DELETEITEM,nPos,0);
+	return (BOOL)::SendMessage(m_hWnd,HDM_DELETEITEM,nPos,0);
 }
 
 inline BOOL CHeaderCtrl::Layout(HD_LAYOUT* pHeaderLayout)
 {
-	return ::SendMessage(m_hWnd,HDM_LAYOUT,0,(LPARAM)pHeaderLayout);
+	return (BOOL)::SendMessage(m_hWnd,HDM_LAYOUT,0,(LPARAM)pHeaderLayout);
 }
 
 inline BOOL CHeaderCtrl::GetItemRect(int iItem,LPRECT lprc) const
 {
-	return ::SendMessage(m_hWnd,HDM_GETITEMRECT,iItem,(LPARAM)lprc);
+	return (BOOL)::SendMessage(m_hWnd,HDM_GETITEMRECT,iItem,(LPARAM)lprc);
 }
 
 inline HIMAGELIST CHeaderCtrl::SetImageList(HIMAGELIST hIml)
@@ -1305,12 +1305,12 @@ inline HIMAGELIST CHeaderCtrl::CreateDragImage(int iItem)
 
 inline BOOL CHeaderCtrl::GetOrderArray(int iCount,int* lpi) const
 {
-	return ::SendMessage(m_hWnd,HDM_GETORDERARRAY,iCount,(LPARAM)lpi);
+	return (BOOL)::SendMessage(m_hWnd,HDM_GETORDERARRAY,iCount,(LPARAM)lpi);
 }
 
 inline BOOL CHeaderCtrl::SetOrderArray(int iCount,int* lpi)
 {
-	return ::SendMessage(m_hWnd,HDM_SETORDERARRAY,iCount,(LPARAM)lpi);
+	return (BOOL)::SendMessage(m_hWnd,HDM_SETORDERARRAY,iCount,(LPARAM)lpi);
 }
 
 inline int CHeaderCtrl::SetHotDivider(int fPos,DWORD dw)
@@ -1345,7 +1345,7 @@ inline COLORREF CListCtrl::GetBkColor() const
 
 inline BOOL CListCtrl::SetBkColor(COLORREF cr)
 {
-	return ::SendMessage(m_hWnd,LVM_SETBKCOLOR,0,(LPARAM)cr);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETBKCOLOR,0,(LPARAM)cr);
 }
 
 inline HIMAGELIST CListCtrl::GetImageList(int nImageList) const
@@ -1365,7 +1365,7 @@ inline int CListCtrl::GetItemCount() const
 
 inline BOOL CListCtrl::GetItem(LV_ITEM* pItem) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETITEM,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(m_hWnd,LVM_GETITEM,0,(LPARAM)pItem);
 }
 
 
@@ -1373,7 +1373,7 @@ inline BOOL CListCtrl::GetItem(LV_ITEM* pItem) const
 
 inline BOOL CListCtrl::SetItem(const LV_ITEM* pItem)
 {
-	return ::SendMessage(m_hWnd,LVM_SETITEM,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETITEM,0,(LPARAM)pItem);
 }
 
 inline UINT CListCtrl::GetCallbackMask() const
@@ -1383,7 +1383,7 @@ inline UINT CListCtrl::GetCallbackMask() const
 
 inline BOOL CListCtrl::SetCallbackMask(UINT nMask)
 {
-	return ::SendMessage(m_hWnd,LVM_SETCALLBACKMASK,(WPARAM)nMask,0);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETCALLBACKMASK,(WPARAM)nMask,0);
 }
 
 inline int CListCtrl::GetNextItem(int nItem, int nFlags) const
@@ -1393,12 +1393,12 @@ inline int CListCtrl::GetNextItem(int nItem, int nFlags) const
 
 inline BOOL CListCtrl::SetItemPosition(int nItem, POINT pt)
 {
-	return ::SendMessage(m_hWnd,LVM_SETITEMPOSITION,(LPARAM)nItem,MAKELPARAM(pt.x,pt.y));
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETITEMPOSITION,(LPARAM)nItem,MAKELPARAM(pt.x,pt.y));
 }
 
 inline BOOL CListCtrl::GetItemPosition(int nItem, LPPOINT lpPoint) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETITEMPOSITION,(WPARAM)nItem,(LPARAM)lpPoint);
+	return (BOOL)::SendMessage(m_hWnd,LVM_GETITEMPOSITION,(WPARAM)nItem,(LPARAM)lpPoint);
 }
 
 inline int CListCtrl::GetStringWidth(LPCSTR lpsz) const
@@ -1413,12 +1413,12 @@ inline HWND CListCtrl::GetEditControl() const
 
 inline BOOL CListCtrl::GetColumn(int nCol, LV_COLUMN* pColumn) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETCOLUMN,(WPARAM)nCol,(LPARAM)pColumn);
+	return (BOOL)::SendMessage(m_hWnd,LVM_GETCOLUMN,(WPARAM)nCol,(LPARAM)pColumn);
 }
 
 inline BOOL CListCtrl::SetColumn(int nCol, const LV_COLUMN* pColumn)
 {
-	return ::SendMessage(m_hWnd,LVM_SETCOLUMN,(WPARAM)nCol,(LPARAM)pColumn);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETCOLUMN,(WPARAM)nCol,(LPARAM)pColumn);
 }
 
 inline int CListCtrl::GetColumnWidth(int nCol) const
@@ -1428,12 +1428,12 @@ inline int CListCtrl::GetColumnWidth(int nCol) const
 
 inline BOOL CListCtrl::SetColumnWidth(int nCol, int cx)
 {
-	return ::SendMessage(m_hWnd,LVM_SETCOLUMNWIDTH,(WPARAM)nCol,MAKELPARAM(cx,0));
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETCOLUMNWIDTH,(WPARAM)nCol,MAKELPARAM(cx,0));
 }
 
 inline BOOL CListCtrl::GetViewRect(LPRECT lpRect) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETVIEWRECT,0,(LPARAM)lpRect);
+	return (BOOL)::SendMessage(m_hWnd,LVM_GETVIEWRECT,0,(LPARAM)lpRect);
 }
 
 inline COLORREF CListCtrl::GetTextColor() const
@@ -1443,7 +1443,7 @@ inline COLORREF CListCtrl::GetTextColor() const
 
 inline BOOL CListCtrl::SetTextColor(COLORREF cr)
 {
-	return ::SendMessage(m_hWnd,LVM_SETTEXTCOLOR,0,(LPARAM)cr);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETTEXTCOLOR,0,(LPARAM)cr);
 }
 
 inline COLORREF CListCtrl::GetTextBkColor() const
@@ -1453,7 +1453,7 @@ inline COLORREF CListCtrl::GetTextBkColor() const
 
 inline BOOL CListCtrl::SetTextBkColor(COLORREF cr)
 {
-	return ::SendMessage(m_hWnd,LVM_SETTEXTBKCOLOR,0,(LPARAM)cr);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETTEXTBKCOLOR,0,(LPARAM)cr);
 }
 
 inline int CListCtrl::GetTopIndex() const
@@ -1468,12 +1468,12 @@ inline int CListCtrl::GetCountPerPage() const
 
 inline BOOL CListCtrl::GetOrigin(LPPOINT lpPoint) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETORIGIN,0,(LPARAM)lpPoint);
+	return (BOOL)::SendMessage(m_hWnd,LVM_GETORIGIN,0,(LPARAM)lpPoint);
 }
 
 inline BOOL CListCtrl::SetItemState(int nItem, LV_ITEM* pItem)
 {
-	return ::SendMessage(m_hWnd,LVM_SETITEMSTATE,nItem,(LPARAM)pItem);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETITEMSTATE,nItem,(LPARAM)pItem);
 }
 
 inline UINT CListCtrl::GetItemState(int nItem, UINT nMask) const
@@ -1500,12 +1500,12 @@ inline int CListCtrl::InsertItem(const LV_ITEM* pItem)
 
 inline BOOL CListCtrl::DeleteItem(int nItem)
 {
-	return ::SendMessage(m_hWnd,LVM_DELETEITEM,nItem,0);
+	return (BOOL)::SendMessage(m_hWnd,LVM_DELETEITEM,nItem,0);
 }
 
 inline BOOL CListCtrl::DeleteAllItems()
 {
-	return ::SendMessage(m_hWnd,LVM_DELETEALLITEMS,0,0);
+	return (BOOL)::SendMessage(m_hWnd,LVM_DELETEALLITEMS,0,0);
 }
 
 inline int CListCtrl::FindItem(LV_FINDINFO* pFindInfo, int nStart) const
@@ -1520,22 +1520,22 @@ inline int CListCtrl::HitTest(LV_HITTESTINFO* pHitTestInfo) const
 
 inline BOOL CListCtrl::EnsureVisible(int nItem, BOOL bPartialOK)
 {
-	return ::SendMessage(m_hWnd,LVM_ENSUREVISIBLE,nItem,bPartialOK);
+	return (BOOL)::SendMessage(m_hWnd,LVM_ENSUREVISIBLE,nItem,bPartialOK);
 }
 
 inline BOOL CListCtrl::Scroll(SIZE size)
 {
-	return ::SendMessage(m_hWnd,LVM_SCROLL,size.cx,size.cy);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SCROLL,size.cx,size.cy);
 }
 
 inline BOOL CListCtrl::RedrawItems(int nFirst, int nLast)
 {
-	return ::SendMessage(m_hWnd,LVM_REDRAWITEMS,nFirst,nLast);
+	return (BOOL)::SendMessage(m_hWnd,LVM_REDRAWITEMS,nFirst,nLast);
 }
 
 inline BOOL CListCtrl::Arrange(UINT nCode)
 {
-	return ::SendMessage(m_hWnd,LVM_ARRANGE,nCode,0);
+	return (BOOL)::SendMessage(m_hWnd,LVM_ARRANGE,nCode,0);
 }
 
 inline HWND CListCtrl::EditLabel(int nItem)
@@ -1560,7 +1560,7 @@ inline int CListCtrl::GetColumnCount() const
 
 inline BOOL CListCtrl::DeleteColumn(int nCol)
 {
-	return ::SendMessage(m_hWnd,LVM_DELETECOLUMN,nCol,0);
+	return (BOOL)::SendMessage(m_hWnd,LVM_DELETECOLUMN,nCol,0);
 }
 
 inline HIMAGELIST CListCtrl::CreateDragImage(int nItem, LPPOINT lpPoint)
@@ -1570,12 +1570,12 @@ inline HIMAGELIST CListCtrl::CreateDragImage(int nItem, LPPOINT lpPoint)
 
 inline BOOL CListCtrl::Update(int nItem)
 {
-	return ::SendMessage(m_hWnd,LVM_UPDATE,nItem,0);
+	return (BOOL)::SendMessage(m_hWnd,LVM_UPDATE,nItem,0);
 }
 
 inline BOOL CListCtrl::SortItems(PFNLVCOMPARE pfnCompare, DWORD dwData)
 {
-	return ::SendMessage(m_hWnd,LVM_SORTITEMS,(WPARAM)dwData,(LPARAM)pfnCompare);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SORTITEMS,(WPARAM)dwData,(LPARAM)pfnCompare);
 }
 
 inline void CListCtrl::RemoveImageList(int nImageList)
@@ -1635,12 +1635,12 @@ inline int CListCtrl::SubItemHitTest(LPLVHITTESTINFO plvhti)
 
 inline BOOL CListCtrl::SetColumnOrderArray(int iCount,LPINT pi)
 {
-	return ::SendMessage(m_hWnd,LVM_SETCOLUMNORDERARRAY,iCount,(LPARAM)pi);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETCOLUMNORDERARRAY,iCount,(LPARAM)pi);
 }
 
 inline BOOL CListCtrl::GetColumnOrderArray(int iCount,LPINT pi) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETCOLUMNORDERARRAY,iCount,(LPARAM)pi);
+	return (BOOL)::SendMessage(m_hWnd,LVM_GETCOLUMNORDERARRAY,iCount,(LPARAM)pi);
 }
 
 inline int CListCtrl::SetHotItem(int iItem)
@@ -1837,12 +1837,12 @@ inline int CListCtrl::SortGroups(PFNLVGROUPCOMPARE pfnGroupCompare,void* plv)
 #ifdef DEF_WCHAR
 inline BOOL CListCtrl::GetColumn(int nCol, LV_COLUMNW* pColumn) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETCOLUMNW,(WPARAM)nCol,(LPARAM)pColumn);
+	return (BOOL)::SendMessage(m_hWnd,LVM_GETCOLUMNW,(WPARAM)nCol,(LPARAM)pColumn);
 }
 
 inline BOOL CListCtrl::SetColumn(int nCol, const LV_COLUMNW* pColumn)
 {
-	return ::SendMessage(m_hWnd,LVM_SETCOLUMNW,(WPARAM)nCol,(LPARAM)pColumn);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETCOLUMNW,(WPARAM)nCol,(LPARAM)pColumn);
 }
 
 inline int CListCtrl::InsertColumn(int nCol, const LV_COLUMNW* pColumn)
@@ -1854,12 +1854,12 @@ inline int CListCtrl::InsertColumn(int nCol, const LV_COLUMNW* pColumn)
 
 inline BOOL CListCtrl::GetItem(LV_ITEMW* pItem) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETITEMW,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(m_hWnd,LVM_GETITEMW,0,(LPARAM)pItem);
 }
 
 inline BOOL CListCtrl::SetItem(const LV_ITEMW* pItem)
 {
-	return ::SendMessage(m_hWnd,LVM_SETITEMW,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETITEMW,0,(LPARAM)pItem);
 }
 
 
@@ -1984,17 +1984,17 @@ inline HTREEITEM CTreeCtrl::GetRootItem() const
 
 inline BOOL CTreeCtrl::GetItem(TV_ITEM* pItem) const
 {
-	return ::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)pItem);
 }
 
 inline BOOL CTreeCtrl::SetItem(TV_ITEM* pItem)
 {
-	return ::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)pItem);
 }
 
 inline BOOL CTreeCtrl::SetItem(TV_ITEMW* pItem)
 {
-	return ::SendMessage(m_hWnd,TVM_SETITEMW,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SETITEMW,0,(LPARAM)pItem);
 }
 
 inline BOOL CTreeCtrl::ItemHasChildren(HTREEITEM hItem) const
@@ -2024,37 +2024,37 @@ inline HTREEITEM CTreeCtrl::InsertItem(LPTV_INSERTSTRUCTW lpInsertStruct)
 
 inline BOOL CTreeCtrl::DeleteItem(HTREEITEM hItem)
 {
-	return ::SendMessage(m_hWnd,TVM_DELETEITEM,0,(LPARAM)hItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_DELETEITEM,0,(LPARAM)hItem);
 }
 
 inline BOOL CTreeCtrl::DeleteAllItems()
 {
-	return ::SendMessage(m_hWnd,TVM_DELETEITEM,0,(LPARAM)TVI_ROOT);
+	return (BOOL)::SendMessage(m_hWnd,TVM_DELETEITEM,0,(LPARAM)TVI_ROOT);
 }
 
 inline BOOL CTreeCtrl::Expand(HTREEITEM hItem,UINT nCode)
 {
-	return ::SendMessage(m_hWnd,TVM_EXPAND,(WPARAM)nCode,(LPARAM)hItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_EXPAND,(WPARAM)nCode,(LPARAM)hItem);
 }
 
 inline BOOL CTreeCtrl::Select(HTREEITEM hItem,UINT nCode)
 {
-	return ::SendMessage(m_hWnd,TVM_SELECTITEM,(WPARAM)nCode,(LPARAM)hItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SELECTITEM,(WPARAM)nCode,(LPARAM)hItem);
 }
 
 inline BOOL CTreeCtrl::SelectItem(HTREEITEM hItem)
 {
-	return ::SendMessage(m_hWnd,TVM_SELECTITEM,TVGN_CARET,(LPARAM)hItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SELECTITEM,TVGN_CARET,(LPARAM)hItem);
 }
 
 inline BOOL CTreeCtrl::SelectDropTarget(HTREEITEM hItem)
 {
-	return ::SendMessage(m_hWnd,TVM_SELECTITEM,TVGN_DROPHILITE,(LPARAM)hItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SELECTITEM,TVGN_DROPHILITE,(LPARAM)hItem);
 }
 
 inline BOOL CTreeCtrl::SelectSetFirstVisible(HTREEITEM hItem)
 {
-	return ::SendMessage(m_hWnd,TVM_SELECTITEM,TVGN_FIRSTVISIBLE,(LPARAM)hItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SELECTITEM,TVGN_FIRSTVISIBLE,(LPARAM)hItem);
 }
 
 inline HWND CTreeCtrl::EditLabel(HTREEITEM hItem)
@@ -2074,17 +2074,17 @@ inline HIMAGELIST CTreeCtrl::CreateDragImage(HTREEITEM hItem)
 
 inline BOOL CTreeCtrl::SortChildren(HTREEITEM hItem)
 {
-	return ::SendMessage(m_hWnd,TVM_SORTCHILDREN,0,(LPARAM)hItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SORTCHILDREN,0,(LPARAM)hItem);
 }
 
 inline BOOL CTreeCtrl::EnsureVisible(HTREEITEM hItem)
 {
-	return ::SendMessage(m_hWnd,TVM_ENSUREVISIBLE,0,(LPARAM)hItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_ENSUREVISIBLE,0,(LPARAM)hItem);
 }
 
 inline BOOL CTreeCtrl::SortChildrenCB(LPTV_SORTCB pSort)
 {
-	return ::SendMessage(m_hWnd,TVM_SORTCHILDRENCB,0,(LPARAM)pSort);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SORTCHILDRENCB,0,(LPARAM)pSort);
 }
 
 inline UINT CTreeCtrl::GetCheckState(HTREEITEM hItem) const
@@ -2171,27 +2171,27 @@ inline HIMAGELIST CComboBoxEx::SetImageList(HIMAGELIST hImageList)
 
 inline BOOL CComboBoxEx::GetItem(COMBOBOXEXITEM* pItem) const
 {
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETITEM,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETITEM,0,(LPARAM)pItem);
 }
 
 inline BOOL CComboBoxEx::GetItem(COMBOBOXEXITEMW* pItem) const
 {
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETITEMW,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETITEMW,0,(LPARAM)pItem);
 }
 
 inline BOOL CComboBoxEx::SetItem(const COMBOBOXEXITEM* pItem)
 {
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_SETITEM,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(CCommonCtrl::m_hWnd,CBEM_SETITEM,0,(LPARAM)pItem);
 }
 
 inline BOOL CComboBoxEx::SetItem(const COMBOBOXEXITEMW* pItem)
 {
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_SETITEMW,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(CCommonCtrl::m_hWnd,CBEM_SETITEMW,0,(LPARAM)pItem);
 }
 
 inline BOOL CComboBoxEx::DeleteItem(int nItem)
 {
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_DELETEITEM,nItem,0);
+	return (BOOL)::SendMessage(CCommonCtrl::m_hWnd,CBEM_DELETEITEM,nItem,0);
 }
 
 inline HWND CComboBoxEx::GetComboControl() const
@@ -2242,32 +2242,32 @@ inline BOOL CAnimateCtrl::Create(DWORD dwStyle, const RECT* rect, HWND hParentWn
 
 inline BOOL CAnimateCtrl::Open(LPTSTR szName)
 {
-	return ::SendMessage(m_hWnd,ACM_OPEN,0,(LPARAM)szName);
+	return (BOOL)::SendMessage(m_hWnd,ACM_OPEN,0,(LPARAM)szName);
 }
 
 inline BOOL CAnimateCtrl::OpenEx(LPTSTR szName)
 {
-	return ::SendMessage(m_hWnd,ACM_OPEN,(WPARAM)GetLanguageSpecificResourceHandle(),(LPARAM)szName);
+	return (BOOL)::SendMessage(m_hWnd,ACM_OPEN,(WPARAM)GetLanguageSpecificResourceHandle(),(LPARAM)szName);
 }
 
 inline BOOL CAnimateCtrl::Play(WORD from, WORD to, DWORD rep)
 {
-	return ::SendMessage(m_hWnd,ACM_PLAY, (WPARAM)rep, MAKELPARAM(from, to));
+	return (BOOL)::SendMessage(m_hWnd,ACM_PLAY, (WPARAM)rep, MAKELPARAM(from, to));
 }
 
 inline BOOL CAnimateCtrl::Stop()
 {
-	return ::SendMessage(m_hWnd,ACM_STOP,0,0);
+	return (BOOL)::SendMessage(m_hWnd,ACM_STOP,0,0);
 }
 
 inline BOOL CAnimateCtrl::Close()
 {
-	return ::SendMessage(m_hWnd,ACM_OPEN,NULL,NULL);
+	return (BOOL)::SendMessage(m_hWnd,ACM_OPEN,NULL,NULL);
 }
 
 inline BOOL CAnimateCtrl::Seek(DWORD frame)
 {
-	return ::SendMessage(m_hWnd,ACM_PLAY, (WPARAM)1, MAKELPARAM(frame, frame));
+	return (BOOL)::SendMessage(m_hWnd,ACM_PLAY, (WPARAM)1, MAKELPARAM(frame, frame));
 }
 #endif
 ///////////////////////////////////////////
@@ -2292,12 +2292,12 @@ inline BOOL CMonthCalCtrl::Create(DWORD dwStyle, const RECT* rect, HWND hParentW
 
 inline BOOL CMonthCalCtrl::GetCurSel(LPSYSTEMTIME pst) const
 {
-	return ::SendMessage(m_hWnd,MCM_GETCURSEL,0,(LPARAM)pst);
+	return (BOOL)::SendMessage(m_hWnd,MCM_GETCURSEL,0,(LPARAM)pst);
 }
 
 inline BOOL CMonthCalCtrl::SetCurSel(LPSYSTEMTIME pst)
 {
-	return ::SendMessage(m_hWnd,MCM_SETCURSEL,0,(LPARAM)pst);
+	return (BOOL)::SendMessage(m_hWnd,MCM_SETCURSEL,0,(LPARAM)pst);
 }
 
 inline DWORD CMonthCalCtrl::GetMaxSelCount() const
@@ -2307,17 +2307,17 @@ inline DWORD CMonthCalCtrl::GetMaxSelCount() const
 
 inline BOOL CMonthCalCtrl::SetMaxSelCount(UINT n)
 {
-	return ::SendMessage(m_hWnd,MCM_SETMAXSELCOUNT,(WPARAM)n,0);
+	return (BOOL)::SendMessage(m_hWnd,MCM_SETMAXSELCOUNT,(WPARAM)n,0);
 }
 
 inline BOOL CMonthCalCtrl::GetSelRange(LPSYSTEMTIME rgst) const
 {
-	return ::SendMessage(m_hWnd,MCM_GETSELRANGE,0,(LPARAM)rgst);
+	return (BOOL)::SendMessage(m_hWnd,MCM_GETSELRANGE,0,(LPARAM)rgst);
 }
 
 inline BOOL CMonthCalCtrl::SetSelRange(LPSYSTEMTIME rgst)
 {
-	return ::SendMessage(m_hWnd,MCM_SETSELRANGE,0,(LPARAM)rgst);
+	return (BOOL)::SendMessage(m_hWnd,MCM_SETSELRANGE,0,(LPARAM)rgst);
 }
 
 inline DWORD CMonthCalCtrl::GetMonthRange(DWORD gmr, LPSYSTEMTIME rgst) const
@@ -2327,17 +2327,17 @@ inline DWORD CMonthCalCtrl::GetMonthRange(DWORD gmr, LPSYSTEMTIME rgst) const
 
 inline BOOL CMonthCalCtrl::SetDayState(int cbds, LPMONTHDAYSTATE rgds)
 {
-	return ::SendMessage(m_hWnd,MCM_SETDAYSTATE,cbds,(LPARAM)rgds);
+	return (BOOL)::SendMessage(m_hWnd,MCM_SETDAYSTATE,cbds,(LPARAM)rgds);
 }
 
 inline BOOL CMonthCalCtrl::GetMinReqRect(LPRECT prc) const
 {
-	return ::SendMessage(m_hWnd,MCM_GETMINREQRECT,0,(LPARAM)prc);
+	return (BOOL)::SendMessage(m_hWnd,MCM_GETMINREQRECT,0,(LPARAM)prc);
 }
 
 inline BOOL CMonthCalCtrl::SetColor(int iColor,COLORREF clr)
 {
-	return ::SendMessage(m_hWnd,MCM_SETCOLOR,iColor,(LPARAM)clr);
+	return (BOOL)::SendMessage(m_hWnd,MCM_SETCOLOR,iColor,(LPARAM)clr);
 }
 
 inline COLORREF CMonthCalCtrl::GetColor(int iColor) const
@@ -2347,22 +2347,22 @@ inline COLORREF CMonthCalCtrl::GetColor(int iColor) const
 
 inline BOOL CMonthCalCtrl::SetToday(LPSYSTEMTIME pst)
 {
-	return ::SendMessage(m_hWnd,MCM_SETTODAY,0,(LPARAM)pst);
+	return (BOOL)::SendMessage(m_hWnd,MCM_SETTODAY,0,(LPARAM)pst);
 }
 
 inline BOOL CMonthCalCtrl::GetToday(LPSYSTEMTIME pst)
 {
-	return ::SendMessage(m_hWnd,MCM_GETTODAY,0,(LPARAM)pst);
+	return (BOOL)::SendMessage(m_hWnd,MCM_GETTODAY,0,(LPARAM)pst);
 }
 
 inline BOOL CMonthCalCtrl::HitTest(PMCHITTESTINFO pinfo)
 {
-	return ::SendMessage(m_hWnd,MCM_HITTEST,0,(LPARAM)pinfo);
+	return (BOOL)::SendMessage(m_hWnd,MCM_HITTEST,0,(LPARAM)pinfo);
 }
 
 inline BOOL CMonthCalCtrl::SetFirstDayOfWeek(int iDay)
 {
-	return ::SendMessage(m_hWnd,MCM_SETFIRSTDAYOFWEEK,0,(LPARAM)iDay);
+	return (BOOL)::SendMessage(m_hWnd,MCM_SETFIRSTDAYOFWEEK,0,(LPARAM)iDay);
 }
 
 inline DWORD CMonthCalCtrl::GetFirstDayOfWeek() const
@@ -2377,7 +2377,7 @@ inline DWORD CMonthCalCtrl::GetRange(LPSYSTEMTIME rgst) const
 
 inline BOOL CMonthCalCtrl::SetRange(DWORD gdtr, LPSYSTEMTIME rgst)
 {
-	return ::SendMessage(m_hWnd,MCM_SETRANGE,(WPARAM)gdtr,(LPARAM)rgst);
+	return (BOOL)::SendMessage(m_hWnd,MCM_SETRANGE,(WPARAM)gdtr,(LPARAM)rgst);
 }
 
 inline int CMonthCalCtrl::GetMonthDelta() const
@@ -2422,7 +2422,7 @@ inline DWORD CDateTimeCtrl::GetSystemtime(LPSYSTEMTIME pst) const
 
 inline BOOL CDateTimeCtrl::SetSystemtime(DWORD gd, LPSYSTEMTIME pst)
 {
-	return ::SendMessage(m_hWnd,DTM_SETSYSTEMTIME,(WPARAM)gd,(LPARAM)pst);
+	return (BOOL)::SendMessage(m_hWnd,DTM_SETSYSTEMTIME,(WPARAM)gd,(LPARAM)pst);
 }
 
 inline DWORD CDateTimeCtrl::GetRange(LPSYSTEMTIME rgst) const
@@ -2432,17 +2432,17 @@ inline DWORD CDateTimeCtrl::GetRange(LPSYSTEMTIME rgst) const
 
 inline BOOL CDateTimeCtrl::SetRange(DWORD gdtr, LPSYSTEMTIME rgst)
 {
-	return ::SendMessage(m_hWnd,DTM_SETRANGE,(WPARAM)gdtr,(LPARAM)rgst);
+	return (BOOL)::SendMessage(m_hWnd,DTM_SETRANGE,(WPARAM)gdtr,(LPARAM)rgst);
 }
 
 inline BOOL CDateTimeCtrl::SetFormat(LPCTSTR sz)
 {
-	return ::SendMessage(m_hWnd,DTM_SETFORMAT,0,(LPARAM)sz);
+	return (BOOL)::SendMessage(m_hWnd,DTM_SETFORMAT,0,(LPARAM)sz);
 }
 
 inline BOOL CDateTimeCtrl::SetMonthCalColor(int iColor, COLORREF clr)
 {
-	return ::SendMessage(m_hWnd,DTM_SETMCCOLOR,iColor,(LPARAM)clr);
+	return (BOOL)::SendMessage(m_hWnd,DTM_SETMCCOLOR,iColor,(LPARAM)clr);
 }
 
 inline COLORREF CDateTimeCtrl::GetMonthCalColor(int iColor) const
@@ -2457,7 +2457,7 @@ inline HWND CDateTimeCtrl::GetMonthCal()
 
 inline BOOL CDateTimeCtrl::SetMonthCalFont(HFONT hfont,DWORD fRedraw)
 {
-	return ::SendMessage(m_hWnd,DTM_SETMCFONT,(WPARAM)hfont,(LPARAM)fRedraw);
+	return (BOOL)::SendMessage(m_hWnd,DTM_SETMCFONT,(WPARAM)hfont,(LPARAM)fRedraw);
 }
 
 inline HFONT CDateTimeCtrl::GetMonthCalFont() const

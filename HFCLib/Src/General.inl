@@ -564,15 +564,15 @@ inline LONG CRegKey::RenameSubKey(LPCWSTR szOldName,LPCWSTR szNewName)
 	return RenameSubKey(m_hKey,szOldName,szNewName);
 }
 
-inline LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCSTR lpData,SIZE_T cbData,DWORD dwType)
+inline LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCSTR lpData,DWORD cbData,DWORD dwType)
 {
 	if (IsUnicodeSystem())
-		return ::RegSetValueExW(m_hKey,lpValueName,0,dwType,(CONST BYTE*)lpData,cbData);
+		return ::RegSetValueExW(m_hKey,lpValueName,0,dwType,(CONST BYTE*)lpData,(DWORD)cbData);
 	else
-		return ::RegSetValueExA(m_hKey,W2A(lpValueName),0,dwType,(CONST BYTE*)lpData,cbData);
+		return ::RegSetValueExA(m_hKey,W2A(lpValueName),0,dwType,(CONST BYTE*)lpData,(DWORD)cbData);
 }
 
-inline DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPSTR lpbData,SIZE_T cbDataLen,LPDWORD lpdwType) const
+inline DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPSTR lpbData,DWORD cbDataLen,LPDWORD lpdwType) const
 {
 	if (IsUnicodeSystem())
 		return ::RegQueryValueExW(m_hKey,(LPWSTR)lpszValueName,NULL,lpdwType,(LPBYTE)lpbData,&cbDataLen)!=ERROR_SUCCESS?0:cbDataLen;

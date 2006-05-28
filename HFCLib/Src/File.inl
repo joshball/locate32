@@ -401,7 +401,7 @@ inline void CFileFind::GetFileName(LPSTR szName,SIZE_T nMaxLen) const
 {
 #ifdef WIN32
 	if (IsUnicodeSystem())
-		WideCharToMultiByte(CP_ACP,0,m_fdw.cFileName,-1,szName,nMaxLen,0,0);
+		WideCharToMultiByte(CP_ACP,0,m_fdw.cFileName,-1,szName,(int)nMaxLen,0,0);
 	else
 		strcpy_s(szName,nMaxLen,m_fd.cFileName);
 
@@ -563,7 +563,7 @@ inline void CFileFind::GetFileName(LPWSTR szName,SIZE_T nMaxLen) const
 	if (IsUnicodeSystem())
 		StringCbCopyW(szName,nMaxLen,m_fdw.cFileName);
 	else
-		MultiByteToWideChar(CP_ACP,0,m_fd.cFileName,-1,szName,nMaxLen);
+		MultiByteToWideChar(CP_ACP,0,m_fd.cFileName,-1,szName,(int)nMaxLen);
 	
 }
 

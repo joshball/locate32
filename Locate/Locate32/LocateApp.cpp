@@ -4442,8 +4442,12 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 
 		
 	CLocateDlg* pLocateDlg=GetLocateDlg();
+	
 	if (pLocateDlg!=NULL)
-		SetWindowPos(*pLocateDlg,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOACTIVATE);
+	{
+		SetWindowPos(HWND_TOP,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,
+			GetForegroundWindow()==*pLocateDlg?SWP_NOACTIVATE:SWP_NOACTIVATE|SWP_NOZORDER);
+	}
 	else
 		SetWindowPos(HWND_TOP,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOZORDER|SWP_NOACTIVATE);
 

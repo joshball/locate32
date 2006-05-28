@@ -105,7 +105,7 @@ inline void CCheckFileNotificationsThread::FileCreated(LPCWSTR szFile,DWORD dwLe
 				if (pItem->IsDeleted())
 				{
 					MemCopyW(szPath,pItem->GetPath(),pItem->GetPathLen()+1);
-					MakeLower(szPath,pItem->GetPathLen());
+					MakeLower(szPath);
 					if (wcsncmp(szPath,szFile,dwLength)==0)
 					{
 						if (pItem->RemoveFlagsForChanged())
@@ -134,7 +134,7 @@ inline void CCheckFileNotificationsThread::FileModified(LPCWSTR szFile,DWORD dwL
 			if (pItem->GetPathLen()==dwLength)
 			{
 				MemCopyW(szPath,pItem->GetPath(),pItem->GetPathLen()+1);
-				MakeLower(szPath,pItem->GetPathLen());
+				MakeLower(szPath);
 			    if (wcsncmp(szPath,szFile,dwLength)==0)
 				{
 					if (pItem->RemoveFlagsForChanged())
@@ -163,7 +163,7 @@ inline void CCheckFileNotificationsThread::FileDeleted(LPCWSTR szFile,DWORD dwLe
 				if (!pItem->IsDeleted())
 				{
 					MemCopyW(szPath,pItem->GetPath(),pItem->GetPathLen()+1);
-					MakeLower(szPath,pItem->GetPathLen());
+					MakeLower(szPath);
 					if (wcsncmp(szPath,szFile,dwLength)==0)
 					{
 						pItem->SetToDeleted();
@@ -225,7 +225,7 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 							MemCopyW(szFile+pChangeData->dwRootLength,pStruct->FileName,dwLength);
 							dwLength+=pChangeData->dwRootLength;
 							szFile[dwLength]='\0';
-							MakeLower(szFile,dwLength);
+							MakeLower(szFile);
 
 							switch(pStruct->Action)
 							{
@@ -396,7 +396,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 	ASSERT(m_pHandles==NULL);
 
 	CArrayFAP<LPWSTR> aRoots;
-	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases());
+	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases(),TRUE);
 	
     m_pHandles=new HANDLE[aRoots.GetSize()+2];
 	m_pChangeDatas=new DIRCHANGEDATA*[aRoots.GetSize()+2];
@@ -410,10 +410,16 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 	m_nHandles=1;
 	DWORD dwOut;
 
+
 	for (int i=0;i<aRoots.GetSize();i++)
 	{
-		const LPWSTR szRoot=aRoots.GetAt(i);
-
+		LPWSTR szRoot=aRoots.GetAt(i);
+		if (szRoot[1]==':' && szRoot[2]=='\0')
+		{
+			szRoot=alloccopy(szRoot,3);
+			szRoot[2]=L'\\';
+		}
+		
 #ifdef _DEBUG_LOGGING
 		// If logging is on, do not use change notifications for root containing log file
 		LPCSTR pLogFile=GetDebugLoggingFile();
@@ -438,6 +444,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 			}		
 		}
 #endif
+		
 		// Allocating new CHANGEDATA struct
 		if (pChangeData==NULL)
 		{
@@ -447,11 +454,12 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 		}
 
 		if (IsUnicodeSystem())
-			pChangeData->hDir=CreateFileW(szRoot,FILE_LIST_DIRECTORY,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
+			pChangeData->hDir=CreateFileW(szRoot,GENERIC_READ /*FILE_LIST_DIRECTORY*/,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
 				NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED,NULL);
 		else
-			pChangeData->hDir=CreateFile(W2A(szRoot),FILE_LIST_DIRECTORY,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
+			pChangeData->hDir=CreateFile(W2A(szRoot),GENERIC_READ /*FILE_LIST_DIRECTORY*/,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
 				NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED,NULL);
+
 
 		if (pChangeData->hDir==INVALID_HANDLE_VALUE)
 			continue;
@@ -469,27 +477,38 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 			pChangeData->dwRootLength=istrlenw(szRoot);
 			if (szRoot[pChangeData->dwRootLength-1]=='\\')
 			{
-				pChangeData->szRoot=new WCHAR[pChangeData->dwRootLength+4];
-				MemCopyW(pChangeData->szRoot,szRoot,pChangeData->dwRootLength+1);
-				MakeLower(pChangeData->szRoot,pChangeData->dwRootLength);
+				if (szRoot!=aRoots.GetAt(i))
+					pChangeData->szRoot=szRoot;
+				else
+				{
+					pChangeData->szRoot=new WCHAR[pChangeData->dwRootLength+4];
+					MemCopyW(pChangeData->szRoot,szRoot,pChangeData->dwRootLength+1);
+				}
+				MakeLower(pChangeData->szRoot);
 			}
 			else
 			{
 				pChangeData->szRoot=new WCHAR[pChangeData->dwRootLength+4];
 				MemCopyW(pChangeData->szRoot,szRoot,pChangeData->dwRootLength);
-				MakeLower(pChangeData->szRoot,pChangeData->dwRootLength);
 				pChangeData->szRoot[pChangeData->dwRootLength++]='\\';
 				pChangeData->szRoot[pChangeData->dwRootLength]='\0';
+				MakeLower(pChangeData->szRoot);
 			}
 			m_pHandles[m_nHandles]=pChangeData->ol.hEvent;
 			m_pChangeDatas[m_nHandles]=pChangeData;
+
+			DebugFormatMessage("CreateHandlesNew: created listener for %S (%S,%X,%X,%X)",
+				szRoot,pChangeData->szRoot,pChangeData,pChangeData->ol.hEvent,pChangeData->hDir);
+
 			pChangeData=NULL;
 			m_nHandles++;
+
 		}
 		else
 			CloseHandle(pChangeData->hDir);
 
 	}
+
 
 	if (pChangeData!=NULL)
 		delete pChangeData;
@@ -658,9 +677,11 @@ BOOL CBackgroundUpdater::Start()
 	}
 
 	DWORD dwThreadID;
-	m_hThread=CreateThread(NULL,0,UpdaterThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
-	if (m_hThread==NULL)
+	HANDLE hThread=CreateThread(NULL,0,UpdaterThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
+	if (hThread==NULL)
 		return FALSE;
+	
+	InterlockedExchangePointer(&m_hThread,hThread);
 	SetThreadPriority(m_hThread,THREAD_PRIORITY_BELOW_NORMAL);
 	
 	InterlockedExchange(&m_lIsWaiting,FALSE);
@@ -671,6 +692,40 @@ BOOL CBackgroundUpdater::Start()
 #endif
 }
 
+
+void CBackgroundUpdater::CreateEventsAndMutex()
+{
+	m_phEvents[0]=CreateEvent(NULL,TRUE,FALSE,NULL);
+	m_phEvents[1]=CreateEvent(NULL,TRUE,FALSE,NULL);
+
+	m_hUpdateListPtrInUse=CreateMutex(NULL,FALSE,NULL);
+}
+
+CBackgroundUpdater::~CBackgroundUpdater()
+{	
+	if (m_hThread!=NULL)
+	{
+		InterlockedExchangePointer(&GetLocateDlg()->m_pBackgroundUpdater,NULL);
+		HANDLE hThread=m_hThread;
+		InterlockedExchangePointer(&m_hThread,NULL);
+		m_hThread=NULL;
+
+		BkgDebugMessage("CBackgroundUpdater::~CBackgroundUpdater()");
+		CloseHandle(hThread);
+	}
+	else
+		InterlockedExchangePointer(&GetLocateDlg()->m_pBackgroundUpdater,NULL);
+	
+	
+	CloseHandle(m_phEvents[0]);
+	CloseHandle(m_phEvents[1]);
+
+	if (m_hUpdateListPtrInUse!=NULL)
+	{
+		CloseHandle(m_hUpdateListPtrInUse);
+		m_hUpdateListPtrInUse=NULL;
+	}
+}
 
 
 BOOL CBackgroundUpdater::Stop()

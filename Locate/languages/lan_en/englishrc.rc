@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,6,5130
- PRODUCTVERSION 2,99,6,5130
+ FILEVERSION 2,99,6,5270
+ PRODUCTVERSION 2,99,6,5270
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 6.5130"
+            VALUE "FileVersion", "3.0 beta 6.5270"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 6.5130"
+            VALUE "ProductVersion", "3.0 beta 6.5270"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -352,7 +352,7 @@ BEGIN
                     BS_AUTORADIOBUTTON,149,237,57,10
     CONTROL         "Descending",IDC_DESCENDINGORDER,"Button",
                     BS_AUTORADIOBUTTON,216,237,57,10
-    CONTROL         "M&atch whole file name",
+    CONTROL         "M&atch whole name only",
                     IDC_MATCHWHOLEFILENAMEONLY,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,8,255,95,10
     LTEXT           "&Check in:",IDC_STATIC,123,255,54,10
@@ -804,7 +804,7 @@ CAPTION "Enter name"
 FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
     LTEXT           "Enter preset name:",IDC_STATIC,7,7,180,11
-  	COMBOBOX        IDC_EDIT,7,20,182,13,CBS_DROPDOWN |  
+  	COMBOBOX        IDC_EDIT,7,20,182,100,CBS_DROPDOWN |  
                     WS_VSCROLL | WS_TABSTOP | CBS_HASSTRINGS
     DEFPUSHBUTTON   "OK",IDC_OK,40,47,50,14
     PUSHBUTTON      "Cancel",IDC_CANCEL,103,47,50,14
@@ -1188,12 +1188,13 @@ BEGIN
     IDS_ERROR               "Error"
     IDS_ERRORCANNOTOPENDB   "Cannot open database file '%s'."
     IDS_ERRORCANNOTREADDB   "Cannot read database file '%s'."
-    IDS_ERRORCANNOTALLOCATE "Cannot allcate memory."
+    IDS_ERRORCANNOTALLOCATE "Cannot allocate memory."
     IDS_SHORTCUTTODESKTOP   "Do you want the shortcut to be placed on the desktop?"
     IDS_ERRORINVALIDFILEFORMAT "Error loading file %s. Invalid file format."
     IDS_ERRCANNOTFIND       "File '%s' cannot found or invalid file format."
 	IDS_ERRORCANNOTSAVESHORTCUTS "Cannot save keyboard shortcuts to the registry."
 	IDS_ERRORCANNOTLOADDEFAULTSHORTUCS	"Cannot load default keyboard shortcuts."
+	IDS_ERRORCANNOTRENAME			"Cannot rename file. %s"
 END
 
 STRINGTABLE 
