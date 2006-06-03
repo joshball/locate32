@@ -4723,13 +4723,17 @@ CSettingsProperties::CKeyboardShortcutsPage::CKeyboardShortcutsPage()
 	m_ToolBarBitmapsDisabled(NULL),m_ToolBarBitmapsHot(NULL),
 	m_pCurrentShortcut(NULL)
 {
-	m_pPossibleControls=CAction::GetPossibleControlValues();
+	m_pPossibleControlsToActivate=CAction::GetPossibleControlValuesToActivate();
+	m_pPossibleControlsToChange=CAction::GetPossibleControlValuesToChange();
 	m_pPossibleMenuCommands=CAction::GetPossibleMenuCommands();
 	m_pVirtualKeyNames=CShortcut::GetVirtualKeyNames();
+
+	
 
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg!=NULL)
 	{
+		bFreeDialogs=FALSE;
 		hDialogs[0]=*pLocateDlg;
 		hDialogs[1]=pLocateDlg->m_NameDlg;
 		hDialogs[2]=pLocateDlg->m_SizeDateDlg;
@@ -4738,6 +4742,7 @@ CSettingsProperties::CKeyboardShortcutsPage::CKeyboardShortcutsPage()
 	}
 	else
 	{
+		bFreeDialogs=TRUE;
 		hDialogs[0]=CreateDialog(GetLanguageSpecificResourceHandle(),
 			MAKEINTRESOURCE(IDD_MAIN),NULL,(DLGPROC)CLocateApp::DummyDialogProc);
 		hDialogs[1]=CreateDialog(GetLanguageSpecificResourceHandle(),
@@ -4756,14 +4761,16 @@ CSettingsProperties::CKeyboardShortcutsPage::CKeyboardShortcutsPage()
 CSettingsProperties::CKeyboardShortcutsPage::~CKeyboardShortcutsPage()
 {
 
-	delete[] m_pPossibleControls;
+	delete[] m_pPossibleControlsToActivate;
+	delete[] m_pPossibleControlsToChange;
 	delete[] m_pPossibleMenuCommands;
-
 	for (int i=0;m_pVirtualKeyNames[i].bKey!=0;i++)
 		delete[] m_pVirtualKeyNames[i].pName;
 	delete[] m_pVirtualKeyNames;
 
-	if (GetLocateDlg()==NULL)
+	m_aPossiblePresets.RemoveAll();
+
+	if (bFreeDialogs)
 	{
 		for (int i=0;hDialogs[i]!=NULL;i++)
             ::DestroyWindow(hDialogs[i]);
@@ -4821,14 +4828,6 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	
 	
 	// Check wheter Advanced items should be added
-	CRegKey RegKey;
-	DWORD dwActivate=FALSE;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
-	{
-		RegKey.QueryValue("ShortcutsActivateAdvanced",dwActivate);
-		RegKey.CloseKey();
-	}
-
 	m_ActionCombo.AssignToDlgItem(*this,IDC_ACTION);
 	m_SubActionCombo.AssignToDlgItem(*this,IDC_SUBACTION);
 	m_VerbCombo.AssignToDlgItem(*this,IDC_VERB);
@@ -4840,10 +4839,10 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATACTIVATETAB));
 	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATMENUCOMMAND));
 	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATSHOWHIDEDIALOG));
-
-	if (dwActivate)
-		m_ActionCombo.AddString(ID2W(IDS_ACTIONCATTRESULTLIST));
-	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATADVANCED));
+	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATTRESULTLIST));
+	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATMISC));
+	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATCHANGEVALUE));
+	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATPRESETS));
 
 	m_VerbCombo.AddString(ID2W(IDS_DEFAULT));
 
@@ -4860,6 +4859,33 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_VerbCombo.AddString("explore");
 	m_VerbCombo.AddString("find");
 	m_VerbCombo.AddString("print");
+
+	// Enumerate presets
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\SearchPresets",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		CRegKey RegKey2;
+		CComboBox Combo(GetDlgItem(IDC_PRESETS));
+		char szBuffer[30];
+
+		for (int nPreset=0;nPreset<1000;nPreset++)
+		{
+			StringCbPrintf(szBuffer,30,"Preset %03d",nPreset);
+	
+			if (RegKey2.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+				break;
+	
+			DWORD dwLength=RegKey2.QueryValueLength("");
+			if (dwLength>0)
+			{
+				WCHAR* pPresetName=new WCHAR[dwLength+1];
+				RegKey2.QueryValue(L"",pPresetName,dwLength);
+				m_aPossiblePresets.Add(pPresetName);
+			}
+	
+			RegKey2.CloseKey();
+		}		
+	}
 
 	// Current selections
 	m_ActionCombo.SetCurSel(0);
@@ -4906,6 +4932,27 @@ void CSettingsProperties::CKeyboardShortcutsPage::InsertSubActions()
 
 	CAction::Action nAction=GetSelectedAction();
 	
+	CStringW SubActionLabel;
+	switch (nAction)
+	{
+	case CAction::ActivateControl:
+	case CAction::ChangeValue:
+		SubActionLabel.LoadString(IDS_SHORTCUTSUBACTIONCONTROL);
+		break;
+	case CAction::ActivateTab:
+		SubActionLabel.LoadString(IDS_SHORTCUTSUBACTIONTAB);
+		break;
+	case CAction::MenuCommand:
+		SubActionLabel.LoadString(IDS_SHORTCUTSUBACTIONMENUITEM);
+		break;
+	case CAction::Presets:
+		SubActionLabel.LoadString(IDS_SHORTCUTSUBACTIONPRESET);
+		break;
+	default:
+		SubActionLabel.LoadString(IDS_SHORTCUTSUBACTION);
+		break;
+	}
+	SetDlgItemText(IDC_STATICSUBACTION,SubActionLabel);
 
 	UINT nSubAction;
 	for (int nIndex=0;(nSubAction=IndexToSubAction(nAction,nIndex))!=(UINT)-1;nIndex++)
@@ -4935,9 +4982,9 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::IndexToSubAction(CAction::Acti
 	case CAction::None:
 		break;
 	case CAction::ActivateControl:
-		if (m_pPossibleControls[nIndex]==CAction::NullControl)
+		if (m_pPossibleControlsToActivate[nIndex]==CAction::NullControl)
 			return (UINT)-1;
-		return m_pPossibleControls[nIndex];
+		return m_pPossibleControlsToActivate[nIndex];
 	case CAction::ActivateTab:
 		if (nIndex>CAction::ActivateTabsLast)
 			return (UINT)-1;
@@ -4954,8 +5001,16 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::IndexToSubAction(CAction::Acti
 		if (nIndex>CAction::ResultListLast)
 			return (UINT)-1;
 		return nIndex;
-	case CAction::Advanced:
-		if (nIndex>CAction::AdvancedLast)
+	case CAction::Misc:
+		if (nIndex>CAction::MiscLast)
+			return (UINT)-1;
+		return nIndex;
+	case CAction::ChangeValue:
+		if (m_pPossibleControlsToChange[nIndex]==CAction::NullControl)
+			return (UINT)-1;
+		return m_pPossibleControlsToChange[nIndex];
+	case CAction::Presets:
+		if (nIndex>=(UINT)m_aPossiblePresets.GetSize())
 			return (UINT)-1;
 		return nIndex;
 	}
@@ -4970,9 +5025,9 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::SubActionToIndex(CAction::Acti
 		return (UINT)-1;
 	case CAction::ActivateControl:
 		{
-			for (int nIndex=0;m_pPossibleControls[nIndex]!=CAction::NullControl;nIndex++)
+			for (int nIndex=0;m_pPossibleControlsToActivate[nIndex]!=CAction::NullControl;nIndex++)
 			{
-				if (m_pPossibleControls[nIndex]==nSubAction)
+				if (m_pPossibleControlsToActivate[nIndex]==nSubAction)
 					return nIndex;
 			}
 			return (UINT)-1;
@@ -4998,10 +5053,21 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::SubActionToIndex(CAction::Acti
 		if (nSubAction>CAction::ResultListLast)
 			return (UINT)-1;
 		return nSubAction;
-	case CAction::Advanced:
-		if (nSubAction>CAction::AdvancedLast)
+	case CAction::Misc:
+		if (nSubAction>CAction::MiscLast)
 			return (UINT)-1;
 		return nSubAction;
+	case CAction::Presets:
+		return nSubAction;
+	case CAction::ChangeValue:
+		{
+			for (int nIndex=0;m_pPossibleControlsToChange[nIndex]!=CAction::NullControl;nIndex++)
+			{
+				if (m_pPossibleControlsToChange[nIndex]==nSubAction)
+					return nIndex;
+			}
+			return (UINT)-1;
+		}
 	default:
 		ASSERT(0);
 		break;
@@ -5018,6 +5084,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 		str.LoadString(IDS_NONE);
 		return TRUE;
 	case CAction::ActivateControl:
+	case CAction::ChangeValue:
 		{
 			// Check which dialog contains control
 			WORD wControlID=HIWORD(uSubAction);
@@ -5098,9 +5165,13 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 		str.LoadString(CAction::GetResultItemActionLabelStringId(
 			(CAction::ActionResultList)IndexToSubAction(CAction::ResultListItems,uSubAction)));		
 		break;
-	case CAction::Advanced:
-		str.LoadString(CAction::GetAdvancedActionStringLabelId(
-			(CAction::ActionAdvanced)IndexToSubAction(CAction::Advanced,uSubAction)));
+	case CAction::Misc:
+		str.LoadString(CAction::GetMiscActionStringLabelId(
+			(CAction::ActionMisc)IndexToSubAction(CAction::Misc,uSubAction)));
+		break;
+	case CAction::Presets:
+		ASSERT(uSubAction<(UINT)m_aPossiblePresets.GetSize());
+		str.Copy(m_aPossiblePresets[(int)uSubAction]);
 		break;
 	default:
 		ASSERT(0);
@@ -5617,6 +5688,24 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnCommand(WORD wID,WORD wNotif
 		SetVirtualKeyWhenShortcutKeyChanged();
 		RefreshShortcutListLabels();
 		break;
+	case IDC_VALUEHELPTEXT:
+		{
+			HRSRC hRc=FindResource(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDR_CHANGEVALUEHELP),"HELPTEXT");
+			HGLOBAL hGlobal=LoadResource(GetLanguageSpecificResourceHandle(),hRc);
+			LPCSTR pStr=(LPCSTR)LockResource(hGlobal);
+
+			// Counting length
+			int len;
+			for (len=0;pStr[len]!='\0';len++)
+			{
+				if (pStr[len]=='E' && pStr[len+1]=='O' && pStr[len+2]=='F')
+					break;
+			}
+
+
+			MessageBox(CString(pStr,len),ID2A(IDS_HELPINFO),MB_OK|MB_ICONINFORMATION);
+			break;
+		}
 	}
 	return FALSE;
 }
@@ -6046,7 +6135,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	EnableDlgItem(IDC_STATICSUBACTION,nItem!=-1); // Subaction static text
 	m_SubActionCombo.EnableWindow(nItem!=-1); // Subaction combo
 
-	ShowState ssVerb=swHide,ssMessage=swHide,ssCommand=swHide,ssWhichFile=swHide;
+	ShowState ssVerb=swHide,ssMessage=swHide,ssCommand=swHide,ssWhichFile=swHide,ssChangeValue=swHide;
 	
 	if (nItem!=-1)
 	{
@@ -6091,28 +6180,34 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 			m_SubActionCombo.EnableWindow(FALSE);
 			break;
 		case CAction::ResultListItems:
+			switch (m_SubActionCombo.GetCurSel())
 			{
-				switch (m_SubActionCombo.GetCurSel())
-				{
-				case CAction::Execute:
-					ssVerb=swShow;
-					break;
-				case CAction::ExecuteCommand:
-                    ssCommand=swShow;
-					break;
-				case CAction::SelectFile:
-					ssWhichFile=swShow;
-					break;
-				}
-                break;
-			}
-		case CAction::Advanced:
-			{
-				INT nSubItem=m_SubActionCombo.GetCurSel();
-				if (nSubItem==CAction::SendMessage || nSubItem==CAction::PostMessage)
-					ssMessage=swShow;
+			case CAction::Execute:
+				ssVerb=swShow;
+				break;
+			case CAction::ExecuteCommand:
+                ssCommand=swShow;
+				break;
+			case CAction::SelectFile:
+				ssWhichFile=swShow;
 				break;
 			}
+            break;
+		case CAction::Misc:
+			switch (m_SubActionCombo.GetCurSel())
+			{
+			case CAction::SendMessage:
+			case CAction::PostMessage:
+				ssMessage=swShow;
+				break;
+			case CAction::ExecuteCommandMisc:
+				ssCommand=swShow;
+				break;				
+			}
+			break;
+		case CAction::ChangeValue:
+			ssChangeValue=swShow;
+			break;
 		}
 	}
 	else
@@ -6151,6 +6246,10 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 
 	ShowDlgItem(IDC_STATICCOMMAND,ssCommand);
 	ShowDlgItem(IDC_COMMAND,ssCommand);
+
+	ShowDlgItem(IDC_STATICVALUE,ssChangeValue);
+	ShowDlgItem(IDC_VALUE,ssChangeValue);
+	ShowDlgItem(IDC_VALUEHELPTEXT,ssChangeValue);
 
 	ShowDlgItem(IDC_STATICWHICHFILE,ssWhichFile);
 	m_WhichFileCombo.ShowWindow((CWndCtrl::ShowState)ssWhichFile);
@@ -6326,6 +6425,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 	SetDlgItemText(IDC_WPARAM,szEmpty);
 	SetDlgItemText(IDC_LPARAM,szEmpty);
 	SetDlgItemText(IDC_COMMAND,szEmpty);
+	SetDlgItemText(IDC_VALUE,szEmpty);
 	m_WhichFileCombo.SetCurSel(0);
 
 
@@ -6347,8 +6447,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 		else if (pAction->m_nResultList==CAction::SelectFile)
 			m_WhichFileCombo.SetCurSel(pAction->m_nSelectFileType);	
 		break;
-	case CAction::Advanced:
-		if ((pAction->m_nAdvanced==CAction::SendMessage || pAction->m_nAdvanced==CAction::PostMessage) &&
+	case CAction::Misc:
+		if ((pAction->m_nMisc==CAction::SendMessage || pAction->m_nMisc==CAction::PostMessage) &&
 			pAction->m_pSendMessage!=NULL)
 		{
 			SetDlgItemText(IDC_WINDOW,pAction->m_pSendMessage->szWindow!=NULL?
@@ -6359,6 +6459,23 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 			SetDlgItemText(IDC_LPARAM,pAction->m_pSendMessage->szLParam!=NULL?
 				pAction->m_pSendMessage->szLParam:szEmpty);
 		}
+		else if (pAction->m_nMisc==CAction::ExecuteCommandMisc && pAction->m_szCommand!=NULL)
+			SetDlgItemText(IDC_COMMAND,pAction->m_szCommand);
+		
+		break;
+	case CAction::Presets:
+		if (pAction->m_szPreset!=NULL)
+		{
+			for (int i=0;i<m_aPossiblePresets.GetSize();i++)
+			{
+				if (wcscmp(m_aPossiblePresets[i],pAction->m_szPreset)==0)
+					m_SubActionCombo.SetCurSel(i);
+			}
+		}
+		break;
+	case CAction::ChangeValue:
+		if (pAction->m_szValue!=NULL)
+			SetDlgItemText(IDC_VALUE,pAction->m_szValue);
 		break;
 	}
 }
@@ -6380,9 +6497,9 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 		{
 			int nCurSel=m_SubActionCombo.GetCurSel();
 			if (nCurSel!=CB_ERR)
-				pAction->m_nActivateControl=m_pPossibleControls[nCurSel];
+				pAction->m_nControl=m_pPossibleControlsToActivate[nCurSel];
 			else
-				pAction->m_nActivateControl=m_pPossibleControls[0];
+				pAction->m_nControl=m_pPossibleControlsToActivate[0];
 			break;
 		}
 	case CAction::MenuCommand:
@@ -6437,14 +6554,15 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 				pAction->m_nSelectFileType=CSubAction::NextFile;
 		}
 		break;
-	case CAction::Advanced:
-		pAction->m_nAdvanced=(CAction::ActionAdvanced)m_SubActionCombo.GetCurSel();
-		if ((int)pAction->m_nAdvanced==CB_ERR)
-			pAction->m_nAdvanced=CAction::SendMessage;
+	case CAction::Misc:
+		pAction->m_nMisc=(CAction::ActionMisc)m_SubActionCombo.GetCurSel();
+		if ((int)pAction->m_nMisc==CB_ERR)
+			pAction->m_nMisc=CAction::SendMessage;
 
 		pAction->m_pSendMessage=new CAction::SendMessageInfo;
 		
-		if (pAction->m_nAdvanced==CAction::SendMessage || pAction->m_nAdvanced==CAction::PostMessage)
+		if (pAction->m_nMisc==CAction::SendMessage || 
+			pAction->m_nMisc==CAction::PostMessage)
 		{
 			// Get message
 			BOOL bTranslated;
@@ -6476,7 +6594,42 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 				GetDlgItemText(IDC_LPARAM,pAction->m_pSendMessage->szLParam,nLen+1);
 			}
 		}
+		else if (pAction->m_nMisc==CAction::ExecuteCommandMisc)
+		{
+			// Get command
+			UINT nLen=GetDlgItemTextLength(IDC_COMMAND);
+			if (nLen>0)
+			{
+				pAction->m_szCommand=new WCHAR[nLen+1];
+				GetDlgItemText(IDC_COMMAND,pAction->m_szCommand,nLen+1);
+			}
+		}
 		break;
+	case CAction::Presets:
+		{
+			pAction->m_nSubAction=m_SubActionCombo.GetCurSel();
+			if((int)pAction->m_nSubAction>=0 && (int)pAction->m_nSubAction<m_aPossiblePresets.GetSize())
+				pAction->m_szPreset=alloccopy(m_aPossiblePresets[(int)pAction->m_nSubAction]);
+			break;
+		}
+	case CAction::ChangeValue:
+		{
+			int nCurSel=m_SubActionCombo.GetCurSel();
+			if (nCurSel!=CB_ERR)
+				pAction->m_nControl=m_pPossibleControlsToChange[nCurSel];
+			else
+				pAction->m_nControl=m_pPossibleControlsToChange[0];
+			
+			// Get command
+			UINT nLen=GetDlgItemTextLength(IDC_VALUE);
+			if (nLen>0)
+			{
+				pAction->m_szCommand=new WCHAR[nLen+1];
+				GetDlgItemText(IDC_VALUE,pAction->m_szValue,nLen+1);
+			}
+			break;
+
+		}
 	default:
 		ASSERT(0);
 		break;
@@ -6513,7 +6666,13 @@ void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CStringW& st
 		break;
 	case CAction::ResultListItems:
 		break;
-	case CAction::Advanced:
+	case CAction::Misc:
+		break;
+	case CAction::Presets:
+		str.LoadString(IDS_ACTIONCATPRESETS);
+		break;
+	case CAction::ChangeValue:
+		str.LoadString(IDS_ACTIONCATCHANGEVALUE);
 		break;
 	}
 

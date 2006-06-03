@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   locate.exe v2.99.6.5070                 */
+   locate.exe v2.99.6.6030                 */
 
-const char* szVersionStr="locate 3.0 beta 6.5070";
+const char* szVersionStr="locate 3.0 beta 6.6030";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -42,33 +42,33 @@ DWORD GetConsoleLines()
 }
 #endif
 
-BOOL SetLanguageSpecifigHandles(LPCSTR szAppPath)
+BOOL SetLanguageSpecifigHandles(LPCWSTR szAppPath)
 {
 	CRegKey RegKey;
-	CString LangFile;
+	CStringW LangFile;
 	if (RegKey.OpenKey(HKCU,"Software\\Update",
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.QueryValue("Language",LangFile);
+		RegKey.QueryValue(L"Language",LangFile);
 		RegKey.CloseKey();
 	}
 	if (LangFile.IsEmpty())
-		LangFile="lan_en.dll";
+		LangFile=L"lan_en.dll";
 
-	CString Path(szAppPath,LastCharIndex(szAppPath,'\\')+1);
+	CStringW Path(szAppPath,LastCharIndex(szAppPath,'\\')+1);
 	
-	HINSTANCE hLib=LoadLibrary(Path+LangFile);
+	HINSTANCE hLib=FileSystem::LoadLibrary(Path+LangFile);
 	if (hLib==NULL)
 	{
-		hLib=LoadLibrary(Path+"lan_en.dll");
+		hLib=FileSystem::LoadLibrary(Path+L"lan_en.dll");
 
 		if (hLib==NULL)
 		{
-			fprintf(stderr,"Cannot load language file '%s'\n",(LPCSTR)LangFile);
+			fwprintf(stderr,L"Cannot load language file '%s'\n",(LPCWSTR)LangFile);
 			return FALSE;
 		}
 
-		fprintf(stderr,"Cannot load language file '%s', using 'lan_en.dll'\n",(LPCSTR)LangFile);
+		fwprintf(stderr,L"Cannot load language file '%s', using 'lan_en.dll'\n",(LPCWSTR)LangFile);
 	}
 
 	SetResourceHandle(hLib,LanguageSpecificResource);
@@ -212,25 +212,25 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 }
 #endif
 
-void showverbose(LPCSTR* ppStrings,UINT nStrings,LPCSTR* ppExtensions,UINT nExtension,LPCSTR* ppDirectories,UINT nDirectories)
+void showverbose(LPCWSTR* ppStrings,UINT nStrings,LPCWSTR* ppExtensions,UINT nExtension,LPCWSTR* ppDirectories,UINT nDirectories)
 {
 	if (nStrings>0)
 	{
 		wprintf(ID2W(IDS_LOCATEVERBOSESTR));
-		printf(ppStrings[0]);
+		wprintf(ppStrings[0]);
 
 		for (UINT i=1;i<nStrings;i++)
-			printf(", %s",ppStrings[i]);
+			wprintf(L", %s",ppStrings[i]);
 		putchar('\n');
 	}
 
 	if (nExtension>0)
 	{
 		wprintf(ID2W(IDS_LOCATEVERBOSEEXT));
-		printf(ppExtensions[0]);
+		wprintf(ppExtensions[0]);
 
 		for (UINT i=1;i<nExtension;i++)
-			printf(", %s",ppExtensions[i]);
+			wprintf(L", %s",ppExtensions[i]);
 		putchar('\n');
 	}
 
@@ -239,12 +239,44 @@ void showverbose(LPCSTR* ppStrings,UINT nStrings,LPCSTR* ppExtensions,UINT nExte
 	{
 		wprintf(ID2W(IDS_LOCATEVERBOSEDIR));
 		for (UINT i=0;i<nDirectories;i++)
-			printf("%s\n",ppDirectories[i]);
+			wprintf(L"%s\n",ppDirectories[i]);
 	}
 	putchar('\n');
 }
 
-int main (int argc,char * argv[])
+BOOL CALLBACK LocateFoundProcW(DWORD dwParam,BOOL bFolder,const CLocater* pLocater)
+{
+	if (nShouldQuit)
+		return FALSE;
+
+	if (dwMainFlags&flagOutputIsPaged)
+	{
+#ifdef WIN32
+		if (Lines>int(GetConsoleLines()-1))
+#else
+		if (Lines>(_farpeekb(_dos_ds,0x484)-1))
+#endif
+		{
+			DWORD nTmp=1;char szbuf[2];
+			SetConsoleMode(hStdIn,0);
+			ReadConsole(hStdIn,szbuf,1,&nTmp,NULL);
+			SetConsoleMode(hStdIn,ENABLE_PROCESSED_INPUT);
+			if (szbuf[0]==3) // Ctrl+C
+				return FALSE;
+			Lines=0;
+		}
+		Lines++;
+	}
+	if (bFolder)
+		wprintf(L"%s\\%s\n",pLocater->GetCurrentPathW(),pLocater->GetFolderNameW());
+	else
+		wprintf(L"%s\\%s\n",pLocater->GetCurrentPathW(),pLocater->GetFileNameW());
+	return TRUE;
+}
+
+
+
+int wmain (int argc,wchar_t * argv[])
 {
 #ifdef _DEBUG
 	CAppData::stdfunc();
@@ -292,33 +324,33 @@ int main (int argc,char * argv[])
 	int i;
 	for (i=1;i<argc;i++)
 	{
-		if (argv[i][0]=='-' || argv[i][0]=='/')
+		if (argv[i][0]==L'-' || argv[i][0]==L'/')
 		{
 			switch (argv[i][1])
 			{
-			case 's':
-			case 'S':
+			case L's':
+			case L'S':
 				dwMainFlags|=flagOutputIsPaged;
 				if (argv[i][2]=='c' || argv[i][2]=='C')
 	           			dwFlags|=LOCATE_CONTAINTEXTISMATCHCASE;
 				break;
-			case 'c':
-			case 'C':
+			case L'c':
+			case L'C':
            		dwFlags|=LOCATE_CONTAINTEXTISMATCHCASE;
                 if (argv[i][2]=='s' || argv[i][2]=='S')
 					dwMainFlags|=flagOutputIsPaged;
     			break;
-			case 'i':
+			case L'i':
 				dwMainFlags|=flagShowWhatAreWeLookingFor;
 				break;
-            case 'd':
+            case L'd':
 				{
 					// Using database file
 					CStringW sFile;
-					if (argv[i][2]=='\0')
+					if (argv[i][2]==L'\0')
 					{
 						if (i>=argc-1)
-							sFile="";
+							sFile=L"";
 						else
 							sFile=argv[++i];
 					}
@@ -333,13 +365,13 @@ int main (int argc,char * argv[])
 					}
 					break;
 				}
-			case 'D':
+			case L'D':
 				{
 					CStringW sName;
-					if (argv[i][2]=='\0')
+					if (argv[i][2]==L'\0')
 					{
 						if (i>=argc-1)
-							sName="";
+							sName=L"";
 						else
 							sName=argv[++i];
 					}
@@ -358,137 +390,137 @@ int main (int argc,char * argv[])
 					}
 					break;
 				}
-			case 'p':
-			case 'P':
-                if (argv[i][2]=='\0')
+			case L'p':
+			case L'P':
+                if (argv[i][2]==L'\0')
 				{
 					if (i>=argc-1)
 						aDirectories.Add(allocemptyW());
 					else
 					{
 						++i;
-						if (argv[i][0]=='.' && argv[i][1]=='\0')
+						if (argv[i][0]=='.' && argv[i][1]==L'\0')
 						{
 							WCHAR* pPath=new WCHAR[MAX_PATH];
 							FileSystem::GetCurrentDirectory(MAX_PATH,pPath);
 							aDirectories.Add(pPath);
 						}
 						else
-							aDirectories.Add(alloccopyAtoW(argv[i]));
+							aDirectories.Add(alloccopy(argv[i]));
 					}
 				}
                 else
 				{
-					int j=argv[i][2]==':'?3:2;
-					if (argv[i][j]=='.' && argv[i][j+1]=='\0')
+					int j=argv[i][2]==L':'?3:2;
+					if (argv[i][j]==L'.' && argv[i][j+1]==L'\0')
 					{
 						WCHAR* pPath=new WCHAR[MAX_PATH];
 						FileSystem::GetCurrentDirectory(MAX_PATH,pPath);
 						aDirectories.Add(pPath);
 					}
 					else
-						aDirectories.Add(alloccopyAtoW(argv[i]+j));
+						aDirectories.Add(alloccopy(argv[i]+j));
 				}
 				break;
 			case 't':
 			case 'T':
-                if (argv[i][2]=='\0')
+                if (argv[i][2]==L'\0')
 				{
 					if (i>=argc-1)
 						aExtensions.Add(allocemptyW());
 					else
-						aExtensions.Add(alloccopyAtoW(argv[++i]));
+						aExtensions.Add(alloccopy(argv[++i]));
 				}
                 else
-                    aExtensions.Add(alloccopyAtoW(argv[i]+2));
+                    aExtensions.Add(alloccopy(argv[i]+2));
 				break;
-			case 'r':
+			case L'r':
 				dwFlags|=LOCATE_REGULAREXPRESSION;
 				break;
-			case 'w':
-			case 'W':
+			case L'w':
+			case L'W':
 				dwFlags|=LOCATE_CHECKWHOLEPATH;
 				break;
-			case 'v':
+			case L'v':
 				options.verbose=1;
 				break;
-			case 'V':
+			case L'V':
 				options.helps=2;
 				break;
-			case '?':
-			case 'h':
-			case 'H':
+			case L'?':
+			case L'h':
+			case L'H':
 				options.helps=1;
 				break;
-			case 'R':
-				if (argv[i][2]=='n' || argv[i][2]=='N')
+			case L'R':
+				if (argv[i][2]==L'n' || argv[i][2]==L'N')
 					dwFlags|=LOCATE_NOSUBDIRECTORIES;
 				else
 					dwFlags&=~LOCATE_NOSUBDIRECTORIES;
 				break;
-			case 'l':
-			case 'L':
+			case L'l':
+			case L'L':
 			{
-				char* ep;
+				WCHAR* ep;
             	switch (argv[i][2])
             	{
-				case 'w':
-					if (argv[i][3]=='n')
+				case L'w':
+					if (argv[i][3]==L'n')
 						dwMainFlags&=~flagWholeWord;
 					else
 						dwMainFlags|=flagWholeWord;
 					break;
-				case 'r':
-					if (argv[i][3]=='n')
+				case L'r':
+					if (argv[i][3]==L'n')
 						dwMainFlags&=~flagReplaceSpaces;
 					else
 						dwMainFlags|=flagReplaceSpaces;
 					break;
-				case 'm':
-            		if (argv[i][3]==':')
-            			dwMinSize=strtoul(argv[i]+4,&ep,0);
+				case L'm':
+            		if (argv[i][3]==L':')
+            			dwMinSize=wcstoul(argv[i]+4,&ep,0);
             		else
-            			dwMinSize=strtoul(argv[i]+3,&ep,0);
-                    if (*ep=='k' || *ep=='K')
+            			dwMinSize=wcstoul(argv[i]+3,&ep,0);
+                    if (*ep==L'k' || *ep==L'K')
                        dwMinSize*=1024;
-                    else if (*ep=='M' || *ep=='m')
+                    else if (*ep==L'M' || *ep==L'm')
                          dwMinSize*=1024*1024;
 	           		break;
-            	case 'M':
-            		if (argv[i][3]==':')
-            			dwMaxSize=strtoul(argv[i]+4,&ep,0);
+            	case L'M':
+            		if (argv[i][3]==L':')
+            			dwMaxSize=wcstoul(argv[i]+4,&ep,0);
             		else
-            			dwMaxSize=strtoul(argv[i]+3,&ep,0);
-                    if (*ep=='k' || *ep=='K')
+            			dwMaxSize=wcstoul(argv[i]+3,&ep,0);
+                    if (*ep==L'k' || *ep==L'K')
                        dwMaxSize*=1024;
-                    else if (*ep=='M' || *ep=='m')
+                    else if (*ep==L'M' || *ep==L'm')
                          dwMaxSize*=1024*1024;
 	           		break;
-            	case 'f':
+            	case L'f':
             		dwFlags&=~LOCATE_FOLDERNAMES;
             		dwFlags|=LOCATE_FILENAMES;
-            		if (argv[i][3]=='d' || argv[i][3]=='D') 
+            		if (argv[i][3]==L'd' || argv[i][3]==L'D') 
 						dwFlags|=LOCATE_FOLDERNAMES;
             		break;
-            	case 'd':                      
+            	case L'd':                      
             		dwFlags&=~LOCATE_FILENAMES;
             		dwFlags|=LOCATE_FOLDERNAMES;
-            		if (argv[i][3]=='f' || argv[i][3]=='F')
+            		if (argv[i][3]==L'f' || argv[i][3]==L'F')
 						dwFlags|=LOCATE_FILENAMES;
             		break;
-            	case 'n':
+            	case L'n':
             		if (argv[i][3]==':')
-            			dwMaxFoundFiles=atol(argv[i]+4);
+            			dwMaxFoundFiles=_wtol(argv[i]+4);
             		else
-            			dwMaxFoundFiles=atol(argv[i]+3);
+            			dwMaxFoundFiles=_wtol(argv[i]+3);
 	           		break;
-	           	case 'c':
-	           	case 'C':
-	           		if (argv[i][3]=='m')
+	           	case L'c':
+	           	case L'C':
+	           		if (argv[i][3]==L'm')
 	           			dwFlags|=LOCATE_CONTAINTEXTISMATCHCASE;
-            		else if (argv[i][3]=='n')
+            		else if (argv[i][3]==L'n')
 	           			dwFlags&=~LOCATE_CONTAINTEXTISMATCHCASE;
-            		else if (argv[i][3]==':')
+            		else if (argv[i][3]==L':')
 					{
 	            		if (pContainData!=NULL)
 							free(pContainData);
@@ -503,45 +535,45 @@ int main (int argc,char * argv[])
             			pContainData=dataparser(argv[i]+3,&dwContainDataLength);
 					}
             		break;
-	           	case 'R':
+	           	case L'R':
 	           		{
 					
 						dwFlags|=LOCATE_REGULAREXPRESSIONSEARCH;
             			if (pContainData!=NULL)
-							free(pContainData);
+							delete[] pContainData;
 					
-						int j=argv[i][3]==':'?4:3;
-						if (argv[i][j]=='\0')
+						int j=argv[i][3]==L':'?4:3;
+						if (argv[i][j]==L'\0')
 						{
 							i++;j=0;
 						}
 
-						if (argv[i][j]=='\"')
+						if (argv[i][j]==L'\"')
 						{						
 							j++;
-							dwContainDataLength=(DWORD)FirstCharIndex(argv[i]+j,'\"');
+							dwContainDataLength=(DWORD)FirstCharIndex(argv[i]+j,L'\"');
 							if (dwContainDataLength==DWORD(-1))
-								dwContainDataLength=istrlen(argv[i]+j);
+								dwContainDataLength=istrlenw(argv[i]+j);
 							pContainData=(PBYTE)alloccopy(argv[i]+j,dwContainDataLength);
 						}
 						else
 						{
-							dwContainDataLength=(DWORD)istrlen(argv[i]+j);
+							dwContainDataLength=(DWORD)istrlenw(argv[i]+j);
 							pContainData=(PBYTE)alloccopy(argv[i]+j,dwContainDataLength);
 						}
 					}
 					break;
-				case 'D': // dates
+				case L'D': // dates
 				{
-					const char* lpCmdLine=argv[i]+3;
+					const WCHAR* lpCmdLine=argv[i]+3;
 
-					int nLength=strlen(lpCmdLine);
+					int nLength=istrlenw(lpCmdLine);
 					if (nLength<7)
                         break;
-					char szBuf[]="XX";
+					WCHAR szBuf[]=L"XX";
 					szBuf[0]=lpCmdLine[1];
 					szBuf[1]=lpCmdLine[2];
-					WORD bYear=atoi(szBuf);
+					WORD bYear=_wtoi(szBuf);
 					if (bYear<60)
 						bYear+=2000;
 					else
@@ -549,12 +581,12 @@ int main (int argc,char * argv[])
 					bYear-=1980;
 					szBuf[0]=lpCmdLine[3];
 					szBuf[1]=lpCmdLine[4];
-					BYTE bMonth=atoi(szBuf);
+					BYTE bMonth=_wtoi(szBuf);
 					if (bMonth<1 || bMonth>12)
 						bMonth=1;
 					szBuf[0]=lpCmdLine[5];
 					szBuf[1]=lpCmdLine[6];
-					BYTE bDay=atoi(szBuf);
+					BYTE bDay=_wtoi(szBuf);
 					if (bDay<1 || bDay>CTime::GetDaysInMonth(bMonth,bYear))
 						bDay=1;					
 					
@@ -562,10 +594,10 @@ int main (int argc,char * argv[])
 					{
 						switch (lpCmdLine[0])
 						{
-						case 'A':
+						case L'A':
 							dwFlags|=LOCATE_MAXACCESSDATE;
 							break;
-						case 'C':
+						case L'C':
 							dwFlags|=LOCATE_MAXCREATIONDATE;
 							break;
 						}
@@ -575,10 +607,10 @@ int main (int argc,char * argv[])
 					{
 						switch (lpCmdLine[0])
 						{
-						case 'a':
+						case L'a':
 							dwFlags|=LOCATE_MINACCESSDATE;
 							break;
-						case 'c':
+						case L'c':
 							dwFlags|=LOCATE_MINCREATIONDATE;
 							break;
 						}
@@ -595,10 +627,10 @@ int main (int argc,char * argv[])
       {
 		  if (dwFlags&LOCATE_REGULAREXPRESSION)
 		  {
-				if (argv[i][0]=='\"')
+				if (argv[i][0]==L'\"')
 				{
 					String << (argv[i]+1);
-					if (String.LastChar()=='\"')
+					if (String.LastChar()==L'\"')
 						String.DelLastChar();
 				}
 				else
@@ -610,9 +642,9 @@ int main (int argc,char * argv[])
 				{
 					// Inserting '/' or space 
 					if (dwMainFlags&flagReplaceSpaces)
-						String << '*';
+						String << L'*';
 					else
-						String << ' ';
+						String << L' ';
 	
 				}
 				
@@ -664,7 +696,7 @@ int main (int argc,char * argv[])
 	{
 		CDatabase* pDatabase=CDatabase::FromOldStyleDatabase(HKCU,"Software\\Update\\Database");
 		if (pDatabase==NULL)
-			pDatabase=CDatabase::FromDefaults(TRUE,A2W(argv[0]),LastCharIndex(argv[0],'\\')+1); // Nothing else can be done?
+			pDatabase=CDatabase::FromDefaults(TRUE,argv[0],LastCharIndex(argv[0],'\\')+1); // Nothing else can be done?
 		aDatabases.Add(pDatabase);
 	}
 	CDatabase::CheckValidNames(aDatabases);
@@ -675,12 +707,12 @@ int main (int argc,char * argv[])
 		dwFlags|=LOCATE_EXTENSIONWITHNAME;
 
 #ifdef _DEBUG
-	printf ("flags: %X name: %s\n",dwMainFlags,(LPCSTR)String);
+	wprintf (L"flags: %X name: %s\n",dwMainFlags,(LPCWSTR)String);
 	Lines++;
 #endif
 	if (dwMainFlags&flagShowWhatAreWeLookingFor)
 	{
-		wprintf(ID2W(IDS_LOCATESTRING),(LPCSTR)String);
+		wprintf(ID2W(IDS_LOCATESTRING),(LPCWSTR)String);
 		Lines++;
 	}
 	
@@ -689,14 +721,14 @@ int main (int argc,char * argv[])
 	locater.SetSizeAndDate(dwFlags,dwMinSize,dwMaxSize,wMinDate,wMaxDate);
 	locater.SetAdvanced(dwFlags,pContainData,dwContainDataLength,dwMaxFoundFiles);
 
-	locater.SetFunctions(LocateProc,LocateFoundProc,NULL);
+	locater.SetFunctions(LocateProc,LocateFoundProc,LocateFoundProcW,NULL);
 
 	
 	if (dwFlags&LOCATE_REGULAREXPRESSION)
 	{
 		if (options.verbose)
 		{
-			wprintf(ID2W(IDS_LOCATEVERBOSEREG),(LPCSTR)String);
+			wprintf(ID2W(IDS_LOCATEVERBOSEREG),(LPCWSTR)String);
 			putchar(' ');
 
 			if (aDirectories.GetSize()>0)
@@ -708,8 +740,8 @@ int main (int argc,char * argv[])
 			putchar('\n');
 		}
 
-		locater.LocateFiles(FALSE,String,
-			(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+		locater.LocateFiles(FALSE,W2A(String),
+			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 	else if (!String.IsEmpty())
 	{
@@ -725,25 +757,25 @@ int main (int argc,char * argv[])
 					String << '*';
 			}
 
-			LPCSTR s=String;
+			LPCWSTR s=String;
 
 			if (options.verbose)
 			{
 				showverbose(&s,1,
-					(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
-					(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+					(LPCWSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+					(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 			}
 
 			locater.LocateFiles(FALSE,&s,1,
-				(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
-				(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+				(LPCWSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+				(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 		}
 		else
 		{
 			// Separate strings
 			
-			CArrayFAP<LPSTR> aStrings;
-			LPCSTR pStr=String;
+			CArrayFAP<LPWSTR> aStrings;
+			LPCWSTR pStr=String;
 			BOOL bContinue=TRUE;
 
 			while (bContinue)
@@ -752,7 +784,7 @@ int main (int argc,char * argv[])
 				if (nIndex==-1)
 				{
 					bContinue=FALSE;
-					nIndex=strlen(pStr);
+					nIndex=istrlenw(pStr);
 				}
 
 				if (nIndex>0)
@@ -762,26 +794,26 @@ int main (int argc,char * argv[])
 					else
 					{
 						// Inserting '*'
-						char* pTemp=new char[nIndex+3];
-						if (pStr[0]!='*')
+						WCHAR* pTemp=new WCHAR[nIndex+3];
+						if (pStr[0]!=L'*')
 						{
-							pTemp[0]='*';
-							sMemCopy(pTemp+1,pStr,nIndex);
-							if (pStr[nIndex-1]!='*')
+							pTemp[0]=L'*';
+							MemCopyW(pTemp+1,pStr,nIndex);
+							if (pStr[nIndex-1]!=L'*')
 							{	
-								pTemp[nIndex+1]='*';
-								pTemp[nIndex+2]='\0';
+								pTemp[nIndex+1]=L'*';
+								pTemp[nIndex+2]=L'\0';
 							}
 							else
-								pTemp[nIndex+1]='\0';
+								pTemp[nIndex+1]=L'\0';
 						}
 						else
 						{
-							sMemCopy(pTemp,pStr,nIndex);
-							if (pStr[nIndex-1]!='*')
+							MemCopyW(pTemp,pStr,nIndex);
+							if (pStr[nIndex-1]!=L'*')
 							{	
-								pTemp[nIndex]='*';
-								pTemp[nIndex+1]='\0';
+								pTemp[nIndex]=L'*';
+								pTemp[nIndex+1]=L'\0';
 							}
 							else
 								pTemp[nIndex]='\0';
@@ -799,14 +831,14 @@ int main (int argc,char * argv[])
 
 			if (options.verbose)
 			{
-				showverbose((LPCSTR*)aStrings.GetData(),aStrings.GetSize(),
-					(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
-					(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+				showverbose((LPCWSTR*)aStrings.GetData(),aStrings.GetSize(),
+					(LPCWSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+					(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 			}
 
-			locater.LocateFiles(FALSE,(LPCSTR*)aStrings.GetData(),aStrings.GetSize(),
-				(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
-				(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+			locater.LocateFiles(FALSE,(LPCWSTR*)aStrings.GetData(),aStrings.GetSize(),
+				(LPCWSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+				(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 
 		}
 
@@ -818,13 +850,13 @@ int main (int argc,char * argv[])
 		if (options.verbose)
 		{
 			showverbose(NULL,0,
-				(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
-				(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+				(LPCWSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+				(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 		}
 
 		locater.LocateFiles(FALSE,NULL,0,
-			(LPCSTR*)aExtensions.GetData(),aExtensions.GetSize(),
-			(LPCSTR*)aDirectories.GetData(),aDirectories.GetSize());
+			(LPCWSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 
 
@@ -832,7 +864,7 @@ int main (int argc,char * argv[])
 		wprintf(ID2W(IDS_LOCATEVERBOSEFOUNDFILES),locater.GetNumberOfResults());
 
 	if (pContainData!=NULL)
-		free(pContainData);
+		delete[] pContainData;
 
 	FreeLibrary(GetLanguageSpecificResourceHandle());
 	return 0;

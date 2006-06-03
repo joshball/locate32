@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   Updatedb.exe v2.99.6.5070 */
+   Updatedb.exe v2.99.6.6030 */
 
 #include <HFCLib.h>
 #include "locatedb/locatedb.h"
@@ -7,9 +7,9 @@
 #include "lan_resources.h"
 
 #ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 3.0 beta 6.5070";
+		LPCSTR szVersionStr="updtdb32 3.0 beta 6.6030";
 #else
-		LPCSTR szVersionStr="updatedb 3.0 beta 6.5070";
+		LPCSTR szVersionStr="updatedb 3.0 beta 6.6030";
 #endif
 
 
@@ -21,33 +21,33 @@ CDatabaseUpdater** ppUpdaters=NULL;
 
 BOOL nQuiet=FALSE;
 
-BOOL SetLanguageSpecifigHandles(LPCSTR szAppPath)
+BOOL SetLanguageSpecifigHandles(LPCWSTR szAppPath)
 {
 	CRegKey RegKey;
-	CString LangFile;
+	CStringW LangFile;
 	if (RegKey.OpenKey(HKCU,"Software\\Update",
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.QueryValue("Language",LangFile);
+		RegKey.QueryValue(L"Language",LangFile);
 		RegKey.CloseKey();
 	}
 	if (LangFile.IsEmpty())
-		LangFile="lan_en.dll";
+		LangFile=L"lan_en.dll";
 
-	CString Path(szAppPath,LastCharIndex(szAppPath,'\\')+1);
+	CStringW Path(szAppPath,LastCharIndex(szAppPath,L'\\')+1);
 	
-	HINSTANCE hLib=LoadLibrary(Path+LangFile);
+	HINSTANCE hLib=FileSystem::LoadLibrary(Path+LangFile);
 	if (hLib==NULL)
 	{
-		hLib=LoadLibrary(Path+"lan_en.dll");
+		hLib=FileSystem::LoadLibrary(Path+"lan_en.dll");
 
 		if (hLib==NULL)
 		{
-			fprintf(stderr,"Cannot load language file '%s'\n",(LPCSTR)Path);
+			fwprintf(stderr,L"Cannot load language file '%s'\n",(LPCWSTR)Path);
 			return FALSE;
 		}
 
-		fprintf(stderr,"Cannot load language file '%s', using 'lan_en.dll'\n",(LPCSTR)LangFile);
+		fwprintf(stderr,L"Cannot load language file '%s', using 'lan_en.dll'\n",(LPCWSTR)LangFile);
 	}
 
 	SetResourceHandle(hLib,LanguageSpecificResource);
@@ -191,7 +191,7 @@ void GetFromDB(LPCSTR szOwnName,CString* pDatabaseFile,CArrayFAP<LPSTR>* aRoots,
 */
 
 
-int main (int argc,char ** argv)
+int wmain (int argc,wchar_t ** argv)
 {
 	CAppData::stdfunc();
 	
@@ -202,7 +202,7 @@ int main (int argc,char ** argv)
 	
 	WORD wCurrentThread=0;
 
-	aDatabases.Add(CDatabase::FromDefaults(TRUE,A2W(argv[0]),LastCharIndex(argv[0],'\\')+1));
+	aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],LastCharIndex(argv[0],'\\')+1));
 	aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 	aDatabases[0]->SetThreadId(wCurrentThread);
 
@@ -298,18 +298,18 @@ int main (int argc,char ** argv)
 				else if (argv[i][2]==L'c' || argv[i][2]==L'C')
 				{
                        if (argv[i][3]==L'\0')
-                           aDatabases.GetLast()->SetCreatorPtr(alloccopyAtoW(argv[++i]));
+                           aDatabases.GetLast()->SetCreatorPtr(alloccopy(argv[++i]));
                        else
-                           aDatabases.GetLast()->SetCreatorPtr(alloccopyAtoW(argv[i]+2));
+                           aDatabases.GetLast()->SetCreatorPtr(alloccopy(argv[i]+2));
 
 					   aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
 				}
 				else if (argv[i][2]==L'd' || argv[i][2]==L'D')
 				{
                        if (argv[i][3]==L'\0')
-                           aDatabases.GetLast()->SetDescriptionPtr(alloccopyAtoW(argv[++i]));
+                           aDatabases.GetLast()->SetDescriptionPtr(alloccopy(argv[++i]));
                        else
-                           aDatabases.GetLast()->SetDescriptionPtr(alloccopyAtoW(argv[i]+2));
+                           aDatabases.GetLast()->SetDescriptionPtr(alloccopy(argv[i]+2));
 
 					   aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
 				}
@@ -324,6 +324,23 @@ int main (int argc,char ** argv)
                     aDatabases.GetLast()->SetFlag(CDatabase::flagIncrementalUpdate,TRUE);
 					aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
 				}
+				break;
+			case 'c':
+			case 'C':
+				if (wcsncmp(aDatabases.GetLast()->GetName(),L"PARAMX",6)!=0 &&
+					wcsncmp(aDatabases.GetLast()->GetName(),L"DEFAULTX",8)!=0)
+					wprintf(ID2W(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
+				else if (argv[i][2]==L'A' || argv[i][2]==L'a')
+				{
+					aDatabases.GetLast()->SetFlag(CDatabase::flagAnsiCharset,TRUE);
+					aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
+				}
+				else if (argv[i][2]==L'U' || argv[i][2]==L'u')
+				{
+					aDatabases.GetLast()->SetFlag(CDatabase::flagAnsiCharset,FALSE);
+					aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
+				}
+				
 				break;
 			case 'N':
 			case 'n':
@@ -448,7 +465,7 @@ int main (int argc,char ** argv)
 		// No registry values?
 		if (aDatabases.GetSize()==0)
 		{
-			aDatabases.Add(CDatabase::FromDefaults(TRUE,A2W(argv[0]),LastCharIndex(argv[0],'\\')+1));
+			aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],LastCharIndex(argv[0],'\\')+1));
 			aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 		}
 	}

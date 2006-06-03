@@ -1067,7 +1067,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,SIZE_T 
 				
 				if(nLength+sNameLength<MAX_PATH)
 				{
-					if (pPoint+MAX_PATH*2+19>pCurrentBuffer->pData+BFSIZE)
+					if (pPoint+MAX_PATH*2+20>pCurrentBuffer->pData+BFSIZE)
 					{
 						// New buffer
 						pCurrentBuffer->nLength=pPoint-pCurrentBuffer->pData;

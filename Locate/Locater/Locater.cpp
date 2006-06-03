@@ -2110,7 +2110,7 @@ void CLocater::CheckFolderW(DWORD nPathLen)
 			{
 				if (IsFileNameWhatAreWeLookingForW())
 				{	
-					if (IsFileAdvancedWhatAreWeLookingFor())
+					if (IsFileAdvancedWhatAreWeLookingForW())
 					{
 					
 						if (!m_pFoundProcW(m_dwData,FALSE,this))

@@ -131,7 +131,7 @@ BOOL CALLBACK CLocateApp::EnumLocateSTWindows(HWND hwnd,LPARAM lParam)
 BOOL CLocateApp::InitInstance()
 {
 	CWinApp::InitInstance();
-
+	LPCWSTR pCommandLine;
 	
 	//extern BOOL bIsFullUnicodeSupport;
 	//bIsFullUnicodeSupport=FALSE;
@@ -170,12 +170,27 @@ BOOL CLocateApp::InitInstance()
 
 
 	// Handling command line arguments
-	DebugFormatMessage("CommandLine: %s",m_lpCmdLine);
-	//if (IsUnicodeSystem())
-	//	ParseParameters(GetCommandLineW(),m_pStartData);
-	//else
-		ParseParameters(A2W(m_lpCmdLine),m_pStartData);
-		
+	pCommandLine=GetCommandLineW();
+	while (*pCommandLine==L' ') pCommandLine++;
+	if (*pCommandLine==L'\"')
+	{
+		pCommandLine++;
+		while (*pCommandLine!=L'\"' && *pCommandLine!=L'\0') 
+			pCommandLine++;
+		if (*pCommandLine==L'\"')
+			pCommandLine++;
+	}
+	else
+	{
+		while (*pCommandLine!=L' ' && *pCommandLine!=L'\0') 
+			pCommandLine++;
+	}			
+	while (*pCommandLine==L' ') pCommandLine++;
+	
+	DebugFormatMessage("CommandLine: %S",pCommandLine);
+	ParseParameters(pCommandLine,m_pStartData);
+
+
 	m_nStartup=m_pStartData->m_nStartup;
 	
 	// If databases are specified by command line, use it
@@ -206,10 +221,11 @@ BOOL CLocateApp::InitInstance()
 		return FALSE;
 	}
 	
+	
 	if ((m_pStartData->m_nStartup&CStartData::startupNewInstance)==0)
 	{
 		// Chechkin whether locate32 is already running
-		if (ChechOtherInstances())
+		if (ActivateOtherInstances(pCommandLine))
 		{
 			m_nStartup|=CStartData::startupExitedBeforeInitialization;
 			return FALSE;
@@ -309,19 +325,19 @@ DWORD CLocateApp::GetLongPathNameNoUni(LPCWSTR lpszShortPath,LPWSTR lpszLongPath
 BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 {
 	int idx=0,temp;
-	while (lpCmdLine[idx]==' ') idx++;
-	if (lpCmdLine[idx]=='/' || lpCmdLine[idx]=='-')
+	while (lpCmdLine[idx]==L' ') idx++;
+	if (lpCmdLine[idx]==L'/' || lpCmdLine[idx]==L'-')
 	{
 		switch(lpCmdLine[++idx])
 		{
-		case 'P': // put 'path' to 'Look in' field
+		case L'P': // put 'path' to 'Look in' field
 			idx++;
-			if (lpCmdLine[idx]==':')
+			if (lpCmdLine[idx]==L':')
 				idx++;
-			while(lpCmdLine[idx]==' ') idx++;
-			if (lpCmdLine[idx]!='\"')
+			while(lpCmdLine[idx]==L' ') idx++;
+			if (lpCmdLine[idx]!=L'\"')
 			{
-				temp=FirstCharIndex(lpCmdLine+idx,' ');
+				temp=FirstCharIndex(lpCmdLine+idx,L' ');
 				ChangeAndAlloc(pStartData->m_pStartPath,lpCmdLine+idx,temp);
 				if (temp<0)
 					return TRUE;
@@ -330,23 +346,23 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			else
 			{
 				idx++;
-				temp=FirstCharIndex(lpCmdLine+idx,'\"');
+				temp=FirstCharIndex(lpCmdLine+idx,L'\"');
 				ChangeAndAlloc(pStartData->m_pStartPath,lpCmdLine+idx,temp);
 				if (temp<0)
 					return TRUE;
 				idx+=temp+1;
 			}
 			break;				
-		case 'p': // Check also if path is correct
+		case L'p': // Check also if path is correct
 			idx++;
-			if (lpCmdLine[idx]==':')
+			if (lpCmdLine[idx]==L':')
 				idx++;
-			while(lpCmdLine[idx]==' ') idx++;
-			if (lpCmdLine[idx]!='\"')
+			while(lpCmdLine[idx]==L' ') idx++;
+			if (lpCmdLine[idx]!=L'\"')
 			{
-				temp=FirstCharIndex(lpCmdLine+idx,' ');
+				temp=FirstCharIndex(lpCmdLine+idx,L' ');
 				if (temp!=-1)
-					*(char*)(lpCmdLine+idx+temp)='\0'; // Setting line end for 
+					*(char*)(lpCmdLine+idx+temp)=L'\0'; // Setting line end for 
 				int nLength=0;
 
 				WCHAR szPath[MAX_PATH+10];
@@ -361,9 +377,9 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			else
 			{
 				idx++;
-				temp=FirstCharIndex(lpCmdLine+idx,'\"');
+				temp=FirstCharIndex(lpCmdLine+idx,L'\"');
 				if (temp!=-1)
-					*(char*)(lpCmdLine+idx+temp)='\0'; // Setting line end for 
+					*(char*)(lpCmdLine+idx+temp)=L'\0'; // Setting line end for 
 				int nLength;
 
 				WCHAR szPath[MAX_PATH+10];
@@ -371,12 +387,12 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				ChangeAndAlloc(pStartData->m_pStartPath,szPath,nLength);
 				if (temp<0)
 					return TRUE;
-				*(char*)(lpCmdLine+idx+temp)='\"'; // Setting line end for 
+				*(char*)(lpCmdLine+idx+temp)=L'\"'; // Setting line end for 
 				idx+=temp+1;
 			}
 			break;				
-		case 'c':
-		case 'C':
+		case L'c':
+		case L'C':
 			{
 				OpenClipboard(NULL);
 				
@@ -404,13 +420,13 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				idx++;
 				break;
 			}
-		case 'T': // put 'type' to 'Extensions' field
-		case 't':
+		case L'T': // put 'type' to 'Extensions' field
+		case L't':
 			idx++;
-			if (lpCmdLine[idx]==':')
+			if (lpCmdLine[idx]==L':')
 				idx++;
-			while(lpCmdLine[idx]==' ') idx++;
-			if (lpCmdLine[idx]!='\"')
+			while(lpCmdLine[idx]==L' ') idx++;
+			if (lpCmdLine[idx]!=L'\"')
 			{
 				temp=FirstCharIndex(lpCmdLine+idx,' ');
 				ChangeAndAlloc(pStartData->m_pTypeString,lpCmdLine+idx,temp);
@@ -428,12 +444,12 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				idx+=temp+1;
 			}
 			break;				
-		case 'D': // activates database named 'name'
+		case L'D': // activates database named 'name'
 			idx++;
-			if (lpCmdLine[idx]==':')
+			if (lpCmdLine[idx]==L':')
 					idx++;
-			while(lpCmdLine[idx]==' ') idx++;
-			if (lpCmdLine[idx]!='\"')
+			while(lpCmdLine[idx]==L' ') idx++;
+			if (lpCmdLine[idx]!=L'\"')
 			{
 				temp=FirstCharIndex(lpCmdLine+idx,' ');
 
@@ -455,7 +471,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			else
 			{
 				idx++;
-				temp=FirstCharIndex(lpCmdLine+idx,'\"');
+				temp=FirstCharIndex(lpCmdLine+idx,L'\"');
 				
 				if (CDatabase::FindByName(pStartData->m_aDatabases,lpCmdLine+idx,temp)==NULL)
 				{
@@ -473,14 +489,14 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				idx+=temp+1;
 			}
 			break;				
-		case 'd': // activates database file 'dbfile'
+		case L'd': // activates database file 'dbfile'
 			idx++;
-			if (lpCmdLine[idx]==':')
+			if (lpCmdLine[idx]==L':')
 				idx++;
-			while(lpCmdLine[idx]==' ') idx++;
-			if (lpCmdLine[idx]!='\"')
+			while(lpCmdLine[idx]==L' ') idx++;
+			if (lpCmdLine[idx]!=L'\"')
 			{
-				temp=FirstCharIndex(lpCmdLine+idx,' ');
+				temp=FirstCharIndex(lpCmdLine+idx,L' ');
 				if (pStartData->m_aDatabases.GetSize()==1 && wcscmp(pStartData->m_aDatabases[0]->GetName(),L"DEFAULTX")==0)
 				{
 					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"PARAMX"));
@@ -505,7 +521,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			else
 			{
 				idx++;
-				temp=FirstCharIndex(lpCmdLine+idx,'\"');
+				temp=FirstCharIndex(lpCmdLine+idx,L'\"');
 				if (pStartData->m_aDatabases.GetSize()==1 && wcscmp(pStartData->m_aDatabases[0]->GetName(),L"DEFAULTX")==0)
 				{
 					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"PARAMX"));
@@ -528,67 +544,87 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				idx+=temp+1;
 			}
 			break;				
-		case 'r': // start locating when Locate32 is opened
+		case L'r': // start locating when Locate32 is opened
 			idx++;
 			pStartData->m_nStatus|=CStartData::statusRunAtStartUp;
 			break;
-		case 'i':
-		case 'I':
+		case L'i':
+		case L'I':
 			idx++;
 			pStartData->m_nStartup|=CStartData::startupNewInstance;
 			break;
-		case 'S': // start locate32 to background, (adds icon to tastbar)
+		case L'a': // Activate instance
+		case L'A': 
+			idx++;
+			if (lpCmdLine[idx]==L':')
+				idx++;
+			if (lpCmdLine[idx]==L' ')
+				pStartData->m_nActivateInstance=-1;
+			else if (lpCmdLine[idx]==L'\0')
+			{
+				pStartData->m_nActivateInstance=-1;
+				return TRUE;
+			}
+			else
+			{
+				pStartData->m_nActivateInstance=_wtoi(lpCmdLine+idx);
+				while(lpCmdLine[idx]!=' ' && lpCmdLine[idx]!='\0') idx++;
+				if (lpCmdLine[idx]==L'\0')
+					return TRUE;
+			}
+			break;		
+		case L'S': // start locate32 to background, (adds icon to tastbar)
 			pStartData->m_nStartup|=CStartData::startupLeaveBackground|CStartData::startupDoNotOpenDialog;
 			idx++;
 			break;
-		case 's': // leave locate32 background when dialog is closed
+		case L's': // leave locate32 background when dialog is closed
 			pStartData->m_nStartup|=CStartData::startupLeaveBackground;
 			idx++;
 			break;
-		case 'u': // start update process at start
+		case L'u': // start update process at start
 			idx++;
 			pStartData->m_nStartup|=CStartData::startupUpdate;
 			break;
-		case 'U': // start update process and exit
+		case L'U': // start update process and exit
 			idx++;
 			pStartData->m_nStartup|=CStartData::startupUpdate|CStartData::startupDoNotOpenDialog;
 			break;
-		case 'R':
+		case L'R':
 			switch(lpCmdLine[++idx])
 			{
-			case 'h':
-			case 'H':
+			case L'h':
+			case L'H':
 				pStartData->m_nPriority=CStartData::priorityHigh;
 				break;	
-			case 'a':
-			case 'A':
-			case '+':
+			case L'a':
+			case L'A':
+			case L'+':
 				pStartData->m_nPriority=CStartData::priorityAbove;
 				break;
-			case 'n':
-			case 'N':
-			case '0':
+			case L'n':
+			case L'N':
+			case L'0':
 				pStartData->m_nPriority=CStartData::priorityNormal;
 				break;
-			case 'b':
-			case 'B':
-			case '-':
+			case L'b':
+			case L'B':
+			case L'-':
 				pStartData->m_nPriority=CStartData::priorityBelow;
 				break;
-			case 'i':
-			case 'I':
+			case L'i':
+			case L'I':
 				pStartData->m_nPriority=CStartData::priorityIdle;
 				break;
-			case 'r':
-			case 'R':
+			case L'r':
+			case L'R':
 				pStartData->m_nPriority=CStartData::priorityRealTime;
 				break;
 			}
 			idx++;
 			break;
-		case 'L':
+		case L'L':
 			idx++;
-			if (lpCmdLine[idx]=='1')
+			if (lpCmdLine[idx]==L'1')
 			{
 				if (pStartData->m_aDatabases.GetSize()==0)
 				{
@@ -603,14 +639,14 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					wcsncmp(pStartData->m_aDatabases.GetLast()->GetName(),L"DEFAULTX",8)==0)
 					pStartData->m_aDatabases.GetLast()->AddLocalRoots();
 				
-				while (lpCmdLine[idx]!=' ') idx++;
+				while (lpCmdLine[idx]!=L' ') idx++;
 			}
 			else 
 			{
-				while (lpCmdLine[idx]==' ') idx++;
+				while (lpCmdLine[idx]==L' ') idx++;
 				
 				CStringW Directory;
-				if (lpCmdLine[idx]!='\"')
+				if (lpCmdLine[idx]!=L'\"')
 				{
 					Directory.Copy(lpCmdLine+idx,FirstCharIndex(lpCmdLine+idx,' '));
 					idx+=Directory.GetLength();
@@ -618,19 +654,19 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				else
 				{
 					idx++;
-					int nIndex=FirstCharIndex(lpCmdLine+idx,'\"');
+					int nIndex=FirstCharIndex(lpCmdLine+idx,L'\"');
 					if (nIndex==-1)
 						return TRUE;
 					Directory.Copy(lpCmdLine+idx,nIndex);
 					idx+=nIndex+1;
 				}
-				while (Directory.LastChar()=='\\')
+				while (Directory.LastChar()==L'\\')
 					Directory.DelLastChar();
 					
 				if (Directory.GetLength()>1)
 				{
 					LPCWSTR pDir=NULL;
-					if (Directory[1]==':' && Directory.GetLength()==2)
+					if (Directory[1]==L':' && Directory.GetLength()==2)
 						pDir=alloccopy(Directory);
 					else if (FileSystem::IsDirectory(Directory))
 						pDir=alloccopy(Directory);
@@ -655,18 +691,18 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				}
 			}
 			break;
-		case 'l':
+		case L'l':
 			switch(lpCmdLine[++idx])
 			{
-			case 'P':
+			case L'P':
 				idx++;
-				if (lpCmdLine[idx]==':')
+				if (lpCmdLine[idx]==L':')
 					idx++;
 				
-				while (lpCmdLine[idx]==' ') idx++;
-				if (lpCmdLine[idx]!='\"')
+				while (lpCmdLine[idx]==L' ') idx++;
+				if (lpCmdLine[idx]!=L'\"')
 				{
-					temp=FirstCharIndex(lpCmdLine+idx,' ');
+					temp=FirstCharIndex(lpCmdLine+idx,L' ');
 					ChangeAndAlloc(pStartData->m_pLoadPreset,lpCmdLine+idx,temp);
 					if (temp<0)
 						return TRUE;
@@ -675,26 +711,26 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				else
 				{
 					idx++;
-					temp=FirstCharIndex(lpCmdLine+idx,'\"');
+					temp=FirstCharIndex(lpCmdLine+idx,L'\"');
 					ChangeAndAlloc(pStartData->m_pLoadPreset,lpCmdLine+idx,temp);
 					if (temp<0)
 						return TRUE;
 					idx+=temp+1;
 				}
 				break;				
-			case 'n': // set number of maximum found files
+			case L'n': // set number of maximum found files
 				{
 					idx++;
-					if (lpCmdLine[idx]==':')
+					if (lpCmdLine[idx]==L':')
 						idx++;
-					while (lpCmdLine[idx]==' ') idx++;
-					temp=FirstCharIndex(lpCmdLine+idx,' ');
+					while (lpCmdLine[idx]==L' ') idx++;
+					temp=FirstCharIndex(lpCmdLine+idx,L' ');
 					CStringW str(lpCmdLine+idx,temp);
 					
 					int val=_wtoi(str);
 					if (val!=0)
 						pStartData->m_dwMaxFoundFiles=val;
-					else if (str.Compare("0")==0)
+					else if (str.Compare(L"0")==0)
 						pStartData->m_dwMaxFoundFiles=0;
 
 					if (temp<0)
@@ -702,40 +738,40 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					idx+=temp+1;
 						break;
 				}
-			case 'f': // Set check field to 'File Names Only'
+			case L'f': // Set check field to 'File Names Only'
 				idx++;
 				pStartData->m_nStatus|=CStartData::statusFindFileNames;
-				if (lpCmdLine[idx]=='d')
+				if (lpCmdLine[idx]==L'd')
 				{
 					pStartData->m_nStatus|=CStartData::statusFindFolderNames;
 					idx++;
 				}
 				break;
-			case 'd': // Set check field to 'Folder Names Only'
+			case L'd': // Set check field to 'Folder Names Only'
 				idx++;
 				pStartData->m_nStatus|=CStartData::statusFindFolderNames;
-				if (lpCmdLine[idx]=='f')
+				if (lpCmdLine[idx]==L'f')
 				{
 					pStartData->m_nStatus|=CStartData::statusFindFileNames;
 					idx++;
 				}
 				break;
-			case 'c': // put 'text' to 'file containing text' field
+			case L'c': // put 'text' to 'file containing text' field
 				idx++;
-				if (lpCmdLine[idx]=='n' && lpCmdLine[idx+1]=='m')
+				if (lpCmdLine[idx]==L'n' && lpCmdLine[idx+1]==L'm')
 				{
 					idx+=2;
 					pStartData->m_nStatus|=CStartData::statusFindIsNotMatchCase;
 					break;
 				}
 				
-				if (lpCmdLine[idx]==':')
+				if (lpCmdLine[idx]==L':')
 					idx++;
 				
-				while (lpCmdLine[idx]==' ') idx++;
-				if (lpCmdLine[idx]!='\"')
+				while (lpCmdLine[idx]==L' ') idx++;
+				if (lpCmdLine[idx]!=L'\"')
 				{
-					temp=FirstCharIndex(lpCmdLine+idx,' ');
+					temp=FirstCharIndex(lpCmdLine+idx,L' ');
 					ChangeAndAlloc(pStartData->m_pFindText,lpCmdLine+idx,temp);
 					if (temp<0)
 						return TRUE;
@@ -744,16 +780,16 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				else
 				{
 					idx++;
-					temp=FirstCharIndex(lpCmdLine+idx,'\"');
+					temp=FirstCharIndex(lpCmdLine+idx,L'\"');
 					ChangeAndAlloc(pStartData->m_pFindText,lpCmdLine+idx,temp);
 					if (temp<0)
 						return TRUE;
 					idx+=temp+1;
 				}
 				break;
-			case 'w': // check 'Match whole name only' field
+			case L'w': // check 'Match whole name only' field
 				idx++;
-				if (lpCmdLine[idx]=='n')
+				if (lpCmdLine[idx]==L'n')
 				{
 					idx++;
 					pStartData->m_nStatus|=CStartData::statusNoMatchWholeName;
@@ -761,9 +797,9 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				else
 					pStartData->m_nStatus|=CStartData::statusMatchWholeName;
 				break;
-			case 'r': // check 'Replace asterisks' field
+			case L'r': // check 'Replace asterisks' field
 				idx++;
-				if (lpCmdLine[idx]=='n')
+				if (lpCmdLine[idx]==L'n')
 				{
 					idx++;
 					pStartData->m_nStatus|=CStartData::statusNoReplaceSpacesWithAsterisks;
@@ -771,9 +807,9 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				else
 					pStartData->m_nStatus|=CStartData::statusReplaceSpacesWithAsterisks;
 				break;
-			case 'W': // check 'Use whole path' field
+			case L'W': // check 'Use whole path' field
 				idx++;
-				if (lpCmdLine[idx]=='n')
+				if (lpCmdLine[idx]==L'n')
 				{
 					idx++;
 					pStartData->m_nStatus|=CStartData::statusNoUseWholePath;
@@ -781,15 +817,15 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				else
 					pStartData->m_nStatus|=CStartData::statusUseWholePath;
 				break;
-			case 'm': // set minumum file size
+			case L'm': // set minumum file size
 				{
 					idx++;
 					if (lpCmdLine[idx]==':')
 						idx++;
 					while (lpCmdLine[idx]==' ') idx++;
-					temp=FirstCharIndex(lpCmdLine+idx,' ');
+					temp=FirstCharIndex(lpCmdLine+idx,L' ');
 					CStringW str(lpCmdLine+idx,temp);
-					while ((str.LastChar()<'0' || str.LastChar()>'9') && !str.IsEmpty())
+					while ((str.LastChar()<L'0' || str.LastChar()>L'9') && !str.IsEmpty())
 					{
 						pStartData->m_cMinSizeType=W2Ac(str.LastChar());
 						str.DelLastChar();
@@ -798,7 +834,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					int val=_wtoi(str);
 					if (val!=0)
 						pStartData->m_dwMinFileSize=val;
-					else if (str.Compare("0")==0)
+					else if (str.Compare(L"0")==0)
 						pStartData->m_dwMinFileSize=0;
 
 
@@ -807,15 +843,15 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					idx+=temp+1;
 					break;
 				}
-			case 'M': // set maximum file size
+			case L'M': // set maximum file size
 				{
 					idx++;
-					if (lpCmdLine[idx]==':')
+					if (lpCmdLine[idx]==L':')
 						idx++;
-					while (lpCmdLine[idx]==' ') idx++;
-					temp=FirstCharIndex(lpCmdLine+idx,' ');
+					while (lpCmdLine[idx]==L' ') idx++;
+					temp=FirstCharIndex(lpCmdLine+idx,L' ');
 					CStringW str(lpCmdLine+idx,temp);
-					while ((str.LastChar()<'0' || str.LastChar()>'9') && !str.IsEmpty())
+					while ((str.LastChar()<L'0' || str.LastChar()>L'9') && !str.IsEmpty())
 					{
 						pStartData->m_cMaxSizeType=W2Ac(str.LastChar());
 						str.DelLastChar();
@@ -824,7 +860,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					int val=_wtoi(str);
 					if (val!=0)
 						pStartData->m_dwMaxFileSize=val;
-					else if (str.Compare("0")==0)
+					else if (str.Compare(L"0")==0)
 						pStartData->m_dwMaxFileSize=0;
 
 					if (temp<0)
@@ -832,12 +868,12 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					idx+=temp+1;
 					break;
 				}
-			case 'D': // dates
+			case L'D': // dates
 				{
 					idx++;
-					while (lpCmdLine[idx]==' ')
+					while (lpCmdLine[idx]==L' ')
 						idx++;
-                    int nLength=LastCharIndex(lpCmdLine+idx,' ');
+                    int nLength=LastCharIndex(lpCmdLine+idx,L' ');
 					if (nLength<0)
 					{
 						nLength=wcslen(lpCmdLine+idx);
@@ -882,39 +918,39 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					idx+=nLength;
 					break;
 				}
-			case 's':
-			case 'S':
+			case L's':
+			case L'S':
 				idx++;
-				if (lpCmdLine[idx]>='0' && lpCmdLine[idx]<=9)
-					pStartData->m_nSorting=lpCmdLine[idx]-'0';
+				if (lpCmdLine[idx]>=L'0' && lpCmdLine[idx]<=9)
+					pStartData->m_nSorting=lpCmdLine[idx]-L'0';
 				else
 				{
 					switch (lpCmdLine[idx])
 					{
-					case 'n':
-					case 'N':
+					case L'n':
+					case L'N':
 						pStartData->m_nSorting=0;
 						break;
-					case 'f':
-					case 'F':
+					case L'f':
+					case L'F':
 						pStartData->m_nSorting=1;
 						break;
-					case 's':
-					case 'S':
+					case L's':
+					case L'S':
 						pStartData->m_nSorting=2;
 						break;
-					case 't':
-					case 'T':
+					case L't':
+					case L'T':
 						pStartData->m_nSorting=3;
 						break;
-					case 'd':
-					case 'D':
+					case L'd':
+					case L'D':
 						pStartData->m_nSorting=4;
 						break;
 					}
 				}
 				idx++;
-				if (lpCmdLine[idx]=='d' || lpCmdLine[idx]=='D')
+				if (lpCmdLine[idx]==L'd' || lpCmdLine[idx]==L'D')
 					pStartData->m_nSorting|=128;
 				idx++;
 				break;
@@ -927,7 +963,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 		return ParseParameters(lpCmdLine+idx,pStartData);
 	
 	}
-	if (lpCmdLine[idx]!='\0')
+	if (lpCmdLine[idx]!=L'\0')
 		ChangeAndAlloc(pStartData->m_pStartString,lpCmdLine+idx);
 	return TRUE;
 }
@@ -1048,16 +1084,28 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 }
 
 
-BOOL CLocateApp::ChechOtherInstances()
+BOOL CLocateApp::ActivateOtherInstances(LPCWSTR pCmdLine)
 {
 	//HWND hWnd=FindWindow("LOCATEAPPST","Locate ST");
 	//if (hWnd!=NULL)
 
-	if (m_nInstance!=0)
+	if (m_nInstance!=0 || m_pStartData->m_nActivateInstance!=0)
 	{
-		// TODO: Unicode
-		ATOM aCommandLine=GlobalAddAtom(GetApp()->GetCmdLine());
-		::SendMessage(HWND_BROADCAST,m_nLocateAppMessage,LOCATEMSG_ACTIVATEINSTANCE,(LPARAM)aCommandLine);
+		ATOM aCommandLine;
+		if (IsUnicodeSystem())
+			aCommandLine=GlobalAddAtomW(pCmdLine);
+		else
+			aCommandLine=GlobalAddAtom(W2A(pCmdLine));
+
+		if (m_pStartData->m_nActivateInstance>0)
+		{
+			::SendMessage(HWND_BROADCAST,m_nLocateAppMessage,
+				MAKEWPARAM(LOCATEMSG_ACTIVATEINSTANCE,m_pStartData->m_nActivateInstance-1),
+				(LPARAM)aCommandLine);
+		}
+		else
+			::SendMessage(HWND_BROADCAST,m_nLocateAppMessage,LOCATEMSG_ACTIVATEINSTANCE,(LPARAM)aCommandLine);
+
 		if (aCommandLine!=NULL)
 			DeleteAtom(aCommandLine);
 		return TRUE;
@@ -3359,7 +3407,8 @@ BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			switch (LOWORD(wParam))
 			{
 			case LOCATEMSG_ACTIVATEINSTANCE:
-				OnActivateAnotherInstance((ATOM)lParam);
+				if (GetLocateApp()->m_nInstance==SHORT(HIWORD(wParam)))
+					OnActivateAnotherInstance((ATOM)lParam);
 				break;
 			case LOCATEMSG_INSTANCEEXITED:
 				if (GetLocateApp()->m_nInstance>DWORD(lParam))
@@ -3531,9 +3580,6 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 
 DWORD CLocateAppWnd::OnActivateAnotherInstance(ATOM aCommandLine)
 {
-	if (GetLocateApp()->m_nInstance!=0)
-		return 0;
-
 	if (aCommandLine==NULL)
 		OnLocate();
 	else

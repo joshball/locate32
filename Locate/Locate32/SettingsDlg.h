@@ -403,13 +403,17 @@ public:
 		CShortcut* m_pCurrentShortcut;
 		int m_nCurrentAction;
 		
-		CAction::ActionActivateControls* m_pPossibleControls;
+		CAction::ActionControls* m_pPossibleControlsToActivate;
+		CAction::ActionControls* m_pPossibleControlsToChange;
 		CAction::ActionMenuCommands* m_pPossibleMenuCommands;
 		CShortcut::VirtualKeyName* m_pVirtualKeyNames;
+		CArrayFAP<LPWSTR> m_aPossiblePresets;
 
+		
 		CComboBox m_ActionCombo,m_SubActionCombo,m_VerbCombo,m_WhichFileCombo;
 
-		HWND hDialogs[5];	
+		HWND hDialogs[5];
+		BOOL bFreeDialogs;
 		HMENU hMainMenu;
 		HMENU hPopupMenu;
 

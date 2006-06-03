@@ -511,6 +511,21 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 							else
 								pDatabase->m_wFlags|=flagIncrementalUpdate;
 							break;
+						case L'A':
+						case L'a':
+							if (*pTemp==L'1')
+							{
+								pDatabase->m_wFlags|=flagAnsiCharset;
+								pTemp++;
+							}
+							else if (*pTemp==L'0')
+							{
+								pDatabase->m_wFlags&=~flagAnsiCharset;
+								pTemp++;
+							}
+							else
+								pDatabase->m_wFlags|=flagAnsiCharset;
+							break;
 						}
 					}
 					break;
@@ -1201,6 +1216,10 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 			str << L"I1";
 		else
 			str << L"I0";
+		if (m_wFlags&flagAnsiCharset)
+			str << L"A1";
+		else
+			str << L"A0";
 		
 		str << L'$';
 	}

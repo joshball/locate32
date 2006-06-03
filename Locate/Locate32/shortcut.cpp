@@ -488,8 +488,8 @@ DWORD CSubAction::FillFromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen)
 			dwDataLen-=dwLen;
 		}
 		break;
-	case CAction::Advanced:
-		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage) && 			
+	case CAction::Misc:
+		if ((m_nMisc==SendMessage || m_nMisc==PostMessage) && 			
 			m_pSendMessage!=NULL)
 		{
 			DWORD dwLen;
@@ -501,6 +501,41 @@ DWORD CSubAction::FillFromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen)
 			
 			pData+=dwLen;
 			dwUsed+=dwLen;
+			dwDataLen-=dwLen;
+		}
+		else if (m_nMisc==ExecuteCommandMisc && m_szCommand!=NULL)
+		{
+			DWORD dwLen;
+
+			for (dwLen=0;dwLen<dwDataLen && ((LPCWSTR)pData)[dwLen]!='\0';dwLen++);
+
+			if (dwLen==dwDataLen)
+				return 0;
+			
+			dwLen++;
+			m_szCommand=new WCHAR[dwLen];
+            MemCopyW(m_szCommand,pData,dwLen);
+			dwUsed+=dwLen*2;
+			pData+=dwLen*2;
+			dwDataLen-=dwLen;
+		}
+		break;
+	case CAction::Presets:
+	case CAction::ChangeValue:
+		if (m_szPreset!=NULL)
+		{
+			DWORD dwLen;
+
+			for (dwLen=0;dwLen<dwDataLen && ((LPCWSTR)pData)[dwLen]!='\0';dwLen++);
+
+			if (dwLen==dwDataLen)
+				return 0;
+			
+			dwLen++;
+			m_szPreset=new WCHAR[dwLen];
+            MemCopyW(m_szPreset,pData,dwLen);
+			dwUsed+=dwLen*2;
+			pData+=dwLen*2;
 			dwDataLen-=dwLen;
 		}
 		break;
@@ -654,12 +689,27 @@ DWORD CSubAction::GetData(DWORD nAction,BYTE* pData_,BOOL bHeader) const
 			pData+=dwUsed*2;
 		}
 		break;
-	case CAction::Advanced:
-		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage) && 			
+	case CAction::Misc:
+		if ((m_nMisc==SendMessage || m_nMisc==PostMessage) && 			
 			m_pSendMessage!=NULL)
 		{
 			DWORD dwUsed=m_pSendMessage->GetData(pData);
 			pData+=dwUsed;
+		}
+		else if (m_nMisc==ExecuteCommandMisc && m_szCommand!=NULL)
+		{
+			DWORD dwUsed=istrlenw(m_szCommand)+1;
+			MemCopyW(pData,m_szCommand,dwUsed);
+			pData+=dwUsed*2;
+		}
+		break;
+	case CAction::Presets:
+	case CAction::ChangeValue:
+		if (m_szPreset!=NULL)
+		{
+			DWORD dwUsed=istrlenw(m_szPreset)+1;
+			MemCopyW(pData,m_szPreset,dwUsed);
+			pData+=dwUsed*2;
 		}
 		break;
 	}
@@ -757,11 +807,11 @@ char CShortcut::GetMnemonicForAction(HWND* hDialogs) const
 		{
 			for (int j=0;hDialogs[j]!=NULL;j++)
 			{	
-				if (HIWORD(pAction->m_nActivateControl)& (1<<15))
+				if (HIWORD(pAction->m_nControl)& (1<<15))
 					continue;
 
 
-				HWND hControl=::GetDlgItem(hDialogs[j],HIWORD(pAction->m_nActivateControl));
+				HWND hControl=::GetDlgItem(hDialogs[j],HIWORD(pAction->m_nControl));
 				if (hControl!=NULL)
 				{
 					DWORD dwTextLen=::SendMessage(hControl,WM_GETTEXTLENGTH,0,0);
@@ -798,13 +848,20 @@ void CSubAction::GetCopyFrom(DWORD nAction,CSubAction& rCopyFrom)
 	case CAction::ResultListItems:
 		if (m_nResultList==Execute && m_szVerb!=NULL)
 			m_szVerb=alloccopy(m_szVerb);
-		if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
+		else if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
 			m_szCommand=alloccopy(m_szCommand);
 		break;
-	case CAction::Advanced:
-		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage ) &&
+	case CAction::Misc:
+		if ((m_nMisc==SendMessage || m_nMisc==PostMessage ) &&
 			m_pSendMessage!=NULL)
 			m_pSendMessage=new SendMessageInfo(*m_pSendMessage);
+		else if (m_nMisc==ExecuteCommandMisc && m_szCommand!=NULL)
+			m_szCommand=alloccopy(m_szCommand);
+		break;
+	case CAction::Presets:
+	case CAction::ChangeValue:
+		if (m_szPreset!=NULL)
+			m_szPreset=alloccopy(m_szPreset);
 		break;
 	}
 	
@@ -820,10 +877,20 @@ void CSubAction::ClearExtraInfo(DWORD nAction)
 		else if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
 			delete[] m_szCommand;			
 		break;
-	case CAction::Advanced:
-		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage ) &&
+	case CAction::Misc:
+		if ((m_nMisc==SendMessage || m_nMisc==PostMessage ) &&
 			m_pSendMessage!=NULL)
 			delete m_pSendMessage;
+		else if (m_nMisc==ExecuteCommandMisc && m_szCommand!=NULL)
+			delete[] m_szCommand;			
+		break;
+	case CAction::Presets:
+		if (m_szPreset!=NULL)
+			delete[] m_szPreset;			
+		break;
+	case CAction::ChangeValue:
+		if (m_szValue!=NULL)
+			delete[] m_szValue;			
 		break;
 	}
 	m_pExtraInfo=NULL;
@@ -850,8 +917,14 @@ void CAction::ExecuteAction()
 	case ResultListItems:
 		DoResultListItems();
 		break;
-	case Advanced:
-		DoAdvanced();
+	case Misc:
+		DoMisc();
+		break;
+	case ChangeValue:
+		DoChangeValue();
+		break;
+	case Presets:
+		DoPresets();
 		break;
 	default:
 		ASSERT(0);
@@ -866,9 +939,9 @@ void CSubAction::DoActivateControl()
 		return;
 	
 	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
-		pLocateDlg->OnCommand(LOWORD(m_nActivateControl),1,NULL);
+		pLocateDlg->OnCommand(LOWORD(m_nControl),1,NULL);
 	else
-		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nActivateControl),1),0);
+		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nControl),1),0);
 }
 
 
@@ -946,17 +1019,136 @@ void CSubAction::DoShowHideDialog()
 			else
 				pLocateDlg->ShowWindow(CWnd::swRestore);
 		}
+		break;        
+	case ShowOpenOrHideDialog:  
+		if (pLocateDlg==NULL)
+			GetLocateAppWnd()->OnLocate();
+		else if (pLocateDlg!=NULL)
+		{
+			WINDOWPLACEMENT wp;
+			wp.length=sizeof(WINDOWPLACEMENT);
+			pLocateDlg->GetWindowPlacement(&wp);
+			if (wp.showCmd!=SW_SHOWMINIMIZED &&wp.showCmd!=SW_HIDE)
+				pLocateDlg->ShowWindow(CWnd::swMinimize);
+			else 
+				GetLocateAppWnd()->OnLocate();
+		}
 		break;
 	}
 }
 
+void CSubAction::DoChangeValue()
+{
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg==NULL || m_szValue==NULL)
+		return;
+	
+	// Get handle to control
+	CWndCtrl Control(pLocateDlg->GetDlgItem(LOWORD(m_nControl)));
+	HWND hInDialog=*pLocateDlg;
+
+	if (Control.GetHandle()==NULL)
+		Control.SetHandle(pLocateDlg->m_NameDlg.GetDlgItem(LOWORD(m_nControl)));
+	if (Control.GetHandle()==NULL)
+		Control.SetHandle(pLocateDlg->m_SizeDateDlg.GetDlgItem(LOWORD(m_nControl)));
+	if (Control.GetHandle()==NULL)
+		Control.SetHandle(pLocateDlg->m_AdvancedDlg.GetDlgItem(LOWORD(m_nControl)));
+
+	ASSERT(Control.GetHandle()!=NULL);
+
+	if (!Control.IsWindowEnabled())
+		return;
+
+	char szClass[100];
+	GetClassName(Control,szClass,100);
+	if (_stricmp(szClass,"EDIT")==0)
+	{
+		Control.SetWindowText(m_szValue);
+		::SendMessage(Control.GetParent(),WM_COMMAND,MAKEWPARAM(m_nControl,EN_CHANGE),LPARAM((HWND)Control));
+	}
+	else if (_stricmp(szClass,"COMBOBOX")==0)
+	{
+		if ((Control.GetStyle()&CBS_DROPDOWNLIST)!=CBS_DROPDOWNLIST)
+		{
+			Control.SetWindowText(m_szValue);
+			::SendMessage(Control.GetParent(),WM_COMMAND,MAKEWPARAM(m_nControl,CBN_EDITCHANGE),LPARAM((HWND)Control));
+		}
+		else
+		{
+			Control.SendMessage(CB_SETCURSEL,_wtoi(m_szValue));
+			::SendMessage(Control.GetParent(),WM_COMMAND,MAKEWPARAM(m_nControl,CBN_SELCHANGE),LPARAM((HWND)Control));
+		}
+	}
+	else if (_stricmp(szClass,"BUTTON")==0)
+	{
+		if (Control.GetStyle()&BS_CHECKBOX)  // This also takes radiobuttons
+		{
+			Control.SendMessage(BM_SETCHECK,_wtoi(m_szValue));
+			::SendMessage(Control.GetParent(),WM_COMMAND,MAKEWPARAM(m_nControl,BN_CLICKED),LPARAM((HWND)Control));
+		}
+	}
+	else if (_stricmp(szClass,"ComboBoxEx32")==0)
+	{
+		CComboBoxEx cb(Control);
+		cb.SetCurSel(-1);
+		cb.SetItemText(-1,m_szValue);
+	}
+	else if (_stricmp(szClass,"SysDateTimePick32")==0)
+	{
+		SYSTEMTIME st;
+		GetLocalTime(&st);
+		st.wHour=0;
+		st.wMinute=0;
+		st.wSecond=0;
+		st.wMilliseconds=0;
+		
+		if (wcslen(m_szValue)>=8)
+		{
+			
+		
+			WCHAR szTemp[5];
+			MemCopyW(szTemp,m_szValue,4);
+			szTemp[4]='\0';
+			st.wYear=(WORD)_wtol(szTemp);
+
+			MemCopyW(szTemp,m_szValue+4,2);
+			szTemp[2]='\0';
+			st.wMonth=(WORD)_wtol(szTemp);
+
+			MemCopyW(szTemp,m_szValue+6,2);
+			szTemp[2]='\0';
+			st.wDay=(WORD)_wtol(szTemp);
+
+		}
+		else
+		{
+			int nIndex=CTime::GetIndex(st.wDay,st.wMonth,st.wYear);
+			if (m_szValue[0]='-')
+				nIndex-=(WORD)_wtol(m_szValue+1);
+			else 
+				nIndex+=(WORD)_wtol(m_szValue);
+
+			CTime::GetDayFromIndex(nIndex,st.wDay,st.wMonth,st.wYear);
+		}
+		Control.SendMessage(DTM_SETSYSTEMTIME,GDT_VALID,LPARAM(&st));
+	}
+}
+
+
+void CSubAction::DoPresets()
+{
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg!=NULL && m_szPreset!=NULL)
+		pLocateDlg->LoadPreset(m_szPreset);
+}
 
 
 void CSubAction::DoResultListItems()
 {
 	if (m_nResultList==ExecuteCommand)
 	{
-		CLocateDlg::ExecuteCommand(m_szCommand);
+		if (m_szCommand!=NULL)
+			CLocateDlg::ExecuteCommand(m_szCommand);
 		return;
 	}
 	
@@ -1004,9 +1196,15 @@ BOOL CALLBACK WindowEnumProc(HWND hwnd,LPARAM lParam)
 	return FALSE;
 }
 
-void CSubAction::DoAdvanced()
+void CSubAction::DoMisc()
 {
-
+	if (m_nMisc==ExecuteCommandMisc)
+	{
+		if (m_szCommand!=NULL)
+			CLocateDlg::ExecuteCommand(m_szCommand);
+		return;
+	}
+	
 
 	// Send/Post Message
 
@@ -1130,7 +1328,7 @@ void CSubAction::DoAdvanced()
 
 	if (hWnd!=NULL)
 	{
-		if (m_nAdvanced==PostMessage)
+		if (m_nMisc==PostMessage)
 			::PostMessage(hWnd,m_pSendMessage->nMessage,wParam,lParam);
 		else
 			::SendMessage(hWnd,m_pSendMessage->nMessage,wParam,lParam);
@@ -1460,6 +1658,8 @@ int CSubAction::GetShowHideDialogActionLabelStringId(CAction::ActionShowHideDial
 		return IDS_ACTIONSWDIALOGMAXIMIZE;
 	case MaximizeOrRestoreDialog:
 		return IDS_ACTIONSWDIALOMAXIMIZEORRESTORE;
+	case ShowOpenOrHideDialog:
+		return IDS_ACTIONSWDIALOMSHOWOPENORHIDE;
 	default:
 		return 0;
 	}
@@ -1500,7 +1700,7 @@ int CSubAction::GetResultItemActionLabelStringId(CAction::ActionResultList uSubA
 	}
 }
 
-int CSubAction::GetAdvancedActionStringLabelId(CAction::ActionAdvanced uSubAction)
+int CSubAction::GetMiscActionStringLabelId(CAction::ActionMisc uSubAction)
 {
 	switch (uSubAction)
 	{
@@ -1508,6 +1708,8 @@ int CSubAction::GetAdvancedActionStringLabelId(CAction::ActionAdvanced uSubActio
 		return IDS_ACTIONADVSENDMESSAGE;
 	case CAction::PostMessage:
 		return IDS_ACTIONADVPOSTMESSAGE;
+	case CAction::ExecuteCommandMisc:
+		return IDS_ACTIONRESITEMEXECUTECOMMAND;
 	default:
 		return 0;
 	}

@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,6,5280
- PRODUCTVERSION 2,99,6,5280
+ FILEVERSION 2,99,6,6030
+ PRODUCTVERSION 2,99,6,6030
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -49,7 +49,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 6.5280"
+            VALUE "ProductVersion", "3.0 beta 6.6030"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -166,9 +166,9 @@ BEGIN
                     WS_TABSTOP
     CONTROL         "File containing te&xt:",IDC_CONTAINDATACHECK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,61,77,10
+    EDITTEXT        IDC_CONTAINDATA,8,72,155,12,ES_AUTOHSCROLL
     CONTROL         "Match &case",IDC_DATAMATCHCASE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,92-0,61,90+0,10
-    EDITTEXT        IDC_CONTAINDATA,8,72,155,12,ES_AUTOHSCROLL
     CONTROL         "",IDC_HELPTOOLBAR,"ToolbarWindow32",WS_CLIPSIBLINGS | 
                     0x894d,149,59,14,13
 END
@@ -620,7 +620,7 @@ BEGIN
 	LTEXT           "Operation:",IDC_STATICVERB,115,281,41,9
     COMBOBOX        IDC_VERB,158,279,122,119,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
-    LTEXT           "Wnd:",IDC_STATICWINDOW,8,281,18,8
+    LTEXT           "Wnd:",IDC_STATICWINDOW,8,281,22,8
     EDITTEXT        IDC_WINDOW,30,279,42,12,ES_AUTOHSCROLL
     LTEXT           "Msg:",IDC_STATICMESSAGE,76,281,16,8
     EDITTEXT        IDC_MESSAGE,95,279,33,12,ES_AUTOHSCROLL | ES_NUMBER
@@ -628,8 +628,11 @@ BEGIN
     EDITTEXT        IDC_WPARAM,165,279,39,12,ES_AUTOHSCROLL
     LTEXT           "LParam:",IDC_STATICLPARAM,206,281,27,8
     EDITTEXT        IDC_LPARAM,236,279,42,12,ES_AUTOHSCROLL
-	LTEXT           "Command (file path=%d, parent=%p):",IDC_STATICCOMMAND,8,281,120,8
-    EDITTEXT        IDC_COMMAND,135,279,144,12,ES_AUTOHSCROLL
+	LTEXT           "Command (file path=%d, parent=%p):",IDC_STATICCOMMAND,8,281,149,8
+    EDITTEXT        IDC_COMMAND,158,279,122,12,ES_AUTOHSCROLL
+	LTEXT           "Value:",IDC_STATICVALUE,115,281,42,8
+    EDITTEXT        IDC_VALUE,158,279,107,12,ES_AUTOHSCROLL
+	PUSHBUTTON      "?",IDC_VALUEHELPTEXT,268,280,12,12
 	LTEXT           "File:",IDC_STATICWHICHFILE,115,281,41,9
     COMBOBOX        IDC_WHICHFILE,158,279,122,119,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
@@ -969,6 +972,7 @@ BEGIN
 			MENUITEM "Update file information",         IDM_FORCEUPDATE
 			MENUITEM "Compute MD5 sum",         IDM_COMPUTEMD5SUM
 			MENUITEM "Compute MD5 sums for equal size files",         IDM_MD5SUMSFORSAMESIZEFILES
+			MENUITEM "Remove deleted files"	IDM_REMOVEDELETEDFILES
         END
 		MENUITEM SEPARATOR
     END
@@ -1059,6 +1063,7 @@ END
 //
 
 IDR_SEARCHFROMFILE      HELPTEXT                "helptext.txt"
+IDR_CHANGEVALUEHELP     HELPTEXT                "helptext2.txt"
 IDR_LOCATEHELP			HELPTEXT                "usage_loc.txt"
 IDR_UPDATEDBHELP		HELPTEXT                "usage_updt.txt"
 
@@ -1575,6 +1580,11 @@ BEGIN
 	IDS_SHORTCUTSWAPWITHNEXT		"Swap with next"
 	IDS_SHORTCUTACTION				"Action:"
 	IDS_SHORTCUTACTION2				"Action (%d/%d):"
+	IDS_SHORTCUTSUBACTION			"SubAction:"
+	IDS_SHORTCUTSUBACTIONCONTROL	"Control:"
+	IDS_SHORTCUTSUBACTIONTAB		"Tab:"
+	IDS_SHORTCUTSUBACTIONMENUITEM	"Menu Item:"
+	IDS_SHORTCUTSUBACTIONPRESET		"Preset:"
 	IDS_SHORTCUTMULTIPLEACTIONS		"Multiple Actions"
 	IDS_SHORTCUTNONE				"None"
 	IDS_SHORTCUTMODEXT				"Win+"
@@ -1610,7 +1620,9 @@ BEGIN
 	IDS_ACTIONCATMENUCOMMAND			"Menu Command"
 	IDS_ACTIONCATSHOWHIDEDIALOG			"Show / Hide dialog"
 	IDS_ACTIONCATTRESULTLIST			"Result item"
-	IDS_ACTIONCATADVANCED				"Advanced"
+	IDS_ACTIONCATMISC					"Miscellaneous"
+	IDS_ACTIONCATCHANGEVALUE			"Change field"
+	IDS_ACTIONCATPRESETS				"Presets"
 	IDS_ACTIONSWDIALOGSHOW				"Show dialog"
 	IDS_ACTIONSWDIALOGMINIMINZE			"Minimize dialog"
 	IDS_ACTIONSWDIALOGCLOSE				"Close dialog"
@@ -1619,6 +1631,7 @@ BEGIN
 	IDS_ACTIONSWDIALOGRESTORE			"Restore dialog"
 	IDS_ACTIONSWDIALOGMAXIMIZE			"Maximize dialog"
 	IDS_ACTIONSWDIALOMAXIMIZEORRESTORE	"Maximize / Restore dialog"
+	IDS_ACTIONSWDIALOMSHOWOPENORHIDE	"Show or Open / Hide dialog"
 	IDS_ACTIONRESITEMEXECUTE			"Execute item"
 	IDS_ACTIONRESITEMCOPY				"Copy file (to clipboard)"
 	IDS_ACTIONRESITEMCUT				"Cut file (to clipboard)"
@@ -1657,6 +1670,15 @@ BEGIN
 	IDS_KEYRESULTLIST				"Result list"
 	IDS_KEYMOREDIRECTORIES			"More Directories button"
 	IDS_KEYTEXTHELPBUTTON			"Containing Text Help"
+	IDS_KEYMINSIZETYPE				"Minimum size (type)"
+	IDS_KEYMAXSIZETYPE				"Maximum size (type)"
+	IDS_KEYMINDATETYPE				"Minimum date (type)"
+	IDS_KEYMAXDATETYPE				"Maximum date (type)"
+	IDS_KEYMINSIZEVALUE				"Minimum size (value)"
+	IDS_KEYMAXSIZEVALUE				"Maximum size (value)"
+	IDS_KEYMINDATEVALUE				"Minimum date (date)"
+	IDS_KEYMAXDATEVALUE				"Maximum date (value)"
+	IDS_KEYCONTAINDATA				"File containing text (value)"
 END
 
 

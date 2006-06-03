@@ -561,7 +561,7 @@ public:
 	void SetDefaultActions(CSubAction*** pActions) const;
 
 protected:
-	void OnOk(BOOL bForceSelectDatabases=FALSE);
+	void OnOk(BOOL bShortcut,BOOL bForceSelectDatabases);
 	void OnStop();
 	void OnNewSearch();
 	void OnContextMenuCommands(WORD wID);
@@ -582,6 +582,8 @@ protected:
 	void OnUpdateLocatedItem();
 	void OnComputeMD5Sums(BOOL bForSameSizeFilesOnly);
 	void OnShowFileInformation();
+	void OnRemoveDeletedFiles();
+	
 	
 	void OnExecuteFile(LPCWSTR szVerb,int nItem=-1);
 	void OnCopy(BOOL bCut,int nItem=1);
@@ -838,6 +840,7 @@ public:
 	friend class CCheckFileNotificationsThread;
 	friend class CBackgroundUpdater;
 	friend class CSelectColumndDlg;
+	friend class CSubAction;
 
 #ifdef _DEBUG
 public:

@@ -238,6 +238,7 @@ public:
 		char m_cMaxDateType;
 		char m_cMinDateType;
 		BYTE m_nSorting;
+		SHORT m_nActivateInstance; // 0 not set, -1 first instance, X instance no
 
 		CArrayFP<CDatabase*> m_aDatabases;
 
@@ -312,7 +313,7 @@ public:
 	static BOOL ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData);
 	static BOOL CALLBACK EnumLocateSTWindows(HWND hwnd,LPARAM lParam);
 
-	BOOL ChechOtherInstances();
+	BOOL ActivateOtherInstances(LPCWSTR pCmdLine);
 	
 	void SaveRegistry() const;
 	void LoadRegistry();
@@ -431,7 +432,8 @@ inline CLocateApp::CStartData::CStartData()
     m_cMaxDateType(0),m_cMinDateType(0),
     m_nSorting(BYTE(-1)),m_nPriority(priorityDontChange),
 	m_pStartPath(NULL),m_pStartString(NULL),
-	m_pTypeString(NULL),m_pFindText(NULL),m_pLoadPreset(NULL)
+	m_pTypeString(NULL),m_pFindText(NULL),m_pLoadPreset(NULL),
+	m_nActivateInstance(0)
 { 
 }
 

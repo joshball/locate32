@@ -338,98 +338,121 @@ WORD CTime::DayOfYear(WORD nDay,WORD nMonth,WORD nYear)
 
 }
 
-CTime CTime::GetDayFromDayOfYear(WORD nDay,WORD nYear)
+
+
+CTime CTime::GetDayFromDayOfYear(WORD nDayOfYear,WORD nYear)
 {
-	struct tm lt;
-	lt.tm_isdst=0;
-	lt.tm_sec=0;
-	lt.tm_min=0;
-	lt.tm_hour=0;
+	struct tm tim;
+	tim.tm_hour=1;
+	tim.tm_min=0;
+	tim.tm_sec=0;
+	tim.tm_year=nYear;
+	WORD wDay,wMonth;
+	GetDayFromDayOfYear(nDayOfYear,nYear,wDay,wMonth);
+	tim.tm_yday=nDayOfYear;
+	tim.tm_mday=wDay;
+	tim.tm_mon=wMonth-1;
+
+	return CTime(mktime(&tim));
+}
+
+void CTime::GetDayFromDayOfYear(WORD nDayOfYear,WORD nYear,WORD& nDay,WORD& nMonth)
+{
 	
-	if (nDay<32)
+	if (nDayOfYear<32)
 	{
-		lt.tm_mon=0;
-		lt.tm_mday=nDay;
-		return CTime(mktime(&lt),0);
+		nMonth=1;
+		nDay=nDayOfYear;
+		return;
 	}
 	if(IsLeapYear(nYear))
 	{
-		if (nDay<61)
+		if (nDayOfYear<61)
 		{
-			lt.tm_mon=1;
-			lt.tm_mday=nDay-31;
-			return CTime(mktime(&lt),0);
+			nMonth=2;
+			nDay=nDayOfYear-31;
+			return;
 		}
-		nDay--;
+		nDayOfYear--;
 	}
 	else
 	{
-		if (nDay<60)
+		if (nDayOfYear<60)
 		{
-			lt.tm_mon=1;
-			lt.tm_mday=nDay-31;
-			return CTime(mktime(&lt),0);
+			nMonth=2;
+			nDay=nDayOfYear-31;
+			return;
 		}
 	}
 	
-	if (nDay<91)
+	if (nDayOfYear<91)
 	{	
-		lt.tm_mon=2;
-		lt.tm_mday=nDay-59;
+		nMonth=3;
+		nDay=nDayOfYear-59;
 	}
-	else if (nDay<121)
+	else if (nDayOfYear<121)
 	{
-		lt.tm_mon=3;
-		lt.tm_mday=nDay-90;
+		nMonth=4;
+		nDay=nDayOfYear-90;
 	}
-	else if (nDay<152)
+	else if (nDayOfYear<152)
 	{
-		lt.tm_mon=4;
-		lt.tm_mday=nDay-120;
+		nMonth=5;
+		nDay=nDayOfYear-120;
 	}
-	else if (nDay<182)
+	else if (nDayOfYear<182)
 	{
-		lt.tm_mon=5;
-		lt.tm_mday=nDay-151;
+		nMonth=6;
+		nDay=nDayOfYear-151;
 	}
-	else if (nDay<213)
+	else if (nDayOfYear<213)
 	{
-		lt.tm_mon=6;
-		lt.tm_mday=nDay-181;
+		nMonth=7;
+		nDay=nDayOfYear-181;
 	}
-	else if (nDay<244)
+	else if (nDayOfYear<244)
 	{
-		lt.tm_mon=7;
-		lt.tm_mday=nDay-212;
+		nMonth=8;
+		nDay=nDayOfYear-212;
 	}
-	else if (nDay<274)
+	else if (nDayOfYear<274)
 	{
-		lt.tm_mon=8;
-		lt.tm_mday=nDay-243;
+		nMonth=9;
+		nDay=nDayOfYear-243;
 	}
-	else if (nDay<305)
+	else if (nDayOfYear<305)
 	{
-		lt.tm_mon=9;
-		lt.tm_mday=nDay-273;
+		nMonth=10;
+		nDay=nDayOfYear-273;
 	}
-	else if (nDay<335)
+	else if (nDayOfYear<335)
 	{
-		lt.tm_mon=10;
-		lt.tm_mday=nDay-304;
+		nMonth=11;
+		nDay=nDayOfYear-304;
 	}
-	else if (nDay<366)
+	else if (nDayOfYear<366)
 	{
-		lt.tm_mon=11;
-		lt.tm_mday=nDay-334;
+		nMonth=12;
+		nDay=nDayOfYear-334;
 	}
-	return CTime(mktime(&lt),0);
 }
 
+	
+
+
+void CTime::GetDayFromIndex(DWORD nIndex,WORD& nDay,WORD& nMonth,WORD& nYear)
+{
+	nYear=(WORD)(nIndex/365.25)+1;
+	GetDayFromDayOfYear((WORD)(nIndex-((nYear-1)*365+LeapYears(nYear-1))),nYear,nDay,nMonth);
+}
+	
 CTime CTime::GetDayFromIndex(DWORD nIndex)
 {
 	WORD nYear=(WORD)(nIndex/365.25)+1;
 	return GetDayFromDayOfYear((WORD)(nIndex-((nYear-1)*365+LeapYears(nYear-1))),nYear);
 }
+
+
 
 BYTE CTime::GetDaysInMonth(BYTE nMonth,WORD nYear)
 {

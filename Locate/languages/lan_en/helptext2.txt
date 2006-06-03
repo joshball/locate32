@@ -1,0 +1,21 @@
+For text field: 
+give a value as an text
+
+For check boxes:
+0 to disable
+1 to enable
+
+For list boxes: 
+give an index to item as number (0,1,2,...)
+
+For date: give date in the form: 
+YYYYMMDD	or
+0  for today or
+N  for today + N days or
+-N  for today - N days
+
+For lookin field:
+
+
+
+EOF

@@ -63,6 +63,10 @@ public:
 	static DWORD GetIndex(WORD nDay,WORD nMonth,WORD nYear);
 	static CTime GetDayFromDayOfYear(WORD nDay,WORD nYear);
 	static CTime GetDayFromIndex(DWORD nIndex);
+	
+	static void GetDayFromDayOfYear(WORD nDayOfYear,WORD nYear,WORD& nDay,WORD& nMonth);
+	static void GetDayFromIndex(DWORD nIndex,WORD& nDay,WORD& nMonth,WORD& nYear);
+	
 	static BYTE GetDaysInMonth(BYTE nMonth,WORD nYear);
 	static BYTE GetWeek(WORD nDay,WORD nMonth,WORD nYear,BYTE nFirstIsMonday=TRUE);
 	static int GetDayOfWeek(WORD nDay,WORD nMonth,WORD nYear);  // 0=Sun, 1=Mon, ..., 6=Sat

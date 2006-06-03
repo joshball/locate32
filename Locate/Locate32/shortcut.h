@@ -11,7 +11,7 @@ public:
 	void GetCopyFrom(DWORD nAction,CSubAction& rCopyFrom);	
 	void ClearExtraInfo(DWORD nAction);
 
-	enum ActionActivateControls { // First is control to be activated, second is for memonics
+	enum ActionControls { // First is control to be activated, second is for memonics
 		NullControl = 0,
 		
 		// Next and previous control
@@ -35,9 +35,17 @@ public:
 		
 		// Size and Data
 		MinimumSize = MAKELONG(IDC_CHECKMINIMUMSIZE,IDC_CHECKMINIMUMSIZE),
+		MinimumSizeValue = MAKELONG(IDC_MINIMUMSIZE,~IDS_KEYMINSIZEVALUE),
+		MinimumSizeType = MAKELONG(IDC_MINSIZETYPE,~IDS_KEYMINSIZETYPE),
 		MaximumSize = MAKELONG(IDC_CHECKMAXIMUMSIZE,IDC_CHECKMAXIMUMSIZE),
+		MaximumSizeValue = MAKELONG(IDC_MAXIMUMSIZE,~IDS_KEYMAXSIZEVALUE),
+		MaximumSizeType = MAKELONG(IDC_MAXSIZETYPE,~IDS_KEYMAXSIZETYPE),
 		MinimumDate = MAKELONG(IDC_CHECKMINDATE,IDC_CHECKMINDATE),
+		MinimumDateValue = MAKELONG(IDC_MINDATE,~IDS_KEYMINDATEVALUE),
+		MinimumDateType = MAKELONG(IDC_MINTYPE,~IDS_KEYMINDATETYPE),
 		MaximumDate = MAKELONG(IDC_CHECKMAXDATE,IDC_CHECKMAXDATE),
+		MaximumDateValue = MAKELONG(IDC_MAXDATE,~IDS_KEYMAXDATEVALUE),
+		MaximumDateType = MAKELONG(IDC_MAXTYPE,~IDS_KEYMAXDATETYPE),
 		
 		// Advanced
 		CheckFilesOrFolders = MAKELONG(IDC_CHECK,IDC_CHECKSTATIC),
@@ -46,19 +54,38 @@ public:
 		UseWholePath = MAKELONG(IDC_USEWHOLEPATH,IDC_USEWHOLEPATH),
 		TypeOfFile = MAKELONG(IDC_FILETYPE,IDC_FILETYPESTATIC),
 		ContainingText = MAKELONG(IDC_CONTAINDATACHECK,IDC_CONTAINDATACHECK),
+		ContainingTextValue = MAKELONG(IDC_CONTAINDATA,~IDS_KEYCONTAINDATA),
 		TextMatchCase = MAKELONG(IDC_DATAMATCHCASE,IDC_DATAMATCHCASE),
 		TextHelp = MAKELONG(IDC_HELPTOOLBAR,~IDS_KEYTEXTHELPBUTTON)
 	};
 
-	static ActionActivateControls* GetPossibleControlValues() {
-		ActionActivateControls a[]={NextControl,PrevControl,
+	static ActionControls* GetPossibleControlValuesToActivate() {
+		ActionControls a[]={NextControl,PrevControl,
 			FindNow,Stop,NewSearch,ResultList,
 			Presets,Name,Type,LookIn,MoreDirectories,NoSubdirectories,Browse,
-            MinimumSize,MaximumSize,MinimumDate,MaximumDate,
+            MinimumSize,MinimumSizeValue,MinimumSizeType,
+			MaximumSize,MaximumSizeValue,MaximumSizeType,
+			MinimumDate,MinimumDateValue,MinimumDateType,
+			MaximumDate,MaximumDateValue,MaximumDateType,
 			CheckFilesOrFolders,MatchWholeName,ReplaceSpaces,
-            UseWholePath,TypeOfFile,ContainingText,
+            UseWholePath,TypeOfFile,ContainingText,ContainingTextValue,
+			TextMatchCase,NullControl};
+		ActionControls* b=new ActionControls[sizeof(a)/sizeof(ActionControls)];
+		CopyMemory(b,a,sizeof(a));
+		return b;
+	}
+
+	static ActionControls* GetPossibleControlValuesToChange() {
+		ActionControls a[]={
+			Name,Type,LookIn,NoSubdirectories,
+            MinimumSize,MinimumSizeValue,MinimumSizeType,
+			MaximumSize,MaximumSizeValue,MaximumSizeType,
+			MinimumDate,MinimumDateValue,MinimumDateType,
+			MaximumDate,MaximumDateValue,MaximumDateType,
+			CheckFilesOrFolders,MatchWholeName,ReplaceSpaces,
+            UseWholePath,TypeOfFile,ContainingText,ContainingTextValue,
 			TextMatchCase,TextHelp,NullControl};
-		ActionActivateControls* b=new ActionActivateControls[sizeof(a)/sizeof(ActionActivateControls)];
+		ActionControls* b=new ActionControls[sizeof(a)/sizeof(ActionControls)];
 		CopyMemory(b,a,sizeof(a));
 		return b;
 	}
@@ -78,13 +105,16 @@ public:
 		FileDatabaseInfo = MAKELONG(IDM_DATABASEINFO,IDS_SHORTCUTMENUFILENOITEM),
 		FileClose = MAKELONG(IDM_CLOSE,IDS_SHORTCUTMENUFILENOITEM),
 		FileExit = MAKELONG(IDM_EXIT,IDS_SHORTCUTMENUFILENOITEM),
+		
 		SpecialCopyPathToClibboard = MAKELONG(IDM_COPYPATHTOCB,IDS_SHORTCUTMENUSPECIAL),
 		SpecialCopyShortPathToClibboard = MAKELONG(IDM_COPYSHORTPATHTOCB,IDS_SHORTCUTMENUSPECIAL),
 		SpecialChangeFileName = MAKELONG(IDM_CHANGEFILENAME,IDS_SHORTCUTMENUSPECIAL),
         SpecialChangeCase = MAKELONG(IDM_CHANGECASE,IDS_SHORTCUTMENUSPECIAL),
+		SpecialShowFileInformation = MAKELONG(IDM_SHOWFILEINFORMATION,IDS_SHORTCUTMENUSPECIAL),
 		SpecialForceUpdate = MAKELONG(IDM_FORCEUPDATE,IDS_SHORTCUTMENUSPECIAL),
 		SpecialComputeMD5Sum = MAKELONG(IDM_COMPUTEMD5SUM,IDS_SHORTCUTMENUSPECIAL),
 		SpecialComputeMD5SumsForSameSizeFiles = MAKELONG(IDM_MD5SUMSFORSAMESIZEFILES,IDS_SHORTCUTMENUSPECIAL),
+		SpecialRemoveDeletedFiles = MAKELONG(IDM_REMOVEDELETEDFILES,IDS_SHORTCUTMENUSPECIAL),
 
 		EditCut = MAKELONG(IDM_CUT,IDS_SHORTCUTMENUEDIT),
 		EditCopy = MAKELONG(IDM_COPY,IDS_SHORTCUTMENUEDIT),
@@ -126,7 +156,8 @@ public:
             FileFindUsingDatabase,FileUpdateDatabases,FileUpdateSelectedDatabase,
             FileStopUpdating,FileDatabaseInfo,FileClose,FileExit,SpecialCopyPathToClibboard,
 			SpecialCopyShortPathToClibboard,SpecialChangeFileName,SpecialChangeCase,
-			SpecialForceUpdate,SpecialComputeMD5Sum,SpecialComputeMD5SumsForSameSizeFiles,
+			SpecialShowFileInformation,SpecialForceUpdate,SpecialComputeMD5Sum,
+			SpecialComputeMD5SumsForSameSizeFiles,SpecialRemoveDeletedFiles,
 			EditCut,EditCopy,EditSelectAll,EditInvertSelection,ViewLargeIcons,ViewSmallIcons,
             ViewList,ViewDetails,ViewArrangeIconsByName,ViewArrangeIconsByFolder,
             ViewArrangeIconsByType,ViewArrangeIconsByDate,ViewArrangeIconsBySize,
@@ -158,8 +189,9 @@ public:
 		RestoreDialog = 5,
 		MaximizeDialog = 6,
 		MaximizeOrRestoreDialog = 7,
+		ShowOpenOrHideDialog = 8,
 
-		ShowHideDialogLast = MaximizeOrRestoreDialog
+		ShowHideDialogLast = ShowOpenOrHideDialog
 	};
 
 	enum ActionResultList { 
@@ -180,21 +212,22 @@ public:
 		ResultListLast = SelectFile
 	};
 
-	enum ActionAdvanced {
+	enum ActionMisc {
 		SendMessage = 0,
 		PostMessage = 1,
+		ExecuteCommandMisc = 2,
 		
-		AdvancedLast = PostMessage
+		MiscLast = ExecuteCommandMisc
 	};
 		
 	union { // Action specifig type
 		DWORD m_nSubAction;
-		ActionActivateControls m_nActivateControl;
+		ActionControls m_nControl;
 		ActionActivateTabs m_nActivateTab;
 		ActionMenuCommands m_nMenuCommand;
 		ActionShowHideDialog m_nDialogCommand;
 		ActionResultList m_nResultList;
-		ActionAdvanced m_nAdvanced;
+		ActionMisc m_nMisc;
 	};
 
 	struct SendMessageInfo {
@@ -221,9 +254,12 @@ public:
 
 	union { // Extra action data
 		void* m_pExtraInfo;	
+		
 		LPWSTR m_szVerb; // with, ResultListItems::Execute, NULL means default
 		SendMessageInfo* m_pSendMessage; // with, Advanced::SendMessage and Advanced::PostMessage
 		LPWSTR m_szCommand;
+		LPWSTR m_szPreset;
+		LPWSTR m_szValue;
 		SelectFileType m_nSelectFileType;
 	};
 
@@ -235,14 +271,16 @@ public:
 	static int GetActivateTabsActionLabelStringId(ActionActivateTabs uSubAction);
 	static int GetShowHideDialogActionLabelStringId(ActionShowHideDialog uSubAction);
 	static int GetResultItemActionLabelStringId(ActionResultList uSubAction);
-	static int GetAdvancedActionStringLabelId(ActionAdvanced uSubAction);
+	static int GetMiscActionStringLabelId(ActionMisc uSubAction);
 
 	void DoActivateControl();
 	void DoActivateTab();
 	void DoMenuCommand();
     void DoShowHideDialog();
 	void DoResultListItems();
-	void DoAdvanced();
+	void DoMisc();
+	void DoChangeValue();
+	void DoPresets();
 
 
 	DWORD GetData(DWORD nAction,BYTE* pData,BOOL bHeader=TRUE) const;
@@ -272,7 +310,9 @@ public:
 		MenuCommand = 2,
 		ShowHideDialog = 3,
 		ResultListItems = 4,
-		Advanced = 5
+		Misc = 5,
+		ChangeValue = 6,
+		Presets = 7
 	};
 	
 	union {

@@ -6,7 +6,7 @@
 #endif
 
 inline CSubAction::CSubAction()
-:	m_nActivateControl(FindNow),m_pExtraInfo(NULL)
+:	m_nControl(FindNow),m_pExtraInfo(NULL)
 {
 }
 
@@ -101,10 +101,20 @@ inline DWORD CSubAction::GetDataLength(DWORD nAction,BOOL bHeader) const
 		else if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
 			dwLength+=(DWORD)(wcslen(m_szCommand)+1)*2;
 		break;
-	case CAction::Advanced:
-		if ((m_nAdvanced==SendMessage || m_nAdvanced==PostMessage ) &&
+	case CAction::Misc:
+		if ((m_nMisc==SendMessage || m_nMisc==PostMessage ) &&
 			m_pSendMessage!=NULL)
 			dwLength+=m_pSendMessage->GetDataLength();
+		else if (m_nMisc==ExecuteCommandMisc && m_szCommand!=NULL)
+			dwLength+=(DWORD)(wcslen(m_szCommand)+1)*2;
+		break;
+	case CAction::Presets:
+		if (m_szPreset!=NULL)
+			dwLength+=(DWORD)(wcslen(m_szPreset)+1)*2;
+		break;
+	case CAction::ChangeValue:
+		if (m_szPreset!=NULL)
+			dwLength+=(DWORD)(wcslen(m_szValue)+1)*2;
 		break;
 	}
 

@@ -531,6 +531,10 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 CLocateDlg::~CLocateDlg()
 {
 	DebugNumMessage("CLocateDlg::~CLocateDlg() this is %X",DWORD(this));
+
+
+	ASSERT(m_hActivePopupMenu==NULL);
+	ASSERT(m_pActiveContextMenu==NULL);
 }
 
 CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
@@ -818,11 +822,11 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		break;
 	case IDC_OK:
 		if (::IsWindowEnabled(GetDlgItem(IDC_OK)))
-			OnOk();
+			OnOk(hControl==NULL && wNotifyCode==1,FALSE);
 		break;
 	case IDM_FINDUSINGDBS:
 		if (::IsWindowEnabled(GetDlgItem(IDC_OK)))
-			OnOk(TRUE);
+			OnOk(hControl==NULL && wNotifyCode==1,TRUE);
 		break;		
 	case IDC_STOP:
 		if (::IsWindowEnabled(GetDlgItem(IDC_STOP)))
@@ -953,6 +957,9 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDM_SHOWFILEINFORMATION:
 		OnShowFileInformation();
 		break;
+	case IDM_REMOVEDELETEDFILES:
+		OnRemoveDeletedFiles();
+		break;
 	case IDM_CHANGEFILENAME:
 		OnChangeFileName();
 		break;
@@ -964,15 +971,24 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		// This is to ensure that these conrols get focus e.g. when alt+n is pressed
 		return m_NameDlg.SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
 	case IDC_CHECKMINIMUMSIZE:
+	case IDC_MINIMUMSIZE:
+	case IDC_MINSIZETYPE:
 	case IDC_CHECKMAXIMUMSIZE:
+	case IDC_MAXIMUMSIZE:
+	case IDC_MAXSIZETYPE:
 	case IDC_CHECKMINDATE:
+	case IDC_MINDATE:
+	case IDC_MINTYPE:
 	case IDC_CHECKMAXDATE:
+	case IDC_MAXDATE:
+	case IDC_MAXTYPE:
 		// This is to ensure that these conrols get focus e.g. when alt+n is pressed
 		return m_SizeDateDlg.SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
 	case IDC_CHECK:
 	case IDC_MATCHWHOLENAME:
 	case IDC_FILETYPE:
 	case IDC_CONTAINDATACHECK:
+	case IDC_CONTAINDATA:
 	case IDC_DATAMATCHCASE:
 	case IDC_REPLACESPACES:
 	case IDC_USEWHOLEPATH:
@@ -1463,7 +1479,7 @@ void CLocateDlg::DeleteTooltipTools()
 	*/
 }
 
-void CLocateDlg::OnOk(BOOL bSelectDatabases)
+void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 {
 	DlgDebugMessage("CLocateDlg::OnOk BEGIN");
 	
@@ -1485,7 +1501,7 @@ void CLocateDlg::OnOk(BOOL bSelectDatabases)
 	if (m_pListTooltips!=NULL)
 		DeleteTooltipTools();
 
-	if (GetKeyState(VK_CONTROL)&0x8000)
+	if (!bShortcut && GetKeyState(VK_CONTROL)&0x8000)
 		bSelectDatabases=TRUE;
 
 
@@ -4866,6 +4882,28 @@ void CLocateDlg::OnRemoveFromThisList()
 	}
 }
 
+void CLocateDlg::OnRemoveDeletedFiles()
+{
+	CIntArray aDeleted;
+
+	int iPrevItem=-1;
+	int iItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
+	while (iItem!=-1)
+	{
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
+		if (pItem!=NULL)
+		{
+			if (pItem->IsDeleted())
+			{
+				m_pListCtrl->DeleteItem(iItem);
+				iItem=m_pListCtrl->GetNextItem(iPrevItem,LVNI_ALL);
+				continue;
+			}
+		}
+		iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
+	}
+}
+
 
 BOOL CLocateDlg::CheckClipboard()
 {
@@ -6975,7 +7013,7 @@ void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)
 		m_dwMaxFoundFiles=pStartData->m_dwMaxFoundFiles;
 	
 	if (pStartData->m_nStatus&CLocateApp::CStartData::statusRunAtStartUp)
-		OnOk();
+		OnOk(FALSE,FALSE);
 }
 
 
@@ -10036,8 +10074,19 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		break;
 	case IDC_MINIMUMSIZE:
 	case IDC_MAXIMUMSIZE:
-		if (wNotifyCode==EN_SETFOCUS)
+		if (hControl==NULL && wNotifyCode==1) // Accelerator
+			SetFocus(wID);
+		else if (wNotifyCode==EN_SETFOCUS)
 			::SendMessage(hControl,EM_SETSEL,0,MAKELPARAM(0,-1));
+		break;
+	case IDC_MINSIZETYPE:
+	case IDC_MAXSIZETYPE:
+	case IDC_MINDATE:
+	case IDC_MAXDATE:
+	case IDC_MINTYPE:
+	case IDC_MAXTYPE:
+		if (hControl==NULL && wNotifyCode==1) // Accelerator
+			SetFocus(wID);
 		break;
 		
 	}
