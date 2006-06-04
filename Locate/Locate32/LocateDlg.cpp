@@ -4,6 +4,12 @@
 #include <tmschema.h>
 
 
+#define STATUSBAR_MISC				0
+#define STATUSBAR_SEARCHFROMFILE	1
+#define STATUSBAR_OPERATIONSTATUS	1
+#define STATUSBAR_LOCATEICON		2
+#define STATUSBAR_UPDATEICON		3
+
 CComboBoxAutoComplete::CComboBoxAutoComplete()
 :	CComboBox(),m_pACData(NULL)
 {
@@ -1508,8 +1514,8 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 	// If dialog is not large mode, change it
 	SetDialogMode(TRUE);
 	// Clearing possible exclamation icons
-	m_pStatusCtrl->SetText("",2,0);
-	m_pStatusCtrl->SetText("",3,0);
+	m_pStatusCtrl->SetText("",STATUSBAR_LOCATEICON,0);
+	m_pStatusCtrl->SetText("",STATUSBAR_UPDATEICON,0);
 	
 	
 	// Resolving Name and Type
@@ -1766,7 +1772,7 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 	{
 		if (ueCode!=ueStillWorking && ueCode!=ueSuccess) // Initializing failed
 		{
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2A(IDS_LOCATINGFAILED),1,0);
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2W(IDS_LOCATINGFAILED),STATUSBAR_OPERATIONSTATUS,0);
 			return FALSE;
 		}
 
@@ -1774,8 +1780,8 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 		((CLocateDlg*)dwParam)->SendMessage(WM_ENABLEITEMS,FALSE);
 
 		
-		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(szEmpty,0,0);
-		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2A(IDS_LOCATING),1,0);
+		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(szEmpty,STATUSBAR_MISC,0);
+		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2W(IDS_LOCATING),STATUSBAR_OPERATIONSTATUS,0);
 		((CLocateDlg*)dwParam)->StartLocateAnimation();
 
 		
@@ -1800,41 +1806,45 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 		((CLocateDlg*)dwParam)->SendMessage(WM_ENABLEITEMS,TRUE);
 
 
-		if (ueCode==ueStopped)
-		{
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2A(IDS_LOCATINGCANCELLED),1,0);
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_WARNING)),2,SBT_OWNERDRAW);
-		}
-		else if (ueCode==ueLimitReached)
-		{
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2A(IDS_LOCATINGLIMITREACHED),1,0);
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_INFORMATION)),2,SBT_OWNERDRAW);
-		}
-		else if (ueCode!=ueStillWorking && ueCode!=ueSuccess) // Locating failed
-		{
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2A(IDS_LOCATINGFAILED),1,0);
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_ERROR)),2,SBT_OWNERDRAW);
-		}
-		else
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2A(IDS_LOCATINGSUCCESS),1,0);
-		
-
-		((CLocateDlg*)dwParam)->m_pStatusCtrl->InvalidateRect(NULL,TRUE);
-
-		CString text;
+		CString NumberOfFiles;
 		if (pLocater->GetNumberOfFoundFiles()>0)
 		{
 			if (pLocater->GetNumberOfFoundDirectories()>0)
-				text.Format(IDS_ITEMSFOUND,pLocater->GetNumberOfFoundFiles(),pLocater->GetNumberOfFoundDirectories());
+				NumberOfFiles.Format(IDS_ITEMSFOUND,pLocater->GetNumberOfFoundFiles(),pLocater->GetNumberOfFoundDirectories());
 			else
-				text.Format(IDS_FILESFOUND,pLocater->GetNumberOfFoundFiles());
+				NumberOfFiles.Format(IDS_FILESFOUND,pLocater->GetNumberOfFoundFiles());
 		}
 		else if (pLocater->GetNumberOfFoundDirectories()>0)
-			text.Format(IDS_DIRECTORIESFOUND,pLocater->GetNumberOfFoundDirectories());
+			NumberOfFiles.Format(IDS_DIRECTORIESFOUND,pLocater->GetNumberOfFoundDirectories());
 		else
-			text.LoadString(IDS_NORESULTS);
+			NumberOfFiles.LoadString(IDS_NORESULTS);
 
-		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(text,0,0);
+
+		CStringW str;
+			
+		if (ueCode==ueStopped)
+		{
+			str.LoadString(IDS_LOCATINGCANCELLED);
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_WARNING)),STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
+		}
+		else if (ueCode==ueLimitReached)
+		{
+			str.LoadString(IDS_LOCATINGLIMITREACHED);
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_INFORMATION)),STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
+		}
+		else if (ueCode!=ueStillWorking && ueCode!=ueSuccess) // Locating failed
+		{
+			str.LoadString(IDS_LOCATINGFAILED);
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_ERROR)),STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
+		}
+		else
+			str.LoadString(IDS_LOCATINGSUCCESS);
+
+		str << L", " << NumberOfFiles;			
+		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);		
+		
+
+		((CLocateDlg*)dwParam)->m_pStatusCtrl->InvalidateRect(NULL,TRUE);
 
 		((CLocateDlg*)dwParam)->CheckClipboard();
 		return TRUE;
@@ -1843,11 +1853,11 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 	{
 		CString text;
 		text.Format(IDS_SEARCHINGFROMFILE,pLocater->GetFileName());
-		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(text,0,0);
+		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(text,STATUSBAR_SEARCHFROMFILE,0);
 		break;
 	}
 	case SearchingEnded:
-		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(STRNULL,0,0);
+		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(STRNULL,STATUSBAR_SEARCHFROMFILE,0);
 		break;
 	case ClassShouldDelete:
 		InterlockedExchangePointer(&((CLocateDlg*)dwParam)->m_pLocater,NULL);
@@ -2394,6 +2404,33 @@ void CLocateDlg::OnTimer(DWORD wTimerID)
 		m_pListCtrl->InvalidateRect(NULL,FALSE);
 		m_pListCtrl->UpdateWindow();
 		break;
+	case ID_UPDATESELECTED:
+		{
+			KillTimer(ID_UPDATESELECTED);
+				
+			int nSelecetedCount=m_pListCtrl->GetSelectedCount();
+			if (nSelecetedCount>0)
+			{
+				ULONGLONG nTotalSize=0;
+				int nIntex=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+				while (nIntex!=-1)
+				{
+					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nIntex);
+					if (pItem!=NULL)
+						nTotalSize+=pItem->GetFileSize();
+					nIntex=m_pListCtrl->GetNextItem(nIntex,LVNI_SELECTED);
+				}
+
+				LPWSTR pFileSize=GetLocateApp()->FormatFileSizeString((DWORD)nTotalSize,(DWORD)(nTotalSize>>32));
+				CStringW str;
+				str.Format(IDS_SELECTEDCOUNT,nSelecetedCount,pFileSize);
+				m_pStatusCtrl->SetText(str,STATUSBAR_MISC,0);
+				delete[] pFileSize;
+			}
+			else
+				m_pStatusCtrl->SetText("",STATUSBAR_MISC,0);
+			break;
+		}
 	case ID_CLICKWAIT:
 		KillTimer(ID_CLICKWAIT);
 		m_ClickWait=FALSE;
@@ -2403,14 +2440,14 @@ void CLocateDlg::OnTimer(DWORD wTimerID)
 		if (m_nCurLocateAnimBitmap>5)
 			m_nCurLocateAnimBitmap=0;
 		if (m_pStatusCtrl!=NULL && m_pLocateAnimBitmaps!=NULL)
-			m_pStatusCtrl->SetText((LPCSTR)m_pLocateAnimBitmaps[m_nCurLocateAnimBitmap],2,SBT_OWNERDRAW);
+			m_pStatusCtrl->SetText((LPCSTR)m_pLocateAnimBitmaps[m_nCurLocateAnimBitmap],STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
 		break;
 	case ID_UPDATEANIM:
 		m_nCurUpdateAnimBitmap++;
 		if (m_nCurUpdateAnimBitmap>12)
 			m_nCurUpdateAnimBitmap=0;
 		if (m_pStatusCtrl!=NULL && m_pUpdateAnimBitmaps!=NULL)
-			m_pStatusCtrl->SetText((LPCSTR)m_pUpdateAnimBitmaps[m_nCurUpdateAnimBitmap],3,SBT_OWNERDRAW);
+			m_pStatusCtrl->SetText((LPCSTR)m_pUpdateAnimBitmaps[m_nCurUpdateAnimBitmap],STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
 		break;
 	}
 }
@@ -2451,7 +2488,7 @@ inline void CLocateDlg::SetControlPositions(UINT nType,int cx, int cy)
 			parts[0]=(cx-44)/2;
 			parts[1]=cx-44;
 			parts[2]=cx-22;
-			parts[3]=cx;
+			parts[3]=cx; // Update icon
 		}
 		else
 		{
@@ -2476,7 +2513,7 @@ inline void CLocateDlg::SetControlPositions(UINT nType,int cx, int cy)
 		m_pListCtrl->GetWindowRect(&rect2);
 		m_pListCtrl->SetWindowPos(HWND_BOTTOM,0,0,cx-5,rect.top-rect2.top,SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
 		m_pListCtrl->UpdateWindow();
-		m_pStatusCtrl->SetParts(4,parts);
+		m_pStatusCtrl->SetParts(5,parts);
 	}
 }
 	
@@ -4061,6 +4098,13 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			BeginDragFiles(m_pListCtrl);
 		break;
 	case LVN_GETINFOTIP:
+		break;
+	case LVN_ITEMCHANGED:
+		if ((!(pNm->uOldState&LVIS_SELECTED) && pNm->uNewState&LVIS_SELECTED)||
+			(!(pNm->uNewState&LVIS_SELECTED) && pNm->uOldState&LVIS_SELECTED))
+		{
+			SetTimer(ID_UPDATESELECTED,100,NULL);
+		}
 		break;
 	}
 	return FALSE;
@@ -6405,7 +6449,7 @@ BOOL CLocateDlg::StartLocateAnimation()
 	}
 	SetTimer(ID_LOCATEANIM,200);
 	m_nCurLocateAnimBitmap=0;
-	m_pStatusCtrl->SetText((LPCSTR)m_pLocateAnimBitmaps[0],2,SBT_OWNERDRAW);
+	m_pStatusCtrl->SetText((LPCSTR)m_pLocateAnimBitmaps[0],STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
 	return TRUE;
 }
 
@@ -6419,7 +6463,7 @@ BOOL CLocateDlg::StopLocateAnimation()
 		delete[] m_pLocateAnimBitmaps;
 		m_pLocateAnimBitmaps=NULL;
 		if (m_pStatusCtrl!=NULL)
-			m_pStatusCtrl->SetText(STRNULL,2,SBT_OWNERDRAW);
+			m_pStatusCtrl->SetText(STRNULL,STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
 	}
 	return TRUE;
 }
@@ -6446,7 +6490,7 @@ BOOL CLocateDlg::StartUpdateAnimation()
 	}
 	SetTimer(ID_UPDATEANIM,100);
 	m_nCurUpdateAnimBitmap=0;
-	m_pStatusCtrl->SetText((LPCSTR)m_pUpdateAnimBitmaps[0],3,SBT_OWNERDRAW);
+	m_pStatusCtrl->SetText((LPCSTR)m_pUpdateAnimBitmaps[0],STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
 	return TRUE;
 }
 
@@ -6460,7 +6504,7 @@ BOOL CLocateDlg::StopUpdateAnimation()
 		delete[] m_pUpdateAnimBitmaps;
 		m_pUpdateAnimBitmaps=NULL;
 		if (m_pStatusCtrl!=NULL)
-			m_pStatusCtrl->SetText(STRNULL,3,SBT_OWNERDRAW);
+			m_pStatusCtrl->SetText(STRNULL,STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
 	}
 	return TRUE;
 }

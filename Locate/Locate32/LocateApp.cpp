@@ -1467,6 +1467,33 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 			_ultow_s((dwFileSizeLo/1024)+(dwFileSizeLo%1024==0?0:1),szRet,40,10);
 		}
 		break;
+	case fsfOverMBasMB:
+		if (bFileSizeHi>0)
+		{
+			LoadString(IDS_MB,szUnit,10);
+			
+			_int64 uiFileSize=((_int64)bFileSizeHi)<<32|(_int64)dwFileSizeLo;
+			_ui64tow_s(uiFileSize/(1024*1024),szRet,40,10);
+		}
+		else if (dwFileSizeLo<1024)
+		{
+			LoadString(IDS_BYTES,szUnit,10);
+			
+			_ultow_s(dwFileSizeLo,szRet,40,10);
+		}
+		else if (dwFileSizeLo<1024*1024)
+		{
+			LoadString(IDS_KB,szUnit,10);
+			
+			_ultow_s(dwFileSizeLo/1024,szRet,40,10);
+		}
+		else
+		{
+			LoadString(IDS_MB,szUnit,10);
+			
+			_ultow_s((dwFileSizeLo/(1024*1024))+(dwFileSizeLo%(1024*1024)==0?0:1),szRet,40,10);
+		}
+		break;
 	case fsfBestUnit:
 		if (bFileSizeHi>0)
 		{

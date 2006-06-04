@@ -58,6 +58,7 @@ extern LPWSTR g_szwBuffer;
 
 // Timer IDs
 #define ID_REDRAWITEMS				1
+#define ID_UPDATESELECTED			2
 #define ID_CLICKWAIT				4
 #define ID_LOCATEANIM				5
 #define ID_UPDATEANIM				6

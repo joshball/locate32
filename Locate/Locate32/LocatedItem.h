@@ -153,7 +153,7 @@ public:
 	WORD GetAccessedTime() const { return wAccessedTime; }
 	DWORD GetFileSizeLo() const { return dwFileSize; }
 	DWORD GetFileSizeHi() const { return wFileSizeHi; }
-	LONGLONG GetFileSize() const { return ((LONGLONG)wFileSizeHi)<<32|(LONGLONG)dwFileSize; }
+	ULONGLONG GetFileSize() const { return ((ULONGLONG)wFileSizeHi)<<32|(ULONGLONG)dwFileSize; }
 	LPWSTR GetExtension() const { return szName+bExtensionPos; }
 	DWORD GetExtensionLength() const { return bNameLength-bExtensionPos; }
 

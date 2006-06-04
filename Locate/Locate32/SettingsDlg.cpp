@@ -1387,14 +1387,15 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::DateFormatComboProc(CO
 		// Date and time formats
 		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
 		{
+			CComboBox cb(((INITIALIZEPARAMS*)pParams)->hControl);
 			((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer.RemoveAll();
 			EnumDateFormats(EnumDateFormatsProc,LOCALE_USER_DEFAULT,DATE_SHORTDATE);
 		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_ADVSETSYSTEMDEFAULT));		
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_SETCURSEL,0,0);		
+			cb.AddString(ID2W(IDS_ADVSETSYSTEMDEFAULT));		
+			cb.SetCurSel(0);		
 
 			for (int i=0;i<((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer.GetSize();i++)
-				::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer[i]);
+				cb.AddString(((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer[i]);
 			
 			((CAdvancedSettingsPage*)pParams->pPage)->m_aBuffer.RemoveAll();
 		}
@@ -1428,23 +1429,26 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::FileSizeListProc(COpti
 		// File size formats
 		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
 		{
-			CString text(IDS_ADVSETFILESIZEFORMATLESS1KB);
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			CComboBox cb(((INITIALIZEPARAMS*)pParams)->hControl);
+			CStringW text(IDS_ADVSETFILESIZEFORMATLESS1KB);
+			cb.AddString(text);		
 			text.LoadString(IDS_ADVSETFILESIZEFORMATDEPENGINGSIZE);
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			cb.AddString(text);		
 			text.LoadString(IDS_ADVSETFILESIZEFORMATBYTES);
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			cb.AddString(text);		
 			text.LoadString(IDS_ADVSETFILESIZEFORMATBYTENOUNITS);
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			cb.AddString(text);		
 			text.LoadString(IDS_ADVSETFILESIZEFORMATKB);
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			cb.AddString(text);		
 			text.LoadString(IDS_ADVSETFILESIZEFORMATKBNOUNITS);
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			cb.AddString(text);		
 			text.LoadString(IDS_ADVSETFILESIZEFORMATMB);
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
+			cb.AddString(text);		
 			text.LoadString(IDS_ADVSETFILESIZEFORMATMBNOUNITS);
-			::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)text);		
-	
+			cb.AddString(text);		
+			text.LoadString(IDS_ADVSETFILESIZEFORMATLESS1MB);
+			cb.AddString(text);		
+			
 		}
 
 		break;

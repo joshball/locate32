@@ -6,16 +6,12 @@ For check boxes:
 1 to enable
 
 For list boxes: 
-give an index to item as number (0,1,2,...)
+give an index as number (0,1,2,...)
 
 For date: give date in the form: 
 YYYYMMDD	or
 0  for today or
 N  for today + N days or
 -N  for today - N days
-
-For lookin field:
-
-
 
 EOF

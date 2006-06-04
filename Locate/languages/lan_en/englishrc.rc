@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,6,6030
- PRODUCTVERSION 2,99,6,6030
+ FILEVERSION 2,99,6,6040
+ PRODUCTVERSION 2,99,6,6040
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 6.5280"
+            VALUE "FileVersion", "3.0 beta 6.6040"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 6.6030"
+            VALUE "ProductVersion", "3.0 beta 6.6040"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -714,19 +714,19 @@ BEGIN
                     48,10
     GROUPBOX        "Actions:",IDC_STATICACTIONS,4,256,273,55
     LTEXT           "&When:",IDC_STATICWHEN,9,272,27,11
-    COMBOBOX        IDC_WHEN,40,270,95,14,CBS_DROPDOWNLIST  | 
+    COMBOBOX        IDC_WHEN,40,270,95,100,CBS_DROPDOWNLIST  | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "&Action:",IDC_STATICACTION,140,272,32,8
-    COMBOBOX        IDC_ACTION,176,270,95,14,CBS_DROPDOWNLIST  | 
+    COMBOBOX        IDC_ACTION,176,270,95,100,CBS_DROPDOWNLIST  | 
                     WS_VSCROLL | WS_TABSTOP
 	LTEXT           "&Operation:",IDC_STATICVERB,140,292,32,8
-    COMBOBOX        IDC_VERB,176,290,95,12,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_VERB,176,290,95,100,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Command (path=%d, parent=%p):",IDC_STATICCOMMAND,9,292,130,8
     EDITTEXT        IDC_COMMAND,140,290,134,12,ES_AUTOHSCROLL
 	DEFPUSHBUTTON   "OK",IDC_OK,171,314,50,14
     PUSHBUTTON      "Cancel",IDC_CANCEL,225,314,50,14
 	LTEXT           "&File:",IDC_STATICWHICHFILE,140,292,32,8
-    COMBOBOX        IDC_WHICHFILE,176,290,95,12,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_WHICHFILE,176,290,95,100,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 
@@ -1074,6 +1074,7 @@ IDR_UPDATEDBHELP		HELPTEXT                "usage_updt.txt"
 STRINGTABLE 
 BEGIN
 	IDS_COPYRIGHT			"Copyright"
+	IDS_SELECTEDCOUNT		"%d files selected, total size %s"
 END
 
 STRINGTABLE 
@@ -1146,7 +1147,7 @@ BEGIN
     IDS_FILESFOUND          "%d file(s) found"
     IDS_DIRECTORIESFOUND    "%d directories found"
     IDS_ITEMSFOUND          "%d files and %d directories found"
-	IDS_NORESULTS	        "No results"
+	IDS_NORESULTS	        "no results"
     IDS_DELETEDFILE         "Deleted / Moved / Offline file"
     IDS_UNKNOWNTYPE         "File"
     IDS_DIRECTORYTYPE       "Directory"
@@ -1471,6 +1472,7 @@ BEGIN
 	IDS_ADVSETSHOWFILESIZESINFORMAT	"Show file sizes as:"
 	IDS_ADVSETFORMATWITHUSERLOCALE	"Use user locale settings to format file size"
 	IDS_ADVSETFILESIZEFORMATLESS1KB	"sizes less than 1KB as bytes, other as kilobytes"
+	IDS_ADVSETFILESIZEFORMATLESS1MB	"sizes more than 1MB as megabytes"
 	IDS_ADVSETFILESIZEFORMATDEPENGINGSIZE	"depending on size"
 	IDS_ADVSETFILESIZEFORMATBYTES	"bytes"
 	IDS_ADVSETFILESIZEFORMATBYTENOUNITS	"bytes (no unit)"

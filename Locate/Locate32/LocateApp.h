@@ -300,7 +300,8 @@ public:
 		fsfKiloBytes = 4,
 		fsfKiloBytesNoUnit = 5,
 		fsfMegaBytesMegaBytes = 6,
-		fsfMegaBytesMegaBytesNoUnit = 7
+		fsfMegaBytesMegaBytesNoUnit = 7,
+		fsfOverMBasMB = 8
 	};
 
 
