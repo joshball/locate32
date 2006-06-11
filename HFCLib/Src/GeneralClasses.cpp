@@ -1228,7 +1228,7 @@ BOOL CRegKey::DeleteKey(HKEY hKey,LPCWSTR szKey)
 BOOL CRegKey::SetValue(LPCWSTR lpValueName,CStringW& strData)
 {
 	if (IsUnicodeSystem())
-		return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)(LPCWSTR)strData,(DWORD)strData.GetLength()*2+1)==ERROR_SUCCESS;
+		return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)(LPCWSTR)strData,(DWORD)(strData.GetLength()+1)*2)==ERROR_SUCCESS;
 	else
 		return ::RegSetValueExA(m_hKey,W2A(lpValueName),0,REG_SZ,(CONST BYTE*)(LPCSTR)W2A(strData),(DWORD)strData.GetLength()+1)==ERROR_SUCCESS;
 }

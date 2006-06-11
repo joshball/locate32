@@ -4882,9 +4882,12 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 			DWORD dwLength=RegKey2.QueryValueLength("");
 			if (dwLength>0)
 			{
-				WCHAR* pPresetName=new WCHAR[dwLength+1];
-				RegKey2.QueryValue(L"",pPresetName,dwLength);
-				m_aPossiblePresets.Add(pPresetName);
+				CStringW PresetName;
+				//WCHAR* pPresetName=new WCHAR[dwLength+1];
+				//RegKey2.QueryValue(L"",pPresetName,dwLength);
+				//m_aPossiblePresets.Add(pPresetName);
+				RegKey2.QueryValue(L"",PresetName);
+				m_aPossiblePresets.Add(PresetName.GiveBuffer());				
 			}
 	
 			RegKey2.CloseKey();
@@ -6216,6 +6219,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	}
 	else
 	{
+
+
 		EnableDlgItem(IDC_HOTKEYRADIO,FALSE);
 		EnableDlgItem(IDC_CODERADIO,FALSE);
 		

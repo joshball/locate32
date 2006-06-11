@@ -1788,7 +1788,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 					(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
 			}
 			
-			pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
+			pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
 		}
 	
 		
@@ -1823,7 +1823,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 					pUpdater->GetCurrentDatabaseName(),
 					(LPCWSTR)ID2W(IDS_UPDATINGCANCELLED2));
 
-				pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
+				pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
 				return FALSE;
 			}
 			else if (ueCode!=ueSuccess)
@@ -1833,7 +1833,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 					pUpdater->GetCurrentDatabaseName(),
 					(LPCWSTR)ID2W(IDS_UPDATINGFAILED));
 
-				pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
+				pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
 				return FALSE;
 			}
 			CStringW str;
@@ -1841,7 +1841,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 				pUpdater->GetCurrentDatabaseName(),
 				(LPCWSTR)ID2W(IDS_UPDATINGDONE));
 
-			pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
+			pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
 		}
 
 		return TRUE;
@@ -1901,8 +1901,8 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 					{
 						// All updaters are interrupted by user
 						str.LoadString(IDS_UPDATINGCANCELLED);
-						pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
-						pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),3,SBT_OWNERDRAW);
+						pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
+						pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
 
 					}
 					else
@@ -1949,10 +1949,10 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 							str.LoadString(IDS_UPDATINGSUCCESS);
 						else
 						{
-							pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),3,SBT_OWNERDRAW);
+							pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
 							str << L' ' << str2;
 						}
-						pLocateDlg->m_pStatusCtrl->SetText(str,1,0);
+						pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
 					}
 				}
 		
@@ -2642,9 +2642,9 @@ void CLocateAppWnd::FreeRootInfos(WORD wThreads,RootInfo* pRootInfos)
 #define MAXINFOTEXTLENGTH		256
 #define MAXINFOTITLELENGTH		64
 
-BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
+BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip,LPCWSTR szText)
 {
-	DebugFormatMessage("CLocateAppWnd::SetUpdateStatusInformation: BEGIN, hIcon=%X, uTip=%d",DWORD(hIcon),uTip);
+	//DebugFormatMessage("CLocateAppWnd::SetUpdateStatusInformation: BEGIN, hIcon=%X, uTip=%d",DWORD(hIcon),uTip);
 
 	NOTIFYICONDATAW nid;
 	ZeroMemory(&nid,sizeof(NOTIFYICONDATAW));
@@ -2819,11 +2819,18 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip)
 	}
 	else if (uTip!=0)
 	{
-		LoadString(uTip,nid.szTip,63);
+		if (szText!=NULL)
+		{
+			WCHAR szString[64];
+			LoadString(uTip,szString,63);
+			StringCbPrintfW(nid.szTip,63,szString,szText);
+		}
+		else
+			LoadString(uTip,nid.szTip,63);
 		nid.uFlags|=NIF_TIP;
 	}
 	
-	DebugMessage("CLocateAppWnd::SetUpdateStatusInformation: END");
+	//DebugMessage("CLocateAppWnd::SetUpdateStatusInformation: END");
 	
 	return Shell_NotifyIconW(NIM_MODIFY,&nid);
 }
@@ -2869,7 +2876,7 @@ BOOL CLocateAppWnd::StartUpdateStatusNotification()
 		BOOL(WINAPI * pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD)=(BOOL(WINAPI *)(HWND,COLORREF,BYTE,DWORD))GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes");
 	
 		BYTE nTransparency=0;
-		DWORD dwExtra=WS_EX_TOOLWINDOW;
+		DWORD dwExtra=WS_EX_TOOLWINDOW/*|WS_EX_NOACTIVATE*/;
 		
 		if ((CLocateApp::GetProgramFlags()&CLocateApp::pfUpdateTooltipTopmostMask)==
 			CLocateApp::pfUpdateTooltipAlwaysTopmost)
@@ -2910,15 +2917,16 @@ BOOL CLocateAppWnd::StartUpdateStatusNotification()
 				dwExtra|=WS_EX_LAYERED;
 		}
 		
-		m_pUpdateStatusWnd->Create("LOCATEAPPUPDATESTATUS","US",WS_POPUPWINDOW|WS_VISIBLE,
+		m_pUpdateStatusWnd->Create("LOCATEAPPUPDATESTATUS","US",WS_POPUPWINDOW/*|WS_VISIBLE*/,
 			NULL,NULL,LPCSTR(0),dwExtra);
 
 		if (nTransparency>0)
 			pSetLayeredWindowAttributes(*m_pUpdateStatusWnd,0,255-nTransparency,LWA_ALPHA);
 
 		m_pUpdateStatusWnd->SetPosition();
+		m_pUpdateStatusWnd->ShowWindow(CWnd::swShowNA);
 		
-
+		
 	}
 
 	return TRUE;
@@ -3259,8 +3267,8 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThrea
 		{
 			pLocateDlg->StartUpdateAnimation();
 		
-			pLocateDlg->m_pStatusCtrl->SetText(szEmpty,0,0);
-			pLocateDlg->m_pStatusCtrl->SetText(ID2A(IDS_UPDATINGDATABASE),1,0);		
+			//pLocateDlg->m_pStatusCtrl->SetText(szEmpty,0,0);
+			pLocateDlg->m_pStatusCtrl->SetText(ID2A(IDS_UPDATINGDATABASE),STATUSBAR_OPERATIONSTATUS,0);		
 		}
 	}
 	else if (bStopIfProcessing)
@@ -4528,8 +4536,8 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 		SetWindowPos(HWND_TOP,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,
 			GetForegroundWindow()==*pLocateDlg?SWP_NOACTIVATE:SWP_NOACTIVATE|SWP_NOZORDER);
 	}
-	else
-		SetWindowPos(HWND_TOP,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOZORDER|SWP_NOACTIVATE);
+	else 
+		SetWindowPos(NULL,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOZORDER|SWP_NOACTIVATE);
 
 
 	m_WindowSize=szSize;

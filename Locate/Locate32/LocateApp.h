@@ -98,7 +98,7 @@ public:
 	
 	DWORD OnActivateAnotherInstance(ATOM aCommandLine);
 	DWORD OnSystemTrayMessage(UINT uID,UINT msg);
-	BOOL SetUpdateStatusInformation(HICON hIcon=NULL,UINT uTip=0);
+	BOOL SetUpdateStatusInformation(HICON hIcon=NULL,UINT uTip=0,LPCWSTR szText=NULL);
 	void GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootInfos);
 	static void FreeRootInfos(WORD wThreads,RootInfo* pRootInfos);
 

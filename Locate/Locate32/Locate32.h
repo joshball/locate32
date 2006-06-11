@@ -132,6 +132,12 @@ extern LPWSTR g_szwBuffer;
 
 
 
+#define STATUSBAR_MISC				0
+#define STATUSBAR_SEARCHFROMFILE	1
+#define STATUSBAR_OPERATIONSTATUS	1
+#define STATUSBAR_LOCATEICON		2
+#define STATUSBAR_UPDATEICON		3
+
 // String copyers
 #define sMemCopy(dst,src,len)	CopyMemory(dst,src,len)
 #define sMemZero(dst,len)		ZeroMemory(dst,len)

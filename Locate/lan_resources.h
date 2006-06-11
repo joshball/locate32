@@ -74,8 +74,11 @@
 #define IDS_MODIFIED                    90
 #define IDS_CREATED                     91
 #define IDS_LASTACCESSED                92
+#define IDS_SELECTEDCOUNT				93
+#define IDS_SELECTEDCOUNT2				94
+#define IDS_SELECTEDCOUNT3				95
+#define IDS_TOTALSIZE					96
 #define IDS_COPYRIGHT                   99
-#define IDS_SELECTEDCOUNT				100
 #define IDD_MAIN                        101
 #define IDS_YES                         101
 #define IDR_MAINMENU                    102
@@ -166,6 +169,7 @@
 #define IDS_PRIORITYBELOWNORMAL			393
 #define IDS_PRIORITYLOW					394
 #define IDS_PRIORITYIDLE				395
+#define IDS_NOTIFYLOCATEWITHNAMED		399
 #define IDS_NOTIFYLOCATE                400
 #define IDS_NOTIFYUPDATING              401
 #define IDS_NOTIFYUPDATINGDBS           402

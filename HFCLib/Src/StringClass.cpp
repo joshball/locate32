@@ -1057,12 +1057,16 @@ CString& CString::operator<<(int iNum)
 	if (m_pData!=NULL)
 	{
 		SIZE_T nStrLen=istrlen(szBuffer);
-
 		SIZE_T templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
 			m_pData=new CHAR[m_nAllocLen=templen+STR_EXTRAALLOC];
+			if (m_pData==NULL)
+			{	
+				SetHFCError(HFC_CANNOTALLOCATE);
+				return *this;
+			}
 			sMemCopy(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
@@ -2894,7 +2898,7 @@ const CStringW& CStringW::operator+=(DWORD iNum)
 	}
 	else
 	{
-		m_nDataLen=istrlen((LPSTR)szBuffer); // should that work anyway
+		m_nDataLen=istrlenw(szBuffer); // should that work anyway
 		
 		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
@@ -2934,7 +2938,7 @@ const CStringW& CStringW::operator+=(int iNum)
 	}
 	else
 	{
-		m_nDataLen=istrlen((LPSTR)szBuffer);
+		m_nDataLen=istrlenw(szBuffer);
 		
 		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
@@ -3246,7 +3250,7 @@ CStringW& CStringW::operator<<(DWORD iNum)
 	}
 	else
 	{
-		m_nDataLen=istrlen((LPSTR)szBuffer);
+		m_nDataLen=istrlenw(szBuffer);
 		
 
 		m_pData=new WCHAR[m_nAllocLen=STR_EXTRAALLOC];
@@ -3286,7 +3290,7 @@ CStringW& CStringW::operator<<(int iNum)
 	}
 	else
 	{
-		m_nDataLen=istrlen((LPSTR)szBuffer);
+		m_nDataLen=istrlenw(szBuffer);
 		
 		m_pData=new WCHAR[m_nAllocLen=STR_EXTRAALLOC];
 		if (m_pData==NULL)

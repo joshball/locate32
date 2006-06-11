@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,6,6040
- PRODUCTVERSION 2,99,6,6040
+ FILEVERSION 2,99,6,6110
+ PRODUCTVERSION 2,99,6,6110
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,7 +44,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 6.6040"
+            VALUE "FileVersion", "3.0 beta 6.6110"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
@@ -1074,7 +1074,10 @@ IDR_UPDATEDBHELP		HELPTEXT                "usage_updt.txt"
 STRINGTABLE 
 BEGIN
 	IDS_COPYRIGHT			"Copyright"
-	IDS_SELECTEDCOUNT		"%d files selected, total size %s"
+	IDS_SELECTEDCOUNT		"%d file(s) selected"
+	IDS_SELECTEDCOUNT2		"%d folder(s) selected"
+	IDS_SELECTEDCOUNT3		"%d file(s) and %d folder(s) selected"
+	IDS_TOTALSIZE			"total size %s"
 END
 
 STRINGTABLE 
@@ -1308,6 +1311,7 @@ END
 STRINGTABLE 
 BEGIN
     IDS_NOTIFYLOCATE        "Locate..."
+	IDS_NOTIFYLOCATEWITHNAMED        "Locate files: %s"
     IDS_NOTIFYUPDATING      "Locate (Updating database: %s)"
     IDS_NOTIFYUPDATINGDBS   "Locate (Updating databases: %d/%d threads running)"
     IDS_NOTIFYUPDATINGDBS2  "Updating databases:"

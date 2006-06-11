@@ -29,7 +29,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2006 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 beta 6.6040
+FILEVERSION=3.0 beta 6.6110
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -876,7 +876,10 @@ MENUSYSTEMTRAY_EXIT=&Exit
 # Generic
 STR_YES=Yes
 STR_NO=No
-STR_SELECTEDCOUNT=%d files selected, total size %s
+STR_SELECTEDCOUNT=%d file(s) selected
+STR_SELECTEDCOUNT2=%d folder(s) selected
+STR_SELECTEDCOUNT3=%d file(s) and %d folder(s) selected
+STR_TOTALSIZE=total size %s
 
 ###########################
 # Tooltips
@@ -932,6 +935,7 @@ STR_UPDATING_FINISHING=finishing
 ###########################
 # Tray icon 
 STR_TRAYICON_LOCATE=Locate...
+STR_TRAYICON_LOCATEWITHNAMED=Locate files: %s
 STR_TRAYICON_UPDATINGDATABASE=Locate (Updating database: %s)
 STR_TRAYICON_UPDATINGDATABASES=Locate (Updating databases: %d/%d threads running)
 STR_TRAYICON_UPDATINGDATABASES2=Updating databases:

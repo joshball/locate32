@@ -4,11 +4,7 @@
 #include <tmschema.h>
 
 
-#define STATUSBAR_MISC				0
-#define STATUSBAR_SEARCHFROMFILE	1
-#define STATUSBAR_OPERATIONSTATUS	1
-#define STATUSBAR_LOCATEICON		2
-#define STATUSBAR_UPDATEICON		3
+
 
 CComboBoxAutoComplete::CComboBoxAutoComplete()
 :	CComboBox(),m_pACData(NULL)
@@ -2409,6 +2405,7 @@ void CLocateDlg::OnTimer(DWORD wTimerID)
 			KillTimer(ID_UPDATESELECTED);
 				
 			int nSelecetedCount=m_pListCtrl->GetSelectedCount();
+			int nFolders=0;
 			if (nSelecetedCount>0)
 			{
 				ULONGLONG nTotalSize=0;
@@ -2417,15 +2414,39 @@ void CLocateDlg::OnTimer(DWORD wTimerID)
 				{
 					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nIntex);
 					if (pItem!=NULL)
-						nTotalSize+=pItem->GetFileSize();
+					{
+						if (pItem->IsFolder())
+							nFolders++;
+						else if (pItem->GetFileSizeLo()!=DWORD(-1))
+							nTotalSize+=pItem->GetFileSize();
+					}
 					nIntex=m_pListCtrl->GetNextItem(nIntex,LVNI_SELECTED);
 				}
 
-				LPWSTR pFileSize=GetLocateApp()->FormatFileSizeString((DWORD)nTotalSize,(DWORD)(nTotalSize>>32));
+				
+
 				CStringW str;
-				str.Format(IDS_SELECTEDCOUNT,nSelecetedCount,pFileSize);
+				
+				if (nFolders==0)
+					str.Format(IDS_SELECTEDCOUNT,nSelecetedCount);
+				else if (nFolders==nSelecetedCount)
+					str.Format(IDS_SELECTEDCOUNT2,nSelecetedCount);
+				else
+					str.Format(IDS_SELECTEDCOUNT3,nSelecetedCount-nFolders,nFolders);
+
+				
+				if (nTotalSize>0)
+				{
+					CStringW size;
+					LPWSTR pFileSize=GetLocateApp()->FormatFileSizeString((DWORD)nTotalSize,(DWORD)(nTotalSize>>32));
+					size.Format(IDS_TOTALSIZE,pFileSize);
+					str << L", " << size;
+					delete[] pFileSize;
+				}
+
+				
 				m_pStatusCtrl->SetText(str,STATUSBAR_MISC,0);
-				delete[] pFileSize;
+				
 			}
 			else
 				m_pStatusCtrl->SetText("",STATUSBAR_MISC,0);
@@ -2545,14 +2566,37 @@ void CLocateDlg::OnSize(UINT nType, int cx, int cy)
 		// Minimizing to system tray
 		if (m_dwFlags&fgDialogMinimizeToST)
 			ShowWindow(swHide);
+
+		{
+			CStringW Named;
+			m_NameDlg.GetDlgItemText(IDC_NAME,Named);
+			if (Named.GetLength()>0)
+				GetLocateAppWnd()->SetUpdateStatusInformation(NULL,IDS_NOTIFYLOCATEWITHNAMED,Named);
+			else
+				GetLocateAppWnd()->SetUpdateStatusInformation(NULL,IDS_NOTIFYLOCATE,NULL);
+
+		}
 		break;
 	case SIZE_RESTORED:
+		GetLocateAppWnd()->SetUpdateStatusInformation(NULL,IDS_NOTIFYLOCATE,NULL);
 		if (m_dwFlags&fgLargeMode)
 		{
 			RECT rect;
 			GetWindowRect(&rect);
 			m_nLargeY=rect.bottom-rect.top;
+
+			
+			if (m_pListCtrl->GetItemCount()>0)
+			{
+				ChangeBackgroundOperationsPriority(FALSE);
+				//StartBackgroundOperations();
+				if (m_pBackgroundUpdater!=NULL)
+					m_pBackgroundUpdater->StopWaiting();
+			}
 		}
+
+		SetControlPositions(nType,cx,cy);
+		break;
 	case SIZE_MAXIMIZED:
 		if (m_dwFlags&fgLargeMode)
 		{

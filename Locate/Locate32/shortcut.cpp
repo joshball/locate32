@@ -1526,7 +1526,7 @@ void CShortcut::FormatKeyLabel(VirtualKeyName* pVirtualKeyNames,BYTE bKey,BYTE b
 	{
 		MakeUpper((LPSTR)&wChar,1);
 		str << char(wChar);
-	}
+	} 
 	else if (nRet==2)
 	{
 		MakeUpper((LPSTR)&wChar,2);
