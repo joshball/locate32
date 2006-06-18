@@ -7,6 +7,7 @@ BOOL CAboutDlg::OnCommand(WORD wID, WORD wNotifyCode, HWND hControl)
 {
 	switch(wID)
 	{
+	case IDCANCEL:
 	case IDC_OK:
 		{
 			EndDialog(0);
@@ -27,6 +28,13 @@ BOOL CAboutDlg::OnCommand(WORD wID, WORD wNotifyCode, HWND hControl)
 			break;
 		}
 	}
+	return FALSE;
+}
+
+BOOL CAboutDlg::OnClose()
+{
+	CDialog::OnClose();
+	EndDialog(0);
 	return FALSE;
 }
 

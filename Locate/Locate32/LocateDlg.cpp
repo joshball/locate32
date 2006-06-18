@@ -1040,6 +1040,20 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 					if (pShortcutList[0]->IsWhenAndWhereSatisfied(*this))
 						pShortcutList[0]->ExecuteAction();
 				}
+				else
+				{
+					// Shortcut wants Win but it is not pressed, acceltable has stolen
+					// enevent, send that event to control
+					HWND hControl=GetFocus();
+					if (hControl!=NULL)
+					{
+						DWORD lParam=1;
+						if ((GetKeyState(VK_LMENU)|GetKeyState(VK_RMENU)) & 0x8000)
+							lParam|=1<<29;
+						::SendMessage(hControl,WM_CHAR,pShortcutList[0]->m_bVirtualKey,lParam);
+					}
+
+				}
 	
 				pShortcutList++;
 			}

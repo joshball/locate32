@@ -3015,7 +3015,7 @@ BOOL CLocateAppWnd::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		{
 			if (m_pLocateDlgThread!=NULL)
 			{
-				if (ShowErrorMessage(IDS_QUITNOW,IDS_UPDATINGDATABASE,MB_YESNO|MB_ICONQUESTION)==IDYES)
+				if (m_pLocateDlgThread->m_pLocate->ShowErrorMessage(IDS_QUITNOW,IDS_UPDATINGDATABASE,MB_YESNO|MB_ICONQUESTION)==IDYES)
 					DestroyWindow();
 			}
 			else

@@ -211,6 +211,11 @@ inline void CLocateDlg::RemoveResultsFromList()
 	ClearMenuVariables();
 	m_pListCtrl->DeleteAllItems();
 	m_aVolumeInformation.RemoveAll();
+
+	m_pStatusCtrl->SetText("",STATUSBAR_MISC,0);
+	m_pStatusCtrl->SetText("",STATUSBAR_OPERATIONSTATUS,0);
+	m_pStatusCtrl->SetText("",STATUSBAR_LOCATEICON,0);
+	m_pStatusCtrl->SetText("",STATUSBAR_UPDATEICON,0);
 }
 			
 inline CLocateDlg::VolumeInformation::VolumeInformation(WORD wDB_,WORD wRootID_,BYTE bType_,DWORD dwVolumeSerial,LPCWSTR szVolumeLabel,LPCWSTR szFileSystem)
