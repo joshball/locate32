@@ -125,7 +125,7 @@ inline void CLocater::SetSizeAndDate(DWORD dwFlags,DWORD dwMinSize,DWORD dwMaxSi
 }
 
 
-inline bool _strncmp(const WCHAR* p1,const char* p2,int a)
+inline bool _strncmp(const WCHAR* p1,const char* p2,SIZE_T a)
 {
 	// TODO: check whether ansi and unicode characters are equal 
 	// when ch between 0 and 255, and remove W2Ac
@@ -135,7 +135,7 @@ inline bool _strncmp(const WCHAR* p1,const char* p2,int a)
 	return TRUE;
 }
 
-inline bool _strfcmp(const WCHAR* p1,const char* p2,int a)
+inline bool _strfcmp(const WCHAR* p1,const char* p2,SIZE_T a)
 {
 	// TODO: check whether ansi and unicode characters are equal 
 	// when ch between 0 and 255, and remove A2Wc
@@ -144,7 +144,7 @@ inline bool _strfcmp(const WCHAR* p1,const char* p2,int a)
 			return FALSE;
 	return TRUE;
 }
-inline bool _strncmp(const WCHAR* p1,const WCHAR* p2,int a)
+inline bool _strncmp(const WCHAR* p1,const WCHAR* p2,SIZE_T a)
 {
 	for (a--;a>=0;a--)
 		if (p1[a]!=p2[a])
@@ -152,7 +152,7 @@ inline bool _strncmp(const WCHAR* p1,const WCHAR* p2,int a)
 	return TRUE;
 }
 
-inline bool _strfcmp(const WCHAR* p1,const WCHAR* p2,int a)
+inline bool _strfcmp(const WCHAR* p1,const WCHAR* p2,SIZE_T a)
 {
 	for (a--;p1[a]!='\\';a--)
 		if (p1[a]!=p2[a])

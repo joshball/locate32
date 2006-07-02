@@ -57,7 +57,7 @@ BOOL CDatabase::LoadFromRegistry(HKEY hKeyRoot,LPCSTR szPath,CArray<CDatabase*>&
 	return TRUE;
 }
 
-CDatabase* CDatabase::FromName(HKEY hKeyRoot,LPCSTR szPath,LPCWSTR szName,SIZE_T iNameLength)
+CDatabase* CDatabase::FromName(HKEY hKeyRoot,LPCSTR szPath,LPCWSTR szName,DWORD iNameLength)
 {
 	CRegKey RegKey,RegKey2;
 	CString Path(szPath);
@@ -68,7 +68,7 @@ CDatabase* CDatabase::FromName(HKEY hKeyRoot,LPCSTR szPath,LPCWSTR szName,SIZE_T
 		return NULL;
 
 	if (iNameLength==SIZE_T(-1))
-		iNameLength=istrlenw(szName);
+		iNameLength=(int)istrlenw(szName);
 
     CString key;
 	for (int i=0;RegKey.EnumKey(i,key);i++)
@@ -182,7 +182,7 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	// Excluded directories
 	DWORD dwLength=1;
 	for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
-		dwLength+=istrlenw(m_aExcludedDirectories[i])+1;
+		dwLength+=(DWORD)(istrlenw(m_aExcludedDirectories[i])+1);
 
 	WCHAR* pString=new WCHAR[dwLength+1];
 	LPWSTR pPtr=pString;
@@ -191,7 +191,7 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 		if (i>0)
 			*(pPtr++)=L';';
 
-		int iLength=istrlenw(m_aExcludedDirectories[i]);
+		int iLength=(int)istrlenw(m_aExcludedDirectories[i]);
 		MemCopyW(pPtr,m_aExcludedDirectories[i],iLength);
 		pPtr+=iLength;
 	}
@@ -278,7 +278,7 @@ CDatabase* CDatabase::FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 		LPCWSTR pPtr=pString;
 		while (*pPtr!=L'\0')
 		{
-			int nIndex=FirstCharIndex(pPtr,L';');
+			int nIndex=(int)FirstCharIndex(pPtr,L';');
 			if (nIndex!=-1)
 			{
 				pDatabase->m_aExcludedDirectories.Add(alloccopy(pPtr,nIndex));
@@ -368,7 +368,7 @@ CDatabase* CDatabase::FromFile(LPCWSTR szFileName,int dwNameLength)
 	return pDatabase;
 }
 
-CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName,LPCWSTR szAppDir,SIZE_T iAppDirLength)
+CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName,LPCWSTR szAppDir,INT iAppDirLength)
 {
 	CDatabase* pDatabase=new CDatabase; // This default dwFlags and description and drives to NULL
 
@@ -380,7 +380,7 @@ CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName,LPCWSTR szAppDir,SIZE_T
 	if (bDefaultFileName)
 	{
 		if (iAppDirLength==SIZE_T(-1))
-			iAppDirLength=istrlenw(szAppDir);
+			iAppDirLength=(int)istrlenw(szAppDir);
 
 		pDatabase->m_szArchiveName=new WCHAR[iAppDirLength+10];
 		MemCopyW(pDatabase->m_szArchiveName,szAppDir,iAppDirLength);
@@ -575,10 +575,10 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 	return NULL;
 }
 
-LPWSTR CDatabase::GetCorrertFileName(LPCWSTR szFileName,SIZE_T dwNameLength)
+LPWSTR CDatabase::GetCorrertFileName(LPCWSTR szFileName,DWORD dwNameLength)
 {
 	if (dwNameLength==SIZE_T(-1))
-		dwNameLength=istrlenw(szFileName);
+		dwNameLength=(DWORD)istrlenw(szFileName);
 	
 	LPWSTR szFile;
 	if (szFileName[0]!=L'\\' && szFileName[1]!=L':')
@@ -619,7 +619,7 @@ void CDatabase::CheckDoubleNames(PDATABASE* ppDatabases,int nDatabases)
 		
 		for (int j=0;j<i;j++)
 		{
-			if (strcasencmp(ppDatabases[i]->m_szName,ppDatabases[j]->m_szName,dwLength+1)==0)
+			if (strcasencmp(ppDatabases[i]->m_szName,ppDatabases[j]->m_szName,DWORD(dwLength+1))==0)
 			{
 				if (ppDatabases[i]->m_szName[dwLength-1]>='0' && ppDatabases[i]->m_szName[dwLength-1]<'9')
 					ppDatabases[i]->m_szName[dwLength-1]++;
@@ -798,12 +798,12 @@ void CDatabase::SetRoots(LPWSTR* pRoots,int nCount)
 
 	// Counting required buffer size
 	DWORD dwBufferSize=0;
-	SIZE_T* dwLengths=new SIZE_T[nCount];
+	DWORD* dwLengths=new DWORD[nCount];
 
 	int i;
 	for (i=0;i<nCount;i++)
 	{
-		dwLengths[i]=istrlenw(pRoots[i]);
+		dwLengths[i]=(DWORD)istrlenw(pRoots[i]);
 		dwBufferSize+=++dwLengths[i];
 	}
 	
@@ -819,7 +819,7 @@ void CDatabase::SetRoots(LPWSTR* pRoots,int nCount)
 	delete[] dwLengths;
 }
 
-CDatabase* CDatabase::FindByName(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szName,SIZE_T iLength)
+CDatabase* CDatabase::FindByName(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szName,INT iLength)
 {
 	CStringW sName(szName,iLength);
 	sName.MakeLower();
@@ -835,7 +835,7 @@ CDatabase* CDatabase::FindByName(PDATABASE* ppDatabases,int nDatabases,LPCWSTR s
 	return NULL;
 }
 
-CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szFile,SIZE_T iLength)
+CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szFile,INT iLength)
 {
 	WCHAR* pPath1=NULL;
 	WCHAR szPath1[MAX_PATH]; 
@@ -848,9 +848,9 @@ CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR s
 	if (szFile[0]!=L'\\' && szFile[1]!=L':')
 	{
 		if (iLength==SIZE_T(-1))
-			iLength=istrlenw(szFile);
+			iLength=(int)istrlenw(szFile);
 			
-		SIZE_T dwLength=GetCurrentDirectory(0,NULL);
+		DWORD dwLength=GetCurrentDirectory(0,NULL);
 		if (dwLength==0)
 			return NULL;
        
@@ -991,7 +991,7 @@ void CDatabase::AddLocalRoots()
 		int i;
 		for (i=0;i<aLocalRoots.GetSize();i++)
 		{
-			SIZE_T iLength=istrlenw(aLocalRoots[i]);
+			DWORD iLength=(DWORD)istrlenw(aLocalRoots[i]);
 			aLengths.Add(++iLength);
 			dwDataLength+=iLength;
 		}
@@ -1012,7 +1012,7 @@ void CDatabase::AddLocalRoots()
 
 void CDatabase::AddRoot(LPCWSTR pRoot)
 {
-	SIZE_T dwLength=istrlenw(pRoot);
+	DWORD dwLength=(DWORD)istrlenw(pRoot);
 	
 	if (m_szRoots==NULL)
 	{
@@ -1314,7 +1314,7 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 	str.FreeExtra();
 
 	if (pdwLen!=NULL)
-		*pdwLen=str.GetLength();
+		*pdwLen=(DWORD)str.GetLength();
 	return str.GiveBuffer();
 }
 
@@ -1327,7 +1327,7 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 	char* szBuffer=NULL;
 
 	LPWSTR szExtra=ConstructExtraBlock();
-	DWORD iExtraLen=istrlenw(szExtra)+1;
+	DWORD dwExtraLen=(DWORD)(istrlenw(szExtra)+1);
 
 	// Constructing temp file name	
 	WCHAR szTempFile[MAX_PATH];
@@ -1381,7 +1381,7 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 			Creator.GetLength()+1+ // Author data
 			Description.GetLength()+1+ // Comments data
 			Extra1.GetLength()+1+
-			iExtraLen+ // Extra
+			dwExtraLen+ // Extra
 			4+ // Time
 			4+ // Number of files
 			4  // Number of directories
@@ -1390,7 +1390,7 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
         pOutFile->Write(Creator);
 		pOutFile->Write(Description);
 		pOutFile->Write(Extra1);
-		pOutFile->Write(szExtra,iExtraLen);
+		pOutFile->Write(szExtra,dwExtraLen);
 		
 		// TIME, FILE and DIRECTORY counts
 		pInFile->Read(szBuffer,3*sizeof(DWORD));

@@ -14,7 +14,7 @@ inline BOOL CWndCtrl::Create(LPCTSTR lpszClassName,
 {
 	return (m_hWnd=CreateWindow(lpszClassName,lpszWindowName,
 		dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline BOOL CWndCtrl::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
@@ -24,7 +24,7 @@ inline BOOL CWndCtrl::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
 {
 	return (m_hWnd=CreateWindowEx(dwExStyle,lpszClassName,
 		lpszWindowName,dwStyle,x,y,nWidth,nHeight,
-		hWndParent,(HMENU)nID,GetInstanceHandle(),lpParam))!=NULL;
+		hWndParent,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),lpParam))!=NULL;
 }
 
 inline BOOL CWndCtrl::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
@@ -34,7 +34,7 @@ inline BOOL CWndCtrl::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
 {
 	return (m_hWnd=CreateWindowEx(dwExStyle,lpszClassName,
 		lpszWindowName,dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),lpParam))!=NULL;
+		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),lpParam))!=NULL;
 }
 
 inline BOOL CWnd::operator==(const CWndCtrl& wnd) const 
@@ -64,7 +64,7 @@ inline BOOL CButton::Create(LPCTSTR lpszCaption,DWORD dwStyle,const RECT* rect,H
 {
 	return (m_hWnd=CreateWindowEx(0L,"BUTTON",lpszCaption,dwStyle,
 		rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU) nID,GetInstanceHandle(), 0L))!=NULL;
+		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(), 0L))!=NULL;
 }
 
 inline UINT CButton::GetState() const
@@ -145,7 +145,7 @@ inline BOOL CEdit::Create(DWORD dwStyle,const RECT* rect,HWND hParentWnd,UINT nI
 {
 	return (m_hWnd=CreateWindowEx(WS_EX_CLIENTEDGE,"EDIT",szEmpty,dwStyle, 
 		rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU) nID,GetInstanceHandle(), 0L))!=NULL;
+		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(), 0L))!=NULL;
 }
 
 inline void CEdit::LimitText(int iLimit)
@@ -205,14 +205,14 @@ inline BOOL CRichEditCtrl::Create(DWORD dwStyle, const RECT* rect, HWND hParentW
 {
 	return (m_hWnd=CreateWindowEx(0L,"RichEdit",szEmpty,
       dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-      hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+      hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline BOOL CRichEditCtrl::CreateV2(DWORD dwStyle, const RECT* rect, HWND hParentWnd, UINT nID)
 {
 	return (m_hWnd=CreateWindowEx(0L,RICHEDIT_CLASS,szEmpty,
       dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-      hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+      hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline BOOL CRichEditCtrl::CanUndo() const
@@ -237,7 +237,7 @@ inline UNDONAMEID CRichEditCtrl::GetRedoName() const
 
 inline int CRichEditCtrl::GetLineCount() const
 {
-	return ::SendMessage(m_hWnd,EM_GETLINECOUNT,0,0);
+	return (int)::SendMessage(m_hWnd,EM_GETLINECOUNT,0,0);
 }
 
 inline BOOL CRichEditCtrl::GetModify() const
@@ -260,7 +260,7 @@ inline void CRichEditCtrl::SetOptions(WORD wOp, DWORD dwFlags)
 	::SendMessage(m_hWnd,EM_SETOPTIONS,wOp,dwFlags);
 }
 
-inline int CRichEditCtrl::GetLine(int nIndex,LPTSTR lpszBuffer) const
+inline SIZE_T CRichEditCtrl::GetLine(int nIndex,LPTSTR lpszBuffer) const
 {
 	return ::SendMessage(m_hWnd,EM_GETLINE,nIndex,(LPARAM)lpszBuffer);
 }
@@ -290,7 +290,7 @@ inline void CRichEditCtrl::LimitText(long nChars)
 
 inline long CRichEditCtrl::LineFromChar(long nIndex) const
 {
-	return ::SendMessage(m_hWnd,EM_LINEFROMCHAR,nIndex,0);
+	return (long)::SendMessage(m_hWnd,EM_LINEFROMCHAR,nIndex,0);
 }
 
 inline void CRichEditCtrl::SetSel(long nStartChar,long nEndChar)
@@ -308,42 +308,42 @@ inline void CRichEditCtrl::SetSel(CHARRANGE &cr)
 
 inline DWORD CRichEditCtrl::GetDefaultCharFormat(CHARFORMAT &cf) const
 {
-	return ::SendMessage(m_hWnd,EM_GETCHARFORMAT,0,(LPARAM)&cf);
+	return (DWORD)::SendMessage(m_hWnd,EM_GETCHARFORMAT,0,(LPARAM)&cf);
 }
 
 inline DWORD CRichEditCtrl::GetSelectionCharFormat(CHARFORMAT &cf) const
 {
-	return ::SendMessage(m_hWnd,EM_GETCHARFORMAT,1,(LPARAM)&cf);
+	return (DWORD)::SendMessage(m_hWnd,EM_GETCHARFORMAT,1,(LPARAM)&cf);
 }
 
 inline DWORD CRichEditCtrl::GetSelectionCharFormat(CHARFORMAT2 &cf) const
 {
-	return ::SendMessage(m_hWnd,EM_GETCHARFORMAT,1,(LPARAM)&cf);
+	return (DWORD)::SendMessage(m_hWnd,EM_GETCHARFORMAT,1,(LPARAM)&cf);
 }
 
 inline long CRichEditCtrl::GetEventMask() const
 {
-	return ::SendMessage(m_hWnd,EM_GETEVENTMASK,0,0);
+	return (long)::SendMessage(m_hWnd,EM_GETEVENTMASK,0,0);
 }
 
-inline long CRichEditCtrl::GetLimitText() const
+inline SIZE_T CRichEditCtrl::GetLimitText() const
 {
-	return ::SendMessage(m_hWnd,EM_GETLIMITTEXT,0,0);
+	return (long)::SendMessage(m_hWnd,EM_GETLIMITTEXT,0,0);
 }
 
 inline DWORD CRichEditCtrl::GetParaFormat(PARAFORMAT &pf) const
 {
-	return ::SendMessage(m_hWnd,EM_GETPARAFORMAT,0,(LPARAM)&pf);
+	return (DWORD)::SendMessage(m_hWnd,EM_GETPARAFORMAT,0,(LPARAM)&pf);
 }
 
 inline DWORD CRichEditCtrl::GetParaFormat(PARAFORMAT2 &pf) const
 {
-	return ::SendMessage(m_hWnd,EM_GETPARAFORMAT,0,(LPARAM)&pf);
+	return (DWORD)::SendMessage(m_hWnd,EM_GETPARAFORMAT,0,(LPARAM)&pf);
 }
 
 inline long CRichEditCtrl::GetSelText(LPSTR lpBuf) const
 {
-	return ::SendMessage(m_hWnd,EM_GETSELTEXT,0,(LPARAM)lpBuf);
+	return (long)::SendMessage(m_hWnd,EM_GETSELTEXT,0,(LPARAM)lpBuf);
 }
 
 inline WORD CRichEditCtrl::GetSelectionType() const
@@ -406,7 +406,7 @@ inline BOOL CRichEditCtrl::SetTargetDevice(HDC hDC,long lLineWidth)
 	return (BOOL)::SendMessage(m_hWnd,EM_SETTARGETDEVICE,(WPARAM)hDC,(LPARAM)lLineWidth);
 }
 
-inline long CRichEditCtrl::GetTextLength() const
+inline SIZE_T CRichEditCtrl::GetTextLength() const
 {
 	return ::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
 }
@@ -418,7 +418,7 @@ inline BOOL CRichEditCtrl::SetReadOnly(BOOL bReadOnly)
 
 inline int CRichEditCtrl::GetFirstVisibleLine() const
 {
-	return ::SendMessage(m_hWnd,EM_GETFIRSTVISIBLELINE,0,0);
+	return (int)::SendMessage(m_hWnd,EM_GETFIRSTVISIBLELINE,0,0);
 }
 
 inline void CRichEditCtrl::EmptyUndoBuffer()
@@ -428,10 +428,10 @@ inline void CRichEditCtrl::EmptyUndoBuffer()
 
 inline int CRichEditCtrl::LineIndex(int nLine) const
 {
-	return ::SendMessage(m_hWnd,EM_LINEINDEX,nLine,0);
+	return (int)::SendMessage(m_hWnd,EM_LINEINDEX,nLine,0);
 }
 
-inline int CRichEditCtrl::LineLength(int nLine) const
+inline SIZE_T CRichEditCtrl::LineLength(int nLine) const
 {
 	return ::SendMessage(m_hWnd,EM_LINELENGTH,(WPARAM)nLine,0);
 }
@@ -456,12 +456,12 @@ inline BOOL CRichEditCtrl::DisplayBand(LPRECT pDisplayRect)
 	return (BOOL)::SendMessage(m_hWnd,EM_DISPLAYBAND,0,(LPARAM)pDisplayRect);
 }
 
-inline long CRichEditCtrl::FindText(DWORD dwFlags,FINDTEXTEX* pFindText) const
+inline LONG_PTR CRichEditCtrl::FindText(DWORD dwFlags,FINDTEXTEX* pFindText) const
 {
-	return ::SendMessage(m_hWnd,EM_FINDTEXTEX,dwFlags,(LPARAM)pFindText);
+	return (long)::SendMessage(m_hWnd,EM_FINDTEXTEX,dwFlags,(LPARAM)pFindText);
 }
 
-inline long CRichEditCtrl::FormatRange(FORMATRANGE* pfr,BOOL bDisplay)
+inline LONG_PTR CRichEditCtrl::FormatRange(FORMATRANGE* pfr,BOOL bDisplay)
 {
 	return ::SendMessage(m_hWnd,EM_FORMATRANGE,bDisplay,(LPARAM)pfr);
 }
@@ -481,12 +481,12 @@ inline void CRichEditCtrl::RequestResize()
 	::SendMessage(m_hWnd,EM_REQUESTRESIZE,0,0);
 }
 
-inline long CRichEditCtrl::StreamIn(int nFormat,EDITSTREAM &es)
+inline LONG_PTR CRichEditCtrl::StreamIn(int nFormat,EDITSTREAM &es)
 {
 	return ::SendMessage(m_hWnd,EM_STREAMIN,nFormat,(LPARAM)&es);
 }
 
-inline long CRichEditCtrl::StreamOut(int nFormat,EDITSTREAM &es)
+inline LONG_PTR CRichEditCtrl::StreamOut(int nFormat,EDITSTREAM &es)
 {
 	return ::SendMessage(m_hWnd,EM_STREAMOUT,nFormat,(LPARAM)&es);
 }
@@ -544,12 +544,12 @@ inline BOOL CRichEditCtrl::SetZoom(DWORD nNumerator,DWORD nDenominator)
 
 inline DWORD CRichEditCtrl::SetOptions(DWORD dwOptions,DWORD dwOperation)
 {
-	return ::SendMessage(m_hWnd,EM_SETOPTIONS,dwOperation,(LPARAM)dwOptions);
+	return (DWORD)::SendMessage(m_hWnd,EM_SETOPTIONS,dwOperation,(LPARAM)dwOptions);
 }
 
 inline DWORD CRichEditCtrl::GetOptions() const
 {
-	return ::SendMessage(m_hWnd,EM_GETOPTIONS,0,0);
+	return (DWORD)::SendMessage(m_hWnd,EM_GETOPTIONS,0,0);
 }
 
 inline BOOL CRichEditCtrl::GetOleInterface(LPVOID* ppOleInterface) const
@@ -586,7 +586,7 @@ inline CListBox::CListBox(HWND hWnd)
 
 inline UINT CListBox::ItemFromPoint(CPoint pt,BOOL& bOutside) const
 {
-	UINT nRet=::SendMessage(m_hWnd,LB_ITEMFROMPOINT,0,MAKELPARAM(pt.x,pt.y));
+	UINT nRet=(UINT)::SendMessage(m_hWnd,LB_ITEMFROMPOINT,0,MAKELPARAM(pt.x,pt.y));
 	bOutside=HIWORD(nRet);
 	return LOWORD(nRet);
 }
@@ -595,17 +595,17 @@ inline BOOL CListBox::Create(DWORD dwStyle,const RECT* rect,HWND hParentWnd,UINT
 {
 	return (m_hWnd=CreateWindowEx(0L,"LISTBOX",szEmpty,
 		dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline int CListBox::GetCount() const
 {
-	return ::SendMessage(m_hWnd,LB_GETCOUNT,0,0);
+	return (int)::SendMessage(m_hWnd,LB_GETCOUNT,0,0);
 }
 
 inline int CListBox::GetHorizontalExtent() const
 {
-	return ::SendMessage(m_hWnd,LB_GETHORIZONTALEXTENT,0,0);
+	return (int)::SendMessage(m_hWnd,LB_GETHORIZONTALEXTENT,0,0);
 }
 
 inline void CListBox::SetHorizontalExtent(int cxExtent)
@@ -615,12 +615,12 @@ inline void CListBox::SetHorizontalExtent(int cxExtent)
 
 inline int CListBox::GetTopIndex() const
 {
-	return ::SendMessage(m_hWnd,LB_GETTOPINDEX,0,0);
+	return (int)::SendMessage(m_hWnd,LB_GETTOPINDEX,0,0);
 }
 
 inline int CListBox::SetTopIndex(int nIndex)
 {
-	return ::SendMessage(m_hWnd,LB_SETTOPINDEX,(WPARAM)nIndex,0);
+	return (int)::SendMessage(m_hWnd,LB_SETTOPINDEX,(WPARAM)nIndex,0);
 }
 
 inline LCID CListBox::GetLocale() const
@@ -630,42 +630,42 @@ inline LCID CListBox::GetLocale() const
 
 inline LCID CListBox::SetLocale(LCID nNewLocale)
 {
-	return ::SendMessage(m_hWnd,LB_SETLOCALE,(WPARAM)nNewLocale,0);
+	return (LCID)::SendMessage(m_hWnd,LB_SETLOCALE,(WPARAM)nNewLocale,0);
 }
 	
-inline int CListBox::InitStorage(int nItems,UINT nBytes)
+inline SIZE_T CListBox::InitStorage(int nItems,SIZE_T nBytes)
 {
 	return ::SendMessage(m_hWnd,LB_INITSTORAGE,(WPARAM)nItems,(LPARAM)nBytes);
 }
 
 inline int CListBox::GetCurSel() const
 {
-	return ::SendMessage(m_hWnd,LB_GETCURSEL,0,0);
+	return (int)::SendMessage(m_hWnd,LB_GETCURSEL,0,0);
 }
 
 inline int CListBox::SetCurSel(int nSelect)
 {
-	return ::SendMessage(m_hWnd,LB_SETCURSEL,(WPARAM)nSelect,0);
+	return (int)::SendMessage(m_hWnd,LB_SETCURSEL,(WPARAM)nSelect,0);
 }
 
 inline int CListBox::GetSel(int nIndex) const
 {
-	return ::SendMessage(m_hWnd,LB_GETSEL,(WPARAM)nIndex,0);
+	return (int)::SendMessage(m_hWnd,LB_GETSEL,(WPARAM)nIndex,0);
 }
 
 inline int CListBox::SetSel(int nIndex,BOOL bSelect)
 {
-	return ::SendMessage(m_hWnd,LB_SETSEL,(WPARAM)bSelect,(LPARAM)nIndex);
+	return (int)::SendMessage(m_hWnd,LB_SETSEL,(WPARAM)bSelect,(LPARAM)nIndex);
 }
 
 inline int CListBox::GetSelCount() const
 {
-	return ::SendMessage(m_hWnd,LB_GETSELCOUNT,0,0);
+	return (int)::SendMessage(m_hWnd,LB_GETSELCOUNT,0,0);
 }
 
 inline int CListBox::GetSelItems(int nMaxItems,LPINT rgIndex) const
 {
-	return ::SendMessage(m_hWnd,LB_GETSELITEMS,(WPARAM)nMaxItems,(LPARAM)rgIndex);
+	return (int)::SendMessage(m_hWnd,LB_GETSELITEMS,(WPARAM)nMaxItems,(LPARAM)rgIndex);
 }
 
 inline void CListBox::SetAnchorIndex(int nIndex)
@@ -675,42 +675,32 @@ inline void CListBox::SetAnchorIndex(int nIndex)
 
 inline int CListBox::GetAnchorIndex() const
 {
-	return ::SendMessage(m_hWnd,LB_SETANCHORINDEX,0,0);
+	return (int)::SendMessage(m_hWnd,LB_SETANCHORINDEX,0,0);
 }
 
-inline DWORD CListBox::GetItemData(int nIndex) const
+inline DWORD_PTR CListBox::GetItemData(int nIndex) const
 {
-	return (DWORD)::SendMessage(m_hWnd,LB_GETITEMDATA,(WPARAM)nIndex,0);
+	return (DWORD_PTR)::SendMessage(m_hWnd,LB_GETITEMDATA,(WPARAM)nIndex,0);
 }
 
-inline int CListBox::SetItemData(int nIndex,DWORD dwItemData)
+inline int CListBox::SetItemData(int nIndex,DWORD_PTR dwItemData)
 {
-	return ::SendMessage(m_hWnd,LB_SETITEMDATA,(WPARAM)nIndex,(LPARAM)dwItemData);
-}
-
-inline void* CListBox::GetItemDataPtr(int nIndex) const
-{
-	return (void*)::SendMessage(m_hWnd,LB_GETITEMDATA,(WPARAM)nIndex,0);
-}
-
-inline int CListBox::SetItemDataPtr(int nIndex,void* pData)
-{
-	return ::SendMessage(m_hWnd,LB_SETITEMDATA,(WPARAM)nIndex,(LPARAM)pData);
+	return (int)::SendMessage(m_hWnd,LB_SETITEMDATA,(WPARAM)nIndex,(LPARAM)dwItemData);
 }
 
 inline int CListBox::GetItemRect(int nIndex,LPRECT lpRect) const
 {
-	return ::SendMessage(m_hWnd,LB_GETITEMRECT,(WPARAM)nIndex,(LPARAM)lpRect);
+	return (int)::SendMessage(m_hWnd,LB_GETITEMRECT,(WPARAM)nIndex,(LPARAM)lpRect);
 }
 
-inline int CListBox::GetText(int nIndex,LPSTR lpszBuffer) const
+inline SIZE_T CListBox::GetText(int nIndex,LPSTR lpszBuffer) const
 {
 	return ::SendMessage(m_hWnd,LB_GETTEXT,(WPARAM)nIndex,(LPARAM)lpszBuffer);
 }
 
-inline int CListBox::GetTextLen(int nIndex) const
+inline SIZE_T CListBox::GetTextLen(int nIndex) const
 {
-	return ::SendMessage(m_hWnd,LB_GETTEXTLEN,(WPARAM)nIndex,0);
+	return (SIZE_T)::SendMessage(m_hWnd,LB_GETTEXTLEN,(WPARAM)nIndex,0);
 }
 
 inline void CListBox::SetColumnWidth(int cxWidth)
@@ -735,44 +725,44 @@ inline BOOL CListBox::SetTabStops(const int& cxEachStop)
 
 inline int CListBox::SetItemHeight(int nIndex,UINT cyItemHeight)
 {
-	return ::SendMessage(m_hWnd,LB_SETITEMHEIGHT,(WPARAM)nIndex,MAKELPARAM(cyItemHeight,0));
+	return (int)::SendMessage(m_hWnd,LB_SETITEMHEIGHT,(WPARAM)nIndex,MAKELPARAM(cyItemHeight,0));
 }
 
 inline int CListBox::GetItemHeight(int nIndex) const
 {
-	return ::SendMessage(m_hWnd,LB_GETITEMHEIGHT,(WPARAM)nIndex,0);
+	return (int)::SendMessage(m_hWnd,LB_GETITEMHEIGHT,(WPARAM)nIndex,0);
 }
 
 inline int CListBox::FindStringExact(int nIndexStart,LPCSTR lpszFind) const
 {
-	return ::SendMessage(m_hWnd,LB_FINDSTRINGEXACT,(WPARAM)nIndexStart,(LPARAM)lpszFind);
+	return (int)::SendMessage(m_hWnd,LB_FINDSTRINGEXACT,(WPARAM)nIndexStart,(LPARAM)lpszFind);
 }
 
 inline int CListBox::GetCaretIndex() const
 {
-	return ::SendMessage(m_hWnd,LB_GETCARETINDEX,0,0);
+	return (int)::SendMessage(m_hWnd,LB_GETCARETINDEX,0,0);
 }
 
 inline int CListBox::SetCaretIndex(int nIndex,BOOL bScroll)
 {
-	return ::SendMessage(m_hWnd,LB_SETCARETINDEX,nIndex,MAKELPARAM(bScroll,0));
+	return (int)::SendMessage(m_hWnd,LB_SETCARETINDEX,nIndex,MAKELPARAM(bScroll,0));
 }
 
 inline int CListBox::AddString(LPCSTR lpszItem)
 {
-	return ::SendMessage(m_hWnd,LB_ADDSTRING,0,(LPARAM)lpszItem);
+	return (int)::SendMessage(m_hWnd,LB_ADDSTRING,0,(LPARAM)lpszItem);
 }
 
 
 
 inline int CListBox::DeleteString(UINT nIndex)
 {
-	return ::SendMessage(m_hWnd,LB_DELETESTRING,nIndex,0);
+	return (int)::SendMessage(m_hWnd,LB_DELETESTRING,nIndex,0);
 }
 
 inline int CListBox::InsertString(int nIndex,LPCSTR lpszItem)
 {
-	return ::SendMessage(m_hWnd,LB_INSERTSTRING,nIndex,(LPARAM)lpszItem);
+	return (int)::SendMessage(m_hWnd,LB_INSERTSTRING,nIndex,(LPARAM)lpszItem);
 }
 
 inline void CListBox::ResetContent()
@@ -782,66 +772,66 @@ inline void CListBox::ResetContent()
 
 inline int CListBox::Dir(UINT attr,LPCSTR lpszWildCard)
 {
-	return ::SendMessage(m_hWnd,LB_DIR,attr,(LPARAM)lpszWildCard);
+	return (int)::SendMessage(m_hWnd,LB_DIR,attr,(LPARAM)lpszWildCard);
 }
 
 inline int CListBox::FindString(int nStartAfter,LPCSTR lpszItem) const
 {
-	return ::SendMessage(m_hWnd,LB_FINDSTRING,nStartAfter,(LPARAM)lpszItem);
+	return (int)::SendMessage(m_hWnd,LB_FINDSTRING,nStartAfter,(LPARAM)lpszItem);
 }
 
 inline int CListBox::SelectString(int nStartAfter,LPCSTR lpszItem)
 {
-	return ::SendMessage(m_hWnd,LB_SELECTSTRING,nStartAfter,(LPARAM)lpszItem);
+	return (int)::SendMessage(m_hWnd,LB_SELECTSTRING,nStartAfter,(LPARAM)lpszItem);
 }
 
 inline int CListBox::SelItemRange(BOOL bSelect,int nFirstItem,int nLastItem)
 {
-	return ::SendMessage(m_hWnd,LB_SELITEMRANGE,bSelect,MAKELPARAM(nFirstItem,nLastItem));
+	return (int)::SendMessage(m_hWnd,LB_SELITEMRANGE,bSelect,MAKELPARAM(nFirstItem,nLastItem));
 }
 
 #ifdef DEF_WCHAR
 inline int CListBox::FindStringExact(int nIndexStart,LPCWSTR lpszFind) const
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,LB_FINDSTRINGEXACT,(WPARAM)nIndexStart,(LPARAM)lpszFind);
+		return (int)::SendMessageW(m_hWnd,LB_FINDSTRINGEXACT,(WPARAM)nIndexStart,(LPARAM)lpszFind);
 	else
-		return ::SendMessage(m_hWnd,LB_FINDSTRINGEXACT,(WPARAM)nIndexStart,(LPARAM)(LPCSTR)W2A(lpszFind));
+		return (int)::SendMessage(m_hWnd,LB_FINDSTRINGEXACT,(WPARAM)nIndexStart,(LPARAM)(LPCSTR)W2A(lpszFind));
 }
 inline int CListBox::AddString(LPCWSTR lpszItem)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,LB_ADDSTRING,0,(LPARAM)lpszItem);
+		return (int)::SendMessageW(m_hWnd,LB_ADDSTRING,0,(LPARAM)lpszItem);
 	else
-		return ::SendMessage(m_hWnd,LB_ADDSTRING,0,(LPARAM)(LPCSTR)W2A(lpszItem));
+		return (int)::SendMessage(m_hWnd,LB_ADDSTRING,0,(LPARAM)(LPCSTR)W2A(lpszItem));
 }
 inline int CListBox::InsertString(int nIndex,LPCWSTR lpszItem)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,LB_INSERTSTRING,nIndex,(LPARAM)lpszItem);
+		return (int)::SendMessageW(m_hWnd,LB_INSERTSTRING,nIndex,(LPARAM)lpszItem);
 	else
-		return ::SendMessage(m_hWnd,LB_INSERTSTRING,nIndex,(LPARAM)(LPCSTR)W2A(lpszItem));
+		return (int)::SendMessage(m_hWnd,LB_INSERTSTRING,nIndex,(LPARAM)(LPCSTR)W2A(lpszItem));
 }
 inline int CListBox::FindString(int nStartAfter,LPCWSTR lpszItem) const
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,LB_FINDSTRING,nStartAfter,(LPARAM)lpszItem);
+		return (int)::SendMessageW(m_hWnd,LB_FINDSTRING,nStartAfter,(LPARAM)lpszItem);
 	else
-		return ::SendMessage(m_hWnd,LB_FINDSTRING,nStartAfter,(LPARAM)(LPCSTR)W2A(lpszItem));
+		return (int)::SendMessage(m_hWnd,LB_FINDSTRING,nStartAfter,(LPARAM)(LPCSTR)W2A(lpszItem));
 }
 inline int CListBox::Dir(UINT attr,LPCWSTR lpszWildCard)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,LB_DIR,attr,(LPARAM)lpszWildCard);
+		return (int)::SendMessageW(m_hWnd,LB_DIR,attr,(LPARAM)lpszWildCard);
 	else
-		return ::SendMessage(m_hWnd,LB_DIR,attr,(LPARAM)(LPCSTR)W2A(lpszWildCard));
+		return (int)::SendMessage(m_hWnd,LB_DIR,attr,(LPARAM)(LPCSTR)W2A(lpszWildCard));
 }
 inline int CListBox::SelectString(int nStartAfter,LPCWSTR lpszItem)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,LB_SELECTSTRING,nStartAfter,(LPARAM)lpszItem);
+		return (int)::SendMessageW(m_hWnd,LB_SELECTSTRING,nStartAfter,(LPARAM)lpszItem);
 	else
-		return ::SendMessage(m_hWnd,LB_SELECTSTRING,nStartAfter,(LPARAM)(LPCSTR)W2A(lpszItem));
+		return (int)::SendMessage(m_hWnd,LB_SELECTSTRING,nStartAfter,(LPARAM)(LPCSTR)W2A(lpszItem));
 }
 #endif
 
@@ -862,22 +852,22 @@ inline BOOL CComboBox::Create(DWORD dwStyle,const RECT* rect,HWND hParentWnd,UIN
 {
 	return (m_hWnd=CreateWindowEx(0L,"COMBOBOX",szEmpty,
 		dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+		hParentWnd,(HMENU)(ULONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline int CComboBox::GetCount() const
 {
-	return ::SendMessage(m_hWnd,CB_GETCOUNT,0,0);
+	return (int)::SendMessage(m_hWnd,CB_GETCOUNT,0,0);
 }		
 
 inline int CComboBox::GetCurSel() const
 {
-	return ::SendMessage(m_hWnd,CB_GETCURSEL,0,0);
+	return (int)::SendMessage(m_hWnd,CB_GETCURSEL,0,0);
 }
 
 inline int CComboBox::SetCurSel(int nSelect)
 {
-	return ::SendMessage(m_hWnd,CB_SETCURSEL,(WPARAM)nSelect,0);
+	return (int)::SendMessage(m_hWnd,CB_SETCURSEL,(WPARAM)nSelect,0);
 }
 
 inline LCID CComboBox::GetLocale() const
@@ -892,15 +882,15 @@ inline LCID CComboBox::SetLocale(LCID nNewLocale)
 
 inline int CComboBox::GetTopIndex() const
 {
-	return ::SendMessage(m_hWnd,CB_GETTOPINDEX,0,0);
+	return (int)::SendMessage(m_hWnd,CB_GETTOPINDEX,0,0);
 }
 
 inline int CComboBox::SetTopIndex(int nIndex)
 {
-	return ::SendMessage(m_hWnd,CB_SETTOPINDEX,(WPARAM)nIndex,0);
+	return (int)::SendMessage(m_hWnd,CB_SETTOPINDEX,(WPARAM)nIndex,0);
 }
 
-inline int CComboBox::InitStorage(int nItems, UINT nBytes)
+inline SIZE_T CComboBox::InitStorage(int nItems, SIZE_T nBytes)
 {
 	return ::SendMessage(m_hWnd,CB_INITSTORAGE,nItems,nBytes);
 }
@@ -912,22 +902,22 @@ inline void CComboBox::SetHorizontalExtent(UINT nExtent)
 
 inline UINT CComboBox::GetHorizontalExtent() const
 {
-	return ::SendMessage(m_hWnd,CB_GETHORIZONTALEXTENT,0,0);
+	return (UINT) ::SendMessage(m_hWnd,CB_GETHORIZONTALEXTENT,0,0);
 }
 
 inline int CComboBox::SetDroppedWidth(UINT nWidth)
 {
-	return ::SendMessage(m_hWnd,CB_SETDROPPEDWIDTH,(WPARAM)nWidth,0);
+	return (int)::SendMessage(m_hWnd,CB_SETDROPPEDWIDTH,(WPARAM)nWidth,0);
 }
 
 inline int CComboBox::GetDroppedWidth() const
 {
-	return ::SendMessage(m_hWnd,CB_GETDROPPEDWIDTH,0,0);
+	return (int)::SendMessage(m_hWnd,CB_GETDROPPEDWIDTH,0,0);
 }
 
 inline DWORD CComboBox::GetEditSel() const
 {
-	return ::SendMessage(m_hWnd,CB_GETEDITSEL,0,0);
+	return (DWORD)::SendMessage(m_hWnd,CB_GETEDITSEL,0,0);
 }
 
 inline BOOL CComboBox::LimitText(int nMaxChars)
@@ -940,63 +930,54 @@ inline BOOL CComboBox::SetEditSel(int nStartChar, int nEndChar)
 	return (BOOL)::SendMessage(m_hWnd,CB_SETEDITSEL,0,MAKELPARAM(nStartChar,nEndChar));
 }
 
-inline DWORD CComboBox::GetItemData(int nIndex) const
+inline DWORD_PTR CComboBox::GetItemData(int nIndex) const
 {
-	return ::SendMessage(m_hWnd,CB_GETITEMDATA,nIndex,0);
+	return (DWORD_PTR)::SendMessage(m_hWnd,CB_GETITEMDATA,nIndex,0);
 }
 
-inline int CComboBox::SetItemData(int nIndex, DWORD dwItemData)
+inline int CComboBox::SetItemData(int nIndex, DWORD_PTR dwItemData)
 {
-	return ::SendMessage(m_hWnd,CB_SETITEMDATA,nIndex,dwItemData);
+	return (int)::SendMessage(m_hWnd,CB_SETITEMDATA,nIndex,dwItemData);
 }
 
-inline void* CComboBox::GetItemDataPtr(int nIndex) const
-{
-	return (void*)::SendMessage(m_hWnd,CB_GETITEMDATA,nIndex,0);
-}
 
-inline int CComboBox::SetItemDataPtr(int nIndex, void* pData)
-{
-	return ::SendMessage(m_hWnd,CB_SETITEMDATA,nIndex,(LPARAM)pData);
-}
-
-inline int CComboBox::GetLBText(int nIndex, LPSTR lpszText) const
+inline SIZE_T CComboBox::GetLBText(int nIndex, LPSTR lpszText) const
 { 
 	return ::SendMessage(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)lpszText);
 }
 
 
 
-inline int CComboBox::GetLBTextLen(int nIndex) const
+inline SIZE_T CComboBox::GetLBTextLen(int nIndex) const
 {
 	return ::SendMessage(m_hWnd,CB_GETLBTEXTLEN,(WPARAM)nIndex,0);
 }
 
 inline int CComboBox::SetItemHeight(int nIndex, UINT cyItemHeight)
 {
-	return ::SendMessage(m_hWnd,CB_SETITEMHEIGHT,nIndex,cyItemHeight);
+	return (int)::SendMessage(m_hWnd,CB_SETITEMHEIGHT,nIndex,cyItemHeight);
 }
 
 inline int CComboBox::GetItemHeight(int nIndex) const
 {
-	return ::SendMessage(m_hWnd,CB_SETITEMHEIGHT,nIndex,0);
+	return (int)::SendMessage(m_hWnd,CB_SETITEMHEIGHT,nIndex,0);
 }
 
 inline int CComboBox::FindStringExact(int nIndexStart, LPCSTR lpszFind) const
 {
-	return ::SendMessage(m_hWnd,CB_FINDSTRINGEXACT,nIndexStart,(LPARAM)lpszFind);
+	return (int)::SendMessage(m_hWnd,CB_FINDSTRINGEXACT,nIndexStart,(LPARAM)lpszFind);
 }
 
 #ifdef DEF_WCHAR
 inline int CComboBox::FindStringExact(int nIndexStart, LPCWSTR lpszFind) const
 {
-	return ::SendMessage(m_hWnd,CB_FINDSTRINGEXACT,nIndexStart,(LPARAM)lpszFind);
+	return (int)::SendMessage(m_hWnd,CB_FINDSTRINGEXACT,nIndexStart,(LPARAM)lpszFind);
 }
 #endif
 
 inline int CComboBox::SetExtendedUI(BOOL bExtended)
 {
-	return ::SendMessage(m_hWnd,CB_SETEXTENDEDUI,bExtended,0);
+	return (int)::SendMessage(m_hWnd,CB_SETEXTENDEDUI,bExtended,0);
 }
 
 inline BOOL CComboBox::GetExtendedUI() const
@@ -1021,18 +1002,18 @@ inline void CComboBox::ShowDropDown(BOOL bShowIt)
 
 inline int CComboBox::AddString(LPCSTR lpszString)
 {
-	return ::SendMessageA(m_hWnd,CB_ADDSTRING,0,(LPARAM)lpszString);
+	return (int)::SendMessageA(m_hWnd,CB_ADDSTRING,0,(LPARAM)lpszString);
 }
 
 
 inline int CComboBox::DeleteString(UINT nIndex)
 {
-	return ::SendMessage(m_hWnd,CB_DELETESTRING,nIndex,0);
+	return (int)::SendMessage(m_hWnd,CB_DELETESTRING,nIndex,0);
 }
 
 inline int CComboBox::InsertString(int nIndex,LPCSTR lpszString)
 {
-	return ::SendMessageA(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)lpszString);
+	return (int)::SendMessageA(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)lpszString);
 }
 
 
@@ -1043,21 +1024,21 @@ inline void CComboBox::ResetContent()
 
 inline int CComboBox::Dir(UINT attr, LPCSTR lpszWildCard)
 {
-	return ::SendMessageA(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)lpszWildCard);
+	return (int)::SendMessageA(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)lpszWildCard);
 }
 
 
 
 inline int CComboBox::FindString(int nStartAfter, LPCSTR lpszString) const
 {
-	return ::SendMessageA(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
+	return (int)::SendMessageA(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
 }
 
 
 
 inline int CComboBox::SelectString(int nStartAfter, LPCSTR lpszString)
 {
-	return ::SendMessageA(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
+	return(int) ::SendMessageA(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
 }
 
 inline void CComboBox::Clear()
@@ -1097,7 +1078,7 @@ inline BOOL CScrollBar::Create(DWORD dwStyle,const RECT* rect,HWND hParentWnd,UI
 {
 	return (m_hWnd=CreateWindowEx(0L,"SCROLLBAR",szEmpty,
 		dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline void CScrollBar::ShowScrollBar(BOOL bShow)
@@ -1132,7 +1113,7 @@ inline BOOL C3DStaticCtrl::Create(LPCTSTR lpszCaption,DWORD dwStyle,const RECT* 
 {
 	return (m_hWnd=CreateWindowEx(0L,"HFC3DSTATIC",lpszCaption,dwStyle,
 		rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU) nID,GetInstanceHandle(), 0L))!=NULL;
+		hParentWnd,(HMENU)(LONG_PTR) nID,GetInstanceHandle(), 0L))!=NULL;
 }
 
 ///////////////////////////
@@ -1152,7 +1133,7 @@ inline BOOL C3DButtonCtrl::Create(LPCTSTR lpszCaption,DWORD dwStyle,const RECT* 
 {
 	return (m_hWnd=CreateWindowEx(0L,"HFC3DBUTTON",lpszCaption,dwStyle,
 		rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU) nID,GetInstanceHandle(), 0L))!=NULL;
+		hParentWnd,(HMENU)(LONG_PTR) nID,GetInstanceHandle(), 0L))!=NULL;
 }
 
 inline BOOL C3DButtonCtrl::SetBitmap(HBITMAP hBitmap)

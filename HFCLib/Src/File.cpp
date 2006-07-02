@@ -509,9 +509,9 @@ BOOL CFile::Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError)
 #endif
 
 #ifdef WIN32
-LONG_PTR CFile::Seek(ULONG_PTR lOff, ULONG_PTR nFrom,CFileException* pError,LONG* pHighPos)
+DWORD CFile::Seek(LONG lOff, DWORD nFrom,CFileException* pError,LONG* pHighPos)
 {
-	LONG_PTR dwNew=::SetFilePointer(m_hFile,lOff,pHighPos,(DWORD)nFrom);
+	DWORD dwNew=::SetFilePointer(m_hFile,lOff,pHighPos,(DWORD)nFrom);
 	if (dwNew  == (LONG_PTR)-1)
 	{
 		SetHFCError(HFC_BADSEEK);
@@ -552,7 +552,7 @@ LONG_PTR CFile::Seek(ULONG_PTR lOff,ULONG_PTR nFrom,CFileException* pError)
 #endif
 
 #ifdef WIN32
-BOOL CFile::SetLength(DWORD dwNewLen,LONG* pHigh)
+BOOL CFile::SetLength(LONG dwNewLen,LONG* pHigh)
 {
 	this->Seek((LONG)dwNewLen,(UINT)begin,NULL,pHigh);
 	return ::SetEndOfFile(m_hFile);
@@ -560,11 +560,12 @@ BOOL CFile::SetLength(DWORD dwNewLen,LONG* pHigh)
 BOOL CFile::SetLength(ULONGLONG dwNewLen)
 {
 	LONG l=(LONG)(dwNewLen>>32);
-	return SetLength((SIZE_T)dwNewLen,&l);
+	this->Seek((LONG)dwNewLen,(UINT)begin,NULL,&l);
+	return ::SetEndOfFile(m_hFile);
 }
 #endif
 
-SIZE_T CFile::Read(void* lpBuf, SIZE_T nCount,CFileException* pError)
+DWORD CFile::Read(void* lpBuf, DWORD nCount,CFileException* pError)
 {
 	if (nCount == 0)
 		return 0;
@@ -888,7 +889,7 @@ BOOL CFile::Read(CStringW& str,CFileException* pError)
 }
 #endif
 
-BOOL CFile::Write(const void* lpBuf, ULONG_PTR nCount,CFileException* pError)
+BOOL CFile::Write(const void* lpBuf, DWORD nCount,CFileException* pError)
 {
 	if (nCount == 0)
 		return TRUE;
@@ -962,19 +963,19 @@ BOOL CFile::IsEndOfFile() const
 }
 
 #ifdef WIN32
-SIZE_T CFile::GetLength(PSIZE_T pHigh) const
+DWORD CFile::GetLength(DWORD* pHigh) const
 {
 	return ::GetFileSize(m_hFile,pHigh);
 }
 ULONGLONG CFile::GetLength64() const
 {
-	SIZE_T high;
-	SIZE_T low=::GetFileSize(m_hFile,&high);
+	DWORD high;
+	DWORD low=::GetFileSize(m_hFile,&high);
 
 	return (((ULONGLONG)high)<<32)|((ULONGLONG)low);
 }
 #else
-SIZE_T CFile::GetLength() const
+DWORD CFile::GetLength() const
 {
 	return filelength(fileno((FILE*)m_hFile));
 }
@@ -1098,7 +1099,7 @@ INT FileSystem::IsDirectory(LPCSTR szDirectoryName)
 	if (szDirectoryName[dwPathLen-1]=='\\' && dwPathLen>3)
 	{
 		szPath=new char[dwPathLen+5];
-		iMemCopy(szPath,szDirectoryName,--dwPathLen);
+		MemCopy(szPath,szDirectoryName,--dwPathLen);
 		szPath[dwPathLen]='\0';
 	}
 	else
@@ -1415,7 +1416,7 @@ BOOL FileSystem::IsValidFileName(LPCWSTR szFile,LPWSTR szShortName)
 // Last '//' is not counted, if exists
 DWORD FileSystem::ParseExistingPath(LPCSTR szPath)
 {
-	DWORD dwLength=strlen(szPath);
+	DWORD dwLength=(DWORD)strlen(szPath);
 
 	if (dwLength<2)
 		return 0;
@@ -1550,7 +1551,7 @@ BOOL FileSystem::IsValidPath(LPCSTR szPath,BOOL bAsDirectory)
 // Last '//' is not counted, if exists
 DWORD FileSystem::ParseExistingPath(LPCWSTR szPath)
 {
-	DWORD dwLength=wcslen(szPath);
+	DWORD dwLength=(DWORD)wcslen(szPath);
 
 	if (dwLength<2)
 		return 0;
@@ -1759,8 +1760,8 @@ BOOL FileSystem::IsSamePath(LPCSTR szDir1,LPCSTR szDir2)
 	nRet1=istrlen(szDir1);
 	nRet2=istrlen(szDir2);
 
-	iMemCopy(path1,szDir1,nRet1);
-	iMemCopy(path2,szDir2,nRet2);
+	MemCopy(path1,szDir1,nRet1);
+	MemCopy(path2,szDir2,nRet2);
 	if (path1[nRet1-1]=='\\')
 		path1[nRet1-1]='\0';
 	if (path2[nRet2-1]=='\\')
@@ -2305,10 +2306,10 @@ BOOL CFileFind::FindNextFile()
 #endif
 }
 
-void CFileFind::GetFilePath(LPSTR szPath,SIZE_T nMaxLen) const
+void CFileFind::GetFilePath(LPSTR szPath,DWORD nMaxLen) const
 {
 #ifdef WIN32
-	int nRet=WideCharToMultiByte(CP_ACP,0,(LPCWSTR)strRoot,strRoot.GetLength(),szPath,nMaxLen,0,0);
+	int nRet=WideCharToMultiByte(CP_ACP,0,(LPCWSTR)strRoot,(int)strRoot.GetLength(),szPath,nMaxLen,0,0);
 
 	if (IsUnicodeSystem())
 		WideCharToMultiByte(CP_ACP,0,m_fdw.cFileName,-1,szPath+nRet,nMaxLen-nRet,0,0);
@@ -2358,7 +2359,7 @@ BOOL CFileFind::GetFileTitle(CString& title) const
 	else
 	{
 		CHAR szPath[MAX_PATH];
-		WideCharToMultiByte(CP_ACP,0,strRoot,strRoot.GetLength(),szPath,MAX_PATH,0,0);
+		WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0);
 		StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName);
 		SIZE_T len=::GetFileTitle(szPath,title.GetBuffer(MAX_PATH),MAX_PATH);
 		
@@ -2374,7 +2375,7 @@ BOOL CFileFind::GetFileTitle(CString& title) const
 	return TRUE;
 }
 
-BOOL CFileFind::GetFileTitle(LPSTR szFileTitle,SIZE_T nMaxLen) const
+BOOL CFileFind::GetFileTitle(LPSTR szFileTitle,DWORD nMaxLen) const
 {
 	if (IsUnicodeSystem())
 	{
@@ -2391,8 +2392,8 @@ BOOL CFileFind::GetFileTitle(LPSTR szFileTitle,SIZE_T nMaxLen) const
 	else
 	{
 		CHAR szPath[MAX_PATH];
-		WideCharToMultiByte(CP_ACP,0,strRoot,strRoot.GetLength(),szPath,MAX_PATH,0,0);
-		StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName);
+		WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0);
+		StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName);
 		return ::GetFileTitle(szPath,szFileTitle,(WORD)min(nMaxLen,0xFFFF))==0;
 	}
 }
@@ -2455,13 +2456,13 @@ BOOL CFileFind::FindFile(LPCWSTR pstrName)
 	return TRUE;
 }
 
-void CFileFind::GetFilePath(LPWSTR szPath,SIZE_T nMaxLen) const
+void CFileFind::GetFilePath(LPWSTR szPath,DWORD nMaxLen) const
 {
 	StringCbCopyNW(szPath,nMaxLen,(LPCWSTR)strRoot,strRoot.GetLength());
 	if (IsUnicodeSystem())	
-		StringCbCopyW(szPath+strRoot.GetLength(),nMaxLen-strRoot.GetLength(),m_fdw.cFileName);
+		StringCbCopyW(szPath+(int)strRoot.GetLength(),nMaxLen-(int)strRoot.GetLength(),m_fdw.cFileName);
 	else
-		MultiByteToWideChar(CP_ACP,0,m_fd.cFileName,-1,szPath+strRoot.GetLength(),nMaxLen-strRoot.GetLength());
+		MultiByteToWideChar(CP_ACP,0,m_fd.cFileName,-1,szPath+(int)strRoot.GetLength(),nMaxLen-(int)strRoot.GetLength());
 }
 
 
@@ -2485,8 +2486,8 @@ BOOL CFileFind::GetFileTitle(CStringW& title) const
 	else
 	{
 		CHAR szPath[MAX_PATH],szTitle[MAX_PATH];
-		WideCharToMultiByte(CP_ACP,0,strRoot,strRoot.GetLength(),szPath,MAX_PATH,0,0);
-		StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName);
+		WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0);
+		StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-(int)strRoot.GetLength(),m_fd.cFileName);
 		short ret=::GetFileTitle(szPath,szTitle,MAX_PATH);
 		
 		if (ret==0)
@@ -2502,7 +2503,7 @@ BOOL CFileFind::GetFileTitle(CStringW& title) const
 }
 
 
-BOOL CFileFind::GetFileTitle(LPWSTR szFileTitle,SIZE_T nMaxLen) const
+BOOL CFileFind::GetFileTitle(LPWSTR szFileTitle,DWORD nMaxLen) const
 {
 
 	if (IsUnicodeSystem())
@@ -2515,8 +2516,8 @@ BOOL CFileFind::GetFileTitle(LPWSTR szFileTitle,SIZE_T nMaxLen) const
 	else
 	{
 		CHAR szPath[MAX_PATH],szTitle[MAX_PATH];
-		WideCharToMultiByte(CP_ACP,0,strRoot,strRoot.GetLength(),szPath,MAX_PATH,0,0);
-		StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName);
+		WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0);
+		StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-(int)strRoot.GetLength(),m_fd.cFileName);
 		short ret=::GetFileTitle(szPath,szTitle,MAX_PATH);
 		if (ret!=0)
 			return FALSE;
@@ -2605,7 +2606,7 @@ CSearchFromFile::~CSearchFromFile()
 	this->CloseFile();
 }
 
-DWORD CSearchHexFromFile::GetFoundPosition() const
+ULONG_PTR CSearchHexFromFile::GetFoundPosition() const
 {
 	return dwFilePtr+dwBufferPtr;
 }
@@ -2662,7 +2663,11 @@ BOOL CSearchHexFromFile::DoSearching()
 	if (pBuffer==NULL)
 	{
 #ifdef WIN32
-		dwFileSize=GetFileSize(hFile,NULL);
+		DWORD dwFileSizeHi;
+		dwFileSize=GetFileSize(hFile,&dwFileSizeHi);
+#ifdef _WIN64
+		dwFileSize|=(SIZE_T)dwFileSizeHi<<32;
+#endif
 #else
 		dwFileSize=filelength(fileno(hFile));
 #endif
@@ -2670,7 +2675,7 @@ BOOL CSearchHexFromFile::DoSearching()
 		if (dwFileSize<dwLength)
 			return FALSE; // File size if smaller than length of search value
 
-		dwBufferLen=min(SEARCH_BUFFERLEN,dwFileSize);
+		dwBufferLen=(DWORD)min(SEARCH_BUFFERLEN,dwFileSize);
 		pBuffer=new BYTE[max(dwBufferLen,1)+1];
 		DWORD dwReaded;
 #ifdef WIN32
@@ -2735,7 +2740,7 @@ BOOL CSearchHexFromFile::DoSearching()
 		if (dwFilePtr+SEARCH_BUFFERLEN>dwFileSize)
 		{
 			delete[] pBuffer;
-			dwBufferLen=dwFileSize-dwFilePtr;
+			dwBufferLen=DWORD(dwFileSize-dwFilePtr);
 			pBuffer=new BYTE[max(1,dwBufferLen)+1];
 		}
 		else

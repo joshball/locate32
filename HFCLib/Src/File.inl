@@ -118,13 +118,13 @@ inline BOOL CFile::Read(DWORD& dwNum,CFileException* pError)
 
 inline BOOL CFile::Write(const CStringA& str,CFileException* pError) 
 { 
-	return this->Write((LPCSTR)str,str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0),pError); 
+	return this->Write((LPCSTR)str,(DWORD)(str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0)),pError); 
 }
 
 #ifdef DEF_WCHAR
 inline BOOL CFile::Write(const CStringW& str,CFileException* pError) 
 { 
-	return this->Write((LPCWSTR)str,(str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0))*2,pError); 
+	return this->Write((LPCWSTR)str,(DWORD)(str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0))*2,pError); 
 }
 #endif
 
@@ -152,13 +152,13 @@ inline BOOL CFile::Write(char ch,CFileException* pError)
 
 inline BOOL CFile::Write(LPCSTR szNullTerminatedString,CFileException* pError) 
 { 
-	return this->Write(szNullTerminatedString,istrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0),pError); 
+	return this->Write(szNullTerminatedString,(DWORD)istrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0),pError); 
 }
 
 #ifdef DEF_WCHAR
 inline BOOL CFile::Write(LPCWSTR szNullTerminatedString,CFileException* pError) 
 { 
-	return this->Write(szNullTerminatedString,2*istrlenw(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?2:0),pError); 
+	return this->Write(szNullTerminatedString,(DWORD)(2*istrlenw(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?2:0)),pError); 
 }
 #endif
 
@@ -397,7 +397,7 @@ inline CFileFind::~CFileFind()
 	Close();
 }
 
-inline void CFileFind::GetFileName(LPSTR szName,SIZE_T nMaxLen) const
+inline void CFileFind::GetFileName(LPSTR szName,DWORD nMaxLen) const
 {
 #ifdef WIN32
 	if (IsUnicodeSystem())
@@ -422,14 +422,18 @@ inline void CFileFind::GetFileName(CString& name) const
 #endif
 }
 
-inline DWORD CFileFind::GetFileSize() const
+inline DWORD CFileFind::GetFileSize(DWORD* pHigh) const
 {
-#ifdef WIN32
+	if (pHigh!=NULL)
+		*pHigh=m_fd.nFileSizeHigh;
 	return m_fd.nFileSizeLow;
-#else
-	return m_fd.ff_fsize;
-#endif
 }
+
+inline ULONGLONG CFileFind::GetFileSize64() const
+{
+	return ULONGLONG(m_fd.nFileSizeHigh)<<32|ULONGLONG(m_fd.nFileSizeLow);
+}
+	
 
 
 
@@ -558,7 +562,7 @@ inline BOOL CFileFind::IsTemporary() const
 
 
 #ifdef DEF_WCHAR
-inline void CFileFind::GetFileName(LPWSTR szName,SIZE_T nMaxLen) const
+inline void CFileFind::GetFileName(LPWSTR szName,DWORD nMaxLen) const
 {
 	if (IsUnicodeSystem())
 		StringCbCopyW(szName,nMaxLen,m_fdw.cFileName);
@@ -603,7 +607,7 @@ inline CSearchHexFromFile::CSearchHexFromFile(LPCSTR szString,BOOL bMatchCase)
 	this->bMatchCase=bMatchCase;
 
 	// Setting data
-	dwLength=istrlen(szString);
+	dwLength=(DWORD)istrlen(szString);
 #ifdef WIN32
 	pSearchValue=new BYTE[dwLength];
 	for (register LONG_PTR i=dwLength-1;i>=0;i--)

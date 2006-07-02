@@ -5,54 +5,23 @@
 #ifndef HFCMEMORY_H
 #define HFCMEMORY_H
 
-/* Benchmark results:
 
-Copyers:
-Buffer/count	1st				2nd				3rd
-10/10000000		CopyMemory:70	dMemCopy:150	fMemCopy:160
-100/1000000 	CopyMemory:111	iMemCopy:130	MemCopy:160
-1000/100000		CopyMemory		iMemCopy		MemCopy
-1000000/100		CopyMemory		iMemCopy		MemCopy
-
-Setters (to 0):
-Buffer/count	1st				2nd				3rd
-10/10000000 	ZeroMemory:30	fMemSet:30  	dMemSet:40
-100/1000000 	dMemSet:70		fMemSet:80  	ZeroMemory:81
-1000/100000		ZeroMemory		iMemSet			fMemSet
-1000000/100		ZeroMemory		fMemSet			fMemSet
-
-Setters (to random):
-Buffer/count	1st				2nd				3rd
-10/10000000 	dMemSet:70		fMemSet:70  	iMemSet:
-100/1000000 	dMemSet:80		fMemSet:81  	iMemSet:110
-1000/100000		iMemSet			dMemSet			fMemSet
-1000000/100		iMemSet			fMemSet			dMemSet
-
-String length:
-Buffer/count	1st				2nd				3rd
-10/10000000 	dstrlen:280		fstrlen:290		istrlen:290
-100/1000000 	dstrlen:321		istrlen:331		fstrlen:340
-1000/100000		dstrlen			fstrlen			istrlen
-1000000/100		istrlen			dstrlen			fstrlen
-*/
 
 
 /*
 	 XXXXXXXX is normal version
 	iXXXXXXXX is inline version
-	fXXXXXXXX is for loop version
 	dXXXXXXXX is define version
 */
 // Memory copiers
-
-void MemCopy(LPVOID dst,LPCVOID src,UINT len);
+#define MemCopy(dst,src,len) CopyMemory(dst,src,len)
 #define dMemCopy(dst,src,len) \
 {for (register UINT __i_=0;__i_<(len);__i_++) \
 ((BYTE*)(dst))[__i_]=((BYTE*)(src))[__i_];}
 
 // Memory setters
 
-void MemSet(LPVOID dst,BYTE byte,UINT count);
+#define MemSet(dst,value,count) FillMemory(dst,count,value)
 #define dMemSet(dst,byte,count) \
 {for (register UINT __i_=0;__i_<(count);__i_++) \
 ((BYTE*)(dst))[__i_]=(BYTE)(byte);}
@@ -125,11 +94,18 @@ public:
 	TYPE* operator ->() {return m_pData; }
 	TYPE operator[](int nIndex) const { return m_pData[nIndex]; }
 	TYPE& operator[](int nIndex) { return m_pData[nIndex]; }
+	TYPE operator[](UINT nIndex) const { return m_pData[nIndex]; }
+	TYPE& operator[](UINT nIndex) { return m_pData[nIndex]; }
+	TYPE operator[](DWORD nIndex) const { return m_pData[nIndex]; }
+	TYPE& operator[](DWORD nIndex) { return m_pData[nIndex]; }
+	TYPE operator[](LONG nIndex) const { return m_pData[nIndex]; }
+	TYPE& operator[](LONG nIndex) { return m_pData[nIndex]; }
+#ifdef _WIN64
 	TYPE operator[](LONG_PTR nIndex) const { return m_pData[nIndex]; }
 	TYPE& operator[](LONG_PTR nIndex) { return m_pData[nIndex]; }
 	TYPE operator[](ULONG_PTR nIndex) const { return m_pData[nIndex]; }
 	TYPE& operator[](ULONG_PTR nIndex) { return m_pData[nIndex]; }
-	
+#endif	
 	
 public:
 	TYPE* m_pData;
@@ -391,220 +367,6 @@ public:
 	ALLOC* pFirstAlloc;
 	ALLOC* pLastAlloc;
 #endif
-};
-
-
-template <class OUTTYPE,SIZE_T ALLOC_SIZE,SIZE_T EXTRA_ALLOC> 
-class CBufferAllocator : public CAllocator
-{
-public:
-	CBufferAllocator();
-	DEBUGVIRTUAL ~CBufferAllocator();
-
-	DEBUGVIRTUAL void FreeAll(); // Caution!
-
-public:
-	// Allocators
-	DEBUGVIRTUAL BYTE* Allocate(SIZE_T size);
-	OUTTYPE Allocate2(SIZE_T size) { return (OUTTYPE)Allocate(size); }
-	DEBUGVIRTUAL OUTTYPE AllocateFast(SIZE_T size); // Faster allocation, does not check unallocated memory
-	
-#ifdef _DEBUG
-	BYTE* Allocate(SIZE_T size,int line,char* szFile);
-#endif
-
-	// Free
-	DEBUGVIRTUAL void Free(void* pBlock);
-	
-	BOOL IsPointerAllocated(const void* pBlock) const { return GetAlloc(pBlock)!=NULL; } 
-	SIZE_T GetAllocSize(const void* pBlock) const { return ((DWORD*)pBlock)[-1]&~(1<<31); }
-
-	void ReArrange(void** pBlocks[],int nBlocks);
-
-#ifdef _DEBUG
-	DEBUGVIRTUAL void DebugInformation(CString& str);
-	DEBUGVIRTUAL CString GetAllocatorID() const;
-#else
-	void DebugInformation(CString& str);
-#endif
-
-
-protected:
-	struct ALLOC
-	{
-	public:
-		SIZE_T dwLength;
-		DWORD dwAllocations;
-		SIZE_T dwFreeSpace;
-		BYTE* pPtr;
-
-		SIZE_T GetFree() const { return dwFreeSpace; }
-
-		BYTE* AllocBlock(SIZE_T size)
-		{
-			size+=EXTRA_ALLOC;
-
-			if (size+sizeof(DWORD)>int(dwFreeSpace))
-				return NULL;
-
-			BYTE* pRet=PBYTE(this)+sizeof(ALLOC);
-			
-			while (*((DWORD*)pRet)!=0)
-			{
-				if ((*((DWORD*)pRet)&0x80000000)==0)
-				{
-					DWORD* pLen=LPDWORD(pRet);
-					DWORD* pNextLen=LPDWORD(pRet+*pLen+sizeof(DWORD));
-
-					// Calculating available free size
-					while (((*pNextLen)&0x80000000)==0)
-					{
-						if (*pNextLen==0)
-						{
-							pPtr=pRet;
-							if (MaximumAvailableBlockInEnd()<LONG(size))
-								return NULL;
-							return AllocBlockFromEnd(size);
-						}
-						*pLen+=*pNextLen+sizeof(DWORD);
-						pNextLen=LPDWORD(pRet+*pLen+sizeof(DWORD));
-					}
-							
-					if (*pLen>=size)
-					{
-						if (*pLen>size+sizeof(DWORD))
-						{
-							*((DWORD*)(pRet+size+sizeof(DWORD)))=*pLen-(size+sizeof(DWORD));
-							*pLen=size|0x80000000;
-						}
-						else
-							*pLen|=0x80000000;
-
-						dwAllocations++;
-						
-						// allocated block might be larger than size
-						dwFreeSpace-=(*pLen&~0x80000000)+sizeof(DWORD);
-
-						pRet+=sizeof(DWORD);
-						if (pPtr<pRet)
-						{
-							pPtr=pRet+size;
-							*((DWORD*)pPtr)=0;
-						}
-						return pRet;
-					}
-				}
-				pRet+=((*((DWORD*)pRet))&~0x80000000)+sizeof(DWORD);
-			}	
-			if (MaximumAvailableBlockInEnd()>=LONG(size))
-				return AllocBlockFromEnd(size);
-			return NULL;
-		}
-
-		BYTE* AllocBlockFromEnd(SIZE_T size)
-		{
-			size+=EXTRA_ALLOC;
-
-			*((DWORD*)pPtr)=size|(1<<31);
-			BYTE* pRet=pPtr+sizeof(DWORD);
-			pPtr=pRet+size;
-			*((DWORD*)pPtr)=0;
-			dwAllocations++;
-			dwFreeSpace-=size+sizeof(DWORD);
-			return pRet;
-		}
-
-		void FreeBlock(void* pBlock)
-		{
-			if (((DWORD*)pBlock)[-1]&(1<<31)) // Checking whether allocated
-			{
-				dwFreeSpace+=(((DWORD*)pBlock)[-1]&~(1<<31))+sizeof(DWORD);
-				((DWORD*)pBlock)[-1]&=~(1<<31);
-				dwAllocations--;
-			}
-		}
-
-		BOOL IsBlockInAlloc(const void* pBlock) const { return DWORD(pBlock)>DWORD(this) && DWORD(pBlock)<DWORD(this)+dwLength; }
-
-
-
-		LONG MaximumAvailableBlockInEnd() const { return dwLength-(int(pPtr)-int(this))-2*sizeof(DWORD); }
-		
-	public:
-		ALLOC* pNext;
-	};
-	
-	ALLOC* GetAlloc(const void* pBlock) const
-	{
-		if (m_pFirstAlloc==NULL)
-			return NULL;
-
-		if (m_pCurrentAlloc->IsBlockInAlloc(pBlock))
-			return m_pCurrentAlloc;
-		
-		ALLOC* pTmp=m_pFirstAlloc;
-		while (pTmp!=NULL)
-		{
-			if (pTmp->IsBlockInAlloc(pBlock))
-				return pTmp;
-			pTmp=pTmp->pNext;
-		}
-		return NULL;
-	}
-
-	ALLOC* NewAlloc(ALLOC* pNext=NULL)
-	{
-		ALLOC* pAlloc=(ALLOC*)new BYTE[ALLOC_SIZE];
-		pAlloc->dwAllocations=0;
-		pAlloc->dwFreeSpace=pAlloc->dwLength=ALLOC_SIZE;
-		pAlloc->pPtr=LPBYTE(pAlloc)+sizeof(ALLOC);
-		*((DWORD*)pAlloc->pPtr)=0;
-		pAlloc->pNext=pNext;	
-		DebugNumMessage("CBufferAllocator<OUTTYPE,ALLOC_SIZE>::NewAlloc(ALLOC* pNext): New ALLOC %X created.",DWORD(pAlloc));
-		return pAlloc;
-	}
-
-	ALLOC* NewAlloc(SIZE_T size,ALLOC* pNext=NULL)
-	{
-		ALLOC* pAlloc=(ALLOC*)new BYTE[size+sizeof(ALLOC)+sizeof(DWORD)];
-		pAlloc->dwFreeSpace=pAlloc->dwLength=size+sizeof(ALLOC)+2*sizeof(DWORD);
-		pAlloc->dwAllocations=0;
-		pAlloc->pPtr=LPBYTE(pAlloc)+sizeof(ALLOC);
-		*((DWORD*)pAlloc->pPtr)=0;
-		pAlloc->pNext=pNext;	
-		DebugNumMessage("CBufferAllocator<OUTTYPE,ALLOC_SIZE>::NewAlloc(DWORD size,ALLOC* pNext): New ALLOC %X created.",DWORD(pAlloc));
-		return pAlloc;
-	}
-
-	ALLOC* m_pFirstAlloc;
-	ALLOC* m_pCurrentAlloc;
-};
-
-
-template <class OUTTYPE,DWORD ALLOC_SIZE,DWORD EXTRA_ALLOC> 
-class CBufferAllocatorThreadSafe : public CBufferAllocator<OUTTYPE,ALLOC_SIZE,EXTRA_ALLOC>
-{
-public:
-	CBufferAllocatorThreadSafe();
-	~CBufferAllocatorThreadSafe();
-
-	DEBUGVIRTUAL BYTE* Allocate(SIZE_T size);
-	OUTTYPE Allocate2(SIZE_T size) { return (OUTTYPE)Allocate(size); }
-	OUTTYPE AllocateFast(SIZE_T size); // Faster allocation, does not check unallocated memory
-
-	DEBUGVIRTUAL void Free(void* pBlock);
-
-	void ReArrange(void** pBlocks[],int nBlocks);
-
-#ifdef _DEBUG
-	DEBUGVIRTUAL void DebugInformation(CString& str);
-	DEBUGVIRTUAL CString GetAllocatorID() const;
-#else
-	void DebugInformation(CString& str);
-#endif
-
-protected:
-	HANDLE m_hMutex;
 };
 
 #include "Memory.inl"

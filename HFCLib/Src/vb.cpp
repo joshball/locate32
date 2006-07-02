@@ -190,7 +190,7 @@ HFCERROR VB::PrintText32(HANDLE hFile, LPCTSTR bfr,TCHAR LF)
 	WriteFile(hFile,"\"",1,&writed,NULL);
 	if (!writed)
 		return SetHFCError(HFC_CANNOTWRITE);
-	WriteFile(hFile,bfr,strlen(bfr),&writed,NULL);
+	WriteFile(hFile,bfr,(DWORD)strlen(bfr),&writed,NULL);
 	if (writed<strlen(bfr))
 		return SetHFCError(HFC_CANNOTWRITE);
 	if (LF)
@@ -211,7 +211,7 @@ HFCERROR VB::PrintNum32(HANDLE hFile, int num,TCHAR LF)
         StringCbPrintf(szBuffer,14,"%d\n",num);
 	else
 		StringCbPrintf(szBuffer,14,"%d,",num);
-	WriteFile(hFile,szBuffer,strlen(szBuffer),&writed,NULL);
+	WriteFile(hFile,szBuffer,(DWORD)strlen(szBuffer),&writed,NULL);
 	if (writed<strlen(szBuffer))
 		return SetHFCError(HFC_CANNOTWRITE);
     return HFC_OK;
@@ -225,7 +225,7 @@ HFCERROR VB::PrintFloat32(HANDLE hFile, double num,TCHAR LF)
         StringCbPrintf(szBuffer,40,"%f\n",num);
 	else
 	    StringCbPrintf(szBuffer,40,"%f,",num);
-	WriteFile(hFile,szBuffer,strlen(szBuffer),&writed,NULL);
+	WriteFile(hFile,szBuffer,(DWORD)strlen(szBuffer),&writed,NULL);
 	if (writed<strlen(szBuffer))
 		return SetHFCError(HFC_CANNOTWRITE);
     return HFC_OK;

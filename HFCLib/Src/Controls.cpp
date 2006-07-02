@@ -7,9 +7,9 @@
 #if defined(WIN32) && !defined (_CONSOLE)
 
 namespace HFCControls {
-	BOOL CALLBACK Ctrl3DStaticProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
-	BOOL CALLBACK Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
-	BOOL CALLBACK HexViewControlProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
+	LRESULT CALLBACK Ctrl3DStaticProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
+	LRESULT CALLBACK Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
+	LRESULT CALLBACK HexViewControlProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
 	BOOL StaticPaint(HDC hDC,HWND hWnd,void* ctrl);
 }
 
@@ -50,20 +50,20 @@ enum Errors {
 typedef struct _HEXVIEWCTRL
 {
 	HFONT hFont;
-	int nLines;
+	SIZE_T nLines;
 	int nLine;
 
 	BYTE* pData;
-	DWORD nDataLen;
-	DWORD nAllocLen;
-	DWORD nAllocExtra;
+	SIZE_T nDataLen;
+	SIZE_T nAllocLen;
+	SIZE_T nAllocExtra;
 	BYTE nBytesPerLine;
 	BYTE nHalfLine;
 	HBRUSH hbrBackground;
 	BYTE bFlags;
 } HEXVIEWCTRL,*LPHEXVIEWCTRL;
 
-BOOL CALLBACK HFCControls::Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT CALLBACK HFCControls::Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	LPBCTRL ctrl;
 	if (msg==WM_CREATE)
@@ -74,7 +74,7 @@ BOOL CALLBACK HFCControls::Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 			SetHFCError(HFC_CANNOTALLOC);
 			return FALSE;
 		}
-		SetWindowLong(hWnd,GWL_USERDATA,(LONG)ctrl);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)ctrl);
 		LPCSTR temp=(LPCSTR)((CREATESTRUCT*)lParam)->lpszName;
 		SIZE_T templen=istrlen(temp);
 		ctrl->szText=new char[templen+2];
@@ -84,7 +84,7 @@ BOOL CALLBACK HFCControls::Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 			delete ctrl;
 			return FALSE;
 		}
-		iMemCopy(ctrl->szText,temp,templen+1);
+		MemCopy(ctrl->szText,temp,templen+1);
 		ctrl->hFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
 		ctrl->nPressed=0;
 		ctrl->nMouseOver=FALSE;
@@ -109,7 +109,7 @@ BOOL CALLBACK HFCControls::Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 			SendMessage(GetParent(hWnd),DM_SETDEFID,(WPARAM)((LPCREATESTRUCT)lParam)->hMenu,0);
 		return FALSE;
 	}
-	ctrl=(LPBCTRL)GetWindowLong(hWnd,GWL_USERDATA);	
+	ctrl=(LPBCTRL)GetWindowLongPtr(hWnd,GWLP_USERDATA);	
 	switch(msg)
 	{
 	case WM_USER+8:
@@ -232,11 +232,11 @@ BOOL CALLBACK HFCControls::Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 		InvalidateRect(hWnd,NULL,TRUE);
 		return TRUE;
 	case B3DM_GETBITMAP:
-		return (BOOL)ctrl->hBitmap;
+		return (LRESULT)ctrl->hBitmap;
 	case B3DM_GETDISABLEDBITMAP:
-		return (BOOL)ctrl->hDisBitmap;
+		return (LRESULT)ctrl->hDisBitmap;
 	case B3DM_GETHOTBITMAP:
-		return (BOOL)ctrl->hHotBitmap;
+		return (LRESULT)ctrl->hHotBitmap;
 	case B3DM_ISPRESSED:
 		return ctrl->nPressed;
 	case B3DM_SETCOLOR:
@@ -494,7 +494,7 @@ BOOL CALLBACK HFCControls::Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 				SetHFCError(HFC_CANNOTALLOC);
 				return FALSE;
 			}
-			iMemCopy(ctrl->szText,temp,templen+1);
+			MemCopy(ctrl->szText,temp,templen+1);
 			InvalidateRect(hWnd,NULL,TRUE);
 			return TRUE;
 		}
@@ -514,7 +514,7 @@ BOOL CALLBACK HFCControls::Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 				delete[] ctrl->pColors;
 			delete ctrl;
 		}
-		SetWindowLong(hWnd,GWL_USERDATA,(LONG)NULL);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)NULL);
 		return FALSE;
 	default:
 		return DefWindowProc(hWnd,msg,wParam,lParam);
@@ -616,7 +616,7 @@ BOOL HFCControls::StaticPaint(HDC hDC,HWND hWnd,void* ctrl)
 	return TRUE;
 }
 
-BOOL CALLBACK HFCControls::Ctrl3DStaticProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT CALLBACK HFCControls::Ctrl3DStaticProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	LPSCTRL ctrl;
 	if (msg==WM_CREATE)
@@ -631,7 +631,8 @@ BOOL CALLBACK HFCControls::Ctrl3DStaticProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 		ctrl->szBuffer=NULL;
 		ctrl->nBufferLen=0;
 		ctrl->nAllocLen=0;
-		SetWindowLong(hWnd,GWL_USERDATA,(LONG)ctrl);
+		
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)ctrl);
 		
 		DWORD i;
 		for (i=0;temp[i]!='\0';i++)
@@ -655,11 +656,12 @@ BOOL CALLBACK HFCControls::Ctrl3DStaticProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 			SetHFCError(HFC_CANNOTALLOC);
 			return FALSE;
 		}
-		iMemCopy(ctrl->szText,temp,i+1);
+		MemCopy(ctrl->szText,temp,i+1);
 		ctrl->hFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
 		return FALSE;
 	}
-	ctrl=(LPSCTRL)GetWindowLong(hWnd,GWL_USERDATA);	
+
+	ctrl=(LPSCTRL)GetWindowLongPtr(hWnd,GWLP_USERDATA);	
 	switch(msg)
 	{
 	case WM_SIZE:
@@ -706,7 +708,7 @@ BOOL CALLBACK HFCControls::Ctrl3DStaticProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 				SetHFCError(HFC_CANNOTALLOC);
 				return FALSE;
 			}
-			iMemCopy(ctrl->szText,temp,i+1);
+			MemCopy(ctrl->szText,temp,i+1);
 			InvalidateRect(hWnd,NULL,TRUE);
 		}
 		break;
@@ -726,7 +728,7 @@ BOOL CALLBACK HFCControls::Ctrl3DStaticProc(HWND hWnd,UINT msg,WPARAM wParam,LPA
 				delete[] ctrl->szBuffer;
 			delete ctrl;
 		}
-		SetWindowLong(hWnd,GWL_USERDATA,(LONG)NULL);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)NULL);
 		return FALSE;
 	default:
 		return DefWindowProc(hWnd,msg,wParam,lParam);
@@ -806,7 +808,7 @@ static inline void HexViewControlPaintProc(HWND hWnd,LPHEXVIEWCTRL ctrl)
 	SelectObject(hDC,ctrl->hFont);
 	GetClientRect(hWnd,&rect);
 	err=GetString(ctrl,hexdata,ctrl->nBytesPerLine*ctrl->nLine);
-	GetTextExtentPoint32(hDC,hexdata,hexdata.GetLength(),&size);
+	GetTextExtentPoint32(hDC,hexdata,(int)hexdata.GetLength(),&size);
 	size.cx+=2;
 	ctrl->nLines=ctrl->nDataLen/ctrl->nBytesPerLine;
 	if ((i=size.cx-rect.right)>0)
@@ -894,11 +896,11 @@ static inline void HexViewControlPaintProc(HWND hWnd,LPHEXVIEWCTRL ctrl)
 	
 	//TODO: this might be unnesescary
 	err=GetString(ctrl,hexdata,ctrl->nLine*ctrl->nBytesPerLine);
-	rect.top+=DrawText(hDC,hexdata,hexdata.GetLength(),&rect,DT_SINGLELINE|DT_LEFT|DT_TOP);
+	rect.top+=DrawText(hDC,hexdata,(int)hexdata.GetLength(),&rect,DT_SINGLELINE|DT_LEFT|DT_TOP);
 	while (err==noError && i<nScrLines)
 	{
 		err=GetString(ctrl,hexdata,(i+ctrl->nLine)*ctrl->nBytesPerLine);
-		DrawText(hDC,hexdata,hexdata.GetLength(),&rect,DT_SINGLELINE|DT_LEFT|DT_TOP);
+		DrawText(hDC,hexdata,(int)hexdata.GetLength(),&rect,DT_SINGLELINE|DT_LEFT|DT_TOP);
 		rect.top+=size.cy;
 		i++;
 	}
@@ -1004,7 +1006,7 @@ static inline void HexViewControlHScrollProc(HWND hWnd,LPHEXVIEWCTRL ctrl,UINT n
 	}
 }
 
-BOOL CALLBACK HFCControls::HexViewControlProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT CALLBACK HFCControls::HexViewControlProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	LPHEXVIEWCTRL ctrl;
 	if (msg==WM_CREATE)
@@ -1015,7 +1017,7 @@ BOOL CALLBACK HFCControls::HexViewControlProc(HWND hWnd,UINT msg,WPARAM wParam,L
 			SetHFCError(HFC_CANNOTALLOC);
 			return FALSE;
 		}
-		SetWindowLong(hWnd,GWL_USERDATA,(LONG)ctrl);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)ctrl);
 		ctrl->hFont=(HFONT)GetStockObject(ANSI_FIXED_FONT);
 		ctrl->nLine=0;
 		ctrl->nLines=0;
@@ -1028,7 +1030,9 @@ BOOL CALLBACK HFCControls::HexViewControlProc(HWND hWnd,UINT msg,WPARAM wParam,L
 		ctrl->hbrBackground=(HBRUSH)GetStockObject(WHITE_BRUSH);
 		ctrl->bFlags=HEXVIEWCTRl_FLAGSCROLLTOEND|HEXVIEWCTRl_FLAGERASEBGK;
 	}
-	ctrl=(LPHEXVIEWCTRL)GetWindowLong(hWnd,GWL_USERDATA);	
+	else
+		ctrl=(LPHEXVIEWCTRL)GetWindowLongPtr(hWnd,GWLP_USERDATA);	
+
 	switch(msg)
 	{
 	case WM_SIZE:
@@ -1042,7 +1046,7 @@ BOOL CALLBACK HFCControls::HexViewControlProc(HWND hWnd,UINT msg,WPARAM wParam,L
 	case WM_DESTROY:
 		if (ctrl!=NULL)
 			delete ctrl;
-		SetWindowLong(hWnd,GWL_USERDATA,(LONG)NULL);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)NULL);
 		return FALSE;
 	case WM_PAINT:
 		HexViewControlPaintProc(hWnd,ctrl);	
@@ -1154,7 +1158,7 @@ BOOL CALLBACK HFCControls::HexViewControlProc(HWND hWnd,UINT msg,WPARAM wParam,L
 			return TRUE;
 		}
 	case HVM_SETBYTESPERLINE: // WPARAM=byter per line
-		ctrl->nBytesPerLine=wParam;
+		ctrl->nBytesPerLine=(BYTE)wParam;
 		if (ctrl->nBytesPerLine>1)
 			ctrl->nHalfLine=ctrl->nBytesPerLine/2-1;
 		else

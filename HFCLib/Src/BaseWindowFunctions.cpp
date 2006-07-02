@@ -13,7 +13,7 @@ COLORREF GetSystemColor(LPCSTR szKey)
 	{
 		RGBTRIPLE rgb;
 		char szBuffer[15];
-		int i;
+		ULONG_PTR i;
 		RegKey.QueryValue(szKey,szBuffer,15);
 		for (i=0;szBuffer[i]!='\0';i--)
 		{

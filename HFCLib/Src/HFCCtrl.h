@@ -31,18 +31,19 @@ public:
 	};
 	
 	enum WindowLongIndex {
-		gwlWndProc=GWL_WNDPROC,
-		gwlHInstance=GWL_HINSTANCE,
-		gwlHWndParent=GWL_HWNDPARENT,
+		gwlWndProc=GWLP_WNDPROC,
+		gwlHInstance=GWLP_HINSTANCE,
+		gwlHWndParent=GWLP_HWNDPARENT,
 		gwlStyle=GWL_STYLE,
 		gwlExStyle=GWL_EXSTYLE,
-		gwlUserData=GWL_USERDATA,
+		gwlUserData=GWLP_USERDATA,
 		gwlID=GWL_ID,
-		dwlMsgResult=DWL_MSGRESULT,
-		dwlDlgProc=DWL_DLGPROC,
-		dwlUser=DWL_USER
+		dwlMsgResult=DWLP_MSGRESULT,
+		dwlDlgProc=DWLP_DLGPROC,
+		dwlUser=DWLP_USER
 	};
-	
+
+
 public:
 	CWndCtrl(HWND hWnd=NULL) { m_hWnd=hWnd; }
 
@@ -64,7 +65,7 @@ public:
 	BOOL ModifyStyleEx(DWORD dwRemove,DWORD dwAdd,UINT nFlags=0);
 
 	LONG GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLong(m_hWnd,nIndex); }	
-	LONG SetWindowLong(WindowLongIndex nIndex,LONG lNewLong) { return ::SetWindowLong(m_hWnd,nIndex,lNewLong); }
+	LONG_PTR SetWindowLong(WindowLongIndex nIndex,LONG_PTR lNewLong) { return ::SetWindowLongPtr(m_hWnd,nIndex,lNewLong); }
 	
 	BOOL Create(LPCTSTR lpszClassName,
 		LPCTSTR lpszWindowName, DWORD dwStyle,
@@ -136,9 +137,9 @@ public:
 	BOOL EnableWindow(BOOL bEnable=TRUE) { return ::EnableWindow(m_hWnd,bEnable); }
 	HWND SetFocus() const { return ::SetFocus(m_hWnd); }
 	
-	UINT GetTextLength() const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0); } 
-	UINT GetText(LPSTR lpszText,UINT cchTextMax) const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText); } 
-	UINT GetText(CStringA& str) const;
+	SIZE_T GetTextLength() const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0); } 
+	SIZE_T GetText(LPSTR lpszText,SIZE_T cchTextMax) const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText); } 
+	SIZE_T GetText(CStringA& str) const;
 	BOOL SetText(LPCSTR lpsz) { return (BOOL)::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); }
 
 #ifdef DEF_WCHAR
@@ -147,8 +148,8 @@ public:
 	int GetWindowText(CStringW& str) const;
 	
 	//widechar support
-	UINT GetText(CStringW& str) const;
-	UINT GetText(LPWSTR lpszText,UINT cchTextMax) const;
+	SIZE_T GetText(CStringW& str) const;
+	SIZE_T GetText(LPWSTR lpszText,SIZE_T cchTextMax) const;
 	BOOL SetText(LPCWSTR lpsz);
 #endif
 
@@ -231,7 +232,7 @@ public:
 	CPoint GetCharPos(long lChar) const;
 	void SetOptions(WORD wOp, DWORD dwFlags);
 
-	int GetLine(int nIndex,LPTSTR lpszBuffer) const;
+	SIZE_T GetLine(int nIndex,LPTSTR lpszBuffer) const;
 	BOOL CanPaste(UINT nFormat=0) const;
 	void GetSel(long& nStartChar,long& nEndChar) const;
 	void GetSel(CHARRANGE &cr) const;
@@ -244,7 +245,7 @@ public:
 	DWORD GetSelectionCharFormat(CHARFORMAT &cf) const;
 	DWORD GetSelectionCharFormat(CHARFORMAT2 &cf) const;
 	long GetEventMask() const;
-	long GetLimitText() const;
+	SIZE_T GetLimitText() const;
 	DWORD GetParaFormat(PARAFORMAT &pf) const;
 	DWORD GetParaFormat(PARAFORMAT2 &pf) const;
 	long GetSelText(LPSTR lpBuf) const;
@@ -264,7 +265,7 @@ public:
 	BOOL SetParaFormat(PARAFORMAT2 &pf);
 	BOOL SetTargetDevice(HDC hDC,long lLineWidth);
 	
-	long GetTextLength() const;
+	SIZE_T GetTextLength() const;
 	BOOL SetReadOnly(BOOL bReadOnly = TRUE);
 	int GetFirstVisibleLine() const;
 	BOOL SetTextEx(LPCSTR szText,DWORD dwFlags=ST_DEFAULT,UINT codepage=CP_ACP);
@@ -274,18 +275,18 @@ public:
 	void EmptyUndoBuffer();
 
 	int LineIndex(int nLine=-1) const;
-	int LineLength(int nLine=-1) const;
+	SIZE_T LineLength(int nLine=-1) const;
 	void LineScroll(int nLines,int nChars=0);
 	void ReplaceSel(LPCTSTR lpszNewText,BOOL bCanUndo=FALSE);
 	
 	BOOL DisplayBand(LPRECT pDisplayRect);
-	long FindText(DWORD dwFlags,FINDTEXTEX* pFindText) const;
-	long FormatRange(FORMATRANGE* pfr,BOOL bDisplay=TRUE);
+	LONG_PTR FindText(DWORD dwFlags,FINDTEXTEX* pFindText) const;
+	LONG_PTR FormatRange(FORMATRANGE* pfr,BOOL bDisplay=TRUE);
 	void HideSelection(BOOL bHide,BOOL bPerm=0);
 	void PasteSpecial(UINT nClipFormat);
 	void RequestResize();
-	long StreamIn(int nFormat,EDITSTREAM &es);
-	long StreamOut(int nFormat,EDITSTREAM &es);
+	LONG_PTR StreamIn(int nFormat,EDITSTREAM &es);
+	LONG_PTR StreamOut(int nFormat,EDITSTREAM &es);
 
 	DWORD SetOptions(DWORD dwOptions,DWORD dwOperation=ECOOP_SET);
 	DWORD GetOptions() const;
@@ -318,7 +319,7 @@ public:
 	int SetTopIndex(int nIndex);
 	LCID GetLocale() const;
 	LCID SetLocale(LCID nNewLocale);
-	int InitStorage(int nItems,UINT nBytes);
+	SIZE_T InitStorage(int nItems,SIZE_T nBytes);
 	UINT ItemFromPoint(CPoint pt,BOOL& bOutside) const;
 
 	int GetCurSel() const;
@@ -331,14 +332,12 @@ public:
 	void SetAnchorIndex(int nIndex);
 	int GetAnchorIndex() const;
 
-	DWORD GetItemData(int nIndex) const;
-	int SetItemData(int nIndex,DWORD dwItemData);
-	void* GetItemDataPtr(int nIndex) const;
-	int SetItemDataPtr(int nIndex,void* pData);
+	DWORD_PTR GetItemData(int nIndex) const;
+	int SetItemData(int nIndex,DWORD_PTR dwItemData);
 	int GetItemRect(int nIndex,LPRECT lpRect) const;
-	int GetText(int nIndex,LPSTR lpszBuffer) const;
-	int GetText(int nIndex,CString& rString) const;
-	int GetTextLen(int nIndex) const;
+	SIZE_T GetText(int nIndex,LPSTR lpszBuffer) const;
+	SIZE_T GetText(int nIndex,CString& rString) const;
+	SIZE_T GetTextLen(int nIndex) const;
 
 	void SetColumnWidth(int cxWidth);
 	BOOL SetTabStops(int nTabStops,LPINT rgTabStops);
@@ -363,8 +362,8 @@ public:
 
 #ifdef DEF_WCHAR
 	int Dir(UINT attr,LPCWSTR lpszWildCard);
-	int GetText(int nIndex,LPWSTR lpszBuffer) const;
-	int GetText(int nIndex,CStringW& rString) const;
+	SIZE_T GetText(int nIndex,LPWSTR lpszBuffer) const;
+	SIZE_T GetText(int nIndex,CStringW& rString) const;
 	int AddString(LPCWSTR lpszItem);
 	int InsertString(int nIndex,LPCWSTR lpszItem);
 	int FindString(int nStartAfter,LPCWSTR lpszItem) const;
@@ -388,7 +387,7 @@ public:
 	LCID SetLocale(LCID nNewLocale);
 	int GetTopIndex() const;
 	int SetTopIndex(int nIndex);
-	int InitStorage(int nItems, UINT nBytes);
+	SIZE_T InitStorage(int nItems, SIZE_T nBytes);
 	void SetHorizontalExtent(UINT nExtent);
 	UINT GetHorizontalExtent() const;
 	int SetDroppedWidth(UINT nWidth);
@@ -398,13 +397,11 @@ public:
 	BOOL LimitText(int nMaxChars);
 	BOOL SetEditSel(int nStartChar, int nEndChar);
 
-	DWORD GetItemData(int nIndex) const;
-	int SetItemData(int nIndex, DWORD dwItemData);
-	void* GetItemDataPtr(int nIndex) const;
-	int SetItemDataPtr(int nIndex, void* pData);
-	int GetLBText(int nIndex, LPSTR lpszText) const;
-	int GetLBText(int nIndex, CStringA& rString) const;
-	int GetLBTextLen(int nIndex) const;
+	DWORD_PTR GetItemData(int nIndex) const;
+	int SetItemData(int nIndex, DWORD_PTR dwItemData);
+	SIZE_T GetLBText(int nIndex, LPSTR lpszText) const;
+	SIZE_T GetLBText(int nIndex, CStringA& rString) const;
+	SIZE_T GetLBTextLen(int nIndex) const;
 
 	int SetItemHeight(int nIndex, UINT cyItemHeight);
 	int GetItemHeight(int nIndex) const;
@@ -431,8 +428,8 @@ public:
 	void Paste();
 
 #ifdef DEF_WCHAR
-	int GetLBText(int nIndex, LPWSTR lpszText) const;
-	int GetLBText(int nIndex, CStringW& rString) const;
+	SIZE_T GetLBText(int nIndex, LPWSTR lpszText) const;
+	SIZE_T GetLBText(int nIndex, CStringW& rString) const;
 	int FindStringExact(int nIndexStart, LPCWSTR lpszFind) const;
 	int AddString(LPCWSTR lpszString);
 	int InsertString(int nIndex, LPCWSTR lpszString);

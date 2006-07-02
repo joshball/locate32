@@ -13,7 +13,7 @@ public:
 	virtual BOOL OnInitDialog(HWND hwndFocus);
 	virtual BOOL OnCommand(WORD wID, WORD wNotifyCode, HWND hControl);
 	virtual void OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis);
-	virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 	virtual BOOL OnClose();
 
 };

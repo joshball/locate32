@@ -125,7 +125,7 @@ void CArray<TYPE>::SetSize(int nNewSize)
 				SetHFCError(HFC_CANNOTALLOC);
 			return;
 		}
-		iMemCopy(m_pData,temp,min(m_nSize,nNewSize)*sizeof(TYPE));
+		MemCopy(m_pData,temp,min(m_nSize,nNewSize)*sizeof(TYPE));
 		delete[] temp;	
 		m_nSize=nNewSize;
 	}
@@ -154,7 +154,7 @@ void CArray<TYPE>::FreeExtra()
 			SetHFCError(HFC_CANNOTALLOC);
 		return;
 	}
-	iMemCopy(newarray,m_pData,m_nSize*sizeof(TYPE));
+	MemCopy(newarray,m_pData,m_nSize*sizeof(TYPE));
 	delete[] m_pData;
 	m_pData=newarray;
 }
@@ -236,7 +236,7 @@ int CArray<TYPE>::Add(TYPE newElement)
 		SetHFCError(HFC_CANNOTALLOC);
 		return 0;
 	}
-	iMemCopy(m_pData,temp,m_nSize*sizeof(TYPE));
+	MemCopy(m_pData,temp,m_nSize*sizeof(TYPE));
 	delete[] temp;
 	m_pData[m_nSize]=newElement;
 	return m_nSize++;
@@ -258,7 +258,7 @@ int CArray<TYPE>::Append(const CArray& src)
 				SetHFCError(HFC_CANNOTALLOC);
 			return;
 		}
-		iMemCopy(m_pData,src.m_pData,src.m_nSize*sizeof(TYPE));
+		MemCopy(m_pData,src.m_pData,src.m_nSize*sizeof(TYPE));
 		return m_nSize=src.m_nSize;
 	}
 	TYPE* newarray=new TYPE[m_nSize+src.m_nSize];
@@ -270,8 +270,8 @@ int CArray<TYPE>::Append(const CArray& src)
 			SetHFCError(HFC_CANNOTALLOC);
 		return;
 	}
-	iMemCopy(newarray,m_pData,m_nSize*sizeof(TYPE));
-	iMemCopy(&newarray[m_nSize],src.m_pData,src.m_nSize*sizeof(TYPE));
+	MemCopy(newarray,m_pData,m_nSize*sizeof(TYPE));
+	MemCopy(&newarray[m_nSize],src.m_pData,src.m_nSize*sizeof(TYPE));
 	delete [] m_pData;
 	m_pData=newarray;
 	return (m_nSize+=src.m_nSize);
@@ -297,7 +297,7 @@ void CArray<TYPE>::Copy(const CArray& src)
 			SetHFCError(HFC_CANNOTALLOC);
 		return;
 	}
-	iMemCopy(m_pData,src.m_pData,src.m_nSize*sizeof(TYPE));
+	MemCopy(m_pData,src.m_pData,src.m_nSize*sizeof(TYPE));
 	return m_nSize=src.m_nSize;
 }
 
@@ -350,10 +350,10 @@ void CArray<TYPE>::InsertAt(int nIndex,TYPE newElement,int nCount)
 		return;
 	}
 	
-	iMemCopy(newarray,m_pData,nIndex*sizeof(TYPE));
+	MemCopy(newarray,m_pData,nIndex*sizeof(TYPE));
 	for (int i=0;i<nCount;i++)
 		newarray[i+nIndex]=newElement;
-	iMemCopy(&newarray[nIndex+nCount],&m_pData[nIndex],(m_nSize-nIndex)*sizeof(TYPE));
+	MemCopy(&newarray[nIndex+nCount],&m_pData[nIndex],(m_nSize-nIndex)*sizeof(TYPE));
 	m_nSize+=nCount;
 	delete[] m_pData;
 	m_pData=newarray;
@@ -386,7 +386,7 @@ void CArray<TYPE>::InsertAt(int nStartIndex,CArray* pNewArray)
 				SetHFCError(HFC_CANNOTALLOC);
 			return;
 		}
-		iMemCopy(m_pData,pNewArray->m_pData,m_nSize*sizeof(TYPE));
+		MemCopy(m_pData,pNewArray->m_pData,m_nSize*sizeof(TYPE));
 		return;
 	}
 	if (nStartIndex>m_nSize)
@@ -400,9 +400,9 @@ void CArray<TYPE>::InsertAt(int nStartIndex,CArray* pNewArray)
 			SetHFCError(HFC_CANNOTALLOC);
 		return;
 	}
-	iMemCopy(newarray,m_pData,nIndex*sizeof(TYPE));
-	iMemCopy(&newarrat[nIndex],pNewArray->m_pData,pNewArray->m_nSize*sizeof(TYPE));
-	iMemCopy(&newarray[nIndex+pNewArray->m_nSize],&m_pData[nIndex],(m_nSize-nIndex)*sizeof(TYPE));
+	MemCopy(newarray,m_pData,nIndex*sizeof(TYPE));
+	MemCopy(&newarrat[nIndex],pNewArray->m_pData,pNewArray->m_nSize*sizeof(TYPE));
+	MemCopy(&newarray[nIndex+pNewArray->m_nSize],&m_pData[nIndex],(m_nSize-nIndex)*sizeof(TYPE));
 	m_nSize+=m_pNewArray->m_nSize;
 	delete[] m_pData;
 	m_pData=newarray;
@@ -627,7 +627,7 @@ void CArrayFAP<TYPE>::Copy(const CArrayFAP& src)
 			SetHFCError(HFC_CANNOTALLOC);
 		return;
 	}
-	iMemCopy(m_pData,src.m_pData,src.m_nSize*sizeof(TYPE));
+	MemCopy(m_pData,src.m_pData,src.m_nSize*sizeof(TYPE));
 	return m_nSize=src.m_nSize;
 }
 

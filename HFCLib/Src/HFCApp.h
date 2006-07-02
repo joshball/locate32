@@ -22,12 +22,12 @@ public:
 private:
 	// Default CALLBACKS
 	static DWORD CALLBACK ThreadProc(LPVOID);
-	static BOOL CALLBACK WndProc(HWND,UINT,WPARAM,LPARAM);
-	static BOOL CALLBACK MdiWndProc(HWND,UINT,WPARAM,LPARAM);
-	static BOOL CALLBACK CommonDialogProc(HWND,UINT,WPARAM,LPARAM);
-	static int CALLBACK FolderDialogProc(HWND,UINT,LPARAM,LPARAM);
-	static BOOL CALLBACK PagePaintProc(HWND,UINT,WPARAM,LPARAM);
-	static BOOL CALLBACK PropPageWndProc(HWND,UINT,WPARAM,LPARAM);
+	static LRESULT CALLBACK WndProc(HWND,UINT,WPARAM,LPARAM);
+	static LRESULT CALLBACK MdiWndProc(HWND,UINT,WPARAM,LPARAM);
+	static LRESULT CALLBACK CommonDialogProc(HWND,UINT,WPARAM,LPARAM);
+	static LRESULT CALLBACK FolderDialogProc(HWND,UINT,LPARAM,LPARAM);
+	static LRESULT CALLBACK PagePaintProc(HWND,UINT,WPARAM,LPARAM);
+	static LRESULT CALLBACK PropPageWndProc(HWND,UINT,WPARAM,LPARAM);
 
 public:
 	static void MatrixErrorProc(void*,DWORD,DWORD);
@@ -74,7 +74,7 @@ private:
 	friend CFolderDialog::CFolderDialog(UINT,UINT,LPCITEMIDLIST);
 	friend BOOL RegisterWndClass(LPCTSTR,UINT,HCURSOR,HBRUSH,HICON,HICON);
 	friend BOOL RegisterMDIChildClass(LPCTSTR,UINT,HCURSOR,HBRUSH,HICON,HICON);
-	friend int CDialog::DoModal(HWND,TypeOfResourceHandle);
+	friend INT_PTR CDialog::DoModal(HWND,TypeOfResourceHandle);
 	friend BOOL CDialog::Create(HWND,TypeOfResourceHandle);
 #endif 
 #ifdef _DEBUG_LOGGING
@@ -370,7 +370,7 @@ inline CWnd* GetMainWnd()
 }
 
 
-inline int CDialog::DoModal(HWND hWndParent,TypeOfResourceHandle bType)
+inline INT_PTR CDialog::DoModal(HWND hWndParent,TypeOfResourceHandle bType)
 {
 	if (IsUnicodeSystem())
 		return DialogBoxParamW(GetResourceHandle(bType),m_lpszTemplateNameW,hWndParent,(DLGPROC)CAppData::WndProc,(LPARAM)this);

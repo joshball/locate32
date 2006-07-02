@@ -118,13 +118,13 @@ void CSelectColumndDlg::SaveActionFields(ColumnItem* pColumn)
 			int nSelection=m_VerbCombo.GetCurSel();
 			if (nSelection==CB_ERR)
 			{
-				UINT nLen=m_VerbCombo.GetTextLength();
+				UINT nLen=(UINT)m_VerbCombo.GetTextLength();
 				pColumn->m_pActions[nWhen]->m_szVerb=new WCHAR[nLen+1];
 				m_VerbCombo.GetText(pColumn->m_pActions[nWhen]->m_szVerb,nLen+1);
 			}
 			else if (nSelection!=0)
 			{
-				UINT nLen=m_VerbCombo.GetLBTextLen(nSelection);
+				UINT nLen=(UINT)m_VerbCombo.GetLBTextLen(nSelection);
 				pColumn->m_pActions[nWhen]->m_szVerb=new WCHAR[nLen+1];
 				m_VerbCombo.GetLBText(nSelection,pColumn->m_pActions[nWhen]->m_szVerb);
 			}
@@ -813,7 +813,7 @@ void CSelectDatabasesDlg::SelectDatabases(LPCWSTR pNames)
 	LPCWSTR pPtr=pNames;
 	while (*pPtr!='\0')
 	{
-		int iStrLen=istrlenw(pPtr)+1;
+		int iStrLen=int(istrlenw(pPtr)+1);
 		dwLength+=iStrLen;
 		pPtr+=iStrLen;
 	}
@@ -962,7 +962,7 @@ void CSelectDatabasesDlg::OnDeletePreset()
 		{
 			if (strncmp(sName,"Preset ",7)==0)
 			{
-				DWORD nIndex=sName.FindFirst(':')+1;
+				DWORD nIndex=int(sName.FindFirst(':'))+1;
 
                 if (nIndex>0 &&  nIndex<sName.GetLength()) 
 				{
@@ -992,7 +992,7 @@ BOOL CSelectDatabasesDlg::CheckRegistryIntegrity(CRegKey& RegKey)
 	{
 		if (strncmp(sName,"Preset ",7)==0)
 		{
-			DWORD nIndex=sName.FindFirst(':')+1;
+			DWORD nIndex=int(sName.FindFirst(':'))+1;
 			if (nIndex>0 &&  nIndex<sName.GetLength()) 
 			{
 				int nIs=atoi(LPCSTR(sName)+7);
@@ -1044,7 +1044,7 @@ void CSelectDatabasesDlg::OnPresetCombo()
 		InsertSelected();
 	else
 	{
-		int nTextLen=m_PresetCombo.GetLBTextLen(nCurSel);
+		SIZE_T nTextLen=m_PresetCombo.GetLBTextLen(nCurSel);
 		if (nTextLen==CB_ERR)
 			return;
 		WCHAR* pText=new WCHAR[nTextLen+1];
@@ -1243,7 +1243,7 @@ BOOL CSelectDatabasesDlg::InsertSelected()
 			LPWSTR pPtr=m_pSelectDatabases;
 			while (*pPtr!=L'\0')
 			{
-				int iStrLen=istrlenw(pPtr)+1;
+				SIZE_T iStrLen=istrlenw(pPtr)+1;
 				if (wcsncmp(pPtr,pDatabase->GetName(),iStrLen)==0)
 				{
 					bFound=TRUE;
@@ -1587,7 +1587,7 @@ void CSelectDatabasesDlg::LoadPresets()
 		{
 			if (wcsncmp(sName,L"Preset ",7)==0)
 			{
-				DWORD nIndex=sName.FindFirst(':')+1;
+				ULONG_PTR nIndex=sName.FindFirst(':')+1;
 				
 				if (nIndex>0 &&  nIndex<sName.GetLength()) 
 					m_PresetCombo.AddString(LPCWSTR(sName)+nIndex);
@@ -1634,7 +1634,7 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCWSTR szName,BOOL bAskOverwrite)
 		// First item is global, second is last
 		for (int i=m_PresetCombo.GetCount()-1;i>=2;i--)
 		{
-			int nItemTextLength=m_PresetCombo.GetLBTextLen(i);
+			SIZE_T nItemTextLength=m_PresetCombo.GetLBTextLen(i);
 			if (nItemTextLength==CB_ERR)
 				continue;
 
@@ -1727,7 +1727,7 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCWSTR szName,BOOL bAskOverwrite)
 		
 		if (szName!=NULL)
 		{
-			int nLen=15+istrlenw(szName);
+			SIZE_T nLen=15+istrlenw(szName);
 			WCHAR* szText=new WCHAR[nLen];
 			if (iOverwriteItem>=0)
 				StringCbPrintfW(szText,nLen*sizeof(WCHAR),L"Preset %03d:%s",iOverwriteItem,szName);
@@ -1777,7 +1777,7 @@ BOOL CSelectDatabasesDlg::LoadPreset(LPCWSTR szName)
 		{
 			if (wcsncmp(sName,L"Preset ",7)==0)
 			{
-				DWORD nIndex=sName.FindFirst(':')+1;
+				ULONG_PTR nIndex=sName.FindFirst(':')+1;
 				
 				if (nIndex>0 &&  nIndex<sName.GetLength()) 
 				{
@@ -1900,7 +1900,7 @@ BOOL CSelectDatabasesDlg::CSavePresetDlg::OnInitDialog(HWND hwndFocus)
 		{
 			if (wcsncmp(sName,L"Preset ",7)==0)
 			{
-				DWORD nIndex=sName.FindFirst(':')+1;
+				ULONG_PTR nIndex=sName.FindFirst(':')+1;
 				
 				if (nIndex>0 &&  nIndex<sName.GetLength()) 
 					PresetCombo.AddString(LPCWSTR(sName)+nIndex);
@@ -2003,7 +2003,7 @@ BOOL CChangeFilenameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			{
 				if (m_dwFlags&fNoExtension)
 				{
-					int nExtPos=m_sFileName.FindLast('.');
+					LONG_PTR nExtPos=m_sFileName.FindLast('.');
 					if (nExtPos!=-1)
 						Name << (LPCWSTR(m_sFileName)+nExtPos);
 				}

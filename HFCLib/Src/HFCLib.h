@@ -175,19 +175,19 @@ class CObject;
 #if defined (WIN32) && !defined (HFC_NOFORCELIBS)
 	#ifndef _CONSOLE
 		#if defined(_DEBUG)
-			#pragma comment(lib,"HFCLib32d.lib")
+			#pragma comment(lib,"HFCLibd.lib")
 		#elif defined(_DEBUG_LOGGING)
-			#pragma comment(lib,"HFCLib32l.lib")
+			#pragma comment(lib,"HFCLibl.lib")
 		#else 
-			#pragma comment(lib,"HFCLib32.lib")
+			#pragma comment(lib,"HFCLib.lib")
 		#endif
 	#else
 		#if defined(_DEBUG)
-			#pragma comment(lib,"HFCCon32d.lib")
+			#pragma comment(lib,"HFCCond.lib")
 		#elif defined(_DEBUG_LOGGING)
-			#pragma comment(lib,"HFCCon32l.lib")
+			#pragma comment(lib,"HFCConl.lib")
 		#else 
-			#pragma comment(lib,"HFCCon32.lib")
+			#pragma comment(lib,"HFCCon.lib")
 		#endif
 	#endif
 	#pragma comment(lib, "kernel32.lib")

@@ -415,32 +415,33 @@ public:
 		fgOnlySpecifiedPosition = 0x10
 	};
 
-
 	enum WindowLongIndex {
-		gwlWndProc=GWL_WNDPROC,
-		gwlHInstance=GWL_HINSTANCE,
-		gwlHWndParent=GWL_HWNDPARENT,
+		gwlWndProc=GWLP_WNDPROC,
+		gwlHInstance=GWLP_HINSTANCE,
+		gwlHWndParent=GWLP_HWNDPARENT,
 		gwlStyle=GWL_STYLE,
 		gwlExStyle=GWL_EXSTYLE,
-		gwlUserData=GWL_USERDATA,
-		gwlID=GWL_ID,
-		dwlMsgResult=DWL_MSGRESULT,
-		dwlDlgProc=DWL_DLGPROC,
-		dwlUser=DWL_USER
+		gwlUserData=GWLP_USERDATA,
+		gwlID=GWLP_ID,
+		dwlMsgResult=DWLP_MSGRESULT,
+		dwlDlgProc=DWLP_DLGPROC,
+		dwlUser=DWLP_USER
 	};
 	enum ClassLongIndex {
-		gclMenuName=GCL_MENUNAME,
-		gclHBRBackGround=GCL_HBRBACKGROUND,
-		gclHCursor=GCL_HCURSOR,
-		gclHIcon=GCL_HICON,
-		gclHIconSm=GCL_HICONSM,
-		gclHModule=GCL_HMODULE,
+		gclMenuName=GCLP_MENUNAME,
+		gclHBRBackGround=GCLP_HBRBACKGROUND,
+		gclHCursor=GCLP_HCURSOR,
+		gclHIcon=GCLP_HICON,
+		gclHIconSm=GCLP_HICONSM,
+		gclHModule=GCLP_HMODULE,
 		gclCBWndExtra=GCL_CBWNDEXTRA,
 		gclCBClsExtra=GCL_CBCLSEXTRA,
-		gclWndProc=GCL_WNDPROC,
+		gclWndProc=GCLP_WNDPROC,
 		gclStyle=GCL_STYLE,
 		gcwAtom=GCW_ATOM
 	};
+
+	
 
 public:
 	CWnd (HWND hWnd=NULL);
@@ -464,7 +465,7 @@ public:
 	BOOL ModifyStyleEx(DWORD dwRemove,DWORD dwAdd,UINT nFlags=0);
 
 	LONG GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLong(m_hWnd,nIndex); }	
-	LONG SetWindowLong(WindowLongIndex nIndex,LONG lNewLong) { return ::SetWindowLong(m_hWnd,nIndex,lNewLong); }
+	LONG_PTR SetWindowLong(WindowLongIndex nIndex,LONG_PTR lNewLong) { return ::SetWindowLongPtr(m_hWnd,nIndex,lNewLong); }
 	DWORD GetClassLong(ClassLongIndex nIndex) const { return ::GetClassLong(m_hWnd,nIndex); }
 	DWORD SetClassLong(ClassLongIndex nIndex,LONG lNewVal) { return ::SetClassLong(m_hWnd,nIndex,lNewVal); }
 
@@ -497,7 +498,7 @@ public:
 	BOOL IsDialogMessage(LPMSG lpMsg) { return ::IsDialogMessage(m_hWnd,lpMsg); }
 
 	BOOL SetWindowText(LPCSTR lpsz) {return ::SetWindowText(m_hWnd,lpsz); }
-	int GetWindowText(LPSTR lpString,int nMaxCount) const { return ::GetWindowText(m_hWnd,lpString,nMaxCount); }
+	int GetWindowText(LPSTR lpString,int nMaxCount) const { return ::GetWindowText(m_hWnd,lpString,(DWORD)nMaxCount); }
 	int GetWindowText(CStringA& str) const;
 	int GetWindowTextLength() const { return ::GetWindowTextLength(m_hWnd); }
 	void SetFont(HFONT hFont,BOOL bRedraw=TRUE) { ::SendMessage(m_hWnd,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(bRedraw,0)); }
@@ -595,9 +596,9 @@ public:
 	BOOL SetDlgItemInt(int idControl,UINT uValue,BOOL fSigned=TRUE) const;
 	BOOL SetDlgItemText(int idControl,LPCSTR lpsz) const;	
 	
-	virtual UINT GetText(LPSTR lpszText,UINT cchTextMax) const;
-	virtual UINT GetText(CStringA& str) const;
-	virtual UINT GetTextLength() const;
+	virtual SIZE_T GetText(LPSTR lpszText,SIZE_T cchTextMax) const;
+	virtual SIZE_T GetText(CStringA& str) const;
+	virtual SIZE_T GetTextLength() const;
 	virtual BOOL SetText(LPCSTR lpsz);
 
 	void DragAcceptFiles(BOOL bAccept);
@@ -630,8 +631,8 @@ public:
 	BOOL SetDlgItemText(int idControl,LPCWSTR lpsz) const;	
 	
 	virtual BOOL SetText(LPCWSTR lpsz);
-	virtual UINT GetText(LPWSTR lpszText,UINT cchTextMax) const;
-	virtual UINT GetText(CStringW& str) const;
+	virtual SIZE_T GetText(LPWSTR lpszText,SIZE_T cchTextMax) const;
+	virtual SIZE_T GetText(CStringW& str) const;
 	
 	BOOL PostMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::PostMessageW(m_hWnd,uMsg,wParam,lParam); }
 	LRESULT SendMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::SendMessageW(m_hWnd,uMsg,wParam,lParam); }
@@ -682,7 +683,7 @@ public:
 	virtual void OnVScroll(UINT nSBCode,UINT nPos,HWND hScrollBar);
 	virtual void OnWindowPosChanged(LPWINDOWPOS lpWndPos);
 	virtual void OnWindowPosChanging(LPWINDOWPOS lpWndPos);
-	virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 	friend class CWndCtrl;
 
 protected:
@@ -708,7 +709,7 @@ public:
 	virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs);
 	virtual void ActivateFrame(int nCmdShow=1);
 
-	virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 protected:
 	HMENU m_hMenu;
 };
@@ -740,7 +741,7 @@ public:
 	virtual HWND GetActiveFrame();
 
 public:
-	virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 	virtual void OnWindowNew();
 };
@@ -769,7 +770,7 @@ public:
 	virtual void ActivateFrame(int nCmdShow=-1);
 
 public:
-	virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 	BOOL UpdateClientEdge(LPRECT lpRect=NULL);
 
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);

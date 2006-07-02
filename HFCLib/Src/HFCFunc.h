@@ -204,7 +204,7 @@ DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi
 int FileOperation(LPSHFILEOPSTRUCT lpFileOp);
 DWORD GetIDListSize(LPITEMIDLIST lpil);
 HRESULT CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc=NULL,LPCSTR pszParams=NULL);
-HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,SIZE_T nBufSize);
+HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,DWORD nBufSize);
 HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath=NULL);
 BOOL RunRegistryCommand(HKEY hKey,LPCSTR szFile);
 DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen);
@@ -218,7 +218,7 @@ DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,U
 DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags);
 int FileOperation(LPSHFILEOPSTRUCTW lpFileOp);
 HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc=NULL,LPCWSTR pszParams=NULL);
-HRESULT GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,SIZE_T nBufSize);
+HRESULT GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,DWORD nBufSize);
 #endif
 
 #endif

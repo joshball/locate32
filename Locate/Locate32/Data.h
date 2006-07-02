@@ -169,7 +169,7 @@ inline CSchedule::CSchedule(CSchedule* pSchedule)
 		DWORD dwLength=1;
 		while (*m_pDatabases!='\0')
 		{
-			int iStrLen=istrlenw(m_pDatabases)+1;
+			int iStrLen=(int)istrlenw(m_pDatabases)+1;
 			dwLength+=iStrLen;
 			m_pDatabases+=iStrLen;
 		}

@@ -118,8 +118,8 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 				
 					dbFile->Read(pRoot->sFileSystem);
 
-					dwSeekLength-=(pRoot->sPath.GetLength()+1+
-						pRoot->sVolumeName.GetLength()+1+pRoot->sFileSystem.GetLength()+1)*2;
+					dwSeekLength-=((DWORD)pRoot->sPath.GetLength()+1+
+						(DWORD)pRoot->sVolumeName.GetLength()+1+(DWORD)pRoot->sFileSystem.GetLength()+1)*2;
 
 					
 				}
@@ -138,8 +138,8 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 					dbFile->Read(strA);
 					pRoot->sFileSystem=strA;
 
-					dwSeekLength-=pRoot->sPath.GetLength()+1+
-						pRoot->sVolumeName.GetLength()+1+pRoot->sFileSystem.GetLength()+1;
+					dwSeekLength-=(DWORD)pRoot->sPath.GetLength()+1+
+						(DWORD)pRoot->sVolumeName.GetLength()+1+(DWORD)pRoot->sFileSystem.GetLength()+1;
 
 				}
 				
@@ -308,7 +308,7 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 				dbFile->Read(Path);
 				aRoots.Add(alloccopy(Path,Path.GetLength()));
 							
-				dbFile->Seek(dwBlockSize-1-(Path.GetLength()+1)*2,
+				dbFile->Seek(dwBlockSize-1-DWORD((Path.GetLength()+1)*2),
 					CFile::current);
 				
 				dbFile->Read(dwBlockSize);
@@ -327,7 +327,7 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 				dbFile->Read(Path);
 				aRoots.Add(alloccopyAtoW(Path,Path.GetLength()));
 							
-				dbFile->Seek(dwBlockSize-1-(Path.GetLength()+1),
+				dbFile->Seek(dwBlockSize-1-DWORD((Path.GetLength()+1)),
 					CFile::current);
 				
 				dbFile->Read(dwBlockSize);

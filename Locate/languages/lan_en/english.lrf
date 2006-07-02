@@ -956,7 +956,7 @@ STRDATABASE_DESCRIPTION=Description
 # Creating shortcut to desktop
 STR_SHORTCUT=Shortcut
 STR_SHORTCUT_TO=Shortcut to 
-STR_SHORTCUT_TODESKTOP=Do you want the shortcut to be placed on the desktop?
+STR_SHORTCUT_TODESKTOP=Do you want the shortcut to be placed on the desktop (press no to choose another directory)?
 
 ###########################
 # Filetype masks

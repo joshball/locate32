@@ -108,7 +108,7 @@ BOOL CException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 	}
 	else
 	{
-		iMemCopy(lpszError,msg,msglen+1);
+		MemCopy(lpszError,msg,msglen+1);
 		
 		
 		char szTmp2[100];
@@ -116,7 +116,7 @@ BOOL CException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 		{
 			size_t dwLen=strlen(szTmp2);
 			if (msglen+dwLen<nMaxError)
-				iMemCopy(lpszError+msglen,szTmp2,dwLen+1);
+				MemCopy(lpszError+msglen,szTmp2,dwLen+1);
 		}
 	}
 	return TRUE;
@@ -380,26 +380,26 @@ BOOL CFileException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 	default:
 		return CException::GetErrorMessage(lpszError,nMaxError);
 	}
-	len=istrlen(msg);
+	len=(DWORD)istrlen(msg);
 	if (nMaxError<=len)
 	{
-		iMemCopy(lpszError,msg,nMaxError-1);
+		MemCopy(lpszError,msg,nMaxError-1);
 		lpszError[nMaxError-1]='\0';
 	}
 	else
 	{
-		iMemCopy(lpszError,msg,len);
+		MemCopy(lpszError,msg,len);
 		if (nMaxError<len+m_strFileName.GetLength()+8)
 			lpszError[len]='\0';
 		else if (!m_strFileName.IsEmpty())
 		{
 			fMemCopy(lpszError+len," path: ",7);
 #ifdef DEF_WCHAR
-			WideCharToMultiByte(CP_ACP,0,(LPCWSTR)m_strFileName,m_strFileName.GetLength()+1,lpszError+len+7,nMaxError-len-7,NULL,NULL);
+			WideCharToMultiByte(CP_ACP,0,(LPCWSTR)m_strFileName,(int)m_strFileName.GetLength()+1,lpszError+len+7,nMaxError-len-7,NULL,NULL);
 #else
 			StringCbCopy(lpszError+len+7,nMaxError-len-7,m_strFileName);
 #endif
-			len+=m_strFileName.GetLength()+7;
+			len+=(DWORD)m_strFileName.GetLength()+7;
 		}
 
 
@@ -408,7 +408,7 @@ BOOL CFileException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 		{
 			size_t dwLen=strlen(szTmp2);
 			if (len+dwLen<nMaxError)
-				iMemCopy(lpszError+len,szTmp2,dwLen+1);
+				MemCopy(lpszError+len,szTmp2,dwLen+1);
 		}
 
 	}

@@ -4,13 +4,15 @@
 
 #include "HFCLib.h"
 
-#ifdef DEF_WCHAR
+#if defined(DEF_WCHAR) && !defined(_WIN64) && !defined(MICROSOFT_LAYER_FOR_UNICODE)
 BOOL bIsFullUnicodeSupport=(GetVersion()&0x80000000)?FALSE:TRUE;
 #endif
 
 void CAppData::stdfunc()
 {
+#if defined(DEF_WCHAR) && !defined(_WIN64) && !defined(MICROSOFT_LAYER_FOR_UNICODE)
 	bIsFullUnicodeSupport=(GetVersion()&0x80000000)?FALSE:TRUE;
+#endif
 }
 
 

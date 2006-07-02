@@ -74,19 +74,19 @@ void CWndCtrl::MapWindowPoints(HWND hwndTo, LPRECT lpRect) const
 	lpRect->bottom=pt.y;
 }
 
-UINT CWndCtrl::GetText(CStringA& str) const
+SIZE_T CWndCtrl::GetText(CStringA& str) const
 {
-	UINT len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
+	SIZE_T len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
 	len=::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)len+1,(LPARAM)str.GetBuffer(len));
 	return len;
 }
 
 #ifdef DEF_WCHAR
-UINT CWndCtrl::GetText(CStringW& str) const
+SIZE_T CWndCtrl::GetText(CStringW& str) const
 {
 	if (IsUnicodeSystem())
 	{
-		UINT len=::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+		SIZE_T len=::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
 		LPWSTR text=new WCHAR[len];
 		if (text==NULL)
 		{
@@ -99,7 +99,7 @@ UINT CWndCtrl::GetText(CStringW& str) const
 		return len;
 	}
 	
-	UINT len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+	SIZE_T len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
 	LPSTR text=new CHAR[len];
 	if (text==NULL)
 	{
@@ -115,8 +115,8 @@ UINT CWndCtrl::GetText(CStringW& str) const
 BOOL CWndCtrl::SetText(LPCWSTR lpsz)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); 
-	return ::SendMessageA(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)W2A(lpsz)); 
+		return (BOOL)::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); 
+	return (BOOL)::SendMessageA(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)W2A(lpsz)); 
 }
 
 BOOL CWndCtrl::SetWindowText(LPCWSTR lpsz) 
@@ -160,17 +160,17 @@ int CWndCtrl::GetWindowText(CStringW& str) const
 	return len;	
 }
 
-UINT CWndCtrl::GetText(LPWSTR lpszText,UINT cchTextMax) const
+SIZE_T CWndCtrl::GetText(LPWSTR lpszText,SIZE_T cchTextMax) const
 {
 	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,WM_GETTEXT,cchTextMax*2,(LPARAM)lpszText); 
 
-	int nLen=::SendMessageA(m_hWnd,WM_GETTEXTLENGTH,0,0);
+	SIZE_T nLen=::SendMessageA(m_hWnd,WM_GETTEXTLENGTH,0,0);
 	char* pText=new char[nLen+2];
-	int ret=::SendMessageA(m_hWnd,WM_GETTEXT,(nLen+2)*2,(LPARAM)pText);
+	SIZE_T ret=::SendMessageA(m_hWnd,WM_GETTEXT,(nLen+2)*2,(LPARAM)pText);
 	if (ret!=0)
 	{
-		MultiByteToWideChar(CP_ACP,0,pText,ret,lpszText,cchTextMax);
+		MultiByteToWideChar(CP_ACP,0,pText,(int)ret,lpszText,(DWORD)cchTextMax);
 		lpszText[ret]=L'\0';
 	}
 	delete pText;
@@ -183,9 +183,9 @@ UINT CWndCtrl::GetText(LPWSTR lpszText,UINT cchTextMax) const
 ///////////////////////////
 // Class CListBox
 ///////////////////////////
-int CListBox::GetText(int nIndex, CStringA& rString) const
+SIZE_T CListBox::GetText(int nIndex, CStringA& rString) const
 {
-	int nLen=::SendMessage(m_hWnd,LB_GETTEXTLEN,(WPARAM)nIndex,0);
+	SIZE_T nLen=::SendMessage(m_hWnd,LB_GETTEXTLEN,(WPARAM)nIndex,0);
 	if (nLen==CB_ERR)
 		return CB_ERR;
 	LPSTR pointer=new CHAR [nLen+2];
@@ -205,26 +205,26 @@ int CListBox::GetText(int nIndex, CStringA& rString) const
 }
 
 #ifdef DEF_WCHAR
-int CListBox::GetText(int nIndex, LPWSTR lpszText) const
+SIZE_T CListBox::GetText(int nIndex, LPWSTR lpszText) const
 { 
 	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,LB_GETTEXT,nIndex,(LPARAM)lpszText);
 
-	int nLen=::SendMessageA(m_hWnd,LB_GETTEXTLEN,nIndex,0);
+	SIZE_T nLen=::SendMessageA(m_hWnd,LB_GETTEXTLEN,nIndex,0);
 	char* pText=new char[nLen+2];
-	int ret=::SendMessageA(m_hWnd,LB_GETTEXT,nIndex,(LPARAM)pText);
+	SIZE_T ret=::SendMessageA(m_hWnd,LB_GETTEXT,nIndex,(LPARAM)pText);
 	if (ret!=0)
 	{
-		MultiByteToWideChar(CP_ACP,0,pText,ret,lpszText,ret+2);
+		MultiByteToWideChar(CP_ACP,0,pText,(int)ret,lpszText,(DWORD)ret+2);
 		lpszText[ret]=L'\0';
 	}
 	delete pText;
 	return ret;
 }
 
-int CListBox::GetText(int nIndex, CStringW& rString) const
+SIZE_T CListBox::GetText(int nIndex, CStringW& rString) const
 {
-	int nLen=::SendMessage(m_hWnd,LB_GETTEXTLEN,(WPARAM)nIndex,0);
+	SIZE_T nLen=::SendMessage(m_hWnd,LB_GETTEXTLEN,(WPARAM)nIndex,0);
 	if (nLen==CB_ERR)
 		return CB_ERR;
 
@@ -269,9 +269,9 @@ int CListBox::GetText(int nIndex, CStringW& rString) const
 ///////////////////////////
 
 
-int CComboBox::GetLBText(int nIndex, CStringA& rString) const
+SIZE_T CComboBox::GetLBText(int nIndex, CStringA& rString) const
 {
-	int nLen=::SendMessage(m_hWnd,CB_GETLBTEXTLEN,(WPARAM)nIndex,0);
+	SIZE_T nLen=::SendMessage(m_hWnd,CB_GETLBTEXTLEN,(WPARAM)nIndex,0);
 	if (nLen==CB_ERR)
 		return CB_ERR;
 	LPSTR pointer=new CHAR [nLen+2];
@@ -291,25 +291,25 @@ int CComboBox::GetLBText(int nIndex, CStringA& rString) const
 }
 
 #ifdef DEF_WCHAR
-int CComboBox::GetLBText(int nIndex, LPWSTR lpszText) const
+SIZE_T CComboBox::GetLBText(int nIndex, LPWSTR lpszText) const
 { 
 	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)lpszText);
 
-	int nLen=::SendMessageA(m_hWnd,CB_GETLBTEXTLEN,nIndex,0);
+	SIZE_T nLen=::SendMessageA(m_hWnd,CB_GETLBTEXTLEN,nIndex,0);
 	char* pText=new char[nLen+2];
-	int ret=::SendMessageA(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)pText);
+	SIZE_T ret=::SendMessageA(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)pText);
 	if (ret!=0)
 	{
-		MultiByteToWideChar(CP_ACP,0,pText,ret,lpszText,ret+2);
+		MultiByteToWideChar(CP_ACP,0,pText,(int)ret,lpszText,(int)ret+2);
 		lpszText[ret]=L'\0';
 	}
 	delete pText;
 	return ret;
 }
-int CComboBox::GetLBText(int nIndex, CStringW& rString) const
+SIZE_T CComboBox::GetLBText(int nIndex, CStringW& rString) const
 {
-	int nLen=::SendMessage(m_hWnd,CB_GETLBTEXTLEN,(WPARAM)nIndex,0);
+	SIZE_T nLen=::SendMessage(m_hWnd,CB_GETLBTEXTLEN,(WPARAM)nIndex,0);
 	if (nLen==CB_ERR)
 		return CB_ERR;
 
@@ -352,41 +352,41 @@ int CComboBox::GetLBText(int nIndex, CStringW& rString) const
 int CComboBox::FindString(int nStartAfter, LPCWSTR lpszString) const
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
+		return (int)::SendMessageW(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
 	else
-		return ::SendMessageA(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)W2A(lpszString));
+		return (int)::SendMessageA(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)W2A(lpszString));
 }
 
 int CComboBox::AddString(LPCWSTR lpszString)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,CB_ADDSTRING,0,(LPARAM)lpszString);
+		return (int)::SendMessageW(m_hWnd,CB_ADDSTRING,0,(LPARAM)lpszString);
 	else
-		return ::SendMessageA(m_hWnd,CB_ADDSTRING,0,(LPARAM)(LPCSTR)W2A(lpszString));
+		return (int)::SendMessageA(m_hWnd,CB_ADDSTRING,0,(LPARAM)(LPCSTR)W2A(lpszString));
 }
 
 int CComboBox::InsertString(int nIndex,LPCWSTR lpszString)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)lpszString);
+		return (int)::SendMessageW(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)lpszString);
 	else
-		return ::SendMessageA(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)(LPCSTR)W2A(lpszString));
+		return (int)::SendMessageA(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)(LPCSTR)W2A(lpszString));
 }
 
 int CComboBox::Dir(UINT attr, LPCWSTR lpszWildCard)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)lpszWildCard);
+		return (int)::SendMessageW(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)lpszWildCard);
 	else
-		return ::SendMessageA(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)(LPCSTR)W2A(lpszWildCard));
+		return (int)::SendMessageA(m_hWnd,CB_DIR,(WPARAM)attr,(LPARAM)(LPCSTR)W2A(lpszWildCard));
 }
 
 int CComboBox::SelectString(int nStartAfter, LPCWSTR lpszString)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
+		return (int)::SendMessageW(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
 	else
-		return ::SendMessageA(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)W2A(lpszString));
+		return (int)::SendMessageA(m_hWnd,CB_SELECTSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)W2A(lpszString));
 }
 
 #endif

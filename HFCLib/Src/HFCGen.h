@@ -245,27 +245,27 @@ public:
 	BOOL OpenWrite(LPCWSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defWrite,pError); }
 
 	
-	ULONG_PTR SeekToEnd() { return this->Seek(0,end); }
+	DWORD SeekToEnd() { return this->Seek(0,end); }
 	BOOL SeekToBegin() { return this->Seek(0,begin)>0; }
 #ifdef WIN32
-	virtual LONG_PTR Seek(ULONG_PTR lOff, ULONG_PTR nFrom,CFileException* pError=NULL,LONG* pHighPos=NULL);
+	virtual DWORD Seek(LONG lOff, DWORD nFrom,CFileException* pError=NULL,LONG* pHighPos=NULL);
 
-	virtual BOOL SetLength(SIZE_T dwNewLen,LONG* pHigh=NULL);
-	BOOL SetLength(ULONGLONG dwNewLen);
+	virtual BOOL SetLength(LONG dwNewLen,LONG* pHigh=NULL);
+	virtual BOOL SetLength(ULONGLONG dwNewLen);
 #else
-	virtual LONG_PTR Seek(ULONG_PTR lOff, ULONG_PTR nFrom,CFileException* pError=NULL);
+	virtual LONG_PTR Seek(LONG lOff, ULONG_PTR nFrom,CFileException* pError=NULL);
 #endif
 
 	
 #ifdef WIN32
-	virtual SIZE_T GetLength(PSIZE_T pHigh=NULL) const;
+	virtual DWORD GetLength(DWORD* pHigh=NULL) const;
 	ULONGLONG GetLength64() const;
 #else
-	virtual SIZE_T GetLength() const;
+	virtual LONG GetLength() const;
 #endif
 
-	virtual SIZE_T Read(void* lpBuf, SIZE_T nCount,CFileException* pError=NULL);
-	virtual BOOL Write(const void* lpBuf, SIZE_T nCount,CFileException* pError=NULL);
+	virtual DWORD Read(void* lpBuf, DWORD nCount,CFileException* pError=NULL);
+	virtual BOOL Write(const void* lpBuf, DWORD nCount,CFileException* pError=NULL);
 	
 	// Helpers
 	BOOL Read(CStringA& str,CFileException* pError=NULL);
@@ -292,8 +292,8 @@ public:
 	virtual BOOL IsEndOfFile() const;
 
 #ifdef WIN32
-	virtual void LockRange(ULONG_PTR dwPos, SIZE_T dwCount);
-	virtual void UnlockRange(ULONG_PTR dwPos, SIZE_T dwCount);
+	virtual void LockRange(DWORD dwPos, DWORD dwCount);
+	virtual void UnlockRange(DWORD dwPos, DWORD dwCount);
 #endif
 	virtual BOOL Flush();
 	virtual BOOL Close();
@@ -447,15 +447,16 @@ public:
 	BOOL FindFile(LPCSTR pstrName=NULL);
 	BOOL FindNextFile();
 	
-	void GetFileName(LPSTR szName,SIZE_T nMaxLen) const;
+	void GetFileName(LPSTR szName,DWORD nMaxLen) const;
 	void GetFileName(CString& name) const;
-	void GetFilePath(LPSTR szPath,SIZE_T nMaxLen) const;
+	void GetFilePath(LPSTR szPath,DWORD nMaxLen) const;
 	void GetFilePath(CString& path) const;
-	SIZE_T GetFileSize() const;
+	DWORD GetFileSize(DWORD* pHigh=NULL) const;
+	ULONGLONG GetFileSize64() const;
 	
 #ifdef WIN32
 	BOOL GetFileTitle(CString& title) const;
-	BOOL GetFileTitle(LPSTR szFileTitle,SIZE_T nMaxLen) const;
+	BOOL GetFileTitle(LPSTR szFileTitle,DWORD nMaxLen) const;
 #endif
 
 #ifdef WIN32
@@ -486,13 +487,13 @@ public:
 
 #ifdef DEF_WCHAR
 	BOOL FindFile(LPCWSTR pstrName);
-	void GetFileName(LPWSTR szName,SIZE_T nMaxLen) const;
+	void GetFileName(LPWSTR szName,DWORD nMaxLen) const;
 	void GetFileName(CStringW& name) const;
-	void GetFilePath(LPWSTR szPath,SIZE_T nMaxLen) const;
+	void GetFilePath(LPWSTR szPath,DWORD nMaxLen) const;
 	void GetFilePath(CStringW& path) const;
 
 	BOOL GetFileTitle(CStringW& title) const;
-	BOOL GetFileTitle(LPWSTR szFileTitle,SIZE_T nMaxLen) const;
+	BOOL GetFileTitle(LPWSTR szFileTitle,DWORD nMaxLen) const;
 #endif
 };
 
@@ -549,11 +550,11 @@ private:
 	BOOL DoSearching();
 	
 	BYTE* pSearchValue;
-	SIZE_T dwLength;
+	DWORD dwLength;
 
 
 	BYTE* pBuffer;
-	SIZE_T dwBufferLen;
+	DWORD dwBufferLen;
 	ULONG_PTR dwBufferPtr;
 	ULONG_PTR dwFilePtr; 
 	SIZE_T dwFileSize;
@@ -839,24 +840,24 @@ public:
 	HKEY GetHandleKey() const;
 	operator HKEY() const;
 
-	DWORD QueryValue(LPCSTR lpszValueName,LPSTR lpbData,SIZE_T cbData,LPDWORD lpdwType=NULL) const;	
+	DWORD QueryValue(LPCSTR lpszValueName,LPSTR lpbData,DWORD cbData,LPDWORD lpdwType=NULL) const;	
 	BOOL QueryValue(LPCSTR lpszValueName,CString& strData) const;	
 	BOOL QueryValue(LPCSTR lpszValueName,DWORD& dwData) const;	
 	
-	SIZE_T QueryValueLength(LPCSTR lpszValueName=NULL) const;
-	SIZE_T QueryValueLength(LPCSTR lpszValueName,BOOL& bIsOk) const;
+	DWORD QueryValueLength(LPCSTR lpszValueName=NULL) const;
+	DWORD QueryValueLength(LPCSTR lpszValueName,BOOL& bIsOk) const;
 	
-	LONG SetValue(LPCSTR lpValueName,LPCSTR lpData,SIZE_T cbData,DWORD dwType=REG_BINARY);
+	LONG SetValue(LPCSTR lpValueName,LPCSTR lpData,DWORD cbData,DWORD dwType=REG_BINARY);
 	BOOL SetValue(LPCSTR lpValueName,CString& strData);
 	LONG SetValue(LPCSTR lpValueName,LPCSTR strData);
 	BOOL SetValue(LPCSTR lpValueName,DWORD dwData);
 	
 	
 
-	DWORD EnumKey(DWORD iSubkey,LPSTR lpszName,SIZE_T cchName,LPSTR lpszClass=NULL,PSIZE_T lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
-	BOOL EnumKey(DWORD iSubkey,CString& strName,LPSTR lpszClass=NULL,PSIZE_T lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
-	DWORD EnumValue(DWORD iValue,LPSTR lpszValue,SIZE_T cchValue,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,PSIZE_T lpcbData=0) const;
-	BOOL EnumValue(DWORD iValue,CString& strName,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,PSIZE_T lpcbData=0) const;
+	DWORD EnumKey(DWORD iSubkey,LPSTR lpszName,DWORD cchName,LPSTR lpszClass=NULL,LPDWORD lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
+	BOOL EnumKey(DWORD iSubkey,CString& strName,LPSTR lpszClass=NULL,LPDWORD lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
+	DWORD EnumValue(DWORD iValue,LPSTR lpszValue,DWORD cchValue,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,LPDWORD lpcbData=0) const;
+	BOOL EnumValue(DWORD iValue,CString& strName,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,LPDWORD lpcbData=0) const;
 	
 	
 
@@ -880,8 +881,8 @@ public:
 	LONG RenameSubKey(LPCSTR szOldName,LPCSTR szNewName);
 
 	LONG NotifyChangeKeyValue(BOOL fWatchSubTree,DWORD fdwNotifyFilter,HANDLE hEvent,BOOL fAsync);
-	LONG QueryInfoKey(LPTSTR lpszClass,PSIZE_T lpcchClass,LPDWORD lpcSubKeys,PSIZE_T lpcchMaxSubkey,
-		PSIZE_T lpcchMaxClass,LPDWORD lpcValues,PSIZE_T lpcchMaxValueName,PSIZE_T lpcbMaxValueData,
+	LONG QueryInfoKey(LPTSTR lpszClass,LPDWORD lpcchClass,LPDWORD lpcSubKeys,LPDWORD lpcchMaxSubkey,
+		LPDWORD lpcchMaxClass,LPDWORD lpcValues,LPDWORD lpcchMaxValueName,LPDWORD lpcbMaxValueData,
 		LPDWORD lpcbSecurityDescriptor,PFILETIME lpftLastWriteTime) const;
 
 #ifdef DEF_WCHAR
@@ -891,13 +892,13 @@ public:
 	BOOL OpenRead(HKEY hKey,LPCWSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defRead,NULL)==ERROR_SUCCESS; }
 	BOOL OpenWrite(HKEY hKey,LPCWSTR lpszSubKey) { return OpenKey(hKey,lpszSubKey,CRegKey::defWrite,NULL)==ERROR_SUCCESS; }
 	
-	DWORD QueryValue(LPCWSTR lpszValueName,LPSTR lpbData,SIZE_T cbDataLen,LPDWORD lpdwType=NULL) const;	
-	DWORD QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,SIZE_T cbLenAsChars) const;	
+	DWORD QueryValue(LPCWSTR lpszValueName,LPSTR lpbData,DWORD cbDataLen,LPDWORD lpdwType=NULL) const;	
+	DWORD QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,DWORD cbLenAsChars) const;	
 	BOOL QueryValue(LPCWSTR lpszValueName,CStringW& strData) const;	
 	BOOL QueryValue(LPCWSTR lpszValueName,DWORD& dwData) const;	
 	
-	SIZE_T QueryValueLength(LPCWSTR lpszValueName) const;
-	SIZE_T QueryValueLength(LPCWSTR lpszValueName,BOOL& bIsOk) const;
+	DWORD QueryValueLength(LPCWSTR lpszValueName) const;
+	DWORD QueryValueLength(LPCWSTR lpszValueName,BOOL& bIsOk) const;
 
 	BOOL SetValue(LPCWSTR lpValueName,CStringW& strData);
 	LONG SetValue(LPCWSTR lpValueName,LPCSTR lpData,DWORD cbData,DWORD dwType=REG_BINARY);
@@ -905,10 +906,10 @@ public:
 	LONG SetValue(LPCWSTR lpValueName,LPCWSTR strData);
 	BOOL SetValue(LPCWSTR lpValueName,DWORD dwData);
 
-	DWORD EnumKey(DWORD iSubkey,LPWSTR lpszName,SIZE_T cchName,LPWSTR lpszClass=NULL,PSIZE_T lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
+	DWORD EnumKey(DWORD iSubkey,LPWSTR lpszName,DWORD cchName,LPWSTR lpszClass=NULL,DWORD* lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
 	BOOL EnumKey(DWORD iSubkey,CStringW& strName,LPWSTR lpszClass=NULL,LPDWORD lpcchClass=NULL,PFILETIME lpftLastWrite=NULL) const;
-	DWORD EnumValue(DWORD iValue,LPWSTR lpszValue,SIZE_T cchValue,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,PSIZE_T lpcbData=0) const;
-	BOOL EnumValue(DWORD iValue,CStringW& strName,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,PSIZE_T lpcbData=0) const;
+	DWORD EnumValue(DWORD iValue,LPWSTR lpszValue,DWORD cchValue,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,LPDWORD lpcbData=0) const;
+	BOOL EnumValue(DWORD iValue,CStringW& strName,LPDWORD lpdwType=NULL,LPBYTE lpbData=NULL,LPDWORD lpcbData=0) const;
 
 	LONG DeleteKey(LPCWSTR lpszSubKey);
 	LONG DeleteValue(LPCWSTR lpszValue); // does not remove subkeys on WinNT

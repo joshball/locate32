@@ -19,14 +19,14 @@ typedef BOOL (CALLBACK* UPDATEPROC)(DWORD dwParam,CallingReason crReason,UpdateE
 
 
 // Maybe usefull
-#define IS_UPDATER_EXITED(ptr)		((((DWORD)(ptr))&0xFFFF0000)==0xFFFF0000?TRUE:FALSE)
-#define GET_UPDATER_CODE(ptr)		(IS_UPDATER_EXITED(ptr)?(UpdateError)(~((DWORD)(ptr))):ueStillWorking)
-#define UPDATER_EXITED(code)		((CDatabaseUpdater*)(~((DWORD)(code))))
+#define IS_UPDATER_EXITED(ptr)		((((ULONG_PTR)(ptr))&0xFFFF0000)==0xFFFF0000?TRUE:FALSE)
+#define GET_UPDATER_CODE(ptr)		(IS_UPDATER_EXITED(ptr)?(UpdateError)(~((ULONG_PTR)(ptr))):ueStillWorking)
+#define UPDATER_EXITED(code)		((CDatabaseUpdater*)(~((ULONG_PTR)(code))))
 
 // String copyers
 #define sMemCopy(dst,src,len)	CopyMemory(dst,src,len)
 #define sMemZero(dst,len)		ZeroMemory(dst,len)
-#define sMemSet(dst,val,len)	iMemSet(dst,val,len)
+#define sMemSet(dst,val,len)	FillMemory(dst,len,val)
 #define sstrlen(str,len)		dstrlen(str,len)
 
 #define sstrlenW				dwstrlen

@@ -161,7 +161,7 @@ DWORD CWinThread::ModalLoop()
 				nIdleTime=0;
 			}
 			if (!GetMessage(&m_currentMessage,NULL,0,0))
-				return m_currentMessage.wParam;
+				return (DWORD)m_currentMessage.wParam;
 			
 			// If OnThreadMessage returns true, do nothing
 			if (OnThreadMessage(&m_currentMessage))
@@ -261,7 +261,7 @@ DWORD CWinThread::ModalLoop()
 				bIdle=TRUE;
 		}
 	}
-	return m_currentMessage.wParam;
+	return (DWORD)m_currentMessage.wParam;
 }
 
 BOOL CWinThread::OnThreadMessage(MSG* pMsg)

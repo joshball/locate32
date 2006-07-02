@@ -141,7 +141,7 @@ extern LPWSTR g_szwBuffer;
 // String copyers
 #define sMemCopy(dst,src,len)	CopyMemory(dst,src,len)
 #define sMemZero(dst,len)		ZeroMemory(dst,len)
-#define sMemSet(dst,val,len)	iMemSet(dst,val,len)
+#define sMemSet(dst,val,len)	FillMemory(dst,len,val)
 #define sstrlen(str,len)		dstrlen(str,len)
 
 #define sstrlenW				dwstrlen

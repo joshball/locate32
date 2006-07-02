@@ -6,7 +6,7 @@
 
 #ifdef DEF_WINDOWS
 
-BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	CWnd* Wnd;
 #ifdef DEF_RESOURCES
@@ -14,7 +14,7 @@ BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	{
 		Wnd=(CWnd*)lParam;
 		Wnd->SetHandle(hWnd);
-		SetWindowLong(hWnd,GWL_USERDATA,(LONG)Wnd);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)Wnd);
 		return ((CDialog*)Wnd)->OnInitDialog((HWND)wParam);
 	} else 
 #endif
@@ -22,11 +22,12 @@ BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	{
 		Wnd=(CWnd*)((LPCREATESTRUCT)lParam)->lpCreateParams;
 		Wnd->SetHandle(hWnd);
-		SetWindowLong(hWnd,GWL_USERDATA,(LONG)Wnd);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)Wnd);
 		return Wnd->OnNcCreate((LPCREATESTRUCT)lParam);
 	}
-	Wnd=(CWnd*)GetWindowLong(hWnd,GWL_USERDATA);
-    if (Wnd!=NULL)
+
+	Wnd=(CWnd*)GetWindowLongPtr(hWnd,GWLP_USERDATA);
+	if (Wnd!=NULL)
 	{
 		switch(msg)
 		{
@@ -46,7 +47,7 @@ BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 			Wnd->OnChangeCbChain((HWND)wParam,(HWND)lParam);
 			return FALSE;
 		case WM_CHAR:
-			Wnd->OnChar((TCHAR) wParam,lParam);
+			Wnd->OnChar((TCHAR) wParam,(DWORD)lParam);
 			return FALSE;
 		case WM_CLOSE:
 			return Wnd->OnClose();
@@ -87,10 +88,10 @@ BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 			Wnd->OnHScroll((UINT)LOWORD(wParam),(UINT)HIWORD(wParam),(HWND)lParam);
 			return FALSE;
 		case WM_KEYDOWN:
-			Wnd->OnKeyDown((int) wParam,lParam);
+			Wnd->OnKeyDown((int) wParam,(LONG)lParam);
 			return FALSE;
 		case WM_KEYUP:
-			Wnd->OnKeyUp((int) wParam,lParam);
+			Wnd->OnKeyUp((int) wParam,(LONG)lParam);
 			return FALSE;
 		case WM_KILLFOCUS:
 			Wnd->OnKillFocus((HWND) wParam);
@@ -101,7 +102,7 @@ BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 			return 0;
 #endif
 		case WM_MEASUREITEM:
-			Wnd->OnMeasureItem(wParam,(MEASUREITEMSTRUCT*)lParam);
+			Wnd->OnMeasureItem((int)wParam,(MEASUREITEMSTRUCT*)lParam);
 			return 0;
 		case WM_MENUCHAR:
 			return Wnd->OnMenuChar((char)LOWORD(wParam),(UINT)HIWORD(wParam),(HMENU)lParam);
@@ -111,7 +112,7 @@ BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		case WM_MOUSEACTIVATE:
 			return Wnd->OnMouseActivate((HWND)wParam,(UINT)LOWORD(lParam),(UINT)HIWORD(lParam));
 		case WM_MOUSEMOVE:
-			Wnd->OnMouseMove(wParam,LOWORD(lParam),HIWORD(lParam));
+			Wnd->OnMouseMove((UINT)wParam,LOWORD(lParam),HIWORD(lParam));
 			return FALSE;
 		case WM_MOVE:
 			Wnd->OnMove((int)(short)LOWORD(lParam),(int)(short)HIWORD(lParam));
@@ -119,7 +120,6 @@ BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		case WM_NCACTIVATE:
 			return Wnd->OnNcActivate((BOOL)wParam);
 		case WM_NCDESTROY:
-			DebugNumMessage("WM_NCDESTROY, Wnd=%X",DWORD(Wnd));
 			Wnd->OnNcDestroy();
 			return 0;
 		case WM_NOTIFY:
@@ -133,12 +133,12 @@ BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		case WM_SETICON:
 			return Wnd->WindowProc(msg,wParam,lParam);
 		case WM_SIZE:
-			Wnd->OnSize(wParam,LOWORD(lParam),HIWORD(lParam));
+			Wnd->OnSize((UINT)wParam,LOWORD(lParam),HIWORD(lParam));
 			return FALSE;
 		case WM_SIZING:
 			return Wnd->OnSizing((UINT)wParam,(LPRECT)lParam);
 		case WM_TIMER:
-			Wnd->OnTimer(wParam);
+			Wnd->OnTimer((DWORD)wParam);
 			return FALSE;
 		case WM_SYSCOMMAND:
 			Wnd->OnSysCommand((UINT)wParam,lParam);
@@ -160,28 +160,28 @@ BOOL CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	return FALSE;
 }
 
-BOOL CALLBACK CAppData::MdiWndProc(HWND hWnd, UINT msg,
+LRESULT CALLBACK CAppData::MdiWndProc(HWND hWnd, UINT msg,
 					  WPARAM wParam, LPARAM lParam)
 {
 	if (msg==WM_NCCREATE)
 	{
 		CWnd* Wnd=(CWnd*)((MDICREATESTRUCT*)((LPCREATESTRUCT)lParam)->lpCreateParams)->lParam;
 		Wnd->SetHandle(hWnd);
-		SetWindowLong(hWnd,GWL_USERDATA,(LONG)Wnd);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)Wnd);
 		return Wnd->OnNcCreate((LPCREATESTRUCT)lParam);
 	}
 	return WndProc(hWnd,msg,wParam,lParam);
 }
 
 #ifdef DEF_RESOURCES
-BOOL CALLBACK CAppData::PropPageWndProc(HWND hWnd,UINT msg,
+LRESULT CALLBACK CAppData::PropPageWndProc(HWND hWnd,UINT msg,
 							  WPARAM wParam, LPARAM lParam)
 {
 	if (msg==WM_INITDIALOG)
 	{
 		CWnd* Wnd=(CWnd*)(((PROPSHEETPAGE*)lParam)->lParam);
 		Wnd->SetHandle(hWnd);
-		SetWindowLong(hWnd,GWL_USERDATA,(LONG)Wnd);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)Wnd);
 		return ((CPropertyPage*)Wnd)->OnInitDialog((HWND)wParam);
 	}
 	return WndProc(hWnd,msg,wParam,lParam);
@@ -251,7 +251,7 @@ BOOL WaitForWindow(CWnd* pWnd,DWORD dwMilliseconds)
 {
 	CString name;
 	name.SetBase(32);
-	name << "WFWE" << (DWORD)pWnd;
+	name << "WFWE" << (ULONGLONG)pWnd;
 	HANDLE hWaitEvent=CreateEvent(NULL,FALSE,FALSE,name);
 	if (hWaitEvent==NULL)
 		return FALSE;
@@ -265,7 +265,6 @@ BOOL WaitForWindow(CWnd* pWnd,DWORD dwMilliseconds)
 BOOL ForceForegroundAndFocus(HWND hWindow)
 {
 	static long dwInProc = 0;
-	DebugFormatMessage("ForceForegroundAndFocus BEGIN, dwInProc=%X hWindow=%X",DWORD(&dwInProc),DWORD(hWindow));
 	
     if (dwInProc == 0) {
 		InterlockedIncrement(&dwInProc);
@@ -274,40 +273,26 @@ BOOL ForceForegroundAndFocus(HWND hWindow)
 		DWORD dwForegoundThread,dwCurrentThreadId;
 		BOOL bDetach=FALSE;
 
-		DebugNumMessage("hForeground=%X",DWORD(hForeground));
-	
+		
 
 		if (hForeground!=NULL)
 		{
 	
 			dwForegoundThread=GetWindowThreadProcessId(hForeground,NULL);
-			DebugNumMessage("dwForegoundThread=%X",DWORD(dwForegoundThread));
 			dwCurrentThreadId=GetWindowThreadProcessId(hWindow,NULL);
-			DebugNumMessage("dwCurrentThreadId=%X",DWORD(dwCurrentThreadId));
 				
 			if (dwForegoundThread!=dwCurrentThreadId)
-			{
 				bDetach=AttachThreadInput(dwCurrentThreadId,dwForegoundThread,TRUE);
-				DebugNumMessage("bDetach=%d",bDetach);
-			}
 		}
 
 		SetForegroundWindow(hWindow);
-		DebugMessage("1");
 		BringWindowToTop(hWindow);
-		DebugMessage("2");
 		SetFocus(hWindow);
-		DebugMessage("3");
 		
 		if (bDetach)
-		{
-			DebugMessage("4");
 			AttachThreadInput(dwCurrentThreadId,dwForegoundThread,FALSE);
-			DebugMessage("5");
-		}
-
+		
 		InterlockedDecrement(&dwInProc);
-		DebugMessage("6");
 		return TRUE;
 	}
 	return FALSE;
@@ -319,7 +304,7 @@ int ReportSystemError(HWND hWnd,LPCSTR szTitle,DWORD dwError,SIZE_T dwExtra,LPCS
 		dwError=GetLastError();
 
 	char* szBuffer;
-	DWORD dwLength=FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_ALLOCATE_BUFFER,NULL,
+	SIZE_T dwLength=FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_ALLOCATE_BUFFER,NULL,
 		dwError,LANG_USER_DEFAULT,(LPSTR)(PVOID*)&szBuffer,0,NULL);
 	if (!dwLength)
 		return MessageBox(hWnd,"Couldn't format error message",szTitle,MB_OK|MB_ICONERROR);
@@ -332,7 +317,7 @@ int ReportSystemError(HWND hWnd,LPCSTR szTitle,DWORD dwError,SIZE_T dwExtra,LPCS
 		if (szPrefix==NULL)
 			szPrefix="%s (%d)";
 
-		dwLength+=+istrlen(szPrefix)+20;
+		dwLength+=istrlen(szPrefix)+20;
 		char* pMessage=new char[dwLength];
 		StringCbPrintf(pMessage,dwLength,szPrefix,szBuffer,dwExtra);
 		nRet=MessageBox(hWnd,pMessage,szTitle,MB_OK|MB_ICONERROR);

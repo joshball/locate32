@@ -2,9 +2,9 @@
    Updatedb.exe v2.99.6.6040 */
 
 #include <HFCLib.h>
-#include "locatedb/locatedb.h"
+#include "../locatedb/locatedb.h"
 
-#include "lan_resources.h"
+#include "../lan_resources.h"
 
 #ifdef WIN32
 		LPCSTR szVersionStr="updtdb32 3.0 beta 6.6040";
@@ -202,7 +202,7 @@ int wmain (int argc,wchar_t ** argv)
 	
 	WORD wCurrentThread=0;
 
-	aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],LastCharIndex(argv[0],'\\')+1));
+	aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],(int)LastCharIndex(argv[0],'\\')+1));
 	aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 	aDatabases[0]->SetThreadId(wCurrentThread);
 
@@ -370,7 +370,7 @@ int wmain (int argc,wchar_t ** argv)
 					}
 					else 
 					{
-						CDatabase* pDatabase=CDatabase::FromFile(sFile,sFile.GetLength());
+						CDatabase* pDatabase=CDatabase::FromFile(sFile,(int)sFile.GetLength());
 						if (pDatabase!=NULL)
 						{
                             aDatabases.Add(pDatabase);
@@ -392,7 +392,7 @@ int wmain (int argc,wchar_t ** argv)
 					else
 						sName=(argv[i]+2);
 
-					if (CDatabase::FindByName(aDatabases,sName,sName.GetLength())==NULL)
+					if (CDatabase::FindByName(aDatabases,sName,(int)sName.GetLength())==NULL)
 					{
 						CDatabase* pDatabase=CDatabase::FromName(HKCU,
 							"Software\\Update\\Databases",sName);
@@ -465,7 +465,7 @@ int wmain (int argc,wchar_t ** argv)
 		// No registry values?
 		if (aDatabases.GetSize()==0)
 		{
-			aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],LastCharIndex(argv[0],'\\')+1));
+			aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],(int)LastCharIndex(argv[0],'\\')+1));
 			aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 		}
 	}

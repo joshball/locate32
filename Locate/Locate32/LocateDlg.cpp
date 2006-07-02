@@ -40,7 +40,7 @@ void CComboBoxAutoComplete::EnableAutoComplete(BOOL bEnable)
 		int nCount=CComboBox::GetCount();
 		for (int i=0;i<nCount;i++)
 		{
-			int nLength=CComboBox::GetLBTextLen(i);
+			int nLength=(int)CComboBox::GetLBTextLen(i);
 			WCHAR* pText=new WCHAR[max(nLength+1,2)];
 			CComboBox::GetLBText(i,pText);
 			m_pACData->aItems.Add(pText);		
@@ -136,7 +136,7 @@ int CComboBoxAutoComplete::SetTopIndex(int nSelect)
 }
 
 
-int CComboBoxAutoComplete::GetLBText(int nIndex, LPSTR lpszText) const
+SIZE_T CComboBoxAutoComplete::GetLBText(int nIndex, LPSTR lpszText) const
 {
 	if (m_pACData==NULL)
 		return CComboBox::GetLBText(nIndex, lpszText);
@@ -144,12 +144,12 @@ int CComboBoxAutoComplete::GetLBText(int nIndex, LPSTR lpszText) const
 	if (nIndex>=m_pACData->aItems.GetSize())
 		return CB_ERR;
 	
-	int nLength=istrlenw(m_pACData->aItems[nIndex]);
+	SIZE_T nLength=istrlenw(m_pACData->aItems[nIndex]);
 	MemCopyWtoA(lpszText,m_pACData->aItems[nIndex],nLength+1);
 	return nLength;
 }
 
-int CComboBoxAutoComplete::GetLBText(int nIndex, CStringA& rString) const
+SIZE_T CComboBoxAutoComplete::GetLBText(int nIndex, CStringA& rString) const
 {
 	if (m_pACData==NULL)
 		return CComboBox::GetLBText(nIndex,rString);
@@ -162,7 +162,7 @@ int CComboBoxAutoComplete::GetLBText(int nIndex, CStringA& rString) const
 }
 
 #ifdef DEF_WCHAR
-int CComboBoxAutoComplete::GetLBText(int nIndex, LPWSTR lpszText) const
+SIZE_T CComboBoxAutoComplete::GetLBText(int nIndex, LPWSTR lpszText) const
 {
 	if (m_pACData==NULL)
 		return CComboBox::GetLBText(nIndex, lpszText);
@@ -170,12 +170,12 @@ int CComboBoxAutoComplete::GetLBText(int nIndex, LPWSTR lpszText) const
 	if (nIndex>=m_pACData->aItems.GetSize())
 		return CB_ERR;
 	
-	int nLength=istrlenw(m_pACData->aItems[nIndex]);
+	SIZE_T nLength=istrlenw(m_pACData->aItems[nIndex]);
 	MemCopy(lpszText,m_pACData->aItems[nIndex],nLength+1);
 	return nLength;
 }
 
-int CComboBoxAutoComplete::GetLBText(int nIndex, CStringW& rString) const
+SIZE_T CComboBoxAutoComplete::GetLBText(int nIndex, CStringW& rString) const
 {
 	if (m_pACData==NULL)
 		return CComboBox::GetLBText(nIndex,rString);
@@ -188,7 +188,7 @@ int CComboBoxAutoComplete::GetLBText(int nIndex, CStringW& rString) const
 }
 #endif
 
-int CComboBoxAutoComplete::GetLBTextLen(int nIndex) const
+SIZE_T CComboBoxAutoComplete::GetLBTextLen(int nIndex) const
 {
 	if (m_pACData==NULL)
 		return CComboBox::GetLBTextLen(nIndex);
@@ -396,7 +396,7 @@ int CLocateDlgThread::ExitInstance()
 {
 	delete m_pLocate;
 	m_pLocate=NULL;
-	InterlockedExchangePointer(&GetLocateAppWnd()->m_pLocateDlgThread,NULL);
+	InterlockedExchangePointer((PVOID*)&GetLocateAppWnd()->m_pLocateDlgThread,NULL);
 	CoUninitialize();
 	return CWinThread::ExitInstance();
 }
@@ -814,6 +814,7 @@ void CLocateDlg::SetResultListFont()
 		DeleteObject(hOldFont);
 }
 
+
 BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
 	switch(wID)
@@ -971,7 +972,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDC_BROWSE:
 	case IDC_NOSUBDIRECTORIES:
 		// This is to ensure that these conrols get focus e.g. when alt+n is pressed
-		return m_NameDlg.SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
+		return (BOOL)m_NameDlg.SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
 	case IDC_CHECKMINIMUMSIZE:
 	case IDC_MINIMUMSIZE:
 	case IDC_MINSIZETYPE:
@@ -985,7 +986,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDC_MAXDATE:
 	case IDC_MAXTYPE:
 		// This is to ensure that these conrols get focus e.g. when alt+n is pressed
-		return m_SizeDateDlg.SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
+		return (BOOL)m_SizeDateDlg.SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
 	case IDC_CHECK:
 	case IDC_MATCHWHOLENAME:
 	case IDC_FILETYPE:
@@ -995,7 +996,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDC_REPLACESPACES:
 	case IDC_USEWHOLEPATH:
 		// This is to ensure that these conrols get focus e.g. when alt+n is pressed
-		return m_AdvancedDlg.SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
+		return (BOOL)m_AdvancedDlg.SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
 	case IDC_NEXTCONTROL:
 		DefDlgProc(*this,WM_NEXTDLGCTL,FALSE,0);
 		//::SetFocus(GetNextDlgTabItem(GetFocus(),FALSE));
@@ -1314,7 +1315,7 @@ void CLocateDlg::StartBackgroundOperations()
 	//DebugMessage("CLocateDlg::StartBackgroundOperations():  BEGIN");
 	if (m_pBackgroundUpdater==NULL)
 	{
-		InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+		InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
 		m_pBackgroundUpdater->CreateEventsAndMutex();
 	}
 
@@ -1325,7 +1326,7 @@ void CLocateDlg::StartBackgroundOperations()
 	if (GetExtraFlags()&efEnableFSTracking)
 	{
 		if (m_pFileNotificationsThread==NULL)
-			InterlockedExchangePointer(&m_pFileNotificationsThread,new CCheckFileNotificationsThread);
+			InterlockedExchangePointer((PVOID*)&m_pFileNotificationsThread,new CCheckFileNotificationsThread);
 		
 		m_pFileNotificationsThread->Start();
 	}
@@ -1870,7 +1871,7 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(STRNULL,STATUSBAR_SEARCHFROMFILE,0);
 		break;
 	case ClassShouldDelete:
-		InterlockedExchangePointer(&((CLocateDlg*)dwParam)->m_pLocater,NULL);
+		InterlockedExchangePointer((PVOID*)&((CLocateDlg*)dwParam)->m_pLocater,NULL);
 		delete pLocater;
 		
 		((CLocateDlg*)dwParam)->StartBackgroundOperations();
@@ -2693,7 +2694,7 @@ LRESULT CALLBACK CLocateDlg::DebugWindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,L
 
 #endif
 
-BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	switch (msg)
 	{
@@ -2828,7 +2829,7 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		}
 		return 0;
 	case WM_ENABLEITEMS:
-		EnableItems(wParam);
+		EnableItems((BOOL)wParam);
 		return 0;
 	case WM_SETITEMFOCUS:
 		::SetFocus((HWND)wParam);
@@ -2852,7 +2853,7 @@ BOOL CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			{
 				CString text;
 				ib.GetInputText(text);
-				DWORD dwLength;
+				SIZE_T dwLength;
 				BYTE* pData=dataparser2(text,&dwLength);
 				BYTE* pPtr=pData+6;
        			if (pData[1]==1)
@@ -2948,7 +2949,7 @@ void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 	if (szCommand==NULL)
 		return;
 	
-	int nIndexToPercent=nIndexToPercent=FirstCharIndex(szCommand,L'%');
+	int nIndexToPercent=nIndexToPercent=(int)FirstCharIndex(szCommand,L'%');
 	if (nIndexToPercent==-1 || (szCommand[nIndexToPercent+1]!=L'd' && szCommand[nIndexToPercent+1]!=L'p'))
 	{
 		// Just execute command
@@ -3004,18 +3005,18 @@ void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 				LPCWSTR pPath;
                 if (pCommand[nIndex+1]==L'd')
 				{
-					nLen=pItems[i]->GetPathLen();
+					nLen=(int)pItems[i]->GetPathLen();
 					pPath=pItems[i]->GetPath();
 				}
 				else 
 				{
 					pPath=pItems[i]->GetParent();
-					nLen=istrlenw(pPath);					
+					nLen=(int)istrlenw(pPath);					
 				}
 
 
 
-				UINT nCommandLen=istrlenw(pCommand);
+				UINT nCommandLen=(UINT)istrlenw(pCommand);
 				LPWSTR pNewCommand=new WCHAR[nCommandLen-2+nLen+1];
 				MemCopyW(pNewCommand,pCommand,nIndex);
 				MemCopyW(pNewCommand+nIndex,pPath,nLen);
@@ -3027,7 +3028,7 @@ void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 
 				pCommand=pNewCommand;
 			}
-			while ((nIndex=FirstCharIndex(pCommand,L'%'))!=-1 && (pCommand[nIndex+1]==L'd' || pCommand[nIndex+1]==L'p'));
+			while ((nIndex=(int)FirstCharIndex(pCommand,L'%'))!=-1 && (pCommand[nIndex+1]==L'd' || pCommand[nIndex+1]==L'p'));
 	
 			// Execute command
 			PROCESS_INFORMATION pi;
@@ -3253,7 +3254,7 @@ void CLocateDlg::OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpmis)
 		CDC dc(this);
 		HGDIOBJ hOld=dc.SelectObject(m_hSendToListFont);
 		FileSystem::GetFileTitle((LPCWSTR)lpmis->itemData,szTitle,MAX_PATH);
-		CSize sz=dc.GetTextExtent(szTitle,wcslen(szTitle));
+		CSize sz=dc.GetTextExtent(szTitle,(int)wcslen(szTitle));
 		lpmis->itemWidth=40+sz.cx;
 		if (sz.cy>16)
 			lpmis->itemHeight=sz.cy+4;
@@ -3920,6 +3921,10 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			}
 			else
 			{
+				// Update detail instantaneously
+				if (g_szBuffer!=NULL)
+					delete[] g_szBuffer;
+
 				// Delayed updating
 				switch (nDetail)
 				{
@@ -3929,7 +3934,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					{
 						if (m_pBackgroundUpdater==NULL)
 						{
-							InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+							InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
 							m_pBackgroundUpdater->CreateEventsAndMutex();
 						}
 						
@@ -3963,7 +3968,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					{
 						if (m_pBackgroundUpdater==NULL)
 						{
-							InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+							InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
 							m_pBackgroundUpdater->CreateEventsAndMutex();
 						}
 
@@ -3985,7 +3990,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					{
 						if (m_pBackgroundUpdater==NULL)
 						{
-							InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+							InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
 							m_pBackgroundUpdater->CreateEventsAndMutex();
 						}
 
@@ -4072,7 +4077,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					{
 						if (m_pBackgroundUpdater==NULL)
 						{
-							InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+							InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
 							m_pBackgroundUpdater->CreateEventsAndMutex();
 						}
 						
@@ -4106,7 +4111,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					{
 						if (m_pBackgroundUpdater==NULL)
 						{
-							InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+							InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
 							m_pBackgroundUpdater->CreateEventsAndMutex();
 						}
 
@@ -4129,7 +4134,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					{
 						if (m_pBackgroundUpdater==NULL)
 						{
-							InterlockedExchangePointer(&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
+							InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
 							m_pBackgroundUpdater->CreateEventsAndMutex();
 						}
 
@@ -5467,13 +5472,18 @@ void CLocateDlg::OnCreateShortcut()
 		return;
 	
 	CWaitCursor wait;
-
+	CStringW sTargetFolder;
+	union {
+		IShellLinkW* pslw;
+		IShellLink* psl;
+	};
+	IPersistFile* ppf;
+	
+	// Resolving desktop path
 	if (IsUnicodeSystem())
 	{
-		// Resolving desktop path
-		CStringW sDesktopPathTmp,sDesktopPath;
-
-		PFNSHGETFOLDERPATHW pGetFolderPath=(PFNSHGETFOLDERPATHW)GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetFolderPathA");
+		CStringW sDesktopPathTmp;
+		PFNSHGETFOLDERPATHW pGetFolderPath=(PFNSHGETFOLDERPATHW)GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetFolderPathW");
 		if (pGetFolderPath!=NULL)
 			pGetFolderPath(*this,CSIDL_DESKTOPDIRECTORY,NULL,SHGFP_TYPE_CURRENT,sDesktopPathTmp.GetBuffer(MAX_PATH));
 		else
@@ -5481,86 +5491,18 @@ void CLocateDlg::OnCreateShortcut()
 			CRegKey RegKey;
 			if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 				RegKey.QueryValue(L"Desktop",sDesktopPathTmp);
-			if (sDesktopPathTmp.IsEmpty())
-				return;
+			
 		}
-		sDesktopPathTmp.FreeExtra();
-		sDesktopPath=sDesktopPathTmp;
-		if (sDesktopPath[sDesktopPath.GetLength()-1]!=L'\\')
-			sDesktopPath<<L'\\';
-		
-		// Creating instance to shell link handler
-		IShellLinkW* psl;
-		HRESULT hRes=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(void**)&psl);
-		
-		if (SUCCEEDED(hRes))
+	
+		if 	(!sDesktopPathTmp.IsEmpty())
 		{
-			// Creating instance to PersistFile interface
-			IPersistFile* ppf;
-			hRes=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
-			
-			if (SUCCEEDED(hRes))
-			{
-				int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
-				BOOL bMsgShowed=FALSE;
-			
-				while (nItem!=-1)
-				{
-					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
-					if (FileSystem::IsFile(pItem->GetPath()))
-					{
-						if (!bMsgShowed)
-						{
-							if (ShowErrorMessage(IDS_SHORTCUTTODESKTOP,IDS_SHORTCUT,MB_YESNO|MB_ICONQUESTION)==IDNO)
-							{
-								psl->Release();
-								ppf->Release();
-								return;
-							}
-							bMsgShowed=TRUE;
-						}
-					}
-				
-					// Setting link path
-					hRes=psl->SetPath(pItem->GetPath());
-					if (!SUCCEEDED(hRes))
-					{
-						ppf->Release();
-						psl->Release();
-						return;
-					}
-					
-					if (pItem->ShouldUpdateTitle())
-						pItem->UpdateTitle();
-					hRes=psl->SetDescription(CStringW(IDS_SHORTCUTTO)+pItem->GetTitle());
-					if (!SUCCEEDED(hRes))
-					{
-						ppf->Release();
-						psl->Release();
-						return;
-					}
-					
-					hRes=ppf->Save(sDesktopPath+pItem->GetTitle()+L".lnk",TRUE);    
-					if (!SUCCEEDED(hRes))
-					{
-						ppf->Release();
-						psl->Release();
-						return;
-					}
-					
-					nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
-				}
-				ppf->Release();
-			}
-			psl->Release();
+			sDesktopPathTmp.FreeExtra();
+			sTargetFolder=sDesktopPathTmp;
 		}
 	}
 	else
 	{
-		// Resolving desktop path
 		CString sDesktopPathTmp;
-		CStringW sDesktopPath;
-		
 		PFNSHGETFOLDERPATHA pGetFolderPath=(PFNSHGETFOLDERPATHA)GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetFolderPathA");
 		if (pGetFolderPath!=NULL)
 			pGetFolderPath(*this,CSIDL_DESKTOPDIRECTORY,NULL,SHGFP_TYPE_CURRENT,sDesktopPathTmp.GetBuffer(MAX_PATH));
@@ -5569,80 +5511,139 @@ void CLocateDlg::OnCreateShortcut()
 			CRegKey RegKey;
 			if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 				RegKey.QueryValue("Desktop",sDesktopPathTmp);
-			if (sDesktopPathTmp.IsEmpty())
-				return;
-		}
-		sDesktopPathTmp.FreeExtra();
-		sDesktopPath=sDesktopPathTmp;
-		if (sDesktopPath[sDesktopPath.GetLength()-1]!=L'\\')
-			sDesktopPath<<L'\\';
+			
+		}		
 
-
-		IShellLink* psl;
-		HRESULT hRes=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl);
-		
-		if (SUCCEEDED(hRes))
+		if 	(!sDesktopPathTmp.IsEmpty())
 		{
-			// Creating instance to PersistFile interface
-			IPersistFile* ppf;
-			hRes=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
-			
-			if (SUCCEEDED(hRes))
-			{
-				int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
-				BOOL bMsgShowed=FALSE;
-			
-				while (nItem!=-1)
-				{
-					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
-					if (FileSystem::IsFile(pItem->GetPath()))
-					{
-						if (!bMsgShowed)
-						{
-							if (ShowErrorMessage(IDS_SHORTCUTTODESKTOP,IDS_SHORTCUT,MB_YESNO|MB_ICONQUESTION)==IDNO)
-							{
-								psl->Release();
-								ppf->Release();
-								return;
-							}
-							bMsgShowed=TRUE;
-						}
-					}
-				
-					// Setting link path
-					hRes=psl->SetPath(W2A(pItem->GetPath()));
-					if (!SUCCEEDED(hRes))
-					{
-						ppf->Release();
-						psl->Release();
-						return;
-					}
-					
-					if (pItem->ShouldUpdateTitle())
-						pItem->UpdateTitle();
-					hRes=psl->SetDescription(CString(IDS_SHORTCUTTO)+pItem->GetTitle());
-					if (!SUCCEEDED(hRes))
-					{
-						ppf->Release();
-						psl->Release();
-						return;
-					}
-					
-					hRes=ppf->Save(sDesktopPath+pItem->GetTitle()+L".lnk",TRUE);    
-					if (!SUCCEEDED(hRes))
-					{
-						ppf->Release();
-						psl->Release();
-						return;
-					}
-					
-					nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
-				}
-				ppf->Release();
-			}
-			psl->Release();
+			sDesktopPathTmp.FreeExtra();
+			sTargetFolder=sDesktopPathTmp;
 		}
 	}
+
+	if (!sTargetFolder.IsEmpty())
+	{
+		switch(ShowErrorMessage(IDS_SHORTCUTTODESKTOP,IDS_SHORTCUT,MB_YESNOCANCEL|MB_ICONQUESTION))
+		{
+		case IDCANCEL:
+			return;
+		case IDNO:
+			sTargetFolder.Empty();
+			break;
+		}
+	}
+
+	if (sTargetFolder.IsEmpty())
+	{
+		CFolderDialog fd(IDS_GETFOLDER,BIF_RETURNONLYFSDIRS|BIF_USENEWUI|BIF_NONEWFOLDERBUTTON);
+		if (!fd.DoModal(*this))
+			return;
+
+		if (!fd.GetFolder(sTargetFolder))
+			return;
+	}
+
+	if (sTargetFolder.LastChar()!=L'\\')
+		sTargetFolder<<L'\\';
+
+
+
+	if (IsUnicodeSystem())
+	{
+		// Creating instance to shell link handler
+		if (!SUCCEEDED(CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(void**)&pslw)))
+			return; 
+
+		// Creating instance to PersistFile interface
+		if (!SUCCEEDED(pslw->QueryInterface(IID_IPersistFile,(void**)&ppf)))
+		{
+			pslw->Release();
+			return;
+		}
+	}
+	else
+	{
+		// Creating instance to shell link handler
+		if (!SUCCEEDED(CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl)))
+			return;
+
+		// Creating instance to PersistFile interface
+		if (!SUCCEEDED(psl->QueryInterface(IID_IPersistFile,(void**)&ppf)))
+		{
+			psl->Release();
+			return;
+		}
+
+	}
+	
+
+
+	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+	BOOL bMsgShowed=FALSE;
+	
+	while (nItem!=-1)
+	{
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+		
+	
+		if (pItem->ShouldUpdateTitle())
+			pItem->UpdateTitle();
+			
+		if (IsUnicodeSystem())
+		{
+			// Setting link path
+			if (!SUCCEEDED(pslw->SetPath(pItem->GetPath())))
+			{
+				ppf->Release();
+				pslw->Release();
+				return;
+			}
+		
+			if (!SUCCEEDED(pslw->SetDescription(CStringW(IDS_SHORTCUTTO)+pItem->GetTitle())))
+			{
+				ppf->Release();
+				pslw->Release();
+				return;
+			}
+		}
+		else
+		{
+			// Setting link path
+			if (!SUCCEEDED(psl->SetPath(W2A(pItem->GetPath()))))
+			{
+				ppf->Release();
+				psl->Release();
+				return;
+			}
+		
+			if (!SUCCEEDED(psl->SetDescription(CStringA(IDS_SHORTCUTTO)+W2A(pItem->GetTitle()))))
+			{
+				ppf->Release();
+				psl->Release();
+				return;
+			}
+		}
+
+		
+		if (!SUCCEEDED(ppf->Save(sTargetFolder+pItem->GetTitle()+L".lnk",TRUE)))
+		{
+			ppf->Release();
+			if (IsUnicodeSystem())
+				pslw->Release();
+			else
+				psl->Release();
+
+			return;
+		}
+		
+		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+	}
+
+	ppf->Release();
+	if (IsUnicodeSystem())
+		pslw->Release();
+	else
+		psl->Release();
 }
 
 void CLocateDlg::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
@@ -9985,12 +9986,12 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 					char* pData=new char[str.GetLength()*2+4];
 					*((DWORD*)pData)=lParam;
 					CopyMemory(pData+4,LPCWSTR(str),str.GetLength()*2);
-					RegKey.SetValue(szName,pData,str.GetLength()*2+4,REG_BINARY);
+					RegKey.SetValue(szName,pData,DWORD(str.GetLength()*2+4),REG_BINARY);
 				}
 				else
 				{
 					LPARAM lParam=m_LookIn.GetItemData(nCurSel);
-					RegKey.SetValue(szName,MAKELPARAM(HIWORD(lParam),LOWORD(lParam)));            
+					RegKey.SetValue(szName,MAKELONG(HIWORD(lParam),LOWORD(lParam)));            
 				}
 
 				RegKey.SetValue("Name/LookInSel",DWORD(i));
@@ -10605,7 +10606,7 @@ void CLocateDlg::CAdvancedDlg::AddBuildInFileTypes()
 	DebugMessage("CAdvancedDlg::AddBuildInFileTypes() END");
 }
 
-BOOL CLocateDlg::CAdvancedDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT CLocateDlg::CAdvancedDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	if (msg==WM_COMPAREITEM && wParam==IDC_FILETYPE)
 	{
@@ -10945,7 +10946,7 @@ DWORD CLocateDlg::CAdvancedDlg::OnOk(CLocater* pLocater)
 		GetDlgItemText(IDC_CONTAINDATA,str);
 		
 		
-		DWORD dwDataLength;
+		SIZE_T dwDataLength;
 		BYTE* pData=NULL;
 		if (_strnicmp(str,"regexp:",7)==0)
 		{

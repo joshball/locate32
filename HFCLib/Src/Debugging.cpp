@@ -129,7 +129,7 @@ void DebugMessage(LPCSTR msg)
 		if (StringCbPrintf (szBufr,2000,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X: %s\r\n",
 			st.wYear%100,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond,
 			st.wMilliseconds,GetCurrentThreadId(),msg)==S_OK )
-			WriteFile(hLogFile,szBufr,strlen(szBufr),&writed,NULL);
+			WriteFile(hLogFile,szBufr,(DWORD)strlen(szBufr),&writed,NULL);
 		FlushFileBuffers(hLogFile);
 	}
 #else
@@ -198,7 +198,7 @@ static int formhexline(char* line,BYTE* pData,SIZE_T datalen)
 	*(ptr++)='\r';
 	*(ptr++)='\n';
 	*(ptr++)='\0';
-	return datalen;
+	return (int)datalen;
 }
 
 
@@ -220,7 +220,7 @@ void DebugHexDump(LPCSTR desc,BYTE* pData,SIZE_T datalen)
 		if (StringCbPrintf (szBufr,2000,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X HEXDUMP %s len=%d:\r\n",
 			st.wYear%100,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond,
 			st.wMilliseconds,GetCurrentThreadId(),desc,datalen)==S_OK)
-            WriteFile(hLogFile,szBufr,strlen(szBufr),&writed,NULL);
+            WriteFile(hLogFile,szBufr,(DWORD)strlen(szBufr),&writed,NULL);
 		
 		char line[3*LINELEN+LINELEN+10];
 		int ret;
@@ -229,8 +229,8 @@ void DebugHexDump(LPCSTR desc,BYTE* pData,SIZE_T datalen)
 		{
 			char indstr[12];
 			if (StringCbPrintf(indstr,12,"%08X ",index)==S_OK)
-				WriteFile(hLogFile,indstr,strlen(indstr),&writed,NULL);
-			WriteFile(hLogFile,line,strlen(line),&writed,NULL);
+				WriteFile(hLogFile,indstr,(DWORD)strlen(indstr),&writed,NULL);
+			WriteFile(hLogFile,line,(DWORD)strlen(line),&writed,NULL);
             			
 			pData+=ret;
 			datalen-=ret;
@@ -284,7 +284,7 @@ void DebugWndMessage(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		char buf[2000];
 		char buf2[100];
 		MsgToText(msg,buf2,100);
-		StringCbPrintf(buf,2000,"HWND: %lX MSG: %s WPARAM: %lX LPARAM: %lX",(DWORD)hWnd,buf2,(DWORD)wParam,(DWORD)lParam);
+		StringCbPrintf(buf,2000,"HWND: %lX MSG: %s WPARAM: %lX LPARAM: %lX",(ULONG_PTR)hWnd,buf2,(ULONG_PTR)wParam,(ULONG_PTR)lParam);
 		DebugMessage(buf);
 	}
 }
@@ -333,7 +333,7 @@ void DebugMessage(LPCWSTR msg)
 		if (StringCbPrintf (szBufr,2000,"%02d%02d%02d %02d:%02d:%02d.%03d TID=%4X: %s\r\n",
 			st.wYear%100,st.wMonth,st.wDay,st.wHour,st.wMinute,st.wSecond,
 			st.wMilliseconds,GetCurrentThreadId(),msgA)==S_OK )
-			WriteFile(hLogFile,szBufr,strlen(szBufr),&writed,NULL);
+			WriteFile(hLogFile,szBufr,(DWORD)strlen(szBufr),&writed,NULL);
 		FlushFileBuffers(hLogFile);
 		delete[] msgA;
 	}
@@ -595,14 +595,14 @@ LRESULT CALLBACK AddDebugNoteWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lP
 				DWORD nWrited=0;
 				CTime now(CTime::GetCurrentTime());
 				str.Format("DEBUG NOTIFY (%s,%s)\r\nBEGIN\r\n",(LPCSTR)GetApp()->GetAppName(),(LPCSTR)now.Format("%x %X"));
-				WriteFile(hFile,str,str.GetLength(),&nWrited,NULL);
+				WriteFile(hFile,str,(DWORD)str.GetLength(),&nWrited,NULL);
 				if (nWrited<str.GetLength())
 				{
 					CloseHandle(hFile);
 					break;
 				}
 				edit.GetText(str);
-				WriteFile(hFile,str,str.GetLength(),&nWrited,NULL);
+				WriteFile(hFile,str,(DWORD)str.GetLength(),&nWrited,NULL);
 				if (nWrited<str.GetLength())
 				{
 					CloseHandle(hFile);
@@ -669,8 +669,8 @@ LRESULT CALLBACK ViewAllocatorsWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM 
 				hWnd,(HMENU)103,GetInstanceHandle(),0);
 			SendMessage(hCtrl,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),1);
 			CString str;
-			GetAllocatorString(SendDlgItemMessage(hWnd,100,CB_GETCURSEL,0,0),str);
-			int index=-1;
+			GetAllocatorString((int)SendDlgItemMessage(hWnd,100,CB_GETCURSEL,0,0),str);
+			LONG_PTR index=-1;
 			while ((index=str.FindNext('\n',index+1))!=-1)
 				str.InsChar(index,'\r');
 			
@@ -698,12 +698,12 @@ LRESULT CALLBACK ViewAllocatorsWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM 
 		{
 			// Updating if necassary
 			CString str;
-			GetAllocatorString(SendDlgItemMessage(hWnd,100,CB_GETCURSEL,0,0),str);
-			int index=-1;
+			GetAllocatorString((int)SendDlgItemMessage(hWnd,100,CB_GETCURSEL,0,0),str);
+			LONG_PTR index=-1;
 			while ((index=str.FindNext('\n',index+1))!=-1)
 				str.InsChar(index,'\r');
 			
-			DWORD dwLength=SendDlgItemMessage(hWnd,103,WM_GETTEXTLENGTH,0,0);
+			DWORD dwLength=(DWORD)SendDlgItemMessage(hWnd,103,WM_GETTEXTLENGTH,0,0);
 			if (str.GetLength()!=dwLength)
 				SetDlgItemText(hWnd,103,str);
 			else
@@ -725,8 +725,8 @@ LRESULT CALLBACK ViewAllocatorsWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM 
 		case 101:
 			{
 				CString str;
-				GetAllocatorString(SendDlgItemMessage(hWnd,100,CB_GETCURSEL,0,0),str);
-				int index=-1;
+				GetAllocatorString((int)SendDlgItemMessage(hWnd,100,CB_GETCURSEL,0,0),str);
+				LONG_PTR index=-1;
 				while ((index=str.FindNext('\n',index+1))!=-1)
 					str.InsChar(index,'\r');
 				SetDlgItemText(hWnd,103,str);
@@ -1025,7 +1025,7 @@ void Assert(BOOL bIsOK,int line,char* file)
 	BOOL bQuit = PeekMessage(&msg, NULL, WM_QUIT, WM_QUIT, PM_REMOVE);
 	_CrtDbgReport(_CRT_ASSERT, file, line, NULL, NULL);
 	if (bQuit)
-		PostQuitMessage(msg.wParam);
+		PostQuitMessage((int)msg.wParam);
 #else
 	fprintf(stderr,"Assertation failed at %s line %d.",file,line);
 #endif

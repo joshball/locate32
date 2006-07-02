@@ -56,10 +56,10 @@ const CReal& CReal::operator=(LPCSTR szNum)
 			isRational=FALSE;
 		return *this;
 	}
-	int nIndex=FirstCharIndex(szNum,'/');
+	LONG_PTR nIndex=FirstCharIndex(szNum,'/');
 	if (nIndex!=-1)
 	{
-		int nMultipler=FirstCharIndex(szNum,' ');
+		int nMultipler=(int)FirstCharIndex(szNum,' ');
 		if (nMultipler>0 && nMultipler<nIndex)
 		{
 			char* sz=new char[nMultipler+1];
@@ -517,7 +517,7 @@ CComplex::operator CString() const
 const CComplex& CComplex::operator=(LPCSTR szNum)
 {
 	while (szNum[0]==' ') szNum++;
-	int nIndex=FirstCharIndex(szNum+1,'+')+1;
+	LONG_PTR nIndex=FirstCharIndex(szNum+1,'+')+1;
 	if (nIndex==0) nIndex=FirstCharIndex(szNum+1,'-')+1;
 	if (nIndex==0)
 	{
@@ -592,13 +592,13 @@ void CAppData::MatrixErrorProc(void* pMatrix,DWORD dwErrorCode,DWORD dwData)
 	switch (dwErrorCode)
 	{
 	case MATERR_DIMENSION:
-		DebugNumMessage("MatrixErrorProc(): Matrix dimension error, matrix=%X",(DWORD)pMatrix);
+		DebugMessage("MatrixErrorProc(): matrix dimension error");
 		break;
 	case MATERR_NOINVERSE:
-		DebugNumMessage("MatrixErrorProc(): No inverse matrix, matrix=%X",(DWORD)pMatrix);
+		DebugMessage("MatrixErrorProc(): no inverse matrix");
 		break;
 	case MATERR_INDEXOUT:
-		DebugNumMessage("MatrixErrorProc(): No inverse matrix, matrix=%X",(DWORD)pMatrix);
+		DebugMessage("MatrixErrorProc(): index out of range");
 		break;
 	}
 }

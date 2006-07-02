@@ -2139,7 +2139,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnRestore()
 		if (pDatabase==NULL)
 		{
 			CStringW sApp(GetApp()->GetExeNameW());
-			pDatabase=CDatabase::FromDefaults(TRUE,sApp,sApp.FindLast(L'\\')+1); // Nothing else can be done?
+			pDatabase=CDatabase::FromDefaults(TRUE,sApp,(int)sApp.FindLast(L'\\')+1); // Nothing else can be done?
 		}
 		else
 		{
@@ -2324,7 +2324,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 
 	CFile* pFile=NULL;
 	LPWSTR pExtra=pDatabase->ConstructExtraBlock();
-	DWORD dwExtraLen=istrlenw(pExtra);
+	DWORD dwExtraLen=(int)istrlenw(pExtra);
 
 	try {
 		pFile=new CFile(Path,CFile::defWrite,TRUE);
@@ -3208,7 +3208,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnBrowse()
 	
 	// Check filename and set
 	fd.GetFilePath(File);
-	int i=File.Find('*');
+	LONG_PTR i=File.Find('*');
 	if (i==-1)
 		SetDlgItemText(IDC_DBFILE,File);
 	else
@@ -3405,7 +3405,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 		Drive << szPath[0] << ":\\";
 	else
 	{
-		int nIndex=FirstCharIndex(szPath,L'\\');
+		LONG_PTR nIndex=FirstCharIndex(szPath,L'\\');
 		if (nIndex==-1 || szPath[nIndex+1]!=L'\\')
 			return -1;
 		
@@ -3622,7 +3622,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	int nCount=Directories.GetCount();
 	for (int i=0;i<nCount;i++)
 	{
-		int iLength=Directories.GetTextLen(i)+1;
+		SIZE_T iLength=Directories.GetTextLen(i)+1;
 		WCHAR* pText=new WCHAR[max(iLength,2)];
 		Directories.GetText(i,pText);
 		m_aDirectories.Add(pText);
@@ -3663,7 +3663,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	
 	for (int i=Directories.GetCount()-1;i>=0;i--)
 	{
-		int iLength=Directories.GetTextLen(i);
+		SIZE_T iLength=Directories.GetTextLen(i);
         WCHAR* szText=new WCHAR[iLength+2];
 		Directories.GetText(i,szText);
 		MakeLower(szText);
@@ -4266,7 +4266,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnDatabas
 			if (m_pSchedule->m_pDatabases!=NULL)
 				delete[] m_pSchedule->m_pDatabases;
 			
-			DWORD dwLength=1;
+			SIZE_T dwLength=1;
 			int i=0;
 			for (i=0;i<aDatabases.GetSize();i++)
 				dwLength+=istrlenw(aDatabases[i]->GetName())+1;
@@ -4275,7 +4275,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnDatabas
 			LPWSTR pPtr=m_pSchedule->m_pDatabases;
 			for (i=0;i<aDatabases.GetSize();i++)
 			{
-				int iStrlen=istrlenw(aDatabases[i]->GetName())+1;
+				LONG_PTR iStrlen=istrlenw(aDatabases[i]->GetName())+1;
 				MemCopyW(pPtr,aDatabases[i]->GetName(),iStrlen);
 				pPtr+=iStrlen;
 			}
@@ -5115,7 +5115,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 
 				if (HWND(Control)!=NULL)
 				{
-					int nIndex;
+					LONG_PTR nIndex;
 					Control.GetWindowText(str);
 					while ((nIndex=str.Find('&'))!=-1)
 						str.DelChar(nIndex);
@@ -5131,7 +5131,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 			str.LoadString(CAction::GetActivateTabsActionLabelStringId(
 				(CAction::ActionActivateTabs)IndexToSubAction(CAction::ActivateTab,uSubAction)));		
 
-			int nIndex;
+			LONG_PTR nIndex;
 			while ((nIndex=str.Find(L"&&"))!=-1)
 				str.DelChar(nIndex);
 			return TRUE;
@@ -5154,7 +5154,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 			if (bRet && mii.fType==MFT_STRING)
 			{
 				str.Format((INT)HIWORD(uSubAction),szLabel);
-				int nIndex=str.FindFirst(L'\t');
+				LONG_PTR nIndex=str.FindFirst(L'\t');
 				if (nIndex!=-1)
 					str.FreeExtra(nIndex);
 
@@ -6535,13 +6535,13 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 			int nSelection=m_VerbCombo.GetCurSel();
 			if (nSelection==CB_ERR)
 			{
-				UINT nLen=m_VerbCombo.GetTextLength();
+				UINT nLen=(UINT)m_VerbCombo.GetTextLength();
 				pAction->m_szVerb=new WCHAR[nLen+1];
 				m_VerbCombo.GetText(pAction->m_szVerb,nLen+1);
 			}
 			else if (nSelection!=0)
 			{
-				UINT nLen=m_VerbCombo.GetLBTextLen(nSelection);
+				UINT nLen=(UINT)m_VerbCombo.GetLBTextLen(nSelection);
 				pAction->m_szVerb=new WCHAR[nLen+1];
 				m_VerbCombo.GetLBText(nSelection,pAction->m_szVerb);
 			}

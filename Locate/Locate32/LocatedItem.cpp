@@ -1288,13 +1288,13 @@ void CLocatedItem::ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
 	if (szTitle!=szName && szTitle!=NULL)
 	{
 		WCHAR* pTemp=szTitle;
-		InterlockedExchangePointer(&szTitle,NULL);
+		InterlockedExchangePointer((PVOID*)&szTitle,NULL);
 		delete[] pTemp;
 	}
 
-	InterlockedExchangePointer(&szName,szNewPath+dwDirectoryLen);
+	InterlockedExchangePointer((PVOID*)&szName,szNewPath+dwDirectoryLen);
 	bNameLength=iLength;
-	InterlockedExchangePointer(&szPath,szNewPath);
+	InterlockedExchangePointer((PVOID*)&szPath,szNewPath);
 	
 	// Finding extension
 	for (bExtensionPos=bNameLength-1; szName[bExtensionPos-1]!=L'.' && bExtensionPos>0 ;bExtensionPos--);

@@ -299,14 +299,14 @@ DWORD CShortcut::GetData(BYTE* _pData) const
 	{
 		if (m_pClass!=NULL && m_pClass!=LPSTR(-1))
 		{
-			dwUsed=istrlen(m_pClass)+1;
+			dwUsed=DWORD(istrlen(m_pClass)+1);
 			CopyMemory(pData,m_pClass,dwUsed);
 			pData+=dwUsed;
 		}
 
 		if (m_pTitle!=NULL)
 		{
-            dwUsed=istrlen(m_pTitle)+1;
+            dwUsed=DWORD(istrlen(m_pTitle)+1);
 			CopyMemory(pData,m_pTitle,dwUsed);
 			pData+=dwUsed;
 		}
@@ -327,10 +327,10 @@ DWORD CShortcut::GetDataLength() const
 	if ((m_dwFlags&sfKeyTypeMask)!=sfLocal)
 	{
 		if (m_pClass!=NULL && m_pClass!=LPSTR(-1))
-			dwLen+=istrlen(m_pClass)+1;
+			dwLen+=DWORD(istrlen(m_pClass)+1);
 
 		if (m_pTitle!=NULL)
-			dwLen+=istrlen(m_pTitle)+1;
+			dwLen+=DWORD(istrlen(m_pTitle)+1);
 	}
 
 	for (int i=0;i<m_apActions.GetSize();i++)
@@ -678,13 +678,13 @@ DWORD CSubAction::GetData(DWORD nAction,BYTE* pData_,BOOL bHeader) const
 	case CAction::ResultListItems:
 		if (m_nResultList==Execute && m_szVerb!=NULL)
 		{
-			DWORD dwUsed=istrlenw(m_szVerb)+1;
+			DWORD dwUsed=DWORD(istrlenw(m_szVerb)+1);
 			MemCopyW(pData,m_szVerb,dwUsed);
 			pData+=dwUsed*2;
 		}
 		else if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
 		{
-			DWORD dwUsed=istrlenw(m_szCommand)+1;
+			DWORD dwUsed=DWORD(istrlenw(m_szCommand)+1);
 			MemCopyW(pData,m_szCommand,dwUsed);
 			pData+=dwUsed*2;
 		}
@@ -698,7 +698,7 @@ DWORD CSubAction::GetData(DWORD nAction,BYTE* pData_,BOOL bHeader) const
 		}
 		else if (m_nMisc==ExecuteCommandMisc && m_szCommand!=NULL)
 		{
-			DWORD dwUsed=istrlenw(m_szCommand)+1;
+			DWORD dwUsed=DWORD(istrlenw(m_szCommand)+1);
 			MemCopyW(pData,m_szCommand,dwUsed);
 			pData+=dwUsed*2;
 		}
@@ -707,7 +707,7 @@ DWORD CSubAction::GetData(DWORD nAction,BYTE* pData_,BOOL bHeader) const
 	case CAction::ChangeValue:
 		if (m_szPreset!=NULL)
 		{
-			DWORD dwUsed=istrlenw(m_szPreset)+1;
+			DWORD dwUsed=DWORD(istrlenw(m_szPreset)+1);
 			MemCopyW(pData,m_szPreset,dwUsed);
 			pData+=dwUsed*2;
 		}
@@ -814,7 +814,7 @@ char CShortcut::GetMnemonicForAction(HWND* hDialogs) const
 				HWND hControl=::GetDlgItem(hDialogs[j],HIWORD(pAction->m_nControl));
 				if (hControl!=NULL)
 				{
-					DWORD dwTextLen=::SendMessage(hControl,WM_GETTEXTLENGTH,0,0);
+					SIZE_T dwTextLen=::SendMessage(hControl,WM_GETTEXTLENGTH,0,0);
 					char* pText=new char[dwTextLen+2];
 					::SendMessage(hControl,WM_GETTEXT,dwTextLen+2,LPARAM(pText));
 
@@ -1231,16 +1231,16 @@ void CSubAction::DoMisc()
 		hWnd=*GetLocateAppWnd();
 	else if (strncmp(m_pSendMessage->szWindow,"Find",4)==0)
 	{
-		int nIndex=FirstCharIndex(m_pSendMessage->szWindow,'(');
+		int nIndex=(int)FirstCharIndex(m_pSendMessage->szWindow,'(');
 		if (nIndex!=-1)
 		{
 			LPCSTR pText=m_pSendMessage->szWindow+nIndex+1;
 			LPSTR pClassAndWindow[3]={NULL,NULL,NULL};
 			
-			nIndex=FirstCharIndex(pText,',');
+			nIndex=(int)FirstCharIndex(pText,',');
 			if (nIndex==-1)
 			{
-				nIndex=FirstCharIndex(pText,')');
+				nIndex=(int)FirstCharIndex(pText,')');
 				if (nIndex==-1)
 					pClassAndWindow[0]=alloccopy(pText);
 				else
@@ -1251,7 +1251,7 @@ void CSubAction::DoMisc()
 				pClassAndWindow[0]=alloccopy(pText,nIndex);
 				pText+=nIndex+1;
 
-				nIndex=FirstCharIndex(pText,')');
+				nIndex=(int)FirstCharIndex(pText,')');
 				pClassAndWindow[1]=alloccopy(pText,nIndex);
 			}
 
@@ -1282,7 +1282,7 @@ void CSubAction::DoMisc()
 			}
 			else if (m_pSendMessage->szWParam[1]!='\0')
 			{
-				DWORD dwLength;
+				SIZE_T dwLength;
 				wParam=(WPARAM)dataparser(m_pSendMessage->szWParam,istrlen(m_pSendMessage->szWParam),gmalloc,&dwLength);
 				*((BYTE*)wParam+dwLength)=0;
 				bFreeWParam=TRUE;
@@ -1290,7 +1290,7 @@ void CSubAction::DoMisc()
 		}
 		else if ((wParam=atoi(m_pSendMessage->szWParam))==0)
 		{
-			DWORD dwLength;
+			SIZE_T dwLength;
 			wParam=(WPARAM)dataparser(m_pSendMessage->szWParam,istrlen(m_pSendMessage->szWParam),gmalloc,&dwLength);
 			*((BYTE*)wParam+dwLength)=0;
 			bFreeWParam=TRUE;
@@ -1311,7 +1311,7 @@ void CSubAction::DoMisc()
 			}
 			else if (m_pSendMessage->szLParam[1]!='\0')
 			{
-				DWORD dwLength;
+				SIZE_T dwLength;
 				lParam=(WPARAM)dataparser(m_pSendMessage->szLParam,istrlen(m_pSendMessage->szLParam),gmalloc,&dwLength);
 				*((BYTE*)lParam+dwLength)=0;
 				bFreeLParam=TRUE;
@@ -1319,7 +1319,7 @@ void CSubAction::DoMisc()
 		}
 		else if ((lParam=atoi(m_pSendMessage->szLParam))==0)
 		{
-			DWORD dwLength;
+			SIZE_T dwLength;
 			lParam=(WPARAM)dataparser(m_pSendMessage->szLParam,istrlen(m_pSendMessage->szLParam),gmalloc,&dwLength);
 			*((BYTE*)lParam+dwLength)=0;
             bFreeLParam=TRUE;

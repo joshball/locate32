@@ -192,7 +192,7 @@ void CAboutDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 	font.DeleteObject();
 }
 
-BOOL CAboutDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT CAboutDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	switch (msg)
 	{

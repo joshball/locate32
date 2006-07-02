@@ -1245,7 +1245,7 @@ LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData)
 	}
 }
 	
-DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,SIZE_T cbData) const
+DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,DWORD cbData) const
 {
 	if (IsUnicodeSystem())
 	{
@@ -1327,7 +1327,7 @@ DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,SIZE_T cbData) cons
 
 
 
-LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData,SIZE_T cbDataAsChars,DWORD dwType)
+LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData,DWORD cbDataAsChars,DWORD dwType)
 {
 	if (IsUnicodeSystem())
 	{

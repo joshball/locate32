@@ -102,9 +102,9 @@ public:
 
 public:
 	BOOL SetText(LPCSTR lpszText,int nPane,int nType);
-	BOOL GetText(CString& sText,int nPane,int* pType=NULL) const;
-	int GetText(LPSTR lpszText,int nPane,int* pType=NULL) const;
-	int GetTextLength(int nPane,int* pType=NULL) const;
+	SIZE_T GetText(CString& sText,int nPane,int* pType=NULL) const;
+	SIZE_T GetText(LPSTR lpszText,int nPane,int* pType=NULL) const;
+	SIZE_T GetTextLength(int nPane,int* pType=NULL) const;
 	BOOL SetParts(int nParts,int* pWidths);
 	int GetParts(int nParts,int* pParts) const;
 	BOOL GetBorders(int* pBorders) const;
@@ -115,16 +115,16 @@ public:
 	BOOL SetIcon(int nPane,HICON hIcon);
 	HICON GetIcon(int nPane) const;
 	BOOL SetTipText(int n,LPCSTR szText);
-	BOOL GetTipText(int n,LPSTR szText,SIZE_T nBufLen) const;
+	SIZE_T GetTipText(int n,LPSTR szText,SIZE_T nBufLen) const;
 	BOOL SetUnicodeFormat(int nFormat);
 	BOOL GetUnicodeFormat() const;
 
 #ifdef DEF_WCHAR
 	BOOL SetText(LPCWSTR lpszText,int nPane,int nType);
-	BOOL GetText(CStringW& sText,int nPane,int* pType=NULL) const;
-	int GetText(LPWSTR lpszText,int nPane,int* pType=NULL) const;
+	SIZE_T GetText(CStringW& sText,int nPane,int* pType=NULL) const;
+	SIZE_T GetText(LPWSTR lpszText,int nPane,int* pType=NULL) const;
 	BOOL SetTipText(int n,LPCWSTR szText);
-	BOOL GetTipText(int n,LPWSTR szText,SIZE_T nBufLen) const;
+	SIZE_T GetTipText(int n,LPWSTR szText,SIZE_T nBufLen) const;
 #endif
 
 };
@@ -492,8 +492,8 @@ public:
 	int GetItemText(int nItem, int nSubItem, LPSTR lpszText, int nLen) const;
 	BOOL SetItemText(int nItem, int nSubItem, LPCSTR lpszText);
 	void SetItemCount(int nItems,DWORD dwFlags=0);
-	BOOL SetItemData(int nItem, DWORD dwData);
-	DWORD GetItemData(int nItem) const;
+	BOOL SetItemData(int nItem, DWORD_PTR dwData);
+	DWORD_PTR GetItemData(int nItem) const;
 	UINT GetSelectedCount() const;
 
 	int InsertItem(const LV_ITEM* pItem);
@@ -641,7 +641,7 @@ public:
 	CString GetItemText(HTREEITEM hItem) const;
 	BOOL GetItemImage(HTREEITEM hItem,int& nImage, int& nSelectedImage) const;
 	UINT GetItemState(HTREEITEM hItem,UINT nStateMask) const;
-	DWORD GetItemData(HTREEITEM hItem) const;
+	DWORD_PTR GetItemData(HTREEITEM hItem) const;
 	BOOL SetItem(TV_ITEM* pItem);
 	BOOL SetItem(TV_ITEMW* pItem);
 	BOOL SetItem(HTREEITEM hItem,UINT nMask,LPCSTR lpszItem,int nImage,
@@ -652,7 +652,7 @@ public:
 	BOOL SetItemText(HTREEITEM hItem,LPCWSTR lpszItem);
 	BOOL SetItemImage(HTREEITEM hItem,int nImage,int nSelectedImage);
 	BOOL SetItemState(HTREEITEM hItem,UINT nState,UINT nStateMask);
-	BOOL SetItemData(HTREEITEM hItem,DWORD dwData);
+	BOOL SetItemData(HTREEITEM hItem,DWORD_PTR dwData);
 	BOOL ItemHasChildren(HTREEITEM hItem) const;
 	HWND GetEditControl() const;
 	UINT GetVisibleCount() const;
@@ -724,8 +724,8 @@ public:
 	BOOL SetItemText(int nItem,LPCSTR lpszText);
 	BOOL SetItemText(int nItem,LPCWSTR lpszText);
 	
-	DWORD GetItemData(int nIndex) const;
-	int SetItemData(int nIndex, DWORD dwItemData);
+	DWORD_PTR GetItemData(int nIndex) const;
+	int SetItemData(int nIndex, DWORD_PTR dwItemData);
 	void* GetItemDataPtr(int nIndex) const;
 
 	DWORD GetStyle() const { return ::GetWindowLong(CCommonCtrl::m_hWnd,GWL_STYLE); }

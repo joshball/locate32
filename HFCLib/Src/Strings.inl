@@ -328,6 +328,42 @@ inline CHAR CString::GetAt(ULONG_PTR nIndex) const
 		return 0;
 }
 
+
+
+inline CHAR CString::operator[](int nIndex) const
+{
+	if (nIndex>=0 && (SIZE_T)nIndex<m_nAllocLen && m_pData!=NULL)
+		return m_pData[nIndex];
+	else
+		return 0;
+}
+
+inline CHAR CString::operator[](LONG nIndex) const
+{
+	if (nIndex>=0 && (SIZE_T)nIndex<m_nAllocLen && m_pData!=NULL)
+		return m_pData[nIndex];
+	else
+		return 0;
+}
+
+
+inline CHAR CString::operator[](DWORD nIndex) const
+{
+	if ((SIZE_T)nIndex<m_nAllocLen && m_pData!=NULL)
+		return m_pData[nIndex];
+	else
+		return 0;
+}
+
+inline CHAR CString::operator[](UINT nIndex) const
+{
+	if ((SIZE_T)nIndex<m_nAllocLen && m_pData!=NULL)
+		return m_pData[nIndex];
+	else
+		return 0;
+}
+
+#ifdef _WIN64
 inline CHAR CString::operator[](ULONG_PTR nIndex) const
 {
 	if (nIndex<m_nAllocLen && m_pData!=NULL)
@@ -338,30 +374,12 @@ inline CHAR CString::operator[](ULONG_PTR nIndex) const
 
 inline CHAR CString::operator[](LONG_PTR nIndex) const
 {
-	if ((ULONG_PTR)nIndex<m_nAllocLen && m_pData!=NULL)
+	if (nIndex>=0 && (ULONG_PTR)nIndex<m_nAllocLen && m_pData!=NULL)
 		return m_pData[nIndex];
 	else
 		return 0;
 }
-
-inline CHAR CString::operator[](int nIndex) const
-{
-	if (nIndex>=0 && (DWORD)nIndex<m_nAllocLen && m_pData!=NULL)
-		return m_pData[nIndex];
-	else
-		return 0;
-}
-
-
-
-
-inline CHAR CString::operator[](UINT nIndex) const
-{
-	if (nIndex>=0 && (DWORD)nIndex<m_nAllocLen && m_pData!=NULL)
-		return m_pData[nIndex];
-	else
-		return 0;
-}
+#endif
 
 #ifdef DEF_WCHAR
 inline const CString& CString::operator=(LPCWSTR str)
@@ -380,7 +398,7 @@ inline const CString& CString::operator=(unsigned char * str)
 	return Copy(str);
 }
 
-inline void CString::SetAt(DWORD nIndex,CHAR ch)
+inline void CString::SetAt(ULONG_PTR nIndex,CHAR ch)
 {
 	if (nIndex<m_nAllocLen)
 		m_pData[nIndex]=ch;
@@ -478,7 +496,7 @@ inline BOOL CString::operator==(LPCWSTR str)
 }
 #endif
 
-inline CString CString::Mid(DWORD nFirst,DWORD nCount) const
+inline CString CString::Mid(ULONG_PTR nFirst,SIZE_T nCount) const
 {
 	if (nFirst+nCount<m_nDataLen)
 		return CString (&m_pData[nFirst],nCount);
@@ -486,7 +504,7 @@ inline CString CString::Mid(DWORD nFirst,DWORD nCount) const
 		return CString (&m_pData[m_nDataLen-nCount]);
 }
 
-inline CString CString::Mid(DWORD nFirst) const
+inline CString CString::Mid(ULONG_PTR nFirst) const
 {
 	if (m_nDataLen>nFirst)
 		return CString(&m_pData[nFirst]);
@@ -494,12 +512,12 @@ inline CString CString::Mid(DWORD nFirst) const
 		return CString(&m_pData[m_nDataLen]);
 }
 
-inline CString CString::Left(DWORD nCount) const
+inline CString CString::Left(SIZE_T nCount) const
 {
 	return CString(m_pData,nCount);
 }
 
-inline CString CString::Right(DWORD nCount) const
+inline CString CString::Right(SIZE_T nCount) const
 {
 	return CString(&m_pData[m_nDataLen-nCount]);
 }
@@ -596,13 +614,7 @@ inline WCHAR CStringW::GetAt(DWORD nIndex) const
 		return 0;
 }
 
-inline WCHAR CStringW::operator[](DWORD nIndex) const
-{
-	if (nIndex<m_nAllocLen && m_pData!=NULL)
-		return m_pData[nIndex];
-	else
-		return 0;
-}
+
 
 inline WCHAR CStringW::operator[](int nIndex) const
 {
@@ -612,7 +624,7 @@ inline WCHAR CStringW::operator[](int nIndex) const
 		return 0;
 }
 
-inline WCHAR CStringW::operator[](UINT nIndex) const
+inline WCHAR CStringW::operator[](LONG nIndex) const
 {
 	if (nIndex>=0 && (DWORD)nIndex<m_nAllocLen && m_pData!=NULL)
 		return m_pData[nIndex];
@@ -620,7 +632,42 @@ inline WCHAR CStringW::operator[](UINT nIndex) const
 		return 0;
 }
 
-inline void CStringW::SetAt(DWORD nIndex,WCHAR ch)
+inline WCHAR CStringW::operator[](DWORD nIndex) const
+{
+	if ((DWORD)nIndex<m_nAllocLen && m_pData!=NULL)
+		return m_pData[nIndex];
+	else
+		return 0;
+}
+
+
+inline WCHAR CStringW::operator[](UINT nIndex) const
+{
+	if ((DWORD)nIndex<m_nAllocLen && m_pData!=NULL)
+		return m_pData[nIndex];
+	else
+		return 0;
+}
+
+#ifdef _WIN64
+inline WCHAR CStringW::operator[](ULONG_PTR nIndex) const
+{
+	if (nIndex<m_nAllocLen && m_pData!=NULL)
+		return m_pData[nIndex];
+	else
+		return 0;
+}
+
+inline WCHAR CStringW::operator[](LONG_PTR nIndex) const
+{
+	if (nIndex>=0 && (SIZE_T)nIndex<m_nAllocLen && m_pData!=NULL)
+		return m_pData[nIndex];
+	else
+		return 0;
+}
+#endif
+
+inline void CStringW::SetAt(ULONG_PTR nIndex,WCHAR ch)
 {
 	if (nIndex<m_nAllocLen)
 		m_pData[nIndex]=ch;
@@ -721,7 +768,7 @@ inline BOOL CStringW::operator==(LPCSTR str)
 	return (Compare(str)==0);
 }
 
-inline CStringW CStringW::Mid(DWORD nFirst,DWORD nCount) const
+inline CStringW CStringW::Mid(ULONG_PTR nFirst,SIZE_T nCount) const
 {
 	if (nFirst+nCount<m_nDataLen)
 		return CStringW (&m_pData[nFirst],nCount);
@@ -729,7 +776,7 @@ inline CStringW CStringW::Mid(DWORD nFirst,DWORD nCount) const
 		return CStringW (&m_pData[m_nDataLen-nCount]);
 }
 
-inline CStringW CStringW::Mid(DWORD nFirst) const
+inline CStringW CStringW::Mid(ULONG_PTR nFirst) const
 {
 	if (m_nDataLen>nFirst)
 		return CStringW(&m_pData[nFirst]);
@@ -737,12 +784,12 @@ inline CStringW CStringW::Mid(DWORD nFirst) const
 		return CStringW(&m_pData[m_nDataLen]);
 }
 
-inline CStringW CStringW::Left(DWORD nCount) const
+inline CStringW CStringW::Left(SIZE_T nCount) const
 {
 	return CStringW(m_pData,nCount);
 }
 
-inline CStringW CStringW::Right(DWORD nCount) const
+inline CStringW CStringW::Right(SIZE_T nCount) const
 {
 	return CStringW(&m_pData[m_nDataLen-nCount]);
 }
@@ -825,10 +872,6 @@ inline W2A::W2A(LPCWSTR sA,SIZE_T len)
 	pAStr=alloccopyWtoA(sA,len);
 }
 
-inline W2A::W2A(LPCWSTR sA,int len)
-{
-	pAStr=alloccopyWtoA(sA,len);
-}
 
 inline W2A::W2A(CStringW& sA)
 {
@@ -856,10 +899,6 @@ inline A2W::A2W(LPCSTR sA,SIZE_T len)
 	pWStr=alloccopyAtoW(sA,len);
 }
 
-inline A2W::A2W(LPCSTR sA,int len)
-{
-	pWStr=alloccopyAtoW(sA,len);
-}
 
 inline A2W::A2W(CString& sA)
 {

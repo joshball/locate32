@@ -11,8 +11,8 @@ int strcasecmp(LPCSTR s1,LPCSTR s2)
 {
 	CHAR *tmp1,*tmp2;	
 	int ret;
-	size_t nLen1=istrlen(s1);
-	size_t nLen2=istrlen(s2);
+	DWORD nLen1=(DWORD)istrlen(s1);
+	DWORD nLen2=(DWORD)istrlen(s2);
 	
 	tmp1=new CHAR[nLen1+2];
 	if (tmp1==NULL)
@@ -38,8 +38,8 @@ int strcasecmp(LPCWSTR s1,LPCWSTR s2)
 {
 	WCHAR *tmp1,*tmp2;	
 	int ret;
-	size_t nLen1=istrlenw(s1);
-	size_t nLen2=istrlenw(s2);
+	DWORD nLen1=(DWORD)istrlenw(s1);
+	DWORD nLen2=(DWORD)istrlenw(s2);
 	
 	tmp1=new WCHAR[nLen1+2];
 	if (tmp1==NULL)
@@ -955,7 +955,7 @@ int vsprintfex( char *buffer, SIZE_T buffersize,const char *format, va_list argL
 				pTemp[length+1]='\0';
 				if (StringCbPrintfExA(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg))!=S_OK)
 					return 0;
-                ptr=end-buffer;
+                ptr=int(end-buffer);
 				delete[] pTemp;
 
 				if (in[length]=='\0')
@@ -975,7 +975,7 @@ int vsprintfex( char *buffer, SIZE_T buffersize,const char *format, va_list argL
 				pTemp[index+1]='\0';
 				if (StringCbPrintfExA(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg))!=S_OK)
 					return 0;
-                ptr=end-buffer;
+                ptr=int(end-buffer);
 				delete[] pTemp;
 				
 				if (in[index]=='\0')
@@ -1027,7 +1027,7 @@ int vswprintfex( wchar_t *buffer, SIZE_T buffersize, const wchar_t *format, va_l
 				pTemp[length+1]=L'\0';
 				if (StringCbPrintfExW(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg))!=S_OK)
 					return 0;
-                ptr=end-buffer;
+                ptr=int(end-buffer);
 				delete[] pTemp;
 
 				if (in[length]==L'\0')
@@ -1049,7 +1049,7 @@ int vswprintfex( wchar_t *buffer, SIZE_T buffersize, const wchar_t *format, va_l
                 
 				if (StringCbPrintfExW(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg))!=S_OK)
 					return 0;
-                ptr=end-buffer;
+                ptr=int(end-buffer);
 
 				delete[] pTemp;
 				

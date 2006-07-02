@@ -317,7 +317,7 @@ inline HGDIOBJ CDC::SelectObject(HGDIOBJ hGdiObj)
 
 inline int CDC::SelectRegion(HRGN hRgn)
 {
-	return (int)::SelectObject(m_hDC,hRgn);
+	return (int)(LONGLONG)::SelectObject(m_hDC,hRgn);
 }
 
 inline void CDC::SetWindow(HWND hWnd)
@@ -1313,7 +1313,7 @@ inline BOOL CWnd::Create(LPCTSTR lpszClassName,
 {
 	return (m_hWnd=CreateWindow(lpszClassName,lpszWindowName,
 		dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline BOOL CWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
@@ -1323,7 +1323,7 @@ inline BOOL CWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
 {
 	return (m_hWnd=CreateWindowEx(dwExStyle,lpszClassName,
 		lpszWindowName,dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),lpParam))!=NULL;
+		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),lpParam))!=NULL;
 }
 
 inline int CWnd::GetWindowText(CStringA& str) const

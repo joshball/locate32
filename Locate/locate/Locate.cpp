@@ -315,7 +315,7 @@ int wmain (int argc,wchar_t * argv[])
 	DWORD dwFlags=LOCATE_FILENAMES|LOCATE_CONTAINTEXTISMATCHCASE;
 	DWORD dwExtraFlags=0;
 	BYTE* pContainData=NULL;
-	DWORD dwContainDataLength=0;
+	SIZE_T dwContainDataLength=0;
 
 	CStringW String;
 	CArrayFAP<LPWSTR> aDirectories;
@@ -567,7 +567,7 @@ int wmain (int argc,wchar_t * argv[])
 				{
 					const WCHAR* lpCmdLine=argv[i]+3;
 
-					int nLength=istrlenw(lpCmdLine);
+					int nLength=(int)istrlenw(lpCmdLine);
 					if (nLength<7)
                         break;
 					WCHAR szBuf[]=L"XX";
@@ -696,7 +696,7 @@ int wmain (int argc,wchar_t * argv[])
 	{
 		CDatabase* pDatabase=CDatabase::FromOldStyleDatabase(HKCU,"Software\\Update\\Database");
 		if (pDatabase==NULL)
-			pDatabase=CDatabase::FromDefaults(TRUE,argv[0],LastCharIndex(argv[0],'\\')+1); // Nothing else can be done?
+			pDatabase=CDatabase::FromDefaults(TRUE,argv[0],(int)LastCharIndex(argv[0],'\\')+1); // Nothing else can be done?
 		aDatabases.Add(pDatabase);
 	}
 	CDatabase::CheckValidNames(aDatabases);
@@ -719,7 +719,7 @@ int wmain (int argc,wchar_t * argv[])
    
 	CLocater locater(aDatabases);
 	locater.SetSizeAndDate(dwFlags,dwMinSize,dwMaxSize,wMinDate,wMaxDate);
-	locater.SetAdvanced(dwFlags,pContainData,dwContainDataLength,dwMaxFoundFiles);
+	locater.SetAdvanced(dwFlags,pContainData,(DWORD)min(dwContainDataLength,MAXDWORD),dwMaxFoundFiles);
 
 	locater.SetFunctions(LocateProc,LocateFoundProc,LocateFoundProcW,NULL);
 
@@ -745,7 +745,7 @@ int wmain (int argc,wchar_t * argv[])
 	}
 	else if (!String.IsEmpty())
 	{
-		int nIndex=String.FindFirst(',');
+		int nIndex=(int)String.FindFirst(',');
 		if (nIndex==-1)
 		{
 			// Inserting '*':s if needed
@@ -784,7 +784,7 @@ int wmain (int argc,wchar_t * argv[])
 				if (nIndex==-1)
 				{
 					bContinue=FALSE;
-					nIndex=istrlenw(pStr);
+					nIndex=(int)istrlenw(pStr);
 				}
 
 				if (nIndex>0)
@@ -824,7 +824,7 @@ int wmain (int argc,wchar_t * argv[])
 					}
 
 					pStr+=nIndex+1;
-					nIndex=FirstCharIndex(pStr,',');
+					nIndex=(int)FirstCharIndex(pStr,',');
 				}
 			
 			}

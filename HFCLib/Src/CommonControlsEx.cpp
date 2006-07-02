@@ -709,7 +709,7 @@ LRESULT CALLBACK CListCtrlEx::SubclassProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPA
 	{
 		nm.hwndFrom=hwnd;
 		nm.idFrom=::GetWindowLong(hwnd,GWL_ID);
-		::SendMessage((HWND)::GetWindowLongPtr(hwnd,GWL_HWNDPARENT),WM_NOTIFY,nm.idFrom,(LPARAM)&nm);	
+		::SendMessage((HWND)::GetWindowLongPtr(hwnd,GWLP_HWNDPARENT),WM_NOTIFY,nm.idFrom,(LPARAM)&nm);	
 	}
 	return lRes;
 }

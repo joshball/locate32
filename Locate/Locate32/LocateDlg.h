@@ -40,9 +40,9 @@ public:
 	int GetTopIndex() const;
 	int SetTopIndex(int nIndex);
 	
-	int GetLBText(int nIndex, LPSTR lpszText) const;
-	int GetLBText(int nIndex, CStringA& rString) const;
-	int GetLBTextLen(int nIndex) const;
+	SIZE_T GetLBText(int nIndex, LPSTR lpszText) const;
+	SIZE_T GetLBText(int nIndex, CStringA& rString) const;
+	SIZE_T GetLBTextLen(int nIndex) const;
 
 	int FindStringExact(int nIndexStart, LPCSTR lpszFind) const;
 	BOOL GetDroppedState() const;
@@ -60,8 +60,8 @@ public:
 	BOOL HandleOnCommand(WORD wNotifyCode);
 
 #ifdef DEF_WCHAR
-	int GetLBText(int nIndex, LPWSTR lpszText) const;
-	int GetLBText(int nIndex, CStringW& rString) const;
+	SIZE_T GetLBText(int nIndex, LPWSTR lpszText) const;
+	SIZE_T GetLBText(int nIndex, CStringW& rString) const;
 	int FindStringExact(int nIndexStart, LPCWSTR lpszFind) const;
 	int AddString(LPCWSTR lpszString);
 	int InsertString(int nIndex, LPCWSTR lpszString);
@@ -335,7 +335,7 @@ public:
 		virtual void OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis);
 		virtual void OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpMeasureItemStruct);
 		virtual void OnDestroy();
-		virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+		virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 		
 		BOOL IsChanged();
 		void HilightTab(BOOL bHilight);
@@ -487,7 +487,7 @@ public:
 	virtual void OnTimer(DWORD wTimerID); 
 	virtual void OnContextMenu(HWND hWnd,CPoint& pos);
 	virtual void OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpMeasureItemStruct);
-	virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 	
 	void OnInitMainMenu(HMENU hPopupMenu,UINT nIndex);
 	void OnInitFileMenu(HMENU hPopupMenu);

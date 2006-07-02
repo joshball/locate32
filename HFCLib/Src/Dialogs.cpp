@@ -50,7 +50,7 @@ BOOL CDialog::OnInitDialog(HWND hwndFocus)
 	return FALSE;
 }
 
-BOOL CDialog::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT CDialog::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 {
 #ifdef _DEBUG
 	void DebugCommandsProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
@@ -96,7 +96,7 @@ void CPropertyPage::Construct(UINT nIDCaption,TypeOfResourceHandle bType)
 {
 	if (IsUnicodeSystem())
 	{
-		iMemSet(&m_pspw,0,sizeof(PROPSHEETPAGEW));
+		ZeroMemory(&m_pspw,sizeof(PROPSHEETPAGEW));
 		m_pspw.dwSize=sizeof(PROPSHEETPAGEW);
 		m_pspw.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
 		if (m_lpszTemplateNameW!=NULL)
@@ -116,7 +116,7 @@ void CPropertyPage::Construct(UINT nIDCaption,TypeOfResourceHandle bType)
 	}
 	else
 	{
-		iMemSet(&m_psp,0,sizeof(PROPSHEETPAGE));
+		ZeroMemory(&m_psp,sizeof(PROPSHEETPAGE));
 		m_psp.dwSize=sizeof(PROPSHEETPAGE);
 		m_psp.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
 		if (m_lpszTemplateName!=NULL)
@@ -140,7 +140,7 @@ void CPropertyPage::Construct(LPCSTR szTitle,TypeOfResourceHandle bType)
 {
 	if (IsUnicodeSystem())
 	{
-		iMemSet(&m_pspw,0,sizeof(PROPSHEETPAGEW));
+		ZeroMemory(&m_pspw,sizeof(PROPSHEETPAGEW));
 		m_pspw.dwSize=sizeof(PROPSHEETPAGEW);
 		m_pspw.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
 		if (m_lpszTemplateNameW!=NULL)
@@ -157,7 +157,7 @@ void CPropertyPage::Construct(LPCSTR szTitle,TypeOfResourceHandle bType)
 	}
 	else
 	{
-		iMemSet(&m_psp,0,sizeof(PROPSHEETPAGE));
+		ZeroMemory(&m_psp,sizeof(PROPSHEETPAGE));
 		m_psp.dwSize=sizeof(PROPSHEETPAGE);
 		m_psp.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
 		if (m_lpszTemplateName!=NULL)
@@ -178,7 +178,7 @@ void CPropertyPage::Construct(LPCWSTR szTitle,TypeOfResourceHandle bType)
 {
 	if (IsUnicodeSystem())
 	{
-		iMemSet(&m_pspw,0,sizeof(PROPSHEETPAGEW));
+		ZeroMemory(&m_pspw,sizeof(PROPSHEETPAGEW));
 		m_pspw.dwSize=sizeof(PROPSHEETPAGEW);
 		m_pspw.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
 		if (m_lpszTemplateNameW!=NULL)
@@ -195,7 +195,7 @@ void CPropertyPage::Construct(LPCWSTR szTitle,TypeOfResourceHandle bType)
 	}
 	else
 	{
-		iMemSet(&m_psp,0,sizeof(PROPSHEETPAGE));
+		ZeroMemory(&m_psp,sizeof(PROPSHEETPAGE));
 		m_psp.dwSize=sizeof(PROPSHEETPAGE);
 		m_psp.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
 		if (m_lpszTemplateName!=NULL)
@@ -322,7 +322,7 @@ BOOL CPropertyPage::OnNotify(int idCtrl,LPNMHDR pnmh)
 	default:
 		return FALSE;
 	}
-	::SetWindowLong(m_hWnd,DWL_MSGRESULT,ret);
+	::SetWindowLongPtr(m_hWnd,DWLP_MSGRESULT,(ULONG_PTR)ret);
 	return TRUE;
 }
 
@@ -357,7 +357,7 @@ void CPropertySheet::Construct(LPCSTR pszCaption,HWND hParentWnd,UINT iSelectPag
 {
 	if (IsUnicodeSystem())
 	{
-		iMemSet(&m_pshw,0,sizeof(PROPSHEETHEADERW));
+		ZeroMemory(&m_pshw,sizeof(PROPSHEETHEADERW));
 		m_pshw.dwSize=PROPSHEETHEADERW_V1_SIZE; //sizeof(PROPSHEETHEADER);
 		
 		if (pszCaption!=NULL)
@@ -372,7 +372,7 @@ void CPropertySheet::Construct(LPCSTR pszCaption,HWND hParentWnd,UINT iSelectPag
 	}
 	else
 	{
-		iMemSet(&m_psh,0,sizeof(PROPSHEETHEADER));
+		ZeroMemory(&m_psh,sizeof(PROPSHEETHEADER));
 		m_psh.dwSize=PROPSHEETHEADER_V1_SIZE; //sizeof(PROPSHEETHEADER);
 		
 		if (pszCaption!=NULL)
@@ -391,7 +391,7 @@ void CPropertySheet::Construct(LPCWSTR pszCaption,HWND hParentWnd,UINT iSelectPa
 {
 	if (IsUnicodeSystem())
 	{
-		iMemSet(&m_pshw,0,sizeof(PROPSHEETHEADERW));
+		ZeroMemory(&m_pshw,sizeof(PROPSHEETHEADERW));
 		m_pshw.dwSize=PROPSHEETHEADERW_V1_SIZE; //sizeof(PROPSHEETHEADER);
 		
 		if (pszCaption!=NULL)
@@ -406,7 +406,7 @@ void CPropertySheet::Construct(LPCWSTR pszCaption,HWND hParentWnd,UINT iSelectPa
 	}
 	else
 	{
-		iMemSet(&m_psh,0,sizeof(PROPSHEETHEADERW));
+		ZeroMemory(&m_psh,sizeof(PROPSHEETHEADERW));
 		m_psh.dwSize=PROPSHEETHEADER_V1_SIZE; //sizeof(PROPSHEETHEADER);
 		
 		if (pszCaption!=NULL)
@@ -461,7 +461,7 @@ int CPropertySheet::GetPageIndex(CPropertyPage* pPage)
 BOOL CPropertySheet::SetActivePage(int nPage)
 {
 	if (m_hWnd!=NULL)
-		return ::SendMessage(m_hWnd,PSM_SETCURSEL,nPage,NULL);
+		return (BOOL)::SendMessage(m_hWnd,PSM_SETCURSEL,nPage,NULL);
 	m_psh.nStartPage=nPage;
 	return FALSE;
 }
@@ -469,7 +469,7 @@ BOOL CPropertySheet::SetActivePage(int nPage)
 BOOL CPropertySheet::SetActivePage(CPropertyPage* pPage)
 {
 	if (m_hWnd!=NULL)
-		return ::SendMessage(m_hWnd,PSM_SETCURSEL,0,(LPARAM)pPage->m_hWnd);
+		return (BOOL)::SendMessage(m_hWnd,PSM_SETCURSEL,0,(LPARAM)pPage->m_hWnd);
 	else
 	{
 		for (int i=m_pages.GetSize()-1;i>=0;i--)
@@ -536,7 +536,7 @@ void CPropertySheet::SetTitle(LPCWSTR lpszText,UINT nStyle)
 	}
 }
 
-int CPropertySheet::DoModal()
+INT_PTR CPropertySheet::DoModal()
 {
 	BuildPropPageArray();
 	m_psh.hwndParent=m_hParentWnd;
@@ -609,9 +609,9 @@ BOOL CPropertySheet::OnInitDialog(HWND hwndFocus)
 // Class CInputDialog
 ///////////////////////////
 
-int CInputDialog::DoModal(HWND hWndParent)
+INT_PTR CInputDialog::DoModal(HWND hWndParent)
 {
-	int ret=CDialog::DoModal(hWndParent);
+	INT_PTR ret=CDialog::DoModal(hWndParent);
 	if (ret==IDC_OK)
 		return 1;
 	m_hWnd=NULL;
@@ -658,7 +658,7 @@ void CInputDialog::SetInputText(LPCSTR szText)
 int CInputDialog::GetInputText(LPSTR szText,int nTextLen) const
 {
 	int i=min(nTextLen-1,(int)m_Input.GetLength());
-	iMemCopy(szText,m_Input,i);
+	MemCopy(szText,m_Input,i);
 	szText[i]='\0';
 	return i;
 }
@@ -744,7 +744,7 @@ BOOL CInputDialog::OnClose()
 ///////////////////////////
 
 
-BOOL CALLBACK CAppData::CommonDialogProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
+LRESULT CALLBACK CAppData::CommonDialogProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
 	CCommonDialog* Wnd;
 	if (uMsg==WM_INITDIALOG && lParam!=NULL)
@@ -786,11 +786,11 @@ BOOL CALLBACK CAppData::CommonDialogProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARA
 			return FALSE;
 		
 		Wnd->SetHandle(hWnd);
-		SetWindowLong(hWnd,GWL_USERDATA,(LONG)Wnd);
+		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)Wnd);
 		return Wnd->OnInitDialog((HWND)wParam);
 	}
 	
-	Wnd=(CCommonDialog*)GetWindowLong(hWnd,GWL_USERDATA);
+	Wnd=(CCommonDialog*)GetWindowLongPtr(hWnd,GWLP_USERDATA);
 	if (Wnd!=NULL && uMsg==WM_COMMAND)
 	{
 		switch(LOWORD(wParam))
@@ -847,7 +847,7 @@ void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCST
 			SetHFCError(HFC_CANNOTALLOC);
 			return;
 		}		
-		iMemSet(m_pwofn,0,sizeof(OPENFILENAMEW));
+		ZeroMemory(m_pwofn,sizeof(OPENFILENAMEW));
 		if (GetSystemFeaturesFlag()&(efWin2000|efWinXP))
 		{
 			DebugMessage("CFileDialog::CFileDialog: m_pwofn->lStructSize=sizeof(OPENFILENAMEW)");
@@ -863,7 +863,7 @@ void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCST
 
 		m_pwofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
 		m_pwofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
-		m_pwofn->lCustData=(DWORD)this;
+		m_pwofn->lCustData=(LPARAM)this;
 		m_pwofn->lpstrFileTitle=new WCHAR[65];
 		m_pwofn->lpstrFileTitle[0]='\0';
 		m_pwofn->nMaxFileTitle=64;
@@ -882,7 +882,7 @@ void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCST
 		m_pwofn->lpstrFile=m_pwFileName;
 		if (lpszFileName!=NULL)
 		{
-			int nRet=istrlen(lpszFileName);
+			int nRet=(int)istrlen(lpszFileName);
 			if (nRet>MAX_PATH-2)
 				nRet=MAX_PATH-2;
             
@@ -929,7 +929,7 @@ void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCST
 			SetHFCError(HFC_CANNOTALLOC);
 			return;
 		}		
-		iMemSet(m_pofn,0,sizeof(OPENFILENAME));
+		ZeroMemory(m_pofn,sizeof(OPENFILENAME));
 		if (GetSystemFeaturesFlag()&(efWin2000|efWinXP))
 		{
 			DebugMessage("CFileDialog::CFileDialog: m_pofn->lStructSize=sizeof(OPENFILENAME)");
@@ -945,7 +945,7 @@ void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCST
 
 		m_pofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
 		m_pofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
-		m_pofn->lCustData=(DWORD)this;
+		m_pofn->lCustData=(LPARAM)this;
 		m_pofn->lpstrFileTitle=new char[65];
 		m_pofn->lpstrFileTitle[0]='\0';
 		m_pofn->nMaxFileTitle=64;
@@ -963,7 +963,7 @@ void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCST
 		m_pofn->nMaxFile=MAX_PATH;
 		if (lpszFileName!=NULL)
 		{
-			int nLen=istrlen(lpszFileName);
+			int nLen=(int)istrlen(lpszFileName);
 			if (nLen>=MAX_PATH-1)
 				nLen=MAX_PATH-2;
 			MemCopy(m_pFileName,lpszFileName,nLen+1);
@@ -1019,7 +1019,7 @@ void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPC
 			SetHFCError(HFC_CANNOTALLOC);
 			return;
 		}		
-		iMemSet(m_pwofn,0,sizeof(OPENFILENAMEW));
+		ZeroMemory(m_pwofn,sizeof(OPENFILENAMEW));
 		if (GetSystemFeaturesFlag()&(efWin2000|efWinXP))
 		{
 			DebugMessage("CFileDialog::CFileDialog: m_pwofn->lStructSize=sizeof(OPENFILENAMEW)");
@@ -1035,7 +1035,7 @@ void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPC
 
 		m_pwofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
 		m_pwofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
-		m_pwofn->lCustData=(DWORD)this;
+		m_pwofn->lCustData=(LPARAM)this;
 		m_pwofn->lpstrFileTitle=new WCHAR[65];
 		m_pwofn->lpstrFileTitle[0]='\0';
 		m_pwofn->nMaxFileTitle=64;
@@ -1053,7 +1053,7 @@ void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPC
 		m_pwofn->nMaxFile=MAX_PATH;
 		if (lpszFileName!=NULL)
 		{
-			int nRet=istrlenw(lpszFileName);
+			int nRet=(int)istrlenw(lpszFileName);
 			if (nRet>MAX_PATH-2)
 				nRet=MAX_PATH-2;
 				
@@ -1101,7 +1101,7 @@ void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPC
 			SetHFCError(HFC_CANNOTALLOC);
 			return;
 		}		
-		iMemSet(m_pofn,0,sizeof(OPENFILENAME));
+		ZeroMemory(m_pofn,sizeof(OPENFILENAME));
 		if (GetSystemFeaturesFlag()&(efWin2000|efWinXP))
 		{
 			DebugMessage("CFileDialog::CFileDialog: m_pofn->lStructSize=sizeof(OPENFILENAME)");
@@ -1117,7 +1117,7 @@ void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPC
 
 		m_pofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
 		m_pofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
-		m_pofn->lCustData=(DWORD)this;
+		m_pofn->lCustData=(LPARAM)this;
 		m_pofn->lpstrFileTitle=new char[65];
 		m_pofn->lpstrFileTitle[0]='\0';
 		m_pofn->nMaxFileTitle=64;
@@ -1136,7 +1136,7 @@ void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPC
 		m_pofn->lpstrFile=m_pFileName;
 		if (lpszFileName!=NULL)
 		{
-			int nLen=istrlenw(lpszFileName);
+			int nLen=(int)istrlenw(lpszFileName);
 			if (nLen>=MAX_PATH-1)
 				nLen=MAX_PATH-2;
 			WideCharToMultiByte(CP_ACP,0,lpszFileName,nLen+1,m_pFileName,nLen+1,NULL,NULL);
@@ -1304,7 +1304,7 @@ BOOL CFileDialog::GetFilePath(CString& name) const
 		if (m_hWnd!=NULL)
 		{
 			WCHAR path[MAX_PATH];
-			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
 			if (nRet<0)
 				return FALSE;
 			else
@@ -1318,7 +1318,7 @@ BOOL CFileDialog::GetFilePath(CString& name) const
 		if (m_hWnd!=NULL)
 		{
 			CHAR path[MAX_PATH];
-			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
 			if (nRet<0)
 				return FALSE;
 			else
@@ -1337,7 +1337,7 @@ BOOL CFileDialog::GetFileName(CString& name) const
 		if (m_hWnd!=NULL)
 		{
 			WCHAR path[MAX_PATH];
-			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
 			if (nRet<0)
 				return FALSE;
 			else
@@ -1351,7 +1351,7 @@ BOOL CFileDialog::GetFileName(CString& name) const
 		if (m_hWnd!=NULL)
 		{
 			CHAR path[MAX_PATH];
-			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
 			if (nRet<0)
 				return FALSE;
 			else
@@ -1403,7 +1403,7 @@ BOOL CFileDialog::GetFilePath(CStringW& name) const
 		if (m_hWnd!=NULL)
 		{
 			WCHAR path[MAX_PATH];
-			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
 			if (nRet<0)
 				return FALSE;
 			else
@@ -1417,7 +1417,7 @@ BOOL CFileDialog::GetFilePath(CStringW& name) const
 		if (m_hWnd!=NULL)
 		{
 			CHAR path[MAX_PATH];
-			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
 			if (nRet<0)
 				return FALSE;
 			else
@@ -1436,7 +1436,7 @@ BOOL CFileDialog::GetFileName(CStringW& name) const
 		if (m_hWnd!=NULL)
 		{
 			WCHAR path[MAX_PATH];
-			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
 			if (nRet<0)
 				return FALSE;
 			else
@@ -1450,7 +1450,7 @@ BOOL CFileDialog::GetFileName(CStringW& name) const
 		if (m_hWnd!=NULL)
 		{
 			CHAR path[MAX_PATH];
-			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
 			if (nRet<0)
 				return FALSE;
 			else
@@ -1517,7 +1517,7 @@ BOOL CFileDialog::GetFolderPath(CString& name) const
 		if (m_hWnd!=NULL)
 		{
 			WCHAR path[MAX_PATH];
-			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,MAX_PATH,(LPARAM)path);
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,MAX_PATH,(LPARAM)path);
 			if (nRet<0)
 				return FALSE;
 			else
@@ -1531,7 +1531,7 @@ BOOL CFileDialog::GetFolderPath(CString& name) const
 		if (m_hWnd!=NULL)
 		{
 			CHAR path[MAX_PATH];
-			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,MAX_PATH,(LPARAM)path);
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,MAX_PATH,(LPARAM)path);
 			if (nRet<0)
 				return FALSE;
 			else
@@ -1551,7 +1551,7 @@ BOOL CFileDialog::GetFolderPath(CStringW& name) const
 		if (m_hWnd!=NULL)
 		{
 			WCHAR path[MAX_PATH];
-			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,MAX_PATH,(LPARAM)path);
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,MAX_PATH,(LPARAM)path);
 			if (nRet<0)
 				return FALSE;
 			else
@@ -1565,7 +1565,7 @@ BOOL CFileDialog::GetFolderPath(CStringW& name) const
 		if (m_hWnd!=NULL)
 		{
 			CHAR path[MAX_PATH];
-			int nRet=::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,MAX_PATH,(LPARAM)path);
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETFOLDERPATH,MAX_PATH,(LPARAM)path);
 			if (nRet<0)
 				return FALSE;
 			else
@@ -1593,14 +1593,14 @@ void CFileDialog::SetDefExt(LPCSTR lpsz)
 		
 		if (lpsz!=NULL)
 		{
-			size_t nLen=istrlen(lpsz)+1;
+			int nLen=(int)istrlen(lpsz)+1;
 			m_pwofn->lpstrDefExt=new WCHAR[nLen];
 			if (m_pwofn->lpstrDefExt==NULL)
 			{
 				SetHFCError(HFC_CANNOTALLOC);
 				return;
 			}
-			MultiByteToWideChar(CP_ACP,0,lpsz,nLen,(LPWSTR)m_pwofn->lpstrDefExt,nLen);
+			MultiByteToWideChar(CP_ACP,0,lpsz,(int)nLen,(LPWSTR)m_pwofn->lpstrDefExt,(int)nLen);
 		}
 		else
 			m_pwofn->lpstrDefExt=NULL;
@@ -1701,7 +1701,7 @@ CFontDialog::CFontDialog(LPLOGFONT lplfInitial,DWORD dwFlags,HDC hdcPrinter)
 	}
 	m_cf.lpLogFont=&m_lf;
 	m_cf.rgbColors=NULL;
-	m_cf.lCustData=(DWORD)this;
+	m_cf.lCustData=(LPARAM)this;
 	m_cf.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
 	m_cf.lpTemplateName=NULL;
 	m_cf.hInstance=GetLanguageSpecificResourceHandle();
@@ -1722,7 +1722,7 @@ CFontDialog::CFontDialog(const CHARFORMAT& charformat,DWORD dwFlags,HDC hdcPrint
 	FillInLogFont(charformat);
 	m_cf.lpLogFont=&m_lf;
 	m_cf.rgbColors=NULL;
-	m_cf.lCustData=(DWORD)this;
+	m_cf.lCustData=(LPARAM)this;
 	m_cf.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
 	m_cf.lpTemplateName=NULL;
 	m_cf.hInstance=GetLanguageSpecificResourceHandle();
@@ -1830,8 +1830,8 @@ CColorDialog::CColorDialog(COLORREF clrInit,DWORD dwFlags)
 		SetHFCError(HFC_CANNOTALLOC);
 		return;
 	}
-	iMemSet(m_cc.lpCustColors,255,sizeof(COLORREF)*16);
-	m_cc.lCustData=(DWORD)this;
+	FillMemory(m_cc.lpCustColors,255,sizeof(COLORREF)*16);
+	m_cc.lCustData=(LPARAM)this;
 	m_cc.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
 	m_cc.lpTemplateName=NULL;
 }
@@ -1855,7 +1855,7 @@ BOOL CColorDialog::DoModal(HWND hParentWnd)
 // Class CPageSetupDialog
 ///////////////////////////
 
-BOOL CALLBACK CAppData::PagePaintProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
+LRESULT CALLBACK CAppData::PagePaintProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
 	return ((CPageSetupDialog*)GetAppData()->m_pCommonDialog)->OnDrawPage((HDC)wParam,uMsg,(LPRECT)lParam);
 }
@@ -1870,7 +1870,7 @@ CPageSetupDialog::CPageSetupDialog(DWORD dwFlags)
 	fMemSet(&m_psd.rtMinMargin,0,sizeof(RECT));
 	fMemSet(&m_psd.rtMargin,0,sizeof(RECT));
 	m_psd.hInstance=GetLanguageSpecificResourceHandle();
-	m_psd.lCustData=(DWORD)this;
+	m_psd.lCustData=(LPARAM)this;
 	m_psd.lpfnPageSetupHook=(LPPAGESETUPHOOK)CAppData::CommonDialogProc;
 	m_psd.lpfnPagePaintHook=(LPPAGEPAINTHOOK)CAppData::PagePaintProc;
 	GetAppData()->m_pCommonDialog=this;
@@ -1972,7 +1972,7 @@ CPrintDialog::CPrintDialog(BOOL bPrintSetupOnly,DWORD dwFlags)
 	else
 		m_pd.Flags|=PD_RETURNDC;
 	m_pd.hInstance=GetLanguageSpecificResourceHandle();
-	m_pd.lCustData=(DWORD)this;
+	m_pd.lCustData=(LPARAM)this;
 	m_pd.lpfnPrintHook=(LPPRINTHOOKPROC)CAppData::CommonDialogProc;
 	m_pd.lpfnSetupHook=NULL;
 	m_pd.lpPrintTemplateName=NULL;
@@ -2026,7 +2026,7 @@ LPDEVMODE CPrintDialog::GetDevMode() const
 {
 	LPDEVMODE lpdm=(LPDEVMODE)GlobalAlloc(GMEM_FIXED,sizeof(DEVMODE));
 	LPDEVMODE lpmdm=(LPDEVMODE)GlobalLock(m_pd.hDevMode);
-	iMemCopy(lpdm,lpmdm,sizeof(DEVMODE));
+	MemCopy(lpdm,lpmdm,sizeof(DEVMODE));
 	GlobalUnlock(m_pd.hDevMode);
 	return lpdm;
 }
@@ -2085,7 +2085,7 @@ CFindReplaceDialog::CFindReplaceDialog()
 	m_fr.lpstrReplaceWith=m_szReplaceWith;
 	m_fr.wFindWhatLen=128;
 	m_fr.wReplaceWithLen=128;
-	m_fr.lCustData=(DWORD)this;
+	m_fr.lCustData=(LPARAM)this;
 	m_fr.lpfnHook=(LPFRHOOKPROC)CAppData::CommonDialogProc;
 	m_fr.lpTemplateName=NULL;
 }
@@ -2110,7 +2110,7 @@ BOOL CFindReplaceDialog::Create(BOOL bFindDialogOnly,LPCTSTR lpszFindWhat,LPCTST
 // Class CFolderDialog
 ///////////////////////////
 
-int CALLBACK CAppData::FolderDialogProc(HWND hWnd,UINT uMsg,LPARAM lParam,LPARAM lpData)
+LRESULT CALLBACK CAppData::FolderDialogProc(HWND hWnd,UINT uMsg,LPARAM lParam,LPARAM lpData)
 {
 	CFolderDialog* pDlg=(CFolderDialog*)lpData;
 	switch (uMsg)
@@ -2190,11 +2190,11 @@ BOOL CFolderDialog::GetDisplayName(LPSTR szDisplayName,DWORD nSize)
 	m_strDisplayName.FreeExtra();
 	if (nSize<=m_strDisplayName.GetLength())
 	{
-		iMemCopy(szDisplayName,(LPCSTR)m_strDisplayName,nSize-1);
+		MemCopy(szDisplayName,(LPCSTR)m_strDisplayName,nSize-1);
 		szDisplayName[nSize-1]='\0';
 	}
 	else
-		iMemCopy(szDisplayName,(LPCSTR)m_strDisplayName,m_strDisplayName.GetLength()+1);
+		MemCopy(szDisplayName,(LPCSTR)m_strDisplayName,m_strDisplayName.GetLength()+1);
 	return TRUE;
 }
 
@@ -2623,7 +2623,7 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 			if (pItems[i]->pData!=NULL)
 			{
 				// Checking whether value is found in combo
-				int nFind=::SendMessage(pItems[i]->hControl,CB_FINDSTRINGEXACT,0,LPARAM(pItems[i]->pData));
+				int nFind=(int)::SendMessage(pItems[i]->hControl,CB_FINDSTRINGEXACT,0,LPARAM(pItems[i]->pData));
 				::SendMessage(pItems[i]->hControl,CB_SETCURSEL,nFind,0);
 				if (nFind==CB_ERR)
 				{
@@ -2890,7 +2890,7 @@ void COptionsPropertyPage::CallApply(Item** pItems)
 			{
 				pItems[i]->SetValuesForBasicParams(&bp);
 				if (pItems[i]->nType==Item::Combo || pItems[i]->nType==Item::List)
-					bp.nCurSel=::SendMessage(pItems[i]->hControl,CB_GETCURSEL,0,0);
+					bp.nCurSel=(LONG)::SendMessage(pItems[i]->hControl,CB_GETCURSEL,0,0);
 				pItems[i]->pProc(&bp);
 			}
 			if (pItems[i]->pChilds!=NULL)
@@ -2983,7 +2983,7 @@ int COptionsPropertyPage::Item::IconFromColor(CImageList* pImageList,int nReplac
 	return nImage;
 }
 	
-BOOL COptionsPropertyPage::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT COptionsPropertyPage::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	switch(msg)
 	{
@@ -3338,7 +3338,7 @@ BOOL COptionsPropertyPage::SetCheckState(HTREEITEM hItem,COptionsPropertyPage::I
 
 BOOL COptionsPropertyPage::SetNumericValue(Item* pItem)
 {
-	int iTextLen=::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,0,0)+1;
+	SIZE_T iTextLen=::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,0,0)+1;
 	char* szText=new char[iTextLen+1];
 	::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(szText));
 
@@ -3375,10 +3375,10 @@ BOOL COptionsPropertyPage::SetTextValue(Item* pItem)
 	{
 	case Item::Combo:
 	case Item::List:
-		iCurSel=::SendMessage(pItem->hControl,CB_GETCURSEL,0,0);
+		iCurSel=(int)::SendMessage(pItem->hControl,CB_GETCURSEL,0,0);
 		if (iCurSel!=CB_ERR)
 		{
-			iTextLen=::SendMessage(pItem->hControl,CB_GETLBTEXTLEN,iCurSel,0)+2;			
+			iTextLen=(int)::SendMessage(pItem->hControl,CB_GETLBTEXTLEN,iCurSel,0)+2;			
 			cp.pNewData=new WCHAR[iTextLen];
 				
 			if (IsUnicodeSystem())
@@ -3393,7 +3393,7 @@ BOOL COptionsPropertyPage::SetTextValue(Item* pItem)
 		}
 		else
 		{
-			iTextLen=::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,iCurSel,0)+2;			
+			iTextLen=(int)::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,iCurSel,0)+2;			
 			cp.pNewData=new WCHAR[iTextLen];
 			
 			
@@ -3412,7 +3412,7 @@ BOOL COptionsPropertyPage::SetTextValue(Item* pItem)
 
 		break;
 	default:
-		iTextLen=::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,0,0)+1;
+		iTextLen=(int)::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,0,0)+1;
 		cp.pNewData=new WCHAR[max(iTextLen,2)];
 		if (IsUnicodeSystem())
 			::SendMessageW(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(cp.pNewData));
@@ -3461,7 +3461,7 @@ BOOL COptionsPropertyPage::SetTextValue(Item* pItem)
 BOOL COptionsPropertyPage::SetListValue(Item* pItem)
 {
 	CHANGINGVALPARAMS cp;
-	cp.lNewValue=::SendMessage(pItem->hControl,CB_GETCURSEL,0,0);
+	cp.lNewValue=(LONG)::SendMessage(pItem->hControl,CB_GETCURSEL,0,0);
 	
 	// Asking wheter value can be changed
 	if (pItem->pProc!=NULL)
@@ -3585,8 +3585,8 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 		{
 			WCHAR szText[100];
 			_itow_s(lValue,szText,100,10);
-			int iLength=istrlenw(szText)+1;
-			int iLabelLen=istrlenw(pString);
+			int iLength=(int)istrlenw(szText)+1;
+			int iLabelLen=(int)istrlenw(pString);
 			
 			WCHAR* pText=new WCHAR[iLabelLen+iLength+2];
 			MemCopyW(pText,pString,iLabelLen);
@@ -3602,8 +3602,8 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 			CComboBox cb(hControl);
 
 			int nCurSel=cb.GetCurSel();
-			int iLength=(nCurSel!=-1)?cb.GetLBTextLen(nCurSel)+1:cb.GetTextLength()+1;
-			int iLabelLen=istrlenw(pString);
+			int iLength=(int)((nCurSel!=-1)?cb.GetLBTextLen(nCurSel)+1:cb.GetTextLength()+1);
+			int iLabelLen=(int)istrlenw(pString);
 			
 			WCHAR* pText=new WCHAR[iLabelLen+iLength+2];
 			MemCopyW(pText,pString,iLabelLen);
@@ -3620,8 +3620,8 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 	case Edit:
 		if (hControl!=NULL && !bActive)
 		{
-			int iLength=::SendMessage(hControl,WM_GETTEXTLENGTH,0,0)+1;
-			int iLabelLen=istrlenw(pString);
+			int iLength=(int)::SendMessage(hControl,WM_GETTEXTLENGTH,0,0)+1;
+			int iLabelLen=(int)istrlenw(pString);
 			
 			WCHAR* pText=new WCHAR[iLabelLen+iLength+1];
 			MemCopyW(pText,pString,iLabelLen);

@@ -39,7 +39,7 @@ public:
 		virtual void OnPaint();
 		virtual void OnMouseMove(UINT fwKeys,WORD xPos,WORD yPos);
 	
-		virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+		virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 	
 		
 
@@ -94,7 +94,7 @@ public:
 	virtual void OnDestroy();
 	virtual void OnTimer(DWORD wTimerID); 
 	virtual void OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu);
-    virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+    virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 	
 	DWORD OnActivateAnotherInstance(ATOM aCommandLine);
 	DWORD OnSystemTrayMessage(UINT uID,UINT msg);
@@ -328,10 +328,6 @@ public:
 	BOOL StopUpdating(BOOL bForce=TRUE);
     BOOL IsUpdating() const;
 	
-	// ReleaseUpdatersPointer should always be called after pointer is free to use for other
-	CDatabaseUpdater** GetUpdatersPointer();
-	CDatabaseUpdater*** GetUpdatersPointerPtr();
-	void ReleaseUpdatersPointer();
 	
 	BOOL GlobalUpdate(CArray<PDATABASE>* paDatabases=NULL,int nThreadPriority=THREAD_PRIORITY_NORMAL);
 
@@ -385,7 +381,7 @@ protected:
 
 	BYTE m_nStartup;
 	
-	HANDLE m_hUpdatersPointerInUse;
+	CRITICAL_SECTION m_cUpdatersPointersInUse;
 	CDatabaseUpdater** m_ppUpdaters;
 	
 
@@ -418,10 +414,13 @@ public:
 
 	static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);
 
+	friend CLocateAppWnd;
+	friend CLocateAppWnd::CUpdateStatusWnd;
 	friend CLocateAppWnd* GetLocateAppWnd();
 	friend CLocateDlg* GetLocateDlg();
 
 
+	
 	
 };
 
@@ -501,31 +500,7 @@ inline BOOL CLocateApp::IsUpdating() const
 	return m_ppUpdaters!=NULL;
 }
 
-inline void CLocateApp::ReleaseUpdatersPointer()
-{
-	ReleaseMutex(m_hUpdatersPointerInUse);
-	DebugMessage("CLocateApp::ReleaseUpdatersPointer(): mutex released");
-}
 
-inline CDatabaseUpdater** CLocateApp::GetUpdatersPointer()
-{
-	DebugMessage("CLocateApp::GetUpdatersPointer(): waiting mutex");
-	if (WaitForMutex(m_hUpdatersPointerInUse,LOCATEAPPUPDATERSMUTEXTIMEOUT))
-		return NULL;
-	DebugMessage("CLocateApp::GetUpdatersPointer(): continuing");
-	return m_ppUpdaters;
-}
-
-inline CDatabaseUpdater*** CLocateApp::GetUpdatersPointerPtr()
-{
-	DebugMessage("CLocateApp::GetUpdatersPointerPtr(): waiting mutex");
-	if (WaitForMutex(m_hUpdatersPointerInUse,LOCATEAPPUPDATERSMUTEXTIMEOUT))
-		return NULL;
-	DebugMessage("CLocateApp::GetUpdatersPointerPtr(): continuing");
-	
-	return &m_ppUpdaters;
-}
-	
 
 inline void CLocateApp::ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText)
 {
@@ -539,7 +514,7 @@ inline void CLocateApp::ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText)
 inline void CLocateApp::ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText,DWORD dwLength)
 {
 	if (dwLength==DWORD(-1))
-		dwLength=istrlenw(szText);
+		dwLength=(DWORD)istrlenw(szText);
 	
 	if (pVar!=NULL)
 		delete[] pVar;
@@ -558,7 +533,7 @@ inline DWORD CLocateApp::GetProgramFlags()
 
 inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,CStringW& str,CSize& szSize)
 {
-	EnlargeSizeForText(dc,str,str.GetLength(),szSize);
+	EnlargeSizeForText(dc,str,(int)str.GetLength(),szSize);
 }
 
 inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,LPCWSTR szText,int nLength,CSize& szSize)

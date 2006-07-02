@@ -27,34 +27,34 @@ BOOL CImageList::DeleteImageList()
 // Class CStatusBarCtrl
 ///////////////////////////
 
-BOOL CStatusBarCtrl::GetText(CString& str,int nPane,int* pType) const
+SIZE_T CStatusBarCtrl::GetText(CString& str,int nPane,int* pType) const
 {
-	int ret=::SendMessage(m_hWnd,SB_GETTEXT,(WPARAM)nPane,(LPARAM)str.GetBuffer(LOWORD(::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0))));
+	SIZE_T ret=::SendMessage(m_hWnd,SB_GETTEXT,(WPARAM)nPane,(LPARAM)str.GetBuffer(LOWORD(::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0))));
 	if (pType!=NULL)
 		*pType=HIWORD(ret);
 	return ret;
 }
 
-int CStatusBarCtrl::GetText(LPSTR lpszText,int nPane,int* pType) const
+SIZE_T CStatusBarCtrl::GetText(LPSTR lpszText,int nPane,int* pType) const
 {
-	int ret=::SendMessage(m_hWnd,SB_GETTEXT,(WPARAM)nPane,(LPARAM)lpszText);	
+	SIZE_T ret=::SendMessage(m_hWnd,SB_GETTEXT,(WPARAM)nPane,(LPARAM)lpszText);	
 	if (pType!=NULL)
 		*pType=HIWORD(ret);
 	return LOWORD(ret);
 }
 
-int CStatusBarCtrl::GetTextLength(int nPane,int* pType) const
+SIZE_T CStatusBarCtrl::GetTextLength(int nPane,int* pType) const
 {
-	int ret=::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0);
+	SIZE_T ret=::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0);
 	if (pType!=NULL)
 		*pType=HIWORD(ret);
 	return LOWORD(ret);
 }
 
 #ifdef DEF_WCHAR
-BOOL CStatusBarCtrl::GetText(CStringW& str,int nPane,int* pType) const
+SIZE_T CStatusBarCtrl::GetText(CStringW& str,int nPane,int* pType) const
 {
-	int ret;
+	SIZE_T ret;
 	SIZE_T len=::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0);
 	
 	if (IsUnicodeSystem())
@@ -72,9 +72,9 @@ BOOL CStatusBarCtrl::GetText(CStringW& str,int nPane,int* pType) const
 	return ret;
 }
 
-int CStatusBarCtrl::GetText(LPWSTR lpszText,int nPane,int* pType) const
+SIZE_T CStatusBarCtrl::GetText(LPWSTR lpszText,int nPane,int* pType) const
 {
-	int ret;
+	SIZE_T ret;
 	if (IsUnicodeSystem())
 		ret=::SendMessageW(m_hWnd,SB_GETTEXTW,(WPARAM)nPane,(LPARAM)lpszText);	
 	else
@@ -83,7 +83,7 @@ int CStatusBarCtrl::GetText(LPWSTR lpszText,int nPane,int* pType) const
 		char* pText=new char[len+2];
 		ret=::SendMessageA(m_hWnd,SB_GETTEXTA,(WPARAM)nPane,(LPARAM)pText);
 		if (ret)
-			MultiByteToWideChar(CP_ACP,0,pText,len+1,lpszText,len+1);
+			MultiByteToWideChar(CP_ACP,0,pText,(int)len+1,lpszText,(int)len+1);
 		delete[] pText;
 	}
 	if (pType!=NULL)
@@ -91,15 +91,15 @@ int CStatusBarCtrl::GetText(LPWSTR lpszText,int nPane,int* pType) const
 	return LOWORD(ret);
 }
 
-BOOL CStatusBarCtrl::GetTipText(int n,LPWSTR szText,SIZE_T nBufLen) const
+SIZE_T CStatusBarCtrl::GetTipText(int n,LPWSTR szText,SIZE_T nBufLen) const
 {
 	if (IsUnicodeSystem())
 		return ::SendMessageW(m_hWnd,SB_GETTIPTEXTW,MAKEWPARAM(n,nBufLen),(LPARAM)szText);
 	
 	char* pText=new char[nBufLen+2];
-	int ret=::SendMessageW(m_hWnd,SB_GETTIPTEXTW,MAKEWPARAM(n,nBufLen),(LPARAM)pText);
+	SIZE_T ret=::SendMessageW(m_hWnd,SB_GETTIPTEXTW,MAKEWPARAM(n,nBufLen),(LPARAM)pText);
 	if (ret)
-		MultiByteToWideChar(CP_ACP,0,pText,-1,szText,nBufLen);
+		MultiByteToWideChar(CP_ACP,0,pText,-1,szText,(int)nBufLen);
 	delete[] pText;
 	return ret;
 }
@@ -128,7 +128,7 @@ BOOL CToolTipCtrl::GetToolInfo(LPTOOLINFO pToolInfo,HWND hWnd,UINT nIDTool) cons
 	pToolInfo->cbSize=TTTOOLINFOA_V1_SIZE;
 	pToolInfo->hwnd=hWnd;
 	pToolInfo->uId=nIDTool;
-	return ::SendMessage(m_hWnd,TTM_GETTOOLINFO,0,(LPARAM)pToolInfo);
+	return (BOOL)::SendMessage(m_hWnd,TTM_GETTOOLINFO,0,(LPARAM)pToolInfo);
 }
 
 void CToolTipCtrl::SetToolRect(HWND hWnd,UINT nIDTool,LPCRECT lpRect)
@@ -166,7 +166,7 @@ BOOL CToolTipCtrl::AddTool(HWND hWnd,UINT nIDText,LPCRECT lpRectTool,UINT nIDToo
 			ti.rect.top=0;
 			ti.rect.bottom=0;
 		}
-		return ::SendMessageW(m_hWnd,TTM_ADDTOOLW,0,(LPARAM)&ti);
+		return (BOOL)::SendMessageW(m_hWnd,TTM_ADDTOOLW,0,(LPARAM)&ti);
 	}
 	else
 	{
@@ -189,7 +189,7 @@ BOOL CToolTipCtrl::AddTool(HWND hWnd,UINT nIDText,LPCRECT lpRectTool,UINT nIDToo
 			ti.rect.top=0;
 			ti.rect.bottom=0;
 		}
-		return ::SendMessage(m_hWnd,TTM_ADDTOOL,0,(LPARAM)&ti);
+		return (BOOL)::SendMessage(m_hWnd,TTM_ADDTOOL,0,(LPARAM)&ti);
 	}
 }
 #endif
@@ -214,7 +214,7 @@ BOOL CToolTipCtrl::AddTool(HWND hWnd,LPCSTR lpszText,LPCRECT lpRectTool,UINT nID
 		ti.rect.top=0;
 		ti.rect.bottom=0;
 	}
-	return ::SendMessage(m_hWnd,TTM_ADDTOOL,0,(LPARAM)&ti);
+	return (BOOL)::SendMessage(m_hWnd,TTM_ADDTOOL,0,(LPARAM)&ti);
 }
 
 void CToolTipCtrl::DelTool(HWND hWnd,UINT nIDTool)
@@ -233,7 +233,7 @@ void CToolTipCtrl::DelTool(HWND hWnd,HWND hToolWnd)
 	ti.cbSize=TTTOOLINFOA_V1_SIZE;
 	ti.uFlags=TTF_IDISHWND;
 	ti.hwnd=hWnd;
-	ti.uId=(UINT)hToolWnd;
+	ti.uId=(UINT_PTR)hToolWnd;
 	::SendMessage(m_hWnd,TTM_DELTOOL,0,(LPARAM)&ti);
 }
 
@@ -244,7 +244,7 @@ BOOL CToolTipCtrl::HitTest(HWND hWnd,LPPOINT pt,LPTOOLINFO lpToolInfo) const
 	hi.hwnd=hWnd;
 	hi.pt=*pt;
 	hi.ti.cbSize=TTTOOLINFOA_V1_SIZE;
-	BOOL nRet=::SendMessage(m_hWnd,TTM_HITTEST,0,(LPARAM)&hi);
+	BOOL nRet=(BOOL)::SendMessage(m_hWnd,TTM_HITTEST,0,(LPARAM)&hi);
 	*lpToolInfo=hi.ti;
 	return nRet;
 }
@@ -310,7 +310,7 @@ BOOL CToolTipCtrl::GetToolInfo(LPTOOLINFOW pToolInfo,HWND hWnd,UINT nIDTool) con
 	pToolInfo->cbSize=TTTOOLINFOW_V1_SIZE;
 	pToolInfo->hwnd=hWnd;
 	pToolInfo->uId=nIDTool;
-	return ::SendMessage(m_hWnd,TTM_GETTOOLINFOW,0,(LPARAM)pToolInfo);
+	return (BOOL)::SendMessage(m_hWnd,TTM_GETTOOLINFOW,0,(LPARAM)pToolInfo);
 }
 
 BOOL CToolTipCtrl::AddTool(HWND hWnd,LPCWSTR lpszText,LPCRECT lpRectTool,UINT nIDTool,LPARAM lParam)
@@ -333,7 +333,7 @@ BOOL CToolTipCtrl::AddTool(HWND hWnd,LPCWSTR lpszText,LPCRECT lpRectTool,UINT nI
 		ti.rect.top=0;
 		ti.rect.bottom=0;
 	}
-	return ::SendMessage(m_hWnd,TTM_ADDTOOLW,0,(LPARAM)&ti);
+	return (BOOL)::SendMessage(m_hWnd,TTM_ADDTOOLW,0,(LPARAM)&ti);
 }
 
 void CToolTipCtrl::UpdateTipText(LPCWSTR lpszText,HWND hWnd,UINT nIDTool)
@@ -365,7 +365,7 @@ BOOL CToolBarCtrl::Create(DWORD dwStyle,const RECT* rect,HWND hWndParent,UINT nI
 {
 	m_hWnd=CreateWindowEx(0L,TOOLBARCLASSNAME,szEmpty,
       dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-      hWndParent,(HMENU)nID,GetInstanceHandle(),NULL);
+      hWndParent,(HMENU)(ULONG_PTR)nID,GetInstanceHandle(),NULL);
 	if (m_hWnd==NULL)
 		return FALSE;
 	::SendMessage(m_hWnd,TB_BUTTONSTRUCTSIZE,sizeof(TBBUTTON),0);
@@ -378,7 +378,7 @@ int CToolBarCtrl::AddBitmap(int nNumButtons,UINT nBitmapID)
 	TBADDBITMAP ab;
 	ab.hInst=GetLanguageSpecificResourceHandle();
 	ab.nID=nBitmapID;
-	return ::SendMessage(m_hWnd,TB_ADDBITMAP,(WPARAM)nNumButtons,(LPARAM)&ab);
+	return (int)::SendMessage(m_hWnd,TB_ADDBITMAP,(WPARAM)nNumButtons,(LPARAM)&ab);
 }
 #endif
 
@@ -386,8 +386,8 @@ int CToolBarCtrl::AddBitmap(int nNumButtons,HBITMAP hBitmap)
 {
 	TBADDBITMAP ab;
 	ab.hInst=NULL;
-	ab.nID=(UINT)hBitmap;
-	return ::SendMessage(m_hWnd,TB_ADDBITMAP,(WPARAM)nNumButtons,(LPARAM)&ab);
+	ab.nID=(UINT_PTR)hBitmap;
+	return (int)::SendMessage(m_hWnd,TB_ADDBITMAP,(WPARAM)nNumButtons,(LPARAM)&ab);
 }
 
 void CToolBarCtrl::SaveState(HKEY hKeyRoot,LPCTSTR lpszSubKey,LPCTSTR lpszValueName)
@@ -414,7 +414,7 @@ void CToolBarCtrl::RestoreState(HKEY hKeyRoot,LPCTSTR lpszSubKey,LPCTSTR lpszVal
 
 void CSpinButtonCtrl::GetRange(int &lower,int& upper) const
 {
-	int ret=::SendMessage(m_hWnd,UDM_GETRANGE,0,0);
+	int ret=(int)::SendMessage(m_hWnd,UDM_GETRANGE,0,0);
 	lower=HIWORD(ret);
 	upper=LOWORD(ret);
 }
@@ -427,7 +427,7 @@ BOOL CTabCtrl::Create(DWORD dwStyle,const RECT* rect,HWND hParentWnd,UINT nID)
 {
 	m_hWnd=CreateWindowEx(0L,WC_TABCONTROL,szEmpty,dwStyle,
 		rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL);
+		hParentWnd,(HMENU)(ULONG_PTR)nID,GetInstanceHandle(),NULL);
 	if (m_hWnd==NULL)
 		return FALSE;
 	return TRUE;
@@ -437,7 +437,7 @@ CSize CTabCtrl::SetItemSize(CSize size)
 {
 	int ret;
 	CSize temp;
-	ret=::SendMessage(m_hWnd,TCM_SETITEMSIZE,0,MAKELPARAM(size.cx,size.cy));
+	ret=(int)::SendMessage(m_hWnd,TCM_SETITEMSIZE,0,MAKELPARAM(size.cx,size.cy));
 	temp.cx=LOWORD(ret);
 	temp.cy=HIWORD(ret);
 	return temp;
@@ -447,12 +447,12 @@ CSize CTabCtrl::SetItemSize(CSize size)
 BOOL CTabCtrl::GetItem(int nItem,TC_ITEMW* pTabCtrlItem) const
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,TCM_GETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+		return (BOOL)::SendMessageW(m_hWnd,TCM_GETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 	else if (pTabCtrlItem->mask&TCIF_TEXT && pTabCtrlItem->pszText!=NULL)
 	{
 		WCHAR* pText=pTabCtrlItem->pszText;
 		pTabCtrlItem->pszText=(WCHAR*)new CHAR[pTabCtrlItem->cchTextMax+1];
-		BOOL bRet=::SendMessageA(m_hWnd,TCM_GETITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+		BOOL bRet=(BOOL)::SendMessageA(m_hWnd,TCM_GETITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 		if (bRet)
 			MultiByteToWideChar(CP_ACP,0,(char*)pTabCtrlItem->pszText,-1,pText,pTabCtrlItem->cchTextMax);
 		delete[] pTabCtrlItem->pszText;
@@ -460,42 +460,42 @@ BOOL CTabCtrl::GetItem(int nItem,TC_ITEMW* pTabCtrlItem) const
 		return bRet;
 	}
 	else
-		return ::SendMessageA(m_hWnd,TCM_GETITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+		return (BOOL)::SendMessageA(m_hWnd,TCM_GETITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 }
 
 BOOL CTabCtrl::SetItem(int nItem,TC_ITEMW* pTabCtrlItem)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,TCM_SETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+		return (BOOL)::SendMessageW(m_hWnd,TCM_SETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 	else if (pTabCtrlItem->mask&TCIF_TEXT && pTabCtrlItem->pszText!=NULL)
 	{
 		WCHAR* pText=pTabCtrlItem->pszText;
 		pTabCtrlItem->pszText=(WCHAR*)alloccopyWtoA(pText);
-		BOOL bRet=::SendMessageA(m_hWnd,TCM_SETITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+		BOOL bRet=(BOOL)::SendMessageA(m_hWnd,TCM_SETITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 		delete[] pTabCtrlItem->pszText;
 		pTabCtrlItem->pszText=pText;
 		return bRet;
 	}
 	else
-		return ::SendMessageA(m_hWnd,TCM_SETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+		return (BOOL)::SendMessageA(m_hWnd,TCM_SETITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 	
 }
 
 BOOL CTabCtrl::InsertItem(int nItem,TC_ITEMW* pTabCtrlItem)
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,TCM_INSERTITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+		return (BOOL)::SendMessageW(m_hWnd,TCM_INSERTITEMW,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 	else if (pTabCtrlItem->mask&TCIF_TEXT && pTabCtrlItem->pszText!=NULL)
 	{
 		WCHAR* pText=pTabCtrlItem->pszText;
 		pTabCtrlItem->pszText=(WCHAR*)alloccopyWtoA(pText);
-		BOOL bRet=::SendMessageA(m_hWnd,TCM_INSERTITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+		BOOL bRet=(BOOL)::SendMessageA(m_hWnd,TCM_INSERTITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 		delete[] pTabCtrlItem->pszText;
 		pTabCtrlItem->pszText=pText;
 		return bRet;
 	}
 	else
-		return ::SendMessageA(m_hWnd,TCM_INSERTITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
+		return (BOOL)::SendMessageA(m_hWnd,TCM_INSERTITEMA,(WPARAM)nItem,(LPARAM)pTabCtrlItem);
 }
 #endif
 
@@ -506,7 +506,7 @@ BOOL CTabCtrl::InsertItem(int nItem,TC_ITEMW* pTabCtrlItem)
 CPoint CRichEditCtrl::GetCharPos(long lChar) const
 {
 	CPoint pt;
-	int ret=::SendMessage(m_hWnd,EM_POSFROMCHAR,(WPARAM)lChar,0);
+	int ret=(int)::SendMessage(m_hWnd,EM_POSFROMCHAR,(WPARAM)lChar,0);
 	pt.x=LOWORD(ret);
 	pt.y=HIWORD(ret);
 	return pt;
@@ -531,7 +531,7 @@ BOOL CRichEditCtrl::SetAlignmentForSelection(WORD wAlignment)
 	{
 		pf.dwMask=PFM_ALIGNMENT;		// only change the alignment
 		pf.wAlignment=wAlignment;
-		return ::SendMessage(m_hWnd,EM_SETPARAFORMAT,0,(LPARAM) &pf);
+		return (BOOL)::SendMessage(m_hWnd,EM_SETPARAFORMAT,0,(LPARAM) &pf);
 	}
 	return TRUE;
 }
@@ -548,7 +548,7 @@ BOOL CRichEditCtrl::SetLineSpacingRuleForSelection(BYTE bLineSpacingRule,LONG dy
 		pf.dwMask=PFM_LINESPACING;		// only change the alignment
 		pf.bLineSpacingRule=bLineSpacingRule;
 		pf.dyLineSpacing=dyLineSpacing;
-		return ::SendMessage(m_hWnd,EM_SETPARAFORMAT,0,(LPARAM) &pf);
+		return (BOOL)::SendMessage(m_hWnd,EM_SETPARAFORMAT,0,(LPARAM) &pf);
 	}
 	return TRUE;
 }
@@ -559,7 +559,7 @@ BOOL CRichEditCtrl::SetEffectForSelection(DWORD dwEffects,DWORD dwMask)
 	cf.cbSize=sizeof(CHARFORMAT2);
 	cf.dwMask=dwMask;
 	cf.dwEffects=dwEffects;
-	return ::SendMessage(m_hWnd,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM)&cf);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM)&cf);
 }
 	
 BOOL CRichEditCtrl::SetUnderlineTypeForSelection(BYTE bUnderlineType)
@@ -568,7 +568,7 @@ BOOL CRichEditCtrl::SetUnderlineTypeForSelection(BYTE bUnderlineType)
 	cf.cbSize=sizeof(CHARFORMAT2);
 	cf.dwMask=CFM_UNDERLINETYPE;
 	cf.bUnderlineType=bUnderlineType;
-	return ::SendMessage(m_hWnd,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM)&cf);
+	return (BOOL)::SendMessage(m_hWnd,EM_SETCHARFORMAT,SCF_SELECTION,(LPARAM)&cf);
 }
 	
 ///////////////////////////
@@ -587,14 +587,14 @@ BOOL CListCtrl::SetItem(int nItem, int nSubItem, UINT nMask, LPCTSTR lpszItem,
 	li.pszText=(LPSTR)lpszItem;
 	li.iImage=nImage;
 	li.lParam=lParam;
-	return ::SendMessage(m_hWnd,LVM_SETITEM,0,(LPARAM)&li);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETITEM,0,(LPARAM)&li);
 }
 
 BOOL CListCtrl::GetItemRect(int nItem, LPRECT lpRect, UINT nCode) const
 {
 	if (lpRect!=NULL)
 		lpRect->left=nCode;
-	return ::SendMessage(m_hWnd,LVM_GETITEMRECT,(WPARAM)nItem,(LPARAM)lpRect);
+	return (BOOL)::SendMessage(m_hWnd,LVM_GETITEMRECT,(WPARAM)nItem,(LPARAM)lpRect);
 }
 
 BOOL CListCtrl::SetItemState(int nItem, UINT nState, UINT nMask)
@@ -606,7 +606,7 @@ BOOL CListCtrl::SetItemState(int nItem, UINT nState, UINT nMask)
 	li.iSubItem=0;
 	li.state=nState;
 	li.stateMask=nMask;
-	return ::SendMessage(m_hWnd,LVM_SETITEMSTATE,nItem,(LPARAM)&li);
+	return(BOOL) ::SendMessage(m_hWnd,LVM_SETITEMSTATE,nItem,(LPARAM)&li);
 }	
 
 BOOL CListCtrl::GetItemText(CString& str,int nItem, int nSubItem) const
@@ -632,7 +632,7 @@ int CListCtrl::GetItemText(int nItem, int nSubItem, LPTSTR lpszText, int nLen) c
 	li.iSubItem=nSubItem;
 	li.pszText=lpszText;
 	li.cchTextMax=nLen;
-	return ::SendMessage(m_hWnd,LVM_GETITEMTEXT,nItem,(LPARAM)&li);
+	return (int)::SendMessage(m_hWnd,LVM_GETITEMTEXT,nItem,(LPARAM)&li);
 }
 
 BOOL CListCtrl::SetItemText(int nItem, int nSubItem, LPCTSTR lpszText)
@@ -643,20 +643,20 @@ BOOL CListCtrl::SetItemText(int nItem, int nSubItem, LPCTSTR lpszText)
 	li.iItem=nItem;
 	li.iSubItem=nSubItem;
 	li.pszText=(LPSTR)lpszText;
-	return ::SendMessage(m_hWnd,LVM_SETITEMTEXT,nItem,(LPARAM)&li);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETITEMTEXT,nItem,(LPARAM)&li);
 }
 
-BOOL CListCtrl::SetItemData(int nItem, DWORD dwData)
+BOOL CListCtrl::SetItemData(int nItem, DWORD_PTR dwData)
 {
 	LV_ITEM li;
 	li.mask=LVIF_PARAM;
 	li.lParam=(LPARAM)dwData;
 	li.iItem=nItem;
 	li.iSubItem=0;
-	return ::SendMessage(m_hWnd,LVM_SETITEM,0,(LPARAM)&li);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETITEM,0,(LPARAM)&li);
 }
 
-DWORD CListCtrl::GetItemData(int nItem) const
+DWORD_PTR CListCtrl::GetItemData(int nItem) const
 {
 	LV_ITEM li;
 	li.mask=LVIF_PARAM;
@@ -673,7 +673,7 @@ int CListCtrl::InsertItem(int nItem, LPCSTR lpszItem)
 	li.iItem=nItem;
 	li.pszText=(LPSTR)lpszItem;
 	li.iSubItem=0;
-	return ::SendMessage(m_hWnd,LVM_INSERTITEM,0,(LPARAM)&li);
+	return (int)::SendMessage(m_hWnd,LVM_INSERTITEM,0,(LPARAM)&li);
 }
 
 int CListCtrl::InsertItem(int nItem, LPCSTR lpszItem, int nImage)
@@ -684,7 +684,7 @@ int CListCtrl::InsertItem(int nItem, LPCSTR lpszItem, int nImage)
 	li.iItem=nItem;
 	li.iSubItem=0;
 	li.pszText=(LPSTR)lpszItem;
-	return ::SendMessage(m_hWnd,LVM_INSERTITEM,0,(LPARAM)&li);
+	return (int)::SendMessage(m_hWnd,LVM_INSERTITEM,0,(LPARAM)&li);
 }
 
 int CListCtrl::HitTest(POINT pt, UINT* pFlags) const
@@ -716,7 +716,7 @@ int CListCtrl::InsertColumn(int nCol, LPCSTR lpszColumnHeading,
 		lc.mask|=LVCF_SUBITEM;
 		lc.iSubItem=nSubItem;
 	}
-	return ::SendMessage(m_hWnd,LVM_INSERTCOLUMN,nCol,(LPARAM)&lc);
+	return (int)::SendMessage(m_hWnd,LVM_INSERTCOLUMN,nCol,(LPARAM)&lc);
 }
 
 int CListCtrl::InsertItem(UINT nMask, int nItem, LPCTSTR lpszItem, UINT nState,
@@ -731,7 +731,7 @@ int CListCtrl::InsertItem(UINT nMask, int nItem, LPCTSTR lpszItem, UINT nState,
 	li.iSubItem=0;
 	li.pszText=(LPSTR)lpszItem;
 	li.lParam=lParam;
-	return ::SendMessage(m_hWnd,LVM_INSERTITEM,0,(LPARAM)&li);
+	return (int)::SendMessage(m_hWnd,LVM_INSERTITEM,0,(LPARAM)&li);
 }
 
 BOOL CListCtrl::LoadColumnsState(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey)
@@ -841,7 +841,7 @@ BOOL CListCtrl::SetItem(int nItem, int nSubItem, UINT nMask, LPCWSTR lpszItem,
 	li.pszText=(LPWSTR)lpszItem;
 	li.iImage=nImage;
 	li.lParam=lParam;
-	return ::SendMessage(m_hWnd,LVM_SETITEMW,0,(LPARAM)&li);
+	return (BOOL)::SendMessage(m_hWnd,LVM_SETITEMW,0,(LPARAM)&li);
 }
 
 int CListCtrl::InsertColumn(int nCol, LPCWSTR lpszColumnHeading,
@@ -861,7 +861,7 @@ int CListCtrl::InsertColumn(int nCol, LPCWSTR lpszColumnHeading,
 		lc.mask|=LVCF_SUBITEM;
 		lc.iSubItem=nSubItem;
 	}
-	return ::SendMessage(m_hWnd,LVM_INSERTCOLUMNW,nCol,(LPARAM)&lc);
+	return (int)::SendMessage(m_hWnd,LVM_INSERTCOLUMNW,nCol,(LPARAM)&lc);
 }
 
 int CListCtrl::InsertItem(UINT nMask, int nItem, LPCWSTR lpszItem, UINT nState,
@@ -876,7 +876,7 @@ int CListCtrl::InsertItem(UINT nMask, int nItem, LPCWSTR lpszItem, UINT nState,
 	li.iSubItem=0;
 	li.pszText=(LPWSTR)lpszItem;
 	li.lParam=lParam;
-	return ::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)&li);
+	return (int)::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)&li);
 }
 
 BOOL CListCtrl::GetItemText(CStringW& str,int nItem, int nSubItem) const
@@ -900,7 +900,7 @@ int CListCtrl::GetItemText(int nItem, int nSubItem, LPWSTR lpszText, int nLen) c
 	li.iSubItem=nSubItem;
 	li.pszText=lpszText;
 	li.cchTextMax=nLen;
-	return ::SendMessage(m_hWnd,LVM_GETITEMTEXTW,nItem,(LPARAM)&li);
+	return (int)::SendMessage(m_hWnd,LVM_GETITEMTEXTW,nItem,(LPARAM)&li);
 }
 
 BOOL CListCtrl::SetItemText(int nItem, int nSubItem, LPCWSTR lpszText)
@@ -910,7 +910,7 @@ BOOL CListCtrl::SetItemText(int nItem, int nSubItem, LPCWSTR lpszText)
 	li.iItem=nItem;
 	li.iSubItem=nSubItem;
 	li.pszText=(LPWSTR)lpszText;
-	return ::SendMessage(m_hWnd,LVM_SETITEMTEXTW,nItem,(LPARAM)&li);
+	return(BOOL) ::SendMessage(m_hWnd,LVM_SETITEMTEXTW,nItem,(LPARAM)&li);
 }
 
 
@@ -921,7 +921,7 @@ int CListCtrl::InsertItem(int nItem, LPCWSTR lpszItem)
 	li.iItem=nItem;
 	li.pszText=(LPWSTR)lpszItem;
 	li.iSubItem=0;
-	return ::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)&li);
+	return (int)::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)&li);
 }
 
 int CListCtrl::InsertItem(int nItem, LPCWSTR lpszItem, int nImage)
@@ -932,7 +932,7 @@ int CListCtrl::InsertItem(int nItem, LPCWSTR lpszItem, int nImage)
 	li.iItem=nItem;
 	li.iSubItem=0;
 	li.pszText=(LPWSTR)lpszItem;
-	return ::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)&li);
+	return (int)::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)&li);
 }
 #endif
 
@@ -959,7 +959,7 @@ BOOL CTreeCtrl::GetItemImage(HTREEITEM hItem,int& nImage, int& nSelectedImage) c
 	BOOL ret;
 	ti.mask=TVIF_SELECTEDIMAGE|TVIF_IMAGE;
 	ti.hItem=hItem;
-	ret=::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)&ti);
+	ret=(BOOL)::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)&ti);
 	nImage=ti.iImage;
 	nSelectedImage=ti.iSelectedImage;
 	return ret;
@@ -975,7 +975,7 @@ UINT CTreeCtrl::GetItemState(HTREEITEM hItem,UINT nStateMask) const
 	return ti.state;
 }
 
-DWORD CTreeCtrl::GetItemData(HTREEITEM hItem) const
+DWORD_PTR CTreeCtrl::GetItemData(HTREEITEM hItem) const
 {
 	TV_ITEM ti;
 	ti.mask=TVIF_PARAM	;
@@ -996,7 +996,7 @@ BOOL CTreeCtrl::SetItem(HTREEITEM hItem,UINT nMask,LPCSTR lpszItem,int nImage,in
 	ti.iSelectedImage=nSelectedImage;
 	ti.cChildren=0;
 	ti.lParam=lParam;
-	return ::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)&ti);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)&ti);
 }
 
 BOOL CTreeCtrl::SetItem(HTREEITEM hItem,UINT nMask,LPCWSTR lpszItem,int nImage,int nSelectedImage,UINT nState,UINT nStateMask,LPARAM lParam)
@@ -1011,7 +1011,7 @@ BOOL CTreeCtrl::SetItem(HTREEITEM hItem,UINT nMask,LPCWSTR lpszItem,int nImage,i
 	ti.iSelectedImage=nSelectedImage;
 	ti.cChildren=0;
 	ti.lParam=lParam;
-	return ::SendMessage(m_hWnd,TVM_SETITEMW,0,(LPARAM)&ti);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SETITEMW,0,(LPARAM)&ti);
 }
 
 BOOL CTreeCtrl::SetItemText(HTREEITEM hItem,LPCSTR lpszItem)
@@ -1020,7 +1020,7 @@ BOOL CTreeCtrl::SetItemText(HTREEITEM hItem,LPCSTR lpszItem)
 	ti.mask=TVIF_TEXT;
 	ti.pszText=(LPSTR)lpszItem;
 	ti.hItem=hItem;
-	return ::SendMessage(m_hWnd,TVM_SETITEMA,0,(LPARAM)&ti);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SETITEMA,0,(LPARAM)&ti);
 }
 
 BOOL CTreeCtrl::SetItemText(HTREEITEM hItem,LPCWSTR lpszItem)
@@ -1029,7 +1029,7 @@ BOOL CTreeCtrl::SetItemText(HTREEITEM hItem,LPCWSTR lpszItem)
 	ti.mask=TVIF_TEXT;
 	ti.pszText=(LPWSTR)lpszItem;
 	ti.hItem=hItem;
-	return ::SendMessage(m_hWnd,TVM_SETITEMW,0,(LPARAM)&ti);
+	return(BOOL) ::SendMessage(m_hWnd,TVM_SETITEMW,0,(LPARAM)&ti);
 }
 
 BOOL CTreeCtrl::SetItemImage(HTREEITEM hItem,int nImage,int nSelectedImage)
@@ -1039,7 +1039,7 @@ BOOL CTreeCtrl::SetItemImage(HTREEITEM hItem,int nImage,int nSelectedImage)
 	ti.iImage=nImage;
 	ti.iSelectedImage=nSelectedImage;
 	ti.hItem=hItem;
-	return ::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)&ti);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)&ti);
 }
 
 BOOL CTreeCtrl::SetItemState(HTREEITEM hItem,UINT nState,UINT nStateMask)
@@ -1049,16 +1049,16 @@ BOOL CTreeCtrl::SetItemState(HTREEITEM hItem,UINT nState,UINT nStateMask)
 	ti.state=nState;
 	ti.stateMask=nStateMask;
 	ti.hItem=hItem;
-	return ::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)&ti);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)&ti);
 }
 
-BOOL CTreeCtrl::SetItemData(HTREEITEM hItem,DWORD dwData)
+BOOL CTreeCtrl::SetItemData(HTREEITEM hItem,DWORD_PTR dwData)
 {
 	TV_ITEM ti;
 	ti.mask=TVIF_PARAM;
 	ti.lParam=dwData;
 	ti.hItem=hItem;
-	return ::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)&ti);
+	return (BOOL)::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)&ti);
 }
 
 HTREEITEM CTreeCtrl::InsertItem(UINT nMask,LPCTSTR lpszItem,int nImage,int nSelectedImage,UINT nState,UINT nStateMask,LPARAM lParam,HTREEITEM hParent,HTREEITEM hInsertAfter)
@@ -1129,7 +1129,7 @@ HTREEITEM CTreeCtrl::InsertItem(LPCWSTR lpszItem,int nImage,int nSelectedImage,H
 HTREEITEM CTreeCtrl::HitTest(const POINT& pt,UINT* pFlags) const
 {
 	TV_HITTESTINFO hi;
-	iMemCopy(&hi.pt,&pt,sizeof(POINT));
+	MemCopy(&hi.pt,&pt,sizeof(POINT));
 	::SendMessage(m_hWnd,TVM_HITTEST,0,(LPARAM)&hi);
 	if (pFlags!=NULL)
 		*pFlags=hi.flags;
@@ -1144,7 +1144,7 @@ BOOL CComboBoxEx::Create(DWORD dwStyle, const RECT* rect, HWND hParentWnd, UINT 
 {
 	CCommonCtrl::m_hWnd=CreateWindowEx(0L,WC_COMBOBOXEX,szEmpty,dwStyle,
 		rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL);
+		hParentWnd,(HMENU)(ULONG_PTR)nID,GetInstanceHandle(),NULL);
 	if (CCommonCtrl::m_hWnd==NULL)
 		return FALSE;
 	CComboBox::m_hWnd=(HWND)::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETCOMBOCONTROL,0,0);
@@ -1178,7 +1178,7 @@ int CComboBoxEx::InsertItem(LPCSTR pszText,int iImage,int iSelectedImage,int iOv
 	cbei.iIndent=iIndent;
 	cbei.lParam=lParam;
 	cbei.pszText=(LPSTR)pszText;
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_INSERTITEM,0,(LPARAM)&cbei);
+	return (int)::SendMessage(CCommonCtrl::m_hWnd,CBEM_INSERTITEM,0,(LPARAM)&cbei);
 }
 	
 int CComboBoxEx::InsertItem(LPCWSTR pszText,int iImage,int iSelectedImage,int iOverlay,int iIndent,LPARAM lParam,UINT mask)
@@ -1207,7 +1207,7 @@ int CComboBoxEx::InsertItem(LPCWSTR pszText,int iImage,int iSelectedImage,int iO
 	cbei.iIndent=iIndent;
 	cbei.lParam=lParam;
 	cbei.pszText=(LPWSTR)pszText;
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_INSERTITEMW,0,(LPARAM)&cbei);
+	return (int)::SendMessage(CCommonCtrl::m_hWnd,CBEM_INSERTITEMW,0,(LPARAM)&cbei);
 }
 	
 CString CComboBoxEx::GetItemText(int nItem) const
@@ -1259,7 +1259,7 @@ int CComboBoxEx::GetItemText(int nItem,LPSTR lpszText,int nLen) const
 	ce.cchTextMax=nLen;
 	ce.pszText=lpszText;
 	ce.mask=CBEIF_TEXT;
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETITEM,0,(LPARAM)&ce);
+	return (int)::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETITEM,0,(LPARAM)&ce);
 }
 
 int CComboBoxEx::GetItemText(int nItem,LPWSTR lpszText,int nLen) const
@@ -1271,7 +1271,7 @@ int CComboBoxEx::GetItemText(int nItem,LPWSTR lpszText,int nLen) const
 		ce.cchTextMax=nLen;
 		ce.pszText=lpszText;
 		ce.mask=CBEIF_TEXT;
-		return ::SendMessageW(CCommonCtrl::m_hWnd,CBEM_GETITEMW,0,(LPARAM)&ce);
+		return (int)::SendMessageW(CCommonCtrl::m_hWnd,CBEM_GETITEMW,0,(LPARAM)&ce);
 	}
 	else
 	{
@@ -1280,7 +1280,7 @@ int CComboBoxEx::GetItemText(int nItem,LPWSTR lpszText,int nLen) const
 		ce.cchTextMax=nLen;
 		ce.pszText=new char[nLen+1];
 		ce.mask=CBEIF_TEXT;
-		int nRet=::SendMessageA(CCommonCtrl::m_hWnd,CBEM_GETITEMA,0,(LPARAM)&ce);
+		int nRet=(int)::SendMessageA(CCommonCtrl::m_hWnd,CBEM_GETITEMA,0,(LPARAM)&ce);
 
 		if (nRet)
 			MultiByteToWideChar(CP_ACP,0,ce.pszText,-1,lpszText,nLen);
@@ -1295,7 +1295,7 @@ BOOL CComboBoxEx::SetItemText(int nItem,LPCSTR lpszText)
 	ce.pszText=(LPSTR)lpszText;
 	ce.iItem=nItem;
 	ce.mask=CBEIF_TEXT;
-	return ::SendMessageA(CCommonCtrl::m_hWnd,CBEM_SETITEMA,0,(LPARAM)&ce);
+	return(BOOL) ::SendMessageA(CCommonCtrl::m_hWnd,CBEM_SETITEMA,0,(LPARAM)&ce);
 }
 
 
@@ -1307,7 +1307,7 @@ BOOL CComboBoxEx::SetItemText(int nItem,LPCWSTR lpszText)
 		ce.pszText=(LPWSTR)lpszText;
 		ce.iItem=nItem;
 		ce.mask=CBEIF_TEXT;
-		return ::SendMessageW(CCommonCtrl::m_hWnd,CBEM_SETITEMW,0,(LPARAM)&ce);
+		return (BOOL)::SendMessageW(CCommonCtrl::m_hWnd,CBEM_SETITEMW,0,(LPARAM)&ce);
 	}
 	else
 	{
@@ -1316,11 +1316,11 @@ BOOL CComboBoxEx::SetItemText(int nItem,LPCWSTR lpszText)
 		ce.pszText=(LPSTR)(LPCSTR)str;
 		ce.iItem=nItem;
 		ce.mask=CBEIF_TEXT;
-		return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_SETITEM,0,(LPARAM)&ce);
+		return (BOOL)::SendMessage(CCommonCtrl::m_hWnd,CBEM_SETITEM,0,(LPARAM)&ce);
 	}
 }
 
-DWORD CComboBoxEx::GetItemData(int nIndex) const
+DWORD_PTR CComboBoxEx::GetItemData(int nIndex) const
 {
 	COMBOBOXEXITEM ce;
 	ce.mask=CBEIF_LPARAM;
@@ -1330,13 +1330,13 @@ DWORD CComboBoxEx::GetItemData(int nIndex) const
 	return ce.lParam;
 }
 
-int CComboBoxEx::SetItemData(int nIndex, DWORD dwItemData)
+int CComboBoxEx::SetItemData(int nIndex, DWORD_PTR dwItemData)
 {
 	COMBOBOXEXITEM ce;
 	ce.mask=CBEIF_LPARAM;
 	ce.iItem=nIndex;
 	ce.lParam=dwItemData;
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_SETITEM,0,(LPARAM)&ce);
+	return (int)::SendMessage(CCommonCtrl::m_hWnd,CBEM_SETITEM,0,(LPARAM)&ce);
 }
 
 void* CComboBoxEx::GetItemDataPtr(int nIndex) const

@@ -45,17 +45,17 @@ inline BOOL CCommonCtrl::GetUnicodeFormat() const
 
 inline UINT CCommonCtrl::SetVersion(UINT nVersion)
 {
-	return ::SendMessage(m_hWnd,CCM_SETVERSION,nVersion,0);
+	return (UINT)::SendMessage(m_hWnd,CCM_SETVERSION,nVersion,0);
 }
 
 inline UINT CCommonCtrl::GetVersion() const
 {
-	return ::SendMessage(m_hWnd,CCM_GETVERSION,0,0);
+	return (UINT)::SendMessage(m_hWnd,CCM_GETVERSION,0,0);
 }
 
 inline BOOL CCommonCtrl::SetNotifyWindow(HWND hWndParent)
 {
-	return ::SendMessage(m_hWnd,CCM_SETNOTIFYWINDOW,(WPARAM)hWndParent,0);
+	return (BOOL)::SendMessage(m_hWnd,CCM_SETNOTIFYWINDOW,(WPARAM)hWndParent,0);
 }
 
 ///////////////////////////////////////////////
@@ -327,7 +327,7 @@ inline BOOL CStatusBarCtrl::Create(DWORD dwStyle,const RECT* rect,HWND hWndParen
 {
 	return (m_hWnd=CreateWindowEx(0L,STATUSCLASSNAME,szEmpty,
       dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-      hWndParent,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+      hWndParent,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline BOOL CStatusBarCtrl::SetText(LPCSTR lpszText,int nPane,int nType)
@@ -342,7 +342,7 @@ inline BOOL CStatusBarCtrl::SetParts(int nParts,int* pWidths)
 
 inline int CStatusBarCtrl::GetParts(int nParts,int* pParts) const
 {
-	return ::SendMessage(m_hWnd,SB_GETPARTS,(WPARAM)nParts,(LPARAM)pParts); 
+	return (int)::SendMessage(m_hWnd,SB_GETPARTS,(WPARAM)nParts,(LPARAM)pParts); 
 }
 
 inline BOOL CStatusBarCtrl::GetBorders(int* pBorders) const
@@ -385,9 +385,9 @@ inline BOOL CStatusBarCtrl::SetTipText(int n,LPCSTR szText)
 	return (BOOL)::SendMessage(m_hWnd,SB_SETTIPTEXT,n,(LPARAM)szText);
 }
 
-inline BOOL CStatusBarCtrl::GetTipText(int n,LPSTR szText,SIZE_T nSize) const
+inline SIZE_T CStatusBarCtrl::GetTipText(int n,LPSTR szText,SIZE_T nSize) const
 {
-	return (BOOL)::SendMessage(m_hWnd,SB_GETTIPTEXT,MAKEWPARAM(n,nSize),(LPARAM)szText);
+	return ::SendMessage(m_hWnd,SB_GETTIPTEXT,MAKEWPARAM(n,nSize),(LPARAM)szText);
 }
 
 inline BOOL CStatusBarCtrl::SetUnicodeFormat(int nFormat)
@@ -454,7 +454,7 @@ inline BOOL CToolTipCtrl::AdjustRect(LPRECT lpRect,BOOL fLarger)
 
 inline int CToolTipCtrl::GetToolCount() const
 {
-	return ::SendMessage(m_hWnd,TTM_GETTOOLCOUNT,0,0);
+	return (int)::SendMessage(m_hWnd,TTM_GETTOOLCOUNT,0,0);
 }
 
 inline void CToolTipCtrl::Activate(BOOL bActivate)
@@ -507,12 +507,12 @@ inline void CToolTipCtrl::SetMargin(LPCRECT lprc)
 
 inline int CToolTipCtrl::GetMaxTipWidth() const
 {
-	return ::SendMessage(m_hWnd,TTM_SETMAXTIPWIDTH,0,0);
+	return (int)::SendMessage(m_hWnd,TTM_SETMAXTIPWIDTH,0,0);
 }
 
 inline int CToolTipCtrl::SetMaxTipWidth(int iWidth)
 {
-	return ::SendMessage(m_hWnd,TTM_SETMAXTIPWIDTH,0,iWidth);
+	return (int)::SendMessage(m_hWnd,TTM_SETMAXTIPWIDTH,0,iWidth);
 }
 
 inline BOOL CToolTipCtrl::EnumTools(UINT iTool,LPTOOLINFO lpToolInfo) const
@@ -587,14 +587,14 @@ inline BOOL CRebarCtrl::Create(DWORD dwStyle,const RECT* rect,HWND hWndParent,UI
 {
 	return (m_hWnd=CreateWindowEx(0L,REBARCLASSNAME,szEmpty,
       dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-      hWndParent,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+      hWndParent,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline BOOL CRebarCtrl::CreateEx(DWORD dwStyle,const RECT* rect,HWND hWndParent,UINT nID,DWORD dwExStyle)
 {
 	return (m_hWnd=CreateWindowEx(dwExStyle,REBARCLASSNAME,szEmpty,
       dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-      hWndParent,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+      hWndParent,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline int CRebarCtrl::InsertBand(int nBand,const REBARBANDINFO* rbi)
@@ -796,7 +796,7 @@ inline BOOL CToolBarCtrl::SetState(int nID,UINT nState)
 
 inline int CToolBarCtrl::GetState(int nID) const
 {
-	return ::SendMessage(m_hWnd,TB_GETSTATE,(WPARAM)nID,0);
+	return (int)::SendMessage(m_hWnd,TB_GETSTATE,(WPARAM)nID,0);
 }
 
 inline BOOL CToolBarCtrl::GetButton(int nIndex,LPTBBUTTON lpButton) const
@@ -806,7 +806,7 @@ inline BOOL CToolBarCtrl::GetButton(int nIndex,LPTBBUTTON lpButton) const
 
 inline int CToolBarCtrl::GetButtonCount() const
 {
-	return ::SendMessage(m_hWnd,TB_BUTTONCOUNT,0,0);
+	return (int)::SendMessage(m_hWnd,TB_BUTTONCOUNT,0,0);
 }
 
 inline BOOL CToolBarCtrl::GetRect(int nID,LPRECT lpRect) const
@@ -851,7 +851,7 @@ inline void CToolBarCtrl::SetRows(int nRows,BOOL bLarger,LPRECT lpRect)
 
 inline int CToolBarCtrl::GetRows() const
 {
-	return ::SendMessage(m_hWnd,TB_GETROWS,0,0);
+	return (int)::SendMessage(m_hWnd,TB_GETROWS,0,0);
 }
 
 inline BOOL CToolBarCtrl::SetCmdID(int nIndex,UINT nID)
@@ -861,7 +861,7 @@ inline BOOL CToolBarCtrl::SetCmdID(int nIndex,UINT nID)
 
 inline UINT CToolBarCtrl::GetBitmapFlags() const
 {
-	return ::SendMessage(m_hWnd,TB_GETBITMAPFLAGS,0,0);
+	return (UINT)::SendMessage(m_hWnd,TB_GETBITMAPFLAGS,0,0);
 }
 
 inline HWND CToolBarCtrl::SetParent(HWND hParentNew)
@@ -911,7 +911,7 @@ inline BOOL CToolBarCtrl::DeleteButton(int nIndex)
 
 inline UINT CToolBarCtrl::CommandToIndex(UINT nID) const
 {
-	return ::SendMessage(m_hWnd,TB_COMMANDTOINDEX,(WPARAM)nID,0);
+	return (UINT)::SendMessage(m_hWnd,TB_COMMANDTOINDEX,(WPARAM)nID,0);
 }
 
 inline void CToolBarCtrl::Customize()
@@ -922,13 +922,13 @@ inline void CToolBarCtrl::Customize()
 #ifdef DEF_RESOURCES
 inline int CToolBarCtrl::AddString(UINT nStringID)
 {
-	return ::SendMessage(m_hWnd,TB_ADDSTRING,(WPARAM)GetLanguageSpecificResourceHandle(),(LPARAM)nStringID);
+	return (int)::SendMessage(m_hWnd,TB_ADDSTRING,(WPARAM)GetLanguageSpecificResourceHandle(),(LPARAM)nStringID);
 }
 #endif
 
 inline int CToolBarCtrl::AddStrings(LPCTSTR lpszStrings)
 {
-	return ::SendMessage(m_hWnd,TB_ADDSTRING,(WPARAM)NULL,(LPARAM)lpszStrings);
+	return (int)::SendMessage(m_hWnd,TB_ADDSTRING,(WPARAM)NULL,(LPARAM)lpszStrings);
 }
 
 inline void CToolBarCtrl::AutoSize()
@@ -978,17 +978,17 @@ inline BOOL CToolBarCtrl::GetMaxSize(SIZE& rSize) const
 
 inline HRESULT CToolBarCtrl::GetObject(REFIID rID,void** ppvObject) const
 {
-	return ::SendMessage(m_hWnd,TB_GETOBJECT,(WPARAM)&rID,(LPARAM)ppvObject);
+	return (HRESULT)::SendMessage(m_hWnd,TB_GETOBJECT,(WPARAM)&rID,(LPARAM)ppvObject);
 }
 
 inline DWORD CToolBarCtrl::GetPadding() const
 {
-	return ::SendMessage(m_hWnd,TB_GETPADDING,0,0);
+	return (DWORD)::SendMessage(m_hWnd,TB_GETPADDING,0,0);
 }
 
 inline BOOL CToolBarCtrl::GetPadding(WORD& cx,WORD& cy) const
 {
-	DWORD nPadding=::SendMessage(m_hWnd,TB_GETPADDING,0,0);
+	DWORD nPadding=(DWORD)::SendMessage(m_hWnd,TB_GETPADDING,0,0);
 	cx=LOWORD(nPadding);
 	cy=HIWORD(nPadding);
 	return TRUE;
@@ -1016,7 +1016,7 @@ inline BOOL CProgressCtrl::Create(DWORD dwStyle,const RECT* rect,HWND hWndParent
 {
 	return (m_hWnd=CreateWindowEx(0L,PROGRESS_CLASS,szEmpty,
       dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-      hWndParent,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+      hWndParent,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline void CProgressCtrl::SetRange(int nLower, int nUpper)
@@ -1026,22 +1026,22 @@ inline void CProgressCtrl::SetRange(int nLower, int nUpper)
 
 inline int CProgressCtrl::SetPos(int nPos)
 {
-	return SendMessage(PBM_SETPOS,nPos,0);
+	return (int)SendMessage(PBM_SETPOS,nPos,0);
 }
 
 inline int CProgressCtrl::OffsetPos(int nPos)
 {
-	return SendMessage(PBM_DELTAPOS,nPos,0);	
+	return (int)SendMessage(PBM_DELTAPOS,nPos,0);	
 }
 
 inline int CProgressCtrl::SetStep(int nStep)
 {
-	return SendMessage(PBM_SETSTEP,nStep,0);
+	return (int)SendMessage(PBM_SETSTEP,nStep,0);
 }
 
 inline int CProgressCtrl::StepIt()
 {
-	return SendMessage(PBM_STEPIT,0,0);
+	return (int)SendMessage(PBM_STEPIT,0,0);
 }
 
 inline void CProgressCtrl::SetBarColor(COLORREF bColor)
@@ -1065,7 +1065,7 @@ inline CSpinButtonCtrl::CSpinButtonCtrl(HWND hWnd)
 inline BOOL CSpinButtonCtrl::Create(DWORD dwStyle,const RECT* rect,HWND hParentWnd,UINT nID)
 {
 	return (m_hWnd=CreateWindowEx(0L,UPDOWN_CLASS,szEmpty,dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-      hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+      hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }	
 
 inline BOOL CSpinButtonCtrl::SetAccel(int nAccel, UDACCEL* pAccel)
@@ -1075,17 +1075,17 @@ inline BOOL CSpinButtonCtrl::SetAccel(int nAccel, UDACCEL* pAccel)
 
 inline UINT CSpinButtonCtrl::GetAccel(int nAccel, UDACCEL* pAccel) const
 {
-	return ::SendMessage(m_hWnd,UDM_GETACCEL,(WPARAM)nAccel,(LPARAM)pAccel); 
+	return (UINT)::SendMessage(m_hWnd,UDM_GETACCEL,(WPARAM)nAccel,(LPARAM)pAccel); 
 }
 
 inline int CSpinButtonCtrl::SetBase(int nBase)
 {
-	return ::SendMessage(m_hWnd,UDM_SETBASE,(WPARAM)nBase,0);
+	return (int)::SendMessage(m_hWnd,UDM_SETBASE,(WPARAM)nBase,0);
 }
 
 inline UINT CSpinButtonCtrl::GetBase() const
 {
-	return ::SendMessage(m_hWnd,UDM_GETBASE,0,0);
+	return (UINT)::SendMessage(m_hWnd,UDM_GETBASE,0,0);
 }
 
 inline HWND CSpinButtonCtrl::SetBuddy(HWND hWndBuddy)
@@ -1100,7 +1100,7 @@ inline HWND CSpinButtonCtrl::GetBuddy() const
 
 inline int CSpinButtonCtrl::SetPos(int nPos)
 {
-	return ::SendMessage(m_hWnd,UDM_SETPOS,0,(LPARAM)nPos);
+	return(int) ::SendMessage(m_hWnd,UDM_SETPOS,0,(LPARAM)nPos);
 }
 
 inline int CSpinButtonCtrl::GetPos() const
@@ -1115,7 +1115,7 @@ inline void CSpinButtonCtrl::SetRange(int nLower,int nUpper)
 
 inline DWORD CSpinButtonCtrl::GetRange() const
 {
-	return ::SendMessage(m_hWnd,UDM_GETRANGE,0,0);
+	return (DWORD)::SendMessage(m_hWnd,UDM_GETRANGE,0,0);
 }
 
 ///////////////////////////
@@ -1143,7 +1143,7 @@ inline HIMAGELIST CTabCtrl::SetImageList(HIMAGELIST hImageList)
 
 inline int CTabCtrl::GetItemCount() const
 {
-	return ::SendMessage(m_hWnd,TCM_GETITEMCOUNT,0,0);
+	return (int)::SendMessage(m_hWnd,TCM_GETITEMCOUNT,0,0);
 }
 
 inline BOOL CTabCtrl::GetItem(int nItem,TC_ITEM* pTabCtrlItem) const
@@ -1165,12 +1165,12 @@ inline BOOL CTabCtrl::GetItemRect(int nItem,LPRECT lpRect) const
 
 inline int CTabCtrl::GetCurSel() const
 {
-	return ::SendMessage(m_hWnd,TCM_GETCURSEL,0,0);
+	return (int)::SendMessage(m_hWnd,TCM_GETCURSEL,0,0);
 }
 
 inline int CTabCtrl::SetCurSel(int nItem)
 {
-	return ::SendMessage(m_hWnd,TCM_SETCURSEL,(WPARAM)nItem,0);
+	return(int) ::SendMessage(m_hWnd,TCM_SETCURSEL,(WPARAM)nItem,0);
 }
 
 inline void CTabCtrl::SetPadding(CSize size)
@@ -1180,7 +1180,7 @@ inline void CTabCtrl::SetPadding(CSize size)
 
 inline int CTabCtrl::GetRowCount() const
 {
-	return ::SendMessage(m_hWnd,TCM_GETROWCOUNT,0,0);
+	return (int)::SendMessage(m_hWnd,TCM_GETROWCOUNT,0,0);
 }
 
 inline HWND CTabCtrl::GetTooltips() const
@@ -1195,7 +1195,7 @@ inline void CTabCtrl::SetTooltips(HWND hWndTip)
 
 inline int CTabCtrl::GetCurFocus() const
 {
-	return ::SendMessage(m_hWnd,TCM_GETCURFOCUS,0,0);
+	return (int)::SendMessage(m_hWnd,TCM_GETCURFOCUS,0,0);
 }
 
 inline BOOL CTabCtrl::InsertItem(int nItem,TC_ITEM* pTabCtrlItem)
@@ -1225,7 +1225,7 @@ inline void CTabCtrl::RemoveImage(int nImage)
 
 inline int CTabCtrl::HitTest(TC_HITTESTINFO* pHitTestInfo) const
 {
-	return ::SendMessage(m_hWnd,TCM_HITTEST,0,(LPARAM)pHitTestInfo);
+	return (int)::SendMessage(m_hWnd,TCM_HITTEST,0,(LPARAM)pHitTestInfo);
 }
 
 ///////////////////////////
@@ -1245,12 +1245,12 @@ inline BOOL CHeaderCtrl::Create(DWORD dwStyle, const RECT* rect, HWND hParentWnd
 {
 	return (m_hWnd=CreateWindowEx(0L,WC_HEADER,szEmpty,dwStyle,
 		rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline int CHeaderCtrl::GetItemCount() const
 {
-	return ::SendMessage(m_hWnd,HDM_GETITEMCOUNT,0,0);
+	return (int)::SendMessage(m_hWnd,HDM_GETITEMCOUNT,0,0);
 }
 
 inline BOOL CHeaderCtrl::GetItem(int nPos, HD_ITEM* pHeaderItem) const
@@ -1265,7 +1265,7 @@ inline BOOL CHeaderCtrl::SetItem(int nPos, HD_ITEM* pHeaderItem)
 
 inline int CHeaderCtrl::InsertItem(int nPos, HD_ITEM* phdi)
 {
-	return ::SendMessage(m_hWnd,HDM_INSERTITEM,nPos,(LPARAM)phdi);
+	return (int)::SendMessage(m_hWnd,HDM_INSERTITEM,nPos,(LPARAM)phdi);
 }
 
 inline BOOL CHeaderCtrl::DeleteItem(int nPos)
@@ -1295,7 +1295,7 @@ inline HIMAGELIST CHeaderCtrl::GetImageList() const
 
 inline int CHeaderCtrl::OrderToIndex(int iItem)
 {
-	return ::SendMessage(m_hWnd,HDM_ORDERTOINDEX,iItem,0);
+	return (int)::SendMessage(m_hWnd,HDM_ORDERTOINDEX,iItem,0);
 }
 
 inline HIMAGELIST CHeaderCtrl::CreateDragImage(int iItem)
@@ -1315,7 +1315,7 @@ inline BOOL CHeaderCtrl::SetOrderArray(int iCount,int* lpi)
 
 inline int CHeaderCtrl::SetHotDivider(int fPos,DWORD dw)
 {
-	return ::SendMessage(m_hWnd,HDM_SETHOTDIVIDER,fPos,dw);
+	return (int)::SendMessage(m_hWnd,HDM_SETHOTDIVIDER,fPos,dw);
 }
 
 ///////////////////////////
@@ -1335,7 +1335,7 @@ inline BOOL CListCtrl::Create(DWORD dwStyle, const RECT* rect, HWND hParentWnd, 
 {
 	return (m_hWnd=CreateWindowEx(0L,WC_LISTVIEW,szEmpty,dwStyle,
 		rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+		hParentWnd,(HMENU)(ULONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline COLORREF CListCtrl::GetBkColor() const
@@ -1360,7 +1360,7 @@ inline HIMAGELIST CListCtrl::SetImageList(HIMAGELIST hImageList, int nImageListT
 
 inline int CListCtrl::GetItemCount() const
 {
-	return ::SendMessage(m_hWnd,LVM_GETITEMCOUNT,0,0);
+	return (int)::SendMessage(m_hWnd,LVM_GETITEMCOUNT,0,0);
 }
 
 inline BOOL CListCtrl::GetItem(LV_ITEM* pItem) const
@@ -1378,7 +1378,7 @@ inline BOOL CListCtrl::SetItem(const LV_ITEM* pItem)
 
 inline UINT CListCtrl::GetCallbackMask() const
 {
-	return ::SendMessage(m_hWnd,LVM_GETCALLBACKMASK,0,0);
+	return (UINT)::SendMessage(m_hWnd,LVM_GETCALLBACKMASK,0,0);
 }
 
 inline BOOL CListCtrl::SetCallbackMask(UINT nMask)
@@ -1388,7 +1388,7 @@ inline BOOL CListCtrl::SetCallbackMask(UINT nMask)
 
 inline int CListCtrl::GetNextItem(int nItem, int nFlags) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETNEXTITEM,(WPARAM)nItem,MAKELPARAM(nFlags,0));
+	return (int)::SendMessage(m_hWnd,LVM_GETNEXTITEM,(WPARAM)nItem,MAKELPARAM(nFlags,0));
 }
 
 inline BOOL CListCtrl::SetItemPosition(int nItem, POINT pt)
@@ -1403,7 +1403,7 @@ inline BOOL CListCtrl::GetItemPosition(int nItem, LPPOINT lpPoint) const
 
 inline int CListCtrl::GetStringWidth(LPCSTR lpsz) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETSTRINGWIDTH,0,(LPARAM)lpsz);
+	return (int)::SendMessage(m_hWnd,LVM_GETSTRINGWIDTH,0,(LPARAM)lpsz);
 }
 
 inline HWND CListCtrl::GetEditControl() const
@@ -1423,7 +1423,7 @@ inline BOOL CListCtrl::SetColumn(int nCol, const LV_COLUMN* pColumn)
 
 inline int CListCtrl::GetColumnWidth(int nCol) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETCOLUMNWIDTH,(WPARAM)nCol,0);
+	return (int)::SendMessage(m_hWnd,LVM_GETCOLUMNWIDTH,(WPARAM)nCol,0);
 }
 
 inline BOOL CListCtrl::SetColumnWidth(int nCol, int cx)
@@ -1458,12 +1458,12 @@ inline BOOL CListCtrl::SetTextBkColor(COLORREF cr)
 
 inline int CListCtrl::GetTopIndex() const
 {
-	return ::SendMessage(m_hWnd,LVM_GETTOPINDEX,0,0);
+	return (int)::SendMessage(m_hWnd,LVM_GETTOPINDEX,0,0);
 }
 
 inline int CListCtrl::GetCountPerPage() const
 {
-	return ::SendMessage(m_hWnd,LVM_GETCOUNTPERPAGE,0,0);
+	return (int)::SendMessage(m_hWnd,LVM_GETCOUNTPERPAGE,0,0);
 }
 
 inline BOOL CListCtrl::GetOrigin(LPPOINT lpPoint) const
@@ -1478,7 +1478,7 @@ inline BOOL CListCtrl::SetItemState(int nItem, LV_ITEM* pItem)
 
 inline UINT CListCtrl::GetItemState(int nItem, UINT nMask) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETITEMSTATE,nItem,nMask);
+	return (UINT)::SendMessage(m_hWnd,LVM_GETITEMSTATE,nItem,nMask);
 }
 
 inline void CListCtrl::SetItemCount(int nItems,DWORD dwFlags)
@@ -1488,12 +1488,12 @@ inline void CListCtrl::SetItemCount(int nItems,DWORD dwFlags)
 
 inline UINT CListCtrl::GetSelectedCount() const
 {
-	return ::SendMessage(m_hWnd,LVM_GETSELECTEDCOUNT,0,0);
+	return (UINT)::SendMessage(m_hWnd,LVM_GETSELECTEDCOUNT,0,0);
 }
 
 inline int CListCtrl::InsertItem(const LV_ITEM* pItem)
 {
-	return ::SendMessage(m_hWnd,LVM_INSERTITEM,0,(LPARAM)pItem);
+	return (int)::SendMessage(m_hWnd,LVM_INSERTITEM,0,(LPARAM)pItem);
 }
 
 
@@ -1510,12 +1510,12 @@ inline BOOL CListCtrl::DeleteAllItems()
 
 inline int CListCtrl::FindItem(LV_FINDINFO* pFindInfo, int nStart) const
 {
-	return ::SendMessage(m_hWnd,LVM_FINDITEM,nStart,(LPARAM)pFindInfo);
+	return (int)::SendMessage(m_hWnd,LVM_FINDITEM,nStart,(LPARAM)pFindInfo);
 }
 
 inline int CListCtrl::HitTest(LV_HITTESTINFO* pHitTestInfo) const
 {
-	return ::SendMessage(m_hWnd,LVM_HITTEST,0,(LPARAM)pHitTestInfo);
+	return (int)::SendMessage(m_hWnd,LVM_HITTEST,0,(LPARAM)pHitTestInfo);
 }
 
 inline BOOL CListCtrl::EnsureVisible(int nItem, BOOL bPartialOK)
@@ -1545,7 +1545,7 @@ inline HWND CListCtrl::EditLabel(int nItem)
 
 inline int CListCtrl::InsertColumn(int nCol, const LV_COLUMN* pColumn)
 {
-	return ::SendMessage(m_hWnd,LVM_INSERTCOLUMN,nCol,(LPARAM)pColumn);
+	return (int)::SendMessage(m_hWnd,LVM_INSERTCOLUMN,nCol,(LPARAM)pColumn);
 }
 
 
@@ -1625,12 +1625,12 @@ inline DWORD CListCtrl::SetIconSpacing(int cx, int cy)
 
 inline BOOL CListCtrl::GetSubItemRect(int iItem,int  iSubItem, LONG code,LPRECT prc) const
 {
-	return ListView_GetSubItemRect(m_hWnd,iItem,iSubItem,code,prc);
+	return (BOOL)ListView_GetSubItemRect(m_hWnd,iItem,iSubItem,code,prc);
 }
     
 inline int CListCtrl::SubItemHitTest(LPLVHITTESTINFO plvhti)
 {
-	return ::SendMessage(m_hWnd,LVM_SUBITEMHITTEST,0,(LPARAM)plvhti);
+	return (int)::SendMessage(m_hWnd,LVM_SUBITEMHITTEST,0,(LPARAM)plvhti);
 }
 
 inline BOOL CListCtrl::SetColumnOrderArray(int iCount,LPINT pi)
@@ -1645,12 +1645,12 @@ inline BOOL CListCtrl::GetColumnOrderArray(int iCount,LPINT pi) const
 
 inline int CListCtrl::SetHotItem(int iItem)
 {
-	return ::SendMessage(m_hWnd,LVM_SETHOTITEM,iItem,0);
+	return (int)::SendMessage(m_hWnd,LVM_SETHOTITEM,iItem,0);
 }
 
 inline int CListCtrl::GetHotItem()
 {
-	return ::SendMessage(m_hWnd,LVM_GETHOTITEM,0,0);
+	return (int)::SendMessage(m_hWnd,LVM_GETHOTITEM,0,0);
 }
 
 inline HCURSOR CListCtrl::SetHotCursor(HCURSOR hCursor)
@@ -1781,17 +1781,17 @@ inline void CListCtrl::CancelEditLabel()
     
 inline int CListCtrl::EnableGroupView(BOOL fEnable)
 {
-	return ListView_EnableGroupView(m_hWnd,fEnable);
+	return (int)ListView_EnableGroupView(m_hWnd,fEnable);
 }
 
 inline int CListCtrl::IsGroupViewEnabled() const
 {
-	return ListView_IsGroupViewEnabled(m_hWnd);
+	return (int)ListView_IsGroupViewEnabled(m_hWnd);
 }
 
 inline int CListCtrl::InsertGroup(int nIndex,const LVGROUP* pGroup)
 {
-	return ListView_InsertGroup(m_hWnd,nIndex,pGroup);
+	return (int)ListView_InsertGroup(m_hWnd,nIndex,pGroup);
 }
 
 inline void CListCtrl::InsertGroupSorted(const LVINSERTGROUPSORTED* pGroupSorted)
@@ -1801,7 +1801,7 @@ inline void CListCtrl::InsertGroupSorted(const LVINSERTGROUPSORTED* pGroupSorted
 
 inline int CListCtrl::GetGroupInfo(int iID,LVGROUP* pGroup)
 {
-	return ListView_SetGroupInfo(m_hWnd,iID,pGroup);
+	return (int)ListView_SetGroupInfo(m_hWnd,iID,pGroup);
 }
 
 inline void CListCtrl::GetGroupMetrics(LVGROUPMETRICS* pGroupMetrics)
@@ -1811,7 +1811,7 @@ inline void CListCtrl::GetGroupMetrics(LVGROUPMETRICS* pGroupMetrics)
 
 inline int CListCtrl::SetGroupInfo(int iID,const LVGROUP* pGroup)
 {
-	return ListView_SetGroupInfo(m_hWnd,iID,pGroup);
+	return (int)ListView_SetGroupInfo(m_hWnd,iID,pGroup);
 }
 
 inline void CListCtrl::SetGroupMetrics(const LVGROUPMETRICS* pGroupMetrics)
@@ -1826,12 +1826,12 @@ inline void CListCtrl::RemoveAllGroups()
 
 inline int CListCtrl::RemoveGroup(int iID)
 {
-	return ListView_RemoveGroup(m_hWnd,iID);
+	return (int)ListView_RemoveGroup(m_hWnd,iID);
 }
 
 inline int CListCtrl::SortGroups(PFNLVGROUPCOMPARE pfnGroupCompare,void* plv)
 {
-	return ListView_SortGroups(m_hWnd,pfnGroupCompare,plv);
+	return (int)ListView_SortGroups(m_hWnd,pfnGroupCompare,plv);
 }
 
 #ifdef DEF_WCHAR
@@ -1847,7 +1847,7 @@ inline BOOL CListCtrl::SetColumn(int nCol, const LV_COLUMNW* pColumn)
 
 inline int CListCtrl::InsertColumn(int nCol, const LV_COLUMNW* pColumn)
 {
-	return ::SendMessage(m_hWnd,LVM_INSERTCOLUMNW,nCol,(LPARAM)pColumn);
+	return (int)::SendMessage(m_hWnd,LVM_INSERTCOLUMNW,nCol,(LPARAM)pColumn);
 }
 
 
@@ -1865,13 +1865,13 @@ inline BOOL CListCtrl::SetItem(const LV_ITEMW* pItem)
 
 inline int CListCtrl::InsertItem(const LV_ITEMW* pItem)
 {
-	return ::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)pItem);
+	return (int)::SendMessage(m_hWnd,LVM_INSERTITEMW,0,(LPARAM)pItem);
 }
 
 
 inline int CListCtrl::GetStringWidth(LPCWSTR lpsz) const
 {
-	return ::SendMessage(m_hWnd,LVM_GETSTRINGWIDTHW,0,(LPARAM)lpsz);
+	return (int)::SendMessage(m_hWnd,LVM_GETSTRINGWIDTHW,0,(LPARAM)lpsz);
 }
 
 
@@ -1894,17 +1894,17 @@ inline BOOL CTreeCtrl::Create(DWORD dwStyle,const RECT* rect,HWND hParentWnd,UIN
 {
 	return (m_hWnd=CreateWindowEx(0L,WC_TREEVIEW,szEmpty,dwStyle,
 		rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+		hParentWnd,(HMENU)(ULONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline UINT CTreeCtrl::GetCount() const
 {
-	return ::SendMessage(m_hWnd,TVM_GETCOUNT,0,0);
+	return (UINT)::SendMessage(m_hWnd,TVM_GETCOUNT,0,0);
 }
 
 inline UINT CTreeCtrl::GetIndent() const
 {
-	return ::SendMessage(m_hWnd,TVM_GETINDENT,0,0);
+	return (UINT)::SendMessage(m_hWnd,TVM_GETINDENT,0,0);
 }
 
 inline void CTreeCtrl::SetIndent(UINT nIndent)
@@ -2009,7 +2009,7 @@ inline HWND CTreeCtrl::GetEditControl() const
 
 inline UINT CTreeCtrl::GetVisibleCount() const
 {
-	return ::SendMessage(m_hWnd,TVM_GETVISIBLECOUNT,0,0);
+	return (UINT)::SendMessage(m_hWnd,TVM_GETVISIBLECOUNT,0,0);
 }
 
 inline HTREEITEM CTreeCtrl::InsertItem(LPTV_INSERTSTRUCTA lpInsertStruct)
@@ -2151,12 +2151,12 @@ inline void CComboBoxEx::SetHandle(HWND hWnd)
 
 inline int CComboBoxEx::InsertItem(const COMBOBOXEXITEM* pItem)
 {
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_INSERTITEM,0,(LPARAM)pItem);
+	return (int)::SendMessage(CCommonCtrl::m_hWnd,CBEM_INSERTITEM,0,(LPARAM)pItem);
 }
 
 inline int CComboBoxEx::InsertItem(const COMBOBOXEXITEMW* pItem)
 {
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_INSERTITEMW,0,(LPARAM)pItem);
+	return (int)::SendMessage(CCommonCtrl::m_hWnd,CBEM_INSERTITEMW,0,(LPARAM)pItem);
 }
 
 inline HIMAGELIST CComboBoxEx::GetImageList() const
@@ -2206,17 +2206,17 @@ inline HWND CComboBoxEx::GetEditControl() const
 
 inline DWORD CComboBoxEx::GetExStyle() const
 {
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETEXSTYLE,0,0);
+	return (DWORD)::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETEXSTYLE,0,0);
 }
 
 inline DWORD CComboBoxEx::SetExStyle(DWORD dwExStyle)
 {
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETEXSTYLE,0,dwExStyle);
+	return (DWORD)::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETEXSTYLE,0,dwExStyle);
 }
 
 inline BOOL CComboBoxEx::HasEditChanged() const
 {
-	return ::SendMessage(CCommonCtrl::m_hWnd,CBEM_HASEDITCHANGED,0,0);
+	return (BOOL)::SendMessage(CCommonCtrl::m_hWnd,CBEM_HASEDITCHANGED,0,0);
 }
 
 ///////////////////////////////////////////
@@ -2237,7 +2237,7 @@ inline BOOL CAnimateCtrl::Create(DWORD dwStyle, const RECT* rect, HWND hParentWn
 {
 	return (m_hWnd=CreateWindowEx(0L,ANIMATE_CLASS,szEmpty,dwStyle,
 		rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+		hParentWnd,(HMENU)(ULONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline BOOL CAnimateCtrl::Open(LPTSTR szName)
@@ -2287,7 +2287,7 @@ inline BOOL CMonthCalCtrl::Create(DWORD dwStyle, const RECT* rect, HWND hParentW
 {
 	return (m_hWnd=CreateWindowEx(0L,MONTHCAL_CLASS,szEmpty,dwStyle,
 		rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+		hParentWnd,(HMENU)(ULONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline BOOL CMonthCalCtrl::GetCurSel(LPSYSTEMTIME pst) const
@@ -2302,7 +2302,7 @@ inline BOOL CMonthCalCtrl::SetCurSel(LPSYSTEMTIME pst)
 
 inline DWORD CMonthCalCtrl::GetMaxSelCount() const
 {
-	return ::SendMessage(m_hWnd,MCM_GETMAXSELCOUNT,0,0);
+	return (DWORD)::SendMessage(m_hWnd,MCM_GETMAXSELCOUNT,0,0);
 }
 
 inline BOOL CMonthCalCtrl::SetMaxSelCount(UINT n)
@@ -2322,7 +2322,7 @@ inline BOOL CMonthCalCtrl::SetSelRange(LPSYSTEMTIME rgst)
 
 inline DWORD CMonthCalCtrl::GetMonthRange(DWORD gmr, LPSYSTEMTIME rgst) const
 {
-	return ::SendMessage(m_hWnd,MCM_GETMONTHRANGE,(WPARAM)gmr,(LPARAM)rgst);
+	return (DWORD)::SendMessage(m_hWnd,MCM_GETMONTHRANGE,(WPARAM)gmr,(LPARAM)rgst);
 }
 
 inline BOOL CMonthCalCtrl::SetDayState(int cbds, LPMONTHDAYSTATE rgds)
@@ -2367,12 +2367,12 @@ inline BOOL CMonthCalCtrl::SetFirstDayOfWeek(int iDay)
 
 inline DWORD CMonthCalCtrl::GetFirstDayOfWeek() const
 {
-	return ::SendMessage(m_hWnd,MCM_GETFIRSTDAYOFWEEK,0,0);
+	return (DWORD)::SendMessage(m_hWnd,MCM_GETFIRSTDAYOFWEEK,0,0);
 }
 
 inline DWORD CMonthCalCtrl::GetRange(LPSYSTEMTIME rgst) const
 {
-	return ::SendMessage(m_hWnd,MCM_GETRANGE,0,(LPARAM)rgst);
+	return (DWORD)::SendMessage(m_hWnd,MCM_GETRANGE,0,(LPARAM)rgst);
 }
 
 inline BOOL CMonthCalCtrl::SetRange(DWORD gdtr, LPSYSTEMTIME rgst)
@@ -2382,17 +2382,17 @@ inline BOOL CMonthCalCtrl::SetRange(DWORD gdtr, LPSYSTEMTIME rgst)
 
 inline int CMonthCalCtrl::GetMonthDelta() const
 {
-	return ::SendMessage(m_hWnd,MCM_GETMONTHDELTA,0,0);
+	return (int)::SendMessage(m_hWnd,MCM_GETMONTHDELTA,0,0);
 }
 
 inline int CMonthCalCtrl::SetMonthDelta(int n)
 {
-	return ::SendMessage(m_hWnd,MCM_SETMONTHDELTA,(WPARAM)n,0);
+	return (int)::SendMessage(m_hWnd,MCM_SETMONTHDELTA,(WPARAM)n,0);
 }
 
 inline DWORD CMonthCalCtrl::GetMaxTodayWidth(LPSIZE psz) const
 {
-	return ::SendMessage(m_hWnd,MCM_GETCURSEL,0,(LPARAM)psz);
+	return (DWORD)::SendMessage(m_hWnd,MCM_GETCURSEL,0,(LPARAM)psz);
 }
 
 ///////////////////////////////////////////
@@ -2412,7 +2412,7 @@ inline BOOL CDateTimeCtrl::Create(DWORD dwStyle, const RECT* rect, HWND hParentW
 {
 	return (m_hWnd=CreateWindowEx(0L,DATETIMEPICK_CLASS,szEmpty,dwStyle,
 		rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)nID,GetInstanceHandle(),NULL))!=NULL;
+		hParentWnd,(HMENU)(ULONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline DWORD CDateTimeCtrl::GetSystemtime(LPSYSTEMTIME pst) const
@@ -2427,7 +2427,7 @@ inline BOOL CDateTimeCtrl::SetSystemtime(DWORD gd, LPSYSTEMTIME pst)
 
 inline DWORD CDateTimeCtrl::GetRange(LPSYSTEMTIME rgst) const
 {
-	return ::SendMessage(m_hWnd,DTM_GETRANGE,0,(LPARAM)rgst);
+	return (DWORD)::SendMessage(m_hWnd,DTM_GETRANGE,0,(LPARAM)rgst);
 }
 
 inline BOOL CDateTimeCtrl::SetRange(DWORD gdtr, LPSYSTEMTIME rgst)

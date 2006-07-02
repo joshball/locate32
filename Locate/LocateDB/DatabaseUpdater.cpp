@@ -77,7 +77,7 @@ CDatabaseUpdater::~CDatabaseUpdater()
 
 UpdateError CDatabaseUpdater::UpdatingProc()
 {
-	DebugFormatMessage("CDatabaseUpdater::UpdatingProc() BEGIN this=%X m_pProc=%X",DWORD(this),DWORD(m_pProc));
+	DebugFormatMessage("CDatabaseUpdater::UpdatingProc() BEGIN this=%lX m_pProc=%lX",ULONG_PTR(this),ULONG_PTR(m_pProc));
 	
 	UpdateError ueResult=ueSuccess;
 
@@ -98,7 +98,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 		try {
 			m_pCurrentRoot=m_aDatabases[m_dwCurrentDatabase]->m_pFirstRoot;
 			
-			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): m_pCurrentDatabase=%X szName=%s",DWORD(m_aDatabases[m_dwCurrentDatabase]),m_aDatabases[m_dwCurrentDatabase]->m_szName);
+			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): m_pCurrentDatabase=%lX szName=%s",ULONG_PTR(m_aDatabases[m_dwCurrentDatabase]),m_aDatabases[m_dwCurrentDatabase]->m_szName);
 				
 			m_pProc(m_dwData,StartedDatabase,ueResult,this);
 			
@@ -112,7 +112,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 	#endif
 				)
 			{
-				DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): m_pCurrentRoot=%X path=%s",DWORD(m_pCurrentRoot),(LPCSTR)W2A(m_pCurrentRoot->m_Path));
+				DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): m_pCurrentRoot=%lX path=%s",ULONG_PTR(m_pCurrentRoot),(LPCSTR)W2A(m_pCurrentRoot->m_Path));
 							
 				sStatus=statusScanning;
 				m_pProc(m_dwData,RootChanged,ueResult,this);
@@ -167,7 +167,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 						m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
 						m_dwFiles,m_dwDirectories,bUnicode);
 					
-					DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): returns: %X",(DWORD)dbFile);
+					DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): returns: %lX",(ULONG_PTR)dbFile);
 					
 					
 					if (dbFile==(CFile*)-1)
@@ -232,9 +232,9 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 		#endif
 				DWORD dwExtraSize1=1,dwExtraSize2=1;
 				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
-					dwExtraSize1+=istrlenw(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1);
+					dwExtraSize1+=(DWORD)istrlenw(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1);
 				if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
-					dwExtraSize2+=istrlenw(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2);
+					dwExtraSize2+=(DWORD)istrlenw(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2);
 				
 				
 
@@ -282,11 +282,11 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 					);
 					// Writing author
 					dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_sAuthor),
-						m_aDatabases[m_dwCurrentDatabase]->m_sAuthor.GetLength()+1);
+						(DWORD)m_aDatabases[m_dwCurrentDatabase]->m_sAuthor.GetLength()+1);
 			
 					// Writing comments
 					dbFile->Write(W2A(m_aDatabases[m_dwCurrentDatabase]->m_sComment),
-						m_aDatabases[m_dwCurrentDatabase]->m_sComment.GetLength()+1);
+						(DWORD)m_aDatabases[m_dwCurrentDatabase]->m_sComment.GetLength()+1);
 					
 					// Writing free data
 					if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
@@ -353,7 +353,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			delete dbFile;
 			dbFile=NULL;
 
-			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): DB %X OK",DWORD(m_aDatabases[m_dwCurrentDatabase]));
+			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): DB %lX OK",ULONG_PTR(m_aDatabases[m_dwCurrentDatabase]));
 		}
 		catch (CFileException fe)
 		{
@@ -447,7 +447,6 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 #ifdef WIN32
 DWORD WINAPI CDatabaseUpdater::UpdateThreadProc(LPVOID lpParameter)
 {
-	DebugNumMessage("CDatabaseUpdater::UpdateThreadProc: lParam=%X",DWORD(lpParameter));
 	return ((CDatabaseUpdater*)lpParameter)->UpdatingProc()==ueSuccess?0:1;	
 }
 #endif
@@ -460,7 +459,7 @@ UpdateError CDatabaseUpdater::Update(BOOL bThreaded,int nThreadPriority)
 	if (bThreaded)
 	{
 		DWORD dwThreadID;
-		DebugNumMessage("CDatabaseUpdater::Update this=%X",DWORD(this));
+		DebugFormatMessage("CDatabaseUpdater::Update this=%lX",ULONG_PTR(this));
 		m_hThread=CreateThread(NULL,0,UpdateThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
 		
 		if (m_hThread!=NULL)
@@ -554,7 +553,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanRoot(volatile LONG& lForceQuit
 	DebugMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: ended to scan root folder");
 	
 	
-	pCurrentBuffer->nLength=pPoint-pCurrentBuffer->pData;
+	pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
 
 	DebugFormatMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: END scanning root %s",m_Path);
 	return ueResult;
@@ -582,7 +581,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanRootW(volatile LONG& lForceQui
 	DebugMessage("CDatabaseUpdater::CRootDirectory::ScanRootW: ended to scan root folder");
 	
 	
-	pCurrentBuffer->nLength=pPoint-pCurrentBuffer->pData;
+	pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
 
 	DebugFormatMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: END scanning root %s",m_Path);
 	return ueResult;
@@ -821,7 +820,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 					if (pPoint+_MAX_PATH+10>pCurrentBuffer->pData+BFSIZE)
 					{
 						// New buffer
-						pCurrentBuffer->nLength=pPoint-pCurrentBuffer->pData;
+						pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
 						pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
 						if (pCurrentBuffer==NULL)
 							throw CException(CException::cannotAllocate);
@@ -860,7 +859,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 
 					// Calculating directory data size
 					if (pSizePointer>=pCurrentBuffer->pData && pSizePointer<pCurrentBuffer->pData+BFSIZE)
-						((DWORD*)pSizePointer)[0]=pPoint-pSizePointer;
+						((DWORD*)pSizePointer)[0]=(DWORD)(pPoint-pSizePointer);
 					else
 					{
 						// Buffer has changed
@@ -871,14 +870,14 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 							pTmp=pTmp->pNext;
 						
 						// Decreasing first buffer
-						((LONG*)pSizePointer)[0]=(LONG)pTmp->pData-(LONG)pSizePointer;
+						((LONG*)pSizePointer)[0]=(LONG)(pTmp->pData-pSizePointer);
 						
 						// Adding length between pCurrentbuffer and pTmp
 						for (;pTmp!=pCurrentBuffer;pTmp=pTmp->pNext)
 							((LONG*)pSizePointer)[0]+=pTmp->nLength;
 
 						// Adding this buffer len
-						((LONG*)pSizePointer)[0]+=pPoint-pCurrentBuffer->pData;
+						((LONG*)pSizePointer)[0]+=(DWORD)(pPoint-pCurrentBuffer->pData);
 					}
 
 					// Increase directories count
@@ -894,7 +893,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 					if (pPoint+MAX_PATH+15>pCurrentBuffer->pData+BFSIZE)
 					{
 						// New buffer
-						pCurrentBuffer->nLength=pPoint-pCurrentBuffer->pData;
+						pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
 						pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
 						pPoint=*pCurrentBuffer;
 					}
@@ -997,7 +996,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,SIZE_T 
 					if (pPoint+MAX_PATH*2+14>pCurrentBuffer->pData+BFSIZE)
 					{
 						// New buffer
-						pCurrentBuffer->nLength=pPoint-pCurrentBuffer->pData;
+						pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
 						pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
 						if (pCurrentBuffer==NULL)
 							throw CException(CException::cannotAllocate);
@@ -1036,7 +1035,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,SIZE_T 
 
 					// Calculating directory data size
 					if (pSizePointer>=pCurrentBuffer->pData && pSizePointer<pCurrentBuffer->pData+BFSIZE)
-						((DWORD*)pSizePointer)[0]=pPoint-pSizePointer;
+						((DWORD*)pSizePointer)[0]=(DWORD)(pPoint-pSizePointer);
 					else
 					{
 						// Buffer has changed
@@ -1047,14 +1046,14 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,SIZE_T 
 							pTmp=pTmp->pNext;
 						
 						// Decreasing first buffer
-						((LONG*)pSizePointer)[0]=(LONG)pTmp->pData-(LONG)pSizePointer;
+						((LONG*)pSizePointer)[0]=(LONG)(pTmp->pData-pSizePointer);
 						
 						// Adding length between pCurrentbuffer and pTmp
 						for (;pTmp!=pCurrentBuffer;pTmp=pTmp->pNext)
 							((LONG*)pSizePointer)[0]+=pTmp->nLength;
 
 						// Adding this buffer len
-						((LONG*)pSizePointer)[0]+=pPoint-pCurrentBuffer->pData;
+						((LONG*)pSizePointer)[0]+=(DWORD)(pPoint-pCurrentBuffer->pData);
 					}
 
 					// Increase directories count
@@ -1070,7 +1069,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,SIZE_T 
 					if (pPoint+MAX_PATH*2+20>pCurrentBuffer->pData+BFSIZE)
 					{
 						// New buffer
-						pCurrentBuffer->nLength=pPoint-pCurrentBuffer->pData;
+						pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
 						pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
 						pPoint=*pCurrentBuffer;
 					}
@@ -1244,10 +1243,10 @@ UpdateError CDatabaseUpdater::CRootDirectory::Write(CFile* dbFile)
 
 	// Calculating data length
 	DWORD nLength=1 // Type
-		+m_Path.GetLength()+1 // Path
-		+sVolumeName.GetLength()+1 // Volume name
+		+(DWORD)m_Path.GetLength()+1 // Path
+		+(DWORD)sVolumeName.GetLength()+1 // Volume name
 		+sizeof(DWORD)	//Serial
-		+sFSName.GetLength()+1 // Filesystem
+		+(DWORD)sFSName.GetLength()+1 // Filesystem
 		+2*sizeof(DWORD) // Number of files and directories
 		+2; // End, 0x0000
 	
@@ -1344,10 +1343,10 @@ UpdateError CDatabaseUpdater::CRootDirectory::WriteW(CFile* dbFile)
 
 	// Calculating data length
 	DWORD nLength=1 // Type
-		+(m_Path.GetLength()+1)*2 // Path
-		+(sVolumeName.GetLength()+1)*2 // Volume name
+		+(DWORD)((m_Path.GetLength()+1)*2) // Path
+		+(DWORD)((sVolumeName.GetLength()+1)*2) // Volume name
 		+sizeof(DWORD)	//Serial
-		+(sFSName.GetLength()+1)*2 // Filesystem
+		+(DWORD)((sFSName.GetLength()+1)*2) // Filesystem
 		+2*sizeof(DWORD) // Number of files and directories
 		+2; // End, 0x0000
 	
@@ -1473,7 +1472,7 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 			
 		while (*pPtr!=L'\0')
 		{
-			SIZE_T dwLength=istrlenw(pPtr);
+			DWORD dwLength=(DWORD)istrlenw(pPtr);
 
 			if ((dwLength==2 || dwLength==3) && pPtr[1]==L':') // Root is drive
 			{
@@ -1736,7 +1735,7 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCWSTR* ppExcl
 	
 	while (pRoot!=NULL)
 	{
-		DWORD nRootLength=pRoot->m_Path.GetLength();
+		DWORD nRootLength=(DWORD)pRoot->m_Path.GetLength();
 		if (pRoot->m_Path.LastChar()=='\\')
 			nRootLength--;
 

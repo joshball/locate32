@@ -274,7 +274,7 @@ INT_PTR CALLBACK DialogProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 		{
 			HICON hIcon=(HICON)LoadImage(hInst,MAKEINTRESOURCE(IDI_SETTINGSTOOL),IMAGE_ICON,32,32,LR_SHARED);
 			//SetIcon(hWnd,hIcon,TRUE);
-			SetClassLong(hWnd,GCL_HICON,(LONG)hIcon);
+			SetClassLongPtr(hWnd,GCLP_HICON,(LONG_PTR)hIcon);
 			hIcon=(HICON)LoadImage(hInst,MAKEINTRESOURCE(IDI_SETTINGSTOOL),IMAGE_ICON,16,16,LR_SHARED);
 			//SetIcon(hWnd,hIcon,FALSE);
 			SetClassLong(hWnd,GCLP_HICONSM,(LONG)hIcon);

@@ -24,11 +24,11 @@ public:
 	
 	BOOL Create(HWND hWndParent=NULL,TypeOfResourceHandle bType=LanguageSpecificResource);
 
-	int DoModal(HWND hWndParent=NULL,TypeOfResourceHandle bType=LanguageSpecificResource);
+	INT_PTR DoModal(HWND hWndParent=NULL,TypeOfResourceHandle bType=LanguageSpecificResource);
 
 public:
 	virtual BOOL OnInitDialog(HWND hwndFocus);
-	virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 
 public:
 	BOOL EndDialog(int nResult) const;
@@ -125,7 +125,7 @@ public:
 	void SetWizardButtons(DWORD dwFlags);
 
 public:
-	virtual int DoModal();
+	virtual INT_PTR DoModal();
 	void AddPage(CPropertyPage* pPage);
 	void RemovePage(CPropertyPage* pPage);
 	void RemovePage(int nPage);
@@ -167,7 +167,7 @@ public:
 	CInputDialog(LPCTSTR lpTemplate,BYTE bFlags=0);
 	CInputDialog(int iTemplate,BYTE bFlags=0);
 
-	int DoModal(HWND hWndParent=NULL);
+	INT_PTR DoModal(HWND hWndParent=NULL);
 	void SetTitle(LPCSTR szTitle);
 	void SetTitle(int iTitle);
 	BOOL SetText(LPCSTR szText);
@@ -218,7 +218,7 @@ public:
 	BOOL GetFileName(CString& sFileName) const;
 	BOOL GetFileExt(CString& sFileExt) const;
 	void GetFileTitle(CString& sFileTitle) const;
-	void GetFileTitle(LPSTR pFileTitle,size_t nMaxLen) const;
+	void GetFileTitle(LPSTR pFileTitle,DWORD nMaxLen) const;
 	
 	void SetFileTitle(LPCSTR szTitle);
 
@@ -245,7 +245,7 @@ public:
 	BOOL GetFileName(CStringW& sFileName) const;
 	BOOL GetFileExt(CStringW& sFileExt) const;
 	void GetFileTitle(CStringW& sFileTitle) const;
-	void GetFileTitle(LPWSTR pFileTitle,size_t nMaxLen) const;
+	void GetFileTitle(LPWSTR pFileTitle,DWORD nMaxLen) const;
 	BOOL GetFolderPath(CStringW& sFolderPath) const;
 	void SetFileTitle(LPCWSTR szTitle);
 	
@@ -631,7 +631,7 @@ public:
 	virtual void OnActivate(WORD fActive,BOOL fMinimized,HWND hwnd);
 	//virtual void OnTimer(DWORD wTimerID); 
 	
-	virtual BOOL WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 
 	BOOL Initialize(Item** pItems);
 	
@@ -903,7 +903,7 @@ inline void CFileDialog::GetFileTitle(CString& sFileTitle) const
 		sFileTitle=m_pofn->lpstrFileTitle;
 }
 
-inline void CFileDialog::GetFileTitle(LPSTR pFileTitle,size_t nMaxLen) const
+inline void CFileDialog::GetFileTitle(LPSTR pFileTitle,DWORD nMaxLen) const
 {
 	if (IsUnicodeSystem())	
 		WideCharToMultiByte(CP_ACP,0,m_pwofn->lpstrFileTitle,-1,pFileTitle,nMaxLen,NULL,NULL);
@@ -920,7 +920,7 @@ inline void CFileDialog::GetFileTitle(CStringW& sFileTitle) const
 		sFileTitle=m_pofn->lpstrFileTitle;
 }
 
-inline void CFileDialog::GetFileTitle(LPWSTR pFileTitle,size_t nMaxLen) const
+inline void CFileDialog::GetFileTitle(LPWSTR pFileTitle,DWORD nMaxLen) const
 {
 	if (IsUnicodeSystem())	
 		StringCbCopyW(pFileTitle,nMaxLen*2,m_pwofn->lpstrFileTitle);
@@ -1167,7 +1167,7 @@ inline void CInputDialog::SetInputText(int iText)
 inline int CInputDialog::GetInputText(CString& text) const
 {
 	text=m_Input;
-	return text.GetLength();
+	return (int)text.GetLength();
 }
 
 ///////////////////////////

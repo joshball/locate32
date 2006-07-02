@@ -30,8 +30,8 @@ LPITEMIDLIST GetFolderIDList(LPCSTR lpszFileName)
 	HRESULT hres;
 	IShellLink *psl;
 	
-	int temp=LastCharIndex(lpszFileName,'\\')+1;
-	iMemCopy(szFolder,lpszFileName,temp);
+	LONG_PTR temp=LastCharIndex(lpszFileName,'\\')+1;
+	sMemCopy(szFolder,lpszFileName,temp);
 	szFolder[temp]='\0';
 	
 	hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(LPVOID*)&psl);
@@ -68,11 +68,11 @@ HRESULT CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc,LPCS
 			hres=psl->SetPath(pszLink);
 			if (SUCCEEDED(hres))
 			{
-				int nIndex=LastCharIndex(pszLink,'\\');
+				LONG_PTR nIndex=LastCharIndex(pszLink,'\\');
 				if (nIndex>=0)
 				{
 					char szWDir[MAX_PATH];
-					iMemCopy(szWDir,pszLink,nIndex);
+					MemCopy(szWDir,pszLink,nIndex);
 					szWDir[nIndex]='\0';
 					psl->SetWorkingDirectory(szWDir);
 				}
@@ -123,7 +123,7 @@ HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath)
 	return hres;
 }
 
-HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,SIZE_T nBufSize)
+HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,DWORD nBufSize)
 {
 	HRESULT hres;  
 	IShellLink* psl;
@@ -184,7 +184,7 @@ LPITEMIDLIST GetFileIDList(LPCWSTR lpszFileName)
 LPITEMIDLIST GetFolderIDList(LPCWSTR lpszFileName)
 {
 	WCHAR szFolder[MAX_PATH];
-	int temp=LastCharIndex(lpszFileName,'\\')+1;
+	LONG_PTR temp=LastCharIndex(lpszFileName,'\\')+1;
 	MemCopyW(szFolder,lpszFileName,temp);
 	szFolder[temp]='\0';
 	return GetFileIDList(szFolder);
@@ -208,7 +208,7 @@ HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc,L
 				if (SUCCEEDED(hres))
 				{
 					
-					int nIndex=LastCharIndex(pszLink,'\\');
+					LONG_PTR nIndex=LastCharIndex(pszLink,'\\');
 					if (nIndex>=0)
 					{
 						WCHAR szWDir[MAX_PATH];
@@ -242,11 +242,11 @@ HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc,L
 				hres=psl->SetPath(W2A(pszLink));
 				if (SUCCEEDED(hres))
 				{
-					int nIndex=LastCharIndex(pszLink,'\\');
+					LONG_PTR nIndex=LastCharIndex(pszLink,'\\');
 					if (nIndex>=0)
 					{
 						char szWDir[MAX_PATH];
-						WideCharToMultiByte(CP_ACP,0,pszLink,nIndex,szWDir,MAX_PATH,0,0);
+						WideCharToMultiByte(CP_ACP,0,pszLink,(int)nIndex,szWDir,MAX_PATH,0,0);
 						szWDir[nIndex]='\0';
 						psl->SetWorkingDirectory(szWDir);
 					}
@@ -328,7 +328,7 @@ HRESULT ResolveShortcut(HWND hWnd,LPCWSTR pszShortcutFile,LPWSTR pszPath)
 	return hres;
 }
 
-HRESULT GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,SIZE_T nBufSize)
+HRESULT GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,DWORD nBufSize)
 {
 	HRESULT hres;
 	if (IsUnicodeSystem())
@@ -379,14 +379,14 @@ HRESULT GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,SIZE_T nBufSi
 #endif
 
 
-BOOL RunRegistryCommand(HKEY hKey,LPCTSTR szFile)
+BOOL RunRegistryCommand(HKEY hKey,LPCSTR szFile)
 {
 	PROCESS_INFORMATION pi;
 	STARTUPINFO si;
 	CRegKey CommandKey;
 	CString ExecuteStr;
 	CString CommandLine;
-	DWORD i;
+	LONG_PTR i;
 
 	if (CommandKey.OpenKey(hKey,"command",CRegKey::openExist|CRegKey::samAll)!=ERROR_SUCCESS)
 		return FALSE;
@@ -429,7 +429,63 @@ BOOL RunRegistryCommand(HKEY hKey,LPCTSTR szFile)
 	return TRUE;
 }
 
-DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,SIZE_T dwBufferLen)
+#ifdef DEF_WCHAR
+BOOL RunRegistryCommand(HKEY hKey,LPCWSTR szFile)
+{
+	if (!IsUnicodeSystem())
+		return RunRegistryCommand(hKey,W2A(szFile));
+
+
+	PROCESS_INFORMATION pi;
+	STARTUPINFOW si;
+	CRegKey CommandKey;
+	CStringW ExecuteStr;
+	CStringW CommandLine;
+	LONG_PTR i;
+
+	if (CommandKey.OpenKey(hKey,"command",CRegKey::openExist|CRegKey::samAll)!=ERROR_SUCCESS)
+		return FALSE;
+	if (CommandKey.QueryValue(L"",ExecuteStr)<2)
+		return FALSE;
+	i=ExecuteStr.FindFirst(L'%');
+	while (i!=-1)
+	{
+		if (ExecuteStr[i+1]==L'1')
+		{
+			CommandLine.Copy(ExecuteStr,i);
+			CommandLine<<szFile;
+			CommandLine<<((LPCWSTR)ExecuteStr+i+2);
+			break;
+		}
+		i=ExecuteStr.FindNext(L'%',i);
+	}
+	if (i==-1)
+		CommandLine=ExecuteStr;
+	if (!ExpandEnvironmentStringsW(CommandLine,ExecuteStr.GetBuffer(1000),1000))
+		ExecuteStr.Swap(CommandLine);
+	si.cb=sizeof(STARTUPINFOW);
+	si.lpReserved=NULL;
+	si.cbReserved2=0;
+	si.lpReserved2=NULL;
+	si.lpDesktop=NULL;
+	si.lpTitle=NULL;
+	si.dwFlags=STARTF_USESHOWWINDOW;
+	si.wShowWindow=SW_SHOWDEFAULT;
+	if (!CreateProcessW(NULL,ExecuteStr.GetBuffer(),NULL,
+		NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
+		NULL,NULL,&si,&pi))
+	{
+		CommandKey.CloseKey();
+		return FALSE;
+	}
+	CloseHandle(pi.hThread);
+	CloseHandle(pi.hProcess);
+	CommandKey.CloseKey();
+	return TRUE;
+}
+#endif
+
+DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen)
 {
 	// May be computer?
 	IShellFolder *psf;
@@ -463,15 +519,15 @@ DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,SIZE_T dwBufferLe
 	{
 	case STRRET_CSTR:
 		StringCbCopy(szName,dwBufferLen,str.cStr);
-		return istrlen(szName);
+		return (DWORD)istrlen(szName);
 	case STRRET_WSTR:
-		return WideCharToMultiByte(CP_ACP,0,str.pOleStr,wcslen(str.pOleStr)+1,szName,dwBufferLen,NULL,NULL);
+		return (DWORD)WideCharToMultiByte(CP_ACP,0,str.pOleStr,(int)wcslen(str.pOleStr)+1,szName,dwBufferLen,NULL,NULL);
 	}
 	return 0;
 }
 
 #ifdef DEF_WCHAR
-DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,SIZE_T dwBufferLen)
+DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,DWORD dwBufferLen)
 {
 	// May be computer?
 	IShellFolder *psf;
@@ -507,14 +563,14 @@ DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,SIZE_T dwBufferL
 		return MultiByteToWideChar(CP_ACP,0,str.cStr,-1,szName,dwBufferLen);
 	case STRRET_WSTR:
 		StringCbCopyW(szName,dwBufferLen,str.pOleStr);
-		return wcslen(szName);
+		return (DWORD)wcslen(szName);
 	}
 	return 0;
 }
 #endif
 
 
-BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,SIZE_T nBufferLen)
+BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,DWORD nBufferLen)
 {
 	CStringW file(szFolder);
 	if (file.LastChar()!=L'\\')
@@ -582,7 +638,7 @@ BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,SIZE_T nBufferLen)
 							case STRRET_WSTR:
 								if (str.pOleStr[0]==L'\\' && str.pOleStr[1]==L'\\')
 								{
-									UINT nlen=istrlenw(str.pOleStr);
+									SIZE_T nlen=istrlenw(str.pOleStr);
 									if (nBufferLen<nlen)
 										nlen=nBufferLen-1;
 									CopyMemory(szTarget,str.pOleStr,nlen);

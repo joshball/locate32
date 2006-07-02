@@ -99,7 +99,7 @@ CLocateApp::CLocateApp()
 	DebugMessage("CLocateApp::CLocateApp()");
 	m_pStartData=new CStartData;
 
-	m_hUpdatersPointerInUse=CreateMutex(NULL,FALSE,NULL);
+	InitializeCriticalSection(&m_cUpdatersPointersInUse);
 }
 
 CLocateApp::~CLocateApp()
@@ -111,11 +111,12 @@ CLocateApp::~CLocateApp()
 		m_pStartData=NULL;
 	}
 
-	if (m_hUpdatersPointerInUse!=NULL)
-	{
-		CloseHandle(m_hUpdatersPointerInUse);
-		m_hUpdatersPointerInUse=NULL;
-	}
+	
+	EnterCriticalSection(&m_cUpdatersPointersInUse);
+	ASSERT(m_ppUpdaters==NULL);
+	LeaveCriticalSection(&m_cUpdatersPointersInUse);
+
+	DeleteCriticalSection(&m_cUpdatersPointersInUse);
 }
 
 BOOL CALLBACK CLocateApp::EnumLocateSTWindows(HWND hwnd,LPARAM lParam)
@@ -1692,18 +1693,18 @@ BOOL CLocateApp::StopUpdating(BOOL bForce)
 		return TRUE; // Already stopped
 
 	BOOL bRet=TRUE;
-	GetUpdatersPointer();
+	EnterCriticalSection(&m_cUpdatersPointersInUse);
 	for (int i=0;m_ppUpdaters!=NULL && m_ppUpdaters[i]!=NULL;i++)
 	{
 		if (!IS_UPDATER_EXITED(m_ppUpdaters[i]))
 		{
-			ReleaseUpdatersPointer();
+			LeaveCriticalSection(&m_cUpdatersPointersInUse);
 			if (!m_ppUpdaters[i]->StopUpdating(bForce))
 				bRet=FALSE;
-			GetUpdatersPointer();
+			EnterCriticalSection(&m_cUpdatersPointersInUse);
 		}
 	}
-	ReleaseUpdatersPointer();
+	LeaveCriticalSection(&m_cUpdatersPointersInUse);
 	
 	GetLocateAppWnd()->StopUpdateStatusNotification();
 	CLocateDlg* pLocateDlg=GetLocateDlg();
@@ -1855,17 +1856,20 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			CLocateAppWnd* pAppWnd=(CLocateAppWnd*)dwParam;
 			DWORD dwRunning=0;
 			
-			CDatabaseUpdater*** pppUpdaters=GetLocateApp()->GetUpdatersPointerPtr();
-			
-			if (pppUpdaters==NULL)
+			EnterCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
+						
+			if (GetLocateApp()->m_ppUpdaters==NULL)
+			{
+				LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
 				return FALSE;
+			}
 
 			
-			for (int i=0;(*pppUpdaters)[i]!=NULL;i++)
+			for (int i=0;GetLocateApp()->m_ppUpdaters[i]!=NULL;i++)
 			{
-				if ((*pppUpdaters)[i]==pUpdater)
-					(*pppUpdaters)[i]=UPDATER_EXITED(ueCode);
-				else if (!IS_UPDATER_EXITED((*pppUpdaters)[i]))
+				if (GetLocateApp()->m_ppUpdaters[i]==pUpdater)
+					GetLocateApp()->m_ppUpdaters[i]=UPDATER_EXITED(ueCode);
+				else if (!IS_UPDATER_EXITED(GetLocateApp()->m_ppUpdaters[i]))
 					dwRunning++;
 			}
 			delete pUpdater;
@@ -1892,12 +1896,12 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 					// ... and constucting notification message:
 					// checking wheter all are stopped, or cancelled 
 					int i;
-					for (i=0;(*pppUpdaters)[i]!=NULL;i++)
+					for (i=0;GetLocateApp()->m_ppUpdaters[i]!=NULL;i++)
 					{
-						if (GET_UPDATER_CODE((*pppUpdaters)[i])!=ueStopped)
+						if (GET_UPDATER_CODE(GetLocateApp()->m_ppUpdaters[i])!=ueStopped)
 							break;
 					}
-					if ((*pppUpdaters)[i]==NULL)
+					if (GetLocateApp()->m_ppUpdaters[i]==NULL)
 					{
 						// All updaters are interrupted by user
 						str.LoadString(IDS_UPDATINGCANCELLED);
@@ -1912,9 +1916,9 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 						str.LoadString(IDS_UPDATINGENDED);
 						int added=0;
 							
-						for (i=0;(*pppUpdaters)[i]!=NULL;i++)
+						for (i=0;GetLocateApp()->m_ppUpdaters[i]!=NULL;i++)
 						{
-							switch (GET_UPDATER_CODE((*pppUpdaters)[i]))
+							switch (GET_UPDATER_CODE(GetLocateApp()->m_ppUpdaters[i]))
 							{
 							case ueSuccess:
 								break;
@@ -1957,10 +1961,11 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 				}
 		
 				// Freeing memory
-				delete[] *pppUpdaters;
-				*pppUpdaters=NULL;
+				delete[] GetLocateApp()->m_ppUpdaters;
+				GetLocateApp()->m_ppUpdaters=NULL;
 
-				GetLocateApp()->ReleaseUpdatersPointer();
+				LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
+				
 
 				if (GetLocateApp()->m_nStartup&CStartData::startupExitAfterUpdating && pAppWnd!=NULL)
 					pAppWnd->PostMessage(WM_COMMAND,IDM_EXIT,NULL);
@@ -1969,7 +1974,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			else 
 			{
 				// Updaters still running, updating shell notify icons
-				GetLocateApp()->ReleaseUpdatersPointer();
+				LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
 				
 				if (dwParam!=NULL)
 				{
@@ -2224,8 +2229,7 @@ BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg,int nThreadPrior
 	if (wThreads==0)
 		return FALSE;
 
-	GetUpdatersPointer();
-	
+	EnterCriticalSection(&m_cUpdatersPointersInUse);	
 	m_ppUpdaters=new CDatabaseUpdater*[wThreads+1];
 	
 	WORD wThread;
@@ -2241,7 +2245,7 @@ BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg,int nThreadPrior
 		m_ppUpdaters[wThread]->Update(TRUE,nThreadPriority);
 	
 	
-	ReleaseUpdatersPointer();
+	LeaveCriticalSection(&m_cUpdatersPointersInUse);
 	
 	if (paDatabasesArg==NULL)
 	{
@@ -2550,20 +2554,20 @@ BOOL CLocateApp::UpdateSettings()
 void CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootInfos)
 {
 	// Counting threads		
-	CDatabaseUpdater** ppUpdaters=GetLocateApp()->GetUpdatersPointer();
+	EnterCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
 	wThreads=0;
-	if (ppUpdaters!=NULL)
+	if (GetLocateApp()->m_ppUpdaters!=NULL)
 	{
-		for (;ppUpdaters[wThreads]!=NULL;wThreads++);
+		for (;GetLocateApp()->m_ppUpdaters[wThreads]!=NULL;wThreads++);
 	}
-	GetLocateApp()->ReleaseUpdatersPointer();
+	LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
 	
 	pRootInfos=new RootInfo[max(wThreads,2)];
 	
 	// Retrieving information
 	wRunning=0;
-	ppUpdaters=GetLocateApp()->GetUpdatersPointer();
-	if (ppUpdaters==NULL)
+	EnterCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
+	if (GetLocateApp()->m_ppUpdaters==NULL)
 	{
 		wThreads=0;
 		delete[] pRootInfos;
@@ -2573,11 +2577,11 @@ void CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootI
 
 	for (WORD i=0;i<wThreads;i++)
 	{
-		if (IS_UPDATER_EXITED(ppUpdaters[i]))
+		if (IS_UPDATER_EXITED(GetLocateApp()->m_ppUpdaters[i]))
 		{
 			pRootInfos[i].pName=NULL;
 			pRootInfos[i].pRoot=NULL;
-			pRootInfos[i].ueError=GET_UPDATER_CODE(ppUpdaters[i]);
+			pRootInfos[i].ueError=GET_UPDATER_CODE(GetLocateApp()->m_ppUpdaters[i]);
 		}
 		else 
 		{
@@ -2585,42 +2589,42 @@ void CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootI
 
 			pRootInfos[i].ueError=ueStillWorking;
 
-			if (ppUpdaters[i]->GetCurrentDatabaseName()==NULL)
+			if (GetLocateApp()->m_ppUpdaters[i]->GetCurrentDatabaseName()==NULL)
 			{
 				// Not started yet
 				pRootInfos[i].pName=allocemptyW();
 				pRootInfos[i].pRoot=NULL;
 
-				if (ppUpdaters[i]->GetStatus()==CDatabaseUpdater::statusFinishing)
+				if (GetLocateApp()->m_ppUpdaters[i]->GetStatus()==CDatabaseUpdater::statusFinishing)
 					pRootInfos[i].ueError=ueSuccess;
 
 				if (m_pUpdateStatusWnd!=NULL)
 				{
-					pRootInfos[i].dwNumberOfDatabases=ppUpdaters[i]->GetNumberOfDatabases();
+					pRootInfos[i].dwNumberOfDatabases=GetLocateApp()->m_ppUpdaters[i]->GetNumberOfDatabases();
 					pRootInfos[i].dwCurrentDatabase=0;
 					pRootInfos[i].wProgressState=0;
 				}
 			}
 			else
 			{
-				pRootInfos[i].pName=ppUpdaters[i]->GetCurrentDatabaseNameStr();
-				if (ppUpdaters[i]->GetCurrentRoot()==NULL)
+				pRootInfos[i].pName=GetLocateApp()->m_ppUpdaters[i]->GetCurrentDatabaseNameStr();
+				if (GetLocateApp()->m_ppUpdaters[i]->GetCurrentRoot()==NULL)
 					pRootInfos[i].pRoot=NULL; // Is writing database
 				else
-					pRootInfos[i].pRoot=ppUpdaters[i]->GetCurrentRootPathStr();
+					pRootInfos[i].pRoot=GetLocateApp()->m_ppUpdaters[i]->GetCurrentRootPathStr();
 				
 				if (m_pUpdateStatusWnd!=NULL)
 				{
-					pRootInfos[i].dwNumberOfDatabases=ppUpdaters[i]->GetNumberOfDatabases();
-					pRootInfos[i].dwCurrentDatabase=ppUpdaters[i]->GetCurrentDatabase();
-					pRootInfos[i].wProgressState=ppUpdaters[i]->GetProgressStatus();
+					pRootInfos[i].dwNumberOfDatabases=GetLocateApp()->m_ppUpdaters[i]->GetNumberOfDatabases();
+					pRootInfos[i].dwCurrentDatabase=GetLocateApp()->m_ppUpdaters[i]->GetCurrentDatabase();
+					pRootInfos[i].wProgressState=GetLocateApp()->m_ppUpdaters[i]->GetProgressStatus();
 				}
 
 			}
 			
 		}
 	}
-	GetLocateApp()->ReleaseUpdatersPointer();
+	LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
 }
 
 void CLocateAppWnd::FreeRootInfos(WORD wThreads,RootInfo* pRootInfos)
@@ -3356,7 +3360,7 @@ void CLocateAppWnd::OnDestroy()
 
 }
 
-BOOL CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	switch (msg)
 	{
@@ -4308,7 +4312,7 @@ void CLocateAppWnd::CUpdateStatusWnd::SetFonts()
 	}
 }
 
-BOOL CLocateAppWnd::CUpdateStatusWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
+LRESULT CLocateAppWnd::CUpdateStatusWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	switch (msg)
 	{
@@ -4399,14 +4403,14 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
         // Changing font
 		dc.SelectObject(m_Font);
 		
-		CDatabaseUpdater** ppUpdaters=GetLocateApp()->GetUpdatersPointer();
-		if (ppUpdaters!=NULL)
+		EnterCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
+		if (GetLocateApp()->m_ppUpdaters!=NULL)
 		{
 			WORD wThreads;
-			for (wThreads=0;ppUpdaters[wThreads]!=NULL;wThreads++);
+			for (wThreads=0;GetLocateApp()->m_ppUpdaters[wThreads]!=NULL;wThreads++);
 
             CLocateAppWnd::RootInfo ri;
-			for (int i=0;ppUpdaters[i]!=NULL;i++)
+			for (int i=0;GetLocateApp()->m_ppUpdaters[i]!=NULL;i++)
 			{
 				szSize.cy+=EXTRA_LINES;
 
@@ -4434,8 +4438,8 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 				LPWSTR szFile=NULL;
 				CDatabase::ArchiveType nArchiveType;
 				CDatabaseUpdater::CRootDirectory* pRoot;
-				ri.dwNumberOfDatabases=ppUpdaters[i]->GetNumberOfDatabases();
-				for (ri.dwCurrentDatabase=0;ppUpdaters[i]->EnumDatabases(ri.dwCurrentDatabase,ri.pName,szFile,nArchiveType,pRoot);ri.dwCurrentDatabase++)
+				ri.dwNumberOfDatabases=GetLocateApp()->m_ppUpdaters[i]->GetNumberOfDatabases();
+				for (ri.dwCurrentDatabase=0;GetLocateApp()->m_ppUpdaters[i]->EnumDatabases(ri.dwCurrentDatabase,ri.pName,szFile,nArchiveType,pRoot);ri.dwCurrentDatabase++)
 				{
 					// Checking how much space "writing database" will take
 					ri.pRoot=NULL;	
@@ -4461,7 +4465,7 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 
 			}
 		}    
-		GetLocateApp()->ReleaseUpdatersPointer();
+		LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
 		
 		szSize.cx+=2*EXTRA_MARGINSX;
 		szSize.cy+=2*EXTRA_MARGINSY;

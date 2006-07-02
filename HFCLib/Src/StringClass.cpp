@@ -43,7 +43,7 @@ CString::CString(const CString& str)
 	}
 }
 
-CString::CString(CHAR ch,DWORD nRepeat)
+CString::CString(CHAR ch,SIZE_T nRepeat)
 :	m_nBase(10)
 {
 	if (!nRepeat)
@@ -192,7 +192,7 @@ CString::CString(LPCWSTR lpsz)
 	}
 }
 
-CString::CString(WCHAR ch,DWORD nRepeat)
+CString::CString(WCHAR ch,SIZE_T nRepeat)
 	:m_nBase(10)
 {
 	if (!nRepeat)
@@ -222,7 +222,8 @@ CString::CString(WCHAR ch,DWORD nRepeat)
 }
 #endif
 
-CHAR& CString::operator[](DWORD nIndex)
+#ifdef _WIN64
+CHAR& CString::operator[](ULONG_PTR nIndex)
 {
 	if (m_pData==NULL)
 		return (char)*szEmpty;
@@ -232,21 +233,52 @@ CHAR& CString::operator[](DWORD nIndex)
 		return m_pData[m_nAllocLen-1];
 }
 
+CHAR& CString::operator[](LONG_PTR nIndex)
+{
+	if (m_pData==NULL)
+		return (char)*szEmpty;
+	if (nIndex>=0 && (SIZE_T)nIndex<m_nAllocLen)
+		return m_pData[nIndex];
+	else
+		return m_pData[m_nAllocLen-1];
+}
+#endif
+
 CHAR& CString::operator[](int nIndex)
 {
 	if (m_pData==NULL)
 		return (char)*szEmpty;
-	if (nIndex>=0 && (DWORD)nIndex<m_nAllocLen)
+	if (nIndex>=0 && (SIZE_T)nIndex<m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
 }
 	
+CHAR& CString::operator[](LONG nIndex)
+{
+	if (m_pData==NULL)
+		return (char)*szEmpty;
+	if (nIndex>=0 && (SIZE_T)nIndex<m_nAllocLen)
+		return m_pData[nIndex];
+	else
+		return m_pData[m_nAllocLen-1];
+}
+
 CHAR& CString::operator[](UINT nIndex)
 {
 	if (m_pData==NULL)
 		return (char)*szEmpty;
-	if (nIndex>=0 && (DWORD)nIndex<m_nAllocLen)
+	if ((DWORD)nIndex<m_nAllocLen)
+		return m_pData[nIndex];
+	else
+		return m_pData[m_nAllocLen-1];
+}
+
+CHAR& CString::operator[](DWORD nIndex)
+{
+	if (m_pData==NULL)
+		return (char)*szEmpty;
+	if ((DWORD)nIndex<m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
@@ -486,7 +518,7 @@ const CString& CString::operator+=(const CString& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+str.m_nDataLen;
+		SIZE_T templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -562,7 +594,7 @@ void CString::Append(LPCSTR str,SIZE_T nStrLen)
 		return;
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+nStrLen;
+		SIZE_T templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -605,7 +637,7 @@ const CString& CString::operator+=(LPCSTR str)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+nStrLen;
+		SIZE_T templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -646,7 +678,7 @@ const CString& CString::operator+=(DWORD iNum)
 	{
 		SIZE_T nStrLen=istrlen(szBuffer);
 
-		DWORD templen=m_nDataLen+nStrLen;
+		SIZE_T templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -723,6 +755,90 @@ const CString& CString::operator+=(int iNum)
 	}
 }
 
+const CString& CString::operator+=(LONGLONG iNum)
+{
+	CHAR szBuffer[34];
+	_i64toa_s(iNum,szBuffer,34,m_nBase);
+	if (m_pData!=NULL)
+	{
+		SIZE_T nStrLen=istrlen(szBuffer);
+
+		SIZE_T templen=m_nDataLen+nStrLen;
+		if (templen>=m_nAllocLen)
+		{
+			LPSTR temp=m_pData;
+			m_pData=new CHAR[m_nAllocLen=templen+STR_EXTRAALLOC];
+			if (m_pData==NULL)
+			{
+				SetHFCError(HFC_CANNOTALLOCATE);
+				return *this;
+			}
+			sMemCopy(m_pData,temp,m_nDataLen);
+			delete[] temp;
+		}
+		sMemCopy(&m_pData[m_nDataLen],szBuffer,nStrLen+1);
+		m_nDataLen+=nStrLen;
+		OUTPUT(m_nDataLen)
+		return *this;	
+	}
+	else
+	{
+		m_nDataLen=istrlen((LPSTR)szBuffer);
+		
+		m_pData=new CHAR[m_nAllocLen=STR_EXTRAALLOC];
+		if (m_pData==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOCATE);
+			return *this;
+		}
+		sMemCopy(m_pData,szBuffer,m_nDataLen+1);
+		OUTPUT(m_nDataLen)
+		return *this;
+	}
+}
+
+const CString& CString::operator+=(ULONGLONG iNum)
+{
+	CHAR szBuffer[34];
+	_ui64toa_s(iNum,szBuffer,34,m_nBase);
+	if (m_pData!=NULL)
+	{
+		SIZE_T nStrLen=istrlen(szBuffer);
+
+		SIZE_T templen=m_nDataLen+nStrLen;
+		if (templen>=m_nAllocLen)
+		{
+			LPSTR temp=m_pData;
+			m_pData=new CHAR[m_nAllocLen=templen+STR_EXTRAALLOC];
+			if (m_pData==NULL)
+			{
+				SetHFCError(HFC_CANNOTALLOCATE);
+				return *this;
+			}
+			sMemCopy(m_pData,temp,m_nDataLen);
+			delete[] temp;
+		}
+		sMemCopy(&m_pData[m_nDataLen],szBuffer,nStrLen+1);
+		m_nDataLen+=nStrLen;
+		OUTPUT(m_nDataLen)
+		return *this;	
+	}
+	else
+	{
+		m_nDataLen=istrlen((LPSTR)szBuffer);
+		
+		m_pData=new CHAR[m_nAllocLen=STR_EXTRAALLOC];
+		if (m_pData==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOCATE);
+			return *this;
+		}
+		sMemCopy(m_pData,szBuffer,m_nDataLen+1);
+		OUTPUT(m_nDataLen)
+		return *this;
+	}
+}
+
 #ifdef DEF_WCHAR
 const CString& CString::operator+=(const CStringW& str)
 {
@@ -730,7 +846,7 @@ const CString& CString::operator+=(const CStringW& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+str.m_nDataLen;
+		SIZE_T templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -811,7 +927,7 @@ const CString& CString::operator+=(LPCWSTR str)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+nStrLen;
+		SIZE_T templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -856,7 +972,7 @@ void CString::Append(LPCWSTR str,SIZE_T nStrLen)
 		return;
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+nStrLen;
+		SIZE_T templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -895,7 +1011,7 @@ CString& CString::operator<<(const CString& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+str.m_nDataLen;
+		SIZE_T templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1091,6 +1207,88 @@ CString& CString::operator<<(int iNum)
 	}
 }
 
+CString& CString::operator<<(LONGLONG iNum)
+{
+	CHAR szBuffer[34];
+	_i64toa_s(iNum,szBuffer,34,m_nBase);
+	if (m_pData!=NULL)
+	{
+		SIZE_T nStrLen=istrlen(szBuffer);
+		SIZE_T templen=m_nDataLen+nStrLen;
+		if (templen>=m_nAllocLen)
+		{
+			LPSTR temp=m_pData;
+			m_pData=new CHAR[m_nAllocLen=templen+STR_EXTRAALLOC];
+			if (m_pData==NULL)
+			{	
+				SetHFCError(HFC_CANNOTALLOCATE);
+				return *this;
+			}
+			sMemCopy(m_pData,temp,m_nDataLen);
+			delete[] temp;
+		}
+		sMemCopy(&m_pData[m_nDataLen],szBuffer,nStrLen+1);
+		m_nDataLen+=nStrLen;
+		OUTPUT(m_nDataLen)
+		return *this;	
+	}
+	else
+	{
+		m_nDataLen=istrlen((LPSTR)szBuffer);
+		
+		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		if (m_pData==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOCATE);
+			return *this;
+		}
+		sMemCopy(m_pData,szBuffer,m_nDataLen+1);
+		OUTPUT(m_nDataLen)
+		return *this;
+	}
+}
+
+CString& CString::operator<<(ULONGLONG iNum)
+{
+	CHAR szBuffer[34];
+	_ui64toa_s(iNum,szBuffer,34,m_nBase);
+	if (m_pData!=NULL)
+	{
+		SIZE_T nStrLen=istrlen(szBuffer);
+		SIZE_T templen=m_nDataLen+nStrLen;
+		if (templen>=m_nAllocLen)
+		{
+			LPSTR temp=m_pData;
+			m_pData=new CHAR[m_nAllocLen=templen+STR_EXTRAALLOC];
+			if (m_pData==NULL)
+			{	
+				SetHFCError(HFC_CANNOTALLOCATE);
+				return *this;
+			}
+			sMemCopy(m_pData,temp,m_nDataLen);
+			delete[] temp;
+		}
+		sMemCopy(&m_pData[m_nDataLen],szBuffer,nStrLen+1);
+		m_nDataLen+=nStrLen;
+		OUTPUT(m_nDataLen)
+		return *this;	
+	}
+	else
+	{
+		m_nDataLen=istrlen((LPSTR)szBuffer);
+		
+		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		if (m_pData==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOCATE);
+			return *this;
+		}
+		sMemCopy(m_pData,szBuffer,m_nDataLen+1);
+		OUTPUT(m_nDataLen)
+		return *this;
+	}
+}
+
 #ifdef DEF_WCHAR
 CString& CString::operator<<(const CStringW& str)
 {
@@ -1098,7 +1296,7 @@ CString& CString::operator<<(const CStringW& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+str.m_nDataLen;
+		SIZE_T templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1179,7 +1377,7 @@ CString& CString::operator<<(LPCWSTR str)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+nStrLen;
+		SIZE_T templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1249,7 +1447,7 @@ int CString::CompareNoCase(LPCSTR lpsz) const
 	if (lpsz==NULL)
 		return 1;
 	CHAR *tmp1,*tmp2;
-	SIZE_T ret=istrlen(lpsz);
+	int ret=(int)istrlen(lpsz);
 	tmp1=new CHAR[m_nDataLen+2];
 	
 	tmp2=new CHAR[ret+2];
@@ -1316,7 +1514,7 @@ int CString::CompareNoCase(LPCWSTR lpsz) const
 	if (lpsz==NULL)
 		return 1;
 	WCHAR *tmp1,*tmp2;
-	SIZE_T ret=istrlenw(lpsz);
+	UINT ret=(UINT)istrlenw(lpsz);
 	tmp1=new WCHAR[m_nDataLen+2];
 	tmp2=new WCHAR[ret+2];
 	if (tmp1==NULL || tmp2==NULL)
@@ -1342,7 +1540,7 @@ int CString::CompareNoCase(LPCWSTR lpsz) const
 	int ret2=wcsncmp(tmp1,tmp2,min(m_nDataLen,ret));
 	delete[] tmp1;
 	delete[] tmp2;
-	return ret2!=0?ret2:ret-m_nDataLen;
+	return ret2!=0?ret2:ret-UINT(m_nDataLen);
 }
 
 #endif
@@ -1465,7 +1663,7 @@ LONG_PTR CString::FindLast(CHAR ch) const
 {
 	if (m_pData==NULL)
 		return -1;
-	int i;
+	ULONG_PTR i;
 	for (i=m_nDataLen-1;i>=0;i--)
 	{
 		if (m_pData[i]==ch)
@@ -1477,7 +1675,7 @@ LONG_PTR CString::FindNext(CHAR ch,LONG_PTR idx) const
 {
 	if (m_pData==NULL)
 		return -1;
-	DWORD i;
+	ULONG_PTR i;
 	for (i=idx+1;i<m_nDataLen;i++)
 	{
 		if (m_pData[i]==ch)
@@ -1602,7 +1800,7 @@ void CString::Compact()
 	m_pData=pchTemp;
 }
 	
-BOOL CString::InsChar(DWORD idx,CHAR ch)
+BOOL CString::InsChar(ULONG_PTR idx,CHAR ch)
 {
 	if (m_nDataLen+1>=m_nAllocLen)
 	{
@@ -1621,7 +1819,7 @@ BOOL CString::InsChar(DWORD idx,CHAR ch)
 		delete[] temp;
 		return TRUE;
 	}
-	for (DWORD i=m_nDataLen;i>idx;i--)
+	for (ULONG_PTR i=m_nDataLen;i>idx;i--)
 		m_pData[i]=m_pData[i-1];
 	m_pData[idx]=ch;
 	m_nDataLen++;
@@ -1631,11 +1829,11 @@ BOOL CString::InsChar(DWORD idx,CHAR ch)
 
 /* Deletes character */
 	
-BOOL CString::DelChar(DWORD idx)
+BOOL CString::DelChar(ULONG_PTR idx)
 {
 	if (idx>=m_nDataLen)
 		return FALSE;
-	for (DWORD i=idx;i<m_nDataLen;i++)
+	for (ULONG_PTR i=idx;i<m_nDataLen;i++)
 		m_pData[i]=m_pData[i+1];
 	m_nDataLen--;
 	return TRUE;
@@ -1698,7 +1896,7 @@ void CString::Trim()
 void CString::Swap(CString& str)
 {
 	LPSTR temp;
-	DWORD templen;
+	SIZE_T templen;
 	BYTE tempbase;
 	
 	temp=m_pData;
@@ -1737,7 +1935,7 @@ void CString::FormatV(LPCSTR lpszFormat,va_list argList)
 		nBufferSize*=2;
 	}
 
-	m_nDataLen=DWORD(end)-DWORD(temp);
+	m_nDataLen=end-temp;
     if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData!=NULL)
@@ -2308,7 +2506,7 @@ CStringW::CStringW(const CStringW& str)
 	}
 }
 
-CStringW::CStringW(WCHAR ch,DWORD nRepeat)
+CStringW::CStringW(WCHAR ch,SIZE_T nRepeat)
 	:m_nBase(10)
 {
 	if (!nRepeat)
@@ -2452,7 +2650,7 @@ CStringW::CStringW(LPCSTR lpsz)
 	}
 }
 
-CStringW::CStringW(CHAR ch,DWORD nRepeat)
+CStringW::CStringW(CHAR ch,SIZE_T nRepeat)
 :	m_nBase(10)
 {
 	if (!nRepeat)
@@ -2478,17 +2676,29 @@ CStringW::CStringW(CHAR ch,DWORD nRepeat)
 	}
 }
 
-WCHAR& CStringW::operator[](DWORD nIndex)
+
+
+WCHAR& CStringW::operator[](int nIndex)
 {
 	if (m_pData==NULL)
 		return (WCHAR)*szwEmpty;
-	if (nIndex<m_nAllocLen)
+	if (nIndex>=0 && (DWORD)nIndex<m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
 }
 
-WCHAR& CStringW::operator[](int nIndex)
+WCHAR& CStringW::operator[](DWORD nIndex)
+{
+	if (m_pData==NULL)
+		return (WCHAR)*szwEmpty;
+	if ((DWORD)nIndex<m_nAllocLen)
+		return m_pData[nIndex];
+	else
+		return m_pData[m_nAllocLen-1];
+}
+
+WCHAR& CStringW::operator[](LONG nIndex)
 {
 	if (m_pData==NULL)
 		return (WCHAR)*szwEmpty;
@@ -2502,12 +2712,34 @@ WCHAR& CStringW::operator[](UINT nIndex)
 {
 	if (m_pData==NULL)
 		return (WCHAR)*szwEmpty;
+	if ((DWORD)nIndex<m_nAllocLen)
+		return m_pData[nIndex];
+	else
+		return m_pData[m_nAllocLen-1];
+}
+
+#ifdef _WIN64
+WCHAR& CStringW::operator[](LONG_PTR nIndex)
+{
+	if (m_pData==NULL)
+		return (WCHAR)*szwEmpty;
 	if (nIndex>=0 && (DWORD)nIndex<m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
 }
-	
+
+WCHAR& CStringW::operator[](ULONG_PTR nIndex)
+{
+	if (m_pData==NULL)
+		return (WCHAR)*szwEmpty;
+	if ((DWORD)nIndex<m_nAllocLen)
+		return m_pData[nIndex];
+	else
+		return m_pData[m_nAllocLen-1];
+}
+#endif
+
 CStringW& CStringW::Copy(LPCWSTR str)
 {
 	if (str==NULL)
@@ -2733,7 +2965,7 @@ const CStringW& CStringW::operator+=(const CStringW& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+str.m_nDataLen;
+		SIZE_T templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -2840,7 +3072,7 @@ const CStringW& CStringW::operator+=(LPCWSTR str)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+nStrLen;
+		SIZE_T templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -2951,13 +3183,94 @@ const CStringW& CStringW::operator+=(int iNum)
 	}
 }
 
+const CStringW& CStringW::operator+=(LONGLONG iNum)
+{
+	WCHAR szBuffer[34];
+	_i64tow_s(iNum,szBuffer,34,m_nBase);
+	if (m_pData!=NULL)
+	{
+		SIZE_T nStrLen=istrlenw(szBuffer);	
+		
+		SIZE_T templen=m_nDataLen+nStrLen;
+		if (templen>=m_nAllocLen)
+		{
+			LPWSTR temp=m_pData;
+			m_pData=new WCHAR[m_nAllocLen=templen+STR_EXTRAALLOC];
+			if (m_pData==NULL)
+			{	
+				SetHFCError(HFC_CANNOTALLOCATE);
+				return *this;
+			}
+			sMemCopyW(m_pData,temp,m_nDataLen);
+			delete[] temp;
+		}
+		sMemCopyW(&m_pData[m_nDataLen],szBuffer,nStrLen+1);
+		m_nDataLen+=nStrLen;
+		return *this;	
+	}
+	else
+	{
+		m_nDataLen=istrlenw(szBuffer);
+		
+		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		if (m_pData==NULL)
+		{	
+			SetHFCError(HFC_CANNOTALLOCATE);
+			return *this;
+		}
+		sMemCopyW(m_pData,szBuffer,m_nDataLen+1);
+		return *this;
+	}
+}
+
+const CStringW& CStringW::operator+=(ULONGLONG iNum)
+{
+	WCHAR szBuffer[34];
+	_ui64tow_s(iNum,szBuffer,34,m_nBase);
+	if (m_pData!=NULL)
+	{
+		SIZE_T nStrLen=istrlenw(szBuffer);	
+		
+		SIZE_T templen=m_nDataLen+nStrLen;
+		if (templen>=m_nAllocLen)
+		{
+			LPWSTR temp=m_pData;
+			m_pData=new WCHAR[m_nAllocLen=templen+STR_EXTRAALLOC];
+			if (m_pData==NULL)
+			{	
+				SetHFCError(HFC_CANNOTALLOCATE);
+				return *this;
+			}
+			sMemCopyW(m_pData,temp,m_nDataLen);
+			delete[] temp;
+		}
+		sMemCopyW(&m_pData[m_nDataLen],szBuffer,nStrLen+1);
+		m_nDataLen+=nStrLen;
+		return *this;	
+	}
+	else
+	{
+		m_nDataLen=istrlenw(szBuffer);
+		
+		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		if (m_pData==NULL)
+		{	
+			SetHFCError(HFC_CANNOTALLOCATE);
+			return *this;
+		}
+		sMemCopyW(m_pData,szBuffer,m_nDataLen+1);
+		return *this;
+	}
+}
+
+
 const CStringW& CStringW::operator+=(const CString& str)
 {
 	if (str.m_nDataLen==0)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+str.m_nDataLen;
+		SIZE_T templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3035,7 +3348,7 @@ const CStringW& CStringW::operator+=(LPCSTR str)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+nStrLen;
+		SIZE_T templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3079,7 +3392,7 @@ void CStringW::Append(LPCSTR str,SIZE_T nStrLen)
 		return;
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+nStrLen;
+		SIZE_T templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3116,7 +3429,7 @@ CStringW& CStringW::operator<<(const CStringW& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+str.m_nDataLen;
+		SIZE_T templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3192,7 +3505,7 @@ CStringW& CStringW::operator<<(LPCWSTR str)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+nStrLen;
+		SIZE_T templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3303,13 +3616,91 @@ CStringW& CStringW::operator<<(int iNum)
 	}
 }
 
+CStringW& CStringW::operator<<(LONGLONG iNum)
+{
+	WCHAR szBuffer[34];
+	_i64tow_s(iNum,szBuffer,34,m_nBase);
+	if (m_pData!=NULL)
+	{
+		SIZE_T nStrLen=istrlenw(szBuffer);
+		SIZE_T templen=m_nDataLen+nStrLen;
+		if (templen>=m_nAllocLen)
+		{
+			LPWSTR temp=m_pData;
+			m_pData=new WCHAR[m_nAllocLen=templen+STR_EXTRAALLOC];
+			if (m_pData==NULL)
+			{	
+				SetHFCError(HFC_CANNOTALLOCATE);
+				return *this;
+			}
+			sMemCopyW(m_pData,temp,m_nDataLen);
+			delete[] temp;
+		}
+		sMemCopyW(&m_pData[m_nDataLen],szBuffer,nStrLen+1);
+		m_nDataLen+=nStrLen;
+		return *this;	
+	}
+	else
+	{
+		m_nDataLen=istrlenw(szBuffer);
+		
+		m_pData=new WCHAR[m_nAllocLen=STR_EXTRAALLOC];
+		if (m_pData==NULL)
+		{	
+			SetHFCError(HFC_CANNOTALLOCATE);
+			return *this;
+		}
+		sMemCopyW(m_pData,szBuffer,m_nDataLen+1);
+		return *this;
+	}
+}
+
+CStringW& CStringW::operator<<(ULONGLONG iNum)
+{
+	WCHAR szBuffer[34];
+	_ui64tow_s(iNum,szBuffer,34,m_nBase);
+	if (m_pData!=NULL)
+	{
+		SIZE_T nStrLen=istrlenw(szBuffer);
+		SIZE_T templen=m_nDataLen+nStrLen;
+		if (templen>=m_nAllocLen)
+		{
+			LPWSTR temp=m_pData;
+			m_pData=new WCHAR[m_nAllocLen=templen+STR_EXTRAALLOC];
+			if (m_pData==NULL)
+			{	
+				SetHFCError(HFC_CANNOTALLOCATE);
+				return *this;
+			}
+			sMemCopyW(m_pData,temp,m_nDataLen);
+			delete[] temp;
+		}
+		sMemCopyW(&m_pData[m_nDataLen],szBuffer,nStrLen+1);
+		m_nDataLen+=nStrLen;
+		return *this;	
+	}
+	else
+	{
+		m_nDataLen=istrlenw(szBuffer);
+		
+		m_pData=new WCHAR[m_nAllocLen=STR_EXTRAALLOC];
+		if (m_pData==NULL)
+		{	
+			SetHFCError(HFC_CANNOTALLOCATE);
+			return *this;
+		}
+		sMemCopyW(m_pData,szBuffer,m_nDataLen+1);
+		return *this;
+	}
+}
+
 CStringW& CStringW::operator<<(const CString& str)
 {
 	if (str.m_nDataLen==0)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		DWORD templen=m_nDataLen+str.m_nDataLen;
+		SIZE_T templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3459,7 +3850,7 @@ int CStringW::CompareNoCase(LPCWSTR lpsz) const
 	int ret;
 	tmp1=new WCHAR[m_nDataLen+2];
 	
-	ret=istrlenw(lpsz);
+	ret=(int)istrlenw(lpsz);
 	tmp2=new WCHAR[ret+2];
 	if (tmp1==NULL || tmp2==NULL)
 	{	
@@ -3531,7 +3922,7 @@ int CStringW::CompareNoCase(LPCSTR lpsz) const
 	CHAR *tmp1,*tmp2;
 	tmp1=new CHAR[m_nDataLen+2];
 
-	SIZE_T ret=istrlen(lpsz);
+	int ret=(int)istrlen(lpsz);
 	tmp2=new CHAR[ret+2];
 	
 	if (tmp1==NULL || tmp2==NULL)
@@ -3665,7 +4056,7 @@ LONG_PTR CStringW::FindLast(WCHAR ch) const
 {
 	if (m_pData==NULL)
 		return -1;
-	int i;
+	ULONG_PTR i;
 	for (i=m_nDataLen-1;i>=0;i--)
 	{
 		if (m_pData[i]==ch)
@@ -3678,7 +4069,7 @@ LONG_PTR CStringW::FindNext(WCHAR ch,LONG_PTR idx) const
 {
 	if (m_pData==NULL)
 		return -1;
-	DWORD i;
+	ULONG_PTR i;
 	for (i=idx+1;i<m_nDataLen;i++)
 	{
 		if (m_pData[i]==ch)
@@ -3796,7 +4187,7 @@ void CStringW::FreeExtra(SIZE_T nNewLength)
 	delete[] temp;
 }
 
-BOOL CStringW::InsChar(DWORD idx,WCHAR ch)
+BOOL CStringW::InsChar(ULONG_PTR idx,WCHAR ch)
 {
 	if (m_nDataLen+1>=m_nAllocLen)
 	{
@@ -3814,7 +4205,7 @@ BOOL CStringW::InsChar(DWORD idx,WCHAR ch)
 		m_pData[m_nDataLen]='\0';
 		return TRUE;
 	}
-	for (DWORD i=m_nDataLen;i>idx;i--)
+	for (ULONG_PTR i=m_nDataLen;i>idx;i--)
 		m_pData[i]=m_pData[i-1];
 	m_pData[idx]=ch;
 	m_nDataLen++;
@@ -3822,11 +4213,11 @@ BOOL CStringW::InsChar(DWORD idx,WCHAR ch)
 	return TRUE;
 }
 	
-BOOL CStringW::DelChar(DWORD idx)
+BOOL CStringW::DelChar(ULONG_PTR idx)
 {
 	if (idx>=m_nDataLen)
 		return FALSE;
-	for (DWORD i=idx;i<m_nDataLen;i++)
+	for (ULONG_PTR i=idx;i<m_nDataLen;i++)
 		m_pData[i]=m_pData[i+1];
 	m_nDataLen--;
 	return TRUE;
@@ -3847,7 +4238,7 @@ BOOL CStringW::Delete(ULONG_PTR idx,SIZE_T nCount)
 		return FALSE;
 	if (nCount<1)
 		return FALSE;
-	for (DWORD i=idx;i<=m_nDataLen-nCount;i++)
+	for (ULONG_PTR i=idx;i<=m_nDataLen-nCount;i++)
 		m_pData[i]=m_pData[i+nCount];
 	m_nDataLen-=nCount;
 	return TRUE;
@@ -3891,7 +4282,7 @@ void CStringW::Trim()
 void CStringW::Swap(CStringW& str)
 {
 	LPWSTR temp;
-	DWORD templen;
+	SIZE_T templen;
 	BYTE tempbase;
 	
 	temp=m_pData;
@@ -3931,7 +4322,7 @@ void CStringW::FormatV(LPCWSTR lpszFormat,va_list argList)
 		nBufferSize*=2;
 	}
 
-	m_nDataLen=(DWORD(end)-DWORD(temp))/sizeof(WCHAR);
+	m_nDataLen=end-temp;
     if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData!=NULL)

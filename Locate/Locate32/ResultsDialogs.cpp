@@ -81,7 +81,7 @@ BOOL CResults::Create(CListCtrl* pList,int* pDetails,int nDetails)
 				
 				// Retrieving detail text
 				LPWSTR szDetail=pItem->GetDetailText((CLocateDlg::DetailType)m_pDetails[i]);
-				SIZE_T dwLength=istrlenw(szDetail);
+				DWORD dwLength=(DWORD)istrlenw(szDetail);
 
 				// Checking length
 				if (dwLength>m_pLengths[i])
@@ -249,13 +249,13 @@ BOOL CResults::SaveToHtmlFile(LPCSTR szFile) const
 			const CDatabase* pDatabase=GetLocateApp()->GetDatabase(m_aFromDatabases[i]);
 
 			outFile.Write("<tr><td>",8);
-			outFile.Write((LPCSTR)W2A(pDatabase->GetName()),istrlenw(pDatabase->GetName()));
+			outFile.Write((LPCSTR)W2A(pDatabase->GetName()),(DWORD)istrlenw(pDatabase->GetName()));
 			outFile.Write("</td><td>",9);
-			outFile.Write((LPCSTR)W2A(pDatabase->GetCreator()),istrlenw(pDatabase->GetCreator()));
+			outFile.Write((LPCSTR)W2A(pDatabase->GetCreator()),(DWORD)istrlenw(pDatabase->GetCreator()));
 			outFile.Write("</td><td>",9);
-			outFile.Write((LPCSTR)W2A(pDatabase->GetDescription()),istrlenw(pDatabase->GetDescription()));
+			outFile.Write((LPCSTR)W2A(pDatabase->GetDescription()),(DWORD)istrlenw(pDatabase->GetDescription()));
 			outFile.Write("</td><td>",9);
-			outFile.Write((LPCSTR)W2A(pDatabase->GetArchiveName()),istrlenw(pDatabase->GetArchiveName()));
+			outFile.Write((LPCSTR)W2A(pDatabase->GetArchiveName()),(DWORD)istrlenw(pDatabase->GetArchiveName()));
 			outFile.Write("</td></tr>",10);
 
 		}
@@ -361,7 +361,7 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 			pLabels[i].LoadString(IDS_LISTNAME+m_pDetails[i],LanguageSpecificResource);
 		    
 			if (pLabels[i].GetLength()>m_pLengths[i])
-					m_pLengths[i]=pLabels[i].GetLength();
+					m_pLengths[i]=(DWORD)pLabels[i].GetLength();
 		}
 	}
 
@@ -421,8 +421,8 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 		int i;
 		for (i=0;i<m_nDetails-1;i++)
 		{
-			outFile.Write((LPCSTR)pLabels[i],pLabels[i].GetLength());
-			outFile.Write(szSpaces,m_pLengths[i]-pLabels[i].GetLength()+2);
+			outFile.Write((LPCSTR)pLabels[i],(DWORD)pLabels[i].GetLength());
+			outFile.Write(szSpaces,m_pLengths[i]-(DWORD)pLabels[i].GetLength()+2);
 		}
 
 		outFile.Write(pLabels[i]);
@@ -628,7 +628,7 @@ BOOL CSaveResultsDlg::OnFileNameOK()
 	while (nItem!=-1)
 	{
 		if (m_pList->GetCheckState(nItem))
-			m_aDetails.Add(m_pList->GetItemData(nItem));	
+			m_aDetails.Add((INT)m_pList->GetItemData(nItem));	
 		nItem=m_pList->GetNextItem(nItem,LVNI_ALL);
 	}
 	return TRUE;
@@ -657,7 +657,7 @@ BOOL CSaveResultsDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				if (g_szBuffer!=NULL)
 					delete[] g_szBuffer;
 
-				g_szBuffer=allocstring(IDS_LISTNAME+pLvdi->item.lParam,LanguageSpecificResource);
+				g_szBuffer=allocstring(IDS_LISTNAME+(UINT)pLvdi->item.lParam,LanguageSpecificResource);
 				pLvdi->item.pszText=g_szBuffer;
 			}
 			break;
@@ -670,7 +670,7 @@ BOOL CSaveResultsDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				if (g_szwBuffer!=NULL)
 					delete[] g_szwBuffer;
 
-				g_szwBuffer=allocstringW(IDS_LISTNAME+pLvdi->item.lParam,LanguageSpecificResource);
+				g_szwBuffer=allocstringW(IDS_LISTNAME+(UINT)pLvdi->item.lParam,LanguageSpecificResource);
 				pLvdi->item.pszText=g_szwBuffer;
 			}
 			break;

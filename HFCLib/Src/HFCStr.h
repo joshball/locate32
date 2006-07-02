@@ -12,7 +12,7 @@
 
 #define sMemCopy(dst,src,len)	CopyMemory(dst,src,len)
 #define sMemZero(dst,len)		ZeroMemory(dst,len)
-#define sMemSet(dst,val,len)	iMemSet(dst,val,len)
+#define sMemSet(dst,val,len)	FillMemory(dst,len,val)
 
 #define sMemCopyW				MemCopyW
 #define sstrlenW				dwstrlen
@@ -26,7 +26,9 @@
 #ifdef DEF_WCHAR
 inline BOOL IsUnicodeSystem()
 {
-#ifdef MICROSOFT_LAYER_FOR_UNICODE 
+#if defined(_WIN64) // Good assumption
+	return TRUE;
+#elif defined(MICROSOFT_LAYER_FOR_UNICODE) 
 	return TRUE;
 #else
 	extern BOOL bIsFullUnicodeSupport;
@@ -153,7 +155,7 @@ int strcasencmp(LPCWSTR s1,LPCWSTR s2,DWORD n);
 
 int _readnum(int base,LPCSTR& str,SIZE_T length=SIZE_T(-1));
 
-BYTE* dataparser(LPCSTR pString,SIZE_T dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength=NULL);
+BYTE* dataparser(LPCSTR pString,SIZE_T dwStrLen,MALLOC_FUNC pMalloc,SIZE_T* pdwDataLength=NULL);
 BYTE* dataparser2(LPCSTR pStr,SIZE_T* pdwDataLength);
 BOOL IsCharNumeric(char cChar,BYTE bBase);
 
@@ -196,15 +198,21 @@ public:
 	CString& SetBase(BYTE nBase);
 	BYTE GetBase() { return m_nBase; }
 
-	CHAR GetAt(DWORD nIndex) const;
-	CHAR operator[](LONG_PTR nIndex) const;
-	CHAR& operator[](LONG_PTR nIndex);
-	CHAR operator[](ULONG_PTR nIndex) const;
-	CHAR& operator[](ULONG_PTR nIndex);
+	CHAR GetAt(ULONG_PTR nIndex) const;
 	CHAR operator[](int nIndex) const;
 	CHAR& operator[](int nIndex);
 	CHAR operator[](UINT nIndex) const;
 	CHAR& operator[](UINT nIndex);
+	CHAR operator[](DWORD nIndex) const;
+	CHAR& operator[](DWORD nIndex);
+	CHAR operator[](LONG nIndex) const;
+	CHAR& operator[](LONG nIndex);
+#ifdef _WIN64
+	CHAR operator[](LONG_PTR nIndex) const;
+	CHAR& operator[](LONG_PTR nIndex);
+	CHAR operator[](ULONG_PTR nIndex) const;
+	CHAR& operator[](ULONG_PTR nIndex);
+#endif
 	void SetAt(ULONG_PTR nIndex,CHAR ch);
 	
 	inline operator LPCSTR() const	{ if (m_pData==NULL)	return szEmpty;	return m_pData;}
@@ -229,6 +237,8 @@ public:
 	const CString& operator+=(LPCSTR str);
 	const CString& operator+=(DWORD iNum);
 	const CString& operator+=(int iNum);
+	const CString& operator+=(LONGLONG iNum);
+	const CString& operator+=(ULONGLONG iNum);
 
 	CString operator+(const CString& str);
 	CString operator+(const LPCSTR str);
@@ -239,6 +249,8 @@ public:
 	CString& operator<<(LPCSTR str);
 	CString& operator<<(DWORD iNum);
 	CString& operator<<(int iNum);
+	CString& operator<<(LONGLONG iNum);
+	CString& operator<<(ULONGLONG iNum);
 
 	void Append(LPCSTR str,SIZE_T iLength=SIZE_T(-1));
     void Append(const CString& str);
@@ -251,7 +263,7 @@ public:
 	BOOL operator==(LPCSTR str);
 	BOOL ContainString(LPCSTR str,ULONG_PTR start=0);
 
-	CString Mid(ULONG_PTR nFirst,ULONG_PTR nCount) const;
+	CString Mid(ULONG_PTR nFirst,SIZE_T nCount) const;
 	CString Mid(ULONG_PTR nFirst) const;
 	CString Left(SIZE_T nCount) const;
 	CString Right(SIZE_T nCount) const;
@@ -401,14 +413,20 @@ public:
 	BYTE GetBase() { return m_nBase; }
 
 	WCHAR GetAt(DWORD nIndex) const;
-	WCHAR operator[](LONG_PTR nIndex) const;
-	WCHAR& operator[](LONG_PTR nIndex);
-	WCHAR operator[](ULONG_PTR nIndex) const;
-	WCHAR& operator[](ULONG_PTR nIndex);
 	WCHAR operator[](int nIndex) const;
 	WCHAR& operator[](int nIndex);
 	WCHAR operator[](UINT nIndex) const;
 	WCHAR& operator[](UINT nIndex);
+	WCHAR operator[](DWORD nIndex) const;
+	WCHAR& operator[](DWORD nIndex);
+	WCHAR operator[](LONG nIndex) const;
+	WCHAR& operator[](LONG nIndex);
+#ifdef _WIN64
+	WCHAR operator[](LONG_PTR nIndex) const;
+	WCHAR& operator[](LONG_PTR nIndex);
+	WCHAR operator[](ULONG_PTR nIndex) const;
+	WCHAR& operator[](ULONG_PTR nIndex);
+#endif
 	void SetAt(ULONG_PTR nIndex,WCHAR ch);
 	operator LPCWSTR() const;
 	LPWSTR GetPCHData() const { return m_pData; } // Use with caution, may be null
@@ -435,6 +453,8 @@ public:
 	const CStringW& operator+=(LPCWSTR str);
 	const CStringW& operator+=(DWORD iNum);
 	const CStringW& operator+=(int iNum);
+	const CStringW& operator+=(LONGLONG iNum);
+	const CStringW& operator+=(ULONGLONG iNum);
 	const CStringW& operator+=(const CString& str);
 	const CStringW& operator+=(CHAR ch);
 	const CStringW& operator+=(LPCSTR str);
@@ -458,6 +478,8 @@ public:
 	CStringW& operator<<(LPCWSTR str);
 	CStringW& operator<<(DWORD iNum);
 	CStringW& operator<<(int iNum);
+	CStringW& operator<<(LONGLONG iNum);
+	CStringW& operator<<(ULONGLONG iNum);
 	CStringW& operator<<(const CString& str);
 	CStringW& operator<<(CHAR ch);
 	CStringW& operator<<(LPCSTR str);
@@ -541,7 +563,6 @@ private:
 public:
 	W2A(LPCWSTR sA);
 	W2A(LPCWSTR sA,SIZE_T len);
-	W2A(LPCWSTR sA,int len);
 	W2A(CStringW& sA);
 
 	~W2A();
@@ -557,7 +578,6 @@ private:
 public:
 	A2W(LPCSTR sA);
 	A2W(LPCSTR sA,SIZE_T len);
-	A2W(LPCSTR sA,int len);
 	A2W(CString& sA);
 
 	~A2W();

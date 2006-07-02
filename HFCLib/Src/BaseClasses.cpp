@@ -68,7 +68,7 @@ BOOL CFont::CreateFont(int nHeight,int nWidth,int nEscapement,
 BOOL CFont::CreatePointFont(int nPointSize,LPCTSTR lpszFaceName,HDC hDC)
 {
 	LOGFONT logFont;
-	iMemSet(&logFont, 0, sizeof(LOGFONT));
+	ZeroMemory(&logFont, sizeof(LOGFONT));
 	logFont.lfCharSet = DEFAULT_CHARSET;
 	logFont.lfHeight = nPointSize;
 	StringCbCopy(logFont.lfFaceName,32,lpszFaceName);
@@ -228,7 +228,7 @@ CSize CDC::TabbedTextOut(int x,int y,LPCTSTR lpszString,int nCount,
 CSize CDC::TabbedTextOut(int x,int y,const CStringA& str,int nTabPositions,
 	LPINT lpnTabStopPositions,int nTabOrigin)
 {
-	LONG ret= ::TabbedTextOutA(m_hDC,x,y,(LPCSTR)str,str.GetLength(),
+	LONG ret= ::TabbedTextOutA(m_hDC,x,y,(LPCSTR)str,(int)str.GetLength(),
 		nTabPositions,lpnTabStopPositions,nTabOrigin);
 	return CSize(LOWORD(ret),HIWORD(ret));
 }
@@ -296,7 +296,7 @@ CSize CDC::GetTabbedTextExtent(LPCTSTR lpszString,int nCount,
 CSize CDC::GetTabbedTextExtent(const CStringA& str,
 	int nTabPositions,LPINT lpnTabStopPositions) const
 {
-	DWORD ret= ::GetTabbedTextExtentA(m_hDC,(LPCSTR)str,str.GetLength()+1,
+	DWORD ret= ::GetTabbedTextExtentA(m_hDC,(LPCSTR)str,(int)str.GetLength()+1,
 		nTabPositions,lpnTabStopPositions);
 	CSize sz(LOWORD(ret),HIWORD(ret));
 	return sz;
@@ -314,7 +314,7 @@ CSize CDC::GetOutputTabbedTextExtent(LPCTSTR lpszString, int nCount,
 CSize CDC::GetOutputTabbedTextExtent(const CStringA& str,
 	int nTabPositions,LPINT lpnTabStopPositions) const
 {
-	DWORD ret= ::GetTabbedTextExtentA(m_hDC,(LPCSTR)str,str.GetLength(),
+	DWORD ret= ::GetTabbedTextExtentA(m_hDC,(LPCSTR)str,(int)str.GetLength(),
 		nTabPositions,lpnTabStopPositions);
 	CSize sz(LOWORD(ret),HIWORD(ret));
 	return sz;
@@ -373,7 +373,7 @@ float CDC::GetMiterLimit() const
 CSize CDC::TabbedTextOut(int x,int y,const CStringW& str,int nTabPositions,
 	LPINT lpnTabStopPositions,int nTabOrigin)
 {
-	LONG ret= ::TabbedTextOutW(m_hDC,x,y,(LPCWSTR)str,str.GetLength(),
+	LONG ret= ::TabbedTextOutW(m_hDC,x,y,(LPCWSTR)str,(int)str.GetLength(),
 		nTabPositions,lpnTabStopPositions,nTabOrigin);
 	return CSize(LOWORD(ret),HIWORD(ret));
 }
@@ -382,9 +382,9 @@ CSize CDC::GetTextExtent(const CStringW& str) const
 {
 	CSize sz;
 	if (IsUnicodeSystem())
-		::GetTextExtentPoint32W(m_hDC,(LPCWSTR)str,str.GetLength(),&sz);
+		::GetTextExtentPoint32W(m_hDC,(LPCWSTR)str,(int)str.GetLength(),&sz);
 	else
-		::GetTextExtentPoint32A(m_hDC,W2A(str),str.GetLength(),&sz);
+		::GetTextExtentPoint32A(m_hDC,W2A(str),(int)str.GetLength(),&sz);
 	return sz;
 }
 
@@ -427,7 +427,7 @@ CSize CDC::GetOutputTextExtent(const CStringW& str) const
 CSize CDC::GetTabbedTextExtent(const CStringW& str,
 	int nTabPositions,LPINT lpnTabStopPositions) const
 {
-	DWORD ret= ::GetTabbedTextExtentW(m_hDC,(LPCWSTR)str,str.GetLength()+1,
+	DWORD ret= ::GetTabbedTextExtentW(m_hDC,(LPCWSTR)str,(int)str.GetLength()+1,
 		nTabPositions,lpnTabStopPositions);
 	CSize sz(LOWORD(ret),HIWORD(ret));
 	return sz;
@@ -436,7 +436,7 @@ CSize CDC::GetTabbedTextExtent(const CStringW& str,
 CSize CDC::GetOutputTabbedTextExtent(const CStringW& str,
 	int nTabPositions,LPINT lpnTabStopPositions) const
 {
-	DWORD ret= ::GetTabbedTextExtentW(m_hDC,(LPCWSTR)str,str.GetLength(),
+	DWORD ret= ::GetTabbedTextExtentW(m_hDC,(LPCWSTR)str,(int)str.GetLength(),
 		nTabPositions,lpnTabStopPositions);
 	CSize sz(LOWORD(ret),HIWORD(ret));
 	return sz;

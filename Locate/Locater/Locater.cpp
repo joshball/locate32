@@ -44,7 +44,7 @@ public:
 	
 	virtual BOOL Search(LPCSTR szFile); // if return value is TRUE if any found
 	virtual BOOL Search(LPCWSTR szFile); // if return value is TRUE if any found
-	virtual DWORD GetFoundPosition() const;
+	virtual ULONG_PTR GetFoundPosition() const;
 	
 public:
 	virtual void OpenFile(LPCSTR szFile);
@@ -116,7 +116,7 @@ BOOL CSearchRegExpFromFile::Search(LPCSTR szFile)
 
 	while (fgets(buffer, sizeof(buffer), (FILE*)hFile) != NULL)
 	{
-		int length = istrlen(buffer);
+		int length = (int)istrlen(buffer);
 		
 		// removing '\n' and '\r'
 		if (length > 0 && (buffer[length-1] == '\n' || buffer[length-1] == '\r'))  
@@ -143,7 +143,7 @@ BOOL CSearchRegExpFromFile::Search(LPCWSTR szFile)
 
 	while (fgets(buffer, sizeof(buffer), (FILE*)hFile) != NULL)
 	{
-		int length = istrlen(buffer);
+		int length = (int)istrlen(buffer);
 		
 		// removing '\n' and '\r'
 		if (length > 0 && (buffer[length-1] == '\n' || buffer[length-1] == '\r'))  
@@ -156,7 +156,7 @@ BOOL CSearchRegExpFromFile::Search(LPCWSTR szFile)
 	return FALSE;
 }
 
-DWORD CSearchRegExpFromFile::GetFoundPosition() const
+ULONG_PTR CSearchRegExpFromFile::GetFoundPosition() const
 {
 	return 0;
 }
@@ -1463,7 +1463,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 			for (int i=0;i<m_aExtensions.GetSize();i++)
 			{
 				// Resolving extension length
-				DWORD dwExtensionPos=LastCharIndex(GetFolderName(),'.')+1;
+				DWORD dwExtensionPos=(DWORD)(LastCharIndex(GetFolderName(),'.')+1);
 				if (dwExtensionPos==-1)
 					continue;
 
@@ -1577,7 +1577,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 			for (int i=0;i<m_aExtensions.GetSize();i++)
 			{
 				// Resolving extension length
-				DWORD dwExtensionPos=LastCharIndex(GetFolderNameW(),'.')+1;
+				DWORD dwExtensionPos=(DWORD)(LastCharIndex(GetFolderNameW(),'.')+1);
 				if (dwExtensionPos==-1)
 					continue;
 

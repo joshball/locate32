@@ -705,7 +705,7 @@ CBackgroundUpdater::~CBackgroundUpdater()
 {	
 	if (m_hThread!=NULL)
 	{
-		InterlockedExchangePointer(&GetLocateDlg()->m_pBackgroundUpdater,NULL);
+		InterlockedExchangePointer((PVOID*)&GetLocateDlg()->m_pBackgroundUpdater,NULL);
 		HANDLE hThread=m_hThread;
 		InterlockedExchangePointer(&m_hThread,NULL);
 		m_hThread=NULL;
@@ -714,7 +714,7 @@ CBackgroundUpdater::~CBackgroundUpdater()
 		CloseHandle(hThread);
 	}
 	else
-		InterlockedExchangePointer(&GetLocateDlg()->m_pBackgroundUpdater,NULL);
+		InterlockedExchangePointer((PVOID*)&GetLocateDlg()->m_pBackgroundUpdater,NULL);
 	
 	
 	CloseHandle(m_phEvents[0]);
