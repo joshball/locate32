@@ -2188,7 +2188,7 @@ BOOL CFolderDialog::GetDisplayName(LPSTR szDisplayName,DWORD nSize)
 	if (!nSize)
 		return FALSE;
 	m_strDisplayName.FreeExtra();
-	if (nSize<=m_strDisplayName.GetLength())
+	if ((int)nSize<=m_strDisplayName.GetLength())
 	{
 		MemCopy(szDisplayName,(LPCSTR)m_strDisplayName,nSize-1);
 		szDisplayName[nSize-1]='\0';
@@ -2679,7 +2679,7 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 		{
 			if (!IsUnicodeSystem())
 			{
-				SIZE_T iStrLen=istrlenw(pCurText);
+				int iStrLen=istrlenw(pCurText);
 				tisa.itemex.pszText=new char[iStrLen+2];
 				MemCopyWtoA(tisa.itemex.pszText,pCurText,iStrLen+1);
 				m_pTree->SetItemText(tisa.hInsertAfter,tisa.itemex.pszText);
@@ -3143,7 +3143,7 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 					WCHAR* pText=pItem->GetText(FALSE);
 					if (!IsUnicodeSystem())
 					{
-						SIZE_T iStrLen=istrlenw(pText);
+						int iStrLen=istrlenw(pText);
 						char* paText=new char [iStrLen+2];
 						MemCopyWtoA(paText,pText,iStrLen+1);
 						m_pTree->SetItemText(pNm->itemOld.hItem,paText);
@@ -3173,7 +3173,7 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 					WCHAR* pText=pItem->GetText(TRUE);
 					if (!IsUnicodeSystem())
 					{
-						SIZE_T iStrLen=istrlenw(pText);
+						int iStrLen=istrlenw(pText);
 						char* paText=new char [iStrLen+2];
 						MemCopyWtoA(paText,pText,iStrLen+1);
 						m_pTree->SetItemText(pNm->itemNew.hItem,paText);
@@ -3338,7 +3338,7 @@ BOOL COptionsPropertyPage::SetCheckState(HTREEITEM hItem,COptionsPropertyPage::I
 
 BOOL COptionsPropertyPage::SetNumericValue(Item* pItem)
 {
-	SIZE_T iTextLen=::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,0,0)+1;
+	int iTextLen=(int)::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,0,0)+1;
 	char* szText=new char[iTextLen+1];
 	::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(szText));
 

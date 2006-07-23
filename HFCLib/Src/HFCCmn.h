@@ -102,9 +102,9 @@ public:
 
 public:
 	BOOL SetText(LPCSTR lpszText,int nPane,int nType);
-	SIZE_T GetText(CString& sText,int nPane,int* pType=NULL) const;
-	SIZE_T GetText(LPSTR lpszText,int nPane,int* pType=NULL) const;
-	SIZE_T GetTextLength(int nPane,int* pType=NULL) const;
+	int GetText(CString& sText,int nPane,int* pType=NULL) const;
+	int GetText(LPSTR lpszText,int nPane,int* pType=NULL) const;
+	int GetTextLength(int nPane,int* pType=NULL) const;
 	BOOL SetParts(int nParts,int* pWidths);
 	int GetParts(int nParts,int* pParts) const;
 	BOOL GetBorders(int* pBorders) const;
@@ -115,16 +115,16 @@ public:
 	BOOL SetIcon(int nPane,HICON hIcon);
 	HICON GetIcon(int nPane) const;
 	BOOL SetTipText(int n,LPCSTR szText);
-	SIZE_T GetTipText(int n,LPSTR szText,SIZE_T nBufLen) const;
+	int GetTipText(int n,LPSTR szText,int nBufLen) const;
 	BOOL SetUnicodeFormat(int nFormat);
 	BOOL GetUnicodeFormat() const;
 
 #ifdef DEF_WCHAR
 	BOOL SetText(LPCWSTR lpszText,int nPane,int nType);
-	SIZE_T GetText(CStringW& sText,int nPane,int* pType=NULL) const;
-	SIZE_T GetText(LPWSTR lpszText,int nPane,int* pType=NULL) const;
+	int GetText(CStringW& sText,int nPane,int* pType=NULL) const;
+	int GetText(LPWSTR lpszText,int nPane,int* pType=NULL) const;
 	BOOL SetTipText(int n,LPCWSTR szText);
-	SIZE_T GetTipText(int n,LPWSTR szText,SIZE_T nBufLen) const;
+	int GetTipText(int n,LPWSTR szText,int nBufLen) const;
 #endif
 
 };

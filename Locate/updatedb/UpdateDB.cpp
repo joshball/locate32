@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   Updatedb.exe v2.99.6.6040 */
+   Updatedb.exe v2.99.6.7230 */
 
 #include <HFCLib.h>
 #include "../locatedb/locatedb.h"
@@ -7,9 +7,9 @@
 #include "../lan_resources.h"
 
 #ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 3.0 beta 6.6040";
+		LPCSTR szVersionStr="updtdb32 3.0 beta 6.7230";
 #else
-		LPCSTR szVersionStr="updatedb 3.0 beta 6.6040";
+		LPCSTR szVersionStr="updatedb 3.0 beta 6.7230";
 #endif
 
 
@@ -54,7 +54,7 @@ BOOL SetLanguageSpecifigHandles(LPCWSTR szAppPath)
 	return TRUE;
 }
 
-BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater)
+BOOL CALLBACK UpdateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater)
 {
 	switch (crReason)
 	{
@@ -513,8 +513,8 @@ int wmain (int argc,wchar_t ** argv)
 				if (!bNameChanged)
 				{
 					ULONG_PTR nFirst=LastCharIndex(aDatabases[i]->GetArchiveName(),'\\')+1;
-					SIZE_T nLength=LastCharIndex(aDatabases[i]->GetArchiveName()+nFirst,'.');
-					if (nLength==SIZE_T(-1))
+					int nLength=LastCharIndex(aDatabases[i]->GetArchiveName()+nFirst,'.');
+					if (nLength==-1)
 						nLength=istrlenw(aDatabases[i]->GetArchiveName()+nFirst);
 
 					
@@ -554,11 +554,27 @@ int wmain (int argc,wchar_t ** argv)
 		ppUpdaters[dwTheads]=NULL;
 
 		// Starting
+		DWORD dwRunning=0;
+		UpdateError ueCode;
 		for (wThread=0;wThread<dwTheads;wThread++)
-			ppUpdaters[wThread]->Update(TRUE);
+		{
+			ueCode=ppUpdaters[wThread]->Update(TRUE);
+			if (ueCode==ueSuccess)
+				dwRunning++;
+			else
+			{
+				delete ppUpdaters[wThread];
+				ppUpdaters[wThread]=UPDATER_EXITED(ueCode);
+			}
+		}
 		
-		while (ppUpdaters!=NULL)
-			Sleep(100);
+		if (dwRunning==0)
+			delete ppUpdaters;
+		else
+		{
+			while (ppUpdaters!=NULL)
+				Sleep(100);
+		}
 	}
 
 	FreeLibrary(GetLanguageSpecificResourceHandle());

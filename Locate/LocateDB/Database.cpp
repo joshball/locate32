@@ -778,7 +778,7 @@ void CDatabase::GetRoots(CArray<LPWSTR>& aRoots) const
 		LPCWSTR pPtr=m_szRoots;
 		while (*pPtr!=L'\0')
 		{
-			SIZE_T dwLength=istrlenw(pPtr);
+			DWORD dwLength=istrlenw(pPtr);
 			aRoots.Add(alloccopy(pPtr,dwLength));
 			pPtr+=dwLength;
 		}

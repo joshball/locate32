@@ -224,7 +224,7 @@ void DebugHexDump(LPCSTR desc,BYTE* pData,SIZE_T datalen)
 		
 		char line[3*LINELEN+LINELEN+10];
 		int ret;
-		size_t index=0;
+		int index=0;
 		while ((ret=formhexline(line,pData,datalen)))
 		{
 			char indstr[12];
@@ -596,14 +596,14 @@ LRESULT CALLBACK AddDebugNoteWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lP
 				CTime now(CTime::GetCurrentTime());
 				str.Format("DEBUG NOTIFY (%s,%s)\r\nBEGIN\r\n",(LPCSTR)GetApp()->GetAppName(),(LPCSTR)now.Format("%x %X"));
 				WriteFile(hFile,str,(DWORD)str.GetLength(),&nWrited,NULL);
-				if (nWrited<str.GetLength())
+				if (nWrited<(DWORD)str.GetLength())
 				{
 					CloseHandle(hFile);
 					break;
 				}
 				edit.GetText(str);
 				WriteFile(hFile,str,(DWORD)str.GetLength(),&nWrited,NULL);
-				if (nWrited<str.GetLength())
+				if (nWrited<(DWORD)str.GetLength())
 				{
 					CloseHandle(hFile);
 					break;
@@ -670,7 +670,7 @@ LRESULT CALLBACK ViewAllocatorsWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM 
 			SendMessage(hCtrl,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),1);
 			CString str;
 			GetAllocatorString((int)SendDlgItemMessage(hWnd,100,CB_GETCURSEL,0,0),str);
-			LONG_PTR index=-1;
+			int index=-1;
 			while ((index=str.FindNext('\n',index+1))!=-1)
 				str.InsChar(index,'\r');
 			
@@ -699,7 +699,7 @@ LRESULT CALLBACK ViewAllocatorsWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM 
 			// Updating if necassary
 			CString str;
 			GetAllocatorString((int)SendDlgItemMessage(hWnd,100,CB_GETCURSEL,0,0),str);
-			LONG_PTR index=-1;
+			int index=-1;
 			while ((index=str.FindNext('\n',index+1))!=-1)
 				str.InsChar(index,'\r');
 			
@@ -726,7 +726,7 @@ LRESULT CALLBACK ViewAllocatorsWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM 
 			{
 				CString str;
 				GetAllocatorString((int)SendDlgItemMessage(hWnd,100,CB_GETCURSEL,0,0),str);
-				LONG_PTR index=-1;
+				int index=-1;
 				while ((index=str.FindNext('\n',index+1))!=-1)
 					str.InsChar(index,'\r');
 				SetDlgItemText(hWnd,103,str);

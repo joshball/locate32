@@ -32,7 +32,7 @@ CString::CString(const CString& str)
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return;
 		}
-		dMemCopy(m_pData,str.m_pData,m_nDataLen+1);
+		sMemCopy(m_pData,str.m_pData,m_nDataLen+1);
 	}
 	else
 	{
@@ -43,7 +43,7 @@ CString::CString(const CString& str)
 	}
 }
 
-CString::CString(CHAR ch,SIZE_T nRepeat)
+CString::CString(CHAR ch,int nRepeat)
 :	m_nBase(10)
 {
 	if (!nRepeat)
@@ -91,7 +91,7 @@ CString::CString(LPCSTR lpsz)
 	}
 }
 
-CString::CString(LPCSTR lpsz,SIZE_T nLength)
+CString::CString(LPCSTR lpsz,int nLength)
 :	m_nBase(10)
 {
 	if (lpsz==NULL || nLength<=0)
@@ -102,7 +102,7 @@ CString::CString(LPCSTR lpsz,SIZE_T nLength)
 	}
 	else
 	{
-		if (nLength==SIZE_T(-1))
+		if (nLength==-1)
 			nLength=istrlen(lpsz);
 
 		//m_nDataLen=strlen(lpsz);
@@ -192,7 +192,7 @@ CString::CString(LPCWSTR lpsz)
 	}
 }
 
-CString::CString(WCHAR ch,SIZE_T nRepeat)
+CString::CString(WCHAR ch,int nRepeat)
 	:m_nBase(10)
 {
 	if (!nRepeat)
@@ -237,7 +237,7 @@ CHAR& CString::operator[](LONG_PTR nIndex)
 {
 	if (m_pData==NULL)
 		return (char)*szEmpty;
-	if (nIndex>=0 && (SIZE_T)nIndex<m_nAllocLen)
+	if (nIndex>=0 && nIndex<m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
@@ -248,7 +248,7 @@ CHAR& CString::operator[](int nIndex)
 {
 	if (m_pData==NULL)
 		return (char)*szEmpty;
-	if (nIndex>=0 && (SIZE_T)nIndex<m_nAllocLen)
+	if (nIndex>=0 && nIndex<m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
@@ -258,7 +258,7 @@ CHAR& CString::operator[](LONG nIndex)
 {
 	if (m_pData==NULL)
 		return (char)*szEmpty;
-	if (nIndex>=0 && (SIZE_T)nIndex<m_nAllocLen)
+	if (nIndex>=0 && nIndex<m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
@@ -268,7 +268,7 @@ CHAR& CString::operator[](UINT nIndex)
 {
 	if (m_pData==NULL)
 		return (char)*szEmpty;
-	if ((DWORD)nIndex<m_nAllocLen)
+	if (nIndex<(UINT)m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
@@ -278,7 +278,7 @@ CHAR& CString::operator[](DWORD nIndex)
 {
 	if (m_pData==NULL)
 		return (char)*szEmpty;
-	if ((DWORD)nIndex<m_nAllocLen)
+	if (nIndex<(DWORD)m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
@@ -300,7 +300,7 @@ CString& CString::Copy(LPCSTR str)
 	return *this;
 }
 
-CString& CString::Copy(LPCSTR str,SIZE_T iLength)
+CString& CString::Copy(LPCSTR str,int iLength)
 {
 	if (str==NULL)
 	{
@@ -309,7 +309,7 @@ CString& CString::Copy(LPCSTR str,SIZE_T iLength)
 	}
 	if (m_pData!=NULL)
 		delete[] m_pData;
-	if (iLength==SIZE_T(-1))
+	if (iLength==-1)
 		m_nDataLen=istrlen(str);
 	else
 		m_nDataLen=iLength;
@@ -335,7 +335,7 @@ CString& CString::Copy(LPCWSTR str)
 	return *this;
 }
 
-CString& CString::Copy(LPCWSTR str,SIZE_T iLength)
+CString& CString::Copy(LPCWSTR str,int iLength)
 {
 	if (str==NULL)
 	{
@@ -344,7 +344,7 @@ CString& CString::Copy(LPCWSTR str,SIZE_T iLength)
 	}
 	if (m_pData!=NULL)
 		delete[] m_pData;
-	if (iLength==SIZE_T(-1))
+	if (iLength==-1)
 		m_nDataLen=istrlenw(str);
 	else
 		m_nDataLen=iLength;
@@ -372,7 +372,7 @@ CString& CString::Copy(const BYTE* str)
 	return *this;
 }
 
-CString& CString::Copy(const BYTE* str,SIZE_T iLength)
+CString& CString::Copy(const BYTE* str,int iLength)
 {
 	if (str==NULL)
 	{
@@ -381,7 +381,7 @@ CString& CString::Copy(const BYTE* str,SIZE_T iLength)
 	}
 	if (m_pData!=NULL)
 		delete[] m_pData;
-	if (iLength==SIZE_T(-1))
+	if (iLength==-1)
 		m_nDataLen=istrlen((LPCSTR)str);
 	else
 		m_nDataLen=iLength;
@@ -518,7 +518,7 @@ const CString& CString::operator+=(const CString& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+str.m_nDataLen;
+		int templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -583,7 +583,7 @@ const CString& CString::operator+=(CHAR ch)
 	}
 }
 
-void CString::Append(LPCSTR str,SIZE_T nStrLen)
+void CString::Append(LPCSTR str,int nStrLen)
 {
 	if (str==NULL)
 		return;
@@ -594,7 +594,7 @@ void CString::Append(LPCSTR str,SIZE_T nStrLen)
 		return;
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -631,13 +631,13 @@ const CString& CString::operator+=(LPCSTR str)
 {
 	if (str==NULL)
 		return *this;	
-	SIZE_T nStrLen=istrlen(str);
+	int nStrLen=istrlen(str);
 
 	if (nStrLen==0)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -676,9 +676,9 @@ const CString& CString::operator+=(DWORD iNum)
 	_itoa_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlen(szBuffer);
+		int nStrLen=istrlen(szBuffer);
 
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -719,9 +719,8 @@ const CString& CString::operator+=(int iNum)
 	_itoa_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlen(szBuffer);
-
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int nStrLen=istrlen(szBuffer);
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -761,9 +760,9 @@ const CString& CString::operator+=(LONGLONG iNum)
 	_i64toa_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlen(szBuffer);
+		int nStrLen=istrlen(szBuffer);
 
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -803,9 +802,9 @@ const CString& CString::operator+=(ULONGLONG iNum)
 	_ui64toa_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlen(szBuffer);
+		int nStrLen=istrlen(szBuffer);
 
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -846,7 +845,7 @@ const CString& CString::operator+=(const CStringW& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+str.m_nDataLen;
+		int templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -921,13 +920,13 @@ const CString& CString::operator+=(LPCWSTR str)
 	if (str==NULL)
 		return *this;	
 	
-	SIZE_T nStrLen=istrlenw(str);
+	int nStrLen=istrlenw(str);
 
 	if (nStrLen==0)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -960,7 +959,7 @@ const CString& CString::operator+=(LPCWSTR str)
 	}
 }
 
-void CString::Append(LPCWSTR str,SIZE_T nStrLen)
+void CString::Append(LPCWSTR str,int nStrLen)
 {
 	if (str==NULL)
 		return;	
@@ -972,7 +971,7 @@ void CString::Append(LPCWSTR str,SIZE_T nStrLen)
 		return;
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1011,7 +1010,7 @@ CString& CString::operator<<(const CString& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+str.m_nDataLen;
+		int templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1085,13 +1084,13 @@ CString& CString::operator<<(LPCSTR str)
 {
 	if (str==NULL)
 		return *this;	
-	SIZE_T nStrLen=istrlen(str);
+	int nStrLen=istrlen(str);
 
 	if (nStrLen==0)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1130,9 +1129,9 @@ CString& CString::operator<<(DWORD iNum)
 	_itoa_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlen(szBuffer);
+		int nStrLen=istrlen(szBuffer);
 
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1172,8 +1171,8 @@ CString& CString::operator<<(int iNum)
 	_itoa_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlen(szBuffer);
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int nStrLen=istrlen(szBuffer);
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1213,8 +1212,8 @@ CString& CString::operator<<(LONGLONG iNum)
 	_i64toa_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlen(szBuffer);
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int nStrLen=istrlen(szBuffer);
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1254,8 +1253,8 @@ CString& CString::operator<<(ULONGLONG iNum)
 	_ui64toa_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlen(szBuffer);
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int nStrLen=istrlen(szBuffer);
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1296,7 +1295,7 @@ CString& CString::operator<<(const CStringW& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+str.m_nDataLen;
+		int templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1371,13 +1370,13 @@ CString& CString::operator<<(LPCWSTR str)
 	if (str==NULL)
 		return *this;	
 	
-	SIZE_T nStrLen=istrlenw(str);
+	int nStrLen=istrlenw(str);
 
 	if (nStrLen==0)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1514,7 +1513,7 @@ int CString::CompareNoCase(LPCWSTR lpsz) const
 	if (lpsz==NULL)
 		return 1;
 	WCHAR *tmp1,*tmp2;
-	UINT ret=(UINT)istrlenw(lpsz);
+	int ret=istrlenw(lpsz);
 	tmp1=new WCHAR[m_nDataLen+2];
 	tmp2=new WCHAR[ret+2];
 	if (tmp1==NULL || tmp2==NULL)
@@ -1593,9 +1592,9 @@ BOOL CString::operator==(const CStringW& str)
 
 #endif
 
-BOOL CString::ContainString(LPCSTR str,ULONG_PTR start)
+BOOL CString::ContainString(LPCSTR str,UINT start)
 {
-	ULONG_PTR i,j=0;
+	int i,j=0;
 	if (m_pData==NULL)
 	{
 		if (str==NULL)
@@ -1626,18 +1625,18 @@ void CString::MakeReverse()
 	if (m_pData==NULL)
 		return;
 	CHAR* pchNewData=new CHAR[m_nDataLen];
-	for (UINT i=0;i<m_nDataLen;i++)
+	for (int i=0;i<m_nDataLen;i++)
 		pchNewData[i]=m_pData[m_nDataLen-i-1];
 	pchNewData[m_nDataLen]='\0';
 	delete[] m_pData;
 	m_pData=pchNewData;
 }
 
-LONG_PTR CString::Find(CHAR ch) const
+int CString::Find(CHAR ch) const
 {
 	if (m_pData==NULL)
 		return -1;
-	DWORD i;
+	int i;
 	for (i=0;i<m_nDataLen;i++)
 	{
 		if (m_pData[i]==ch)
@@ -1646,11 +1645,11 @@ LONG_PTR CString::Find(CHAR ch) const
 	return -1;
 }
 
-LONG_PTR CString::FindFirst(CHAR ch) const
+int CString::FindFirst(CHAR ch) const
 {
 	if (m_pData==NULL)
 		return -1;
-	DWORD i;
+	int i;
 	for (i=0;i<m_nDataLen;i++)
 	{
 		if (m_pData[i]==ch)
@@ -1659,11 +1658,11 @@ LONG_PTR CString::FindFirst(CHAR ch) const
 	return -1;
 }
 
-LONG_PTR CString::FindLast(CHAR ch) const
+int CString::FindLast(CHAR ch) const
 {
 	if (m_pData==NULL)
 		return -1;
-	ULONG_PTR i;
+	int i;
 	for (i=m_nDataLen-1;i>=0;i--)
 	{
 		if (m_pData[i]==ch)
@@ -1671,11 +1670,11 @@ LONG_PTR CString::FindLast(CHAR ch) const
 	}
 	return -1;
 }
-LONG_PTR CString::FindNext(CHAR ch,LONG_PTR idx) const
+int CString::FindNext(CHAR ch,int idx) const
 {
 	if (m_pData==NULL)
 		return -1;
-	ULONG_PTR i;
+	int i;
 	for (i=idx+1;i<m_nDataLen;i++)
 	{
 		if (m_pData[i]==ch)
@@ -1684,13 +1683,13 @@ LONG_PTR CString::FindNext(CHAR ch,LONG_PTR idx) const
    	return -1;
 }	
 
-LONG_PTR CString::FindOneOf(LPCSTR lpszCharSet) const
+int CString::FindOneOf(LPCSTR lpszCharSet) const
 {
 	if (m_pData==NULL)
 		return -1;
-	for (DWORD i=0;i<m_nDataLen;i++)
+	for (int i=0;i<m_nDataLen;i++)
 	{
-		for (DWORD j=0;lpszCharSet[j]!='\0';j++)
+		for (int j=0;lpszCharSet[j]!='\0';j++)
 		{
 			if (m_pData[i]==lpszCharSet[j])
 				return i;
@@ -1699,7 +1698,7 @@ LONG_PTR CString::FindOneOf(LPCSTR lpszCharSet) const
 	return -1;
 }
 
-LONG_PTR CString::Find(LPCSTR lpszSub) const
+int CString::Find(LPCSTR lpszSub) const
 {
 	if (m_pData==NULL)
 		return -1;
@@ -1709,9 +1708,9 @@ LONG_PTR CString::Find(LPCSTR lpszSub) const
 	return -1;
 }
 
-LPSTR CString::GetBuffer(SIZE_T nMinBufLength,BOOL bStoreData)
+LPSTR CString::GetBuffer(int nMinBufLength,BOOL bStoreData)
 {
-	if (nMinBufLength==SIZE_T(-1))
+	if (nMinBufLength==-1)
 	{
 		if (m_pData==NULL)
 		{
@@ -1726,7 +1725,7 @@ LPSTR CString::GetBuffer(SIZE_T nMinBufLength,BOOL bStoreData)
 		}
 		return m_pData;
 	}
-	if ((DWORD)nMinBufLength>=m_nAllocLen)
+	if (nMinBufLength>=m_nAllocLen)
 	{
 		if (bStoreData && m_pData!=NULL)
 		{
@@ -1760,12 +1759,12 @@ LPSTR CString::GetBuffer(SIZE_T nMinBufLength,BOOL bStoreData)
 	return m_pData;
 }
 
-void CString::FreeExtra(SIZE_T nNewLength)
+void CString::FreeExtra(int nNewLength)
 {
 	if (m_pData==NULL)
 		return;
 	LPSTR temp=m_pData;
-	if (nNewLength==SIZE_T(-1))
+	if (nNewLength==-1)
 		m_nDataLen=istrlen(m_pData);
 	else
 		m_nDataLen=nNewLength;
@@ -1800,7 +1799,7 @@ void CString::Compact()
 	m_pData=pchTemp;
 }
 	
-BOOL CString::InsChar(ULONG_PTR idx,CHAR ch)
+BOOL CString::InsChar(int idx,CHAR ch)
 {
 	if (m_nDataLen+1>=m_nAllocLen)
 	{
@@ -1819,7 +1818,7 @@ BOOL CString::InsChar(ULONG_PTR idx,CHAR ch)
 		delete[] temp;
 		return TRUE;
 	}
-	for (ULONG_PTR i=m_nDataLen;i>idx;i--)
+	for (int i=m_nDataLen;i>idx;i--)
 		m_pData[i]=m_pData[i-1];
 	m_pData[idx]=ch;
 	m_nDataLen++;
@@ -1829,11 +1828,11 @@ BOOL CString::InsChar(ULONG_PTR idx,CHAR ch)
 
 /* Deletes character */
 	
-BOOL CString::DelChar(ULONG_PTR idx)
+BOOL CString::DelChar(int idx)
 {
 	if (idx>=m_nDataLen)
 		return FALSE;
-	for (ULONG_PTR i=idx;i<m_nDataLen;i++)
+	for (int i=idx;i<m_nDataLen;i++)
 		m_pData[i]=m_pData[i+1];
 	m_nDataLen--;
 	return TRUE;
@@ -1841,7 +1840,7 @@ BOOL CString::DelChar(ULONG_PTR idx)
 
 void CString::ReplaceChars(char from,char to)
 {
-	for (DWORD i=0;i<m_nDataLen;i++)
+	for (int i=0;i<m_nDataLen;i++)
 	{
 		if (m_pData[i]==from)
 			m_pData[i]=to;
@@ -1849,13 +1848,13 @@ void CString::ReplaceChars(char from,char to)
 }
 
 
-BOOL CString::Delete(ULONG_PTR idx,SIZE_T nCount)
+BOOL CString::Delete(int idx,int nCount)
 {
 	if (idx>=m_nDataLen)
 		return FALSE;
 	if (nCount<1)
 		return FALSE;
-	for (ULONG_PTR i=idx;i<=m_nDataLen-nCount;i++)
+	for (int i=idx;i<=m_nDataLen-nCount;i++)
 		m_pData[i]=m_pData[i+nCount];
 	m_nDataLen-=nCount;
 	return TRUE;
@@ -1896,7 +1895,7 @@ void CString::Trim()
 void CString::Swap(CString& str)
 {
 	LPSTR temp;
-	SIZE_T templen;
+	int templen;
 	BYTE tempbase;
 	
 	temp=m_pData;
@@ -1935,7 +1934,7 @@ void CString::FormatV(LPCSTR lpszFormat,va_list argList)
 		nBufferSize*=2;
 	}
 
-	m_nDataLen=end-temp;
+	m_nDataLen=(int)(end-temp);
     if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData!=NULL)
@@ -1995,7 +1994,7 @@ void CString::Format(UINT nFormatID,...)
 	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete lpszFormat;
 			lpszFormat=new CHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2024,7 +2023,7 @@ void CString::FormatEx(UINT nFormatID,...)
 	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete lpszFormat;
 			lpszFormat=new CHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2066,7 +2065,7 @@ void CString::FormatC(UINT nFormatID,...)
 	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete lpszFormat;
 			lpszFormat=new CHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2096,7 +2095,7 @@ void CString::FormatExC(UINT nFormatID,...)
 	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete lpszFormat;
 			lpszFormat=new CHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2136,7 +2135,7 @@ CString::CString(int nID)
 	m_nDataLen=::LoadStringA(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete[] szBuffer;
 			szBuffer=new CHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2167,7 +2166,7 @@ CString::CString(int nID,TypeOfResourceHandle bType)
 	m_nDataLen=::LoadStringA(GetResourceHandle(bType),nID,szBuffer,STR_LOADSTRINGBUFLEN);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete[] szBuffer;
 			szBuffer=new CHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2198,7 +2197,7 @@ CString::CString(UINT nID)
 	m_nDataLen=::LoadStringA(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete[] szBuffer;
 			szBuffer=new CHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2228,7 +2227,7 @@ CString::CString(UINT nID,TypeOfResourceHandle bType)
 	m_nDataLen=::LoadStringA(GetResourceHandle(bType),nID,szBuffer,STR_LOADSTRINGBUFLEN);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete[] szBuffer;
 			szBuffer=new CHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2260,7 +2259,7 @@ CString::CString(int nID,BOOL bLoadAsUnicode)
 		m_nDataLen=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
 		if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 		{
-			for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+			for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 			{
 				delete[] szBuffer;
 				szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2288,7 +2287,7 @@ CString::CString(int nID,BOOL bLoadAsUnicode)
 	m_nDataLen=::LoadStringA(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete[] szBuffer;
 			szBuffer=new CHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2320,7 +2319,7 @@ CString::CString(UINT nID,BOOL bLoadAsUnicode)
 		m_nDataLen=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
 		if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 		{
-			for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+			for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 			{
 				delete[] szBuffer;
 				szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2348,7 +2347,7 @@ CString::CString(UINT nID,BOOL bLoadAsUnicode)
 	m_nDataLen=::LoadStringA(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete[] szBuffer;
 			szBuffer=new CHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2378,7 +2377,7 @@ BOOL CString::LoadString(UINT nID)
 	m_nDataLen=::LoadStringA(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete[] szBuffer;
 			szBuffer=new CHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2424,7 +2423,7 @@ BOOL CString::LoadString(UINT nID,TypeOfResourceHandle bType)
 	m_nDataLen=::LoadStringA(GetResourceHandle(bType),nID,szBuffer,STR_LOADSTRINGBUFLEN);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete[] szBuffer;
 			szBuffer=new CHAR[i*STR_LOADSTRINGBUFLEN];
@@ -2506,7 +2505,7 @@ CStringW::CStringW(const CStringW& str)
 	}
 }
 
-CStringW::CStringW(WCHAR ch,SIZE_T nRepeat)
+CStringW::CStringW(WCHAR ch,int nRepeat)
 	:m_nBase(10)
 {
 	if (!nRepeat)
@@ -2535,7 +2534,7 @@ CStringW::CStringW(LPCWSTR lpsz)
 {
 	if (lpsz!=NULL)
 	{
-		m_nDataLen=wcslen(lpsz);
+		m_nDataLen=(int)wcslen(lpsz);
 		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{
@@ -2552,7 +2551,7 @@ CStringW::CStringW(LPCWSTR lpsz)
 	}
 }
 
-CStringW::CStringW(LPCWSTR lpsz,SIZE_T nLength)
+CStringW::CStringW(LPCWSTR lpsz,int nLength)
 	:m_nBase(10)
 {
 	if (lpsz==NULL || nLength<=0)
@@ -2563,7 +2562,7 @@ CStringW::CStringW(LPCWSTR lpsz,SIZE_T nLength)
 	}
 	else
 	{
-		if (nLength==SIZE_T(-1))
+		if (nLength==-1)
 			nLength=istrlenw(lpsz);
 
 		m_nDataLen=nLength;
@@ -2589,7 +2588,7 @@ CStringW::CStringW(const short * lpsz)
 	}
 	else
 	{
-		m_nDataLen=wcslen((LPWSTR)lpsz);
+		m_nDataLen=(int)wcslen((LPWSTR)lpsz);
 
 		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
@@ -2650,7 +2649,7 @@ CStringW::CStringW(LPCSTR lpsz)
 	}
 }
 
-CStringW::CStringW(CHAR ch,SIZE_T nRepeat)
+CStringW::CStringW(CHAR ch,int nRepeat)
 :	m_nBase(10)
 {
 	if (!nRepeat)
@@ -2682,7 +2681,7 @@ WCHAR& CStringW::operator[](int nIndex)
 {
 	if (m_pData==NULL)
 		return (WCHAR)*szwEmpty;
-	if (nIndex>=0 && (DWORD)nIndex<m_nAllocLen)
+	if (nIndex>=0 && nIndex<m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
@@ -2692,7 +2691,7 @@ WCHAR& CStringW::operator[](DWORD nIndex)
 {
 	if (m_pData==NULL)
 		return (WCHAR)*szwEmpty;
-	if ((DWORD)nIndex<m_nAllocLen)
+	if (nIndex<(DWORD)m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
@@ -2702,7 +2701,7 @@ WCHAR& CStringW::operator[](LONG nIndex)
 {
 	if (m_pData==NULL)
 		return (WCHAR)*szwEmpty;
-	if (nIndex>=0 && (DWORD)nIndex<m_nAllocLen)
+	if (nIndex>=0 && nIndex<m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
@@ -2712,7 +2711,7 @@ WCHAR& CStringW::operator[](UINT nIndex)
 {
 	if (m_pData==NULL)
 		return (WCHAR)*szwEmpty;
-	if ((DWORD)nIndex<m_nAllocLen)
+	if (nIndex<(UINT)m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
@@ -2723,7 +2722,7 @@ WCHAR& CStringW::operator[](LONG_PTR nIndex)
 {
 	if (m_pData==NULL)
 		return (WCHAR)*szwEmpty;
-	if (nIndex>=0 && (DWORD)nIndex<m_nAllocLen)
+	if (nIndex>=0 && nIndex<(LONG_PTR)m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
@@ -2733,7 +2732,7 @@ WCHAR& CStringW::operator[](ULONG_PTR nIndex)
 {
 	if (m_pData==NULL)
 		return (WCHAR)*szwEmpty;
-	if ((DWORD)nIndex<m_nAllocLen)
+	if (nIndex<(ULONG_PTR)m_nAllocLen)
 		return m_pData[nIndex];
 	else
 		return m_pData[m_nAllocLen-1];
@@ -2757,7 +2756,7 @@ CStringW& CStringW::Copy(LPCWSTR str)
 	return *this;
 }
 
-CStringW& CStringW::Copy(LPCWSTR str,SIZE_T iLength)
+CStringW& CStringW::Copy(LPCWSTR str,int iLength)
 {
 	if (str==NULL)
 	{
@@ -2766,7 +2765,7 @@ CStringW& CStringW::Copy(LPCWSTR str,SIZE_T iLength)
 	}
 	if (m_pData!=NULL)
 		delete[] m_pData;
-	if (iLength==SIZE_T(-1))
+	if (iLength==-1)
 		m_nDataLen=istrlenw(str);
 	else
 		m_nDataLen=iLength;
@@ -2791,7 +2790,7 @@ CStringW& CStringW::Copy(LPCSTR str)
 	return *this;
 }
 
-CStringW& CStringW::Copy(LPCSTR str,SIZE_T iLength)
+CStringW& CStringW::Copy(LPCSTR str,int iLength)
 {
 	if (str==NULL)
 	{
@@ -2800,7 +2799,7 @@ CStringW& CStringW::Copy(LPCSTR str,SIZE_T iLength)
 	}
 	if (m_pData!=NULL)
 		delete[] m_pData;
-	if (iLength==SIZE_T(-1))
+	if (iLength==-1)
 		m_nDataLen=istrlen(str);
 	else
 		m_nDataLen=iLength;
@@ -2825,7 +2824,7 @@ CStringW& CStringW::Copy(const BYTE* str)
 	return *this;
 }
 
-CStringW& CStringW::Copy(const BYTE* str,SIZE_T iLength)
+CStringW& CStringW::Copy(const BYTE* str,int iLength)
 {
 	if (str==NULL)
 	{
@@ -2834,7 +2833,7 @@ CStringW& CStringW::Copy(const BYTE* str,SIZE_T iLength)
 	}
 	if (m_pData!=NULL)
 		delete[] m_pData;
-	if (iLength==SIZE_T(-1))
+	if (iLength==-1)
 		m_nDataLen=istrlen((LPCSTR)str);
 	else
 		m_nDataLen=iLength;
@@ -2965,7 +2964,7 @@ const CStringW& CStringW::operator+=(const CStringW& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+str.m_nDataLen;
+		int templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3017,7 +3016,7 @@ const CStringW& CStringW::operator+=(WCHAR ch)
 }
 
 
-void CStringW::Append(LPCWSTR str,SIZE_T nStrLen)
+void CStringW::Append(LPCWSTR str,int nStrLen)
 {
 	if (str==NULL)
 		return;	
@@ -3028,7 +3027,7 @@ void CStringW::Append(LPCWSTR str,SIZE_T nStrLen)
 		return;
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3066,13 +3065,13 @@ const CStringW& CStringW::operator+=(LPCWSTR str)
 	if (str==NULL)
 		return *this;	
 	
-	SIZE_T nStrLen=istrlenw(str);
+	int nStrLen=istrlenw(str);
 
 	if (nStrLen==0)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3109,9 +3108,9 @@ const CStringW& CStringW::operator+=(DWORD iNum)
 	_itow_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlenw(szBuffer);
+		int nStrLen=istrlenw(szBuffer);
 
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3149,9 +3148,9 @@ const CStringW& CStringW::operator+=(int iNum)
 	_itow_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlenw(szBuffer);	
+		int nStrLen=istrlenw(szBuffer);	
 		
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3189,9 +3188,9 @@ const CStringW& CStringW::operator+=(LONGLONG iNum)
 	_i64tow_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlenw(szBuffer);	
+		int nStrLen=istrlenw(szBuffer);	
 		
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3229,9 +3228,9 @@ const CStringW& CStringW::operator+=(ULONGLONG iNum)
 	_ui64tow_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlenw(szBuffer);	
+		int nStrLen=istrlenw(szBuffer);	
 		
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3270,7 +3269,7 @@ const CStringW& CStringW::operator+=(const CString& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+str.m_nDataLen;
+		int templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3342,13 +3341,13 @@ const CStringW& CStringW::operator+=(LPCSTR str)
 {
 	if (str==NULL)
 		return *this;	
-	SIZE_T nStrLen=istrlen(str);
+	int nStrLen=istrlen(str);
 
 	if (nStrLen==0)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3381,7 +3380,7 @@ const CStringW& CStringW::operator+=(LPCSTR str)
 	}
 }
 
-void CStringW::Append(LPCSTR str,SIZE_T nStrLen)
+void CStringW::Append(LPCSTR str,int nStrLen)
 {
 	if (str==NULL)
 		return;	
@@ -3392,7 +3391,7 @@ void CStringW::Append(LPCSTR str,SIZE_T nStrLen)
 		return;
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3429,7 +3428,7 @@ CStringW& CStringW::operator<<(const CStringW& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+str.m_nDataLen;
+		int templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3499,13 +3498,13 @@ CStringW& CStringW::operator<<(LPCWSTR str)
 {
 	if (str==NULL)
 		return *this;	
-	SIZE_T nStrLen=istrlenw(str);
+	int nStrLen=istrlenw(str);
 
 	if (nStrLen==0)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3542,9 +3541,9 @@ CStringW& CStringW::operator<<(DWORD iNum)
 	_itow_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlenw(szBuffer);
+		int nStrLen=istrlenw(szBuffer);
 
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3583,8 +3582,8 @@ CStringW& CStringW::operator<<(int iNum)
 	_itow_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlenw(szBuffer);
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int nStrLen=istrlenw(szBuffer);
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3622,8 +3621,8 @@ CStringW& CStringW::operator<<(LONGLONG iNum)
 	_i64tow_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlenw(szBuffer);
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int nStrLen=istrlenw(szBuffer);
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3661,8 +3660,8 @@ CStringW& CStringW::operator<<(ULONGLONG iNum)
 	_ui64tow_s(iNum,szBuffer,34,m_nBase);
 	if (m_pData!=NULL)
 	{
-		SIZE_T nStrLen=istrlenw(szBuffer);
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int nStrLen=istrlenw(szBuffer);
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3700,7 +3699,7 @@ CStringW& CStringW::operator<<(const CString& str)
 		return *this;	
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+str.m_nDataLen;
+		int templen=m_nDataLen+str.m_nDataLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3772,13 +3771,13 @@ CStringW& CStringW::operator<<(LPCSTR str)
 {
 	if (str==NULL)
 		return *this;	
-	SIZE_T nStrLen=istrlen(str);
+	int nStrLen=istrlen(str);
 
 	if (nStrLen==0)
 		return *this;
 	if (m_pData!=NULL)
 	{
-		SIZE_T templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+nStrLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPWSTR temp=m_pData;
@@ -3985,9 +3984,9 @@ BOOL CStringW::operator==(const CString& str)
 	return FALSE;
 }
 
-BOOL CStringW::ContainString(LPCWSTR str,ULONG_PTR start)
+BOOL CStringW::ContainString(LPCWSTR str,UINT start)
 {
-	ULONG_PTR i,j=0;
+	int i,j=0;
 	if (m_pData==NULL)
 	{
 		if (str==NULL)
@@ -4018,7 +4017,7 @@ void CStringW::MakeReverse()
 	if (m_pData==NULL)
 		return;
 	WCHAR* pchNewData=new WCHAR[m_nDataLen];
-	for (UINT i=0;i<m_nDataLen;i++)
+	for (int i=0;i<m_nDataLen;i++)
 		pchNewData[i]=m_pData[m_nDataLen-i-1];
 	pchNewData[m_nDataLen]='\0';
 	delete[] m_pData;
@@ -4026,11 +4025,11 @@ void CStringW::MakeReverse()
 }
 
 
-LONG_PTR CStringW::Find(WCHAR ch) const
+int CStringW::Find(WCHAR ch) const
 {
 	if (m_pData==NULL)
 		return -1;
-	DWORD i;
+	int i;
 	for (i=0;i<m_nDataLen;i++)
 	{
 		if (m_pData[i]==ch)
@@ -4039,11 +4038,11 @@ LONG_PTR CStringW::Find(WCHAR ch) const
 	return -1;
 }
 
-LONG_PTR CStringW::FindFirst(WCHAR ch) const
+int CStringW::FindFirst(WCHAR ch) const
 {
 	if (m_pData==NULL)
 		return -1;
-	DWORD i;
+	int i;
 	for (i=0;i<m_nDataLen;i++)
 	{
 		if (m_pData[i]==ch)
@@ -4052,11 +4051,11 @@ LONG_PTR CStringW::FindFirst(WCHAR ch) const
 	return -1;
 }
 
-LONG_PTR CStringW::FindLast(WCHAR ch) const
+int CStringW::FindLast(WCHAR ch) const
 {
 	if (m_pData==NULL)
 		return -1;
-	ULONG_PTR i;
+	int i;
 	for (i=m_nDataLen-1;i>=0;i--)
 	{
 		if (m_pData[i]==ch)
@@ -4065,11 +4064,11 @@ LONG_PTR CStringW::FindLast(WCHAR ch) const
 	return -1;
 }
 
-LONG_PTR CStringW::FindNext(WCHAR ch,LONG_PTR idx) const
+int CStringW::FindNext(WCHAR ch,int idx) const
 {
 	if (m_pData==NULL)
 		return -1;
-	ULONG_PTR i;
+	int i;
 	for (i=idx+1;i<m_nDataLen;i++)
 	{
 		if (m_pData[i]==ch)
@@ -4078,12 +4077,12 @@ LONG_PTR CStringW::FindNext(WCHAR ch,LONG_PTR idx) const
    	return -1;
 }	
 
-LONG_PTR CStringW::FindOneOf(LPCWSTR lpszCharSet) const
+int CStringW::FindOneOf(LPCWSTR lpszCharSet) const
 {
 	if (m_pData==NULL)
 		return -1;
 	
-	for (DWORD i=0;i<m_nDataLen;i++)
+	for (int i=0;i<m_nDataLen;i++)
 	{
 		for (DWORD j=0;lpszCharSet[j]!='\0';j++)
 		{
@@ -4094,7 +4093,7 @@ LONG_PTR CStringW::FindOneOf(LPCWSTR lpszCharSet) const
 	return -1;
 }
 
-LONG_PTR CStringW::Find(LPCWSTR lpszSub) const
+int CStringW::Find(LPCWSTR lpszSub) const
 {
 	if (m_pData==NULL)
 		return -1;
@@ -4104,9 +4103,9 @@ LONG_PTR CStringW::Find(LPCWSTR lpszSub) const
 	return -1;
 }
 
-LPWSTR CStringW::GetBuffer(SIZE_T nMinBufLength,BOOL bStoreData)
+LPWSTR CStringW::GetBuffer(int nMinBufLength,BOOL bStoreData)
 {
-	if (nMinBufLength==SIZE_T(-1))
+	if (nMinBufLength==-1)
 	{
 		if (m_pData==NULL)
 		{
@@ -4121,7 +4120,7 @@ LPWSTR CStringW::GetBuffer(SIZE_T nMinBufLength,BOOL bStoreData)
 		}
 		return m_pData;
 	}
-	if ((DWORD)nMinBufLength>=m_nAllocLen)
+	if (nMinBufLength>=m_nAllocLen)
 	{
 		if (bStoreData && m_pData!=NULL)
 		{
@@ -4167,12 +4166,12 @@ void CStringW::Compact()
 	m_pData=pchTemp;
 }
 	
-void CStringW::FreeExtra(SIZE_T nNewLength)
+void CStringW::FreeExtra(int nNewLength)
 {
 	if (m_pData==NULL)
 		return;
 	LPWSTR temp=m_pData;
-	if (nNewLength==SIZE_T(-1))
+	if (nNewLength==-1)
 		m_nDataLen=istrlenw(m_pData);
 	else
 		m_nDataLen=nNewLength;
@@ -4187,7 +4186,7 @@ void CStringW::FreeExtra(SIZE_T nNewLength)
 	delete[] temp;
 }
 
-BOOL CStringW::InsChar(ULONG_PTR idx,WCHAR ch)
+BOOL CStringW::InsChar(int idx,WCHAR ch)
 {
 	if (m_nDataLen+1>=m_nAllocLen)
 	{
@@ -4205,7 +4204,7 @@ BOOL CStringW::InsChar(ULONG_PTR idx,WCHAR ch)
 		m_pData[m_nDataLen]='\0';
 		return TRUE;
 	}
-	for (ULONG_PTR i=m_nDataLen;i>idx;i--)
+	for (int i=m_nDataLen;i>idx;i--)
 		m_pData[i]=m_pData[i-1];
 	m_pData[idx]=ch;
 	m_nDataLen++;
@@ -4213,11 +4212,11 @@ BOOL CStringW::InsChar(ULONG_PTR idx,WCHAR ch)
 	return TRUE;
 }
 	
-BOOL CStringW::DelChar(ULONG_PTR idx)
+BOOL CStringW::DelChar(int idx)
 {
 	if (idx>=m_nDataLen)
 		return FALSE;
-	for (ULONG_PTR i=idx;i<m_nDataLen;i++)
+	for (int i=idx;i<m_nDataLen;i++)
 		m_pData[i]=m_pData[i+1];
 	m_nDataLen--;
 	return TRUE;
@@ -4225,20 +4224,20 @@ BOOL CStringW::DelChar(ULONG_PTR idx)
 
 void CStringW::ReplaceChars(char from,char to)
 {
-	for (DWORD i=0;i<m_nDataLen;i++)
+	for (int i=0;i<m_nDataLen;i++)
 	{
 		if (m_pData[i]==from)
 			m_pData[i]=to;
 	}
 }
 
-BOOL CStringW::Delete(ULONG_PTR idx,SIZE_T nCount)
+BOOL CStringW::Delete(int idx,int nCount)
 {
 	if (idx>=m_nDataLen)
 		return FALSE;
 	if (nCount<1)
 		return FALSE;
-	for (ULONG_PTR i=idx;i<=m_nDataLen-nCount;i++)
+	for (int i=idx;i<=m_nDataLen-nCount;i++)
 		m_pData[i]=m_pData[i+nCount];
 	m_nDataLen-=nCount;
 	return TRUE;
@@ -4282,7 +4281,7 @@ void CStringW::Trim()
 void CStringW::Swap(CStringW& str)
 {
 	LPWSTR temp;
-	SIZE_T templen;
+	int templen;
 	BYTE tempbase;
 	
 	temp=m_pData;
@@ -4322,7 +4321,7 @@ void CStringW::FormatV(LPCWSTR lpszFormat,va_list argList)
 		nBufferSize*=2;
 	}
 
-	m_nDataLen=end-temp;
+	m_nDataLen=(int)(end-temp);
     if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
 		if (m_pData!=NULL)
@@ -4390,7 +4389,7 @@ void CStringW::Format(UINT nFormatID,...)
 	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete lpszFormat;
 			lpszFormat=new WCHAR[i*STR_LOADSTRINGBUFLEN];
@@ -4419,7 +4418,7 @@ void CStringW::FormatEx(UINT nFormatID,...)
 	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete lpszFormat;
 			lpszFormat=new WCHAR[i*STR_LOADSTRINGBUFLEN];
@@ -4462,7 +4461,7 @@ void CStringW::FormatC(UINT nFormatID,...)
 	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,CommonResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete lpszFormat;
 			lpszFormat=new WCHAR[i*STR_LOADSTRINGBUFLEN];
@@ -4491,7 +4490,7 @@ void CStringW::FormatExC(UINT nFormatID,...)
 	m_nDataLen=::LoadString(nFormatID,lpszFormat,STR_LOADSTRINGBUFLEN,CommonResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete lpszFormat;
 			lpszFormat=new WCHAR[i*STR_LOADSTRINGBUFLEN];
@@ -4534,7 +4533,7 @@ CStringW::CStringW(int nID)
 	m_nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete[] szBuffer;
 			szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];
@@ -4564,7 +4563,7 @@ CStringW::CStringW(int nID,TypeOfResourceHandle bType)
 	m_nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,bType);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete[] szBuffer;
 			szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];
@@ -4595,7 +4594,7 @@ CStringW::CStringW(UINT nID)
 	m_nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,LanguageSpecificResource);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete[] szBuffer;
 			szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];
@@ -4625,7 +4624,7 @@ CStringW::CStringW(UINT nID,TypeOfResourceHandle bType)
 	m_nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,bType);
 	if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
 	{
-		for (DWORD i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+		for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
 		{
 			delete[] szBuffer;
 			szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];

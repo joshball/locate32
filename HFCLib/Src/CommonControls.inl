@@ -385,9 +385,9 @@ inline BOOL CStatusBarCtrl::SetTipText(int n,LPCSTR szText)
 	return (BOOL)::SendMessage(m_hWnd,SB_SETTIPTEXT,n,(LPARAM)szText);
 }
 
-inline SIZE_T CStatusBarCtrl::GetTipText(int n,LPSTR szText,SIZE_T nSize) const
+inline int CStatusBarCtrl::GetTipText(int n,LPSTR szText,int nSize) const
 {
-	return ::SendMessage(m_hWnd,SB_GETTIPTEXT,MAKEWPARAM(n,nSize),(LPARAM)szText);
+	return (int)::SendMessage(m_hWnd,SB_GETTIPTEXT,MAKEWPARAM(n,nSize),(LPARAM)szText);
 }
 
 inline BOOL CStatusBarCtrl::SetUnicodeFormat(int nFormat)

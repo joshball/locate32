@@ -277,7 +277,7 @@ BOOL CLocater::LocatingProc()
 		m_wCurrentRootIndex=0;
         
 		ueResult=ueStillWorking;
-		m_pProc(m_dwData,BeginningDatabase,ueStillWorking,(DWORD)m_pCurrentDatabase->szName,this);
+		m_pProc(m_dwData,BeginningDatabase,ueStillWorking,(DWORD_PTR)m_pCurrentDatabase->szName,this);
 
 
 		
@@ -718,7 +718,7 @@ BOOL CLocater::LocatingProc()
 		}
 		
 		
-		m_pProc(m_dwData,FinishedDatabase,ueResult,(DWORD)m_pCurrentDatabase->szName,this);
+		m_pProc(m_dwData,FinishedDatabase,ueResult,(DWORD_PTR)m_pCurrentDatabase->szName,this);
 
 		// Finishing
 		if (szBuffer!=NULL)
@@ -963,7 +963,7 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR* szNames,DWORD nNames,
 BOOL CLocater::LocateFiles(BOOL bThreaded,LPCSTR szRegExp,LPCWSTR* szDirectories,DWORD nDirectories)
 {
 	LocaterDebugMessage5("CLocater::LocateFiles BEGIN, \r\nszRegExp:%s\r\nszDirectories:%X\r\nnDirectories:%d",
-		szRegExp,(DWORD)szDirectories,nDirectories,0,0,0);
+		szRegExp,(DWORD_PTR)szDirectories,nDirectories,0,0,0);
 
 	if (szRegExp[0]!='\0')
 	{

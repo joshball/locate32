@@ -27,11 +27,11 @@ HFCERROR SetHFCError2(HFCERROR nErr,int line,char* file);
 HFCERROR GetHFCError(void);
 HFCERRCALLBACK SetHFCErrorCallback(HFCERRCALLBACK pfCallbackFunc,DWORD dwData);
 LPCSTR GetStdErrorStr(HFCERROR nError);
-HFCERROR ExceptionErrorFunc(HFCERROR nError,SIZE_T dwData);
+HFCERROR ExceptionErrorFunc(HFCERROR nError,DWORD_PTR dwData);
 void SysErrorMessage(CString& str,DWORD dwSystemError);
-HFCERROR StdHFCErrorCallbackStdout(HFCERROR nError,SIZE_T dwData);
-HFCERROR StdHFCErrorCallbackStderr(HFCERROR nError,SIZE_T dwData);
-HFCERROR StdHFCErrorCallbackMsgBox(HFCERROR nError,SIZE_T dwData);
+HFCERROR StdHFCErrorCallbackStdout(HFCERROR nError,DWORD_PTR dwData);
+HFCERROR StdHFCErrorCallbackStderr(HFCERROR nError,DWORD_PTR dwData);
+HFCERROR StdHFCErrorCallbackMsgBox(HFCERROR nError,DWORD_PTR dwData);
 
 
 //Only tests if HFC Library works correctly, returning nonzero if OK
@@ -209,7 +209,7 @@ HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath=NULL);
 BOOL RunRegistryCommand(HKEY hKey,LPCSTR szFile);
 DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen);
 DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,DWORD dwBufferLen);
-BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,SIZE_T nBufferLen);
+BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,DWORD nBufferLen);
 
 #ifdef DEF_WCHAR
 LPITEMIDLIST GetFileIDList(LPCWSTR lpszFileName);

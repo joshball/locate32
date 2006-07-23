@@ -464,8 +464,13 @@ public:
 	DWORD SetExStyle(DWORD dwExStyle) { return ::SetWindowLong(m_hWnd,GWL_EXSTYLE,dwExStyle); }
 	BOOL ModifyStyleEx(DWORD dwRemove,DWORD dwAdd,UINT nFlags=0);
 
-	LONG GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLong(m_hWnd,nIndex); }	
+#ifdef _WIN64
+	LONG_PTR GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLongPtr(m_hWnd,nIndex); }	
 	LONG_PTR SetWindowLong(WindowLongIndex nIndex,LONG_PTR lNewLong) { return ::SetWindowLongPtr(m_hWnd,nIndex,lNewLong); }
+#else
+	LONG GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLongPtr(m_hWnd,nIndex); }	
+	LONG SetWindowLong(WindowLongIndex nIndex,LONG lNewLong) { return ::SetWindowLongPtr(m_hWnd,nIndex,lNewLong); }
+#endif
 	DWORD GetClassLong(ClassLongIndex nIndex) const { return ::GetClassLong(m_hWnd,nIndex); }
 	DWORD SetClassLong(ClassLongIndex nIndex,LONG lNewVal) { return ::SetClassLong(m_hWnd,nIndex,lNewVal); }
 
@@ -596,9 +601,9 @@ public:
 	BOOL SetDlgItemInt(int idControl,UINT uValue,BOOL fSigned=TRUE) const;
 	BOOL SetDlgItemText(int idControl,LPCSTR lpsz) const;	
 	
-	virtual SIZE_T GetText(LPSTR lpszText,SIZE_T cchTextMax) const;
-	virtual SIZE_T GetText(CStringA& str) const;
-	virtual SIZE_T GetTextLength() const;
+	virtual int GetText(LPSTR lpszText,int cchTextMax) const;
+	virtual int GetText(CStringA& str) const;
+	virtual int GetTextLength() const;
 	virtual BOOL SetText(LPCSTR lpsz);
 
 	void DragAcceptFiles(BOOL bAccept);
@@ -631,8 +636,8 @@ public:
 	BOOL SetDlgItemText(int idControl,LPCWSTR lpsz) const;	
 	
 	virtual BOOL SetText(LPCWSTR lpsz);
-	virtual SIZE_T GetText(LPWSTR lpszText,SIZE_T cchTextMax) const;
-	virtual SIZE_T GetText(CStringW& str) const;
+	virtual int GetText(LPWSTR lpszText,int cchTextMax) const;
+	virtual int GetText(CStringW& str) const;
 	
 	BOOL PostMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::PostMessageW(m_hWnd,uMsg,wParam,lParam); }
 	LRESULT SendMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::SendMessageW(m_hWnd,uMsg,wParam,lParam); }

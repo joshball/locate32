@@ -26,8 +26,8 @@ BeginningDatabase:	(DWORD)DB mame
 Otherwise:			number of found files
 */
 
-typedef BOOL (CALLBACK* LOCATEPROC)(DWORD dwParam,CallingReason crReason,UpdateError ueError,DWORD dwInfo,const CLocater* pLocater);
-typedef BOOL (CALLBACK* LOCATEFOUNDPROC)(DWORD dwParam,BOOL bFolder,const CLocater* pLocater);
+typedef BOOL (CALLBACK* LOCATEPROC)(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueError,DWORD_PTR dwInfo,const CLocater* pLocater);
+typedef BOOL (CALLBACK* LOCATEFOUNDPROC)(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater);
 
 #define LOCATE_FILENAMES				0x0001
 #define LOCATE_FOLDERNAMES				0x0002
@@ -90,7 +90,7 @@ protected:
 
 public:
 	
-	void SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC pFoundProc,LOCATEFOUNDPROC pFoundProcW,DWORD dwParam=0);
+	void SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC pFoundProc,LOCATEFOUNDPROC pFoundProcW,DWORD_PTR dwParam=0);
 	
 	// Creates new thread and start to locate files
 	/*BOOL LocateFiles(BOOL bThreaded,LPCSTR* szName,DWORD dwNames,
@@ -297,7 +297,7 @@ private:
 	LOCATEPROC m_pProc;
 	LOCATEFOUNDPROC m_pFoundProc;
 	LOCATEFOUNDPROC m_pFoundProcW;
-	DWORD m_dwData;
+	DWORD_PTR m_dwData;
 	CSearchFromFile* m_pContentSearcher;
 	CFile* dbFile;
 

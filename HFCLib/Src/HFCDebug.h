@@ -9,7 +9,7 @@
 
 
 #ifdef _DEBUG
-void MsgToText(DWORD msg,LPSTR text,size_t maxlen);
+void MsgToText(DWORD msg,LPSTR text,DWORD maxlen);
 
 void AddDebugMenuItems(HWND hWnd);
 void AddDebugNote(HWND hWndParent);

@@ -58,7 +58,7 @@ CLOCATERINITIALIATIONS
 	SetDatabases(aDatabases);
 }
 
-inline void CLocater::SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC pFoundProc,LOCATEFOUNDPROC pFoundProcW,DWORD dwParam)
+inline void CLocater::SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC pFoundProc,LOCATEFOUNDPROC pFoundProcW,DWORD_PTR dwParam)
 {
 	m_pProc=pProc;
 	m_pFoundProc=pFoundProc;
@@ -125,7 +125,7 @@ inline void CLocater::SetSizeAndDate(DWORD dwFlags,DWORD dwMinSize,DWORD dwMaxSi
 }
 
 
-inline bool _strncmp(const WCHAR* p1,const char* p2,SIZE_T a)
+inline bool _strncmp(const WCHAR* p1,const char* p2,int a)
 {
 	// TODO: check whether ansi and unicode characters are equal 
 	// when ch between 0 and 255, and remove W2Ac
@@ -135,7 +135,7 @@ inline bool _strncmp(const WCHAR* p1,const char* p2,SIZE_T a)
 	return TRUE;
 }
 
-inline bool _strfcmp(const WCHAR* p1,const char* p2,SIZE_T a)
+inline bool _strfcmp(const WCHAR* p1,const char* p2,int a)
 {
 	// TODO: check whether ansi and unicode characters are equal 
 	// when ch between 0 and 255, and remove A2Wc
@@ -144,7 +144,7 @@ inline bool _strfcmp(const WCHAR* p1,const char* p2,SIZE_T a)
 			return FALSE;
 	return TRUE;
 }
-inline bool _strncmp(const WCHAR* p1,const WCHAR* p2,SIZE_T a)
+inline bool _strncmp(const WCHAR* p1,const WCHAR* p2,int a)
 {
 	for (a--;a>=0;a--)
 		if (p1[a]!=p2[a])
@@ -152,7 +152,7 @@ inline bool _strncmp(const WCHAR* p1,const WCHAR* p2,SIZE_T a)
 	return TRUE;
 }
 
-inline bool _strfcmp(const WCHAR* p1,const WCHAR* p2,SIZE_T a)
+inline bool _strfcmp(const WCHAR* p1,const WCHAR* p2,int a)
 {
 	for (a--;p1[a]!='\\';a--)
 		if (p1[a]!=p2[a])
@@ -166,15 +166,15 @@ inline CLocater::ValidType CLocater::IsFolderValid(DWORD nPathLen)
 	{
 		for (int i=0;i<m_aDirectories.GetSize();i++)
 		{
-			if (m_aDirectories.GetAt(i)->GetLength()>nPathLen)
+			if ((DWORD)m_aDirectories.GetAt(i)->GetLength()>nPathLen)
 			{
 				if (_strfcmp(*m_aDirectories.GetAt(i),szCurrentPathLower,nPathLen))
 					return SomeValidFolders;
 			}
-			else if (m_aDirectories.GetAt(i)->GetLength()==nPathLen)
+			else if ((DWORD)m_aDirectories.GetAt(i)->GetLength()==nPathLen)
 			{
 				if (_strfcmp(*m_aDirectories.GetAt(i),szCurrentPathLower,
-					m_aDirectories.GetAt(i)->GetLength()))
+					(int)m_aDirectories.GetAt(i)->GetLength()))
 					return ValidFolders;
 			}
 		}
@@ -190,7 +190,7 @@ inline CLocater::ValidType CLocater::IsFolderValidW(DWORD nPathLen)
 	{
 		for (int i=0;i<m_aDirectories.GetSize();i++)
 		{
-			if (m_aDirectories.GetAt(i)->GetLength()>nPathLen)
+			if ((DWORD)m_aDirectories.GetAt(i)->GetLength()>nPathLen)
 			{
 				if (_strfcmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,nPathLen))
 					return SomeValidFolders;
@@ -198,7 +198,7 @@ inline CLocater::ValidType CLocater::IsFolderValidW(DWORD nPathLen)
 			else if (m_aDirectories.GetAt(i)->GetLength()==nPathLen)
 			{
 				if (_strfcmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,
-					m_aDirectories.GetAt(i)->GetLength()))
+					(int)m_aDirectories.GetAt(i)->GetLength()))
 					return ValidFolders;
 			}
 		}
@@ -212,7 +212,7 @@ inline CLocater::ValidType CLocater::IsRootValid(DWORD nPathLen)
 {
 	for (int i=0;i<m_aDirectories.GetSize();i++)
 	{
-		if (m_aDirectories.GetAt(i)->GetLength()>nPathLen)
+		if ((DWORD)m_aDirectories.GetAt(i)->GetLength()>nPathLen)
 		{
 			if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLower,nPathLen))
 				return SomeValidFolders;
@@ -231,7 +231,7 @@ inline CLocater::ValidType CLocater::IsRootValidW(DWORD nPathLen)
 {
 	for (int i=0;i<m_aDirectories.GetSize();i++)
 	{
-		if (m_aDirectories.GetAt(i)->GetLength()>nPathLen)
+		if ((DWORD)m_aDirectories.GetAt(i)->GetLength()>nPathLen)
 		{
 			if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,nPathLen))
 				return SomeValidFolders;
@@ -239,7 +239,7 @@ inline CLocater::ValidType CLocater::IsRootValidW(DWORD nPathLen)
 		else
 		{
 			if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,
-				m_aDirectories.GetAt(i)->GetLength()))
+				(int)m_aDirectories.GetAt(i)->GetLength()))
 				return ValidFolders;
 		}
 	}

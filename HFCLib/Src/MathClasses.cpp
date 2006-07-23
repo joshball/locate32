@@ -517,7 +517,7 @@ CComplex::operator CString() const
 const CComplex& CComplex::operator=(LPCSTR szNum)
 {
 	while (szNum[0]==' ') szNum++;
-	LONG_PTR nIndex=FirstCharIndex(szNum+1,'+')+1;
+	int nIndex=FirstCharIndex(szNum+1,'+')+1;
 	if (nIndex==0) nIndex=FirstCharIndex(szNum+1,'-')+1;
 	if (nIndex==0)
 	{

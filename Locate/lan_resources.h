@@ -261,6 +261,7 @@
 #define IDS_ERRORDIFFERENTCHARSETINDB	1031
 #define IDC_TARGETTYPE                  1032
 #define IDC_STARTIN                     1033
+#define IDS_ERRORCANNOTCREATETHREAD		1034
 #define IDC_RUNMODE                     1035
 #define IDC_FINDTARGET                  1036
 #define IDC_SHORTCUTKEY                 1038

@@ -27,42 +27,42 @@ BOOL CImageList::DeleteImageList()
 // Class CStatusBarCtrl
 ///////////////////////////
 
-SIZE_T CStatusBarCtrl::GetText(CString& str,int nPane,int* pType) const
+int CStatusBarCtrl::GetText(CString& str,int nPane,int* pType) const
 {
-	SIZE_T ret=::SendMessage(m_hWnd,SB_GETTEXT,(WPARAM)nPane,(LPARAM)str.GetBuffer(LOWORD(::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0))));
+	int ret=(int)::SendMessage(m_hWnd,SB_GETTEXT,(WPARAM)nPane,(LPARAM)str.GetBuffer(LOWORD(::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0))));
 	if (pType!=NULL)
 		*pType=HIWORD(ret);
 	return ret;
 }
 
-SIZE_T CStatusBarCtrl::GetText(LPSTR lpszText,int nPane,int* pType) const
+int CStatusBarCtrl::GetText(LPSTR lpszText,int nPane,int* pType) const
 {
-	SIZE_T ret=::SendMessage(m_hWnd,SB_GETTEXT,(WPARAM)nPane,(LPARAM)lpszText);	
+	int ret=(int)::SendMessage(m_hWnd,SB_GETTEXT,(WPARAM)nPane,(LPARAM)lpszText);	
 	if (pType!=NULL)
 		*pType=HIWORD(ret);
 	return LOWORD(ret);
 }
 
-SIZE_T CStatusBarCtrl::GetTextLength(int nPane,int* pType) const
+int CStatusBarCtrl::GetTextLength(int nPane,int* pType) const
 {
-	SIZE_T ret=::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0);
+	int ret=(int)::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0);
 	if (pType!=NULL)
 		*pType=HIWORD(ret);
 	return LOWORD(ret);
 }
 
 #ifdef DEF_WCHAR
-SIZE_T CStatusBarCtrl::GetText(CStringW& str,int nPane,int* pType) const
+int CStatusBarCtrl::GetText(CStringW& str,int nPane,int* pType) const
 {
-	SIZE_T ret;
-	SIZE_T len=::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0);
+	int ret;
+	int len=(int)::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0);
 	
 	if (IsUnicodeSystem())
-		ret=::SendMessageW(m_hWnd,SB_GETTEXTW,(WPARAM)nPane,(LPARAM)str.GetBuffer(len));
+		ret=(int)::SendMessageW(m_hWnd,SB_GETTEXTW,(WPARAM)nPane,(LPARAM)str.GetBuffer(len));
 	else
 	{
 		char* pText=new char[len+2];
-		ret=::SendMessageA(m_hWnd,SB_GETTEXTA,(WPARAM)nPane,(LPARAM)pText);
+		ret=(int)::SendMessageA(m_hWnd,SB_GETTEXTA,(WPARAM)nPane,(LPARAM)pText);
 		str.Copy(pText,len);
 		delete[] pText;
 	}
@@ -72,16 +72,16 @@ SIZE_T CStatusBarCtrl::GetText(CStringW& str,int nPane,int* pType) const
 	return ret;
 }
 
-SIZE_T CStatusBarCtrl::GetText(LPWSTR lpszText,int nPane,int* pType) const
+int CStatusBarCtrl::GetText(LPWSTR lpszText,int nPane,int* pType) const
 {
-	SIZE_T ret;
+	int ret;
 	if (IsUnicodeSystem())
-		ret=::SendMessageW(m_hWnd,SB_GETTEXTW,(WPARAM)nPane,(LPARAM)lpszText);	
+		ret=(int)::SendMessageW(m_hWnd,SB_GETTEXTW,(WPARAM)nPane,(LPARAM)lpszText);	
 	else
 	{
-		SIZE_T len=::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0);
+		int len=(int)::SendMessage(m_hWnd,SB_GETTEXTLENGTH,(WPARAM)nPane,0);
 		char* pText=new char[len+2];
-		ret=::SendMessageA(m_hWnd,SB_GETTEXTA,(WPARAM)nPane,(LPARAM)pText);
+		ret=(int)::SendMessageA(m_hWnd,SB_GETTEXTA,(WPARAM)nPane,(LPARAM)pText);
 		if (ret)
 			MultiByteToWideChar(CP_ACP,0,pText,(int)len+1,lpszText,(int)len+1);
 		delete[] pText;
@@ -91,13 +91,13 @@ SIZE_T CStatusBarCtrl::GetText(LPWSTR lpszText,int nPane,int* pType) const
 	return LOWORD(ret);
 }
 
-SIZE_T CStatusBarCtrl::GetTipText(int n,LPWSTR szText,SIZE_T nBufLen) const
+int CStatusBarCtrl::GetTipText(int n,LPWSTR szText,int nBufLen) const
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,SB_GETTIPTEXTW,MAKEWPARAM(n,nBufLen),(LPARAM)szText);
+		return (int)::SendMessageW(m_hWnd,SB_GETTIPTEXTW,MAKEWPARAM(n,nBufLen),(LPARAM)szText);
 	
 	char* pText=new char[nBufLen+2];
-	SIZE_T ret=::SendMessageW(m_hWnd,SB_GETTIPTEXTW,MAKEWPARAM(n,nBufLen),(LPARAM)pText);
+	int ret=(int)::SendMessageW(m_hWnd,SB_GETTIPTEXTW,MAKEWPARAM(n,nBufLen),(LPARAM)pText);
 	if (ret)
 		MultiByteToWideChar(CP_ACP,0,pText,-1,szText,(int)nBufLen);
 	delete[] pText;

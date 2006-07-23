@@ -48,7 +48,7 @@ CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
         BYTE* pOrig=pData;
         while (*pData!='\0')
 		{
-			int iStrLen=istrlen(LPSTR(pData))+1;
+			int iStrLen=(int)istrlen(LPSTR(pData))+1;
 			dwLength+=iStrLen;
 			pData+=iStrLen;
 		}
@@ -70,7 +70,7 @@ CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
         BYTE* pOrig=pData;
         while (*pData!='\0')
 		{
-			int iStrLen=istrlen(LPSTR(pData))+1;
+			int iStrLen=(int)istrlen(LPSTR(pData))+1;
 			dwLength+=iStrLen;
 			pData+=iStrLen;
 		}
@@ -94,7 +94,7 @@ DWORD CSchedule::GetDataLen() const
 	LPWSTR pPtr=m_pDatabases;
 	while (*pPtr!='\0')
 	{
-        int iStrLen=istrlenw(pPtr)+1;
+        int iStrLen=(int)istrlenw(pPtr)+1;
 		dwLength+=iStrLen;
 		pPtr+=iStrLen;
 	}
@@ -115,7 +115,7 @@ DWORD CSchedule::GetData(BYTE* pData) const
 	LPWSTR pPtr=m_pDatabases;
 	while (*pPtr!='\0')
 	{
-		int iStrLen=istrlenw(pPtr)+1;
+		int iStrLen=(int)istrlenw(pPtr)+1;
 		MemCopyWtoA(pData,pPtr,iStrLen);
         dwLength+=iStrLen;
 		pPtr+=iStrLen;

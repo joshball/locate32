@@ -64,9 +64,14 @@ public:
 	DWORD SetExStyle(DWORD dwExStyle) { return ::SetWindowLong(m_hWnd,GWL_EXSTYLE,dwExStyle); }
 	BOOL ModifyStyleEx(DWORD dwRemove,DWORD dwAdd,UINT nFlags=0);
 
-	LONG GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLong(m_hWnd,nIndex); }	
+#ifdef _WIN64
+	LONG_PTR GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLongPtr(m_hWnd,nIndex); }	
 	LONG_PTR SetWindowLong(WindowLongIndex nIndex,LONG_PTR lNewLong) { return ::SetWindowLongPtr(m_hWnd,nIndex,lNewLong); }
-	
+#else
+	LONG GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLongPtr(m_hWnd,nIndex); }	
+	LONG SetWindowLong(WindowLongIndex nIndex,LONG lNewLong) { return ::SetWindowLongPtr(m_hWnd,nIndex,lNewLong); }
+#endif
+
 	BOOL Create(LPCTSTR lpszClassName,
 		LPCTSTR lpszWindowName, DWORD dwStyle,
 		const RECT* rect,
@@ -137,9 +142,9 @@ public:
 	BOOL EnableWindow(BOOL bEnable=TRUE) { return ::EnableWindow(m_hWnd,bEnable); }
 	HWND SetFocus() const { return ::SetFocus(m_hWnd); }
 	
-	SIZE_T GetTextLength() const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0); } 
-	SIZE_T GetText(LPSTR lpszText,SIZE_T cchTextMax) const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText); } 
-	SIZE_T GetText(CStringA& str) const;
+	int GetTextLength() const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0); } 
+	int GetText(LPSTR lpszText,int cchTextMax) const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText); } 
+	int GetText(CStringA& str) const;
 	BOOL SetText(LPCSTR lpsz) { return (BOOL)::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); }
 
 #ifdef DEF_WCHAR
@@ -148,8 +153,8 @@ public:
 	int GetWindowText(CStringW& str) const;
 	
 	//widechar support
-	SIZE_T GetText(CStringW& str) const;
-	SIZE_T GetText(LPWSTR lpszText,SIZE_T cchTextMax) const;
+	int GetText(CStringW& str) const;
+	int GetText(LPWSTR lpszText,int cchTextMax) const;
 	BOOL SetText(LPCWSTR lpsz);
 #endif
 
@@ -232,7 +237,7 @@ public:
 	CPoint GetCharPos(long lChar) const;
 	void SetOptions(WORD wOp, DWORD dwFlags);
 
-	SIZE_T GetLine(int nIndex,LPTSTR lpszBuffer) const;
+	int GetLine(int nIndex,LPTSTR lpszBuffer) const;
 	BOOL CanPaste(UINT nFormat=0) const;
 	void GetSel(long& nStartChar,long& nEndChar) const;
 	void GetSel(CHARRANGE &cr) const;
@@ -245,7 +250,7 @@ public:
 	DWORD GetSelectionCharFormat(CHARFORMAT &cf) const;
 	DWORD GetSelectionCharFormat(CHARFORMAT2 &cf) const;
 	long GetEventMask() const;
-	SIZE_T GetLimitText() const;
+	int GetLimitText() const;
 	DWORD GetParaFormat(PARAFORMAT &pf) const;
 	DWORD GetParaFormat(PARAFORMAT2 &pf) const;
 	long GetSelText(LPSTR lpBuf) const;
@@ -265,7 +270,7 @@ public:
 	BOOL SetParaFormat(PARAFORMAT2 &pf);
 	BOOL SetTargetDevice(HDC hDC,long lLineWidth);
 	
-	SIZE_T GetTextLength() const;
+	int GetTextLength() const;
 	BOOL SetReadOnly(BOOL bReadOnly = TRUE);
 	int GetFirstVisibleLine() const;
 	BOOL SetTextEx(LPCSTR szText,DWORD dwFlags=ST_DEFAULT,UINT codepage=CP_ACP);
@@ -275,7 +280,7 @@ public:
 	void EmptyUndoBuffer();
 
 	int LineIndex(int nLine=-1) const;
-	SIZE_T LineLength(int nLine=-1) const;
+	int LineLength(int nLine=-1) const;
 	void LineScroll(int nLines,int nChars=0);
 	void ReplaceSel(LPCTSTR lpszNewText,BOOL bCanUndo=FALSE);
 	
@@ -335,9 +340,9 @@ public:
 	DWORD_PTR GetItemData(int nIndex) const;
 	int SetItemData(int nIndex,DWORD_PTR dwItemData);
 	int GetItemRect(int nIndex,LPRECT lpRect) const;
-	SIZE_T GetText(int nIndex,LPSTR lpszBuffer) const;
-	SIZE_T GetText(int nIndex,CString& rString) const;
-	SIZE_T GetTextLen(int nIndex) const;
+	int GetText(int nIndex,LPSTR lpszBuffer) const;
+	int GetText(int nIndex,CString& rString) const;
+	int GetTextLen(int nIndex) const;
 
 	void SetColumnWidth(int cxWidth);
 	BOOL SetTabStops(int nTabStops,LPINT rgTabStops);
@@ -362,8 +367,8 @@ public:
 
 #ifdef DEF_WCHAR
 	int Dir(UINT attr,LPCWSTR lpszWildCard);
-	SIZE_T GetText(int nIndex,LPWSTR lpszBuffer) const;
-	SIZE_T GetText(int nIndex,CStringW& rString) const;
+	int GetText(int nIndex,LPWSTR lpszBuffer) const;
+	int GetText(int nIndex,CStringW& rString) const;
 	int AddString(LPCWSTR lpszItem);
 	int InsertString(int nIndex,LPCWSTR lpszItem);
 	int FindString(int nStartAfter,LPCWSTR lpszItem) const;
@@ -399,9 +404,9 @@ public:
 
 	DWORD_PTR GetItemData(int nIndex) const;
 	int SetItemData(int nIndex, DWORD_PTR dwItemData);
-	SIZE_T GetLBText(int nIndex, LPSTR lpszText) const;
-	SIZE_T GetLBText(int nIndex, CStringA& rString) const;
-	SIZE_T GetLBTextLen(int nIndex) const;
+	int GetLBText(int nIndex, LPSTR lpszText) const;
+	int GetLBText(int nIndex, CStringA& rString) const;
+	int GetLBTextLen(int nIndex) const;
 
 	int SetItemHeight(int nIndex, UINT cyItemHeight);
 	int GetItemHeight(int nIndex) const;
@@ -428,8 +433,8 @@ public:
 	void Paste();
 
 #ifdef DEF_WCHAR
-	SIZE_T GetLBText(int nIndex, LPWSTR lpszText) const;
-	SIZE_T GetLBText(int nIndex, CStringW& rString) const;
+	int GetLBText(int nIndex, LPWSTR lpszText) const;
+	int GetLBText(int nIndex, CStringW& rString) const;
 	int FindStringExact(int nIndexStart, LPCWSTR lpszFind) const;
 	int AddString(LPCWSTR lpszString);
 	int InsertString(int nIndex, LPCWSTR lpszString);

@@ -291,8 +291,34 @@ DWORD CShortcut::GetData(BYTE* _pData) const
 	*((WORD*)pData)=0xFFED; // Start mark
 	pData+=sizeof(WORD);
 
-	CopyMemory(pData,this,sizeof(CShortcut));
-	pData+=sizeof(CShortcut);
+	// Flags
+	*((WORD*)pData)=m_dwFlags;
+
+	// Virtual key
+	*(pData+2)=m_bVirtualKey;
+	
+	// Modfiers
+	*(pData+3)=m_bModifiers;
+
+	// Class
+	if (m_pClass==LPSTR(-1))
+		*((DWORD*)(pData+4))=DWORD(-1);
+	else
+		*((DWORD*)(pData+4))=(DWORD)min(ULONG_PTR(m_pClass),MAXDWORD);
+	
+	// Title
+	*((DWORD*)(pData+8))=(DWORD)min(ULONG_PTR(m_pTitle),MAXDWORD);
+	
+	// Delay
+	*((DWORD*)(pData+12))=m_nDelay;
+
+	
+	// Array
+	*((DWORD*)(pData+24))=m_apActions.GetSize();
+		
+	
+	
+	pData+=28 /*sizeof(CShortcut)*/;
 
 
 	if ((m_dwFlags&sfKeyTypeMask)!=sfLocal)
@@ -323,7 +349,7 @@ DWORD CShortcut::GetData(BYTE* _pData) const
 
 DWORD CShortcut::GetDataLength() const
 {
-	DWORD dwLen=sizeof(CShortcut)+sizeof(WORD);
+	DWORD dwLen=sizeof(WORD)+28 /*sizeof(CShortcut)*/;
 	if ((m_dwFlags&sfKeyTypeMask)!=sfLocal)
 	{
 		if (m_pClass!=NULL && m_pClass!=LPSTR(-1))
@@ -348,12 +374,43 @@ CShortcut* CShortcut::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
 
     if (*((WORD*)pData)!=0xFFED)
 		return NULL;
+	pData+=sizeof(WORD);
 
 	CShortcut* pShortcut=new CShortcut((void*)NULL);
-	CopyMemory(pShortcut,pData+sizeof(WORD),sizeof(CShortcut));	
-	dwUsed=sizeof(WORD)+sizeof(CShortcut);
-	pData+=sizeof(WORD)+sizeof(CShortcut);
-	dwDataLen-=sizeof(WORD)+sizeof(CShortcut);
+	
+	// Flags
+	pShortcut->m_dwFlags=*((WORD*)pData);
+
+	// Virtual key
+	pShortcut->m_bVirtualKey=*(pData+2);
+	
+	// Modfiers
+	pShortcut->m_bModifiers=*(pData+3);
+
+	if ((pShortcut->m_dwFlags&sfKeyTypeMask)==sfLocal)
+		pShortcut->m_wWhenPressed=*((WORD*)(pData+4));
+	else
+	{
+		// Class
+		if (*((DWORD*)(pData+4))==DWORD(-1))
+			pShortcut->m_pClass=LPSTR(-1);
+		else
+			pShortcut->m_pClass=(LPSTR)*((DWORD*)(pData+4));
+		
+		// Title
+		pShortcut->m_pTitle=(LPSTR)*((DWORD*)(pData+8));
+	}
+
+	// Delay
+	pShortcut->m_nDelay=*((DWORD*)(pData+12));
+
+	
+	// Array
+	DWORD dwActions=*((DWORD*)(pData+24));
+		
+	pData+=28; // sizeof(CShortcut)==28 in Win32
+	dwUsed=sizeof(WORD)+28; 
+	dwDataLen-=sizeof(WORD)+28;
 
 	if ((pShortcut->m_dwFlags&sfKeyTypeMask)!=sfLocal) // Load class and title 
 	{
@@ -394,10 +451,7 @@ CShortcut* CShortcut::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
 		}
 	}
 
-	DWORD dwActions=pShortcut->m_apActions.GetSize();
-	pShortcut->m_apActions.GiveBuffer(); // There is no allocated data
-	
-    for (DWORD i=0;i<dwActions;i++)
+	for (DWORD i=0;i<dwActions;i++)
 	{
 		CAction* pAction=CAction::FromData(pData,dwDataLen,dwLen);
 
@@ -446,7 +500,7 @@ DWORD CSubAction::FillFromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen)
 		
 	
 	m_nSubAction=*((DWORD*)(pData));
-	m_pExtraInfo=*((void**)(pData+sizeof(DWORD)));
+	m_pExtraInfo=(void*)*((DWORD*)(pData+sizeof(DWORD)));
 
 	pData+=2*sizeof(DWORD);
 	dwUsed=2*sizeof(DWORD);
@@ -669,7 +723,7 @@ DWORD CSubAction::GetData(DWORD nAction,BYTE* pData_,BOOL bHeader) const
 	}
 
 	*((DWORD*)pData)=m_nSubAction;
-	*((void**)(pData+sizeof(DWORD)))=m_pExtraInfo;
+	*((DWORD*)(pData+sizeof(DWORD)))=(DWORD)min(LONG_PTR(m_pExtraInfo),MAXDWORD);
 	pData+=2*sizeof(DWORD);
 	
 

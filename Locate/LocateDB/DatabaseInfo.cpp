@@ -186,7 +186,7 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 			CString sDrives;
 			dbFile->Read(sDrives);
 			
-			for (DWORD i=0;i<sDrives.GetLength();i++)
+			for (int i=0;i<sDrives.GetLength();i++)
 				aRootFolders.Add(new CRoot(sDrives[i]));	
 				
 			DWORD nTime;

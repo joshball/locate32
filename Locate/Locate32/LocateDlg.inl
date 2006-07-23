@@ -16,7 +16,7 @@ inline CLocateDlg::CLocateDlg()
 	m_pImageHandler(NULL),m_iTooltipItem(-1),m_iTooltipSubItem(-1),m_bTooltipActive(FALSE),
 	m_hLastFocus(NULL),m_WaitEvery30(0),m_WaitEvery60(0),m_hDialogFont(NULL)
 {
-	DebugNumMessage("CLocateDlg::CLocateDlg() this is %X",DWORD(this));
+	DebugFormatMessage("CLocateDlg::CLocateDlg() this is %X",DWORD_PTR(this));
 
 	ZeroMemory(m_aResultListActions,TypeCount*ListActionCount*sizeof(void*));
 }

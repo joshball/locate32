@@ -7,12 +7,12 @@
 // Library variables
 
 #define  HFCVERSIONMS		MAKEVERSION(5,99)
-#define  HFCVERSIONLS		MAKEVERSION(6,7020)
+#define  HFCVERSIONLS		MAKEVERSION(6,7230)
 
 #ifdef _DEBUG
-#define  HFCVERSIONSTR		"HFC Library (DEBUG) v5.99.6.7020";
+#define  HFCVERSIONSTR		"HFC Library (DEBUG) v5.99.6.7230";
 #else
-#define  HFCVERSIONSTR		"HFC Library v5.99.6.7020";
+#define  HFCVERSIONSTR		"HFC Library v5.99.6.7230";
 #endif
 
 LPCSTR szEmpty="";
@@ -74,7 +74,7 @@ DWORD GetHFCLibFlags(void)
 
 
 #ifdef _DEBUG
-void MsgToText(DWORD msg,LPSTR text,size_t maxlen)
+void MsgToText(DWORD msg,LPSTR text,DWORD maxlen)
 {
 #ifdef WIN32
 	switch (msg)

@@ -4,7 +4,7 @@
 
 #include "HFCLib.h"
 
-HFCERROR ExceptionErrorFunc(HFCERROR nError,SIZE_T dwData)
+HFCERROR ExceptionErrorFunc(HFCERROR nError,DWORD_PTR dwData)
 {
 	switch ((DWORD)nError)
 	{
@@ -100,7 +100,7 @@ BOOL CException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 		msg="Unknown error.";
 		break;
 	}
-	SIZE_T msglen=istrlen(msg);
+	UINT msglen=istrlen(msg);
 
 	if (nMaxError<=msglen)
 	{
@@ -114,7 +114,7 @@ BOOL CException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 		char szTmp2[100];
 		if (StringCbPrintf(szTmp2,100," OS err: %d",m_lOsError)==S_OK)
 		{
-			size_t dwLen=strlen(szTmp2);
+			UINT dwLen=(UINT)strlen(szTmp2);
 			if (msglen+dwLen<nMaxError)
 				MemCopy(lpszError+msglen,szTmp2,dwLen+1);
 		}
@@ -406,7 +406,7 @@ BOOL CFileException::GetErrorMessage(LPTSTR lpszError,UINT nMaxError)
 		char szTmp2[100];
 		if (StringCbPrintf(szTmp2,100," OS err: %d",m_lOsError)==S_OK)
 		{
-			size_t dwLen=strlen(szTmp2);
+			UINT dwLen=(UINT)strlen(szTmp2);
 			if (len+dwLen<nMaxError)
 				MemCopy(lpszError+len,szTmp2,dwLen+1);
 		}

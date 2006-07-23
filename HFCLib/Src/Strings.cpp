@@ -148,7 +148,7 @@ BOOL ContainString(LPCSTR string,LPCSTR pattern)
 
 BOOL ContainString(LPCWSTR string,LPCWSTR pattern)
 {
-   unsigned int i,j=0;
+   int i,j=0;
    for (i=0;i<istrlenw(string);i++)
    {
       j=0;
@@ -161,9 +161,9 @@ BOOL ContainString(LPCWSTR string,LPCWSTR pattern)
    return 0;
 }
 
-LONG_PTR FirstCharIndex(LPCSTR str,const CHAR ch)
+int FirstCharIndex(LPCSTR str,const CHAR ch)
 {
-	LONG_PTR i;
+	int i;
 	for (i=0;str[i]!='\0';i++)
 	{
 		if (str[i]==ch)
@@ -172,9 +172,9 @@ LONG_PTR FirstCharIndex(LPCSTR str,const CHAR ch)
 	return -1;
 }
 
-LONG_PTR FirstCharIndex(LPCWSTR str,const WCHAR ch)
+int FirstCharIndex(LPCWSTR str,const WCHAR ch)
 {
-	LONG_PTR i;
+	int i;
 	for (i=0;str[i]!=L'\0';i++)
 	{
 		if (str[i]==ch)
@@ -183,9 +183,9 @@ LONG_PTR FirstCharIndex(LPCWSTR str,const WCHAR ch)
 	return -1;
 }
 
-LONG_PTR LastCharIndex(LPCSTR str,const CHAR ch)
+int LastCharIndex(LPCSTR str,const CHAR ch)
 {
-	LONG_PTR i,ret=-1;
+	int i,ret=-1;
 	for (i=0;str[i]!='\0';i++)
 	{
 		if (str[i]==ch)
@@ -194,9 +194,9 @@ LONG_PTR LastCharIndex(LPCSTR str,const CHAR ch)
 	return ret;
 }
 
-LONG_PTR LastCharIndex(LPCWSTR str,const WCHAR ch)
+int LastCharIndex(LPCWSTR str,const WCHAR ch)
 {
-	LONG_PTR i,ret=-1;
+	int i,ret=-1;
 	for (i=0;str[i]!=L'\0';i++)
 	{
 		if (str[i]==ch)
@@ -205,9 +205,9 @@ LONG_PTR LastCharIndex(LPCWSTR str,const WCHAR ch)
 	return ret;
 }
 
-LONG_PTR NextCharIndex(LPCSTR str,const CHAR ch,LONG_PTR oldidx)
+int NextCharIndex(LPCSTR str,const CHAR ch,int oldidx)
 {
-   LONG_PTR i;
+   int i;
    for (i=oldidx+1;str[i]!='\0';i++)
    {
       if (str[i]==ch)
@@ -216,9 +216,9 @@ LONG_PTR NextCharIndex(LPCSTR str,const CHAR ch,LONG_PTR oldidx)
    return -1;
 }
 
-LONG_PTR NextCharIndex(LPCWSTR str,const WCHAR ch,LONG_PTR oldidx)
+int NextCharIndex(LPCWSTR str,const WCHAR ch,int oldidx)
 {
-   LONG_PTR i;
+   int i;
    for (i=oldidx+1;str[i]!=L'\0';i++)
    {
       if (str[i]==ch)
@@ -256,7 +256,7 @@ static int _getbase(LPCSTR& str)
 }
 
 // szString will change
-int _readnum(int base,LPCSTR& str,SIZE_T length)
+int _readnum(int base,LPCSTR& str,int length)
 {
 	int num=0;
 	BOOL bToNegative=FALSE;
@@ -333,7 +333,7 @@ if str begins with "hex:" or "bin:" following data will be hex data e.g:
 
 */
 
-BYTE* dataparser(LPCSTR pStr,SIZE_T dwStrLen,MALLOC_FUNC pMalloc,SIZE_T* pdwDataLength)
+BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength)
 {
 	if (pStr[0]=='\0')
 		return NULL;
@@ -389,7 +389,7 @@ BYTE* dataparser(LPCSTR pStr,SIZE_T dwStrLen,MALLOC_FUNC pMalloc,SIZE_T* pdwData
 	else if (_1stcontain2nd(pStr,"hex:") || _1stcontain2nd(pStr,"bin:"))
 	{
 		pStr+=4;
-		SIZE_T i=0;
+		int i=0;
 		
 		// Calculating reqiured size
 		for (LPCSTR pStr2=pStr;*pStr2!='\0';i++)
@@ -461,7 +461,7 @@ BYTE* dataparser(LPCSTR pStr,SIZE_T dwStrLen,MALLOC_FUNC pMalloc,SIZE_T* pdwData
 			return NULL;
 
 		pRet=(BYTE*)pMalloc(dwStrLen);
-		SIZE_T i;
+		int i;
 		for (i=0;*pStr!='\0';i++,pStr++)
 		{
 			if (*pStr=='\\' && pStr[1]!='\0')
@@ -644,9 +644,9 @@ if str is:
   "byte16(12)", *(BYTE*)data will be 0x12 and *pdwDataLength will be 1
 */
 
-inline void _allocmore(BYTE*& pStr,BYTE*& pStrPtr,SIZE_T& nAllocLen,SIZE_T nRequired)
+inline void _allocmore(BYTE*& pStr,BYTE*& pStrPtr,DWORD& nAllocLen,int nRequired)
 {
-	SIZE_T nLen=SIZE_T(pStrPtr-pStr);
+	DWORD nLen=DWORD(pStrPtr-pStr);
 	if (nAllocLen<nLen+nRequired)
 	{
 		BYTE* pNewPtr=new BYTE[nAllocLen=nLen+nRequired+10];
@@ -657,14 +657,14 @@ inline void _allocmore(BYTE*& pStr,BYTE*& pStrPtr,SIZE_T& nAllocLen,SIZE_T nRequ
 	}
 }
 
-BYTE* dataparser2(LPCSTR pStr,SIZE_T* pdwDataLength)
+BYTE* dataparser2(LPCSTR pStr,DWORD* pdwDataLength)
 {
 	if (pStr[0]=='\0')
 		return NULL;
 	
 	BYTE* pData=new BYTE[10];
 	BYTE* pDataPtr=pData;
-	SIZE_T nAllocLen=10;
+	DWORD nAllocLen=10;
 
 	// Removing spaces 
 	while (*pStr==' ') pStr++;
@@ -920,7 +920,7 @@ inline void* va_getarg(va_list argList,int count)
 
 
 
-int vsprintfex( char *buffer, SIZE_T buffersize,const char *format, va_list argList )
+int vsprintfex( char *buffer, int buffersize,const char *format, va_list argList )
 {
 	int ptr=0;
 	const char* in=format;
@@ -992,7 +992,7 @@ int vsprintfex( char *buffer, SIZE_T buffersize,const char *format, va_list argL
 
 
 #ifdef DEF_WCHAR
-int vswprintfex( wchar_t *buffer, SIZE_T buffersize, const wchar_t *format, va_list argList )
+int vswprintfex( wchar_t *buffer, int buffersize, const wchar_t *format, va_list argList )
 {
 	int ptr=0;
 	const wchar_t* in=format;

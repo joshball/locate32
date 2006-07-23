@@ -134,13 +134,13 @@ HRESULT STDMETHODCALLTYPE CFileObject::GetData(FORMATETC *pformatetcIn,STGMEDIUM
 			pmedium->hGlobal=GetItemIDListOffset();
 		else if (strcasecmp(CFSTR_FILENAME,szFormat)==0)
 		{
-			int len=m_Files[0]->GetLength();
+			int len=(int)m_Files[0]->GetLength();
 			pmedium->hGlobal=GlobalAlloc(GMEM_DDESHARE|GMEM_FIXED,len+2);
 			WideCharToMultiByte(CP_ACP,0,(LPCWSTR)*m_Files[0],len+1,(LPSTR)pmedium->hGlobal,len+2,NULL,0);
 		}
 		else if (strcasecmp(CFSTR_FILENAMEW,szFormat)==0)
 		{
-			int len=m_Files[0]->GetLength();
+			int len=(int)m_Files[0]->GetLength();
 			pmedium->hGlobal=GlobalAlloc(GMEM_DDESHARE|GMEM_FIXED,len*2+2);
 			MemCopyW((LPWSTR)pmedium->hGlobal,(LPCWSTR)*m_Files[0],len+1);
 		}
@@ -382,7 +382,7 @@ HGLOBAL CFileObject::GetHDrop()
 		// Win2000/XP needs Unicode
 		int i;
 		for (i=0;i<m_Files.GetSize();i++)
-			nDataLength+=(m_Files[i]->GetLength()+1)*2;
+			nDataLength+=((DWORD)m_Files[i]->GetLength()+1)*2;
 		hGlobal=GlobalAlloc(GPTR,nDataLength);
 		BYTE* pLock=(BYTE*)GlobalLock(hGlobal);
 
@@ -406,7 +406,7 @@ HGLOBAL CFileObject::GetHDrop()
 	else
 	{
 		for (int i=0;i<m_Files.GetSize();i++)
-			nDataLength+=m_Files[i]->GetLength()+1;
+			nDataLength+=(DWORD)m_Files[i]->GetLength()+1;
 		hGlobal=GlobalAlloc(GPTR,nDataLength);
 		if (hGlobal==NULL)
 			return NULL;
@@ -513,8 +513,8 @@ HGLOBAL CFileObject::GetFileNameMapA()
 	int i;
 	for (i=0;i<m_Files.GetSize();i++)
 	{
-		pNameStartPos[i]=m_Files[i]->FindLast('\\')+1;
-		nDataLength+=m_Files[i]->GetLength()+1-pNameStartPos[i];
+		pNameStartPos[i]=(int)m_Files[i]->FindLast('\\')+1;
+		nDataLength+=(DWORD)m_Files[i]->GetLength()+1-pNameStartPos[i];
 	}
 	HGLOBAL hGlobal=GlobalAlloc(GPTR,nDataLength);
 	if (hGlobal==NULL)
@@ -537,8 +537,8 @@ HGLOBAL CFileObject::GetFileNameMapW()
 	int i;
 	for (i=0;i<m_Files.GetSize();i++)
 	{
-		pNameStartPos[i]=m_Files[i]->FindLast('\\')+1;
-		nDataLength+=m_Files[i]->GetLength()+1-pNameStartPos[i];
+		pNameStartPos[i]=(int)m_Files[i]->FindLast('\\')+1;
+		nDataLength+=(int)m_Files[i]->GetLength()+1-pNameStartPos[i];
 	}
 	HGLOBAL hGlobal=GlobalAlloc(GPTR,nDataLength*2);
 	if (hGlobal==NULL)

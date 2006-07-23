@@ -13,7 +13,7 @@
 class CLocater;
 class CDatabaseUpdater;
 
-typedef BOOL (CALLBACK* UPDATEPROC)(DWORD dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater);
+typedef BOOL (CALLBACK* UPDATEPROC)(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater);
 
 #define BFSIZE 200000
 
@@ -46,11 +46,11 @@ public:
 		~CRootDirectory();
 	
 		UpdateError ScanRoot(volatile LONG& lForceQuit);
-		UpdateError ScanFolder(LPSTR szFolder,SIZE_T nFolderNameLength,volatile LONG& lForceQuit);
+		UpdateError ScanFolder(LPSTR szFolder,DWORD nFolderNameLength,volatile LONG& lForceQuit);
 		UpdateError Write(CFile* dbFile);
 
 		UpdateError ScanRootW(volatile LONG& lForceQuit);
-		UpdateError ScanFolder(LPWSTR szFolder,SIZE_T nFolderNameLength,volatile LONG& lForceQuit);
+		UpdateError ScanFolder(LPWSTR szFolder,DWORD nFolderNameLength,volatile LONG& lForceQuit);
 		UpdateError WriteW(CFile* dbFile);
 
 		
@@ -116,7 +116,7 @@ public:
 		CDatabase::ArchiveType m_nArchiveType;
 		
 		LPWSTR m_szName;
-		SIZE_T m_dwNameLength;
+		DWORD m_dwNameLength;
 
 		CStringW m_sAuthor;
 		CStringW m_sComment;
@@ -146,15 +146,15 @@ protected:
 public:
 	CDatabaseUpdater(LPCWSTR szDatabaseFile,LPCWSTR szAuthor,LPCWSTR szComment,
 		LPCWSTR* pszRoots,DWORD nNumberOfRoots,
-		UPDATEPROC pProc,DWORD dwParam=0);	
+		UPDATEPROC pProc,DWORD_PTR dwParam=0);	
 					// Scan strings of pszRoots
 
 	CDatabaseUpdater(const PDATABASE* ppDatabases,
-		int nDatabases,UPDATEPROC pProc,DWORD dwParam=0);
+		int nDatabases,UPDATEPROC pProc,DWORD_PTR dwParam=0);
 	
 	// Takes databases with thread ID wThread
 	CDatabaseUpdater(const PDATABASE* ppDatabases,
-		int nDatabases,UPDATEPROC pProc,WORD wThread,DWORD dwParam=0);
+		int nDatabases,UPDATEPROC pProc,WORD wThread,DWORD_PTR dwParam=0);
 
 	~CDatabaseUpdater();
 	
@@ -206,7 +206,7 @@ private:
 private:
 	CFile* dbFile;
 	UPDATEPROC m_pProc;
-	DWORD m_dwData;
+	DWORD_PTR m_dwData;
 #ifdef WIN32
 	HANDLE m_hThread;
 	volatile LONG m_lForceQuit;

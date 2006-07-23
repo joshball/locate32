@@ -338,7 +338,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			while(lpCmdLine[idx]==L' ') idx++;
 			if (lpCmdLine[idx]!=L'\"')
 			{
-				temp=FirstCharIndex(lpCmdLine+idx,L' ');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
 				ChangeAndAlloc(pStartData->m_pStartPath,lpCmdLine+idx,temp);
 				if (temp<0)
 					return TRUE;
@@ -347,7 +347,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			else
 			{
 				idx++;
-				temp=FirstCharIndex(lpCmdLine+idx,L'\"');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,L'\"');
 				ChangeAndAlloc(pStartData->m_pStartPath,lpCmdLine+idx,temp);
 				if (temp<0)
 					return TRUE;
@@ -361,7 +361,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			while(lpCmdLine[idx]==L' ') idx++;
 			if (lpCmdLine[idx]!=L'\"')
 			{
-				temp=FirstCharIndex(lpCmdLine+idx,L' ');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
 				if (temp!=-1)
 					*(char*)(lpCmdLine+idx+temp)=L'\0'; // Setting line end for 
 				int nLength=0;
@@ -378,7 +378,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			else
 			{
 				idx++;
-				temp=FirstCharIndex(lpCmdLine+idx,L'\"');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,L'\"');
 				if (temp!=-1)
 					*(char*)(lpCmdLine+idx+temp)=L'\0'; // Setting line end for 
 				int nLength;
@@ -429,7 +429,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			while(lpCmdLine[idx]==L' ') idx++;
 			if (lpCmdLine[idx]!=L'\"')
 			{
-				temp=FirstCharIndex(lpCmdLine+idx,' ');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,' ');
 				ChangeAndAlloc(pStartData->m_pTypeString,lpCmdLine+idx,temp);
 				if (temp<0)
 					return TRUE;
@@ -438,7 +438,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			else
 			{
 				idx++;
-				temp=FirstCharIndex(lpCmdLine+idx,'\"');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,'\"');
 				ChangeAndAlloc(pStartData->m_pTypeString,lpCmdLine+idx,temp);
 				if (temp<0)
 					return TRUE;
@@ -452,7 +452,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			while(lpCmdLine[idx]==L' ') idx++;
 			if (lpCmdLine[idx]!=L'\"')
 			{
-				temp=FirstCharIndex(lpCmdLine+idx,' ');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,' ');
 
 				if (CDatabase::FindByName(pStartData->m_aDatabases,lpCmdLine+idx,temp)==NULL)
 				{
@@ -472,7 +472,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			else
 			{
 				idx++;
-				temp=FirstCharIndex(lpCmdLine+idx,L'\"');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,L'\"');
 				
 				if (CDatabase::FindByName(pStartData->m_aDatabases,lpCmdLine+idx,temp)==NULL)
 				{
@@ -497,7 +497,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			while(lpCmdLine[idx]==L' ') idx++;
 			if (lpCmdLine[idx]!=L'\"')
 			{
-				temp=FirstCharIndex(lpCmdLine+idx,L' ');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
 				if (pStartData->m_aDatabases.GetSize()==1 && wcscmp(pStartData->m_aDatabases[0]->GetName(),L"DEFAULTX")==0)
 				{
 					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"PARAMX"));
@@ -522,7 +522,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			else
 			{
 				idx++;
-				temp=FirstCharIndex(lpCmdLine+idx,L'\"');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,L'\"');
 				if (pStartData->m_aDatabases.GetSize()==1 && wcscmp(pStartData->m_aDatabases[0]->GetName(),L"DEFAULTX")==0)
 				{
 					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"PARAMX"));
@@ -630,7 +630,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				if (pStartData->m_aDatabases.GetSize()==0)
 				{
 					CStringW sExeName=GetApp()->GetExeNameW();
-					pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,sExeName,sExeName.FindLast('\\')+1));
+					pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,sExeName,(int)sExeName.FindLast('\\')+1));
 					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 					pStartData->m_aDatabases[0]->SetThreadId(0);
 					pStartData->m_nStartup|=CStartData::startupDatabasesOverridden;
@@ -650,12 +650,12 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				if (lpCmdLine[idx]!=L'\"')
 				{
 					Directory.Copy(lpCmdLine+idx,FirstCharIndex(lpCmdLine+idx,' '));
-					idx+=Directory.GetLength();
+					idx+=(int)Directory.GetLength();
 				}
 				else
 				{
 					idx++;
-					int nIndex=FirstCharIndex(lpCmdLine+idx,L'\"');
+					int nIndex=(int)FirstCharIndex(lpCmdLine+idx,L'\"');
 					if (nIndex==-1)
 						return TRUE;
 					Directory.Copy(lpCmdLine+idx,nIndex);
@@ -677,7 +677,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 						if (pStartData->m_aDatabases.GetSize()==0)
 						{
 							CStringW sExeName=GetApp()->GetExeNameW();
-							pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,sExeName,sExeName.FindLast('\\')+1));
+							pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,sExeName,(int)sExeName.FindLast('\\')+1));
 							pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 							pStartData->m_aDatabases[0]->SetThreadId(0);
 							pStartData->m_nStartup|=CStartData::startupDatabasesOverridden;
@@ -703,7 +703,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				while (lpCmdLine[idx]==L' ') idx++;
 				if (lpCmdLine[idx]!=L'\"')
 				{
-					temp=FirstCharIndex(lpCmdLine+idx,L' ');
+					temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
 					ChangeAndAlloc(pStartData->m_pLoadPreset,lpCmdLine+idx,temp);
 					if (temp<0)
 						return TRUE;
@@ -712,7 +712,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				else
 				{
 					idx++;
-					temp=FirstCharIndex(lpCmdLine+idx,L'\"');
+					temp=(int)FirstCharIndex(lpCmdLine+idx,L'\"');
 					ChangeAndAlloc(pStartData->m_pLoadPreset,lpCmdLine+idx,temp);
 					if (temp<0)
 						return TRUE;
@@ -725,7 +725,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					if (lpCmdLine[idx]==L':')
 						idx++;
 					while (lpCmdLine[idx]==L' ') idx++;
-					temp=FirstCharIndex(lpCmdLine+idx,L' ');
+					temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
 					CStringW str(lpCmdLine+idx,temp);
 					
 					int val=_wtoi(str);
@@ -772,7 +772,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				while (lpCmdLine[idx]==L' ') idx++;
 				if (lpCmdLine[idx]!=L'\"')
 				{
-					temp=FirstCharIndex(lpCmdLine+idx,L' ');
+					temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
 					ChangeAndAlloc(pStartData->m_pFindText,lpCmdLine+idx,temp);
 					if (temp<0)
 						return TRUE;
@@ -781,7 +781,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				else
 				{
 					idx++;
-					temp=FirstCharIndex(lpCmdLine+idx,L'\"');
+					temp=(int)FirstCharIndex(lpCmdLine+idx,L'\"');
 					ChangeAndAlloc(pStartData->m_pFindText,lpCmdLine+idx,temp);
 					if (temp<0)
 						return TRUE;
@@ -824,7 +824,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					if (lpCmdLine[idx]==':')
 						idx++;
 					while (lpCmdLine[idx]==' ') idx++;
-					temp=FirstCharIndex(lpCmdLine+idx,L' ');
+					temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
 					CStringW str(lpCmdLine+idx,temp);
 					while ((str.LastChar()<L'0' || str.LastChar()>L'9') && !str.IsEmpty())
 					{
@@ -850,7 +850,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					if (lpCmdLine[idx]==L':')
 						idx++;
 					while (lpCmdLine[idx]==L' ') idx++;
-					temp=FirstCharIndex(lpCmdLine+idx,L' ');
+					temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
 					CStringW str(lpCmdLine+idx,temp);
 					while ((str.LastChar()<L'0' || str.LastChar()>L'9') && !str.IsEmpty())
 					{
@@ -874,10 +874,10 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					idx++;
 					while (lpCmdLine[idx]==L' ')
 						idx++;
-                    int nLength=LastCharIndex(lpCmdLine+idx,L' ');
+                    int nLength=(int)LastCharIndex(lpCmdLine+idx,L' ');
 					if (nLength<0)
 					{
-						nLength=wcslen(lpCmdLine+idx);
+						nLength=(int)wcslen(lpCmdLine+idx);
 						if (nLength<7)
                             return TRUE;
 					}
@@ -982,7 +982,7 @@ BYTE CLocateApp::CheckDatabases()
 		if (pDatabase==NULL)
 		{
 			pDatabase=CDatabase::FromDefaults(TRUE,GetApp()->GetExeNameW(),
-				LastCharIndex(GetApp()->GetExeNameW(),L'\\')+1); // Nothing else can be done?
+				(int)LastCharIndex(GetApp()->GetExeNameW(),L'\\')+1); // Nothing else can be done?
 		}
 		else
 		{
@@ -1156,10 +1156,10 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 
 			
 
-			dwLength+=m_strDateFormat.GetLength();
+			dwLength+=(DWORD)m_strDateFormat.GetLength();
 		}
 		else
-            dwLength+=m_strDateFormat.GetLength()*2;
+            dwLength+=(DWORD)m_strDateFormat.GetLength()*2;
 	}
 	if (wTime!=WORD(-1))
 	{
@@ -1190,10 +1190,10 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 
 			}
 
-			dwLength+=m_strTimeFormat.GetLength();
+			dwLength+=(DWORD)m_strTimeFormat.GetLength();
 		}
 		else
-			dwLength+=m_strTimeFormat.GetLength()*2;
+			dwLength+=(DWORD)m_strTimeFormat.GetLength()*2;
 	
 		
 	}
@@ -1204,7 +1204,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 	//Formatting date
     if (wDate!=WORD(-1))
 	{
-		for (DWORD i=0;i<m_strDateFormat.GetLength();i++)
+		for (int i=0;i<m_strDateFormat.GetLength();i++)
 		{
 			switch (m_strDateFormat[i])
 			{
@@ -1308,7 +1308,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 		*pPtr=' ';
 		pPtr++;
 		
-		for (DWORD i=0;i<m_strTimeFormat.GetLength();i++)
+		for (int i=0;i<m_strTimeFormat.GetLength();i++)
 		{
 			switch (m_strTimeFormat[i])
 			{
@@ -1761,7 +1761,96 @@ void CLocateApp::ClearStartData()
 	}
 }
 
-BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater)
+void CLocateAppWnd::NotifyFinishingUpdating()
+{
+	// No updaters running anymore...
+				
+	// ...so stopping animations
+	if (this!=NULL)
+	{
+		if (m_pUpdateStatusWnd!=NULL)
+			m_pUpdateStatusWnd->Update();
+		StopUpdateStatusNotification();
+	}
+
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg!=NULL)
+	{
+		pLocateDlg->StopUpdateAnimation();
+		
+		CStringW str;
+		
+		// ... and constucting notification message:
+		// checking wheter all are stopped, or cancelled 
+		int i;
+		for (i=0;GetLocateApp()->m_ppUpdaters[i]!=NULL;i++)
+		{
+			if (GET_UPDATER_CODE(GetLocateApp()->m_ppUpdaters[i])!=ueStopped)
+				break;
+		}
+		if (GetLocateApp()->m_ppUpdaters[i]==NULL)
+		{
+			// All updaters are interrupted by user
+			str.LoadString(IDS_UPDATINGCANCELLED);
+			pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
+			pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
+
+		}
+		else
+		{
+			// All succeeded or some updaters failed/interrupted
+            CStringW str2;
+			str.LoadString(IDS_UPDATINGENDED);
+			int added=0;
+				
+			for (i=0;GetLocateApp()->m_ppUpdaters[i]!=NULL;i++)
+			{
+				switch (GET_UPDATER_CODE(GetLocateApp()->m_ppUpdaters[i]))
+				{
+				case ueSuccess:
+					break;
+				case ueStopped:
+					if (added>0)
+						str2 << L", ";
+					str2 << ID2W(IDS_UPDATINGTHREAD);
+					str2 << ' ' << (int)(i+1) << L": ";
+					str2 << ID2W(IDS_UPDATINGCANCELLED2);
+					added++;
+					break;
+				case ueFolderUnavailable:
+					if (added>0)
+						str2 << L", ";
+					str2 << ID2W(IDS_UPDATINGTHREAD);
+					str2 << ' ' << (int)(i+1) << L": ";
+					str2 << ID2W(IDS_UPDATINGUNAVAILABLEROOT);
+					added++;
+					break;
+				default:
+					if (added>0)
+						str2 << L", ";
+					str2 << ID2W(IDS_UPDATINGTHREAD);
+					str2 << ' ' << (int)(i+1) << L": ";
+					str2 << ID2W(IDS_UPDATINGFAILED);
+					added++;
+					break;
+				}
+			}
+
+			if (str2.IsEmpty())
+				str.LoadString(IDS_UPDATINGSUCCESS);
+			else
+			{
+				pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
+				str << L' ' << str2;
+			}
+			pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
+		}
+	}
+
+	
+}
+
+BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater)
 {
 	DbcDebugFormatMessage2("CLocateApp::UpdateProc BEGIN, reason=%d, code=%d",crReason,ueCode);
 	
@@ -1853,7 +1942,6 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 				return TRUE; // One thread mode
 
 						
-			CLocateAppWnd* pAppWnd=(CLocateAppWnd*)dwParam;
 			DWORD dwRunning=0;
 			
 			EnterCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
@@ -1876,100 +1964,17 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 			
 			if (dwRunning==0)
 			{
-				// No updaters running anymore...
+				((CLocateAppWnd*)dwParam)->NotifyFinishingUpdating();
 				
-				// ...so stopping animations
-				if (pAppWnd!=NULL)
-				{
-					if (pAppWnd->m_pUpdateStatusWnd!=NULL)
-						pAppWnd->m_pUpdateStatusWnd->Update();
-					pAppWnd->StopUpdateStatusNotification();
-				}
-
-				CLocateDlg* pLocateDlg=GetLocateDlg();
-				if (pLocateDlg!=NULL)
-				{
-					pLocateDlg->StopUpdateAnimation();
-					
-					CStringW str;
-					
-					// ... and constucting notification message:
-					// checking wheter all are stopped, or cancelled 
-					int i;
-					for (i=0;GetLocateApp()->m_ppUpdaters[i]!=NULL;i++)
-					{
-						if (GET_UPDATER_CODE(GetLocateApp()->m_ppUpdaters[i])!=ueStopped)
-							break;
-					}
-					if (GetLocateApp()->m_ppUpdaters[i]==NULL)
-					{
-						// All updaters are interrupted by user
-						str.LoadString(IDS_UPDATINGCANCELLED);
-						pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
-						pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
-
-					}
-					else
-					{
-						// All succeeded or some updaters failed/interrupted
-                        CStringW str2;
-						str.LoadString(IDS_UPDATINGENDED);
-						int added=0;
-							
-						for (i=0;GetLocateApp()->m_ppUpdaters[i]!=NULL;i++)
-						{
-							switch (GET_UPDATER_CODE(GetLocateApp()->m_ppUpdaters[i]))
-							{
-							case ueSuccess:
-								break;
-							case ueStopped:
-								if (added>0)
-									str2 << L", ";
-								str2 << ID2W(IDS_UPDATINGTHREAD);
-								str2 << ' ' << (int)(i+1) << L": ";
-								str2 << ID2W(IDS_UPDATINGCANCELLED2);
-								added++;
-								break;
-							case ueFolderUnavailable:
-								if (added>0)
-									str2 << L", ";
-								str2 << ID2W(IDS_UPDATINGTHREAD);
-								str2 << ' ' << (int)(i+1) << L": ";
-								str2 << ID2W(IDS_UPDATINGUNAVAILABLEROOT);
-								added++;
-								break;
-							default:
-								if (added>0)
-									str2 << L", ";
-								str2 << ID2W(IDS_UPDATINGTHREAD);
-								str2 << ' ' << (int)(i+1) << L": ";
-								str2 << ID2W(IDS_UPDATINGFAILED);
-								added++;
-								break;
-							}
-						}
-
-						if (str2.IsEmpty())
-							str.LoadString(IDS_UPDATINGSUCCESS);
-						else
-						{
-							pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
-							str << L' ' << str2;
-						}
-						pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
-					}
-				}
-		
 				// Freeing memory
 				delete[] GetLocateApp()->m_ppUpdaters;
 				GetLocateApp()->m_ppUpdaters=NULL;
 
 				LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
-				
+	
 
-				if (GetLocateApp()->m_nStartup&CStartData::startupExitAfterUpdating && pAppWnd!=NULL)
-					pAppWnd->PostMessage(WM_COMMAND,IDM_EXIT,NULL);
-
+				if (GetLocateApp()->m_nStartup&CStartData::startupExitAfterUpdating && dwParam!=NULL)
+					((CLocateAppWnd*)dwParam)->PostMessage(WM_COMMAND,IDM_EXIT,NULL);
 			}
 			else 
 			{
@@ -2160,7 +2165,15 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD dwParam,CallingReason crReason,Update
 				str.Format(IDS_ERRORDIFFERENTCHARSETINDB,W2A(pUpdater->GetCurrentDatabaseName()));
 				return ::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
 			}
-			return TRUE;}
+			return TRUE;
+		case ueCannotCreateThread:
+			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
+			{
+				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
+					ID2A(IDS_ERRORCANNOTCREATETHREAD),ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
+			}
+			return FALSE;
+		}
 		break;
 	}
 	
@@ -2236,14 +2249,38 @@ BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg,int nThreadPrior
 	for (wThread=0;wThread<wThreads;wThread++)
 	{
 		m_ppUpdaters[wThread]=new CDatabaseUpdater(*paDatabases,paDatabases->GetSize(),
-			UpdateProc,wThread,(DWORD)m_pMainWnd);
+			UpdateProc,wThread,(DWORD_PTR)m_pMainWnd);
 	}
 	m_ppUpdaters[wThreads]=NULL;
     
 	// Starting
+	DWORD dwRunning=0;
 	for (wThread=0;wThread<wThreads;wThread++)
-		m_ppUpdaters[wThread]->Update(TRUE,nThreadPriority);
-	
+	{
+		UpdateError ueCode=m_ppUpdaters[wThread]->Update(TRUE,nThreadPriority);
+		if (ueCode==ueSuccess)
+			dwRunning++;
+		else
+		{
+			delete m_ppUpdaters[wThread];
+			m_ppUpdaters[wThread]=UPDATER_EXITED(ueCode);
+		}
+	}
+			
+	if (dwRunning==0)
+	{
+		((CLocateAppWnd*)m_pMainWnd)->NotifyFinishingUpdating();
+				
+		// Freeing memory
+		delete[] GetLocateApp()->m_ppUpdaters;
+		GetLocateApp()->m_ppUpdaters=NULL;
+
+		
+
+		if (GetLocateApp()->m_nStartup&CStartData::startupExitAfterUpdating)
+			m_pMainWnd->PostMessage(WM_COMMAND,IDM_EXIT,NULL);
+		m_ppUpdaters=NULL;
+	}
 	
 	LeaveCriticalSection(&m_cUpdatersPointersInUse);
 	
@@ -2253,7 +2290,7 @@ BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg,int nThreadPrior
 			delete paDatabases->GetAt(i);
 		delete paDatabases;
 	}
-	return TRUE;
+	return dwRunning>0;
 }
 
 void CLocateApp::OnInitDatabaseMenu(CMenu& PopupMenu)
@@ -2298,7 +2335,7 @@ void CLocateApp::OnDatabaseMenuItem(WORD wID)
 
 	ASSERT(iDB>=0 && iDB<m_aDatabases.GetSize());
 
-	DWORD dwLength=istrlenw(m_aDatabases[iDB]->GetName());
+	DWORD dwLength=(DWORD)istrlenw(m_aDatabases[iDB]->GetName());
 	LPWSTR pDatabaseName=new WCHAR[dwLength+2];
 	MemCopyW(pDatabaseName,m_aDatabases[iDB]->GetName(),dwLength);
 	pDatabaseName[dwLength]='\0';
@@ -2710,11 +2747,11 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip,LPCWSTR szT
 						iRequired+=iInitializingLen;
 					else
 					{
-						iRequired+=istrlenw(pRootInfos[i].pName);
+						iRequired+=(int)istrlenw(pRootInfos[i].pName);
 						if (pRootInfos[i].pRoot==NULL)
 							iRequiredForRoots+=iWritingLen+2;
 						else
-                        	iRequiredForRoots+=istrlenw(pRootInfos[i].pRoot)+2;
+                        	iRequiredForRoots+=(int)istrlenw(pRootInfos[i].pRoot)+2;
 					}
 				}
 				
@@ -2753,7 +2790,7 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip,LPCWSTR szT
 						}
 						else
 						{
-							int iLen=istrlenw(pRootInfos[i].pName);
+							int iLen=(int)istrlenw(pRootInfos[i].pName);
 							MemCopyW(pPtr,pRootInfos[i].pName,iLen);
 							pPtr+=iLen;
 							if (iRequired+iRequiredForRoots<MAXTIPTEXTLENGTH)
@@ -2767,7 +2804,7 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip,LPCWSTR szT
 								}
 								else
 								{
-									int iLen=istrlenw(pRootInfos[i].pRoot);
+									int iLen=(int)istrlenw(pRootInfos[i].pRoot);
 									MemCopyW(pPtr,pRootInfos[i].pRoot,iLen);
 									pPtr+=iLen;
 								}
@@ -3242,7 +3279,7 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThrea
 				BOOL bFound=FALSE;
 				while (*pPtr!=NULL)
 				{
-					int iStrLen=istrlenw(pPtr)+1;
+					size_t iStrLen=istrlenw(pPtr)+1;
 					if (wcsncmp(pPtr,aGlobalDatabases[i]->GetName(),iStrLen)==0)
 					{
 						bFound=TRUE;
@@ -4037,7 +4074,7 @@ void CLocateAppWnd::CUpdateStatusWnd::OnPaint()
 	
     // Drawing title
 	LPCWSTR pPtr=sStatusText;
-	int nLength=FirstCharIndex(pPtr,'\n');
+	int nLength=(int)FirstCharIndex(pPtr,'\n');
 	rc2=rcClient;
 	dc.SetTextColor(m_cTitleColor);
 	dc.DrawText(pPtr,nLength,&rc2,DT_SINGLELINE|DT_CALCRECT);
@@ -4051,7 +4088,7 @@ void CLocateAppWnd::CUpdateStatusWnd::OnPaint()
 	while (nLength!=-1)
 	{
 		pPtr+=nLength+1;
-		nLength=FirstCharIndex(pPtr,'\n');
+		nLength=(int)FirstCharIndex(pPtr,'\n');
 
 		rc2=rcClient;
 		dc.DrawText(pPtr,nLength,&rc2,DT_SINGLELINE|DT_CALCRECT);
@@ -4134,7 +4171,7 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 	size_t nLength;
 	if (szExtra!=NULL)
 	{
-		int iLen=istrlenw(error)+istrlenw(szExtra)+1;
+		int iLen=(int)istrlenw(error)+(int)istrlenw(szExtra)+1;
 		szNewPtr=new WCHAR[iLen];
 		StringCbPrintfW(szNewPtr,iLen*sizeof(WCHAR),error,szExtra);
 		nLength=wcslen(szNewPtr);
@@ -4149,7 +4186,7 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 		CDC dc(this);
 		dc.SetMapMode(MM_TEXT);
 		dc.SelectObject(m_Font);
-		CSize sz=dc.GetTextExtent(szNewPtr,nLength);
+		CSize sz=dc.GetTextExtent(szNewPtr,(int)nLength);
 	
 		if (m_WindowSize.cx<sz.cx)
 			m_WindowSize.cx=sz.cx;

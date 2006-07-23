@@ -360,7 +360,7 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 		{
 			pLabels[i].LoadString(IDS_LISTNAME+m_pDetails[i],LanguageSpecificResource);
 		    
-			if (pLabels[i].GetLength()>m_pLengths[i])
+			if ((DWORD)pLabels[i].GetLength()>m_pLengths[i])
 					m_pLengths[i]=(DWORD)pLabels[i].GetLength();
 		}
 	}

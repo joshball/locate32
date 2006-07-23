@@ -53,8 +53,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,6,6040
- PRODUCTVERSION 2,99,6,6040
+ FILEVERSION 2,99,6,7230
+ PRODUCTVERSION 2,99,6,7230
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -70,12 +70,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "Updating filedatabase"
-            VALUE "FileVersion", "2, 99, 6, 6040"
+            VALUE "FileVersion", "2, 99, 6, 7230"
             VALUE "InternalName", "Updtdb32"
             VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "updtdb32.exe"
             VALUE "ProductName", "Updatedb"
-            VALUE "ProductVersion", "2.99.6.6040"
+            VALUE "ProductVersion", "2.99.6.7230"
         END
     END
     BLOCK "VarFileInfo"

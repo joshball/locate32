@@ -905,7 +905,7 @@ void CLocatedItem::UpdateOwner()
 	BOOL bRet;
 	if (szPath[0]==L'\\' && szPath[1]==L'\\')
 	{
-		DWORD dwLength=2+FirstCharIndex(szPath+2,L'\\');
+		DWORD dwLength=2+(DWORD)FirstCharIndex(szPath+2,L'\\');
 		WCHAR* szServer=new WCHAR[dwLength+1];
 		MemCopyW(szServer,szPath,dwLength);
 		szServer[dwLength]='\0';
@@ -1244,7 +1244,7 @@ void CLocatedItem::DeleteExtraInfoField(CLocateDlg::DetailType nType)
 void CLocatedItem::ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
 {
 	if (iLength==-1)
-		iLength=istrlenw(szNewName);
+		iLength=(int)istrlenw(szNewName);
 
 	DWORD dwDirectoryLen=DWORD(szName-szPath);
 	ASSERT(dwDirectoryLen>0);
@@ -1319,7 +1319,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 	{
 		
 		CStringW str(IsFolder()?IDS_TOOLTIPFORDIRECTORYDELETED:IDS_TOOLTIPFORFILEDELETED);
-		int nLen=str.GetLength()+GetPathLen()+istrlenw(GetType())+2;
+		int nLen=(int)str.GetLength()+GetPathLen()+(int)istrlenw(GetType())+2;
 		g_szwBuffer=new WCHAR[nLen];
 		swprintfex(g_szwBuffer,nLen,str,GetName(),GetParent(),GetType());
 		return g_szwBuffer;
@@ -1337,7 +1337,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 	{
 		CStringW str(IDS_TOOLTIPFORDIRECTORY);
 		
-		int nLen=str.GetLength()+GetPathLen()+istrlenw(GetType())+istrlenw(szDate)+2;
+		int nLen=(int)str.GetLength()+GetPathLen()+(int)istrlenw(GetType())+(int)istrlenw(szDate)+2;
 		g_szwBuffer=new WCHAR[nLen];
 		swprintfex(g_szwBuffer,nLen,str,GetName(),GetParent(),GetType(),szDate);
 	}
@@ -1345,7 +1345,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 	{
 		CStringW str(IDS_TOOLTIPFORFILE);
 		
-		int nLen=str.GetLength()+GetPathLen()+istrlenw(GetType())+istrlenw(szDate)+25;
+		int nLen=(int)str.GetLength()+GetPathLen()+(int)istrlenw(GetType())+(int)istrlenw(szDate)+25;
 		g_szwBuffer=new WCHAR[nLen];
 		
 		WCHAR szSize[25];
@@ -1353,7 +1353,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 		if (GetFileSize()>LONGLONG(1024*1024*1024)) // Over 1 Gb
 		{
 			StringCbPrintfW(szSize,25*sizeof(WCHAR),L"%1.2f",double(GetFileSize())/(1024*1024*1024));
-			size_t nLength=istrlenw(szSize);
+			int nLength=(int)istrlenw(szSize);
 			while (szSize[nLength-1]=='0')
 				nLength--;
 			if (szSize[nLength-1]=='.')
@@ -1363,7 +1363,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 		else if (GetFileSize()>LONGLONG(1024*1024)) // Over 1 Mb
 		{
 			StringCbPrintfW(szSize,25,L"%1.2f",double(GetFileSize())/(1024*1024));
-			size_t nLength=wcslen(szSize);
+			int nLength=(int)wcslen(szSize);
 			while (szSize[nLength-1]=='0')
 				nLength--;
 			if (szSize[nLength-1]=='.')
@@ -1373,7 +1373,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 		else if (GetFileSize()>LONGLONG(1024)) // Over 1 Gb
 		{
 			StringCbPrintfW(szSize,25*sizeof(WCHAR),L"%1.2f",double(GetFileSize())/(1024));
-			size_t nLength=wcslen(szSize);
+			int nLength=(int)wcslen(szSize);
 			while (szSize[nLength-1]=='0')
 				nLength--;
 			if (szSize[nLength-1]=='.')

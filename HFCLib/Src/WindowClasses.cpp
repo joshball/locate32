@@ -69,21 +69,21 @@ UINT CWnd::GetDlgItemText(int nIDDlgItem,CStringA& str) const
 	return len;
 }
 
-SIZE_T CWnd::GetText(LPSTR lpszText,SIZE_T cchTextMax) const
+int CWnd::GetText(LPSTR lpszText,int cchTextMax) const
 {
-	return ::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText);
+	return (int)::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText);
 }
 
-SIZE_T CWnd::GetText(CStringA& str) const
+int CWnd::GetText(CStringA& str) const
 {
-	SIZE_T len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
-	len=::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)len+1,(LPARAM)str.GetBuffer(len));
+	int len=(int)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
+	len=(int)::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)len+1,(LPARAM)str.GetBuffer(len));
 	return len;
 }
 
-SIZE_T CWnd::GetTextLength() const
+int CWnd::GetTextLength() const
 {
-	return ::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
+	return (int)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
 }
 
 BOOL CWnd::SetText(LPCSTR lpsz)
@@ -420,14 +420,14 @@ UINT CWnd::GetDlgItemText(int nIDDlgItem,CStringW& str)
 	return len;
 }
 
-SIZE_T CWnd::GetText(LPWSTR lpszText,SIZE_T cchTextMax) const
+int CWnd::GetText(LPWSTR lpszText,int cchTextMax) const
 {
 	if (IsUnicodeSystem())
-		return ::SendMessageW(m_hWnd,WM_GETTEXT,cchTextMax*2,(LPARAM)lpszText); 
+		return (int)::SendMessageW(m_hWnd,WM_GETTEXT,cchTextMax*2,(LPARAM)lpszText); 
 
-	SIZE_T nLen=::SendMessageA(m_hWnd,WM_GETTEXTLENGTH,0,0);
+	int nLen=(int)::SendMessageA(m_hWnd,WM_GETTEXTLENGTH,0,0);
 	char* pText=new char[nLen+2];
-	SIZE_T ret=::SendMessageA(m_hWnd,WM_GETTEXT,(nLen+2)*2,(LPARAM)pText);
+	int ret=(int)::SendMessageA(m_hWnd,WM_GETTEXT,(nLen+2)*2,(LPARAM)pText);
 	if (ret!=0)
 	{
 		MultiByteToWideChar(CP_ACP,0,pText,(int)ret,lpszText,(int)cchTextMax);
@@ -437,31 +437,31 @@ SIZE_T CWnd::GetText(LPWSTR lpszText,SIZE_T cchTextMax) const
 	return ret;
 }
 
-SIZE_T CWnd::GetText(CStringW& str) const
+int CWnd::GetText(CStringW& str) const
 {
 	if (IsUnicodeSystem())
 	{
-		SIZE_T len=::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+		int len=(int)::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
 		LPWSTR text=new WCHAR[len];
 		if (text==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOC);
 			return FALSE;
 		}
-		len=::SendMessageW(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
+		len=(int)::SendMessageW(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
 		str.Copy(text,len);
 		delete[] text;
 		return len;
 	}
 	
-	SIZE_T len=::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+	int len=(int)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
 	LPSTR text=new CHAR[len];
 	if (text==NULL)
 	{
 		SetHFCError(HFC_CANNOTALLOC);
 		return FALSE;
 	}
-	len=::SendMessageA(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text); 
+	len=(int)::SendMessageA(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text); 
 	str.Copy(text,len);
 	delete[] text;
 	return len;

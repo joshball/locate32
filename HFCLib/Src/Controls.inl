@@ -260,9 +260,9 @@ inline void CRichEditCtrl::SetOptions(WORD wOp, DWORD dwFlags)
 	::SendMessage(m_hWnd,EM_SETOPTIONS,wOp,dwFlags);
 }
 
-inline SIZE_T CRichEditCtrl::GetLine(int nIndex,LPTSTR lpszBuffer) const
+inline int CRichEditCtrl::GetLine(int nIndex,LPTSTR lpszBuffer) const
 {
-	return ::SendMessage(m_hWnd,EM_GETLINE,nIndex,(LPARAM)lpszBuffer);
+	return (int)::SendMessage(m_hWnd,EM_GETLINE,nIndex,(LPARAM)lpszBuffer);
 }
 
 inline BOOL CRichEditCtrl::CanPaste(UINT nFormat) const
@@ -326,7 +326,7 @@ inline long CRichEditCtrl::GetEventMask() const
 	return (long)::SendMessage(m_hWnd,EM_GETEVENTMASK,0,0);
 }
 
-inline SIZE_T CRichEditCtrl::GetLimitText() const
+inline int CRichEditCtrl::GetLimitText() const
 {
 	return (long)::SendMessage(m_hWnd,EM_GETLIMITTEXT,0,0);
 }
@@ -406,9 +406,9 @@ inline BOOL CRichEditCtrl::SetTargetDevice(HDC hDC,long lLineWidth)
 	return (BOOL)::SendMessage(m_hWnd,EM_SETTARGETDEVICE,(WPARAM)hDC,(LPARAM)lLineWidth);
 }
 
-inline SIZE_T CRichEditCtrl::GetTextLength() const
+inline int CRichEditCtrl::GetTextLength() const
 {
-	return ::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
+	return (int)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
 }
 
 inline BOOL CRichEditCtrl::SetReadOnly(BOOL bReadOnly)
@@ -431,9 +431,9 @@ inline int CRichEditCtrl::LineIndex(int nLine) const
 	return (int)::SendMessage(m_hWnd,EM_LINEINDEX,nLine,0);
 }
 
-inline SIZE_T CRichEditCtrl::LineLength(int nLine) const
+inline int CRichEditCtrl::LineLength(int nLine) const
 {
-	return ::SendMessage(m_hWnd,EM_LINELENGTH,(WPARAM)nLine,0);
+	return (int)::SendMessage(m_hWnd,EM_LINELENGTH,(WPARAM)nLine,0);
 }
 
 inline void CRichEditCtrl::LineScroll(int nLines,int nChars)
@@ -693,14 +693,14 @@ inline int CListBox::GetItemRect(int nIndex,LPRECT lpRect) const
 	return (int)::SendMessage(m_hWnd,LB_GETITEMRECT,(WPARAM)nIndex,(LPARAM)lpRect);
 }
 
-inline SIZE_T CListBox::GetText(int nIndex,LPSTR lpszBuffer) const
+inline int CListBox::GetText(int nIndex,LPSTR lpszBuffer) const
 {
-	return ::SendMessage(m_hWnd,LB_GETTEXT,(WPARAM)nIndex,(LPARAM)lpszBuffer);
+	return (int)::SendMessage(m_hWnd,LB_GETTEXT,(WPARAM)nIndex,(LPARAM)lpszBuffer);
 }
 
-inline SIZE_T CListBox::GetTextLen(int nIndex) const
+inline int CListBox::GetTextLen(int nIndex) const
 {
-	return (SIZE_T)::SendMessage(m_hWnd,LB_GETTEXTLEN,(WPARAM)nIndex,0);
+	return (int)::SendMessage(m_hWnd,LB_GETTEXTLEN,(WPARAM)nIndex,0);
 }
 
 inline void CListBox::SetColumnWidth(int cxWidth)
@@ -941,16 +941,16 @@ inline int CComboBox::SetItemData(int nIndex, DWORD_PTR dwItemData)
 }
 
 
-inline SIZE_T CComboBox::GetLBText(int nIndex, LPSTR lpszText) const
+inline int CComboBox::GetLBText(int nIndex, LPSTR lpszText) const
 { 
-	return ::SendMessage(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)lpszText);
+	return (int)::SendMessage(m_hWnd,CB_GETLBTEXT,nIndex,(LPARAM)lpszText);
 }
 
 
 
-inline SIZE_T CComboBox::GetLBTextLen(int nIndex) const
+inline int CComboBox::GetLBTextLen(int nIndex) const
 {
-	return ::SendMessage(m_hWnd,CB_GETLBTEXTLEN,(WPARAM)nIndex,0);
+	return (int)::SendMessage(m_hWnd,CB_GETLBTEXTLEN,(WPARAM)nIndex,0);
 }
 
 inline int CComboBox::SetItemHeight(int nIndex, UINT cyItemHeight)

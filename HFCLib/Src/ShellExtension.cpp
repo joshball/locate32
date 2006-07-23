@@ -386,7 +386,7 @@ BOOL RunRegistryCommand(HKEY hKey,LPCSTR szFile)
 	CRegKey CommandKey;
 	CString ExecuteStr;
 	CString CommandLine;
-	LONG_PTR i;
+	int i;
 
 	if (CommandKey.OpenKey(hKey,"command",CRegKey::openExist|CRegKey::samAll)!=ERROR_SUCCESS)
 		return FALSE;
@@ -441,7 +441,7 @@ BOOL RunRegistryCommand(HKEY hKey,LPCWSTR szFile)
 	CRegKey CommandKey;
 	CStringW ExecuteStr;
 	CStringW CommandLine;
-	LONG_PTR i;
+	int i;
 
 	if (CommandKey.OpenKey(hKey,"command",CRegKey::openExist|CRegKey::samAll)!=ERROR_SUCCESS)
 		return FALSE;
@@ -638,7 +638,7 @@ BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,DWORD nBufferLen)
 							case STRRET_WSTR:
 								if (str.pOleStr[0]==L'\\' && str.pOleStr[1]==L'\\')
 								{
-									SIZE_T nlen=istrlenw(str.pOleStr);
+									DWORD nlen=istrlenw(str.pOleStr);
 									if (nBufferLen<nlen)
 										nlen=nBufferLen-1;
 									CopyMemory(szTarget,str.pOleStr,nlen);

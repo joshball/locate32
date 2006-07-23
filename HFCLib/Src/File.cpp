@@ -1095,7 +1095,7 @@ INT FileSystem::IsDirectory(LPCSTR szDirectoryName)
 	
 	// Taking last '\\' 
 	LPSTR szPath;
-	SIZE_T dwPathLen=istrlen(szDirectoryName);
+	int dwPathLen=istrlen(szDirectoryName);
 	if (szDirectoryName[dwPathLen-1]=='\\' && dwPathLen>3)
 	{
 		szPath=new char[dwPathLen+5];
@@ -1157,7 +1157,7 @@ INT FileSystem::IsDirectory(LPCSTR szDirectoryName)
 		if (szPath==szDirectoryName)
 		{
 			szPath=new char[dwPathLen+5];
-			dMemCopy(szPath,szDirectoryName,dwPathLen);
+			sMemCopy(szPath,szDirectoryName,dwPathLen);
 		}		
 		dMemCopy(szPath+dwPathLen,"\\*.*",5);
 
@@ -1242,7 +1242,7 @@ INT FileSystem::IsDirectory(LPCWSTR szDirectoryName)
 	
 	// Taking last '\\' 
 	LPWSTR szPath;
-	SIZE_T dwPathLen=istrlenw(szDirectoryName);
+	int dwPathLen=istrlenw(szDirectoryName);
 	if (szDirectoryName[dwPathLen-1]==L'\\' && dwPathLen>3)
 	{
 		szPath=new WCHAR[dwPathLen+5];
@@ -1756,7 +1756,7 @@ BOOL FileSystem::IsSamePath(LPCSTR szDir1,LPCSTR szDir2)
 	return strcasecmp(path1,path2)==0;	
 #else
 	char path1[MAX_PATH],path2[MAX_PATH];
-	SIZE_T nRet1,nRet2;
+	int nRet1,nRet2;
 	nRet1=istrlen(szDir1);
 	nRet2=istrlen(szDir2);
 
@@ -2347,7 +2347,7 @@ BOOL CFileFind::GetFileTitle(CString& title) const
 		WCHAR szTitle[MAX_PATH],szPath[MAX_PATH];
 		StringCbCopyNW(szPath,MAX_PATH,strRoot,strRoot.GetLength());
 		StringCbCopyW(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fdw.cFileName);
-		SIZE_T len=::GetFileTitleW(szPath,szTitle,MAX_PATH);
+		int len=::GetFileTitleW(szPath,szTitle,MAX_PATH);
 		if (len==0)
 			title=szTitle;
 		else
@@ -2361,7 +2361,7 @@ BOOL CFileFind::GetFileTitle(CString& title) const
 		CHAR szPath[MAX_PATH];
 		WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0);
 		StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName);
-		SIZE_T len=::GetFileTitle(szPath,title.GetBuffer(MAX_PATH),MAX_PATH);
+		int len=::GetFileTitle(szPath,title.GetBuffer(MAX_PATH),MAX_PATH);
 		
 		if (len==0)
 			title.FreeExtra();

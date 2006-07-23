@@ -45,7 +45,7 @@ HFCERRCALLBACK SetHFCErrorCallback(HFCERRCALLBACK pfCallbackFunc,DWORD dwData)
 }
 
 // Standard callbacks
-HFCERROR StdHFCErrorCallbackStdout(HFCERROR nError,SIZE_T dwData)
+HFCERROR StdHFCErrorCallbackStdout(HFCERROR nError,DWORD_PTR dwData)
 {
 	if (nError!=HFC_NOERROR)
 	{
@@ -57,7 +57,7 @@ HFCERROR StdHFCErrorCallbackStdout(HFCERROR nError,SIZE_T dwData)
 	return nError;
 }
 
-HFCERROR StdHFCErrorCallbackStderr(HFCERROR nError,SIZE_T dwData)
+HFCERROR StdHFCErrorCallbackStderr(HFCERROR nError,DWORD_PTR dwData)
 {
 	if (nError!=HFC_NOERROR)
 	{
@@ -69,7 +69,7 @@ HFCERROR StdHFCErrorCallbackStderr(HFCERROR nError,SIZE_T dwData)
 	return nError;
 }
 
-HFCERROR StdHFCErrorCallbackMsgBox(HFCERROR nError,SIZE_T dwData)
+HFCERROR StdHFCErrorCallbackMsgBox(HFCERROR nError,DWORD_PTR dwData)
 {
 	if (nError!=HFC_NOERROR)
 	{

@@ -1591,7 +1591,7 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 		}
 		else
 		{
-			DWORD i=0;
+			int i=0;
 			UINT nIndex;
 
 			if (nRet&CAdvancedDlg::flagReplaceSpaces)
@@ -1773,7 +1773,7 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 	
 }
 
-BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode,DWORD dwInfo,const CLocater* pLocater)
+BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueCode,DWORD_PTR dwInfo,const CLocater* pLocater)
 {
 	DbcDebugFormatMessage2("CLocateDlg::LocateProc BEGIN, reason=%d, code=%d",crReason,ueCode);
 	
@@ -1925,7 +1925,7 @@ BOOL CLocateDlg::LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ueC
 	return TRUE;
 }
 
-BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLocater* pLocater)
+BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater)
 {
 	DbcDebugMessage("CLocateDlg::LocateFoundProc BEGIN");
 	
@@ -2038,7 +2038,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLoca
 	return TRUE;
 }
 
-BOOL CALLBACK CLocateDlg::LocateFoundProcW(DWORD dwParam,BOOL bFolder,const CLocater* pLocater)
+BOOL CALLBACK CLocateDlg::LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater)
 {
 	DbcDebugMessage("CLocateDlg::LocateFoundProcW BEGIN");
 	
@@ -4245,7 +4245,7 @@ void CLocateDlg::SortItems(DetailType nDetail,BYTE bDescending,BOOL bNoneIsPossi
 	{ 
 		// Ascending
 		DebugFormatMessage("Going to sort(1), nColumn is %X",LPARAM(nDetail));
-		BOOL bRet=m_pListCtrl->SortItems(ListViewCompareProc,(LPARAM)(nDetail));
+		BOOL bRet=m_pListCtrl->SortItems(ListViewCompareProc,(DWORD)(nDetail));
 		DebugFormatMessage("bRet=%X",bRet);
 		m_nSorting=nDetail&127;
 	}
@@ -4253,7 +4253,7 @@ void CLocateDlg::SortItems(DetailType nDetail,BYTE bDescending,BOOL bNoneIsPossi
 	{
 		// Descending
 		DebugFormatMessage("Going to sort(2), nColumn is %X",LPARAM(nDetail));
-		BOOL bRet=m_pListCtrl->SortItems(ListViewCompareProc,(LPARAM)(nDetail|128));
+		BOOL bRet=m_pListCtrl->SortItems(ListViewCompareProc,(DWORD)(nDetail|128));
 		DebugFormatMessage("bRet=%X",bRet);
 		m_nSorting=nDetail|128;
 	}
@@ -5421,8 +5421,8 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder)
 	else
 	{
 		CString sTemp;
-		int nIndex=sProgram.FindFirst('%');
-		int nAdded=0;
+		LONG_PTR nIndex=sProgram.FindFirst('%');
+		LONG_PTR nAdded=0;
         while (nIndex!=-1)
 		{
 			sTemp.Append(sProgram,nIndex);
@@ -5922,24 +5922,9 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 			return NULL;
 
 
-		if (!pItems[i]->IsItemShortcut())
-		{
-			sParent=pItems[i]->GetParent();
-			//GetFirstParent(sParent,pItem->GetParent());
-			aFiles.Add(new CStringW(pItems[i]->GetPath()));
-		}
-		else
-		{
-			// If item is shortcut, check parent
-			CStringW* pStr=new CStringW;
-			GetShortcutTarget(pItems[i]->GetPath(),pStr->GetBuffer(MAX_PATH),MAX_PATH);
-			pStr->FreeExtra();
-		       
-			sParent.Copy(*pStr,pStr->FindLast(L'\\'));
-			//GetFirstParent(sParent,*pStr);		
-			
-			aFiles.Add(pStr);
-		}
+		sParent=pItems[i]->GetParent();
+		//GetFirstParent(sParent,pItem->GetParent());
+		aFiles.Add(new CStringW(pItems[i]->GetPath()));
 			
 
 
@@ -6057,7 +6042,7 @@ CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForFiles(LPCWSTR szParen
 	}
 
 	CStringW sParent(szParent);
-	DWORD dwCutFileNames=sParent.GetLength();
+	DWORD dwCutFileNames=(DWORD)sParent.GetLength();
 
 	if (szParent[1]==':' && szParent[2]=='\0')
 		sParent << L'\\';
@@ -6288,7 +6273,7 @@ BOOL CLocateDlg::GetFileClassID(LPCWSTR file,CLSID& clsid,LPCWSTR szType)
 {
 	CRegKey BaseKey;
 	CStringW Key;
-	int i=LastCharIndex(file,L'.');
+	LONG_PTR i=LastCharIndex(file,L'.');
 	if (i>=0)
 		Key=file+i;
 	else
@@ -6705,7 +6690,7 @@ void CLocateDlg::OnCopyPathToClipboard(BOOL bShortPath)
 		}
 
 		BYTE* pData=(BYTE*)GlobalLock(hMem);
-		WideCharToMultiByte(CP_ACP,0,LPCWSTR(Text),Text.GetLength()+1,(LPSTR)pData,Text.GetLength()+1,NULL,NULL);
+		WideCharToMultiByte(CP_ACP,0,LPCWSTR(Text),(int)Text.GetLength()+1,(LPSTR)pData,Text.GetLength()+1,NULL,NULL);
 		GlobalUnlock(hMem);
 
 		if (OpenClipboard())
@@ -9302,7 +9287,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 		CStringW Path(aRoots.GetAt(i));
 		Path.MakeLower();
 		
-		if (wcsncmp(Path,FolderLower,min(Path.GetLength(),dwLength))==0)
+		if (wcsncmp(Path,FolderLower,min((DWORD)Path.GetLength(),dwLength))==0)
 			bFound=TRUE;
 	}
 	if (!bFound)

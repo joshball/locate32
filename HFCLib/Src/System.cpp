@@ -35,8 +35,8 @@ BOOL SystemInfo(LPSYSTEMINFO info)
 		CString Version;
 		if (Key.QueryValue("Version",Version))
 		{
-			LONG_PTR hi=Version.FindFirst('.');
-			LONG_PTR lo=Version.FindNext('.',hi);
+			int hi=Version.FindFirst('.');
+			int lo=Version.FindNext('.',hi);
 			info->hiIEVer=atoi(Version.Left(hi));
 			info->loIEVer=atoi(Version.Mid(hi,lo));
 		}

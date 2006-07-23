@@ -76,7 +76,7 @@ LRESULT CALLBACK HFCControls::Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,
 		}
 		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)ctrl);
 		LPCSTR temp=(LPCSTR)((CREATESTRUCT*)lParam)->lpszName;
-		SIZE_T templen=istrlen(temp);
+		int templen=istrlen(temp);
 		ctrl->szText=new char[templen+2];
 		if (ctrl->szText==NULL)
 		{
@@ -487,7 +487,7 @@ LRESULT CALLBACK HFCControls::Ctrl3DButtonProc(HWND hWnd,UINT msg,WPARAM wParam,
 			if (ctrl->szText!=NULL)
 				delete[] ctrl->szText;
 			LPCSTR temp=(LPCSTR)lParam;
-			SIZE_T templen=istrlen(temp);
+			int templen=istrlen(temp);
 			ctrl->szText=new char[templen+2];
 			if (ctrl->szText==NULL)
 			{
@@ -748,7 +748,7 @@ static void clear(LPHEXVIEWCTRL ctrl)
 	ctrl->nLines=0;
 }
 
-static BYTE GetString(LPHEXVIEWCTRL ctrl,CString& str,SIZE_T nStartPos)
+static BYTE GetString(LPHEXVIEWCTRL ctrl,CString& str,int nStartPos)
 {
 	char szBuf[5];
 	SIZE_T nLen=ctrl->nDataLen-nStartPos;

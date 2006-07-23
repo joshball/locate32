@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   locate.exe v2.99.6.6040                 */
+   locate.exe v2.99.6.7230                 */
 
-const char* szVersionStr="locate 3.0 beta 6.6040";
+const char* szVersionStr="locate 3.0 beta 6.7230";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -10,8 +10,8 @@ const char* szVersionStr="locate 3.0 beta 6.6040";
 #include <conio.h>
 #endif
       
-#include "locater/locater.h"
-#include "lan_resources.h"
+#include "../locater/locater.h"
+#include "../lan_resources.h"
 
 
 
@@ -142,7 +142,7 @@ void GetFromDB(char* own,char* szPath)
 #endif
 */
     
-BOOL CALLBACK LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ue,DWORD dwInfo,const CLocater* pLocater)
+BOOL CALLBACK LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ue,DWORD_PTR dwInfo,const CLocater* pLocater)
 {          
 	switch (crReason)
 	{
@@ -167,7 +167,7 @@ BOOL CALLBACK LocateProc(DWORD dwParam,CallingReason crReason,UpdateError ue,DWO
     return TRUE;
 }
 
-BOOL CALLBACK LocateFoundProc(DWORD dwParam,BOOL bFolder,const CLocater* pLocater)
+BOOL CALLBACK LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater)
 {
 	if (nShouldQuit)
 		return FALSE;
@@ -244,7 +244,7 @@ void showverbose(LPCWSTR* ppStrings,UINT nStrings,LPCWSTR* ppExtensions,UINT nEx
 	putchar('\n');
 }
 
-BOOL CALLBACK LocateFoundProcW(DWORD dwParam,BOOL bFolder,const CLocater* pLocater)
+BOOL CALLBACK LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater)
 {
 	if (nShouldQuit)
 		return FALSE;
@@ -315,7 +315,7 @@ int wmain (int argc,wchar_t * argv[])
 	DWORD dwFlags=LOCATE_FILENAMES|LOCATE_CONTAINTEXTISMATCHCASE;
 	DWORD dwExtraFlags=0;
 	BYTE* pContainData=NULL;
-	SIZE_T dwContainDataLength=0;
+	DWORD dwContainDataLength=0;
 
 	CStringW String;
 	CArrayFAP<LPWSTR> aDirectories;

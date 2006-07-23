@@ -298,13 +298,13 @@ BOOL ForceForegroundAndFocus(HWND hWindow)
 	return FALSE;
 }
 
-int ReportSystemError(HWND hWnd,LPCSTR szTitle,DWORD dwError,SIZE_T dwExtra,LPCSTR szPrefix)
+int ReportSystemError(HWND hWnd,LPCSTR szTitle,DWORD dwError,DWORD dwExtra,LPCSTR szPrefix)
 {
 	if (dwError==DWORD(-1))
 		dwError=GetLastError();
 
 	char* szBuffer;
-	SIZE_T dwLength=FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_ALLOCATE_BUFFER,NULL,
+	DWORD dwLength=FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_ALLOCATE_BUFFER,NULL,
 		dwError,LANG_USER_DEFAULT,(LPSTR)(PVOID*)&szBuffer,0,NULL);
 	if (!dwLength)
 		return MessageBox(hWnd,"Couldn't format error message",szTitle,MB_OK|MB_ICONERROR);

@@ -116,14 +116,14 @@ inline CFileObject::CEnumFORMATETC::CEnumFORMATETC()
 inline CFileObject::CFileObject()
 {
 	GetCursorPos(&m_StartPosition);
-	DebugFormatMessage("FileObject %X created.",(DWORD)this);
+	DebugFormatMessage("FileObject %X created.",(DWORD_PTR)this);
 }
 
 inline CFileObject::~CFileObject()
 {
 	//m_Files.RemoveAll();
 	//m_Points.RemoveAll();
-	DebugFormatMessage("FileObject %X destroyed.",(DWORD)this);
+	DebugFormatMessage("FileObject %X destroyed.",(DWORD_PTR)this);
 }
 
 

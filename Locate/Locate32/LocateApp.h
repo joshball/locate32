@@ -112,7 +112,8 @@ public:
 
 	BOOL StartUpdateStatusNotification();
 	BOOL StopUpdateStatusNotification();
-	
+	void NotifyFinishingUpdating();
+
 	BOOL TurnOnShortcuts();
 	BOOL TurnOffShortcuts();
 
@@ -331,7 +332,7 @@ public:
 	
 	BOOL GlobalUpdate(CArray<PDATABASE>* paDatabases=NULL,int nThreadPriority=THREAD_PRIORITY_NORMAL);
 
-
+	
 
 	// Database menu functions
 	static BOOL IsDatabaseMenu(HMENU hMenu);
@@ -342,7 +343,7 @@ public:
 	static DWORD GetProgramFlags();
     	
 private:
-	static BOOL CALLBACK UpdateProc(DWORD dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater);
+	static BOOL CALLBACK UpdateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater);
 	
 
 protected:

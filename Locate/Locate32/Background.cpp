@@ -356,7 +356,7 @@ void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCWSTR szRoot,CLocateDlg*
 	}
 	else
 	{
-		DWORD dwLength=istrlenw(szRoot);
+		DWORD dwLength=(DWORD)istrlenw(szRoot);
 
 		int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 		while (nItem!=-1)
@@ -474,7 +474,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 				
 		if (bRet)
 		{
-			pChangeData->dwRootLength=istrlenw(szRoot);
+			pChangeData->dwRootLength=(DWORD)istrlenw(szRoot);
 			if (szRoot[pChangeData->dwRootLength-1]=='\\')
 			{
 				if (szRoot!=aRoots.GetAt(i))

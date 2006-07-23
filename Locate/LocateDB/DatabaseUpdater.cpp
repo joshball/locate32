@@ -10,7 +10,7 @@
 #endif
 
 CDatabaseUpdater::CDatabaseUpdater(LPCWSTR szDatabaseFile,LPCWSTR szAuthor,LPCWSTR szComment,
-		LPCWSTR* pszRoots,DWORD nNumberOfRoots,UPDATEPROC pProc,DWORD dwParam)
+		LPCWSTR* pszRoots,DWORD nNumberOfRoots,UPDATEPROC pProc,DWORD_PTR dwParam)
 :	m_pCurrentRoot(NULL),sStatus(statusInitializing),m_dwFiles(0),m_dwDirectories(0),
 	m_pProc(pProc),m_dwData(dwParam),m_dwCurrentDatabase(DWORD(-1)),dbFile(NULL)
 #ifdef WIN32	
@@ -24,7 +24,7 @@ CDatabaseUpdater::CDatabaseUpdater(LPCWSTR szDatabaseFile,LPCWSTR szAuthor,LPCWS
 }
 
 CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
-		int nDatabases,UPDATEPROC pProc,DWORD dwParam)
+		int nDatabases,UPDATEPROC pProc,DWORD_PTR dwParam)
 :	m_pCurrentRoot(NULL),sStatus(statusInitializing),m_dwFiles(0),m_dwDirectories(0),
 	m_pProc(pProc),m_dwData(dwParam),m_dwCurrentDatabase(DWORD(-1)),dbFile(NULL)
 #ifdef WIN32	
@@ -38,7 +38,7 @@ CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
 }
 	
 CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
-		int nDatabases,UPDATEPROC pProc,WORD wThread,DWORD dwParam)
+		int nDatabases,UPDATEPROC pProc,WORD wThread,DWORD_PTR dwParam)
 :	m_pCurrentRoot(NULL),sStatus(statusInitializing),m_dwFiles(0),m_dwDirectories(0),
 	m_pProc(pProc),m_dwData(dwParam),m_dwCurrentDatabase(DWORD(-1)),dbFile(NULL)
 #ifdef WIN32	
@@ -468,7 +468,8 @@ UpdateError CDatabaseUpdater::Update(BOOL bThreaded,int nThreadPriority)
 			ResumeThread(m_hThread);
 			return ueSuccess;
 		}
-        return ueCannotCreateThread;
+		m_pProc(m_dwData,ErrorOccured,ueCannotCreateThread,this);
+		return ueCannotCreateThread;
 	}
 	else
 		return UpdatingProc();
@@ -760,7 +761,7 @@ inline DWORD _FindGetFileSizeHi(FIND_DATA* fd)
 }
 #endif
 
-UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T nLength,volatile LONG& lForceQuit)
+UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nLength,volatile LONG& lForceQuit)
 {
 	if (m_aExcludedDirectories.GetSize()>0)
 	{
@@ -805,7 +806,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 				throw ueStopped;
 			}
 
-			SIZE_T sNameLength=istrlen(_FindGetName(&fd));
+			DWORD sNameLength=istrlen(_FindGetName(&fd));
 			ASSERT(sNameLength<256);
 				
 
@@ -935,7 +936,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,SIZE_T n
 	return ueSuccess;
 }
 
-UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,SIZE_T nLength,volatile LONG& lForceQuit)
+UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD nLength,volatile LONG& lForceQuit)
 {
 	if (m_aExcludedDirectories.GetSize()>0)
 	{
@@ -980,7 +981,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,SIZE_T 
 				throw ueStopped;
 			}
 
-			SIZE_T sNameLength=istrlenw(_FindGetName(&fd));
+			DWORD sNameLength=istrlenw(_FindGetName(&fd));
 
 			ASSERT(sNameLength<256);
 				
@@ -1403,7 +1404,7 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 	m_szExtra1(NULL),m_szExtra2(NULL)
 {
 	m_szArchive=alloccopy(pDatabase->GetArchiveName());
-	m_dwNameLength=wcslen(pDatabase->GetName());
+	m_dwNameLength=(DWORD)wcslen(pDatabase->GetName());
 	m_szName=alloccopy(pDatabase->GetName(),m_dwNameLength);
 
 	// Retrieving flags

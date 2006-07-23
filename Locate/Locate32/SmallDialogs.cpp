@@ -962,7 +962,7 @@ void CSelectDatabasesDlg::OnDeletePreset()
 		{
 			if (strncmp(sName,"Preset ",7)==0)
 			{
-				DWORD nIndex=int(sName.FindFirst(':'))+1;
+				int nIndex=int(sName.FindFirst(':'))+1;
 
                 if (nIndex>0 &&  nIndex<sName.GetLength()) 
 				{
@@ -992,7 +992,7 @@ BOOL CSelectDatabasesDlg::CheckRegistryIntegrity(CRegKey& RegKey)
 	{
 		if (strncmp(sName,"Preset ",7)==0)
 		{
-			DWORD nIndex=int(sName.FindFirst(':'))+1;
+			int nIndex=int(sName.FindFirst(':'))+1;
 			if (nIndex>0 &&  nIndex<sName.GetLength()) 
 			{
 				int nIs=atoi(LPCSTR(sName)+7);
@@ -1587,7 +1587,7 @@ void CSelectDatabasesDlg::LoadPresets()
 		{
 			if (wcsncmp(sName,L"Preset ",7)==0)
 			{
-				ULONG_PTR nIndex=sName.FindFirst(':')+1;
+				int nIndex=sName.FindFirst(':')+1;
 				
 				if (nIndex>0 &&  nIndex<sName.GetLength()) 
 					m_PresetCombo.AddString(LPCWSTR(sName)+nIndex);
@@ -1777,7 +1777,7 @@ BOOL CSelectDatabasesDlg::LoadPreset(LPCWSTR szName)
 		{
 			if (wcsncmp(sName,L"Preset ",7)==0)
 			{
-				ULONG_PTR nIndex=sName.FindFirst(':')+1;
+				int nIndex=sName.FindFirst(':')+1;
 				
 				if (nIndex>0 &&  nIndex<sName.GetLength()) 
 				{
@@ -1900,7 +1900,7 @@ BOOL CSelectDatabasesDlg::CSavePresetDlg::OnInitDialog(HWND hwndFocus)
 		{
 			if (wcsncmp(sName,L"Preset ",7)==0)
 			{
-				ULONG_PTR nIndex=sName.FindFirst(':')+1;
+				int nIndex=sName.FindFirst(':')+1;
 				
 				if (nIndex>0 &&  nIndex<sName.GetLength()) 
 					PresetCombo.AddString(LPCWSTR(sName)+nIndex);
