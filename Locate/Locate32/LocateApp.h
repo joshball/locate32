@@ -505,7 +505,7 @@ inline BOOL CLocateApp::IsUpdating() const
 
 inline void CLocateApp::ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText)
 {
-	SIZE_T dwLength=istrlenw(szText);
+	DWORD dwLength=istrlenw(szText);
 	if (pVar!=NULL)
 		delete[] pVar;
 	pVar=new WCHAR [dwLength+1];

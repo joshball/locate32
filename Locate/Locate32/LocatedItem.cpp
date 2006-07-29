@@ -537,7 +537,7 @@ void CLocatedItem::UpdateType()
 			return;
 		}
 		
-		SIZE_T dwTypeLen=istrlenw(fi.szTypeName);
+		DWORD dwTypeLen=istrlenw(fi.szTypeName);
 		
 		szType=new WCHAR[++dwTypeLen];
 		MemCopyW(szType,fi.szTypeName,dwTypeLen);
@@ -1312,12 +1312,11 @@ LPWSTR CLocatedItem::GetToolTipText() const
 {
 	ISDLGTHREADOK
 
-	if (g_szwBuffer!=NULL)
-		delete[] g_szwBuffer;
-
+	
 	if (IsDeleted())
 	{
-		
+		if (g_szwBuffer!=NULL)
+			delete[] g_szwBuffer;
 		CStringW str(IsFolder()?IDS_TOOLTIPFORDIRECTORYDELETED:IDS_TOOLTIPFORFILEDELETED);
 		int nLen=(int)str.GetLength()+GetPathLen()+(int)istrlenw(GetType())+2;
 		g_szwBuffer=new WCHAR[nLen];
@@ -1326,27 +1325,27 @@ LPWSTR CLocatedItem::GetToolTipText() const
 	}
 
 	
-	WCHAR* szDate=GetLocateApp()->FormatDateAndTimeString(GetModifiedDate(),GetModifiedTime());
 		
 	if (ShouldUpdateFileSizeOrDate())
 		((CLocatedItem*)this)->UpdateFileSizeAndTime();
 	if (ShouldUpdateType())
 		((CLocatedItem*)this)->UpdateType();
 
+	WCHAR* szDate=GetLocateApp()->FormatDateAndTimeString(GetModifiedDate(),GetModifiedTime());
+	
+
 	if (IsFolder())
 	{
 		CStringW str(IDS_TOOLTIPFORDIRECTORY);
-		
 		int nLen=(int)str.GetLength()+GetPathLen()+(int)istrlenw(GetType())+(int)istrlenw(szDate)+2;
+		if (g_szwBuffer!=NULL)
+			delete[] g_szwBuffer;
 		g_szwBuffer=new WCHAR[nLen];
 		swprintfex(g_szwBuffer,nLen,str,GetName(),GetParent(),GetType(),szDate);
 	}
-	else
+	else 
 	{
-		CStringW str(IDS_TOOLTIPFORFILE);
-		
-		int nLen=(int)str.GetLength()+GetPathLen()+(int)istrlenw(GetType())+(int)istrlenw(szDate)+25;
-		g_szwBuffer=new WCHAR[nLen];
+		CStringW text;
 		
 		WCHAR szSize[25];
 
@@ -1362,7 +1361,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 		}	
 		else if (GetFileSize()>LONGLONG(1024*1024)) // Over 1 Mb
 		{
-			StringCbPrintfW(szSize,25,L"%1.2f",double(GetFileSize())/(1024*1024));
+			StringCbPrintfW(szSize,25*sizeof(WCHAR),L"%1.2f",double(GetFileSize())/(1024*1024));
 			int nLength=(int)wcslen(szSize);
 			while (szSize[nLength-1]=='0')
 				nLength--;
@@ -1382,12 +1381,83 @@ LPWSTR CLocatedItem::GetToolTipText() const
 		}	
 		else
 		{
-			int nLength=StringCbPrintfW(szSize,25*sizeof(WCHAR),L"%d",GetFileSizeLo());
-			::LoadString(IDS_BYTES,szSize+nLength,25-nLength);
+			HRESULT hRes=StringCbPrintfW(szSize,25*sizeof(WCHAR),L"%d",GetFileSizeLo());
+			int nLength=(int)wcslen(szSize);
+			if (SUCCEEDED(hRes))
+				::LoadString(IDS_BYTES,szSize+nLength,25-nLength);
+			else
+				szSize[0]='\0';
 		}
-		
 
-		swprintfex(g_szwBuffer,nLen,str,GetName(),GetParent(),GetType(),szDate,szSize);
+		text.FormatEx(IDS_TOOLTIPFORFILE,GetName(),GetParent(),GetType(),szDate,szSize);
+			
+		if (IsItemShortcut())
+		{
+			// Get command and target
+			
+			union {
+				IShellLinkW* pslw;
+				IShellLink* psl;
+			};
+			IPersistFile* ppf=NULL;
+			psl=NULL;
+			
+			if (IsUnicodeSystem())
+			{
+				if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(void**)&pslw)))
+				{
+					if (FAILED(pslw->QueryInterface(IID_IPersistFile,(void**)&ppf)))
+						ppf=NULL;
+				}
+			}
+			else
+			{
+				if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl)))
+				{
+					if (FAILED(psl->QueryInterface(IID_IPersistFile,(void**)&ppf)))
+						ppf=NULL;
+				}
+			}
+
+			if (ppf!=NULL)
+			{
+				if (SUCCEEDED(ppf->Load(GetPath(),STGM_READ)))
+				{
+					WCHAR szBuffer[INFOTIPSIZE+2];
+					HRESULT hRes=pslw->GetPath(szBuffer,INFOTIPSIZE+2,NULL,0);
+					if (SUCCEEDED(hRes))
+					{
+						text << L"\r\n";
+						text.AddString(IDS_TOOLTIPTARGET);
+						text << L' ' << szBuffer;
+					}
+
+					szBuffer[0]='\0';
+					hRes=pslw->GetDescription(szBuffer,INFOTIPSIZE+2);
+					if (SUCCEEDED(hRes) && szBuffer[0]!='\0')
+					{
+						text << L"\r\n";
+						text.AddString(IDS_TOOLTIPDESCRIPTION);
+						text << L' ' << szBuffer;
+					}
+
+	
+				}
+				ppf->Release();
+			}
+
+			if (psl!=NULL)
+			{
+				if (IsUnicodeSystem())
+					pslw->Release();
+				else
+					psl->Release();
+			}
+		}
+
+		if (g_szwBuffer!=NULL)
+			delete[] g_szwBuffer;
+		g_szwBuffer=text.GiveBuffer();
 	}
 
 	delete[] szDate;

@@ -108,7 +108,7 @@ public:
 	static CDatabase* FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey);
 	static CDatabase* FromFile(LPCWSTR szFileName,int dwNameLength=-1);
     static CDatabase* FromOldStyleDatabase(HKEY hKeyRoot,LPCSTR szPath);
-	static CDatabase* FromDefaults(BOOL bDefaultFileName,LPCWSTR szAppDir,INT iAppDirLength);
+	static CDatabase* FromDefaults(BOOL bDefaultFileName,LPCWSTR szAppDir,int iAppDirLength);
 	static CDatabase* FromExtraBlock(LPCWSTR szExtraBlock);
 	
 	static void CheckValidNames(CArray<PDATABASE>& aDatabases);
@@ -126,11 +126,11 @@ public:
 	static WORD GetUniqueIndex(PDATABASE* ppDatabases,int nDatabases);
 
 
-	static CDatabase* FindByName(CArray<PDATABASE>& aDatabases,LPCWSTR szName,INT iLength=-1);
-	static CDatabase* FindByName(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szName,INT iLength=-1);
+	static CDatabase* FindByName(CArray<PDATABASE>& aDatabases,LPCWSTR szName,int iLength=-1);
+	static CDatabase* FindByName(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szName,int iLength=-1);
 
-	static CDatabase* FindByFile(CArray<PDATABASE>& aDatabases,LPCWSTR szFile,INT iLength=-1);
-	static CDatabase* FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szFile,INT iLength=-1);
+	static CDatabase* FindByFile(CArray<PDATABASE>& aDatabases,LPCWSTR szFile,int iLength=-1);
+	static CDatabase* FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szFile,int iLength=-1);
 
 	static void GetLogicalDrives(CArrayFAP<LPWSTR>* paRoots);
 

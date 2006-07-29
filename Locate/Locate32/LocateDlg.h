@@ -40,9 +40,9 @@ public:
 	int GetTopIndex() const;
 	int SetTopIndex(int nIndex);
 	
-	SIZE_T GetLBText(int nIndex, LPSTR lpszText) const;
-	SIZE_T GetLBText(int nIndex, CStringA& rString) const;
-	SIZE_T GetLBTextLen(int nIndex) const;
+	int GetLBText(int nIndex, LPSTR lpszText) const;
+	int GetLBText(int nIndex, CStringA& rString) const;
+	int GetLBTextLen(int nIndex) const;
 
 	int FindStringExact(int nIndexStart, LPCSTR lpszFind) const;
 	BOOL GetDroppedState() const;
@@ -60,8 +60,8 @@ public:
 	BOOL HandleOnCommand(WORD wNotifyCode);
 
 #ifdef DEF_WCHAR
-	SIZE_T GetLBText(int nIndex, LPWSTR lpszText) const;
-	SIZE_T GetLBText(int nIndex, CStringW& rString) const;
+	int GetLBText(int nIndex, LPWSTR lpszText) const;
+	int GetLBText(int nIndex, CStringW& rString) const;
 	int FindStringExact(int nIndexStart, LPCWSTR lpszFind) const;
 	int AddString(LPCWSTR lpszString);
 	int InsertString(int nIndex, LPCWSTR lpszString);
@@ -246,7 +246,7 @@ public:
 		BOOL GetDirectoriesForSelection(CArray<LPWSTR>& aDirectories,const DirSelection* pSelection,BOOL bNoWarnings=FALSE);
 
 		static void AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory);
-		static void AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,SIZE_T sLength);
+		static void AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,DWORD sLength);
 		
 		BOOL CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,BOOL bAlsoSet=TRUE,BOOL bNoWarning=FALSE);
 

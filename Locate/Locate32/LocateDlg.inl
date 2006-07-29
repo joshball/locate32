@@ -199,7 +199,7 @@ inline CLocateDlg::CAdvancedDlg::FileType::FileType(LPWSTR frType,LPWSTR frTitle
 {
 }
 
-inline void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,SIZE_T sLen)
+inline void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,DWORD sLen)
 {
 	LPWSTR pDirectories=alloccopy(szDirectory,sLen);
 	AddDirectoryToList(aDirectories,pDirectories);

@@ -1,9 +1,9 @@
 #ifndef DATA_H
 #define DATA_H
 
-#define SCHEDULE_V1_LEN		0x20
-#define SCHEDULE_V2_LEN		0x24
-#define SCHEDULE_V3_LEN		0x28
+#define SCHEDULE_V1_LEN		32
+#define SCHEDULE_V2_LEN		36
+#define SCHEDULE_V3_LEN		40
 
 class CSchedule
 {

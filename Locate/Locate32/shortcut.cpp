@@ -19,7 +19,7 @@
 
 #endif
 
-static BOOL _ContainString(LPCSTR s1,LPCSTR s2,size_t s2len) // Is s2 in the s1
+static BOOL _ContainString(LPCSTR s1,LPCSTR s2,int s2len) // Is s2 in the s1
 {
 
 
@@ -36,7 +36,7 @@ static BOOL _ContainString(LPCSTR s1,LPCSTR s2,size_t s2len) // Is s2 in the s1
 
 	while (*s1!='\0')
 	{
-		for (size_t i=0;;i++)
+		for (int i=0;;i++)
 		{
 			// is s1 too short?
 			if (s1[i]=='\0')
@@ -216,11 +216,25 @@ BOOL CShortcut::LoadShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadFlags)
 
 BOOL CShortcut::LoadShortcuts(const BYTE* pData,DWORD dwDataLength,CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadFlag)
 {
+	DWORD dwShortcuts=0;
+
 	const BYTE* pPtr=pData;
 	while (dwDataLength>=4 && *((DWORD*)pPtr)!=NULL)
 	{
 		DWORD dwLength;
+
+		if (dwShortcuts==43)
+		{
+			ASSERT(1);
+		}
+
 		CShortcut* pShortcut=CShortcut::FromData(pPtr,dwDataLength,dwLength);
+
+		if (pShortcut!=NULL)
+			dwShortcuts++;
+		else
+			ASSERT(0);
+
 
 		if (pShortcut==NULL)
 			return FALSE;
@@ -286,8 +300,7 @@ BOOL CShortcut::SaveShortcuts(const CArrayFP<CShortcut*>& aShortcuts)
 DWORD CShortcut::GetData(BYTE* _pData) const
 {
 	BYTE* pData=_pData;
-	DWORD dwUsed;
-
+	
 	*((WORD*)pData)=0xFFED; // Start mark
 	pData+=sizeof(WORD);
 
@@ -325,23 +338,22 @@ DWORD CShortcut::GetData(BYTE* _pData) const
 	{
 		if (m_pClass!=NULL && m_pClass!=LPSTR(-1))
 		{
-			dwUsed=DWORD(istrlen(m_pClass)+1);
-			CopyMemory(pData,m_pClass,dwUsed);
-			pData+=dwUsed;
+			int iUsed=istrlen(m_pClass)+1;
+			CopyMemory(pData,m_pClass,iUsed);
+			pData+=iUsed;
 		}
 
 		if (m_pTitle!=NULL)
 		{
-            dwUsed=DWORD(istrlen(m_pTitle)+1);
-			CopyMemory(pData,m_pTitle,dwUsed);
-			pData+=dwUsed;
+            int iUsed=istrlen(m_pTitle)+1;
+			CopyMemory(pData,m_pTitle,iUsed);
+			pData+=iUsed;
 		}
 	}
 
 	for (int i=0;i<m_apActions.GetSize();i++)
 	{
-		dwUsed=m_apActions[i]->GetData(pData);
-		pData+=dwUsed;
+		pData+=m_apActions[i]->GetData(pData);
 	}
 
 	return DWORD(pData-_pData);
@@ -369,7 +381,7 @@ CShortcut* CShortcut::FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed)
 {
 	DWORD dwLen;
 
-	if (dwDataLen<sizeof(CShortcut)+sizeof(WORD))
+	if (dwDataLen<28+sizeof(WORD))
 		return NULL;
 
     if (*((WORD*)pData)!=0xFFED)
@@ -868,7 +880,7 @@ char CShortcut::GetMnemonicForAction(HWND* hDialogs) const
 				HWND hControl=::GetDlgItem(hDialogs[j],HIWORD(pAction->m_nControl));
 				if (hControl!=NULL)
 				{
-					SIZE_T dwTextLen=::SendMessage(hControl,WM_GETTEXTLENGTH,0,0);
+					DWORD dwTextLen=(DWORD)::SendMessage(hControl,WM_GETTEXTLENGTH,0,0);
 					char* pText=new char[dwTextLen+2];
 					::SendMessage(hControl,WM_GETTEXT,dwTextLen+2,LPARAM(pText));
 
@@ -1336,7 +1348,7 @@ void CSubAction::DoMisc()
 			}
 			else if (m_pSendMessage->szWParam[1]!='\0')
 			{
-				SIZE_T dwLength;
+				DWORD dwLength;
 				wParam=(WPARAM)dataparser(m_pSendMessage->szWParam,istrlen(m_pSendMessage->szWParam),gmalloc,&dwLength);
 				*((BYTE*)wParam+dwLength)=0;
 				bFreeWParam=TRUE;
@@ -1344,7 +1356,7 @@ void CSubAction::DoMisc()
 		}
 		else if ((wParam=atoi(m_pSendMessage->szWParam))==0)
 		{
-			SIZE_T dwLength;
+			DWORD dwLength;
 			wParam=(WPARAM)dataparser(m_pSendMessage->szWParam,istrlen(m_pSendMessage->szWParam),gmalloc,&dwLength);
 			*((BYTE*)wParam+dwLength)=0;
 			bFreeWParam=TRUE;
@@ -1365,7 +1377,7 @@ void CSubAction::DoMisc()
 			}
 			else if (m_pSendMessage->szLParam[1]!='\0')
 			{
-				SIZE_T dwLength;
+				DWORD dwLength;
 				lParam=(WPARAM)dataparser(m_pSendMessage->szLParam,istrlen(m_pSendMessage->szLParam),gmalloc,&dwLength);
 				*((BYTE*)lParam+dwLength)=0;
 				bFreeLParam=TRUE;
@@ -1373,7 +1385,7 @@ void CSubAction::DoMisc()
 		}
 		else if ((lParam=atoi(m_pSendMessage->szLParam))==0)
 		{
-			SIZE_T dwLength;
+			DWORD dwLength;
 			lParam=(WPARAM)dataparser(m_pSendMessage->szLParam,istrlen(m_pSendMessage->szLParam),gmalloc,&dwLength);
 			*((BYTE*)lParam+dwLength)=0;
             bFreeLParam=TRUE;
@@ -1419,7 +1431,7 @@ DWORD CSubAction::SendMessageInfo::GetData(BYTE* pData_) const
 
 	if (szWindow!=NULL)
 	{
-        size_t dwUsed=strlen(szWindow)+1;
+        DWORD dwUsed=istrlen(szWindow)+1;
 		CopyMemory(pData,szWindow,dwUsed);
 		pData+=dwUsed;
 	}
@@ -1429,7 +1441,7 @@ DWORD CSubAction::SendMessageInfo::GetData(BYTE* pData_) const
 	
 	if (szWParam!=NULL)
 	{
-        size_t dwUsed=strlen(szWParam)+1;
+        DWORD dwUsed=istrlen(szWParam)+1;
 		CopyMemory(pData,szWParam,dwUsed);
 		pData+=dwUsed;
 	}
@@ -1438,7 +1450,7 @@ DWORD CSubAction::SendMessageInfo::GetData(BYTE* pData_) const
 	
 	if (szLParam!=NULL)
 	{
-        size_t dwUsed=strlen(szLParam)+1;
+        DWORD dwUsed=istrlen(szLParam)+1;
 		CopyMemory(pData,szLParam,dwUsed);
 		pData+=dwUsed;
 	}

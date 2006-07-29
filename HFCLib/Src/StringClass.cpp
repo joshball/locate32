@@ -94,7 +94,7 @@ CString::CString(LPCSTR lpsz)
 CString::CString(LPCSTR lpsz,int nLength)
 :	m_nBase(10)
 {
-	if (lpsz==NULL || nLength<=0)
+	if (lpsz==NULL || nLength==0)
 	{
 		m_pData=NULL;
 		m_nDataLen=0;
@@ -102,7 +102,7 @@ CString::CString(LPCSTR lpsz,int nLength)
 	}
 	else
 	{
-		if (nLength==-1)
+		if (nLength<=-1)
 			nLength=istrlen(lpsz);
 
 		//m_nDataLen=strlen(lpsz);
@@ -2554,7 +2554,7 @@ CStringW::CStringW(LPCWSTR lpsz)
 CStringW::CStringW(LPCWSTR lpsz,int nLength)
 	:m_nBase(10)
 {
-	if (lpsz==NULL || nLength<=0)
+	if (lpsz==NULL || nLength==0)
 	{
 		m_pData=NULL;
 		m_nDataLen=0;
@@ -2562,7 +2562,7 @@ CStringW::CStringW(LPCWSTR lpsz,int nLength)
 	}
 	else
 	{
-		if (nLength==-1)
+		if (nLength<=-1)
 			nLength=istrlenw(lpsz);
 
 		m_nDataLen=nLength;

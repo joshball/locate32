@@ -136,7 +136,7 @@ int CComboBoxAutoComplete::SetTopIndex(int nSelect)
 }
 
 
-SIZE_T CComboBoxAutoComplete::GetLBText(int nIndex, LPSTR lpszText) const
+int CComboBoxAutoComplete::GetLBText(int nIndex, LPSTR lpszText) const
 {
 	if (m_pACData==NULL)
 		return CComboBox::GetLBText(nIndex, lpszText);
@@ -144,12 +144,12 @@ SIZE_T CComboBoxAutoComplete::GetLBText(int nIndex, LPSTR lpszText) const
 	if (nIndex>=m_pACData->aItems.GetSize())
 		return CB_ERR;
 	
-	SIZE_T nLength=istrlenw(m_pACData->aItems[nIndex]);
+	DWORD nLength=istrlenw(m_pACData->aItems[nIndex]);
 	MemCopyWtoA(lpszText,m_pACData->aItems[nIndex],nLength+1);
 	return nLength;
 }
 
-SIZE_T CComboBoxAutoComplete::GetLBText(int nIndex, CStringA& rString) const
+int CComboBoxAutoComplete::GetLBText(int nIndex, CStringA& rString) const
 {
 	if (m_pACData==NULL)
 		return CComboBox::GetLBText(nIndex,rString);
@@ -162,7 +162,7 @@ SIZE_T CComboBoxAutoComplete::GetLBText(int nIndex, CStringA& rString) const
 }
 
 #ifdef DEF_WCHAR
-SIZE_T CComboBoxAutoComplete::GetLBText(int nIndex, LPWSTR lpszText) const
+int CComboBoxAutoComplete::GetLBText(int nIndex, LPWSTR lpszText) const
 {
 	if (m_pACData==NULL)
 		return CComboBox::GetLBText(nIndex, lpszText);
@@ -170,12 +170,12 @@ SIZE_T CComboBoxAutoComplete::GetLBText(int nIndex, LPWSTR lpszText) const
 	if (nIndex>=m_pACData->aItems.GetSize())
 		return CB_ERR;
 	
-	SIZE_T nLength=istrlenw(m_pACData->aItems[nIndex]);
+	DWORD nLength=istrlenw(m_pACData->aItems[nIndex]);
 	MemCopy(lpszText,m_pACData->aItems[nIndex],nLength+1);
 	return nLength;
 }
 
-SIZE_T CComboBoxAutoComplete::GetLBText(int nIndex, CStringW& rString) const
+int CComboBoxAutoComplete::GetLBText(int nIndex, CStringW& rString) const
 {
 	if (m_pACData==NULL)
 		return CComboBox::GetLBText(nIndex,rString);
@@ -188,7 +188,7 @@ SIZE_T CComboBoxAutoComplete::GetLBText(int nIndex, CStringW& rString) const
 }
 #endif
 
-SIZE_T CComboBoxAutoComplete::GetLBTextLen(int nIndex) const
+int CComboBoxAutoComplete::GetLBTextLen(int nIndex) const
 {
 	if (m_pACData==NULL)
 		return CComboBox::GetLBTextLen(nIndex);
@@ -712,10 +712,10 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
     // Setting icons
 	HICON hIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,32,32,LR_SHARED);
 	SetIcon(hIcon,TRUE);
-	SetClassLong(gclHIcon,(LONG)hIcon);
+	SetClassLong(gclHIcon,(LONG_PTR)hIcon);
 	hIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,LR_SHARED);
 	SetIcon(hIcon,FALSE);
-	SetClassLong((CWnd::ClassLongIndex)GCLP_HICONSM,(LONG)hIcon);
+	SetClassLong((CWnd::ClassLongIndex)GCLP_HICONSM,(LONG_PTR)hIcon);
 
 
 	// Setting tooltips
@@ -2853,7 +2853,7 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			{
 				CString text;
 				ib.GetInputText(text);
-				SIZE_T dwLength;
+				DWORD dwLength;
 				BYTE* pData=dataparser2(text,&dwLength);
 				BYTE* pPtr=pData+6;
        			if (pData[1]==1)
@@ -5421,8 +5421,8 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder)
 	else
 	{
 		CString sTemp;
-		LONG_PTR nIndex=sProgram.FindFirst('%');
-		LONG_PTR nAdded=0;
+		int nIndex=sProgram.FindFirst('%');
+		int nAdded=0;
         while (nIndex!=-1)
 		{
 			sTemp.Append(sProgram,nIndex);
@@ -7274,7 +7274,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	ci.iIndent=0;
 	ci.lParam=MAKELPARAM(Everywhere,Original);
 	if (lParam==ci.lParam || nSelection==-1)
-		nSelection=ci.iItem;
+		nSelection=(int)ci.iItem;
 	ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 	m_LookIn.InsertItem(&ci);
 	pMalloc->Free(idl);
@@ -7292,7 +7292,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	ci.iIndent=0;
 	ci.lParam=MAKELPARAM(Special,Documents);
 	if (lParam==ci.lParam)
-		nSelection=ci.iItem;
+		nSelection=(int)ci.iItem;
 	ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 	m_LookIn.InsertItem(&ci);
 	pMalloc->Free(idl);
@@ -7309,7 +7309,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	ci.iIndent=1;
 	ci.lParam=MAKELPARAM(Special,Desktop);
 	if (lParam==ci.lParam)
-		nSelection=ci.iItem;
+		nSelection=(int)ci.iItem;
 	ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 	m_LookIn.InsertItem(&ci);
 	pMalloc->Free(idl);
@@ -7333,7 +7333,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		ci.iIndent=1;
 		ci.lParam=MAKELPARAM(Special,Personal);
 		if (lParam==ci.lParam)
-			nSelection=ci.iItem;
+			nSelection=(int)ci.iItem;
 		ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 		m_LookIn.InsertItem(&ci);
 	}
@@ -7350,7 +7350,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	ci.iIndent=0;
 	ci.lParam=MAKELPARAM(Special,MyComputer);
 	if (lParam==ci.lParam)
-		nSelection=ci.iItem;
+		nSelection=(int)ci.iItem;
 	ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 	m_LookIn.InsertItem(&ci);
 	pMalloc->Free(idl);
@@ -7396,7 +7396,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		ci.iIndent=1;
 		ci.lParam=MAKELPARAM(Drive,szBuf[0]);
 		if (lParam==ci.lParam)
-			nSelection=ci.iItem;
+			nSelection=(int)ci.iItem;
 		ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 		m_LookIn.InsertItem(&ci);
 
@@ -7466,7 +7466,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 			ci.iIndent=0;
 			ci.lParam=MAKELPARAM(Everywhere,RootTitle);
 			if (lParam==ci.lParam)
-				nSelection=ci.iItem;
+				nSelection=(int)ci.iItem;
 			ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 			m_LookIn.InsertItem(&ci);
 			pMalloc->Free(idl);
@@ -7486,7 +7486,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 				ci.lParam=MAKELPARAM(Root,ComputeChecksumFromDir(aRoots[i]));
 					
 				if (lParam==ci.lParam)
-					nSelection=ci.iItem;
+					nSelection=(int)ci.iItem;
 				ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 				m_LookIn.InsertItem(&ci);
 
@@ -7516,7 +7516,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 			ci.iIndent=0;
 			ci.lParam=MAKELPARAM(Custom,j);
 			if (lParam==ci.lParam)
-				nSelection=ci.iItem;
+				nSelection=(int)ci.iItem;
 			ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 			m_LookIn.InsertItem(&ci);
 
@@ -7544,8 +7544,8 @@ BOOL CLocateDlg::CNameDlg::SelectByLParam(LPARAM lParam)
 		m_LookIn.GetItem(&ci);
 		if (ci.lParam==lParam)
 		{
-			m_LookIn.SetCurSel(ci.iItem);
-			m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(ci.iItem));
+			m_LookIn.SetCurSel((int)ci.iItem);
+			m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW((int)ci.iItem));
 			return TRUE;
 		}
 	}
@@ -7570,7 +7570,7 @@ BOOL CLocateDlg::CNameDlg::SelectByRootName(LPCWSTR szDirectory)
 
 			if (strcasecmp(ci.pszText,szDirectory)==0)
 			{
-				m_LookIn.SetCurSel(ci.iItem);
+				m_LookIn.SetCurSel((int)ci.iItem);
 				m_LookIn.SetItemText(-1,szPath);
 				return TRUE;
 			}
@@ -7592,7 +7592,7 @@ BOOL CLocateDlg::CNameDlg::SelectByCustomName(LPCWSTR szDirectory)
 			ASSERT(HIWORD(ci.lParam)<m_nMaxBrowse);
 			if (m_pBrowse[HIWORD(ci.lParam)].CompareNoCase(szDirectory)==0)
 			{
-				m_LookIn.SetCurSel(ci.iItem);
+				m_LookIn.SetCurSel((int)ci.iItem);
 				m_LookIn.SetItemText(-1,m_pBrowse[HIWORD(ci.lParam)]);
 				return TRUE;
 			}
@@ -9356,11 +9356,11 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 			m_LookIn.GetItem(&ci);
 			if (static_cast<TypeOfItem>(LOWORD(ci.lParam))!=Custom)
 				break;
-			m_LookIn.DeleteItem(ci.iItem);
+			m_LookIn.DeleteItem((int)ci.iItem);
 		}
 		
 		// Adding new items
-		int nSel=++ci.iItem;
+		int nSel=(int)++ci.iItem;
 		ci.iIndent=0;
 		ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 		for (DWORD i=0;i<m_nMaxBrowse;i++)
@@ -9532,8 +9532,8 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCWSTR szPath)
 						continue;
 					if ((char)HIWORD(ci.lParam)==temp[0])
 					{
-						m_LookIn.SetCurSel(ci.iItem);
-						m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(ci.iItem));
+						m_LookIn.SetCurSel((int)ci.iItem);
+						m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW((int)ci.iItem));
 						break;
 					}
 				}
@@ -9557,7 +9557,7 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCWSTR szPath)
 				ci.lParam=MAKELPARAM(Custom,0);
 				ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 				m_LookIn.InsertItem(&ci);
-				m_LookIn.SetCurSel(ci.iItem);
+				m_LookIn.SetCurSel((int)ci.iItem);
 				m_LookIn.SetItemText(-1,temp);
 				return TRUE;
 			}
@@ -9580,7 +9580,7 @@ void CLocateDlg::CNameDlg::DirSelection::SetValuesFromControl(HWND hControl,cons
 {
 	FreeData();
 
-	int nCurSel=::SendMessage((HWND)::SendMessage(hControl,CBEM_GETCOMBOCONTROL,0,0),CB_GETCURSEL,0,0);
+	int nCurSel=(int)::SendMessage((HWND)::SendMessage(hControl,CBEM_GETCOMBOCONTROL,0,0),CB_GETCURSEL,0,0);
 
 	COMBOBOXEXITEMW ci;
 	ci.mask=CBEIF_LPARAM|CBEIF_TEXT;
@@ -9597,7 +9597,7 @@ void CLocateDlg::CNameDlg::DirSelection::SetValuesFromControl(HWND hControl,cons
 	if (nCurSel==-1)
 	{
 		// No selection, custom
-		SIZE_T dwLength=istrlenw(szTitle);
+		DWORD dwLength=istrlenw(szTitle);
 
 		if (dwLength<MAX_PATH+9)
 		{
@@ -9942,12 +9942,12 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 			m_LookIn.GetItemText(-1,str.GetBuffer(2000),2000);
 			str.FreeExtra();
 			char* pData=new char[str.GetLength()*2+4];
-			*((DWORD*)pData)=lParam;
+			*((DWORD*)pData)=(DWORD)lParam;
 			CopyMemory(pData+4,LPCWSTR(str),str.GetLength()*2);
 			RegKey.SetValue("Name/LookIn",pData,str.GetLength()*2+4,REG_BINARY);
 		}
 		else
-			RegKey.SetValue("Name/LookIn",MAKELPARAM(HIWORD(lParam),LOWORD(lParam)));            
+			RegKey.SetValue("Name/LookIn",(DWORD)MAKELONG(HIWORD(lParam),LOWORD(lParam)));            
 	}
 	else
 	{
@@ -9969,7 +9969,7 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 					m_LookIn.GetItemText(-1,str.GetBuffer(2000),2000);
 					str.FreeExtra();
 					char* pData=new char[str.GetLength()*2+4];
-					*((DWORD*)pData)=lParam;
+					*((DWORD*)pData)=(DWORD)lParam;
 					CopyMemory(pData+4,LPCWSTR(str),str.GetLength()*2);
 					RegKey.SetValue(szName,pData,DWORD(str.GetLength()*2+4),REG_BINARY);
 				}
@@ -9983,7 +9983,7 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 			}
 			else if (m_pMultiDirs[i]->nType==Custom)
 			{	
-				SIZE_T dwLength=istrlenw(m_pMultiDirs[i]->pTitleOrDirectory)*2;
+				DWORD dwLength=istrlenw(m_pMultiDirs[i]->pTitleOrDirectory)*2;
 				
 				char* pData=new char[dwLength+4];
 				*((DWORD*)pData)=DWORD(Custom);
@@ -9993,7 +9993,7 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 			else
 			{
 				LPARAM lParam=m_pMultiDirs[i]->GetLParam(m_pBrowse,m_nMaxBrowse);
-				RegKey.SetValue(szName,MAKELPARAM(HIWORD(lParam),LOWORD(lParam)));
+				RegKey.SetValue(szName,(DWORD)MAKELONG(HIWORD(lParam),LOWORD(lParam)));
 			}
 
 
@@ -10931,7 +10931,7 @@ DWORD CLocateDlg::CAdvancedDlg::OnOk(CLocater* pLocater)
 		GetDlgItemText(IDC_CONTAINDATA,str);
 		
 		
-		SIZE_T dwDataLength;
+		DWORD dwDataLength;
 		BYTE* pData=NULL;
 		if (_strnicmp(str,"regexp:",7)==0)
 		{
@@ -11298,7 +11298,7 @@ void CLocateDlg::CAdvancedDlg::SaveControlStates(CRegKey& RegKey)
 		RegKey.SetValue("Advanced/TypeOfFile",DWORD(nCurSel));
 	else
 	{
-		SIZE_T dwLength=istrlenw(pType->szType);
+		DWORD dwLength=istrlenw(pType->szType);
 		WCHAR* szData=new WCHAR[++dwLength+pType->dwExtensionLength];
 		MemCopyW(szData,pType->szType,dwLength);
 		MemCopyW(szData+dwLength,pType->szExtensions,pType->dwExtensionLength);
@@ -11373,7 +11373,7 @@ int CLocateDlg::CAdvancedDlg::AddTypeToList(BYTE* pTypeAndExtensions)
 {
 	CRegKey RegKey;
 	
-	SIZE_T dwLength=istrlenw((LPCWSTR)pTypeAndExtensions);
+	DWORD dwLength=istrlenw((LPCWSTR)pTypeAndExtensions);
 	if (dwLength==0)
 		return CB_ERR;
 	WCHAR* szType=new WCHAR[++dwLength];
@@ -11467,7 +11467,7 @@ CLocateDlg::CAdvancedDlg::FileType::FileType(LPCWSTR& szBuildIn,HIMAGELIST hImag
 	
 	
 	// First string is title
-	SIZE_T dwLength=istrlenw(szBuildIn);
+	DWORD dwLength=istrlenw(szBuildIn);
 	szTitle=new WCHAR[++dwLength];
 	MemCopyW(szTitle,szBuildIn,dwLength);
 	szBuildIn+=dwLength;

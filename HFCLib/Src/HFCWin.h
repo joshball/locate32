@@ -467,12 +467,14 @@ public:
 #ifdef _WIN64
 	LONG_PTR GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLongPtr(m_hWnd,nIndex); }	
 	LONG_PTR SetWindowLong(WindowLongIndex nIndex,LONG_PTR lNewLong) { return ::SetWindowLongPtr(m_hWnd,nIndex,lNewLong); }
+	LONG_PTR GetClassLong(ClassLongIndex nIndex) const { return ::GetClassLongPtr(m_hWnd,nIndex); }
+	LONG_PTR SetClassLong(ClassLongIndex nIndex,LONG_PTR lNewVal) { return ::SetClassLongPtr(m_hWnd,nIndex,lNewVal); }
 #else
-	LONG GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLongPtr(m_hWnd,nIndex); }	
-	LONG SetWindowLong(WindowLongIndex nIndex,LONG lNewLong) { return ::SetWindowLongPtr(m_hWnd,nIndex,lNewLong); }
+	LONG GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLong(m_hWnd,nIndex); }	
+	LONG SetWindowLong(WindowLongIndex nIndex,LONG lNewLong) { return ::SetWindowLong(m_hWnd,nIndex,lNewLong); }
+	LONG GetClassLong(ClassLongIndex nIndex) const { return ::GetClassLong(m_hWnd,nIndex); }
+	LONG SetClassLong(ClassLongIndex nIndex,LONG lNewVal) { return ::SetClassLong(m_hWnd,nIndex,lNewVal); }
 #endif
-	DWORD GetClassLong(ClassLongIndex nIndex) const { return ::GetClassLong(m_hWnd,nIndex); }
-	DWORD SetClassLong(ClassLongIndex nIndex,LONG lNewVal) { return ::SetClassLong(m_hWnd,nIndex,lNewVal); }
 
 	virtual BOOL Create(LPCTSTR lpszClassName,
 		LPCTSTR lpszWindowName, DWORD dwStyle,

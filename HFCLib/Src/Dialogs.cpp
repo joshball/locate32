@@ -572,8 +572,8 @@ void CPropertySheet::BuildPropPageArray()
 		m_psh.phpage=new HPROPSHEETPAGE[max(2,m_pages.GetSize())];
 		for (int i=0;i<m_pages.GetSize();i++)
 		{
-			m_psh.phpage[i]=CreatePropertySheetPageW(
-				&((CPropertyPage*)m_pages.GetAt(i))->m_pspw);
+			CPropertyPage* pPage=(CPropertyPage*)m_pages.GetAt(i);
+			m_psh.phpage[i]=CreatePropertySheetPageW(&pPage->m_pspw);
 		}
 		m_psh.nPages=m_pages.GetSize();
 	}
@@ -2416,8 +2416,16 @@ COptionsPropertyPage::Item::~Item()
 
 void COptionsPropertyPage::Construct(const OPTIONPAGE* pOptionPage,TypeOfResourceHandle bType)
 {
+	if (pOptionPage->dwFlags&OPTIONPAGE::opTemplateIsID)
+		m_lpszTemplateName=MAKEINTRESOURCE(pOptionPage->nIDTemplate);
+	else
+	{
+		if (IsUnicodeSystem())
+			m_lpszTemplateNameW=alloccopy(pOptionPage->lpszTemplateName);
+		else
+			m_lpszTemplateName=alloccopyWtoA(pOptionPage->lpszTemplateName);
+	}
 
-	m_lpszTemplateName=pOptionPage->lpszTemplateName;
 
 	if (pOptionPage->dwFlags&OPTIONPAGE::opCaptionIsID)
 		CPropertyPage::Construct(pOptionPage->nIDCaption,bType);

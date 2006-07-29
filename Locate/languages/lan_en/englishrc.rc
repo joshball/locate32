@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,6,7230
- PRODUCTVERSION 2,99,6,7230
+ FILEVERSION 2,99,6,7290
+ PRODUCTVERSION 2,99,6,7290
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 6.7230"
+            VALUE "FileVersion", "3.0 beta 6.7290"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 6.7230"
+            VALUE "ProductVersion", "3.0 beta 6.7290"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -498,7 +498,7 @@ BEGIN
     CONTROL         "Use Unicode character set",
                     IDC_UNICODE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,61,256,11
-    CONTROL         "&Do not owerwrite existing data (e.g, use for cataloguing CD-ROMs)",
+    CONTROL         "&Do not overwrite existing data (e.g, use for cataloguing CD-ROMs)",
                     IDC_INCREMENTALUPDATE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,73,256,11
     GROUPBOX        "Information:",IDC_STATIC,2,93,270,92
@@ -1259,6 +1259,8 @@ BEGIN
 	IDS_TOOLTIPFORFILEDELETED		"File: %s\r\nPath: %s\r\nType: %s"
 	IDS_TOOLTIPFORDIRECTORY			"Directory: %s\r\nPath: %s\r\nType: %s\r\nDate Modified: %s"
 	IDS_TOOLTIPFORDIRECTORYDELETED	"Directory: %s\r\nPath: %s\r\nType: %s"
+	IDS_TOOLTIPDESCRIPTION			"Description:"
+	IDS_TOOLTIPTARGET				"Target:"
 END
 
 STRINGTABLE 

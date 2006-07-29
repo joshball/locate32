@@ -597,19 +597,20 @@ public:
 	{
 		union {
 			UINT nIDTemplate;
-			LPCTSTR lpszTemplateName;
+			LPCWSTR lpszTemplateName;
         };
 		union {
 			UINT nIDCaption;
-			LPCSTR lpszCaption;
+			LPCWSTR lpszCaption;
 		};
 		union {
 			UINT nIDChangeText;
-			LPCSTR lpszChangeText;
+			LPCWSTR lpszChangeText;
 		};
 		UINT nTreeCtrlID;
 
 		enum OptionPageFlags {
+			opTemplateIsID=0x1,
 			opCaptionIsID=0x2,
 			opChangeIsID=0x4
 		};
@@ -1179,7 +1180,7 @@ inline COptionsPropertyPage::COptionsPropertyPage()
 }
 
 inline COptionsPropertyPage::COptionsPropertyPage(const COptionsPropertyPage::OPTIONPAGE* pOptionPage,TypeOfResourceHandle bType)
-:	m_pTree(NULL),m_pItems(NULL),CPropertyPage(pOptionPage->lpszTemplateName)
+:	m_pTree(NULL),m_pItems(NULL),CPropertyPage()
 {
 	Construct(pOptionPage,bType);
 }

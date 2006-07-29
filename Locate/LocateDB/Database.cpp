@@ -57,7 +57,7 @@ BOOL CDatabase::LoadFromRegistry(HKEY hKeyRoot,LPCSTR szPath,CArray<CDatabase*>&
 	return TRUE;
 }
 
-CDatabase* CDatabase::FromName(HKEY hKeyRoot,LPCSTR szPath,LPCWSTR szName,DWORD iNameLength)
+CDatabase* CDatabase::FromName(HKEY hKeyRoot,LPCSTR szPath,LPCWSTR szName,DWORD dwNameLength)
 {
 	CRegKey RegKey,RegKey2;
 	CString Path(szPath);
@@ -67,8 +67,8 @@ CDatabase* CDatabase::FromName(HKEY hKeyRoot,LPCSTR szPath,LPCWSTR szName,DWORD 
 	if (RegKey.OpenKey(hKeyRoot,Path,CRegKey::defRead|CRegKey::samEnumerateSubkeys)!=ERROR_SUCCESS)
 		return NULL;
 
-	if (iNameLength==SIZE_T(-1))
-		iNameLength=(int)istrlenw(szName);
+	if (dwNameLength==DWORD(-1))
+		dwNameLength=istrlenw(szName);
 
     CString key;
 	for (int i=0;RegKey.EnumKey(i,key);i++)
@@ -81,7 +81,7 @@ CDatabase* CDatabase::FromName(HKEY hKeyRoot,LPCSTR szPath,LPCWSTR szName,DWORD 
 				CAllocArrayTmpl<WCHAR> pName(dwLength);
 				RegKey2.QueryValue(L"",pName,dwLength);
                 
-				if (strcasencmp(pName,szName,iNameLength)==0)
+				if (strcasencmp(pName,szName,dwNameLength)==0)
 					return CDatabase::FromKey(RegKey,"",key);		
 			}
 			RegKey2.CloseKey();
@@ -114,7 +114,7 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,const PDATABASE* ppDa
     for (int i=0;i<nDatabases;i++)
 	{
 		char* pKeyName=ppDatabases[i]->GetValidKey(i+1);
-		SIZE_T dwLength=istrlen(pKeyName);
+		DWORD dwLength=istrlen(pKeyName);
 		
 		// Copying name
 		char* pKey=new char[nDigits+dwLength+2];
@@ -368,7 +368,7 @@ CDatabase* CDatabase::FromFile(LPCWSTR szFileName,int dwNameLength)
 	return pDatabase;
 }
 
-CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName,LPCWSTR szAppDir,INT iAppDirLength)
+CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName,LPCWSTR szAppDir,int iAppDirLength)
 {
 	CDatabase* pDatabase=new CDatabase; // This default dwFlags and description and drives to NULL
 
@@ -379,7 +379,7 @@ CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName,LPCWSTR szAppDir,INT iA
 	
 	if (bDefaultFileName)
 	{
-		if (iAppDirLength==SIZE_T(-1))
+		if (iAppDirLength==-1)
 			iAppDirLength=(int)istrlenw(szAppDir);
 
 		pDatabase->m_szArchiveName=new WCHAR[iAppDirLength+10];
@@ -577,7 +577,7 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 
 LPWSTR CDatabase::GetCorrertFileName(LPCWSTR szFileName,DWORD dwNameLength)
 {
-	if (dwNameLength==SIZE_T(-1))
+	if (dwNameLength==DWORD(-1))
 		dwNameLength=(DWORD)istrlenw(szFileName);
 	
 	LPWSTR szFile;
@@ -615,7 +615,7 @@ void CDatabase::CheckDoubleNames(PDATABASE* ppDatabases,int nDatabases)
 {
 	for (int i=1;i<nDatabases;i++)
 	{
-		SIZE_T dwLength=istrlenw(ppDatabases[i]->m_szName);
+		DWORD dwLength=istrlenw(ppDatabases[i]->m_szName);
 		
 		for (int j=0;j<i;j++)
 		{
@@ -819,7 +819,7 @@ void CDatabase::SetRoots(LPWSTR* pRoots,int nCount)
 	delete[] dwLengths;
 }
 
-CDatabase* CDatabase::FindByName(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szName,INT iLength)
+CDatabase* CDatabase::FindByName(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szName,int iLength)
 {
 	CStringW sName(szName,iLength);
 	sName.MakeLower();
@@ -835,7 +835,7 @@ CDatabase* CDatabase::FindByName(PDATABASE* ppDatabases,int nDatabases,LPCWSTR s
 	return NULL;
 }
 
-CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szFile,INT iLength)
+CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR szFile,int iLength)
 {
 	WCHAR* pPath1=NULL;
 	WCHAR szPath1[MAX_PATH]; 
@@ -847,7 +847,7 @@ CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR s
 
 	if (szFile[0]!=L'\\' && szFile[1]!=L':')
 	{
-		if (iLength==SIZE_T(-1))
+		if (iLength==-1)
 			iLength=(int)istrlenw(szFile);
 			
 		DWORD dwLength=GetCurrentDirectory(0,NULL);
@@ -987,7 +987,7 @@ void CDatabase::AddLocalRoots()
 	if (m_szRoots==NULL)
 	{
 		CIntArray aLengths;
-		SIZE_T dwDataLength=0;
+		DWORD dwDataLength=0;
 		int i;
 		for (i=0;i<aLocalRoots.GetSize();i++)
 		{

@@ -50,7 +50,8 @@ inline CSettingsProperties::CAdvancedSettingsPage::CAdvancedSettingsPage()
 	DebugMessage("CSettingsProperties::CAdvancedSettingsPage::CAdvancedSettingsPage()"); 
 
 	OPTIONPAGE op;
-	op.dwFlags=COptionsPropertyPage::OPTIONPAGE::opCaptionIsID|
+	op.dwFlags=COptionsPropertyPage::OPTIONPAGE::opTemplateIsID|
+		COptionsPropertyPage::OPTIONPAGE::opCaptionIsID|
 		COptionsPropertyPage::OPTIONPAGE::opChangeIsID;
 	
 	

@@ -1044,7 +1044,7 @@ void CSelectDatabasesDlg::OnPresetCombo()
 		InsertSelected();
 	else
 	{
-		SIZE_T nTextLen=m_PresetCombo.GetLBTextLen(nCurSel);
+		int nTextLen=m_PresetCombo.GetLBTextLen(nCurSel);
 		if (nTextLen==CB_ERR)
 			return;
 		WCHAR* pText=new WCHAR[nTextLen+1];
@@ -1243,7 +1243,7 @@ BOOL CSelectDatabasesDlg::InsertSelected()
 			LPWSTR pPtr=m_pSelectDatabases;
 			while (*pPtr!=L'\0')
 			{
-				SIZE_T iStrLen=istrlenw(pPtr)+1;
+				int iStrLen=istrlenw(pPtr)+1;
 				if (wcsncmp(pPtr,pDatabase->GetName(),iStrLen)==0)
 				{
 					bFound=TRUE;
@@ -1634,7 +1634,7 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCWSTR szName,BOOL bAskOverwrite)
 		// First item is global, second is last
 		for (int i=m_PresetCombo.GetCount()-1;i>=2;i--)
 		{
-			SIZE_T nItemTextLength=m_PresetCombo.GetLBTextLen(i);
+			int nItemTextLength=m_PresetCombo.GetLBTextLen(i);
 			if (nItemTextLength==CB_ERR)
 				continue;
 
@@ -1727,7 +1727,7 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCWSTR szName,BOOL bAskOverwrite)
 		
 		if (szName!=NULL)
 		{
-			SIZE_T nLen=15+istrlenw(szName);
+			int nLen=15+istrlenw(szName);
 			WCHAR* szText=new WCHAR[nLen];
 			if (iOverwriteItem>=0)
 				StringCbPrintfW(szText,nLen*sizeof(WCHAR),L"Preset %03d:%s",iOverwriteItem,szName);

@@ -190,8 +190,8 @@ public:
 			
 			BOOL EnableRemoveButton();
 			int AddDriveToList(LPWSTR szDrive);
-			int AddDirectoryToListWithVerify(LPCWSTR szPath,SIZE_T iLength=-1);
-			int AddDirectoryToList(LPCWSTR szPath,SIZE_T iLength=-1);
+			int AddDirectoryToListWithVerify(LPCWSTR szPath,INT iLength=-1);
+			int AddDirectoryToList(LPCWSTR szPath,int iLength=-1);
 			int AddComputerToList(LPCWSTR szName);
 			
 		public:

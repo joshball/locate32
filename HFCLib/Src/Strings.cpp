@@ -953,7 +953,8 @@ int vsprintfex( char *buffer, int buffersize,const char *format, va_list argList
 				pTemp[0]='%';
 				CopyMemory(pTemp+1,in,length);
 				pTemp[length+1]='\0';
-				if (StringCbPrintfExA(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg))!=S_OK)
+				HRESULT hRes=StringCbPrintfExA(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg));
+				if (FAILED(hRes))
 					return 0;
                 ptr=int(end-buffer);
 				delete[] pTemp;
@@ -973,7 +974,8 @@ int vsprintfex( char *buffer, int buffersize,const char *format, va_list argList
 				pTemp[0]='%';
 				CopyMemory(pTemp+1,in,index);
 				pTemp[index+1]='\0';
-				if (StringCbPrintfExA(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg))!=S_OK)
+				HRESULT hRes=StringCbPrintfExA(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg));
+				if (FAILED(hRes))
 					return 0;
                 ptr=int(end-buffer);
 				delete[] pTemp;
@@ -1025,7 +1027,9 @@ int vswprintfex( wchar_t *buffer, int buffersize, const wchar_t *format, va_list
 				pTemp[0]=L'%';
 				MemCopyW(pTemp+1,in,length);
 				pTemp[length+1]=L'\0';
-				if (StringCbPrintfExW(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg))!=S_OK)
+				HRESULT hRes=StringCbPrintfExW(buffer+ptr,(buffersize-ptr)*sizeof(wchar_t),&end,
+					NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg));
+				if (FAILED(hRes))
 					return 0;
                 ptr=int(end-buffer);
 				delete[] pTemp;
@@ -1047,7 +1051,9 @@ int vswprintfex( wchar_t *buffer, int buffersize, const wchar_t *format, va_list
 				pTemp[index+1]=L'\0';
 				
                 
-				if (StringCbPrintfExW(buffer+ptr,buffersize-ptr,&end,NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg))!=S_OK)
+				HRESULT hRes=StringCbPrintfExW(buffer+ptr,(buffersize-ptr)*sizeof(wchar_t),&end,
+					NULL,STRSAFE_IGNORE_NULLS,pTemp,va_getarg(argList,nNextArg));
+				if (FAILED(hRes))
 					return 0;
                 ptr=int(end-buffer);
 

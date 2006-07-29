@@ -2864,7 +2864,7 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip,LPCWSTR szT
 		{
 			WCHAR szString[64];
 			LoadString(uTip,szString,63);
-			StringCbPrintfW(nid.szTip,63,szString,szText);
+			StringCbPrintfW(nid.szTip,63*sizeof(WCHAR),szString,szText);
 		}
 		else
 			LoadString(uTip,nid.szTip,63);
@@ -3279,7 +3279,7 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThrea
 				BOOL bFound=FALSE;
 				while (*pPtr!=NULL)
 				{
-					size_t iStrLen=istrlenw(pPtr)+1;
+					int iStrLen=istrlenw(pPtr)+1;
 					if (wcsncmp(pPtr,aGlobalDatabases[i]->GetName(),iStrLen)==0)
 					{
 						bFound=TRUE;
@@ -3743,7 +3743,7 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 					BYTE* pPtr=pSchedules+6;
 					for (DWORD n=0;n<*(DWORD*)(pSchedules+2);n++)
 					{
-						if (pPtr+sizeof(CSchedule)>=pSchedules+nKeyLen)
+						if (pPtr+SCHEDULE_V2_LEN>=pSchedules+nKeyLen)
 							break;
 
 						DebugFormatMessage("SCHEDULEV2: type=%d",((CSchedule*)pPtr)->m_nType);
@@ -3758,7 +3758,7 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 					BYTE* pPtr=pSchedules+6;
 					for (DWORD n=0;n<*(DWORD*)(pSchedules+2);n++)
 					{
-						if (pPtr+sizeof(CSchedule)>=pSchedules+nKeyLen)
+						if (pPtr+SCHEDULE_V3_LEN>=pSchedules+nKeyLen)
 							break;
 
 						DebugFormatMessage("SCHEDULEV3: type=%d",((CSchedule*)pPtr)->m_nType);
@@ -3818,7 +3818,7 @@ BOOL CLocateAppWnd::SaveSchedules()
 			SetHFCError(HFC_CANNOTALLOC);
 			//DebugMessage("LocateAppWnd::OnDestroy(): Cannot allocate memory.");
 		}
-		pSchedules[0]=sizeof(CSchedule);
+		pSchedules[0]=SCHEDULE_V3_LEN;
 		pSchedules[1]=3; //version
 		*(DWORD*)(pSchedules+2)=m_Schedules.GetCount();
 		
@@ -4168,13 +4168,13 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 	}
 
 	LPWSTR szNewPtr;
-	size_t nLength;
+	int nLength;
 	if (szExtra!=NULL)
 	{
 		int iLen=(int)istrlenw(error)+(int)istrlenw(szExtra)+1;
 		szNewPtr=new WCHAR[iLen];
 		StringCbPrintfW(szNewPtr,iLen*sizeof(WCHAR),error,szExtra);
-		nLength=wcslen(szNewPtr);
+		nLength=istrlenw(szNewPtr);
 	}
 	else
 	    szNewPtr=alloccopy(error,nLength=istrlenw(error));

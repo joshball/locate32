@@ -97,7 +97,6 @@ HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath)
 {
 	HRESULT hres;  
 	IShellLink* psl;
-	WIN32_FIND_DATA wfd;
 	pszPath[0]='\0';
 
 	hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl);
@@ -114,7 +113,7 @@ HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath)
 			{
 				hres=psl->Resolve(hWnd,SLR_ANY_MATCH);
 				if (pszPath!=NULL && SUCCEEDED(hres))
-					hres=psl->GetPath(pszPath,MAX_PATH,(WIN32_FIND_DATA*)&wfd,0);
+					hres=psl->GetPath(pszPath,MAX_PATH,NULL,0);
 			}
 			ppf->Release();
 		}
@@ -127,8 +126,7 @@ HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,DWORD nBufSize)
 {
 	HRESULT hres;  
 	IShellLink* psl;
-	WIN32_FIND_DATA wfd;
-
+	
 	hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl);
 	if (SUCCEEDED(hres))
 	{
@@ -140,7 +138,7 @@ HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,DWORD nBufSize)
 			MultiByteToWideChar(CP_ACP,0,pszShortcutFile,-1,wsz,MAX_PATH);
 			hres=ppf->Load(wsz,STGM_READ);
 			if (SUCCEEDED(hres))
-				hres=psl->GetPath(pszTarget,nBufSize,(WIN32_FIND_DATA*)&wfd,0);
+				hres=psl->GetPath(pszTarget,nBufSize,NULL,0);
 			ppf->Release();
 		}
 		psl->Release();  

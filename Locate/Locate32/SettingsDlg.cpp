@@ -2757,7 +2757,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 
 		while (*pPtr!='\0')
 		{
-			SIZE_T dwLength=istrlenw(pPtr);
+			DWORD dwLength=istrlenw(pPtr);
 
 			if (dwLength>2)
 			{
@@ -2960,7 +2960,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 			li.pszText=szPath;
 			li.cchTextMax=MAX_PATH;
 			m_pList->GetItem(&li);
-			SIZE_T nPathLen=istrlenw(szPath);
+			DWORD nPathLen=istrlenw(szPath);
 			for (int i=0;i<aRoots.GetSize();i++)
 			{
 				LPWSTR pAddedPath=aRoots.GetAt(i);
@@ -3208,7 +3208,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnBrowse()
 	
 	// Check filename and set
 	fd.GetFilePath(File);
-	LONG_PTR i=File.Find('*');
+	int i=File.Find('*');
 	if (i==-1)
 		SetDlgItemText(IDC_DBFILE,File);
 	else
@@ -3333,7 +3333,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 
 		while (*pPtr!='\0')
 		{
-			SIZE_T dwLength=istrlenw(pPtr);
+			DWORD dwLength=istrlenw(pPtr);
 
 			// Check if selected
 			if (strcasecmp(pPtr,szDrive)==0)
@@ -3346,7 +3346,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	return li.iItem;
 }
 
-int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryToListWithVerify(LPCWSTR szFolder,SIZE_T iLength)
+int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryToListWithVerify(LPCWSTR szFolder,INT iLength)
 {
 	CStringW rFolder(szFolder,iLength);
 
@@ -3388,9 +3388,9 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 }
 
 		
-int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryToList(LPCWSTR szPath,SIZE_T iLength)
+int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryToList(LPCWSTR szPath,int iLength)
 {
-	if (iLength==SIZE_T(-1))
+	if (iLength==-1)
 		iLength=istrlenw(szPath);
 	
 	WCHAR szLabel[20],szFileSystem[20];
@@ -3405,7 +3405,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 		Drive << szPath[0] << ":\\";
 	else
 	{
-		LONG_PTR nIndex=FirstCharIndex(szPath,L'\\');
+		int nIndex=FirstCharIndex(szPath,L'\\');
 		if (nIndex==-1 || szPath[nIndex+1]!=L'\\')
 			return -1;
 		
@@ -3622,7 +3622,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	int nCount=Directories.GetCount();
 	for (int i=0;i<nCount;i++)
 	{
-		SIZE_T iLength=Directories.GetTextLen(i)+1;
+		DWORD iLength=Directories.GetTextLen(i)+1;
 		WCHAR* pText=new WCHAR[max(iLength,2)];
 		Directories.GetText(i,pText);
 		m_aDirectories.Add(pText);
@@ -3663,7 +3663,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	
 	for (int i=Directories.GetCount()-1;i>=0;i--)
 	{
-		SIZE_T iLength=Directories.GetTextLen(i);
+		int iLength=Directories.GetTextLen(i);
         WCHAR* szText=new WCHAR[iLength+2];
 		Directories.GetText(i,szText);
 		MakeLower(szText);
@@ -4266,7 +4266,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnDatabas
 			if (m_pSchedule->m_pDatabases!=NULL)
 				delete[] m_pSchedule->m_pDatabases;
 			
-			SIZE_T dwLength=1;
+			DWORD dwLength=1;
 			int i=0;
 			for (i=0;i<aDatabases.GetSize();i++)
 				dwLength+=istrlenw(aDatabases[i]->GetName())+1;
@@ -5115,7 +5115,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 
 				if (HWND(Control)!=NULL)
 				{
-					LONG_PTR nIndex;
+					int nIndex;
 					Control.GetWindowText(str);
 					while ((nIndex=str.Find('&'))!=-1)
 						str.DelChar(nIndex);
@@ -5131,7 +5131,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 			str.LoadString(CAction::GetActivateTabsActionLabelStringId(
 				(CAction::ActionActivateTabs)IndexToSubAction(CAction::ActivateTab,uSubAction)));		
 
-			LONG_PTR nIndex;
+			int nIndex;
 			while ((nIndex=str.Find(L"&&"))!=-1)
 				str.DelChar(nIndex);
 			return TRUE;
@@ -5154,7 +5154,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 			if (bRet && mii.fType==MFT_STRING)
 			{
 				str.Format((INT)HIWORD(uSubAction),szLabel);
-				LONG_PTR nIndex=str.FindFirst(L'\t');
+				int nIndex=str.FindFirst(L'\t');
 				if (nIndex!=-1)
 					str.FreeExtra(nIndex);
 

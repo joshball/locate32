@@ -27,59 +27,48 @@ CSchedule::CSchedule()
 
 CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
 {
+	sMemCopy(this,pData,SCHEDULE_V1_LEN);
+	pData+=SCHEDULE_V1_LEN;		
+
 	if (nVersion==1)
 	{
-		sMemCopy(this,pData,SCHEDULE_V1_LEN);
 		m_pDatabases=NULL;
 		m_nThreadPriority=THREAD_PRIORITY_NORMAL;
-		pData+=SCHEDULE_V1_LEN;
-	}
-	else if (nVersion==2)
-	{
-		sMemCopy(this,pData,SCHEDULE_V2_LEN);
-		m_nThreadPriority=THREAD_PRIORITY_NORMAL;
-		pData+=SCHEDULE_V2_LEN;
-		if (m_pDatabases==NULL)
-		{
-			pData++;
-			return;
-		}
-        DWORD dwLength=1;
-        BYTE* pOrig=pData;
-        while (*pData!='\0')
-		{
-			int iStrLen=(int)istrlen(LPSTR(pData))+1;
-			dwLength+=iStrLen;
-			pData+=iStrLen;
-		}
-		pData++;
-
-		m_pDatabases=new WCHAR[dwLength];
-		MemCopyAtoW(m_pDatabases,pOrig,dwLength);
-	}
-	else if (nVersion==3)
-	{
-		sMemCopy(this,pData,SCHEDULE_V3_LEN);
-		pData+=SCHEDULE_V3_LEN;
-		if (m_pDatabases==NULL)
-		{
-			pData++;
-			return;
-		}
-        DWORD dwLength=1;
-        BYTE* pOrig=pData;
-        while (*pData!='\0')
-		{
-			int iStrLen=(int)istrlen(LPSTR(pData))+1;
-			dwLength+=iStrLen;
-			pData+=iStrLen;
-		}
-		pData++;
-
-		m_pDatabases=new WCHAR[dwLength];
-		MemCopyAtoW(m_pDatabases,pOrig,dwLength);
-	}
 		
+	}
+	else if (nVersion==2 || nVersion==3)
+	{
+		BOOL bDatabasesSpecified=*((DWORD*)pData)!=NULL;
+		pData+=sizeof(DWORD);
+
+		if (nVersion==3)
+		{
+			m_nThreadPriority=*((DWORD*)pData);
+			pData+=sizeof(DWORD);
+		}
+		else
+			m_nThreadPriority=THREAD_PRIORITY_NORMAL;
+			
+			
+		if (bDatabasesSpecified) 
+		{
+			// Databases
+			DWORD dwLength=1;
+			BYTE* pOrig=pData;
+			while (*pData!='\0')
+			{
+				int iStrLen=(int)istrlen(LPSTR(pData))+1;
+				dwLength+=iStrLen;
+				pData+=iStrLen;
+			}
+			
+			m_pDatabases=new WCHAR[dwLength];
+			MemCopyAtoW(m_pDatabases,pOrig,dwLength);
+		}
+		else
+			m_pDatabases=NULL;
+		pData++;
+	}
 	
 	if (m_tLastStartDate.wYear<1900) // There is something wrong
 		GetCurrentDateAndTime(&m_tLastStartDate,&m_tLastStartTime);
@@ -88,9 +77,9 @@ CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
 DWORD CSchedule::GetDataLen() const
 {
 	if (m_pDatabases==NULL)
-		return sizeof(CSchedule)+1;
+		return SCHEDULE_V3_LEN+1;
     	
-	DWORD dwLength=sizeof(CSchedule)+1;
+	DWORD dwLength=SCHEDULE_V3_LEN+1;
 	LPWSTR pPtr=m_pDatabases;
 	while (*pPtr!='\0')
 	{
@@ -103,23 +92,27 @@ DWORD CSchedule::GetDataLen() const
 
 DWORD CSchedule::GetData(BYTE* pData) const
 {
-	CopyMemory(pData,this,sizeof(CSchedule));
-	pData+=sizeof(CSchedule);
-	if (m_pDatabases==NULL)
+	CopyMemory(pData,this,SCHEDULE_V1_LEN);
+	pData+=SCHEDULE_V1_LEN;
+
+	*((DWORD*)pData)=m_pDatabases!=NULL;
+	pData+=sizeof(DWORD);
+
+	*((DWORD*)pData)=m_nThreadPriority;
+	pData+=sizeof(DWORD);
+
+	DWORD dwLength=SCHEDULE_V3_LEN+1;	
+	if (m_pDatabases!=NULL)
 	{
-		*pData='\0';
-		return sizeof(CSchedule)+1;
-	}
-	
-	DWORD dwLength=sizeof(CSchedule)+1;
-	LPWSTR pPtr=m_pDatabases;
-	while (*pPtr!='\0')
-	{
-		int iStrLen=(int)istrlenw(pPtr)+1;
-		MemCopyWtoA(pData,pPtr,iStrLen);
-        dwLength+=iStrLen;
-		pPtr+=iStrLen;
-		pData+=iStrLen;
+		LPWSTR pPtr=m_pDatabases;
+		while (*pPtr!='\0')
+		{
+			int iStrLen=(int)istrlenw(pPtr)+1;
+			MemCopyWtoA(pData,pPtr,iStrLen);
+			dwLength+=iStrLen;
+			pPtr+=iStrLen;
+			pData+=iStrLen;
+		}
 	}
     *pData='\0';
 	return dwLength;
