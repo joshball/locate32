@@ -84,8 +84,8 @@ inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDir
 {
 }
 
-inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::CExcludeDirectoryDialog(const CArrayFAP<LPWSTR>& rDirectories)
-:	CDialog(IDD_EXCLUDEDIRECTORIES),m_bTextChanged(TRUE)
+inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::CExcludeDirectoryDialog(LPCWSTR szFiles,const CArrayFAP<LPWSTR>& rDirectories)
+:	CDialog(IDD_EXCLUDEDIRECTORIES),m_bDirectoryFieldChanged(TRUE),m_sFiles(szFiles)
 {
 	for (int i=0;i<rDirectories.GetSize();i++)
 		m_aDirectories.Add(alloccopy(rDirectories[i]));

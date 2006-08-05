@@ -210,7 +210,7 @@ public:
 			{
 			public:
 				CExcludeDirectoryDialog();
-				CExcludeDirectoryDialog(const CArrayFAP<LPWSTR>& rDirectories);
+				CExcludeDirectoryDialog(LPCWSTR szFiles,const CArrayFAP<LPWSTR>& rDirectories);
 
 				virtual BOOL OnInitDialog(HWND hwndFocus);
 				virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
@@ -224,9 +224,10 @@ public:
 				void EnableControls();
 
 			public:
+				CStringW m_sFiles;
 				CArrayFAP<LPWSTR> m_aDirectories;
-
-				BOOL m_bTextChanged;
+				
+				BOOL m_bDirectoryFieldChanged;
 			};
 
 		};

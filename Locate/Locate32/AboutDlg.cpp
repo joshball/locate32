@@ -70,17 +70,14 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 			VOID* pTranslations,* pProductVersion=NULL;
 			VerQueryValueW(pData,L"VarFileInfo\\Translation",&pTranslations,&iDataLength);
 			WCHAR szTranslation[100];
-			StringCbPrintfW(szTranslation,100*sizeof(WCHAR),L"\\StringFileInfo\\%4X%4X\\ProductVersion",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
-			for (int i=0;szTranslation[i]!='\0';i++)
-			{
-				if (szTranslation[i]==' ')
-					szTranslation[i]='0';
-			}
+			StringCbPrintfW(szTranslation,100*sizeof(WCHAR),L"\\StringFileInfo\\%04X%04X\\ProductVersion",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
 			if (!VerQueryValueW(pData,szTranslation,&pProductVersion,&iDataLength))
 				VerQueryValueW(pData,L"\\StringFileInfo\\040904b0\\ProductVersion",&pProductVersion,&iDataLength);
 			
 			if (pProductVersion!=NULL)
 				SetDlgItemText(IDC_VERSION,CStringW(IDS_VERSION)+LPCWSTR(pProductVersion));
+
+			delete[] pData;
 		}
 		else
 		{
@@ -90,17 +87,14 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 			VOID* pTranslations,* pProductVersion=NULL;
 			VerQueryValue(pData,"VarFileInfo\\Translation",&pTranslations,&iDataLength);
 			char szTranslation[100];
-			StringCbPrintf(szTranslation,100,"\\StringFileInfo\\%4X%4X\\ProductVersion",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
-			for (int i=0;szTranslation[i]!='\0';i++)
-			{
-				if (szTranslation[i]==' ')
-					szTranslation[i]='0';
-			}
+			StringCbPrintf(szTranslation,100,"\\StringFileInfo\\%04X%04X\\ProductVersion",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
 			if (!VerQueryValue(pData,szTranslation,&pProductVersion,&iDataLength))
 				VerQueryValue(pData,"\\StringFileInfo\\040904b0\\ProductVersion",&pProductVersion,&iDataLength);
 			
 			if (pProductVersion!=NULL)
 				SetDlgItemText(IDC_VERSION,CString(IDS_VERSION)+LPCSTR(pProductVersion));
+
+			delete[] pData;
 		}
 		
 

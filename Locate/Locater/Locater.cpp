@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   database locater v2.99.6.6040                 */
+   database locater v2.99.6.8050                 */
 
 #include <HFCLib.h>
 
@@ -747,103 +747,6 @@ DWORD WINAPI CLocater::LocateThreadProc(LPVOID lpParameter)
 	return ((CLocater*)lpParameter)->LocatingProc();
 }
 
-BOOL _ContainString(LPCSTR s1,LPCWSTR s2) // Is s2 in the s1
-{
-    BOOL bBreakIfNotMatch;
-	if (s2[0]=='*')
-	{
-		if (s2[1]=='\0')
-			return TRUE;
-		s2++;
-		bBreakIfNotMatch=FALSE;
-	}
-	else
-		bBreakIfNotMatch=TRUE;
-
-	while (*s1!='\0')
-	{
-		for (int i=0;;i++)
-		{
-			// is s1 too short?
-			if (s1[i]=='\0')
-			{
-				if (s2[i]=='\0')
-					return TRUE;
-				return s2[i]=='*' && s2[i+1]=='\0';
-			}
-			// string differ
-			if (A2Wc(s1[i])!=s2[i])
-			{
-				if (s2[i]=='?')
-					continue;
-				
-				if (s2[i]=='*')
-				{
-					if (s2[i+1]=='\0')
-						return TRUE;
-					s2+=i+1;
-					s1+=i-1;
-					bBreakIfNotMatch=FALSE;
-					break;
-				}
-				break;
-			}
-		}
-		if (bBreakIfNotMatch)
-			return FALSE;
-		s1++;
-	}
-	return FALSE;
-}
-
-BOOL _ContainString(LPCWSTR s1,LPCWSTR s2) // Is s2 in the s1
-{
-    BOOL bBreakIfNotMatch;
-	if (s2[0]=='*')
-	{
-		if (s2[1]=='\0')
-			return TRUE;
-		s2++;
-		bBreakIfNotMatch=FALSE;
-	}
-	else
-		bBreakIfNotMatch=TRUE;
-
-	while (*s1!='\0')
-	{
-		for (int i=0;;i++)
-		{
-			// is s1 too short?
-			if (s1[i]=='\0')
-			{
-				if (s2[i]=='\0')
-					return TRUE;
-				return s2[i]=='*' && s2[i+1]=='\0';
-			}
-			// string differ
-			if (s1[i]!=s2[i])
-			{
-				if (s2[i]=='?')
-					continue;
-				
-				if (s2[i]=='*')
-				{
-					if (s2[i+1]=='\0')
-						return TRUE;
-					s2+=i+1;
-					s1+=i-1;
-					bBreakIfNotMatch=FALSE;
-					break;
-				}
-				break;
-			}
-		}
-		if (bBreakIfNotMatch)
-			return FALSE;
-		s1++;
-	}
-	return FALSE;
-}
 
 /*
 inline BOOL CLocater::SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCSTR* szDirectories,DWORD nDirectories)
@@ -1094,7 +997,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 					LPWSTR szCondition=m_aNames[i]->GetBuffer();
 					szCondition[m_aNames[i]->GetLength()-1]='\0';
 
-					if (_ContainString(szName,szCondition))
+					if (ContainString(szName,szCondition))
 					{
 						delete[] szName;
 						szCondition[m_aNames[i]->GetLength()-1]='.';
@@ -1103,7 +1006,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 					szCondition[m_aNames[i]->GetLength()-1]='.';
 				}
 			}
-			else if (_ContainString(szName,*m_aNames[i]))
+			else if (ContainString(szName,*m_aNames[i]))
 			{
 				delete[] szName;
 				return TRUE;
@@ -1202,7 +1105,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 					LPWSTR szCondition=m_aNames[i]->GetBuffer();
 					szCondition[m_aNames[i]->GetLength()-1]='\0';
 
-					if (_ContainString(szName,szCondition))
+					if (ContainString(szName,szCondition))
 					{
 						delete[] szName;
 						szCondition[m_aNames[i]->GetLength()-1]='.';
@@ -1211,7 +1114,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 					szCondition[m_aNames[i]->GetLength()-1]='.';
 				}
 			}
-			else if (_ContainString(szName,*m_aNames[i]))
+			else if (ContainString(szName,*m_aNames[i]))
 			{
 				delete[] szName;
 				return TRUE;
@@ -1272,7 +1175,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 					LPWSTR szCondition=m_aNames[i]->GetBuffer();
 					szCondition[m_aNames[i]->GetLength()-1]='\0';
 
-					if (_ContainString(szName,szCondition))
+					if (ContainString(szName,szCondition))
 					{
 						delete[] szName;
 						szCondition[m_aNames[i]->GetLength()-1]='.';
@@ -1281,7 +1184,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 					szCondition[m_aNames[i]->GetLength()-1]='.';
 				}
 			}
-			else if (_ContainString(szName,*m_aNames[i]))
+			else if (ContainString(szName,*m_aNames[i]))
 			{
 				delete[] szName;
 				return TRUE;
@@ -1381,7 +1284,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 					LPWSTR szCondition=m_aNames[i]->GetBuffer();
 					szCondition[m_aNames[i]->GetLength()-1]='\0';
 
-					if (_ContainString(szName,szCondition))
+					if (ContainString(szName,szCondition))
 					{
 						delete[] szName;
 						szCondition[m_aNames[i]->GetLength()-1]='.';
@@ -1390,7 +1293,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 					szCondition[m_aNames[i]->GetLength()-1]='.';
 				}
 			}
-			else if (_ContainString(szName,*m_aNames[i]))
+			else if (ContainString(szName,*m_aNames[i]))
 			{
 				delete[] szName;
 				return TRUE;
@@ -1440,7 +1343,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
-			if (_ContainString(szName,*m_aNames[i]))
+			if (ContainString(szName,*m_aNames[i]))
 			{
 				delete[] szName;
 				return TRUE;
@@ -1504,7 +1407,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
-			if (_ContainString(szName,*m_aNames[i]))
+			if (ContainString(szName,*m_aNames[i]))
 			{
 				delete[] szName;
 				return TRUE;
@@ -1554,7 +1457,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
-			if (_ContainString(szName,*m_aNames[i]))
+			if (ContainString(szName,*m_aNames[i]))
 			{
 				delete[] szName;
 				return TRUE;
@@ -1618,7 +1521,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
-			if (_ContainString(szName,*m_aNames[i]))
+			if (ContainString(szName,*m_aNames[i]))
 			{
 				delete[] szName;
 				return TRUE;

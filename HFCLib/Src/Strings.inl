@@ -43,6 +43,8 @@ inline LPSTR alloccopymulti(LPCSTR szMultiString)
 #ifdef DEF_WCHAR
 inline LPWSTR alloccopy(LPCWSTR szString)
 {
+	if (szString==NULL)
+		return NULL;
 	int nLength=istrlenw(szString)+1;
 	WCHAR* psz=new WCHAR[max(nLength,2)];
 	CopyMemory(psz,szString,nLength<<1);
@@ -61,13 +63,15 @@ inline LPWSTR alloccopymulti(LPCWSTR szMultiString)
 {
 	int nTotLen;
 	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
-	WCHAR* psz=new WCHAR[nTotLen];
-	CopyMemory(psz,szMultiString,(++nTotLen)<<1);
+	WCHAR* psz=new WCHAR[nTotLen+2];
+	CopyMemory(psz,szMultiString,nTotLen+2);
 	return psz;
 }
 
 inline LPSTR alloccopyWtoA(LPCWSTR szString)
 {
+	if (szString==NULL)
+		return NULL;
 	int dwLength=istrlenw(szString);
 	CHAR* psz=new CHAR[max(dwLength,1)+1];
 	MemCopyWtoA(psz,szString,dwLength+1);
@@ -84,6 +88,8 @@ inline LPSTR alloccopyWtoA(LPCWSTR szString,DWORD dwLength)
 
 inline LPWSTR alloccopyAtoW(LPCSTR szString)
 {
+	if (szString==NULL)
+		return NULL;
 	int dwLength=(int)istrlen(szString);
 	WCHAR* psz=new WCHAR[max(dwLength,1)+1];
 	MultiByteToWideChar(CP_ACP,0,szString,dwLength+1,psz,dwLength+1);
@@ -102,8 +108,8 @@ inline LPSTR alloccopymultiWtoA(LPCWSTR szMultiString)
 {
 	SIZE_T nTotLen;
 	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
-	char* psz=new char[nTotLen];
-	MemCopyWtoA(psz,szMultiString,(++nTotLen)<<1);
+	char* psz=new char[nTotLen+2];
+	MemCopyWtoA(psz,szMultiString,nTotLen+2);
 	return psz;
 }
 
@@ -111,8 +117,8 @@ inline LPWSTR alloccopymultiAtoW(LPCSTR szMultiString)
 {
 	SIZE_T nTotLen;
 	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
-	WCHAR* psz=new WCHAR[nTotLen];
-	MemCopyAtoW(psz,szMultiString,(++nTotLen)<<1);
+	WCHAR* psz=new WCHAR[nTotLen+2];
+	MemCopyAtoW(psz,szMultiString,nTotLen+2);
 	return psz;
 }
 
@@ -881,7 +887,8 @@ inline W2A::W2A(CStringW& sA)
 
 inline W2A::~W2A()
 {
-	delete pAStr;
+	if (pAStr!=NULL)
+		delete pAStr;
 }
 
 inline W2A::operator LPCSTR() const
@@ -907,7 +914,8 @@ inline A2W::A2W(CString& sA)
 
 inline A2W::~A2W()
 {
-	delete pWStr;
+	if (pWStr!=NULL)
+		delete pWStr;
 }
 
 inline A2W::operator LPCWSTR() const

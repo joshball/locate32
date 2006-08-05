@@ -3226,10 +3226,14 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnBrowse()
 
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnExcludeDirectories()
 {
-	CExcludeDirectoryDialog edd(m_pDatabase->GetExcludedDirectories());
+	CExcludeDirectoryDialog edd(m_pDatabase->GetExcludedFiles(),
+		m_pDatabase->GetExcludedDirectories());
 	
 	if (edd.DoModal(*this))
+	{
+		m_pDatabase->SetExcludedFiles(edd.m_sFiles);
 		m_pDatabase->SetExcludedDirectories(edd.m_aDirectories);
+	}
 }
 
 int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList(LPWSTR szDrive)
@@ -3541,12 +3545,14 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	CDialog::OnInitDialog(hwndFocus);
 	CListBox List(GetDlgItem(IDC_DIRECTORIES));
 
+	SetDlgItemText(IDC_EXCLUDEFILES,m_sFiles);
+
 	// Inserting strings
 	for (int i=0;i<m_aDirectories.GetSize();i++)
 		List.AddString(m_aDirectories[i]);
 	
 	EnableControls();
-	SetFocus(IDC_DIRECTORYNAME);
+	SetFocus(IDC_EXCLUDEFILES);
 
 
 	return FALSE;
@@ -3558,7 +3564,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	switch(wID)
 	{
 	case IDOK:
-		if (m_bTextChanged)
+		if (m_bDirectoryFieldChanged && GetFocus()==GetDlgItem(IDC_DIRECTORYNAME))
 		{
 			OnAddFolder(TRUE);
 			SetFocus(IDC_DIRECTORYNAME);
@@ -3572,7 +3578,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 		else if (wNotifyCode==EN_CHANGE)
 		{
 			EnableControls();
-			m_bTextChanged=TRUE;
+			m_bDirectoryFieldChanged=TRUE;
 		}
 		break;
 	case IDC_OK:
@@ -3615,6 +3621,8 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::OnOK()
 {
 	EndDialog(1);
+
+	GetDlgItemText(IDC_EXCLUDEFILES,m_sFiles);
 	
 	m_aDirectories.RemoveAll();
 
@@ -3632,7 +3640,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 		
 BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::OnAddFolder(BOOL bShowErrorMessageIfExists)
 {
-	m_bTextChanged=FALSE;
+	m_bDirectoryFieldChanged=FALSE;
 
 	CStringW sDirectoryPre,sDirectory;
 	CEdit DirectoryName(GetDlgItem(IDC_DIRECTORYNAME));

@@ -138,6 +138,7 @@ int NextCharIndex(LPCSTR,const CHAR,int);
 
 #ifdef DEF_WCHAR
 BOOL ContainString(LPCWSTR,LPCWSTR);
+BOOL ContainString(LPCSTR,LPCWSTR);
 int FirstCharIndex(LPCWSTR,const WCHAR);
 int LastCharIndex(LPCWSTR,const WCHAR);
 int NextCharIndex(LPCWSTR,const WCHAR,int);

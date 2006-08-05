@@ -836,14 +836,13 @@ inline BOOL CBackgroundUpdater::RunningProc()
 				{
 					Item* pItem=aUpdateList.GetAt(i);
 
-					DebugFormatMessage("Checking whether item %s needs to be updated ",pItem->m_pItem->GetName());
+					BkgDebugFormatMessage("Checking whether item %s needs to be updated ",pItem->m_pItem->GetName());
 
 					POINT pt;
 					if (m_pList->GetItemPosition(pItem->m_iItem,&pt))
 					{
-						DebugFormatMessage("step two for %s, pt.x=%d, pt.y=%d, (%d,%d,%d,%d)",
-							pItem->m_pItem->GetName(),pt.x,pt.y,
-							rcViewRect.left,rcViewRect.right,rcViewRect.top,rcViewRect.bottom);
+						BkgDebugFormatMessage4("step two for %s, pt.x=%d, pt.y=%d",
+							pItem->m_pItem->GetName(),pt.x,pt.y,0);
 
 						// X axes does not need to be checked when report mode is on
 						POINT ptOrigin;
@@ -858,7 +857,7 @@ inline BOOL CBackgroundUpdater::RunningProc()
 						{
 							BOOL bReDraw=FALSE;
 							
-							DebugFormatMessage("Refreshing %s",pItem->m_pItem->GetName());
+							BkgDebugFormatMessage("Refreshing %s",pItem->m_pItem->GetName());
 							pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
 
 							if (bReDraw)

@@ -131,35 +131,153 @@ int strcasencmp(LPCWSTR s1,LPCWSTR s2,DWORD n)
 }
 
 
-BOOL ContainString(LPCSTR string,LPCSTR pattern)
+BOOL ContainString(LPCSTR s1,LPCSTR s2) // Is s2 in the s1
 {
-   unsigned int i,j=0;
-   for (i=0;i<strlen(string);i++)
-   {
-      j=0;
-      while ((string[i+j]==pattern[j] || pattern[j]=='?') && string[i+j]!='\0' ) j++;
-      if (pattern[j]=='\0')
-         return 1;
-      if (pattern[j]=='*')
-         return ContainString(&(string[j+i+1]),&(pattern[j+1]));
-   }
-   return 0;
+    BOOL bBreakIfNotMatch;
+	if (s2[0]=='*')
+	{
+		if (s2[1]=='\0')
+			return TRUE;
+		s2++;
+		bBreakIfNotMatch=FALSE;
+	}
+	else
+		bBreakIfNotMatch=TRUE;
+
+	while (*s1!='\0')
+	{
+		for (int i=0;;i++)
+		{
+			// is s1 too short?
+			if (s1[i]=='\0')
+			{
+				if (s2[i]=='\0')
+					return TRUE;
+				return s2[i]=='*' && s2[i+1]=='\0';
+			}
+			// string differ
+			if (s1[i]!=s2[i])
+			{
+				if (s2[i]=='?')
+					continue;
+				
+				if (s2[i]=='*')
+				{
+					if (s2[i+1]=='\0')
+						return TRUE;
+					s2+=i+1;
+					s1+=i-1;
+					bBreakIfNotMatch=FALSE;
+					break;
+				}
+				break;
+			}
+		}
+		if (bBreakIfNotMatch)
+			return FALSE;
+		s1++;
+	}
+	return FALSE;
 }
 
-BOOL ContainString(LPCWSTR string,LPCWSTR pattern)
+BOOL ContainString(LPCSTR s1,LPCWSTR s2) // Is s2 in the s1
 {
-   int i,j=0;
-   for (i=0;i<istrlenw(string);i++)
-   {
-      j=0;
-      while ((string[i+j]==pattern[j] || pattern[j]==L'?') && string[i+j]!=L'\0' ) j++;
-      if (pattern[j]==L'\0')
-         return 1;
-      if (pattern[j]==L'*')
-         return ContainString(&(string[j+i+1]),&(pattern[j+1]));
-   }
-   return 0;
+    BOOL bBreakIfNotMatch;
+	if (s2[0]==L'*')
+	{
+		if (s2[1]==L'\0')
+			return TRUE;
+		s2++;
+		bBreakIfNotMatch=FALSE;
+	}
+	else
+		bBreakIfNotMatch=TRUE;
+
+	while (*s1!='\0')
+	{
+		for (int i=0;;i++)
+		{
+			// is s1 too short?
+			if (s1[i]=='\0')
+			{
+				if (s2[i]==L'\0')
+					return TRUE;
+				return s2[i]==L'*' && s2[i+1]==L'\0';
+			}
+			// string differ
+			if (A2Wc(s1[i])!=s2[i])
+			{
+				if (s2[i]==L'?')
+					continue;
+				
+				if (s2[i]==L'*')
+				{
+					if (s2[i+1]==L'\0')
+						return TRUE;
+					s2+=i+1;
+					s1+=i-1;
+					bBreakIfNotMatch=FALSE;
+					break;
+				}
+				break;
+			}
+		}
+		if (bBreakIfNotMatch)
+			return FALSE;
+		s1++;
+	}
+	return FALSE;
 }
+
+BOOL ContainString(LPCWSTR s1,LPCWSTR s2) // Is s2 in the s1
+{
+    BOOL bBreakIfNotMatch;
+	if (s2[0]==L'*')
+	{
+		if (s2[1]==L'\0')
+			return TRUE;
+		s2++;
+		bBreakIfNotMatch=FALSE;
+	}
+	else
+		bBreakIfNotMatch=TRUE;
+
+	while (*s1!=L'\0')
+	{
+		for (int i=0;;i++)
+		{
+			// is s1 too short?
+			if (s1[i]==L'\0')
+			{
+				if (s2[i]==L'\0')
+					return TRUE;
+				return s2[i]==L'*' && s2[i+1]==L'\0';
+			}
+			// string differ
+			if (s1[i]!=s2[i])
+			{
+				if (s2[i]==L'?')
+					continue;
+				
+				if (s2[i]==L'*')
+				{
+					if (s2[i+1]==L'\0')
+						return TRUE;
+					s2+=i+1;
+					s1+=i-1;
+					bBreakIfNotMatch=FALSE;
+					break;
+				}
+				break;
+			}
+		}
+		if (bBreakIfNotMatch)
+			return FALSE;
+		s1++;
+	}
+	return FALSE;
+}
+
 
 int FirstCharIndex(LPCSTR str,const CHAR ch)
 {

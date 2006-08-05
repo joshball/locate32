@@ -32,6 +32,7 @@
 #define IDS_LISTVOLUMESERIAL            19
 #define IDS_LISTVOLUMEFILESYSTEM        20
 #define IDS_LISTMD5SUM                  21
+#define IDS_LISTAUTHOR					22
 #define IDI_LENS                        23
 #define IDS_LOCATINGLIMITREACHED        24
 #define IDS_LOCATINGSUCCESS             25
@@ -60,6 +61,15 @@
 #define IDS_GB                          53
 #define IDS_AM                          54
 #define IDS_PM                          55
+#define IDS_LISTTITLE					57
+#define IDS_LISTSUBJECT					58
+#define IDS_LISTCATEGORY				59
+#define IDS_LISTPAGES					60
+#define IDS_LISTCOMMENTS				61
+#define IDS_LISTDESCRIPTION				62
+#define IDS_LISTFILEVERSION				63
+#define IDS_LISTPRODUCTNAME				64
+#define IDS_LISTPRODUCTVERSION			65
 #define IDS_HELPINFO                    70
 #define IDS_FILEINFORMATION				71
 #define IDS_FILEINFORMATIONFMT			72
@@ -379,6 +389,7 @@
 #define IDC_DATAMATCHCASE               1135
 #define IDC_DIRECTORYNAME               1136
 #define IDC_CLOSEBUTTONMINIMIZESWINDOW	1137
+#define IDC_EXCLUDEFILES				1137
 #define IDC_MINIMIZETOSYSTEMTRAY        1139
 #define IDC_REMEMBERSTATES              1140
 #define IDC_CLOSETOSYSTEMTRAY           1141

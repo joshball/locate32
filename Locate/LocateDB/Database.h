@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   database updater v2.99.6.6040                */
+   database updater v2.99.6.8050                */
 
 #if !defined(DATABASE_H)
 #define DATABASE_H
@@ -81,6 +81,9 @@ public:
 
 	LPSTR GetValidKey(DWORD dwUniqueNum=0) const; // free returned pointer with delete[]
 
+	LPCWSTR GetExcludedFiles() const;
+	void SetExcludedFiles(LPCWSTR szExcludedDirectories);
+
 	const CArrayFAP<LPWSTR>& GetExcludedDirectories() const;
 	void SetExcludedDirectories(const CArrayFAP<LPWSTR>& aExcludedDirectories);
 	BOOL AddExcludedDirectory(LPCWSTR szDirectory);
@@ -150,6 +153,7 @@ private:
 	ArchiveType m_ArchiveType;
 	LPWSTR m_szArchiveName;
 
+	LPWSTR m_szExcludedFiles;
 	CArrayFAP<LPWSTR> m_aExcludedDirectories;
 };
 
@@ -159,7 +163,7 @@ inline CDatabase::CDatabase()
 // Default values:
 :	m_szCreator(NULL),m_szDescription(NULL),m_szRoots(NULL),
 	m_wFlags(flagEnabled|flagGlobalUpdate),m_wThread(0),
-	m_ArchiveType(archiveFile),m_wID(0)
+	m_ArchiveType(archiveFile),m_wID(0),m_szExcludedFiles(NULL)
 {
 	if (!IsUnicodeSystem())
 		m_wFlags|=flagAnsiCharset;
@@ -177,6 +181,8 @@ inline CDatabase::~CDatabase()
 		delete[] m_szArchiveName;
 	if (m_szRoots!=NULL)
 		delete[] m_szRoots;
+	if (m_szExcludedFiles!=NULL)
+		delete[] m_szExcludedFiles;
 }
 
 inline LPCWSTR CDatabase::GetName() const 
@@ -328,6 +334,17 @@ inline void CDatabase::SetArchiveType(ArchiveType nType)
 	m_ArchiveType=nType;
 }
 
+inline void CDatabase::SetExcludedFiles(LPCWSTR szExcludedDirectories)
+{
+	if (m_szExcludedFiles!=NULL)
+		delete[] m_szExcludedFiles;
+	if (szExcludedDirectories[0]!='\0')
+		m_szExcludedFiles=alloccopy(szExcludedDirectories);
+	else
+		m_szExcludedFiles=NULL;
+}
+
+
 inline void CDatabase::SetRootsPtr(LPWSTR szRoots)
 {
 	if (m_szRoots!=NULL)
@@ -381,6 +398,11 @@ inline void CDatabase::SetFlag(DatabaseFlags nFlag,BOOL bSet)
 		m_wFlags|=nFlag;
 	else
 		m_wFlags&=~WORD(nFlag);
+}
+
+inline LPCWSTR CDatabase::GetExcludedFiles() const
+{
+	return m_szExcludedFiles;
 }
 
 inline const CArrayFAP<LPWSTR>& CDatabase::GetExcludedDirectories() const

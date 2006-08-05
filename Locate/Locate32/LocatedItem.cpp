@@ -34,8 +34,8 @@ void CLocatedItem::SetFolder(const CLocater* pLocater)
 	// Settig title (maybe)
 	if ((GetLocateDlg()->GetFlags()&(CLocateDlg::fgLVAlwaysShowExtensions|CLocateDlg::fgLV1stCharUpper))==CLocateDlg::fgLVAlwaysShowExtensions)
 	{
-		szTitle=szName;
-		dwFlags|=LITEM_TITLEOK;
+		szFileTitle=szName;
+		dwFlags|=LITEM_FILETITLEOK;
 	}
 
 	// Setting file size;
@@ -86,8 +86,8 @@ void CLocatedItem::SetFolderW(const CLocater* pLocater)
 	// Settig title (maybe)
 	if ((GetLocateDlg()->GetFlags()&(CLocateDlg::fgLVAlwaysShowExtensions|CLocateDlg::fgLV1stCharUpper))==CLocateDlg::fgLVAlwaysShowExtensions)
 	{
-		szTitle=szName;
-		dwFlags|=LITEM_TITLEOK;
+		szFileTitle=szName;
+		dwFlags|=LITEM_FILETITLEOK;
 	}
 
 	// Setting file size;
@@ -138,8 +138,8 @@ void CLocatedItem::SetFile(const CLocater* pLocater)
 	// Settig title (maybe)
 	if ((GetLocateDlg()->GetFlags()&(CLocateDlg::fgLVAlwaysShowExtensions|CLocateDlg::fgLV1stCharUpper))==CLocateDlg::fgLVAlwaysShowExtensions)
 	{
-		szTitle=szName;
-		dwFlags|=LITEM_TITLEOK;
+		szFileTitle=szName;
+		dwFlags|=LITEM_FILETITLEOK;
 	}
 
 	// Setting file size;
@@ -190,8 +190,8 @@ void CLocatedItem::SetFileW(const CLocater* pLocater)
 	// Settig title (maybe)
 	if ((GetLocateDlg()->GetFlags()&(CLocateDlg::fgLVAlwaysShowExtensions|CLocateDlg::fgLV1stCharUpper))==CLocateDlg::fgLVAlwaysShowExtensions)
 	{
-		szTitle=szName;
-		dwFlags|=LITEM_TITLEOK;
+		szFileTitle=szName;
+		dwFlags|=LITEM_FILETITLEOK;
 	}
 
 	// Setting file size;
@@ -223,10 +223,10 @@ void CLocatedItem::ClearData()
 {
 	//ItemDebugMessage("CLocatedItem::ClearData BEGIN");
 
-	if (szTitle!=NULL && szTitle!=szName)
-		delete[] szTitle;
+	if (szFileTitle!=NULL && szFileTitle!=szName)
+		delete[] szFileTitle;
 		
-	szTitle=NULL;
+	szFileTitle=NULL;
 	if (szPath!=NULL)
 	{
 		delete[] szPath;
@@ -250,8 +250,8 @@ void CLocatedItem::UpdateByDetail(CLocateDlg::DetailType nDetail)
 	case CLocateDlg::FullPath:
 		UpdateFilename();
 		break;
-	case CLocateDlg::Title:
-		UpdateTitle();
+	case CLocateDlg::Name:
+		UpdateFileTitle();
 		UpdateIcon();
 		break;
 	case CLocateDlg::InFolder:
@@ -284,6 +284,22 @@ void CLocatedItem::UpdateByDetail(CLocateDlg::DetailType nDetail)
 	case CLocateDlg::MD5sum:
 		ComputeMD5sum();
 		break;
+	case CLocateDlg::Author:
+	case CLocateDlg::Title:
+	case CLocateDlg::Subject:
+	case CLocateDlg::Pages:
+	case CLocateDlg::Comments:
+		UpdateSummaryProperties();
+		break;
+	case CLocateDlg::Category:
+		UpdateDocSummaryProperties();
+		break;
+	case CLocateDlg::Description:
+	case CLocateDlg::FileVersion:
+	case CLocateDlg::ProductName:
+	case CLocateDlg::ProductVersion:
+		UpdateVersionInformation();
+		break;
 	}	
 }
 
@@ -302,8 +318,8 @@ BOOL CLocatedItem::ShouldUpdateByDetail(CLocateDlg::DetailType nDetail) const
 	case CLocateDlg::VolumeSerial:
 	case CLocateDlg::VOlumeFileSystem:
 		return FALSE;
-	case CLocateDlg::Title:
-		return ShouldUpdateTitle() || ShouldUpdateIcon();
+	case CLocateDlg::Name:
+		return ShouldUpdateFileTitle() || ShouldUpdateIcon();
 	case CLocateDlg::InFolder:
 		return ShouldUpdateParentIcon();
 	case CLocateDlg::FileSize:
@@ -356,14 +372,14 @@ void CLocatedItem::UpdateFilename()
 }
 	
 
-void CLocatedItem::UpdateTitle()
+void CLocatedItem::UpdateFileTitle()
 {
 	ItemDebugMessage("CLocatedItem::UpdateTitle BEGIN");
 	//ItemDebugFormatMessage4("CLocatedItem::UpdateTitle1: %d",DWORD(GetLocateDlg()->GetFlags()&CLocateDlg::fgLVExtensionFlag),0,0,0);
-	ItemDebugFormatMessage4("CLocatedItem::UpdateTitle1: ShouldUpdate=%d",ShouldUpdateTitle(),0,0,0);
+	ItemDebugFormatMessage4("CLocatedItem::UpdateTitle1: ShouldUpdate=%d",ShouldUpdateFileTitle(),0,0,0);
 
-	if (szTitle!=szName && szTitle!=NULL)
-		delete[] szTitle;
+	if (szFileTitle!=szName && szFileTitle!=NULL)
+		delete[] szFileTitle;
 	
 	if (!(dwFlags&LITEM_FILENAMEOK))
 		UpdateFilename();
@@ -373,13 +389,13 @@ void CLocatedItem::UpdateTitle()
 		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
 			return;
 		
-		szTitle=new WCHAR[bNameLength+1];
-		WORD nLen=FileSystem::GetFileTitle(GetPath(),szTitle,bNameLength+1);
+		szFileTitle=new WCHAR[bNameLength+1];
+		WORD nLen=FileSystem::GetFileTitle(GetPath(),szFileTitle,bNameLength+1);
 		if (nLen!=0)
 		{
-			delete[] szTitle;
-			szTitle=new WCHAR[nLen];
-			FileSystem::GetFileTitle(GetPath(),szTitle,nLen);
+			delete[] szFileTitle;
+			szFileTitle=new WCHAR[nLen];
+			FileSystem::GetFileTitle(GetPath(),szFileTitle,nLen);
 		}
 	}
 	else
@@ -387,14 +403,14 @@ void CLocatedItem::UpdateTitle()
 		switch (GetLocateDlg()->GetFlags()&CLocateDlg::fgLVExtensionFlag)
 		{
 		case CLocateDlg::fgLVAlwaysShowExtensions:
-			szTitle=szName;
+			szFileTitle=szName;
 			break;
 		case CLocateDlg::fgLVHideKnownExtensions:
 			{
 				if (bExtensionPos==bNameLength)
 				{
 					// No extension
-					szTitle=szName;
+					szFileTitle=szName;
 					break;
 				}
 				BOOL bShowExtension=TRUE;
@@ -443,24 +459,24 @@ void CLocatedItem::UpdateTitle()
 				}
 				if (bShowExtension)
 				{
-					szTitle=szName;
+					szFileTitle=szName;
 					break;
 				}			
 			}
 		case CLocateDlg::fgLVNeverShowExtensions:
-			szTitle=new WCHAR[bExtensionPos];
-			MemCopyW(szTitle,GetName(),DWORD(bExtensionPos)-1);
-			szTitle[bExtensionPos-1]=L'\0';
+			szFileTitle=new WCHAR[bExtensionPos];
+			MemCopyW(szFileTitle,GetName(),DWORD(bExtensionPos)-1);
+			szFileTitle[bExtensionPos-1]=L'\0';
 			break;
 		}
 		if (GetLocateDlg()->GetFlags()&CLocateDlg::fgLV1stCharUpper)
 		{
 			BOOL bAllUpper=TRUE;
 			DWORD i;
-			for (i=0;szTitle[i]!='\0';i++)
+			for (i=0;szFileTitle[i]!='\0';i++)
 			{
 				// Todo: test this in Win9X
-				if (!IsCharUpper(szTitle[i]))
+				if (!IsCharUpper(szFileTitle[i]))
 				{
 					bAllUpper=FALSE;
 					break;
@@ -468,16 +484,16 @@ void CLocatedItem::UpdateTitle()
 			}
 			if (bAllUpper)
 			{
-				if (szTitle==szName)
+				if (szFileTitle==szName)
 				{
-					szTitle=new WCHAR[i+1];
-					MemCopyW(szTitle,szName,i+1);
+					szFileTitle=new WCHAR[i+1];
+					MemCopyW(szFileTitle,szName,i+1);
 				}
-				MakeLower(szTitle+1,i-1);
+				MakeLower(szFileTitle+1,i-1);
 			}
 		}
 	}
-	dwFlags|=LITEM_TITLEOK;
+	dwFlags|=LITEM_FILETITLEOK;
 
 	ItemDebugMessage("CLocatedItem::UpdateTitle END");
 }
@@ -668,13 +684,14 @@ void CLocatedItem::UpdateFileSizeAndTime()
 			FindClose(hFind);
 			FILETIME ft2;
 			
+			
 			FileTimeToLocalFileTime(&fd.ftLastWriteTime,&ft2);
 			FileTimeToDosDateTime(&ft2,&wModifiedDate,&wModifiedTime);
 			FileTimeToLocalFileTime(&fd.ftCreationTime,&ft2);
 			FileTimeToDosDateTime(&ft2,&wCreatedDate,&wCreatedTime);
 			FileTimeToLocalFileTime(&fd.ftLastAccessTime,&ft2);
 			FileTimeToDosDateTime(&ft2,&wAccessedDate,&wAccessedTime);
-
+			
 			if (wAccessedTime==0)
 				wAccessedTime=WORD(-1);
 
@@ -864,15 +881,16 @@ void CLocatedItem::UpdateOwner()
 	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::Owner);
 	pField->bShouldUpdate=FALSE;
 
-	if (IsDeleted())
-		return;
-
+	
 	if (pField->szText!=NULL)
 	{
 		delete[] pField->szText;
 		pField->szText=NULL;
 	}
-			
+		
+	if (IsDeleted())
+		return;
+
     	
 	DWORD dwNeeded=0;
 	if (!FileSystem::GetFileSecurity(GetPath(),OWNER_SECURITY_INFORMATION,NULL,0,&dwNeeded))
@@ -942,16 +960,22 @@ void CLocatedItem::UpdateShortFileName()
 	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::ShortFileName);
 	pField->bShouldUpdate=FALSE;
 
+	if (pField->szText!=NULL)
+	{
+		delete[] pField->szText; 
+		pField->szText=NULL;
+	}
+	
 	if (IsDeleted())
 		return;
+
+	
 
 	WCHAR szShortPath[MAX_PATH];
 	DWORD nLength=FileSystem::GetShortPathName(GetPath(),szShortPath,MAX_PATH);
 	if (nLength==0)
 	{
-		if (pField->szText!=NULL)
-			delete[] pField->szText; 
-		pField->szText=allocemptyW();
+		//pField->szText=allocemptyW();
 		ItemDebugMessage("CLocatedItem::UpdateShortFileName END2");
 		return;
 	}
@@ -961,9 +985,6 @@ void CLocatedItem::UpdateShortFileName()
 	if (nStart>0)
 		nStart++;
     nLength-=nStart;
-
-	if (pField->szText!=NULL)
-		delete[] pField->szText; 
 
 	pField->szText=alloccopy(szShortPath+nStart,nLength);
 
@@ -979,6 +1000,13 @@ void CLocatedItem::UpdateShortFilePath()
 	
 	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::ShortFilePath);
 	pField->bShouldUpdate=FALSE;
+	
+	if (pField->szText!=NULL)
+	{
+		delete[] pField->szText; 
+		pField->szText=NULL;
+	}
+
 	if (IsDeleted())
 		return;
 
@@ -986,23 +1014,310 @@ void CLocatedItem::UpdateShortFilePath()
 	DWORD nLength=FileSystem::GetShortPathName(GetPath(),szShortPath,MAX_PATH);
 	if (nLength==0)
 	{
-		if (pField->szText!=NULL)
-			delete[] pField->szText; 
-
-		pField->szText=allocemptyW();
 		ItemDebugMessage("CLocatedItem::UpdateShortFilePath END2");
+		return;
 	}
 	
-
-
-	if (pField->szText!=NULL)
-		delete[] pField->szText; 
-
 	pField->szText=alloccopy(szShortPath,nLength);
 
 	ItemDebugMessage("CLocatedItem::UpdateShortFilePath END");
 }
 
+void CLocatedItem::UpdateSummaryProperties()
+{
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+	
+	ItemDebugMessage("CLocatedItem::UpdateSummaryProperties BEGIN");
+	
+	ExtraInfo* pFields[5];
+	pFields[0]=CreateExtraInfoField(CLocateDlg::Author);
+	pFields[1]=CreateExtraInfoField(CLocateDlg::Title);
+	pFields[2]=CreateExtraInfoField(CLocateDlg::Subject);
+	pFields[3]=CreateExtraInfoField(CLocateDlg::Comments);
+	pFields[4]=CreateExtraInfoField(CLocateDlg::Pages);
+	
+
+	for (int i=0;i<4;i++)
+	{
+		pFields[i]->bShouldUpdate=FALSE;
+		if (pFields[i]->szText!=NULL)
+		{
+			delete[] pFields[i]->szText;
+			pFields[i]->szText=NULL;
+		}
+	}	
+	pFields[4]->bShouldUpdate=FALSE;
+	pFields[4]->nPages=0;
+
+
+	
+	if (IsDeleted())
+		return;
+
+	IPropertySetStorage* ppss;
+	IPropertyStorage* pps;
+	
+	STGOPTIONS stgo;
+	stgo.usVersion=STGOPTIONS_VERSION;
+	
+	HRESULT hRes=StgOpenStorageEx(GetPath(),STGM_READ|STGM_SHARE_EXCLUSIVE,STGFMT_ANY,0,NULL,0,
+		IID_IPropertySetStorage,(void**)&ppss);
+	if (!SUCCEEDED(hRes))
+		return;
+	
+	hRes=ppss->Open(FMTID_SummaryInformation,STGM_READ|STGM_SHARE_EXCLUSIVE,&pps);
+	if (!SUCCEEDED(hRes))
+	{
+		ppss->Release();
+		return;
+	}
+
+	
+	PROPSPEC rgpspec[5];
+	PROPVARIANT rgpropvar[5];
+	
+	for (int i=0;i<5;i++)
+	{
+		rgpspec[i].ulKind=PRSPEC_PROPID;
+		PropVariantInit(&rgpropvar[i]);
+	}
+
+	rgpspec[0].propid=PIDSI_AUTHOR;
+	rgpspec[1].propid=PIDSI_TITLE;
+	rgpspec[2].propid=PIDSI_SUBJECT;
+	rgpspec[3].propid=PIDSI_COMMENT;
+	rgpspec[4].propid=PIDSI_PAGECOUNT;
+
+	hRes=pps->ReadMultiple(5,rgpspec,rgpropvar);
+	if (SUCCEEDED(hRes))
+	{
+		for (int i=0;i<4;i++) // Last is pages
+		{
+			switch (rgpropvar[i].vt)
+			{
+			case VT_LPSTR:
+				pFields[i]->szText=alloccopyAtoW(rgpropvar[i].pszVal);
+				break;
+			case VT_LPWSTR:
+				pFields[i]->szText=alloccopy(rgpropvar[i].pwszVal);
+				break;
+			}
+			PropVariantClear(&rgpropvar[i]);
+		}
+
+		switch (rgpropvar[4].vt)
+		{
+		case VT_I2:
+			pFields[4]->nPages=rgpropvar[4].iVal;
+			break;
+		case VT_I4:
+		case VT_INT:
+			pFields[4]->nPages=rgpropvar[4].lVal;
+			break;
+		case VT_I8:
+			pFields[4]->nPages=(INT)rgpropvar[4].hVal.LowPart;
+			break;
+		case VT_UI2:
+			pFields[4]->nPages=rgpropvar[4].uiVal;
+			break;
+		case VT_UI4:
+		case VT_UINT:
+			pFields[4]->nPages=rgpropvar[4].ulVal;
+			break;
+		case VT_UI8:
+			pFields[4]->nPages=(DWORD)rgpropvar[4].uhVal.LowPart;
+			break;
+		}
+		PropVariantClear(&rgpropvar[4]);
+		
+	}
+
+
+	pps->Release();
+	ppss->Release();
+				
+}
+
+
+void CLocatedItem::UpdateDocSummaryProperties()
+{
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+	
+	ItemDebugMessage("CLocatedItem::UpdateDocSummaryProperties BEGIN");
+	
+	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::Category);
+	pField->bShouldUpdate=FALSE;
+
+	if (pField->szText!=NULL)
+	{
+		delete[] pField->szText;
+		pField->szText=NULL;
+	}
+			
+	if (IsDeleted())
+		return;
+
+	IPropertySetStorage* ppss;
+	IPropertyStorage* pps;
+	
+	STGOPTIONS stgo;
+	stgo.usVersion=STGOPTIONS_VERSION;
+	
+	HRESULT hRes=StgOpenStorageEx(GetPath(),STGM_READ|STGM_SHARE_EXCLUSIVE,STGFMT_ANY,0,NULL,0,
+		IID_IPropertySetStorage,(void**)&ppss);
+	if (!SUCCEEDED(hRes))
+		return;
+	
+	hRes=ppss->Open(FMTID_DocSummaryInformation,STGM_READ|STGM_SHARE_EXCLUSIVE,&pps);
+	if (!SUCCEEDED(hRes))
+	{
+		ppss->Release();
+		return;
+	}
+
+	
+	PROPSPEC rgpspec[1];
+	PROPVARIANT rgpropvar[1];
+	
+	PropVariantInit(&rgpropvar[0]);
+	rgpspec[0].ulKind=PRSPEC_PROPID;
+	rgpspec[0].propid=PIDDSI_CATEGORY;
+
+	hRes=pps->ReadMultiple(1,rgpspec,rgpropvar);
+	if (SUCCEEDED(hRes))
+	{
+		switch (rgpropvar[0].vt)
+		{
+		case VT_LPSTR:
+			pField->szText=alloccopyAtoW(rgpropvar[0].pszVal);
+			break;
+		case VT_LPWSTR:
+			pField->szText=alloccopy(rgpropvar[0].pwszVal);
+			break;
+		}
+		PropVariantClear(&rgpropvar[0]);
+	}
+
+
+	pps->Release();
+	ppss->Release();
+}
+
+void CLocatedItem::UpdateVersionInformation()
+{
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+	
+	ItemDebugMessage("CLocatedItem::UpdateVersionInformation BEGIN");
+	
+	ExtraInfo* pFields[4];
+	pFields[0]=CreateExtraInfoField(CLocateDlg::Description);
+	pFields[1]=CreateExtraInfoField(CLocateDlg::FileVersion);
+	pFields[2]=CreateExtraInfoField(CLocateDlg::ProductName);
+	pFields[3]=CreateExtraInfoField(CLocateDlg::ProductVersion);
+	
+	for (int i=0;i<4;i++)
+	{
+		pFields[i]->bShouldUpdate=FALSE;
+		if (pFields[i]->szText!=NULL)
+		{
+			delete[] pFields[i]->szText;
+			pFields[i]->szText=NULL;
+		}
+	}	
+
+	if (IsDeleted())
+		return;
+
+	if (IsUnicodeSystem())
+	{
+		UINT iDataLength=GetFileVersionInfoSizeW(GetPath(),NULL);
+		if (iDataLength>0)
+		{
+			VOID *pTranslations;
+			LPWSTR pProductVersion=NULL,pProductName=NULL;
+			LPWSTR pFileVersion=NULL,pDescription=NULL;
+			
+			BYTE* pData=new BYTE[iDataLength];
+			GetFileVersionInfoW(GetPath(),NULL,iDataLength,pData);
+		
+			VerQueryValueW(pData,L"VarFileInfo\\Translation",&pTranslations,&iDataLength);
+			WCHAR szTranslation[100];
+			
+			StringCbPrintfW(szTranslation,100*sizeof(WCHAR),L"\\StringFileInfo\\%04X%04X\\ProductVersion",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
+			if (!VerQueryValueW(pData,szTranslation,(void**)&pProductVersion,&iDataLength))
+				VerQueryValueW(pData,L"\\StringFileInfo\\040904b0\\ProductVersion",(void**)&pProductVersion,&iDataLength);
+
+			StringCbPrintfW(szTranslation,100*sizeof(WCHAR),L"\\StringFileInfo\\%04X%04X\\FileVersion",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
+			if (!VerQueryValueW(pData,szTranslation,(void**)&pFileVersion,&iDataLength))
+				VerQueryValueW(pData,L"\\StringFileInfo\\040904b0\\FileVersion",(void**)&pFileVersion,&iDataLength);
+
+			StringCbPrintfW(szTranslation,100*sizeof(WCHAR),L"\\StringFileInfo\\%04X%04X\\FileDescription",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
+			if (!VerQueryValueW(pData,szTranslation,(void**)&pDescription,&iDataLength))
+				VerQueryValueW(pData,L"\\StringFileInfo\\040904b0\\FileDescription",(void**)&pDescription,&iDataLength);
+
+			StringCbPrintfW(szTranslation,100*sizeof(WCHAR),L"\\StringFileInfo\\%04X%04X\\ProductName",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
+			if (!VerQueryValueW(pData,szTranslation,(void**)&pProductName,&iDataLength))
+				VerQueryValueW(pData,L"\\StringFileInfo\\040904b0\\ProductName",(void**)&pProductName,&iDataLength);
+
+			if (pDescription!=NULL)
+				pFields[0]->szText=alloccopy(pDescription);
+			if (pFileVersion!=NULL)
+				pFields[1]->szText=alloccopy(pFileVersion);
+			if (pProductName!=NULL)
+				pFields[2]->szText=alloccopy(pProductName);
+			if (pProductVersion!=NULL)
+				pFields[3]->szText=alloccopy(pProductVersion);
+			
+			delete[] pData;
+		}
+	}
+	else
+	{
+		UINT iDataLength=GetFileVersionInfoSize(W2A(GetPath()),NULL);
+		if (iDataLength>0)
+		{
+			VOID *pTranslations;
+			LPSTR pProductVersion=NULL,pProductName=NULL;
+			LPSTR pFileVersion=NULL,pDescription=NULL;
+			
+			BYTE* pData=new BYTE[iDataLength];
+			GetFileVersionInfo(W2A(GetPath()),NULL,iDataLength,pData);
+		
+			VerQueryValue(pData,"VarFileInfo\\Translation",&pTranslations,&iDataLength);
+			CHAR szTranslation[100];
+			
+			StringCbPrintf(szTranslation,100,"\\StringFileInfo\\%04X%04X\\ProductVersion",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
+			if (!VerQueryValue(pData,szTranslation,(void**)&pProductVersion,&iDataLength))
+				VerQueryValue(pData,"\\StringFileInfo\\040904b0\\ProductVersion",(void**)&pProductVersion,&iDataLength);
+
+			StringCbPrintf(szTranslation,100,"\\StringFileInfo\\%04X%04X\\FileVersion",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
+			if (!VerQueryValue(pData,szTranslation,(void**)&pFileVersion,&iDataLength))
+				VerQueryValue(pData,"\\StringFileInfo\\040904b0\\FileVersion",(void**)&pFileVersion,&iDataLength);
+
+			StringCbPrintf(szTranslation,100,"\\StringFileInfo\\%04X%04X\\FileDescription",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
+			if (!VerQueryValue(pData,szTranslation,(void**)&pDescription,&iDataLength))
+				VerQueryValue(pData,"\\StringFileInfo\\040904b0\\FileDescription",(void**)&pDescription,&iDataLength);
+
+			StringCbPrintf(szTranslation,100,"\\StringFileInfo\\%04X%04X\\ProductName",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
+			if (!VerQueryValue(pData,szTranslation,(void**)&pProductName,&iDataLength))
+				VerQueryValue(pData,"\\StringFileInfo\\040904b0\\ProductName",(void**)&pProductName,&iDataLength);
+
+			if (pDescription!=NULL)
+				pFields[0]->szText=alloccopyAtoW(pDescription);
+			if (pFileVersion!=NULL)
+				pFields[1]->szText=alloccopyAtoW(pFileVersion);
+			if (pProductName!=NULL)
+				pFields[2]->szText=alloccopyAtoW(pProductName);
+			if (pProductVersion!=NULL)
+				pFields[3]->szText=alloccopyAtoW(pProductVersion);
+			
+			delete[] pData;
+		}
+	}
+}
 
 void CLocatedItem::SetToDeleted()
 {
@@ -1080,7 +1395,7 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
         //This fixes case
 		if (wcsncmp(szPath,szFullPath,dwLength)!=0)
 		{
-			RemoveFlags(LITEM_TITLEOK);   
+			RemoveFlags(LITEM_FILETITLEOK);   
 			MemCopyW(szPath,szFullPath,dwLength);
 		}
 		AddFlags(LITEM_FILENAMEOK);
@@ -1099,13 +1414,13 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 			bExtensionPos=bNameLength;
 	
 		AddFlags(LITEM_FILENAMEOK);
-		RemoveFlags(LITEM_TITLEOK);
+		RemoveFlags(LITEM_FILETITLEOK);
 	}
 
 	if (IsDeleted())
 	{
 		// File has come back
-		dwFlags&=~(LITEM_COULDCHANGE|LITEM_TITLEOK);
+		dwFlags&=~(LITEM_COULDCHANGE|LITEM_FILETITLEOK);
 
 		// Settings information obtained from WIN32_FIND_DATA structure
 		if (!IsFolder())
@@ -1285,10 +1600,10 @@ void CLocatedItem::ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
 
 	
 	// Do fileoperation first
-	if (szTitle!=szName && szTitle!=NULL)
+	if (szFileTitle!=szName && szFileTitle!=NULL)
 	{
-		WCHAR* pTemp=szTitle;
-		InterlockedExchangePointer((PVOID*)&szTitle,NULL);
+		WCHAR* pTemp=szFileTitle;
+		InterlockedExchangePointer((PVOID*)&szFileTitle,NULL);
 		delete[] pTemp;
 	}
 
@@ -1305,7 +1620,7 @@ void CLocatedItem::ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
 
 	AddFlags(LITEM_FILENAMEOK);
 	
-	UpdateTitle();
+	UpdateFileTitle();
 }
 
 LPWSTR CLocatedItem::GetToolTipText() const

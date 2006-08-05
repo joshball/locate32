@@ -1240,8 +1240,12 @@ LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData)
 		return ::RegSetValueExW(m_hKey,lpValueName,0,REG_SZ,(CONST BYTE*)strData,(DWORD)((wcslen(strData)+1)*2));
 	else
 	{
-		CString aData(strData);
-		return ::RegSetValueExA(m_hKey,W2A(lpValueName),0,REG_SZ,(CONST BYTE*)(LPCSTR)aData,(DWORD)((aData.GetLength()+1)));
+		int nLen=istrlenw(strData);
+		LPSTR aData=new char[nLen+2];
+		WideCharToMultiByte(CP_ACP,0,strData,nLen+1,aData,nLen+1,NULL,NULL);
+		LONG lRet=::RegSetValueExA(m_hKey,W2A(lpValueName),0,REG_SZ,(CONST BYTE*)aData,nLen+1);
+		delete[] aData;
+		return lRet;
 	}
 }
 	
@@ -1251,11 +1255,21 @@ DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,DWORD cbData) const
 	{
 		cbData*=2;
 		DWORD dwType;
-		if (::RegQueryValueExW(m_hKey,(LPWSTR)lpszValueName,NULL,&dwType,(LPBYTE)lpStr,&cbData)!=ERROR_SUCCESS)
+		DWORD dwDataLen=cbData;
+		if (::RegQueryValueExW(m_hKey,(LPWSTR)lpszValueName,NULL,&dwType,(LPBYTE)lpStr,&dwDataLen)!=ERROR_SUCCESS)
 			return 0;
+		if (dwType==REG_MULTI_SZ)
+		{
+			if (dwDataLen+sizeof(WCHAR)<=cbData)
+			{
+				lpStr[dwDataLen/2]='\0';
+				return dwDataLen/2;
+			}
+			return dwDataLen/2-1;			
+		}
 		if (dwType!=REG_SZ && dwType!=REG_EXPAND_SZ && REG_MULTI_SZ)
 			return 0;
-		return cbData/2;
+		return dwDataLen/2-1;
 	}
 	else
 	{
@@ -1274,6 +1288,7 @@ DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,DWORD cbData) const
 		case REG_EXPAND_SZ:
 			{
 				char* pDataA=new char[dwDataLen+1];
+				
 				if (::RegQueryValueExA(m_hKey,aValue,NULL,NULL,(LPBYTE)pDataA,&dwDataLen)!=ERROR_SUCCESS)
 				{
 					delete[] pDataA;
@@ -1289,34 +1304,23 @@ DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPWSTR lpStr,DWORD cbData) const
 		case REG_MULTI_SZ:
 			{
 				char* pDataA=new char[dwDataLen+1];
-				if (::RegQueryValueExA(m_hKey,aValue,NULL,NULL,(LPBYTE)pDataA,&dwDataLen)!=ERROR_SUCCESS)
+				LONG lRet=::RegQueryValueExA(m_hKey,aValue,NULL,NULL,(LPBYTE)pDataA,&dwDataLen);
+				if (lRet!=ERROR_SUCCESS)
 				{
 					delete[] pDataA;
+					return lRet;
+				}
+
+				if (!MultiByteToWideChar(CP_ACP,0,pDataA,dwDataLen,lpStr,cbData))
 					return 0;
-				}
 
-				ULONG_PTR ind=0;
-				while (pDataA[ind]!='\0')
-				{
-					SIZE_T nlen=strlen(pDataA+ind);
-					
-					if (ind+nlen+2>cbData)
-					{
-						MemCopyAtoW(lpStr+ind,pDataA+ind,cbData-ind-2);
-						lpStr[cbData-2]=L'\0';
-						lpStr[cbData-1]=L'\0';
-
-						delete[] pDataA;
-						return ERROR_SUCCESS;
-					}
-						
-					MemCopyAtoW(lpStr+ind,pDataA+ind,nlen);
-					ind+=nlen;
-					lpStr[ind++]=L'\0';
-				}
-				lpStr[ind]=L'\0';
 				delete[] pDataA;
-				return min(cbData,dwDataLen);
+				if (dwDataLen+1<=cbData)
+				{
+					lpStr[dwDataLen]='\0';
+					return dwDataLen;
+				}
+				return dwDataLen-1;				
 			}
 		default:
 			return FALSE;

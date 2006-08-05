@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   database updater v2.99.6.6040                  */
+   database updater v2.99.6.8050                  */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -18,6 +18,8 @@ CDatabase::CDatabase(CDatabase& src)
 		m_szDescription=alloccopy(m_szDescription);
 	if (m_szArchiveName!=NULL)
 		m_szArchiveName=alloccopy(m_szArchiveName);
+	if (m_szExcludedFiles!=NULL)
+		m_szExcludedFiles=alloccopy(m_szExcludedFiles);
 
 	
 	if (m_szRoots!=NULL)
@@ -47,11 +49,13 @@ BOOL CDatabase::LoadFromRegistry(HKEY hKeyRoot,LPCSTR szPath,CArray<CDatabase*>&
 	for (int i=0;RegKey.EnumKey(i,key);i++)
 	{
 		CDatabase* pDatabase=CDatabase::FromKey(RegKey,"",key);
-		if (pDatabase->m_wID==0)
-			pDatabase->m_wID=GetUniqueIndex(aDatabases);
-
+		
 		if (pDatabase!=NULL)
+		{
+			if (pDatabase->m_wID==0)
+				pDatabase->m_wID=GetUniqueIndex(aDatabases);
 			aDatabases.Add(pDatabase);
+		}
 	}
 
 	return TRUE;
@@ -105,12 +109,13 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,const PDATABASE* ppDa
 		RegKey.DeleteKey(name);
 
 	
+	
 	// Retrieving digits;
 	int nDigits=1;
 	for (int i=10;i<=nDatabases;i*=10,nDigits++);
 	char* pNum=new char[nDigits+1];
-		
-
+	
+	
     for (int i=0;i<nDatabases;i++)
 	{
 		char* pKeyName=ppDatabases[i]->GetValidKey(i+1);
@@ -121,7 +126,7 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,const PDATABASE* ppDa
 
         sMemCopy(pKey+nDigits+1,pKeyName,dwLength+1);
 		pKey[nDigits]='_';
-        
+    
         // Formating number
 		_itoa_s(i+1,pNum,nDigits+1,10);
 		ASSERT(strlen(pNum)<=size_t(nDigits));
@@ -135,6 +140,7 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,const PDATABASE* ppDa
 	}
 
 	delete[] pNum;
+	
 	return TRUE;
 }
 
@@ -152,12 +158,13 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	RegKey.SetValue("Flags",DWORD(m_wFlags));
 	RegKey.SetValue("Thread",DWORD(m_wThread));
 	RegKey.SetValue("ID",DWORD(m_wID));
-
+	
 	RegKey.SetValue("ArchiveType",DWORD(m_ArchiveType));
 	if (m_szArchiveName!=NULL)
 		RegKey.SetValue(L"ArchiveName",m_szArchiveName);
 	else
 		RegKey.SetValue("ArchiveName",szEmpty);
+
 
 	if (m_szCreator!=NULL)
 		RegKey.SetValue(L"Creator",m_szCreator);
@@ -179,6 +186,7 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	else
 		RegKey.SetValue("Roots",szEmpty);
 
+
 	// Excluded directories
 	DWORD dwLength=1;
 	for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
@@ -197,8 +205,16 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	}
 	*pPtr=L'\0';
 		
+	if (m_szExcludedFiles!=NULL)
+		RegKey.SetValue(L"Excluded Files",m_szExcludedFiles);
+	else
+		RegKey.SetValue("Excluded Files",szEmpty);
+
 	RegKey.SetValue(L"Excluded Directories",pString);
     delete[] pString;
+
+	DebugMessage("SaveToRegistryEND");
+
 	return TRUE;
 }
 
@@ -264,8 +280,16 @@ CDatabase* CDatabase::FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	if (dwLength>1)
 	{
 		pDatabase->m_szRoots=new WCHAR[dwLength+1];
-		RegKey.QueryValue(L"Roots",pDatabase->m_szRoots,dwLength);
+		RegKey.QueryValue(L"Roots",pDatabase->m_szRoots,dwLength+1);
 		pDatabase->m_szRoots[dwLength]='\0';
+	}
+
+	// Excluded files
+	dwLength=RegKey.QueryValueLength("Excluded Files");
+	if (dwLength>1)
+	{
+		pDatabase->m_szExcludedFiles=new WCHAR[dwLength];
+		RegKey.QueryValue(L"Excluded Files",pDatabase->m_szExcludedFiles,dwLength);
 	}
 
 	// Excluded directories
@@ -560,7 +584,10 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 				break;
 			case L'E':
 			case L'e':
-                pDatabase->m_aExcludedDirectories.Add(sValue.GiveBuffer());
+                if (pPtr[1]==L'F')
+					pDatabase->m_szExcludedFiles=sValue.GiveBuffer();
+				else
+					pDatabase->m_aExcludedDirectories.Add(sValue.GiveBuffer());
 				break;
 			}
 
@@ -1294,6 +1321,20 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 			str << L'$';
 			pStr++;
 		}
+	}
+
+	// Excluded files
+	if (m_szExcludedFiles!=NULL)
+	{
+		// Creator
+		str << L"EF:";
+		for (int i=0;m_szExcludedFiles[i]!=L'\0';i++)
+		{
+			if (m_szExcludedFiles[i]==L'$')
+				str << L'\\';
+			str << m_szExcludedFiles[i];
+		}
+		str << L'$';
 	}
 
 	// Excluded directories

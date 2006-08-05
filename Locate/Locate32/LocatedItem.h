@@ -8,7 +8,7 @@
 class CLocater;
 
 // For dwFlags
-#define LITEM_TITLEOK				0x1
+#define LITEM_FILETITLEOK			0x1
 #define LITEM_TYPEOK				0x2
 #define LITEM_ICONOK				0x4
 #define LITEM_FILESIZEOK			0x8
@@ -49,7 +49,7 @@ public:
 	
 
 	void UpdateByDetail(CLocateDlg::DetailType nDetail);
-	void UpdateTitle();
+	void UpdateFileTitle();
 	void UpdateIcon();
 	void UpdateParentIcon();
 	void UpdateType();
@@ -61,39 +61,14 @@ public:
 	void UpdateShortFileName();
 	void UpdateShortFilePath();
 	void ComputeMD5sum(BOOL bForce=FALSE);
-
+	void UpdateSummaryProperties();
+	void UpdateDocSummaryProperties();
+	void UpdateVersionInformation();
+	
 	void SetToDeleted();
 	
 	void ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength=-1);
 
-private:
-	LPWSTR szTitle;
-	LPWSTR szName;
-	mutable LPWSTR szPath;
-	LPWSTR szType;
-	int iIcon;
-	int iParentIcon;
-
-	DWORD dwFlags;
-	WORD wModifiedDate;
-	WORD wModifiedTime;
-	WORD wCreatedDate;
-	WORD wCreatedTime;
-	WORD wAccessedDate;
-	WORD wAccessedTime;
-	DWORD dwFileSize;
-	WORD wFileSizeHi;
-	BYTE bExtensionPos;
-	BYTE bAttribs;
-	BYTE bNameLength;
-
-	WORD wDatabaseID;
-	WORD wRootID;
-
-public:
-	//static LPSTR m_szBuffer; 
-
-public:
 	DWORD GetFlags() const { return dwFlags; }
 	void AddFlags(DWORD dwAdd) { dwFlags|=dwAdd; }
 	void RemoveFlags(DWORD dwRemove) { dwFlags&=~dwRemove; }
@@ -101,7 +76,7 @@ public:
 	void CheckIfDeleted();
 
 	BOOL ShouldUpdateByDetail(CLocateDlg::DetailType nDetail) const;
-	BOOL ShouldUpdateTitle() const;
+	BOOL ShouldUpdateFileTitle() const;
 	BOOL ShouldUpdateFilename() const;
 	BOOL ShouldUpdateType() const;
 	BOOL ShouldUpdateIcon() const;
@@ -136,7 +111,7 @@ public:
 	LPWSTR GetPath() const { szName[-1]=L'\\'; return szPath; }
 	DWORD GetPathLen() const { return bNameLength+DWORD(szName-szPath); }
 	LPWSTR GetParent() const { szName[-1]=L'\0'; return szPath; }
-	LPWSTR GetTitle() const { return szTitle; }
+	LPWSTR GetFileTitle() const { return szFileTitle; }
 	LPWSTR GetType() const { return szType; }
 	
 	LPWSTR GetDetailText(CLocateDlg::DetailType nDetailType) const;
@@ -159,6 +134,7 @@ public:
 
 	BOOL GetImageDimensions(SIZE& dim) const;
 	int GetImageDimensionsProduct() const;
+	int GetPages() const;
 	LPWSTR GetExtraText(CLocateDlg::DetailType nDetailType) const; 
 	void ExtraSetUpdateWhenFileSizeChanged();
 	void DeleteAllExtraFields();
@@ -167,9 +143,32 @@ public:
 	LPWSTR FormatAttributes() const;
 	LPWSTR FormatOwner() const;
 	LPWSTR FormatImageInformation() const;
+	LPWSTR FormatPages() const;
 
 private:
-	
+	LPWSTR szFileTitle;
+	LPWSTR szName;
+	mutable LPWSTR szPath;
+	LPWSTR szType;
+	int iIcon;
+	int iParentIcon;
+
+	DWORD dwFlags;
+	WORD wModifiedDate;
+	WORD wModifiedTime;
+	WORD wCreatedDate;
+	WORD wCreatedTime;
+	WORD wAccessedDate;
+	WORD wAccessedTime;
+	DWORD dwFileSize;
+	WORD wFileSizeHi;
+	BYTE bExtensionPos;
+	BYTE bAttribs;
+	BYTE bNameLength;
+
+	WORD wDatabaseID;
+	WORD wRootID;
+
 	/* For extra field i.e. fields not obtained from db */
 	struct ExtraInfo {
 		ExtraInfo(CLocateDlg::DetailType nType);
@@ -181,6 +180,7 @@ private:
 		union {
 			SIZE szImageDimension;
 			WCHAR* szText;
+			UINT nPages;
 		};
 		BYTE bShouldUpdate;
 

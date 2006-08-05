@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   database updater v2.99.6.6040                */
+   database updater v2.99.6.8050                */
 
 #if !defined(DATABASEUPDATER_H)
 #define DATABASEUPDATER_H
@@ -80,7 +80,13 @@ public:
 		
 
 		// Excluded directories
-		CArray<LPWSTR> m_aExcludedDirectories; 
+		CArrayFAP<LPWSTR> m_aExcludedDirectories; 
+		
+		union
+		{
+			LPSTR* m_aExcludeFilesPatternsA; 
+			LPWSTR* m_aExcludeFilesPatternsW; 
+		};
 
 		friend CDatabaseUpdater;
 		friend DBArchive;
@@ -94,7 +100,7 @@ public:
 		DBArchive();
 		DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveType nArchiveType,
 			LPCWSTR szAuthor,LPCWSTR szComment,LPCWSTR* pszRoots,DWORD nNumberOfRoots,BYTE nFlags,
-			LPCWSTR* ppExcludedDirectories,int nExcludedDirectories);
+			LPCWSTR szExcludedFiles,LPCWSTR* ppExcludedDirectories,int nExcludedDirectories);
 		DBArchive(const CDatabase* pDatabase);
 		~DBArchive();
 
@@ -107,7 +113,8 @@ public:
 
 		BOOL IsFlagged(DBFlags flag);
 		void SetFlag(DBFlags flag,BOOL bSet=TRUE);
-		void ParseExcludedDirectories(const LPCWSTR* ppExcludedDirectories,int nExcludedDirectories);
+		void ParseExcludedFilesAndDirectories(LPCWSTR szExcludedFiles,
+			const LPCWSTR* ppExcludedDirectories,int nExcludedDirectories);
 		
 
 	protected:
@@ -132,6 +139,12 @@ public:
 		// For progress estimation
 		DWORD m_dwExpectedDirectories;
 		DWORD m_dwExpectedFiles;
+
+		union
+		{
+			LPSTR* m_aExcludeFilesPatternsA; 
+			LPWSTR* m_aExcludeFilesPatternsW; 
+		};
 
 
 	};
@@ -234,19 +247,19 @@ private:
 typedef CDatabaseUpdater* PDATABASEUPDATER;
 
 inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath)
-:	m_Path(szPath),m_dwFiles(0),m_dwDirectories(0),m_pFirstBuffer(NULL)
+:	m_Path(szPath),m_dwFiles(0),m_dwDirectories(0),m_pFirstBuffer(NULL),m_aExcludeFilesPatternsA(NULL)
 {
 }
 
 inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,int iLength)
-:	m_Path(szPath,iLength),m_dwFiles(0),m_dwDirectories(0),m_pFirstBuffer(NULL)
+:	m_Path(szPath,iLength),m_dwFiles(0),m_dwDirectories(0),m_pFirstBuffer(NULL),m_aExcludeFilesPatternsA(NULL)
 {
 }
 
 inline CDatabaseUpdater::DBArchive::DBArchive()
 :	m_szArchive(NULL),m_nArchiveType(CDatabase::archiveFile),m_pFirstRoot(NULL),m_nFlags(0),
 	m_dwExpectedDirectories(DWORD(-1)),m_dwExpectedFiles(DWORD(-1)),
-	m_szExtra1(NULL),m_szExtra2(NULL)
+	m_szExtra1(NULL),m_szExtra2(NULL),m_aExcludeFilesPatternsA(NULL)
 {
 }
 

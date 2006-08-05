@@ -70,8 +70,8 @@ BEGIN
     IDS_APP_TITLE           "SettingsTool"
     IDS_SAVESETTINGS        "Save settings"
     IDS_RESTORESETTINGS     "Restore settings"
-    IDS_SAVEFILTER          "Registry backup|*.opt|Registry script|*.reg|"
-    IDS_RESTOREFILTER       "Registry backups|*.opt|All Files|*|"
+    IDS_SAVEFILTER          "Registry script|*.reg|Registry backup|*.opt|"
+    IDS_RESTOREFILTER       "Registry files|*.reg;*.opt|Registry script|*.reg|Registry backup|*.opt|"
     IDS_ERROR               "Error"
     IDS_ERRORCANNOTOPENKEY  "Cannot open registry key. Locate is not installed? System error: %s"
     IDS_ERRORCANNOTEXPORTSETTINGS "Cannot export settings. System error: %s"
@@ -86,6 +86,10 @@ BEGIN
     IDS_ERRORCANNOTDELETEKEY "Cannot remove settings. System error: %s"
     IDS_ERRORCANNOTCREATEKEY "Cannot create registry key. System error: %s"
     IDS_ERRORCANNOTRESTOREKEY "Cannot restore settings. System error: %s"
+    IDS_ERRORCANNOTENABLEPRIVILEGE "Cannot enable privilege. System error: %s"
+    IDS_SAVEFILTER9x        "Registry script|*.reg|"
+    IDS_RESTOREFILTER9x     "Registry script|*.reg|"
+    IDS_ERRORCANNOTRUNREGEDIT "Cannot run regedit.exe. System error: %s"
 END
 
 #endif    // English (U.S.) resources
@@ -107,8 +111,8 @@ LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,6,4150
- PRODUCTVERSION 1,0,6,4150
+ FILEVERSION 1,0,6,8050
+ PRODUCTVERSION 1,0,6,8050
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -124,12 +128,12 @@ BEGIN
         BLOCK "080004b0"
         BEGIN
             VALUE "FileDescription", "Settings import and export tool for Locate"
-            VALUE "FileVersion", "1, 0, 6, 4150"
+            VALUE "FileVersion", "1, 0, 6, 8050"
             VALUE "InternalName", "SetTool"
             VALUE "LegalCopyright", "Copyright (C) 2006 Janne Huttunen"
             VALUE "OriginalFilename", "SetTool"
             VALUE "ProductName", "SetTool"
-            VALUE "ProductVersion", "1, 0, 6, 4150"
+            VALUE "ProductVersion", "1, 0, 6, 8050"
         END
     END
     BLOCK "VarFileInfo"

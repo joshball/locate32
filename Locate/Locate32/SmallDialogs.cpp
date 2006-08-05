@@ -14,12 +14,15 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 	m_pList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES,LVS_EX_CHECKBOXES);
 	m_pList->InsertColumn(0,"",LVCFMT_LEFT,250);
 
+	CLocateDlg::ViewDetails* pDetails=CLocateDlg::GetDefaultDetails();
+
     int nItem;
 	for (nItem=0;nItem<m_aSelectedCols.GetSize();nItem++)
 	{
 		m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem,LPSTR_TEXTCALLBACK,0,0,0,
 			LPARAM(new ColumnItem(m_aSelectedCols[nItem],
 			(CLocateDlg::DetailType)m_aIDs[m_aSelectedCols[nItem]],
+			pDetails[m_aIDs[m_aSelectedCols[nItem]]].nString,
 			m_aWidths[m_aSelectedCols[nItem]],
 			m_aAligns[m_aSelectedCols[nItem]],m_aActions[m_aSelectedCols[nItem]])));
 		m_pList->SetCheckState(nItem,TRUE);
@@ -31,10 +34,13 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 		{
 			m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem++,
 				LPSTR_TEXTCALLBACK,0,0,0,LPARAM(new ColumnItem(i,
-				(CLocateDlg::DetailType)m_aIDs[i],m_aWidths[i],m_aAligns[i],m_aActions[i])));
+				(CLocateDlg::DetailType)m_aIDs[i],
+				pDetails[m_aIDs[i]].nString,
+				m_aWidths[i],m_aAligns[i],m_aActions[i])));
 			m_pList->SetCheckState(nItem,FALSE);
 		}
 	}
+	delete[] pDetails;
 
 	
 	CSpinButtonCtrl spin(GetDlgItem(IDC_SPIN));
@@ -580,7 +586,8 @@ void CSelectColumndDlg::OnReset()
 		if (pDetails[i].bShow)
 		{
 			if (m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem,LPSTR_TEXTCALLBACK,0,0,0,
-				LPARAM(new ColumnItem(i,CLocateDlg::DetailType(i),pDetails[i].nWidth,
+				LPARAM(new ColumnItem(i,CLocateDlg::DetailType(i),
+				pDetails[i].nString,pDetails[i].nWidth,
 				(ColumnItem::Align)pDetails[i].nAlign,m_aActions[i])))>=0)
 			{
 				m_pList->SetCheckState(nItem++,TRUE);
@@ -592,7 +599,8 @@ void CSelectColumndDlg::OnReset()
 		if (!pDetails[i].bShow)
 		{
 			if (m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem,LPSTR_TEXTCALLBACK,0,0,0,
-				LPARAM(new ColumnItem(i,CLocateDlg::DetailType(i),pDetails[i].nWidth,
+				LPARAM(new ColumnItem(i,CLocateDlg::DetailType(i),
+				pDetails[i].nString,pDetails[i].nWidth,
 				(ColumnItem::Align)pDetails[i].nAlign,m_aActions[i])))>0)
 			{
 				m_pList->SetCheckState(nItem++,FALSE);

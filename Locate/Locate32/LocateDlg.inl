@@ -19,6 +19,8 @@ inline CLocateDlg::CLocateDlg()
 	DebugFormatMessage("CLocateDlg::CLocateDlg() this is %X",DWORD_PTR(this));
 
 	ZeroMemory(m_aResultListActions,TypeCount*ListActionCount*sizeof(void*));
+
+	
 }
 
 inline CLocateDlg::CNameDlg::CNameDlg()

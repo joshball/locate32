@@ -20,7 +20,7 @@ CDatabaseUpdater::CDatabaseUpdater(LPCWSTR szDatabaseFile,LPCWSTR szAuthor,LPCWS
 	DebugMessage("CDatabaseUpdater::CDatabaseUpdater(1)");
 
 	m_aDatabases.Add(new DBArchive(szDatabaseFile,CDatabase::archiveFile,
-		szAuthor,szComment,pszRoots,nNumberOfRoots,0,NULL,0));
+		szAuthor,szComment,pszRoots,nNumberOfRoots,0,NULL,NULL,0));
 }
 
 CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
@@ -798,136 +798,165 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 
 	for(;;)
 	{
-		if (_FindGetName(&fd)[0]!='.' || (_FindGetName(&fd)[1]!='\0' && _FindGetName(&fd)[1]!='.'))
+		if (_FindGetName(&fd)[0]=='.' && (_FindGetName(&fd)[1]=='\0' || _FindGetName(&fd)[1]=='.'))
 		{
-			if (lForceQuit)
-			{
-				_FindClose(hFind);
-				throw ueStopped;
-			}
+			if(!_FindNextFile(hFind,&fd))
+				break;
+			continue;
+		}
 
-			DWORD sNameLength=istrlen(_FindGetName(&fd));
-			ASSERT(sNameLength<256);
-				
 
-			if (_FindIsFolder(&fd))
+		if (lForceQuit)
+		{
+			_FindClose(hFind);
+			throw ueStopped;
+		}
+
+		if (m_aExcludeFilesPatternsA!=NULL)
+		{
+			BOOL bExcluded=FALSE;
+			LPSTR* pPtr=m_aExcludeFilesPatternsA;
+			while (*pPtr!=NULL)
 			{
-				// Get the length of directory name and checks that length is 
-				// less than MAX_PATH, otherwise ignore
-				if (nLength+sNameLength<MAX_PATH)
+				if (ContainString(_FindGetName(&fd),*pPtr))
 				{
-					
-					// Check whether new buffer is needed
-					if (pPoint+_MAX_PATH+10>pCurrentBuffer->pData+BFSIZE)
-					{
-						// New buffer
-						pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
-						pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
-						if (pCurrentBuffer==NULL)
-							throw CException(CException::cannotAllocate);
-						
-						pPoint=*pCurrentBuffer;
-					}
-					
-					*pPoint=UDBATTRIB_DIRECTORY|_FindGetAttribFlag(&fd); // Directory
-					BYTE* pSizePointer=pPoint+1;
-					pPoint+=5;
-
-					
-					
-
-					// Set file name length
-					*(pPoint++)=(BYTE)sNameLength;
-					
-					// Copy path
-					sMemCopy(szFolder+nLength,_FindGetName(&fd),sNameLength);
-					sMemCopy(pPoint,_FindGetName(&fd),sNameLength+1);
-
-					// Move pointer
-					pPoint+=sNameLength+1;
-
-
-					// File time
-					_FindGetLastWriteDosDateTime(&fd,(WORD*)pPoint,(WORD*)pPoint+1);
-					_FindGetCreationDosDate(&fd,(WORD*)pPoint+2);
-					_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+3);
-					pPoint+=sizeof(WORD)*4;
-				
-					ScanFolder(szFolder,nLength+sNameLength,lForceQuit);
-					//szFolder[nLength+sTemp]='\0';
-					*pPoint='\0'; // No more files and directories
-					pPoint++;
-
-					// Calculating directory data size
-					if (pSizePointer>=pCurrentBuffer->pData && pSizePointer<pCurrentBuffer->pData+BFSIZE)
-						((DWORD*)pSizePointer)[0]=(DWORD)(pPoint-pSizePointer);
-					else
-					{
-						// Buffer has changed
-						CBuffer* pTmp=m_pFirstBuffer;
-						
-						// old buffer to pTmp
-						while (pSizePointer<pTmp->pData || pSizePointer>=pTmp->pData+BFSIZE)
-							pTmp=pTmp->pNext;
-						
-						// Decreasing first buffer
-						((LONG*)pSizePointer)[0]=(LONG)(pTmp->pData-pSizePointer);
-						
-						// Adding length between pCurrentbuffer and pTmp
-						for (;pTmp!=pCurrentBuffer;pTmp=pTmp->pNext)
-							((LONG*)pSizePointer)[0]+=pTmp->nLength;
-
-						// Adding this buffer len
-						((LONG*)pSizePointer)[0]+=(DWORD)(pPoint-pCurrentBuffer->pData);
-					}
-
-					// Increase directories count
-					m_dwDirectories++;
+					bExcluded=TRUE;
+					break;
 				}
+
+				pPtr++;
 			}
-			else
+
+			if (bExcluded)
 			{
-				// File name
+				if(!_FindNextFile(hFind,&fd))
+					break;
+				continue;
+			}				
+		}
+
+		DWORD sNameLength=istrlen(_FindGetName(&fd));
+		ASSERT(sNameLength<256);
+			
+
+		if (_FindIsFolder(&fd))
+		{
+			// Get the length of directory name and checks that length is 
+			// less than MAX_PATH, otherwise ignore
+			if (nLength+sNameLength<MAX_PATH)
+			{
 				
-				if(nLength+sNameLength<MAX_PATH)
+				// Check whether new buffer is needed
+				if (pPoint+_MAX_PATH+10>pCurrentBuffer->pData+BFSIZE)
 				{
-					if (pPoint+MAX_PATH+15>pCurrentBuffer->pData+BFSIZE)
-					{
-						// New buffer
-						pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
-						pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
-						pPoint=*pCurrentBuffer;
-					}
-
-					*(pPoint++)=UDBATTRIB_FILE|_FindGetAttribFlag(&fd); // File
+					// New buffer
+					pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
+					pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
+					if (pCurrentBuffer==NULL)
+						throw CException(CException::cannotAllocate);
 					
-					// File name length
-					*(pPoint++)=(BYTE)sNameLength; 
-					// Extension position (or 0 if no extension)
-					for (*pPoint=BYTE(sNameLength)-1;*pPoint>0 && _FindGetName(&fd)[*pPoint]!='.';(*pPoint)--); 
-					pPoint++;
-					
-					// Copying filename
-					sMemCopy(pPoint,_FindGetName(&fd),sNameLength+1);
-					pPoint+=sNameLength+1;
-					
-					// File size
-					((DWORD*)pPoint)[0]=_FindGetFileSizeLo(&fd);
-					pPoint[4]=(BYTE)_FindGetFileSizeHi(&fd);
-					pPoint+=5;
-
-					// File time
-					_FindGetLastWriteDosDateTime(&fd,(WORD*)pPoint,(WORD*)pPoint+1);
-					_FindGetCreationDosDate(&fd,(WORD*)pPoint+2);
-					_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+3);
-					
-					pPoint+=sizeof(WORD)*4;
-					
-					// Increase files count
-					m_dwFiles++;
+					pPoint=*pCurrentBuffer;
 				}
+				
+				*pPoint=UDBATTRIB_DIRECTORY|_FindGetAttribFlag(&fd); // Directory
+				BYTE* pSizePointer=pPoint+1;
+				pPoint+=5;
+
+				
+				
+
+				// Set file name length
+				*(pPoint++)=(BYTE)sNameLength;
+				
+				// Copy path
+				sMemCopy(szFolder+nLength,_FindGetName(&fd),sNameLength);
+				sMemCopy(pPoint,_FindGetName(&fd),sNameLength+1);
+
+				// Move pointer
+				pPoint+=sNameLength+1;
+
+
+				// File time
+				_FindGetLastWriteDosDateTime(&fd,(WORD*)pPoint,(WORD*)pPoint+1);
+				_FindGetCreationDosDate(&fd,(WORD*)pPoint+2);
+				_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+3);
+				pPoint+=sizeof(WORD)*4;
+			
+				ScanFolder(szFolder,nLength+sNameLength,lForceQuit);
+				//szFolder[nLength+sTemp]='\0';
+				*pPoint='\0'; // No more files and directories
+				pPoint++;
+
+				// Calculating directory data size
+				if (pSizePointer>=pCurrentBuffer->pData && pSizePointer<pCurrentBuffer->pData+BFSIZE)
+					((DWORD*)pSizePointer)[0]=(DWORD)(pPoint-pSizePointer);
+				else
+				{
+					// Buffer has changed
+					CBuffer* pTmp=m_pFirstBuffer;
+					
+					// old buffer to pTmp
+					while (pSizePointer<pTmp->pData || pSizePointer>=pTmp->pData+BFSIZE)
+						pTmp=pTmp->pNext;
+					
+					// Decreasing first buffer
+					((LONG*)pSizePointer)[0]=(LONG)(pTmp->pData-pSizePointer);
+					
+					// Adding length between pCurrentbuffer and pTmp
+					for (;pTmp!=pCurrentBuffer;pTmp=pTmp->pNext)
+						((LONG*)pSizePointer)[0]+=pTmp->nLength;
+
+					// Adding this buffer len
+					((LONG*)pSizePointer)[0]+=(DWORD)(pPoint-pCurrentBuffer->pData);
+				}
+
+				// Increase directories count
+				m_dwDirectories++;
 			}
-		}		
+		}
+		else
+		{
+			// File name
+			
+			if(nLength+sNameLength<MAX_PATH)
+			{
+				if (pPoint+MAX_PATH+15>pCurrentBuffer->pData+BFSIZE)
+				{
+					// New buffer
+					pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
+					pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
+					pPoint=*pCurrentBuffer;
+				}
+
+				*(pPoint++)=UDBATTRIB_FILE|_FindGetAttribFlag(&fd); // File
+				
+				// File name length
+				*(pPoint++)=(BYTE)sNameLength; 
+				// Extension position (or 0 if no extension)
+				for (*pPoint=BYTE(sNameLength)-1;*pPoint>0 && _FindGetName(&fd)[*pPoint]!='.';(*pPoint)--); 
+				pPoint++;
+				
+				// Copying filename
+				sMemCopy(pPoint,_FindGetName(&fd),sNameLength+1);
+				pPoint+=sNameLength+1;
+				
+				// File size
+				((DWORD*)pPoint)[0]=_FindGetFileSizeLo(&fd);
+				pPoint[4]=(BYTE)_FindGetFileSizeHi(&fd);
+				pPoint+=5;
+
+				// File time
+				_FindGetLastWriteDosDateTime(&fd,(WORD*)pPoint,(WORD*)pPoint+1);
+				_FindGetCreationDosDate(&fd,(WORD*)pPoint+2);
+				_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+3);
+				
+				pPoint+=sizeof(WORD)*4;
+				
+				// Increase files count
+				m_dwFiles++;
+			}
+		}
+		
 		if(!_FindNextFile(hFind,&fd))
 			break;
 	}
@@ -935,6 +964,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 
 	return ueSuccess;
 }
+
 
 UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD nLength,volatile LONG& lForceQuit)
 {
@@ -973,137 +1003,167 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 
 	for(;;)
 	{
-		if (_FindGetName(&fd)[0]!=L'.' || (_FindGetName(&fd)[1]!=L'\0' && _FindGetName(&fd)[1]!=L'.'))
+		if (_FindGetName(&fd)[0]==L'.' && (_FindGetName(&fd)[1]==L'\0' || _FindGetName(&fd)[1]==L'.'))
 		{
-			if (lForceQuit)
+			if(!_FindNextFile(hFind,&fd))
+				break;
+			continue;
+		}
+
+		if (lForceQuit)
+		{
+			_FindClose(hFind);
+			throw ueStopped;
+		}
+
+
+		if (m_aExcludeFilesPatternsW!=NULL)
+		{
+			BOOL bExcluded=FALSE;
+			LPWSTR* pPtr=m_aExcludeFilesPatternsW;
+			while (*pPtr!=NULL)
 			{
-				_FindClose(hFind);
-				throw ueStopped;
-			}
-
-			DWORD sNameLength=istrlenw(_FindGetName(&fd));
-
-			ASSERT(sNameLength<256);
-				
-
-			if (_FindIsFolder(&fd))
-			{
-				// Get the length of directory name and checks that length is 
-				// less than MAX_PATH, otherwise ignore
-				if (nLength+sNameLength<MAX_PATH)
+				if (ContainString(_FindGetName(&fd),*pPtr))
 				{
-					
-					// Check whether new buffer is needed
-					if (pPoint+MAX_PATH*2+14>pCurrentBuffer->pData+BFSIZE)
-					{
-						// New buffer
-						pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
-						pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
-						if (pCurrentBuffer==NULL)
-							throw CException(CException::cannotAllocate);
-						
-						pPoint=*pCurrentBuffer;
-					}
-					
-					*pPoint=UDBATTRIB_DIRECTORY|_FindGetAttribFlag(&fd); // Directory
-					BYTE* pSizePointer=pPoint+1;
-					pPoint+=5;
-
-					
-					
-
-					// Set file name length
-					*(pPoint++)=(BYTE)sNameLength;
-					
-					// Copy path
-					MemCopyW(szFolder+nLength,_FindGetName(&fd),sNameLength);
-					MemCopyW(pPoint,_FindGetName(&fd),sNameLength+1);
-
-					// Move pointer
-					pPoint+=sNameLength*2+2;
-
-
-					// File time
-					_FindGetLastWriteDosDateTime(&fd,(WORD*)pPoint,(WORD*)pPoint+1);
-					_FindGetCreationDosDate(&fd,(WORD*)pPoint+2,(WORD*)pPoint+3);
-					_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+4,(WORD*)pPoint+5);
-					pPoint+=sizeof(WORD)*6;
-				
-					ScanFolder(szFolder,nLength+sNameLength,lForceQuit);
-					//szFolder[nLength+sTemp]='\0';
-					*pPoint='\0'; // No more files and directories
-					pPoint++;
-
-					// Calculating directory data size
-					if (pSizePointer>=pCurrentBuffer->pData && pSizePointer<pCurrentBuffer->pData+BFSIZE)
-						((DWORD*)pSizePointer)[0]=(DWORD)(pPoint-pSizePointer);
-					else
-					{
-						// Buffer has changed
-						CBuffer* pTmp=m_pFirstBuffer;
-						
-						// old buffer to pTmp
-						while (pSizePointer<pTmp->pData || pSizePointer>=pTmp->pData+BFSIZE)
-							pTmp=pTmp->pNext;
-						
-						// Decreasing first buffer
-						((LONG*)pSizePointer)[0]=(LONG)(pTmp->pData-pSizePointer);
-						
-						// Adding length between pCurrentbuffer and pTmp
-						for (;pTmp!=pCurrentBuffer;pTmp=pTmp->pNext)
-							((LONG*)pSizePointer)[0]+=pTmp->nLength;
-
-						// Adding this buffer len
-						((LONG*)pSizePointer)[0]+=(DWORD)(pPoint-pCurrentBuffer->pData);
-					}
-
-					// Increase directories count
-					m_dwDirectories++;
+					bExcluded=TRUE;
+					break;
 				}
+
+				pPtr++;
 			}
-			else
+
+			if (bExcluded)
 			{
-				// File name
+				if(!_FindNextFile(hFind,&fd))
+					break;
+				continue;
+			}				
+		}
+
+		DWORD sNameLength=istrlenw(_FindGetName(&fd));
+		ASSERT(sNameLength<256);
+
+		
+			
+
+		if (_FindIsFolder(&fd))
+		{
+			// Get the length of directory name and checks that length is 
+			// less than MAX_PATH, otherwise ignore
+			if (nLength+sNameLength<MAX_PATH)
+			{
 				
-				if(nLength+sNameLength<MAX_PATH)
+				// Check whether new buffer is needed
+				if (pPoint+MAX_PATH*2+14>pCurrentBuffer->pData+BFSIZE)
 				{
-					if (pPoint+MAX_PATH*2+20>pCurrentBuffer->pData+BFSIZE)
-					{
-						// New buffer
-						pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
-						pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
-						pPoint=*pCurrentBuffer;
-					}
-
-					*(pPoint++)=UDBATTRIB_FILE|_FindGetAttribFlag(&fd); // File
+					// New buffer
+					pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
+					pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
+					if (pCurrentBuffer==NULL)
+						throw CException(CException::cannotAllocate);
 					
-					// File name length
-					*(pPoint++)=(BYTE)sNameLength; 
-					// Extension position (or 0 if no extension)
-					for (*pPoint=BYTE(sNameLength)-1;*pPoint>0 && _FindGetName(&fd)[*pPoint]!='.';(*pPoint)--); 
-					pPoint++;
-
-					// Copying filename
-					MemCopyW(pPoint,_FindGetName(&fd),sNameLength+1);
-					pPoint+=sNameLength*2+2;
-					
-					// File size
-					*((DWORD*)pPoint)=_FindGetFileSizeLo(&fd);
-					*((WORD*)(pPoint+4))=(WORD)_FindGetFileSizeHi(&fd);
-					pPoint+=6;
-
-					// File time
-					_FindGetLastWriteDosDateTime(&fd,(WORD*)pPoint,(WORD*)pPoint+1);
-					_FindGetCreationDosDate(&fd,(WORD*)pPoint+2,(WORD*)pPoint+3);
-					_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+4,(WORD*)pPoint+4);
-					
-					pPoint+=sizeof(WORD)*6;
-					
-					// Increase files count
-					m_dwFiles++;
+					pPoint=*pCurrentBuffer;
 				}
+				
+				*pPoint=UDBATTRIB_DIRECTORY|_FindGetAttribFlag(&fd); // Directory
+				BYTE* pSizePointer=pPoint+1;
+				pPoint+=5;
+
+				
+				
+
+				// Set file name length
+				*(pPoint++)=(BYTE)sNameLength;
+				
+				// Copy path
+				MemCopyW(szFolder+nLength,_FindGetName(&fd),sNameLength);
+				MemCopyW(pPoint,_FindGetName(&fd),sNameLength+1);
+
+				// Move pointer
+				pPoint+=sNameLength*2+2;
+
+
+				// File time
+				_FindGetLastWriteDosDateTime(&fd,(WORD*)pPoint,(WORD*)pPoint+1);
+				_FindGetCreationDosDate(&fd,(WORD*)pPoint+2,(WORD*)pPoint+3);
+				_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+4,(WORD*)pPoint+5);
+				pPoint+=sizeof(WORD)*6;
+			
+				ScanFolder(szFolder,nLength+sNameLength,lForceQuit);
+				//szFolder[nLength+sTemp]='\0';
+				*pPoint='\0'; // No more files and directories
+				pPoint++;
+
+				// Calculating directory data size
+				if (pSizePointer>=pCurrentBuffer->pData && pSizePointer<pCurrentBuffer->pData+BFSIZE)
+					((DWORD*)pSizePointer)[0]=(DWORD)(pPoint-pSizePointer);
+				else
+				{
+					// Buffer has changed
+					CBuffer* pTmp=m_pFirstBuffer;
+					
+					// old buffer to pTmp
+					while (pSizePointer<pTmp->pData || pSizePointer>=pTmp->pData+BFSIZE)
+						pTmp=pTmp->pNext;
+					
+					// Decreasing first buffer
+					((LONG*)pSizePointer)[0]=(LONG)(pTmp->pData-pSizePointer);
+					
+					// Adding length between pCurrentbuffer and pTmp
+					for (;pTmp!=pCurrentBuffer;pTmp=pTmp->pNext)
+						((LONG*)pSizePointer)[0]+=pTmp->nLength;
+
+					// Adding this buffer len
+					((LONG*)pSizePointer)[0]+=(DWORD)(pPoint-pCurrentBuffer->pData);
+				}
+
+				// Increase directories count
+				m_dwDirectories++;
 			}
-		}		
+		}
+		else
+		{
+			// File name
+			
+			if(nLength+sNameLength<MAX_PATH)
+			{
+				if (pPoint+MAX_PATH*2+20>pCurrentBuffer->pData+BFSIZE)
+				{
+					// New buffer
+					pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
+					pCurrentBuffer=pCurrentBuffer->pNext=new CBuffer;
+					pPoint=*pCurrentBuffer;
+				}
+
+				*(pPoint++)=UDBATTRIB_FILE|_FindGetAttribFlag(&fd); // File
+				
+				// File name length
+				*(pPoint++)=(BYTE)sNameLength; 
+				// Extension position (or 0 if no extension)
+				for (*pPoint=BYTE(sNameLength)-1;*pPoint>0 && _FindGetName(&fd)[*pPoint]!='.';(*pPoint)--); 
+				pPoint++;
+
+				// Copying filename
+				MemCopyW(pPoint,_FindGetName(&fd),sNameLength+1);
+				pPoint+=sNameLength*2+2;
+				
+				// File size
+				*((DWORD*)pPoint)=_FindGetFileSizeLo(&fd);
+				*((WORD*)(pPoint+4))=(WORD)_FindGetFileSizeHi(&fd);
+				pPoint+=6;
+
+				// File time
+				_FindGetLastWriteDosDateTime(&fd,(WORD*)pPoint,(WORD*)pPoint+1);
+				_FindGetCreationDosDate(&fd,(WORD*)pPoint+2,(WORD*)pPoint+3);
+				_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+4,(WORD*)pPoint+4);
+				
+				pPoint+=sizeof(WORD)*6;
+				
+				// Increase files count
+				m_dwFiles++;
+			}
+		}
+
 		if(!_FindNextFile(hFind,&fd))
 			break;
 	}
@@ -1401,7 +1461,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::WriteW(CFile* dbFile)
 CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 :	m_sAuthor(pDatabase->GetCreator()),m_sComment(pDatabase->GetDescription()),
 	m_nArchiveType(pDatabase->GetArchiveType()),m_pFirstRoot(NULL),m_nFlags(0),
-	m_szExtra1(NULL),m_szExtra2(NULL)
+	m_szExtra1(NULL),m_szExtra2(NULL),m_aExcludeFilesPatternsA(NULL)
 {
 	m_szArchive=alloccopy(pDatabase->GetArchiveName());
 	m_dwNameLength=(DWORD)wcslen(pDatabase->GetName());
@@ -1626,18 +1686,18 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 		m_dwExpectedFiles,m_dwExpectedDirectories);
 
 	// Excluded directories
-	if (pDatabase->GetExcludedDirectories().GetSize()>0)
-		ParseExcludedDirectories(pDatabase->GetExcludedDirectories().GetData(),pDatabase->GetExcludedDirectories().GetSize());
-
+	ParseExcludedFilesAndDirectories(pDatabase->GetExcludedFiles(),
+		pDatabase->GetExcludedDirectories().GetData(),pDatabase->GetExcludedDirectories().GetSize());
+	
 	m_szExtra2=pDatabase->ConstructExtraBlock();
 }
 		
 CDatabaseUpdater::DBArchive::DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveType nArchiveType,
 											  LPCWSTR szAuthor,LPCWSTR szComment,LPCWSTR* pszRoots,DWORD nNumberOfRoots,BYTE nFlags,
-											  LPCWSTR* ppExcludedDirectories,int nExcludedDirectories)
+											  LPCWSTR szExcludedFiles,LPCWSTR* ppExcludedDirectories,int nExcludedDirectories)
 :	m_sAuthor(szAuthor),m_sComment(szComment),m_nArchiveType(nArchiveType),
 	m_szName(NULL),m_dwNameLength(0),m_nFlags(nFlags),
-	m_szExtra1(NULL),m_szExtra2(NULL)
+	m_szExtra1(NULL),m_szExtra2(NULL),m_aExcludeFilesPatternsA(NULL)
 {
 	m_szArchive=alloccopy(szArchiveName);
 	
@@ -1655,8 +1715,7 @@ CDatabaseUpdater::DBArchive::DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveT
 		tmp=tmp->m_pNext=new CRootDirectory(pszRoots[i]);
 	tmp->m_pNext=NULL;
 
-	if (nExcludedDirectories>0)
-		ParseExcludedDirectories(ppExcludedDirectories,nExcludedDirectories);
+	ParseExcludedFilesAndDirectories(szExcludedFiles,ppExcludedDirectories,nExcludedDirectories);
 
 	CDatabaseInfo::ReadFilesAndDirectoriesCount(m_nArchiveType,m_szArchive,
 		m_dwExpectedFiles,m_dwExpectedDirectories);
@@ -1683,11 +1742,91 @@ CDatabaseUpdater::DBArchive::~DBArchive()
 		delete[] m_szExtra1;
 	if (m_szExtra2!=NULL)
 		delete[] m_szExtra2;
+
+	if (m_aExcludeFilesPatternsA!=NULL)
+	{
+		if (m_nFlags&Unicode)
+		{
+			for (int i=0;m_aExcludeFilesPatternsW[i]!=NULL;i++)
+				delete[] m_aExcludeFilesPatternsW[i];
+			delete[] m_aExcludeFilesPatternsW;
+		}
+		else
+		{
+			for (int i=0;m_aExcludeFilesPatternsA[i]!=NULL;i++)
+				delete[] m_aExcludeFilesPatternsA[i];
+			delete[] m_aExcludeFilesPatternsA;
+		}
+	}
 }
 
 
-void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCWSTR* ppExcludedDirs,int nExcludedDirectories)
+void CDatabaseUpdater::DBArchive::ParseExcludedFilesAndDirectories(LPCWSTR szExcludedFiles,
+																   const LPCWSTR* ppExcludedDirs,
+																   int nExcludedDirectories)
 {
+	// Parsing files
+	if (szExcludedFiles!=NULL)
+	{
+		if (szExcludedFiles[0]!='\0')
+		{
+			// Counting
+			DWORD nPatterns=1;
+			LPCWSTR pPtr;
+
+			for (pPtr=szExcludedFiles;*pPtr!='\0';pPtr++)
+			{
+				if (*pPtr==';' || *pPtr==',')
+					nPatterns++;
+			}
+
+			if (m_nFlags&Unicode)
+				m_aExcludeFilesPatternsW=new WCHAR*[nPatterns+1];
+			else
+				m_aExcludeFilesPatternsA=new CHAR*[nPatterns+1];
+
+			nPatterns=0;
+			pPtr=szExcludedFiles;
+
+			for (;;)
+			{
+				DWORD nLength;
+				for (nLength=0;pPtr[nLength]!='\0' && pPtr[nLength]!=';' && pPtr[nLength]!=',';nLength++);
+
+				if (m_nFlags&Unicode)
+					m_aExcludeFilesPatternsW[nPatterns]=alloccopy(pPtr,nLength);
+				else
+					m_aExcludeFilesPatternsA[nPatterns]=alloccopyWtoA(pPtr,nLength);
+				nPatterns++;
+
+				pPtr+=nLength;
+
+				if (*pPtr=='\0')
+					break;
+
+				pPtr++;
+			}
+
+			m_aExcludeFilesPatternsA[nPatterns]=NULL;
+		}
+	}
+
+	if (nExcludedDirectories==0)
+	{
+		// Just place excluded files and exit
+		if (m_aExcludeFilesPatternsA!=NULL)
+		{
+			CRootDirectory* pRoot=m_pFirstRoot;
+			while (pRoot!=NULL)
+			{
+				pRoot->m_aExcludeFilesPatternsA=m_aExcludeFilesPatternsA;
+				pRoot=pRoot->m_pNext;
+			}
+		}
+		return;
+	}
+
+	// Parsing directories
 	// First, check that directory names are valid
 	LPWSTR* ppExcludedDirectories=new LPWSTR[max(nExcludedDirectories,2)];
 	DWORD* pdwExcludedDirectoriesLen=new DWORD[max(nExcludedDirectories,2)];
@@ -1731,7 +1870,7 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCWSTR* ppExcl
 
 
 
-	// Then set excluded directories for corresponding roots
+	// Then set excluded files and directories for roots
 	CRootDirectory* pRoot=m_pFirstRoot;
 	
 	while (pRoot!=NULL)
@@ -1791,9 +1930,14 @@ void CDatabaseUpdater::DBArchive::ParseExcludedDirectories(const LPCWSTR* ppExcl
 				delete pRoot;
 				pRoot=pPrevRoot->m_pNext;
 			}
+			continue;
 		}
-		else // Next root
-			pRoot=pRoot->m_pNext;
+		
+		// Inserting excluded files pattern
+		pRoot->m_aExcludeFilesPatternsA=m_aExcludeFilesPatternsA;
+			
+		// Next root
+		pRoot=pRoot->m_pNext;
 	}
 
 	for (int i=0;i<nExcludedDirectories;i++)
@@ -1809,25 +1953,20 @@ CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,
 	CFile* dbFile=NULL;
 	
 	try {
-
-		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): opening file");
-        dbFile=new CFile(szArchive,
+		dbFile=new CFile(szArchive,
 			CFile::modeReadWrite|CFile::openExisting|CFile::shareDenyWrite|CFile::shareDenyRead|CFile::otherStrNullTerminated,TRUE);
 
 		if (dbFile==NULL)
 		{
 			// Cannot open file, incremental update not possible
-			DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): END dbFile is NULL");
 			return NULL;
 		}
 	
-		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): seektobegin");
-        dbFile->SeekToBegin();
+		dbFile->SeekToBegin();
 	
 		// Reading and verifing header
 		char szBuffer[11];
-		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): reading header");
-        dbFile->Read(szBuffer,11);
+		dbFile->Read(szBuffer,11);
 
 		if (szBuffer[0]!='L' || szBuffer[1]!='O' || 
 			szBuffer[2]!='C' || szBuffer[3]!='A' || 
@@ -1855,8 +1994,6 @@ CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,
 
 	
 		// Updating file and directory counts
-		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): updating file and directory count");
-        
 		DWORD dwBlockSize;
 		dbFile->Read(dwBlockSize);
 		dbFile->Seek(dwBlockSize-2*sizeof(DWORD),CFile::current);
@@ -1873,8 +2010,6 @@ CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,
 		dbFile->Write(dwTemp2);
 
 		// Searching enf of file
-		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): searching end of file");
-        
 		dbFile->Read(dwBlockSize);
 		while (dwBlockSize>0)
 		{
@@ -1886,8 +2021,6 @@ CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,
 		// Now we should be in the end of file
 		ASSERT(dbFile->IsEndOfFile());
 
-		DebugMessage("CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(): it is end of file");
-        
 		dbFile->Seek(-LONG(sizeof(DWORD)),CFile::current);
 	}
 	catch (CFileException fe)

@@ -41,7 +41,8 @@ public:
 			Center=LVCFMT_CENTER
 		} m_nAlign;
 
-		ColumnItem(int nCol,CLocateDlg::DetailType nType,int nWidth,Align nAlign,CSubAction** pActions);
+		ColumnItem(int nCol,CLocateDlg::DetailType nType,int nResourceID,
+			int nWidth,Align nAlign,CSubAction** pActions);
 
 		CSubAction** m_pActions;
 

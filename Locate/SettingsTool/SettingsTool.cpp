@@ -10,40 +10,6 @@ HINSTANCE hInst;
 
 INT_PTR CALLBACK	DialogProc(HWND, UINT, WPARAM, LPARAM);
 
-
-int WINAPI WinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     LPSTR    lpCmdLine,
-                     int       nCmdShow)
-{
-	UNREFERENCED_PARAMETER(hPrevInstance);
-	UNREFERENCED_PARAMETER(lpCmdLine);
-	hInst=hInstance;
-
-	HANDLE hToken;
-	if (OpenProcessToken(GetCurrentProcess(),TOKEN_ADJUST_PRIVILEGES,&hToken))
-	{
-		PTOKEN_PRIVILEGES ns=(PTOKEN_PRIVILEGES)new BYTE[sizeof(DWORD)+sizeof(LUID_AND_ATTRIBUTES)+2];
-		if (LookupPrivilegeValue(NULL,SE_BACKUP_NAME,&(ns->Privileges[0].Luid)))
-		{
-			ns->PrivilegeCount=1;
-			ns->Privileges[0].Attributes=SE_PRIVILEGE_ENABLED;
-			AdjustTokenPrivileges(hToken,FALSE,ns,0,NULL,NULL);
-		}
-		if (LookupPrivilegeValue(NULL,SE_RESTORE_NAME,&(ns->Privileges[0].Luid)))
-		{
-			ns->PrivilegeCount=1;
-			ns->Privileges[0].Attributes=SE_PRIVILEGE_ENABLED;
-			AdjustTokenPrivileges(hToken,FALSE,ns,0,NULL,NULL);
-		}
-		delete[] (BYTE*)ns;
-	}
-
-	DialogBox(hInstance,MAKEINTRESOURCE(IDD_MAIN),NULL,DialogProc);
-
-	return (int) 0;
-}
-
 void ShowError(HWND hWnd,int nID,LONG nError)
 {
 	char szError[100];
@@ -68,6 +34,44 @@ void ShowError(HWND hWnd,int nID,LONG nError)
 			LocalFree(pMsg);
 	}
 }
+
+int WINAPI WinMain(HINSTANCE hInstance,
+                     HINSTANCE hPrevInstance,
+                     LPSTR    lpCmdLine,
+                     int       nCmdShow)
+{
+	UNREFERENCED_PARAMETER(hPrevInstance);
+	UNREFERENCED_PARAMETER(lpCmdLine);
+	hInst=hInstance;
+
+	HANDLE hToken;
+	if (OpenProcessToken(GetCurrentProcess(),TOKEN_ADJUST_PRIVILEGES,&hToken))
+	{
+		PTOKEN_PRIVILEGES ns=(PTOKEN_PRIVILEGES)new BYTE[sizeof(DWORD)+sizeof(LUID_AND_ATTRIBUTES)+2];
+		if (LookupPrivilegeValue(NULL,SE_BACKUP_NAME,&(ns->Privileges[0].Luid)))
+		{
+			ns->PrivilegeCount=1;
+			ns->Privileges[0].Attributes=SE_PRIVILEGE_ENABLED;
+			if (!AdjustTokenPrivileges(hToken,FALSE,ns,0,NULL,NULL))
+				ShowError(NULL,IDS_ERRORCANNOTENABLEPRIVILEGE,GetLastError());
+		}
+		if (LookupPrivilegeValue(NULL,SE_RESTORE_NAME,&(ns->Privileges[0].Luid)))
+		{
+			ns->PrivilegeCount=1;
+			ns->Privileges[0].Attributes=SE_PRIVILEGE_ENABLED;
+			if (!AdjustTokenPrivileges(hToken,FALSE,ns,0,NULL,NULL))
+				ShowError(NULL,IDS_ERRORCANNOTENABLEPRIVILEGE,GetLastError());
+
+		}
+		delete[] (BYTE*)ns;
+	}
+
+	DialogBox(hInstance,MAKEINTRESOURCE(IDD_MAIN),NULL,DialogProc);
+
+	return (int) 0;
+}
+
+
 
 LONG DeleteSubKey(HKEY hKey,LPCSTR szKey)
 {
@@ -98,13 +102,22 @@ LONG DeleteSubKey(HKEY hKey,LPCSTR szKey)
 
 BOOL SaveSettings(HWND hWnd)
 {
-	
-
-
 	char szPath[MAX_PATH]="";
 	char szTitle[100],szFilter[200];
 	LoadString(hInst,IDS_SAVESETTINGS,szTitle,100);
-	LoadString(hInst,IDS_SAVEFILTER,szFilter,200);
+	
+	OSVERSIONINFO ve;
+	ve.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
+	if (GetVersionEx(&ve))
+	{
+		if (ve.dwPlatformId==VER_PLATFORM_WIN32_NT)
+			LoadString(hInst,IDS_SAVEFILTER,szFilter,200);
+		else
+			LoadString(hInst,IDS_SAVEFILTER9x,szFilter,200);
+	}
+	else
+		LoadString(hInst,IDS_SAVEFILTER,szFilter,200);
+
 	for (int i=0;szFilter[i]!='\0';i++)
 	{
 		if (szFilter[i]=='|')
@@ -121,12 +134,12 @@ BOOL SaveSettings(HWND hWnd)
 	ofn.nMaxFile=MAX_PATH;
 	ofn.lpstrTitle=szTitle;
 	ofn.Flags=OFN_ENABLESIZING|OFN_EXPLORER|OFN_LONGNAMES|OFN_OVERWRITEPROMPT;
-	ofn.lpstrDefExt="*.opt";
+	ofn.lpstrDefExt="*.reg";
 
 	if (!GetSaveFileName(&ofn))
 		return FALSE;
 	
-	if (ofn.nFilterIndex==2)
+	if (ofn.nFilterIndex==1)
 	{
 		// Registry script
 		char szCommand[2000];
@@ -144,6 +157,8 @@ BOOL SaveSettings(HWND hWnd)
 			CloseHandle(pi.hThread);
 			CloseHandle(pi.hProcess);	
 		}
+		else
+			ShowError(hWnd,IDS_ERRORCANNOTRUNREGEDIT,GetLastError());
 		return TRUE;		
 	}
 
@@ -174,8 +189,19 @@ BOOL RestoreSettings(HWND hWnd)
 {	
 	char szPath[MAX_PATH]="";
 	char szTitle[100],szFilter[200];
+	OSVERSIONINFO ve;
+	ve.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
+	if (GetVersionEx(&ve))
+	{
+		if (ve.dwPlatformId==VER_PLATFORM_WIN32_NT)
+			LoadString(hInst,IDS_RESTOREFILTER,szFilter,200);
+		else
+			LoadString(hInst,IDS_RESTOREFILTER9x,szFilter,200);
+	}
+	else
+		LoadString(hInst,IDS_RESTOREFILTER,szFilter,200);
+	
 	LoadString(hInst,IDS_RESTORESETTINGS,szTitle,100);
-	LoadString(hInst,IDS_RESTOREFILTER,szFilter,200);
 
 	for (int i=0;szFilter[i]!='\0';i++)
 	{
@@ -198,12 +224,83 @@ BOOL RestoreSettings(HWND hWnd)
 	if (!GetOpenFileName(&ofn))
 		return FALSE;
 	
+	int nDotIndex;
+	for (nDotIndex=strlen(szPath)-1;nDotIndex>=0 && szPath[nDotIndex]!='.';nDotIndex--);
+
+	if (nDotIndex>=0 && _stricmp(szPath+nDotIndex+1,"reg")==0)
+	{
+		char szBackup[MAX_PATH];
+		CopyMemory(szBackup,szPath,nDotIndex+1);
+		strcpy_s(szBackup+nDotIndex+1,MAX_PATH-nDotIndex-1,"old.reg");
+				
+		// Backing up
+		char szCommand[2000];
+		sprintf_s(szCommand,2000,"regedit /ea \"%s\" HKEY_CURRENT_USER\\Software\\Update",szBackup);
+
+		PROCESS_INFORMATION pi;
+		STARTUPINFO si; // Ansi and Unicode versions are same
+		ZeroMemory(&si,sizeof(STARTUPINFO));
+		si.cb=sizeof(STARTUPINFO);
+		
+		if (CreateProcess(NULL,szCommand,NULL,
+			NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
+			NULL,NULL,&si,&pi))
+		{
+			CloseHandle(pi.hThread);
+			CloseHandle(pi.hProcess);	
+		}
+		else
+			ShowError(hWnd,IDS_ERRORCANNOTRUNREGEDIT,GetLastError());
+
+		
+		
+		// Restore key
+		DeleteSubKey(HKEY_CURRENT_USER,"SOFTWARE\\Update");
+		sprintf_s(szCommand,2000,"regedit /s \"%s\"",szPath);
+
+		ZeroMemory(&si,sizeof(STARTUPINFO));
+		si.cb=sizeof(STARTUPINFO);
+		
+		if (CreateProcess(NULL,szCommand,NULL,
+			NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
+			NULL,NULL,&si,&pi))
+		{
+			CloseHandle(pi.hThread);
+			CloseHandle(pi.hProcess);	
+		}
+		else
+			ShowError(hWnd,IDS_ERRORCANNOTRUNREGEDIT,GetLastError());
+
+
+		return TRUE;		
+	}
+	
+	// First, check that we can restore key
+	HKEY hRegKey;
+	LONG lRet=RegCreateKeyEx(HKEY_CURRENT_USER,"SOFTWARE\\Update_tmpTmp",
+		0,NULL,REG_OPTION_BACKUP_RESTORE,KEY_ALL_ACCESS,NULL,&hRegKey,NULL);
+	if (lRet!=ERROR_SUCCESS)
+	{
+		ShowError(hWnd,IDS_ERRORCANNOTCREATEKEY,lRet);
+		return FALSE;
+	}
+	lRet=RegRestoreKey(hRegKey,szPath,0);
+	RegCloseKey(hRegKey);		
+	DeleteSubKey(HKEY_CURRENT_USER,"SOFTWARE\\Update_tmpTmp");
+
+	if (lRet!=ERROR_SUCCESS)
+	{
+		ShowError(hWnd,IDS_ERRORCANNOTRESTOREKEY,lRet);
+		return FALSE;
+	}
+
+	
+	
 	// Clear existing key
 	DeleteSubKey(HKEY_CURRENT_USER,"SOFTWARE\\Update");
-
-	// Resotre key
-	HKEY hRegKey;
-	LONG lRet=RegCreateKeyEx(HKEY_CURRENT_USER,"SOFTWARE\\Update",
+	
+	// Restore key
+	lRet=RegCreateKeyEx(HKEY_CURRENT_USER,"SOFTWARE\\Update",
 		0,NULL,REG_OPTION_BACKUP_RESTORE,KEY_ALL_ACCESS,NULL,&hRegKey,NULL);
 
 	if (lRet!=ERROR_SUCCESS)
@@ -220,8 +317,6 @@ BOOL RestoreSettings(HWND hWnd)
 		ShowError(hWnd,IDS_ERRORCANNOTRESTOREKEY,lRet);
 		return FALSE;
 	}
-
-	
 	return TRUE;
 }
 
@@ -277,7 +372,7 @@ INT_PTR CALLBACK DialogProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 			SetClassLongPtr(hWnd,GCLP_HICON,(LONG_PTR)hIcon);
 			hIcon=(HICON)LoadImage(hInst,MAKEINTRESOURCE(IDI_SETTINGSTOOL),IMAGE_ICON,16,16,LR_SHARED);
 			//SetIcon(hWnd,hIcon,FALSE);
-			SetClassLong(hWnd,GCLP_HICONSM,(LONG)hIcon);
+			SetClassLongPtr(hWnd,GCLP_HICONSM,(LONG_PTR)hIcon);
 			break;
 		}
 	case WM_COMMAND:

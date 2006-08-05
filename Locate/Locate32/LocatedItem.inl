@@ -54,14 +54,33 @@ inline LPWSTR CLocatedItem::FormatImageInformation() const
 }
 
 
+inline LPWSTR CLocatedItem::FormatPages() const
+{
+	ISDLGTHREADOK
+
+	ExtraInfo* pInfo=GetFieldForType(CLocateDlg::Pages);
+	if (pInfo!=NULL)
+	{
+		if (pInfo->nPages==0)
+			return const_cast<LPWSTR>(szwEmpty);	
+
+		if (g_szwBuffer!=NULL)
+			delete[] g_szwBuffer;
+		g_szwBuffer=new WCHAR[11];
+		_ultow_s(pInfo->nPages,g_szwBuffer,11,10);
+		return g_szwBuffer;
+	}
+	return const_cast<LPWSTR>(szwEmpty);	
+}
+
 inline LPWSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) const
 {
 	
 	switch (nDetailType)
 	{
-	case CLocateDlg::Title:
-		if (GetTitle()!=NULL)
-			return GetTitle();
+	case CLocateDlg::Name:
+		if (GetFileTitle()!=NULL)
+			return GetFileTitle();
 		else
 			return GetName();		
 	case CLocateDlg::InFolder:
@@ -104,12 +123,23 @@ inline LPWSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) co
 	case CLocateDlg::ShortFileName:
 	case CLocateDlg::ShortFilePath:
 	case CLocateDlg::MD5sum:
+	case CLocateDlg::Author:
+	case CLocateDlg::Title:
+	case CLocateDlg::Subject:
+	case CLocateDlg::Category:
+	case CLocateDlg::Comments:
+	case CLocateDlg::Description:
+	case CLocateDlg::FileVersion:
+	case CLocateDlg::ProductName:
+	case CLocateDlg::ProductVersion:
 		{
 			LPWSTR ret=GetExtraText(nDetailType);
 			if (ret==NULL)
 				return const_cast<LPWSTR>(szwEmpty);
 			return ret;
 		}
+	case CLocateDlg::Pages:
+		return FormatPages();
 	case CLocateDlg::ImageDimensions:
 		return FormatImageInformation();				
 	case CLocateDlg::Database:
@@ -129,10 +159,10 @@ inline LPWSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) co
 }
 
 
-inline BOOL CLocatedItem::ShouldUpdateTitle() const 
+inline BOOL CLocatedItem::ShouldUpdateFileTitle() const 
 { 
 	// do not depend on efEnableUpdating
-	return !(dwFlags&LITEM_TITLEOK && dwFlags&LITEM_FILENAMEOK); 
+	return !(dwFlags&LITEM_FILETITLEOK && dwFlags&LITEM_FILENAMEOK); 
 }
 
 inline BOOL CLocatedItem::ShouldUpdateFilename() const 
@@ -222,7 +252,7 @@ inline void CLocatedItem::CheckIfDeleted()
 }
 
 inline CLocatedItem::CLocatedItem()
-:	szTitle(NULL),szType(NULL),dwFlags(0),pFirstExtraInfo(NULL)
+:	szFileTitle(NULL),szType(NULL),dwFlags(0),pFirstExtraInfo(NULL)
 {
 }
 
@@ -241,27 +271,14 @@ inline void CLocatedItem::UpdateIcon()
 	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
 	{
         if (GetFileInfo(GetPath(),0,&fi,/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
-		{
 			iIcon=fi.iIcon;
-			DebugFormatMessage("CLocatedItem::UpdateIcon(): iIcon for %s is %d",GetName(),iIcon);
-			
-		}
 		else
-		{
 			iIcon=GetLocateApp()->m_nDelImage;
-			DebugFormatMessage("CLocatedItem::UpdateIcon(): failed to get icon, iIcon for %s is %d",GetName(),iIcon);
-		}
 	}
 	else if (IsDeleted())
-	{
 		iIcon=GetLocateApp()->m_nDelImage;
-		DebugFormatMessage("CLocatedItem::UpdateIcon(): use deleted icon %d for %s",iIcon,GetName());
-	}
 	else
-	{
 		iIcon=GetLocateApp()->m_nDefImage;
-		DebugFormatMessage("CLocatedItem::UpdateIcon(): use default icon %d for %s",iIcon,GetName());
-	}
 
 	dwFlags|=LITEM_ICONOK;
 }
@@ -362,6 +379,15 @@ inline int CLocatedItem::GetImageDimensionsProduct() const
 	return 0;
 }
 
+inline int CLocatedItem::GetPages() const
+{
+	ExtraInfo* pInfo=GetFieldForType(CLocateDlg::Pages);
+	if (pInfo!=NULL)
+		return pInfo->nPages;
+	return 0;
+}
+
+
 inline LPWSTR CLocatedItem::GetExtraText(CLocateDlg::DetailType nDetail) const
 {
 	ExtraInfo* pInfo=GetFieldForType(nDetail);
@@ -379,6 +405,16 @@ inline void CLocatedItem::ExtraSetUpdateWhenFileSizeChanged()
 		{
 		case CLocateDlg::Owner:
 		case CLocateDlg::ImageDimensions:
+		case CLocateDlg::Author:
+		case CLocateDlg::Title:
+		case CLocateDlg::Subject:
+		case CLocateDlg::Category:
+		case CLocateDlg::Comments:
+		case CLocateDlg::Pages:
+		case CLocateDlg::Description:
+		case CLocateDlg::FileVersion:
+		case CLocateDlg::ProductName:
+		case CLocateDlg::ProductVersion:
             pTmp->bShouldUpdate=TRUE;
 			break;
 		case CLocateDlg::MD5sum:
@@ -414,6 +450,15 @@ inline CLocatedItem::ExtraInfo::~ExtraInfo()
 	case CLocateDlg::ShortFilePath:
 	case CLocateDlg::Owner:
 	case CLocateDlg::MD5sum:
+	case CLocateDlg::Author:
+	case CLocateDlg::Title:
+	case CLocateDlg::Subject:
+	case CLocateDlg::Category:
+	case CLocateDlg::Comments:
+	case CLocateDlg::Description:
+	case CLocateDlg::FileVersion:
+	case CLocateDlg::ProductName:
+	case CLocateDlg::ProductVersion:
 		if (szText!=NULL && szText!=szwEmpty)
 			delete[] szText;
 		break;

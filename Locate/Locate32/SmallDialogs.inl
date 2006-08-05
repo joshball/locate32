@@ -13,10 +13,11 @@ inline CSelectColumndDlg::CSelectColumndDlg()
 {
 }
 
-inline CSelectColumndDlg::ColumnItem::ColumnItem(int nCol,CLocateDlg::DetailType nType,int nWidth,Align nAlign,CSubAction** pActions)
+inline CSelectColumndDlg::ColumnItem::ColumnItem(int nCol,CLocateDlg::DetailType nType,int nResourceID,
+												 int nWidth,Align nAlign,CSubAction** pActions)
 :	m_nType(nType),m_nWidth(nWidth),m_nCol(nCol),m_nAlign(nAlign),m_pActions(pActions)
 {
-	m_strName.LoadString(IDS_LISTNAME+int(nType),LanguageSpecificResource);
+	m_strName.LoadString(nResourceID,LanguageSpecificResource);
 }
 
 inline CSelectDatabasesDlg::CSelectDatabasesDlg(const CArray<PDATABASE>& rOrigDatabases,CArray<PDATABASE>& rSelectedDatabases,BYTE bFlags,LPCSTR szRegKey)

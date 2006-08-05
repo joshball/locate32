@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   Updatedb.exe v2.99.6.7290 */
+   Updatedb.exe v2.99.6.8050 */
 
 #include <HFCLib.h>
 #include "../locatedb/locatedb.h"
@@ -7,9 +7,9 @@
 #include "../lan_resources.h"
 
 #ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 3.0 beta 6.7290";
+		LPCSTR szVersionStr="updtdb32 3.0 beta 6.8050";
 #else
-		LPCSTR szVersionStr="updatedb 3.0 beta 6.7290";
+		LPCSTR szVersionStr="updatedb 3.0 beta 6.8050";
 #endif
 
 
@@ -259,6 +259,30 @@ int wmain (int argc,wchar_t ** argv)
 				}
 				break;
 			case 'e':
+				if (wcsncmp(aDatabases.GetLast()->GetName(),L"PARAMX",6)!=0 && 
+					wcsncmp(aDatabases.GetLast()->GetName(),L"DEFAULTX",8)!=0)
+					wprintf(ID2W(IDS_UPDATEDB32CANNOTCHANGELOADED),aDatabases.GetLast()->GetName());
+				else 
+				{
+					CStringW* pStr;
+					if (argv[i][2]=='\0' && i+1<argc)
+						pStr=new CStringW(argv[++i]);
+					else
+						pStr=new CStringW(argv[i]+2);
+					
+					if ((*pStr)[0]==L'\"')
+						pStr->DelChar(0);
+					if (pStr->LastChar()==L'\"')
+						pStr->DelLastChar();
+					while (pStr->LastChar()==L'\\')
+						pStr->DelLastChar();
+					
+					if (pStr->GetLength()>0)
+						aDatabases.GetLast()->SetExcludedFiles(*pStr);
+
+					aDatabases.GetLast()->SetNamePtr(alloccopy(L"PARAMX"));
+				}
+				break;
 			case 'E':
 				if (wcsncmp(aDatabases.GetLast()->GetName(),L"PARAMX",6)!=0 && 
 					wcsncmp(aDatabases.GetLast()->GetName(),L"DEFAULTX",8)!=0)

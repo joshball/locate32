@@ -22,6 +22,11 @@
 #define IDS_ERRORCANNOTCREATEKEY        116
 #define IDS_ERRORCANNOTCREATEKEY2       117
 #define IDS_ERRORCANNOTRESTOREKEY       117
+#define IDS_ERRORCANNOTENABLEPRIVILEGE  118
+#define IDS_SAVEFILTER9x                119
+#define IDS_RESTOREFILTER9x             120
+#define IDS_ERRORCANNOTRUNREGEDIT       121
+#define IDS_CANNOTRESOLVEFILETYPE       122
 #define IDR_MAINFRAME                   128
 #define IDD_MAIN                        129
 #define IDC_RESTORESETTINGS             1001

@@ -1127,7 +1127,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 	BYTE fFlags=0;
 
 	// wDate/wTime is 0xFFFFFFFF, omit date/time
-	if (wDate!=WORD(-1))
+	if (wDate!=WORD(-1) && wDate!=0)
 	{
 		if (m_strDateFormat.IsEmpty())
 		{
@@ -1161,7 +1161,9 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 		else
             dwLength+=(DWORD)m_strDateFormat.GetLength()*2;
 	}
-	if (wTime!=WORD(-1))
+	
+	
+	if (wTime!=WORD(-1) && wTime!=0)
 	{
 		if (m_strTimeFormat.IsEmpty())
 		{
@@ -1202,7 +1204,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 	LPWSTR pPtr=szRet;
 
 	//Formatting date
-    if (wDate!=WORD(-1))
+    if (wDate!=WORD(-1) && wDate!=0)
 	{
 		for (int i=0;i<m_strDateFormat.GetLength();i++)
 		{
@@ -1303,7 +1305,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 	}
 	
 	// Formatting time
-	if (wTime!=WORD(-1))
+	if (wTime!=WORD(-1) && wTime!=0)
 	{
 		*pPtr=' ';
 		pPtr++;
@@ -1435,6 +1437,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 		m_strDateFormat.Empty();
 	if (fFlags&fTimeIsDefault)
 		m_strTimeFormat.Empty();
+	
 	return szRet;
 }
 
@@ -1620,7 +1623,7 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 		{
 			if (IsUnicodeSystem())
 			{
-				WCHAR* szFormattedStr=new WCHAR[50];
+				WCHAR* szFormattedStr=new WCHAR[60];
 				WCHAR szTemp[10]=L".",szTemp2[10]=L" ";
 
 				NUMBERFMTW fmt;
@@ -1641,7 +1644,7 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 				RegKey.QueryValue(L"sThousand",szTemp2,10);
 
 				
-				if (GetNumberFormatW(LOCALE_USER_DEFAULT,0,szRet,&fmt,szFormattedStr,50)>0)
+				if (GetNumberFormatW(LOCALE_USER_DEFAULT,0,szRet,&fmt,szFormattedStr,60)>0)
 				{
 					delete[] szRet;
 					szRet=szFormattedStr;
@@ -1673,7 +1676,7 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 
 				
 				if (GetNumberFormat(LOCALE_USER_DEFAULT,0,W2A(szRet),&fmt,szFormattedStr,50)>0)
-					szRet=alloccopyAtoW(szFormattedStr);
+					MultiByteToWideChar(CP_ACP,0,szFormattedStr,-1,szRet,40);
 			}
 		}
 	}
@@ -1681,7 +1684,7 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 	if (!(m_nFileSizeFormat==fsfBytesNoUnit || 
 		m_nFileSizeFormat==fsfKiloBytesNoUnit|| 
 		m_nFileSizeFormat==fsfMegaBytesMegaBytesNoUnit))
-		StringCbCatW(szRet,40,szUnit);
+		StringCbCatW(szRet,40*sizeof(WCHAR),szUnit);
 
 	return szRet;
 }
@@ -1869,7 +1872,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			{
 				str.Format(IDS_UPDATINGDATABASE2,
 					pUpdater->GetCurrentDatabaseName(),
-					pUpdater->GetCurrentRoot()->m_Path);
+					(LPCWSTR)pUpdater->GetCurrentRoot()->m_Path);
 			}
 			else
 			{

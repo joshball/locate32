@@ -114,7 +114,7 @@ class CLocateDlg : public CDialog
 public:
 	// If more than 64 details, make m_nSorting bigger
 	enum DetailType {
-		Title=0,
+		Name=0,
 		InFolder=1,
 		FullPath=2,
 		ShortFileName=3,
@@ -134,7 +134,18 @@ public:
 		VolumeSerial=17,
 		VOlumeFileSystem=18,
 		MD5sum=19,
-		LastType=19,
+		Author=20,
+		Title=21,
+		Subject=22,
+		Category=23,
+		Pages=24,
+		Comments=25,
+		Description=26,
+		FileVersion=27,
+		ProductName=28,
+		ProductVersion=29,
+
+		LastType=29,
 
 		TypeCount=LastType+1,
 
@@ -459,6 +470,8 @@ private:
 
 	};
 
+
+public:
 	struct ViewDetails {
 		/* DetailType nDetail; */
 		int nString;
@@ -493,7 +506,7 @@ public:
 	void OnInitFileMenu(HMENU hPopupMenu);
 	void OnInitSendToMenu(HMENU hPopupMenu);
 	
-	void OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo,int nItem=-1,DetailType nDetail=Title);
+	void OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo,int nItem=-1,DetailType nDetail=Name);
 	static void ExecuteCommand(LPCWSTR szCommand,int nItem=-1);
 	
 	void SortItems(DetailType nDetail,BYTE bDescending=-1,BOOL bNoneIsPossible=FALSE); // bDescending:0=ascending order, 1=desc, -1=default

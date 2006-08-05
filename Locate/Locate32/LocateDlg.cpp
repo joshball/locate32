@@ -449,7 +449,7 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 				// Deleting previous tools
 				m_pLocate->DeleteTooltipTools();
 
-				if (CLocateDlg::DetailType(m_pLocate->m_pListCtrl->GetColumnIDFromSubItem(ht.iSubItem))==CLocateDlg::Title)
+				if (CLocateDlg::DetailType(m_pLocate->m_pListCtrl->GetColumnIDFromSubItem(ht.iSubItem))==CLocateDlg::Name)
 				{
 					TOOLINFOW tii;
 					tii.cbSize = TTTOOLINFOW_V2_SIZE;
@@ -542,7 +542,7 @@ CLocateDlg::~CLocateDlg()
 CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
 {
 	ViewDetails aDetails[]={
-		{/*Title,*/IDS_LISTNAME,TRUE,LVCFMT_LEFT,200},
+		{/*Name,*/IDS_LISTNAME,TRUE,LVCFMT_LEFT,200},
 		{/*InFolder,*/IDS_LISTINFOLDER,TRUE,LVCFMT_LEFT,300},
 		{/*FullPath,*/IDS_LISTFULLPATH,FALSE,LVCFMT_LEFT,300},
 		{/*ShortFileName,*/IDS_LISTSHORTFILENAME,FALSE,LVCFMT_LEFT,200},
@@ -561,7 +561,17 @@ CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
 		{/*VolumeLabel,*/IDS_LISTVOLUMELABEL,FALSE,LVCFMT_LEFT,100},
 		{/*VolumeSerial,*/IDS_LISTVOLUMESERIAL,FALSE,LVCFMT_LEFT,90},
 		{/*VOlumeFileSystem,*/IDS_LISTVOLUMEFILESYSTEM,FALSE,LVCFMT_LEFT,90},
-		{/*MD5sum,*/IDS_LISTMD5SUM,FALSE,LVCFMT_LEFT,100}
+		{/*MD5sum,*/IDS_LISTMD5SUM,FALSE,LVCFMT_LEFT,100},
+		{/*Author,*/IDS_LISTAUTHOR,FALSE,LVCFMT_LEFT,100},
+		{/*Title,*/IDS_LISTTITLE,FALSE,LVCFMT_LEFT,100},
+		{/*Subject,*/IDS_LISTSUBJECT,FALSE,LVCFMT_LEFT,100},
+		{/*Category,*/IDS_LISTCATEGORY,FALSE,LVCFMT_LEFT,100},
+		{/*Pages,*/IDS_LISTPAGES,FALSE,LVCFMT_LEFT,100},
+		{/*Comments,*/IDS_LISTCOMMENTS,FALSE,LVCFMT_LEFT,100},
+		{/*Description,*/IDS_LISTDESCRIPTION,FALSE,LVCFMT_LEFT,100},
+		{/*FileVersion,*/IDS_LISTFILEVERSION,FALSE,LVCFMT_LEFT,100},
+		{/*ProductName,*/IDS_LISTPRODUCTNAME,FALSE,LVCFMT_LEFT,100},
+		{/*ProductVersion,*/IDS_LISTPRODUCTVERSION,FALSE,LVCFMT_LEFT,100}
 	};
 
 	ViewDetails* pRet=new ViewDetails[sizeof(aDetails)/sizeof(ViewDetails)];
@@ -858,7 +868,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		SetListStyle(3);
 		break;
 	case IDM_ARRANGENAME:
-		SortItems(Title);
+		SortItems(Name);
 		break;
 	case IDM_ARRANGEFOLDER:
 		SortItems(InFolder);
@@ -1415,6 +1425,11 @@ void CLocateDlg::SetDialogMode(BOOL bLarge)
 				delete[] g_szBuffer;
 				g_szBuffer=NULL;
 			}
+			if (g_szwBuffer!=NULL)
+			{
+				delete[] g_szwBuffer;
+				g_szwBuffer=NULL;
+			}
 			m_pListCtrl->ShowWindow(CWndCtrl::swHide);
 		}
 	}
@@ -1862,7 +1877,7 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 	}
 	case SearchingStarted:
 	{
-		CString text;
+		CStringW text;
 		text.Format(IDS_SEARCHINGFROMFILE,pLocater->GetFileName());
 		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(text,STATUSBAR_SEARCHFROMFILE,0);
 		break;
@@ -2312,6 +2327,25 @@ void CLocateDlg::OnDestroy()
 	m_SizeDateDlg.DestroyWindow();
 	m_AdvancedDlg.DestroyWindow();
 	
+	
+	SaveRegistry();
+	ISDLGTHREADOK
+
+	// Freeing target paths in dwItemData
+	ClearMenuVariables();
+	HMENU hOldMenu=GetMenu();
+	FreeSendToMenuItems(GetSubMenu(hOldMenu,0));
+	::DestroyMenu(hOldMenu);
+	m_Menu.DestroyMenu(); // Destroy submenu
+
+	// Releasing drop target
+	RevokeDragDrop(*m_pListCtrl);
+	m_pDropTarget->Release(); //This deletes class
+	OleUninitialize();
+
+
+	// Delete window classes
+	// Tab control and statusbar
 	if (m_pTabCtrl!=NULL)
 	{
 		delete m_pTabCtrl;
@@ -2323,26 +2357,7 @@ void CLocateDlg::OnDestroy()
 		m_pStatusCtrl=NULL;
 	}
 
-
-	SaveRegistry();
-	ISDLGTHREADOK
-
-	// Freeing target paths in dwItemData
-	ClearMenuVariables();
-	HMENU hOldMenu=GetMenu();
-	FreeSendToMenuItems(GetSubMenu(hOldMenu,0));
-	::DestroyMenu(hOldMenu);
-	m_Menu.DestroyMenu(); // Destroy submenu
-	
-
-	
-
-	// Relasing drop target
-	RevokeDragDrop(*m_pListCtrl);
-	m_pDropTarget->Release(); //This deletes class
-	OleUninitialize();
-
-	    
+	// List control and related stuff
 	if (m_pListCtrl!=NULL)
 	{
 		if ((m_pListCtrl->GetStyle() & LVS_TYPEMASK)==LVS_REPORT)
@@ -2356,6 +2371,15 @@ void CLocateDlg::OnDestroy()
 		delete m_pListTooltips;
 		m_pListTooltips=NULL;
 	}
+	if (m_pImageHandler!=NULL)
+	{
+		delete m_pImageHandler;
+		m_pImageHandler=NULL;
+	}
+
+
+
+	// Buffers
 	if (g_szBuffer!=NULL)
 	{
 		delete[] g_szBuffer;
@@ -2366,17 +2390,15 @@ void CLocateDlg::OnDestroy()
 		delete[] g_szwBuffer;
 		g_szwBuffer=NULL;
 	}
+
+	// SendTo list related stuff
 	if (m_hSendToListFont!=NULL)
 	{
 		DeleteObject(m_hSendToListFont);
 		m_hSendToListFont=NULL;
 	}
 
-	if (m_pImageHandler!=NULL)
-	{
-		delete m_pImageHandler;
-		m_pImageHandler=NULL;
-	}
+	
 
 	if (!(m_dwFlags&fgDialogLeaveLocateBackground))
 		GetLocateAppWnd()->PostMessage(WM_COMMAND,MAKEWPARAM(IDC_COMEWITHME,0));
@@ -2566,11 +2588,18 @@ void CLocateDlg::OnSize(UINT nType, int cx, int cy)
 		//StopBackgroundOperations();
 		ChangeBackgroundOperationsPriority(TRUE);
 
+		// Free buffers
 		if (g_szBuffer!=NULL)
 		{
 			delete[] g_szBuffer;
 			g_szBuffer=NULL;
 		}
+		if (g_szwBuffer!=NULL)
+		{
+			delete[] g_szwBuffer;
+			g_szwBuffer=NULL;
+		}
+
 		if (m_hSendToListFont!=NULL)
 		{
 			DeleteObject(m_hSendToListFont);
@@ -3509,7 +3538,6 @@ void CLocateDlg::LoadRegistry()
 		if (RegKey.QueryValue("WaitEvery60",dwTemp))
 			m_WaitEvery60=WORD(dwTemp);
 	}
-	
 }
 
 void CLocateDlg::LoadDialogTexts()
@@ -3617,7 +3645,7 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 					break;
 
 				((NMTTDISPINFO*)pnmh)->hinst=NULL;
-				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))==Title)
+				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))==Name)
 				{
 						
 					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_iTooltipItem);
@@ -3655,7 +3683,7 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 					break;
 
 				((NMTTDISPINFOW*)pnmh)->hinst=NULL;
-				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))==Title)
+				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))==Name)
 				{
 						
 					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_iTooltipItem);
@@ -3683,7 +3711,7 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 
 				m_bTooltipActive=TRUE;
 
-				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))!=Title)
+				if (DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))!=Name)
 				{
 					CRect rc;
 					m_pListCtrl->GetSubItemRect(m_iTooltipItem,m_iTooltipSubItem,LVIR_LABEL,&rc);
@@ -3877,16 +3905,16 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				switch (nDetail)
 				{
 				// Title and parent are special since they have icons
-				case Title:
-					if (pItem->ShouldUpdateTitle())
-						pItem->UpdateTitle();
+				case Name:
+					if (pItem->ShouldUpdateFileTitle())
+						pItem->UpdateFileTitle();
 
 					if (pItem->ShouldUpdateIcon())
                         pItem->UpdateIcon();
 
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
-					if (pItem->GetTitle()!=NULL)
-						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetTitle());
+					if (pItem->GetFileTitle()!=NULL)
+						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetFileTitle());
 					else
 						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetName());
 					
@@ -3929,8 +3957,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				switch (nDetail)
 				{
 				// Title and parent are special since they have icons
-				case Title:
-					if (pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon())
+				case Name:
+					if (pItem->ShouldUpdateFileTitle() || pItem->ShouldUpdateIcon())
 					{
 						if (m_pBackgroundUpdater==NULL)
 						{
@@ -3938,23 +3966,18 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 							m_pBackgroundUpdater->CreateEventsAndMutex();
 						}
 						
-						
-						DebugFormatMessage("LVN_GETDISPINFO: Calling AddToUpdateList with nDetail=Title for %s",pItem->GetName());
-							
-
-						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Title);
+						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Name);
 						
 						if (m_pLocater==NULL) // Locating in process
 							m_pBackgroundUpdater->StopWaiting();
 					}
 					
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
-					if (pItem->GetTitle()!=NULL)
-						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetTitle());
+					if (pItem->GetFileTitle()!=NULL)
+						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetFileTitle());
 					else
 						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetName());
 					pLvdi->item.iImage=pItem->GetIcon();
-					DebugFormatMessage("LVN_GETDISPINFO: icon set to %d for item %s",pLvdi->item.iImage,pItem->GetName());
 
 					if (pItem->GetAttributes()&(LITEMATTRIB_CUTTED|LITEMATTRIB_HIDDEN))
 					{
@@ -4025,15 +4048,15 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				switch (nDetail)
 				{
 				// Title and parent are special since they have icons
-				case Title:
-					if (pItem->ShouldUpdateTitle())
-						pItem->UpdateTitle();
+				case Name:
+					if (pItem->ShouldUpdateFileTitle())
+						pItem->UpdateFileTitle();
 					if (pItem->ShouldUpdateIcon())
                         pItem->UpdateIcon();
 
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
-					if (pItem->GetTitle()!=NULL)
-						pLvdi->item.pszText=pItem->GetTitle();
+					if (pItem->GetFileTitle()!=NULL)
+						pLvdi->item.pszText=pItem->GetFileTitle();
 					else
 						pLvdi->item.pszText=pItem->GetName();
 					
@@ -4072,8 +4095,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				switch (nDetail)
 				{
 				// Title and parent are special since they have icons
-				case Title:
-					if (pItem->ShouldUpdateTitle() || pItem->ShouldUpdateIcon())
+				case Name:
+					if (pItem->ShouldUpdateFileTitle() || pItem->ShouldUpdateIcon())
 					{
 						if (m_pBackgroundUpdater==NULL)
 						{
@@ -4082,22 +4105,18 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						}
 						
 						
-						DebugFormatMessage("LVN_GETDISPINFO: Calling AddToUpdateList with nDetail=Title for %s",pItem->GetName());
-							
-
-						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Title);
+						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Name);
 						
 						if (m_pLocater==NULL) // Locating in process
 							m_pBackgroundUpdater->StopWaiting();
 					}
 					
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
-					if (pItem->GetTitle()!=NULL)
-						pLvdi->item.pszText=pItem->GetTitle();
+					if (pItem->GetFileTitle()!=NULL)
+						pLvdi->item.pszText=pItem->GetFileTitle();
 					else
 						pLvdi->item.pszText=pItem->GetName();
 					pLvdi->item.iImage=pItem->GetIcon();
-					DebugFormatMessage("LVN_GETDISPINFO: icon set to %d for item %s",pLvdi->item.iImage,pItem->GetName());
 
 					if (pItem->GetAttributes()&(LITEMATTRIB_CUTTED|LITEMATTRIB_HIDDEN))
 					{
@@ -4274,14 +4293,14 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 	DetailType nDetail=DetailType(lParamSort&127);
 	switch (nDetail)
 	{
-	case Title:
-		if (pItem1->ShouldUpdateTitle())
-			pItem1->UpdateTitle();
-		if (pItem2->ShouldUpdateTitle())
-			pItem2->UpdateTitle();
+	case Name:
+		if (pItem1->ShouldUpdateFileTitle())
+			pItem1->UpdateFileTitle();
+		if (pItem2->ShouldUpdateFileTitle())
+			pItem2->UpdateFileTitle();
 		if (lParamSort&128)
-			return _wcsicmp(pItem2->GetTitle(),pItem1->GetTitle());
-		return _wcsicmp(pItem1->GetTitle(),pItem2->GetTitle());
+			return _wcsicmp(pItem2->GetFileTitle(),pItem1->GetFileTitle());
+		return _wcsicmp(pItem1->GetFileTitle(),pItem2->GetFileTitle());
 	case InFolder:
 		if (lParamSort&128)
 			return _wcsicmp(pItem2->GetParent(),pItem1->GetParent());
@@ -4416,10 +4435,31 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			return lParamSort&128?1:-1;
 		else
 			return lParamSort&128?-1:1;
+	case Pages:
+		if (pItem1->ShouldUpdateExtra(Pages))
+			pItem1->UpdateSummaryProperties();
+		if (pItem2->ShouldUpdateExtra(Pages))
+			pItem2->UpdateSummaryProperties();
+		
+		if (pItem2->GetPages()==pItem1->GetPages())
+			return 0;
+		else if (pItem2->GetPages()>pItem1->GetPages())
+			return lParamSort&128?1:-1;
+		else
+			return lParamSort&128?-1:1;
 	case Owner:
 	case ShortFileName:	
 	case ShortFilePath:
 	case MD5sum:
+	case Author:
+	case Title:
+	case Subject:
+	case Category:
+	case Comments:
+	case Description:
+	case FileVersion:
+	case ProductName:
+	case ProductVersion:
 		{
 			if (pItem1->ShouldUpdateExtra(nDetail))
 				pItem1->UpdateByDetail(nDetail);
@@ -5586,8 +5626,8 @@ void CLocateDlg::OnCreateShortcut()
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
 		
 	
-		if (pItem->ShouldUpdateTitle())
-			pItem->UpdateTitle();
+		if (pItem->ShouldUpdateFileTitle())
+			pItem->UpdateFileTitle();
 			
 		if (IsUnicodeSystem())
 		{
@@ -5599,7 +5639,7 @@ void CLocateDlg::OnCreateShortcut()
 				return;
 			}
 		
-			if (!SUCCEEDED(pslw->SetDescription(CStringW(IDS_SHORTCUTTO)+pItem->GetTitle())))
+			if (!SUCCEEDED(pslw->SetDescription(CStringW(IDS_SHORTCUTTO)+pItem->GetFileTitle())))
 			{
 				ppf->Release();
 				pslw->Release();
@@ -5616,7 +5656,7 @@ void CLocateDlg::OnCreateShortcut()
 				return;
 			}
 		
-			if (!SUCCEEDED(psl->SetDescription(CStringA(IDS_SHORTCUTTO)+W2A(pItem->GetTitle()))))
+			if (!SUCCEEDED(psl->SetDescription(CStringA(IDS_SHORTCUTTO)+W2A(pItem->GetFileTitle()))))
 			{
 				ppf->Release();
 				psl->Release();
@@ -5625,7 +5665,7 @@ void CLocateDlg::OnCreateShortcut()
 		}
 
 		
-		if (!SUCCEEDED(ppf->Save(sTargetFolder+pItem->GetTitle()+L".lnk",TRUE)))
+		if (!SUCCEEDED(ppf->Save(sTargetFolder+pItem->GetFileTitle()+L".lnk",TRUE)))
 		{
 			ppf->Release();
 			if (IsUnicodeSystem())
@@ -6714,7 +6754,7 @@ void CLocateDlg::OnChangeFileName()
 		DWORD dwTemp=0;;
 		RegKey.QueryValue("NoExtensionInRename",dwTemp);
 		if (dwTemp)
-			fnd.m_dwFlags|=CChangeFilenameDlg::fNoExtension;
+			bNoExtension=TRUE;
 	}
 
 	int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
@@ -6725,6 +6765,11 @@ void CLocateDlg::OnChangeFileName()
 		{
 			fnd.m_sParent=pItem->GetParent();
 			fnd.m_sFileName.Copy(pItem->GetName(),pItem->GetNameLen());
+			
+			if (!bNoExtension || pItem->IsFolder())
+				fnd.m_dwFlags&=~CChangeFilenameDlg::fNoExtension;
+			else
+				fnd.m_dwFlags|=CChangeFilenameDlg::fNoExtension;
 
 			if (fnd.DoModal(*this))
 			{
@@ -6810,7 +6855,7 @@ void CLocateDlg::OnChangeFileNameCase()
 				}
 
 				FileSystem::MoveFile(pItem->GetPath(),pItem->GetPath());
-				pItem->RemoveFlags(LITEM_TITLEOK|LITEM_FILENAMEOK);
+				pItem->RemoveFlags(LITEM_FILETITLEOK|LITEM_FILENAMEOK);
 				m_pListCtrl->RedrawItems(iItem,iItem);
 				
 
@@ -8769,9 +8814,9 @@ void CLocateDlg::LoadResultlistActions()
 
 void CLocateDlg::SetDefaultActions(CSubAction*** pActions) const
 {
-	pActions[Title][
+	pActions[Name][
 		GetFlags()&fgLVStylePointToSelect?LeftMouseButtonClick:LeftMouseButtonDblClick]=new CSubAction(CSubAction::Execute);
-	pActions[Title][RightMouseButtonClick]=new CSubAction(CSubAction::OpenContextMenu);
+	pActions[Name][RightMouseButtonClick]=new CSubAction(CSubAction::OpenContextMenu);
 }
 
 
@@ -10619,7 +10664,6 @@ LRESULT CLocateDlg::CAdvancedDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lPara
 
 BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
-	DebugFormatMessage("%X->OnCommand(%d,%d,%X)",DWORD(this),wID,wNotifyCode,hControl);
 	switch (wID)
 	{
 	case IDC_TEXTHELP:
@@ -10808,6 +10852,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		break;
 
 	}
+	
 	return CDialog::OnCommand(wID,wNotifyCode,hControl);
 }
 

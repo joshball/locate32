@@ -71,6 +71,8 @@
 				GenerateManifest="false"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
+				MapFileName="$(OutDir)\$(ProjectName).map"
+				MapExports="true"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -232,6 +234,8 @@
 				GenerateManifest="false"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
+				MapFileName="$(OutDir)\$(ProjectName).map"
+				MapExports="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -781,6 +785,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\commonres\defaultshortcuts.dat"
+				>
+			</File>
+			<File
 				RelativePath=".\commonres\deftypei.bmp"
 				>
 			</File>
@@ -842,6 +850,10 @@
 			</File>
 			<File
 				RelativePath=".\commonres\locate32.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\commonres\manifest"
 				>
 			</File>
 			<File
@@ -929,18 +941,18 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\commonres\defaultshortcuts.dat"
+		<Filter
+			Name="Documents"
 			>
-		</File>
-		<File
-			RelativePath=".\commonres\manifest"
-			>
-		</File>
-		<File
-			RelativePath="..\..\Install\Locate2\Readme.txt"
-			>
-		</File>
+			<File
+				RelativePath="..\..\Install\Locate2\Readme.txt"
+				>
+			</File>
+			<File
+				RelativePath="..\misc\Uuden detailin lisays.txt"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

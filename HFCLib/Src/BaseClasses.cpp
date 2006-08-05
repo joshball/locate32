@@ -567,17 +567,20 @@ BOOL CMenu::InsertMenu(UINT nItem,BOOL fByPosition,LPMENUITEMINFOW lpmii)
 	if (IsUnicodeSystem())
 		return ::InsertMenuItemW(m_hMenu,nItem,fByPosition,lpmii);
 
-	if (lpmii->fMask&MIIM_STRING || (lpmii->fMask&MIIM_TYPE && lpmii->fType&MFT_STRING))
+	if (lpmii->fMask&MIIM_STRING || lpmii->fMask&MIIM_TYPE)
 	{
-		LPWSTR sTemp=lpmii->dwTypeData;
-		lpmii->dwTypeData=(LPWSTR)alloccopyWtoA(sTemp);
-		BOOL bRet=::InsertMenuItemA(m_hMenu,nItem,fByPosition,(MENUITEMINFOA*)lpmii);
-		delete[] (LPSTR)lpmii->dwTypeData;
-		lpmii->dwTypeData=sTemp;
-		return bRet;
+		if (lpmii->fType!=MFT_BITMAP && lpmii->fType!=MFT_OWNERDRAW && lpmii->fType!=MFT_SEPARATOR)
+		{
+			LPWSTR sTemp=lpmii->dwTypeData;
+			lpmii->dwTypeData=(LPWSTR)alloccopyWtoA(sTemp);
+			BOOL bRet=::InsertMenuItemA(m_hMenu,nItem,fByPosition,(MENUITEMINFOA*)lpmii);
+			delete[] (LPSTR)lpmii->dwTypeData;
+			lpmii->dwTypeData=sTemp;
+			return bRet;
+		}
 	}
-	else
-		return ::InsertMenuItemA(m_hMenu,nItem,fByPosition,(MENUITEMINFOA*)lpmii);
+	
+	return ::InsertMenuItemA(m_hMenu,nItem,fByPosition,(MENUITEMINFOA*)lpmii);
 }
 
 BOOL CMenu::SetMenuItemInfo(UINT uItem,BOOL fByPosition,LPMENUITEMINFOW lpmii)
@@ -585,17 +588,19 @@ BOOL CMenu::SetMenuItemInfo(UINT uItem,BOOL fByPosition,LPMENUITEMINFOW lpmii)
 	if (IsUnicodeSystem())
 		return ::SetMenuItemInfoW(m_hMenu,uItem,fByPosition,lpmii);
 		
-	if (lpmii->fMask&MIIM_STRING || (lpmii->fMask&MIIM_TYPE && lpmii->fType&MFT_STRING))
+	if (lpmii->fMask&MIIM_STRING || lpmii->fMask&MIIM_TYPE)
 	{
-		LPWSTR sTemp=lpmii->dwTypeData;
-		lpmii->dwTypeData=(LPWSTR)alloccopyWtoA(sTemp);
-		BOOL bRet=::SetMenuItemInfoA(m_hMenu,uItem,fByPosition,(MENUITEMINFOA*)lpmii);
-		delete[] (LPSTR)lpmii->dwTypeData;
-		lpmii->dwTypeData=sTemp;
-		return bRet;
+		if (lpmii->fType!=MFT_BITMAP && lpmii->fType!=MFT_OWNERDRAW && lpmii->fType!=MFT_SEPARATOR)
+		{
+			LPWSTR sTemp=lpmii->dwTypeData;
+			lpmii->dwTypeData=(LPWSTR)alloccopyWtoA(sTemp);
+			BOOL bRet=::SetMenuItemInfoA(m_hMenu,uItem,fByPosition,(MENUITEMINFOA*)lpmii);
+			delete[] (LPSTR)lpmii->dwTypeData;
+			lpmii->dwTypeData=sTemp;
+			return bRet;
+		}
 	}
-	else
-		return ::SetMenuItemInfoA(m_hMenu,uItem,fByPosition,(MENUITEMINFOA*)lpmii);
+	return ::SetMenuItemInfoA(m_hMenu,uItem,fByPosition,(MENUITEMINFOA*)lpmii);
 }
 
 BOOL CMenu::GetMenuItemInfo(UINT uItem,BOOL fByPosition,LPMENUITEMINFOW lpmii) const
@@ -603,20 +608,45 @@ BOOL CMenu::GetMenuItemInfo(UINT uItem,BOOL fByPosition,LPMENUITEMINFOW lpmii) c
 	if (IsUnicodeSystem())
 		return ::GetMenuItemInfoW(m_hMenu,uItem,fByPosition,lpmii);
 
-	if (lpmii->fMask&MIIM_STRING || (lpmii->fMask&MIIM_TYPE && lpmii->fType&MFT_STRING))
+	
+	if ((lpmii->fMask&MIIM_STRING || lpmii->fMask&MIIM_TYPE) && lpmii->cch>0)
 	{
-		LPWSTR sTemp=lpmii->dwTypeData;
-		lpmii->dwTypeData=(LPWSTR)new char[lpmii->cch+2];
-		BOOL bRet=::GetMenuItemInfoA(m_hMenu,uItem,fByPosition,(MENUITEMINFOA*)lpmii);
+		// Get type
+		MENUITEMINFOA miia;
+		miia.cbSize=sizeof(MENUITEMINFOA);
+		miia.fMask=MIIM_FTYPE;
+
+		if (!::GetMenuItemInfoA(m_hMenu,uItem,fByPosition,&miia))
+			return FALSE;
+
+		if (miia.fType==MFT_BITMAP || miia.fType==MFT_OWNERDRAW || miia.fType==MFT_SEPARATOR)
+			return ::GetMenuItemInfoA(m_hMenu,uItem,fByPosition,(MENUITEMINFOA*)lpmii);
+
+		ASSERT(sizeof(MENUITEMINFOA)==sizeof(MENUITEMINFOW));
+
+		CopyMemory(&miia,lpmii,sizeof(MENUITEMINFOA));
+		
+		miia.dwTypeData=new char[lpmii->cch+2];
+		BOOL bRet=::GetMenuItemInfoA(m_hMenu,uItem,fByPosition,&miia);
 		if (bRet)
-			MultiByteToWideChar(CP_ACP,0,(LPSTR)lpmii->dwTypeData,-1,sTemp,lpmii->cch);
-		delete[] (LPSTR)lpmii->dwTypeData;
-		lpmii->dwTypeData=sTemp;
+		{
+			lpmii->fType=miia.fType;
+			lpmii->fState=miia.fState;
+			lpmii->wID=miia.wID;
+			lpmii->hSubMenu=miia.hSubMenu;
+			lpmii->hbmpChecked=miia.hbmpChecked;
+			lpmii->hbmpUnchecked=miia.hbmpUnchecked;
+			lpmii->dwItemData=miia.dwItemData;
+			lpmii->cch=miia.cch;
+			lpmii->hbmpItem=miia.hbmpItem;
+
+			MemCopyAtoW(lpmii->dwTypeData,miia.dwTypeData,lpmii->cch+1);
+		}
+		delete[] miia.dwTypeData;
 		return bRet;
 	}
 	else
-		return ::SetMenuItemInfoA(m_hMenu,uItem,fByPosition,(MENUITEMINFOA*)lpmii);
-
+		return ::GetMenuItemInfoA(m_hMenu,uItem,fByPosition,(MENUITEMINFOA*)lpmii);
 }
 #endif
 

@@ -281,6 +281,8 @@ BOOL CResults::SaveToHtmlFile(LPCSTR szFile) const
 		outFile.Write(pStr,sizeof(pStr)-1);
 	}
 	
+	CLocateDlg::ViewDetails* pDetails=CLocateDlg::GetDefaultDetails();
+
 	if (m_dwFlags&RESULT_INCLUDELABELS && m_nDetails>0)
 	{
 		{
@@ -292,13 +294,16 @@ BOOL CResults::SaveToHtmlFile(LPCSTR szFile) const
 		{
 			outFile.Write("<td>",4);
 			
-			str.LoadString(IDS_LISTNAME+m_pDetails[i],LanguageSpecificResource);
+			
+			str.LoadString(pDetails[m_pDetails[i]].nString,LanguageSpecificResource);
 			outFile.Write(str);
 			outFile.Write("</td>",5);
 		}
 		
 		outFile.Write("\n</tr>\n",7);
 	}
+
+	delete[] pDetails;
 
 	for (int nRes=0;nRes<m_nResults;nRes++)
 	{
@@ -354,16 +359,21 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 	// Checking width of labels if necessary
 	CAllocArrayTmpl<CString> pLabels(max(m_nDetails,1));
 
+
+	CLocateDlg::ViewDetails* pDetails=CLocateDlg::GetDefaultDetails();
+
 	if (m_dwFlags&RESULT_INCLUDELABELS)
 	{
 		for (int i=0;i<m_nDetails;i++)
 		{
-			pLabels[i].LoadString(IDS_LISTNAME+m_pDetails[i],LanguageSpecificResource);
+			pLabels[i].LoadString(pDetails[m_pDetails[i]].nString,LanguageSpecificResource);
 		    
 			if ((DWORD)pLabels[i].GetLength()>m_pLengths[i])
 					m_pLengths[i]=(DWORD)pLabels[i].GetLength();
 		}
 	}
+
+	delete[] pDetails;
 
 	// Checking the fields tallest length
 	DWORD dwMaxLength=0;
@@ -406,9 +416,9 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 		for (int i=0;i<m_aFromDatabases.GetSize();i++)
 		{
 			const CDatabase* pDatabase=GetLocateApp()->GetDatabase(m_aFromDatabases[i]);
-			str.Format(IDS_SAVERESULTSDB,pDatabase->GetName(),
-				pDatabase->GetCreator(),pDatabase->GetDescription(),
-				pDatabase->GetArchiveName());
+			str.Format(IDS_SAVERESULTSDB,W2A(pDatabase->GetName()),
+				W2A(pDatabase->GetCreator()),W2A(pDatabase->GetDescription()),
+				W2A(pDatabase->GetArchiveName()));
 			outFile.Write(str);
 			outFile.Write("\r\n",2);
 		}
@@ -548,12 +558,14 @@ BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
 		EnableDlgItem(IDC_SELECTEDITEMS,FALSE);
 	}
 
+	CLocateDlg::ViewDetails* pDetails=CLocateDlg::GetDefaultDetails();
+
 	// Inserting details to list view and checking selected
 	int nItem;
 	CString Title;
 	for (nItem=0;nItem<m_aDetails.GetSize();nItem++)
 	{
-		Title.LoadString(IDS_LISTNAME+m_aDetails[nItem],LanguageSpecificResource);
+		Title.LoadString(pDetails[m_aDetails[nItem]].nString,LanguageSpecificResource);
 		m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem,
 			Title,0,0,0,LPARAM(m_aDetails[nItem]));
 		m_pList->SetCheckState(nItem,TRUE);
@@ -563,12 +575,13 @@ BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
 	{
 		if (m_aDetails.Find(nDetail)==-1)
 		{
-			Title.LoadString(IDS_LISTNAME+nDetail,LanguageSpecificResource);
+			Title.LoadString(pDetails[nDetail].nString,LanguageSpecificResource);
 			m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem++,
 				Title,0,0,0,LPARAM(nDetail));
 			m_pList->SetCheckState(nItem,FALSE);
 		}
 	}
+	delete[] pDetails;
 	
 	return CFileDialog::OnInitDialog(hwndFocus);
 }
