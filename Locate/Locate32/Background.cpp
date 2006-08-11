@@ -93,6 +93,13 @@ inline void CCheckFileNotificationsThread::FileCreated(LPCWSTR szFile,DWORD dwLe
 {
 	BkgDebugNumMessage("File created: %S",DWORD(szFile));
 
+	if (pLocateDlg->m_pListCtrl==NULL)
+		return;
+	if (pLocateDlg->m_pListCtrl->GetItemCount()==0)
+		return;
+
+
+
 	WCHAR szPath[MAX_PATH];
 	int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
@@ -124,6 +131,11 @@ inline void CCheckFileNotificationsThread::FileModified(LPCWSTR szFile,DWORD dwL
 {
 	BkgDebugNumMessage("File modified: %S",DWORD(szFile));
 
+	if (pLocateDlg->m_pListCtrl==NULL)
+		return;
+	if (pLocateDlg->m_pListCtrl->GetItemCount()==0)
+		return;
+
 	WCHAR szPath[MAX_PATH];
 	int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
@@ -150,6 +162,11 @@ inline void CCheckFileNotificationsThread::FileModified(LPCWSTR szFile,DWORD dwL
 inline void CCheckFileNotificationsThread::FileDeleted(LPCWSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg)
 {
 	BkgDebugNumMessage("File deleted: %S",DWORD(szFile));
+
+	if (pLocateDlg->m_pListCtrl==NULL)
+		return;
+	if (pLocateDlg->m_pListCtrl->GetItemCount()==0)
+		return;
 
 	WCHAR szPath[MAX_PATH];
 	int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
@@ -330,6 +347,12 @@ BOOL CCheckFileNotificationsThread::RunningProcOld()
 void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCWSTR szRoot,CLocateDlg* pLocateDlg)
 {
 	BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot BEGIN");
+	
+	if (pLocateDlg->m_pListCtrl==NULL)
+		return;
+	if (pLocateDlg->m_pListCtrl->GetItemCount()==0)
+		return;
+
 	// Updating changed items by checking all items
 	if (szRoot[1]=='\0')
 	{

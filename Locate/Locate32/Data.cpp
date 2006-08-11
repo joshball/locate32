@@ -6,7 +6,7 @@
 
 CSchedule::CSchedule()
 :	m_bFlags(flagEnabled),m_nType(typeDaily),m_pDatabases(NULL),
-	m_nThreadPriority(THREAD_PRIORITY_NORMAL)
+	m_nThreadPriority(THREAD_PRIORITY_NORMAL),m_wCpuUsageTheshold(WORD(-1))
 {
 	SYSTEMTIME st;
 	GetLocalTime(&st);
@@ -28,7 +28,10 @@ CSchedule::CSchedule()
 CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
 {
 	sMemCopy(this,pData,SCHEDULE_V1_LEN);
-	pData+=SCHEDULE_V1_LEN;		
+	pData+=SCHEDULE_V1_LEN;	
+
+	if (nVersion!=4)
+		m_wCpuUsageTheshold=WORD(-1);
 
 	if (nVersion==1)
 	{
@@ -36,12 +39,12 @@ CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
 		m_nThreadPriority=THREAD_PRIORITY_NORMAL;
 		
 	}
-	else if (nVersion==2 || nVersion==3)
+	else if (nVersion>=2 && nVersion<=4)
 	{
 		BOOL bDatabasesSpecified=*((DWORD*)pData)!=NULL;
 		pData+=sizeof(DWORD);
 
-		if (nVersion==3)
+		if (nVersion>=3)
 		{
 			m_nThreadPriority=*((DWORD*)pData);
 			pData+=sizeof(DWORD);
@@ -77,9 +80,9 @@ CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
 DWORD CSchedule::GetDataLen() const
 {
 	if (m_pDatabases==NULL)
-		return SCHEDULE_V3_LEN+1;
+		return SCHEDULE_V34_LEN+1;
     	
-	DWORD dwLength=SCHEDULE_V3_LEN+1;
+	DWORD dwLength=SCHEDULE_V34_LEN+1;
 	LPWSTR pPtr=m_pDatabases;
 	while (*pPtr!='\0')
 	{
@@ -101,7 +104,7 @@ DWORD CSchedule::GetData(BYTE* pData) const
 	*((DWORD*)pData)=m_nThreadPriority;
 	pData+=sizeof(DWORD);
 
-	DWORD dwLength=SCHEDULE_V3_LEN+1;	
+	DWORD dwLength=SCHEDULE_V34_LEN+1;	
 	if (m_pDatabases!=NULL)
 	{
 		LPWSTR pPtr=m_pDatabases;

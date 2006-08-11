@@ -256,6 +256,7 @@ public:
 		virtual void OnDestroy();
 		virtual BOOL OnApply();
 		virtual void OnCancel();
+		void OnEdit();
 
 		void EnableItems();
 				
@@ -281,7 +282,7 @@ public:
 			CSchedule* m_pSchedule;
 		
 		private:
-			CComboBox* m_pCombo;
+			CComboBox* m_pTypeCombo;
 			BYTE m_bChanged;
 
 #ifdef _DEBUG

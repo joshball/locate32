@@ -772,7 +772,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	mii.fType=MFT_STRING;
 	smenu.InsertMenu(0x76,FALSE,&mii);
 	mii.wID=0x77;
-	mii.dwTypeData="Show background op state";
+	mii.dwTypeData="Show debug related information";
 	mii.dwItemData=0;
 	mii.fType=MFT_STRING;
 	smenu.InsertMenu(0x77,FALSE,&mii);
@@ -1297,6 +1297,11 @@ BOOL CLocateDlg::UpdateSettings()
 
 void CLocateDlg::OnSelectAll()
 {
+	if (m_pListCtrl==NULL)
+		return;
+	if (m_pListCtrl->GetItemCount()==0)
+		return;
+
 	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
 	{
@@ -1308,6 +1313,11 @@ void CLocateDlg::OnSelectAll()
 
 void CLocateDlg::OnInvertSelection()
 {
+	if (m_pListCtrl==NULL)
+		return;
+	if (m_pListCtrl->GetItemCount()==0)
+		return;
+
 	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
 	{
@@ -1985,26 +1995,27 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const C
 		MakeLower(szPath);
 
 		
-		CListCtrl* pList=((CLocateDlg*)dwParam)->m_pListCtrl;
-		int nItem=pList->GetNextItem(-1,LVNI_ALL);
-		while (nItem!=-1)
+		if (((CLocateDlg*)dwParam)->m_pListCtrl->GetItemCount()>0)
 		{
-			CLocatedItem* pItem=(CLocatedItem*)pList->GetItemData(nItem);
-			if (pItem!=NULL)
+			int nItem=((CLocateDlg*)dwParam)->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
+			while (nItem!=-1)
 			{
-				ASSERT(pItem->GetPathLen()<MAX_PATH);
+				CLocatedItem* pItem=(CLocatedItem*)((CLocateDlg*)dwParam)->m_pListCtrl->GetItemData(nItem);
+				if (pItem!=NULL)
+				{
+					ASSERT(pItem->GetPathLen()<MAX_PATH);
 
-				MemCopyWtoA(szPath2,pItem->GetPath(),pItem->GetPathLen()+1);
-				MakeLower(szPath2);
-			
+					MemCopyWtoA(szPath2,pItem->GetPath(),pItem->GetPathLen()+1);
+					MakeLower(szPath2);
 				
-				if (strcmp(szPath,szPath2)==0)
-					return TRUE; // Alreafy found
-				
+					
+					if (strcmp(szPath,szPath2)==0)
+						return TRUE; // Alreafy found
+					
+				}
+				nItem=((CLocateDlg*)dwParam)->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
 			}
-			nItem=pList->GetNextItem(nItem,LVNI_ALL);
-		}
-		
+		}		
 
 	}
 
@@ -2097,26 +2108,27 @@ BOOL CALLBACK CLocateDlg::LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const 
 		}
 		MakeLower(szPath);
 		
-		CListCtrl* pList=((CLocateDlg*)dwParam)->m_pListCtrl;
-		int nItem=pList->GetNextItem(-1,LVNI_ALL);
-		while (nItem!=-1)
+		if (((CLocateDlg*)dwParam)->m_pListCtrl->GetItemCount())
 		{
-			CLocatedItem* pItem=(CLocatedItem*)pList->GetItemData(nItem);
-			if (pItem!=NULL)
+			int nItem=((CLocateDlg*)dwParam)->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
+			while (nItem!=-1)
 			{
-				ASSERT(pItem->GetPathLen()<MAX_PATH);
+				CLocatedItem* pItem=(CLocatedItem*)((CLocateDlg*)dwParam)->m_pListCtrl->GetItemData(nItem);
+				if (pItem!=NULL)
+				{
+					ASSERT(pItem->GetPathLen()<MAX_PATH);
 
-				MemCopyW(szPath2,pItem->GetPath(),pItem->GetPathLen()+1);
-				MakeLower(szPath2);
-			
+					MemCopyW(szPath2,pItem->GetPath(),pItem->GetPathLen()+1);
+					MakeLower(szPath2);
 				
-				if (wcscmp(szPath,szPath2)==0)
-					return TRUE; // Alreafy found
-				
+					
+					if (wcscmp(szPath,szPath2)==0)
+						return TRUE; // Alreafy found
+					
+				}
+				nItem=((CLocateDlg*)dwParam)->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
 			}
-			nItem=pList->GetNextItem(nItem,LVNI_ALL);
-		}
-		
+		}		
 
 	}
 
@@ -2672,7 +2684,7 @@ LRESULT CALLBACK CLocateDlg::DebugWindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,L
 	case WM_CREATE:
 		::CreateWindow("EDIT","",WS_VISIBLE|WS_CHILD|ES_AUTOHSCROLL|ES_AUTOVSCROLL|ES_MULTILINE,0,0,100,100,
 			hwnd,(HMENU)100,GetInstanceHandle(),NULL);
-		::SetTimer(hwnd,1,100,NULL);
+		::SetTimer(hwnd,1,500,NULL);
 		return 0;
 	case WM_SIZE:
 		if (wParam==SIZE_RESTORED || wParam==0)
@@ -2711,7 +2723,11 @@ LRESULT CALLBACK CLocateDlg::DebugWindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,L
 		else
 			str << "\r\nFileNotifications is not running";
 
-		//str << "\r\nCpu time: " << nCPU;
+		if (GetLocateAppWnd()->m_pCpuUsage!=NULL)
+		{
+			str.SetBase(10);
+			str << "\r\nCpu time: " << GetLocateAppWnd()->m_pCpuUsage->GetCpuUsage();
+		}
 
 		::SetDlgItemText(hwnd,100,LPCSTR(str));
 		break;
@@ -2765,19 +2781,22 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		}
 		break;
 	case WM_SETTINGCHANGE:
-		if (wParam==0x2a && lParam==NULL) // Possibly shell icon cache is updeted
+		if (wParam==0x2a && lParam==NULL && m_pListCtrl!=NULL) // Possibly shell icon cache is updeted
 		{
-			int nItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
-			while (nItem!=-1)
+			if (m_pListCtrl->GetItemCount()>0)
 			{
-				CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+				int nItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
+				while (nItem!=-1)
+				{
+					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
 
-				pItem->RemoveFlags(LITEM_ICONOK|LITEM_PARENTICONOK);
-				
-				nItem=m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
+					pItem->RemoveFlags(LITEM_ICONOK|LITEM_PARENTICONOK);
+					
+					nItem=m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
+				}
+				m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount()-1);
+				m_pListCtrl->UpdateWindow();
 			}
-			m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount()-1);
-			m_pListCtrl->UpdateWindow();
 		}
 		SetListSelStyle();
 		if (m_pBackgroundUpdater!=NULL)
@@ -2925,10 +2944,10 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			ZeroMemory(&wce,sizeof(WNDCLASSEX));
 			wce.cbSize=sizeof(wce);
 			wce.style=CS_HREDRAW|CS_VREDRAW;
-			wce.lpfnWndProc=DebugWindowProc;
 			wce.hInstance=GetInstanceHandle();
 			wce.hbrBackground=(HBRUSH)COLOR_WINDOW;
 			wce.lpszClassName="DEBUGWINDOWCLASS";
+			wce.lpfnWndProc=DebugWindowProc;
 			RegisterClassEx(&wce);
 			
 			SetLastError(0);
@@ -5001,19 +5020,23 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 
 	// Todo: change this code to check items which are in deleted folders and
 	// remove them		
-	iItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
-	while(iItem!=-1)
+	if (m_pListCtrl->GetItemCount()>0)
 	{
-		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-		pItem->CheckIfDeleted();
-		ASSERT(m_pBackgroundUpdater!=NULL);
-		//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,CLocateDlg::Needed)",m_pBackgroundUpdater,pItem,nItem);
-				
-		m_pBackgroundUpdater->AddToUpdateList(pItem,iItem,CLocateDlg::Needed);			
-		iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
-	}
+		iItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
+		while(iItem!=-1)
+		{
+			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
+			pItem->CheckIfDeleted();
+			ASSERT(m_pBackgroundUpdater!=NULL);
+			//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,CLocateDlg::Needed)",m_pBackgroundUpdater,pItem,nItem);
+					
+			m_pBackgroundUpdater->AddToUpdateList(pItem,iItem,CLocateDlg::Needed);			
+			iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
+		}
 
-	m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount());
+		m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount());
+	}
+	
 	m_pListCtrl->UpdateWindow();
 	m_pBackgroundUpdater->StopWaiting();
 
@@ -5032,6 +5055,11 @@ void CLocateDlg::OnRemoveFromThisList()
 void CLocateDlg::OnRemoveDeletedFiles()
 {
 	CIntArray aDeleted;
+
+	if (m_pListCtrl==NULL)
+		return;
+	if (m_pListCtrl->GetItemCount()==0)
+		return;
 
 	int iPrevItem=-1;
 	int iItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
@@ -5054,12 +5082,17 @@ void CLocateDlg::OnRemoveDeletedFiles()
 
 BOOL CLocateDlg::CheckClipboard()
 {
+	DebugMessage("CLocateDlg::CheckClipboard() BEGIN");
+	
 	if (m_pListCtrl==NULL)
 		return TRUE;
-	CArrayFP<CString*> aFiles;
+	if (m_pListCtrl->GetItemCount()==0)
+		return TRUE; // No need to do anything
+	
+	
+	CArrayFAP<LPWSTR> aFiles;
 	BYTE bIsCuttedFiles=FALSE;
 	UINT nPreferredDropEffectFormat=RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT);
-	
 	
 	OpenClipboard();
 	
@@ -5084,23 +5117,40 @@ BOOL CLocateDlg::CheckClipboard()
 			HANDLE hData=GetClipboardData(CF_HDROP);
 			if (hData!=NULL)
 			{
-				CString temp;
-				bIsCuttedFiles=TRUE;
-				int last=DragQueryFile((HDROP)hData,0xFFFFFFFF,NULL,0);
-				for (int i=0;i<last;i++)
+				if (IsUnicodeSystem())
 				{
-					DragQueryFile((HDROP)hData,i,temp.GetBuffer(_MAX_PATH),_MAX_PATH);
-					temp.FreeExtra();
-					aFiles.Add(new CString(temp));
+					bIsCuttedFiles=TRUE;
+					int last=DragQueryFileW((HDROP)hData,0xFFFFFFFF,NULL,0);
+					for (int i=0;i<last;i++)
+					{
+						UINT nLen=DragQueryFileW((HDROP)hData,i,NULL,0);
+						if (nLen>0)
+						{
+							LPWSTR szPath=new WCHAR[nLen+2];
+							if (DragQueryFileW((HDROP)hData,i,szPath,nLen+2)>0)
+								aFiles.Add(szPath);
+							else
+								delete[] szPath;
+						}
+					}
+				}
+				else
+				{
+					bIsCuttedFiles=TRUE;
+					int last=DragQueryFile((HDROP)hData,0xFFFFFFFF,NULL,0);
+					for (int i=0;i<last;i++)
+					{
+						char szPath[MAX_PATH];
+						if (DragQueryFile((HDROP)hData,i,szPath,MAX_PATH)>0)
+							aFiles.Add(alloccopyAtoW(szPath));
+					}
 				}
 			}
 		}
-
-
 		break;
 	}
 	CloseClipboard();
-	
+
 	int nReDraws=0;
 	
 	if (bIsCuttedFiles)
@@ -5112,7 +5162,7 @@ BOOL CLocateDlg::CheckClipboard()
 			int i;
 			for (i=0;i<aFiles.GetSize();i++)
 			{
-				if (aFiles[i]->CompareNoCase(pItem->GetPath())==0)
+				if (_wcsicmp(aFiles[i],pItem->GetPath())==0)
 				{
 					pItem->AddAttribute(LITEMATTRIB_CUTTED);
 					m_pListCtrl->RedrawItems(nItem,nItem);
@@ -5144,9 +5194,10 @@ BOOL CLocateDlg::CheckClipboard()
 			nItem=m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
 		}
 	}
+
 	if (nReDraws)
 		m_pListCtrl->UpdateWindow();
-	
+
 	aFiles.RemoveAll();
 	return TRUE;
 }

@@ -11,7 +11,9 @@ class CSettingsProperties;
 class CUpdateThread;
 class CLocateDlgThread;
 
-DOUBLE GetCpuTime();
+class CCpuUsage;
+
+
 
 class CLocateAppWnd : public CFrameWnd
 {
@@ -148,6 +150,7 @@ public:
 	int m_nCurUpdateAnimBitmap;
 	
 	CListFP <CSchedule*> m_Schedules;
+	CCpuUsage* m_pCpuUsage;
 
 	// Keyboard shortcuts
 	CArrayFP<CShortcut*> m_aShortcuts;

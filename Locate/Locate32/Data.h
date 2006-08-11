@@ -3,7 +3,7 @@
 
 #define SCHEDULE_V1_LEN		32
 #define SCHEDULE_V2_LEN		36
-#define SCHEDULE_V3_LEN		40
+#define SCHEDULE_V34_LEN	40
 
 class CSchedule
 {
@@ -128,7 +128,9 @@ public:
 	static BOOL GetCurrentDateAndTime(SDATE* pDate=NULL,STIME* pTime=NULL,UINT* pnWeekDay=NULL);
 
 public:
-	BYTE m_bFlags;
+	WORD m_bFlags;
+	WORD m_wCpuUsageTheshold;
+
 	ScheduleType m_nType;
 	STIME m_tStartTime;
 	STIME m_tLastStartTime; // If flagRunned is not set, these are 

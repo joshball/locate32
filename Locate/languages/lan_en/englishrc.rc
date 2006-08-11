@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,6,8050
- PRODUCTVERSION 2,99,6,8050
+ FILEVERSION 2,99,6,8110
+ PRODUCTVERSION 2,99,6,8110
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 6.8050"
+            VALUE "FileVersion", "3.0 beta 6.8110"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 6.8050"
+            VALUE "ProductVersion", "3.0 beta 6.8110"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -228,7 +228,7 @@ BEGIN
 END
 
 
-IDD_SCHEDULEDUPDATE DIALOGEX 0, 0, 230, 170
+IDD_SCHEDULEDUPDATE DIALOGEX 0, 0, 230, 190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Scheduled update"
 FONT 8, "Tahoma", 0, 0, 0x1
@@ -260,7 +260,7 @@ BEGIN
                     77,50,25,9
     EDITTEXT        IDC_MINUTEONHOUR,105,48,32,13,ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "'th minute of hour",IDC_MINUTEONHOURLBL,
-                    140,50,55,9
+                    140,50,78,9
     CONTROL         "Spin1",IDC_MINUTESPIN,"msctls_updown32",UDS_SETBUDDYINT | 
                     UDS_ALIGNRIGHT | UDS_ARROWKEYS,127,34,9,11
     CONTROL         "Mon",IDC_MON,
@@ -305,11 +305,18 @@ BEGIN
     CONTROL         "&Delete After Run",
                     IDC_DELETEAFTERRUN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
                     7,124,100,10
-    LTEXT           "Thread Priority:",IDC_THREADPRIORITYLABEL,8,139,70,10
-	COMBOBOX        IDC_THREADPRIORITY,80,137,75,98,CBS_DROPDOWNLIST |  
+	CONTROL         "Start only when CPU usage is below:",
+                    IDC_CPUUSAGECHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    7,138,120,10
+	EDITTEXT        IDC_CPUUSAGE,137,136,32,13,ES_AUTOHSCROLL | ES_NUMBER
+	CONTROL         "Spin1",IDC_CPUUSAGESPIN,"msctls_updown32",UDS_SETBUDDYINT | 
+					UDS_ALIGNRIGHT | UDS_ARROWKEYS,150,140,9,11
+    LTEXT           "%",IDC_CPUUSAGEEXTRALABEL,172,139,10,10
+	LTEXT           "Thread Priority:",IDC_THREADPRIORITYLABEL,8,156,70,10
+	COMBOBOX        IDC_THREADPRIORITY,80,154,75,98,CBS_DROPDOWNLIST |  
                     WS_VSCROLL | WS_TABSTOP | CBS_HASSTRINGS
-    PUSHBUTTON      "Databases",IDC_DATABASES,178,137,48,14
-	LTEXT           "",IDC_LASTRUN,8,156,168,13
+    PUSHBUTTON      "Databases",IDC_DATABASES,178,154,48,14
+	LTEXT           "",IDC_LASTRUN,8,173,168,13
 END
 
 

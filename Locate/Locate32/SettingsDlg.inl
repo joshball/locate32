@@ -97,7 +97,7 @@ inline CSettingsProperties::CAutoUpdateSettingsPage::CAutoUpdateSettingsPage()
 }
 
 inline CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::CCheduledUpdateDlg()
-:	CDialog(IDD_SCHEDULEDUPDATE),m_pCombo(NULL),m_pSchedule(NULL),m_bChanged(FALSE)
+:	CDialog(IDD_SCHEDULEDUPDATE),m_pTypeCombo(NULL),m_pSchedule(NULL),m_bChanged(FALSE)
 {
 }
 

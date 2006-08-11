@@ -104,6 +104,8 @@ extern LPWSTR g_szwBuffer;
 #include "LocateDlg.inl"
 #include "SettingsDlg.inl"
 
+#include "3rdparty/cpuusage.h"
+
 
 #define COLUMNSNUM					5
 #define DEL_IMAGE					((CLocateApp*)GetApp())->m_nDelImage

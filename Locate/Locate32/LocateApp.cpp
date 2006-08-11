@@ -4,92 +4,16 @@
 #include "wfext.h"
 #include <pdh.h>
 
+#include "3rdparty/cpuusage.h"
+
+
+
 #pragma comment(lib, "pdh.lib")
 
 UINT CLocateApp::m_nHFCInstallationMessage=0;
 UINT CLocateApp::m_nTaskbarCreated=0;
 UINT CLocateApp::m_nLocateAppMessage=0;
 
-DOUBLE GetCpuTime()
-{
-	HQUERY hQuery;
-	HCOUNTER* pCounter=(HCOUNTER *)GlobalAlloc(GPTR, sizeof(HCOUNTER));;
-	PDH_FMT_COUNTERVALUE FmtValue;
-
-	HMODULE hModule=LoadLibrary("pdh.dll");
-	if (hModule==NULL)
-		return -1;
-    	
-	PDH_STATUS (*pDdhOpenQueryW)(LPCWSTR,DWORD_PTR,PDH_HQUERY*)=
-		(PDH_STATUS (*)(LPCWSTR,DWORD_PTR,PDH_HQUERY*))GetProcAddress(hModule,"PdhOpenQueryW");
-
-	PDH_STATUS (*pPdhAddCounterW)(PDH_HQUERY,LPCWSTR,DWORD_PTR,PDH_HCOUNTER*)=
-		(PDH_STATUS (*)(PDH_HQUERY,LPCWSTR,DWORD_PTR,PDH_HCOUNTER*))GetProcAddress(hModule,"PdhAddCounterW");
-	PDH_STATUS (*pPdhCollectQueryData)(PDH_HQUERY)=
-		(PDH_STATUS (*)(PDH_HQUERY))GetProcAddress(hModule,"PdhCollectQueryData");
-	PDH_STATUS (*pPdhGetFormattedCounterValue)(PDH_HCOUNTER,DWORD,LPDWORD,PPDH_FMT_COUNTERVALUE)=
-		(PDH_STATUS (*)(PDH_HCOUNTER,DWORD,LPDWORD,PPDH_FMT_COUNTERVALUE))GetProcAddress(hModule,"PdhGetFormattedCounterValue");
-	PDH_STATUS (*pDdhCloseQuery)(PDH_HQUERY)=
-		(PDH_STATUS (*)(PDH_HQUERY))GetProcAddress(hModule,"PdhCloseQuery");
-
-	if (pDdhOpenQueryW==NULL || pPdhAddCounterW==NULL || 
-		pPdhCollectQueryData==NULL || pPdhGetFormattedCounterValue==NULL ||
-		pDdhCloseQuery==NULL)
-	{
-		FreeLibrary(hModule);
-		GlobalFree(pCounter);
-		return -1;
-	}
-
-
-	if (pDdhOpenQueryW(NULL, 0, &hQuery)!=NULL)
-	{
-		pDdhCloseQuery(hQuery);
-		FreeLibrary(hModule);
-		GlobalFree(pCounter);
-		return -1;
-	}
-
-	if (pPdhAddCounterW(hQuery, L"\\Processor(_Total)\\% Processor Time", 0, pCounter)!=ERROR_SUCCESS)
-	{
-		pDdhCloseQuery(hQuery);
-		FreeLibrary(hModule);
-		GlobalFree(pCounter);
-		return -1;
-	}
-
-	if(pPdhCollectQueryData(hQuery)!=ERROR_SUCCESS)
-	{
-		pDdhCloseQuery(hQuery);
-		FreeLibrary(hModule);
-		GlobalFree(pCounter);
-		return -1;
-	}
-
-	Sleep(500);
-	if(pPdhCollectQueryData(hQuery)!=ERROR_SUCCESS)
-	{
-		pDdhCloseQuery(hQuery);
-		FreeLibrary(hModule);
-		GlobalFree(pCounter);
-		return -1;
-	}
-
-	if (pPdhGetFormattedCounterValue(*pCounter, PDH_FMT_DOUBLE, NULL, &FmtValue)!=ERROR_SUCCESS)
-	{
-		pDdhCloseQuery(hQuery);
-		FreeLibrary(hModule);
-		GlobalFree(pCounter);
-		return -1;
-	}
-
-	pDdhCloseQuery(hQuery);
-	
-	FreeLibrary(hModule);
-	GlobalFree(pCounter);
-
-	return FmtValue.doubleValue;
-}
 
 CLocateApp::CLocateApp()
 :	CWinApp("LOCATE32"),m_nDelImage(0),m_nStartup(0),
@@ -166,9 +90,6 @@ BOOL CLocateApp::InitInstance()
 
 	// Enumerate instances
 	EnumWindows(EnumLocateSTWindows,(LPARAM)&m_nInstance);
-
-
-
 
 	// Handling command line arguments
 	pCommandLine=GetCommandLineW();
@@ -2376,7 +2297,7 @@ int CLocateApp::GetDatabaseMenuIndex(HMENU hPopupMenu)
 
 CLocateAppWnd::CLocateAppWnd()
 :	m_pAbout(NULL),m_pSettings(NULL),
-	m_pLocateDlgThread(NULL),
+	m_pLocateDlgThread(NULL),m_pCpuUsage(NULL),
 	m_pUpdateAnimIcons(NULL),m_hHook(NULL)
 {
 	DebugMessage("CLocateAppWnd::CLocateAppWnd()");
@@ -2388,7 +2309,8 @@ CLocateAppWnd::~CLocateAppWnd()
 	//m_Schedules.RemoveAll();
 
 	
-
+	if (m_pCpuUsage!=NULL)
+		delete m_pCpuUsage;
 }
 
 int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
@@ -3707,6 +3629,12 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 	if (GetLocateApp()->m_nInstance!=0)
 		return 0;
 
+	
+	// Clear existing schedules
+	m_Schedules.RemoveAll();
+
+	BOOL bNeedCpuUsage=FALSE;
+	
 	DebugNumMessage("CLocateAppWnd::SetSchedules(0x%X) START",(DWORD)pSchedules);
 	if (pSchedules==NULL)
 	{
@@ -3754,18 +3682,23 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 					}
 				}
 			}
-			else if (pSchedules[1]==3)
+			else if (pSchedules[1]==3 || pSchedules[1]==4)
 			{
-				if (nKeyLen>=6 && pSchedules[0]==SCHEDULE_V3_LEN)
+				if (nKeyLen>=6 && pSchedules[0]==SCHEDULE_V34_LEN)
 				{
 					BYTE* pPtr=pSchedules+6;
 					for (DWORD n=0;n<*(DWORD*)(pSchedules+2);n++)
 					{
-						if (pPtr+SCHEDULE_V3_LEN>=pSchedules+nKeyLen)
+						if (pPtr+SCHEDULE_V34_LEN>=pSchedules+nKeyLen)
 							break;
 
 						DebugFormatMessage("SCHEDULEV3: type=%d",((CSchedule*)pPtr)->m_nType);
-						m_Schedules.AddTail(new CSchedule(pPtr,3));
+						CSchedule* pSchedule=new CSchedule(pPtr,pSchedules[1]);
+						m_Schedules.AddTail(pSchedule);
+
+						if (pSchedule->m_bFlags&CSchedule::flagEnabled &&
+							pSchedule->m_wCpuUsageTheshold!=WORD(-1))
+							bNeedCpuUsage=TRUE;
 					}
 				}
 			}
@@ -3776,19 +3709,37 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 	{
 		
 		m_Schedules.Swap(*pSchedules);
-#ifdef _DEBUG
 		POSITION pPos=m_Schedules.GetHeadPosition();
 		while (pPos!=NULL)
 		{
-			DebugFormatMessage("SCHEDULE: type=%d",m_Schedules.GetAt(pPos)->m_nType);
+			CSchedule* pSchedule=m_Schedules.GetAt(pPos);
+			DebugFormatMessage("SCHEDULE: type=%d",pSchedule->m_nType);
+			if (pSchedule->m_bFlags&CSchedule::flagEnabled &&
+				pSchedule->m_wCpuUsageTheshold!=WORD(-1))
+				bNeedCpuUsage=TRUE;
 			pPos=m_Schedules.GetNextPosition(pPos);
 		}
-#endif
+	}
+
+	if (bNeedCpuUsage)
+	{
+		if (m_pCpuUsage==NULL)
+		{
+			m_pCpuUsage=new CCpuUsage;
+			m_pCpuUsage->GetCpuUsage();
+		}
+		else
+			bNeedCpuUsage=FALSE;
+	}
+	else if (m_pCpuUsage!=NULL)
+	{
+		delete m_pCpuUsage;
+		m_pCpuUsage=NULL;
 	}
 
 	SYSTEMTIME st;
 	GetLocalTime(&st);
-	SetTimer(ID_SYNCSCHEDULES,1000-st.wMilliseconds,NULL);
+	SetTimer(ID_SYNCSCHEDULES,(bNeedCpuUsage?2000:1000)-st.wMilliseconds,NULL);
 	DebugMessage("CLocateAppWnd::SetSchedules END");
 	return m_Schedules.GetCount();
 }
@@ -3821,8 +3772,8 @@ BOOL CLocateAppWnd::SaveSchedules()
 			SetHFCError(HFC_CANNOTALLOC);
 			//DebugMessage("LocateAppWnd::OnDestroy(): Cannot allocate memory.");
 		}
-		pSchedules[0]=SCHEDULE_V3_LEN;
-		pSchedules[1]=3; //version
+		pSchedules[0]=SCHEDULE_V34_LEN;
+		pSchedules[1]=4; //version
 		*(DWORD*)(pSchedules+2)=m_Schedules.GetCount();
 		
 		
@@ -3872,22 +3823,36 @@ void CLocateAppWnd::CheckSchedules()
 			DWORD nTemp=pSchedule->WhenShouldRun(tCurTime,tCurDate,nDayOfWeek);
 			if (nTemp<500)
 			{
-				bSchedulesChanged=TRUE;
-				
-				sMemCopy(&pSchedule->m_tLastStartDate,&tCurDate,sizeof(CSchedule::SDATE));
-				sMemCopy(&pSchedule->m_tLastStartTime,&tCurTime,sizeof(CSchedule::STIME));
-				
-				pSchedule->m_bFlags|=CSchedule::flagRunned;
-								
-				OnUpdate(FALSE,pSchedule->m_pDatabases,pSchedule->m_nThreadPriority);
-				
-				if (pSchedule->m_bFlags&CSchedule::flagDeleteAfterRun)
+				BOOL bRun=TRUE;
+				if (pSchedule->m_wCpuUsageTheshold!=WORD(-1))
 				{
-					POSITION pTmp=m_Schedules.GetNextPosition(pPos);
-					delete pSchedule;
-					m_Schedules.RemoveAt(pPos);
-					pPos=pTmp;
-					continue;
+					ASSERT(m_pCpuUsage!=NULL);
+
+					if (m_pCpuUsage->GetCpuUsage()>pSchedule->m_wCpuUsageTheshold)
+						bRun=FALSE;
+				}
+				if (GetLocateApp()->IsUpdating())
+					bRun=FALSE;
+
+				if (bRun)
+				{
+					bSchedulesChanged=TRUE;
+				
+					sMemCopy(&pSchedule->m_tLastStartDate,&tCurDate,sizeof(CSchedule::SDATE));
+					sMemCopy(&pSchedule->m_tLastStartTime,&tCurTime,sizeof(CSchedule::STIME));
+					
+					pSchedule->m_bFlags|=CSchedule::flagRunned;
+									
+					OnUpdate(FALSE,pSchedule->m_pDatabases,pSchedule->m_nThreadPriority);
+					
+					if (pSchedule->m_bFlags&CSchedule::flagDeleteAfterRun)
+					{
+						POSITION pTmp=m_Schedules.GetNextPosition(pPos);
+						delete pSchedule;
+						m_Schedules.RemoveAt(pPos);
+						pPos=pTmp;
+						continue;
+					}
 				}
 			}
 		}

@@ -15,6 +15,8 @@ public:
 
 	virtual BOOL OnInitDialog(HWND hwndFocus);
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
+	virtual void OnDestroy();
+
 	
 	virtual void OnOK();
 	virtual void OnCancel();
@@ -450,6 +452,8 @@ private:
 		virtual BOOL OnInitDialog(HWND hwndFocus);
 		virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 		virtual BOOL OnClose();
+		virtual void OnDestroy();
+	
 		
 		void OnOK();
 	};

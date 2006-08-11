@@ -355,16 +355,17 @@ void CLocatedItem::UpdateFilename()
 	}
 	else if (dwLength>0)
 	{
-		delete[] szPath;
-		szPath=new WCHAR[dwLength+2];
-		MemCopyW(szPath,szFullPath,dwLength+1);
-        
-		szName=szPath+LastCharIndex(szPath,L'\\')+1;
+		WCHAR* pTmp=szPath;
+		InterlockedExchangePointer((PVOID*)&szPath,alloccopy(szFullPath,dwLength));
+		delete[] pTmp;
+
+		InterlockedExchangePointer((PVOID*)&szName,szPath+LastCharIndex(szPath,L'\\')+1);
 		bNameLength=BYTE(dwLength-DWORD(szName-szPath));
 
 		for (bExtensionPos=bNameLength-1; szName[bExtensionPos-1]!=L'.' && bExtensionPos>0 ;bExtensionPos--);
 		if (bExtensionPos==0)
 			bExtensionPos=bNameLength;
+		
 
 	}
     
@@ -378,39 +379,40 @@ void CLocatedItem::UpdateFileTitle()
 	//ItemDebugFormatMessage4("CLocatedItem::UpdateTitle1: %d",DWORD(GetLocateDlg()->GetFlags()&CLocateDlg::fgLVExtensionFlag),0,0,0);
 	ItemDebugFormatMessage4("CLocatedItem::UpdateTitle1: ShouldUpdate=%d",ShouldUpdateFileTitle(),0,0,0);
 
-	if (szFileTitle!=szName && szFileTitle!=NULL)
-		delete[] szFileTitle;
 	
 	if (!(dwFlags&LITEM_FILENAMEOK))
 		UpdateFilename();
 
-	if ((GetLocateDlg()->GetFlags()&CLocateDlg::fgLVMethodFlag)==CLocateDlg::fgLVUseGetFileTitle)
+	WCHAR* pNewFileTitle=NULL;
+	BOOL bCheckCase=TRUE;
+
+	if (IsFolder())
+		pNewFileTitle=szName; // Show full name for folders
+	else if ((GetLocateDlg()->GetFlags()&CLocateDlg::fgLVMethodFlag)==CLocateDlg::fgLVUseGetFileTitle)
 	{
-		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
-			return;
-		
-		szFileTitle=new WCHAR[bNameLength+1];
-		WORD nLen=FileSystem::GetFileTitle(GetPath(),szFileTitle,bNameLength+1);
+		WORD nLen=FileSystem::GetFileTitle(GetPath(),NULL,0);
 		if (nLen!=0)
 		{
-			delete[] szFileTitle;
-			szFileTitle=new WCHAR[nLen];
-			FileSystem::GetFileTitle(GetPath(),szFileTitle,nLen);
+			pNewFileTitle=new WCHAR[nLen];
+			FileSystem::GetFileTitle(GetPath(),pNewFileTitle,nLen);
+			bCheckCase=FALSE;
 		}
+		else 
+			pNewFileTitle=szName;
 	}
 	else
 	{
 		switch (GetLocateDlg()->GetFlags()&CLocateDlg::fgLVExtensionFlag)
 		{
 		case CLocateDlg::fgLVAlwaysShowExtensions:
-			szFileTitle=szName;
+			pNewFileTitle=szName;
 			break;
 		case CLocateDlg::fgLVHideKnownExtensions:
 			{
 				if (bExtensionPos==bNameLength)
 				{
 					// No extension
-					szFileTitle=szName;
+					pNewFileTitle=szName;
 					break;
 				}
 				BOOL bShowExtension=TRUE;
@@ -459,40 +461,51 @@ void CLocatedItem::UpdateFileTitle()
 				}
 				if (bShowExtension)
 				{
-					szFileTitle=szName;
+					pNewFileTitle=szName;
 					break;
-				}			
+				}		
+				// Continuing
 			}
 		case CLocateDlg::fgLVNeverShowExtensions:
-			szFileTitle=new WCHAR[bExtensionPos];
-			MemCopyW(szFileTitle,GetName(),DWORD(bExtensionPos)-1);
-			szFileTitle[bExtensionPos-1]=L'\0';
+			if (bExtensionPos==bNameLength)
+				pNewFileTitle=szName;
+			else
+				pNewFileTitle=alloccopy(GetName(),DWORD(bExtensionPos)-1);
 			break;
 		}
-		if (GetLocateDlg()->GetFlags()&CLocateDlg::fgLV1stCharUpper)
+	}
+
+	if (!bCheckCase && GetLocateDlg()->GetFlags()&CLocateDlg::fgLV1stCharUpper)
+	{
+		BOOL bAllUpper=TRUE;
+		DWORD i;
+		for (i=0;pNewFileTitle[i]!='\0';i++)
 		{
-			BOOL bAllUpper=TRUE;
-			DWORD i;
-			for (i=0;szFileTitle[i]!='\0';i++)
+			// Todo: test this in Win9X
+			if (!IsCharUpper(pNewFileTitle[i]))
 			{
-				// Todo: test this in Win9X
-				if (!IsCharUpper(szFileTitle[i]))
-				{
-					bAllUpper=FALSE;
-					break;
-				}
-			}
-			if (bAllUpper)
-			{
-				if (szFileTitle==szName)
-				{
-					szFileTitle=new WCHAR[i+1];
-					MemCopyW(szFileTitle,szName,i+1);
-				}
-				MakeLower(szFileTitle+1,i-1);
+				bAllUpper=FALSE;
+				break;
 			}
 		}
+		if (bAllUpper)
+		{
+			if (pNewFileTitle==szName)
+			{
+				pNewFileTitle=new WCHAR[i+1];
+				MemCopyW(pNewFileTitle,szName,i+1);
+			}
+			MakeLower(pNewFileTitle+1,i-1);
+		}
 	}
+
+	ASSERT(pNewFileTitle!=NULL);
+
+	WCHAR* pTmp=szFileTitle;
+	InterlockedExchangePointer((PVOID*)&szFileTitle,pNewFileTitle);
+	if (pTmp!=szName && pTmp!=NULL)
+		delete[] pTmp;
+	
 	dwFlags|=LITEM_FILETITLEOK;
 
 	ItemDebugMessage("CLocatedItem::UpdateTitle END");
@@ -502,36 +515,26 @@ void CLocatedItem::UpdateType()
 {
 	ItemDebugMessage("CLocatedItem::UpdateType BEGIN");
 	
-	if (szType!=NULL)
-		delete[] szType;
+	WCHAR* pNewType=NULL;
 		
-
-
 	if (!(GetLocateDlg()->GetFlags()&CLocateDlg::fgLVShowFileTypes))
 	{
 		WCHAR buf[300];
 		DWORD dwLength;
 
-		// File/folder does not exist
+		// No extension
 		if (IsFolder())
-		{
-			dwLength=LoadString(IDS_DIRECTORYTYPE,buf,300);
-			szType=new WCHAR[dwLength+1];
-			MemCopyW(szType,buf,dwLength+1);
-		}
+			pNewType=allocstringW(IDS_DIRECTORYTYPE);
 		else
 		{
 			dwLength=LoadString(IDS_UNKNOWNTYPE,buf,300)+1;		
-			szType=new WCHAR[GetExtensionLength()+dwLength+1];
-			MemCopyW(szType,GetExtension(),GetExtensionLength());
-			szType[GetExtensionLength()]=L' ';
-			MemCopyW(szType+GetExtensionLength()+1,buf,dwLength);
+			pNewType=new WCHAR[GetExtensionLength()+dwLength+1];
+			MemCopyW(pNewType,GetExtension(),GetExtensionLength());
+			pNewType[GetExtensionLength()]=L' ';
+			MemCopyW(pNewType+GetExtensionLength()+1,buf,dwLength);
 		}
-		dwFlags|=LITEM_TYPEOK;
-		return;
 	}
-
-	if (GetLocateDlg()->GetFlags()&CLocateDlg::fgLVShowShellType)
+	else if (GetLocateDlg()->GetFlags()&CLocateDlg::fgLVShowShellType)
 	{
 		// Using shell functions
 		SHFILEINFOW fi;
@@ -540,6 +543,7 @@ void CLocatedItem::UpdateType()
 			// Taking icon now too
 			if (!GetFileInfo(GetPath(),0,&fi,SHGFI_TYPENAME|SHGFI_ICON|SHGFI_SYSICONINDEX))
 			{
+				// File does not exist
 				SetToDeleted();
 				return;
 			}
@@ -549,32 +553,22 @@ void CLocatedItem::UpdateType()
 		}
 		else if (!GetFileInfo(GetPath(),0,&fi,SHGFI_TYPENAME))
 		{
+			// File does not exist
 			SetToDeleted();
 			return;
 		}
 		
-		DWORD dwTypeLen=istrlenw(fi.szTypeName);
-		
-		szType=new WCHAR[++dwTypeLen];
-		MemCopyW(szType,fi.szTypeName,dwTypeLen);
-		dwFlags|=LITEM_TYPEOK;
-		return;
+		pNewType=alloccopy(fi.szTypeName);
 	}
-
-	// File/folder does not exist
-	if (IsFolder())
+	else if (IsFolder())
 	{
 		if (!FileSystem::IsDirectory(GetPath()))
 		{
+			// Folder does not exist
 			SetToDeleted();
 			return;
 		}
-		WCHAR szBuffer[80];
-		DWORD dwTextLen=LoadString(IDS_DIRECTORYTYPE,szBuffer,80)+1;
-		szType=new WCHAR[dwTextLen];
-		MemCopyW(szType,szBuffer,dwTextLen);
-		dwFlags|=LITEM_TYPEOK;
-		return;
+		pNewType=allocstringW(IDS_DIRECTORYTYPE);
 	}
 	else
 	{
@@ -583,52 +577,55 @@ void CLocatedItem::UpdateType()
 			SetToDeleted();
 			return;
 		}
-	}
+	
+		CRegKey RegKey;
+		CStringW Type;
+		BOOL bOK=FALSE;
 
-	CRegKey RegKey;
-	CStringW Type;
-	if (RegKey.OpenKey(HKCR,szName+bExtensionPos-1,CRegKey::openExist|CRegKey::samRead|CRegKey::samQueryValue)==ERROR_SUCCESS)
-	{
-		RegKey.QueryValue(L"",Type);
-		RegKey.CloseKey();
-		
-		if (!Type.IsEmpty())
+		if (RegKey.OpenKey(HKCR,szName+bExtensionPos-1,CRegKey::openExist|CRegKey::samRead|CRegKey::samQueryValue)==ERROR_SUCCESS)
 		{
-			if (RegKey.OpenKey(HKCR,Type,CRegKey::openExist|CRegKey::samRead|CRegKey::samQueryValue)==ERROR_SUCCESS)
+			RegKey.QueryValue(L"",Type);
+			RegKey.CloseKey();
+			
+			if (!Type.IsEmpty())
 			{
-				// Taking type now
-				DWORD nLength=RegKey.QueryValueLength("");
-				if (nLength)
+				if (RegKey.OpenKey(HKCR,Type,CRegKey::openExist|CRegKey::samRead|CRegKey::samQueryValue)==ERROR_SUCCESS)
 				{
-					szType=new WCHAR[nLength];
-					if (RegKey.QueryValue(L"",szType,nLength))
+					// Taking type now
+					DWORD nLength=RegKey.QueryValueLength("");
+					if (nLength)
 					{
-						dwFlags|=LITEM_TYPEOK;
-						return;
+						pNewType=new WCHAR[nLength];
+						if (RegKey.QueryValue(L"",pNewType,nLength))
+							bOK=TRUE;
+						else
+							delete[] pNewType;
 					}
-					else
-						delete[] szType;
-
+					RegKey.CloseKey();
 				}
-				RegKey.CloseKey();
 			}
 		}
-	}
 
-	WCHAR szBuffer[80];
-	DWORD dwTextLen=LoadString(IDS_UNKNOWNTYPE,szBuffer,80)+1;
+		WCHAR szBuffer[300];
+		DWORD dwTextLen=LoadString(IDS_UNKNOWNTYPE,szBuffer,300)+1;
 
-	if (bExtensionPos!=bNameLength)
-	{
-		szType=new WCHAR[dwTextLen+GetExtensionLength()+1];
-		MemCopyW(szType,GetExtension(),GetExtensionLength());
-		MakeUpper(szType,GetExtensionLength());
-		szType[GetExtensionLength()]=L' ';
-		MemCopyW(szType+GetExtensionLength()+1,szBuffer,dwTextLen);
-	}
-	else // No extension
-		szType=alloccopy(szBuffer,dwTextLen);
+		if (bExtensionPos!=bNameLength)
+		{
+			pNewType=new WCHAR[dwTextLen+GetExtensionLength()+1];
+			MemCopyW(pNewType,GetExtension(),GetExtensionLength());
+			MakeUpper(pNewType,GetExtensionLength());
+			pNewType[GetExtensionLength()]=L' ';
+			MemCopyW(pNewType+GetExtensionLength()+1,szBuffer,dwTextLen);
+		}
+		else // No extension
+			pNewType=alloccopy(szBuffer,dwTextLen);
 	
+	}
+	
+	WCHAR* pTmp=szType;
+	InterlockedExchangePointer((PVOID*)&szType,pNewType);
+	delete[] pTmp;
+
 	dwFlags|=LITEM_TYPEOK;
 
 	ItemDebugMessage("CLocatedItem::UpdateType END");
@@ -778,11 +775,12 @@ void CLocatedItem::UpdateDimensions()
 
 	ItemDebugMessage("CLocatedItem::UpdateDimensions BEGIN");
 	
-	if (GetLocateDlg()->m_pImageHandler==NULL)
-		return;
 
 	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::ImageDimensions);
 	pField->bShouldUpdate=FALSE;
+
+	if (GetLocateDlg()->m_pImageHandler==NULL)
+		return;
 
 	SIZE dim;
 	if (!GetLocateDlg()->m_pImageHandler->pGetImageDimensionsW(GetPath(),&dim))
@@ -811,8 +809,9 @@ void CLocatedItem::ComputeMD5sum(BOOL bForce)
 		
 	if (pField->szText!=NULL)
 	{
-		delete[] pField->szText;
-		pField->szText=NULL;
+		WCHAR* pTmp=pField->szText;
+		InterlockedExchangePointer((PVOID*)&pField->szText,NULL);
+		delete[] pTmp;
 	}
 
 	if (IsFolder() || IsDeleted())
@@ -855,17 +854,19 @@ void CLocatedItem::ComputeMD5sum(BOOL bForce)
 	{
 		md5_finish(&state, digest);
 
-		pField->szText=new WCHAR[2*16+1];
+		WCHAR* pNewText=new WCHAR[2*16+1];
 
 		for (int i=0;i<16;i++)
 		{
 			BYTE bHi=BYTE(digest[i]>>4)&0xF;
 			BYTE bLo=BYTE(digest[i]&0xF);
 
-			pField->szText[i*2]=bHi>=10?bHi-10+L'a':bHi+L'0';
-			pField->szText[i*2+1]=bLo>=10?bLo-10+L'a':bLo+L'0';
+			pNewText[i*2]=bHi>=10?bHi-10+L'a':bHi+L'0';
+			pNewText[i*2+1]=bLo>=10?bLo-10+L'a':bLo+L'0';
 		}
-		pField->szText[16*2]=L'\0';
+		pNewText[16*2]=L'\0';
+
+		InterlockedExchangePointer((PVOID*)&pField->szText,pNewText);
 	}
 
 	ItemDebugMessage("CLocatedItem::ComputeMD5sum END");
@@ -884,8 +885,9 @@ void CLocatedItem::UpdateOwner()
 	
 	if (pField->szText!=NULL)
 	{
-		delete[] pField->szText;
-		pField->szText=NULL;
+		WCHAR* pTmp=pField->szText;
+		InterlockedExchangePointer((PVOID*)&pField->szText,NULL);
+		delete[] pTmp;
 	}
 		
 	if (IsDeleted())
@@ -935,15 +937,17 @@ void CLocatedItem::UpdateOwner()
 
 	if (bRet)
 	{
-		pField->szText=new WCHAR[dwOwnerLen+dwDomainLen+2];
+		WCHAR* pNewText=new WCHAR[dwOwnerLen+dwDomainLen+2];
 		if (dwDomainLen>0)
 		{
-			MemCopyW(pField->szText,szDomain,dwDomainLen);
-			pField->szText[dwDomainLen]=L'\\';
-			MemCopyW(pField->szText+dwDomainLen+1,szOwner,dwOwnerLen+1);                
+			MemCopyW(pNewText,szDomain,dwDomainLen);
+			pNewText[dwDomainLen]=L'\\';
+			MemCopyW(pNewText+dwDomainLen+1,szOwner,dwOwnerLen+1);                
 		}
 		else
-			MemCopyW(pField->szText,szOwner,dwOwnerLen+1);
+			MemCopyW(pNewText,szOwner,dwOwnerLen+1);
+		
+		InterlockedExchangePointer((PVOID*)&pField->szText,pNewText);
 	}
 	delete[] (BYTE*) pDesc;
 
@@ -962,8 +966,9 @@ void CLocatedItem::UpdateShortFileName()
 
 	if (pField->szText!=NULL)
 	{
-		delete[] pField->szText; 
-		pField->szText=NULL;
+		WCHAR* pTmp=pField->szText;
+		InterlockedExchangePointer((PVOID*)&pField->szText,NULL);
+		delete[] pTmp;
 	}
 	
 	if (IsDeleted())
@@ -986,7 +991,7 @@ void CLocatedItem::UpdateShortFileName()
 		nStart++;
     nLength-=nStart;
 
-	pField->szText=alloccopy(szShortPath+nStart,nLength);
+	InterlockedExchangePointer((PVOID*)&pField->szText,alloccopy(szShortPath+nStart,nLength));
 
 	ItemDebugMessage("CLocatedItem::UpdateShortFileName END");
 }
@@ -1003,8 +1008,9 @@ void CLocatedItem::UpdateShortFilePath()
 	
 	if (pField->szText!=NULL)
 	{
-		delete[] pField->szText; 
-		pField->szText=NULL;
+		WCHAR* pTmp=pField->szText;
+		InterlockedExchangePointer((PVOID*)&pField->szText,NULL);
+		delete[] pTmp;
 	}
 
 	if (IsDeleted())
@@ -1018,7 +1024,7 @@ void CLocatedItem::UpdateShortFilePath()
 		return;
 	}
 	
-	pField->szText=alloccopy(szShortPath,nLength);
+	InterlockedExchangePointer((PVOID*)&pField->szText,alloccopy(szShortPath,nLength));
 
 	ItemDebugMessage("CLocatedItem::UpdateShortFilePath END");
 }
@@ -1043,8 +1049,9 @@ void CLocatedItem::UpdateSummaryProperties()
 		pFields[i]->bShouldUpdate=FALSE;
 		if (pFields[i]->szText!=NULL)
 		{
-			delete[] pFields[i]->szText;
-			pFields[i]->szText=NULL;
+			WCHAR* pTmp=pFields[i]->szText;
+			InterlockedExchangePointer((PVOID*)&pFields[i]->szText,NULL);
+			delete[] pTmp;
 		}
 	}	
 	pFields[4]->bShouldUpdate=FALSE;
@@ -1097,10 +1104,12 @@ void CLocatedItem::UpdateSummaryProperties()
 			switch (rgpropvar[i].vt)
 			{
 			case VT_LPSTR:
-				pFields[i]->szText=alloccopyAtoW(rgpropvar[i].pszVal);
+				InterlockedExchangePointer((PVOID*)&pFields[i]->szText,
+					alloccopyAtoW(rgpropvar[i].pszVal));
 				break;
 			case VT_LPWSTR:
-				pFields[i]->szText=alloccopy(rgpropvar[i].pwszVal);
+				InterlockedExchangePointer((PVOID*)&pFields[i]->szText,
+					alloccopy(rgpropvar[i].pwszVal));
 				break;
 			}
 			PropVariantClear(&rgpropvar[i]);
@@ -1152,8 +1161,9 @@ void CLocatedItem::UpdateDocSummaryProperties()
 
 	if (pField->szText!=NULL)
 	{
-		delete[] pField->szText;
-		pField->szText=NULL;
+		WCHAR* pTmp=pField->szText;
+		InterlockedExchangePointer((PVOID*)&pField->szText,NULL);
+		delete[] pTmp;
 	}
 			
 	if (IsDeleted())
@@ -1191,10 +1201,12 @@ void CLocatedItem::UpdateDocSummaryProperties()
 		switch (rgpropvar[0].vt)
 		{
 		case VT_LPSTR:
-			pField->szText=alloccopyAtoW(rgpropvar[0].pszVal);
+			InterlockedExchangePointer((PVOID*)&pField->szText,
+				alloccopyAtoW(rgpropvar[0].pszVal));
 			break;
 		case VT_LPWSTR:
-			pField->szText=alloccopy(rgpropvar[0].pwszVal);
+			InterlockedExchangePointer((PVOID*)&pField->szText,
+				alloccopy(rgpropvar[0].pwszVal));
 			break;
 		}
 		PropVariantClear(&rgpropvar[0]);
@@ -1223,8 +1235,9 @@ void CLocatedItem::UpdateVersionInformation()
 		pFields[i]->bShouldUpdate=FALSE;
 		if (pFields[i]->szText!=NULL)
 		{
-			delete[] pFields[i]->szText;
-			pFields[i]->szText=NULL;
+			WCHAR* pTmp=pFields[i]->szText;
+			InterlockedExchangePointer((PVOID*)&pFields[i]->szText,NULL);
+			delete[] pTmp;
 		}
 	}	
 
@@ -1237,13 +1250,17 @@ void CLocatedItem::UpdateVersionInformation()
 		if (iDataLength>0)
 		{
 			VOID *pTranslations;
+			DWORD DefTranslations[2]={0x0490,0x04b0};
+			
 			LPWSTR pProductVersion=NULL,pProductName=NULL;
 			LPWSTR pFileVersion=NULL,pDescription=NULL;
 			
 			BYTE* pData=new BYTE[iDataLength];
 			GetFileVersionInfoW(GetPath(),NULL,iDataLength,pData);
 		
-			VerQueryValueW(pData,L"VarFileInfo\\Translation",&pTranslations,&iDataLength);
+			if (!VerQueryValueW(pData,L"VarFileInfo\\Translation",&pTranslations,&iDataLength))
+				pTranslations=DefTranslations;
+
 			WCHAR szTranslation[100];
 			
 			StringCbPrintfW(szTranslation,100*sizeof(WCHAR),L"\\StringFileInfo\\%04X%04X\\ProductVersion",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
@@ -1280,13 +1297,17 @@ void CLocatedItem::UpdateVersionInformation()
 		if (iDataLength>0)
 		{
 			VOID *pTranslations;
+			DWORD DefTranslations[2]={0x0490,0x04b0};
+			
 			LPSTR pProductVersion=NULL,pProductName=NULL;
 			LPSTR pFileVersion=NULL,pDescription=NULL;
 			
 			BYTE* pData=new BYTE[iDataLength];
 			GetFileVersionInfo(W2A(GetPath()),NULL,iDataLength,pData);
 		
-			VerQueryValue(pData,"VarFileInfo\\Translation",&pTranslations,&iDataLength);
+			if (!VerQueryValue(pData,"VarFileInfo\\Translation",&pTranslations,&iDataLength))
+				pTranslations=DefTranslations;
+
 			CHAR szTranslation[100];
 			
 			StringCbPrintf(szTranslation,100,"\\StringFileInfo\\%04X%04X\\ProductVersion",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1]);
@@ -1306,13 +1327,13 @@ void CLocatedItem::UpdateVersionInformation()
 				VerQueryValue(pData,"\\StringFileInfo\\040904b0\\ProductName",(void**)&pProductName,&iDataLength);
 
 			if (pDescription!=NULL)
-				pFields[0]->szText=alloccopyAtoW(pDescription);
+				InterlockedExchangePointer((PVOID*)&pFields[0]->szText,alloccopyAtoW(pDescription));
 			if (pFileVersion!=NULL)
-				pFields[1]->szText=alloccopyAtoW(pFileVersion);
+				InterlockedExchangePointer((PVOID*)&pFields[1]->szText,alloccopyAtoW(pFileVersion));
 			if (pProductName!=NULL)
-				pFields[2]->szText=alloccopyAtoW(pProductName);
+				InterlockedExchangePointer((PVOID*)&pFields[2]->szText,alloccopyAtoW(pProductName));
 			if (pProductVersion!=NULL)
-				pFields[3]->szText=alloccopyAtoW(pProductVersion);
+				InterlockedExchangePointer((PVOID*)&pFields[3]->szText,alloccopyAtoW(pProductVersion));
 			
 			delete[] pData;
 		}
@@ -1323,11 +1344,10 @@ void CLocatedItem::SetToDeleted()
 {
 	ItemDebugMessage("CLocatedItem::SetToDeleted BEGIN");
 	
-	WCHAR szBuffer[80];
-	DWORD dwLength=LoadString(IDS_DELETEDFILE,szBuffer,80)+1;
-	if (szType!=NULL)
-		delete[] szType;
-	szType=alloccopy(szBuffer,dwLength);
+	WCHAR* pTmp=szType;
+	InterlockedExchangePointer((PVOID*)&szType,allocstringW(IDS_DELETEDFILE));
+	if (pTmp!=NULL)
+		delete[] pTmp;
 	iIcon=DEL_IMAGE;
 	
 	dwFileSize=DWORD(-1);
@@ -1402,11 +1422,11 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 	}
 	else if (dwLength>0)
 	{
-        delete[] szPath;
-		szPath=new WCHAR[dwLength+2];
-		MemCopyW(szPath,szFullPath,dwLength+1);
-        
-		szName=szPath+LastCharIndex(szPath,L'\\')+1;
+		WCHAR* pTmp=szPath;      
+		InterlockedExchangePointer((PVOID*)&szPath,alloccopy(szFullPath,dwLength));       
+		delete[] pTmp;
+		
+		InterlockedExchangePointer((PVOID*)&szName,szPath+LastCharIndex(szPath,L'\\')+1);
 		bNameLength=BYTE(dwLength-DWORD(szName-szPath));
 
 		for (bExtensionPos=bNameLength-1; szName[bExtensionPos-1]!=L'.' && bExtensionPos>0 ;bExtensionPos--);

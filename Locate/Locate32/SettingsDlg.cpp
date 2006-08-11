@@ -1883,34 +1883,45 @@ void CSettingsProperties::CDatabasesSettingsPage::OnNew(CDatabase* pDatabaseTemp
 		dbd.m_pDatabase=CDatabase::FromDefaults(FALSE,NULL,0);
 	dbd.m_nMaximumNumbersOfThreads=m_nThreadsCurrently;
 	
-	int iItem=m_pList->GetNextItem(-1,LVNI_ALL);
-	while (iItem!=-1)
+	if (m_pList->GetItemCount()>0)
 	{
-		CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(iItem);
-		if (pDatabase!=NULL)
-			dbd.m_aOtherDatabases.Add(pDatabase);
-		iItem=m_pList->GetNextItem(iItem,LVNI_ALL);
+		int iItem=m_pList->GetNextItem(-1,LVNI_ALL);
+		while (iItem!=-1)
+		{
+			CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(iItem);
+			if (pDatabase!=NULL)
+				dbd.m_aOtherDatabases.Add(pDatabase);
+			iItem=m_pList->GetNextItem(iItem,LVNI_ALL);
+		}
 	}
 
 	if (dbd.DoModal(*this,LanguageSpecificResource))
 	{
 		LVITEM li;
-		li.iItem=m_pList->GetNextItem(-1,LVNI_ALL);
-		while (li.iItem!=-1)
+
+		if (m_pList->GetItemCount()>0)
 		{
-			CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(li.iItem);
-			ASSERT(pDatabase!=NULL);
+			li.iItem=m_pList->GetNextItem(-1,LVNI_ALL);
+			while (li.iItem!=-1)
+			{
+				CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(li.iItem);
+				ASSERT(pDatabase!=NULL);
 
-			if (pDatabase->GetThreadId()>dbd.m_pDatabase->GetThreadId())
-				break;
+				if (pDatabase->GetThreadId()>dbd.m_pDatabase->GetThreadId())
+					break;
 
-			li.iItem=m_pList->GetNextItem(li.iItem,LVNI_ALL);
+				li.iItem=m_pList->GetNextItem(li.iItem,LVNI_ALL);
+			}
+
+			// Inserting to the end of list
+			if (li.iItem==-1)
+				li.iItem=m_pList->GetItemCount();
+
 		}
+		else
+			li.iItem=0;
 
-		// Inserting to the end of list
-		if (li.iItem==-1)
-			li.iItem=m_pList->GetItemCount();
-
+		
 		li.pszText=LPSTR_TEXTCALLBACK;
 		if (m_nThreadsCurrently>1 && ((CLocateApp*)GetApp())->m_wComCtrlVersion>=0x0600)
 			li.mask=LVIF_TEXT|LVIF_PARAM|LVIF_STATE|LVIF_GROUPID;
@@ -1937,6 +1948,8 @@ void CSettingsProperties::CDatabasesSettingsPage::OnNew(CDatabase* pDatabaseTemp
 void CSettingsProperties::CDatabasesSettingsPage::OnEdit()
 {
 	CWaitCursor wait;
+
+	ASSERT(m_pList->GetItemCount()>0);
 
 	CDatabaseDialog dbd;
 
@@ -2531,22 +2544,23 @@ void CSettingsProperties::CDatabasesSettingsPage::EnableThreadGroups(int nThread
 	}
 
 	// Setting groups IDs
-	
-	LVITEM li;
-	li.mask=LVIF_GROUPID;
-	li.iItem=m_pList->GetNextItem(-1,LVNI_ALL);
-	li.iSubItem=0;
-	while (li.iItem!=-1)
+	if (m_pList->GetItemCount()>0)
 	{
-		CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(li.iItem);
-		ASSERT(pDatabase!=NULL);
+		LVITEM li;
+		li.mask=LVIF_GROUPID;
+		li.iItem=m_pList->GetNextItem(-1,LVNI_ALL);
+		li.iSubItem=0;
+		while (li.iItem!=-1)
+		{
+			CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(li.iItem);
+			ASSERT(pDatabase!=NULL);
 
-		li.iGroupId=pDatabase->GetThreadId();
-		
-		m_pList->SetItem(&li);
-		li.iItem=m_pList->GetNextItem(li.iItem,LVNI_ALL);
+			li.iGroupId=pDatabase->GetThreadId();
+			
+			m_pList->SetItem(&li);
+			li.iItem=m_pList->GetNextItem(li.iItem,LVNI_ALL);
+		}
 	}
-
 }
 
 void CSettingsProperties::CDatabasesSettingsPage::RemoveThreadGroups()
@@ -2599,26 +2613,28 @@ void CSettingsProperties::CDatabasesSettingsPage::ChangeNumberOfThreads(int nThr
 	else if (nThreads<m_nThreadsCurrently)
 	{
 		// Ensuring that there is no any items with higher thread ID than available
-		int nItem=m_pList->GetNextItem(-1,LVNI_ALL);
-		while (nItem!=-1)
+		if (m_pList->GetItemCount()>0)
 		{
-			CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(nItem);
-			ASSERT(pDatabase!=NULL);
-
-			if (pDatabase->GetThreadId()>=nThreads)
+			int nItem=m_pList->GetNextItem(-1,LVNI_ALL);
+			while (nItem!=-1)
 			{
-				pDatabase->SetThreadId(nThreads-1);
-				
-				LVITEM li;
-				li.iItem=nItem;
-				li.iSubItem=0;
-				li.mask=LVIF_GROUPID;
-				li.iGroupId=nThreads-1;
-				m_pList->SetItem(&li);
-			}
-			nItem=m_pList->GetNextItem(nItem,LVNI_ALL);
-		}
+				CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(nItem);
+				ASSERT(pDatabase!=NULL);
 
+				if (pDatabase->GetThreadId()>=nThreads)
+				{
+					pDatabase->SetThreadId(nThreads-1);
+					
+					LVITEM li;
+					li.iItem=nItem;
+					li.iSubItem=0;
+					li.mask=LVIF_GROUPID;
+					li.iGroupId=nThreads-1;
+					m_pList->SetItem(&li);
+				}
+				nItem=m_pList->GetNextItem(nItem,LVNI_ALL);
+			}
+		}
 
 		if (((CLocateApp*)GetApp())->m_wComCtrlVersion>=0x0600)
 		{
@@ -3794,18 +3810,12 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnCommand(WORD wID,WORD wNoti
 			break;
 		}
 	case IDC_EDIT:
-		{
-			CCheduledUpdateDlg sud;
-			int nCurSel=m_pSchedules->GetCurSel();
-			if (nCurSel==-1)
-				break;
-			sud.m_pSchedule=(CSchedule*)m_pSchedules->GetItemData(nCurSel);
-			sud.DoModal(*this);
-			m_pSchedules->SetCurSel(nCurSel);
-			break;
-		}
+		OnEdit();
+		break;
 	case IDC_UPDATES:
-		if (wNotifyCode==LBN_SELCHANGE)
+		if (wNotifyCode==LBN_DBLCLK)
+			OnEdit();
+		else if (wNotifyCode==LBN_SELCHANGE)
 		{
 			CString txt;
 			EnableItems();
@@ -3880,6 +3890,17 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnCommand(WORD wID,WORD wNoti
 
 	}
 	return FALSE;
+}
+
+void CSettingsProperties::CAutoUpdateSettingsPage::OnEdit()
+{
+	CCheduledUpdateDlg sud;
+	int nCurSel=m_pSchedules->GetCurSel();
+	if (nCurSel==-1)
+		return;
+	sud.m_pSchedule=(CSchedule*)m_pSchedules->GetItemData(nCurSel);
+	sud.DoModal(*this);
+	m_pSchedules->SetCurSel(nCurSel);
 }
 
 void CSettingsProperties::CAutoUpdateSettingsPage::OnDestroy()
@@ -3979,48 +4000,37 @@ void CSettingsProperties::CAutoUpdateSettingsPage::OnCancel()
 
 BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDialog(HWND hwndFocus)
 {
-	m_pCombo=new CComboBox(GetDlgItem(IDC_TYPE));
-	CString txt;
-	txt.LoadString(IDS_MINUTELY);
-	m_pCombo->AddString(txt);
-	txt.LoadString(IDS_HOURLY);
-	m_pCombo->AddString(txt);
-	txt.LoadString(IDS_DAILY);
-	m_pCombo->AddString(txt);
-	txt.LoadString(IDS_WEEKLY);
-	m_pCombo->AddString(txt);
-	txt.LoadString(IDS_MONTHLY);
-	m_pCombo->AddString(txt);
-	txt.LoadString(IDS_ONCE);
-	m_pCombo->AddString(txt);
-	txt.LoadString(IDS_ATSTARTUP);
-	m_pCombo->AddString(txt);
-	CComboBox MonthType(GetDlgItem(IDC_MTYPE));
-	txt.LoadString(IDS_FIRST);
-	MonthType.AddString(txt);
-	txt.LoadString(IDS_SECOND);
-	MonthType.AddString(txt);
-	txt.LoadString(IDS_THIRD);
-	MonthType.AddString(txt);
-	txt.LoadString(IDS_FOURTH);
-	MonthType.AddString(txt);
-	txt.LoadString(IDS_LAST);
-	MonthType.AddString(txt);
-	CComboBox MDays(GetDlgItem(IDC_MDAYS));
-	txt.LoadString(IDS_MONDAY);
-	MDays.AddString(txt);
-	txt.LoadString(IDS_TUESDAY);
-	MDays.AddString(txt);
-	txt.LoadString(IDS_WEDNESDAY);
-	MDays.AddString(txt);
-	txt.LoadString(IDS_THURSDAY);
-	MDays.AddString(txt);
-	txt.LoadString(IDS_FRIDAY);
-	MDays.AddString(txt);
-	txt.LoadString(IDS_SATURDAY);
-	MDays.AddString(txt);
-	txt.LoadString(IDS_SUNDAY);
-	MDays.AddString(txt);
+	// Type combo
+	int nSel[]={2,3,4,5,6,1,0};
+	m_pTypeCombo=new CComboBox(GetDlgItem(IDC_TYPE));
+	m_pTypeCombo->AddString(ID2W(IDS_MINUTELY));
+	m_pTypeCombo->AddString(ID2W(IDS_HOURLY));
+	m_pTypeCombo->AddString(ID2W(IDS_DAILY));
+	m_pTypeCombo->AddString(ID2W(IDS_WEEKLY));
+	m_pTypeCombo->AddString(ID2W(IDS_MONTHLY));
+	m_pTypeCombo->AddString(ID2W(IDS_ONCE));
+	m_pTypeCombo->AddString(ID2W(IDS_ATSTARTUP));
+	m_pTypeCombo->SetCurSel(nSel[m_pSchedule->m_nType]);
+	
+	// Month type combo
+	CComboBox Combo(GetDlgItem(IDC_MTYPE));
+	Combo.AddString(ID2W(IDS_FIRST));
+	Combo.AddString(ID2W(IDS_SECOND));
+	Combo.AddString(ID2W(IDS_THIRD));
+	Combo.AddString(ID2W(IDS_FOURTH));
+	Combo.AddString(ID2W(IDS_LAST));
+	
+	// Days combo
+	Combo.AssignToDlgItem(*this,IDC_MDAYS);
+	Combo.AddString(ID2W(IDS_MONDAY));
+	Combo.AddString(ID2W(IDS_TUESDAY));
+	Combo.AddString(ID2W(IDS_WEDNESDAY));
+	Combo.AddString(ID2W(IDS_THURSDAY));
+	Combo.AddString(ID2W(IDS_FRIDAY));
+	Combo.AddString(ID2W(IDS_SATURDAY));
+	Combo.AddString(ID2W(IDS_SUNDAY));
+
+	// Time control
 	SYSTEMTIME st;
 	GetLocalTime(&st);
 	st.wHour=m_pSchedule->m_tStartTime.bHour;
@@ -4028,31 +4038,28 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 	st.wSecond=m_pSchedule->m_tStartTime.bSecond;
 	CDateTimeCtrl TimeCtrl(GetDlgItem(IDC_TIME));
 	TimeCtrl.SetSystemtime(GDT_VALID,&st);
-	CSpinButtonCtrl spin1(GetDlgItem(IDC_SPIN)),spin2(GetDlgItem(IDC_MSPIN)),spin3(GetDlgItem(IDC_MINUTESPIN));
-	spin1.SetRange(1,32000);
-	spin2.SetRange(1,31);
-	spin3.SetRange(0,59);
-	spin1.SetBuddy(GetDlgItem(IDC_EVERY));
-	spin2.SetBuddy(GetDlgItem(IDC_MEVERY));
-	spin3.SetBuddy(GetDlgItem(IDC_MINUTEONHOUR));
 
+	
 	// Setting Every spin (and maybe other things)
+	CSpinButtonCtrl SpinControl(GetDlgItem(IDC_SPIN));
+	SpinControl.SetRange(1,32000);
+	SpinControl.SetBuddy(GetDlgItem(IDC_EVERY));
 	switch (m_pSchedule->m_nType)
 	{
 	case CSchedule::typeMinutely:
-		spin1.SetPos(m_pSchedule->m_tMinutely.wEvery);
+		SpinControl.SetPos(m_pSchedule->m_tMinutely.wEvery);
 		SetDlgItemInt(IDC_EVERY,m_pSchedule->m_tMinutely.wEvery);
 		break;
 	case CSchedule::typeHourly:
-		spin1.SetPos(m_pSchedule->m_tHourly.wEvery);
+		SpinControl.SetPos(m_pSchedule->m_tHourly.wEvery);
 		SetDlgItemInt(IDC_EVERY,m_pSchedule->m_tHourly.wEvery);
 		break;
 	case CSchedule::typeDaily:
-		spin1.SetPos(m_pSchedule->m_tDaily.wEvery);
+		SpinControl.SetPos(m_pSchedule->m_tDaily.wEvery);
 		SetDlgItemInt(IDC_EVERY,m_pSchedule->m_tDaily.wEvery);
 		break;
 	case CSchedule::typeWeekly:
-		spin1.SetPos(m_pSchedule->m_tWeekly.wEvery);
+		SpinControl.SetPos(m_pSchedule->m_tWeekly.wEvery);
 		SetDlgItemInt(IDC_EVERY,m_pSchedule->m_tWeekly.wEvery);
 		if (m_pSchedule->m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Monday)
 			CheckDlgButton(IDC_MON,BST_CHECKED);
@@ -4070,17 +4077,21 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 			CheckDlgButton(IDC_SUN,BST_CHECKED);
 		break;
 	default:
-        spin1.SetPos(1);
+        SpinControl.SetPos(1);
 		break;
 	}
 
+	// "Every Month" spin
+	SpinControl.AssignToDlgItem(*this,IDC_MSPIN);
+	SpinControl.SetRange(1,31);
+	SpinControl.SetBuddy(GetDlgItem(IDC_MEVERY));
 	if (m_pSchedule->m_nType==CSchedule::typeMonthly)
 	{
 		if (m_pSchedule->m_tMonthly.nType==CSchedule::SMONTHLYTYPE::Day)
 		{
 			CheckDlgButton(IDC_MDAY,BST_CHECKED);
 			OnCommand(IDC_MDAY,CBN_SELCHANGE,NULL);
-			spin2.SetPos(m_pSchedule->m_tMonthly.bDay);
+			SpinControl.SetPos(m_pSchedule->m_tMonthly.bDay);
 			SetDlgItemInt(IDC_MEVERY,m_pSchedule->m_tMonthly.bDay);
 			SendDlgItemMessage(IDC_MTYPE,CB_SETCURSEL,0,0);
 			SendDlgItemMessage(IDC_MDAYS,CB_SETCURSEL,0,0);
@@ -4091,18 +4102,34 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 			OnCommand(IDC_MTHE,CBN_SELCHANGE,NULL);
 			SendDlgItemMessage(IDC_MTYPE,CB_SETCURSEL,m_pSchedule->m_tMonthly.nWeek,0);
 			SendDlgItemMessage(IDC_MDAYS,CB_SETCURSEL,m_pSchedule->m_tMonthly.bDay,0);
-			spin2.SetPos(1);
+			SpinControl.SetPos(1);
 		}	
 	}
 	else
 	{
 		CheckDlgButton(IDC_MDAY,BST_CHECKED);
 		OnCommand(IDC_MDAY,CBN_SELCHANGE,NULL);
-		spin2.SetPos(1);
+		SpinControl.SetPos(1);
 		SendDlgItemMessage(IDC_MTYPE,CB_SETCURSEL,0,0);
 		SendDlgItemMessage(IDC_MDAYS,CB_SETCURSEL,0,0);
 	}
 	
+
+
+	// Setting minute spin
+	SpinControl.AssignToDlgItem(*this,IDC_MINUTESPIN);
+	SpinControl.SetRange(0,59);
+	SpinControl.SetBuddy(GetDlgItem(IDC_MINUTEONHOUR));
+	if (m_pSchedule->m_nType==CSchedule::typeHourly)
+	{
+		SpinControl.SetPos(m_pSchedule->m_tHourly.wMinute);
+		SetDlgItemInt(IDC_MINUTEONHOUR,m_pSchedule->m_tHourly.wMinute);
+	}
+	else
+		SpinControl.SetPos(0);
+		
+	
+	// Once time control
 	if (m_pSchedule->m_nType==CSchedule::typeOnce)
 	{
 		GetLocalTime(&st);
@@ -4113,86 +4140,124 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 		DateCtrl.SetSystemtime(GDT_VALID,&st);
 	}
 	
-	// Setting minute spin
-	if (m_pSchedule->m_nType==CSchedule::typeHourly)
-	{
-		spin3.SetPos(m_pSchedule->m_tHourly.wMinute);
-		SetDlgItemInt(IDC_MINUTEONHOUR,m_pSchedule->m_tHourly.wMinute);
-	}
-	else
-		spin3.SetPos(0);
-		
-	int nSel[]={2,3,4,5,6,1,0};
-
-	m_pCombo->SetCurSel(nSel[m_pSchedule->m_nType]);
-	OnTypeChanged();
+	
+	
+	// Enabled, "delete after run" and "at this time only"	
 	if (m_pSchedule->m_bFlags&CSchedule::flagEnabled)
 		CheckDlgButton(IDC_ENABLED,BST_CHECKED);
 	if (m_pSchedule->m_bFlags&CSchedule::flagDeleteAfterRun)
 		CheckDlgButton(IDC_DELETEAFTERRUN,BST_CHECKED);
 	if (m_pSchedule->m_bFlags&CSchedule::flagAtThisTime)
 		CheckDlgButton(IDC_ATTHISTIME,BST_CHECKED);
-	if (m_pSchedule->m_bFlags&CSchedule::flagRunned &&
-		!(m_pSchedule->m_tLastStartTime.bHour==0 && m_pSchedule->m_tLastStartTime.bMinute==0 && m_pSchedule->m_tLastStartTime.bSecond==0 &&
-		m_pSchedule->m_tLastStartDate.wYear<1995 && m_pSchedule->m_tLastStartDate.bMonth==0 && m_pSchedule->m_tLastStartDate.bDay==0))
+
+	
+	// CPU usage
+	SpinControl.AssignToDlgItem(*this,IDC_CPUUSAGESPIN);
+	SpinControl.SetRange(0,100);
+	SpinControl.SetBuddy(GetDlgItem(IDC_CPUUSAGE));
+	if (m_pSchedule->m_wCpuUsageTheshold!=WORD(-1))
 	{
-		char szDate[100],szTime[100];
-		st.wYear=m_pSchedule->m_tLastStartDate.wYear;
-		st.wMonth=m_pSchedule->m_tLastStartDate.bMonth;
-		st.wDay=m_pSchedule->m_tLastStartDate.bDay;
-		st.wHour=m_pSchedule->m_tLastStartTime.bHour;
-		st.wMinute=m_pSchedule->m_tLastStartTime.bMinute;
-		st.wSecond=m_pSchedule->m_tLastStartTime.bSecond;
-		st.wMilliseconds=0;
-		GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
-		GetDateFormat(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,szDate,100);
-		txt.Format(IDS_LASTRUN,szDate,szTime);
+		CheckDlgButton(IDC_CPUUSAGECHECK,TRUE);
+		SetDlgItemInt(IDC_CPUUSAGE,m_pSchedule->m_wCpuUsageTheshold,FALSE);
+		SpinControl.SetPos(m_pSchedule->m_wCpuUsageTheshold);
 	}
 	else
-		txt.LoadString(IDS_LASTRUNNEVER);
-	
-	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYHIGH));		
-	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYABOVENORMAL));		
-	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYNORMAL));		
-	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYBELOWNORMAL));		
-	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYLOW));		
-	SendDlgItemMessage(IDC_THREADPRIORITY,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYIDLE));	
+	{
+		EnableDlgItem(IDC_CPUUSAGE,FALSE);
+		EnableDlgItem(IDC_CPUUSAGESPIN,FALSE);
+		EnableDlgItem(IDC_CPUUSAGEEXTRALABEL,FALSE);
+		SetDlgItemInt(IDC_CPUUSAGE,0,FALSE);
+		SpinControl.SetPos(100);
+	}
 
+
+	// Thread priority
+	Combo.AssignToDlgItem(*this,IDC_THREADPRIORITY);
+	Combo.AddString(ID2W(IDS_PRIORITYHIGH));
+	Combo.AddString(ID2W(IDS_PRIORITYABOVENORMAL));
+	Combo.AddString(ID2W(IDS_PRIORITYNORMAL));
+	Combo.AddString(ID2W(IDS_PRIORITYBELOWNORMAL));
+	Combo.AddString(ID2W(IDS_PRIORITYLOW));
+	Combo.AddString(ID2W(IDS_PRIORITYIDLE));
 	switch (m_pSchedule->m_nThreadPriority)
 	{
 	case THREAD_PRIORITY_HIGHEST:
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,0);
+		Combo.SetCurSel(0);
 		break;
 	case THREAD_PRIORITY_ABOVE_NORMAL:
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,1);
+		Combo.SetCurSel(1);
 		break;
 	case THREAD_PRIORITY_NORMAL:
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,2);
+		Combo.SetCurSel(2);
 		break;
 	case THREAD_PRIORITY_BELOW_NORMAL:
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,3);
+		Combo.SetCurSel(3);
 		break;
 	case THREAD_PRIORITY_LOWEST:
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,4);
+		Combo.SetCurSel(4);
 		break;
 	case THREAD_PRIORITY_IDLE:
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,5);
+		Combo.SetCurSel(5);
 		break;
 	default:
-		SendDlgItemMessage(IDC_THREADPRIORITY,CB_SETCURSEL,2);
+		Combo.SetCurSel(2);
 		break;
 	}
 		
 
 
-#ifdef _DEBUG
-	CString txt2;
-	txt2.Format(" F:%X STD:%d.%d.%d STT: %d:%d:",m_pSchedule->m_bFlags,
+	// Last run text
+	CStringW LastRun;
+	if (m_pSchedule->m_bFlags&CSchedule::flagRunned &&
+		!(m_pSchedule->m_tLastStartTime.bHour==0 && m_pSchedule->m_tLastStartTime.bMinute==0 && 
+		m_pSchedule->m_tLastStartTime.bSecond==0 && m_pSchedule->m_tLastStartDate.wYear<1995 && 
+		m_pSchedule->m_tLastStartDate.bMonth==0 && m_pSchedule->m_tLastStartDate.bDay==0))
+	{
+		if (IsUnicodeSystem())
+		{
+			WCHAR szDate[100],szTime[100];
+			st.wYear=m_pSchedule->m_tLastStartDate.wYear;
+			st.wMonth=m_pSchedule->m_tLastStartDate.bMonth;
+			st.wDay=m_pSchedule->m_tLastStartDate.bDay;
+			st.wHour=m_pSchedule->m_tLastStartTime.bHour;
+			st.wMinute=m_pSchedule->m_tLastStartTime.bMinute;
+			st.wSecond=m_pSchedule->m_tLastStartTime.bSecond;
+			st.wMilliseconds=0;
+			GetTimeFormatW(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
+			GetDateFormatW(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,szDate,100);
+			LastRun.Format(IDS_LASTRUN,szDate,szTime);
+		}
+		else
+		{
+			char szDate[100],szTime[100];
+			st.wYear=m_pSchedule->m_tLastStartDate.wYear;
+			st.wMonth=m_pSchedule->m_tLastStartDate.bMonth;
+			st.wDay=m_pSchedule->m_tLastStartDate.bDay;
+			st.wHour=m_pSchedule->m_tLastStartTime.bHour;
+			st.wMinute=m_pSchedule->m_tLastStartTime.bMinute;
+			st.wSecond=m_pSchedule->m_tLastStartTime.bSecond;
+			st.wMilliseconds=0;
+			GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
+			GetDateFormat(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,szDate,100);
+			LastRun.Format(IDS_LASTRUN,(LPCWSTR)A2W(szDate),(LPCWSTR)A2W(szTime));
+		}
+	}
+	else
+		LastRun.LoadString(IDS_LASTRUNNEVER);
+	
+/*#ifdef _DEBUG
+	CStringW txt2;
+	txt2.Format(L" F:%X STD:%d.%d.%d STT: %d:%d:",m_pSchedule->m_bFlags,
 		m_pSchedule->m_tLastStartDate.bDay,m_pSchedule->m_tLastStartDate.bMonth,m_pSchedule->m_tLastStartDate.wYear,
 		m_pSchedule->m_tLastStartTime.bHour,m_pSchedule->m_tLastStartTime.bMinute,m_pSchedule->m_tLastStartTime.bSecond);
-	txt << txt2;
-#endif
-	SetDlgItemText(IDC_LASTRUN,(LPCSTR)txt);
+	LastRun << txt2;
+#endif*/
+
+	SetDlgItemText(IDC_LASTRUN,LastRun);
+	
+	
+	OnTypeChanged();
+		
 	m_bChanged=FALSE;
 	return CDialog::OnInitDialog(hwndFocus);
 }
@@ -4232,17 +4297,79 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnCommand
 	case IDC_FRI:
 	case IDC_SAT:
 	case IDC_SUN:	
-	case IDC_EVERY:
-	case IDC_MEVERY:
 	case IDC_MTYPE:
 	case IDC_MDAYS:
 	case IDC_ONCETIME:
 	case IDC_ENABLED:
 	case IDC_DELETEAFTERRUN:
+	case IDC_THREADPRIORITY:
 		m_bChanged=TRUE;
 		break;
 	case IDC_DATABASES:
 		OnDatabases();
+		break;
+	case IDC_CPUUSAGECHECK:
+		{
+			BOOL bEnable=IsDlgButtonChecked(IDC_CPUUSAGECHECK);
+			EnableDlgItem(IDC_CPUUSAGE,bEnable);
+			EnableDlgItem(IDC_CPUUSAGESPIN,bEnable);
+			EnableDlgItem(IDC_CPUUSAGEEXTRALABEL,bEnable);
+			
+			SetFocus(IDC_CPUUSAGE);
+			m_bChanged=TRUE;
+			break;
+		}
+	case IDC_EVERY:
+		if (wNotifyCode==EN_SETFOCUS)
+			::SendMessage(hControl,EM_SETSEL,0,-1);
+		else if (wNotifyCode==EN_CHANGE)
+		{
+			BOOL bTranslated=FALSE;
+			UINT nVal=GetDlgItemInt(IDC_EVERY,&bTranslated,FALSE);
+			if (nVal<1)
+				SetDlgItemInt(IDC_EVERY,1,FALSE);
+		
+			m_bChanged=TRUE;
+		}
+		break;
+	case IDC_MEVERY:
+		if (wNotifyCode==EN_SETFOCUS)
+			::SendMessage(hControl,EM_SETSEL,0,-1);
+		else if (wNotifyCode==EN_CHANGE)
+		{
+			BOOL bTranslated=FALSE;
+			UINT nVal=GetDlgItemInt(IDC_MEVERY,&bTranslated,FALSE);
+			if (nVal<1 && bTranslated)
+				SetDlgItemInt(IDC_MEVERY,1,FALSE);
+			else if (nVal>31 && bTranslated)
+				SetDlgItemInt(IDC_MEVERY,31,FALSE);
+
+			m_bChanged=TRUE;
+		}
+		break;
+	case IDC_MINUTEONHOUR:
+		if (wNotifyCode==EN_SETFOCUS)
+			::SendMessage(hControl,EM_SETSEL,0,-1);
+		else if (wNotifyCode==EN_CHANGE)
+		{
+			BOOL bTranslated=FALSE;
+			UINT nVal=GetDlgItemInt(IDC_MINUTEONHOUR,&bTranslated,FALSE);
+			if (nVal>59  && bTranslated)
+				SetDlgItemInt(IDC_MINUTEONHOUR,59,FALSE);
+			m_bChanged=TRUE;
+		}
+		break;
+	case IDC_CPUUSAGE:
+		if (wNotifyCode==EN_SETFOCUS)
+			::SendMessage(hControl,EM_SETSEL,0,-1);
+		else if (wNotifyCode==EN_CHANGE)
+		{
+			BOOL bTranslated=FALSE;
+			UINT nVal=GetDlgItemInt(IDC_CPUUSAGE,&bTranslated,FALSE);
+			if (nVal>100 && bTranslated)
+				SetDlgItemInt(IDC_CPUUSAGE,100,FALSE);
+			m_bChanged=TRUE;
+		}
 		break;
 	}
 	return FALSE;
@@ -4289,6 +4416,8 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnDatabas
 			}
 			*pPtr='\0';
 		}
+
+		m_bChanged=TRUE;
 		return TRUE;
 	}
 	return FALSE;
@@ -4308,10 +4437,10 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnNotify(
 
 void CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnDestroy()
 {
-	if (m_pCombo!=NULL)
+	if (m_pTypeCombo!=NULL)
 	{
-		delete m_pCombo;
-		m_pCombo=NULL;
+		delete m_pTypeCombo;
+		m_pTypeCombo=NULL;
 	}
 	CDialog::OnDestroy();
 }
@@ -4325,6 +4454,8 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnClose()
 
 BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnOK()
 {
+	BOOL bTranslated=FALSE;
+
 	CSchedule::ScheduleType nType[]={
 		CSchedule::typeMinutely,
 		CSchedule::typeHourly,
@@ -4334,7 +4465,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnOK()
 		CSchedule::typeOnce,
 		CSchedule::typeAtStartup,
 	};
-	CSchedule::ScheduleType nNewType=nType[m_pCombo->GetCurSel()];
+	CSchedule::ScheduleType nNewType=nType[m_pTypeCombo->GetCurSel()];
 	if (m_pSchedule->m_nType!=nNewType)
 	{
 		m_bChanged=TRUE;
@@ -4370,26 +4501,29 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnOK()
 	switch (m_pSchedule->m_nType)
 	{
 	case CSchedule::typeMinutely:
-		m_pSchedule->m_tMinutely.wEvery=GetDlgItemInt(IDC_EVERY);
-		if ((int)m_pSchedule->m_tMinutely.wEvery<1)
+		m_pSchedule->m_tMinutely.wEvery=GetDlgItemInt(IDC_EVERY,&bTranslated,FALSE);
+		if (!bTranslated || (int)m_pSchedule->m_tMinutely.wEvery<1)
 			m_pSchedule->m_tMinutely.wEvery=1;
 		break;
 	case CSchedule::typeHourly:
-		m_pSchedule->m_tHourly.wEvery=GetDlgItemInt(IDC_EVERY);
-		m_pSchedule->m_tHourly.wMinute=GetDlgItemInt(IDC_MINUTEONHOUR);
-		if (m_pSchedule->m_tHourly.wMinute>59)
-			m_pSchedule->m_tHourly.wMinute=59;
-		if ((int)m_pSchedule->m_tHourly.wEvery<1)
+		m_pSchedule->m_tHourly.wEvery=GetDlgItemInt(IDC_EVERY,&bTranslated,FALSE);
+		if (!bTranslated || (int)m_pSchedule->m_tHourly.wEvery<1)
 			m_pSchedule->m_tHourly.wEvery=1;
+		
+		m_pSchedule->m_tHourly.wMinute=GetDlgItemInt(IDC_MINUTEONHOUR,&bTranslated,FALSE);
+		if (!bTranslated)
+			m_pSchedule->m_tHourly.wMinute=0;
+		else if (m_pSchedule->m_tHourly.wMinute>59)
+			m_pSchedule->m_tHourly.wMinute=59;
 		break;		
 	case CSchedule::typeDaily:
-		m_pSchedule->m_tDaily.wEvery=GetDlgItemInt(IDC_EVERY);
-		if ((int)m_pSchedule->m_tDaily.wEvery<1)
+		m_pSchedule->m_tDaily.wEvery=GetDlgItemInt(IDC_EVERY,&bTranslated,FALSE);
+		if (!bTranslated || (int)m_pSchedule->m_tDaily.wEvery<1)
 			m_pSchedule->m_tDaily.wEvery=1;
 		break;
 	case CSchedule::typeWeekly:
-		m_pSchedule->m_tWeekly.wEvery=GetDlgItemInt(IDC_EVERY);
-		if ((int)m_pSchedule->m_tWeekly.wEvery<1)
+		m_pSchedule->m_tWeekly.wEvery=GetDlgItemInt(IDC_EVERY,&bTranslated,FALSE);
+		if (!bTranslated || (int)m_pSchedule->m_tWeekly.wEvery<1)
 			m_pSchedule->m_tWeekly.wEvery=1;
 		m_pSchedule->m_tWeekly.bDays=0;
 		if (IsDlgButtonChecked(IDC_MON))
@@ -4411,8 +4545,8 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnOK()
 		if (IsDlgButtonChecked(IDC_MDAY))
 		{
 			m_pSchedule->m_tMonthly.nType=CSchedule::SMONTHLYTYPE::Day;
-			m_pSchedule->m_tMonthly.bDay=GetDlgItemInt(IDC_MEVERY);
-			if ((int)m_pSchedule->m_tMonthly.bDay<1)
+			m_pSchedule->m_tMonthly.bDay=GetDlgItemInt(IDC_MEVERY,&bTranslated,FALSE);
+			if (!bTranslated || (int)m_pSchedule->m_tMonthly.bDay<1)
 				m_pSchedule->m_tMonthly.bDay=1;
 		}
 		else
@@ -4433,6 +4567,16 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnOK()
 	case CSchedule::typeAtStartup:
 		break;
 	}
+
+	if (IsDlgButtonChecked(IDC_CPUUSAGECHECK))
+	{
+		m_pSchedule->m_wCpuUsageTheshold=GetDlgItemInt(IDC_CPUUSAGE,&bTranslated,FALSE);
+		if (!bTranslated)
+			m_pSchedule->m_wCpuUsageTheshold=WORD(-1);
+	}
+	else
+		m_pSchedule->m_wCpuUsageTheshold=WORD(-1);
+
 
 	switch (SendDlgItemMessage(IDC_THREADPRIORITY,CB_GETCURSEL))
 	{
@@ -4475,7 +4619,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnTypeCha
 		CSchedule::typeAtStartup,
 	};
 		
-	CSchedule::ScheduleType nType=nTypes[m_pCombo->GetCurSel()];
+	CSchedule::ScheduleType nType=nTypes[m_pTypeCombo->GetCurSel()];
 
 	EnableDlgItem(IDC_TIME,nType!=CSchedule::typeMinutely && 
 		nType!=CSchedule::typeHourly && nType!=CSchedule::typeAtStartup);
@@ -5208,18 +5352,19 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnApply()
 
 	m_pSettings->m_aShortcuts.RemoveAll();
 	
-	DebugMessage("CKeyboardShortcutsPage::OnApply() 1");
-	
-	int nItem=m_pList->GetNextItem(-1,LVNI_ALL);
-	while (nItem!=-1)
+	if (m_pList->GetItemCount()>0)
 	{
-		CShortcut* pShortcut=(CShortcut*)m_pList->GetItemData(nItem);
-		if (pShortcut!=NULL)
+		int nItem=m_pList->GetNextItem(-1,LVNI_ALL);
+		while (nItem!=-1)
 		{
-			m_pSettings->m_aShortcuts.Add(pShortcut);
-			m_pList->SetItemData(nItem,NULL);
+			CShortcut* pShortcut=(CShortcut*)m_pList->GetItemData(nItem);
+			if (pShortcut!=NULL)
+			{
+				m_pSettings->m_aShortcuts.Add(pShortcut);
+				m_pList->SetItemData(nItem,NULL);
+			}
+			nItem=m_pList->GetNextItem(nItem,LVNI_ALL);
 		}
-		nItem=m_pList->GetNextItem(nItem,LVNI_ALL);
 	}
 
 	DebugMessage("CKeyboardShortcutsPage::OnApply() END");
@@ -6351,6 +6496,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForShortcut(CShortcut
 	ASSERT(pShortcut->m_apActions.GetSize()>0);
 	SetFieldsForAction(pShortcut->m_apActions[0]);
 
+	ASSERT(m_pWhenPressedList->GetItemCount()>0);
+
 	int nItem=m_pWhenPressedList->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
 	{
@@ -6399,6 +6546,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForShortcut(CShortcu
 
 	if ((pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)==CShortcut::sfLocal)
 	{
+		ASSERT(m_pWhenPressedList->GetItemCount()>0);
+		
 		int nItem=m_pWhenPressedList->GetNextItem(-1,LVNI_ALL);
 		while (nItem!=-1)
 		{	

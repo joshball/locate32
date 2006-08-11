@@ -165,6 +165,8 @@ public:
 	virtual BOOL OnInitDialog(HWND hwndFocus);
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 	virtual BOOL OnClose();
+	virtual void OnDestroy();
+
 
 	enum {
 		Sentence,
@@ -184,6 +186,7 @@ public:
 	virtual BOOL OnInitDialog(HWND hwndFocus);
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 	virtual BOOL OnClose();
+	virtual void OnDestroy();
 
 	CStringW m_sParent;
 	CStringW m_sFileName;
