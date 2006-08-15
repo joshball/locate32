@@ -50,7 +50,7 @@ private:
 	friend CWinThread* GetCurrentWinThread();
 	friend CWinThread* GetWinThread(DWORD);
 	friend CWinApp* GetApp();
-	friend CWnd* GetMainWnd();
+	friend CTargetWnd* GetMainWnd();
 	friend HINSTANCE GetInstanceHandle();
 #endif
 #ifdef DEF_RESOURCES
@@ -127,7 +127,7 @@ inline HINSTANCE GetLanguageSpecificResourceHandle()
 #ifdef DEF_APP
 
 
-class CWinThread : public CCmdTarget
+class CWinThread : public CObject
 {
 public:
 	CWinThread();
@@ -163,7 +163,7 @@ public:
     virtual BOOL InitInstance(); // if return value is TRUE, thread will go to modal loop
 	virtual int ExitInstance();
 
-	virtual CWnd* GetMainWnd();
+	virtual CTargetWnd* GetMainWnd();
 
 	const MSG* GetCurrentMessage() const;
 	virtual BOOL OnThreadMessage(MSG* pMsg);
@@ -200,8 +200,8 @@ protected:
 	MSG m_currentMessage;
 
 public:
-	CWnd* m_pMainWnd;
-	CWnd* m_pMouseMessagesTo;
+	CTargetWnd* m_pMainWnd;
+	CTargetWnd* m_pMouseMessagesTo;
 	DWORD m_nThreadID;
 	BOOL m_bAutoDelete;
 };
@@ -224,7 +224,7 @@ public:
 	CString GetExeName() const;
 	CStringW GetExeNameW() const;
 
-	void SetMainWnd(CWnd* pWnd);
+	void SetMainWnd(CTargetWnd* pWnd);
 	int GetCmdShow() { return m_nCmdShow; }
 		
 	virtual BOOL InitApplication();
@@ -262,7 +262,7 @@ inline BOOL CWinThread::CreateThread(DWORD dwCreateFlags,UINT nStackSize,LPSECUR
 	return (m_hThread=::CreateThread(lpSecurityAttrs,nStackSize,(LPTHREAD_START_ROUTINE)CAppData::ThreadProc,this,dwCreateFlags,&m_nThreadID))!=NULL;
 }
 
-inline CWnd* CWinThread::GetMainWnd()
+inline CTargetWnd* CWinThread::GetMainWnd()
 {
 	return m_pMainWnd;
 }
@@ -359,12 +359,12 @@ inline void CWinThread::UnRegisterDialog(HWND hDialog)
 	}
 }
 
-inline void CWinApp::SetMainWnd(CWnd* pWnd)
+inline void CWinApp::SetMainWnd(CTargetWnd* pWnd)
 {
 	m_pMainWnd=pWnd;
 }
 
-inline CWnd* GetMainWnd()
+inline CTargetWnd* GetMainWnd()
 {
 	return GetAppData()->pAppClass->GetMainWnd();
 }

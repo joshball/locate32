@@ -534,9 +534,11 @@ CLocateDlg::~CLocateDlg()
 {
 	DebugNumMessage("CLocateDlg::~CLocateDlg() this is %X",DWORD(this));
 
-
 	ASSERT(m_hActivePopupMenu==NULL);
 	ASSERT(m_pActiveContextMenu==NULL);
+
+	if (m_pDesktopFolder!=NULL)
+		m_pDesktopFolder->Release();
 }
 
 CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
@@ -1440,7 +1442,7 @@ void CLocateDlg::SetDialogMode(BOOL bLarge)
 				delete[] g_szwBuffer;
 				g_szwBuffer=NULL;
 			}
-			m_pListCtrl->ShowWindow(CWndCtrl::swHide);
+			m_pListCtrl->ShowWindow(swHide);
 		}
 	}
 }
@@ -2811,6 +2813,14 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 	case WM_INITMENUPOPUP:
 		if (m_pActiveContextMenu!=NULL)
 		{
+			if (m_pActiveContextMenu->pContextMenu3!=NULL)
+			{
+				HRESULT hRes;
+				LRESULT hRet;
+				hRes=m_pActiveContextMenu->pContextMenu3->HandleMenuMsg2(msg,wParam,lParam,&hRet);
+				if (hRes==NOERROR)
+					return hRet;
+			}
 			if (m_pActiveContextMenu->pContextMenu2!=NULL)
 				m_pActiveContextMenu->pContextMenu2->HandleMenuMsg(msg,wParam,lParam);
 
@@ -3297,12 +3307,17 @@ void CLocateDlg::OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpmis)
 		// This is IContextMenu item
 		if (m_pActiveContextMenu!=NULL && lpmis->itemID<IDM_DEFSENDTOITEM)
 			return;
+
+		// SendTo menu item
 		
-		WCHAR szTitle[_MAX_PATH];
 		CDC dc(this);
 		HGDIOBJ hOld=dc.SelectObject(m_hSendToListFont);
-		FileSystem::GetFileTitle((LPCWSTR)lpmis->itemData,szTitle,MAX_PATH);
-		CSize sz=dc.GetTextExtent(szTitle,(int)wcslen(szTitle));
+		
+		SHFILEINFOW fi;
+		fi.hIcon=NULL;
+		GetFileInfo((LPITEMIDLIST)lpmis->itemData,0,&fi,SHGFI_DISPLAYNAME|SHGFI_ICON|SHGFI_SMALLICON);
+			
+		CSize sz=dc.GetTextExtent(fi.szDisplayName,(int)wcslen(fi.szDisplayName));
 		lpmis->itemWidth=40+sz.cx;
 		if (sz.cy>16)
 			lpmis->itemHeight=sz.cy+4;
@@ -4693,6 +4708,17 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 		ClearMenuVariables();
 		return;
 	}
+	else if (wcscmp(szName,L"properties")==0 && m_pActiveContextMenu->nIDLParentLevel<=1)
+	{
+		ClearMenuVariables();
+		
+		int nItems;
+		CLocatedItem** pItems=GetSeletedItems(nItems);
+		CPropertiesSheet* fileprops=new CPropertiesSheet(nItems,pItems);
+		delete[] pItems;
+		fileprops->Open();
+		return;
+	}
 	
 	CMINVOKECOMMANDINFOEX cii;
 	ZeroMemory(&cii,sizeof(CMINVOKECOMMANDINFOEX));
@@ -4711,6 +4737,50 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 
 }
 
+CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForItems(int nItems,CLocatedItem** ppItems)
+{
+	if (m_pDesktopFolder==NULL)
+		return NULL;
+
+	LPITEMIDLIST* ppFullIDLs=new LPITEMIDLIST[nItems];
+	LPITEMIDLIST pParentIDL;
+
+	int iItem=0;
+	for (int i=0;i<nItems;i++)
+	{
+		if (SUCCEEDED(m_pDesktopFolder->ParseDisplayName(*this,NULL,ppItems[i]->GetPath(),NULL,&ppFullIDLs[iItem],NULL)))
+			iItem++;
+	}
+	nItems=iItem;
+
+	if (iItem==0)
+		return NULL;
+
+	LPITEMIDLIST* ppSimpleIDLs=new LPITEMIDLIST[nItems];
+	ContextMenuStuff* pContextMenuStuff=NULL;
+	int nParentIDLLevel=-1;
+
+	if (GetSimpleIDLsandParentfromIDLs(nItems,ppFullIDLs,&pParentIDL,ppSimpleIDLs,&nParentIDLLevel))
+	{
+		pContextMenuStuff=GetContextMenuForFiles(nItems,pParentIDL,ppSimpleIDLs,nParentIDLLevel);
+		if (pContextMenuStuff==NULL)
+		{
+			for (int i=0;i<nItems;i++)
+				CoTaskMemFree(ppSimpleIDLs[i]);
+			CoTaskMemFree(pParentIDL);
+			delete[] ppSimpleIDLs;
+		}
+	}
+	else
+		delete[] ppSimpleIDLs;
+				
+	for (int i=0;i<nItems;i++)
+		CoTaskMemFree(ppFullIDLs[i]);
+	delete[] ppFullIDLs;
+	
+	return pContextMenuStuff;
+}
+	
 void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 {
 	CWaitCursor wait;
@@ -4740,9 +4810,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 
 			if (nRet<=32)
 			{
-				CArrayFP<CStringW*> aFile;
-				aFile.Add(new CStringW(pItems[i]->GetPath()));
-				ContextMenuStuff* pContextMenuStuff=GetContextMenuForFiles(pItems[i]->GetParent(),aFile);
+				ContextMenuStuff* pContextMenuStuff=GetContextMenuForItems(1,&pItems[i]);
 				if (pContextMenuStuff!=NULL)
 				{
 					CMINVOKECOMMANDINFOEX cii;
@@ -4770,6 +4838,171 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 	delete[] pItems;
 }
 
+BOOL CLocateDlg::GetSimpleIDLsandParentForSelectedItems(int& nItems,LPITEMIDLIST& rpParentIDL,LPITEMIDLIST*& rpSimpleIDLs)
+{
+	int nSelected=m_pListCtrl->GetSelectedCount();
+
+	if (nSelected==0)
+		return FALSE;
+
+	if (m_pDesktopFolder==NULL)
+		return FALSE;
+
+	LPITEMIDLIST* pFullIDLs=new LPITEMIDLIST[nSelected];
+	
+	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+	nItems=0;
+	while (nItem!=-1)
+	{
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+		
+		if (pItem!=NULL)
+		{
+			if (SUCCEEDED(m_pDesktopFolder->ParseDisplayName(*this,NULL,pItem->GetPath(),NULL,&pFullIDLs[nItems],NULL)))
+				nItems++;
+			
+		}
+
+		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+	}
+
+	ASSERT(nItems<nSelected);
+
+	BOOL bRet=GetSimpleIDLsandParentfromIDLs(nItems,pFullIDLs,&rpParentIDL,rpSimpleIDLs);
+
+	for (int i=0;i<nItems;i++)
+		CoTaskMemFree(pFullIDLs[i]);
+	delete[] pFullIDLs;
+
+	if (!bRet)
+		delete[] rpSimpleIDLs;	
+	
+	return bRet;
+}
+	
+BOOL CLocateDlg::GetSimpleIDLsandParentfromIDLs(int nItems,LPITEMIDLIST* pFullIDLs,LPITEMIDLIST* rpParentIDL,LPITEMIDLIST* rpSimpleIDLs,int* pParentIDLLevel)
+{
+	if (m_pDesktopFolder==NULL)
+		return FALSE;
+
+
+	int nEqualLevels=0;
+	
+	if (nItems==1)
+	{
+		// Handle 1 file separately
+
+		LPITEMIDLIST pidlLast, pidlNext;
+		
+		// Split pidl into parent part and the last part
+		for (pidlLast = pFullIDLs[0]; 
+			pidlNext = (LPITEMIDLIST)((BYTE*)pidlLast + pidlLast->mkid.cb),pidlNext->mkid.cb;
+			pidlLast = pidlNext) 
+			nEqualLevels++;
+
+		if (pFullIDLs[0]==pidlLast)
+			return FALSE;
+
+		// Copy parent IDL
+		DWORD nLength=DWORD(LPBYTE(pidlLast)-LPBYTE(pFullIDLs[0]));
+		*rpParentIDL=(LPITEMIDLIST)CoTaskMemAlloc(nLength+2);
+		CopyMemory(*rpParentIDL,pFullIDLs[0],nLength);
+		*((WORD*)(LPBYTE(*rpParentIDL)+nLength))=0;
+
+	
+
+		// Copy simple IDL
+		rpSimpleIDLs[0]=(LPITEMIDLIST)CoTaskMemAlloc(pidlLast->mkid.cb+2);
+		CopyMemory(rpSimpleIDLs[0],pidlLast,pidlLast->mkid.cb+2);
+
+		if (pParentIDLLevel!=NULL)
+			*pParentIDLLevel=nEqualLevels;
+		return TRUE;
+	}
+
+	if (pFullIDLs[0]->mkid.cb==0)
+	{
+		// Empty IDL
+		return FALSE;
+	}
+
+
+	
+	// Pointers
+	LPITEMIDLIST* pPtr=new LPITEMIDLIST[nItems];
+	for (int i=0;i<nItems;i++)
+		pPtr[i]=pFullIDLs[i];
+	
+
+	// Check highest parent level
+	BOOL bAllEqual=TRUE;
+	DWORD nParentLength=0;
+	
+	while (((LPITEMIDLIST)((BYTE*)pPtr[0] + pPtr[0]->mkid.cb))->mkid.cb) // Net the last
+	{
+		// Side of first ID of first item lsit
+		int i;
+		WORD cb0,cb,cbpre=pPtr[0]->mkid.cb;
+
+		pPtr[0]=(LPITEMIDLIST)((BYTE*)pPtr[0] + pPtr[0]->mkid.cb);
+		cb0=pPtr[0]->mkid.cb;
+		pPtr[0]->mkid.cb=0;
+
+		for (i=1;i<nItems;i++)
+		{
+			pPtr[i]=(LPITEMIDLIST)((BYTE*)pPtr[i] + pPtr[i]->mkid.cb);
+			cb=pPtr[i]->mkid.cb;
+			pPtr[i]->mkid.cb=0;
+
+			
+			HRESULT hRes=m_pDesktopFolder->CompareIDs(0,pFullIDLs[0],pFullIDLs[i]);
+			pPtr[i]->mkid.cb=cb;
+
+			if (FAILED(hRes) || HRESULT_CODE(hRes)!=0)
+			{
+				bAllEqual=FALSE;
+				break;
+			}
+
+		}
+
+		pPtr[0]->mkid.cb=cb0;
+
+		if (!bAllEqual)
+			break;
+
+		nEqualLevels++;
+
+		nParentLength+=cbpre;
+		
+	}
+
+	if (nEqualLevels==0)
+	{
+		delete[] pPtr;
+		return FALSE;
+	}
+
+	if (pParentIDLLevel!=NULL)
+		*pParentIDLLevel=nEqualLevels;
+	
+	
+	// Copy parent IDL
+	*rpParentIDL=(LPITEMIDLIST)CoTaskMemAlloc(nParentLength+2);
+	CopyMemory(*rpParentIDL,pFullIDLs[0],nParentLength);
+	*((WORD*)(LPBYTE(*rpParentIDL)+nParentLength))=0;
+
+	// Copy simple IDLs
+	for (int i=0;i<nItems;i++)
+	{
+		DWORD nLength=GetIDListSize((LPITEMIDLIST)(LPBYTE(pFullIDLs[i])+nParentLength));
+
+		rpSimpleIDLs[i]=(LPITEMIDLIST)CoTaskMemAlloc(nLength);
+		CopyMemory(rpSimpleIDLs[i],LPBYTE(pFullIDLs[i])+nParentLength,nLength);
+	}
+	return TRUE;
+}
+
 void CLocateDlg::OnProperties(int nItem)
 {
 	if (m_pListCtrl->GetSelectedCount()==0)
@@ -4777,53 +5010,37 @@ void CLocateDlg::OnProperties(int nItem)
 
 	
 	
-	CArrayFP<CStringW*> aFiles;
-	CArray<LPCWSTR> aParents;
-	
 	int nItems;
 	CLocatedItem** pItems=GetSeletedItems(nItems,nItem);
+	ContextMenuStuff* pContextMenu=GetContextMenuForItems(nItems,pItems);
 
-	aParents;
-	for (int i=0;i<nItems;i++)
+	if (pContextMenu!=NULL)
 	{
-	    if (pItems[i]!=NULL)
+		if (pContextMenu->nIDLParentLevel>1)
 		{
-			aFiles.Add(new CStringW(pItems[i]->GetPath()));		
-		
-			int j;
-			for (j=0;j<aParents.GetSize();j++)
-			{
-				if (wcscmp(aParents[j],pItems[i]->GetParent())==0)
-					break;
-			}
-
-			if (j==aParents.GetSize())
-				aParents.Add(pItems[i]->GetParent());
+			CMINVOKECOMMANDINFO cii;
+			cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
+			cii.fMask=0;
+			cii.hwnd=*this;
+			cii.lpVerb="properties";
+			cii.lpParameters=NULL;
+			cii.lpDirectory=NULL;
+			cii.nShow=SW_SHOWDEFAULT;
+			HMENU hMenu=CreatePopupMenu();
+			pContextMenu->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
+			pContextMenu->pContextMenu->InvokeCommand(&cii);
+			DestroyMenu(hMenu);
+			delete[] pItems;
+			delete pContextMenu;		
+			return;
 		}
+		delete pContextMenu;		
 	}
 
-	
-	ContextMenuStuff* pContextMenuStuff=GetContextMenuForFiles(aParents[0],aFiles);
-	if (pContextMenuStuff!=NULL)
-	{
-		CMINVOKECOMMANDINFO cii;
-		cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
-		cii.fMask=0;
-		cii.hwnd=*this;
-		cii.lpVerb="properties";
-		cii.lpParameters=NULL;
-		cii.lpDirectory=NULL;
-		cii.nShow=SW_SHOWDEFAULT;
-		HMENU hMenu=CreatePopupMenu();
-		pContextMenuStuff->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
-		pContextMenuStuff->pContextMenu->InvokeCommand(&cii);
-		
-		delete pContextMenuStuff;
-		DestroyMenu(hMenu);
-		return;
-	}
-	
+	CPropertiesSheet* fileprops=new CPropertiesSheet(nItems,pItems);
 	delete[] pItems;
+
+	fileprops->Open();
 }
 
 void CLocateDlg::OnAutoArrange()
@@ -5280,7 +5497,7 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 				HRESULT(STDAPICALLTYPE * pSHOpenFolderAndSelectItems)(LPCITEMIDLIST,UINT,LPCITEMIDLIST*,DWORD)=
 					(HRESULT(STDAPICALLTYPE *)(LPCITEMIDLIST,UINT,LPCITEMIDLIST*,DWORD))GetProcAddress(GetModuleHandle("shell32.dll"),"SHOpenFolderAndSelectItems");
 				
-				if (pSHOpenFolderAndSelectItems!=NULL)
+				if (pSHOpenFolderAndSelectItems!=NULL && m_pDesktopFolder!=NULL)
 				{
 					CArrayFP<FolderInfo*> aFolders;
 					int i;
@@ -5306,19 +5523,12 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 					}
 
 					// Initializing pDesktopFolder
-					IShellFolder *pDesktopFolder,*pParentFolder;
-					IMalloc *pMalloc;
-
+					IShellFolder* pParentFolder;
 					LPITEMIDLIST pParentIDList;
-					HRESULT hRes=SHGetDesktopFolder(&pDesktopFolder);
-					if (!SUCCEEDED(hRes))
-						return;
-
-					hRes=SHGetMalloc(&pMalloc);
-					if (!SUCCEEDED(hRes))
-						pMalloc=NULL;
+					HRESULT hRes;
 
 					
+								
 					// Open folders
 					for (i=0;i<aFolders.GetSize();i++)
 					{
@@ -5329,16 +5539,15 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 							sFolder << L'\\';
 	
 						// Getting ID list of parent
-						hRes=pDesktopFolder->ParseDisplayName(*this,NULL,(LPOLESTR)(LPCWSTR)sFolder,NULL,&pParentIDList,NULL);
+						hRes=m_pDesktopFolder->ParseDisplayName(*this,NULL,(LPOLESTR)(LPCWSTR)sFolder,NULL,&pParentIDList,NULL);
 						if (!SUCCEEDED(hRes))
 							continue;
 						
 						// Querying IShellFolder interface for parent
-						hRes=pDesktopFolder->BindToObject(pParentIDList,NULL,IID_IShellFolder,(void**)&pParentFolder);
+						hRes=m_pDesktopFolder->BindToObject(pParentIDList,NULL,IID_IShellFolder,(void**)&pParentFolder);
 						if (!SUCCEEDED(hRes))
 						{
-							if (pMalloc!=NULL)
-								pMalloc->Free(pParentIDList);
+							CoTaskMemFree(pParentIDList);
 							continue;
 						}
 						
@@ -5357,23 +5566,13 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 						hRes=pSHOpenFolderAndSelectItems(pParentIDList,aFolders[i]->aItems.GetSize(),pItemPids,0);
 
 						// Free 
-						if (pMalloc!=NULL)
-						{
-							for (int j=0;j<aFolders[i]->aItems.GetSize();j++)
-								pMalloc->Free((void*)pItemPids[j]);
+						for (int j=0;j<aFolders[i]->aItems.GetSize();j++)
+							CoTaskMemFree((void*)pItemPids[j]);
 
-							pMalloc->Free(pParentIDList);
-						}
+						CoTaskMemFree(pParentIDList);
+
 						pParentFolder->Release();
-
-
-
 					}
-
-					pDesktopFolder->Release();
-					if (pMalloc!=NULL)
-						pMalloc->Release();
-					
 				}
 				else if (IsUnicodeSystem())
 				{
@@ -5861,20 +6060,11 @@ void CLocateDlg::OnInitSendToMenu(HMENU hPopupMenu)
 	for(int i=GetMenuItemCount(hPopupMenu)-1;i>=0;i--)
 		DeleteMenu(hPopupMenu,i,MF_BYPOSITION);
 
-	CStringW SendToPath;
-	
-	// Resolving Send To -directory location
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
-	{
-		RegKey.QueryValue(L"SendTo",SendToPath);
-		RegKey.CloseKey();
-	}
-
 	if (m_hSendToListFont!=NULL)
 		DeleteObject(m_hSendToListFont);
 	
 	// Initializing fonts
+	CRegKey RegKey;
 	if (RegKey.OpenKey(HKCU,"Control Panel\\Desktop\\WindowMetrics",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		LOGFONTW font;
@@ -5884,52 +6074,169 @@ void CLocateDlg::OnInitSendToMenu(HMENU hPopupMenu)
 	else
 		m_hSendToListFont=(HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
-	AddSendToMenuItems(CMenu(hPopupMenu),SendToPath,IDM_DEFSENDTOITEM);
+	AddSendToMenuItems(CMenu(hPopupMenu),NULL,IDM_DEFSENDTOITEM);
 }
 
-UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,CStringW& sSendToPath,UINT wStartID)
+UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT wStartID)
 {
-	CStringW Path(sSendToPath);
-	CFileFind Find;
 	MENUITEMINFOW mi;
-	BOOL bErr;
-	
 	mi.cbSize=sizeof(MENUITEMINFOW);
-	Path << L"\\*.*";
 	mi.fMask=MIIM_DATA|MIIM_ID|MIIM_STATE|MIIM_TYPE|MIIM_SUBMENU;
 	mi.fType=MFT_OWNERDRAW;
 	mi.fState=MFS_ENABLED;
 	mi.wID=wStartID;
-	//mi.dwTypeData=(LPWSTR)(HMENU)Menu;
-	bErr=Find.FindFile(Path);
-	while (bErr)
+	
+			
+	BOOL bUseFileFind=TRUE;
+	if (m_pDesktopFolder!=NULL)
 	{
-		Find.GetFileName(Path);
-		if (Path[0]!=L'.' && !Find.IsSystem() && !Find.IsHidden())
+		HRESULT hRes;
+		IShellFolder* psf=NULL;
+		BOOL bFreeIDList=FALSE;
+
+		if (pIDListToPath==NULL)
 		{
-			Find.GetFilePath(Path);
-			mi.dwItemData=(DWORD)new WCHAR[Path.GetLength()+2];
-			MemCopyW((LPWSTR)mi.dwItemData,Path,Path.GetLength()+1);
-			if (Find.IsDirectory())
-			{
-				CMenu Menu;
-				Menu.CreateMenu();
-				mi.wID+=AddSendToMenuItems(Menu,Path,mi.wID);
-				mi.hSubMenu=Menu;
-			}
+			hRes=SHGetSpecialFolderLocation(*this,CSIDL_SENDTO,&pIDListToPath);
+			if (SUCCEEDED(hRes)) 
+				bFreeIDList=TRUE;
 			else
-				mi.hSubMenu=NULL;
-			Menu.InsertMenu(mi.wID,FALSE,&mi);
-			mi.wID++;
+				pIDListToPath=NULL;
 		}
-		bErr=Find.FindNextFile();
+
+
+		if (pIDListToPath!=NULL)
+		{
+			hRes=m_pDesktopFolder->BindToObject(pIDListToPath,NULL,IID_IShellFolder,(LPVOID *)&psf);
+			if (FAILED(hRes)) 
+				psf=NULL;
+		}
+
+
+		
+		if (psf!=NULL)
+		{
+			IEnumIDList* peidl;
+			DWORD dwParentListSize=GetIDListSize(pIDListToPath)-sizeof(WORD);
+
+			hRes=psf->EnumObjects(NULL,SHCONTF_FOLDERS|SHCONTF_NONFOLDERS,&peidl);
+			if (SUCCEEDED(hRes))
+			{
+				LPITEMIDLIST pidl,pidlFull;
+				while (peidl->Next(1,&pidl,NULL)==S_OK)
+				{
+					DWORD dwListSize=GetIDListSize(pidl);
+					// Form full ID list
+					pidlFull=(LPITEMIDLIST)CoTaskMemAlloc(dwParentListSize+dwListSize);
+					CopyMemory(pidlFull,pIDListToPath,dwParentListSize);
+					CopyMemory(((BYTE*)pidlFull)+dwParentListSize,pidl,dwListSize);
+										
+					mi.hSubMenu=NULL;
+					BOOL bDontAdd=FALSE;
+					
+					SFGAOF aof=SFGAO_DROPTARGET|SFGAO_FOLDER|SFGAO_STREAM;
+					hRes=psf->GetAttributesOf(1,(LPCITEMIDLIST*)&pidl,&aof);
+					if (SUCCEEDED(hRes))
+					{
+						if (aof&SFGAO_DROPTARGET)
+						{
+							if (aof&SFGAO_FOLDER && !(aof&SFGAO_STREAM))
+							{
+								CMenu Menu;
+								Menu.CreateMenu();
+								mi.wID+=AddSendToMenuItems(Menu,pidlFull,mi.wID);
+								mi.hSubMenu=Menu;
+							}
+						}
+						else 
+							bDontAdd=TRUE;
+					}
+					
+					if (!bDontAdd)
+					{
+						mi.dwItemData=(DWORD)pidlFull;
+						Menu.InsertMenu(mi.wID,FALSE,&mi);
+						mi.wID++;
+					}
+					else
+						CoTaskMemFree(pidlFull);
+
+					CoTaskMemFree(pidl);
+					
+					
+				}
+				peidl->Release();
+				bUseFileFind=FALSE;
+			}
+		}
+
+		if (bFreeIDList)
+			CoTaskMemFree(pIDListToPath);
 	}
-	Find.Close();
+	
+	if (bUseFileFind)
+	{
+		CFileFind Find;
+		BOOL bErr;
+
+		WCHAR szSendToPath[MAX_PATH];
+		if (pIDListToPath==NULL)
+		{
+			// Resolving Send To -directory location
+			CRegKey RegKey;
+			if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+			{
+				RegKey.QueryValue(L"SendTo",szSendToPath,MAX_PATH);
+				RegKey.CloseKey();
+			}
+		}
+		else
+		{
+			if (IsUnicodeSystem())
+				SHGetPathFromIDListW(pIDListToPath,szSendToPath);
+			else
+			{
+				char szSendToPathA[MAX_PATH];
+				SHGetPathFromIDListW(pIDListToPath,szSendToPath);
+				MultiByteToWideChar(CP_ACP,0,szSendToPathA,-1,szSendToPath,MAX_PATH);
+			}
+		}
+
+		wcscat_s(szSendToPath,MAX_PATH,L"\\*.*");
+		
+		bErr=Find.FindFile(szSendToPath);
+		while (bErr)
+		{
+			WCHAR szPath[MAX_PATH];
+			Find.GetFileName(szPath,MAX_PATH);
+
+			
+			if (szPath[0]!=L'.' && !Find.IsSystem() && !Find.IsHidden())
+			{
+				Find.GetFilePath(szPath,MAX_PATH);
+				mi.dwItemData=(DWORD)GetFileIDList(szPath);
+				
+				if (Find.IsDirectory())
+				{
+					CMenu Menu;
+					Menu.CreateMenu();
+					mi.wID+=AddSendToMenuItems(Menu,(LPITEMIDLIST)mi.dwItemData,mi.wID);
+					mi.hSubMenu=Menu;
+				}
+				else
+					mi.hSubMenu=NULL;
+				Menu.InsertMenu(mi.wID,FALSE,&mi);
+				mi.wID++;
+			}
+			bErr=Find.FindNextFile();
+		}
+		Find.Close();
+	}
+	
 	if (mi.wID==wStartID)
 	{
 		// Inserting default menu items
-		Path.LoadString(IDS_EMPTY);
-		mi.dwTypeData=(LPWSTR)(LPCWSTR)Path;
+		ID2W EmptyTitle(IDS_EMPTY);
+		mi.dwTypeData=(LPWSTR)(LPCWSTR)EmptyTitle;
 		mi.dwItemData=0;
 		mi.fState=MFS_GRAYED;
 		mi.fType=MFT_STRING;
@@ -6003,57 +6310,7 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 	if (!bSimple)
 	{
 		// Creating context menu for file items
-		CArrayFP<CStringW*> aFiles;
-		CStringW sParent; // For checking that are files in same folder
-		
-		// Checking first item
-		int i=0;
-		for (;pItems[i]==NULL && i<nItems;i++);
-		if (i>=nItems)
-			return NULL;
-
-
-		sParent=pItems[i]->GetParent();
-		//GetFirstParent(sParent,pItem->GetParent());
-		aFiles.Add(new CStringW(pItems[i]->GetPath()));
-			
-
-
-		// Checking other items
-		for (i++;i<nItems;i++)
-		{
-			if (pItems[i]!=NULL)
-			{
-				if (pItems[i]->IsItemShortcut())
-				{
-					// If item is shortcut, check parent
-					CStringW* pStr=new CStringW;
-					GetShortcutTarget(pItems[i]->GetPath(),pStr->GetBuffer(_MAX_PATH),MAX_PATH);
-
-					if (wcsncmp(sParent,*pStr,pStr->FindLast(L'\\'))!=0)
-					{
-						delete pStr;
-						break;
-					}
-					pStr->FreeExtra();
-					aFiles.Add(pStr);
-				}
-				else
-				{
-					// If parent is same, break
-					if (sParent.Compare(pItems[i]->GetParent())!=0)
-						break;
-					aFiles.Add(new CStringW(pItems[i]->GetPath()));
-				}
-			}
-		}
-
-		// This creates pointers to IContextMenu interfaces
-		// This is possible, if files are in same folder, 
-		if (i>=nItems)
-			m_pActiveContextMenu=GetContextMenuForFiles(sParent,aFiles);
-
-
+		m_pActiveContextMenu=GetContextMenuForItems(nItems,pItems);
 
 		if (m_pActiveContextMenu!=NULL)
 		{
@@ -6117,37 +6374,23 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 	
 }
 	
-CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForFiles(LPCWSTR szParent,CArrayFP<CStringW*>& aFiles)
+CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForFiles(int nItems,LPITEMIDLIST pParentIDL,LPITEMIDLIST* ppSimpleIDLs,int nParentIDLlevel)
 {
-	ASSERT(aFiles.GetSize()!=0);
+	if (m_pDesktopFolder==NULL)
+		return NULL;
+
+	if (nParentIDLlevel<=1)
+		return NULL; // Not enough?
+	
+	ASSERT(nItems!=0);
+
 
 	ContextMenuStuff* pcs=new ContextMenuStuff;
-	pcs->nIDlistCount=aFiles.GetSize();
-
-	IShellFolder *pDesktopFolder;
-	HRESULT hRes=SHGetDesktopFolder(&pDesktopFolder);
-	if (!SUCCEEDED(hRes))
-	{
-		delete pcs;
-		return NULL;
-	}
-
-	CStringW sParent(szParent);
-	DWORD dwCutFileNames=(DWORD)sParent.GetLength();
-
-	if (szParent[1]==':' && szParent[2]=='\0')
-		sParent << L'\\';
+	pcs->nIDLCount=nItems;
+	pcs->nIDLParentLevel=nParentIDLlevel;
 	
-	// Getting ID list of parent
-	hRes=pDesktopFolder->ParseDisplayName(*this,NULL,(LPOLESTR)(LPCWSTR)sParent,NULL,&pcs->pParentIDList,NULL);
-	if (!SUCCEEDED(hRes))
-	{
-		delete pcs;
-		return NULL;
-	}
-
 	// Querying IShellFolder interface for parent
-	hRes=pDesktopFolder->BindToObject(pcs->pParentIDList,NULL,IID_IShellFolder,(void**)&pcs->pParentFolder);
+	HRESULT hRes=m_pDesktopFolder->BindToObject(pParentIDL,NULL,IID_IShellFolder,(void**)&pcs->pParentFolder);
 	if (!SUCCEEDED(hRes))
 	{
 		delete pcs;
@@ -6155,32 +6398,16 @@ CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForFiles(LPCWSTR szParen
 	}
 
 
-	// Querying id lists for files
-	pcs->apidl=new LPITEMIDLIST[aFiles.GetSize()+1];
-
-	for (int i=0;i<aFiles.GetSize();i++)
-	{
-		LPCWSTR szPath;
-
-		if ((*aFiles[i])[dwCutFileNames]==L'\\')
-			szPath=((LPCWSTR)*aFiles[i])+dwCutFileNames+1;
-		else
-			szPath=((LPCWSTR)*aFiles[i])+aFiles[i]->FindLast(L'\\')+1;
-
-		
-		hRes=pcs->pParentFolder->ParseDisplayName(*this,NULL,(LPOLESTR)szPath,NULL,&pcs->apidl[i],NULL);
-		if (!SUCCEEDED(hRes))
-			pcs->apidl[i]=NULL;
-
-	}
-
-	pcs->pParentFolder->GetUIObjectOf(*this,aFiles.GetSize(),(LPCITEMIDLIST*)pcs->apidl,
+	pcs->pParentFolder->GetUIObjectOf(*this,nItems,(LPCITEMIDLIST*)ppSimpleIDLs,
 		IID_IContextMenu,NULL,(void**)&pcs->pContextMenu);
 	if (!SUCCEEDED(hRes))
 	{
 		delete pcs;
 		return NULL;
 	}
+
+	pcs->pParentIDL=pParentIDL;
+	pcs->ppSimpleIDLs=ppSimpleIDLs;
 
 	hRes=pcs->pContextMenu->QueryInterface(IID_IContextMenu2,(void**)&pcs->pContextMenu2);
 	if (!SUCCEEDED(hRes))
@@ -6221,6 +6448,7 @@ void CLocateDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 			if (m_pActiveContextMenu!=NULL && lpdis->itemID<IDM_DEFSENDTOITEM)
 				return;
 
+			// SendTo menu item
 			CDC dc(lpdis->hDC);
 			COLORREF backcolor,forecolor;
 			
@@ -6234,6 +6462,7 @@ void CLocateDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 				forecolor=GetSysColor(COLOR_MENUTEXT);
 				backcolor=GetSysColor(COLOR_MENU);
 			}
+
 			if (lpdis->itemAction&ODA_SELECT || lpdis->itemAction&ODA_DRAWENTIRE)
 			{
 				HPEN oldpen;
@@ -6248,10 +6477,12 @@ void CLocateDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 				dc.SelectObject(oldbrush);
 				dc.SelectObject(oldpen);
 			}
+
+			
 			SHFILEINFOW fi;
 			fi.hIcon=NULL;
 			HGDIOBJ hOld=dc.SelectObject(m_hSendToListFont);
-			GetFileInfo((LPCWSTR)(lpdis->itemData),0,&fi,SHGFI_DISPLAYNAME|SHGFI_ICON|SHGFI_SMALLICON);
+			GetFileInfo((LPITEMIDLIST)(lpdis->itemData),0,&fi,SHGFI_DISPLAYNAME|SHGFI_ICON|SHGFI_SMALLICON);
 			dc.SetTextColor(forecolor);
 			dc.SetBkColor(backcolor);
 			if (fi.hIcon!=NULL)
@@ -6328,22 +6559,85 @@ void CLocateDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 
 void CLocateDlg::OnSendToCommand(WORD wID)
 {
-	CWaitCursor wait;
-	CStringW SendToPath;
-	CRegKey BaseKey;
-	MENUITEMINFO mii;
-	CLSID clsid;
+	if (m_pDesktopFolder==NULL)
+		return;
 
+	CWaitCursor wait;
+	LPITEMIDLIST pidlLast, pidlNext;
+    USHORT cb;
+    MENUITEMINFO mii;
+	IShellFolder* psf;
+    IDropTarget* pdt;
+		
 	mii.cbSize=sizeof(MENUITEMINFO);
 	mii.fMask=MIIM_DATA;
 	if (m_hActivePopupMenu!=NULL)
 		GetMenuItemInfo(m_hActivePopupMenu,wID,FALSE,&mii);
 	else
 		GetMenuItemInfo(GetSubMenu(GetMenu(),0),wID,FALSE,&mii);
+	if (mii.dwItemData==NULL)
+		return;
 
-	SendToPath=(LPCWSTR)mii.dwItemData;
-	if (GetFileClassID(SendToPath,clsid,L"DropHandler"))
-		SendFiles(SendToPath,m_pListCtrl,clsid);
+	
+	
+    // Split pidl into parent part and the last part
+	pidlLast = (LPITEMIDLIST)mii.dwItemData;
+    while(pidlNext = (LPITEMIDLIST)((BYTE*)pidlLast + pidlLast->mkid.cb),pidlNext->mkid.cb)
+		pidlLast = pidlNext;
+
+    //  Temporarily split the pidl at the point we found.
+    cb = pidlLast->mkid.cb;
+    pidlLast->mkid.cb = 0;
+
+    //  Bind to the folder part.  
+    if ((LPITEMIDLIST)mii.dwItemData == pidlLast) 
+	{
+        psf = m_pDesktopFolder;
+        m_pDesktopFolder->AddRef();
+    }
+	else
+	{
+		if (FAILED(m_pDesktopFolder->BindToObject((LPITEMIDLIST)mii.dwItemData,NULL,IID_IShellFolder,(LPVOID *)&psf)))
+		{
+			// Restore the pidl before exiting
+			pidlLast->mkid.cb = cb;
+			return;
+		}
+	}
+    
+    // Restore the pidl we temporarily edited.
+    pidlLast->mkid.cb = cb;
+    HRESULT hRes = psf->GetUIObjectOf(*this,1,(LPCITEMIDLIST*)&pidlLast,IID_IDropTarget,NULL,(LPVOID*)&pdt);
+    psf->Release();
+	if (FAILED(hRes))
+		return;
+
+
+	CFileObject *pfoSrc=new CFileObject;
+	pfoSrc->AutoDelete();
+	pfoSrc->AddRef();
+	pfoSrc->SetFiles(m_pListCtrl);
+		
+	
+	DWORD dwEffect=DROPEFFECT_COPY | DROPEFFECT_MOVE | DROPEFFECT_LINK;
+	POINTL pt={0,0};
+	
+	hRes=pdt->DragEnter(pfoSrc,MK_LBUTTON,pt,&dwEffect);
+	if (SUCCEEDED(hRes) && dwEffect)
+	{
+		// Drop file
+		hRes=pdt->Drop(pfoSrc,MK_LBUTTON,pt,&dwEffect);
+	}
+	else
+	{
+		// Drop target didn't like file object
+		hRes = pdt->DragLeave();
+	}
+
+	// Releasing FileObjects
+	pfoSrc->Release();
+	
+	pdt->Release();
 }
 	
 void CLocateDlg::FreeSendToMenuItems(HMENU hMenu)
@@ -6355,95 +6649,9 @@ void CLocateDlg::FreeSendToMenuItems(HMENU hMenu)
 	while (GetMenuItemInfo(hMenu,wID,FALSE,&mii))
 	{
 		if (mii.dwItemData!=NULL)
-			delete[] (LPSTR)mii.dwItemData;
+			CoTaskMemFree((LPVOID)mii.dwItemData);
 		wID++;
 	}
-}
-
-BOOL CLocateDlg::GetFileClassID(LPCWSTR file,CLSID& clsid,LPCWSTR szType)
-{
-	CRegKey BaseKey;
-	CStringW Key;
-	LONG_PTR i=LastCharIndex(file,L'.');
-	if (i>=0)
-		Key=file+i;
-	else
-		Key='*';
-	if (BaseKey.OpenKey(HKCR,Key,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
-		return FALSE;
-	Key.Empty();
-	BaseKey.QueryValue(L"",Key);
-	Key << L"\\ShellEx\\" << szType;
-	if (BaseKey.OpenKey(HKCR,Key,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
-		return FALSE;
-	BaseKey.QueryValue(L"",Key);
-	if (Key.IsEmpty())
-		return FALSE;
-	return CLSIDFromString((LPWSTR)(LPCWSTR)Key,&clsid)==NOERROR;
-}
-
-BOOL CLocateDlg::SendFiles(CStringW& dst,CListCtrl* pList,CLSID& clsid)
-{
-	OleInitialize(NULL);
-
-	HRESULT hres;
-	IUnknown* punk;
-	
-	// Creating instance
-	hres=CoCreateInstance(clsid,NULL,CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER|CLSCTX_LOCAL_SERVER,IID_IUnknown,(void**)&punk);
-	if (SUCCEEDED(hres))
-	{
-		// Creating file objects and ItemIDList
-		CFileObject *pfoSrc=new CFileObject,*pfoDst=new CFileObject;
-		pfoSrc->AutoDelete();
-		pfoDst->AutoDelete();
-		pfoSrc->AddRef();
-		pfoDst->AddRef();
-		pfoDst->SetFile(dst);
-		pfoSrc->SetFiles(pList);
-		
-		// Initializing IShellExtInit if interface exists
-		IShellExtInit* psxi=NULL;
-		hres=punk->QueryInterface(IID_IShellExtInit,(void**)&psxi);
-		if (SUCCEEDED(hres))
-		{
-			HGLOBAL lpilDst=pfoDst->GetItemIDList();
-			hres=psxi->Initialize(NULL,pfoDst,NULL);
-			GlobalFree(lpilDst);
-		}
-			
-		// Creating DropTarget object
-		IDropTarget* pdt;
-		hres=punk->QueryInterface(IID_IDropTarget,(void**)&pdt);
-		if (SUCCEEDED(hres))
-		{
-			DWORD de=DROPEFFECT_COPY;
-			POINTL pt={0,0};
-			
-			// Neseccary?
-			pdt->DragEnter(pfoSrc,MK_LBUTTON,pt,&de);
-			
-			// Drop file
-			hres=pdt->Drop(pfoSrc,MK_LBUTTON,pt,&de);
-			
-			// Releasing DropTarget
-			pdt->Release();
-		}
-
-		// Releasing IShellExtInit if exists
-		if (psxi!=NULL)
-			psxi->Release();
-		
-		// Releasing FileObjects
-		pfoSrc->Release();
-		pfoDst->Release();
-
-		// Releasing IUnknown
-		punk->Release();
-	}
-	
-	OleUninitialize();
-	return SUCCEEDED(hres);
 }
 
 void CLocateDlg::BeginDragFiles(CListCtrl* pList)
@@ -9501,7 +9709,7 @@ void CLocateDlg::CNameDlg::OnBrowse()
 		else
 		{
 			WCHAR szName[500];
-			if (GetDisplayNameFromIDList(fd.m_lpil,szName,500))
+			if (GetComputerNameFromIDList(fd.m_lpil,szName,500))
 			{
 				if (szName[0]==L'\\' && szName[1]==L'\\')
 					CheckAndAddDirectory(szName,istrlenw(szName),TRUE,FALSE);

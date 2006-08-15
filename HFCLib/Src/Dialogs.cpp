@@ -11,7 +11,7 @@
 ///////////////////////////
 
 CDialog::CDialog(LPCSTR lpTemplate)
-	: CWnd(NULL)
+	: CTargetWnd(NULL)
 {
 	if (IS_INTRESOURCE(lpTemplate))
 		m_lpszTemplateName=MAKEINTRESOURCE(lpTemplate);
@@ -22,7 +22,7 @@ CDialog::CDialog(LPCSTR lpTemplate)
 }
 
 CDialog::CDialog(LPCWSTR lpTemplate)
-	: CWnd(NULL)
+	: CTargetWnd(NULL)
 {
 	if (IS_INTRESOURCE(lpTemplate))
 		m_lpszTemplateName=MAKEINTRESOURCE(lpTemplate);
@@ -329,18 +329,18 @@ BOOL CPropertyPage::OnNotify(int idCtrl,LPNMHDR pnmh)
 ///////////////////////////////////////////
 // CPropertySheet
 ///////////////////////////////////////////
-/*
+
 int CALLBACK PropertySheetProc(HWND hWndDlg,UINT uMsg,LPARAM lParam)
 {
 	switch (uMsg)
 	{
 	case PSCB_INITIALIZED:
+		
 		DebugMessage("PropertySheetProc(): PSCB_INITIALIZED");
 		break;
 	}
 	return 0;
 }
-*/
 
 CPropertySheet::~CPropertySheet()
 {
@@ -355,6 +355,8 @@ void CPropertySheet::Construct(UINT nIDCaption,HWND hParentWnd,UINT iSelectPage)
 
 void CPropertySheet::Construct(LPCSTR pszCaption,HWND hParentWnd,UINT iSelectPage)
 {
+	m_hParentWnd=hParentWnd;
+
 	if (IsUnicodeSystem())
 	{
 		ZeroMemory(&m_pshw,sizeof(PROPSHEETHEADERW));
@@ -367,8 +369,6 @@ void CPropertySheet::Construct(LPCSTR pszCaption,HWND hParentWnd,UINT iSelectPag
 		m_pshw.dwFlags=PSH_DEFAULT;
 		m_pshw.nStartPage=iSelectPage;
 		m_pshw.pfnCallback=NULL;
-		m_bStacked=TRUE;
-		m_hParentWnd=hParentWnd;
 	}
 	else
 	{
@@ -382,13 +382,12 @@ void CPropertySheet::Construct(LPCSTR pszCaption,HWND hParentWnd,UINT iSelectPag
 		m_psh.dwFlags=PSH_DEFAULT;
 		m_psh.nStartPage=iSelectPage;
 		m_psh.pfnCallback=NULL;
-		m_bStacked=TRUE;
-		m_hParentWnd=hParentWnd;
 	}
 }
 
 void CPropertySheet::Construct(LPCWSTR pszCaption,HWND hParentWnd,UINT iSelectPage)
 {
+	m_hParentWnd=hParentWnd;
 	if (IsUnicodeSystem())
 	{
 		ZeroMemory(&m_pshw,sizeof(PROPSHEETHEADERW));
@@ -401,8 +400,6 @@ void CPropertySheet::Construct(LPCWSTR pszCaption,HWND hParentWnd,UINT iSelectPa
 		m_pshw.dwFlags=PSH_DEFAULT;
 		m_pshw.nStartPage=iSelectPage;
 		m_pshw.pfnCallback=NULL;
-		m_bStacked=TRUE;
-		m_hParentWnd=hParentWnd;
 	}
 	else
 	{
@@ -416,8 +413,6 @@ void CPropertySheet::Construct(LPCWSTR pszCaption,HWND hParentWnd,UINT iSelectPa
 		m_psh.dwFlags=PSH_DEFAULT;
 		m_psh.nStartPage=iSelectPage;
 		m_psh.pfnCallback=NULL;
-		m_bStacked=TRUE;
-		m_hParentWnd=hParentWnd;
 	}
 }
 
@@ -541,9 +536,23 @@ INT_PTR CPropertySheet::DoModal()
 	BuildPropPageArray();
 	m_psh.hwndParent=m_hParentWnd;
 	if (IsUnicodeSystem())
+	{
+		if (m_pshw.dwFlags&PSH_MODELESS)
+		{
+			m_hWnd=(HWND)::PropertySheetW(&m_pshw);
+			return m_hWnd!=NULL;
+		}
 		return ::PropertySheetW(&m_pshw);
+	}
 	else
+	{
+		if (m_psh.dwFlags&PSH_MODELESS)
+		{
+			m_hWnd=(HWND)::PropertySheet(&m_psh);
+			return m_hWnd!=NULL;
+		}
 		return ::PropertySheet(&m_psh);
+	}
 
 }
 
@@ -589,21 +598,7 @@ void CPropertySheet::BuildPropPageArray()
 	}
 }
 
-BOOL CPropertySheet::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
-{
-	return FALSE;
-}
 
-BOOL CPropertySheet::OnInitDialog(HWND hwndFocus)
-{
-	if (!m_bStacked)
-	{
-		HWND hWndTab=(HWND)SendMessage(PSM_GETTABCONTROL);
-		if (hWndTab!=NULL)
-			::SetWindowLong(hWndTab,GWL_STYLE,(::GetWindowLong(hWndTab,GWL_STYLE)|TCS_MULTILINE)&~TCS_SINGLELINE);
-	}
-	return 0;
-}
 
 ///////////////////////////
 // Class CInputDialog

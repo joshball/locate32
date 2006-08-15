@@ -8,7 +8,7 @@
 
 #ifdef DEF_WINDOWS
 
-class CCommonCtrl : public CWndCtrl
+class CCommonCtrl : public CWnd
 {
 public:
 	CCommonCtrl(HWND hWnd=NULL);
@@ -206,7 +206,7 @@ public:
 #endif
 
 protected:
-	friend class CWnd;
+	friend class CTargetWnd;
 	friend class CToolBarCtrl;
 };
 

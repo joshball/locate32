@@ -94,7 +94,7 @@ DWORD GetFileVersion(LPCSTR szFile,DWORD* dwFileVersionLo=NULL);
 // Process and thread functions
 #ifdef DEF_APP
 CWinApp* GetApp();
-CWnd* GetMainWnd();
+CTargetWnd* GetMainWnd();
 CWinThread* GetCurrentWinThread();
 CWinThread* GetWinThread(DWORD nThreadID);
 HINSTANCE GetInstanceHandle();
@@ -207,8 +207,8 @@ HRESULT CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc=NULL
 HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,DWORD nBufSize);
 HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath=NULL);
 BOOL RunRegistryCommand(HKEY hKey,LPCSTR szFile);
-DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen);
-DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,DWORD dwBufferLen);
+DWORD GetComputerNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen);
+DWORD GetComputerNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,DWORD dwBufferLen);
 BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,DWORD nBufferLen);
 
 #ifdef DEF_WCHAR
@@ -270,7 +270,6 @@ inline DWORD WaitForMutex(HANDLE hMutex,DWORD dwTimeOut=5000)
 }
 
 
-#endif
 
 
 #ifdef WIN32
@@ -288,6 +287,14 @@ inline int FileOperation(LPSHFILEOPSTRUCT lpFileOp)
 {
 	return SHFileOperation(lpFileOp);
 }
+#endif
+
+#ifdef DEF_WINDOWS
+inline LONG GetWindowStyle(HWND hWnd)
+{
+	return GetWindowLong(hWnd,GWL_STYLE);
+}
+#endif
 
 
 #endif

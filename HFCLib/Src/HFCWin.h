@@ -14,7 +14,6 @@ public:
 	CDC();
 	CDC(HDC hDC);
 	CDC(CWnd* pWnd);
-	CDC(CWndCtrl* pWnd);
 	virtual ~CDC();
 	
 	HDC m_hDC;
@@ -387,7 +386,7 @@ public:
 #endif
 };
 
-class CWnd : public CCmdTarget
+class CWnd : public CObject
 {
 public:
 	enum ShowState { 
@@ -407,6 +406,7 @@ public:
 		swForceMinimize=SW_FORCEMINIMIZE,
 		swMax=SW_MAX
 	};
+
 	enum PositionFlags {
 		fgAllowMinimized = 0x1,
 		fgAllowMaximized = 0x2,
@@ -422,11 +422,12 @@ public:
 		gwlStyle=GWL_STYLE,
 		gwlExStyle=GWL_EXSTYLE,
 		gwlUserData=GWLP_USERDATA,
-		gwlID=GWLP_ID,
+		gwlID=GWL_ID,
 		dwlMsgResult=DWLP_MSGRESULT,
 		dwlDlgProc=DWLP_DLGPROC,
 		dwlUser=DWLP_USER
 	};
+
 	enum ClassLongIndex {
 		gclMenuName=GCLP_MENUNAME,
 		gclHBRBackGround=GCLP_HBRBACKGROUND,
@@ -441,21 +442,16 @@ public:
 		gcwAtom=GCW_ATOM
 	};
 
-	
-
 public:
-	CWnd (HWND hWnd=NULL);
-	virtual ~CWnd();
+	CWnd(HWND hWnd=NULL) { m_hWnd=hWnd; }
 
-public:
 	HWND GetHandle() const { return m_hWnd; }
 	void SetHandle(HWND hWnd) { m_hWnd=hWnd; }
+	void AssignToDlgItem(HWND hDialog,int nID) { m_hWnd=::GetDlgItem(hDialog,nID); }
 	operator HWND() const { return m_hWnd; }
 	
 	BOOL operator==(const CWnd& wnd) const { return (m_hWnd==wnd.m_hWnd); }
 	BOOL operator!=(const CWnd& wnd) const { return (m_hWnd!=wnd.m_hWnd); }
-	BOOL operator==(const CWndCtrl& wnd) const;
-	BOOL operator!=(const CWndCtrl& wnd) const;
 	
 	DWORD GetStyle() const { return ::GetWindowLong(m_hWnd,GWL_STYLE); }
 	DWORD SetStyle(DWORD dwStyle) { return ::SetWindowLong(m_hWnd,GWL_STYLE,dwStyle); }
@@ -476,6 +472,190 @@ public:
 	LONG SetClassLong(ClassLongIndex nIndex,LONG lNewVal) { return ::SetClassLong(m_hWnd,nIndex,lNewVal); }
 #endif
 
+	BOOL Create(LPCTSTR lpszClassName,
+		LPCTSTR lpszWindowName, DWORD dwStyle,
+		const RECT* rect,
+		HWND hParentWnd, UINT nID);
+
+	BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
+		LPCTSTR lpszWindowName, DWORD dwStyle,
+		int x, int y, int nWidth, int nHeight,
+		HWND hWndParent, UINT nID, LPVOID lpParam = NULL);
+
+	BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
+		LPCTSTR lpszWindowName, DWORD dwStyle,
+		const RECT* rect,
+		HWND hParentWnd, UINT nID,
+		LPVOID lpParam = NULL);
+
+	BOOL DestroyWindow() {return ::DestroyWindow(m_hWnd);}
+	
+	int GetDlgCtrlID() const {return ::GetDlgCtrlID(m_hWnd);}
+	int SetDlgCtrlID(int nID) {return ::SetWindowLong(m_hWnd,GWL_ID,(LONG)nID);}
+	HWND GetParent() const { return ::GetParent(m_hWnd); }
+	HWND SetParent(HWND hwndNewParent) {return ::SetParent(m_hWnd,hwndNewParent);}
+	
+	BOOL PostMessage(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::PostMessage(m_hWnd,uMsg,wParam,lParam); }
+	LRESULT SendMessage(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::SendMessage(m_hWnd,uMsg,wParam,lParam); }
+	
+	BOOL SetWindowText(LPCSTR lpsz) {return ::SetWindowText(m_hWnd,lpsz); }
+	int GetWindowText(LPSTR lpString,int nMaxCount) const { return ::GetWindowText(m_hWnd,lpString,nMaxCount); }
+	int GetWindowText(CString& str) const;
+	int GetWindowTextLength() const { return ::GetWindowTextLength(m_hWnd); }
+	void SetFont(HFONT hFont,BOOL bRedraw=TRUE) { ::SendMessage(m_hWnd,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(bRedraw,0)); }
+	HFONT GetFont() const { return (HFONT)::SendMessage(m_hWnd,WM_GETFONT,0,0); }
+	
+	void MoveWindow(int x,int y,int nWidth,int nHeight,BOOL bRepaint=TRUE) { ::MoveWindow(m_hWnd,x,y,nWidth,nHeight,bRepaint); }
+	void MoveWindow(LPCRECT lpRect,BOOL bRepaint=TRUE) {::MoveWindow(m_hWnd,lpRect->left,lpRect->top,lpRect->right-lpRect->left,lpRect->bottom-lpRect->top,bRepaint);}
+	int SetWindowRgn(HRGN hRgn, BOOL bRedraw) { return ::SetWindowRgn(m_hWnd,hRgn,bRedraw); }
+	int GetWindowRgn(HRGN hRgn) const {return ::GetWindowRgn(m_hWnd,hRgn);}
+	BOOL SetWindowPos(HWND hWndInsertAfter,int x,int y,int cx,int cy,UINT nFlags) {return ::SetWindowPos(m_hWnd,hWndInsertAfter,x,y,cx,cy,nFlags);}
+	void GetWindowRect(LPRECT lpRect) const { ::GetWindowRect(m_hWnd,lpRect); }
+	void GetClientRect(LPRECT lpRect) const { ::GetClientRect(m_hWnd,lpRect); }
+
+	void ClientToScreen(LPPOINT lpPoint) const {::ClientToScreen(m_hWnd,lpPoint); }
+	void ClientToScreen(LPRECT lpRect) const;
+	void ScreenToClient(LPPOINT lpPoint) const { ::ScreenToClient(m_hWnd,lpPoint); }
+	void ScreenToClient(LPRECT lpRect) const;
+	void MapWindowPoints(HWND hwndTo, LPPOINT lpPoint, UINT nCount) const { ::MapWindowPoints(m_hWnd,hwndTo,lpPoint,nCount); }
+	void MapWindowPoints(HWND hwndTo, LPRECT lpRect) const;
+
+	BOOL GetWindowPlacement(WINDOWPLACEMENT* lpwndpl) const;
+	BOOL SetWindowPlacement(const WINDOWPLACEMENT* lpwndpl);
+
+	BOOL IsIconic() const { return ::IsIconic(m_hWnd); }
+	BOOL IsZoomed() const { return ::IsZoomed(m_hWnd); }
+	UINT ArrangeIconicWindows() { return ::ArrangeIconicWindows(m_hWnd); }
+	void BringWindowToTop() { ::BringWindowToTop(m_hWnd); }
+	
+	BOOL GetUpdateRect(LPRECT lpRect,BOOL bErase=FALSE);
+	int GetUpdateRgn(HRGN hRgn,BOOL bErase=FALSE);
+	void Invalidate(BOOL bErase=TRUE);
+	BOOL InvalidateRect(CONST RECT* lpRect,BOOL bErase);
+	void InvalidateRgn(HRGN hRgn,BOOL bErase=TRUE);
+	BOOL ShowWindow(ShowState nCmdShow) const { return ::ShowWindow(m_hWnd,nCmdShow); }
+	BOOL IsWindowVisible() const { return ::IsWindowVisible(m_hWnd); }
+
+	BOOL RedrawWindow(LPCRECT lpRectUpdate=NULL,HRGN hrgnUpdate=NULL,UINT flags=RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE) { return ::RedrawWindow(m_hWnd,lpRectUpdate,hrgnUpdate,flags); }
+	BOOL UpdateWindow() const { return ::UpdateWindow(m_hWnd); }
+	
+
+	HDC GetDC() const { return ::GetDC(m_hWnd); }
+	CDC* GetCDC() { return new CDC(this); }
+	HDC GetWindowDC() const { return ::GetWindowDC(m_hWnd); }
+	int ReleaseDC(HDC hDC) { return ::ReleaseDC(m_hWnd,hDC); }
+	void ReleaseCDC(CDC* pDC) { delete pDC; }
+	
+
+	BOOL IsWindowEnabled() const { return ::IsWindowEnabled(m_hWnd); }
+	BOOL EnableWindow(BOOL bEnable=TRUE) { return ::EnableWindow(m_hWnd,bEnable); }
+	HWND SetFocus() const { return ::SetFocus(m_hWnd); }
+	static HWND GetFocus();
+	BOOL ForceForegroundAndFocus();
+	
+	int GetTextLength() const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0); } 
+	int GetText(LPSTR lpszText,int cchTextMax) const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText); } 
+	int GetText(CStringA& str) const;
+	BOOL SetText(LPCSTR lpsz) { return (BOOL)::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); }
+
+	static HWND GetDesktopWindow();
+
+	static HWND GetActiveWindow();
+	HWND SetActiveWindow();
+	BOOL SetForegroundWindow();
+	static HWND GetForegroundWindow();
+	static HWND GetCapture();
+	HWND SetCapture();
+
+	HICON SetIcon(HICON hIcon,BOOL bBigIcon);
+	HICON GetIcon(BOOL bBigIcon) const;
+
+
+	BOOL SetMenu(HMENU hMenu) { return ::SetMenu(m_hWnd,hMenu); }
+	HMENU GetMenu() const { return ::GetMenu(m_hWnd); }
+	HMENU GetSystemMenu(BOOL bRevert=FALSE) const { return ::GetSystemMenu(m_hWnd,bRevert); }
+
+	void ShowOwnedPopups(BOOL bShow=TRUE);
+	BOOL EnableScrollBar(int nSBFlags,UINT nArrowFlags=ESB_ENABLE_BOTH);
+
+	UINT SetTimer(UINT idTimer,UINT uTimeout,TIMERPROC tmprc=NULL);	
+	BOOL KillTimer(UINT uIDEvent);
+
+	HWND GetDlgItem(int nID) const { return ::GetDlgItem(m_hWnd,nID); }
+	BOOL IsDialogMessage(LPMSG lpMsg) { return ::IsDialogMessage(m_hWnd,lpMsg); }
+	BOOL SetDlgItemPos(int iDlgItemID,HWND hWndInsertAfter,int x,int y,int cx,int cy,UINT nFlags) {return ::SetWindowPos(::GetDlgItem(m_hWnd,iDlgItemID),hWndInsertAfter,x,y,cx,cy,nFlags);}
+	BOOL UpdateDlgItem(int iDlgItemID) const { return ::UpdateWindow(::GetDlgItem(m_hWnd,iDlgItemID)); }
+	BOOL IsDlgItemEnabled(int nDlgItemID) const { return ::IsWindowEnabled(::GetDlgItem(m_hWnd,nDlgItemID)); }
+	BOOL EnableDlgItem(int nDlgItemID,BOOL bEnable=TRUE) { return ::EnableWindow(::GetDlgItem(m_hWnd,nDlgItemID),bEnable); }
+	BOOL ShowDlgItem(int nDlgItemID,ShowState nCmdShow) const { return ::ShowWindow(::GetDlgItem(m_hWnd,nDlgItemID),nCmdShow); }
+	HWND SetFocus(int nDlgItemID) const { return ::SetFocus(::GetDlgItem(m_hWnd,nDlgItemID)); }
+	
+	
+	BOOL CheckDlgButton(int nIDButton,UINT uCheck) const;
+	void CheckRadioButton(int nIDFirstButton,int nIDLastButton,int nIDCheckButton);
+	int GetCheckedRadioButton(int nIDFirstButton,int nIDLastButton);
+
+	UINT GetDlgItemInt(int nIDDlgItem,BOOL* lpTranslated=NULL,BOOL bSigned=TRUE) const;
+	UINT GetDlgItemText(int nIDDlgItem,LPSTR lpString,int nMaxCount) const;	
+	UINT GetDlgItemText(int nIDDlgItem,CStringA& str) const;
+	UINT GetDlgItemTextLength(int nIDDlgItem) const;
+
+	HWND GetNextDlgGroupItem(HWND hWndCtl,BOOL bPrevious=FALSE) const;
+	HWND GetNextDlgTabItem(HWND hWndCtl,BOOL bPrevious=FALSE) const;
+	UINT IsDlgButtonChecked(int nIDButton) const;
+	LONG SendDlgItemMessage(int idControl,UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const;
+	BOOL SetDlgItemInt(int idControl,UINT uValue,BOOL fSigned=TRUE) const;
+	BOOL SetDlgItemText(int idControl,LPCSTR lpsz) const;	
+	LONG GetDlgItemStyle(int idControl) const { return ::GetWindowLong(GetDlgItem(idControl),GWL_STYLE); }
+	LONG SetDlgItemStyle(int idControl,LONG lStyle) const { return ::SetWindowLong(GetDlgItem(idControl),GWL_STYLE,lStyle); }
+	
+	void DragAcceptFiles(BOOL bAccept);
+	BOOL OpenClipboard();
+
+	void CenterWindow();
+	BOOL LoadPosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey,DWORD fFlags);
+	BOOL SavePosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) const;
+
+	int MessageBox(LPCSTR lpText,LPCSTR lpCaption=NULL,UINT uType=MB_OK);
+#ifdef DEF_RESOURCES
+	int ShowErrorMessage(UINT nIDMsgStr,UINT nIDTitleStr=0,UINT uType=MB_OK|MB_ICONSTOP) const;
+#endif
+	int ReportSystemError(LPCSTR szTitle=NULL,DWORD dwError=DWORD(-1),DWORD dwExtra=0,LPCSTR szPrefix=NULL);
+
+
+#ifdef DEF_WCHAR
+	BOOL SetWindowText(LPCWSTR lpsz);
+	int GetWindowText(LPWSTR lpString,int nMaxCount) const;
+	int GetWindowText(CStringW& str) const;
+	
+	UINT GetDlgItemText(int nIDDlgItem,CStringW& str);
+	UINT GetDlgItemText(int nIDDlgItem,LPWSTR lpString,int nMaxCount) const;	
+	BOOL SetDlgItemText(int idControl,LPCWSTR lpsz) const;	
+	//widechar support
+	int GetText(CStringW& str) const;
+	int GetText(LPWSTR lpszText,int cchTextMax) const;
+	BOOL SetText(LPCWSTR lpsz);
+
+	BOOL PostMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::PostMessageW(m_hWnd,uMsg,wParam,lParam); }
+	LRESULT SendMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::SendMessageW(m_hWnd,uMsg,wParam,lParam); }
+	LONG SendDlgItemMessageW(int idControl,UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const;
+
+	int MessageBox(LPCWSTR lpText,LPCWSTR lpCaption=NULL,UINT uType=MB_OK);
+
+#endif
+
+protected:
+	HWND m_hWnd;
+};
+
+class CTargetWnd : public CWnd
+{
+public:
+	CTargetWnd (HWND hWnd=NULL);
+	virtual ~CTargetWnd();
+
+public:
+
 	virtual BOOL Create(LPCTSTR lpszClassName,
 		LPCTSTR lpszWindowName, DWORD dwStyle,
 		const RECT* rect,
@@ -493,158 +673,22 @@ public:
 		LPVOID lpParam = NULL);
 
 	virtual BOOL DestroyWindow();
-	
-	int GetDlgCtrlID() const {return ::GetDlgCtrlID(m_hWnd);}
-	int SetDlgCtrlID(int nID) {return ::SetWindowLong(m_hWnd,GWL_ID,(LONG)nID);}
-	HWND GetDlgItem(int nID) const { return ::GetDlgItem(m_hWnd,nID); }
-	HWND GetParent() const { return ::GetParent(m_hWnd); }
-	HWND SetParent(HWND hwndNewParent) {return ::SetParent(m_hWnd,hwndNewParent);}
-	
-	BOOL PostMessage(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::PostMessage(m_hWnd,uMsg,wParam,lParam); }
-	LRESULT SendMessage(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::SendMessage(m_hWnd,uMsg,wParam,lParam); }
-	BOOL IsDialogMessage(LPMSG lpMsg) { return ::IsDialogMessage(m_hWnd,lpMsg); }
-
-	BOOL SetWindowText(LPCSTR lpsz) {return ::SetWindowText(m_hWnd,lpsz); }
-	int GetWindowText(LPSTR lpString,int nMaxCount) const { return ::GetWindowText(m_hWnd,lpString,(DWORD)nMaxCount); }
-	int GetWindowText(CStringA& str) const;
-	int GetWindowTextLength() const { return ::GetWindowTextLength(m_hWnd); }
-	void SetFont(HFONT hFont,BOOL bRedraw=TRUE) { ::SendMessage(m_hWnd,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(bRedraw,0)); }
-	HFONT GetFont() const { return (HFONT)::SendMessage(m_hWnd,WM_GETFONT,0,0); }
 		
-	BOOL SetMenu(HMENU hMenu) { return ::SetMenu(m_hWnd,hMenu); }
-	HMENU GetMenu() const { return ::GetMenu(m_hWnd); }
-	HMENU GetSystemMenu(BOOL bRevert=FALSE) const { return ::GetSystemMenu(m_hWnd,bRevert); }
-
-	BOOL IsIconic() const { return ::IsIconic(m_hWnd); }
-	BOOL IsZoomed() const { return ::IsZoomed(m_hWnd); }
-	
-	void MoveWindow(int x,int y,int nWidth,int nHeight,BOOL bRepaint=TRUE) { ::MoveWindow(m_hWnd,x,y,nWidth,nHeight,bRepaint); }
-	void MoveWindow(LPCRECT lpRect,BOOL bRepaint=TRUE) {::MoveWindow(m_hWnd,lpRect->left,lpRect->top,lpRect->right-lpRect->left,lpRect->bottom-lpRect->top,bRepaint);}
-	int SetWindowRgn(HRGN hRgn, BOOL bRedraw) { return ::SetWindowRgn(m_hWnd,hRgn,bRedraw); }
-	int GetWindowRgn(HRGN hRgn) const {return ::GetWindowRgn(m_hWnd,hRgn);}
-	BOOL SetWindowPos(HWND hWndInsertAfter,int x,int y,int cx,int cy,UINT nFlags) {return ::SetWindowPos(m_hWnd,hWndInsertAfter,x,y,cx,cy,nFlags);}
-	BOOL SetDlgItemPos(int iDlgItemID,HWND hWndInsertAfter,int x,int y,int cx,int cy,UINT nFlags) {return ::SetWindowPos(::GetDlgItem(m_hWnd,iDlgItemID),hWndInsertAfter,x,y,cx,cy,nFlags);}
-		
-	UINT ArrangeIconicWindows() { return ::ArrangeIconicWindows(m_hWnd); }
-	void BringWindowToTop() { ::BringWindowToTop(m_hWnd); }
-	void GetWindowRect(LPRECT lpRect) const { ::GetWindowRect(m_hWnd,lpRect); }
-	void GetClientRect(LPRECT lpRect) const { ::GetClientRect(m_hWnd,lpRect); }
-	
-	BOOL GetWindowPlacement(WINDOWPLACEMENT* lpwndpl) const;
-	BOOL SetWindowPlacement(const WINDOWPLACEMENT* lpwndpl);
-	
-	void ClientToScreen(LPPOINT lpPoint) const {::ClientToScreen(m_hWnd,lpPoint); }
-	void ClientToScreen(LPRECT lpRect) const;
-	void ScreenToClient(LPPOINT lpPoint) const { ::ScreenToClient(m_hWnd,lpPoint); }
-	void ScreenToClient(LPRECT lpRect) const;
-	void MapWindowPoints(HWND hwndTo, LPPOINT lpPoint, UINT nCount) const { ::MapWindowPoints(m_hWnd,hwndTo,lpPoint,nCount); }
-	void MapWindowPoints(HWND hwndTo, LPRECT lpRect) const;
-
-	HDC GetDC() const { return ::GetDC(m_hWnd); }
-	CDC* GetCDC() { return new CDC(this); }
-	HDC GetWindowDC() const { return ::GetWindowDC(m_hWnd); }
-	int ReleaseDC(HDC hDC) { return ::ReleaseDC(m_hWnd,hDC); }
-	void ReleaseCDC(CDC* pDC) { delete pDC; }
-
-	BOOL UpdateWindow() const { return ::UpdateWindow(m_hWnd); }
-	BOOL UpdateDlgItem(int iDlgItemID) const { return ::UpdateWindow(::GetDlgItem(m_hWnd,iDlgItemID)); }
-
-	BOOL GetUpdateRect(LPRECT lpRect,BOOL bErase=FALSE);
-	int GetUpdateRgn(HRGN hRgn,BOOL bErase=FALSE);
-	void Invalidate(BOOL bErase=TRUE);
-	BOOL InvalidateRect(CONST RECT* lpRect,BOOL bErase);
-	void InvalidateRgn(HRGN hRgn,BOOL bErase=TRUE);
-	BOOL ShowWindow(ShowState nCmdShow) const { return ::ShowWindow(m_hWnd,nCmdShow); }
-	BOOL ShowDlgItem(int nDlgItemID,ShowState nCmdShow) const { return ::ShowWindow(::GetDlgItem(m_hWnd,nDlgItemID),nCmdShow); }
-	
-	BOOL IsWindowVisible() const { return ::IsWindowVisible(m_hWnd); }
-	void ShowOwnedPopups(BOOL bShow=TRUE);
-
-	BOOL RedrawWindow(LPCRECT lpRectUpdate=NULL,HRGN hrgnUpdate=NULL,UINT flags=RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE) { return ::RedrawWindow(m_hWnd,lpRectUpdate,hrgnUpdate,flags); }
-	BOOL EnableScrollBar(int nSBFlags,UINT nArrowFlags=ESB_ENABLE_BOTH);
-
-	UINT SetTimer(UINT idTimer,UINT uTimeout,TIMERPROC tmprc=NULL);	
-	BOOL KillTimer(UINT uIDEvent);
-
-	BOOL IsWindowEnabled() const { return ::IsWindowEnabled(m_hWnd); }
-	BOOL IsDlgItemEnabled(int nDlgItemID) const { return ::IsWindowEnabled(::GetDlgItem(m_hWnd,nDlgItemID)); }
-	
-	BOOL EnableWindow(BOOL bEnable=TRUE) { return ::EnableWindow(m_hWnd,bEnable); }
-	BOOL EnableDlgItem(int nDlgItemID,BOOL bEnable=TRUE) { return ::EnableWindow(::GetDlgItem(m_hWnd,nDlgItemID),bEnable); }
-	
-	static HWND GetActiveWindow();
-	HWND SetActiveWindow();
-
-	BOOL SetForegroundWindow();
-	static HWND GetForegroundWindow();
-
-	static HWND GetCapture();
-	HWND SetCapture();
-	HWND SetFocus() const { return ::SetFocus(m_hWnd); }
-	static HWND GetFocus();
-	HWND SetFocus(int nID);
-	BOOL ForceForegroundAndFocus();
-	
-	static HWND GetDesktopWindow();
-
-	BOOL CheckDlgButton(int nIDButton,UINT uCheck) const;
-	void CheckRadioButton(int nIDFirstButton,int nIDLastButton,int nIDCheckButton);
-	int GetCheckedRadioButton(int nIDFirstButton,int nIDLastButton);
-	
-	UINT GetDlgItemInt(int nIDDlgItem,BOOL* lpTranslated=NULL,BOOL bSigned=TRUE) const;
-	UINT GetDlgItemText(int nIDDlgItem,LPSTR lpString,int nMaxCount) const;	
-	UINT GetDlgItemText(int nIDDlgItem,CStringA& str) const;
-	UINT GetDlgItemTextLength(int nIDDlgItem) const;
-
-	HWND GetNextDlgGroupItem(HWND hWndCtl,BOOL bPrevious=FALSE) const;
-	HWND GetNextDlgTabItem(HWND hWndCtl,BOOL bPrevious=FALSE) const;
-	UINT IsDlgButtonChecked(int nIDButton) const;
-	LONG SendDlgItemMessage(int idControl,UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const;
-	BOOL SetDlgItemInt(int idControl,UINT uValue,BOOL fSigned=TRUE) const;
-	BOOL SetDlgItemText(int idControl,LPCSTR lpsz) const;	
 	
 	virtual int GetText(LPSTR lpszText,int cchTextMax) const;
 	virtual int GetText(CStringA& str) const;
 	virtual int GetTextLength() const;
 	virtual BOOL SetText(LPCSTR lpsz);
 
-	void DragAcceptFiles(BOOL bAccept);
-
-	HICON SetIcon(HICON hIcon,BOOL bBigIcon);
-	HICON GetIcon(BOOL bBigIcon) const;
-	BOOL OpenClipboard();
 		
-	int MessageBox(LPCSTR lpText,LPCSTR lpCaption=NULL,UINT uType=MB_OK);
-	int MessageBox(LPCWSTR lpText,LPCWSTR lpCaption=NULL,UINT uType=MB_OK);
 	
-	void CenterWindow();
-
-	BOOL LoadPosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey,DWORD fFlags);
-	BOOL SavePosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) const;
 	
-#ifdef DEF_RESOURCES
-	int ShowErrorMessage(UINT nIDMsgStr,UINT nIDTitleStr=0,UINT uType=MB_OK|MB_ICONSTOP) const;
-#endif
-	int ReportSystemError(LPCSTR szTitle=NULL,DWORD dwError=DWORD(-1),DWORD dwExtra=0,LPCSTR szPrefix=NULL);
 
 #ifdef DEF_WCHAR
 	//widechar support
-	BOOL SetWindowText(LPCWSTR lpsz);
-	int GetWindowText(LPWSTR lpString,int nMaxCount) const;
-	int GetWindowText(CStringW& str) const;
-	UINT GetDlgItemText(int nIDDlgItem,CStringW& str);
-	
-	UINT GetDlgItemText(int nIDDlgItem,LPWSTR lpString,int nMaxCount) const;	
-	BOOL SetDlgItemText(int idControl,LPCWSTR lpsz) const;	
-	
 	virtual BOOL SetText(LPCWSTR lpsz);
 	virtual int GetText(LPWSTR lpszText,int cchTextMax) const;
 	virtual int GetText(CStringW& str) const;
-	
-	BOOL PostMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::PostMessageW(m_hWnd,uMsg,wParam,lParam); }
-	LRESULT SendMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::SendMessageW(m_hWnd,uMsg,wParam,lParam); }
-	LONG SendDlgItemMessageW(int idControl,UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const;
-	
 #endif	
 
 public:
@@ -691,16 +735,12 @@ public:
 	virtual void OnWindowPosChanged(LPWINDOWPOS lpWndPos);
 	virtual void OnWindowPosChanging(LPWINDOWPOS lpWndPos);
 	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
-	friend class CWndCtrl;
-
-protected:
-	HWND m_hWnd;
-
+	
 };
 
 #if defined(DEF_RESOURCES)
 
-class CFrameWnd : public CWnd
+class CFrameWnd : public CTargetWnd
 {
 public:
 	CFrameWnd();

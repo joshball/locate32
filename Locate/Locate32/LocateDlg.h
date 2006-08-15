@@ -468,9 +468,10 @@ private:
 		IContextMenu3* pContextMenu3;
 		IShellFolder* pParentFolder;
 
-		LPITEMIDLIST pParentIDList;
-		LPITEMIDLIST* apidl;
-		int nIDlistCount;
+		LPITEMIDLIST pParentIDL;
+		LPITEMIDLIST* ppSimpleIDLs;
+		int nIDLCount;
+		int nIDLParentLevel;
 
 	};
 
@@ -516,7 +517,7 @@ public:
 	void SortItems(DetailType nDetail,BYTE bDescending=-1,BOOL bNoneIsPossible=FALSE); // bDescending:0=ascending order, 1=desc, -1=default
 	void SetSorting(BYTE bSorting=BYTE(-2)); // bSorting==BYTE(-2): default
 
-	static UINT AddSendToMenuItems(CMenu& Menu,CStringW& sSendToPath,UINT wStartID);
+	UINT AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST sIDListToPath,UINT wStartID);
 	static void FreeSendToMenuItems(HMENU hMenu);
 	static BOOL IsSendToMenu(HMENU hMenu);
 	static BOOL InsertMenuItemsFromTemplate(CMenu& Menu,HMENU hTemplate,UINT uStartPosition,int nDefaultItem=-1);
@@ -528,8 +529,14 @@ public:
 	static int SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSorting);
 	void SetSortArrowToHeader(DetailType nDetail,BOOL bRemove,BOOL bDownArrow);
 	HMENU CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pSelectedItems,int nSelectedItems,BOOL bSimple=FALSE);
-	ContextMenuStuff* GetContextMenuForFiles(LPCWSTR szParent,CArrayFP<CStringW*>& aFiles);
+	
+	ContextMenuStuff* GetContextMenuForItems(int nItems,CLocatedItem** ppItems);
+	ContextMenuStuff* GetContextMenuForFiles(int nItems,LPITEMIDLIST pParentIDL,LPITEMIDLIST* ppSimpleIDLs,int nParentIDLlevel=-1);
+	
 	CLocatedItem** GetSeletedItems(int& nItems,int nIncludeIfNoneSeleted=-1);
+	
+	BOOL GetSimpleIDLsandParentForSelectedItems(int& nItems,LPITEMIDLIST& rpParentIDL,LPITEMIDLIST*& rpSimpleIDLs);
+	BOOL GetSimpleIDLsandParentfromIDLs(int nItems,LPITEMIDLIST* pFullIDLs,LPITEMIDLIST* rpParentIDL,LPITEMIDLIST* rpSimpleIDLs,int* pParentIDLLevel=NULL);
 	
 	void InitTooltips();
 
@@ -542,9 +549,6 @@ public:
 	void StopBackgroundOperations();
 	void ChangeBackgroundOperationsPriority(BOOL bLower);
 
-	BOOL GetFileClassID(LPCWSTR file,CLSID& clsid,LPCWSTR szType); 
-	BOOL SendFiles(CStringW& dst,CListCtrl* pList,CLSID& clsid);
-	
 	void BeginDragFiles(CListCtrl* pList);
 
 
@@ -650,7 +654,7 @@ public:
 		BOOL IsLoaded();
 		HMODULE hModule;
 		IH_GETIMAGEDIMENSIONSW pGetImageDimensionsW;
-		ULONG uToken;
+		ULONG_PTR uToken;
 	};
 	ImageHandlerDll* m_pImageHandler;
 
@@ -775,7 +779,8 @@ protected:
 
 	
 	ContextMenuStuff* m_pActiveContextMenu;
-	
+	IShellFolder* m_pDesktopFolder;
+
 	CMenu m_Menu;
 	HFONT m_hSendToListFont;
 	HFONT m_hDialogFont;

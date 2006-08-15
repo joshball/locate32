@@ -134,9 +134,6 @@ protected:
 #endif
 
 
-class CCmdTarget : public CObject
-{
-};
 
 class CFile : public CExceptionObject
 {
@@ -337,6 +334,7 @@ namespace FileSystem {
 	
 	short GetFileTitle(LPCSTR lpszFile,LPSTR lpszTitle,WORD cbBuf);
 	DWORD GetFileAttributes(LPCSTR lpFileName);
+	BOOL SetFileAttributes(LPCSTR lpFileName,DWORD dwFileAttributes);
 
 	UINT GetDriveType(LPCSTR lpRootPathName);
 	DWORD GetLogicalDriveStrings(DWORD nBufferLength,LPSTR lpBuffer);
@@ -391,6 +389,7 @@ namespace FileSystem {
 
 	short GetFileTitle(LPCWSTR lpszFile,LPWSTR lpszTitle,WORD cbBuf);
 	DWORD GetFileAttributes(LPCWSTR lpFileName);
+	BOOL SetFileAttributes(LPCWSTR lpFileName,DWORD dwFileAttributes);
 
 
 	UINT GetDriveType(LPCWSTR lpRootPathName);
@@ -484,6 +483,10 @@ public:
 	BOOL IsTemporary() const;
 	BOOL IsCompressed() const;
 #endif
+
+	BOOL IsRootDirectory() const;
+	BOOL IsParentDirectory() const;
+
 
 #ifdef DEF_WCHAR
 	BOOL FindFile(LPCWSTR pstrName);

@@ -8,7 +8,7 @@
 
 #if defined(DEF_RESOURCES) && defined(DEF_WINDOWS)
 
-class CDialog : public CWnd
+class CDialog : public CTargetWnd
 {
 protected:
 	union {
@@ -104,7 +104,6 @@ public:
 	void Construct(LPCWSTR pszCaption,HWND hParentWnd=NULL,UINT iSelectPage=0);
 
 	BOOL Create(HWND hParentWnd=NULL,DWORD dwStyle=(DWORD)-1,DWORD dwExStyle=0);
-	void EnableStackedTabs(BOOL bStacked);
 
 public:
 	int GetPageCount() const;
@@ -133,8 +132,6 @@ public:
 	BOOL PressButton(int nButton);
 
 	virtual void BuildPropPageArray();
-	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
-	virtual BOOL OnInitDialog(HWND hwndFocus);
 	
 protected:
 	union {
@@ -146,7 +143,6 @@ protected:
 
 	CPtrArray m_pages;
 	HWND m_hParentWnd;
-	BOOL m_bStacked;
 	
 	friend class CPropertyPage;
 };
@@ -690,7 +686,7 @@ protected:
 
 
 inline CDialog::CDialog(int iTemplate)
-	: CWnd(NULL),m_lpszTemplateName(MAKEINTRESOURCE(iTemplate))
+	: CTargetWnd(NULL),m_lpszTemplateName(MAKEINTRESOURCE(iTemplate))
 {
 }
 
@@ -777,13 +773,16 @@ inline void CPropertyPage::EndDialog(int nID)
 // CPropertySheet
 
 inline CPropertySheet::CPropertySheet()
-:	CWnd(NULL)
 {
+	ZeroMemory(&m_pshw,sizeof(PROPSHEETHEADERW));
+	m_pshw.dwSize=PROPSHEETHEADERW_V1_SIZE; //sizeof(PROPSHEETHEADER);
 }
 
 inline CPropertySheet::CPropertySheet(HWND hWnd)
 :	CWnd(hWnd)
 {
+	ZeroMemory(&m_pshw,sizeof(PROPSHEETHEADERW));
+	m_pshw.dwSize=PROPSHEETHEADERW_V1_SIZE; //sizeof(PROPSHEETHEADER);
 }
 
 inline CPropertySheet::CPropertySheet(UINT nIDCaption,HWND hParentWnd,UINT iSelectPage)
@@ -799,11 +798,6 @@ inline CPropertySheet::CPropertySheet(LPCSTR pszCaption,HWND hParentWnd,UINT iSe
 inline CPropertySheet::CPropertySheet(LPCWSTR pszCaption,HWND hParentWnd,UINT iSelectPage)
 {
 	Construct(pszCaption,hParentWnd,iSelectPage);
-}
-
-inline void CPropertySheet::EnableStackedTabs(BOOL bStacked)
-{
-	m_bStacked = bStacked;
 }
 
 inline int CPropertySheet::GetPageCount() const

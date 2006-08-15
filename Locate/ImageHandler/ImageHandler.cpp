@@ -33,13 +33,13 @@ IMAGEHANDLER_API BOOL GetImageDimensionsW(LPCWSTR szFile,SIZE* dim)
 	return dim->cx>0 && dim->cy>0;
 }
 
-IMAGEHANDLER_API BOOL InitLibrary(ULONG* pToken)
+IMAGEHANDLER_API BOOL InitLibrary(ULONG_PTR* pToken)
 {
 	GdiplusStartupInput gdiplusStartupInput;
 	return GdiplusStartup(pToken,&gdiplusStartupInput,NULL)==0;
 }
 
-IMAGEHANDLER_API void UninitLibrary(ULONG uToken)
+IMAGEHANDLER_API void UninitLibrary(ULONG_PTR uToken)
 {
 	GdiplusShutdown(uToken);
 }

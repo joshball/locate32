@@ -131,7 +131,8 @@ STDMETHODIMP CFindExtension::OpenLocate(HWND hParent,
     HWND hWnd=FindWindow("LOCATEAPPST","Locate ST");
 	if (hWnd!=NULL)
 	{
-		::SendMessage(hWnd,WM_ANOTHERINSTANCE,0,0);
+		UINT nLocateAppMessage=RegisterWindowMessage("Locate32Communication");
+		::SendMessage(HWND_BROADCAST,nLocateAppMessage,MAKEWPARAM(LOCATEMSG_ACTIVATEINSTANCE,0),NULL);
 		return NOERROR;
 	}	
 	

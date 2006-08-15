@@ -2458,9 +2458,9 @@ BOOL CFileFind::FindFile(LPCWSTR pstrName)
 
 void CFileFind::GetFilePath(LPWSTR szPath,DWORD nMaxLen) const
 {
-	StringCbCopyNW(szPath,nMaxLen,(LPCWSTR)strRoot,strRoot.GetLength());
+	StringCbCopyNW(szPath,nMaxLen*sizeof(WCHAR),(LPCWSTR)strRoot,strRoot.GetLength()*sizeof(WCHAR));
 	if (IsUnicodeSystem())	
-		StringCbCopyW(szPath+(int)strRoot.GetLength(),nMaxLen-(int)strRoot.GetLength(),m_fdw.cFileName);
+		StringCbCopyW(szPath+(int)strRoot.GetLength(),(nMaxLen-(int)strRoot.GetLength())*sizeof(WCHAR),m_fdw.cFileName);
 	else
 		MultiByteToWideChar(CP_ACP,0,m_fd.cFileName,-1,szPath+(int)strRoot.GetLength(),nMaxLen-(int)strRoot.GetLength());
 }

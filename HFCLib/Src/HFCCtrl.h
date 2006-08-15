@@ -9,162 +9,8 @@
 #ifdef DEF_WINDOWS
 
 // Classes for windows basic controls
-class CWndCtrl : public CCmdTarget
-{
-public:
-	enum ShowState { 
-		swHide=SW_HIDE,
-		swShowNormal=SW_SHOWNORMAL,
-		swNormal=SW_NORMAL,
-		swShowMinimized=SW_SHOWMINIMIZED,
-		swShowMaximized=SW_SHOWMAXIMIZED,
-		swMaximize=SW_MAXIMIZE,
-		swShowNoActivate=SW_SHOWNOACTIVATE,
-		swShow=SW_SHOW,
-		swMinimize=SW_MINIMIZE,
-		swShowMinNiActive=SW_SHOWMINNOACTIVE,
-		swShowNA=SW_SHOWNA,
-		swRestore=SW_RESTORE,
-		swShowDefault=SW_SHOWDEFAULT,
-		swForceMinimize=SW_FORCEMINIMIZE,
-		swMax=SW_MAX
-	};
-	
-	enum WindowLongIndex {
-		gwlWndProc=GWLP_WNDPROC,
-		gwlHInstance=GWLP_HINSTANCE,
-		gwlHWndParent=GWLP_HWNDPARENT,
-		gwlStyle=GWL_STYLE,
-		gwlExStyle=GWL_EXSTYLE,
-		gwlUserData=GWLP_USERDATA,
-		gwlID=GWL_ID,
-		dwlMsgResult=DWLP_MSGRESULT,
-		dwlDlgProc=DWLP_DLGPROC,
-		dwlUser=DWLP_USER
-	};
 
-
-public:
-	CWndCtrl(HWND hWnd=NULL) { m_hWnd=hWnd; }
-
-	HWND GetHandle() const { return m_hWnd; }
-	void SetHandle(HWND hWnd) { m_hWnd=hWnd; }
-	void AssignToDlgItem(HWND hDialog,int nID) { m_hWnd=::GetDlgItem(hDialog,nID); }
-	operator HWND() const { return m_hWnd; }
-	
-	BOOL operator==(const CWnd& wnd) const { return (m_hWnd==wnd.m_hWnd); }
-	BOOL operator!=(const CWnd& wnd) const { return (m_hWnd!=wnd.m_hWnd); }
-	BOOL operator==(const CWndCtrl& wnd) const { return (m_hWnd==wnd.m_hWnd); }
-	BOOL operator!=(const CWndCtrl& wnd) const { return (m_hWnd!=wnd.m_hWnd); }
-	
-	DWORD GetStyle() const { return ::GetWindowLong(m_hWnd,GWL_STYLE); }
-	DWORD SetStyle(DWORD dwStyle) { return ::SetWindowLong(m_hWnd,GWL_STYLE,dwStyle); }
-	BOOL ModifyStyle(DWORD dwRemove,DWORD dwAdd,UINT nFlags=0);
-	DWORD GetExStyle() const { return ::GetWindowLong(m_hWnd,GWL_EXSTYLE); }
-	DWORD SetExStyle(DWORD dwExStyle) { return ::SetWindowLong(m_hWnd,GWL_EXSTYLE,dwExStyle); }
-	BOOL ModifyStyleEx(DWORD dwRemove,DWORD dwAdd,UINT nFlags=0);
-
-#ifdef _WIN64
-	LONG_PTR GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLongPtr(m_hWnd,nIndex); }	
-	LONG_PTR SetWindowLong(WindowLongIndex nIndex,LONG_PTR lNewLong) { return ::SetWindowLongPtr(m_hWnd,nIndex,lNewLong); }
-#else
-	LONG GetWindowLong(WindowLongIndex nIndex) const { return ::GetWindowLongPtr(m_hWnd,nIndex); }	
-	LONG SetWindowLong(WindowLongIndex nIndex,LONG lNewLong) { return ::SetWindowLongPtr(m_hWnd,nIndex,lNewLong); }
-#endif
-
-	BOOL Create(LPCTSTR lpszClassName,
-		LPCTSTR lpszWindowName, DWORD dwStyle,
-		const RECT* rect,
-		HWND hParentWnd, UINT nID);
-
-	BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
-		LPCTSTR lpszWindowName, DWORD dwStyle,
-		int x, int y, int nWidth, int nHeight,
-		HWND hWndParent, UINT nID, LPVOID lpParam = NULL);
-
-	BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
-		LPCTSTR lpszWindowName, DWORD dwStyle,
-		const RECT* rect,
-		HWND hParentWnd, UINT nID,
-		LPVOID lpParam = NULL);
-
-	BOOL DestroyWindow() {return ::DestroyWindow(m_hWnd);}
-	
-	int GetDlgCtrlID() const {return ::GetDlgCtrlID(m_hWnd);}
-	int SetDlgCtrlID(int nID) {return ::SetWindowLong(m_hWnd,GWL_ID,(LONG)nID);}
-	HWND GetParent() const { return ::GetParent(m_hWnd); }
-	HWND SetParent(HWND hwndNewParent) {return ::SetParent(m_hWnd,hwndNewParent);}
-	
-	BOOL PostMessage(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::PostMessage(m_hWnd,uMsg,wParam,lParam); }
-	LRESULT SendMessage(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::SendMessage(m_hWnd,uMsg,wParam,lParam); }
-	
-	BOOL SetWindowText(LPCSTR lpsz) {return ::SetWindowText(m_hWnd,lpsz); }
-	int GetWindowText(LPSTR lpString,int nMaxCount) const { return ::GetWindowText(m_hWnd,lpString,nMaxCount); }
-	int GetWindowText(CString& str) const;
-	int GetWindowTextLength() const { return ::GetWindowTextLength(m_hWnd); }
-	void SetFont(HFONT hFont,BOOL bRedraw=TRUE) { ::SendMessage(m_hWnd,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(bRedraw,0)); }
-	HFONT GetFont() const { return (HFONT)::SendMessage(m_hWnd,WM_GETFONT,0,0); }
-	
-	void MoveWindow(int x,int y,int nWidth,int nHeight,BOOL bRepaint=TRUE) { ::MoveWindow(m_hWnd,x,y,nWidth,nHeight,bRepaint); }
-	void MoveWindow(LPCRECT lpRect,BOOL bRepaint=TRUE) {::MoveWindow(m_hWnd,lpRect->left,lpRect->top,lpRect->right-lpRect->left,lpRect->bottom-lpRect->top,bRepaint);}
-	int SetWindowRgn(HRGN hRgn, BOOL bRedraw) { return ::SetWindowRgn(m_hWnd,hRgn,bRedraw); }
-	int GetWindowRgn(HRGN hRgn) const {return ::GetWindowRgn(m_hWnd,hRgn);}
-	BOOL SetWindowPos(HWND hWndInsertAfter,int x,int y,int cx,int cy,UINT nFlags) {return ::SetWindowPos(m_hWnd,hWndInsertAfter,x,y,cx,cy,nFlags);}
-	void GetWindowRect(LPRECT lpRect) const { ::GetWindowRect(m_hWnd,lpRect); }
-	void GetClientRect(LPRECT lpRect) const { ::GetClientRect(m_hWnd,lpRect); }
-
-	void ClientToScreen(LPPOINT lpPoint) const {::ClientToScreen(m_hWnd,lpPoint); }
-	void ClientToScreen(LPRECT lpRect) const;
-	void ScreenToClient(LPPOINT lpPoint) const { ::ScreenToClient(m_hWnd,lpPoint); }
-	void ScreenToClient(LPRECT lpRect) const;
-	void MapWindowPoints(HWND hwndTo, LPPOINT lpPoint, UINT nCount) const { ::MapWindowPoints(m_hWnd,hwndTo,lpPoint,nCount); }
-	void MapWindowPoints(HWND hwndTo, LPRECT lpRect) const;
-
-	HDC GetDC() const { return ::GetDC(m_hWnd); }
-	CDC* GetCDC() { return new CDC(this); }
-	HDC GetWindowDC() const { return ::GetWindowDC(m_hWnd); }
-	int ReleaseDC(HDC hDC) { return ::ReleaseDC(m_hWnd,hDC); }
-	void ReleaseCDC(CDC* pDC) { delete pDC; }
-
-	BOOL UpdateWindow() const { return ::UpdateWindow(m_hWnd); }
-	
-	BOOL ShowWindow(ShowState nCmdShow) const { return ::ShowWindow(m_hWnd,nCmdShow); }
-	BOOL IsWindowVisible() const { return ::IsWindowVisible(m_hWnd); }
-	BOOL RedrawWindow(LPCRECT lpRectUpdate=NULL,HRGN hrgnUpdate=NULL,UINT flags=RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE) { return ::RedrawWindow(m_hWnd,lpRectUpdate,hrgnUpdate,flags); }
-	
-	BOOL GetUpdateRect(LPRECT lpRect,BOOL bErase=FALSE) {return ::GetUpdateRect(m_hWnd,lpRect,bErase); }
-	int GetUpdateRgn(HRGN hRgn,BOOL bErase=FALSE) { return ::GetUpdateRgn(m_hWnd,hRgn,bErase); }
-	BOOL Invalidate(BOOL bErase=TRUE) {return ::InvalidateRect(m_hWnd,NULL,bErase); }
-	BOOL InvalidateRect(CONST RECT* lpRect,BOOL bErase) { return ::InvalidateRect(m_hWnd,lpRect,bErase); }
-	BOOL InvalidateRgn(HRGN hRgn,BOOL bErase=TRUE) {return  ::InvalidateRgn(m_hWnd,hRgn,bErase); }
-
-	BOOL IsWindowEnabled() const { return ::IsWindowEnabled(m_hWnd); }
-	BOOL EnableWindow(BOOL bEnable=TRUE) { return ::EnableWindow(m_hWnd,bEnable); }
-	HWND SetFocus() const { return ::SetFocus(m_hWnd); }
-	
-	int GetTextLength() const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0); } 
-	int GetText(LPSTR lpszText,int cchTextMax) const { return (UINT)::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText); } 
-	int GetText(CStringA& str) const;
-	BOOL SetText(LPCSTR lpsz) { return (BOOL)::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); }
-
-#ifdef DEF_WCHAR
-	BOOL SetWindowText(LPCWSTR lpsz);
-	int GetWindowText(LPWSTR lpString,int nMaxCount) const;
-	int GetWindowText(CStringW& str) const;
-	
-	//widechar support
-	int GetText(CStringW& str) const;
-	int GetText(LPWSTR lpszText,int cchTextMax) const;
-	BOOL SetText(LPCWSTR lpsz);
-#endif
-
-	friend class CWnd;
-
-protected:
-	HWND m_hWnd;
-};
-
-class CButton : public CWndCtrl
+class CButton : public CWnd
 {
 public:
 	CButton();
@@ -187,7 +33,7 @@ public:
 	HCURSOR GetCursor();
 };
 
-class CEdit : public CWndCtrl
+class CEdit : public CWnd
 {
 public:
 	CEdit();
@@ -206,7 +52,7 @@ public:
 	void Paste();
 };
 
-class CRichEditCtrl : public CWndCtrl
+class CRichEditCtrl : public CWnd
 {
 public:
 	CRichEditCtrl();
@@ -308,7 +154,7 @@ public:
 };
 
 
-class CListBox : public CWndCtrl
+class CListBox : public CWnd
 {
 public:
 	CListBox();
@@ -377,7 +223,7 @@ public:
 #endif
 };
 
-class CComboBox : public CWndCtrl
+class CComboBox : public CWnd
 {
 public:
 	CComboBox();
@@ -444,7 +290,7 @@ public:
 #endif
 };
 
-class CScrollBar : public CWndCtrl
+class CScrollBar : public CWnd
 {
 public:
 	CScrollBar();
@@ -469,7 +315,7 @@ protected:
 	int m_nBar;
 };
 
-class C3DStaticCtrl : public CWndCtrl
+class C3DStaticCtrl : public CWnd
 {
 public:
 	C3DStaticCtrl();
@@ -479,7 +325,7 @@ public:
 public:
 };
 
-class C3DButtonCtrl : public CWndCtrl
+class C3DButtonCtrl : public CWnd
 {
 public:
 	C3DButtonCtrl();

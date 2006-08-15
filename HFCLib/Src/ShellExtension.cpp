@@ -8,41 +8,44 @@
 
 LPITEMIDLIST GetFileIDList(LPCSTR lpszFileName)
 {
-	LPITEMIDLIST ret=NULL;
-	HRESULT hres;
-	IShellLink *psl;
+	LPITEMIDLIST pidl=NULL;
+	IShellFolder *pDesktop;
+	if (FAILED(SHGetDesktopFolder(&pDesktop)))
+		return NULL;
+
 	
-	hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(LPVOID*)&psl);
-	if (SUCCEEDED(hres))
+	if (FAILED(pDesktop->ParseDisplayName(NULL,NULL,(LPOLESTR)(LPCWSTR)A2W(lpszFileName),NULL,&pidl,NULL)))
 	{
-		hres=psl->SetPath(lpszFileName);
-		if (SUCCEEDED(hres))
-			psl->GetIDList(&ret);
-		psl->Release();
+		pDesktop->Release();
+		return NULL;
 	}
-	return ret;
+	return pidl;
 }
 
 LPITEMIDLIST GetFolderIDList(LPCSTR lpszFileName)
 {
-	CHAR szFolder[_MAX_PATH];
-	LPITEMIDLIST ret=NULL;
-	HRESULT hres;
-	IShellLink *psl;
+		int temp=LastCharIndex(lpszFileName,'\\');
+	LPCWSTR szFolder;
+	if (temp==-1)
+		szFolder=alloccopyAtoW(lpszFileName);
+	else
+		szFolder=alloccopyAtoW(lpszFileName,temp+1);
 	
-	LONG_PTR temp=LastCharIndex(lpszFileName,'\\')+1;
-	sMemCopy(szFolder,lpszFileName,temp);
-	szFolder[temp]='\0';
-	
-	hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(LPVOID*)&psl);
-	if (SUCCEEDED(hres))
+	LPITEMIDLIST pidl=NULL;
+	IShellFolder *pDesktop;
+	if (FAILED(SHGetDesktopFolder(&pDesktop)))
 	{
-		hres=psl->SetPath(szFolder);
-		if (SUCCEEDED(hres))
-			psl->GetIDList(&ret);
-		psl->Release();
+		delete[] szFolder;
+		return NULL;
 	}
-	return ret;
+	
+	if (FAILED(pDesktop->ParseDisplayName(NULL,NULL,(LPOLESTR)szFolder,NULL,&pidl,NULL)))
+	{
+		pDesktop->Release();
+		delete[] szFolder;
+		return NULL;
+	}
+	return pidl;
 }
 
 DWORD GetIDListSize(LPITEMIDLIST lpil)
@@ -149,43 +152,44 @@ HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,DWORD nBufSize)
 #ifdef DEF_WCHAR
 LPITEMIDLIST GetFileIDList(LPCWSTR lpszFileName)
 {
-	LPITEMIDLIST ret=NULL;
-	HRESULT hres;
-		
-	if (IsUnicodeSystem())
+	LPITEMIDLIST pidl=NULL;
+	IShellFolder *pDesktop;
+	if (FAILED(SHGetDesktopFolder(&pDesktop)))
+		return NULL;
+
+	
+	if (FAILED(pDesktop->ParseDisplayName(NULL,NULL,(LPOLESTR)lpszFileName,NULL,&pidl,NULL)))
 	{
-		IShellLinkW *psl;
-		hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(LPVOID*)&psl);
-		if (SUCCEEDED(hres))
-		{
-			hres=psl->SetPath(lpszFileName);
-			if (SUCCEEDED(hres))
-				psl->GetIDList(&ret);
-			psl->Release();
-		}
+		pDesktop->Release();
+		return NULL;
 	}
-	else
-	{
-		IShellLink *psl;
-		hres=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(LPVOID*)&psl);
-		if (SUCCEEDED(hres))
-		{
-			hres=psl->SetPath(W2A(lpszFileName));
-			if (SUCCEEDED(hres))
-				psl->GetIDList(&ret);
-			psl->Release();
-		}
-	}
-	return ret;
+	return pidl;
 }
 
 LPITEMIDLIST GetFolderIDList(LPCWSTR lpszFileName)
 {
-	WCHAR szFolder[MAX_PATH];
-	LONG_PTR temp=LastCharIndex(lpszFileName,'\\')+1;
-	MemCopyW(szFolder,lpszFileName,temp);
-	szFolder[temp]='\0';
-	return GetFileIDList(szFolder);
+	int temp=LastCharIndex(lpszFileName,'\\');
+	LPCWSTR szFolder;
+	if (temp==-1)
+		szFolder=alloccopy(lpszFileName);
+	else
+		szFolder=alloccopy(lpszFileName,temp+1);
+	
+	LPITEMIDLIST pidl=NULL;
+	IShellFolder *pDesktop;
+	if (FAILED(SHGetDesktopFolder(&pDesktop)))
+	{
+		delete[] szFolder;
+		return NULL;
+	}
+	
+	if (FAILED(pDesktop->ParseDisplayName(NULL,NULL,(LPOLESTR)szFolder,NULL,&pidl,NULL)))
+	{
+		pDesktop->Release();
+		delete[] szFolder;
+		return NULL;
+	}
+	return pidl;
 }
 
 HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc,LPCWSTR pszParams)
@@ -483,7 +487,7 @@ BOOL RunRegistryCommand(HKEY hKey,LPCWSTR szFile)
 }
 #endif
 
-DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen)
+DWORD GetComputerNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen)
 {
 	// May be computer?
 	IShellFolder *psf;
@@ -515,6 +519,9 @@ DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen
 
 	switch (str.uType)
 	{
+	case STRRET_OFFSET:
+		StringCbCopy(szName,dwBufferLen,(LPSTR)((LPBYTE)lpiil+str.uOffset));
+		return (DWORD)istrlen(szName);
 	case STRRET_CSTR:
 		StringCbCopy(szName,dwBufferLen,str.cStr);
 		return (DWORD)istrlen(szName);
@@ -525,7 +532,7 @@ DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen
 }
 
 #ifdef DEF_WCHAR
-DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,DWORD dwBufferLen)
+DWORD GetComputerNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,DWORD dwBufferLen)
 {
 	// May be computer?
 	IShellFolder *psf;
@@ -557,6 +564,8 @@ DWORD GetDisplayNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,DWORD dwBufferLe
 
 	switch (str.uType)
 	{
+	case STRRET_OFFSET:
+		return MultiByteToWideChar(CP_ACP,0,(LPSTR)((LPBYTE)lpiil+str.uOffset),-1,szName,dwBufferLen);
 	case STRRET_CSTR:
 		return MultiByteToWideChar(CP_ACP,0,str.cStr,-1,szName,dwBufferLen);
 	case STRRET_WSTR:
@@ -629,6 +638,13 @@ BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,DWORD nBufferLen)
 						{
 							switch (str.uType)
 							{
+							case STRRET_OFFSET:
+								{
+									LPSTR pStr=(LPSTR)((LPBYTE)il+str.uOffset);
+									if (pStr[0]=='\\' && pStr[1]=='\\')
+									bRet=MultiByteToWideChar(CP_ACP,0,pStr,-1,szTarget,nBufferLen)>0?1:0;
+										break;
+								}
 							case STRRET_CSTR:
 								if (str.cStr[0]=='\\' && str.cStr[1]=='\\')
 									bRet=MultiByteToWideChar(CP_ACP,0,str.cStr,-1,szTarget,nBufferLen)>0?1:0;

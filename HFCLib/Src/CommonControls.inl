@@ -9,7 +9,7 @@
 // CCommonCtrl
 
 inline CCommonCtrl::CCommonCtrl(HWND hWnd)
-:	CWndCtrl(hWnd)
+:	CWnd(hWnd)
 {
 }
 

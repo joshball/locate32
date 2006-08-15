@@ -520,10 +520,10 @@ void CSelectColumndDlg::EnableItems()
 	ShowDlgItem(IDC_COMMAND,ssCommand);
 
 	ShowDlgItem(IDC_STATICVERB,ssVerb);
-	m_VerbCombo.ShowWindow((CWndCtrl::ShowState)ssVerb);
+	m_VerbCombo.ShowWindow(ssVerb);
 
 	ShowDlgItem(IDC_STATICWHICHFILE,ssWhichFile);
-	m_WhichFileCombo.ShowWindow((CWndCtrl::ShowState)ssWhichFile);
+	m_WhichFileCombo.ShowWindow(ssWhichFile);
 	
 }
 
@@ -2224,4 +2224,654 @@ void CLocateDlg::CRemovePresetDlg::OnOK()
 	}
 
 	EndDialog(1);
+}
+
+///////////////////////////////////////////////////////////
+// CPropertiesSheet
+
+CPropertiesSheet::CPropertiesSheet(int nItems,CLocatedItem** pItems)
+:	m_hThread(NULL)
+{
+	CStringW Title;
+	if (pItems[0]->ShouldUpdateFileTitle())
+		pItems[0]->UpdateFileTitle();
+
+	Title.Format(IDS_FILEPROPERTIESSHEETCAPTION,pItems[0]->GetFileTitle());
+	
+	Construct(Title,NULL,0);
+
+	m_pPropertiesPage=new CPropertiesPage(nItems,pItems);
+	AddPage((CPropertyPage*)m_pPropertiesPage);	
+}
+
+CPropertiesSheet::~CPropertiesSheet()
+{
+	CloseHandle(m_hThread);
+	delete m_pPropertiesPage;
+	
+}
+
+DWORD WINAPI CPropertiesSheet::StartThreadProc(LPVOID lpParameter)
+{
+	(DWORD)((CPropertiesSheet*)lpParameter)->DoModal();
+	delete ((CPropertiesSheet*)lpParameter);
+	return 0;
+}
+
+void CPropertiesSheet::Open()
+{
+	DWORD dwThreadID;
+	m_hThread=CreateThread(NULL,0,StartThreadProc,this,0,&dwThreadID);
+	
+}
+	
+CPropertiesSheet::CPropertiesPage::CPropertiesPage(int nItems,CLocatedItem** pItems)
+:	CPropertyPage(IDD_FILEPROPERTIES,IDS_FILEPROPERTIESPAGETITLE),
+	m_nItems(nItems),m_nFiles(0),m_nDirectories(0),m_nSize(0),m_nSizeOnDisk(0),
+	m_bIsSameType(TRUE),m_bReadOnly(0),m_bHidden(0),m_bArchive(0),
+	m_pGetVolumePathName(NULL)
+{
+	m_ppFiles=new LPWSTR[nItems];
+	m_pbIsDirectory=new BOOL[nItems];
+	for (int i=0;i<nItems;i++)
+	{
+		m_ppFiles[i]=alloccopy(pItems[i]->GetPath());
+		m_pbIsDirectory[i]=pItems[i]->IsFolder();
+	}
+
+	DWORD dwThread;
+	m_hThread=CreateThread(NULL,0,CountingThreadProc,this,0,&dwThread);
+
+	DWORD dwError=GetLastError();
+
+	m_pGetVolumePathName=(GETVOLUMEPATHNAMEW)GetProcAddress(GetModuleHandle("kernel32.dll"),"GetVolumePathNameW");
+	
+	if (m_pGetVolumePathName==NULL)
+		m_pGetVolumePathName=GetVolumePathNameAlt;
+}
+
+
+CPropertiesSheet::CPropertiesPage::~CPropertiesPage()
+{
+	if (m_ppFiles!=NULL)
+	{
+		for (int i=0;i<m_nItems;i++)
+			delete[] m_ppFiles[i];
+		delete[] m_ppFiles;
+		delete[] m_pbIsDirectory;
+	}
+
+}
+
+BOOL CPropertiesSheet::CPropertiesPage::OnInitDialog(HWND hwndFocus)
+{
+	CPropertyPage::OnInitDialog(hwndFocus);
+
+	SendDlgItemMessage(IDC_FILEICON,STM_SETIMAGE,IMAGE_ICON,
+		(LPARAM)LoadImage(IDI_FILES,IMAGE_ICON,0,0,LR_SHARED|LR_DEFAULTSIZE));
+
+	UpdateFields();
+	SetTimer(0,250);
+
+	return FALSE;
+}
+
+BOOL CPropertiesSheet::CPropertiesPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
+{
+	CPropertyPage::OnCommand(wID,wNotifyCode,hControl);
+	
+	return FALSE;
+}
+
+void CPropertiesSheet::CPropertiesPage::OnDestroy()
+{
+	CPropertyPage::OnDestroy();
+
+	if (m_hThread!=NULL)
+	{
+		DWORD status;
+		BOOL bRet=::GetExitCodeThread(m_hThread,&status);
+		if (bRet && status==STILL_ACTIVE)
+		{
+			::TerminateThread(m_hThread,1);
+			KillTimer(0);
+		}
+
+		CloseHandle(m_hThread);
+		m_hThread=NULL;
+	}
+}
+
+
+BOOL CPropertiesSheet::CPropertiesPage::OnApply()
+{
+	CPropertyPage::OnApply();
+
+	enum { DisableArchive=0x1,EnableArchive=0x2,
+		DisableHidden=0x4,EnableHidden=0x8,
+		DisableReadOnly=0x10,EnableReadOnly=0x20};
+	DWORD dwDo=0;
+
+	switch (IsDlgButtonChecked(IDC_ARCHIVE))
+	{
+	case 0:
+		if (m_bArchive!=0)
+			dwDo|=DisableArchive;
+		break;
+	case 1:
+		if (m_bArchive!=1)
+			dwDo|=EnableArchive;
+		break;
+	}
+
+	switch (IsDlgButtonChecked(IDC_HIDDEN))
+	{
+	case 0:
+		if (m_bHidden!=0)
+			dwDo|=DisableHidden;
+		break;
+	case 1:
+		if (m_bHidden!=1)
+			dwDo|=EnableHidden;
+		break;
+	}
+
+	switch (IsDlgButtonChecked(IDC_READONLY))
+	{
+	case 0:
+		if (m_bReadOnly!=0)
+			dwDo|=DisableReadOnly;
+		break;
+	case 1:
+		if (m_bReadOnly!=1)
+			dwDo|=EnableReadOnly;
+		break;
+	}
+
+	if (dwDo)
+	{
+		for (int i=0;i<m_nItems;i++)
+		{
+			DWORD dwAttributesOld=FileSystem::GetFileAttributes(m_ppFiles[i]);
+			DWORD dwAttributes=dwAttributesOld;
+			
+			if (dwDo&EnableArchive)
+				dwAttributes|=FILE_ATTRIBUTE_ARCHIVE;
+			else if (dwDo&DisableArchive)
+				dwAttributes&=~FILE_ATTRIBUTE_ARCHIVE;
+
+			if (dwDo&EnableHidden)
+				dwAttributes|=FILE_ATTRIBUTE_HIDDEN;
+			else if (dwDo&DisableHidden)
+				dwAttributes&=~FILE_ATTRIBUTE_HIDDEN;
+
+			if (dwDo&EnableReadOnly)
+				dwAttributes|=FILE_ATTRIBUTE_READONLY;
+			else if (dwDo&DisableReadOnly)
+				dwAttributes&=~FILE_ATTRIBUTE_READONLY;
+
+			if (dwAttributes!=dwAttributesOld)
+				FileSystem::SetFileAttributes(m_ppFiles[i],dwAttributes);
+		}
+	}
+
+	return TRUE;
+}
+
+void CPropertiesSheet::CPropertiesPage::OnCancel()
+{
+	CPropertyPage::OnCancel();
+}
+
+void CPropertiesSheet::CPropertiesPage::OnTimer(DWORD wTimerID)
+{
+	if (m_hThread!=NULL)
+	{
+		DWORD status;
+		BOOL bRet=::GetExitCodeThread(m_hThread,&status);
+		if (bRet && status!=STILL_ACTIVE)
+		{
+			KillTimer(0);	
+			CloseHandle(m_hThread);
+			m_hThread=NULL;
+		}
+	}
+
+	UpdateFields();
+}
+					
+void CPropertiesSheet::CPropertiesPage::UpdateFields()
+{
+	CStringW Text;
+	Text.Format(IDS_FILEPROPERTIESPAGEFILESFMT,m_nFiles,m_nDirectories);
+	SetDlgItemText(IDC_FILESANDDIRECTORIES,Text);
+
+	if (m_bIsSameType)
+	{
+		SHFILEINFOW fi;
+		if (GetFileInfo(m_ppFiles[0],0,&fi,SHGFI_TYPENAME))
+			Text.Format(IDS_FILEPROPERTIESALLOFTYPE,fi.szTypeName);
+		else
+			Text.Format(IDS_FILEPROPERTIESALLOFTYPE,(LPCWSTR)ID2W(IDS_UNKNOWN));
+	}
+	else 
+		Text.LoadString(IDS_FILEPROPERTIESPAGEMULTIPLETYPES);
+	SetDlgItemText(IDC_TYPES,Text);
+
+	WCHAR szBestSize[100],szBytes[100];
+	
+	FormatSizes(m_nSize,szBestSize,szBytes);
+	Text.Format(IDS_FILEPROPERTIESPAGESIZEFMT,szBestSize,szBytes);
+	SetDlgItemText(IDC_SIZEOFILES,Text);
+
+	FormatSizes(m_nSizeOnDisk,szBestSize,szBytes);
+	Text.Format(IDS_FILEPROPERTIESPAGESIZEFMT,szBestSize,szBytes);
+	SetDlgItemText(IDC_SIZEONDISK,Text);
+
+	if (m_bReadOnly==2)
+	{
+		SetDlgItemStyle(IDC_READONLY,
+			(GetDlgItemStyle(IDC_READONLY)&~BS_AUTOCHECKBOX)|BS_AUTO3STATE);
+	}
+	if (m_bHidden==2)
+	{
+		SetDlgItemStyle(IDC_HIDDEN,
+			(GetDlgItemStyle(IDC_HIDDEN)&~BS_AUTOCHECKBOX)|BS_AUTO3STATE);
+	}
+	if (m_bArchive==2)
+	{
+		SetDlgItemStyle(IDC_ARCHIVE,
+			(GetDlgItemStyle(IDC_ARCHIVE)&~BS_AUTOCHECKBOX)|BS_AUTO3STATE);
+	}
+	
+	CheckDlgButton(IDC_READONLY,m_bReadOnly);
+	CheckDlgButton(IDC_HIDDEN,m_bHidden);
+	CheckDlgButton(IDC_ARCHIVE,m_bArchive);
+}
+
+
+BOOL WINAPI CPropertiesSheet::CPropertiesPage::GetVolumePathNameAlt(LPCWSTR lpszFileName,LPWSTR lpszVolumePathName,DWORD cchBufferLength)
+{
+	if (cchBufferLength<4)
+		return FALSE;
+	if (lpszFileName[0]=='\\' && lpszFileName[1])
+	{
+		// Network share
+		int nIndex=FirstCharIndex(lpszFileName+2,'\\');
+		if (nIndex==-1)
+			return FALSE;
+		nIndex+=2;
+
+		while ((DWORD)nIndex<cchBufferLength)
+		{
+			MemCopyW(lpszVolumePathName,lpszFileName,nIndex);
+			lpszVolumePathName[nIndex]='\0';
+
+			if (FileSystem::IsDirectory(lpszVolumePathName))
+				return TRUE;
+
+			int nIndex2=FirstCharIndex(lpszFileName+nIndex+1,'\\');
+			if (nIndex2==-1)
+			{
+				if (FileSystem::IsDirectory(lpszFileName))
+				{
+					wcscpy_s(lpszVolumePathName,cchBufferLength,lpszFileName);
+					wcscat_s(lpszVolumePathName,cchBufferLength,L"\\");
+					return TRUE;
+				}
+				return FALSE;
+			}
+			nIndex+=nIndex2+1;
+		}
+	}
+	if (lpszFileName[1]==':')
+	{
+		// Drive
+		lpszVolumePathName[0]=lpszFileName[0];
+		lpszVolumePathName[1]=L':';
+		lpszVolumePathName[2]=L'\\';
+		lpszVolumePathName[3]=L'\0';
+		return TRUE;
+	}
+	return FALSE;
+}
+
+
+
+void CPropertiesSheet::CPropertiesPage::CheckFiles()
+{
+	m_nExPos0=LastCharIndex(m_ppFiles[0],L'.')+1;
+
+	
+
+	for (int i=0;i<m_nItems;i++)
+	{
+		if (m_pbIsDirectory[i])
+		{
+			m_nDirectories++;
+				if (i>0 && m_bIsSameType && !m_pbIsDirectory[0])
+				m_bIsSameType=FALSE;
+			
+			CheckDirectory(m_ppFiles[i],i==0);
+		}
+		else
+		{
+			m_nFiles++;
+			
+			CheckFile(m_ppFiles[i],i==0);			
+		}
+	}
+}
+
+void CPropertiesSheet::CPropertiesPage::CheckFile(LPCWSTR szFile,BOOL bIsFirst)
+{
+	union {
+		WIN32_FIND_DATA fd;
+		WIN32_FIND_DATAW fdw; // The beginning of the structures are equal
+	};
+
+	HANDLE hFind;
+	if (IsUnicodeSystem())	
+		hFind=FindFirstFileW(szFile,&fdw);
+	else
+		hFind=FindFirstFileA(W2A(szFile),&fd);
+
+	if (hFind!=INVALID_HANDLE_VALUE)
+	{
+		FindClose(hFind);
+
+		if (bIsFirst)
+		{
+			m_bArchive=fd.dwFileAttributes&FILE_ATTRIBUTE_ARCHIVE?1:0;
+			m_bHidden=fd.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN?1:0;
+			m_bReadOnly=fd.dwFileAttributes&FILE_ATTRIBUTE_READONLY?1:0;
+		}
+		else
+		{
+			if ((m_bArchive==1 && !(fd.dwFileAttributes&FILE_ATTRIBUTE_ARCHIVE)) ||
+				(m_bArchive==0 && fd.dwFileAttributes&FILE_ATTRIBUTE_ARCHIVE))
+				m_bArchive=2;
+			if ((m_bHidden==1 && !(fd.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN)) ||
+				(m_bHidden==0 && fd.dwFileAttributes&FILE_ATTRIBUTE_HIDDEN))
+				m_bHidden=2;
+			if ((m_bReadOnly==1 && !(fd.dwFileAttributes&FILE_ATTRIBUTE_READONLY)) ||
+				(m_bReadOnly==0 && fd.dwFileAttributes&FILE_ATTRIBUTE_READONLY))
+				m_bReadOnly=2;
+		}
+
+		ULONGLONG ulFileSize=ULONGLONG(fd.nFileSizeHigh)<<32|ULONGLONG(fd.nFileSizeLow);
+		m_nSize+=ulFileSize;
+		
+		WCHAR szVolume[MAX_PATH];
+			
+		if (m_pGetVolumePathName(szFile,szVolume,MAX_PATH))
+		{
+			DWORD dwSectorsPerCluster,dwBytesPerSector,
+				dwNumberOfFreeClusters,dwTotalNumberOfCluster;
+			BOOL bRet;
+			if (IsUnicodeSystem())
+			{
+				bRet=GetDiskFreeSpaceW(szVolume,&dwSectorsPerCluster,&dwBytesPerSector,
+					&dwNumberOfFreeClusters,&dwTotalNumberOfCluster);
+			}
+			else
+			{
+				bRet=GetDiskFreeSpaceA(W2A(szVolume),&dwSectorsPerCluster,&dwBytesPerSector,
+					&dwNumberOfFreeClusters,&dwTotalNumberOfCluster);
+			}
+			if (bRet)
+			{
+				DWORD dwClusterSize=dwBytesPerSector*dwSectorsPerCluster;
+				if (ulFileSize%dwClusterSize==0)
+					m_nSizeOnDisk+=ulFileSize;
+				else
+					m_nSizeOnDisk+=(ulFileSize/dwClusterSize+1)*dwClusterSize;
+			}
+			else
+				m_nSizeOnDisk+=ulFileSize;
+		}
+		else
+			m_nSizeOnDisk+=ulFileSize;
+	}
+
+	// Check type
+	if (!bIsFirst && m_bIsSameType)
+	{
+		if (m_pbIsDirectory[0])
+			m_bIsSameType=FALSE;
+		else
+		{
+			int nExPos=LastCharIndex(szFile,L'.')+1;
+			if (nExPos!=0)
+			{
+				if (m_nExPos0==0)
+					m_bIsSameType=FALSE;
+				else if (_wcsicmp(szFile+nExPos,m_ppFiles[0]+m_nExPos0)!=0)
+					m_bIsSameType=FALSE;
+			}
+			else if (m_nExPos0!=-1)
+				m_bIsSameType=FALSE;
+		}
+	}	
+}
+
+
+void CPropertiesSheet::CPropertiesPage::CheckDirectory(LPCWSTR szDirectory,BOOL bIsFirst)
+{
+	WCHAR szMask[MAX_PATH];
+	DWORD nLength=istrlenw(szDirectory);
+	MemCopyW(szMask,szDirectory,nLength);
+	MemCopyW(szMask+nLength,L"\\*.*",5);
+
+
+	CFileFind ff;
+	
+	BOOL bRet=ff.FindFile(szMask);
+	while (bRet)
+	{
+		if (ff.IsParentDirectory())
+		{
+			bRet=ff.FindNextFile();
+			continue;
+		}
+
+		if (ff.IsRootDirectory())
+		{
+			if (bIsFirst)
+			{
+				m_bArchive=ff.IsArchived();
+				m_bHidden=ff.IsHidden();
+				m_bReadOnly=ff.IsReadOnly();
+			}
+			else
+			{
+				if ((m_bArchive==1 && !ff.IsArchived()) ||
+					(m_bArchive==0 && ff.IsArchived()))
+					m_bArchive=2;
+				if ((m_bHidden==1 && !ff.IsHidden()) ||
+					(m_bHidden==0 && ff.IsHidden()))
+					m_bHidden=2;
+				if ((m_bReadOnly==1 && !ff.IsReadOnly()) ||
+					(m_bReadOnly==0 && ff.IsReadOnly()))
+					m_bReadOnly=2;
+			}
+		}
+		else 
+		{
+			WCHAR szPath[MAX_PATH];
+			ff.GetFilePath(szPath,MAX_PATH);
+			
+			int i;
+			for (i=0;i<m_nItems;i++)
+			{
+				if (_wcsicmp(szPath,m_ppFiles[i])==0)
+					break;
+			}
+
+			if (i==m_nItems)
+			{
+				if (ff.IsDirectory())
+				{
+					m_nDirectories++;
+					CheckDirectory(szPath,FALSE);
+				}
+				else
+				{
+					m_nFiles++;
+					CheckFile(szPath,FALSE);
+				}
+			}
+		}		
+		bRet=ff.FindNextFile();
+
+	}
+
+	// Check type
+	if (!bIsFirst && m_bIsSameType)
+	{
+		if (!m_pbIsDirectory[0])
+			m_bIsSameType=FALSE;
+	}
+}
+
+
+DWORD WINAPI CPropertiesSheet::CPropertiesPage::CountingThreadProc(LPVOID lpParameter)
+{
+	((CPropertiesPage*)lpParameter)->CheckFiles();
+	return 0;
+}
+
+
+void CPropertiesSheet::CPropertiesPage::FormatSizes(ULONGLONG ulSize,WCHAR* szBestFit,WCHAR* szBytes)
+{
+	WCHAR unit[10],unit2[10],szBestFitPre[100],szBytesPre[100];
+	BOOL bDigits=0;
+
+	if (ulSize>1024*1024*1024)
+	{
+		DWORD num=DWORD(ulSize/(1024*1024));
+		if (num>=100*1024)
+			_ultow_s(num/1024,szBestFitPre,40,10);
+		else
+		{
+			StringCbPrintfW(szBestFitPre,100*sizeof(WCHAR),L"%1.1f",double(num)/1024);
+			bDigits=1;
+		}
+		
+		LoadString(IDS_GB,unit,10);
+	}
+	else if (ulSize>1048576) // As MB
+	{
+		DWORD num=DWORD(ulSize/1024);
+		
+		if (num>=100*1024)
+			_ultow_s(num/1024,szBestFitPre,100,10);
+		else
+		{
+			StringCbPrintfW(szBestFitPre,100*sizeof(WCHAR),L"%1.1f",double(num)/1024);
+			bDigits=1;
+		}
+		LoadString(IDS_MB,unit,10);
+	}
+	else if (ulSize>1024) // As KB
+	{
+		if (ulSize>=100*1024)
+			_ultow_s(DWORD(ulSize/1024),szBestFitPre,100,10);
+		else
+		{
+			StringCbPrintfW(szBestFitPre,100*sizeof(WCHAR),L"%1.1f",double(ulSize)/1024);
+			bDigits=1;
+		}
+		
+		LoadString(IDS_KB,unit,10);
+	}
+	else // As B
+	{
+		_ultow_s(DWORD(ulSize),szBestFitPre,100,10);
+	
+		//LoadString(IDS_BYTES,unit,10);
+	}
+
+	LoadString(IDS_BYTES,unit2,10);
+	_ui64tow_s(ulSize,szBytesPre,100,10);
+	
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,"Control Panel\\International",CRegKey::defRead)==ERROR_SUCCESS)
+	{
+		
+		if (IsUnicodeSystem())
+		{
+			WCHAR szTemp[10]=L".",szTemp2[10]=L" ";
+
+			NUMBERFMTW fmt;
+		
+			// Defaults;
+			fmt.NumDigits=bDigits; 
+			fmt.LeadingZero=1;
+			fmt.Grouping=3; 
+			fmt.lpDecimalSep=szTemp; 
+			fmt.lpThousandSep=szTemp2; 
+			fmt.NegativeOrder=1; 
+			
+			if (RegKey.QueryValue(L"iLZero",szTemp,10)>1)
+				fmt.LeadingZero=_wtoi(szTemp);
+			if (RegKey.QueryValue(L"sGrouping",szTemp,10)>1)
+				fmt.Grouping=_wtoi(szTemp);
+			RegKey.QueryValue(L"sDecimal",szTemp,10);
+			RegKey.QueryValue(L"sThousand",szTemp2,10);
+
+			
+			if (GetNumberFormatW(LOCALE_USER_DEFAULT,0,szBestFitPre,&fmt,szBestFit,100)==0)
+				wcscpy_s(szBestFit,100,szBestFitPre);
+
+			fmt.NumDigits=0; 
+			
+			if (GetNumberFormatW(LOCALE_USER_DEFAULT,0,szBytesPre,&fmt,szBytes,100)==0)
+				wcscpy_s(szBytes,100,szBestFitPre);
+		}
+		else
+		{
+			char szFormattedStr[100];
+			char szTemp[10]=".",szTemp2[10]=" ";
+
+			NUMBERFMT fmt;
+		
+			// Defaults;
+			fmt.NumDigits=bDigits; 
+			fmt.LeadingZero=1;
+			fmt.Grouping=3; 
+			fmt.lpDecimalSep=szTemp; 
+			fmt.lpThousandSep=szTemp2; 
+			fmt.NegativeOrder=1; 
+			
+			if (RegKey.QueryValue("iLZero",szTemp,10)>1)
+				fmt.LeadingZero=atoi(szTemp);
+			if (RegKey.QueryValue("sGrouping",szTemp,10)>1)
+				fmt.Grouping=atoi(szTemp);
+			RegKey.QueryValue("sDecimal",szTemp,10);
+			RegKey.QueryValue("sThousand",szTemp2,10);
+
+			
+			if (GetNumberFormat(LOCALE_USER_DEFAULT,0,W2A(szBestFitPre),&fmt,szFormattedStr,100)>0)
+				MultiByteToWideChar(CP_ACP,0,szFormattedStr,-1,szBestFit,100);
+			else
+				wcscpy_s(szBestFit,100,szBestFitPre);
+
+			fmt.NumDigits=0; 
+			
+			if (GetNumberFormat(LOCALE_USER_DEFAULT,0,W2A(szBytesPre),&fmt,szFormattedStr,100)>0)
+				MultiByteToWideChar(CP_ACP,0,szFormattedStr,-1,szBytes,100);
+			else
+				wcscpy_s(szBytes,100,szBytesPre);
+		}
+	}
+	else
+	{
+		wcscpy_s(szBestFit,100,szBestFitPre);
+		wcscpy_s(szBytes,100,szBytesPre);
+	}
+
+	wcscat_s(szBestFit,100,unit);
+	wcscat_s(szBytes,100,unit2);
+	
 }

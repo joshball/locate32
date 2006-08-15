@@ -1285,27 +1285,10 @@ inline BOOL CMenu::ModifyMenu(UINT nPosition, UINT nFlags, UINT nIDNewItem, LPCW
 		return ::ModifyMenuA(m_hMenu,nPosition,nFlags,nIDNewItem,W2A(lpszNewItem));
 }
 
-
-
-
 #endif
-////////////////////////////////////////
-// CWnd 
 
-inline CWnd::CWnd(HWND hWnd)
-{
-	m_hWnd=hWnd;
-}
-
-inline CWnd::~CWnd()
-{
-}
-
-
-inline BOOL CWnd::DestroyWindow()
-{
-	return ::DestroyWindow(m_hWnd);
-}
+///////////////////////////
+// Class CWin
 
 inline BOOL CWnd::Create(LPCTSTR lpszClassName,
 		LPCTSTR lpszWindowName, DWORD dwStyle,
@@ -1318,19 +1301,22 @@ inline BOOL CWnd::Create(LPCTSTR lpszClassName,
 
 inline BOOL CWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
 		LPCTSTR lpszWindowName, DWORD dwStyle,
+		int x, int y, int nWidth, int nHeight,
+		HWND hWndParent, UINT nID, LPVOID lpParam)
+{
+	return (m_hWnd=CreateWindowEx(dwExStyle,lpszClassName,
+		lpszWindowName,dwStyle,x,y,nWidth,nHeight,
+		hWndParent,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),lpParam))!=NULL;
+}
+
+inline BOOL CWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
+		LPCTSTR lpszWindowName, DWORD dwStyle,
 		const RECT* rect,HWND hParentWnd, UINT nID,
 		LPVOID lpParam)
 {
 	return (m_hWnd=CreateWindowEx(dwExStyle,lpszClassName,
 		lpszWindowName,dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
 		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),lpParam))!=NULL;
-}
-
-inline int CWnd::GetWindowText(CStringA& str) const
-{
-	int len=::GetWindowTextLength(m_hWnd);
-	len=::GetWindowText(m_hWnd,str.GetBuffer(len),len+1);
-	return len;
 }
 
 inline BOOL CWnd::GetWindowPlacement(WINDOWPLACEMENT* lpwndpl) const
@@ -1381,26 +1367,6 @@ inline void CWnd::InvalidateRgn(HRGN hRgn, BOOL bErase)
 	::InvalidateRgn(m_hWnd,hRgn,bErase);
 }
 
-inline void CWnd::ShowOwnedPopups(BOOL bShow)
-{
-	::ShowOwnedPopups(m_hWnd,bShow);
-}
-
-inline BOOL CWnd::EnableScrollBar(int nSBFlags,UINT nArrowFlags)
-{
-	return ::EnableScrollBar(m_hWnd,nSBFlags,nArrowFlags);
-}
-
-inline UINT CWnd::SetTimer(UINT idTimer,UINT uTimeout,TIMERPROC tmprc)
-{
-	return (UINT)::SetTimer(m_hWnd,(UINT_PTR)idTimer,uTimeout,tmprc);
-}
-
-inline BOOL CWnd::KillTimer(UINT uIDEvent)
-{
-	return ::KillTimer(m_hWnd,uIDEvent);
-}
-
 inline HWND CWnd::GetActiveWindow()
 {
 	return ::GetActiveWindow();
@@ -1436,11 +1402,6 @@ inline HWND CWnd::GetFocus()
 	return (HWND)::GetFocus();
 }
 
-inline HWND CWnd::SetFocus(int nID)
-{
-	return ::SetFocus(::GetDlgItem(m_hWnd,nID));
-}
-
 inline BOOL CWnd::ForceForegroundAndFocus()
 {
 	return ::ForceForegroundAndFocus(m_hWnd);
@@ -1449,6 +1410,54 @@ inline BOOL CWnd::ForceForegroundAndFocus()
 inline HWND CWnd::GetDesktopWindow()
 {
 	return ::GetDesktopWindow();
+}
+
+inline HICON CWnd::SetIcon(HICON hIcon,BOOL bBigIcon)
+{
+	return (HICON)::SendMessage(m_hWnd,WM_SETICON,(WPARAM)bBigIcon,(LPARAM)hIcon);
+}
+
+inline HICON CWnd::GetIcon(BOOL bBigIcon) const
+{
+	return (HICON)::SendMessage(m_hWnd,WM_GETICON,(WPARAM)bBigIcon,0);
+}
+
+inline int CWnd::MessageBox(LPCSTR lpText,LPCSTR lpCaption,UINT uType)
+{
+	return (int)::MessageBoxA(m_hWnd,lpText,lpCaption,uType);
+}
+
+inline int CWnd::MessageBox(LPCWSTR lpText,LPCWSTR lpCaption,UINT uType)
+{
+	if (IsUnicodeSystem())
+		return ::MessageBoxW(m_hWnd,lpText,lpCaption,uType);
+	else
+		return ::MessageBoxA(m_hWnd,W2A(lpText),W2A(lpCaption),uType);
+}
+
+inline int CWnd::ReportSystemError(LPCSTR szTitle,DWORD dwError,DWORD dwExtra,LPCSTR szPrefix)
+{
+	return ::ReportSystemError(m_hWnd,szTitle,dwError,dwExtra,szPrefix);
+}
+
+inline void CWnd::ShowOwnedPopups(BOOL bShow)
+{
+	::ShowOwnedPopups(m_hWnd,bShow);
+}
+
+inline BOOL CWnd::EnableScrollBar(int nSBFlags,UINT nArrowFlags)
+{
+	return ::EnableScrollBar(m_hWnd,nSBFlags,nArrowFlags);
+}
+
+inline UINT CWnd::SetTimer(UINT idTimer,UINT uTimeout,TIMERPROC tmprc)
+{
+	return (UINT)::SetTimer(m_hWnd,(UINT_PTR)idTimer,uTimeout,tmprc);
+}
+
+inline BOOL CWnd::KillTimer(UINT uIDEvent)
+{
+	return ::KillTimer(m_hWnd,uIDEvent);
 }
 
 inline BOOL CWnd::CheckDlgButton(int nIDButton,UINT  uCheck) const
@@ -1465,6 +1474,7 @@ inline UINT CWnd::GetDlgItemInt(int nIDDlgItem,BOOL* lpTranslated,BOOL bSigned) 
 {
 	return ::GetDlgItemInt(m_hWnd,nIDDlgItem,lpTranslated,bSigned);
 }
+
 inline UINT CWnd::GetDlgItemText(int nIDDlgItem,LPSTR lpString,int nMaxCount) const
 {
 	return ::GetDlgItemText(m_hWnd,nIDDlgItem,lpString,nMaxCount);
@@ -1522,45 +1532,56 @@ inline void CWnd::DragAcceptFiles(BOOL bAccept)
 	::DragAcceptFiles(m_hWnd,bAccept);
 }
 
-inline HICON CWnd::SetIcon(HICON hIcon,BOOL bBigIcon)
-{
-	return (HICON)::SendMessage(m_hWnd,WM_SETICON,(WPARAM)bBigIcon,(LPARAM)hIcon);
-}
-
-inline HICON CWnd::GetIcon(BOOL bBigIcon) const
-{
-	return (HICON)::SendMessage(m_hWnd,WM_GETICON,(WPARAM)bBigIcon,0);
-}
-
 inline BOOL CWnd::OpenClipboard()
 {
 	return (BOOL)::OpenClipboard(m_hWnd);
 }
 	
-inline int CWnd::MessageBox(LPCSTR lpText,LPCSTR lpCaption,UINT uType)
+
+////////////////////////////////////////
+// CTargetWnd 
+
+inline CTargetWnd::CTargetWnd(HWND hWnd)
 {
-	return (int)::MessageBoxA(m_hWnd,lpText,lpCaption,uType);
+	m_hWnd=hWnd;
 }
 
-inline int CWnd::MessageBox(LPCWSTR lpText,LPCWSTR lpCaption,UINT uType)
+
+
+inline BOOL CTargetWnd::DestroyWindow()
 {
-	if (IsUnicodeSystem())
-		return ::MessageBoxW(m_hWnd,lpText,lpCaption,uType);
-	else
-		return ::MessageBoxA(m_hWnd,W2A(lpText),W2A(lpCaption),uType);
+	return ::DestroyWindow(m_hWnd);
 }
 
-inline int CWnd::ReportSystemError(LPCSTR szTitle,DWORD dwError,DWORD dwExtra,LPCSTR szPrefix)
+inline BOOL CTargetWnd::Create(LPCTSTR lpszClassName,
+		LPCTSTR lpszWindowName, DWORD dwStyle,
+		const RECT* rect,HWND hParentWnd, UINT nID)
 {
-	return ::ReportSystemError(m_hWnd,szTitle,dwError,dwExtra,szPrefix);
+	return (m_hWnd=CreateWindow(lpszClassName,lpszWindowName,
+		dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
+		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
+
+inline BOOL CTargetWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
+		LPCTSTR lpszWindowName, DWORD dwStyle,
+		const RECT* rect,HWND hParentWnd, UINT nID,
+		LPVOID lpParam)
+{
+	return (m_hWnd=CreateWindowEx(dwExStyle,lpszClassName,
+		lpszWindowName,dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
+		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),lpParam))!=NULL;
+}
+
+
+
+
 
 
 ///////////////////////////
 // Class CFrameDlg
 
 inline CFrameWnd::CFrameWnd()
-:	CWnd(NULL),m_hMenu(NULL)
+:	CTargetWnd(NULL),m_hMenu(NULL)
 {
 }
 

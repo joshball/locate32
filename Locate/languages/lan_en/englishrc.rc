@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,6,8110
- PRODUCTVERSION 2,99,6,8110
+ FILEVERSION 2,99,6,8150
+ PRODUCTVERSION 2,99,6,8150
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 6.8110"
+            VALUE "FileVersion", "3.0 beta 6.8150"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 6.8110"
+            VALUE "ProductVersion", "3.0 beta 6.8150"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -840,7 +840,27 @@ BEGIN
     PUSHBUTTON      "Cancel",IDC_CANCEL,80,47,50,14
 END
 
-
+IDD_FILEPROPERTIES DIALOGEX 0, 0, 229, 218
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
+FONT 8, "Tahoma", 0, 0, 0x1
+BEGIN
+    ICON            "",IDC_FILEICON,9,6,21,20,SS_REALSIZEIMAGE
+    LTEXT           "",IDC_FILESANDDIRECTORIES,59,12,167,10
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,9,32,217,1
+    LTEXT           "Type:",IDC_STATIC,9,41,50,10
+    LTEXT           "",IDC_TYPES,59,41,167,10
+    LTEXT           "Location:",IDC_STATIC,9,57,50,10
+    LTEXT           "Various Folders",IDC_TYPES2,59,57,167,10
+    LTEXT           "Size:",IDC_STATIC,9,73,50,10
+    LTEXT           "",IDC_SIZEOFILES,59,73,167,10
+    LTEXT           "Size on disk:",IDC_STATIC,9,89,50,10
+    LTEXT           "",IDC_SIZEONDISK,59,89,167,10
+    CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,9,105,217,1
+    LTEXT           "Attributes",IDC_STATIC,9,113,50,10
+    CONTROL         "Read-only",IDC_READONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,57,113,53,10
+    CONTROL         "Hidden",IDC_HIDDEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,57,127,53,10
+    CONTROL         "Archive",IDC_ARCHIVE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,57,141,53,10
+END
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1687,6 +1707,16 @@ BEGIN
 	IDS_ADVSHORTCUTLOCAL			"Local"
 	IDS_ADVSHORTCUTGLOBALHOTKEY		"Global (hotkey)"
 	IDS_ADVSHORTCUTGLOBALHOOK		"Global (hook)"
+END
+
+STRINGTABLE
+BEGIN
+	IDS_FILEPROPERTIESSHEETCAPTION		"%s, ... Properties"
+	IDS_FILEPROPERTIESPAGETITLE			"General"
+	IDS_FILEPROPERTIESPAGEMULTIPLETYPES	"Multiple Types"
+	IDS_FILEPROPERTIESPAGEFILESFMT		"%d Files, %d Directories"
+	IDS_FILEPROPERTIESPAGESIZEFMT		"%s (%s)"
+	IDS_FILEPROPERTIESALLOFTYPE			"All of type %s"
 END
 
 STRINGTABLE

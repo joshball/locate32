@@ -10,16 +10,6 @@
 // Class CWnd
 ///////////////////////////
 
-/* virtual */BOOL CWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
-		LPCTSTR lpszWindowName, DWORD dwStyle,
-		int x, int y, int nWidth, int nHeight,
-		HWND hWndParent, HMENU nIDorHMenu, LPVOID lpParam)
-{
-	return (m_hWnd=CreateWindowEx(dwExStyle,lpszClassName,
-		lpszWindowName,dwStyle,x,y,nWidth,nHeight,
-		hWndParent,nIDorHMenu,GetInstanceHandle(),lpParam))!=NULL;
-}
-
 BOOL CWnd::ModifyStyle(DWORD dwRemove,DWORD dwAdd,UINT nFlags)
 {
 	if (!::SetWindowLong(m_hWnd,GWL_STYLE,(::GetWindowLong(m_hWnd,GWL_STYLE)&~dwRemove)|dwAdd))
@@ -28,7 +18,7 @@ BOOL CWnd::ModifyStyle(DWORD dwRemove,DWORD dwAdd,UINT nFlags)
 		::SetWindowPos(m_hWnd,HWND_TOP,0,0,0,0,nFlags|SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
 	return TRUE;
 }
-	
+
 BOOL CWnd::ModifyStyleEx(DWORD dwRemove,DWORD dwAdd,UINT nFlags)
 {
 	if (!::SetWindowLong(m_hWnd,GWL_EXSTYLE,(::GetWindowLong(m_hWnd,GWL_EXSTYLE)&~dwRemove)|dwAdd))
@@ -38,19 +28,13 @@ BOOL CWnd::ModifyStyleEx(DWORD dwRemove,DWORD dwAdd,UINT nFlags)
 	return TRUE;
 }
 
-void CWnd::MapWindowPoints(HWND hwndTo, LPRECT lpRect) const
+int CWnd::GetWindowText(CString& str) const
 {
-	POINT pt={lpRect->left,lpRect->top};
-	::MapWindowPoints(m_hWnd,hwndTo,&pt,1);
-	lpRect->left=pt.x;
-	lpRect->top=pt.y;
-	pt.x=lpRect->right;
-	pt.y=lpRect->bottom;
-	::MapWindowPoints(m_hWnd,hwndTo,&pt,1);
-	lpRect->right=pt.x;
-	lpRect->bottom=pt.y;
+	int len=::GetWindowTextLength(m_hWnd);
+	len=::GetWindowText(m_hWnd,str.GetBuffer(len),len+1);
+	return len;
 }
-	
+
 int CWnd::GetCheckedRadioButton(int nIDFirstButton,int nIDLastButton)
 {
 	for (int i=nIDFirstButton;i<=nIDLastButton;i++)
@@ -69,9 +53,34 @@ UINT CWnd::GetDlgItemText(int nIDDlgItem,CStringA& str) const
 	return len;
 }
 
-int CWnd::GetText(LPSTR lpszText,int cchTextMax) const
+UINT CWnd::GetDlgItemText(int nIDDlgItem,CStringW& str)
 {
-	return (int)::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText);
+	HWND hCtrl=::GetDlgItem(m_hWnd,nIDDlgItem);
+	UINT len=(UINT)::SendMessage(hCtrl,WM_GETTEXTLENGTH,0,0);
+	
+	if (IsUnicodeSystem())
+		return ::GetWindowTextW(hCtrl,str.GetBuffer(len),len+1);
+
+
+	char* pText=new char[len+2];
+	::GetWindowTextA(hCtrl,pText,len+1);
+	str.Copy(pText,len);
+	delete[] pText;
+	return len;
+}
+
+
+void CWnd::MapWindowPoints(HWND hwndTo, LPRECT lpRect) const
+{
+	POINT pt={lpRect->left,lpRect->top};
+	::MapWindowPoints(m_hWnd,hwndTo,&pt,1);
+	lpRect->left=pt.x;
+	lpRect->top=pt.y;
+	pt.x=lpRect->right;
+	pt.y=lpRect->bottom;
+	::MapWindowPoints(m_hWnd,hwndTo,&pt,1);
+	lpRect->right=pt.x;
+	lpRect->bottom=pt.y;
 }
 
 int CWnd::GetText(CStringA& str) const
@@ -81,22 +90,6 @@ int CWnd::GetText(CStringA& str) const
 	return len;
 }
 
-int CWnd::GetTextLength() const
-{
-	return (int)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
-}
-
-BOOL CWnd::SetText(LPCSTR lpsz)
-{
-	return (BOOL)::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz);
-}
-
-BOOL CWnd::SetText(LPCWSTR lpsz)
-{
-	if (IsUnicodeSystem())
-		return (BOOL)::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz);
-	return (BOOL)::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)W2A(lpsz));
-}
 
 BOOL CWnd::SetWindowText(LPCWSTR lpsz)
 {
@@ -128,362 +121,6 @@ void CWnd::CenterWindow()
 	::GetWindowRect(m_hWnd,&rect);
 	::SetWindowPos(m_hWnd,HWND_TOP,(sRes.cx-(rect.right-rect.left))/2,(sRes.cy-(rect.bottom-rect.top))/2,1,1,SWP_NOSIZE|SWP_NOZORDER);
 }
-
-#ifdef DEF_RESOURCES
-int CWnd::ShowErrorMessage(UINT nIDMsgStr,UINT nIDTitleStr,UINT uType) const
-{
-	if (IsUnicodeSystem())
-	{
-		WCHAR title[100];
-		WCHAR msg[1000];
-		LoadStringW(GetLanguageSpecificResourceHandle(),nIDMsgStr,msg,1000);
-		if (nIDTitleStr)
-			LoadStringW(GetLanguageSpecificResourceHandle(),nIDTitleStr,title,100);
-		else
-			StringCbCopyW(title,100,szwError);
-		return ::MessageBoxW(m_hWnd,msg,title,uType);
-	}
-	else
-	{
-		char title[100];
-		char msg[1000];
-		LoadString(nIDMsgStr,msg,1000);
-		if (nIDTitleStr)
-			LoadString(nIDTitleStr,title,100);
-		else
-			StringCbCopy(title,100,szError);
-		return ::MessageBox(m_hWnd,msg,title,uType);
-	}
-}
-#endif
-
-
-//Message Handlers
-
-void CWnd::OnActivate(WORD fActive,BOOL fMinimized,HWND hwnd)
-{
-	WindowProc(WM_ACTIVATE,MAKEWPARAM(fActive,fMinimized),(LPARAM)hwnd);
-}
-
-void CWnd::OnActivateApp(BOOL fActive,DWORD dwThreadID)
-{
-	WindowProc(WM_ACTIVATEAPP,(WPARAM)fActive,(LPARAM)dwThreadID);
-}
-
-void CWnd::OnCancelMode()
-{
-	WindowProc(WM_CANCELMODE,0,0);
-}
-
-void CWnd::OnCaptureChanged(HWND hwndNewCapture)
-{
-	WindowProc(WM_CAPTURECHANGED,0,(LPARAM)hwndNewCapture);
-}
-
-void CWnd::OnChangeCbChain(HWND hWndRemove,HWND hWndAfter)
-{
-	WindowProc(WM_CHANGECBCHAIN,(WPARAM)hWndRemove,(LPARAM)hWndAfter);
-}
-
-void CWnd::OnChar(TCHAR chCharCode,DWORD lKeyData)
-{
-	WindowProc(WM_CHAR,(WPARAM)chCharCode,(LPARAM)lKeyData);
-}
-
-BOOL CWnd::OnClose()
-{
-	return (BOOL)WindowProc(WM_CLOSE,0,0);
-}
-
-BOOL CWnd::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
-{
-	return (BOOL)WindowProc(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
-}
-
-void CWnd::OnContextMenu(HWND hWnd,CPoint& pos)
-{
-	WindowProc(WM_CONTEXTMENU,(WPARAM)hWnd,MAKELPARAM(pos.x,pos.y));
-}
-
-int CWnd::OnCreate(LPCREATESTRUCT lpcs)
-{
-	return (int)WindowProc(WM_CREATE,0,(LPARAM)lpcs);
-}
-	
-	
-void CWnd::OnDestroy()
-{
-	WindowProc(WM_DESTROY,0,0);
-}
-
-void CWnd::OnDestroyClipboard()
-{
-	WindowProc(WM_DESTROYCLIPBOARD,0,0);
-}
-
-void CWnd::OnDrawClipboard()
-{
-	WindowProc(WM_DRAWCLIPBOARD,0,0);
-}
-
-void CWnd::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
-{
-	WindowProc(WM_DRAWITEM,idCtl,(LPARAM)lpdis);
-}	
-
-void CWnd::OnDropFiles(HDROP hDrop)
-{
-	WindowProc(WM_DROPFILES,(WPARAM)hDrop,0);
-}
-
-void CWnd::OnHelp(LPHELPINFO lphi)
-{
-	WindowProc(WM_HELP,0,(LPARAM)lphi);
-}
-
-void CWnd::OnHScroll(UINT nSBCode,UINT nPos,HWND hScrollBar)
-{
-	WindowProc(WM_HSCROLL,MAKEWPARAM(nSBCode,nPos),(LPARAM)hScrollBar);
-}
-
-void CWnd::OnInitMenu(HMENU hMenu)
-{
-	WindowProc(WM_INITMENU,(WPARAM)hMenu,0);
-}
-
-void CWnd::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
-{
-	WindowProc(WM_INITMENUPOPUP,(WPARAM)hPopupMenu,MAKELPARAM(nIndex,bSysMenu));
-}
-	
-void CWnd::OnKeyDown(int nVirtKey,LONG lKeyData)
-{
-	WindowProc(WM_KEYDOWN,(WPARAM)nVirtKey,(LPARAM)lKeyData);
-}
-
-void CWnd::OnKeyUp(int nVirtKey,LONG lKeyData)
-{
-	WindowProc(WM_KEYUP,(WPARAM)nVirtKey,(LPARAM)lKeyData);
-}
-
-void CWnd::OnKillFocus(HWND hwndGetFocus)
-{
-	WindowProc(WM_KILLFOCUS,(WPARAM)hwndGetFocus,0);
-}
-
-void CWnd::OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpMeasureItemStruct)
-{
-	WindowProc(WM_MEASUREITEM,nIDCtl,(LPARAM)lpMeasureItemStruct);
-}
-
-LRESULT CWnd::OnMenuChar(UINT nChar,UINT nFlags,HMENU hMenu)
-{
-	return WindowProc(WM_MENUCHAR,(WPARAM)MAKELONG(nChar,nFlags),(LPARAM)hMenu);
-}
-
-void CWnd::OnMenuSelect(UINT uItem,UINT fuFlags,HMENU hmenu)
-{
-	WindowProc(WM_MENUSELECT,MAKEWPARAM(uItem,fuFlags),(LPARAM)hmenu);
-}
-	
-int CWnd::OnMouseActivate(HWND hDesktopWnd,UINT nHitTest,UINT message)
-{
-	return(int) WindowProc(WM_MOUSEACTIVATE,(WPARAM)hDesktopWnd,MAKELPARAM(nHitTest,message));
-}
-
-void CWnd::OnMouseMove(UINT fwKeys,WORD xPos,WORD yPos)
-{
-	WindowProc(WM_MOUSEMOVE,(WPARAM)fwKeys,(LPARAM)MAKELONG(xPos,yPos));
-}
-
-void CWnd::OnMove(int x, int y)
-{
-	WindowProc(WM_MOVE,0,(LPARAM)MAKELONG(x,y));
-}
-
-BOOL CWnd::OnNcActivate(BOOL bActive)
-{
-	return (BOOL)WindowProc(WM_NCACTIVATE,(WPARAM)bActive,0);
-}
-	
-BOOL CWnd::OnNcCreate(LPCREATESTRUCT lpCreateStruct)
-{
-	return (BOOL)WindowProc(WM_NCCREATE,0,(LPARAM)lpCreateStruct);
-}
-
-void CWnd::OnNcDestroy()
-{
-	WindowProc(WM_NCDESTROY,0,0);
-	
-	// For WaitForWindow()
-	CString name;
-	name.SetBase(32);
-	name << "WFWE" << (ULONGLONG)this;
-	HANDLE hEvent=OpenEvent(EVENT_MODIFY_STATE,FALSE,name);
-	SetEvent(hEvent);
-	CloseHandle(hEvent);
-
-	// No more messages to this class
-	::SetWindowLongPtr(m_hWnd,GWLP_USERDATA,0);
-}
-	
-BOOL CWnd::OnNotify(int idCtrl,LPNMHDR pnmh)
-{
-	return (BOOL)WindowProc(WM_NOTIFY,idCtrl,(LPARAM)pnmh);
-}
-
-void CWnd::OnPaint()
-{
-	WindowProc(WM_PAINT,0,0);
-}
-
-void CWnd::OnPaintClipboard(HWND hClipAppWnd,HGLOBAL hPaintStruct)
-{
-	WindowProc(WM_PAINTCLIPBOARD,(WPARAM)hClipAppWnd,(LPARAM)hPaintStruct);
-}
-
-void CWnd::OnSize(UINT nType, int cx, int cy)
-{
-	WindowProc(WM_SIZE,(WPARAM)nType,(LPARAM)MAKELONG(cx,cy));
-}
-
-BOOL CWnd::OnSizing(UINT nSide,LPRECT lpRect)
-{
-	return (BOOL)WindowProc(WM_SIZING,(WPARAM)nSide,(LPARAM)lpRect);
-}
-
-void CWnd::OnSysCommand(UINT nID,LPARAM lParam)
-{
-	WindowProc(WM_SYSCOMMAND,(WPARAM)nID,lParam);
-}
-	
-void CWnd::OnTimer(DWORD wTimerID)
-{
-	WindowProc(WM_TIMER,wTimerID,NULL);
-}
-
-void CWnd::OnVScroll(UINT nSBCode,UINT nPos,HWND hScrollBar)
-{
-	WindowProc(WM_VSCROLL,MAKEWPARAM(nSBCode,nPos),(LPARAM)hScrollBar);
-}
-
-void CWnd::OnWindowPosChanged(LPWINDOWPOS lpWndPos)
-{
-	WindowProc(WM_WINDOWPOSCHANGED,0,(LPARAM)lpWndPos);
-}
-
-void CWnd::OnWindowPosChanging(LPWINDOWPOS lpWndPos)
-{
-	WindowProc(WM_WINDOWPOSCHANGING,0,(LPARAM)lpWndPos);
-}
-
-LRESULT CWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
-{
-#ifdef _DEBUG
-	void DebugCommandsProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
-	DebugCommandsProc(*this,msg,wParam,lParam);
-#endif
-	return DefWindowProc(m_hWnd,msg,wParam,lParam);
-}
-
-#ifdef DEF_WCHAR
-int CWnd::GetWindowText(CStringW& str) const
-{
-	if (IsUnicodeSystem())
-	{
-		int len=::GetWindowTextLengthW(m_hWnd);
-		len=::GetWindowTextW(m_hWnd,str.GetBuffer(len),len+1);
-		return len;
-	}
-
-	int len=::GetWindowTextLength(m_hWnd);
-	char* pText=new char[len+2];
-	::GetWindowTextA(m_hWnd,pText,len+1);
-	str.Copy(pText,len);
-	delete[] pText;
-	return len;	
-}
-
-UINT CWnd::GetDlgItemText(int nIDDlgItem,CStringW& str)
-{
-	HWND hCtrl=::GetDlgItem(m_hWnd,nIDDlgItem);
-	UINT len=(UINT)::SendMessage(hCtrl,WM_GETTEXTLENGTH,0,0);
-	
-	if (IsUnicodeSystem())
-		return ::GetWindowTextW(hCtrl,str.GetBuffer(len),len+1);
-
-
-	char* pText=new char[len+2];
-	::GetWindowTextA(hCtrl,pText,len+1);
-	str.Copy(pText,len);
-	delete[] pText;
-	return len;
-}
-
-int CWnd::GetText(LPWSTR lpszText,int cchTextMax) const
-{
-	if (IsUnicodeSystem())
-		return (int)::SendMessageW(m_hWnd,WM_GETTEXT,cchTextMax*2,(LPARAM)lpszText); 
-
-	int nLen=(int)::SendMessageA(m_hWnd,WM_GETTEXTLENGTH,0,0);
-	char* pText=new char[nLen+2];
-	int ret=(int)::SendMessageA(m_hWnd,WM_GETTEXT,(nLen+2)*2,(LPARAM)pText);
-	if (ret!=0)
-	{
-		MultiByteToWideChar(CP_ACP,0,pText,(int)ret,lpszText,(int)cchTextMax);
-		lpszText[ret]=L'\0';
-	}
-	delete pText;
-	return ret;
-}
-
-int CWnd::GetText(CStringW& str) const
-{
-	if (IsUnicodeSystem())
-	{
-		int len=(int)::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
-		LPWSTR text=new WCHAR[len];
-		if (text==NULL)
-		{
-			SetHFCError(HFC_CANNOTALLOC);
-			return FALSE;
-		}
-		len=(int)::SendMessageW(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
-		str.Copy(text,len);
-		delete[] text;
-		return len;
-	}
-	
-	int len=(int)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
-	LPSTR text=new CHAR[len];
-	if (text==NULL)
-	{
-		SetHFCError(HFC_CANNOTALLOC);
-		return FALSE;
-	}
-	len=(int)::SendMessageA(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text); 
-	str.Copy(text,len);
-	delete[] text;
-	return len;
-}
-
-UINT CWnd::GetDlgItemText(int nIDDlgItem,LPWSTR lpString,int nMaxCount) const
-{
-	if (IsUnicodeSystem())
-		return ::GetDlgItemTextW(m_hWnd,nIDDlgItem,lpString,nMaxCount); 
-
-	char* pText=new char[nMaxCount+2];
-	int ret=::GetDlgItemTextA(m_hWnd,nIDDlgItem,pText,nMaxCount);
-	if (ret!=0)
-	{
-		MultiByteToWideChar(CP_ACP,0,pText,ret,lpString,nMaxCount);
-		lpString[ret]=L'\0';
-	}
-	delete pText;
-	return ret;
-}
-
-#endif
 
 BOOL CWnd::LoadPosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey,DWORD fFlags)
 {
@@ -598,6 +235,469 @@ BOOL CWnd::SavePosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) const
 	return bRet;
 }
 
+
+#ifdef DEF_RESOURCES
+int CWnd::ShowErrorMessage(UINT nIDMsgStr,UINT nIDTitleStr,UINT uType) const
+{
+	if (IsUnicodeSystem())
+	{
+		WCHAR title[100];
+		WCHAR msg[1000];
+		LoadStringW(GetLanguageSpecificResourceHandle(),nIDMsgStr,msg,1000);
+		if (nIDTitleStr)
+			LoadStringW(GetLanguageSpecificResourceHandle(),nIDTitleStr,title,100);
+		else
+			StringCbCopyW(title,100,szwError);
+		return ::MessageBoxW(m_hWnd,msg,title,uType);
+	}
+	else
+	{
+		char title[100];
+		char msg[1000];
+		LoadString(nIDMsgStr,msg,1000);
+		if (nIDTitleStr)
+			LoadString(nIDTitleStr,title,100);
+		else
+			StringCbCopy(title,100,szError);
+		return ::MessageBox(m_hWnd,msg,title,uType);
+	}
+}
+#endif
+#ifdef DEF_WCHAR
+int CWnd::GetText(CStringW& str) const
+{
+	if (IsUnicodeSystem())
+	{
+		int len=(int)::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+		LPWSTR text=new WCHAR[len];
+		if (text==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return FALSE;
+		}
+		len=(int)::SendMessageW(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
+		str.Copy(text,len);
+		delete[] text;
+		return len;
+	}
+	
+	int len=(int)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+	LPSTR text=new CHAR[len];
+	if (text==NULL)
+	{
+		SetHFCError(HFC_CANNOTALLOC);
+		return FALSE;
+	}
+	len=(int)::SendMessageA(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text); 
+	str.Copy(text,len);
+	delete[] text;
+	return len;
+}
+ 
+BOOL CWnd::SetText(LPCWSTR lpsz)
+{
+	if (IsUnicodeSystem())
+		return (BOOL)::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz); 
+	return (BOOL)::SendMessageA(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)W2A(lpsz)); 
+}
+
+
+int CWnd::GetWindowText(CStringW& str) const
+{
+	if (IsUnicodeSystem())
+	{
+		int len=::GetWindowTextLengthW(m_hWnd);
+		len=::GetWindowTextW(m_hWnd,str.GetBuffer(len),len+1);
+		return len;
+	}
+
+	int len=::GetWindowTextLength(m_hWnd);
+	char* pText=new char[len+2];
+	::GetWindowTextA(m_hWnd,pText,len+1);
+	str.Copy(pText,len);
+	delete[] pText;
+	return len;	
+}
+
+
+
+int CWnd::GetText(LPWSTR lpszText,int cchTextMax) const
+{
+	if (IsUnicodeSystem())
+		return (int)::SendMessageW(m_hWnd,WM_GETTEXT,cchTextMax*2,(LPARAM)lpszText); 
+
+	int nLen=(int)::SendMessageA(m_hWnd,WM_GETTEXTLENGTH,0,0);
+	char* pText=new char[nLen+2];
+	int ret=(int)::SendMessageA(m_hWnd,WM_GETTEXT,(nLen+2)*2,(LPARAM)pText);
+	if (ret!=0)
+	{
+		MultiByteToWideChar(CP_ACP,0,pText,(int)ret,lpszText,(DWORD)cchTextMax);
+		lpszText[ret]=L'\0';
+	}
+	delete pText;
+	return ret;
+}
+
+UINT CWnd::GetDlgItemText(int nIDDlgItem,LPWSTR lpString,int nMaxCount) const
+{
+	if (IsUnicodeSystem())
+		return ::GetDlgItemTextW(m_hWnd,nIDDlgItem,lpString,nMaxCount); 
+
+	char* pText=new char[nMaxCount+2];
+	int ret=::GetDlgItemTextA(m_hWnd,nIDDlgItem,pText,nMaxCount);
+	if (ret!=0)
+	{
+		MultiByteToWideChar(CP_ACP,0,pText,ret,lpString,nMaxCount);
+		lpString[ret]=L'\0';
+	}
+	delete pText;
+	return ret;
+}
+
+#endif
+
+
+
+///////////////////////////
+// Class CTargetWnd
+///////////////////////////
+
+CTargetWnd::~CTargetWnd()
+{
+}
+
+/* virtual */BOOL CTargetWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
+		LPCTSTR lpszWindowName, DWORD dwStyle,
+		int x, int y, int nWidth, int nHeight,
+		HWND hWndParent, HMENU nIDorHMenu, LPVOID lpParam)
+{
+	return (m_hWnd=CreateWindowEx(dwExStyle,lpszClassName,
+		lpszWindowName,dwStyle,x,y,nWidth,nHeight,
+		hWndParent,nIDorHMenu,GetInstanceHandle(),lpParam))!=NULL;
+}
+
+
+int CTargetWnd::GetText(LPSTR lpszText,int cchTextMax) const
+{
+	return (int)::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)cchTextMax,(LPARAM)lpszText);
+}
+
+int CTargetWnd::GetText(CStringA& str) const
+{
+	int len=(int)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
+	len=(int)::SendMessage(m_hWnd,WM_GETTEXT,(WPARAM)len+1,(LPARAM)str.GetBuffer(len));
+	return len;
+}
+
+int CTargetWnd::GetTextLength() const
+{
+	return (int)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0);
+}
+
+BOOL CTargetWnd::SetText(LPCSTR lpsz)
+{
+	return (BOOL)::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz);
+}
+
+BOOL CTargetWnd::SetText(LPCWSTR lpsz)
+{
+	if (IsUnicodeSystem())
+		return (BOOL)::SendMessageW(m_hWnd,WM_SETTEXT,0,(LPARAM)lpsz);
+	return (BOOL)::SendMessage(m_hWnd,WM_SETTEXT,0,(LPARAM)(LPCSTR)W2A(lpsz));
+}
+
+
+
+
+
+
+
+
+//Message Handlers
+
+void CTargetWnd::OnActivate(WORD fActive,BOOL fMinimized,HWND hwnd)
+{
+	WindowProc(WM_ACTIVATE,MAKEWPARAM(fActive,fMinimized),(LPARAM)hwnd);
+}
+
+void CTargetWnd::OnActivateApp(BOOL fActive,DWORD dwThreadID)
+{
+	WindowProc(WM_ACTIVATEAPP,(WPARAM)fActive,(LPARAM)dwThreadID);
+}
+
+void CTargetWnd::OnCancelMode()
+{
+	WindowProc(WM_CANCELMODE,0,0);
+}
+
+void CTargetWnd::OnCaptureChanged(HWND hwndNewCapture)
+{
+	WindowProc(WM_CAPTURECHANGED,0,(LPARAM)hwndNewCapture);
+}
+
+void CTargetWnd::OnChangeCbChain(HWND hWndRemove,HWND hWndAfter)
+{
+	WindowProc(WM_CHANGECBCHAIN,(WPARAM)hWndRemove,(LPARAM)hWndAfter);
+}
+
+void CTargetWnd::OnChar(TCHAR chCharCode,DWORD lKeyData)
+{
+	WindowProc(WM_CHAR,(WPARAM)chCharCode,(LPARAM)lKeyData);
+}
+
+BOOL CTargetWnd::OnClose()
+{
+	return (BOOL)WindowProc(WM_CLOSE,0,0);
+}
+
+BOOL CTargetWnd::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
+{
+	return (BOOL)WindowProc(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
+}
+
+void CTargetWnd::OnContextMenu(HWND hWnd,CPoint& pos)
+{
+	WindowProc(WM_CONTEXTMENU,(WPARAM)hWnd,MAKELPARAM(pos.x,pos.y));
+}
+
+int CTargetWnd::OnCreate(LPCREATESTRUCT lpcs)
+{
+	return (int)WindowProc(WM_CREATE,0,(LPARAM)lpcs);
+}
+	
+	
+void CTargetWnd::OnDestroy()
+{
+	WindowProc(WM_DESTROY,0,0);
+}
+
+void CTargetWnd::OnDestroyClipboard()
+{
+	WindowProc(WM_DESTROYCLIPBOARD,0,0);
+}
+
+void CTargetWnd::OnDrawClipboard()
+{
+	WindowProc(WM_DRAWCLIPBOARD,0,0);
+}
+
+void CTargetWnd::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
+{
+	WindowProc(WM_DRAWITEM,idCtl,(LPARAM)lpdis);
+}	
+
+void CTargetWnd::OnDropFiles(HDROP hDrop)
+{
+	WindowProc(WM_DROPFILES,(WPARAM)hDrop,0);
+}
+
+void CTargetWnd::OnHelp(LPHELPINFO lphi)
+{
+	WindowProc(WM_HELP,0,(LPARAM)lphi);
+}
+
+void CTargetWnd::OnHScroll(UINT nSBCode,UINT nPos,HWND hScrollBar)
+{
+	WindowProc(WM_HSCROLL,MAKEWPARAM(nSBCode,nPos),(LPARAM)hScrollBar);
+}
+
+void CTargetWnd::OnInitMenu(HMENU hMenu)
+{
+	WindowProc(WM_INITMENU,(WPARAM)hMenu,0);
+}
+
+void CTargetWnd::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
+{
+	WindowProc(WM_INITMENUPOPUP,(WPARAM)hPopupMenu,MAKELPARAM(nIndex,bSysMenu));
+}
+	
+void CTargetWnd::OnKeyDown(int nVirtKey,LONG lKeyData)
+{
+	WindowProc(WM_KEYDOWN,(WPARAM)nVirtKey,(LPARAM)lKeyData);
+}
+
+void CTargetWnd::OnKeyUp(int nVirtKey,LONG lKeyData)
+{
+	WindowProc(WM_KEYUP,(WPARAM)nVirtKey,(LPARAM)lKeyData);
+}
+
+void CTargetWnd::OnKillFocus(HWND hwndGetFocus)
+{
+	WindowProc(WM_KILLFOCUS,(WPARAM)hwndGetFocus,0);
+}
+
+void CTargetWnd::OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpMeasureItemStruct)
+{
+	WindowProc(WM_MEASUREITEM,nIDCtl,(LPARAM)lpMeasureItemStruct);
+}
+
+LRESULT CTargetWnd::OnMenuChar(UINT nChar,UINT nFlags,HMENU hMenu)
+{
+	return WindowProc(WM_MENUCHAR,(WPARAM)MAKELONG(nChar,nFlags),(LPARAM)hMenu);
+}
+
+void CTargetWnd::OnMenuSelect(UINT uItem,UINT fuFlags,HMENU hmenu)
+{
+	WindowProc(WM_MENUSELECT,MAKEWPARAM(uItem,fuFlags),(LPARAM)hmenu);
+}
+	
+int CTargetWnd::OnMouseActivate(HWND hDesktopWnd,UINT nHitTest,UINT message)
+{
+	return(int) WindowProc(WM_MOUSEACTIVATE,(WPARAM)hDesktopWnd,MAKELPARAM(nHitTest,message));
+}
+
+void CTargetWnd::OnMouseMove(UINT fwKeys,WORD xPos,WORD yPos)
+{
+	WindowProc(WM_MOUSEMOVE,(WPARAM)fwKeys,(LPARAM)MAKELONG(xPos,yPos));
+}
+
+void CTargetWnd::OnMove(int x, int y)
+{
+	WindowProc(WM_MOVE,0,(LPARAM)MAKELONG(x,y));
+}
+
+BOOL CTargetWnd::OnNcActivate(BOOL bActive)
+{
+	return (BOOL)WindowProc(WM_NCACTIVATE,(WPARAM)bActive,0);
+}
+	
+BOOL CTargetWnd::OnNcCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	return (BOOL)WindowProc(WM_NCCREATE,0,(LPARAM)lpCreateStruct);
+}
+
+void CTargetWnd::OnNcDestroy()
+{
+	WindowProc(WM_NCDESTROY,0,0);
+	
+	// For WaitForWindow()
+	CString name;
+	name.SetBase(32);
+	name << "WFWE" << (ULONGLONG)this;
+	HANDLE hEvent=OpenEvent(EVENT_MODIFY_STATE,FALSE,name);
+	SetEvent(hEvent);
+	CloseHandle(hEvent);
+
+	// No more messages to this class
+	::SetWindowLongPtr(m_hWnd,GWLP_USERDATA,0);
+}
+	
+BOOL CTargetWnd::OnNotify(int idCtrl,LPNMHDR pnmh)
+{
+	return (BOOL)WindowProc(WM_NOTIFY,idCtrl,(LPARAM)pnmh);
+}
+
+void CTargetWnd::OnPaint()
+{
+	WindowProc(WM_PAINT,0,0);
+}
+
+void CTargetWnd::OnPaintClipboard(HWND hClipAppWnd,HGLOBAL hPaintStruct)
+{
+	WindowProc(WM_PAINTCLIPBOARD,(WPARAM)hClipAppWnd,(LPARAM)hPaintStruct);
+}
+
+void CTargetWnd::OnSize(UINT nType, int cx, int cy)
+{
+	WindowProc(WM_SIZE,(WPARAM)nType,(LPARAM)MAKELONG(cx,cy));
+}
+
+BOOL CTargetWnd::OnSizing(UINT nSide,LPRECT lpRect)
+{
+	return (BOOL)WindowProc(WM_SIZING,(WPARAM)nSide,(LPARAM)lpRect);
+}
+
+void CTargetWnd::OnSysCommand(UINT nID,LPARAM lParam)
+{
+	WindowProc(WM_SYSCOMMAND,(WPARAM)nID,lParam);
+}
+	
+void CTargetWnd::OnTimer(DWORD wTimerID)
+{
+	WindowProc(WM_TIMER,wTimerID,NULL);
+}
+
+void CTargetWnd::OnVScroll(UINT nSBCode,UINT nPos,HWND hScrollBar)
+{
+	WindowProc(WM_VSCROLL,MAKEWPARAM(nSBCode,nPos),(LPARAM)hScrollBar);
+}
+
+void CTargetWnd::OnWindowPosChanged(LPWINDOWPOS lpWndPos)
+{
+	WindowProc(WM_WINDOWPOSCHANGED,0,(LPARAM)lpWndPos);
+}
+
+void CTargetWnd::OnWindowPosChanging(LPWINDOWPOS lpWndPos)
+{
+	WindowProc(WM_WINDOWPOSCHANGING,0,(LPARAM)lpWndPos);
+}
+
+LRESULT CTargetWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
+{
+#ifdef _DEBUG
+	void DebugCommandsProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
+	DebugCommandsProc(*this,msg,wParam,lParam);
+#endif
+	return DefWindowProc(m_hWnd,msg,wParam,lParam);
+}
+
+#ifdef DEF_WCHAR
+
+
+
+
+int CTargetWnd::GetText(LPWSTR lpszText,int cchTextMax) const
+{
+	if (IsUnicodeSystem())
+		return (int)::SendMessageW(m_hWnd,WM_GETTEXT,cchTextMax*2,(LPARAM)lpszText); 
+
+	int nLen=(int)::SendMessageA(m_hWnd,WM_GETTEXTLENGTH,0,0);
+	char* pText=new char[nLen+2];
+	int ret=(int)::SendMessageA(m_hWnd,WM_GETTEXT,(nLen+2)*2,(LPARAM)pText);
+	if (ret!=0)
+	{
+		MultiByteToWideChar(CP_ACP,0,pText,(int)ret,lpszText,(int)cchTextMax);
+		lpszText[ret]=L'\0';
+	}
+	delete pText;
+	return ret;
+}
+
+int CTargetWnd::GetText(CStringW& str) const
+{
+	if (IsUnicodeSystem())
+	{
+		int len=(int)::SendMessageW(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+		LPWSTR text=new WCHAR[len];
+		if (text==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOC);
+			return FALSE;
+		}
+		len=(int)::SendMessageW(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text);
+		str.Copy(text,len);
+		delete[] text;
+		return len;
+	}
+	
+	int len=(int)::SendMessage(m_hWnd,WM_GETTEXTLENGTH,0,0)+2;
+	LPSTR text=new CHAR[len];
+	if (text==NULL)
+	{
+		SetHFCError(HFC_CANNOTALLOC);
+		return FALSE;
+	}
+	len=(int)::SendMessageA(m_hWnd,WM_GETTEXT,(WPARAM)len,(LPARAM)text); 
+	str.Copy(text,len);
+	delete[] text;
+	return len;
+}
+
+
+
+#endif
+
+
 ///////////////////////////
 // Class CFrameDlg
 ///////////////////////////
@@ -645,7 +745,7 @@ BOOL CFrameWnd::Create(LPCTSTR lpszClassName,LPCTSTR lpszWindowName,DWORD dwStyl
 
 int CFrameWnd::OnCreate(LPCREATESTRUCT lpcs)
 {
-	if (CWnd::OnCreate(lpcs)==-1)
+	if (CTargetWnd::OnCreate(lpcs)==-1)
 		return -1;
 	AddDebugMenuItems(*this);
 	if (OnCreateClient(lpcs))
@@ -660,7 +760,7 @@ BOOL CFrameWnd::OnCreateClient(LPCREATESTRUCT lpcs)
 	
 LRESULT CFrameWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 {
-	return CWnd::WindowProc(msg,wParam,lParam);
+	return CTargetWnd::WindowProc(msg,wParam,lParam);
 }
 
 ///////////////////////////
@@ -929,7 +1029,7 @@ BOOL CMDIChildWnd::UpdateClientEdge(LPRECT lpRect)
 
 BOOL CMDIChildWnd::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
-	return CWnd::OnCommand(wID,wNotifyCode,hControl);
+	return CTargetWnd::OnCommand(wID,wNotifyCode,hControl);
 }
 
 void CMDIChildWnd::OnWindowNew()
@@ -938,12 +1038,12 @@ void CMDIChildWnd::OnWindowNew()
 
 LRESULT CMDIChildWnd::OnMenuChar(UINT nChar,UINT nFlags,HMENU hMenu)
 {
-	return CWnd::OnMenuChar(nChar,nFlags,hMenu);
+	return CTargetWnd::OnMenuChar(nChar,nFlags,hMenu);
 }
 
 BOOL CMDIChildWnd::OnNcCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	return CWnd::OnNcCreate(lpCreateStruct);
+	return CTargetWnd::OnNcCreate(lpCreateStruct);
 }
 
 int CMDIChildWnd::OnCreate(LPCREATESTRUCT lpcs)
@@ -982,18 +1082,18 @@ void CMDIChildWnd::OnWindowPosChanging(LPWINDOWPOS lpWndPos)
 			lpWndPos->cy=rectClient.bottom-rectClient.top;
 		}
 	}
-	CWnd::OnWindowPosChanging(lpWndPos);
+	CTargetWnd::OnWindowPosChanging(lpWndPos);
 }
 
 BOOL CMDIChildWnd::OnNcActivate(BOOL bActive)
 {
-	return CWnd::OnNcActivate(bActive);
+	return CTargetWnd::OnNcActivate(bActive);
 }
 
 void CMDIChildWnd::OnDestroy()
 {
 	UpdateClientEdge();
-	CWnd::OnDestroy();
+	CTargetWnd::OnDestroy();
 }
 
 ///////////////////////////

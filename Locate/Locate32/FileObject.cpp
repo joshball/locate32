@@ -130,8 +130,8 @@ HRESULT STDMETHODCALLTYPE CFileObject::GetData(FORMATETC *pformatetcIn,STGMEDIUM
 		GetClipboardFormatName(pformatetcIn->cfFormat,szFormat,100);
 		if (strcasecmp(CFSTR_SHELLIDLIST,szFormat)==0)
 			pmedium->hGlobal=GetItemIDList();
-		else if (strcasecmp(CFSTR_SHELLIDLISTOFFSET,szFormat)==0 && m_Points.GetSize()>0)
-			pmedium->hGlobal=GetItemIDListOffset();
+		/*else if (strcasecmp(CFSTR_SHELLIDLISTOFFSET,szFormat)==0 && m_Points.GetSize()>0)
+			pmedium->hGlobal=GetItemIDListOffset();*/
 		else if (strcasecmp(CFSTR_FILENAME,szFormat)==0)
 		{
 			int len=(int)m_Files[0]->GetLength();
@@ -198,7 +198,13 @@ HRESULT STDMETHODCALLTYPE CFileObject::QueryGetData(FORMATETC *pformatetc)
 		pformatetc->tymed=TYMED_HGLOBAL;
 	else if (pformatetc->tymed!=TYMED_HGLOBAL)
 	{
-		FoDebugFormatMessage2("CFileObject::QueryGetData: invalid tymed %X",pformatetc->tymed,NULL);
+#ifdef _DEBUG
+		char szFormat[100];
+		if (GetClipboardFormatName(pformatetc->cfFormat,szFormat,100))
+			FoDebugFormatMessage2("CFileObject::QueryGetData: invalid tymed %X, format=%s",pformatetc->tymed,szFormat);
+		else
+			FoDebugFormatMessage2("CFileObject::QueryGetData: invalid tymed %X",pformatetc->tymed,NULL);
+#endif
 		return DV_E_TYMED;
 	}
 
@@ -224,8 +230,8 @@ HRESULT STDMETHODCALLTYPE CFileObject::QueryGetData(FORMATETC *pformatetc)
 
 		if (strcasecmp(szFormat,CFSTR_SHELLIDLIST)==0)
 			return S_OK;
-		if (strcasecmp(szFormat,CFSTR_SHELLIDLISTOFFSET)==0)
-			return S_OK;
+		/*if (strcasecmp(szFormat,CFSTR_SHELLIDLISTOFFSET)==0)
+			return S_OK;*/
 		if (strcasecmp(szFormat,CFSTR_FILENAME)==0)
 			return S_OK;
 		if (strcasecmp(szFormat,CFSTR_FILENAMEW)==0)
@@ -493,6 +499,7 @@ HGLOBAL CFileObject::GetItemIDList()
 	return (HGLOBAL)pida;
 }
 
+/*
 HGLOBAL CFileObject::GetItemIDListOffset()
 {
 	POINT* pPoints=(POINT*)GlobalAlloc(GPTR,sizeof(POINT)*(m_Files.GetSize()+1));
@@ -505,6 +512,7 @@ HGLOBAL CFileObject::GetItemIDListOffset()
 	}
 	return (HGLOBAL)pPoints;
 }
+*/
 
 HGLOBAL CFileObject::GetFileNameMapA()
 {

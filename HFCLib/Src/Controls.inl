@@ -5,58 +5,18 @@
 #ifndef HFCCONTROLS_INL
 #define HFCCONTROLS_INL
 
-///////////////////////////
-// Class CWinCtrl
 
-inline BOOL CWndCtrl::Create(LPCTSTR lpszClassName,
-		LPCTSTR lpszWindowName, DWORD dwStyle,
-		const RECT* rect,HWND hParentWnd, UINT nID)
-{
-	return (m_hWnd=CreateWindow(lpszClassName,lpszWindowName,
-		dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
-}
-
-inline BOOL CWndCtrl::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
-		LPCTSTR lpszWindowName, DWORD dwStyle,
-		int x, int y, int nWidth, int nHeight,
-		HWND hWndParent, UINT nID, LPVOID lpParam)
-{
-	return (m_hWnd=CreateWindowEx(dwExStyle,lpszClassName,
-		lpszWindowName,dwStyle,x,y,nWidth,nHeight,
-		hWndParent,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),lpParam))!=NULL;
-}
-
-inline BOOL CWndCtrl::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
-		LPCTSTR lpszWindowName, DWORD dwStyle,
-		const RECT* rect,HWND hParentWnd, UINT nID,
-		LPVOID lpParam)
-{
-	return (m_hWnd=CreateWindowEx(dwExStyle,lpszClassName,
-		lpszWindowName,dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),lpParam))!=NULL;
-}
-
-inline BOOL CWnd::operator==(const CWndCtrl& wnd) const 
-{
-	return (m_hWnd==wnd.m_hWnd);
-}
-
-inline BOOL CWnd::operator!=(const CWndCtrl& wnd) const
-{
-	return (m_hWnd!=wnd.m_hWnd); 
-}
 
 ///////////////////////////
 // Class CButton
 
 inline CButton::CButton()
-:	CWndCtrl(NULL)
+:	CWnd(NULL)
 {
 }
 
 inline CButton::CButton(HWND hWnd)
-:	CWndCtrl(hWnd)
+:	CWnd(hWnd)
 {
 }
 
@@ -132,12 +92,12 @@ inline HCURSOR CButton::GetCursor()
 
 
 inline CEdit::CEdit() 
-:	CWndCtrl(NULL)
+:	CWnd(NULL)
 {
 }
 
 inline CEdit::CEdit(HWND hWnd) 
-:	CWndCtrl(hWnd)
+:	CWnd(hWnd)
 {
 }
 
@@ -192,12 +152,12 @@ inline void CEdit::Paste()
 // CRichEditCtrl
 
 inline CRichEditCtrl::CRichEditCtrl()
-:	CWndCtrl(NULL)
+:	CWnd(NULL)
 {
 }
 
 inline CRichEditCtrl::CRichEditCtrl(HWND hWnd)
-:	CWndCtrl(hWnd)
+:	CWnd(hWnd)
 {
 }
 
@@ -575,12 +535,12 @@ inline BOOL CRichEditCtrl::SetOleCallback(IRichEditOleCallback *pOleCallback)
 // Class CListBox
 
 inline CListBox::CListBox()
-:	CWndCtrl(NULL)
+:	CWnd(NULL)
 {
 }
 
 inline CListBox::CListBox(HWND hWnd)
-:	CWndCtrl(hWnd)
+:	CWnd(hWnd)
 {
 }
 
@@ -839,12 +799,12 @@ inline int CListBox::SelectString(int nStartAfter,LPCWSTR lpszItem)
 // Class CComboBox
 
 inline CComboBox::CComboBox()
-:	CWndCtrl(NULL)
+:	CWnd(NULL)
 {
 }
 
 inline CComboBox::CComboBox(HWND hWnd)
-:	CWndCtrl(hWnd)
+:	CWnd(hWnd)
 {
 }
 
@@ -1065,12 +1025,12 @@ inline void CComboBox::Paste()
 // Class ScrollBar
 
 inline CScrollBar::CScrollBar()
-:	CWndCtrl(NULL),m_nBar(SB_CTL)
+:	CWnd(NULL),m_nBar(SB_CTL)
 {
 }
 
 inline CScrollBar::CScrollBar(HWND hWnd,int nBar)
-:	CWndCtrl(hWnd),m_nBar(nBar)
+:	CWnd(hWnd),m_nBar(nBar)
 {
 }
 	
@@ -1100,12 +1060,12 @@ inline BOOL CScrollBar::SetScrollInfo(LPSCROLLINFO lpScrollInfo,BOOL bRedraw)
 // Class C3DStaticCtrl
 
 inline C3DStaticCtrl::C3DStaticCtrl()
-:	CWndCtrl(NULL)
+:	CWnd(NULL)
 {
 }
 
 inline C3DStaticCtrl::C3DStaticCtrl(HWND hWnd)
-:	CWndCtrl(hWnd)
+:	CWnd(hWnd)
 {
 }
 
@@ -1120,12 +1080,12 @@ inline BOOL C3DStaticCtrl::Create(LPCTSTR lpszCaption,DWORD dwStyle,const RECT* 
 // Class C3DButtonCtrl
 
 inline C3DButtonCtrl::C3DButtonCtrl()
-:	CWndCtrl(NULL)
+:	CWnd(NULL)
 {
 }
 
 inline C3DButtonCtrl::C3DButtonCtrl(HWND hWnd)
-:	CWndCtrl(hWnd)
+:	CWnd(hWnd)
 {
 }
 

@@ -45,7 +45,7 @@ public:
 
 	HGLOBAL GetHDrop();
 	HGLOBAL GetItemIDList();
-	HGLOBAL GetItemIDListOffset();
+	//HGLOBAL GetItemIDListOffset();
 	HGLOBAL GetFileNameMapA();
 	HGLOBAL GetFileNameMapW();
 

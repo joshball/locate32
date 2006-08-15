@@ -3072,6 +3072,24 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 								
 					switch (str.uType)
 					{
+					case STRRET_OFFSET:
+						{
+							LPCSTR pStr=(LPCSTR)((LPBYTE)fd.m_lpil + str.uOffset);						
+							if (pStr[0]!='\\' && pStr[1]!='\\')
+							{
+								if (pStr[0]==':' && pStr[1]==':')
+									ShowErrorMessage(IDS_ERRORCANNOTADDITEM,IDS_ERROR,MB_ICONERROR|MB_OK);
+								else
+								{
+									CString s;
+									s.Format(IDS_ERRORCANNOTADDITEM2,pStr);
+									MessageBox(s,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
+								}
+								return;
+							}
+							AddComputerToList(A2W(pStr));
+							break;
+						}
 					case STRRET_CSTR:
 						if (str.cStr[0]!='\\' && str.cStr[1]!='\\')
 						{
@@ -3101,9 +3119,8 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 							return;
 						}
 						AddComputerToList(str.pOleStr);
+						CoTaskMemFree(str.pOleStr);
 						break;
-					default:
-						throw CException(CException::unknown);
 					}
 				}
                 else
@@ -5257,7 +5274,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 			else if (wControlID!=0)
 			{
 				// Checking wheter dialog contains control 
-				CWndCtrl Control;
+				CWnd Control;
 				for (int i=0;hDialogs[i]!=NULL;i++)
 				{
 					Control.AssignToDlgItem(hDialogs[i],wControlID);
@@ -6395,7 +6412,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	}
 
 	ShowDlgItem(IDC_STATICVERB,ssVerb);
-	m_VerbCombo.ShowWindow((CWndCtrl::ShowState)ssVerb);
+	m_VerbCombo.ShowWindow(ssVerb);
 		
 	ShowDlgItem(IDC_STATICWINDOW,ssMessage);
 	ShowDlgItem(IDC_WINDOW,ssMessage);
@@ -6414,7 +6431,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	ShowDlgItem(IDC_VALUEHELPTEXT,ssChangeValue);
 
 	ShowDlgItem(IDC_STATICWHICHFILE,ssWhichFile);
-	m_WhichFileCombo.ShowWindow((CWndCtrl::ShowState)ssWhichFile);
+	m_WhichFileCombo.ShowWindow(ssWhichFile);
 
 }
 

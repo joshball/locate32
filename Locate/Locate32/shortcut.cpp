@@ -1110,7 +1110,7 @@ void CSubAction::DoChangeValue()
 		return;
 	
 	// Get handle to control
-	CWndCtrl Control(pLocateDlg->GetDlgItem(LOWORD(m_nControl)));
+	CWnd Control(pLocateDlg->GetDlgItem(LOWORD(m_nControl)));
 	HWND hInDialog=*pLocateDlg;
 
 	if (Control.GetHandle()==NULL)

@@ -107,15 +107,7 @@ CDC::CDC(CWnd* pWnd)
 	m_bPrinting=FALSE;
 }
 
-CDC::CDC(CWndCtrl* pWnd)
-{
-	if (pWnd!=NULL)
-		m_hWnd=*pWnd;
-	else
-		m_hWnd=NULL;
-	m_hDC=GetDC(m_hWnd);
-	m_bPrinting=FALSE;
-}
+
 
 BOOL CDC::CreateDC(LPCTSTR lpszDriverName,LPCTSTR lpszDeviceName,
 	LPCTSTR lpszOutput,const void* lpInitData)

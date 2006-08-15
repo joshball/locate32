@@ -3973,7 +3973,7 @@ int CLocateAppWnd::CUpdateStatusWnd::OnCreate(LPCREATESTRUCT lpcs)
 
 void CLocateAppWnd::CUpdateStatusWnd::OnDestroy()
 {
-	CWnd::OnDestroy();
+	CTargetWnd::OnDestroy();
 	if (m_pMouseMove!=NULL)
 	{
 		delete m_pMouseMove;
@@ -3989,7 +3989,7 @@ void CLocateAppWnd::CUpdateStatusWnd::OnDestroy()
 
 void CLocateAppWnd::CUpdateStatusWnd::OnNcDestroy()
 {
-	CWnd::OnNcDestroy();
+	CTargetWnd::OnNcDestroy();
 
 	// If this is NULL, class is deleted anyway
 	if (GetLocateAppWnd()->m_pUpdateStatusWnd!=NULL)
@@ -4357,7 +4357,7 @@ LRESULT CLocateAppWnd::CUpdateStatusWnd::WindowProc(UINT msg,WPARAM wParam,LPARA
 		}
 		break;
 	}
-	return CWnd::WindowProc(msg,wParam,lParam);
+	return CTargetWnd::WindowProc(msg,wParam,lParam);
 }
 
 void CLocateAppWnd::CUpdateStatusWnd::OnMouseMove(UINT fwKeys,WORD xPos,WORD yPos)

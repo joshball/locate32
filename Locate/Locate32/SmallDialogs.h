@@ -196,8 +196,72 @@ public:
 	DWORD m_dwFlags;
 };
 
+typedef BOOL (WINAPI* GETVOLUMEPATHNAMEW)(LPCWSTR,LPWSTR,DWORD);
+typedef BOOL (WINAPI* GETDISKFREESPACEEX)(LPCSTR,PULARGE_INTEGER, PULARGE_INTEGER, PULARGE_INTEGER);
 
 
+class CPropertiesSheet : public CPropertySheet  
+{
+public:
+	CPropertiesSheet(int nItems,CLocatedItem** pItems);
+	virtual ~CPropertiesSheet();
+
+	class CPropertiesPage : public CPropertyPage 
+	{
+	public:
+		CPropertiesPage(int nItems,CLocatedItem** pItems);
+		virtual ~CPropertiesPage();
+
+		virtual BOOL OnInitDialog(HWND hwndFocus);
+		virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
+		virtual BOOL OnApply();
+		virtual void OnCancel();
+		virtual void OnTimer(DWORD wTimerID); 
+		virtual void OnDestroy();
+				
+		void UpdateFields();
+		void CheckFiles();
+		void CheckDirectory(LPCWSTR szDirectory,BOOL bIsFirst);
+		void CheckFile(LPCWSTR szFile,BOOL bIsFirst);
+		
+		static void FormatSizes(ULONGLONG ulSize,WCHAR* szBestFit,WCHAR* szBytes);
+		static DWORD WINAPI CountingThreadProc(LPVOID lpParameter);
+		static BOOL WINAPI GetVolumePathNameAlt(LPCWSTR lpszFileName,LPWSTR lpszVolumePathName,DWORD cchBufferLength);
+		
+		
+	private:
+		HANDLE m_hThread;
+		int m_nItems;
+		LPWSTR* m_ppFiles;
+		BOOL* m_pbIsDirectory;
+
+		int m_nFiles;
+		int m_nDirectories;
+		ULONGLONG m_nSize;
+		ULONGLONG m_nSizeOnDisk;
+		BOOL m_bIsSameType;
+
+		int m_bReadOnly;
+		int m_bHidden;
+		int m_bArchive;
+
+		int m_nExPos0;
+
+		GETVOLUMEPATHNAMEW m_pGetVolumePathName;
+		
+	};
+
+	CPropertyPage* m_pPropertiesPage;
+	
+
+	static DWORD WINAPI StartThreadProc(LPVOID lpParameter);
+	void Open();
+	
+	HANDLE m_hThread;
+
+
+
+};
 
 #include "SmallDialogs.inl"
 

@@ -216,6 +216,10 @@ inline DWORD FileSystem::GetFileAttributes(LPCSTR lpFileName)
 	return ::GetFileAttributesA(lpFileName);
 }
 
+inline BOOL FileSystem::SetFileAttributes(LPCSTR lpFileName,DWORD dwFileAttributes)
+{
+	return ::SetFileAttributes(lpFileName,dwFileAttributes);
+}
 
 inline DWORD FileSystem::GetFullPathName(LPCSTR lpFileName,DWORD nBufferLength,LPSTR lpBuffer,LPTSTR* lpFilePart)
 {
@@ -354,6 +358,14 @@ inline DWORD FileSystem::GetFileAttributes(LPCWSTR lpFileName)
 		return ::GetFileAttributesA(W2A(lpFileName));
 }
 
+inline BOOL FileSystem::SetFileAttributes(LPCWSTR lpFileName,DWORD dwFileAttributes)
+{
+	if (IsUnicodeSystem())
+		return ::SetFileAttributesW(lpFileName,dwFileAttributes);
+	else
+		return ::SetFileAttributesA(W2A(lpFileName),dwFileAttributes);
+}
+
 inline BOOL FileSystem::GetFileSecurity(LPCWSTR lpFileName,SECURITY_INFORMATION RequestedInformation,
 	PSECURITY_DESCRIPTOR pSecurityDescriptor,DWORD nLength,LPDWORD lpnLengthNeeded)
 {
@@ -409,6 +421,23 @@ inline void CFileFind::GetFileName(LPSTR szName,DWORD nMaxLen) const
 	strcpy_s(szName,nMaxLen,m_fd.ff_name);
 #endif
 }
+
+inline BOOL CFileFind::IsRootDirectory() const
+{
+	if (IsUnicodeSystem())
+		return m_fdw.cFileName[0]==L'.' && m_fdw.cFileName[1]==L'\0';
+	else
+		return m_fd.cFileName[0]=='.' && m_fd.cFileName[1]=='\0';
+}
+
+inline BOOL CFileFind::IsParentDirectory() const
+{
+	if (IsUnicodeSystem())
+		return m_fdw.cFileName[0]==L'.' && m_fdw.cFileName[1]==L'.' && m_fdw.cFileName[2]==L'\0';
+	else
+		return m_fd.cFileName[0]=='.' && m_fd.cFileName[1]=='.' && m_fd.cFileName[2]=='\0';
+}
+
 
 inline void CFileFind::GetFileName(CString& name) const
 {
@@ -488,9 +517,9 @@ inline USHORT CFileFind::GetFileDate() const
 inline BOOL CFileFind::MatchesMask(DWORD dwMask) const
 {
 #ifdef WIN32
-	return (m_fd.dwFileAttributes&dwMask);
+	return (m_fd.dwFileAttributes&dwMask)?TRUE:FALSE;
 #else
-	return (m_fd.ff_attrib&dwMask);
+	return (m_fd.ff_attrib&dwMask)?TRUE:FALSE;
 #endif
 }
 

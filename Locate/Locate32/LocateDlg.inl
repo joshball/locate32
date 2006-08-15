@@ -21,6 +21,8 @@ inline CLocateDlg::CLocateDlg()
 	ZeroMemory(m_aResultListActions,TypeCount*ListActionCount*sizeof(void*));
 
 	
+	if (FAILED(SHGetDesktopFolder(&m_pDesktopFolder)))
+		m_pDesktopFolder=NULL;
 }
 
 inline CLocateDlg::CNameDlg::CNameDlg()
@@ -90,6 +92,7 @@ inline void CLocateDlg::ClearMenuVariables()
 		DestroyMenu(m_hActivePopupMenu);
 		m_hActivePopupMenu=NULL;
 	}
+
 }
 
 inline void CLocateDlg::OnActivateTab(int nIndex)
@@ -289,7 +292,7 @@ inline LPCWSTR CLocateDlg::GetDBVolumeFileSystem(WORD wDB,WORD wRootID)
 
 inline CLocateDlg::ContextMenuStuff::ContextMenuStuff()
 :	pContextMenu3(NULL),pContextMenu2(NULL),pContextMenu(NULL),
-	pParentFolder(NULL),pParentIDList(NULL),apidl(NULL)
+	pParentFolder(NULL),pParentIDL(NULL),ppSimpleIDLs(NULL)
 {
 }
 
@@ -307,23 +310,16 @@ inline CLocateDlg::ContextMenuStuff::~ContextMenuStuff()
 		pParentFolder->Release();
 	
 
-	IMalloc* pMalloc;
-	if (SHGetMalloc(&pMalloc)==NOERROR)
+	CoTaskMemFree(pParentIDL);
+
+	if (ppSimpleIDLs!=NULL)
 	{
-		if (pParentIDList!=NULL)
-			pMalloc->Free(pParentIDList);
-		
-		if (apidl!=NULL)
-		{
-			for (int i=0;i<nIDlistCount;i++)
-				pMalloc->Free((void*)apidl[i]);
-			delete[] apidl;
-		}
-
-		pMalloc->Release();
+		for (int i=0;i<nIDLCount;i++)
+			CoTaskMemFree((void*)ppSimpleIDLs[i]);
+		delete[] ppSimpleIDLs;
 	}
-	//delete[] apcidl;
 
+	//delete[] apcidl;
 }
 
 
