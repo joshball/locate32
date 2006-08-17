@@ -518,6 +518,7 @@ public:
 	void SetSorting(BYTE bSorting=BYTE(-2)); // bSorting==BYTE(-2): default
 
 	UINT AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST sIDListToPath,UINT wStartID);
+	IDropTarget* GetDropTarget(LPITEMIDLIST pidl) const;
 	static void FreeSendToMenuItems(HMENU hMenu);
 	static BOOL IsSendToMenu(HMENU hMenu);
 	static BOOL InsertMenuItemsFromTemplate(CMenu& Menu,HMENU hTemplate,UINT uStartPosition,int nDefaultItem=-1);

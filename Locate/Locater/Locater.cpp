@@ -246,7 +246,8 @@ BOOL CLocater::LocatingProc()
 	
 	// Initializing
 	UpdateError ueResult=ueStillWorking;
-	
+	BOOL bContinueToNextDB=TRUE;
+
 #ifdef WIN32
 	InterlockedExchange(&m_lForceQuit,FALSE);
 #endif
@@ -265,7 +266,7 @@ BOOL CLocater::LocatingProc()
 	ASSERT(dbFile==NULL);
 	
 	
-	for (int i=0;i<m_aDatabases.GetSize() && ueResult==ueStillWorking;i++)
+	for (int i=0;i<m_aDatabases.GetSize() && bContinueToNextDB;i++)
 	{
 		LocaterDebugMessage("CLocater::LocatingProc() DBSTART");
 	
@@ -276,7 +277,6 @@ BOOL CLocater::LocatingProc()
 		m_wCurrentDatabaseID=m_pCurrentDatabase->wID;
 		m_wCurrentRootIndex=0;
         
-		ueResult=ueStillWorking;
 		m_pProc(m_dwData,BeginningDatabase,ueStillWorking,(DWORD_PTR)m_pCurrentDatabase->szName,this);
 
 
@@ -685,7 +685,6 @@ BOOL CLocater::LocatingProc()
 				if (m_pCurrentDatabase!=NULL)
 					DebugFormatMessage("UNKNOWN: %s",m_pCurrentDatabase->szArchive);
 #endif
-				m_pProc(m_dwData,ErrorOccured,ueResult=ueInvalidDatabase,0,this);
 				m_pProc(m_dwData,ErrorOccured,ueResult=ueUnknown,0,this);
 				break;
 			}
@@ -696,9 +695,11 @@ BOOL CLocater::LocatingProc()
 			{
 			case CException::cannotAllocate:
 				m_pProc(m_dwData,ErrorOccured,ueResult=ueAlloc,0,this);
+				bContinueToNextDB=FALSE;
 				break;
 			case CException::none:
 				// No error, LocateFoundProc returned FALSE
+				bContinueToNextDB=FALSE;
 				break;
 			default:
 				m_pProc(m_dwData,ErrorOccured,ueResult=ueUnknown,0,this);
@@ -708,7 +709,10 @@ BOOL CLocater::LocatingProc()
 		catch (UpdateError ue)
 		{
 			if (ue==ueLimitReached)
+			{
 				ueResult=ueLimitReached;
+				bContinueToNextDB=FALSE;
+			}
 			else if (ue!=ueSuccess && ue!=ueStillWorking && ue!=ueFolderUnavailable)
 				m_pProc(m_dwData,ErrorOccured,ueResult=ue,0,this);
 		}
@@ -1480,7 +1484,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 			for (int i=0;i<m_aExtensions.GetSize();i++)
 			{
 				// Resolving extension length
-				DWORD dwExtensionPos=(DWORD)(LastCharIndex(GetFolderNameW(),'.')+1);
+				DWORD dwExtensionPos=(DWORD)(LastCharIndex(GetFolderNameW(),L'.')+1);
 				if (dwExtensionPos==-1)
 					continue;
 

@@ -239,10 +239,10 @@ public:
 		DWORD GetDataLength() const;
 		static SendMessageInfo* FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed);
 		
-		LPSTR szWindow;
+		LPWSTR szWindow;
 		DWORD nMessage;
-		LPSTR szWParam;
-		LPSTR szLParam;
+		LPWSTR szWParam;
+		LPWSTR szLParam;
 	};
 
 	enum SelectFileType {

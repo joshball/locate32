@@ -55,6 +55,7 @@
 #define IDS_REGULAREXPRESSION           42
 #define IDS_REGULAREXPRESSIONFULLPATH   43
 #define IDS_DEFAULT                     44
+#define IDS_LOCATINGFAILED2             45
 #define IDS_BYTES                       50
 #define IDS_KB                          51
 #define IDS_MB                          52
@@ -543,6 +544,7 @@
 #define IDS_LASTERRORCANNOTOPEN         1906
 #define IDS_LASTERRORCANNOTREAD         1907
 #define IDS_LASTERRORCANNOTWRITE        1908
+#define IDS_LASTERRORUNKNOWN2           1909
 #define IDS_SIZEMB                      2007
 #define IDS_SIZEKB                      2008
 #define IDS_SIZEBYTES                   2009

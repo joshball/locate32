@@ -130,7 +130,7 @@ void CLocatedItem::SetFile(const CLocater* pLocater)
 	szName=szPath+(++nPathLen);
 	MemCopyAtoW(szName,pLocater->GetFileName(),DWORD(bNameLength)+1);
 	bExtensionPos=pLocater->GetFileExtensionPos();
-	if (bExtensionPos==0)
+	if (bExtensionPos==0 && *szName!='.')
 		bExtensionPos=bNameLength;
 	else
 		bExtensionPos++;
@@ -182,7 +182,7 @@ void CLocatedItem::SetFileW(const CLocater* pLocater)
 	szName=szPath+(++nPathLen);
 	MemCopyW(szName,pLocater->GetFileNameW(),DWORD(bNameLength)+1);
 	bExtensionPos=pLocater->GetFileExtensionPos();
-	if (bExtensionPos==0)
+	if (bExtensionPos==0 && *szName!='.')
 		bExtensionPos=bNameLength;
 	else
 		bExtensionPos++;
@@ -340,6 +340,8 @@ BOOL CLocatedItem::ShouldUpdateByDetail(CLocateDlg::DetailType nDetail) const
 void CLocatedItem::UpdateFilename()
 {
 	WCHAR szFullPath[MAX_PATH];
+
+	ItemDebugMessage("CLocatedItem::UpdateFilename() BEGIN");
 	
 	DWORD dwLength=GetLocateApp()->m_pGetLongPathName(GetPath(),szFullPath,MAX_PATH);
 	if (dwLength==GetPathLen())
@@ -370,15 +372,15 @@ void CLocatedItem::UpdateFilename()
 	}
     
 	dwFlags|=LITEM_FILENAMEOK;
+
+	ItemDebugMessage("CLocatedItem::UpdateFilename() END");
 }
 	
 
 void CLocatedItem::UpdateFileTitle()
 {
-	ItemDebugMessage("CLocatedItem::UpdateTitle BEGIN");
-	//ItemDebugFormatMessage4("CLocatedItem::UpdateTitle1: %d",DWORD(GetLocateDlg()->GetFlags()&CLocateDlg::fgLVExtensionFlag),0,0,0);
-	ItemDebugFormatMessage4("CLocatedItem::UpdateTitle1: ShouldUpdate=%d",ShouldUpdateFileTitle(),0,0,0);
-
+	ItemDebugMessage("CLocatedItem::UpdateFileTitle BEGIN");
+	
 	
 	if (!(dwFlags&LITEM_FILENAMEOK))
 		UpdateFilename();
@@ -508,7 +510,7 @@ void CLocatedItem::UpdateFileTitle()
 	
 	dwFlags|=LITEM_FILETITLEOK;
 
-	ItemDebugMessage("CLocatedItem::UpdateTitle END");
+	ItemDebugMessage("CLocatedItem::UpdateFileTitle END");
 }
 
 void CLocatedItem::UpdateType() 
@@ -545,7 +547,7 @@ void CLocatedItem::UpdateType()
 			{
 				// File does not exist
 				SetToDeleted();
-				return;
+				ItemDebugMessage("CLocatedItem::UpdateType END1");
 			}
 			iIcon=fi.iIcon;
 			DebugFormatMessage("dwFlags|=LITEM_ICONOK by UpdateType for %s",GetPath());
@@ -555,6 +557,7 @@ void CLocatedItem::UpdateType()
 		{
 			// File does not exist
 			SetToDeleted();
+			ItemDebugMessage("CLocatedItem::UpdateType END2");
 			return;
 		}
 		
@@ -566,6 +569,7 @@ void CLocatedItem::UpdateType()
 		{
 			// Folder does not exist
 			SetToDeleted();
+			ItemDebugMessage("CLocatedItem::UpdateType END3");
 			return;
 		}
 		pNewType=allocstringW(IDS_DIRECTORYTYPE);
@@ -575,6 +579,7 @@ void CLocatedItem::UpdateType()
 		if (!FileSystem::IsFile(GetPath()))
 		{
 			SetToDeleted();
+			ItemDebugMessage("CLocatedItem::UpdateType END4");
 			return;
 		}
 	
@@ -593,11 +598,17 @@ void CLocatedItem::UpdateType()
 				{
 					// Taking type now
 					DWORD nLength=RegKey.QueryValueLength("");
+					ItemDebugFormatMessage1("CLocatedItem::UpdateType Type from registry, %d",nLength);
 					if (nLength)
 					{
 						pNewType=new WCHAR[nLength];
 						if (RegKey.QueryValue(L"",pNewType,nLength))
+						{
+							ItemDebugMessage("CLocatedItem::UpdateType Type from registry2");
+							ItemDebugMessage(pNewType);
+							
 							bOK=TRUE;
+						}
 						else
 							delete[] pNewType;
 					}
@@ -606,20 +617,22 @@ void CLocatedItem::UpdateType()
 			}
 		}
 
-		WCHAR szBuffer[300];
-		DWORD dwTextLen=LoadString(IDS_UNKNOWNTYPE,szBuffer,300)+1;
-
-		if (bExtensionPos!=bNameLength)
+		if (!bOK)
 		{
-			pNewType=new WCHAR[dwTextLen+GetExtensionLength()+1];
-			MemCopyW(pNewType,GetExtension(),GetExtensionLength());
-			MakeUpper(pNewType,GetExtensionLength());
-			pNewType[GetExtensionLength()]=L' ';
-			MemCopyW(pNewType+GetExtensionLength()+1,szBuffer,dwTextLen);
-		}
-		else // No extension
-			pNewType=alloccopy(szBuffer,dwTextLen);
-	
+			WCHAR szBuffer[300];
+			DWORD dwTextLen=LoadString(IDS_UNKNOWNTYPE,szBuffer,300)+1;
+
+			if (bExtensionPos!=bNameLength)
+			{
+				pNewType=new WCHAR[dwTextLen+GetExtensionLength()+1];
+				MemCopyW(pNewType,GetExtension(),GetExtensionLength());
+				MakeUpper(pNewType,GetExtensionLength());
+				pNewType[GetExtensionLength()]=L' ';
+				MemCopyW(pNewType+GetExtensionLength()+1,szBuffer,dwTextLen);
+			}
+			else // No extension
+				pNewType=alloccopy(szBuffer,dwTextLen);
+		}	
 	}
 	
 	WCHAR* pTmp=szType;
@@ -694,6 +707,8 @@ void CLocatedItem::UpdateFileSizeAndTime()
 
 			dwFlags|=LITEM_TIMEDATEOK|LITEM_FILESIZEOK;
 		}
+
+		ItemDebugMessage("CLocatedItem::UpdateFileSizeAndTime END1");
 		return;
 	}
 
@@ -737,12 +752,15 @@ void CLocatedItem::UpdateFileSizeAndTime()
 				dwFlags|=LITEM_TIMEDATEOK|LITEM_FILESIZEOK;
 
 				FindClose(hFind);
+				ItemDebugMessage("CLocatedItem::UpdateFileSizeAndTime END2");
 				return;
 			}
 		}
 
 
 		SetToDeleted();
+
+		ItemDebugMessage("CLocatedItem::UpdateFileSizeAndTime END3");
 		return;
 	}
 
@@ -891,14 +909,20 @@ void CLocatedItem::UpdateOwner()
 	}
 		
 	if (IsDeleted())
+	{
+		ItemDebugMessage("CLocatedItem::UpdateOwner END1");
 		return;
+	}
 
     	
 	DWORD dwNeeded=0;
 	if (!FileSystem::GetFileSecurity(GetPath(),OWNER_SECURITY_INFORMATION,NULL,0,&dwNeeded))
 	{
 		if (GetLastError()!=ERROR_INSUFFICIENT_BUFFER)
+		{
+			ItemDebugMessage("CLocatedItem::UpdateOwner END2");
 			return;
+		}
 	}
 
     PSECURITY_DESCRIPTOR pDesc=(PSECURITY_DESCRIPTOR)new BYTE[dwNeeded+2];
@@ -906,6 +930,8 @@ void CLocatedItem::UpdateOwner()
     if (!FileSystem::GetFileSecurity(szPath,OWNER_SECURITY_INFORMATION,pDesc,dwNeeded+2,&dwNeeded))
 	{
 		delete[] (BYTE*) pDesc;
+		ItemDebugMessage("CLocatedItem::UpdateOwner END3");
+			
 		return;
 	}
 	
@@ -914,6 +940,8 @@ void CLocatedItem::UpdateOwner()
 	if (!GetSecurityDescriptorOwner(pDesc,&psid,&bDefaulted))
 	{
 		delete[] (BYTE*) pDesc;
+		ItemDebugMessage("CLocatedItem::UpdateOwner END4");
+			
 		return;
 	}
 	
@@ -972,7 +1000,10 @@ void CLocatedItem::UpdateShortFileName()
 	}
 	
 	if (IsDeleted())
+	{
+		ItemDebugMessage("CLocatedItem::UpdateShortFileName END2");
 		return;
+	}
 
 	
 
@@ -1014,7 +1045,10 @@ void CLocatedItem::UpdateShortFilePath()
 	}
 
 	if (IsDeleted())
+	{
+		ItemDebugMessage("CLocatedItem::UpdateShortFilePath END1");
 		return;
+	}
 
 	WCHAR szShortPath[MAX_PATH];
 	DWORD nLength=FileSystem::GetShortPathName(GetPath(),szShortPath,MAX_PATH);
@@ -1463,6 +1497,8 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 		bAttribs=CDatabaseUpdater::GetAttribFlag(fd.dwFileAttributes)|(bAttribs&LITEMATTRIB_DIRECTORY);
 				
 		dwFlags|=LITEM_TIMEDATEOK|LITEM_FILESIZEOK|LITEM_ATTRIBOK;
+		
+		ItemDebugFormatMessage4("CLocatedItem::RemoveFlagsForChanged END2, flagsnow=%X",dwFlags,0,0,0);
 		return TRUE;
 	}
 

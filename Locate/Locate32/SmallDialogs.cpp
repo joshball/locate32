@@ -2497,7 +2497,7 @@ BOOL WINAPI CPropertiesSheet::CPropertiesPage::GetVolumePathNameAlt(LPCWSTR lpsz
 	if (lpszFileName[0]=='\\' && lpszFileName[1])
 	{
 		// Network share
-		int nIndex=FirstCharIndex(lpszFileName+2,'\\');
+		int nIndex=FirstCharIndex(lpszFileName+2,L'\\');
 		if (nIndex==-1)
 			return FALSE;
 		nIndex+=2;
@@ -2510,7 +2510,7 @@ BOOL WINAPI CPropertiesSheet::CPropertiesPage::GetVolumePathNameAlt(LPCWSTR lpsz
 			if (FileSystem::IsDirectory(lpszVolumePathName))
 				return TRUE;
 
-			int nIndex2=FirstCharIndex(lpszFileName+nIndex+1,'\\');
+			int nIndex2=FirstCharIndex(lpszFileName+nIndex+1,L'\\');
 			if (nIndex2==-1)
 			{
 				if (FileSystem::IsDirectory(lpszFileName))

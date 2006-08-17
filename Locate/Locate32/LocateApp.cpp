@@ -58,6 +58,7 @@ BOOL CLocateApp::InitInstance()
 	CWinApp::InitInstance();
 	LPCWSTR pCommandLine;
 	
+
 	//extern BOOL bIsFullUnicodeSupport;
 	//bIsFullUnicodeSupport=FALSE;
 
@@ -350,7 +351,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			while(lpCmdLine[idx]==L' ') idx++;
 			if (lpCmdLine[idx]!=L'\"')
 			{
-				temp=(int)FirstCharIndex(lpCmdLine+idx,' ');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
 				ChangeAndAlloc(pStartData->m_pTypeString,lpCmdLine+idx,temp);
 				if (temp<0)
 					return TRUE;
@@ -359,7 +360,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			else
 			{
 				idx++;
-				temp=(int)FirstCharIndex(lpCmdLine+idx,'\"');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,L'\"');
 				ChangeAndAlloc(pStartData->m_pTypeString,lpCmdLine+idx,temp);
 				if (temp<0)
 					return TRUE;
@@ -373,7 +374,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			while(lpCmdLine[idx]==L' ') idx++;
 			if (lpCmdLine[idx]!=L'\"')
 			{
-				temp=(int)FirstCharIndex(lpCmdLine+idx,' ');
+				temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
 
 				if (CDatabase::FindByName(pStartData->m_aDatabases,lpCmdLine+idx,temp)==NULL)
 				{
@@ -570,7 +571,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				CStringW Directory;
 				if (lpCmdLine[idx]!=L'\"')
 				{
-					Directory.Copy(lpCmdLine+idx,FirstCharIndex(lpCmdLine+idx,' '));
+					Directory.Copy(lpCmdLine+idx,FirstCharIndex(lpCmdLine+idx,L' '));
 					idx+=(int)Directory.GetLength();
 				}
 				else
@@ -903,7 +904,7 @@ BYTE CLocateApp::CheckDatabases()
 		if (pDatabase==NULL)
 		{
 			pDatabase=CDatabase::FromDefaults(TRUE,GetApp()->GetExeNameW(),
-				(int)LastCharIndex(GetApp()->GetExeNameW(),L'\\')+1); // Nothing else can be done?
+				(int)LastCharIndex((LPCWSTR)GetApp()->GetExeNameW(),L'\\')+1); // Nothing else can be done?
 		}
 		else
 		{
@@ -1982,9 +1983,9 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 						::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
 							ID2A(IDS_ERRORUNKNOWN),ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
 				}
-				return FALSE;
+				
 			}
-			break;
+			return FALSE;
 		case ueCreate:
 		case ueOpen:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
@@ -2001,9 +2002,8 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 					str.Format(IDS_ERRORCANNOTOPENDB,W2A(pUpdater->GetCurrentDatabaseFile()));
 					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
 				}
-				return FALSE;
 			}
-			break;
+			return FALSE;
 		case ueRead:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
@@ -2020,7 +2020,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
 				}
 			}
-			break;
+			return FALSE;
 		case ueWrite:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
@@ -2036,17 +2036,15 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 					str.Format(IDS_ERRORCANNOTWRITEDB,W2A(pUpdater->GetCurrentDatabaseFile()));
 					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
 				}
-				
-                return FALSE;
 			}
-			break;
+			return FALSE;
 		case ueAlloc:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
 				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
 					ID2A(IDS_ERRORCANNOTALLOCATE),ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
 			}
-			break;
+			return FALSE;
 		case ueInvalidDatabase:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
@@ -2055,7 +2053,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
 				return FALSE;
 			}
-			break;
+			return FALSE;
 		case ueFolderUnavailable:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowNonCriticalErrors)
 			{
@@ -2071,9 +2069,8 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 					str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?W2A(pUpdater->GetCurrentRootPath()):"");
 					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
 				}
-				return FALSE;
 			}
-			break;
+			return FALSE;
 		case ueCannotIncrement:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowNonCriticalErrors)
 			{
@@ -4042,7 +4039,7 @@ void CLocateAppWnd::CUpdateStatusWnd::OnPaint()
 	
     // Drawing title
 	LPCWSTR pPtr=sStatusText;
-	int nLength=(int)FirstCharIndex(pPtr,'\n');
+	int nLength=(int)FirstCharIndex(pPtr,L'\n');
 	rc2=rcClient;
 	dc.SetTextColor(m_cTitleColor);
 	dc.DrawText(pPtr,nLength,&rc2,DT_SINGLELINE|DT_CALCRECT);
@@ -4056,7 +4053,7 @@ void CLocateAppWnd::CUpdateStatusWnd::OnPaint()
 	while (nLength!=-1)
 	{
 		pPtr+=nLength+1;
-		nLength=(int)FirstCharIndex(pPtr,'\n');
+		nLength=(int)FirstCharIndex(pPtr,L'\n');
 
 		rc2=rcClient;
 		dc.DrawText(pPtr,nLength,&rc2,DT_SINGLELINE|DT_CALCRECT);

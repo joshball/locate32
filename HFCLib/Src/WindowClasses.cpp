@@ -114,6 +114,22 @@ int CWnd::GetWindowText(LPWSTR lpString,int nMaxCount) const
 	return ret;
 }
 
+int CWnd::GetClassName(LPWSTR lpString,int nMaxCount) const
+{
+	if (IsUnicodeSystem())
+		return ::GetClassNameW(m_hWnd,lpString,(int)nMaxCount); 
+
+	char* pText=new char[nMaxCount+2];
+	int ret=::GetClassNameA(m_hWnd,pText,(INT)nMaxCount);
+	if (ret!=0)
+	{
+		MultiByteToWideChar(CP_ACP,0,pText,(int)ret,lpString,(int)nMaxCount);
+		lpString[ret]=L'\0';
+	}
+	delete pText;
+	return ret;
+}
+
 void CWnd::CenterWindow()
 {
 	SIZE sRes = {GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN)};
@@ -334,6 +350,8 @@ int CWnd::GetText(LPWSTR lpszText,int cchTextMax) const
 		MultiByteToWideChar(CP_ACP,0,pText,(int)ret,lpszText,(DWORD)cchTextMax);
 		lpszText[ret]=L'\0';
 	}
+	else
+		lpszText[0]=L'\0';
 	delete pText;
 	return ret;
 }
@@ -350,6 +368,8 @@ UINT CWnd::GetDlgItemText(int nIDDlgItem,LPWSTR lpString,int nMaxCount) const
 		MultiByteToWideChar(CP_ACP,0,pText,ret,lpString,nMaxCount);
 		lpString[ret]=L'\0';
 	}
+	else
+		lpString[0]=L'\0';
 	delete pText;
 	return ret;
 }

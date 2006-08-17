@@ -505,6 +505,8 @@ public:
 	void SetFont(HFONT hFont,BOOL bRedraw=TRUE) { ::SendMessage(m_hWnd,WM_SETFONT,(WPARAM)hFont,MAKELPARAM(bRedraw,0)); }
 	HFONT GetFont() const { return (HFONT)::SendMessage(m_hWnd,WM_GETFONT,0,0); }
 	
+	int GetClassName(LPSTR lpString,int nMaxCount) const { return ::GetClassName(m_hWnd,lpString,nMaxCount); }
+	
 	void MoveWindow(int x,int y,int nWidth,int nHeight,BOOL bRepaint=TRUE) { ::MoveWindow(m_hWnd,x,y,nWidth,nHeight,bRepaint); }
 	void MoveWindow(LPCRECT lpRect,BOOL bRepaint=TRUE) {::MoveWindow(m_hWnd,lpRect->left,lpRect->top,lpRect->right-lpRect->left,lpRect->bottom-lpRect->top,bRepaint);}
 	int SetWindowRgn(HRGN hRgn, BOOL bRedraw) { return ::SetWindowRgn(m_hWnd,hRgn,bRedraw); }
@@ -627,7 +629,9 @@ public:
 	BOOL SetWindowText(LPCWSTR lpsz);
 	int GetWindowText(LPWSTR lpString,int nMaxCount) const;
 	int GetWindowText(CStringW& str) const;
-	
+
+	int GetClassName(LPWSTR lpString,int nMaxCount) const;
+
 	UINT GetDlgItemText(int nIDDlgItem,CStringW& str);
 	UINT GetDlgItemText(int nIDDlgItem,LPWSTR lpString,int nMaxCount) const;	
 	BOOL SetDlgItemText(int idControl,LPCWSTR lpsz) const;	

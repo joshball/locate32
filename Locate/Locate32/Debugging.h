@@ -17,11 +17,11 @@ extern DEBUGALLOCATORTYPE DebugAlloc;
 #ifdef _DEBUG_LOGGING
 
 
-//#define DEBUGMSG_DIALOG
-//#define DEBUGMSG_ITEMS
-//#define DEBUGMSG_DBCALLBACK
+#define DEBUGMSG_DIALOG
+#define DEBUGMSG_ITEMS
+#define DEBUGMSG_DBCALLBACK
 //#define DEBUGMSG_BACKGROUND
-//#define DEBUGMSG_FILEOBJECT
+#define DEBUGMSG_FILEOBJECT
 
 
 #ifdef DEBUGMSG_DIALOGS
@@ -77,6 +77,7 @@ extern DEBUGALLOCATORTYPE DebugAlloc;
 #define DlgDebugMessage(a)
 
 #define ItemDebugMessage(a)
+#define ItemDebugFormatMessage1
 #define ItemDebugFormatMessage4
 
 #define BkgDebugMessage(a)

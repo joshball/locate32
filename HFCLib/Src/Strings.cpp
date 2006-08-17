@@ -279,73 +279,10 @@ BOOL ContainString(LPCWSTR s1,LPCWSTR s2) // Is s2 in the s1
 }
 
 
-int FirstCharIndex(LPCSTR str,const CHAR ch)
-{
-	int i;
-	for (i=0;str[i]!='\0';i++)
-	{
-		if (str[i]==ch)
-			return i;
-	}
-	return -1;
-}
 
-int FirstCharIndex(LPCWSTR str,const WCHAR ch)
-{
-	int i;
-	for (i=0;str[i]!=L'\0';i++)
-	{
-		if (str[i]==ch)
-			return i;
-	}
-	return -1;
-}
 
-int LastCharIndex(LPCSTR str,const CHAR ch)
-{
-	int i,ret=-1;
-	for (i=0;str[i]!='\0';i++)
-	{
-		if (str[i]==ch)
-			ret=i;
-	}
-	return ret;
-}
-
-int LastCharIndex(LPCWSTR str,const WCHAR ch)
-{
-	int i,ret=-1;
-	for (i=0;str[i]!=L'\0';i++)
-	{
-		if (str[i]==ch)
-			ret=i;
-	}
-	return ret;
-}
-
-int NextCharIndex(LPCSTR str,const CHAR ch,int oldidx)
-{
-   int i;
-   for (i=oldidx+1;str[i]!='\0';i++)
-   {
-      if (str[i]==ch)
-         return i;
-   }
-   return -1;
-}
-
-int NextCharIndex(LPCWSTR str,const WCHAR ch,int oldidx)
-{
-   int i;
-   for (i=oldidx+1;str[i]!=L'\0';i++)
-   {
-      if (str[i]==ch)
-         return i;
-   }
-   return -1;
-}
-
-static int _getbase(LPCSTR& str)
+template<class CHARTYPE>
+static int _getbase(const CHARTYPE*& str)
 {
 	if (*str==':')
 		return 16;
@@ -373,54 +310,8 @@ static int _getbase(LPCSTR& str)
 	return base>0?base:16;
 }
 
-// szString will change
-int _readnum(int base,LPCSTR& str,int length)
-{
-	int num=0;
-	BOOL bToNegative=FALSE;
-	for (;*str=='-';str++)
-		bToNegative=!bToNegative;
 
-	if (base==16)
-	{
-		for (;*str!='\0' && length>0;length--,str++)
-		{
-			if (*str>='0' && *str<='9')
-			{
-				num<<=4;
-				num+=*str-'0';
-			}
-			else if (*str>='a' && *str<='f')
-			{
-				num<<=4;
-				num+=*str-'a'+0xa;
-			}
-			else if (*str>='A' && *str<='F')
-			{
-				num<<=4;
-				num+=*str-'A'+0xa;
-			}
-			else
-				break;
-		}
-		if (bToNegative)
-			return -num;
-		return num;
-	}
-	for (;*str!='\0' && length>0;length--,str++)
-	{
-		int n=chartonum(*str);
-        if (n>=base)
-			break;
-		if (n==0 && *str!='0')
-			break;
-		num*=base;
-		num+=n;
-	}
-	if (bToNegative)
-		return -num;
-	return num;
-}
+
 
 /*
 BYTE* dataparser(LPCSTR pString,DWORD dwStrLen,DWORD* pdwDataLength);
@@ -727,7 +618,279 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLe
 	}
 }
 
-static int _getbase2(LPCSTR& str,int def)
+#ifdef DEF_WCHAR
+BYTE* dataparser(LPCWSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength)
+{
+	if (pStr[0]==L'\0')
+		return NULL;
+	
+	if (_1stcontain2nd(pStr,L"int:"))
+	{
+		pStr+=4;
+		BYTE* pRet=(BYTE*)pMalloc(4);
+		*((DWORD*)pRet)=DWORD(_readnum(10,pStr));
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=4;
+		return pRet;
+	}
+	else if (_1stcontain2nd(pStr,L"dword"))
+	{
+		pStr+=5;
+		int base=_getbase(pStr);
+		if (*pStr!=':')
+			return NULL;
+		pStr++;
+		BYTE* pRet=(BYTE*)pMalloc(4);
+		*((DWORD*)pRet)=DWORD(_readnum(base,pStr));
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=4;
+		return pRet;
+	}
+	else if (_1stcontain2nd(pStr,L"word"))
+	{
+		pStr+=4;		
+		int base=_getbase(pStr);
+		if (*pStr!=':')
+			return NULL;
+		pStr++;
+		BYTE* pRet=(BYTE*)pMalloc(2);
+		*((WORD*)pRet)=WORD(_readnum(base,pStr));
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=2;
+		return pRet;
+	}
+	else if (_1stcontain2nd(pStr,L"byte"))
+	{
+		pStr+=4;		
+		int base=_getbase(pStr);
+		if (*pStr!=':')
+			return NULL;
+		pStr++;
+		BYTE* pRet=(BYTE*)pMalloc(2);
+		*pRet=BYTE(_readnum(base,pStr));
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=1;
+		return pRet;
+	}
+	else if (_1stcontain2nd(pStr,L"hex:") || _1stcontain2nd(pStr,L"bin:"))
+	{
+		pStr+=4;
+		int i=0;
+		
+		// Calculating reqiured size
+		for (LPCWSTR pStr2=pStr;*pStr2!='\0';i++)
+		{
+			if (!((*pStr2>='0' && *pStr2<='9') || 
+				(*pStr2>='a' && *pStr2<='f') ||
+				(*pStr2>='A' && *pStr2<='F')))
+				break;
+				
+			pStr2++;
+
+			if ((*pStr2>='0' && *pStr2<='9') || 
+				(*pStr2>='a' && *pStr2<='f') ||
+				(*pStr2>='A' && *pStr2<='F'))
+				pStr2++;
+
+			for (;*pStr2==' ';pStr2++);
+		}
+
+		if (i==0)
+			return NULL;
+			
+		BYTE* pRet=(BYTE*)pMalloc(max(i,2));
+
+		for (i=0;*pStr!='\0';i++)
+		{
+			if (*pStr>='0' && *pStr<='9')
+				pRet[i]=*pStr-'0';
+			else if (*pStr>='a' && *pStr<='f')
+				pRet[i]=*pStr-'a'+0xa;
+			else if (*pStr>='A' && *pStr<='F')
+				pRet[i]=*pStr-'A'+0xa;
+			else
+				break;
+
+			pStr++;
+
+			if (*pStr>='0' && *pStr<='9')
+			{
+				pRet[i]<<=4;
+				pRet[i]+=*pStr-'0';
+				pStr++;
+			}
+			else if (*pStr>='a' && *pStr<='f')
+			{
+				pRet[i]<<=4;
+				pRet[i]+=*pStr-'a'+0xa;
+				pStr++;
+			}
+			else if (*pStr>='A' && *pStr<='F')
+			{
+				pRet[i]<<=4;
+				pRet[i]+=*pStr-'A'+0xa;
+				pStr++;
+			}
+
+			for (;*pStr==' ';pStr++);
+		}
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=i;
+		return pRet;
+	}
+	else if (_1stcontain2nd(pStr,L"str:"))
+	{
+		dwStrLen-=4;
+		pStr+=4;
+		BYTE* pRet;
+		if (int(dwStrLen)<=0)
+			return NULL;
+
+		pRet=(BYTE*)pMalloc(dwStrLen);
+		int i;
+		for (i=0;*pStr!='\0';i++,pStr++)
+		{
+			if (*pStr=='\\' && pStr[1]!='\0')
+			{
+				pStr++;
+				switch (*pStr)
+				{
+				case '0':
+					pRet[i]='\0';
+					break;
+				case 'n':
+					pRet[i]='\n';
+					break;
+				case 'r':
+					pRet[i]='\r';
+					break;
+				case 't':
+					pRet[i]='\t';
+					break;
+				case 'b':
+					pRet[i]='\b';
+					break;
+				default:
+					pRet[i]=BYTE(_readnum(16,pStr,2));
+					pStr--;
+					break;
+				}
+			}
+			else
+				pRet[i]=W2Ac(*pStr);
+		}
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=i;
+		return pRet;
+	}
+	else if (_1stcontain2nd(pStr,L"oem:"))
+	{
+		dwStrLen-=4;
+		pStr+=4;
+		if (int(dwStrLen)<=0)
+			return NULL;
+		
+		BYTE* pRet;
+		pRet=(BYTE*)pMalloc(dwStrLen);
+		int i;
+		for (i=0;*pStr!='\0';i++,pStr++)
+		{
+			if (*pStr=='\\' && pStr[1]!='\0')
+			{
+				pStr++;
+				switch (*pStr)
+				{
+				case '0':
+					pRet[i]='\0';
+					break;
+				case 'n':
+					pRet[i]='\n';
+					break;
+				case 'r':
+					pRet[i]='\r';
+					break;
+				case 't':
+					pRet[i]='\t';
+					break;
+				case 'b':
+					pRet[i]='\b';
+					break;
+				default:
+					pRet[i]=BYTE(_readnum(16,pStr,2));
+					pStr--;
+					break;
+				}
+			}
+			else
+				pRet[i]=W2Ac(*pStr);
+		}
+		AnsiToOemBuff(LPSTR(pRet),LPSTR(pRet),i);
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=i;
+		return pRet;
+	}
+	else if (_1stcontain2nd(pStr,L"wstr:") || _1stcontain2nd(pStr,L"uni:"))
+	{
+		for (pStr+=3,dwStrLen-=3;*pStr!=':';pStr++,dwStrLen--);
+		pStr++;dwStrLen--;
+
+		if (int(dwStrLen)<=0)
+			return NULL;
+	
+		WCHAR* pRet;
+		pRet=(WCHAR*)pMalloc(dwStrLen*2);
+
+
+		int i;
+		for (i=0;*pStr!='\0';i++,pStr++)
+		{
+			if (*pStr=='\\' && pStr[1]!='\0')
+			{
+				pStr++;
+				switch (*pStr)
+				{
+				case '0':
+					pRet[i]=L'\0';
+					break;
+				case 'n':
+					pRet[i]=L'\n';
+					break;
+				case 'r':
+					pRet[i]=L'\r';
+					break;
+				case 't':
+					pRet[i]=L'\t';
+					break;
+				case 'b':
+					pRet[i]=L'\b';
+					break;
+				default:
+					pRet[i]=WCHAR(_readnum(16,pStr,4));
+					pStr--;
+					break;
+				}
+			}
+			else
+				pRet[i]=*pStr;
+		}
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=i*2;
+		return (BYTE*)pRet;
+	}
+	else
+	{
+		if (int(dwStrLen)<=0)
+			return NULL;
+		
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=dwStrLen;
+		return (BYTE*)alloccopyWtoA(pStr,dwStrLen);
+	}
+}
+#endif
+
+template<class CHARTYPE>
+static int _getbase2(const CHARTYPE*& str,int def)
 {
 	if (*str=='(')
 		return def;
@@ -1008,7 +1171,238 @@ BYTE* dataparser2(LPCSTR pStr,DWORD* pdwDataLength)
 	return pData;
 }
 
+#ifdef DEF_WCHAR
+BYTE* dataparser2(LPCWSTR pStr,DWORD* pdwDataLength)
+{
+	if (pStr[0]=='\0')
+		return NULL;
+	
+	BYTE* pData=new BYTE[10];
+	BYTE* pDataPtr=pData;
+	DWORD nAllocLen=10;
 
+	// Removing spaces 
+	while (*pStr==' ') pStr++;
+
+	while (*pStr!='\0')
+	{
+		if (_1stcontain2nd(pStr,L"int"))
+		{
+			pStr+=3;
+			int base=_getbase2(pStr,10);
+			if (*pStr!='(')
+				break;
+			pStr++;
+			
+			_allocmore(pData,pDataPtr,nAllocLen,4);
+			*((DWORD*)pDataPtr)=DWORD(_readnum(base,pStr));
+			while (*pStr!=')' && *pStr!='\0') pStr++;
+			if (*pStr==')') pStr++;
+			pDataPtr+=4;
+		}
+		else if (_1stcontain2nd(pStr,L"dword"))
+		{
+			pStr+=5;
+			int base=_getbase2(pStr,16);
+			if (*pStr!='(')
+				break;
+			pStr++;
+			
+			_allocmore(pData,pDataPtr,nAllocLen,4);
+			*((DWORD*)pDataPtr)=DWORD(_readnum(base,pStr));
+			while (*pStr!=')' && *pStr!='\0') pStr++;
+			if (*pStr==')') pStr++;
+			pDataPtr+=4;
+		}
+		else if (_1stcontain2nd(pStr,L"word"))
+		{
+			pStr+=4;
+			int base=_getbase2(pStr,16);
+			if (*pStr!='(')
+				break;
+			pStr++;
+			
+			_allocmore(pData,pDataPtr,nAllocLen,2);
+			*((WORD*)pDataPtr)=WORD(_readnum(base,pStr));
+			while (*pStr!=')' && *pStr!='\0') pStr++;
+			if (*pStr==')') pStr++;
+			pDataPtr+=2;
+		}
+		else if (_1stcontain2nd(pStr,L"byte"))
+		{
+			pStr+=4;
+			int base=_getbase2(pStr,16);
+			if (*pStr!='(')
+				break;
+			pStr++;
+			
+			_allocmore(pData,pDataPtr,nAllocLen,1);
+			*((BYTE*)pDataPtr)=BYTE(_readnum(base,pStr));
+			while (*pStr!=')' && *pStr!='\0') pStr++;
+			if (*pStr==')') pStr++;
+			pDataPtr+=1;
+		}
+		else if (_1stcontain2nd(pStr,L"str"))
+		{
+			pStr+=3;
+			if (*pStr!='(')
+				break;
+			pStr++;
+			
+			for (;*pStr!=')' && *pStr!='\0';pStr++)
+			{
+				_allocmore(pData,pDataPtr,nAllocLen,1);
+				
+				if (*pStr=='\\' && pStr[1]!='\0')
+				{
+					pStr++;
+					switch (*pStr)
+					{
+					case '0':
+						*(pDataPtr++)='\0';
+						break;
+					case 'n':
+						*(pDataPtr++)='\n';
+						break;
+					case 'r':
+						*(pDataPtr++)='\r';
+						break;
+					case 't':
+						*(pDataPtr++)='\t';
+						break;
+					case 'b':
+						*(pDataPtr++)='\b';
+						break;
+					case ')':
+						*(pDataPtr++)=')';
+						break;
+					default:
+						*(pDataPtr++)=BYTE(_readnum(16,pStr,2));;
+						pStr--;
+						break;
+					}
+				}
+				else
+					*(pDataPtr++)=W2Ac(*pStr);
+			}
+			if (*pStr==')') pStr++;
+		}
+		else if (_1stcontain2nd(pStr,L"oem"))
+		{
+			pStr+=3;
+			if (*pStr!='(')
+				break;
+			pStr++;
+			
+			int iStart=DWORD(pDataPtr-pData);
+			
+			for (;*pStr!=')' && *pStr!='\0';pStr++)
+			{
+				_allocmore(pData,pDataPtr,nAllocLen,1);
+				
+				if (*pStr=='\\' && pStr[1]!='\0')
+				{
+					pStr++;
+					switch (*pStr)
+					{
+					case '0':
+						*(pDataPtr++)='\0';
+						break;
+					case 'n':
+						*(pDataPtr++)='\n';
+						break;
+					case 'r':
+						*(pDataPtr++)='\r';
+						break;
+					case 't':
+						*(pDataPtr++)='\t';
+						break;
+					case 'b':
+						*(pDataPtr++)='\b';
+						break;
+					case ')':
+						*(pDataPtr++)=')';
+						break;
+					default:
+						*(pDataPtr++)=BYTE(_readnum(16,pStr,2));;
+						pStr--;
+						break;
+					}
+				}
+				else
+					*(pDataPtr++)=W2Ac(*pStr);
+			}
+			CharToOemBuff(LPSTR(pData+iStart),LPSTR(pData+iStart),DWORD(pDataPtr-pData)-iStart);
+			if (*pStr==')') pStr++;
+		}
+		else if (_1stcontain2nd(pStr,L"wstr") || _1stcontain2nd(pStr,L"uni"))
+		{
+			pStr+=3;
+			while (*pStr!='(') pStr++;
+			pStr++;
+			
+			for (;*pStr!=')' && *pStr!='\0';pStr++)
+			{
+				_allocmore(pData,pDataPtr,nAllocLen,2);
+				
+				if (*pStr=='\\' && pStr[1]!='\0')
+				{
+					pStr++;
+					switch (*pStr)
+					{
+					case '0':
+						*LPWORD(pDataPtr)=L'\0';
+						break;
+					case 'n':
+						*LPWORD(pDataPtr)=L'\n';
+						break;
+					case 'r':
+						*LPWORD(pDataPtr)=L'\r';
+						break;
+					case 't':
+						*LPWORD(pDataPtr)=L'\t';
+						break;
+					case 'b':
+						*LPWORD(pDataPtr)=L'\b';
+						break;
+					case ')':
+						*LPWORD(pDataPtr)=L')';
+						break;
+					default:
+						*LPWORD(pDataPtr)=WORD(_readnum(16,pStr,4));;
+						pStr--;
+						break;
+					}
+					pDataPtr+=2;
+				}
+				else
+				{	
+					*((WCHAR*)pDataPtr)=*pStr;
+					pDataPtr+=2;
+				}
+			}
+			if (*pStr==')') 
+				pStr++;
+		}
+		else
+		{
+			_allocmore(pData,pDataPtr,nAllocLen,1);
+			LPCWSTR pStrOld=pStr;
+			*pDataPtr=_readnum(16,pStr,2);
+			if (pStr==pStrOld)
+			{
+				*pdwDataLength=DWORD(pDataPtr-pData);
+				return pData;
+			}
+			pDataPtr++;
+		}
+		while (*pStr==' ') pStr++;
+	}
+	*pdwDataLength=DWORD(pDataPtr-pData);
+	return pData;
+}
+
+#endif
 
 BOOL IsCharNumeric(char cChar,BYTE bBase)
 {
@@ -1275,7 +1669,7 @@ LPWSTR allocstringW(UINT nID,TypeOfResourceHandle bType)
 	if (szBuffer==NULL)
 	{
 		SetHFCError(HFC_CANNOTALLOCATE);
-		return FALSE;
+		return NULL;
 	}
 	UINT nDataLen=::LoadString(nID,szBuffer,STR_LOADSTRINGBUFLEN,bType);
 	if (nDataLen>=STR_LOADSTRINGBUFLEN-2)

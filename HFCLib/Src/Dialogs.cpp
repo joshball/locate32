@@ -690,7 +690,55 @@ void CInputDialog::SetCancelButtonText(int nText)
 		SetDlgItemText(IDC_CANCEL,m_CancelButton);
 }
 
-	
+#ifdef DEF_WCHAR
+void CInputDialog::SetTitle(LPCWSTR szTitle)
+{
+	m_Title=szTitle;
+	if (m_hWnd!=NULL)
+		SetWindowText(m_Title);
+}
+
+BOOL CInputDialog::SetText(LPCWSTR szText)
+{
+	m_Text=szText;
+	if (m_hWnd!=NULL)
+		SetDlgItemText(IDC_TEXT,m_Text);
+	return TRUE;
+}
+
+void CInputDialog::SetInputText(LPCWSTR szText)
+{
+	m_Input=szText;
+	if (m_hWnd!=NULL)
+		SetDlgItemText(IDC_EDIT,m_Input);
+}
+
+int CInputDialog::GetInputText(LPWSTR szText,int nTextLen) const
+{
+	int i=min(nTextLen-1,(int)m_Input.GetLength());
+	MemCopy(szText,m_Input,i);
+	szText[i]='\0';
+	return i;
+}
+
+void CInputDialog::SetOKButtonText(LPCWSTR szText)
+{
+	m_OKButton=szText;
+	if (m_hWnd!=NULL)
+		SetDlgItemText(IDC_OK,m_OKButton);
+}
+
+void CInputDialog::SetCancelButtonText(LPCWSTR szText)
+{
+	if (m_bFlags&ID_NOCANCELBUTTON)
+		return;
+	m_CancelButton=szText;
+	if (m_hWnd!=NULL)
+		SetDlgItemText(IDC_CANCEL,m_CancelButton);
+}
+
+#endif
+
 BOOL CInputDialog::OnInitDialog(HWND hwndFocus)
 {
 	SetDlgItemText(IDC_TEXT,m_Text);
@@ -1370,10 +1418,10 @@ BOOL CFileDialog::GetFileExt(CString& ext) const
 			if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path)<0)
 				return FALSE;
 			else
-				ext=path+LastCharIndex(path,'.')+1;
+				ext=path+LastCharIndex(path,L'.')+1;
 		}
 		else
-			ext=m_pwFileName+LastCharIndex(m_pwFileName,'.')+1;
+			ext=m_pwFileName+LastCharIndex(m_pwFileName,L'.')+1;
 	}
 	else
 	{
@@ -1467,10 +1515,10 @@ BOOL CFileDialog::GetFileExt(CStringW& ext) const
 			if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path)<0)
 				return FALSE;
 			else
-				ext=path+LastCharIndex(path,'.')+1;
+				ext=path+LastCharIndex(path,L'.')+1;
 		}
 		else
-			ext=m_pwFileName+LastCharIndex(m_pwFileName,'.')+1;
+			ext=m_pwFileName+LastCharIndex(m_pwFileName,L'.')+1;
 	}
 	else
 	{
@@ -2149,9 +2197,7 @@ CFolderDialog::~CFolderDialog()
 {
 	if (m_lpil!=NULL)
 	{
-		LPMALLOC pMalloc;
-		SHGetMalloc(&pMalloc);
-		pMalloc->Free(m_lpil);
+		CoTaskMemFree(m_lpil);
 		m_lpil=NULL;
 	}
 	CoUninitialize();

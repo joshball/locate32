@@ -7,19 +7,67 @@
 #ifndef HFCSTR_INL
 #define HFCSTR_INL
 
+template<class CHARTYPE> 
+inline int istrlen(const CHARTYPE* str)
+{
+	int len;
+	for (len=0;(str)[len]!='\0';len++);
+	return len;
+}
+
+
+
+#ifdef DEF_WCHAR
+#define istrlenw istrlen
+
+inline char W2Ac(WCHAR ch)
+{
+	char ret=0;
+	WideCharToMultiByte(CP_ACP,0,&ch,1,&ret,1,NULL,NULL);
+	return ret;
+}
+
+
+inline WCHAR A2Wc(char ch)
+{
+	WCHAR ret=0;
+	MultiByteToWideChar(CP_ACP,0,&ch,1,&ret,1);
+	return ret;
+}
+
+inline BOOL IsCharLower(WCHAR ch)
+{
+	if (IsUnicodeSystem())
+		return IsCharLowerW(ch);
+	else
+		return iswlower(ch);
+}
+
+inline BOOL IsCharUpper(WCHAR ch)
+{
+	if (IsUnicodeSystem())
+		return IsCharUpperW(ch);
+	else
+		return iswupper(ch);
+}
+#endif
+
+
+
+
 // copyers with allocation
-inline LPSTR alloccopy(LPCSTR szString)
+inline char* alloccopy(const char* szString)
 {
 	int nLength=istrlen(szString);
 	char* psz=new char[max(nLength,1)+1];
-	CopyMemory(psz,szString,nLength+1);
+	CopyMemory(psz,szString,(nLength+1)*sizeof(char));
 	return psz;
 }
 
-inline LPSTR alloccopy(LPCSTR szString,DWORD dwLength)
+inline char* alloccopy(const char* szString,DWORD dwLength)
 {
 	char* psz=new char[max(dwLength,1)+1];
-	CopyMemory(psz,szString,dwLength);
+	CopyMemory(psz,szString,dwLength*sizeof(char));
 	psz[dwLength]='\0';
 	return psz;
 }
@@ -31,40 +79,40 @@ inline LPSTR allocempty()
 	return psz;
 }
 
-inline LPSTR alloccopymulti(LPCSTR szMultiString)
+template <class CHARTYPE>
+inline CHARTYPE* alloccopymulti(const CHARTYPE* szMultiString)
 {
 	int nTotLen;
 	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
-	char* psz=new char[nTotLen];
-	CopyMemory(psz,szMultiString,++nTotLen);
+	CHARTYPE* psz=new CHARTYPE[nTotLen];
+	CopyMemory(psz,szMultiString,(++nTotLen)*sizeof(CHARTYPE));
 	return psz;
 }
+
+inline char* alloccopy(CString& sString)
+{
+	if (sString.m_nDataLen==0)
+		return allocempty();
+	char* psz=new char[sString.m_nDataLen+1];
+	CopyMemory(psz,sString.m_pData,sString.m_nDataLen+1);
+	return psz;
+}
+
 
 #ifdef DEF_WCHAR
-inline LPWSTR alloccopy(LPCWSTR szString)
+inline WCHAR* alloccopy(const WCHAR* szString)
 {
-	if (szString==NULL)
-		return NULL;
-	int nLength=istrlenw(szString)+1;
-	WCHAR* psz=new WCHAR[max(nLength,2)];
-	CopyMemory(psz,szString,nLength<<1);
+	int nLength=istrlen(szString);
+	WCHAR* psz=new WCHAR[max(nLength,1)+1];
+	CopyMemory(psz,szString,(nLength+1)*sizeof(WCHAR));
 	return psz;
 }
 
-inline LPWSTR alloccopy(LPCWSTR szString,DWORD dwLength)
+inline WCHAR* alloccopy(const WCHAR* szString,DWORD dwLength)
 {
 	WCHAR* psz=new WCHAR[max(dwLength,1)+1];
-	CopyMemory(psz,szString,dwLength<<1);
-	psz[dwLength]=L'\0';
-	return psz;
-}
-
-inline LPWSTR alloccopymulti(LPCWSTR szMultiString)
-{
-	int nTotLen;
-	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
-	WCHAR* psz=new WCHAR[nTotLen+2];
-	CopyMemory(psz,szMultiString,nTotLen+2);
+	CopyMemory(psz,szString,dwLength*sizeof(WCHAR));
+	psz[dwLength]='\0';
 	return psz;
 }
 
@@ -129,41 +177,17 @@ inline LPWSTR allocemptyW()
 	return psz;
 }
 
-
-#endif
-
-inline char W2Ac(WCHAR ch)
+inline WCHAR* alloccopy(CStringW& sString)
 {
-	char ret=0;
-	WideCharToMultiByte(CP_ACP,0,&ch,1,&ret,1,NULL,NULL);
-	return ret;
-}
-
-#ifdef DEF_WCHAR
-inline WCHAR A2Wc(char ch)
-{
-	WCHAR ret=0;
-	MultiByteToWideChar(CP_ACP,0,&ch,1,&ret,1);
-	return ret;
-}
-
-inline BOOL IsCharLower(WCHAR ch)
-{
-	if (IsUnicodeSystem())
-		return IsCharLowerW(ch);
-	else
-		return iswlower(ch);
-}
-
-inline BOOL IsCharUpper(WCHAR ch)
-{
-	if (IsUnicodeSystem())
-		return IsCharUpperW(ch);
-	else
-		return iswupper(ch);
+	if (sString.m_nDataLen==0)
+		return allocemptyW();
+	WCHAR* psz=new WCHAR[sString.m_nDataLen+1];
+	MemCopyW(psz,sString.m_pData,sString.m_nDataLen+1);
+	return psz;
 }
 
 #endif
+
 
 
 
@@ -220,6 +244,7 @@ inline void MakeLower(LPWSTR szStr)
 	else
 		_wcslwr_s(szStr,istrlenw(szStr)+1);
 }
+
 inline void MakeLower(LPWSTR szStr,DWORD cchLength)
 {
 	if (IsUnicodeSystem())
@@ -254,8 +279,12 @@ inline void MakeUpper(LPWSTR szStr,DWORD cchLength)
 }
 #endif
 
+
+
+
 // char replacers
-inline void replacech(LPSTR str,char from,char to)
+template<class CHARTYPE>
+inline void replacech(CHARTYPE* str,CHARTYPE from,CHARTYPE to)
 {
 	for (register UINT i=0;str[i]!='\0';i++)
 	{
@@ -264,36 +293,319 @@ inline void replacech(LPSTR str,char from,char to)
 	}
 }
 
-#ifdef DEF_WCHAR
-inline void replacech(LPWSTR str,WCHAR from,WCHAR to)
+
+
+template<class CHARTYPE>
+int FirstCharIndex(const CHARTYPE* str,CHARTYPE ch)
 {
-	for (register UINT i=0;str[i]!='\0';i++)
+	int i;
+	for (i=0;str[i]!='\0';i++)
 	{
-		if (str[i]==from)
-			str[i]=to;
+		if (str[i]==ch)
+			return i;
 	}
+	return -1;
 }
-#endif
 
-// parsers
-inline UINT fparseto(LPCSTR str,char ch)
+template<class CHARTYPE>
+int LastCharIndex(const CHARTYPE* str,CHARTYPE ch)
 {
-	register UINT i=0;
-	for (;str[i]!=ch;i++);
-	return i;
+	int i,ret=-1;
+	for (i=0;str[i]!='\0';i++)
+	{
+		if (str[i]==ch)
+			ret=i;
+	}
+	return ret;
+}
+
+template<class CHARTYPE>
+int NextCharIndex(const CHARTYPE* str,CHARTYPE ch,int oldidx)
+{
+   int i;
+   for (i=oldidx+1;str[i]!='\0';i++)
+   {
+      if (str[i]==ch)
+         return i;
+   }
+   return -1;
+}
+
+
+inline int sprintfex( char *buffer, int buffersize, const char *format,...)
+{
+	va_list argList;
+	va_start(argList,format);
+	int nRet=vsprintfex(buffer,buffersize,format,argList);
+	va_end(argList);
+	return nRet;
 }
 
 #ifdef DEF_WCHAR
-inline UINT fwparse(LPCWSTR str,WCHAR ch)
+inline int swprintfex( wchar_t *buffer, int buffersize, const wchar_t *format,...)
 {
-	register UINT i=0;
-	for (;str[i]!=ch;i++);
-	return i;
+	va_list argList;
+	va_start(argList,format);
+	int nRet=vswprintfex(buffer,buffersize,format,argList);
+	va_end(argList);
+	return nRet;
 }
 #endif
+
+
+
+////////////////////////////////////////////////////////////////
+// dataparsers
+
+template<class TYPE>
+inline bool _1stcontain2nd(const TYPE* s1,const TYPE* s2)
+{
+	for (register int i=0;s2[i]!='\0';i++)
+		if (s1[i]!=s2[i])
+			return FALSE;
+	return TRUE;
+}
+
+// szString will change
+template<class CHARTYPE>
+int _readnum(int base,const CHARTYPE*& str,int length=-1)
+{
+	int num=0;
+	BOOL bToNegative=FALSE;
+	for (;*str=='-';str++)
+		bToNegative=!bToNegative;
+	if (length==-1)
+		length=istrlen(str);
+
+	if (base==16)
+	{
+		for (;*str!='\0' && length>0;length--,str++)
+		{
+			if (*str>='0' && *str<='9')
+			{
+				num<<=4;
+				num+=*str-'0';
+			}
+			else if (*str>='a' && *str<='f')
+			{
+				num<<=4;
+				num+=*str-'a'+0xa;
+			}
+			else if (*str>='A' && *str<='F')
+			{
+				num<<=4;
+				num+=*str-'A'+0xa;
+			}
+			else
+				break;
+		}
+		if (bToNegative)
+			return -num;
+		return num;
+	}
+	for (;*str!='\0' && length>0;length--,str++)
+	{
+		int n=chartonum(*str);
+		if (n>=base)
+			break;
+		if (n==0 && *str!='0')
+			break;
+		num*=base;
+		num+=n;
+	}
+	if (bToNegative)
+		return -num;
+	return num;
+}
+
+template<class CHARTYPE>
+// szString will not change
+inline int readnum(int base,const CHARTYPE*& str,int length)
+{
+	return _readnum(base,str,length);
+}
+
+template<class CHARTYPE>
+inline int chartonum(CHARTYPE ch)
+{
+	if (ch>='0' && ch<='9')
+		return ch-'0';
+	if (ch>='a' && ch<='z')
+		return ch-'a'+10;
+	if (ch>='A' && ch<='Z')
+		return ch-'a'+10;
+	return 0;
+}
+
+template<class CHARTYPE> 
+inline int parseto(const CHARTYPE* str,CHARTYPE ch)
+{
+	int len;
+	for (len=0;(str)[len]!=(ch);len++);
+	return len;
+}
+
+template<class CHARTYPE> 
+inline int parseto2(const CHARTYPE* str,CHARTYPE ch1,CHARTYPE ch2)
+{
+	int len;
+	for (len=0;str[len]!=ch1 && str[len]!=ch2;len++);
+	return len;
+}
+
+template<class CHARTYPE> 
+inline int parseto3(const CHARTYPE* str,CHARTYPE ch1,CHARTYPE ch2,CHARTYPE ch3)
+{
+	int len;
+	for (len=0;str[len]!=ch1 && str[len]!=ch2 && str[len]!=ch3;len++);
+	return len;
+}
+
+template<class CHARTYPE> 
+inline int parseto4(const CHARTYPE* str,CHARTYPE ch1,CHARTYPE ch2,CHARTYPE ch3,CHARTYPE ch4)
+{
+	int len;
+	for (len=0;str[len]!=ch1 && str[len]!=ch2 && str[len]!=ch3 && str[len]!=ch4;len++);
+	return len;
+}
+
+
+
+template<class CHARTYPE>
+inline BYTE* dataparser(const CHARTYPE* pString,DWORD dwStrLen,DWORD* pdwDataLength=NULL)
+{
+	return dataparser(pString,dwStrLen,malloc,pdwDataLength);
+}
+
+template<class CHARTYPE>
+inline BYTE* dataparser(const CHARTYPE* str,DWORD* pdwDataLength=NULL)
+{
+	return dataparser(str,istrlen(str),pdwDataLength);
+}
+
+inline BYTE* dataparser(const CString& str,DWORD* pdwDataLength=NULL)
+{
+	return dataparser(LPCSTR(str),str.GetLength(),pdwDataLength);
+}
+
+
+#ifdef DEF_WCHAR
+inline BYTE* dataparser(const CStringW& str,DWORD* pdwDataLength=NULL)
+{
+	return dataparser(LPCWSTR(str),str.GetLength(),pdwDataLength);
+}
+#endif
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////
+// Classes
+////////////////////////////////////////////////////////////////////////////
+
+
+#ifdef DEF_WCHAR
 
 ///////////////////////////////////////////
-// inlines for CString
+// W2A
+
+inline W2A::W2A(LPCWSTR sA)
+{
+	pAStr=alloccopyWtoA(sA);
+}
+
+inline W2A::W2A(LPCWSTR sA,int len)
+{
+	pAStr=alloccopyWtoA(sA,len);
+}
+
+
+inline W2A::W2A(CStringW& sA)
+{
+	pAStr=alloccopyWtoA(sA,sA.GetLength());
+}
+
+
+inline W2A::~W2A()
+{
+	if (pAStr!=NULL)
+		delete pAStr;
+}
+
+inline W2A::operator LPCSTR() const
+{
+	return pAStr;
+}
+
+///////////////////////////////////////////
+// A2W
+
+inline A2W::A2W(LPCSTR sA)
+{
+	pWStr=alloccopyAtoW(sA);
+}
+
+inline A2W::A2W(LPCSTR sA,int len)
+{
+	pWStr=alloccopyAtoW(sA,len);
+}
+
+
+inline A2W::A2W(CString& sA)
+{
+	pWStr=alloccopyAtoW(sA,sA.GetLength());
+}
+
+inline A2W::~A2W()
+{
+	if (pWStr!=NULL)
+		delete pWStr;
+}
+
+inline A2W::operator LPCWSTR() const
+{
+	return pWStr;
+}
+
+#endif
+
+
+
+///////////////////////////////////////////
+// ID2A
+
+inline ID2A::~ID2A()
+{
+	delete pStr;
+}
+
+inline ID2A::operator LPCSTR() const
+{
+	return pStr;
+}
+
+///////////////////////////////////////////
+// ID2W
+
+#ifdef DEF_WCHAR
+inline ID2W::~ID2W()
+{
+	delete pWStr;
+}
+
+inline ID2W::operator LPCWSTR() const
+{
+	return pWStr;
+}
+#endif
+
+
+
+
+
+///////////////////////////////////////////
+// CString
 
 inline CString::CString()
 :	m_pData(NULL),m_nDataLen(0),m_nAllocLen(0),m_nBase(10)
@@ -822,131 +1134,6 @@ inline LPWSTR CStringW::GiveBuffer()
 
 #endif 
 
-// dataparsers
 
-inline bool _1stcontain2nd(const char* s1,const char* s2)
-{
-	for (register int i=0;s2[i]!='\0';i++)
-		if (s1[i]!=s2[i])
-			return FALSE;
-	return TRUE;
-}
-
-inline int chartonum(char ch)
-{
-	if (ch>='0' && ch<='9')
-		return ch-'0';
-	if (ch>='a' && ch<='z')
-		return ch-'a'+10;
-	if (ch>='A' && ch<='Z')
-		return ch-'a'+10;
-	return 0;
-}
-
-// szString will not change
-inline int readnum(int base,LPCSTR szString,int length=-1)
-{
-	return _readnum(base,szString,length);
-}
-
-inline BYTE* dataparser(LPCSTR pString,DWORD dwStrLen,DWORD* pdwDataLength=NULL)
-{
-	return dataparser(pString,dwStrLen,malloc,pdwDataLength);
-}
-inline BYTE* dataparser(const CString& str,DWORD* pdwDataLength=NULL)
-{
-	return dataparser(LPCSTR(str),str.GetLength(),pdwDataLength);
-}
-
-inline BYTE* dataparser(LPCSTR str,DWORD* pdwDataLength=NULL)
-{
-	return dataparser(str,istrlen(str),pdwDataLength);
-}
-
-
-
-
-#ifdef DEF_WCHAR
-
-inline W2A::W2A(LPCWSTR sA)
-{
-	pAStr=alloccopyWtoA(sA);
-}
-
-inline W2A::W2A(LPCWSTR sA,int len)
-{
-	pAStr=alloccopyWtoA(sA,len);
-}
-
-
-inline W2A::W2A(CStringW& sA)
-{
-	pAStr=alloccopyWtoA(sA,sA.GetLength());
-}
-
-
-inline W2A::~W2A()
-{
-	if (pAStr!=NULL)
-		delete pAStr;
-}
-
-inline W2A::operator LPCSTR() const
-{
-	return pAStr;
-}
-
-inline A2W::A2W(LPCSTR sA)
-{
-	pWStr=alloccopyAtoW(sA);
-}
-
-inline A2W::A2W(LPCSTR sA,int len)
-{
-	pWStr=alloccopyAtoW(sA,len);
-}
-
-
-inline A2W::A2W(CString& sA)
-{
-	pWStr=alloccopyAtoW(sA,sA.GetLength());
-}
-
-inline A2W::~A2W()
-{
-	if (pWStr!=NULL)
-		delete pWStr;
-}
-
-inline A2W::operator LPCWSTR() const
-{
-	return pWStr;
-}
-
-#endif
-
-
-
-inline ID2A::~ID2A()
-{
-	delete pStr;
-}
-
-inline ID2A::operator LPCSTR() const
-{
-	return pStr;
-}
-
-#ifdef DEF_WCHAR
-inline ID2W::~ID2W()
-{
-	delete pWStr;
-}
-
-inline ID2W::operator LPCWSTR() const
-{
-	return pWStr;
-}
-#endif
 
 #endif

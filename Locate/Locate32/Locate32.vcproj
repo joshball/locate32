@@ -559,6 +559,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\misc.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ResultsDialogs.cpp"
 				>
 			</File>

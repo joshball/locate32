@@ -225,7 +225,7 @@ BOOL RestoreSettings(HWND hWnd)
 		return FALSE;
 	
 	int nDotIndex;
-	for (nDotIndex=strlen(szPath)-1;nDotIndex>=0 && szPath[nDotIndex]!='.';nDotIndex--);
+	for (nDotIndex=(int)strlen(szPath)-1;nDotIndex>=0 && szPath[nDotIndex]!='.';nDotIndex--);
 
 	if (nDotIndex>=0 && _stricmp(szPath+nDotIndex+1,"reg")==0)
 	{
@@ -378,6 +378,11 @@ INT_PTR CALLBACK DialogProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 	case WM_COMMAND:
 		switch (LOWORD(wParam))
 		{
+		case IDOK:
+			break;
+		case IDCANCEL:
+			EndDialog(hWnd,0);
+			break;
 		case IDC_SAVESETTINGS:
 			SaveSettings(hWnd);
 			break;

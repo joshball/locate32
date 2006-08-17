@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,6,8150
- PRODUCTVERSION 2,99,6,8150
+ FILEVERSION 2,99,6,8170
+ PRODUCTVERSION 2,99,6,8170
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 6.8150"
+            VALUE "FileVersion", "3.0 beta 6.8170"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 6.8150"
+            VALUE "ProductVersion", "3.0 beta 6.8170"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1167,6 +1167,7 @@ BEGIN
 	IDS_LOCATINGLIMITREACHED "Results limit reached"
     IDS_LOCATING            "Locating files..."
     IDS_LOCATINGFAILED      "Locating failed"
+    IDS_LOCATINGFAILED2      "Locating finished with error (%s)"
     IDS_LOCATINGCANCELLED   "Locating interrupted"
     IDS_SEARCHINGFROMFILE   "Searching from file %s."
 END
@@ -1275,6 +1276,7 @@ STRINGTABLE
 BEGIN
     IDS_LASTERROR						"Error: "
     IDS_LASTERRORUNKNOWN				"unknown (db %s)"
+    IDS_LASTERRORUNKNOWN2				"unknown"
     IDS_LASTERRORCANNOTOPEN				"cannot open database %s"
     IDS_LASTERRORCANNOTREAD				"cannot read database %s"
 	IDS_LASTERRORCANNOTWRITE			"cannot write database %s"

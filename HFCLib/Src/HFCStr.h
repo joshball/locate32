@@ -7,22 +7,6 @@
 #ifndef HFCSTR_H
 #define HFCSTR_H
 
-////////////////////////////////////////
-// Definitions
-
-#define sMemCopy(dst,src,len)	CopyMemory(dst,src,len)
-#define sMemZero(dst,len)		ZeroMemory(dst,len)
-#define sMemSet(dst,val,len)	FillMemory(dst,len,val)
-
-#define sMemCopyW				MemCopyW
-#define sstrlenW				dwstrlen
-
-
-////////////////////////////////////////
-// Functions
-
-
-
 #ifdef DEF_WCHAR
 inline BOOL IsUnicodeSystem()
 {
@@ -37,83 +21,16 @@ inline BOOL IsUnicodeSystem()
 }
 #endif
 
-inline int istrlen(const char* str)
-{
-	int len;
-	for (len=0;(str)[len]!='\0';len++);
-	return len;
-}
 
+////////////////////////////////////////
+// Definitions
 
-#ifdef DEF_WCHAR
-inline int istrlenw(const WCHAR* str)
-{
-	int len;
-	for (len=0;(str)[len]!=L'\0';len++);
-	return len;
-}
-#endif
+#define sMemCopy(dst,src,len)	CopyMemory(dst,src,len)
+#define sMemZero(dst,len)		ZeroMemory(dst,len)
+#define sMemSet(dst,val,len)	FillMemory(dst,len,val)
 
-inline int parseto(LPCSTR str,CHAR ch)
-{
-	int len;
-	for (len=0;(str)[len]!=(ch);len++);
-	return len;
-}
-
-#ifdef DEF_WCHAR
-inline int parseto(LPCWSTR str,WCHAR ch)
-{
-	int len;
-	for (len=0;(str)[len]!=(ch);len++);
-	return len;
-}
-#endif
-
-inline int parseto2(LPCSTR str,CHAR ch1,CHAR ch2)
-{
-	int len;
-	for (len=0;str[len]!=ch1 && str[len]!=ch2;len++);
-	return len;
-}
-
-inline int parseto3(LPCSTR str,CHAR ch1,CHAR ch2,CHAR ch3)
-{
-	int len;
-	for (len=0;str[len]!=ch1 && str[len]!=ch2 && str[len]!=ch3;len++);
-	return len;
-}
-
-inline int parseto4(LPCSTR str,CHAR ch1,CHAR ch2,CHAR ch3,CHAR ch4)
-{
-	int len;
-	for (len=0;str[len]!=ch1 && str[len]!=ch2 && str[len]!=ch3 && str[len]!=ch4;len++);
-	return len;
-}
-
-
-// Extended sprintf style handlers
-int vsprintfex( char *buffer, int buffersize, const char *format, va_list argptr );
-inline int sprintfex( char *buffer, int buffersize, const char *format,...)
-{
-	va_list argList;
-	va_start(argList,format);
-	int nRet=vsprintfex(buffer,buffersize,format,argList);
-	va_end(argList);
-	return nRet;
-}
-
-#ifdef DEF_WCHAR
-int vswprintfex( wchar_t *buffer, int buffersize, const wchar_t *format, va_list argptr );
-inline int swprintfex( wchar_t *buffer, int buffersize, const wchar_t *format,...)
-{
-	va_list argList;
-	va_start(argList,format);
-	int nRet=vswprintfex(buffer,buffersize,format,argList);
-	va_end(argList);
-	return nRet;
-}
-#endif
+#define sMemCopyW				MemCopyW
+#define sstrlenW				dwstrlen
 
 #ifdef DEF_WCHAR
 #define MemCopyW(dst,src,len) \
@@ -127,21 +44,13 @@ inline int swprintfex( wchar_t *buffer, int buffersize, const wchar_t *format,..
 #endif
 
 
-
 ////////////////////////////////////////
 // String functions
 
 BOOL ContainString(LPCSTR,LPCSTR);
-int FirstCharIndex(LPCSTR,const CHAR);
-int LastCharIndex(LPCSTR,const CHAR);
-int NextCharIndex(LPCSTR,const CHAR,int);
-
 #ifdef DEF_WCHAR
 BOOL ContainString(LPCWSTR,LPCWSTR);
 BOOL ContainString(LPCSTR,LPCWSTR);
-int FirstCharIndex(LPCWSTR,const WCHAR);
-int LastCharIndex(LPCWSTR,const WCHAR);
-int NextCharIndex(LPCWSTR,const WCHAR,int);
 #endif
 
 #ifdef WIN32
@@ -154,17 +63,25 @@ int strcasecmp(LPCWSTR,LPCWSTR);
 int strcasencmp(LPCWSTR s1,LPCWSTR s2,DWORD n);
 #endif
 
-int _readnum(int base,LPCSTR& str,int length=-1);
-
 BYTE* dataparser(LPCSTR pString,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength=NULL);
 BYTE* dataparser2(LPCSTR pStr,DWORD* pdwDataLength);
 BOOL IsCharNumeric(char cChar,BYTE bBase);
 
 LPSTR allocstring(UINT nID,TypeOfResourceHandle bType=LanguageSpecificResource);
+
 #ifdef DEF_WCHAR
+BYTE* dataparser(LPCWSTR pString,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength=NULL);
+BYTE* dataparser2(LPCWSTR pStr,DWORD* pdwDataLength);
+
 LPWSTR allocstringW(UINT nID,TypeOfResourceHandle bType=LanguageSpecificResource);
 #endif
 
+
+// Extended sprintf style handlers
+int vsprintfex( char *buffer, int buffersize, const char *format, va_list argptr );
+#ifdef DEF_WCHAR
+int vswprintfex( wchar_t *buffer, int buffersize, const wchar_t *format, va_list argptr );
+#endif
 
 
 
@@ -367,6 +284,7 @@ public:
 	BOOL operator==(LPCWSTR str);
 
 	friend class CStringW;
+	friend char* alloccopy(CString& sString);
 #endif
 
 #ifdef _DEBUG_LOGGING
@@ -550,6 +468,7 @@ public:
 	BOOL AddString(UINT nID,TypeOfResourceHandle bType);
 #endif
 	friend class CString;
+	friend WCHAR* alloccopy(CStringW& sString);
 
 };
 

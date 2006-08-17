@@ -55,7 +55,7 @@ BOOL SetLanguageSpecifigHandles(LPCWSTR szAppPath)
 	if (LangFile.IsEmpty())
 		LangFile=L"lan_en.dll";
 
-	CStringW Path(szAppPath,LastCharIndex(szAppPath,'\\')+1);
+	CStringW Path(szAppPath,LastCharIndex(szAppPath,L'\\')+1);
 	
 	HINSTANCE hLib=FileSystem::LoadLibrary(Path+LangFile);
 	if (hLib==NULL)
@@ -696,7 +696,7 @@ int wmain (int argc,wchar_t * argv[])
 	{
 		CDatabase* pDatabase=CDatabase::FromOldStyleDatabase(HKCU,"Software\\Update\\Database");
 		if (pDatabase==NULL)
-			pDatabase=CDatabase::FromDefaults(TRUE,argv[0],(int)LastCharIndex(argv[0],'\\')+1); // Nothing else can be done?
+			pDatabase=CDatabase::FromDefaults(TRUE,argv[0],(int)LastCharIndex(argv[0],L'\\')+1); // Nothing else can be done?
 		aDatabases.Add(pDatabase);
 	}
 	CDatabase::CheckValidNames(aDatabases);
@@ -824,7 +824,7 @@ int wmain (int argc,wchar_t * argv[])
 					}
 
 					pStr+=nIndex+1;
-					nIndex=(int)FirstCharIndex(pStr,',');
+					nIndex=(int)FirstCharIndex(pStr,L',');
 				}
 			
 			}

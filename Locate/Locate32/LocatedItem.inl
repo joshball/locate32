@@ -268,6 +268,7 @@ inline CLocatedItem::~CLocatedItem()
 inline void CLocatedItem::UpdateIcon()
 {
 	SHFILEINFOW fi;
+	ItemDebugMessage("CLocatedItem::UpdateIcon BEGIN");
 	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
 	{
         if (GetFileInfo(GetPath(),0,&fi,/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
@@ -281,10 +282,14 @@ inline void CLocatedItem::UpdateIcon()
 		iIcon=GetLocateApp()->m_nDefImage;
 
 	dwFlags|=LITEM_ICONOK;
+
+	ItemDebugMessage("CLocatedItem::UpdateIcon END");
+	
 }
 
 inline void CLocatedItem::UpdateParentIcon()
 {
+	ItemDebugMessage("CLocatedItem::UpdateParentIcon BEGIN");
 	SHFILEINFOW fi;
 	LPWSTR szParent=GetParent();
 	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
@@ -312,6 +317,8 @@ inline void CLocatedItem::UpdateParentIcon()
     	iIcon=GetLocateApp()->m_nDefImage;
 
 	dwFlags|=LITEM_PARENTICONOK;
+
+	ItemDebugMessage("CLocatedItem::UpdateParentIcon END");
 }
 
 

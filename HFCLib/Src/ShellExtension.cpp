@@ -5,8 +5,119 @@
 #include "HFCLib.h"
 
 #ifdef WIN32
+BOOL StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,LPSTR szString,DWORD cchBufferLen)
+{
+	switch (strret.uType)
+	{
+	case STRRET_OFFSET:
+		return strcpy_s(szString,cchBufferLen,(LPSTR)((LPBYTE)lpiil+strret.uOffset))==0;
+	case STRRET_CSTR:
+		return strcpy_s(szString,cchBufferLen,strret.cStr)==0;
+	case STRRET_WSTR:
+		BOOL bRet=WideCharToMultiByte(CP_ACP,0,strret.pOleStr,-1,szString,cchBufferLen,NULL,NULL)>0;
+		if (!bRet)
+			bRet=*strret.pOleStr=='\0';
+		CoTaskMemFree(strret.pOleStr);
+		return bRet;
+	}
+	return FALSE;
+}
 
-LPITEMIDLIST GetFileIDList(LPCSTR lpszFileName)
+void StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,CString& sString)
+{
+	switch (strret.uType)
+	{
+	case STRRET_OFFSET:
+		sString.Copy((LPSTR)((LPBYTE)lpiil+strret.uOffset));
+		break;
+	case STRRET_CSTR:
+		sString.Copy(strret.cStr);
+		break;
+	case STRRET_WSTR:
+		sString.Copy(strret.pOleStr);
+		CoTaskMemFree(strret.pOleStr);
+		break;
+	}	
+}
+
+LPSTR StrRetToPtr(STRRET& strret,LPITEMIDLIST lpiil)
+{
+	LPSTR pRet=NULL;
+	switch (strret.uType)
+	{
+	case STRRET_OFFSET:
+		pRet=alloccopy((LPSTR)((LPBYTE)lpiil+strret.uOffset));
+		break;
+	case STRRET_CSTR:
+		pRet=alloccopy(strret.cStr);
+		break;
+	case STRRET_WSTR:
+		pRet=alloccopyWtoA(strret.pOleStr);
+		CoTaskMemFree(strret.pOleStr);
+		break;
+	}	
+	return pRet;
+}
+
+#ifdef DEF_WCHAR
+BOOL StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,LPWSTR szString,DWORD cchBufferLen)
+{
+	switch (strret.uType)
+	{
+	case STRRET_OFFSET:
+		if (MultiByteToWideChar(CP_ACP,0,(LPSTR)((LPBYTE)lpiil+strret.uOffset),-1,szString,cchBufferLen)>0)
+			return TRUE;
+		return *(LPSTR)((LPBYTE)lpiil+strret.uOffset)=='\0';
+	case STRRET_CSTR:
+		if (MultiByteToWideChar(CP_ACP,0,strret.cStr,-1,szString,cchBufferLen)>0)
+			return TRUE;
+		return *strret.cStr=='\0';
+	case STRRET_WSTR:
+		BOOL bRet=wcscpy_s(szString,cchBufferLen,strret.pOleStr)==0;
+		CoTaskMemFree(strret.pOleStr);
+		return bRet;
+	}
+	return FALSE;
+}
+
+void StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,CStringW& sString)
+{
+	switch (strret.uType)
+	{
+	case STRRET_OFFSET:
+		sString.Copy((LPSTR)((LPBYTE)lpiil+strret.uOffset));
+		break;
+	case STRRET_CSTR:
+		sString.Copy(strret.cStr);
+		break;
+	case STRRET_WSTR:
+		sString.Copy(strret.pOleStr);
+		CoTaskMemFree(strret.pOleStr);
+		break;
+	}	
+}
+
+LPWSTR StrRetToPtrW(STRRET& strret,LPITEMIDLIST lpiil)
+{
+	LPWSTR pRet=NULL;
+	switch (strret.uType)
+	{
+	case STRRET_OFFSET:
+		pRet=alloccopyAtoW((LPSTR)((LPBYTE)lpiil+strret.uOffset));
+		break;
+	case STRRET_CSTR:
+		pRet=alloccopyAtoW(strret.cStr);
+		break;
+	case STRRET_WSTR:
+		pRet=alloccopy(strret.pOleStr);
+		CoTaskMemFree(strret.pOleStr);
+		break;
+	}	
+	return pRet;
+}
+#endif
+
+LPITEMIDLIST GetIDList(LPCSTR lpszFileName)
 {
 	LPITEMIDLIST pidl=NULL;
 	IShellFolder *pDesktop;
@@ -22,7 +133,7 @@ LPITEMIDLIST GetFileIDList(LPCSTR lpszFileName)
 	return pidl;
 }
 
-LPITEMIDLIST GetFolderIDList(LPCSTR lpszFileName)
+LPITEMIDLIST GetIDListForParent(LPCSTR lpszFileName)
 {
 		int temp=LastCharIndex(lpszFileName,'\\');
 	LPCWSTR szFolder;
@@ -150,7 +261,7 @@ HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,DWORD nBufSize)
 }
 
 #ifdef DEF_WCHAR
-LPITEMIDLIST GetFileIDList(LPCWSTR lpszFileName)
+LPITEMIDLIST GetIDList(LPCWSTR lpszFileName)
 {
 	LPITEMIDLIST pidl=NULL;
 	IShellFolder *pDesktop;
@@ -166,9 +277,9 @@ LPITEMIDLIST GetFileIDList(LPCWSTR lpszFileName)
 	return pidl;
 }
 
-LPITEMIDLIST GetFolderIDList(LPCWSTR lpszFileName)
+LPITEMIDLIST GetIDListForParent(LPCWSTR lpszFileName)
 {
-	int temp=LastCharIndex(lpszFileName,'\\');
+	int temp=LastCharIndex(lpszFileName,L'\\');
 	LPCWSTR szFolder;
 	if (temp==-1)
 		szFolder=alloccopy(lpszFileName);
@@ -210,7 +321,7 @@ HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc,L
 				if (SUCCEEDED(hres))
 				{
 					
-					LONG_PTR nIndex=LastCharIndex(pszLink,'\\');
+					LONG_PTR nIndex=LastCharIndex(pszLink,L'\\');
 					if (nIndex>=0)
 					{
 						WCHAR szWDir[MAX_PATH];
@@ -244,7 +355,7 @@ HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc,L
 				hres=psl->SetPath(W2A(pszLink));
 				if (SUCCEEDED(hres))
 				{
-					LONG_PTR nIndex=LastCharIndex(pszLink,'\\');
+					LONG_PTR nIndex=LastCharIndex(pszLink,L'\\');
 					if (nIndex>=0)
 					{
 						char szWDir[MAX_PATH];
@@ -509,25 +620,15 @@ DWORD GetComputerNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLe
 	}
 
 	STRRET str;
-	if (!SUCCEEDED(psf->GetDisplayNameOf(lpiil,SHGDN_NORMAL | SHGDN_FORPARSING,&str)))
+	if (!SUCCEEDED(psf->GetDisplayNameOf(lpiil,SHGDN_FORPARSING,&str)))
 	{
 		psf->Release();
 		return 0;
 	}
 	psf->Release();
 
-
-	switch (str.uType)
-	{
-	case STRRET_OFFSET:
-		StringCbCopy(szName,dwBufferLen,(LPSTR)((LPBYTE)lpiil+str.uOffset));
-		return (DWORD)istrlen(szName);
-	case STRRET_CSTR:
-		StringCbCopy(szName,dwBufferLen,str.cStr);
-		return (DWORD)istrlen(szName);
-	case STRRET_WSTR:
-		return (DWORD)WideCharToMultiByte(CP_ACP,0,str.pOleStr,(int)wcslen(str.pOleStr)+1,szName,dwBufferLen,NULL,NULL);
-	}
+	if (StrRetToStr(str,lpiil,szName,dwBufferLen))
+		return istrlen(szName);
 	return 0;
 }
 
@@ -561,17 +662,8 @@ DWORD GetComputerNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,DWORD dwBufferL
 	}
 	psf->Release();
 
-
-	switch (str.uType)
-	{
-	case STRRET_OFFSET:
-		return MultiByteToWideChar(CP_ACP,0,(LPSTR)((LPBYTE)lpiil+str.uOffset),-1,szName,dwBufferLen);
-	case STRRET_CSTR:
-		return MultiByteToWideChar(CP_ACP,0,str.cStr,-1,szName,dwBufferLen);
-	case STRRET_WSTR:
-		StringCbCopyW(szName,dwBufferLen,str.pOleStr);
-		return (DWORD)wcslen(szName);
-	}
+	if (StrRetToStr(str,lpiil,szName,dwBufferLen))
+		return istrlenw(szName);
 	return 0;
 }
 #endif
@@ -585,8 +677,19 @@ BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,DWORD nBufferLen)
 	file << L"desktop.ini";
 
 	WCHAR cls[300];
-	if (!GetPrivateProfileStringW(L".ShellClassInfo",L"CLSID2",szwEmpty,cls,300,file))
-		return FALSE;
+	if (IsUnicodeSystem())
+	{
+		if (!GetPrivateProfileStringW(L".ShellClassInfo",L"CLSID2",szwEmpty,cls,300,file))
+			return FALSE;
+	}
+	else
+	{
+		char clsA[300];
+		if (!GetPrivateProfileString(".ShellClassInfo","CLSID2",szEmpty,clsA,300,W2A(file)))
+			return FALSE;
+		MultiByteToWideChar(CP_ACP,0,clsA,-1,cls,300);
+	}
+
 
 	if (wcscmp(cls,L"{0AFACED1-E828-11D1-9187-B532F1E9575D}")!=0)
 		return FALSE; // Folder shortcut
@@ -625,8 +728,11 @@ BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,DWORD nBufferLen)
 		if (SUCCEEDED(psl->GetIDList(&il)))
 		{
 			STRRET str;
-			if (SHGetPathFromIDListW(il,szTarget))
-				bRet=2;
+			if (SUCCEEDED(psf->GetDisplayNameOf(il,SHGDN_FORPARSING,&str)))
+			{
+				if (StrRetToStr(str,il,szTarget,nBufferLen))
+					bRet=2;
+			}
 			else
 			{
 				SHDESCRIPTIONID di;
@@ -634,38 +740,15 @@ BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,DWORD nBufferLen)
 				{
                     if (di.clsid==CLSID_NetworkPlaces)
 					{		
-						if (SUCCEEDED(psf->GetDisplayNameOf(il,SHGDN_NORMAL | SHGDN_FORPARSING,&str)))
+						if (SUCCEEDED(psf->GetDisplayNameOf(il,SHGDN_FORPARSING,&str)))
 						{
-							switch (str.uType)
-							{
-							case STRRET_OFFSET:
-								{
-									LPSTR pStr=(LPSTR)((LPBYTE)il+str.uOffset);
-									if (pStr[0]=='\\' && pStr[1]=='\\')
-									bRet=MultiByteToWideChar(CP_ACP,0,pStr,-1,szTarget,nBufferLen)>0?1:0;
-										break;
-								}
-							case STRRET_CSTR:
-								if (str.cStr[0]=='\\' && str.cStr[1]=='\\')
-									bRet=MultiByteToWideChar(CP_ACP,0,str.cStr,-1,szTarget,nBufferLen)>0?1:0;
-								break;
-							case STRRET_WSTR:
-								if (str.pOleStr[0]==L'\\' && str.pOleStr[1]==L'\\')
-								{
-									DWORD nlen=istrlenw(str.pOleStr);
-									if (nBufferLen<nlen)
-										nlen=nBufferLen-1;
-									CopyMemory(szTarget,str.pOleStr,nlen);
-									szTarget[nlen]='\0';
-									bRet=1;
-								}			
-								break;
-							}
+							if (StrRetToStr(str,il,szTarget,nBufferLen))
+								bRet=szTarget[0]=='\\' && szTarget[1]=='\\';
 						}
 					}
 				}
 			}
-			
+			CoTaskMemFree(il);
 		}
 	}
 	

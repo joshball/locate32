@@ -467,7 +467,7 @@ HGLOBAL CFileObject::GetItemIDList()
 	
 	for (i=1;i<=m_Files.GetSize();i++)
 	{
-		pItemLists[i]=GetFileIDList(*m_Files[i-1]);
+		pItemLists[i]=GetIDList(*m_Files[i-1]);
 		nDataLength+=pItemLengths[i]=GetIDListSize(pItemLists[i]);
 	}
 	CIDA* pida=(CIDA*)GlobalAlloc(GPTR,nDataLength);
@@ -486,14 +486,10 @@ HGLOBAL CFileObject::GetItemIDList()
 	{
 		pida->aoffset[i]=nOffset;
 		sMemCopy((LPSTR)pida+nOffset,pItemLists[i],pItemLengths[i]);
+		CoTaskMemFree(pItemLists[i]);
 		nOffset+=pItemLengths[i];
 	}
-	if (pItemLists[0]!=NULL)
-	{
-		IMalloc* pMalloc;
-		if (SHGetMalloc(&pMalloc)==NOERROR)
-			pMalloc->Free(pItemLists[0]);
-	}
+
 	delete[] pItemLists;
 	delete[] pItemLengths;
 	return (HGLOBAL)pida;

@@ -73,7 +73,7 @@ static BOOL _ContainString(LPCSTR s1,LPCSTR s2,int s2len) // Is s2 in the s1
 #ifndef KEYHOOK_EXPORTS
 
 
-BOOL __ContainString(LPCSTR s1,LPCSTR s2) // Is s2 in the s1
+BOOL __ContainString(LPCWSTR s1,LPCWSTR s2) // Is s2 in the s1
 {
 
 	BOOL bBreakIfNotMatch;
@@ -652,14 +652,14 @@ CAction::SendMessageInfo* CAction::SendMessageInfo::FromData(const BYTE* pData,D
 	pSendMessage->nMessage=*((DWORD*)(pData+2));
 	
 	pData+=sizeof(DWORD)+sizeof(WORD);
-	dwUsed+=sizeof(DWORD)+sizeof(WORD);
+	dwUsed=sizeof(DWORD)+sizeof(WORD);
 	dwDataLen-=sizeof(DWORD)+sizeof(WORD);
 
 	
 	// Set szWindow
 	DWORD dwLen;
-	for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
-	if (dwLen==dwDataLen)
+	for (dwLen=0;dwLen*2<dwDataLen && ((WCHAR*)pData)[dwLen]!='\0';dwLen++);
+	if (dwLen*2==dwDataLen)
 	{
 		delete pSendMessage;
 		return NULL;
@@ -667,19 +667,19 @@ CAction::SendMessageInfo* CAction::SendMessageInfo::FromData(const BYTE* pData,D
 	dwLen++;
 	if (dwLen>1)
 	{
-		pSendMessage->szWindow=new char[dwLen];
-		CopyMemory(pSendMessage->szWindow,pData,dwLen);
+		pSendMessage->szWindow=new WCHAR[dwLen];
+		MemCopyW(pSendMessage->szWindow,pData,dwLen);
 	}
 	else
 		pSendMessage->szWindow=NULL;
 
-	dwUsed+=dwLen;
-	pData+=dwLen;
-	dwDataLen-=dwLen;
+	dwUsed+=dwLen*2;
+	pData+=dwLen*2;
+	dwDataLen-=dwLen*2;
 
 	// Set szParam
-	for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
-	if (dwLen==dwDataLen)
+	for (dwLen=0;dwLen*2<dwDataLen && ((WCHAR*)pData)[dwLen]!='\0';dwLen++);
+	if (dwLen*2==dwDataLen)
 	{
 		delete pSendMessage;
 		return NULL;
@@ -687,20 +687,20 @@ CAction::SendMessageInfo* CAction::SendMessageInfo::FromData(const BYTE* pData,D
 	dwLen++;
 	if (dwLen>1)
 	{
-		pSendMessage->szWParam=new char[dwLen];
-		CopyMemory(pSendMessage->szWParam,pData,dwLen);
+		pSendMessage->szWParam=new WCHAR[dwLen];
+		MemCopyW(pSendMessage->szWParam,pData,dwLen);
 	}
 	else
 		pSendMessage->szWParam=NULL;
 
-	dwUsed+=dwLen;
-	pData+=dwLen;
-	dwDataLen-=dwLen;
+	dwUsed+=dwLen*2;
+	pData+=dwLen*2;
+	dwDataLen-=dwLen*2;
 
 
 	// Set szLParam
-	for (dwLen=0;dwLen<dwDataLen && pData[dwLen]!='\0';dwLen++);
-	if (dwLen==dwDataLen)
+	for (dwLen=0;dwLen*2<dwDataLen && ((WCHAR*)pData)[dwLen]!='\0';dwLen++);
+	if (dwLen*2==dwDataLen)
 	{
 		delete pSendMessage;
 		return NULL;
@@ -708,15 +708,15 @@ CAction::SendMessageInfo* CAction::SendMessageInfo::FromData(const BYTE* pData,D
 	dwLen++;
 	if (dwLen>1)
 	{
-		pSendMessage->szLParam=new char[dwLen];
-		CopyMemory(pSendMessage->szLParam,pData,dwLen);
+		pSendMessage->szLParam=new WCHAR[dwLen];
+		MemCopyW(pSendMessage->szLParam,pData,dwLen);
 	}
 	else
 		pSendMessage->szLParam=NULL;
 
-	dwUsed+=dwLen;
-	pData+=dwLen;
-	dwDataLen-=dwLen;
+	dwUsed+=dwLen*2;
+	pData+=dwLen*2;
+	dwDataLen-=dwLen*2;
 
 
 	return pSendMessage;
@@ -1231,29 +1231,31 @@ void CSubAction::DoResultListItems()
 void * __cdecl gmalloc(size_t size) { return GlobalAlloc(GPTR,size+1); }
 BOOL CALLBACK WindowEnumProc(HWND hwnd,LPARAM lParam)
 {
-	if  (((LPSTR*)lParam)[0]!=NULL)
+	CWnd wnd(hwnd);
+		
+	if  (((LPWSTR*)lParam)[0]!=NULL)
 	{
 		// Class is specified
-		char szClass[200];
-		if (GetClassName(hwnd,szClass,200)>0)
+		WCHAR szClass[200];
+		if (wnd.GetClassName(szClass,200)>0)
 		{
-			if (!__ContainString(szClass,((LPSTR*)lParam)[0]))
+			if (!__ContainString(szClass,((LPWSTR*)lParam)[0]))
 				return TRUE;
 		}
-		else if (((LPSTR*)lParam)[0][0]!='*' || ((LPSTR*)lParam)[0][1]!='\0')
+		else if (((LPWSTR*)lParam)[0][0]!='*' || ((LPWSTR*)lParam)[0][1]!='\0')
 			return TRUE;
 	}
 
-	if  (((LPSTR*)lParam)[1]!=NULL)
+	if  (((LPWSTR*)lParam)[1]!=NULL)
 	{
 		// Title is specified
-		char szTitle[400];
-		if (GetWindowText(hwnd,szTitle,400)>0)
+		WCHAR szTitle[400];
+		if (wnd.GetWindowText(szTitle,400)>0)
 		{
-			if (!__ContainString(szTitle,((LPSTR*)lParam)[1]))
+			if (!__ContainString(szTitle,((LPWSTR*)lParam)[1]))
 				return TRUE;
 		}
-		else if (((LPSTR*)lParam)[1][0]!='*' || ((LPSTR*)lParam)[1][1]!='\0')
+		else if (((LPSTR*)lParam)[1][0]!='*' || ((LPWSTR*)lParam)[1][1]!='\0')
 			return TRUE;
 	}
 
@@ -1285,28 +1287,28 @@ void CSubAction::DoMisc()
 			m_pSendMessage->szWindow[1]=='X')
 		{
 			// Hex value
-			LPSTR szTemp;
-			hWnd=(HWND)strtoul(m_pSendMessage->szWindow+2,&szTemp,16);
+			LPWSTR szTemp;
+			hWnd=(HWND)wcstoul(m_pSendMessage->szWindow+2,&szTemp,16);
 		}
 	}
-	else if (strcasecmp(m_pSendMessage->szWindow,"HWND_BROADCAST")==0)
+	else if (strcasecmp(m_pSendMessage->szWindow,L"HWND_BROADCAST")==0)
 		hWnd=HWND_BROADCAST;
-	else if (GetLocateDlg()!=NULL && strcasecmp(m_pSendMessage->szWindow,"LOCATEDLG")==0)
+	else if (GetLocateDlg()!=NULL && strcasecmp(m_pSendMessage->szWindow,L"LOCATEDLG")==0)
 		hWnd=*GetLocateDlg();
-	else if (strcasecmp(m_pSendMessage->szWindow,"LOCATEST")==0)
+	else if (strcasecmp(m_pSendMessage->szWindow,L"LOCATEST")==0)
 		hWnd=*GetLocateAppWnd();
-	else if (strncmp(m_pSendMessage->szWindow,"Find",4)==0)
+	else if (wcsncmp(m_pSendMessage->szWindow,L"Find",4)==0)
 	{
-		int nIndex=(int)FirstCharIndex(m_pSendMessage->szWindow,'(');
+		int nIndex=(int)FirstCharIndex(m_pSendMessage->szWindow,L'(');
 		if (nIndex!=-1)
 		{
-			LPCSTR pText=m_pSendMessage->szWindow+nIndex+1;
-			LPSTR pClassAndWindow[3]={NULL,NULL,NULL};
+			LPCWSTR pText=m_pSendMessage->szWindow+nIndex+1;
+			LPWSTR pClassAndWindow[3]={NULL,NULL,NULL};
 			
-			nIndex=(int)FirstCharIndex(pText,',');
+			nIndex=(int)FirstCharIndex(pText,L',');
 			if (nIndex==-1)
 			{
-				nIndex=(int)FirstCharIndex(pText,')');
+				nIndex=(int)FirstCharIndex(pText,L')');
 				if (nIndex==-1)
 					pClassAndWindow[0]=alloccopy(pText);
 				else
@@ -1317,7 +1319,7 @@ void CSubAction::DoMisc()
 				pClassAndWindow[0]=alloccopy(pText,nIndex);
 				pText+=nIndex+1;
 
-				nIndex=(int)FirstCharIndex(pText,')');
+				nIndex=(int)FirstCharIndex(pText,L')');
 				pClassAndWindow[1]=alloccopy(pText,nIndex);
 			}
 
@@ -1343,8 +1345,8 @@ void CSubAction::DoMisc()
 				m_pSendMessage->szWParam[1]=='X')
 			{
 				// Hex value
-				LPSTR szTemp;
-				wParam=(WPARAM)strtoul(m_pSendMessage->szWParam+2,&szTemp,16);
+				LPWSTR szTemp;
+				wParam=(WPARAM)wcstoul(m_pSendMessage->szWParam+2,&szTemp,16);
 			}
 			else if (m_pSendMessage->szWParam[1]!='\0')
 			{
@@ -1354,7 +1356,7 @@ void CSubAction::DoMisc()
 				bFreeWParam=TRUE;
 			}
 		}
-		else if ((wParam=atoi(m_pSendMessage->szWParam))==0)
+		else if ((wParam=_wtoi(m_pSendMessage->szWParam))==0)
 		{
 			DWORD dwLength;
 			wParam=(WPARAM)dataparser(m_pSendMessage->szWParam,istrlen(m_pSendMessage->szWParam),gmalloc,&dwLength);
@@ -1372,8 +1374,8 @@ void CSubAction::DoMisc()
 				m_pSendMessage->szLParam[1]=='X')
 			{
 				// Hex value
-				LPSTR szTemp;
-				lParam=(WPARAM)strtoul(m_pSendMessage->szLParam+2,&szTemp,16);
+				LPWSTR szTemp;
+				lParam=(WPARAM)wcstoul(m_pSendMessage->szLParam+2,&szTemp,16);
 			}
 			else if (m_pSendMessage->szLParam[1]!='\0')
 			{
@@ -1383,7 +1385,7 @@ void CSubAction::DoMisc()
 				bFreeLParam=TRUE;
 			}
 		}
-		else if ((lParam=atoi(m_pSendMessage->szLParam))==0)
+		else if ((lParam=_wtoi(m_pSendMessage->szLParam))==0)
 		{
 			DWORD dwLength;
 			lParam=(WPARAM)dataparser(m_pSendMessage->szLParam,istrlen(m_pSendMessage->szLParam),gmalloc,&dwLength);
@@ -1431,32 +1433,41 @@ DWORD CSubAction::SendMessageInfo::GetData(BYTE* pData_) const
 
 	if (szWindow!=NULL)
 	{
-        DWORD dwUsed=istrlen(szWindow)+1;
+        DWORD dwUsed=(istrlen(szWindow)+1)*2;
 		CopyMemory(pData,szWindow,dwUsed);
 		pData+=dwUsed;
 	}
 	else
+	{
 		*(pData++)='\0';
+		*(pData++)='\0';
+	}
 		
 	
 	if (szWParam!=NULL)
 	{
-        DWORD dwUsed=istrlen(szWParam)+1;
+        DWORD dwUsed=(istrlen(szWParam)+1)*2;
 		CopyMemory(pData,szWParam,dwUsed);
 		pData+=dwUsed;
 	}
 	else
+	{
 		*(pData++)='\0';
+		*(pData++)='\0';
+	}
+
 	
 	if (szLParam!=NULL)
 	{
-        DWORD dwUsed=istrlen(szLParam)+1;
+        DWORD dwUsed=(istrlen(szLParam)+1)*2;
 		CopyMemory(pData,szLParam,dwUsed);
 		pData+=dwUsed;
 	}
 	else
+	{
 		*(pData++)='\0';
-	
+		*(pData++)='\0';
+	}	
 
 	return DWORD(pData-pData_);
 }

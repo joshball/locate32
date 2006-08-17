@@ -160,7 +160,7 @@ public:
 class CInputDialog : public CDialog  
 {
 public:
-	CInputDialog(LPCTSTR lpTemplate,BYTE bFlags=0);
+	CInputDialog(LPCSTR lpTemplate,BYTE bFlags=0);
 	CInputDialog(int iTemplate,BYTE bFlags=0);
 
 	INT_PTR DoModal(HWND hWndParent=NULL);
@@ -181,13 +181,25 @@ public:
 	virtual BOOL OnInitDialog(HWND hwndFocus);
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 	virtual BOOL OnClose();
+
+#ifdef DEF_WCHAR
+	void SetTitle(LPCWSTR szTitle);
+	BOOL SetText(LPCWSTR szText);
+	void SetInputText(LPCWSTR szText);
+	int GetInputText(CStringW& text) const;
+	int GetInputText(LPWSTR szText,int nTextLen) const;
+	
+	void SetOKButtonText(LPCWSTR szText);
+	void SetCancelButtonText(LPCWSTR szText);
+#endif
+
 protected:
 	BYTE m_bFlags;
-	CString m_Title;
-	CString m_Text;
-	CString m_Input;
-	CString m_OKButton;
-	CString m_CancelButton;
+	CStringW m_Title;
+	CStringW m_Text;
+	CStringW m_Input;
+	CStringW m_OKButton;
+	CStringW m_CancelButton;
 };
 
 class CFileDialog : public CCommonDialog
@@ -1140,7 +1152,7 @@ inline BOOL CFindReplaceDialog::ReplaceAll() const
 // Class CInputDialog
 
 
-inline CInputDialog::CInputDialog(LPCTSTR lpTemplate,BYTE bFlags)
+inline CInputDialog::CInputDialog(LPCSTR lpTemplate,BYTE bFlags)
 :	CDialog(lpTemplate),m_bFlags(bFlags),
 	m_OKButton("OK"),m_CancelButton("CANCEL")
 {
@@ -1165,6 +1177,14 @@ inline int CInputDialog::GetInputText(CString& text) const
 	return (int)text.GetLength();
 }
 
+#ifdef DEF_WCHAR
+inline int CInputDialog::GetInputText(CStringW& text) const
+{
+	text=m_Input;
+	return (int)text.GetLength();
+}
+
+#endif
 ///////////////////////////
 // Class COptionsPropertyPage
 

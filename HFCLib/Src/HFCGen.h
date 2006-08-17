@@ -6,6 +6,10 @@
 #ifndef HFCGENERAL_H
 #define HFCGENERAL_H
 
+
+
+
+
 class CTime
 {
 public:

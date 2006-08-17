@@ -2432,7 +2432,7 @@ void CFileFind::GetFilePath(CStringW& path) const
 
 BOOL CFileFind::FindFile(LPCWSTR pstrName)
 {
-	strRoot.Copy(pstrName,LastCharIndex(pstrName,'\\')+1);
+	strRoot.Copy(pstrName,LastCharIndex(pstrName,L'\\')+1);
 	if (m_hFind!=NULL)
 		::FindClose(m_hFind);
 	

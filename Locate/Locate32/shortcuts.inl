@@ -136,17 +136,17 @@ inline DWORD CAction::GetDataLength() const
 
 inline DWORD CAction::SendMessageInfo::GetDataLength() const
 {
-	DWORD dwLength=sizeof(WORD)+sizeof(DWORD)+3; // 3*'\0'
+	DWORD dwLength=sizeof(WORD)+sizeof(DWORD)+3*sizeof(WCHAR); // 3*'\0'
 
 	if (szWindow!=NULL)
-		dwLength+=(DWORD)strlen(szWindow); // '\0' already included
+		dwLength+=(DWORD)wcslen(szWindow)*2; // '\0' already included
 	
 
 	if (szWParam!=NULL)
-		dwLength+=(DWORD)strlen(szWParam); // '\0' already included
+		dwLength+=(DWORD)wcslen(szWParam)*2; // '\0' already included
 
 	if (szLParam!=NULL)
-		dwLength+=(DWORD)strlen(szLParam); // '\0' already included
+		dwLength+=(DWORD)wcslen(szLParam)*2; // '\0' already included
 
 	return dwLength;
 }

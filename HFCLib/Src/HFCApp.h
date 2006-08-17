@@ -7,7 +7,7 @@
 #define HFCAPP_H
 
 
-	
+
 
 // Every application global variables and functions should be here
 // This class is only for library use

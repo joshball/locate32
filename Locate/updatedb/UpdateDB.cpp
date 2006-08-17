@@ -202,7 +202,7 @@ int wmain (int argc,wchar_t ** argv)
 	
 	WORD wCurrentThread=0;
 
-	aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],(int)LastCharIndex(argv[0],'\\')+1));
+	aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],(int)LastCharIndex(argv[0],L'\\')+1));
 	aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 	aDatabases[0]->SetThreadId(wCurrentThread);
 
@@ -489,7 +489,7 @@ int wmain (int argc,wchar_t ** argv)
 		// No registry values?
 		if (aDatabases.GetSize()==0)
 		{
-			aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],(int)LastCharIndex(argv[0],'\\')+1));
+			aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],(int)LastCharIndex(argv[0],L'\\')+1));
 			aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 		}
 	}
@@ -536,8 +536,8 @@ int wmain (int argc,wchar_t ** argv)
 
 				if (!bNameChanged)
 				{
-					ULONG_PTR nFirst=LastCharIndex(aDatabases[i]->GetArchiveName(),'\\')+1;
-					int nLength=LastCharIndex(aDatabases[i]->GetArchiveName()+nFirst,'.');
+					ULONG_PTR nFirst=LastCharIndex(aDatabases[i]->GetArchiveName(),L'\\')+1;
+					int nLength=LastCharIndex(aDatabases[i]->GetArchiveName()+nFirst,L'.');
 					if (nLength==-1)
 						nLength=istrlenw(aDatabases[i]->GetArchiveName()+nFirst);
 

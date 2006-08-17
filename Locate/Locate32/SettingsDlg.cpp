@@ -1080,10 +1080,6 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		
 
 	Item* UpdateProcessItems[]={
-		CreateCheckBox(IDS_ADVSETSHOWCRITICALERRORS,NULL,
-			DefaultCheckBoxProc,CLocateApp::pfShowCriticalErrors,&m_pSettings->m_dwProgramFlags),
-		CreateCheckBox(IDS_ADVSETSHOWNONCRITICALERRORS,NULL,
-			DefaultCheckBoxProc,CLocateApp::pfShowNonCriticalErrors,&m_pSettings->m_dwProgramFlags),
 		CreateCheckBox(IDS_ADVSETSHOWUPDATESTATUSTOOLTIP,StatusTooltipItems,
 			DefaultCheckBoxProc,CLocateApp::pfEnableUpdateTooltip,&m_pSettings->m_dwProgramFlags),
 		CreateListBox(IDS_ADVSETUPDATETHREADPRIORITY,UpdateThreadPriorityProc,0,&m_pSettings->m_nUpdateThreadPriority),
@@ -1093,6 +1089,10 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	Item* MiscItems[]={
 		CreateCheckBox(IDS_ADVSETDONTSHOWEXTINRENAME,NULL,DefaultCheckBoxProc,
 			CSettingsProperties::settingsDontShowExtensionInRenameDialog,&m_pSettings->m_dwSettingsFlags),
+		CreateCheckBox(IDS_ADVSETSHOWCRITICALERRORS,NULL,
+			DefaultCheckBoxProc,CLocateApp::pfShowCriticalErrors,&m_pSettings->m_dwProgramFlags),
+		CreateCheckBox(IDS_ADVSETSHOWNONCRITICALERRORS,NULL,
+			DefaultCheckBoxProc,CLocateApp::pfShowNonCriticalErrors,&m_pSettings->m_dwProgramFlags),
 		NULL
 	};
 
@@ -2943,6 +2943,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 	pText=new WCHAR[iLength];
 	GetDlgItemText(IDC_DESCRIPTION,pText,iLength);
 	m_pDatabase->SetDescriptionPtr(pText);
+	
 
 	// Settings flags
 	m_pDatabase->Enable(IsDlgButtonChecked(IDC_ENABLE));
@@ -3047,12 +3048,12 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 		{
 			// Checking type of folder
 			IShellFolder *psf=NULL;
-
+			
 			try {
 				HRESULT hRes=SHGetDesktopFolder(&psf);
 	            if (!SUCCEEDED(hRes))
 					throw COleException(hRes);
-
+				
 					
 				SHDESCRIPTIONID di;
 				hRes=SHGetDataFromIDList(psf,fd.m_lpil,SHGDFIL_DESCRIPTIONID,&di,sizeof(SHDESCRIPTIONID));
@@ -3061,72 +3062,37 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 
 				
 			
-				if (di.clsid==CLSID_NetworkPlaces)
-				{			
-					STRRET str;
-					hRes=psf->GetDisplayNameOf(fd.m_lpil,SHGDN_NORMAL | SHGDN_FORPARSING,&str);
-					
-					if (!SUCCEEDED(hRes))
-						throw COleException(hRes);
-
-								
-					switch (str.uType)
-					{
-					case STRRET_OFFSET:
-						{
-							LPCSTR pStr=(LPCSTR)((LPBYTE)fd.m_lpil + str.uOffset);						
-							if (pStr[0]!='\\' && pStr[1]!='\\')
-							{
-								if (pStr[0]==':' && pStr[1]==':')
-									ShowErrorMessage(IDS_ERRORCANNOTADDITEM,IDS_ERROR,MB_ICONERROR|MB_OK);
-								else
-								{
-									CString s;
-									s.Format(IDS_ERRORCANNOTADDITEM2,pStr);
-									MessageBox(s,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
-								}
-								return;
-							}
-							AddComputerToList(A2W(pStr));
-							break;
-						}
-					case STRRET_CSTR:
-						if (str.cStr[0]!='\\' && str.cStr[1]!='\\')
-						{
-							if (str.cStr[0]==':' && str.cStr[1]==':')
-								ShowErrorMessage(IDS_ERRORCANNOTADDITEM,IDS_ERROR,MB_ICONERROR|MB_OK);
-							else
-							{
-								CString s;
-								s.Format(IDS_ERRORCANNOTADDITEM2,str.cStr);
-								MessageBox(s,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
-							}
-							return;
-						}
-						AddComputerToList(A2W(str.cStr));
-						break;
-					case STRRET_WSTR:
-						if (str.pOleStr[0]!=L'\\' && str.pOleStr[1]!=L'\\')
-						{
-							if (str.pOleStr[0]==L':' && str.pOleStr[1]==L':')
-								ShowErrorMessage(IDS_ERRORCANNOTADDITEM,IDS_ERROR,MB_ICONERROR|MB_OK);
-							else
-							{
-								CStringW s;
-								s.Format(IDS_ERRORCANNOTADDITEM2,str.pOleStr);
-								MessageBox(s,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
-							}
-							return;
-						}
-						AddComputerToList(str.pOleStr);
-						CoTaskMemFree(str.pOleStr);
-						break;
-					}
-				}
-                else
+				if (di.clsid!=CLSID_NetworkPlaces)
 					throw FALSE;
 
+				
 
+				STRRET str;
+				LPWSTR pComputer;
+				hRes=psf->GetDisplayNameOf(fd.m_lpil,SHGDN_FORPARSING,&str);
+				if (FAILED(hRes))
+					throw COleException(hRes);
+				
+				pComputer=StrRetToPtrW(str,fd.m_lpil);
+				if (pComputer==NULL)
+					throw COleException(hRes);
+					
+			
+				if (pComputer[0]!='\\' && pComputer[1]!='\\')
+				{
+					if (pComputer[0]==':' && pComputer[1]==':')
+						ShowErrorMessage(IDS_ERRORCANNOTADDITEM,IDS_ERROR,MB_ICONERROR|MB_OK);
+					else
+					{
+						CStringW s;
+						s.Format(IDS_ERRORCANNOTADDITEM2,pComputer);
+						MessageBox(s,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+					}
+				}
+				else
+					AddComputerToList(pComputer);
+				
+				delete[] pComputer;
 		
 			}
 	#ifdef _DEBUG_LOGGING
@@ -3541,7 +3507,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToL
 
 	// Resolving icon,
 	SHFILEINFOW fi;
-	if (SHGetFileInfoW(szName,0,&fi,sizeof(SHFILEINFO),SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+	if (GetFileInfo(szName,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
 		li.iImage=fi.iIcon;
 	else
 		return -1;
@@ -6635,12 +6601,12 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 			pAction->m_pSendMessage!=NULL)
 		{
 			SetDlgItemText(IDC_WINDOW,pAction->m_pSendMessage->szWindow!=NULL?
-				pAction->m_pSendMessage->szWindow:szEmpty);
+				pAction->m_pSendMessage->szWindow:szwEmpty);
 			SetDlgItemInt(IDC_MESSAGE,pAction->m_pSendMessage->nMessage,FALSE);
 			SetDlgItemText(IDC_WPARAM,pAction->m_pSendMessage->szWParam!=NULL?
-				pAction->m_pSendMessage->szWParam:szEmpty);
+				pAction->m_pSendMessage->szWParam:szwEmpty);
 			SetDlgItemText(IDC_LPARAM,pAction->m_pSendMessage->szLParam!=NULL?
-				pAction->m_pSendMessage->szLParam:szEmpty);
+				pAction->m_pSendMessage->szLParam:szwEmpty);
 		}
 		else if (pAction->m_nMisc==CAction::ExecuteCommandMisc && pAction->m_szCommand!=NULL)
 			SetDlgItemText(IDC_COMMAND,pAction->m_szCommand);
@@ -6757,7 +6723,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 			UINT nLen=GetDlgItemTextLength(IDC_WINDOW);
 			if (nLen>0)
 			{
-				pAction->m_pSendMessage->szWindow=new char[nLen+1];
+				pAction->m_pSendMessage->szWindow=new WCHAR[nLen+1];
 				GetDlgItemText(IDC_WINDOW,pAction->m_pSendMessage->szWindow,nLen+1);
 			}
 		
@@ -6765,7 +6731,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 			nLen=GetDlgItemTextLength(IDC_WPARAM);
 			if (nLen>0)
 			{
-				pAction->m_pSendMessage->szWParam=new char[nLen+1];
+				pAction->m_pSendMessage->szWParam=new WCHAR[nLen+1];
 				GetDlgItemText(IDC_WPARAM,pAction->m_pSendMessage->szWParam,nLen+1);
 			}
 			
@@ -6773,7 +6739,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 			nLen=GetDlgItemTextLength(IDC_LPARAM);
 			if (nLen>0)
 			{
-				pAction->m_pSendMessage->szLParam=new char[nLen+1];
+				pAction->m_pSendMessage->szLParam=new WCHAR[nLen+1];
 				GetDlgItemText(IDC_LPARAM,pAction->m_pSendMessage->szLParam,nLen+1);
 			}
 		}

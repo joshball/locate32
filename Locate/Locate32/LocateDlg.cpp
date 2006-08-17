@@ -1872,18 +1872,49 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 		}
 		else if (ueCode!=ueStillWorking && ueCode!=ueSuccess) // Locating failed
 		{
-			str.LoadString(IDS_LOCATINGFAILED);
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_ERROR)),STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
+			CStringW str2;
+			switch (ueCode)
+			{
+			case ueUnknown:
+				str2.LoadString(IDS_LASTERRORUNKNOWN);
+				break;
+			case ueOpen:
+				str2.LoadString(IDS_LASTERRORCANNOTOPEN);
+				break;
+			case ueRead:
+				str2.LoadString(IDS_LASTERRORCANNOTREAD);
+				break;
+			case ueAlloc:
+				str2.LoadString(IDS_LASTERRORCANNOTALLOCATE);
+				break;
+			case ueInvalidDatabase:
+				str2.LoadString(IDS_LASTERRORINVALIDDB);
+				break;
+			}
+			if (str2.IsEmpty())
+			{
+				((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_ERROR)),STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
+				str.LoadString(IDS_LOCATINGFAILED);
+			}
+			else
+			{
+				int nIndex=str2.Find(L'%');
+				if (nIndex!=-1)
+				{
+					str2.DelChar(nIndex);
+					str2.DelChar(nIndex);
+					if (nIndex>0 && str2[nIndex-1]==' ')
+						str2.DelChar(nIndex-1);
+				}
+				str.Format(IDS_LOCATINGFAILED2,(LPCWSTR)str2);
+			}
 		}
 		else
 			str.LoadString(IDS_LOCATINGSUCCESS);
 
 		str << L", " << NumberOfFiles;			
 		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);		
-		
-
 		((CLocateDlg*)dwParam)->m_pStatusCtrl->InvalidateRect(NULL,TRUE);
-
 		((CLocateDlg*)dwParam)->CheckClipboard();
 		return TRUE;
 	}
@@ -1911,31 +1942,91 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 		switch (ueCode)
 		{
 		case ueUnknown:
-			((CLocateDlg*)dwParam)->ShowErrorMessage(IDS_ERRORUNKNOWN,IDS_ERROR);
+			if (IsUnicodeSystem())
+			{
+				WCHAR* pError;
+				if (FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
+					GetLastError(),LANG_USER_DEFAULT,(LPWSTR)&pError,0,NULL))
+				{
+					CStringW str;
+					str.Format(IDS_ERRORUNKNOWNOS,pError);
+					while (str.LastChar()=='\n' || str.LastChar()=='\r')
+					str.DelLastChar();
+						
+					if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
+						((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+					((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
+					LocalFree(pError);
+				}
+				else
+				{
+					ID2W str(IDS_ERRORUNKNOWN);
+					((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
+					if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
+						((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+				}
+			}
+			else
+			{
+				CHAR* pError;
+
+				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
+					GetLastError(),LANG_USER_DEFAULT,(LPSTR)&pError,0,NULL))
+				{
+					CString str;
+					str.Format(IDS_ERRORUNKNOWNOS,pError);
+					while (str.LastChar()=='\n' || str.LastChar()=='\r')
+						str.DelLastChar();
+					
+					if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
+						((CLocateDlg*)dwParam)->MessageBox(str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+
+					((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
+					LocalFree(pError);
+				}
+				else 
+				{
+					ID2A str(IDS_ERRORUNKNOWN);
+					((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
+					if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
+						((CLocateDlg*)dwParam)->MessageBox(str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+				}
+			}
 			return FALSE;
 		case ueOpen:
 		case ueCreate:
 			{
 				CStringW str;
 				str.Format(IDS_ERRORCANNOTOPENDB,pLocater->GetCurrentDatabaseFile());
-				((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
-				return FALSE;
+				((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
+				if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
+					((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
 			}
+			return FALSE;
 		case ueRead:
 			{
 				CStringW str;
 				str.Format(IDS_ERRORCANNOTREADDB,pLocater->GetCurrentDatabaseFile());
-				((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+				((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
+				if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
+					((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+				
 				return FALSE;
 			}
 		case ueAlloc:
-			((CLocateDlg*)dwParam)->ShowErrorMessage(IDS_ERRORCANNOTALLOCATE,IDS_ERROR);
-			break;
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2W(IDS_ERRORCANNOTALLOCATE),STATUSBAR_LOCATEERRORS,0);
+			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
+				((CLocateDlg*)dwParam)->ShowErrorMessage(IDS_ERRORCANNOTALLOCATE,IDS_ERROR);
+			return FALSE;
 		case ueInvalidDatabase:
 			{
 				CStringW str;
 				str.Format(IDS_ERRORINVALIDDB,pLocater->GetCurrentDatabaseFile());
-				((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+				((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
+						
+				if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
+					((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+				
 				return FALSE;
 			}
 		}
@@ -2909,7 +3000,7 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			ib.SetCancelButtonText("Cancel");
 			if (ib.DoModal(*this))
 			{
-				CString text;
+				CStringW text;
 				ib.GetInputText(text);
 				DWORD dwLength;
 				BYTE* pData=dataparser2(text,&dwLength);
@@ -3930,8 +4021,12 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(pLvdi->item.iSubItem));
 
+			
+
 			if (GetFlags()&fgLVNoDelayedUpdate) 
 			{
+				ItemDebugFormatMessage1("LVN_GETDISPINFOA %d BEGIN1",nDetail);
+			
 				// Update detail instantaneously
 				if (g_szBuffer!=NULL)
 					delete[] g_szBuffer;
@@ -3980,9 +4075,12 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					break;
 				}
 				
+				ItemDebugMessage("LVN_GETDISPINFOA END1");
 			}
 			else
 			{
+				ItemDebugFormatMessage1("LVN_GETDISPINFOA %d BEGIN2",nDetail);
+			
 				// Update detail instantaneously
 				if (g_szBuffer!=NULL)
 					delete[] g_szBuffer;
@@ -4061,6 +4159,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetDetailText(nDetail));
 					break;
 				}
+				ItemDebugMessage("LVN_GETDISPINFOA END2");
 			}
 			break;
 		}
@@ -4077,6 +4176,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 
 			if (GetFlags()&fgLVNoDelayedUpdate) 
 			{
+				ItemDebugFormatMessage1("LVN_GETDISPINFOW %d BEGIN1",nDetail);
 				// Update detail instantaneously
 
 				switch (nDetail)
@@ -4121,10 +4221,12 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					pLvdi->item.pszText=pItem->GetDetailText(nDetail);
 					break;
 				}
-				
+				ItemDebugMessage("LVN_GETDISPINFOW END1");
 			}
 			else
 			{
+				ItemDebugFormatMessage1("LVN_GETDISPINFOW %d BEGIN2",nDetail);
+			
 				// Delayed updating
 				switch (nDetail)
 				{
@@ -4201,6 +4303,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					pLvdi->item.pszText=pItem->GetDetailText(nDetail);
 					break;
 				}
+				ItemDebugMessage("LVN_GETDISPINFOW END2");
 			}
 			break;
 		}
@@ -6094,11 +6197,16 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 		IShellFolder* psf=NULL;
 		BOOL bFreeIDList=FALSE;
 
+		DWORD dwAddLogicalDrives=0;
+
 		if (pIDListToPath==NULL)
 		{
 			hRes=SHGetSpecialFolderLocation(*this,CSIDL_SENDTO,&pIDListToPath);
 			if (SUCCEEDED(hRes)) 
+			{
+				dwAddLogicalDrives=GetLogicalDrives();
 				bFreeIDList=TRUE;
+			}
 			else
 				pIDListToPath=NULL;
 		}
@@ -6122,6 +6230,7 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 			if (SUCCEEDED(hRes))
 			{
 				LPITEMIDLIST pidl,pidlFull;
+				
 				while (peidl->Next(1,&pidl,NULL)==S_OK)
 				{
 					DWORD dwListSize=GetIDListSize(pidl);
@@ -6153,6 +6262,117 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 					
 					if (!bDontAdd)
 					{
+						if (dwAddLogicalDrives)
+						{
+							if (IsUnicodeSystem())
+							{
+								IShellLinkW* psl;
+								hRes=psf->GetUIObjectOf(*this,1,(LPCITEMIDLIST*)&pidl,IID_IShellLinkW,NULL,(void**)&psl);
+								if (FAILED(hRes))
+								{
+									// Alternative way
+									STRRET str;
+									hRes=psf->GetDisplayNameOf(pidl,SHGDN_FORPARSING,&str);
+									if (SUCCEEDED(hRes))
+									{
+										LPWSTR pStr=StrRetToPtrW(str,pidl);
+										if (pStr!=NULL)
+										{
+											hRes=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(void**)&psl);
+											if (SUCCEEDED(hRes))
+											{
+												IPersistFile* ppf;
+												hRes=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
+												if (SUCCEEDED(hRes))
+												{
+													hRes=ppf->Load(pStr,STGM_READ);
+													ppf->Release();
+												}
+
+												if (FAILED(hRes))
+													psl->Release();
+											}
+											delete[] pStr;
+										}
+										else
+											hRes=E_FAIL;
+									}
+
+									
+								}
+								
+								if (SUCCEEDED(hRes))
+								{
+									WCHAR szPath[MAX_PATH];
+									hRes=psl->GetPath(szPath,MAX_PATH,0,0);
+									if (hRes==NO_ERROR)
+									{
+										if (szPath[1]==L':' && 
+											(szPath[2]==L'\0' || (szPath[2]==L'\\' && szPath[3]==L'\0')))
+										{
+											CharUpperBuffW(szPath,1);
+											dwAddLogicalDrives&=~(1<<BYTE(szPath[0]-L'A'));
+										}
+									}
+									psl->Release();
+								}
+							}
+							else
+							{
+								IShellLinkA* psl;
+								hRes=psf->GetUIObjectOf(*this,1,(LPCITEMIDLIST*)&pidl,IID_IShellLinkA,NULL,(void**)&psl);
+								if (FAILED(hRes))
+								{
+									// Alternative way
+									STRRET str;
+									hRes=psf->GetDisplayNameOf(pidl,SHGDN_FORPARSING,&str);
+									if (SUCCEEDED(hRes))
+									{
+										LPWSTR pStr=StrRetToPtrW(str,pidl);
+										if (pStr!=NULL)
+										{
+											hRes=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl);
+											if (SUCCEEDED(hRes))
+											{
+												IPersistFile* ppf;
+												hRes=psl->QueryInterface(IID_IPersistFile,(void**)&ppf);
+												if (SUCCEEDED(hRes))
+												{
+													hRes=ppf->Load(pStr,STGM_READ);
+													ppf->Release();
+												}
+
+												if (FAILED(hRes))
+													psl->Release();
+
+											}
+											delete[] pStr;
+										}
+										else
+											hRes=E_FAIL;
+									}
+								}
+
+								
+								if (SUCCEEDED(hRes))
+								{
+									char szPath[MAX_PATH];
+									hRes=psl->GetPath(szPath,MAX_PATH,0,0);
+									if (hRes==NO_ERROR)
+									{
+										if (szPath[1]==':' && 
+											(szPath[2]=='\0' || (szPath[2]=='\\' && szPath[3]=='\0')))
+										{
+											CharUpperBuffA(szPath,1);
+											dwAddLogicalDrives&=~(1<<BYTE(szPath[0]-'A'));
+										}
+									}
+									psl->Release();
+								}
+							}
+
+							
+						}
 						mi.dwItemData=(DWORD)pidlFull;
 						Menu.InsertMenu(mi.wID,FALSE,&mi);
 						mi.wID++;
@@ -6165,6 +6385,45 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 					
 				}
 				peidl->Release();
+
+				if (dwAddLogicalDrives)
+				{
+					// Add removable drives
+					char drive[]="X:\\";
+					for (int i=0;i<='Z'-'A';i++)
+					{
+						if (dwAddLogicalDrives&(1<<i))
+						{
+							drive[0]='A'+i;
+							DWORD dwDriveType=FileSystem::GetDriveType(drive);
+							if (dwDriveType==DRIVE_REMOVABLE)
+							{
+								mi.dwItemData=(DWORD)GetIDList(drive);
+								if (mi.dwItemData!=NULL)
+								{
+									Menu.InsertMenu(mi.wID,FALSE,&mi);
+									mi.wID++;
+								}
+							}
+						}
+					}
+
+					// Determine IMAPI burning device
+					CArrayFAP<LPWSTR> Burners;
+					BOOL GetIMAPIBurningDevices(CArray<LPWSTR>& aDevicePaths);
+					if (GetIMAPIBurningDevices(Burners))
+					{
+						for (int i=0;i<Burners.GetSize();i++)
+						{
+							mi.dwItemData=(DWORD)GetIDList(Burners[i]);
+							if (mi.dwItemData!=NULL)
+							{
+								Menu.InsertMenu(mi.wID,FALSE,&mi);
+								mi.wID++;
+							}
+						}
+					}
+				}
 				bUseFileFind=FALSE;
 			}
 		}
@@ -6213,7 +6472,7 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 			if (szPath[0]!=L'.' && !Find.IsSystem() && !Find.IsHidden())
 			{
 				Find.GetFilePath(szPath,MAX_PATH);
-				mi.dwItemData=(DWORD)GetFileIDList(szPath);
+				mi.dwItemData=(DWORD)GetIDList(szPath);
 				
 				if (Find.IsDirectory())
 				{
@@ -6557,18 +6816,56 @@ void CLocateDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 	}
 }
 
+IDropTarget* CLocateDlg::GetDropTarget(LPITEMIDLIST pidl) const
+{
+	LPITEMIDLIST pidlLast, pidlNext;
+    USHORT cb;
+    IShellFolder* psf;
+    IDropTarget* pdt;
+		
+	
+    // Split pidl into parent part and the last part
+	pidlLast = pidl;
+    while(pidlNext = (LPITEMIDLIST)((BYTE*)pidlLast + pidlLast->mkid.cb),pidlNext->mkid.cb)
+		pidlLast = pidlNext;
+
+    //  Temporarily split the pidl at the point we found.
+    cb = pidlLast->mkid.cb;
+    pidlLast->mkid.cb = 0;
+
+    //  Bind to the folder part.  
+    if (pidl == pidlLast) 
+	{
+        psf = m_pDesktopFolder;
+        m_pDesktopFolder->AddRef();
+    }
+	else
+	{
+		if (FAILED(m_pDesktopFolder->BindToObject(pidl,NULL,IID_IShellFolder,(LPVOID *)&psf)))
+		{
+			// Restore the pidl before exiting
+			pidlLast->mkid.cb = cb;
+			return NULL;
+		}
+	}
+    
+    // Restore the pidl we temporarily edited.
+    pidlLast->mkid.cb = cb;
+    HRESULT hRes = psf->GetUIObjectOf(*this,1,(LPCITEMIDLIST*)&pidlLast,IID_IDropTarget,NULL,(LPVOID*)&pdt);
+    psf->Release();
+	
+	if (FAILED(hRes))
+		return NULL;
+	return pdt;
+}
+
 void CLocateDlg::OnSendToCommand(WORD wID)
 {
 	if (m_pDesktopFolder==NULL)
 		return;
 
 	CWaitCursor wait;
-	LPITEMIDLIST pidlLast, pidlNext;
-    USHORT cb;
-    MENUITEMINFO mii;
-	IShellFolder* psf;
-    IDropTarget* pdt;
-		
+	MENUITEMINFO mii;
 	mii.cbSize=sizeof(MENUITEMINFO);
 	mii.fMask=MIIM_DATA;
 	if (m_hActivePopupMenu!=NULL)
@@ -6578,41 +6875,10 @@ void CLocateDlg::OnSendToCommand(WORD wID)
 	if (mii.dwItemData==NULL)
 		return;
 
-	
-	
-    // Split pidl into parent part and the last part
-	pidlLast = (LPITEMIDLIST)mii.dwItemData;
-    while(pidlNext = (LPITEMIDLIST)((BYTE*)pidlLast + pidlLast->mkid.cb),pidlNext->mkid.cb)
-		pidlLast = pidlNext;
-
-    //  Temporarily split the pidl at the point we found.
-    cb = pidlLast->mkid.cb;
-    pidlLast->mkid.cb = 0;
-
-    //  Bind to the folder part.  
-    if ((LPITEMIDLIST)mii.dwItemData == pidlLast) 
-	{
-        psf = m_pDesktopFolder;
-        m_pDesktopFolder->AddRef();
-    }
-	else
-	{
-		if (FAILED(m_pDesktopFolder->BindToObject((LPITEMIDLIST)mii.dwItemData,NULL,IID_IShellFolder,(LPVOID *)&psf)))
-		{
-			// Restore the pidl before exiting
-			pidlLast->mkid.cb = cb;
-			return;
-		}
-	}
-    
-    // Restore the pidl we temporarily edited.
-    pidlLast->mkid.cb = cb;
-    HRESULT hRes = psf->GetUIObjectOf(*this,1,(LPCITEMIDLIST*)&pidlLast,IID_IDropTarget,NULL,(LPVOID*)&pdt);
-    psf->Release();
-	if (FAILED(hRes))
+	IDropTarget* pdt=GetDropTarget((LPITEMIDLIST)mii.dwItemData);
+	if (pdt==NULL)
 		return;
-
-
+	
 	CFileObject *pfoSrc=new CFileObject;
 	pfoSrc->AutoDelete();
 	pfoSrc->AddRef();
@@ -6622,7 +6888,7 @@ void CLocateDlg::OnSendToCommand(WORD wID)
 	DWORD dwEffect=DROPEFFECT_COPY | DROPEFFECT_MOVE | DROPEFFECT_LINK;
 	POINTL pt={0,0};
 	
-	hRes=pdt->DragEnter(pfoSrc,MK_LBUTTON,pt,&dwEffect);
+	HRESULT hRes=pdt->DragEnter(pfoSrc,MK_LBUTTON,pt,&dwEffect);
 	if (SUCCEEDED(hRes) && dwEffect)
 	{
 		// Drop file
@@ -7066,7 +7332,7 @@ void CLocateDlg::OnChangeFileNameCase()
 
 				if (!cd.bForExtension)
 				{
-					iLength=LastCharIndex(szName,'.')+1;
+					iLength=LastCharIndex(szName,L'.')+1;
 					if (iLength==0)
 						iLength=pItem->GetNameLen();
 				}
@@ -7090,7 +7356,7 @@ void CLocateDlg::OnChangeFileNameCase()
 					{
 						MakeUpper(szName+(i++),1);
 						
-						int nIndex=FirstCharIndex(szName+i,' ');
+						int nIndex=FirstCharIndex(szName+i,L' ');
 						if (nIndex==-1)
 						{
 							MakeLower(szName+i,iLength-i);
@@ -7794,7 +8060,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 				ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 				m_LookIn.InsertItem(&ci);
 
-				DebugFormatMessage("DriveList: root %s added, i=%d",aRoots.GetAt(i),i);
+				DebugFormatMessage("DriveList: root %S added, i=%d",aRoots.GetAt(i),i);
 
 			}
 
@@ -8461,7 +8727,7 @@ void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWS
 		// Check how long first string is
 		if (pPtr[0]=='\"')
 		{
-			nLength=FirstCharIndex(pPtr+1,'\"');
+			nLength=FirstCharIndex(pPtr+1,L'\"');
 			sDirectory.Copy(pPtr+1,nLength);
 
 			if (nLength!=-1)
@@ -8473,7 +8739,7 @@ void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWS
 		}
 		else
 		{
-			nLength=FirstCharIndex(pPtr,';');
+			nLength=FirstCharIndex(pPtr,L';');
 			if (nLength==-1)
 				nLength=istrlenw(pPtr);
 			sDirectory.Copy(pPtr,nLength);
@@ -11231,19 +11497,19 @@ DWORD CLocateDlg::CAdvancedDlg::OnOk(CLocater* pLocater)
 	{
 		if (IsDlgButtonChecked(IDC_DATAMATCHCASE))
 			dwFlags|=LOCATE_CONTAINTEXTISMATCHCASE;
-		CString str;
+		CStringW str;
 		GetDlgItemText(IDC_CONTAINDATA,str);
 		
 		
 		DWORD dwDataLength;
 		BYTE* pData=NULL;
-		if (_strnicmp(str,"regexp:",7)==0)
+		if (_wcsnicmp(str,L"regexp:",7)==0)
 		{
-			dwDataLength=istrlen(LPCSTR(str)+7)+1;
+			dwDataLength=str.GetLength()-7+1;
             if (dwDataLength>1)
 			{
 				pData=(BYTE*)malloc(dwDataLength+1);
-				sMemCopy(pData,LPCSTR(str)+7,dwDataLength);
+				WideCharToMultiByte(CP_ACP,0,LPCWSTR(str)+7,dwDataLength,(LPSTR)pData,dwDataLength+1,NULL,NULL);
 				dwFlags|=LOCATE_REGULAREXPRESSIONSEARCH;
 			}
 		}
