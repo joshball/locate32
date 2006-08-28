@@ -804,42 +804,57 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 						if (nLength<7)
                             return TRUE;
 					}
-					if (nLength<7)
+
+					if (nLength<2)
 					{
 						idx+=nLength;
 						break;
 					}
 
-					WCHAR szBuf[]=L"XX";
-					szBuf[0]=lpCmdLine[idx+1];
-					szBuf[1]=lpCmdLine[idx+2];
-					WORD bYear=_wtoi(szBuf);
-					if (bYear<60)
-						bYear+=2000;
+					BOOL bMaxDate=IsCharUpper(lpCmdLine[idx]);
+					if (bMaxDate) // max date
+						pStartData->m_cMaxDateType=W2Ac(lpCmdLine[idx++]);
 					else
-						bYear+=1900;
-					szBuf[0]=lpCmdLine[idx+3];
-					szBuf[1]=lpCmdLine[idx+4];
-					BYTE bMonth=_wtoi(szBuf);
-					if (bMonth<1 || bMonth>12)
-						bMonth=1;
-					szBuf[0]=lpCmdLine[idx+5];
-					szBuf[1]=lpCmdLine[idx+6];
-					BYTE bDay=_wtoi(szBuf);
-					if (bDay<1 || bDay>CTime::GetDaysInMonth(bMonth,bYear))
-						bDay=1;					
-					
-					if (IsCharUpper(lpCmdLine[idx])) // max date
+						pStartData->m_cMinDateType=W2Ac(lpCmdLine[idx++]);
+					nLength--;
+
+
+					DWORD dwDate;
+					if (nLength<6)
 					{
-						pStartData->m_cMaxDateType=W2Ac(lpCmdLine[idx]);
-						pStartData->m_dwMaxDate=(bYear<<16)|(bMonth<<8)|(bDay);
+						dwDate=_wtoi(lpCmdLine+idx);
+						dwDate|=1<<31;
 					}
 					else
 					{
-						pStartData->m_cMinDateType=W2Ac(lpCmdLine[idx]);
-						pStartData->m_dwMinDate=(bYear<<16)|(bMonth<<8)|(bDay);
+						WCHAR szBuf[]=L"XX";
+						szBuf[0]=lpCmdLine[idx];
+						szBuf[1]=lpCmdLine[idx+1];
+						WORD bYear=_wtoi(szBuf);
+						if (bYear<60)
+							bYear+=2000;
+						else
+							bYear+=1900;
+						szBuf[0]=lpCmdLine[idx+2];
+						szBuf[1]=lpCmdLine[idx+3];
+						BYTE bMonth=_wtoi(szBuf);
+						if (bMonth<1 || bMonth>12)
+							bMonth=1;
+						szBuf[0]=lpCmdLine[idx+4];
+						szBuf[1]=lpCmdLine[idx+5];
+						BYTE bDay=_wtoi(szBuf);
+						if (bDay<1 || bDay>CTime::GetDaysInMonth(bMonth,bYear))
+							bDay=1;			
+
+						dwDate=(bYear<<16)|(bMonth<<8)|(bDay);
 					}
 					idx+=nLength;
+					
+					if (bMaxDate)
+						pStartData->m_dwMaxDate=dwDate;
+					else
+						pStartData->m_dwMinDate=dwDate;
+
 					break;
 				}
 			case L's':

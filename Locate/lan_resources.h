@@ -321,7 +321,8 @@
 #define IDC_GOTOHOMEPAGE                1074
 #define IDC_MINSIZETYPE                 1074
 #define IDC_MAXSIZETYPE                 1075
-#define IDC_FILEDATE                    1077
+#define IDC_MINDATEMODE                 1076
+#define IDC_MAXDATEMODE                 1077
 #define IDC_UPDATES                     1079
 #define IDC_ADD                         1080
 #define IDC_DELETE                      1082
@@ -794,6 +795,8 @@
 #define IDS_ADVSHORTCUTLOCAL            5571
 #define IDS_ADVSHORTCUTGLOBALHOTKEY     5572
 #define IDS_ADVSHORTCUTGLOBALHOOK       5573
+#define IDS_KEYMAXDATEMODE				5583
+#define IDS_KEYMINDATEMODE				5584
 #define IDS_KEYMAXDATEVALUE             5585
 #define IDS_KEYMINDATEVALUE             5586
 #define IDS_KEYMAXSIZEVALUE             5587

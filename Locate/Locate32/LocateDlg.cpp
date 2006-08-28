@@ -998,9 +998,11 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDC_MAXSIZETYPE:
 	case IDC_CHECKMINDATE:
 	case IDC_MINDATE:
+	case IDC_MINDATEMODE:
 	case IDC_MINTYPE:
 	case IDC_CHECKMAXDATE:
 	case IDC_MAXDATE:
+	case IDC_MAXDATEMODE:
 	case IDC_MAXTYPE:
 		// This is to ensure that these conrols get focus e.g. when alt+n is pressed
 		return (BOOL)m_SizeDateDlg.SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
@@ -10742,6 +10744,15 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		else if (wNotifyCode==EN_SETFOCUS)
 			::SendMessage(hControl,EM_SETSEL,0,MAKELPARAM(0,-1));
 		break;
+	case IDC_MAXDATEMODE:
+	case IDC_MINDATEMODE:
+		{
+			CDateTimeCtrlEx* pCtrl=(CDateTimeCtrlEx*)SendDlgItemMessage(
+				wID==IDC_MAXDATEMODE?IDC_MAXDATE:IDC_MINDATE,DTMX_GETCLASS);
+			if (pCtrl->IsWindowEnabled())
+				pCtrl->ChangeMode(!pCtrl->GetMode());
+			break;
+		}
 	case IDC_MINSIZETYPE:
 	case IDC_MAXSIZETYPE:
 	case IDC_MINDATE:
@@ -10936,18 +10947,32 @@ void CLocateDlg::CSizeDateDlg::SetStartData(const CLocateApp::CStartData* pStart
 		st.wMinute=1;
 		st.wSecond=1;
 		st.wMilliseconds=1;
-		st.wDay=BYTE(pStartData->m_dwMinDate);
-		st.wMonth=BYTE(pStartData->m_dwMinDate>>8);
-		st.wYear=WORD(pStartData->m_dwMinDate>>16);
+		if (pStartData->m_dwMinDate&(1<<31))
+		{
+			st.wDay=WORD(pStartData->m_dwMinDate);
+			st.wMonth=0xFFFF;
+			st.wYear=0xFFFF;
+		}
+		else
+		{			
+			st.wDay=BYTE(pStartData->m_dwMinDate);
+			st.wMonth=BYTE(pStartData->m_dwMinDate>>8);
+			st.wYear=WORD(pStartData->m_dwMinDate>>16);
+		}
 		SendDlgItemMessage(IDC_MINDATE,DTM_SETSYSTEMTIME,GDT_VALID,LPARAM(&st));
 
 		switch (pStartData->m_cMinDateType)
 		{
+		case 'C':
 		case 'c':
 			SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,1);
 			break;
+		case 'A':
 		case 'a':
 			SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,2);
+			break;
+		default:
+			SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,0);
 			break;
 		}
 	}
@@ -10955,23 +10980,39 @@ void CLocateDlg::CSizeDateDlg::SetStartData(const CLocateApp::CStartData* pStart
 	if (pStartData->m_dwMaxDate!=DWORD(-1))
 	{
 		CheckDlgButton(IDC_CHECKMAXDATE,1);
-        SYSTEMTIME st;
+        
+		SYSTEMTIME st;
 		st.wHour=1;
 		st.wMinute=1;
 		st.wSecond=1;
 		st.wMilliseconds=1;
-		st.wDay=BYTE(pStartData->m_dwMaxDate);
-		st.wMonth=BYTE(pStartData->m_dwMaxDate>>8);
-		st.wYear=WORD(pStartData->m_dwMaxDate>>16);
+		
+		if (pStartData->m_dwMaxDate&(1<<31))
+		{
+			st.wDay=WORD(pStartData->m_dwMaxDate);
+			st.wMonth=0xFFFF;
+			st.wYear=0xFFFF;
+		}
+		else
+		{			
+			st.wDay=BYTE(pStartData->m_dwMaxDate);
+			st.wMonth=BYTE(pStartData->m_dwMaxDate>>8);
+			st.wYear=WORD(pStartData->m_dwMaxDate>>16);
+		}
 		SendDlgItemMessage(IDC_MAXDATE,DTM_SETSYSTEMTIME,GDT_VALID,LPARAM(&st));
 
 		switch (pStartData->m_cMaxDateType)
 		{
+		case 'C':
 		case 'c':
 			SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,1);
 			break;
 		case 'a':
+		case 'A':
 			SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,2);
+			break;
+		default:
+			SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,0);
 			break;
 		}
 	}
@@ -11020,9 +11061,12 @@ void CLocateDlg::CSizeDateDlg::LoadControlStates(CRegKey& RegKey)
 	else
 	{
 		if (dwType==REG_DWORD && dwLen>=sizeof(DWORD))
-			SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,*((int*)szData),0);
-	
-		SendDlgItemMessage(IDC_MINDATE,DTMX_CHANGEMODE,0,0);
+		{
+			SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,LOWORD(*((int*)szData)),0);
+			SendDlgItemMessage(IDC_MINDATE,DTMX_CHANGEMODE,HIWORD(*((int*)szData)),0);
+		}
+		else
+			SendDlgItemMessage(IDC_MINDATE,DTMX_CHANGEMODE,0,0);
 		CheckDlgButton(IDC_CHECKMINDATE,FALSE);
 	}
 		
@@ -11036,8 +11080,12 @@ void CLocateDlg::CSizeDateDlg::LoadControlStates(CRegKey& RegKey)
 	else
 	{
 		if (dwType==REG_DWORD && dwLen>=sizeof(DWORD))
-			SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,*((int*)szData),0);
-		SendDlgItemMessage(IDC_MAXDATE,DTMX_CHANGEMODE,0,0);
+		{
+			SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,LOWORD(*((int*)szData)),0);
+			SendDlgItemMessage(IDC_MAXDATE,DTMX_CHANGEMODE,HIWORD(*((int*)szData)),0);
+		}
+		else
+			SendDlgItemMessage(IDC_MAXDATE,DTMX_CHANGEMODE,0,0);
 		CheckDlgButton(IDC_CHECKMAXDATE,FALSE);
 	}
 		
@@ -11066,7 +11114,11 @@ void CLocateDlg::CSizeDateDlg::SaveControlStates(CRegKey& RegKey)
 		RegKey.SetValue("SizeDate/MinimumDate",szTemp,sizeof(SYSTEMTIME)+4,REG_BINARY);
 	}
 	else
-		RegKey.SetValue("SizeDate/MinimumDate",DWORD(SendDlgItemMessage(IDC_MINTYPE,CB_GETCURSEL,0,0)));
+	{
+		RegKey.SetValue("SizeDate/MinimumDate",
+			(DWORD)MAKELONG(SendDlgItemMessage(IDC_MINTYPE,CB_GETCURSEL),
+			SendDlgItemMessage(IDC_MINDATE,DTMX_GETMODE)));
+	}
 
 	if (IsDlgButtonChecked(IDC_CHECKMAXDATE))
 	{
@@ -11076,8 +11128,11 @@ void CLocateDlg::CSizeDateDlg::SaveControlStates(CRegKey& RegKey)
 		RegKey.SetValue("SizeDate/MaximumDate",szTemp,sizeof(SYSTEMTIME)+4,REG_BINARY);
 	}
 	else
-		RegKey.SetValue("SizeDate/MaximumDate",DWORD(SendDlgItemMessage(IDC_MAXTYPE,CB_GETCURSEL,0,0)));
-
+	{
+		RegKey.SetValue("SizeDate/MaximumDate",
+			(DWORD)MAKELONG(SendDlgItemMessage(IDC_MAXTYPE,CB_GETCURSEL),
+			SendDlgItemMessage(IDC_MAXDATE,DTMX_GETMODE)));
+	}
 }
 
 BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)

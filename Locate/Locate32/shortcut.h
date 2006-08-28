@@ -42,9 +42,11 @@ public:
 		MaximumSizeType = MAKELONG(IDC_MAXSIZETYPE,~IDS_KEYMAXSIZETYPE),
 		MinimumDate = MAKELONG(IDC_CHECKMINDATE,IDC_CHECKMINDATE),
 		MinimumDateValue = MAKELONG(IDC_MINDATE,~IDS_KEYMINDATEVALUE),
+		MinimumDateMode = MAKELONG(IDC_MINDATEMODE,~IDS_KEYMINDATEMODE),
 		MinimumDateType = MAKELONG(IDC_MINTYPE,~IDS_KEYMINDATETYPE),
 		MaximumDate = MAKELONG(IDC_CHECKMAXDATE,IDC_CHECKMAXDATE),
 		MaximumDateValue = MAKELONG(IDC_MAXDATE,~IDS_KEYMAXDATEVALUE),
+		MaximumDateMode = MAKELONG(IDC_MAXDATEMODE,~IDS_KEYMAXDATEMODE),
 		MaximumDateType = MAKELONG(IDC_MAXTYPE,~IDS_KEYMAXDATETYPE),
 		
 		// Advanced
@@ -65,8 +67,8 @@ public:
 			Presets,Name,Type,LookIn,MoreDirectories,NoSubdirectories,Browse,
             MinimumSize,MinimumSizeValue,MinimumSizeType,
 			MaximumSize,MaximumSizeValue,MaximumSizeType,
-			MinimumDate,MinimumDateValue,MinimumDateType,
-			MaximumDate,MaximumDateValue,MaximumDateType,
+			MinimumDate,MinimumDateValue,MinimumDateMode,MinimumDateType,
+			MaximumDate,MaximumDateValue,MaximumDateMode,MaximumDateType,
 			CheckFilesOrFolders,MatchWholeName,ReplaceSpaces,
             UseWholePath,TypeOfFile,ContainingText,ContainingTextValue,
 			TextMatchCase,NullControl};

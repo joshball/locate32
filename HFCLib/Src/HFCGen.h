@@ -67,6 +67,9 @@ public:
 	static DWORD GetIndex(WORD nDay,WORD nMonth,WORD nYear);
 	static CTime GetDayFromDayOfYear(WORD nDay,WORD nYear);
 	static CTime GetDayFromIndex(DWORD nIndex);
+#ifdef WIN32
+	static void DecreaseDaysInSystemTime(LPSYSTEMTIME pst,int nDays);
+#endif
 	
 	static void GetDayFromDayOfYear(WORD nDayOfYear,WORD nYear,WORD& nDay,WORD& nMonth);
 	static void GetDayFromIndex(DWORD nIndex,WORD& nDay,WORD& nMonth,WORD& nYear);

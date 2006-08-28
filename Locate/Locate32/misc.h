@@ -11,6 +11,7 @@
 #define DTMX_GETRELDATE			DTM_FIRST+21 
 #define DTMX_GETCLASS			DTM_FIRST+22 // Returns pointer to CDateTimePickEx
 #define DTMX_CHANGEMODE			DTM_FIRST+23 // wParam: 0 for explicit mode, 1 for relative mode
+#define DTMX_GETMODE			DTM_FIRST+24 // returns 0 for explicit mode, 1 for relative mode
 #define DTMX_GETSYSTEMTIME		DTM_GETSYSTEMTIME
 #define DTMX_SETSYSTEMTIME		DTM_SETSYSTEMTIME
 
@@ -52,6 +53,7 @@ public:
 	int GetRelativeDate() const;
 	void SetRelativeDate(int nNewPos,DWORD dwFlags);
 	void ChangeMode(BOOL bToRelative);
+	BOOL GetMode() const; // TRUE if relative, FALSE is explicit
 	
 
 private:
@@ -83,6 +85,10 @@ inline int CDateTimeCtrlEx::GetValueFromText(LPCWSTR szText)
 	return _wtoi(szText);
 }
 
+inline BOOL CDateTimeCtrlEx::GetMode() const
+{
+	return (m_dwFlags&ModeMask)==ModeRelative;
+}
 
 
 #endif

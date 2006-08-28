@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   locate.exe v2.99.6.8150                 */
+   locate.exe v2.99.6.8280                 */
 
-const char* szVersionStr="locate 3.0 beta 6.8150";
+const char* szVersionStr="locate 3.0 beta 6.8280";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -273,6 +273,7 @@ BOOL CALLBACK LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pL
 		wprintf(L"%s\\%s\n",pLocater->GetCurrentPathW(),pLocater->GetFileNameW());
 	return TRUE;
 }
+
 
 
 
@@ -568,29 +569,12 @@ int wmain (int argc,wchar_t * argv[])
 					const WCHAR* lpCmdLine=argv[i]+3;
 
 					int nLength=(int)istrlenw(lpCmdLine);
-					if (nLength<7)
+
+					if (nLength<2)
                         break;
-					WCHAR szBuf[]=L"XX";
-					szBuf[0]=lpCmdLine[1];
-					szBuf[1]=lpCmdLine[2];
-					WORD bYear=_wtoi(szBuf);
-					if (bYear<60)
-						bYear+=2000;
-					else
-						bYear+=1900;
-					bYear-=1980;
-					szBuf[0]=lpCmdLine[3];
-					szBuf[1]=lpCmdLine[4];
-					BYTE bMonth=_wtoi(szBuf);
-					if (bMonth<1 || bMonth>12)
-						bMonth=1;
-					szBuf[0]=lpCmdLine[5];
-					szBuf[1]=lpCmdLine[6];
-					BYTE bDay=_wtoi(szBuf);
-					if (bDay<1 || bDay>CTime::GetDaysInMonth(bMonth,bYear))
-						bDay=1;					
-					
-					if (isupper(lpCmdLine[0])) // max date
+
+					BOOL bMaxDate=isupper(lpCmdLine[0]);
+					if (bMaxDate) 
 					{
 						switch (lpCmdLine[0])
 						{
@@ -601,7 +585,6 @@ int wmain (int argc,wchar_t * argv[])
 							dwFlags|=LOCATE_MAXCREATIONDATE;
 							break;
 						}
-						wMaxDate=(BYTE(bYear)<<9)|(bMonth<<5)|(bDay);
 					}
 					else
 					{
@@ -614,9 +597,48 @@ int wmain (int argc,wchar_t * argv[])
 							dwFlags|=LOCATE_MINCREATIONDATE;
 							break;
 						}
-						wMinDate=(bYear<<9)|(bMonth<<5)|(bDay);
 					}
+					lpCmdLine++;
+					nLength--;
 
+					WORD wDate;
+					if (nLength<6)
+					{
+						int nRel=_wtoi(lpCmdLine);
+						SYSTEMTIME st;
+						GetLocalTime(&st);
+						CTime::DecreaseDaysInSystemTime(&st,nRel);
+						wDate=(BYTE(st.wYear)<<9)|(st.wMonth<<5)|(st.wDay);
+					}
+					else
+					{
+						WCHAR szBuf[]=L"XX";
+						szBuf[0]=lpCmdLine[0];
+						szBuf[1]=lpCmdLine[1];
+						WORD bYear=_wtoi(szBuf);
+						if (bYear<60)
+							bYear+=2000;
+						else
+							bYear+=1900;
+						bYear-=1980;
+						szBuf[0]=lpCmdLine[2];
+						szBuf[1]=lpCmdLine[3];
+						BYTE bMonth=_wtoi(szBuf);
+						if (bMonth<1 || bMonth>12)
+							bMonth=1;
+						szBuf[0]=lpCmdLine[4];
+						szBuf[1]=lpCmdLine[5];
+						BYTE bDay=_wtoi(szBuf);
+						if (bDay<1 || bDay>CTime::GetDaysInMonth(bMonth,bYear))
+							bDay=1;					
+						wDate=(BYTE(bYear)<<9)|(bMonth<<5)|(bDay);
+					}
+					
+					if (bMaxDate) // max date
+						wMaxDate=wDate;
+					else
+						wMinDate=wDate;
+					
 					break;
 				}
 				}

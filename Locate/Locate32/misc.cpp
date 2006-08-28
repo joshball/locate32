@@ -237,25 +237,6 @@ void CDateTimeCtrlEx::ChangeMode(BOOL bToRelativeMode)
 	}
 }
 
-void DecreaseDaysInSystemTime(LPSYSTEMTIME pst,int nDays)
-{
-	int nDay=(int)pst->wDay-nDays;
-	while (nDay<=0)
-	{
-		if (pst->wMonth==1)
-		{
-			pst->wYear--;
-			pst->wMonth=12;
-		}
-		else
-			pst->wMonth--;
-
-		nDay+=CTime::GetDaysInMonth((BYTE)pst->wMonth,pst->wYear);
-	}
-
-	pst->wDay=nDay;
-}
-
 	
 LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
@@ -317,7 +298,7 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 		else
 		{
 			GetLocalTime((SYSTEMTIME*)lParam);
-			DecreaseDaysInSystemTime((SYSTEMTIME*)lParam,pData->GetRelativeDate());
+			CTime::DecreaseDaysInSystemTime((SYSTEMTIME*)lParam,pData->GetRelativeDate());
 			return GDT_VALID;
 		}
 	case DTM_SETSYSTEMTIME:
@@ -507,6 +488,8 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 	case DTMX_CHANGEMODE:
 		pData->ChangeMode((BOOL)wParam);
 		break;
+	case DTMX_GETMODE:
+		return pData->GetMode();
 	case WM_SETFOCUS:
 		if ((pData->m_dwFlags&ModeMask)==ModeExplicit)
 			::SetFocus(pData->m_hTimePickerWnd);

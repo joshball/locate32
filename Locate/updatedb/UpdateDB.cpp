@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   Updatedb.exe v2.99.6.8150 */
+   Updatedb.exe v2.99.6.8280 */
 
 #include <HFCLib.h>
 #include "../locatedb/locatedb.h"

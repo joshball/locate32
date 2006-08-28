@@ -700,6 +700,27 @@ BYTE CTime::Wait(DWORD nTime)
 	return TRUE;
 }
 
+#ifdef WIN32
+void CTime::DecreaseDaysInSystemTime(LPSYSTEMTIME pst,int nDays)
+{
+	int nDay=(int)pst->wDay-nDays;
+	while (nDay<=0)
+	{
+		if (pst->wMonth==1)
+		{
+			pst->wYear--;
+			pst->wMonth=12;
+		}
+		else
+			pst->wMonth--;
+
+		nDay+=GetDaysInMonth((BYTE)pst->wMonth,pst->wYear);
+	}
+
+	pst->wDay=nDay;
+}
+#endif
+
 
 #ifdef WIN32
 ////////////////////////////
