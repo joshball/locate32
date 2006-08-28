@@ -444,16 +444,19 @@ void CLocatedItem::UpdateFileTitle()
 								{
 									// Taking type now
 									DWORD nLength=RegKey.QueryValueLength("");
-									if (nLength)
+									if (nLength>0)
 									{
-										if (szType!=NULL)
-											delete[] szType;
-											
-										szType=new WCHAR[nLength];
-										if (RegKey.QueryValue(L"",szType,nLength))
+										WCHAR* pNewType=new WCHAR[nLength+1];
+										if (RegKey.QueryValue(L"",pNewType,nLength))
+										{
+											WCHAR* pTmp=szType;
+											InterlockedExchangePointer((VOID**)&szType,pNewType);
 											dwFlags|=LITEM_TYPEOK;
+											if (pTmp!=NULL)
+												delete[] pTmp;
+										}
 										else
-											delete[] szType;
+											delete[] pNewType;
 									}
 								}
 								RegKey.CloseKey();
@@ -599,9 +602,9 @@ void CLocatedItem::UpdateType()
 					// Taking type now
 					DWORD nLength=RegKey.QueryValueLength("");
 					ItemDebugFormatMessage1("CLocatedItem::UpdateType Type from registry, %d",nLength);
-					if (nLength)
+					if (nLength>0)
 					{
-						pNewType=new WCHAR[nLength];
+						pNewType=new WCHAR[nLength+1];
 						if (RegKey.QueryValue(L"",pNewType,nLength))
 						{
 							ItemDebugMessage("CLocatedItem::UpdateType Type from registry2");
@@ -637,7 +640,8 @@ void CLocatedItem::UpdateType()
 	
 	WCHAR* pTmp=szType;
 	InterlockedExchangePointer((PVOID*)&szType,pNewType);
-	delete[] pTmp;
+	if (pTmp!=NULL)
+		delete[] pTmp;
 
 	dwFlags|=LITEM_TYPEOK;
 
@@ -1458,7 +1462,8 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 	{
 		WCHAR* pTmp=szPath;      
 		InterlockedExchangePointer((PVOID*)&szPath,alloccopy(szFullPath,dwLength));       
-		delete[] pTmp;
+		if (pTmp!=NULL)
+			delete[] pTmp;
 		
 		InterlockedExchangePointer((PVOID*)&szName,szPath+LastCharIndex(szPath,L'\\')+1);
 		bNameLength=BYTE(dwLength-DWORD(szName-szPath));

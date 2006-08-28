@@ -364,6 +364,8 @@ BOOL CLocateDlgThread::InitInstance()
 	CWinThread::InitInstance();
 	CoInitialize(NULL);
 	
+	RegisterDataTimeExCltr();
+
 	m_pMainWnd=m_pLocate=new CLocateDlg;
 	m_pLocate->Create(NULL);
 	
@@ -386,6 +388,7 @@ BOOL CLocateDlgThread::InitInstance()
 				
 		}
 	}
+
 
 	
 	RegisterDialog(*m_pLocate);
@@ -655,7 +658,9 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_NameDlg.Create(*this);
 	m_NameDlg.ShowWindow(swShow);
 	m_SizeDateDlg.Create(*this);
+	DWORD dwError=GetLastError();
 	m_SizeDateDlg.ShowWindow(swHide);
+
 	m_AdvancedDlg.Create(*this);
 	m_AdvancedDlg.ShowWindow(swHide);
 	
@@ -6410,7 +6415,6 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 
 					// Determine IMAPI burning device
 					CArrayFAP<LPWSTR> Burners;
-					BOOL GetIMAPIBurningDevices(CArray<LPWSTR>& aDevicePaths);
 					if (GetIMAPIBurningDevices(Burners))
 					{
 						for (int i=0;i<Burners.GetSize();i++)
@@ -10717,6 +10721,7 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		{
 			EnableDlgItem(IDC_MAXDATE,TRUE);
 			EnableDlgItem(IDC_MAXTYPE,TRUE);
+
 			SetFocus(IDC_MAXDATE);
 			HilightTab(TRUE);
 		}
@@ -11012,10 +11017,14 @@ void CLocateDlg::CSizeDateDlg::LoadControlStates(CRegKey& RegKey)
 		SendDlgItemMessage(IDC_MINDATE,DTM_SETSYSTEMTIME,0,(LPARAM)(szData+4));
 		SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,*((int*)szData),0);
 	}
-	else if (dwType==REG_DWORD && dwLen>=sizeof(DWORD))
-		SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,*((int*)szData),0);
 	else
+	{
+		if (dwType==REG_DWORD && dwLen>=sizeof(DWORD))
+			SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,*((int*)szData),0);
+	
+		SendDlgItemMessage(IDC_MINDATE,DTMX_CHANGEMODE,0,0);
 		CheckDlgButton(IDC_CHECKMINDATE,FALSE);
+	}
 		
 	dwLen=RegKey.QueryValue("SizeDate/MaximumDate",szData,sizeof(SYSTEMTIME)+4,&dwType);
 	if (dwLen>=sizeof(SYSTEMTIME)+4 && dwType==REG_BINARY)
@@ -11024,10 +11033,13 @@ void CLocateDlg::CSizeDateDlg::LoadControlStates(CRegKey& RegKey)
 		SendDlgItemMessage(IDC_MAXDATE,DTM_SETSYSTEMTIME,0,(LPARAM)(szData+4));
 		SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,*((int*)szData),0);
 	}
-	else if (dwType==REG_DWORD && dwLen>=sizeof(DWORD))
-		SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,*((int*)szData),0);
 	else
+	{
+		if (dwType==REG_DWORD && dwLen>=sizeof(DWORD))
+			SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,*((int*)szData),0);
+		SendDlgItemMessage(IDC_MAXDATE,DTMX_CHANGEMODE,0,0);
 		CheckDlgButton(IDC_CHECKMAXDATE,FALSE);
+	}
 		
 	HilightTab(IsChanged());
 }
@@ -11049,7 +11061,7 @@ void CLocateDlg::CSizeDateDlg::SaveControlStates(CRegKey& RegKey)
 	if (IsDlgButtonChecked(IDC_CHECKMINDATE))
 	{
 		char szTemp[sizeof(SYSTEMTIME)+4];
-		SendDlgItemMessage(IDC_MINDATE,DTM_GETSYSTEMTIME,0,(LPARAM)(szTemp+4));
+		SendDlgItemMessage(IDC_MINDATE,DTM_GETSYSTEMTIME,DTXF_FORSAVE,(LPARAM)(szTemp+4));
 		*((int*)szTemp)=SendDlgItemMessage(IDC_MINTYPE,CB_GETCURSEL,0,0);
 		RegKey.SetValue("SizeDate/MinimumDate",szTemp,sizeof(SYSTEMTIME)+4,REG_BINARY);
 	}
@@ -11059,7 +11071,7 @@ void CLocateDlg::CSizeDateDlg::SaveControlStates(CRegKey& RegKey)
 	if (IsDlgButtonChecked(IDC_CHECKMAXDATE))
 	{
 		char szTemp[sizeof(SYSTEMTIME)+4];
-		SendDlgItemMessage(IDC_MAXDATE,DTM_GETSYSTEMTIME,0,(LPARAM)(szTemp+4));
+		SendDlgItemMessage(IDC_MAXDATE,DTM_GETSYSTEMTIME,DTXF_FORSAVE,(LPARAM)(szTemp+4));
 		*((int*)szTemp)=SendDlgItemMessage(IDC_MAXTYPE,CB_GETCURSEL,0,0);
 		RegKey.SetValue("SizeDate/MaximumDate",szTemp,sizeof(SYSTEMTIME)+4,REG_BINARY);
 	}

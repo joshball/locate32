@@ -745,6 +745,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\misc.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ResultsDialogs.h"
 				>
 			</File>

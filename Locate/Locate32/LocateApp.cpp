@@ -75,6 +75,7 @@ BOOL CLocateApp::InitInstance()
 	// Initializing locater library
 	InitLocaterLibrary();
 
+
 	if (!IsUnicodeSystem())
 		m_pGetLongPathName=CLocateApp::GetLongPathNameNoUni;
 	else 
@@ -1022,12 +1023,12 @@ BOOL CLocateApp::ActivateOtherInstances(LPCWSTR pCmdLine)
 
 		if (m_pStartData->m_nActivateInstance>0)
 		{
-			::SendMessage(HWND_BROADCAST,m_nLocateAppMessage,
+			::SendNotifyMessage(HWND_BROADCAST,m_nLocateAppMessage,
 				MAKEWPARAM(LOCATEMSG_ACTIVATEINSTANCE,m_pStartData->m_nActivateInstance-1),
 				(LPARAM)aCommandLine);
 		}
 		else
-			::SendMessage(HWND_BROADCAST,m_nLocateAppMessage,LOCATEMSG_ACTIVATEINSTANCE,(LPARAM)aCommandLine);
+			::SendNotifyMessage(HWND_BROADCAST,m_nLocateAppMessage,LOCATEMSG_ACTIVATEINSTANCE,(LPARAM)aCommandLine);
 
 		if (aCommandLine!=NULL)
 			DeleteAtom(aCommandLine);
@@ -3309,12 +3310,15 @@ void CLocateAppWnd::OnDestroy()
 
 	((CLocateApp*)GetApp())->StopUpdating();
 	
-	SaveSchedules();
 	
-	::SendMessage(HWND_BROADCAST,CLocateApp::m_nLocateAppMessage,
-		LOCATEMSG_INSTANCEEXITED,GetLocateApp()->m_nInstance);
+	SaveSchedules();
 
+	::SendNotifyMessage(HWND_BROADCAST,CLocateApp::m_nLocateAppMessage,
+		LOCATEMSG_INSTANCEEXITED,GetLocateApp()->m_nInstance);
+	
+	
 	CFrameWnd::OnDestroy();
+	
 	DebugMessage("void CLocateAppWnd::OnDestroy() END");
 
 }
@@ -3767,7 +3771,7 @@ BOOL CLocateAppWnd::SaveSchedules()
 		if (pSchedules==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOC);
-			//DebugMessage("LocateAppWnd::OnDestroy(): Cannot allocate memory.");
+			DebugMessage("LocateAppWnd::OnDestroy(): Cannot allocate memory.");
 		}
 		pSchedules[0]=SCHEDULE_V34_LEN;
 		pSchedules[1]=4; //version
@@ -3778,7 +3782,7 @@ BOOL CLocateAppWnd::SaveSchedules()
 		pPos=m_Schedules.GetHeadPosition();
 		while (pPos!=NULL)
 		{
-			//DebugFormatMessage("SCHEDULE: type %d",m_Schedules.GetAt(pPos)->m_nType);
+			DebugFormatMessage("SCHEDULE: type %d",m_Schedules.GetAt(pPos)->m_nType);
 			pPtr+=m_Schedules.GetAt(pPos)->GetData(pPtr);
 			pPos=m_Schedules.GetNextPosition(pPos);
 		}
@@ -3794,7 +3798,8 @@ BOOL CLocateAppWnd::SaveSchedules()
 #endif
 		delete[] pSchedules;
 	}
-	//DebugMessage("CLocateAppWnd::SaveSchedules() END");
+	
+	DebugMessage("CLocateAppWnd::SaveSchedules() END");
 	return TRUE;
 }
 	

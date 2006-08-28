@@ -722,6 +722,8 @@ public:
 	BOOL LoadBitmap(LPCTSTR lpszResourceName);
 	BOOL LoadBitmap(UINT nIDResource);
 	BOOL LoadOEMBitmap(UINT nIDBitmap);
+	BOOL LoadOEMBitmap(UINT nIDBitmap,int sizeX,int sizeY);
+
 
 	BOOL CreateBitmap(int nWidth,int nHeight,UINT nPlanes,UINT nBitcount,const void* lpBits);
 	BOOL CreateBitmapIndirect(LPBITMAP lpBitmap);

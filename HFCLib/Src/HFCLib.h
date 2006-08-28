@@ -32,6 +32,7 @@
 #define WINVER			0x0501
 #define _WIN32_WINNT	0x0501
 #define _WIN32_IE		0x0501
+#define OEMRESOURCE
 
 
 #endif // CONSOLE
@@ -221,9 +222,6 @@ class CObject;
 	#ifndef DEF_RESOURCES
 		#error Resources required for applications
 	#endif
-#endif
-#if defined(WIN32) && defined(DEF_RESOURCES)
-	#define OEMRESOURCE
 #endif
 
 #endif

@@ -242,7 +242,7 @@ CLocater::~CLocater()
 
 BOOL CLocater::LocatingProc()
 {
-	LocaterDebugMessage("CLocater::LocatingProc() BEGIN");
+	LocaterDebugNumMessage("CLocater::LocatingProc() BEGIN hThread=%X",GetCurrentThreadId());
 	
 	// Initializing
 	UpdateError ueResult=ueStillWorking;

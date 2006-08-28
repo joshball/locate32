@@ -29,7 +29,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2006 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 beta 6.8170
+FILEVERSION=3.0 beta 6.8270
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -127,12 +127,18 @@ DLGSIZEDATE_MAXIMUMFILESIZE=M&aximum filesize:
 DLGSIZEDATE_FILEDATEATLEAST=Files n&ewer than:
 DLGSIZEDATE_FILEDATEATMOST=Files &older than:
 DLGSIZEDATE_INFOTEXT=Size and date are looked up from the database. If the database does not contain size and dateinformation, these options will be ignored.
-STRSIZEDATA_DATETYPE_MODIFIED=Modified
-STRSIZEDATA_DATETYPE_CREATED=Created
-STRSIZEDATA_DATETYPE_LASTACCESSED=Last accessed
+STRSIZEDATE_DATETYPE_MODIFIED=Modified
+STRSIZEDATE_DATETYPE_CREATED=Created
+STRSIZEDATE_DATETYPE_LASTACCESSED=Last accessed
+STRSIZEDATE_EXPLICITDATE=&Explicit dates
+STRSIZEDATE_RELATIVEDATE=&Relative dates
+STRSIZEDATE_TODAY=today
+STRSIZEDATE_DAY=1 day
+STRSIZEDATE_NDAYS=days
 DLGSIZEDATE_CONTROLWIDTHEXTRA=0
 DLGSIZEDATE_INFOWIDTHEXTRA=0
 DLGSIZEDATE_INFOHEIGHTEXTRA=0
+
 
 # Advanced dialog (A tab in the main dialog)
 STRADVANCED_TABCAPTION=Advanced
@@ -787,7 +793,7 @@ DLGCHANGEFILENAME_NOTE=Filename will not be updated to the databases. So file wi
 STRCHANGEFILENAME_NAMEALREADYEXISTS=A file with name '%s' already exists.
 
 ###########################
-# Dile properties
+# File properties
 STRFILEPROPERTIES_CAPTION=%s, ... Properties
 STRFILEPROPERTIESPAGE_TITLE=General
 DLGFILEPROPERTIESPAGE_TYPE=Type:

@@ -198,7 +198,7 @@ inline void CCheckFileNotificationsThread::FileDeleted(LPCWSTR szFile,DWORD dwLe
 
 BOOL CCheckFileNotificationsThread::RunningProcNew()
 {
-	DebugNumMessage("CCheckFileNotificationsThread::RunningProcNew() BEGIN, thread is 0x%X",GetCurrentThreadId());
+	BkgDebugMessage("CCheckFileNotificationsThread::RunningProcNew() BEGIN");
 	CreateHandlesNew();
 	DWORD dwOut;
 
@@ -346,34 +346,43 @@ BOOL CCheckFileNotificationsThread::RunningProcOld()
 
 void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCWSTR szRoot,CLocateDlg* pLocateDlg)
 {
-	BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot BEGIN");
+	BkgDebugFormatMessage("CCheckFileNotificationsThread::UpdateItemsInRoot BEGIN szRoot=%s",szRoot);
 	
 	if (pLocateDlg->m_pListCtrl==NULL)
 		return;
 	if (pLocateDlg->m_pListCtrl->GetItemCount()==0)
 		return;
 
+	
 	// Updating changed items by checking all items
 	if (szRoot[1]=='\0')
 	{
+		BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot 1a");
+
 		WCHAR szDriveLower=szRoot[0];
 		WCHAR szDriveUpper=szRoot[0];
 		MakeUpper(&szDriveUpper,1);
+
+		BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot 2a");
 
 		int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 		while (nItem!=-1)
 		{
 			CLocatedItem* pItem=(CLocatedItem*)pLocateDlg->m_pListCtrl->GetItemData(nItem);
-			
-			// Checking whether path is in changed volume
-			LPCWSTR szPath=pItem->GetPath();
-			if ((szPath[0]==szDriveLower || szPath[0]==szDriveUpper) &&
-				szPath[1]==L':')
+
+			if (pItem!=NULL)
 			{
-				// Just disabling flags, let background thread do the rest
-				if (pItem->RemoveFlagsForChanged())
-					pLocateDlg->PostMessage(WM_UPDATENEEDEDDETAILTS,WPARAM(nItem),LPARAM(pItem));
+				// Checking whether path is in changed volume
+				LPCWSTR szPath=pItem->GetPath();
+				if ((szPath[0]==szDriveLower || szPath[0]==szDriveUpper) &&
+					szPath[1]==L':')
+				{
+					// Just disabling flags, let background thread do the rest
+					if (pItem->RemoveFlagsForChanged())
+						pLocateDlg->PostMessage(WM_UPDATENEEDEDDETAILTS,WPARAM(nItem),LPARAM(pItem));
+				}
 			}
+
 			nItem=pLocateDlg->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
 		}
 	}
@@ -381,22 +390,28 @@ void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCWSTR szRoot,CLocateDlg*
 	{
 		DWORD dwLength=(DWORD)istrlenw(szRoot);
 
+		BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot 1b");
+
 		int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 		while (nItem!=-1)
 		{
 			CLocatedItem* pItem=(CLocatedItem*)pLocateDlg->m_pListCtrl->GetItemData(nItem);
-			if (pItem->GetPathLen()>=dwLength)
+
+			if (pItem!=NULL)
 			{
-				LPWSTR szPath=alloccopy(pItem->GetPath(),pItem->GetPathLen());
-				MakeLower(szPath);
-	                
-				if (wcsncmp(szPath,szRoot,dwLength)==0)
+				if (pItem->GetPathLen()>=dwLength)
 				{
-					// Just disabling flags, let background thread do the rest
-					if (pItem->RemoveFlagsForChanged())
-						pLocateDlg->PostMessage(WM_UPDATENEEDEDDETAILTS,WPARAM(nItem),LPARAM(pItem));
+					LPWSTR szPath=alloccopy(pItem->GetPath(),pItem->GetPathLen());
+					MakeLower(szPath);
+		                
+					if (wcsncmp(szPath,szRoot,dwLength)==0)
+					{
+						// Just disabling flags, let background thread do the rest
+						if (pItem->RemoveFlagsForChanged())
+							pLocateDlg->PostMessage(WM_UPDATENEEDEDDETAILTS,WPARAM(nItem),LPARAM(pItem));
+					}
+					delete[] szPath;
 				}
-				delete[] szPath;
 			}
 			nItem=pLocateDlg->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
 		}
@@ -521,7 +536,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 			m_pChangeDatas[m_nHandles]=pChangeData;
 
 			DebugFormatMessage("CreateHandlesNew: created listener for %S (%S,%X,%X,%X)",
-				szRoot,pChangeData->szRoot,pChangeData,pChangeData->ol.hEvent,pChangeData->hDir);
+				szRoot,pChangeData->szRoot,(DWORD_PTR)pChangeData,pChangeData->ol.hEvent,pChangeData->hDir);
 
 			pChangeData=NULL;
 			m_nHandles++;
@@ -812,7 +827,7 @@ inline BOOL CBackgroundUpdater::RunningProc()
 
 		BkgDebugMessage("CBackgroundUpdater::RunningProc(): Going to sleep.");
 		
-		DWORD nRet=WaitForMultipleObjects(2,m_phEvents,FALSE,500);
+		DWORD nRet=WaitForMultipleObjects(2,m_phEvents,FALSE,INFINITE);
 		InterlockedExchange(&m_lIsWaiting,FALSE);
 
 		BkgDebugFormatMessage4("CBackgroundUpdater::RunningProc(): Woked, nRet=%d.",nRet,0,0,0);
@@ -890,6 +905,7 @@ inline BOOL CBackgroundUpdater::RunningProc()
 					
 				}
 				aUpdateList.RemoveAll();
+				
 			}
 			ResetEvent(m_phEvents[1]);
 			BkgDebugMessage("CBackgroundUpdater::RunningProc(): I am tired");
@@ -921,8 +937,14 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 	for (int i=pUpdateList->GetSize()-1;i>=0;i--)
 	{
 		Item* pListItem=pUpdateList->GetAt(i);
+
+		BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Checking whether pItem=%X is pListItem=%X, i=%d, listsize=%d",
+			(DWORD_PTR)pItem,(DWORD_PTR)pListItem,i,pUpdateList->GetSize());
+
+		if (pListItem==NULL)
+			continue;
 		
-		BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Checking whether pItem=%X is pListItem=%X",pItem,pListItem,NULL,NULL);
+		
 
 		if (pUpdateList->GetAt(i)->m_pItem==pItem)
 		{
@@ -942,7 +964,7 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 						}
 						if (j<0) // Not found
 						{
-							BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new(1) detail %d to item %X",nDetail,pListItem,0,0);
+							BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new(1) detail %d to item %X",nDetail,(DWORD_PTR)pListItem,0,0);
 							pListItem->m_aDetails.Add((CLocateDlg::DetailType)type);
 						}
 					}
@@ -961,7 +983,7 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 				if (j<0)
 				{
 					// Not found
-					BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new(2) detail %d to item %X",nDetail,pListItem,0,0);
+					BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new(2) detail %d to item %X",nDetail,(DWORD_PTR)pListItem,0,0);
 					pListItem->m_aDetails.Add(nDetail);
 				}
 			}
@@ -977,9 +999,9 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 			
 	if (nDetail!=CLocateDlg::Needed)
 	{
-		BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new item (%X,%d,%d)",pItem,iItem,nDetail,0);
-			
-		pUpdateList->Add(new Item(pItem,iItem,nDetail));
+		Item* pNewItem=new Item(pItem,iItem,nDetail);
+		BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new item (%X) %X list size=%d",(DWORD_PTR)pItem,(DWORD_PTR)pNewItem,pUpdateList->GetSize(),0);
+		pUpdateList->Add(pNewItem);
 		ReleaseUpdaterListPtr();
 
 		BkgDebugMessage("CBackgroundUpdater::AddToUpdateList END (newitem)");
@@ -1000,6 +1022,8 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 	if (pUpdateItem->m_aDetails.GetSize()>0)
 	{
 		pUpdateList=GetUpdaterListPtr();
+		BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new item (%X), list size=%d",
+			(DWORD_PTR)pUpdateItem,pUpdateList->GetSize(),0,0);
 		pUpdateList->Add(pUpdateItem); 
 		ReleaseUpdaterListPtr();
 	}

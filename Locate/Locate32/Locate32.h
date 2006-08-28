@@ -87,6 +87,7 @@ extern LPWSTR g_szwBuffer;
 // Include other files
 #include "Debugging.h"
 
+#include "misc.h"
 #include "messages.h"
 #include "Data.h"
 #include "FileObject.h"
@@ -132,6 +133,7 @@ extern LPWSTR g_szwBuffer;
 #define SUBMENU_MULTIDIRSELECTION			5
 #define SUBMENU_PRESETSELECTION				6
 #define SUBMENU_OPENITEMFORFILEMENU			7
+#define SUBMENU_DATETIMEPICKEXMENU			8
 
 // Special menu in SUBMENU_EXTRACONTEXTMENUITEMS
 #define	SUBMENU_SPECIALMENU					2

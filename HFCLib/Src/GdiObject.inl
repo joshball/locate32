@@ -305,6 +305,15 @@ inline BOOL CBitmap::LoadOEMBitmap(UINT nIDBitmap)
 	return (m_hObject=(HGDIOBJ)::LoadBitmap(NULL,MAKEINTRESOURCE(nIDBitmap)))!=NULL;
 }
 
+inline BOOL CBitmap::LoadOEMBitmap(UINT nIDBitmap,int sizeX,int sizeY)
+{
+	if (m_hObject!=NULL)
+		::DeleteObject(m_hObject);
+	return (m_hObject=(HGDIOBJ)::LoadImage(NULL,MAKEINTRESOURCE(nIDBitmap),
+		IMAGE_BITMAP,sizeX,sizeY,LR_DEFAULTCOLOR))!=NULL;
+}
+
+
 inline BOOL CBitmap::CreateBitmap(int nWidth, int nHeight, UINT nPlanes, UINT nBitcount,
 	const void* lpBits)
 {

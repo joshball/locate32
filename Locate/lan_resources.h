@@ -77,6 +77,7 @@
 #define IDS_NAME                        80
 #define IDS_ADVANCED                    81
 #define IDS_SIZEDATE                    82
+#define IDS_DATETODAY					83
 #define IDS_BYEXTENSION                 85
 #define IDS_BUILDINTYPES                86
 #define IDS_FILENAMESONLY               87
@@ -89,6 +90,8 @@
 #define IDS_SELECTEDCOUNT2              94
 #define IDS_SELECTEDCOUNT3              95
 #define IDS_TOTALSIZE                   96
+#define IDS_DATEDAY						97
+#define IDS_DATENDAYS					98
 #define IDS_COPYRIGHT                   99
 #define IDD_MAIN                        101
 #define IDS_YES                         101
@@ -319,7 +322,6 @@
 #define IDC_MINSIZETYPE                 1074
 #define IDC_MAXSIZETYPE                 1075
 #define IDC_FILEDATE                    1077
-#define IDC_TASKS                       1079
 #define IDC_UPDATES                     1079
 #define IDC_ADD                         1080
 #define IDC_DELETE                      1082
@@ -1037,6 +1039,8 @@
 #define IDM_FORCEUPDATE                 40068
 #define IDM_SHOWFILEINFORMATION         40073
 #define IDM_REMOVEDELETEDFILES          40074
+#define IDM_EXPLICITDATE				40075
+#define IDM_RELATIVEDATE				40077
 #define IDM_DEFSHORTCUTITEM             49000
 #define IDM_DEFMENUITEM                 50000
 #define IDM_DEFCONTEXTITEM              51000

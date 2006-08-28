@@ -447,6 +447,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 #ifdef WIN32
 DWORD WINAPI CDatabaseUpdater::UpdateThreadProc(LPVOID lpParameter)
 {
+	DebugFormatMessage("CDatabaseUpdater::UpdateThreadProc thread=%lX",GetCurrentThreadId());
 	return ((CDatabaseUpdater*)lpParameter)->UpdatingProc()==ueSuccess?0:1;	
 }
 #endif
