@@ -645,6 +645,8 @@ public:
 	LONG SendDlgItemMessageW(int idControl,UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const;
 
 	int MessageBox(LPCWSTR lpText,LPCWSTR lpCaption=NULL,UINT uType=MB_OK);
+	static int MessageBox(HWND hWnd,LPCWSTR lpText,LPCWSTR lpCaption=NULL,UINT uType=MB_OK);
+
 
 #endif
 

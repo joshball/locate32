@@ -10845,7 +10845,23 @@ void CLocateDlg::CSizeDateDlg::OnClear(BOOL bInitial)
 	EnableDlgItem(IDC_MAXTYPE,FALSE);
 	SendDlgItemMessage(IDC_MINIMUMSIZESPIN,UDM_SETPOS,0,MAKELPARAM(0,0));
 	SendDlgItemMessage(IDC_MAXIMUMSIZESPIN,UDM_SETPOS,0,MAKELPARAM(0,0));
-	
+
+	CDateTimeCtrlEx* pMinDateCtrl=CDateTimeCtrlEx::GetClass(GetDlgItem(IDC_MINDATE));
+	CDateTimeCtrlEx* pMaxDateCtrl=CDateTimeCtrlEx::GetClass(GetDlgItem(IDC_MAXDATE));
+
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	if (pMinDateCtrl!=NULL)
+	{
+		pMinDateCtrl->SetExplicitDate(&st,GDT_VALID|DTXF_NOMODECHANGE);
+		pMinDateCtrl->SetRelativeDate(0,DTXF_NOMODECHANGE);
+	}
+	if (pMaxDateCtrl!=NULL)
+	{
+		pMaxDateCtrl->SetExplicitDate(&st,GDT_VALID|DTXF_NOMODECHANGE);
+		pMaxDateCtrl->SetRelativeDate(0,DTXF_NOMODECHANGE);
+	}
+
 	if (bInitial)
 	{
 		DWORD dwMinType=0,dwMaxType=0,dwMinSizeType=0,dwMaxSizeType=0;
@@ -10856,10 +10872,22 @@ void CLocateDlg::CSizeDateDlg::OnClear(BOOL bInitial)
 			RegKey.QueryValue("SizeDate/MaximumSizeType",dwMaxSizeType);
 			
 			char szTemp[sizeof(SYSTEMTIME)+4];
-			if (RegKey.QueryValue("SizeDate/MaximumDate",szTemp,sizeof(SYSTEMTIME)+4)>=4)
-				dwMaxType=*((DWORD*)szTemp);
-			if (RegKey.QueryValue("SizeDate/MinimumDate",szTemp,sizeof(SYSTEMTIME)+4)>=4)
-				dwMinType=*((DWORD*)szTemp);
+			DWORD dwLength=RegKey.QueryValue("SizeDate/MaximumDate",szTemp,sizeof(SYSTEMTIME)+4);
+			if (dwLength>=sizeof(DWORD))
+			{
+				dwMaxType=LOWORD(*((DWORD*)szTemp));
+				if (pMaxDateCtrl!=NULL)
+					pMaxDateCtrl->ChangeMode(HIWORD(*((DWORD*)szTemp)));
+
+			}
+
+			dwLength=RegKey.QueryValue("SizeDate/MinimumDate",szTemp,sizeof(SYSTEMTIME)+4);
+			if (dwLength>=sizeof(DWORD))
+			{
+				dwMinType=LOWORD(*((DWORD*)szTemp));
+				if (pMinDateCtrl!=NULL)
+					pMinDateCtrl->ChangeMode(HIWORD(*((DWORD*)szTemp)));
+			}
 		}
 		
 		SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,dwMinType,0);
@@ -10869,10 +10897,6 @@ void CLocateDlg::CSizeDateDlg::OnClear(BOOL bInitial)
 		
 	}
 
-	SYSTEMTIME st;
-	GetLocalTime(&st);
-	SendDlgItemMessage(IDC_MINDATE,DTM_SETSYSTEMTIME,GDT_VALID,(LPARAM)&st);
-	SendDlgItemMessage(IDC_MAXDATE,DTM_SETSYSTEMTIME,GDT_VALID,(LPARAM)&st);
 
 	HilightTab(FALSE);
 }
@@ -11056,14 +11080,14 @@ void CLocateDlg::CSizeDateDlg::LoadControlStates(CRegKey& RegKey)
 	{
 		CheckDlgButton(IDC_CHECKMINDATE,TRUE);
 		SendDlgItemMessage(IDC_MINDATE,DTM_SETSYSTEMTIME,0,(LPARAM)(szData+4));
-		SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,*((int*)szData),0);
+		SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,LOWORD(*((LONG*)szData)),0);
 	}
 	else
 	{
 		if (dwType==REG_DWORD && dwLen>=sizeof(DWORD))
 		{
-			SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,LOWORD(*((int*)szData)),0);
-			SendDlgItemMessage(IDC_MINDATE,DTMX_CHANGEMODE,HIWORD(*((int*)szData)),0);
+			SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,LOWORD(*((DWORD*)szData)),0);
+			SendDlgItemMessage(IDC_MINDATE,DTMX_CHANGEMODE,HIWORD(*((DWORD*)szData)),0);
 		}
 		else
 			SendDlgItemMessage(IDC_MINDATE,DTMX_CHANGEMODE,0,0);
@@ -11075,14 +11099,14 @@ void CLocateDlg::CSizeDateDlg::LoadControlStates(CRegKey& RegKey)
 	{
 		CheckDlgButton(IDC_CHECKMAXDATE,TRUE);
 		SendDlgItemMessage(IDC_MAXDATE,DTM_SETSYSTEMTIME,0,(LPARAM)(szData+4));
-		SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,*((int*)szData),0);
+		SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,LOWORD(*((LONG*)szData)),0);
 	}
 	else
 	{
 		if (dwType==REG_DWORD && dwLen>=sizeof(DWORD))
 		{
-			SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,LOWORD(*((int*)szData)),0);
-			SendDlgItemMessage(IDC_MAXDATE,DTMX_CHANGEMODE,HIWORD(*((int*)szData)),0);
+			SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,LOWORD(*((DWORD*)szData)),0);
+			SendDlgItemMessage(IDC_MAXDATE,DTMX_CHANGEMODE,HIWORD(*((DWORD*)szData)),0);
 		}
 		else
 			SendDlgItemMessage(IDC_MAXDATE,DTMX_CHANGEMODE,0,0);
@@ -11110,7 +11134,8 @@ void CLocateDlg::CSizeDateDlg::SaveControlStates(CRegKey& RegKey)
 	{
 		char szTemp[sizeof(SYSTEMTIME)+4];
 		SendDlgItemMessage(IDC_MINDATE,DTM_GETSYSTEMTIME,DTXF_FORSAVE,(LPARAM)(szTemp+4));
-		*((int*)szTemp)=SendDlgItemMessage(IDC_MINTYPE,CB_GETCURSEL,0,0);
+		*((LONG*)szTemp)=MAKELONG(SendDlgItemMessage(IDC_MINTYPE,CB_GETCURSEL),
+			SendDlgItemMessage(IDC_MINDATE,DTMX_GETMODE));
 		RegKey.SetValue("SizeDate/MinimumDate",szTemp,sizeof(SYSTEMTIME)+4,REG_BINARY);
 	}
 	else
@@ -11124,7 +11149,8 @@ void CLocateDlg::CSizeDateDlg::SaveControlStates(CRegKey& RegKey)
 	{
 		char szTemp[sizeof(SYSTEMTIME)+4];
 		SendDlgItemMessage(IDC_MAXDATE,DTM_GETSYSTEMTIME,DTXF_FORSAVE,(LPARAM)(szTemp+4));
-		*((int*)szTemp)=SendDlgItemMessage(IDC_MAXTYPE,CB_GETCURSEL,0,0);
+		*((LONG*)szTemp)=MAKELONG(SendDlgItemMessage(IDC_MAXTYPE,CB_GETCURSEL),
+			SendDlgItemMessage(IDC_MAXDATE,DTMX_GETMODE));
 		RegKey.SetValue("SizeDate/MaximumDate",szTemp,sizeof(SYSTEMTIME)+4,REG_BINARY);
 	}
 	else

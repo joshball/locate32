@@ -15,12 +15,16 @@
 #define DTMX_GETSYSTEMTIME		DTM_GETSYSTEMTIME
 #define DTMX_SETSYSTEMTIME		DTM_SETSYSTEMTIME
 
-// For lParam of DTMX_SETRELDATE
-#define DTXF_NOMODECHANGE		0x1
-#define DTXF_NOSPINCHANGE		0x2
+// For lParam of DTMX_SETRELDATE & DTMX_SETSYSTEMTIME
+#define DTXF_NOMODECHANGE		0x10000000
+#define DTXF_NOSPINCHANGE		0x20000000
+
 
 // For wParam of DTMX_GETSYSTEMTIME 
 #define DTXF_FORSAVE			0x80000000
+
+#define DTXF_MSGMASK			0xF0000000
+
 
 // Functions
 BOOL GetIMAPIBurningDevices(CArray<LPWSTR>& aDevicePaths);
@@ -51,9 +55,13 @@ public:
 
 public:
 	int GetRelativeDate() const;
+	int GetExplicitDate(LPSYSTEMTIME pSystemTime,DWORD dwFlags) const;
+	int SetExplicitDate(LPSYSTEMTIME pSystemTime,DWORD dwFlags);
 	void SetRelativeDate(int nNewPos,DWORD dwFlags);
 	void ChangeMode(BOOL bToRelative);
 	BOOL GetMode() const; // TRUE if relative, FALSE is explicit
+
+	static CDateTimeCtrlEx* GetClass(HWND hWnd);
 	
 
 private:
@@ -88,6 +96,11 @@ inline int CDateTimeCtrlEx::GetValueFromText(LPCWSTR szText)
 inline BOOL CDateTimeCtrlEx::GetMode() const
 {
 	return (m_dwFlags&ModeMask)==ModeRelative;
+}
+
+inline CDateTimeCtrlEx* CDateTimeCtrlEx::GetClass(HWND hWnd)
+{
+	return (CDateTimeCtrlEx*)::GetWindowLongPtr(hWnd,GWLP_USERDATA);
 }
 
 

@@ -186,6 +186,7 @@ inline int LoadString(UINT uID,LPSTR lpBuffer,int nBufferMax,TypeOfResourceHandl
 {
 	return (int)::LoadStringA(GetResourceHandle(bType),uID,lpBuffer,nBufferMax);
 }
+
 #ifdef DEF_WCHAR
 int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax,TypeOfResourceHandle bType);
 int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax);

@@ -1828,11 +1828,10 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 		return TRUE;
 	}
 	case FinishedUpdating:
-	{
-		CLocateDlg* pLocateDlg=GetLocateDlg();
-		if (pLocateDlg!=NULL)
+		if (ueCode!=ueStopped) // This is done at the end of CLocateApp::StopUpdating
 		{
-			if (ueCode!=ueStopped) // This is done at the end of CLocateApp::StopUpdating
+			CLocateDlg* pLocateDlg=GetLocateDlg();
+			if (pLocateDlg!=NULL)
 			{
 				pLocateDlg->m_NameDlg.InitDriveBox();
 				
@@ -1841,7 +1840,6 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			}
 		}
 		break;
-	}
 	case FinishedDatabase:
 	{
 		CLocateDlg* pLocateDlg=GetLocateDlg();
@@ -1914,7 +1912,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 				LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
 	
 
-				if (GetLocateApp()->m_nStartup&CStartData::startupExitAfterUpdating && dwParam!=NULL)
+				if (dwParam!=NULL && GetLocateApp()->m_nStartup&CStartData::startupExitAfterUpdating)
 					((CLocateAppWnd*)dwParam)->PostMessage(WM_COMMAND,IDM_EXIT,NULL);
 			}
 			else 
@@ -2006,108 +2004,72 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 		case ueOpen:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				if (IsUnicodeSystem())
-				{
-					CStringW str;
-					str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
-					::MessageBoxW(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
-				}
-				else
-				{
-					CString str;
-					str.Format(IDS_ERRORCANNOTOPENDB,W2A(pUpdater->GetCurrentDatabaseFile()));
-					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
-				}
+				CStringW str;
+				str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
+				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
 			}
 			return FALSE;
 		case ueRead:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				if (IsUnicodeSystem())
-				{
-					CStringW str;
-					str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
-					::MessageBoxW(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
-				}
-				else
-				{
-					CString str;
-					str.Format(IDS_ERRORCANNOTREADDB,W2A(pUpdater->GetCurrentDatabaseFile()));
-					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
-				}
+				CStringW str;
+				str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
+				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
 			}
 			return FALSE;
 		case ueWrite:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				if (IsUnicodeSystem())
-				{
-					CStringW str;
-					str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
-					::MessageBoxW(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
-				}
-				else
-				{
-					CString str;
-					str.Format(IDS_ERRORCANNOTWRITEDB,W2A(pUpdater->GetCurrentDatabaseFile()));
-					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
-				}
+				CStringW str;
+				str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
+				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
 			}
 			return FALSE;
 		case ueAlloc:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-					ID2A(IDS_ERRORCANNOTALLOCATE),ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
+					ID2W(IDS_ERRORCANNOTALLOCATE),ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
 			}
 			return FALSE;
 		case ueInvalidDatabase:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				CString str;
+				CStringW str;
 				str.Format(IDS_ERRORINVALIDDB,W2A(pUpdater->GetCurrentDatabaseName()));
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
 				return FALSE;
 			}
 			return FALSE;
 		case ueFolderUnavailable:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowNonCriticalErrors)
 			{
-				if (IsUnicodeSystem())
-				{
-					CStringW str;
-					str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():L"");
-					::MessageBoxW(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
-				}
-				else
-				{
-					CString str;
-					str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?W2A(pUpdater->GetCurrentRootPath()):"");
-					::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
-				}
+				CStringW str;
+				str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():L"");
+				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
 			}
 			return FALSE;
 		case ueCannotIncrement:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowNonCriticalErrors)
 			{
-				CString str;
+				CStringW str;
 				str.Format(IDS_ERRORCANNOTWRITEINCREMENTALLY,W2A(pUpdater->GetCurrentDatabaseName()));
-				return ::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
+				return CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
 			}
 			return TRUE;
 		case ueWrongCharset:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowNonCriticalErrors)
 			{
-				CString str;
+				CStringW str;
 				str.Format(IDS_ERRORDIFFERENTCHARSETINDB,W2A(pUpdater->GetCurrentDatabaseName()));
-				return ::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2A(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
+				return CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
 			}
 			return TRUE;
 		case ueCannotCreateThread:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-					ID2A(IDS_ERRORCANNOTCREATETHREAD),ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
+				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
+					ID2W(IDS_ERRORCANNOTCREATETHREAD),ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
 			}
 			return FALSE;
 		}

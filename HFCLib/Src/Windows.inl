@@ -1435,6 +1435,14 @@ inline int CWnd::MessageBox(LPCWSTR lpText,LPCWSTR lpCaption,UINT uType)
 		return ::MessageBoxA(m_hWnd,W2A(lpText),W2A(lpCaption),uType);
 }
 
+inline int CWnd::MessageBox(HWND hWnd,LPCWSTR lpText,LPCWSTR lpCaption,UINT uType)
+{
+	if (IsUnicodeSystem())
+		return ::MessageBoxW(hWnd,lpText,lpCaption,uType);
+	else
+		return ::MessageBoxA(hWnd,W2A(lpText),W2A(lpCaption),uType);
+}
+
 inline int CWnd::ReportSystemError(LPCSTR szTitle,DWORD dwError,DWORD dwExtra,LPCSTR szPrefix)
 {
 	return ::ReportSystemError(m_hWnd,szTitle,dwError,dwExtra,szPrefix);

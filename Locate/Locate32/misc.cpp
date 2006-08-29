@@ -128,7 +128,7 @@ void CDateTimeCtrlEx::CreateControls()
 	if (m_hTimePickerWnd==NULL)
 	{
 		m_hTimePickerWnd=CreateWindowEx(WS_EX_NOPARENTNOTIFY|WS_EX_CLIENTEDGE,
-			"SysDateTimePick32","",dwStyle|WS_VISIBLE,
+			"SysDateTimePick32","",dwStyle|DTS_RIGHTALIGN|WS_VISIBLE,
 			rcClientRect.left,rcClientRect.top,rcClientRect.right,rcClientRect.bottom,
 			*this,(HMENU)IDC_EXPLICITIDATE,GetInstanceHandle(),NULL);
 	}
@@ -283,37 +283,9 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 		pData->Invalidate();
 		break;	
 	case DTM_GETSYSTEMTIME:
-		if ((pData->m_dwFlags&ModeMask)==ModeExplicit)
-		{
-			wParam&=~DTXF_FORSAVE;
-			return ::SendMessage(pData->m_hTimePickerWnd,msg,wParam,lParam);
-		}
-		else if (wParam&DTXF_FORSAVE)
-		{
-			((SYSTEMTIME*)lParam)->wYear=0xFFFF;
-			((SYSTEMTIME*)lParam)->wMonth=0xFFFF;
-			((SYSTEMTIME*)lParam)->wDay=pData->GetRelativeDate();
-			return GDT_VALID|DTXF_FORSAVE;
-		}
-		else
-		{
-			GetLocalTime((SYSTEMTIME*)lParam);
-			CTime::DecreaseDaysInSystemTime((SYSTEMTIME*)lParam,pData->GetRelativeDate());
-			return GDT_VALID;
-		}
+		return pData->GetExplicitDate((LPSYSTEMTIME)lParam,wParam);
 	case DTM_SETSYSTEMTIME:
-		if (((SYSTEMTIME*)lParam)->wYear==0xFFFF && ((SYSTEMTIME*)lParam)->wMonth==0xFFFF)
-		{
-			// Relative
-			pData->ChangeMode(TRUE);
-			pData->SetRelativeDate(((SYSTEMTIME*)lParam)->wDay,0);
-			return 1;
-		}
-		else
-		{
-			pData->ChangeMode(FALSE);
-			return ::SendMessage(pData->m_hTimePickerWnd,msg,wParam,lParam);
-		}
+		return pData->SetExplicitDate((LPSYSTEMTIME)lParam,wParam);
 	case DTM_GETRANGE:
 	case DTM_SETRANGE:
 	case DTM_SETFORMATA:
@@ -504,6 +476,47 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 	return DefWindowProc(hWnd,msg,wParam,lParam);
 }
 
+	
+int CDateTimeCtrlEx::SetExplicitDate(LPSYSTEMTIME pSystemTime,DWORD dwFlags)
+{
+	if (pSystemTime->wYear==0xFFFF && pSystemTime->wMonth==0xFFFF)
+	{
+		// Relative
+		if (!(dwFlags&DTXF_NOMODECHANGE))
+			ChangeMode(TRUE);
+		SetRelativeDate(pSystemTime->wDay,dwFlags);
+		return 1;
+	}
+	else
+	{
+		if (!(dwFlags&DTXF_NOMODECHANGE))
+			ChangeMode(FALSE);
+		return ::SendMessage(m_hTimePickerWnd,DTM_SETSYSTEMTIME,dwFlags&~DTXF_MSGMASK,(LPARAM)pSystemTime);
+	}
+}
+	
+int CDateTimeCtrlEx::GetExplicitDate(LPSYSTEMTIME pSystemTime,DWORD dwFlags) const
+{
+	if ((m_dwFlags&ModeMask)==ModeExplicit)
+	{
+		dwFlags&=~DTXF_FORSAVE;
+		return ::SendMessage(m_hTimePickerWnd,DTM_GETSYSTEMTIME,dwFlags,(LPARAM)pSystemTime);
+	}
+	else if (dwFlags&DTXF_FORSAVE)
+	{
+		pSystemTime->wYear=0xFFFF;
+		pSystemTime->wMonth=0xFFFF;
+		pSystemTime->wDay=GetRelativeDate();
+		return GDT_VALID|DTXF_FORSAVE;
+	}
+	else
+	{
+		GetLocalTime(pSystemTime);
+		CTime::DecreaseDaysInSystemTime(pSystemTime,GetRelativeDate());
+		return GDT_VALID;
+	}
+}
+
 int CDateTimeCtrlEx::GetRelativeDate() const
 {
 	if ((m_dwFlags&ModeMask)==ModeExplicit)
@@ -511,7 +524,6 @@ int CDateTimeCtrlEx::GetRelativeDate() const
 
 	return (int)::SendMessage(m_hSpinWnd,UDM_GETPOS32,0,0);
 }
-	
 
 void CDateTimeCtrlEx::SetRelativeDate(int nNewPos,DWORD dwFlags)
 {
