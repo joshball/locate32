@@ -1373,6 +1373,37 @@ BOOL CFileDialog::GetFilePath(CString& name) const
 	return TRUE;
 }
 
+BOOL CFileDialog::GetFilePath(LPSTR pFilePath,DWORD nMaxLen) const
+{
+	if (IsUnicodeSystem())
+	{
+		if (m_hWnd!=NULL)
+		{
+			WCHAR path[MAX_PATH];
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				WideCharToMultiByte(CP_ACP,0,path,nRet,pFilePath,nMaxLen,NULL,NULL);
+		}
+		else
+			WideCharToMultiByte(CP_ACP,0,m_pwFileName,-1,pFilePath,nMaxLen,NULL,NULL);
+	}
+	else
+	{
+		if (m_hWnd!=NULL)
+		{
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,nMaxLen,(LPARAM)pFilePath);
+			if (nRet<0)
+				return FALSE;
+		}
+		else
+			strcpy_s(pFilePath,nMaxLen,m_pFileName);
+	}
+	return TRUE;
+}
+
+
 BOOL CFileDialog::GetFileName(CString& name) const
 {
 	if (IsUnicodeSystem())
@@ -1387,7 +1418,7 @@ BOOL CFileDialog::GetFileName(CString& name) const
 				name.Copy(path,nRet-1);
 		}
 		else
-			name=m_pwFileName;
+			name=m_pwFileName+m_pwofn->nFileOffset;
 	}
 	else
 	{
@@ -1401,42 +1432,42 @@ BOOL CFileDialog::GetFileName(CString& name) const
 				name.Copy(path,nRet-1);
 		}
 		else
-			name=m_pFileName;
+			name=m_pwFileName+m_pofn->nFileOffset;
 	}
 	return TRUE;
 }
 
-
-
-BOOL CFileDialog::GetFileExt(CString& ext) const
+BOOL CFileDialog::GetFileName(LPSTR pFileName,DWORD nMaxLen) const
 {
 	if (IsUnicodeSystem())
 	{
 		if (m_hWnd!=NULL)
 		{
 			WCHAR path[MAX_PATH];
-			if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path)<0)
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
 				return FALSE;
 			else
-				ext=path+LastCharIndex(path,L'.')+1;
+				WideCharToMultiByte(CP_ACP,0,path,nRet,pFileName,nMaxLen,NULL,NULL);
 		}
 		else
-			ext=m_pwFileName+LastCharIndex(m_pwFileName,L'.')+1;
+			WideCharToMultiByte(CP_ACP,0,m_pwFileName+m_pwofn->nFileOffset,-1,pFileName,nMaxLen,NULL,NULL);
 	}
 	else
 	{
 		if (m_hWnd!=NULL)
 		{
-			CHAR path[MAX_PATH];
-			if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path)<0)
-				ext.Empty();
-			else
-				ext=path+LastCharIndex(path,'.')+1;
-			ext=m_pFileName+LastCharIndex(m_pFileName,'.')+1;
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,nMaxLen,(LPARAM)pFileName);
+			if (nRet<0)
+				return FALSE;
 		}
+		else
+			strcpy_s(pFileName+m_pofn->nFileOffset,nMaxLen,m_pFileName);
 	}
 	return TRUE;
 }
+
+
 
 #ifdef DEF_WCHAR
 BOOL CFileDialog::GetFilePath(CStringW& name) const
@@ -1468,6 +1499,36 @@ BOOL CFileDialog::GetFilePath(CStringW& name) const
 		}
 		else
 			name=m_pFileName;
+	}
+	return TRUE;
+}
+
+BOOL CFileDialog::GetFilePath(LPWSTR pFilePath,DWORD nMaxLen) const
+{
+	if (IsUnicodeSystem())
+	{
+		if (m_hWnd!=NULL)
+		{
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,nMaxLen,(LPARAM)pFilePath);
+			if (nRet<0)
+				return FALSE;
+		}
+		else
+			wcscpy_s(pFilePath,nMaxLen,m_pwFileName);
+	}
+	else
+	{
+		if (m_hWnd!=NULL)
+		{
+			CHAR path[MAX_PATH];
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETFILEPATH,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			else
+				MultiByteToWideChar(CP_ACP,0,path,nRet,pFilePath,nMaxLen);
+		}
+		else
+			MultiByteToWideChar(CP_ACP,0,m_pFileName,-1,pFilePath,nMaxLen);
 	}
 	return TRUE;
 }
@@ -1505,35 +1566,37 @@ BOOL CFileDialog::GetFileName(CStringW& name) const
 	return TRUE;
 }
 
-BOOL CFileDialog::GetFileExt(CStringW& ext) const
+BOOL CFileDialog::GetFileName(LPWSTR pFileName,DWORD nMaxLen) const
 {
 	if (IsUnicodeSystem())
 	{
 		if (m_hWnd!=NULL)
 		{
-			WCHAR path[MAX_PATH];
-			if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path)<0)
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,nMaxLen,(LPARAM)pFileName);
+			if (nRet<0)
 				return FALSE;
-			else
-				ext=path+LastCharIndex(path,L'.')+1;
 		}
 		else
-			ext=m_pwFileName+LastCharIndex(m_pwFileName,L'.')+1;
+			wcscpy_s(pFileName+m_pwofn->nFileOffset,nMaxLen,m_pwFileName);
 	}
 	else
 	{
 		if (m_hWnd!=NULL)
 		{
 			CHAR path[MAX_PATH];
-			if (::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path)<0)
-				ext.Empty();
-			else
-				ext=path+LastCharIndex(path,'.')+1;
-			ext=m_pFileName+LastCharIndex(m_pFileName,'.')+1;
+			int nRet=(int)::SendMessage(::GetParent(m_hWnd),CDM_GETSPEC,MAX_PATH,(LPARAM)path);
+			if (nRet<0)
+				return FALSE;
+			MultiByteToWideChar(CP_ACP,0,path,nRet,pFileName,nMaxLen);
 		}
+		else
+			MultiByteToWideChar(CP_ACP,0,m_pFileName+m_pofn->nFileOffset,-1,pFileName,nMaxLen);
 	}
 	return TRUE;
 }
+
+
+
 #endif
 
 BOOL CFileDialog::GetReadOnlyPref() const
@@ -2339,11 +2402,13 @@ BOOL CFolderDialog::GetFolder(LPWSTR szFolder) const
 // Class COptionsPropertyPage
 ///////////////////////////
 
+
 #define IDC_EDITCONTROLFORSELECTEDITEM  1300
 #define IDC_SPINCONTROLFORSELECTEDITEM  1301
 #define IDC_COMBOCONTROLFORSELECTEDITEM 1302
 #define IDC_COLORBUTTONFORSELECTEDITEM	1303
 #define IDC_FONTBUTTONFORSELECTEDITEM	1304
+#define IDC_BROWSEBUTTONFORSELECTEDITEM	1305
 //#define sMemCopyW	MemCopyW
 
 
@@ -2445,6 +2510,7 @@ COptionsPropertyPage::Item::~Item()
 	{
 	case Combo:
 	case Edit:
+	case File:
 		if (pData!=NULL)
 			delete[] pData;
 		break;
@@ -2590,6 +2656,7 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 			EnableChilds(!IsUnicodeSystem()?tisa.hInsertAfter:tisw.hInsertAfter,pItems[i]->bChecked);
 			break;
 		case Item::Edit:
+		case Item::File:
             pItems[i]->hControl=CreateWindow("EDIT","",
 				ES_AUTOHSCROLL|WS_TABSTOP|WS_CHILDWINDOW|WS_BORDER,
 				10,10,100,13,*this,(HMENU)IDC_EDITCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
@@ -2805,7 +2872,7 @@ BOOL COptionsPropertyPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 				
 				if (pItem->nType==Item::Numeric)
 					SetNumericValue(pItem);
-				else if (pItem->nType==Item::Edit)
+				else if (pItem->nType==Item::Edit || pItem->nType==Item::File)
 					SetTextValue(pItem);
 				
 				break;
@@ -2909,8 +2976,63 @@ BOOL COptionsPropertyPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			}
 			break;
 		}
-	}
+	case IDC_BROWSEBUTTONFORSELECTEDITEM:
+		{
+			HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
+			if (hItem==NULL)
+				break;
+			Item* pItem=(Item*)m_pTree->GetItemData(hItem);
+			if (pItem==NULL)
+				break;
+			
+			if (pItem->nType==Item::File)
+			{
+				BROWSEDLGPARAMS bp;
+				pItem->SetValuesForBasicParams(&bp);
+				bp.crReason=BASICPARAMS::BrowseFile;
+				bp.pPage=this;
+				bp.szTitle=NULL;
+				bp.szFilters=NULL;
+				pItem->pProc(&bp);
+				
+				CFileDialog* pfd;
+				if (IS_INTRESOURCE(bp.szFilters))
+				{
+					pfd=new CFileDialog(TRUE,L"*",szwEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|
+						OFN_NOREADONLYRETURN|OFN_ENABLESIZING,UINT(bp.szFilters));
+				}
+				else
+				{
+					pfd=new CFileDialog(TRUE,L"*",szwEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|
+						OFN_NOREADONLYRETURN|OFN_ENABLESIZING,bp.szFilters);
+				}
+				
+				pfd->EnableFeatures();
+				if (IS_INTRESOURCE(bp.szTitle))
+					pfd->SetTitle(ID2W((UINT)bp.szTitle));
+				else
+					pfd->SetTitle(bp.szTitle);
+	
+				if (pfd->DoModal(*this))
+				{
+					WCHAR szPath[MAX_PATH];
+					if (pfd->GetFilePath(szPath,MAX_PATH))
+					{
+						if (IsUnicodeSystem())
+							::SendMessageW(pItem->hControl,WM_SETTEXT,0,(LPARAM)szPath);
+						else
+							::SendMessage(pItem->hControl,WM_SETTEXT,0,(LPARAM)(LPCSTR)W2A(szPath));
+						::SendMessage(pItem->hControl,EM_SETSEL,0,-1);
+						::SetFocus(pItem->hControl);
+					}
+				}
 
+
+				delete pfd;
+			}
+			break;
+		}
+	}
 	return FALSE;
 }
 
@@ -3049,7 +3171,7 @@ LRESULT COptionsPropertyPage::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			if (pItem->hControl!=NULL)
 			{
 				// Checking that should position change
-				RECT rcItem,rcOrig,rcTree,rcOther;
+				CRect rcItem,rcOrig,rcTree,rcOther;
 				m_pTree->GetClientRect(&rcTree);
 				m_pTree->GetItemRect(hActiveItem,&rcItem,TRUE);
 				BOOL bNotVisible=rcItem.top<0 || rcItem.bottom>rcTree.bottom;
@@ -3074,9 +3196,18 @@ LRESULT COptionsPropertyPage::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 
 					if (pItem->hControl2!=NULL)
 					{
-						::SetWindowPos(pItem->hControl2,HWND_TOP,rcItem.right+1+rcOther.left,rcItem.top-1+rcOther.top,0,0,
-							(bNotVisible?SWP_HIDEWINDOW:SWP_SHOWWINDOW)|SWP_NOSIZE|SWP_NOACTIVATE);
-						::InvalidateRect(pItem->hControl2,NULL,FALSE);
+						if (pItem->nType==Item::Numeric)
+						{
+							::SetWindowPos(pItem->hControl2,HWND_TOP,rcItem.right+1+rcOther.left,rcItem.top-1+rcOther.top,0,0,
+								(bNotVisible?SWP_HIDEWINDOW:SWP_SHOWWINDOW)|SWP_NOSIZE|SWP_NOACTIVATE);
+							::InvalidateRect(pItem->hControl2,NULL,FALSE);
+						}
+						else if (pItem->nType==Item::File)
+						{
+							::SetWindowPos(pItem->hControl2,HWND_TOP,rcItem.right+1+rcOrig.Width(),rcItem.top-1,0,0,
+								(bNotVisible?SWP_HIDEWINDOW:SWP_SHOWWINDOW)|SWP_NOSIZE|SWP_NOACTIVATE);
+							::InvalidateRect(pItem->hControl2,NULL,FALSE);
+						}
 					}
 
 				}
@@ -3256,6 +3387,8 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 						RECT rcTree;
 						m_pTree->GetClientRect(&rcTree);
 						nWidth=rcTree.right-rc.right;
+						if (pItem->nType==Item::File)
+							nWidth-=20;
 					}
 					::SetWindowPos(pItem->hControl,HWND_TOP,0,0,nWidth,20,SWP_SHOWWINDOW|SWP_NOMOVE);
 
@@ -3283,6 +3416,16 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 						else
 							::SendMessage(pItem->hControl2,UDM_SETRANGE32,0,MAXLONG);
 
+						::SetWindowPos(pItem->hControl2,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
+					}
+					else if (pItem->nType==Item::File)
+					{
+						// Browse control
+						pItem->hControl2=CreateWindow("BUTTON","...",
+							BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW|WS_VISIBLE,
+							rc.right+20,rc.top-1,20,21,*this,(HMENU)IDC_BROWSEBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+						::SendMessage(pItem->hControl2,WM_SETFONT,SendMessage(WM_GETFONT),0);
+						
 						::SetWindowPos(pItem->hControl2,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
 					}
 
@@ -3667,6 +3810,7 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 		}
 		return pString;
 	case Edit:
+	case File:
 		if (hControl!=NULL && !bActive)
 		{
 			int iLength=(int)::SendMessage(hControl,WM_GETTEXTLENGTH,0,0)+1;
@@ -3977,5 +4121,7 @@ BOOL CALLBACK COptionsPropertyPage::DefaultColorProc(BASICPARAMS* pParams)
 	}		
 	return TRUE;
 }
+
+
 
 #endif

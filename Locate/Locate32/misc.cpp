@@ -283,9 +283,9 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 		pData->Invalidate();
 		break;	
 	case DTM_GETSYSTEMTIME:
-		return pData->GetExplicitDate((LPSYSTEMTIME)lParam,wParam);
+		return pData->GetExplicitDate((LPSYSTEMTIME)lParam,(DWORD)wParam);
 	case DTM_SETSYSTEMTIME:
-		return pData->SetExplicitDate((LPSYSTEMTIME)lParam,wParam);
+		return pData->SetExplicitDate((LPSYSTEMTIME)lParam,(DWORD)wParam);
 	case DTM_GETRANGE:
 	case DTM_SETRANGE:
 	case DTM_SETFORMATA:
@@ -491,7 +491,7 @@ int CDateTimeCtrlEx::SetExplicitDate(LPSYSTEMTIME pSystemTime,DWORD dwFlags)
 	{
 		if (!(dwFlags&DTXF_NOMODECHANGE))
 			ChangeMode(FALSE);
-		return ::SendMessage(m_hTimePickerWnd,DTM_SETSYSTEMTIME,dwFlags&~DTXF_MSGMASK,(LPARAM)pSystemTime);
+		return (int)::SendMessage(m_hTimePickerWnd,DTM_SETSYSTEMTIME,dwFlags&~DTXF_MSGMASK,(LPARAM)pSystemTime);
 	}
 }
 	
@@ -500,7 +500,7 @@ int CDateTimeCtrlEx::GetExplicitDate(LPSYSTEMTIME pSystemTime,DWORD dwFlags) con
 	if ((m_dwFlags&ModeMask)==ModeExplicit)
 	{
 		dwFlags&=~DTXF_FORSAVE;
-		return ::SendMessage(m_hTimePickerWnd,DTM_GETSYSTEMTIME,dwFlags,(LPARAM)pSystemTime);
+		return (int)::SendMessage(m_hTimePickerWnd,DTM_GETSYSTEMTIME,dwFlags,(LPARAM)pSystemTime);
 	}
 	else if (dwFlags&DTXF_FORSAVE)
 	{
@@ -582,3 +582,15 @@ BOOL RegisterDataTimeExCltr()
 	wc.lpfnWndProc=CDateTimeCtrlEx::WndProc;
 	return RegisterClassEx(&wc)!=NULL;
 }
+
+
+
+
+
+
+
+
+
+
+
+

@@ -35,7 +35,7 @@ inline HWND CCommonCtrl::GetDropTarget() const
 
 inline BOOL CCommonCtrl::SetUnicodeFormat(BOOL nFormat)
 {
-	return (BOOL)::SendMessage(m_hWnd,CCM_SETUNICODEFORMAT,0,(LPARAM)nFormat);
+	return (BOOL)::SendMessage(m_hWnd,CCM_SETUNICODEFORMAT,(LPARAM)nFormat,0);
 }
 
 inline BOOL CCommonCtrl::GetUnicodeFormat() const
@@ -392,7 +392,7 @@ inline int CStatusBarCtrl::GetTipText(int n,LPSTR szText,int nSize) const
 
 inline BOOL CStatusBarCtrl::SetUnicodeFormat(int nFormat)
 {
-	return (BOOL)::SendMessage(m_hWnd,SB_SETUNICODEFORMAT,0,nFormat);
+	return (BOOL)::SendMessage(m_hWnd,SB_SETUNICODEFORMAT,nFormat,0);
 }
 
 inline BOOL CStatusBarCtrl::GetUnicodeFormat() const
@@ -1735,7 +1735,7 @@ inline DWORD CListCtrl::GetUnicodeFormat() const
 
 inline void CListCtrl::SetUnicodeFormat(DWORD fUnicode)
 {
-	::SendMessage(m_hWnd,LVM_SETUNICODEFORMAT,0,(LPARAM)fUnicode);
+	::SendMessage(m_hWnd,LVM_SETUNICODEFORMAT,(LPARAM)fUnicode,0);
 }
 
 inline void CListCtrl::SetTileWidth(const int* cpWidth)

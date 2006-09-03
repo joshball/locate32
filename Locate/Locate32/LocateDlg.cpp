@@ -3684,7 +3684,7 @@ void CLocateDlg::LoadDialogTexts()
 		m_NameDlg.LoadControlStates(RegKey);
 		m_NameDlg.EnableItems(TRUE);
 
-		m_SizeDateDlg.LoadControlStates(RegKey);
+		m_SizeDateDlg.LoadControlStates(RegKey,FALSE);
 		m_SizeDateDlg.EnableItems(TRUE);
 
 		m_AdvancedDlg.LoadControlStates(RegKey);
@@ -8986,7 +8986,7 @@ void CLocateDlg::OnPresetsSelection(int nPreset)
 	m_NameDlg.LoadControlStates(PresetKey);
 	m_NameDlg.EnableItems(TRUE);
 
-	m_SizeDateDlg.LoadControlStates(PresetKey);
+	m_SizeDateDlg.LoadControlStates(PresetKey,TRUE);
 	m_SizeDateDlg.EnableItems(TRUE);
 
 	m_AdvancedDlg.LoadControlStates(PresetKey);
@@ -9023,7 +9023,7 @@ void CLocateDlg::LoadPreset(LPCWSTR szPreset)
 	m_NameDlg.LoadControlStates(PresetKey);
 	m_NameDlg.EnableItems(TRUE);
 
-	m_SizeDateDlg.LoadControlStates(PresetKey);
+	m_SizeDateDlg.LoadControlStates(PresetKey,TRUE);
 	m_SizeDateDlg.EnableItems(TRUE);
 
 	m_AdvancedDlg.LoadControlStates(PresetKey);
@@ -11044,7 +11044,7 @@ void CLocateDlg::CSizeDateDlg::SetStartData(const CLocateApp::CStartData* pStart
 	EnableItems(TRUE);
 }
 
-void CLocateDlg::CSizeDateDlg::LoadControlStates(CRegKey& RegKey)
+void CLocateDlg::CSizeDateDlg::LoadControlStates(CRegKey& RegKey,BOOL bPreset)
 {
 	DWORD dwTemp=0;
 	if (RegKey.QueryValue("SizeDate/MinimumSize",dwTemp))
@@ -11082,15 +11082,18 @@ void CLocateDlg::CSizeDateDlg::LoadControlStates(CRegKey& RegKey)
 		SendDlgItemMessage(IDC_MINDATE,DTM_SETSYSTEMTIME,0,(LPARAM)(szData+4));
 		SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,LOWORD(*((LONG*)szData)),0);
 	}
-	else
+	else 
 	{
-		if (dwType==REG_DWORD && dwLen>=sizeof(DWORD))
+		if (!bPreset)
 		{
-			SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,LOWORD(*((DWORD*)szData)),0);
-			SendDlgItemMessage(IDC_MINDATE,DTMX_CHANGEMODE,HIWORD(*((DWORD*)szData)),0);
+			if (dwType==REG_DWORD && dwLen>=sizeof(DWORD))
+			{
+				SendDlgItemMessage(IDC_MINTYPE,CB_SETCURSEL,LOWORD(*((DWORD*)szData)),0);
+				SendDlgItemMessage(IDC_MINDATE,DTMX_CHANGEMODE,HIWORD(*((DWORD*)szData)),0);
+			}
+			else
+				SendDlgItemMessage(IDC_MINDATE,DTMX_CHANGEMODE,0,0);
 		}
-		else
-			SendDlgItemMessage(IDC_MINDATE,DTMX_CHANGEMODE,0,0);
 		CheckDlgButton(IDC_CHECKMINDATE,FALSE);
 	}
 		
@@ -11101,15 +11104,18 @@ void CLocateDlg::CSizeDateDlg::LoadControlStates(CRegKey& RegKey)
 		SendDlgItemMessage(IDC_MAXDATE,DTM_SETSYSTEMTIME,0,(LPARAM)(szData+4));
 		SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,LOWORD(*((LONG*)szData)),0);
 	}
-	else
+	else 
 	{
-		if (dwType==REG_DWORD && dwLen>=sizeof(DWORD))
+		if (!bPreset)
 		{
-			SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,LOWORD(*((DWORD*)szData)),0);
-			SendDlgItemMessage(IDC_MAXDATE,DTMX_CHANGEMODE,HIWORD(*((DWORD*)szData)),0);
+			if (dwType==REG_DWORD && dwLen>=sizeof(DWORD))
+			{
+				SendDlgItemMessage(IDC_MAXTYPE,CB_SETCURSEL,LOWORD(*((DWORD*)szData)),0);
+				SendDlgItemMessage(IDC_MAXDATE,DTMX_CHANGEMODE,HIWORD(*((DWORD*)szData)),0);
+			}
+			else
+				SendDlgItemMessage(IDC_MAXDATE,DTMX_CHANGEMODE,0,0);
 		}
-		else
-			SendDlgItemMessage(IDC_MAXDATE,DTMX_CHANGEMODE,0,0);
 		CheckDlgButton(IDC_CHECKMAXDATE,FALSE);
 	}
 		

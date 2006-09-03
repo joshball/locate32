@@ -15,6 +15,8 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 	m_pList=new CListCtrl(GetDlgItem(IDC_COLUMNS));
 	m_pList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES,LVS_EX_CHECKBOXES);
 	m_pList->InsertColumn(0,"",LVCFMT_LEFT,250);
+	if (IsUnicodeSystem())
+		m_pList->SetUnicodeFormat(TRUE);
 
 	CLocateDlg::ViewDetails* pDetails=CLocateDlg::GetDefaultDetails();
 

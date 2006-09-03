@@ -14,6 +14,8 @@ class CLocateDlgThread;
 class CCpuUsage;
 
 
+// For SetUpdateStatusInformation
+#define	DEFAPPICON		(HICON)INVALID_HANDLE_VALUE  
 
 class CLocateAppWnd : public CFrameWnd
 {
@@ -106,6 +108,7 @@ public:
 
 	void AddTaskbarIcon();
 	void DeleteTaskbarIcon();
+	void LoadAppIcon();
 	
 	DWORD SetSchedules(CList<CSchedule*>* pSchedules=NULL);
 	BOOL SaveSchedules();
@@ -146,6 +149,7 @@ public:
 	CLocateDlgThread* m_pLocateDlgThread;
 	CUpdateStatusWnd* m_pUpdateStatusWnd;
 	
+	HICON m_hAppIcon;
 	HICON* m_pUpdateAnimIcons;
 	int m_nCurUpdateAnimBitmap;
 	
@@ -286,14 +290,19 @@ public:
 		pfTooltipDefault = pfEnableUpdateTooltip|pfUpdateTooltipAlwaysTopmost|pfUpdateTooltipPositionDefault,
 		pfTooltipSave = pfEnableUpdateTooltip|pfUpdateTooltipTopmostMask|pfUpdateTooltipPositionMask,
 
+		// Misc
+		pfTrayIconClickActivate = 0x1000,
+		pfMiscDefault = 0,
+		pfMiscSave = 0x1000,
+
 		// Filesize/time/date format
 		pfFormatUseLocaleFormat = 0x4, // Option
 		pfFormatMask = 0x4,
 		pfFormatDefault = pfFormatUseLocaleFormat,
 		pfFormatSave = pfFormatUseLocaleFormat,
 
-		pfDefault = pfErrorDefault|pfTooltipDefault|pfFormatDefault,
-		pfSave = pfErrorSave|pfTooltipSave|pfFormatSave
+		pfDefault = pfErrorDefault|pfTooltipDefault|pfFormatDefault|pfMiscDefault,
+		pfSave = pfErrorSave|pfTooltipSave|pfFormatSave|pfMiscSave
 	};
 
 	enum FileSizeFormats {

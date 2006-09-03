@@ -76,7 +76,9 @@ public:
 		static BOOL CALLBACK LimitResultsCheckBoxProc(COptionsPropertyPage::BASICPARAMS* pParams); 
 		static BOOL CALLBACK UpdateTooltipPositionProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK UpdateTooltipTopmostProc(COptionsPropertyPage::BASICPARAMS* pParams);
-		
+		static BOOL CALLBACK ExternalCommandProc(BASICPARAMS* pParams); 
+		static BOOL CALLBACK TrayIconProc(BASICPARAMS* pParams); 
+
 
 		static BOOL CALLBACK EnumDateFormatsProc(LPTSTR lpDateFormatString);
 		static BOOL CALLBACK EnumTimeFormatsProc(LPTSTR lpDateFormatString);
@@ -443,6 +445,7 @@ public:
 	CLocateApp::FileSizeFormats m_nFileSizeFormat;
 	
 	CStringW m_OpenFoldersWith;
+	CStringW m_CustomTrayIcon;
 	
  	// Database
 	CArrayFP<PDATABASE> m_aDatabases;
@@ -465,6 +468,7 @@ public:
 		settingsSetTooltipDelays=0x0040,
 		settingsUseCustomResultListFont=0x0080,
 		settingsDontShowExtensionInRenameDialog=0x0100,
+		settingsCustomUseTrayIcon = 0x0200,
 				
 		settingsDefault=settingsUseLanguageWithConsoleApps
 	};

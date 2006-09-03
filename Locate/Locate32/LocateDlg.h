@@ -322,7 +322,7 @@ public:
 		BOOL LookOnlyFiles() const;
 		void SetStartData(const CLocateApp::CStartData* pStartData);
 
-		void LoadControlStates(CRegKey& RegKey);
+		void LoadControlStates(CRegKey& RegKey,BOOL bPreset);
 		void SaveControlStates(CRegKey& RegKey);
 
 		BOOL IsChanged();

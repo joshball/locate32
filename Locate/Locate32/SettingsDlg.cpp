@@ -233,6 +233,10 @@ BOOL CSettingsProperties::LoadSettings()
 		if (RegKey.QueryValue("ResultListFont",(LPSTR)&m_lResultListFont,sizeof(LOGFONT))==sizeof(LOGFONT))
 			m_dwSettingsFlags|=settingsUseCustomResultListFont;
 
+
+		if (RegKey.QueryValue(L"CustomTrayIcon",m_CustomTrayIcon))
+			m_dwSettingsFlags|=settingsCustomUseTrayIcon;
+
 	}
 
 	// m_bAdvancedAndContextMenuFlag
@@ -384,6 +388,11 @@ BOOL CSettingsProperties::SaveSettings()
 			RegKey.SetValue("ResultListFont",(LPSTR)&m_lResultListFont,sizeof(LOGFONT));
 		else
 			RegKey.DeleteValue("ResultListFont");
+
+		if (m_dwSettingsFlags&settingsCustomUseTrayIcon)
+			RegKey.SetValue(L"CustomTrayIcon",m_CustomTrayIcon);
+		else
+			RegKey.DeleteValue("CustomTrayIcon");
 
 	}
 
@@ -910,7 +919,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL
 	};
 	Item* OtherExplorerProgram[]={
-		CreateEdit(IDS_ADVSETOPENFOLDERWITH,DefaultEditStrWProc,0,&m_pSettings->m_OpenFoldersWith),
+		CreateFile(IDS_ADVSETOPENFOLDERWITH,ExternalCommandProc,0,&m_pSettings->m_OpenFoldersWith),
 		NULL
 	};
 
@@ -1086,6 +1095,10 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL
 	};
 	
+	Item* SystemTrayIconItems[]={
+		CreateFile(IDS_ADVSETICONFILE,TrayIconProc,0,&m_pSettings->m_CustomTrayIcon),
+		NULL
+	};
 	Item* MiscItems[]={
 		CreateCheckBox(IDS_ADVSETDONTSHOWEXTINRENAME,NULL,DefaultCheckBoxProc,
 			CSettingsProperties::settingsDontShowExtensionInRenameDialog,&m_pSettings->m_dwSettingsFlags),
@@ -1093,6 +1106,10 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			DefaultCheckBoxProc,CLocateApp::pfShowCriticalErrors,&m_pSettings->m_dwProgramFlags),
 		CreateCheckBox(IDS_ADVSETSHOWNONCRITICALERRORS,NULL,
 			DefaultCheckBoxProc,CLocateApp::pfShowNonCriticalErrors,&m_pSettings->m_dwProgramFlags),
+		CreateCheckBox(IDS_ADVSETCLICKACTIVATETRAYICON,NULL,
+			DefaultCheckBoxProc,CLocateApp::pfTrayIconClickActivate,&m_pSettings->m_dwProgramFlags),
+		CreateCheckBox(IDS_ADVSETCUSTOMTRAYICON,SystemTrayIconItems,DefaultCheckBoxProc,
+			CSettingsProperties::settingsCustomUseTrayIcon,&m_pSettings->m_dwSettingsFlags),
 		NULL
 	};
 
@@ -1478,6 +1495,28 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::EnumDateFormatsProc(LP
 	return TRUE;
 }
 
+BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::ExternalCommandProc(BASICPARAMS* pParams)
+{
+	if (pParams->crReason==BASICPARAMS::BrowseFile)
+	{
+		((BROWSEDLGPARAMS*)pParams)->szTitle=MAKEINTRESOURCEW(IDS_ADVSETSELECTPROGRAM);
+		((BROWSEDLGPARAMS*)pParams)->szFilters=MAKEINTRESOURCEW(IDS_PROGRAMSFILTERS);
+		return TRUE;
+	}
+	return DefaultEditStrWProc(pParams);
+}
+
+
+BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::TrayIconProc(BASICPARAMS* pParams)
+{
+	if (pParams->crReason==BASICPARAMS::BrowseFile)
+	{
+		((BROWSEDLGPARAMS*)pParams)->szTitle=MAKEINTRESOURCEW(IDS_ADVSETSELECTICONFILE);
+		((BROWSEDLGPARAMS*)pParams)->szFilters=MAKEINTRESOURCEW(IDS_ICONFILTERS);
+		return TRUE;
+	}
+	return DefaultEditStrWProc(pParams);
+}
 
 ////////////////////////////////////////
 // CLanguageSettingsPage
@@ -1489,8 +1528,8 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnInitDialog(HWND hwndFocus)
 	CPropertyPage::OnInitDialog(hwndFocus);
 
 	m_pList=new CListCtrl(GetDlgItem(IDC_LANGUAGE));
-
-	m_pList->SetUnicodeFormat(TRUE);
+	if (IsUnicodeSystem())
+		m_pList->SetUnicodeFormat(TRUE);
 	
 	m_pList->InsertColumn(0,ID2W(IDS_LANGUAGE),LVCFMT_LEFT,130);
 	m_pList->InsertColumn(1,ID2W(IDS_LANGUAGEFILE),LVCFMT_LEFT,80);
@@ -1742,7 +1781,9 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnInitDialog(HWND hwndFocus)
 		int oa[]={3,0,1,2};
 		m_pList->SetColumnOrderArray(4,oa);
 	}
-		
+	if (IsUnicodeSystem())
+		m_pList->SetUnicodeFormat(TRUE);
+
 	m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Databases Settings List Widths");
 	
 	// Setting threads counter
@@ -2212,7 +2253,6 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 	CWaitCursor wait;
 	
 	// Initializing file name dialog
-	CString Title;
 	CFileDialog fd(TRUE,L"*",szwEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,IDS_IMPORTDATABASEFILTERS);
 	fd.EnableFeatures();
 	fd.SetTitle(ID2W(IDS_IMPORTDATABASESETTINGS));
@@ -2273,16 +2313,16 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 
 	if (pDatabase==NULL)
 	{
-		CString msg,path;
+		CStringW msg,path;
 		fd.GetFilePath(path);
-		msg.Format(IDS_UNABLEREADSETTINGS,(LPCSTR)path);
-		MessageBox(msg,Title,MB_OK|MB_ICONERROR);
+		msg.Format(IDS_UNABLEREADSETTINGS,(LPCWSTR)path);
+		MessageBox(msg,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
 		return;
 	}
 
 	if (pDatabase->GetThreadId()>=m_nThreadsCurrently)
 	{
-		if (MessageBox(ID2A(IDS_INCREASETHREADCOUNT),Title,MB_ICONQUESTION|MB_YESNO)==IDYES)
+		if (MessageBox(ID2W(IDS_INCREASETHREADCOUNT),ID2W(IDS_IMPORTDATABASESETTINGS),MB_ICONQUESTION|MB_YESNO)==IDYES)
 		{
 			ChangeNumberOfThreads(pDatabase->GetThreadId()+1);
 			SetDlgItemInt(IDC_THREADS,pDatabase->GetThreadId()+1,FALSE);
@@ -2312,7 +2352,6 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 		pCurFile=pDatabase->GetArchiveName();
 
 	// Initializing file name dialog
-	CStringW Path;
 	CFileDialog fd(FALSE,L"*",pCurFile,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,
 		IDS_EXPORTDATABASEFILTERS);
 	fd.EnableFeatures();
@@ -2322,6 +2361,8 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 	// Ask file name
 	if (!fd.DoModal(*this))
 		return;
+	
+	CStringW Path;
 	fd.GetFilePath(Path);
 	
 	if (FileSystem::IsFile(Path))
@@ -4958,12 +4999,14 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_pWhenPressedList=new CListCtrl(GetDlgItem(IDC_WHENPRESSED));
 	m_pWhenPressedList->InsertColumn(0,"",LVCFMT_LEFT,150);
 	m_pWhenPressedList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES,LVS_EX_CHECKBOXES);
+	if (IsUnicodeSystem())
+		m_pWhenPressedList->SetUnicodeFormat(TRUE);
 	
-	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,0,ID2A(IDS_SHORTCUTWHENFOCUSINRESULTLIST),0,0,0,CShortcut::wpFocusInResultList);
-	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,1,ID2A(IDS_SHORTCUTWHENFOCUSNOTINRESULTLIST),0,0,0,CShortcut::wpFocusNotInResultList);
-	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,2,ID2A(IDS_SHORTCUTWHENNAMETABSHOWN),0,0,0,CShortcut::wpNameTabShown);
-	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,3,ID2A(IDS_SHORTCUTWHENSIZEDATETABSHOWN),0,0,0,CShortcut::wpSizeDateTabShown);
-	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,4,ID2A(IDS_SHORTCUTWHENADVANCEDTABSHOWN),0,0,0,CShortcut::wpAdvancedTabShown);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,0,ID2W(IDS_SHORTCUTWHENFOCUSINRESULTLIST),0,0,0,CShortcut::wpFocusInResultList);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,1,ID2W(IDS_SHORTCUTWHENFOCUSNOTINRESULTLIST),0,0,0,CShortcut::wpFocusNotInResultList);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,2,ID2W(IDS_SHORTCUTWHENNAMETABSHOWN),0,0,0,CShortcut::wpNameTabShown);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,3,ID2W(IDS_SHORTCUTWHENSIZEDATETABSHOWN),0,0,0,CShortcut::wpSizeDateTabShown);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,4,ID2W(IDS_SHORTCUTWHENADVANCEDTABSHOWN),0,0,0,CShortcut::wpAdvancedTabShown);
 	
 	
 	// Check wheter Advanced items should be added

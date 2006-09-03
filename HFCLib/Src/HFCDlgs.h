@@ -220,17 +220,19 @@ public:
 	virtual ~CFileDialog();
 
 	BOOL EnableFeatures(DWORD nFlags=efCheck);
+	void SetTitle(LPCSTR szTitle);
 	BOOL DoModal(HWND hParentWnd=NULL);
 
 	BOOL GetFilePath(CString& sPath) const;
 	BOOL GetFileName(CString& sFileName) const;
-	BOOL GetFileExt(CString& sFileExt) const;
 	void GetFileTitle(CString& sFileTitle) const;
+	
+	BOOL GetFilePath(LPSTR pFilePath,DWORD nMaxLen) const;
+	BOOL GetFileName(LPSTR pFileName,DWORD nMaxLen) const;
 	void GetFileTitle(LPSTR pFileTitle,DWORD nMaxLen) const;
 	
 	void SetFileTitle(LPCSTR szTitle);
 
-	void SetTitle(LPCSTR szTitle);
 	
 	int GetFilterIndex() const;
 	BOOL GetReadOnlyPref() const;
@@ -248,16 +250,19 @@ public:
 		DWORD dwFlags=OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT,	LPCWSTR lpszFilter=NULL);
 	CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,UINT uFilterId);	
 
+	void SetTitle(LPCWSTR szTitle);
+
 	
 	BOOL GetFilePath(CStringW& sPath) const;
 	BOOL GetFileName(CStringW& sFileName) const;
-	BOOL GetFileExt(CStringW& sFileExt) const;
 	void GetFileTitle(CStringW& sFileTitle) const;
-	void GetFileTitle(LPWSTR pFileTitle,DWORD nMaxLen) const;
 	BOOL GetFolderPath(CStringW& sFolderPath) const;
 	void SetFileTitle(LPCWSTR szTitle);
 	
-	void SetTitle(LPCWSTR szTitle);
+	BOOL GetFilePath(LPWSTR pFilePath,DWORD nMaxLen) const;
+	BOOL GetFileName(LPWSTR pFileName,DWORD nMaxLen) const;
+	void GetFileTitle(LPWSTR pFileTitle,DWORD nMaxLen) const;
+
 	
 #endif
 
@@ -445,6 +450,7 @@ protected:
 
 // class COptionsPropertyPage : public CPropertyPage
 
+
 class COptionsPropertyPage : public CPropertyPage
 {
 public:
@@ -464,7 +470,8 @@ public:
 			Get,
 			Set,
 			Apply,
-			ChangingValue
+			ChangingValue,
+			BrowseFile
 		} crReason;
 
 		// Input
@@ -500,6 +507,10 @@ public:
 			COLORREF cNewColor;
 			LOGFONT* pNewLogFont;
 		};
+	};
+	struct BROWSEDLGPARAMS : BASICPARAMS {
+		LPWSTR szTitle; // Can be identiefier to resource
+		LPWSTR szFilters; // Can be identiefier to resource
 	};
 
 	typedef BOOL (CALLBACK* CALLBACKPROC)(BASICPARAMS* pParams);
@@ -551,7 +562,8 @@ public:
 			List,
 			Numeric,
 			Color,
-			Font
+			Font,
+			File
 		} nType;
 		Item* pParent;
 		Item** pChilds; // NULL terminated array
@@ -662,6 +674,8 @@ public:
 	static Item* CreateColor(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
 	static Item* CreateFont(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
 	static Item* CreateFont(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateFile(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateFile(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
 
 private:
     BOOL InsertItemsToTree(HTREEITEM hParent,Item** pItems,Item* pParent=NULL);
@@ -684,8 +698,6 @@ protected:
 	CStringW m_ChangeText;
 		
 };
-
-
 
 
 
@@ -963,19 +975,19 @@ inline void CFileDialog::SetFileTitle(LPCSTR pFileTitle)
 		StringCbCopy(m_pofn->lpstrFileTitle,64,pFileTitle);
 }
 
-inline void CFileDialog::SetTitle(LPCSTR pFileTitle)
+inline void CFileDialog::SetTitle(LPCSTR pTitle)
 {
 	if (IsUnicodeSystem())	
 	{
 		if (m_pwofn->lpstrTitle!=NULL)
 			delete[] m_pwofn->lpstrTitle;
-		m_pwofn->lpstrTitle=alloccopyAtoW(pFileTitle);
+		m_pwofn->lpstrTitle=alloccopyAtoW(pTitle);
 	}
 	else
 	{
 		if (m_pwofn->lpstrTitle!=NULL)
 			delete[] m_pwofn->lpstrTitle;
-		m_pofn->lpstrTitle=alloccopy(pFileTitle);
+		m_pofn->lpstrTitle=alloccopy(pTitle);
 	}
 }
 #ifdef DEF_WCHAR
@@ -989,19 +1001,19 @@ inline void CFileDialog::SetFileTitle(LPCWSTR pFileTitle)
 }
 
 
-inline void CFileDialog::SetTitle(LPCWSTR pFileTitle)
+inline void CFileDialog::SetTitle(LPCWSTR pTitle)
 {
 	if (IsUnicodeSystem())	
 	{
 		if (m_pwofn->lpstrTitle!=NULL)
 			delete[] m_pwofn->lpstrTitle;
-		m_pwofn->lpstrTitle=alloccopy(pFileTitle);
+		m_pwofn->lpstrTitle=alloccopy(pTitle);
 	}
 	else
 	{
 		if (m_pwofn->lpstrTitle!=NULL)
 			delete[] m_pwofn->lpstrTitle;
-		m_pofn->lpstrTitle=alloccopyWtoA(pFileTitle);
+		m_pofn->lpstrTitle=alloccopyWtoA(pTitle);
 	}
 }
 #endif
@@ -1185,6 +1197,9 @@ inline int CInputDialog::GetInputText(CStringW& text) const
 }
 
 #endif
+
+
+
 ///////////////////////////
 // Class COptionsPropertyPage
 
@@ -1306,6 +1321,18 @@ inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateFont(
 	return new Item(Item::Font,NULL,NULL,nTextID,pProc,wParam,lParam);
 }
 
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateFile(
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::File,NULL,NULL,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateFile(
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::File,NULL,NULL,nTextID,pProc,wParam,lParam);
+}
+
 inline int COptionsPropertyPage::Item::GetStateImage(CImageList* pImageList) const
 {
 	switch (nType)
@@ -1339,7 +1366,8 @@ inline void COptionsPropertyPage::Item::GetValuesFromBasicParams(const COptionsP
 		break;
 	case Edit:
 	case Combo:
-		if (pData!=NULL)
+	case File:
+		if (pData!=NULL && pData!=pParams->pData)
 			delete[] pData;
 		pData=pParams->pData;
 		DebugFormatMessage("GetValuesFromBasicParams, pData=%X",pData);
@@ -1375,6 +1403,7 @@ inline void COptionsPropertyPage::Item::SetValuesForBasicParams(COptionsProperty
 		break;
 	case Edit:
 	case Combo:
+	case File:
 		pParams->pData=pData;
 		break;
 	case Color:
@@ -1395,6 +1424,10 @@ inline void COptionsPropertyPage::Item::FreeText(LPWSTR pText) const
     if (pText!=pString)
 		delete[] pText;
 }
+
+
+
+
 
 
 ///////////////////////////

@@ -507,6 +507,8 @@ BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
 	m_pList=new CListCtrl(GetDlgItem(IDC_DETAILS));
 	m_pList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES,LVS_EX_CHECKBOXES);
 	m_pList->InsertColumn(0,"",LVCFMT_LEFT,330,0);
+	if (IsUnicodeSystem())
+		m_pList->SetUnicodeFormat(TRUE);
 		
 	// Initialing toolbar
 	m_ToolbarIL.Create(IDB_SAVERESTOOLBARBITMAPS,14,2,RGB(255,255,255));

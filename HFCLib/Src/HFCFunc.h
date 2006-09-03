@@ -120,6 +120,7 @@ inline CString LoadString(UINT nID,TypeOfResourceHandle bType)
 {
 	return CString((UINT)nID,bType);
 }
+
 #ifdef DEF_WCHAR
 inline CStringW LoadStringW(UINT nID)
 {
@@ -130,10 +131,22 @@ inline CStringW LoadStringW(UINT nID,TypeOfResourceHandle bType)
 	return CStringW((UINT)nID,bType);
 }
 #endif
-inline HANDLE LoadImage(LPCTSTR lpszName,UINT uType,int cxDesired,int cyDesired,UINT fuLoad)
+
+inline HANDLE LoadImage(LPCSTR lpszName,UINT uType,int cxDesired,int cyDesired,UINT fuLoad)
 {
 	return (HANDLE)::LoadImage(GetCommonResourceHandle(),lpszName,uType,cxDesired,cyDesired,fuLoad);
 }
+
+#ifdef DEF_WCHAR
+inline HANDLE LoadImage(LPCWSTR lpszName,UINT uType,int cxDesired,int cyDesired,UINT fuLoad)
+{
+	if (IsUnicodeSystem())
+		return (HANDLE)::LoadImageW(GetCommonResourceHandle(),lpszName,uType,cxDesired,cyDesired,fuLoad);
+	else
+		return (HANDLE)::LoadImageA(GetCommonResourceHandle(),W2A(lpszName),uType,cxDesired,cyDesired,fuLoad);
+}
+#endif
+
 inline HANDLE LoadImage(UINT nID,UINT uType,int cxDesired,int cyDesired,UINT fuLoad)
 {
 	return (HANDLE)::LoadImage(GetCommonResourceHandle(),MAKEINTRESOURCE(nID),uType,cxDesired,cyDesired,fuLoad);

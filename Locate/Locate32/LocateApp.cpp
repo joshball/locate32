@@ -1660,7 +1660,7 @@ BOOL CLocateApp::StopUpdating(BOOL bForce)
 		//pLocateDlg->ResetFileNotificators();
 		pLocateDlg->PostMessage(WM_REFRESHNOTIFIERHANDLERS);
 	}
-	GetLocateAppWnd()->SetUpdateStatusInformation((HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,0),IDS_NOTIFYLOCATE);
+	GetLocateAppWnd()->SetUpdateStatusInformation(DEFAPPICON,IDS_NOTIFYLOCATE);
 	
 	// I think pointers are removed elsewhere
 	ASSERT(m_ppUpdaters==NULL);
@@ -2271,7 +2271,7 @@ int CLocateApp::GetDatabaseMenuIndex(HMENU hPopupMenu)
 // CLocateAppWnd
 
 CLocateAppWnd::CLocateAppWnd()
-:	m_pAbout(NULL),m_pSettings(NULL),
+:	m_pAbout(NULL),m_pSettings(NULL),m_hAppIcon(NULL),
 	m_pLocateDlgThread(NULL),m_pCpuUsage(NULL),
 	m_pUpdateAnimIcons(NULL),m_hHook(NULL)
 {
@@ -2305,12 +2305,33 @@ int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 	SetIcon(hIcon,TRUE);
 	SetClassLong(gclHIcon,(LONG)hIcon);
 
-	
+	LoadAppIcon();
+
 	SetTimer(ID_ENSUREVISIBLEICON,2000,NULL);
 	
 	return CFrameWnd::OnCreate(lpcs);
 }
 
+void CLocateAppWnd::LoadAppIcon()
+{
+	if (m_hAppIcon!=NULL)
+		DeleteObject(m_hAppIcon);
+
+	
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+	{
+		CStringW CustomTrayIcon;
+		if (RegKey.QueryValue(L"CustomTrayIcon",CustomTrayIcon))
+		{
+			m_hAppIcon=(HICON)LoadImage(CustomTrayIcon,IMAGE_ICON,16,16,LR_LOADFROMFILE);
+			if (m_hAppIcon!=NULL)
+				return;
+		}
+	}
+
+	m_hAppIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,0);
+}
 
 BOOL CLocateAppWnd::OnCreateClient(LPCREATESTRUCT lpcs)
 {
@@ -2602,7 +2623,10 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip,LPCWSTR szT
 	if (hIcon!=NULL)
 	{
 		// Updating icon
-		nid.hIcon=hIcon;
+		if (hIcon==INVALID_HANDLE_VALUE)
+			nid.hIcon=m_hAppIcon;
+		else
+			nid.hIcon=hIcon;
 		nid.uFlags|=NIF_ICON;
 	}
 	
@@ -2883,7 +2907,7 @@ BOOL CLocateAppWnd::StopUpdateStatusNotification()
 		KillTimer(ID_UPDATEANIM);
 		delete[] m_pUpdateAnimIcons;
 		m_pUpdateAnimIcons=NULL;
-		GetLocateAppWnd()->SetUpdateStatusInformation((HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,0),IDS_NOTIFYLOCATE);
+		GetLocateAppWnd()->SetUpdateStatusInformation(DEFAPPICON,IDS_NOTIFYLOCATE);
 	}
 	return TRUE;
 }
@@ -3034,6 +3058,10 @@ BYTE CLocateAppWnd::OnSettings()
 				SetSchedules(m_pSettings->GetSchedules());
 				SaveSchedules();
 			}
+
+			// Set icon
+			LoadAppIcon();
+			SetUpdateStatusInformation(DEFAPPICON,0);
 			
 			if (GetLocateDlg()!=NULL)
 			{
@@ -3290,6 +3318,12 @@ void CLocateAppWnd::OnDestroy()
 	
 	SaveSchedules();
 
+	if (m_hAppIcon!=NULL)
+	{
+		DeleteObject(m_hAppIcon);
+		m_hAppIcon=NULL;
+	}
+
 	::SendNotifyMessage(HWND_BROADCAST,CLocateApp::m_nLocateAppMessage,
 		LOCATEMSG_INSTANCEEXITED,GetLocateApp()->m_nInstance);
 	
@@ -3414,7 +3448,7 @@ void CLocateAppWnd::AddTaskbarIcon()
 	nid.uID=1000;
 	nid.uFlags=NIF_ICON|NIF_MESSAGE|NIF_TIP;
 	nid.uCallbackMessage=WM_SYSTEMTRAY;
-	nid.hIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,LR_DEFAULTCOLOR|LR_SHARED);
+	nid.hIcon=m_hAppIcon;
 	LoadString(IDS_NOTIFYLOCATE,nid.szTip,63);
 
 	Shell_NotifyIcon(NIM_ADD,&nid);
@@ -3465,6 +3499,10 @@ DWORD CLocateAppWnd::OnSystemTrayMessage(UINT uID,UINT msg)
 			// Doubleclick
 			OnLocate();
 			break;
+		case WM_LBUTTONDOWN:
+			if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfTrayIconClickActivate)
+				OnLocate();
+			break;
 		case WM_RBUTTONUP:
 			{
 				POINT pt;
@@ -3492,6 +3530,10 @@ DWORD CLocateAppWnd::OnSystemTrayMessage(UINT uID,UINT msg)
 	{
 		switch (msg)
 		{
+		case WM_LBUTTONDOWN:
+			if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfTrayIconClickActivate)
+				OnLocate();
+			break;
 		case WM_LBUTTONDBLCLK:
 			OnLocate();
 			break;
