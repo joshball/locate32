@@ -330,7 +330,7 @@ public:
 	CHOOSECOLOR m_cc;
 
 	CColorDialog(COLORREF clrInit=0,DWORD dwFlags=0);
-	virtual ~CColorDialog();
+	
 	BOOL DoModal(HWND hParentWnd=NULL);
 
 	void SetCurrentColor(COLORREF clr);

@@ -2493,7 +2493,6 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 				pLvdi->item.pszText=const_cast<LPWSTR>(pDatabase->GetArchiveName());
 				break;
 			case 2:
-				ISDLGTHREADOK
 				if (g_szwBuffer!=NULL)
 					delete[] g_szwBuffer;
 				g_szwBuffer=new WCHAR[100];
@@ -2501,7 +2500,6 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 				pLvdi->item.pszText=g_szwBuffer;
 				break;
 			case 3:
-				ISDLGTHREADOK
 				if (g_szwBuffer!=NULL)
 					delete[] g_szwBuffer;
 				g_szwBuffer=new WCHAR[20];

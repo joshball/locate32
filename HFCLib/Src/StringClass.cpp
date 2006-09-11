@@ -1267,7 +1267,7 @@ CString& CString::operator<<(ULONGLONG iNum)
 			sMemCopy(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		sMemCopy(&m_pData[m_nDataLen],szBuffer,nStrLen+1);
+		sMemCopy(m_pData+m_nDataLen,szBuffer,nStrLen+1);
 		m_nDataLen+=nStrLen;
 		OUTPUT(m_nDataLen)
 		return *this;	

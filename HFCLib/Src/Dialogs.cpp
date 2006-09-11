@@ -1925,34 +1925,37 @@ DWORD CFontDialog::FillInLogFont(const CHARFORMAT& cf)
 CColorDialog::CColorDialog(COLORREF clrInit,DWORD dwFlags)
 :	CCommonDialog()
 {
+	ZeroMemory(&m_cc,sizeof(CHOOSECOLOR));
 	m_cc.lStructSize=sizeof(CHOOSECOLOR);
 	m_cc.Flags=dwFlags|CC_ENABLEHOOK;
 	m_cc.hInstance=(HWND)GetLanguageSpecificResourceHandle();
 	if (m_cc.rgbResult=clrInit)
 		m_cc.Flags|=CC_RGBINIT;
-	m_cc.lpCustColors=new COLORREF[16];
-	if (m_cc.lpCustColors==NULL)
-	{
-		SetHFCError(HFC_CANNOTALLOC);
-		return;
-	}
-	FillMemory(m_cc.lpCustColors,255,sizeof(COLORREF)*16);
+	
 	m_cc.lCustData=(LPARAM)this;
 	m_cc.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
-	m_cc.lpTemplateName=NULL;
+	//m_cc.lpTemplateName=NULL;
+
+	
 }
 
-CColorDialog::~CColorDialog()
-{
-	if (m_cc.lpCustColors!=NULL)
-		delete[] m_cc.lpCustColors;
-}
+
 
 BOOL CColorDialog::DoModal(HWND hParentWnd)
 {
 	BOOL ret;
 	m_cc.hwndOwner=hParentWnd;
+	COLORREF aCustomColors[16];
+	FillMemory(aCustomColors,sizeof(COLORREF)*16,255);
+
+	if (m_cc.lpCustColors==NULL)
+		m_cc.lpCustColors=aCustomColors;
+
 	ret=ChooseColor(&m_cc);
+	
+	if (m_cc.lpCustColors==aCustomColors)
+		m_cc.lpCustColors=NULL;
+
 	m_hWnd=NULL;
 	return ret;
 }
@@ -2940,11 +2943,12 @@ BOOL COptionsPropertyPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			if (pItem->nType==Item::Color)
 			{
 				CColorDialog cd(pItem->cColor);
-				cd.DoModal(*this);
-	
-				SetColorValue(pItem,cd.GetColor());
+				if (cd.DoModal(*this))
+				{
+					SetColorValue(pItem,cd.GetColor());
 
-				m_pTree->RedrawWindow();
+					m_pTree->RedrawWindow();
+				}
 				break;
 			}
 			break;
@@ -2964,13 +2968,14 @@ BOOL COptionsPropertyPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			{
 				CFontDialog fd(pItem->pLogFont,CF_SCREENFONTS);
                 
-				fd.DoModal(*this);
-	
-				SetFontValue(pItem,&fd.m_lf);
+				if (fd.DoModal(*this))
+				{
+					SetFontValue(pItem,&fd.m_lf);
 
-				WCHAR* pText=pItem->GetText(TRUE);
-				m_pTree->SetItemText(hItem,pText);
-				pItem->FreeText(pText);
+					WCHAR* pText=pItem->GetText(TRUE);
+					m_pTree->SetItemText(hItem,pText);
+					pItem->FreeText(pText);
+				}
 
 				break;
 			}
@@ -2999,7 +3004,7 @@ BOOL COptionsPropertyPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 				if (IS_INTRESOURCE(bp.szFilters))
 				{
 					pfd=new CFileDialog(TRUE,L"*",szwEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|
-						OFN_NOREADONLYRETURN|OFN_ENABLESIZING,UINT(bp.szFilters));
+						OFN_NOREADONLYRETURN|OFN_ENABLESIZING,(UINT)(ULONG_PTR)(bp.szFilters));
 				}
 				else
 				{
@@ -3009,7 +3014,7 @@ BOOL COptionsPropertyPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 				
 				pfd->EnableFeatures();
 				if (IS_INTRESOURCE(bp.szTitle))
-					pfd->SetTitle(ID2W((UINT)bp.szTitle));
+					pfd->SetTitle(ID2W((UINT)(ULONG_PTR)bp.szTitle));
 				else
 					pfd->SetTitle(bp.szTitle);
 	

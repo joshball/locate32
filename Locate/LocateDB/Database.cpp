@@ -258,6 +258,9 @@ CDatabase* CDatabase::FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 		pDatabase->m_szArchiveName=new WCHAR[dwLength];
 		RegKey.QueryValue(L"ArchiveName",pDatabase->m_szArchiveName,dwLength);
 	}
+	else
+		pDatabase->m_szArchiveName=allocemptyW();
+
 
     // Copying creator info
 	dwLength=RegKey.QueryValueLength("Creator");
@@ -707,7 +710,7 @@ void CDatabase::CheckValidNames(PDATABASE* ppDatabases,int nDatabases)
 #define ISVALIDFORKEY(a) \
 	( ((a)>=L'0' && (a)<=L'9') || \
 	  ((a)>=L'a' && (a)<=L'z') || \
-	  ((a)>=L'A' && (a)<=L'A') || \
+	  ((a)>=L'A' && (a)<=L'Z') || \
 	  (a)==L' ' || \
 	  (a)==L'#' || \
 	  (a)==L'-' || \
@@ -931,8 +934,7 @@ CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR s
 	{
 		WCHAR szPath2[MAX_PATH];
 		dwRet=FileSystem::GetShortPathName(ppDatabases[i]->m_szArchiveName,szPath2,MAX_PATH);
-
-		if (dwRet!=NULL)
+		if (dwRet!=0)
 		{
 			if (strcasecmp(szPath1,szPath2)==0)
 				return ppDatabases[i];
