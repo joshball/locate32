@@ -144,9 +144,6 @@ BOOL CListCtrlEx::ShowColumn(int nCol)
 		return TRUE;
 
 	aColumns[nCol]->lc.mask|=LVCF_SUBITEM|LVCF_TEXT;
-	aColumns[nCol]->lc.iSubItem=aSubItems.GetSize();
-	aSubItems.Add(aColumns[nCol]->nID);
-
 	if (aColumns[nCol]->bFlags&COLUMNDATA::FlagTitleIsResource)
 	{
 		CStringW txt(UINT(aColumns[nCol]->nTitleID),aColumns[nCol]->bResourceType);
@@ -155,10 +152,37 @@ BOOL CListCtrlEx::ShowColumn(int nCol)
 	else
 		aColumns[nCol]->lc.pszText=aColumns[nCol]->pStrTitle;
 
-	CListCtrl::InsertColumn(aSubItems.GetSize(),&aColumns[nCol]->lc);
+
+
+	if (nCol==0) // Should be label
+	{
+		aColumns[nCol]->lc.iSubItem=0;
+		aSubItems.InsertAt(0,aColumns[nCol]->nID);
+		CListCtrl::InsertColumn(0,&aColumns[nCol]->lc);
+	
+		for (int i=0;i<aColumns.GetSize();i++)
+		{
+			if (aColumns[i]->bFlags&COLUMNDATA::FlagVisible)
+				aColumns[i]->lc.iSubItem++;
+		}
+
+		LVCOLUMN lc;
+		lc.mask=LVCF_SUBITEM;
+		for (int i=1;CListCtrl::GetColumn(i,&lc);i++)
+		{
+			lc.iSubItem++;
+			CListCtrl::SetColumn(i,&lc);
+		}	
+	}
+	else
+	{
+		aColumns[nCol]->lc.iSubItem=aSubItems.GetSize();
+		aSubItems.Add(aColumns[nCol]->nID);
+		CListCtrl::InsertColumn(aSubItems.GetSize(),&aColumns[nCol]->lc);
+	}
+
 	aColumns[nCol]->bFlags|=COLUMNDATA::FlagVisible;
 
-			
 	if (aColumns[nCol]->bFlags&COLUMNDATA::FlagTitleIsResource)
 		delete[] aColumns[nCol]->lc.pszText;
 	return TRUE;

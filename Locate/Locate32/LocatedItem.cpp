@@ -850,6 +850,7 @@ void CLocatedItem::ComputeMD5sum(BOOL bForce)
 	CFile* pFile=NULL;
 	try {
 		pFile=new CFile(GetPath(),CFile::defRead,TRUE);
+		pFile->CloseOnDelete();
 	
 		md5_byte_t* pData=new md5_byte_t[1024];
 	
@@ -1667,6 +1668,9 @@ void CLocatedItem::ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
 		InterlockedExchangePointer((PVOID*)&szFileTitle,NULL);
 		delete[] pTemp;
 	}
+	else
+		InterlockedExchangePointer((PVOID*)&szFileTitle,szNewPath+dwDirectoryLen);
+
 
 	InterlockedExchangePointer((PVOID*)&szName,szNewPath+dwDirectoryLen);
 	bNameLength=iLength;

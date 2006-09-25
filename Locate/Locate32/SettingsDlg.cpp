@@ -970,6 +970,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CSettingsProperties::settingsUseOtherProgramsToOpenFolders,&m_pSettings->m_dwSettingsFlags),
 		CreateCheckBox(IDS_ADVSETCOMPUTEMD5SUMS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLVComputeMD5Sums,&m_pSettings->m_dwLocateDialogFlags),
+		CreateCheckBox(IDS_ADVSETALLOWINPLACERENAMING,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVAllowInPlaceRenaming,&m_pSettings->m_dwLocateDialogFlags),
 		NULL
 	};
 	Item* LimitMaximumResults[]={
@@ -2290,6 +2292,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 			CString Path;
 			fd.GetFilePath(Path);
 			pFile=new CFile(Path,CFile::defRead,TRUE);
+			pFile->CloseOnDelete();
 
 			DWORD dwLength=pFile->GetLength();
 			pFileContent=new char[dwLength+1];
@@ -2382,6 +2385,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 
 	try {
 		pFile=new CFile(Path,CFile::defWrite,TRUE);
+		pFile->CloseOnDelete();
 		pFile->Write(pExtra,dwExtraLen);
 	}
 	catch (...)

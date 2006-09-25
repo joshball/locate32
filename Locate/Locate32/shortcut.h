@@ -210,8 +210,9 @@ public:
 		ShowSpecialMenu = 10,			
 		ExecuteCommand = 11,
 		SelectFile = 12,
+		RenameFile = 13,
 		
-		ResultListLast = SelectFile
+		ResultListLast = RenameFile
 	};
 
 	enum ActionMisc {

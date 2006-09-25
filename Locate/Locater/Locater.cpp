@@ -200,6 +200,7 @@ CLocater::~CLocater()
 
 	if (dbFile!=NULL)
 	{
+		dbFile->Close();
 		delete dbFile;
 		dbFile=NULL;
 	}
@@ -290,6 +291,7 @@ BOOL CLocater::LocatingProc()
 			{
 			case CDatabase::archiveFile:
 				dbFile=new CFile(m_pCurrentDatabase->szArchive,CFile::defRead,TRUE);
+				dbFile->CloseOnDelete();
 				break;
 			default:
 				throw CFileException(CFileException::notImplemented,

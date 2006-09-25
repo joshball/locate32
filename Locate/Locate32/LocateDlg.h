@@ -608,6 +608,7 @@ protected:
 	
 	
 	void OnExecuteFile(LPCWSTR szVerb,int nItem=-1);
+	void OnRenameFile(int nItem=1);
 	void OnCopy(BOOL bCut,int nItem=1);
 	void OnOpenFolder(BOOL bContaining,int nItem=-1);
 	void OnCreateShortcut();
@@ -682,11 +683,12 @@ public:
 		fgLVShowFlag=0x000100F0,
 		
 		fgLVNoDoubleItems=0x00020000,
+		fgLVComputeMD5Sums=0x00040000,
 		fgLVFoldersFirst=0x00080000,
 		fgLVActivateFirstResult=0x00100000,
 		fgLVNoDelayedUpdate=0x00200000,
-		fgLVComputeMD5Sums=0x00040000,
 		fgLVSelectFullRow=0x00400000,
+		fgLVAllowInPlaceRenaming=0x00800000,
 		
 
 		fgLVUseGetFileTitle=0x00000000,
@@ -708,8 +710,8 @@ public:
 		fgLVStyleAlwaysUnderline=0x00008000|fgLVStyleUnderLine,
 		fgLVStyleUnderlineFlag=0x00008000|fgLVStyleUnderLine,
 		fgLVStyleFlag=0x0000F000,
-		fgLVFlag=0x007FFFF0,
-		fgLVSave=0x007FFFF0,
+		fgLVFlag=0x00FFFFF0,
+		fgLVSave=0x00FFFFF0,
 			
 		// Name tab
 		fgNameMultibleDirectories=0x04000000,

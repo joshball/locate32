@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,99,6,9030
- PRODUCTVERSION 2,99,6,9030
+ FILEVERSION 2,99,6,9230
+ PRODUCTVERSION 2,99,6,9230
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 beta 6.9030"
+            VALUE "FileVersion", "3.0 RC1 6.9230"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2006 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 beta 6.9030"
+            VALUE "ProductVersion", "3.0 RC1 6.9230"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1628,6 +1628,7 @@ BEGIN
 	IDS_ADVSETICONFILE				"File:"
 	IDS_ADVSETSELECTICONFILE		"Select icon file"
 	IDS_ADVSETSELECTPROGRAM			"Select program"
+	IDS_ADVSETALLOWINPLACERENAMING	"Allow in place renaming"
 END
 
 STRINGTABLE
@@ -1708,6 +1709,7 @@ BEGIN
 	IDS_ACTIONRESITEMSPECIALMENU		"Open special menu"
 	IDS_ACTIONRESITEMEXECUTECOMMAND		"Execute Command"
 	IDS_ACTIONRESITEMSELECTFILE			"Select File"
+	IDS_ACTIONRESITEMRENAMEFILE			"Rename File"
 	IDS_ACTIONRESITEMNEXTFILE			"Next file"
 	IDS_ACTIONRESITEMPREVFILE			"Previous file"
 	IDS_ACTIONRESITEMNEXTNONDELETEDFILE	"Next non-deleted file"

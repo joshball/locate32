@@ -616,6 +616,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 		m_pStatusCtrl->SetUnicodeFormat(TRUE);
 	}
 	
+
 	
 	// Setting tab control labels	
 	WCHAR Buffer[80];
@@ -723,6 +724,10 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	// Setting list control imagelists and style
 	SetSystemImagelists(m_pListCtrl,&m_AdvancedDlg.m_hDefaultTypeIcon);
 	SetListSelStyle();
+	if (GetFlags()&fgLVAllowInPlaceRenaming)
+		m_pListCtrl->ModifyStyle(0,LVS_EDITLABELS);
+
+
 	
 
 
@@ -742,7 +747,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_NameDlg.EnableMultiDirectorySupport(GetFlags()&fgNameMultibleDirectories?TRUE:FALSE);
 	
 	// Loading texts which are used at last time
-	if (m_dwFlags&fgDialogRememberFields)
+	if (GetFlags()&fgDialogRememberFields)
 		LoadDialogTexts();
 
 	// Sorting
@@ -1250,6 +1255,12 @@ BOOL CLocateDlg::UpdateSettings()
 	m_NameDlg.InitDriveBox();
 
 	SetDialogMode(GetFlags()&fgLargeMode);
+
+	if (GetFlags()&fgLVAllowInPlaceRenaming)
+		m_pListCtrl->ModifyStyle(0,LVS_EDITLABELS);
+	else
+		m_pListCtrl->ModifyStyle(LVS_EDITLABELS,0);
+
 
 	BOOL(WINAPI * pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD)=(BOOL(WINAPI *)(HWND,COLORREF,BYTE,DWORD))GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes");
 	if (pSetLayeredWindowAttributes!=NULL)
@@ -3393,6 +3404,9 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 
 
 		} 
+	case CAction::RenameFile:
+		OnRenameFile(nItem);
+		break;
 	}
 }
 
@@ -3754,8 +3768,7 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 	switch (idCtrl)
 	{
 	case IDC_FILELIST:
-		ListNotifyHandler((NMLISTVIEW*)pnmh);
-		break;
+		return ListNotifyHandler((NMLISTVIEW*)pnmh);
 	case IDC_TAB:
 		if (pnmh->code==TCN_SELCHANGE)
 			SetVisibleWindowInTab();
@@ -4323,6 +4336,92 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 		if (m_pListCtrl->GetNextItem(-1,LVNI_SELECTED)!=-1)
 			BeginDragFiles(m_pListCtrl);
 		break;
+	case LVN_BEGINLABELEDITA:
+	case LVN_BEGINLABELEDITW:
+		{
+			NMLVDISPINFOA* pDistInfo=(NMLVDISPINFOA*)pNm;
+			if (m_pListCtrl->GetColumnIDFromSubItem(pDistInfo->item.iSubItem)!=CLocateDlg::Name)
+			{
+				// Not allowed for other fields than Name
+				SetWindowLong(dwlMsgResult,TRUE);
+				return TRUE;
+			}
+
+			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(pDistInfo->item.iItem);
+			if (pItem==NULL)
+			{
+				// Not allowed for other fields than Name
+				SetWindowLong(dwlMsgResult,TRUE);
+				return TRUE;
+			}
+
+			ASSERT(!pItem->ShouldUpdateFileTitle());
+			ASSERT(!pItem->ShouldUpdateFilename());
+
+			if (pItem->GetFileTitle()!=pItem->GetName())
+			{
+				int nTitleLen=istrlen(pItem->GetFileTitle());
+				if (_wcsnicmp(pItem->GetName(),pItem->GetFileTitle(),nTitleLen)!=0)
+				{
+					// We can't determine which part should be changed in filename
+					SetWindowLong(dwlMsgResult,TRUE);
+					return TRUE;
+				}
+			}
+
+			SetWindowLong(dwlMsgResult,FALSE);
+			return FALSE;
+		}
+		break;
+	case LVN_ENDLABELEDITA:
+		break;
+	case LVN_ENDLABELEDITW:
+		{
+			NMLVDISPINFOW* pDistInfo=(NMLVDISPINFOW*)pNm;
+			if (pDistInfo->item.pszText==NULL)
+				return TRUE;
+
+			if (m_pListCtrl->GetColumnIDFromSubItem(pDistInfo->item.iSubItem)!=CLocateDlg::Name)
+			{
+				// Not allowed for other fields than Name
+				SetWindowLong(dwlMsgResult,FALSE);
+				return FALSE;
+			}
+
+			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(pDistInfo->item.iItem);
+			if (pItem==NULL)
+			{
+				// Not allowed for other fields than Name
+				SetWindowLong(dwlMsgResult,FALSE);
+				return FALSE;
+			}
+
+			if (pItem->GetFileTitle()!=pItem->GetName())
+			{
+				int nOldTitleLen=istrlen(pItem->GetFileTitle());
+				if (_wcsnicmp(pItem->GetName(),pItem->GetFileTitle(),nOldTitleLen)!=0)
+				{
+					// We can't determine which part should be changed in filename
+					SetWindowLong(dwlMsgResult,FALSE);
+					return FALSE;
+				}
+				int nNewTitleLen=istrlen(pDistInfo->item.pszText);
+
+				ASSERT(pItem->GetNameLen()>=(UINT)nOldTitleLen);
+
+				WCHAR* pNewName=new WCHAR[nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1];
+				MemCopyW(pNewName,pDistInfo->item.pszText,nNewTitleLen);
+				MemCopyW(pNewName+nNewTitleLen,pItem->GetName()+nOldTitleLen,pItem->GetNameLen()-nOldTitleLen+1);
+				pItem->ChangeName(this,pNewName,nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1);
+				delete[] pNewName;
+			}
+			else
+				pItem->ChangeName(this,pDistInfo->item.pszText);
+
+
+			SetWindowLong(dwlMsgResult,TRUE);
+			return TRUE;
+		}
 	case LVN_GETINFOTIP:
 		break;
 	case LVN_ITEMCHANGED:
@@ -5528,7 +5627,26 @@ BOOL CLocateDlg::CheckClipboard()
 	aFiles.RemoveAll();
 	return TRUE;
 }
+
+void CLocateDlg::OnRenameFile(int nItem)
+{
+	if (m_pListCtrl->GetSelectedCount()==0 && nItem==-1)
+		return;
 	
+
+	if (GetFlags()&fgLVAllowInPlaceRenaming)
+	{
+		if (m_pListCtrl->GetSelectedCount()>0)
+			m_pListCtrl->EditLabel(m_pListCtrl->GetNextItem(-1,LVNI_SELECTED));
+		else if (nItem!=-1)
+			m_pListCtrl->EditLabel(nItem);
+	}
+	else
+		OnChangeFileName();
+}
+	
+
+
 void CLocateDlg::OnCopy(BOOL bCut,int nItem)
 {
 	if (m_pListCtrl->GetSelectedCount()==0 && nItem==-1)

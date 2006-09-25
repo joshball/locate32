@@ -121,6 +121,10 @@ BOOL CResults::SaveToHtmlFile(LPCSTR szFile) const
 	// Opening files
 	CFile outFile(szFile,CFile::defWrite,TRUE);
 	CFile tmpFile(m_sTempFile,CFile::defRead,TRUE);
+
+	outFile.CloseOnDelete();
+	tmpFile.CloseOnDelete();
+
 	CString str;
 	
 	/* Header section BEGIN */
@@ -345,6 +349,9 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 	// Opening files
 	CFile outFile(szFile,CFile::defWrite,TRUE);
 	CFile tmpFile(m_sTempFile,CFile::defRead,TRUE);
+
+	outFile.CloseOnDelete();
+	tmpFile.CloseOnDelete();
 
 	// Writing header
 	{

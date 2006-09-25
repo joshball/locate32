@@ -806,6 +806,8 @@ BOOL CShortcut::GetDefaultShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadF
 	RegKey.QueryValue("Shortcuts",(LPSTR)pData,dwDataLength,NULL);
 	RegKey.CloseKey();
 	CFile File(TRUE);
+	File.CloseOnDelete();
+		
 
 	try {
 		File.Open(szFile,CFile::defWrite);
@@ -829,6 +831,8 @@ BOOL CShortcut::GetDefaultShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadF
 	DWORD dwLength;
 	try {
 		CFile File(Path,CFile::defRead,TRUE);
+		File.CloseOnDelete();
+
 		dwLength=File.GetLength();
 		pData=new BYTE[dwLength];
 		File.Read(pData,dwLength);
@@ -1772,6 +1776,8 @@ int CSubAction::GetResultItemActionLabelStringId(CAction::ActionResultList uSubA
 		return IDS_ACTIONRESITEMEXECUTECOMMAND;
 	case SelectFile:
 		return IDS_ACTIONRESITEMSELECTFILE;
+	case RenameFile:
+		return IDS_ACTIONRESITEMRENAMEFILE;
 	default:
 		return 0;
 	}

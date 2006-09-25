@@ -977,6 +977,7 @@ BOOL CDatabase::IsFileNamesOEM() const
 		{
 		case archiveFile:
 			dbFile=new CFile(GetArchiveName(),CFile::defRead,TRUE);
+			dbFile->CloseOnDelete();
 			break;
 		default:
 			return -1;
@@ -1389,6 +1390,7 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 	try {
 		// Opening database and trying to read header
 		pInFile=new CFile(szArchive,CFile::defRead|CFile::otherStrNullTerminated,TRUE);
+		pInFile->CloseOnDelete();
 
 		szBuffer=new char[12];
 		pInFile->Read(szBuffer,11);
@@ -1414,6 +1416,7 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 		pInFile->Read(Extra2);
 
 		pOutFile=new CFile(szTempFile,CFile::defWrite|CFile::otherStrNullTerminated,TRUE);
+		pOutFile->CloseOnDelete();
 		
 		// Writing identification, '\17=0x11=0x10|0x1' 0x1 = Long filenames and 0x10 = ANSI
 		pOutFile->Write("LOCATEDB20",10);

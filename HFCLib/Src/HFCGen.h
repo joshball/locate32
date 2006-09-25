@@ -230,6 +230,9 @@ public:
 	virtual ULONG_PTR GetPosition() const;
 #endif
 
+	void CloseOnDelete(BOOL bCloseOnDelete=TRUE) { m_bCloseOnDelete=bCloseOnDelete; }
+	BOOL IsClosingOnDelete() const { return m_bCloseOnDelete; }
+
 	BOOL GetStatus(CFileStatus& rStatus) const;
 	virtual CString GetFileTitle() const;
 	virtual CString GetFilePath() const;

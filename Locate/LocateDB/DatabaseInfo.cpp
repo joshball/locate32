@@ -401,6 +401,7 @@ BOOL CDatabaseInfo::ReadFilesAndDirectoriesCount(CDatabase::ArchiveType nArchive
 		{
 		case CDatabase::archiveFile:
 			dbFile=new CFile(szArchive,CFile::defRead,TRUE);
+			dbFile->CloseOnDelete();
 			break;
 		default:
 			throw CFileException(CFileException::notImplemented,

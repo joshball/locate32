@@ -61,6 +61,7 @@ CDatabaseUpdater::~CDatabaseUpdater()
 
 	if (dbFile!=NULL)
 	{
+		dbFile->Close();
 		delete dbFile;
 		dbFile=NULL;
 	}
@@ -194,6 +195,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 					DebugMessage("CDatabaseUpdater::UpdatingProc(): trying to open database");
 					dbFile=new CFile(m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
 						CFile::defWrite|CFile::otherStrNullTerminated,TRUE);
+					dbFile->CloseOnDelete();
 				}
 				break;
 			default:
@@ -1267,12 +1269,12 @@ UpdateError CDatabaseUpdater::CRootDirectory::Write(CFile* dbFile)
 		{
 			char szDrive[4]="X:\\";
 			szDrive[0]=W2Ac(m_Path[0]);
-			nRet=GetVolumeInformation(szDrive,sVolumeName.GetBuffer(20),20,&dwSerial,
-				&dwTemp,&dwTemp,sFSName.GetBuffer(20),20);
+			nRet=GetVolumeInformation(szDrive,sVolumeName.GetBuffer(50),50,&dwSerial,
+				&dwTemp,&dwTemp,sFSName.GetBuffer(50),50);
 		}
 		else // network, UNC path
-			nRet=GetVolumeInformation(W2A(m_Path),sVolumeName.GetBuffer(20),20,&dwSerial,
-				&dwTemp,&dwTemp,sFSName.GetBuffer(20),20);
+			nRet=GetVolumeInformation(W2A(m_Path),sVolumeName.GetBuffer(50),50,&dwSerial,
+				&dwTemp,&dwTemp,sFSName.GetBuffer(50),50);
 		
 		if (nRet)
 		{
@@ -1381,12 +1383,12 @@ UpdateError CDatabaseUpdater::CRootDirectory::WriteW(CFile* dbFile)
 		{
 			WCHAR szDrive[4]=L"X:\\";
 			szDrive[0]=m_Path[0];
-			nRet=GetVolumeInformationW(szDrive,sVolumeName.GetBuffer(20),20,&dwSerial,
-				&dwTemp,&dwTemp,sFSName.GetBuffer(20),20);
+			nRet=GetVolumeInformationW(szDrive,sVolumeName.GetBuffer(50),50,&dwSerial,
+				&dwTemp,&dwTemp,sFSName.GetBuffer(50),50);
 		}
 		else // network, UNC path
-			nRet=GetVolumeInformationW(m_Path,sVolumeName.GetBuffer(20),20,&dwSerial,
-				&dwTemp,&dwTemp,sFSName.GetBuffer(20),20);
+			nRet=GetVolumeInformationW(m_Path,sVolumeName.GetBuffer(50),50,&dwSerial,
+				&dwTemp,&dwTemp,sFSName.GetBuffer(50),50);
 		
 		if (nRet)
 		{
@@ -1956,12 +1958,12 @@ CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,
 	try {
 		dbFile=new CFile(szArchive,
 			CFile::modeReadWrite|CFile::openExisting|CFile::shareDenyWrite|CFile::shareDenyRead|CFile::otherStrNullTerminated,TRUE);
-
 		if (dbFile==NULL)
 		{
 			// Cannot open file, incremental update not possible
 			return NULL;
 		}
+		dbFile->CloseOnDelete();
 	
 		dbFile->SeekToBegin();
 	
