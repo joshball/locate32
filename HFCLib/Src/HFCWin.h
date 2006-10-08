@@ -605,7 +605,7 @@ public:
 	HWND GetNextDlgGroupItem(HWND hWndCtl,BOOL bPrevious=FALSE) const;
 	HWND GetNextDlgTabItem(HWND hWndCtl,BOOL bPrevious=FALSE) const;
 	UINT IsDlgButtonChecked(int nIDButton) const;
-	LONG SendDlgItemMessage(int idControl,UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const;
+	LRESULT SendDlgItemMessage(int idControl,UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const;
 	BOOL SetDlgItemInt(int idControl,UINT uValue,BOOL fSigned=TRUE) const;
 	BOOL SetDlgItemText(int idControl,LPCSTR lpsz) const;	
 	LONG GetDlgItemStyle(int idControl) const { return ::GetWindowLong(GetDlgItem(idControl),GWL_STYLE); }
@@ -642,7 +642,7 @@ public:
 
 	BOOL PostMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::PostMessageW(m_hWnd,uMsg,wParam,lParam); }
 	LRESULT SendMessageW(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return ::SendMessageW(m_hWnd,uMsg,wParam,lParam); }
-	LONG SendDlgItemMessageW(int idControl,UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const;
+	LRESULT SendDlgItemMessageW(int idControl,UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const;
 
 	int MessageBox(LPCWSTR lpText,LPCWSTR lpCaption=NULL,UINT uType=MB_OK);
 	static int MessageBox(HWND hWnd,LPCWSTR lpText,LPCWSTR lpCaption=NULL,UINT uType=MB_OK);

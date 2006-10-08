@@ -1791,6 +1791,44 @@ void CLocateAppWnd::NotifyFinishingUpdating()
 	
 }
 
+int CLocateApp::ErrorBox(int nError,UINT uType)
+{
+	ID2W Text(nError);
+	ID2W Title(IDS_ERROR);
+
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg!=NULL)
+		return pLocateDlg->MessageBox(Text,Title,uType);
+	
+	extern CLocateApp theApp;;
+	if (theApp.m_pMainWnd!=NULL)
+	{
+		theApp.m_pMainWnd->ForceForegroundAndFocus();
+		theApp.m_pMainWnd->SetForegroundWindow();
+	}
+	
+	return CWnd::MessageBox(NULL,Text,Title,uType|MB_TOPMOST);
+}
+
+
+int CLocateApp::ErrorBox(LPCWSTR szError,UINT uType)
+{
+	ID2W Title(IDS_ERROR);
+
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg!=NULL)
+		return pLocateDlg->MessageBox(szError,Title,uType);
+	
+	extern CLocateApp theApp;;
+	if (theApp.m_pMainWnd!=NULL)
+	{
+		theApp.m_pMainWnd->ForceForegroundAndFocus();
+		theApp.m_pMainWnd->SetForegroundWindow();	
+	}
+	
+	return CWnd::MessageBox(NULL,szError,Title,uType|MB_TOPMOST);
+}
+	
 BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueCode,CDatabaseUpdater* pUpdater)
 {
 	DbcDebugFormatMessage2("CLocateApp::UpdateProc BEGIN, reason=%d, code=%d",crReason,ueCode);
@@ -1958,15 +1996,13 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 							str.DelLastChar();
 						str << state;
 						
-						::MessageBoxW(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-							str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+						ErrorBox(str);
 						LocalFree(pError);
 
 						
 					}
 					else
-						::MessageBoxW(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-							ID2W(IDS_ERRORUNKNOWN),ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+						ErrorBox(IDS_ERRORUNKNOWN);
 				}
 				else
 				{
@@ -1987,15 +2023,13 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 							str.DelLastChar();
 						str << state;
 						
-						::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-							str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+						ErrorBox(A2W(str));
 						LocalFree(pError);
 
 						
 					}
 					else
-						::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-							ID2A(IDS_ERRORUNKNOWN),ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
+						ErrorBox(IDS_ERRORUNKNOWN);
 				}
 				
 			}
@@ -2006,7 +2040,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			{
 				CStringW str;
 				str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
-				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+				ErrorBox(str);
 			}
 			return FALSE;
 		case ueRead:
@@ -2014,7 +2048,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			{
 				CStringW str;
 				str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
-				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+				ErrorBox(str);
 			}
 			return FALSE;
 		case ueWrite:
@@ -2022,22 +2056,19 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			{
 				CStringW str;
 				str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
-				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+				ErrorBox(str);
 			}
 			return FALSE;
 		case ueAlloc:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
-			{
-				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-					ID2W(IDS_ERRORCANNOTALLOCATE),ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
-			}
+				ErrorBox(IDS_ERRORCANNOTALLOCATE);
 			return FALSE;
 		case ueInvalidDatabase:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
 				CStringW str;
 				str.Format(IDS_ERRORINVALIDDB,W2A(pUpdater->GetCurrentDatabaseName()));
-				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+				ErrorBox(str);
 				return FALSE;
 			}
 			return FALSE;
@@ -2046,7 +2077,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			{
 				CStringW str;
 				str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():L"");
-				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+				ErrorBox(str);
 			}
 			return FALSE;
 		case ueCannotIncrement:
@@ -2054,7 +2085,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			{
 				CStringW str;
 				str.Format(IDS_ERRORCANNOTWRITEINCREMENTALLY,W2A(pUpdater->GetCurrentDatabaseName()));
-				return CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
+				return ErrorBox(str,MB_ICONERROR|MB_YESNO)==IDYES;
 			}
 			return TRUE;
 		case ueWrongCharset:
@@ -2062,15 +2093,12 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			{
 				CStringW str;
 				str.Format(IDS_ERRORDIFFERENTCHARSETINDB,W2A(pUpdater->GetCurrentDatabaseName()));
-				return CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,str,ID2W(IDS_ERROR),MB_ICONERROR|MB_YESNO)==IDYES;
+				return ErrorBox(str,MB_ICONERROR|MB_YESNO)==IDYES;
 			}
 			return TRUE;
 		case ueCannotCreateThread:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
-			{
-				CWnd::MessageBox(dwParam!=NULL?(HWND)*((CLocateAppWnd*)dwParam):NULL,
-					ID2W(IDS_ERRORCANNOTCREATETHREAD),ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
-			}
+				ErrorBox(IDS_ERRORCANNOTCREATETHREAD);
 			return FALSE;
 		}
 		break;
@@ -3046,7 +3074,7 @@ BYTE CLocateAppWnd::OnSettings()
 		// Opening dialog
 		m_pSettings->DoModal();
 		
-		if (!m_pSettings->IsFlagSet(CSettingsProperties::settingsCancelled))
+		if (!m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsCancelled))
 		{
 			// Saving settings to registry
 			m_pSettings->SaveSettings();
@@ -3066,7 +3094,7 @@ BYTE CLocateAppWnd::OnSettings()
 			if (GetLocateDlg()!=NULL)
 			{
 				// Set LocateDlg to use new seetings
-				if (m_pSettings->IsFlagSet(CSettingsProperties::settingsIsUsedDatabaseChanged))
+				if (m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsIsUsedDatabaseChanged))
 				{
 					GetLocateDlg()->m_NameDlg.InitDriveBox();
 					GetLocateDlg()->ResetFileNotificators();
@@ -3219,6 +3247,7 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThrea
 				{
 					CDatabase* pDatabase=new CDatabase(*aGlobalDatabases[i]);
 					pDatabase->UpdateGlobally(TRUE);
+					pDatabase->SetThreadId(0);
 					aDatabases.Add(pDatabase);
 				}
 			}
@@ -3786,11 +3815,13 @@ BOOL CLocateAppWnd::SaveSchedules()
 			pPos=m_Schedules.GetNextPosition(pPos);
 		}		
 		
+		//DebugFormatMessage("dwDataLen=%d",dwDataLen);
+
 		BYTE* pSchedules=new BYTE[dwDataLen];
 		if (pSchedules==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOC);
-			DebugMessage("LocateAppWnd::OnDestroy(): Cannot allocate memory.");
+			//DebugMessage("LocateAppWnd::OnDestroy(): Cannot allocate memory.");
 		}
 		pSchedules[0]=SCHEDULE_V34_LEN;
 		pSchedules[1]=4; //version
@@ -3801,10 +3832,11 @@ BOOL CLocateAppWnd::SaveSchedules()
 		pPos=m_Schedules.GetHeadPosition();
 		while (pPos!=NULL)
 		{
-			DebugFormatMessage("SCHEDULE: type %d",m_Schedules.GetAt(pPos)->m_nType);
+			//DebugFormatMessage("SCHEDULE: type %d",m_Schedules.GetAt(pPos)->m_nType);
 			pPtr+=m_Schedules.GetAt(pPos)->GetData(pPtr);
 			pPos=m_Schedules.GetNextPosition(pPos);
 		}
+		//DebugMessage("Saveing schedules into registry");
 		RegKey.SetValue("Schedules",(LPCSTR)pSchedules,dwDataLen,REG_BINARY);
 		
 #ifdef _DEBUG

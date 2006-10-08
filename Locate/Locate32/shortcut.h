@@ -98,6 +98,7 @@ public:
 		FileRemoveFromThisList = MAKELONG(IDM_REMOVEFROMTHISLIST,IDS_SHORTCUTMENUFILEITEM),
         FileCreateShortcut = MAKELONG(IDM_CREATESHORTCUT,IDS_SHORTCUTMENUFILEITEM),
 		FileDelete = MAKELONG(IDM_DELETE,IDS_SHORTCUTMENUFILEITEM),
+		FileRename = MAKELONG(IDM_RENAME,IDS_SHORTCUTMENUFILEITEM),
 		FileProperties = MAKELONG(IDM_PROPERTIES,IDS_SHORTCUTMENUFILEITEM),
 		FileSaveResults = MAKELONG(IDM_SAVERESULT,IDS_SHORTCUTMENUFILENOITEM),
 		FileFindUsingDatabase = MAKELONG(IDM_FINDUSINGDBS,IDS_SHORTCUTMENUFILENOITEM),
@@ -154,7 +155,7 @@ public:
 
 	static ActionMenuCommands* GetPossibleMenuCommands() {
 		ActionMenuCommands a[]={FileOpenContainingFolder,FileRemoveFromThisList,
-			FileCreateShortcut,FileDelete,FileProperties,FileSaveResults,
+			FileCreateShortcut,FileRename,FileDelete,FileProperties,FileSaveResults,
             FileFindUsingDatabase,FileUpdateDatabases,FileUpdateSelectedDatabase,
             FileStopUpdating,FileDatabaseInfo,FileClose,FileExit,SpecialCopyPathToClibboard,
 			SpecialCopyShortPathToClibboard,SpecialChangeFileName,SpecialChangeCase,

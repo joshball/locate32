@@ -132,10 +132,13 @@ STDMETHODIMP CFindExtension::OpenLocate(HWND hParent,
 	if (hWnd!=NULL)
 	{
 		UINT nLocateAppMessage=RegisterWindowMessage("Locate32Communication");
-		::SendMessage(HWND_BROADCAST,nLocateAppMessage,MAKEWPARAM(LOCATEMSG_ACTIVATEINSTANCE,0),NULL);
+		::SendNotifyMessage(HWND_BROADCAST,nLocateAppMessage,LOCATEMSG_ACTIVATEINSTANCE,(LPARAM)NULL);
 		return NOERROR;
 	}	
+	/*else
+		MessageBox(NULL,"No locate active","Error",MB_OK);*/
 	
+
 	char szPath[MAX_PATH]="";
 	GetModuleFileName(g_hmodThisDll,szPath,MAX_PATH);
 
@@ -154,6 +157,8 @@ STDMETHODIMP CFindExtension::OpenLocate(HWND hParent,
 	ZeroMemory(&si,sizeof(STARTUPINFO));
 	si.cb=sizeof(STARTUPINFO);
 	
+	//MessageBox(NULL,szPath,"Executing",MB_OK);
+
 	if (CreateProcess(NULL,szPath,NULL,
 		NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
 		NULL,NULL,&si,&pi))

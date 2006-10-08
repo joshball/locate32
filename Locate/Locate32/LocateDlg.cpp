@@ -942,9 +942,11 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDM_CREATESHORTCUT:
 		OnCreateShortcut();
 		break;
-	case IDC_DELETEKEY:
 	case IDM_DELETE:
 		OnDelete();
+		break;
+	case IDM_RENAME:
+		OnRenameFile();
 		break;
 	case IDM_REMOVEFROMTHISLIST:
 		OnRemoveFromThisList();
@@ -4917,6 +4919,12 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 		ClearMenuVariables();
 		return;
 	}
+	else if (wcscmp(szName,L"rename")==0)
+	{
+		OnRenameFile();
+		ClearMenuVariables();
+		return;
+	}
 	else if (wcscmp(szName,L"properties")==0 && m_pActiveContextMenu->nIDLParentLevel<=1)
 	{
 		ClearMenuVariables();
@@ -6270,12 +6278,14 @@ void CLocateDlg::OnInitFileMenu(HMENU hPopupMenu)
 	{
 		EnableMenuItem(hPopupMenu,IDM_CREATESHORTCUT,MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hPopupMenu,IDM_DELETE,MF_BYCOMMAND|MF_ENABLED);
+		EnableMenuItem(hPopupMenu,IDM_RENAME,MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hPopupMenu,IDM_PROPERTIES,MF_BYCOMMAND|MF_ENABLED);
 		EnableMenuItem(hPopupMenu,IDM_OPENCONTAININGFOLDER,MF_BYCOMMAND|MF_ENABLED);
 	}
 	else
 	{
 		EnableMenuItem(hPopupMenu,IDM_CREATESHORTCUT,MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(hPopupMenu,IDM_RENAME,MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hPopupMenu,IDM_DELETE,MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hPopupMenu,IDM_PROPERTIES,MF_BYCOMMAND|MF_GRAYED);
 		EnableMenuItem(hPopupMenu,IDM_OPENCONTAININGFOLDER,MF_BYCOMMAND|MF_GRAYED);
@@ -6707,29 +6717,50 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 
 				if (HIBYTE(GetKeyState(VK_SHIFT)))
 				{
-					//hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-					//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY|CMF_EXTENDEDVERBS);
 					hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
-						IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_EXTENDEDVERBS);
+						IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_EXTENDEDVERBS|CMF_CANRENAME);
 
 				}
 				else
 				{
-					//hRes=m_pActiveContextMenu->QueryContextMenu(hFileMenu,0,
-					//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL|CMF_VERBSONLY);
 					hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
-						IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE);
+						IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_CANRENAME);
 				}
 			}
 			else
 			{
 				hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
-					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_VERBSONLY);
-				//hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
-				//	IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_NORMAL);
+					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_VERBSONLY|CMF_CANRENAME);
 			}
 			if (SUCCEEDED(hRes))
 			{
+				
+				
+
+				/* Insert "Rename" 
+				UINT uID;
+				if (IsUnicodeSystem())
+				{
+					for (int iPos=0;(uID=FileMenu.GetMenuItemID(iPos))!=UINT(-1);iPos++)
+					{
+						if (uID>=IDM_DEFCONTEXTITEM && uID<IDM_DEFCONTEXTITEM+1000)
+						{
+							WCHAR szName[200];
+							HRESULT hRes=m_pActiveContextMenu->pContextMenu->GetCommandString(
+								uID-IDM_DEFCONTEXTITEM,GCS_VERBW,NULL,(LPSTR)szName,200);
+							
+							if (hRes!=NOERROR)
+							{
+								if (wcscmp(szName,L"delete")==0)
+								{
+									CAppData::stdfunc();
+								}
+							}
+						}							
+					}
+				}*/
+
+				// Insert special menu, ...
 				InsertMenuItemsFromTemplate(CMenu(hFileMenu),m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
 				return hFileMenu;
 			}
@@ -7203,6 +7234,9 @@ BOOL CLocateDlg::StopLocateAnimation()
 	
 BOOL CLocateDlg::StartUpdateAnimation()
 {
+	if (m_pStatusCtrl==NULL)
+		return FALSE;
+
 	if (m_pUpdateAnimBitmaps==NULL)
 	{
 		m_pUpdateAnimBitmaps=new HICON[13];
@@ -10900,7 +10934,7 @@ BOOL CLocateDlg::CSizeDateDlg::OnOk(CLocater* pLocater)
 		GetDlgItemTextLength(IDC_MINIMUMSIZE)>0)
 	{
 		dwMinSize=GetDlgItemInt(IDC_MINIMUMSIZE);
-		int nCurSel=SendDlgItemMessage(IDC_MINSIZETYPE,CB_GETCURSEL,0,0);
+		int nCurSel=(int)SendDlgItemMessage(IDC_MINSIZETYPE,CB_GETCURSEL,0,0);
 		if (nCurSel)
 			dwMinSize*=1024;
 		if (nCurSel==2)
@@ -10910,7 +10944,7 @@ BOOL CLocateDlg::CSizeDateDlg::OnOk(CLocater* pLocater)
 		GetDlgItemTextLength(IDC_MAXIMUMSIZE)>0)
 	{
 		dwMaxSize=GetDlgItemInt(IDC_MAXIMUMSIZE);
-		int nCurSel=SendDlgItemMessage(IDC_MAXSIZETYPE,CB_GETCURSEL,0,0);
+		int nCurSel=(int)SendDlgItemMessage(IDC_MAXSIZETYPE,CB_GETCURSEL,0,0);
 		if (nCurSel)
 			dwMaxSize*=1024;
 		if (nCurSel==2)
@@ -10921,7 +10955,7 @@ BOOL CLocateDlg::CSizeDateDlg::OnOk(CLocater* pLocater)
 		SYSTEMTIME st;
 		SendDlgItemMessage(IDC_MINDATE,DTM_GETSYSTEMTIME,0,(LPARAM)&st);
 		wMinDate=SYSTEMTIMETODOSDATE(st);
-		int nCurSel=SendDlgItemMessage(IDC_MINTYPE,CB_GETCURSEL,0,0);
+		int nCurSel=(int)SendDlgItemMessage(IDC_MINTYPE,CB_GETCURSEL,0,0);
 		if (nCurSel==1)
 			dwFlags|=LOCATE_MINCREATIONDATE;
 		else if (nCurSel==2)
@@ -10932,7 +10966,7 @@ BOOL CLocateDlg::CSizeDateDlg::OnOk(CLocater* pLocater)
 		SYSTEMTIME st;
 		SendDlgItemMessage(IDC_MAXDATE,DTM_GETSYSTEMTIME,0,(LPARAM)&st);
 		wMaxDate=SYSTEMTIMETODOSDATE(st);
-		int nCurSel=SendDlgItemMessage(IDC_MAXTYPE,CB_GETCURSEL,0,0);
+		int nCurSel=(int)SendDlgItemMessage(IDC_MAXTYPE,CB_GETCURSEL,0,0);
 		if (nCurSel==1)
 			dwFlags|=LOCATE_MAXCREATIONDATE;
 		else if (nCurSel==2)
@@ -11526,10 +11560,10 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		case CBN_CLOSEUP:
 			if (m_hTypeUpdaterThread==NULL)
 			{
-				int nSelected=SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL);
+				int nSelected=(int)SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL);
 
 				// Destroying unnecessary icons
-				for (int i=SendDlgItemMessage(IDC_FILETYPE,CB_GETCOUNT)-1;i>0;i--)
+				for (int i=(int)SendDlgItemMessage(IDC_FILETYPE,CB_GETCOUNT)-1;i>0;i--)
 				{
 					if (i!=nSelected)
 					{
@@ -11969,7 +12003,7 @@ void CLocateDlg::CAdvancedDlg::OnDestroy()
 		m_hTypeUpdaterThread=NULL;
 	}
 
-	for (int i=SendDlgItemMessage(IDC_FILETYPE,CB_GETCOUNT)-1;i>0;i--)
+	for (int i=(int)SendDlgItemMessage(IDC_FILETYPE,CB_GETCOUNT)-1;i>0;i--)
 	{
 		FileType* pFileType=(FileType*)SendDlgItemMessage(IDC_FILETYPE,CB_GETITEMDATA,i);
 		if (pFileType!=NULL)
@@ -12064,7 +12098,7 @@ void CLocateDlg::CAdvancedDlg::LoadControlStates(CRegKey& RegKey)
 void CLocateDlg::CAdvancedDlg::SaveControlStates(CRegKey& RegKey)
 {
 	// Advanced dialog
-	RegKey.SetValue("Advanced/Check",SendDlgItemMessage(IDC_CHECK,CB_GETCURSEL));
+	RegKey.SetValue("Advanced/Check",(DWORD)SendDlgItemMessage(IDC_CHECK,CB_GETCURSEL));
 	RegKey.SetValue("Advanced/MatchWholeName",IsDlgButtonChecked(IDC_MATCHWHOLENAME));
 	RegKey.SetValue("Advanced/ReplaceSpaces",IsDlgButtonChecked(IDC_REPLACESPACES));
 	RegKey.SetValue("Advanced/UseWholePath",IsDlgButtonChecked(IDC_USEWHOLEPATH));
@@ -12079,7 +12113,7 @@ void CLocateDlg::CAdvancedDlg::SaveControlStates(CRegKey& RegKey)
 	RegKey.SetValue("Advanced/TextIsMatchCase",IsDlgButtonChecked(IDC_DATAMATCHCASE));
 
 	// Type box
-	int nCurSel=SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL);
+	int nCurSel=(int)SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL);
 	FileType* pType=(FileType*)SendDlgItemMessage(IDC_FILETYPE,CB_GETITEMDATA,nCurSel);
 	if (pType==NULL || pType==(CAdvancedDlg::FileType*)szwEmpty || pType->szType==NULL)
 		RegKey.SetValue("Advanced/TypeOfFile",DWORD(nCurSel));
@@ -12153,7 +12187,7 @@ int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCWSTR szKey,CArray<FileType*>& aFi
 	pType->SetIcon(RegKey);
 
 	
-	return SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(pType));
+	return (int)SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(pType));
 }
 
 int CLocateDlg::CAdvancedDlg::AddTypeToList(BYTE* pTypeAndExtensions)
@@ -12190,7 +12224,7 @@ int CLocateDlg::CAdvancedDlg::AddTypeToList(BYTE* pTypeAndExtensions)
 	
 	pFileType->SetIcon(RegKey);
 
-	return SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(pFileType));
+	return (int)SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(pFileType));
 }
 
 DWORD WINAPI CLocateDlg::CAdvancedDlg::UpdaterProc(CLocateDlg::CAdvancedDlg* pAdvancedDlg)
@@ -12199,7 +12233,7 @@ DWORD WINAPI CLocateDlg::CAdvancedDlg::UpdaterProc(CLocateDlg::CAdvancedDlg* pAd
 
 	CArray<FileType*> aFileTypes;
 
-	for (int i=pAdvancedDlg->SendDlgItemMessage(IDC_FILETYPE,CB_GETCOUNT)-1;i>=0;i--)
+	for (int i=(int)pAdvancedDlg->SendDlgItemMessage(IDC_FILETYPE,CB_GETCOUNT)-1;i>=0;i--)
 	{
 		FileType* pParam=(FileType*)pAdvancedDlg->SendDlgItemMessage(IDC_FILETYPE,CB_GETITEMDATA,i);
 		if (pParam!=NULL && pParam!=(FileType*)szwEmpty && pParam->szType!=NULL)

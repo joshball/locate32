@@ -1508,13 +1508,13 @@ inline UINT CWnd::IsDlgButtonChecked(int nIDButton) const
 {
 	return ::IsDlgButtonChecked(m_hWnd,nIDButton);
 }
-inline LONG CWnd::SendDlgItemMessage(int idControl,UINT uMsg,WPARAM wParam,LPARAM lParam) const
+inline LRESULT CWnd::SendDlgItemMessage(int idControl,UINT uMsg,WPARAM wParam,LPARAM lParam) const
 {
-	return (LONG)::SendDlgItemMessageA(m_hWnd,idControl,uMsg,wParam,lParam);
+	return ::SendDlgItemMessageA(m_hWnd,idControl,uMsg,wParam,lParam);
 }
-inline LONG CWnd::SendDlgItemMessageW(int idControl,UINT uMsg,WPARAM wParam,LPARAM lParam) const
+inline LRESULT CWnd::SendDlgItemMessageW(int idControl,UINT uMsg,WPARAM wParam,LPARAM lParam) const
 {
-	return (LONG)::SendDlgItemMessageW(m_hWnd,idControl,uMsg,wParam,lParam);
+	return ::SendDlgItemMessageW(m_hWnd,idControl,uMsg,wParam,lParam);
 }
 
 inline BOOL CWnd::SetDlgItemInt(int idControl,UINT uValue,BOOL fSigned) const

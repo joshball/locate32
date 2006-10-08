@@ -594,7 +594,7 @@ inline BOOL CFileFind::IsTemporary() const
 inline void CFileFind::GetFileName(LPWSTR szName,DWORD nMaxLen) const
 {
 	if (IsUnicodeSystem())
-		StringCbCopyW(szName,nMaxLen,m_fdw.cFileName);
+		StringCbCopyW(szName,nMaxLen*2,m_fdw.cFileName);
 	else
 		MultiByteToWideChar(CP_ACP,0,m_fd.cFileName,-1,szName,(int)nMaxLen);
 	

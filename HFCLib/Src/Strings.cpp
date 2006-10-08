@@ -311,7 +311,121 @@ static int _getbase(const CHARTYPE*& str)
 }
 
 
+static int _readstring(BYTE*& pRet,LPCSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc)
+{
+	pRet=(BYTE*)pMalloc(dwStrLen);
+	int i;
+	for (i=0;*pStr!='\0';i++,pStr++)
+	{
+		if (*pStr=='\\' && pStr[1]!='\0')
+		{
+			pStr++;
+			switch (*pStr)
+			{
+			case '0':
+				pRet[i]='\0';
+				break;
+			case 'n':
+				pRet[i]='\n';
+				break;
+			case 'r':
+				pRet[i]='\r';
+				break;
+			case 't':
+				pRet[i]='\t';
+				break;
+			case 'b':
+				pRet[i]='\b';
+				break;
+			default:
+				pRet[i]=BYTE(_readnum(16,pStr,2));
+				pStr--;
+				break;
+			}
+		}
+		else
+			pRet[i]=*pStr;
+	}
+	return i;
+}
 
+static int _readstringW(WCHAR*& pRet,LPCSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc)
+{
+	pRet=(WCHAR*)pMalloc(dwStrLen*2);
+
+	int i;
+	for (i=0;*pStr!='\0';i++,pStr++)
+	{
+		if (*pStr=='\\' && pStr[1]!='\0')
+		{
+			pStr++;
+			switch (*pStr)
+			{
+			case '0':
+				pRet[i]=L'\0';
+				break;
+			case 'n':
+				pRet[i]=L'\n';
+				break;
+			case 'r':
+				pRet[i]=L'\r';
+				break;
+			case 't':
+				pRet[i]=L'\t';
+				break;
+			case 'b':
+				pRet[i]=L'\b';
+				break;
+			default:
+				pRet[i]=WCHAR(_readnum(16,pStr,4));
+				pStr--;
+				break;
+			}
+		}
+		else
+			pRet[i]=A2Wc(*pStr);
+	}
+	return i;
+}
+
+static int _readstringW(WCHAR*& pRet,LPCWSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc)
+{
+	pRet=(WCHAR*)pMalloc(dwStrLen*2);
+
+	int i;
+	for (i=0;*pStr!='\0';i++,pStr++)
+	{
+		if (*pStr=='\\' && pStr[1]!='\0')
+		{
+			pStr++;
+			switch (*pStr)
+			{
+			case '0':
+				pRet[i]=L'\0';
+				break;
+			case 'n':
+				pRet[i]=L'\n';
+				break;
+			case 'r':
+				pRet[i]=L'\r';
+				break;
+			case 't':
+				pRet[i]=L'\t';
+				break;
+			case 'b':
+				pRet[i]=L'\b';
+				break;
+			default:
+				pRet[i]=WCHAR(_readnum(16,pStr,4));
+				pStr--;
+				break;
+			}
+		}
+		else
+			pRet[i]=*pStr;
+	}
+	return i;
+}
 
 /*
 BYTE* dataparser(LPCSTR pString,DWORD dwStrLen,DWORD* pdwDataLength);
@@ -325,6 +439,10 @@ if str is:
   "str:Hello\0", data will be "Hello\0" and *pdwDataLength will be 6
   "oem:Hello", data will be "Hello" and *pdwDataLength will be 5, ansi to oem conversion will be done
   "unicode:Hello", data will be L"Hello" and *pdwDataLength will be 10, ansi to unicode conversion will be done
+  "wstr:Hello", same as above
+  "utf16:Hello", same as above
+  "utf8:Hello", conversion to utf8
+  "utf7:Hello", conversion to utf7
   "dword(16):12345678", *(DWORD*)data will be 0x12345678 (hex) and *pdwDataLength will be 4
   "dword(16):12345678", *(DWORD*)data will be 0x12345678 (hex) and *pdwDataLength will be 4
   "dword(10):12345678", *(DWORD*)data will be 12345678 (decimal) and *pdwDataLength will be 4
@@ -465,97 +583,18 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLe
 	{
 		dwStrLen-=4;
 		pStr+=4;
-		BYTE* pRet;
 		if (int(dwStrLen)<=0)
 			return NULL;
 
-		pRet=(BYTE*)pMalloc(dwStrLen);
-		int i;
-		for (i=0;*pStr!='\0';i++,pStr++)
-		{
-			if (*pStr=='\\' && pStr[1]!='\0')
-			{
-				pStr++;
-				switch (*pStr)
-				{
-				case '0':
-					pRet[i]='\0';
-					break;
-				case 'n':
-					pRet[i]='\n';
-					break;
-				case 'r':
-					pRet[i]='\r';
-					break;
-				case 't':
-					pRet[i]='\t';
-					break;
-				case 'b':
-					pRet[i]='\b';
-					break;
-				default:
-					pRet[i]=BYTE(_readnum(16,pStr,2));
-					pStr--;
-					break;
-				}
-			}
-			else
-				pRet[i]=*pStr;
-		}
+		BYTE* pRet;
+		int len=_readstring(pRet,pStr,dwStrLen,pMalloc);
+		
 		if (pdwDataLength!=NULL)
-			*pdwDataLength=i;
+			*pdwDataLength=len;
 		return pRet;
 	}
 #ifdef WIN32
-	else if (_1stcontain2nd(pStr,"oem:"))
-	{
-		dwStrLen-=4;
-		pStr+=4;
-		if (int(dwStrLen)<=0)
-			return NULL;
-		
-		BYTE* pRet;
-		pRet=(BYTE*)pMalloc(dwStrLen);
-		int i;
-		for (i=0;*pStr!='\0';i++,pStr++)
-		{
-			if (*pStr=='\\' && pStr[1]!='\0')
-			{
-				pStr++;
-				switch (*pStr)
-				{
-				case '0':
-					pRet[i]='\0';
-					break;
-				case 'n':
-					pRet[i]='\n';
-					break;
-				case 'r':
-					pRet[i]='\r';
-					break;
-				case 't':
-					pRet[i]='\t';
-					break;
-				case 'b':
-					pRet[i]='\b';
-					break;
-				default:
-					pRet[i]=BYTE(_readnum(16,pStr,2));
-					pStr--;
-					break;
-				}
-			}
-			else
-				pRet[i]=*pStr;
-		}
-		AnsiToOemBuff(LPSTR(pRet),LPSTR(pRet),i);
-		if (pdwDataLength!=NULL)
-			*pdwDataLength=i;
-		return pRet;
-	}
-#endif
-#ifdef DEF_WCHAR
-	else if (_1stcontain2nd(pStr,"wstr:") || _1stcontain2nd(pStr,"uni:"))
+	else if (_1stcontain2nd(pStr,"wstr:") || _1stcontain2nd(pStr,"uni:") || _1stcontain2nd(pStr,"utf16:"))
 	{
 		for (pStr+=3,dwStrLen-=3;*pStr!=':';pStr++,dwStrLen--);
 		pStr++;dwStrLen--;
@@ -564,43 +603,74 @@ BYTE* dataparser(LPCSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLe
 			return NULL;
 	
 		WCHAR* pRet;
-		pRet=(WCHAR*)pMalloc(dwStrLen*2);
+		int len=_readstringW(pRet,pStr,dwStrLen,pMalloc);
 
-
-		int i;
-		for (i=0;*pStr!='\0';i++,pStr++)
-		{
-			if (*pStr=='\\' && pStr[1]!='\0')
-			{
-				pStr++;
-				switch (*pStr)
-				{
-				case '0':
-					pRet[i]=L'\0';
-					break;
-				case 'n':
-					pRet[i]=L'\n';
-					break;
-				case 'r':
-					pRet[i]=L'\r';
-					break;
-				case 't':
-					pRet[i]=L'\t';
-					break;
-				case 'b':
-					pRet[i]=L'\b';
-					break;
-				default:
-					pRet[i]=WCHAR(_readnum(16,pStr,4));
-					pStr--;
-					break;
-				}
-			}
-			else
-				MemCopyAtoW(pRet+i,pStr,1);
-		}
 		if (pdwDataLength!=NULL)
-			*pdwDataLength=i*2;
+			*pdwDataLength=len*2;
+		return (BYTE*)pRet;
+	}
+	else if (_1stcontain2nd(pStr,"utf8:"))
+	{
+		dwStrLen-=5;
+		pStr+=5;
+
+		if (int(dwStrLen)<=0)
+			return NULL;
+	
+		WCHAR* pUnicode;
+		int len=_readstringW(pUnicode,pStr,dwStrLen,malloc);
+
+		// Get Length
+		char* pRet=(char*)pMalloc((len+1)*2);
+		len=WideCharToMultiByte(CP_UTF8,0,pUnicode,len,pRet,(len+1)*2,NULL,NULL);
+
+		free(pUnicode);
+		
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=len;
+		return (BYTE*)pRet;
+	}
+	else if (_1stcontain2nd(pStr,"utf7:"))
+	{
+		dwStrLen-=5;
+		pStr+=5;
+
+		if (int(dwStrLen)<=0)
+			return NULL;
+	
+		WCHAR* pUnicode;
+		int len=_readstringW(pUnicode,pStr,dwStrLen,malloc);
+
+		// Get Length
+		char* pRet=(char*)pMalloc((len+1)*5);		
+		len=WideCharToMultiByte(CP_UTF7,0,pUnicode,len,pRet,(len+1)*5,NULL,NULL);
+
+		free(pUnicode);
+		
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=len;
+		return (BYTE*)pRet;
+	}
+	else if (_1stcontain2nd(pStr,"oem:"))
+	{
+		dwStrLen-=4;
+		pStr+=4;
+
+		if (int(dwStrLen)<=0)
+			return NULL;
+	
+		WCHAR* pUnicode;
+		int len=_readstringW(pUnicode,pStr,dwStrLen,malloc);
+
+		// Get Length
+		len=WideCharToMultiByte(CP_OEMCP,0,pUnicode,len,NULL,0,NULL,NULL);
+		char* pRet=(char*)pMalloc(len+1);		
+		len=WideCharToMultiByte(CP_OEMCP,0,pUnicode,len,pRet,len+1,NULL,NULL);
+
+		free(pUnicode);
+		
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=len;
 		return (BYTE*)pRet;
 	}
 #endif
@@ -742,46 +812,22 @@ BYTE* dataparser(LPCWSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataL
 	{
 		dwStrLen-=4;
 		pStr+=4;
-		BYTE* pRet;
 		if (int(dwStrLen)<=0)
 			return NULL;
 
-		pRet=(BYTE*)pMalloc(dwStrLen);
-		int i;
-		for (i=0;*pStr!='\0';i++,pStr++)
-		{
-			if (*pStr=='\\' && pStr[1]!='\0')
-			{
-				pStr++;
-				switch (*pStr)
-				{
-				case '0':
-					pRet[i]='\0';
-					break;
-				case 'n':
-					pRet[i]='\n';
-					break;
-				case 'r':
-					pRet[i]='\r';
-					break;
-				case 't':
-					pRet[i]='\t';
-					break;
-				case 'b':
-					pRet[i]='\b';
-					break;
-				default:
-					pRet[i]=BYTE(_readnum(16,pStr,2));
-					pStr--;
-					break;
-				}
-			}
-			else
-				pRet[i]=W2Ac(*pStr);
-		}
+		WCHAR* pUnicode;
+		int len=_readstringW(pUnicode,pStr,dwStrLen,malloc);
+
+		// Get Length
+		len=WideCharToMultiByte(CP_ACP,0,pUnicode,len,NULL,0,NULL,NULL);
+		char* pRet=(char*)pMalloc(len+1);		
+		len=WideCharToMultiByte(CP_ACP,0,pUnicode,len,pRet,len+1,NULL,NULL);
+
+		free(pUnicode);
+		
 		if (pdwDataLength!=NULL)
-			*pdwDataLength=i;
-		return pRet;
+			*pdwDataLength=len;
+		return (BYTE*)pRet;
 	}
 	else if (_1stcontain2nd(pStr,L"oem:"))
 	{
@@ -790,46 +836,21 @@ BYTE* dataparser(LPCWSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataL
 		if (int(dwStrLen)<=0)
 			return NULL;
 		
-		BYTE* pRet;
-		pRet=(BYTE*)pMalloc(dwStrLen);
-		int i;
-		for (i=0;*pStr!='\0';i++,pStr++)
-		{
-			if (*pStr=='\\' && pStr[1]!='\0')
-			{
-				pStr++;
-				switch (*pStr)
-				{
-				case '0':
-					pRet[i]='\0';
-					break;
-				case 'n':
-					pRet[i]='\n';
-					break;
-				case 'r':
-					pRet[i]='\r';
-					break;
-				case 't':
-					pRet[i]='\t';
-					break;
-				case 'b':
-					pRet[i]='\b';
-					break;
-				default:
-					pRet[i]=BYTE(_readnum(16,pStr,2));
-					pStr--;
-					break;
-				}
-			}
-			else
-				pRet[i]=W2Ac(*pStr);
-		}
-		AnsiToOemBuff(LPSTR(pRet),LPSTR(pRet),i);
+		WCHAR* pUnicode;
+		int len=_readstringW(pUnicode,pStr,dwStrLen,malloc);
+
+		// Get Length
+		len=WideCharToMultiByte(CP_OEMCP,0,pUnicode,len,NULL,0,NULL,NULL);
+		char* pRet=(char*)pMalloc(len+1);		
+		len=WideCharToMultiByte(CP_OEMCP,0,pUnicode,len,pRet,len+1,NULL,NULL);
+
+		free(pUnicode);
+		
 		if (pdwDataLength!=NULL)
-			*pdwDataLength=i;
-		return pRet;
+			*pdwDataLength=len;
+		return (BYTE*)pRet;
 	}
-	else if (_1stcontain2nd(pStr,L"wstr:") || _1stcontain2nd(pStr,L"uni:"))
+	else if (_1stcontain2nd(pStr,L"wstr:") || _1stcontain2nd(pStr,L"uni:") || _1stcontain2nd(pStr,L"utf16:"))
 	{
 		for (pStr+=3,dwStrLen-=3;*pStr!=':';pStr++,dwStrLen--);
 		pStr++;dwStrLen--;
@@ -838,43 +859,50 @@ BYTE* dataparser(LPCWSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataL
 			return NULL;
 	
 		WCHAR* pRet;
-		pRet=(WCHAR*)pMalloc(dwStrLen*2);
-
-
-		int i;
-		for (i=0;*pStr!='\0';i++,pStr++)
-		{
-			if (*pStr=='\\' && pStr[1]!='\0')
-			{
-				pStr++;
-				switch (*pStr)
-				{
-				case '0':
-					pRet[i]=L'\0';
-					break;
-				case 'n':
-					pRet[i]=L'\n';
-					break;
-				case 'r':
-					pRet[i]=L'\r';
-					break;
-				case 't':
-					pRet[i]=L'\t';
-					break;
-				case 'b':
-					pRet[i]=L'\b';
-					break;
-				default:
-					pRet[i]=WCHAR(_readnum(16,pStr,4));
-					pStr--;
-					break;
-				}
-			}
-			else
-				pRet[i]=*pStr;
-		}
+		int len=_readstringW(pRet,pStr,dwStrLen,pMalloc);
+		
 		if (pdwDataLength!=NULL)
-			*pdwDataLength=i*2;
+			*pdwDataLength=len*2;
+		return (BYTE*)pRet;
+	}
+	else if (_1stcontain2nd(pStr,L"utf8:"))
+	{
+		dwStrLen-=5;
+		pStr+=5;
+		if (int(dwStrLen)<=0)
+			return NULL;
+		
+		WCHAR* pUnicode;
+		int len=_readstringW(pUnicode,pStr,dwStrLen,malloc);
+
+		// Get Length
+		char* pRet=(char*)pMalloc((len+1)*2);		
+		len=WideCharToMultiByte(CP_UTF8,0,pUnicode,len,pRet,(len+1)*2,NULL,NULL);
+
+		free(pUnicode);
+		
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=len;
+		return (BYTE*)pRet;
+	}
+	else if (_1stcontain2nd(pStr,L"utf7:"))
+	{
+		dwStrLen-=5;
+		pStr+=5;
+		if (int(dwStrLen)<=0)
+			return NULL;
+		
+		WCHAR* pUnicode;
+		int len=_readstringW(pUnicode,pStr,dwStrLen,malloc);
+
+		// Get Length
+		char* pRet=(char*)pMalloc((len+1)*5);		
+		len=WideCharToMultiByte(CP_UTF7,0,pUnicode,len,pRet,(len+1)*5,NULL,NULL);
+
+		free(pUnicode);
+		
+		if (pdwDataLength!=NULL)
+			*pdwDataLength=len;
 		return (BYTE*)pRet;
 	}
 	else

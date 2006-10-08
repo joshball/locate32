@@ -263,7 +263,7 @@ int CWnd::ShowErrorMessage(UINT nIDMsgStr,UINT nIDTitleStr,UINT uType) const
 		if (nIDTitleStr)
 			LoadStringW(GetLanguageSpecificResourceHandle(),nIDTitleStr,title,100);
 		else
-			StringCbCopyW(title,100,szwError);
+			StringCbCopyW(title,100*2,szwError);
 		return ::MessageBoxW(m_hWnd,msg,title,uType);
 	}
 	else

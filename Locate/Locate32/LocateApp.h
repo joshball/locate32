@@ -423,6 +423,9 @@ public:
 	void ClearStartData();
 	void SetStartData(CStartData* pStarData);
 	
+	static int ErrorBox(int nError,UINT uType=MB_ICONERROR|MB_OK);
+	static int ErrorBox(LPCWSTR szError,UINT uType=MB_ICONERROR|MB_OK);
+	
 	const CDatabase* GetDatabase(WORD wID) const;
 
 	static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);

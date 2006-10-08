@@ -1909,9 +1909,15 @@ BOOL FileSystem::IsSubDirectory(LPCWSTR szSubDir,LPCWSTR szPath)
 
 	WCHAR sSubDir[MAX_PATH],sPath[MAX_PATH];
 	if (!GetShortPathNameW(szSubDir,sSubDir,MAX_PATH))
-		StringCbCopyW(sSubDir,MAX_PATH,szSubDir);
+	{
+		if (StringCbCopyW(sSubDir,MAX_PATH*2,szSubDir)!=S_OK)
+			return FALSE;
+	}
 	if (!GetShortPathNameW(szPath,sPath,MAX_PATH))
-		StringCbCopyW(sPath,MAX_PATH,szPath);
+	{
+		if (StringCbCopyW(sPath,MAX_PATH*2,szPath)!=S_OK)
+			return FALSE;
+	}
     int nSlashes=0,i;
 	// Counting '\\' characters in szPath
 	for (i=0;sPath[i]!=L'\0';i++)
@@ -2345,8 +2351,12 @@ BOOL CFileFind::GetFileTitle(CString& title) const
 	if (IsUnicodeSystem())
 	{
 		WCHAR szTitle[MAX_PATH],szPath[MAX_PATH];
-		StringCbCopyNW(szPath,MAX_PATH,strRoot,strRoot.GetLength());
-		StringCbCopyW(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fdw.cFileName);
+		if (StringCbCopyNW(szPath,MAX_PATH*2,strRoot,strRoot.GetLength()*2)!=S_OK)
+			return FALSE;
+
+		if (StringCbCopyW(szPath+strRoot.GetLength(),(MAX_PATH-strRoot.GetLength())*2,m_fdw.cFileName)!=S_OK)
+			return FALSE;
+
 		int len=::GetFileTitleW(szPath,szTitle,MAX_PATH);
 		if (len==0)
 			title=szTitle;
@@ -2359,8 +2369,11 @@ BOOL CFileFind::GetFileTitle(CString& title) const
 	else
 	{
 		CHAR szPath[MAX_PATH];
-		WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0);
-		StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName);
+		if (WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0)==0)
+			return FALSE;
+		
+		if (StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName)!=S_OK)
+			return FALSE;
 		int len=::GetFileTitle(szPath,title.GetBuffer(MAX_PATH),MAX_PATH);
 		
 		if (len==0)
@@ -2380,8 +2393,10 @@ BOOL CFileFind::GetFileTitle(LPSTR szFileTitle,DWORD nMaxLen) const
 	if (IsUnicodeSystem())
 	{
 		WCHAR szTitle[MAX_PATH],szPath[MAX_PATH];
-		StringCbCopyNW(szPath,MAX_PATH,strRoot,strRoot.GetLength());
-		StringCbCopyW(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fdw.cFileName);
+		if (StringCbCopyNW(szPath,MAX_PATH*2,strRoot,strRoot.GetLength()*2)!=S_OK)
+			return FALSE;
+		if (StringCbCopyW(szPath+strRoot.GetLength(),(MAX_PATH-strRoot.GetLength())*2,m_fdw.cFileName)!=S_OK)
+			return FALSE;
 		short ret=::GetFileTitleW(szPath,szTitle,MAX_PATH);
 		if (ret!=0)
 			return FALSE;
@@ -2392,8 +2407,11 @@ BOOL CFileFind::GetFileTitle(LPSTR szFileTitle,DWORD nMaxLen) const
 	else
 	{
 		CHAR szPath[MAX_PATH];
-		WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0);
-		StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName);
+		if (WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0)==0)
+			return FALSE;
+
+		if (StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName)!=S_OK)
+			return FALSE;
 		return ::GetFileTitle(szPath,szFileTitle,(WORD)min(nMaxLen,0xFFFF))==0;
 	}
 }
@@ -2472,8 +2490,10 @@ BOOL CFileFind::GetFileTitle(CStringW& title) const
 	if (IsUnicodeSystem())
 	{
 		WCHAR szPath[MAX_PATH];
-		StringCbCopyNW(szPath,MAX_PATH,strRoot,strRoot.GetLength());
-		StringCbCopyW(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fdw.cFileName);
+		if (StringCbCopyNW(szPath,MAX_PATH*2,strRoot,strRoot.GetLength()*2)!=S_OK)
+			return FALSE;
+		if (StringCbCopyW(szPath+strRoot.GetLength(),(MAX_PATH-strRoot.GetLength())*2,m_fdw.cFileName)!=S_OK)
+			return FALSE;
 		short ret=::GetFileTitleW(szPath,title.GetBuffer(),MAX_PATH);
 		if (ret==0)
 			title.FreeExtra();
@@ -2486,8 +2506,10 @@ BOOL CFileFind::GetFileTitle(CStringW& title) const
 	else
 	{
 		CHAR szPath[MAX_PATH],szTitle[MAX_PATH];
-		WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0);
-		StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-(int)strRoot.GetLength(),m_fd.cFileName);
+		if (WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0)==0)
+			return FALSE;
+		if (StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-(int)strRoot.GetLength(),m_fd.cFileName)!=S_OK)
+			return FALSE;
 		short ret=::GetFileTitle(szPath,szTitle,MAX_PATH);
 		
 		if (ret==0)
@@ -2509,15 +2531,19 @@ BOOL CFileFind::GetFileTitle(LPWSTR szFileTitle,DWORD nMaxLen) const
 	if (IsUnicodeSystem())
 	{
 		WCHAR szPath[MAX_PATH];
-		StringCbCopyNW(szPath,MAX_PATH,strRoot,strRoot.GetLength());
-		StringCbCopyW(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fdw.cFileName);
+		if (StringCbCopyNW(szPath,MAX_PATH*2,strRoot,strRoot.GetLength()*2)!=S_OK)
+			return FALSE;
+		if (StringCbCopyW(szPath+strRoot.GetLength(),(MAX_PATH-strRoot.GetLength())*2,m_fdw.cFileName)!=S_OK)
+			return FALSE;
 		return ::GetFileTitleW(szPath,szFileTitle,(WORD)min(nMaxLen,0xFFFF))==0;
 	}
 	else
 	{
 		CHAR szPath[MAX_PATH],szTitle[MAX_PATH];
-		WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0);
-		StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-(int)strRoot.GetLength(),m_fd.cFileName);
+		if (WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0)!=0)
+			return FALSE;
+		if (StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-(int)strRoot.GetLength(),m_fd.cFileName)!=S_OK)
+			return FALSE;
 		short ret=::GetFileTitle(szPath,szTitle,MAX_PATH);
 		if (ret!=0)
 			return FALSE;

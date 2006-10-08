@@ -35,6 +35,8 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_dwTooltipDelayAutopop(DWORD(-1)),
 	m_dwTooltipDelayInitial(DWORD(-1))
 {
+	AddFlags(PSH_NOAPPLYNOW|PSH_NOCONTEXTHELP);
+
 	m_pGeneral=new CGeneralSettingsPage;
 	m_pAdvanced=new CAdvancedSettingsPage;
 	m_pLanguage=new CLanguageSettingsPage;
@@ -58,8 +60,7 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 
 
 
-	m_psh.dwFlags|=PSH_NOAPPLYNOW|PSH_NOCONTEXTHELP;
-
+	
 	int nDeviceCaps;
 	{
 		// Getting device caps
@@ -154,7 +155,7 @@ BOOL CSettingsProperties::LoadSettings()
 	for (int i=0;i<rOrigDatabases.GetSize();i++)
 		m_aDatabases.Add(new CDatabase(*rOrigDatabases[i]));
 	
-	SetFlags(settingsDatabasesOverridden,
+	SetSettingsFlags(settingsDatabasesOverridden,
 		((CLocateApp*)GetApp())->GetStartupFlags()&CLocateApp::CStartData::startupDatabasesOverridden);
 	
 	
@@ -214,7 +215,7 @@ BOOL CSettingsProperties::LoadSettings()
 
 		// Overrinding explorer for opening folders
 		RegKey.QueryValue("Use other program to open folders",nTemp);
-		SetFlags(settingsUseOtherProgramsToOpenFolders,nTemp);
+		SetSettingsFlags(settingsUseOtherProgramsToOpenFolders,nTemp);
 		RegKey.QueryValue(L"Open folders with",m_OpenFoldersWith);
 
 		if (RegKey.QueryValue("Transparency",nTemp))
@@ -263,13 +264,13 @@ BOOL CSettingsProperties::LoadSettings()
 	if (m_strLangFile.IsEmpty())
 	{
 		m_strLangFile=L"lan_en.dll";
-		SetFlags(settingsUseLanguageWithConsoleApps);
+		SetSettingsFlags(settingsUseLanguageWithConsoleApps);
 	}
 	else if (RegKey.OpenKey(HKCU,"Software\\Update",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		CStringW tmp;
 		RegKey.QueryValue(L"Language",tmp);
-		SetFlags(settingsUseLanguageWithConsoleApps,tmp.CompareNoCase(m_strLangFile)==0);
+		SetSettingsFlags(settingsUseLanguageWithConsoleApps,tmp.CompareNoCase(m_strLangFile)==0);
 		RegKey.CloseKey();
 	}
 		
@@ -283,7 +284,7 @@ BOOL CSettingsProperties::LoadSettings()
 				Path << '\\';
 			Path<<L"Locate32 Autorun.lnk";
 			
-			SetFlags(settingsStartLocateAtStartup,FileSystem::IsFile(Path));
+			SetSettingsFlags(settingsStartLocateAtStartup,FileSystem::IsFile(Path));
 			
 		}
 	}
@@ -362,7 +363,7 @@ BOOL CSettingsProperties::SaveSettings()
 		RegKey.SetValue("Default Sorting",DWORD(m_bSorting));
 			
 		// Overrinding explorer for opening folders
-		RegKey.SetValue("Use other program to open folders",(DWORD)IsFlagSet(settingsUseOtherProgramsToOpenFolders));
+		RegKey.SetValue("Use other program to open folders",(DWORD)IsSettingsFlagSet(settingsUseOtherProgramsToOpenFolders));
 		RegKey.SetValue(L"Open folders with",m_OpenFoldersWith);
 
 		RegKey.SetValue("Transparency",m_nTransparency);
@@ -426,7 +427,7 @@ BOOL CSettingsProperties::SaveSettings()
 	
 	// Settings databases
 	CDatabase::CheckIDs(m_aDatabases);
-	if (!IsFlagSet(settingsDatabasesOverridden))
+	if (!IsSettingsFlagSet(settingsDatabasesOverridden))
 	{
 		GetLocateApp()->SetDatabases(m_aDatabases);
 		CDatabase::SaveToRegistry(HKCU,"Software\\Update\\Databases",GetLocateApp()->GetDatabases());
@@ -571,7 +572,7 @@ BOOL CSettingsProperties::SaveSettings()
 		if (RegKey.OpenKey(HKCU,"Software\\Update",
 				CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
-			if (IsFlagSet(settingsUseLanguageWithConsoleApps))
+			if (IsSettingsFlagSet(settingsUseLanguageWithConsoleApps))
 				RegKey.SetValue(L"Language",m_strLangFile);
 			else
 				RegKey.DeleteValue("Language");
@@ -589,7 +590,7 @@ BOOL CSettingsProperties::SaveSettings()
 				Path << L'\\';
 			Path<<L"Locate32 Autorun.lnk";
 			
-			if (IsFlagSet(settingsStartLocateAtStartup))
+			if (IsSettingsFlagSet(settingsStartLocateAtStartup))
 			{
 				if (!FileSystem::IsFile(Path))
 					CreateShortcut(Path,GetApp()->GetExeNameW(),L"",L" /S");
@@ -790,7 +791,7 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnApply()
 	}
 		
 	// Defaults
-	int nSel=SendDlgItemMessage(IDC_SORTING,CB_GETCURSEL);
+	int nSel=(int)SendDlgItemMessage(IDC_SORTING,CB_GETCURSEL);
 	if (nSel<=0)
 		m_pSettings->m_bSorting=BYTE(-1);
 	else
@@ -816,7 +817,7 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnApply()
 
 void CSettingsProperties::CGeneralSettingsPage::OnCancel()
 {
-	m_pSettings->SetFlags(CSettingsProperties::settingsCancelled);
+	m_pSettings->SetSettingsFlags(CSettingsProperties::settingsCancelled);
 	
 	CPropertyPage::OnCancel();
 }
@@ -1130,7 +1131,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 
 void CSettingsProperties::CAdvancedSettingsPage::OnCancel()
 {
-	m_pSettings->SetFlags(CSettingsProperties::settingsCancelled);
+	m_pSettings->SetSettingsFlags(CSettingsProperties::settingsCancelled);
 	COptionsPropertyPage::OnCancel();
 }
 
@@ -1543,7 +1544,7 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnInitDialog(HWND hwndFocus)
 	FindLanguages();
 	
 	CheckDlgButton(IDC_USEWITHCONSOLEAPPS,
-		m_pSettings->IsFlagSet(CSettingsProperties::settingsUseLanguageWithConsoleApps));
+		m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsUseLanguageWithConsoleApps));
 	return FALSE;
 }
 
@@ -1551,7 +1552,7 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnApply()
 {
 	CPropertyPage::OnApply();
 	
-    m_pSettings->SetFlags(settingsUseLanguageWithConsoleApps,IsDlgButtonChecked(IDC_USEWITHCONSOLEAPPS));
+    m_pSettings->SetSettingsFlags(settingsUseLanguageWithConsoleApps,IsDlgButtonChecked(IDC_USEWITHCONSOLEAPPS));
 
 	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
 	if (nItem!=-1)
@@ -1576,7 +1577,7 @@ void CSettingsProperties::CLanguageSettingsPage::OnDestroy()
 		
 void CSettingsProperties::CLanguageSettingsPage::OnCancel()
 {
-	m_pSettings->SetFlags(CSettingsProperties::settingsCancelled);
+	m_pSettings->SetSettingsFlags(CSettingsProperties::settingsCancelled);
 
 	CPropertyPage::OnCancel();
 }
@@ -1796,7 +1797,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnInitDialog(HWND hwndFocus)
 	SetDatabasesToList();
 
 
-	if (m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
+	if (m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
 	{
 		// Databases are overridden via command line parameters
 		// Disabling new button
@@ -1996,7 +1997,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnEdit()
 
 	CDatabaseDialog dbd;
 
-	if (m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
+	if (m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
 		dbd.m_bDontEditName=TRUE;
 
 	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
@@ -2207,7 +2208,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnRestore()
 	
 	
 	// Databases are not anymore overridden
-	m_pSettings->ClearFlags(CSettingsProperties::settingsDatabasesOverridden);
+	m_pSettings->ClearSettingsFlags(CSettingsProperties::settingsDatabasesOverridden);
 	
 	
 	// Setting databases to list
@@ -2403,13 +2404,13 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 	switch(pNm->hdr.code)
 	{
 	case LVN_ITEMCHANGING:
-		if (m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
+		if (m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
 			return TRUE;
 		return FALSE;
 	case LVN_ITEMCHANGED:
 		if (pNm->lParam!=NULL && (pNm->uNewState&0x00002000)!=(pNm->uOldState&0x00002000))
 		{
-			if (m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
+			if (m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
 			{
 				m_pList->SetCheckState(pNm->iItem,((CDatabase*)pNm->lParam)->IsEnabled());
 				m_pList->SetItemState(pNm->iItem,0,LVIS_SELECTED);
@@ -2445,7 +2446,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 			switch (pLvdi->item.iSubItem)
 			{
 			case 0:
-				if (!m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
+				if (!m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
 					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pDatabase->GetName());
 				else
 				{
@@ -2481,7 +2482,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 			switch (pLvdi->item.iSubItem)
 			{
 			case 0:
-				if (!m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
+				if (!m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
 					pLvdi->item.pszText=const_cast<LPWSTR>(pDatabase->GetName());
 				else
 				{
@@ -2555,7 +2556,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnApply()
 
 void CSettingsProperties::CDatabasesSettingsPage::OnCancel()
 {
-	m_pSettings->SetFlags(CSettingsProperties::settingsCancelled);
+	m_pSettings->SetSettingsFlags(CSettingsProperties::settingsCancelled);
 
 
 	CPropertyPage::OnCancel();
@@ -2700,7 +2701,7 @@ void CSettingsProperties::CDatabasesSettingsPage::EnableButtons()
 {
 	int nSelectedItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
 	
-	BOOL bEnable=nSelectedItem!=-1 && !m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden);
+	BOOL bEnable=nSelectedItem!=-1 && !m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsDatabasesOverridden);
 	
 	EnableDlgItem(IDC_EDIT,nSelectedItem!=-1);
 	EnableDlgItem(IDC_REMOVE,bEnable);
@@ -2708,7 +2709,7 @@ void CSettingsProperties::CDatabasesSettingsPage::EnableButtons()
 	
 	
 	EnableDlgItem(IDC_EXPORT,bEnable);
-	EnableDlgItem(IDC_IMPORT,!m_pSettings->IsFlagSet(CSettingsProperties::settingsDatabasesOverridden));
+	EnableDlgItem(IDC_IMPORT,!m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsDatabasesOverridden));
 	
 	if (bEnable)
 	{
@@ -3735,7 +3736,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::OnRemove()
 {
-	int nSel=SendDlgItemMessage(IDC_DIRECTORIES,LB_GETCURSEL);
+	int nSel=(int)SendDlgItemMessage(IDC_DIRECTORIES,LB_GETCURSEL);
 	if (nSel==LB_ERR)
 		return;
 
@@ -4015,7 +4016,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnApply()
 
 void CSettingsProperties::CAutoUpdateSettingsPage::OnCancel()
 {
-	m_pSettings->SetFlags(CSettingsProperties::settingsCancelled);
+	m_pSettings->SetSettingsFlags(CSettingsProperties::settingsCancelled);
 
 	CPropertyPage::OnCancel();
 }
@@ -5432,7 +5433,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnDestroy()
 		
 void CSettingsProperties::CKeyboardShortcutsPage::OnCancel()
 {
-	m_pSettings->SetFlags(CSettingsProperties::settingsCancelled);
+	m_pSettings->SetSettingsFlags(CSettingsProperties::settingsCancelled);
 
 	CPropertyPage::OnCancel();
 }
@@ -5967,7 +5968,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetShortcutKeyWhenVirtualKeyCh
 void CSettingsProperties::CKeyboardShortcutsPage::SetVirtualKeyWhenShortcutKeyChanged()
 {
 	
-	DWORD dwKey=SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_GETHOTKEY,0,0);
+	DWORD dwKey=(DWORD)SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_GETHOTKEY,0,0);
 
     if (dwKey==0)
 		return;
@@ -6022,7 +6023,7 @@ BYTE CSettingsProperties::CKeyboardShortcutsPage::GetVirtualCode(BOOL bScanCode)
 {
 	if (!bScanCode)
 	{
-		int nSel=SendDlgItemMessage(IDC_CODE,CB_GETCURSEL);
+		int nSel=(int)SendDlgItemMessage(IDC_CODE,CB_GETCURSEL);
 		if (nSel!=CB_ERR)
 			return m_pVirtualKeyNames[nSel].bKey;
 		

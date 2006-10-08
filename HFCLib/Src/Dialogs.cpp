@@ -346,6 +346,13 @@ CPropertySheet::~CPropertySheet()
 {
 	if (m_psh.phpage!=NULL)
 		delete[] m_psh.phpage;
+	if (m_psh.dwFlags&=PSH_USEICONID && !IS_INTRESOURCE(m_psh.pszIcon))
+	{
+		if (IsUnicodeSystem())
+			delete[] m_pshw.pszIcon;
+		else
+			delete[] m_psh.pszIcon;
+	}
 }
 
 void CPropertySheet::Construct(UINT nIDCaption,HWND hParentWnd,UINT iSelectPage)
@@ -369,6 +376,7 @@ void CPropertySheet::Construct(LPCSTR pszCaption,HWND hParentWnd,UINT iSelectPag
 		m_pshw.dwFlags=PSH_DEFAULT;
 		m_pshw.nStartPage=iSelectPage;
 		m_pshw.pfnCallback=NULL;
+		m_pshw.hInstance=GetCommonResourceHandle();
 	}
 	else
 	{
@@ -382,6 +390,7 @@ void CPropertySheet::Construct(LPCSTR pszCaption,HWND hParentWnd,UINT iSelectPag
 		m_psh.dwFlags=PSH_DEFAULT;
 		m_psh.nStartPage=iSelectPage;
 		m_psh.pfnCallback=NULL;
+		m_psh.hInstance=GetCommonResourceHandle();
 	}
 }
 
@@ -400,6 +409,7 @@ void CPropertySheet::Construct(LPCWSTR pszCaption,HWND hParentWnd,UINT iSelectPa
 		m_pshw.dwFlags=PSH_DEFAULT;
 		m_pshw.nStartPage=iSelectPage;
 		m_pshw.pfnCallback=NULL;
+		m_pshw.hInstance=GetCommonResourceHandle();
 	}
 	else
 	{
@@ -413,6 +423,7 @@ void CPropertySheet::Construct(LPCWSTR pszCaption,HWND hParentWnd,UINT iSelectPa
 		m_psh.dwFlags=PSH_DEFAULT;
 		m_psh.nStartPage=iSelectPage;
 		m_psh.pfnCallback=NULL;
+		m_psh.hInstance=GetCommonResourceHandle();
 	}
 }
 
@@ -505,6 +516,76 @@ void CPropertySheet::SetTitle(LPCSTR lpszText,UINT nStyle)
 	}
 }
 
+void CPropertySheet::SetIcon(HICON hIcon)
+{
+	if (m_psh.dwFlags&PSH_USEICONID && !IS_INTRESOURCE(m_psh.pszIcon))
+	{
+		if (IsUnicodeSystem())
+			delete[] m_pshw.pszIcon;
+		else
+			delete[] m_psh.pszIcon;
+		
+	}
+
+	m_psh.dwFlags&=~PSH_USEICONID;
+	m_psh.dwFlags|=PSH_USEHICON;
+	m_psh.hIcon=hIcon;
+}
+
+void CPropertySheet::SetIcon(LPCSTR szIcon)
+{
+	if (m_psh.dwFlags&PSH_USEICONID && !IS_INTRESOURCE(m_psh.pszIcon))
+	{
+		if (IsUnicodeSystem())
+			delete[] m_pshw.pszIcon;
+		else
+			delete[] m_psh.pszIcon;
+	}
+	else
+		m_psh.dwFlags&=~PSH_USEHICON;
+	
+	m_psh.dwFlags|=PSH_USEICONID;
+	if (IsUnicodeSystem())
+		m_pshw.pszIcon=alloccopyAtoW(szIcon);
+	else
+		m_psh.pszIcon=alloccopy(szIcon);
+}
+
+void CPropertySheet::SetIcon(LPCWSTR szIcon)
+{
+	if (m_psh.dwFlags&PSH_USEICONID && !IS_INTRESOURCE(m_psh.pszIcon))
+	{
+		if (IsUnicodeSystem())
+			delete[] m_pshw.pszIcon;
+		else
+			delete[] m_psh.pszIcon;
+	}
+	else
+		m_psh.dwFlags&=~PSH_USEHICON;
+	
+	m_psh.dwFlags|=PSH_USEICONID;
+	if (IsUnicodeSystem())
+		m_pshw.pszIcon=alloccopy(szIcon);
+	else
+		m_psh.pszIcon=alloccopyWtoA(szIcon);
+}
+
+void CPropertySheet::SetIcon(int nIcon)
+{
+	if (m_psh.dwFlags&PSH_USEICONID && !IS_INTRESOURCE(m_psh.pszIcon))
+	{
+		if (IsUnicodeSystem())
+			delete[] m_pshw.pszIcon;
+		else
+			delete[] m_psh.pszIcon;
+	}
+	else
+		m_psh.dwFlags&=~PSH_USEHICON;
+	
+	m_psh.dwFlags|=PSH_USEICONID;
+	m_psh.pszIcon=MAKEINTRESOURCE(nIcon);
+}
+
 void CPropertySheet::SetTitle(LPCWSTR lpszText,UINT nStyle)
 {
 	if (IsUnicodeSystem())
@@ -582,9 +663,9 @@ void CPropertySheet::BuildPropPageArray()
 		for (int i=0;i<m_pages.GetSize();i++)
 		{
 			CPropertyPage* pPage=(CPropertyPage*)m_pages.GetAt(i);
-			m_psh.phpage[i]=CreatePropertySheetPageW(&pPage->m_pspw);
+			m_pshw.phpage[i]=CreatePropertySheetPageW(&pPage->m_pspw);
 		}
-		m_psh.nPages=m_pages.GetSize();
+		m_pshw.nPages=m_pages.GetSize();
 	}
 	else
 	{

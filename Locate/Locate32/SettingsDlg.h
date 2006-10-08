@@ -20,10 +20,10 @@ public:
 	BOOL SaveSettings();
 	CList<CSchedule*>* GetSchedules() { return &m_Schedules; }
 
-	void SetFlags(DWORD dwFlags,BOOL bState);
-	void SetFlags(DWORD dwFlags);
-	void ClearFlags(DWORD dwFlags);
-	BOOL IsFlagSet(DWORD dwFlags);
+	void SetSettingsFlags(DWORD dwFlags,BOOL bState);
+	void SetSettingsFlags(DWORD dwFlags);
+	void ClearSettingsFlags(DWORD dwFlags);
+	BOOL IsSettingsFlagSet(DWORD dwFlags);
 	BOOL IsAllFlagsSet(DWORD dwFlags);
     
 public:

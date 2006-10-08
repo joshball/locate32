@@ -956,12 +956,12 @@ void CSelectDatabasesDlg::OnOK()
 
 void CSelectDatabasesDlg::OnDeletePreset()
 {
-	int nCurSel=SendDlgItemMessage(IDC_PRESETS,CB_GETCURSEL);
+	int nCurSel=(int)SendDlgItemMessage(IDC_PRESETS,CB_GETCURSEL);
 	if (nCurSel==CB_ERR)
 		return;
 	
 	
-	int nTextLen=SendDlgItemMessage(IDC_PRESETS,CB_GETLBTEXTLEN,nCurSel);
+	int nTextLen=(int)SendDlgItemMessage(IDC_PRESETS,CB_GETLBTEXTLEN,nCurSel);
 	if (nTextLen==CB_ERR)
 		return;
 	char* pText=new char[nTextLen+1];
@@ -1051,7 +1051,7 @@ void CSelectDatabasesDlg::OnThreads()
 
 void CSelectDatabasesDlg::OnPresetCombo()
 {
-	int nCurSel=SendDlgItemMessage(IDC_PRESETS,CB_GETCURSEL);
+	int nCurSel=(int)SendDlgItemMessage(IDC_PRESETS,CB_GETCURSEL);
 	if (nCurSel==CB_ERR)
 		return;
 
@@ -2189,7 +2189,7 @@ BOOL CLocateDlg::CRemovePresetDlg::OnClose()
 
 void CLocateDlg::CRemovePresetDlg::OnOK()
 {
-	int nSelection=SendDlgItemMessage(IDC_PRESETS,CB_GETCURSEL);
+	int nSelection=(int)SendDlgItemMessage(IDC_PRESETS,CB_GETCURSEL);
 	if (nSelection==CB_ERR)
 		return;
 

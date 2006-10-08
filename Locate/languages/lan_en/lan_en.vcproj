@@ -183,8 +183,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(PlatformName) - $(ConfigurationName)\bin"
-			IntermediateDirectory="$(SolutionDir)$(PlatformName) - $(ConfigurationName)\$(ProjectName)"
+			OutputDirectory="C:\My Documents\Programming\C\Locate\$(PlatformName) - $(ConfigurationName)\bin"
+			IntermediateDirectory="C:\My Documents\Programming\C\Locate\$(PlatformName) - $(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -267,8 +267,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName) - $(ConfigurationName)\bin"
-			IntermediateDirectory="$(SolutionDir)$(PlatformName) - $(ConfigurationName)\$(ProjectName)"
+			OutputDirectory="C:\My Documents\Programming\C\Locate\$(PlatformName) - $(ConfigurationName)\bin"
+			IntermediateDirectory="C:\My Documents\Programming\C\Locate\$(PlatformName) - $(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"

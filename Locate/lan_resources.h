@@ -480,7 +480,6 @@
 #define IDC_SELECTALLKEY                1200
 #define IDC_LEFT                        1200
 #define IDC_CODE                        1200
-#define IDC_DELETEKEY                   1201
 #define IDC_CENTER                      1201
 #define IDC_FILESANDDIRECTORIES         1201
 #define IDC_IMPORT                      1202
@@ -1002,6 +1001,7 @@
 #define IDM_CLOSE                       40001
 #define IDM_CREATESHORTCUT              40002
 #define IDM_DELETE                      40003
+#define IDM_RENAME                      40004
 #define IDM_OPENCONTAININGFOLDER        40005
 #define IDM_PROPERTIES                  40007
 #define IDM_ABOUT                       40008

@@ -622,7 +622,10 @@ BOOL CListCtrlEx::GetColumn(int nCol, LV_COLUMNW* pColumn) const
 					pColumn->cchTextMax,aColumns[nCol]->bResourceType);
 			}
 			else
-				StringCbCopyW(pColumn->pszText,pColumn->cchTextMax,aColumns[nCol]->pStrTitle);
+			{
+				if (StringCbCopyW(pColumn->pszText,pColumn->cchTextMax*2,aColumns[nCol]->pStrTitle)!=S_OK)
+					return FALSE;
+			}
 		}
 		return TRUE;
 	}

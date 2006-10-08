@@ -12,7 +12,7 @@
 
 
 
-inline BOOL CSettingsProperties::IsFlagSet(DWORD dwFlags)
+inline BOOL CSettingsProperties::IsSettingsFlagSet(DWORD dwFlags)
 {
 	return (m_dwSettingsFlags&dwFlags)?TRUE:FALSE;
 }
@@ -22,7 +22,7 @@ inline BOOL CSettingsProperties::IsAllFlagsSet(DWORD dwFlags)
 	return (m_dwSettingsFlags&dwFlags)==dwFlags?TRUE:FALSE;
 }
 
-inline void CSettingsProperties::SetFlags(DWORD dwFlags,BOOL bState)
+inline void CSettingsProperties::SetSettingsFlags(DWORD dwFlags,BOOL bState)
 {
 	if (bState)
 		m_dwSettingsFlags|=dwFlags;
@@ -30,12 +30,12 @@ inline void CSettingsProperties::SetFlags(DWORD dwFlags,BOOL bState)
 		m_dwSettingsFlags&=~dwFlags;
 }
 
-inline void CSettingsProperties::SetFlags(DWORD dwFlags)
+inline void CSettingsProperties::SetSettingsFlags(DWORD dwFlags)
 {
 	m_dwSettingsFlags|=dwFlags;
 }
 
-inline void CSettingsProperties::ClearFlags(DWORD dwFlags)
+inline void CSettingsProperties::ClearSettingsFlags(DWORD dwFlags)
 {
 	m_dwSettingsFlags&=~dwFlags;
 }

@@ -80,7 +80,10 @@ CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
 DWORD CSchedule::GetDataLen() const
 {
 	if (m_pDatabases==NULL)
+	{
+		DebugFormatMessage("GetDataLen returns SCHEDULE_V34_LEN+1=%d",SCHEDULE_V34_LEN+1);
 		return SCHEDULE_V34_LEN+1;
+	}
     	
 	DWORD dwLength=SCHEDULE_V34_LEN+1;
 	LPWSTR pPtr=m_pDatabases;
@@ -90,23 +93,34 @@ DWORD CSchedule::GetDataLen() const
 		dwLength+=iStrLen;
 		pPtr+=iStrLen;
 	}
+	DebugFormatMessage("GetDataLen returns %d",dwLength);
 	return dwLength;
 }
 
 DWORD CSchedule::GetData(BYTE* pData) const
 {
+	//DebugMessage("CSchedule::GetData BEGIN");
+
 	CopyMemory(pData,this,SCHEDULE_V1_LEN);
 	pData+=SCHEDULE_V1_LEN;
 
+	//DebugMessage("1");
+
 	*((DWORD*)pData)=m_pDatabases!=NULL;
 	pData+=sizeof(DWORD);
+	
+	//DebugMessage("2");
 
 	*((DWORD*)pData)=m_nThreadPriority;
 	pData+=sizeof(DWORD);
 
+	//DebugMessage("3");
+
 	DWORD dwLength=SCHEDULE_V34_LEN+1;	
 	if (m_pDatabases!=NULL)
 	{
+		//DebugMessage("4");
+
 		LPWSTR pPtr=m_pDatabases;
 		while (*pPtr!='\0')
 		{
@@ -117,7 +131,12 @@ DWORD CSchedule::GetData(BYTE* pData) const
 			pData+=iStrLen;
 		}
 	}
+
+	//DebugMessage("5");
+
     *pData='\0';
+
+	//DebugFormatMessage("CSchedule::GetData END dwLength=%d",dwLength);
 	return dwLength;
 }
 

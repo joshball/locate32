@@ -123,6 +123,15 @@ public:
 	void SetFinishText(LPCWSTR lpszText);
 	void SetWizardButtons(DWORD dwFlags);
 
+	void SetIcon(LPCSTR szIcon);
+	void SetIcon(LPCWSTR szIcon);
+	void SetIcon(int nIcon);
+	void SetIcon(HICON hIcon);
+
+	DWORD GetFlags() const { return m_psh.dwFlags; }
+	void AddFlags(DWORD dwAdd) { m_psh.dwFlags|=dwAdd; }
+	void RemoveFlags(DWORD dwRemove) { m_psh.dwFlags&=~dwRemove; }
+	
 public:
 	virtual INT_PTR DoModal();
 	void AddPage(CPropertyPage* pPage);
@@ -883,6 +892,7 @@ inline void CPropertySheet::SetWizardButtons(DWORD dwFlags)
 	::SendMessage(m_hWnd,PSM_SETWIZBUTTONS,0,(LPARAM)dwFlags);
 }
 
+
 ///////////////////////////
 // Class CFileDialog
 
@@ -994,9 +1004,9 @@ inline void CFileDialog::SetTitle(LPCSTR pTitle)
 inline void CFileDialog::SetFileTitle(LPCWSTR pFileTitle)
 {
 	if (IsUnicodeSystem())	
-		StringCbCopyW(m_pwofn->lpstrFileTitle,64,pFileTitle);
+		StringCbCopyW(m_pwofn->lpstrFileTitle,64*2,pFileTitle);
 	else
-		WideCharToMultiByte(CP_ACP,0,pFileTitle,-1,m_pofn->lpstrFileTitle,64,NULL,NULL);
+		WideCharToMultiByte(CP_ACP,0,pFileTitle,-1,m_pofn->lpstrFileTitle,64*2,NULL,NULL);
 	
 }
 
