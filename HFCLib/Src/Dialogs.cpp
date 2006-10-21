@@ -3124,17 +3124,14 @@ BOOL COptionsPropertyPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 
 BOOL COptionsPropertyPage::OnApply()
 {
-	DebugMessage("COptionsPropertyPage::OnApply() BEGIN");
 	CPropertyPage::OnApply();
 	if (m_pItems!=NULL)
 		CallApply(m_pItems);
-	DebugMessage("COptionsPropertyPage::OnApply() END");
 	return TRUE;
 }
 
 void COptionsPropertyPage::CallApply(Item** pItems)
 {
-	DebugMessage("COptionsPropertyPage::CallApply() BEGIN");
 	COMBOAPPLYPARAMS bp;
 	bp.pPage=this;
 	bp.crReason=BASICPARAMS::Apply;
@@ -3154,12 +3151,10 @@ void COptionsPropertyPage::CallApply(Item** pItems)
 				CallApply(pItems[i]->pChilds);
 		}
 	}
-	DebugMessage("COptionsPropertyPage::CallApply() END");
 }
 
 void COptionsPropertyPage::OnDestroy()
 {
-	DebugMessage("COptionsPropertyPage::OnDestroy() BEGIN");
 	CPropertyPage::OnDestroy();
 
 	if (m_pItems!=NULL)
@@ -3174,7 +3169,6 @@ void COptionsPropertyPage::OnDestroy()
 		delete m_pTree;
 		m_pTree=NULL;
 	}
-	DebugMessage("COptionsPropertyPage::OnDestroy() END");
 }
 
 	
@@ -3328,7 +3322,6 @@ LRESULT COptionsPropertyPage::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 
 BOOL COptionsPropertyPage::OnNotify(int idCtrl,LPNMHDR pnmh)
 {
-	DebugFormatMessage("COptionsPropertyPage::OnNotify(%d,%X) BEGIN",idCtrl,pnmh);
 	if (idCtrl==m_nTreeID)
 	{
 		CPropertyPage::OnNotify(idCtrl,pnmh);
@@ -3337,7 +3330,6 @@ BOOL COptionsPropertyPage::OnNotify(int idCtrl,LPNMHDR pnmh)
 			SetWindowLong(dwlMsgResult,bRet);
 		return bRet;
 	}			
-	DebugMessage("COptionsPropertyPage::OnNotify) END");
 	return CPropertyPage::OnNotify(idCtrl,pnmh);
 }
 
@@ -3952,7 +3944,6 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 // wParam is used mask
 BOOL CALLBACK COptionsPropertyPage::DefaultCheckBoxProc(COptionsPropertyPage::BASICPARAMS* pParams)
 {
-	DebugMessage("DefaultCheckBoxProc");
 	switch (pParams->crReason)
 	{
 	case BASICPARAMS::Initialize:
@@ -3978,7 +3969,6 @@ BOOL CALLBACK COptionsPropertyPage::DefaultCheckBoxProc(COptionsPropertyPage::BA
 // HIWORD of wParam is mask to be setted, LOWORD is value
 BOOL CALLBACK COptionsPropertyPage::DefaultRadioBoxProc(COptionsPropertyPage::BASICPARAMS* pParams)
 {
-	DebugMessage("DefaultRadioBoxProc");
 	switch (pParams->crReason)
 	{
 	case BASICPARAMS::Initialize:
@@ -4013,7 +4003,6 @@ BOOL CALLBACK COptionsPropertyPage::DefaultRadioBoxProc(COptionsPropertyPage::BA
 // HIWORD of wParam is mask (shifted 16 bits) to be setted, LOWORD is value (shifted 16 bit)
 BOOL CALLBACK COptionsPropertyPage::DefaultRadioBoxShiftProc(COptionsPropertyPage::BASICPARAMS* pParams)
 {
-	DebugMessage("DefaultRadioBoxShiftProc");
 	switch (pParams->crReason)
 	{
 	case BASICPARAMS::Initialize:
@@ -4047,7 +4036,6 @@ BOOL CALLBACK COptionsPropertyPage::DefaultRadioBoxShiftProc(COptionsPropertyPag
 // otherwise HIWORD is maximum, LOWORD is minimum
 BOOL CALLBACK COptionsPropertyPage::DefaultNumericProc(COptionsPropertyPage::BASICPARAMS* pParams)
 {
-	DebugMessage("DefaultNumericProc");
 	switch (pParams->crReason)
 	{
 	case BASICPARAMS::Initialize:
@@ -4113,7 +4101,6 @@ BOOL CALLBACK COptionsPropertyPage::DefaultNumericProc(COptionsPropertyPage::BAS
 // lParam is pointer to string class which will be set
 BOOL CALLBACK COptionsPropertyPage::DefaultEditStrProc(BASICPARAMS* pParams)
 {
-	DebugMessage("DefaultEditStrProc");
 	switch(pParams->crReason)
 	{
 	case BASICPARAMS::Initialize:
@@ -4139,7 +4126,6 @@ BOOL CALLBACK COptionsPropertyPage::DefaultEditStrProc(BASICPARAMS* pParams)
 // lParam is pointer to CStringW which will be set
 BOOL CALLBACK COptionsPropertyPage::DefaultEditStrWProc(BASICPARAMS* pParams)
 {
-	DebugMessage("DefaultEditStrWProc");
 	switch(pParams->crReason)
 	{
 	case BASICPARAMS::Initialize:
@@ -4165,7 +4151,6 @@ BOOL CALLBACK COptionsPropertyPage::DefaultEditStrWProc(BASICPARAMS* pParams)
 // lParam is pointer to LOGFONT strcut
 BOOL CALLBACK COptionsPropertyPage::DefaultFontProc(BASICPARAMS* pParams)
 {
-	DebugMessage("DefaultFontProc");
 	switch(pParams->crReason)
 	{
 	case BASICPARAMS::Initialize:
@@ -4189,7 +4174,6 @@ BOOL CALLBACK COptionsPropertyPage::DefaultFontProc(BASICPARAMS* pParams)
 // lParam is pointer to COLORREF
 BOOL CALLBACK COptionsPropertyPage::DefaultColorProc(BASICPARAMS* pParams)
 {
-	DebugMessage("DefaultColorProc");
 	switch(pParams->crReason)
 	{
 	case BASICPARAMS::Initialize:

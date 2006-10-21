@@ -3613,7 +3613,8 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 		break;
 	case ID_RUNSTARTUPSCHEDULES:
 		KillTimer(ID_RUNSTARTUPSCHEDULES);
-		RunStartupSchedules();
+		if (RunStartupSchedules())
+			SetTimer(ID_RUNSTARTUPSCHEDULES,1000);
 		break;
 	default:
 		if (int(wTimerID)>=ID_SHORTCUTACTIONTIMER)
@@ -3915,11 +3916,8 @@ void CLocateAppWnd::CheckSchedules()
 		SaveSchedules();
 }
 
-void CLocateAppWnd::RunStartupSchedules()
+BOOL CLocateAppWnd::RunStartupSchedules()
 {
-	if (GetLocateApp()->IsUpdating())
-		return;
-	
 	CSchedule::STIME tCurTime;
 	CSchedule::SDATE tCurDate;
 	
@@ -3927,6 +3925,7 @@ void CLocateAppWnd::RunStartupSchedules()
 	UINT nDayOfWeek;
 	CSchedule::GetCurrentDateAndTime(&tCurDate,&tCurTime,&nDayOfWeek);
 	BOOL bSchedulesChanged=FALSE;	
+	BOOL bShouldBeCalledAgain=FALSE;
 
 	POSITION pPos=m_Schedules.GetHeadPosition();
 	while (pPos!=NULL)
@@ -3937,29 +3936,49 @@ void CLocateAppWnd::RunStartupSchedules()
 			if (pSchedule->m_nType==CSchedule::typeAtStartup && 
 				pSchedule->m_bFlags&CSchedule::flagEnabled)
 			{
-				bSchedulesChanged=TRUE;
-				
-				sMemCopy(&pSchedule->m_tLastStartDate,&tCurDate,sizeof(CSchedule::SDATE));
-				sMemCopy(&pSchedule->m_tLastStartTime,&tCurTime,sizeof(CSchedule::STIME));
-				
-				pSchedule->m_bFlags|=CSchedule::flagRunned;
-								
-				OnUpdate(FALSE,pSchedule->m_pDatabases,pSchedule->m_nThreadPriority);
-				
-				if (pSchedule->m_bFlags&CSchedule::flagDeleteAfterRun)
+				BOOL bRun=TRUE;
+				if (pSchedule->m_wCpuUsageTheshold!=WORD(-1))
 				{
-					POSITION pTmp=m_Schedules.GetNextPosition(pPos);
-					delete pSchedule;
-					m_Schedules.RemoveAt(pPos);
-					pPos=pTmp;
-					continue;
+					ASSERT(m_pCpuUsage!=NULL);
+
+					if (m_pCpuUsage->GetCpuUsage()>pSchedule->m_wCpuUsageTheshold)
+						bRun=FALSE;
 				}
+				if (GetLocateApp()->IsUpdating())
+					bRun=FALSE;
+
+				if (bRun)
+				{
+
+					bSchedulesChanged=TRUE;
+					
+					sMemCopy(&pSchedule->m_tLastStartDate,&tCurDate,sizeof(CSchedule::SDATE));
+					sMemCopy(&pSchedule->m_tLastStartTime,&tCurTime,sizeof(CSchedule::STIME));
+					
+					pSchedule->m_bFlags|=CSchedule::flagRunned;
+									
+					OnUpdate(FALSE,pSchedule->m_pDatabases,pSchedule->m_nThreadPriority);
+					
+					if (pSchedule->m_bFlags&CSchedule::flagDeleteAfterRun)
+					{
+						POSITION pTmp=m_Schedules.GetNextPosition(pPos);
+						delete pSchedule;
+						m_Schedules.RemoveAt(pPos);
+						pPos=pTmp;
+						continue;
+					}
+				}
+				else
+					bShouldBeCalledAgain=TRUE;
 			}
 		}
 		pPos=m_Schedules.GetNextPosition(pPos);
 	}
+
 	if (bSchedulesChanged)
 		SaveSchedules();
+
+	return bShouldBeCalledAgain;
 }
 
 ////////////////////////////

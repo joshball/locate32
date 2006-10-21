@@ -219,6 +219,7 @@ public:
 	public:
 			
 		CNameDlg();
+		virtual ~CNameDlg();
 		
 		virtual BOOL OnInitDialog(HWND hwndFocus);
 		virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
@@ -226,6 +227,10 @@ public:
 		virtual void OnSize(UINT nType, int cx, int cy);	
 		
 	public:
+		BOOL InitDriveBox(BYTE nFirstTime=FALSE);
+		void ChangeNumberOfItemsInLists(int iNumberOfNames,int iNumberOfTypes,int iNumberOfDirectories);
+		
+	private:
 		BOOL OnOk(CStringW& sName,CArray<LPWSTR>& aExtensions,CArrayFAP<LPWSTR>& aDirectories);
 		void OnClear(BOOL bInitial=FALSE);
 
@@ -243,9 +248,7 @@ public:
 		BOOL SetPath(LPCWSTR szPath);
 
 		void EnableItems(BOOL bEnable=TRUE);
-		BOOL InitDriveBox(BYTE nFirstTime=FALSE);
 		void SetStartData(const CLocateApp::CStartData* pStartData);
-		void ChangeNumberOfItemsInLists(int iNumberOfNames,int iNumberOfTypes,int iNumberOfDirectories);
 		
 		BOOL EnableMultiDirectorySupport(BOOL bEnable);
 		BOOL SelectByLParam(LPARAM lParam);
@@ -275,10 +278,8 @@ public:
 		void SaveRegistry() const;
 		void LoadRegistry();
 
-	public:
-		CStringW* m_pBrowse;
-		DWORD m_nMaxBrowse;
 
+	private:
 		WORD m_nFieldLeft;
 		WORD m_nButtonWidth;
 		WORD m_nCheckWidth;
@@ -289,6 +290,14 @@ public:
 		DWORD m_nMaxNamesInList;
 		DWORD m_nMaxTypesInList;
 
+	private:
+		DWORD m_nMaxBrowse;
+		CStringW* m_pBrowse;
+		mutable CRITICAL_SECTION m_cBrowse;
+
+		DirSelection** m_pMultiDirs;
+		
+
 #ifdef _DEBUG
 	public:
 		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
@@ -296,13 +305,13 @@ public:
 		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
 #endif
 
-	
-		DirSelection** m_pMultiDirs;
-
+	public:
+		
 		CComboBox m_Name;
 		CComboBox m_Type;
 		CComboBoxEx m_LookIn;
-	
+
+		friend CLocateDlg;
 
 	};
 
@@ -742,6 +751,17 @@ public:
 
 	// Another 32 set for settings
 	enum LocateDialogExtraFlags {
+		// List view (continued)
+		efLVDontShowDeletedFiles = 0x10000000,
+		efLVDefault = 0x0,
+		efLVSave = 0x10000000,
+
+		// Name dialog
+		efNameDontSaveNetworkDrivesAndDirectories =  0x00010000,
+		
+		efNameDefault = 0,
+		efNameSave = 0x000F0000,
+
 		// Background operations
 		efDisableItemUpdating = 0x00,
         efEnableItemUpdating = 0x01,
@@ -757,8 +777,8 @@ public:
 		efBackgroundDefault = efEnableItemUpdating|efEnableFSTracking,
 		efBackgroundSave = efItemUpdatingSave|efTrackingSave,
 
-		efDefault = efBackgroundDefault,
-		efSave = efBackgroundSave
+		efDefault = efLVDefault|efNameDefault|efBackgroundDefault,
+		efSave = efLVSave|efNameSave|efBackgroundSave
 	};
 
 

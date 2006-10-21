@@ -21,7 +21,7 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 		switch (nArchiveType)
 		{
 		case CDatabase::archiveFile:
-			dbFile=new CFile(szArchivePath,CFile::defRead,TRUE);
+			dbFile=new CFile(szArchivePath,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
 			break;
 		default:
 			throw CFileException(CFileException::notImplemented,-1,szArchivePath);
@@ -260,7 +260,7 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 		switch (pDatabase->GetArchiveType())
 		{
 		case CDatabase::archiveFile:
-			dbFile=new CFile(pDatabase->GetArchiveName(),CFile::defRead,TRUE);
+			dbFile=new CFile(pDatabase->GetArchiveName(),CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
 			break;
 		default:
 			throw CFileException(CFileException::notImplemented,
@@ -306,6 +306,8 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 				// Reading type and path
 				dbFile->Read(bPathLen);
 				dbFile->Read(Path);
+					
+				
 				aRoots.Add(alloccopy(Path,Path.GetLength()));
 							
 				dbFile->Seek(dwBlockSize-1-DWORD((Path.GetLength()+1)*2),
@@ -325,6 +327,7 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 				// Reading type and path
 				dbFile->Read(bPathLen);
 				dbFile->Read(Path);
+
 				aRoots.Add(alloccopyAtoW(Path,Path.GetLength()));
 							
 				dbFile->Seek(dwBlockSize-1-DWORD((Path.GetLength()+1)),
@@ -400,7 +403,7 @@ BOOL CDatabaseInfo::ReadFilesAndDirectoriesCount(CDatabase::ArchiveType nArchive
 		switch (nArchiveType)
 		{
 		case CDatabase::archiveFile:
-			dbFile=new CFile(szArchive,CFile::defRead,TRUE);
+			dbFile=new CFile(szArchive,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
 			dbFile->CloseOnDelete();
 			break;
 		default:

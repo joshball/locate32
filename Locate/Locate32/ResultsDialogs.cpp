@@ -120,7 +120,7 @@ BOOL CResults::SaveToHtmlFile(LPCSTR szFile) const
 {
 	// Opening files
 	CFile outFile(szFile,CFile::defWrite,TRUE);
-	CFile tmpFile(m_sTempFile,CFile::defRead,TRUE);
+	CFile tmpFile(m_sTempFile,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
 
 	outFile.CloseOnDelete();
 	tmpFile.CloseOnDelete();
@@ -348,7 +348,7 @@ BOOL CResults::SaveToFile(LPCSTR szFile) const
 {
 	// Opening files
 	CFile outFile(szFile,CFile::defWrite,TRUE);
-	CFile tmpFile(m_sTempFile,CFile::defRead,TRUE);
+	CFile tmpFile(m_sTempFile,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
 
 	outFile.CloseOnDelete();
 	tmpFile.CloseOnDelete();

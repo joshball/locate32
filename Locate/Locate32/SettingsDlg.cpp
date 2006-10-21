@@ -954,6 +954,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CSettingsProperties::settingsSetTooltipDelays,&m_pSettings->m_dwSettingsFlags),
 		CreateCheckBox(IDS_ADVSETDONTSHOWHIDDENFILES,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLVDontShowHiddenFiles,&m_pSettings->m_dwLocateDialogFlags),
+		CreateCheckBox(IDS_ADVSETDONTSHOWDELETEDFILES,NULL,DefaultCheckBoxProc,
+			CLocateDlg::efLVDontShowDeletedFiles,&m_pSettings->m_dwLocateDialogExtraFlags),
 		CreateCheckBox(IDS_ADVSETNODOUBLERESULTS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLVNoDoubleItems,&m_pSettings->m_dwLocateDialogFlags),
 		CreateCheckBox(IDS_ADVSETFOLDERSFIRST,NULL,DefaultCheckBoxProc,
@@ -1041,6 +1043,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	Item* LookInItems[]={
 		CreateNumeric(IDS_ADVSETNUMBEROFDIRECTORIES,DefaultNumericProc,
 			MAKELONG(0,100),&m_pSettings->m_nNumberOfDirectories),
+		CreateCheckBox(IDS_ADVSETDONTSAVENETWORKDRIVES,NULL,DefaultCheckBoxProc,
+			CLocateDlg::efNameDontSaveNetworkDrivesAndDirectories,&m_pSettings->m_dwLocateDialogExtraFlags),
 		CreateRadioBox(IDS_ADVSETADDSELECTEDROOTS,NULL,DefaultRadioBoxShiftProc,
 			MAKELONG(CLocateDlg::fgNameAddEnabledRoots>>16,CLocateDlg::fgNameRootFlag>>16),&m_pSettings->m_dwLocateDialogFlags),
 		CreateRadioBox(IDS_ADVSETADDALLROOTS,NULL,DefaultRadioBoxShiftProc,
@@ -1113,6 +1117,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			DefaultCheckBoxProc,CLocateApp::pfTrayIconClickActivate,&m_pSettings->m_dwProgramFlags),
 		CreateCheckBox(IDS_ADVSETCUSTOMTRAYICON,SystemTrayIconItems,DefaultCheckBoxProc,
 			CSettingsProperties::settingsCustomUseTrayIcon,&m_pSettings->m_dwSettingsFlags),
+		CreateCheckBox(IDS_ADVSETUSEDEFDIRECTORYICON,NULL,DefaultCheckBoxProc,
+			CLocateApp::pfUseDefaultIconForDirectories,&m_pSettings->m_dwProgramFlags),
 		NULL
 	};
 
@@ -2292,7 +2298,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 		try {
 			CString Path;
 			fd.GetFilePath(Path);
-			pFile=new CFile(Path,CFile::defRead,TRUE);
+			pFile=new CFile(Path,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
 			pFile->CloseOnDelete();
 
 			DWORD dwLength=pFile->GetLength();
@@ -3340,11 +3346,17 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	}
 
 	// Resolving icon,
-	SHFILEINFOW fi;
-	if (GetFileInfo(szDrive,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
-		li.iImage=fi.iIcon;
+	if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfUseDefaultIconForDirectories &&
+		FileSystem::GetDriveType(szDrive)==DRIVE_REMOTE)
+		li.iImage=DIR_IMAGE;
 	else
-		li.iImage=DEL_IMAGE;
+	{
+		SHFILEINFOW fi;
+		if (GetFileInfo(szDrive,0,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+			li.iImage=fi.iIcon;
+		else
+			li.iImage=DEL_IMAGE;
+	}
 	// Label
 	li.iSubItem=0;
 	li.mask=LVIF_TEXT|LVIF_IMAGE;
@@ -3477,18 +3489,27 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 	li.mask=LVIF_TEXT|LVIF_IMAGE;
 	li.iSubItem=0;
 		
-	SHFILEINFOW fi;
-    if (GetFileInfo(szPath,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+	// Resolving icon,
+	if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfUseDefaultIconForDirectories)
 	{
-		// Label
-		li.iImage=fi.iIcon;
-		li.pszText=fi.szDisplayName;
+		li.iImage=DIR_IMAGE;
+		li.pszText=const_cast<LPWSTR>(szPath+LastCharIndex(szPath,L'\\')+1);
 	}
 	else
 	{
-		// Label
-		li.iImage=DEL_IMAGE;
-		li.pszText=const_cast<LPWSTR>(szwEmpty);
+		SHFILEINFOW fi;
+		if (GetFileInfo(szPath,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+		{
+			// Label
+			li.iImage=fi.iIcon;
+			li.pszText=fi.szDisplayName;
+		}
+		else
+		{
+			// Label
+			li.iImage=DEL_IMAGE;
+			li.pszText=const_cast<LPWSTR>(szwEmpty);
+		}
 	}
 	m_pList->InsertItem(&li);
 
@@ -3549,18 +3570,28 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToL
 	LVITEMW li;
 	li.iItem=m_pList->GetItemCount();
 
-	// Resolving icon,
-	SHFILEINFOW fi;
-	if (GetFileInfo(szName,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
-		li.iImage=fi.iIcon;
-	else
-		return -1;
-
 	// Setting data
 	// Label
+	if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfUseDefaultIconForDirectories)
+	{
+		li.iImage=DIR_IMAGE;
+		li.pszText=const_cast<LPWSTR>(szName);
+	}
+	else
+	{
+		// Resolving icon,
+		SHFILEINFOW fi;
+		if (GetFileInfo(szName,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+		{
+			li.iImage=fi.iIcon;
+			li.pszText=fi.szDisplayName;
+		}
+		else
+			return -1;
+	}
+
 	li.iSubItem=0;
 	li.mask=LVIF_TEXT|LVIF_IMAGE;
-	li.pszText=fi.szDisplayName;
 	m_pList->InsertItem(&li);
 
 	// Path

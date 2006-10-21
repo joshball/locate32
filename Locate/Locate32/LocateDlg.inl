@@ -31,6 +31,7 @@ inline CLocateDlg::CNameDlg::CNameDlg()
 	m_nMaxTypesInList(DEFAULT_NUMBEROFTYPES),
 	m_pBrowse(NULL),m_pMultiDirs(NULL)
 {
+	InitializeCriticalSection(&m_cBrowse);
 }
 
 inline WORD CLocateDlg::CNameDlg::ComputeChecksumFromDir(LPCWSTR szDir)

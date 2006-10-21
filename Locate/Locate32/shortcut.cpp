@@ -830,7 +830,7 @@ BOOL CShortcut::GetDefaultShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadF
 	BYTE* pData=NULL;
 	DWORD dwLength;
 	try {
-		CFile File(Path,CFile::defRead,TRUE);
+		CFile File(Path,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
 		File.CloseOnDelete();
 
 		dwLength=File.GetLength();

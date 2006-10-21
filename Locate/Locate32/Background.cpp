@@ -59,8 +59,10 @@ BOOL CCheckFileNotificationsThread::Stop()
 	{
 		if (m_pHandles!=NULL)
 		{
+			BkgDebugFormatMessage("CCheckFileNotificationsThread::Stop set event %X",DWORD(m_pHandles[0]));
+
 			SetEvent(m_pHandles[0]);
-			for (int i=0;i<100 && GetLocateDlg()->m_pFileNotificationsThread!=NULL;i++)
+			for (int i=0;i<30 && GetLocateDlg()->m_pFileNotificationsThread!=NULL;i++)
 				Sleep(10);
 		}
 		if (GetLocateDlg()->m_pFileNotificationsThread!=NULL)
@@ -204,12 +206,15 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 
 	for (;;)
 	{
-		BkgDebugMessage("CCheckFileNotificationsThread::RunningProc(), GOING TO SLEEP");
+		BkgDebugFormatMessage("CCheckFileNotificationsThread::RunningProc(), GOING TO SLEEP, m_pHandles[0]=%X",DWORD(m_pHandles[0]));
 		DWORD nRet=WaitForMultipleObjects(m_nHandles,m_pHandles,FALSE,INFINITE);
 		BkgDebugNumMessage("CCheckFileNotificationsThread::RunningProc(), WAKED nRet=%X",nRet);
 
 		if (nRet==WAIT_OBJECT_0) // The first is end event
+		{
+			CAppData::stdfunc();
 			break;
+		}
 		else if (nRet>WAIT_OBJECT_0 && nRet<WAIT_OBJECT_0+m_nHandles)
 		{
 			CLocateDlg* pLocateDlg=GetLocateDlg();
@@ -442,7 +447,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 	
 	ASSERT(m_pHandles!=NULL);
 
-	m_pHandles[0]=CreateEvent(NULL,TRUE,FALSE,NULL);
+	m_pHandles[0]=CreateEvent(NULL,FALSE,FALSE,NULL);
 	m_pChangeDatas[0]=NULL;
 
 	m_nHandles=1;
@@ -569,7 +574,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 	
 	ASSERT(m_pHandles!=NULL);
 
-	m_pHandles[0]=CreateEvent(NULL,TRUE,FALSE,NULL);
+	m_pHandles[0]=CreateEvent(NULL,FALSE,FALSE,NULL);
 	m_pRoots[0]=NULL;
 
 	m_nHandles=1;
@@ -789,7 +794,7 @@ BOOL CBackgroundUpdater::Stop()
 		InterlockedExchange(&m_lGoToSleep,TRUE);
 
 		SetEvent(m_phEvents[0]); // 0 = end envent
-		for (int i=0;i<100 && GetLocateDlg()->m_pBackgroundUpdater!=NULL;i++)
+		for (int i=0;i<30 && GetLocateDlg()->m_pBackgroundUpdater!=NULL;i++)
 			Sleep(10);
 
 		if (GetLocateDlg()->m_pBackgroundUpdater!=NULL)

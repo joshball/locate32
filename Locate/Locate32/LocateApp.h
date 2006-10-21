@@ -113,7 +113,7 @@ public:
 	DWORD SetSchedules(CList<CSchedule*>* pSchedules=NULL);
 	BOOL SaveSchedules();
 	void CheckSchedules();
-	void RunStartupSchedules();
+	BOOL RunStartupSchedules(); // return value = Should run again?
 
 	BOOL StartUpdateStatusNotification();
 	BOOL StopUpdateStatusNotification();
@@ -292,8 +292,9 @@ public:
 
 		// Misc
 		pfTrayIconClickActivate = 0x1000,
+		pfUseDefaultIconForDirectories =  0x2000,
 		pfMiscDefault = 0,
-		pfMiscSave = 0x1000,
+		pfMiscSave = 0x2000,
 
 		// Filesize/time/date format
 		pfFormatUseLocaleFormat = 0x4, // Option

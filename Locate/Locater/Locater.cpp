@@ -290,7 +290,7 @@ BOOL CLocater::LocatingProc()
 			switch (m_pCurrentDatabase->nArchiveType)
 			{
 			case CDatabase::archiveFile:
-				dbFile=new CFile(m_pCurrentDatabase->szArchive,CFile::defRead,TRUE);
+				dbFile=new CFile(m_pCurrentDatabase->szArchive,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
 				dbFile->CloseOnDelete();
 				break;
 			default:

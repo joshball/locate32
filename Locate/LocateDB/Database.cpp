@@ -213,8 +213,6 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	RegKey.SetValue(L"Excluded Directories",pString);
     delete[] pString;
 
-	DebugMessage("SaveToRegistryEND");
-
 	return TRUE;
 }
 
@@ -976,7 +974,7 @@ BOOL CDatabase::IsFileNamesOEM() const
 		switch (m_ArchiveType)
 		{
 		case archiveFile:
-			dbFile=new CFile(GetArchiveName(),CFile::defRead,TRUE);
+			dbFile=new CFile(GetArchiveName(),CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
 			dbFile->CloseOnDelete();
 			break;
 		default:
@@ -1389,7 +1387,7 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 
 	try {
 		// Opening database and trying to read header
-		pInFile=new CFile(szArchive,CFile::defRead|CFile::otherStrNullTerminated,TRUE);
+		pInFile=new CFile(szArchive,CFile::defRead|CFile::otherStrNullTerminated|CFile::otherErrorWhenEOF,TRUE);
 		pInFile->CloseOnDelete();
 
 		szBuffer=new char[12];
