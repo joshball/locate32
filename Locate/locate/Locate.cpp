@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   locate.exe v2.99.6.9030                 */
+   locate.exe v2.99.6.10220                 */
 
-const char* szVersionStr="locate 3.0 beta 6.9030";
+const char* szVersionStr="locate 3.0 RC2 6.10220";
 
 #include <hfclib.h>
 #ifndef WIN32
