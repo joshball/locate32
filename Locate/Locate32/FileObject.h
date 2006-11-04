@@ -39,7 +39,7 @@ public:
 	virtual ~CFileObject();
 
 	BYTE SetFile(LPCWSTR szFile); 
-	BYTE SetFiles(CListCtrl* pList);
+	BYTE SetFiles(CListCtrl* pList,BOOL bNoDeleted=FALSE);
 	HGLOBAL GetFileNameA();
 	HGLOBAL GetFileNameW();
 

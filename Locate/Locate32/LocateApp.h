@@ -294,7 +294,7 @@ public:
 		pfTrayIconClickActivate = 0x1000,
 		pfUseDefaultIconForDirectories =  0x2000,
 		pfMiscDefault = 0,
-		pfMiscSave = 0x2000,
+		pfMiscSave = 0x3000,
 
 		// Filesize/time/date format
 		pfFormatUseLocaleFormat = 0x4, // Option

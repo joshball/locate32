@@ -1839,7 +1839,11 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 	else
-		m_pLocater->LocateFiles(TRUE,W2A(Name),(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
+	{
+		// Regular expression
+		m_pLocater->LocateFiles(TRUE,W2A(Name),nRet&CAdvancedDlg::flagRexExpIsCaleSensitive,
+			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
+	}
 	
 	DlgDebugMessage("CLocateDlg::OnOk END");
 	
@@ -4939,12 +4943,16 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 
 	ASSERT(wID>=IDM_DEFCONTEXTITEM && m_pActiveContextMenu!=NULL);
 
+	
+	/*
 	CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_pListCtrl->GetNextItem(-1,LVNI_SELECTED));
+	
 	
 	if (!pItem->IsFolder() && !FileSystem::IsFile(pItem->GetPath()))
 		return;
 	if (pItem->IsFolder() && !FileSystem::IsDirectory(pItem->GetPath()))
 		return;
+	*/
 
 	WCHAR szName[221];  
 	
@@ -5014,7 +5022,7 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 	cii.hwnd=*this;
 	cii.lpVerb=(LPCSTR)MAKELONG(wID-IDM_DEFCONTEXTITEM,0);
 	cii.lpVerbW=(LPCWSTR)MAKELONG(wID-IDM_DEFCONTEXTITEM,0);
-	cii.lpDirectoryW=pItem->GetParent();
+	cii.lpDirectoryW=NULL;
 	cii.lpDirectory=alloccopyWtoA(cii.lpDirectoryW);
 	cii.nShow=SW_SHOWDEFAULT;
 	m_pActiveContextMenu->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
@@ -5735,10 +5743,13 @@ void CLocateDlg::OnCopy(BOOL bCut,int nItem)
 	CFileObject fo;
 
 	if (m_pListCtrl->GetSelectedCount()>0)
-		fo.SetFiles(m_pListCtrl);
+		fo.SetFiles(m_pListCtrl,TRUE);
     else
 	{
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+		if (!FileSystem::IsFile(pItem->GetPath()))
+			return;
+
 		fo.SetFile(pItem->GetPath());
 	}
 
@@ -7107,7 +7118,7 @@ void CLocateDlg::OnSendToCommand(WORD wID)
 	CFileObject *pfoSrc=new CFileObject;
 	pfoSrc->AutoDelete();
 	pfoSrc->AddRef();
-	pfoSrc->SetFiles(m_pListCtrl);
+	pfoSrc->SetFiles(m_pListCtrl,TRUE);
 		
 	
 	DWORD dwEffect=DROPEFFECT_COPY | DROPEFFECT_MOVE | DROPEFFECT_LINK;
@@ -7155,7 +7166,7 @@ void CLocateDlg::BeginDragFiles(CListCtrl* pList)
 		
 		pfo->AutoDelete();
 		pfo->AddRef();
-		pfo->SetFiles(pList);
+		pfo->SetFiles(pList,TRUE);
 
 		pfs->AutoDelete();
 		pfs->AddRef();

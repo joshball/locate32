@@ -849,7 +849,7 @@ void CLocatedItem::ComputeMD5sum(BOOL bForce)
 	BOOL bOK=TRUE;
 	CFile* pFile=NULL;
 	try {
-		pFile=new CFile(GetPath(),CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
+		pFile=new CFile(GetPath(),CFile::defRead,TRUE);
 		pFile->CloseOnDelete();
 	
 		md5_byte_t* pData=new md5_byte_t[1024];

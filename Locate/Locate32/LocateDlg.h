@@ -369,7 +369,8 @@ public:
 			flagMatchCase=0x1,
 			flagReplaceSpaces=0x2,
 			flagNameIsRegularExpression=0x4, // These are not returned, 
-			flagUseWholePath=0x8
+			flagUseWholePath=0x8,
+			flagRexExpIsCaleSensitive=0x10 // These are not returned, 
 		};
 		DWORD OnOk(CLocater* pLocater);
 		void OnClear(BOOL bInitial=FALSE);

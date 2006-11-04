@@ -541,7 +541,7 @@ BEGIN
     LTEXT           "Pattern (e.g., ""*.tmp;*~""):",10,10,13,248,8
     EDITTEXT        IDC_EXCLUDEFILES,9,25,250,13,ES_AUTOHSCROLL
     GROUPBOX        "Exclude directories:",IDC_STATIC,3,53,262,164
-	LTEXT           "Directory:",9,10,65,111,8
+	LTEXT           "Directory ('*' and '?' are allowed):",9,10,65,111,8
     EDITTEXT        IDC_DIRECTORYNAME,9,77,187,13,ES_AUTOHSCROLL
     PUSHBUTTON      "&Browse",IDC_BROWSE,203,76,55,14
     LTEXT           "Excluded directories:",8,10,98,111,8
@@ -674,7 +674,7 @@ BEGIN
     CONTROL         "Key is released",IDC_EXECUTEWHENKEYISUP,"Button",
                     BS_AUTORADIOBUTTON,190,113,72,10
     LTEXT           "Remove messages from queue:",IDC_REMOVEMESSAGESTATIC,10,
-                    130,100,8
+                    130,108,8
     CONTROL         "Key down",IDC_REMOVEDOWNMESSAGE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,119,130,47,10
     CONTROL         "Key up",IDC_REMOVEUPMESSAGE,"Button",BS_AUTOCHECKBOX | 

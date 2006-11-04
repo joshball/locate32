@@ -6,10 +6,11 @@ parameters:
     -i          shows what are we looking for
     -p          look in directory 'path'
     -r          'file' is interpreted as regular expression
+    -rc         'file' is interpreted as regular expression (case sensitive)
     -w          use whole path, not just file name
     -t          set extension
-	-R			search subdirectories 
-	-Rn			don't search subdirectories
+    -R          search subdirectories 
+    -Rn         don't search subdirectories
     -d file     set database file
     -D name     uses database named 'name'
     -lm:SIZE    set minimum size to SIZE, eg -lms:100k
@@ -25,13 +26,13 @@ parameters:
     -lf         look only file names (default)
     -ld         look only directory names
     -lfd        look file and directory names
+    -lw         match whole name only
+    -lrn        don't replace spaces with asterisk
     -lc:TEXT    file must contain string TEXT
     -lcm        string text is match case (default)
     -lcnm       string text is not match case
     -lR:TEXT    same as above but TEXT is regular expression
-    -lw         match whole name only
-    -lrn        don't replace spaces with asterisk
-    -v			verbose mode, information about search
+    -v          verbose mode, information about search
     -h          help, this screen
 
 EOF

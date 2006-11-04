@@ -437,6 +437,8 @@ int wmain (int argc,wchar_t * argv[])
 				break;
 			case L'r':
 				dwFlags|=LOCATE_REGULAREXPRESSION;
+				if (argv[i][2]==L'c' || argv[i][2]==L'C')
+					dwFlags|=LOCATE_REGEXPISCASESENSITIVE;
 				break;
 			case L'w':
 			case L'W':
@@ -762,7 +764,7 @@ int wmain (int argc,wchar_t * argv[])
 			putchar('\n');
 		}
 
-		locater.LocateFiles(FALSE,W2A(String),
+		locater.LocateFiles(FALSE,W2A(String),dwFlags&LOCATE_REGEXPISCASESENSITIVE,
 			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 	else if (!String.IsEmpty())

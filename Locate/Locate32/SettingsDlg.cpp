@@ -3721,25 +3721,35 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	CListBox Directories(GetDlgItem(IDC_DIRECTORIES));
 	
 	DirectoryName.GetText(sDirectoryPre);
-	if (!FileSystem::GetFullPathName(sDirectoryPre,400,sDirectory.GetBuffer(400),NULL))
+
+	if (sDirectoryPre.Find('*')==-1 && sDirectory.Find('.')==-1)
 	{
-		CStringW str;
-		str.Format(IDS_ERRORDIRECTORYNOTFOUND,LPCWSTR(sDirectory));
-		MessageBox(str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
-		return FALSE;	
+		// Exact path
+		if (!FileSystem::GetFullPathName(sDirectoryPre,400,sDirectory.GetBuffer(400),NULL))
+		{
+			CStringW str;
+			str.Format(IDS_ERRORDIRECTORYNOTFOUND,LPCWSTR(sDirectory));
+			MessageBox(str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+			DirectoryName.SetFocus();
+			return FALSE;	
+		}
+		sDirectory.FreeExtra();
+
+
+		if (!FileSystem::IsDirectory(sDirectory))
+		{
+			CStringW str;
+			str.Format(IDS_ERRORDIRECTORYNOTFOUND,LPCWSTR(sDirectory));
+			MessageBox(str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+			DirectoryName.SetFocus();
+			return FALSE;
+		}
+
+		sDirectoryPre=sDirectory;
 	}
-	sDirectory.FreeExtra();
-
-
-	if (!FileSystem::IsDirectory(sDirectory))
-	{
-		CStringW str;
-		str.Format(IDS_ERRORDIRECTORYNOTFOUND,LPCWSTR(sDirectory));
-		MessageBox(str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
-		return FALSE;
-	}
-
-	sDirectoryPre=sDirectory;
+	else
+		sDirectory=sDirectoryPre;
+		
 	sDirectoryPre.MakeLower();
 
 	

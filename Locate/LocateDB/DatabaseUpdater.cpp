@@ -774,7 +774,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 
 		for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
 		{
-			if (wcscmp(m_aExcludedDirectories[i],pLowerFolder)==0)
+			if (ContainString(pLowerFolder,m_aExcludedDirectories[i]))
 			{
 				delete[] pLowerFolder;
 				return ueSuccess;
@@ -979,7 +979,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 
 		for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
 		{
-			if (wcscmp(m_aExcludedDirectories[i],pLowerFolder)==0)
+			if (ContainString(pLowerFolder,m_aExcludedDirectories[i]))
 			{
 				delete[] pLowerFolder;
 				return ueSuccess;
@@ -1833,6 +1833,7 @@ void CDatabaseUpdater::DBArchive::ParseExcludedFilesAndDirectories(LPCWSTR szExc
 	// First, check that directory names are valid
 	LPWSTR* ppExcludedDirectories=new LPWSTR[max(nExcludedDirectories,2)];
 	DWORD* pdwExcludedDirectoriesLen=new DWORD[max(nExcludedDirectories,2)];
+	BOOL* pbIsPattern=new BOOL[max(nExcludedDirectories,2)];
 	int i,j;
 	for (i=0,j=0;i<nExcludedDirectories;i++)
 	{
@@ -1850,24 +1851,42 @@ void CDatabaseUpdater::DBArchive::ParseExcludedFilesAndDirectories(LPCWSTR szExc
 			MakeLower(ppExcludedDirectories[j]);
 			
 			pdwExcludedDirectoriesLen[j]=2;
-		
+			pbIsPattern[j]=FALSE;
+
 			j++;
 			continue;
 		}
 
+		if (FirstCharIndex(ppExcludedDirs[i],L'*')==-1 && FirstCharIndex(ppExcludedDirs[i],L'?')==-1)
+		{
+			WCHAR szBuffer[400];
+			int nRet=FileSystem::GetFullPathName(ppExcludedDirs[i],400,szBuffer,NULL);
 
-		WCHAR szBuffer[400];
-		int nRet=FileSystem::GetFullPathName(ppExcludedDirs[i],400,szBuffer,NULL);
+			if (!nRet)
+				continue;
 
-		if (!nRet)
-			continue;
+			if (szBuffer[nRet-1]==L'\\')
+				szBuffer[--nRet]=L'\0';
+	
+			MakeLower(szBuffer);
+			pdwExcludedDirectoriesLen[j]=nRet;
+			ppExcludedDirectories[j]=alloccopy(szBuffer,nRet);
+			pbIsPattern[j]=FALSE;
+			j++;
+		}
+		else
+		{
+			int nLen=istrlen(ppExcludedDirs[i]);
+			if (ppExcludedDirs[i][nLen-1]==L'\\')
+				nLen--;
+			
+			pdwExcludedDirectoriesLen[j]=nLen;
+			ppExcludedDirectories[j]=alloccopy(ppExcludedDirs[i],nLen);
+			MakeLower(ppExcludedDirectories[j]);
+			pbIsPattern[j]=TRUE;
+			j++;
+		}
 
-		if (szBuffer[nRet-1]==L'\\')
-			szBuffer[--nRet]=L'\0';
-
-		MakeLower(szBuffer);
-		pdwExcludedDirectoriesLen[j]=nRet;
-		ppExcludedDirectories[j++]=alloccopy(szBuffer,nRet);
 	}
 	nExcludedDirectories=j;
 
@@ -1890,6 +1909,14 @@ void CDatabaseUpdater::DBArchive::ParseExcludedFilesAndDirectories(LPCWSTR szExc
 
 		for (int i=0;i<nExcludedDirectories;i++)
 		{
+			if (pbIsPattern[i])
+			{
+				// Excluded directory is pattern
+				pRoot->m_aExcludedDirectories.Add(alloccopy(ppExcludedDirectories[i],
+					pdwExcludedDirectoriesLen[i]));
+				continue;
+			}
+
 			// Excluded path is shorter than root, excluded dir cannot be subdir of root
 			if (pdwExcludedDirectoriesLen[i]<nRootLength)
 				continue;

@@ -352,18 +352,27 @@ BYTE CFileObject::SetFile(LPCWSTR szFile)
 	return TRUE;
 }
 
-BYTE CFileObject::SetFiles(CListCtrl* pList)
+BYTE CFileObject::SetFiles(CListCtrl* pList,BOOL bNoDeleted)
 {
 	m_Files.RemoveAll();
 	m_Points.RemoveAll();
-	int nItem=pList->GetNextItem(-1,LVNI_SELECTED);
 	BOOL bGetPoints=((pList->GetStyle() & LVS_TYPEMASK)==LVS_ICON) || (pList->GetSelectedCount()==1);
 
+	int nItem=pList->GetNextItem(-1,LVNI_SELECTED);
 	while (nItem!=-1)
 	{
 		CLocatedItem* pData=(CLocatedItem*)pList->GetItemData(nItem);
 		if (pData!=NULL)
 		{
+			if (bNoDeleted)
+			{
+				if (!FileSystem::IsFile(pData->GetPath()))
+				{
+					nItem=pList->GetNextItem(nItem,LVNI_SELECTED);
+					continue;
+				}
+			}
+
 			m_Files.Add(new CStringW(pData->GetPath()));
 			if (bGetPoints)
 			{
@@ -457,7 +466,7 @@ HGLOBAL CFileObject::GetFileNameW()
 
 HGLOBAL CFileObject::GetItemIDList()
 {
-	int i;
+	int i,nFiles=0;
 	LPITEMIDLIST* pItemLists=new LPITEMIDLIST[m_Files.GetSize()+1];
 	DWORD* pItemLengths=new DWORD[m_Files.GetSize()+1];
 	UINT nDataLength=sizeof(CIDA)+m_Files.GetSize()*sizeof(UINT);
@@ -465,14 +474,18 @@ HGLOBAL CFileObject::GetItemIDList()
 	pItemLists[0]=NULL;
 	nDataLength+=pItemLengths[0]=2;
 	
-	for (i=1;i<=m_Files.GetSize();i++)
+	for (i=0;i<m_Files.GetSize();i++)
 	{
-		pItemLists[i]=GetIDList(*m_Files[i-1]);
-		nDataLength+=pItemLengths[i]=GetIDListSize(pItemLists[i]);
+		pItemLists[nFiles+1]=GetIDList(*m_Files[i]);
+		if (pItemLists[nFiles+1]!=NULL)
+		{
+			nDataLength+=pItemLengths[nFiles+1]=GetIDListSize(pItemLists[nFiles+1]);
+			nFiles++;
+		}
 	}
 	CIDA* pida=(CIDA*)GlobalAlloc(GPTR,nDataLength);
-	pida->cidl=m_Files.GetSize();
-	DWORD nOffset=pida->aoffset[0]=sizeof(CIDA)+m_Files.GetSize()*sizeof(UINT);
+	pida->cidl=nFiles;
+	DWORD nOffset=pida->aoffset[0]=sizeof(CIDA)+nFiles*sizeof(UINT);
 	if (pItemLists[0]==NULL)
 	{
 		*(WORD*)((LPSTR)pida+nOffset)=0;
@@ -482,7 +495,7 @@ HGLOBAL CFileObject::GetItemIDList()
 	else
 		i=0;
 	
-	for (;i<=m_Files.GetSize();i++)
+	for (;i<=nFiles;i++)
 	{
 		pida->aoffset[i]=nOffset;
 		sMemCopy((LPSTR)pida+nOffset,pItemLists[i],pItemLengths[i]);

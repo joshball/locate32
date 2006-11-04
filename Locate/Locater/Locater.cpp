@@ -869,7 +869,7 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR* szNames,DWORD nNames,
 	return SetDirectoriesAndStartToLocate(bThreaded,szDirectories,nDirectories);	
 }
 
-BOOL CLocater::LocateFiles(BOOL bThreaded,LPCSTR szRegExp,LPCWSTR* szDirectories,DWORD nDirectories)
+BOOL CLocater::LocateFiles(BOOL bThreaded,LPCSTR szRegExp,BOOL bCaseSensitive,LPCWSTR* szDirectories,DWORD nDirectories)
 {
 	LocaterDebugMessage5("CLocater::LocateFiles BEGIN, \r\nszRegExp:%s\r\nszDirectories:%X\r\nnDirectories:%d",
 		szRegExp,(DWORD_PTR)szDirectories,nDirectories,0,0,0);
@@ -881,7 +881,7 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCSTR szRegExp,LPCWSTR* szDirectories
 		const char *error;
 		int erroffset;
 
-		m_regexp=pcre_compile(szRegExp,0,&error,&erroffset,NULL);
+		m_regexp=pcre_compile(szRegExp,!bCaseSensitive?PCRE_CASELESS:0,&error,&erroffset,NULL);
 
 		if (m_regexp==NULL)
 		{
