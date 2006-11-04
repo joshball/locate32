@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   database locater v2.99.6.10220                 */
+   database locater v2.99.6.11040                 */
 
 #include <HFCLib.h>
 
@@ -39,7 +39,7 @@ void InitLocaterLibrary()
 class CSearchRegExpFromFile : public CSearchFromFile
 {
 public:
-	CSearchRegExpFromFile(LPCSTR szRegularExpression,DWORD dwLength=DWORD(-1));
+	CSearchRegExpFromFile(LPCSTR szRegularExpression,BOOL bCaseSensitive,DWORD dwLength=DWORD(-1));
 	virtual ~CSearchRegExpFromFile();
 	
 	virtual BOOL Search(LPCSTR szFile); // if return value is TRUE if any found
@@ -56,20 +56,20 @@ private:
 	pcre_extra* pRegExtra;
 };
 
-CSearchRegExpFromFile::CSearchRegExpFromFile(LPCSTR szRegularExpression,DWORD dwLength)
+CSearchRegExpFromFile::CSearchRegExpFromFile(LPCSTR szRegularExpression,BOOL bCaseSensitive,DWORD dwLength)
 :	CSearchFromFile(),pRegExp(NULL),pRegExtra(NULL)
 {
 	const char *error;
 	int erroffset;
 
 	if (dwLength==DWORD(-1))
-		pRegExp=pcre_compile(szRegularExpression,0,&error,&erroffset,NULL);
+		pRegExp=pcre_compile(szRegularExpression,!bCaseSensitive?PCRE_CASELESS:0,&error,&erroffset,NULL);
 	else
 	{
 		char* pText=new char[dwLength+1];
 		sMemCopy(pText,szRegularExpression,dwLength);
 		pText[dwLength]='\0';
-		pRegExp=pcre_compile(pText,0,&error,&erroffset,NULL);
+		pRegExp=pcre_compile(pText,!bCaseSensitive?PCRE_CASELESS:0,&error,&erroffset,NULL);
 		delete[] pText;
 	}
 
@@ -816,11 +816,14 @@ void CLocater::SetAdvanced(DWORD dwFlags,BYTE* pContainData,DWORD dwContainDataL
 			delete m_pContentSearcher;
 
 		if (dwFlags&LOCATE_REGULAREXPRESSIONSEARCH)
-			m_pContentSearcher=new CSearchRegExpFromFile(LPCSTR(pContainData),dwContainDataLength);
+		{
+			m_pContentSearcher=new CSearchRegExpFromFile(LPCSTR(pContainData),
+				(m_dwFlags&LOCATE_CONTAINTEXTISMATCHCASE)?TRUE:FALSE,dwContainDataLength);
+		}
 		else
 		{
 			m_pContentSearcher=new CSearchHexFromFile(LPCSTR(pContainData),dwContainDataLength,
-				(m_dwFlags&LOCATE_CONTAINTEXTISMATCHCASE)==LOCATE_CONTAINTEXTISMATCHCASE);
+				(m_dwFlags&LOCATE_CONTAINTEXTISMATCHCASE)?TRUE:FALSE);
 		}
 
 	}
@@ -869,9 +872,9 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR* szNames,DWORD nNames,
 	return SetDirectoriesAndStartToLocate(bThreaded,szDirectories,nDirectories);	
 }
 
-BOOL CLocater::LocateFiles(BOOL bThreaded,LPCSTR szRegExp,BOOL bCaseSensitive,LPCWSTR* szDirectories,DWORD nDirectories)
+BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR szRegExp,BOOL bCaseSensitive,LPCWSTR* szDirectories,DWORD nDirectories)
 {
-	LocaterDebugMessage5("CLocater::LocateFiles BEGIN, \r\nszRegExp:%s\r\nszDirectories:%X\r\nnDirectories:%d",
+	LocaterDebugMessage5("CLocater::LocateFiles BEGIN, \r\nszRegExp:%S\r\nszDirectories:%X\r\nnDirectories:%d",
 		szRegExp,(DWORD_PTR)szDirectories,nDirectories,0,0,0);
 
 	if (szRegExp[0]!='\0')
@@ -881,7 +884,23 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCSTR szRegExp,BOOL bCaseSensitive,LP
 		const char *error;
 		int erroffset;
 
-		m_regexp=pcre_compile(szRegExp,!bCaseSensitive?PCRE_CASELESS:0,&error,&erroffset,NULL);
+		if (IsUnicodeSystem())
+		{
+			int nLen=istrlen(szRegExp)+1;
+			char* szRegExpUTF8=new char[nLen*2];
+			if (WideCharToMultiByte(CP_UTF8,0,szRegExp,nLen,szRegExpUTF8,nLen*2,NULL,NULL)==0)
+				m_regexp=pcre_compile(W2A(szRegExp),!bCaseSensitive?PCRE_CASELESS:0,&error,&erroffset,NULL);
+			else
+			{
+				m_regexp=pcre_compile(szRegExpUTF8,
+					PCRE_UTF8|(!bCaseSensitive?PCRE_CASELESS:0),
+					&error,&erroffset,NULL);
+				m_dwFlags|=LOCATE_NAMEREGEXPISUTF8;
+			}
+			delete[] szRegExpUTF8;
+		}
+		else
+			m_regexp=pcre_compile(W2A(szRegExp),!bCaseSensitive?PCRE_CASELESS:0,&error,&erroffset,NULL);
 
 		if (m_regexp==NULL)
 		{
@@ -957,20 +976,65 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 	if (m_dwFlags&LOCATE_REGULAREXPRESSION)
 	{
 		int ovector[OVECCOUNT];
-		if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
+		if (m_dwFlags&LOCATE_NAMEREGEXPISUTF8)
 		{
-			szCurrentPath[dwCurrentPathLen]='\\';
-			dMemCopy(szCurrentPath+dwCurrentPathLen+1,GetFileName(),GetFileNameLen()+1);
-			int rc = pcre_exec(m_regexp,m_regextra,szCurrentPath,dwCurrentPathLen+GetFileNameLen()+1,
-				0,0,ovector,OVECCOUNT);
+			if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
+			{
+				int nTotalLength=dwCurrentPathLen+GetFileNameLen()+1;
+				WCHAR* szPathW=new WCHAR[nTotalLength];
+				char* szPathUTF8=new char[nTotalLength*2];
+				
+				MemCopyAtoW(szPathW,szCurrentPath,dwCurrentPathLen);
+				szPathW[dwCurrentPathLen]=L'\\';
+				MemCopyAtoW(szPathW+dwCurrentPathLen+1,GetFileName(),GetFileNameLen());
+				
+				nTotalLength=WideCharToMultiByte(CP_UTF8,0,szPathW,nTotalLength,
+					szPathUTF8,nTotalLength*2,NULL,NULL);
 
-			szCurrentPath[dwCurrentPathLen]='\0';
-			return rc>=0;
+				int rc = pcre_exec(m_regexp,m_regextra,szPathUTF8,nTotalLength,0,0,
+					ovector,OVECCOUNT);
+
+				szCurrentPath[dwCurrentPathLen]='\0';
+				
+				delete[] szPathW;
+				delete[] szPathUTF8;
+				return rc>=0;
+			}
+			else
+			{
+				// Converting to UTF8
+				WCHAR* szNameW=new WCHAR[GetFileNameLen()];
+				char* szNameUTF8=new char[GetFileNameLen()*2];
+				MemCopyAtoW(szNameW,GetFileName(),GetFileNameLen());
+				int nLen=WideCharToMultiByte(CP_UTF8,0,szNameW,GetFileNameLen(),
+					szNameUTF8,GetFileNameLen()*2,NULL,NULL);
+
+				int rc=pcre_exec(m_regexp,m_regextra,szNameUTF8,nLen,
+					0,0,ovector,OVECCOUNT);
+
+				delete[] szNameW;
+				delete[] szNameUTF8;
+				return rc>=0;
+			}
 		}
 		else
 		{
-			return pcre_exec(m_regexp,m_regextra,GetFileName(),GetFileNameLen(),
-				0,0,ovector,OVECCOUNT)>=0;
+			if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
+			{
+				szCurrentPath[dwCurrentPathLen]='\\';
+				dMemCopy(szCurrentPath+dwCurrentPathLen+1,GetFileName(),GetFileNameLen()+1);
+				int rc = pcre_exec(m_regexp,m_regextra,szCurrentPath,
+					dwCurrentPathLen+GetFileNameLen()+1,
+					0,0,ovector,OVECCOUNT);
+
+				szCurrentPath[dwCurrentPathLen]='\0';
+				return rc>=0;
+			}
+			else
+			{
+				return pcre_exec(m_regexp,m_regextra,GetFileName(),GetFileNameLen(),
+					0,0,ovector,OVECCOUNT)>=0;
+			}
 		}
 	}
 
@@ -1136,19 +1200,52 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 	if (m_dwFlags&LOCATE_REGULAREXPRESSION)
 	{
 		int ovector[OVECCOUNT];
-		if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
+		if (m_dwFlags&LOCATE_NAMEREGEXPISUTF8)
 		{
-			char szPath[MAX_PATH];
-			MemCopyWtoA(szPath,szCurrentPathW,dwCurrentPathLen);
-			szPath[dwCurrentPathLen]='\\';
-			MemCopyWtoA(szPath+dwCurrentPathLen+1,GetFileNameW(),GetFileNameLen()+1);
-			return pcre_exec(m_regexp,m_regextra,szPath,dwCurrentPathLen+GetFileNameLen()+1,
-				0,0,ovector,OVECCOUNT)>=0;
+			if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
+			{
+				char* szPathUTF8=new char[(dwCurrentPathLen+GetFileNameLen()+1)*2];
+				int nLen=WideCharToMultiByte(CP_UTF8,0,szCurrentPathW,dwCurrentPathLen,
+					szPathUTF8,dwCurrentPathLen*2,NULL,NULL);
+				szPathUTF8[nLen++]='\\';
+				nLen+=WideCharToMultiByte(CP_UTF8,0,GetFileNameW(),GetFileNameLen(),
+					szPathUTF8+nLen,GetFileNameLen()*2,NULL,NULL);
+
+				int rc=pcre_exec(m_regexp,m_regextra,szPathUTF8,nLen,
+					0,0,ovector,OVECCOUNT);
+
+				delete[] szPathUTF8;
+				return rc>=0;
+			}
+			else
+			{
+				// Converting to UTF8
+				char* pNameUTF8=new char[GetFileNameLen()*2];
+				int nLen=WideCharToMultiByte(CP_UTF8,0,GetFileNameW(),GetFileNameLen(),
+					pNameUTF8,GetFileNameLen()*2,NULL,NULL);
+				
+				int rc=pcre_exec(m_regexp,m_regextra,pNameUTF8,nLen,0,0,ovector,OVECCOUNT);
+
+				delete[] pNameUTF8;
+				return rc>=0;
+			}
 		}
 		else
 		{
-			return pcre_exec(m_regexp,m_regextra,W2A(GetFileNameW()),GetFileNameLen(),
-				0,0,ovector,OVECCOUNT)>=0;
+			if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
+			{
+				char szPath[MAX_PATH];
+				MemCopyWtoA(szPath,szCurrentPathW,dwCurrentPathLen);
+				szPath[dwCurrentPathLen]='\\';
+				MemCopyWtoA(szPath+dwCurrentPathLen+1,GetFileNameW(),GetFileNameLen()+1);
+				return pcre_exec(m_regexp,m_regextra,szPath,dwCurrentPathLen+GetFileNameLen()+1,
+					0,0,ovector,OVECCOUNT)>=0;
+			}
+			else
+			{
+				return pcre_exec(m_regexp,m_regextra,W2A(GetFileNameW()),GetFileNameLen(),
+					0,0,ovector,OVECCOUNT)>=0;
+			}
 		}
 	}
 

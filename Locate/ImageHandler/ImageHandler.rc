@@ -53,8 +53,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,6,10220
- PRODUCTVERSION 1,0,6,10220
+ FILEVERSION 1,0,6,11040
+ PRODUCTVERSION 1,0,6,11040
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -71,12 +71,12 @@ BEGIN
         BEGIN
             VALUE "Comments", "This library contains image handlers that uses GDI+. If GDI+ is not installed, library wont work."
             VALUE "FileDescription", "Image Helpers"
-            VALUE "FileVersion", "1, 0, 6, 10220"
+            VALUE "FileVersion", "1, 0, 6, 11040"
             VALUE "InternalName", "ImageHandler"
             VALUE "LegalCopyright", "Copyright (C) 2003-2006 Janne Huttunen"
             VALUE "OriginalFilename", "imghnd"
             VALUE "ProductName", "ImageHandler"
-            VALUE "ProductVersion", "1, 0, 6, 10220"
+            VALUE "ProductVersion", "1, 0, 6, 11040"
         END
     END
     BLOCK "VarFileInfo"

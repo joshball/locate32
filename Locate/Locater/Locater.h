@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   database locater v2.99.6.10220               */
+   database locater v2.99.6.11040               */
 
 #if !defined(LOCATER_H)
 #define LOCATER_H
@@ -39,9 +39,9 @@ typedef BOOL (CALLBACK* LOCATEFOUNDPROC)(DWORD_PTR dwParam,BOOL bFolder,const CL
 #define LOCATE_CONTAINTEXTISMATCHCASE	0x00000200
 #define LOCATE_EXTENSIONWITHNAME		0x00000400
 #define LOCATE_REGULAREXPRESSION		0x00000800
-#define LOCATE_REGEXPISCASESENSITIVE	0x10000000 // this if for name, LOCATE_CONTAINTEXTISMATCHCASE is for text
 #define LOCATE_CHECKWHOLEPATH			0x00001000
 #define LOCATE_REGULAREXPRESSIONSEARCH  0x00002000
+#define LOCATE_NAMEREGEXPISUTF8			0x00004000 
 
 
 #define SYSTEMTIMETODOSDATE(st)	((((st).wDay&0x1F))|(((st).wMonth&0x0F)<<5)|((((st).wYear-1980))<<9))
@@ -100,7 +100,7 @@ public:
 	BOOL LocateFiles(BOOL bThreaded,LPCWSTR* szName,DWORD dwNames,
 		LPCWSTR* szExtensions,DWORD nExtensions,
 		LPCWSTR* szDirectories,DWORD nDirectories); 
-	BOOL LocateFiles(BOOL bThreaded,LPCSTR szRegExp,BOOL bCaseSensitive,
+	BOOL LocateFiles(BOOL bThreaded,LPCWSTR szRegExp,BOOL bCaseSensitive,
 		LPCWSTR* szDirectories,DWORD nDirectories); 
 	
 

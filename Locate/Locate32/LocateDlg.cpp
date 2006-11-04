@@ -1841,7 +1841,7 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 	else
 	{
 		// Regular expression
-		m_pLocater->LocateFiles(TRUE,W2A(Name),nRet&CAdvancedDlg::flagRexExpIsCaleSensitive,
+		m_pLocater->LocateFiles(TRUE,Name,nRet&CAdvancedDlg::flagRexExpIsCaleSensitive,
 			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 	

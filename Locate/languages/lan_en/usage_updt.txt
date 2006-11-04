@@ -10,9 +10,9 @@ parameters:
     -L1         check all local hard drives
     -Epath      Exclude directory from updating
     -epattern   Exclude files from updating
-    -I			incrementally update database
-    -cU			use unicode charset
-    -cA			use ANSI charset
+    -I          incrementally update database
+    -cU         use unicode charset
+    -cA         use ANSI charset
     -Tc         set creator
     -Td         set description
     -n          following databases uses another thread

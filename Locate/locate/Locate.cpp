@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   locate.exe v2.99.6.10220                 */
+   locate.exe v2.99.6.11040                 */
 
-const char* szVersionStr="locate 3.0 RC2 6.10220";
+const char* szVersionStr="locate 3.0 RC3 6.11040";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -14,6 +14,7 @@ const char* szVersionStr="locate 3.0 RC2 6.10220";
 #include "../lan_resources.h"
 
 
+#define LOCATE_EX_REGEXPISCASESENSITIVE	0x10000000 // this if for name, LOCATE_CONTAINTEXTISMATCHCASE is for text
 
 
 int Lines=0;
@@ -438,7 +439,7 @@ int wmain (int argc,wchar_t * argv[])
 			case L'r':
 				dwFlags|=LOCATE_REGULAREXPRESSION;
 				if (argv[i][2]==L'c' || argv[i][2]==L'C')
-					dwFlags|=LOCATE_REGEXPISCASESENSITIVE;
+					dwFlags|=LOCATE_EX_REGEXPISCASESENSITIVE;
 				break;
 			case L'w':
 			case L'W':
@@ -764,7 +765,7 @@ int wmain (int argc,wchar_t * argv[])
 			putchar('\n');
 		}
 
-		locater.LocateFiles(FALSE,W2A(String),dwFlags&LOCATE_REGEXPISCASESENSITIVE,
+		locater.LocateFiles(FALSE,String,dwFlags&LOCATE_EX_REGEXPISCASESENSITIVE,
 			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 	else if (!String.IsEmpty())
