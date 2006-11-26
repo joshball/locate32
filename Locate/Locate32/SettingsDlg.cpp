@@ -104,7 +104,7 @@ BOOL CSettingsProperties::LoadSettings()
 {
 	DebugMessage("CSettingsProperties::LoadSettings()");
 	
-	CRegKey RegKey;
+	CRegKey2 RegKey;
 	
 	m_DateFormat=((CLocateApp*)GetApp())->m_strDateFormat;
 	m_TimeFormat=((CLocateApp*)GetApp())->m_strTimeFormat;
@@ -118,7 +118,7 @@ BOOL CSettingsProperties::LoadSettings()
 		m_dwLocateDialogFlags=GetLocateDlg()->GetFlags();
 		m_dwLocateDialogExtraFlags=GetLocateDlg()->GetExtraFlags();
 	}
-	else if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	else if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		DWORD temp=m_dwLocateDialogFlags;
 		RegKey.QueryValue("Program Status",temp);
@@ -132,7 +132,7 @@ BOOL CSettingsProperties::LoadSettings()
 
 
 	}
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Recent Strings",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Recent Strings",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		RegKey.QueryValue("NumberOfDirectories",m_nNumberOfDirectories);
 		RegKey.QueryValue("NumberOfNames",m_nNumberOfNames);
@@ -142,7 +142,7 @@ BOOL CSettingsProperties::LoadSettings()
 	// Initializing values
 	if (GetLocateDlg()==NULL)
 	{
-		if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+		if (RegKey.OpenKey(HKCU,"\\Locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 			RegKey.QueryValue("MaximumFoundFiles",m_nMaximumFoundFiles);
 	}
 	else
@@ -184,7 +184,7 @@ BOOL CSettingsProperties::LoadSettings()
 	}
 
 	// Loading some general settings
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
 	{
 		m_bDefaultFlag=0;
 		DWORD nTemp=1;
@@ -255,7 +255,7 @@ BOOL CSettingsProperties::LoadSettings()
 	
 	
 	// m_strLanguage
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource),
+	if (RegKey.OpenKey(HKCU,"",
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		RegKey.QueryValue(L"Language",m_strLangFile);
@@ -290,7 +290,7 @@ BOOL CSettingsProperties::LoadSettings()
 	}
 	
 	// Update status tooltip
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		DWORD dwTemp;
 		if (RegKey.QueryValue("Transparency",dwTemp))
@@ -322,7 +322,7 @@ BOOL CSettingsProperties::LoadSettings()
 
 
 	// Update status tooltip
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Misc",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Misc",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		DWORD dwTemp=0;;
 		RegKey.QueryValue("NoExtensionInRename",dwTemp);
@@ -339,12 +339,9 @@ BOOL CSettingsProperties::SaveSettings()
 {
 	DebugMessage("CSettingsProperties::SaveSettings()");
 	
-	CRegKey RegKey;
-	CString Path;
-	
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\General";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
 		RegKey.SetValue("Program Status",m_dwLocateDialogFlags&CLocateDlg::fgSave);
 		RegKey.SetValue("Program StatusExtra",m_dwLocateDialogExtraFlags&CLocateDlg::efSave);
@@ -402,21 +399,14 @@ BOOL CSettingsProperties::SaveSettings()
 	((CLocateApp*)GetApp())->m_strTimeFormat=m_TimeFormat;
 	((CLocateApp*)GetApp())->m_nFileSizeFormat=m_nFileSizeFormat;
 
-
-
-
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Recent Strings";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Recent Strings",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
 		RegKey.SetValue("NumberOfDirectories",m_nNumberOfDirectories);
 		RegKey.SetValue("NumberOfNames",m_nNumberOfNames);
 		RegKey.SetValue("NumberOfTypes",m_nNumberOfTypes);
 	}
 
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Locate";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		RegKey.SetValue("MaximumFoundFiles",(LPTSTR)&m_nMaximumFoundFiles,4,REG_DWORD);
 	if (GetLocateDlg()!=NULL)
 	{
@@ -430,7 +420,7 @@ BOOL CSettingsProperties::SaveSettings()
 	if (!IsSettingsFlagSet(settingsDatabasesOverridden))
 	{
 		GetLocateApp()->SetDatabases(m_aDatabases);
-		CDatabase::SaveToRegistry(HKCU,"Software\\Update\\Databases",GetLocateApp()->GetDatabases());
+		CDatabase::SaveToRegistry(HKCU,CLocateApp::GetRegKey("Databases"),GetLocateApp()->GetDatabases());
 
 		GetLocateApp()->ClearStartupFlag(CLocateApp::CStartData::startupDatabasesOverridden);
 	}
@@ -563,13 +553,13 @@ BOOL CSettingsProperties::SaveSettings()
 	}
 
 	// Language
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource),
+	if (RegKey.OpenKey(HKCU,"",
 		CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
 		RegKey.SetValue(L"Language",m_strLangFile);
 		RegKey.CloseKey();
 		
-		if (RegKey.OpenKey(HKCU,"Software\\Update",
+		if (RegKey.OpenKey(HKCU,CLocateApp::GetRegKey(""),
 				CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
 			if (IsSettingsFlagSet(settingsUseLanguageWithConsoleApps))
@@ -605,9 +595,7 @@ BOOL CSettingsProperties::SaveSettings()
 	}
 
 	// Update status tooltip
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Dialogs\\Updatestatus";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Dialogs\\Updatestatus",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
 		
 		RegKey.SetValue("Transparency",m_nToolTipTransparency);
@@ -620,9 +608,7 @@ BOOL CSettingsProperties::SaveSettings()
 	}
 
 	// Misc settings
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Misc";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Misc",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
 		RegKey.SetValue("NoExtensionInRename",m_dwSettingsFlags&settingsDontShowExtensionInRenameDialog?1:0);
 	}
@@ -1545,7 +1531,7 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnInitDialog(HWND hwndFocus)
 	m_pList->InsertColumn(2,ID2W(IDS_LANGUAGEDESC),LVCFMT_LEFT,100);
 	
 	m_pList->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT ,LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT );
-	m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Language Settings List Widths");
+	m_pList->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Language Settings List Widths");
 
 	FindLanguages();
 	
@@ -1575,7 +1561,7 @@ void CSettingsProperties::CLanguageSettingsPage::OnDestroy()
 
 	if (m_pList!=NULL)
 	{
-		m_pList->SaveColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Language Settings List Widths");
+		m_pList->SaveColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Language Settings List Widths");
 		delete m_pList;
 		m_pList=NULL;
 	}
@@ -1793,7 +1779,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnInitDialog(HWND hwndFocus)
 	if (IsUnicodeSystem())
 		m_pList->SetUnicodeFormat(TRUE);
 
-	m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Databases Settings List Widths");
+	m_pList->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Databases Settings List Widths");
 	
 	// Setting threads counter
 	CSpinButtonCtrl Spin(GetDlgItem(IDC_THREADSPIN));
@@ -1868,7 +1854,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnDestroy()
 {
 	if (m_pList!=NULL)
 	{
-		m_pList->SaveColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Databases Settings List Widths");
+		m_pList->SaveColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Databases Settings List Widths");
 		delete m_pList;
 		m_pList=NULL;
 	}
@@ -2193,7 +2179,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnRestore()
 	// Loading databases from registry
 	ASSERT(m_pSettings->m_aDatabases.GetSize()==0);
 	
-	CDatabase::LoadFromRegistry(HKCU,"Software\\Update\\Databases",m_pSettings->m_aDatabases);
+	CDatabase::LoadFromRegistry(HKCU,CLocateApp::GetRegKey("Databases"),m_pSettings->m_aDatabases);
 
 	// If there is still no any available database, try to load old style db
 	if (m_pSettings->m_aDatabases.GetSize()==0)
@@ -2206,7 +2192,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnRestore()
 		}
 		else
 		{
-			if (CDatabase::SaveToRegistry(HKCU,"Software\\Update\\Databases",&pDatabase,1))
+			if (CDatabase::SaveToRegistry(HKCU,CLocateApp::GetRegKey("Databases"),&pDatabase,1))
 				CRegKey::DeleteKey(HKCU,"Software\\Update\\Database");
 		}
 		m_pSettings->m_aDatabases.Add(pDatabase);
@@ -2766,7 +2752,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	m_pList->InsertColumn(1,ID2W(IDS_VOLUMEPATH),LVCFMT_LEFT,75,1);
 	m_pList->InsertColumn(2,ID2W(IDS_VOLUMETYPE),LVCFMT_LEFT,70,2);
 	m_pList->InsertColumn(3,ID2W(IDS_VOLUMEFILESYSTEM),LVCFMT_LEFT,65,3);
-	m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Database Dialog List Widths");
+	m_pList->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Database Dialog List Widths");
 	
 	for (int i=1;i<=m_nMaximumNumbersOfThreads;i++)
 	{
@@ -2864,7 +2850,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnDestroy()
 {
 	if (m_pList!=NULL)
 	{
-		m_pList->SaveColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Database Dialog List Widths");
+		m_pList->SaveColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Database Dialog List Widths");
 		delete m_pList;
 		m_pList=NULL;
 	}
@@ -4448,7 +4434,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnDatabas
 	CArray<PDATABASE> aDatabases;
 		
 	CSelectDatabasesDlg dbd(GetLocateApp()->GetDatabases(),aDatabases,0,
-		CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\SelectDatabases/Schedule");
+		CRegKey2::GetCommonKey()+"\\Dialogs\\SelectDatabases/Schedule");
 	dbd.SelectDatabases(m_pSchedule->m_pDatabases);
 
 	if (dbd.DoModal(*this))
@@ -5015,7 +5001,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_pList->InsertColumn(2,ID2A(IDS_SHORTCUTLISTLABELACTION),LVCFMT_LEFT,200);
 	
 	m_pList->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT ,LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT );
-	m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Shortcuts Settings List Widths");
+	m_pList->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Shortcuts Settings List Widths");
 
 	m_ToolBarBitmaps.Create(IDB_SHORTCUTACTIONSBITMAPS,15,0,RGB(255,255,255));
 	m_ToolBarBitmapsHot.Create(IDB_SHORTCUTACTIONSBITMAPSH,15,0,RGB(255,255,255));
@@ -5087,10 +5073,10 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_VerbCombo.AddString("print");
 
 	// Enumerate presets
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\SearchPresets",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\Dialogs\\SearchPresets",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		CRegKey RegKey2;
+		CRegKey PresetKey;
 		CComboBox Combo(GetDlgItem(IDC_PRESETS));
 		char szBuffer[30];
 
@@ -5098,21 +5084,21 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 		{
 			StringCbPrintf(szBuffer,30,"Preset %03d",nPreset);
 	
-			if (RegKey2.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+			if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 				break;
 	
-			DWORD dwLength=RegKey2.QueryValueLength("");
+			DWORD dwLength=PresetKey.QueryValueLength("");
 			if (dwLength>0)
 			{
 				CStringW PresetName;
 				//WCHAR* pPresetName=new WCHAR[dwLength+1];
-				//RegKey2.QueryValue(L"",pPresetName,dwLength);
+				//PresetKey.QueryValue(L"",pPresetName,dwLength);
 				//m_aPossiblePresets.Add(pPresetName);
-				RegKey2.QueryValue(L"",PresetName);
+				PresetKey.QueryValue(L"",PresetName);
 				m_aPossiblePresets.Add(PresetName.GiveBuffer());				
 			}
 	
-			RegKey2.CloseKey();
+			PresetKey.CloseKey();
 		}		
 	}
 
@@ -5452,7 +5438,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnDestroy()
 
 	if (m_pList!=NULL)
 	{
-		m_pList->SaveColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","Shortcuts Settings List Widths");
+		m_pList->SaveColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Shortcuts Settings List Widths");
 		delete m_pList;
 		m_pList=NULL;
 	}

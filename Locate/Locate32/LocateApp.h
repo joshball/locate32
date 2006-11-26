@@ -233,6 +233,8 @@ public:
 		LPWSTR m_pTypeString;
 		LPWSTR m_pFindText;
 		LPWSTR m_pLoadPreset;
+		LPWSTR m_pSettingBranch;
+
 		DWORD m_nStatus;
 		DWORD m_nPriority;
 		BYTE m_nStartup;
@@ -408,7 +410,17 @@ protected:
 
 
 
+
+
+	BOOL InitCommonRegKey();
+	void FinalizeCommonRegKey();
+
+	LPSTR m_szCommonRegKey;
+	LPSTR m_szCommonRegFile;
+	
+
 public:
+	static CPtrContA<CHAR> GetRegKey(LPCSTR szSubKey);
 	
 	const CArray<PDATABASE>& GetDatabases() const { return m_aDatabases; }
 	CArray<PDATABASE>* GetDatabasesPtr() { return &m_aDatabases; }
@@ -435,10 +447,8 @@ public:
 	friend CLocateAppWnd::CUpdateStatusWnd;
 	friend CLocateAppWnd* GetLocateAppWnd();
 	friend CLocateDlg* GetLocateDlg();
+	friend CRegKey2;
 
-
-	
-	
 };
 
 inline CLocateApp::CStartData::CStartData()
@@ -450,7 +460,7 @@ inline CLocateApp::CStartData::CStartData()
     m_nSorting(BYTE(-1)),m_nPriority(priorityDontChange),
 	m_pStartPath(NULL),m_pStartString(NULL),
 	m_pTypeString(NULL),m_pFindText(NULL),m_pLoadPreset(NULL),
-	m_nActivateInstance(0)
+	m_nActivateInstance(0),m_pSettingBranch(NULL)
 { 
 }
 
@@ -466,6 +476,8 @@ inline CLocateApp::CStartData::~CStartData()
 		delete[] m_pFindText;
 	if (m_pLoadPreset!=NULL)
 		delete[] m_pLoadPreset;
+	if (m_pSettingBranch!=NULL)
+		delete[] m_pSettingBranch;
 
 }
 
@@ -567,11 +579,26 @@ inline BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases)
 {
 	DWORD nThreadPriority=THREAD_PRIORITY_NORMAL;
 
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
 		RegKey.QueryValue("Update Process Priority",nThreadPriority);
 	
 	return OnUpdate(bStopIfProcessing,pDatabases,(int)nThreadPriority);
 }
+
+
+
+inline CString CRegKey2::GetCommonKey()
+{
+	extern CLocateApp theApp;
+	return CString(theApp.m_szCommonRegKey)+="\\Locate32";
+}
+
+inline CStringW CRegKey2::GetCommonKeyW()
+{
+	extern CLocateApp theApp;
+	return CStringW(theApp.m_szCommonRegKey)+="\\Locate32";
+}
+
 
 #endif

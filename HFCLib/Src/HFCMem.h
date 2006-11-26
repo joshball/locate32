@@ -254,15 +254,47 @@ public:
 #endif
 
 // Data keepers
-
-template<class TYPE> class CDataKeeperFP
+template<class TYPE> class CPtrCont
 {
 public:
-	CDataKeeperFP(TYPE* data) { m_data=data; m_nRef=1; }
-	~CDataKeeperFP() { delete m_data; }
+	CPtrCont(TYPE* data) { m_data=data;  }
+	~CPtrCont() { delete m_data; }
+
+	operator TYPE*() const { return m_data; }
+	operator TYPE*&() { return m_data; }
+	operator TYPE() const { return *m_data; }
+	operator TYPE&() { return *m_data; }
+	TYPE* operator ->() { return m_data; }
+
+private:
+	TYPE* m_data;
+
+};
+
+template<class TYPE> class CPtrContA
+{
+public:
+	CPtrContA(TYPE* data) { m_data=data;  }
+	~CPtrContA() { delete[] m_data; }
+	
+	operator TYPE*() const { return m_data; }
+	operator TYPE*&() { return m_data; }
+	operator TYPE() const { return *m_data; }
+	operator TYPE&() { return *m_data; }
+	TYPE* operator ->() { return m_data; }
+
+private:
+	TYPE* m_data;
+};
+
+template<class TYPE> class CPtrContRef
+{
+public:
+	CPtrContRef(TYPE* data) { m_data=data; m_nRef=1; }
+	~CPtrContRef() { delete m_data; }
 
 	void AddRef() { m_nRef++; }
-	CDataKeeperFP* Release()
+	CPtrContRef* Release()
 	{
 		m_nRef--;
 		if (m_nRef==0)
@@ -285,14 +317,14 @@ private:
 	int m_nRef;
 };
 
-template<class TYPE> class CDataKeeperFAP
+template<class TYPE> class CPtrContRefA
 {
 public:
-	CDataKeeperFAP(TYPE* data) { m_data=data; m_nRef=1; }
-	~CDataKeeperFAP() { delete[] m_data; }
+	CPtrContRefA(TYPE* data) { m_data=data; m_nRef=1; }
+	~CPtrContRefA() { delete[] m_data; }
 	
 	void AddRef() { m_nRef++; }
-	CDataKeeperFAP* Release()
+	CPtrContRefA* Release()
 	{
 		if (--m_nRef==0)
 		{

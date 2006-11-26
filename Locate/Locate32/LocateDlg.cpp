@@ -373,8 +373,8 @@ BOOL CLocateDlgThread::InitInstance()
 	BOOL(WINAPI * pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD)=(BOOL(WINAPI *)(HWND,COLORREF,BYTE,DWORD))GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes");
 	if (pSetLayeredWindowAttributes!=NULL)
 	{
-		CRegKey RegKey;
-		if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+		CRegKey2 RegKey;
+		if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 		{
 			DWORD dwTransparency=0;
 			if (RegKey.QueryValue("Transparency",dwTransparency))
@@ -644,7 +644,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	delete[] pDetails;
 
 	m_pListCtrl->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP,LVS_EX_HEADERDRAGDROP);
-	m_pListCtrl->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General","ListWidths");
+	m_pListCtrl->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\General","ListWidths");
 
 	// Initializing drop target
 	OleInitialize(NULL);
@@ -815,8 +815,8 @@ void CLocateDlg::SetResultListFont()
 	HFONT hOldFont=m_pListCtrl->GetFont();
 	HFONT hNewFont=m_hDialogFont;
 
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
 	{
 		LOGFONT lFont;
 		if (RegKey.QueryValue("ResultListFont",(LPSTR)&lFont,sizeof(LOGFONT))==sizeof(LOGFONT))
@@ -1106,7 +1106,7 @@ BOOL CLocateDlg::SetListStyle(int id,BOOL bInit)
 	if ((dwStyle & LVS_TYPEMASK)==LVS_REPORT && id!=3)
 	{
 		m_pListCtrl->SaveColumnsState(HKCU,
-			CString(IDS_REGPLACE,CommonResource)+"\\General","ListWidths");
+			CRegKey2::GetCommonKey()+"\\General","ListWidths");
 	}
 
 	switch(id)
@@ -1209,12 +1209,10 @@ void CLocateDlg::SetMenuCheckMarkForListStyle()
 
 BOOL CLocateDlg::UpdateSettings()
 {
-	CRegKey RegKey;
-	CString Path;
+	CRegKey2 RegKey;
 	DWORD temp=3;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\General";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		//Dialog flags
 		temp=m_dwFlags;
@@ -1274,9 +1272,7 @@ BOOL CLocateDlg::UpdateSettings()
 	if (pSetLayeredWindowAttributes!=NULL)
 	{
 		// Transparency
-		Path.LoadString(IDS_REGPLACE,CommonResource);
-		Path<<"\\General";
-		if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+		if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 		{
 			if (!RegKey.QueryValue("Transparency",temp))
 				temp=0;
@@ -1520,8 +1516,8 @@ void CLocateDlg::InitTooltips()
 		}
 
 		// Set delay times
-		CRegKey RegKey;
-		if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+		CRegKey2 RegKey;
+		if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
 		{
 			DWORD dwDelay;
 			if (RegKey.QueryValue("TooltipDelayAutopop",dwDelay))
@@ -1618,7 +1614,7 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 		
 		CSelectDatabasesDlg dbd(GetLocateApp()->GetDatabases(),*pDatabases,
 			GetLocateApp()->GetStartupFlags()&CLocateApp::CStartData::startupDatabasesOverridden?CSelectDatabasesDlg::flagDisablePresets:0,
-			CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\SelectDatabases/Locate");
+			CRegKey2::GetCommonKey()+"\\Dialogs\\SelectDatabases/Locate");
 		if (!dbd.DoModal(*this))
 		{
 			delete pDatabases;
@@ -2102,10 +2098,16 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const C
 		if (bFolder)
 		{
 			if (pLocater->GetFolderAttributes()&(LITEMATTRIB_HIDDEN|LITEMATTRIB_SYSTEM))
+			{
+				pLocater->IgnoreThisResult(TRUE);
 				return TRUE;
+			}
 		}
 		else if (pLocater->GetFileAttributes()&(LITEMATTRIB_HIDDEN|LITEMATTRIB_SYSTEM))
+		{
+			pLocater->IgnoreThisResult(FALSE);
 			return TRUE;
+		}
 	}
 
 	
@@ -2154,7 +2156,10 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const C
 				
 					
 					if (strcmp(szPath,szPath2)==0)
+					{
+						pLocater->IgnoreThisResult(bFolder);
 						return TRUE; // Alreafy found
+					}
 					
 				}
 				nItem=((CLocateDlg*)dwParam)->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
@@ -2185,6 +2190,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const C
 			if (!FileSystem::IsDirectory(((CLocatedItem*)li.lParam)->GetPath()))
 			{
 				delete (CLocatedItem*)li.lParam;
+				pLocater->IgnoreThisResult(TRUE);
 				return TRUE;
 			}
 		}
@@ -2193,6 +2199,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const C
 			if (!FileSystem::IsFile(((CLocatedItem*)li.lParam)->GetPath()))
 			{
 				delete (CLocatedItem*)li.lParam;
+				pLocater->IgnoreThisResult(FALSE);
 				return TRUE;
 			}
 		}
@@ -2240,10 +2247,16 @@ BOOL CALLBACK CLocateDlg::LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const 
 		if (bFolder)
 		{
 			if (pLocater->GetFolderAttributes()&(LITEMATTRIB_HIDDEN|LITEMATTRIB_SYSTEM))
+			{
+				pLocater->IgnoreThisResult(TRUE);
 				return TRUE;
+			}
 		}
 		else if (pLocater->GetFileAttributes()&(LITEMATTRIB_HIDDEN|LITEMATTRIB_SYSTEM))
+		{
+			pLocater->IgnoreThisResult(FALSE);
 			return TRUE;
+		}
 	}
 
 	// Check wheter item is already added
@@ -2289,7 +2302,10 @@ BOOL CALLBACK CLocateDlg::LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const 
 				
 					
 					if (wcscmp(szPath,szPath2)==0)
+					{
+						pLocater->IgnoreThisResult(bFolder);
 						return TRUE; // Alreafy found
+					}
 					
 				}
 				nItem=((CLocateDlg*)dwParam)->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
@@ -2320,6 +2336,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const 
 			if (!FileSystem::IsDirectory(((CLocatedItem*)li.lParam)->GetPath()))
 			{
 				delete (CLocatedItem*)li.lParam;
+				pLocater->IgnoreThisResult(TRUE);
 				return TRUE;
 			}
 		}
@@ -2328,6 +2345,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const 
 			if (!FileSystem::IsFile(((CLocatedItem*)li.lParam)->GetPath()))
 			{
 				delete (CLocatedItem*)li.lParam;
+				pLocater->IgnoreThisResult(FALSE);
 				return TRUE;
 			}
 		}
@@ -2560,7 +2578,7 @@ void CLocateDlg::OnDestroy()
 	if (m_pListCtrl!=NULL)
 	{
 		if ((m_pListCtrl->GetStyle() & LVS_TYPEMASK)==LVS_REPORT)
-			m_pListCtrl->SaveColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General","ListWidths");
+			m_pListCtrl->SaveColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\General","ListWidths");
 		delete m_pListCtrl;
 		m_pListCtrl=NULL;
 	}
@@ -3618,13 +3636,10 @@ void CLocateDlg::OnChangeCbChain(HWND hWndRemove,HWND hWndAfter)
 
 void CLocateDlg::SaveRegistry()
 {
-	CRegKey RegKey;
-	CString Path;
+	CRegKey2 RegKey;
 	DWORD temp;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\General";
 
-	if(RegKey.OpenKey(HKCU,Path,CRegKey::defWrite)==ERROR_SUCCESS)
+	if(RegKey.OpenKey(HKCU,"\\General",CRegKey::defWrite)==ERROR_SUCCESS)
 	{
 		CRect rect;
 		//CMenu menu(GetSubMenu(GetMenu(),2));
@@ -3674,22 +3689,17 @@ void CLocateDlg::SaveRegistry()
 void CLocateDlg::LoadRegistry()
 {
 	CMenu menu(GetMenu());
-	CRegKey RegKey;
+	CRegKey2 RegKey;
 	DWORD temp;
 	DWORD x=100,y=100,cx=438;
 
-	CString Path(IDS_REGPLACE,CommonResource);
-	Path<<"\\Locate";
-
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		RegKey.QueryValue("MaximumFoundFiles",(LPTSTR)&m_dwMaxFoundFiles,sizeof(DWORD));
 		RegKey.CloseKey();
 	}
-	
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\General";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		// Loading dwFlags
 		temp=m_dwFlags;
@@ -3750,9 +3760,7 @@ void CLocateDlg::LoadRegistry()
 	}
 
 	
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Locate";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		DWORD dwTemp;
 		if (RegKey.QueryValue("WaitEvery30",dwTemp))
@@ -3764,12 +3772,8 @@ void CLocateDlg::LoadRegistry()
 
 void CLocateDlg::LoadDialogTexts()
 {
-	CRegKey RegKey;
-	CString Path;
-
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Dialogs";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\Dialogs",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		m_NameDlg.LoadControlStates(RegKey);
 		m_NameDlg.EnableItems(TRUE);
@@ -3785,11 +3789,9 @@ void CLocateDlg::LoadDialogTexts()
 
 void CLocateDlg::SaveDialogTexts()
 {
-	CRegKey RegKey;
-	CString Path;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Dialogs";
-	if(RegKey.OpenKey(HKCU,Path,CRegKey::defWrite)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+
+	if(RegKey.OpenKey(HKCU,"\\Dialogs",CRegKey::defWrite)==ERROR_SUCCESS)
 	{
 		m_NameDlg.SaveControlStates(RegKey);
 		m_SizeDateDlg.SaveControlStates(RegKey);
@@ -4515,10 +4517,10 @@ void CLocateDlg::SetSorting(BYTE bSorting)
 {
 	if (bSorting==BYTE(-2))
 	{
-		CRegKey RegKey;
+		CRegKey2 RegKey;
 		bSorting=BYTE(-1);
 		
-		if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+		if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
 		{
 			DWORD nTemp=BYTE(-1);
 			if (RegKey.QueryValue("Default Sorting",nTemp))
@@ -5801,8 +5803,8 @@ void CLocateDlg::OnOpenFolder(BOOL bContaining,int nItem)
 	if (bContaining)
 	{
 		// Loading some general settings
-		CRegKey RegKey;
-		if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+		CRegKey2 RegKey;
+		if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
 		{	
 			DWORD dwTemp=0;
 			RegKey.QueryValue("Use other program to open folders",dwTemp);
@@ -5991,8 +5993,8 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder)
 	CString sProgram;
 	
 	// Loading some general settings
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
 	{
 		DWORD dwTemp=0;
 		RegKey.QueryValue("Use other program to open folders",dwTemp);
@@ -7219,7 +7221,8 @@ BOOL CLocateDlg::ResolveSystemLVStatus()
 {
 	m_dwFlags=(m_dwFlags&~fgLVStyleFlag)|fgLVStyleSystemDefine;
 
-	
+	// TODO: Implement by using SHGetSetSettings
+
 	CRegKey RegKey;
 	if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
@@ -7362,11 +7365,9 @@ void CLocateDlg::OnSaveResults()
 	CSaveResultsDlg SaveResultsDlg;
 	
 	// Loading previous state
-	CRegKey RegKey;
-	CString Path;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\General";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		RegKey.QueryValue("SaveResultsFlags",(LPTSTR)&SaveResultsDlg.m_nFlags,4);
 		SaveResultsDlg.m_nFlags&=RESULT_SAVESTATE;
@@ -7396,7 +7397,7 @@ void CLocateDlg::OnSaveResults()
 	CWaitCursor wait;
 
 	// Saving state
-	if(RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	if(RegKey.OpenKey(HKCU,"\\General",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
 		RegKey.SetValue("SaveResultsFlags",SaveResultsDlg.m_nFlags&RESULT_SAVESTATE);
 		RegKey.SetValue("SaveResultsDetails",(LPCTSTR)(const int*)SaveResultsDlg.m_aDetails,
@@ -7511,9 +7512,9 @@ void CLocateDlg::OnChangeFileName()
 {
 	CChangeFilenameDlg fnd;
 	
-	CRegKey RegKey;
+	CRegKey2 RegKey;
 	BOOL bNoExtension=FALSE;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Misc",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Misc",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		DWORD dwTemp=0;;
 		RegKey.QueryValue("NoExtensionInRename",dwTemp);
@@ -9057,11 +9058,9 @@ void CLocateDlg::OnPresets()
 	CLocateDlg::InsertMenuItemsFromTemplate(Menu,m_Menu.GetSubMenu(SUBMENU_PRESETSELECTION),0);
 	
 	
-	CRegKey RegKey;
-	CString Path;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Dialogs\\SearchPresets";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+
+	if (RegKey.OpenKey(HKCU,"\\Dialogs\\SearchPresets",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		CRegKey PresetKey;
 		WCHAR szBuffer[30];
@@ -9162,11 +9161,9 @@ void CLocateDlg::OnPresets()
 DWORD CLocateDlg::CheckExistenceOfPreset(LPCWSTR szName,DWORD* pdwPresets) // Returns index to preset or FFFFFFFF
 {
 	// First, find free indentifier
-	CRegKey RegKey;
-	CString Path;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Dialogs\\SearchPresets";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	
+	if (RegKey.OpenKey(HKCU,"\\Dialogs\\SearchPresets",CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 	{
 		if (pdwPresets!=NULL)
 			*pdwPresets=0;
@@ -9218,8 +9215,10 @@ void CLocateDlg::OnPresetsSave()
 	if (dwID==DWORD(-1))
 		dwID=dwPresets;
 
-	CRegKey MainKey,PresetKey;
-	if (MainKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\SearchPresets",
+	CRegKey2 MainKey;
+	CRegKey PresetKey;
+
+	if (MainKey.OpenKey(HKCU,"\\Dialogs\\SearchPresets",
 		CRegKey::createNew|CRegKey::samAll)!=ERROR_SUCCESS)
 		return;
 
@@ -9241,11 +9240,10 @@ void CLocateDlg::OnPresetsSave()
 
 void CLocateDlg::OnPresetsSelection(int nPreset)
 {
-	CRegKey RegKey,PresetKey;
-	CString Path;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Dialogs\\SearchPresets";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	CRegKey PresetKey;
+	
+	if (RegKey.OpenKey(HKCU,"\\Dialogs\\SearchPresets",CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 		return;
 
 	char szBuffer[30];
@@ -9267,12 +9265,11 @@ void CLocateDlg::OnPresetsSelection(int nPreset)
 
 void CLocateDlg::LoadPreset(LPCWSTR szPreset)
 {
-	CRegKey RegKey,PresetKey;
-	CStringW Path,Name;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Dialogs\\SearchPresets";
+	CRegKey2 RegKey;
+	CRegKey PresetKey;
 
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+
+	if (RegKey.OpenKey(HKCU,"\\Dialogs\\SearchPresets",CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 		return;
 	
 	// Finding registry entry for the preset
@@ -9284,6 +9281,7 @@ void CLocateDlg::LoadPreset(LPCWSTR szPreset)
 		if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 			return;
 
+		CStringW Name;
 		if (PresetKey.QueryValue(L"",Name))
 		{
 			if (Name.Compare(szPreset)==0)
@@ -9556,8 +9554,8 @@ void CLocateDlg::LoadResultlistActions()
 {
 	ClearResultlistActions();
 
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
 	{
 		BOOL bOk;
 		DWORD dwLength=RegKey.QueryValueLength("ResultListActions",bOk);
@@ -9660,18 +9658,15 @@ void CLocateDlg::SaveResultlistActions()
 	DebugNumMessage("CLocateDlg::SaveResultlistActions(): ResultListActions length: %d",dwLength);
 
 
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defWrite)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defWrite)==ERROR_SUCCESS)
 	{
 		
 		RegKey.SetValue("ResultListActions",LPCSTR(pData),dwLength,REG_BINARY);
 		RegKey.CloseKey();
 	}
 
-			
-
-
-
+	
 }
 
 
@@ -9707,13 +9702,12 @@ BOOL CLocateDlg::CSavePresetDlg::OnInitDialog(HWND hwndFocus)
 	::CSavePresetDlg::OnInitDialog(hwndFocus);
 	
 	CString Path;
-	CRegKey RegKey,RegKey2;
+	CRegKey2 RegKey;
+	CRegKey PresetKey;
 	CComboBox Combo(GetDlgItem(IDC_EDIT));
 	char szBuffer[30];
 
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Dialogs\\SearchPresets";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Dialogs\\SearchPresets",CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 		return FALSE;
 	
 	
@@ -9722,14 +9716,14 @@ BOOL CLocateDlg::CSavePresetDlg::OnInitDialog(HWND hwndFocus)
 	{
 		StringCbPrintf(szBuffer,30,"Preset %03d",nPreset);
 
-		if (RegKey2.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+		if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 			break;
 
 		CStringW sCurrentName;
-		RegKey2.QueryValue(L"",sCurrentName);
+		PresetKey.QueryValue(L"",sCurrentName);
 		Combo.AddString(sCurrentName);
 
-		RegKey2.CloseKey();
+		PresetKey.CloseKey();
 	}	
 	return FALSE;
 }
@@ -10025,8 +10019,8 @@ void CLocateDlg::CNameDlg::OnClear(BOOL bInitial)
 
 void CLocateDlg::CNameDlg::SaveRegistry() const
 {
-	CRegKey RegKey;
-	if(RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Recent Strings",CRegKey::defWrite)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if(RegKey.OpenKey(HKCU,"\\Recent Strings",CRegKey::defWrite)==ERROR_SUCCESS)
 	{
 		CStringW buffer,bfr;
 		int i=0;
@@ -10075,13 +10069,13 @@ void CLocateDlg::CNameDlg::SaveRegistry() const
 
 void CLocateDlg::CNameDlg::LoadRegistry()
 {
-	CRegKey RegKey;
+	CRegKey2 RegKey;
 	m_Name.ResetContent();
 	m_Type.ResetContent();
 	m_Type.AddString(ID2W(IDS_NOEXTENSION));
 	
 
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Recent Strings",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Recent Strings",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		WORD i;
 		CStringW name,buffer;
@@ -11214,8 +11208,8 @@ void CLocateDlg::CSizeDateDlg::OnClear(BOOL bInitial)
 	if (bInitial)
 	{
 		DWORD dwMinType=0,dwMaxType=0,dwMinSizeType=0,dwMaxSizeType=0;
-		CRegKey RegKey;
-		if(RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs",CRegKey::defRead)==ERROR_SUCCESS)
+		CRegKey2 RegKey;
+		if(RegKey.OpenKey(HKCU,"\\Dialogs",CRegKey::defRead)==ERROR_SUCCESS)
 		{
 			RegKey.QueryValue("SizeDate/MinimumSizeType",dwMinSizeType);
 			RegKey.QueryValue("SizeDate/MaximumSizeType",dwMaxSizeType);
@@ -11568,11 +11562,11 @@ void CLocateDlg::CAdvancedDlg::AddBuildInFileTypes()
 		return;
 
 	CStringW strTypes;
-	CRegKey RegKey;
+	CRegKey2 RegKey;
 	DWORD bRet=FALSE;
 
 	// Loading buildin types from registry if needed	
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Locate",
+	if (RegKey.OpenKey(HKCU,"\\Locate",
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		RegKey.QueryValue(L"Load Buildin Types",bRet);
@@ -11585,7 +11579,7 @@ void CLocateDlg::CAdvancedDlg::AddBuildInFileTypes()
 	{
 		strTypes.LoadString(IDS_BUILDINTYPES);
 
-        if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Locate",
+        if (RegKey.OpenKey(HKCU,"\\Locate",
 			CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
 			if (!bRet)		
@@ -11833,8 +11827,8 @@ BOOL CLocateDlg::CAdvancedDlg::IsChanged()
 {
 	DWORD dwDefaultCheck=0,dwDefaultMatchWholeName=0,dwDefaultReplaceSpaces=0,dwDefaultUseWholePath=0;
 
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		RegKey.QueryValue("Default CheckIn",dwDefaultCheck);
 		RegKey.QueryValue("Default MatchWholeName",dwDefaultMatchWholeName);
@@ -11983,8 +11977,8 @@ DWORD CLocateDlg::CAdvancedDlg::OnOk(CLocater* pLocater)
 	
 void CLocateDlg::CAdvancedDlg::OnClear(BOOL bInitial)
 {
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		DWORD nTemp=1;
 		RegKey.QueryValue("Default CheckIn",nTemp);

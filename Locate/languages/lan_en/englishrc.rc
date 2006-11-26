@@ -337,7 +337,7 @@ BEGIN
                     IDC_ALWAYSUNDERLINE,21,71,220,10
     RADIOBUTTON     "&Click file to select",IDC_CLICKTOSELECT,
                     8,85,252,10
-    LTEXT           "This option has only effect to that how result list items are selects. To specify how files are opened, use 'Select Details' dialog (View menu).",
+    LTEXT           "This option has only effect to that how result list items are selected. To specify how files are opened, use 'Select Details' dialog (View menu).",
                     IDC_STATIC,8,97,272,30
 	GROUPBOX        "Locate dialog:",IDC_STATIC,2,135,281,79
     CONTROL         "&Minimize to system tray",IDC_MINIMIZETOSYSTEMTRAY,

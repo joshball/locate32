@@ -13,6 +13,8 @@ extern LPSTR g_szBuffer;
 extern LPWSTR g_szwBuffer; 
 
 
+#include "../common/common.h"
+
 #include "commonres.h"
 #include "lan_resources.h"
 

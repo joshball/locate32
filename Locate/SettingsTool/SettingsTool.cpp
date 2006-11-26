@@ -173,6 +173,7 @@ BOOL SaveSettings(HWND hWnd)
 		return FALSE;
 	}
 
+	DeleteFile(szPath);
 	lRet=RegSaveKey(hRegKey,szPath,NULL);
 	RegCloseKey(hRegKey);		
 	

@@ -197,8 +197,8 @@ BYTE CShortcut::ModifiersToHotkeyModifiers(BYTE bModifier)
 
 BOOL CShortcut::LoadShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadFlags)
 {
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)!=ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)!=ERROR_SUCCESS)
 		return FALSE;
 
 	DWORD dwDataLength=RegKey.QueryValueLength("Shortcuts");
@@ -274,8 +274,8 @@ BOOL CShortcut::SaveShortcuts(const CArrayFP<CShortcut*>& aShortcuts)
 	DWORD dwLength=sizeof(DWORD);
 	int i;
 
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defWrite)!=ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defWrite)!=ERROR_SUCCESS)
 		return FALSE;
 
 	for (i=0;i<aShortcuts.GetSize();i++)
@@ -796,8 +796,8 @@ BOOL CShortcut::GetDefaultShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadF
 	// BEGIN 
 	{
 	LPCSTR szFile="C:\\My Documents\\Programming\\C\\Locate\\Locate32\\commonres\\defaultshortcuts.dat";
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)!=ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)!=ERROR_SUCCESS)
 		return FALSE;
 	DWORD dwDataLength=RegKey.QueryValueLength("Shortcuts");
 	if (dwDataLength<4)

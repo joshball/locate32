@@ -128,11 +128,6 @@ IDB_SHORTCUTACTIONSBITMAPSH BITMAP                  "commonres\\keybith.bmp"
 
 STRINGTABLE 
 BEGIN
-    IDS_REGPLACE            "Software\\Update\\Locate32"
-END
-
-STRINGTABLE 
-BEGIN
     IDS_ERROR               "Error"
 END
 

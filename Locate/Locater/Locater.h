@@ -233,6 +233,8 @@ public:
 
 	DWORD GetNumberOfDatabases() const;
 
+	void IgnoreThisResult(BOOL bIsFolder) const; // Use in LOCATEFOUNDPROC
+
 private:
 	// Locate information
 	union {
@@ -303,8 +305,8 @@ private:
 	CFile* dbFile;
 
 private:
-	DWORD m_dwFoundFiles;
-	DWORD m_dwFoundDirectories;
+	mutable DWORD m_dwFoundFiles;
+	mutable DWORD m_dwFoundDirectories;
 
 #ifdef WIN32
 	HANDLE m_hThread;

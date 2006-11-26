@@ -16,8 +16,8 @@ CSchedule::CSchedule()
 	m_tDaily.wEvery=1;
 
 
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
 	{
 		DWORD dwTemp;
 		if (RegKey.QueryValue("Update Process Priority",dwTemp))

@@ -85,7 +85,7 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 
 		CString str("Database Info List Widths for ");
 		str << m_pDatabase->GetName();
-		m_pList->LoadColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs",str);
+		m_pList->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs",str);
 		
 		//Settting creator and description
 		SetDlgItemText(IDC_CREATOR,di->sCreator);
@@ -277,7 +277,7 @@ void CDatabaseInfos::CDatabaseInfoPage::OnDestroy()
 		CString str("Database Info List Widths for ");
 		str << m_pDatabase->GetName();
 
-		m_pList->SaveColumnsState(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs",str);
+		m_pList->SaveColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs",str);
 
 		delete m_pList;
 		m_pList=NULL;

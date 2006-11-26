@@ -18,7 +18,8 @@ UINT CLocateApp::m_nLocateAppMessage=0;
 CLocateApp::CLocateApp()
 :	CWinApp("LOCATE32"),m_nDelImage(0),m_nStartup(0),
 	m_ppUpdaters(NULL),m_pLastDatabase(NULL),m_nFileSizeFormat(fsfOverKBasKB),
-	m_dwProgramFlags(pfDefault),m_nInstance(0)
+	m_dwProgramFlags(pfDefault),m_nInstance(0),m_szCommonRegFile(NULL),
+	m_szCommonRegKey(NULL)
 {
 	DebugMessage("CLocateApp::CLocateApp()");
 	m_pStartData=new CStartData;
@@ -113,6 +114,8 @@ BOOL CLocateApp::InitInstance()
 	
 	DebugFormatMessage("CommandLine: %S",pCommandLine);
 	ParseParameters(pCommandLine,m_pStartData);
+
+	InitCommonRegKey();
 
 
 	m_nStartup=m_pStartData->m_nStartup;
@@ -220,6 +223,8 @@ int CLocateApp::ExitInstance()
 		FreeLibrary(GetLanguageSpecificResourceHandle());
 		SetResourceHandle(GetInstanceHandle(),SetBoth);
 	}
+
+	FinalizeCommonRegKey();
 	return 0;
 }
 
@@ -254,6 +259,17 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 	{
 		switch(lpCmdLine[++idx])
 		{
+		case L'X': // settings branch
+			idx++;
+			if (lpCmdLine[idx]==L':')
+				idx++;
+			while(lpCmdLine[idx]==L' ') idx++;
+			temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
+			ChangeAndAlloc(pStartData->m_pSettingBranch,lpCmdLine+idx,temp);
+			if (temp<0)
+				return TRUE;
+			idx+=temp;
+			break;				
 		case L'P': // put 'path' to 'Look in' field
 			idx++;
 			if (lpCmdLine[idx]==L':')
@@ -380,7 +396,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				if (CDatabase::FindByName(pStartData->m_aDatabases,lpCmdLine+idx,temp)==NULL)
 				{
 					CDatabase* pDatabase=CDatabase::FromName(HKCU,
-						"Software\\Update\\Databases",lpCmdLine+idx,temp);
+						GetRegKey("Databases"),lpCmdLine+idx,temp);
 					if (pDatabase!=NULL)
 					{
 						pDatabase->SetThreadId(0);
@@ -400,7 +416,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				if (CDatabase::FindByName(pStartData->m_aDatabases,lpCmdLine+idx,temp)==NULL)
 				{
 					CDatabase* pDatabase=CDatabase::FromName(HKCU,
-						"Software\\Update\\Databases",lpCmdLine+idx,temp);
+						GetRegKey("Databases"),lpCmdLine+idx,temp);
 					if (pDatabase!=NULL)
 					{
 						pDatabase->SetThreadId(0);
@@ -911,7 +927,7 @@ BYTE CLocateApp::CheckDatabases()
 {
 	// First, check that there is database 
 	if (m_aDatabases.GetSize()==0)
-		CDatabase::LoadFromRegistry(HKCU,"Software\\Update\\Databases",m_aDatabases);
+		CDatabase::LoadFromRegistry(HKCU,CLocateApp::GetRegKey("Databases"),m_aDatabases);
 
 	// If there is still no any available database, try to load old style db
 	if (m_aDatabases.GetSize()==0)
@@ -924,7 +940,7 @@ BYTE CLocateApp::CheckDatabases()
 		}
 		else
 		{
-			if (CDatabase::SaveToRegistry(HKCU,"Software\\Update\\Databases",&pDatabase,1))
+			if (CDatabase::SaveToRegistry(HKCU,CLocateApp::GetRegKey("Databases"),&pDatabase,1))
 				CRegKey::DeleteKey(HKCU,"Software\\Update\\Database");
 		}
 		m_aDatabases.Add(pDatabase);
@@ -2110,10 +2126,9 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 
 BOOL CLocateApp::SetLanguageSpecifigHandles()
 {
-	CRegKey RegKey;
+	CRegKey2 RegKey;
 	CStringW LangFile;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource),
-		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		RegKey.QueryValue(L"Language",LangFile);
 		RegKey.CloseKey();
@@ -2346,8 +2361,8 @@ void CLocateAppWnd::LoadAppIcon()
 		DeleteObject(m_hAppIcon);
 
 	
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
 	{
 		CStringW CustomTrayIcon;
 		if (RegKey.QueryValue(L"CustomTrayIcon",CustomTrayIcon))
@@ -2480,8 +2495,8 @@ BOOL CLocateAppWnd::TurnOffShortcuts()
 
 void CLocateApp::SaveRegistry() const
 {
-	CRegKey RegKey;
-	if(RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",
+	CRegKey2 RegKey;
+	if(RegKey.OpenKey(HKCU,"\\General",
 		CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
 		RegKey.SetValue("General Flags",m_dwProgramFlags&pfSave);
@@ -2499,11 +2514,11 @@ void CLocateApp::LoadRegistry()
 	// When modifications are done, check whether 
 	// function is applicable for UpdateSettings
 
-	CRegKey RegKey;
+	CRegKey2 RegKey;
 	m_strDateFormat.Empty();
 	m_strTimeFormat.Empty();
 
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",
+	if (RegKey.OpenKey(HKCU,"\\General",
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		// Loading dwFlags
@@ -2523,8 +2538,8 @@ void CLocateApp::LoadRegistry()
 
 BOOL CLocateApp::UpdateSettings()
 {
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\General",
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		// Loading dwFlags
@@ -2898,8 +2913,8 @@ BOOL CLocateAppWnd::StartUpdateStatusNotification()
 
 		if (pSetLayeredWindowAttributes!=NULL)
 		{
-			CRegKey RegKey;
-			if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+			CRegKey2 RegKey;
+			if (RegKey.OpenKey(HKCU,"Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 			{
 				DWORD dwTemp;
 				if (RegKey.QueryValue("Transparency",dwTemp))
@@ -3211,7 +3226,7 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThrea
 			CSelectDatabasesDlg dbd(GetLocateApp()->GetDatabases(),aDatabases,
 				(GetLocateApp()->GetStartupFlags()&CLocateApp::CStartData::startupDatabasesOverridden?CSelectDatabasesDlg::flagDisablePresets:0)|
 				CSelectDatabasesDlg::flagShowThreads|CSelectDatabasesDlg::flagSetUpdateState|CSelectDatabasesDlg::flagEnablePriority,
-				CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\SelectDatabases/Update");
+				CRegKey2::GetCommonKey()+"\\Dialogs\\SelectDatabases/Update");
 			dbd.SetThreadPriority(nThreadPriority);
 			if (!dbd.DoModal(m_pLocateDlgThread!=NULL?HWND(*GetLocateDlg()):HWND(*this)))
                 return FALSE;
@@ -3688,11 +3703,8 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 	DebugNumMessage("CLocateAppWnd::SetSchedules(0x%X) START",(DWORD)pSchedules);
 	if (pSchedules==NULL)
 	{
-		CRegKey RegKey;
-		CString Path;
-		Path.LoadString(IDS_REGPLACE,CommonResource);
-		Path<<"\\General";
-		if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+		CRegKey2 RegKey;
+		if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 		{
 			DWORD nKeyLen=RegKey.QueryValueLength("Schedules");
 			BYTE* pSchedules=new BYTE[nKeyLen];
@@ -3801,12 +3813,8 @@ BOOL CLocateAppWnd::SaveSchedules()
 
 	DebugMessage("CLocateAppWnd::SaveSchedules() START");
 	
-	CRegKey RegKey;
-	CString Path;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\General";
-	
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
 		DWORD dwDataLen=6;
 		POSITION pPos=m_Schedules.GetHeadPosition();
@@ -3981,6 +3989,59 @@ BOOL CLocateAppWnd::RunStartupSchedules()
 	return bShouldBeCalledAgain;
 }
 
+BOOL CLocateApp::InitCommonRegKey()
+{
+	m_szCommonRegKey=ReadIniFile(&m_szCommonRegFile,
+		m_pStartData!=NULL?W2A(m_pStartData->m_pSettingBranch):NULL);
+	
+	if (m_szCommonRegKey!=NULL)
+	{
+		if (m_szCommonRegFile!=NULL)
+			LoadSettingsFromFile(m_szCommonRegKey,m_szCommonRegFile);
+	}
+	else
+	{
+		// Use default
+		m_szCommonRegKey=alloccopy("Software\\Update");
+	}
+
+	return TRUE;
+}
+
+void CLocateApp::FinalizeCommonRegKey()
+{
+	if (m_szCommonRegKey==NULL)
+		return;
+	
+	if (m_szCommonRegFile!=NULL)
+	{
+		SaveSettingsToFile(m_szCommonRegKey,m_szCommonRegFile);
+
+		delete[] m_szCommonRegFile;
+	}
+
+	delete[] m_szCommonRegKey;
+}
+
+CPtrContA<CHAR> CLocateApp::GetRegKey(LPCSTR szSubKey)
+{
+	extern CLocateApp theApp;
+
+	int nCommonKeyLen=istrlen(theApp.m_szCommonRegKey);
+	int nSubKeyLen=istrlen(szSubKey)+1;
+
+	char* pKey=new char[nCommonKeyLen+nSubKeyLen+(szSubKey[0]!='\\')];
+
+	MemCopy(pKey,theApp.m_szCommonRegKey,nCommonKeyLen);
+	
+	if (szSubKey[0]!='\\')
+		pKey[nCommonKeyLen++]='\\';
+
+	MemCopy(pKey+nCommonKeyLen,szSubKey,nSubKeyLen);
+
+	return CPtrContA<CHAR>(pKey);
+}
+
 ////////////////////////////
 // CLocateAppWnd::CUpdateStatusWnd
 CLocateAppWnd::CUpdateStatusWnd::CUpdateStatusWnd()
@@ -3996,8 +4057,8 @@ CLocateAppWnd::CUpdateStatusWnd::CUpdateStatusWnd()
 	m_cBackColor=GetSysColor(COLOR_INFOBK);
 
 	// Update status tooltip
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		DWORD dwTemp;
 		if (RegKey.QueryValue("TextColor",dwTemp))
@@ -4053,7 +4114,7 @@ void CLocateAppWnd::CUpdateStatusWnd::OnDestroy()
 		ReleaseCapture();			
 	}
 
-	SavePosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\Updatestatus","WindowPos");
+	SavePosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs\\Updatestatus","WindowPos");
 
 }
 
@@ -4353,9 +4414,9 @@ void CLocateAppWnd::CUpdateStatusWnd::SetFonts()
 		return;
 
 	// Update status tooltip
-	CRegKey RegKey;
+	CRegKey2 RegKey;
 	LOGFONT lTitleFont,lTextFont;
-	if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		if (RegKey.QueryValue("TextFont",(LPSTR)&lTextFont,sizeof(LOGFONT))<sizeof(LOGFONT))
 			CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(&lTextFont,NULL);
@@ -4591,7 +4652,7 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 	case CLocateApp::pfUpdateTooltipPositionDefault:
 		break;
 	case CLocateApp::pfUpdateTooltipPositionLastPosition:
-		if (LoadPosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs\\Updatestatus","WindowPos",fgOnlyNormalPosition))
+		if (LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs\\Updatestatus","WindowPos",fgOnlyNormalPosition))
 			return;
 		break;
 	default:
@@ -4717,6 +4778,7 @@ BOOL CLocateAppWnd::CUpdateStatusWnd::DestroyWindow()
 	CWnd::DestroyWindow();
 	return TRUE;
 }
+
 
 #ifdef _DEBUG
 DEBUGALLOCATORTYPE DebugAlloc;

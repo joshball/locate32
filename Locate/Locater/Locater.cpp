@@ -867,7 +867,11 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR* szNames,DWORD nNames,
 		}
 	}
 	for (i=0;i<nExtensions;i++)
-		m_aExtensions.Add(new CStringW(szExtensions[i]));
+	{
+		CStringW* pExtenstion=new CStringW(szExtensions[i]);
+		pExtenstion->MakeLower();
+		m_aExtensions.Add(pExtenstion);
+	}
 
 	return SetDirectoriesAndStartToLocate(bThreaded,szDirectories,nDirectories);	
 }

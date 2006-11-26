@@ -9,7 +9,7 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 {
 	ASSERT(m_aIDs.GetSize()==m_aWidths.GetSize());
 
-	if (!LoadPosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","SelectColumnsWindowPos",fgOnlyNormalPosition))
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","SelectColumnsWindowPos",fgOnlyNormalPosition))
 		CenterWindow();
 
 	m_pList=new CListCtrl(GetDlgItem(IDC_COLUMNS));
@@ -367,7 +367,7 @@ void CSelectColumndDlg::OnDestroy()
 		m_pList=NULL;
 	}
 	
-	SavePosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","SelectColumnsWindowPos");
+	SavePosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","SelectColumnsWindowPos");
 		
 	return CDialog::OnDestroy();
 }
@@ -667,7 +667,7 @@ BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
 	
-	if (!LoadPosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","SelectDatabasesWindowPos",fgOnlyNormalPosition))
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","SelectDatabasesWindowPos",fgOnlyNormalPosition))
 		CenterWindow();
 
 
@@ -848,7 +848,7 @@ void CSelectDatabasesDlg::OnDestroy()
 {
 	m_List.SaveColumnsState(HKCU,m_pRegKey,"Database List Widths");
 
-	SavePosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","SelectDatabasesWindowPos");
+	SavePosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","SelectDatabasesWindowPos");
 
 	CDialog::OnDestroy();
 }
@@ -1860,7 +1860,7 @@ BOOL CSavePresetDlg::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
 
-	if (!LoadPosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","SavePresetWindowPos",fgOnlyNormalPosition))
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","SavePresetWindowPos",fgOnlyNormalPosition))
 		CenterWindow();
 
 	return FALSE;
@@ -1869,7 +1869,7 @@ BOOL CSavePresetDlg::OnInitDialog(HWND hwndFocus)
 void CSavePresetDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
-	SavePosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","SavePresetWindowPos");
+	SavePosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","SavePresetWindowPos");
 }
 
 BOOL CSavePresetDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
@@ -1978,7 +1978,7 @@ BOOL CChangeCaseDlg::OnInitDialog(HWND hwndFocus)
 	}
 	CheckDlgButton(IDC_EXTENSIONS,bForExtension);
 
-	if (!LoadPosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","ChangeCaseWindowPos",fgOnlyNormalPosition))
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","ChangeCaseWindowPos",fgOnlyNormalPosition))
 		CenterWindow();
 
 	return FALSE;
@@ -1987,7 +1987,7 @@ BOOL CChangeCaseDlg::OnInitDialog(HWND hwndFocus)
 void CChangeCaseDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
-	SavePosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","ChangeCaseWindowPos");
+	SavePosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","ChangeCaseWindowPos");
 }
 
 BOOL CChangeCaseDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
@@ -2040,7 +2040,7 @@ BOOL CChangeFilenameDlg::OnInitDialog(HWND hwndFocus)
 		SetDlgItemText(IDC_EDIT,m_sFileName);
 
 
-	if (!LoadPosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","ChangeFilenameWindowPos",fgOnlyNormalPosition))
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","ChangeFilenameWindowPos",fgOnlyNormalPosition))
 		CenterWindow();
 	return FALSE;
 }
@@ -2048,7 +2048,7 @@ BOOL CChangeFilenameDlg::OnInitDialog(HWND hwndFocus)
 void CChangeFilenameDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
-	SavePosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","ChangeFilenameWindowPos");
+	SavePosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","ChangeFilenameWindowPos");
 }
 
 BOOL CChangeFilenameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
@@ -2112,21 +2112,18 @@ BOOL CChangeFilenameDlg::OnClose()
 BOOL CLocateDlg::CRemovePresetDlg::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
-	if (!LoadPosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","RemovePresetWindowPos",fgOnlyNormalPosition))
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","RemovePresetWindowPos",fgOnlyNormalPosition))
 		CenterWindow();
 
 
 
 	// First, find indentifiers
-	CRegKey RegKey;
-	CString Path;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Dialogs\\SearchPresets";
-	if (RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\Dialogs\\SearchPresets",CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 		return FALSE;
 	
 	
-	CRegKey RegKey2;
+	CRegKey PresetKey;
 	CComboBox Combo(GetDlgItem(IDC_PRESETS));
 	char szBuffer[30];
 
@@ -2134,15 +2131,15 @@ BOOL CLocateDlg::CRemovePresetDlg::OnInitDialog(HWND hwndFocus)
 	{
 		StringCbPrintf(szBuffer,30,"Preset %03d",nPreset);
 
-		if (RegKey2.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
+		if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
 			break;
 
 		CStringW sCurrentName;
-		RegKey2.QueryValue(L"",sCurrentName);
+		PresetKey.QueryValue(L"",sCurrentName);
 
 		Combo.AddString(sCurrentName);
 
-		RegKey2.CloseKey();
+		PresetKey.CloseKey();
 	}		
 
 	// Choosing first
@@ -2153,7 +2150,7 @@ BOOL CLocateDlg::CRemovePresetDlg::OnInitDialog(HWND hwndFocus)
 void CLocateDlg::CRemovePresetDlg::OnDestroy()
 {
 	CDialog::OnDestroy();
-	SavePosition(HKCU,CString(IDS_REGPLACE,CommonResource)+"\\Dialogs","RemovePresetWindowPos");
+	SavePosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","RemovePresetWindowPos");
 }
 
 BOOL CLocateDlg::CRemovePresetDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
@@ -2193,12 +2190,9 @@ void CLocateDlg::CRemovePresetDlg::OnOK()
 	if (nSelection==CB_ERR)
 		return;
 
-	CRegKey RegKey;
-	CString Path;
-	Path.LoadString(IDS_REGPLACE,CommonResource);
-	Path<<"\\Dialogs\\SearchPresets";
-	
-	LONG lErr=RegKey.OpenKey(HKCU,Path,CRegKey::openExist|CRegKey::samAll);
+	CRegKey2 RegKey;
+
+	LONG lErr=RegKey.OpenKey(HKCU,"\\Dialogs\\SearchPresets",CRegKey::openExist|CRegKey::samAll);
 	if (lErr!=ERROR_SUCCESS)
 	{
 		ReportSystemError(NULL,lErr,0);

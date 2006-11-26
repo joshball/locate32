@@ -143,8 +143,8 @@ inline CLocateDlg::ImageHandlerDll::ImageHandlerDll()
 {
 	DWORD bLoadDll=TRUE;
 	{
-		CRegKey RegKey;
-		if (RegKey.OpenKey(HKCU,CString(IDS_REGPLACE,CommonResource),CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+		CRegKey2 RegKey;
+		if (RegKey.OpenKey(HKCU,"",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 			RegKey.QueryValue("Load imagehandler",bLoadDll);
 	}
 	if (!bLoadDll)

@@ -103,6 +103,44 @@ inline CDateTimeCtrlEx* CDateTimeCtrlEx::GetClass(HWND hWnd)
 	return (CDateTimeCtrlEx*)::GetWindowLongPtr(hWnd,GWLP_USERDATA);
 }
 
+class CRegKey2 : public CRegKey
+{
+public:
+	CRegKey2();
+	CRegKey2(HKEY hKey);
+	CRegKey2(HKEY hKey,LPCSTR lpszSubKey,DWORD fStatus=CRegKey::defWrite,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+	CRegKey2(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus=CRegKey::defWrite,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+
+	LONG OpenKey(HKEY hKey,LPCSTR lpszSubKey,DWORD fStatus=CRegKey::createNew|CRegKey::samAll,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+	LONG OpenKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus=CRegKey::createNew|CRegKey::samAll,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+
+	static CString GetCommonKey();
+	static CStringW GetCommonKeyW();
+};
+
+inline CRegKey2::CRegKey2()
+:	CRegKey()
+{
+}
+
+inline CRegKey2::CRegKey2(HKEY hKey)
+:	CRegKey(hKey)
+{
+}
+
+inline CRegKey2::CRegKey2(HKEY hKey,LPCSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+:	CRegKey()
+{
+	OpenKey(hKey,lpszSubKey,fStatus,lpSecurityAttributes);
+}
+
+inline CRegKey2::CRegKey2(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
+:	CRegKey()
+{
+	OpenKey(hKey,lpszSubKey,fStatus,lpSecurityAttributes);
+}
+
+
 
 
 

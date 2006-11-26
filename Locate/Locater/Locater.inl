@@ -584,5 +584,13 @@ inline LPCWSTR CLocater::GetCurrentDatabaseFileSystem() const
 {
 	return m_sFileSystem;
 }
-	
+
+inline void CLocater::IgnoreThisResult(BOOL bIsFolder) const
+{
+	if (bIsFolder)
+		m_dwFoundDirectories--;
+	else
+		m_dwFoundFiles--;
+}
+
 #endif
