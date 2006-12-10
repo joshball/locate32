@@ -11,7 +11,7 @@
 			<DebugSettings
 				Command="$(TargetPath)"
 				WorkingDirectory=""
-				CommandArguments="-e&quot;*tmp;*~&quot;"
+				CommandArguments=""
 				Attach="false"
 				DebuggerType="3"
 				Remote="1"

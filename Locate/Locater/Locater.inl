@@ -127,8 +127,6 @@ inline void CLocater::SetSizeAndDate(DWORD dwFlags,DWORD dwMinSize,DWORD dwMaxSi
 
 inline bool _strncmp(const WCHAR* p1,const char* p2,int a)
 {
-	// TODO: check whether ansi and unicode characters are equal 
-	// when ch between 0 and 255, and remove W2Ac
 	for (a--;a>=0;a--)
 		if (p1[a]!=A2Wc(p2[a]))
 			return FALSE;
@@ -137,8 +135,6 @@ inline bool _strncmp(const WCHAR* p1,const char* p2,int a)
 
 inline bool _strfcmp(const WCHAR* p1,const char* p2,int a)
 {
-	// TODO: check whether ansi and unicode characters are equal 
-	// when ch between 0 and 255, and remove A2Wc
 	for (a--;p1[a]!='\\';a--)
 		if (p1[a]!=A2Wc(p2[a]))
 			return FALSE;

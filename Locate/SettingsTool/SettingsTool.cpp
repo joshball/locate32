@@ -154,6 +154,7 @@ BOOL SaveSettings(HWND hWnd)
 			NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
 			NULL,NULL,&si,&pi))
 		{
+			WaitForSingleObject(pi.hProcess,2000);
 			CloseHandle(pi.hThread);
 			CloseHandle(pi.hProcess);	
 		}
@@ -247,6 +248,7 @@ BOOL RestoreSettings(HWND hWnd)
 			NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
 			NULL,NULL,&si,&pi))
 		{
+			WaitForSingleObject(pi.hProcess,2000);
 			CloseHandle(pi.hThread);
 			CloseHandle(pi.hProcess);	
 		}

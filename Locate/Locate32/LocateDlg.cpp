@@ -894,6 +894,9 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDM_ARRANGEDATE:
 		SortItems(DateModified);
 		break;
+	case IDM_ARRANGEEXTENSION:
+		SortItems(Extension);
+		break;
 	case IDM_AUTOARRANGE:
 		OnAutoArrange();
 		break;
@@ -1869,10 +1872,10 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 
 		
 		// Selecting path column
-		int nColumn;
+		int nColumn=-1;
 		if (((CLocateDlg*)dwParam)->m_nSorting==BYTE(-1))
 			nColumn=((CLocateDlg*)dwParam)->m_pListCtrl->GetVisibleColumn(((CLocateDlg*)dwParam)->m_pListCtrl->GetColumnFromID(InFolder));
-		else
+		else if ((((CLocateDlg*)dwParam)->m_nSorting&127)!=Extension)
 			nColumn=((CLocateDlg*)dwParam)->m_pListCtrl->GetVisibleColumn(((CLocateDlg*)dwParam)->m_pListCtrl->GetColumnFromID(((CLocateDlg*)dwParam)->m_nSorting&127));
 		
 		if (nColumn!=-1)
@@ -4579,7 +4582,8 @@ void CLocateDlg::SortItems(DetailType nDetail,BYTE bDescending,BOOL bNoneIsPossi
 			bDescending=(m_nSorting&128)==0;
 	}
 
-	SetSortArrowToHeader(nDetail,FALSE,bDescending);
+	if (nDetail!=Extension)
+		SetSortArrowToHeader(nDetail,FALSE,bDescending);
 
 	if (!bDescending)
 	{ 
@@ -4598,9 +4602,12 @@ void CLocateDlg::SortItems(DetailType nDetail,BYTE bDescending,BOOL bNoneIsPossi
 		m_nSorting=nDetail|128;
 	}
 
-	int nColumn=m_pListCtrl->GetVisibleColumn(m_pListCtrl->GetColumnFromID(nDetail));
-	if (nColumn!=-1)
-		m_pListCtrl->SendMessage(LVM_FIRST+140/* LVM_SETSELECTEDCOLUMN */,nColumn,0);
+	if (nDetail!=Extension)
+	{
+		int nColumn=m_pListCtrl->GetVisibleColumn(m_pListCtrl->GetColumnFromID(nDetail));
+		if (nColumn!=-1)
+			m_pListCtrl->SendMessage(LVM_FIRST+140/* LVM_SETSELECTEDCOLUMN */,nColumn,0);
+	}
 
 	DebugMessage("CLocateDlg::SortItems END");
 }
@@ -4610,7 +4617,15 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 	CLocatedItem* pItem1=(CLocatedItem*)lParam1;
 	CLocatedItem* pItem2=(CLocatedItem*)lParam2;
 
-	// Todo check whether _wcsicmp is OK replacement for lstrcmpi
+	
+	if ((lParamSort&127)==Extension)
+	{
+		// Sort by extension
+		if (lParamSort&128)
+			return _wcsicmp(pItem2->GetExtension(),pItem1->GetExtension());
+		return _wcsicmp(pItem1->GetExtension(),pItem2->GetExtension());
+	}
+
 	DetailType nDetail=DetailType(lParamSort&127);
 	switch (nDetail)
 	{
@@ -7221,15 +7236,15 @@ BOOL CLocateDlg::ResolveSystemLVStatus()
 {
 	m_dwFlags=(m_dwFlags&~fgLVStyleFlag)|fgLVStyleSystemDefine;
 
-	// TODO: Implement by using SHGetSetSettings
+	SHELLFLAGSTATE sfs;
+	SHGetSettings(&sfs,SSF_DOUBLECLICKINWEBVIEW);
 
-	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (sfs.fDoubleClickInWebView==0)
 	{
-		DWORD temp[7]={2,0x08};
-		RegKey.QueryValue("ShellState",(LPTSTR)temp,7*4);
-		if (LOBYTE(temp[1])==0x41 || LOBYTE(temp[1])==0x1)
+		CRegKey RegKey;
+		if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 		{
+			char temp[4];
 			m_dwFlags|=fgLVStylePointToSelect;
 			RegKey.QueryValue("IconUnderline",(LPTSTR)temp,4);
 			if (temp[0]==2)
@@ -7249,8 +7264,6 @@ BOOL CLocateDlg::ResolveSystemLVStatus()
 			}
 		}
 	}
-	else
-		return FALSE;
 	return TRUE;
 }
 
@@ -7797,7 +7810,7 @@ void CLocateDlg::OnShowFileInformation()
 
 void CLocateDlg::OnSelectDetails()
 {
-	CSelectColumndDlg dlg;
+	CSelectColumnsDlg dlg;
 	
 
 	int nColumns=m_pListCtrl->GetColumnCount();
@@ -7824,7 +7837,7 @@ void CLocateDlg::OnSelectDetails()
 		dlg.m_aWidths[iCol]=lc.cx;
 
         // Set align
-		dlg.m_aAligns[iCol]=(CSelectColumndDlg::ColumnItem::Align)(lc.fmt&LVCFMT_JUSTIFYMASK);
+		dlg.m_aAligns[iCol]=(CSelectColumnsDlg::ColumnItem::Align)(lc.fmt&LVCFMT_JUSTIFYMASK);
 
 		dlg.m_aActions[iCol]=new CSubAction*[ListActionCount];
 		ZeroMemory(dlg.m_aActions[iCol],ListActionCount*sizeof(CSubAction*));
@@ -10179,7 +10192,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 				if (cDrive==FolderLower[0] && bAlsoSet)
 				{
 					m_LookIn.SetCurSel(i);
-					m_LookIn.SetItemText(-1,m_LookIn.GetItemText(i));
+					m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(i));
 					return TRUE;
 				}
 			}
@@ -10279,7 +10292,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 		if (bAlsoSet)
 		{
 			m_LookIn.SetCurSel(nSel);
-			m_LookIn.SetItemText(-1,m_LookIn.GetItemText(nSel));
+			m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(nSel));
 		}
 		else
 			m_LookIn.SetCurSel(nCurSel);
@@ -10435,23 +10448,68 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCWSTR szPath)
 					{
 						m_LookIn.SetCurSel((int)ci.iItem);
 						m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW((int)ci.iItem));
-						break;
+						return TRUE;
 					}
 				}
-				return TRUE;	
+					
 			}
 		}
-		else
+		
+
+		EnterCriticalSection(&m_cBrowse);
+
+		if (m_pBrowse!=NULL && FileSystem::IsDirectory(szPath)) 
 		{
-			if (FileSystem::IsDirectory(szPath)) 
+			COMBOBOXEXITEMW ci;
+			SHFILEINFOW fi;
+			CStringW FolderLower(szPath);
+			FolderLower.MakeLower();
+
+			// Check whether folder already exists in other directory list
+			for (DWORD i=0;i<m_nMaxBrowse;i++)
 			{
-				SHFILEINFOW fi;
-				COMBOBOXEXITEMW ci;
-				EnterCriticalSection(&m_cBrowse);
-				if (m_pBrowse!=NULL && m_nMaxBrowse>0)
-					m_pBrowse[0]=temp;
-				LeaveCriticalSection(&m_cBrowse);
+				CStringW str(m_pBrowse[i]);
+				str.MakeLower();
+				if (str.Compare(FolderLower)==0)
+				{
+					// Deleting previous one
+					for (DWORD j=i+1;j<m_nMaxBrowse;j++)
+						m_pBrowse[j-1].Swap(m_pBrowse[j]);
+					m_pBrowse[m_nMaxBrowse-1].Empty();
+				}
+			}
+
+			// moving previous folders one down
+			for (int i=m_nMaxBrowse-1;i>0;i--)
+				m_pBrowse[i].Swap(m_pBrowse[i-1]);
+			
+			m_pBrowse[0].Copy(szPath);
+
+			
 				
+			// If selection is on, following code may mess it
+			m_LookIn.SetCurSel(-1);
+
+
+			// Removing old items from list
+			ci.mask=CBEIF_LPARAM;
+			for (ci.iItem=m_LookIn.GetCount()-1;ci.iItem>=0;ci.iItem--)
+			{
+				m_LookIn.GetItem(&ci);
+				if (static_cast<TypeOfItem>(LOWORD(ci.lParam))!=Custom)
+					break;
+				m_LookIn.DeleteItem((int)ci.iItem);
+			}
+			
+			// Adding new items
+			int nSel=(int)++ci.iItem;
+			ci.iIndent=0;
+			ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
+			for (DWORD i=0;i<m_nMaxBrowse;i++)
+			{
+				if (m_pBrowse[i].IsEmpty())
+					break;
+
 				if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfUseDefaultIconForDirectories)
 				{
 					ci.iImage=DIR_IMAGE;
@@ -10459,22 +10517,27 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCWSTR szPath)
 				}
 				else
 				{
-					GetFileInfo(temp,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+					GetFileInfo(m_pBrowse[i],0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
 					ci.iImage=fi.iIcon;
-					GetFileInfo(temp,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+					GetFileInfo(m_pBrowse[i],0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 					ci.iSelectedImage=fi.iIcon;
 				}
-				ci.pszText=(LPWSTR)temp;
-				ci.iItem=m_LookIn.GetCount();
-				ci.iIndent=0;
-				ci.lParam=MAKELPARAM(Custom,0);
-				ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
+
+			
+				ci.pszText=m_pBrowse[i].GetBuffer();
+				ci.lParam=MAKELPARAM(Custom,i);
 				m_LookIn.InsertItem(&ci);
-				m_LookIn.SetCurSel((int)ci.iItem);
-				m_LookIn.SetItemText(-1,temp);
-				return TRUE;
+				ci.iItem++;
 			}
+
+			m_LookIn.SetCurSel(nSel);
+			m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(nSel));
+			
+			LeaveCriticalSection(&m_cBrowse);
+			return TRUE;
 		}
+
+		LeaveCriticalSection(&m_cBrowse);
 	}
 
 	for (int i=0;m_LookIn.GetCount();i++)
@@ -10482,7 +10545,7 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCWSTR szPath)
 		if (m_LookIn.GetItemData(i)==MAKELPARAM(Everywhere,Original))
 		{
 			m_LookIn.SetCurSel(i);
-			m_LookIn.SetItemText(-1,m_LookIn.GetItemText(i));
+			m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(i));
 			break;
 		}
 	}

@@ -18,6 +18,7 @@ parameters:
     -n          following databases uses another thread
     -q          quiet mode
     -h          help (this screen)
+    -X:CUSTOM   use different settings branch (see locate.ini file)
     -v          show version string 
 
 EOF

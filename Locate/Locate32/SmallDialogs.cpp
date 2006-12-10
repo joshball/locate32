@@ -3,9 +3,9 @@
 #include "Locate32.h"
 
 ///////////////////////////////////////////////////////////
-// CSelectColumndDlg
+// CSelectColumnsDlg
 
-BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
+BOOL CSelectColumnsDlg::OnInitDialog(HWND hwndFocus)
 {
 	ASSERT(m_aIDs.GetSize()==m_aWidths.GetSize());
 
@@ -97,7 +97,7 @@ BOOL CSelectColumndDlg::OnInitDialog(HWND hwndFocus)
 	return CDialog::OnInitDialog(hwndFocus);
 }
 
-void CSelectColumndDlg::SaveActionFields(ColumnItem* pColumn)
+void CSelectColumnsDlg::SaveActionFields(ColumnItem* pColumn)
 {
 	int nWhen=m_WhenCombo.GetCurSel();
 	ASSERT(nWhen!=CB_ERR);
@@ -158,7 +158,7 @@ void CSelectColumndDlg::SaveActionFields(ColumnItem* pColumn)
 	}
 }
 	
-void CSelectColumndDlg::SetActionFields(ColumnItem* pColumn)
+void CSelectColumnsDlg::SetActionFields(ColumnItem* pColumn)
 {
 	int nWhen=m_WhenCombo.GetCurSel();;
 	ASSERT(nWhen!=CB_ERR);
@@ -193,7 +193,7 @@ void CSelectColumndDlg::SetActionFields(ColumnItem* pColumn)
 }
 
 
-BOOL CSelectColumndDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
+BOOL CSelectColumnsDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
 	switch (wID)
 	{
@@ -323,7 +323,7 @@ BOOL CSelectColumndDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	return CDialog::OnCommand(wID,wNotifyCode,hControl);
 }
 
-BOOL CSelectColumndDlg::ItemUpOrDown(BOOL bUp)
+BOOL CSelectColumnsDlg::ItemUpOrDown(BOOL bUp)
 {
 	int nSelected=m_pList->GetNextItem(-1,LVNI_SELECTED);
 	ASSERT(nSelected!=-1);
@@ -352,14 +352,14 @@ BOOL CSelectColumndDlg::ItemUpOrDown(BOOL bUp)
 	return TRUE;
 }
 
-BOOL CSelectColumndDlg::OnClose()
+BOOL CSelectColumnsDlg::OnClose()
 {
 	CDialog::OnClose();
 	EndDialog(0);
 	return 0;
 }
 
-void CSelectColumndDlg::OnDestroy()
+void CSelectColumnsDlg::OnDestroy()
 {
 	if (m_pList!=NULL)
 	{
@@ -372,7 +372,7 @@ void CSelectColumndDlg::OnDestroy()
 	return CDialog::OnDestroy();
 }
 
-BOOL CSelectColumndDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
+BOOL CSelectColumnsDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 {
 	switch (idCtrl)
 	{
@@ -382,7 +382,7 @@ BOOL CSelectColumndDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 	return CDialog::OnNotify(idCtrl,pnmh);
 }
 
-BOOL CSelectColumndDlg::ListNotifyHandler(NMLISTVIEW *pNm)
+BOOL CSelectColumnsDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 {
 	switch(pNm->hdr.code)
 	{
@@ -467,7 +467,7 @@ BOOL CSelectColumndDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 	return FALSE;
 }
 
-void CSelectColumndDlg::EnableItems()
+void CSelectColumnsDlg::EnableItems()
 {
 	ShowState ssCommand=swHide,ssVerb=swHide,ssWhichFile=swHide;
 	
@@ -529,7 +529,7 @@ void CSelectColumndDlg::EnableItems()
 	
 }
 
-void CSelectColumndDlg::OnOK()
+void CSelectColumnsDlg::OnOK()
 {
 	m_aSelectedCols.RemoveAll();
 	
@@ -571,7 +571,7 @@ void CSelectColumndDlg::OnOK()
 	EndDialog(1);
 }
 
-void CSelectColumndDlg::OnCancel()
+void CSelectColumnsDlg::OnCancel()
 {
 	for (int i=0;i<m_aActions.GetSize();i++)
 		delete[] m_aActions[i];
@@ -580,7 +580,7 @@ void CSelectColumndDlg::OnCancel()
 	EndDialog(0);
 }
 
-void CSelectColumndDlg::OnReset()
+void CSelectColumnsDlg::OnReset()
 {
 	m_pList->DeleteAllItems();
 
@@ -620,7 +620,7 @@ void CSelectColumndDlg::OnReset()
 	EnableItems();
 }
 
-void CSelectColumndDlg::OnResetActions()
+void CSelectColumnsDlg::OnResetActions()
 {
 	for (int i=0;i<m_aActions.GetSize();i++)
 	{

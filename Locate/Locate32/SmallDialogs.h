@@ -5,10 +5,10 @@
 #pragma once
 #endif
 
-class CSelectColumndDlg : public CDialog  
+class CSelectColumnsDlg : public CDialog  
 {
 public:
-	CSelectColumndDlg();
+	CSelectColumnsDlg();
 
 	virtual BOOL OnInitDialog(HWND hwndFocus);
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);

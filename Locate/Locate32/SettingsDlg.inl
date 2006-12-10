@@ -6,6 +6,229 @@
 #endif 
 
 
+inline COptionsPropertyPage::COptionsPropertyPage()
+:	m_pTree(NULL),m_pItems(NULL),CPropertyPage()
+{
+}
+
+inline COptionsPropertyPage::COptionsPropertyPage(const COptionsPropertyPage::OPTIONPAGE* pOptionPage,TypeOfResourceHandle bType)
+:	m_pTree(NULL),m_pItems(NULL),CPropertyPage()
+{
+	Construct(pOptionPage,bType);
+}
+
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRoot(LPWSTR szText,Item** pChilds)
+{
+	return new Item(Item::Root,NULL,pChilds,szText,NULL,0,0);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRoot(UINT nTextID,Item** pChilds)
+{
+	return new Item(Item::Root,NULL,pChilds,nTextID,NULL,0,0);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateCheckBox(
+	LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::CheckBox,NULL,pChilds,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateCheckBox(
+	UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::CheckBox,NULL,pChilds,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRadioBox(
+	LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::RadioBox,NULL,pChilds,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRadioBox(
+	UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::RadioBox,NULL,pChilds,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateComboBox(
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Combo,NULL,NULL,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateComboBox(
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Combo,NULL,NULL,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateEdit(
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Edit,NULL,NULL,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateEdit(
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Edit,NULL,NULL,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateListBox(
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::List,NULL,NULL,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateListBox(
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::List,NULL,NULL,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateNumeric(
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Numeric,NULL,NULL,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateNumeric(
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Numeric,NULL,NULL,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateColor(
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Color,NULL,NULL,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateColor(
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Color,NULL,NULL,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateFont(
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Font,NULL,NULL,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateFont(
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::Font,NULL,NULL,nTextID,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateFile(
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::File,NULL,NULL,szText,pProc,wParam,lParam);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateFile(
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+{
+	return new Item(Item::File,NULL,NULL,nTextID,pProc,wParam,lParam);
+}
+
+inline int COptionsPropertyPage::Item::GetStateImage(CImageList* pImageList) const
+{
+	switch (nType)
+	{
+	case CheckBox:
+		return bChecked?2:1;
+	case RadioBox:
+		return bChecked?4:3;
+	case Root:
+		return 5;
+	case Color:
+		if (m_nStateIcon==-1)
+			m_nStateIcon=IconFromColor(pImageList);
+		return m_nStateIcon;
+	default:
+		return 0;
+	}
+}
+
+inline void COptionsPropertyPage::Item::GetValuesFromBasicParams(const COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch (nType)
+	{
+	case RadioBox:
+	case CheckBox:
+		bChecked=pParams->bChecked;
+		break;
+	case Numeric:
+	case List:
+    	lValue=pParams->lValue;
+		break;
+	case Edit:
+	case Combo:
+	case File:
+		if (pData!=NULL && pData!=pParams->pData)
+			delete[] pData;
+		pData=pParams->pData;
+		DebugFormatMessage("GetValuesFromBasicParams, pData=%X",pData);
+		break;
+	case Color:
+		cColor=pParams->cColor;
+        break;
+	case Font:
+		if (pLogFont==NULL)
+			pLogFont=pParams->pLogFont;
+		ASSERT (pParams->pLogFont==pLogFont);
+		break;
+	case Root:
+	default:
+		break;
+	}
+}
+
+inline void COptionsPropertyPage::Item::SetValuesForBasicParams(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	pParams->lParam=lParam;
+	pParams->wParam=wParam;
+	
+	switch (nType)
+	{
+	case RadioBox:
+	case CheckBox:
+		pParams->bChecked=bChecked;
+		break;
+	case Numeric:
+	case List:
+    	pParams->lValue=lValue;
+		break;
+	case Edit:
+	case Combo:
+	case File:
+		pParams->pData=pData;
+		break;
+	case Color:
+		pParams->cColor=cColor;
+		break;
+	case Font:
+		pParams->pLogFont=pLogFont;
+		break;
+	case Root:
+	default:
+		pParams->pData=NULL;
+		break;
+	}
+}
+
+inline void COptionsPropertyPage::Item::FreeText(LPWSTR pText) const
+{
+    if (pText!=pString)
+		delete[] pText;
+}
+
+
 
 
 

@@ -33,6 +33,7 @@ parameters:
     -lcnm       string text is not match case
     -lR:TEXT    same as above but TEXT is regular expression
     -v          verbose mode, information about search
+    -X:CUSTOM   use different settings branch (see locate.ini file)
     -h          help, this screen
 
 EOF

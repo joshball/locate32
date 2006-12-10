@@ -1,31 +1,87 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   Updatedb.exe v2.99.6.11040 */
+   Updatedb.exe v2.99.6.12100 */
 
 #include <HFCLib.h>
 #include "../locatedb/locatedb.h"
-
 #include "../lan_resources.h"
+#include "../common/common.h"
 
-#ifdef WIN32
-		LPCSTR szVersionStr="updtdb32 3.0 RC3 6.11040";
-#else
-		LPCSTR szVersionStr="updatedb 3.0 RC3 6.11040";
-#endif
+LPCSTR szVersionStr="updtdb32 3.0 RC4 6.12100";
+
 
 
 #if !defined(LANG_FI) && !defined(LANG_EN)
 #define LANG_EN
 #endif
 
+LPSTR g_szRegKey;
+LPSTR g_szRegFile;
+BYTE g_bFileIsReg;
+
 CDatabaseUpdater** ppUpdaters=NULL;
 
 BOOL nQuiet=FALSE;
+
+void SetRegKey(int argc,wchar_t* argv[])
+{
+	CString Branch;
+
+	int i;
+	for (i=1;i<argc;i++)
+	{
+		if (argv[i][0]==L'-' || argv[i][0]==L'/')
+		{
+			switch (argv[i][1])
+			{
+	        case L'X':
+				if (argv[i][2]==L'\0')
+				{
+					if (i<argc-1)
+						Branch=argv[++i];
+				}
+				else
+	                   Branch=(argv[i]+2);
+				break;
+			}
+		}
+	}
+	
+	
+	g_szRegKey=ReadIniFile(&g_szRegFile,Branch.GetPData(),g_bFileIsReg);
+	
+	if (g_szRegKey!=NULL)
+	{
+		if (g_szRegFile!=NULL)
+			LoadSettingsFromFile(g_szRegKey,g_szRegFile,g_bFileIsReg);
+	}
+	else
+	{
+		// Use default
+		g_szRegKey=alloccopy("Software\\Update");
+	}
+
+}
+
+void FinishRegKey()
+{
+	if (g_szRegKey==NULL)
+		return;
+	
+	if (g_szRegFile!=NULL)
+	{
+		SaveSettingsToFile(g_szRegKey,g_szRegFile,g_bFileIsReg);
+
+		delete[] g_szRegFile;
+	}
+
+	delete[] g_szRegKey;
+}
 
 BOOL SetLanguageSpecifigHandles(LPCWSTR szAppPath)
 {
 	CRegKey RegKey;
 	CStringW LangFile;
-	if (RegKey.OpenKey(HKCU,"Software\\Update",
+	if (RegKey.OpenKey(HKCU,g_szRegKey,
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		RegKey.QueryValue(L"Language",LangFile);
@@ -195,6 +251,8 @@ int wmain (int argc,wchar_t ** argv)
 {
 	CAppData::stdfunc();
 	
+	SetRegKey(argc,argv);
+
 	if (!SetLanguageSpecifigHandles(argv[0]))
 		return 1;
 
@@ -202,7 +260,7 @@ int wmain (int argc,wchar_t ** argv)
 	
 	WORD wCurrentThread=0;
 
-	aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],(int)LastCharIndex(argv[0],L'\\')+1));
+	aDatabases.Add(CDatabase::FromDefaults(TRUE));
 	aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 	aDatabases[0]->SetThreadId(wCurrentThread);
 
@@ -217,6 +275,13 @@ int wmain (int argc,wchar_t ** argv)
         {
             switch (argv[i][1])
 			{
+			case L'X':
+				if (argv[i][2]==L'\0')
+				{
+					if (i<argc-1)
+						i++; // RegKeyName already set
+				}
+				break;
 			case 'l':
 			case 'L':
 				if (wcsncmp(aDatabases.GetLast()->GetName(),L"PARAMX",6)!=0 && 
@@ -419,7 +484,7 @@ int wmain (int argc,wchar_t ** argv)
 					if (CDatabase::FindByName(aDatabases,sName,(int)sName.GetLength())==NULL)
 					{
 						CDatabase* pDatabase=CDatabase::FromName(HKCU,
-							"Software\\Update\\Databases",sName);
+							CString(g_szRegKey)+"\\Databases",sName);
 
 						if (pDatabase!=NULL)
 						{
@@ -480,16 +545,16 @@ int wmain (int argc,wchar_t ** argv)
 	// Checking databases
 	// First, check that there is database 
 	if (aDatabases.GetSize()==0)
-		CDatabase::LoadFromRegistry(HKCU,"Software\\Update\\Databases",aDatabases);   
+		CDatabase::LoadFromRegistry(HKCU,CString(g_szRegKey)+"\\Databases",aDatabases);   
 	else if (aDatabases.GetSize()==1 && wcsncmp(aDatabases[0]->GetName(),L"DEFAULTX",8)==0)
 	{
 		aDatabases.RemoveAll();
-		CDatabase::LoadFromRegistry(HKCU,"Software\\Update\\Databases",aDatabases);   
+		CDatabase::LoadFromRegistry(HKCU,CString(g_szRegKey)+"\\Databases",aDatabases);   
 
 		// No registry values?
 		if (aDatabases.GetSize()==0)
 		{
-			aDatabases.Add(CDatabase::FromDefaults(TRUE,argv[0],(int)LastCharIndex(argv[0],L'\\')+1));
+			aDatabases.Add(CDatabase::FromDefaults(TRUE));
 			aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 		}
 	}
@@ -600,6 +665,8 @@ int wmain (int argc,wchar_t ** argv)
 				Sleep(100);
 		}
 	}
+
+	FinishRegKey();
 
 	FreeLibrary(GetLanguageSpecificResourceHandle());
 

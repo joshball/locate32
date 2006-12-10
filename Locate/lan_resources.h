@@ -1028,6 +1028,7 @@
 #define IDM_INVERTSELECTION             40026
 #define IDM_PRESETSAVE                  40027
 #define IDM_PRESETREMOVE                40028
+#define IDM_ARRANGEEXTENSION            40029
 #define IDM_SETTINGS                    40033
 #define IDM_DATABASEINFO                40035
 #define IDM_SAVERESULT                  40038

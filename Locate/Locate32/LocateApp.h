@@ -417,6 +417,7 @@ protected:
 
 	LPSTR m_szCommonRegKey;
 	LPSTR m_szCommonRegFile;
+	BYTE m_bFileIsReg;
 	
 
 public:

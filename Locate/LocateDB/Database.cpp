@@ -393,7 +393,7 @@ CDatabase* CDatabase::FromFile(LPCWSTR szFileName,int dwNameLength)
 	return pDatabase;
 }
 
-CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName,LPCWSTR szAppDir,int iAppDirLength)
+CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName)
 {
 	CDatabase* pDatabase=new CDatabase; // This default dwFlags and description and drives to NULL
 
@@ -404,12 +404,25 @@ CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName,LPCWSTR szAppDir,int iA
 	
 	if (bDefaultFileName)
 	{
-		if (iAppDirLength==-1)
-			iAppDirLength=(int)istrlenw(szAppDir);
-
-		pDatabase->m_szArchiveName=new WCHAR[iAppDirLength+10];
-		MemCopyW(pDatabase->m_szArchiveName,szAppDir,iAppDirLength);
-		MemCopyW(pDatabase->m_szArchiveName+iAppDirLength,L"files.dbs",10);
+		int iLen;
+		if (IsUnicodeSystem())
+		{
+			WCHAR szExeName[MAX_PATH];
+			GetModuleFileNameW(NULL,szExeName,MAX_PATH);
+			iLen=LastCharIndex(szExeName,L'\\')+1;
+			pDatabase->m_szArchiveName=new WCHAR[iLen+10];
+			MemCopyW(pDatabase->m_szArchiveName,szExeName,iLen);
+		}	
+		else
+		{
+			char szExeName[MAX_PATH];
+			GetModuleFileName(NULL,szExeName,MAX_PATH);
+			iLen=LastCharIndex(szExeName,'\\')+1;
+			pDatabase->m_szArchiveName=new WCHAR[iLen+10];
+			MemCopyAtoW(pDatabase->m_szArchiveName,szExeName,iLen);
+		}
+		
+		MemCopyW(pDatabase->m_szArchiveName+iLen,L"files.dbs",10);
 
 	}
 	else

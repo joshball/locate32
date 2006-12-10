@@ -151,6 +151,9 @@ public:
 
 		TypeCount=LastType+1,
 
+
+
+		Extension=127, // Not column, for sorting
 		Needed=255
 	};
 
@@ -885,7 +888,7 @@ public:
 	friend class CLocateDlgThread;
 	friend class CCheckFileNotificationsThread;
 	friend class CBackgroundUpdater;
-	friend class CSelectColumndDlg;
+	friend class CSelectColumnsDlg;
 	friend class CSubAction;
 
 #ifdef _DEBUG

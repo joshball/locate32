@@ -6,14 +6,14 @@
 #endif
 
 ////////////////////////////////////////////////////////////
-// CSelectColumndDlg
+// CSelectColumnsDlg
 
-inline CSelectColumndDlg::CSelectColumndDlg()
+inline CSelectColumnsDlg::CSelectColumnsDlg()
 :	CDialog(IDD_SELECTDETAILS),m_pList(NULL)
 {
 }
 
-inline CSelectColumndDlg::ColumnItem::ColumnItem(int nCol,CLocateDlg::DetailType nType,int nResourceID,
+inline CSelectColumnsDlg::ColumnItem::ColumnItem(int nCol,CLocateDlg::DetailType nType,int nResourceID,
 												 int nWidth,Align nAlign,CSubAction** pActions)
 :	m_nType(nType),m_nWidth(nWidth),m_nCol(nCol),m_nAlign(nAlign),m_pActions(pActions)
 {

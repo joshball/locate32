@@ -133,6 +133,7 @@ public:
 		ViewArrangeIconsByType = MAKELONG(IDM_ARRANGETYPE,IDS_SHORTCUTMENUVIEWARRANGEICONS),
 		ViewArrangeIconsByDate = MAKELONG(IDM_ARRANGESIZE,IDS_SHORTCUTMENUVIEWARRANGEICONS),
 		ViewArrangeIconsBySize = MAKELONG(IDM_ARRANGEDATE,IDS_SHORTCUTMENUVIEWARRANGEICONS),
+		ViewArrangeIconsByExtension = MAKELONG(IDM_ARRANGEEXTENSION,IDS_SHORTCUTMENUVIEWARRANGEICONS),
 		ViewArrangeIconsAutoArrange = MAKELONG(IDM_AUTOARRANGE,IDS_SHORTCUTMENUVIEWARRANGEICONS),
 		ViewArrangeIconsAlignToGrid = MAKELONG(IDM_ALIGNTOGRID,IDS_SHORTCUTMENUVIEWARRANGEICONS),
 		ViewLineUpIcons = MAKELONG(IDM_LINEUPICONS,IDS_SHORTCUTMENUVIEW),
@@ -164,7 +165,8 @@ public:
 			EditCut,EditCopy,EditSelectAll,EditInvertSelection,ViewLargeIcons,ViewSmallIcons,
             ViewList,ViewDetails,ViewArrangeIconsByName,ViewArrangeIconsByFolder,
             ViewArrangeIconsByType,ViewArrangeIconsByDate,ViewArrangeIconsBySize,
-            ViewArrangeIconsAutoArrange,ViewArrangeIconsAlignToGrid,ViewLineUpIcons,
+			ViewArrangeIconsByExtension,ViewArrangeIconsAutoArrange,
+			ViewArrangeIconsAlignToGrid,ViewLineUpIcons,
 			ViewSelectDetails,ViewRefresh,OptionsSettings,
 			HelpAbout,PresetSave,PresetRemove,MultidirNextSelection,MultidirPrevSelection,
 			MultidirNewDirectory,MultidirRemoveSelection,NullMenuCommand};

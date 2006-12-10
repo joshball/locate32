@@ -306,7 +306,8 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				int nLength=0;
 
 				WCHAR szPath[MAX_PATH+10];
-				nLength=GetLocateApp()->m_pGetLongPathName(lpCmdLine+idx,szPath,MAX_PATH+10);
+				WCHAR* tmp;
+				nLength=FileSystem::GetFullPathName(lpCmdLine+idx,MAX_PATH,szPath,&tmp);
 				ChangeAndAlloc(pStartData->m_pStartPath,szPath,nLength);
 								
 				if (temp<0)
@@ -569,7 +570,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				if (pStartData->m_aDatabases.GetSize()==0)
 				{
 					CStringW sExeName=GetApp()->GetExeNameW();
-					pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,sExeName,(int)sExeName.FindLast('\\')+1));
+					pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE));
 					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 					pStartData->m_aDatabases[0]->SetThreadId(0);
 					pStartData->m_nStartup|=CStartData::startupDatabasesOverridden;
@@ -616,7 +617,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 						if (pStartData->m_aDatabases.GetSize()==0)
 						{
 							CStringW sExeName=GetApp()->GetExeNameW();
-							pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE,sExeName,(int)sExeName.FindLast('\\')+1));
+							pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE));
 							pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 							pStartData->m_aDatabases[0]->SetThreadId(0);
 							pStartData->m_nStartup|=CStartData::startupDatabasesOverridden;
@@ -935,8 +936,7 @@ BYTE CLocateApp::CheckDatabases()
 		CDatabase* pDatabase=CDatabase::FromOldStyleDatabase(HKCU,"Software\\Update\\Database");
 		if (pDatabase==NULL)
 		{
-			pDatabase=CDatabase::FromDefaults(TRUE,GetApp()->GetExeNameW(),
-				(int)LastCharIndex((LPCWSTR)GetApp()->GetExeNameW(),L'\\')+1); // Nothing else can be done?
+			pDatabase=CDatabase::FromDefaults(TRUE); // Nothing else can be done?
 		}
 		else
 		{
@@ -3992,12 +3992,12 @@ BOOL CLocateAppWnd::RunStartupSchedules()
 BOOL CLocateApp::InitCommonRegKey()
 {
 	m_szCommonRegKey=ReadIniFile(&m_szCommonRegFile,
-		m_pStartData!=NULL?W2A(m_pStartData->m_pSettingBranch):NULL);
+		m_pStartData!=NULL?W2A(m_pStartData->m_pSettingBranch):NULL,m_bFileIsReg);
 	
 	if (m_szCommonRegKey!=NULL)
 	{
 		if (m_szCommonRegFile!=NULL)
-			LoadSettingsFromFile(m_szCommonRegKey,m_szCommonRegFile);
+			LoadSettingsFromFile(m_szCommonRegKey,m_szCommonRegFile,m_bFileIsReg);
 	}
 	else
 	{
@@ -4015,7 +4015,7 @@ void CLocateApp::FinalizeCommonRegKey()
 	
 	if (m_szCommonRegFile!=NULL)
 	{
-		SaveSettingsToFile(m_szCommonRegKey,m_szCommonRegFile);
+		SaveSettingsToFile(m_szCommonRegKey,m_szCommonRegFile,m_bFileIsReg);
 
 		delete[] m_szCommonRegFile;
 	}

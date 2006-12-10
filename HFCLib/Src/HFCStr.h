@@ -134,7 +134,7 @@ public:
 	void SetAt(int nIndex,CHAR ch);
 	
 	inline operator LPCSTR() const	{ if (m_pData==NULL)	return szEmpty;	return m_pData;}
-	LPSTR GetPCHData() const { return m_pData; } // Use with caution, may be null
+	LPSTR GetPData() const { return m_pData; } // Use with caution, may be null
 	
 
 	CString& Copy(LPCSTR src);
@@ -348,7 +348,7 @@ public:
 #endif
 	void SetAt(int nIndex,WCHAR ch);
 	operator LPCWSTR() const;
-	LPWSTR GetPCHData() const { return m_pData; } // Use with caution, may be null
+	LPWSTR GetPData() const { return m_pData; } // Use with caution, may be null
 	
 	CStringW& Copy(LPCSTR src);
 	CStringW& Copy(LPCSTR src,int iLength);

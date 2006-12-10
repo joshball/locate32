@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   locate.exe v2.99.6.11040                 */
+   locate.exe v2.99.6.12100                 */
 
-const char* szVersionStr="locate 3.0 RC3 6.11040";
+const char* szVersionStr="locate 3.0 RC4 6.12100";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -12,6 +12,7 @@ const char* szVersionStr="locate 3.0 RC3 6.11040";
       
 #include "../locater/locater.h"
 #include "../lan_resources.h"
+#include "../common/common.h"
 
 
 #define LOCATE_EX_REGEXPISCASESENSITIVE	0x10000000 // this if for name, LOCATE_CONTAINTEXTISMATCHCASE is for text
@@ -34,6 +35,66 @@ HANDLE hStdOut;
 HANDLE hStdIn;
 volatile BOOL nShouldQuit=FALSE;
 
+LPSTR g_szRegKey;
+LPSTR g_szRegFile;
+BYTE g_bFileIsReg;
+
+void SetRegKey(int argc,wchar_t* argv[])
+{
+	CString Branch;
+
+	int i;
+	for (i=1;i<argc;i++)
+	{
+		if (argv[i][0]==L'-' || argv[i][0]==L'/')
+		{
+			switch (argv[i][1])
+			{
+	        case L'X':
+				if (argv[i][2]==L'\0')
+				{
+					if (i<argc-1)
+						Branch=argv[++i];
+				}
+				else
+	                   Branch=(argv[i]+2);
+				break;
+			}
+		}
+	}
+	
+	
+	g_szRegKey=ReadIniFile(&g_szRegFile,Branch.GetPData(),g_bFileIsReg);
+	
+	if (g_szRegKey!=NULL)
+	{
+		if (g_szRegFile!=NULL)
+			LoadSettingsFromFile(g_szRegKey,g_szRegFile,g_bFileIsReg);
+	}
+	else
+	{
+		// Use default
+		g_szRegKey=alloccopy("Software\\Update");
+	}
+
+}
+
+void FinishRegKey()
+{
+	if (g_szRegKey==NULL)
+		return;
+	
+	if (g_szRegFile!=NULL)
+	{
+		SaveSettingsToFile(g_szRegKey,g_szRegFile,g_bFileIsReg);
+
+		delete[] g_szRegFile;
+	}
+
+	delete[] g_szRegKey;
+}
+
+
 DWORD GetConsoleLines()
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbiInfo;
@@ -47,7 +108,7 @@ BOOL SetLanguageSpecifigHandles(LPCWSTR szAppPath)
 {
 	CRegKey RegKey;
 	CStringW LangFile;
-	if (RegKey.OpenKey(HKCU,"Software\\Update",
+	if (RegKey.OpenKey(HKCU,g_szRegKey,
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		RegKey.QueryValue(L"Language",LangFile);
@@ -293,6 +354,10 @@ int wmain (int argc,wchar_t * argv[])
 
 	InitLocaterLibrary();
 
+	SetRegKey(argc,argv);
+
+	CString RegKey("");	
+
 	if (!SetLanguageSpecifigHandles(argv[0]))
 	{
 #ifdef _DEBUG
@@ -330,6 +395,13 @@ int wmain (int argc,wchar_t * argv[])
 		{
 			switch (argv[i][1])
 			{
+			case L'X':
+				if (argv[i][2]==L'\0')
+				{
+					if (i<argc-1)
+						i++; // RegKeyName already set
+				}
+				break;
 			case L's':
 			case L'S':
 				dwMainFlags|=flagOutputIsPaged;
@@ -383,7 +455,7 @@ int wmain (int argc,wchar_t * argv[])
 					if (CDatabase::FindByName(aDatabases,sName)==NULL)
 					{
 						CDatabase* pDatabase=CDatabase::FromName(HKCU,
-							"Software\\Update\\Databases",sName);
+							CString(g_szRegKey)+"\\Databases",sName);
 						if (pDatabase!=NULL)
 						{
 							pDatabase->SetThreadId(0);
@@ -714,14 +786,14 @@ int wmain (int argc,wchar_t * argv[])
 	// Checking databases
 	// First, check that there is database 
 	if (aDatabases.GetSize()==0)
-		CDatabase::LoadFromRegistry(HKCU,"Software\\Update\\Databases",aDatabases);   
+		CDatabase::LoadFromRegistry(HKCU,CString(g_szRegKey)+"\\Databases",aDatabases);   
 	
 	// If there is still no any available database, try to load old style db
 	if (aDatabases.GetSize()==0)
 	{
-		CDatabase* pDatabase=CDatabase::FromOldStyleDatabase(HKCU,"Software\\Update\\Database");
+		CDatabase* pDatabase=CDatabase::FromOldStyleDatabase(HKCU,CString(g_szRegKey)+"\\Database");
 		if (pDatabase==NULL)
-			pDatabase=CDatabase::FromDefaults(TRUE,argv[0],(int)LastCharIndex(argv[0],L'\\')+1); // Nothing else can be done?
+			pDatabase=CDatabase::FromDefaults(TRUE); // Nothing else can be done?
 		aDatabases.Add(pDatabase);
 	}
 	CDatabase::CheckValidNames(aDatabases);
@@ -890,6 +962,8 @@ int wmain (int argc,wchar_t * argv[])
 
 	if (pContainData!=NULL)
 		delete[] pContainData;
+
+	FinishRegKey();
 
 	FreeLibrary(GetLanguageSpecificResourceHandle());
 	return 0;
