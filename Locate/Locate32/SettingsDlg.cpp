@@ -2195,7 +2195,8 @@ BOOL CSettingsProperties::LoadSettings()
 {
 	DebugMessage("CSettingsProperties::LoadSettings()");
 	
-	CRegKey2 RegKey;
+	CRegKey GenRegKey;
+	CRegKey2 LocRegKey;
 	
 	m_DateFormat=((CLocateApp*)GetApp())->m_strDateFormat;
 	m_TimeFormat=((CLocateApp*)GetApp())->m_strTimeFormat;
@@ -2209,32 +2210,32 @@ BOOL CSettingsProperties::LoadSettings()
 		m_dwLocateDialogFlags=GetLocateDlg()->GetFlags();
 		m_dwLocateDialogExtraFlags=GetLocateDlg()->GetExtraFlags();
 	}
-	else if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	else if (LocRegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		DWORD temp=m_dwLocateDialogFlags;
-		RegKey.QueryValue("Program Status",temp);
+		LocRegKey.QueryValue("Program Status",temp);
 		m_dwLocateDialogFlags&=~CLocateDlg::fgSave;
 		m_dwLocateDialogFlags|=temp&CLocateDlg::fgSave;
 
 		temp=m_dwLocateDialogExtraFlags;
-		RegKey.QueryValue("Program StatusExtra",temp);
+		LocRegKey.QueryValue("Program StatusExtra",temp);
 		m_dwLocateDialogExtraFlags&=~CLocateDlg::efSave;
 		m_dwLocateDialogExtraFlags|=temp&CLocateDlg::efSave;
 
 
 	}
-	if (RegKey.OpenKey(HKCU,"\\Recent Strings",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (LocRegKey.OpenKey(HKCU,"\\Recent Strings",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.QueryValue("NumberOfDirectories",m_nNumberOfDirectories);
-		RegKey.QueryValue("NumberOfNames",m_nNumberOfNames);
-		RegKey.QueryValue("NumberOfTypes",m_nNumberOfTypes);
+		LocRegKey.QueryValue("NumberOfDirectories",m_nNumberOfDirectories);
+		LocRegKey.QueryValue("NumberOfNames",m_nNumberOfNames);
+		LocRegKey.QueryValue("NumberOfTypes",m_nNumberOfTypes);
 	}
 
 	// Initializing values
 	if (GetLocateDlg()==NULL)
 	{
-		if (RegKey.OpenKey(HKCU,"\\Locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
-			RegKey.QueryValue("MaximumFoundFiles",m_nMaximumFoundFiles);
+		if (LocRegKey.OpenKey(HKCU,"\\Locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+			LocRegKey.QueryValue("MaximumFoundFiles",m_nMaximumFoundFiles);
 	}
 	else
 		m_nMaximumFoundFiles=GetLocateDlg()->GetMaxFoundFiles();
@@ -2275,101 +2276,102 @@ BOOL CSettingsProperties::LoadSettings()
 	}
 
 	// Loading some general settings
-	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+	if (LocRegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
 	{
 		m_bDefaultFlag=0;
 		DWORD nTemp=1;
-		RegKey.QueryValue("Default CheckIn",nTemp);
+		LocRegKey.QueryValue("Default CheckIn",nTemp);
 		m_bDefaultFlag|=nTemp;
 		SendDlgItemMessage(IDC_CHECKIN,CB_SETCURSEL,nTemp);
 		
 		nTemp=0;
-		RegKey.QueryValue("Default MatchWholeName",nTemp);
+		LocRegKey.QueryValue("Default MatchWholeName",nTemp);
 		if (nTemp) m_bDefaultFlag|=defaultWholeName;
 		
 		nTemp=1;
-		RegKey.QueryValue("Default DataMatchCase",nTemp);
+		LocRegKey.QueryValue("Default DataMatchCase",nTemp);
 		if (nTemp) m_bDefaultFlag|=defaultMatchCase;
 		
 		nTemp=0;
-		RegKey.QueryValue("Default ReplaceSpaces",nTemp);
+		LocRegKey.QueryValue("Default ReplaceSpaces",nTemp);
 		if (nTemp) m_bDefaultFlag|=defaultReplaceSpaces;
 
 		nTemp=0;
-		RegKey.QueryValue("Default UseWholePath",nTemp);
+		LocRegKey.QueryValue("Default UseWholePath",nTemp);
 		if (nTemp) m_bDefaultFlag|=defaultUseWholePath;
 
 
-		if (RegKey.QueryValue("Default Sorting",nTemp))
+		if (LocRegKey.QueryValue("Default Sorting",nTemp))
 			m_bSorting=(BYTE)nTemp;		
 
 
 		// Overrinding explorer for opening folders
-		RegKey.QueryValue("Use other program to open folders",nTemp);
+		LocRegKey.QueryValue("Use other program to open folders",nTemp);
 		SetSettingsFlags(settingsUseOtherProgramsToOpenFolders,nTemp);
-		RegKey.QueryValue(L"Open folders with",m_OpenFoldersWith);
+		LocRegKey.QueryValue(L"Open folders with",m_OpenFoldersWith);
 
-		if (RegKey.QueryValue("Transparency",nTemp))
+		if (LocRegKey.QueryValue("Transparency",nTemp))
 			m_nTransparency=min(nTemp,255);
 
 
-		if (RegKey.QueryValue("TooltipDelayAutopop",m_dwTooltipDelayAutopop))
+		if (LocRegKey.QueryValue("TooltipDelayAutopop",m_dwTooltipDelayAutopop))
 			m_dwSettingsFlags|=settingsSetTooltipDelays;
-		if (RegKey.QueryValue("TooltipDelayInitial",m_dwTooltipDelayInitial))
+		if (LocRegKey.QueryValue("TooltipDelayInitial",m_dwTooltipDelayInitial))
 			m_dwSettingsFlags|=settingsSetTooltipDelays;
 
-		if (RegKey.QueryValue("Update Process Priority",nTemp))
+		if (LocRegKey.QueryValue("Update Process Priority",nTemp))
 			m_nUpdateThreadPriority=nTemp;
 
 
-		if (RegKey.QueryValue("ResultListFont",(LPSTR)&m_lResultListFont,sizeof(LOGFONT))==sizeof(LOGFONT))
+		if (LocRegKey.QueryValue("ResultListFont",(LPSTR)&m_lResultListFont,sizeof(LOGFONT))==sizeof(LOGFONT))
 			m_dwSettingsFlags|=settingsUseCustomResultListFont;
 
 
-		if (RegKey.QueryValue(L"CustomTrayIcon",m_CustomTrayIcon))
+		if (LocRegKey.QueryValue(L"CustomTrayIcon",m_CustomTrayIcon))
 			m_dwSettingsFlags|=settingsCustomUseTrayIcon;
 
 	}
 
 	// m_bAdvancedAndContextMenuFlag
 	m_bAdvancedAndContextMenuFlag=0;
-	if (RegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (GenRegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 		m_bAdvancedAndContextMenuFlag|=cmLocateOnMyComputer;
-	if (RegKey.OpenKey(HKCR,"CLSID\\{450D8FBA-AD25-11D0-98A8-0800361B1103}\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (GenRegKey.OpenKey(HKCR,"CLSID\\{450D8FBA-AD25-11D0-98A8-0800361B1103}\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 		m_bAdvancedAndContextMenuFlag|=cmLocateOnMyDocuments;
-	if (RegKey.OpenKey(HKCR,"Drive\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (GenRegKey.OpenKey(HKCR,"Drive\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 		m_bAdvancedAndContextMenuFlag|=cmLocateOnDrives;
-	if (RegKey.OpenKey(HKCR,"Directory\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (GenRegKey.OpenKey(HKCR,"Directory\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 		m_bAdvancedAndContextMenuFlag|=cmLocateOnFolders;
-	if (RegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\updatedb",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (GenRegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\updatedb",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 		m_bAdvancedAndContextMenuFlag|=cmUpdateOnMyComputer;
 	
 	
 	// m_strLanguage
-	if (RegKey.OpenKey(HKCU,"",
+	if (GenRegKey.OpenKey(HKCU,"",
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.QueryValue(L"Language",m_strLangFile);
-		RegKey.CloseKey();
+		GenRegKey.QueryValue(L"Language",m_strLangFile);
+		GenRegKey.CloseKey();
 	}
 	if (m_strLangFile.IsEmpty())
 	{
 		m_strLangFile=L"lan_en.dll";
 		SetSettingsFlags(settingsUseLanguageWithConsoleApps);
 	}
-	else if (RegKey.OpenKey(HKCU,"Software\\Update",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	else if (GenRegKey.OpenKey(HKCU,CLocateApp::GetRegKey(""),
+		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		CStringW tmp;
-		RegKey.QueryValue(L"Language",tmp);
+		GenRegKey.QueryValue(L"Language",tmp);
 		SetSettingsFlags(settingsUseLanguageWithConsoleApps,tmp.CompareNoCase(m_strLangFile)==0);
-		RegKey.CloseKey();
+		GenRegKey.CloseKey();
 	}
 		
 	// Checking wheter locate is runned at system startup
-	if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (GenRegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		CStringW Path;
-		if (RegKey.QueryValue(L"Startup",Path))
+		if (GenRegKey.QueryValue(L"Startup",Path))
 		{
 			if (Path.LastChar()!='\\')
 				Path << '\\';
@@ -2381,25 +2383,25 @@ BOOL CSettingsProperties::LoadSettings()
 	}
 	
 	// Update status tooltip
-	if (RegKey.OpenKey(HKCU,"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (LocRegKey.OpenKey(HKCU,"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		DWORD dwTemp;
-		if (RegKey.QueryValue("Transparency",dwTemp))
+		if (LocRegKey.QueryValue("Transparency",dwTemp))
 			m_nToolTipTransparency=min(dwTemp,255);
-		if (RegKey.QueryValue("TextColor",dwTemp))
+		if (LocRegKey.QueryValue("TextColor",dwTemp))
 			m_cToolTipTextColor=dwTemp;
-		if (RegKey.QueryValue("TitleColor",dwTemp))
+		if (LocRegKey.QueryValue("TitleColor",dwTemp))
 			m_cToolTipTitleColor=dwTemp;
-		if (RegKey.QueryValue("ErrorColor",dwTemp))
+		if (LocRegKey.QueryValue("ErrorColor",dwTemp))
 			m_cToolTipErrorColor=dwTemp;
-		if (RegKey.QueryValue("BackColor",dwTemp))
+		if (LocRegKey.QueryValue("BackColor",dwTemp))
 			m_cToolTipBackColor=dwTemp;
 
 	
-		if (RegKey.QueryValue("TextFont",(LPSTR)&m_lToolTipTextFont,sizeof(LOGFONT))<sizeof(LOGFONT))
+		if (LocRegKey.QueryValue("TextFont",(LPSTR)&m_lToolTipTextFont,sizeof(LOGFONT))<sizeof(LOGFONT))
 			CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(&m_lToolTipTextFont,NULL);
 		
-		if (RegKey.QueryValue("TitleFont",(LPSTR)&m_lToolTipTitleFont,sizeof(LOGFONT))<sizeof(LOGFONT))
+		if (LocRegKey.QueryValue("TitleFont",(LPSTR)&m_lToolTipTitleFont,sizeof(LOGFONT))<sizeof(LOGFONT))
 			CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(NULL,&m_lToolTipTitleFont);
 		
 	}
@@ -2413,10 +2415,10 @@ BOOL CSettingsProperties::LoadSettings()
 
 
 	// Update status tooltip
-	if (RegKey.OpenKey(HKCU,"\\Misc",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (LocRegKey.OpenKey(HKCU,"\\Misc",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		DWORD dwTemp=0;;
-		RegKey.QueryValue("NoExtensionInRename",dwTemp);
+		LocRegKey.QueryValue("NoExtensionInRename",dwTemp);
 		if (dwTemp)
 			m_dwSettingsFlags|=settingsDontShowExtensionInRenameDialog;
 	}
@@ -2430,58 +2432,59 @@ BOOL CSettingsProperties::SaveSettings()
 {
 	DebugMessage("CSettingsProperties::SaveSettings()");
 	
-	CRegKey2 RegKey;
+	CRegKey GenRegKey;
+	CRegKey2 LocRegKey;
 
-	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	if (LocRegKey.OpenKey(HKCU,"\\General",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
-		RegKey.SetValue("Program Status",m_dwLocateDialogFlags&CLocateDlg::fgSave);
-		RegKey.SetValue("Program StatusExtra",m_dwLocateDialogExtraFlags&CLocateDlg::efSave);
-		RegKey.SetValue("General Flags",m_dwProgramFlags&CLocateApp::pfSave);
+		LocRegKey.SetValue("Program Status",m_dwLocateDialogFlags&CLocateDlg::fgSave);
+		LocRegKey.SetValue("Program StatusExtra",m_dwLocateDialogExtraFlags&CLocateDlg::efSave);
+		LocRegKey.SetValue("General Flags",m_dwProgramFlags&CLocateApp::pfSave);
 		
-		RegKey.SetValue(L"DateFormat",m_DateFormat);
-		RegKey.SetValue(L"TimeFormat",m_TimeFormat);
+		LocRegKey.SetValue(L"DateFormat",m_DateFormat);
+		LocRegKey.SetValue(L"TimeFormat",m_TimeFormat);
 
 
 		// Default flags
-		RegKey.SetValue("Default CheckIn",m_bDefaultFlag&defaultCheckInFlag);
-		RegKey.SetValue("Default MatchWholeName",m_bDefaultFlag&defaultWholeName?1:0);
-		RegKey.SetValue("Default DataMatchCase",m_bDefaultFlag&defaultMatchCase?1:0);
-		RegKey.SetValue("Default ReplaceSpaces",m_bDefaultFlag&defaultReplaceSpaces?1:0);
-		RegKey.SetValue("Default UseWholePath",m_bDefaultFlag&defaultUseWholePath?1:0);
-		RegKey.SetValue("Default Sorting",DWORD(m_bSorting));
+		LocRegKey.SetValue("Default CheckIn",m_bDefaultFlag&defaultCheckInFlag);
+		LocRegKey.SetValue("Default MatchWholeName",m_bDefaultFlag&defaultWholeName?1:0);
+		LocRegKey.SetValue("Default DataMatchCase",m_bDefaultFlag&defaultMatchCase?1:0);
+		LocRegKey.SetValue("Default ReplaceSpaces",m_bDefaultFlag&defaultReplaceSpaces?1:0);
+		LocRegKey.SetValue("Default UseWholePath",m_bDefaultFlag&defaultUseWholePath?1:0);
+		LocRegKey.SetValue("Default Sorting",DWORD(m_bSorting));
 			
 		// Overrinding explorer for opening folders
-		RegKey.SetValue("Use other program to open folders",(DWORD)IsSettingsFlagSet(settingsUseOtherProgramsToOpenFolders));
-		RegKey.SetValue(L"Open folders with",m_OpenFoldersWith);
+		LocRegKey.SetValue("Use other program to open folders",(DWORD)IsSettingsFlagSet(settingsUseOtherProgramsToOpenFolders));
+		LocRegKey.SetValue(L"Open folders with",m_OpenFoldersWith);
 
-		RegKey.SetValue("Transparency",m_nTransparency);
+		LocRegKey.SetValue("Transparency",m_nTransparency);
 
 		if (m_dwSettingsFlags&settingsSetTooltipDelays)
 		{
-			RegKey.SetValue("TooltipDelayAutopop",m_dwTooltipDelayAutopop);
-			RegKey.SetValue("TooltipDelayInitial",m_dwTooltipDelayInitial);
+			LocRegKey.SetValue("TooltipDelayAutopop",m_dwTooltipDelayAutopop);
+			LocRegKey.SetValue("TooltipDelayInitial",m_dwTooltipDelayInitial);
 		}
 		else
 		{
-			RegKey.DeleteValue("TooltipDelayAutopop");
-			RegKey.DeleteValue("TooltipDelayInitial");
+			LocRegKey.DeleteValue("TooltipDelayAutopop");
+			LocRegKey.DeleteValue("TooltipDelayInitial");
 		}
 
 
-		RegKey.SetValue("Update Process Priority",(DWORD)m_nUpdateThreadPriority);
+		LocRegKey.SetValue("Update Process Priority",(DWORD)m_nUpdateThreadPriority);
 
 
 
 
 		if (m_dwSettingsFlags&settingsUseCustomResultListFont)
-			RegKey.SetValue("ResultListFont",(LPSTR)&m_lResultListFont,sizeof(LOGFONT));
+			LocRegKey.SetValue("ResultListFont",(LPSTR)&m_lResultListFont,sizeof(LOGFONT));
 		else
-			RegKey.DeleteValue("ResultListFont");
+			LocRegKey.DeleteValue("ResultListFont");
 
 		if (m_dwSettingsFlags&settingsCustomUseTrayIcon)
-			RegKey.SetValue(L"CustomTrayIcon",m_CustomTrayIcon);
+			LocRegKey.SetValue(L"CustomTrayIcon",m_CustomTrayIcon);
 		else
-			RegKey.DeleteValue("CustomTrayIcon");
+			LocRegKey.DeleteValue("CustomTrayIcon");
 
 	}
 
@@ -2490,15 +2493,15 @@ BOOL CSettingsProperties::SaveSettings()
 	((CLocateApp*)GetApp())->m_strTimeFormat=m_TimeFormat;
 	((CLocateApp*)GetApp())->m_nFileSizeFormat=m_nFileSizeFormat;
 
-	if (RegKey.OpenKey(HKCU,"\\Recent Strings",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	if (LocRegKey.OpenKey(HKCU,"\\Recent Strings",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
-		RegKey.SetValue("NumberOfDirectories",m_nNumberOfDirectories);
-		RegKey.SetValue("NumberOfNames",m_nNumberOfNames);
-		RegKey.SetValue("NumberOfTypes",m_nNumberOfTypes);
+		LocRegKey.SetValue("NumberOfDirectories",m_nNumberOfDirectories);
+		LocRegKey.SetValue("NumberOfNames",m_nNumberOfNames);
+		LocRegKey.SetValue("NumberOfTypes",m_nNumberOfTypes);
 	}
 
-	if (RegKey.OpenKey(HKCU,"\\Locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
-		RegKey.SetValue("MaximumFoundFiles",(LPTSTR)&m_nMaximumFoundFiles,4,REG_DWORD);
+	if (LocRegKey.OpenKey(HKCU,"\\Locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+		LocRegKey.SetValue("MaximumFoundFiles",(LPTSTR)&m_nMaximumFoundFiles,4,REG_DWORD);
 	if (GetLocateDlg()!=NULL)
 	{
 		GetLocateDlg()->SetMaxFoundFiles(m_nMaximumFoundFiles);
@@ -2532,107 +2535,107 @@ BOOL CSettingsProperties::SaveSettings()
 	// Insert/Remove context menu items
 	
 	// Locate... on My Computer
-	if (RegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (GenRegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.CloseKey();
+		GenRegKey.CloseKey();
 		if ((m_bAdvancedAndContextMenuFlag&cmLocateOnMyComputer)==0)
 			CRegKey::DeleteKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\locate");
 	}
 	else if (m_bAdvancedAndContextMenuFlag&cmLocateOnMyComputer)
 	{
-		if (RegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+		if (GenRegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
-			RegKey.SetValue("",ID2A(IDS_EXPLORERLOCATE));
+			GenRegKey.SetValue("",ID2A(IDS_EXPLORERLOCATE));
 			CRegKey CommandKey;
-			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+			if (CommandKey.OpenKey(GenRegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
 				CStringW command;
-				command.Format(L"\"%s\" /P4",GetApp()->GetExeNameW());
+				command.Format(L"\"%s\" /P4",(LPCWSTR)GetApp()->GetExeNameW());
 				CommandKey.SetValue(L"",command);
 			}
 		}
 	}
 	
 	// Locate... on My Documents
-	if (RegKey.OpenKey(HKCR,"CLSID\\{450D8FBA-AD25-11D0-98A8-0800361B1103}\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (GenRegKey.OpenKey(HKCR,"CLSID\\{450D8FBA-AD25-11D0-98A8-0800361B1103}\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.CloseKey();
+		GenRegKey.CloseKey();
 		if ((m_bAdvancedAndContextMenuFlag&cmLocateOnMyDocuments)==0)
 			CRegKey::DeleteKey(HKCR,"CLSID\\{450D8FBA-AD25-11D0-98A8-0800361B1103}\\shell\\locate");
 	}
 	else if (m_bAdvancedAndContextMenuFlag&cmLocateOnMyDocuments)
 	{
-		if (RegKey.OpenKey(HKCR,"CLSID\\{450D8FBA-AD25-11D0-98A8-0800361B1103}\\shell\\locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+		if (GenRegKey.OpenKey(HKCR,"CLSID\\{450D8FBA-AD25-11D0-98A8-0800361B1103}\\shell\\locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
-			RegKey.SetValue("",ID2A(IDS_EXPLORERLOCATE));
+			GenRegKey.SetValue("",ID2A(IDS_EXPLORERLOCATE));
 			CRegKey CommandKey;
-			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+			if (CommandKey.OpenKey(GenRegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
 				CStringW command;
-				command.Format(L"\"%s\" /P3",GetApp()->GetExeNameW());
+				command.Format(L"\"%s\" /P3",(LPCWSTR)GetApp()->GetExeNameW());
 				CommandKey.SetValue(L"",command);
 			}
 		}
 	}
 
 	// Locate... on Drives
-	if (RegKey.OpenKey(HKCR,"Drive\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (GenRegKey.OpenKey(HKCR,"Drive\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.CloseKey();
+		GenRegKey.CloseKey();
 		if ((m_bAdvancedAndContextMenuFlag&cmLocateOnDrives)==0)
 			CRegKey::DeleteKey(HKCR,"Drive\\shell\\locate");
 	}
 	else if (m_bAdvancedAndContextMenuFlag&cmLocateOnDrives)
 	{
-		if (RegKey.OpenKey(HKCR,"Drive\\shell\\locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+		if (GenRegKey.OpenKey(HKCR,"Drive\\shell\\locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
-			RegKey.SetValue("",ID2A(IDS_EXPLORERLOCATE));
+			GenRegKey.SetValue("",ID2A(IDS_EXPLORERLOCATE));
 			CRegKey CommandKey;
-			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+			if (CommandKey.OpenKey(GenRegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
 				CStringW command;
-				command.Format(L"\"%s\" /p \"%%1\"",GetApp()->GetExeNameW());
+				command.Format(L"\"%s\" /p \"%%1\"",(LPCWSTR)GetApp()->GetExeNameW());
 				CommandKey.SetValue(L"",command);
 			}
 		}
 	}
 
 	// Locate... on Directories
-	if (RegKey.OpenKey(HKCR,"Directory\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (GenRegKey.OpenKey(HKCR,"Directory\\shell\\locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.CloseKey();
+		GenRegKey.CloseKey();
 		if ((m_bAdvancedAndContextMenuFlag&cmLocateOnFolders)==0)
 			CRegKey::DeleteKey(HKCR,"Directory\\shell\\locate");
 	}
 	else if (m_bAdvancedAndContextMenuFlag&cmLocateOnFolders)
 	{
-		if (RegKey.OpenKey(HKCR,"Directory\\shell\\locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+		if (GenRegKey.OpenKey(HKCR,"Directory\\shell\\locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
-			RegKey.SetValue("",ID2A(IDS_EXPLORERLOCATE));
+			GenRegKey.SetValue("",ID2A(IDS_EXPLORERLOCATE));
 			CRegKey CommandKey;
-			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+			if (CommandKey.OpenKey(GenRegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
 				CStringW command;
-				command.Format(L"\"%s\" /p \"%%1\"",GetApp()->GetExeNameW());
+				command.Format(L"\"%s\" /p \"%%1\"",(LPCWSTR)GetApp()->GetExeNameW());
 				CommandKey.SetValue(L"",command);
 			}
 		}
 	}
 
 	// Update Database... on My Computer
-	if (RegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\updatedb",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (GenRegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\updatedb",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		RegKey.CloseKey();
+		GenRegKey.CloseKey();
 		if ((m_bAdvancedAndContextMenuFlag&cmUpdateOnMyComputer)==0)
 			CRegKey::DeleteKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\updatedb");
 	}
 	else if (m_bAdvancedAndContextMenuFlag&cmUpdateOnMyComputer)
 	{
-		if (RegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\updatedb",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+		if (GenRegKey.OpenKey(HKCR,"CLSID\\{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\shell\\updatedb",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
-			RegKey.SetValue("",ID2A(IDS_EXPLORERUPDATE));
+			GenRegKey.SetValue("",ID2A(IDS_EXPLORERUPDATE));
 			CRegKey CommandKey;
-			if (CommandKey.OpenKey(RegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+			if (CommandKey.OpenKey(GenRegKey,"command",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 			{
 				CStringW sExeName(GetApp()->GetExeNameW());
 				CStringW command(sExeName,sExeName.FindLast(L'\\')+1);
@@ -2644,28 +2647,28 @@ BOOL CSettingsProperties::SaveSettings()
 	}
 
 	// Language
-	if (RegKey.OpenKey(HKCU,"",
+	if (LocRegKey.OpenKey(HKCU,"",
 		CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
-		RegKey.SetValue(L"Language",m_strLangFile);
-		RegKey.CloseKey();
+		LocRegKey.SetValue(L"Language",m_strLangFile);
+		LocRegKey.CloseKey();
 		
-		if (RegKey.OpenKey(HKCU,CLocateApp::GetRegKey(""),
+		if (GenRegKey.OpenKey(HKCU,CLocateApp::GetRegKey(""),
 				CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		{
 			if (IsSettingsFlagSet(settingsUseLanguageWithConsoleApps))
-				RegKey.SetValue(L"Language",m_strLangFile);
+				GenRegKey.SetValue(L"Language",m_strLangFile);
 			else
-				RegKey.DeleteValue("Language");
+				GenRegKey.DeleteValue("Language");
 		}
 
 	}	
 
 	// Creating or deleting shortcut to Startup mene if necessary
-	if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	if (GenRegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		CStringW Path;
-		if (RegKey.QueryValue(L"Startup",Path))
+		if (GenRegKey.QueryValue(L"Startup",Path))
 		{
 			if (Path.LastChar()!=L'\\')
 				Path << L'\\';
@@ -2686,22 +2689,22 @@ BOOL CSettingsProperties::SaveSettings()
 	}
 
 	// Update status tooltip
-	if (RegKey.OpenKey(HKCU,"\\Dialogs\\Updatestatus",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	if (LocRegKey.OpenKey(HKCU,"\\Dialogs\\Updatestatus",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
 		
-		RegKey.SetValue("Transparency",m_nToolTipTransparency);
-		RegKey.SetValue("TextFont",(LPSTR)&m_lToolTipTextFont,sizeof(LOGFONT));
-		RegKey.SetValue("TitleFont",(LPSTR)&m_lToolTipTitleFont,sizeof(LOGFONT));
-		RegKey.SetValue("TextColor",(DWORD)m_cToolTipTextColor);
-		RegKey.SetValue("TitleColor",(DWORD)m_cToolTipTitleColor);
-		RegKey.SetValue("ErrorColor",(DWORD)m_cToolTipErrorColor);
-		RegKey.SetValue("BackColor",(DWORD)m_cToolTipBackColor);
+		LocRegKey.SetValue("Transparency",m_nToolTipTransparency);
+		LocRegKey.SetValue("TextFont",(LPSTR)&m_lToolTipTextFont,sizeof(LOGFONT));
+		LocRegKey.SetValue("TitleFont",(LPSTR)&m_lToolTipTitleFont,sizeof(LOGFONT));
+		LocRegKey.SetValue("TextColor",(DWORD)m_cToolTipTextColor);
+		LocRegKey.SetValue("TitleColor",(DWORD)m_cToolTipTitleColor);
+		LocRegKey.SetValue("ErrorColor",(DWORD)m_cToolTipErrorColor);
+		LocRegKey.SetValue("BackColor",(DWORD)m_cToolTipBackColor);
 	}
 
 	// Misc settings
-	if (RegKey.OpenKey(HKCU,"\\Misc",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	if (LocRegKey.OpenKey(HKCU,"\\Misc",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
-		RegKey.SetValue("NoExtensionInRename",m_dwSettingsFlags&settingsDontShowExtensionInRenameDialog?1:0);
+		LocRegKey.SetValue("NoExtensionInRename",m_dwSettingsFlags&settingsDontShowExtensionInRenameDialog?1:0);
 	}
 		
 	

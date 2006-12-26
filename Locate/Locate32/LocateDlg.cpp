@@ -5764,7 +5764,8 @@ void CLocateDlg::OnCopy(BOOL bCut,int nItem)
     else
 	{
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
-		if (!FileSystem::IsFile(pItem->GetPath()))
+		if (!FileSystem::IsFile(pItem->GetPath()) &&
+			!FileSystem::IsDirectory(pItem->GetPath()))
 			return;
 
 		fo.SetFile(pItem->GetPath());

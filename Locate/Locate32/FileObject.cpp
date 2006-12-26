@@ -218,11 +218,11 @@ HRESULT STDMETHODCALLTYPE CFileObject::QueryGetData(FORMATETC *pformatetc)
 		FoDebugMessage("CFileObject::QueryGetData: format is CF_HDROP");
 		return S_OK;
 	}
-	if (pformatetc->cfFormat==CF_TEXT)
+	/*if (pformatetc->cfFormat==CF_TEXT)
 	{
 		FoDebugMessage("CFileObject::QueryGetData: format is CF_TEXT");
 		return S_OK;
-	}
+	}*/
 	char szFormat[100];
 	if (GetClipboardFormatName(pformatetc->cfFormat,szFormat,100))
 	{
@@ -366,7 +366,8 @@ BYTE CFileObject::SetFiles(CListCtrl* pList,BOOL bNoDeleted)
 		{
 			if (bNoDeleted)
 			{
-				if (!FileSystem::IsFile(pData->GetPath()))
+				if (!FileSystem::IsFile(pData->GetPath()) &&
+					!FileSystem::IsDirectory(pData->GetPath()))
 				{
 					nItem=pList->GetNextItem(nItem,LVNI_SELECTED);
 					continue;

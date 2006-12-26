@@ -54,6 +54,7 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 			SetDlgItemText(IDC_VERSION,Temp);
 			SetDlgItemText(IDC_FILES,Temp);
 			SetDlgItemText(IDC_DIRECTORIES,Temp);
+			SetDlgItemText(IDC_CHARSET,Temp);
 			return CDialog::OnInitDialog(hwndFocus);
 		}
 	

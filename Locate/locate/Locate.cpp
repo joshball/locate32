@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2006 Janne Huttunen
-   locate.exe v2.99.6.12100                 */
+   locate.exe v2.99.6.12260                 */
 
-const char* szVersionStr="locate 3.0 RC4 6.12100";
+const char* szVersionStr="locate 3.0 RC5 6.12260";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -630,12 +630,12 @@ int wmain (int argc,wchar_t * argv[])
 							dwContainDataLength=(DWORD)FirstCharIndex(argv[i]+j,L'\"');
 							if (dwContainDataLength==DWORD(-1))
 								dwContainDataLength=istrlenw(argv[i]+j);
-							pContainData=(PBYTE)alloccopy(argv[i]+j,dwContainDataLength);
+							pContainData=(PBYTE)alloccopyWtoA(argv[i]+j,dwContainDataLength);
 						}
 						else
 						{
 							dwContainDataLength=(DWORD)istrlenw(argv[i]+j);
-							pContainData=(PBYTE)alloccopy(argv[i]+j,dwContainDataLength);
+							pContainData=(PBYTE)alloccopyWtoA(argv[i]+j,dwContainDataLength);
 						}
 					}
 					break;
