@@ -421,7 +421,7 @@ protected:
 	
 
 public:
-	static CPtrContA<CHAR> GetRegKey(LPCSTR szSubKey);
+	static CAutoPtrA<CHAR> GetRegKey(LPCSTR szSubKey);
 	
 	const CArray<PDATABASE>& GetDatabases() const { return m_aDatabases; }
 	CArray<PDATABASE>* GetDatabasesPtr() { return &m_aDatabases; }

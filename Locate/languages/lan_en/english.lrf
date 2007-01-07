@@ -1,6 +1,6 @@
 # English language file 
 #	
-# Copyright (C) 2003-2006 Janne Huttunen <Janne.Huttunen@uku.fi>
+# Copyright (C) 2003-2007 Janne Huttunen <Janne.Huttunen@uku.fi>
 #
 
 FOR_PROGRAM=LOCATE32
@@ -27,9 +27,9 @@ CODEPAGE=1252
 
 # FILEVERSION_NUMERIC must in in format A, B, C, D where A, B, C and D are integers between 0-65535
 ORIGINALFILENAME=lan_en.dll
-LEGALCOPYRIGHT=Copyright © 1997-2006 Janne Huttunen
+LEGALCOPYRIGHT=Copyright © 1997-2007 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 RC5 6.12260
+FILEVERSION=3.0 build 7.1060
 FILEDESCRIPTION=English language file for Locate32
 
 

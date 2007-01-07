@@ -786,7 +786,7 @@ public:
 	};
 
 
-public:
+protected:
 	CTabCtrl* m_pTabCtrl;
 	CListCtrlEx* m_pListCtrl;
 	CStatusBarCtrl* m_pStatusCtrl;
@@ -884,13 +884,20 @@ public:
 	static LPCWSTR GetDBVolumeSerial(WORD wDB,WORD wRootID);
 	static LPCWSTR GetDBVolumeFileSystem(WORD wDB,WORD wRootID);
 
+	int GetCurrentTab() const { return m_pTabCtrl->GetCurSel(); }
+	
 
 	friend class CLocateDlgThread;
 	friend class CCheckFileNotificationsThread;
 	friend class CBackgroundUpdater;
 	friend class CSelectColumnsDlg;
 	friend class CSubAction;
+	friend class CFileTarget;
+	friend class CSettingsProperties;
+	friend class CSettingsProperties::CKeyboardShortcutsPage;
 
+	friend BOOL CLocateAppWnd::TurnOnShortcuts();
+	
 #ifdef _DEBUG
 public:
 	inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }

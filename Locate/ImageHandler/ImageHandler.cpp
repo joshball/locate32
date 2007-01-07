@@ -1,5 +1,5 @@
 /* Image property handler front-end for GDI+ 
-Copyright (C) 2003-2005 Janne Huttunen				*/
+Copyright (C) 2003-2007 Janne Huttunen				*/
 
 #include <windows.h>
 #include <gdiplus.h>

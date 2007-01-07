@@ -187,6 +187,8 @@ void CLocatedItem::SetFileW(const CLocater* pLocater)
 	else
 		bExtensionPos++;
 	
+	ASSERT(!FileSystem::IsDirectory(GetPath()));
+
 	// Settig title (maybe)
 	if ((GetLocateDlg()->GetFlags()&(CLocateDlg::fgLVAlwaysShowExtensions|CLocateDlg::fgLV1stCharUpper))==CLocateDlg::fgLVAlwaysShowExtensions)
 	{
@@ -337,13 +339,22 @@ BOOL CLocatedItem::ShouldUpdateByDetail(CLocateDlg::DetailType nDetail) const
 	}	
 }
 
-void CLocatedItem::UpdateFilename()
-{
-	WCHAR szFullPath[MAX_PATH];
 
+NDEBUGINLINE void CLocatedItem::UpdateFilename()
+{
+	/*
+#ifdef _DEBUG
+	// Convert short file name to long file name
+	WCHAR szFullPath[MAX_PATH];
 	ItemDebugMessage("CLocatedItem::UpdateFilename() BEGIN");
 	
 	DWORD dwLength=GetLocateApp()->m_pGetLongPathName(GetPath(),szFullPath,MAX_PATH);
+
+	if (wcscmp(GetPath(),szFullPath)!=0)
+	{
+		CAppData::stdfunc();
+	}
+
 	if (dwLength==GetPathLen())
 	{
 		// Checking assumptions, i.e. length of file name and extension does not change 
@@ -367,10 +378,11 @@ void CLocatedItem::UpdateFilename()
 		for (bExtensionPos=bNameLength-1; szName[bExtensionPos-1]!=L'.' && bExtensionPos>0 ;bExtensionPos--);
 		if (bExtensionPos==0)
 			bExtensionPos=bNameLength;
-		
-
 	}
     
+#endif
+	*/
+
 	dwFlags|=LITEM_FILENAMEOK;
 
 	ItemDebugMessage("CLocatedItem::UpdateFilename() END");

@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2006 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2007 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #ifndef HFCMEMORY_H
@@ -254,96 +254,56 @@ public:
 #endif
 
 // Data keepers
-template<class TYPE> class CPtrCont
+template<class TYPE> 
+class CAutoPtr
 {
 public:
-	CPtrCont(TYPE* data) { m_data=data;  }
-	~CPtrCont() { delete m_data; }
+	CAutoPtr(TYPE* data) { m_data=data;  }
+	CAutoPtr(CAutoPtr<TYPE>& another) { m_data=another.Release(); }
+	~CAutoPtr();
 
-	operator TYPE*() const { return m_data; }
-	operator TYPE*&() { return m_data; }
-	operator TYPE() const { return *m_data; }
-	operator TYPE&() { return *m_data; }
-	TYPE* operator ->() { return m_data; }
-
-private:
-	TYPE* m_data;
-
-};
-
-template<class TYPE> class CPtrContA
-{
-public:
-	CPtrContA(TYPE* data) { m_data=data;  }
-	~CPtrContA() { delete[] m_data; }
+	TYPE* Release();
 	
 	operator TYPE*() const { return m_data; }
 	operator TYPE*&() { return m_data; }
-	operator TYPE() const { return *m_data; }
-	operator TYPE&() { return *m_data; }
-	TYPE* operator ->() { return m_data; }
-
-private:
-	TYPE* m_data;
-};
-
-template<class TYPE> class CPtrContRef
-{
-public:
-	CPtrContRef(TYPE* data) { m_data=data; m_nRef=1; }
-	~CPtrContRef() { delete m_data; }
-
-	void AddRef() { m_nRef++; }
-	CPtrContRef* Release()
-	{
-		m_nRef--;
-		if (m_nRef==0)
-		{
-			delete this; 
-			return NULL;
-		}
-		else
-			return this;
-	}
-
-	operator TYPE*() const { return m_data; }
-	operator TYPE*&() { return m_data; }
-	operator TYPE() const { return *m_data; }
-	operator TYPE&() { return *m_data; }
-	TYPE* operator ->() { return m_data; }
-
-private:
-	TYPE* m_data;
-	int m_nRef;
-};
-
-template<class TYPE> class CPtrContRefA
-{
-public:
-	CPtrContRefA(TYPE* data) { m_data=data; m_nRef=1; }
-	~CPtrContRefA() { delete[] m_data; }
 	
-	void AddRef() { m_nRef++; }
-	CPtrContRefA* Release()
-	{
-		if (--m_nRef==0)
-		{
-			delete this; 
-			return NULL;
-		}
-		else
-			return this;
-	}
-
-	operator TYPE*() const { return m_data; }
-	operator TYPE*&() { return m_data; }
-	operator TYPE() const { return *m_data; }
-	operator TYPE&() { return *m_data; }
 	TYPE* operator ->() { return m_data; }
+
+	CAutoPtr<TYPE>& operator=(TYPE* data);
+	CAutoPtr<TYPE>& operator=(CAutoPtr<TYPE>& another);
+
 
 private:
 	TYPE* m_data;
-	int m_nRef;
+
+};
+
+template<class TYPE> 
+class CAutoPtrA
+{
+public:
+	CAutoPtrA(TYPE* data) { m_data=data;  }
+	CAutoPtrA(CAutoPtrA<TYPE>& another) { m_data=another.Release(); }
+	~CAutoPtrA();
+
+	TYPE* Release();
+	
+	operator TYPE*() const { return m_data; }
+	operator TYPE*&() { return m_data; }
+	
+	TYPE* operator ->() { return m_data; }
+
+	CAutoPtrA<TYPE>& operator=(TYPE* data);
+	CAutoPtrA<TYPE>& operator=(CAutoPtrA<TYPE>& another);
+
+	TYPE operator[](LONG_PTR nIndex) const { return m_data[nIndex]; }
+	TYPE& operator[](LONG_PTR nIndex) { return m_data[nIndex]; };
+	
+
+
+private:
+	TYPE* m_data;
+
 };
 
 class CAllocator // Abstract class for Allocators

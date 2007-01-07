@@ -901,15 +901,15 @@ void CSelectDatabasesDlg::OnOK()
 	if (m_List.GetItemCount()>0)
 	{
 		// Get the first item
-		int nNext;
+		//int nNext;
 		int nItem=m_List.GetNextItem(-1,LVNI_ALL);
 
-		while ((nNext=m_List.GetNextItem(nItem,LVNI_ABOVE))!=-1)
+		/*while ((nNext=m_List.GetNextItem(nItem,LVNI_ABOVE))!=-1)
 		{
 			if (nNext==nItem)
 				break; // This should not be like that, why is it?
 			nItem=nNext;
-		}
+		}*/
 		
 		while (nItem!=-1)
 		{
@@ -924,10 +924,12 @@ void CSelectDatabasesDlg::OnOK()
 				m_List.SetItemData(nItem,NULL);
 			}
 
-			nNext=m_List.GetNextItem(nItem,LVNI_BELOW);
+			/*nNext=m_List.GetNextItem(nItem,LVNI_BELOW);
 			if (nNext==nItem)
 				break;
-			nItem=nNext;
+			nItem=nNext;*/
+
+			nItem=m_List.GetNextItem(nItem,LVNI_ALL);
 		}
 	}
 
@@ -1715,14 +1717,15 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCWSTR szName,BOOL bAskOverwrite)
 		if (m_List.GetItemCount()>0)
 		{
 			// Get the first item
-			int nNext;
+			//int nNext;
 			int nItem=m_List.GetNextItem(-1,LVNI_ALL);
-			while ((nNext=m_List.GetNextItem(nItem,LVNI_ABOVE))!=-1)
+			/*while ((nNext=m_List.GetNextItem(nItem,LVNI_ABOVE))!=-1)
 			{
 				if (nNext==nItem)
 					break; // This should not be like that, why is it?
 				nItem=nNext;
-			}
+			}*/
+
 			// Now we have top index
 			while (nItem!=-1)
 			{
@@ -1737,10 +1740,12 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCWSTR szName,BOOL bAskOverwrite)
 						aSelected.Add(pDatabase->GetID());
 				}
 
-				nNext=m_List.GetNextItem(nItem,LVNI_BELOW);
+				/*nNext=m_List.GetNextItem(nItem,LVNI_BELOW);
 				if (nNext==nItem)
 					break;
-				nItem=nNext;
+				nItem=nNext;*/
+
+				nItem=m_List.GetNextItem(nItem,LVNI_ALL);
 			}
 		}
 

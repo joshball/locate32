@@ -1826,7 +1826,7 @@ BOOL CShortcut::IsWhenAndWhereSatisfied(HWND hSystemTrayWnd)  const
 		CLocateDlg* pLocateDlg=GetLocateDlg();
 		if (pLocateDlg!=NULL)
 		{
-			switch (pLocateDlg->m_pTabCtrl->GetCurSel())
+			switch (pLocateDlg->GetCurrentTab())
 			{
 			case 0: // Name tab
 				if (m_wWhenPressed&wpNameTabShown)

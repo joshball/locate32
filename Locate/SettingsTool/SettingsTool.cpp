@@ -63,6 +63,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 				ShowError(NULL,IDS_ERRORCANNOTENABLEPRIVILEGE,GetLastError());
 
 		}
+		CloseHandle(hToken);
 		delete[] (BYTE*)ns;
 	}
 

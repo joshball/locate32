@@ -3,8 +3,9 @@
 
 
 #define WM_SYSTEMTRAY				WM_APP+100
+#define WM_SETOPERATIONSTATUSBAR	WM_APP+101 //wParam is ID to icon, lParam is text
 #define WM_UPDATENEEDEDDETAILTS		WM_APP+102 //wParam is item, lParam is pointer to item
-#define WM_REFRESHNOTIFIERHANDLERS	WM_APP+103 
+#define WM_UPDATINGSTOPPED			WM_APP+104
 #define WM_GETLOCATEDLG				WM_APP+105 // wParam==0: return HWND, wParam==1: return PTR, wParam==2: return PTR to ST
 #define WM_FREEUPDATESTATUSPOINTERS	WM_APP+106
 #define WM_EXECUTESHORTCUT			WM_APP+107 // wParam is index to shortcut 

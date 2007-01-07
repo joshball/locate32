@@ -1158,6 +1158,9 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 	LPWSTR pPtr=szRet;
 
 	//Formatting date
+
+	// TODO: GetTimeFormat and GetDateFormat ?
+
     if (wDate!=WORD(-1) && wDate!=0)
 	{
 		for (int i=0;i<m_strDateFormat.GetLength();i++)
@@ -1666,16 +1669,8 @@ BOOL CLocateApp::StopUpdating(BOOL bForce)
 	GetLocateAppWnd()->StopUpdateStatusNotification();
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg!=NULL)
-		pLocateDlg->StopUpdateAnimation();
-	
-	// It is good to check this handle again
-	pLocateDlg=GetLocateDlg();
-	if (pLocateDlg!=NULL)
-	{
-		pLocateDlg->m_NameDlg.InitDriveBox();
-		//pLocateDlg->ResetFileNotificators();
-		pLocateDlg->PostMessage(WM_REFRESHNOTIFIERHANDLERS);
-	}
+		pLocateDlg->SendMessage(WM_UPDATINGSTOPPED);
+		
 	GetLocateAppWnd()->SetUpdateStatusInformation(DEFAPPICON,IDS_NOTIFYLOCATE);
 	
 	// I think pointers are removed elsewhere
@@ -1749,9 +1744,7 @@ void CLocateAppWnd::NotifyFinishingUpdating()
 		{
 			// All updaters are interrupted by user
 			str.LoadString(IDS_UPDATINGCANCELLED);
-			pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
-			pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
-
+			pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,(WPARAM)IDI_EXCLAMATION,(LPARAM)(LPCWSTR)str);
 		}
 		else
 		{
@@ -1794,13 +1787,16 @@ void CLocateAppWnd::NotifyFinishingUpdating()
 			}
 
 			if (str2.IsEmpty())
+			{
 				str.LoadString(IDS_UPDATINGSUCCESS);
+				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);				
+			}
 			else
 			{
-				pLocateDlg->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_EXCLAMATION)),STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
 				str << L' ' << str2;
+				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,
+					(WPARAM)IDI_EXCLAMATION,(LPARAM)(LPCWSTR)str);				
 			}
-			pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
 		}
 	}
 
@@ -1873,7 +1869,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 					(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
 			}
 			
-			pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
+			pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
 		}
 	
 		
@@ -1886,12 +1882,8 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 		{
 			CLocateDlg* pLocateDlg=GetLocateDlg();
 			if (pLocateDlg!=NULL)
-			{
-				pLocateDlg->m_NameDlg.InitDriveBox();
-				
-				//pLocateDlg->ResetFileNotificators();
-				pLocateDlg->PostMessage(WM_REFRESHNOTIFIERHANDLERS);
-			}
+				pLocateDlg->PostMessage(WM_UPDATINGSTOPPED);
+			
 		}
 		break;
 	case FinishedDatabase:
@@ -1906,7 +1898,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 					pUpdater->GetCurrentDatabaseName(),
 					(LPCWSTR)ID2W(IDS_UPDATINGCANCELLED2));
 
-				pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
+				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
 				return FALSE;
 			}
 			else if (ueCode!=ueSuccess)
@@ -1916,7 +1908,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 					pUpdater->GetCurrentDatabaseName(),
 					(LPCWSTR)ID2W(IDS_UPDATINGFAILED));
 
-				pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
+				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
 				return FALSE;
 			}
 			CStringW str;
@@ -1924,7 +1916,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 				pUpdater->GetCurrentDatabaseName(),
 				(LPCWSTR)ID2W(IDS_UPDATINGDONE));
 
-			pLocateDlg->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);
+			pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
 		}
 
 		return TRUE;
@@ -3106,16 +3098,11 @@ BYTE CLocateAppWnd::OnSettings()
 			LoadAppIcon();
 			SetUpdateStatusInformation(DEFAPPICON,0);
 			
-			if (GetLocateDlg()!=NULL)
-			{
-				// Set LocateDlg to use new seetings
-				if (m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsIsUsedDatabaseChanged))
-				{
-					GetLocateDlg()->m_NameDlg.InitDriveBox();
-					GetLocateDlg()->ResetFileNotificators();
-				}
-				GetLocateDlg()->UpdateSettings();
-			}
+			// Set LocateDlg to use new seetings
+			CLocateDlg* pLocateDlg=GetLocateDlg();
+			if (pLocateDlg!=NULL)
+				pLocateDlg->UpdateSettings();
+			
 		}
 		
 		// Freeing memory
@@ -3281,7 +3268,7 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThrea
 			pLocateDlg->StartUpdateAnimation();
 		
 			//pLocateDlg->m_pStatusCtrl->SetText(szEmpty,0,0);
-			pLocateDlg->m_pStatusCtrl->SetText(ID2A(IDS_UPDATINGDATABASE),STATUSBAR_OPERATIONSTATUS,0);		
+			pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)ID2W(IDS_UPDATINGDATABASE));							
 		}
 	}
 	else if (bStopIfProcessing)
@@ -4023,7 +4010,7 @@ void CLocateApp::FinalizeCommonRegKey()
 	delete[] m_szCommonRegKey;
 }
 
-CPtrContA<CHAR> CLocateApp::GetRegKey(LPCSTR szSubKey)
+CAutoPtrA<CHAR> CLocateApp::GetRegKey(LPCSTR szSubKey)
 {
 	extern CLocateApp theApp;
 
@@ -4039,7 +4026,7 @@ CPtrContA<CHAR> CLocateApp::GetRegKey(LPCSTR szSubKey)
 
 	MemCopy(pKey+nCommonKeyLen,szSubKey,nSubKeyLen);
 
-	return CPtrContA<CHAR>(pKey);
+	return pKey;
 }
 
 ////////////////////////////

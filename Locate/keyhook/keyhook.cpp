@@ -1,5 +1,5 @@
 /* Keyhook handler for Locate
-Copyright (C) 2004-2006 Janne Huttunen				*/
+Copyright (C) 2004-2007 Janne Huttunen				*/
 
 #include <windows.h>
 

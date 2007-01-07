@@ -1,6 +1,6 @@
 //
 // Locate Find Extension
-// Copyright 2005 Janne Huttunen
+// Copyright 2005-2007 Janne Huttunen
 //
 // class id:  8A2F2E09-3209-4934-ACB1-DE5BB052950F
 //

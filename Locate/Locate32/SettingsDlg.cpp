@@ -4146,9 +4146,9 @@ void CSettingsProperties::CDatabasesSettingsPage::OnRemove()
 	{
 		if (FileSystem::IsFile(pDatabase->GetArchiveName()))
 		{
-			CString str;
+			CStringW str;
 			str.Format(IDS_DELETEDATABASEQUESTION,pDatabase->GetArchiveName());
-			int nRet=MessageBox(str,ID2A(IDS_DELETEDATABASE),MB_ICONQUESTION|MB_YESNO);
+			int nRet=MessageBox(str,ID2W(IDS_DELETEDATABASE),MB_ICONQUESTION|MB_YESNO);
 			if (nRet==IDYES)
 				FileSystem::Remove(pDatabase->GetArchiveName());
 		}
@@ -4377,7 +4377,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 		BOOL bError=FALSE;
 
 		try {
-			CString Path;
+			CStringW Path;
 			fd.GetFilePath(Path);
 			pFile=new CFile(Path,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
 			pFile->CloseOnDelete();
@@ -4614,15 +4614,15 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnApply()
 	ASSERT(m_pSettings->m_aDatabases.GetSize()==0);
 
 	// Get the first item
-	int nNext;
+	//int nNext;
 	int nItem=m_pList->GetNextItem(-1,LVNI_ALL);
 
-	while ((nNext=m_pList->GetNextItem(nItem,LVNI_ABOVE))!=-1)
+	/*while ((nNext=m_pList->GetNextItem(nItem,LVNI_ABOVE))!=-1)
 	{
 		if (nNext==nItem)
 			break; // This should not be like that, why is it?
 		nItem=nNext;
-	}
+	}*/
 	
 	while (nItem!=-1)
 	{
@@ -4632,10 +4632,12 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnApply()
 		m_pSettings->m_aDatabases.Add(pDatabase);
 		m_pList->SetItemData(nItem,NULL);
 
-		nNext=m_pList->GetNextItem(nItem,LVNI_BELOW);
+		/*nNext=m_pList->GetNextItem(nItem,LVNI_BELOW);
 		if (nNext==nItem)
 			break;
-		nItem=nNext;
+		nItem=nNext;*/
+
+		nItem=m_pList->GetNextItem(nItem,LVNI_ALL);
 	}
 	
 	return TRUE;
@@ -4983,7 +4985,6 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::ListNotifyHan
 
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 {
-
 	// Setting name
 	int iLength=GetDlgItemTextLength(IDC_NAME)+1;
 	WCHAR* pText=new WCHAR[iLength];
@@ -4993,27 +4994,27 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 	{
 		if (wcsncmp(pText,L"DEFAULTX",8)==0 || wcsncmp(pText,L"PARAMX",6)==0)
 		{
-			CString msg;
+			CStringW msg;
 			msg.Format(IDS_INVALIDDBNAME,pText);
-			MessageBox(msg,ID2A(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
+			MessageBox(msg,ID2W(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
 			SetFocus(IDC_NAME);
 			delete[] pText;
 			return;
 		}
 		if (!CDatabase::IsNameValid(pText))
 		{
-			CString msg;
+			CStringW msg;
 			msg.Format(IDS_INVALIDDBNAME,pText);
-			MessageBox(msg,ID2A(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
+			MessageBox(msg,ID2W(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
 			SetFocus(IDC_NAME);
 			delete[] pText;
 			return;
 		}
 		if (CDatabase::FindByName(m_aOtherDatabases,pText)!=NULL)
 		{
-			CString msg;
+			CStringW msg;
 			msg.Format(IDS_NAMEALREADYEXISTS,pText);
-			MessageBox(msg,ID2A(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
+			MessageBox(msg,ID2W(IDS_DATABASESETTINGS),MB_OK|MB_ICONINFORMATION);
 			SetFocus(IDC_NAME);
 			delete[] pText;
 			return;

@@ -167,8 +167,12 @@ inline BOOL CLocatedItem::ShouldUpdateFileTitle() const
 
 inline BOOL CLocatedItem::ShouldUpdateFilename() const 
 { 
+#ifdef _DEBUG
 	// do not depend on efEnableUpdating
 	return !(dwFlags&LITEM_FILENAMEOK); 
+#else
+	return FALSE;
+#endif
 }
 
 inline BOOL CLocatedItem::ShouldUpdateType() const 

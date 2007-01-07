@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2006 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2007 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #ifndef HFCMEMORY_INL
@@ -23,6 +23,78 @@ inline void fMemSet(void* dst,BYTE byte,SIZE_T count) // faster when count is sm
 /////////////////////////////////////////////////
 // Inline functions
 /////////////////////////////////////////////////
+
+////////////////////////////////////////////////
+// CAutoPtr
+
+template<class TYPE> 
+inline CAutoPtr<TYPE>::~CAutoPtr()
+{
+	if (m_data!=NULL)
+		delete m_data;
+}
+
+template<class TYPE> 
+inline TYPE* CAutoPtr<TYPE>::Release()
+{
+	TYPE* tmp=m_data;
+	m_data=NULL;
+	return tmp;
+}
+
+template<class TYPE> 
+inline CAutoPtr<TYPE>& CAutoPtr<TYPE>::operator=(TYPE* data)
+{
+	if (m_data!=NULL)
+		delete m_data;
+	m_data=data;
+}
+	
+template<class TYPE> 
+inline CAutoPtr<TYPE>& CAutoPtr<TYPE>::operator=(CAutoPtr<TYPE>& another)
+{
+	if (m_data!=NULL)
+		delete m_data;
+	m_data=another.Release();
+}
+
+
+
+////////////////////////////////////////////////
+// CAutoPtrA
+
+template<class TYPE> 
+inline CAutoPtrA<TYPE>::~CAutoPtrA()
+{
+	if (m_data!=NULL)
+		delete[] m_data;
+}
+
+template<class TYPE> 
+inline TYPE* CAutoPtrA<TYPE>::Release()
+{
+	TYPE* tmp=m_data;
+	m_data=NULL;
+	return tmp;
+}
+
+template<class TYPE> 
+inline CAutoPtrA<TYPE>& CAutoPtrA<TYPE>::operator=(TYPE* data)
+{
+	if (m_data!=NULL)
+		delete[] m_data;
+	m_data=data;
+}
+	
+template<class TYPE> 
+inline CAutoPtrA<TYPE>& CAutoPtrA<TYPE>::operator=(CAutoPtrA<TYPE>& another)
+{
+	if (m_data!=NULL)
+		delete[] m_data;
+	m_data=another.Release();
+}
+
+
 
 /////////////////////////////////////////////////
 // CBufferAllocator

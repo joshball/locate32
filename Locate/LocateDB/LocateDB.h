@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2006 Janne Huttunen
-   database updater v2.99.6.11040                 */
+/* Copyright (c) 1997-2007 Janne Huttunen
+   database updater v3.0.7.1060                 */
 
 #ifndef LOCATEDB_H
 #define LOCATEDB_H

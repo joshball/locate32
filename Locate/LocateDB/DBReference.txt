@@ -1,4 +1,4 @@
-Locate DB fileformat reference for version 20 ((C) 2001-2006 Janne Huttunen)
+Locate DB fileformat reference for version 20 ((C) 2001-2007 Janne Huttunen)
 
 
 1. The content of database is following:

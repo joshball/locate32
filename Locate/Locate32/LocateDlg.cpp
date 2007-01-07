@@ -1259,8 +1259,7 @@ BOOL CLocateDlg::UpdateSettings()
 	
 
 	m_NameDlg.InitDriveBox();
-
-
+	ResetFileNotificators();
 
 	SetDialogMode(GetFlags()&fgLargeMode);
 
@@ -2782,7 +2781,7 @@ inline void CLocateDlg::SetControlPositions(UINT nType,int cx, int cy)
 				parts[0]=(cx-72)/2;
 				parts[1]=cx-72;
 				parts[2]=cx-47;
-				parts[3]=-1;
+				parts[3]=cx-25;
 			}
 		}
 		m_pStatusCtrl->SetWindowPos(HWND_BOTTOM,0,cy-20,cx,20,SWP_NOACTIVATE|SWP_NOZORDER);
@@ -2951,8 +2950,20 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 {
 	switch (msg)
 	{
-	case WM_REFRESHNOTIFIERHANDLERS:
+	case WM_UPDATINGSTOPPED:
+		StopUpdateAnimation();
+	
+		m_NameDlg.InitDriveBox();
 		ResetFileNotificators();
+		break;
+	case WM_SETOPERATIONSTATUSBAR:
+		if (m_pStatusCtrl!=NULL)
+		{
+			if (lParam!=NULL)
+				m_pStatusCtrl->SetText((LPCWSTR)lParam,STATUSBAR_OPERATIONSTATUS,0);
+			if (wParam!=0)
+				m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,(LPCSTR)wParam)),STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
+		}
 		break;
 	case WM_UPDATENEEDEDDETAILTS:
 		if (m_pBackgroundUpdater!=NULL)

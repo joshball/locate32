@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2006 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2007 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 
@@ -728,10 +728,10 @@ public:
 	int SetItemData(int nIndex, DWORD_PTR dwItemData);
 	void* GetItemDataPtr(int nIndex) const;
 
-	DWORD GetStyle() const { return ::GetWindowLong(CCommonCtrl::m_hWnd,GWL_STYLE); }
-	DWORD SetStyle(DWORD dwStyle) { return ::SetWindowLong(CCommonCtrl::m_hWnd,GWL_STYLE,dwStyle); }
-	BOOL ModifyStyle(DWORD dwRemove,DWORD dwAdd,UINT nFlags=0) { return CCommonCtrl::ModifyStyle(dwRemove,dwAdd,nFlags); }
-	BOOL ModifyStyleEx(DWORD dwRemove,DWORD dwAdd,UINT nFlags=0) { return CCommonCtrl::ModifyStyleEx(dwRemove,dwAdd,nFlags); }
+	using CCommonCtrl::GetWindowLong;
+	using CCommonCtrl::SetWindowLong;
+	using CCommonCtrl::ModifyStyle;
+	using CCommonCtrl::ModifyStyleEx;
 
 	DWORD GetExStyle() const;
 	DWORD SetExStyle(DWORD dwExStyle);
@@ -742,37 +742,33 @@ public:
 	void SetHandle(HWND hWnd);
 	void AssignToDlgItem(HWND hDialog,int nID);
 	
-	BOOL DestroyWindow() {return CCommonCtrl::DestroyWindow();}
+	using CCommonCtrl::DestroyWindow;
 	
-	int GetDlgCtrlID() const {return CCommonCtrl::GetDlgCtrlID();}
-	int SetDlgCtrlID(int nID) {return CCommonCtrl::SetDlgCtrlID(nID); }
-	HWND GetParent() const { return CCommonCtrl::GetParent(); }
-	HWND SetParent(HWND hwndNewParent) {return CCommonCtrl::SetParent(hwndNewParent);}
-	BOOL PostMessage(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return CCommonCtrl::PostMessage(uMsg,wParam,lParam); }
-	LRESULT SendMessage(UINT uMsg,WPARAM wParam=0,LPARAM lParam=0) const { return CCommonCtrl::SendMessage(uMsg,wParam,lParam); }
-	void SetFont(HFONT hFont,BOOL bRedraw=TRUE) { CCommonCtrl::SendMessage(WM_SETFONT,(WPARAM)hFont,MAKELPARAM(bRedraw,0)); }
-	HFONT GetFont() const { return CCommonCtrl::GetFont(); }
-	void MoveWindow(int x,int y,int nWidth,int nHeight,BOOL bRepaint=TRUE) { CCommonCtrl::MoveWindow(x,y,nWidth,nHeight,bRepaint); }
-	void MoveWindow(LPCRECT lpRect,BOOL bRepaint=TRUE) { CCommonCtrl::MoveWindow(lpRect,bRepaint);}
-	int SetWindowRgn(HRGN hRgn, BOOL bRedraw) { return CCommonCtrl::SetWindowRgn(hRgn,bRedraw); }
-	int GetWindowRgn(HRGN hRgn) const {return CCommonCtrl::GetWindowRgn(hRgn);}
-	BOOL SetWindowPos(HWND hWndInsertAfter,int x,int y,int cx,int cy,UINT nFlags) {return CCommonCtrl::SetWindowPos(hWndInsertAfter,x,y,cx,cy,nFlags);}
-	void GetWindowRect(LPRECT lpRect) const { CCommonCtrl::GetWindowRect(lpRect); }
-	void GetClientRect(LPRECT lpRect) const { CCommonCtrl::GetClientRect(lpRect); }
-	void ClientToScreen(LPPOINT lpPoint) const {CCommonCtrl::ClientToScreen(lpPoint); }
-	void ClientToScreen(LPRECT lpRect) const { CCommonCtrl::ClientToScreen(lpRect); }
-	void ScreenToClient(LPPOINT lpPoint) const { CCommonCtrl::ScreenToClient(lpPoint); }
-	void ScreenToClient(LPRECT lpRect) const { CCommonCtrl::ScreenToClient(lpRect); }
-	HDC GetDC() const { return CCommonCtrl::GetDC(); }
-	HDC GetWindowDC() const { return CCommonCtrl::GetWindowDC(); }
-	int ReleaseDC(HDC hDC) { return CCommonCtrl::ReleaseDC(hDC); }
-	BOOL UpdateWindow() const { return CCommonCtrl::UpdateWindow(); }
-	BOOL ShowWindow(ShowState nCmdShow) const { return CCommonCtrl::ShowWindow(nCmdShow); }
-	BOOL IsWindowVisible() const { return CCommonCtrl::IsWindowVisible(); }
-	BOOL RedrawWindow(LPCRECT lpRectUpdate=NULL,HRGN hrgnUpdate=NULL,UINT flags=RDW_INVALIDATE|RDW_UPDATENOW|RDW_ERASE) { return CCommonCtrl::RedrawWindow(lpRectUpdate,hrgnUpdate,flags); }
-	BOOL IsWindowEnabled() const { return CCommonCtrl::IsWindowEnabled(); }
-	BOOL EnableWindow(BOOL bEnable=TRUE) { return CCommonCtrl::EnableWindow(bEnable); }
-	HWND SetFocus() const { return CCommonCtrl::SetFocus(); }
+	using CCommonCtrl::GetDlgCtrlID;
+	using CCommonCtrl::SetDlgCtrlID;
+	using CCommonCtrl::GetParent;
+	using CCommonCtrl::SetParent;
+	using CCommonCtrl::PostMessage;
+	using CCommonCtrl::SendMessage;
+	using CCommonCtrl::GetFont;
+	using CCommonCtrl::MoveWindow;
+	using CCommonCtrl::SetWindowRgn;
+	using CCommonCtrl::GetWindowRgn;
+	using CCommonCtrl::SetWindowPos;
+	using CCommonCtrl::GetWindowRect;
+	using CCommonCtrl::GetClientRect;
+	using CCommonCtrl::ClientToScreen;
+	using CCommonCtrl::ScreenToClient;
+	using CCommonCtrl::GetDC;
+	using CCommonCtrl::GetWindowDC;
+	using CCommonCtrl::ReleaseDC; 
+	using CCommonCtrl::UpdateWindow;
+	using CCommonCtrl::ShowWindow;
+	using CCommonCtrl::IsWindowVisible;
+	using CCommonCtrl::RedrawWindow;
+	using CCommonCtrl::IsWindowEnabled;
+	using CCommonCtrl::EnableWindow;
+	using CCommonCtrl::SetFocus; 
 };
 
 #ifdef DEF_RESOURCES

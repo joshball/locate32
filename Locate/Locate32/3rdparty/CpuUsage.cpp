@@ -11,6 +11,9 @@ Plug-ins API for ATI Tray Tools v1.0, API Version 1.4, (c) 2005 Ray Adams
 #include <comdef.h>	
 #include <WinPerf.h>
 
+#pragma comment(lib, "comsuppw.lib")
+
+
 #define SYSTEM_OBJECT_INDEX					2		// 'System' object
 #define PROCESS_OBJECT_INDEX				230		// 'Process' object
 #define PROCESSOR_OBJECT_INDEX				238		// 'Processor' object

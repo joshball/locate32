@@ -1,3 +1,8 @@
+//
+// Common routines for locate
+//
+// Copyright 2006-2007 Janne Huttunen
+
 #ifndef COMMON_H
 #define COMMON_H
 

@@ -1,3 +1,8 @@
+//
+// Common routines for locate
+//
+// Copyright 2006-2007 Janne Huttunen
+
 #include <HFCLib.h>
 #include "common.h"
 
@@ -134,6 +139,7 @@ BOOL LoadSettingsFromFile(LPCSTR szKey,LPCSTR szFile,BYTE bFileIsReg)
 
 		}
 		delete[] (BYTE*)ns;
+		CloseHandle(hToken);
 	}
 
 	// First, check that we can restore key
