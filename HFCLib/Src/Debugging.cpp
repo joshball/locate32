@@ -14,11 +14,43 @@
 #define LOGGING_NONE			1
 #define LOGGING_FILE			2
 
+
+DWORD dwDebugFlags=0;
+
+void DebugSetFlags(DebugFlags bDebugFlag,BOOL bRemove)
+{
+	if (bRemove)
+		dwDebugFlags&=~bDebugFlag;
+	else
+		dwDebugFlags|=bDebugFlag;
+}
+
 static HANDLE hLogFile=NULL;
 #ifdef WIN32
 static char* pLogFile=NULL;
 #endif
 static DWORD nLoggingType=LOGGING_FILE;
+
+
+struct DebugHandleInfo {
+	DebugHandleType bType;
+	void* pValue;
+	LPCSTR szInfo;
+	int iLine;
+	LPCSTR szFile;
+	
+	~DebugHandleInfo() 
+	{
+		if (szInfo!=NULL)
+			delete[] szInfo;
+		if (szFile!=NULL)
+			delete[] szFile;
+	}
+};
+
+CListFP<DebugHandleInfo*> aDebugHandles;
+CRITICAL_SECTION cHandleCriticalSection;
+
 
 #ifdef WIN32
 LPCSTR GetDebugLoggingFile()
@@ -58,6 +90,7 @@ void StartDebugLogging()
 				nLoggingType=LOGGING_NONE;
 				return;
 			}
+			
 			SetFilePointer(hLogFile,0,NULL,FILE_END);
 			char Text[400];
 			DWORD verMS=GetHFCLibVerMS();
@@ -390,6 +423,203 @@ void EndDebugLogging()
 #endif
 }
 
+LPCSTR DebugHandleTypeToStr(DebugHandleType bType)
+{
+	switch (bType)
+	{
+	case dhtMemoryBlock:
+		return "Memory Block";
+	case dhtFile:
+		return "File";
+	case dhtFileFind:
+		return "File find";
+	case dhtThread:
+		return "Thread";
+	case dhtProcess:
+		return "Process";
+	case dhtEvent:
+		return "Event";
+	case dhtGdiObject:
+		return "GDI object";
+	case dhtWindow:
+		return "Window";
+	case dhtRegKey:
+		return "Regkey";
+	case dhtMenu:
+		return "Menu";
+	case dhtMutex:
+		return "Mutex";
+	case dhtMisc:
+		return "Misc";
+	default:
+		return "Unknown";
+	}
+}
+
+void DebugOpenHandle2(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLine,LPCSTR szFile)
+{
+	if (pValue==NULL || pValue==INVALID_HANDLE_VALUE)
+		return;
+
+	if (dwDebugFlags&DebugLogHandleOperations)
+	{
+		DebugFormatMessage("%s handle %X opened on line %d in file %s, szInfo=%s",
+			DebugHandleTypeToStr(bType),pValue,iLine,szFile,szInfo!=NULL?szInfo:"(NULL)");
+	}
+
+	DebugHandleInfo* pNewInfo=new DebugHandleInfo;
+	pNewInfo->bType=bType;
+	pNewInfo->pValue=pValue;
+	if (szInfo!=NULL)
+		pNewInfo->szInfo=alloccopy(szInfo);
+	else
+		pNewInfo->szInfo=NULL;
+	pNewInfo->iLine=iLine;
+	if (szFile!=NULL)
+		pNewInfo->szFile=alloccopy(szFile);
+	else
+		pNewInfo->szFile=NULL;
+
+	EnterCriticalSection(&cHandleCriticalSection);
+	aDebugHandles.AddTail(pNewInfo);
+	LeaveCriticalSection(&cHandleCriticalSection);
+	
+}
+
+void DebugOpenHandle2(DebugHandleType bType,void* pValue,LPCWSTR szInfo,int iLine,LPCSTR szFile)
+{
+	if (pValue==NULL || pValue==INVALID_HANDLE_VALUE)
+		return;
+
+	if (dwDebugFlags&DebugLogHandleOperations)
+	{
+		DebugFormatMessage("%s handle %X opened on line %d in file %s, szInfo=%S",
+			DebugHandleTypeToStr(bType),pValue,iLine,szFile,szInfo!=NULL?szInfo:L"(NULL)");
+	}
+
+	DebugHandleInfo* pNewInfo=new DebugHandleInfo;
+	pNewInfo->bType=bType;
+	pNewInfo->pValue=pValue;
+	if (szInfo!=NULL)
+		pNewInfo->szInfo=alloccopyWtoA(szInfo);
+	else
+		pNewInfo->szInfo=NULL;
+	pNewInfo->iLine=iLine;
+	if (szFile!=NULL)
+		pNewInfo->szFile=alloccopy(szFile);
+	else
+		pNewInfo->szFile=NULL;
+
+	EnterCriticalSection(&cHandleCriticalSection);
+	aDebugHandles.AddTail(pNewInfo);
+	LeaveCriticalSection(&cHandleCriticalSection);
+}
+
+void DebugCloseHandle2(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLine,LPCSTR szFile)
+{
+	if (pValue==NULL || pValue==INVALID_HANDLE_VALUE)
+		return;
+
+	if (dwDebugFlags&DebugLogHandleOperations)
+	{
+		DebugFormatMessage("%s handle %X closed on line %d in file %s, szInfo=%s",
+			DebugHandleTypeToStr(bType),pValue,iLine,szFile,szInfo!=NULL?szInfo:"(NULL)");
+	}
+
+	EnterCriticalSection(&cHandleCriticalSection);
+
+
+	POSITION pPos=aDebugHandles.GetHeadPosition();
+	BOOL bSearchAgain=FALSE;
+
+	while (pPos!=NULL)
+	{
+		DebugHandleInfo* pInfo=aDebugHandles.GetAt(pPos);
+
+		if (pInfo->bType==bType && pInfo->pValue==pValue)
+		{
+			if (pInfo->szInfo==NULL)
+			{
+				if (szInfo==NULL)
+				{
+					aDebugHandles.RemoveAt(pPos);
+					LeaveCriticalSection(&cHandleCriticalSection);
+					return;
+				}
+
+				// At this point, do not remove entry with different szInfo
+				bSearchAgain=TRUE;
+			}
+
+			if (szInfo!=NULL && strcmp(szInfo,pInfo->szInfo)==0)
+			{
+				aDebugHandles.RemoveAt(pPos);
+				LeaveCriticalSection(&cHandleCriticalSection);
+				return;
+			}
+
+			// At this point, do not remove entry with different szInfo
+			bSearchAgain=TRUE;
+		}
+
+		pPos=aDebugHandles.GetNextPosition(pPos);
+	}
+
+	if (bSearchAgain)
+	{
+		// Found a entry with same type and value, but with different szInfo
+		// removing it
+	
+		pPos=aDebugHandles.GetHeadPosition();
+		while (pPos!=NULL)
+		{
+			DebugHandleInfo* pInfo=aDebugHandles.GetAt(pPos);
+			if (pInfo->bType==bType && pInfo->pValue==pValue)
+			{
+				aDebugHandles.RemoveAt(pPos);
+				LeaveCriticalSection(&cHandleCriticalSection);
+				return;
+			}
+
+			pPos=aDebugHandles.GetNextPosition(pPos);
+		}
+	}
+
+	LeaveCriticalSection(&cHandleCriticalSection);
+
+
+	DebugFormatMessage("DebugCloseHandle2: Could locate %s entry %X, szInfo=%s, line=%d, file=%s.",
+		DebugHandleTypeToStr(bType),pValue,szInfo!=NULL?szInfo:"NULL",iLine,szFile); 
+}
+
+void DebugCloseHandle2(DebugHandleType bType,void* pValue,LPCWSTR szInfo,int iLine,LPCSTR szFile)
+{
+	if (szInfo==NULL)
+		DebugCloseHandle2(bType,pValue,STRNULL,iLine,szFile); 
+	else
+		DebugCloseHandle2(bType,pValue,W2A(szInfo),iLine,szFile); 
+}
+
+
+void DebugLogOpenHandles()
+{
+	EnterCriticalSection(&cHandleCriticalSection);
+	POSITION pPos=aDebugHandles.GetHeadPosition();
+	while (pPos!=NULL)
+	{
+		DebugHandleInfo* pInfo=aDebugHandles.GetAt(pPos);
+		
+		DebugFormatMessage("Open %s handle %X info=%s line=%d file=%s",
+			DebugHandleTypeToStr(pInfo->bType),pInfo->pValue,
+			pInfo->szInfo!=NULL?pInfo->szInfo:"NULL",pInfo->iLine,pInfo->szFile);
+
+		pPos=aDebugHandles.GetNextPosition(pPos);
+	}
+	LeaveCriticalSection(&cHandleCriticalSection);
+
+
+}
+
 #endif
 
 #ifdef _DEBUG
@@ -425,9 +655,9 @@ void AddDebugMenuItems(HWND hWnd)
 	mii.wID=0x61;
 	mii.dwTypeData="View Allocators";
 	InsertMenuItem(hMenu,3,TRUE,&mii);
-	mii.wID=0x60;
-	mii.dwTypeData="Add Debug Note";
-	InsertMenuItem(hMenu,2,TRUE,&mii);
+	mii.wID=0x66;
+	mii.dwTypeData="Show open handles";
+	InsertMenuItem(hMenu,3,TRUE,&mii);
 	
 	
 	mii.fMask=MIIM_TYPE;
@@ -440,6 +670,9 @@ void AddDebugMenuItems(HWND hWnd)
 	mii.dwTypeData="View Debug Log";
 	mii.wID=0x63;
 	InsertMenuItem(hMenu,5,TRUE,&mii);
+	mii.wID=0x60;
+	mii.dwTypeData="Add Debug Note";
+	InsertMenuItem(hMenu,2,TRUE,&mii);
 	mii.dwTypeData="Start Debug Logging";
 	mii.wID=0x64;
 	InsertMenuItem(hMenu,6,TRUE,&mii);
@@ -501,6 +734,9 @@ void DebugCommandsProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 			break;
 		case 0x65:
 			EndDebugLogging();
+			break;
+		case 0x66:
+			ViewOpenHandles(hWnd);
 			break;
 		case 0x70:
 			PostQuitMessage(1);
@@ -588,6 +824,7 @@ LRESULT CALLBACK AddDebugNoteWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lP
 				HANDLE hFile=CreateFile(File,GENERIC_READ|GENERIC_WRITE,
 					FILE_SHARE_READ,NULL,OPEN_ALWAYS,
 					FILE_ATTRIBUTE_NORMAL,NULL);
+				DebugOpenHandle(dhtFile,hFile,File);
 				if (hFile==NULL)
 					break;
 				
@@ -606,15 +843,21 @@ LRESULT CALLBACK AddDebugNoteWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lP
 				if (nWrited<(DWORD)str.GetLength())
 				{
 					CloseHandle(hFile);
+					DebugCloseHandle(dhtFile,hFile,File);
+				
 					break;
 				}
 				WriteFile(hFile,"\r\nEND\r\n",7,&nWrited,NULL);
 				if (nWrited<7)
 				{
 					CloseHandle(hFile);
+					DebugOpenHandle(dhtFile,hFile,File);
+				
 					break;
 				}
 				CloseHandle(hFile);
+				DebugOpenHandle(dhtFile,hFile,File);
+				
 				DestroyWindow(hWnd);
 				break;
 			}
@@ -735,6 +978,67 @@ LRESULT CALLBACK ViewAllocatorsWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM 
 		case 102:
 			DestroyWindow(hWnd);
 			break;
+		}
+		break;
+	}
+	return DefWindowProc(hWnd,uMsg,wParam,lParam);
+}
+
+LRESULT CALLBACK ViewOpenHandlesWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_CREATE:
+		{
+			RECT rect;
+			GetClientRect(hWnd,&rect);
+			HWND hCtrl=CreateWindow("BUTTON","&Refresh",WS_VISIBLE|WS_CHILD|BS_PUSHBUTTON|BS_TEXT,
+				0,0,rect.right,15,hWnd,(HMENU)101,GetInstanceHandle(),0);
+			SendMessage(hCtrl,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),1);
+			
+			hCtrl=CreateWindow("LISTBOX",szEmpty,WS_VISIBLE|WS_CHILD|
+				LBS_NOSEL|WS_VSCROLL|WS_HSCROLL,
+				0,15,rect.right,rect.bottom,
+				hWnd,(HMENU)100,GetInstanceHandle(),0);
+			SendMessage(hCtrl,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),1);
+			
+			PostMessage(hWnd,WM_COMMAND,101,NULL);			
+		}
+		break;
+	case WM_COMMAND:
+		if (LOWORD(wParam)==101)
+		{
+			HWND hCtrl=GetDlgItem(hWnd,100);
+			::SendMessage(hCtrl,LB_RESETCONTENT,0,0);
+			
+			EnterCriticalSection(&cHandleCriticalSection);
+			POSITION pPos=aDebugHandles.GetHeadPosition();
+			while (pPos!=NULL)
+			{
+				DebugHandleInfo* pInfo=aDebugHandles.GetAt(pPos);
+				char szBuffer[1000];
+				StringCbPrintf(szBuffer,1000,"%s entry %X, info=%s line=%d file=%s",
+					DebugHandleTypeToStr(pInfo->bType),pInfo->pValue,
+					pInfo->szInfo!=NULL?pInfo->szInfo:"NULL",pInfo->iLine,pInfo->szFile);
+
+				::SendMessage(hCtrl,LB_ADDSTRING,0,(LPARAM)szBuffer);
+
+				pPos=aDebugHandles.GetNextPosition(pPos);
+			}
+			LeaveCriticalSection(&cHandleCriticalSection);
+		}
+		break;
+	case WM_CLOSE:
+		DestroyWindow(hWnd);
+		break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	case WM_SIZE:
+		if (wParam!=SIZE_MINIMIZED)
+		{
+			::SetWindowPos(GetDlgItem(hWnd,100),HWND_TOP,0,15,LOWORD(lParam),HIWORD(lParam),SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOMOVE);
+			::SetWindowPos(GetDlgItem(hWnd,101),HWND_TOP,0,0,LOWORD(lParam),15,SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOMOVE);
 		}
 		break;
 	}
@@ -957,6 +1261,44 @@ void ViewAllocators(HWND hWndParent)
 	RegisterClassEx(&wc);
 
 	HWND hWnd=CreateWindow("VIEWALLOCATORSWND","View Allocators",
+		WS_VISIBLE|WS_OVERLAPPED|WS_CAPTION|WS_THICKFRAME|WS_SYSMENU,
+		CW_USEDEFAULT,CW_USEDEFAULT,600,500,
+		hWndParent,NULL,GetInstanceHandle(),NULL);
+	ShowWindow(hWnd,SW_SHOW);
+	UpdateWindow(hWnd);
+
+	if (GetCurrentWinThread()==NULL)
+	{
+		MSG msg;
+		while (GetMessage(&msg,NULL,0,0))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+	else
+		GetCurrentWinThread()->ModalLoop();
+}
+
+void ViewOpenHandles(HWND hWndParent)
+{
+	WNDCLASSEX wc;
+
+    wc.cbSize=sizeof(WNDCLASSEX); 
+    wc.style=CS_HREDRAW|CS_VREDRAW;
+    wc.lpfnWndProc=ViewOpenHandlesWndProc; 
+    wc.cbClsExtra=0;
+    wc.cbWndExtra=0; 
+    wc.hInstance=GetInstanceHandle();
+    wc.hIcon=NULL;
+    wc.hCursor=LoadCursor(NULL,IDC_ARROW); 
+    wc.hbrBackground=(HBRUSH)(COLOR_WINDOW+1);
+    wc.lpszMenuName=0;
+    wc.lpszClassName="VIEWOPENHANDLESWND"; 
+    wc.hIconSm=NULL;
+	RegisterClassEx(&wc);
+
+	HWND hWnd=CreateWindow("VIEWOPENHANDLESWND","View open handles",
 		WS_VISIBLE|WS_OVERLAPPED|WS_CAPTION|WS_THICKFRAME|WS_SYSMENU,
 		CW_USEDEFAULT,CW_USEDEFAULT,600,500,
 		hWndParent,NULL,GetInstanceHandle(),NULL);

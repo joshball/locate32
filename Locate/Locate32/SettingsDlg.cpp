@@ -2347,11 +2347,11 @@ BOOL CSettingsProperties::LoadSettings()
 	
 	
 	// m_strLanguage
-	if (GenRegKey.OpenKey(HKCU,"",
+	if (LocRegKey.OpenKey(HKCU,"",
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		GenRegKey.QueryValue(L"Language",m_strLangFile);
-		GenRegKey.CloseKey();
+		LocRegKey.QueryValue(L"Language",m_strLangFile);
+		LocRegKey.CloseKey();
 	}
 	if (m_strLangFile.IsEmpty())
 	{
@@ -4128,11 +4128,12 @@ void CSettingsProperties::CDatabasesSettingsPage::OnEdit()
 	else
 		delete dbd.m_pDatabase;
 
-	EnableButtons();
-	m_pList->SetFocus();
 
 	if (m_nThreadsCurrently>1 && GetLocateApp()->m_wComCtrlVersion<0x0600)
 		m_pList->SortItems(ThreadSortProc,NULL);
+
+	EnableButtons();
+	m_pList->SetFocus();
 }
 
 void CSettingsProperties::CDatabasesSettingsPage::OnRemove()
@@ -4324,6 +4325,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnThreads()
 		SetDlgItemInt(IDC_THREADS,nThreads=1,FALSE);
 
 	ChangeNumberOfThreads(nThreads);
+	
 	EnableButtons();
 }
 

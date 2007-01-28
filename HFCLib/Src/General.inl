@@ -323,7 +323,10 @@ inline CRegKey::CRegKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus,LPSECURITY_AT
 inline CRegKey::~CRegKey()
 {
 	if (m_hKey!=NULL)
+	{
 		RegCloseKey(m_hKey);
+		DebugCloseHandle(dhtRegKey,m_hKey,STRNULL);
+	}
 	m_hKey=NULL;
 }
 

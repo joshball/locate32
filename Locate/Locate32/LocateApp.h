@@ -63,7 +63,7 @@ public:
 		static void FillFontStructs(LOGFONT* pTextFont,LOGFONT* pTitleFont);
 
 			
-		CStringW sStatusText;
+		CStringW m_sStatusText;
 		CArrayFAP<LPWSTR> m_aErrors;
 		
 		CFont m_TitleFont,m_Font;
@@ -74,7 +74,7 @@ public:
 		COLORREF m_cErrorColor;
 		COLORREF m_cBackColor;
 		
-		HANDLE m_hUpdateMutex;
+		CRITICAL_SECTION m_cUpdate;
 
 
 		// Mouse move
@@ -103,7 +103,7 @@ public:
 	DWORD OnActivateAnotherInstance(ATOM aCommandLine);
 	DWORD OnSystemTrayMessage(UINT uID,UINT msg);
 	BOOL SetUpdateStatusInformation(HICON hIcon=NULL,UINT uTip=0,LPCWSTR szText=NULL);
-	void GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootInfos);
+	BOOL GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootInfos);
 	static void FreeRootInfos(WORD wThreads,RootInfo* pRootInfos);
 
 	void AddTaskbarIcon();
@@ -439,6 +439,7 @@ public:
 	
 	static int ErrorBox(int nError,UINT uType=MB_ICONERROR|MB_OK);
 	static int ErrorBox(LPCWSTR szError,UINT uType=MB_ICONERROR|MB_OK);
+	static LPWSTR FormatLastOsError();
 	
 	const CDatabase* GetDatabase(WORD wID) const;
 

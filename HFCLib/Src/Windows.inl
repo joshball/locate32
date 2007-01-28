@@ -47,6 +47,7 @@ inline BOOL CDC::RestoreDC(int nSavedDC)
 inline void CDC::ReleaseDC()
 {
 	::ReleaseDC(m_hWnd,m_hDC);
+	DebugCloseHandle(dhtGdiObject,m_hDC,STRNULL);
 	m_hWnd=NULL;
 	m_hDC=NULL;
 }
@@ -296,6 +297,7 @@ inline CSize CDC::ScaleWindowExt(int xNum,int xDenom,int yNum,int yDenom)
 inline void CDC::ReleaseDC(HWND hWnd)
 {
 	::ReleaseDC(hWnd,m_hDC);
+	DebugCloseHandle(dhtGdiObject,m_hDC,STRNULL);
 	m_hWnd=NULL;
 	m_hDC=NULL;
 }
@@ -1098,6 +1100,7 @@ inline CMenu::CMenu(HMENU hMenu)
 inline BOOL CMenu::CreateMenu()
 {	
 	m_hMenu=::CreateMenu();
+	DebugOpenHandle(dhtMenu,m_hMenu,STRNULL);
 	if (m_hMenu==NULL)
 		return FALSE;
 	return TRUE;
@@ -1106,6 +1109,7 @@ inline BOOL CMenu::CreateMenu()
 inline BOOL CMenu::CreatePopupMenu()
 {
 	m_hMenu=::CreatePopupMenu();
+	DebugOpenHandle(dhtMenu,m_hMenu,STRNULL);
 	if (m_hMenu==NULL)
 		return FALSE;
 	return TRUE;
@@ -1115,6 +1119,7 @@ inline BOOL CMenu::CreatePopupMenu()
 inline BOOL CMenu::LoadMenu(LPCTSTR lpszResourceName)
 {
 	m_hMenu=::LoadMenu(lpszResourceName);
+	DebugOpenHandle(dhtMenu,m_hMenu,STRNULL);
 	if (m_hMenu==NULL)
 		return FALSE;
 	return TRUE;
@@ -1124,6 +1129,7 @@ inline BOOL CMenu::LoadMenu(LPCTSTR lpszResourceName)
 inline BOOL CMenu::LoadMenuIndirect(const void* lpMenuTemplate)
 {
 	m_hMenu=::LoadMenuIndirect(lpMenuTemplate);
+	DebugOpenHandle(dhtMenu,m_hMenu,STRNULL);
 	if (m_hMenu==NULL)
 		return FALSE;
 	return TRUE;
@@ -1317,6 +1323,11 @@ inline BOOL CWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
 	return (m_hWnd=CreateWindowEx(dwExStyle,lpszClassName,
 		lpszWindowName,dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
 		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),lpParam))!=NULL;
+}
+
+inline BOOL CWnd::DestroyWindow() 
+{
+	return ::DestroyWindow(m_hWnd);
 }
 
 inline BOOL CWnd::GetWindowPlacement(WINDOWPLACEMENT* lpwndpl) const

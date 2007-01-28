@@ -259,7 +259,9 @@ inline CAppData::~CAppData()
 
 inline BOOL CWinThread::CreateThread(DWORD dwCreateFlags,UINT nStackSize,LPSECURITY_ATTRIBUTES lpSecurityAttrs)
 {
-	return (m_hThread=::CreateThread(lpSecurityAttrs,nStackSize,(LPTHREAD_START_ROUTINE)CAppData::ThreadProc,this,dwCreateFlags,&m_nThreadID))!=NULL;
+	m_hThread=::CreateThread(lpSecurityAttrs,nStackSize,(LPTHREAD_START_ROUTINE)CAppData::ThreadProc,this,dwCreateFlags,&m_nThreadID);
+	DebugOpenHandle(dhtThread,m_hThread,STRNULL);
+	return m_hThread!=NULL;
 }
 
 inline CTargetWnd* CWinThread::GetMainWnd()

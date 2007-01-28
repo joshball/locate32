@@ -229,6 +229,7 @@ CLocater::~CLocater()
 	if (m_hThread!=NULL)
 	{
 		CloseHandle(m_hThread);
+		DebugCloseHandle(dhtThread,m_hThread,STRNULL);
 		m_hThread=NULL;
 	}
 #endif
@@ -771,6 +772,7 @@ inline BOOL CLocater::SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCSTR* szDi
 		DWORD dwThreadID;
 		LocaterDebugMessage("CLocater::LocateFiles CREATING THREAD");
 		m_hThread=CreateThread(NULL,0,CLocater::LocateThreadProc,this,0,&dwThreadID);
+		DebugOpenThread(dhtThread,m_hThread,STRNULL);
 		LocaterDebugMessage("CLocater::LocateFiles CREATING THREAD OK?");
 		return m_hThread!=NULL;
 	}
@@ -796,6 +798,7 @@ inline BOOL CLocater::SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCWSTR* szD
 		DWORD dwThreadID;
 		LocaterDebugMessage("CLocater::LocateFiles CREATING THREAD");
 		m_hThread=CreateThread(NULL,0,CLocater::LocateThreadProc,this,0,&dwThreadID);
+		DebugOpenHandle(dhtThread,m_hThread,STRNULL);
 		LocaterDebugMessage("CLocater::LocateFiles CREATING THREAD OK?");
 		return m_hThread!=NULL;
 	}

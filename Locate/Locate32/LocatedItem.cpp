@@ -702,12 +702,14 @@ void CLocatedItem::UpdateFileSizeAndTime()
 			hFind=FindFirstFileW(GetPath(),&fdw);
 		else
 			hFind=FindFirstFileA(W2A(GetPath()),&fd);
+		DebugOpenHandle(dhtFileFind,hFind,GetPath());
 
 		if (hFind==INVALID_HANDLE_VALUE)
 			SetToDeleted();
 		else
 		{
 			FindClose(hFind);
+			DebugCloseHandle(dhtFileFind,hFind,GetPath());
 			FILETIME ft2;
 			
 			
@@ -735,6 +737,7 @@ void CLocatedItem::UpdateFileSizeAndTime()
 	else
 		hFile=CreateFile(W2A(GetPath()),0,FILE_SHARE_READ|FILE_SHARE_WRITE,
 			NULL,OPEN_EXISTING,0,NULL);
+	DebugOpenHandle(dhtFile,hFile,GetPath());
 
 	if (hFile==INVALID_HANDLE_VALUE)
 	{
@@ -750,7 +753,8 @@ void CLocatedItem::UpdateFileSizeAndTime()
 				hFind=FindFirstFileW(GetPath(),&fdw);
 			else
 				hFind=FindFirstFileA(W2A(GetPath()),&fd);
-
+			DebugOpenHandle(dhtFileFind,hFind,GetPath());
+			
 			if (hFind!=INVALID_HANDLE_VALUE)
 			{
 				dwFileSize=fd.nFileSizeLow;
@@ -768,6 +772,8 @@ void CLocatedItem::UpdateFileSizeAndTime()
 				dwFlags|=LITEM_TIMEDATEOK|LITEM_FILESIZEOK;
 
 				FindClose(hFind);
+				DebugCloseHandle(dhtFileFind,hFind,GetPath());
+			
 				ItemDebugMessage("CLocatedItem::UpdateFileSizeAndTime END2");
 				return;
 			}
@@ -798,6 +804,7 @@ void CLocatedItem::UpdateFileSizeAndTime()
 	
 	dwFlags|=LITEM_TIMEDATEOK|LITEM_FILESIZEOK;
 	CloseHandle(hFile);
+	DebugCloseHandle(dhtFile,hFile,GetPath());
 
 	ItemDebugMessage("CLocatedItem::UpdateFileSizeAndTime END");
 }
@@ -1119,8 +1126,17 @@ void CLocatedItem::UpdateSummaryProperties()
 	STGOPTIONS stgo;
 	stgo.usVersion=STGOPTIONS_VERSION;
 	
-	HRESULT hRes=StgOpenStorageEx(GetPath(),STGM_READ|STGM_SHARE_EXCLUSIVE,STGFMT_ANY,0,NULL,0,
-		IID_IPropertySetStorage,(void**)&ppss);
+
+	HRESULT(STDAPICALLTYPE* pStgOpenStorageEx)(const WCHAR*,DWORD,DWORD,DWORD,STGOPTIONS*,
+		  PSECURITY_DESCRIPTOR,REFIID,void**);
+	pStgOpenStorageEx=(HRESULT(STDAPICALLTYPE *)(const WCHAR*,DWORD,DWORD,DWORD,STGOPTIONS*,
+		  PSECURITY_DESCRIPTOR,REFIID,void**))GetProcAddress(GetModuleHandle("Ole32.dll"),"StgOpenStorageEx");
+	if (pStgOpenStorageEx==NULL)
+		return;
+
+	HRESULT hRes=pStgOpenStorageEx(GetPath(),STGM_READ|STGM_SHARE_EXCLUSIVE,STGFMT_ANY,0,NULL,0,
+			IID_IPropertySetStorage,(void**)&ppss);
+
 	if (!SUCCEEDED(hRes))
 		return;
 	
@@ -1226,7 +1242,14 @@ void CLocatedItem::UpdateDocSummaryProperties()
 	STGOPTIONS stgo;
 	stgo.usVersion=STGOPTIONS_VERSION;
 	
-	HRESULT hRes=StgOpenStorageEx(GetPath(),STGM_READ|STGM_SHARE_EXCLUSIVE,STGFMT_ANY,0,NULL,0,
+	HRESULT(STDAPICALLTYPE* pStgOpenStorageEx)(const WCHAR*,DWORD,DWORD,DWORD,STGOPTIONS*,
+		  PSECURITY_DESCRIPTOR,REFIID,void**);
+	pStgOpenStorageEx=(HRESULT(STDAPICALLTYPE *)(const WCHAR*,DWORD,DWORD,DWORD,STGOPTIONS*,
+		  PSECURITY_DESCRIPTOR,REFIID,void**))GetProcAddress(GetModuleHandle("Ole32.dll"),"StgOpenStorageEx");
+	if (pStgOpenStorageEx==NULL)
+		return;
+
+	HRESULT hRes=pStgOpenStorageEx(GetPath(),STGM_READ|STGM_SHARE_EXCLUSIVE,STGFMT_ANY,0,NULL,0,
 		IID_IPropertySetStorage,(void**)&ppss);
 	if (!SUCCEEDED(hRes))
 		return;
@@ -1438,7 +1461,8 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 		hFind=FindFirstFileW(GetPath(),&fdw);
 	else
 		hFind=FindFirstFile(W2A(GetPath()),&fd);
-
+	DebugOpenHandle(dhtFileFind,hFind,GetPath());
+			
 	if (hFind==INVALID_HANDLE_VALUE)
 	{
 		if (!IsDeleted())
@@ -1451,6 +1475,8 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 		return FALSE;
 	}
 	FindClose(hFind);
+	DebugCloseHandle(dhtFileFind,hFind,GetPath());
+			
     
 	// Checking whether filename and title is correct
 	WCHAR szFullPath[MAX_PATH];

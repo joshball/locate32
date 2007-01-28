@@ -62,6 +62,8 @@ CWinThread::~CWinThread()
 	if (m_hThread!=NULL)
 	{
 		CloseHandle(m_hThread);
+		DebugCloseHandle(dhtThread,m_hThread,STRNULL);
+
 		if (GetAppData()->m_pThreads!=NULL)
 		{
 			POSITION pPos=GetAppData()->m_pThreads->Find(this);

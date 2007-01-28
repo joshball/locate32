@@ -253,11 +253,13 @@ BOOL WaitForWindow(CWnd* pWnd,DWORD dwMilliseconds)
 	name.SetBase(32);
 	name << "WFWE" << (ULONGLONG)pWnd;
 	HANDLE hWaitEvent=CreateEvent(NULL,FALSE,FALSE,name);
+	DebugOpenHandle(dhtEvent,hWaitEvent,name);
 	if (hWaitEvent==NULL)
 		return FALSE;
 	int nRet=MsgWaitForMultipleObjectsEx(1,(HANDLE*)&hWaitEvent,dwMilliseconds,
 		QS_ALLEVENTS|QS_ALLINPUT,MWMO_WAITALL|MWMO_ALERTABLE);
 	CloseHandle(hWaitEvent);
+	DebugCloseHandle(dhtEvent,hWaitEvent,name);
 	return nRet==WAIT_OBJECT_0;
 }
 

@@ -15,6 +15,7 @@ BOOL CGdiObject::DeleteObject()
 		return FALSE;
 	if (::DeleteObject(m_hObject))
 	{
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
 		m_hObject=NULL;
 		return TRUE;
 	}
@@ -58,11 +59,16 @@ BOOL CFont::CreateFont(int nHeight,int nWidth,int nEscapement,
 	LPCTSTR lpszFacename)
 {
 	if (m_hObject!=NULL)
-		DeleteObject();
-	return (m_hObject=(HFONT)::CreateFont(nHeight,nWidth,nEscapement,
+	{
+		::DeleteObject(m_hObject);
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	m_hObject=(HFONT)::CreateFont(nHeight,nWidth,nEscapement,
 		nOrientation,nWeight,bItalic,bUnderline,cStrikeOut,
 		nCharSet,nOutPrecision,nClipPrecision,nQuality,nPitchAndFamily,
-		lpszFacename))!=NULL;
+		lpszFacename);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 BOOL CFont::CreatePointFont(int nPointSize,LPCTSTR lpszFaceName,HDC hDC)
@@ -104,6 +110,7 @@ CDC::CDC(CWnd* pWnd)
 	else
 		m_hWnd=NULL;
 	m_hDC=GetDC(m_hWnd);
+	DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
 	m_bPrinting=FALSE;
 }
 
@@ -117,6 +124,7 @@ BOOL CDC::CreateDC(LPCTSTR lpszDriverName,LPCTSTR lpszDeviceName,
 	if (m_hDC!=NULL)
 		DeleteDC();
 	m_hDC=::CreateDC(lpszDriverName,lpszDeviceName,lpszOutput,(CONST DEVMODE*)lpInitData);
+	DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
 	if (m_hDC==NULL)
 		return FALSE;
 	return TRUE;
@@ -130,6 +138,7 @@ BOOL CDC::CreateIC(LPCTSTR lpszDriverName, LPCTSTR lpszDeviceName,
 	if (m_hDC!=NULL)
 		DeleteDC();
 	m_hDC=::CreateIC(lpszDriverName,lpszDeviceName,lpszOutput,(CONST DEVMODE*)lpInitData);
+	DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
 	if (m_hDC==NULL)
 		return FALSE;
 	return TRUE;
@@ -142,6 +151,7 @@ BOOL CDC::CreateCompatibleDC(HDC hDC)
 	else if (m_hDC!=NULL)
 		::DeleteDC(m_hDC);
 	m_hDC=::CreateCompatibleDC(hDC);
+	DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
 	m_hWnd=NULL;
 	if (m_hDC==NULL)
 		return FALSE;
@@ -154,6 +164,7 @@ BOOL CDC::DeleteDC()
 		return FALSE;
 	if (!::DeleteDC(m_hDC))
 		return FALSE;
+	DebugCloseHandle(dhtGdiObject,m_hDC,STRNULL);
 	m_hDC=NULL;
 	return TRUE;
 }
@@ -464,11 +475,13 @@ CPaintDC::CPaintDC(CWnd* pWnd)
 {
 	m_hWnd=pWnd->GetHandle();
 	m_hDC=BeginPaint(m_hWnd,&m_ps);
+	DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
 }
 
 CPaintDC::~CPaintDC()
 {
 	EndPaint(m_hWnd,&m_ps);
+	DebugCloseHandle(dhtGdiObject,m_hDC,STRNULL);
 }
 
 ///////////////////////////
@@ -481,6 +494,7 @@ BOOL CMenu::DestroyMenu()
 		return FALSE;
 	if (!::DestroyMenu(m_hMenu))
 		return FALSE;
+	DebugCloseHandle(dhtMenu,m_hMenu,STRNULL);
 	m_hMenu=NULL;
 	return TRUE;
 }

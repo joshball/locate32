@@ -87,11 +87,13 @@ BYTE FileSystem::CopyFile(LPCTSTR src,LPCTSTR dst)
 		SetHFCError(HFC_CANNOTOPEN);
 		return FALSE;
 	}
+	DebugOpenHandle(File,fp,src);
 	Size=filelength(fileno(fp));
 	buffer=new char[Size+2];
 	if (buffer==NULL)
 	{
 		fclose(fp);
+		DebugCloseHandle(dhtFile,fp,src);
 		SetHFCError(HFC_CANNOTALLOC);
 		return FALSE;
 	}
@@ -99,26 +101,35 @@ BYTE FileSystem::CopyFile(LPCTSTR src,LPCTSTR dst)
 	{
 		delete[] buffer;
 		fclose(fp);
+		DebugCloseHandle(dhtFile,fp,src);
 		SetHFCError(HFC_CANNOTREAD);
 		return FALSE;
 	}
 	_dos_getftime(fileno(fp),&temp,&temp2);
 	fclose(fp);
+	DebugCloseHandle(dhtFile,fp,src);
+
 	fp=fopen(src,"wb");
+	
 	if (fp==NULL)
 	{
 		delete[] buffer;
 		SetHFCError(HFC_CANNOTCREATE);
 		return FALSE;
 	}
+	DebugOpenHandle(dhtFile,fp,src);
+	
 	if (fwrite(buffer,1,Size,fp))
 	{
 		delete[] buffer;
+		fclose(fp);
+		DebugCloseHandle(dhtFile,fp,src);
 		SetHFCError(HFC_CANNOTWRITE);
 		return FALSE;
 	}
 	_dos_setftime(fileno(fp),temp,temp2);
 	fclose(fp);
+	DebugCloseHandle(dhtFile,fp,src);
 	_dos_getfileattr(src,&temp);
 	_dos_setfileattr(dst,temp);
 	return TRUE;
@@ -335,7 +346,10 @@ BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError)
 			throw CFileException(CFileException::OsErrorToException(::GetLastError()),::GetLastError(),lpszFileName);
 		return FALSE;
 	}
-	else if (pError!=NULL)
+	
+	DebugOpenHandle(dhtFile,m_hFile,m_strFileName);
+
+	if (pError!=NULL)
 		pError->m_cause=CException::none;
 	return TRUE;
 #else
@@ -502,7 +516,10 @@ BOOL CFile::Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError)
 			throw CFileException(CFileException::OsErrorToException(::GetLastError()),::GetLastError(),m_strFileName);
 		return FALSE;
 	}
-	else if (pError!=NULL)
+
+	DebugOpenHandle(dhtFile,m_hFile,m_strFileName);
+
+	if (pError!=NULL)
 		pError->m_cause=CException::none;
 	return TRUE;
 }
@@ -939,6 +956,7 @@ BOOL CFile::Close()
 #else
 		bError = !fclose((FILE*)m_hFile);
 #endif
+	DebugCloseHandle(dhtFile,m_hFile,W2A(m_strFileName));
 	m_hFile = FILE_NULL;
 	m_bCloseOnDelete = FALSE;
 	m_strFileName.Empty();
@@ -1053,11 +1071,13 @@ BOOL FileSystem::IsFile(LPCSTR szFileName)
 	WIN32_FIND_DATA fd;
 	int ret=TRUE;
 	hFind=FindFirstFile(szFileName,&fd);
+	DebugOpenHandle(dhtFileFind,hFind,STRNULL);
 	if (hFind!=INVALID_HANDLE_VALUE)
 	{
 		while (fd.dwFileAttributes==FILE_ATTRIBUTE_DIRECTORY && ret)
 			ret=FindNextFile(hFind,&fd);
 		FindClose(hFind);	
+		DebugCloseHandle(dhtFileFind,hFind,STRNULL);
 		return ret;
 	}
 	return FALSE;
@@ -1106,6 +1126,7 @@ INT FileSystem::IsDirectory(LPCSTR szDirectoryName)
 		szPath=LPSTR(szDirectoryName);
 
 	hFind=FindFirstFile(szPath,&fd);
+	DebugOpenHandle(dhtFileFind,hFind,szPath);
 	if (hFind!=INVALID_HANDLE_VALUE)
 	{
 		while (!(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) && ret)
@@ -1115,6 +1136,7 @@ INT FileSystem::IsDirectory(LPCSTR szDirectoryName)
 			delete[] szPath;
 
 		FindClose(hFind);	
+		DebugCloseHandle(dhtFileFind,hFind,szPath);
 		if (ret)
 		{
 			if (szDirectoryName[0]=='\\')
@@ -1162,6 +1184,7 @@ INT FileSystem::IsDirectory(LPCSTR szDirectoryName)
 		dMemCopy(szPath+dwPathLen,"\\*.*",5);
 
 		hFind=FindFirstFile(szPath,&fd);
+		DebugOpenHandle(dhtFileFind,hFind,szPath);
 		delete[] szPath;
 		if (hFind==INVALID_HANDLE_VALUE)
 			return 0;
@@ -1170,6 +1193,7 @@ INT FileSystem::IsDirectory(LPCSTR szDirectoryName)
 		//while ((fd.cFileName[0]!='.' || fd.cFileName[1]!='\0') && ret==1)
 		//	ret=FindNextFile(hFind,&fd);
 		FindClose(hFind);
+		DebugCloseHandle(dhtFileFind,hFind,szPath);
 		//return ret?2:0;
 		return 2;
 	}
@@ -1197,11 +1221,13 @@ BOOL FileSystem::IsFile(LPCWSTR szFileName)
 	WIN32_FIND_DATAW fd;
 	int ret=TRUE;
 	hFind=FindFirstFileW(szFileName,&fd);
+	DebugOpenHandle(dhtFileFind,hFind,szFileName);
 	if (hFind!=INVALID_HANDLE_VALUE)
 	{
 		while (fd.dwFileAttributes==FILE_ATTRIBUTE_DIRECTORY && ret)
 			ret=FindNextFileW(hFind,&fd);
 		FindClose(hFind);	
+		DebugCloseHandle(dhtFileFind,hFind,szFileName);
 		return ret;
 	}
 	return FALSE;
@@ -1253,6 +1279,7 @@ INT FileSystem::IsDirectory(LPCWSTR szDirectoryName)
 		szPath=LPWSTR(szDirectoryName);
 
 	hFind=FindFirstFileW(szPath,&fd);
+	DebugOpenHandle(dhtFileFind,hFind,szPath);
 	if (hFind!=INVALID_HANDLE_VALUE)
 	{
 		while (!(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) && ret)
@@ -1262,6 +1289,7 @@ INT FileSystem::IsDirectory(LPCWSTR szDirectoryName)
 			delete[] szPath;
 
 		FindClose(hFind);	
+		DebugCloseHandle(dhtFileFind,hFind,szPath);
 		if (ret)
 		{
 			if (szDirectoryName[0]==L'\\')
@@ -1309,6 +1337,7 @@ INT FileSystem::IsDirectory(LPCWSTR szDirectoryName)
 		MemCopyW(szPath+dwPathLen,L"\\*.*",5);
 
 		hFind=FindFirstFileW(szPath,&fd);
+		DebugOpenHandle(dhtFileFind,hFind,szPath);
 		delete[] szPath;
 		if (hFind==INVALID_HANDLE_VALUE)
 			return 0;
@@ -1317,6 +1346,7 @@ INT FileSystem::IsDirectory(LPCWSTR szDirectoryName)
 		//while ((fd.cFileName[0]!='.' || fd.cFileName[1]!='\0') && ret==1)
 		//	ret=FindNextFile(hFind,&fd);
 		FindClose(hFind);
+		DebugCloseHandle(dhtFileFind,hFind,STRNULL);
 		//return ret?2:0;
 		return 2;
 	}
@@ -1344,7 +1374,9 @@ BOOL FileSystem::IsValidFileName(LPCSTR szFile,LPSTR szShortName)
 		FILE_ATTRIBUTE_NORMAL,NULL);
 	if (hFile==INVALID_HANDLE_VALUE)
 		return FALSE;
+	DebugOpenHandle(dhtFile,hFile,szFile);
 	CloseHandle(hFile);
+	DebugCloseHandle(dhtFile,hFile,szFile);
 	if (szShortName!=NULL)
 		GetShortPathName(szFile,szShortName,_MAX_PATH);
 	DeleteFile(szFile);
@@ -1396,7 +1428,9 @@ BOOL FileSystem::IsValidFileName(LPCWSTR szFile,LPWSTR szShortName)
 
 	if (hFile==INVALID_HANDLE_VALUE)
 		return FALSE;
+	DebugOpenHandle(dhtFile,hFile,szFile);
 	CloseHandle(hFile);
+	DebugCloseHandle(dhtFile,hFile,szFile);
 	if (szShortName!=NULL)
 	{	
 		if (IsUnicodeSystem())
@@ -1501,9 +1535,11 @@ BOOL FileSystem::IsValidPath(LPCSTR szPath,BOOL bAsDirectory)
 				HANDLE hFile=CreateFile(szPath,GENERIC_WRITE,
 					FILE_SHARE_READ,NULL,CREATE_ALWAYS,
 					FILE_ATTRIBUTE_NORMAL,NULL);
+				DebugOpenHandle(dhtFile,hFile,szPath);
 				if (hFile!=INVALID_HANDLE_VALUE)
 				{
 					CloseHandle(hFile);
+					DebugCloseHandle(dhtFile,hFile,szPath);
 					DeleteFile(szPath);
 
 					bRet=TRUE;
@@ -1650,7 +1686,9 @@ BOOL FileSystem::IsValidPath(LPCWSTR szPath,BOOL bAsDirectory)
 					FILE_ATTRIBUTE_NORMAL,NULL);
 				if (hFile!=INVALID_HANDLE_VALUE)
 				{
+					DebugOpenHandle(dhtFile,hFile,szPath);
 					CloseHandle(hFile);
+					DebugCloseHandle(dhtFile,hFile,szPath);
 					DeleteFileW(szPath);
 
 					bRet=TRUE;
@@ -2192,13 +2230,17 @@ BOOL FileSystem::GetStatus(LPCSTR lpszFileName,CFileStatus& rStatus)
 		FILE_ATTRIBUTE_NORMAL,NULL);
 	if (hFile==INVALID_HANDLE_VALUE)
 		return FALSE;
-	
+	DebugOpenHandle(dhtFile,hFile,rStatus.m_szFullName);
+
 	if (!GetFileInformationByHandle(hFile,&fi))
 	{
 		CloseHandle(hFile);
+		DebugCloseHandle(dhtFile,hFile,rStatus.m_szFullName);
 		return FALSE;
 	}
 	CloseHandle(hFile);
+	DebugCloseHandle(dhtFile,hFile,rStatus.m_szFullName);
+		
 	rStatus.m_ctime=fi.ftCreationTime;
 	rStatus.m_mtime=fi.ftLastWriteTime;
 	rStatus.m_atime=fi.ftLastAccessTime;
@@ -2228,12 +2270,17 @@ BOOL  FileSystem::SetStatus(LPCSTR lpszFileName,const CFileStatus& status)
 		status.m_attribute,NULL);
 	if (hFile==INVALID_HANDLE_VALUE)
 		return FALSE;
+	DebugOpenHandle(dhtFile,hFile,lpszFileName);
+		
 	if (!SetFileTime(hFile,&((FILETIME)status.m_ctime),&((FILETIME)status.m_atime),&((FILETIME)status.m_mtime)))
 	{
 		CloseHandle(hFile);
+		DebugCloseHandle(dhtFile,hFile,lpszFileName);
 		return FALSE;
 	}
 	CloseHandle(hFile);
+	DebugCloseHandle(dhtFile,hFile,lpszFileName);
+		
 	return SetFileAttributes(lpszFileName,status.m_attribute);
 #else
 	UINT ftime,fdate;
@@ -2259,6 +2306,7 @@ void CFileFind::Close()
 	if (m_hFind!=NULL)
 	{
 		FindClose(m_hFind);
+		DebugCloseHandle(dhtFileFind,m_hFind,STRNULL);
 		m_hFind=NULL;
 	}
 }
@@ -2269,7 +2317,10 @@ BOOL CFileFind::FindFile(LPCSTR pstrName)
 	strRoot.Copy(pstrName,LastCharIndex(pstrName,'\\')+1);
 #ifdef WIN32
 	if (m_hFind!=NULL)
+	{
 		::FindClose(m_hFind);
+		DebugCloseHandle(dhtFileFind,m_hFind,STRNULL);
+	}
 	
 	if (IsUnicodeSystem())
 	{
@@ -2288,6 +2339,8 @@ BOOL CFileFind::FindFile(LPCSTR pstrName)
 	
 	if (m_hFind==INVALID_HANDLE_VALUE)
 		return FALSE;
+
+	DebugOpenHandle(dhtFileFind,m_hFind,STRNULL);
 	return TRUE;
 #else
 	if (pstrName==NULL)
@@ -2452,7 +2505,10 @@ BOOL CFileFind::FindFile(LPCWSTR pstrName)
 {
 	strRoot.Copy(pstrName,LastCharIndex(pstrName,L'\\')+1);
 	if (m_hFind!=NULL)
+	{	
 		::FindClose(m_hFind);
+		DebugCloseHandle(dhtFileFind,m_hFind,STRNULL);
+	}
 	
 	if (IsUnicodeSystem())
 	{
@@ -2468,6 +2524,7 @@ BOOL CFileFind::FindFile(LPCWSTR pstrName)
 		else
 			m_hFind=::FindFirstFile("*.*",&m_fd);
 	}
+	DebugOpenHandle(dhtFileFind,m_hFind,STRNULL);
 		
 	if (m_hFind==INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -2574,6 +2631,10 @@ void CSearchFromFile::OpenFile(LPCSTR szFile)
 
 	if (hFile==NULL)
 		SetHFCError2(HFC_CANNOTOPEN,__LINE__,__FILE__);
+	else
+	{
+		DebugOpenHandle(dhtFile,hFile,szFile);
+	}
 
 }
 
@@ -2592,6 +2653,11 @@ void CSearchFromFile::OpenFile(LPCWSTR szFile)
 		OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
 	if (hFile==INVALID_HANDLE_VALUE)
 		hFile=NULL;
+	else
+		DebugOpenHandle(dhtFile,hFile,szFile);
+
+
+
 
 	if (hFile==NULL)
 		SetHFCError2(HFC_CANNOTOPEN,__LINE__,__FILE__);
@@ -2601,13 +2667,16 @@ void CSearchFromFile::OpenFile(LPCWSTR szFile)
 
 void CSearchFromFile::CloseFile()
 {
-#ifdef WIN32
 	if (hFile!=NULL)
+	{
+#ifdef WIN32
 		CloseHandle(hFile);
 #else
-	if (hFile!=NULL)
 		fclose(hFile);
 #endif
+		DebugCloseHandle(dhtFile,hFile,STRNULL);
+	}
+		
 	hFile=NULL;
 
 }
@@ -2639,13 +2708,15 @@ ULONG_PTR CSearchHexFromFile::GetFoundPosition() const
 
 void CSearchHexFromFile::CloseFile()
 {
-#ifdef WIN32
 	if (hFile!=NULL)
+	{
+#ifdef WIN32
 		CloseHandle(hFile);
 #else
-	if (hFile!=NULL)
 		fclose(hFile);
 #endif
+		DebugCloseHandle(dhtFile,hFile,STRNULL);
+	}
 	hFile=NULL;
 
 	if (pBuffer!=NULL)

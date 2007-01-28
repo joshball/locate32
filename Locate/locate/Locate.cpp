@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   locate.exe v3.0.7.1060                 */
+   locate.exe v3.0.7.1210                 */
 
-const char* szVersionStr="locate 3.0 build 7.1060";
+const char* szVersionStr="locate 3.0 build 7.1210";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -683,7 +683,7 @@ int wmain (int argc,wchar_t * argv[])
 						SYSTEMTIME st;
 						GetLocalTime(&st);
 						CTime::DecreaseDaysInSystemTime(&st,nRel);
-						wDate=(BYTE(st.wYear)<<9)|(st.wMonth<<5)|(st.wDay);
+						wDate=(BYTE(st.wYear-1980)<<9)|(st.wMonth<<5)|(st.wDay);
 					}
 					else
 					{

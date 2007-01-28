@@ -149,10 +149,12 @@ inline CCheckFileNotificationsThread::DIRCHANGEDATA::~DIRCHANGEDATA()
 		if (pCancelIo!=NULL)
             pCancelIo(hDir);
 		CloseHandle(hDir);
+		DebugCloseHandle(dhtFile,hDir,STRNULL);
 	}
 	if (ol.hEvent!=NULL)
 	{
 		CloseHandle(ol.hEvent);
+		DebugCloseHandle(dhtEvent,ol.hEvent,STRNULL);
 	}
 	if (pBuffer!=NULL)
 		delete[] pBuffer;
@@ -186,6 +188,7 @@ inline CCheckFileNotificationsThread::~CCheckFileNotificationsThread()
 		m_hThread=NULL;
 
 		CloseHandle(hThread);
+		DebugCloseHandle(dhtThread,hThread,STRNULL);
 	}
 	else
 		GetLocateDlg()->m_pFileNotificationsThread=NULL;

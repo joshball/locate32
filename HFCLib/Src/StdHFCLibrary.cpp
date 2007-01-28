@@ -26,6 +26,11 @@ void CAppData::stdfunc()
 int PASCAL WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 	 LPTSTR lpszCmdLine,int nCmdShow)
 {
+#ifdef _DEBUG_LOGGING
+	extern CRITICAL_SECTION cHandleCriticalSection;
+	InitializeCriticalSection(&cHandleCriticalSection);
+#endif
+
 	int nResult;
 	if (GetAppData()->pAppClass!=NULL)
 	{
@@ -53,6 +58,7 @@ int PASCAL WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 #ifdef _DEBUG
 		void CheckAllocators();
 		CheckAllocators();
+		DebugLogOpenHandles();
 #endif
 		GetAppData()->m_pThreads->RemoveAll();
 		delete GetAppData()->m_pThreads;

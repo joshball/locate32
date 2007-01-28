@@ -59,11 +59,15 @@ inline CFile::CFile(LPCWSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions)
 inline CFile::~CFile()
 {
 	if (m_hFile!=FILE_NULL && m_bCloseOnDelete)
+	{
 #ifdef WIN32
 		CloseHandle(m_hFile);
 #else
 		fclose((FILE*)m_hFile);
 #endif
+
+		DebugCloseHandle(dhtFile,m_hFile,W2A(m_strFileName));
+	}
 }
 
 inline CFile::operator HANDLE() const

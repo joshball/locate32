@@ -752,6 +752,8 @@ LONG CRegKey::CopyKey(HKEY hSource,HKEY hDestination)
 			lRet=lErr;
 			continue;
 		}
+		DebugOpenHandle(dhtRegKey,hSubSource,szName);
+
 
 		lErr=RegCreateKeyEx(hDestination,szName,0,szClass,0,KEY_ALL_ACCESS,NULL,&hSubDestination,NULL);
 		if (lErr!=ERROR_SUCCESS)
@@ -760,13 +762,19 @@ LONG CRegKey::CopyKey(HKEY hSource,HKEY hDestination)
 			lRet=lErr;
 			continue;
 		}
+		DebugOpenHandle(dhtRegKey,hSubDestination,szName);
+
 
 		if (CopyKey(hSubSource,hSubDestination)<=0)
 			lRet=lErr;
 			
 
 		RegCloseKey(hSubSource);
+		DebugCloseHandle(dhtRegKey,hSubSource,szName);
+
 		RegCloseKey(hSubDestination);
+		DebugCloseHandle(dhtRegKey,hSubDestination,szName);
+
 	}
 
 	// Now copying values
@@ -799,6 +807,8 @@ LONG CRegKey::RenameSubKey(HKEY hKey,LPCSTR szOldName,LPCSTR szNewName)
 	LONG lErr=RegOpenKeyEx(hKey,szOldName,0,KEY_READ,&hSource);
 	if (lErr!=ERROR_SUCCESS)
 		return lErr;
+	DebugOpenHandle(dhtRegKey,hSource,szOldName);
+
 	
 
 	lErr=RegCreateKeyEx(hKey,szNewName,0,NULL,0,KEY_ALL_ACCESS,NULL,&hDestination,NULL);
@@ -807,10 +817,13 @@ LONG CRegKey::RenameSubKey(HKEY hKey,LPCSTR szOldName,LPCSTR szNewName)
 		RegCloseKey(hSource);
 		return lErr;
 	}
+	DebugOpenHandle(dhtRegKey,hDestination,szNewName);
 
 	LONG lRet=CopyKey(hSource,hDestination);
 	RegCloseKey(hSource);
+	DebugCloseHandle(dhtRegKey,hSource,szOldName);
 	RegCloseKey(hDestination);
+	DebugCloseHandle(dhtRegKey,hDestination,szNewName);
 
     if (lRet==ERROR_SUCCESS)
 	{
@@ -830,6 +843,8 @@ LONG CRegKey::RenameSubKey(HKEY hKey,LPCWSTR szOldName,LPCWSTR szNewName)
 	LONG lErr=RegOpenKeyExW(hKey,szOldName,0,KEY_READ,&hSource);
 	if (lErr!=ERROR_SUCCESS)
 		return lErr;
+	DebugOpenHandle(dhtRegKey,hSource,szOldName);
+
 	
 
 	lErr=RegCreateKeyExW(hKey,szNewName,0,NULL,0,KEY_ALL_ACCESS,NULL,&hDestination,NULL);
@@ -838,10 +853,16 @@ LONG CRegKey::RenameSubKey(HKEY hKey,LPCWSTR szOldName,LPCWSTR szNewName)
 		RegCloseKey(hSource);
 		return lErr;
 	}
+	DebugOpenHandle(dhtRegKey,hDestination,szNewName);
+
 
 	LONG lRet=CopyKey(hSource,hDestination);
+	
 	RegCloseKey(hSource);
+	DebugCloseHandle(dhtRegKey,hSource,szOldName);
+
 	RegCloseKey(hDestination);
+	DebugCloseHandle(dhtRegKey,hDestination,szNewName);
 
     if (lRet==ERROR_SUCCESS)
 	{
@@ -857,7 +878,10 @@ LONG CRegKey::OpenKey(HKEY hKey,LPCSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTRI
 	DWORD  fdwOptions;
 	LONG ret;
 	if (m_hKey!=NULL)
+	{
 		RegCloseKey(m_hKey);
+		DebugCloseHandle(dhtRegKey,m_hKey,lpszSubKey);
+	}
 	if (fStatus==samAll)
 		samDesired=KEY_ALL_ACCESS;
 	else
@@ -890,6 +914,8 @@ LONG CRegKey::OpenKey(HKEY hKey,LPCSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTRI
 	}
 	if (ret!=ERROR_SUCCESS)
 		m_hKey=NULL;
+	else
+		DebugOpenHandle(dhtRegKey,m_hKey,lpszSubKey);
 	return ret;
 }
 
@@ -899,6 +925,7 @@ LONG CRegKey::CloseKey()
 	if (m_hKey!=NULL)
 	{
 		ret=RegCloseKey(m_hKey);
+		DebugCloseHandle(dhtRegKey,m_hKey,STRNULL);
 		if (ret==ERROR_SUCCESS)
 			m_hKey=NULL;
 		return ret;
@@ -915,7 +942,10 @@ LONG CRegKey::OpenKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTR
 	DWORD  fdwOptions;
 	LONG ret;
 	if (m_hKey!=NULL)
+	{
 		RegCloseKey(m_hKey);
+		DebugCloseHandle(dhtRegKey,&m_hKey,lpszSubKey);
+	}
 	if (fStatus==samAll)
 		samDesired=KEY_ALL_ACCESS;
 	else
@@ -948,6 +978,8 @@ LONG CRegKey::OpenKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTR
 	}
 	if (ret!=ERROR_SUCCESS)
 		m_hKey=NULL;
+	else
+		DebugOpenHandle(dhtRegKey,m_hKey,lpszSubKey);
 	return ret;
 }
 
@@ -1207,6 +1239,7 @@ BOOL CRegKey::DeleteKey(HKEY hKey,LPCSTR szKey)
 	if (RegOpenKeyEx(hKey,szKey,0,
 		KEY_ENUMERATE_SUB_KEYS|KEY_SET_VALUE,&hSubKey)!=ERROR_SUCCESS)
 		return TRUE;	
+	DebugOpenHandle(dhtRegKey,hSubKey,szKey);
 	for(;;)
 	{
 		cb=200;
@@ -1216,6 +1249,7 @@ BOOL CRegKey::DeleteKey(HKEY hKey,LPCSTR szKey)
 		DeleteKey(hSubKey,szSubKey);
 	}
 	RegCloseKey(hSubKey);
+	DebugCloseHandle(dhtRegKey,hSubKey,szKey);
 	RegDeleteKey(hKey,szKey);
 	return TRUE;
 }
@@ -1233,6 +1267,8 @@ BOOL CRegKey::DeleteKey(HKEY hKey,LPCWSTR szKey)
 	if (RegOpenKeyExW(hKey,szKey,0,
 		KEY_ENUMERATE_SUB_KEYS|KEY_SET_VALUE,&hSubKey)!=ERROR_SUCCESS)
 		return TRUE;	
+	DebugOpenHandle(dhtRegKey,hSubKey,szKey);
+	
 	for(;;)
 	{
 		cb=400;
@@ -1242,6 +1278,7 @@ BOOL CRegKey::DeleteKey(HKEY hKey,LPCWSTR szKey)
 		DeleteKey(hSubKey,szSubKey);
 	}
 	RegCloseKey(hSubKey);
+	DebugCloseHandle(dhtRegKey,hSubKey,szKey);
 	RegDeleteKeyW(hKey,szKey);
 	return TRUE;
 }

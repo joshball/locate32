@@ -488,7 +488,7 @@ public:
 		HWND hParentWnd, UINT nID,
 		LPVOID lpParam = NULL);
 
-	BOOL DestroyWindow() {return ::DestroyWindow(m_hWnd);}
+	BOOL DestroyWindow();
 	
 	int GetDlgCtrlID() const {return ::GetDlgCtrlID(m_hWnd);}
 	int SetDlgCtrlID(int nID) {return ::SetWindowLong(m_hWnd,GWL_ID,(LONG)nID);}

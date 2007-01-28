@@ -595,8 +595,10 @@ void CTargetWnd::OnNcDestroy()
 	name.SetBase(32);
 	name << "WFWE" << (ULONGLONG)this;
 	HANDLE hEvent=OpenEvent(EVENT_MODIFY_STATE,FALSE,name);
+	DebugOpenHandle(dhtEvent,hEvent,name);
 	SetEvent(hEvent);
 	CloseHandle(hEvent);
+	DebugCloseHandle(dhtEvent,hEvent,name);
 
 	// No more messages to this class
 	::SetWindowLongPtr(m_hWnd,GWLP_USERDATA,0);

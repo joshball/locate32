@@ -2248,6 +2248,7 @@ CPropertiesSheet::CPropertiesSheet(int nItems,CLocatedItem** pItems)
 CPropertiesSheet::~CPropertiesSheet()
 {
 	CloseHandle(m_hThread);
+	DebugCloseHandle(dhtThread,m_hThread,STRNULL);
 	delete m_pPropertiesPage;
 	
 }
@@ -2263,6 +2264,7 @@ void CPropertiesSheet::Open()
 {
 	DWORD dwThreadID;
 	m_hThread=CreateThread(NULL,0,StartThreadProc,this,0,&dwThreadID);
+	DebugOpenHandle(dhtThread,m_hThread,STRNULL);
 	
 }
 	
@@ -2282,6 +2284,7 @@ CPropertiesSheet::CPropertiesPage::CPropertiesPage(int nItems,CLocatedItem** pIt
 
 	DWORD dwThread;
 	m_hThread=CreateThread(NULL,0,CountingThreadProc,this,0,&dwThread);
+	DebugOpenHandle(dhtThread,m_hThread,STRNULL);
 
 	DWORD dwError=GetLastError();
 
@@ -2339,6 +2342,7 @@ void CPropertiesSheet::CPropertiesPage::OnDestroy()
 		}
 
 		CloseHandle(m_hThread);
+		DebugCloseHandle(dhtThread,m_hThread,STRNULL);
 		m_hThread=NULL;
 	}
 }
@@ -2434,6 +2438,7 @@ void CPropertiesSheet::CPropertiesPage::OnTimer(DWORD wTimerID)
 		{
 			KillTimer(0);	
 			CloseHandle(m_hThread);
+			DebugCloseHandle(dhtThread,m_hThread,STRNULL);
 			m_hThread=NULL;
 		}
 	}
@@ -2576,10 +2581,13 @@ void CPropertiesSheet::CPropertiesPage::CheckFile(LPCWSTR szFile,BOOL bIsFirst)
 		hFind=FindFirstFileW(szFile,&fdw);
 	else
 		hFind=FindFirstFileA(W2A(szFile),&fd);
-
+	DebugOpenHandle(dhtFileFind,hFind,szFile);
+			
 	if (hFind!=INVALID_HANDLE_VALUE)
 	{
 		FindClose(hFind);
+		DebugCloseHandle(dhtFileFind,hFind,szFile);
+			
 
 		if (bIsFirst)
 		{

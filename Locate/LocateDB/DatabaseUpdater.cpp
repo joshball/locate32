@@ -71,6 +71,7 @@ CDatabaseUpdater::~CDatabaseUpdater()
 	if (m_hThread!=NULL)
 	{
 		CloseHandle(m_hThread);
+		DebugCloseHandle(dhtThread,m_hThread,STRNULL);
 		m_hThread=NULL;
 	}
 #endif
@@ -464,6 +465,7 @@ UpdateError CDatabaseUpdater::Update(BOOL bThreaded,int nThreadPriority)
 		DWORD dwThreadID;
 		DebugFormatMessage("CDatabaseUpdater::Update this=%lX",ULONG_PTR(this));
 		m_hThread=CreateThread(NULL,0,UpdateThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
+		DebugOpenHandle(dhtThread,m_hThread,STRNULL);
 		
 		if (m_hThread!=NULL)
 		{
@@ -599,11 +601,15 @@ typedef WIN32_FIND_DATAW FIND_DATAW;
 
 inline HFIND _FindFirstFile(LPCSTR szFolder,FIND_DATA* fd)
 {
-	return FindFirstFileA(szFolder,fd);
+	HFIND hFind=FindFirstFileA(szFolder,fd);
+	DebugOpenHandle(dhtFileFind,hFind,szFolder);
+	return hFind;
 }
 inline HFIND _FindFirstFile(LPCWSTR szFolder,FIND_DATAW * fd)
 {
-	return FindFirstFileW(szFolder,fd);
+	HFIND hFind=FindFirstFileW(szFolder,fd);
+	DebugOpenHandle(dhtFileFind,hFind,szFolder);
+	return hFind;
 }
 inline BOOL _FindNextFile(HFIND hFind,FIND_DATA* fd)
 {
@@ -616,6 +622,7 @@ inline BOOL _FindNextFile(HFIND hFind,FIND_DATAW* fd)
 inline void _FindClose(HFIND hFind)
 {
 	FindClose(hFind);
+	DebugCloseHandle(dhtFileFind,hFind,STRNULL);
 }
 inline BOOL _FindIsFolder(FIND_DATA* fd)
 {

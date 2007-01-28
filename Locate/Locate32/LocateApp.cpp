@@ -59,6 +59,7 @@ BOOL CLocateApp::InitInstance()
 	CWinApp::InitInstance();
 	LPCWSTR pCommandLine;
 	
+	//DebugSetFlags(DebugLogHandleOperations);
 
 	//extern BOOL bIsFullUnicodeSupport;
 	//bIsFullUnicodeSupport=FALSE;
@@ -1730,74 +1731,85 @@ void CLocateAppWnd::NotifyFinishingUpdating()
 	{
 		pLocateDlg->StopUpdateAnimation();
 		
-		CStringW str;
 		
 		// ... and constucting notification message:
 		// checking wheter all are stopped, or cancelled 
 		int i;
-		for (i=0;GetLocateApp()->m_ppUpdaters[i]!=NULL;i++)
+		EnterCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
+		
+		if (GetLocateApp()->m_ppUpdaters!=NULL)
 		{
-			if (GET_UPDATER_CODE(GetLocateApp()->m_ppUpdaters[i])!=ueStopped)
-				break;
-		}
-		if (GetLocateApp()->m_ppUpdaters[i]==NULL)
-		{
-			// All updaters are interrupted by user
-			str.LoadString(IDS_UPDATINGCANCELLED);
-			pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,(WPARAM)IDI_EXCLAMATION,(LPARAM)(LPCWSTR)str);
-		}
-		else
-		{
-			// All succeeded or some updaters failed/interrupted
-            CStringW str2;
-			str.LoadString(IDS_UPDATINGENDED);
-			int added=0;
-				
 			for (i=0;GetLocateApp()->m_ppUpdaters[i]!=NULL;i++)
 			{
-				switch (GET_UPDATER_CODE(GetLocateApp()->m_ppUpdaters[i]))
-				{
-				case ueSuccess:
+				if (GET_UPDATER_CODE(GetLocateApp()->m_ppUpdaters[i])!=ueStopped)
 					break;
-				case ueStopped:
-					if (added>0)
-						str2 << L", ";
-					str2 << ID2W(IDS_UPDATINGTHREAD);
-					str2 << ' ' << (int)(i+1) << L": ";
-					str2 << ID2W(IDS_UPDATINGCANCELLED2);
-					added++;
-					break;
-				case ueFolderUnavailable:
-					if (added>0)
-						str2 << L", ";
-					str2 << ID2W(IDS_UPDATINGTHREAD);
-					str2 << ' ' << (int)(i+1) << L": ";
-					str2 << ID2W(IDS_UPDATINGUNAVAILABLEROOT);
-					added++;
-					break;
-				default:
-					if (added>0)
-						str2 << L", ";
-					str2 << ID2W(IDS_UPDATINGTHREAD);
-					str2 << ' ' << (int)(i+1) << L": ";
-					str2 << ID2W(IDS_UPDATINGFAILED);
-					added++;
-					break;
-				}
 			}
-
-			if (str2.IsEmpty())
+			if (GetLocateApp()->m_ppUpdaters[i]==NULL)
 			{
-				str.LoadString(IDS_UPDATINGSUCCESS);
-				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);				
+				// All updaters are interrupted by user
+				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,(WPARAM)IDI_EXCLAMATION,
+					(LPARAM)(LPCWSTR)ID2W(IDS_UPDATINGCANCELLED));
 			}
 			else
 			{
-				str << L' ' << str2;
-				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,
-					(WPARAM)IDI_EXCLAMATION,(LPARAM)(LPCWSTR)str);				
+				// All succeeded or some updaters failed/interrupted
+				CStringW str2;
+				int added=0;
+					
+				for (i=0;GetLocateApp()->m_ppUpdaters[i]!=NULL;i++)
+				{
+					switch (GET_UPDATER_CODE(GetLocateApp()->m_ppUpdaters[i]))
+					{
+					case ueSuccess:
+						break;
+					case ueStopped:
+						if (added>0)
+							str2 << L", ";
+						str2 << ID2W(IDS_UPDATINGTHREAD);
+						str2 << ' ' << (int)(i+1) << L": ";
+						str2 << ID2W(IDS_UPDATINGCANCELLED2);
+						added++;
+						break;
+					case ueFolderUnavailable:
+						if (added>0)
+							str2 << L", ";
+						str2 << ID2W(IDS_UPDATINGTHREAD);
+						str2 << ' ' << (int)(i+1) << L": ";
+						str2 << ID2W(IDS_UPDATINGUNAVAILABLEROOT);
+						added++;
+						break;
+					default:
+						if (added>0)
+							str2 << L", ";
+						str2 << ID2W(IDS_UPDATINGTHREAD);
+						str2 << ' ' << (int)(i+1) << L": ";
+						str2 << ID2W(IDS_UPDATINGFAILED);
+						added++;
+						break;
+					}
+				}
+
+				if (str2.IsEmpty())
+				{
+					pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,
+						(LPARAM)(LPCWSTR)ID2W(IDS_UPDATINGSUCCESS));				
+				}
+				else
+				{
+					CStringW str(IDS_UPDATINGENDED);
+					str << L' ' << str2;
+					pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,
+						(WPARAM)IDI_EXCLAMATION,(LPARAM)(LPCWSTR)str);				
+				}
 			}
 		}
+		else
+		{
+			pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,
+				(LPARAM)(LPCWSTR)ID2W(IDS_UPDATINGENDED));				
+		}
+
+		LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
 	}
 
 	
@@ -1985,60 +1997,29 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 		case ueUnknown:
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
-				if (IsUnicodeSystem())
+				WCHAR* pError=FormatLastOsError();
+
+				if (pError!=NULL)
 				{
-					WCHAR* pError;
-
-					if (FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
-						GetLastError(),LANG_USER_DEFAULT,(LPWSTR)&pError,0,NULL))
-					{
-						CStringW str,state;
-						if (pUpdater->GetCurrentRoot()==NULL)
-							state.Format(IDS_ERRORUNKNOWNWRITEDB,pUpdater->GetCurrentDatabaseFile());
-						else
-							state.Format(IDS_ERRORUNKNOWNSCANROOT,pUpdater->GetCurrentRootPath());
-						
-						
-						str.Format(IDS_ERRORUNKNOWNOS,pError);
-						while (str.LastChar()=='\n' || str.LastChar()=='\r')
-							str.DelLastChar();
-						str << state;
-						
-						ErrorBox(str);
-						LocalFree(pError);
-
-						
-					}
+					CStringW str,state;
+					if (pUpdater->GetCurrentRoot()==NULL)
+						state.Format(IDS_ERRORUNKNOWNWRITEDB,pUpdater->GetCurrentDatabaseFile());
 					else
-						ErrorBox(IDS_ERRORUNKNOWN);
+						state.Format(IDS_ERRORUNKNOWNSCANROOT,pUpdater->GetCurrentRootPath());
+					
+					
+					str.Format(IDS_ERRORUNKNOWNOS,pError);
+					while (str.LastChar()=='\n' || str.LastChar()=='\r')
+						str.DelLastChar();
+					str << state;
+					
+					ErrorBox(str);
+					LocalFree(pError);
+
+					
 				}
 				else
-				{
-					CHAR* pError;
-
-					if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
-						GetLastError(),LANG_USER_DEFAULT,(LPSTR)&pError,0,NULL))
-					{
-						CString str,state;
-						if (pUpdater->GetCurrentRoot()==NULL)
-							state.Format(IDS_ERRORUNKNOWNWRITEDB,W2A(pUpdater->GetCurrentDatabaseFile()));
-						else
-							state.Format(IDS_ERRORUNKNOWNSCANROOT,W2A(pUpdater->GetCurrentRootPath()));
-						
-						
-						str.Format(IDS_ERRORUNKNOWNOS,pError);
-						while (str.LastChar()=='\n' || str.LastChar()=='\r')
-							str.DelLastChar();
-						str << state;
-						
-						ErrorBox(A2W(str));
-						LocalFree(pError);
-
-						
-					}
-					else
-						ErrorBox(IDS_ERRORUNKNOWN);
-				}
+					ErrorBox(IDS_ERRORUNKNOWN);
 				
 			}
 			return FALSE;
@@ -2178,7 +2159,9 @@ BOOL CLocateApp::GlobalUpdate(CArray<PDATABASE>* paDatabasesArg,int nThreadPrior
 
 	EnterCriticalSection(&m_cUpdatersPointersInUse);	
 	m_ppUpdaters=new CDatabaseUpdater*[wThreads+1];
-	
+	if (m_ppUpdaters==NULL)
+		return FALSE;
+
 	WORD wThread;
 	for (wThread=0;wThread<wThreads;wThread++)
 	{
@@ -2544,30 +2527,27 @@ BOOL CLocateApp::UpdateSettings()
 	return TRUE;
 }
 
-void CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootInfos)
+BOOL CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootInfos)
 {
-	// Counting threads		
-	EnterCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
+	// Initializing
 	wThreads=0;
-	if (GetLocateApp()->m_ppUpdaters!=NULL)
-	{
-		for (;GetLocateApp()->m_ppUpdaters[wThreads]!=NULL;wThreads++);
-	}
-	LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
-	
-	pRootInfos=new RootInfo[max(wThreads,2)];
-	
-	// Retrieving information
+	pRootInfos=NULL;
 	wRunning=0;
+	
+	// Counting threads		
 	EnterCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
 	if (GetLocateApp()->m_ppUpdaters==NULL)
 	{
-		wThreads=0;
-		delete[] pRootInfos;
-		pRootInfos=NULL;
-		return;
+		// Not updating
+		LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
+		return FALSE;
 	}
+	
+	for (;GetLocateApp()->m_ppUpdaters[wThreads]!=NULL;wThreads++);
 
+	pRootInfos=new RootInfo[max(wThreads,2)];
+	
+	
 	for (WORD i=0;i<wThreads;i++)
 	{
 		if (IS_UPDATER_EXITED(GetLocateApp()->m_ppUpdaters[i]))
@@ -2618,6 +2598,7 @@ void CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootI
 		}
 	}
 	LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
+	return TRUE;
 }
 
 void CLocateAppWnd::FreeRootInfos(WORD wThreads,RootInfo* pRootInfos)
@@ -2671,8 +2652,17 @@ BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip,LPCWSTR szT
 		
 		WORD wThreads,wRunning;
 		RootInfo* pRootInfos;
-		GetRootInfos(wThreads,wRunning,pRootInfos);
 		
+		if (!GetRootInfos(wThreads,wRunning,pRootInfos))
+		{
+			// TODO
+			m_pUpdateStatusWnd->Update(0,0,NULL);
+			NotifyFinishingUpdating();			
+			return FALSE;
+		}
+
+		
+			
 		if (m_pUpdateStatusWnd!=NULL)
 			m_pUpdateStatusWnd->Update(wThreads,wRunning,pRootInfos);
 			
@@ -3217,6 +3207,8 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThrea
 			dbd.SetThreadPriority(nThreadPriority);
 			if (!dbd.DoModal(m_pLocateDlgThread!=NULL?HWND(*GetLocateDlg()):HWND(*this)))
                 return FALSE;
+			
+
 			if (GetLocateApp()->IsUpdating())
 				return FALSE;
 			if (!GetLocateApp()->GlobalUpdate(&aDatabases,dbd.GetThreadPriority()))
@@ -3276,8 +3268,12 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThrea
 		// Starting thread which stops updating		
 		DWORD dwThreadID;
 		HANDLE hThread=CreateThread(NULL,0,KillUpdaterProc,(void*)this,0,&dwThreadID);
+		DebugOpenHandle(dhtThread,hThread,STRNULL);
 		if (hThread!=NULL)
+		{
 			CloseHandle(hThread);
+			DebugCloseHandle(dhtThread,hThread,STRNULL);
+		}
 	}
 	return TRUE;
 }
@@ -3589,6 +3585,15 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 	switch (wTimerID)
 	{
 	case ID_UPDATEANIM:
+		// Checking this abnormal state
+		if (GetLocateApp()->m_ppUpdaters==NULL)
+		{
+			// Stop update animation
+			NotifyFinishingUpdating();
+			break;
+		}
+		
+
 		m_nCurUpdateAnimBitmap++;
 		if (m_nCurUpdateAnimBitmap>12)
 			m_nCurUpdateAnimBitmap=0;
@@ -4029,6 +4034,31 @@ CAutoPtrA<CHAR> CLocateApp::GetRegKey(LPCSTR szSubKey)
 	return pKey;
 }
 
+LPWSTR CLocateApp::FormatLastOsError()
+{
+	if (IsUnicodeSystem())
+	{
+		LPWSTR pError;
+		if (FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
+			GetLastError(),LANG_USER_DEFAULT,(LPWSTR)&pError,0,NULL))
+			return pError;
+		return NULL;
+	}
+	else
+	{
+		LPSTR pError;
+		DWORD dwLen=FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
+			GetLastError(),LANG_USER_DEFAULT,(LPSTR)&pError,0,NULL);
+		if (dwLen>0)
+		{
+			LPWSTR pErrorW=(LPWSTR)LocalAlloc(LMEM_FIXED,dwLen+2);
+			MultiByteToWideChar(CP_ACP,0,pError,dwLen+1,pErrorW,dwLen+2);
+			LocalFree(pError);
+			return pErrorW;
+		}
+		return NULL;
+	}
+}
 ////////////////////////////
 // CLocateAppWnd::CUpdateStatusWnd
 CLocateAppWnd::CUpdateStatusWnd::CUpdateStatusWnd()
@@ -4058,21 +4088,16 @@ CLocateAppWnd::CUpdateStatusWnd::CUpdateStatusWnd()
 			m_cBackColor=dwTemp;
 	}
 
-	m_hUpdateMutex=CreateMutex(NULL,FALSE,NULL);
+	InitializeCriticalSection(&m_cUpdate);
 }
 
 CLocateAppWnd::CUpdateStatusWnd::~CUpdateStatusWnd()
 {
-	if (m_hUpdateMutex!=NULL)
-	{
-		if (WaitForMutex(m_hUpdateMutex,BACKGROUNDUPDATERMUTEXTIMEOUT))
-		{
-			DebugMessage("CLocateAppWnd::CUpdateStatusWnd::~CUpdateStatusWnd() WaitForMutex returns error");
-		}
-	
-		CloseHandle(m_hUpdateMutex);
-		m_hUpdateMutex=NULL;
-	}
+	EnterCriticalSection(&m_cUpdate);
+	LeaveCriticalSection(&m_cUpdate);
+
+	DeleteCriticalSection(&m_cUpdate);
+
 	
 	m_aErrors.RemoveAll();
 
@@ -4148,11 +4173,7 @@ void CLocateAppWnd::CUpdateStatusWnd::OnPaint()
 	dc.SetBkMode(TRANSPARENT);
 	dc.SelectObject(m_TitleFont);
 
-	if (WaitForMutex(m_hUpdateMutex,BACKGROUNDUPDATERMUTEXTIMEOUT))
-	{
-		DebugMessage("CLocateAppWnd::CUpdateStatusWnd::OnPaint() WaitForMutex returns error");
-		return;
-	}
+	EnterCriticalSection(&m_cUpdate);
 	
 	RECT rcClient,rc2;
 	GetClientRect(&rcClient);
@@ -4161,7 +4182,7 @@ void CLocateAppWnd::CUpdateStatusWnd::OnPaint()
 
 	
     // Drawing title
-	LPCWSTR pPtr=sStatusText;
+	LPCWSTR pPtr=m_sStatusText;
 	int nLength=(int)FirstCharIndex(pPtr,L'\n');
 	rc2=rcClient;
 	dc.SetTextColor(m_cTitleColor);
@@ -4195,7 +4216,8 @@ void CLocateAppWnd::CUpdateStatusWnd::OnPaint()
 	
 		rcClient.top+=rc2.bottom-rc2.top+EXTRA_LINES;
 	}
-	ReleaseMutex(m_hUpdateMutex);
+
+	LeaveCriticalSection(&m_cUpdate);
 }
 
 
@@ -4204,11 +4226,7 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 	if (ueError==ueStopped)
 		return;
 
-	if (WaitForMutex(m_hUpdateMutex,BACKGROUNDUPDATERMUTEXTIMEOUT))
-	{
-		DebugMessage("CLocateAppWnd::CUpdateStatusWnd::~CUpdateStatusWnd() WaitForMutex returns error");
-		return;
-	}
+	EnterCriticalSection(&m_cUpdate);
 
 	// Now, change pointer to null, if someone is accesing pointer, it may have enough time to read
 	WCHAR error[300];
@@ -4281,7 +4299,7 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 		m_WindowSize.cy+=sz.cy+EXTRA_MARGINSY;
 	}
 	
-	ReleaseMutex(m_hUpdateMutex);
+	LeaveCriticalSection(&m_cUpdate);
 
 	SetPosition();
 }
@@ -4676,9 +4694,16 @@ void CLocateAppWnd::CUpdateStatusWnd::Update()
 {
 	WORD wThreads,wRunning;
 	RootInfo* pRootInfos;
-	GetLocateAppWnd()->GetRootInfos(wThreads,wRunning,pRootInfos);
-	Update(wThreads,wRunning,pRootInfos);
-	CLocateAppWnd::FreeRootInfos(wThreads,pRootInfos);
+	if (GetLocateAppWnd()->GetRootInfos(wThreads,wRunning,pRootInfos))
+	{
+		Update(wThreads,wRunning,pRootInfos);
+		CLocateAppWnd::FreeRootInfos(wThreads,pRootInfos);
+	}
+	else
+	{
+		Update(0,0,NULL);
+		IdleClose();
+	}
 }
 
 void CLocateAppWnd::CUpdateStatusWnd::CheckForegroundWindow()
@@ -4724,28 +4749,44 @@ void CLocateAppWnd::CUpdateStatusWnd::CheckForegroundWindow()
 
 void CLocateAppWnd::CUpdateStatusWnd::Update(WORD wThreads,WORD wRunning,RootInfo* pRootInfos)
 {
-	if (WaitForMutex(m_hUpdateMutex,BACKGROUNDUPDATERMUTEXTIMEOUT))
-	{
-		DebugMessage(" CLocateAppWnd::CUpdateStatusWnd::Update WaitForMutex returns error");
-		return;
-	}
+	EnterCriticalSection(&m_cUpdate);
 	
 	
-	sStatusText.Empty();
+	m_sStatusText.Empty();
 
 	// Forming title
 	if (wRunning>0)
-		sStatusText.LoadString(IDS_UPDATINGTOOLTIPTITLE);
+		m_sStatusText.LoadString(IDS_UPDATINGTOOLTIPTITLE);
 	else
-		sStatusText.LoadString(IDS_UPDATINGENDED);
+		m_sStatusText.LoadString(IDS_UPDATINGENDED);
 
-	for (WORD i=0;i<wThreads;i++)
+	if (pRootInfos!=NULL)
 	{
-		sStatusText << L'\n';
-		FormatStatusTextLine(sStatusText,pRootInfos[i],wThreads>1?i+1:-1,wThreads);
+		for (WORD i=0;i<wThreads;i++)
+		{
+			m_sStatusText << L'\n';
+			FormatStatusTextLine(m_sStatusText,pRootInfos[i],wThreads>1?i+1:-1,wThreads);
+		}
 	}
-	
-	ReleaseMutex(m_hUpdateMutex);
+	else
+	{
+		m_sStatusText << L'\n';
+		LPWSTR pError=CLocateApp::FormatLastOsError();
+		if (pError!=NULL)
+		{
+			CStringW str;
+			str.Format(IDS_ERRORUNKNOWNOS,pError);
+			while (str.LastChar()=='\n' || str.LastChar()=='\r')
+			str.DelLastChar();
+			m_sStatusText << str;
+		}
+		else
+			m_sStatusText.AddString(IDS_ERRORUNKNOWN);
+	}
+		
+		
+
+	LeaveCriticalSection(&m_cUpdate);
 
 	InvalidateRect(NULL,TRUE);
 }

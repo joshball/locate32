@@ -16,6 +16,7 @@ BOOL CGlobalAlloc::Alloc(SIZE_T nSize,allocFlags nFlags)
 	if (m_hGlobal!=NULL)
 		Free();
 	m_hGlobal=GlobalAlloc(nFlags,nSize);
+	DebugOpenHandle(dhtMemoryBlock,m_hGlobal,STRNULL);
 	if (m_hGlobal==NULL)
 	{
 		if (m_bThrow)
@@ -55,6 +56,7 @@ void CGlobalAlloc::Free()
 	if ((m_nFlags&moveable)==0 && m_pData!=NULL)
 		GlobalUnlock(m_hGlobal);
 	GlobalFree(m_hGlobal);
+	DebugCloseHandle(dhtMemoryBlock,m_hGlobal,STRNULL);
 	m_pData=NULL;
 	m_hGlobal=NULL;
 }

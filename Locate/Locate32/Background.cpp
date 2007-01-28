@@ -25,6 +25,8 @@ BOOL CCheckFileNotificationsThread::Start()
 
 	DWORD dwThreadID;
 	m_hThread=CreateThread(NULL,0,NotificationThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
+	DebugOpenHandle(dhtThread,m_hThread,"CheckFileNotifications");
+
 	if (m_hThread==NULL)
 		return FALSE;
 	SetThreadPriority(m_hThread,THREAD_PRIORITY_BELOW_NORMAL);
@@ -448,6 +450,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 	ASSERT(m_pHandles!=NULL);
 
 	m_pHandles[0]=CreateEvent(NULL,FALSE,FALSE,NULL);
+	DebugOpenHandle(dhtEvent,m_pHandles[0],STRNULL);
 	m_pChangeDatas[0]=NULL;
 
 	m_nHandles=1;
@@ -493,6 +496,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 		{
 			pChangeData=new DIRCHANGEDATA;
 			pChangeData->ol.hEvent=CreateEvent(NULL,FALSE,FALSE,NULL);
+			DebugOpenHandle(dhtEvent,pChangeData->ol.hEvent,STRNULL);
 			pChangeData->pBuffer=new BYTE[CHANGE_BUFFER_LEN];
 		}
 
@@ -502,6 +506,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 		else
 			pChangeData->hDir=CreateFile(W2A(szRoot),GENERIC_READ /*FILE_LIST_DIRECTORY*/,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
 				NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED,NULL);
+		DebugOpenHandle(dhtFile,pChangeData->hDir,szRoot);
 
 
 		if (pChangeData->hDir==INVALID_HANDLE_VALUE)
@@ -548,7 +553,10 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 
 		}
 		else
+		{
 			CloseHandle(pChangeData->hDir);
+			DebugCloseHandle(dhtFile,pChangeData->hDir,szRoot);
+		}
 
 	}
 
@@ -574,7 +582,8 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 	
 	ASSERT(m_pHandles!=NULL);
 
-	m_pHandles[0]=CreateEvent(NULL,FALSE,FALSE,NULL);
+	m_pHandles[0]=CreateEvent(NULL,FALSE,FALSE,STRNULL);
+	DebugOpenHandle(dhtEvent,m_pHandles[0],STRNULL);
 	m_pRoots[0]=NULL;
 
 	m_nHandles=1;
@@ -601,6 +610,8 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 			BkgDebugFormatMessage4("Type of %s is 0x%X",szDrive,FileSystem::GetDriveType(szRoot),0,0);
 			m_pHandles[m_nHandles]=FindFirstChangeNotification(szDrive,TRUE,
 				FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
+			DebugOpenHandle(dhtMisc,m_pHandles[m_nHandles],STRNULL);
+
 			BkgDebugFormatMessage4("FindFirstChangeNotification1,%d returned: 0x%X, drive is %s, GetLastError()=0x%X",i,m_pHandles[m_nHandles],szDrive,GetLastError());
 			if (m_pHandles[m_nHandles]!=INVALID_HANDLE_VALUE)
 			{
@@ -634,7 +645,8 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 			else
 				m_pHandles[m_nHandles]=FindFirstChangeNotification(W2A(szRoot),TRUE,
 					FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
-				
+			DebugOpenHandle(dhtEvent,m_pHandles[m_nHandles],STRNULL);
+
 			BkgDebugFormatMessage4("FindFirstChangeNotification2,%d returned: 0x%X, drive is %S, GetLastError()=0x%X",i,m_pHandles[m_nHandles],szRoot,GetLastError());
 			if (m_pHandles[m_nHandles]!=INVALID_HANDLE_VALUE)
 			{
@@ -670,6 +682,7 @@ BOOL CCheckFileNotificationsThread::DestroyHandles()
 	
 		// Pointers used with ReadDirectoryChangesW		
 		CloseHandle(pHandles[0]);
+		DebugCloseHandle(dhtEvent,pHandles[0],STRNULL);
 		for (UINT n=1;n<nHandles;n++)
 		{
 			//DebugFormatMessage("Deleting CHANGEDIR for %s",pChangeDatas[n]->szRoot);
@@ -688,9 +701,11 @@ BOOL CCheckFileNotificationsThread::DestroyHandles()
 	{
 		// Pointers used with traditional method
 		CloseHandle(pHandles[0]);
+		DebugCloseHandle(dhtEvent,pHandles[0],STRNULL);
 		for (UINT n=1;n<nHandles;n++)
 		{
 			FindCloseChangeNotification(pHandles[n]);
+			DebugCloseHandle(dhtMisc,pHandles[n],STRNULL);
 			delete[] m_pRoots[n];
 		}
 		delete[] pHandles;
@@ -721,6 +736,7 @@ BOOL CBackgroundUpdater::Start()
 
 	DWORD dwThreadID;
 	HANDLE hThread=CreateThread(NULL,0,UpdaterThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
+	DebugOpenHandle(dhtThread,hThread,"BackgroundUpdater");
 	if (hThread==NULL)
 		return FALSE;
 	
@@ -739,9 +755,12 @@ BOOL CBackgroundUpdater::Start()
 void CBackgroundUpdater::CreateEventsAndMutex()
 {
 	m_phEvents[0]=CreateEvent(NULL,TRUE,FALSE,NULL);
+	DebugOpenHandle(dhtEvent,m_phEvents[0],STRNULL);
 	m_phEvents[1]=CreateEvent(NULL,TRUE,FALSE,NULL);
+	DebugOpenHandle(dhtEvent,m_phEvents[1],STRNULL);
 
 	m_hUpdateListPtrInUse=CreateMutex(NULL,FALSE,NULL);
+	DebugOpenHandle(dhtMutex,m_hUpdateListPtrInUse,STRNULL);
 }
 
 CBackgroundUpdater::~CBackgroundUpdater()
@@ -755,17 +774,21 @@ CBackgroundUpdater::~CBackgroundUpdater()
 
 		BkgDebugMessage("CBackgroundUpdater::~CBackgroundUpdater()");
 		CloseHandle(hThread);
+		DebugCloseHandle(dhtThread,hThread,STRNULL);
 	}
 	else
 		InterlockedExchangePointer((PVOID*)&GetLocateDlg()->m_pBackgroundUpdater,NULL);
 	
 	
 	CloseHandle(m_phEvents[0]);
+	DebugCloseHandle(dhtEvent,m_phEvents[0],STRNULL);
 	CloseHandle(m_phEvents[1]);
+	DebugCloseHandle(dhtEvent,m_phEvents[1],STRNULL);
 
 	if (m_hUpdateListPtrInUse!=NULL)
 	{
 		CloseHandle(m_hUpdateListPtrInUse);
+		DebugCloseHandle(dhtMutex,m_hUpdateListPtrInUse,STRNULL);
 		m_hUpdateListPtrInUse=NULL;
 	}
 }

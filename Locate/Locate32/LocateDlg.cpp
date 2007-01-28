@@ -916,7 +916,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDM_UPDATEDATABASES:
 	case IDM_STOPUPDATING:
 		//CLocateAppWnd handles these
-		GetLocateAppWnd()->SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
+		GetLocateAppWnd()->PostMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
 		break;
 	case IDC_PRESETS:
 		OnPresets();
@@ -1989,11 +1989,9 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 		switch (ueCode)
 		{
 		case ueUnknown:
-			if (IsUnicodeSystem())
 			{
-				WCHAR* pError;
-				if (FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
-					GetLastError(),LANG_USER_DEFAULT,(LPWSTR)&pError,0,NULL))
+				WCHAR* pError=CLocateApp::FormatLastOsError();
+				if (pError!=NULL)
 				{
 					CStringW str;
 					str.Format(IDS_ERRORUNKNOWNOS,pError);
@@ -2011,32 +2009,6 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 					((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
 					if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 						((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
-				}
-			}
-			else
-			{
-				CHAR* pError;
-
-				if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
-					GetLastError(),LANG_USER_DEFAULT,(LPSTR)&pError,0,NULL))
-				{
-					CString str;
-					str.Format(IDS_ERRORUNKNOWNOS,pError);
-					while (str.LastChar()=='\n' || str.LastChar()=='\r')
-						str.DelLastChar();
-					
-					if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
-						((CLocateDlg*)dwParam)->MessageBox(str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
-
-					((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
-					LocalFree(pError);
-				}
-				else 
-				{
-					ID2A str(IDS_ERRORUNKNOWN);
-					((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
-					if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
-						((CLocateDlg*)dwParam)->MessageBox(str,ID2A(IDS_ERROR),MB_OK|MB_ICONERROR);
 				}
 			}
 			return FALSE;
@@ -12266,6 +12238,7 @@ void CLocateDlg::CAdvancedDlg::OnDestroy()
 	{
 		TerminateThread(m_hTypeUpdaterThread,0);
 		CloseHandle(m_hTypeUpdaterThread);
+		DebugCloseHandle(dhtThread,m_hTypeUpdaterThread,STRNULL);
 		m_hTypeUpdaterThread=NULL;
 	}
 
@@ -12405,6 +12378,7 @@ void CLocateDlg::CAdvancedDlg::UpdateTypeList()
 	{
 		DWORD dwID;
 		m_hTypeUpdaterThread=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)UpdaterProc,this,0,&dwID);
+		DebugOpenHandle(dhtThread,m_hTypeUpdaterThread,STRNULL);
 
 		if (m_hTypeUpdaterThread==NULL)
 			DebugFormatMessage("m_hTypeUpdaterThread==NULL, last error=%d",GetLastError());
@@ -12539,6 +12513,7 @@ DWORD WINAPI CLocateDlg::CAdvancedDlg::UpdaterProc(CLocateDlg::CAdvancedDlg* pAd
 	pAdvancedDlg->m_dwFlags|=fgOtherTypeAdded;
 
 	CloseHandle(pAdvancedDlg->m_hTypeUpdaterThread);
+	DebugCloseHandle(dhtThread,pAdvancedDlg->m_hTypeUpdaterThread,STRNULL);
 	pAdvancedDlg->m_hTypeUpdaterThread=NULL;
 	
 	if (!pAdvancedDlg->SendDlgItemMessage(IDC_FILETYPE,CB_GETDROPPEDSTATE))

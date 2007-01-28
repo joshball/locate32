@@ -23,7 +23,10 @@ inline CGdiObject::CGdiObject(HGDIOBJ hObject)
 inline CGdiObject::~CGdiObject()
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
 }
 
 inline CGdiObject::operator HGDIOBJ() const
@@ -64,8 +67,14 @@ inline BOOL CGdiObject::operator!=(const CGdiObject& obj) const
 inline BOOL CGdiObject::CreateStockObject(int nIndex)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::GetStockObject(nIndex))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::GetStockObject(nIndex);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 	
 ///////////////////////////
@@ -85,12 +94,14 @@ inline CPen::CPen(int nPenStyle,int nWidth,COLORREF crColor)
 :	CGdiObject(NULL)
 {
 	m_hObject=(HGDIOBJ)::CreatePen(nPenStyle,nWidth,crColor);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
 }
 
 inline CPen::CPen(int nPenStyle,int nWidth,const LOGBRUSH* pLogBrush,int nStyleCount,const DWORD* lpStyle)
 :	CGdiObject(NULL)
 {
 	m_hObject=(HGDIOBJ)::ExtCreatePen(nPenStyle,nWidth,pLogBrush,nStyleCount,lpStyle);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
 }
 
 inline CPen::operator HPEN() const
@@ -111,22 +122,41 @@ inline int CPen::GetExtLogPen(EXTLOGPEN* pLogPen)
 inline BOOL CPen::CreatePen(int nPenStyle,int nWidth,COLORREF crColor)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreatePen(nPenStyle,nWidth,crColor))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::CreatePen(nPenStyle,nWidth,crColor);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CPen::CreatePen(int nPenStyle,int nWidth,const LOGBRUSH* pLogBrush,int nStyleCount,const DWORD* lpStyle)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::ExtCreatePen(nPenStyle,nWidth,pLogBrush,nStyleCount,lpStyle))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::ExtCreatePen(nPenStyle,nWidth,pLogBrush,nStyleCount,lpStyle);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
+
 }
 
 inline BOOL CPen::CreatePenIndirect(LPLOGPEN lpLogPen)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreatePenIndirect(lpLogPen))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	
+	m_hObject=(HGDIOBJ)::CreatePenIndirect(lpLogPen);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 ///////////////////////////
@@ -146,12 +176,14 @@ inline CBrush::CBrush(COLORREF crColor)
 :	CGdiObject(NULL)
 {
 	m_hObject=(HGDIOBJ)::CreateSolidBrush(crColor);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
 }
 
 inline CBrush::CBrush(int nIndex,COLORREF crColor)
 :	CGdiObject(NULL)
 {
 	m_hObject=(HGDIOBJ)::CreateHatchBrush(nIndex,crColor);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
 }
 
 inline CBrush::operator HBRUSH() const
@@ -167,50 +199,93 @@ inline int CBrush::GetLogBrush(LOGBRUSH* pLogBrush)
 inline BOOL CBrush::CreateSolidBrush(COLORREF crColor)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateSolidBrush(crColor))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::CreateSolidBrush(crColor);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CBrush::CreateHatchBrush(int nIndex,COLORREF crColor)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateHatchBrush(nIndex,crColor))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::CreateHatchBrush(nIndex,crColor);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
+
 }
 
 inline BOOL CBrush::CreateBrushIndirect(const LOGBRUSH* lpLogBrush)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateBrushIndirect(lpLogBrush))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::CreateBrushIndirect(lpLogBrush);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CBrush::CreatePatternBrush(HBITMAP hBitmap)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreatePatternBrush(hBitmap))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::CreatePatternBrush(hBitmap);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CBrush::CreateDIBPatternBrush(HGLOBAL hPackedDIB,UINT nUsage)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateDIBPatternBrush(hPackedDIB,nUsage))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::CreateDIBPatternBrush(hPackedDIB,nUsage);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CBrush::CreateDIBPatternBrush(const void* lpPackedDIB,UINT nUsage)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateDIBPatternBrushPt(lpPackedDIB,nUsage))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::CreateDIBPatternBrushPt(lpPackedDIB,nUsage);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CBrush::CreateSysColorBrush(int nIndex)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::GetSysColorBrush(nIndex))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::GetSysColorBrush(nIndex);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 ///////////////////////////
@@ -239,15 +314,27 @@ inline int CFont::GetLogFont(LOGFONT* pLogFont)
 inline BOOL CFont::CreateFontIndirect(const LOGFONTA* lpLogFont)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HFONT)::CreateFontIndirectA(lpLogFont))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	
+	m_hObject=(HFONT)::CreateFontIndirectA(lpLogFont);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CFont::CreateFontIndirect(const LOGFONTW* lpLogFont)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HFONT)::CreateFontIndirectW(lpLogFont))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HFONT)::CreateFontIndirectW(lpLogFont);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 ///////////////////////////
@@ -290,27 +377,43 @@ HINSTANCE GetLanguageSpecificResourceHandle();
 inline BOOL CBitmap::LoadBitmap(LPCTSTR lpszResourceName)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
 #ifdef DEF_RESOURCES
-	return (m_hObject=(HGDIOBJ)::LoadBitmap(GetCommonResourceHandle(),lpszResourceName))!=NULL;
-#else
-	return m_hObject=NULL;
+	m_hObject=(HGDIOBJ)::LoadBitmap(GetCommonResourceHandle(),lpszResourceName);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
 #endif
+	return m_hObject!=NULL;
 }
 
 inline BOOL CBitmap::LoadOEMBitmap(UINT nIDBitmap)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::LoadBitmap(NULL,MAKEINTRESOURCE(nIDBitmap)))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::LoadBitmap(NULL,MAKEINTRESOURCE(nIDBitmap));
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CBitmap::LoadOEMBitmap(UINT nIDBitmap,int sizeX,int sizeY)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::LoadImage(NULL,MAKEINTRESOURCE(nIDBitmap),
-		IMAGE_BITMAP,sizeX,sizeY,LR_DEFAULTCOLOR))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::LoadImage(NULL,MAKEINTRESOURCE(nIDBitmap),
+		IMAGE_BITMAP,sizeX,sizeY,LR_DEFAULTCOLOR);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 
@@ -318,22 +421,40 @@ inline BOOL CBitmap::CreateBitmap(int nWidth, int nHeight, UINT nPlanes, UINT nB
 	const void* lpBits)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateBitmap(nWidth,nHeight,nPlanes,nBitcount,lpBits))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::CreateBitmap(nWidth,nHeight,nPlanes,nBitcount,lpBits);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CBitmap::CreateBitmapIndirect(LPBITMAP lpBitmap)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateBitmapIndirect(lpBitmap))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::CreateBitmapIndirect(lpBitmap);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CBitmap::CreateCompatibleBitmap(HDC hDC, int nWidth, int nHeight)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateCompatibleBitmap(hDC,nWidth,nHeight))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::CreateCompatibleBitmap(hDC,nWidth,nHeight);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline CSize CBitmap::SetBitmapDimension(int nWidth, int nHeight)
@@ -416,15 +537,25 @@ inline CPalette::CPalette(HPALETTE hObject)
 inline BOOL CPalette::CreatePalette(LPLOGPALETTE lpLogPalette)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreatePalette(lpLogPalette))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	m_hObject=(HGDIOBJ)::CreatePalette(lpLogPalette);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CPalette::CreateHalftonePalette(HDC hDC)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateHalftonePalette(hDC))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	m_hObject=(HGDIOBJ)::CreateHalftonePalette(hDC);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 ///////////////////////////
@@ -503,66 +634,111 @@ inline CRgn::CRgn(HRGN hObject)
 inline BOOL CRgn::CreateRectRgn(int x1, int y1, int x2, int y2)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateRectRgn(x1,y1,x2,y2))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	m_hObject=(HGDIOBJ)::CreateRectRgn(x1,y1,x2,y2);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CRgn::CreateRectRgnIndirect(LPCRECT lpRect)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateRectRgnIndirect(lpRect))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	m_hObject=(HGDIOBJ)::CreateRectRgnIndirect(lpRect);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CRgn::CreateEllipticRgn(int x1, int y1, int x2, int y2)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateEllipticRgn(x1,y1,x2,y2))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	m_hObject=(HGDIOBJ)::CreateEllipticRgn(x1,y1,x2,y2);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CRgn::CreateEllipticRgnIndirect(LPCRECT lpRect)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateEllipticRgnIndirect(lpRect))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	m_hObject=(HGDIOBJ)::CreateEllipticRgnIndirect(lpRect);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CRgn::CreatePolygonRgn(LPPOINT lpPoints, int nCount, int nMode)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreatePolygonRgn(lpPoints,nCount,nMode))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	m_hObject=(HGDIOBJ)::CreatePolygonRgn(lpPoints,nCount,nMode);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CRgn::CreatePolyPolygonRgn(LPPOINT lpPoints, LPINT lpPolyCounts,
 		int nCount, int nPolyFillMode)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreatePolyPolygonRgn(lpPoints,lpPolyCounts,nCount,nPolyFillMode))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	m_hObject=(HGDIOBJ)::CreatePolyPolygonRgn(lpPoints,lpPolyCounts,nCount,nPolyFillMode);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CRgn::CreateRoundRectRgn(int x1,int y1,int x2,int y2,int x3, int y3)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::CreateRoundRectRgn(x1,y1,x2,y2,x3,y3))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	m_hObject=(HGDIOBJ)::CreateRoundRectRgn(x1,y1,x2,y2,x3,y3);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 inline BOOL CRgn::CreateFromPath(HDC hDC)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::PathToRegion(hDC))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	m_hObject=(HGDIOBJ)::PathToRegion(hDC);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 	
 inline BOOL CRgn::CreateFromData(const XFORM* lpXForm, int nCount,
 	const RGNDATA* pRgnData)
 {
 	if (m_hObject!=NULL)
+	{
 		::DeleteObject(m_hObject);
-	return (m_hObject=(HGDIOBJ)::ExtCreateRegion(lpXForm,nCount,pRgnData))!=NULL;
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+	m_hObject=(HGDIOBJ)::ExtCreateRegion(lpXForm,nCount,pRgnData);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
 }
 
 ///////////////////////////
