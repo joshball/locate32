@@ -81,7 +81,7 @@ DWORD CSchedule::GetDataLen() const
 {
 	if (m_pDatabases==NULL)
 	{
-		DebugFormatMessage("GetDataLen returns SCHEDULE_V34_LEN+1=%d",SCHEDULE_V34_LEN+1);
+		//DebugFormatMessage("GetDataLen returns SCHEDULE_V34_LEN+1=%d",SCHEDULE_V34_LEN+1);
 		return SCHEDULE_V34_LEN+1;
 	}
     	
@@ -93,7 +93,8 @@ DWORD CSchedule::GetDataLen() const
 		dwLength+=iStrLen;
 		pPtr+=iStrLen;
 	}
-	DebugFormatMessage("GetDataLen returns %d",dwLength);
+	
+	//DebugFormatMessage("GetDataLen returns %d",dwLength);
 	return dwLength;
 }
 

@@ -151,12 +151,6 @@ public:
 	DWORD GetDataLen() const;
 	DWORD GetData(BYTE* pData) const;
 
-#ifdef _DEBUG
-public:
-	inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-	inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-	inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
 };
 
 ////////////////////////////////////////////////////////////

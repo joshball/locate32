@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.1060                 */
+   database updater v3.0.7.2110                 */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -136,7 +136,9 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,const PDATABASE* ppDa
 		sMemSet(pKey,'0',nDigits-dwLength);
         
 		ppDatabases[i]->SaveToRegistry(hKeyRoot,szPath,pKey);
+		
 		delete[] pKey;
+		delete[] pKeyName;
 	}
 
 	delete[] pNum;

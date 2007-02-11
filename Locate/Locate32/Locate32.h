@@ -13,6 +13,12 @@ extern LPSTR g_szBuffer;
 extern LPWSTR g_szwBuffer; 
 
 
+
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
 #include "../common/common.h"
 
 #include "commonres.h"

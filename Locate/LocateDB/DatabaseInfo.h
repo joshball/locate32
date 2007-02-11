@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.1060                 */
+   database updater v3.0.7.2110                 */
 
 #if !defined(DATABASEINFO_H)
 #define DATABASEINFO_H
@@ -110,10 +110,6 @@ inline BOOL CDatabaseInfo::GetInfo(const CDatabase* pDatabase)
 	return GetInfo(pDatabase->GetArchiveType(),pDatabase->GetArchiveName());
 } 
 
-/*inline BOOL CDatabaseInfo::GetRootsFromDatabases(CArray<LPSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled)
-{
-	return GetRootsFromDatabases(aRoots,aDatabases,aDatabases.GetSize(),bOnlyEnabled);
-}*/
 
 inline BOOL CDatabaseInfo::GetRootsFromDatabases(CArray<LPWSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled)
 {

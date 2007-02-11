@@ -54,14 +54,10 @@ public:
 		LPWSTR* m_pRoots;
 		DIRCHANGEDATA** m_pChangeDatas;
 	};
+
+	LPWSTR m_pFile; // Used in RunningProcNew
 	
 	BOOL (WINAPI* m_pReadDirectoryChangesW)(HANDLE,LPVOID,DWORD,BOOL,DWORD,LPDWORD,LPOVERLAPPED,LPOVERLAPPED_COMPLETION_ROUTINE);
-#ifdef _DEBUG
-public:
-	void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-	void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-	void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
 
 };
 
@@ -121,12 +117,6 @@ public:
 	
 	
 
-#ifdef _DEBUG
-public:
-	void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-	void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-	void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
 };
 
 inline CCheckFileNotificationsThread::DIRCHANGEDATA::DIRCHANGEDATA()
@@ -149,12 +139,12 @@ inline CCheckFileNotificationsThread::DIRCHANGEDATA::~DIRCHANGEDATA()
 		if (pCancelIo!=NULL)
             pCancelIo(hDir);
 		CloseHandle(hDir);
-		DebugCloseHandle(dhtFile,hDir,STRNULL);
+		DebugCloseFile(hDir);
 	}
 	if (ol.hEvent!=NULL)
 	{
 		CloseHandle(ol.hEvent);
-		DebugCloseHandle(dhtEvent,ol.hEvent,STRNULL);
+		DebugCloseEvent(ol.hEvent);
 	}
 	if (pBuffer!=NULL)
 		delete[] pBuffer;
@@ -164,7 +154,7 @@ inline CCheckFileNotificationsThread::DIRCHANGEDATA::~DIRCHANGEDATA()
 
 
 inline CCheckFileNotificationsThread::CCheckFileNotificationsThread()
-:	m_hThread(NULL),m_nHandles(0),m_pHandles(NULL),m_pRoots(NULL)
+:	m_hThread(NULL),m_nHandles(0),m_pHandles(NULL),m_pRoots(NULL),m_pFile(NULL)
 {
 	DebugMessage("CCheckFileNotificationsThread::CCheckFileNotificationsThread()");
 
@@ -180,6 +170,9 @@ inline CCheckFileNotificationsThread::~CCheckFileNotificationsThread()
 {	
 	DestroyHandles();
 		
+	if (m_pFile!=NULL)
+		delete[] m_pFile;
+
 	if (m_hThread!=NULL)
 	{
 		
@@ -188,7 +181,7 @@ inline CCheckFileNotificationsThread::~CCheckFileNotificationsThread()
 		m_hThread=NULL;
 
 		CloseHandle(hThread);
-		DebugCloseHandle(dhtThread,hThread,STRNULL);
+		DebugCloseThread(hThread);
 	}
 	else
 		GetLocateDlg()->m_pFileNotificationsThread=NULL;

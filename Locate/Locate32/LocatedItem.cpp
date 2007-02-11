@@ -498,7 +498,6 @@ void CLocatedItem::UpdateFileTitle()
 		DWORD i;
 		for (i=0;pNewFileTitle[i]!='\0';i++)
 		{
-			// Todo: test this in Win9X
 			if (!IsCharUpper(pNewFileTitle[i]))
 			{
 				bAllUpper=FALSE;

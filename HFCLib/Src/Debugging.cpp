@@ -2,10 +2,15 @@
 // HFC Library - Copyright (C) 1999-2007 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
+
 #include "HFCLib.h"
 
 #if defined(_DEBUG)
 #include <crtdbg.h>
+
+#define HFC_NORMAL_BLOCK (_CLIENT_BLOCK|(0xc0<<16)) // Normal
+#define HFC_ARRAY_BLOCK (_CLIENT_BLOCK|(0xd0<<16)) // Array
+
 #endif
 
 
@@ -38,18 +43,21 @@ struct DebugHandleInfo {
 	LPCSTR szInfo;
 	int iLine;
 	LPCSTR szFile;
-	
-	~DebugHandleInfo() 
-	{
-		if (szInfo!=NULL)
-			delete[] szInfo;
-		if (szFile!=NULL)
-			delete[] szFile;
-	}
+
+	DebugHandleInfo* pNext;
 };
 
-CListFP<DebugHandleInfo*> aDebugHandles;
-CRITICAL_SECTION cHandleCriticalSection;
+static void ClearDebugHandleInfo(DebugHandleInfo* pInfo)
+{
+	if (pInfo->szInfo!=NULL)
+		free((void*)pInfo->szInfo);
+	if (pInfo->szFile!=NULL)
+		free((void*)pInfo->szFile);
+}
+
+DebugHandleInfo* pFirstDebugHandle=NULL;
+DebugHandleInfo* pLastDebugHandle=NULL;
+CRITICAL_SECTION cHandleCriticalSection={0,0,0,0,0};
 
 
 #ifdef WIN32
@@ -77,8 +85,9 @@ void StartDebugLogging()
 		else
 		{
 			char szFullPath[MAX_PATH],*temp;
-			GetFullPathName(File,MAX_PATH,szFullPath,&temp);
-			pLogFile=alloccopy(szFullPath);
+			int iLen=GetFullPathName(File,MAX_PATH,szFullPath,&temp)+1;
+			pLogFile=(char*)malloc(iLen);
+			CopyMemory(pLogFile,szFullPath,iLen);
 			CharLower(pLogFile);
 			
 			hLogFile=CreateFile(File,GENERIC_WRITE|GENERIC_READ,
@@ -359,7 +368,10 @@ void DebugMessage(LPCWSTR msg)
 				return;
 		}
 		char szBufr[2000];
-		char* msgA=alloccopyWtoA(msg);
+
+		int iLen=istrlenw(msg)+1;
+		char* msgA=(char*)malloc(iLen);
+		WideCharToMultiByte(CP_ACP,0,msg,iLen,msgA,iLen,0,0);
 		SYSTEMTIME st;
 		DWORD writed;
 		GetLocalTime(&st);
@@ -368,7 +380,7 @@ void DebugMessage(LPCWSTR msg)
 			st.wMilliseconds,GetCurrentThreadId(),msgA)==S_OK )
 			WriteFile(hLogFile,szBufr,(DWORD)strlen(szBufr),&writed,NULL);
 		FlushFileBuffers(hLogFile);
-		delete[] msgA;
+		free(msgA);
 	}
 }
 
@@ -397,7 +409,7 @@ void DebugFormatMessage(LPCWSTR text,...)
 }
 #endif
 
-void EndDebugLogging()
+void StopDebugLogging()
 {
 #ifdef WIN32
 	if (nLoggingType==LOGGING_FILE)
@@ -406,7 +418,7 @@ void EndDebugLogging()
 		CloseHandle(hLogFile);
 		if (pLogFile!=NULL)
 		{
-			delete[] pLogFile;
+			free(pLogFile);
 			pLogFile=NULL;
 		}
 		hLogFile=NULL;
@@ -467,21 +479,34 @@ void DebugOpenHandle2(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLine
 			DebugHandleTypeToStr(bType),pValue,iLine,szFile,szInfo!=NULL?szInfo:"(NULL)");
 	}
 
-	DebugHandleInfo* pNewInfo=new DebugHandleInfo;
+	DebugHandleInfo* pNewInfo=(DebugHandleInfo*)malloc(sizeof(DebugHandleInfo));
+	pNewInfo->pNext=NULL;
 	pNewInfo->bType=bType;
 	pNewInfo->pValue=pValue;
 	if (szInfo!=NULL)
-		pNewInfo->szInfo=alloccopy(szInfo);
+	{
+		int iLen=istrlen(szInfo)+1;
+		pNewInfo->szInfo=(char*)malloc(iLen);
+		CopyMemory((void*)pNewInfo->szInfo,szInfo,iLen);
+	}
 	else
 		pNewInfo->szInfo=NULL;
+
 	pNewInfo->iLine=iLine;
 	if (szFile!=NULL)
-		pNewInfo->szFile=alloccopy(szFile);
+	{
+		int iLen=istrlen(szFile)+1;
+		pNewInfo->szFile=(char*)malloc(iLen);
+		CopyMemory((void*)pNewInfo->szFile,szFile,iLen);
+	}
 	else
 		pNewInfo->szFile=NULL;
 
 	EnterCriticalSection(&cHandleCriticalSection);
-	aDebugHandles.AddTail(pNewInfo);
+	if (pFirstDebugHandle!=NULL)
+		pLastDebugHandle=pLastDebugHandle->pNext=pNewInfo;
+	else
+		pLastDebugHandle=pFirstDebugHandle=pNewInfo;
 	LeaveCriticalSection(&cHandleCriticalSection);
 	
 }
@@ -497,21 +522,34 @@ void DebugOpenHandle2(DebugHandleType bType,void* pValue,LPCWSTR szInfo,int iLin
 			DebugHandleTypeToStr(bType),pValue,iLine,szFile,szInfo!=NULL?szInfo:L"(NULL)");
 	}
 
-	DebugHandleInfo* pNewInfo=new DebugHandleInfo;
+	DebugHandleInfo* pNewInfo=(DebugHandleInfo*)malloc(sizeof(DebugHandleInfo));
+	pNewInfo->pNext=NULL;
 	pNewInfo->bType=bType;
 	pNewInfo->pValue=pValue;
 	if (szInfo!=NULL)
-		pNewInfo->szInfo=alloccopyWtoA(szInfo);
+	{
+		int iLen=istrlenw(szInfo)+1;
+		pNewInfo->szInfo=(char*)malloc(iLen);
+		WideCharToMultiByte(CP_ACP,0,szInfo,iLen,(LPSTR)pNewInfo->szInfo,iLen,0,0);
+	}
 	else
 		pNewInfo->szInfo=NULL;
+
 	pNewInfo->iLine=iLine;
 	if (szFile!=NULL)
-		pNewInfo->szFile=alloccopy(szFile);
+	{
+		int iLen=istrlen(szFile)+1;
+		pNewInfo->szFile=(char*)malloc(iLen);
+		CopyMemory((void*)pNewInfo->szFile,szFile,iLen);
+	}
 	else
 		pNewInfo->szFile=NULL;
 
 	EnterCriticalSection(&cHandleCriticalSection);
-	aDebugHandles.AddTail(pNewInfo);
+	if (pFirstDebugHandle!=NULL)
+		pLastDebugHandle=pLastDebugHandle->pNext=pNewInfo;
+	else
+		pLastDebugHandle=pFirstDebugHandle=pNewInfo;
 	LeaveCriticalSection(&cHandleCriticalSection);
 }
 
@@ -520,69 +558,46 @@ void DebugCloseHandle2(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLin
 	if (pValue==NULL || pValue==INVALID_HANDLE_VALUE)
 		return;
 
-	if (dwDebugFlags&DebugLogHandleOperations)
-	{
-		DebugFormatMessage("%s handle %X closed on line %d in file %s, szInfo=%s",
-			DebugHandleTypeToStr(bType),pValue,iLine,szFile,szInfo!=NULL?szInfo:"(NULL)");
-	}
 
 	EnterCriticalSection(&cHandleCriticalSection);
 
 
-	POSITION pPos=aDebugHandles.GetHeadPosition();
-	BOOL bSearchAgain=FALSE;
-
-	while (pPos!=NULL)
+	DebugHandleInfo* pInfo=pFirstDebugHandle;
+	DebugHandleInfo* pPrev=NULL;
+	while (pInfo!=NULL)
 	{
-		DebugHandleInfo* pInfo=aDebugHandles.GetAt(pPos);
-
-		if (pInfo->bType==bType && pInfo->pValue==pValue)
+		if (pInfo->pValue==pValue && (pInfo->bType==bType || pInfo->bType==dhtUnknown))
 		{
-			if (pInfo->szInfo==NULL)
+			if (pPrev==NULL)
 			{
-				if (szInfo==NULL)
-				{
-					aDebugHandles.RemoveAt(pPos);
-					LeaveCriticalSection(&cHandleCriticalSection);
-					return;
-				}
-
-				// At this point, do not remove entry with different szInfo
-				bSearchAgain=TRUE;
+				// Remove first
+				if (pLastDebugHandle==pFirstDebugHandle)
+					pLastDebugHandle=NULL;
+				pFirstDebugHandle=pInfo->pNext;
+			}
+			else
+			{
+				if (pLastDebugHandle==pInfo)
+					pLastDebugHandle=pPrev;
+				pPrev->pNext=pInfo->pNext;				
 			}
 
-			if (szInfo!=NULL && strcmp(szInfo,pInfo->szInfo)==0)
+			if (dwDebugFlags&DebugLogHandleOperations)
 			{
-				aDebugHandles.RemoveAt(pPos);
-				LeaveCriticalSection(&cHandleCriticalSection);
-				return;
+				DebugFormatMessage("%s handle %X closed on line %d in file %s, szInfo=%s",
+					DebugHandleTypeToStr(bType),pValue,iLine,szFile,szInfo!=NULL?szInfo:"(NULL)");
 			}
 
-			// At this point, do not remove entry with different szInfo
-			bSearchAgain=TRUE;
+			ClearDebugHandleInfo(pInfo);
+			free(pInfo);
+
+			LeaveCriticalSection(&cHandleCriticalSection);
+			return;
 		}
 
-		pPos=aDebugHandles.GetNextPosition(pPos);
-	}
 
-	if (bSearchAgain)
-	{
-		// Found a entry with same type and value, but with different szInfo
-		// removing it
-	
-		pPos=aDebugHandles.GetHeadPosition();
-		while (pPos!=NULL)
-		{
-			DebugHandleInfo* pInfo=aDebugHandles.GetAt(pPos);
-			if (pInfo->bType==bType && pInfo->pValue==pValue)
-			{
-				aDebugHandles.RemoveAt(pPos);
-				LeaveCriticalSection(&cHandleCriticalSection);
-				return;
-			}
-
-			pPos=aDebugHandles.GetNextPosition(pPos);
-		}
+		pPrev=pInfo;
+		pInfo=pInfo->pNext;
 	}
 
 	LeaveCriticalSection(&cHandleCriticalSection);
@@ -592,6 +607,58 @@ void DebugCloseHandle2(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLin
 		DebugHandleTypeToStr(bType),pValue,szInfo!=NULL?szInfo:"NULL",iLine,szFile); 
 }
 
+void DebugCloseHandle3(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLine,LPCSTR szFile)
+{
+	if (pValue==NULL || pValue==INVALID_HANDLE_VALUE)
+		return;
+
+	EnterCriticalSection(&cHandleCriticalSection);
+
+
+	DebugHandleInfo* pInfo=pFirstDebugHandle;
+	DebugHandleInfo* pPrev=NULL;
+	while (pInfo!=NULL)
+	{
+		if (pInfo->pValue==pValue && (pInfo->bType==bType || pInfo->bType==dhtUnknown))
+		{
+			if (pPrev==NULL)
+			{
+				// Remove first
+				if (pLastDebugHandle==pFirstDebugHandle)
+					pLastDebugHandle=NULL;
+				pFirstDebugHandle=pInfo->pNext;
+			}
+			else
+			{
+				if (pLastDebugHandle==pInfo)
+					pLastDebugHandle=pPrev;
+				pPrev->pNext=pInfo->pNext;				
+			}
+
+			
+			if (dwDebugFlags&DebugLogHandleOperations)
+			{
+				DebugFormatMessage("%s handle %X closed on line %d in file %s, szInfo=%s",
+					DebugHandleTypeToStr(bType),pValue,iLine,szFile,szInfo!=NULL?szInfo:"(NULL)");
+			}
+
+			ClearDebugHandleInfo(pInfo);
+			free(pInfo);
+
+
+			LeaveCriticalSection(&cHandleCriticalSection);
+			return;
+		}
+
+
+		pPrev=pInfo;
+		pInfo=pInfo->pNext;
+	}
+
+	LeaveCriticalSection(&cHandleCriticalSection);
+}
+
+
 void DebugCloseHandle2(DebugHandleType bType,void* pValue,LPCWSTR szInfo,int iLine,LPCSTR szFile)
 {
 	if (szInfo==NULL)
@@ -600,27 +667,173 @@ void DebugCloseHandle2(DebugHandleType bType,void* pValue,LPCWSTR szInfo,int iLi
 		DebugCloseHandle2(bType,pValue,W2A(szInfo),iLine,szFile); 
 }
 
+void DebugCloseHandle3(DebugHandleType bType,void* pValue,LPCWSTR szInfo,int iLine,LPCSTR szFile)
+{
+	if (szInfo==NULL)
+		DebugCloseHandle3(bType,pValue,STRNULL,iLine,szFile); 
+	else
+		DebugCloseHandle3(bType,pValue,W2A(szInfo),iLine,szFile); 
+}
 
 void DebugLogOpenHandles()
 {
 	EnterCriticalSection(&cHandleCriticalSection);
-	POSITION pPos=aDebugHandles.GetHeadPosition();
-	while (pPos!=NULL)
+	
+	if (pFirstDebugHandle!=NULL)
 	{
-		DebugHandleInfo* pInfo=aDebugHandles.GetAt(pPos);
-		
-		DebugFormatMessage("Open %s handle %X info=%s line=%d file=%s",
-			DebugHandleTypeToStr(pInfo->bType),pInfo->pValue,
-			pInfo->szInfo!=NULL?pInfo->szInfo:"NULL",pInfo->iLine,pInfo->szFile);
+		DebugMessage("Following handles are marked open:");
+		DebugHandleInfo* pInfo=pFirstDebugHandle;
+		while (pInfo!=NULL)
+		{
+			DebugFormatMessage("Open %s handle %X info=%s line=%d file=%s",
+				DebugHandleTypeToStr(pInfo->bType),pInfo->pValue,
+				pInfo->szInfo!=NULL?pInfo->szInfo:"NULL",pInfo->iLine,pInfo->szFile);
 
-		pPos=aDebugHandles.GetNextPosition(pPos);
+			pInfo=pInfo->pNext;
+		}
+		LeaveCriticalSection(&cHandleCriticalSection);
+		DebugMessage("Open handle list end.");
 	}
-	LeaveCriticalSection(&cHandleCriticalSection);
+	
+}
+
+void DebugClearOpenHandlesList()
+{
+	EnterCriticalSection(&cHandleCriticalSection);
+	
+	while (pFirstDebugHandle!=NULL)
+	{
+		DebugHandleInfo* pTmp=pFirstDebugHandle;
+		pFirstDebugHandle=pTmp->pNext;
+
+		ClearDebugHandleInfo(pTmp);
+		free(pTmp);
+	}
+	pLastDebugHandle=NULL;
+
+	DeleteCriticalSection(&cHandleCriticalSection);
+}
 
 
+
+
+// Memory alloction with tracking, corresponds to DEBUG_NEW
+void* operator new(size_t nSize, LPCSTR lpszFileName, int nLine)
+{
+#ifdef _DEBUG
+	void* pBlock=::operator new(nSize,HFC_NORMAL_BLOCK,lpszFileName,nLine);
+#else
+	void* pBlock=::operator new(nSize);
+#endif
+	DebugOpenHandle2(dhtMemoryBlock,pBlock,STRNULL,nLine,lpszFileName);
+	return pBlock;
+}
+
+
+void* operator new[](size_t nSize, LPCSTR lpszFileName, int nLine)
+{
+#ifdef _DEBUG	
+	void* pBlock=::operator new(nSize,HFC_ARRAY_BLOCK,lpszFileName,nLine);
+#else
+	void* pBlock=::operator new(nSize);
+#endif
+	DebugOpenHandle2(dhtMemoryBlock,pBlock,STRNULL,nLine,lpszFileName);
+	return pBlock;
+}
+
+void operator delete(void* p, LPCSTR lpszFileName, int nLine)
+{
+	DebugCloseHandle2(dhtMemoryBlock,p,STRNULL,nLine,lpszFileName);
+#ifdef _DEBUG	
+	::operator delete(p,HFC_NORMAL_BLOCK,lpszFileName,nLine);
+#else
+	::operator delete(p);
+#endif
+}
+
+void operator delete[](void* p, LPCSTR lpszFileName, int nLine)
+{
+	DebugCloseHandle2(dhtMemoryBlock,p,STRNULL,nLine,lpszFileName);
+#ifdef _DEBUG	
+	::operator delete(p,HFC_ARRAY_BLOCK,lpszFileName,nLine);
+#else
+	::operator delete(p);
+#endif
+}
+
+#ifndef HFC_NOALLOCTRACKING
+
+// Memory alloction, no tracking
+void * operator new(size_t nSize)
+{
+#ifdef _DEBUG
+	void* pBlock=::operator new(nSize,HFC_NORMAL_BLOCK,0,NULL);
+#else
+	void* pBlock=malloc(nSize);
+#endif
+	
+	DebugOpenHandle2(dhtMemoryBlock,pBlock,STRNULL,__LINE__,__FILE__);
+	return pBlock;
+}
+
+
+
+// Memory alloction, no tracking
+void * operator new[](size_t nSize)
+{
+#ifdef _DEBUG
+	void* pBlock=::operator new(nSize,HFC_ARRAY_BLOCK,0,NULL);
+#else
+	void* pBlock=::operator new(nSize);
+#endif
+	DebugOpenHandle2(dhtMemoryBlock,pBlock,STRNULL,__LINE__,__FILE__);
+	return pBlock;
+}
+
+void operator delete(void *p)
+{
+	if (p == NULL)
+		return;
+
+	DebugCloseHandle3(dhtMemoryBlock,p,STRNULL,0,NULL);
+
+#ifdef _DEBUG
+	_free_dbg(p,HFC_NORMAL_BLOCK);
+#else
+	free(p);
+#endif
+}
+
+void operator delete[](void *p )
+{
+	if (p == NULL)
+		return;
+
+	DebugCloseHandle3(dhtMemoryBlock,p,STRNULL,0,NULL);
+	
+#ifdef _DEBUG
+	_free_dbg(p,HFC_ARRAY_BLOCK);
+#else
+	free(p);
+#endif
 }
 
 #endif
+
+#endif
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////////
+// Debug related windows function
+
 
 #ifdef _DEBUG
 
@@ -652,9 +865,6 @@ void AddDebugMenuItems(HWND hWnd)
 	
 	mii.fMask=MIIM_ID|MIIM_TYPE;
 	mii.fType=MFT_STRING;
-	mii.wID=0x61;
-	mii.dwTypeData="View Allocators";
-	InsertMenuItem(hMenu,3,TRUE,&mii);
 	mii.wID=0x66;
 	mii.dwTypeData="Show open handles";
 	InsertMenuItem(hMenu,3,TRUE,&mii);
@@ -720,9 +930,6 @@ void DebugCommandsProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		case 0x60:
 			AddDebugNote(hWnd);
 			break;
-		case 0x61:
-			ViewAllocators(hWnd);
-			break;
 		case 0x62:
 			MessageBox(hWnd,GetHFCLibStr(),"HFC Library version.",MB_ICONINFORMATION|MB_OK);
 			break;
@@ -733,7 +940,7 @@ void DebugCommandsProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam)
 			StartDebugLogging();
 			break;
 		case 0x65:
-			EndDebugLogging();
+			StopDebugLogging();
 			break;
 		case 0x66:
 			ViewOpenHandles(hWnd);
@@ -880,109 +1087,6 @@ LRESULT CALLBACK AddDebugNoteWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lP
 	return DefWindowProc(hWnd,uMsg,wParam,lParam);
 }
  
-LRESULT CALLBACK ViewAllocatorsWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
-{
-	void AddAllocatorsIDtoCombo(HWND hCombo);
-	void GetAllocatorString(int iIndex,CString& str);
-	
-	switch (uMsg)
-	{
-	case WM_CREATE:
-		{
-			RECT rect;
-			GetClientRect(hWnd,&rect);
-			HWND hCtrl=CreateWindow("COMBOBOX",szEmpty,WS_VISIBLE|WS_CHILD|CBS_DROPDOWNLIST|WS_VSCROLL|WS_TABSTOP,
-				0,0,rect.right-100,100,
-				hWnd,(HMENU)100,GetInstanceHandle(),0);
-			SendMessage(hCtrl,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),1);
-
-			AddAllocatorsIDtoCombo(hCtrl);
-			SendMessage(hCtrl,CB_SETCURSEL,0,0);
-			
-			hCtrl=CreateWindow("BUTTON","&Refresh",WS_VISIBLE|WS_CHILD|
-				BS_PUSHBUTTON|BS_TEXT,rect.right-100,0,50,19,
-				hWnd,(HMENU)101,GetInstanceHandle(),0);
-			SendMessage(hCtrl,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),1);
-			hCtrl=CreateWindow("BUTTON","&Close",WS_VISIBLE|WS_CHILD|BS_PUSHBUTTON|BS_TEXT,
-				rect.right-50,0,50,19,hWnd,(HMENU)102,GetInstanceHandle(),0);
-			SendMessage(hCtrl,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),1);
-			hCtrl=CreateWindow("EDIT",szEmpty,WS_VISIBLE|WS_CHILD|
-				ES_AUTOHSCROLL|ES_AUTOVSCROLL|ES_MULTILINE|ES_READONLY|WS_VSCROLL|WS_HSCROLL,
-				0,20,rect.right,rect.bottom-20,
-				hWnd,(HMENU)103,GetInstanceHandle(),0);
-			SendMessage(hCtrl,WM_SETFONT,(WPARAM)GetStockObject(DEFAULT_GUI_FONT),1);
-			CString str;
-			GetAllocatorString((int)SendDlgItemMessage(hWnd,100,CB_GETCURSEL,0,0),str);
-			int index=-1;
-			while ((index=str.FindNext('\n',index+1))!=-1)
-				str.InsChar(index,'\r');
-			
-			SetDlgItemText(hWnd,103,str);
-			SetTimer(hWnd,0,500,NULL);
-		}
-		break;
-	case WM_CLOSE:
-		DestroyWindow(hWnd);
-		break;
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		KillTimer(hWnd,0);
-		break;
-	case WM_SIZE:
-		if (wParam!=SIZE_MINIMIZED)
-		{
-			::SetWindowPos(GetDlgItem(hWnd,100),HWND_TOP,0,0,LOWORD(lParam)-100,100,SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOMOVE);
-			::SetWindowPos(GetDlgItem(hWnd,101),HWND_TOP,LOWORD(lParam)-100,0,0,0,SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOSIZE);
-			::SetWindowPos(GetDlgItem(hWnd,102),HWND_TOP,LOWORD(lParam)-50,0,0,0,SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOSIZE);
-			::SetWindowPos(GetDlgItem(hWnd,103),HWND_TOP,0,0,LOWORD(lParam),HIWORD(lParam)-20,SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOMOVE);
-		}
-		break;
-	case WM_TIMER:
-		{
-			// Updating if necassary
-			CString str;
-			GetAllocatorString((int)SendDlgItemMessage(hWnd,100,CB_GETCURSEL,0,0),str);
-			int index=-1;
-			while ((index=str.FindNext('\n',index+1))!=-1)
-				str.InsChar(index,'\r');
-			
-			DWORD dwLength=(DWORD)SendDlgItemMessage(hWnd,103,WM_GETTEXTLENGTH,0,0);
-			if (str.GetLength()!=dwLength)
-				SetDlgItemText(hWnd,103,str);
-			else
-			{
-				char* szText=new char[dwLength+1];
-				GetDlgItemText(hWnd,103,szText,dwLength+1);
-				if (strcmp(szText,str)!=0)
-					SetDlgItemText(hWnd,103,str);
-				delete[] szText;
-			}
-			break;
-		}
-	case WM_COMMAND:
-		switch (LOWORD(wParam))
-		{
-		case 100:
-			if (HIWORD(wParam)!=CBN_SELCHANGE)
-				break;
-		case 101:
-			{
-				CString str;
-				GetAllocatorString((int)SendDlgItemMessage(hWnd,100,CB_GETCURSEL,0,0),str);
-				int index=-1;
-				while ((index=str.FindNext('\n',index+1))!=-1)
-					str.InsChar(index,'\r');
-				SetDlgItemText(hWnd,103,str);
-				break;
-			}
-		case 102:
-			DestroyWindow(hWnd);
-			break;
-		}
-		break;
-	}
-	return DefWindowProc(hWnd,uMsg,wParam,lParam);
-}
 
 LRESULT CALLBACK ViewOpenHandlesWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lParam)
 {
@@ -1012,10 +1116,9 @@ LRESULT CALLBACK ViewOpenHandlesWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM
 			::SendMessage(hCtrl,LB_RESETCONTENT,0,0);
 			
 			EnterCriticalSection(&cHandleCriticalSection);
-			POSITION pPos=aDebugHandles.GetHeadPosition();
-			while (pPos!=NULL)
+			DebugHandleInfo* pInfo=pFirstDebugHandle;
+			while (pInfo!=NULL)
 			{
-				DebugHandleInfo* pInfo=aDebugHandles.GetAt(pPos);
 				char szBuffer[1000];
 				StringCbPrintf(szBuffer,1000,"%s entry %X, info=%s line=%d file=%s",
 					DebugHandleTypeToStr(pInfo->bType),pInfo->pValue,
@@ -1023,7 +1126,7 @@ LRESULT CALLBACK ViewOpenHandlesWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM
 
 				::SendMessage(hCtrl,LB_ADDSTRING,0,(LPARAM)szBuffer);
 
-				pPos=aDebugHandles.GetNextPosition(pPos);
+				pInfo=pInfo->pNext;
 			}
 			LeaveCriticalSection(&cHandleCriticalSection);
 		}
@@ -1165,7 +1268,7 @@ LRESULT CALLBACK ViewDebugLogWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM lP
 			SetFocus(GetDlgItem(hWnd,108));
 			break;
 		case 102:
-			EndDebugLogging();
+			StopDebugLogging();
 			RefreshDebugLogViewer(hWnd);
 			SetFocus(GetDlgItem(hWnd,108));
 			break;
@@ -1242,43 +1345,6 @@ void AddDebugNote(HWND hWndParent)
 		GetCurrentWinThread()->ModalLoop();
 }
 
-void ViewAllocators(HWND hWndParent)
-{
-	WNDCLASSEX wc;
-
-    wc.cbSize=sizeof(WNDCLASSEX); 
-    wc.style=CS_HREDRAW|CS_VREDRAW;
-    wc.lpfnWndProc=ViewAllocatorsWndProc; 
-    wc.cbClsExtra=0;
-    wc.cbWndExtra=0; 
-    wc.hInstance=GetInstanceHandle();
-    wc.hIcon=NULL;
-    wc.hCursor=LoadCursor(NULL,IDC_ARROW); 
-    wc.hbrBackground=(HBRUSH)(COLOR_WINDOW+1);
-    wc.lpszMenuName=0;
-    wc.lpszClassName="VIEWALLOCATORSWND"; 
-    wc.hIconSm=NULL;
-	RegisterClassEx(&wc);
-
-	HWND hWnd=CreateWindow("VIEWALLOCATORSWND","View Allocators",
-		WS_VISIBLE|WS_OVERLAPPED|WS_CAPTION|WS_THICKFRAME|WS_SYSMENU,
-		CW_USEDEFAULT,CW_USEDEFAULT,600,500,
-		hWndParent,NULL,GetInstanceHandle(),NULL);
-	ShowWindow(hWnd,SW_SHOW);
-	UpdateWindow(hWnd);
-
-	if (GetCurrentWinThread()==NULL)
-	{
-		MSG msg;
-		while (GetMessage(&msg,NULL,0,0))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-	}
-	else
-		GetCurrentWinThread()->ModalLoop();
-}
 
 void ViewOpenHandles(HWND hWndParent)
 {

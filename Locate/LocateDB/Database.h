@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.1060                 */
+   database updater v3.0.7.2110                 */
 
 #if !defined(DATABASE_H)
 #define DATABASE_H
@@ -8,6 +8,16 @@
 #pragma once
 #endif
 
+
+//#define UpdDebugMessage(a) DebugMessage(a)
+//#define UpdDebugFormatMessage1(a,b) DebugFormatMessage(a,b)
+//#define UpdDebugFormatMessage2(a,b,c) DebugFormatMessage(a,b,c)
+//#define UpdDebugFormatMessage5(a,b,c,d,e,f,g) DebugFormatMessage(a,b,c,d,e,f,g)
+
+#define UpdDebugMessage(a)
+#define UpdDebugFormatMessage1(a,b) 
+#define UpdDebugFormatMessage2(a,b,c) 
+#define UpdDebugFormatMessage5(a,b,c,d,e,f,g)
 
 
 

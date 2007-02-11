@@ -4,6 +4,10 @@
 
 #include "HFCLib.h"
 
+#if defined(HFC_USEDEBUGNEW)
+	#define new DEBUG_NEW
+#endif
+
 void IntToBin(UINT num,LPTSTR szBuffer,UINT bits)
 {
 	UINT i,mask;

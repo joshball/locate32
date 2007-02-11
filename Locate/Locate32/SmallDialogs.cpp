@@ -2248,7 +2248,7 @@ CPropertiesSheet::CPropertiesSheet(int nItems,CLocatedItem** pItems)
 CPropertiesSheet::~CPropertiesSheet()
 {
 	CloseHandle(m_hThread);
-	DebugCloseHandle(dhtThread,m_hThread,STRNULL);
+	DebugCloseThread(m_hThread);
 	delete m_pPropertiesPage;
 	
 }
@@ -2264,7 +2264,7 @@ void CPropertiesSheet::Open()
 {
 	DWORD dwThreadID;
 	m_hThread=CreateThread(NULL,0,StartThreadProc,this,0,&dwThreadID);
-	DebugOpenHandle(dhtThread,m_hThread,STRNULL);
+	DebugOpenThread(m_hThread);
 	
 }
 	
@@ -2284,7 +2284,7 @@ CPropertiesSheet::CPropertiesPage::CPropertiesPage(int nItems,CLocatedItem** pIt
 
 	DWORD dwThread;
 	m_hThread=CreateThread(NULL,0,CountingThreadProc,this,0,&dwThread);
-	DebugOpenHandle(dhtThread,m_hThread,STRNULL);
+	DebugOpenThread(m_hThread);
 
 	DWORD dwError=GetLastError();
 
@@ -2342,7 +2342,7 @@ void CPropertiesSheet::CPropertiesPage::OnDestroy()
 		}
 
 		CloseHandle(m_hThread);
-		DebugCloseHandle(dhtThread,m_hThread,STRNULL);
+		DebugCloseThread(m_hThread);
 		m_hThread=NULL;
 	}
 }
@@ -2438,7 +2438,7 @@ void CPropertiesSheet::CPropertiesPage::OnTimer(DWORD wTimerID)
 		{
 			KillTimer(0);	
 			CloseHandle(m_hThread);
-			DebugCloseHandle(dhtThread,m_hThread,STRNULL);
+			DebugCloseThread(m_hThread);
 			m_hThread=NULL;
 		}
 	}

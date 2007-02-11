@@ -530,7 +530,7 @@ inline W2A::W2A(CStringW& sA)
 inline W2A::~W2A()
 {
 	if (pAStr!=NULL)
-		delete pAStr;
+		delete[] pAStr;
 }
 
 inline W2A::operator LPCSTR() const
@@ -560,7 +560,7 @@ inline A2W::A2W(CString& sA)
 inline A2W::~A2W()
 {
 	if (pWStr!=NULL)
-		delete pWStr;
+		delete[] pWStr;
 }
 
 inline A2W::operator LPCWSTR() const
@@ -577,7 +577,7 @@ inline A2W::operator LPCWSTR() const
 
 inline ID2A::~ID2A()
 {
-	delete pStr;
+	delete[] pStr;
 }
 
 inline ID2A::operator LPCSTR() const
@@ -591,7 +591,7 @@ inline ID2A::operator LPCSTR() const
 #ifdef DEF_WCHAR
 inline ID2W::~ID2W()
 {
-	delete pWStr;
+	delete[] pWStr;
 }
 
 inline ID2W::operator LPCWSTR() const

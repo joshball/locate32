@@ -30,7 +30,7 @@ parameters:
     -lrn        don't replace spaces with asterisk
     -lc:TEXT    file must contain string TEXT
     -lcm        string text is match case (default)
-    -lcnm       string text is not match case
+    -lcn        string text is not match case
     -lR:TEXT    same as above but TEXT is regular expression
     -v          verbose mode, information about search
     -X:CUSTOM   use different settings branch (see locate.ini file)

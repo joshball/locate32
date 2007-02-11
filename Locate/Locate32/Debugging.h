@@ -7,7 +7,6 @@
 
 
 #ifdef _DEBUG
-extern DEBUGALLOCATORTYPE DebugAlloc;
 #define _DEBUG_LOGGING
 #endif
 
@@ -42,14 +41,16 @@ extern DEBUGALLOCATORTYPE DebugAlloc;
 
 #ifdef DEBUGMSG_BACKGROUND
 #define BkgDebugMessage(a)						DebugMessage(a)
-#define BkgDebugNumMessage(a,b)					DebugNumMessage(a,b)
+#define BkgDebugNumMessage(a,b)					DebugFormatMessage(a,(DWORD)(b))
 #define BkgDebugFormatMessage(a,b)				DebugFormatMessage(a,b)
 #define BkgDebugFormatMessage4(a,b1,b2,b3,b4)	DebugFormatMessage(a,b1,b2,b3,b4)
+#define BkgDebugFormatMessage5(a,b1,b2,b3,b4,b5)	DebugFormatMessage(a,b1,b2,b3,b4,b5)
 #else
 #define BkgDebugMessage(a)
 #define BkgDebugNumMessage(a,b)
 #define BkgDebugFormatMessage(a,b) 
 #define BkgDebugFormatMessage4(a,b1,b2,b3,b4)
+#define BkgDebugFormatMessage5(a,b1,b2,b3,b4,b5)
 #endif
 
 #ifdef DEBUGMSG_DBCALLBACK

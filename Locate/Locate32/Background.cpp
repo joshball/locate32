@@ -244,28 +244,30 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 						while (1)
 						{
 							DWORD dwLength=pStruct->FileNameLength/2;
-							WCHAR* szFile=new WCHAR[pChangeData->dwRootLength+dwLength+2];
-							MemCopyW(szFile,pChangeData->szRoot,pChangeData->dwRootLength);
-							MemCopyW(szFile+pChangeData->dwRootLength,pStruct->FileName,dwLength);
+							
+							m_pFile=new WCHAR[pChangeData->dwRootLength+dwLength+2];
+							MemCopyW(m_pFile,pChangeData->szRoot,pChangeData->dwRootLength);
+							MemCopyW(m_pFile+pChangeData->dwRootLength,pStruct->FileName,dwLength);
 							dwLength+=pChangeData->dwRootLength;
-							szFile[dwLength]='\0';
-							MakeLower(szFile);
+							m_pFile[dwLength]='\0';
+							MakeLower(m_pFile);
 
 							switch(pStruct->Action)
 							{
 							case FILE_ACTION_ADDED:
 							case FILE_ACTION_RENAMED_NEW_NAME:
-								FileCreated(szFile,dwLength,pLocateDlg);
+								FileCreated(m_pFile,dwLength,pLocateDlg);
 								break;
 							case FILE_ACTION_REMOVED:
 							case FILE_ACTION_RENAMED_OLD_NAME:
-								FileDeleted(szFile,dwLength,pLocateDlg);
+								FileDeleted(m_pFile,dwLength,pLocateDlg);
 								break;
 							case FILE_ACTION_MODIFIED:
-								FileModified(szFile,dwLength,pLocateDlg);
+								FileModified(m_pFile,dwLength,pLocateDlg);
 								break;
 							}
-							delete[] szFile;
+							delete[] m_pFile;
+							m_pFile=NULL;
 							
 							BkgDebugMessage("CCheckFileNotificationsThread::RunningProc() 1");
 							
@@ -303,7 +305,7 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 
 BOOL CCheckFileNotificationsThread::RunningProcOld()
 {
-	DebugNumMessage("CCheckFileNotificationsThread::RunningProcOld() BEGIN, thread is 0x%X",GetCurrentThreadId());
+	BkgDebugNumMessage("CCheckFileNotificationsThread::RunningProcOld() BEGIN, thread is 0x%X",GetCurrentThreadId());
 	CreateHandlesOld();
 	for (;;)
 	{
@@ -450,7 +452,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 	ASSERT(m_pHandles!=NULL);
 
 	m_pHandles[0]=CreateEvent(NULL,FALSE,FALSE,NULL);
-	DebugOpenHandle(dhtEvent,m_pHandles[0],STRNULL);
+	DebugOpenEvent(m_pHandles[0]);
 	m_pChangeDatas[0]=NULL;
 
 	m_nHandles=1;
@@ -496,7 +498,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 		{
 			pChangeData=new DIRCHANGEDATA;
 			pChangeData->ol.hEvent=CreateEvent(NULL,FALSE,FALSE,NULL);
-			DebugOpenHandle(dhtEvent,pChangeData->ol.hEvent,STRNULL);
+			DebugOpenEvent(pChangeData->ol.hEvent);
 			pChangeData->pBuffer=new BYTE[CHANGE_BUFFER_LEN];
 		}
 
@@ -545,8 +547,6 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 			m_pHandles[m_nHandles]=pChangeData->ol.hEvent;
 			m_pChangeDatas[m_nHandles]=pChangeData;
 
-			DebugFormatMessage("CreateHandlesNew: created listener for %S (%S,%X,%X,%X)",
-				szRoot,pChangeData->szRoot,(DWORD_PTR)pChangeData,pChangeData->ol.hEvent,pChangeData->hDir);
 
 			pChangeData=NULL;
 			m_nHandles++;
@@ -583,7 +583,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 	ASSERT(m_pHandles!=NULL);
 
 	m_pHandles[0]=CreateEvent(NULL,FALSE,FALSE,STRNULL);
-	DebugOpenHandle(dhtEvent,m_pHandles[0],STRNULL);
+	DebugOpenEvent(m_pHandles[0]);
 	m_pRoots[0]=NULL;
 
 	m_nHandles=1;
@@ -645,7 +645,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 			else
 				m_pHandles[m_nHandles]=FindFirstChangeNotification(W2A(szRoot),TRUE,
 					FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
-			DebugOpenHandle(dhtEvent,m_pHandles[m_nHandles],STRNULL);
+			DebugOpenEvent(m_pHandles[m_nHandles]);
 
 			BkgDebugFormatMessage4("FindFirstChangeNotification2,%d returned: 0x%X, drive is %S, GetLastError()=0x%X",i,m_pHandles[m_nHandles],szRoot,GetLastError());
 			if (m_pHandles[m_nHandles]!=INVALID_HANDLE_VALUE)
@@ -664,8 +664,6 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 
 BOOL CCheckFileNotificationsThread::DestroyHandles()
 {
-	
-	
 	BkgDebugMessage("CCheckFileNotificationsThread::DestroyHandles() BEGIN");
 	
 	if (m_pHandles==NULL)
@@ -682,7 +680,7 @@ BOOL CCheckFileNotificationsThread::DestroyHandles()
 	
 		// Pointers used with ReadDirectoryChangesW		
 		CloseHandle(pHandles[0]);
-		DebugCloseHandle(dhtEvent,pHandles[0],STRNULL);
+		DebugCloseEvent(pHandles[0]);
 		for (UINT n=1;n<nHandles;n++)
 		{
 			//DebugFormatMessage("Deleting CHANGEDIR for %s",pChangeDatas[n]->szRoot);
@@ -701,7 +699,7 @@ BOOL CCheckFileNotificationsThread::DestroyHandles()
 	{
 		// Pointers used with traditional method
 		CloseHandle(pHandles[0]);
-		DebugCloseHandle(dhtEvent,pHandles[0],STRNULL);
+		DebugCloseEvent(pHandles[0]);
 		for (UINT n=1;n<nHandles;n++)
 		{
 			FindCloseChangeNotification(pHandles[n]);
@@ -755,12 +753,12 @@ BOOL CBackgroundUpdater::Start()
 void CBackgroundUpdater::CreateEventsAndMutex()
 {
 	m_phEvents[0]=CreateEvent(NULL,TRUE,FALSE,NULL);
-	DebugOpenHandle(dhtEvent,m_phEvents[0],STRNULL);
+	DebugOpenEvent(m_phEvents[0]);
 	m_phEvents[1]=CreateEvent(NULL,TRUE,FALSE,NULL);
-	DebugOpenHandle(dhtEvent,m_phEvents[1],STRNULL);
+	DebugOpenEvent(m_phEvents[1]);
 
 	m_hUpdateListPtrInUse=CreateMutex(NULL,FALSE,NULL);
-	DebugOpenHandle(dhtMutex,m_hUpdateListPtrInUse,STRNULL);
+	DebugOpenMutex(m_hUpdateListPtrInUse);
 }
 
 CBackgroundUpdater::~CBackgroundUpdater()
@@ -774,21 +772,21 @@ CBackgroundUpdater::~CBackgroundUpdater()
 
 		BkgDebugMessage("CBackgroundUpdater::~CBackgroundUpdater()");
 		CloseHandle(hThread);
-		DebugCloseHandle(dhtThread,hThread,STRNULL);
+		DebugCloseThread(hThread);
 	}
 	else
 		InterlockedExchangePointer((PVOID*)&GetLocateDlg()->m_pBackgroundUpdater,NULL);
 	
 	
 	CloseHandle(m_phEvents[0]);
-	DebugCloseHandle(dhtEvent,m_phEvents[0],STRNULL);
+	DebugCloseEvent(m_phEvents[0]);
 	CloseHandle(m_phEvents[1]);
-	DebugCloseHandle(dhtEvent,m_phEvents[1],STRNULL);
+	DebugCloseEvent(m_phEvents[1]);
 
 	if (m_hUpdateListPtrInUse!=NULL)
 	{
 		CloseHandle(m_hUpdateListPtrInUse);
-		DebugCloseHandle(dhtMutex,m_hUpdateListPtrInUse,STRNULL);
+		DebugCloseMutex(m_hUpdateListPtrInUse);
 		m_hUpdateListPtrInUse=NULL;
 	}
 }
@@ -846,7 +844,7 @@ BOOL CBackgroundUpdater::Stop()
 
 inline BOOL CBackgroundUpdater::RunningProc()
 {
-	DebugNumMessage("CBackgroundUpdater::RunningProc() BEGIN, running thread 0x%X",GetCurrentThreadId());
+	BkgDebugNumMessage("CBackgroundUpdater::RunningProc() BEGIN, running thread 0x%X",GetCurrentThreadId());
 
 	for (;;)
 	{

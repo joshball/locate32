@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database locater v3.0.7.1060               */
+   database locater v3.0.7.2110               */
 
 #if !defined(LOCATER_H)
 #define LOCATER_H
@@ -11,12 +11,13 @@
 #include "../locatedb/definitions.h"
 
 
-#define LocaterDebugMessage(a) DebugMessage(a)
-#define LocaterDebugNumMessage(a,b) DebugNumMessage(a,b)
-#define LocaterDebugMessage5(a,b,c,d,e,f,g) DebugFormatMessage(a,b,c,d,e,f,g)
+//#define LocaterDebugMessage(a) DebugMessage(a)
+//#define LocaterDebugNumMessage(a,b) DebugFormatMessage(a,(DWORD)(b))
+//#define LocaterDebugMessage5(a,b,c,d,e,f,g) DebugFormatMessage(a,b,c,d,e,f,g)
 
-//#define LocaterDebugMessage(a)
-//#define LocaterDebugMessage5(a,b,c,d,e,f,g)
+#define LocaterDebugMessage(a)
+#define LocaterDebugNumMessage(a,b) 
+#define LocaterDebugMessage5(a,b,c,d,e,f,g)
 
 
 class CLocater;

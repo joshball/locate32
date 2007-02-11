@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,7,1210
- PRODUCTVERSION 3,0,7,1210
+ FILEVERSION 3,0,7,2110
+ PRODUCTVERSION 3,0,7,2110
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 build 7.1210"
+            VALUE "FileVersion", "3.0 build 7.2110"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2007 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 build 7.1210"
+            VALUE "ProductVersion", "3.0 build 7.2110"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1267,7 +1267,7 @@ BEGIN
     IDS_ERRORUNKNOWNSCANROOT		" State: scanning root '%s'."
 	IDS_ERRORINVALIDDB				"Invalid database format in file '%s'. Update database."
     IDS_ERRORCANNOTWRITEDB			"Cannot write database to file '%s'."
-    IDS_ERRORWRONGDRIVE				"Path is found in drive that has not included in file database."
+    IDS_ERRORWRONGDRIVE				"Path is found in drive that was not included in file database."
     IDS_ERRORNOCOLUMNSSELECTED		"No any columns selected. Select at least one."
     IDS_ERRORCANNOTADDITEM			"Cannot add item."
     IDS_ERRORCANNOTADDITEM2			"Cannot add item '%s'."
@@ -1703,6 +1703,7 @@ BEGIN
 	IDS_ACTIONSWDIALOGMAXIMIZE			"Maximize dialog"
 	IDS_ACTIONSWDIALOMAXIMIZEORRESTORE	"Maximize / Restore dialog"
 	IDS_ACTIONSWDIALOMSHOWOPENORHIDE	"Show or Open / Hide dialog"
+	IDS_ACTIONSWDIALOMSHOWANDDIRFROMEXPLORER	"Show dialog and path from Explorer"
 	IDS_ACTIONRESITEMEXECUTE			"Execute item"
 	IDS_ACTIONRESITEMCOPY				"Copy file (to clipboard)"
 	IDS_ACTIONRESITEMCUT				"Cut file (to clipboard)"

@@ -4,6 +4,10 @@
 
 #include "HFCLib.h"
 
+#if defined(HFC_USEDEBUGNEW)
+	#define new DEBUG_NEW
+#endif
+
 #if defined(DEF_RESOURCES) && defined(DEF_WINDOWS)
 
 ///////////////////////////
@@ -346,11 +350,20 @@ CPropertySheet::~CPropertySheet()
 {
 	if (m_psh.phpage!=NULL)
 		delete[] m_psh.phpage;
-	if (m_psh.dwFlags&=PSH_USEICONID && !IS_INTRESOURCE(m_psh.pszIcon))
+	if (IsUnicodeSystem())
 	{
-		if (IsUnicodeSystem())
+		if (m_pshw.pszCaption)
+			delete[] m_pshw.pszCaption;
+		
+		if (m_psh.dwFlags&=PSH_USEICONID && !IS_INTRESOURCE(m_psh.pszIcon))
 			delete[] m_pshw.pszIcon;
-		else
+	}
+	else
+	{
+		if (m_pshw.pszCaption)
+			delete[] m_psh.pszCaption;
+		
+		if (m_psh.dwFlags&=PSH_USEICONID && !IS_INTRESOURCE(m_psh.pszIcon))
 			delete[] m_psh.pszIcon;
 	}
 }
@@ -1300,6 +1313,8 @@ CFileDialog::~CFileDialog()
 				delete[] (LPWSTR)m_pwofn->lpstrTitle;
 			if (m_pwofn->lpstrDefExt!=NULL)
 				delete[] (LPWSTR)m_pwofn->lpstrDefExt;
+			if (m_pwofn->lpstrFileTitle!=NULL)
+				delete[] m_pwofn->lpstrFileTitle;
 			delete[] (CHAR*)m_pwofn;
 			m_pwofn=NULL;
 		}
@@ -1307,6 +1322,7 @@ CFileDialog::~CFileDialog()
 			delete[] m_pwFilter;
 		if (m_pwFileName!=NULL)
 			delete[] m_pwFileName;
+		
 	}
 	else
 	{
@@ -1316,6 +1332,8 @@ CFileDialog::~CFileDialog()
 				delete[] (LPSTR)m_pofn->lpstrTitle;
 			if (m_pofn->lpstrDefExt!=NULL)
 				delete[] (LPSTR)m_pofn->lpstrDefExt;
+			if (m_pofn->lpstrFileTitle!=NULL)
+				delete[] m_pofn->lpstrFileTitle;
 			delete[] (char*)m_pofn;
 			m_pofn=NULL;
 		}

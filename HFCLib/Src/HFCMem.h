@@ -20,11 +20,12 @@
 ((BYTE*)(dst))[__i_]=((BYTE*)(src))[__i_];}
 
 // Memory setters
-
 #define MemSet(dst,value,count) FillMemory(dst,count,value)
 #define dMemSet(dst,byte,count) \
 {for (register UINT __i_=0;__i_<(count);__i_++) \
 ((BYTE*)(dst))[__i_]=(BYTE)(byte);}
+
+
 
 //////////////////////////////////////
 // CLASSES
@@ -110,6 +111,9 @@ public:
 public:
 	TYPE* m_pData;
 };
+
+
+
 
 #ifdef WIN32
 class CGlobalAlloc : public CExceptionObject
@@ -253,7 +257,7 @@ public:
 
 #endif
 
-// Data keepers
+// CAutoPtr, works like auto_ptr in STL
 template<class TYPE> 
 class CAutoPtr
 {
@@ -278,6 +282,8 @@ private:
 
 };
 
+
+// CAutoPtrA, use detele[] when freeing memory
 template<class TYPE> 
 class CAutoPtrA
 {
@@ -306,60 +312,6 @@ private:
 
 };
 
-class CAllocator // Abstract class for Allocators
-{
-public:
-	CAllocator();
-	DEBUGVIRTUAL ~CAllocator();
-
-	DEBUGVIRTUAL void FreeAll();
-	
-	DEBUGVIRTUAL BYTE* Allocate(SIZE_T size);
-	DEBUGVIRTUAL BYTE* AllocateFast(SIZE_T size);
-	DEBUGVIRTUAL void Free(void* pBlock);
-
-#ifdef _DEBUG
-	BYTE* Allocate(SIZE_T size,int line,char* szFile);
-#endif
-	
-	DEBUGVIRTUAL void DebugInformation(CString& str);
-	DEBUGVIRTUAL CString GetAllocatorID() const;
-};
-
-template <DWORD EXTRA_ALLOC>
-class CDebugAllocator : public CAllocator
-{
-public:
-	CDebugAllocator();
-	DEBUGVIRTUAL ~CDebugAllocator();
-
-	DEBUGVIRTUAL void FreeAll();
-	
-	DEBUGVIRTUAL BYTE* Allocate(SIZE_T size);
-	DEBUGVIRTUAL BYTE* AllocateFast(SIZE_T size);
-
-#ifdef _DEBUG
-	BYTE* Allocate(SIZE_T size,int line,char* szFile);
-#endif
-	
-	DEBUGVIRTUAL void Free(void* pBlock);
-	
-#ifdef _DEBUG
-	DEBUGVIRTUAL void DebugInformation(CString& str);
-	DEBUGVIRTUAL CString GetAllocatorID() const;
-
-	struct ALLOC 
-	{
-		ALLOC* pNext;
-		ALLOC* pPrev;
-		SIZE_T dwLength;
-		char* szFile;
-		int line;
-	};
-	ALLOC* pFirstAlloc;
-	ALLOC* pLastAlloc;
-#endif
-};
 
 #include "Memory.inl"
 

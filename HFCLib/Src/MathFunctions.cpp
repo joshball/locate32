@@ -5,6 +5,10 @@
 #include "HFCLib.h"
 #include <math.h>
 
+#if defined(HFC_USEDEBUGNEW)
+	#define new DEBUG_NEW
+#endif
+
 UINT powi(USHORT x,BYTE y)
 {
 	UINT ret=x;

@@ -4,6 +4,10 @@
 
 #include "HFCLib.h"
 
+#if defined(HFC_USEDEBUGNEW)
+	#define new DEBUG_NEW
+#endif
+
 HFCERROR ExceptionErrorFunc(HFCERROR nError,DWORD_PTR dwData)
 {
 	switch ((DWORD)nError)

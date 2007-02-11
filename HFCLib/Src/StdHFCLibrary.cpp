@@ -4,6 +4,12 @@
 
 #include "HFCLib.h"
 
+#if defined(HFC_USEDEBUGNEW)
+	#define new DEBUG_NEW
+#endif
+
+
+
 #if defined(DEF_WCHAR) && !defined(_WIN64) && !defined(MICROSOFT_LAYER_FOR_UNICODE)
 BOOL bIsFullUnicodeSupport=(GetVersion()&0x80000000)?FALSE:TRUE;
 #endif
@@ -26,10 +32,6 @@ void CAppData::stdfunc()
 int PASCAL WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 	 LPTSTR lpszCmdLine,int nCmdShow)
 {
-#ifdef _DEBUG_LOGGING
-	extern CRITICAL_SECTION cHandleCriticalSection;
-	InitializeCriticalSection(&cHandleCriticalSection);
-#endif
 
 	int nResult;
 	if (GetAppData()->pAppClass!=NULL)
@@ -55,11 +57,7 @@ int PASCAL WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 		if (GetAppData()->pAppClass->InitInstance())
 			GetAppData()->pAppClass->ModalLoop();	
 		nResult=GetAppData()->pAppClass->ExitInstance();
-#ifdef _DEBUG
-		void CheckAllocators();
-		CheckAllocators();
-		DebugLogOpenHandles();
-#endif
+
 		GetAppData()->m_pThreads->RemoveAll();
 		delete GetAppData()->m_pThreads;
 		GetAppData()->m_pThreads=NULL;

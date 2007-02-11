@@ -4,6 +4,10 @@
 
 #include "HFCLib.h"
 
+#if defined(HFC_USEDEBUGNEW)
+	#define new DEBUG_NEW
+#endif
+
 CAppData m_AppData;
 
 #ifdef DEF_APP
@@ -62,7 +66,7 @@ CWinThread::~CWinThread()
 	if (m_hThread!=NULL)
 	{
 		CloseHandle(m_hThread);
-		DebugCloseHandle(dhtThread,m_hThread,STRNULL);
+		DebugCloseThread(m_hThread);
 
 		if (GetAppData()->m_pThreads!=NULL)
 		{

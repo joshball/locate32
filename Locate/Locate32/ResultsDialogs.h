@@ -35,12 +35,7 @@ private:
 	CString m_sTempFile;
 	
 
-#ifdef _DEBUG
-public:
-	void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-	void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-	void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
+
 };
 
 class CSaveResultsDlg : public CFileDialog  
@@ -65,12 +60,7 @@ private:
 	CListCtrl* m_pList;
 	CImageList m_ToolbarIL,m_ToolbarILHover,m_ToolbarILDisabled;
 
-#ifdef _DEBUG
-public:
-	void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-	void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-	void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
+
 };
 
 inline CResults::CResults(BOOL bThrowExceptions)

@@ -173,7 +173,7 @@ inline void COptionsPropertyPage::Item::GetValuesFromBasicParams(const COptionsP
 		if (pData!=NULL && pData!=pParams->pData)
 			delete[] pData;
 		pData=pParams->pData;
-		DebugFormatMessage("GetValuesFromBasicParams, pData=%X",pData);
+		//DebugFormatMessage("GetValuesFromBasicParams, pData=%X",pData);
 		break;
 	case Color:
 		cColor=pParams->cColor;

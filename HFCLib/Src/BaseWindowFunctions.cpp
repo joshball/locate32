@@ -4,6 +4,10 @@
 
 #include "HFCLib.h"
 
+#if defined(HFC_USEDEBUGNEW)
+	#define new DEBUG_NEW
+#endif
+
 #if defined(WIN32)
 
 COLORREF GetSystemColor(LPCSTR szKey)
@@ -42,6 +46,11 @@ COLORREF GetSystemColor(LPCSTR szKey)
 CWinApp::CWinApp(LPCTSTR lpszAppName)
 :	m_pszAppName(lpszAppName)
 {
+#ifdef _DEBUG_LOGGING
+	extern CRITICAL_SECTION cHandleCriticalSection;
+	InitializeCriticalSection(&cHandleCriticalSection);
+#endif
+
 	GetAppData()->pAppClass=this;
 	GetAppData()->hCommonResourceHandle=NULL;
 	GetAppData()->hLanguageSpecificResourceHandle=NULL;
@@ -82,13 +91,15 @@ CWinApp::~CWinApp()
 	m_hThread=NULL;
 	m_nThreadID=0;
 	
-	
-	EndDebugLogging();
-
 #ifdef _DEBUG_LOGGING
 	extern CRITICAL_SECTION cHandleCriticalSection;
+	void DebugClearOpenHandlesList();
+	DebugLogOpenHandles();
+	DebugClearOpenHandlesList();	
 	DeleteCriticalSection(&cHandleCriticalSection);
 #endif
+
+	StopDebugLogging();
 }
 
 

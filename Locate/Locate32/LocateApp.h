@@ -164,15 +164,6 @@ public:
 	
 	friend inline CLocateDlg* GetLocateWnd();
 
-#ifdef _DEBUG
-public:
-	inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-	inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-	inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
-
-
-
 };
 
 
@@ -252,12 +243,7 @@ public:
 
 		CArrayFP<CDatabase*> m_aDatabases;
 
-#ifdef _DEBUG
-	public:
-		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-		inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
+
 
 	};
 

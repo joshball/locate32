@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   locate.exe v3.0.7.1210                 */
+   locate.exe v3.0.7.2110                 */
 
-const char* szVersionStr="locate 3.0 build 7.1210";
+const char* szVersionStr="locate 3.0 build 7.2110";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -9,6 +9,7 @@ const char* szVersionStr="locate 3.0 build 7.1210";
 #include <sys/farptr.h>
 #include <conio.h>
 #endif
+#include <locale.h>
       
 #include "../locater/locater.h"
 #include "../lan_resources.h"
@@ -344,6 +345,8 @@ int wmain (int argc,wchar_t * argv[])
 #ifdef _DEBUG
 	CAppData::stdfunc();
 #endif
+
+	_wsetlocale(LC_CTYPE,L".OCP"); 
 
 #ifdef WIN32
 	hStdOut=GetStdHandle(STD_OUTPUT_HANDLE);

@@ -359,7 +359,7 @@ LPWSTR g_szwBuffer=NULL;
 
 BOOL CLocateDlgThread::InitInstance()
 {
-	DebugNumMessage("CLocateDlgThread::InitInstance(), thread is 0x%X",GetCurrentThreadId());
+	DebugFormatMessage("CLocateDlgThread::InitInstance(), thread is 0x%X",GetCurrentThreadId());
 
 	CWinThread::InitInstance();
 	CoInitialize(NULL);
@@ -535,7 +535,7 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 
 CLocateDlg::~CLocateDlg()
 {
-	DebugNumMessage("CLocateDlg::~CLocateDlg() this is %X",DWORD(this));
+	DebugFormatMessage("CLocateDlg::~CLocateDlg() this is %X",DWORD(this));
 
 	ASSERT(m_hActivePopupMenu==NULL);
 	ASSERT(m_pActiveContextMenu==NULL);
@@ -2489,20 +2489,24 @@ void CLocateDlg::OnDestroy()
 	
 	CDialog::OnDestroy();
 	
+	// Ensure that locating process is terminated
 	if (m_pLocater!=NULL)
 	{
 		m_pLocater->StopLocating();
-
-		DebugNumMessage("CLocateDlg::OnDestroy(): m_pLocater=%X",(DWORD)m_pLocater);
+		DebugFormatMessage("CLocateDlg::OnDestroy(): m_pLocater=%X",(DWORD)m_pLocater);
 	}
 
+	// Ensuring that update animations are not on
 	StopUpdateAnimation();
 	
+	// Stop background operations
 	if (m_pFileNotificationsThread!=NULL)
 		m_pFileNotificationsThread->Stop();
 	if (m_pBackgroundUpdater!=NULL)
 		m_pBackgroundUpdater->Stop();
 
+	ASSERT(m_pFileNotificationsThread==NULL);
+	ASSERT(m_pBackgroundUpdater==NULL);
 
 	ChangeClipboardChain(*this,m_hNextClipboardViewer);
 	
@@ -2596,11 +2600,12 @@ void CLocateDlg::OnDestroy()
 	PostQuitMessage(0);
 
 	DebugMessage("CLocateDlg::OnDestroy() END");
+
 }
 
 void CLocateDlg::ResetFileNotificators()
 {
-	DebugMessage("CLocateDlg::ResetFileNotificators() BEGIN");
+	//DebugMessage("CLocateDlg::ResetFileNotificators() BEGIN");
 		
 	if (m_pFileNotificationsThread!=NULL)
 		m_pFileNotificationsThread->Stop();
@@ -2612,7 +2617,7 @@ void CLocateDlg::ResetFileNotificators()
 	else
 		m_pFileNotificationsThread=NULL;
 
-	DebugMessage("CLocateDlg::ResetFileNotificators() END");
+	//DebugMessage("CLocateDlg::ResetFileNotificators() END");
 
 }
 
@@ -5594,7 +5599,7 @@ void CLocateDlg::OnRemoveDeletedFiles()
 
 BOOL CLocateDlg::CheckClipboard()
 {
-	DebugMessage("CLocateDlg::CheckClipboard() BEGIN");
+	//DebugMessage("CLocateDlg::CheckClipboard() BEGIN");
 	
 	if (m_pListCtrl==NULL)
 		return TRUE;
@@ -6748,12 +6753,20 @@ BOOL CLocateDlg::InsertMenuItemsFromTemplate(CMenu& Menu,HMENU hTemplate,UINT uS
             CMenu NewMenu;
 			NewMenu.CreatePopupMenu();
 			if (!InsertMenuItemsFromTemplate(NewMenu,CMenu(mii.hSubMenu),0))
+			{
+				NewMenu.DestroyMenu();
 				return FALSE;
-			mii.hSubMenu=NewMenu;		
+			}
+			mii.hSubMenu=NewMenu;
+			DebugCloseHandle(dhtMenu,mii.hSubMenu,STRNULL);
 		}
 		
 		if (!Menu.InsertMenu(i+uStartPosition,TRUE,&mii))
+		{
+			if (mii.hSubMenu!=NULL)
+				DestroyMenu(mii.hSubMenu);
 			return FALSE;
+		}
 	}
 	return TRUE;
 }
@@ -8028,7 +8041,7 @@ void CLocateDlg::CNameDlg::ChangeNumberOfItemsInLists(int iNumberOfNames,int iNu
 
 BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 {
-	DebugFormatMessage("CNameDlg::InitDriveBox BEGIN, items in list %d",m_LookIn.GetCount());
+	//DebugFormatMessage("CNameDlg::InitDriveBox BEGIN, items in list %d",m_LookIn.GetCount());
 
 	// Handle to locate dialog
 	CLocateDlg* pLocateDlg=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate;
@@ -8064,9 +8077,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	else
 		lParam=MAKELPARAM(Everywhere,0);
 
-	LPMALLOC pMalloc;
-	SHGetMalloc(&pMalloc);
-
+	
 
 	m_LookIn.SetImageList((HIMAGELIST)GetFileInfo(szwEmpty,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON));
 
@@ -8085,7 +8096,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		nSelection=(int)ci.iItem;
 	ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 	m_LookIn.InsertItem(&ci);
-	pMalloc->Free(idl);
+	CoTaskMemFree(idl);
 	
 
 	// Document folders
@@ -8103,7 +8114,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		nSelection=(int)ci.iItem;
 	ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 	m_LookIn.InsertItem(&ci);
-	pMalloc->Free(idl);
+	CoTaskMemFree(idl);
 	
 	// Desktop
 	SHGetSpecialFolderLocation(*this,CSIDL_DESKTOP,&idl);
@@ -8120,7 +8131,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		nSelection=(int)ci.iItem;
 	ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 	m_LookIn.InsertItem(&ci);
-	pMalloc->Free(idl);
+	CoTaskMemFree(idl);
 	
 	// My Documents
 	temp.Empty();
@@ -8161,7 +8172,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		nSelection=(int)ci.iItem;
 	ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 	m_LookIn.InsertItem(&ci);
-	pMalloc->Free(idl);
+	CoTaskMemFree(idl);
 	
 	// Drives
 	CArrayFAP<LPWSTR> aRoots;
@@ -8277,7 +8288,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 				nSelection=(int)ci.iItem;
 			ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 			m_LookIn.InsertItem(&ci);
-			pMalloc->Free(idl);
+			CoTaskMemFree(idl);
 
 			LeaveCriticalSection(&m_cBrowse);
 
@@ -8308,14 +8319,13 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 				ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 				m_LookIn.InsertItem(&ci);
 
-				DebugFormatMessage("DriveList: root %S added, i=%d",aRoots.GetAt(i),i);
+				//DebugFormatMessage("DriveList: root %S added, i=%d",aRoots.GetAt(i),i);
 
 			}
 
 			
 		}
 	}
-	pMalloc->Release();
 
 	EnterCriticalSection(&m_cBrowse);
 	if (m_pBrowse!=NULL) // NULL is possible is locate is just closing
@@ -8347,7 +8357,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 			ci.mask=CBEIF_TEXT|CBEIF_IMAGE|CBEIF_INDENT|CBEIF_SELECTEDIMAGE|CBEIF_LPARAM;
 			m_LookIn.InsertItem(&ci);
 
-			DebugFormatMessage("DriveList: directory %s added",m_pBrowse[j].GetBuffer());
+			//DebugFormatMessage("DriveList: directory %s added",m_pBrowse[j].GetBuffer());
 		}
 	}
 	LeaveCriticalSection(&m_cBrowse);
@@ -8358,7 +8368,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(nSelection));
 	}
 
-	DebugMessage("CNameDlg::InitDriveBox END");
+	//DebugMessage("CNameDlg::InitDriveBox END");
 	return TRUE;
 }
 	
@@ -8765,7 +8775,7 @@ DWORD CLocateDlg::CNameDlg::GetCurrentlySelectedComboItem() const
 		m_LookIn.GetItemText(nCurSel,szTmp1,MAX_PATH);
 		m_LookIn.GetItemText(-1,szTmp2,MAX_PATH);
 		
-		DebugNumMessage("CNameDlg::GetCurrentlySelectedComboItem UC: wcscmp(szTmp1,szTmp2)=%d",wcscmp(szTmp1,szTmp2));
+		DebugFormatMessage("CNameDlg::GetCurrentlySelectedComboItem UC: wcscmp(szTmp1,szTmp2)=%d",wcscmp(szTmp1,szTmp2));
 		if (wcscmp(szTmp1,szTmp2)!=0)
 			nCurSel=DWORD(CB_ERR);
 	}	
@@ -8775,13 +8785,13 @@ DWORD CLocateDlg::CNameDlg::GetCurrentlySelectedComboItem() const
 
 BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDirectories,TypeOfItem* pType,BOOL bNoWarningIfNotExists)
 {
-	DebugMessage("CNameDlg::GetDirectoriesForActiveSelection BEGIN");
+	//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection BEGIN");
 	
 	DWORD nCurSel=GetCurrentlySelectedComboItem();
 	
 	if (nCurSel==DWORD(CB_ERR))
 	{
-		DebugMessage("CNameDlg::GetDirectoriesForActiveSelection A");
+		//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection A");
 	
 
 		// Getting directory from combo
@@ -8816,12 +8826,12 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDir
 		if (pType!=NULL)
 			*pType=Custom;
 
-		DebugMessage("CNameDlg::GetDirectoriesForActiveSelection END 1");
+		//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection END 1");
 		return bRet;
 	}
 	else
 	{
-		DebugMessage("CNameDlg::GetDirectoriesForActiveSelection B");
+		//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection B");
 			
 		COMBOBOXEXITEMW ci;
 		ci.mask=CBEIF_LPARAM;
@@ -8843,12 +8853,12 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDir
 		}
 		else
 		{
-			DebugMessage("CNameDlg::GetDirectoriesForActiveSelection END 2");
+			//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection END 2");
 			return GetDirectoriesFromLParam(aDirectories,ci.lParam);
 		}
 	}
 
-	DebugMessage("CNameDlg::GetDirectoriesForActiveSelection END 3");
+	//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection END 3");
 }
 
 BOOL CLocateDlg::CNameDlg::GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirectories,LPCWSTR szCustomText,DWORD dwLength,BOOL bCurrentSelection,BOOL bNoWarning)
@@ -9558,7 +9568,7 @@ void CLocateDlg::LoadResultlistActions()
 		DWORD dwLength=RegKey.QueryValueLength("ResultListActions",bOk);
 		if (bOk)
 		{
-			DebugNumMessage("CLocateDlg::LoadResultlistActions(): ResultListActions length: %d",dwLength);
+			//DebugFormatMessage("CLocateDlg::LoadResultlistActions(): ResultListActions length: %d",dwLength);
 
 			if (dwLength==0)
 				return;
@@ -9650,9 +9660,11 @@ void CLocateDlg::SaveResultlistActions()
 		}
 	}
 
+	delete[] pData;
+
 	ASSERT(DWORD(pPtr-pData)==dwLength);
 
-	DebugNumMessage("CLocateDlg::SaveResultlistActions(): ResultListActions length: %d",dwLength);
+	//DebugFormatMessage("CLocateDlg::SaveResultlistActions(): ResultListActions length: %d",dwLength);
 
 
 	CRegKey2 RegKey;
@@ -9991,6 +10003,8 @@ void CLocateDlg::CNameDlg::OnClear(BOOL bInitial)
 
 	if (m_pMultiDirs!=NULL)
 	{
+		for (int i=0;m_pMultiDirs[i]!=NULL;i++)
+			delete m_pMultiDirs[i];
 		delete[] m_pMultiDirs;
 		
 		// Initializing struct
@@ -10392,24 +10406,15 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCWSTR szPath)
 	WCHAR temp[MAX_PATH];
 	LPWSTR tmp;
 	int ret=_wtoi(szPath);
+
+
 	
 	if ((ret>0 && ret<=4) || szPath[0]==L'0')
 	{
-		LPARAM lParam;
 		if (ret==0)
-			lParam=MAKELPARAM(Everywhere,Original);
+			SelectByLParam(MAKELPARAM(Everywhere,Original));
 		else
-			lParam=MAKELPARAM(Special,ret);
-		
-		for (int i=0;m_LookIn.GetCount();i++)
-		{	
-			if (m_LookIn.GetItemData(i)==lParam)
-			{
-				m_LookIn.SetCurSel(i);
-				m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(i));
-				return TRUE;
-			}
-		}
+			SelectByLParam(MAKELPARAM(Special,ret));
 		return FALSE;	
 	}
 
@@ -10692,6 +10697,7 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 			m_Type.SetText(pData);	
 		else
 			m_Type.SetText(szEmpty);
+		delete[] pData;
 	}
 
 	if (m_pMultiDirs!=NULL)
@@ -10730,6 +10736,8 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 			}
 		}
 
+		for (int i=0;m_pMultiDirs[i]!=NULL;i++)
+			delete m_pMultiDirs[i];
 		delete[] m_pMultiDirs;
 		if (aSelections.GetSize()>0)
 		{
@@ -10936,6 +10944,7 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 					*((DWORD*)pData)=(DWORD)lParam;
 					CopyMemory(pData+4,LPCWSTR(str),str.GetLength()*2);
 					RegKey.SetValue(szName,pData,DWORD(str.GetLength()*2+4),REG_BINARY);
+					delete[] pData;
 				}
 				else
 				{
@@ -10953,6 +10962,7 @@ void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
 				*((DWORD*)pData)=DWORD(Custom);
 				CopyMemory(pData+4,m_pMultiDirs[i]->pTitleOrDirectory,dwLength);
 				RegKey.SetValue(szName,pData,dwLength+4,REG_BINARY);
+				delete[] pData;
 			}
 			else
 			{
@@ -12151,8 +12161,6 @@ void CLocateDlg::CAdvancedDlg::ChangeEnableStateForCheck()
 		EnableDlgItem(IDC_CHECK,TRUE);
 	else
 	{
-		// TODO: Mieti tämä, lisäksi 
-
 		//SendDlgItemMessage(IDC_CHECK,CB_SETCURSEL,0);
 		EnableDlgItem(IDC_CHECK,FALSE);
 	}
@@ -12238,7 +12246,7 @@ void CLocateDlg::CAdvancedDlg::OnDestroy()
 	{
 		TerminateThread(m_hTypeUpdaterThread,0);
 		CloseHandle(m_hTypeUpdaterThread);
-		DebugCloseHandle(dhtThread,m_hTypeUpdaterThread,STRNULL);
+		DebugCloseThread(m_hTypeUpdaterThread);
 		m_hTypeUpdaterThread=NULL;
 	}
 
@@ -12378,7 +12386,7 @@ void CLocateDlg::CAdvancedDlg::UpdateTypeList()
 	{
 		DWORD dwID;
 		m_hTypeUpdaterThread=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)UpdaterProc,this,0,&dwID);
-		DebugOpenHandle(dhtThread,m_hTypeUpdaterThread,STRNULL);
+		DebugOpenThread(m_hTypeUpdaterThread);
 
 		if (m_hTypeUpdaterThread==NULL)
 			DebugFormatMessage("m_hTypeUpdaterThread==NULL, last error=%d",GetLastError());
@@ -12513,7 +12521,7 @@ DWORD WINAPI CLocateDlg::CAdvancedDlg::UpdaterProc(CLocateDlg::CAdvancedDlg* pAd
 	pAdvancedDlg->m_dwFlags|=fgOtherTypeAdded;
 
 	CloseHandle(pAdvancedDlg->m_hTypeUpdaterThread);
-	DebugCloseHandle(dhtThread,pAdvancedDlg->m_hTypeUpdaterThread,STRNULL);
+	DebugCloseThread(pAdvancedDlg->m_hTypeUpdaterThread);
 	pAdvancedDlg->m_hTypeUpdaterThread=NULL;
 	
 	if (!pAdvancedDlg->SendDlgItemMessage(IDC_FILETYPE,CB_GETDROPPEDSTATE))

@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.1060                 */
+   database updater v3.0.7.2110                 */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -17,7 +17,7 @@ CDatabaseUpdater::CDatabaseUpdater(LPCWSTR szDatabaseFile,LPCWSTR szAuthor,LPCWS
 	,m_hThread(NULL),m_lForceQuit(FALSE)
 #endif
 {
-	DebugMessage("CDatabaseUpdater::CDatabaseUpdater(1)");
+	UpdDebugMessage("CDatabaseUpdater::CDatabaseUpdater(1)");
 
 	m_aDatabases.Add(new DBArchive(szDatabaseFile,CDatabase::archiveFile,
 		szAuthor,szComment,pszRoots,nNumberOfRoots,0,NULL,NULL,0));
@@ -31,7 +31,7 @@ CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
 	,m_hThread(NULL),m_lForceQuit(FALSE)
 #endif
 {
-	DebugMessage("CDatabaseUpdater::CDatabaseUpdater(2)");
+	UpdDebugMessage("CDatabaseUpdater::CDatabaseUpdater(2)");
 
 	for (int i=0;i<nDatabases;i++)
 		m_aDatabases.Add(new DBArchive(ppDatabases[i]));
@@ -45,7 +45,7 @@ CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
 	,m_hThread(NULL),m_lForceQuit(FALSE)
 #endif
 {
-	DebugMessage("CDatabaseUpdater::CDatabaseUpdater(3)");
+	UpdDebugMessage("CDatabaseUpdater::CDatabaseUpdater(3)");
 
 	for (int i=0;i<nDatabases;i++)
 	{
@@ -57,7 +57,7 @@ CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
 
 CDatabaseUpdater::~CDatabaseUpdater()
 {
-	DebugMessage("CDatabaseUpdater::~CDatabaseUpdater()");
+	UpdDebugMessage("CDatabaseUpdater::~CDatabaseUpdater()");
 
 	if (dbFile!=NULL)
 	{
@@ -71,7 +71,7 @@ CDatabaseUpdater::~CDatabaseUpdater()
 	if (m_hThread!=NULL)
 	{
 		CloseHandle(m_hThread);
-		DebugCloseHandle(dhtThread,m_hThread,STRNULL);
+		DebugCloseThread(m_hThread);
 		m_hThread=NULL;
 	}
 #endif
@@ -79,7 +79,7 @@ CDatabaseUpdater::~CDatabaseUpdater()
 
 UpdateError CDatabaseUpdater::UpdatingProc()
 {
-	DebugFormatMessage("CDatabaseUpdater::UpdatingProc() BEGIN this=%lX m_pProc=%lX",ULONG_PTR(this),ULONG_PTR(m_pProc));
+	UpdDebugFormatMessage2("CDatabaseUpdater::UpdatingProc() BEGIN this=%lX m_pProc=%lX",ULONG_PTR(this),ULONG_PTR(m_pProc));
 	
 	UpdateError ueResult=ueSuccess;
 
@@ -100,7 +100,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 		try {
 			m_pCurrentRoot=m_aDatabases[m_dwCurrentDatabase]->m_pFirstRoot;
 			
-			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): m_pCurrentDatabase=%lX szName=%s",ULONG_PTR(m_aDatabases[m_dwCurrentDatabase]),m_aDatabases[m_dwCurrentDatabase]->m_szName);
+			UpdDebugFormatMessage2("CDatabaseUpdater::UpdatingProc(): m_pCurrentDatabase=%lX szName=%s",ULONG_PTR(m_aDatabases[m_dwCurrentDatabase]),m_aDatabases[m_dwCurrentDatabase]->m_szName);
 				
 			m_pProc(m_dwData,StartedDatabase,ueResult,this);
 			
@@ -114,7 +114,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 	#endif
 				)
 			{
-				DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): m_pCurrentRoot=%lX path=%s",ULONG_PTR(m_pCurrentRoot),(LPCSTR)W2A(m_pCurrentRoot->m_Path));
+				UpdDebugFormatMessage2("CDatabaseUpdater::UpdatingProc(): m_pCurrentRoot=%lX path=%s",ULONG_PTR(m_pCurrentRoot),(LPCSTR)W2A(m_pCurrentRoot->m_Path));
 							
 				sStatus=statusScanning;
 				m_pProc(m_dwData,RootChanged,ueResult,this);
@@ -147,7 +147,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				throw ueResult=ueStopped;
 	#endif
 
-			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): writing to %s",m_aDatabases[m_dwCurrentDatabase]->m_szArchive);
+			UpdDebugFormatMessage1("CDatabaseUpdater::UpdatingProc(): writing to %s",m_aDatabases[m_dwCurrentDatabase]->m_szArchive);
 		
 			// Start writing database
 			m_pProc(m_dwData,RootChanged,ueResult,this);
@@ -163,13 +163,13 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			case CDatabase::archiveFile:
 				if (m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::IncrementalUpdate))
 				{
-					DebugMessage("CDatabaseUpdater::UpdatingProc(): trying to open database for incremental update");
+					UpdDebugMessage("CDatabaseUpdater::UpdatingProc(): trying to open database for incremental update");
 					
 					dbFile=OpenDatabaseFileForIncrementalUpdate(
 						m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
 						m_dwFiles,m_dwDirectories,bUnicode);
 					
-					DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): returns: %lX",(ULONG_PTR)dbFile);
+					UpdDebugFormatMessage1("CDatabaseUpdater::UpdatingProc(): returns: %lX",(ULONG_PTR)dbFile);
 					
 					
 					if (dbFile==(CFile*)-1)
@@ -193,7 +193,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				
 				if (dbFile==NULL)
 				{
-					DebugMessage("CDatabaseUpdater::UpdatingProc(): trying to open database");
+					UpdDebugMessage("CDatabaseUpdater::UpdatingProc(): trying to open database");
 					dbFile=new CFile(m_aDatabases[m_dwCurrentDatabase]->m_szArchive,
 						CFile::defWrite|CFile::otherStrNullTerminated,TRUE);
 					dbFile->CloseOnDelete();
@@ -208,7 +208,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			{
 				//////////////////////////////////
 				// Writing header
-				DebugMessage("CDatabaseUpdater::UpdatingProc(): writing header");
+				UpdDebugMessage("CDatabaseUpdater::UpdatingProc(): writing header");
 
 		#ifdef WIN32
 				// Writing identification, '\17=0x11=0x10|0x1' 0x1 = Long filenames and 0x10 = ANSI
@@ -328,10 +328,10 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				dbFile->Write(m_dwFiles);
 				dbFile->Write(m_dwDirectories);
 			
-				DebugMessage("CDatabaseUpdater::UpdatingProc(): writing header end");
+				UpdDebugMessage("CDatabaseUpdater::UpdatingProc(): writing header end");
 			}
 
-			DebugMessage("CDatabaseUpdater::UpdatingProc(): writing directory data");
+			UpdDebugMessage("CDatabaseUpdater::UpdatingProc(): writing directory data");
 
 			// Writing root directory datas
 			m_pCurrentRoot=m_aDatabases[m_dwCurrentDatabase]->m_pFirstRoot;
@@ -348,7 +348,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 				m_pCurrentRoot=m_pCurrentRoot->m_pNext;
 			}
 
-			DebugMessage("CDatabaseUpdater::UpdatingProc(): end of directory data");
+			UpdDebugMessage("CDatabaseUpdater::UpdatingProc(): end of directory data");
 
 			// End mark
 			dbFile->Write((DWORD)0);
@@ -356,11 +356,11 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			delete dbFile;
 			dbFile=NULL;
 
-			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): DB %lX OK",ULONG_PTR(m_aDatabases[m_dwCurrentDatabase]));
+			UpdDebugFormatMessage1("CDatabaseUpdater::UpdatingProc(): DB %lX OK",ULONG_PTR(m_aDatabases[m_dwCurrentDatabase]));
 		}
 		catch (CFileException fe)
 		{
-			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): catch CFileException exception with cause %d",fe.m_cause);
+			UpdDebugFormatMessage1("CDatabaseUpdater::UpdatingProc(): catch CFileException exception with cause %d",fe.m_cause);
 
 			switch (fe.m_cause)
 			{
@@ -395,7 +395,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 		}
 		catch (CException ex)
 		{
-			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): catch CException exception with cause %d",ex.m_cause);
+			UpdDebugFormatMessage1("CDatabaseUpdater::UpdatingProc(): catch CException exception with cause %d",ex.m_cause);
 
 			switch (ex.m_cause)
 			{
@@ -410,7 +410,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 		}
 		catch (UpdateError ue)
 		{
-			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): catch uerror %d",DWORD(ue));
+			UpdDebugFormatMessage1("CDatabaseUpdater::UpdatingProc(): catch uerror %d",DWORD(ue));
 
 			if (ue!=ueStillWorking && ue!=ueSuccess && ue!=ueFolderUnavailable)
 			{
@@ -420,7 +420,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 		}
 		catch (...)
 		{
-			DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): catch unknown exception");
+			UpdDebugMessage("CDatabaseUpdater::UpdatingProc(): catch unknown exception");
 
 			m_pProc(m_dwData,ErrorOccured,ueResult=ueUnknown,this);
 			break;
@@ -442,7 +442,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 
 	// This class is deleted in the previous call, do not access this anymore
 
-	DebugFormatMessage("CDatabaseUpdater::UpdatingProc(): ALL DONE ueResult=%d",DWORD(ueResult));
+	UpdDebugFormatMessage1("CDatabaseUpdater::UpdatingProc(): ALL DONE ueResult=%d",DWORD(ueResult));
 
 	return ueResult;
 }
@@ -450,7 +450,7 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 #ifdef WIN32
 DWORD WINAPI CDatabaseUpdater::UpdateThreadProc(LPVOID lpParameter)
 {
-	DebugFormatMessage("CDatabaseUpdater::UpdateThreadProc thread=%lX",GetCurrentThreadId());
+	UpdDebugFormatMessage1("CDatabaseUpdater::UpdateThreadProc thread=%lX",GetCurrentThreadId());
 	return ((CDatabaseUpdater*)lpParameter)->UpdatingProc()==ueSuccess?0:1;	
 }
 #endif
@@ -463,9 +463,9 @@ UpdateError CDatabaseUpdater::Update(BOOL bThreaded,int nThreadPriority)
 	if (bThreaded)
 	{
 		DWORD dwThreadID;
-		DebugFormatMessage("CDatabaseUpdater::Update this=%lX",ULONG_PTR(this));
+		UpdDebugFormatMessage1("CDatabaseUpdater::Update this=%lX",ULONG_PTR(this));
 		m_hThread=CreateThread(NULL,0,UpdateThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
-		DebugOpenHandle(dhtThread,m_hThread,STRNULL);
+		DebugOpenThread(m_hThread);
 		
 		if (m_hThread!=NULL)
 		{
@@ -535,11 +535,21 @@ CDatabaseUpdater::CRootDirectory::~CRootDirectory()
 		delete m_pFirstBuffer;
 		m_pFirstBuffer=pCurrentBuffer;
 	}
+
+	POSITION pPos=m_aOpenHandles.GetHeadPosition();
+	while (pPos!=NULL)
+	{
+		FindClose(m_aOpenHandles.GetAt(pPos));
+		DebugCloseHandle(dhtFileFind,m_aOpenHandles.GetAt(pPos),STRNULL);
+
+		pPos=m_aOpenHandles.GetNextPosition(pPos);
+	}
+	m_aOpenHandles.RemoveAll();
 }
 
 UpdateError CDatabaseUpdater::CRootDirectory::ScanRoot(volatile LONG& lForceQuit)
 {
-	DebugFormatMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: scanning root %s",m_Path);
+	UpdDebugFormatMessage1("CDatabaseUpdater::CRootDirectory::ScanRoot: scanning root %s",m_Path);
 
 	// Initializing buffer
 	pCurrentBuffer=m_pFirstBuffer=new CBuffer;
@@ -554,20 +564,20 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanRoot(volatile LONG& lForceQuit
 	char szPath[MAX_PATH+20];
 	MemCopyWtoA(szPath,(LPCWSTR)m_Path,m_Path.GetLength()+1);
 	
-	DebugMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: started to scan root folder");
+	UpdDebugMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: started to scan root folder");
 	UpdateError ueResult=ScanFolder(szPath,m_Path.GetLength(),lForceQuit);
-	DebugMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: ended to scan root folder");
+	UpdDebugMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: ended to scan root folder");
 	
 	
 	pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
 
-	DebugFormatMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: END scanning root %s",m_Path);
+	UpdDebugFormatMessage1("CDatabaseUpdater::CRootDirectory::ScanRoot: END scanning root %s",m_Path);
 	return ueResult;
 }
 
 UpdateError CDatabaseUpdater::CRootDirectory::ScanRootW(volatile LONG& lForceQuit)
 {
-	DebugFormatMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: scanning root %s",m_Path);
+	UpdDebugFormatMessage1("CDatabaseUpdater::CRootDirectory::ScanRoot: scanning root %s",m_Path);
 
 	// Initializing buffer
 	pCurrentBuffer=m_pFirstBuffer=new CBuffer;
@@ -582,194 +592,17 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanRootW(volatile LONG& lForceQui
 	WCHAR szPath[MAX_PATH+20];
 	MemCopyW(szPath,(LPCWSTR)m_Path,m_Path.GetLength()+1);
 	
-	DebugMessage("CDatabaseUpdater::CRootDirectory::ScanRootW: started to scan root folder");
+	UpdDebugMessage("CDatabaseUpdater::CRootDirectory::ScanRootW: started to scan root folder");
 	UpdateError ueResult=ScanFolder(szPath,m_Path.GetLength(),lForceQuit);
-	DebugMessage("CDatabaseUpdater::CRootDirectory::ScanRootW: ended to scan root folder");
+	UpdDebugMessage("CDatabaseUpdater::CRootDirectory::ScanRootW: ended to scan root folder");
 	
 	
 	pCurrentBuffer->nLength=(DWORD)(pPoint-pCurrentBuffer->pData);
 
-	DebugFormatMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: END scanning root %s",m_Path);
+	UpdDebugFormatMessage1("CDatabaseUpdater::CRootDirectory::ScanRoot: END scanning root %s",m_Path);
 	return ueResult;
 }
-#ifdef WIN32
-typedef	HANDLE HFIND;
-typedef WIN32_FIND_DATAA FIND_DATA;
-typedef WIN32_FIND_DATAW FIND_DATAW;
 
-#define VALID_HFIND(h)		((h)!=INVALID_HANDLE_VALUE)
-
-inline HFIND _FindFirstFile(LPCSTR szFolder,FIND_DATA* fd)
-{
-	HFIND hFind=FindFirstFileA(szFolder,fd);
-	DebugOpenHandle(dhtFileFind,hFind,szFolder);
-	return hFind;
-}
-inline HFIND _FindFirstFile(LPCWSTR szFolder,FIND_DATAW * fd)
-{
-	HFIND hFind=FindFirstFileW(szFolder,fd);
-	DebugOpenHandle(dhtFileFind,hFind,szFolder);
-	return hFind;
-}
-inline BOOL _FindNextFile(HFIND hFind,FIND_DATA* fd)
-{
-	return FindNextFileA(hFind,fd);
-}
-inline BOOL _FindNextFile(HFIND hFind,FIND_DATAW* fd)
-{
-	return FindNextFileW(hFind,fd);
-}
-inline void _FindClose(HFIND hFind)
-{
-	FindClose(hFind);
-	DebugCloseHandle(dhtFileFind,hFind,STRNULL);
-}
-inline BOOL _FindIsFolder(FIND_DATA* fd)
-{
-	return (fd->dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)==FILE_ATTRIBUTE_DIRECTORY;
-}
-inline BOOL _FindIsFolder(FIND_DATAW* fd)
-{
-	return (fd->dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)==FILE_ATTRIBUTE_DIRECTORY;
-}
-inline LPCSTR _FindGetName(FIND_DATA* fd)
-{
-	return fd->cFileName;
-}
-inline LPCWSTR _FindGetName(FIND_DATAW* fd)
-{
-	return fd->cFileName;
-}
-
-inline BYTE _FindGetAttribFlag(FIND_DATA* fd)
-{
-	return CDatabaseUpdater::GetAttribFlag(fd->dwFileAttributes);
-}
-inline BYTE _FindGetAttribFlag(FIND_DATAW* fd)
-{
-	return CDatabaseUpdater::GetAttribFlag(fd->dwFileAttributes);
-}
-
-
-inline void _FindGetLastWriteDosDateTime(FIND_DATA* fd,WORD* pwDate,WORD* pwTime)
-{
-	FILETIME ft;
-	FileTimeToLocalFileTime(&fd->ftLastWriteTime,&ft);
-	FileTimeToDosDateTime(&ft,pwDate,pwTime);
-}
-inline void _FindGetCreationDosDate(FIND_DATA* fd,WORD* pwDate)
-{
-	FILETIME ft;
-	WORD wTemp;
-	FileTimeToLocalFileTime(&fd->ftCreationTime,&ft);
-	FileTimeToDosDateTime(&ft,pwDate,&wTemp);
-}
-inline void _FindGetLastAccessDosDate(FIND_DATA* fd,WORD* pwDate)
-{
-	FILETIME ft;
-	WORD wTemp;
-	FileTimeToLocalFileTime(&fd->ftLastAccessTime,&ft);
-	FileTimeToDosDateTime(&ft,pwDate,&wTemp);
-}
-
-
-inline void _FindGetLastWriteDosDateTime(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime)
-{
-	FILETIME ft;
-	FileTimeToLocalFileTime(&fd->ftLastWriteTime,&ft);
-	FileTimeToDosDateTime(&ft,pwDate,pwTime);
-}
-inline void _FindGetCreationDosDate(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime)
-{
-	FILETIME ft;
-	FileTimeToLocalFileTime(&fd->ftCreationTime,&ft);
-	FileTimeToDosDateTime(&ft,pwDate,pwTime);
-}
-inline void _FindGetLastAccessDosDate(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime)
-{
-	FILETIME ft;
-	FileTimeToLocalFileTime(&fd->ftLastAccessTime,&ft);
-	FileTimeToDosDateTime(&ft,pwDate,pwTime);
-}
-
-inline DWORD _FindGetFileSizeLo(FIND_DATA* fd)
-{
-	return fd->nFileSizeLow;
-}
-inline DWORD _FindGetFileSizeLo(FIND_DATAW* fd)
-{
-	return fd->nFileSizeLow;
-}
-
-inline DWORD _FindGetFileSizeHi(FIND_DATA* fd)
-{
-	return fd->nFileSizeHigh;
-}
-inline DWORD _FindGetFileSizeHi(FIND_DATAW* fd)
-{
-	return fd->nFileSizeHigh;
-}
-
-#else
-typedef int HFIND;
-typedef struct ffblk FIND_DATA;
-
-#define VALID_HFIND(h)		((h)==0)
-
-inline HFIND _FindFirstFile(LPCSTR szFolder,FIND_DATA* fd)
-{
-	return findfirst(szFolder,fd,FA_HIDDEN|FA_SYSTEM|FA_DIREC);
-}
-inline BOOL _FindNextFile(HFIND hFind,FIND_DATA* fd)
-{
-	return !findnext(fd);
-}
-inline void _FindClose(HFIND hFind)
-{
-}
-inline BOOL _FindIsFolder(FIND_DATA* fd)
-{
-	return (fd->ff_attrib&FA_DIREC)==FA_DIREC;
-}
-inline LPCSTR _FindGetName(FIND_DATA* fd)
-{
-	return fd->ff_name;
-}
-inline BYTE _FindGetAttribFlag(FIND_DATA* fd)
-{
-	BYTE bRet=0;
-	if (fd->ff_attrib&FA_ARCH)
-		bRet|=UDBATTRIB_ARCHIVE;
-	if (fd->ff_attrib&FA_HIDDEN)
-		bRet|=UDBATTRIB_HIDDEN;
-	if (fd->ff_attrib&FA_RDONLY)
-		bRet|=UDBATTRIB_READONLY;
-	if (fd->ff_attrib&FA_SYSTEM)
-		bRet|=UDBATTRIB_SYSTEM;
-	return bRet;
-}
-inline void _FindGetLastWriteDosDateTime(FIND_DATA* fd,WORD* pwDate,WORD* pwTime)
-{
-	*pwDate=fd->ff_fdate;
-	*pwTime=fd->ff_ftime;
-}
-inline void _FindGetCreationDosDate(FIND_DATA* fd,WORD* pwDate)
-{
-	*pwDate=fd->lfn_cdate;
-}
-inline void _FindGetLastAccessDosDate(FIND_DATA* fd,WORD* pwDate)
-{
-	*pwDate=fd->lfn_adate;
-}
-inline DWORD _FindGetFileSizeLo(FIND_DATA* fd)
-{
-	return fd->ff_fsize;
-}
-inline DWORD _FindGetFileSizeHi(FIND_DATA* fd)
-{
-	return 0;
-}
-#endif
 
 UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nLength,volatile LONG& lForceQuit)
 {
@@ -1745,6 +1578,10 @@ CDatabaseUpdater::DBArchive::~DBArchive()
 		m_pFirstRoot=m_pCurrentRoot;
 	}
 
+	
+	if (m_szName!=NULL)
+        delete[] m_szName;
+
 	if (m_szArchive!=NULL)
         delete[] m_szArchive;
 
@@ -1981,6 +1818,7 @@ void CDatabaseUpdater::DBArchive::ParseExcludedFilesAndDirectories(LPCWSTR szExc
 		delete[] ppExcludedDirectories[i];
 	delete[] ppExcludedDirectories;
 	delete[] pdwExcludedDirectoriesLen;
+	delete[] pbIsPattern;
 }
 
 CFile* CDatabaseUpdater::OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,DWORD dwFiles,DWORD dwDirectories,BOOL bUnicode)

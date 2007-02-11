@@ -4,6 +4,10 @@
 
 #include "HFCLib.h"
 
+#if defined(HFC_USEDEBUGNEW)
+	#define new DEBUG_NEW
+#endif
+
 namespace Crypt // Implementation
 {
 	UINT EnCrypt(const PUCHAR szSrc,DWORD nDataLen,PUCHAR szDst,DWORD pKey[3]);

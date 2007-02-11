@@ -100,12 +100,7 @@ public:
 public:
 	CLocateDlg* m_pLocate;
 
-#ifdef _DEBUG
-public:
-	inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-	inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-	inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
+
 };
 
 //extern CBufferAllocator<BYTE*,2000,BUFFERALLOC_EXTRALEN> FileTypeAllocator;
@@ -301,12 +296,7 @@ public:
 		DirSelection** m_pMultiDirs;
 		
 
-#ifdef _DEBUG
-	public:
-		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-		inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
+
 
 	public:
 		
@@ -341,12 +331,7 @@ public:
 		void HilightTab(BOOL bHilight);
 
 
-#ifdef _DEBUG
-	public:
-		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-		inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
+
 	};
 
 	class CAdvancedDlg : public CDialog  
@@ -437,12 +422,7 @@ public:
 
 		CSubAction* m_aResultListActions[TypeCount];
 
-#ifdef _DEBUG
-	public:
-		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-		inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
+
 	};
 
 private:
@@ -636,6 +616,10 @@ protected:
 	BOOL SetListStyle(int id,BOOL bInit=FALSE);
 	void SetMenuCheckMarkForListStyle();
 	void SetVisibleWindowInTab();
+	
+	BOOL SetPath(LPCWSTR szPath) { return m_NameDlg.SetPath(szPath); }
+
+	
 	void SaveRegistry();
 	void LoadRegistry();
 
@@ -900,10 +884,6 @@ public:
 	
 #ifdef _DEBUG
 public:
-	inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-	inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-	inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-
 	static LRESULT CALLBACK DebugWindowProc(HWND hwnd,UINT uMsg,WPARAM wParam,LPARAM lParam);
 #endif
 

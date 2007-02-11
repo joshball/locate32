@@ -21,13 +21,7 @@ protected:
 		virtual HRESULT STDMETHODCALLTYPE Skip(ULONG celt);
 		virtual HRESULT STDMETHODCALLTYPE Reset(void);
 		virtual HRESULT STDMETHODCALLTYPE Clone(IEnumFORMATETC __RPC_FAR *__RPC_FAR *ppenum);
-	
-#ifdef _DEBUG
-	public:
-		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-		inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
+
 	};
 
 	CArrayFP<CStringW*> m_Files;
@@ -62,12 +56,6 @@ public:
 
 	virtual HRESULT STDMETHODCALLTYPE EnumDAdvise(IEnumSTATDATA** ppenumAdvise);
 
-#ifdef _DEBUG
-public:
-	void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-	void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-	void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
 };
 
 class CFileSource : public CCoDropSource
@@ -75,12 +63,6 @@ class CFileSource : public CCoDropSource
 public:
 	virtual HRESULT STDMETHODCALLTYPE QueryContinueDrag(BOOL fEscapePressed,DWORD grfKeyState);
     virtual HRESULT STDMETHODCALLTYPE GiveFeedback(DWORD dwEffect);
-#ifdef _DEBUG
-public:
-	void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-	void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-	void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
 };
 
 class CFileTarget : public CCoDropTarget
@@ -96,12 +78,7 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE DragLeave(void);
 	virtual HRESULT STDMETHODCALLTYPE Drop(IDataObject __RPC_FAR *pDataObj,
 		DWORD grfKeyState,POINTL pt,DWORD __RPC_FAR *pdwEffect);
-#ifdef _DEBUG
-public:
-	void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-	void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-	void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
+
 
 	IDataObject* m_pDataObjectInWindow;
 };

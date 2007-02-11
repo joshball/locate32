@@ -195,8 +195,9 @@ public:
 		MaximizeDialog = 6,
 		MaximizeOrRestoreDialog = 7,
 		ShowOpenOrHideDialog = 8,
+		ShowDialogAndGetDirFromExplorer = 9,
 
-		ShowHideDialogLast = ShowOpenOrHideDialog
+		ShowHideDialogLast = ShowDialogAndGetDirFromExplorer
 	};
 
 	enum ActionResultList { 
@@ -293,6 +294,10 @@ public:
 	DWORD GetDataLength(DWORD nAction,BOOL bHeader=TRUE) const;
 	
 	static CSubAction* FromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed);
+
+	static LPWSTR GetPathFromExplorer();
+	static BOOL CALLBACK EnumExplorerChilds(HWND hWnd,LPARAM lParam);
+
 	
 protected:
 	DWORD FillFromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen);

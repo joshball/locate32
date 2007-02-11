@@ -1104,7 +1104,123 @@ void CSubAction::DoShowHideDialog()
 				GetLocateAppWnd()->OnLocate();
 		}
 		break;
+	case ShowDialogAndGetDirFromExplorer:
+		{
+			LPWSTR pPath=GetPathFromExplorer();
+			GetLocateAppWnd()->OnLocate();
+
+			if (pPath!=NULL)
+			{
+				CLocateDlg* pLocateDlg=GetLocateDlg();
+				if (pLocateDlg!=NULL)
+					pLocateDlg->SetPath(pPath);
+				delete[] pPath;
+			}
+			break;
+		}
+		break;
 	}
+}
+
+LPWSTR CSubAction::GetPathFromExplorer()
+{
+	if (!IsUnicodeSystem())
+	{
+		// Global shortcuts won't even work in non-unicode systems
+		return NULL;
+	}
+
+	HWND hCurWindow=GetForegroundWindow();
+	char szClass[100]="";
+	GetClassName(hCurWindow,szClass,100);
+	
+	if (strcmp(szClass,"ExploreWClass")!=0  && // WinXP
+		strcmp(szClass,"CabinetWClass")!=0)  // WinNT
+		return NULL;
+	
+	WCHAR* pPath=new WCHAR[MAX_PATH];
+	pPath[0]='\0';
+	EnumChildWindows(hCurWindow,EnumExplorerChilds,(LPARAM)pPath);
+
+	if (pPath[0]=='\0')
+	{
+		delete[] pPath;
+		return NULL;
+	}
+	return pPath;
+}
+
+BOOL CALLBACK CSubAction::EnumExplorerChilds(HWND hWnd,LPARAM lParam)
+{
+	char szClass[100]="";
+	GetClassName(hWnd,szClass,100);
+
+	if (strcmp(szClass,"ComboBoxEx32")!=0)
+		return TRUE;
+
+	if (::SendMessageW(hWnd,WM_GETTEXT,MAX_PATH,lParam)==0)
+		return TRUE;
+	
+	if (FileSystem::IsDirectory((LPCWSTR)lParam))
+		return FALSE; // Path is OK
+
+	// Check wheter lParam is Desktop
+	LPITEMIDLIST idl;
+	SHGetSpecialFolderLocation(NULL,CSIDL_DESKTOP,&idl);
+	SHFILEINFOW fi;
+	if (GetFileInfo(idl,0,&fi,SHGFI_DISPLAYNAME))
+	{
+		if (wcscmp(fi.szDisplayName,(LPCWSTR)lParam)==0)
+		{
+			((LPWSTR)lParam)[0]=L'2';
+			((LPWSTR)lParam)[1]=L'\0';
+			CoTaskMemFree(idl);
+			return FALSE;
+		}
+	
+		CoTaskMemFree(idl);		
+	}
+
+	// Check wheter lParam is My Computer
+	SHGetSpecialFolderLocation(NULL,CSIDL_DRIVES,&idl);
+	if (GetFileInfo(idl,0,&fi,SHGFI_DISPLAYNAME))
+	{
+		if (wcscmp(fi.szDisplayName,(LPCWSTR)lParam)==0)
+		{
+			((LPWSTR)lParam)[0]=L'4';
+			((LPWSTR)lParam)[1]=L'\0';
+			CoTaskMemFree(idl);
+			return FALSE;
+		}
+	
+		CoTaskMemFree(idl);		
+	}
+
+	// Check wheter lParam is My Documents
+	CRegKey RegKey;
+	if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		WCHAR temp[MAX_PATH];
+		RegKey.QueryValue(L"Personal",temp,MAX_PATH);
+		RegKey.CloseKey();
+
+		if	(FileSystem::IsDirectory(temp))
+		{
+			if (GetFileInfo(temp,0,&fi,SHGFI_DISPLAYNAME))
+			{
+				if (wcscmp(fi.szDisplayName,(LPCWSTR)lParam)==0)
+				{
+					((LPWSTR)lParam)[0]=L'3';
+					((LPWSTR)lParam)[1]=L'\0';
+			
+					return FALSE;
+				}
+			}
+		}
+	}
+
+	((LPWSTR)lParam)[0]='\0';
+	return TRUE;
 }
 
 void CSubAction::DoChangeValue()
@@ -1523,6 +1639,8 @@ void CShortcut::ModifyMenus(CArrayFP<CShortcut*>& aShortcuts,HMENU hMainMenu,HME
 		}
 	}
 
+	for (int i=0;pVirtKeyNames[i].bKey!=0;i++)
+		delete[] pVirtKeyNames[i].pName;
 	delete[] pVirtKeyNames;
 }
 
@@ -1741,6 +1859,8 @@ int CSubAction::GetShowHideDialogActionLabelStringId(CAction::ActionShowHideDial
 		return IDS_ACTIONSWDIALOMAXIMIZEORRESTORE;
 	case ShowOpenOrHideDialog:
 		return IDS_ACTIONSWDIALOMSHOWOPENORHIDE;
+	case ShowDialogAndGetDirFromExplorer:
+		return IDS_ACTIONSWDIALOMSHOWANDDIRFROMEXPLORER;
 	default:
 		return 0;
 	}

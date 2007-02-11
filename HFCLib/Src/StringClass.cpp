@@ -5,6 +5,10 @@
 #include "HFCLib.h"
 #include <stdarg.h>
 
+#if defined(HFC_USEDEBUGNEW)
+	#define new DEBUG_NEW
+#endif
+
 //#define OUTPUT_LENGTHS
 
 #define STR_EXTRAALLOC					64

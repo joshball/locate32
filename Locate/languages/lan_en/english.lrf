@@ -29,7 +29,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2007 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 build 7.1210
+FILEVERSION=3.0 build 7.2110
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -565,6 +565,7 @@ STRACTION_DIALOGRESTORE=Restore dialog
 STRACTION_DIALOGMAXIMIZE=Maximize dialog
 STRACTION_DIALOGMAXIMIZEORRESTORE=Maximize / Restore dialog
 STRACTION_DIALOGSHOWOPENORHIDE=Show or Open / Hide dialog
+STRACTION_DIALOGSHOWANDDIRFROMEXPLORER=Show dialog and path from Explorer
 STRACTION_EXECUTE=Execute item
 STRACTION_COPY=Copy file (to clipboard)
 STRACTION_CUT=Cut file (to clipboard)
@@ -1051,7 +1052,7 @@ STRERROR_INVALIDDATABASE=Invalid database format in file '%s'. Update database.
 STRERROR_CANNOTWRITEDATABASE=Cannot write database to file '%s'.
 STRERROR_INVALIDFILEFORMAT=Error loading file %s. Invalid file format.
 STRERROR_NODRIVESSELECTED=No any drives selected.
-STRERROR_DRIVENOTINDATABASE=Path is found in drive that has not included in file database.
+STRERROR_DRIVENOTINDATABASE=Path is found in drive that was not included in file database.
 STRERROR_NOCULUMNSSELECTED=No any columns selected. Select at least one.
 STRERROR_CANNOTADDITEM=Cannot add item.
 STRERROR_CANNOTADDITEM2=Cannot add item '%s'.

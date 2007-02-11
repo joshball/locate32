@@ -4,6 +4,10 @@
 
 #include "HFCLib.h"
 
+#if defined(HFC_USEDEBUGNEW)
+	#define new DEBUG_NEW
+#endif
+
 #if defined(WIN32) && !defined (_CONSOLE)
 
 namespace HFCControls {

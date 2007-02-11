@@ -532,6 +532,7 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 				m_pTree->SetItemText(tisw.hInsertAfter,pCurText);
 			
 		}
+		pItems[i]->FreeText(pCurText);
 
 
 		
@@ -2188,7 +2189,17 @@ CSettingsProperties::~CSettingsProperties()
 	
 	m_Schedules.RemoveAll();
 
-	
+	// Free buffers
+	if (g_szBuffer!=NULL)
+	{
+		delete[] g_szBuffer;
+		g_szBuffer=NULL;
+	}
+	if (g_szwBuffer!=NULL)
+	{
+		delete[] g_szwBuffer;
+		g_szwBuffer=NULL;
+	}
 }
 
 BOOL CSettingsProperties::LoadSettings()
@@ -5372,7 +5383,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnExcludeDire
 int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList(LPWSTR szDrive)
 {
 	DWORD nType=FileSystem::GetDriveType(szDrive);
-	DebugFormatMessage(L"CSettingsProperties::CDatabaseSettingsPage::AddDriveToList(%s),type:%X",szDrive,nType);
+	//DebugFormatMessage(L"CSettingsProperties::CDatabaseSettingsPage::AddDriveToList(%s),type:%X",szDrive,nType);
 
 	LVITEMW li;
 	li.iItem=m_pList->GetItemCount();

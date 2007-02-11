@@ -971,6 +971,10 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\HFCDebug.log"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.1060                 */
+   database updater v3.0.7.2110                 */
 
 #if !defined(DATABASEUPDATER_H)
 #define DATABASEUPDATER_H
@@ -17,6 +17,13 @@ typedef BOOL (CALLBACK* UPDATEPROC)(DWORD_PTR dwParam,CallingReason crReason,Upd
 
 #define BFSIZE 200000
 
+typedef	HANDLE HFIND;
+typedef WIN32_FIND_DATAA FIND_DATA;
+typedef WIN32_FIND_DATAW FIND_DATAW;
+
+#define VALID_HFIND(h)		((h)!=INVALID_HANDLE_VALUE)
+
+
 
 // Maybe usefull
 #define IS_UPDATER_EXITED(ptr)		((((ULONG_PTR)(ptr))&0xFFFF0000)==0xFFFF0000?TRUE:FALSE)
@@ -30,6 +37,9 @@ typedef BOOL (CALLBACK* UPDATEPROC)(DWORD_PTR dwParam,CallingReason crReason,Upd
 #define sstrlen(str,len)		dstrlen(str,len)
 
 #define sstrlenW				dwstrlen
+
+
+
 
 
 class CDatabaseUpdater
@@ -55,6 +65,30 @@ public:
 
 		
 		
+	protected:
+		HFIND _FindFirstFile(LPCSTR szFolder,FIND_DATA* fd);
+		HFIND _FindFirstFile(LPCWSTR szFolder,FIND_DATAW * fd);
+		static BOOL _FindNextFile(HFIND hFind,FIND_DATA* fd);
+		static BOOL _FindNextFile(HFIND hFind,FIND_DATAW* fd);
+		void _FindClose(HFIND hFind);
+		static BOOL _FindIsFolder(FIND_DATA* fd);
+		static BOOL _FindIsFolder(FIND_DATAW* fd);
+		static LPCSTR _FindGetName(FIND_DATA* fd);
+		static LPCWSTR _FindGetName(FIND_DATAW* fd);
+		static BYTE _FindGetAttribFlag(FIND_DATA* fd);
+		static BYTE _FindGetAttribFlag(FIND_DATAW* fd);
+		static void _FindGetLastWriteDosDateTime(FIND_DATA* fd,WORD* pwDate,WORD* pwTime);
+		static void _FindGetCreationDosDate(FIND_DATA* fd,WORD* pwDate);
+		static void _FindGetLastAccessDosDate(FIND_DATA* fd,WORD* pwDate);
+		static void _FindGetLastWriteDosDateTime(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime);
+		static void _FindGetCreationDosDate(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime);
+		static void _FindGetLastAccessDosDate(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime);
+		static DWORD _FindGetFileSizeLo(FIND_DATA* fd);
+		static DWORD _FindGetFileSizeLo(FIND_DATAW* fd);
+		static DWORD _FindGetFileSizeHi(FIND_DATA* fd);
+		static DWORD _FindGetFileSizeHi(FIND_DATAW* fd);
+
+		CList<HFIND> m_aOpenHandles;
 
 	public:
 		CStringW m_Path;
@@ -75,6 +109,7 @@ public:
 			DWORD nLength;
 			CBuffer* pNext;
 		};
+		
 		CBuffer *m_pFirstBuffer,*pCurrentBuffer;
 		BYTE* pPoint;
 		
@@ -90,6 +125,7 @@ public:
 
 		friend CDatabaseUpdater;
 		friend DBArchive;
+	
 	public:
 		CRootDirectory* m_pNext;
 
@@ -145,8 +181,6 @@ public:
 			LPSTR* m_aExcludeFilesPatternsA; 
 			LPWSTR* m_aExcludeFilesPatternsW; 
 		};
-
-
 	};
 
 protected:
@@ -203,6 +237,7 @@ public:
 	static BYTE GetAttribFlag(DWORD dwAttribs);
 #endif
 
+
 private:
 
 	static CFile* OpenDatabaseFileForIncrementalUpdate(LPCWSTR szArchive,DWORD dwFiles,DWORD dwDirectories,BOOL bUnicode);
@@ -245,6 +280,132 @@ private:
 };
 
 typedef CDatabaseUpdater* PDATABASEUPDATER;
+
+
+
+
+
+inline HFIND CDatabaseUpdater::CRootDirectory::_FindFirstFile(LPCSTR szFolder,FIND_DATA* fd)
+{
+	HFIND hFind=FindFirstFileA(szFolder,fd);
+	if (hFind!=INVALID_HANDLE_VALUE)
+	{
+		m_aOpenHandles.AddHead(hFind);
+		DebugOpenHandle(dhtFileFind,hFind,szFolder);
+	}
+	return hFind;
+}
+
+inline HFIND CDatabaseUpdater::CRootDirectory::_FindFirstFile(LPCWSTR szFolder,FIND_DATAW * fd)
+{
+	HFIND hFind=FindFirstFileW(szFolder,fd);
+	if (hFind!=INVALID_HANDLE_VALUE)
+	{
+		m_aOpenHandles.AddHead(hFind);
+		DebugOpenHandle(dhtFileFind,hFind,szFolder);
+	}
+	return hFind;
+}
+inline BOOL CDatabaseUpdater::CRootDirectory::_FindNextFile(HFIND hFind,FIND_DATA* fd)
+{
+	return FindNextFileA(hFind,fd);
+}
+inline BOOL CDatabaseUpdater::CRootDirectory::_FindNextFile(HFIND hFind,FIND_DATAW* fd)
+{
+	return FindNextFileW(hFind,fd);
+}
+inline void CDatabaseUpdater::CRootDirectory::_FindClose(HFIND hFind)
+{
+	ASSERT(hFind==m_aOpenHandles.GetHead());
+	m_aOpenHandles.RemoveHead();
+	FindClose(hFind);
+	DebugCloseHandle(dhtFileFind,hFind,STRNULL);
+}
+inline BOOL CDatabaseUpdater::CRootDirectory::_FindIsFolder(FIND_DATA* fd)
+{
+	return (fd->dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)==FILE_ATTRIBUTE_DIRECTORY;
+}
+inline BOOL CDatabaseUpdater::CRootDirectory::_FindIsFolder(FIND_DATAW* fd)
+{
+	return (fd->dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)==FILE_ATTRIBUTE_DIRECTORY;
+}
+inline LPCSTR CDatabaseUpdater::CRootDirectory::_FindGetName(FIND_DATA* fd)
+{
+	return fd->cFileName;
+}
+inline LPCWSTR CDatabaseUpdater::CRootDirectory::_FindGetName(FIND_DATAW* fd)
+{
+	return fd->cFileName;
+}
+
+inline BYTE CDatabaseUpdater::CRootDirectory::_FindGetAttribFlag(FIND_DATA* fd)
+{
+	return CDatabaseUpdater::GetAttribFlag(fd->dwFileAttributes);
+}
+inline BYTE CDatabaseUpdater::CRootDirectory::_FindGetAttribFlag(FIND_DATAW* fd)
+{
+	return CDatabaseUpdater::GetAttribFlag(fd->dwFileAttributes);
+}
+
+
+inline void CDatabaseUpdater::CRootDirectory::_FindGetLastWriteDosDateTime(FIND_DATA* fd,WORD* pwDate,WORD* pwTime)
+{
+	FILETIME ft;
+	FileTimeToLocalFileTime(&fd->ftLastWriteTime,&ft);
+	FileTimeToDosDateTime(&ft,pwDate,pwTime);
+}
+inline void CDatabaseUpdater::CRootDirectory::_FindGetCreationDosDate(FIND_DATA* fd,WORD* pwDate)
+{
+	FILETIME ft;
+	WORD wTemp;
+	FileTimeToLocalFileTime(&fd->ftCreationTime,&ft);
+	FileTimeToDosDateTime(&ft,pwDate,&wTemp);
+}
+inline void CDatabaseUpdater::CRootDirectory::_FindGetLastAccessDosDate(FIND_DATA* fd,WORD* pwDate)
+{
+	FILETIME ft;
+	WORD wTemp;
+	FileTimeToLocalFileTime(&fd->ftLastAccessTime,&ft);
+	FileTimeToDosDateTime(&ft,pwDate,&wTemp);
+}
+
+
+inline void CDatabaseUpdater::CRootDirectory::_FindGetLastWriteDosDateTime(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime)
+{
+	FILETIME ft;
+	FileTimeToLocalFileTime(&fd->ftLastWriteTime,&ft);
+	FileTimeToDosDateTime(&ft,pwDate,pwTime);
+}
+inline void CDatabaseUpdater::CRootDirectory::_FindGetCreationDosDate(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime)
+{
+	FILETIME ft;
+	FileTimeToLocalFileTime(&fd->ftCreationTime,&ft);
+	FileTimeToDosDateTime(&ft,pwDate,pwTime);
+}
+inline void CDatabaseUpdater::CRootDirectory::_FindGetLastAccessDosDate(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime)
+{
+	FILETIME ft;
+	FileTimeToLocalFileTime(&fd->ftLastAccessTime,&ft);
+	FileTimeToDosDateTime(&ft,pwDate,pwTime);
+}
+
+inline DWORD CDatabaseUpdater::CRootDirectory::_FindGetFileSizeLo(FIND_DATA* fd)
+{
+	return fd->nFileSizeLow;
+}
+inline DWORD CDatabaseUpdater::CRootDirectory::_FindGetFileSizeLo(FIND_DATAW* fd)
+{
+	return fd->nFileSizeLow;
+}
+
+inline DWORD CDatabaseUpdater::CRootDirectory::_FindGetFileSizeHi(FIND_DATA* fd)
+{
+	return fd->nFileSizeHigh;
+}
+inline DWORD CDatabaseUpdater::CRootDirectory::_FindGetFileSizeHi(FIND_DATAW* fd)
+{
+	return fd->nFileSizeHigh;
+}
 
 inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath)
 :	m_Path(szPath),m_dwFiles(0),m_dwDirectories(0),m_pFirstBuffer(NULL),m_aExcludeFilesPatternsA(NULL)

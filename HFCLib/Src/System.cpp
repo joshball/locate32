@@ -4,6 +4,10 @@
 
 #include "HFCLib.h"
 
+#if defined(HFC_USEDEBUGNEW)
+	#define new DEBUG_NEW
+#endif
+
 BOOL SystemInfo(LPSYSTEMINFO info)
 {
 #ifdef WIN32

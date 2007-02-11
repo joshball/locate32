@@ -64,7 +64,7 @@ BOOL CLocateApp::InitInstance()
 	//extern BOOL bIsFullUnicodeSupport;
 	//bIsFullUnicodeSupport=FALSE;
 
-	DebugNumMessage("CLocateApp::InitInstance(), thread is 0x%X",GetCurrentThreadId());
+	DebugFormatMessage("CLocateApp::InitInstance(), thread is 0x%X",GetCurrentThreadId());
 
 	// Initializing HFC library
 	if (!InitializeHFC())
@@ -2093,7 +2093,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 		break;
 	}
 	
-	DebugMessage("CLocateApp::UpdateProc END");
+	DbcDebugMessage("CLocateApp::UpdateProc END");
 	return TRUE;
 }
 
@@ -3122,18 +3122,18 @@ BYTE CLocateAppWnd::OnLocate()
 	
 	if (m_pLocateDlgThread==NULL)
 	{
-		DebugMessage("CLocateAppWnd::OnLocate() 1a");
+		//DebugMessage("CLocateAppWnd::OnLocate() 1a");
 
 		// Hiding LocateST
 		if (GetFocus()==NULL)
 			ForceForegroundAndFocus();
 		
-		DebugMessage("CLocateAppWnd::OnLocate() 1b");
+		//DebugMessage("CLocateAppWnd::OnLocate() 1b");
 
 		m_pLocateDlgThread=new CLocateDlgThread;
 		m_pLocateDlgThread->CreateThread();
 
-		DebugMessage("CLocateAppWnd::OnLocate() 1c");
+		//DebugMessage("CLocateAppWnd::OnLocate() 1c");
 
 
 		while (m_pLocateDlgThread->m_pLocate==NULL)
@@ -3143,27 +3143,27 @@ BYTE CLocateAppWnd::OnLocate()
 
 		ShowWindow(swHide);
 
-		DebugNumMessage("CLocateAppWnd::OnLocate() 1e, pLocate=%X",DWORD(m_pLocateDlgThread->m_pLocate));
-		DebugNumMessage("CLocateAppWnd::OnLocate() 1e, hWnd=%X",DWORD(m_pLocateDlgThread->m_pLocate->GetHandle()));
+		//DebugFormatMessage("CLocateAppWnd::OnLocate() 1e, pLocate=%X",DWORD(m_pLocateDlgThread->m_pLocate));
+		//DebugFormatMessage("CLocateAppWnd::OnLocate() 1e, hWnd=%X",DWORD(m_pLocateDlgThread->m_pLocate->GetHandle()));
 		
 		m_pLocateDlgThread->m_pLocate->ForceForegroundAndFocus();
 
-		DebugMessage("CLocateAppWnd::OnLocate() 1f");
+		//DebugMessage("CLocateAppWnd::OnLocate() 1f");
 		
 
 		
 	}
 	else
 	{
-		DebugMessage("CLocateAppWnd::OnLocate() 2a");
+		//DebugMessage("CLocateAppWnd::OnLocate() 2a");
 
 		ForceForegroundAndFocus();
 		
-		DebugMessage("CLocateAppWnd::OnLocate() 2b");
+		//DebugMessage("CLocateAppWnd::OnLocate() 2b");
 
 		CLocateDlg* pLocateDlg=GetLocateDlg();
 
-		DebugNumMessage("CLocateAppWnd::OnLocate() 2c %X",DWORD(pLocateDlg));
+		//DebugFormatMessage("CLocateAppWnd::OnLocate() 2c %X",DWORD(pLocateDlg));
 
 		// Restore dialog if needed
 		WINDOWPLACEMENT wp;
@@ -3172,12 +3172,12 @@ BYTE CLocateAppWnd::OnLocate()
 		if (wp.showCmd!=SW_MAXIMIZE)
             pLocateDlg->ShowWindow(swRestore);
 
-		DebugMessage("CLocateAppWnd::OnLocate() 2d");
+		//DebugMessage("CLocateAppWnd::OnLocate() 2d");
 
 
 		pLocateDlg->BringWindowToTop();
 
-		DebugMessage("CLocateAppWnd::OnLocate() 2e");
+		//DebugMessage("CLocateAppWnd::OnLocate() 2e");
 
 		pLocateDlg->ForceForegroundAndFocus();
 	}
@@ -3268,11 +3268,11 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThrea
 		// Starting thread which stops updating		
 		DWORD dwThreadID;
 		HANDLE hThread=CreateThread(NULL,0,KillUpdaterProc,(void*)this,0,&dwThreadID);
-		DebugOpenHandle(dhtThread,hThread,STRNULL);
+		DebugOpenThread(hThread);
 		if (hThread!=NULL)
 		{
 			CloseHandle(hThread);
-			DebugCloseHandle(dhtThread,hThread,STRNULL);
+			DebugCloseThread(hThread);
 		}
 	}
 	return TRUE;
@@ -3325,7 +3325,7 @@ void CLocateAppWnd::OnDestroy()
 		
 			if (m_pLocateDlgThread!=NULL)
 			{
-				DebugNumMessage("Terminating locate dialog thread %X",(DWORD)m_pLocateDlgThread);
+				DebugFormatMessage("Terminating locate dialog thread %X",(DWORD)m_pLocateDlgThread);
 				::TerminateThread(hLocateThread,1);
 				
 				if (m_pLocateDlgThread!=NULL)
@@ -3692,7 +3692,7 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 
 	BOOL bNeedCpuUsage=FALSE;
 	
-	DebugNumMessage("CLocateAppWnd::SetSchedules(0x%X) START",(DWORD)pSchedules);
+	//DebugFormatMessage("CLocateAppWnd::SetSchedules(0x%X) START",(DWORD)pSchedules);
 	if (pSchedules==NULL)
 	{
 		CRegKey2 RegKey;
@@ -3705,7 +3705,7 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 			char* pTmpData=new char[nKeyLen*2+2];
 			for (DWORD i=0;i<nKeyLen;i++)
 				StringCbPrintf(pTmpData+i*2,3,"%02X",pSchedules[i]);
-			DebugFormatMessage("SCHEDULES(length=%d): %s",nKeyLen,pTmpData);
+			//DebugFormatMessage("SCHEDULES(length=%d): %s",nKeyLen,pTmpData);
 			delete[] pTmpData;
 #endif
 			if (pSchedules[1]==1)
@@ -3716,7 +3716,7 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 					BYTE* pPtr=pSchedules+6;
 					for (DWORD n=0;n<*(DWORD*)(pSchedules+2);n++)
 					{
-						DebugFormatMessage("SCHEDULEV1: type=%d",((CSchedule*)pPtr)->m_nType);
+						//DebugFormatMessage("SCHEDULEV1: type=%d",((CSchedule*)pPtr)->m_nType);
 						m_Schedules.AddTail(new CSchedule(pPtr,1));
 					}
 				}
@@ -3731,7 +3731,7 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 						if (pPtr+SCHEDULE_V2_LEN>=pSchedules+nKeyLen)
 							break;
 
-						DebugFormatMessage("SCHEDULEV2: type=%d",((CSchedule*)pPtr)->m_nType);
+						//DebugFormatMessage("SCHEDULEV2: type=%d",((CSchedule*)pPtr)->m_nType);
 						m_Schedules.AddTail(new CSchedule(pPtr,2));
 					}
 				}
@@ -3746,7 +3746,7 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 						if (pPtr+SCHEDULE_V34_LEN>=pSchedules+nKeyLen)
 							break;
 
-						DebugFormatMessage("SCHEDULEV3: type=%d",((CSchedule*)pPtr)->m_nType);
+						//DebugFormatMessage("SCHEDULEV3: type=%d",((CSchedule*)pPtr)->m_nType);
 						CSchedule* pSchedule=new CSchedule(pPtr,pSchedules[1]);
 						m_Schedules.AddTail(pSchedule);
 
@@ -3767,7 +3767,7 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 		while (pPos!=NULL)
 		{
 			CSchedule* pSchedule=m_Schedules.GetAt(pPos);
-			DebugFormatMessage("SCHEDULE: type=%d",pSchedule->m_nType);
+			//DebugFormatMessage("SCHEDULE: type=%d",pSchedule->m_nType);
 			if (pSchedule->m_bFlags&CSchedule::flagEnabled &&
 				pSchedule->m_wCpuUsageTheshold!=WORD(-1))
 				bNeedCpuUsage=TRUE;
@@ -3794,7 +3794,7 @@ DWORD CLocateAppWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 	SYSTEMTIME st;
 	GetLocalTime(&st);
 	SetTimer(ID_SYNCSCHEDULES,(bNeedCpuUsage?2000:1000)-st.wMilliseconds,NULL);
-	DebugMessage("CLocateAppWnd::SetSchedules END");
+	//DebugMessage("CLocateAppWnd::SetSchedules END");
 	return m_Schedules.GetCount();
 }
 
@@ -3803,7 +3803,7 @@ BOOL CLocateAppWnd::SaveSchedules()
 	if (GetLocateApp()->m_nInstance!=0)
 		return 0;
 
-	DebugMessage("CLocateAppWnd::SaveSchedules() START");
+	//DebugMessage("CLocateAppWnd::SaveSchedules() START");
 	
 	CRegKey2 RegKey;
 	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
@@ -3851,7 +3851,7 @@ BOOL CLocateAppWnd::SaveSchedules()
 		delete[] pSchedules;
 	}
 	
-	DebugMessage("CLocateAppWnd::SaveSchedules() END");
+	//DebugMessage("CLocateAppWnd::SaveSchedules() END");
 	return TRUE;
 }
 	
@@ -4808,9 +4808,6 @@ BOOL CLocateAppWnd::CUpdateStatusWnd::DestroyWindow()
 }
 
 
-#ifdef _DEBUG
-DEBUGALLOCATORTYPE DebugAlloc;
-#endif
 
 CLocateApp theApp;
 

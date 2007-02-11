@@ -13,6 +13,10 @@
 #define UDBATTRIB_DIRECTORY	0x80
 #define UDBATTRIB_TYPEFLAG	0xF0
 
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
 #include "Definitions.h"
 #include "Database.h"
 #include "DatabaseUpdater.h"

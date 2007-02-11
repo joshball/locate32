@@ -313,13 +313,6 @@ public:
 		CSettingsProperties* m_pSettings;
 	
 
-#ifdef _DEBUG
-	public:
-		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-		inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-
-#endif
 	};
 	
 	class CAdvancedSettingsPage : public COptionsPropertyPage 
@@ -350,12 +343,6 @@ public:
 
 		CArrayFAP<LPSTR> m_aBuffer;
 
-#ifdef _DEBUG
-	public:
-		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-		inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
 	};
 	
 	class CLanguageSettingsPage : public CPropertyPage 
@@ -383,13 +370,6 @@ public:
 			CStringW Description;
 		};
 
-
-#ifdef _DEBUG
-	public:
-		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-		inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
 	private:
 		CListCtrl* m_pList;
 		int nLastSel;
@@ -552,12 +532,7 @@ public:
 			CComboBox* m_pTypeCombo;
 			BYTE m_bChanged;
 
-#ifdef _DEBUG
-		public:
-			inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-			inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-			inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
+
 		};
 
 	protected:
@@ -656,12 +631,7 @@ public:
 		CSettingsProperties* m_pSettings;
 
 		
-#ifdef _DEBUG
-	public:
-		inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-		inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-		inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
+
 	private:
 		CListCtrl* m_pList,*m_pWhenPressedList;
 		CToolBarCtrl* m_pToolBar;
@@ -793,12 +763,7 @@ private:
 
 	friend CGeneralSettingsPage;
 
-#ifdef _DEBUG
-public:
-	inline void* operator new(size_t size) { return DebugAlloc.Allocate(size,__LINE__,__FILE__); }
-	inline void operator delete(void* pObject) { DebugAlloc.Free(pObject); }
-	inline void operator delete(void* pObject,size_t size) { DebugAlloc.Free(pObject); }
-#endif
+
 };
 
 

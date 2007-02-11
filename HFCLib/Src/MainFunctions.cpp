@@ -4,15 +4,18 @@
 
 #include "HFCLib.h"
 
-// Library variables
+#if defined(HFC_USEDEBUGNEW)
+	#define new DEBUG_NEW
+#endif
 
-#define  HFCVERSIONMS		MAKEVERSION(6,10)
-#define  HFCVERSIONLS		MAKEVERSION(7,1281)
+// Library variables
+#define  HFCVERSIONMS		MAKEVERSION(6,20)
+#define  HFCVERSIONLS		MAKEVERSION(7,2110)
 
 #ifdef _DEBUG
-#define  HFCVERSIONSTR		"HFC Library (DEBUG) v6.10.7.1281";
+#define  HFCVERSIONSTR		"HFC Library (DEBUG) v6.20.7.2110";
 #else
-#define  HFCVERSIONSTR		"HFC Library v6.10.7.1281";
+#define  HFCVERSIONSTR		"HFC Library v6.20.7.2110";
 #endif
 
 LPCSTR szEmpty="";
@@ -185,8 +188,10 @@ DWORD GetFileVersion(LPCSTR szFile,DWORD* dwFileVersionLo)
 		VerQueryValue(pVersion,"\\",(void**)&pffi,&nflen);
 		if (dwFileVersionLo!=NULL)
 			*dwFileVersionLo=pffi->dwFileVersionLS;	
+		delete[] pVersion;
 		return pffi->dwFileVersionMS;
 	}
+	delete[] pVersion;
 	return 0;
 }
 	

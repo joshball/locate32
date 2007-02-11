@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database locater v3.0.7.1060               */
+   database locater v3.0.7.2110               */
 
 #include <HFCLib.h>
 
@@ -19,12 +19,17 @@ extern "C" void  (*pcre_stack_free)(void *) = free;
 extern "C" int   (*pcre_callout)(pcre_callout_block *) = NULL;
 */
 
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
 #include "Locater.h"
 
 #include "../locatedb/locatedb.h"
 
 
 #define OVECCOUNT 30  /* should be a multiple of 3 */
+
 
 
 void InitLocaterLibrary()
@@ -229,7 +234,7 @@ CLocater::~CLocater()
 	if (m_hThread!=NULL)
 	{
 		CloseHandle(m_hThread);
-		DebugCloseHandle(dhtThread,m_hThread,STRNULL);
+		DebugCloseThread(m_hThread);
 		m_hThread=NULL;
 	}
 #endif
@@ -303,6 +308,7 @@ BOOL CLocater::LocatingProc()
 	
 			// Reading and verifing header
 			szBuffer=new BYTE[11];
+			
 			dbFile->Read(szBuffer,11);
 
 			if (szBuffer[0]!='L' || szBuffer[1]!='O' || 
@@ -370,7 +376,9 @@ BOOL CLocater::LocatingProc()
 						{
 							// Reading data to buffer
 							delete[] szBuffer;
+							
 							pPoint=szBuffer=new BYTE[dwBlockSize];
+							
 							dbFile->Read(szBuffer,dwBlockSize);
 
 							// Resolving volume name 
@@ -445,6 +453,7 @@ BOOL CLocater::LocatingProc()
 						// Reading data to buffer
 						delete[] szBuffer;
 						pPoint=szBuffer=new BYTE[dwBlockSize];
+						
 						dbFile->Read(szBuffer,dwBlockSize);
 
 						LocaterDebugMessage("CLocater::LocatingProc(W) 2");
@@ -530,6 +539,7 @@ BOOL CLocater::LocatingProc()
 							// Reading data to buffer
 							delete[] szBuffer;
 							pPoint=szBuffer=new BYTE[dwBlockSize];
+
 							dbFile->Read(szBuffer,dwBlockSize);
 
 							// Resolving volume name 
@@ -604,6 +614,7 @@ BOOL CLocater::LocatingProc()
 						// Reading data to buffer
 						delete[] szBuffer;
 						pPoint=szBuffer=new BYTE[dwBlockSize];
+						
 						dbFile->Read(szBuffer,dwBlockSize);
 
 						LocaterDebugMessage("CLocater::LocatingProc() 2");
@@ -730,6 +741,7 @@ BOOL CLocater::LocatingProc()
 		// Finishing
 		if (szBuffer!=NULL)
 			delete[] szBuffer;
+			
 		szBuffer=NULL;
 	}
 	
@@ -798,7 +810,7 @@ inline BOOL CLocater::SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCWSTR* szD
 		DWORD dwThreadID;
 		LocaterDebugMessage("CLocater::LocateFiles CREATING THREAD");
 		m_hThread=CreateThread(NULL,0,CLocater::LocateThreadProc,this,0,&dwThreadID);
-		DebugOpenHandle(dhtThread,m_hThread,STRNULL);
+		DebugOpenThread(m_hThread);
 		LocaterDebugMessage("CLocater::LocateFiles CREATING THREAD OK?");
 		return m_hThread!=NULL;
 	}
