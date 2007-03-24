@@ -152,7 +152,8 @@ public:
 	HICON m_hAppIcon;
 	HICON* m_pUpdateAnimIcons;
 	int m_nCurUpdateAnimBitmap;
-	
+	CRITICAL_SECTION m_csAnimBitmaps;
+
 	CListFP <CSchedule*> m_Schedules;
 	CCpuUsage* m_pCpuUsage;
 

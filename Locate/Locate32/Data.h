@@ -121,7 +121,6 @@ public:
 	CSchedule(BYTE*& pData,BYTE nVersion);
 	~CSchedule();
 
-	void GetString(CStringA& rString) const;
 	void GetString(CStringW& rString) const;
 	
 	DWORD WhenShouldRun(STIME& tTime,SDATE& tDate,UINT nDayOfWeek) const;

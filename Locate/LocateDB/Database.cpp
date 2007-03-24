@@ -635,7 +635,7 @@ LPWSTR CDatabase::GetCorrertFileName(LPCWSTR szFileName,DWORD dwNameLength)
 		dwLength--;
 		if (szFile[dwLength-1]!='\\')
 			szFile[dwLength++]='\\';
-		sMemCopy(szFile+dwLength,szFileName,DWORD(dwNameLength));
+		MemCopyW(szFile+dwLength,szFileName,DWORD(dwNameLength));
 		szFile[dwLength+dwNameLength]='\0';
 	}
 	else

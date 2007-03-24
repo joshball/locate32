@@ -142,143 +142,7 @@ DWORD CSchedule::GetData(BYTE* pData) const
 }
 
 
-void CSchedule::GetString(CStringA& str) const
-{
-	CStringA time;
-	SYSTEMTIME st;
-	GetLocalTime(&st);
-	st.wHour=m_tStartTime.bHour;
-	st.wMinute=m_tStartTime.bMinute;
-	st.wSecond=m_tStartTime.bSecond;
 	
-	str.Empty();
-	GetTimeFormatA(LOCALE_USER_DEFAULT,0,&st,NULL,time.GetBuffer(1000),1000);
-
-	time.FreeExtra();
-	switch (m_nType)
-	{
-	case typeMinutely:
-		if (m_tMinutely.wEvery==1)
-			str.LoadString(IDS_MINUTELYEVERYMINUTE);
-		else
-			str.FormatEx(IDS_MINUTELYEVERYXMINUTE,(int)m_tMinutely.wEvery);
-		break;
-	case typeHourly:
-		if (m_tHourly.wEvery==1)
-			str.FormatEx(IDS_HOURLYLYEVERYHOUR,(int)m_tHourly.wMinute);
-		else
-			str.FormatEx(IDS_HOURLYLYEVERYXHOUR,(int)m_tHourly.wEvery,(int)m_tHourly.wMinute);
-		break;
-	case typeDaily:
-		if (m_tDaily.wEvery==1)
-			str.FormatEx(IDS_DAILYEVERYDAY,(LPCSTR)time);
-		else
-			str.FormatEx(IDS_DAILYEVERYXDAYS,(LPCSTR)time,(int)m_tDaily.wEvery);
-		break;
-	case typeWeekly:
-		{
-			CStringA days;
-			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Monday)
-			{
-				char szDate[10];
-				LoadStringA(GetResourceHandle(LanguageSpecificResource),IDS_MON,szDate,10);
-				days << szDate << ' ';
-			}
-			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Tuesday)
-			{
-				char szDate[10];
-				LoadStringA(GetResourceHandle(LanguageSpecificResource),IDS_TUE,szDate,10);
-				days << szDate << ' ';
-			}
-			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Wednesday)
-			{
-				char szDate[10];
-				LoadStringA(GetResourceHandle(LanguageSpecificResource),IDS_WED,szDate,10);
-				days << szDate << ' ';
-			}
-			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Thursday)
-			{
-				char szDate[10];
-				LoadStringA(GetResourceHandle(LanguageSpecificResource),IDS_THU,szDate,10);
-				days << szDate << ' ';
-			}
-			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Friday)
-			{
-				char szDate[10];
-				LoadStringA(GetResourceHandle(LanguageSpecificResource),IDS_FRI,szDate,10);
-				days << szDate << ' ';
-			}
-			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Saturday)
-			{
-				char szDate[10];
-				LoadStringA(GetResourceHandle(LanguageSpecificResource),IDS_SAT,szDate,10);
-				days << szDate << ' ';
-			}
-			if (m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Sunday)
-			{
-				char szDate[10];
-				LoadStringA(GetResourceHandle(LanguageSpecificResource),IDS_SUN,szDate,10);
-				days << szDate << ' ';
-			}
-			
-			if (m_tWeekly.wEvery==1)
-				str.FormatEx(IDS_WEEKLYEVERYWEEK,(LPCSTR)time,(LPCSTR)days);
-			else
-				str.FormatEx(IDS_WEEKLYEVERYXWEEKS,(LPCSTR)time,(LPCSTR)days,(int)m_tWeekly.wEvery);	
-			break;
-		}
-	case typeMonthly:
-		if (m_tMonthly.nType==CSchedule::SMONTHLYTYPE::Day)
-			str.Format(IDS_MONTHLYEVERYDAY,(LPCSTR)time,(int)m_tMonthly.bDay);
-		else
-		{
-			char day[10];
-			CStringA type;
-			type.LoadString(IDS_FIRST+m_tMonthly.nWeek);
-			type.MakeLower();
-			st.wYear=1999;
-			st.wMonth=8;
-			st.wDay=2+m_tMonthly.bDay;
-			LoadStringA(GetResourceHandle(LanguageSpecificResource),IDS_MONDAY+m_tMonthly.bDay,day,10);
-			str.FormatEx(IDS_MONTHLYEVERYTYPE,(LPCSTR)time,(LPCSTR)type,day);
-		}
-		break;
-	case typeOnce:
-		{
-			CStringA date;
-			st.wYear=m_dStartDate.wYear;
-			st.wMonth=m_dStartDate.bMonth;
-			st.wDay=m_dStartDate.bDay;
-			GetDateFormat(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,NULL,date.GetBuffer(100),100);
-			str.FormatEx(IDS_ATTIMEON,(LPCSTR)time,(LPCSTR)date);
-			break;
-		}
-	case typeAtStartup:
-		str.LoadString(IDS_ATSTARTUPSTR);
-		break;
-	}
-	if (m_bFlags&flagRunned &&
-		!(m_tLastStartTime.bHour==0 && m_tLastStartTime.bMinute==0 && m_tLastStartTime.bSecond==0 &&
-		m_tLastStartDate.wYear<1995 && m_tLastStartDate.bMonth==0 && m_tLastStartDate.bDay==0))
-	{
-		SYSTEMTIME st;
-		st.wYear=m_tLastStartDate.wYear;
-		st.wMonth=m_tLastStartDate.bMonth;
-		st.wDay=m_tLastStartDate.bDay;
-		st.wHour=m_tLastStartTime.bHour;
-		st.wMinute=m_tLastStartTime.bMinute;
-		st.wSecond=m_tLastStartTime.bSecond;
-		st.wMilliseconds=0;
-		CString tmp;
-		char szDate[100];
-		char szTime[100];
-		GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
-		GetDateFormat(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,NULL,szDate,100);
-		tmp.Format(IDS_LASTRUN,szDate,szTime);
-		str << tmp;
-	}
-}
-
 
 void CSchedule::GetString(CStringW& str) const
 {
@@ -288,11 +152,20 @@ void CSchedule::GetString(CStringW& str) const
 	st.wHour=m_tStartTime.bHour;
 	st.wMinute=m_tStartTime.bMinute;
 	st.wSecond=m_tStartTime.bSecond;
-	
 	str.Empty();
-	GetTimeFormatW(LOCALE_USER_DEFAULT,0,&st,NULL,time.GetBuffer(1000),1000);
+	
+	if (IsUnicodeSystem())
+	{
+		GetTimeFormatW(LOCALE_USER_DEFAULT,0,&st,NULL,time.GetBuffer(200),200);
+		time.FreeExtra();
+	}
+	else
+	{
+		char szBuffer[200];
+		GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,szBuffer,200);
+		time=szBuffer;
+	}
 
-	time.FreeExtra();
 	switch (m_nType)
 	{
 	case typeMinutely:
@@ -407,13 +280,27 @@ void CSchedule::GetString(CStringW& str) const
 		st.wMinute=m_tLastStartTime.bMinute;
 		st.wSecond=m_tLastStartTime.bSecond;
 		st.wMilliseconds=0;
-		CStringW tmp;
-		WCHAR szDate[100];
-		WCHAR szTime[100];
-		GetTimeFormatW(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
-		GetDateFormatW(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,NULL,szDate,100);
-		tmp.FormatEx(IDS_LASTRUN,szDate,szTime);
-		str << tmp;
+		if (IsUnicodeSystem())
+		{
+			CStringW tmp;
+			WCHAR szDate[100];
+			WCHAR szTime[100];
+			GetTimeFormatW(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
+			GetDateFormatW(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,NULL,szDate,100);
+			tmp.FormatEx(IDS_LASTRUN,szDate,szTime);
+			str << tmp;
+		}
+		else
+		{
+			CStringA tmp;
+			CHAR szDate[100];
+			CHAR szTime[100];
+			GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
+			GetDateFormat(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,NULL,szDate,100);
+			tmp.FormatEx(IDS_LASTRUN,szDate,szTime);
+			str << tmp;
+		}
+		
 	}
 }
 

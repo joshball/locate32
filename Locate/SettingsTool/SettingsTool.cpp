@@ -127,7 +127,7 @@ BOOL SaveSettings(HWND hWnd)
 
 	OPENFILENAME ofn;
 	ZeroMemory(&ofn,sizeof(OPENFILENAME));
-	ofn.lStructSize=sizeof(OPENFILENAME);
+	ofn.lStructSize=OPENFILENAME_SIZE_VERSION_400;
 	ofn.hwndOwner=hWnd;
 	ofn.hInstance=hInst;
 	ofn.lpstrFilter=szFilter;
@@ -214,7 +214,7 @@ BOOL RestoreSettings(HWND hWnd)
 
 	OPENFILENAME ofn;
 	ZeroMemory(&ofn,sizeof(OPENFILENAME));
-	ofn.lStructSize=sizeof(OPENFILENAME);
+	ofn.lStructSize=OPENFILENAME_SIZE_VERSION_400;
 	ofn.hwndOwner=hWnd;
 	ofn.hInstance=hInst;
 	ofn.lpstrFilter=szFilter;

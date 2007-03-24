@@ -542,6 +542,8 @@ CLocateDlg::~CLocateDlg()
 
 	if (m_pDesktopFolder!=NULL)
 		m_pDesktopFolder->Release();
+
+	DeleteCriticalSection(&m_csAnimBitmaps);
 }
 
 CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
@@ -2693,15 +2695,19 @@ void CLocateDlg::OnTimer(DWORD wTimerID)
 		m_nCurLocateAnimBitmap++;
 		if (m_nCurLocateAnimBitmap>5)
 			m_nCurLocateAnimBitmap=0;
+		EnterCriticalSection(&m_csAnimBitmaps);
 		if (m_pStatusCtrl!=NULL && m_pLocateAnimBitmaps!=NULL)
 			m_pStatusCtrl->SetText((LPCSTR)m_pLocateAnimBitmaps[m_nCurLocateAnimBitmap],STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
+		LeaveCriticalSection(&m_csAnimBitmaps);
 		break;
 	case ID_UPDATEANIM:
 		m_nCurUpdateAnimBitmap++;
 		if (m_nCurUpdateAnimBitmap>12)
 			m_nCurUpdateAnimBitmap=0;
+		EnterCriticalSection(&m_csAnimBitmaps);
 		if (m_pStatusCtrl!=NULL && m_pUpdateAnimBitmaps!=NULL)
 			m_pStatusCtrl->SetText((LPCSTR)m_pUpdateAnimBitmaps[m_nCurUpdateAnimBitmap],STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
+		LeaveCriticalSection(&m_csAnimBitmaps);
 		break;
 	}
 }
@@ -7295,24 +7301,32 @@ BOOL CLocateDlg::SetListSelStyle()
 
 BOOL CLocateDlg::StartLocateAnimation()
 {
-	if (m_pLocateAnimBitmaps==NULL)
+	EnterCriticalSection(&m_csAnimBitmaps);
+	if (m_pLocateAnimBitmaps!=NULL)
 	{
-		m_pLocateAnimBitmaps=new HICON[6];
-		m_pLocateAnimBitmaps[0]=(HICON)LoadImage(IDI_LANIM1,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pLocateAnimBitmaps[1]=(HICON)LoadImage(IDI_LANIM2,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pLocateAnimBitmaps[2]=(HICON)LoadImage(IDI_LANIM3,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pLocateAnimBitmaps[3]=(HICON)LoadImage(IDI_LANIM4,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pLocateAnimBitmaps[4]=(HICON)LoadImage(IDI_LANIM5,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pLocateAnimBitmaps[5]=(HICON)LoadImage(IDI_LANIM6,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+		LeaveCriticalSection(&m_csAnimBitmaps);
+		return TRUE;
 	}
+	
+		
+	m_pLocateAnimBitmaps=new HICON[6];
+	m_pLocateAnimBitmaps[0]=(HICON)LoadImage(IDI_LANIM1,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pLocateAnimBitmaps[1]=(HICON)LoadImage(IDI_LANIM2,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pLocateAnimBitmaps[2]=(HICON)LoadImage(IDI_LANIM3,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pLocateAnimBitmaps[3]=(HICON)LoadImage(IDI_LANIM4,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pLocateAnimBitmaps[4]=(HICON)LoadImage(IDI_LANIM5,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pLocateAnimBitmaps[5]=(HICON)LoadImage(IDI_LANIM6,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	
 	SetTimer(ID_LOCATEANIM,200);
 	m_nCurLocateAnimBitmap=0;
 	m_pStatusCtrl->SetText((LPCSTR)m_pLocateAnimBitmaps[0],STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
+	LeaveCriticalSection(&m_csAnimBitmaps);
 	return TRUE;
 }
 
 BOOL CLocateDlg::StopLocateAnimation()
 {
+	EnterCriticalSection(&m_csAnimBitmaps);
 	if (m_pLocateAnimBitmaps!=NULL)
 	{
 		KillTimer(ID_LOCATEANIM);
@@ -7320,9 +7334,13 @@ BOOL CLocateDlg::StopLocateAnimation()
 			DestroyIcon(m_pLocateAnimBitmaps[i]);
 		delete[] m_pLocateAnimBitmaps;
 		m_pLocateAnimBitmaps=NULL;
+		LeaveCriticalSection(&m_csAnimBitmaps);
+		
 		if (m_pStatusCtrl!=NULL)
 			m_pStatusCtrl->SetText(STRNULL,STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
+		return TRUE;
 	}
+	LeaveCriticalSection(&m_csAnimBitmaps);
 	return TRUE;
 }
 	
@@ -7331,32 +7349,39 @@ BOOL CLocateDlg::StartUpdateAnimation()
 	if (m_pStatusCtrl==NULL)
 		return FALSE;
 
-	if (m_pUpdateAnimBitmaps==NULL)
+	EnterCriticalSection(&m_csAnimBitmaps);
+	if (m_pUpdateAnimBitmaps!=NULL)
 	{
-		m_pUpdateAnimBitmaps=new HICON[13];
-		m_pUpdateAnimBitmaps[0]=(HICON)LoadImage(IDI_UANIM1,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pUpdateAnimBitmaps[1]=(HICON)LoadImage(IDI_UANIM2,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pUpdateAnimBitmaps[2]=(HICON)LoadImage(IDI_UANIM3,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pUpdateAnimBitmaps[3]=(HICON)LoadImage(IDI_UANIM4,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pUpdateAnimBitmaps[4]=(HICON)LoadImage(IDI_UANIM5,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pUpdateAnimBitmaps[5]=(HICON)LoadImage(IDI_UANIM6,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pUpdateAnimBitmaps[6]=(HICON)LoadImage(IDI_UANIM7,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pUpdateAnimBitmaps[7]=(HICON)LoadImage(IDI_UANIM8,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pUpdateAnimBitmaps[8]=(HICON)LoadImage(IDI_UANIM9,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pUpdateAnimBitmaps[9]=(HICON)LoadImage(IDI_UANIM10,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pUpdateAnimBitmaps[10]=(HICON)LoadImage(IDI_UANIM11,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pUpdateAnimBitmaps[11]=(HICON)LoadImage(IDI_UANIM12,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		m_pUpdateAnimBitmaps[12]=(HICON)LoadImage(IDI_UANIM13,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-		
+		LeaveCriticalSection(&m_csAnimBitmaps);
+		return TRUE;
 	}
+	
+	m_pUpdateAnimBitmaps=new HICON[13];
+	m_pUpdateAnimBitmaps[0]=(HICON)LoadImage(IDI_UANIM1,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pUpdateAnimBitmaps[1]=(HICON)LoadImage(IDI_UANIM2,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pUpdateAnimBitmaps[2]=(HICON)LoadImage(IDI_UANIM3,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pUpdateAnimBitmaps[3]=(HICON)LoadImage(IDI_UANIM4,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pUpdateAnimBitmaps[4]=(HICON)LoadImage(IDI_UANIM5,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pUpdateAnimBitmaps[5]=(HICON)LoadImage(IDI_UANIM6,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pUpdateAnimBitmaps[6]=(HICON)LoadImage(IDI_UANIM7,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pUpdateAnimBitmaps[7]=(HICON)LoadImage(IDI_UANIM8,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pUpdateAnimBitmaps[8]=(HICON)LoadImage(IDI_UANIM9,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pUpdateAnimBitmaps[9]=(HICON)LoadImage(IDI_UANIM10,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pUpdateAnimBitmaps[10]=(HICON)LoadImage(IDI_UANIM11,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pUpdateAnimBitmaps[11]=(HICON)LoadImage(IDI_UANIM12,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pUpdateAnimBitmaps[12]=(HICON)LoadImage(IDI_UANIM13,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	
 	SetTimer(ID_UPDATEANIM,100);
 	m_nCurUpdateAnimBitmap=0;
 	m_pStatusCtrl->SetText((LPCSTR)m_pUpdateAnimBitmaps[0],STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
+	
+	LeaveCriticalSection(&m_csAnimBitmaps);
 	return TRUE;
 }
 
 BOOL CLocateDlg::StopUpdateAnimation()
 {
+	EnterCriticalSection(&m_csAnimBitmaps);
 	if (m_pUpdateAnimBitmaps!=NULL)
 	{
 		KillTimer(ID_UPDATEANIM);
@@ -7364,9 +7389,13 @@ BOOL CLocateDlg::StopUpdateAnimation()
 			DestroyIcon(m_pUpdateAnimBitmaps[i]);
 		delete[] m_pUpdateAnimBitmaps;
 		m_pUpdateAnimBitmaps=NULL;
+		LeaveCriticalSection(&m_csAnimBitmaps);
 		if (m_pStatusCtrl!=NULL)
 			m_pStatusCtrl->SetText(STRNULL,STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
+	
+		return TRUE;
 	}
+	LeaveCriticalSection(&m_csAnimBitmaps);
 	return TRUE;
 }
 

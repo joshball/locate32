@@ -5984,7 +5984,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnCommand(WORD wID,WORD wNoti
 			OnEdit();
 		else if (wNotifyCode==LBN_SELCHANGE)
 		{
-			CString txt;
+			CStringW txt;
 			EnableItems();
 
 			int nCurSel=m_pSchedules->GetCurSel();
@@ -5997,7 +5997,6 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnCommand(WORD wID,WORD wNoti
 			if (pSchedule->m_bFlags&CSchedule::flagRunned)
 			{
 				SYSTEMTIME st;
-				char szDate[100],szTime[100];
 				st.wYear=pSchedule->m_tLastStartDate.wYear;
 				st.wMonth=pSchedule->m_tLastStartDate.bMonth;
 				st.wDay=pSchedule->m_tLastStartDate.bDay;
@@ -6005,13 +6004,25 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnCommand(WORD wID,WORD wNoti
 				st.wMinute=pSchedule->m_tLastStartTime.bMinute;
 				st.wSecond=pSchedule->m_tLastStartTime.bSecond;
 				st.wMilliseconds=0;
-				GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
-				GetDateFormat(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,szDate,100);
-				txt.FormatEx(IDS_LASTRUN,szDate,szTime);
+				
+				if (IsUnicodeSystem())
+				{
+					WCHAR szDate[100],szTime[100];
+					GetTimeFormatW(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
+					GetDateFormatW(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,szDate,100);
+					txt.FormatEx(IDS_LASTRUN,szDate,szTime);
+				}
+				else
+				{
+					char szDate[100],szTime[100];
+					GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
+					GetDateFormat(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,szDate,100);
+					txt.FormatEx(IDS_LASTRUN,A2W(szDate),A2W(szTime));
+				}
 			}
 			else
 				txt.LoadString(IDS_LASTRUNNEVER);
-			SetDlgItemText(IDC_LASTRUN,(LPCSTR)txt);
+			SetDlgItemText(IDC_LASTRUN,(LPCWSTR)txt);
 		}
 		break;
 	case IDC_UP:
@@ -6380,16 +6391,17 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 		m_pSchedule->m_tLastStartTime.bSecond==0 && m_pSchedule->m_tLastStartDate.wYear<1995 && 
 		m_pSchedule->m_tLastStartDate.bMonth==0 && m_pSchedule->m_tLastStartDate.bDay==0))
 	{
+		st.wYear=m_pSchedule->m_tLastStartDate.wYear;
+		st.wMonth=m_pSchedule->m_tLastStartDate.bMonth;
+		st.wDay=m_pSchedule->m_tLastStartDate.bDay;
+		st.wHour=m_pSchedule->m_tLastStartTime.bHour;
+		st.wMinute=m_pSchedule->m_tLastStartTime.bMinute;
+		st.wSecond=m_pSchedule->m_tLastStartTime.bSecond;
+		st.wMilliseconds=0;
+			
 		if (IsUnicodeSystem())
 		{
 			WCHAR szDate[100],szTime[100];
-			st.wYear=m_pSchedule->m_tLastStartDate.wYear;
-			st.wMonth=m_pSchedule->m_tLastStartDate.bMonth;
-			st.wDay=m_pSchedule->m_tLastStartDate.bDay;
-			st.wHour=m_pSchedule->m_tLastStartTime.bHour;
-			st.wMinute=m_pSchedule->m_tLastStartTime.bMinute;
-			st.wSecond=m_pSchedule->m_tLastStartTime.bSecond;
-			st.wMilliseconds=0;
 			GetTimeFormatW(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
 			GetDateFormatW(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,szDate,100);
 			LastRun.Format(IDS_LASTRUN,szDate,szTime);
@@ -6397,13 +6409,6 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 		else
 		{
 			char szDate[100],szTime[100];
-			st.wYear=m_pSchedule->m_tLastStartDate.wYear;
-			st.wMonth=m_pSchedule->m_tLastStartDate.bMonth;
-			st.wDay=m_pSchedule->m_tLastStartDate.bDay;
-			st.wHour=m_pSchedule->m_tLastStartTime.bHour;
-			st.wMinute=m_pSchedule->m_tLastStartTime.bMinute;
-			st.wSecond=m_pSchedule->m_tLastStartTime.bSecond;
-			st.wMilliseconds=0;
 			GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
 			GetDateFormat(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,szDate,100);
 			LastRun.Format(IDS_LASTRUN,(LPCWSTR)A2W(szDate),(LPCWSTR)A2W(szTime));

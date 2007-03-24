@@ -23,6 +23,8 @@ inline CLocateDlg::CLocateDlg()
 	
 	if (FAILED(SHGetDesktopFolder(&m_pDesktopFolder)))
 		m_pDesktopFolder=NULL;
+
+	InitializeCriticalSection(&m_csAnimBitmaps);
 }
 
 inline CLocateDlg::CNameDlg::CNameDlg()

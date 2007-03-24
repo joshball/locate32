@@ -797,10 +797,14 @@ protected:
 	HFONT m_hDialogFont;
 
 	CBitmap m_CircleBitmap;
-	HICON* m_pLocateAnimBitmaps;
+	
 	HICON* m_pUpdateAnimBitmaps;
-	WORD m_nCurLocateAnimBitmap;
+	HICON* m_pLocateAnimBitmaps;
 	WORD m_nCurUpdateAnimBitmap;
+	WORD m_nCurLocateAnimBitmap;
+	CRITICAL_SECTION m_csAnimBitmaps;
+
+	
 	WORD m_nMaxYMinimized;
 	WORD m_nMaxYMaximized;
 
