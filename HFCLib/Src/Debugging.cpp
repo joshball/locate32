@@ -502,12 +502,18 @@ void DebugOpenHandle2(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLine
 	else
 		pNewInfo->szFile=NULL;
 
-	EnterCriticalSection(&cHandleCriticalSection);
+	if (cHandleCriticalSection.DebugInfo!=NULL || 
+		cHandleCriticalSection.LockCount!=0)
+		EnterCriticalSection(&cHandleCriticalSection);
+
 	if (pFirstDebugHandle!=NULL)
 		pLastDebugHandle=pLastDebugHandle->pNext=pNewInfo;
 	else
 		pLastDebugHandle=pFirstDebugHandle=pNewInfo;
-	LeaveCriticalSection(&cHandleCriticalSection);
+	
+	if (cHandleCriticalSection.DebugInfo!=NULL || 
+		cHandleCriticalSection.LockCount!=0)
+		LeaveCriticalSection(&cHandleCriticalSection);
 	
 }
 
@@ -545,12 +551,16 @@ void DebugOpenHandle2(DebugHandleType bType,void* pValue,LPCWSTR szInfo,int iLin
 	else
 		pNewInfo->szFile=NULL;
 
-	EnterCriticalSection(&cHandleCriticalSection);
+	if (cHandleCriticalSection.DebugInfo!=NULL || 
+		cHandleCriticalSection.LockCount!=0)
+		EnterCriticalSection(&cHandleCriticalSection);
 	if (pFirstDebugHandle!=NULL)
 		pLastDebugHandle=pLastDebugHandle->pNext=pNewInfo;
 	else
 		pLastDebugHandle=pFirstDebugHandle=pNewInfo;
-	LeaveCriticalSection(&cHandleCriticalSection);
+	if (cHandleCriticalSection.DebugInfo!=NULL || 
+		cHandleCriticalSection.LockCount!=0)
+		LeaveCriticalSection(&cHandleCriticalSection);
 }
 
 void DebugCloseHandle2(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLine,LPCSTR szFile)
@@ -559,7 +569,9 @@ void DebugCloseHandle2(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLin
 		return;
 
 
-	EnterCriticalSection(&cHandleCriticalSection);
+	if (cHandleCriticalSection.DebugInfo!=NULL || 
+		cHandleCriticalSection.LockCount!=0)
+		EnterCriticalSection(&cHandleCriticalSection);
 
 
 	DebugHandleInfo* pInfo=pFirstDebugHandle;
@@ -600,7 +612,9 @@ void DebugCloseHandle2(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLin
 		pInfo=pInfo->pNext;
 	}
 
-	LeaveCriticalSection(&cHandleCriticalSection);
+	if (cHandleCriticalSection.DebugInfo!=NULL || 
+		cHandleCriticalSection.LockCount!=0)
+		LeaveCriticalSection(&cHandleCriticalSection);
 
 
 	DebugFormatMessage("DebugCloseHandle2: Could locate %s entry %X, szInfo=%s, line=%d, file=%s.",
@@ -612,7 +626,9 @@ void DebugCloseHandle3(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLin
 	if (pValue==NULL || pValue==INVALID_HANDLE_VALUE)
 		return;
 
-	EnterCriticalSection(&cHandleCriticalSection);
+	if (cHandleCriticalSection.DebugInfo!=NULL || 
+		cHandleCriticalSection.LockCount!=0)
+		EnterCriticalSection(&cHandleCriticalSection);
 
 
 	DebugHandleInfo* pInfo=pFirstDebugHandle;
@@ -655,7 +671,9 @@ void DebugCloseHandle3(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLin
 		pInfo=pInfo->pNext;
 	}
 
-	LeaveCriticalSection(&cHandleCriticalSection);
+	if (cHandleCriticalSection.DebugInfo!=NULL || 
+		cHandleCriticalSection.LockCount!=0)
+		LeaveCriticalSection(&cHandleCriticalSection);
 }
 
 

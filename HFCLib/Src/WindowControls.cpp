@@ -134,7 +134,7 @@ int CComboBox::GetLBText(int nIndex, LPWSTR lpszText) const
 		MultiByteToWideChar(CP_ACP,0,pText,(int)ret,lpszText,(int)ret+2);
 		lpszText[ret]=L'\0';
 	}
-	delete pText;
+	delete[] pText;
 	return ret;
 }
 

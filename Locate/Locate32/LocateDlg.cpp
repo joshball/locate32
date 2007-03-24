@@ -9557,8 +9557,28 @@ void CLocateDlg::ClearShortcuts()
 
 }
 	
+
+void CLocateDlg::SetDefaultActions(CSubAction*** pActions) const
+{
+	pActions[Name][
+		GetFlags()&fgLVStylePointToSelect?LeftMouseButtonClick:LeftMouseButtonDblClick]=new CSubAction(CSubAction::Execute);
+	pActions[Name][RightMouseButtonClick]=new CSubAction(CSubAction::OpenContextMenu);
+}
+
+
+/* CLocateDlg::LoadResultlistActions and CLocateDlg::SaveResultlistActions:
+Format in registry: all non "zero" (do something) actions are stored 
+one after another in the following format
+
+1. column index (CLocateDlg::DetailType) as DWORD value 
+2. action (CLocateDlg::ResultListAction) as DWORD value 
+3. data given by CSubAction::GetData and CSubAction::FromData
+
+*/
+
 void CLocateDlg::LoadResultlistActions()
 {
+	// Going to set default actions
 	ClearResultlistActions();
 
 	CRegKey2 RegKey;
@@ -9577,9 +9597,11 @@ void CLocateDlg::LoadResultlistActions()
 			BYTE *pData=new BYTE[dwLength];
 			if (RegKey.QueryValue("ResultListActions",LPSTR(pData),dwLength)==dwLength)
 			{
+				// Check all actions
                 BYTE* pPtr=pData;
 				while (dwLength>0)
 				{
+					// Stop if action is not suitable
 					if (*((WORD*)pPtr)>LastType || *((WORD*)pPtr+1)>=ListActionCount)
 						break;
 
@@ -9597,6 +9619,7 @@ void CLocateDlg::LoadResultlistActions()
 
 				delete[] pData;
 
+				// If dwLength==0, all actions was OK
 				if (dwLength==0)
 					return;
 
@@ -9612,6 +9635,8 @@ void CLocateDlg::LoadResultlistActions()
 		}
 	}
 
+	// Set default actions, 2D array is converted to 
+	// 1D array for SetDefaultActions
 	CSubAction*** ppActions=new CSubAction**[TypeCount];
 	for (int i=0;i<TypeCount;i++)
 		ppActions[i]=m_aResultListActions[i];
@@ -9619,17 +9644,9 @@ void CLocateDlg::LoadResultlistActions()
 	delete[] ppActions;
 }
 
-void CLocateDlg::SetDefaultActions(CSubAction*** pActions) const
-{
-	pActions[Name][
-		GetFlags()&fgLVStylePointToSelect?LeftMouseButtonClick:LeftMouseButtonDblClick]=new CSubAction(CSubAction::Execute);
-	pActions[Name][RightMouseButtonClick]=new CSubAction(CSubAction::OpenContextMenu);
-}
-
-
-
 void CLocateDlg::SaveResultlistActions()
 {
+	// Counting length of data
 	DWORD dwLength=0;
 	for (int iCol=0;iCol<TypeCount;iCol++)
 	{
@@ -9640,9 +9657,9 @@ void CLocateDlg::SaveResultlistActions()
 		}
 	}
 
+	// Constuct data
 	BYTE* pData=new BYTE[dwLength];
 	BYTE* pPtr=pData;
-
 	for (int iCol=0;iCol<TypeCount;iCol++)
 	{
 		for (int iAct=0;iAct<ListActionCount;iAct++)
@@ -9660,22 +9677,21 @@ void CLocateDlg::SaveResultlistActions()
 		}
 	}
 
-	delete[] pData;
-
 	ASSERT(DWORD(pPtr-pData)==dwLength);
 
 	//DebugFormatMessage("CLocateDlg::SaveResultlistActions(): ResultListActions length: %d",dwLength);
 
-
+	// Save to registry
 	CRegKey2 RegKey;
 	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defWrite)==ERROR_SUCCESS)
 	{
 		
 		RegKey.SetValue("ResultListActions",LPCSTR(pData),dwLength,REG_BINARY);
 		RegKey.CloseKey();
-	}
+	}	
 
-	
+	delete[] pData;
+
 }
 
 

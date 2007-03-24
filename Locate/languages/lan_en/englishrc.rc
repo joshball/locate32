@@ -149,8 +149,8 @@ STYLE DS_SETFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
-    LTEXT           "C&heck:",IDC_CHECKSTATIC,8,8,38,9
-    COMBOBOX        IDC_CHECK,50,5,145,53,CBS_DROPDOWNLIST | WS_VSCROLL | 
+    LTEXT           "C&heck:",IDC_CHECKSTATIC,8,8,38+0,9
+    COMBOBOX        IDC_CHECK,50+0,5,145,53,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "&Match whole name only",IDC_MATCHWHOLENAME,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,8,21,100,9
@@ -163,7 +163,7 @@ BEGIN
                     CBS_OWNERDRAWVARIABLE | CBS_SORT | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "File containing te&xt:",IDC_CONTAINDATACHECK,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,61,77,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,61,77+0,10
     EDITTEXT        IDC_CONTAINDATA,8,72,155,12,ES_AUTOHSCROLL
     CONTROL         "Match &case",IDC_DATAMATCHCASE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,92-0,61,90+0,10

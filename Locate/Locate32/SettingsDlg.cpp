@@ -1597,6 +1597,7 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
     case Combo:
 		if (hControl!=NULL && !bActive)
 		{
+			
 			CComboBox cb(hControl);
 
 			int nCurSel=cb.GetCurSel();
@@ -1619,6 +1620,7 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 	case File:
 		if (hControl!=NULL && !bActive)
 		{
+			
 			int iLength=(int)::SendMessage(hControl,WM_GETTEXTLENGTH,0,0)+1;
 			int iLabelLen=(int)istrlenw(pString);
 			
@@ -1631,7 +1633,7 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 				// 9x
 				char* pTemp=new char[iLength+2];
 				::GetWindowText(hControl,pTemp,iLength);
-				MemCopyAtoW(pText+iLabelLen,pTemp,iLength+1);
+				MemCopyAtoW(pText+iLabelLen,pTemp,iLength);
 				delete[] pTemp;
 			}
 			else
@@ -1643,8 +1645,9 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 	case Font:
 		if (pLogFont!=NULL)
 		{
+			
 			CStringW str(pString);
-			str << ' ' << pLogFont->lfFaceName;
+			str << L' ' << pLogFont->lfFaceName;
 
 			if (pLogFont->lfHeight<0)
 			{
@@ -1653,9 +1656,10 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 				int pt=MulDiv(-pLogFont->lfHeight, 72,::GetDeviceCaps(hScreenDC,LOGPIXELSY));
 				::ReleaseDC(NULL,hScreenDC);
 				
-				str << ' ' << pt;
+				str << L' ' << pt;
 			}
 
+			
 			return str.GiveBuffer();
 		}
 		return pString;
