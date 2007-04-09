@@ -130,11 +130,8 @@ inline CCheckFileNotificationsThread::DIRCHANGEDATA::~DIRCHANGEDATA()
 {
 	if (hDir!=NULL)
 	{
-		HMODULE hKernelDll=GetModuleHandle("kernel32.dll");
-		
-		
 		BOOL (WINAPI *pCancelIo)(HANDLE)=
-			(BOOL (WINAPI *)(HANDLE))GetProcAddress(hKernelDll,"CancelIo");
+			(BOOL (WINAPI *)(HANDLE))GetProcAddress(GetModuleHandle("kernel32.dll"),"CancelIo");
 
 		if (pCancelIo!=NULL)
             pCancelIo(hDir);

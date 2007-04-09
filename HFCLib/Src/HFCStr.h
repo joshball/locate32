@@ -33,13 +33,23 @@ inline BOOL IsUnicodeSystem()
 #define sstrlenW				dwstrlen
 
 #ifdef DEF_WCHAR
-#define MemCopyW(dst,src,len) \
-	sMemCopy((dst),(src),(len)*sizeof(WCHAR))
-#define iMemCopyW(dst,src,len) \
-	iMemCopy((dst),(src),(len)*sizeof(WCHAR))
+
+inline void MemCopyW(LPWSTR dst,LPCWSTR src,int len)
+{
+	sMemCopy((LPVOID)dst,(LPCVOID)src,len*sizeof(WCHAR));
+}
+
 #define MemCopyWtoA(dst,src,len) \
-	WideCharToMultiByte(CP_ACP,0,(LPCWSTR)(src),(int)(len),(LPSTR)(dst),(int)(len),NULL,NULL)
+	WideCharToMultiByte(CP_ACP,0,(src),(int)(len),(dst),(int)(len),NULL,NULL)
 #define MemCopyAtoW(dst,src,len) \
+	MultiByteToWideChar(CP_ACP,0,(src),(int)(len),(dst),(int)(len))
+
+// No type check
+#define _MemCopyW(dst,src,len) \
+	sMemCopy((dst),(src),(len)*sizeof(WCHAR))
+#define _MemCopyWtoA(dst,src,len) \
+	WideCharToMultiByte(CP_ACP,0,(LPCWSTR)(src),(int)(len),(LPSTR)(dst),(int)(len),NULL,NULL)
+#define _MemCopyAtoW(dst,src,len) \
 	MultiByteToWideChar(CP_ACP,0,(LPCSTR)(src),(int)(len),(LPWSTR)(dst),(int)(len))
 #endif
 

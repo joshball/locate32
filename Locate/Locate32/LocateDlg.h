@@ -601,8 +601,8 @@ protected:
 	
 	
 	void OnExecuteFile(LPCWSTR szVerb,int nItem=-1);
-	void OnRenameFile(int nItem=1);
-	void OnCopy(BOOL bCut,int nItem=1);
+	void OnRenameFile(int nItem=-1);
+	void OnCopy(BOOL bCut,int nItem=-1);
 	void OnOpenFolder(BOOL bContaining,int nItem=-1);
 	void OnCreateShortcut();
 	enum DeleteFlag {

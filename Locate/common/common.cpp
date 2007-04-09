@@ -9,19 +9,101 @@
 #include <parsers.h>
 
 
+typedef HRESULT (__stdcall * PFNSHGETFOLDERPATH)(HWND, int, HANDLE, DWORD, LPWSTR);  // "SHGetFolderPathW"
+
+
+LPWSTR GetDefaultFileLocation(LPCWSTR szFileName,BOOL bMustExists,DWORD* lpdwSize)
+{
+	int nFileNameLen=istrlen(szFileName);
+	
+
+	PFNSHGETFOLDERPATH pGetFolderPath=(PFNSHGETFOLDERPATH)GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetFolderPathW");
+	if (pGetFolderPath!=NULL)
+	{
+		WCHAR szAppDataPath[MAX_PATH];
+		if (SUCCEEDED(pGetFolderPath(NULL,CSIDL_APPDATA,NULL,
+			SHGFP_TYPE_CURRENT,szAppDataPath)))
+		{
+			int nPathLen=istrlen(szAppDataPath);
+			if (szAppDataPath[nPathLen-1]!=L'\\')
+				szAppDataPath[nPathLen++]=L'\\';
+			
+			LPWSTR pStr=new WCHAR[nPathLen+9+nFileNameLen+1];
+			MemCopyW(pStr,szAppDataPath,nPathLen);
+
+			MemCopyW(pStr+nPathLen,L"Locate32",9);
+			if (!FileSystem::IsDirectory(pStr))
+				FileSystem::CreateDirectory(pStr);
+			
+			nPathLen+=8;
+			pStr[nPathLen++]='\\';
+
+			
+			MemCopyW(pStr+nPathLen,szFileName,nFileNameLen+1);
+			
+			if (lpdwSize!=NULL)
+				*lpdwSize=nPathLen+nFileNameLen;
+			
+			if (!bMustExists)
+				return pStr;	
+
+			if (FileSystem::IsFile(pStr))
+				return pStr;
+
+			// Check also programs directory
+			delete[] pStr;
+		}
+	}
+
+
+	int iLen;
+	LPWSTR pStr;
+	if (IsUnicodeSystem())
+	{
+		WCHAR szExeName[MAX_PATH];
+		GetModuleFileNameW(NULL,szExeName,MAX_PATH);
+		iLen=LastCharIndex(szExeName,L'\\')+1;
+		pStr=new WCHAR[iLen+nFileNameLen+1];
+		MemCopyW(pStr,szExeName,iLen);
+	}	
+	else
+	{
+		char szExeName[MAX_PATH];
+		GetModuleFileName(NULL,szExeName,MAX_PATH);
+		iLen=LastCharIndex(szExeName,'\\')+1;
+		pStr=new WCHAR[iLen+nFileNameLen+1];
+		MemCopyAtoW(pStr,szExeName,iLen);
+	}
+
+	
+	MemCopyW(pStr+iLen,szFileName,nFileNameLen+1);
+	if (lpdwSize!=NULL)
+		*lpdwSize=iLen+nFileNameLen;
+
+	if (!bMustExists)
+		return pStr;	
+
+	if (FileSystem::IsFile(pStr))
+		return pStr;
+
+	// Return NULL
+	delete[] pStr;
+	return NULL;
+}
+
+
 LPSTR ReadIniFile(LPSTR* pFile,LPCSTR szSection,BYTE& bFileIsReg)
 {
-	char szPath[MAX_PATH];
-	GetModuleFileName(NULL,szPath,MAX_PATH);
-	int nStart=LastCharIndex(szPath,'\\')+1;
-	strcpy_s(szPath+nStart,MAX_PATH-nStart,"locate.ini");
+	LPWSTR pPath=GetDefaultFileLocation(L"locate.ini",TRUE);
+	if (pPath==NULL)
+		return NULL;
 
 	bFileIsReg=TRUE;
 
 	char* pFileContent=NULL;
 	try
 	{
-		CFile Ini(szPath,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
+		CFile Ini(pPath,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
 		DWORD dwSize=Ini.GetLength();
 		pFileContent=new char[dwSize+1];
 		Ini.Read(pFileContent,dwSize);
@@ -32,8 +114,11 @@ LPSTR ReadIniFile(LPSTR* pFile,LPCSTR szSection,BYTE& bFileIsReg)
 	{
 		if (pFileContent!=NULL)
 			delete[] pFileContent;
+		delete[] pPath;
 		return NULL;
 	}
+	delete[] pPath;
+		
 
 	LPCSTR pPtr=NULL;
 	LPSTR pKeyName=NULL;
@@ -240,3 +325,4 @@ BOOL SaveSettingsToFile(LPCSTR szKey,LPCSTR szFile,BYTE bFileIsReg)
 	
 	return TRUE;
 }
+

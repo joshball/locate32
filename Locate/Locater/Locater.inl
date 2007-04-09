@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database locater v3.0.7.1060               */
+   database locater v3.0.7.3250               */
 
 #if !defined(LOCATER_INL)
 #define LOCATER_INL
@@ -69,7 +69,7 @@ inline void CLocater::SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC pFoundProc,L
 inline void CLocater::SetDatabases(LPCWSTR szDatabaseFile)
 {
 	m_aDatabases.RemoveAll();
-	m_aDatabases.Add(new DBArchive(L"custom",CDatabase::archiveFile,szDatabaseFile,0,TRUE));
+	m_aDatabases.Add(new DBArchive(L"custom",CDatabase::archiveFile,szDatabaseFile,0,TRUE,NULL));
 }
 
 inline void CLocater::SetDatabases(const PDATABASE* pDatabases,int nDatabases)
@@ -79,7 +79,7 @@ inline void CLocater::SetDatabases(const PDATABASE* pDatabases,int nDatabases)
 	{
 		m_aDatabases.Add(new DBArchive(pDatabases[i]->GetName(),
 			pDatabases[i]->GetArchiveType(),pDatabases[i]->GetArchiveName(),
-			pDatabases[i]->GetID(),pDatabases[i]->IsEnabled()));
+			pDatabases[i]->GetID(),pDatabases[i]->IsEnabled(),pDatabases[i]->GetRootMaps()));
 	}
 }
 
@@ -90,7 +90,7 @@ inline void CLocater::SetDatabases(const CDatabase* pDatabases,int nDatabases)
 	{
 		m_aDatabases.Add(new DBArchive(pDatabases[i].GetName(),
 			pDatabases[i].GetArchiveType(),pDatabases[i].GetArchiveName(),
-			pDatabases[i].GetID(),pDatabases[i].IsEnabled()));
+			pDatabases[i].GetID(),pDatabases[i].IsEnabled(),pDatabases[i].GetRootMaps()));
 	}
 }
 
@@ -100,7 +100,7 @@ inline void CLocater::SetDatabases(const CArray<PDATABASE>& aDatabases)
 	for (int i=0;i<aDatabases.GetSize();i++)
 	{
 		m_aDatabases.Add(new DBArchive(aDatabases[i]->GetName(),aDatabases[i]->GetArchiveType(),
-			aDatabases[i]->GetArchiveName(),aDatabases[i]->GetID(),aDatabases[i]->IsEnabled()));
+			aDatabases[i]->GetArchiveName(),aDatabases[i]->GetID(),aDatabases[i]->IsEnabled(),aDatabases[i]->GetRootMaps()));
 	}
 }
 
@@ -110,7 +110,7 @@ inline void CLocater::SetDatabases(const CArray<CDatabase>& aDatabases)
 	for (int i=0;i<aDatabases.GetSize();i++)
 	{
 		m_aDatabases.Add(new DBArchive(aDatabases[i].GetName(),aDatabases[i].GetArchiveType(),
-			aDatabases[i].GetArchiveName(),aDatabases[i].GetID(),aDatabases[i].IsEnabled()));
+			aDatabases[i].GetArchiveName(),aDatabases[i].GetID(),aDatabases[i].IsEnabled(),aDatabases[i].GetRootMaps()));
 	}
 }
 
@@ -511,11 +511,16 @@ inline void CLocater::CouldStop()
 #endif
 
 
-inline CLocater::DBArchive::DBArchive(LPCWSTR szName_,CDatabase::ArchiveType nArchiveType_,LPCWSTR szArchive_,WORD wID_,BOOL bEnable_)
+inline CLocater::DBArchive::DBArchive(LPCWSTR szName_,CDatabase::ArchiveType nArchiveType_,
+									  LPCWSTR szArchive_,WORD wID_,BOOL bEnable_,LPCWSTR szRootMaps_)
 :	nArchiveType(nArchiveType_),wID(wID_),bEnable(bEnable_),bUnicode(FALSE)
 {
 	szName=alloccopy(szName_);
 	szArchive=alloccopy(szArchive_);
+	if (szRootMaps_!=NULL)
+		szRootMaps=alloccopy(szRootMaps_);
+	else
+		szRootMaps=NULL;
 }
 
 inline CLocater::DBArchive::~DBArchive()
@@ -524,6 +529,8 @@ inline CLocater::DBArchive::~DBArchive()
 		delete[] szName;
 	if (szArchive!=NULL)
 		delete[] szArchive;
+	if (szRootMaps!=NULL)
+		delete[] szRootMaps;
 }
 
 inline WORD CLocater::GetCurrentDatabaseID() const

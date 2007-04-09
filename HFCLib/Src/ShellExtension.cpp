@@ -325,7 +325,7 @@ HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc,L
 				if (SUCCEEDED(hres))
 				{
 					
-					LONG_PTR nIndex=LastCharIndex(pszLink,L'\\');
+					int nIndex=LastCharIndex(pszLink,L'\\');
 					if (nIndex>=0)
 					{
 						WCHAR szWDir[MAX_PATH];

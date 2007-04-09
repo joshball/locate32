@@ -3,6 +3,7 @@
 
 #include <HFCLib.h>
 #include "Locatedb.h"
+#include "../common/common.h"
 
 CDatabase::CDatabase(CDatabase& src)
 {
@@ -20,6 +21,8 @@ CDatabase::CDatabase(CDatabase& src)
 		m_szArchiveName=alloccopy(m_szArchiveName);
 	if (m_szExcludedFiles!=NULL)
 		m_szExcludedFiles=alloccopy(m_szExcludedFiles);
+	if (m_szRootMaps!=NULL)
+		m_szRootMaps=alloccopy(m_szRootMaps);
 
 	
 	if (m_szRoots!=NULL)
@@ -215,6 +218,11 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	RegKey.SetValue(L"Excluded Directories",pString);
     delete[] pString;
 
+	if (m_szRootMaps!=NULL)
+		RegKey.SetValue(L"RootMaps",m_szRootMaps);
+	else
+		RegKey.SetValue("RootMaps",szEmpty);
+
 	return TRUE;
 }
 
@@ -321,6 +329,15 @@ CDatabase* CDatabase::FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 		delete[] pString;
 	}
 
+	// Copying description
+	dwLength=RegKey.QueryValueLength("RootMaps");
+	if (dwLength>1)
+	{
+		pDatabase->m_szRootMaps=new WCHAR[dwLength];
+		RegKey.QueryValue(L"RootMaps",pDatabase->m_szRootMaps,dwLength);
+	}
+
+
 	return pDatabase;
 }
 
@@ -405,30 +422,9 @@ CDatabase* CDatabase::FromDefaults(BOOL bDefaultFileName)
 	pDatabase->m_ArchiveType=CDatabase::archiveFile;
 	
 	if (bDefaultFileName)
-	{
-		int iLen;
-		if (IsUnicodeSystem())
-		{
-			WCHAR szExeName[MAX_PATH];
-			GetModuleFileNameW(NULL,szExeName,MAX_PATH);
-			iLen=LastCharIndex(szExeName,L'\\')+1;
-			pDatabase->m_szArchiveName=new WCHAR[iLen+10];
-			MemCopyW(pDatabase->m_szArchiveName,szExeName,iLen);
-		}	
-		else
-		{
-			char szExeName[MAX_PATH];
-			GetModuleFileName(NULL,szExeName,MAX_PATH);
-			iLen=LastCharIndex(szExeName,'\\')+1;
-			pDatabase->m_szArchiveName=new WCHAR[iLen+10];
-			MemCopyAtoW(pDatabase->m_szArchiveName,szExeName,iLen);
-		}
-		
-		MemCopyW(pDatabase->m_szArchiveName+iLen,L"files.dbs",10);
-
-	}
+		pDatabase->m_szArchiveName=GetDefaultFileLocation(L"files.dbs");
 	else
-		pDatabase->m_szArchiveName=NULL;
+		pDatabase->m_szArchiveName=allocemptyW();
 	return pDatabase;
 }
 
@@ -580,7 +576,7 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 				{
 					// File:
 					pDatabase->m_ArchiveType=CDatabase::archiveFile;
-					pDatabase->m_szArchiveName=sValue.GiveBuffer();
+					pDatabase->SetArchiveNamePtr(sValue.GiveBuffer());
 				}
 				break;
 			case L'C': // Creator
@@ -590,6 +586,10 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 			case L'D': // Description
 			case L'd':
 				pDatabase->m_szDescription=sValue.GiveBuffer();
+				break;
+			case L'M': // Description
+			case L'm':
+				pDatabase->m_szRootMaps=sValue.GiveBuffer();
 				break;
 			case L'R':
 			case L'r':
@@ -625,19 +625,7 @@ LPWSTR CDatabase::GetCorrertFileName(LPCWSTR szFileName,DWORD dwNameLength)
 	
 	LPWSTR szFile;
 	if (szFileName[0]!=L'\\' && szFileName[1]!=L':')
-	{
-		DWORD dwLength=GetCurrentDirectory(0,NULL);
-        if (dwLength==0)
-			return NULL;
-	
-		szFile=new WCHAR[dwLength+dwNameLength+2];
-		FileSystem::GetCurrentDirectory(dwLength,szFile);
-		dwLength--;
-		if (szFile[dwLength-1]!='\\')
-			szFile[dwLength++]='\\';
-		MemCopyW(szFile+dwLength,szFileName,DWORD(dwNameLength));
-		szFile[dwLength+dwNameLength]='\0';
-	}
+		szFile=GetDefaultFileLocation(szFileName);
 	else
 	{
 		szFile=new WCHAR[dwNameLength+1];
@@ -645,11 +633,11 @@ LPWSTR CDatabase::GetCorrertFileName(LPCWSTR szFileName,DWORD dwNameLength)
 		szFile[dwNameLength]=L'\0';
 	}
 
-	// Checking whether file exists
+	// Checking whether file name is valid
 	if (!FileSystem::IsValidFileName(szFile))
 	{
 		delete[] szFile;
-		return NULL;
+		return allocemptyW();
 	}
 	return szFile;
 }
@@ -926,9 +914,10 @@ CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR s
 		
 		for (int i=0;i<nDatabases;i++)
 		{
+			ASSERT_VALID(ppDatabases[i]->m_szArchiveName)
 			if (!FileSystem::IsFile(ppDatabases[i]->m_szArchiveName))
 			{
-				if (strcasecmp(pPath1,ppDatabases[i]->m_szArchiveName)==0)
+				if (_wcsicmp(pPath1,ppDatabases[i]->m_szArchiveName)==0)
 				{
 					if (pPath1!=szFile)
 						delete[] pPath1;
@@ -946,6 +935,7 @@ CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR s
 	for (int i=0;i<nDatabases;i++)
 	{
 		WCHAR szPath2[MAX_PATH];
+		ASSERT_VALID(ppDatabases[i]->m_szArchiveName);
 		dwRet=FileSystem::GetShortPathName(ppDatabases[i]->m_szArchiveName,szPath2,MAX_PATH);
 		if (dwRet!=0)
 		{
@@ -1280,7 +1270,7 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		str << L'$';
 	}
 
-	if (m_ArchiveType==archiveFile && m_szArchiveName!=NULL)
+	if (m_ArchiveType==archiveFile && m_szArchiveName!=NULL && m_szArchiveName[0]!='\0')
 	{
 		// Archive file
 		str << L"AF:";
@@ -1353,6 +1343,8 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		str << L'$';
 	}
 
+
+
 	// Excluded directories
 	for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
 	{
@@ -1365,6 +1357,19 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		}
 		str << L'$';
 	
+	}
+
+	// Roots maps
+	if (m_szRootMaps!=NULL)
+	{
+		str << L"M:";
+		for (int i=0;m_szRootMaps[i]!=L'\0';i++)
+		{
+			if (m_szRootMaps[i]==L'$')
+				str << L'\\';
+			str << m_szRootMaps[i];
+		}
+		str << L'$';
 	}
 
 	str << L'$';

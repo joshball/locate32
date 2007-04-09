@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   locate.exe v3.0.7.3240                 */
+   locate.exe v3.0.7.4090                 */
 
-const char* szVersionStr="locate 3.0 build 7.3240";
+const char* szVersionStr="locate 3.0 build 7.4090";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -138,72 +138,6 @@ BOOL SetLanguageSpecifigHandles(LPCWSTR szAppPath)
 	return TRUE;
 }
 
-/*
-void ReadIniFile(LPSTR szData,LPSTR szPath)
-{
-    int i;
-    while (1)
-    {
-        while (szData[0]==' ' || szData[0]=='\n' || szData[0]=='\r') szData++;
-        for (i=0;szData[i]!='=' && szData[i]!='\0';i++);
-        if (szData[i]=='\0')
-            return;    
-        szData[i]='\0';
-        if (strcasecmp(szData,"DatabaseFile")==0)
-        {
-            szData+=i+1;
-            for (i=0;szData[i]!='\0' && szData[i]!='\n';i++);
-            if (szData[i-1]=='\r')
-               szData[i-1]='\0';
-            else
-               szData[i]='\0';
-            strcpy(szPath,szData);
-            return;
-        }
-        while (szData[0]=='\n' || szData[0]=='\r')
-        {
-            if (szData[0]=='\0')
-                return;
-            szData++;   
-        }     
-    }
-}
-
-
-#ifndef WIN32
-void GetFromDB(char* own,char* szPath)
-{
-   int i;
-   for (i=strlen(own);i>=0 && own[i]!='\\' && own[i]!='/' ;i--);
-   MemCopy(szPath,own,i);
-   MemCopy(szPath+i,"\\locate.ini",12);
-   FILE* fp;
-   fp=fopen(szPath,"rb");
-   szPath[0]='\0';
-   if (fp!=NULL)
-   {
-       LPSTR szFile;
-       int nSize=filelength(fileno(fp));
-	       szFile=new char[nSize+2];
-       if (szFile!=NULL)
-       {
-           if (0!=fread(szFile,1,nSize,fp))
-           {
-               szFile[nSize]='\0';
-               ReadIniFile(szFile,szPath);	
-           }
-           delete[] szFile; 
-       }
-       fclose(fp);
-   }
-   if (!IsFile(szPath)) 
-   {
-       MemCopy(szPath,own,i);
-       MemCopy(szPath+i,"\\files.dbs",11);
-   }
-}
-#endif
-*/
     
 BOOL CALLBACK LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ue,DWORD_PTR dwInfo,const CLocater* pLocater)
 {          

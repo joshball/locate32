@@ -20,7 +20,7 @@ CDatabaseUpdater::CDatabaseUpdater(LPCWSTR szDatabaseFile,LPCWSTR szAuthor,LPCWS
 	UpdDebugMessage("CDatabaseUpdater::CDatabaseUpdater(1)");
 
 	m_aDatabases.Add(new DBArchive(szDatabaseFile,CDatabase::archiveFile,
-		szAuthor,szComment,pszRoots,nNumberOfRoots,0,NULL,NULL,0));
+		szAuthor,szComment,pszRoots,nNumberOfRoots,0,NULL,NULL,0,NULL));
 }
 
 CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
@@ -920,7 +920,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 				
 				// Copy path
 				MemCopyW(szFolder+nLength,_FindGetName(&fd),sNameLength);
-				MemCopyW(pPoint,_FindGetName(&fd),sNameLength+1);
+				MemCopyW((LPWSTR)pPoint,_FindGetName(&fd),sNameLength+1);
 
 				// Move pointer
 				pPoint+=sNameLength*2+2;
@@ -987,7 +987,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 				pPoint++;
 
 				// Copying filename
-				MemCopyW(pPoint,_FindGetName(&fd),sNameLength+1);
+				MemCopyW((LPWSTR)pPoint,_FindGetName(&fd),sNameLength+1);
 				pPoint+=sNameLength*2+2;
 				
 				// File size
@@ -998,7 +998,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 				// File time
 				_FindGetLastWriteDosDateTime(&fd,(WORD*)pPoint,(WORD*)pPoint+1);
 				_FindGetCreationDosDate(&fd,(WORD*)pPoint+2,(WORD*)pPoint+3);
-				_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+4,(WORD*)pPoint+4);
+				_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+4,(WORD*)pPoint+5);
 				
 				pPoint+=sizeof(WORD)*6;
 				
@@ -1147,7 +1147,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::Write(CFile* dbFile)
 
 	// Calculating data length
 	DWORD nLength=1 // Type
-		+(DWORD)m_Path.GetLength()+1 // Path
+		+(DWORD)m_PathInDatabase.GetLength()+1 // Path
 		+(DWORD)sVolumeName.GetLength()+1 // Volume name
 		+sizeof(DWORD)	//Serial
 		+(DWORD)sFSName.GetLength()+1 // Filesystem
@@ -1168,7 +1168,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::Write(CFile* dbFile)
 	dbFile->Write(nType);
 
 	// Writing path
-	dbFile->Write(W2A(m_Path));
+	dbFile->Write(W2A(m_PathInDatabase));
 
 	// Writing volume name
 	dbFile->Write(sVolumeName);
@@ -1247,7 +1247,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::WriteW(CFile* dbFile)
 
 	// Calculating data length
 	DWORD nLength=1 // Type
-		+(DWORD)((m_Path.GetLength()+1)*2) // Path
+		+(DWORD)((m_PathInDatabase.GetLength()+1)*2) // Path
 		+(DWORD)((sVolumeName.GetLength()+1)*2) // Volume name
 		+sizeof(DWORD)	//Serial
 		+(DWORD)((sFSName.GetLength()+1)*2) // Filesystem
@@ -1268,7 +1268,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::WriteW(CFile* dbFile)
 	dbFile->Write(nType);
 
 	// Writing path
-	dbFile->Write(m_Path);
+	dbFile->Write(m_PathInDatabase);
 
 	// Writing volume name
 	dbFile->Write(sVolumeName);
@@ -1335,17 +1335,17 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 			{
 				drive[0]=szDrives[i*4];
 				
+				int nMapLen;
+				LPCWSTR pDriveInDb=pDatabase->FindRootMap(drive,nMapLen);
+				CRootDirectory* pNewDirectory=new CRootDirectory(drive,pDriveInDb,nMapLen);
+
 				if (m_pFirstRoot==NULL)
-					tmp=m_pFirstRoot=new CRootDirectory(drive);
+					tmp=m_pFirstRoot=pNewDirectory;
 				else
-					tmp=tmp->m_pNext=new CRootDirectory(drive);
+					tmp=tmp->m_pNext=pNewDirectory;
 			}
 		}
 		delete[] szDrives;
-
-
-
-
 #else
 		char drive[3]="X:";
 		char szDrives[27];
@@ -1367,160 +1367,21 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
         
 		if (m_pFirstRoot!=NULL)
 			tmp->m_pNext=NULL;
-		
-		
 	}
 	else
 	{
-		CRootDirectory* tmp;
-			
+		CRootDirectory* pCurrent=NULL;
+		
 		while (*pPtr!=L'\0')
 		{
 			DWORD dwLength=(DWORD)istrlenw(pPtr);
-
-			if ((dwLength==2 || dwLength==3) && pPtr[1]==L':') // Root is drive
-			{
-				WCHAR root[]=L"X:\\";
-				root[0]=pPtr[0];
-				if (m_pFirstRoot==NULL)
-					tmp=m_pFirstRoot=new CRootDirectory(root,dwLength);
-				else
-					tmp=tmp->m_pNext=new CRootDirectory(root,dwLength);
-			}
-			else if (pPtr[0]=='\\' && pPtr[1]=='\\')
-			{
-				if (FileSystem::IsDirectory(pPtr))
-				{
-					if (m_pFirstRoot==NULL)
-						tmp=m_pFirstRoot=new CRootDirectory(pPtr,dwLength);
-					else
-						tmp=tmp->m_pNext=new CRootDirectory(pPtr,dwLength);
-				}
-				else
-				{
-					// May be computer, since it is not directory
-					// So retrieve shares
-					DWORD dwEntries=-1,cbBuffer=16384,dwRet;
-					HANDLE hEnum;
-					
-					if (IsUnicodeSystem())
-					{
-						NETRESOURCEW nr;
-						nr.dwScope=RESOURCE_CONNECTED;
-						nr.dwType=RESOURCETYPE_DISK;
-						nr.dwDisplayType=RESOURCEDISPLAYTYPE_SHARE;
-						nr.dwUsage=RESOURCEUSAGE_CONTAINER;
-						nr.lpLocalName=NULL;
-						nr.lpRemoteName=const_cast<LPWSTR>(pPtr);
-						nr.lpComment=NULL;
-						nr.lpProvider=NULL;
-						dwRet=WNetOpenEnumW(RESOURCE_GLOBALNET,RESOURCETYPE_DISK,0,&nr,&hEnum);
-					}
-					else
-					{
-						NETRESOURCE nr;
-						nr.dwScope=RESOURCE_CONNECTED;
-						nr.dwType=RESOURCETYPE_DISK;
-						nr.dwDisplayType=RESOURCEDISPLAYTYPE_SHARE;
-						nr.dwUsage=RESOURCEUSAGE_CONTAINER;
-						nr.lpLocalName=NULL;
-						nr.lpRemoteName=alloccopyWtoA(pPtr);
-						nr.lpComment=NULL;
-						nr.lpProvider=NULL;
-						dwRet=WNetOpenEnumA(RESOURCE_GLOBALNET,RESOURCETYPE_DISK,0,&nr,&hEnum);
-						delete[] nr.lpRemoteName;
-					}
-
-					if (dwRet!=NOERROR)
-					{
-						if (m_pFirstRoot==NULL)
-							tmp=m_pFirstRoot=new CRootDirectory(pPtr,dwLength);
-						else
-							tmp=tmp->m_pNext=new CRootDirectory(pPtr,dwLength);
-
-						pPtr+=dwLength+1;
-						continue;
-					}
-
-
-					if (IsUnicodeSystem())
-					{
-						NETRESOURCEW* nro;
-							
-						for(;;)
-						{
-							nro=(NETRESOURCEW*)GlobalAlloc(GPTR,cbBuffer);
-							dwRet=WNetEnumResourceW(hEnum,&dwEntries,nro,&cbBuffer);
-							if (dwRet==ERROR_NO_MORE_ITEMS)
-								break;
-
-							if (dwRet!=ERROR_MORE_DATA && dwRet!=NOERROR)
-							{
-								if (m_pFirstRoot==NULL)
-									tmp=m_pFirstRoot=new CRootDirectory(pPtr,dwLength);
-								else
-									tmp=tmp->m_pNext=new CRootDirectory(pPtr,dwLength);
-
-								break;
-							}
-
-							for (DWORD i=0;i<dwEntries;i++)
-							{
-								if (m_pFirstRoot==NULL)
-									tmp=m_pFirstRoot=new CRootDirectory(nro[i].lpRemoteName);
-								else
-									tmp=tmp->m_pNext=new CRootDirectory(nro[i].lpRemoteName);
-							}
-							GlobalFree((HGLOBAL)nro);
-						}
-					}
-					else
-					{
-						NETRESOURCE* nro;
-							
-						for(;;)
-						{
-							nro=(NETRESOURCE*)GlobalAlloc(GPTR,cbBuffer);
-							dwRet=WNetEnumResource(hEnum,&dwEntries,nro,&cbBuffer);
-							if (dwRet==ERROR_NO_MORE_ITEMS)
-								break;
-
-							if (dwRet!=ERROR_MORE_DATA && dwRet!=NOERROR)
-							{
-								if (m_pFirstRoot==NULL)
-									tmp=m_pFirstRoot=new CRootDirectory(pPtr,dwLength);
-								else
-									tmp=tmp->m_pNext=new CRootDirectory(pPtr,dwLength);
-
-								break;
-							}
-
-							for (DWORD i=0;i<dwEntries;i++)
-							{
-								if (m_pFirstRoot==NULL)
-									tmp=m_pFirstRoot=new CRootDirectory(A2W(nro[i].lpRemoteName));
-								else
-									tmp=tmp->m_pNext=new CRootDirectory(A2W(nro[i].lpRemoteName));
-							}
-							GlobalFree((HGLOBAL)nro);
-						}
-					}
-					WNetCloseEnum(hEnum);	
-				}
-			}
-			else
-			{
-				if (m_pFirstRoot==NULL)
-					tmp=m_pFirstRoot=new CRootDirectory(pPtr,dwLength);
-				else
-					tmp=tmp->m_pNext=new CRootDirectory(pPtr,dwLength);
-			}
-
+			CreateRootDirectories(pCurrent,pPtr,dwLength,pDatabase->GetRootMaps());
+			
 			pPtr+=dwLength+1;
 		}
 
 		if (m_pFirstRoot!=NULL)
-			tmp->m_pNext=NULL;
+			pCurrent->m_pNext=NULL;
 	}
 
 
@@ -1537,7 +1398,7 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 		
 CDatabaseUpdater::DBArchive::DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveType nArchiveType,
 											  LPCWSTR szAuthor,LPCWSTR szComment,LPCWSTR* pszRoots,DWORD nNumberOfRoots,BYTE nFlags,
-											  LPCWSTR szExcludedFiles,LPCWSTR* ppExcludedDirectories,int nExcludedDirectories)
+											  LPCWSTR szExcludedFiles,LPCWSTR* ppExcludedDirectories,int nExcludedDirectories,LPCWSTR szRootMaps)
 :	m_sAuthor(szAuthor),m_sComment(szComment),m_nArchiveType(nArchiveType),
 	m_szName(NULL),m_dwNameLength(0),m_nFlags(nFlags),
 	m_szExtra1(NULL),m_szExtra2(NULL),m_aExcludeFilesPatternsA(NULL)
@@ -1553,10 +1414,13 @@ CDatabaseUpdater::DBArchive::DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveT
 		return;
 	}
 
-	CRootDirectory* tmp=m_pFirstRoot=new CRootDirectory(pszRoots[0]);
+	int nMapLen;
+	LPCWSTR pDriveInDb=CDatabase::FindRootMap(szRootMaps,pszRoots[0],nMapLen);
+	CRootDirectory* pCurrent=NULL;
+	CreateRootDirectories(pCurrent,pszRoots[0],istrlen(pszRoots[0]),szRootMaps);
 	for (DWORD i=1;i<nNumberOfRoots;i++)
-		tmp=tmp->m_pNext=new CRootDirectory(pszRoots[i]);
-	tmp->m_pNext=NULL;
+		CreateRootDirectories(pCurrent,pszRoots[i],istrlen(pszRoots[i]),szRootMaps);
+	pCurrent->m_pNext=NULL;
 
 	ParseExcludedFilesAndDirectories(szExcludedFiles,ppExcludedDirectories,nExcludedDirectories);
 
@@ -1607,6 +1471,170 @@ CDatabaseUpdater::DBArchive::~DBArchive()
 	}
 }
 
+
+void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurrent,LPCWSTR pRoot,
+														DWORD dwLength,LPCWSTR szRootMaps)
+{
+	if ((dwLength==2 || dwLength==3) && pRoot[1]==L':') // Root is drive
+	{
+		WCHAR drive[]=L"X:\\";
+		drive[0]=pRoot[0];
+
+		int nMapLen;
+		LPCWSTR pDriveInDb=CDatabase::FindRootMap(szRootMaps,drive,nMapLen);
+		CRootDirectory* pNewDirectory=new CRootDirectory(drive,dwLength,pDriveInDb,nMapLen);
+
+		if (pCurrent==NULL)
+			pCurrent=m_pFirstRoot=pNewDirectory;
+		else
+			pCurrent=pCurrent->m_pNext=pNewDirectory;
+	}
+	else if (pRoot[0]=='\\' && pRoot[1]=='\\')
+	{
+		int nMapLen;
+		LPCWSTR pDriveInDb=CDatabase::FindRootMap(szRootMaps,pRoot,nMapLen);
+			
+		if (FileSystem::IsDirectory(pRoot))
+		{
+			CRootDirectory* pNewDirectory=new CRootDirectory(pRoot,dwLength,pDriveInDb,nMapLen);
+
+			if (pCurrent==NULL)
+				pCurrent=m_pFirstRoot=pNewDirectory;
+			else
+				pCurrent=pCurrent->m_pNext=pNewDirectory;
+		}
+		else
+		{
+			// May be computer, since it is not directory
+			// So retrieve shares
+			DWORD dwEntries=-1,cbBuffer=16384,dwRet;
+			HANDLE hEnum;
+			
+			if (IsUnicodeSystem())
+			{
+				NETRESOURCEW nr;
+				nr.dwScope=RESOURCE_CONNECTED;
+				nr.dwType=RESOURCETYPE_DISK;
+				nr.dwDisplayType=RESOURCEDISPLAYTYPE_SHARE;
+				nr.dwUsage=RESOURCEUSAGE_CONTAINER;
+				nr.lpLocalName=NULL;
+				nr.lpRemoteName=const_cast<LPWSTR>(pRoot);
+				nr.lpComment=NULL;
+				nr.lpProvider=NULL;
+				dwRet=WNetOpenEnumW(RESOURCE_GLOBALNET,RESOURCETYPE_DISK,0,&nr,&hEnum);
+			}
+			else
+			{
+				NETRESOURCE nr;
+				nr.dwScope=RESOURCE_CONNECTED;
+				nr.dwType=RESOURCETYPE_DISK;
+				nr.dwDisplayType=RESOURCEDISPLAYTYPE_SHARE;
+				nr.dwUsage=RESOURCEUSAGE_CONTAINER;
+				nr.lpLocalName=NULL;
+				nr.lpRemoteName=alloccopyWtoA(pRoot);
+				nr.lpComment=NULL;
+				nr.lpProvider=NULL;
+				dwRet=WNetOpenEnumA(RESOURCE_GLOBALNET,RESOURCETYPE_DISK,0,&nr,&hEnum);
+				delete[] nr.lpRemoteName;
+			}
+
+			if (dwRet!=NOERROR)
+			{
+				CRootDirectory* pNewDirectory=new CRootDirectory(pRoot,dwLength,pDriveInDb,nMapLen);
+
+				if (pCurrent==NULL)
+					pCurrent=m_pFirstRoot=pNewDirectory;
+				else
+					pCurrent=pCurrent->m_pNext=pNewDirectory;
+				return;
+			}
+
+
+			union {
+				NETRESOURCEW* nrow;
+				NETRESOURCE* nro;
+			};
+				
+			for(;;)
+			{
+				nro=(NETRESOURCE*)GlobalAlloc(GPTR,cbBuffer);
+				if (IsUnicodeSystem())
+					dwRet=WNetEnumResourceW(hEnum,&dwEntries,nrow,&cbBuffer);
+				else
+					dwRet=WNetEnumResource(hEnum,&dwEntries,nro,&cbBuffer);
+
+				if (dwRet==ERROR_NO_MORE_ITEMS)
+					break;
+
+				if (dwRet!=ERROR_MORE_DATA && dwRet!=NOERROR)
+				{
+					CRootDirectory* pNewDirectory=new CRootDirectory(pRoot,dwLength,pDriveInDb,nMapLen);
+
+					if (pCurrent==NULL)
+						pCurrent=m_pFirstRoot=pNewDirectory;
+					else
+						pCurrent=pCurrent->m_pNext=pNewDirectory;
+
+					break;
+				}
+
+				for (DWORD i=0;i<dwEntries;i++)
+				{
+					LPWSTR pRemoteName=IsUnicodeSystem()?
+						nrow[i].lpRemoteName:alloccopyAtoW(nro[i].lpRemoteName);
+
+					CRootDirectory* pNewDirectory;
+					BOOL bAdded=FALSE;
+
+					if (pDriveInDb!=NULL)
+					{
+						if (_wcsnicmp(pRemoteName,pRoot,dwLength)==0)
+						{
+							// Begin of remote name is ok
+							int nLen=istrlenw(pRemoteName+dwLength);
+							WCHAR* szMap=new WCHAR[nMapLen+nLen+1];
+							MemCopyW(szMap,pDriveInDb,nMapLen);
+							MemCopyW(szMap+nMapLen,pRemoteName+dwLength,nLen+1);
+							pNewDirectory=new CRootDirectory(pRemoteName,szMap,nMapLen+nLen);
+							bAdded=TRUE;
+						}
+					}
+
+					if (!bAdded)
+					{
+						// Check chares individially
+						int nMapLen2;
+						LPCWSTR pDriveInDb2=CDatabase::FindRootMap(szRootMaps,pRemoteName,nMapLen2);
+						pNewDirectory=new CRootDirectory(pRemoteName,pDriveInDb2,nMapLen2);
+					}
+					
+					if (pCurrent==NULL)
+						pCurrent=m_pFirstRoot=pNewDirectory;
+					else
+						pCurrent=pCurrent->m_pNext=pNewDirectory;
+
+					if (!IsUnicodeSystem())
+						delete[] pRemoteName;
+				}
+				GlobalFree((HGLOBAL)nro);
+			}
+	
+			WNetCloseEnum(hEnum);	
+		}
+	}
+	else
+	{
+		int nMapLen;
+		LPCWSTR pDriveInDb=CDatabase::FindRootMap(szRootMaps,pRoot,nMapLen);
+		CRootDirectory* pNewDirectory=new CRootDirectory(pRoot,dwLength,pDriveInDb,nMapLen);
+
+		if (pCurrent==NULL)
+			pCurrent=m_pFirstRoot=pNewDirectory;
+		else
+			pCurrent=pCurrent->m_pNext=pNewDirectory;
+	}
+
+}
 
 void CDatabaseUpdater::DBArchive::ParseExcludedFilesAndDirectories(LPCWSTR szExcludedFiles,
 																   const LPCWSTR* ppExcludedDirs,

@@ -709,10 +709,9 @@ void DebugLogOpenHandles()
 
 			pInfo=pInfo->pNext;
 		}
-		LeaveCriticalSection(&cHandleCriticalSection);
 		DebugMessage("Open handle list end.");
 	}
-	
+	LeaveCriticalSection(&cHandleCriticalSection);
 }
 
 void DebugClearOpenHandlesList()
@@ -729,7 +728,7 @@ void DebugClearOpenHandlesList()
 	}
 	pLastDebugHandle=NULL;
 
-	DeleteCriticalSection(&cHandleCriticalSection);
+	LeaveCriticalSection(&cHandleCriticalSection);
 }
 
 

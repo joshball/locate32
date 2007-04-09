@@ -4449,7 +4449,52 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 		}
 		break;
 	case LVN_ENDLABELEDITA:
-		break;
+		{
+			NMLVDISPINFOA* pDistInfo=(NMLVDISPINFOA*)pNm;
+			if (pDistInfo->item.pszText==NULL)
+				return TRUE;
+
+			if (m_pListCtrl->GetColumnIDFromSubItem(pDistInfo->item.iSubItem)!=CLocateDlg::Name)
+			{
+				// Not allowed for other fields than Name
+				SetWindowLong(dwlMsgResult,FALSE);
+				return FALSE;
+			}
+
+			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(pDistInfo->item.iItem);
+			if (pItem==NULL)
+			{
+				// Not allowed for other fields than Name
+				SetWindowLong(dwlMsgResult,FALSE);
+				return FALSE;
+			}
+
+			if (pItem->GetFileTitle()!=pItem->GetName())
+			{
+				int nOldTitleLen=istrlen(pItem->GetFileTitle());
+				if (_wcsnicmp(pItem->GetName(),pItem->GetFileTitle(),nOldTitleLen)!=0)
+				{
+					// We can't determine which part should be changed in filename
+					SetWindowLong(dwlMsgResult,FALSE);
+					return FALSE;
+				}
+				int nNewTitleLen=istrlen(pDistInfo->item.pszText);
+
+				ASSERT(pItem->GetNameLen()>=(UINT)nOldTitleLen);
+
+				WCHAR* pNewName=new WCHAR[nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1];
+				MemCopyAtoW(pNewName,pDistInfo->item.pszText,nNewTitleLen);
+				MemCopyW(pNewName+nNewTitleLen,pItem->GetName()+nOldTitleLen,pItem->GetNameLen()-nOldTitleLen+1);
+				pItem->ChangeName(this,pNewName,nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1);
+				delete[] pNewName;
+			}
+			else
+				pItem->ChangeName(this,A2W(pDistInfo->item.pszText));
+
+
+			SetWindowLong(dwlMsgResult,TRUE);
+			return TRUE;
+		}
 	case LVN_ENDLABELEDITW:
 		{
 			NMLVDISPINFOW* pDistInfo=(NMLVDISPINFOW*)pNm;
@@ -7514,7 +7559,7 @@ void CLocateDlg::OnCopyPathToClipboard(BOOL bShortPath)
 		}
 		
 		BYTE* pData=(BYTE*)GlobalLock(hMem);
-		MemCopyW(pData,LPCWSTR(Text),Text.GetLength()+1);
+		MemCopyW((LPWSTR)pData,LPCWSTR(Text),Text.GetLength()+1);
 		GlobalUnlock(hMem);
 
 		if (OpenClipboard())

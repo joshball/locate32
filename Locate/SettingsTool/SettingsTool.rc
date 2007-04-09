@@ -111,8 +111,8 @@ LANGUAGE LANG_FINNISH, SUBLANG_DEFAULT
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,7,3240
- PRODUCTVERSION 1,0,7,3240
+ FILEVERSION 1,0,7,3250
+ PRODUCTVERSION 1,0,7,3250
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -128,12 +128,12 @@ BEGIN
         BLOCK "080004b0"
         BEGIN
             VALUE "FileDescription", "Settings import and export tool for Locate"
-            VALUE "FileVersion", "1, 0, 7, 3240"
+            VALUE "FileVersion", "1, 0, 7, 3250"
             VALUE "InternalName", "SetTool"
             VALUE "LegalCopyright", "Copyright (C) 2006-2007 Janne Huttunen"
             VALUE "OriginalFilename", "SetTool"
             VALUE "ProductName", "SetTool"
-            VALUE "ProductVersion", "1, 0, 7, 3240"
+            VALUE "ProductVersion", "1, 0, 7, 3250"
         END
     END
     BLOCK "VarFileInfo"

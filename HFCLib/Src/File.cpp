@@ -2105,6 +2105,7 @@ UINT FileSystem::GetSystemDirectory(LPWSTR lpBuffer,UINT uSize)
 		if (uRet==0)
 			return 0;
 		MultiByteToWideChar(CP_ACP,0,lpBufferA,uRet+1,lpBuffer,uSize);
+		delete[] lpBufferA;
 		return uRet;
 	}
 }

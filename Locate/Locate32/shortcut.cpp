@@ -532,7 +532,7 @@ DWORD CSubAction::FillFromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen)
 
 			dwLen++;
 			m_szVerb=new WCHAR[dwLen];
-            MemCopyW(m_szVerb,pData,dwLen);
+            MemCopyW(m_szVerb,(LPCWSTR)pData,dwLen);
 			dwUsed+=dwLen*2;
 			pData+=dwLen*2;
 			dwDataLen-=dwLen;
@@ -548,7 +548,7 @@ DWORD CSubAction::FillFromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen)
 			
 			dwLen++;
 			m_szCommand=new WCHAR[dwLen];
-            MemCopyW(m_szCommand,pData,dwLen);
+            MemCopyW(m_szCommand,(LPCWSTR)pData,dwLen);
 			dwUsed+=dwLen*2;
 			pData+=dwLen*2;
 			dwDataLen-=dwLen;
@@ -580,7 +580,7 @@ DWORD CSubAction::FillFromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen)
 			
 			dwLen++;
 			m_szCommand=new WCHAR[dwLen];
-            MemCopyW(m_szCommand,pData,dwLen);
+            MemCopyW(m_szCommand,(LPCWSTR)pData,dwLen);
 			dwUsed+=dwLen*2;
 			pData+=dwLen*2;
 			dwDataLen-=dwLen;
@@ -599,7 +599,7 @@ DWORD CSubAction::FillFromData(DWORD nAction,const BYTE* pData,DWORD dwDataLen)
 			
 			dwLen++;
 			m_szPreset=new WCHAR[dwLen];
-            MemCopyW(m_szPreset,pData,dwLen);
+            MemCopyW(m_szPreset,(LPCWSTR)pData,dwLen);
 			dwUsed+=dwLen*2;
 			pData+=dwLen*2;
 			dwDataLen-=dwLen;
@@ -668,7 +668,7 @@ CAction::SendMessageInfo* CAction::SendMessageInfo::FromData(const BYTE* pData,D
 	if (dwLen>1)
 	{
 		pSendMessage->szWindow=new WCHAR[dwLen];
-		MemCopyW(pSendMessage->szWindow,pData,dwLen);
+		MemCopyW(pSendMessage->szWindow,(LPCWSTR)pData,dwLen);
 	}
 	else
 		pSendMessage->szWindow=NULL;
@@ -688,7 +688,7 @@ CAction::SendMessageInfo* CAction::SendMessageInfo::FromData(const BYTE* pData,D
 	if (dwLen>1)
 	{
 		pSendMessage->szWParam=new WCHAR[dwLen];
-		MemCopyW(pSendMessage->szWParam,pData,dwLen);
+		MemCopyW(pSendMessage->szWParam,(LPCWSTR)pData,dwLen);
 	}
 	else
 		pSendMessage->szWParam=NULL;
@@ -709,7 +709,7 @@ CAction::SendMessageInfo* CAction::SendMessageInfo::FromData(const BYTE* pData,D
 	if (dwLen>1)
 	{
 		pSendMessage->szLParam=new WCHAR[dwLen];
-		MemCopyW(pSendMessage->szLParam,pData,dwLen);
+		MemCopyW(pSendMessage->szLParam,(LPCWSTR)pData,dwLen);
 	}
 	else
 		pSendMessage->szLParam=NULL;
@@ -745,13 +745,13 @@ DWORD CSubAction::GetData(DWORD nAction,BYTE* pData_,BOOL bHeader) const
 		if (m_nResultList==Execute && m_szVerb!=NULL)
 		{
 			DWORD dwUsed=DWORD(istrlenw(m_szVerb)+1);
-			MemCopyW(pData,m_szVerb,dwUsed);
+			MemCopyW((LPWSTR)pData,m_szVerb,dwUsed);
 			pData+=dwUsed*2;
 		}
 		else if (m_nResultList==ExecuteCommand && m_szCommand!=NULL)
 		{
 			DWORD dwUsed=DWORD(istrlenw(m_szCommand)+1);
-			MemCopyW(pData,m_szCommand,dwUsed);
+			MemCopyW((LPWSTR)pData,m_szCommand,dwUsed);
 			pData+=dwUsed*2;
 		}
 		break;
@@ -765,7 +765,7 @@ DWORD CSubAction::GetData(DWORD nAction,BYTE* pData_,BOOL bHeader) const
 		else if (m_nMisc==ExecuteCommandMisc && m_szCommand!=NULL)
 		{
 			DWORD dwUsed=DWORD(istrlenw(m_szCommand)+1);
-			MemCopyW(pData,m_szCommand,dwUsed);
+			MemCopyW((LPWSTR)pData,m_szCommand,dwUsed);
 			pData+=dwUsed*2;
 		}
 		break;
@@ -774,7 +774,7 @@ DWORD CSubAction::GetData(DWORD nAction,BYTE* pData_,BOOL bHeader) const
 		if (m_szPreset!=NULL)
 		{
 			DWORD dwUsed=DWORD(istrlenw(m_szPreset)+1);
-			MemCopyW(pData,m_szPreset,dwUsed);
+			MemCopyW((LPWSTR)pData,m_szPreset,dwUsed);
 			pData+=dwUsed*2;
 		}
 		break;

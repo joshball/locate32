@@ -5,271 +5,6 @@
 #pragma once
 #endif 
 
-class COptionsPropertyPage : public CPropertyPage
-{
-public:
-	struct Item;
-
-	enum NewState {
-		Unchecked,
-		Checked,
-		Toggle 
-	};
-	// Callback systtem
-	struct BASICPARAMS {
-		
-		enum Reason {
-			Initialize,
-			SetSpinRange,
-			Get,
-			Set,
-			Apply,
-			ChangingValue,
-			BrowseFile
-		} crReason;
-
-		// Input
-		DWORD wParam;
-		void* lParam;
-		COptionsPropertyPage* pPage;
-
-		// Output
-		union {
-			BOOL bChecked;
-			LPWSTR pData;
-			LONG lValue;
-			COLORREF cColor;
-			LOGFONT* pLogFont;
-		};
-	};
-
-	struct INITIALIZEPARAMS : public BASICPARAMS {
-		HWND hControl;
-	};
-	struct COMBOAPPLYPARAMS : public BASICPARAMS {
-		LONG nCurSel;
-	};
-	struct SPINPOXPARAMS : public BASICPARAMS {
-		int iLow;
-		int iHigh;
-	};
-	struct CHANGINGVALPARAMS : public BASICPARAMS {
-		union {
-			NewState nNewState;
-			LPWSTR pNewData;
-			LONG lNewValue;
-			COLORREF cNewColor;
-			LOGFONT* pNewLogFont;
-		};
-	};
-	struct BROWSEDLGPARAMS : BASICPARAMS {
-		LPWSTR szTitle; // Can be identiefier to resource
-		LPWSTR szFilters; // Can be identiefier to resource
-	};
-
-	typedef BOOL (CALLBACK* CALLBACKPROC)(BASICPARAMS* pParams);
-
-	// lParam is pointer to DWORD value which is will be set
-	// wParam is used mask
-	static BOOL CALLBACK DefaultCheckBoxProc(BASICPARAMS* pParams); 
-	
-	// lParam is pointer to DWORD value which is will be set
-	// HIWORD of wParam is mask to be setted, LOWORD is value
-	static BOOL CALLBACK DefaultRadioBoxProc(BASICPARAMS* pParams); 
-
-	// lParam is pointer to DWORD value which is will be set
-	// HIWORD of wParam is mask (shifted 16 bits) to be setted, LOWORD is value (shifted 16 bit)
-	static BOOL CALLBACK DefaultRadioBoxShiftProc(BASICPARAMS* pParams); 
-
-	// lParam is pointer to DWORD value which is will be set
-	// if wParam==0, all values are accepted
-	// if wParam==-1, only nonnegative values are accepted
-	// otherwise HIWORD is maximum, LOWORD is minimum
-	static BOOL CALLBACK DefaultNumericProc(BASICPARAMS* pParams); 
-
-	// lParam is pointer to string class which will be set
-	static BOOL CALLBACK DefaultEditStrProc(BASICPARAMS* pParams); 
-
-	// lParam is pointer to CStringW which will be set
-	static BOOL CALLBACK DefaultEditStrWProc(BASICPARAMS* pParams); 
-
-	// lParam is pointer to COLORREF which will be set
-	static BOOL CALLBACK DefaultColorProc(BASICPARAMS* pParams); 
-
-	// lParam is pointer to LOGFONT which will be set
-	static BOOL CALLBACK DefaultFontProc(BASICPARAMS* pParams); 
-
-
-public:
-	// Item class
-	struct Item {
-	private:
-		BOOL bEnabled;
-
-		// Visualization
-		enum ItemType {
-			Root,
-			CheckBox,
-			RadioBox,
-			Edit,
-			Combo,
-			List,
-			Numeric,
-			Color,
-			Font,
-			File
-		} nType;
-		Item* pParent;
-		Item** pChilds; // NULL terminated array
-		LPWSTR pString;
-
-		HWND hControl; // Control associated for item
-		HWND hControl2; // Another control associated for item
-
-		// Data
-		union {
-			BOOL bChecked;
-			LPWSTR pData;
-			LONG lValue;
-			COLORREF cColor;
-			LOGFONT* pLogFont;
-		};
-
-		// Callback
-		CALLBACKPROC pProc;
-		DWORD wParam;
-		void* lParam;
-
-		mutable int m_nStateIcon;
-
-	private:
-		Item(ItemType nType,Item* pParent,Item** pChilds,LPWSTR pString,
-			CALLBACKPROC pProc,DWORD wParam,void* lParam);
-		Item(ItemType nType,Item* pParent,Item** pChilds,UINT nStringID,
-			CALLBACKPROC pProc,DWORD wParam,void* lParam);
-		~Item();
-
-		int GetStateImage(CImageList* pImageList) const;
-		
-		void SetValuesForBasicParams(COptionsPropertyPage::BASICPARAMS* pParams);
-		void GetValuesFromBasicParams(const COptionsPropertyPage::BASICPARAMS* pParams);
-
-		LPWSTR GetText(BOOL bActive=FALSE) const;
-		void FreeText(LPWSTR pText) const;
-
-		int IconFromColor(CImageList* pImageList,int nReplace=-1) const;
-		
-		friend COptionsPropertyPage;
-
-
-	};
-	
-	
-public:
-
-	struct OPTIONPAGE
-	{
-		union {
-			UINT nIDTemplate;
-			LPCWSTR lpszTemplateName;
-        };
-		union {
-			UINT nIDCaption;
-			LPCWSTR lpszCaption;
-		};
-		union {
-			UINT nIDChangeText;
-			LPCWSTR lpszChangeText;
-		};
-		UINT nTreeCtrlID;
-
-		enum OptionPageFlags {
-			opTemplateIsID=0x1,
-			opCaptionIsID=0x2,
-			opChangeIsID=0x4
-		};
-		DWORD dwFlags;
-	};
-
-
-
-	COptionsPropertyPage();
-	COptionsPropertyPage(const COptionsPropertyPage::OPTIONPAGE* pOptionPage,TypeOfResourceHandle bType=LanguageSpecificResource);
-	
-	void Construct(const OPTIONPAGE* pOptionPage,TypeOfResourceHandle bType=LanguageSpecificResource);
-	
-
-	virtual BOOL OnApply();
-	virtual void OnDestroy();
-	virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
-	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
-	virtual void OnActivate(WORD fActive,BOOL fMinimized,HWND hwnd);
-	//virtual void OnTimer(DWORD wTimerID); 
-	
-	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
-
-	BOOL Initialize(Item** pItems);
-	
-	static Item* CreateRoot(LPWSTR szText,Item** pChilds);
-	static Item* CreateRoot(UINT nTextID,Item** pChilds);
-	static Item* CreateCheckBox(LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateCheckBox(UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateRadioBox(LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateRadioBox(UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateEdit(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateEdit(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateListBox(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateListBox(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateComboBox(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateComboBox(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateNumeric(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateNumeric(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateColor(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateColor(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateFont(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateFont(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateFile(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateFile(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-
-private:
-    BOOL InsertItemsToTree(HTREEITEM hParent,Item** pItems,Item* pParent=NULL);
-	BOOL TreeNotifyHandler(NMTVDISPINFO *pTvdi);
-	BOOL SetCheckState(HTREEITEM hItem,Item* pItem,NewState nNewState);
-	BOOL SetNumericValue(Item* pItem);
-	BOOL SetTextValue(Item* pItem);
-	BOOL SetListValue(Item* pItem);
-	BOOL SetColorValue(Item* pItem,COLORREF cNewColor);
-	BOOL SetFontValue(Item* pItem,LOGFONT* pLogFont);
-	void EnableChilds(HTREEITEM hItem,BOOL bEnable);
-	void UncheckOtherRadioButtons(HTREEITEM hItem,HTREEITEM hParent);
-	void CallApply(Item** pItems);
-	
-	struct UserData {
-		WNDPROC pOldWndProc;
-		COptionsPropertyPage* pDialog;
-	};
-
-	static LRESULT CALLBACK TreeSubClassFunc(HWND hWnd,UINT uMessage,
-		WPARAM wParam,LPARAM lParam);
-	static LRESULT CALLBACK ButtonSubClassFunc(HWND hWnd,UINT uMessage,
-		WPARAM wParam,LPARAM lParam);
-	static LRESULT CALLBACK EditSubClassFunc(HWND hWnd,UINT uMessage,
-		WPARAM wParam,LPARAM lParam);
-	static LRESULT CALLBACK ComboSubClassFunc(HWND hWnd,UINT uMessage,
-		WPARAM wParam,LPARAM lParam);
-	
-
-protected:
-	CTreeCtrl* m_pTree;
-	mutable CImageList m_Images;
-	Item** m_pItems;
-	UINT m_nTreeID;
-	CStringW m_ChangeText;
-
-	
-		
-};
-
 
 
 
@@ -425,7 +160,6 @@ public:
 			virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 			virtual BOOL OnClose();
 			
-			BOOL ListNotifyHandler(NMLISTVIEW *pNm);
 		
 		protected:
 			
@@ -433,14 +167,17 @@ public:
 			void OnBrowse();
 			void OnAddFolder();
 			void OnRemoveFolder();
-			void OnExcludeDirectories();
-			
-			BOOL EnableRemoveButton();
+			void OnAdvanced();
+
+			BOOL ItemUpOrDown(BOOL bUp);
+			void EnableControls();
 			int AddDriveToList(LPWSTR szDrive);
 			int AddDirectoryToListWithVerify(LPCWSTR szPath,INT iLength=-1);
 			int AddDirectoryToList(LPCWSTR szPath,int iLength=-1);
 			int AddComputerToList(LPCWSTR szName);
 			
+			int FindPosInRootList(LPCWSTR szDrive);
+
 		public:
 			BOOL m_bDontEditName;
 			
@@ -453,28 +190,39 @@ public:
 		protected:
 			CListCtrl* m_pList;
 
-			class CExcludeDirectoryDialog : public CDialog
+			class CAdvancedDialog : public CDialog
 			{
 			public:
-				CExcludeDirectoryDialog();
-				CExcludeDirectoryDialog(LPCWSTR szFiles,const CArrayFAP<LPWSTR>& rDirectories);
+				CAdvancedDialog(LPCWSTR szFiles,
+					const CArrayFAP<LPWSTR>& rDirectories,
+					const CListCtrl* pCopyItemsFrom,
+					LPCWSTR szRootMaps);
 
 				virtual BOOL OnInitDialog(HWND hwndFocus);
 				virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 				virtual BOOL OnClose();
+				virtual void OnDestroy();
+				virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
+			
 				
 				void OnOK();
+				void OnSet();
 				BOOL OnAddFolder(BOOL bShowErrorMessageIfExists);
 				void OnRemove();
 				void OnBrowse();
 
-				void EnableControls();
+				void EnableControlsExclude();
+				void EnableControlsAndSetMaps();
 
 			public:
 				CStringW m_sFiles;
 				CArrayFAP<LPWSTR> m_aDirectories;
-				
-				BOOL m_bDirectoryFieldChanged;
+				CStringW m_sRootMaps;
+
+			protected:
+				CListCtrl* m_pDriveList;
+				const CListCtrl* m_pCopyItemsFrom;
+
 			};
 
 		};

@@ -205,13 +205,26 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 			li.mask=LVIF_TEXT|LVIF_IMAGE;
 			li.iItem=i;
 			SHFILEINFOW fi;
-			if (GetFileInfo(di->aRootFolders.GetAt(i)->sPath+L'\\',0,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+			if (GetFileInfo(di->aRootFolders[i]->sRootMap.IsEmpty()?
+				di->aRootFolders.GetAt(i)->sPath+L'\\':
+				di->aRootFolders.GetAt(i)->sRootMap+L'\\',
+				0,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
 				li.iImage=fi.iIcon;
 			else
 				li.iImage=DEL_IMAGE;
 			li.iSubItem=0;
-			li.pszText=di->aRootFolders.GetAt(i)->sPath.GetBuffer();
-			m_pList->InsertItem(&li);
+			if (!di->aRootFolders[i]->sRootMap.IsEmpty())
+			{
+				CStringW tmp;
+				tmp << di->aRootFolders[i]->sPath << L" -> " << di->aRootFolders[i]->sRootMap;
+				li.pszText=tmp.GetBuffer();
+				m_pList->InsertItem(&li);
+			}
+			else
+			{
+				li.pszText=di->aRootFolders[i]->sPath.GetBuffer();
+				m_pList->InsertItem(&li);
+			}
 			
 			if (!m_bOldDB)
 			{

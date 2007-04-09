@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database locater v3.0.7.2110               */
+   database locater v3.0.7.3250               */
 
 #if !defined(LOCATER_H)
 #define LOCATER_H
@@ -257,7 +257,8 @@ private:
 
 	//  Needed information from CDatabase
 	struct DBArchive {
-		DBArchive(LPCWSTR szName,CDatabase::ArchiveType nArchiveType,LPCWSTR szArchive,WORD wID,BOOL bEnable);
+		DBArchive(LPCWSTR szName,CDatabase::ArchiveType nArchiveType,
+			LPCWSTR szArchive,WORD wID,BOOL bEnable,LPCWSTR szRootMaps);
 		~DBArchive();
 		
 		LPWSTR szName;
@@ -270,6 +271,8 @@ private:
 
 		BYTE bEnable:1;
 		BYTE bUnicode:1;
+
+		LPCWSTR szRootMaps;
 
 	};
 	CArrayFP<DBArchive*> m_aDatabases;

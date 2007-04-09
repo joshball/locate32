@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database locater v3.0.7.2110               */
+   database locater v3.0.7.3250               */
 
 #include <HFCLib.h>
 
@@ -364,9 +364,28 @@ BOOL CLocater::LocatingProc()
 								dbFile->Read(wTemp);
 							}
 							szCurrentPathW[nPathLen]=L'\0';
+							dwBlockSize-=(nPathLen+1)*2+1; // second 1 is type
+							
+							
+							// Check whether there is root map
+							int nActualPathLen;
+							BOOL bFree;
+							LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
+								m_pCurrentDatabase->szRootMaps,szCurrentPathW,nActualPathLen,bFree);
+							if (pActualPath!=NULL)
+							{
+								MemCopyW(szCurrentPathW,pActualPath,nActualPathLen);
+								MemCopyW(szCurrentPathLowerW,pActualPath,nActualPathLen);
+								szCurrentPathW[nPathLen=nActualPathLen]=L'\0';
+							
+								if (bFree)
+									delete[] pActualPath;
+							}
+
+
+							// Lower case
 							szCurrentPathLowerW[nPathLen]=L'\0';
 							MakeLower(szCurrentPathLowerW);
-							dwBlockSize-=(nPathLen+1)*2+1; // second 1 is type
 						}
 						
 						ValidType vtType=IsRootValidW(nPathLen);
@@ -448,6 +467,21 @@ BOOL CLocater::LocatingProc()
 							szCurrentPathW[nPathLen]=L'\0';
 							
 							dwBlockSize-=(nPathLen+1)*2+1; // second 1 is type
+
+							// Check whether there is root map
+							int nActualPathLen;
+							BOOL bFree;
+							LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
+								m_pCurrentDatabase->szRootMaps,szCurrentPathW,nActualPathLen,bFree);
+							if (pActualPath!=NULL)
+							{
+								MemCopyW(szCurrentPathW,pActualPath,nActualPathLen);
+								szCurrentPathW[nPathLen=nActualPathLen]=L'\0';
+
+								if (bFree)
+									delete[] pActualPath;
+							}
+
 						}
 						
 						// Reading data to buffer
@@ -526,9 +560,27 @@ BOOL CLocater::LocatingProc()
 								dbFile->Read(cTemp);
 							}
 							szCurrentPath[nPathLen]='\0';
+							dwBlockSize-=nPathLen+1+1; // second 1 is type
+
+							// Check whether there is root map
+							int nActualPathLen;
+							BOOL bFree;
+							LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
+								m_pCurrentDatabase->szRootMaps,A2W(szCurrentPath),nActualPathLen,bFree);
+							if (pActualPath!=NULL)
+							{
+								MemCopyWtoA(szCurrentPath,pActualPath,nActualPathLen);
+								MemCopyWtoA(szCurrentPathLower,pActualPath,nActualPathLen);
+								szCurrentPathW[nPathLen=nActualPathLen]=L'\0';
+							
+								if (bFree)
+									delete[] pActualPath;
+							}
+
+							// Lower case
 							szCurrentPathLower[nPathLen]='\0';
 							MakeLower(szCurrentPathLower);
-							dwBlockSize-=nPathLen+1+1; // second 1 is type
+
 						}
 						
 						ValidType vtType=IsRootValid(nPathLen);
@@ -609,6 +661,20 @@ BOOL CLocater::LocatingProc()
 							szCurrentPath[nPathLen]='\0';
 							
 							dwBlockSize-=nPathLen+1+1; // second 1 is type
+
+							// Check whether there is root map
+							int nActualPathLen;
+							BOOL bFree;
+							LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
+								m_pCurrentDatabase->szRootMaps,A2W(szCurrentPath),nActualPathLen,bFree);
+							if (pActualPath!=NULL)
+							{
+								MemCopyWtoA(szCurrentPath,pActualPath,nActualPathLen);
+								szCurrentPath[nPathLen=nActualPathLen]=L'\0';
+
+								if (bFree)
+									delete[] pActualPath;
+							}
 						}
 						
 						// Reading data to buffer
@@ -1774,7 +1840,7 @@ inline BOOL CLocater::IsFileAdvancedWhatAreWeLookingForW() const
 		WCHAR szPath[MAX_PATH];
 		MemCopyW(szPath,szCurrentPathW,dwCurrentPathLen);
 		szPath[GetCurrentPathLen()]='\\';
-		MemCopyW(szPath+GetCurrentPathLen()+1,GetFileName(),GetFileNameLen()+1);
+		MemCopyW(szPath+GetCurrentPathLen()+1,GetFileNameW(),GetFileNameLen()+1);
 		
 		// Searching
 		m_pProc(m_dwData,SearchingStarted,ueStillWorking,0,this);
@@ -1953,8 +2019,8 @@ void CLocater::LocateValidFolderW(DWORD nPathLen)
 			pPathLower++;
 			
 			// Copying paths
-			MemCopyW(pPath,pPoint,dwNameLen+1);
-			MemCopyW(pPathLower,pPoint,dwNameLen+1);
+			MemCopyW(pPath,(LPCWSTR)pPoint,dwNameLen+1);
+			MemCopyW(pPathLower,(LPCWSTR)pPoint,dwNameLen+1);
 			MakeLower(pPathLower);
 
 			ValidType vtType=IsFolderValidW(nPathLen+dwNameLen+1);			
@@ -2110,7 +2176,7 @@ void CLocater::CheckFolderW(DWORD nPathLen)
 			}
 
 			szCurrentPathW[nPathLen]='\\';
-			MemCopyW(szCurrentPathW+nPathLen+1,pPoint,dwNameLen+1);
+			MemCopyW(szCurrentPathW+nPathLen+1,(LPCWSTR)pPoint,dwNameLen+1);
 			
 			if (m_aDirectories.GetSize()>0 && m_dwFlags&LOCATE_NOSUBDIRECTORIES)
 				pPoint+=*((DWORD*)(pPoint-5))-6;

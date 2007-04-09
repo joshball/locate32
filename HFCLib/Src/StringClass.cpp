@@ -2600,7 +2600,7 @@ CStringW::CStringW(const short * lpsz)
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return;
 		}
-		sMemCopyW(m_pData,lpsz,m_nDataLen+1);
+		_MemCopyW(m_pData,lpsz,m_nDataLen+1);
 	}
 }
 
@@ -2823,7 +2823,7 @@ CStringW& CStringW::Copy(const BYTE* str)
 		delete[] m_pData;
 	for (m_nDataLen=0;str[m_nDataLen]!='\0';m_nDataLen++);
 	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+1];
-	MemCopyAtoW(m_pData,str,m_nDataLen);
+	MemCopyAtoW(m_pData,(char*)str,m_nDataLen);
 	m_pData[m_nDataLen]=L'\0';
 	return *this;
 }
@@ -2843,7 +2843,7 @@ CStringW& CStringW::Copy(const BYTE* str,int iLength)
 		m_nDataLen=iLength;
 	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+1];
 	
-	MemCopyAtoW(m_pData,str,m_nDataLen);
+	MemCopyAtoW(m_pData,(char*)str,m_nDataLen);
 	m_pData[m_nDataLen]=L'\0';
 	return *this;
 }

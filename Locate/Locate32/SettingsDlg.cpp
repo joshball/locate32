@@ -15,2103 +15,11 @@ inline BOOL operator!=(const SYSTEMTIME& s1,const SYSTEMTIME& s2)
 		s1.wMilliseconds==s2.wMilliseconds);
 }
 
-#define IDC_EDITCONTROLFORSELECTEDITEM  1300
-#define IDC_SPINCONTROLFORSELECTEDITEM  1301
-#define IDC_COMBOCONTROLFORSELECTEDITEM 1302
-#define IDC_COLORBUTTONFORSELECTEDITEM	1303
-#define IDC_FONTBUTTONFORSELECTEDITEM	1304
-#define IDC_BROWSEBUTTONFORSELECTEDITEM	1305
+
 //#define sMemCopyW	MemCopyW
 
 
-COptionsPropertyPage::Item::Item(
-	ItemType nType_,Item* pParent_,Item** pChilds_,LPWSTR pString_,
-	CALLBACKPROC pProc_,DWORD wParam_,void* lParam_)
-:	nType(nType_),pParent(pParent_),pData(NULL),bEnabled(TRUE),
-	wParam(wParam_),lParam(lParam_),pProc(pProc_),
-	m_nStateIcon(-1),hControl(NULL),hControl2(NULL)
-{
-	if (pString_!=NULL)
-		pString=alloccopy(pString_);
-	else 
-		pString=NULL;
-	
-	if (pChilds_!=NULL)
-	{
-		int i;
-		for (i=0;pChilds_[i]!=NULL;i++);
-		if (i>0)
-		{
-			pChilds=new Item*[i+1];
-			CopyMemory(pChilds,pChilds_,sizeof(Item*)*(i+1));
-			return;
-		}
-	}
-	pChilds=NULL;
-}
 
-COptionsPropertyPage::Item::Item(
-	ItemType nType_,Item* pParent_,Item** pChilds_,UINT nStringID,
-	CALLBACKPROC pProc_,DWORD wParam_,void* lParam_)
-:	nType(nType_),pParent(pParent_),pData(NULL),bEnabled(TRUE),
-	wParam(wParam_),lParam(lParam_),pProc(pProc_),
-	m_nStateIcon(-1),hControl(NULL),hControl2(NULL)
-{
-	int nCurLen=50;
-	int iLength;
-	
-	if (!IsUnicodeSystem())
-	{
-		// Non-unicode
-		char* szText=new char[nCurLen];
-		while ((iLength=::LoadString(GetResourceHandle(LanguageSpecificResource),nStringID,szText,nCurLen)+1)>=nCurLen)
-		{
-			delete[] szText;
-			nCurLen+=50;
-			szText=new char[nCurLen];
-		}
-		pString=new WCHAR[iLength];
-		MemCopyAtoW(pString,szText,iLength);
-		delete[] szText;
-	}
-	else
-	{
-		// Unicode
-		WCHAR* szText=new WCHAR[nCurLen];
-		while ((iLength=::LoadStringW(GetResourceHandle(LanguageSpecificResource),nStringID,szText,nCurLen)+1)>=nCurLen)
-		{
-			delete[] szText;
-			nCurLen+=50;
-			szText=new WCHAR[nCurLen];
-		}
-		pString=new WCHAR[iLength];
-		MemCopyW(pString,szText,iLength);
-		delete[] szText;
-	}
-
-	if (pChilds_!=NULL)
-	{
-		int i;
-		for (i=0;pChilds_[i]!=NULL;i++);
-		if (i>0)
-		{
-			pChilds=new Item*[i+1];
-			CopyMemory(pChilds,pChilds_,sizeof(Item*)*(i+1));
-			return;
-		}
-	}
-	pChilds=NULL;
-
-	
-
-}
-
-
-COptionsPropertyPage::Item::~Item()
-{
-	if (pChilds!=NULL)
-	{
-		for (int i=0;pChilds[i]!=NULL;i++)
-			delete pChilds[i];
-		delete[] pChilds;
-	}
-	if (pString!=NULL)
-		delete[] pString;
-
-	switch (nType)
-	{
-	case Combo:
-	case Edit:
-	case File:
-		if (pData!=NULL)
-			delete[] pData;
-		break;
-	case Font:
-		if (pLogFont!=NULL)
-			delete pLogFont;
-		break;
-	}
-}
-
-void COptionsPropertyPage::Construct(const OPTIONPAGE* pOptionPage,TypeOfResourceHandle bType)
-{
-	if (pOptionPage->dwFlags&OPTIONPAGE::opTemplateIsID)
-		m_lpszTemplateName=MAKEINTRESOURCE(pOptionPage->nIDTemplate);
-	else
-	{
-		if (IsUnicodeSystem())
-			m_lpszTemplateNameW=alloccopy(pOptionPage->lpszTemplateName);
-		else
-			m_lpszTemplateName=alloccopyWtoA(pOptionPage->lpszTemplateName);
-	}
-
-
-	if (pOptionPage->dwFlags&OPTIONPAGE::opCaptionIsID)
-		CPropertyPage::Construct(pOptionPage->nIDCaption,bType);
-	else
-		CPropertyPage::Construct(pOptionPage->lpszCaption,bType);
-
-	m_nTreeID=pOptionPage->nTreeCtrlID;
-
-
-	if (pOptionPage->dwFlags&OPTIONPAGE::opChangeIsID)
-		m_ChangeText.LoadString(pOptionPage->nIDChangeText);
-	else
-		m_ChangeText=pOptionPage->lpszChangeText;
-
-
-}
-
-BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
-{
-	if (m_pTree==NULL)
-	{
-		m_pTree=new CTreeCtrl(GetDlgItem(IDC_SETTINGS));
-		m_Images.Create(IDB_OPTIONSPROPERTYPAGEBITMAPS,16,256,RGB(255,255,255),IMAGE_BITMAP,LR_SHARED|LR_CREATEDIBSECTION);
-		m_pTree->SetImageList(m_Images,TVSIL_STATE);
-		if (IsUnicodeSystem())
-			m_pTree->SetUnicodeFormat(TRUE);
-
-		// Subclassing tree control
-		UserData* pUserData=new UserData;
-		pUserData->pDialog=this;
-		pUserData->pOldWndProc=(WNDPROC)m_pTree->SetWindowLong(gwlWndProc,(LONG_PTR)TreeSubClassFunc);
-
-		if (pUserData->pOldWndProc==NULL)
-		{
-			// Subclassing didn't success
-			delete pUserData;
-		}
-		else
-			m_pTree->SetWindowLong(gwlUserData,(LONG_PTR)pUserData);
-
-		
-	}
-
-	if (pItems==NULL)
-		return FALSE;
-	
-	// Counting items
-	int iItems;
-	for (iItems=0;pItems[iItems]!=NULL;iItems++);
-	
-	m_pItems=new Item*[max(iItems+1,2)];
-	m_pItems[iItems]=NULL;
-	CopyMemory(m_pItems,pItems,sizeof(Item*)*(iItems+1));
-	return InsertItemsToTree(NULL,m_pItems,NULL);
-	
-}
-
-
-
-BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyPage::Item** pItems,COptionsPropertyPage::Item* pParent)
-{
-	INITIALIZEPARAMS bp;
-	bp.pPage=this;
-
-	
-
-	union {
-		TVINSERTSTRUCTA tisa;
-		TVINSERTSTRUCTW tisw;
-	};
-	
-	if (!IsUnicodeSystem())
-	{
-		// Windows 9x
-		tisa.hInsertAfter=TVI_LAST;
-		tisa.hParent=hParent;
-		tisa.itemex.stateMask=TVIS_STATEIMAGEMASK|TVIS_EXPANDED;
-		tisa.itemex.mask=TVIF_STATE|TVIF_CHILDREN|TVIF_TEXT|TVIF_PARAM;
-	}
-	else
-	{
-		// Windows NT/2000/XP
-		tisw.hInsertAfter=TVI_LAST;
-		tisw.hParent=hParent;
-		tisw.itemex.stateMask=TVIS_STATEIMAGEMASK|TVIS_EXPANDED;
-		tisw.itemex.mask=TVIF_STATE|TVIF_CHILDREN|TVIF_TEXT|TVIF_PARAM;
-	}
-
-	HTREEITEM hSelectedRadioItem=NULL;
-	
-	int nItemHeight=18;
-    for (int i=0;pItems[i]!=NULL;i++)
-	{
-		if (pItems[i]->pProc!=NULL)
-		{
-			bp.crReason=BASICPARAMS::Get;
-			pItems[i]->SetValuesForBasicParams(&bp);
-			if (pItems[i]->pProc(&bp))
-				pItems[i]->GetValuesFromBasicParams(&bp);
-		}
-        			
-		if (!IsUnicodeSystem())
-		{
-			SIZE_T iStrLen=istrlenw(pItems[i]->pString);
-			tisa.itemex.pszText=new char [iStrLen+2];
-			MemCopyWtoA(tisa.itemex.pszText,pItems[i]->pString,iStrLen+1);
-			tisa.itemex.cChildren=pItems[i]->pChilds==0?0:1;
-			tisa.itemex.lParam=LPARAM(pItems[i]);
-			tisa.itemex.state=TVIS_EXPANDED|INDEXTOSTATEIMAGEMASK(pItems[i]->GetStateImage(&m_Images));
-			tisa.hInsertAfter=m_pTree->InsertItem(&tisa);
-			delete[] tisa.itemex.pszText;
-		}
-		else
-		{
-			tisw.itemex.pszText=pItems[i]->pString;
-			tisw.itemex.cChildren=pItems[i]->pChilds==0?0:1;
-			tisw.itemex.lParam=LPARAM(pItems[i]);
-			tisw.itemex.state=TVIS_EXPANDED|INDEXTOSTATEIMAGEMASK(pItems[i]->GetStateImage(&m_Images));
-			tisw.hInsertAfter=m_pTree->InsertItem(&tisw);
-		}
-
-
-		if (pItems[i]->pChilds!=NULL)
-			InsertItemsToTree(!IsUnicodeSystem()?tisa.hInsertAfter:tisw.hInsertAfter,pItems[i]->pChilds,pItems[i]);
-
-		// Type specified actions
-		switch (pItems[i]->nType)
-		{
-		case Item::RadioBox:
-			if (pItems[i]->bChecked)
-				hSelectedRadioItem=!IsUnicodeSystem()?tisa.hInsertAfter:tisw.hInsertAfter;
-			// Continuing
-		case Item::CheckBox:
-			EnableChilds(!IsUnicodeSystem()?tisa.hInsertAfter:tisw.hInsertAfter,pItems[i]->bChecked);
-			break;
-		case Item::Edit:
-		case Item::File:
-			{
-				pItems[i]->hControl=CreateWindow("EDIT","",
-					ES_AUTOHSCROLL|WS_CHILDWINDOW|WS_BORDER,
-					10,10,100,13,*this,(HMENU)IDC_EDITCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
-				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
-
-				// Subclassing control
-				UserData* pUserData=new UserData;
-				pUserData->pDialog=this;
-				pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
-					GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
-
-				if (pUserData->pOldWndProc==NULL)
-				{
-					// Subclassing didn't success
-					delete pUserData;
-				}
-				else
-					::SetWindowLongPtr(pItems[i]->hControl,GWLP_USERDATA,(LONG_PTR)pUserData);
-
-				
-				// Initializing
-				if (pItems[i]->pProc!=NULL)
-				{
-					bp.crReason=BASICPARAMS::Initialize;
-					bp.hControl=pItems[i]->hControl;
-					pItems[i]->pProc(&bp);
-				}
-				if (pItems[i]->pData!=NULL)
-				{
-					if (IsUnicodeSystem())
-						::SendMessageW(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(pItems[i]->pData));
-					else
-						::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM((LPCSTR)W2A(pItems[i]->pData)));
-				}
-				break;
-			}
-		case Item::Numeric:
-			{
-				pItems[i]->hControl=CreateWindow("EDIT","",
-					ES_AUTOHSCROLL|WS_CHILDWINDOW|WS_BORDER|ES_NUMBER,
-					10,10,50,20,*this,(HMENU)IDC_EDITCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
-				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
-
-				// Setting subclass info struct
-				UserData* pUserData=new UserData;
-				pUserData->pDialog=this;
-				pUserData->pOldWndProc=NULL;
-				::SetWindowLongPtr(pItems[i]->hControl,GWLP_USERDATA,(LONG_PTR)pUserData);
-	
-				// Initializing
-				if (pItems[i]->pProc!=NULL)
-				{
-					bp.crReason=BASICPARAMS::Initialize;
-					bp.hControl=pItems[i]->hControl;
-					pItems[i]->pProc(&bp);
-				}
-				if (IsUnicodeSystem())
-				{
-					WCHAR szText[100];
-					_itow_s(pItems[i]->lValue,szText,100,10);
-					::SendMessageW(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(szText));
-				}
-				else
-				{
-					char szText[100];
-					_itoa_s(pItems[i]->lValue,szText,100,10);
-					::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(szText));
-				}
-			}
-			break;
-		case Item::List:
-			{
-				pItems[i]->hControl=CreateWindow("COMBOBOX","",
-					CBS_DROPDOWNLIST|WS_VSCROLL|WS_CHILDWINDOW|WS_BORDER,
-					10,10,100,100,*this,(HMENU)IDC_COMBOCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
-				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
-				
-				// Subclassing control
-				UserData* pUserData=new UserData;
-				pUserData->pDialog=this;
-				pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
-					GWLP_WNDPROC,(LONG_PTR)ComboSubClassFunc);
-
-				if (pUserData->pOldWndProc==NULL)
-				{
-					// Subclassing didn't success
-					delete pUserData;
-				}
-				else
-					::SetWindowLongPtr(pItems[i]->hControl,GWLP_USERDATA,(LONG_PTR)pUserData);
-
-				// Initializing
-				if (pItems[i]->pProc!=NULL)
-				{
-					bp.crReason=BASICPARAMS::Initialize;
-					bp.hControl=pItems[i]->hControl;
-					pItems[i]->pProc(&bp);
-				}
-				::SendMessage(pItems[i]->hControl,CB_SETCURSEL,pItems[i]->lValue,NULL);
-				break;
-			}			
-		case Item::Combo:
-			{
-				pItems[i]->hControl=CreateWindow("COMBOBOX","",
-					CBS_DROPDOWN|WS_VSCROLL|WS_CHILDWINDOW|WS_BORDER,
-					10,10,100,100,*this,(HMENU)IDC_COMBOCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
-				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
-
-				// Subclassing control
-				UserData* pUserData=new UserData;
-				pUserData->pDialog=this;
-				pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
-					GWLP_WNDPROC,(LONG_PTR)ComboSubClassFunc);
-
-				if (pUserData->pOldWndProc==NULL)
-				{
-					// Subclassing didn't success
-					delete pUserData;
-				}
-				else
-					::SetWindowLongPtr(pItems[i]->hControl,GWLP_USERDATA,(LONG_PTR)pUserData);
-
-				HWND hEdit=GetWindow(pItems[i]->hControl,GW_CHILD);
-				if (hEdit!=NULL)
-				{
-					UserData* pUserData=new UserData;
-					pUserData->pDialog=this;
-					pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(hEdit,
-						GWLP_WNDPROC,(LONG_PTR)ComboSubClassFunc);
-
-					if (pUserData->pOldWndProc==NULL)
-					{
-						// Subclassing didn't success
-						delete pUserData;
-					}
-					else
-						::SetWindowLongPtr(hEdit,GWLP_USERDATA,(LONG_PTR)pUserData);
-				}
-
-				// Initializing
-				if (pItems[i]->pProc!=NULL)
-				{
-					bp.crReason=BASICPARAMS::Initialize;
-					bp.hControl=pItems[i]->hControl;
-					pItems[i]->pProc(&bp);
-				}
-
-				
-				if (pItems[i]->pData!=NULL)
-				{
-					// Checking whether value is found in combo
-					int nFind=(int)::SendMessage(pItems[i]->hControl,CB_FINDSTRINGEXACT,0,LPARAM(pItems[i]->pData));
-					::SendMessage(pItems[i]->hControl,CB_SETCURSEL,nFind,0);
-					if (nFind==CB_ERR)
-					{
-						if (IsUnicodeSystem())
-							::SendMessageW(pItems[i]->hControl,WM_SETTEXT,0,LPARAM(pItems[i]->pData));
-						else
-							::SendMessage(pItems[i]->hControl,WM_SETTEXT,0,LPARAM((LPCSTR)W2A(pItems[i]->pData)));
-					}
-				}
-				break;
-			}
-		case Item::Font:
-			{
-				if (IsUnicodeSystem())
-					pItems[i]->hControl=CreateWindowW(L"BUTTON",m_ChangeText,BS_PUSHBUTTON|WS_CHILDWINDOW,
-						10,10,100,13,*this,(HMENU)IDC_FONTBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
-				else
-					pItems[i]->hControl=CreateWindow("BUTTON",W2A(m_ChangeText),BS_PUSHBUTTON|WS_CHILDWINDOW,
-						10,10,100,13,*this,(HMENU)IDC_FONTBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
-
-				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
-
-				// Subclassing control
-				UserData* pUserData=new UserData;
-				pUserData->pDialog=this;
-				pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
-					GWLP_WNDPROC,(LONG_PTR)ButtonSubClassFunc);
-
-				if (pUserData->pOldWndProc==NULL)
-				{
-					// Subclassing didn't success
-					delete pUserData;
-				}
-				else
-					::SetWindowLongPtr(pItems[i]->hControl,GWLP_USERDATA,(LONG_PTR)pUserData);
-
-				// Initializing
-				if (pItems[i]->pProc!=NULL)
-				{
-					bp.crReason=BASICPARAMS::Initialize;
-					bp.hControl=pItems[i]->hControl;
-					pItems[i]->pProc(&bp);
-				}
-				break;
-			}		
-		case Item::Color:
-			{
-				if (IsUnicodeSystem())
-					pItems[i]->hControl=CreateWindowW(L"BUTTON",m_ChangeText,BS_PUSHBUTTON|WS_CHILDWINDOW,
-						10,10,100,13,*this,(HMENU)IDC_COLORBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
-				else
-					pItems[i]->hControl=CreateWindow("BUTTON",W2A(m_ChangeText),BS_PUSHBUTTON|WS_CHILDWINDOW,
-						10,10,100,13,*this,(HMENU)IDC_COLORBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
-
-				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
-
-				// Subclassing control
-				UserData* pUserData=new UserData;
-				pUserData->pDialog=this;
-				pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
-					GWLP_WNDPROC,(LONG_PTR)ButtonSubClassFunc);
-
-				if (pUserData->pOldWndProc==NULL)
-				{
-					// Subclassing didn't success
-					delete pUserData;
-				}
-				else
-					::SetWindowLongPtr(pItems[i]->hControl,GWLP_USERDATA,(LONG_PTR)pUserData);
-
-				// Initializing
-				if (pItems[i]->pProc!=NULL)
-				{
-					bp.crReason=BASICPARAMS::Initialize;
-					bp.hControl=pItems[i]->hControl;
-					pItems[i]->pProc(&bp);
-				}
-				break;
-			}			
-		}
-		
-		// Setting text
-		LPWSTR pCurText=pItems[i]->GetText();
-		if (pCurText!=pItems[i]->pString)
-		{
-			if (!IsUnicodeSystem())
-			{
-				int iStrLen=istrlenw(pCurText);
-				tisa.itemex.pszText=new char[iStrLen+2];
-				MemCopyWtoA(tisa.itemex.pszText,pCurText,iStrLen+1);
-				m_pTree->SetItemText(tisa.hInsertAfter,tisa.itemex.pszText);
-				delete[] tisa.itemex.pszText;
-			}
-			else
-				m_pTree->SetItemText(tisw.hInsertAfter,pCurText);
-			
-		}
-		pItems[i]->FreeText(pCurText);
-
-
-		
-		if (pItems[i]->hControl!=NULL)
-		{
-			CRect rc;
-			::GetWindowRect(pItems[i]->hControl,&rc);
-			if (rc.Height()-2>nItemHeight)
-				nItemHeight=rc.Height()-2;
-		}
-	}
-
-	// Ensuring that one radio is at least selected
-	if (hSelectedRadioItem==NULL)
-	{
-		HTREEITEM hItem;
-		if (hParent==NULL)
-			hItem=m_pTree->GetNextItem(NULL,TVGN_ROOT);
-		else
-			hItem=m_pTree->GetNextItem(hParent,TVGN_CHILD);
-
-		while (hItem!=NULL)
-		{
-			Item* pItem=(Item*)m_pTree->GetItemData(hItem);
-			if (pItem!=NULL)
-			{
-				if (pItem->nType==Item::RadioBox)
-				{
-					hSelectedRadioItem=hItem;
-					SetCheckState(hItem,pItem,Checked);					
-					break;
-				}
-			}            			
-			hItem=m_pTree->GetNextItem(hItem,TVGN_NEXT);
-		}
-	}
-	else
-		UncheckOtherRadioButtons(hSelectedRadioItem,hParent);
-
-	if (nItemHeight>m_pTree->GetItemHeight())
-		m_pTree->SetItemHeight(nItemHeight);
-	return TRUE;
-}
-
-BOOL COptionsPropertyPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
-{
-	CPropertyPage::OnCommand(wID,wNotifyCode,hControl);
-
-	switch (wID)
-	{
-	case IDC_EDITCONTROLFORSELECTEDITEM:
-		switch (wNotifyCode)
-		{
-		case EN_CHANGE:
-			{
-				HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
-				if (hItem==NULL)
-					break;
-				
-				Item* pItem=(Item*)m_pTree->GetItemData(hItem);
-				if (pItem==NULL)
-					break;
-				if (pItem->hControl!=hControl)
-					break;
-				
-				if (pItem->nType==Item::Numeric)
-					SetNumericValue(pItem);
-				else if (pItem->nType==Item::Edit || pItem->nType==Item::File)
-					SetTextValue(pItem);
-				
-				break;
-			}
-		case EN_SETFOCUS:
-			::SendMessage(hControl,EM_SETSEL,0,MAKELPARAM(0,-1));
-			break;
-		}
-		break;
-	case IDC_SPINCONTROLFORSELECTEDITEM:
-		break;
-	case IDC_COMBOCONTROLFORSELECTEDITEM:
-		switch (wNotifyCode)
-		{
-		case CBN_SELCHANGE:
-			{
-				HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
-				if (hItem==NULL)
-					break;
-				Item* pItem=(Item*)m_pTree->GetItemData(hItem);
-				if (pItem==NULL)
-					break;
-				if (pItem->hControl!=hControl)
-					break;
-				if (pItem->nType==Item::Combo)
-					SetTextValue(pItem);
-				else if (pItem->nType==Item::List)
-					SetListValue(pItem);
-				break;
-			}
-		case CBN_EDITCHANGE:
-			{
-				HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
-				if (hItem==NULL)
-					break;
-				Item* pItem=(Item*)m_pTree->GetItemData(hItem);
-				if (pItem==NULL)
-					break;
-				if (pItem->hControl!=hControl)
-					break;
-
-				if (pItem->nType==Item::Combo)
-					SetTextValue(pItem);
-				break;
-			}
-		case CBN_SETFOCUS:
-			::SendMessage(hControl,CB_SETEDITSEL,0,MAKELPARAM(0,-1));
-			break;
-		default:
-			CAppData::stdfunc();
-			break;
-		}
-		break;
-	case IDC_COLORBUTTONFORSELECTEDITEM:
-		{
-			HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
-			if (hItem==NULL)
-				break;
-			Item* pItem=(Item*)m_pTree->GetItemData(hItem);
-			if (pItem==NULL)
-				break;
-			if (pItem->hControl!=hControl)
-				break;
-
-			if (pItem->nType==Item::Color)
-			{
-				CColorDialog cd(pItem->cColor);
-				if (cd.DoModal(*this))
-				{
-					SetColorValue(pItem,cd.GetColor());
-
-					m_pTree->RedrawWindow();
-				}
-				break;
-			}
-			break;
-		}
-	case IDC_FONTBUTTONFORSELECTEDITEM:
-		{
-			HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
-			if (hItem==NULL)
-				break;
-			Item* pItem=(Item*)m_pTree->GetItemData(hItem);
-			if (pItem==NULL)
-				break;
-			if (pItem->hControl!=hControl)
-				break;
-
-			if (pItem->nType==Item::Font)
-			{
-				CFontDialog fd(pItem->pLogFont,CF_SCREENFONTS);
-                
-				if (fd.DoModal(*this))
-				{
-					SetFontValue(pItem,&fd.m_lf);
-
-					WCHAR* pText=pItem->GetText(TRUE);
-					m_pTree->SetItemText(hItem,pText);
-					pItem->FreeText(pText);
-				}
-
-				break;
-			}
-			break;
-		}
-	case IDC_BROWSEBUTTONFORSELECTEDITEM:
-		{
-			HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
-			if (hItem==NULL)
-				break;
-			Item* pItem=(Item*)m_pTree->GetItemData(hItem);
-			if (pItem==NULL)
-				break;
-			
-			if (pItem->nType==Item::File)
-			{
-				BROWSEDLGPARAMS bp;
-				pItem->SetValuesForBasicParams(&bp);
-				bp.crReason=BASICPARAMS::BrowseFile;
-				bp.pPage=this;
-				bp.szTitle=NULL;
-				bp.szFilters=NULL;
-				pItem->pProc(&bp);
-				
-				CFileDialog* pfd;
-				if (IS_INTRESOURCE(bp.szFilters))
-				{
-					pfd=new CFileDialog(TRUE,L"*",szwEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|
-						OFN_NOREADONLYRETURN|OFN_ENABLESIZING,(UINT)(ULONG_PTR)(bp.szFilters));
-				}
-				else
-				{
-					pfd=new CFileDialog(TRUE,L"*",szwEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|
-						OFN_NOREADONLYRETURN|OFN_ENABLESIZING,bp.szFilters);
-				}
-				
-				pfd->EnableFeatures();
-				if (IS_INTRESOURCE(bp.szTitle))
-					pfd->SetTitle(ID2W((UINT)(ULONG_PTR)bp.szTitle));
-				else
-					pfd->SetTitle(bp.szTitle);
-	
-				if (pfd->DoModal(*this))
-				{
-					WCHAR szPath[MAX_PATH];
-					if (pfd->GetFilePath(szPath,MAX_PATH))
-					{
-						if (IsUnicodeSystem())
-							::SendMessageW(pItem->hControl,WM_SETTEXT,0,(LPARAM)szPath);
-						else
-							::SendMessage(pItem->hControl,WM_SETTEXT,0,(LPARAM)(LPCSTR)W2A(szPath));
-						::SendMessage(pItem->hControl,EM_SETSEL,0,-1);
-						::SetFocus(pItem->hControl);
-					}
-				}
-
-
-				delete pfd;
-			}
-			break;
-		}
-	}
-	return FALSE;
-}
-
-BOOL COptionsPropertyPage::OnApply()
-{
-	CPropertyPage::OnApply();
-	if (m_pItems!=NULL)
-		CallApply(m_pItems);
-	return TRUE;
-}
-
-void COptionsPropertyPage::CallApply(Item** pItems)
-{
-	COMBOAPPLYPARAMS bp;
-	bp.pPage=this;
-	bp.crReason=BASICPARAMS::Apply;
-
-	for (int i=0;pItems[i]!=NULL;i++)
-	{
-		if (pItems[i]->bEnabled)
-		{
-			if (pItems[i]->pProc!=NULL)
-			{
-				pItems[i]->SetValuesForBasicParams(&bp);
-				if (pItems[i]->nType==Item::Combo || pItems[i]->nType==Item::List)
-					bp.nCurSel=(LONG)::SendMessage(pItems[i]->hControl,CB_GETCURSEL,0,0);
-				pItems[i]->pProc(&bp);
-			}
-			if (pItems[i]->pChilds!=NULL)
-				CallApply(pItems[i]->pChilds);
-		}
-	}
-}
-
-void COptionsPropertyPage::OnDestroy()
-{
-	CPropertyPage::OnDestroy();
-	
-	if (m_pTree!=NULL)
-	{
-		m_pTree->DeleteAllItems();
-		delete m_pTree;
-		m_pTree=NULL;
-	}
-	
-	if (m_pItems!=NULL)
-	{
-		for (int i=0;m_pItems[i]!=NULL;i++)
-			delete m_pItems[i];
-		delete[] m_pItems;
-	}
-
-	
-}
-
-	
-void COptionsPropertyPage::OnActivate(WORD fActive,BOOL fMinimized,HWND hwnd)
-{
-	CPropertyPage::OnActivate(fActive,fMinimized,hwnd);
-
-	if (fActive!=WA_INACTIVE)
-		PostMessage(WM_REDRAWSELITEMCONTROL);
-}
-
-/*void COptionsPropertyPage::OnTimer(DWORD wTimerID)
-{
-	switch (wTimerID)
-	{
-	case 0:
-		KillTimer(0);
-		PostMessage(WM_REDRAWSELITEMCONTROL);
-		break;
-	}
-	CPropertyPage::OnTimer(wTimerID);
-}*/
-
-int COptionsPropertyPage::Item::IconFromColor(CImageList* pImageList,int nReplace) const
-{
-	int cx=16,cy=16;
-	pImageList->GetIconSize(&cx,&cy);
-
-	HDC hScreenDC=::GetDC(NULL);
-	HDC memDC=::CreateCompatibleDC(hScreenDC);
-    HBITMAP memBM=CreateCompatibleBitmap(hScreenDC,cx,cy);
-    HBITMAP memBM2=CreateCompatibleBitmap(hScreenDC,cx,cy);
-    
-	// Creating first image
-	SelectObject(memDC,memBM);
-    HBRUSH hBrush=CreateSolidBrush(cColor);
-	FillRect(memDC,&CRect(2,0,cx-2,cy-3),hBrush);
-	DeleteObject(hBrush);
-	
-	// Crating second image
-	SelectObject(memDC,memBM2);
-    hBrush=CreateSolidBrush(RGB(255,255,255));
-	FillRect(memDC,&CRect(0,0,cx,cy),hBrush);
-	DeleteObject(hBrush);
-	hBrush=CreateSolidBrush(RGB(0,0,0));
-	FillRect(memDC,&CRect(2,0,cx-2,cy-3),hBrush);
-	DeleteObject(hBrush);
-	
-	DeleteDC(memDC);
-	
-	
-	int nImage=-1;
-	
-	if (nReplace==-1)
-		nImage=pImageList->Add(memBM,memBM2);
-	else
-		nImage=pImageList->Replace(nReplace,memBM,memBM2)?nReplace:-1;
-    
-	DeleteObject(memBM);
-	DeleteObject(memBM2);
-	::ReleaseDC(NULL,hScreenDC);
-	
-	return nImage;
-}
-	
-LRESULT COptionsPropertyPage::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
-{
-	switch(msg)
-	{
-	case WM_REDRAWSELITEMCONTROL:
-		{
-			HTREEITEM hActiveItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
-			if (hActiveItem==NULL)
-				return TRUE;
-
-			Item* pItem=(Item*)m_pTree->GetItemData(hActiveItem);
-			if (pItem==NULL)
-				return TRUE;
-
-			if (pItem->hControl!=NULL)
-			{
-				// Checking that should position change
-				CRect rcItem,rcOrig,rcTree,rcOther;
-				m_pTree->GetClientRect(&rcTree);
-				m_pTree->GetItemRect(hActiveItem,&rcItem,TRUE);
-				BOOL bNotVisible=rcItem.top<0 || rcItem.bottom>rcTree.bottom;
-				m_pTree->ClientToScreen(&rcItem);
-				
-				::GetWindowRect(pItem->hControl,&rcOrig);
-				if (pItem->hControl2!=NULL)
-				{
-					::GetWindowRect(pItem->hControl2,&rcOther);
-					rcOther.left-=rcOrig.left;
-					rcOther.top-=rcOrig.top;
-				}
-
-
-				//if (rcOrig.left!=rcItem.right+1 || rcOrig.top!=rcItem.top-1)
-				{
-					// Moving control to correct place
-					ScreenToClient(&rcItem);
-					::SetWindowPos(pItem->hControl,HWND_TOP,rcItem.right+1,rcItem.top-1,0,0,
-						(bNotVisible?SWP_HIDEWINDOW:SWP_SHOWWINDOW)|SWP_NOSIZE|SWP_NOACTIVATE);
-					
-
-					if (pItem->hControl2!=NULL)
-					{
-						if (pItem->nType==Item::Numeric)
-						{
-							::SetWindowPos(pItem->hControl2,HWND_TOP,rcItem.right+1+rcOther.left,rcItem.top-1+rcOther.top,0,0,
-								(bNotVisible?SWP_HIDEWINDOW:SWP_SHOWWINDOW)|SWP_NOSIZE|SWP_NOACTIVATE);
-							::InvalidateRect(pItem->hControl2,NULL,FALSE);
-						}
-						else if (pItem->nType==Item::File)
-						{
-							::SetWindowPos(pItem->hControl2,HWND_TOP,rcItem.right+1+rcOrig.Width(),rcItem.top-1,0,0,
-								(bNotVisible?SWP_HIDEWINDOW:SWP_SHOWWINDOW)|SWP_NOSIZE|SWP_NOACTIVATE);
-							::InvalidateRect(pItem->hControl2,NULL,FALSE);
-						}
-					}
-
-				}
-
-				::InvalidateRect(pItem->hControl,NULL,FALSE);
-				if (pItem->hControl2!=NULL)
-					::InvalidateRect(pItem->hControl2,NULL,FALSE);
-			}
-			break;
-		}
-	case WM_FOCUSSELITEMCONTROL:
-		{
-			HTREEITEM hActiveItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
-			if (hActiveItem==NULL)
-				return TRUE;
-
-			Item* pItem=(Item*)m_pTree->GetItemData(hActiveItem);
-			if (pItem==NULL)
-				return TRUE;
-			
-			if (pItem->hControl!=NULL)
-			{
-				::InvalidateRect(pItem->hControl,NULL,FALSE);
-				::SetFocus(pItem->hControl);
-			}
-
-			break;
-		}
-	}
-	return CPropertyPage::WindowProc(msg,wParam,lParam);
-}
-
-BOOL COptionsPropertyPage::OnNotify(int idCtrl,LPNMHDR pnmh)
-{
-	if (idCtrl==m_nTreeID)
-	{
-		CPropertyPage::OnNotify(idCtrl,pnmh);
-		BOOL bRet=TreeNotifyHandler((NMTVDISPINFO*)pnmh);
-		if (bRet)
-			SetWindowLong(dwlMsgResult,bRet);
-		return bRet;
-	}			
-	return CPropertyPage::OnNotify(idCtrl,pnmh);
-}
-
-BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
-{
-	switch (pTvdi->hdr.code)
-	{
-	case TVN_KEYDOWN:
-		if (((NMTVKEYDOWN*)pTvdi)->wVKey==VK_SPACE)
-		{
-			HTREEITEM hItem=m_pTree->GetNextItem(NULL,TVGN_CARET);
-			if (hItem==NULL)
-				break;
-			Item* pItem=(Item*)m_pTree->GetItemData(hItem);
-			if (pItem==NULL)
-				break;
-			if (pItem->bEnabled && (pItem->nType==Item::RadioBox || pItem->nType==Item::CheckBox))
-				SetCheckState(hItem,pItem,Toggle);
-			
-		}
-		break;
-	case NM_CLICK:
-	case NM_DBLCLK:
-		{
-			TVHITTESTINFO ht;
-			GetCursorPos(&ht.pt);
-			m_pTree->ScreenToClient(&ht.pt);
-			HTREEITEM hItem=m_pTree->HitTest(&ht);
-			if (hItem==NULL)
-				break;
-			Item* pItem=(Item*)m_pTree->GetItemData(hItem);
-			if (pItem==NULL)
-				break;
-			if (pItem->nType==Item::RadioBox || pItem->nType==Item::CheckBox)
-			{
-				if (pItem->bEnabled && (ht.flags&TVHT_ONITEMSTATEICON || pTvdi->hdr.code==NM_DBLCLK))
-					SetCheckState(hItem,pItem,Toggle);
-			}
-			break;
-		}
-	case TVN_SELCHANGINGA:
-	case TVN_SELCHANGINGW:
-		{
-			NMTREEVIEWA *pNm=(NMTREEVIEWA*)pTvdi;
-			// Procedure does not access to any LPTSTR elements of NMTREEVIEWW,
-			// so no need for different unicode implementation
-
-			// Checking if selection cannot be changed
-			if (pNm->itemNew.lParam!=NULL)
-			{
-				if (!((Item*)pNm->itemNew.lParam)->bEnabled)
-					return TRUE;
-			}
-
-			// Hiding control for previous item
-			if (pNm->itemOld.lParam!=NULL)
-			{
-				Item* pItem=(Item*)pNm->itemOld.lParam;
-				if (pItem->hControl!=NULL)
-				{
-					// Hiding window and ensuring that that part of tree is redrawn
-					RECT rc;
-					::GetWindowRect(pItem->hControl,&rc);
-					::ShowWindow(pItem->hControl,SW_HIDE);
-					m_pTree->ScreenToClient(&rc);
-					::InvalidateRect(*m_pTree,&rc,FALSE);
-					
-					// Setting text
-					WCHAR* pText=pItem->GetText(FALSE);
-					if (!IsUnicodeSystem())
-					{
-						int iStrLen=istrlenw(pText);
-						char* paText=new char [iStrLen+2];
-						MemCopyWtoA(paText,pText,iStrLen+1);
-						m_pTree->SetItemText(pNm->itemOld.hItem,paText);
-						delete[] paText;
-					
-					}
-					else
-						m_pTree->SetItemText(pNm->itemOld.hItem,pText);
-					pItem->FreeText(pText);
-					
-					// Deleting another control
-					if (pItem->hControl2!=NULL)
-					{
-						::DestroyWindow(pItem->hControl2);
-						pItem->hControl2=NULL;
-					}
-
-					if (pItem->nType==Item::Numeric)
-					{
-						// Desubclassing
-						UserData* pUserData=(UserData*)::GetWindowLong(pItem->hControl,GWLP_USERDATA);
-						if (pUserData!=NULL)
-						{
-							if (pUserData->pOldWndProc!=NULL)
-								::SetWindowLongPtr(pItem->hControl,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
-							pUserData->pOldWndProc=NULL;
-						}
-					}
-				}
-			}
-			// Showing control for previous item
-			if (pNm->itemNew.lParam!=NULL)
-			{
-				Item* pItem=(Item*)pNm->itemNew.lParam;
-				if (pItem->hControl!=NULL)
-				{
-					// Changing text
-					// Setting text
-					WCHAR* pText=pItem->GetText(TRUE);
-					if (!IsUnicodeSystem())
-					{
-						int iStrLen=istrlenw(pText);
-						char* paText=new char [iStrLen+2];
-						MemCopyWtoA(paText,pText,iStrLen+1);
-						m_pTree->SetItemText(pNm->itemNew.hItem,paText);
-						delete[] paText;
-					
-					}
-					else
-						m_pTree->SetItemText(pNm->itemNew.hItem,pText);
-					
-					
-					// Show control
-					::ShowWindow(((Item*)pNm->itemNew.lParam)->hControl,SW_SHOW);
-	                
-					// Moving it
-					RECT rc;
-					m_pTree->GetItemRect(pNm->itemNew.hItem,&rc,TRUE);
-					m_pTree->ClientToScreen(&rc);
-					ScreenToClient(&rc);
-					
-					int nWidth=60; // 60 is for numeric
-					if (pItem->nType==Item::Font || pItem->nType==Item::Color) 
-					{
-						CDC dc(this);
-						HGDIOBJ hOldFont=dc.SelectObject((HFONT)SendMessage(WM_GETFONT));
-						CSize sz=dc.GetTextExtent(m_ChangeText);
-						nWidth=sz.cx+10;
-						dc.SelectObject(hOldFont);
-					}
-					else if (pItem->nType!=Item::Numeric)
-					{
-						RECT rcTree;
-						m_pTree->GetClientRect(&rcTree);
-						nWidth=rcTree.right-rc.right;
-						if (pItem->nType==Item::File)
-							nWidth-=20;
-					}
-					::SetWindowPos(pItem->hControl,HWND_TOP,0,0,nWidth,20,SWP_SHOWWINDOW|SWP_NOMOVE);
-
-							
-
-					
-					if (pItem->nType==Item::Numeric)
-					{
-						// Creating Up/Down control
-						pItem->hControl2=CreateWindow("msctls_updown32","",
-							UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_ARROWKEYS|WS_CHILDWINDOW|WS_VISIBLE|UDS_NOTHOUSANDS,
-							rc.right+20,rc.top-1,10,10,*this,(HMENU)IDC_SPINCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
-						::SendMessage(pItem->hControl2,UDM_SETBUDDY,WPARAM(pItem->hControl),NULL);
-						
-						
-						// Subclassing edit control
-						UserData* pUserData=(UserData*)::GetWindowLongPtr(pItem->hControl,GWLP_USERDATA);
-						if (pUserData!=NULL)
-						{
-							pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItem->hControl,
-								GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
-						}
-
-
-						// Subclassing updown control
-						pUserData=new UserData;
-						pUserData->pDialog=this;
-						pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItem->hControl2,
-							GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
-
-						if (pUserData->pOldWndProc==NULL)
-						{
-							// Subclassing didn't success
-							delete pUserData;
-						}
-						else
-							::SetWindowLongPtr(pItem->hControl2,GWLP_USERDATA,(LONG_PTR)pUserData);
-
-						if (pItem->pProc!=NULL)
-						{
-							SPINPOXPARAMS spb;
-							spb.iLow=0;
-							spb.iHigh=MAXLONG;
-							pItem->SetValuesForBasicParams(&spb);
-							spb.crReason=SPINPOXPARAMS::SetSpinRange;
-							spb.pPage=this;
-							pItem->pProc(&spb);
-							::SendMessage(pItem->hControl2,UDM_SETRANGE32,spb.iLow,spb.iHigh);
-						}
-						else
-							::SendMessage(pItem->hControl2,UDM_SETRANGE32,0,MAXLONG);
-
-						::SetWindowPos(pItem->hControl2,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
-					}
-					else if (pItem->nType==Item::File)
-					{
-						// Browse control
-						pItem->hControl2=CreateWindow("BUTTON","...",
-							BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW|WS_VISIBLE,
-							rc.right+20,rc.top-1,20,21,*this,(HMENU)IDC_BROWSEBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
-						::SendMessage(pItem->hControl2,WM_SETFONT,SendMessage(WM_GETFONT),0);
-						
-						::SetWindowPos(pItem->hControl2,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
-
-						// Subclassing control
-						UserData* pUserData=new UserData;
-						pUserData->pDialog=this;
-						pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItem->hControl2,
-							GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
-
-						if (pUserData->pOldWndProc==NULL)
-						{
-							// Subclassing didn't success
-							delete pUserData;
-						}
-						else
-							::SetWindowLongPtr(pItem->hControl2,GWLP_USERDATA,(LONG_PTR)pUserData);
-					}
-
-					if (pItem->nType!=Item::Color && pItem->nType!=Item::Font)
-						PostMessage(WM_FOCUSSELITEMCONTROL);
-				}
-			}
-			break;
-		}
-	case TVN_SELCHANGEDA:
-	case TVN_SELCHANGEDW:
-		/*if (pNm->itemNew.lParam!=NULL)
-		{
-			if (((Item*)pNm->itemNew.lParam)->hControl!=NULL)
-				::SetFocus(((Item*)pNm->itemNew.lParam)->hControl);
-		}*/
-		break;
-	case TVN_ITEMEXPANDINGA:
-	case TVN_ITEMEXPANDINGW:
-		if (((NMTREEVIEWA*)pTvdi)->action==TVE_COLLAPSE || ((NMTREEVIEWA*)pTvdi)->action==TVE_TOGGLE)
-			return TRUE;
-		return FALSE;
-	case TVN_DELETEITEMA:
-	case TVN_DELETEITEMW:
-		if (((NMTREEVIEW*)pTvdi)->itemOld.lParam!=NULL)
-		{
-			Item* pItem=(Item*)((NMTREEVIEW*)pTvdi)->itemOld.lParam;
-			if (pItem->hControl2!=NULL)
-			{
-				::DestroyWindow(pItem->hControl2);
-				pItem->hControl2=NULL;
-			}
-
-			if (pItem->hControl!=NULL)
-			{
-				if (pItem->nType==Item::Numeric)
-				{
-					UserData* pData=(UserData*)::GetWindowLong(pItem->hControl,GWLP_USERDATA);
-					if (pData!=NULL)
-					{
-						::SetWindowLongPtr(pItem->hControl,GWLP_USERDATA,NULL);
-						if (pData->pOldWndProc!=NULL)
-							::SetWindowLongPtr(pItem->hControl,GWLP_WNDPROC,(LONG_PTR)pData->pOldWndProc);
-
-						delete pData;
-					}
-					
-				}
-				::DestroyWindow(pItem->hControl);
-
-				pItem->hControl=NULL;
-			}
-		}
-		break;
-	case NM_CUSTOMDRAW:
-		{
-			NMTVCUSTOMDRAW* pCustomDraw=(NMTVCUSTOMDRAW*)pTvdi;
-			if (pCustomDraw->nmcd.dwDrawStage==CDDS_PREPAINT)
-				return CDRF_NOTIFYITEMDRAW|CDRF_NOTIFYPOSTPAINT;
-			else if (pCustomDraw->nmcd.dwDrawStage==CDDS_POSTPAINT)
-			{
-				PostMessage(WM_REDRAWSELITEMCONTROL);
-				return CDRF_NOTIFYITEMDRAW;
-			}
-			else if (pCustomDraw->nmcd.dwDrawStage&CDDS_ITEMPREPAINT)
-			{
-				Item* pItem=(Item*)pCustomDraw->nmcd.lItemlParam;
-				if (!pItem->bEnabled)
-					pCustomDraw->clrText=GetSysColor(COLOR_GRAYTEXT);
-				return CDRF_DODEFAULT;
-			}
-			break;
-		}
-	}
-	return FALSE;
-}
-
-
-BOOL COptionsPropertyPage::SetCheckState(HTREEITEM hItem,COptionsPropertyPage::Item* pItem,
-										 COptionsPropertyPage::NewState nNewState)
-{
-	if (nNewState==Toggle && pItem->nType==Item::RadioBox)
-		nNewState=Checked;
-
-	if (pItem->pProc!=NULL)
-	{
-		CHANGINGVALPARAMS cp;
-		cp.crReason=BASICPARAMS::ChangingValue;
-		cp.pPage=this;
-		pItem->SetValuesForBasicParams(&cp);
-		cp.nNewState=nNewState;
-		if (!pItem->pProc(&cp))
-			return FALSE;
-	}
-
-	if (pItem->nType==Item::CheckBox || pItem->nType==Item::RadioBox)
-	{
-		if (nNewState==Toggle)
-		    pItem->bChecked=!pItem->bChecked;
-		else if (nNewState==Checked)
-		{
-			if (pItem->bChecked)
-				return FALSE;
-			pItem->bChecked=TRUE;
-		}
-		else
-		{
-			if (!pItem->bChecked)
-				return FALSE;
-			pItem->bChecked=FALSE;
-		}
-		m_pTree->SetItemState(hItem,INDEXTOSTATEIMAGEMASK(pItem->GetStateImage(&m_Images)),TVIS_STATEIMAGEMASK);
-
-		if (pItem->nType==Item::RadioBox && pItem->bChecked)
-			UncheckOtherRadioButtons(hItem,m_pTree->GetParentItem(hItem));
-		
-		EnableChilds(hItem,pItem->bChecked);
-		
-		
-		if (pItem->pProc!=NULL)
-		{
-			BASICPARAMS bp;
-			bp.crReason=BASICPARAMS::Set;
-			bp.pPage=this;
-			pItem->SetValuesForBasicParams(&bp);
-			pItem->pProc(&bp);
-		}
-		return TRUE;
-	}
-	return FALSE;
-}
-
-BOOL COptionsPropertyPage::SetNumericValue(Item* pItem)
-{
-	int iTextLen=(int)::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,0,0)+1;
-	char* szText=new char[iTextLen+1];
-	::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(szText));
-
-	CHANGINGVALPARAMS cp;
-	cp.lNewValue=atol(szText);
-	delete[] szText;
-
-	// Asking wheter value can be changed
-	if (pItem->pProc!=NULL)
-	{
-		cp.crReason=BASICPARAMS::ChangingValue;
-		pItem->SetValuesForBasicParams(&cp);
-		cp.pPage=this;
-		if (!pItem->pProc(&cp))
-			return FALSE;
-	}
-	pItem->lValue=cp.lNewValue;
-	if (pItem->pProc!=NULL)
-	{
-		cp.crReason=BASICPARAMS::Set;
-		cp.lValue=pItem->lValue;
-		pItem->pProc(&cp);
-	}
-	return TRUE;
-}
-
-BOOL COptionsPropertyPage::SetTextValue(Item* pItem)
-{
-	
-
-	CHANGINGVALPARAMS cp;
-	int iTextLen,iCurSel;
-	switch (pItem->nType)
-	{
-	case Item::Combo:
-	case Item::List:
-		iCurSel=(int)::SendMessage(pItem->hControl,CB_GETCURSEL,0,0);
-		if (iCurSel!=CB_ERR)
-		{
-			iTextLen=(int)::SendMessage(pItem->hControl,CB_GETLBTEXTLEN,iCurSel,0)+2;			
-			cp.pNewData=new WCHAR[iTextLen];
-				
-			if (IsUnicodeSystem())
-				::SendMessageW(pItem->hControl,CB_GETLBTEXT,iCurSel,LPARAM(cp.pNewData));
-			else
-			{
-				char* pAText=new char[iTextLen];
-				::SendMessage(pItem->hControl,CB_GETLBTEXT,iCurSel,LPARAM(pAText));
-				MultiByteToWideChar(CP_ACP,0,pAText,-1,cp.pNewData,iTextLen);
-				delete[] pAText;
-			}			
-		}
-		else
-		{
-			iTextLen=(int)::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,iCurSel,0)+2;			
-			cp.pNewData=new WCHAR[iTextLen];
-			
-			
-			if (IsUnicodeSystem())
-				::SendMessageW(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(cp.pNewData));
-			else
-			{
-				char* pAText=new char[iTextLen];
-				::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(pAText));
-				MultiByteToWideChar(CP_ACP,0,pAText,-1,cp.pNewData,iTextLen);
-				delete[] pAText;
-			}		
-			
-			
-		}
-
-		break;
-	default:
-		iTextLen=(int)::SendMessage(pItem->hControl,WM_GETTEXTLENGTH,0,0)+1;
-		cp.pNewData=new WCHAR[max(iTextLen,2)];
-		if (IsUnicodeSystem())
-			::SendMessageW(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(cp.pNewData));
-		else
-		{
-			char* pAText=new char[iTextLen];
-			::SendMessage(pItem->hControl,WM_GETTEXT,iTextLen,LPARAM(pAText));
-			MultiByteToWideChar(CP_ACP,0,pAText,-1,cp.pNewData,iTextLen);
-			delete[] pAText;
-		}	
-		
-		break;
-	}
-	
-	
-
-	// Asking wheter value can be changed
-	if (pItem->pProc!=NULL)
-	{
-		cp.crReason=BASICPARAMS::ChangingValue;
-		pItem->SetValuesForBasicParams(&cp);
-		cp.pPage=this;
-		if (!pItem->pProc(&cp))
-		{
-			delete[] cp.pNewData;
-			return FALSE;
-		}
-	}
-
-	
-	if (pItem->pData!=NULL)
-		delete[] pItem->pData;
-
-	
-	pItem->pData=cp.pNewData;
-	if (pItem->pProc!=NULL)
-	{
-		cp.crReason=BASICPARAMS::Set;
-		cp.pData=cp.pData;
-		pItem->pProc(&cp);
-	}
-	
-	return TRUE;
-}
-
-BOOL COptionsPropertyPage::SetListValue(Item* pItem)
-{
-	CHANGINGVALPARAMS cp;
-	cp.lNewValue=(LONG)::SendMessage(pItem->hControl,CB_GETCURSEL,0,0);
-	
-	// Asking wheter value can be changed
-	if (pItem->pProc!=NULL)
-	{
-		cp.crReason=BASICPARAMS::ChangingValue;
-		pItem->SetValuesForBasicParams(&cp);
-		cp.pPage=this;
-		if (!pItem->pProc(&cp))
-			return FALSE;
-	}
-	pItem->lValue=cp.lNewValue;
-	if (pItem->pProc!=NULL)
-	{
-		cp.crReason=BASICPARAMS::Set;
-		cp.lValue=pItem->lValue;
-		pItem->pProc(&cp);
-	}
-	return TRUE;
-}
-
-BOOL COptionsPropertyPage::SetColorValue(Item* pItem,COLORREF cNewColor)
-{
-	CHANGINGVALPARAMS cp;
-	cp.cNewColor=cNewColor;
-	
-	// Asking wheter value can be changed
-	if (pItem->pProc!=NULL)
-	{
-		cp.crReason=BASICPARAMS::ChangingValue;
-		pItem->SetValuesForBasicParams(&cp);
-		cp.pPage=this;
-		if (!pItem->pProc(&cp))
-			return FALSE;
-	}
-	pItem->cColor=cp.cNewColor;
-	if (pItem->pProc!=NULL)
-	{
-		cp.crReason=BASICPARAMS::Set;
-		cp.cColor=pItem->cColor;
-		pItem->pProc(&cp);
-	}
-
-	pItem->m_nStateIcon=pItem->IconFromColor(&m_Images,pItem->m_nStateIcon);
-	return TRUE;
-}
-
-BOOL COptionsPropertyPage::SetFontValue(Item* pItem,LOGFONT* pLogFont)
-{
-	CHANGINGVALPARAMS cp;
-	cp.pNewLogFont=pLogFont;
-	
-	// Asking wheter value can be changed
-	if (pItem->pProc!=NULL)
-	{
-		cp.crReason=BASICPARAMS::ChangingValue;
-		pItem->SetValuesForBasicParams(&cp);
-		cp.pPage=this;
-		if (!pItem->pProc(&cp))
-			return FALSE;
-	}
-	if (pItem->pLogFont==NULL)
-		pItem->pLogFont=new LOGFONT;
-    CopyMemory(pItem->pLogFont,cp.pNewLogFont,sizeof(LOGFONT));
-	
-	if (pItem->pProc!=NULL)
-	{
-		cp.crReason=BASICPARAMS::Set;
-		cp.pLogFont=pItem->pLogFont;
-		pItem->pProc(&cp);
-	}
-	return TRUE;
-}
-	
-	
-void COptionsPropertyPage::EnableChilds(HTREEITEM hItem,BOOL bEnable)
-{
-	HTREEITEM hChildItem=m_pTree->GetNextItem(hItem,TVGN_CHILD);
-    while (hChildItem!=NULL)
-	{
-		Item* pItem=(Item*)m_pTree->GetItemData(hChildItem);
-		if (pItem!=NULL)
-			pItem->bEnabled=bEnable;
-		
-		m_pTree->SetItemState(hChildItem,bEnable?0:TVIS_CUT,TVIS_CUT);
-		
-		hChildItem=m_pTree->GetNextItem(hChildItem,TVGN_NEXT);
-	}
-}
-
-void COptionsPropertyPage::UncheckOtherRadioButtons(HTREEITEM hItem,HTREEITEM hParent)
-{
-	if (hParent==NULL)
-		return;
-	
-	HTREEITEM hChilds;
-	if (hParent==NULL)
-		hChilds=m_pTree->GetNextItem(NULL,TVGN_ROOT);
-	else
-		hChilds=m_pTree->GetNextItem(hParent,TVGN_CHILD);
-
-
-
-	while (hChilds!=NULL)
-	{
-		Item* pItem=(Item*)m_pTree->GetItemData(hChilds);
-		if (pItem!=NULL)
-		{
-			if (pItem->nType==Item::RadioBox && hChilds!=hItem)
-				SetCheckState(hChilds,(Item*)m_pTree->GetItemData(hChilds),Unchecked);
-		}
-		hChilds=m_pTree->GetNextItem(hChilds,TVGN_NEXT);
-	}
-}
-
-WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
-{
-	switch (nType)
-	{
-	case Numeric:
-		if (hControl!=NULL && !bActive)
-		{
-			WCHAR szText[100];
-			_itow_s(lValue,szText,100,10);
-			int iLength=(int)istrlenw(szText)+1;
-			int iLabelLen=(int)istrlenw(pString);
-			
-			WCHAR* pText=new WCHAR[iLabelLen+iLength+2];
-			MemCopyW(pText,pString,iLabelLen);
-			pText[iLabelLen++]=' ';
-			MemCopyW(pText+iLabelLen,szText,iLength);
-			return pText;
-		}
-		return pString;
-	case List:
-    case Combo:
-		if (hControl!=NULL && !bActive)
-		{
-			
-			CComboBox cb(hControl);
-
-			int nCurSel=cb.GetCurSel();
-			int iLength=(int)((nCurSel!=-1)?cb.GetLBTextLen(nCurSel)+1:cb.GetTextLength()+1);
-			int iLabelLen=(int)istrlenw(pString);
-			
-			WCHAR* pText=new WCHAR[iLabelLen+iLength+2];
-			MemCopyW(pText,pString,iLabelLen);
-			pText[iLabelLen++]=' ';
-				
-			if (nCurSel!=-1)
-				cb.GetLBText(nCurSel,pText+iLabelLen);
-			else
-				cb.GetWindowText(pText+iLabelLen,iLength+1);
-
-			return pText;
-		}
-		return pString;
-	case Edit:
-	case File:
-		if (hControl!=NULL && !bActive)
-		{
-			
-			int iLength=(int)::SendMessage(hControl,WM_GETTEXTLENGTH,0,0)+1;
-			int iLabelLen=(int)istrlenw(pString);
-			
-			WCHAR* pText=new WCHAR[iLabelLen+iLength+1];
-			MemCopyW(pText,pString,iLabelLen);
-			pText[iLabelLen++]=' ';
-				
-			if (!IsUnicodeSystem())
-			{
-				// 9x
-				char* pTemp=new char[iLength+2];
-				::GetWindowText(hControl,pTemp,iLength);
-				MemCopyAtoW(pText+iLabelLen,pTemp,iLength);
-				delete[] pTemp;
-			}
-			else
-				::GetWindowTextW(hControl,pText+iLabelLen,iLength);
-				
-			return pText;
-		}
-		return pString;
-	case Font:
-		if (pLogFont!=NULL)
-		{
-			
-			CStringW str(pString);
-			str << L' ' << pLogFont->lfFaceName;
-
-			if (pLogFont->lfHeight<0)
-			{
-				// Getting device caps
-				HDC hScreenDC=::GetDC(NULL);
-				int pt=MulDiv(-pLogFont->lfHeight, 72,::GetDeviceCaps(hScreenDC,LOGPIXELSY));
-				::ReleaseDC(NULL,hScreenDC);
-				
-				str << L' ' << pt;
-			}
-
-			
-			return str.GiveBuffer();
-		}
-		return pString;
-	case RadioBox:
-	case CheckBox:
-	case Root:
-	case Color:
-	default:
-		return pString;
-	}
-}
-
-// lParam is pointer to DWORD value which is will be set
-// wParam is used mask
-BOOL CALLBACK COptionsPropertyPage::DefaultCheckBoxProc(COptionsPropertyPage::BASICPARAMS* pParams)
-{
-	switch (pParams->crReason)
-	{
-	case BASICPARAMS::Initialize:
-		break;
-	case BASICPARAMS::Get:
-		pParams->bChecked=(*((DWORD*)pParams->lParam))&pParams->wParam?TRUE:FALSE;
-		break;
-	case BASICPARAMS::Set:
-		break;
-	case BASICPARAMS::Apply:
-		if (pParams->bChecked)
-			*((DWORD*)pParams->lParam)|=DWORD(pParams->wParam);
-		else
-			*((DWORD*)pParams->lParam)&=~DWORD(pParams->wParam);
-		break;
-	case BASICPARAMS::ChangingValue:
-		break;
-	}
-	return TRUE;
-}
-
-// lParam is pointer to DWORD value which is will be set
-// HIWORD of wParam is mask to be setted, LOWORD is value
-BOOL CALLBACK COptionsPropertyPage::DefaultRadioBoxProc(COptionsPropertyPage::BASICPARAMS* pParams)
-{
-	switch (pParams->crReason)
-	{
-	case BASICPARAMS::Initialize:
-		break;
-	case BASICPARAMS::Get:
-		if (pParams->lParam!=NULL)
-			pParams->bChecked=((*((DWORD*)pParams->lParam))&(HIWORD(pParams->wParam)))==LOWORD(pParams->wParam);
-		else
-			pParams->bChecked=0;
-		break;
-	case BASICPARAMS::Set:
-		/*
-		*((DWORD*)pParams->lParam)&=~HIWORD(pParams->wParam);
-		if (pParams->bChecked)
-			*((DWORD*)pParams->lParam)|=LOWORD(pParams->wParam);
-		*/
-		break;
-	case BASICPARAMS::Apply:
-		if (pParams->bChecked && pParams->lParam!=NULL)
-		{
-			*((DWORD*)pParams->lParam)&=~HIWORD(pParams->wParam);
-			*((DWORD*)pParams->lParam)|=LOWORD(pParams->wParam);
-		}
-		break;		
-	case BASICPARAMS::ChangingValue:
-		break;
-	}
-	return TRUE;
-}
-
-// lParam is pointer to DWORD value which is will be set
-// HIWORD of wParam is mask (shifted 16 bits) to be setted, LOWORD is value (shifted 16 bit)
-BOOL CALLBACK COptionsPropertyPage::DefaultRadioBoxShiftProc(COptionsPropertyPage::BASICPARAMS* pParams)
-{
-	switch (pParams->crReason)
-	{
-	case BASICPARAMS::Initialize:
-		break;
-	case BASICPARAMS::Get:
-		pParams->bChecked=((*((DWORD*)pParams->lParam))&(HIWORD(pParams->wParam)<<16))==LOWORD(pParams->wParam)<<16;
-		break;
-	case BASICPARAMS::Set:
-		/*
-		*((DWORD*)pParams->lParam)&=~HIWORD(pParams->wParam);
-		if (pParams->bChecked)
-			*((DWORD*)pParams->lParam)|=LOWORD(pParams->wParam);
-		*/
-		break;
-	case BASICPARAMS::Apply:
-		if (pParams->bChecked)
-		{
-			*((DWORD*)pParams->lParam)&=~(HIWORD(pParams->wParam)<<16);
-			*((DWORD*)pParams->lParam)|=LOWORD(pParams->wParam)<<16;
-		}
-		break;		
-	case BASICPARAMS::ChangingValue:
-		break;
-	}
-	return TRUE;
-}
-
-// lParam is pointer to DWORD value which is will be set
-// if wParam==0, all values are accepted
-// if wParam==-1, positive values are accepted
-// otherwise HIWORD is maximum, LOWORD is minimum
-BOOL CALLBACK COptionsPropertyPage::DefaultNumericProc(COptionsPropertyPage::BASICPARAMS* pParams)
-{
-	switch (pParams->crReason)
-	{
-	case BASICPARAMS::Initialize:
-		break;
-	case BASICPARAMS::Get:
-		pParams->lValue=*((DWORD*)pParams->lParam);
-		if (pParams->wParam==0) 
-			break; // Accept all values
-		else if (pParams->wParam==DWORD(-1))
-		{
-			// -1: Accept only nonnegative values
-			if (pParams->lValue<0)
-				pParams->lValue=0;
-		}
-		else if (pParams->lValue>int(HIWORD(pParams->wParam)))
-			pParams->lValue=int(HIWORD(pParams->wParam));
-		else if (pParams->lValue<int(LOWORD(pParams->wParam)))
-			pParams->lValue=int(LOWORD(pParams->wParam));
-		break;
-	case BASICPARAMS::Set:
-		/*
-		*((DWORD*)pParams->lParam)&=~HIWORD(pParams->wParam);
-		if (pParams->bChecked)
-			*((DWORD*)pParams->lParam)|=LOWORD(pParams->wParam);
-		*/
-		break;
-	case BASICPARAMS::Apply:
-		*((DWORD*)pParams->lParam)=pParams->lValue;
-		break;		
-	case BASICPARAMS::SetSpinRange:
-		if (pParams->wParam==0)
-		{
-			((SPINPOXPARAMS*)pParams)->iLow=MINLONG;
-			((SPINPOXPARAMS*)pParams)->iHigh=MAXLONG;
-		}
-		else if (pParams->wParam==DWORD(-1))
-		{
-			((SPINPOXPARAMS*)pParams)->iLow=0;
-			((SPINPOXPARAMS*)pParams)->iHigh=MAXLONG;
-		}
-		else
-		{
-			((SPINPOXPARAMS*)pParams)->iLow=LOWORD(pParams->wParam);
-			((SPINPOXPARAMS*)pParams)->iHigh=HIWORD(pParams->wParam);
-		}
-		break;
-	case BASICPARAMS::ChangingValue:
-		if (pParams->wParam==0) // 
-			break;
-		else if (pParams->wParam==DWORD(-1))
-		{
-			if (((CHANGINGVALPARAMS*)pParams)->lNewValue<0)
-				return FALSE;
-		}
-		else if (((CHANGINGVALPARAMS*)pParams)->lNewValue<int(LOWORD(pParams->wParam)) || 
-			((CHANGINGVALPARAMS*)pParams)->lNewValue>int(HIWORD(pParams->wParam)))
-			return FALSE;
-		break;
-	}
-	return TRUE;
-}
-
-// lParam is pointer to string class which will be set
-BOOL CALLBACK COptionsPropertyPage::DefaultEditStrProc(BASICPARAMS* pParams)
-{
-	switch(pParams->crReason)
-	{
-	case BASICPARAMS::Initialize:
-		break;
-	case BASICPARAMS::Get:
-		ASSERT(pParams->pData==NULL);
-		pParams->pData=alloccopyAtoW(*(CString*)pParams->lParam);
-		break;
-	case BASICPARAMS::Set:
-		break;
-	case BASICPARAMS::Apply:
-		if (pParams->pData==NULL)
-			((CString*)pParams->lParam)->Empty();
-		else
-			((CString*)pParams->lParam)->Copy(pParams->pData);
-		break;
-	case BASICPARAMS::ChangingValue:
-		break;
-	}		
-	return TRUE;
-}
-
-// lParam is pointer to CStringW which will be set
-BOOL CALLBACK COptionsPropertyPage::DefaultEditStrWProc(BASICPARAMS* pParams)
-{
-	switch(pParams->crReason)
-	{
-	case BASICPARAMS::Initialize:
-		break;
-	case BASICPARAMS::Get:
-		ASSERT(pParams->pData==NULL);
-		pParams->pData=alloccopy(*(CStringW*)pParams->lParam);
-		break;
-	case BASICPARAMS::Set:
-		break;
-	case BASICPARAMS::Apply:
-		if (pParams->pData==NULL)
-			((CStringW*)pParams->lParam)->Empty();
-		else
-			((CStringW*)pParams->lParam)->Copy(pParams->pData);
-		break;
-	case BASICPARAMS::ChangingValue:
-		break;
-	}		
-	return TRUE;
-}
-
-// lParam is pointer to LOGFONT strcut
-BOOL CALLBACK COptionsPropertyPage::DefaultFontProc(BASICPARAMS* pParams)
-{
-	switch(pParams->crReason)
-	{
-	case BASICPARAMS::Initialize:
-		break;
-	case BASICPARAMS::Get:
-		if (pParams->pLogFont==NULL)
-			pParams->pLogFont=new LOGFONT;
-		CopyMemory(pParams->pLogFont,pParams->lParam,sizeof(LOGFONT));
-		break;
-	case BASICPARAMS::Set:
-		break;
-	case BASICPARAMS::Apply:
-		CopyMemory(pParams->lParam,pParams->pLogFont,sizeof(LOGFONT));	
-		break;
-	case BASICPARAMS::ChangingValue:
-		break;
-	}		
-	return TRUE;
-}
-
-// lParam is pointer to COLORREF
-BOOL CALLBACK COptionsPropertyPage::DefaultColorProc(BASICPARAMS* pParams)
-{
-	switch(pParams->crReason)
-	{
-	case BASICPARAMS::Initialize:
-		break;
-	case BASICPARAMS::Get:
-		pParams->cColor=*((COLORREF*)pParams->lParam);
-		break;
-	case BASICPARAMS::Set:
-		break;
-	case BASICPARAMS::Apply:
-		*((COLORREF*)pParams->lParam)=pParams->cColor;
-		break;
-	case BASICPARAMS::ChangingValue:
-		break;
-	}		
-	return TRUE;
-}
-
-
-LRESULT CALLBACK COptionsPropertyPage::TreeSubClassFunc(HWND hWnd,UINT uMsg,
-															  WPARAM wParam,LPARAM lParam)
-{
-	UserData* pUserData=(UserData*)::GetWindowLongPtr(hWnd,GWLP_USERDATA);
-	LRESULT lRet=FALSE;
-
-	if (pUserData==NULL)
-		return FALSE;
-
-	
-	switch (uMsg)
-	{
-	case WM_DESTROY:
-		// Calling original window procedure
-		lRet=CallWindowProc(pUserData->pOldWndProc,hWnd,uMsg,wParam,lParam);
-
-		// Desubclassing
-		::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
-		
-		// Free memory
-		delete pUserData;
-		return lRet;
-	case WM_KEYDOWN:
-		if ((wParam==VK_DOWN || wParam==VK_UP) &&
-			!(GetKeyState(VK_CONTROL)&0x8000))
-		{
-			HTREEITEM hCurrentItem=TreeView_GetSelection(hWnd);
-			if (hCurrentItem!=NULL)
-			{
-				HTREEITEM hNextItem;
-				
-				for (;;)
-				{
-					if (wParam==VK_DOWN)
-						hNextItem=TreeView_GetNextVisible(hWnd,hCurrentItem);
-					else
-						hNextItem=TreeView_GetPrevVisible(hWnd,hCurrentItem);
-
-					if (hNextItem==NULL)
-						break;
-
-					TVITEM tv;
-					tv.hItem=hNextItem;
-					tv.mask=TVIF_HANDLE|TVIF_PARAM;
-					TreeView_GetItem(hWnd,&tv);					
-
-					if (((Item*)tv.lParam)->bEnabled)
-						break;
-
-					hCurrentItem=hNextItem;
-				}
-				
-				if (hNextItem!=NULL)
-				{
-					::SetFocus(hWnd);
-					TreeView_SelectItem(hWnd,hNextItem);
-				}
-				break;
-			}			
-		}
-		// Continue to default
-	default:
-		lRet=CallWindowProc(pUserData->pOldWndProc,hWnd,uMsg,wParam,lParam);
-		break;
-	}
-
-	return lRet;
-}
-
-LRESULT CALLBACK COptionsPropertyPage::ButtonSubClassFunc(HWND hWnd,UINT uMsg,
-															  WPARAM wParam,LPARAM lParam)
-{
-	
-
-	UserData* pUserData=(UserData*)::GetWindowLongPtr(hWnd,GWLP_USERDATA);
-	LRESULT lRet=FALSE;
-
-	if (pUserData==NULL)
-		return FALSE;
-
-	
-	switch (uMsg)
-	{
-	case WM_DESTROY:
-		// Calling original window procedure
-		lRet=CallWindowProc(pUserData->pOldWndProc,hWnd,uMsg,wParam,lParam);
-
-		// Desubclassing
-		::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
-		
-		// Free memory
-		delete pUserData;
-		return lRet;
-	case WM_KEYDOWN:
-		if ((wParam==VK_DOWN || wParam==VK_UP) &&
-			!(GetKeyState(VK_CONTROL)&0x8000))
-			pUserData->pDialog->m_pTree->SendMessage(WM_KEYDOWN,wParam,lParam);
-
-		// Continue to default
-	default:
-		lRet=CallWindowProc(pUserData->pOldWndProc,hWnd,uMsg,wParam,lParam);
-		break;
-	}
-
-	return lRet;
-}
-
-LRESULT CALLBACK COptionsPropertyPage::EditSubClassFunc(HWND hWnd,UINT uMsg,
-															  WPARAM wParam,LPARAM lParam)
-{
-	UserData* pUserData=(UserData*)::GetWindowLongPtr(hWnd,GWLP_USERDATA);
-	LRESULT lRet=FALSE;
-
-	if (pUserData==NULL)
-		return FALSE;
-
-	
-	switch (uMsg)
-	{
-	case WM_DESTROY:
-		// Calling original window procedure
-		lRet=CallWindowProc(pUserData->pOldWndProc,hWnd,uMsg,wParam,lParam);
-
-		// Desubclassing
-		::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
-		
-		// Free memory
-		delete pUserData;
-		return lRet;
-	case WM_KEYDOWN:
-		if (wParam==VK_DOWN || wParam==VK_UP)
-			return pUserData->pDialog->m_pTree->SendMessage(WM_KEYDOWN,wParam,lParam);
-
-
-		// Continue to default
-	default:
-		lRet=CallWindowProc(pUserData->pOldWndProc,hWnd,uMsg,wParam,lParam);
-		break;
-	}
-
-	return lRet;
-}
-
-LRESULT CALLBACK COptionsPropertyPage::ComboSubClassFunc(HWND hWnd,UINT uMsg,
-															  WPARAM wParam,LPARAM lParam)
-{
-	UserData* pUserData=(UserData*)::GetWindowLongPtr(hWnd,GWLP_USERDATA);
-	LRESULT lRet=FALSE;
-
-	if (pUserData==NULL)
-		return FALSE;
-
-	
-	switch (uMsg)
-	{
-	case WM_DESTROY:
-		// Calling original window procedure
-		lRet=CallWindowProc(pUserData->pOldWndProc,hWnd,uMsg,wParam,lParam);
-
-		// Desubclassing
-		::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
-		
-		// Free memory
-		delete pUserData;
-		return lRet;
-	case WM_KEYDOWN:
-		if ((wParam==VK_DOWN || wParam==VK_UP) && 
-			!(GetKeyState(VK_MENU)&0x8000))
-		{
-			if (GetWindow(hWnd,GW_CHILD)==NULL)
-			{
-				// Edit control
-				if (!::SendMessage(::GetParent(hWnd),CB_GETDROPPEDSTATE,0,0))	
-					return pUserData->pDialog->m_pTree->SendMessage(WM_KEYDOWN,wParam,lParam);
-			}
-			else if (!::SendMessage(hWnd,CB_GETDROPPEDSTATE,0,0))	
-				return pUserData->pDialog->m_pTree->SendMessage(WM_KEYDOWN,wParam,lParam);
-		}
-
-		// Continue to default
-	default:
-		lRet=CallWindowProc(pUserData->pOldWndProc,hWnd,uMsg,wParam,lParam);
-		break;
-	}
-
-	return lRet;
-}
 
 ////////////////////////////////////////
 // CSettingsProperties
@@ -4297,10 +2205,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnRestore()
 	{
 		CDatabase* pDatabase=CDatabase::FromOldStyleDatabase(HKCU,"Software\\Update\\Database");
 		if (pDatabase==NULL)
-		{
-			CStringW sApp(GetApp()->GetExeNameW());
 			pDatabase=CDatabase::FromDefaults(TRUE); 
-		}
 		else
 		{
 			if (CDatabase::SaveToRegistry(HKCU,CLocateApp::GetRegKey("Databases"),&pDatabase,1))
@@ -4512,7 +2417,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 			return TRUE;
 		return FALSE;
 	case LVN_ITEMCHANGED:
-		if (pNm->lParam!=NULL && (pNm->uNewState&0x00002000)!=(pNm->uOldState&0x00002000))
+		if (pNm->lParam!=NULL && (pNm->uNewState&LVIS_SELECTED)!=(pNm->uOldState&LVIS_SELECTED))
 		{
 			if (m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
 			{
@@ -4915,9 +2820,8 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	if (m_pDatabase->GetRoots()!=NULL)
 	{
 		CheckDlgButton(IDC_CUSTOMDRIVES,1);
-		EnableDlgItem(IDC_FOLDERS,TRUE);
-		EnableDlgItem(IDC_ADDFOLDER,TRUE);
-		EnableDlgItem(IDC_REMOVEFOLDER,EnableRemoveButton());
+		
+		EnableControls();
 
 		LPCWSTR pPtr=m_pDatabase->GetRoots();
 
@@ -4960,6 +2864,8 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	return FALSE;
 }
 
+
+
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnDestroy()
 {
 	if (m_pList!=NULL)
@@ -4983,22 +2889,23 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnNotify(int 
 	switch (idCtrl)
 	{
 	case IDC_FOLDERS:
-		ListNotifyHandler((NMLISTVIEW*)pnmh);
+		switch (((NMLISTVIEW*)pnmh)->hdr.code)
+		{
+		case LVN_ITEMCHANGED:
+			if (((((NMLISTVIEW*)pnmh)->uNewState&LVIS_SELECTED)!=
+				(((NMLISTVIEW*)pnmh)->uOldState&LVIS_SELECTED)))
+				EnableControls();
+			break;
+		}
 		break;
 	}
 	return CDialog::OnNotify(idCtrl,pnmh);
 }
 
-BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::ListNotifyHandler(NMLISTVIEW *pNm)
-{
-	switch(pNm->hdr.code)
-	{
-	case NM_CLICK:
-		EnableDlgItem(IDC_REMOVEFOLDER,EnableRemoveButton());
-		break;
-	}
-	return TRUE;
-}
+
+				
+
+
 
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 {
@@ -5272,7 +3179,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 	}
 
 	// Enable "Remove folder" button is needed
-	EnableDlgItem(IDC_REMOVEFOLDER,EnableRemoveButton());
+	EnableControls();
 }
 
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnRemoveFolder()
@@ -5285,7 +3192,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnRemoveFolde
 
 
 	// Enable "Remove folder" button is needed
-	EnableDlgItem(IDC_REMOVEFOLDER,EnableRemoveButton());
+	EnableControls();
 }
 
 BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
@@ -5303,15 +3210,11 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnCommand(WOR
 		break;
 	case IDC_LOCALDRIVES:
 		CheckDlgButton(IDC_CUSTOMDRIVES,0);
-		EnableDlgItem(IDC_FOLDERS,FALSE);
-		EnableDlgItem(IDC_ADDFOLDER,FALSE);
-		EnableDlgItem(IDC_REMOVEFOLDER,FALSE);
+		EnableControls();
 		break;
 	case IDC_CUSTOMDRIVES:
 		CheckDlgButton(IDC_LOCALDRIVES,0);
-		EnableDlgItem(IDC_FOLDERS,TRUE);
-		EnableDlgItem(IDC_ADDFOLDER,TRUE);
-		EnableDlgItem(IDC_REMOVEFOLDER,EnableRemoveButton());
+		EnableControls();
 		break;
 	case IDC_BROWSE:
 		OnBrowse();
@@ -5322,8 +3225,12 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnCommand(WOR
 	case IDC_REMOVEFOLDER:
 		OnRemoveFolder();
 		break;
-	case IDC_EXCLUDEDIRECTORIES:
-		OnExcludeDirectories();
+	case IDC_ADVANCED:
+		OnAdvanced();
+		break;
+	case IDC_UP:
+	case IDC_DOWN:
+		ItemUpOrDown(wID==IDC_UP);
 		break;
 	case IDC_NAME:
 	case IDC_DBFILE:
@@ -5372,16 +3279,99 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnBrowse()
 	SendDlgItemMessage(IDC_DBFILE,EM_SETSEL,0,-1);
 }
 
-void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnExcludeDirectories()
+BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::ItemUpOrDown(BOOL bUp)
 {
-	CExcludeDirectoryDialog edd(m_pDatabase->GetExcludedFiles(),
-		m_pDatabase->GetExcludedDirectories());
+	int nSelected=m_pList->GetNextItem(-1,LVNI_SELECTED);
+	ASSERT(nSelected!=-1);
+	
+	int nOther=m_pList->GetNextItem(nSelected,bUp?LVNI_ABOVE:LVNI_BELOW);
+	if (nOther==-1 || nOther==nSelected)
+		return FALSE;
+
+	LV_ITEMW li1,li2;
+	WCHAR szBuffer1[MAX_PATH+10];
+	WCHAR szBuffer2[MAX_PATH+10];
+	li1.pszText=szBuffer1;
+	li1.cchTextMax=MAX_PATH+10;
+	li2.pszText=szBuffer2;
+	li2.cchTextMax=MAX_PATH+10;
+	li1.iItem=nSelected;
+	li2.iItem=nOther;
+
+	li1.mask=LVIF_TEXT|LVIF_IMAGE|LVIF_STATE;
+	li2.mask=LVIF_TEXT|LVIF_IMAGE|LVIF_STATE;
+	li1.stateMask=LVIS_FOCUSED|LVIS_SELECTED;
+
+		// Subitem 0
+	li1.iSubItem=li2.iSubItem=0;
+	m_pList->GetItem(&li1);
+	m_pList->GetItem(&li2);
+	swap(li1.iItem,li2.iItem);
+	m_pList->SetItem(&li1);
+	m_pList->SetItem(&li2);
+
+	li1.mask=LVIF_TEXT;
+	li2.mask=LVIF_TEXT;
+	
+	// Subitem 1
+	li1.iSubItem=li2.iSubItem=1;
+	m_pList->GetItem(&li1);
+	m_pList->GetItem(&li2);
+	swap(li1.iItem,li2.iItem);
+	m_pList->SetItem(&li1);
+	m_pList->SetItem(&li2);
+
+	// Subitem 2
+	li1.iSubItem=li2.iSubItem=2;
+	m_pList->GetItem(&li1);
+	m_pList->GetItem(&li2);
+	swap(li1.iItem,li2.iItem);
+	m_pList->SetItem(&li1);
+	m_pList->SetItem(&li2);
+
+	// Subitem 3
+	li1.iSubItem=li2.iSubItem=3;
+	m_pList->GetItem(&li1);
+	m_pList->GetItem(&li2);
+	swap(li1.iItem,li2.iItem);
+	m_pList->SetItem(&li1);
+	m_pList->SetItem(&li2);
+
+	m_pList->EnsureVisible(nOther,FALSE);
+
+	EnableControls();
+	m_pList->SetFocus();
+	return TRUE;
+}
+
+void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAdvanced()
+{
+	CAdvancedDialog edd(m_pDatabase->GetExcludedFiles(),
+		m_pDatabase->GetExcludedDirectories(),
+		IsDlgButtonChecked(IDC_CUSTOMDRIVES)?m_pList:NULL,
+		m_pDatabase->GetRootMaps());
 	
 	if (edd.DoModal(*this))
 	{
 		m_pDatabase->SetExcludedFiles(edd.m_sFiles);
 		m_pDatabase->SetExcludedDirectories(edd.m_aDirectories);
+		m_pDatabase->SetRootMapsPtr(alloccopy(edd.m_sRootMaps));
 	}
+}
+
+int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::FindPosInRootList(LPCWSTR szDrive)
+{
+	LPCWSTR pPtr=m_pDatabase->GetRoots();
+	for (int i=0;*pPtr!='\0';i++)
+	{
+		if (_wcsnicmp(pPtr,szDrive,2)==0 && 
+			(pPtr[2]=='\0' || (pPtr[2]=='\\' && pPtr[3]=='\0')))
+			return i;
+		while (*pPtr!='\0') 
+			pPtr++;
+		pPtr++;
+	}
+	return -1;
 }
 
 int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList(LPWSTR szDrive)
@@ -5389,8 +3379,33 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	DWORD nType=FileSystem::GetDriveType(szDrive);
 	//DebugFormatMessage(L"CSettingsProperties::CDatabaseSettingsPage::AddDriveToList(%s),type:%X",szDrive,nType);
 
+	// Find position for drive
 	LVITEMW li;
 	li.iItem=m_pList->GetItemCount();
+	int nPosInRootList=-1;
+	if (m_pDatabase->GetRoots()!=NULL)
+	{
+		// If custom is selected, order should be same
+		// as in the string given by GetRoots()
+		nPosInRootList=FindPosInRootList(szDrive);
+		if (nPosInRootList!=-1)
+		{
+			CStringW sText;
+				
+			for (int i=0;i<li.iItem;i++) // li.iItem contains number of items
+			{
+				m_pList->GetItemText(sText,i,1);
+				int nPos=FindPosInRootList(sText);
+
+				if (nPosInRootList<nPos)
+				{
+					li.iItem=i;
+					break;
+				}
+			}
+		}
+	}
+	
 
 	CStringW Temp;
 	WCHAR szLabel[20],szFileSystem[20]=L"";
@@ -5455,7 +3470,9 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 			li.iImage=fi.iIcon;
 		else
 			li.iImage=DEL_IMAGE;
+		
 	}
+
 	// Label
 	li.iSubItem=0;
 	li.mask=LVIF_TEXT|LVIF_IMAGE;
@@ -5479,28 +3496,15 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	li.iSubItem=3;
 	m_pList->SetItem(&li);
 	
-	if (m_pDatabase->GetRoots()==NULL) 
+	if (m_pDatabase->GetRoots()!=NULL) 
 	{
-		// Set if local drives	
-		if (nType==DRIVE_FIXED)
+		if (nPosInRootList!=-1)
 			m_pList->SetCheckState(li.iItem,TRUE);
 	}
-	else
-	{
-		LPCWSTR pPtr=m_pDatabase->GetRoots();
+	else if (nType==DRIVE_FIXED)
+		m_pList->SetCheckState(li.iItem,TRUE);
 
-		while (*pPtr!='\0')
-		{
-			DWORD dwLength=istrlenw(pPtr);
 
-			// Check if selected
-			if (strcasecmp(pPtr,szDrive)==0)
-				m_pList->SetCheckState(li.iItem,TRUE);
-
-			pPtr+=dwLength+1;
-		}
-	}
-	
 	return li.iItem;
 }
 
@@ -5589,26 +3593,20 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 	li.iSubItem=0;
 		
 	// Resolving icon,
+	SHFILEINFOW fi;
+	fi.szDisplayName[0]='\0';
+	li.pszText=fi.szDisplayName;
 	if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfUseDefaultIconForDirectories)
 	{
 		li.iImage=DIR_IMAGE;
-		li.pszText=const_cast<LPWSTR>(szPath+LastCharIndex(szPath,L'\\')+1);
+		li.pszText=const_cast<LPWSTR>(szPath)+LastCharIndex(szPath,L'\\')+1;	
 	}
 	else
 	{
-		SHFILEINFOW fi;
 		if (GetFileInfo(szPath,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
-		{
-			// Label
 			li.iImage=fi.iIcon;
-			li.pszText=fi.szDisplayName;
-		}
 		else
-		{
-			// Label
 			li.iImage=DEL_IMAGE;
-			li.pszText=const_cast<LPWSTR>(szwEmpty);
-		}
 	}
 	m_pList->InsertItem(&li);
 
@@ -5633,26 +3631,55 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 	return li.iItem;
 }
 
-BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::EnableRemoveButton()
+void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::EnableControls()
 {
+	if (IsDlgButtonChecked(IDC_CUSTOMDRIVES))
+	{
+		EnableDlgItem(IDC_FOLDERS,TRUE);
+		EnableDlgItem(IDC_ADDFOLDER,TRUE);
 	
-	// Check current item whether it is drive (drives cannot be removed)
-	LVITEM li;
-	li.iItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
-	if (li.iItem==-1)
-		return FALSE; // Any drive is not selected
+		BOOL bEnableRemove=FALSE;
+		// Check current item whether it is drive (drives cannot be removed)
+		LVITEM li;
+		li.iItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
+		if (li.iItem!=-1)
+		{
+			char szPath[_MAX_PATH];
+			li.mask=LVIF_TEXT;
+			li.iSubItem=1;
+			li.pszText=szPath;
+			li.cchTextMax=_MAX_PATH;
+			m_pList->GetItem(&li);
+		
+			// Is the path form of "X:"?
+			if (szPath[1]!=':' || szPath[2]!='\0')
+				bEnableRemove=TRUE;
+		}
 
-	char szPath[_MAX_PATH];
-	li.mask=LVIF_TEXT;
-	li.iSubItem=1;
-	li.pszText=szPath;
-	li.cchTextMax=_MAX_PATH;
-	m_pList->GetItem(&li);
+		EnableDlgItem(IDC_REMOVEFOLDER,bEnableRemove);
+
+		int nSelected=m_pList->GetNextItem(-1,LVNI_SELECTED);
+		if (nSelected!=-1)
+		{
+			EnableDlgItem(IDC_UP,m_pList->GetNextItem(nSelected,LVNI_ABOVE)!=-1);
+			EnableDlgItem(IDC_DOWN,m_pList->GetNextItem(nSelected,LVNI_BELOW)!=-1);
+		}
+		else
+		{
+			EnableDlgItem(IDC_UP,FALSE);
+			EnableDlgItem(IDC_DOWN,FALSE);
+		}
+	}
+	else
+	{
+		EnableDlgItem(IDC_FOLDERS,FALSE);
+		EnableDlgItem(IDC_ADDFOLDER,FALSE);
+		EnableDlgItem(IDC_UP,FALSE);
+		EnableDlgItem(IDC_DOWN,FALSE);
+	}
 	
-	// Is the path form of "X:"?
-	if (szPath[1]==':' && szPath[2]=='\0')
-		return FALSE;
-	return TRUE;
+
+
 }
 
 
@@ -5671,20 +3698,20 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToL
 
 	// Setting data
 	// Label
+	SHFILEINFOW fi;
+	fi.szDisplayName[0]='\0';
+	li.pszText=fi.szDisplayName;
+
 	if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfUseDefaultIconForDirectories)
 	{
 		li.iImage=DIR_IMAGE;
-		li.pszText=const_cast<LPWSTR>(szName);
+		li.pszText=const_cast<LPWSTR>(szName)+LastCharIndex(szName,L'\\')+1;	
 	}
 	else
 	{
 		// Resolving icon,
-		SHFILEINFOW fi;
 		if (GetFileInfo(szName,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
-		{
 			li.iImage=fi.iIcon;
-			li.pszText=fi.szDisplayName;
-		}
 		else
 			return -1;
 	}
@@ -5713,7 +3740,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToL
 /////////////////////////////////////////////////
 // CDatabasesSettingsPage::CDatabaseDialog::CExcludedDirectoryDialog
 
-BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::OnInitDialog(HWND hwndFocus)
+BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
 	CListBox List(GetDlgItem(IDC_DIRECTORIES));
@@ -5724,34 +3751,344 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	for (int i=0;i<m_aDirectories.GetSize();i++)
 		List.AddString(m_aDirectories[i]);
 	
-	EnableControls();
+	
+	// Initialize drive list
+	m_pDriveList=new CListCtrl(GetDlgItem(IDC_FOLDERS));
+	CLocateDlg::SetSystemImagelists(m_pDriveList);
+	m_pDriveList->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT,
+		LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT);
+	if (IsUnicodeSystem())
+		m_pDriveList->SetUnicodeFormat(TRUE);
+	m_pDriveList->InsertColumn(0,ID2W(IDS_VOLUMELABEL),LVCFMT_LEFT,95,0);
+	m_pDriveList->InsertColumn(1,ID2W(IDS_VOLUMEPATH),LVCFMT_LEFT,105,1);
+	m_pDriveList->InsertColumn(2,ID2W(IDS_VOLUMEINDATABASE),LVCFMT_LEFT,115,1);
+	m_pDriveList->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Database Advanced Dialog List Widths");
+	
+	// Copy items to list from m_pCopyItemsFrom list
+	LVITEMW li;
+	WCHAR szBuffer[MAX_PATH+100];
+	
+	if (m_pCopyItemsFrom==NULL)
+	{
+		// Local drives
+		li.iItem=0;
+		
+		// Inserting local drives to drive list
+		DWORD nLength=GetLogicalDriveStrings(0,NULL)+1;
+		if (nLength<2)
+			return FALSE;
+
+		WCHAR* szDrives=new WCHAR[nLength+1];
+		FileSystem::GetLogicalDriveStrings(nLength,szDrives);
+		for (LPWSTR szDrive=szDrives;szDrive[0]!=L'\0';szDrive+=4)
+		{
+			if (FileSystem::GetDriveType(szDrive)!=DRIVE_FIXED)
+				continue;
+
+
+			DWORD dwTemp;
+			UINT nOldMode=SetErrorMode(SEM_FAILCRITICALERRORS);
+	
+			if (!FileSystem::GetVolumeInformation(szDrive,szBuffer,MAX_PATH+100,&dwTemp,&dwTemp,&dwTemp,NULL,0))
+				szBuffer[0]='\0';
+			
+			SetErrorMode(nOldMode);
+	
+			if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfUseDefaultIconForDirectories)
+				li.iImage=DIR_IMAGE;
+			else
+			{
+				SHFILEINFOW fi;
+				if (GetFileInfo(szDrive,0,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+					li.iImage=fi.iIcon;
+				else
+					li.iImage=DEL_IMAGE;
+			}
+			
+			// Label
+			li.iSubItem=0;
+			li.mask=LVIF_TEXT|LVIF_IMAGE;
+			li.pszText=szBuffer;
+			m_pDriveList->InsertItem(&li);
+
+			// Path
+			li.mask=LVIF_TEXT;
+			li.iSubItem=1;
+			szDrive[2]=L'\0';
+			li.pszText=szDrive;
+			m_pDriveList->SetItem(&li);
+
+		
+
+			li.iItem++;
+		}
+		delete[] szDrives;
+	}
+	else
+	{
+		int iNewItem=0;
+		li.pszText=szBuffer;
+		li.cchTextMax=MAX_PATH+100;
+	
+		int iItem=m_pCopyItemsFrom->GetNextItem(-1,LVNI_ALL);
+		while (iItem!=-1)
+		{
+			if (m_pCopyItemsFrom->GetCheckState(iItem))
+			{
+				// Label
+				li.mask=LVIF_TEXT|LVIF_IMAGE;
+				li.iSubItem=0;
+				li.iItem=iItem;
+				m_pCopyItemsFrom->GetItem(&li);
+				li.iItem=iNewItem;
+				m_pDriveList->InsertItem(&li);
+				
+				// Path
+				li.mask=LVIF_TEXT;
+				li.iSubItem=1;
+				li.iItem=iItem;
+				m_pCopyItemsFrom->GetItem(&li);
+				li.iItem=iNewItem;
+				m_pDriveList->SetItem(&li);
+
+		
+				iNewItem++;
+			}
+
+			iItem=m_pCopyItemsFrom->GetNextItem(iItem,LVNI_ALL);
+		}
+	}
+
+	// Check active maps
+	li.mask=LVIF_TEXT;
+	li.pszText=szBuffer;
+	li.cchTextMax=MAX_PATH+100;
+	
+	LPCWSTR pMap=m_sRootMaps;
+	while (*pMap!='\0')
+	{
+		// Get length of source
+		int nLen=0;
+		for (;pMap[nLen]!=L'>' && pMap[nLen]!=L'|' && pMap[nLen]!='\0';nLen++);
+		if (pMap[nLen]=='\0')
+			break;
+
+		// No target?
+		if (pMap[nLen]==L'|')
+		{
+			pMap+=nLen+1;
+			continue;
+		}
+
+		li.iSubItem=1;
+		li.iItem=m_pDriveList->GetNextItem(-1,LVNI_ALL);
+		while (li.iItem!=-1)
+		{
+			m_pDriveList->GetItem(&li);
+
+			if (_wcsnicmp(pMap,szBuffer,nLen)==0)		
+			{
+				if (szBuffer[nLen]=='\0')
+					break;
+			}
+			li.iItem=m_pDriveList->GetNextItem(li.iItem,LVNI_ALL);
+		}
+
+		if (li.iItem!=-1)
+		{
+			// Change pMap to point target
+			pMap+=nLen+1;
+			for (nLen=0;pMap[nLen]!='|' && pMap[nLen]!='\0';nLen++);
+		
+			// Set target to list
+			MemCopyW(szBuffer,pMap,nLen);
+			szBuffer[nLen]='\0';
+			li.iSubItem=2;
+			m_pDriveList->SetItem(&li);
+		}
+		else
+		{
+			// Insert new item to list
+			li.iItem=m_pDriveList->GetItemCount();
+
+			// Copy source to buffer
+			MemCopyW(szBuffer,pMap,nLen);
+			szBuffer[nLen]='\0';
+			
+			SHFILEINFOW fi;
+			fi.szDisplayName[0]='\0';
+			li.pszText=fi.szDisplayName;
+			if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfUseDefaultIconForDirectories)
+			{
+				li.iImage=DIR_IMAGE;
+				li.pszText=szBuffer+LastCharIndex(szBuffer,L'\\')+1;
+			}
+			else
+			{
+				if (GetFileInfo(szBuffer,0,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX|SHGFI_DISPLAYNAME))
+					li.iImage=fi.iIcon;
+				else
+					li.iImage=DEL_IMAGE;
+			}
+	
+
+			// Label
+			li.iSubItem=0;
+			li.mask=LVIF_TEXT|LVIF_IMAGE;
+			m_pDriveList->InsertItem(&li);
+
+			// Path
+			li.mask=LVIF_TEXT;
+			li.iSubItem=1;
+			li.pszText=szBuffer;
+			m_pDriveList->SetItem(&li);
+
+			// Change pMap to point target
+			pMap+=nLen+1;
+			for (nLen=0;pMap[nLen]!='|' && pMap[nLen]!='\0';nLen++);
+			
+			// Set target to list
+			MemCopyW(szBuffer,pMap,nLen);
+			szBuffer[nLen]='\0';
+			li.iSubItem=2;
+			m_pDriveList->SetItem(&li);
+		}
+
+		pMap+=nLen+1;				
+	}
+
+	// Insert (new map) item
+	li.mask=LVIF_TEXT|LVIF_IMAGE;
+	LoadString(IDS_CLKFORNEWMAP,szBuffer,MAX_PATH+100);
+	li.pszText=szBuffer;
+	li.iItem=m_pDriveList->GetItemCount();
+	li.iSubItem=0;
+	li.iImage=-1;
+	m_pDriveList->InsertItem(&li);
+
+	EnableControlsExclude();
+	EnableControlsAndSetMaps();
 	SetFocus(IDC_EXCLUDEFILES);
-
-
 	return FALSE;
 }
 
-BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
+BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnNotify(int idCtrl,LPNMHDR pnmh)
+{
+	switch (idCtrl)
+	{
+	case IDC_FOLDERS:
+		switch (((NMLISTVIEW*)pnmh)->hdr.code)
+		{
+		case LVN_ITEMCHANGED:
+			if ((((NMLISTVIEW*)pnmh)->uNewState&LVIS_SELECTED)!=
+				(((NMLISTVIEW*)pnmh)->uOldState&LVIS_SELECTED))
+				EnableControlsAndSetMaps();
+			break;	
+		case LVN_KEYDOWN:
+			if (((LPNMLVKEYDOWN)pnmh)->wVKey!=VK_SPACE)
+				break;
+			// Continue
+		case NM_CLICK:
+			{
+				WCHAR szBuffer[MAX_PATH+100];
+				LVITEMW li;
+				li.mask=LVIF_TEXT;
+				li.iSubItem=1;
+				li.pszText=szBuffer;
+				li.cchTextMax=MAX_PATH+100;
+				li.iItem=m_pDriveList->GetNextItem(-1,LVNI_SELECTED);
+				if (li.iItem==-1)
+					break;
+
+				m_pDriveList->GetItem(&li);
+
+				if (szBuffer[0]!='\0')
+				{
+					// Not (new item) 
+					break;
+				}
+
+				// (new item) selected
+				CInputDialog ib(IDD_INPUTBOX);
+				ib.SetText(IDS_ENTERNEWDIRECTORY);
+				ib.SetTitle(IDS_NEWMAP);
+				ib.SetOKButtonText(IDS_OK);
+				ib.SetCancelButtonText(IDS_CANCEL);
+				if (ib.DoModal(*this))
+				{
+					ib.GetInputText(szBuffer,MAX_PATH+100);
+
+					SHFILEINFOW fi;
+					fi.szDisplayName[0]='\0';
+					li.pszText=fi.szDisplayName;
+					if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfUseDefaultIconForDirectories)
+					{
+						li.pszText=szBuffer+LastCharIndex(szBuffer,L'\\')+1;	
+						li.iImage=DIR_IMAGE;
+					}
+					else
+					{
+						if (GetFileInfo(szBuffer,0,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX|SHGFI_DISPLAYNAME))
+							li.iImage=fi.iIcon;
+						else
+							li.iImage=DEL_IMAGE;
+					}
+					
+					// Label
+					li.iSubItem=0;
+					li.mask=LVIF_TEXT|LVIF_IMAGE;
+					m_pDriveList->SetItem(&li);
+
+					// Path
+					li.mask=LVIF_TEXT;
+					li.iSubItem=1;
+					li.pszText=szBuffer;
+					m_pDriveList->SetItem(&li);
+					
+					// Insert (new map) item
+					li.mask=LVIF_TEXT|LVIF_IMAGE|LVIF_PARAM;
+					LoadString(IDS_CLKFORNEWMAP,szBuffer,MAX_PATH+100);
+					li.iItem=m_pDriveList->GetItemCount();
+					li.iSubItem=0;
+					li.iImage=-1;
+					li.lParam=-1;
+					m_pDriveList->InsertItem(&li);
+
+					m_pDriveList->EnsureVisible(((LPNMITEMACTIVATE)pnmh)->iItem,FALSE);
+
+					EnableControlsAndSetMaps();
+				}	
+				break;
+			}
+		}
+		break;
+	}
+	return CDialog::OnNotify(idCtrl,pnmh);
+}
+
+BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
 	CDialog::OnCommand(wID,wNotifyCode,hControl);
 	switch(wID)
 	{
 	case IDOK:
-		if (m_bDirectoryFieldChanged && GetFocus()==GetDlgItem(IDC_DIRECTORYNAME))
-		{
-			OnAddFolder(TRUE);
-			SetFocus(IDC_DIRECTORYNAME);
-		}
-		else
-			OnOK();
+		OnOK();
 		break;
 	case IDC_DIRECTORYNAME:
 		if (wNotifyCode==EN_SETFOCUS)
+		{
 			::SendMessage(hControl,EM_SETSEL,0,MAKELPARAM(0,-1));
+			
+			if (::SendMessage(hControl,WM_GETTEXTLENGTH,0,0)>0)
+				SetDefID(IDC_ADDFOLDER);
+		}
+		else if (wNotifyCode==EN_KILLFOCUS)
+			SetDefID(IDC_OK);
 		else if (wNotifyCode==EN_CHANGE)
 		{
-			EnableControls();
-			m_bDirectoryFieldChanged=TRUE;
+			EnableControlsExclude();
+			SetDefID(::SendMessage(hControl,WM_GETTEXTLENGTH,0,0)>0?
+				IDC_ADDFOLDER:IDC_OK);
 		}
 		break;
 	case IDC_OK:
@@ -5772,26 +4109,83 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 		break;
 	case IDC_DIRECTORIES:
 		if (wNotifyCode==LBN_SELCHANGE)
-			EnableControls();
-break;
+			EnableControlsExclude();
+	case IDC_PATHINDATABASE:
+		if (wNotifyCode==EN_SETFOCUS)
+		{
+			::SendMessage(hControl,EM_SETSEL,0,MAKELPARAM(0,-1));
+			SetDefID(IDC_SET);
+		}
+		else if (wNotifyCode==EN_KILLFOCUS)
+			SetDefID(IDC_OK);
+		else if (wNotifyCode==EN_CHANGE)
+			EnableControlsExclude();
+		break;
+	case IDC_SET:
+		OnSet();
+		break;
 	}
 	return FALSE;
 }
 
-BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::OnClose()
+void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnDestroy()
+{
+	if (m_pDriveList!=NULL)
+	{
+		m_pDriveList->SaveColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Database Advanced Dialog List Widths");
+		delete m_pDriveList;
+		m_pDriveList=NULL;
+	}
+	CDialog::OnDestroy();
+}
+
+
+BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnClose()
 {
 	CDialog::OnClose();
 	EndDialog(0);
 	return 0;
 }
 
-void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::EnableControls()
+void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::EnableControlsExclude()
 {
 	EnableDlgItem(IDC_REMOVEFOLDER,SendDlgItemMessage(IDC_DIRECTORIES,LB_GETSEL)!=LB_ERR?TRUE:FALSE);
 	EnableDlgItem(IDC_ADDFOLDER,GetDlgItemTextLength(IDC_DIRECTORYNAME)>0);
 }
 
-void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::OnOK()
+void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::EnableControlsAndSetMaps()
+{
+	int nSelected=m_pDriveList->GetNextItem(-1,LVNI_SELECTED);
+	if (nSelected!=-1)
+	{
+		// Check whether selection is (new item)
+		WCHAR szBuffer[10]=L"";
+		LVITEMW li;
+		li.mask=LVIF_TEXT;
+		li.iSubItem=1;
+		li.pszText=szBuffer;
+		li.cchTextMax=10;
+		li.iItem=nSelected;
+		m_pDriveList->GetItem(&li);
+		if (szBuffer[0]=='\0')
+			nSelected=-1;
+	}		
+
+	EnableDlgItem(IDC_PATHINDATABASE,nSelected!=-1);
+	EnableDlgItem(IDC_PATHINDATABASELABEL,nSelected!=-1);
+	EnableDlgItem(IDC_SET,nSelected!=-1);
+
+	if (nSelected!=-1)
+	{
+		CStringW sPath;
+		m_pDriveList->GetItemText(sPath,nSelected,2);
+		SetDlgItemText(IDC_PATHINDATABASE,sPath);
+	}
+	else
+		SetDlgItemText(IDC_PATHINDATABASE,"");
+}
+
+void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnOK()
 {
 	EndDialog(1);
 
@@ -5809,12 +4203,49 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 		m_aDirectories.Add(pText);
 	}
 
-}
-		
-BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::OnAddFolder(BOOL bShowErrorMessageIfExists)
-{
-	m_bDirectoryFieldChanged=FALSE;
+	m_sRootMaps.Empty();
+	int nItem=m_pDriveList->GetNextItem(-1,LVNI_ALL);
+	while (nItem!=-1)
+	{
+		CStringW sPathInDb;
+		m_pDriveList->GetItemText(sPathInDb,nItem,2);
+		if (!sPathInDb.IsEmpty())
+		{
+			CStringW sDrive;
+			m_pDriveList->GetItemText(sDrive,nItem,1);
+			
+			if (!m_sRootMaps.IsEmpty())
+				m_sRootMaps << L'|';
+			m_sRootMaps << sDrive << L'>' << sPathInDb;
+		}
 
+		nItem=m_pDriveList->GetNextItem(nItem,LVNI_ALL);
+	}
+}
+
+void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnSet()
+{
+	CStringW sPath;
+	GetDlgItemText(IDC_PATHINDATABASE,sPath);
+
+	if (sPath.FindOneOf(L">|")!=-1)
+	{
+		ShowErrorMessage(IDS_INVALIDCHARACTERS,IDS_ERROR);
+		SetFocus(IDC_PATHINDATABASE);
+		return;
+	}
+
+	int nItem=m_pDriveList->GetNextItem(-1,LVNI_SELECTED);
+	if (nItem!=-1)
+	{
+		m_pDriveList->SetItemText(nItem,2,sPath);
+	}
+
+	SetDefID(IDC_OK);
+}
+
+BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnAddFolder(BOOL bShowErrorMessageIfExists)
+{
 	CStringW sDirectoryPre,sDirectory;
 	CEdit DirectoryName(GetDlgItem(IDC_DIRECTORYNAME));
 	CListBox Directories(GetDlgItem(IDC_DIRECTORIES));
@@ -5870,11 +4301,13 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 	Directories.AddString(sDirectory);
 
 	SetFocus(IDC_DIRECTORIES);
-	EnableControls();
+	EnableControlsExclude();
+	
+	SetDefID(IDC_OK);
 	return FALSE;
 }
 
-void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::OnRemove()
+void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnRemove()
 {
 	int nSel=(int)SendDlgItemMessage(IDC_DIRECTORIES,LB_GETCURSEL);
 	if (nSel==LB_ERR)
@@ -5882,10 +4315,10 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirec
 
 	SendDlgItemMessage(IDC_DIRECTORIES,LB_DELETESTRING,nSel);
 
-	EnableControls();
+	EnableControlsExclude();
 }
 
-void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CExcludeDirectoryDialog::OnBrowse()
+void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnBrowse()
 {
 	CWaitCursor;
 
@@ -6582,7 +5015,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnDatabas
 			LPWSTR pPtr=m_pSchedule->m_pDatabases;
 			for (i=0;i<aDatabases.GetSize();i++)
 			{
-				LONG_PTR iStrlen=istrlenw(aDatabases[i]->GetName())+1;
+				int iStrlen=istrlenw(aDatabases[i]->GetName())+1;
 				MemCopyW(pPtr,aDatabases[i]->GetName(),iStrlen);
 				pPtr+=iStrlen;
 			}

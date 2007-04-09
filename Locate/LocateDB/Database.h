@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.2110                 */
+   database updater v3.0.7.3250                 */
 
 #if !defined(DATABASE_H)
 #define DATABASE_H
@@ -56,6 +56,7 @@ public:
 	LPCWSTR GetCreator() const;
 	LPCWSTR GetDescription() const;
 	LPCWSTR GetRoots() const;
+	LPCWSTR GetRootMaps() const;
 	void GetRoots(CArray<LPWSTR>& aRoots) const;
 	WORD GetFlags() const;
 	WORD GetThreadId() const;
@@ -70,6 +71,7 @@ public:
 	void SetRootsPtr(LPWSTR szRoots);
 	void SetRoots(CArray<LPWSTR>& aRoots);
 	void SetRoots(LPWSTR* pRoots,int nCount);
+	void SetRootMapsPtr(LPWSTR szRootMaps);
 	void AddRoot(LPCWSTR pRoot);
 	void AddLocalRoots();
 
@@ -102,6 +104,8 @@ public:
 	BOOL IsFileNamesOEM() const;
 
 	BOOL DoDatabaseFileExist() const;
+
+	
 
 private:
 	BOOL SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey);
@@ -147,6 +151,15 @@ public:
 
 	static void GetLogicalDrives(CArrayFAP<LPWSTR>* paRoots);
 
+	
+	LPCWSTR FindRootMap(LPCWSTR szRoot,int& iRetLen) const;
+	LPCWSTR FindActualPathForMap(LPCWSTR szMap,int& iRetLen,BOOL& bFree) const;
+	static LPCWSTR FindRootMap(LPCWSTR szRootMaps,LPCWSTR szRoot,int& iRetLen);
+	static LPCWSTR FindActualPathForMap(LPCWSTR szRootMaps,LPCWSTR szMap,int& iRetLen,BOOL& bFree);
+	
+
+
+
 private:
 	LPWSTR m_szName;
 	WORD m_wFlags;
@@ -157,6 +170,7 @@ private:
 	LPWSTR m_szDescription;
 
 	LPWSTR m_szRoots; // Roots included, NULL means all local
+	LPWSTR m_szRootMaps; // string is of the form drive>path_in_db|drive>path_in_db|...
 	
 	// Archive type, at that moment only file is supported
 	// in future, possiple types may be tcp/ip stream, SQL, ...
@@ -173,7 +187,7 @@ inline CDatabase::CDatabase()
 // Default values:
 :	m_szCreator(NULL),m_szDescription(NULL),m_szRoots(NULL),
 	m_wFlags(flagEnabled|flagGlobalUpdate),m_wThread(0),m_szArchiveName(NULL),
-	m_ArchiveType(archiveFile),m_wID(0),m_szExcludedFiles(NULL)
+	m_ArchiveType(archiveFile),m_wID(0),m_szExcludedFiles(NULL),m_szRootMaps(NULL)
 {
 	if (!IsUnicodeSystem())
 		m_wFlags|=flagAnsiCharset;
@@ -193,6 +207,8 @@ inline CDatabase::~CDatabase()
 		delete[] m_szRoots;
 	if (m_szExcludedFiles!=NULL)
 		delete[] m_szExcludedFiles;
+	if (m_szRootMaps!=NULL)
+		delete[] m_szRootMaps;
 }
 
 inline LPCWSTR CDatabase::GetName() const 
@@ -203,6 +219,11 @@ inline LPCWSTR CDatabase::GetName() const
 inline LPCWSTR CDatabase::GetRoots() const 
 { 
 	return m_szRoots; 
+}
+
+inline LPCWSTR CDatabase::GetRootMaps() const 
+{ 
+	return m_szRootMaps; 
 }
 
 inline LPCWSTR CDatabase::GetCreator() const 
@@ -329,6 +350,7 @@ inline void CDatabase::SetArchiveName(LPCWSTR szArchiveName)
 {
 	if (m_szArchiveName!=NULL)
 		delete[] m_szArchiveName;
+	ASSERT_VALID(szArchiveName);
 	m_szArchiveName=alloccopy(szArchiveName);
 }
 
@@ -336,7 +358,10 @@ inline void CDatabase::SetArchiveNamePtr(LPWSTR szArchiveName)
 {
 	if (m_szArchiveName!=NULL)
 		delete[] m_szArchiveName;
-	m_szArchiveName=szArchiveName;
+	if (szArchiveName!=NULL)
+		m_szArchiveName=szArchiveName;
+	else
+		m_szArchiveName=allocemptyW();
 }
 
 inline void CDatabase::SetArchiveType(ArchiveType nType)
@@ -360,6 +385,13 @@ inline void CDatabase::SetRootsPtr(LPWSTR szRoots)
 	if (m_szRoots!=NULL)
 		delete[] m_szRoots;
 	m_szRoots=szRoots;
+}
+
+inline void CDatabase::SetRootMapsPtr(LPWSTR szRootMaps)
+{
+	if (m_szRootMaps!=NULL)
+		delete[] m_szRootMaps;
+	m_szRootMaps=szRootMaps;
 }
 
 inline void CDatabase::SetRoots(CArray<LPWSTR>& aRoots)
@@ -392,6 +424,7 @@ inline BOOL CDatabase::DoDatabaseFileExist() const
 	switch (m_ArchiveType)
 	{
 	case archiveFile:
+		ASSERT_VALID(m_szArchiveName);
 		return FileSystem::IsFile(m_szArchiveName);
 	}
 	return FALSE;
@@ -443,5 +476,108 @@ inline BOOL CDatabase::AddExcludedDirectory(LPCWSTR szDirectory)
 	m_aExcludedDirectories.Add(alloccopy(szDirectory));
 	return TRUE;
 }
+
+
+inline LPCWSTR CDatabase::FindRootMap(LPCWSTR szRoot,int& iRetLen) const
+{
+	return FindRootMap(m_szRootMaps,szRoot,iRetLen);
+}
+
+inline LPCWSTR CDatabase::FindActualPathForMap(LPCWSTR szMap,int& iRetLen,BOOL& bFree) const
+{
+	return FindActualPathForMap(m_szRootMaps,szMap,iRetLen,bFree);
+}
+
+	
+inline LPCWSTR CDatabase::FindRootMap(LPCWSTR szRootMaps,LPCWSTR szRoot,int& iRetLen)
+{
+	if (szRootMaps==NULL)
+		return NULL;
+
+	for (;;)
+	{
+		// Get Length
+		int nLen=0;
+		for (;szRootMaps[nLen]!=L'>' && szRootMaps[nLen]!=L'|';nLen++)
+		{
+			if (szRootMaps[nLen]=='\0')
+				return NULL;
+		}
+
+		if (szRootMaps[nLen]==L'|')
+		{
+			szRootMaps+=nLen+1;
+			continue;
+		}
+
+		BOOL bFound=_wcsnicmp(szRootMaps,szRoot,nLen)==0;
+		if (bFound)		
+			bFound=szRoot[nLen]=='\0';
+
+		szRootMaps+=nLen+1;
+
+		for (iRetLen=0;szRootMaps[iRetLen]!='|' && szRootMaps[iRetLen]!='\0';iRetLen++);
+		
+		if (bFound)
+			return szRootMaps;
+		
+		if (szRootMaps[iRetLen]=='\0')
+			return NULL;
+
+		szRootMaps+=iRetLen+1;				
+	}
+}
+
+inline LPCWSTR CDatabase::FindActualPathForMap(LPCWSTR szRootMaps,LPCWSTR szMap,int& iRetLen,BOOL& bFree)
+{
+	bFree=FALSE;
+
+	if (szRootMaps==NULL)
+		return NULL;
+
+	for (;;)
+	{
+		// Get Length
+		for (iRetLen=0;szRootMaps[iRetLen]!=L'>' && szRootMaps[iRetLen]!=L'|';iRetLen++)
+		{
+			if (szRootMaps[iRetLen]=='\0')
+				return NULL;
+		}
+
+		if (szRootMaps[iRetLen]==L'|')
+		{
+			szRootMaps+=iRetLen+1;
+			continue;
+		}
+
+		LPCWSTR pActualpath=szRootMaps;
+		szRootMaps+=iRetLen+1;
+
+		int nLen=0;
+		for (;szRootMaps[nLen]!='|' && szRootMaps[nLen]!='\0';nLen++);
+
+		if (_wcsnicmp(szRootMaps,szMap,nLen)==0)
+		{
+			if (szMap[nLen]=='\0')
+				return pActualpath;
+
+			szMap+=nLen;
+			int nMapLen=istrlenw(szMap);
+			LPWSTR pRet=new WCHAR[iRetLen+nMapLen+1];
+			MemCopyW(pRet,pActualpath,iRetLen);
+			MemCopyW(pRet+iRetLen,szMap,nMapLen+1);
+			bFree=TRUE;
+			iRetLen+=nMapLen;
+			return pRet;
+		}
+
+		if (szRootMaps[nLen]=='\0')
+			return NULL;
+
+		szRootMaps+=nLen+1;				
+	}
+}
+
+
 
 #endif

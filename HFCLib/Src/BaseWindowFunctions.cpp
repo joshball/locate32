@@ -99,6 +99,7 @@ CWinApp::~CWinApp()
 	DeleteCriticalSection(&cHandleCriticalSection);
 #endif
 
+	
 	StopDebugLogging();
 }
 

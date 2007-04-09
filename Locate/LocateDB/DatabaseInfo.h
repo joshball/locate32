@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.2110                 */
+   database updater v3.0.7.3250                 */
 
 #if !defined(DATABASEINFO_H)
 #define DATABASEINFO_H
@@ -38,13 +38,14 @@ public:
 		DWORD dwNumberOfFiles;
 		DWORD dwNumberOfDirectories;
 		RootType rtType;
+		CStringW sRootMap;
 	};
 	
 protected:
 	CDatabaseInfo();
 
 	BOOL GetInfo(const CDatabase* pDatabase);
-	BOOL GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchivePath);
+	BOOL GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchivePath,LPCWSTR szRootMaps);
 
 public:
 	BYTE bVersion;
@@ -97,7 +98,7 @@ inline CDatabaseInfo* CDatabaseInfo::GetFromFile(LPCWSTR szArchivePath)
 {
 	CDatabaseInfo* pRet=new CDatabaseInfo;
 	
-	if (!pRet->GetInfo(CDatabase::archiveFile,szArchivePath))
+	if (!pRet->GetInfo(CDatabase::archiveFile,szArchivePath,NULL))
 	{
 		delete pRet;
 		return NULL;
@@ -107,7 +108,7 @@ inline CDatabaseInfo* CDatabaseInfo::GetFromFile(LPCWSTR szArchivePath)
 
 inline BOOL CDatabaseInfo::GetInfo(const CDatabase* pDatabase)
 {
-	return GetInfo(pDatabase->GetArchiveType(),pDatabase->GetArchiveName());
+	return GetInfo(pDatabase->GetArchiveType(),pDatabase->GetArchiveName(),pDatabase->GetRootMaps());
 } 
 
 

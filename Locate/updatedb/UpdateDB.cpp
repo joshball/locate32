@@ -1,12 +1,12 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   Updatedb.exe v3.0.7.3240 */
+   Updatedb.exe v3.0.7.4090 */
 
 #include <HFCLib.h>
 #include "../locatedb/locatedb.h"
 #include "../lan_resources.h"
 #include "../common/common.h"
 
-LPCSTR szVersionStr="updtdb32 3.0 build 7.3240";
+LPCSTR szVersionStr="updtdb32 3.0 build 7.4090";
 
 
 
@@ -215,36 +215,6 @@ BOOL CALLBACK UpdateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ue
 	}
 	return TRUE;
 }
-
-/*
-void GetFromDB(LPCSTR szOwnName,CString* pDatabaseFile,CArrayFAP<LPSTR>* aRoots,CString* pCreator,CString* pDescription)
-{
-   	CString Temp;
-
-#ifdef WIN32
-   	CRegKey RegKey;
-	CDatabaseUpdater::GetDBSettings(aRoots,pCreator,pDescription,pDatabaseFile);
-#else
-	// Retrieving ini file name
-	char szIniFile[_MAX_PATH]; 
-	int i;
-	dstrlen(szOwnName,i);
-	for (i--;i>=0 && szOwnName[i]!='\\' && szOwnName[i]!='/' ;i--);
-	sMemCopy(szIniFile,szOwnName,i);
-	sMemCopy(szIniFile+i,"\\locate.ini",12);
-	CDatabaseUpdater::GetDBSettings(szIniFile,aRoots,pCreator,pDescription,pDatabaseFile);
-#endif
-	
-	if (pDatabaseFile!=NULL)
-    {
-        if (!CFile::IsValidFileName(*pDatabaseFile))
-		{
-    		pDatabaseFile->Copy(szOwnName,LastCharIndex(szOwnName,'\\')+1);
-			*pDatabaseFile<<"Files.dbs";
-    	}
-    }
-}
-*/
 
 
 int wmain (int argc,wchar_t ** argv)

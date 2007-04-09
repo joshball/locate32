@@ -1178,7 +1178,7 @@ BYTE* dataparser2(LPCSTR pStr,DWORD* pdwDataLength)
 				}
 				else
 				{	
-					MemCopyAtoW(pDataPtr,pStr,1);
+					_MemCopyAtoW(pDataPtr,pStr,1);
 					pDataPtr+=2;
 				}
 			}

@@ -5,7 +5,7 @@
 #include "Locatedb.h"
 
 
-BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchivePath)
+BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchivePath,LPCWSTR szRootMaps)
 {
 	sCreator.Empty();
 	sDescription.Empty();
@@ -112,6 +112,7 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 				if (cCharset==Unicode)
 				{
 					dbFile->Read(pRoot->sPath);
+	
 					dbFile->Read(pRoot->sVolumeName);
 
 					dbFile->Read(pRoot->dwVolumeSerial);
@@ -147,7 +148,20 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 				// Reading number of files and directories
 				dbFile->Read(pRoot->dwNumberOfFiles);
 				dbFile->Read(pRoot->dwNumberOfDirectories);
-					
+				
+
+				// Resolve map
+				int nActualPathLen;
+				BOOL bFree;
+				LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
+					szRootMaps,pRoot->sPath,nActualPathLen,bFree);
+				if (pActualPath!=NULL)
+				{
+					pRoot->sRootMap.Copy(pActualPath,nActualPathLen);
+					if (bFree)
+						delete[] pActualPath;
+				}
+
 				aRootFolders.Add(pRoot);
 
 				
@@ -307,8 +321,19 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 				dbFile->Read(bPathLen);
 				dbFile->Read(Path);
 					
-				
-				aRoots.Add(alloccopy(Path,Path.GetLength()));
+				// Resolve map
+				int nActualPathLen;
+				BOOL bFree;
+				LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
+					pDatabase->GetRootMaps(),Path,nActualPathLen,bFree);
+				if (pActualPath!=NULL)
+				{
+					aRoots.Add(alloccopy(pActualPath,nActualPathLen));
+					if (bFree)
+						delete[] pActualPath;
+				}
+				else
+					aRoots.Add(alloccopy(Path,Path.GetLength()));
 							
 				dbFile->Seek(dwBlockSize-1-DWORD((Path.GetLength()+1)*2),
 					CFile::current);
@@ -328,7 +353,20 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 				dbFile->Read(bPathLen);
 				dbFile->Read(Path);
 
-				aRoots.Add(alloccopyAtoW(Path,Path.GetLength()));
+				// Resolve map
+				int nActualPathLen;
+				BOOL bFree;
+				LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
+					pDatabase->GetRootMaps(),A2W(Path),nActualPathLen,bFree);
+				if (pActualPath!=NULL)
+				{
+					aRoots.Add(alloccopy(pActualPath,nActualPathLen));
+					if (bFree)
+						delete[] pActualPath;
+				}
+				else
+					aRoots.Add(alloccopyAtoW(Path,Path.GetLength()));
+				
 							
 				dbFile->Seek(dwBlockSize-1-DWORD((Path.GetLength()+1)),
 					CFile::current);

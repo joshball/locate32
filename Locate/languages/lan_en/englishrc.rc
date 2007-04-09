@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,7,3240
- PRODUCTVERSION 3,0,7,3240
+ FILEVERSION 3,0,7,4090
+ PRODUCTVERSION 3,0,7,4090
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 build 7.3240"
+            VALUE "FileVersion", "3.0 build 7.4090"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2007 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 build 7.3240"
+            VALUE "ProductVersion", "3.0 build 7.4090"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -490,11 +490,11 @@ BEGIN
     GROUPBOX        "Database settings:",IDC_STATIC,2,0,270,88
     CONTROL         "&Enable",IDC_ENABLE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,11,58,11
+    CONTROL         "Update &Globally",IDC_GLOBALUPDATE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,76,11,88,11
     RTEXT           "T&hread:",IDC_STATIC,182,11,47,11
     COMBOBOX        IDC_USEDTHREAD,233,9,32,52,CBS_DROPDOWNLIST |  
                     WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Update &Globally",IDC_GLOBALUPDATE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,76,11,88,11
     LTEXT           "&Name:",IDC_STATIC,7,27,44,9
     EDITTEXT        IDC_NAME,50,25,148,13,ES_AUTOHSCROLL
     LTEXT           "&File:",IDC_STATIC,7,45,34,9
@@ -517,39 +517,47 @@ BEGIN
                     BS_AUTORADIOBUTTON,7,200,105,10
     CONTROL         "&Custom",IDC_CUSTOMDRIVES,"Button",BS_AUTORADIOBUTTON,
                     129,200,70,10
-    LTEXT           "Drives and Directories:",8,8,230,106,8
-    PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,129,227,65,13
-    PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,199,227,65,13
     CONTROL         "&Stop if root unavailable",IDC_STOPIFROOTUNAVAILABLE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,213,150,10
-    PUSHBUTTON      "&Exclude Files/Directories",IDC_EXCLUDEDIRECTORIES,159,211,105,
+    PUSHBUTTON      "&Advanced",IDC_ADVANCED,179,211,85,
                     13
-    CONTROL         "",IDC_FOLDERS,"SysListView32",LVS_REPORT | 
+    LTEXT           "Drives and Directories:",8,8,230,96,8
+    PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,104,227,55,13
+    PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,161,227,45,13
+    PUSHBUTTON      "&Up",IDC_UP,209,227,28,13
+    PUSHBUTTON      "&Down",IDC_DOWN,237,227,28,13
+    CONTROL         "",IDC_FOLDERS,"SysListView32",LVS_REPORT | WS_TABSTOP |
                     LVS_SINGLESEL | LVS_SHAREIMAGELISTS | LVS_NOSORTHEADER | 
                     WS_BORDER | WS_TABSTOP,7,241,257,82
-    PUSHBUTTON      "OK",IDC_OK,123,329,65,13
+    DEFPUSHBUTTON      "OK",IDC_OK,123,329,65,13
     PUSHBUTTON      "Cancel",IDC_CANCEL,193,329,65,13
 END
 
 
-IDD_EXCLUDEDIRECTORIES DIALOGEX 0, 0, 271, 239
+IDD_DBADVANCED DIALOGEX 0, 0, 270, 299
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Exclude files and directories"
+CAPTION "Advanced database settings"
 FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Exclude files:",IDC_STATIC,3,1,261,47
-    LTEXT           "Pattern (e.g., ""*.tmp;*~""):",10,10,13,248,8
-    EDITTEXT        IDC_EXCLUDEFILES,9,25,250,13,ES_AUTOHSCROLL
-    GROUPBOX        "Exclude directories:",IDC_STATIC,3,53,262,164
-	LTEXT           "Directory ('*' and '?' are allowed):",9,10,65,111,8
-    EDITTEXT        IDC_DIRECTORYNAME,9,77,187,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "&Browse",IDC_BROWSE,203,76,55,14
-    LTEXT           "Excluded directories:",8,10,98,111,8
-    PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,125,95,64,13
-    PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,193,95,65,13
-    LISTBOX         IDC_DIRECTORIES,9,109,250,103,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "OK",IDC_OK,123,222,65,13
-    PUSHBUTTON      "Cancel",IDC_CANCEL,193,222,65,13
+	LTEXT           "Exclude files pattern (e.g., ""*.tmp;*~""):",10,10,9,248,8
+    EDITTEXT        IDC_EXCLUDEFILES,9,20,250,13,ES_AUTOHSCROLL
+    GROUPBOX        "Exclude diles and directories:",IDC_STATIC,3,0,262,167
+    LTEXT           "Enter directory ('*' and '?' are allowed):",9,10,39,246,8
+    EDITTEXT        IDC_DIRECTORYNAME,9,51,187,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "&Browse",IDC_BROWSE,203,51,55,14
+    LTEXT           "Excluded directories:",IDC_STATIC,10,71,111,8
+    PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,125,69,64,13
+    PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,193,69,65,13
+    LISTBOX         IDC_DIRECTORIES,9,83,250,78,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Choose a drive or directory and give a name which is used in database:",IDC_STATIC,10,179,247,8
+    CONTROL         "",IDC_FOLDERS,"SysListView32",LVS_REPORT | WS_BORDER | WS_TABSTOP |
+                    LVS_SHAREIMAGELISTS | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,9,189,250,60,WS_EX_CLIENTEDGE
+	LTEXT           "Path in database:",IDC_PATHINDATABASELABEL,10,251,111,8
+    EDITTEXT        IDC_PATHINDATABASE,9,260,197,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "&Set",IDC_SET,214,260,44,14
+	GROUPBOX        "Drive and directory maps:",IDC_STATIC,3,169,262,112
+    DEFPUSHBUTTON   "OK",IDC_OK,123,283,65,13
+    PUSHBUTTON      "Cancel",IDC_CANCEL,193,283,65,13
 END
 
 IDD_INPUTBOX DIALOGEX 0, 0, 186, 65
@@ -1359,7 +1367,7 @@ BEGIN
     IDS_VOLUMESERIAL        "Volume Serial"
     IDS_VOLUMEFILESYSTEM    "File System"
     IDS_VOLUMEFILES         "Files"
-    IDS_VOLUMEDIRECTORIES   "Directories"
+	IDS_VOLUMEDIRECTORIES   "Directories"
 END
 
 
@@ -1418,6 +1426,17 @@ BEGIN
 	IDS_COMMANDLINEARGUMENT "Command line"
 END
 
+STRINGTABLE 
+BEGIN
+   	IDS_VOLUMEINDATABASE    "In Database"    
+	IDS_INVALIDCHARACTERS   "The characters '>' or '|' are not allowed."
+	IDS_CANNOTEXCLUDESELECTED	"Cannot exclude selected item."
+	IDS_ALREADYEXCLUDED			"Directory is already in the list."
+	IDS_NEWMAP					"New map"
+	IDS_CLKFORNEWMAP		"(click for new directory)"
+	IDS_ENTERNEWDIRECTORY	"Enter a new directory:"
+END
+
 
 STRINGTABLE 
 BEGIN
@@ -1442,6 +1461,7 @@ END
 
 STRINGTABLE 
 BEGIN
+    IDS_NONEPARENTHESIS		"(none)"
     IDS_MONDAY              "Monday"
     IDS_TUESDAY             "Tuesday"
     IDS_WEDNESDAY           "Wednesday"
@@ -1502,11 +1522,6 @@ BEGIN
     IDS_VOLUMETYPECOMPUTER  "Computer"
 END
 
-STRINGTABLE 
-BEGIN
-	IDS_CANNOTEXCLUDESELECTED	"Cannot exclude selected item."
-	IDS_ALREADYEXCLUDED			"Directory is already in the list."
-END
 
 STRINGTABLE 
 BEGIN
@@ -1896,6 +1911,8 @@ STRINGTABLE
 BEGIN
     IDS_YES						"Yes"
     IDS_NO						"No"
+    IDS_OK						"OK"
+    IDS_CANCEL					"Cancel"
     IDS_DOCUMENTFOLDERS			"Document Folders"
     IDS_GETFOLDER				"Get Folder:"
 	IDS_EVERYWERE				"Everywhere"

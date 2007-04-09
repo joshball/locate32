@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.2110                 */
+   database updater v3.0.7.3250                 */
 
 #if !defined(DATABASEUPDATER_H)
 #define DATABASEUPDATER_H
@@ -50,8 +50,8 @@ public:
 	class CRootDirectory
 	{
 	private:
-		CRootDirectory(LPCWSTR szPath);
-		CRootDirectory(LPCWSTR szPath,int iPathLen);
+		CRootDirectory(LPCWSTR szPath,LPCWSTR szPathInDb,int iPathInDbLen);
+		CRootDirectory(LPCWSTR szPath,int iPathLen,LPCWSTR szPathInDb,int iPathInDbLen);
 		
 		~CRootDirectory();
 	
@@ -91,7 +91,7 @@ public:
 		CList<HFIND> m_aOpenHandles;
 
 	public:
-		CStringW m_Path;
+		CStringW m_Path,m_PathInDatabase;
 		DWORD m_dwFiles;
 		DWORD m_dwDirectories;
 	
@@ -136,7 +136,8 @@ public:
 		DBArchive();
 		DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveType nArchiveType,
 			LPCWSTR szAuthor,LPCWSTR szComment,LPCWSTR* pszRoots,DWORD nNumberOfRoots,BYTE nFlags,
-			LPCWSTR szExcludedFiles,LPCWSTR* ppExcludedDirectories,int nExcludedDirectories);
+			LPCWSTR szExcludedFiles,LPCWSTR* ppExcludedDirectories,int nExcludedDirectories,
+			LPCWSTR szMaps);
 		DBArchive(const CDatabase* pDatabase);
 		~DBArchive();
 
@@ -151,7 +152,7 @@ public:
 		void SetFlag(DBFlags flag,BOOL bSet=TRUE);
 		void ParseExcludedFilesAndDirectories(LPCWSTR szExcludedFiles,
 			const LPCWSTR* ppExcludedDirectories,int nExcludedDirectories);
-		
+		void CreateRootDirectories(CRootDirectory*& pCurrent,LPCWSTR pRoot,DWORD dwLength,LPCWSTR szMaps);		
 
 	protected:
 
@@ -407,14 +408,26 @@ inline DWORD CDatabaseUpdater::CRootDirectory::_FindGetFileSizeHi(FIND_DATAW* fd
 	return fd->nFileSizeHigh;
 }
 
-inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath)
-:	m_Path(szPath),m_dwFiles(0),m_dwDirectories(0),m_pFirstBuffer(NULL),m_aExcludeFilesPatternsA(NULL)
+inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,
+														LPCWSTR szPathInDb,int iPathInDbLen)
+:	m_Path(szPath),m_dwFiles(0),m_dwDirectories(0),
+	m_pFirstBuffer(NULL),m_aExcludeFilesPatternsA(NULL)
 {
+	if (szPathInDb!=NULL)
+		m_PathInDatabase.Copy(szPathInDb,iPathInDbLen);
+	else
+		m_PathInDatabase.Copy(m_Path);
 }
 
-inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,int iLength)
-:	m_Path(szPath,iLength),m_dwFiles(0),m_dwDirectories(0),m_pFirstBuffer(NULL),m_aExcludeFilesPatternsA(NULL)
+inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,
+														int iLength,LPCWSTR szPathInDb,int iPathInDbLen)
+:	m_Path(szPath,iLength),m_dwFiles(0),m_dwDirectories(0),
+	m_pFirstBuffer(NULL),m_aExcludeFilesPatternsA(NULL)
 {
+	if (szPathInDb!=NULL)
+		m_PathInDatabase.Copy(szPathInDb,iPathInDbLen);
+	else
+		m_PathInDatabase.Copy(m_Path);
 }
 
 inline CDatabaseUpdater::DBArchive::DBArchive()

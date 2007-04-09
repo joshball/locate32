@@ -570,7 +570,6 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			{
 				if (pStartData->m_aDatabases.GetSize()==0)
 				{
-					CStringW sExeName=GetApp()->GetExeNameW();
 					pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE));
 					pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 					pStartData->m_aDatabases[0]->SetThreadId(0);
@@ -617,7 +616,6 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					{
 						if (pStartData->m_aDatabases.GetSize()==0)
 						{
-							CStringW sExeName=GetApp()->GetExeNameW();
 							pStartData->m_aDatabases.Add(CDatabase::FromDefaults(TRUE));
 							pStartData->m_aDatabases[0]->SetNamePtr(alloccopy(L"DEFAULTX"));
 							pStartData->m_aDatabases[0]->SetThreadId(0);
@@ -4549,17 +4547,40 @@ void CLocateAppWnd::CUpdateStatusWnd::OnMouseMove(UINT fwKeys,WORD xPos,WORD yPo
 void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 {	
 	CRect rcDesktopRect,rcTrayRect;
+	CPoint ptUpperLeft;
+	CSize szSize;
+	BOOL bAdjustDesktopRect=FALSE; // If TRUE, remove tray are from rcDesktopRect
+
 	HWND hShellTrayWnd=FindWindow("Shell_TrayWnd",NULL); // Whole tray window
 	HWND hDesktop=FindWindow("Progman","Program Manager");
+	
 	if (hDesktop==NULL)
 		hDesktop=GetDesktopWindow();
 	
-	CPoint ptUpperLeft;
-	CSize szSize;
 	
-	::GetWindowRect(hDesktop,&rcDesktopRect);
+	// Bound monitor arrea
+	HMONITOR (WINAPI *pMonitorFromWindow)(HWND,DWORD);
+	pMonitorFromWindow=(HMONITOR (WINAPI *)(HWND,DWORD))GetProcAddress(GetModuleHandle("user32.dll"),"MonitorFromWindow");
+	if (pMonitorFromWindow!=NULL)
+	{
+		HMONITOR hCurrentMonitor=MonitorFromWindow(hShellTrayWnd!=NULL?hShellTrayWnd:*this,MONITOR_DEFAULTTOPRIMARY);
+		MONITORINFO mi;
+		mi.cbSize = sizeof(mi);
+		GetMonitorInfo(hCurrentMonitor, &mi);
+		
+		rcDesktopRect=mi.rcWork;
+	}
+	else
+	{
+		// Get screen size
+		::GetWindowRect(hDesktop,&rcDesktopRect);
+		bAdjustDesktopRect=TRUE;
+	}
+
+	// Compute center point
 	POINT ptDesktopCenter={(rcDesktopRect.left+rcDesktopRect.right)/2,(rcDesktopRect.top+rcDesktopRect.bottom)/2};
 	
+
 	// Computing width and height
 	if (m_WindowSize.cx==0 && m_WindowSize.cy==0)
 	{
@@ -4610,31 +4631,29 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 				FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
 				EnlargeSizeForText(dc,str,szThisLine);
 					
-				if (!IS_UPDATER_EXITED(GetLocateApp()->m_ppUpdaters[i]))
+				
+				LPWSTR szFile=NULL;
+				CDatabase::ArchiveType nArchiveType;
+				CDatabaseUpdater::CRootDirectory* pRoot;
+				ri.dwNumberOfDatabases=GetLocateApp()->m_ppUpdaters[i]->GetNumberOfDatabases();
+				for (ri.dwCurrentDatabase=0;GetLocateApp()->m_ppUpdaters[i]->EnumDatabases(ri.dwCurrentDatabase,ri.pName,szFile,nArchiveType,pRoot);ri.dwCurrentDatabase++)
 				{
-					LPWSTR szFile=NULL;
-					CDatabase::ArchiveType nArchiveType;
-					CDatabaseUpdater::CRootDirectory* pRoot;
-					ri.dwNumberOfDatabases=GetLocateApp()->m_ppUpdaters[i]->GetNumberOfDatabases();
-					for (ri.dwCurrentDatabase=0;GetLocateApp()->m_ppUpdaters[i]->EnumDatabases(ri.dwCurrentDatabase,ri.pName,szFile,nArchiveType,pRoot);ri.dwCurrentDatabase++)
+					// Checking how much space "writing database" will take
+					ri.pRoot=NULL;	
+					str.Empty();
+					FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
+					EnlargeSizeForText(dc,str,szThisLine);
+				
+					while (pRoot!=NULL)
 					{
-						// Checking how much space "writing database" will take
-						ri.pRoot=NULL;	
+						// Checking how much space "scanning root" will take
+						ri.pRoot=pRoot->m_Path.GetBuffer();
 						str.Empty();
 						FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
 						EnlargeSizeForText(dc,str,szThisLine);
-					
-						while (pRoot!=NULL)
-						{
-							// Checking how much space "scanning root" will take
-							ri.pRoot=pRoot->m_Path.GetBuffer();
-							str.Empty();
-							FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
-							EnlargeSizeForText(dc,str,szThisLine);
-							pRoot=pRoot->m_pNext;
-						}
-						
+						pRoot=pRoot->m_pNext;
 					}
+					
 				}
 
 				szSize.cy+=szThisLine.cy;
@@ -4665,25 +4684,30 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 		{
 			// Tray is on bottom
 			nPosition=CLocateApp::pfUpdateTooltipPositionDownRight;
-			rcDesktopRect.bottom=rcTrayRect.top;
+			
+			if (bAdjustDesktopRect)
+				rcDesktopRect.bottom=rcTrayRect.top;
 		}
 		else if (rcTrayRect.bottom<ptDesktopCenter.y)
 		{
 			// Tray is on top
 			nPosition=CLocateApp::pfUpdateTooltipPositionUpRight;
-			rcDesktopRect.top=rcTrayRect.bottom;
+			if (bAdjustDesktopRect)
+				rcDesktopRect.top=rcTrayRect.bottom;
 		}
 		else if (rcTrayRect.right<ptDesktopCenter.x)
 		{
 			// Tray is on left
 			nPosition=CLocateApp::pfUpdateTooltipPositionDownLeft;
-			rcDesktopRect.left=rcTrayRect.right;
+			if (bAdjustDesktopRect)
+				rcDesktopRect.left=rcTrayRect.right;
 		}
 		else
 		{
 			// Tray is on right
 			nPosition=CLocateApp::pfUpdateTooltipPositionDownRight;
-			rcDesktopRect.right=rcTrayRect.left;
+			if (bAdjustDesktopRect)
+				rcDesktopRect.right=rcTrayRect.left;
 		}
 	}
 

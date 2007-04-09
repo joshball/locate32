@@ -114,12 +114,14 @@
 #define IDC_TEXTHELP                    107
 #define IDD_ADVANCEDSETTINGS            108
 #define IDS_LOOKINCONTRADICTION         109
-#define IDD_EXCLUDEDIRECTORIES          109
+#define IDD_DBADVANCED					109
 #define IDS_NOEXTENSION                 110
 #define IDC_COPYRIGHT                   111
 #define IDC_YOURRIGHT                   112
 #define IDC_YOURRIGHT2                  113
 #define IDC_SYSINFO                     115
+#define IDS_OK                          116
+#define IDS_CANCEL                      117
 #define IDR_POPUPMENU                   120
 #define IDI_LANIM1                      168
 #define IDI_LANIM2                      169
@@ -385,7 +387,7 @@
 #define IDC_ADDFOLDER                   1127
 #define IDC_REMOVEFOLDER                1128
 #define IDC_MATCHWHOLENAME              1129
-#define IDC_EXCLUDEDIRECTORIES          1130
+#define IDC_ADVANCED					1130
 #define IDC_DATEFORMAT                  1131
 #define IDC_TIMEFORMAT                  1132
 #define IDC_CHECK                       1132
@@ -456,7 +458,6 @@
 #define IDC_ACTION2                     1181
 #define IDC_SUBACTION                   1181
 #define IDC_FROMMNEMONIC                1184
-#define IDC_ADVANCED                    1185
 #define IDC_WAITDELAY                   1186
 #define IDC_WAITPOST                    1187
 #define IDC_WAITMS                      1188
@@ -537,6 +538,9 @@
 #define IDC_CPUUSAGESPIN                1242
 #define IDC_CPUUSAGE                    1243
 #define IDC_CPUUSAGEEXTRALABEL          1244
+#define IDC_SET							1245
+#define IDC_PATHINDATABASE				1246
+#define IDC_PATHINDATABASELABEL			1247
 #define IDS_LASTERROR                   1900
 #define IDS_LASTERRORUNKNOWN            1901
 #define IDS_LASTERRORINVALIDDB          1902
@@ -569,6 +573,7 @@
 #define IDS_VOLUMEFILESYSTEM            2044
 #define IDS_VOLUMEFILES                 2045
 #define IDS_VOLUMEDIRECTORIES           2046
+#define IDS_VOLUMEINDATABASE			2047
 #define IDS_VOLUMETYPEUNKNOWN           2050
 #define IDS_VOLUMETYPEFIXED             2051
 #define IDS_VOLUMETYPEREMOVABLE         2052
@@ -578,8 +583,12 @@
 #define IDS_VOLUMETYPEDIRECTORY         2056
 #define IDS_VOLUMETYPEDIRECTORY2        2057
 #define IDS_VOLUMETYPECOMPUTER          2057
+#define IDS_INVALIDCHARACTERS			2099
 #define IDS_CANNOTEXCLUDESELECTED       2100
 #define IDS_ALREADYEXCLUDED             2101
+#define IDS_NEWMAP						2102
+#define IDS_CLKFORNEWMAP				2103
+#define IDS_ENTERNEWDIRECTORY			2104
 #define IDS_EMPTY                       3000
 #define IDS_NONE                        3001
 #define IDS_UNKNOWN                     3002
@@ -612,6 +621,7 @@
 #define IDS_ADVANCEDSETTINGS            5004
 #define IDS_LANGUAGESETTINGS            5005
 #define IDS_SHORTCUTSETTINGS            5006
+#define IDS_NONEPARENTHESIS				5130
 #define IDS_MONDAY                      5131
 #define IDS_TUESDAY                     5132
 #define IDS_WEDNESDAY                   5133

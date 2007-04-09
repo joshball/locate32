@@ -393,6 +393,21 @@ inline BOOL CDialog::EndDialog(int nResult) const
 	return ::EndDialog(m_hWnd,nResult);
 }
 
+inline DWORD CDialog::GetDefID() const
+{
+	return (DWORD)::SendMessage(m_hWnd,DM_GETDEFID,0,0);
+}
+
+inline void CDialog::SetDefID(UINT nID)
+{
+	::SendMessage(m_hWnd,DM_SETDEFID,(WPARAM)nID,0);
+}
+
+inline void CDialog::Reposition()
+{
+	::SendMessage(m_hWnd,DM_REPOSITION,0,0);
+}
+
 	
 #endif
 #endif
