@@ -129,7 +129,7 @@ public:
 		DatabaseArchive=15,
 		VolumeLabel=16,
 		VolumeSerial=17,
-		VOlumeFileSystem=18,
+		VolumeFileSystem=18,
 		MD5sum=19,
 		Author=20,
 		Title=21,
@@ -741,12 +741,13 @@ public:
 	enum LocateDialogExtraFlags {
 		// List view (continued)
 		efLVDontShowDeletedFiles = 0x10000000,
-		efLVDefault = 0x0,
-		efLVSave = 0x10000000,
+		efLVNoUpdateWhileSorting = 0x20000000,
+		efLVDefault = efLVNoUpdateWhileSorting,
+		efLVSave = 0x20000000,
 
 		// Name dialog
 		efNameDontSaveNetworkDrivesAndDirectories =  0x00010000,
-		
+		efNameDontResolveIconAndDisplayNameForDrives = 0x00020000,
 		efNameDefault = 0,
 		efNameSave = 0x000F0000,
 

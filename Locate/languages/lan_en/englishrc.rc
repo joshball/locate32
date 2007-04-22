@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,7,4090
- PRODUCTVERSION 3,0,7,4090
+ FILEVERSION 3,0,7,4220
+ PRODUCTVERSION 3,0,7,4220
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 build 7.4090"
+            VALUE "FileVersion", "3.0 build 7.4220"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2007 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 build 7.4090"
+            VALUE "ProductVersion", "3.0 build 7.4220"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -541,7 +541,7 @@ FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
 	LTEXT           "Exclude files pattern (e.g., ""*.tmp;*~""):",10,10,9,248,8
     EDITTEXT        IDC_EXCLUDEFILES,9,20,250,13,ES_AUTOHSCROLL
-    GROUPBOX        "Exclude diles and directories:",IDC_STATIC,3,0,262,167
+    GROUPBOX        "Exclude files and directories:",IDC_STATIC,3,0,262,167
     LTEXT           "Enter directory ('*' and '?' are allowed):",9,10,39,246,8
     EDITTEXT        IDC_DIRECTORYNAME,9,51,187,13,ES_AUTOHSCROLL
     PUSHBUTTON      "&Browse",IDC_BROWSE,203,51,55,14
@@ -1651,6 +1651,8 @@ BEGIN
 	IDS_ADVSETSELECTPROGRAM			"Select program"
 	IDS_ADVSETALLOWINPLACERENAMING	"Explorer style renaming"
 	IDS_ADVSETUSEDEFDIRECTORYICON	"Use default icon for directories (use with slow network drives)"
+	IDS_ADVSETWHILESORTINGDONOTREADINFO	"While sorting, do not read information from files"
+	IDS_ADVSETDONTRESOLVEDRIVEICONS	"Do not resolve icon for local drives"
 END
 
 STRINGTABLE

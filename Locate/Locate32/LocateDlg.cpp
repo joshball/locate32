@@ -703,8 +703,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	// Loading registry
 	LoadRegistry();
 	// Refreshing dialog box
-	if ((GetFlags()&fgNameRootFlag)!=fgNameDontAddRoots)
-        m_NameDlg.InitDriveBox();
+	m_NameDlg.InitDriveBox(TRUE);
 
 
 	// Check default shortcut integrity
@@ -1230,6 +1229,11 @@ BOOL CLocateDlg::UpdateSettings()
 		RegKey.QueryValue("Program StatusExtra",temp);
         m_dwExtraFlags&=~efSave;
 		m_dwExtraFlags|=temp&efSave;
+
+		if ((m_dwExtraFlags&efItemUpdatingMask)==efDisableItemUpdating)
+			m_dwExtraFlags|=efLVNoUpdateWhileSorting;
+
+
 	}
 	m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount());
 	SetListSelStyle();
@@ -2375,7 +2379,11 @@ int CLocateDlg::SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSortin
 		ASSERT(c>=0 && c<int(dwMaxItems));
 		CLocatedItem* pItem=(CLocatedItem*)pList->GetItemData(c);
 		if (pItem==NULL || DWORD(pItem)==DWORD(-1))
+		{
 			::MessageBox(NULL,"CLocateDlg::SortNewItem:Something is wrong! Contact jmhuttun@venda.uku.fi",NULL,MB_OK);
+			return 0;
+		}
+
 		int nRet=ListViewCompareProc(LPARAM(pItem),LPARAM(pNewItem),bSorting);
 		if (nRet<0) // New item should be later
 		{
@@ -2432,6 +2440,8 @@ void CLocateDlg::OnNewSearch()
 	StopBackgroundOperations();
 		
 	// StopBackgroundOperations uses only CouldStop
+	if (m_pFileNotificationsThread!=NULL)
+		m_pFileNotificationsThread->Stop();
 	if (m_pBackgroundUpdater!=NULL)
 		m_pBackgroundUpdater->Stop();
 	
@@ -3708,6 +3718,9 @@ void CLocateDlg::LoadRegistry()
 		RegKey.QueryValue("Program StatusExtra",temp);
 		m_dwExtraFlags&=~efSave;
 		m_dwExtraFlags|=temp&efSave;
+		if ((m_dwExtraFlags&efItemUpdatingMask)==efDisableItemUpdating)
+			m_dwExtraFlags|=efLVNoUpdateWhileSorting;
+
 		
 
 		DWORD dwOldFlags=m_dwFlags;
@@ -4673,6 +4686,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			pItem1->UpdateFileTitle();
 		if (pItem2->ShouldUpdateFileTitle())
 			pItem2->UpdateFileTitle();
+		
 		if (lParamSort&128)
 			return _wcsicmp(pItem2->GetFileTitle(),pItem1->GetFileTitle());
 		return _wcsicmp(pItem1->GetFileTitle(),pItem2->GetFileTitle());
@@ -4685,16 +4699,19 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			return _wcsicmp(pItem2->GetPath(),pItem1->GetPath());
 		return _wcsicmp(pItem1->GetPath(),pItem2->GetPath());
 	case FileSize:
-		if (pItem1->ShouldUpdateFileSize())
-			pItem1->UpdateFileSizeAndTime();
-		if (pItem2->ShouldUpdateFileSize())
-			pItem2->UpdateFileSizeAndTime();
+		if (!(GetLocateDlg()->GetExtraFlags()&efLVNoUpdateWhileSorting))
+		{
+			if (pItem1->ShouldUpdateFileSize())
+				pItem1->UpdateFileSize();
+			if (pItem2->ShouldUpdateFileSize())
+				pItem2->UpdateFileSize();
+		}
 
 		if (pItem2->IsFolder())
 		{
 			if (pItem1->IsFolder())
 				return 0;
-			return lParamSort&128?-1:0;
+			return lParamSort&128?-1:1;
 		}
 		else if (pItem1->IsFolder())
 			return lParamSort&128?1:-1;
@@ -4722,11 +4739,13 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			return _wcsicmp(pItem2->GetType(),pItem1->GetType());
 		return _wcsicmp(pItem1->GetType(),pItem2->GetType());
 	case DateModified:
-		if (pItem1->ShouldUpdateTimeAndDate())
-			pItem1->UpdateFileSizeAndTime();
-		if (pItem2->ShouldUpdateTimeAndDate())
-			pItem2->UpdateFileSizeAndTime();
-		
+		if (!(GetLocateDlg()->GetExtraFlags()&efLVNoUpdateWhileSorting))
+		{
+			if (pItem1->ShouldUpdateTimeAndDate())
+				pItem1->UpdateFileTime();
+			if (pItem2->ShouldUpdateTimeAndDate())
+				pItem2->UpdateFileTime();
+		}		
 		if (pItem1->GetModifiedDate()==pItem2->GetModifiedDate())
 		{
 			// Same day
@@ -4742,10 +4761,13 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		else
 			return lParamSort&128?-1:1;
 	case DateCreated:
-		if (pItem1->ShouldUpdateTimeAndDate())
-			pItem1->UpdateFileSizeAndTime();
-		if (pItem2->ShouldUpdateTimeAndDate())
-			pItem2->UpdateFileSizeAndTime();
+		if (!(GetLocateDlg()->GetExtraFlags()&efLVNoUpdateWhileSorting))
+		{
+			if (pItem1->ShouldUpdateTimeAndDate())
+				pItem1->UpdateFileTime();
+			if (pItem2->ShouldUpdateTimeAndDate())
+				pItem2->UpdateFileTime();
+		}
 		
 		if (pItem1->GetCreatedDate()==pItem2->GetCreatedDate())
 		{
@@ -4762,11 +4784,14 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		else
 			return lParamSort&128?-1:1;
 	case DateAccessed:
-		if (pItem1->ShouldUpdateTimeAndDate())
-			pItem1->UpdateFileSizeAndTime();
-		if (pItem2->ShouldUpdateTimeAndDate())
-			pItem2->UpdateFileSizeAndTime();
-		
+		if (!(GetLocateDlg()->GetExtraFlags()&efLVNoUpdateWhileSorting))
+		{
+			if (pItem1->ShouldUpdateTimeAndDate())
+				pItem1->UpdateFileTime();
+			if (pItem2->ShouldUpdateTimeAndDate())
+				pItem2->UpdateFileTime();
+		}
+
 		if (pItem1->GetAccessedDate()==pItem2->GetAccessedDate())
 		{
 			// Same day
@@ -4786,7 +4811,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			pItem1->UpdateAttributes();
 		if (pItem2->ShouldUpdateAttributes())
 			pItem2->UpdateAttributes();
-
+		
 		if (pItem2->IsDeleted())
 		{
 			if (pItem1->IsDeleted())
@@ -4897,7 +4922,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		}
 		return _wcsicmp(CLocateDlg::GetDBVolumeSerial(pItem1->GetDatabaseID(),pItem1->GetRootID()),
 			CLocateDlg::GetDBVolumeSerial(pItem2->GetDatabaseID(),pItem2->GetRootID()));
-	case VOlumeFileSystem:
+	case VolumeFileSystem:
 		if (lParamSort&128)
 		{
 			return _wcsicmp(CLocateDlg::GetDBVolumeFileSystem(pItem2->GetDatabaseID(),pItem2->GetRootID()),
@@ -8009,7 +8034,7 @@ BOOL CLocateDlg::CNameDlg::OnInitDialog(HWND hwndFocus)
 	m_LookIn.AssignToDlgItem(*this,IDC_LOOKIN);
 		
 	LoadRegistry();
-	InitDriveBox(TRUE);
+	//InitDriveBox(TRUE);
 
 	RECT rc1,rc2;
 	GetWindowRect(&rc1);
@@ -8279,11 +8304,38 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		if (!bAdd)
 			continue;
 
-		GetFileInfo(szBuf,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
-		ci.iImage=fi.iIcon;
-		GetFileInfo(szBuf,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
-		ci.iSelectedImage=fi.iIcon;
-		GetFileInfo(szBuf,0,&fi,SHGFI_DISPLAYNAME);
+		if (GetLocateDlg()->GetExtraFlags()&efNameDontResolveIconAndDisplayNameForDrives)
+		{
+			// Icon from system drive
+			WCHAR szWindowsDir[MAX_PATH]=L"C:\\";
+			FileSystem::GetWindowsDirectory(szWindowsDir,MAX_PATH);
+			if (szWindowsDir[1]==L':' && szWindowsDir[2]==L'\\')
+				szWindowsDir[3]='\0';
+			GetFileInfo(szWindowsDir,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+			ci.iSelectedImage=fi.iIcon;
+			GetFileInfo(szWindowsDir,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+			ci.iImage=fi.iIcon;
+			
+			fi.szDisplayName[0]='\0';
+			FileSystem::GetVolumeInformation(szBuf,fi.szDisplayName,MAX_PATH-7,NULL,
+				NULL,NULL,NULL,0);
+			int nLen=istrlen(fi.szDisplayName);
+			fi.szDisplayName[nLen++]=L' ';
+			fi.szDisplayName[nLen++]=L'(';
+			fi.szDisplayName[nLen++]=szBuf[0];
+			fi.szDisplayName[nLen++]=L':';
+			fi.szDisplayName[nLen++]=L')';
+			fi.szDisplayName[nLen++]=L'\0';
+
+		}
+		else
+		{
+			GetFileInfo(szBuf,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+			ci.iSelectedImage=fi.iIcon;
+			GetFileInfo(szBuf,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_DISPLAYNAME);
+			ci.iImage=fi.iIcon;
+		}
+
 		ci.pszText=fi.szDisplayName;
 		ci.iItem++;
 		ci.iIndent=1;

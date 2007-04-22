@@ -318,7 +318,7 @@ BOOL CLocatedItem::ShouldUpdateByDetail(CLocateDlg::DetailType nDetail) const
 	case CLocateDlg::DatabaseArchive:
 	case CLocateDlg::VolumeLabel:
 	case CLocateDlg::VolumeSerial:
-	case CLocateDlg::VOlumeFileSystem:
+	case CLocateDlg::VolumeFileSystem:
 		return FALSE;
 	case CLocateDlg::Name:
 		return ShouldUpdateFileTitle() || ShouldUpdateIcon();
@@ -681,6 +681,206 @@ void CLocatedItem::UpdateAttributes()
 	bAttribs=CDatabaseUpdater::GetAttribFlag(dwAttributes)|(bAttribs&LITEMATTRIB_DIRECTORY);
 	
 	ItemDebugMessage("CLocatedItem::UpdateAttributes END");
+}
+void CLocatedItem::UpdateFileTime()
+{
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+
+	ItemDebugMessage("CLocatedItem::UpdateFileTime BEGIN");
+	
+	if (IsFolder())
+	{
+		union {
+			WIN32_FIND_DATA fd;
+			WIN32_FIND_DATAW fdw; // The beginning of the structures are equal
+		};
+		HANDLE hFind;
+		if (IsUnicodeSystem())	
+			hFind=FindFirstFileW(GetPath(),&fdw);
+		else
+			hFind=FindFirstFileA(W2A(GetPath()),&fd);
+		DebugOpenHandle(dhtFileFind,hFind,GetPath());
+
+		if (hFind==INVALID_HANDLE_VALUE)
+			SetToDeleted();
+		else
+		{
+			FindClose(hFind);
+			DebugCloseHandle(dhtFileFind,hFind,GetPath());
+			FILETIME ft2;
+			
+			
+			FileTimeToLocalFileTime(&fd.ftLastWriteTime,&ft2);
+			FileTimeToDosDateTime(&ft2,&wModifiedDate,&wModifiedTime);
+			FileTimeToLocalFileTime(&fd.ftCreationTime,&ft2);
+			FileTimeToDosDateTime(&ft2,&wCreatedDate,&wCreatedTime);
+			FileTimeToLocalFileTime(&fd.ftLastAccessTime,&ft2);
+			FileTimeToDosDateTime(&ft2,&wAccessedDate,&wAccessedTime);
+			
+			if (wAccessedTime==0)
+				wAccessedTime=WORD(-1);
+
+			dwFlags|=LITEM_TIMEDATEOK|LITEM_FILESIZEOK;
+		}
+
+		ItemDebugMessage("CLocatedItem::UpdateFileTime END1");
+		return;
+	}
+
+	HANDLE hFile;
+	if (IsUnicodeSystem())
+		hFile=CreateFileW(GetPath(),0,FILE_SHARE_READ|FILE_SHARE_WRITE,
+			NULL,OPEN_EXISTING,0,NULL);
+	else
+		hFile=CreateFile(W2A(GetPath()),0,FILE_SHARE_READ|FILE_SHARE_WRITE,
+			NULL,OPEN_EXISTING,0,NULL);
+	DebugOpenHandle(dhtFile,hFile,GetPath());
+
+	if (hFile==INVALID_HANDLE_VALUE)
+	{
+		if (GetLastError()==ERROR_SHARING_VIOLATION)
+		{
+			// Another method to query information
+			union {
+				WIN32_FIND_DATA fd;
+				WIN32_FIND_DATAW fdw; // The beginning of the structures are equal
+			};
+			HANDLE hFind;
+			if (IsUnicodeSystem())	
+				hFind=FindFirstFileW(GetPath(),&fdw);
+			else
+				hFind=FindFirstFileA(W2A(GetPath()),&fd);
+			DebugOpenHandle(dhtFileFind,hFind,GetPath());
+			
+			if (hFind!=INVALID_HANDLE_VALUE)
+			{
+				dwFileSize=fd.nFileSizeLow;
+				wFileSizeHi=(BYTE)fd.nFileSizeHigh;
+
+
+				FILETIME ft2;
+				FileTimeToLocalFileTime(&fd.ftLastWriteTime,&ft2);
+				FileTimeToDosDateTime(&ft2,&wModifiedDate,&wModifiedTime);
+				FileTimeToLocalFileTime(&fd.ftCreationTime,&ft2);
+				FileTimeToDosDateTime(&ft2,&wCreatedDate,&wCreatedTime);
+				FileTimeToLocalFileTime(&fd.ftLastAccessTime,&ft2);
+				FileTimeToDosDateTime(&ft2,&wAccessedDate,&wAccessedTime);
+	
+				dwFlags|=LITEM_TIMEDATEOK|LITEM_FILESIZEOK;
+
+				FindClose(hFind);
+				DebugCloseHandle(dhtFileFind,hFind,GetPath());
+			
+				ItemDebugMessage("CLocatedItem::UpdateFileTime END2");
+				return;
+			}
+		}
+
+
+		SetToDeleted();
+
+		ItemDebugMessage("CLocatedItem::UpdateFileTime END3");
+		return;
+	}
+
+	FILETIME ftCreated,ftModified,ftAccessed,ft2;
+	GetFileTime(hFile,&ftCreated,&ftAccessed,&ftModified);
+	FileTimeToLocalFileTime(&ftModified,&ft2);
+	FileTimeToDosDateTime(&ft2,&wModifiedDate,&wModifiedTime);
+	FileTimeToLocalFileTime(&ftCreated,&ft2);
+	FileTimeToDosDateTime(&ft2,&wCreatedDate,&wCreatedTime);
+	FileTimeToLocalFileTime(&ftAccessed,&ft2);
+	FileTimeToDosDateTime(&ft2,&wAccessedDate,&wAccessedTime);
+	
+	if (wAccessedTime==0) // 0 wAccessedTime probably indicates that system does not save time
+		wAccessedTime=WORD(-1);
+	
+	dwFlags|=LITEM_TIMEDATEOK;
+	CloseHandle(hFile);
+	DebugCloseHandle(dhtFile,hFile,GetPath());
+
+	ItemDebugMessage("CLocatedItem::UpdateFileTime END");
+}
+
+void CLocatedItem::UpdateFileSize()
+{
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+
+	ItemDebugMessage("CLocatedItem::UpdateFileSize BEGIN");
+	
+	if (IsFolder())
+	{
+		dwFlags|=LITEM_FILESIZEOK;
+		return;
+	}
+
+	HANDLE hFile;
+	if (IsUnicodeSystem())
+		hFile=CreateFileW(GetPath(),0,FILE_SHARE_READ|FILE_SHARE_WRITE,
+			NULL,OPEN_EXISTING,0,NULL);
+	else
+		hFile=CreateFile(W2A(GetPath()),0,FILE_SHARE_READ|FILE_SHARE_WRITE,
+			NULL,OPEN_EXISTING,0,NULL);
+	DebugOpenHandle(dhtFile,hFile,GetPath());
+
+	if (hFile==INVALID_HANDLE_VALUE)
+	{
+		if (GetLastError()==ERROR_SHARING_VIOLATION)
+		{
+			// Another method to query information
+			union {
+				WIN32_FIND_DATA fd;
+				WIN32_FIND_DATAW fdw; // The beginning of the structures are equal
+			};
+			HANDLE hFind;
+			if (IsUnicodeSystem())	
+				hFind=FindFirstFileW(GetPath(),&fdw);
+			else
+				hFind=FindFirstFileA(W2A(GetPath()),&fd);
+			DebugOpenHandle(dhtFileFind,hFind,GetPath());
+			
+			if (hFind!=INVALID_HANDLE_VALUE)
+			{
+				dwFileSize=fd.nFileSizeLow;
+				wFileSizeHi=(BYTE)fd.nFileSizeHigh;
+
+
+				FILETIME ft2;
+				FileTimeToLocalFileTime(&fd.ftLastWriteTime,&ft2);
+				FileTimeToDosDateTime(&ft2,&wModifiedDate,&wModifiedTime);
+				FileTimeToLocalFileTime(&fd.ftCreationTime,&ft2);
+				FileTimeToDosDateTime(&ft2,&wCreatedDate,&wCreatedTime);
+				FileTimeToLocalFileTime(&fd.ftLastAccessTime,&ft2);
+				FileTimeToDosDateTime(&ft2,&wAccessedDate,&wAccessedTime);
+	
+				dwFlags|=LITEM_TIMEDATEOK|LITEM_FILESIZEOK;
+
+				FindClose(hFind);
+				DebugCloseHandle(dhtFileFind,hFind,GetPath());
+			
+				ItemDebugMessage("CLocatedItem::UpdateFileSize END2");
+				return;
+			}
+		}
+
+
+		SetToDeleted();
+
+		ItemDebugMessage("CLocatedItem::UpdateFileSize END3");
+		return;
+	}
+
+	DWORD dwFileSizeHiTemp;
+	dwFileSize=::GetFileSize(hFile,&dwFileSizeHiTemp);
+	wFileSizeHi=static_cast<BYTE>(dwFileSizeHiTemp);
+
+	dwFlags|=LITEM_FILESIZEOK;
+	CloseHandle(hFile);
+	DebugCloseHandle(dhtFile,hFile,GetPath());
+
+	ItemDebugMessage("CLocatedItem::UpdateFileSize END");
 }
 
 void CLocatedItem::UpdateFileSizeAndTime()

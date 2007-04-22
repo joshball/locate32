@@ -53,6 +53,8 @@ public:
 	void UpdateIcon();
 	void UpdateParentIcon();
 	void UpdateType();
+	void UpdateFileSize();
+	void UpdateFileTime();
 	void UpdateFileSizeAndTime();
 	void UpdateAttributes();
 	void UpdateFilename();
@@ -112,6 +114,7 @@ public:
 	DWORD GetPathLen() const { return bNameLength+DWORD(szName-szPath); }
 	LPWSTR GetParent() const { szName[-1]=L'\0'; return szPath; }
 	LPWSTR GetFileTitle() const { return szFileTitle; }
+	LPWSTR GetFileTitleSafe() const { if (szFileTitle==NULL) return szName; return szFileTitle; }
 	LPWSTR GetType() const { return szType; }
 	
 	LPWSTR GetDetailText(CLocateDlg::DetailType nDetailType) const;

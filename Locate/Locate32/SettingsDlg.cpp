@@ -132,6 +132,15 @@ BOOL CSettingsProperties::LoadSettings()
 	{
 		m_dwLocateDialogFlags=GetLocateDlg()->GetFlags();
 		m_dwLocateDialogExtraFlags=GetLocateDlg()->GetExtraFlags();
+
+		// read efLVNoUpdateWhileSorting from registry
+		if (LocRegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+		{
+			DWORD temp=m_dwLocateDialogExtraFlags;
+			LocRegKey.QueryValue("Program StatusExtra",temp);
+			m_dwLocateDialogExtraFlags&=~CLocateDlg::efLVNoUpdateWhileSorting;
+			m_dwLocateDialogExtraFlags|=temp&CLocateDlg::efLVNoUpdateWhileSorting;
+		}
 	}
 	else if (LocRegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
@@ -993,12 +1002,19 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateRadioBox(IDS_ADVSETENABLEFSCHANGETRACKING,NULL,DefaultRadioBoxProc,
 			MAKELONG(CLocateDlg::efEnableFSTracking,CLocateDlg::efTrackingMask),&m_pSettings->m_dwLocateDialogExtraFlags),
 		NULL,
+		CreateCheckBox(IDS_ADVSETWHILESORTINGDONOTREADINFO,NULL,DefaultCheckBoxProc,
+			CLocateDlg::efLVNoUpdateWhileSorting,&m_pSettings->m_dwLocateDialogExtraFlags),
 		NULL
 	};
 	if (GetProcAddress(GetModuleHandle("kernel32.dll"),"ReadDirectoryChangesW")!=NULL)
 	{
 		FileBackgroundOperations[2]=CreateRadioBox(IDS_ADVSETENABLEFSCHANGETRACKINGOLD,NULL,DefaultRadioBoxProc,
 			MAKELONG(CLocateDlg::efEnableFSTrackingOld,CLocateDlg::efTrackingMask),&m_pSettings->m_dwLocateDialogExtraFlags);
+	}
+	else
+	{
+		FileBackgroundOperations[2]=FileBackgroundOperations[3];
+		FileBackgroundOperations[3]=NULL;
 	}
 
 	Item* UpdateResults[]={
@@ -1048,6 +1064,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			MAKELONG(0,100),&m_pSettings->m_nNumberOfDirectories),
 		CreateCheckBox(IDS_ADVSETDONTSAVENETWORKDRIVES,NULL,DefaultCheckBoxProc,
 			CLocateDlg::efNameDontSaveNetworkDrivesAndDirectories,&m_pSettings->m_dwLocateDialogExtraFlags),
+		CreateCheckBox(IDS_ADVSETDONTRESOLVEDRIVEICONS,NULL,DefaultCheckBoxProc,
+			CLocateDlg::efNameDontResolveIconAndDisplayNameForDrives,&m_pSettings->m_dwLocateDialogExtraFlags),
 		CreateRadioBox(IDS_ADVSETADDSELECTEDROOTS,NULL,DefaultRadioBoxShiftProc,
 			MAKELONG(CLocateDlg::fgNameAddEnabledRoots>>16,CLocateDlg::fgNameRootFlag>>16),&m_pSettings->m_dwLocateDialogFlags),
 		CreateRadioBox(IDS_ADVSETADDALLROOTS,NULL,DefaultRadioBoxShiftProc,
@@ -1530,6 +1548,7 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::TrayIconProc(BASICPARA
 	}
 	return DefaultEditStrWProc(pParams);
 }
+
 
 ////////////////////////////////////////
 // CLanguageSettingsPage

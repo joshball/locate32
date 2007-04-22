@@ -71,7 +71,7 @@ public:
 		static BOOL CALLBACK UpdateTooltipTopmostProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK ExternalCommandProc(BASICPARAMS* pParams); 
 		static BOOL CALLBACK TrayIconProc(BASICPARAMS* pParams); 
-
+		
 
 		static BOOL CALLBACK EnumDateFormatsProc(LPTSTR lpDateFormatString);
 		static BOOL CALLBACK EnumTimeFormatsProc(LPTSTR lpDateFormatString);

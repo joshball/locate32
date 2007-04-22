@@ -152,7 +152,7 @@ inline LPWSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) co
 		return const_cast<LPWSTR>(CLocateDlg::GetDBVolumeLabel(GetDatabaseID(),GetRootID()));
 	case CLocateDlg::VolumeSerial:
 		return const_cast<LPWSTR>(CLocateDlg::GetDBVolumeSerial(GetDatabaseID(),GetRootID()));
-	case CLocateDlg::VOlumeFileSystem:
+	case CLocateDlg::VolumeFileSystem:
 		return const_cast<LPWSTR>(CLocateDlg::GetDBVolumeFileSystem(GetDatabaseID(),GetRootID()));
 	}
 	return const_cast<LPWSTR>(szwEmpty);
