@@ -1013,20 +1013,8 @@
 				>
 			</File>
 		</Filter>
-		<Filter
-			Name="Documents"
-			>
-			<File
-				RelativePath="..\..\Install\Locate2\Readme.txt"
-				>
-			</File>
-			<File
-				RelativePath="..\misc\Uuden detailin lisays.txt"
-				>
-			</File>
-		</Filter>
 		<File
-			RelativePath=".\HFCDebug.log"
+			RelativePath="..\misc\Instructions to add new column to result list.txt"
 			>
 		</File>
 	</Files>
