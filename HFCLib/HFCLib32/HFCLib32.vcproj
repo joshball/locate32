@@ -88,7 +88,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Copying Library..."
-				CommandLine="copy $(OutDir)\HFCLibd.lib D:\Progra~1\HFC\Lib"
+				CommandLine="copy $(OutDir)\HFCLibd.lib  &quot;$(HFCROOT)\Lib&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -163,7 +163,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Copying Library..."
-				CommandLine="copy $(OutDir)\HFCLibd.lib D:\Progra~1\HFC\Lib64"
+				CommandLine="copy $(OutDir)\HFCLibd.lib &quot;$(HFCROOT)\Lib64&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -238,7 +238,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Copying Library..."
-				CommandLine="copy $(OutDir)\HFCLib.lib D:\Progra~1\HFC\Lib"
+				CommandLine="copy $(OutDir)\HFCLib.lib &quot;$(HFCROOT)\Lib&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -314,7 +314,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Copying Library..."
-				CommandLine="copy $(OutDir)\HFCLib.lib D:\Progra~1\HFC\Lib64"
+				CommandLine="copy $(OutDir)\HFCLib.lib &quot;$(HFCROOT)\Lib64&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -389,7 +389,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Copying Library..."
-				CommandLine="copy $(OutDir)\HFCLibl.lib D:\Progra~1\HFC\Lib"
+				CommandLine="copy $(OutDir)\HFCLibl.lib &quot;$(HFCROOT)\Lib&quot;"
 			/>
 		</Configuration>
 		<Configuration
@@ -465,7 +465,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Copying Library..."
-				CommandLine="copy $(OutDir)\HFCLibl.lib D:\Progra~1\HFC\Lib64"
+				CommandLine="copy $(OutDir)\HFCLibl.lib &quot;$(HFCROOT)\Lib64&quot;"
 			/>
 		</Configuration>
 	</Configurations>

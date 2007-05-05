@@ -743,7 +743,7 @@ public:
 		efLVDontShowDeletedFiles = 0x10000000,
 		efLVNoUpdateWhileSorting = 0x20000000,
 		efLVDefault = efLVNoUpdateWhileSorting,
-		efLVSave = 0x20000000,
+		efLVSave = 0x30000000,
 
 		// Name dialog
 		efNameDontSaveNetworkDrivesAndDirectories =  0x00010000,

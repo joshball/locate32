@@ -1971,7 +1971,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnNew(CDatabase* pDatabaseTemp
 	if (dbd.DoModal(*this,LanguageSpecificResource))
 	{
 		LVITEM li;
-
+		
 		if (m_pList->GetItemCount()>0)
 		{
 			li.iItem=m_pList->GetNextItem(-1,LVNI_ALL);
@@ -2005,8 +2005,14 @@ void CSettingsProperties::CDatabasesSettingsPage::OnNew(CDatabase* pDatabaseTemp
 		li.iGroupId=dbd.m_pDatabase->GetThreadId();
 		li.state=LVIS_SELECTED;
 		li.stateMask=LVIS_SELECTED;
+		
+		// LVM_ITEMCHANGED notification (which will be send when
+		// InsertItem is called) will change the status to disabled
+		BOOL bEnabled=dbd.m_pDatabase->IsEnabled();
+		
 		li.iItem=m_pList->InsertItem(&li);
-		m_pList->SetCheckState(li.iItem,dbd.m_pDatabase->IsEnabled());
+
+		m_pList->SetCheckState(li.iItem,bEnabled);
 
 		m_pList->EnsureVisible(li.iItem,FALSE);
 	}

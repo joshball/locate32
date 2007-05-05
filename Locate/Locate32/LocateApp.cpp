@@ -1873,10 +1873,9 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 	case Initializing:
 	{
 		// Start animations
-		CLocateAppWnd* pLocateAppWnd=GetLocateAppWnd();
-		if (pLocateAppWnd!=NULL)
+		if (GetLocateAppWnd()->GetHandle()!=NULL)
 		{
-			pLocateAppWnd->StartUpdateStatusNotification();
+			GetLocateAppWnd()->StartUpdateStatusNotification();
 		
 			CLocateDlg* pLocateDlg=GetLocateDlg();
 			if (pLocateDlg!=NULL)

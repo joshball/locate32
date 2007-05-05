@@ -186,7 +186,7 @@ private:
 inline CDatabase::CDatabase()
 // Default values:
 :	m_szCreator(NULL),m_szDescription(NULL),m_szRoots(NULL),
-	m_wFlags(flagEnabled|flagGlobalUpdate),m_wThread(0),m_szArchiveName(NULL),
+	m_wFlags(flagEnabled|flagGlobalUpdate|flagStopIfRootUnavailable),m_wThread(0),m_szArchiveName(NULL),
 	m_ArchiveType(archiveFile),m_wID(0),m_szExcludedFiles(NULL),m_szRootMaps(NULL)
 {
 	if (!IsUnicodeSystem())
