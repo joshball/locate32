@@ -307,6 +307,7 @@ public:
 		fsfOverMBasMB = 8
 	};
 
+	
 
 protected:
 	BYTE CheckDatabases();
@@ -377,6 +378,67 @@ public:
 	static UINT m_nHFCInstallationMessage;
 	static UINT m_nTaskbarCreated;
 	static UINT m_nLocateAppMessage;
+
+
+	// Locale number information
+	struct LocaleNumberFormat {
+		LocaleNumberFormat()
+		{
+			// Default values
+			uLeadingZero=1;
+			uGrouping=3;
+			
+			CRegKey RegKey;
+			if (RegKey.OpenKey(HKCU,"Control Panel\\International",CRegKey::defRead)==ERROR_SUCCESS)
+			{
+				WCHAR szTemp[10];
+				int nLen;
+
+				if (RegKey.QueryValue(L"iLZero",szTemp,10)>1)
+					uLeadingZero=_wtoi(szTemp);
+				if (RegKey.QueryValue(L"sGrouping",szTemp,10)>1)
+					uGrouping=_wtoi(szTemp);
+
+				nLen=RegKey.QueryValueLength(L"sDecimal");
+				if (nLen>1)
+				{
+					pDecimal=new WCHAR[nLen+1];
+					RegKey.QueryValue(L"sDecimal",pDecimal,nLen);
+				}
+				else
+				{
+					pDecimal=new WCHAR[2];
+					pDecimal[0]=L'.';
+					pDecimal[1]=L'\0';
+				}
+
+				nLen=RegKey.QueryValueLength(L"sThousand");
+				if (nLen>1)
+				{
+					pThousand=new WCHAR[nLen+1];
+					RegKey.QueryValue(L"sThousand",pThousand,nLen);
+				}
+				else
+				{
+					pThousand=new WCHAR[2];
+					pThousand[0]=L' ';
+					pThousand[1]=L'\0';
+				}
+			}
+		}
+		
+		~LocaleNumberFormat()
+		{
+			delete[] pDecimal;
+			delete[] pThousand;
+		}
+			
+		UINT uLeadingZero;
+		UINT uGrouping;
+		WCHAR* pDecimal;
+		WCHAR* pThousand;
+	} *m_pLocaleNumberFormat;
+	
 
 protected:
 	CStartData* m_pStartData;

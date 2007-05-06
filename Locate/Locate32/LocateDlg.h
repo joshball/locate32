@@ -748,6 +748,7 @@ public:
 		// Name dialog
 		efNameDontSaveNetworkDrivesAndDirectories =  0x00010000,
 		efNameDontResolveIconAndDisplayNameForDrives = 0x00020000,
+		efNameDontSaveNameTypeAndDirectories = 0x00040000,
 		efNameDefault = 0,
 		efNameSave = 0x000F0000,
 

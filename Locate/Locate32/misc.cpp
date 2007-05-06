@@ -1,5 +1,7 @@
 #include <HFCLib.h>
 #include "Locate32.h"
+
+#include <rpcsal.h>  // Imapi.h requires this
 #include <imapi.h>
 #include <uxtheme.h>
 #include <tmschema.h>
@@ -644,3 +646,53 @@ LONG CRegKey2::OpenKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATT
 	return lRet;
 }
 
+LONG CRegKey2::DeleteKey(LPCSTR lpszSubKey)
+{
+	extern CLocateApp theApp;
+	
+	int nCommonKeyLen=istrlen(theApp.m_szCommonRegKey);
+	int nKeyLen=istrlen(lpszSubKey)+1;
+	
+	char* pNewKey=new char[nCommonKeyLen+nKeyLen+(lpszSubKey[0]!='\\')+9];
+	
+	MemCopy(pNewKey,theApp.m_szCommonRegKey,nCommonKeyLen);
+	
+	MemCopy(pNewKey+nCommonKeyLen,"\\Locate32",9);
+	nCommonKeyLen+=9;
+
+	if (lpszSubKey[0]!='\\')
+		pNewKey[nCommonKeyLen++]='\\';
+	
+	MemCopy(pNewKey+nCommonKeyLen,lpszSubKey,nKeyLen);
+	
+	LONG lRet=CRegKey::DeleteKey(HKCU,pNewKey);
+
+	delete[] pNewKey;
+
+	return lRet;
+}
+
+LONG CRegKey2::DeleteKey(LPCWSTR lpszSubKey)
+{
+	extern CLocateApp theApp;
+	
+	int nCommonKeyLen=istrlen(theApp.m_szCommonRegKey);
+	int nKeyLen=istrlenw(lpszSubKey)+1;
+	
+	WCHAR* pNewKey=new WCHAR[nCommonKeyLen+nKeyLen+(lpszSubKey[0]!='\\')];
+	MultiByteToWideChar(CP_ACP,0,theApp.m_szCommonRegKey,nCommonKeyLen,pNewKey,nCommonKeyLen+nKeyLen);
+	
+	MemCopyW(pNewKey+nCommonKeyLen,L"\\Locate32",9);
+	nCommonKeyLen+=9;
+
+	if (lpszSubKey[0]!=L'\\')
+		pNewKey[nCommonKeyLen++]=L'\\';
+	
+	MemCopy(pNewKey+nCommonKeyLen,lpszSubKey,nKeyLen);
+	
+	LONG lRet=CRegKey::DeleteKey(HKCU,pNewKey);
+
+	delete[] pNewKey;
+
+	return lRet;
+}

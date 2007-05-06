@@ -19,7 +19,7 @@ CLocateApp::CLocateApp()
 :	CWinApp("LOCATE32"),m_nDelImage(0),m_nStartup(0),
 	m_ppUpdaters(NULL),m_pLastDatabase(NULL),m_nFileSizeFormat(fsfOverKBasKB),
 	m_dwProgramFlags(pfDefault),m_nInstance(0),m_szCommonRegFile(NULL),
-	m_szCommonRegKey(NULL)
+	m_szCommonRegKey(NULL),m_pLocaleNumberFormat(NULL)
 {
 	DebugMessage("CLocateApp::CLocateApp()");
 	m_pStartData=new CStartData;
@@ -36,6 +36,11 @@ CLocateApp::~CLocateApp()
 		m_pStartData=NULL;
 	}
 
+	if (m_pLocaleNumberFormat!=NULL)
+	{
+		delete m_pLocaleNumberFormat;
+		m_pLocaleNumberFormat=NULL;
+	}
 	
 	EnterCriticalSection(&m_cUpdatersPointersInUse);
 	ASSERT(m_ppUpdaters==NULL);
@@ -1573,66 +1578,46 @@ LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) co
 
 	if (m_dwProgramFlags&pfFormatUseLocaleFormat)
 	{
-		CRegKey RegKey;
-		if (RegKey.OpenKey(HKCU,"Control Panel\\International",CRegKey::defRead)==ERROR_SUCCESS)
-		{
-			if (IsUnicodeSystem())
-			{
-				WCHAR* szFormattedStr=new WCHAR[60];
-				WCHAR szTemp[10]=L".",szTemp2[10]=L" ";
+		if (GetLocateApp()->m_pLocaleNumberFormat==NULL)
+			GetLocateApp()->m_pLocaleNumberFormat=new LocaleNumberFormat;
 
-				NUMBERFMTW fmt;
+		union {
+			NUMBERFMTW fmtw;
+			NUMBERFMT fmt;
+		};
+
+		fmt.NumDigits=bDigits; 
+		fmt.LeadingZero=GetLocateApp()->m_pLocaleNumberFormat->uLeadingZero;
+		fmt.Grouping=GetLocateApp()->m_pLocaleNumberFormat->uGrouping; 
+		fmt.NegativeOrder=1; 
 			
-				// Defaults;
-				fmt.NumDigits=bDigits; 
-				fmt.LeadingZero=1;
-				fmt.Grouping=3; 
-				fmt.lpDecimalSep=szTemp; 
-				fmt.lpThousandSep=szTemp2; 
-				fmt.NegativeOrder=1; 
-				
-				if (RegKey.QueryValue(L"iLZero",szTemp,10)>1)
-					fmt.LeadingZero=_wtoi(szTemp);
-				if (RegKey.QueryValue(L"sGrouping",szTemp,10)>1)
-					fmt.Grouping=_wtoi(szTemp);
-				RegKey.QueryValue(L"sDecimal",szTemp,10);
-				RegKey.QueryValue(L"sThousand",szTemp2,10);
-
-				
-				if (GetNumberFormatW(LOCALE_USER_DEFAULT,0,szRet,&fmt,szFormattedStr,60)>0)
-				{
-					delete[] szRet;
-					szRet=szFormattedStr;
-				}
-				else
-					delete[] szFormattedStr;
+		if (IsUnicodeSystem())
+		{
+			WCHAR* szFormattedStr=new WCHAR[60];
+			
+			fmtw.lpDecimalSep=GetLocateApp()->m_pLocaleNumberFormat->pDecimal; 
+			fmtw.lpThousandSep=GetLocateApp()->m_pLocaleNumberFormat->pThousand; 
+			
+			if (GetNumberFormatW(LOCALE_USER_DEFAULT,0,szRet,&fmtw,szFormattedStr,60)>0)
+			{
+				delete[] szRet;
+				szRet=szFormattedStr;
 			}
 			else
-			{
-				char szFormattedStr[50];
-				char szTemp[10]=".",szTemp2[10]=" ";
-
-				NUMBERFMT fmt;
+				delete[] szFormattedStr;
+		}
+		else
+		{
+			char szFormattedStr[50];
+					
+			fmt.lpDecimalSep=alloccopyWtoA(GetLocateApp()->m_pLocaleNumberFormat->pDecimal); 
+			fmt.lpThousandSep=alloccopyWtoA(GetLocateApp()->m_pLocaleNumberFormat->pThousand); 
 			
-				// Defaults;
-				fmt.NumDigits=bDigits; 
-				fmt.LeadingZero=1;
-				fmt.Grouping=3; 
-				fmt.lpDecimalSep=szTemp; 
-				fmt.lpThousandSep=szTemp2; 
-				fmt.NegativeOrder=1; 
-				
-				if (RegKey.QueryValue("iLZero",szTemp,10)>1)
-					fmt.LeadingZero=atoi(szTemp);
-				if (RegKey.QueryValue("sGrouping",szTemp,10)>1)
-					fmt.Grouping=atoi(szTemp);
-				RegKey.QueryValue("sDecimal",szTemp,10);
-				RegKey.QueryValue("sThousand",szTemp2,10);
+			if (GetNumberFormat(LOCALE_USER_DEFAULT,0,W2A(szRet),&fmt,szFormattedStr,50)>0)
+				MultiByteToWideChar(CP_ACP,0,szFormattedStr,-1,szRet,40);
 
-				
-				if (GetNumberFormat(LOCALE_USER_DEFAULT,0,W2A(szRet),&fmt,szFormattedStr,50)>0)
-					MultiByteToWideChar(CP_ACP,0,szFormattedStr,-1,szRet,40);
-			}
+			delete[] fmt.lpDecimalSep;
+			delete[] fmt.lpThousandSep;
 		}
 	}
 

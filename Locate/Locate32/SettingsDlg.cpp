@@ -1085,8 +1085,10 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateNumeric(IDS_ADVSETNUMBEROFTYPES,DefaultNumericProc,
 			MAKELONG(0,256),&m_pSettings->m_nNumberOfTypes),
 		CreateRoot(IDS_ADVSETLOOKINCOMBO,LookInItems),
-		CreateCheckBox(IDS_ADVSETLOADTYPES,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLoadRegistryTypes,&m_pSettings->m_dwLocateDialogFlags),
+		CreateCheckBox(IDS_ADVSETLARGEMODEONLY,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgDialogLargeModeOnly,&m_pSettings->m_dwLocateDialogFlags),
+		CreateCheckBox(IDS_ADVSETDONTSAVELISTITEMS,NULL,DefaultCheckBoxProc,
+			CLocateDlg::efNameDontSaveNameTypeAndDirectories,&m_pSettings->m_dwLocateDialogExtraFlags),
 		CreateCheckBox(IDS_ADVSETTOPMOST,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgDialogTopMost,&m_pSettings->m_dwLocateDialogFlags),
 		NULL, // For transparency
@@ -1108,7 +1110,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	if (GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes")!=NULL)
 	{
 		// Needs at least Win2k
-		DialogItems[6]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
+		DialogItems[7]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nTransparency);
 		StatusTooltipItems[8]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nToolTipTransparency);

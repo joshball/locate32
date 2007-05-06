@@ -10173,6 +10173,13 @@ void CLocateDlg::CNameDlg::OnClear(BOOL bInitial)
 void CLocateDlg::CNameDlg::SaveRegistry() const
 {
 	CRegKey2 RegKey;
+	if (GetLocateDlg()->GetExtraFlags()&efNameDontSaveNameTypeAndDirectories)
+	{
+		// Do not save list items, just delete key
+		RegKey.DeleteKey("\\Recent Strings");
+		return;
+	}
+
 	if(RegKey.OpenKey(HKCU,"\\Recent Strings",CRegKey::defWrite)==ERROR_SUCCESS)
 	{
 		CStringW buffer,bfr;

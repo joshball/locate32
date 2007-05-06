@@ -111,8 +111,16 @@ public:
 	CRegKey2(HKEY hKey,LPCSTR lpszSubKey,DWORD fStatus=CRegKey::defWrite,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
 	CRegKey2(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus=CRegKey::defWrite,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
 
+
+	// Open hKey/CommonKey/lpszSubKey
 	LONG OpenKey(HKEY hKey,LPCSTR lpszSubKey,DWORD fStatus=CRegKey::createNew|CRegKey::samAll,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
 	LONG OpenKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus=CRegKey::createNew|CRegKey::samAll,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);
+
+
+	// Deletekey HKCU/CommonKey/lpszSubKey
+	LONG DeleteKey(LPCSTR lpszSubKey);
+	LONG DeleteKey(LPCWSTR lpszSubKey);
+	
 
 	static CString GetCommonKey();
 	static CStringW GetCommonKeyW();
