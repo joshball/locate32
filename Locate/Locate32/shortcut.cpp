@@ -795,7 +795,7 @@ BOOL CShortcut::GetDefaultShortcuts(CArrayFP<CShortcut*>& aShortcuts,BYTE bLoadF
 	/*
 	// BEGIN 
 	{
-	LPCSTR szFile="C:\\My Documents\\Programming\\C\\Locate\\Locate32\\commonres\\defaultshortcuts.dat";
+	LPCSTR szFile="C:\\Users\\jmhuttun\\Programming\\projects\\Locate\\Locate32\\commonres\\defaultshortcuts.dat";
 	CRegKey2 RegKey;
 	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)!=ERROR_SUCCESS)
 		return FALSE;
@@ -1117,6 +1117,15 @@ void CSubAction::DoShowHideDialog()
 				delete[] pPath;
 			}
 			break;
+		}
+		break;
+	case StopLocatingOrCloseWindow:
+		if (pLocateDlg!=NULL)
+		{
+			if (pLocateDlg->IsLocating())
+				pLocateDlg->OnStop();
+			else
+				pLocateDlg->PostMessage(WM_CLOSE);
 		}
 		break;
 	}
@@ -1856,11 +1865,13 @@ int CSubAction::GetShowHideDialogActionLabelStringId(CAction::ActionShowHideDial
 	case MaximizeDialog:
 		return IDS_ACTIONSWDIALOGMAXIMIZE;
 	case MaximizeOrRestoreDialog:
-		return IDS_ACTIONSWDIALOMAXIMIZEORRESTORE;
+		return IDS_ACTIONSWDIALOGMAXIMIZEORRESTORE;
 	case ShowOpenOrHideDialog:
-		return IDS_ACTIONSWDIALOMSHOWOPENORHIDE;
+		return IDS_ACTIONSWDIALOGSHOWOPENORHIDE;
 	case ShowDialogAndGetDirFromExplorer:
-		return IDS_ACTIONSWDIALOMSHOWANDDIRFROMEXPLORER;
+		return IDS_ACTIONSWDIALOGSHOWANDDIRFROMEXPLORER;
+	case StopLocatingOrCloseWindow:
+		return IDS_ACTIONSWDIALOGSSTOPLOCATINGORCLOSEDIALOG;
 	default:
 		return 0;
 	}
@@ -1898,6 +1909,10 @@ int CSubAction::GetResultItemActionLabelStringId(CAction::ActionResultList uSubA
 		return IDS_ACTIONRESITEMSELECTFILE;
 	case RenameFile:
 		return IDS_ACTIONRESITEMRENAMEFILE;
+	case SelectNthFile:
+		return IDS_ACTIONRESITEMSELECTNTHITEM;
+	case ExecuteNthFile:
+		return IDS_ACTIONRESITEMEXECUTENTHITEM;
 	default:
 		return 0;
 	}

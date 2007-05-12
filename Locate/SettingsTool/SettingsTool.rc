@@ -90,6 +90,7 @@ BEGIN
     IDS_SAVEFILTER9x        "Registry script|*.reg|"
     IDS_RESTOREFILTER9x     "Registry script|*.reg|"
     IDS_ERRORCANNOTRUNREGEDIT "Cannot run regedit.exe. System error: %s"
+    IDS_LOCATE32RUNNING     "Locate32 should not be running while settings are restored. Quit Locate32 before continuing."
 END
 
 #endif    // English (U.S.) resources

@@ -228,7 +228,7 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 			DIRCHANGEDATA* pChangeData=m_pChangeDatas[nRet-WAIT_OBJECT_0];
 			
 			// Asking changes
-			if (pLocateDlg->m_pLocater==NULL) // if locating in process, do nothing
+			if (!pLocateDlg->IsLocating()) // if locating in process, do nothing
 			{
 				if (GetOverlappedResult(pChangeData->hDir,&pChangeData->ol,&dwOut,FALSE))
 				{
@@ -324,7 +324,7 @@ BOOL CCheckFileNotificationsThread::RunningProcOld()
 			if (pLocateDlg==NULL)
 				break;
 
-			if (pLocateDlg->m_pLocater==NULL) // if locating in process, do nothing
+			if (!pLocateDlg->IsLocating()) // if locating in process, do nothing
 			{
 				while (pLocateDlg->m_pBackgroundUpdater!=NULL &&
 					!pLocateDlg->m_pBackgroundUpdater->m_lIsWaiting)

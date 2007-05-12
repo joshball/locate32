@@ -141,6 +141,7 @@ public:
 		ViewRefresh = MAKELONG(IDM_REFRESH,IDS_SHORTCUTMENUVIEW),
 
 		OptionsSettings = MAKELONG(IDM_SETTINGS,IDS_SHORTCUTMENUOPTIONS),
+		OptionsSettingsTool = MAKELONG(IDM_SETTOOL,IDS_SHORTCUTMENUOPTIONS),
 
 		HelpAbout = MAKELONG(IDM_ABOUT,IDS_SHORTCUTMENUHELP),
 
@@ -167,7 +168,7 @@ public:
             ViewArrangeIconsByType,ViewArrangeIconsByDate,ViewArrangeIconsBySize,
 			ViewArrangeIconsByExtension,ViewArrangeIconsAutoArrange,
 			ViewArrangeIconsAlignToGrid,ViewLineUpIcons,
-			ViewSelectDetails,ViewRefresh,OptionsSettings,
+			ViewSelectDetails,ViewRefresh,OptionsSettings,OptionsSettingsTool,
 			HelpAbout,PresetSave,PresetRemove,MultidirNextSelection,MultidirPrevSelection,
 			MultidirNewDirectory,MultidirRemoveSelection,NullMenuCommand};
 		ActionMenuCommands* b=new ActionMenuCommands[sizeof(a)/sizeof(ActionMenuCommands)];
@@ -196,8 +197,9 @@ public:
 		MaximizeOrRestoreDialog = 7,
 		ShowOpenOrHideDialog = 8,
 		ShowDialogAndGetDirFromExplorer = 9,
+		StopLocatingOrCloseWindow = 10,
 
-		ShowHideDialogLast = ShowDialogAndGetDirFromExplorer
+		ShowHideDialogLast = StopLocatingOrCloseWindow
 	};
 
 	enum ActionResultList { 
@@ -215,8 +217,10 @@ public:
 		ExecuteCommand = 11,
 		SelectFile = 12,
 		RenameFile = 13,
+		SelectNthFile = 14,
+		ExecuteNthFile = 15,
 		
-		ResultListLast = RenameFile
+		ResultListLast = ExecuteNthFile
 	};
 
 	enum ActionMisc {
@@ -268,6 +272,7 @@ public:
 		LPWSTR m_szPreset;
 		LPWSTR m_szValue;
 		SelectFileType m_nSelectFileType;
+		int m_nItem;
 	};
 
 	// highest bit = 1 : mainmenu

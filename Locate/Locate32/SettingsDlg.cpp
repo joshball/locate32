@@ -6211,10 +6211,14 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 				}
 				break;
 			case 2: // Action
-				if (((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize()>1)
-					g_szBuffer=allocstring(IDS_SHORTCUTMULTIPLEACTIONS);
-				else if (pLvdi->item.state&LVIS_SELECTED)
+				if (pLvdi->item.state&LVIS_SELECTED)
 				{
+					if (((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize()>1)
+					{
+						g_szBuffer=allocstring(IDS_SHORTCUTMULTIPLEACTIONS);
+						break;
+					}
+					
 					int nCurSel=m_SubActionCombo.GetCurSel();
 					UINT nSubAction=0;
 					CAction::Action nAction=GetSelectedAction();
@@ -6235,10 +6239,19 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 				}				
 				else
 				{
-					CStringW Buffer;
-					FormatActionLabel(Buffer,(CAction::Action)((CShortcut*)pLvdi->item.lParam)->m_apActions[0]->m_nAction,
-						((CShortcut*)pLvdi->item.lParam)->m_apActions[0]->m_nSubAction);
-					g_szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
+					CStringA Buffer;
+					for (int i=0;i<((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize();i++)
+					{
+						CStringW Action;
+						FormatActionLabel(Action,(CAction::Action)((CShortcut*)pLvdi->item.lParam)->m_apActions[i]->m_nAction,
+							((CShortcut*)pLvdi->item.lParam)->m_apActions[i]->m_nSubAction);
+						
+						if (i>0)
+							Buffer << ", ";
+						Buffer << Action;
+					}
+
+					g_szBuffer=Buffer.GiveBuffer();
 				}
 				break;
 			default:
@@ -6318,10 +6331,14 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 				}
 				break;
 			case 2: // Action
-				if (((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize()>1)
-					g_szwBuffer=allocstringW(IDS_SHORTCUTMULTIPLEACTIONS);
-				else if (pLvdi->item.state&LVIS_SELECTED)
+				if (pLvdi->item.state&LVIS_SELECTED)
 				{
+					if (((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize()>1)
+					{
+						g_szwBuffer=allocstringW(IDS_SHORTCUTMULTIPLEACTIONS);
+						break;
+					}
+				
 					int nCurSel=m_SubActionCombo.GetCurSel();
 					UINT nSubAction=0;
 					CAction::Action nAction=GetSelectedAction();
@@ -6343,8 +6360,15 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 				else
 				{
 					CStringW Buffer;
-					FormatActionLabel(Buffer,(CAction::Action)((CShortcut*)pLvdi->item.lParam)->m_apActions[0]->m_nAction,
-						((CShortcut*)pLvdi->item.lParam)->m_apActions[0]->m_nSubAction);
+					for (int i=0;i<((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize();i++)
+					{
+						CStringW Action;
+						FormatActionLabel(Action,(CAction::Action)((CShortcut*)pLvdi->item.lParam)->m_apActions[i]->m_nAction,
+							((CShortcut*)pLvdi->item.lParam)->m_apActions[i]->m_nSubAction);
+						if (i>0)
+							Buffer << L", ";
+						Buffer << Action;
+					}
 					g_szwBuffer=Buffer.GiveBuffer();
 				}
 				break;
@@ -6929,7 +6953,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	EnableDlgItem(IDC_STATICSUBACTION,nItem!=-1); // Subaction static text
 	m_SubActionCombo.EnableWindow(nItem!=-1); // Subaction combo
 
-	ShowState ssVerb=swHide,ssMessage=swHide,ssCommand=swHide,ssWhichFile=swHide,ssChangeValue=swHide;
+	ShowState ssVerb=swHide,ssMessage=swHide,ssCommand=swHide,ssWhichFile=swHide;
+	ShowState ssChangeValue=swHide,ssItem=swHide;
 	
 	if (nItem!=-1)
 	{
@@ -6984,6 +7009,10 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 				break;
 			case CAction::SelectFile:
 				ssWhichFile=swShow;
+				break;
+			case CAction::SelectNthFile:
+			case CAction::ExecuteNthFile:
+				ssItem=swShow;
 				break;
 			}
             break;
@@ -7049,6 +7078,9 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 
 	ShowDlgItem(IDC_STATICWHICHFILE,ssWhichFile);
 	m_WhichFileCombo.ShowWindow(ssWhichFile);
+
+	ShowDlgItem(IDC_STATICITEM,ssItem);
+	ShowDlgItem(IDC_ITEM,ssItem);
 
 }
 
@@ -7226,14 +7258,16 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 	SetDlgItemText(IDC_LPARAM,szEmpty);
 	SetDlgItemText(IDC_COMMAND,szEmpty);
 	SetDlgItemText(IDC_VALUE,szEmpty);
+	SetDlgItemInt(IDC_ITEM,1,FALSE);
 	m_WhichFileCombo.SetCurSel(0);
 
 
 	switch (pAction->m_nAction)
 	{
 	case CAction::ResultListItems:
-		if (pAction->m_nResultList==CAction::Execute)
+		switch (pAction->m_nResultList)
 		{
+		case CAction::Execute:
 			if (pAction->m_szVerb==NULL)
 				m_VerbCombo.SetCurSel(0);
 			else
@@ -7241,11 +7275,19 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 				m_VerbCombo.SetCurSel(-1);
 				m_VerbCombo.SetText(pAction->m_szVerb);
 			}
-		}
-		else if (pAction->m_nResultList==CAction::ExecuteCommand && pAction->m_szCommand!=NULL)
-			SetDlgItemText(IDC_COMMAND,pAction->m_szCommand);
-		else if (pAction->m_nResultList==CAction::SelectFile)
+			break;
+		case CAction::ExecuteCommand:
+			if (pAction->m_szCommand!=NULL)
+				SetDlgItemText(IDC_COMMAND,pAction->m_szCommand);
+			break;
+		case CAction::SelectFile:
 			m_WhichFileCombo.SetCurSel(pAction->m_nSelectFileType);	
+			break;
+		case CAction::SelectNthFile:
+		case CAction::ExecuteNthFile:
+			SetDlgItemInt(IDC_ITEM,pAction->m_nItem+1,FALSE);
+			break;
+		}
 		break;
 	case CAction::Misc:
 		if ((pAction->m_nMisc==CAction::SendMessage || pAction->m_nMisc==CAction::PostMessage) &&
@@ -7321,37 +7363,53 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 		pAction->m_nResultList=(CAction::ActionResultList)m_SubActionCombo.GetCurSel();
 		if ((int)pAction->m_nResultList==CB_ERR)
 			pAction->m_nResultList=CAction::Execute;
-		else if (pAction->m_nResultList==CAction::Execute)
+		else 
 		{
-			int nSelection=m_VerbCombo.GetCurSel();
-			if (nSelection==CB_ERR)
+			switch (pAction->m_nResultList)
 			{
-				UINT nLen=(UINT)m_VerbCombo.GetTextLength();
-				pAction->m_szVerb=new WCHAR[nLen+1];
-				m_VerbCombo.GetText(pAction->m_szVerb,nLen+1);
+			case CAction::Execute:
+				{
+					int nSelection=m_VerbCombo.GetCurSel();
+					if (nSelection==CB_ERR)
+					{
+						UINT nLen=(UINT)m_VerbCombo.GetTextLength();
+						pAction->m_szVerb=new WCHAR[nLen+1];
+						m_VerbCombo.GetText(pAction->m_szVerb,nLen+1);
+					}
+					else if (nSelection!=0)
+					{
+						UINT nLen=(UINT)m_VerbCombo.GetLBTextLen(nSelection);
+						pAction->m_szVerb=new WCHAR[nLen+1];
+						m_VerbCombo.GetLBText(nSelection,pAction->m_szVerb);
+					}
+					break;
+				}
+			case CAction::ExecuteCommand:
+				{
+					// Get command
+					UINT nLen=GetDlgItemTextLength(IDC_COMMAND);
+					if (nLen>0)
+					{
+						pAction->m_szCommand=new WCHAR[nLen+1];
+						GetDlgItemText(IDC_COMMAND,pAction->m_szCommand,nLen+1);
+					}
+					break;
+				}
+			case CAction::SelectFile:
+				pAction->m_nSelectFileType=(CSubAction::SelectFileType)m_WhichFileCombo.GetCurSel();
+				if (int(pAction->m_nSelectFileType)==CB_ERR)
+					pAction->m_nSelectFileType=CSubAction::NextFile;
+				break;
+			case CAction::SelectNthFile:
+			case CAction::ExecuteNthFile:
+				{
+					BOOL bTranslated;
+					pAction->m_nItem=GetDlgItemInt(IDC_ITEM,&bTranslated,FALSE)-1;
+					if (!bTranslated)
+						pAction->m_nItem=0;
+					break;
+				}
 			}
-			else if (nSelection!=0)
-			{
-				UINT nLen=(UINT)m_VerbCombo.GetLBTextLen(nSelection);
-				pAction->m_szVerb=new WCHAR[nLen+1];
-				m_VerbCombo.GetLBText(nSelection,pAction->m_szVerb);
-			}
-		}
-		else if (pAction->m_nResultList==CAction::ExecuteCommand)
-		{
-			// Get command
-			UINT nLen=GetDlgItemTextLength(IDC_COMMAND);
-			if (nLen>0)
-			{
-				pAction->m_szCommand=new WCHAR[nLen+1];
-				GetDlgItemText(IDC_COMMAND,pAction->m_szCommand,nLen+1);
-			}
-		}
-		else if (pAction->m_nResultList==CAction::SelectFile)
-		{
-			pAction->m_nSelectFileType=(CSubAction::SelectFileType)m_WhichFileCombo.GetCurSel();
-			if (int(pAction->m_nSelectFileType)==CB_ERR)
-				pAction->m_nSelectFileType=CSubAction::NextFile;
 		}
 		break;
 	case CAction::Misc:

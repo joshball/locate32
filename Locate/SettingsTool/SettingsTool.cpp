@@ -190,6 +190,18 @@ BOOL SaveSettings(HWND hWnd)
 
 BOOL RestoreSettings(HWND hWnd)
 {	
+	// Check whether locate32 is running
+	HWND hLocateSTWindow=FindWindow("LOCATEAPPST",NULL);
+	if (hLocateSTWindow!=NULL)
+	{
+		char szText[100];
+		LoadString(hInst,IDS_LOCATE32RUNNING,szText,100);
+		if (MessageBox(hWnd,szText,NULL,MB_OKCANCEL|MB_ICONINFORMATION))
+			return FALSE;
+	}
+
+
+
 	char szPath[MAX_PATH]="";
 	char szTitle[100],szFilter[200];
 	OSVERSIONINFO ve;

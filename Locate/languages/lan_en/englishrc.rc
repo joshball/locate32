@@ -652,7 +652,9 @@ BEGIN
 	LTEXT           "File:",IDC_STATICWHICHFILE,115,281,41,9
     COMBOBOX        IDC_WHICHFILE,158,279,122,119,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
-    
+    LTEXT           "Item:",IDC_STATICITEM,115,281,41,9
+    EDITTEXT        IDC_ITEM,158,279,122,12,ES_AUTOHSCROLL|ES_NUMBER
+	
 END
 
 IDD_SHORTCUTADVANCED DIALOGEX 100, 100, 273, 200
@@ -739,6 +741,8 @@ BEGIN
     COMBOBOX        IDC_VERB,176,290,95,100,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Command (path=%d, parent=%p):",IDC_STATICCOMMAND,9,292,130,8
     EDITTEXT        IDC_COMMAND,140,290,134,12,ES_AUTOHSCROLL
+    LTEXT           "Item:",IDC_STATICITEM,9,292,130,8
+    EDITTEXT        IDC_ITEM,140,290,134,12,ES_AUTOHSCROLL
 	DEFPUSHBUTTON   "OK",IDC_OK,171,314,50,14
     PUSHBUTTON      "Cancel",IDC_CANCEL,225,314,50,14
 	LTEXT           "&File:",IDC_STATICWHICHFILE,140,292,32,8
@@ -918,6 +922,7 @@ BEGIN
     POPUP "&Options"
     BEGIN
         MENUITEM "&Settings", IDM_SETTINGS
+		MENUITEM "Setting Backup tool", IDM_SETTOOL
     END
     POPUP "&Help"
     BEGIN
@@ -1502,12 +1507,16 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_SYSWIN32S           "Running on Windows %d.%d with Win32s Build:%d"
-    IDS_SYSWIN95            "Running on Windows'95 version %d.%d.%d"
-    IDS_SYSWIN98            "Running on Windows'98 version %d.%d.%d"
-    IDS_SYSWINNT            "Running on Windows NT %d.%d Build: %d"
-    IDS_SYSWINME            "Running on Windows Millenium %d.%d.%d"
-    IDS_SYSWIN2000WORKSTATION "Running on Windows 2000 Workstation %d.%d Build %d"
+    IDS_SYSWIN32S				"Running on Windows %d.%d with Win32s Build:%d"
+    IDS_SYSWIN95				"Running on Windows'95 version %d.%d.%d"
+    IDS_SYSWIN98				"Running on Windows'98 version %d.%d.%d"
+    IDS_SYSWINNT				"Running on Windows NT %d.%d Build: %d"
+    IDS_SYSWINME				"Running on Windows Millenium %d.%d.%d"
+    IDS_SYSWIN2000WORKSTATION	"Running on Windows 2000 Workstation %d.%d Build %d"
+	IDS_SYSWIN2003SERVER		"Running on Windows 2003 Server %d.%d Build %d"
+	IDS_SYSWINVISTA				"Running on Windows Vista %d.%d Build %d"
+	IDS_SYSWINSERVERLONGHORN	"Running on Windows Server ""Longhorn"" %d.%d Build %d"
+
 END
 
 STRINGTABLE 
@@ -1708,7 +1717,7 @@ BEGIN
 	IDS_ACTIONCATACTIVATETAB			"Activate Tab"
 	IDS_ACTIONCATMENUCOMMAND			"Menu Command"
 	IDS_ACTIONCATSHOWHIDEDIALOG			"Show / Hide dialog"
-	IDS_ACTIONCATTRESULTLIST			"Result item"
+	IDS_ACTIONCATTRESULTLIST			"Result list"
 	IDS_ACTIONCATMISC					"Miscellaneous"
 	IDS_ACTIONCATCHANGEVALUE			"Change field"
 	IDS_ACTIONCATPRESETS				"Presets"
@@ -1719,9 +1728,10 @@ BEGIN
 	IDS_ACTIONSWDIALOGOPENORCLOSE		"Open / Close dialog"
 	IDS_ACTIONSWDIALOGRESTORE			"Restore dialog"
 	IDS_ACTIONSWDIALOGMAXIMIZE			"Maximize dialog"
-	IDS_ACTIONSWDIALOMAXIMIZEORRESTORE	"Maximize / Restore dialog"
-	IDS_ACTIONSWDIALOMSHOWOPENORHIDE	"Show or Open / Hide dialog"
-	IDS_ACTIONSWDIALOMSHOWANDDIRFROMEXPLORER	"Show dialog and path from Explorer"
+	IDS_ACTIONSWDIALOGMAXIMIZEORRESTORE	"Maximize / Restore dialog"
+	IDS_ACTIONSWDIALOGSHOWOPENORHIDE	"Show or Open / Hide dialog"
+	IDS_ACTIONSWDIALOGSHOWANDDIRFROMEXPLORER	"Show dialog and path from Explorer"
+	IDS_ACTIONSWDIALOGSSTOPLOCATINGORCLOSEDIALOG "Stop locating or close dialog"
 	IDS_ACTIONRESITEMEXECUTE			"Execute item"
 	IDS_ACTIONRESITEMCOPY				"Copy file (to clipboard)"
 	IDS_ACTIONRESITEMCUT				"Cut file (to clipboard)"
@@ -1740,6 +1750,8 @@ BEGIN
 	IDS_ACTIONRESITEMPREVFILE			"Previous file"
 	IDS_ACTIONRESITEMNEXTNONDELETEDFILE	"Next non-deleted file"
 	IDS_ACTIONRESITEMPREVNONDELETEDFILE	"Previous non-deleted file"
+	IDS_ACTIONRESITEMSELECTNTHITEM		"Select Nth file"
+	IDS_ACTIONRESITEMEXECUTENTHITEM		"Execute Nth file"
 	IDS_ACTIONADVSENDMESSAGE			"Send message"
 	IDS_ACTIONADVPOSTMESSAGE			"Post message"
 END

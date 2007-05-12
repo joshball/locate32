@@ -910,6 +910,9 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDM_SETTINGS:
 		OnSettings();
 		break;
+	case IDM_SETTOOL:
+		OnSettingsTool();
+		break;
 	case IDM_SELECTDETAILS:
 		OnSelectDetails();
 		break;
@@ -1411,7 +1414,7 @@ void CLocateDlg::StartBackgroundOperations()
 void CLocateDlg::StopBackgroundOperations()
 {
 	//DebugMessage("CLocateDlg::StopBackgroundOperations():  BEGIN");
-	if (m_pLocater!=NULL)
+	if (IsLocating())
 		return;
 
 	if (m_pFileNotificationsThread!=NULL)
@@ -1585,7 +1588,7 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 		m_pBackgroundUpdater->Stop();
 	if (m_pFileNotificationsThread!=NULL)
 		m_pFileNotificationsThread->Stop();
-	if (m_pLocater!=NULL)
+	if (IsLocating())
 		m_pLocater->StopLocating();
 	
 	// Deleting previous items
@@ -1720,9 +1723,12 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 						WCHAR* pTemp=new WCHAR[nIndex+3];
 						if (pStr[0]!=L'*')
 						{
+							// Insert asterisk to begin
 							pTemp[0]=L'*';
 							MemCopyW(pTemp+1,pStr,nIndex);
-							if (pStr[nIndex-1]!=L'*')
+							// Insert asterisk to the end of string if thre is no 
+							// that already and extension is not specified
+							if (pStr[nIndex-1]!=L'*' && FirstCharIndex(pStr,L'.')==-1)
 							{	
 								pTemp[nIndex+1]=L'*';
 								pTemp[nIndex+2]=L'\0';
@@ -1733,7 +1739,9 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 						else
 						{
 							sMemCopyW(pTemp,pStr,nIndex);
-							if (pStr[nIndex-1]!=L'*')
+							// Insert asterisk to the end of string if thre is no 
+							// that already and extension is not specified
+							if (pStr[nIndex-1]!=L'*' && FirstCharIndex(pStr,L'.')==-1)
 							{	
 								pTemp[nIndex]=L'*';
 								pTemp[nIndex+1]=L'\0';
@@ -2422,6 +2430,24 @@ int CLocateDlg::SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSortin
 	}
 }
 	
+void CLocateDlg::OnSettingsTool()
+{
+	// Save settings
+	SaveResultlistActions();
+	SaveDialogTexts();
+	SaveRegistry();
+	if ((m_pListCtrl->GetStyle() & LVS_TYPEMASK)==LVS_REPORT)
+			m_pListCtrl->SaveColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\General","ListWidths");
+	GetLocateAppWnd()->SaveSchedules();
+	GetLocateApp()->SaveRegistry();
+
+
+	CStringW sExeName(GetApp()->GetExeNameW());
+	ShellExecuteW(*this,NULL,sExeName.Left(sExeName.FindLast('\\')+1)+L"settool.exe",
+		NULL,NULL,SW_SHOW);
+
+}
+
 void CLocateDlg::OnStop()
 {
 	CWaitCursor wait;
@@ -2429,7 +2455,7 @@ void CLocateDlg::OnStop()
 	if (m_pBackgroundUpdater!=NULL)
 		m_pBackgroundUpdater->StopWaiting();
 
-	if (m_pLocater!=NULL)
+	if (IsLocating())
 		m_pLocater->StopLocating();
 }
 
@@ -2445,7 +2471,7 @@ void CLocateDlg::OnNewSearch()
 	if (m_pBackgroundUpdater!=NULL)
 		m_pBackgroundUpdater->Stop();
 	
-	if (m_pLocater!=NULL)
+	if (IsLocating())
 		m_pLocater->StopLocating();
 
 	RemoveResultsFromList();
@@ -2502,7 +2528,7 @@ void CLocateDlg::OnDestroy()
 	CDialog::OnDestroy();
 	
 	// Ensure that locating process is terminated
-	if (m_pLocater!=NULL)
+	if (IsLocating())
 	{
 		m_pLocater->StopLocating();
 		DebugFormatMessage("CLocateDlg::OnDestroy(): m_pLocater=%X",(DWORD)m_pLocater);
@@ -2612,6 +2638,8 @@ void CLocateDlg::OnDestroy()
 	PostQuitMessage(0);
 
 	DebugMessage("CLocateDlg::OnDestroy() END");
+
+
 
 }
 
@@ -3500,6 +3528,7 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 			if (nSelectedItem!=-1)
 				m_pListCtrl->SetItemState(nSelectedItem,0,LVIS_SELECTED|LVIS_FOCUSED);
 			m_pListCtrl->SetItemState(nItem,LVIS_SELECTED|LVIS_FOCUSED,LVIS_SELECTED|LVIS_FOCUSED);
+			m_pListCtrl->EnsureVisible(nItem,FALSE);
 			
 			break;
 
@@ -3508,6 +3537,28 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 	case CAction::RenameFile:
 		OnRenameFile(nItem);
 		break;
+	case CAction::SelectNthFile:
+	case CAction::ExecuteNthFile:
+		{
+			// Unselect other items
+			int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+			while (nItem!=-1)
+			{
+				if (nItem!=(int)pExtraInfo)					
+					m_pListCtrl->SetItemState(nItem,0,LVIS_SELECTED|LVIS_FOCUSED);
+				nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+			}
+
+			// Selcet item
+			m_pListCtrl->SetItemState((int)pExtraInfo,LVIS_SELECTED|LVIS_FOCUSED,LVIS_SELECTED|LVIS_FOCUSED);
+			m_pListCtrl->EnsureVisible((int)pExtraInfo,FALSE);
+			
+			
+			// Execute item
+			if (m_nResultAction==CAction::ExecuteNthFile)
+				OnExecuteFile(NULL,(int)pExtraInfo);
+			break;
+		}
 	}
 }
 
@@ -4208,7 +4259,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Name);
 						
-						if (m_pLocater==NULL) // Locating in process
+						if (!IsLocating()) // Locating in process
 							m_pBackgroundUpdater->StopWaiting();
 					}
 					
@@ -4237,7 +4288,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 
 						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,InFolder)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,InFolder);
-						if (m_pLocater==NULL) // Locating is not in process
+						if (!IsLocating()) // Locating is not in process
 							m_pBackgroundUpdater->StopWaiting();
 					}
 
@@ -4260,7 +4311,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,%d)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem,DWORD(nDetail));
 						
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,nDetail);
-						if (m_pLocater==NULL) // Locating is not in process
+						if (!IsLocating()) // Locating is not in process
 							m_pBackgroundUpdater->StopWaiting();
 					}
 					pLvdi->item.mask=LVIF_TEXT;
@@ -4351,7 +4402,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Name);
 						
-						if (m_pLocater==NULL) // Locating in process
+						if (!IsLocating()) // Locating in process
 							m_pBackgroundUpdater->StopWaiting();
 					}
 					
@@ -4381,7 +4432,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 
 						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,InFolder)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,InFolder);
-						if (m_pLocater==NULL) // Locating is not in process
+						if (!IsLocating()) // Locating is not in process
 							m_pBackgroundUpdater->StopWaiting();
 					}
 
@@ -4404,7 +4455,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,%d)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem,DWORD(nDetail));
 						
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,nDetail);
-						if (m_pLocater==NULL) // Locating is not in process
+						if (!IsLocating()) // Locating is not in process
 							m_pBackgroundUpdater->StopWaiting();
 					}
 					pLvdi->item.mask=LVIF_TEXT;

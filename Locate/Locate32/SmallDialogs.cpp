@@ -123,37 +123,50 @@ void CSelectColumnsDlg::SaveActionFields(ColumnItem* pColumn)
 			pColumn->m_pActions[nWhen]->ClearExtraInfo(CAction::ResultListItems);
 		}
 
-		if (pColumn->m_pActions[nWhen]->m_nResultList==CAction::Execute)
+		switch (pColumn->m_pActions[nWhen]->m_nResultList)
 		{
-			int nSelection=m_VerbCombo.GetCurSel();
-			if (nSelection==CB_ERR)
+		case CAction::Execute:
 			{
-				UINT nLen=(UINT)m_VerbCombo.GetTextLength();
-				pColumn->m_pActions[nWhen]->m_szVerb=new WCHAR[nLen+1];
-				m_VerbCombo.GetText(pColumn->m_pActions[nWhen]->m_szVerb,nLen+1);
+				int nSelection=m_VerbCombo.GetCurSel();
+				if (nSelection==CB_ERR)
+				{
+					UINT nLen=(UINT)m_VerbCombo.GetTextLength();
+					pColumn->m_pActions[nWhen]->m_szVerb=new WCHAR[nLen+1];
+					m_VerbCombo.GetText(pColumn->m_pActions[nWhen]->m_szVerb,nLen+1);
+				}
+				else if (nSelection!=0)
+				{
+					UINT nLen=(UINT)m_VerbCombo.GetLBTextLen(nSelection);
+					pColumn->m_pActions[nWhen]->m_szVerb=new WCHAR[nLen+1];
+					m_VerbCombo.GetLBText(nSelection,pColumn->m_pActions[nWhen]->m_szVerb);
+				}
+				break;
 			}
-			else if (nSelection!=0)
+		case CAction::ExecuteCommand:
 			{
-				UINT nLen=(UINT)m_VerbCombo.GetLBTextLen(nSelection);
-				pColumn->m_pActions[nWhen]->m_szVerb=new WCHAR[nLen+1];
-				m_VerbCombo.GetLBText(nSelection,pColumn->m_pActions[nWhen]->m_szVerb);
+				// Get command
+				UINT nLen=GetDlgItemTextLength(IDC_COMMAND);
+				if (nLen>0)
+				{
+					pColumn->m_pActions[nWhen]->m_szCommand=new WCHAR[nLen+1];
+					GetDlgItemText(IDC_COMMAND,pColumn->m_pActions[nWhen]->m_szCommand,nLen+1);
+				}
+				break;
 			}
-		}
-		else if (pColumn->m_pActions[nWhen]->m_nResultList==CAction::ExecuteCommand)
-		{
-			// Get command
-			UINT nLen=GetDlgItemTextLength(IDC_COMMAND);
-			if (nLen>0)
-			{
-				pColumn->m_pActions[nWhen]->m_szCommand=new WCHAR[nLen+1];
-				GetDlgItemText(IDC_COMMAND,pColumn->m_pActions[nWhen]->m_szCommand,nLen+1);
-			}
-		}
-		else if (pColumn->m_pActions[nWhen]->m_nResultList==CAction::SelectFile)
-		{
+		case CAction::SelectFile:
 			pColumn->m_pActions[nWhen]->m_nSelectFileType=(CSubAction::SelectFileType)m_WhichFileCombo.GetCurSel();
 			if (int(pColumn->m_pActions[nWhen]->m_nSelectFileType)==CB_ERR)
 				pColumn->m_pActions[nWhen]->m_nSelectFileType=CSubAction::NextFile;
+			break;
+		case CAction::SelectNthFile:
+		case CAction::ExecuteNthFile:
+			{
+				BOOL bTranslated;
+				pColumn->m_pActions[nWhen]->m_nItem=GetDlgItemInt(IDC_ITEM,&bTranslated,FALSE)-1;
+				if (!bTranslated)
+					pColumn->m_pActions[nWhen]->m_nItem=0;
+				break;
+			}
 		}
 	}
 }
@@ -166,6 +179,7 @@ void CSelectColumnsDlg::SetActionFields(ColumnItem* pColumn)
 	m_VerbCombo.SetCurSel(0);
 	m_WhichFileCombo.SetCurSel(0);
 	SetDlgItemText(IDC_COMMAND,szEmpty);
+	SetDlgItemInt(IDC_ITEM,1,FALSE);
 
 
 	if (pColumn->m_pActions[nWhen]==NULL)
@@ -174,8 +188,9 @@ void CSelectColumnsDlg::SetActionFields(ColumnItem* pColumn)
 	{
         m_ActionCombo.SetCurSel(pColumn->m_pActions[nWhen]->m_nSubAction+1);
 		
-        if (pColumn->m_pActions[nWhen]->m_nResultList==CSubAction::Execute)
+        switch (pColumn->m_pActions[nWhen]->m_nResultList)
 		{
+		case CSubAction::Execute:
 			if (pColumn->m_pActions[nWhen]->m_szVerb==NULL)
 				m_VerbCombo.SetCurSel(0);
 			else
@@ -183,11 +198,19 @@ void CSelectColumnsDlg::SetActionFields(ColumnItem* pColumn)
 				m_VerbCombo.SetCurSel(-1);
 				m_VerbCombo.SetText(pColumn->m_pActions[nWhen]->m_szVerb);
 			}
-		}
-		else if (pColumn->m_pActions[nWhen]->m_nResultList==CSubAction::ExecuteCommand && pColumn->m_pActions[nWhen]->m_szCommand!=NULL)
-			SetDlgItemText(IDC_COMMAND,pColumn->m_pActions[nWhen]->m_szCommand);
-		else if (pColumn->m_pActions[nWhen]->m_nResultList==CSubAction::SelectFile)
+			break;
+		case CSubAction::ExecuteCommand:
+			if (pColumn->m_pActions[nWhen]->m_szCommand!=NULL)
+				SetDlgItemText(IDC_COMMAND,pColumn->m_pActions[nWhen]->m_szCommand);
+			break;
+		case CSubAction::SelectFile:
 			m_WhichFileCombo.SetCurSel(pColumn->m_pActions[nWhen]->m_nSelectFileType);	
+			break;
+		case CSubAction::SelectNthFile:
+		case CSubAction::ExecuteNthFile:
+			SetDlgItemInt(IDC_ITEM,pColumn->m_pActions[nWhen]->m_nItem+1,FALSE);
+			break;
+		}
 	}
 
 }
@@ -469,7 +492,7 @@ BOOL CSelectColumnsDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 
 void CSelectColumnsDlg::EnableItems()
 {
-	ShowState ssCommand=swHide,ssVerb=swHide,ssWhichFile=swHide;
+	ShowState ssCommand=swHide,ssVerb=swHide,ssWhichFile=swHide,ssItem=swHide;
 	
 	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
 	
@@ -486,12 +509,22 @@ void CSelectColumnsDlg::EnableItems()
 		EnableDlgItem(IDC_HIDE,bChecked);
 
 		int nAction=m_ActionCombo.GetCurSel();
-		if (nAction==CSubAction::Execute+1)
+		switch (nAction)
+		{
+		case CSubAction::Execute+1:
 			ssVerb=swShow;
-		else if (nAction==CSubAction::ExecuteCommand+1)
+			break;
+		case CSubAction::ExecuteCommand+1:
 			ssCommand=swShow;
-		else if (nAction==CSubAction::SelectFile+1)
+			break;
+		case CSubAction::SelectFile+1:
 			ssWhichFile=swShow;
+			break;
+		case CSubAction::SelectNthFile+1:
+		case CSubAction::ExecuteNthFile+1:
+			ssItem=swShow;
+			break;
+		}
 
 	}
 	else
@@ -520,6 +553,9 @@ void CSelectColumnsDlg::EnableItems()
 
 	ShowDlgItem(IDC_STATICCOMMAND,ssCommand);
 	ShowDlgItem(IDC_COMMAND,ssCommand);
+
+	ShowDlgItem(IDC_STATICITEM,ssItem);
+	ShowDlgItem(IDC_ITEM,ssItem);
 
 	ShowDlgItem(IDC_STATICVERB,ssVerb);
 	m_VerbCombo.ShowWindow(ssVerb);

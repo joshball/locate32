@@ -20,5 +20,6 @@
 // LOWORD(wParam) for Locate32Communication
 #define LOCATEMSG_ACTIVATEINSTANCE			0
 #define LOCATEMSG_INSTANCEEXITED			1
+#define LOCATEMSG_EXITPROCESSS				2
 
 #endif

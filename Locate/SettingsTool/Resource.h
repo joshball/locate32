@@ -27,6 +27,8 @@
 #define IDS_RESTOREFILTER9x             120
 #define IDS_ERRORCANNOTRUNREGEDIT       121
 #define IDS_CANNOTRESOLVEFILETYPE       122
+#define IDS_STRING122                   122
+#define IDS_LOCATE32RUNNING             122
 #define IDR_MAINFRAME                   128
 #define IDD_MAIN                        129
 #define IDC_RESTORESETTINGS             1001

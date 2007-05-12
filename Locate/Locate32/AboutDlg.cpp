@@ -121,19 +121,37 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 			}
 		case VER_PLATFORM_WIN32_NT:
 			{
-				if (ver.dwMajorVersion>=5 && ver.dwMinorVersion>=1)
+				if (ver.dwMajorVersion==6)
 				{
+					// Windows XP products
 					OSVERSIONINFOEX osx;
 					osx.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);
 					GetVersionEx((OSVERSIONINFO*)&osx);
-					text.Format(IDS_SYSWINXP,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+					if (osx.wProductType==VER_NT_SERVER)
+						text.Format(IDS_SYSWINSERVERLONGHORN,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+					else
+						text.Format(IDS_SYSWINVISTA,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
 					text << ' ' << osx.szCSDVersion;
 				}
-				else if (ver.dwMajorVersion>=5)
+				else if (ver.dwMajorVersion==5 && ver.dwMinorVersion>=1)
 				{
+					// Windows XP products
 					OSVERSIONINFOEX osx;
 					osx.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);
 					GetVersionEx((OSVERSIONINFO*)&osx);
+					if (osx.wProductType==VER_NT_SERVER)
+						text.Format(IDS_SYSWIN2003SERVER,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+					else
+						text.Format(IDS_SYSWINXP,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+					text << ' ' << osx.szCSDVersion;
+				}
+				else if (ver.dwMajorVersion==5)
+				{
+					// Windows 2000 products
+					OSVERSIONINFOEX osx;
+					osx.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);
+					GetVersionEx((OSVERSIONINFO*)&osx);
+
 					if (osx.wProductType==VER_NT_SERVER && osx.wSuiteMask&VER_SUITE_ENTERPRISE)
 						text.Format(IDS_SYSWIN2000ENTEPRISE,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
 					else if (osx.wProductType==VER_NT_SERVER)

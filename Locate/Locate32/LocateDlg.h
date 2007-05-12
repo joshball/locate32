@@ -544,7 +544,7 @@ public:
 	void ChangeBackgroundOperationsPriority(BOOL bLower);
 
 	void BeginDragFiles(CListCtrl* pList);
-
+	
 
 	BOOL ResolveSystemLVStatus();
 	BOOL SetListSelStyle();
@@ -585,6 +585,7 @@ protected:
 	void OnAlignToGrid();
 	void OnRefresh();
 	void OnSettings() { GetLocateAppWnd()->OnSettings(); }
+	void OnSettingsTool();
 	void OnProperties(int nItem=1);
 	void OnRemoveFromThisList();
 	void OnSelectAll();
@@ -635,7 +636,8 @@ protected:
 	void LoadPreset(LPCWSTR szPreset);
 	static DWORD CheckExistenceOfPreset(LPCWSTR szName,DWORD* pdwPresets); // Returns index to preset or FFFFFFFF
 
-	
+	BOOL IsLocating() const { return m_pLocater!=NULL; }
+
 
 	static BOOL CALLBACK LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueCode,DWORD_PTR dwFoundFiles,const CLocater* pLocater);
 	static BOOL CALLBACK LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater);
