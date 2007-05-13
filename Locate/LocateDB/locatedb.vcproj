@@ -293,7 +293,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_DEBUG_LOGGING"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_DEBUG_LOGGING;HFC_NOALLOCTRACKING"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="HFCLib.h"
@@ -355,7 +355,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_DEBUG_LOGGING"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_DEBUG_LOGGING;HFC_NOALLOCTRACKING"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="HFCLib.h"

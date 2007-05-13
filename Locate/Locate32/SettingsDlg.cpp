@@ -2266,7 +2266,14 @@ void CSettingsProperties::CDatabasesSettingsPage::OnRestore()
 
 void CSettingsProperties::CDatabasesSettingsPage::OnThreads()
 {
-	int nThreads=GetDlgItemInt(IDC_THREADS);
+	BOOL bError;
+	int nThreads=(int)SendDlgItemMessage(IDC_THREADSPIN,UDM_GETPOS32,0,LPARAM(&bError));
+	if (bError)
+	{
+		nThreads=GetDlgItemInt(IDC_THREADS,&bError,FALSE);
+		if (!bError)
+			nThreads=1;
+	}
 
 	if (nThreads<1)
 		SetDlgItemInt(IDC_THREADS,nThreads=1,FALSE);
@@ -4652,11 +4659,11 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 	
 	// Month type combo
 	CComboBox Combo(GetDlgItem(IDC_MTYPE));
-	Combo.AddString(ID2W(IDS_FIRST));
-	Combo.AddString(ID2W(IDS_SECOND));
-	Combo.AddString(ID2W(IDS_THIRD));
-	Combo.AddString(ID2W(IDS_FOURTH));
-	Combo.AddString(ID2W(IDS_LAST));
+	Combo.AddString(ID2W(IDS_WEEKFIRST));
+	Combo.AddString(ID2W(IDS_WEEKSECOND));
+	Combo.AddString(ID2W(IDS_WEEKTHIRD));
+	Combo.AddString(ID2W(IDS_WEEKFOURTH));
+	Combo.AddString(ID2W(IDS_WEEKLAST));
 	
 	// Days combo
 	Combo.AssignToDlgItem(*this,IDC_MDAYS);
@@ -4679,26 +4686,22 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 
 	
 	// Setting Every spin (and maybe other things)
-	CSpinButtonCtrl SpinControl(GetDlgItem(IDC_SPIN));
+	CSpinButtonCtrl SpinControl(GetDlgItem(IDC_EVERYSPIN));
 	SpinControl.SetRange(1,32000);
 	SpinControl.SetBuddy(GetDlgItem(IDC_EVERY));
 	switch (m_pSchedule->m_nType)
 	{
 	case CSchedule::typeMinutely:
 		SpinControl.SetPos(m_pSchedule->m_tMinutely.wEvery);
-		SetDlgItemInt(IDC_EVERY,m_pSchedule->m_tMinutely.wEvery);
 		break;
 	case CSchedule::typeHourly:
 		SpinControl.SetPos(m_pSchedule->m_tHourly.wEvery);
-		SetDlgItemInt(IDC_EVERY,m_pSchedule->m_tHourly.wEvery);
 		break;
 	case CSchedule::typeDaily:
 		SpinControl.SetPos(m_pSchedule->m_tDaily.wEvery);
-		SetDlgItemInt(IDC_EVERY,m_pSchedule->m_tDaily.wEvery);
 		break;
 	case CSchedule::typeWeekly:
 		SpinControl.SetPos(m_pSchedule->m_tWeekly.wEvery);
-		SetDlgItemInt(IDC_EVERY,m_pSchedule->m_tWeekly.wEvery);
 		if (m_pSchedule->m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Monday)
 			CheckDlgButton(IDC_MON,BST_CHECKED);
 		if (m_pSchedule->m_tWeekly.bDays&CSchedule::SWEEKLYTYPE::Tuesday)
@@ -4730,7 +4733,6 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 			CheckDlgButton(IDC_MDAY,BST_CHECKED);
 			OnCommand(IDC_MDAY,CBN_SELCHANGE,NULL);
 			SpinControl.SetPos(m_pSchedule->m_tMonthly.bDay);
-			SetDlgItemInt(IDC_MEVERY,m_pSchedule->m_tMonthly.bDay);
 			SendDlgItemMessage(IDC_MTYPE,CB_SETCURSEL,0,0);
 			SendDlgItemMessage(IDC_MDAYS,CB_SETCURSEL,0,0);
 		}
@@ -4758,13 +4760,8 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 	SpinControl.AssignToDlgItem(*this,IDC_MINUTESPIN);
 	SpinControl.SetRange(0,59);
 	SpinControl.SetBuddy(GetDlgItem(IDC_MINUTEONHOUR));
-	if (m_pSchedule->m_nType==CSchedule::typeHourly)
-	{
-		SpinControl.SetPos(m_pSchedule->m_tHourly.wMinute);
-		SetDlgItemInt(IDC_MINUTEONHOUR,m_pSchedule->m_tHourly.wMinute);
-	}
-	else
-		SpinControl.SetPos(0);
+	SpinControl.SetPos(m_pSchedule->m_nType==CSchedule::typeHourly?
+		m_pSchedule->m_tHourly.wMinute:0);
 		
 	
 	// Once time control
@@ -4796,7 +4793,6 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 	if (m_pSchedule->m_wCpuUsageTheshold!=WORD(-1))
 	{
 		CheckDlgButton(IDC_CPUUSAGECHECK,TRUE);
-		SetDlgItemInt(IDC_CPUUSAGE,m_pSchedule->m_wCpuUsageTheshold,FALSE);
 		SpinControl.SetPos(m_pSchedule->m_wCpuUsageTheshold);
 	}
 	else
@@ -4804,7 +4800,6 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 		EnableDlgItem(IDC_CPUUSAGE,FALSE);
 		EnableDlgItem(IDC_CPUUSAGESPIN,FALSE);
 		EnableDlgItem(IDC_CPUUSAGEEXTRALABEL,FALSE);
-		SetDlgItemInt(IDC_CPUUSAGE,0,FALSE);
 		SpinControl.SetPos(100);
 	}
 
@@ -5263,7 +5258,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnTypeCha
 		txt.LoadString(IDS_MINUTELY);
 		ShowDlgItem(IDC_EVERYTXT,swShow);
 		ShowDlgItem(IDC_EVERY,swShow);
-		ShowDlgItem(IDC_SPIN,swShow);
+		ShowDlgItem(IDC_EVERYSPIN,swShow);
 		ShowDlgItem(IDC_MINUTEONHOUR,swHide);
 		ShowDlgItem(IDC_MINUTEONHOURLBL,swHide);
 		ShowDlgItem(IDC_MINUTESPIN,swHide);
@@ -5294,7 +5289,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnTypeCha
 		txt.LoadString(IDS_HOURLY);
 		ShowDlgItem(IDC_EVERYTXT,swShow);
 		ShowDlgItem(IDC_EVERY,swShow);
-		ShowDlgItem(IDC_SPIN,swShow);
+		ShowDlgItem(IDC_EVERYSPIN,swShow);
 		ShowDlgItem(IDC_MINUTEONHOUR,swShow);
 		ShowDlgItem(IDC_MINUTEONHOURLBL,swShow);
 		ShowDlgItem(IDC_MINUTESPIN,swShow); 
@@ -5325,7 +5320,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnTypeCha
 		txt.LoadString(IDS_DAILY);
 		ShowDlgItem(IDC_EVERYTXT,swShow);
 		ShowDlgItem(IDC_EVERY,swShow);
-		ShowDlgItem(IDC_SPIN,swShow);
+		ShowDlgItem(IDC_EVERYSPIN,swShow);
 		ShowDlgItem(IDC_MINUTEONHOUR,swHide);
 		ShowDlgItem(IDC_MINUTEONHOURLBL,swHide);
 		ShowDlgItem(IDC_MINUTESPIN,swHide);
@@ -5356,7 +5351,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnTypeCha
 		txt.LoadString(IDS_WEEKLY);
 		ShowDlgItem(IDC_EVERYTXT,swShow);
 		ShowDlgItem(IDC_EVERY,swShow);
-		ShowDlgItem(IDC_SPIN,swShow);
+		ShowDlgItem(IDC_EVERYSPIN,swShow);
 		ShowDlgItem(IDC_MINUTEONHOUR,swHide);
 		ShowDlgItem(IDC_MINUTEONHOURLBL,swHide);
 		ShowDlgItem(IDC_MINUTESPIN,swHide);
@@ -5387,7 +5382,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnTypeCha
 		txt.LoadString(IDS_MONTHLY);
 		ShowDlgItem(IDC_EVERYTXT,swHide);
 		ShowDlgItem(IDC_EVERY,swHide);
-		ShowDlgItem(IDC_SPIN,swHide);
+		ShowDlgItem(IDC_EVERYSPIN,swHide);
 		ShowDlgItem(IDC_MINUTEONHOUR,swHide);
 		ShowDlgItem(IDC_MINUTEONHOURLBL,swHide);
 		ShowDlgItem(IDC_MINUTESPIN,swHide);
@@ -5418,7 +5413,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnTypeCha
 		txt.LoadString(IDS_ONCE);
 		ShowDlgItem(IDC_EVERYTXT,swHide);
 		ShowDlgItem(IDC_EVERY,swHide);
-		ShowDlgItem(IDC_SPIN,swHide);
+		ShowDlgItem(IDC_EVERYSPIN,swHide);
 		ShowDlgItem(IDC_MINUTEONHOUR,swHide);
 		ShowDlgItem(IDC_MINUTEONHOURLBL,swHide);
 		ShowDlgItem(IDC_MINUTESPIN,swHide);
@@ -5449,7 +5444,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnTypeCha
 		txt.LoadString(IDS_ATSTARTUP);
 		ShowDlgItem(IDC_EVERYTXT,swHide);
 		ShowDlgItem(IDC_EVERY,swHide);
-		ShowDlgItem(IDC_SPIN,swHide);
+		ShowDlgItem(IDC_EVERYSPIN,swHide);
 		ShowDlgItem(IDC_MINUTEONHOUR,swHide);
 		ShowDlgItem(IDC_MINUTEONHOURLBL,swHide);
 		ShowDlgItem(IDC_MINUTESPIN,swHide);
@@ -5649,6 +5644,10 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_VerbCombo.AddString("explore");
 	m_VerbCombo.AddString("find");
 	m_VerbCombo.AddString("print");
+
+	// Item spin
+	SendDlgItemMessage(IDC_ITEMSPIN,UDM_SETRANGE32,1,0xFFFFFFFF>>1);
+	SendDlgItemMessage(IDC_ITEMSPIN,UDM_SETBUDDY,WPARAM(GetDlgItem(IDC_ITEM)),0);
 
 	// Enumerate presets
 	CRegKey2 RegKey;
@@ -5869,7 +5868,8 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::SubActionToIndex(CAction::Acti
 	
 }
 
-BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& str,CAction::Action nAction,UINT uSubAction) const
+BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& str,CAction::Action nAction,
+																	UINT uSubAction,void* pExtraInfo) const
 {
 	switch (nAction)
 	{
@@ -5957,6 +5957,32 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 	case CAction::ResultListItems:
 		str.LoadString(CAction::GetResultItemActionLabelStringId(
 			(CAction::ActionResultList)IndexToSubAction(CAction::ResultListItems,uSubAction)));		
+		if (uSubAction==CAction::SelectNthFile ||
+			uSubAction==CAction::ExecuteNthFile)
+		{
+			CStringW str2;
+			int nExtId=IDS_NTH;
+			WCHAR szValue[10]=L"N";
+			if (pExtraInfo!=INVALID_HANDLE_VALUE)
+			{
+				switch ((int)pExtraInfo)
+				{
+				case 0:
+					nExtId=IDS_FIRST;
+					break;
+				case 1:
+					nExtId=IDS_SECOND;
+					break;
+				case 2:
+					nExtId=IDS_THIRD;
+					break;
+				}
+				_ltow_s((int)pExtraInfo+1,szValue,10,10);
+			}
+			
+			str2.Format(str,szValue,(LPCWSTR)ID2W(nExtId));
+			str=str2;
+		}
 		break;
 	case CAction::Misc:
 		str.LoadString(CAction::GetMiscActionStringLabelId(
@@ -6230,7 +6256,22 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 					if ((nSubAction=IndexToSubAction(nAction,nCurSel))!=UINT(-1))
 					{
 						CStringW Buffer;
-						FormatActionLabel(Buffer,nAction,nSubAction);
+						void* pExtraInfo=INVALID_HANDLE_VALUE;
+						if (nAction==CAction::ResultListItems && 
+							(nSubAction==CAction::SelectNthFile ||
+							nSubAction==CAction::ExecuteNthFile))
+						{
+							BOOL bError;
+							int nItem=(int)SendDlgItemMessage(IDC_ITEMSPIN,UDM_GETPOS32,0,(LPARAM)&bError);
+							if (bError)
+							{
+								nItem=GetDlgItemInt(IDC_ITEM,&bError,FALSE);
+								bError=!bError;
+							}
+							if (!bError && nItem>0)
+								pExtraInfo=(void*)(nItem-1);							
+						}
+						FormatActionLabel(Buffer,nAction,nSubAction,pExtraInfo);
 						g_szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
 						break;
 					}
@@ -6240,11 +6281,12 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 				else
 				{
 					CStringA Buffer;
-					for (int i=0;i<((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize();i++)
+					CShortcut* pShortcut=((CShortcut*)pLvdi->item.lParam);
+					for (int i=0;i<pShortcut->m_apActions.GetSize();i++)
 					{
 						CStringW Action;
-						FormatActionLabel(Action,(CAction::Action)((CShortcut*)pLvdi->item.lParam)->m_apActions[i]->m_nAction,
-							((CShortcut*)pLvdi->item.lParam)->m_apActions[i]->m_nSubAction);
+						FormatActionLabel(Action,(CAction::Action)pShortcut->m_apActions[i]->m_nAction,
+							pShortcut->m_apActions[i]->m_nSubAction,pShortcut->m_apActions[i]->m_pExtraInfo);
 						
 						if (i>0)
 							Buffer << ", ";
@@ -6350,7 +6392,22 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 					if ((nSubAction=IndexToSubAction(nAction,nCurSel))!=UINT(-1))
 					{
 						CStringW Buffer;
-						FormatActionLabel(Buffer,nAction,nSubAction);
+						void* pExtraInfo=INVALID_HANDLE_VALUE;
+						if (nAction==CAction::ResultListItems && 
+							(nSubAction==CAction::SelectNthFile ||
+							nSubAction==CAction::ExecuteNthFile))
+						{
+							BOOL bError;
+							int nItem=(int)SendDlgItemMessage(IDC_ITEMSPIN,UDM_GETPOS32,0,(LPARAM)&bError);
+							if (bError)
+							{
+								nItem=GetDlgItemInt(IDC_ITEM,&bError,FALSE);
+								bError=!bError;
+							}
+							if (!bError && nItem>0)
+								pExtraInfo=(void*)(nItem-1);					
+						}
+						FormatActionLabel(Buffer,nAction,nSubAction,pExtraInfo);
 						g_szwBuffer=Buffer.GiveBuffer();
 						break;
 					}
@@ -6360,11 +6417,12 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 				else
 				{
 					CStringW Buffer;
-					for (int i=0;i<((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize();i++)
+					CShortcut* pShortcut=((CShortcut*)pLvdi->item.lParam);
+					for (int i=0;i<pShortcut->m_apActions.GetSize();i++)
 					{
 						CStringW Action;
-						FormatActionLabel(Action,(CAction::Action)((CShortcut*)pLvdi->item.lParam)->m_apActions[i]->m_nAction,
-							((CShortcut*)pLvdi->item.lParam)->m_apActions[i]->m_nSubAction);
+						FormatActionLabel(Action,(CAction::Action)pShortcut->m_apActions[i]->m_nAction,
+							pShortcut->m_apActions[i]->m_nSubAction,pShortcut->m_apActions[i]->m_pExtraInfo);
 						if (i>0)
 							Buffer << L", ";
 						Buffer << Action;
@@ -7079,8 +7137,12 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	ShowDlgItem(IDC_STATICWHICHFILE,ssWhichFile);
 	m_WhichFileCombo.ShowWindow(ssWhichFile);
 
+	
 	ShowDlgItem(IDC_STATICITEM,ssItem);
 	ShowDlgItem(IDC_ITEM,ssItem);
+	ShowDlgItem(IDC_ITEMSPIN,ssItem);
+	
+	
 
 }
 
@@ -7258,7 +7320,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 	SetDlgItemText(IDC_LPARAM,szEmpty);
 	SetDlgItemText(IDC_COMMAND,szEmpty);
 	SetDlgItemText(IDC_VALUE,szEmpty);
-	SetDlgItemInt(IDC_ITEM,1,FALSE);
+	SendDlgItemMessage(IDC_ITEMSPIN,UDM_SETPOS32,0,1);
 	m_WhichFileCombo.SetCurSel(0);
 
 
@@ -7285,7 +7347,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 			break;
 		case CAction::SelectNthFile:
 		case CAction::ExecuteNthFile:
-			SetDlgItemInt(IDC_ITEM,pAction->m_nItem+1,FALSE);
+			SendDlgItemMessage(IDC_ITEMSPIN,UDM_SETPOS32,0,LPARAM(pAction->m_nItem+1));
 			break;
 		}
 		break;
@@ -7403,9 +7465,15 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 			case CAction::SelectNthFile:
 			case CAction::ExecuteNthFile:
 				{
-					BOOL bTranslated;
-					pAction->m_nItem=GetDlgItemInt(IDC_ITEM,&bTranslated,FALSE)-1;
-					if (!bTranslated)
+					BOOL bError;
+					pAction->m_nItem=(int)SendDlgItemMessage(IDC_ITEMSPIN,UDM_GETPOS32,0,(LPARAM)&bError)-1;
+					if (bError)
+					{
+						pAction->m_nItem=GetDlgItemInt(IDC_ITEM,&bError,FALSE)-1;
+						bError=!bError;
+					}
+
+					if (bError || pAction->m_nItem<0)
 						pAction->m_nItem=0;
 					break;
 				}
@@ -7503,7 +7571,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::ClearActionFields()
 }
 
 
-void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CStringW& str,CAction::Action nAction,UINT uSubAction) const
+void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CStringW& str,CAction::Action nAction,
+																	UINT uSubAction,void* pExtraInfo) const
 {
 	// Insert action code
 	switch (nAction)
@@ -7536,7 +7605,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CStringW& st
 
 	// Insert subaction code
 	CStringW subaction;
-	if (GetSubActionLabel(subaction,nAction,uSubAction))
+	if (GetSubActionLabel(subaction,nAction,uSubAction,pExtraInfo))
 	{
 		if (str.IsEmpty())
 			str=subaction;

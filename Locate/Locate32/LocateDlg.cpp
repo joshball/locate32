@@ -4720,7 +4720,16 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 	CLocatedItem* pItem1=(CLocatedItem*)lParam1;
 	CLocatedItem* pItem2=(CLocatedItem*)lParam2;
 
-	
+	// If "Show folders first" is chosen, separate files and directories
+	if (GetLocateDlg()->GetFlags()&fgLVFoldersFirst)
+	{
+		if (pItem1->IsFolder() && !pItem2->IsFolder())
+			return -1;
+		else if (!pItem1->IsFolder() && pItem2->IsFolder())
+			return 1;
+	}
+
+	// Search criteria is Extension
 	if ((lParamSort&127)==Extension)
 	{
 		// Sort by extension
@@ -8952,7 +8961,6 @@ DWORD CLocateDlg::CNameDlg::GetCurrentlySelectedComboItem() const
 		m_LookIn.GetItemText(nCurSel,szTmp1,MAX_PATH);
 		m_LookIn.GetItemText(-1,szTmp2,MAX_PATH);
 		
-		DebugFormatMessage("CNameDlg::GetCurrentlySelectedComboItem UC: wcscmp(szTmp1,szTmp2)=%d",wcscmp(szTmp1,szTmp2));
 		if (wcscmp(szTmp1,szTmp2)!=0)
 			nCurSel=DWORD(CB_ERR);
 	}	
@@ -11381,22 +11389,44 @@ BOOL CLocateDlg::CSizeDateDlg::OnOk(CLocater* pLocater)
 	if (IsDlgButtonChecked(IDC_CHECKMINIMUMSIZE) &&
 		GetDlgItemTextLength(IDC_MINIMUMSIZE)>0)
 	{
-		dwMinSize=GetDlgItemInt(IDC_MINIMUMSIZE);
-		int nCurSel=(int)SendDlgItemMessage(IDC_MINSIZETYPE,CB_GETCURSEL,0,0);
-		if (nCurSel)
-			dwMinSize*=1024;
-		if (nCurSel==2)
-			dwMinSize*=1024;
+		BOOL bError;
+		dwMinSize=(DWORD)SendDlgItemMessage(IDC_MINIMUMSIZESPIN,UDM_GETPOS32,0,(LPARAM)&bError);
+		if (bError)
+		{
+			dwMinSize=GetDlgItemInt(IDC_MINIMUMSIZE,&bError,FALSE);
+			if (!bError)
+				dwMinSize=DWORD(-1);
+		}
+		
+		if (dwMinSize!=DWORD(-1))
+		{
+			int nCurSel=(int)SendDlgItemMessage(IDC_MINSIZETYPE,CB_GETCURSEL,0,0);
+			if (nCurSel)
+				dwMinSize*=1024;
+			if (nCurSel==2)
+				dwMinSize*=1024;
+		}
 	}
 	if (IsDlgButtonChecked(IDC_CHECKMAXIMUMSIZE) && 
 		GetDlgItemTextLength(IDC_MAXIMUMSIZE)>0)
 	{
-		dwMaxSize=GetDlgItemInt(IDC_MAXIMUMSIZE);
-		int nCurSel=(int)SendDlgItemMessage(IDC_MAXSIZETYPE,CB_GETCURSEL,0,0);
-		if (nCurSel)
-			dwMaxSize*=1024;
-		if (nCurSel==2)
-			dwMaxSize*=1024;
+		BOOL bError;
+		dwMaxSize=(DWORD)SendDlgItemMessage(IDC_MAXIMUMSIZESPIN,UDM_GETPOS32,0,(LPARAM)&bError);
+		if (bError)
+		{
+			dwMaxSize=GetDlgItemInt(IDC_MAXIMUMSIZE,&bError,FALSE);
+			if (!bError)
+				dwMaxSize=DWORD(-1);
+		}
+
+		if (dwMaxSize!=DWORD(-1))
+		{
+			int nCurSel=(int)SendDlgItemMessage(IDC_MAXSIZETYPE,CB_GETCURSEL,0,0);
+			if (nCurSel)
+				dwMaxSize*=1024;
+			if (nCurSel==2)
+				dwMaxSize*=1024;
+		}
 	}
 	if (IsDlgButtonChecked(IDC_CHECKMINDATE))
 	{
@@ -11725,13 +11755,33 @@ void CLocateDlg::CSizeDateDlg::LoadControlStates(CRegKey& RegKey,BOOL bPreset)
 void CLocateDlg::CSizeDateDlg::SaveControlStates(CRegKey& RegKey)
 {
 	if (IsDlgButtonChecked(IDC_CHECKMINIMUMSIZE))
-		RegKey.SetValue("SizeDate/MinimumSize",DWORD(GetDlgItemInt(IDC_MINIMUMSIZE)));
+	{
+		BOOL bError;
+		DWORD dwMinSize=(DWORD)SendDlgItemMessage(IDC_MINIMUMSIZESPIN,UDM_GETPOS32,0,(LPARAM)&bError);
+		if (bError)
+		{
+			dwMinSize=GetDlgItemInt(IDC_MINIMUMSIZE,&bError,FALSE);
+			if (!bError)
+				dwMinSize=0;
+		}
+		RegKey.SetValue("SizeDate/MinimumSize",dwMinSize);
+	}
 	else
 		RegKey.DeleteValue("SizeDate/MinimumSize");
 	RegKey.SetValue("SizeDate/MinimumSizeType",DWORD(SendDlgItemMessage(IDC_MINSIZETYPE,CB_GETCURSEL,0,0)));
 
 	if (IsDlgButtonChecked(IDC_CHECKMAXIMUMSIZE))
-		RegKey.SetValue("SizeDate/MaximumSize",DWORD(GetDlgItemInt(IDC_MAXIMUMSIZE)));
+	{
+		BOOL bError;
+		DWORD dwMaxSize=(DWORD)SendDlgItemMessage(IDC_MAXIMUMSIZESPIN,UDM_GETPOS32,0,(LPARAM)&bError);
+		if (bError)
+		{
+			dwMaxSize=GetDlgItemInt(IDC_MAXIMUMSIZE,&bError,FALSE);
+			if (!bError)
+				dwMaxSize=0;
+		}
+		RegKey.SetValue("SizeDate/MaximumSize",dwMaxSize);
+	}
 	else
 		RegKey.DeleteValue("SizeDate/MaximumSize");
 	RegKey.SetValue("SizeDate/MaximumSizeType",DWORD(SendDlgItemMessage(IDC_MAXSIZETYPE,CB_GETCURSEL,0,0)));
@@ -12444,7 +12494,7 @@ void CLocateDlg::CAdvancedDlg::OnDestroy()
 	CDialog::OnDestroy();
 	if (m_hTypeUpdaterThread!=NULL)
 	{
-		TerminateThread(m_hTypeUpdaterThread,0);
+		TerminateThread(m_hTypeUpdaterThread,0,TRUE);
 		CloseHandle(m_hTypeUpdaterThread);
 		DebugCloseThread(m_hTypeUpdaterThread);
 		m_hTypeUpdaterThread=NULL;

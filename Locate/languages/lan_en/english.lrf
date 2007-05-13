@@ -29,7 +29,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2007 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 build 7.5060
+FILEVERSION=3.0 build 7.5130
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -593,8 +593,8 @@ STRACTION_NEXTFILE=Next file
 STRACTION_PREVFILE=Previous file
 STRACTION_NEXTNONDELETEDFILE=Next non-deleted file
 STRACTION_PREVNONDELETEDFILE=Previous non-deleted file
-STRACTION_SELECTNTHITEM=Select Nth file
-STRACTION_EXECUTENTHITEM=Execute Nth file
+STRACTION_SELECTNTHITEM=Select %s%s file
+STRACTION_EXECUTENTHITEM=Execute %s%s file
 STRACTION_SENDMESSAGE=Send message
 STRACTION_POSTMESSAGE=Post message
 
@@ -961,6 +961,11 @@ STR_SELECTEDCOUNT=%d file(s) selected
 STR_SELECTEDCOUNT2=%d folder(s) selected
 STR_SELECTEDCOUNT3=%d file(s) and %d folder(s) selected
 STR_TOTALSIZE=total size %s
+STR_FIRST='st
+STR_SECOND='nd
+STR_THIRD='rd
+STR_NTH='th
+
 
 ###########################
 # Tooltips

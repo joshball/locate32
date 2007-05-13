@@ -47,7 +47,7 @@ BOOL CSelectColumnsDlg::OnInitDialog(HWND hwndFocus)
 	delete[] pDetails;
 
 	
-	CSpinButtonCtrl spin(GetDlgItem(IDC_SPIN));
+	CSpinButtonCtrl spin(GetDlgItem(IDC_WIDTHSPIN));
 	spin.SetRange(10,10000);
 	spin.SetBuddy(GetDlgItem(IDC_WIDTH));
 	
@@ -65,7 +65,14 @@ BOOL CSelectColumnsDlg::OnInitDialog(HWND hwndFocus)
 		if (nID==0)
 			break;
 
-		m_ActionCombo.AddString(ID2W(nID));
+		if (uSubItem==CAction::SelectNthFile || uSubItem==CAction::ExecuteNthFile)
+		{
+			CStringW str;
+			str.Format(nID,L"N",(LPCWSTR)ID2W(IDS_NTH));
+			m_ActionCombo.AddString(str);
+		}
+		else
+			m_ActionCombo.AddString(ID2W(nID));
 	}
 	m_ActionCombo.SetCurSel(0);
 	
@@ -85,6 +92,10 @@ BOOL CSelectColumnsDlg::OnInitDialog(HWND hwndFocus)
 	m_VerbCombo.AddString("find");
 	m_VerbCombo.AddString("print");
 	m_VerbCombo.SetCurSel(0);
+
+	// Item spin
+	SendDlgItemMessage(IDC_ITEMSPIN,UDM_SETRANGE32,1,0xFFFFFFFF>>1);
+	SendDlgItemMessage(IDC_ITEMSPIN,UDM_SETBUDDY,WPARAM(GetDlgItem(IDC_ITEM)),0);
 
 	// Insert "next/prev file"s
 	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMNEXTFILE));
@@ -161,9 +172,15 @@ void CSelectColumnsDlg::SaveActionFields(ColumnItem* pColumn)
 		case CAction::SelectNthFile:
 		case CAction::ExecuteNthFile:
 			{
-				BOOL bTranslated;
-				pColumn->m_pActions[nWhen]->m_nItem=GetDlgItemInt(IDC_ITEM,&bTranslated,FALSE)-1;
-				if (!bTranslated)
+				BOOL bError;
+				pColumn->m_pActions[nWhen]->m_nItem=(int)SendDlgItemMessage(IDC_ITEMSPIN,UDM_GETPOS32,0,(LPARAM)&bError)-1;
+				if (bError)
+				{
+					pColumn->m_pActions[nWhen]->m_nItem=GetDlgItemInt(IDC_ITEM,&bError,FALSE)-1;
+					bError=!bError;
+				}
+
+				if (bError || pColumn->m_pActions[nWhen]->m_nItem<0)
 					pColumn->m_pActions[nWhen]->m_nItem=0;
 				break;
 			}
@@ -179,7 +196,7 @@ void CSelectColumnsDlg::SetActionFields(ColumnItem* pColumn)
 	m_VerbCombo.SetCurSel(0);
 	m_WhichFileCombo.SetCurSel(0);
 	SetDlgItemText(IDC_COMMAND,szEmpty);
-	SetDlgItemInt(IDC_ITEM,1,FALSE);
+	SendDlgItemMessage(IDC_ITEMSPIN,UDM_SETPOS32,0,1);
 
 
 	if (pColumn->m_pActions[nWhen]==NULL)
@@ -208,7 +225,7 @@ void CSelectColumnsDlg::SetActionFields(ColumnItem* pColumn)
 			break;
 		case CSubAction::SelectNthFile:
 		case CSubAction::ExecuteNthFile:
-			SetDlgItemInt(IDC_ITEM,pColumn->m_pActions[nWhen]->m_nItem+1,FALSE);
+			SendDlgItemMessage(IDC_ITEMSPIN,UDM_SETPOS32,0,pColumn->m_pActions[nWhen]->m_nItem+1);
 			break;
 		}
 	}
@@ -286,7 +303,10 @@ BOOL CSelectColumnsDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			if (pItem==NULL)
 				break;
 
-			pItem->m_nWidth=GetDlgItemInt(IDC_WIDTH,NULL,FALSE);
+			BOOL bError;
+			pItem->m_nWidth=(int)SendDlgItemMessage(IDC_WIDTHSPIN,UDM_GETPOS32,0,LPARAM(&bError));
+			if (bError)
+				pItem->m_nWidth=GetDlgItemInt(IDC_WIDTH,NULL,FALSE);
 
 		}
 		break;
@@ -463,8 +483,8 @@ BOOL CSelectColumnsDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				
 			
 
-			::InvalidateRect(GetDlgItem(IDC_SPIN),NULL,TRUE);
-			SendDlgItemMessage(IDC_SPIN,UDM_SETPOS,0,pItem->m_nWidth);
+			::InvalidateRect(GetDlgItem(IDC_WIDTHSPIN),NULL,TRUE);
+			SendDlgItemMessage(IDC_WIDTHSPIN,UDM_SETPOS,0,pItem->m_nWidth);
 
 
 			CheckDlgButton(IDC_LEFT,pItem->m_nAlign==ColumnItem::Left);
@@ -538,7 +558,7 @@ void CSelectColumnsDlg::EnableItems()
 
 
 	
-	::InvalidateRect(GetDlgItem(IDC_SPIN),NULL,TRUE);
+	::InvalidateRect(GetDlgItem(IDC_WIDTHSPIN),NULL,TRUE);
 
 	EnableDlgItem(IDC_ALIGN,nItem!=-1);
 	EnableDlgItem(IDC_LEFT,nItem!=-1);
@@ -556,6 +576,7 @@ void CSelectColumnsDlg::EnableItems()
 
 	ShowDlgItem(IDC_STATICITEM,ssItem);
 	ShowDlgItem(IDC_ITEM,ssItem);
+	ShowDlgItem(IDC_ITEMSPIN,ssItem);
 
 	ShowDlgItem(IDC_STATICVERB,ssVerb);
 	m_VerbCombo.ShowWindow(ssVerb);
@@ -2373,7 +2394,7 @@ void CPropertiesSheet::CPropertiesPage::OnDestroy()
 		BOOL bRet=::GetExitCodeThread(m_hThread,&status);
 		if (bRet && status==STILL_ACTIVE)
 		{
-			::TerminateThread(m_hThread,1);
+			TerminateThread(m_hThread,1,TRUE);
 			KillTimer(0);
 		}
 

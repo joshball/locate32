@@ -88,7 +88,7 @@ CWinThread::~CWinThread()
 
 BOOL CWinThread::TerminateThread(DWORD dwExitCode)
 {
-	BOOL nRet=::TerminateThread(m_hThread,dwExitCode);
+	BOOL nRet=::TerminateThread(m_hThread,dwExitCode,TRUE);
 	this->ExitInstance();
 	return nRet;	
 }

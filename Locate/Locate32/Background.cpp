@@ -73,13 +73,11 @@ BOOL CCheckFileNotificationsThread::Stop()
 			bRet=::GetExitCodeThread(hThread,&status);
 			BOOL bTerminated=FALSE;
 	
-			while (bRet && status==STILL_ACTIVE)
+			
+			if (bRet && status==STILL_ACTIVE)
 			{
-				if (::TerminateThread(hThread,1))
+				if (::TerminateThread(hThread,1,TRUE))
 					bTerminated=TRUE;
-	
-				Sleep(100);
-				bRet=::GetExitCodeThread(hThread,&status);
 			}
 	
 			if (bTerminated && m_hThread!=NULL)
@@ -824,12 +822,10 @@ BOOL CBackgroundUpdater::Stop()
 
 			status=0;
 			bRet=::GetExitCodeThread(hThread,&status);
-			while (bRet && status==STILL_ACTIVE)
+			if (bRet && status==STILL_ACTIVE)
 			{
-				if (::TerminateThread(hThread,1))
+				if (TerminateThread(hThread,1,TRUE))
 					bTerminated=TRUE;
-				Sleep(100);
-				bRet=::GetExitCodeThread(hThread,&status);
 			}
 	
 			if (bTerminated && m_hThread!=NULL)

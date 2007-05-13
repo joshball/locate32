@@ -374,7 +374,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\keyhook;..;..\ImageHandler;..\LocateDb;..\Locater"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_DEBUG_LOGGING"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_DEBUG_LOGGING;HFC_NOALLOCTRACKING"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="HFCLib.h"
@@ -457,7 +457,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\keyhook;..;..\ImageHandler;..\LocateDb;..\Locater"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_DEBUG_LOGGING"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_DEBUG_LOGGING;HFC_NOALLOCTRACKING"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="HFCLib.h"

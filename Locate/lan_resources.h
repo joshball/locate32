@@ -56,6 +56,10 @@
 #define IDS_REGULAREXPRESSIONFULLPATH   43
 #define IDS_DEFAULT                     44
 #define IDS_LOCATINGFAILED2             45
+#define IDS_FIRST						46
+#define IDS_SECOND						47
+#define	IDS_THIRD						48
+#define	IDS_NTH							49
 #define IDS_BYTES                       50
 #define IDS_KB                          51
 #define IDS_MB                          52
@@ -331,7 +335,7 @@
 #define IDC_ENABLED                     1084
 #define IDC_TIME                        1085
 #define IDC_EVERY                       1086
-#define IDC_SPIN                        1087
+#define IDC_EVERYSPIN                   1087
 #define IDC_EVERYTXT                    1088
 #define IDC_DAYS                        1089
 #define IDC_WEEKS                       1090
@@ -419,7 +423,7 @@
 #define IDC_COLUMNS                     1151
 #define IDC_THREADS                     1152
 #define IDC_WIDTH                       1152
-#define IDC_SPIN1                       1153
+#define IDC_WIDTHSPIN                   1153
 #define IDC_THREADSPIN                  1153
 #define IDC_DBINFO                      1154
 #define IDC_WHEN                        1154
@@ -543,6 +547,7 @@
 #define IDC_PATHINDATABASELABEL			1247
 #define IDC_STATICITEM                  1248
 #define IDC_ITEM                        1249
+#define IDC_ITEMSPIN                    1250
 #define IDS_LASTERROR                   1900
 #define IDS_LASTERRORUNKNOWN            1901
 #define IDS_LASTERRORINVALIDDB          1902
@@ -935,11 +940,11 @@
 #define IDS_MONTHLY                     5913
 #define IDS_ONCE                        5914
 #define IDS_ATSTARTUP                   5915
-#define IDS_FIRST                       5921
-#define IDS_SECOND                      5922
-#define IDS_THIRD                       5923
-#define IDS_FOURTH                      5924
-#define IDS_LAST                        5925
+#define IDS_WEEKFIRST                   5921
+#define IDS_WEEKSECOND                  5922
+#define IDS_WEEKTHIRD                   5923
+#define IDS_WEEKFOURTH                  5924
+#define IDS_WEEKLAST                    5925
 #define IDS_RESULTSTRING                6000
 #define IDS_PRESETSAVETITLE             6100
 #define IDS_OVERWRITEPRESET             6101

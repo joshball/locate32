@@ -358,8 +358,8 @@ public:
 
 
 		
-		void FormatActionLabel(CStringW& str,CAction::Action nAction,UINT uSubAction) const;
-		BOOL GetSubActionLabel(CStringW& str,CAction::Action nAction,UINT uSubAction) const;
+		void FormatActionLabel(CStringW& str,CAction::Action nAction,UINT uSubAction,void* pExtraInfo=INVALID_HANDLE_VALUE) const;
+		BOOL GetSubActionLabel(CStringW& str,CAction::Action nAction,UINT uSubAction,void* pExtraInfo=INVALID_HANDLE_VALUE) const;
 		UINT IndexToSubAction(CAction::Action nAction,UINT nIndex) const;
 		UINT SubActionToIndex(CAction::Action nAction,UINT nSubAction) const;
 
@@ -403,8 +403,6 @@ public:
 		BOOL bFreeDialogs;
 		HMENU hMainMenu;
 		HMENU hPopupMenu;
-
-
 
 	};
 

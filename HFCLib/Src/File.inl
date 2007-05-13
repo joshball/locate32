@@ -65,8 +65,8 @@ inline CFile::~CFile()
 #else
 		fclose((FILE*)m_hFile);
 #endif
+		DebugCloseFile(m_hFile);
 
-		DebugCloseHandle(dhtFile,m_hFile,W2A(m_strFileName));
 	}
 }
 

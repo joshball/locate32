@@ -1013,7 +1013,8 @@ BOOL CLocater::StopLocating()
 	DWORD status;
 	if (hThread==NULL)
 		return FALSE;
-	
+
+
 	BOOL bRet=::GetExitCodeThread(m_hThread,&status);
 	if (bRet && status==STILL_ACTIVE)
 	{
@@ -1032,15 +1033,7 @@ BOOL CLocater::StopLocating()
 		
 		if (bRet && status==STILL_ACTIVE)
 		{
-			::TerminateThread(hThread,1);
-		
-			bRet=::GetExitCodeThread(hThread,&status);
-			while (bRet && status==STILL_ACTIVE)
-			{
-				::TerminateThread(hThread,1);
-				Sleep(100);
-				bRet=::GetExitCodeThread(hThread,&status);
-			}
+			TerminateThread(hThread,1,TRUE);
 			
 			m_pProc(m_dwData,FinishedDatabase,ueStopped,0,this);
 			m_pProc(m_dwData,FinishedLocating,ueStopped,0,this);

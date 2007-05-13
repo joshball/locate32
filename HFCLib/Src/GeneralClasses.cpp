@@ -774,10 +774,11 @@ LONG CRegKey::CopyKey(HKEY hSource,HKEY hDestination)
 			
 
 		RegCloseKey(hSubSource);
-		DebugCloseHandle(dhtRegKey,hSubSource,szName);
-
 		RegCloseKey(hSubDestination);
-		DebugCloseHandle(dhtRegKey,hSubDestination,szName);
+		DebugCloseRegKey(hSubSource);
+		DebugCloseRegKey(hSubDestination);
+
+		
 
 	}
 

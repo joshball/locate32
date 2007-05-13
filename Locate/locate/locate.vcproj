@@ -350,7 +350,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;LOCATER_NOTHREAD;PCRE_STATIC;_DEBUG_LOGGING"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;LOCATER_NOTHREAD;PCRE_STATIC;_DEBUG_LOGGING;HFC_NOALLOCTRACKING"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -427,7 +427,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;LOCATER_NOTHREAD;PCRE_STATIC;_DEBUG_LOGGING"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;LOCATER_NOTHREAD;PCRE_STATIC;_DEBUG_LOGGING;HFC_NOALLOCTRACKING"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"

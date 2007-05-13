@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,7,5060
- PRODUCTVERSION 3,0,7,5060
+ FILEVERSION 3,0,7,5130
+ PRODUCTVERSION 3,0,7,5130
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,7 +44,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 build 7.5060"
+            VALUE "FileVersion", "3.0 build 7.5130"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2007 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
@@ -248,7 +248,7 @@ BEGIN
                     IDC_EVERYTXT,15,50,25,11
     EDITTEXT        IDC_EVERY,40,48,32,13,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        IDC_MEVERY,48,48,24,13,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Spin1",IDC_SPIN,"msctls_updown32",UDS_SETBUDDYINT | 
+    CONTROL         "Spin1",IDC_EVERYSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
                     UDS_ALIGNRIGHT | UDS_ARROWKEYS,87,34,9,11
     LTEXT           "day",IDC_DAYS,
                     77,50,25,9
@@ -654,7 +654,9 @@ BEGIN
                     WS_TABSTOP
     LTEXT           "Item:",IDC_STATICITEM,115,281,41,9
     EDITTEXT        IDC_ITEM,158,279,122,12,ES_AUTOHSCROLL|ES_NUMBER
-	
+	CONTROL         "Spin1",IDC_ITEMSPIN,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,
+					258,279,22,12	
 END
 
 IDD_SHORTCUTADVANCED DIALOGEX 100, 100, 273, 200
@@ -722,7 +724,7 @@ BEGIN
     PUSHBUTTON		"Reset &Actions",IDC_RESETACTIONS,215,117,60,14
     LTEXT           "Select details for file list:",IDC_STATIC,7,7,95,8
     EDITTEXT        IDC_WIDTH,149,223,38,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "",IDC_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT,189,222,18,16
+    CONTROL         "",IDC_WIDTHSPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT,189,222,18,16
     LTEXT           "Align:",IDC_ALIGN,8,241,25,10
     CONTROL         "&Left",IDC_LEFT,"Button",BS_AUTORADIOBUTTON,41,241,48,
                     10
@@ -743,6 +745,9 @@ BEGIN
     EDITTEXT        IDC_COMMAND,140,290,134,12,ES_AUTOHSCROLL
     LTEXT           "Item:",IDC_STATICITEM,9,292,130,8
     EDITTEXT        IDC_ITEM,140,290,134,12,ES_AUTOHSCROLL
+	CONTROL         "Spin1",IDC_ITEMSPIN,"msctls_updown32",
+                    UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,
+					240,290,34,12
 	DEFPUSHBUTTON   "OK",IDC_OK,171,314,50,14
     PUSHBUTTON      "Cancel",IDC_CANCEL,225,314,50,14
 	LTEXT           "&File:",IDC_STATICWHICHFILE,140,292,32,8
@@ -1457,11 +1462,11 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_FIRST               "First"
-    IDS_SECOND              "Second"
-    IDS_THIRD               "Third"
-    IDS_FOURTH              "Fourth"
-    IDS_LAST                "Last"
+    IDS_WEEKFIRST				"First"
+    IDS_WEEKSECOND              "Second"
+    IDS_WEEKTHIRD               "Third"
+    IDS_WEEKFOURTH              "Fourth"
+    IDS_WEEKLAST                "Last"
 END
 
 STRINGTABLE 
@@ -1750,8 +1755,8 @@ BEGIN
 	IDS_ACTIONRESITEMPREVFILE			"Previous file"
 	IDS_ACTIONRESITEMNEXTNONDELETEDFILE	"Next non-deleted file"
 	IDS_ACTIONRESITEMPREVNONDELETEDFILE	"Previous non-deleted file"
-	IDS_ACTIONRESITEMSELECTNTHITEM		"Select Nth file"
-	IDS_ACTIONRESITEMEXECUTENTHITEM		"Execute Nth file"
+	IDS_ACTIONRESITEMSELECTNTHITEM		"Select %s%s file"
+	IDS_ACTIONRESITEMEXECUTENTHITEM		"Execute %s%s file"
 	IDS_ACTIONADVSENDMESSAGE			"Send message"
 	IDS_ACTIONADVPOSTMESSAGE			"Post message"
 END
@@ -1928,6 +1933,10 @@ BEGIN
     IDS_NO						"No"
     IDS_OK						"OK"
     IDS_CANCEL					"Cancel"
+	IDS_FIRST					"'st"
+	IDS_SECOND					"'nd"
+	IDS_THIRD					"'rd"
+	IDS_NTH						"'th"
     IDS_DOCUMENTFOLDERS			"Document Folders"
     IDS_GETFOLDER				"Get Folder:"
 	IDS_EVERYWERE				"Everywhere"

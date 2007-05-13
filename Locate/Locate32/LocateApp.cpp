@@ -3339,7 +3339,7 @@ void CLocateAppWnd::OnDestroy()
 			if (m_pLocateDlgThread!=NULL)
 			{
 				DebugFormatMessage("Terminating locate dialog thread %X",(DWORD)m_pLocateDlgThread);
-				::TerminateThread(hLocateThread,1);
+				TerminateThread(hLocateThread,1,TRUE);
 				
 				if (m_pLocateDlgThread!=NULL)
 					delete m_pLocateDlgThread;

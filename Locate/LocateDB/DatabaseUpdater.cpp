@@ -499,15 +499,8 @@ BOOL CDatabaseUpdater::StopUpdating(BOOL bForce)
 
 		if (bRet && status==STILL_ACTIVE)
 		{
-			::TerminateThread(hThread,1);
-			bRet=::GetExitCodeThread(hThread,&status);
-			while (bRet && status==STILL_ACTIVE)
-			{
-				::TerminateThread(hThread,1);
-				Sleep(100);
-				bRet=::GetExitCodeThread(hThread,&status);
-			}
-
+			::TerminateThread(hThread,1,TRUE);
+			
 			m_pProc(m_dwData,FinishedUpdating,ueStopped,this);
 			if (m_hThread!=NULL)
 				m_pProc(m_dwData,ClassShouldDelete,ueStopped,this);

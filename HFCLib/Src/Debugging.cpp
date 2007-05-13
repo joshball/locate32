@@ -43,6 +43,7 @@ struct DebugHandleInfo {
 	LPCSTR szInfo;
 	int iLine;
 	LPCSTR szFile;
+	DWORD hThreadId;
 
 	DebugHandleInfo* pNext;
 };
@@ -483,6 +484,7 @@ void DebugOpenHandle2(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLine
 	pNewInfo->pNext=NULL;
 	pNewInfo->bType=bType;
 	pNewInfo->pValue=pValue;
+	pNewInfo->hThreadId=GetCurrentThreadId();
 	if (szInfo!=NULL)
 	{
 		int iLen=istrlen(szInfo)+1;
@@ -532,6 +534,7 @@ void DebugOpenHandle2(DebugHandleType bType,void* pValue,LPCWSTR szInfo,int iLin
 	pNewInfo->pNext=NULL;
 	pNewInfo->bType=bType;
 	pNewInfo->pValue=pValue;
+	pNewInfo->hThreadId=GetCurrentThreadId();
 	if (szInfo!=NULL)
 	{
 		int iLen=istrlenw(szInfo)+1;
@@ -703,9 +706,10 @@ void DebugLogOpenHandles()
 		DebugHandleInfo* pInfo=pFirstDebugHandle;
 		while (pInfo!=NULL)
 		{
-			DebugFormatMessage("Open %s handle %X info=%s line=%d file=%s",
+			DebugFormatMessage("Open %s handle %X info=%s line=%d file=%s thread id=%X",
 				DebugHandleTypeToStr(pInfo->bType),pInfo->pValue,
-				pInfo->szInfo!=NULL?pInfo->szInfo:"NULL",pInfo->iLine,pInfo->szFile);
+				pInfo->szInfo!=NULL?pInfo->szInfo:"NULL",pInfo->iLine,
+				pInfo->szFile,pInfo->hThreadId);
 
 			pInfo=pInfo->pNext;
 		}
@@ -731,6 +735,31 @@ void DebugClearOpenHandlesList()
 	LeaveCriticalSection(&cHandleCriticalSection);
 }
 
+BOOL WINAPI  TerminateThread(HANDLE hThread,DWORD dwExitCode,BOOL bWaitUntilExited)
+{
+	// Terminate thread	
+	if (!::TerminateThread(hThread,dwExitCode))
+		return FALSE;
+
+	if (bWaitUntilExited || cHandleCriticalSection.OwningThread==hThread)
+		WaitForSingleObject(hThread,1000);
+
+	DWORD dwThreadId=GetThreadId(hThread);
+
+	DebugFormatMessage("Thread %X (id=%X) terminated",hThread,dwThreadId);
+
+	if (GetThreadId(cHandleCriticalSection.OwningThread)==dwThreadId)
+	{
+		// Close critical section
+		cHandleCriticalSection.OwningThread=GetCurrentThread();
+		LeaveCriticalSection(&cHandleCriticalSection);
+	}
+
+	
+
+	
+	return TRUE;
+}
 
 
 
@@ -1164,6 +1193,8 @@ LRESULT CALLBACK ViewOpenHandlesWndProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARAM
 	}
 	return DefWindowProc(hWnd,uMsg,wParam,lParam);
 }
+
+
 
 static void RefreshDebugLogViewer(HWND hWnd)
 {

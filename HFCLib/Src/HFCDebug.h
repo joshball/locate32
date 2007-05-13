@@ -119,6 +119,14 @@ void DebugCloseHandle3(DebugHandleType bType,void* pValue,LPCWSTR szInfo,int iLi
 void DebugLogOpenHandles();
 			
 
+// Functions will handle logging correctly, use these instead
+BOOL WINAPI TerminateThread(HANDLE hThread,DWORD dwExitCode,BOOL bWaitUntilExited);
+inline BOOL WINAPI _TerminateThread(HANDLE hThread,DWORD dwExitCode)
+{
+	TerminateThread(hThread,dwExitCode,FALSE);
+}
+
+
 
 
 
@@ -166,6 +174,14 @@ inline void DebugCloseHandle2(DebugHandleType bType,void* pValue,LPCWSTR szInfo,
 inline void DebugCloseHandle3(DebugHandleType bType,void* pValue,LPCWSTR szInfo,int iLine,LPCSTR szFile) {}
 #endif
 
+// Terminate thread
+inline BOOL WINAPI TerminateThread(HANDLE hThread,DWORD dwExitCode,BOOL bWaitUntilExited)
+{
+	BOOL bRet=::TerminateThread(hThread,dwExitCode);
+	WaitForSingleObject(hThread,1000);
+	return bRet;
+}
+#define _TerminateThread	TerminateThread
 
 #define DEBUG_NEW new
 
