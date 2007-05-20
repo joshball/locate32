@@ -306,6 +306,8 @@ BOOL CDatabaseInfo::GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase*
 		// Skipping other header fields
 		DWORD dwBlockSize;
 		dbFile->Read(dwBlockSize);
+
+
 		dbFile->Seek(dwBlockSize,CFile::current);
 
 		// Reading drive/directory information

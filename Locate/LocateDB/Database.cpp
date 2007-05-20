@@ -1402,13 +1402,14 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 
 	BOOL bRet=TRUE;
 	DWORD dwTemp;
-	CString Creator,Description,Extra1,Extra2;
 	
 
 	try {
 		// Opening database and trying to read header
 		pInFile=new CFile(szArchive,CFile::defRead|CFile::otherStrNullTerminated|CFile::otherErrorWhenEOF,TRUE);
 		pInFile->CloseOnDelete();
+
+		ULONGLONG ulFileSize=pInFile->GetLength64();
 
 		szBuffer=new char[12];
 		pInFile->Read(szBuffer,11);
@@ -1426,35 +1427,74 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 				szArchive);
 		}
 
-		// Reading fields
-		pInFile->Read(dwTemp); // Header size
-		pInFile->Read(Creator);
-		pInFile->Read(Description);
-		pInFile->Read(Extra1);
-		pInFile->Read(Extra2);
+		// Is unicode character set in use
+		BOOL bUnicode=szBuffer[10]&0x20;
 
+		// Reading header size
+		pInFile->Read(dwTemp);
+
+		// Open output file		
 		pOutFile=new CFile(szTempFile,CFile::defWrite|CFile::otherStrNullTerminated,TRUE);
 		pOutFile->CloseOnDelete();
 		
-		// Writing identification, '\17=0x11=0x10|0x1' 0x1 = Long filenames and 0x10 = ANSI
-		pOutFile->Write("LOCATEDB20",10);
-		pOutFile->Write(BYTE(0x11));
+		// Writing "LOCATE20" and character set idenfication
+		pOutFile->Write(szBuffer,11);
+		
 
-        // Writing header size
-		pOutFile->Write(DWORD(
-			Creator.GetLength()+1+ // Author data
-			Description.GetLength()+1+ // Comments data
-			Extra1.GetLength()+1+
-			dwExtraLen+ // Extra
-			4+ // Time
-			4+ // Number of files
-			4  // Number of directories
-			));
+		// Copy creator, description and extra fields
+		if (bUnicode)
+		{
+			CStringW Creator,Description,Extra1,Extra2;
+			
+			pInFile->Read(Creator);
+			
+			pInFile->Read(Description);
+			pInFile->Read(Extra1);
+			pInFile->Read(Extra2);
 
-        pOutFile->Write(Creator);
-		pOutFile->Write(Description);
-		pOutFile->Write(Extra1);
-		pOutFile->Write(szExtra,dwExtraLen);
+			 // Writing header size
+			pOutFile->Write(DWORD(
+				(Creator.GetLength()+1)*2+ // Author data
+				(Description.GetLength()+1)*2+ // Comments data
+				(Extra1.GetLength()+1)*2+
+				dwExtraLen*2+ // Extra
+				4+ // Time
+				4+ // Number of files
+				4  // Number of directories
+				));
+
+			pOutFile->Write(Creator);
+			pOutFile->Write(Description);
+			pOutFile->Write(Extra1);
+			pOutFile->Write(szExtra,dwExtraLen*2);
+		}
+		else
+		{
+			CString Creator,Description,Extra1,Extra2;
+			
+			pInFile->Read(Creator);
+			pInFile->Read(Description);
+			pInFile->Read(Extra1);
+			pInFile->Read(Extra2);
+
+			// Writing header size
+			pOutFile->Write(DWORD(
+				Creator.GetLength()+1+ // Author data
+				Description.GetLength()+1+ // Comments data
+				dwExtraLen+ // Extra
+				4+ // Time
+				4+ // Number of files
+				4  // Number of directories
+				));
+
+			pOutFile->Write(Creator);
+			pOutFile->Write(Description);
+			pOutFile->Write(Extra1);
+			pOutFile->Write(W2A(szExtra),dwExtraLen);
+		}
+
+		
+   
 		
 		// TIME, FILE and DIRECTORY counts
 		pInFile->Read(szBuffer,3*sizeof(DWORD));
@@ -1464,6 +1504,12 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 		pInFile->Read(dwTemp);
 		while (dwTemp!=0)
 		{
+			if (dwTemp>ulFileSize-pInFile->GetPosition64())
+			{
+				// Invalid database
+				throw CFileException(CFileException::invalidFile);
+			}
+
 			pOutFile->Write(dwTemp);
 
 			delete[] szBuffer;

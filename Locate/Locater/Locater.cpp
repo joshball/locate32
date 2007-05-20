@@ -304,6 +304,8 @@ BOOL CLocater::LocatingProc()
 					-1,m_pCurrentDatabase->szArchive);
 			}
 
+			ULONGLONG ulFileSize=dbFile->GetLength64();
+
 			LocaterDebugMessage("CLocater::LocatingProc() READINGDB");
 	
 			// Reading and verifing header
@@ -338,6 +340,12 @@ BOOL CLocater::LocatingProc()
 				{
 					// There is directories in which files should be
 					dbFile->Read(dwBlockSize);
+					
+					if (dwBlockSize>ulFileSize-dbFile->GetPosition64())
+					{
+						// Invalid database
+						throw CFileException(CFileException::invalidFile);
+					}
 
 					LocaterDebugMessage("CLocater::LocatingProc(W) block size readed A");
 
@@ -396,6 +404,8 @@ BOOL CLocater::LocatingProc()
 							// Reading data to buffer
 							delete[] szBuffer;
 							
+						
+			
 							pPoint=szBuffer=new BYTE[dwBlockSize];
 							
 							dbFile->Read(szBuffer,dwBlockSize);
@@ -443,6 +453,12 @@ BOOL CLocater::LocatingProc()
 
 					// No restrinctions about directories
 					dbFile->Read(dwBlockSize);
+
+					if (dwBlockSize>ulFileSize-dbFile->GetPosition64())
+					{
+						// Invalid database
+						throw CFileException(CFileException::invalidFile);
+					}
 
 					LocaterDebugMessage("CLocater::LocatingProc(W) block size readed B");
 					
@@ -534,6 +550,13 @@ BOOL CLocater::LocatingProc()
 					// There is directories in which files should be
 
 					dbFile->Read(dwBlockSize);
+
+					if (dwBlockSize>ulFileSize-dbFile->GetPosition64())
+					{
+						// Invalid database
+						throw CFileException(CFileException::invalidFile);
+					}
+
 
 					LocaterDebugMessage("CLocater::LocatingProc() block size readed A");
 
@@ -637,6 +660,13 @@ BOOL CLocater::LocatingProc()
 
 					// No restrinctions about directories
 					dbFile->Read(dwBlockSize);
+
+					if (dwBlockSize>ulFileSize-dbFile->GetPosition64())
+					{
+						// Invalid database
+						throw CFileException(CFileException::invalidFile);
+					}
+
 
 					LocaterDebugMessage("CLocater::LocatingProc() block size readed B");
 					

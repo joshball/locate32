@@ -317,8 +317,11 @@ namespace FileSystem {
 	BOOL Rename(LPCSTR lpszOldName,LPCSTR lpszNewName);
 	BOOL MoveFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,DWORD dwFlags=0);	
 	BOOL Remove(LPCSTR lpszFileName);
+	BOOL CopyFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,BOOL bFailIfExists=FALSE);
+
 	BOOL GetStatus(LPCSTR lpszFileName,CFileStatus& rStatus);
 	BOOL SetStatus(LPCSTR lpszFileName,const CFileStatus& status);
+	
 	
 	BOOL IsFile(LPCSTR szFileName);
 	INT IsDirectory(LPCSTR szDirectoryName); // return: 0 not dir, 1 fixed, 2 remote
@@ -383,7 +386,8 @@ namespace FileSystem {
 	BOOL Rename(LPCWSTR lpszOldName,LPCWSTR lpszNewName);
 	BOOL MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,DWORD dwFlags=0);	
 	BOOL Remove(LPCWSTR lpszFileName);
-	
+	BOOL CopyFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,BOOL bFailIfExists=FALSE);
+
 	
 	
 	BOOL CreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes=NULL);

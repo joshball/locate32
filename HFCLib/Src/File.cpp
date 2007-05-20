@@ -1049,7 +1049,7 @@ ULONG_PTR CFile::GetPosition(PLONG pHigh) const
 #ifdef WIN32
 ULONGLONG CFile::GetPosition64() const
 {
-	LONG high;
+	LONG high=0;
 	DWORD dwPos=::SetFilePointer(m_hFile,0,&high,FILE_CURRENT);
 	if (dwPos==(DWORD)-1)
 	{

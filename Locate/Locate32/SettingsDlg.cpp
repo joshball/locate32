@@ -2412,15 +2412,26 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 	CStringW Path;
 	fd.GetFilePath(Path);
 	
-	if (FileSystem::IsFile(Path))
+	if (FileSystem::IsFile(pDatabase->GetArchiveName()))
 	{
-		if (pDatabase->SaveExtraBlockToDbFile(Path))
-			return;
+		if (Path.CompareNoCase(pDatabase->GetArchiveName())!=-1 &&
+			fd.GetFilterIndex()==1)
+		{
+			// Destination is not same as the database file, copy content of file
+			FileSystem::CopyFile(pDatabase->GetArchiveName(),Path,FALSE);
+		}
+		
+		if (FileSystem::IsFile(Path))
+		{
+			// Save extra block
+			if (pDatabase->SaveExtraBlockToDbFile(Path))
+				return;
 
-		CStringW msg;
-		msg.Format(IDS_FILEISNOTDATABASE,LPCWSTR(Path));
-		if (MessageBox(msg,ID2W(IDS_EXPORTDATABASESETTINGS),MB_ICONQUESTION|MB_YESNO)==IDNO)
-			return;			
+			CStringW msg;
+			msg.Format(IDS_FILEISNOTDATABASE,LPCWSTR(Path));
+			if (MessageBox(msg,ID2W(IDS_EXPORTDATABASESETTINGS),MB_ICONQUESTION|MB_YESNO)==IDNO)
+				return;			
+		}
 	}
 
 	CFile* pFile=NULL;

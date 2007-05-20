@@ -264,6 +264,11 @@ inline BOOL FileSystem::MoveFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,
 	return ::MoveFileEx(lpExistingFileName,lpNewFileName,dwFlags);	
 }
 	
+inline BOOL FileSystem::CopyFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,BOOL bFailIfExists)
+{
+	return ::CopyFile(lpExistingFileName,lpNewFileName,bFailIfExists);
+}
+
 inline UINT FileSystem::GetDriveType(LPCSTR lpRootPathName)
 {
 	return ::GetDriveType(lpRootPathName);
@@ -344,6 +349,14 @@ inline BOOL FileSystem::MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileNam
 		return ::MoveFileExW(lpExistingFileName,lpNewFileName,dwFlags);	
 	else
 		return ::MoveFileExA(W2A(lpExistingFileName),W2A(lpNewFileName),dwFlags);	
+}
+
+inline BOOL FileSystem::CopyFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,BOOL bFailIfExists)
+{
+	if (IsUnicodeSystem())
+		return ::CopyFileW(lpExistingFileName,lpNewFileName,bFailIfExists);
+	else
+		return ::CopyFileA(W2A(lpExistingFileName),W2A(lpNewFileName),bFailIfExists);
 }
 
 inline UINT FileSystem::GetDriveType(LPCWSTR lpRootPathName)
