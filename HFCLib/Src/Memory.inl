@@ -43,19 +43,34 @@ inline TYPE* CAutoPtr<TYPE>::Release()
 }
 
 template<class TYPE> 
-inline CAutoPtr<TYPE>& CAutoPtr<TYPE>::operator=(TYPE* data)
+inline void CAutoPtr<TYPE>::Assign(TYPE* data)
 {
 	if (m_data!=NULL)
 		delete m_data;
 	m_data=data;
 }
-	
+
 template<class TYPE> 
-inline CAutoPtr<TYPE>& CAutoPtr<TYPE>::operator=(CAutoPtr<TYPE>& another)
+inline void CAutoPtr<TYPE>::Assign(CAutoPtr<TYPE>& another)
 {
 	if (m_data!=NULL)
 		delete m_data;
 	m_data=another.Release();
+}
+
+template<class TYPE> 
+inline CAutoPtr<TYPE>& CAutoPtr<TYPE>::operator=(TYPE* data)
+{
+	Assign(data);
+	return *this;
+}
+
+	
+template<class TYPE> 
+inline CAutoPtr<TYPE>& CAutoPtr<TYPE>::operator=(CAutoPtr<TYPE>& another)
+{
+	Assign(another);
+	return *this;
 }
 
 
@@ -79,19 +94,33 @@ inline TYPE* CAutoPtrA<TYPE>::Release()
 }
 
 template<class TYPE> 
-inline CAutoPtrA<TYPE>& CAutoPtrA<TYPE>::operator=(TYPE* data)
+inline void CAutoPtrA<TYPE>::Assign(TYPE* data)
 {
 	if (m_data!=NULL)
 		delete[] m_data;
 	m_data=data;
 }
-	
+
 template<class TYPE> 
-inline CAutoPtrA<TYPE>& CAutoPtrA<TYPE>::operator=(CAutoPtrA<TYPE>& another)
+inline void CAutoPtrA<TYPE>::Assign(CAutoPtr<TYPE>& another)
 {
 	if (m_data!=NULL)
 		delete[] m_data;
 	m_data=another.Release();
+}
+
+template<class TYPE> 
+inline CAutoPtrA<TYPE>& CAutoPtrA<TYPE>::operator=(TYPE* data)
+{
+	Assign(data);
+	return *this;
+}
+	
+template<class TYPE> 
+inline CAutoPtrA<TYPE>& CAutoPtrA<TYPE>::operator=(CAutoPtrA<TYPE>& another)
+{
+	Assign(another);
+	return *this;
 }
 
 

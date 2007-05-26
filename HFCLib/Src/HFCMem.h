@@ -262,7 +262,7 @@ template<class TYPE>
 class CAutoPtr
 {
 public:
-	CAutoPtr(TYPE* data) { m_data=data;  }
+	CAutoPtr(TYPE* data=NULL) { m_data=data;  }
 	CAutoPtr(CAutoPtr<TYPE>& another) { m_data=another.Release(); }
 	~CAutoPtr();
 
@@ -272,6 +272,9 @@ public:
 	operator TYPE*&() { return m_data; }
 	
 	TYPE* operator ->() { return m_data; }
+
+	void Assign(TYPE* data);
+	void Assign(CAutoPtr<TYPE>& another);
 
 	CAutoPtr<TYPE>& operator=(TYPE* data);
 	CAutoPtr<TYPE>& operator=(CAutoPtr<TYPE>& another);
@@ -288,7 +291,7 @@ template<class TYPE>
 class CAutoPtrA
 {
 public:
-	CAutoPtrA(TYPE* data) { m_data=data;  }
+	CAutoPtrA(TYPE* data=NULL) { m_data=data;  }
 	CAutoPtrA(CAutoPtrA<TYPE>& another) { m_data=another.Release(); }
 	~CAutoPtrA();
 
@@ -299,11 +302,15 @@ public:
 	
 	TYPE* operator ->() { return m_data; }
 
+	void Assign(TYPE* data);
+	void Assign(CAutoPtr<TYPE>& another);
+
 	CAutoPtrA<TYPE>& operator=(TYPE* data);
 	CAutoPtrA<TYPE>& operator=(CAutoPtrA<TYPE>& another);
 
-	TYPE operator[](LONG_PTR nIndex) const { return m_data[nIndex]; }
-	TYPE& operator[](LONG_PTR nIndex) { return m_data[nIndex]; };
+	// No need for these, compiler use TYPE*& automatically
+	//TYPE operator[](LONG_PTR nIndex) const { return m_data[nIndex]; }
+	//TYPE& operator[](LONG_PTR nIndex) { return m_data[nIndex]; };
 	
 
 

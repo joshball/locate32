@@ -4,6 +4,7 @@ usage: locate [-s] [-p path] [-t type] [-d dbfile] [-r] [-D dbname] [-h] file
 parameters:
     -s          pause after page
     -i          shows what are we looking for
+    --			terminate parameter list
     -p          look in directory 'path'
     -r          'file' is interpreted as regular expression
     -rc         'file' is interpreted as regular expression (case sensitive)
@@ -11,6 +12,7 @@ parameters:
     -t          set extension
     -R          search subdirectories 
     -Rn         don't search subdirectories
+    -+			allow logical operators + and - (if you want to use -, use -- argument)
     -d file     set database file
     -D name     uses database named 'name'
     -lm:SIZE    set minimum size to SIZE, eg -lms:100k

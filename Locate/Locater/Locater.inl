@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database locater v3.0.7.3250               */
+   database locater v3.0.7.5260               */
 
 #if !defined(LOCATER_INL)
 #define LOCATER_INL

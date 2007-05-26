@@ -947,7 +947,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateFont(IDS_ADVSETRESULTLISTFONT,DefaultFontProc,NULL,&m_pSettings->m_lResultListFont),
 		NULL
 	};
-	Item* FileViewItems[]={
+	Item* ResultsListItems[]={
 		CreateCheckBox(IDS_ADVSETUSECUSTOMFONTINRESULTLIST,ResultListFontItems,DefaultCheckBoxProc,
 			CSettingsProperties::settingsUseCustomResultListFont,&m_pSettings->m_dwSettingsFlags),
 		CreateCheckBox(IDS_ADVSETNODELAYEDUPDATING,NULL,DefaultCheckBoxProc,
@@ -1026,10 +1026,12 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	};
 		
 
-	Item* ResultsItems[]={
+	Item* LocateProcessAndResultsItems[]={
 		CreateCheckBox(IDS_ADVSETLIMITRESULTS,LimitMaximumResults,LimitResultsCheckBoxProc,
 			0,&m_pSettings->m_nMaximumFoundFiles),
-		CreateRoot(IDS_ADVSETRESULTSLIST,FileViewItems),
+		CreateCheckBox(IDS_ADVSETLOGICALOPERATIONS,NULL,DefaultCheckBoxProc,
+			CLocateDlg::efEnableLogicalOperations,&m_pSettings->m_dwLocateDialogExtraFlags),
+		CreateRoot(IDS_ADVSETRESULTSLIST,ResultsListItems),
 		CreateRoot(IDS_ADVSETUPDATERESULTS,UpdateResults),
 		NULL
 	};
@@ -1077,7 +1079,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL
 	};
 
-	Item* DialogItems[]={
+	Item* LocateDialogItems[]={
 		CreateCheckBox(IDS_ADVSETLARGEMODEONLY,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgDialogLargeModeOnly,&m_pSettings->m_dwLocateDialogFlags),
 		CreateNumeric(IDS_ADVSETNUMBEROFNAMES,DefaultNumericProc,
@@ -1085,8 +1087,6 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateNumeric(IDS_ADVSETNUMBEROFTYPES,DefaultNumericProc,
 			MAKELONG(0,256),&m_pSettings->m_nNumberOfTypes),
 		CreateRoot(IDS_ADVSETLOOKINCOMBO,LookInItems),
-		CreateCheckBox(IDS_ADVSETLARGEMODEONLY,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgDialogLargeModeOnly,&m_pSettings->m_dwLocateDialogFlags),
 		CreateCheckBox(IDS_ADVSETDONTSAVELISTITEMS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::efNameDontSaveNameTypeAndDirectories,&m_pSettings->m_dwLocateDialogExtraFlags),
 		CreateCheckBox(IDS_ADVSETTOPMOST,NULL,DefaultCheckBoxProc,
@@ -1110,7 +1110,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	if (GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes")!=NULL)
 	{
 		// Needs at least Win2k
-		DialogItems[7]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
+		LocateDialogItems[6]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nTransparency);
 		StatusTooltipItems[8]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nToolTipTransparency);
@@ -1147,8 +1147,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 
 	
 	Item* Parents[]={
-		CreateRoot(IDS_ADVSETRESULTS,ResultsItems),
-		CreateRoot(IDS_ADVSETDIALOGS,DialogItems),
+		CreateRoot(IDS_ADVSETLOCATEPROCESS,LocateProcessAndResultsItems),
+		CreateRoot(IDS_ADVSETDIALOGS,LocateDialogItems),
 		CreateRoot(IDS_ADVSETUPDATEPROCESS,UpdateProcessItems),
 		CreateRoot(IDS_ADVSETMISCELLANEOUS,MiscItems),
 		CreateRoot(IDS_ADVSETSYSTEM,SystemItems),

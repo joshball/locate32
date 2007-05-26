@@ -1583,6 +1583,7 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 	CStringW Name,Title;
 	CArrayFAP<LPWSTR> aExtensions,aDirectories,aNames;
 	DWORD nRet;
+	BOOL bPlusOrMinusFound=FALSE;
 
 	if (m_pBackgroundUpdater!=NULL)
 		m_pBackgroundUpdater->Stop();
@@ -1643,7 +1644,10 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 		}
 	}
 
+	// Create locater object
 	m_pLocater=new CLocater(*pDatabases);
+
+
 
 	// Calling routines for subdialogs
 	m_SizeDateDlg.OnOk(m_pLocater);
@@ -1651,12 +1655,11 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 
 	
 
-
 	
 	// Checking name, inserting asterisks etc..
 	if (!Name.IsEmpty()) 
 	{
-		if (Name[0]==':') // Is regexp
+		if (Name[0]==':') // Is regular expression
 		{
 			Name.DelChar(0);
 			nRet|=CAdvancedDlg::flagNameIsRegularExpression;
@@ -1696,8 +1699,34 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 			
 			LPCWSTR pStr=Name;
 			
+			// Parse Name string
 			for(;;)
 			{
+				
+				// First, if logical operations can be used, check is + or - present
+				enum {
+					NotSpecified,
+					MustExist, // + found
+					MustNotExist // - found
+				} nType=NotSpecified;
+				
+				if (GetExtraFlags()&efEnableLogicalOperations)
+				{
+					if (pStr[0]==L'+')
+					{
+						nType=MustExist;
+						bPlusOrMinusFound=TRUE;
+						pStr++;
+					}
+					else if (pStr[0]==L'-')
+					{
+						nType=MustNotExist;
+						bPlusOrMinusFound=TRUE;
+						pStr++;
+					}
+				}
+
+
 				// Check whether parenthes are used
 				BOOL bParenthes=FALSE;
 				for (nIndex=0;pStr[nIndex]==L' ';nIndex++);
@@ -1706,50 +1735,87 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 					// Parenthes on use
 					bParenthes=TRUE;
 					pStr+=nIndex+1;
+					// Calculate length
 					for (nIndex=0;pStr[nIndex]!=L'\"' && pStr[nIndex]!=L'\0';nIndex++);
 				}
 				else
 				{
+					// Calculate length
 					for (nIndex=0;pStr[nIndex]!=L',' && pStr[nIndex]!=L';' && pStr[nIndex]!=L'\0';nIndex++);
 				}
 		
 				if (nIndex>0)
 				{
 					if (nRet&CAdvancedDlg::flagMatchCase)
-						aNames.Add(alloccopy(pStr,nIndex));
+					{
+						if (nType==NotSpecified)
+							aNames.Add(alloccopy(pStr,nIndex));
+						else
+						{
+							// Insert '+' or '-'
+							WCHAR* pNewString=new WCHAR[nIndex+2];
+							pNewString[0]=nType==MustExist?L'+':L'-';
+							MemCopyW(pNewString+1,pStr,nIndex);
+							pNewString[nIndex+1]='\0';
+							aNames.Add(pNewString);
+						}
+					}
 					else
 					{
 						// Inserting '*'
-						WCHAR* pTemp=new WCHAR[nIndex+3];
+						
+						
+						// 4 is enough for '*' at the begin and end of string,
+						// for '\0' and for '+' or '-'
+						WCHAR* pNewString=new WCHAR[nIndex+4]; 
+
+						if (nType!=NotSpecified)
+						{
+							pNewString[0]=nType==MustExist?L'+':L'-';
+							// Move pointer forward
+							pNewString++;
+						}
+
+
 						if (pStr[0]!=L'*')
 						{
 							// Insert asterisk to begin
-							pTemp[0]=L'*';
-							MemCopyW(pTemp+1,pStr,nIndex);
+							pNewString[0]=L'*';
+							MemCopyW(pNewString+1,pStr,nIndex);
+							
 							// Insert asterisk to the end of string if thre is no 
 							// that already and extension is not specified
 							if (pStr[nIndex-1]!=L'*' && FirstCharIndex(pStr,L'.')==-1)
 							{	
-								pTemp[nIndex+1]=L'*';
-								pTemp[nIndex+2]=L'\0';
+								pNewString[nIndex+1]=L'*';
+								pNewString[nIndex+2]=L'\0';
 							}
 							else
-								pTemp[nIndex+1]=L'\0';
+								pNewString[nIndex+1]=L'\0';
 						}
 						else
 						{
-							sMemCopyW(pTemp,pStr,nIndex);
+							sMemCopyW(pNewString,pStr,nIndex);
+							
 							// Insert asterisk to the end of string if thre is no 
 							// that already and extension is not specified
 							if (pStr[nIndex-1]!=L'*' && FirstCharIndex(pStr,L'.')==-1)
 							{	
-								pTemp[nIndex]=L'*';
-								pTemp[nIndex+1]=L'\0';
+								pNewString[nIndex]=L'*';
+								pNewString[nIndex+1]=L'\0';
 							}
 							else
-								pTemp[nIndex]=L'\0';
+								pNewString[nIndex]=L'\0';
 						}
-						aNames.Add(pTemp);
+
+						
+						if (nType!=NotSpecified)
+						{
+							// Move pointer back
+							pNewString--;
+						}
+
+						aNames.Add(pNewString);
 
 
 					}
@@ -1794,6 +1860,7 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 	if (m_NameDlg.IsDlgButtonChecked(IDC_NOSUBDIRECTORIES))
 		m_pLocater->AddAdvancedFlags(LOCATE_NOSUBDIRECTORIES);
 
+	
 
 	// Set funtion pointers
 	m_pLocater->SetFunctions(LocateProc,LocateFoundProc,LocateFoundProcW,DWORD(this));
@@ -1835,6 +1902,24 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 		Title << L" (" << DWORD(GetLocateApp()->m_nInstance+1) << L')';
 	SetText(Title);
 
+
+	// Enable LogicalOperations
+	if (bPlusOrMinusFound)
+	{
+		// '+' or '-' found
+		m_pLocater->AddAdvancedFlags(LOCATE_LOGICALOPERATIONS);
+
+		// Remove string which does not have '+' or '-' (those
+		// are meaningless
+		for (int i=0;i<aNames.GetSize();)
+		{
+			if (aNames[i][0]!=L'+' && aNames[i][0]!=L'-')
+				aNames.RemoveAt(i);
+			else
+				i++;
+		}
+	}
+				
 
 	// LocateFoundProc uses UpdateList
 	StartBackgroundOperations();
@@ -8759,6 +8844,9 @@ BOOL CLocateDlg::CNameDlg::IsChanged()
 		}
 	}
 
+	if (IsDlgButtonChecked(IDC_NOSUBDIRECTORIES))
+		return TRUE;
+
 	if (m_pMultiDirs!=NULL)
 	{
 		if (m_pMultiDirs[1]!=NULL)
@@ -10201,6 +10289,7 @@ void CLocateDlg::CNameDlg::OnClear(BOOL bInitial)
 	m_Name.SetText(szEmpty);
 	m_Type.SetText(szEmpty);
 	m_Type.EnableWindow(TRUE);
+	CheckDlgButton(IDC_NOSUBDIRECTORIES,FALSE);
 
 	if (m_pMultiDirs!=NULL)
 	{

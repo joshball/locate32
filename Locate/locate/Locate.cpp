@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   locate.exe v3.0.7.5130                 */
+   locate.exe v3.0.7.5260                 */
 
-const char* szVersionStr="locate 3.0 build 7.5130";
+const char* szVersionStr="locate 3.0 build 7.5260";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -308,7 +308,9 @@ int wmain (int argc,wchar_t * argv[])
 	struct {
 		BYTE helps:3;
 		BYTE verbose:1;
-	} options={0,0};
+		BYTE logicalops:1;
+		BYTE noargs:1;
+	} options={0,0,0,0};
 
 	DWORD dwMinSize=DWORD(-1);
 	DWORD dwMaxSize=DWORD(-1);
@@ -328,7 +330,7 @@ int wmain (int argc,wchar_t * argv[])
 	int i;
 	for (i=1;i<argc;i++)
 	{
-		if (argv[i][0]==L'-' || argv[i][0]==L'/')
+		if ((argv[i][0]==L'-' || argv[i][0]==L'/') && !options.noargs)
 		{
 			switch (argv[i][1])
 			{
@@ -470,6 +472,12 @@ int wmain (int argc,wchar_t * argv[])
 					dwFlags|=LOCATE_NOSUBDIRECTORIES;
 				else
 					dwFlags&=~LOCATE_NOSUBDIRECTORIES;
+				break;
+			case L'+':
+				options.logicalops=1;
+				break;
+			case L'-':
+				options.noargs=1;
 				break;
 			case L'l':
 			case L'L':
@@ -782,15 +790,36 @@ int wmain (int argc,wchar_t * argv[])
 		int nIndex=(int)String.FindFirst(',');
 		if (nIndex==-1)
 		{
-			// Inserting '*':s if needed
-			if (!(dwMainFlags&flagWholeWord))
+			if (options.logicalops &&
+				(String[0]==L'+' || String[0]==L'-'))
 			{
-				if (String[0]!='*')
-					String.InsChar(0,'*');
-				if (String.LastChar()!='*')
-					String << '*';
+				locater.AddAdvancedFlags(LOCATE_LOGICALOPERATIONS);
+
+				// Inserting '*':s if needed
+				if (!(dwMainFlags&flagWholeWord))
+				{
+					if (String[1]!=L'*')
+						String.InsChar(1,L'*');
+					if (String.LastChar()!=L'*')
+						String << L'*';
+				}
+			}
+			else
+			{
+				// Inserting '*':s if needed
+				if (!(dwMainFlags&flagWholeWord))
+				{
+					if (String[0]!=L'*')
+						String.InsChar(0,L'*');
+					if (String.LastChar()!=L'*')
+						String << L'*';
+				}
 			}
 
+
+		
+			
+			
 			LPCWSTR s=String;
 
 			if (options.verbose)
@@ -811,8 +840,9 @@ int wmain (int argc,wchar_t * argv[])
 			CArrayFAP<LPWSTR> aStrings;
 			LPCWSTR pStr=String;
 			BOOL bContinue=TRUE;
+			BOOL bPlusOrMinusFound=FALSE;
 
-			while (bContinue)
+			for (;;)
 			{
 				
 				if (nIndex==-1)
@@ -821,46 +851,120 @@ int wmain (int argc,wchar_t * argv[])
 					nIndex=(int)istrlenw(pStr);
 				}
 
+				// First, if logical operations can be used, check is + or - present
+				enum {
+					NotSpecified,
+					MustExist, // + found
+					MustNotExist // - found
+				} nType=NotSpecified;
+				
+				if (options.logicalops)
+				{
+					if (pStr[0]==L'+')
+					{
+						nType=MustExist;
+						bPlusOrMinusFound=TRUE;
+						pStr++;
+						nIndex--;
+					}
+					else if (pStr[0]==L'-')
+					{
+						nType=MustNotExist;
+						bPlusOrMinusFound=TRUE;
+						pStr++;
+						nIndex--;
+					}
+				}
+
 				if (nIndex>0)
 				{
 					if (dwMainFlags&flagWholeWord)
-						aStrings.Add(alloccopy(pStr,nIndex));
+					{
+						if (nType==NotSpecified)
+							aStrings.Add(alloccopy(pStr,nIndex));
+						else
+						{
+							// Insert '+' or '-'
+							WCHAR* pNewString=new WCHAR[nIndex+2];
+							pNewString[0]=nType==MustExist?L'+':L'-';
+							MemCopyW(pNewString+1,pStr,nIndex);
+							pNewString[nIndex+1]='\0';
+							aStrings.Add(pNewString);
+						}
+					}
 					else
 					{
 						// Inserting '*'
-						WCHAR* pTemp=new WCHAR[nIndex+3];
+						// 4 is enough for '*' at the begin and end of string,
+						// for '\0' and for '+' or '-'
+						WCHAR* pNewString=new WCHAR[nIndex+4]; 
+
+						if (nType!=NotSpecified)
+						{
+							pNewString[0]=nType==MustExist?L'+':L'-';
+							// Move pointer forward
+							pNewString++;
+						}
+						
 						if (pStr[0]!=L'*')
 						{
-							pTemp[0]=L'*';
-							MemCopyW(pTemp+1,pStr,nIndex);
+							pNewString[0]=L'*';
+							MemCopyW(pNewString+1,pStr,nIndex);
 							if (pStr[nIndex-1]!=L'*')
 							{	
-								pTemp[nIndex+1]=L'*';
-								pTemp[nIndex+2]=L'\0';
+								pNewString[nIndex+1]=L'*';
+								pNewString[nIndex+2]=L'\0';
 							}
 							else
-								pTemp[nIndex+1]=L'\0';
+								pNewString[nIndex+1]=L'\0';
 						}
 						else
 						{
-							MemCopyW(pTemp,pStr,nIndex);
+							MemCopyW(pNewString,pStr,nIndex);
 							if (pStr[nIndex-1]!=L'*')
 							{	
-								pTemp[nIndex]=L'*';
-								pTemp[nIndex+1]=L'\0';
+								pNewString[nIndex]=L'*';
+								pNewString[nIndex+1]=L'\0';
 							}
 							else
-								pTemp[nIndex]='\0';
+								pNewString[nIndex]='\0';
 						}
-						aStrings.Add(pTemp);
-
+						
+						
+						if (nType!=NotSpecified)
+						{
+							// Move pointer back
+							pNewString--;
+						}
+						aStrings.Add(pNewString);
 
 					}
 
+					if (!bContinue)
+						break;
+
 					pStr+=nIndex+1;
 					nIndex=(int)FirstCharIndex(pStr,L',');
+				
 				}
 			
+			}
+
+			// Enable LogicalOperations
+			if (bPlusOrMinusFound)
+			{
+				// '+' or '-' found
+				locater.AddAdvancedFlags(LOCATE_LOGICALOPERATIONS);
+
+				// Remove string which does not have '+' or '-' (those
+				// are meaningless
+				for (int i=0;i<aStrings.GetSize();)
+				{
+					if (aStrings[i][0]!=L'+' && aStrings[i][0]!=L'-')
+						aStrings.RemoveAt(i);
+					else
+						i++;
+				}
 			}
 
 			if (options.verbose)

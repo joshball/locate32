@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database locater v3.0.7.3250               */
+   database locater v3.0.7.5260               */
 
 #include <HFCLib.h>
 
@@ -1147,117 +1147,84 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 	}
 
 	
+	if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
+		return TRUE;
 
+	// Checking extension first
+	if (m_aExtensions.GetSize()>0)
+	{
+		BOOL bFound=FALSE;
+		
+		if (!HaveFileExtension())
+		{
+			// No extension
+			for (int i=0;i<m_aExtensions.GetSize();i++)
+			{
+				if (m_aExtensions[i]->GetLength()==0)
+				{
+					bFound=TRUE;
+					break;
+				}
+			}
+		}
+		else
+		{
+			// Resolving extension length
+			DWORD dwExtensionLen=GetFileNameLen()-GetFileExtensionPos()-1;
+			char* szExtension=NULL;
+
+			for (int i=0;i<m_aExtensions.GetSize();i++)
+			{
+				if (dwExtensionLen!=m_aExtensions[i]->GetLength())
+					continue;
+
+				if (szExtension==NULL)
+				{
+					// Copying extension to buffer
+					szExtension=new char[dwExtensionLen];
+					sMemCopy(szExtension,GetFileName()+GetFileExtensionPos()+1,dwExtensionLen);
+					MakeLower(szExtension,dwExtensionLen);
+				}
+				
+				if (_strncmp(*m_aExtensions[i],szExtension,dwExtensionLen))
+				{
+					bFound=TRUE;
+					break;
+				}
+			}
+			if (szExtension!=NULL)
+				delete[] szExtension;
+
+			
+		}
+
+		if (!bFound)
+			return FALSE;
+	}
+
+	
+	
+	if (m_aNames.GetSize()==0)
+		return TRUE;
+
+
+	DWORD dwNameLength;
+	CAutoPtrA<char> szName;
 	
 	if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
 	{
-		if (m_aNames.GetSize()==0)
-			return TRUE;
-
-		// Copying to buffer
-		DWORD dwPathLen=dwCurrentPathLen+1+GetFileNameLen();
-		char* szName=new char[dwPathLen+2];
+		// Copying whole path to buffer
+		dwNameLength=dwCurrentPathLen+1+GetFileNameLen();
+		szName=new char[dwNameLength+2];
 		
 		sMemCopy(szName,szCurrentPath,dwCurrentPathLen);
 		szName[dwCurrentPathLen]='\\';
 		sMemCopy(szName+dwCurrentPathLen+1,GetFileName(),GetFileNameLen());
-		szName[dwPathLen]='\0';
-
-		MakeLower(szName,dwPathLen);
-
-		for (int i=0;i<m_aNames.GetSize();i++)
-		{
-			if (m_aNames[i]->LastChar()=='.')
-			{
-				if (!HaveFileExtension())
-				{
-					// No extension, that is what are we looking for
-					LPWSTR szCondition=m_aNames[i]->GetBuffer();
-					szCondition[m_aNames[i]->GetLength()-1]='\0';
-
-					if (ContainString(szName,szCondition))
-					{
-						delete[] szName;
-						szCondition[m_aNames[i]->GetLength()-1]='.';
-						return TRUE;
-					}
-					szCondition[m_aNames[i]->GetLength()-1]='.';
-				}
-			}
-			else if (ContainString(szName,*m_aNames[i]))
-			{
-				delete[] szName;
-				return TRUE;
-			}
-		}	
-		delete[] szName;
-		return FALSE;
+		szName[dwNameLength]='\0';
+		MakeLower(szName,dwNameLength);
 	}
 	else
-	{	
-		if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
-			return TRUE;
-
-		// Checking extension first
-		if (m_aExtensions.GetSize()>0)
-		{
-			BOOL bFound=FALSE;
-			
-			if (!HaveFileExtension())
-			{
-				// No extension
-				for (int i=0;i<m_aExtensions.GetSize();i++)
-				{
-					if (m_aExtensions[i]->GetLength()==0)
-					{
-						bFound=TRUE;
-						break;
-					}
-				}
-			}
-			else
-			{
-
-				
-				// Resolving extension length
-				DWORD dwExtensionLen=GetFileNameLen()-GetFileExtensionPos()-1;
-				char* szExtension=NULL;
-
-				for (int i=0;i<m_aExtensions.GetSize();i++)
-				{
-					if (dwExtensionLen!=m_aExtensions[i]->GetLength())
-						continue;
-
-					if (szExtension==NULL)
-					{
-						// Copying extension to buffer
-						szExtension=new char[dwExtensionLen];
-						sMemCopy(szExtension,GetFileName()+GetFileExtensionPos()+1,dwExtensionLen);
-						MakeLower(szExtension,dwExtensionLen);
-					}
-					
-					if (_strncmp(*m_aExtensions[i],szExtension,dwExtensionLen))
-					{
-						bFound=TRUE;
-						break;
-					}
-				}
-				if (szExtension!=NULL)
-					delete[] szExtension;
-
-				
-			}
-
-			if (!bFound)
-				return FALSE;
-		}
-
-		
-		
-		if (m_aNames.GetSize()==0)
-			return TRUE;
-
-		DWORD dwNameLength;
+	{
 		// If whole name is what are we looking for, copy all name to szName
 		if (m_dwFlags&LOCATE_EXTENSIONWITHNAME)
 			dwNameLength=GetFileNameLen();
@@ -1269,44 +1236,79 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 		}
 		
 		// Copying to buffer
-		char* szName=new char[dwNameLength+2];
+		szName=new char[dwNameLength+2];
 		sMemCopy(szName,GetFileName(),dwNameLength);
 		szName[dwNameLength]='\0';
 		MakeLower(szName,dwNameLength);
+	}
+
+
+
+
+	if (m_dwFlags&LOCATE_LOGICALOPERATIONS)
+	{
+		// Search type is AND
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
+			BOOL bFound=FALSE;
+
 			if (m_aNames[i]->LastChar()=='.')
 			{
-				if (GetFileExtensionPos()==0 && szName[0]!='.')
+				if (!HaveFileExtension())
 				{
 					// No extension, that is what are we looking for
 					LPWSTR szCondition=m_aNames[i]->GetBuffer();
 					szCondition[m_aNames[i]->GetLength()-1]='\0';
-
-					if (ContainString(szName,szCondition))
-					{
-						delete[] szName;
-						szCondition[m_aNames[i]->GetLength()-1]='.';
-						return TRUE;
-					}
+					bFound=ContainString(szName,szCondition+1);
 					szCondition[m_aNames[i]->GetLength()-1]='.';
 				}
 			}
-			else if (ContainString(szName,*m_aNames[i]))
+			else 
+				bFound=ContainString(szName,m_aNames[i]->GetBuffer()+1);
+
+			if (bFound)
 			{
-				delete[] szName;
-				return TRUE;
+				if (m_aNames[i]->GetAt(0)==L'-')
+					return FALSE;
 			}
+			else if (m_aNames[i]->GetAt(0)==L'+')
+				return FALSE;
+		
 		}	
-		delete[] szName;
-		return FALSE;
+		return TRUE;
 	}
+
+	// Search type is OR
+	for (int i=0;i<m_aNames.GetSize();i++)
+	{
+		if (m_aNames[i]->LastChar()=='.')
+		{
+			if (!HaveFileExtension())
+			{
+				// No extension, that is what are we looking for
+				LPWSTR szCondition=m_aNames[i]->GetBuffer();
+				szCondition[m_aNames[i]->GetLength()-1]='\0';
+
+				if (ContainString(szName,szCondition))
+				{
+					szCondition[m_aNames[i]->GetLength()-1]='.';
+					return TRUE;
+				}
+				szCondition[m_aNames[i]->GetLength()-1]='.';
+			}
+		}
+		else if (ContainString(szName,*m_aNames[i]))
+			return TRUE;
+	}	
+	return FALSE;
 }
 
 inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 {
 	if (m_dwFlags&LOCATE_REGULAREXPRESSION)
 	{
+		// Regular expression
+
 		int ovector[OVECCOUNT];
 		if (m_dwFlags&LOCATE_NAMEREGEXPISUTF8)
 		{
@@ -1360,115 +1362,85 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 	
 
 	
+	
+	
+	if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
+		return TRUE;
+
+	// Checking extension first
+	if (m_aExtensions.GetSize()>0)
+	{
+		BOOL bFound=FALSE;
+		
+		if (!HaveFileExtensionW())
+		{
+			// No extension
+			for (int i=0;i<m_aExtensions.GetSize();i++)
+			{
+				if (m_aExtensions[i]->GetLength()==0)
+				{
+					bFound=TRUE;
+					break;
+				}
+			}
+		}
+		else
+		{
+			// Resolving extension length
+			DWORD dwExtensionLen=GetFileNameLen()-GetFileExtensionPos()-1;
+			WCHAR* szExtension=NULL;
+
+			for (int i=0;i<m_aExtensions.GetSize();i++)
+			{
+				if (dwExtensionLen!=m_aExtensions[i]->GetLength())
+					continue;
+
+				if (szExtension==NULL)
+				{
+					// Copying extension to buffer
+					szExtension=new WCHAR[dwExtensionLen];
+					MemCopyW(szExtension,GetFileNameW()+GetFileExtensionPos()+1,dwExtensionLen);
+					MakeLower(szExtension,dwExtensionLen);
+				}
+				
+				if (_strncmp(*m_aExtensions[i],szExtension,dwExtensionLen))
+				{
+					bFound=TRUE;
+					break;
+				}
+			}
+			if (szExtension!=NULL)
+				delete[] szExtension;
+
+			
+		}
+
+		if (!bFound)
+			return FALSE;
+	}
+
+	
+	
+	if (m_aNames.GetSize()==0)
+		return TRUE;
+
+	DWORD dwNameLength;
+	CAutoPtrA<WCHAR> szName;
+
 	if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
 	{
-		if (m_aNames.GetSize()==0)
-			return TRUE;
-
 		// Copying to buffer
-		DWORD dwPathLen=dwCurrentPathLen+1+GetFileNameLen();
-		WCHAR* szName=new WCHAR[dwPathLen+2];
+		dwNameLength=dwCurrentPathLen+1+GetFileNameLen();
+		szName=new WCHAR[dwNameLength+2];
 		
 		MemCopyW(szName,szCurrentPathW,dwCurrentPathLen);
 		szName[dwCurrentPathLen]=L'\\';
 		MemCopyW(szName+dwCurrentPathLen+1,GetFileNameW(),GetFileNameLen());
-		szName[dwPathLen]=L'\0';
-
-		MakeLower(szName,dwPathLen);
-
-		for (int i=0;i<m_aNames.GetSize();i++)
-		{
-			if (m_aNames[i]->LastChar()=='.')
-			{
-				if (!HaveFileExtensionW())
-				{
-					// No extension, that is what are we looking for
-					LPWSTR szCondition=m_aNames[i]->GetBuffer();
-					szCondition[m_aNames[i]->GetLength()-1]='\0';
-
-					if (ContainString(szName,szCondition))
-					{
-						delete[] szName;
-						szCondition[m_aNames[i]->GetLength()-1]='.';
-						return TRUE;
-					}
-					szCondition[m_aNames[i]->GetLength()-1]='.';
-				}
-			}
-			else if (ContainString(szName,*m_aNames[i]))
-			{
-				delete[] szName;
-				return TRUE;
-			}
-		}	
-		delete[] szName;
-		return FALSE;
+		szName[dwNameLength]=L'\0';
+		MakeLower(szName,dwNameLength);
 	}
 	else
-	{	
-		if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
-			return TRUE;
-
-		// Checking extension first
-		if (m_aExtensions.GetSize()>0)
-		{
-			BOOL bFound=FALSE;
-			
-			if (!HaveFileExtensionW())
-			{
-				// No extension
-				for (int i=0;i<m_aExtensions.GetSize();i++)
-				{
-					if (m_aExtensions[i]->GetLength()==0)
-					{
-						bFound=TRUE;
-						break;
-					}
-				}
-			}
-			else
-			{
-
-				
-				// Resolving extension length
-				DWORD dwExtensionLen=GetFileNameLen()-GetFileExtensionPos()-1;
-				WCHAR* szExtension=NULL;
-
-				for (int i=0;i<m_aExtensions.GetSize();i++)
-				{
-					if (dwExtensionLen!=m_aExtensions[i]->GetLength())
-						continue;
-
-					if (szExtension==NULL)
-					{
-						// Copying extension to buffer
-						szExtension=new WCHAR[dwExtensionLen];
-						MemCopyW(szExtension,GetFileNameW()+GetFileExtensionPos()+1,dwExtensionLen);
-						MakeLower(szExtension,dwExtensionLen);
-					}
-					
-					if (_strncmp(*m_aExtensions[i],szExtension,dwExtensionLen))
-					{
-						bFound=TRUE;
-						break;
-					}
-				}
-				if (szExtension!=NULL)
-					delete[] szExtension;
-
-				
-			}
-
-			if (!bFound)
-				return FALSE;
-		}
-
-		
-		
-		if (m_aNames.GetSize()==0)
-			return TRUE;
-
-		DWORD dwNameLength;
+	{
 		// If whole name is what are we looking for, copy all name to szName
 		if (m_dwFlags&LOCATE_EXTENSIONWITHNAME)
 			dwNameLength=GetFileNameLen();
@@ -1480,39 +1452,73 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 		}
 		
 		// Copying to buffer
-		WCHAR* szName=new WCHAR[dwNameLength+2];
+		szName=new WCHAR[dwNameLength+2];
 		MemCopyW(szName,GetFileNameW(),dwNameLength);
 		szName[dwNameLength]='\0';
 		MakeLower(szName,dwNameLength);
-		
+	}
+	
+	if (m_dwFlags&LOCATE_LOGICALOPERATIONS)
+	{
+		// Search type is AND
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
+			BOOL bFound=FALSE;
+
 			if (m_aNames[i]->LastChar()=='.')
 			{
-				if (GetFileExtensionPos()==0 && szName[0]!='.')
+				// No extension required			
+				if (!HaveFileExtensionW())
 				{
 					// No extension, that is what are we looking for
 					LPWSTR szCondition=m_aNames[i]->GetBuffer();
 					szCondition[m_aNames[i]->GetLength()-1]='\0';
-
-					if (ContainString(szName,szCondition))
-					{
-						delete[] szName;
-						szCondition[m_aNames[i]->GetLength()-1]='.';
-						return TRUE;
-					}
+					bFound=ContainString(szName,szCondition+1);
 					szCondition[m_aNames[i]->GetLength()-1]='.';
 				}
 			}
-			else if (ContainString(szName,*m_aNames[i]))
+			else 
+				bFound=ContainString(szName,m_aNames[i]->GetBuffer()+1);
+
+			if (bFound)
 			{
-				delete[] szName;
-				return TRUE;
+				if (m_aNames[i]->GetAt(0)==L'-')
+					return FALSE;
 			}
-		}	
-		delete[] szName;
-		return FALSE;
+			else if (m_aNames[i]->GetAt(0)==L'+')
+				return FALSE;
+			
+		}
+		return TRUE;
 	}
+	
+
+
+
+	// Search type is OR
+	for (int i=0;i<m_aNames.GetSize();i++)
+	{
+		if (m_aNames[i]->LastChar()=='.')
+		{
+			// No extension required			
+			if (!HaveFileExtensionW())
+			{
+				// No extension, that is what are we looking for
+				LPWSTR szCondition=m_aNames[i]->GetBuffer();
+				szCondition[m_aNames[i]->GetLength()-1]='\0';
+
+				if (ContainString(szName,szCondition))
+				{
+					szCondition[m_aNames[i]->GetLength()-1]='.';
+					return TRUE;
+				}
+				szCondition[m_aNames[i]->GetLength()-1]='.';
+			}
+		}
+		else if (ContainString(szName,*m_aNames[i]))
+			return TRUE;
+	}	
+	return FALSE;
 }
 
 inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
@@ -1536,98 +1542,102 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 		}
 		
 	}
+
+
+	if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
+		return TRUE;
+
+	// Checking extension first
+	if (m_aExtensions.GetSize()>0)
+	{
+		BOOL bFound=FALSE;
+
+		for (int i=0;i<m_aExtensions.GetSize();i++)
+		{
+			// Resolving extension length
+			DWORD dwExtensionPos=(DWORD)(LastCharIndex(GetFolderName(),'.')+1);
+			if (dwExtensionPos==-1)
+				continue;
+
+			DWORD dwExtensionLen=GetFolderNameLen()-dwExtensionPos;
+			
+			if (dwExtensionLen!=m_aExtensions[i]->GetLength())
+				continue;
+
+			// Copying extension to buffer
+			char* szExtension=new char[dwExtensionLen];
+			sMemCopy(szExtension,GetFolderName()+dwExtensionPos,dwExtensionLen);
+			MakeLower(szExtension,dwExtensionLen);
+			if (_strncmp(*m_aExtensions[i],szExtension,dwExtensionLen))
+			{
+				delete[] szExtension;
+				bFound=TRUE;
+				break;
+			}
+			delete[] szExtension;
+		}
+
+		if (!bFound)
+			return FALSE;
+	}
+	
+	if (m_aNames.GetSize()==0)
+		return TRUE;
+
+	if (GetFolderNameLen()==0)
+		return FALSE;
+
+	
+	// Copying to buffer
+	CAutoPtrA<char> szName;
+	
 	if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
 	{
-		if (m_aNames.GetSize()==0)
-			return TRUE;
-
-		// Copying to buffer
 		DWORD dwPathLen=dwCurrentPathLen+1+GetFolderNameLen();
-		char* szName=new char[dwPathLen+2];
-		
+		szName=new char[dwPathLen+2];
 		sMemCopy(szName,szCurrentPath,dwCurrentPathLen);
 		szName[dwCurrentPathLen]='\\';
 		sMemCopy(szName+dwCurrentPathLen+1,GetFolderName(),GetFolderNameLen());
 		szName[dwPathLen]='\0';
-
-		MakeLower(szName);
-
-		for (int i=0;i<m_aNames.GetSize();i++)
-		{
-			if (ContainString(szName,*m_aNames[i]))
-			{
-				delete[] szName;
-				return TRUE;
-			}
-		}	
-		delete[] szName;
-		return FALSE;
+		MakeLower(szName,dwPathLen);
 	}
 	else
-	{	
-	
-		if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
-			return TRUE;
-
-		// Checking extension first
-		if (m_aExtensions.GetSize()>0)
-		{
-			BOOL bFound=FALSE;
-
-			for (int i=0;i<m_aExtensions.GetSize();i++)
-			{
-				// Resolving extension length
-				DWORD dwExtensionPos=(DWORD)(LastCharIndex(GetFolderName(),'.')+1);
-				if (dwExtensionPos==-1)
-					continue;
-
-				DWORD dwExtensionLen=GetFolderNameLen()-dwExtensionPos;
-				
-				if (dwExtensionLen!=m_aExtensions[i]->GetLength())
-					continue;
-
-				// Copying extension to buffer
-				char* szExtension=new char[dwExtensionLen];
-				sMemCopy(szExtension,GetFolderName()+dwExtensionPos,dwExtensionLen);
-				MakeLower(szExtension,dwExtensionLen);
-				if (_strncmp(*m_aExtensions[i],szExtension,dwExtensionLen))
-				{
-					delete[] szExtension;
-					bFound=TRUE;
-					break;
-				}
-				delete[] szExtension;
-			}
-
-			if (!bFound)
-				return FALSE;
-		}
-		
-		if (m_aNames.GetSize()==0)
-			return TRUE;
-
-		if (GetFolderNameLen()==0)
-			return FALSE;
-
-	
-		// Copying to buffer
-		char* szName=new char[GetFolderNameLen()+1];
+	{
+		szName=new char[GetFolderNameLen()+1];
 		sMemCopy(szName,GetFolderName(),GetFolderNameLen());
 		szName[GetFolderNameLen()]='\0';
 		MakeLower(szName);
+	}
 
+	if (m_dwFlags&LOCATE_LOGICALOPERATIONS)
+	{
+	
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
-			if (ContainString(szName,*m_aNames[i]))
+			if (ContainString(szName,m_aNames[i]->GetBuffer()+1))
 			{
-				delete[] szName;
-				return TRUE;
+				if (m_aNames[i]->GetAt(0)==L'-')
+					return FALSE;
+			}
+			else
+			{
+				if (m_aNames[i]->GetAt(0)==L'+')
+					return FALSE;
 			}
 		}
-		delete[] szName;
-		return FALSE;
+		return TRUE;
 	}
+
+
+	for (int i=0;i<m_aNames.GetSize();i++)
+	{
+		if (ContainString(szName,*m_aNames[i]))
+			return TRUE;
+	}
+	return FALSE;
+
 }
+
 
 inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 {
@@ -1650,97 +1660,103 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 		}
 		
 	}
+
+
+
+
+	
+
+	
+	if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
+		return TRUE;
+
+	// Checking extension first
+	if (m_aExtensions.GetSize()>0)
+	{
+		BOOL bFound=FALSE;
+
+		for (int i=0;i<m_aExtensions.GetSize();i++)
+		{
+			// Resolving extension length
+			DWORD dwExtensionPos=(DWORD)(LastCharIndex(GetFolderNameW(),L'.')+1);
+			if (dwExtensionPos==-1)
+				continue;
+
+			DWORD dwExtensionLen=GetFolderNameLen()-dwExtensionPos;
+			
+			if (dwExtensionLen!=m_aExtensions[i]->GetLength())
+				continue;
+
+			// Copying extension to buffer
+			WCHAR* szExtension=new WCHAR[dwExtensionLen];
+			MemCopyW(szExtension,GetFolderNameW()+dwExtensionPos,dwExtensionLen);
+			MakeLower(szExtension,dwExtensionLen);
+			if (_strncmp(*m_aExtensions[i],szExtension,dwExtensionLen))
+			{
+				delete[] szExtension;
+				bFound=TRUE;
+				break;
+			}
+			delete[] szExtension;
+		}
+
+		if (!bFound)
+			return FALSE;
+	}
+	
+	if (m_aNames.GetSize()==0)
+		return TRUE;
+
+	if (GetFolderNameLen()==0)
+		return FALSE;
+
+	
+	// Copying to buffer
+	CAutoPtrA<WCHAR> szName;
+	
 	if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
 	{
-		if (m_aNames.GetSize()==0)
-			return TRUE;
-
-		// Copying to buffer
 		DWORD dwPathLen=dwCurrentPathLen+1+GetFolderNameLen();
-		WCHAR* szName=new WCHAR[dwPathLen+2];
-		
+		szName=new WCHAR[dwPathLen+2];
 		MemCopyW(szName,szCurrentPathW,dwCurrentPathLen);
 		szName[dwCurrentPathLen]='\\';
 		MemCopyW(szName+dwCurrentPathLen+1,GetFolderNameW(),GetFolderNameLen());
 		szName[dwPathLen]='\0';
-
-		MakeLower(szName);
-
-		for (int i=0;i<m_aNames.GetSize();i++)
-		{
-			if (ContainString(szName,*m_aNames[i]))
-			{
-				delete[] szName;
-				return TRUE;
-			}
-		}	
-		delete[] szName;
-		return FALSE;
+		MakeLower(szName,dwPathLen);
 	}
 	else
-	{	
-	
-		if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
-			return TRUE;
-
-		// Checking extension first
-		if (m_aExtensions.GetSize()>0)
-		{
-			BOOL bFound=FALSE;
-
-			for (int i=0;i<m_aExtensions.GetSize();i++)
-			{
-				// Resolving extension length
-				DWORD dwExtensionPos=(DWORD)(LastCharIndex(GetFolderNameW(),L'.')+1);
-				if (dwExtensionPos==-1)
-					continue;
-
-				DWORD dwExtensionLen=GetFolderNameLen()-dwExtensionPos;
-				
-				if (dwExtensionLen!=m_aExtensions[i]->GetLength())
-					continue;
-
-				// Copying extension to buffer
-				WCHAR* szExtension=new WCHAR[dwExtensionLen];
-				MemCopyW(szExtension,GetFolderNameW()+dwExtensionPos,dwExtensionLen);
-				MakeLower(szExtension,dwExtensionLen);
-				if (_strncmp(*m_aExtensions[i],szExtension,dwExtensionLen))
-				{
-					delete[] szExtension;
-					bFound=TRUE;
-					break;
-				}
-				delete[] szExtension;
-			}
-
-			if (!bFound)
-				return FALSE;
-		}
-		
-		if (m_aNames.GetSize()==0)
-			return TRUE;
-
-		if (GetFolderNameLen()==0)
-			return FALSE;
-
-	
-		// Copying to buffer
-		WCHAR* szName=new WCHAR[GetFolderNameLen()+1];
+	{
+		szName=new WCHAR[GetFolderNameLen()+1];
 		MemCopyW(szName,GetFolderNameW(),GetFolderNameLen());
 		szName[GetFolderNameLen()]='\0';
 		MakeLower(szName);
+	}
 
+	if (m_dwFlags&LOCATE_LOGICALOPERATIONS)
+	{
+	
 		for (int i=0;i<m_aNames.GetSize();i++)
 		{
-			if (ContainString(szName,*m_aNames[i]))
+			if (ContainString(szName,m_aNames[i]->GetBuffer()+1))
 			{
-				delete[] szName;
-				return TRUE;
+				if (m_aNames[i]->GetAt(0)==L'-')
+					return FALSE;
+			}
+			else
+			{
+				if (m_aNames[i]->GetAt(0)==L'+')
+					return FALSE;
 			}
 		}
-		delete[] szName;
-		return FALSE;
+		return TRUE;
 	}
+
+	for (int i=0;i<m_aNames.GetSize();i++)
+	{
+		if (ContainString(szName,*m_aNames[i]))
+			return TRUE;
+	}
+	return FALSE;
 }
 
 inline BOOL CLocater::IsFileAdvancedWhatAreWeLookingFor() const

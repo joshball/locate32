@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,7,5130
- PRODUCTVERSION 3,0,7,5130
+ FILEVERSION 3,0,7,5260
+ PRODUCTVERSION 3,0,7,5260
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 build 7.5130"
+            VALUE "FileVersion", "3.0 build 7.5260"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2007 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 build 7.5060"
+            VALUE "ProductVersion", "3.0 build 7.5260"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1554,8 +1554,8 @@ END
 
 STRINGTABLE
 BEGIN
-	IDS_ADVSETRESULTS				"Results"
-	IDS_ADVSETRESULTSLIST			"Result list"
+	IDS_ADVSETLOCATEPROCESS			"Locate process and results"
+	IDS_ADVSETRESULTSLIST			"Results list"
 	IDS_ADVSETNODELAYEDUPDATING		"Show icon, title and other information before locating is finished"
 	IDS_ADVSETSHOWDATESINFORMAT		"Show dates in format:"
 	IDS_ADVSETSHOWTIMESINFORMAT		"Show times in format:"
@@ -1668,6 +1668,7 @@ BEGIN
 	IDS_ADVSETUSEDEFDIRECTORYICON	"Use default icon for directories (use with slow network drives)"
 	IDS_ADVSETWHILESORTINGDONOTREADINFO	"While sorting, do not read information from files"
 	IDS_ADVSETDONTRESOLVEDRIVEICONS	"Do not resolve icon for local drives"
+	IDS_ADVSETLOGICALOPERATIONS		"Allow logical operations (+ and -)"
 END
 
 STRINGTABLE

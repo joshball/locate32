@@ -741,6 +741,11 @@ public:
 
 	// Another 32 set for settings
 	enum LocateDialogExtraFlags {
+		// Locate process
+		efEnableLogicalOperations = 0x00000010,
+		efLocateProcessDefaults = efEnableLogicalOperations,
+		efLocateProcessSave = 0x00000010,
+
 		// List view (continued)
 		efLVDontShowDeletedFiles = 0x10000000,
 		efLVNoUpdateWhileSorting = 0x20000000,
@@ -755,22 +760,22 @@ public:
 		efNameSave = 0x000F0000,
 
 		// Background operations
-		efDisableItemUpdating = 0x00,
-        efEnableItemUpdating = 0x01,
-		efItemUpdatingMask = 0x01,
-		efItemUpdatingSave = 0x01,
+		efDisableItemUpdating = 0x00000000,
+        efEnableItemUpdating = 0x00000001,
+		efItemUpdatingMask = 0x00000001,
+		efItemUpdatingSave = 0x00000001,
 		
-		efDisableFSTracking = 0x00,
-		efEnableFSTracking  = 0x02,
-		efEnableFSTrackingOld = 0x04|efEnableFSTracking,
+		efDisableFSTracking = 0x00000000,
+		efEnableFSTracking  = 0x00000002,
+		efEnableFSTrackingOld = 0x00000004|efEnableFSTracking,
 		efTrackingMask = efEnableFSTracking|efEnableFSTrackingOld,
 		efTrackingSave = efEnableFSTracking|efEnableFSTrackingOld,
 		
 		efBackgroundDefault = efEnableItemUpdating|efEnableFSTracking,
 		efBackgroundSave = efItemUpdatingSave|efTrackingSave,
 
-		efDefault = efLVDefault|efNameDefault|efBackgroundDefault,
-		efSave = efLVSave|efNameSave|efBackgroundSave
+		efDefault = efLocateProcessDefaults|efLVDefault|efNameDefault|efBackgroundDefault,
+		efSave = efLocateProcessSave|efLVSave|efNameSave|efBackgroundSave
 	};
 
 

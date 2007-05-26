@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database locater v3.0.7.3250               */
+   database locater v3.0.7.5260               */
 
 #if !defined(LOCATER_H)
 #define LOCATER_H
@@ -43,7 +43,7 @@ typedef BOOL (CALLBACK* LOCATEFOUNDPROC)(DWORD_PTR dwParam,BOOL bFolder,const CL
 #define LOCATE_CHECKWHOLEPATH			0x00001000
 #define LOCATE_REGULAREXPRESSIONSEARCH  0x00002000
 #define LOCATE_NAMEREGEXPISUTF8			0x00004000 
-
+#define LOCATE_LOGICALOPERATIONS		0x00010000 
 
 #define SYSTEMTIMETODOSDATE(st)	((((st).wDay&0x1F))|(((st).wMonth&0x0F)<<5)|((((st).wYear-1980))<<9))
 #define DOSDATETODAY(dt)		BYTE((dt)&0x1F)
@@ -138,6 +138,8 @@ private:
 	//BOOL SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCSTR* szDirectories,DWORD nDirectories);
 	BOOL SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCWSTR* szDirectories,DWORD nDirectories);
 	
+	template<class CHARTYPE> void Check(CHARTYPE* test) const;
+
 	BOOL IsFileNameWhatAreWeLookingFor() const;
 	BOOL IsFileNameWhatAreWeLookingForW() const;
 	BOOL IsFolderNameWhatAreWeLookingFor() const;
