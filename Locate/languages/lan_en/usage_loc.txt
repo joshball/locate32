@@ -13,6 +13,7 @@ parameters:
     -R          search subdirectories 
     -Rn         don't search subdirectories
     -+			allow logical operators + and - (if you want to use -, use -- argument)
+    -+n			do not allow logical operators + and - 
     -d file     set database file
     -D name     uses database named 'name'
     -lm:SIZE    set minimum size to SIZE, eg -lms:100k

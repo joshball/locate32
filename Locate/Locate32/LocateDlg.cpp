@@ -864,8 +864,22 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		break;
 	case IDM_ABOUT:
 		{
-			CAboutDlg About;
-			About.DoModal(*this);
+			//CAboutDlg About;
+			//About.DoModal(*this);
+		}
+		break;
+	case IDM_HELPTOPICS:
+		if (IsUnicodeSystem())
+		{
+			CStringW sExeName=GetLocateApp()->GetExeNameW();
+			HtmlHelpW(*this,sExeName.Left(sExeName.FindLast(L'\\')+1)+L"Locate32.chm",
+				0,HH_HELP_FINDER);
+		}
+		else
+		{
+			CString sExeName=GetLocateApp()->GetExeName();
+			HtmlHelp(*this,sExeName.Left(sExeName.FindLast(L'\\')+1)+"Locate32.chm",
+				0,HH_HELP_FINDER);
 		}
 		break;
 	case IDM_LARGEICONS:
@@ -1909,14 +1923,18 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 		// '+' or '-' found
 		m_pLocater->AddAdvancedFlags(LOCATE_LOGICALOPERATIONS);
 
-		// Remove string which does not have '+' or '-' (those
-		// are meaningless
-		for (int i=0;i<aNames.GetSize();)
+		// Insert '+' for string which does not have '+' or '-'
+		for (int i=0;i<aNames.GetSize();i++)
 		{
 			if (aNames[i][0]!=L'+' && aNames[i][0]!=L'-')
-				aNames.RemoveAt(i);
-			else
-				i++;
+			{
+				int nLen=istrlen(aNames[i])+1;
+				LPWSTR pNew=new WCHAR[nLen+1];
+				pNew[0]=L'+';
+				MemCopyW(pNew+1,aNames[i],nLen);
+				delete[] aNames[i];
+				aNames[i]=pNew;
+			}
 		}
 	}
 				
@@ -3482,7 +3500,7 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 			CLocatedItem** pSelectedItems=GetSeletedItems(nSelectedItems,nItem);
 			m_hActivePopupMenu=CreateFileContextMenu(NULL,pSelectedItems,nSelectedItems,
 				m_nResultAction==CAction::OpenContextMenuSimple);
-			delete pSelectedItems;
+			delete[] pSelectedItems;
 			if (m_hActivePopupMenu==NULL)
 				break;
 

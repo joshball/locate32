@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,7,5260
- PRODUCTVERSION 3,0,7,5260
+ FILEVERSION 3,0,7,5270
+ PRODUCTVERSION 3,0,7,5270
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 build 7.5260"
+            VALUE "FileVersion", "3.0 build 7.5270"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2007 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 build 7.5260"
+            VALUE "ProductVersion", "3.0 build 7.5270"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -927,10 +927,12 @@ BEGIN
     POPUP "&Options"
     BEGIN
         MENUITEM "&Settings", IDM_SETTINGS
-		MENUITEM "Setting Backup tool", IDM_SETTOOL
+		MENUITEM "Settings Backup tool", IDM_SETTOOL
     END
     POPUP "&Help"
     BEGIN
+		MENUITEM "Help &Topics",	IDM_HELPTOPICS
+		MENUITEM SEPARATOR
         MENUITEM "&About",       IDM_ABOUT
     END
 END
@@ -1014,13 +1016,13 @@ BEGIN
                                                 IDM_REMOVEFROMTHISLIST
         POPUP "&Special"
         BEGIN
-            MENUITEM "&Copy Path to Clipboard",        IDM_COPYPATHTOCB
-            MENUITEM "Copy &Short Path to Clipboard",        IDM_COPYSHORTPATHTOCB
-            MENUITEM "Change &Filename",         IDM_CHANGEFILENAME
-            MENUITEM "Change C&ase for Filename",         IDM_CHANGECASE
+            MENUITEM "&Copy path to clipboard",        IDM_COPYPATHTOCB
+            MENUITEM "Copy &short path to clipboard",        IDM_COPYSHORTPATHTOCB
+            MENUITEM "Change &filename",         IDM_CHANGEFILENAME
+            MENUITEM "Change c&ase for filename",         IDM_CHANGECASE
 			MENUITEM "Show total size of selected files", IDM_SHOWFILEINFORMATION
 			MENUITEM "Update file information",         IDM_FORCEUPDATE
-			MENUITEM "Compute MD5 sum",         IDM_COMPUTEMD5SUM
+			MENUITEM "Compute MD5 sums",         IDM_COMPUTEMD5SUM
 			MENUITEM "Compute MD5 sums for equal size files",         IDM_MD5SUMSFORSAMESIZEFILES
 			MENUITEM "Remove deleted files"	IDM_REMOVEDELETEDFILES
         END

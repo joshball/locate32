@@ -1,0 +1,278 @@
+[OPTIONS]
+Auto Index=Yes
+Compatibility=1.1 or later
+Compiled file=Locate32.chm
+Contents file=Locate32.hhc
+Index file=Locate32.hhk
+Default topic=main_index.htm
+Display compile progress=No
+Full-text search=Yes
+Language=0x0409 English (United States)
+
+
+[FILES]
+hid_edit_copy.htm
+hid_edit_cut.htm
+hid_edit_invertselection.htm
+hid_edit_selectall.htm
+hid_file_opencontainingfolder.htm
+hid_file_removefromlist.htm
+hid_file_open.htm
+hid_file_sendto.htm
+hid_file_cut.htm
+hid_file_copy.htm
+hid_file_createshortcut.htm
+hid_file_delete.htm
+hid_file_rename.htm
+hid_file_properties.htm
+hid_file_saveresults.htm
+hid_file_findusingdatabases.htm
+hid_file_updatedatabases.htm
+hid_file_updateselected.htm
+hid_file_updatedatabase.htm
+hid_file_stopupdating.htm
+hid_file_databaseinfo.htm
+hid_file_close.htm
+hid_file_exit.htm
+hid_view_largeicons.htm
+hid_view_smallicons.htm
+hid_view_list.htm
+hid_view_details.htm
+hid_view_arrangeicons.htm
+hid_view_lineupicons.htm
+hid_view_selectdetails.htm
+hid_view_refresh.htm
+hid_view_arrange_byname.htm
+hid_view_arrange_byfolder.htm
+hid_view_arrange_bytype.htm
+hid_view_arrange_bysize.htm
+hid_view_arrange_bydate.htm
+hid_view_arrange_byextension.htm
+hid_view_arrange_autoarrange.htm
+hid_view_arrange_aligntogrid.htm
+hid_options_settings.htm
+hid_options_settingstool.htm
+hid_help_about.htm
+hid_help_index.htm
+hid_systemtray_openlocate.htm
+hid_special_copypathtoclipboard.htm
+hid_special_copyshortpathtoclipboard.htm
+hid_special_changefilename.htm
+hid_special_changecaseforfilename.htm
+hid_special_showtotalsize.htm
+hid_special_updatefileinformation.htm
+hid_special_computeMD5sums.htm
+hid_special_computeMD5sumsforequalsizefiles.htm
+hid_special_removedeletedfiles.htm
+
+
+main_index.htm
+menu_file.htm
+menu_edit.htm
+menu_view.htm
+menu_options.htm
+menu_help.htm
+menu_special.htm
+menu_contextmenu.htm
+menu_systemtray.htm
+
+issue_searchterms.htm
+issue_commandlinearguments.htm
+howto_externaldrives.htm
+
+[IGNOREFILES]
+afx_hidd_color.htm
+afx_hidd_fileopen.htm
+afx_hidd_filesave.htm
+afx_hidd_find.htm
+afx_hidd_font.htm
+afx_hidd_newtypedlg.htm
+afx_hidd_replace.htm
+afx_hidp_default.htm
+afx_hidw_dockbar_top.htm
+afx_hidw_status_bar.htm
+afx_hidw_toolbar.htm
+hidr_doc1type.htm
+hid_app_about.htm
+hid_app_exit.htm
+hid_context_help.htm
+hid_file_mru_file1.htm
+hid_file_new.htm
+hid_file_open.htm
+hid_file_save.htm
+hid_file_save_as.htm
+hid_file_send_mail.htm
+hid_help_index.htm
+hid_help_using.htm
+hid_ht_caption.htm
+hid_ht_nowhere.htm
+hid_next_pane.htm
+hid_prev_pane.htm
+hid_sc_close.htm
+hid_sc_maximize.htm
+hid_sc_minimize.htm
+hid_sc_move.htm
+hid_sc_nextwindow.htm
+hid_sc_prevwindow.htm
+hid_sc_restore.htm
+hid_sc_size.htm
+hid_sc_tasklist.htm
+hid_view_ruler.htm
+hid_view_status_bar.htm
+hid_view_toolbar.htm
+hid_window_all.htm
+hid_window_arrange.htm
+hid_window_cascade.htm
+hid_window_new.htm
+hid_window_split.htm
+hid_window_tile.htm
+hid_window_tile_horz.htm
+hid_window_tile_vert.htm
+scrollbars.htm
+
+[ALIAS]
+HIDR_MAINFRAME = main_index.htm
+
+main_index							= main_index.htm
+hid_edit_copy						= hid_edit_copy.htm
+hid_edit_cut						= hid_edit_cut.htm
+hid_edit_selectall					= hid_edit_selectall.htm
+hid_edit_invertselection			= hid_edit_invertselection.htm
+hid_file_opencontainingfolder       = hid_file_opencontainingfolder.htm
+hid_file_removefromlist             = hid_file_removefromlist.htm
+hid_file_open                       = hid_file_open.htm
+hid_file_sendto						= hid_file_sendto.htm
+hid_file_cut						= hid_file_cut.htm
+hid_file_copy						= hid_file_copy.htm
+hid_file_createshortcut				= hid_file_createshortcut.htm
+hid_file_delete						= hid_file_delete.htm
+hid_file_rename						= hid_file_rename.htm
+hid_file_properties					= hid_file_properties.htm
+hid_file_saveresults				= hid_file_saveresults.htm
+hid_file_findusingdatabases			= hid_file_findusingdatabases.htm
+hid_file_updatedatabases			= hid_file_updatedatabases.htm
+hid_file_updateselected				= hid_file_updateselected.htm
+hid_file_updatedatabase				= hid_file_updatedatabase.htm
+hid_file_stopupdating				= hid_file_stopupdating.htm
+hid_file_databaseinfo				= hid_file_databaseinfo.htm
+hid_file_close						= hid_file_close.htm
+hid_file_exit						= hid_file_exit.htm
+hid_view_largeicons					= hid_view_largeicons.htm
+hid_view_smallicons					= hid_view_smallicons.htm
+hid_view_listicons					= hid_view_listicons.htm
+hid_view_details					= hid_view_details.htm
+hid_view_arrangeicons				= hid_view_arrangeicons.htm
+hid_view_lineupicons				= hid_view_lineupicons.htm
+hid_view_selectdetails				= hid_view_selectdetails.htm
+hid_view_refresh					= hid_view_refresh.htm
+hid_view_arrange_byname				= hid_view_arrange_byname
+hid_view_arrange_byfolder			= hid_view_arrange_byfolder.htm
+hid_view_arrange_bytype				= hid_view_arrange_bytype.htm
+hid_view_arrange_bysize				= hid_view_arrange_bysize.htm
+hid_view_arrange_bydate				= hid_view_arrange_bydate.htm
+hid_view_arrange_byextension		= hid_view_arrange_byextension.htm
+hid_view_arrange_autoarrange		= hid_view_arrange_autoarrange.htm
+hid_view_arrange_aligntogrid		= hid_view_arrange_aligntogrid.htm
+hid_options_settings				= hid_options_settings.htm
+hid_options_settingstool			= hid_options_settingstool.htm
+hid_help_about						= hid_help_about.htm
+hid_help_index						= hid_help_index.htm
+hid_systemtray_openlocate			= hid_systemtray_openlocate.htm
+hid_special_copypathtoclipboard		= hid_special_copypathtoclipboard.htm
+hid_special_copyshortpathtoclipboard= hid_special_copyshortpathtoclipboard.htm
+hid_special_changefilename			= hid_special_changefilename.htm
+hid_special_changecaseforfilename	= hid_special_changecaseforfilename.htm
+hid_special_showtotalsize			= hid_special_showtotalsize.htm
+hid_special_updatefileinformation	= hid_special_updatefileinformation.htm
+hid_special_computeMD5sums			= hid_special_computeMD5sums.htm
+hid_special_computeMD5sumsforequalsizefiles = hid_special_computeMD5sumsforequalsizefiles.htm
+hid_special_removedeletedfiles		= hid_special_removedeletedfiles.htm
+
+menu_file							= menu_file.htm
+menu_edit							= menu_edit.htm
+menu_view							= menu_view.htm
+menu_options						= menu_options.htm
+menu_help							= menu_help.htm
+menu_contextmenu					= menu_contextmenu.htm
+menu_systemtray						= menu_systemtray.htm
+
+issue_searchterms					= issue_searchterms.htm
+issue_commandlinearguments			= issue_commandlinearguments.htm
+howto_externaldrives				= howto_externaldrives.htm
+
+
+[IGNOREALIAS]
+afx_hidd_color						= afx_hidd_color.htm
+afx_hidd_fileopen					= afx_hidd_fileopen.htm
+afx_hidd_filesave					= afx_hidd_filesave.htm
+afx_hidd_find						= afx_hidd_find.htm
+afx_hidd_font						= afx_hidd_font.htm
+afx_hidd_newtypedlg					= afx_hidd_newtypedlg.htm
+afx_hidd_replace					= afx_hidd_replace.htm
+AFX_HIDP_DEFAULT					= AFX_HIDP_DEFAULT.htm
+hid_context_help					= hid_context_help.htm
+hid_ht_caption						= hid_ht_caption.htm
+hid_ht_nowhere						= hid_ht_nowhere.htm
+hid_next_pane						= hid_next_pane.htm
+hid_prev_pane						= hid_prev_pane.htm
+hid_sc_close						= hid_sc_close.htm
+hid_sc_maximize						= hid_sc_maximize.htm
+hid_sc_minimize						= hid_sc_minimize.htm
+hid_sc_move							= hid_sc_move.htm
+hid_sc_nextwindow					= hid_sc_nextwindow.htm
+hid_sc_prevwindow					= hid_sc_prevwindow.htm
+hid_sc_restore						= hid_sc_restore.htm
+hid_sc_size							= hid_sc_size.htm
+hid_sc_tasklist						= hid_sc_tasklist.htm
+hidr_doc1type						= hidr_doc1type.htm
+
+HIDD_ABOUTBOX						= HID_APP_ABOUT.htm
+HID_HT_SIZE							= HID_SC_SIZE.htm
+HID_HT_HSCROLL						= scrollbars.htm
+HID_HT_VSCROLL						= scrollbars.htm
+HID_HT_MINBUTTON					= HID_SC_MINIMIZE.htm
+HID_HT_MAXBUTTON					= HID_SC_MAXIMIZE.htm
+AFX_HIDP_INVALID_FILENAME			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_TO_OPEN_DOC			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_TO_SAVE_DOC			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_ASK_TO_SAVE				= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_TO_CREATE_DOC		= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FILE_TOO_LARGE				= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_TO_START_PRINT		= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_TO_LAUNCH_HELP		= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_INTERNAL_FAILURE			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_COMMAND_FAILURE			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_PARSE_INT					= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_PARSE_REAL					= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_PARSE_INT_RANGE			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_PARSE_REAL_RANGE			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_PARSE_STRING_SIZE			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_INVALID_FORMAT		= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_INVALID_PATH		= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_DISK_FULL			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_ACCESS_READ			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_ACCESS_WRITE		= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_IO_ERROR_READ		= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_IO_ERROR_WRITE		= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_STATIC_OBJECT				= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_TO_CONNECT			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_SERVER_BUSY				= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_BAD_VERB					= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_MEMORY_ALLOC		= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_TO_NOTIFY			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_TO_LAUNCH			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_ASK_TO_UPDATE				= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_TO_UPDATE			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_TO_REGISTER			= AFX_HIDP_DEFAULT.htm
+AFX_HIDP_FAILED_TO_AUTO_REGISTER	= AFX_HIDP_DEFAULT.htm
+AFX_HIDW_DOCKBAR_BOTTOM				= AFX_HIDW_DOCKBAR_TOP.HTM ; Same topic, 4 different possible hit tests
+AFX_HIDW_DOCKBAR_LEFT				= AFX_HIDW_DOCKBAR_TOP.HTM ; Same topic, 4 different possible hit tests
+AFX_HIDW_DOCKBAR_RIGHT				= AFX_HIDW_DOCKBAR_TOP.HTM ; Same topic, 4 different possible hit tests
+
+[MAP]
+#include HTMLDefines.h
+
+[TEXT POPUPS]
+HTMLDefines.h
+
+[INFOTYPES]

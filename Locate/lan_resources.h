@@ -1061,6 +1061,7 @@
 #define IDM_SETTOOL						40034
 #define IDM_DATABASEINFO                40035
 #define IDM_SAVERESULT                  40038
+#define IDM_HELPTOPICS					40039
 #define IDM_EXIT                        40040
 #define IDM_OPENLOCATE                  40041
 #define IDM_GLOBALUPDATEDB              40042

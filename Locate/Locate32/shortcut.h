@@ -143,6 +143,7 @@ public:
 		OptionsSettings = MAKELONG(IDM_SETTINGS,IDS_SHORTCUTMENUOPTIONS),
 		OptionsSettingsTool = MAKELONG(IDM_SETTOOL,IDS_SHORTCUTMENUOPTIONS),
 
+		HelpTopics = MAKELONG(IDM_HELPTOPICS,IDS_SHORTCUTMENUHELP),
 		HelpAbout = MAKELONG(IDM_ABOUT,IDS_SHORTCUTMENUHELP),
 
 		PresetSave = MAKELONG(IDM_PRESETSAVE,IDS_SHORTCUTMENUPRESETS),
@@ -169,7 +170,7 @@ public:
 			ViewArrangeIconsByExtension,ViewArrangeIconsAutoArrange,
 			ViewArrangeIconsAlignToGrid,ViewLineUpIcons,
 			ViewSelectDetails,ViewRefresh,OptionsSettings,OptionsSettingsTool,
-			HelpAbout,PresetSave,PresetRemove,MultidirNextSelection,MultidirPrevSelection,
+			HelpTopics,HelpAbout,PresetSave,PresetRemove,MultidirNextSelection,MultidirPrevSelection,
 			MultidirNewDirectory,MultidirRemoveSelection,NullMenuCommand};
 		ActionMenuCommands* b=new ActionMenuCommands[sizeof(a)/sizeof(ActionMenuCommands)];
 		CopyMemory(b,a,sizeof(a));

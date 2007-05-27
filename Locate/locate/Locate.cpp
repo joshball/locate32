@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   locate.exe v3.0.7.5260                 */
+   locate.exe v3.0.7.5270                 */
 
-const char* szVersionStr="locate 3.0 build 7.5260";
+const char* szVersionStr="locate 3.0 build 7.5270";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -474,7 +474,10 @@ int wmain (int argc,wchar_t * argv[])
 					dwFlags&=~LOCATE_NOSUBDIRECTORIES;
 				break;
 			case L'+':
-				options.logicalops=1;
+				if (argv[i][2]==L'n' || argv[i][2]==L'N')
+					options.logicalops=0;
+				else
+					options.logicalops=1;
 				break;
 			case L'-':
 				options.noargs=1;
@@ -956,14 +959,18 @@ int wmain (int argc,wchar_t * argv[])
 				// '+' or '-' found
 				locater.AddAdvancedFlags(LOCATE_LOGICALOPERATIONS);
 
-				// Remove string which does not have '+' or '-' (those
-				// are meaningless
+				// Insert '+' for string which does not have '+' or '-'
 				for (int i=0;i<aStrings.GetSize();)
 				{
 					if (aStrings[i][0]!=L'+' && aStrings[i][0]!=L'-')
-						aStrings.RemoveAt(i);
-					else
-						i++;
+					{
+						int nLen=istrlen(aStrings[i])+1;
+						LPWSTR pNew=new WCHAR[nLen+1];
+						pNew[0]=L'+';
+						MemCopyW(pNew+1,aStrings[i],nLen);
+						delete[] aStrings[i];
+						aStrings[i]=pNew;
+					}
 				}
 			}
 

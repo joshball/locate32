@@ -261,10 +261,19 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 {
 	int idx=0,temp;
 	while (lpCmdLine[idx]==L' ') idx++;
-	if (lpCmdLine[idx]==L'/' || lpCmdLine[idx]==L'-')
+	
+	if ((lpCmdLine[idx]==L'/' || lpCmdLine[idx]==L'-'))
 	{
 		switch(lpCmdLine[++idx])
 		{
+		case L'-':
+			if (lpCmdLine[++idx]!=L'\0')
+			{
+				if (lpCmdLine[idx]==L' ')
+					idx++;
+				ChangeAndAlloc(pStartData->m_pStartString,lpCmdLine+idx);
+			}
+			return TRUE;
 		case L'X': // settings branch
 			idx++;
 			if (lpCmdLine[idx]==L':')
