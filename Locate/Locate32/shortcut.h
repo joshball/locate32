@@ -119,10 +119,10 @@ public:
 		SpecialComputeMD5SumsForSameSizeFiles = MAKELONG(IDM_MD5SUMSFORSAMESIZEFILES,IDS_SHORTCUTMENUSPECIAL),
 		SpecialRemoveDeletedFiles = MAKELONG(IDM_REMOVEDELETEDFILES,IDS_SHORTCUTMENUSPECIAL),
 
-		EditCut = MAKELONG(IDM_CUT,IDS_SHORTCUTMENUEDIT),
-		EditCopy = MAKELONG(IDM_COPY,IDS_SHORTCUTMENUEDIT),
-		EditSelectAll = MAKELONG(IDM_SELECTALL,IDS_SHORTCUTMENUEDIT),
-		EditInvertSelection = MAKELONG(IDM_INVERTSELECTION,IDS_SHORTCUTMENUEDIT),
+		EditCut = MAKELONG(IDM_EDIT_CUT,IDS_SHORTCUTMENUEDIT),
+		EditCopy = MAKELONG(IDM_EDIT_COPY,IDS_SHORTCUTMENUEDIT),
+		EditSelectAll = MAKELONG(IDM_EDIT_SELECTALL,IDS_SHORTCUTMENUEDIT),
+		EditInvertSelection = MAKELONG(IDM_EDIT_INVERTSELECTION,IDS_SHORTCUTMENUEDIT),
 
 		ViewLargeIcons = MAKELONG(IDM_LARGEICONS,IDS_SHORTCUTMENUVIEW),
 		ViewSmallIcons = MAKELONG(IDM_SMALLICONS,IDS_SHORTCUTMENUVIEW),
@@ -224,12 +224,26 @@ public:
 		ResultListLast = ExecuteNthFile
 	};
 
+	
+		
+
 	enum ActionMisc {
 		SendMessage = 0,
 		PostMessage = 1,
 		ExecuteCommandMisc = 2,
 		
 		MiscLast = ExecuteCommandMisc
+	};
+
+	enum ActionHelp {
+		HelpShowHelp = 0,
+		HelpCloseHelp = 1,
+		HelpShowTopics = 2,
+		HelpIndex = 3,
+		HelpTOC = 4,
+		HelpSearch = 5,
+
+		HelpLast = HelpSearch
 	};
 		
 	union { // Action specifig type
@@ -240,6 +254,7 @@ public:
 		ActionShowHideDialog m_nDialogCommand;
 		ActionResultList m_nResultList;
 		ActionMisc m_nMisc;
+		ActionHelp m_nHelp;
 	};
 
 	struct SendMessageInfo {
@@ -284,7 +299,8 @@ public:
 	static int GetActivateTabsActionLabelStringId(ActionActivateTabs uSubAction);
 	static int GetShowHideDialogActionLabelStringId(ActionShowHideDialog uSubAction);
 	static int GetResultItemActionLabelStringId(ActionResultList uSubAction);
-	static int GetMiscActionStringLabelId(ActionMisc uSubAction);
+	static int GetMiscActionLabelStringId(ActionMisc uSubAction);
+	static int GetHelpActionLabelStringId(ActionHelp uSubAction);
 
 	void DoActivateControl();
 	void DoActivateTab();
@@ -294,6 +310,7 @@ public:
 	void DoMisc();
 	void DoChangeValue();
 	void DoPresets();
+	void DoHelp();
 
 
 	DWORD GetData(DWORD nAction,BYTE* pData,BOOL bHeader=TRUE) const;
@@ -329,7 +346,8 @@ public:
 		ResultListItems = 4,
 		Misc = 5,
 		ChangeValue = 6,
-		Presets = 7
+		Presets = 7,
+		Help = 8
 	};
 	
 	union {

@@ -34,6 +34,7 @@ public:
 		virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 		virtual BOOL OnApply();
 		virtual void OnCancel();
+		virtual void OnHelp(LPHELPINFO lphi);
 				
 	protected:
 		BYTE OnSystemSettings();
@@ -56,6 +57,7 @@ public:
 		CAdvancedSettingsPage();
 		virtual BOOL OnInitDialog(HWND hwndFocus);
 		virtual void OnCancel();
+		virtual void OnHelp(LPHELPINFO lphi);
 
 		
 	protected:
@@ -90,6 +92,7 @@ public:
 		virtual void OnDestroy();
 		virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 		virtual void OnTimer(DWORD wTimerID); 
+		virtual void OnHelp(LPHELPINFO lphi);
 			
 		BOOL ListNotifyHandler(NMLISTVIEW *pNm);
 				
@@ -121,6 +124,7 @@ public:
 		virtual BOOL OnApply();
 		virtual void OnCancel();
 		virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
+		virtual void OnHelp(LPHELPINFO lphi);
 			
 	protected:
         BOOL ListNotifyHandler(NMLISTVIEW *pNm);
@@ -159,6 +163,8 @@ public:
 			virtual void OnDestroy();
 			virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 			virtual BOOL OnClose();
+			virtual void OnHelp(LPHELPINFO lphi);
+			
 			
 		
 		protected:
@@ -203,7 +209,8 @@ public:
 				virtual BOOL OnClose();
 				virtual void OnDestroy();
 				virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
-			
+				virtual void OnHelp(LPHELPINFO lphi);
+		
 				
 				void OnOK();
 				void OnSet();
@@ -248,6 +255,7 @@ public:
 		virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 		virtual void OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis);
 		virtual void OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpMeasureItemStruct);
+		virtual void OnHelp(LPHELPINFO lphi);
 		virtual void OnDestroy();
 		virtual BOOL OnApply();
 		virtual void OnCancel();
@@ -267,6 +275,8 @@ public:
 			virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 			virtual void OnDestroy();
 			virtual BOOL OnClose();
+			virtual void OnHelp(LPHELPINFO lphi);
+			
 
 		private:
 			BOOL OnOK();
@@ -301,6 +311,8 @@ public:
 			virtual BOOL OnInitDialog(HWND hwndFocus);
 			virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 			virtual BOOL OnClose();
+			virtual void OnHelp(LPHELPINFO lphi);
+			
 			
 			void OnOK();
 			void EnableItems();
@@ -322,6 +334,8 @@ public:
 		virtual void OnDestroy();
 		virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 		virtual void OnTimer(DWORD wTimerID); 
+		virtual void OnHelp(LPHELPINFO lphi);
+			
 			
 		BOOL ListNotifyHandler(NMLISTVIEW *pNm);
 		BOOL WherePressedNotifyHandler(NMLISTVIEW *pNm);

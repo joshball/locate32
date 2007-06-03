@@ -66,6 +66,10 @@ public:
 	
 	void EndDialog(int nID);
 
+	DWORD GetFlags() const { return m_psp.dwFlags; }
+	void AddFlags(DWORD dwAdd) { m_psp.dwFlags|=dwAdd; }
+	void RemoveFlags(DWORD dwRemove) { m_psp.dwFlags&=~dwRemove; }
+
 public:
 	virtual BOOL OnApply();
 	virtual void OnReset();

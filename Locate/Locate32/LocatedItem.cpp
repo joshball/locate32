@@ -51,7 +51,7 @@ void CLocatedItem::SetFolder(const CLocater* pLocater)
     wAccessedTime=pLocater->GetFolderAccessedTime();
 	
 	// Setting attributes
-	bAttribs=pLocater->GetFolderAttributes()&LITEMATTRIB_DBATTRIBFLAG;
+	wAttribs=pLocater->GetFolderAttributes()&LITEMATTRIB_DBATTRIBFLAG;
 	
 	iIcon=DIR_IMAGE;
 	if (nPathLen<=3)
@@ -103,7 +103,7 @@ void CLocatedItem::SetFolderW(const CLocater* pLocater)
     wAccessedTime=pLocater->GetFolderAccessedTimeW();
 	
 	// Setting attributes
-	bAttribs=pLocater->GetFolderAttributes()&LITEMATTRIB_DBATTRIBFLAG;
+	wAttribs=pLocater->GetFolderAttributes()&LITEMATTRIB_DBATTRIBFLAG;
 	
 	iIcon=DIR_IMAGE;
 	if (nPathLen<=3)
@@ -155,7 +155,7 @@ void CLocatedItem::SetFile(const CLocater* pLocater)
 	wAccessedTime=pLocater->GetFileAccessedTime();
 
 	// Setting attributes
-	bAttribs=pLocater->GetFileAttributes()&LITEMATTRIB_DBATTRIBFLAG;
+	wAttribs=pLocater->GetFileAttributes()&LITEMATTRIB_DBATTRIBFLAG;
 
 	iIcon=DEF_IMAGE;
 	if (nPathLen<=3)
@@ -209,7 +209,7 @@ void CLocatedItem::SetFileW(const CLocater* pLocater)
 	wAccessedTime=pLocater->GetFileAccessedTimeW();
 
 	// Setting attributes
-	bAttribs=pLocater->GetFileAttributes()&LITEMATTRIB_DBATTRIBFLAG;
+	wAttribs=pLocater->GetFileAttributes()&LITEMATTRIB_DBATTRIBFLAG;
 
 	iIcon=DEF_IMAGE;
 	if (nPathLen<=3)
@@ -678,7 +678,9 @@ void CLocatedItem::UpdateAttributes()
 		SetToDeleted();
 		return;
 	}
-	bAttribs=CDatabaseUpdater::GetAttribFlag(dwAttributes)|(bAttribs&LITEMATTRIB_DIRECTORY);
+	wAttribs=GetAttributesFromSystemAttributes(dwAttributes)|(wAttribs&LITEMATTRIB_DIRECTORY);
+
+
 	
 	ItemDebugMessage("CLocatedItem::UpdateAttributes END");
 }
@@ -1737,7 +1739,7 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 		FileTimeToLocalFileTime(&fd.ftLastAccessTime,&ftLocal);
 		FileTimeToDosDateTime(&ftLocal,&wAccessedDate,&wAccessedTime);
 		
-		bAttribs=CDatabaseUpdater::GetAttribFlag(fd.dwFileAttributes)|(bAttribs&LITEMATTRIB_DIRECTORY);
+		wAttribs=GetAttributesFromSystemAttributes(fd.dwFileAttributes)|(wAttribs&LITEMATTRIB_DIRECTORY);
 				
 		dwFlags|=LITEM_TIMEDATEOK|LITEM_FILESIZEOK|LITEM_ATTRIBOK;
 		
@@ -1749,11 +1751,11 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 
 	BOOL bRet=FALSE;
 
-	BYTE bAttribFlag=CDatabaseUpdater::GetAttribFlag(fd.dwFileAttributes)|(bAttribs&LITEMATTRIB_DIRECTORY);
-	if (bAttribFlag!=bAttribs)
+	BYTE wAttribFlag=GetAttributesFromSystemAttributes(fd.dwFileAttributes)|(wAttribs&LITEMATTRIB_DIRECTORY);
+	if (wAttribFlag!=wAttribs)
 	{
 		bRet=TRUE;
-		bAttribs=bAttribFlag|(bAttribs&LITEMATTRIB_CUTTED);
+		wAttribs=wAttribFlag|(wAttribs&LITEMATTRIB_CUTTED);
 		dwFlags|=LITEM_ATTRIBOK;
 	}
 
@@ -2079,4 +2081,22 @@ LPWSTR CLocatedItem::GetToolTipText() const
 
 	delete[] szDate;
 	return g_szwBuffer;
+}
+
+WORD CLocatedItem::GetAttributesFromSystemAttributes(DWORD dwSystemAttributess)
+{
+	WORD wRet=0;
+	if (dwSystemAttributess&FILE_ATTRIBUTE_ARCHIVE)
+		wRet|=LITEMATTRIB_ARCHIVE;
+	if (dwSystemAttributess&FILE_ATTRIBUTE_HIDDEN)
+		wRet|=LITEMATTRIB_HIDDEN;
+	if (dwSystemAttributess&FILE_ATTRIBUTE_READONLY)
+		wRet|=LITEMATTRIB_READONLY;
+	if (dwSystemAttributess&FILE_ATTRIBUTE_SYSTEM)
+		wRet|=LITEMATTRIB_SYSTEM;
+	if (dwSystemAttributess&FILE_ATTRIBUTE_COMPRESSED)
+		wRet|=LITEMATTRIB_COMPRESSED;
+	if (dwSystemAttributess&FILE_ATTRIBUTE_ENCRYPTED)
+		wRet|=LITEMATTRIB_ENCRYPTED;
+	return wRet;
 }

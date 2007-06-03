@@ -255,6 +255,46 @@ BOOL CWnd::SavePosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey) const
 	return bRet;
 }
 
+HWND CWnd::HtmlHelp(UINT uCommand,DWORD_PTR dwData,LPCSTR szHelpFile)
+{
+	if (szHelpFile!=NULL)
+	{	
+		if (FirstCharIndex(szHelpFile,'\\')!=-1)
+			return HtmlHelpA(m_hWnd,szHelpFile,uCommand,dwData);
+
+
+		// Insert path
+#ifdef DEF_WCHAR
+		if (IsUnicodeSystem())
+		{
+			CStringW sExeName=GetApp()->GetExeNameW();
+			return HtmlHelpW(*this,sExeName.Left(sExeName.FindLast(L'\\')+1)+szHelpFile,
+				uCommand,dwData);
+		}
+#endif
+	
+		CString sExeName=GetApp()->GetExeName();
+		return HtmlHelpA(*this,sExeName.Left(sExeName.FindLast(L'\\')+1)+szHelpFile,
+			uCommand,dwData);
+	}
+
+
+
+#ifdef DEF_WCHAR
+	if (IsUnicodeSystem())
+	{
+		CStringW sExeName=GetApp()->GetExeNameW();
+		return HtmlHelpW(*this,sExeName.Left(sExeName.FindLast(L'.')+1)+L"chm",
+			uCommand,dwData);
+	}
+#endif
+
+	CString sExeName=GetApp()->GetExeName();
+	return HtmlHelpA(*this,sExeName.Left(sExeName.FindLast(L'.')+1)+"chm",
+		uCommand,dwData);
+}
+	
+
 
 #ifdef DEF_RESOURCES
 int CWnd::ShowErrorMessage(UINT nIDMsgStr,UINT nIDTitleStr,UINT uType) const
@@ -378,6 +418,47 @@ UINT CWnd::GetDlgItemText(int nIDDlgItem,LPWSTR lpString,int nMaxCount) const
 	return ret;
 }
 
+
+HWND CWnd::HtmlHelp(UINT uCommand,DWORD_PTR dwData,LPCWSTR szHelpFile)
+{
+	if (szHelpFile!=NULL)
+	{	
+		if (FirstCharIndex(szHelpFile,L'\\')!=-1)
+		{
+			if (IsUnicodeSystem())
+				return HtmlHelpW(m_hWnd,szHelpFile,uCommand,dwData);
+			else
+				return HtmlHelpA(m_hWnd,W2A(szHelpFile),uCommand,dwData);
+		}
+
+
+
+		// Insert path
+		if (IsUnicodeSystem())
+		{
+			CStringW sExeName=GetApp()->GetExeNameW();
+			return HtmlHelpW(*this,sExeName.Left(sExeName.FindLast(L'\\')+1)+szHelpFile,
+				uCommand,dwData);
+		}
+	
+		CString sExeName=GetApp()->GetExeName();
+		return HtmlHelpA(*this,sExeName.Left(sExeName.FindLast(L'\\')+1)+szHelpFile,
+			uCommand,dwData);
+	}
+
+
+
+	if (IsUnicodeSystem())
+	{
+		CStringW sExeName=GetApp()->GetExeNameW();
+		return HtmlHelpW(*this,sExeName.Left(sExeName.FindLast(L'.')+1)+L"chm",
+			uCommand,dwData);
+	}
+
+	CString sExeName=GetApp()->GetExeName();
+	return HtmlHelpA(*this,sExeName.Left(sExeName.FindLast(L'.')+1)+"chm",
+		uCommand,dwData);
+}
 #endif
 
 

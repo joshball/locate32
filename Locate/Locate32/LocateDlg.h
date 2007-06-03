@@ -485,19 +485,20 @@ public:
 	CLocateDlg();
 	virtual ~CLocateDlg();
 
-	virtual BOOL OnInitDialog(HWND hwndFocus);
-	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
-	virtual BOOL OnClose();
-	virtual void OnDestroy();
-	virtual void OnSize(UINT nType, int cx, int cy);	
-	virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 	virtual void OnChangeCbChain(HWND hWndRemove,HWND hWndAfter );
-	virtual void OnDrawClipboard();
-	virtual void OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu);
-	virtual void OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis);
-	virtual void OnTimer(DWORD wTimerID); 
+	virtual BOOL OnClose();
+	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 	virtual void OnContextMenu(HWND hWnd,CPoint& pos);
+	virtual void OnDestroy();
+	virtual void OnDrawClipboard();
+	virtual void OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis);
+	virtual void OnHelp(LPHELPINFO lphi);
+	virtual BOOL OnInitDialog(HWND hwndFocus);
+	virtual void OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu);
 	virtual void OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpMeasureItemStruct);
+	virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
+	virtual void OnSize(UINT nType, int cx, int cy);	
+	virtual void OnTimer(DWORD wTimerID); 
 	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 	
 	void OnInitMainMenu(HMENU hPopupMenu,UINT nIndex);

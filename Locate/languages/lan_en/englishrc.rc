@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,7,5270
- PRODUCTVERSION 3,0,7,5270
+ FILEVERSION 3,0,7,6030
+ PRODUCTVERSION 3,0,7,6030
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 build 7.5270"
+            VALUE "FileVersion", "3.0 build 7.6030"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2007 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 build 7.5270"
+            VALUE "ProductVersion", "3.0 build 7.6030"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -230,6 +230,7 @@ IDD_SCHEDULEDUPDATE DIALOGEX 0, 0, 230, 190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Scheduled update"
 FONT 8, "Tahoma", 0, 0, 0x1
+EXSTYLE WS_EX_CONTEXTHELP
 BEGIN
     DEFPUSHBUTTON   "OK",IDC_OK,178,4,
                     48,14
@@ -486,6 +487,7 @@ IDD_DATABASEDIALOG DIALOGEX 0, 0, 274, 345
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Database"
 FONT 8, "Tahoma", 0, 0, 0x1
+EXSTYLE WS_EX_CONTEXTHELP
 BEGIN
     GROUPBOX        "Database settings:",IDC_STATIC,2,0,270,88
     CONTROL         "&Enable",IDC_ENABLE,"Button",BS_AUTOCHECKBOX | 
@@ -538,6 +540,7 @@ IDD_DBADVANCED DIALOGEX 0, 0, 270, 299
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Advanced database settings"
 FONT 8, "Tahoma", 0, 0, 0x1
+EXSTYLE WS_EX_CONTEXTHELP
 BEGIN
 	LTEXT           "Exclude files pattern (e.g., ""*.tmp;*~""):",10,10,9,248,8
     EDITTEXT        IDC_EXCLUDEFILES,9,20,250,13,ES_AUTOHSCROLL
@@ -664,6 +667,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION |
     WS_SYSMENU
 CAPTION "Advanced settings:"
 FONT 8, "Tahoma", 0, 0, 0x1
+EXSTYLE WS_EX_CONTEXTHELP
 BEGIN
     GROUPBOX        "Advanced options:",IDC_STATIC,4,1,263,34
     LTEXT           "&Type:",IDC_STATIC,10,16,28,11
@@ -711,6 +715,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION |
     WS_SYSMENU
 CAPTION "Select Details"
 FONT 8, "Tahoma", 0, 0, 0x1
+EXSTYLE WS_EX_CONTEXTHELP
 BEGIN
     LTEXT           "Width of the selected column (in pixels):",IDC_TEXT,7,226,137,8
     CONTROL         "",IDC_COLUMNS,"SysListView32",LVS_REPORT | 
@@ -762,6 +767,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION |
     WS_SYSMENU
 CAPTION "Select databases:"
 FONT 8, "Tahoma", 0, 0, 0x1
+EXSTYLE WS_EX_CONTEXTHELP
 BEGIN
     LTEXT           "Selected &databases:",IDC_STATIC,6,10,142,12
     CONTROL         "",IDC_DATABASES,"SysListView32",LVS_REPORT | 
@@ -890,11 +896,11 @@ BEGIN
     END
     POPUP "&Edit"
     BEGIN
-        MENUITEM "Cu&t",         IDM_CUT
-        MENUITEM "&Copy",        IDM_COPY
+        MENUITEM "Cu&t",         IDM_EDIT_CUT
+        MENUITEM "&Copy",        IDM_EDIT_COPY
         MENUITEM SEPARATOR
-        MENUITEM "Select &All",   IDM_SELECTALL
-        MENUITEM "&Invert Selection", IDM_INVERTSELECTION
+        MENUITEM "Select &All",   IDM_EDIT_SELECTALL
+        MENUITEM "&Invert Selection", IDM_EDIT_INVERTSELECTION
     END
     POPUP "&View"
     BEGIN
@@ -1727,6 +1733,7 @@ BEGIN
 	IDS_ACTIONCATSHOWHIDEDIALOG			"Show / Hide dialog"
 	IDS_ACTIONCATTRESULTLIST			"Result list"
 	IDS_ACTIONCATMISC					"Miscellaneous"
+	IDS_ACTIONCATHELP					"Help"
 	IDS_ACTIONCATCHANGEVALUE			"Change field"
 	IDS_ACTIONCATPRESETS				"Presets"
 	IDS_ACTIONSWDIALOGSHOW				"Show dialog"
@@ -1762,6 +1769,12 @@ BEGIN
 	IDS_ACTIONRESITEMEXECUTENTHITEM		"Execute %s%s file"
 	IDS_ACTIONADVSENDMESSAGE			"Send message"
 	IDS_ACTIONADVPOSTMESSAGE			"Post message"
+	IDS_ACTIONHELPSHOW					"Show Help for Item"
+	IDS_ACTIONHELPCLOSE					"Close Help"
+	IDS_ACTIONHELPTOPICS				"Show Topics"
+	IDS_ACTIONHELPINDEX					"Show Index"
+	IDS_ACTIONHELPTOC					"Table of Contents"
+	IDS_ACTIONHELPSEARCH				"Search"
 END
 
 

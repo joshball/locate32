@@ -624,6 +624,8 @@ public:
 #endif
 	int ReportSystemError(LPCSTR szTitle=NULL,DWORD dwError=DWORD(-1),DWORD dwExtra=0,LPCSTR szPrefix=NULL);
 
+	HWND HtmlHelp(UINT uCommand,DWORD_PTR dwData,LPCSTR szHelpFile=NULL);
+	
 
 #ifdef DEF_WCHAR
 	BOOL SetWindowText(LPCWSTR lpsz);
@@ -648,6 +650,7 @@ public:
 	static int MessageBox(HWND hWnd,LPCWSTR lpText,LPCWSTR lpCaption=NULL,UINT uType=MB_OK);
 
 
+	HWND HtmlHelp(UINT uCommand,DWORD_PTR dwData,LPCWSTR szHelpFile);
 #endif
 
 protected:

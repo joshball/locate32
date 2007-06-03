@@ -996,6 +996,9 @@ void CAction::ExecuteAction()
 	case Presets:
 		DoPresets();
 		break;
+	case Help:
+		DoHelp();
+		break;
 	default:
 		ASSERT(0);
 		break;
@@ -1129,6 +1132,69 @@ void CSubAction::DoShowHideDialog()
 		}
 		break;
 	}
+}
+
+
+void CSubAction::DoHelp()
+{
+	CTargetWnd* pWnd=GetLocateDlg();
+	if (pWnd==NULL)
+		pWnd=GetLocateAppWnd();
+	
+	switch(m_nHelp)
+	{
+	case HelpShowHelp:
+		{
+			HELPINFO h;
+			h.cbSize=sizeof(HELPINFO);
+			h.iContextType=HELPINFO_WINDOW;
+			h.hItemHandle=GetFocus();
+			
+			if (pWnd==GetLocateDlg())
+			{
+				// If comboboxes are selected, the edit in size of combo
+				// may have focus. 
+				HWND hParent=GetParent((HWND)h.hItemHandle);
+				while (hParent!=NULL && hParent!=*pWnd &&
+					hParent!=((CLocateDlg*)pWnd)->m_NameDlg &&
+					hParent!=((CLocateDlg*)pWnd)->m_SizeDateDlg &&
+					hParent!=((CLocateDlg*)pWnd)->m_AdvancedDlg)
+				{
+					h.hItemHandle=hParent;
+					hParent=GetParent(hParent);
+				}
+			}
+
+
+			h.iCtrlId=GetDlgCtrlID((HWND)h.hItemHandle);
+			h.dwContextId=0;
+			GetCursorPos(&h.MousePos);
+			pWnd->OnHelp(&h);
+			break;
+		}
+	case HelpCloseHelp:
+		pWnd->HtmlHelp(HH_CLOSE_ALL,0);
+		break;
+	case HelpShowTopics:
+		pWnd->HtmlHelp(HH_DISPLAY_TOPIC,0);
+		break;
+	case HelpIndex:
+		pWnd->HtmlHelp(HH_DISPLAY_INDEX,0);
+		break;
+	case HelpTOC:
+		pWnd->HtmlHelp(HH_DISPLAY_TOC,0);
+		break;
+	case HelpSearch:
+		{
+			HH_FTS_QUERY q;
+			ZeroMemory(&q,sizeof(HH_FTS_QUERY));
+			q.cbStruct=sizeof(HH_FTS_QUERY);
+
+			pWnd->HtmlHelp(HH_DISPLAY_SEARCH,(DWORD_PTR)&q);
+			break;
+		}
+	};
+
 }
 
 LPWSTR CSubAction::GetPathFromExplorer()
@@ -1918,7 +1984,7 @@ int CSubAction::GetResultItemActionLabelStringId(CAction::ActionResultList uSubA
 	}
 }
 
-int CSubAction::GetMiscActionStringLabelId(CAction::ActionMisc uSubAction)
+int CSubAction::GetMiscActionLabelStringId(CAction::ActionMisc uSubAction)
 {
 	switch (uSubAction)
 	{
@@ -1933,6 +1999,26 @@ int CSubAction::GetMiscActionStringLabelId(CAction::ActionMisc uSubAction)
 	}
 }
 
+int CSubAction::GetHelpActionLabelStringId(CAction::ActionHelp uSubAction)
+{
+	switch (uSubAction)
+	{
+	case HelpShowHelp:
+		return IDS_ACTIONHELPSHOW;
+	case HelpCloseHelp:
+		return IDS_ACTIONHELPCLOSE;
+	case HelpShowTopics:
+		return IDS_ACTIONHELPTOPICS;
+	case HelpIndex:
+		return IDS_ACTIONHELPINDEX;
+	case HelpTOC:
+		return IDS_ACTIONHELPTOC;
+	case HelpSearch:
+		return IDS_ACTIONHELPSEARCH;
+	default:
+		return 0;
+	}
+}
 #endif
 
 BOOL CShortcut::DoClassOrTitleMatch(LPCSTR pClass,LPCSTR pCondition)

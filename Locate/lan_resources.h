@@ -880,6 +880,7 @@
 #define IDS_KEYF12                      5646
 #define IDS_KEYF13                      5647
 #define IDS_KEYF14                      5648
+#define IDS_ACTIONCATHELP	            5700
 #define IDS_ACTIONCATACTIVATECONTROL    5701
 #define IDS_ACTIONCATACTIVATETAB        5702
 #define IDS_ACTIONCATMENUCOMMAND        5703
@@ -921,6 +922,12 @@
 #define IDS_ACTIONADVPOSTMESSAGE        5741
 #define IDS_ACTIONRESITEMSELECTNTHITEM	5742
 #define IDS_ACTIONRESITEMEXECUTENTHITEM	5743
+#define IDS_ACTIONHELPSHOW				5750
+#define IDS_ACTIONHELPCLOSE				5751
+#define IDS_ACTIONHELPTOPICS			5752
+#define IDS_ACTIONHELPINDEX				5753
+#define IDS_ACTIONHELPTOC				5754
+#define IDS_ACTIONHELPSEARCH			5755
 #define IDS_ADVSETCUSTOMTRAYICON		5800
 #define IDS_ADVSETICONFILE				5801
 #define IDS_ADVSETSELECTICONFILE		5802
@@ -1049,11 +1056,11 @@
 #define IDM_ARRANGEDATE                 40019
 #define IDM_AUTOARRANGE                 40020
 #define IDM_LOOKINNEXTSELECTION         40021
-#define IDM_CUT                         40022
-#define IDM_LOOKINPREVSELECTION         40023
-#define IDM_SELECTALL                   40024
-#define IDM_COPY                        40025
-#define IDM_INVERTSELECTION             40026
+#define IDM_EDIT_CUT                    40022
+#define IDM_LOOKINPREVSELECTION			40023
+#define IDM_EDIT_SELECTALL              40024
+#define IDM_EDIT_COPY                   40025
+#define IDM_EDIT_INVERTSELECTION        40026
 #define IDM_PRESETSAVE                  40027
 #define IDM_PRESETREMOVE                40028
 #define IDM_ARRANGEEXTENSION            40029
@@ -1087,6 +1094,8 @@
 #define IDM_REMOVEDELETEDFILES          40074
 #define IDM_EXPLICITDATE				40075
 #define IDM_RELATIVEDATE				40077
+#define IDM_CUT							40078
+#define IDM_COPY						40079
 #define IDM_DEFSHORTCUTITEM             49000
 #define IDM_DEFMENUITEM                 50000
 #define IDM_DEFCONTEXTITEM              51000

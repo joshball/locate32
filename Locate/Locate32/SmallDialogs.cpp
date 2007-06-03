@@ -108,6 +108,15 @@ BOOL CSelectColumnsDlg::OnInitDialog(HWND hwndFocus)
 	return CDialog::OnInitDialog(hwndFocus);
 }
 
+
+
+void CSelectColumnsDlg::OnHelp(LPHELPINFO lphi)
+{
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
+}
+
+
 void CSelectColumnsDlg::SaveActionFields(ColumnItem* pColumn)
 {
 	int nWhen=m_WhenCombo.GetCurSel();
@@ -719,6 +728,14 @@ CSelectDatabasesDlg::~CSelectDatabasesDlg()
 		m_pSelectDatabases=NULL;
 	}
 }
+
+
+void CSelectDatabasesDlg::OnHelp(LPHELPINFO lphi)
+{
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
+}
+
 
 BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 {

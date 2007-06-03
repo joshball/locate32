@@ -83,7 +83,20 @@ CPropertyPage::~CPropertyPage()
 }
 
 /*
-UINT CALLBACK PropertySheetPageProc(HWND hWnd,UINT uMsg,LPPROPSHEETPAGE  ppsp)
+
+UINT CALLBACK PropertySheetPageProcA(HWND hWnd,UINT uMsg,LPPROPSHEETPAGEA  ppsp)
+{
+	switch (uMsg)
+	{
+	case PSPCB_CREATE:
+		return 1;
+	case PSPCB_RELEASE:
+		break;
+	}
+	return 0;
+}
+
+UINT CALLBACK PropertySheetPageProcW(HWND hWnd,UINT uMsg,LPPROPSHEETPAGEW  ppsp)
 {
 	switch (uMsg)
 	{
@@ -102,7 +115,7 @@ void CPropertyPage::Construct(UINT nIDCaption,TypeOfResourceHandle bType)
 	{
 		ZeroMemory(&m_pspw,sizeof(PROPSHEETPAGEW));
 		m_pspw.dwSize=sizeof(PROPSHEETPAGEW);
-		m_pspw.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
+		m_pspw.dwFlags=PSP_DEFAULT /* |PSP_USECALLBACK */;
 		if (m_lpszTemplateNameW!=NULL)
 		{
 			m_pspw.hInstance=GetResourceHandle(bType);
@@ -115,14 +128,14 @@ void CPropertyPage::Construct(UINT nIDCaption,TypeOfResourceHandle bType)
 			m_pspw.pszTitle=allocstringW(nIDCaption);
 			m_pspw.dwFlags|=PSP_USETITLE;
 		}
-		m_pspw.pfnCallback=NULL; //PropertySheetPageProc;
+		m_pspw.pfnCallback=NULL; /*PropertySheetPageProcW;*/
 		m_bFirstSetActive=TRUE;
 	}
 	else
 	{
 		ZeroMemory(&m_psp,sizeof(PROPSHEETPAGE));
 		m_psp.dwSize=sizeof(PROPSHEETPAGE);
-		m_psp.dwFlags=PSP_DEFAULT ; //PSP_USECALLBACK;
+		m_psp.dwFlags=PSP_DEFAULT /*|PSP_USECALLBACK */;
 		if (m_lpszTemplateName!=NULL)
 		{
 			m_psp.hInstance=GetResourceHandle(bType);
@@ -135,7 +148,7 @@ void CPropertyPage::Construct(UINT nIDCaption,TypeOfResourceHandle bType)
 			m_psp.pszTitle=allocstring(nIDCaption);
 			m_psp.dwFlags|=PSP_USETITLE;
 		}
-		m_psp.pfnCallback=NULL; //PropertySheetPageProc;
+		m_psp.pfnCallback=NULL; /*PropertySheetPageProcA;*/
 		m_bFirstSetActive=TRUE;
 	}
 }
@@ -323,6 +336,18 @@ BOOL CPropertyPage::OnNotify(int idCtrl,LPNMHDR pnmh)
 	case PSN_WIZFINISH:
 		ret=!OnWizardFinish();
 		break;
+	case PSN_HELP:
+		{
+			HELPINFO hi;
+			hi.cbSize=sizeof(HELPINFO);
+			hi.iContextType=HELPINFO_WINDOW;
+			hi.dwContextId=0;
+			hi.iCtrlId=(int)pnmh->idFrom;
+			hi.hItemHandle=pnmh->hwndFrom;
+			GetCursorPos(&hi.MousePos);
+			OnHelp(&hi);
+			return TRUE;
+		}
 	default:
 		return FALSE;
 	}
@@ -334,6 +359,7 @@ BOOL CPropertyPage::OnNotify(int idCtrl,LPNMHDR pnmh)
 // CPropertySheet
 ///////////////////////////////////////////
 
+/*
 int CALLBACK PropertySheetProc(HWND hWndDlg,UINT uMsg,LPARAM lParam)
 {
 	switch (uMsg)
@@ -345,6 +371,7 @@ int CALLBACK PropertySheetProc(HWND hWndDlg,UINT uMsg,LPARAM lParam)
 	}
 	return 0;
 }
+*/
 
 CPropertySheet::~CPropertySheet()
 {

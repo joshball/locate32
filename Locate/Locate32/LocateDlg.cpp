@@ -864,23 +864,12 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		break;
 	case IDM_ABOUT:
 		{
-			//CAboutDlg About;
-			//About.DoModal(*this);
+			CAboutDlg About;
+			About.DoModal(*this);
 		}
 		break;
 	case IDM_HELPTOPICS:
-		if (IsUnicodeSystem())
-		{
-			CStringW sExeName=GetLocateApp()->GetExeNameW();
-			HtmlHelpW(*this,sExeName.Left(sExeName.FindLast(L'\\')+1)+L"Locate32.chm",
-				0,HH_HELP_FINDER);
-		}
-		else
-		{
-			CString sExeName=GetLocateApp()->GetExeName();
-			HtmlHelp(*this,sExeName.Left(sExeName.FindLast(L'\\')+1)+"Locate32.chm",
-				0,HH_HELP_FINDER);
-		}
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
 		break;
 	case IDM_LARGEICONS:
 		SetListStyle(0);
@@ -952,9 +941,11 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		GetLocateAppWnd()->PostMessage(WM_COMMAND,IDM_EXIT,NULL);
 		break;
 	case IDM_CUT:
+	case IDM_EDIT_CUT:
 		OnCopy(TRUE);
 		break;
 	case IDM_COPY:
+	case IDM_EDIT_COPY:
 		OnCopy(FALSE);
 		break;
 	case IDM_OPENCONTAININGFOLDER:
@@ -975,10 +966,10 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDC_SELECTALLKEY:
 		if (GetFocus()!=GetDlgItem(IDC_FILELIST))
 			break;
-	case IDM_SELECTALL:
+	case IDM_EDIT_SELECTALL:
 		OnSelectAll();
 		break;
-	case IDM_INVERTSELECTION:
+	case IDM_EDIT_INVERTSELECTION:
 		OnInvertSelection();
 		break;
 	case IDM_LINEUPICONS:
@@ -1163,6 +1154,20 @@ BOOL CLocateDlg::SetListStyle(int id,BOOL bInit)
 	return TRUE;
 }
 
+
+void CLocateDlg::OnHelp(LPHELPINFO lphi)
+{
+	//CTargetWnd::OnHelp(lphi);
+
+	// Menu item
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+	{
+		// No topic found, show topics window
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
+	}
+	
+}
+	
 void CLocateDlg::SetMenuCheckMarkForListStyle()
 {
 	ASSERT(m_pListCtrl!=NULL);

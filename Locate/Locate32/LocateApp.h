@@ -42,6 +42,7 @@ public:
 		virtual void OnTimer(DWORD wTimerID);
 		virtual void OnPaint();
 		virtual void OnMouseMove(UINT fwKeys,WORD xPos,WORD yPos);
+		
 	
 		virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 	
@@ -98,7 +99,8 @@ public:
 	virtual void OnDestroy();
 	virtual void OnTimer(DWORD wTimerID); 
 	virtual void OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu);
-    virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
+	virtual void OnHelp(LPHELPINFO lphi);
+	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
 	
 	DWORD OnActivateAnotherInstance(ATOM aCommandLine);
 	DWORD OnSystemTrayMessage(UINT uID,UINT msg);

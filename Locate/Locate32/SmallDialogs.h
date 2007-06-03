@@ -15,6 +15,8 @@ public:
 	virtual BOOL OnClose();
 	virtual void OnDestroy();
 	virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
+	virtual void OnHelp(LPHELPINFO lphi);
+		
 
 	void OnOK();
 	void OnCancel();
@@ -80,6 +82,7 @@ private:
 		virtual void OnOK();
 		virtual BOOL OnInitDialog(HWND hwndFocus);
 
+
 		CSelectDatabasesDlg* m_pParent;
 
 	};
@@ -93,6 +96,8 @@ public:
 	virtual BOOL OnClose();
 	virtual void OnDestroy();
 	virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
+	virtual void OnHelp(LPHELPINFO lphi);
+		
 	BOOL ListNotifyHandler(NMLISTVIEW *pNm);
     
 	void OnOK();

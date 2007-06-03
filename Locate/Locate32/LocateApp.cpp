@@ -4862,6 +4862,29 @@ BOOL CLocateAppWnd::CUpdateStatusWnd::DestroyWindow()
 	return TRUE;
 }
 
+
+void CLocateAppWnd::OnHelp(LPHELPINFO lphi)
+{
+	if (GetLocateDlg()!=NULL)
+	{
+		GetLocateDlg()->OnHelp(lphi);
+		return;
+	}
+
+	CTargetWnd::OnHelp(lphi);
+
+	if (lphi->iContextType==HELPINFO_MENUITEM)
+	{
+		// Menu item
+		if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		{
+			// No topic found, show topics window
+			HtmlHelp(HH_DISPLAY_TOPIC,0);
+		}
+	}
+}
+
+
 CLocateApp::LocaleNumberFormat::LocaleNumberFormat()
 :	uLeadingZero(1),uGrouping(3)
 {

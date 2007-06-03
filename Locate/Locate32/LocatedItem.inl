@@ -13,20 +13,24 @@ inline LPWSTR CLocatedItem::FormatAttributes() const
 		ISDLGTHREADOK
 		if (g_szwBuffer!=NULL)
 			delete[] g_szwBuffer;
-		g_szwBuffer=new WCHAR[10];
+		g_szwBuffer=new WCHAR[12];
 
 		LPWSTR pPtr=g_szwBuffer;
 
 		if (IsFolder())
 			*(pPtr++)=L'D';
-		if (GetAttributes()&LITEMATTRIB_READONLY)
+		if (IsReadOnly())
 			*(pPtr++)=L'R';
-		if (GetAttributes()&LITEMATTRIB_HIDDEN)
+		if (IsHidden())
 			*(pPtr++)=L'H';
-		if (GetAttributes()&LITEMATTRIB_SYSTEM)
+		if (IsSystem())
 			*(pPtr++)=L'S';
-		if (GetAttributes()&LITEMATTRIB_ARCHIVE)
+		if (IsArchive())
 			*(pPtr++)=L'A';
+		if (IsCompressed())
+			*(pPtr++)=L'C';
+		if (IsEncrypted())
+			*(pPtr++)=L'E';
 		*pPtr=L'\0';
 		return g_szwBuffer;
 	}

@@ -52,6 +52,8 @@
 #include <shlobj.h>
 #include <richedit.h>
 #include <richole.h>
+#include <htmlhelp.h>
+#undef HtmlHelp
 
 #else
 #include <string.h>

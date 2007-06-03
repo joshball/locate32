@@ -39,12 +39,14 @@ inline void CSettingsProperties::ClearSettingsFlags(DWORD dwFlags)
 inline CSettingsProperties::CGeneralSettingsPage::CGeneralSettingsPage()
 :	CPropertyPage(IDD_GENERALSETTINGS,IDS_GENERALSETTINGS)
 {
+	AddFlags(PSP_HASHELP);
 }
 
 inline CSettingsProperties::CAdvancedSettingsPage::CAdvancedSettingsPage()
 {	
 	DebugMessage("CSettingsProperties::CAdvancedSettingsPage::CAdvancedSettingsPage()"); 
 
+	
 	OPTIONPAGE op;
 	op.dwFlags=COptionsPropertyPage::OPTIONPAGE::opTemplateIsID|
 		COptionsPropertyPage::OPTIONPAGE::opCaptionIsID|
@@ -58,16 +60,22 @@ inline CSettingsProperties::CAdvancedSettingsPage::CAdvancedSettingsPage()
 	op.nIDChangeText=IDS_ADVSETCHANGE;
 	
 	Construct(&op);
+
+
+	AddFlags(PSP_HASHELP);
+
 }
 
 inline CSettingsProperties::CLanguageSettingsPage::CLanguageSettingsPage()
 :	CPropertyPage(IDD_LANGUAGESETTINGS,IDS_LANGUAGESETTINGS),m_pList(NULL),nLastSel(0)
 {
+	AddFlags(PSP_HASHELP);
 }
 
 inline CSettingsProperties::CDatabasesSettingsPage::CDatabasesSettingsPage()
 :	CPropertyPage(IDD_DATABASESETTINGS,IDS_DATABASESETTINGS),m_pList(NULL)
 {
+	AddFlags(PSP_HASHELP);
 }
 
 inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CDatabaseDialog()
@@ -90,6 +98,7 @@ inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDi
 inline CSettingsProperties::CAutoUpdateSettingsPage::CAutoUpdateSettingsPage()
 :	CPropertyPage(IDD_AUTOUPDATESETTINGS,IDS_AUTOUPDATESETTINGS)
 {
+	AddFlags(PSP_HASHELP);
 }
 
 inline CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::CCheduledUpdateDlg()

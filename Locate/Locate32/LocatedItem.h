@@ -24,6 +24,8 @@ class CLocater;
 #define LITEMATTRIB_ARCHIVE			0x4
 #define LITEMATTRIB_SYSTEM			0x8
 #define LITEMATTRIB_CUTTED			0x10
+#define LITEMATTRIB_COMPRESSED		0x20
+#define LITEMATTRIB_ENCRYPTED		0x40
 #define LITEMATTRIB_DIRECTORY		0x80
 
 #define LITEMATTRIB_DBATTRIBFLAG	0x8F
@@ -96,18 +98,20 @@ public:
 	WORD GetDatabaseID() const { return wDatabaseID; }
 	WORD GetRootID() const { return wRootID; }
 
-	BYTE GetAttributes() const { return bAttribs; }
-	void AddAttribute(BYTE bAttribute) { bAttribs|=bAttribute; }
-	void RemoveAttribute(BYTE bAttribute) { bAttribs&=~bAttribute; }
+	WORD GetAttributes() const { return wAttribs; }
+	void AddAttribute(WORD wAttribute) { wAttribs|=wAttribute; }
+	void RemoveAttribute(WORD wAttribute) { wAttribs&=~wAttribute; }
 
 	BOOL IsDeleted() const { return iIcon==((CLocateApp*)GetApp())->m_nDelImage && dwFileSize==DWORD(-1) && wModifiedTime==WORD(-1) && wModifiedDate==WORD(-1); }
-	BOOL IsFolder() const { return bAttribs&LITEMATTRIB_DIRECTORY; }
-	BOOL IsHidden() const { return bAttribs&LITEMATTRIB_HIDDEN; }
-	BOOL IsReadOnly() const { return bAttribs&LITEMATTRIB_READONLY; }
-	BOOL IsSystem() const { return bAttribs&LITEMATTRIB_SYSTEM; }
-	BOOL IsArchive() const { return bAttribs&LITEMATTRIB_ARCHIVE; }
-	BOOL IsCutted() const { return bAttribs&LITEMATTRIB_CUTTED; }
-
+	BOOL IsFolder() const { return wAttribs&LITEMATTRIB_DIRECTORY; }
+	BOOL IsHidden() const { return wAttribs&LITEMATTRIB_HIDDEN; }
+	BOOL IsReadOnly() const { return wAttribs&LITEMATTRIB_READONLY; }
+	BOOL IsSystem() const { return wAttribs&LITEMATTRIB_SYSTEM; }
+	BOOL IsArchive() const { return wAttribs&LITEMATTRIB_ARCHIVE; }
+	BOOL IsCutted() const { return wAttribs&LITEMATTRIB_CUTTED; }
+	BOOL IsCompressed() const { return wAttribs&LITEMATTRIB_COMPRESSED; }
+	BOOL IsEncrypted() const { return wAttribs&LITEMATTRIB_ENCRYPTED; }
+	
 	LPWSTR GetName() const { return szName; }
 	DWORD GetNameLen() const { return bNameLength; }
 	LPWSTR GetPath() const { szName[-1]=L'\\'; return szPath; }
@@ -149,6 +153,10 @@ public:
 	LPWSTR FormatPages() const;
 
 private:
+	static WORD GetAttributesFromSystemAttributes(DWORD dwSystemAttributess);
+	
+
+
 	LPWSTR szFileTitle;
 	LPWSTR szName;
 	mutable LPWSTR szPath;
@@ -166,7 +174,7 @@ private:
 	DWORD dwFileSize;
 	WORD wFileSizeHi;
 	BYTE bExtensionPos;
-	BYTE bAttribs;
+	WORD wAttribs;
 	BYTE bNameLength;
 
 	WORD wDatabaseID;

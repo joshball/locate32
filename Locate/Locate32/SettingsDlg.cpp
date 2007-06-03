@@ -39,7 +39,11 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_dwTooltipDelayAutopop(DWORD(-1)),
 	m_dwTooltipDelayInitial(DWORD(-1))
 {
-	AddFlags(PSH_NOAPPLYNOW|PSH_NOCONTEXTHELP);
+	AddFlags(PSH_NOAPPLYNOW);
+
+#ifdef _DEBUG
+	AddFlags(PSH_HASHELP);
+#endif
 
 	m_pGeneral=new CGeneralSettingsPage;
 	m_pAdvanced=new CAdvancedSettingsPage;
@@ -903,6 +907,12 @@ BYTE CSettingsProperties::CGeneralSettingsPage::OnAlwaysUnderline()
 	return TRUE;
 }
 
+void CSettingsProperties::CGeneralSettingsPage::OnHelp(LPHELPINFO lphi)
+{
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
+}
+
 
 ////////////////////////////////////////
 // CAdvancedSettingsPage
@@ -1157,6 +1167,13 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	Initialize(Parents);
 	return FALSE;
 }
+
+void CSettingsProperties::CAdvancedSettingsPage::OnHelp(LPHELPINFO lphi)
+{
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
+}
+
 
 void CSettingsProperties::CAdvancedSettingsPage::OnCancel()
 {
@@ -1579,6 +1596,12 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnInitDialog(HWND hwndFocus)
 	return FALSE;
 }
 
+void CSettingsProperties::CLanguageSettingsPage::OnHelp(LPHELPINFO lphi)
+{
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
+}
+
 BOOL CSettingsProperties::CLanguageSettingsPage::OnApply()
 {
 	CPropertyPage::OnApply();
@@ -1849,6 +1872,12 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnInitDialog(HWND hwndFocus)
 
 	EnableButtons();	
 	return FALSE;
+}
+
+void CSettingsProperties::CDatabasesSettingsPage::OnHelp(LPHELPINFO lphi)
+{
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 
 void CSettingsProperties::CDatabasesSettingsPage::SetDatabasesToList()
@@ -2909,7 +2938,11 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	return FALSE;
 }
 
-
+void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnHelp(LPHELPINFO lphi)
+{
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
+}
 
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnDestroy()
 {
@@ -4017,6 +4050,14 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 	return FALSE;
 }
 
+
+void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnHelp(LPHELPINFO lphi)
+{
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
+}
+
+
 BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnNotify(int idCtrl,LPNMHDR pnmh)
 {
 	switch (idCtrl)
@@ -4398,6 +4439,12 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnInitDialog(HWND hwndFocus)
 		pPos=m_pSettings->m_Schedules.GetNextPosition(pPos);
 	}
 	return FALSE;
+}
+
+void CSettingsProperties::CAutoUpdateSettingsPage::OnHelp(LPHELPINFO lphi)
+{
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 
 void CSettingsProperties::CAutoUpdateSettingsPage::EnableItems()
@@ -4899,6 +4946,14 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 	m_bChanged=FALSE;
 	return CDialog::OnInitDialog(hwndFocus);
 }
+
+
+void CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnHelp(LPHELPINFO lphi)
+{
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
+}
+
 
 BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
@@ -5517,6 +5572,8 @@ CSettingsProperties::CKeyboardShortcutsPage::CKeyboardShortcutsPage()
 	m_ToolBarBitmapsDisabled(NULL),m_ToolBarBitmapsHot(NULL),
 	m_pCurrentShortcut(NULL)
 {
+	AddFlags(PSP_HASHELP);
+
 	m_pPossibleControlsToActivate=CAction::GetPossibleControlValuesToActivate();
 	m_pPossibleControlsToChange=CAction::GetPossibleControlValuesToChange();
 	m_pPossibleMenuCommands=CAction::GetPossibleMenuCommands();
@@ -5639,6 +5696,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATMISC));
 	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATCHANGEVALUE));
 	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATPRESETS));
+	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATHELP));
 
 	m_VerbCombo.AddString(ID2W(IDS_DEFAULT));
 
@@ -5704,6 +5762,13 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 
 		
 	return FALSE;
+}
+
+
+void CSettingsProperties::CKeyboardShortcutsPage::OnHelp(LPHELPINFO lphi)
+{
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 
 
@@ -5816,6 +5881,10 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::IndexToSubAction(CAction::Acti
 		if (nIndex>=(UINT)m_aPossiblePresets.GetSize())
 			return (UINT)-1;
 		return nIndex;
+	case CAction::Help:
+		if (nIndex>CAction::HelpLast)
+			return (UINT)-1;
+		return nIndex;
 	}
 	return (UINT)-1;
 }
@@ -5871,6 +5940,10 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::SubActionToIndex(CAction::Acti
 			}
 			return (UINT)-1;
 		}
+	case CAction::Help:
+		if (nSubAction>CAction::Help)
+			return (UINT)-1;
+		return nSubAction;
 	default:
 		ASSERT(0);
 		break;
@@ -5996,12 +6069,16 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 		}
 		break;
 	case CAction::Misc:
-		str.LoadString(CAction::GetMiscActionStringLabelId(
+		str.LoadString(CAction::GetMiscActionLabelStringId(
 			(CAction::ActionMisc)IndexToSubAction(CAction::Misc,uSubAction)));
 		break;
 	case CAction::Presets:
 		ASSERT(uSubAction<(UINT)m_aPossiblePresets.GetSize());
 		str.Copy(m_aPossiblePresets[(int)uSubAction]);
+		break;
+	case CAction::Help:
+		str.LoadString(CAction::GetHelpActionLabelStringId(
+			(CAction::ActionHelp)IndexToSubAction(CAction::Help,uSubAction)));		
 		break;
 	default:
 		ASSERT(0);
@@ -7428,6 +7505,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 		}
 	case CAction::ActivateTab:
 	case CAction::ShowHideDialog:
+	case CAction::Help:
 		pAction->m_nSubAction=m_SubActionCombo.GetCurSel();
 		if ((int)pAction->m_nSubAction==CB_ERR)
 			pAction->m_nSubAction=0;
@@ -7600,17 +7678,18 @@ void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CStringW& st
 	case CAction::MenuCommand:
 		str.LoadString(IDS_ACTIONCATMENUCOMMAND);
 		break;
-	case CAction::ShowHideDialog:
-		break;
-	case CAction::ResultListItems:
-		break;
-	case CAction::Misc:
-		break;
 	case CAction::Presets:
 		str.LoadString(IDS_ACTIONCATPRESETS);
 		break;
 	case CAction::ChangeValue:
 		str.LoadString(IDS_ACTIONCATCHANGEVALUE);
+		break;
+	case CAction::Help:
+		str.LoadString(IDS_ACTIONCATHELP);
+		break;
+	case CAction::ShowHideDialog:
+	case CAction::ResultListItems:
+	case CAction::Misc:
 		break;
 	}
 
@@ -7708,6 +7787,12 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnInitDialog(HWN
 
 	EnableItems();
 	return FALSE;
+}
+
+void CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnHelp(LPHELPINFO lphi)
+{
+	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 
 
