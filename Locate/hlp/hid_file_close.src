@@ -1,0 +1,10 @@
+TITLE=Close (File menu)
+CONTENT=
+<OBJECT TYPE="application/x-oleobject" CLASSID="clsid:1e2a7bd0-dab9-11d0-b93a-00c04fc99f9e">
+	<PARAM NAME="Keyword" VALUE="close">
+</OBJECT>
+<div id="menucommands">
+<H1><A NAME="hid_file_close"></A>Close (File menu)</H1>
+
+<P>Closes Locate dialog. Locate32 may stay running in background.</P>
+</div>

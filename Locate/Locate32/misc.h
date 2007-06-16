@@ -118,8 +118,8 @@ public:
 
 
 	// Deletekey HKCU/CommonKey/lpszSubKey
-	LONG DeleteKey(LPCSTR lpszSubKey);
-	LONG DeleteKey(LPCWSTR lpszSubKey);
+	static LONG DeleteCommonKey(LPCSTR lpszSubKey);
+	static LONG DeleteCommonKey(LPCWSTR lpszSubKey);
 	
 
 	static CString GetCommonKey();

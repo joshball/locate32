@@ -1,50 +1,0 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
-<HTML><HEAD><META HTTP-EQUIV="Content-Type" Content="text/html; charset=Windows-1252"><TITLE>(Search terms)</TITLE></HEAD><BODY>
-<P><A NAME="issue_searchterms"></A><B>Search terms</B></P>
-
-
-<p>
-The following issues may clear out that which kind of search terms can be used in "Named:" field.
-
-
-<ul>
-<li>By default, Locate finds files which contains a given text. For example, 
-"bar" will find files foobar, barbox and foobarbox. </li>
-
-<li>You can use * and ? as usually. For example, "foo*bar" will find any files which name contains "foo" 
-followed by "bar" and "foo?bar" will find files, for example, "foo1bar", "fooabar" but not "foo11bar".</li>
-
-<li>You can also use "Named:" field to specigy extension, for example, use "foobar*.txt". </li>
-
-<li>If you want to files which name are exacly "foobar", check "Match whole name only" option 
-in Advanced tab. If you want that this option to be enabled by default, check the corresponding option in General
-settings. </li>
-
-<li>Tehcnically speaking, "foobar" without "Match whole name only" option is same as "*foobar*" with that option enabled.
-However, if extension is specified in "Named:" field (i.e., there is dot '.' in name), * is not added to the end.</li>
-
-<li>You can specify several searging terms by using comma, for example "foo, bar" will search files which name 
-contains foo or bar. If you want to search files including commas, use apostrophes (e.g., type "foo,bar","cat*dog").
-</li>
-
-<li>If you want to search files which names contains "foo" and "bar" (but not necessarily in that order", you 
-can use "+foo,+bar". If you want to search files, which name does <b>not</b> contain "foo" but contains "bar", use 
-"-foo","+bar". To find files which name contains + or -, use apostrophe (e.g., type: +"-foo",+"+bar").
-<b>Note: to use + or -, it is required that "Allow logical operations + and -" options in Advanced 
-settings is enabled.</b>
-</li>
-
-<li>You can use PERL compatible regular expression. For example, you can search files which contain 
-"foo" or "bar", type: ":foo|bar" (':' at the beginning tells that the given string is a regular expression). 
-Regular expression are implemented by using <a href="www.pcre.org/">PCRE library</a>.  
-<a href="http://www.perldoc.com/perl5.8.0/pod/perlre.html">An introduction to 
-perl regular expressions</a>.
-</li>
-</ul>
-</p>
-<p>
-Note: "Advanded tab" above refers to Advanced tab in Locate dialog, and "General settings" and "Advanced settings" 
-refers to General and Advanced tab in Settings dialog.</p>
-
-</BODY>
-</HTML>

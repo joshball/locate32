@@ -119,7 +119,69 @@ BOOL CIdentifiers::LoadFromLResFile(LPCSTR szFile,BOOL bShowFound)
 	return TRUE;
 }
 
-BOOL CIdentifiers::InsertToRCFile(LPCSTR szNewFile,LPCSTR szBaseFile,BOOL bShowMerging)
+BOOL CIdentifiers::LoadFromHtmlRawFile(LPCSTR szFile,BOOL bShowFound)
+{
+	char* pBuffer=NULL;
+	DWORD dwLength=0;
+	
+	if (!ReadFileContent(szFile,pBuffer,dwLength))
+		return FALSE;
+
+	LPCSTR pPointer=pBuffer;
+	DWORD dwReadedLines=1;
+	BOOL bIsThereCommentsBefore=FALSE;
+	CString name,text;
+		
+	IDENTIFIER* pNew=NULL;
+
+	for(;;)
+	{
+		if (!FindNextIdentifierInLresFile(pPointer,dwReadedLines,bIsThereCommentsBefore))
+			break;
+		
+		if (!SeperateIdentifierAndText(pPointer,name,text))
+		{
+			fprintf(_stderr,"Error in line %d in file %s.\n",dwReadedLines,szFile);
+			delete[] pBuffer;
+			return FALSE;				
+		}
+
+		pNew=FindIdentifier(name);
+		
+		if (pNew==NULL)
+		{			
+			pNew=AddTail();
+			pNew->name.Swap(name);
+			
+			if (text.IsEmpty())
+			{
+				// The text is the rest of file
+				pNew->text=pPointer;
+				if (bShowFound)
+					printf("Found ID for the rest of file: %s\n",LPCSTR(pNew->name));
+				break;
+			}
+			else
+			{
+				pNew->text.Swap(text);
+				if (bShowFound)
+					printf("Found ID: %s=%s\n",LPCSTR(pNew->name),LPCSTR(pNew->text));
+			}
+		}
+		else
+		{
+			printf("Dublicated identifier %s, replacing text with %s\n",LPCSTR(name),LPCSTR(text));
+			pNew->text.Swap(text);
+			pNew->bCommentsAbove=bIsThereCommentsBefore;
+		}
+		pNew->dwLineNumber=dwReadedLines;
+	}
+	
+	delete[] pBuffer;
+	return TRUE;
+}
+
+BOOL CIdentifiers::InsertToOutputFile(LPCSTR szNewFile,LPCSTR szBaseFile,BOOL bShowMerging)
 {
 	char* pBase=NULL;
 	DWORD dwLength=0;
@@ -232,7 +294,7 @@ BOOL CIdentifiers::UpdateLResFile(LPCSTR szInputFile,LPCSTR szOutputFile,BYTE bS
 				char ret;
 				do {
 					printf("Found obsolete ID '%s'. Comment/Delete/doNothing [C]?",LPCSTR(pID->name));
-					ret=getch();
+					ret=_getch();
 					if (ret!='\r' && ret!='\n')
 						printf("%c\n",ret);
 					else
@@ -321,7 +383,7 @@ BOOL CIdentifiers::UpdateLResFile(LPCSTR szInputFile,LPCSTR szOutputFile,BYTE bS
 						printf("New ID %s found, ref='%s'\n",LPCSTR(pID->name),LPCSTR(pReference->text));
 						printf("Merging it (Yes,No,withText,Ref) [R]?");
 							
-						ret=getch();
+						ret=_getch();
 						if (ret!='\r' && ret!='\n')
 							printf("%c\n",ret);
 						else
@@ -337,7 +399,7 @@ BOOL CIdentifiers::UpdateLResFile(LPCSTR szInputFile,LPCSTR szOutputFile,BYTE bS
 					do {
 						printf("Merging new identifier '%s' (Yes,No,withText) [Y]?",LPCSTR(pID->name));
 							
-						ret=getch();
+						ret=_getch();
 						if (ret!='\r' && ret!='\n')
 							printf("%c\n",ret);
 						else
@@ -371,7 +433,7 @@ BOOL CIdentifiers::UpdateLResFile(LPCSTR szInputFile,LPCSTR szOutputFile,BYTE bS
 				{
 					do 
 					printf("  enter text:");
-					while (gets(text.GetBuffer(2000))!=NULL);
+					while (gets_s(text.GetBuffer(2000),2000)!=NULL);
 					text.FreeExtra();		
 				}		
 
@@ -420,7 +482,7 @@ BOOL CIdentifiers::UpdateLResFile(LPCSTR szInputFile,LPCSTR szOutputFile,BYTE bS
 						str<<"Eof [" << def << "]?";
 
 						printf(str);
-						ret=getch();
+						ret=_getch();
 						if (ret!='\r' && ret!='\n')
 							printf("%c\n",ret);
 						else

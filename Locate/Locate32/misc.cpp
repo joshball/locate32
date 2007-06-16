@@ -646,7 +646,7 @@ LONG CRegKey2::OpenKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATT
 	return lRet;
 }
 
-LONG CRegKey2::DeleteKey(LPCSTR lpszSubKey)
+LONG CRegKey2::DeleteCommonKey(LPCSTR lpszSubKey)
 {
 	extern CLocateApp theApp;
 	
@@ -672,7 +672,7 @@ LONG CRegKey2::DeleteKey(LPCSTR lpszSubKey)
 	return lRet;
 }
 
-LONG CRegKey2::DeleteKey(LPCWSTR lpszSubKey)
+LONG CRegKey2::DeleteCommonKey(LPCWSTR lpszSubKey)
 {
 	extern CLocateApp theApp;
 	

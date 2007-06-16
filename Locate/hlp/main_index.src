@@ -1,0 +1,41 @@
+TITLE=Locate32 Help Index
+CONTENT=
+<div id="helptopics">
+
+<H1>Locate32 Help topics</H1>
+<p>
+This is a preliminary help file for Locate32. If you have suggestion about 
+that what this help should contains, contact author (written text would be 
+fantastic!).
+</p>
+
+<P><B>General issues:</B>
+<UL>
+<LI><A HREF="issue_searchterms.htm">Special terms in searches (logical operations, regular expressions, etc...).</A></LI>
+<LI><A HREF="issue_commandLInearguments.htm">Command LIne arguments.</A></LI>
+</UL>
+</P>
+
+
+
+<P><B>How To:</B>
+<UL>
+<LI><A HREF="howto_externaldrives.htm">Index network drives, USB memory sticks, etc...</A></LI>
+</UL>
+</P>
+
+
+
+<P><B>User interface</B>
+<UL>
+<LI><A HREF="menu_file.htm">File menu</A></LI>
+<LI><A HREF="menu_edit.htm">Edit menu</A></LI>
+<LI><A HREF="menu_view.htm">View menu</A></LI>
+<LI><A HREF="menu_options.htm">Options menu</A></LI>
+<LI><A HREF="menu_help.htm">Help menu</A></LI>
+<LI><A HREF="menu_contextmenu.htm">Context menus</A></LI>
+<LI><A HREF="menu_systemtray.htm">System tray menu</A></LI>
+</UL>
+</P>
+
+</div>

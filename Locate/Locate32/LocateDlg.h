@@ -485,6 +485,7 @@ public:
 	CLocateDlg();
 	virtual ~CLocateDlg();
 
+	virtual void OnActivateApp(BOOL fActive,DWORD dwThreadID); 
 	virtual void OnChangeCbChain(HWND hWndRemove,HWND hWndAfter );
 	virtual BOOL OnClose();
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
@@ -742,14 +743,22 @@ public:
 
 	// Another 32 set for settings
 	enum LocateDialogExtraFlags {
+		
+		
 		// Locate process
 		efEnableLogicalOperations = 0x00000010,
 		efLocateProcessDefaults = efEnableLogicalOperations,
 		efLocateProcessSave = 0x00000010,
 
+		// Locate dialog
+		efFocusToResultListWhenAppActivated = 0x01000000,
+		efLocateDialogDefault = 0,
+		efLocateDialogSave = 0,
+		
 		// List view (continued)
 		efLVDontShowDeletedFiles = 0x10000000,
 		efLVNoUpdateWhileSorting = 0x20000000,
+		efLVRenamingActivated = 0x40000000,
 		efLVDefault = efLVNoUpdateWhileSorting,
 		efLVSave = 0x30000000,
 
@@ -775,8 +784,8 @@ public:
 		efBackgroundDefault = efEnableItemUpdating|efEnableFSTracking,
 		efBackgroundSave = efItemUpdatingSave|efTrackingSave,
 
-		efDefault = efLocateProcessDefaults|efLVDefault|efNameDefault|efBackgroundDefault,
-		efSave = efLocateProcessSave|efLVSave|efNameSave|efBackgroundSave
+		efDefault = efLocateProcessDefaults|efLocateDialogDefault|efLVDefault|efNameDefault|efBackgroundDefault,
+		efSave = efLocateProcessSave|efLocateDialogSave|efLVSave|efNameSave|efBackgroundSave
 	};
 
 
@@ -874,7 +883,13 @@ protected:
 	// Accessors
 public:
 	DWORD GetFlags() const { return m_dwFlags; }
+	void AddFlags(DWORD dwFlags) { m_dwFlags|=dwFlags; }
+	void RemoveFlags(DWORD dwFlags) { m_dwFlags&=~dwFlags; }
+	
 	DWORD GetExtraFlags() const { return m_dwExtraFlags; }
+	void AddExtraFlags(DWORD dwFlags) { m_dwExtraFlags|=dwFlags; }
+	void RemoveExtraFlags(DWORD dwFlags) { m_dwExtraFlags&=~dwFlags; }
+	
 	DWORD GetMaxFoundFiles() const { return m_dwMaxFoundFiles; }
 	void SetMaxFoundFiles(DWORD dwValue) { m_dwMaxFoundFiles=dwValue; }
 

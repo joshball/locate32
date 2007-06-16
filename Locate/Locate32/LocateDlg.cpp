@@ -3789,6 +3789,27 @@ void CLocateDlg::OnDrawClipboard()
 	CDialog::OnDrawClipboard();
 }
 
+void CLocateDlg::OnActivateApp(BOOL fActive,DWORD dwThreadID)
+{
+	CDialog::OnActivateApp(fActive,dwThreadID);
+
+	if (!fActive)
+	{
+		// If list control is still in label edit mode,
+		// the result list should got focus next time app is activated
+		AddExtraFlags(efFocusToResultListWhenAppActivated);
+	}
+	else
+	{
+		if (GetExtraFlags()&efFocusToResultListWhenAppActivated)
+		{
+			// Give focus for the result list
+			m_pListCtrl->SetFocus();
+			RemoveExtraFlags(efFocusToResultListWhenAppActivated);
+		}
+	}
+}
+	
 void CLocateDlg::OnChangeCbChain(HWND hWndRemove,HWND hWndAfter)
 {
 	CDialog::OnChangeCbChain(hWndRemove,hWndAfter);
@@ -4616,12 +4637,16 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				}
 			}
 
+			AddExtraFlags(efLVRenamingActivated);
+
 			SetWindowLong(dwlMsgResult,FALSE);
 			return FALSE;
 		}
 		break;
 	case LVN_ENDLABELEDITA:
 		{
+			RemoveExtraFlags(efLVRenamingActivated);
+
 			NMLVDISPINFOA* pDistInfo=(NMLVDISPINFOA*)pNm;
 			if (pDistInfo->item.pszText==NULL)
 				return TRUE;
@@ -4641,6 +4666,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				return FALSE;
 			}
 
+			BOOL bOK;
+
 			if (pItem->GetFileTitle()!=pItem->GetName())
 			{
 				int nOldTitleLen=istrlen(pItem->GetFileTitle());
@@ -4657,18 +4684,21 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				WCHAR* pNewName=new WCHAR[nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1];
 				MemCopyAtoW(pNewName,pDistInfo->item.pszText,nNewTitleLen);
 				MemCopyW(pNewName+nNewTitleLen,pItem->GetName()+nOldTitleLen,pItem->GetNameLen()-nOldTitleLen+1);
-				pItem->ChangeName(this,pNewName,nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1);
+				bOK=pItem->ChangeName(this,pNewName,nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1);
 				delete[] pNewName;
 			}
 			else
-				pItem->ChangeName(this,A2W(pDistInfo->item.pszText));
+				bOK=pItem->ChangeName(this,A2W(pDistInfo->item.pszText));
 
-
-			SetWindowLong(dwlMsgResult,TRUE);
-			return TRUE;
+			
+			SetWindowLong(dwlMsgResult,bOK);
+			return bOK;
 		}
 	case LVN_ENDLABELEDITW:
 		{
+			RemoveExtraFlags(efLVRenamingActivated);
+
+
 			NMLVDISPINFOW* pDistInfo=(NMLVDISPINFOW*)pNm;
 			if (pDistInfo->item.pszText==NULL)
 				return TRUE;
@@ -4688,6 +4718,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				return FALSE;
 			}
 
+			BOOL bOK;
+
 			if (pItem->GetFileTitle()!=pItem->GetName())
 			{
 				int nOldTitleLen=istrlen(pItem->GetFileTitle());
@@ -4704,15 +4736,15 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				WCHAR* pNewName=new WCHAR[nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1];
 				MemCopyW(pNewName,pDistInfo->item.pszText,nNewTitleLen);
 				MemCopyW(pNewName+nNewTitleLen,pItem->GetName()+nOldTitleLen,pItem->GetNameLen()-nOldTitleLen+1);
-				pItem->ChangeName(this,pNewName,nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1);
+				bOK=pItem->ChangeName(this,pNewName,nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1);
 				delete[] pNewName;
 			}
 			else
-				pItem->ChangeName(this,pDistInfo->item.pszText);
+				bOK=pItem->ChangeName(this,pDistInfo->item.pszText);
+				
 
-
-			SetWindowLong(dwlMsgResult,TRUE);
-			return TRUE;
+			SetWindowLong(dwlMsgResult,bOK);
+			return bOK;
 		}
 	case LVN_GETINFOTIP:
 		break;
@@ -10343,14 +10375,14 @@ void CLocateDlg::CNameDlg::OnClear(BOOL bInitial)
 
 void CLocateDlg::CNameDlg::SaveRegistry() const
 {
-	CRegKey2 RegKey;
 	if (GetLocateDlg()->GetExtraFlags()&efNameDontSaveNameTypeAndDirectories)
 	{
 		// Do not save list items, just delete key
-		RegKey.DeleteKey("\\Recent Strings");
+		CRegKey2::DeleteCommonKey("\\Recent Strings");
 		return;
 	}
 
+	CRegKey2 RegKey;
 	if(RegKey.OpenKey(HKCU,"\\Recent Strings",CRegKey::defWrite)==ERROR_SUCCESS)
 	{
 		CStringW buffer,bfr;

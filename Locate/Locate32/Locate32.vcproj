@@ -16,6 +16,9 @@
 		/>
 	</Platforms>
 	<ToolFiles>
+		<ToolFile
+			RelativePath="..\hlp\src.rules"
+		/>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
@@ -30,6 +33,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="lrestoolHTML"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -115,6 +121,9 @@
 				Name="VCCustomBuildTool"
 			/>
 			<Tool
+				Name="lrestoolHTML"
+			/>
+			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
@@ -196,6 +205,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="lrestoolHTML"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -281,6 +293,9 @@
 				Name="VCCustomBuildTool"
 			/>
 			<Tool
+				Name="lrestoolHTML"
+			/>
+			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
@@ -363,6 +378,9 @@
 				Name="VCCustomBuildTool"
 			/>
 			<Tool
+				Name="lrestoolHTML"
+			/>
+			<Tool
 				Name="VCXMLDataGeneratorTool"
 			/>
 			<Tool
@@ -443,6 +461,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="lrestoolHTML"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -1021,6 +1042,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\hlp\Locate32.chm"
+				>
+			</File>
+			<File
 				RelativePath="..\hlp\Locate32.hhc"
 				>
 			</File>
@@ -1038,7 +1063,7 @@
 						Name="VCCustomBuildTool"
 						Description="Making help file..."
 						CommandLine="start /wait hhc &quot;..\hlp\Locate32.hhp&quot;&#x0D;&#x0A;if not exist &quot;..\hlp\Locate32.chm&quot; goto :HelpError&#x0D;&#x0A;copy &quot;..\hlp\Locate32.chm&quot; &quot;$(OutDir)\Locate32.chm&quot;&#x0D;&#x0A;goto :HelpDone&#x0D;&#x0A;:HelpError&#x0D;&#x0A;echo ..\hlp\Locate32.hhp(1) : error:Problem encountered creating help file&#x0D;&#x0A;echo.&#x0D;&#x0A;:HelpDone&#x0D;&#x0A;echo.&#x0D;&#x0A;"
-						AdditionalDependencies="hlp\HTMLDefines.h"
+						AdditionalDependencies="hlp\HTMLDefines.h hlp\*.htm"
 						Outputs="$(OutDir)\$(ProjectName).chm"
 					/>
 				</FileConfiguration>
@@ -1049,7 +1074,7 @@
 						Name="VCCustomBuildTool"
 						Description="Making help file..."
 						CommandLine="start /wait hhc &quot;..\hlp\Locate32.hhp&quot;&#x0D;&#x0A;if not exist &quot;..\hlp\Locate32.chm&quot; goto :HelpError&#x0D;&#x0A;copy &quot;..\hlp\Locate32.chm&quot; &quot;$(OutDir)\Locate32.chm&quot;&#x0D;&#x0A;goto :HelpDone&#x0D;&#x0A;:HelpError&#x0D;&#x0A;echo ..\hlp\Locate32.hhp(1) : error:Problem encountered creating help file&#x0D;&#x0A;echo.&#x0D;&#x0A;:HelpDone&#x0D;&#x0A;echo.&#x0D;&#x0A;"
-						AdditionalDependencies="hlp\HTMLDefines.h"
+						AdditionalDependencies="hlp\HTMLDefines.h hlp\*.htm"
 						Outputs="$(OutDir)\$(ProjectName).chm"
 					/>
 				</FileConfiguration>
@@ -1060,7 +1085,7 @@
 						Name="VCCustomBuildTool"
 						Description="Making help file..."
 						CommandLine="start /wait hhc &quot;..\hlp\Locate32.hhp&quot;&#x0D;&#x0A;if not exist &quot;..\hlp\Locate32.chm&quot; goto :HelpError&#x0D;&#x0A;copy &quot;..\hlp\Locate32.chm&quot; &quot;$(OutDir)\Locate32.chm&quot;&#x0D;&#x0A;goto :HelpDone&#x0D;&#x0A;:HelpError&#x0D;&#x0A;echo ..\hlp\Locate32.hhp(1) : error:Problem encountered creating help file&#x0D;&#x0A;echo.&#x0D;&#x0A;:HelpDone&#x0D;&#x0A;echo.&#x0D;&#x0A;"
-						AdditionalDependencies="hlp\HTMLDefines.h"
+						AdditionalDependencies="hlp\HTMLDefines.h hlp\*.htm"
 						Outputs="$(OutDir)\$(ProjectName).chm"
 					/>
 				</FileConfiguration>
@@ -1071,7 +1096,7 @@
 						Name="VCCustomBuildTool"
 						Description="Making help file..."
 						CommandLine="start /wait hhc &quot;..\hlp\Locate32.hhp&quot;&#x0D;&#x0A;if not exist &quot;..\hlp\Locate32.chm&quot; goto :HelpError&#x0D;&#x0A;copy &quot;..\hlp\Locate32.chm&quot; &quot;$(OutDir)\Locate32.chm&quot;&#x0D;&#x0A;goto :HelpDone&#x0D;&#x0A;:HelpError&#x0D;&#x0A;echo ..\hlp\Locate32.hhp(1) : error:Problem encountered creating help file&#x0D;&#x0A;echo.&#x0D;&#x0A;:HelpDone&#x0D;&#x0A;echo.&#x0D;&#x0A;"
-						AdditionalDependencies="hlp\HTMLDefines.h"
+						AdditionalDependencies="hlp\HTMLDefines.h hlp\*.htm"
 						Outputs="$(OutDir)\$(ProjectName).chm"
 					/>
 				</FileConfiguration>
@@ -1082,7 +1107,7 @@
 						Name="VCCustomBuildTool"
 						Description="Making help file..."
 						CommandLine="start /wait hhc &quot;..\hlp\Locate32.hhp&quot;&#x0D;&#x0A;if not exist &quot;..\hlp\Locate32.chm&quot; goto :HelpError&#x0D;&#x0A;copy &quot;..\hlp\Locate32.chm&quot; &quot;$(OutDir)\Locate32.chm&quot;&#x0D;&#x0A;goto :HelpDone&#x0D;&#x0A;:HelpError&#x0D;&#x0A;echo ..\hlp\Locate32.hhp(1) : error:Problem encountered creating help file&#x0D;&#x0A;echo.&#x0D;&#x0A;:HelpDone&#x0D;&#x0A;echo.&#x0D;&#x0A;"
-						AdditionalDependencies="hlp\HTMLDefines.h"
+						AdditionalDependencies="hlp\HTMLDefines.h hlp\*.htm"
 						Outputs="$(OutDir)\$(ProjectName).chm"
 					/>
 				</FileConfiguration>
@@ -1093,337 +1118,281 @@
 						Name="VCCustomBuildTool"
 						Description="Making help file..."
 						CommandLine="start /wait hhc &quot;..\hlp\Locate32.hhp&quot;&#x0D;&#x0A;if not exist &quot;..\hlp\Locate32.chm&quot; goto :HelpError&#x0D;&#x0A;copy &quot;..\hlp\Locate32.chm&quot; &quot;$(OutDir)\Locate32.chm&quot;&#x0D;&#x0A;goto :HelpDone&#x0D;&#x0A;:HelpError&#x0D;&#x0A;echo ..\hlp\Locate32.hhp(1) : error:Problem encountered creating help file&#x0D;&#x0A;echo.&#x0D;&#x0A;:HelpDone&#x0D;&#x0A;echo.&#x0D;&#x0A;"
-						AdditionalDependencies="hlp\HTMLDefines.h"
+						AdditionalDependencies="hlp\HTMLDefines.h hlp\*.htm"
 						Outputs="$(OutDir)\$(ProjectName).chm"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\hlp\styles.css"
+				>
 			</File>
 		</Filter>
 		<Filter
 			Name="HTML Help Topics"
 			>
 			<File
-				RelativePath="..\hlp\hid_edit_copy.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_edit_copy.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_edit_cut.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_edit_cut.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_edit_invertselection.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_edit_invertselection.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_edit_selectall.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_edit_selectall.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_close.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_close.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_copy.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_copy.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_createshortcut.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_createshortcut.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_cut.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_cut.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_databaseinfo.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_databaseinfo.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_delete.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_delete.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_exit.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_exit.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_findusingdatabases.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_findusingdatabases.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_open.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_open.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_opencontainingfolder.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_opencontainingfolder.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_properties.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_properties.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_removefromlist.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_removefromlist.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_rename.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_rename.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_saveresults.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_saveresults.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_sendto.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_sendto.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_stopupdating.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_stopupdating.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_updatedatabase.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_updatedatabase.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_updatedatabases.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_updatedatabases.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_file_updateselected.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_file_updateselected.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_help_about.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_help_about.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_help_index.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_help_index.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_options_settings.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_options_settings.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_options_settingstool.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_options_settingstool.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_special_changecaseforfilename.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_special_changecaseforfilename.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_special_changefilename.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_special_changefilename.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_special_computeMD5sums.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_special_computeMD5sums.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_special_computeMD5sumsforequalsizefiles.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_special_computeMD5sumsforequalsizefiles.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_special_copypathtoclipboard.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_special_copypathtoclipboard.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_special_copyshortpathtoclipboard.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_special_copyshortpathtoclipboard.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_special_removedeletedfiles.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_special_removedeletedfiles.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_special_showtotalsize.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_special_showtotalsize.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_special_updatefileinformation.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_special_updatefileinformation.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_systemtray_openlocate.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_systemtray_openlocate.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_arrange_aligntogrid.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_arrange_aligntogrid.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_arrange_autoarrange.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_arrange_autoarrange.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_arrange_bydate.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_arrange_bydate.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_arrange_byextension.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_arrange_byextension.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_arrange_byfolder.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_arrange_byfolder.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_arrange_byname.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_arrange_byname.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_arrange_bysize.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_arrange_bysize.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_arrange_bytype.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_arrange_bytype.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_arrangeicons.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_arrangeicons.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_details.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_details.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_largeicons.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_largeicons.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_lineupicons.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_lineupicons.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_list.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_list.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_refresh.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_refresh.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_selectdetails.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_selectdetails.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_view_smallicons.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\hid_view_smallicons.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\howto_externaldrives.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\howto_externaldrives.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\issue_commandlinearguments.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\issue_commandlinearguments.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\issue_searchterms.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\issue_searchterms.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\main_index.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\main_index.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\menu_contextmenu.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\menu_contextmenu.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\menu_edit.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\menu_edit.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\menu_file.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\menu_file.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\menu_help.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\menu_help.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\menu_options.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\menu_options.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\menu_special.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\menu_special.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\menu_systemtray.htm"
-				DeploymentContent="true"
+				RelativePath="..\hlp\menu_systemtray.src"
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\menu_view.htm"
+				RelativePath="..\hlp\menu_view.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\page_raw.htm"
 				DeploymentContent="true"
 				>
 			</File>

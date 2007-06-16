@@ -1,0 +1,28 @@
+TITLE=Options menu commands
+CONTENT=
+<div id="menus">
+<H1><A NAME="menu_options"></A>Options menu commands</H1>
+
+
+<P>The Options menu offers the following commands:
+
+<TABLE cols=2 width=900>
+<TBODY>
+
+<TR VALIGN="top">
+<TD width=21%><A HREF="hid_options_settings.htm">Settings</A></TD>
+<TD width=79%>Opens the settings dialog.</TD>
+</TR>
+
+
+
+<TR VALIGN="top">
+<TD width=21%><A HREF="hid_options_settingstool.htm">Settings Backup Tool</A></TD>
+<TD width=79%>Opens settings backup tool.</TD>
+</TR>
+
+</TBODY>
+</TABLE>
+</P>
+</div>
+

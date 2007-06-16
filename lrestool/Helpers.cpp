@@ -230,29 +230,32 @@ BOOL SetArgString(int& i,CString& str,int argc,char* argv[])
 	return TRUE;
 }
 
-BOOL SetBaseFileToRegistry(LPCSTR szName,LPCSTR szFile)
+BOOL SetBaseFileToRegistry(LPCSTR szName,LPCSTR szFile,BOOL bRawHelpPage)
 {
 	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,"Software\\lrestool\\basefiles",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	LPCSTR szKey=bRawHelpPage?"Software\\lrestool\\rawHTMLfiles":"Software\\lrestool\\basefiles";
+	if (RegKey.OpenKey(HKCU,szKey,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		return RegKey.SetValue(szName,szFile)==ERROR_SUCCESS;
 	return FALSE;
 }
 
-BOOL GetBaseFileFromRegistry(LPCSTR szName,CString& sFile)
+BOOL GetBaseFileFromRegistry(LPCSTR szName,CString& sFile,BOOL bRawHelpPage)
 {
 	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,"Software\\lrestool\\basefiles",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	LPCSTR szKey=bRawHelpPage?"Software\\lrestool\\rawHTMLfiles":"Software\\lrestool\\basefiles";
+	if (RegKey.OpenKey(HKCU,szKey,CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		RegKey.QueryValue(szName,sFile);
-		return CFile::IsFile(sFile);
+		return FileSystem::IsFile(sFile);
 	}
 	return FALSE;
 }
 
-BOOL DeleteBaseFileFromRegistry(LPCSTR szName)
+BOOL DeleteBaseFileFromRegistry(LPCSTR szName,BOOL bRawHelpPage)
 {
 	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,"Software\\lrestool\\basefiles",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+	LPCSTR szKey=bRawHelpPage?"Software\\lrestool\\rawHTMLfiles":"Software\\lrestool\\basefiles";
+	if (RegKey.OpenKey(HKCU,szKey,CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 		return RegKey.DeleteValue(szName);
 	return FALSE;	
 }
@@ -354,7 +357,7 @@ void CIdentifiers::PrintUnused(BOOL bLineNumbers)
 			pPos=GetNextPosition(pPos);
 		}
 
-		bNumbers=wsprintf(szNumber,"%d",dwMaxLines);
+		bNumbers=sprintf_s(szNumber,40,"%d",dwMaxLines);
 	}
 	
 	POSITION pPos=GetHeadPosition();
@@ -368,9 +371,9 @@ void CIdentifiers::PrintUnused(BOOL bLineNumbers)
 			{
 				char szBuffer[10];
 				char* szLinuNumber=new char[bNumbers+2];
-				wsprintf(szBuffer,"00%dd",bNumbers);
+				sprintf_s(szBuffer,10,"00%dd",bNumbers);
 				szBuffer[0]='%';
-				wsprintf(szLinuNumber,szBuffer,rID.dwLineNumber);				
+				sprintf_s(szLinuNumber,bNumbers+2,szBuffer,rID.dwLineNumber);				
 
 				printf("%s %s: '%s'\n",szLinuNumber,LPCSTR(rID.name),LPCSTR(rID.text));
 				delete[] szLinuNumber;
@@ -412,8 +415,8 @@ void CIdentifiers::PrintChanged(CIdentifiers* pAnother,BOOL bLineNumbers)
 			pPos=pAnother->GetNextPosition(pPos);
 		}
 	
-		bNumbers=wsprintf(szNumber,"%d",dwMaxLines);
-		bNumbers2=wsprintf(szNumber,"%d",dwMaxLines2);
+		bNumbers=sprintf_s(szNumber,40,"%d",dwMaxLines);
+		bNumbers2=sprintf_s(szNumber,40,"%d",dwMaxLines2);
 	}
 	
 	POSITION pPos=GetHeadPosition();
@@ -431,18 +434,18 @@ void CIdentifiers::PrintChanged(CIdentifiers* pAnother,BOOL bLineNumbers)
 			{
 				char szBuffer[10];
 				char* szLinuNumber=new char[bNumbers+2];
-				wsprintf(szBuffer,"00%dd",bNumbers);
+				sprintf_s(szBuffer,10,"00%dd",bNumbers);
 				szBuffer[0]='%';
-				wsprintf(szLinuNumber,szBuffer,rID.dwLineNumber);	
+				sprintf_s(szLinuNumber,bNumbers+2,szBuffer,rID.dwLineNumber);	
 
 				if (pAnotherID==NULL)			
 					printf("%04d %s: '%s'\n",rID.dwLineNumber,LPCSTR(rID.name),LPCSTR(rID.text));
 				else
 				{
 					char* szLinuNumber2=new char[bNumbers2+2];
-					wsprintf(szBuffer,"00%dd",bNumbers2);
+					sprintf_s(szBuffer,bNumbers2+2,"00%dd",bNumbers2);
 					szBuffer[0]='%';
-					wsprintf(szLinuNumber2,szBuffer,pAnotherID->dwLineNumber);	
+					sprintf_s(szLinuNumber2,bNumbers2+2,szBuffer,pAnotherID->dwLineNumber);	
 
 
 					printf("%s %s: '%s'<-->%s '%s'\n",szLinuNumber,LPCSTR(rID.name),LPCSTR(rID.text),
@@ -522,9 +525,7 @@ BOOL CIdentifiers::FindIdentifierInLresFile(LPCSTR& pPointer,LPCSTR szIdName,int
 	LPCSTR szName;
 	DWORD dwNameLength;
 	if (iIdNameLength==-1)
-	{
-		dstrlen(szIdName,iIdNameLength);
-	}
+		iIdNameLength=istrlen(szIdName);
 
 	while (FindNextIdentifierInLresFile(pPointer,dwReadedLines,bIsComments))
 	{
@@ -558,7 +559,8 @@ BOOL CIdentifiers::DeleteIdentifier(LPSTR& pData,DWORD& dwLength,LPCSTR szId,BOO
 		InsertTextToIndex(pData,dwLength,DWORD(pPointer-pData),"#OBSOLETE ",10);
 	else
 	{
-		for (int iLength=0;pPointer[iLength]!='\n' && pPointer[iLength]!='\0';iLength++);
+		int iLength;
+		for (iLength=0;pPointer[iLength]!='\n' && pPointer[iLength]!='\0';iLength++);
 
 		if (pPointer[iLength]=='\0')
 			pData[dwLength=DWORD(pPointer-pData)]='\0';

@@ -2,7 +2,7 @@
 #include <conio.h>
 #include "lrestool.h"
 
-#define COPYRIGHTTEXT "lrestool v 2.1.5.7100 (C) 2003-2005 Janne Huttunen: language resource tool\n\n"
+#define COPYRIGHTTEXT "lrestool v 3.0.7.6160 (C) 2003-2007 Janne Huttunen: language resource tool\n\n"
 
 
 FILE* _stderr=stderr;
@@ -35,7 +35,8 @@ int CreateMode(Data& o)
 	
 	if (o.bVerbose)
 		printf("Merging identifies to file '%s'\n",LPCSTR(o.strOutFile));
-	if (!iLResFile.InsertToRCFile(o.strOutFile,o.strBaseFile,o.bDoubleVerbose))
+	
+	if (!iLResFile.InsertToOutputFile(o.strOutFile,o.strBaseFile,o.bDoubleVerbose))
 	{
 		if (o.bVerbose)
 			fprintf(_stderr,"Exiting due error...\n");
@@ -80,7 +81,7 @@ int CheckMode(Data& o)
 	}
 
 	// Loading reference information
-	if (CFile::IsFile(o.strReference))
+	if (FileSystem::IsFile(o.strReference))
 		iReference.LoadFromLResFile(o.strReference,FALSE);
 	
 	if (!iRCFile.UpdateLResFile(o.strLResFile,o.strOutFile,o.bDoubleVerbose,o.bInteractive,iReference))
@@ -104,7 +105,7 @@ int CheckMode(Data& o)
 
 int DifferenceMode(Data& o)
 {
-	CIdentifiers iFirst,iSecond;
+	IDENTIFIERS iFirst,iSecond;
 	if (!iFirst.LoadFromLResFile(o.strLResFile,FALSE))
 	{
 		fprintf(_stderr,"error: cannot read from file %s\n",LPCSTR(o.strLResFile));
@@ -131,9 +132,50 @@ int DifferenceMode(Data& o)
 	return 0;
 }
 
-int SetBaseMode(Data& o)
+int GenerateHelpPage(Data& o)
 {
-	if (!CFile::IsFile(o.strBaseFile))
+	IDENTIFIERS iSrcFile;
+	
+	// First load identifiers from file
+	if (o.bVerbose)
+		printf("Loading identifiers from file %s\n",LPCSTR(o.strLResFile));
+
+	if (!iSrcFile.LoadFromHtmlRawFile(o.strLResFile,o.bDoubleVerbose))
+	{
+		if (o.bVerbose)
+			fprintf(_stderr,"Exiting due error...\n");
+		return 1;
+	}
+
+	if (o.bVerbose)
+		printf("\t%d identifiers found.\n",iSrcFile.GetCount());
+
+	if (o.strOutFile.IsEmpty())
+	{
+		o.strOutFile.Copy(o.strLResFile,o.strLResFile.FindLast('.'));
+		o.strOutFile << ".htm";
+		if (o.bVerbose)
+			printf("Output file is set to '%s'\n",LPCSTR(o.strOutFile));
+	}
+	
+	if (o.bVerbose)
+		printf("Merging identifies to file '%s'\n",LPCSTR(o.strOutFile));
+	
+	if (!iSrcFile.InsertToOutputFile(o.strOutFile,o.strBaseFile,o.bDoubleVerbose))
+	{
+		if (o.bVerbose)
+			fprintf(_stderr,"Exiting due error...\n");
+		return 1;
+	}
+
+	// Clearing memory
+	iSrcFile.RemoveAll(!o.bVerbose);
+	return 0;
+}
+
+int SetRegFile(Data& o,BOOL bRawHtmpPage)
+{
+	if (!FileSystem::IsFile(o.strBaseFile))
 	{
 		fprintf(_stderr,"File '%s' does not exist",LPCSTR(o.strBaseFile));
 		return 1;
@@ -143,24 +185,24 @@ int SetBaseMode(Data& o)
 	LPSTR szTemp;
 	GetFullPathName(o.strBaseFile,MAX_PATH,szPath,&szTemp);
 	
-    if (SetBaseFileToRegistry(o.strLResFile,szPath))
+    if (SetBaseFileToRegistry(o.strLResFile,szPath,bRawHtmpPage))
 		printf("name '%s' is set to correspond with file '%s'\n",LPCSTR(o.strLResFile),szPath);
 	else
 		fprintf(_stderr,"Error: database cannot be setted");
 	return 0;
 }
 
-int ShowBaseMode(Data& o)
+int ShowRegFile(Data& o,BOOL bRawHtmpPage)
 {
 	CString sFile;
-	GetBaseFileFromRegistry(o.strLResFile,sFile);
+	GetBaseFileFromRegistry(o.strLResFile,sFile,bRawHtmpPage);
 	printf("name '%s' corresponds with file '%s'\n",LPCSTR(o.strLResFile),LPCSTR(sFile));
 	return 0;
 }
 
-int DelBaseMode(Data& o)
+int DelRegFile(Data& o,BOOL bRawHtmpPage)
 {
-	DeleteBaseFileFromRegistry(o.strLResFile);
+	DeleteBaseFileFromRegistry(o.strLResFile,bRawHtmpPage);
 	return 0;
 }
 
@@ -204,6 +246,12 @@ int main(int argc,char* argv[])
 						o.bShowLineNumbers=TRUE;
 				}
 				break;
+			case 'h':
+				if (o.nMode!=Data::CreateRCFile)
+					o.bShowHelp=TRUE;
+				else 
+                    o.nMode=Data::GenHelpPage;
+				break;
 			case 'R':
 				if (o.nMode!=Data::CreateRCFile)
 					o.bShowHelp=TRUE;
@@ -229,16 +277,41 @@ int main(int argc,char* argv[])
 					}
 				}
 				break;
+			case 'H':
+				if (o.nMode!=Data::CreateRCFile)
+					o.bShowHelp=TRUE;
+				else
+				{
+					switch (argv[i][2])
+					{
+					case 'a':
+					case 'A':
+						o.nMode=Data::SetRawHelpFile;
+						break;
+					case 's':
+					case 'S':
+						o.nMode=Data::ShowRawHelpFile;
+						break;
+					case 'd':
+					case 'D':
+						o.nMode=Data::DelRawHelpFile;
+						break;
+					default:
+						o.bShowHelp=TRUE;
+						break;
+					}
+				}
+				break;
 			case 'o':
-				if (o.nMode!=Data::CreateRCFile && o.nMode!=Data::CheckLResFile)
+				if (o.nMode!=Data::CreateRCFile && o.nMode!=Data::CheckLResFile && o.nMode!=Data::GenHelpPage)
 					o.bShowHelp=TRUE;
 				else if (!SetArgString(i,o.strOutFile,argc,argv))
 					o.bShowHelp=TRUE;
 				break;
 			case 'b':
-				if (o.nMode!=Data::CreateRCFile && o.nMode!=Data::CheckLResFile)
+				if (o.nMode!=Data::CreateRCFile && o.nMode!=Data::CheckLResFile && o.nMode!=Data::GenHelpPage)
 					o.bShowHelp=TRUE;
-				if (!SetArgString(i,o.strBaseFile,argc,argv))
+				else if (!SetArgString(i,o.strBaseFile,argc,argv))
 					o.bShowHelp=TRUE;
 				break;
 			case 'i':
@@ -262,6 +335,12 @@ int main(int argc,char* argv[])
 				else
 					o.bShowHelp=TRUE;
 				break;
+			case 'n':
+				if (o.nMode!=Data::GenHelpPage)
+					o.bShowHelp=TRUE;
+				else if (!SetArgString(i,o.strReference,argc,argv))
+					o.bShowHelp=TRUE;
+				break;
 			case 'v':
 				if (argv[i][2]=='v')
 				{
@@ -281,7 +360,7 @@ int main(int argc,char* argv[])
 				break;
 			}
 		}
-		else if (o.nMode==Data::SetBaseName)
+		else if (o.nMode==Data::SetBaseName || o.nMode==Data::SetRawHelpFile)
 		{
 			if (o.strLResFile.IsEmpty())
 				o.strLResFile=argv[i];
@@ -310,18 +389,24 @@ int main(int argc,char* argv[])
 		printf("usage: lrestool [-o outfile] [-b basefile] lrffile\n");
 		printf("or:    lrestool -c [-i] [-r lrffile] [-o outfile] [-b basefile] lrffile\n");
 		printf("or:    lrestool -d 1stfile 2ndfile \n");
-		printf("or:    lrestool -R[a,s,d] name [basefile]\n\n");
+		printf("or:    lrestool -h -n name  -o helppage.htm helppage.src \n");
+		printf("or:    lrestool -R[a,s,d] name [basefile]\n");
+		printf("or:    lrestool -H[a,s,d] name [basefile]\n\n");
 		printf("\t-o outfile:\tset output file to 'outfile'\n");
 		printf("\t-c:\t\tchecks infile, adds missing identifiers\n\t\t\tand marks obsolete identifiers\n");
 		printf("\t-i:\t\tmakes checking interactively (use with -c only)\n");
 		printf("\t-r file:\tuses lrf file as reference\n");
 		printf("\t-d:\t\tchecks difference between to two lanfuage files\n");
 		printf("\t-l:\t\tshow line numbers (use with -d only)\n");
+		printf("\t-h:\t\tconvert help page source to HTML help page\n");
 		printf("\t-b basefile:\tset basefile file to 'basefile'\n");
 		printf("\t-e:\t\tuse stdout instead of stderr for error messages\n");
-		printf("\t-Ra:\t\tsets program name to corresponds with file \n\t\t\t 'basefile' (name corresponds with FOR_PROGRAM\n\t\t\tidentifier in lrf file)\n");
+		printf("\t-Ra:\t\tsets program name corresponds to file \n\t\t\t'basefile' (name corresponds with FOR_PROGRAM\n\t\t\tidentifier in lrf file)\n");
 		printf("\t-Rs:\t\tshows basefile which corresponds to program name\n");
 		printf("\t-Rd:\t\tunsets basefile which corresponds to program name\n");
+		printf("\t-Ha:\t\tsets program name corresponds to raw help file \n\t\t\t'basefile')\n");
+		printf("\t-Hs:\t\tshows the raw help file corresponds to program name\n");
+		printf("\t-Hd:\t\tunsets the raw help file which corresponds to \n\t\t\tprogram name\n");
 		printf("\t-v:\t\tverbose\n");
 
 		return 1;
@@ -333,10 +418,23 @@ int main(int argc,char* argv[])
 		CString Name;
 
 		if (CIdentifiers::FindProgramNameFromLResFile(o.strLResFile,Name))
-			GetBaseFileFromRegistry(Name,o.strBaseFile);
+			GetBaseFileFromRegistry(Name,o.strBaseFile,FALSE);
 			
 		if (o.strBaseFile.IsEmpty())
 			o.strBaseFile="lres_base.rc";
+	}
+	else if (o.nMode==Data::GenHelpPage && o.strBaseFile.IsEmpty())
+	{
+		if (o.strReference.IsEmpty())
+		{
+			printf("No program name give, using default (LOCATE32)\n");
+			o.strReference="LOCATE32";
+		}
+		
+		GetBaseFileFromRegistry(o.strReference,o.strBaseFile,TRUE);
+			
+		if (o.strBaseFile.IsEmpty())
+			o.strBaseFile="page_raw.htm";
 	}
 
 	if (o.bDoubleVerbose)
@@ -362,6 +460,13 @@ int main(int argc,char* argv[])
 			printf("\tnew file: %s\n",LPCSTR(o.strLResFile));
 			printf("\told file: %s\n",LPCSTR(o.strReference));
 			break;
+		case Data::GenHelpPage:
+			printf("generate help file:\n");
+			printf("\tinput file: %s\n",LPCSTR(o.strLResFile));
+			printf("\toutput file: %s\n",LPCSTR(o.strOutFile));
+			printf("\tbase file: %s\n",LPCSTR(o.strBaseFile));
+			printf("\tprogram name: %s\n",LPCSTR(o.strReference));
+			break;
 		case Data::SetBaseName:
 			printf("set base name mode with parameters:\n");
 			printf("\tname: %s\n",LPCSTR(o.strLResFile));
@@ -375,6 +480,19 @@ int main(int argc,char* argv[])
 			printf("delete base name mode with parameters:\n");
 			printf("\tname: %s\n",LPCSTR(o.strLResFile));
 			break;
+		case Data::SetRawHelpFile:
+			printf("set raw HTMP page mode with parameters:\n");
+			printf("\tname: %s\n",LPCSTR(o.strLResFile));
+			printf("\tfile: %s\n",LPCSTR(o.strBaseFile));
+			break;
+		case Data::ShowRawHelpFile:
+			printf("show raw HTMP page mode with parameters:\n");
+			printf("\tname: %s\n",LPCSTR(o.strLResFile));
+			break;
+		case Data::DelRawHelpFile:
+			printf("delete raw HTMP page mode with parameters:\n");
+			printf("\tname: %s\n",LPCSTR(o.strLResFile));
+			break;
 		}
 	}
 
@@ -386,12 +504,20 @@ int main(int argc,char* argv[])
 		return CheckMode(o);
 	case Data::Difference:
 		return DifferenceMode(o);
+	case Data::GenHelpPage:
+		return GenerateHelpPage(o);
 	case Data::SetBaseName:
-		return SetBaseMode(o);
+		return SetRegFile(o,FALSE);
 	case Data::ShowBaseName:
-		return ShowBaseMode(o);
+		return ShowRegFile(o,FALSE);
 	case Data::DelBaseName:
-		return DelBaseMode(o);
+		return DelRegFile(o,FALSE);
+	case Data::SetRawHelpFile:
+		return SetRegFile(o,TRUE);
+	case Data::ShowRawHelpFile:
+		return ShowRegFile(o,TRUE);
+	case Data::DelRawHelpFile:
+		return DelRegFile(o,TRUE);
 	} 
 	return 0;
 }

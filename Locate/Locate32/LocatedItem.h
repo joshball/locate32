@@ -71,7 +71,7 @@ public:
 	
 	void SetToDeleted();
 	
-	void ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength=-1);
+	BOOL ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength=-1);
 
 	DWORD GetFlags() const { return dwFlags; }
 	void AddFlags(DWORD dwAdd) { dwFlags|=dwAdd; }

@@ -1857,7 +1857,7 @@ void CLocatedItem::DeleteExtraInfoField(CLocateDlg::DetailType nType)
 	}
 }
 
-void CLocatedItem::ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
+BOOL CLocatedItem::ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
 {
 	if (iLength==-1)
 		iLength=(int)istrlenw(szNewName);
@@ -1892,7 +1892,7 @@ void CLocatedItem::ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
 		pWnd->MessageBox(str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
 
 		delete[] szNewPath;
-		return;
+		return FALSE;
 	}
 
 
@@ -1925,6 +1925,8 @@ void CLocatedItem::ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
 	AddFlags(LITEM_FILENAMEOK);
 	
 	UpdateFileTitle();
+
+	return TRUE;
 }
 
 LPWSTR CLocatedItem::GetToolTipText() const

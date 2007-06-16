@@ -1,0 +1,7 @@
+TITLE=Update Selected... (File menu/System tray menu)
+CONTENT=
+<div id="menucommands">
+<H1><A NAME="hid_file_updateselected"></A>Update Selected... (File menu/System tray menu)</H1>
+
+<P>Shows dialog from which databases can be chosen and then updates selected databases. </P>
+</div>

@@ -39,14 +39,18 @@ struct Data{
 	CString strReference; // In difference mode this is old file
 	CString strBaseFile;
 	CString strOutFile;	
-
+	
 	enum Mode {
 		CreateRCFile,
         CheckLResFile,
 		Difference,
+		GenHelpPage,
 		SetBaseName,
 		ShowBaseName,
-		DelBaseName
+		DelBaseName,
+		SetRawHelpFile,
+		ShowRawHelpFile,
+		DelRawHelpFile
 	} nMode;
 	BYTE bInteractive:1;
 	BYTE bShowHelp:1;
@@ -66,7 +70,8 @@ public:
 
 	BOOL LoadFromRCFile(LPCSTR szFile,BOOL bShowFound);
 	BOOL LoadFromLResFile(LPCSTR szFile,BOOL bShowFound);
-
+	BOOL LoadFromHtmlRawFile(LPCSTR szFile,BOOL bShowFound);
+	
 	void RemoveAll(BOOL bShowUnused);
 
 	PIDENTIFIER FindIdentifier(LPCSTR szName);	
@@ -74,7 +79,7 @@ public:
 	POSITION FindIdentifierPos(LPCSTR szName) const;	
 	
 	
-	BOOL InsertToRCFile(LPCSTR szNewFile,LPCSTR szBaseFile,BOOL bShowMerging);
+	BOOL InsertToOutputFile(LPCSTR szNewFile,LPCSTR szBaseFile,BOOL bShowMerging);
 	BOOL UpdateLResFile(LPCSTR szInputFile,LPCSTR szOutputFile,BYTE bShowFound,BYTE bInteractive,const CIdentifiers& iReference);
 	void CheckDifferences(CIdentifiers& rAnother,BOOL bCheckChanges);
 
@@ -110,8 +115,8 @@ typedef CIdentifiers IDENTIFIERS,*PIDENTIFIERS;
 
 BOOL SetArgString(int& i,CString& str,int argc,char* argv[]);
 
-BOOL SetBaseFileToRegistry(LPCSTR szName,LPCSTR szFile);
-BOOL GetBaseFileFromRegistry(LPCSTR szName,CString& sFile);
-BOOL DeleteBaseFileFromRegistry(LPCSTR szName);
+BOOL SetBaseFileToRegistry(LPCSTR szName,LPCSTR szFile,BOOL bRawHelpPage);
+BOOL GetBaseFileFromRegistry(LPCSTR szName,CString& sFile,BOOL bRawHelpPage);
+BOOL DeleteBaseFileFromRegistry(LPCSTR szName,BOOL bRawHelpPage);
 
 #endif

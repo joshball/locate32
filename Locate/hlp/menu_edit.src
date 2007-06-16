@@ -1,0 +1,38 @@
+TITLE=Edit menu commands
+CONTENT=
+<div id="menus">
+<H1><A NAME="menu_edit"></A>Edit menu commands</H1>
+
+<P>The <b> Edit</b> menu offers the following commands:
+
+
+<TABLE cols=2 width=900>
+<TBODY>
+
+<TR VALIGN="top">
+<TD width=15%><A HREF="hid_edit_cut.htm">Cut</A></TD>
+<TD width=85%>Copy selected results to clipboard. 
+Files are removed if a file operatoin is executed.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%><A HREF="hid_edit_copy.htm">Copy</A></TD>
+<TD width=85%>Copy selected results to clipboard.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%><A HREF="hid_edit_selectall.htm">Select All</A></TD>
+<TD width=85%>Select all items in the result list.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%><A HREF="hid_edit_invertselection.htm">Invert Selection</A></TD>
+<TD width=85%>Select items in the result list which are not chosen.</TD>
+</TR>
+
+</TBODY>
+</TABLE>
+</P>
+
+</div>
+
