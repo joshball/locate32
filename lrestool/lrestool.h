@@ -79,7 +79,7 @@ public:
 	POSITION FindIdentifierPos(LPCSTR szName) const;	
 	
 	
-	BOOL InsertToOutputFile(LPCSTR szNewFile,LPCSTR szBaseFile,BOOL bShowMerging);
+	BOOL InsertToOutputFile(LPCSTR szNewFile,LPCSTR szBaseFile,BOOL bShowMerging,BOOL bAllowNonExisting=FALSE);
 	BOOL UpdateLResFile(LPCSTR szInputFile,LPCSTR szOutputFile,BYTE bShowFound,BYTE bInteractive,const CIdentifiers& iReference);
 	void CheckDifferences(CIdentifiers& rAnother,BOOL bCheckChanges);
 

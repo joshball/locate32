@@ -10,7 +10,7 @@
 			CommandLine="lrestool -h [AllOptions] [AdditionalOptions] -n LOCATE32 -o &quot;$(InputDir)\$(InputName).htm&quot; &quot;$(InputPath)&quot;"
 			Outputs="$(InputDir)\$(InputName).htm"
 			FileExtensions="*.src"
-			ExecutionDescription="Compiling $(InputName).src ..."
+			ExecutionDescription="Generating $(InputName).htm ..."
 			BatchingSeparator=""
 			>
 			<Properties>

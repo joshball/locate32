@@ -1,0 +1,61 @@
+TITLE=Name & Location tab
+CONTENT=
+<div id="tabs">
+<H1><A NAME="tab_name"></A>Name & Location tab</H1>
+
+<P>The <b>Name & Location</b> tab contains the following fields:</P>
+
+<div id="controls">
+<H2><A NAME="hid_name_named"></A>Named:</H2>
+<P>Use this field to specify file name. Leave this field empty if file does not matter. 
+You can also use '*' (any characters) or '?' (any one character) as usually. Several names
+can be specified by using comma ',' as the separator. You can use apostrophes "" if file 
+name contains special characters such as commas.
+</P>
+<P><b>Note:</b>If "Match whole name" in Advanced tab is not chosen,
+asterisks are automatically inserted to the begin and the end of the given string (if an 
+extension is given in this field, a asterisk is inserted only the begin). So
+"foo" is effectively the same as "*foo*". 
+See also <a href="issue_searchterms.htm">searching terms</a>.</P>
+
+<H2><A NAME="hid_name_extensions"></A>Extensions:</H2>
+<P>
+You can use this field to specify extensions. Several extensions can be specified by 
+using space as separator. Extension can also be specified in Named: field (e.g. "*.txt").
+</P>
+<P>
+If extensions are specified by using this field, only files are searched and "Check:"
+field in Advanced tab is disabled. This field is disabled if "Use whole path" in 
+Advanced tab is chosen.
+</P>
+
+<H2><A NAME="hid_name_lookin"></A>Look in:</H2>
+<P>
+Use this field to specify directories for files. Choose a location from the drop-down 
+list or type directory name. You can give several directories by using 
+';' as separator. 
+</P>
+<P>
+There is also an alternative way to specify sevaral directories. If "Possible to choose
+more than one directory" option in Advanced setting is enabled, "#1" button will appear
+on right of "Look in:". If you press that button, a popup menu will appear
+which can be used to specify several directories. The number in button shows which selection
+is activated. 
+</P>
+
+<H2><A NAME="hid_name_nosubdirectories"></A>No subdirectories</H2>
+<P>
+By default, files and folders in subdirectories will also returned. You can use this field to 
+exclude files and folder in subdirectories.
+</P>
+
+<H2><A NAME="hid_name_browse"></A>Browse...</H2>
+<P>
+You can use this button to speficy a directory for "Look in:" field.
+</P>
+
+</div>
+
+
+</div>
+

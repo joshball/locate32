@@ -10,6 +10,57 @@
 		<param name="Local" value="main_index.htm">
 		</OBJECT>
 	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="General issues">
+		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Special terms in searches">
+			<param name="Local" value="issue_searchterms.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Command Line arguments">
+			<param name="Local" value="issue_commandLInearguments.htm">
+			</OBJECT>
+	</UL>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="How To">
+		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Search text and other data inside of files">
+			<param name="Local" value="issue_datasearch.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Index external drives">
+			<param name="Local" value="howto_externaldrives.htm">
+			</OBJECT>
+		
+	</UL>
+			
+		
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Dialogs">
+		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Locate dialog">
+			<param name="Local" value="dialog_locate.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Name & Location tab">
+			<param name="Local" value="tab_name.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Size and data tab">
+			<param name="Local" value="tab_sizedate.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Advanced tab">
+			<param name="Local" value="tab_advanced.htm">
+			</OBJECT>
+		
+	</UL>
+	<LI> <OBJECT type="text/sitemap">
 		<param name="Name" value="Menus">
 		</OBJECT>
 	<UL>

@@ -125,29 +125,28 @@ body
 				   a key role in border generation */
 }
 
-#menus table
-{
-	margin: 10px 0 10px 0;
-}
 
+	
+	
+	
 h1
 {
 	font-family: Arial, sans-serif;
-	font-size: 140%;
+	font-size: 150%;
 	margin-bottom: 14pt; 
 }
 h2
 {
 	font-family: Arial, sans-serif;
-	font-size: 130%;
-	margin-bottom: 12pt;
+	font-size: 125%;
+	margin-bottom: 6pt;
 }
 h3
 {
 	font-family: Arial, sans-serif;
-	font-size: 120%;
+	font-size: 100%;
 	font-weight: bold;
-	margin-bottom: 10pt;
+	margin-bottom: 2pt;
 }
 h4
 {
@@ -218,8 +217,7 @@ a
 	font-size: 10pt;
 	text-decoration: none;
 }
-
-
+ 
 
 a:link { color: #336699; }
 a:visited { color: #003366; }
@@ -230,3 +228,22 @@ a.li:visited { color: #003366; }
 a.li:active { color: #993333; }
 a.li:hover { color: #660000; }
 
+
+#menus table
+{
+	margin: 10px 0 10px 0;
+}
+
+
+#controls h2
+{
+	font-family: Arial, sans-serif;
+	font-size: 110%;
+	font-weight: bold;
+	margin: 16pt 2pt 6pt 12pr;
+}	
+
+#controls p
+{
+	margin: 6pt 6pt 6pt 12pt;
+}

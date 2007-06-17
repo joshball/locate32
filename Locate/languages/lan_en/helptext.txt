@@ -2,16 +2,16 @@ You can search text or binary data from files. For example type:
 
 Hello			search text 'Hello' from files
 str:Hello			same as 'Hello'
-str:Hello\0		search 'Hello' with zero byte
+str:Hello\0			search 'Hello' with zero byte
 uni:Hello			search unicode string (UTF16) 'Hello'
-wstr:Hello		search unicode (UTF16) string 'Hello'
+wstr:Hello			search unicode (UTF16) string 'Hello'
 utf16:Hello		search unicode (UTF16) string 'Hello'
-utf8:Hello		search unicode (UTF8) string 'Hello'
-utf7:Hello		search unicode (UTF7) string 'Hello'
+utf8:Hello			search unicode (UTF8) string 'Hello'
+utf7:Hello			search unicode (UTF7) string 'Hello'
 hex:12AAFF		search binary data '12AAFF' from files
 bin:12AAFF		same as 'hex:12AAFF'
-dword(16):12345678	search double word  (32-bit value) '12345678' (base is 16)
-dword(10):12345678	search double word '12345678' (base is 10)
+dword(16):12345678		search double word  (32-bit value) '12345678' (base is 16)
+dword(10):12345678		search double word '12345678' (base is 10)
 word(16):1234		search word (16-bit value) '1234' from files
 byte(16):12		search byte (8-bit value) 12 from files
 regexp:cat|dog		search 'cat' or 'dog' 

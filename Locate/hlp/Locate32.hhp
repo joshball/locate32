@@ -65,8 +65,12 @@ hid_special_computeMD5sums.htm
 hid_special_computeMD5sumsforequalsizefiles.htm
 hid_special_removedeletedfiles.htm
 
+dialog_locate.htm
 
-main_index.htm
+tab_name.htm
+tab_sizedate.htm
+tab_advanced.htm
+
 menu_file.htm
 menu_edit.htm
 menu_view.htm
@@ -76,9 +80,13 @@ menu_special.htm
 menu_contextmenu.htm
 menu_systemtray.htm
 
+
 issue_searchterms.htm
 issue_commandlinearguments.htm
+issue_datasearch.htm
 howto_externaldrives.htm
+
+main_index.htm
 
 
 [ALIAS]
@@ -141,6 +149,11 @@ hid_special_computeMD5sums			= hid_special_computeMD5sums.htm
 hid_special_computeMD5sumsforequalsizefiles = hid_special_computeMD5sumsforequalsizefiles.htm
 hid_special_removedeletedfiles		= hid_special_removedeletedfiles.htm
 
+dialog_locate						= dialog_locate.htm
+tab_name							= tab_name.htm
+tab_sizedate						= tab_sizedate.htm
+tab_advanced						= tab_advanced.htm
+
 menu_file							= menu_file.htm
 menu_edit							= menu_edit.htm
 menu_view							= menu_view.htm
@@ -151,12 +164,51 @@ menu_systemtray						= menu_systemtray.htm
 
 issue_searchterms					= issue_searchterms.htm
 issue_commandlinearguments			= issue_commandlinearguments.htm
+issue_datasearch					= issue_datasearch.htm
 howto_externaldrives				= howto_externaldrives.htm
 
 
+IDC_TAB								= dialog_locate.htm
+IDC_FRAME							= dialog_locate.htm
+IDC_OK								= dialog_locate.htm
+IDC_STOP							= dialog_locate.htm
+IDC_NEWSEARCH						= dialog_locate.htm
+IDC_PRESETS							= dialog_locate.htm
+IDC_FILELIST						= dialog_locate.htm
+IDC_STATUS							= dialog_locate.htm
 
+IDC_NAME							= tab_name.htm
+IDC_TYPE							= tab_name.htm
+IDC_LOOKIN							= tab_name.htm
+IDC_MOREDIRECTORIES					= tab_name.htm
+IDC_NOSUBDIRECTORIES				= tab_name.htm
+IDC_BROWSE							= tab_name.htm
 
-IDC_NAME							= issue_searchterms.htm
+IDC_CHECKMINIMUMSIZE				= tab_sizedate.htm
+IDC_MINIMUMSIZE						= tab_sizedate.htm
+IDC_MINSIZETYPE						= tab_sizedate.htm
+IDC_MINIMUMSIZESPIN					= tab_sizedate.htm	
+IDC_CHECKMAXIMUMSIZE				= tab_sizedate.htm
+IDC_MAXIMUMSIZE						= tab_sizedate.htm
+IDC_MAXSIZETYPE						= tab_sizedate.htm
+IDC_MAXIMUMSIZESPIN					= tab_sizedate.htm
+IDC_CHECKMINDATE					= tab_sizedate.htm
+IDC_MINDATE							= tab_sizedate.htm
+IDC_MINTYPE							= tab_sizedate.htm
+IDC_CHECKMAXDATE					= tab_sizedate.htm
+IDC_MAXDATE							= tab_sizedate.htm
+IDC_MAXTYPE							= tab_sizedate.htm
+
+IDC_CHECK							= tab_advanced.htm
+IDC_MATCHWHOLENAME					= tab_advanced.htm
+IDC_REPLACESPACES					= tab_advanced.htm
+IDC_USEWHOLEPATH					= tab_advanced.htm
+IDC_FILETYPE						= tab_advanced.htm
+IDC_CONTAINDATACHECK				= tab_advanced.htm
+IDC_CONTAINDATA						= tab_advanced.htm
+IDC_DATAMATCHCASE					= tab_advanced.htm
+IDC_HELPTOOLBA						= tab_advanced.htm
+
 
 IDM_EDIT_COPY						= hid_edit_copy.htm
 IDM_EDIT_CUT						= hid_edit_cut.htm

@@ -1,0 +1,46 @@
+TITLE=Locate dialog
+CONTENT=
+<div id="tabs">
+<H1><A NAME="tab_name"></A>Locate dialog</H1>
+
+<P>The <b>Locate</b> dialog contains the following fields:</P>
+
+<div id="controls">
+<H2><A NAME="hid_locatedialog_name"></A>Name & Location, Size and date and Advanded tab</H2>
+<P>These tab are used to specify search criterias. <a href="tab_name.htm">Name & Location tab</a> 
+is used to specify name of files, file extension and locations,  
+<a href="tab_sizedate.htm">Size and Date tab</a> can be used to specify the 
+minumum and maximum of the files and the file dates, and <a href="tab_advanced.htm">Advanced tab</a>
+contains some special options for searches. If any field in tabs are changed, the label 
+of the tab is marked as '*'.
+</P>
+
+<H2><A NAME="hid_locatedialog_findnow"></A>Find Now</H2>
+<P>
+This button can be used to execute searches.
+</P>
+
+<H2><A NAME="hid_locatedialog_stop"></A>Stop</H2>
+<P>
+This button can be used to terminate searching.
+</P>
+
+<H2><A NAME="hid_locatedialog_newbutton"></A>New Search</H2>
+<P>
+Use this button to clear fields and the results list. This button will also 
+hide the result list if "Result list is always shown" option in Advanced 
+setting is not chosen.
+</P>
+
+<H2><A NAME="hid_locatedialog_presets"></A>Presets</H2>
+<P>
+This button can be used to save and load presets, which can be used to 
+save search criterias. 
+</P>
+
+
+</div>
+
+
+</div>
+

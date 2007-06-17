@@ -2,7 +2,7 @@
 #include <conio.h>
 #include "lrestool.h"
 
-#define COPYRIGHTTEXT "lrestool v 3.0.7.6160 (C) 2003-2007 Janne Huttunen: language resource tool\n\n"
+#define COPYRIGHTTEXT "lrestool v 3.0.7.6170 (C) 2003-2007 Janne Huttunen: language resource tool\n\n"
 
 
 FILE* _stderr=stderr;
@@ -161,7 +161,7 @@ int GenerateHelpPage(Data& o)
 	if (o.bVerbose)
 		printf("Merging identifies to file '%s'\n",LPCSTR(o.strOutFile));
 	
-	if (!iSrcFile.InsertToOutputFile(o.strOutFile,o.strBaseFile,o.bDoubleVerbose))
+	if (!iSrcFile.InsertToOutputFile(o.strOutFile,o.strBaseFile,o.bDoubleVerbose,TRUE))
 	{
 		if (o.bVerbose)
 			fprintf(_stderr,"Exiting due error...\n");

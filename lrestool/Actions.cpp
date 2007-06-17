@@ -181,7 +181,7 @@ BOOL CIdentifiers::LoadFromHtmlRawFile(LPCSTR szFile,BOOL bShowFound)
 	return TRUE;
 }
 
-BOOL CIdentifiers::InsertToOutputFile(LPCSTR szNewFile,LPCSTR szBaseFile,BOOL bShowMerging)
+BOOL CIdentifiers::InsertToOutputFile(LPCSTR szNewFile,LPCSTR szBaseFile,BOOL bShowMerging,BOOL bAllowNonExisting)
 {
 	char* pBase=NULL;
 	DWORD dwLength=0;
@@ -233,10 +233,13 @@ BOOL CIdentifiers::InsertToOutputFile(LPCSTR szNewFile,LPCSTR szBaseFile,BOOL bS
 			IDENTIFIER* pID=FindIdentifier(name);
 			if (pID==NULL)
 			{
-				printf("Identified %s not found.\n",LPCSTR(name));
-				file.Write('$');
-				file.Write(name);
-				file.Write('$');
+				if (!bAllowNonExisting)
+				{
+					printf("Identified %s not found.\n",LPCSTR(name));
+					file.Write('$');
+					file.Write(name);
+					file.Write('$');
+				}
 			}
 			else
 			{
