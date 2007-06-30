@@ -664,6 +664,7 @@ public:
 
 	// 32 bit set for settings
 	enum LocateDialogFlags {
+		
 		// Dialog
 		fgLargeMode=0x00000001,
 		fgDialogRememberFields=0x0000002,
@@ -747,8 +748,9 @@ public:
 		
 		// Locate process
 		efEnableLogicalOperations = 0x00000010,
-		efLocateProcessDefaults = efEnableLogicalOperations,
-		efLocateProcessSave = 0x00000010,
+		efAllowSpacesAsSeparators = 0x00000020,
+		efLocateProcessDefaults = efEnableLogicalOperations|efAllowSpacesAsSeparators,
+		efLocateProcessSave = 0x00000030,
 
 		// Locate dialog
 		efFocusToResultListWhenAppActivated = 0x01000000,
@@ -883,10 +885,12 @@ protected:
 	// Accessors
 public:
 	DWORD GetFlags() const { return m_dwFlags; }
+	BOOL IsFlagSet(LocateDialogFlags nFlag) const { return m_dwExtraFlags&nFlag?1:0; }
 	void AddFlags(DWORD dwFlags) { m_dwFlags|=dwFlags; }
 	void RemoveFlags(DWORD dwFlags) { m_dwFlags&=~dwFlags; }
 	
 	DWORD GetExtraFlags() const { return m_dwExtraFlags; }
+	BOOL IsExtraFlagSet(LocateDialogExtraFlags nFlag) const { return m_dwExtraFlags&nFlag?1:0; }
 	void AddExtraFlags(DWORD dwFlags) { m_dwExtraFlags|=dwFlags; }
 	void RemoveExtraFlags(DWORD dwFlags) { m_dwExtraFlags&=~dwFlags; }
 	

@@ -1,6 +1,7 @@
 /* Keyhook handler for Locate
 Copyright (C) 2004-2007 Janne Huttunen				*/
 
+#define _WIN32_WINNT 0x0500
 #include <windows.h>
 
 #include <hfcdef.h>
@@ -81,12 +82,10 @@ BOOL UnsetHook(HHOOK hHook)
 	return TRUE;
 }
 
-	
+
 
 LRESULT CALLBACK HookKeyboardProc(int code,WPARAM wParam,LPARAM lParam)
 {
-	static BOOL bKeyDown=FALSE;
-	BOOL bKeyUp=FALSE;
 	if (code == HC_ACTION) 
 	{
 		switch (wParam) 
@@ -97,6 +96,47 @@ LRESULT CALLBACK HookKeyboardProc(int code,WPARAM wParam,LPARAM lParam)
 		case WM_SYSKEYDOWN:
 			{
 				PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT) lParam;
+
+				/*
+
+				static BOOL bWinFDown=FALSE;
+
+				if (p->vkCode=='F' && (GetKeyState(VK_LWIN)|GetKeyState(VK_RWIN)) & 0x8000)
+				{
+					 // Event is confirmed, should do something
+					if (wParam==WM_KEYUP || wParam==WM_SYSKEYUP)
+					{
+						// Key up
+						if (!bWinFDown)
+                            break;
+
+						bWinFDown=FALSE;
+
+						// Remove key up
+						// return 1;
+					}
+					else
+					{
+						// Key down
+						bWinFDown=TRUE;
+						
+						PostMessage(g_hTargetWindow,WM_OPENDIALOG,0,0);
+
+						// Remove key down
+						return 1;
+					}
+				}
+
+				if (bWinFDown && 
+					(p->vkCode==VK_LWIN || p->vkCode==VK_RWIN) &&
+					(wParam==WM_KEYUP || wParam==WM_SYSKEYUP))
+				{
+					
+					// Do some magic
+					keybd_event('F',0,KEYEVENTF_KEYUP,0);
+				}
+				*/
+
 
 				for (DWORD i=0;i<g_nShortcuts;i++)
 				{
@@ -138,7 +178,7 @@ LRESULT CALLBACK HookKeyboardProc(int code,WPARAM wParam,LPARAM lParam)
 						if ((g_pShortcuts[i]->m_dwFlags&CShortcut::sfExecuteMask)==CShortcut::sfExecuteWhenUp)
 							PostMessage(g_hTargetWindow,WM_EXECUTESHORTCUT,i,0);
 
-						if (g_pShortcuts[i]->m_dwFlags&CShortcut::sfRemoveKeyDownMessage)
+						if (g_pShortcuts[i]->m_dwFlags&CShortcut::sfRemoveKeyUpMessage)
 							return 1;
 					}
 					else
@@ -149,11 +189,67 @@ LRESULT CALLBACK HookKeyboardProc(int code,WPARAM wParam,LPARAM lParam)
 						if ((g_pShortcuts[i]->m_dwFlags&CShortcut::sfExecuteMask)==CShortcut::sfExecuteWhenDown)
 							PostMessage(g_hTargetWindow,WM_EXECUTESHORTCUT,i,0);
 
-						if (g_pShortcuts[i]->m_dwFlags&CShortcut::sfRemoveKeyUpMessage)
+						if (g_pShortcuts[i]->m_dwFlags&CShortcut::sfRemoveKeyDownMessage)
 							return 1;
 					}
 				}
 
+				if((p->vkCode==VK_LWIN || p->vkCode==VK_RWIN) &&
+					(wParam==WM_KEYUP || wParam==WM_SYSKEYUP))
+				{
+					for (DWORD i=0;i<g_nShortcuts;i++)
+					{
+						if ((g_pShortcuts[i]->m_dwFlags&CShortcut::sfKeyTypeMask)!=CShortcut::sfGlobalHook ||
+							!(g_pShortcuts[i]->m_dwFlags&CShortcut::sfKeyCurrentlyDown) ||
+							!(g_pShortcuts[i]->m_dwFlags&CShortcut::sfSendKeyEventBeforeWinRelaseIsHandled))							
+							continue;
+
+						// Checking modifiers
+						if (!g_pShortcuts[i]->IsModifiersOk(GetKeyState(VK_MENU) & 0x8000,
+							GetKeyState(VK_CONTROL) & 0x8000,
+							GetKeyState(VK_SHIFT) & 0x8000,TRUE))
+							continue;
+						
+
+						
+						// Virtual release button before release of Win button is handled
+						// This prevents Start menu to appear
+						UINT (WINAPI *pSendInput)(UINT,LPINPUT,int)=
+							(UINT (WINAPI *)(UINT,LPINPUT,int))GetProcAddress(GetModuleHandle("user32.dll"),"SendInput");
+
+						if (pSendInput!=NULL)
+						{
+							INPUT input;
+							input.type=INPUT_KEYBOARD;
+							if (g_pShortcuts[i]->m_dwFlags&CShortcut::sfVirtualKeyIsScancode)
+							{
+								input.ki.dwFlags=KEYEVENTF_KEYUP|KEYEVENTF_SCANCODE;
+								input.ki.wScan=g_pShortcuts[i]->m_bVirtualKey;
+								input.ki.wVk=0;
+							}
+							else
+							{
+								input.ki.dwFlags=KEYEVENTF_KEYUP;
+								input.ki.wVk=g_pShortcuts[i]->m_bVirtualKey;
+								input.ki.wScan=0;
+							}
+							input.ki.time=0;
+							input.ki.time=0;
+							pSendInput(1,&input,sizeof(INPUT));
+						}
+						else
+						{
+							// Using keybd_event istead
+							if (!(g_pShortcuts[i]->m_dwFlags&CShortcut::sfVirtualKeyIsScancode))
+							{
+								keybd_event(g_pShortcuts[i]->m_bVirtualKey,0,KEYEVENTF_KEYUP,0);
+							}
+						}
+
+						g_pShortcuts[i]->m_dwFlags&=~CShortcut::sfKeyCurrentlyDown;
+					}
+				}
+				
 				break;
 			}
 			

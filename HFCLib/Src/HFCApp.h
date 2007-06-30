@@ -209,25 +209,35 @@ public:
 class CWinApp : public CWinThread
 {
 public:
-	LPTSTR m_lpCmdLine;
+	LPSTR m_szCmdLine;
 	int m_nCmdShow;
-	LPCTSTR m_pszAppName;
-	
+	LPCSTR m_szAppName;
+
+#ifdef DEF_WCHAR
+	LPWSTR m_szHelpFile;
+#endif
+
 public:
 	CWinApp(LPCTSTR lpszAppName);
 	
 	virtual ~CWinApp();
 	
 
-	LPCSTR GetCmdLine() const { return m_lpCmdLine; }
-	LPCSTR GetAppName() const { return m_pszAppName; }
+	LPCSTR GetCmdLine() const { return m_szCmdLine; }
+	LPCSTR GetAppName() const { return m_szAppName; }
+	
 	CString GetExeName() const;
-	CStringW GetExeNameW() const;
 
 	void SetMainWnd(CTargetWnd* pWnd);
 	int GetCmdShow() { return m_nCmdShow; }
 		
 	virtual BOOL InitApplication();
+
+#ifdef DEF_WCHAR
+	CStringW GetExeNameW() const;
+	void SetHelpFile(LPCSTR szHelpFile);
+	void SetHelpFile(LPCWSTR szHelpFile);
+#endif
 
 private:
 	CAppData m_AppData;

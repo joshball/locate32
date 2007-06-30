@@ -1,4 +1,5 @@
 TITLE=Search terms
+STYLES=ul li { margin: 4pt 0 4pt 0; }
 CONTENT=
 <H1><A NAME="issue_searchterms"></A>Search terms</H1>
 
@@ -15,15 +16,17 @@ followed by "bar" and "foo?bar" will find files, for example, "foo1bar", "fooaba
 <li>You can also use "Named:" field to specigy extension, for example, use "foobar*.txt". </li>
 
 <li>If you want to files which name are exacly "foobar", check "Match whole name only" option 
-in Advanced tab. If you want that this option to be enabled by default, check the corresponding option in General
-settings. </li>
-
-<li>Tehcnically speaking, "foobar" without "Match whole name only" option is same as "*foobar*" with that option enabled.
-However, if extension is specified in "Named:" field (i.e., there is dot '.' in name), * is not added to the end.</li>
-
-<li>You can specify several searging terms by using comma, for example "foo, bar" will search files which name 
+in Advanced tab. If you want that this option to be enabled by default, check the corresponding 
+option in General settings. 
+More precively, "foobar" without "Match whole name only" is same as "*foobar*" with "Match whole name only".
+If extension is specified in "Named:" field (i.e., there is dot '.' in name), * is not added to the end.</li>
+	
+<li>You can specify several searging terms by using comma, for example "foo,bar" will search files which name 
 contains foo or bar. If you want to search files including commas, use apostrophes (e.g., type "foo,bar","cat*dog").
+Space can also be used as the separator if "Use space as a separator in "Named:" field"-option
+in Advanced setting is enabled.
 </li>
+
 
 <li>If you want to search files which names contains "foo" and "bar" (but not necessarily in that order", you 
 can use "+foo,+bar". If you want to search files, which name does <b>not</b> contain "foo" but contains "bar", use 
@@ -31,6 +34,15 @@ can use "+foo,+bar". If you want to search files, which name does <b>not</b> con
 <b>Note: to use + or -, it is required that "Allow logical operations + and -" options in Advanced 
 settings is enabled.</b>
 </li>
+
+<li>Behauviour of that of how spaces are treated depends on the option
+"Use space as a separator in "Named:" field". If that option is
+disabled, all spaces are treaeted as a part of search criteries. For example,
+if you have extra space after comma, that space is treated as a part of the given file name 
+(e.g., "cat, dog" will find files containing "cat" and " dog"). If that option is enabled,
+all extra spaces are ignored. </li>
+
+
 
 <li>You can use PERL compatible regular expression. For example, you can search files which contain 
 "foo" or "bar", type: ":foo|bar" (':' at the beginning tells that the given string is a regular expression). 

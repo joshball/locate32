@@ -115,3 +115,134 @@ DWORD GetSystemFeaturesFlag()
 	return 0;
 #endif
 }
+
+
+/* 
+
+Function for retrieving data from version resource 
+
+Parameters:
+
+szBlock:				Name of version block
+
+szText:					Pointer to a string buffer that receives the data
+
+dwMaxTextLen:			Maximum characters in szText ('\0' is included)
+ 
+*/
+
+BOOL GetVersionText(
+	LPCSTR /* IN */ szModulePath,
+	LPCSTR /* IN */ szBlock,
+	LPSTR /* OUT */ szText, 
+	DWORD /* IN  */ dwMaxTextLen
+	)
+{
+	// Copying version information to buffer
+	UINT iDataLength=GetFileVersionInfoSize(szModulePath,NULL);
+	if (iDataLength<2)
+		return FALSE;
+	BYTE* pData=new BYTE[iDataLength+2];
+	if (pData==NULL)
+		return FALSE;
+
+	if (!GetFileVersionInfo(szModulePath,NULL,iDataLength,pData))
+	{
+		delete[] pData;
+		return FALSE;
+	}
+	
+	VOID* pTranslations,* pProductVersion=NULL;
+	char szTranslation[200];
+	
+	
+	// Checking first translation block
+	if (!VerQueryValue(pData,"VarFileInfo\\Translation",&pTranslations,&iDataLength))
+	{
+		delete[] pData;
+		return FALSE;
+	}
+	sprintf_s(szTranslation,200,"\\StringFileInfo\\%04X%04X\\%s",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1],szBlock);
+	
+	
+	
+	if (!VerQueryValue(pData,szTranslation,&pProductVersion,&iDataLength))
+	{
+		// Checking english if nothing else does not found
+		sprintf_s(szTranslation,200,"\\StringFileInfo\\040904b0\\%s",szBlock);
+		
+		if (!VerQueryValue(pData,szTranslation,&pProductVersion,&iDataLength))
+		{
+			delete[] pData;
+			return FALSE;
+		}
+	}
+
+
+	
+	// Copying information from pProductVersion to szText
+	strcpy_s(szText,dwMaxTextLen,(LPCSTR)pProductVersion);
+	
+	delete[] pData;
+	return TRUE;
+}
+	
+
+#ifdef DEF_WCHAR
+BOOL GetVersionText(
+	LPCWSTR /* IN */ szModulePath,
+	LPCSTR /* IN */ szBlock,
+	LPWSTR /* OUT */ szText, 
+	DWORD /* IN  */ dwMaxTextLen
+	)
+{
+	// Copying version information to buffer
+	UINT iDataLength=GetFileVersionInfoSizeW(szModulePath,NULL);
+	if (iDataLength<2)
+		return FALSE;
+	BYTE* pData=new BYTE[iDataLength+2];
+	if (pData==NULL)
+		return FALSE;
+
+	if (!GetFileVersionInfoW(szModulePath,NULL,iDataLength,pData))
+	{
+		delete[] pData;
+		return FALSE;
+	}
+	
+	VOID* pTranslations,* pProductVersion=NULL;
+	WCHAR szTranslation[200];
+	
+	
+	// Checking first translation block
+	if (!VerQueryValueW(pData,L"VarFileInfo\\Translation",&pTranslations,&iDataLength))
+	{
+		delete[] pData;
+		return FALSE;
+	}
+	swprintf_s(szTranslation,200,L"\\StringFileInfo\\%04X%04X\\%S",LPWORD(pTranslations)[0],LPWORD(pTranslations)[1],szBlock);
+	
+	
+	
+	if (!VerQueryValueW(pData,szTranslation,&pProductVersion,&iDataLength))
+	{
+		// Checking english if nothing else does not found
+		swprintf_s(szTranslation,200,L"\\StringFileInfo\\040904b0\\%S",szBlock);
+		
+		if (!VerQueryValueW(pData,szTranslation,&pProductVersion,&iDataLength))
+		{
+			delete[] pData;
+			return FALSE;
+		}
+	}
+
+
+	
+	// Copying information from pProductVersion to szText
+	wcscpy_s(szText,dwMaxTextLen,(LPCWSTR)pProductVersion);
+	
+	delete[] pData;
+	return TRUE;
+}
+
+#endif

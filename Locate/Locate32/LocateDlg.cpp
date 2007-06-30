@@ -1601,37 +1601,47 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 	CWaitCursor wait;
 	CStringW Name,Title;
 	CArrayFAP<LPWSTR> aExtensions,aDirectories,aNames;
-	DWORD nRet;
+	DWORD nAdvancedFlags;
+
+	// String contains logical operations '+' and '-':
 	BOOL bPlusOrMinusFound=FALSE;
 
+	// Stop background operations
 	if (m_pBackgroundUpdater!=NULL)
 		m_pBackgroundUpdater->Stop();
 	if (m_pFileNotificationsThread!=NULL)
 		m_pFileNotificationsThread->Stop();
+
+	// Stop locating process if still active
 	if (IsLocating())
 		m_pLocater->StopLocating();
 	
-	// Deleting previous items
+
+	// Deleting previous items and clear tooltips
 	RemoveResultsFromList();
-	
 	if (m_pListTooltips!=NULL)
 		DeleteTooltipTools();
 
+
+	// If OnOk is not initaited using shortcuts and
+	// control is pressed, open select databases dialog
 	if (!bShortcut && GetKeyState(VK_CONTROL)&0x8000)
 		bSelectDatabases=TRUE;
 
 
-	// If dialog is not large mode, change it
-	SetDialogMode(TRUE);
+	
+
+
 	// Clearing possible exclamation icons
 	m_pStatusCtrl->SetText("",STATUSBAR_LOCATEICON,0);
 	m_pStatusCtrl->SetText("",STATUSBAR_UPDATEICON,0);
 	
 	
-	// Resolving Name and Type
+	// Resolving Name and Type, CNameDlg::OnOk can
+	// stop execution of this function if Look In directory
+	// is not ok
 	if (!m_NameDlg.OnOk(Name,aExtensions,aDirectories))
 	{
-		DlgDebugMessage("CLocateDlg::OnOk END_1");
 		return;
 	}
 	
@@ -1641,8 +1651,8 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 	CArray<PDATABASE>* pDatabases;
 	if (bSelectDatabases)
 	{
+		// Use Select databases dialog
 		pDatabases=new CArray<PDATABASE>;
-		
 		CSelectDatabasesDlg dbd(GetLocateApp()->GetDatabases(),*pDatabases,
 			GetLocateApp()->GetStartupFlags()&CLocateApp::CStartData::startupDatabasesOverridden?CSelectDatabasesDlg::flagDisablePresets:0,
 			CRegKey2::GetCommonKey()+"\\Dialogs\\SelectDatabases/Locate");
@@ -1651,10 +1661,10 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 			delete pDatabases;
 			return;
 		}
-
 	}
 	else
 	{
+		// Use enabled databases
 		pDatabases=GetLocateApp()->GetDatabasesPtr();
 		if (pDatabases->GetSize()==0)
 		{
@@ -1663,82 +1673,92 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 		}
 	}
 
+	
+	// No returns before the end anymore
+
+
+	// If dialog is not large mode, change it
+	SetDialogMode(TRUE);
+
 	// Create locater object
 	m_pLocater=new CLocater(*pDatabases);
 
-
-
 	// Calling routines for subdialogs
 	m_SizeDateDlg.OnOk(m_pLocater);
-	nRet=m_AdvancedDlg.OnOk(m_pLocater);
+	nAdvancedFlags=m_AdvancedDlg.OnOk(m_pLocater);
 
 	
-
-	
-	// Checking name, inserting asterisks etc..
+	// Checking name 
 	if (!Name.IsEmpty()) 
 	{
-		if (Name[0]==':') // Is regular expression
+		if (Name[0]==':') 
 		{
+			// Name is regular expression, PCRE will be used
 			Name.DelChar(0);
-			nRet|=CAdvancedDlg::flagNameIsRegularExpression;
+			nAdvancedFlags|=CAdvancedDlg::flagNameIsRegularExpression;
 			if (Name[0]==':')
 			{
 				Name.DelChar(0);
-				nRet|=CAdvancedDlg::flagUseWholePath;
+				nAdvancedFlags|=CAdvancedDlg::flagUseWholePath;
 			}
 			else if (Name[0]==' ')
 				Name.DelChar(0);
 		}
 		else
 		{
-			int i=0;
-			UINT nIndex;
-
-			if (nRet&CAdvancedDlg::flagReplaceSpaces)
+			// If replace spaces with asterisks is chosen, 
+			// replace ' ' -> '*'
+			if (nAdvancedFlags&CAdvancedDlg::flagReplaceSpaces)
 			{
 				// Replacing spaces with asterisks
-				for (i=0;i<Name.GetLength();i++)
+				for (int i=0;i<Name.GetLength();i++)
 				{
 					if (Name[i]==' ')
 						Name[i]='*';
 				}
-			}
 
-			// Removing extra asterisks
-			for (i=0;i<Name.GetLength();i++)
-			{
-				if (Name[i]==L'*')
+				// Remove multiple (and therefore
+				// meaningless) asterisks
+				for (int i=0;i<Name.GetLength();i++)
 				{
-					while (Name[i+1]==L'*')
-						Name.DelChar(i+1);
+					if (Name[i]==L'*')
+					{
+						while (Name[i+1]==L'*')
+							Name.DelChar(i+1);
+					}
 				}
+
 			}
 
 			
-			LPCWSTR pStr=Name;
 			
-			// Parse Name string
+			// Parse string, split into separate string etc...
+			LPCWSTR pStr=Name;
+			UINT nIndex;
+			
 			for(;;)
 			{
 				
-				// First, if logical operations can be used, check is + or - present
+				// First, if logical operations are enabled, 
+				// check whether + or - is present
 				enum {
 					NotSpecified,
 					MustExist, // + found
 					MustNotExist // - found
 				} nType=NotSpecified;
 				
-				if (GetExtraFlags()&efEnableLogicalOperations)
+				if (IsExtraFlagSet(efEnableLogicalOperations))
 				{
 					if (pStr[0]==L'+')
 					{
+						// '+' present, 
 						nType=MustExist;
 						bPlusOrMinusFound=TRUE;
 						pStr++;
 					}
 					else if (pStr[0]==L'-')
 					{
+						// '-' present, 
 						nType=MustNotExist;
 						bPlusOrMinusFound=TRUE;
 						pStr++;
@@ -1746,32 +1766,46 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 				}
 
 
-				// Check whether parenthes are used
-				BOOL bParenthes=FALSE;
-				for (nIndex=0;pStr[nIndex]==L' ';nIndex++);
+				// Check whether apostrophes are used
+				BOOL bApostrophes=FALSE;
+				// Apostrophes may be found after spaces
+				for (nIndex=0;pStr[nIndex]==' ';nIndex++); 
+				
 				if (pStr[nIndex]==L'\"')
 				{
 					// Parenthes on use
-					bParenthes=TRUE;
+					bApostrophes=TRUE;
 					pStr+=nIndex+1;
+
 					// Calculate length
 					for (nIndex=0;pStr[nIndex]!=L'\"' && pStr[nIndex]!=L'\0';nIndex++);
 				}
+				else if (IsExtraFlagSet(efAllowSpacesAsSeparators))
+				{
+					// Calculate length, separators are ' ', ',' and ';'
+					for (nIndex=0;pStr[nIndex]!=L' ' && pStr[nIndex]!=L',' && pStr[nIndex]!=L';' && pStr[nIndex]!=L'\0';nIndex++);
+				}
 				else
 				{
-					// Calculate length
+					// Calculate length, separators are ',' and ';'
 					for (nIndex=0;pStr[nIndex]!=L',' && pStr[nIndex]!=L';' && pStr[nIndex]!=L'\0';nIndex++);
 				}
-		
+
+				// If length > 0, insert to aNames list 
 				if (nIndex>0)
 				{
-					if (nRet&CAdvancedDlg::flagMatchCase)
+					// Add possible asterisks
+					if (nAdvancedFlags&CAdvancedDlg::flagMatchCase)
 					{
+						// Match case search, do not add asterisks
 						if (nType==NotSpecified)
+						{
+							// No logical operatoins given
 							aNames.Add(alloccopy(pStr,nIndex));
+						}
 						else
 						{
-							// Insert '+' or '-'
+							// Logical operations given, insert '+' or '-'
 							WCHAR* pNewString=new WCHAR[nIndex+2];
 							pNewString[0]=nType==MustExist?L'+':L'-';
 							MemCopyW(pNewString+1,pStr,nIndex);
@@ -1781,92 +1815,97 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 					}
 					else
 					{
-						// Inserting '*'
+						// No match case, inserting '*' to the begin and the end 
+						// (no end if extension is given)
 						
 						
-						// 4 is enough for '*' at the begin and end of string,
-						// for '\0' and for '+' or '-'
+						// 4 bytes extra in alloctaion is enough for '*' at the begin 
+						// and end of string, for '\0' and for '+' or '-'
 						WCHAR* pNewString=new WCHAR[nIndex+4]; 
+						WCHAR* pNewStringPtr=pNewString;
 
 						if (nType!=NotSpecified)
 						{
-							pNewString[0]=nType==MustExist?L'+':L'-';
+							*pNewStringPtr=nType==MustExist?L'+':L'-';
+							
 							// Move pointer forward
-							pNewString++;
+							pNewStringPtr++;
 						}
 
 
 						if (pStr[0]!=L'*')
 						{
-							// Insert asterisk to begin
-							pNewString[0]=L'*';
-							MemCopyW(pNewString+1,pStr,nIndex);
+							// No asterisk at the beginning of string, 
+							// Insert asterisk
+							*pNewStringPtr=L'*';
+							pNewStringPtr++;
+						}
+
+						// Copy string
+						MemCopyW(pNewStringPtr,pStr,nIndex);
+						pNewStringPtr+=nIndex;
 							
-							// Insert asterisk to the end of string if thre is no 
-							// that already and extension is not specified
-							if (pStr[nIndex-1]!=L'*' && FirstCharIndex(pStr,L'.')==-1)
-							{	
-								pNewString[nIndex+1]=L'*';
-								pNewString[nIndex+2]=L'\0';
-							}
-							else
-								pNewString[nIndex+1]=L'\0';
+						// Insert asterisk to the end of string if thre is no 
+						// any already and extension is not specified
+						if (pStr[nIndex-1]!=L'*' && FirstCharIndex(pStr,L'.')==-1)
+						{	
+							pNewStringPtr[0]=L'*';
+							pNewStringPtr[1]=L'\0';
 						}
 						else
-						{
-							sMemCopyW(pNewString,pStr,nIndex);
-							
-							// Insert asterisk to the end of string if thre is no 
-							// that already and extension is not specified
-							if (pStr[nIndex-1]!=L'*' && FirstCharIndex(pStr,L'.')==-1)
-							{	
-								pNewString[nIndex]=L'*';
-								pNewString[nIndex+1]=L'\0';
-							}
-							else
-								pNewString[nIndex]=L'\0';
-						}
-
+							pNewStringPtr[0]=L'\0';
 						
-						if (nType!=NotSpecified)
-						{
-							// Move pointer back
-							pNewString--;
-						}
 
 						aNames.Add(pNewString);
-
 
 					}
 	
 			
 				}				
 
-				if (bParenthes)
+				if (bApostrophes)
 				{
+					// Apostrophe was used at the beginning of string,
+					// terminate processing if no apostrophe at the end
 					if (pStr[nIndex]!=L'\"')
 						break;
-					pStr+=nIndex+1;
 
+					// Move pointer
+					pStr+=nIndex+1;
+					
+					// Ignore spaces after apostrophe
 					while (*pStr==L' ')
 						pStr++;
-					if (*pStr!=L',')
-						break;
-					pStr++;
 				}
 				else
 				{
-					if (pStr[nIndex]=='\0')
-						break;
-					pStr+=nIndex+1;	
+					// Move pointer
+					pStr+=nIndex;
 				}
+
+				if (IsExtraFlagSet(efAllowSpacesAsSeparators))
+				{
+					// Ignore all separators
+					while (*pStr==L' ' || *pStr==',' || *pStr==';')
+						pStr++;
+					if (*pStr=='\0')
+						break;
+				}
+				else
+				{
+					// Separator must found
+					if (*pStr!=L',' && *pStr!=L';')
+						break;
+					pStr++;
+				}
+				
 			}
 		}
 	}
 	
 	// Extension no extensions, checking if name contains extension
 	// No extension needed if "use whole path" is set
-	if (nRet&CAdvancedDlg::flagUseWholePath)
+	if (nAdvancedFlags&CAdvancedDlg::flagUseWholePath)
 	{
 		aExtensions.RemoveAll();
 		m_pLocater->AddAdvancedFlags(LOCATE_EXTENSIONWITHNAME|LOCATE_CHECKWHOLEPATH);
@@ -1891,9 +1930,9 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 
 	// Making title
 	Title.LoadString(IDS_TITLE);
-	if (nRet&CAdvancedDlg::flagNameIsRegularExpression)
+	if (nAdvancedFlags&CAdvancedDlg::flagNameIsRegularExpression)
 	{
-		if (nRet&CAdvancedDlg::flagUseWholePath)
+		if (nAdvancedFlags&CAdvancedDlg::flagUseWholePath)
 			Title.AddString(IDS_REGULAREXPRESSIONFULLPATH);
 		else
 			Title.AddString(IDS_REGULAREXPRESSION);
@@ -1952,16 +1991,17 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 
 
 	// Starting location
-	if (!(nRet&CAdvancedDlg::flagNameIsRegularExpression))
+	if (nAdvancedFlags&CAdvancedDlg::flagNameIsRegularExpression)
 	{
-		m_pLocater->LocateFiles(TRUE,(LPCWSTR*)aNames.GetData(),aNames.GetSize(),
-			(LPCWSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+		// Regular expression
+		m_pLocater->LocateFiles(TRUE,Name,nAdvancedFlags&CAdvancedDlg::flagRexExpIsCaleSensitive,
 			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 	else
 	{
-		// Regular expression
-		m_pLocater->LocateFiles(TRUE,Name,nRet&CAdvancedDlg::flagRexExpIsCaleSensitive,
+		// Normal search
+		m_pLocater->LocateFiles(TRUE,(LPCWSTR*)aNames.GetData(),aNames.GetSize(),
+			(LPCWSTR*)aExtensions.GetData(),aExtensions.GetSize(),
 			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 	
@@ -3789,25 +3829,33 @@ void CLocateDlg::OnDrawClipboard()
 	CDialog::OnDrawClipboard();
 }
 
+
 void CLocateDlg::OnActivateApp(BOOL fActive,DWORD dwThreadID)
 {
-	CDialog::OnActivateApp(fActive,dwThreadID);
-
 	if (!fActive)
 	{
 		// If list control is still in label edit mode,
 		// the result list should got focus next time app is activated
-		AddExtraFlags(efFocusToResultListWhenAppActivated);
+		if (GetExtraFlags()&efLVRenamingActivated)
+		{
+			AddExtraFlags(efFocusToResultListWhenAppActivated);
+			RemoveExtraFlags(efLVRenamingActivated);
+		}
 	}
 	else
 	{
 		if (GetExtraFlags()&efFocusToResultListWhenAppActivated)
 		{
+			RemoveExtraFlags(efFocusToResultListWhenAppActivated);
+
 			// Give focus for the result list
 			m_pListCtrl->SetFocus();
-			RemoveExtraFlags(efFocusToResultListWhenAppActivated);
+
+			return;
 		}
 	}
+
+	CDialog::OnActivateApp(fActive,dwThreadID);
 }
 	
 void CLocateDlg::OnChangeCbChain(HWND hWndRemove,HWND hWndAfter)

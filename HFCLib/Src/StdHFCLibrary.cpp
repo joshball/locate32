@@ -49,7 +49,7 @@ int PASCAL WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,
 		GetAppData()->m_pThreads->AddTail(GetAppData()->pAppClass);
 		GetAppData()->hAppInstance=hInstance;
 		SetResourceHandle(hInstance,SetBoth);
-		GetAppData()->pAppClass->m_lpCmdLine=lpszCmdLine;
+		GetAppData()->pAppClass->m_szCmdLine=lpszCmdLine;
 		GetAppData()->pAppClass->m_nCmdShow=nCmdShow;
 		
 		StartDebugLogging();

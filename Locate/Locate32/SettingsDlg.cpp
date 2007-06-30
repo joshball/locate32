@@ -1039,6 +1039,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	Item* LocateProcessAndResultsItems[]={
 		CreateCheckBox(IDS_ADVSETLIMITRESULTS,LimitMaximumResults,LimitResultsCheckBoxProc,
 			0,&m_pSettings->m_nMaximumFoundFiles),
+		CreateCheckBox(IDS_ADVSETSPACEISSEPARATOR,NULL,DefaultCheckBoxProc,
+			CLocateDlg::efAllowSpacesAsSeparators,&m_pSettings->m_dwLocateDialogExtraFlags),
 		CreateCheckBox(IDS_ADVSETLOGICALOPERATIONS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::efEnableLogicalOperations,&m_pSettings->m_dwLocateDialogExtraFlags),
 		CreateRoot(IDS_ADVSETRESULTSLIST,ResultsListItems),
@@ -1753,63 +1755,74 @@ void CSettingsProperties::CLanguageSettingsPage::FindLanguages()
 
     while (bRet)
 	{
-		char szPathTemp[MAX_PATH];
+		WCHAR szPathTemp[MAX_PATH];
 		ff.GetFilePath(szPathTemp,MAX_PATH);
-		HINSTANCE hLib=LoadLibrary(szPathTemp);
-        if (hLib!=NULL)
+		
+		// Check whether file can be loaded as datafile
+		HINSTANCE hLib=FileSystem::LoadLibrary(szPathTemp,LOAD_LIBRARY_AS_DATAFILE);
+        if (hLib==NULL)
 		{
-			LANGCALL pFunc=(LANGCALL)GetProcAddress(hLib,"GetLocateLanguageFileInfo");
-			if (pFunc==NULL) // Watcom style
-				pFunc=(LANGCALL)GetProcAddress(hLib,"_GetLocateLanguageFileInfo");
-			LANGCALLW pFuncW=(LANGCALLW)GetProcAddress(hLib,"GetLocateLanguageFileInfoW");
-			if (pFuncW==NULL) // Watcom style
-				pFuncW=(LANGCALLW)GetProcAddress(hLib,"_GetLocateLanguageFileInfoW");
-
-			if (pFuncW!=NULL && IsUnicodeSystem())
-			{
-				LanguageItem* pli=new LanguageItem;
-				pFuncW(pli->Language.GetBuffer(200),200,pli->Description.GetBuffer(1000),1000);
-				pli->Language.FreeExtra();
-				pli->Description.FreeExtra();
-
-				ff.GetFileName(pli->File);
-				li.lParam=(LPARAM)pli;
-				li.iSubItem=0;
-				if (m_pSettings->m_strLangFile.CompareNoCase(pli->File)==0)
-				{
-					li.state=LVIS_SELECTED;
-					nLastSel=li.iItem;
-				}
-				else
-					li.state=0;
-
-				m_pList->InsertItem(&li);
-				li.iItem++;
-			}
-			else if (pFunc!=NULL)
-			{
-				LanguageItem* pli=new LanguageItem;
-				char szLanguage[200],szDescription[1000];
-				pFunc(szLanguage,200,szDescription,1000);
-				pli->Language=szLanguage;
-				pli->Description=szDescription;
-				
-				ff.GetFileName(pli->File);
-				li.lParam=(LPARAM)pli;
-				li.iSubItem=0;
-				if (m_pSettings->m_strLangFile.CompareNoCase(pli->File)==0)
-				{
-					li.state=LVIS_SELECTED;
-					nLastSel=li.iItem;
-				}
-				else
-					li.state=0;
-
-				m_pList->InsertItem(&li);
-				li.iItem++;
-			}
-			FreeLibrary(hLib);
+			bRet=ff.FindNextFile();
+			continue;
 		}
+
+		FreeLibrary(hLib);
+
+
+
+
+		LanguageItem* pli=new LanguageItem;
+				
+		if (IsUnicodeSystem())
+		{
+			// Retrieving language from version resource
+			if (!GetVersionText(szPathTemp,"ProvidesLanguage",pli->Language.GetBuffer(200),200))
+			{
+				delete pli;
+				bRet=ff.FindNextFile();
+				continue;
+			}
+				
+			pli->Language.FreeExtra();
+
+
+			// Retrieving description from version resource
+			if (GetVersionText(szPathTemp,"FileDescription",pli->Description.GetBuffer(1000),1000))
+				pli->Description.FreeExtra();
+		}
+		else
+		{
+			char szLanguage[200],szDescription[1000];
+			// Retrieving language from version resource
+			if (!GetVersionText(W2A(szPathTemp),"ProvidesLanguage",szLanguage,200))
+			{
+				delete pli;
+				bRet=ff.FindNextFile();
+				continue;
+			}
+				
+				
+			pli->Language=szLanguage;
+
+			// Retrieving description from version resource
+			if (GetVersionText(W2A(szPathTemp),"FileDescription",szDescription,1000))
+				pli->Description=szDescription;
+		}
+
+		ff.GetFileName(pli->File);
+		li.lParam=(LPARAM)pli;
+		li.iSubItem=0;
+		if (m_pSettings->m_strLangFile.CompareNoCase(pli->File)==0)
+		{
+			li.state=LVIS_SELECTED;
+			nLastSel=li.iItem;
+		}
+		else
+			li.state=0;
+
+		m_pList->InsertItem(&li);
+		li.iItem++;
+
 		bRet=ff.FindNextFile();
 	}
 }
@@ -2488,21 +2501,15 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 	{
 	case LVN_ITEMCHANGING:
 		if (m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
-			return TRUE;
+			return TRUE; // No change allowed
 		return FALSE;
 	case LVN_ITEMCHANGED:
-		if (pNm->lParam!=NULL && (pNm->uNewState&LVIS_SELECTED)!=(pNm->uOldState&LVIS_SELECTED))
+		if (pNm->lParam!=NULL &&
+			(pNm->uNewState&LVIS_STATEIMAGEMASK)!=(pNm->uOldState&LVIS_STATEIMAGEMASK))
 		{
-			if (m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
-			{
-				m_pList->SetCheckState(pNm->iItem,((CDatabase*)pNm->lParam)->IsEnabled());
-				m_pList->SetItemState(pNm->iItem,0,LVIS_SELECTED);
-			}
-			else
-				((CDatabase*)pNm->lParam)->Enable(m_pList->GetCheckState(pNm->iItem));
-
+			((CDatabase*)pNm->lParam)->Enable(((pNm->uNewState&LVIS_STATEIMAGEMASK)>>12)-1);
 			EnableButtons();
-		}	
+		}
 		break;
 	case NM_CLICK:
 		EnableButtons();
@@ -7766,6 +7773,8 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnInitDialog(HWN
 			CheckDlgButton(IDC_REMOVEDOWNMESSAGE,TRUE);
 		if (m_pShortcut->m_dwFlags&CShortcut::sfRemoveKeyUpMessage)
 			CheckDlgButton(IDC_REMOVEUPMESSAGE,TRUE);
+		if (m_pShortcut->m_dwFlags&CShortcut::sfSendKeyEventBeforeWinRelaseIsHandled)
+			CheckDlgButton(IDC_SENDKEYRELEASEBEFOREWIN,TRUE);
 	}
 	else
 	{
@@ -7816,6 +7825,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::EnableItems()
 		EnableDlgItem(IDC_REMOVEMESSAGESTATIC,TRUE);
 		EnableDlgItem(IDC_REMOVEDOWNMESSAGE,TRUE);
 		EnableDlgItem(IDC_REMOVEUPMESSAGE,TRUE);
+
+		EnableDlgItem(IDC_SENDKEYRELEASEBEFOREWIN,TRUE);
 	}
 	else
 	{
@@ -7831,6 +7842,8 @@ void CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::EnableItems()
 		EnableDlgItem(IDC_REMOVEMESSAGESTATIC,FALSE);
 		EnableDlgItem(IDC_REMOVEDOWNMESSAGE,FALSE);
 		EnableDlgItem(IDC_REMOVEUPMESSAGE,FALSE);
+
+		EnableDlgItem(IDC_SENDKEYRELEASEBEFOREWIN,FALSE);
 	}
 
 	EnableDlgItem(IDC_WAITMS,IsDlgButtonChecked(IDC_WAITDELAY));
@@ -7934,6 +7947,11 @@ void CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnOK()
 			m_pShortcut->m_dwFlags|=CShortcut::sfRemoveKeyUpMessage;
 		else
 			m_pShortcut->m_dwFlags&=~CShortcut::sfRemoveKeyUpMessage;
+
+		if (IsDlgButtonChecked(IDC_SENDKEYRELEASEBEFOREWIN))
+			m_pShortcut->m_dwFlags|=CShortcut::sfSendKeyEventBeforeWinRelaseIsHandled;
+		else
+			m_pShortcut->m_dwFlags&=~CShortcut::sfSendKeyEventBeforeWinRelaseIsHandled;
 	}
 	
 

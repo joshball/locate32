@@ -201,10 +201,27 @@ inline int LoadString(UINT uID,LPSTR lpBuffer,int nBufferMax,TypeOfResourceHandl
 }
 
 #ifdef DEF_WCHAR
+int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax,HINSTANCE hInstance);
 int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax,TypeOfResourceHandle bType);
 int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax);
 #endif
 
+
+
+
+
+/* Function for retrieving text from text resource, defined in System.cpp
+Parameters:
+
+hInstance				Instance to module
+szBlock:				Name of version block
+szText:					Pointer to a string buffer that receives the data
+dwMaxTextLen:			Maximum characters in szText ('\0' is included)
+*/
+BOOL GetVersionText(LPCSTR szModulePath,LPCSTR szBlock,LPSTR szText,DWORD dwMaxTextLen);
+#ifdef DEF_WCHAR
+BOOL GetVersionText(LPCWSTR szModulePath,LPCSTR szBlock,LPWSTR szText,DWORD dwMaxTextLen);
+#endif
 
 #endif
 

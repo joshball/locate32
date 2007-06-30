@@ -278,9 +278,32 @@ HWND CWnd::HtmlHelp(UINT uCommand,DWORD_PTR dwData,LPCSTR szHelpFile)
 			uCommand,dwData);
 	}
 
-
-
+	
 #ifdef DEF_WCHAR
+	LPCWSTR szwHelpFile=GetApp()->m_szHelpFile;
+	if (szwHelpFile!=NULL)
+	{	
+		if (FirstCharIndex(szwHelpFile,L'\\')!=-1)
+		{
+			if (IsUnicodeSystem())
+				return HtmlHelpW(m_hWnd,szwHelpFile,uCommand,dwData);
+			else
+				return HtmlHelpA(m_hWnd,W2A(szwHelpFile),uCommand,dwData);
+		}
+
+		// Insert path
+		if (IsUnicodeSystem())
+		{
+			CStringW sExeName=GetApp()->GetExeNameW();
+			return HtmlHelpW(*this,sExeName.Left(sExeName.FindLast(L'\\')+1)+szwHelpFile,
+				uCommand,dwData);
+		}
+	
+		CString sExeName=GetApp()->GetExeName();
+		return HtmlHelpA(*this,sExeName.Left(sExeName.FindLast(L'\\')+1)+szwHelpFile,
+			uCommand,dwData);
+	}
+
 	if (IsUnicodeSystem())
 	{
 		CStringW sExeName=GetApp()->GetExeNameW();
@@ -421,6 +444,9 @@ UINT CWnd::GetDlgItemText(int nIDDlgItem,LPWSTR lpString,int nMaxCount) const
 
 HWND CWnd::HtmlHelp(UINT uCommand,DWORD_PTR dwData,LPCWSTR szHelpFile)
 {
+	if (szHelpFile==NULL)
+		szHelpFile=GetApp()->m_szHelpFile;
+
 	if (szHelpFile!=NULL)
 	{	
 		if (FirstCharIndex(szHelpFile,L'\\')!=-1)

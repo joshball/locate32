@@ -69,7 +69,7 @@ Files are removed if a file operatoin is executed.</TD>
 </TR>
 
 <TR VALIGN="top">
-<TD width=20%><A HREF="hid_file_rename.htm">Rename</A></TD>
+<TD width=20%><A HREF="hid_file_properties.htm">Properties</A></TD>
 <TD width=80%>Show properties of the selected files.</TD>
 </TR>
 

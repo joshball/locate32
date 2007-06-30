@@ -436,9 +436,10 @@ public:
 		sfExecuteWhenUp = 0x08,
 		sfExecuteMask = 0x08,
 
-		sfRemoveKeyUpMessage = 0x10,
-		sfRemoveKeyDownMessage = 0x20,
-		sfKeyCurrentlyDown = 0x40, // For set hook
+		sfRemoveKeyDownMessage = 0x10,
+		sfRemoveKeyUpMessage = 0x20,
+		sfKeyCurrentlyDown = 0x40, // For hook
+		sfSendKeyEventBeforeWinRelaseIsHandled = 0x80, // For hook
 		
 		sfVirtualKeySpecified = 0x1000,
 		sfVirtualKeyIsScancode = 0x2000,

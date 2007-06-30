@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,7,6170
- PRODUCTVERSION 3,0,7,6170
+ FILEVERSION 3,0,7,7010
+ PRODUCTVERSION 3,0,7,7010
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 build 7.6170"
+            VALUE "FileVersion", "3.0 build 7.7010"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2007 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 build 7.6170"
+            VALUE "ProductVersion", "3.0 build 7.7010"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -662,7 +662,7 @@ BEGIN
 					258,279,22,12	
 END
 
-IDD_SHORTCUTADVANCED DIALOGEX 100, 100, 273, 200
+IDD_SHORTCUTADVANCED DIALOGEX 100, 100, 273, 218
 STYLE DS_SETFONT | DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Advanced settings:"
@@ -683,7 +683,7 @@ BEGIN
     CONTROL         "Locate dialog",IDC_LOCATEDIALOG,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,173,71,87,9
     GROUPBOX        "Execute options:",IDC_STATICEXECUTAIONOPTIONS,4,99,263,
-                    78
+                    89
     LTEXT           "When execute:",IDC_EXECUTEWHENSTATIC,10,113,61,8
     CONTROL         "Key is pressed",IDC_EXECUTEWHENKEYISDOWN,"Button",
                     BS_AUTORADIOBUTTON,119,113,64,10
@@ -695,17 +695,19 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,119,130,47,10
     CONTROL         "Key up",IDC_REMOVEUPMESSAGE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,190,130,38,10
+    CONTROL         "Send a key release event before Win key is handled (use with Win+F)",IDC_SENDKEYRELEASEBEFOREWIN,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,10,144,260,11
     LTEXT           "&Wait before execute:",IDC_STATICWAITBEFOREEXECUTE,10,
-                    144,117,11
-    CONTROL         "None",IDC_WAITNONE,"Button",BS_AUTORADIOBUTTON,10,157,
+                    160,117,11
+    CONTROL         "None",IDC_WAITNONE,"Button",BS_AUTORADIOBUTTON,10,173,
                     49,11
     CONTROL         "Delay (ms):",IDC_WAITDELAY,"Button",BS_AUTORADIOBUTTON,
-                    61,157,55,11
-    EDITTEXT        IDC_WAITMS,121,157,40,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Post",IDC_WAITPOST,"Button",BS_AUTORADIOBUTTON,182,157,
+                    61,173,55,11
+    EDITTEXT        IDC_WAITMS,121,170,40,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Post",IDC_WAITPOST,"Button",BS_AUTORADIOBUTTON,182,173,
                     35,11
-    DEFPUSHBUTTON   "OK",IDC_OK,71,181,50,14
-    PUSHBUTTON      "Cancel",IDC_CANCEL,149,181,50,14
+    DEFPUSHBUTTON   "OK",IDC_OK,71,197,50,14
+    PUSHBUTTON      "Cancel",IDC_CANCEL,149,197,50,14
 END
 
 
@@ -1134,8 +1136,10 @@ IDR_UPDATEDBHELP		HELPTEXT                "usage_updt.txt"
 //
 // String Table
 //
+
 STRINGTABLE 
 BEGIN
+	IDS_HELPFILE			"locate32.chm"
 	IDS_COPYRIGHT			"Copyright"
 	IDS_SELECTEDCOUNT		"%d file(s) selected"
 	IDS_SELECTEDCOUNT2		"%d folder(s) selected"
@@ -1676,7 +1680,8 @@ BEGIN
 	IDS_ADVSETUSEDEFDIRECTORYICON	"Use default icon for directories (use with slow network drives)"
 	IDS_ADVSETWHILESORTINGDONOTREADINFO	"While sorting, do not read information from files"
 	IDS_ADVSETDONTRESOLVEDRIVEICONS	"Do not resolve icon for local drives"
-	IDS_ADVSETLOGICALOPERATIONS		"Allow logical operations (+ and -)"
+	IDS_ADVSETLOGICALOPERATIONS		"Allow logical operations (+ and -) in search"
+	IDS_ADVSETSPACEISSEPARATOR		"Use space as a separator in ""Named:"" field"
 END
 
 STRINGTABLE

@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by englishrc.rc
 //
+#define IDS_HELPFILE					1
 #define IDI_APPLICATIONICON             1
 #define IDS_LISTNAME                    2
 #define IDI_DELETEDFILE                 2
@@ -481,6 +482,7 @@
 #define IDC_EXECUTEWHENSTATIC           1197
 #define IDC_REMOVEMESSAGESTATIC         1198
 #define IDC_RADIO1                      1199
+#define IDC_SENDKEYRELEASEBEFOREWIN		1199
 #define IDC_RIGHT                       1199
 #define IDC_SELECTALLKEY                1200
 #define IDC_LEFT                        1200
@@ -940,6 +942,7 @@
 #define IDS_ADVSETDONTRESOLVEDRIVEICONS	5809
 #define	IDS_ADVSETDONTSAVELISTITEMS		5810
 #define	IDS_ADVSETLOGICALOPERATIONS		5811
+#define	IDS_ADVSETSPACEISSEPARATOR		5812
 #define IDS_SCHEDULEUPDATE              5901
 #define IDS_MINUTELY                    5909
 #define IDS_HOURLY                      5910

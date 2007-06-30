@@ -2136,10 +2136,10 @@ BOOL CLocateApp::SetLanguageSpecifigHandles()
 	
 	
 
-	HINSTANCE hLib=FileSystem::LoadLibrary(Path+LangFile);
+	HINSTANCE hLib=FileSystem::LoadLibrary(Path+LangFile,LOAD_LIBRARY_AS_DATAFILE);
 	if (hLib==NULL)
 	{
-		hLib=FileSystem::LoadLibrary(Path+L"lan_en.dll");
+		hLib=FileSystem::LoadLibrary(Path+L"lan_en.dll",LOAD_LIBRARY_AS_DATAFILE);
 
 		if (hLib==NULL)
 		{
@@ -2153,6 +2153,12 @@ BOOL CLocateApp::SetLanguageSpecifigHandles()
 	}
 
 	SetResourceHandle(hLib,LanguageSpecificResource);
+
+	// Set help file
+	LangFile.LoadString(IDS_HELPFILE);
+	if (FileSystem::IsFile(Path+LangFile))
+		GetApp()->SetHelpFile(LangFile);
+
 	return TRUE;
 }
 
@@ -3443,6 +3449,9 @@ LRESULT CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			else           			
 				m_aShortcuts[int(wParam)]->ExecuteAction();
 		}
+		break;
+	case WM_OPENDIALOG:
+		OnLocate();
 		break;
 	case WM_RESETSHORTCUTS:
 		TurnOnShortcuts();

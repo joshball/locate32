@@ -44,7 +44,7 @@ COLORREF GetSystemColor(LPCSTR szKey)
 #ifdef DEF_APP
 
 CWinApp::CWinApp(LPCTSTR lpszAppName)
-:	m_pszAppName(lpszAppName)
+:	m_szAppName(lpszAppName),m_szCmdLine(NULL),m_szHelpFile(NULL)
 {
 #ifdef _DEBUG_LOGGING
 	extern CRITICAL_SECTION cHandleCriticalSection;
@@ -67,6 +67,7 @@ CString CWinApp::GetExeName() const
 	return CString(szExeName,len);
 }
 
+#ifdef DEF_WCHAR
 CStringW CWinApp::GetExeNameW() const
 {
 	if (IsUnicodeSystem())
@@ -80,7 +81,28 @@ CStringW CWinApp::GetExeNameW() const
 	return CStringW(GetExeName());
 }
 
-		
+void CWinApp::SetHelpFile(LPCSTR szHelpFile)
+{
+	if (m_szHelpFile!=NULL)
+		delete[] m_szHelpFile;
+	if (szHelpFile!=NULL)
+		m_szHelpFile=alloccopyAtoW(szHelpFile);
+	else
+		m_szHelpFile=NULL;
+}
+
+void CWinApp::SetHelpFile(LPCWSTR szHelpFile)
+{
+	if (m_szHelpFile!=NULL)
+		delete[] m_szHelpFile;
+	if (szHelpFile!=NULL)
+		m_szHelpFile=alloccopy(szHelpFile);
+	else
+		m_szHelpFile=NULL;
+}
+#endif
+
+
 BOOL CWinApp::InitApplication()
 {
 	return FALSE;
@@ -98,6 +120,9 @@ CWinApp::~CWinApp()
 	DebugClearOpenHandlesList();	
 	DeleteCriticalSection(&cHandleCriticalSection);
 #endif
+
+	if (m_szHelpFile!=NULL)
+		delete[] m_szHelpFile;
 
 	
 	StopDebugLogging();

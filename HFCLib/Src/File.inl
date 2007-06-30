@@ -320,9 +320,9 @@ inline UINT FileSystem::GetSystemDirectory(LPSTR lpBuffer,UINT uSize)
 	return ::GetSystemDirectoryA(lpBuffer,uSize);
 }
 
-inline HMODULE FileSystem::LoadLibrary(LPCSTR lpFileName)
+inline HMODULE FileSystem::LoadLibrary(LPCSTR lpFileName,DWORD dwFlags)
 {
-	return ::LoadLibraryA(lpFileName);
+	return ::LoadLibraryExA(lpFileName,NULL,dwFlags);
 }
 
 	
@@ -392,12 +392,12 @@ inline BOOL FileSystem::GetFileSecurity(LPCWSTR lpFileName,SECURITY_INFORMATION 
 		return ::GetFileSecurityA(W2A(lpFileName),RequestedInformation,pSecurityDescriptor,nLength,lpnLengthNeeded);
 }
 
-inline HMODULE FileSystem::LoadLibrary(LPCWSTR lpFileName)
+inline HMODULE FileSystem::LoadLibrary(LPCWSTR lpFileName,DWORD dwFlags)
 {
 	if (IsUnicodeSystem())
-		return ::LoadLibraryW(lpFileName);
+		return ::LoadLibraryExW(lpFileName,NULL,dwFlags);
 	else
-		return ::LoadLibraryA(W2A(lpFileName));
+		return ::LoadLibraryExA(W2A(lpFileName),NULL,dwFlags);
 }
 
 

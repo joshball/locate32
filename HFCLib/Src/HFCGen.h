@@ -365,7 +365,7 @@ namespace FileSystem {
 
 	UINT GetWindowsDirectory(LPSTR lpBuffer,UINT uSize);
 	UINT GetSystemDirectory(LPSTR lpBuffer,UINT uSize);
-	HMODULE LoadLibrary(LPCSTR lpFileName);
+	HMODULE LoadLibrary(LPCSTR lpFileName,DWORD dwFlags=NULL);
 
 
 
@@ -427,7 +427,7 @@ namespace FileSystem {
 
 	UINT GetWindowsDirectory(LPWSTR lpBuffer,UINT uSize);
 	UINT GetSystemDirectory(LPWSTR lpBuffer,UINT uSize);
-	HMODULE LoadLibrary(LPCWSTR lpFileName);
+	HMODULE LoadLibrary(LPCWSTR lpFileName,DWORD dwFlags=NULL);
 
 #endif	
 

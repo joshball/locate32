@@ -1643,6 +1643,19 @@ int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax,TypeOfResourceHandle bTyp
 	}
 	return (int)::LoadStringW(GetResourceHandle(bType),uID,lpBuffer,nBufferMax);
 }
+
+int LoadString(UINT uID,LPWSTR lpBuffer,int nBufferMax,HINSTANCE hInstance)
+{
+	if (!IsUnicodeSystem())
+	{
+		char* pStr=new char[nBufferMax+1];
+		int nRet=::LoadStringA(hInstance,uID,pStr,nBufferMax);
+		MultiByteToWideChar(CP_ACP,0,pStr,nRet+1,lpBuffer,nBufferMax);
+		delete[] pStr;
+		return nRet;
+	}
+	return (int)::LoadStringW(hInstance,uID,lpBuffer,nBufferMax);
+}
 #endif
 
 
