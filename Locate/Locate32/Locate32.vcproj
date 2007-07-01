@@ -1405,6 +1405,42 @@
 				>
 			</File>
 			<File
+				RelativePath="..\hlp\settings_advanced.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\settings_autoupdate.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\settings_autoupdatedlg.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\settings_databasedlg.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\settings_databases.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\settings_general.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\settings_languages.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\settings_shortcuts.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\settings_shortcutsadvanced.src"
+				>
+			</File>
+			<File
 				RelativePath="..\hlp\tab_advanced.src"
 				>
 			</File>

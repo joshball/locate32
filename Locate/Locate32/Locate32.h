@@ -19,8 +19,6 @@ extern LPWSTR g_szwBuffer;
 #define new DEBUG_NEW
 #endif
 
-#include <htmlhelp.h>
-#pragma comment(lib,"htmlhelp.lib")
 
 
 

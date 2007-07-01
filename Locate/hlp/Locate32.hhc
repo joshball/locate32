@@ -60,6 +60,7 @@
 			</OBJECT>
 		
 	</UL>
+	
 	<LI> <OBJECT type="text/sitemap">
 		<param name="Name" value="Menus">
 		</OBJECT>
@@ -92,6 +93,37 @@
 			<param name="Name" value="System tray menu commands">
 			<param name="Local" value="menu_systemtray.htm">
 			</OBJECT>
+	</UL>
+	
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Settings">
+		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="General tab">
+			<param name="Local" value="settings_general.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Advanced tab">
+			<param name="Local" value="settings_advanced.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Language tab">
+			<param name="Local" value="settings_languages.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Database tab">
+			<param name="Local" value="settings_databases.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Auto Update tab">
+			<param name="Local" value="settings_autoupdate.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Keyboard Shortcuts tab">
+			<param name="Local" value="settings_shortcuts.htm">
+			</OBJECT>
+		
 	</UL>
 </UL>
 </BODY></HTML>

@@ -319,6 +319,50 @@ private:
 
 };
 
+// CDataContainer, keeps memory until m_dwCount==0
+template<class TYPE> 
+class CDataContainer
+{
+public:
+	CDataContainer(TYPE* data=NULL);
+	~CDataContainer();
+
+	void AddRef() { m_dwCount++; }
+	CDataContainer* Release();
+	
+	operator TYPE*() const { return m_data; }
+	operator TYPE*&() { return m_data; }
+	
+	TYPE* operator ->() { return m_data; }
+
+private:
+	TYPE* m_data;
+	DWORD m_dwCount;
+
+};
+
+// CDataContainer, keeps memory until m_dwCount==0
+template<class TYPE> 
+class CDataContainerA
+{
+public:
+	CDataContainerA(TYPE* data=NULL);
+	~CDataContainerA();
+
+	void AddRef() { m_dwCount++; }
+	CDataContainerA* Release();
+	
+	operator TYPE*() const { return m_data; }
+	operator TYPE*&() { return m_data; }
+	
+	TYPE* operator ->() { return m_data; }
+
+private:
+	TYPE* m_data;
+	DWORD m_dwCount;
+
+};
+
 
 #include "Memory.inl"
 

@@ -217,6 +217,9 @@ class CObject;
 #ifndef HFC_DISABLEVERSION32
 	#pragma comment(lib, "version.lib")
 #endif
+#ifndef HFC_DISABLEHTMLHELP
+	#pragma comment(lib,"htmlhelp.lib")
+#endif
 #endif
 
 //Any errors

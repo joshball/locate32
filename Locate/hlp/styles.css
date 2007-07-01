@@ -240,10 +240,28 @@ a.li:hover { color: #660000; }
 	font-family: Arial, sans-serif;
 	font-size: 110%;
 	font-weight: bold;
-	margin: 16pt 2pt 6pt 12pr;
+	margin: 16pt 2pt 6pt 2pt;
 }	
 
 #controls p
 {
 	margin: 6pt 6pt 6pt 12pt;
 }
+
+#general_settings h2
+{
+	font-family: Arial, sans-serif;
+	font-size: 110%;
+	margin-bottom: 6pt;
+	color: #ff0000;
+}
+
+
+
+#general_settings p
+{
+	margin-left: 8pt;
+	margin-bottom: 4pt;
+	
+}
+

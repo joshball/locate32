@@ -1,0 +1,87 @@
+TITLE=General tab / Settings dialog
+CONTENT=
+<div id="settings">
+<H1><A NAME="settings_general"></A>General Settings</H1>
+
+<p>The General tab in the settings dialog contains some options 
+which can be used to change behaviour of Locate32 dialog.
+The General tab contains the following options:
+</p>
+
+
+<h2>Mouse selection -group</h2>
+<p>This group contains options related to the result list and mouse. It contains options 
+to specify how items in the result list are selected. Note that to specify how items are 
+opened, use 'Select Details' command under View menu.</p>
+
+<div id="general_settings">
+<p>
+<b><A NAME="setting_general_usesystemsettings"></A>Use current system folder settings</b>:
+If this option is enabled, Locate32 uses same settings as Windows Explorer to
+decide how items in the result list are selected and are results underliner.
+</p>
+
+<p>
+<b><A NAME="setting_general_pointtoselect"></A>Point to select</b>:
+If this option is enabled, items in the result list can be selected by pointing items.
+Several items can be selected by using Ctrl ans Shift keys. If this option is enabled, 
+you can specify that when the file names are underlined by using options 
+<b>Never underline file names</b>, <b>Underline file names when I point at them</b>
+and <b>Always underline file names</b>.
+</p>
+
+<p>
+<b><A NAME="setting_general_pointtoselect"></A>Click file to select</b>:
+If this option is enabled, items in the result list can be selected by clicking items.
+</p>
+</div>
+
+
+<h2>Locate dialog -group</h2>
+<p>This group contains options related opening and closing Locate32 dialog. </p>
+
+<div id="general_settings">
+<p>
+<b><A NAME="setting_general_minimizetost"></A>Minimize to system trasy</b>:
+If this option is enabled, Locate32 dialog is not shown in taskbar when the dialog is minimized. 
+</p>
+
+<p>
+<b><A NAME="setting_general_closeminimizes"></A>Close button minimizes window</b>:
+If this option is enabled, Locate32 is minimized when Close button (X) is clicked on 
+the windows titlebar.</b>.
+</p>
+
+<p>
+<b><A NAME="setting_general_remember"></A>Remember content of fields</b>:
+If this option is enabled and Locate dialog closed, the content of edit fields, 
+selections in comboboxes and check states in Locate32 dialog are restored when 
+the dialog is opened next time. 
+</p>
+
+<p>
+<b><A NAME="setting_general_leavebackground"></A>Leave program background when dialog is closed</b>:
+If this option is enabled, the application is not completely quited when the dialog is closed.
+You can use the system tray icon to open Locate dialog or for other features. 
+Note that, although this option is not chosen, similar behaviour occurs when Locate32 is 
+started with '-S' argument, for example, using shortcut in Startup menu. 
+</p>
+</div>
+
+
+<h2>Defaults -group</h2>
+<p>This group contains options related initial values for fields in Locate32 dialog. 
+For example, if you enable <b>Use whole name only</b> option in this group, then 
+"Use whole name only" -field in Advanced tab is checked after "New Search" -button is 
+pressed or when the Locate32 dialog opened (if Remember content of fields option
+is not enabled). Similar options in this group for the corresponds fields in 
+Advanced tab are <b>Check in:</b>, <b>Replace space with '*'</b>, <b>Use whole path</b>
+and <b>Match case (for "File containing text")</b>. </p>
+<p><b>Sorting</b> field have an effect 
+of the sorting of the results when "New Search" -button is pressed or the dialog is 
+opened. For example, if Sorting is set to "Name" and <b>Ascending</b> check box is selected,
+then after the items in the result list are sorted by filename to the asceding order.
+</p>
+
+
+</div>

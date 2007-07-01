@@ -286,6 +286,8 @@ inline void CLocatedItem::UpdateIcon()
 	}
 	else if (IsDeleted())
 		iIcon=GetLocateApp()->m_nDelImage;
+	else if (IsFolder())
+		iIcon=GetLocateApp()->m_nDirImage;
 	else
 		iIcon=GetLocateApp()->m_nDefImage;
 

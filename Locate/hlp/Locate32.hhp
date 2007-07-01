@@ -86,6 +86,16 @@ issue_commandlinearguments.htm
 issue_datasearch.htm
 howto_externaldrives.htm
 
+settings_general.htm
+settings_advanced.htm
+settings_languages.htm
+settings_databases.htm
+settings_autoupdate.htm
+settings_shortcuts.htm
+settings_databasedlg.htm
+settings_autoupdatedlg.htm
+settings_shortcutsadvanced.htm
+
 main_index.htm
 
 
@@ -167,6 +177,15 @@ issue_commandlinearguments			= issue_commandlinearguments.htm
 issue_datasearch					= issue_datasearch.htm
 howto_externaldrives				= howto_externaldrives.htm
 
+settings_general					= settings_general.htm
+settings_advanced					= settings_advanced.htm
+settings_languages					= settings_languages.htm
+settings_databases					= settings_databases.htm
+settings_autoupdate					= settings_autoupdate.htm
+settings_shortcuts					= settings_shortcuts.htm
+settings_databasedlg				= settings_databasedlg.htm
+settings_autoupdatedlg				= settings_autoupdatedlg.htm
+settings_shortcutsadvanced			= settings_shortcutsadvanced.htm
 
 IDC_TAB								= dialog_locate.htm
 IDC_FRAME							= dialog_locate.htm
@@ -260,6 +279,17 @@ IDM_FORCEUPDATE						= hid_special_updatefileinformation.htm
 IDM_COMPUTEMD5SUM					= hid_special_computeMD5sums.htm
 IDM_MD5SUMSFORSAMESIZEFILES			= hid_special_computeMD5sumsforequalsizefiles.htm
 IDM_REMOVEDELETEDFILES				= hid_special_removedeletedfiles.htm
+
+HELP_SETTINGS_GENERAL				= settings_general.htm
+HELP_SETTINGS_ADVANCED				= settings_advanced.htm
+HELP_SETTINGS_LANGUAGES				= settings_languages.htm
+HELP_SETTINGS_DATABASES				= settings_databases.htm
+HELP_SETTINGS_AUTOUPDATE			= settings_autoupdate.htm
+HELP_SETTINGS_SHORTCUTS				= settings_shortcuts.htm
+HELP_SETTINGS_DATABASEDLG			= settings_databasedlg.htm
+HELP_SETTINGS_AUTOUPDATEDLG			= settings_autoupdatedlg.htm
+HELP_SETTINGS_SHORTCUTADVANCED		= settings_shortcutsadvanced.htm
+
 
 HID_UPDATEMENU_ITEM0				= hid_file_updatedatabase.htm
 HID_UPDATEMENU_ITEM1				= hid_file_updatedatabase.htm

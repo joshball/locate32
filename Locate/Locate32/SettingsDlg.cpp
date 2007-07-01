@@ -703,19 +703,28 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnInitDialog(HWND hwndFocus)
 	else if (m_pSettings->m_dwLocateDialogFlags&CLocateDlg::fgDialogLeaveLocateBackground)
 		CheckDlgButton(IDC_CLOSETOSYSTEMTRAY,1);
 	
+	CLocateDlg::ViewDetails* pViewDetails=CLocateDlg::GetDefaultDetails();
+	
 	// Adding details to sorting box
 	if (IsUnicodeSystem())
 	{
 		SendDlgItemMessageW(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)ID2W(IDS_NOSORTNG));
-		for (int iDetail=0;iDetail<=CLocateDlg::LastType;iDetail++)
-			SendDlgItemMessageW(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)ID2W(IDS_LISTNAME+iDetail));
+		for (int iDetail=0;iDetail<CLocateDlg::TypeCount;iDetail++)
+		{
+			SendDlgItemMessageW(IDC_SORTING,CB_ADDSTRING,0,
+				(LPARAM)(LPCWSTR)ID2W(pViewDetails[iDetail].nString));
+		}
 	}
 	else
 	{
 		SendDlgItemMessage(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_NOSORTNG));
-		for (int iDetail=0;iDetail<=CLocateDlg::LastType;iDetail++)
-			SendDlgItemMessage(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_LISTNAME+iDetail));
+		for (int iDetail=0;iDetail<CLocateDlg::TypeCount;iDetail++)
+		{
+			SendDlgItemMessage(IDC_SORTING,CB_ADDSTRING,0,
+				(LPARAM)(LPCSTR)ID2A(pViewDetails[iDetail].nString));
+		}
 	}	
+	delete[] pViewDetails;
 	
 	// Defaults
 	if (m_pSettings->m_bSorting!=BYTE(-1))
@@ -808,7 +817,7 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnApply()
 		
 	// Defaults
 	int nSel=(int)SendDlgItemMessage(IDC_SORTING,CB_GETCURSEL);
-	if (nSel<=0)
+	if (nSel<=0 || nSel>=CLocateDlg::TypeCount+1)
 		m_pSettings->m_bSorting=BYTE(-1);
 	else
 	{
@@ -909,7 +918,7 @@ BYTE CSettingsProperties::CGeneralSettingsPage::OnAlwaysUnderline()
 
 void CSettingsProperties::CGeneralSettingsPage::OnHelp(LPHELPINFO lphi)
 {
-	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_GENERAL)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 
@@ -1141,6 +1150,17 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateFile(IDS_ADVSETICONFILE,TrayIconProc,0,&m_pSettings->m_CustomTrayIcon),
 		NULL
 	};
+	
+	Item* SystemTrayIcon[]={
+		CreateCheckBox(IDS_ADVSETDONTSHOWSTICON,NULL,DefaultCheckBoxProc,
+			CLocateApp::pfDontShowSystemTrayIcon,&m_pSettings->m_dwProgramFlags),
+		CreateCheckBox(IDS_ADVSETCLICKACTIVATETRAYICON,NULL,
+			DefaultCheckBoxProc,CLocateApp::pfTrayIconClickActivate,&m_pSettings->m_dwProgramFlags),
+		CreateCheckBox(IDS_ADVSETCUSTOMTRAYICON,SystemTrayIconItems,DefaultCheckBoxProc,
+			CSettingsProperties::settingsCustomUseTrayIcon,&m_pSettings->m_dwSettingsFlags),
+		NULL
+	};
+
 	Item* MiscItems[]={
 		CreateCheckBox(IDS_ADVSETDONTSHOWEXTINRENAME,NULL,DefaultCheckBoxProc,
 			CSettingsProperties::settingsDontShowExtensionInRenameDialog,&m_pSettings->m_dwSettingsFlags),
@@ -1148,10 +1168,6 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			DefaultCheckBoxProc,CLocateApp::pfShowCriticalErrors,&m_pSettings->m_dwProgramFlags),
 		CreateCheckBox(IDS_ADVSETSHOWNONCRITICALERRORS,NULL,
 			DefaultCheckBoxProc,CLocateApp::pfShowNonCriticalErrors,&m_pSettings->m_dwProgramFlags),
-		CreateCheckBox(IDS_ADVSETCLICKACTIVATETRAYICON,NULL,
-			DefaultCheckBoxProc,CLocateApp::pfTrayIconClickActivate,&m_pSettings->m_dwProgramFlags),
-		CreateCheckBox(IDS_ADVSETCUSTOMTRAYICON,SystemTrayIconItems,DefaultCheckBoxProc,
-			CSettingsProperties::settingsCustomUseTrayIcon,&m_pSettings->m_dwSettingsFlags),
 		CreateCheckBox(IDS_ADVSETUSEDEFDIRECTORYICON,NULL,DefaultCheckBoxProc,
 			CLocateApp::pfUseDefaultIconForDirectories,&m_pSettings->m_dwProgramFlags),
 		NULL
@@ -1162,6 +1178,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateRoot(IDS_ADVSETLOCATEPROCESS,LocateProcessAndResultsItems),
 		CreateRoot(IDS_ADVSETDIALOGS,LocateDialogItems),
 		CreateRoot(IDS_ADVSETUPDATEPROCESS,UpdateProcessItems),
+		CreateRoot(IDS_ADVSETSYSTEMTRAYICON,SystemTrayIcon),
 		CreateRoot(IDS_ADVSETMISCELLANEOUS,MiscItems),
 		CreateRoot(IDS_ADVSETSYSTEM,SystemItems),
 		NULL};
@@ -1172,7 +1189,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 
 void CSettingsProperties::CAdvancedSettingsPage::OnHelp(LPHELPINFO lphi)
 {
-	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_ADVANCED)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 
@@ -1600,7 +1617,7 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnInitDialog(HWND hwndFocus)
 
 void CSettingsProperties::CLanguageSettingsPage::OnHelp(LPHELPINFO lphi)
 {
-	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_LANGUAGES)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 
@@ -1889,7 +1906,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnInitDialog(HWND hwndFocus)
 
 void CSettingsProperties::CDatabasesSettingsPage::OnHelp(LPHELPINFO lphi)
 {
-	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_DATABASES)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 
@@ -2947,7 +2964,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnHelp(LPHELPINFO lphi)
 {
-	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_DATABASEDLG)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 
@@ -4450,7 +4467,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnInitDialog(HWND hwndFocus)
 
 void CSettingsProperties::CAutoUpdateSettingsPage::OnHelp(LPHELPINFO lphi)
 {
-	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_AUTOUPDATE)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 
@@ -4957,7 +4974,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 
 void CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnHelp(LPHELPINFO lphi)
 {
-	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_AUTOUPDATEDLG)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 
@@ -5774,7 +5791,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 
 void CSettingsProperties::CKeyboardShortcutsPage::OnHelp(LPHELPINFO lphi)
 {
-	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_SHORTCUTS)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 
@@ -7800,7 +7817,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnInitDialog(HWN
 
 void CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnHelp(LPHELPINFO lphi)
 {
-	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_SHORTCUTADVANCED)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 

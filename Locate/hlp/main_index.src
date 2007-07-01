@@ -52,4 +52,17 @@ fantastic!).
 </UL>
 </P>
 
+<H2>Settings dialog:</H2>
+<P>
+<UL>
+<LI><A HREF="settings_general.htm">General tab</A></LI>
+<LI><A HREF="settings_advanced.htm">Advanced tab</A></LI>
+<LI><A HREF="settings_languages.htm">Language tab</A></LI>
+<LI><A HREF="settings_databases.htm">Databases tab</A></LI>
+<LI><A HREF="settings_autoupdate.htm">Auto Update tab</A></LI>
+<LI><A HREF="settings_shortcuts.htm">Keyboard Shortcut tab</A></LI>
+</UL>
+</P>
+
+
 </div>

@@ -125,6 +125,65 @@ inline CAutoPtrA<TYPE>& CAutoPtrA<TYPE>::operator=(CAutoPtrA<TYPE>& another)
 
 
 
+////////////////////////////////////////////////
+// CDataContainer
+
+template<class TYPE> 
+CDataContainer<TYPE>::CDataContainer(TYPE* data)
+:	m_data(data),m_dwCount(1)
+{
+	if (m_data!=NULL)
+		delete m_data;
+}
+
+template<class TYPE> 
+CDataContainer<TYPE>::~CDataContainer()
+{
+	if (m_data!=NULL)
+		delete m_data;
+}
+
+template<class TYPE> 
+CDataContainer<TYPE>* CDataContainer<TYPE>::Release()
+{
+	--m_dwCount;
+	if (m_dwCount==0)
+	{
+		delete this;
+		return NULL;
+	}
+	return this;
+}
+
+////////////////////////////////////////////////
+// CDataContainerA
+
+template<class TYPE> 
+CDataContainerA<TYPE>::CDataContainerA(TYPE* data)
+:	m_data(data),m_dwCount(1)
+{
+	if (m_data!=NULL)
+		delete m_data;
+}
+
+template<class TYPE> 
+CDataContainerA<TYPE>::~CDataContainerA()
+{
+	if (m_data!=NULL)
+		delete[] m_data;
+}
+
+template<class TYPE> 
+CDataContainerA<TYPE>* CDataContainerA<TYPE>::Release()
+{
+	--m_dwCount;
+	if (m_dwCount==0)
+	{
+		delete this;
+		return NULL;
+	}
+	return this;
+}
 
 
 

@@ -974,15 +974,12 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 	CStringW Path(GetExeNameW());
 	Path << L",1";
 	
-	if (Key.OpenKey(HKCR,".ltmp",CRegKey::createNew|CRegKey::samCreateSubkey|CRegKey::samWrite)!=NOERROR)
-		return FALSE;
-	Key.SetValue(szEmpty,"LTMPFile",8,REG_SZ);
-	if (Key.OpenKey(HKCR,"LTMPFile",CRegKey::createNew|CRegKey::samCreateSubkey|CRegKey::samWrite)!=NOERROR)
-		return FALSE;
-	Key.SetValue(szEmpty,"Deleted / Moved File (REMOVE THIS TYPE)",39,REG_SZ);
-	if (Key.OpenKey(HKCR,"LTMPFile\\DefaultIcon",CRegKey::createNew|CRegKey::samCreateSubkey|CRegKey::samWrite)!=NOERROR)
-		return FALSE;
-	Key.SetValue(szwEmpty,Path);
+	if (Key.OpenKey(HKCR,".ltmp",CRegKey::createNew|CRegKey::samCreateSubkey|CRegKey::samWrite)==NOERROR)
+		Key.SetValue(szEmpty,"LTMPFile",8,REG_SZ);
+	if (Key.OpenKey(HKCR,"LTMPFile",CRegKey::createNew|CRegKey::samCreateSubkey|CRegKey::samWrite)==NOERROR)
+		Key.SetValue(szEmpty,"Deleted / Moved File (REMOVE THIS TYPE)",39,REG_SZ);
+	if (Key.OpenKey(HKCR,"LTMPFile\\DefaultIcon",CRegKey::createNew|CRegKey::samCreateSubkey|CRegKey::samWrite)==NOERROR)
+		Key.SetValue(szwEmpty,Path);
 	Key.CloseKey();
 
 	FileSystem::GetTempPath(_MAX_PATH,Path.GetBuffer(_MAX_PATH));
@@ -997,7 +994,7 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 		File.Close();
 
 		fi.iIcon=1;
-		GetFileInfo(Path,0,&fi,SHGFI_ICON|SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
+		GetFileInfo(Path,0,&fi,/*SHGFI_ICON|SHGFI_SMALLICON|*/ SHGFI_SYSICONINDEX);
 		m_nDelImage=fi.iIcon;
 
 		FileSystem::Remove(Path);
@@ -1016,7 +1013,7 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 		File.Close();
 
 		fi.iIcon=1;
-		GetFileInfo(Path,0,&fi,SHGFI_ICON|SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
+		GetFileInfo(Path,0,&fi,/*SHGFI_ICON|SHGFI_SMALLICON|*/ SHGFI_SYSICONINDEX);
 		m_nDefImage=fi.iIcon;
 
 		FileSystem::Remove(Path);
@@ -1028,7 +1025,7 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 	if (FileSystem::GetSystemDirectory(Path.GetBuffer(_MAX_PATH+3),_MAX_PATH)>0)
 	{
 		fi.iIcon=1;
-		GetFileInfo(Path,0,&fi,SHGFI_ICON|SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
+		GetFileInfo(Path,0,&fi,/*SHGFI_ICON|SHGFI_SMALLICON|*/SHGFI_SYSICONINDEX);
 		m_nDirImage=fi.iIcon;
 
 		WCHAR szDrives[100];
@@ -1037,7 +1034,8 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 			LPCWSTR pPtr=szDrives;
 			while (*pPtr!='\0')
 			{
-				if (FileSystem::GetDriveType(pPtr)==DRIVE_FIXED)
+				if (FileSystem::GetDriveType(pPtr)==DRIVE_FIXED &&
+					(*pPtr!=Path[0] || Path[1]!=':'))
 					break;
 
 				pPtr+=istrlenw(pPtr)+1;
@@ -2549,10 +2547,22 @@ BOOL CLocateApp::UpdateSettings()
 		CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		// Loading dwFlags
-		DWORD temp=m_dwProgramFlags;
-		RegKey.QueryValue("General Flags",temp);
+		DWORD dwNewFlags=m_dwProgramFlags;
+		RegKey.QueryValue("General Flags",dwNewFlags);
+		
+		if (dwNewFlags&pfDontShowSystemTrayIcon &&
+			!(m_dwProgramFlags&pfDontShowSystemTrayIcon))
+			m_AppWnd.DeleteTaskbarIcon(TRUE);
+		else if (!(dwNewFlags&pfDontShowSystemTrayIcon) &&
+			m_dwProgramFlags&pfDontShowSystemTrayIcon)
+		{
+			m_AppWnd.AddTaskbarIcon(TRUE);
+			m_AppWnd.SetUpdateStatusInformation(NULL,IDS_NOTIFYLOCATE);
+		}
+				
+
 		m_dwProgramFlags&=~pfSave;
-		m_dwProgramFlags|=temp&pfSave;
+		m_dwProgramFlags|=dwNewFlags&pfSave;
 	}
 
 	return TRUE;
@@ -2653,7 +2663,8 @@ void CLocateAppWnd::FreeRootInfos(WORD wThreads,RootInfo* pRootInfos)
 
 BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip,LPCWSTR szText)
 {
-	//DebugFormatMessage("CLocateAppWnd::SetUpdateStatusInformation: BEGIN, hIcon=%X, uTip=%d",DWORD(hIcon),uTip);
+	if (CLocateApp::GetProgramFlags()&CLocateApp::pfDontShowSystemTrayIcon)
+		return TRUE;
 
 	NOTIFYICONDATAW nid;
 	ZeroMemory(&nid,sizeof(NOTIFYICONDATAW));
@@ -3500,8 +3511,11 @@ LRESULT CLocateAppWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 	return CFrameWnd::WindowProc(msg,wParam,lParam);
 }
 
-void CLocateAppWnd::AddTaskbarIcon()
+void CLocateAppWnd::AddTaskbarIcon(BOOL bForce)
 {
+	if (!bForce && CLocateApp::GetProgramFlags()&CLocateApp::pfDontShowSystemTrayIcon)
+		return;
+
 	// Creating taskbar icon
 	NOTIFYICONDATA nid;
 	nid.cbSize=NOTIFYICONDATA_V1_SIZE;
@@ -3522,8 +3536,11 @@ void CLocateAppWnd::AddTaskbarIcon()
 	}
 }
 
-void CLocateAppWnd::DeleteTaskbarIcon()
+void CLocateAppWnd::DeleteTaskbarIcon(BOOL bForce)
 {
+	if (!bForce && CLocateApp::GetProgramFlags()&CLocateApp::pfDontShowSystemTrayIcon)
+		return;
+
 	NOTIFYICONDATA nid;
 	nid.cbSize=sizeof(NOTIFYICONDATA);
 	nid.hWnd=*this;
@@ -3642,6 +3659,7 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 		CheckSchedules();
 		break;
 	case ID_ENSUREVISIBLEICON:
+		if (!(CLocateApp::GetProgramFlags()&CLocateApp::pfDontShowSystemTrayIcon))
 		{
 			// Check icon
 			NOTIFYICONDATA nid;

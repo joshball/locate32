@@ -108,8 +108,8 @@ public:
 	BOOL GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootInfos);
 	static void FreeRootInfos(WORD wThreads,RootInfo* pRootInfos);
 
-	void AddTaskbarIcon();
-	void DeleteTaskbarIcon();
+	void AddTaskbarIcon(BOOL bForce=FALSE);
+	void DeleteTaskbarIcon(BOOL bForce=FALSE);
 	void LoadAppIcon();
 	
 	DWORD SetSchedules(CList<CSchedule*>* pSchedules=NULL);
@@ -284,8 +284,9 @@ public:
 		// Misc
 		pfTrayIconClickActivate = 0x1000,
 		pfUseDefaultIconForDirectories =  0x2000,
+		pfDontShowSystemTrayIcon = 0x4000,
 		pfMiscDefault = 0,
-		pfMiscSave = 0x3000,
+		pfMiscSave = 0x7000,
 
 		// Filesize/time/date format
 		pfFormatUseLocaleFormat = 0x4, // Option

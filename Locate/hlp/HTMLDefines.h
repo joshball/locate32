@@ -18,15 +18,15 @@
 #define HID_SC_RESTORE                          0x1EF12
 #define HID_SC_TASKLIST                         0x1EF13
 
-
-// Window menu list
-#define HID_WINDOW_ALL                          0x1EF1F
-
-// Commands (HID_*) 
-#define HID_EDIT_COPY                           0x1E122
-#define HID_EDIT_CUT                            0x1E123
-#define HID_EDIT_SELECT_ALL                     0x1E12A
-#define HID_EDIT_INVERTSELECTION                0x1E128
+#define HELP_SETTINGS_GENERAL					0x30001
+#define HELP_SETTINGS_ADVANCED					0x30002
+#define HELP_SETTINGS_LANGUAGES					0x30003
+#define HELP_SETTINGS_DATABASES					0x30004
+#define HELP_SETTINGS_AUTOUPDATE				0x30005
+#define HELP_SETTINGS_SHORTCUTS					0x30006
+#define HELP_SETTINGS_DATABASEDLG				0x30007
+#define HELP_SETTINGS_AUTOUPDATEDLG				0x30008
+#define HELP_SETTINGS_SHORTCUTADVANCED			0x30009
 
 #include "../lan_resources.h"
 
