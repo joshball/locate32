@@ -25,6 +25,9 @@ inline CLocateDlg::CLocateDlg()
 		m_pDesktopFolder=NULL;
 
 	InitializeCriticalSection(&m_csAnimBitmaps);
+
+	DebugFormatMessage("CLocateDlg::CLocateDlg() END",DWORD_PTR(this));
+
 }
 
 inline CLocateDlg::CNameDlg::CNameDlg()

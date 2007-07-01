@@ -969,6 +969,8 @@ BYTE CLocateApp::CheckDatabases()
 
 BYTE CLocateApp::SetDeleteAndDefaultImage()
 {
+	DebugMessage("SetDeleteAndDefaultImage BEGIN");
+
 	CRegKey Key;
 	SHFILEINFOW fi;
 	CStringW Path(GetExeNameW());
@@ -1046,6 +1048,9 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 		}
 		
 	}
+	
+	
+	DebugMessage("SetDeleteAndDefaultImage END");
 	return TRUE;
 }
 
@@ -2134,10 +2139,20 @@ BOOL CLocateApp::SetLanguageSpecifigHandles()
 	
 	
 
-	HINSTANCE hLib=FileSystem::LoadLibrary(Path+LangFile,LOAD_LIBRARY_AS_DATAFILE);
+	OSVERSIONINFO ver;
+	ver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
+	BOOL bDataFileOk=GetVersionEx(&ver);
+	bDataFileOk=bDataFileOk && ver.dwPlatformId==VER_PLATFORM_WIN32_NT && 
+		(ver.dwMajorVersion>5 || (ver.dwMajorVersion==5 && ver.dwMinorVersion>=1));
+
+
+
+	HINSTANCE hLib=FileSystem::LoadLibrary(Path+LangFile,bDataFileOk?LOAD_LIBRARY_AS_DATAFILE:NULL);
+	
 	if (hLib==NULL)
 	{
-		hLib=FileSystem::LoadLibrary(Path+L"lan_en.dll",LOAD_LIBRARY_AS_DATAFILE);
+		hLib=FileSystem::LoadLibrary(Path+L"lan_en.dll",bDataFileOk?LOAD_LIBRARY_AS_DATAFILE:NULL);
+		
 
 		if (hLib==NULL)
 		{
@@ -3583,12 +3598,14 @@ DWORD CLocateAppWnd::OnSystemTrayMessage(UINT uID,UINT msg)
 			break;
 		case WM_RBUTTONUP:
 			{
+				DebugMessage("OpenPopupMenu");
 				POINT pt;
 				GetCursorPos(&pt);
 				SetForegroundWindow();
 				TrackPopupMenu(m_Menu.GetSubMenu(0),
 					TPM_RIGHTALIGN|TPM_BOTTOMALIGN|TPM_RIGHTBUTTON,pt.x,pt.y,0,
 					*this,NULL);
+				DebugMessage("OpenPopupMenu END");
 				break;
 			}
 			break;

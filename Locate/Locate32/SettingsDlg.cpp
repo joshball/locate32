@@ -1770,13 +1770,22 @@ void CSettingsProperties::CLanguageSettingsPage::FindLanguages()
 	CFileFind ff;
 	BOOL bRet=ff.FindFile(Path);
 
+
+	OSVERSIONINFO ver;
+	ver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
+	BOOL bDataFileOk=GetVersionEx(&ver);
+	bDataFileOk=bDataFileOk && ver.dwPlatformId==VER_PLATFORM_WIN32_NT && 
+		(ver.dwMajorVersion>5 || (ver.dwMajorVersion==5 && ver.dwMinorVersion>=1));
+
+
     while (bRet)
 	{
 		WCHAR szPathTemp[MAX_PATH];
 		ff.GetFilePath(szPathTemp,MAX_PATH);
 		
 		// Check whether file can be loaded as datafile
-		HINSTANCE hLib=FileSystem::LoadLibrary(szPathTemp,LOAD_LIBRARY_AS_DATAFILE);
+		HINSTANCE hLib=FileSystem::LoadLibrary(szPathTemp,
+			bDataFileOk?LOAD_LIBRARY_AS_DATAFILE:NULL);
         if (hLib==NULL)
 		{
 			bRet=ff.FindNextFile();

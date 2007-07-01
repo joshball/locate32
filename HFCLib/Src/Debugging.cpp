@@ -741,8 +741,12 @@ BOOL WINAPI  TerminateThread(HANDLE hThread,DWORD dwExitCode,BOOL bWaitUntilExit
 	if (!::TerminateThread(hThread,dwExitCode))
 		return FALSE;
 
+	/* FIX THIS
+	
+	
 	if (bWaitUntilExited || cHandleCriticalSection.OwningThread==hThread)
 		WaitForSingleObject(hThread,1000);
+
 
 	DWORD dwThreadId=GetThreadId(hThread);
 
@@ -755,7 +759,7 @@ BOOL WINAPI  TerminateThread(HANDLE hThread,DWORD dwExitCode,BOOL bWaitUntilExit
 		LeaveCriticalSection(&cHandleCriticalSection);
 	}
 
-	
+	*/
 
 	
 	return TRUE;

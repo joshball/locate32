@@ -390,8 +390,8 @@ BOOL CLocateDlgThread::InitInstance()
 	}
 
 
-	
 	RegisterDialog(*m_pLocate);
+
 	return TRUE;
 }
 
@@ -588,6 +588,8 @@ CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
 
 BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 {
+	DebugMessage("CLocateDlg::OnInitDialog BEGIN");
+
 	ShowDlgItem(IDC_FILELIST,swHide);
 	ShowDlgItem(IDC_STATUS,swHide);
 	
@@ -804,6 +806,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 		title << L" (" << DWORD(GetLocateApp()->m_nInstance+1) << L')';
 	SetText(title);
 	
+	DebugMessage("CLocateDlg::OnInitDialog END");
 	return FALSE;
 }
 
