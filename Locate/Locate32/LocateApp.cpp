@@ -2139,11 +2139,16 @@ BOOL CLocateApp::SetLanguageSpecifigHandles()
 	
 	
 
-	OSVERSIONINFO ver;
-	ver.dwOSVersionInfoSize=sizeof(OSVERSIONINFO);
-	BOOL bDataFileOk=GetVersionEx(&ver);
+#ifdef _WIN64
+	BOOL bDataFileOk=TRUE;
+#else
+	OSVERSIONINFOEX ver;
+	ver.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);
+	BOOL bDataFileOk=GetVersionEx((OSVERSIONINFO*)&ver);
 	bDataFileOk=bDataFileOk && ver.dwPlatformId==VER_PLATFORM_WIN32_NT && 
-		(ver.dwMajorVersion>5 || (ver.dwMajorVersion==5 && ver.dwMinorVersion>=1));
+		(ver.dwMajorVersion>5 || (ver.dwMajorVersion==5 && ver.dwMinorVersion>=2) ||
+		(ver.dwMajorVersion==5 && ver.dwMinorVersion==1 && ver.wServicePackMajor>=2));
+#endif
 
 
 
