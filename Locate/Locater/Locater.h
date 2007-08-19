@@ -111,8 +111,8 @@ public:
 #endif
 
 	void SetSizeAndDate(DWORD dwFlags,
-		DWORD dwMinSize=(DWORD)-1, // -1 is no min size
-		DWORD dwMaxSize=(DWORD)-1, // -1 is no max size
+		ULONGLONG ullMinSize=(ULONGLONG)-1, // -1 is no min size
+		ULONGLONG ullMaxSize=(ULONGLONG)-1, // -1 is no max size
 		WORD wMinDate=(WORD)-1, // DOS format, -1 is no mindate
 		WORD wMaxDate=(WORD)-1 // DOS format, -1 is no maxdata
 	);
@@ -177,6 +177,7 @@ public:
 	LPCSTR GetFileName() const;
 	DWORD GetFileNameLen() const;
 	BYTE GetFileExtensionPos() const;
+	ULONGLONG GetFileSize() const;
 	DWORD GetFileSizeLo() const;
 	WORD GetFileSizeHi() const;
 	WORD GetFileModifiedTime() const;
@@ -200,6 +201,7 @@ public:
 	WORD GetFolderAccessedTimeW() const;
 	
 	LPCWSTR GetFileNameW() const;
+	ULONGLONG GetFileSizeW() const;
 	DWORD GetFileSizeLoW() const;
 	WORD GetFileSizeHiW() const;
 	WORD GetFileModifiedTimeW() const;
@@ -295,8 +297,8 @@ private:
 
 	
 	// File size and date
-	DWORD m_dwMinSize;
-	DWORD m_dwMaxSize;
+	ULONGLONG m_ullMinSize;
+	ULONGLONG m_ullMaxSize;
 	DWORD m_dwFlags;
 	WORD m_wMinDate;
 	WORD m_wMaxDate;

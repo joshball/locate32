@@ -8,7 +8,7 @@
 #ifdef WIN32
 #define CLOCATERINITIALIATIONS   \
 :	m_dwMaxFoundFiles(DWORD(-1)), \
-	m_dwMinSize(DWORD(-1)),m_dwMaxSize(DWORD(-1)), \
+	m_ullMinSize(ULONGLONG(-1)),m_ullMaxSize(ULONGLONG(-1)), \
 	m_wMinDate(WORD(-1)),m_wMaxDate(WORD(-1)), \
 	m_dwFlags(LOCATE_FOLDERNAMES),szBuffer(NULL), \
 	m_pContentSearcher(NULL), \
@@ -114,12 +114,12 @@ inline void CLocater::SetDatabases(const CArray<CDatabase>& aDatabases)
 	}
 }
 
-inline void CLocater::SetSizeAndDate(DWORD dwFlags,DWORD dwMinSize,DWORD dwMaxSize,
+inline void CLocater::SetSizeAndDate(DWORD dwFlags,ULONGLONG ullMinSize,ULONGLONG ullMaxSize,
 									 WORD wMinDate,WORD wMaxDate)
 {
 	m_dwFlags=(m_dwFlags&~(LOCATE_MINCREATIONDATE|LOCATE_MINACCESSDATE|LOCATE_MAXCREATIONDATE|LOCATE_MAXACCESSDATE))|dwFlags;
-	m_dwMinSize=dwMinSize;
-	m_dwMaxSize=dwMaxSize;
+	m_ullMinSize=ullMinSize;
+	m_ullMaxSize=ullMaxSize;
 	m_wMinDate=wMinDate;
 	m_wMaxDate=wMaxDate;
 }
@@ -305,6 +305,12 @@ inline WORD CLocater::GetFileSizeHi() const
 	return WORD(*(pPoint+1+1+1+(pPoint[1]+1)+sizeof(DWORD)));
 }
 
+inline ULONGLONG CLocater::GetFileSize() const
+{
+	return ULONGLONG(GetFileSizeHi())<<32|ULONGLONG(GetFileSizeLo());
+}
+	
+
 inline WORD CLocater::GetFileModifiedDate() const
 {
 	return *(WORD*)(pPoint+1+1+1+(pPoint[1]+1)+5);
@@ -386,6 +392,7 @@ inline LPCWSTR CLocater::GetFileNameW() const
 	return LPCWSTR(pPoint+3);
 }
 
+
 inline DWORD CLocater::GetFileSizeLoW() const
 {
 	return *(DWORD*)(pPoint+1+1+1+(pPoint[1]*2+2));
@@ -394,6 +401,11 @@ inline DWORD CLocater::GetFileSizeLoW() const
 inline WORD CLocater::GetFileSizeHiW() const
 {
 	return *(WORD*)(pPoint+1+1+1+(pPoint[1]*2+2)+sizeof(DWORD));
+}
+
+inline ULONGLONG CLocater::GetFileSizeW() const
+{
+	return ULONGLONG(GetFileSizeHiW())<<32|ULONGLONG(GetFileSizeLoW());
 }
 
 inline WORD CLocater::GetFileModifiedDateW() const

@@ -5347,6 +5347,8 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 		return;
 	}
 	
+	CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_pListCtrl->GetNextItem(-1,LVNI_SELECTED));
+	
 	CMINVOKECOMMANDINFOEX cii;
 	ZeroMemory(&cii,sizeof(CMINVOKECOMMANDINFOEX));
 	cii.cbSize=sizeof(CMINVOKECOMMANDINFOEX);
@@ -5354,7 +5356,7 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 	cii.hwnd=*this;
 	cii.lpVerb=(LPCSTR)MAKELONG(wID-IDM_DEFCONTEXTITEM,0);
 	cii.lpVerbW=(LPCWSTR)MAKELONG(wID-IDM_DEFCONTEXTITEM,0);
-	cii.lpDirectoryW=NULL;
+	cii.lpDirectoryW=pItem->GetParent();
 	cii.lpDirectory=alloccopyWtoA(cii.lpDirectoryW);
 	cii.nShow=SW_SHOWDEFAULT;
 	m_pActiveContextMenu->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
@@ -5431,9 +5433,15 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 		{
 			int nRet;
 			if (IsUnicodeSystem())
-				nRet=(int)ShellExecuteW(*this,szVerb,pItems[i]->GetPath(),NULL,NULL,SW_SHOW);
+			{
+				CStringW sParent(pItems[i]->GetParent());
+				nRet=(int)ShellExecuteW(*this,szVerb,pItems[i]->GetPath(),NULL,sParent,SW_SHOW);
+			}
 			else
-				nRet=(int)ShellExecuteA(*this,szVerb==NULL?NULL:(LPCSTR)W2A(szVerb),W2A(pItems[i]->GetPath()),NULL,NULL,SW_SHOW);
+			{
+				CString sParent(pItems[i]->GetParent());
+				nRet=(int)ShellExecuteA(*this,szVerb==NULL?NULL:(LPCSTR)W2A(szVerb),W2A(pItems[i]->GetPath()),NULL,sParent,SW_SHOW);
+			}
 
 			if (nRet<=32)
 			{
@@ -5448,9 +5456,16 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 					cii.lpVerbW=szVerb;
 					cii.lpVerb=szVerb!=NULL?alloccopyWtoA(szVerb):NULL;
 					cii.nShow=SW_SHOWDEFAULT;
+					cii.lpDirectoryW=alloccopy(pItems[i]->GetParent());
+					cii.lpDirectory=alloccopyWtoA(pItems[i]->GetParent());
+					
 					HMENU hMenu=CreatePopupMenu();
 					pContextMenuStuff->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
 					pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
+					
+					delete[] cii.lpDirectory;
+					delete[] cii.lpDirectoryW;
+
 					if (szVerb!=NULL)
 						delete[] (LPSTR)cii.lpVerb;
 					
@@ -11578,49 +11593,49 @@ BOOL CLocateDlg::CSizeDateDlg::OnOk(CLocater* pLocater)
 	DlgDebugMessage("CLocateDlg::CSizeDateDlg::OnOk BEGIN");
 	
 	DWORD dwFlags=0;
-	DWORD dwMinSize=DWORD(-1),dwMaxSize=DWORD(-1);
+	ULONGLONG ullMinSize=ULONGLONG(-1),ullMaxSize=ULONGLONG(-1);
 	WORD wMinDate=WORD(-1),wMaxDate=WORD(-1);
 
 	if (IsDlgButtonChecked(IDC_CHECKMINIMUMSIZE) &&
 		GetDlgItemTextLength(IDC_MINIMUMSIZE)>0)
 	{
 		BOOL bError;
-		dwMinSize=(DWORD)SendDlgItemMessage(IDC_MINIMUMSIZESPIN,UDM_GETPOS32,0,(LPARAM)&bError);
+		ullMinSize=(ULONGLONG)SendDlgItemMessage(IDC_MINIMUMSIZESPIN,UDM_GETPOS32,0,(LPARAM)&bError);
 		if (bError)
 		{
-			dwMinSize=GetDlgItemInt(IDC_MINIMUMSIZE,&bError,FALSE);
+			ullMinSize=GetDlgItemInt(IDC_MINIMUMSIZE,&bError,FALSE);
 			if (!bError)
-				dwMinSize=DWORD(-1);
+				ullMinSize=ULONGLONG(-1);
 		}
 		
-		if (dwMinSize!=DWORD(-1))
+		if (ullMinSize!=ULONGLONG(-1))
 		{
 			int nCurSel=(int)SendDlgItemMessage(IDC_MINSIZETYPE,CB_GETCURSEL,0,0);
 			if (nCurSel)
-				dwMinSize*=1024;
+				ullMinSize*=1024;
 			if (nCurSel==2)
-				dwMinSize*=1024;
+				ullMinSize*=1024;
 		}
 	}
 	if (IsDlgButtonChecked(IDC_CHECKMAXIMUMSIZE) && 
 		GetDlgItemTextLength(IDC_MAXIMUMSIZE)>0)
 	{
 		BOOL bError;
-		dwMaxSize=(DWORD)SendDlgItemMessage(IDC_MAXIMUMSIZESPIN,UDM_GETPOS32,0,(LPARAM)&bError);
+		ullMaxSize=(ULONGLONG)SendDlgItemMessage(IDC_MAXIMUMSIZESPIN,UDM_GETPOS32,0,(LPARAM)&bError);
 		if (bError)
 		{
-			dwMaxSize=GetDlgItemInt(IDC_MAXIMUMSIZE,&bError,FALSE);
+			ullMaxSize=GetDlgItemInt(IDC_MAXIMUMSIZE,&bError,FALSE);
 			if (!bError)
-				dwMaxSize=DWORD(-1);
+				ullMaxSize=ULONGLONG(-1);
 		}
 
-		if (dwMaxSize!=DWORD(-1))
+		if (ullMaxSize!=ULONGLONG(-1))
 		{
 			int nCurSel=(int)SendDlgItemMessage(IDC_MAXSIZETYPE,CB_GETCURSEL,0,0);
 			if (nCurSel)
-				dwMaxSize*=1024;
+				ullMaxSize*=1024;
 			if (nCurSel==2)
-				dwMaxSize*=1024;
+				ullMaxSize*=1024;
 		}
 	}
 	if (IsDlgButtonChecked(IDC_CHECKMINDATE))
@@ -11646,7 +11661,7 @@ BOOL CLocateDlg::CSizeDateDlg::OnOk(CLocater* pLocater)
 			dwFlags|=LOCATE_MAXACCESSDATE;
 	}
 
-	pLocater->SetSizeAndDate(dwFlags,dwMinSize,dwMaxSize,wMinDate,wMaxDate);
+	pLocater->SetSizeAndDate(dwFlags,ullMinSize,ullMaxSize,wMinDate,wMaxDate);
 	
 	DlgDebugMessage("CLocateDlg::CSizeDateDlg::OnOk END");
 	return IsDlgButtonChecked(IDC_MATCHWHOLENAME);

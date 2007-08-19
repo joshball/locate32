@@ -1011,7 +1011,6 @@ STR_LOCATING=Locating files...
 STR_LOCATING_SUCCESS=Locating finished
 STR_LOCATING_FAILED=Locating failed
 STR_LOCATING_FAILED2=Locating finished with error (%s)
-STR_LOCATING_FAILEDCANNOTOPEN=
 STR_LOCATING_INTERRUPTED=Locating interrupted
 STR_LOCATING_LIMITREACHED=Results limit reached
 STR_LOCATING_SEARCHINGFROMFILE=Searching from file %s.

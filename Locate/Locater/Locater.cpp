@@ -1761,14 +1761,14 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 
 inline BOOL CLocater::IsFileAdvancedWhatAreWeLookingFor() const
 {
-	if (m_dwMinSize!=DWORD(-1))
+	if (m_ullMinSize!=ULONGLONG(-1))
 	{
-		if (GetFileSizeHi()==0 && GetFileSizeLo()<m_dwMinSize)
+		if (GetFileSize()<m_ullMinSize)
 			return FALSE;
 	}
-	if (m_dwMaxSize!=DWORD(-1))
+	if (m_ullMaxSize!=ULONGLONG(-1))
 	{
-		if (GetFileSizeHi()!=0 || GetFileSizeLo()>m_dwMaxSize)
+		if (GetFileSize()>m_ullMaxSize)
 			return FALSE;
 	}
 	if (m_wMaxDate!=WORD(-1))
@@ -1827,14 +1827,14 @@ inline BOOL CLocater::IsFileAdvancedWhatAreWeLookingFor() const
 
 inline BOOL CLocater::IsFileAdvancedWhatAreWeLookingForW() const
 {
-	if (m_dwMinSize!=DWORD(-1))
+	if (m_ullMinSize!=ULONGLONG(-1))
 	{
-		if (GetFileSizeHiW()==0 && GetFileSizeLoW()<m_dwMinSize)
+		if (GetFileSizeW()<m_ullMinSize)
 			return FALSE;
 	}
-	if (m_dwMaxSize!=DWORD(-1))
+	if (m_ullMaxSize!=ULONGLONG(-1))
 	{
-		if (GetFileSizeHiW()!=0 || GetFileSizeLoW()>m_dwMaxSize)
+		if (GetFileSizeW()>m_ullMaxSize)
 			return FALSE;
 	}
 	if (m_wMaxDate!=WORD(-1))
