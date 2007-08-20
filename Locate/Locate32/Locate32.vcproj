@@ -792,6 +792,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\lan_resources.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Locate32.h"
 				>
 			</File>

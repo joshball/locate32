@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.2110                 */
+   database updater v3.0.7.8190                 */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -648,7 +648,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 			throw ueStopped;
 		}
 
-		if (m_aExcludeFilesPatternsA!=NULL)
+		if (m_aExcludeFilesPatternsA!=NULL && !_FindIsFolder(&fd))
 		{
 			BOOL bExcluded=FALSE;
 			LPSTR* pPtr=m_aExcludeFilesPatternsA;
@@ -853,7 +853,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 		}
 
 
-		if (m_aExcludeFilesPatternsW!=NULL)
+		if (m_aExcludeFilesPatternsW!=NULL && !_FindIsFolder(&fd))
 		{
 			BOOL bExcluded=FALSE;
 			LPWSTR* pPtr=m_aExcludeFilesPatternsW;

@@ -31,7 +31,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2007 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 build 7.7010
+FILEVERSION=3.0 build 7.8190
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -1110,7 +1110,7 @@ STRERROR_UNKNOWNOS=Unknown error. Latest OS error: %s
 STRERROR_UNKNOWNASWRITINGDB=State: writing database to file '%s'.
 STRERROR_UNKNOWNASSCANNINGROOT=State: scanning root '%s'.
 STRERROR_CANNOTWRITEINCREMENTALLY=Cannot write database '%s' incrementally, trying full update?
-STRERROR_DIFFERENTCHARSETINDB=Cannot write database '%s' incrementally. The character set in the existing database is not correct. Overwrite database?
+STRERROR_DIFFERENTCHARSETINDB=The existing content of the database cannot be kept because the character set in the database is different than used at this time. Do you want to overwrite database?
 STRERROR_CANNOTSAVESHORTCUTS=Cannot save keyboard shortcuts to the registry.
 STRERROR_CANNOTLOADDEFAULTSHORTCUTS=Cannot load default keyboard shortcuts.
 STRERROR_CANNOTCREATETHREAD=Cannot create thread.
@@ -1162,7 +1162,7 @@ STRUPDATEDB_CANNOTCREATEFILE=Error: cannot create file %s.
 STRUPDATEDB_CANNOTWRITEFILE=Error: cannot write to file %s.
 STRUPDATEDB_CANNOTALLOCATEMEMORY=Error: cannot allocate memory.
 STRUPDATEDB_ROOTUNAVAILABLE=Error: path unavailable: %s.
-STRUPDATEDB_CANNOTUPDATEINCREMENTALLY=Error: cannot write %s incrementally, trying full update (y/n)?
+STRUPDATEDB_CANNOTUPDATEINCREMENTALLY=Error: the existing content of the database cannot be kept because the character set in the database is different than used at this time. Do you want to overwrite database (y/n)?
 STRUPDATEDB_WRONGCHARSETINDB=Error: cannot write %s incrementally: the character set in the existing database is not correct. Trying full update (y/n)?
 STRUPDATEDB_UNKNOWNERROR=Unknown error.
 STRUPDATEDB_UPDATINGDATABASE=Updating database %s (file: %s)

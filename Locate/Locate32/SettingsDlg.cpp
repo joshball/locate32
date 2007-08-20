@@ -4950,14 +4950,14 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 			WCHAR szDate[100],szTime[100];
 			GetTimeFormatW(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
 			GetDateFormatW(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,szDate,100);
-			LastRun.Format(IDS_LASTRUN,szDate,szTime);
+			LastRun.FormatEx(IDS_LASTRUN,szDate,szTime);
 		}
 		else
 		{
 			char szDate[100],szTime[100];
 			GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,szTime,100);
 			GetDateFormat(LOCALE_USER_DEFAULT,DATE_LONGDATE,&st,NULL,szDate,100);
-			LastRun.Format(IDS_LASTRUN,(LPCWSTR)A2W(szDate),(LPCWSTR)A2W(szTime));
+			LastRun.FormatEx(IDS_LASTRUN,(LPCWSTR)A2W(szDate),(LPCWSTR)A2W(szTime));
 		}
 	}
 	else

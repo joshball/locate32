@@ -5443,6 +5443,10 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 				nRet=(int)ShellExecuteA(*this,szVerb==NULL?NULL:(LPCSTR)W2A(szVerb),W2A(pItems[i]->GetPath()),NULL,sParent,SW_SHOW);
 			}
 
+
+			// If ShellExecute didn't success, using InvokeCommand
+			// this usually brings a window which ask that in which 
+			// application the document is opened
 			if (nRet<=32)
 			{
 				ContextMenuStuff* pContextMenuStuff=GetContextMenuForItems(1,&pItems[i]);
