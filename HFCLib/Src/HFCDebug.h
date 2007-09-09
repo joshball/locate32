@@ -148,6 +148,11 @@ void operator delete(void *p);
 void operator delete[](void *p);
 #endif
 
+
+#if !defined(HFC_NODEBUGNEW)
+	#define new DEBUG_NEW
+#endif
+
 #else
 // These makes possible to use these as normally like functions 
 inline void StartDebugLogging() {}

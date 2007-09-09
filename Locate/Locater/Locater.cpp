@@ -19,9 +19,7 @@ extern "C" void  (*pcre_stack_free)(void *) = free;
 extern "C" int   (*pcre_callout)(pcre_callout_block *) = NULL;
 */
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
+
 
 #include "Locater.h"
 

@@ -3,10 +3,12 @@
 //
 // Copyright 2006-2007 Janne Huttunen
 
+
 #include <HFCLib.h>
 #include "common.h"
 
 #include <parsers.h>
+
 
 
 typedef HRESULT (__stdcall * PFNSHGETFOLDERPATH)(HWND, int, HANDLE, DWORD, LPWSTR);  // "SHGetFolderPathW"

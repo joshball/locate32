@@ -14,6 +14,7 @@ UINT CLocateApp::m_nHFCInstallationMessage=0;
 UINT CLocateApp::m_nTaskbarCreated=0;
 UINT CLocateApp::m_nLocateAppMessage=0;
 
+#define COUNT_UPDATEANIMATIONS 13
 
 CLocateApp::CLocateApp()
 :	CWinApp("LOCATE32"),m_nDelImage(0),m_nStartup(0),
@@ -969,7 +970,7 @@ BYTE CLocateApp::CheckDatabases()
 
 BYTE CLocateApp::SetDeleteAndDefaultImage()
 {
-	DebugMessage("SetDeleteAndDefaultImage BEGIN");
+	//DebugMessage("SetDeleteAndDefaultImage BEGIN");
 
 	CRegKey Key;
 	SHFILEINFOW fi;
@@ -1050,7 +1051,7 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 	}
 	
 	
-	DebugMessage("SetDeleteAndDefaultImage END");
+	//DebugMessage("SetDeleteAndDefaultImage END");
 	return TRUE;
 }
 
@@ -2382,7 +2383,10 @@ int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 void CLocateAppWnd::LoadAppIcon()
 {
 	if (m_hAppIcon!=NULL)
+	{
+		DebugCloseGdiObject(m_hAppIcon);
 		DeleteObject(m_hAppIcon);
+	}
 
 	
 	CRegKey2 RegKey;
@@ -2392,12 +2396,14 @@ void CLocateAppWnd::LoadAppIcon()
 		if (RegKey.QueryValue(L"CustomTrayIcon",CustomTrayIcon))
 		{
 			m_hAppIcon=(HICON)LoadImage(CustomTrayIcon,IMAGE_ICON,16,16,LR_LOADFROMFILE);
+			DebugOpenGdiObject(m_hAppIcon);
 			if (m_hAppIcon!=NULL)
 				return;
 		}
 	}
 
 	m_hAppIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,0);
+	DebugOpenGdiObject(m_hAppIcon);
 }
 
 BOOL CLocateAppWnd::OnCreateClient(LPCREATESTRUCT lpcs)
@@ -2901,21 +2907,14 @@ BOOL CLocateAppWnd::StartUpdateStatusNotification()
 	EnterCriticalSection(&m_csAnimBitmaps);
 	if (m_pUpdateAnimIcons==NULL)
 	{
-		m_pUpdateAnimIcons=new HICON[13];
-		m_pUpdateAnimIcons[0]=(HICON)LoadImage(IDI_UANIM1,IMAGE_ICON,16,16,0);
-		m_pUpdateAnimIcons[1]=(HICON)LoadImage(IDI_UANIM2,IMAGE_ICON,16,16,0);
-		m_pUpdateAnimIcons[2]=(HICON)LoadImage(IDI_UANIM3,IMAGE_ICON,16,16,0);
-		m_pUpdateAnimIcons[3]=(HICON)LoadImage(IDI_UANIM4,IMAGE_ICON,16,16,0);
-		m_pUpdateAnimIcons[4]=(HICON)LoadImage(IDI_UANIM5,IMAGE_ICON,16,16,0);
-		m_pUpdateAnimIcons[5]=(HICON)LoadImage(IDI_UANIM6,IMAGE_ICON,16,16,0);
-		m_pUpdateAnimIcons[6]=(HICON)LoadImage(IDI_UANIM7,IMAGE_ICON,16,16,0);
-		m_pUpdateAnimIcons[7]=(HICON)LoadImage(IDI_UANIM8,IMAGE_ICON,16,16,0);
-		m_pUpdateAnimIcons[8]=(HICON)LoadImage(IDI_UANIM9,IMAGE_ICON,16,16,0);
-		m_pUpdateAnimIcons[9]=(HICON)LoadImage(IDI_UANIM10,IMAGE_ICON,16,16,0);
-		m_pUpdateAnimIcons[10]=(HICON)LoadImage(IDI_UANIM11,IMAGE_ICON,16,16,0);
-		m_pUpdateAnimIcons[11]=(HICON)LoadImage(IDI_UANIM12,IMAGE_ICON,16,16,0);
-		m_pUpdateAnimIcons[12]=(HICON)LoadImage(IDI_UANIM13,IMAGE_ICON,16,16,0);
-	
+		m_pUpdateAnimIcons=new HICON[COUNT_UPDATEANIMATIONS];
+
+		for (int i=0;i<COUNT_UPDATEANIMATIONS;i++)
+		{
+			m_pUpdateAnimIcons[i]=(HICON)LoadImage(IDI_UANIM1+i,IMAGE_ICON,16,16,0);
+			DebugOpenGdiObject(m_pUpdateAnimIcons[i]);
+		}
+		
 		m_nCurUpdateAnimBitmap=0;
 		SetTimer(ID_UPDATEANIM,100);
 	}
@@ -2995,6 +2994,11 @@ BOOL CLocateAppWnd::StopUpdateStatusNotification()
 	if (m_pUpdateAnimIcons!=NULL)
 	{
 		KillTimer(ID_UPDATEANIM);
+		for (int i=0;i<COUNT_UPDATEANIMATIONS;i++)
+		{
+			DebugCloseGdiObject(m_pUpdateAnimIcons[i]);
+			DestroyIcon(m_pUpdateAnimIcons[i]);
+		}
 		delete[] m_pUpdateAnimIcons;
 		m_pUpdateAnimIcons=NULL;
 		GetLocateAppWnd()->SetUpdateStatusInformation(DEFAPPICON,IDS_NOTIFYLOCATE);
@@ -3406,6 +3410,7 @@ void CLocateAppWnd::OnDestroy()
 
 	if (m_hAppIcon!=NULL)
 	{
+		DebugCloseGdiObject(m_hAppIcon);
 		DeleteObject(m_hAppIcon);
 		m_hAppIcon=NULL;
 	}
@@ -3603,14 +3608,14 @@ DWORD CLocateAppWnd::OnSystemTrayMessage(UINT uID,UINT msg)
 			break;
 		case WM_RBUTTONUP:
 			{
-				DebugMessage("OpenPopupMenu");
+				//DebugMessage("OpenPopupMenu");
 				POINT pt;
 				GetCursorPos(&pt);
 				SetForegroundWindow();
 				TrackPopupMenu(m_Menu.GetSubMenu(0),
 					TPM_RIGHTALIGN|TPM_BOTTOMALIGN|TPM_RIGHTBUTTON,pt.x,pt.y,0,
 					*this,NULL);
-				DebugMessage("OpenPopupMenu END");
+				//DebugMessage("OpenPopupMenu END");
 				break;
 			}
 			break;
@@ -4538,11 +4543,13 @@ LRESULT CLocateAppWnd::CUpdateStatusWnd::WindowProc(UINT msg,WPARAM wParam,LPARA
 	case WM_ERASEBKGND:
 		{
 			HBRUSH hBrush=CreateSolidBrush(m_cBackColor);
+			DebugOpenGdiObject(hBrush);
 			if (hBrush!=NULL)
 			{
 				RECT rc;
 				GetClientRect(&rc);
                 FillRect((HDC)wParam,&rc,hBrush);
+				DebugCloseGdiObject(hBrush);
 				DeleteObject(hBrush);
 				return TRUE;
 			}

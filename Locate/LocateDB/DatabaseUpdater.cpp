@@ -833,9 +833,18 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 	
 	HFIND hFind=_FindFirstFile(szFolder,&fd);
 	
+	
 
 	if (!VALID_HFIND(hFind))
+	{
+		// It is possible that directory has no files, 
+		// checking whether directory actually exists
+		szFolder[nLength-1]='\0';
+		if (FileSystem::IsDirectory(szFolder))
+			return ueSuccess;	
 		return ueFolderUnavailable;
+	}
+
 
 	for(;;)
 	{

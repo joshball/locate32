@@ -15,12 +15,6 @@ extern LPWSTR g_szwBuffer;
 
 
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-
-
-
 
 #include "../hlp/HTMLDefines.h"
 

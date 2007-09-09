@@ -4,9 +4,7 @@
 
 #include "HFCLib.h"
 
-#if defined(HFC_USEDEBUGNEW)
-	#define new DEBUG_NEW
-#endif
+
 
 LONGLONG FileSystem::GetDiskFreeSpace(LPCSTR szDrive)
 {
@@ -1283,9 +1281,10 @@ INT FileSystem::IsDirectory(LPCWSTR szDirectoryName)
 		szPath=LPWSTR(szDirectoryName);
 
 	hFind=FindFirstFileW(szPath,&fd);
-	DebugOpenHandle(dhtFileFind,hFind,szPath);
 	if (hFind!=INVALID_HANDLE_VALUE)
 	{
+		DebugOpenHandle(dhtFileFind,hFind,szPath);
+
 		while (!(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY) && ret)
 			ret=FindNextFileW(hFind,&fd);
 	

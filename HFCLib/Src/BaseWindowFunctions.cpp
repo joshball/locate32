@@ -4,9 +4,6 @@
 
 #include "HFCLib.h"
 
-#if defined(HFC_USEDEBUGNEW)
-	#define new DEBUG_NEW
-#endif
 
 #if defined(WIN32)
 
@@ -112,6 +109,11 @@ CWinApp::~CWinApp()
 {
 	m_hThread=NULL;
 	m_nThreadID=0;
+
+	
+	if (m_szHelpFile!=NULL)
+		delete[] m_szHelpFile;
+
 	
 #ifdef _DEBUG_LOGGING
 	extern CRITICAL_SECTION cHandleCriticalSection;
@@ -121,10 +123,7 @@ CWinApp::~CWinApp()
 	DeleteCriticalSection(&cHandleCriticalSection);
 #endif
 
-	if (m_szHelpFile!=NULL)
-		delete[] m_szHelpFile;
 
-	
 	StopDebugLogging();
 }
 

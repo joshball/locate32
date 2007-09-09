@@ -4680,6 +4680,8 @@ void CSettingsProperties::CAutoUpdateSettingsPage::OnDrawItem(UINT idCtl,LPDRAWI
 			hIcon=(HICON)LoadImage(IDI_YES,IMAGE_ICON,16,16,0);
 		else
 			hIcon=(HICON)LoadImage(IDI_NO,IMAGE_ICON,16,16,0);
+		DebugOpenGdiObject(hIcon);
+
 		CRect rc(lpdis->rcItem);
 		dc.DrawState(CPoint(rc.left,rc.top),CSize(16,16),hIcon,DST_ICON);
 		rc.left+=16;

@@ -4,7 +4,8 @@
 #include <tmschema.h>
 
 
-
+#define COUNT_LOCATEANIMATIONS 6
+#define COUNT_UPDATEANIMATIONS 13
 
 CComboBoxAutoComplete::CComboBoxAutoComplete()
 :	CComboBox(),m_pACData(NULL)
@@ -824,7 +825,10 @@ void CLocateDlg::SetResultListFont()
 	{
 		LOGFONT lFont;
 		if (RegKey.QueryValue("ResultListFont",(LPSTR)&lFont,sizeof(LOGFONT))==sizeof(LOGFONT))
+		{
 			hNewFont=CreateFontIndirect(&lFont);
+			DebugOpenGdiObject(hNewFont);
+		}
 		
 	}
 	
@@ -837,7 +841,10 @@ void CLocateDlg::SetResultListFont()
 	}
 
 	if (hOldFont!=m_hDialogFont)
+	{
+		DebugCloseGdiObject(hOldFont);
 		DeleteObject(hOldFont);
+	}
 }
 
 
@@ -2778,6 +2785,7 @@ void CLocateDlg::OnDestroy()
 	// SendTo list related stuff
 	if (m_hSendToListFont!=NULL)
 	{
+		DebugCloseGdiObject(m_hSendToListFont);
 		DeleteObject(m_hSendToListFont);
 		m_hSendToListFont=NULL;
 	}
@@ -2993,6 +3001,7 @@ void CLocateDlg::OnSize(UINT nType, int cx, int cy)
 
 		if (m_hSendToListFont!=NULL)
 		{
+			DebugCloseGdiObject(m_hSendToListFont);
 			DeleteObject(m_hSendToListFont);
 			m_hSendToListFont=NULL;
 		}
@@ -3167,6 +3176,7 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 	case WM_EXITMENULOOP:
 		if (m_hSendToListFont!=NULL)
 		{
+			DebugCloseGdiObject(m_hSendToListFont);
 			DeleteObject(m_hSendToListFont);
 			m_hSendToListFont=NULL;
 		}
@@ -6729,10 +6739,16 @@ void CLocateDlg::OnInitSendToMenu(HMENU hPopupMenu)
 {
 	// Removing default items
 	for(int i=GetMenuItemCount(hPopupMenu)-1;i>=0;i--)
+	{
+		DebugCloseGdiObject(hPopupMenu);
 		DeleteMenu(hPopupMenu,i,MF_BYPOSITION);
+	}
 
 	if (m_hSendToListFont!=NULL)
+	{
+		DebugCloseGdiObject(m_hSendToListFont);
 		DeleteObject(m_hSendToListFont);
+	}
 	
 	// Initializing fonts
 	CRegKey RegKey;
@@ -7649,13 +7665,12 @@ BOOL CLocateDlg::StartLocateAnimation()
 	}
 	
 		
-	m_pLocateAnimBitmaps=new HICON[6];
-	m_pLocateAnimBitmaps[0]=(HICON)LoadImage(IDI_LANIM1,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pLocateAnimBitmaps[1]=(HICON)LoadImage(IDI_LANIM2,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pLocateAnimBitmaps[2]=(HICON)LoadImage(IDI_LANIM3,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pLocateAnimBitmaps[3]=(HICON)LoadImage(IDI_LANIM4,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pLocateAnimBitmaps[4]=(HICON)LoadImage(IDI_LANIM5,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pLocateAnimBitmaps[5]=(HICON)LoadImage(IDI_LANIM6,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+	m_pLocateAnimBitmaps=new HICON[COUNT_LOCATEANIMATIONS];
+	for (int i=0;i<COUNT_LOCATEANIMATIONS;i++)
+	{
+		m_pLocateAnimBitmaps[i]=(HICON)LoadImage(IDI_LANIM1+i,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+		DebugOpenGdiObject(m_pLocateAnimBitmaps[i]);
+	}
 	
 	SetTimer(ID_LOCATEANIM,200);
 	m_nCurLocateAnimBitmap=0;
@@ -7670,8 +7685,11 @@ BOOL CLocateDlg::StopLocateAnimation()
 	if (m_pLocateAnimBitmaps!=NULL)
 	{
 		KillTimer(ID_LOCATEANIM);
-		for (int i=0;i<6;i++)
+		for (int i=0;i<COUNT_LOCATEANIMATIONS;i++)
+		{
+			DebugCloseGdiObject(m_pLocateAnimBitmaps[i]);
 			DestroyIcon(m_pLocateAnimBitmaps[i]);
+		}
 		delete[] m_pLocateAnimBitmaps;
 		m_pLocateAnimBitmaps=NULL;
 		LeaveCriticalSection(&m_csAnimBitmaps);
@@ -7696,21 +7714,13 @@ BOOL CLocateDlg::StartUpdateAnimation()
 		return TRUE;
 	}
 	
-	m_pUpdateAnimBitmaps=new HICON[13];
-	m_pUpdateAnimBitmaps[0]=(HICON)LoadImage(IDI_UANIM1,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pUpdateAnimBitmaps[1]=(HICON)LoadImage(IDI_UANIM2,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pUpdateAnimBitmaps[2]=(HICON)LoadImage(IDI_UANIM3,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pUpdateAnimBitmaps[3]=(HICON)LoadImage(IDI_UANIM4,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pUpdateAnimBitmaps[4]=(HICON)LoadImage(IDI_UANIM5,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pUpdateAnimBitmaps[5]=(HICON)LoadImage(IDI_UANIM6,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pUpdateAnimBitmaps[6]=(HICON)LoadImage(IDI_UANIM7,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pUpdateAnimBitmaps[7]=(HICON)LoadImage(IDI_UANIM8,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pUpdateAnimBitmaps[8]=(HICON)LoadImage(IDI_UANIM9,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pUpdateAnimBitmaps[9]=(HICON)LoadImage(IDI_UANIM10,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pUpdateAnimBitmaps[10]=(HICON)LoadImage(IDI_UANIM11,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pUpdateAnimBitmaps[11]=(HICON)LoadImage(IDI_UANIM12,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	m_pUpdateAnimBitmaps[12]=(HICON)LoadImage(IDI_UANIM13,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
-	
+	m_pUpdateAnimBitmaps=new HICON[COUNT_LOCATEANIMATIONS];
+	for (int i=0;i<COUNT_LOCATEANIMATIONS;i++)
+	{
+		m_pUpdateAnimBitmaps[i]=(HICON)LoadImage(IDI_UANIM1+i,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+		DebugOpenGdiObject(m_pUpdateAnimBitmaps[i]);
+	}
+
 	SetTimer(ID_UPDATEANIM,100);
 	m_nCurUpdateAnimBitmap=0;
 	m_pStatusCtrl->SetText((LPCSTR)m_pUpdateAnimBitmaps[0],STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
@@ -7725,8 +7735,11 @@ BOOL CLocateDlg::StopUpdateAnimation()
 	if (m_pUpdateAnimBitmaps!=NULL)
 	{
 		KillTimer(ID_UPDATEANIM);
-		for (int i=0;i<13;i++)
+		for (int i=0;i<COUNT_LOCATEANIMATIONS;i++)
+		{
+			DebugCloseGdiObject(m_pUpdateAnimBitmaps[i]);
 			DestroyIcon(m_pUpdateAnimBitmaps[i]);
+		}
 		delete[] m_pUpdateAnimBitmaps;
 		m_pUpdateAnimBitmaps=NULL;
 		LeaveCriticalSection(&m_csAnimBitmaps);

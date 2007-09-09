@@ -1454,6 +1454,8 @@ BOOL CSelectDatabasesDlg::InsertDatabases(WORD wCount,WORD wThreads,const WORD* 
 		}
 	}
 
+	delete[] pTaken;
+
 	return TRUE;
 }
 

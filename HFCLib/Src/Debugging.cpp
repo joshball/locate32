@@ -2,7 +2,7 @@
 // HFC Library - Copyright (C) 1999-2007 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
-
+#define HFC_NODEBUGNEW // no "#define new DEBUG_NEW"
 #include "HFCLib.h"
 
 #if defined(_DEBUG)
@@ -620,7 +620,7 @@ void DebugCloseHandle2(DebugHandleType bType,void* pValue,LPCSTR szInfo,int iLin
 		LeaveCriticalSection(&cHandleCriticalSection);
 
 
-	DebugFormatMessage("DebugCloseHandle2: Could locate %s entry %X, szInfo=%s, line=%d, file=%s.",
+	DebugFormatMessage("DebugCloseHandle2: Could not locate %s entry %X, szInfo=%s, line=%d, file=%s.",
 		DebugHandleTypeToStr(bType),pValue,szInfo!=NULL?szInfo:"NULL",iLine,szFile); 
 }
 
