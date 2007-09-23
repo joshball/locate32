@@ -948,7 +948,7 @@ DWORD WINAPI CBackgroundUpdater::UpdaterThreadProc(LPVOID lpParameter)
 	return ((CBackgroundUpdater*)lpParameter)->RunningProc();
 }
 
-void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateDlg::DetailType nDetail)
+void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailType nDetail)
 {
 	BkgDebugFormatMessage("CBackgroundUpdater::AddToUpdateList BEGIN this is %X",this);
 	
@@ -970,24 +970,24 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 
 		if (pUpdateList->GetAt(i)->m_pItem==pItem)
 		{
-			if (nDetail==CLocateDlg::Needed)
+			if (nDetail==Needed)
 			{
 				BkgDebugMessage("CBackgroundUpdater::AddToUpdateList checking whether all needed details");
 				
-				for (int type=0;type<=CLocateDlg::LastType;type++)
+				for (int type=0;type<=LastType;type++)
 				{
-					if (pItem->ShouldUpdateByDetail((CLocateDlg::DetailType)type))
+					if (pItem->ShouldUpdateByDetail((DetailType)type))
 					{
 						int j;
                         for (j=pListItem->m_aDetails.GetSize()-1;j>=0;j--)
 						{
-							if (pListItem->m_aDetails[j]==(CLocateDlg::DetailType)type)
+							if (pListItem->m_aDetails[j]==(DetailType)type)
 								break;
 						}
 						if (j<0) // Not found
 						{
 							BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new(1) detail %d to item %X",nDetail,(DWORD_PTR)pListItem,0,0);
-							pListItem->m_aDetails.Add((CLocateDlg::DetailType)type);
+							pListItem->m_aDetails.Add((DetailType)type);
 						}
 					}
 				}
@@ -1019,7 +1019,7 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 
 	BkgDebugMessage("CBackgroundUpdater::AddToUpdateList END (loop)");
 			
-	if (nDetail!=CLocateDlg::Needed)
+	if (nDetail!=Needed)
 	{
 		Item* pNewItem=new Item(pItem,iItem,nDetail);
 		BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new item (%X) %X list size=%d",(DWORD_PTR)pItem,(DWORD_PTR)pNewItem,pUpdateList->GetSize(),0);
@@ -1036,10 +1036,10 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateD
 	BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new item with all necessary details (%X,%d)",pItem,iItem,0,0);
 	Item* pUpdateItem=new Item(pItem,iItem);
 
-	for (int type=0;type<=CLocateDlg::LastType;type++)
+	for (int type=0;type<=LastType;type++)
 	{
-		if (pItem->ShouldUpdateByDetail((CLocateDlg::DetailType)type))
-			pUpdateItem->m_aDetails.Add((CLocateDlg::DetailType)type);
+		if (pItem->ShouldUpdateByDetail((DetailType)type))
+			pUpdateItem->m_aDetails.Add((DetailType)type);
 	}
 	if (pUpdateItem->m_aDetails.GetSize()>0)
 	{

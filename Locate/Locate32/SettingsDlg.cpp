@@ -709,7 +709,7 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnInitDialog(HWND hwndFocus)
 	if (IsUnicodeSystem())
 	{
 		SendDlgItemMessageW(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)ID2W(IDS_NOSORTNG));
-		for (int iDetail=0;iDetail<CLocateDlg::TypeCount;iDetail++)
+		for (int iDetail=0;iDetail<TypeCount;iDetail++)
 		{
 			SendDlgItemMessageW(IDC_SORTING,CB_ADDSTRING,0,
 				(LPARAM)(LPCWSTR)ID2W(pViewDetails[iDetail].nString));
@@ -718,7 +718,7 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnInitDialog(HWND hwndFocus)
 	else
 	{
 		SendDlgItemMessage(IDC_SORTING,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_NOSORTNG));
-		for (int iDetail=0;iDetail<CLocateDlg::TypeCount;iDetail++)
+		for (int iDetail=0;iDetail<TypeCount;iDetail++)
 		{
 			SendDlgItemMessage(IDC_SORTING,CB_ADDSTRING,0,
 				(LPARAM)(LPCSTR)ID2A(pViewDetails[iDetail].nString));
@@ -817,7 +817,7 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnApply()
 		
 	// Defaults
 	int nSel=(int)SendDlgItemMessage(IDC_SORTING,CB_GETCURSEL);
-	if (nSel<=0 || nSel>=CLocateDlg::TypeCount+1)
+	if (nSel<=0 || nSel>=TypeCount+1)
 		m_pSettings->m_bSorting=BYTE(-1);
 	else
 	{

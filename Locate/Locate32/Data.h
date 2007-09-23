@@ -5,6 +5,50 @@
 #define SCHEDULE_V2_LEN		36
 #define SCHEDULE_V34_LEN	40
 
+// Details, used to specify columns
+// If more than 64 details, make m_nSorting in CLocateDlg and other places bigger
+enum DetailType {
+	Name=0,
+	InFolder=1,
+	FullPath=2,
+	ShortFileName=3,
+	ShortFilePath=4,
+	FileSize=5,
+	FileType=6,
+	DateModified=7,
+	DateCreated=8,
+	DateAccessed=9,
+	Attributes=10,
+	ImageDimensions=11,
+	Owner=12,
+	Database=13,
+	DatabaseDescription=14,
+	DatabaseArchive=15,
+	VolumeLabel=16,
+	VolumeSerial=17,
+	VolumeFileSystem=18,
+	MD5sum=19,
+	Author=20,
+	Title=21,
+	Subject=22,
+	Category=23,
+	Pages=24,
+	Comments=25,
+	Description=26,
+	FileVersion=27,
+	ProductName=28,
+	ProductVersion=29,
+
+	LastType=29,
+
+	TypeCount=LastType+1,
+
+
+
+	Extension=127, // Not column, for sorting
+	Needed=255
+};
+
 class CSchedule
 {
 public:

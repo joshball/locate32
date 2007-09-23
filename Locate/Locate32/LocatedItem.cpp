@@ -245,61 +245,61 @@ void CLocatedItem::ClearData()
 	//ItemDebugMessage("CLocatedItem::ClearData END");
 }
 
-void CLocatedItem::UpdateByDetail(CLocateDlg::DetailType nDetail)
+void CLocatedItem::UpdateByDetail(DetailType nDetail)
 {
 	switch(nDetail)
 	{
-	case CLocateDlg::FullPath:
+	case FullPath:
 		UpdateFilename();
 		break;
-	case CLocateDlg::Name:
+	case Name:
 		UpdateFileTitle();
 		UpdateIcon();
 		break;
-	case CLocateDlg::InFolder:
+	case InFolder:
 		UpdateParentIcon();
 		break;
-	case CLocateDlg::FileSize:
-	case CLocateDlg::DateModified:
-	case CLocateDlg::DateCreated:
-	case CLocateDlg::DateAccessed:
+	case FileSize:
+	case DateModified:
+	case DateCreated:
+	case DateAccessed:
 		UpdateFileSizeAndTime();
 		break;
-	case CLocateDlg::FileType:
+	case FileType:
 		UpdateType();
 		break;
-	case CLocateDlg::Attributes:
+	case Attributes:
 		UpdateAttributes();
 		break;
-	case CLocateDlg::ImageDimensions:
+	case ImageDimensions:
 		UpdateDimensions();
 		break;
-	case CLocateDlg::Owner:
+	case Owner:
 		UpdateOwner();
 		break;
-	case CLocateDlg::ShortFileName:
+	case ShortFileName:
 		UpdateShortFileName();
 		break;
-	case CLocateDlg::ShortFilePath:
+	case ShortFilePath:
 		UpdateShortFilePath();
 		break;
-	case CLocateDlg::MD5sum:
+	case MD5sum:
 		ComputeMD5sum();
 		break;
-	case CLocateDlg::Author:
-	case CLocateDlg::Title:
-	case CLocateDlg::Subject:
-	case CLocateDlg::Pages:
-	case CLocateDlg::Comments:
+	case Author:
+	case Title:
+	case Subject:
+	case Pages:
+	case Comments:
 		UpdateSummaryProperties();
 		break;
-	case CLocateDlg::Category:
+	case Category:
 		UpdateDocSummaryProperties();
 		break;
-	case CLocateDlg::Description:
-	case CLocateDlg::FileVersion:
-	case CLocateDlg::ProductName:
-	case CLocateDlg::ProductVersion:
+	case Description:
+	case FileVersion:
+	case ProductName:
+	case ProductVersion:
 		UpdateVersionInformation();
 		break;
 	}	
@@ -307,32 +307,32 @@ void CLocatedItem::UpdateByDetail(CLocateDlg::DetailType nDetail)
 
 
 	
-BOOL CLocatedItem::ShouldUpdateByDetail(CLocateDlg::DetailType nDetail) const
+BOOL CLocatedItem::ShouldUpdateByDetail(DetailType nDetail) const
 {
 	switch(nDetail)
 	{
-	case CLocateDlg::FullPath:
+	case FullPath:
 		return ShouldUpdateFilename();
-	case CLocateDlg::Database:
-	case CLocateDlg::DatabaseDescription:
-	case CLocateDlg::DatabaseArchive:
-	case CLocateDlg::VolumeLabel:
-	case CLocateDlg::VolumeSerial:
-	case CLocateDlg::VolumeFileSystem:
+	case Database:
+	case DatabaseDescription:
+	case DatabaseArchive:
+	case VolumeLabel:
+	case VolumeSerial:
+	case VolumeFileSystem:
 		return FALSE;
-	case CLocateDlg::Name:
+	case Name:
 		return ShouldUpdateFileTitle() || ShouldUpdateIcon();
-	case CLocateDlg::InFolder:
+	case InFolder:
 		return ShouldUpdateParentIcon();
-	case CLocateDlg::FileSize:
+	case FileSize:
 		return ShouldUpdateFileSize();
-	case CLocateDlg::DateModified:
-	case CLocateDlg::DateCreated:
-	case CLocateDlg::DateAccessed:
+	case DateModified:
+	case DateCreated:
+	case DateAccessed:
 		return ShouldUpdateTimeAndDate();
-	case CLocateDlg::FileType:
+	case FileType:
 		return ShouldUpdateType();
-	case CLocateDlg::Attributes:
+	case Attributes:
 		return ShouldUpdateAttributes();
 	default:
 		return ShouldUpdateExtra(nDetail);
@@ -1018,7 +1018,7 @@ void CLocatedItem::UpdateDimensions()
 	ItemDebugMessage("CLocatedItem::UpdateDimensions BEGIN");
 	
 
-	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::ImageDimensions);
+	ExtraInfo* pField=CreateExtraInfoField(ImageDimensions);
 	pField->bShouldUpdate=FALSE;
 
 	if (GetLocateDlg()->m_pImageHandler==NULL)
@@ -1043,7 +1043,7 @@ void CLocatedItem::ComputeMD5sum(BOOL bForce)
 
 	ItemDebugMessage("CLocatedItem::ComputeMD5sum BEGIN");
 
-	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::MD5sum);
+	ExtraInfo* pField=CreateExtraInfoField(MD5sum);
 	pField->bShouldUpdate=FALSE;
 
 	if (!bForce && !(GetLocateDlg()->GetFlags()&CLocateDlg::fgLVComputeMD5Sums))
@@ -1122,7 +1122,7 @@ void CLocatedItem::UpdateOwner()
 	
 	ItemDebugMessage("CLocatedItem::UpdateOwner BEGIN");
 	
-	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::Owner);
+	ExtraInfo* pField=CreateExtraInfoField(Owner);
 	pField->bShouldUpdate=FALSE;
 
 	
@@ -1214,7 +1214,7 @@ void CLocatedItem::UpdateShortFileName()
 
 	ItemDebugFormatMessage4("CLocatedItem::UpdateShortFileName BEGIN %s",GetPath(),0,0,0);
 	
-	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::ShortFileName);
+	ExtraInfo* pField=CreateExtraInfoField(ShortFileName);
 	pField->bShouldUpdate=FALSE;
 
 	if (pField->szText!=NULL)
@@ -1259,7 +1259,7 @@ void CLocatedItem::UpdateShortFilePath()
 
 	ItemDebugMessage("CLocatedItem::UpdateShortFilePath BEGIN");
 	
-	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::ShortFilePath);
+	ExtraInfo* pField=CreateExtraInfoField(ShortFilePath);
 	pField->bShouldUpdate=FALSE;
 	
 	if (pField->szText!=NULL)
@@ -1296,11 +1296,11 @@ void CLocatedItem::UpdateSummaryProperties()
 	ItemDebugMessage("CLocatedItem::UpdateSummaryProperties BEGIN");
 	
 	ExtraInfo* pFields[5];
-	pFields[0]=CreateExtraInfoField(CLocateDlg::Author);
-	pFields[1]=CreateExtraInfoField(CLocateDlg::Title);
-	pFields[2]=CreateExtraInfoField(CLocateDlg::Subject);
-	pFields[3]=CreateExtraInfoField(CLocateDlg::Comments);
-	pFields[4]=CreateExtraInfoField(CLocateDlg::Pages);
+	pFields[0]=CreateExtraInfoField(Author);
+	pFields[1]=CreateExtraInfoField(Title);
+	pFields[2]=CreateExtraInfoField(Subject);
+	pFields[3]=CreateExtraInfoField(Comments);
+	pFields[4]=CreateExtraInfoField(Pages);
 	
 
 	for (int i=0;i<4;i++)
@@ -1424,7 +1424,7 @@ void CLocatedItem::UpdateDocSummaryProperties()
 	
 	ItemDebugMessage("CLocatedItem::UpdateDocSummaryProperties BEGIN");
 	
-	ExtraInfo* pField=CreateExtraInfoField(CLocateDlg::Category);
+	ExtraInfo* pField=CreateExtraInfoField(Category);
 	pField->bShouldUpdate=FALSE;
 
 	if (pField->szText!=NULL)
@@ -1500,10 +1500,10 @@ void CLocatedItem::UpdateVersionInformation()
 	ItemDebugMessage("CLocatedItem::UpdateVersionInformation BEGIN");
 	
 	ExtraInfo* pFields[4];
-	pFields[0]=CreateExtraInfoField(CLocateDlg::Description);
-	pFields[1]=CreateExtraInfoField(CLocateDlg::FileVersion);
-	pFields[2]=CreateExtraInfoField(CLocateDlg::ProductName);
-	pFields[3]=CreateExtraInfoField(CLocateDlg::ProductVersion);
+	pFields[0]=CreateExtraInfoField(Description);
+	pFields[1]=CreateExtraInfoField(FileVersion);
+	pFields[2]=CreateExtraInfoField(ProductName);
+	pFields[3]=CreateExtraInfoField(ProductVersion);
 	
 	for (int i=0;i<4;i++)
 	{
@@ -1830,7 +1830,7 @@ BOOL CLocatedItem::IsItemShortcut() const
 	return FALSE;
 }
 
-void CLocatedItem::DeleteExtraInfoField(CLocateDlg::DetailType nType)
+void CLocatedItem::DeleteExtraInfoField(DetailType nType)
 {
 	if (pFirstExtraInfo==NULL)
 		return;

@@ -453,7 +453,7 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 				// Deleting previous tools
 				m_pLocate->DeleteTooltipTools();
 
-				if (CLocateDlg::DetailType(m_pLocate->m_pListCtrl->GetColumnIDFromSubItem(ht.iSubItem))==CLocateDlg::Name)
+				if (DetailType(m_pLocate->m_pListCtrl->GetColumnIDFromSubItem(ht.iSubItem))==Name)
 				{
 					TOOLINFOW tii;
 					tii.cbSize = TTTOOLINFOW_V2_SIZE;
@@ -484,7 +484,7 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 					int nWidth=m_pLocate->m_pListCtrl->GetStringWidth(sText)+12;
 					
 					// InFolder need also space for icon
-					if (CLocateDlg::DetailType(m_pLocate->m_pListCtrl->GetColumnIDFromSubItem(ht.iSubItem))==CLocateDlg::InFolder)
+					if (DetailType(m_pLocate->m_pListCtrl->GetColumnIDFromSubItem(ht.iSubItem))==InFolder)
 						nWidth+=rc2.Width()+5;
 
 					if (nWidth>rc.Width())
@@ -795,6 +795,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	
 #endif
 
+	// Set focus
 	m_NameDlg.SetFocus();
 	m_NameDlg.m_Name.SetFocus();
 	
@@ -2820,12 +2821,12 @@ void CLocateDlg::ResetFileNotificators()
 
 }
 
-void CLocateDlg::OnTimer(DWORD wTimerID)
+void CLocateDlg::OnTimer(DWORD dwTimerID)
 {
 	// Somehow this hangs program (?)
 	//CDialog::OnTimer(wTimerID);
 	
-	switch (wTimerID)
+	switch (LOWORD(dwTimerID))
 	{
 	case ID_REDRAWITEMS:
 		KillTimer(ID_REDRAWITEMS);
@@ -2905,6 +2906,10 @@ void CLocateDlg::OnTimer(DWORD wTimerID)
 		if (m_pStatusCtrl!=NULL && m_pUpdateAnimBitmaps!=NULL)
 			m_pStatusCtrl->SetText((LPCSTR)m_pUpdateAnimBitmaps[m_nCurUpdateAnimBitmap],STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
 		LeaveCriticalSection(&m_csAnimBitmaps);
+		break;
+	default:
+		KillTimer(dwTimerID);
+		PostMessage(WM_SETITEMFOCUS,(WPARAM)dwTimerID);
 		break;
 	}
 }
@@ -3149,7 +3154,7 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 	case WM_UPDATENEEDEDDETAILTS:
 		if (m_pBackgroundUpdater!=NULL)
 		{
-			m_pBackgroundUpdater->AddToUpdateList((CLocatedItem*)lParam,int(wParam),CLocateDlg::Needed);
+			m_pBackgroundUpdater->AddToUpdateList((CLocatedItem*)lParam,int(wParam),Needed);
 			m_pBackgroundUpdater->StopWaiting();
 		}
 		break;
@@ -4669,7 +4674,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 	case LVN_BEGINLABELEDITW:
 		{
 			NMLVDISPINFOA* pDistInfo=(NMLVDISPINFOA*)pNm;
-			if (m_pListCtrl->GetColumnIDFromSubItem(pDistInfo->item.iSubItem)!=CLocateDlg::Name)
+			if (m_pListCtrl->GetColumnIDFromSubItem(pDistInfo->item.iSubItem)!=Name)
 			{
 				// Not allowed for other fields than Name
 				SetWindowLong(dwlMsgResult,TRUE);
@@ -4712,7 +4717,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			if (pDistInfo->item.pszText==NULL)
 				return TRUE;
 
-			if (m_pListCtrl->GetColumnIDFromSubItem(pDistInfo->item.iSubItem)!=CLocateDlg::Name)
+			if (m_pListCtrl->GetColumnIDFromSubItem(pDistInfo->item.iSubItem)!=Name)
 			{
 				// Not allowed for other fields than Name
 				SetWindowLong(dwlMsgResult,FALSE);
@@ -4764,7 +4769,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			if (pDistInfo->item.pszText==NULL)
 				return TRUE;
 
-			if (m_pListCtrl->GetColumnIDFromSubItem(pDistInfo->item.iSubItem)!=CLocateDlg::Name)
+			if (m_pListCtrl->GetColumnIDFromSubItem(pDistInfo->item.iSubItem)!=Name)
 			{
 				// Not allowed for other fields than Name
 				SetWindowLong(dwlMsgResult,FALSE);
@@ -5903,7 +5908,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 			ASSERT(m_pBackgroundUpdater!=NULL);
 			//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,CLocateDlg::Needed)",m_pBackgroundUpdater,pItem,nItem);
 					
-			m_pBackgroundUpdater->AddToUpdateList(pItem,iItem,CLocateDlg::Needed);			
+			m_pBackgroundUpdater->AddToUpdateList(pItem,iItem,Needed);			
 			iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
 		}
 
@@ -8304,6 +8309,23 @@ void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)
 	
 	if (pStartData->m_nStatus&CLocateApp::CStartData::statusRunAtStartUp)
 		OnOk(FALSE,FALSE);
+
+	// Set focus
+	switch (pStartData->m_nActivateControl)
+	{
+	case CLocateApp::CStartData::Named:
+		SetTimer((UINT)m_NameDlg.GetDlgItem(IDC_NAME),100);
+		break;
+	case CLocateApp::CStartData::Type:
+		SetTimer((UINT)m_NameDlg.GetDlgItem(IDC_TYPE),100);
+		break;
+	case CLocateApp::CStartData::LookIn:
+		SetTimer((UINT)m_NameDlg.GetDlgItem(IDC_LOOKIN),100);
+		break;
+	case CLocateApp::CStartData::Results:
+		SetTimer((UINT)(HWND)*m_pListCtrl,100);
+		break;
+	}
 }
 
 
@@ -9981,7 +10003,7 @@ void CLocateDlg::SetDefaultActions(CSubAction*** pActions) const
 Format in registry: all non "zero" (do something) actions are stored 
 one after another in the following format
 
-1. column index (CLocateDlg::DetailType) as DWORD value 
+1. column index (DetailType) as DWORD value 
 2. action (CLocateDlg::ResultListAction) as DWORD value 
 3. data given by CSubAction::GetData and CSubAction::FromData
 

@@ -63,7 +63,7 @@ extern LPWSTR g_szwBuffer;
 #define DEFAULT_NUMBEROFTYPES			10
 
 
-// Timer IDs
+// Timer IDs, if timer ID is not one of those, ID is HWND to control to get focus
 #define ID_REDRAWITEMS				1
 #define ID_UPDATESELECTED			2
 #define ID_CLICKWAIT				4

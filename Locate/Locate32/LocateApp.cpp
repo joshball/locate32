@@ -510,8 +510,28 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			idx++;
 			pStartData->m_nStartup|=CStartData::startupNewInstance;
 			break;
-		case L'a': // Activate instance
-		case L'A': 
+		case L'A': // Activate control
+			switch(lpCmdLine[++idx])
+			{
+			case L'n':
+			case L'N':
+				pStartData->m_nActivateControl=CStartData::Named;
+				break;	
+			case L't':
+			case L'T':
+				pStartData->m_nActivateControl=CStartData::Type;
+				break;	
+			case L'l':
+			case L'L':
+				pStartData->m_nActivateControl=CStartData::LookIn;
+				break;	
+			case L'r':
+			case L'R':
+				pStartData->m_nActivateControl=CStartData::Results;
+				break;	
+			}
+			idx++;
+			break;case L'a': // Activate instance
 			idx++;
 			if (lpCmdLine[idx]==L':')
 				idx++;
@@ -889,35 +909,30 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					break;
 				}
 			case L's':
-			case L'S':
+			case L'S': // Sort items
 				idx++;
-				if (lpCmdLine[idx]>=L'0' && lpCmdLine[idx]<=9)
-					pStartData->m_nSorting=lpCmdLine[idx]-L'0';
-				else
+				switch (lpCmdLine[idx])
 				{
-					switch (lpCmdLine[idx])
-					{
-					case L'n':
-					case L'N':
-						pStartData->m_nSorting=0;
-						break;
-					case L'f':
-					case L'F':
-						pStartData->m_nSorting=1;
-						break;
-					case L's':
-					case L'S':
-						pStartData->m_nSorting=2;
-						break;
-					case L't':
-					case L'T':
-						pStartData->m_nSorting=3;
-						break;
-					case L'd':
-					case L'D':
-						pStartData->m_nSorting=4;
-						break;
-					}
+				case L'n':
+				case L'N':
+					pStartData->m_nSorting=Name;
+					break;
+				case L'f':
+				case L'F':
+					pStartData->m_nSorting=InFolder;
+					break;
+				case L's':
+				case L'S':
+					pStartData->m_nSorting=FileSize;
+					break;
+				case L't':
+				case L'T':
+					pStartData->m_nSorting=FileType;
+					break;
+				case L'd':
+				case L'D':
+					pStartData->m_nSorting=DateModified;
+					break;
 				}
 				idx++;
 				if (lpCmdLine[idx]==L'd' || lpCmdLine[idx]==L'D')
@@ -2139,7 +2154,7 @@ BOOL CLocateApp::SetLanguageSpecifigHandles()
 	CStringW Path(sExeName,sExeName.FindLast('\\')+1);
 	
 	
-
+/*
 #ifdef _WIN64
 	BOOL bDataFileOk=TRUE;
 #else
@@ -2150,14 +2165,18 @@ BOOL CLocateApp::SetLanguageSpecifigHandles()
 		(ver.dwMajorVersion>5 || (ver.dwMajorVersion==5 && ver.dwMinorVersion>=2) ||
 		(ver.dwMajorVersion==5 && ver.dwMinorVersion==1 && ver.wServicePackMajor>=2));
 #endif
+*/
 
 
+	// We have tried LOAD_LIBRARY_AS_DATAFILE as a parameter for
+	// LoadLibrary but some translation won't then work. 
 
-	HINSTANCE hLib=FileSystem::LoadLibrary(Path+LangFile,bDataFileOk?LOAD_LIBRARY_AS_DATAFILE:NULL);
+	HINSTANCE hLib=FileSystem::LoadLibrary(Path+LangFile,NULL);
 	
 	if (hLib==NULL)
 	{
-		hLib=FileSystem::LoadLibrary(Path+L"lan_en.dll",bDataFileOk?LOAD_LIBRARY_AS_DATAFILE:NULL);
+		
+		hLib=FileSystem::LoadLibrary(Path+L"lan_en.dll",NULL); 
 		
 
 		if (hLib==NULL)

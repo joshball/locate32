@@ -62,7 +62,7 @@ inline LPWSTR CLocatedItem::FormatPages() const
 {
 	ISDLGTHREADOK
 
-	ExtraInfo* pInfo=GetFieldForType(CLocateDlg::Pages);
+	ExtraInfo* pInfo=GetFieldForType(Pages);
 	if (pInfo!=NULL)
 	{
 		if (pInfo->nPages==0)
@@ -77,21 +77,21 @@ inline LPWSTR CLocatedItem::FormatPages() const
 	return const_cast<LPWSTR>(szwEmpty);	
 }
 
-inline LPWSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) const
+inline LPWSTR CLocatedItem::GetDetailText(DetailType nDetailType) const
 {
 	
 	switch (nDetailType)
 	{
-	case CLocateDlg::Name:
+	case Name:
 		if (GetFileTitle()!=NULL)
 			return GetFileTitle();
 		else
 			return GetName();		
-	case CLocateDlg::InFolder:
+	case InFolder:
 		return GetParent();
-	case CLocateDlg::FullPath:
+	case FullPath:
 		return GetPath();
-	case CLocateDlg::FileSize:
+	case FileSize:
 		ISDLGTHREADOK
 		if (GetFileSizeLo()==DWORD(-1))
 			return const_cast<LPWSTR>(szwEmpty);
@@ -99,64 +99,64 @@ inline LPWSTR CLocatedItem::GetDetailText(CLocateDlg::DetailType nDetailType) co
 			delete[] g_szwBuffer;
 		return (g_szwBuffer=((CLocateApp*)GetApp())->FormatFileSizeString(
 			GetFileSizeLo(),GetFileSizeHi()));
-	case CLocateDlg::FileType:
+	case FileType:
 		if (GetType()==NULL)
 			return const_cast<LPWSTR>(szwEmpty);
 		return GetType();
-	case CLocateDlg::DateModified:
+	case DateModified:
 		ISDLGTHREADOK
 		if (g_szwBuffer!=NULL)
 			delete[] g_szwBuffer;
 		return (g_szwBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
 			GetModifiedDate(),GetModifiedTime()));
-	case CLocateDlg::DateCreated:
+	case DateCreated:
 		ISDLGTHREADOK
 		if (g_szwBuffer!=NULL)
 			delete[] g_szwBuffer;
 		return (g_szwBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
 			GetCreatedDate(),GetCreatedTime()));
-	case CLocateDlg::DateAccessed:
+	case DateAccessed:
 		ISDLGTHREADOK
 		if (g_szwBuffer!=NULL)
 			delete[] g_szwBuffer;
 		return (g_szwBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
 			GetAccessedDate(),GetAccessedTime()));
-	case CLocateDlg::Attributes:
+	case Attributes:
 		return FormatAttributes();				
-	case CLocateDlg::Owner:
-	case CLocateDlg::ShortFileName:
-	case CLocateDlg::ShortFilePath:
-	case CLocateDlg::MD5sum:
-	case CLocateDlg::Author:
-	case CLocateDlg::Title:
-	case CLocateDlg::Subject:
-	case CLocateDlg::Category:
-	case CLocateDlg::Comments:
-	case CLocateDlg::Description:
-	case CLocateDlg::FileVersion:
-	case CLocateDlg::ProductName:
-	case CLocateDlg::ProductVersion:
+	case Owner:
+	case ShortFileName:
+	case ShortFilePath:
+	case MD5sum:
+	case Author:
+	case Title:
+	case Subject:
+	case Category:
+	case Comments:
+	case Description:
+	case FileVersion:
+	case ProductName:
+	case ProductVersion:
 		{
 			LPWSTR ret=GetExtraText(nDetailType);
 			if (ret==NULL)
 				return const_cast<LPWSTR>(szwEmpty);
 			return ret;
 		}
-	case CLocateDlg::Pages:
+	case Pages:
 		return FormatPages();
-	case CLocateDlg::ImageDimensions:
+	case ImageDimensions:
 		return FormatImageInformation();				
-	case CLocateDlg::Database:
+	case Database:
 		return const_cast<LPWSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetName());
-	case CLocateDlg::DatabaseDescription:
+	case DatabaseDescription:
 		return const_cast<LPWSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetDescription());
-	case CLocateDlg::DatabaseArchive:
+	case DatabaseArchive:
 		return const_cast<LPWSTR>(GetLocateApp()->GetDatabase(GetDatabaseID())->GetArchiveName());
-	case CLocateDlg::VolumeLabel:
+	case VolumeLabel:
 		return const_cast<LPWSTR>(CLocateDlg::GetDBVolumeLabel(GetDatabaseID(),GetRootID()));
-	case CLocateDlg::VolumeSerial:
+	case VolumeSerial:
 		return const_cast<LPWSTR>(CLocateDlg::GetDBVolumeSerial(GetDatabaseID(),GetRootID()));
-	case CLocateDlg::VolumeFileSystem:
+	case VolumeFileSystem:
 		return const_cast<LPWSTR>(CLocateDlg::GetDBVolumeFileSystem(GetDatabaseID(),GetRootID()));
 	}
 	return const_cast<LPWSTR>(szwEmpty);
@@ -224,7 +224,7 @@ inline BOOL CLocatedItem::ShouldUpdateParentIcon2() const
 	return !(dwFlags&LITEM_PARENTICONOK); 
 }
 
-inline BOOL CLocatedItem::ShouldUpdateExtra(CLocateDlg::DetailType nDetail) const
+inline BOOL CLocatedItem::ShouldUpdateExtra(DetailType nDetail) const
 {
 	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
 		return FALSE;
@@ -332,7 +332,7 @@ inline void CLocatedItem::UpdateParentIcon()
 }
 
 
-inline void CLocatedItem::ReFresh(CArray<CLocateDlg::DetailType>& aDetails,BOOL& bReDraw)
+inline void CLocatedItem::ReFresh(CArray<DetailType>& aDetails,BOOL& bReDraw)
 {
 	ItemDebugFormatMessage4("CLocatedItem::ReFresh BEGIN, item=%s flags=%X",GetName(),GetFlags(),0,0);
 
@@ -353,7 +353,7 @@ inline void CLocatedItem::ReFresh(CArray<CLocateDlg::DetailType>& aDetails,BOOL&
 	ItemDebugFormatMessage4("CLocatedItem::ReFresh END, item=%s flags=%X",GetName(),GetFlags(),0,0);
 }
 
-inline void CLocatedItem::ReFresh(CArray<CLocateDlg::DetailType>& aDetails,int* pUpdated)
+inline void CLocatedItem::ReFresh(CArray<DetailType>& aDetails,int* pUpdated)
 {
 	ItemDebugFormatMessage4("CLocatedItem::ReFresh BEGIN, item=%s flags=%X",GetName(),GetFlags(),0,0);
 	
@@ -379,7 +379,7 @@ inline void CLocatedItem::ReFresh(CArray<CLocateDlg::DetailType>& aDetails,int* 
 
 inline BOOL CLocatedItem::GetImageDimensions(SIZE& dim) const
 {
-	ExtraInfo* pInfo=GetFieldForType(CLocateDlg::ImageDimensions);
+	ExtraInfo* pInfo=GetFieldForType(ImageDimensions);
 	if (pInfo!=NULL)
 	{
 		dim=pInfo->szImageDimension;
@@ -390,7 +390,7 @@ inline BOOL CLocatedItem::GetImageDimensions(SIZE& dim) const
 
 inline int CLocatedItem::GetImageDimensionsProduct() const
 {
-	ExtraInfo* pInfo=GetFieldForType(CLocateDlg::ImageDimensions);
+	ExtraInfo* pInfo=GetFieldForType(ImageDimensions);
 	if (pInfo!=NULL)
 		return pInfo->szImageDimension.cx*pInfo->szImageDimension.cy;
 	return 0;
@@ -398,14 +398,14 @@ inline int CLocatedItem::GetImageDimensionsProduct() const
 
 inline int CLocatedItem::GetPages() const
 {
-	ExtraInfo* pInfo=GetFieldForType(CLocateDlg::Pages);
+	ExtraInfo* pInfo=GetFieldForType(Pages);
 	if (pInfo!=NULL)
 		return pInfo->nPages;
 	return 0;
 }
 
 
-inline LPWSTR CLocatedItem::GetExtraText(CLocateDlg::DetailType nDetail) const
+inline LPWSTR CLocatedItem::GetExtraText(DetailType nDetail) const
 {
 	ExtraInfo* pInfo=GetFieldForType(nDetail);
 	if (pInfo!=NULL)
@@ -420,21 +420,21 @@ inline void CLocatedItem::ExtraSetUpdateWhenFileSizeChanged()
 	{
 		switch (pTmp->nType)
 		{
-		case CLocateDlg::Owner:
-		case CLocateDlg::ImageDimensions:
-		case CLocateDlg::Author:
-		case CLocateDlg::Title:
-		case CLocateDlg::Subject:
-		case CLocateDlg::Category:
-		case CLocateDlg::Comments:
-		case CLocateDlg::Pages:
-		case CLocateDlg::Description:
-		case CLocateDlg::FileVersion:
-		case CLocateDlg::ProductName:
-		case CLocateDlg::ProductVersion:
+		case Owner:
+		case ImageDimensions:
+		case Author:
+		case Title:
+		case Subject:
+		case Category:
+		case Comments:
+		case Pages:
+		case Description:
+		case FileVersion:
+		case ProductName:
+		case ProductVersion:
             pTmp->bShouldUpdate=TRUE;
 			break;
-		case CLocateDlg::MD5sum:
+		case MD5sum:
 			if (GetLocateDlg()->GetFlags()&CLocateDlg::fgLVComputeMD5Sums)
 				pTmp->bShouldUpdate=TRUE;
 			break;
@@ -454,7 +454,7 @@ inline void CLocatedItem::DeleteAllExtraFields()
 } 
 
 
-inline CLocatedItem::ExtraInfo::ExtraInfo(CLocateDlg::DetailType nType_)
+inline CLocatedItem::ExtraInfo::ExtraInfo(DetailType nType_)
 :	nType(nType_),pNext(NULL),szText(NULL),bShouldUpdate(TRUE)
 {
 }
@@ -463,19 +463,19 @@ inline CLocatedItem::ExtraInfo::~ExtraInfo()
 {
 	switch (nType)
 	{
-	case CLocateDlg::ShortFileName:
-	case CLocateDlg::ShortFilePath:
-	case CLocateDlg::Owner:
-	case CLocateDlg::MD5sum:
-	case CLocateDlg::Author:
-	case CLocateDlg::Title:
-	case CLocateDlg::Subject:
-	case CLocateDlg::Category:
-	case CLocateDlg::Comments:
-	case CLocateDlg::Description:
-	case CLocateDlg::FileVersion:
-	case CLocateDlg::ProductName:
-	case CLocateDlg::ProductVersion:
+	case ShortFileName:
+	case ShortFilePath:
+	case Owner:
+	case MD5sum:
+	case Author:
+	case Title:
+	case Subject:
+	case Category:
+	case Comments:
+	case Description:
+	case FileVersion:
+	case ProductName:
+	case ProductVersion:
 		if (szText!=NULL && szText!=szwEmpty)
 			delete[] szText;
 		break;
@@ -483,7 +483,7 @@ inline CLocatedItem::ExtraInfo::~ExtraInfo()
 }
 
 
-inline CLocatedItem::ExtraInfo* CLocatedItem::GetFieldForType(CLocateDlg::DetailType nType) const
+inline CLocatedItem::ExtraInfo* CLocatedItem::GetFieldForType(DetailType nType) const
 {
 	ExtraInfo* pTmp=pFirstExtraInfo;
 	while (pTmp!=NULL)
@@ -497,7 +497,7 @@ inline CLocatedItem::ExtraInfo* CLocatedItem::GetFieldForType(CLocateDlg::Detail
 
 
 
-inline CLocatedItem::ExtraInfo* CLocatedItem::CreateExtraInfoField(CLocateDlg::DetailType nType)
+inline CLocatedItem::ExtraInfo* CLocatedItem::CreateExtraInfoField(DetailType nType)
 {
 	/* First check if field already exists */
 	ExtraInfo* pField=GetFieldForType(nType);

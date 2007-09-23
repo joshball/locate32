@@ -208,7 +208,7 @@ public:
 
 		};
 
-		enum PriorityFlags {
+		enum Priority {
 			priorityDontChange=0,
 			priorityHigh=HIGH_PRIORITY_CLASS,
 			priorityAbove=ABOVE_NORMAL_PRIORITY_CLASS,
@@ -216,6 +216,14 @@ public:
 			priorityBelow=BELOW_NORMAL_PRIORITY_CLASS,
 			priorityIdle=IDLE_PRIORITY_CLASS,
 			priorityRealTime=REALTIME_PRIORITY_CLASS
+		};
+
+		enum Controls {
+			None,
+			Named,
+			Type,
+			LookIn,
+			Results
 		};
 
 
@@ -230,7 +238,8 @@ public:
 		LPWSTR m_pSettingBranch;
 
 		DWORD m_nStatus;
-		DWORD m_nPriority;
+		Priority m_nPriority;
+		Controls m_nActivateControl;
 		BYTE m_nStartup;
 		DWORD m_dwMaxFoundFiles;
 		DWORD m_dwMaxFileSize;
@@ -241,7 +250,7 @@ public:
 		DWORD m_dwMinDate;
 		char m_cMaxDateType;
 		char m_cMinDateType;
-		BYTE m_nSorting;
+		BYTE m_nSorting; 
 		SHORT m_nActivateInstance; // 0 not set, -1 first instance, X instance no
 
 		CArrayFP<CDatabase*> m_aDatabases;
@@ -470,7 +479,8 @@ inline CLocateApp::CStartData::CStartData()
     m_nSorting(BYTE(-1)),m_nPriority(priorityDontChange),
 	m_pStartPath(NULL),m_pStartString(NULL),
 	m_pTypeString(NULL),m_pFindText(NULL),m_pLoadPreset(NULL),
-	m_nActivateInstance(0),m_pSettingBranch(NULL)
+	m_nActivateInstance(0),m_pSettingBranch(NULL),
+	m_nActivateControl(None)
 { 
 }
 

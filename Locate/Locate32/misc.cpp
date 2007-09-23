@@ -148,7 +148,7 @@ void CDateTimeCtrlEx::CreateControls()
 			rcClientRect.left,rcClientRect.top,rcClientRect.right,rcClientRect.bottom,
 			*this,(HMENU)IDC_RELATIVEDATESPIN,GetInstanceHandle(),NULL);
 		::SendMessage(m_hSpinWnd,UDM_SETBUDDY,WPARAM(m_hEditWnd),0);
-		::SendMessage(m_hSpinWnd,UDM_SETRANGE,0,1000);
+		::SendMessage(m_hSpinWnd,UDM_SETRANGE,0,UD_MAXVAL);
 	}
 
 	

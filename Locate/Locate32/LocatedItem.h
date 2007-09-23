@@ -46,11 +46,11 @@ private:
 	void ClearData();
 
 public:
-	void ReFresh(CArray<CLocateDlg::DetailType>& aDetails,BOOL& bReDraw);
-	void ReFresh(CArray<CLocateDlg::DetailType>& aDetails,int* pUpdated);
+	void ReFresh(CArray<DetailType>& aDetails,BOOL& bReDraw);
+	void ReFresh(CArray<DetailType>& aDetails,int* pUpdated);
 	
 
-	void UpdateByDetail(CLocateDlg::DetailType nDetail);
+	void UpdateByDetail(DetailType nDetail);
 	void UpdateFileTitle();
 	void UpdateIcon();
 	void UpdateParentIcon();
@@ -79,7 +79,7 @@ public:
 	BOOL RemoveFlagsForChanged(); // Returing ok if changed
 	void CheckIfDeleted();
 
-	BOOL ShouldUpdateByDetail(CLocateDlg::DetailType nDetail) const;
+	BOOL ShouldUpdateByDetail(DetailType nDetail) const;
 	BOOL ShouldUpdateFileTitle() const;
 	BOOL ShouldUpdateFilename() const;
 	BOOL ShouldUpdateType() const;
@@ -91,7 +91,7 @@ public:
 	BOOL ShouldUpdateParentIcon() const;
 	BOOL ShouldUpdateParentIcon2() const;
 	
-	BOOL ShouldUpdateExtra(CLocateDlg::DetailType nDetail) const;
+	BOOL ShouldUpdateExtra(DetailType nDetail) const;
 
 	
 	// Accessors
@@ -121,7 +121,7 @@ public:
 	LPWSTR GetFileTitleSafe() const { if (szFileTitle==NULL) return szName; return szFileTitle; }
 	LPWSTR GetType() const { return szType; }
 	
-	LPWSTR GetDetailText(CLocateDlg::DetailType nDetailType) const;
+	LPWSTR GetDetailText(DetailType nDetailType) const;
 	LPWSTR GetToolTipText() const;
 
 
@@ -142,7 +142,7 @@ public:
 	BOOL GetImageDimensions(SIZE& dim) const;
 	int GetImageDimensionsProduct() const;
 	int GetPages() const;
-	LPWSTR GetExtraText(CLocateDlg::DetailType nDetailType) const; 
+	LPWSTR GetExtraText(DetailType nDetailType) const; 
 	void ExtraSetUpdateWhenFileSizeChanged();
 	void DeleteAllExtraFields();
     BOOL IsItemShortcut() const;
@@ -182,12 +182,12 @@ private:
 
 	/* For extra field i.e. fields not obtained from db */
 	struct ExtraInfo {
-		ExtraInfo(CLocateDlg::DetailType nType);
+		ExtraInfo(DetailType nType);
 		~ExtraInfo();
 		
 		BOOL ShouldUpdate() const;
 
-		CLocateDlg::DetailType nType;
+		DetailType nType;
 		union {
 			SIZE szImageDimension;
 			WCHAR* szText;
@@ -200,9 +200,9 @@ private:
 	};
 	ExtraInfo* pFirstExtraInfo;
 
-	void DeleteExtraInfoField(CLocateDlg::DetailType nType);
-	ExtraInfo* CreateExtraInfoField(CLocateDlg::DetailType nType);
-	ExtraInfo* GetFieldForType(CLocateDlg::DetailType nType) const;
+	void DeleteExtraInfoField(DetailType nType);
+	ExtraInfo* CreateExtraInfoField(DetailType nType);
+	ExtraInfo* GetFieldForType(DetailType nType) const;
 	
 
 };

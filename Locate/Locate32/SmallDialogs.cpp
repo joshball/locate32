@@ -25,7 +25,7 @@ BOOL CSelectColumnsDlg::OnInitDialog(HWND hwndFocus)
 	{
 		m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem,LPSTR_TEXTCALLBACK,0,0,0,
 			LPARAM(new ColumnItem(m_aSelectedCols[nItem],
-			(CLocateDlg::DetailType)m_aIDs[m_aSelectedCols[nItem]],
+			(DetailType)m_aIDs[m_aSelectedCols[nItem]],
 			pDetails[m_aIDs[m_aSelectedCols[nItem]]].nString,
 			m_aWidths[m_aSelectedCols[nItem]],
 			m_aAligns[m_aSelectedCols[nItem]],m_aActions[m_aSelectedCols[nItem]])));
@@ -38,7 +38,7 @@ BOOL CSelectColumnsDlg::OnInitDialog(HWND hwndFocus)
 		{
 			m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem++,
 				LPSTR_TEXTCALLBACK,0,0,0,LPARAM(new ColumnItem(i,
-				(CLocateDlg::DetailType)m_aIDs[i],
+				(DetailType)m_aIDs[i],
 				pDetails[m_aIDs[i]].nString,
 				m_aWidths[i],m_aAligns[i],m_aActions[i])));
 			m_pList->SetCheckState(nItem,FALSE);
@@ -654,12 +654,12 @@ void CSelectColumnsDlg::OnReset()
 	CLocateDlg::ViewDetails* pDetails=CLocateDlg::GetDefaultDetails();
 
 	int nItem=0,i;
-	for (i=0;i<CLocateDlg::TypeCount;i++)
+	for (i=0;i<TypeCount;i++)
 	{
 		if (pDetails[i].bShow)
 		{
 			if (m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem,LPSTR_TEXTCALLBACK,0,0,0,
-				LPARAM(new ColumnItem(i,CLocateDlg::DetailType(i),
+				LPARAM(new ColumnItem(i,DetailType(i),
 				pDetails[i].nString,pDetails[i].nWidth,
 				(ColumnItem::Align)pDetails[i].nAlign,m_aActions[i])))>=0)
 			{
@@ -667,12 +667,12 @@ void CSelectColumnsDlg::OnReset()
 			}
 		}
 	}
-	for (i=0;i<CLocateDlg::TypeCount;i++)
+	for (i=0;i<TypeCount;i++)
 	{
 		if (!pDetails[i].bShow)
 		{
 			if (m_pList->InsertItem(LVIF_TEXT|LVIF_PARAM,nItem,LPSTR_TEXTCALLBACK,0,0,0,
-				LPARAM(new ColumnItem(i,CLocateDlg::DetailType(i),
+				LPARAM(new ColumnItem(i,DetailType(i),
 				pDetails[i].nString,pDetails[i].nWidth,
 				(ColumnItem::Align)pDetails[i].nAlign,m_aActions[i])))>0)
 			{

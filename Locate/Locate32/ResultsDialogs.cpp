@@ -76,11 +76,11 @@ BOOL CResults::Create(CListCtrl* pList,int* pDetails,int nDetails)
 			for (int i=0;i<nDetails;i++)
 			{
 				// Updating if necessary
-				if (pItem->ShouldUpdateByDetail((CLocateDlg::DetailType)m_pDetails[i]))
-					pItem->UpdateByDetail((CLocateDlg::DetailType)m_pDetails[i]);
+				if (pItem->ShouldUpdateByDetail((DetailType)m_pDetails[i]))
+					pItem->UpdateByDetail((DetailType)m_pDetails[i]);
 				
 				// Retrieving detail text
-				LPWSTR szDetail=pItem->GetDetailText((CLocateDlg::DetailType)m_pDetails[i]);
+				LPWSTR szDetail=pItem->GetDetailText((DetailType)m_pDetails[i]);
 				DWORD dwLength=(DWORD)istrlenw(szDetail);
 
 				// Checking length
@@ -491,9 +491,9 @@ CSaveResultsDlg::CSaveResultsDlg()
 	SetTitle(ID2W(IDS_SAVERESULTS));
 	
 	// Setting default details
-	m_aDetails.Add(CLocateDlg::FullPath);
-	m_aDetails.Add(CLocateDlg::FileSize);
-	m_aDetails.Add(CLocateDlg::DateModified);
+	m_aDetails.Add(FullPath);
+	m_aDetails.Add(FileSize);
+	m_aDetails.Add(DateModified);
 }
 
 CSaveResultsDlg::~CSaveResultsDlg()
@@ -580,7 +580,7 @@ BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
 		m_pList->SetCheckState(nItem,TRUE);
 	}
 
-	for (int nDetail=0;nDetail<=CLocateDlg::LastType;nDetail++)
+	for (int nDetail=0;nDetail<=LastType;nDetail++)
 	{
 		if (m_aDetails.Find(nDetail)==-1)
 		{
@@ -674,7 +674,7 @@ BOOL CSaveResultsDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 	case LVN_GETDISPINFO:
 		{
 			LV_DISPINFO *pLvdi=(LV_DISPINFO *)pNm;
-			if (pLvdi->item.lParam<=CLocateDlg::LastType)
+			if (pLvdi->item.lParam<=LastType)
 			{
 				if (g_szBuffer!=NULL)
 					delete[] g_szBuffer;
@@ -687,7 +687,7 @@ BOOL CSaveResultsDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 	case LVN_GETDISPINFOW:
 		{
 			LV_DISPINFOW *pLvdi=(LV_DISPINFOW*)pNm;
-			if (pLvdi->item.lParam<=CLocateDlg::LastType)
+			if (pLvdi->item.lParam<=LastType)
 			{
 				if (g_szwBuffer!=NULL)
 					delete[] g_szwBuffer;

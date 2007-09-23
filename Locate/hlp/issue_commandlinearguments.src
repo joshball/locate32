@@ -10,6 +10,8 @@ CONTENT=
 <TR><TD width=10%>-p path</TD><TD width=90%>put 'path' to 'Look in' field (checks also that path is correct)</TD></TR>
 <TR><TD width=10%>-t type</TD><TD width=90%>put 'type' to 'Extensions' field</TD></TR>
 <TR><TD width=10%>-r</TD><TD width=90%>start locating when Locate32 is opened</TD></TR>
+<TR><TD width=10%>-Ax</TD><TD width=90%>Acticate control, x can be 'n' (Named), 
+'t' (Extentions), 'l' (Look In), or 'r' (results list).</TD></TR>
 <TR><TD width=10%>-c</TD><TD width=90%>put clipboard content to 'Named field'</TD></TR>
 <TR><TD width=10%>-s</TD><TD width=90%>leave locate32 background when Locate dialog is closed</TD></TR>
 <TR><TD width=10%>-S</TD><TD width=90%>start locate32 to background mode (does not open Locate dialog)</TD></TR>

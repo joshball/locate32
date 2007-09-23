@@ -32,7 +32,7 @@ public:
 	struct ColumnItem 
 	{
 		
-		CLocateDlg::DetailType m_nType;
+		DetailType m_nType;
 		int m_nCol;
 		int m_nWidth;
 		CStringW m_strName;
@@ -43,7 +43,7 @@ public:
 			Center=LVCFMT_CENTER
 		} m_nAlign;
 
-		ColumnItem(int nCol,CLocateDlg::DetailType nType,int nResourceID,
+		ColumnItem(int nCol,DetailType nType,int nResourceID,
 			int nWidth,Align nAlign,CSubAction** pActions);
 
 		CSubAction** m_pActions;

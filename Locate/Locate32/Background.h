@@ -82,7 +82,7 @@ public:
 	void StopWaiting();
 	BOOL IsWaiting() const;
 
-	void AddToUpdateList(CLocatedItem* pItem, int iItem,CLocateDlg::DetailType nDetail);
+	void AddToUpdateList(CLocatedItem* pItem, int iItem,DetailType nDetail);
 	DWORD GetUpdateListSize() const;
 
 public:
@@ -92,11 +92,11 @@ public:
 	struct Item{
 		CLocatedItem* m_pItem;
 		int m_iItem;
-		CArray<CLocateDlg::DetailType> m_aDetails;
+		CArray<DetailType> m_aDetails;
 		
 		Item() {};
 		Item(CLocatedItem* pItem, int iItem);
-		Item(CLocatedItem* pItem, int iItem,CLocateDlg::DetailType nDetail);
+		Item(CLocatedItem* pItem, int iItem,DetailType nDetail);
 		
 	};
 	
@@ -271,7 +271,7 @@ inline CBackgroundUpdater::Item::Item(CLocatedItem* pItem, int iItem)
 {
 }
 
-inline CBackgroundUpdater::Item::Item(CLocatedItem* pItem, int iItem,CLocateDlg::DetailType nDetail)
+inline CBackgroundUpdater::Item::Item(CLocatedItem* pItem, int iItem,DetailType nDetail)
 :	m_pItem(pItem),m_iItem(iItem)
 {
 	m_aDetails.Add(nDetail);

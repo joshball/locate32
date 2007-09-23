@@ -1,7 +1,7 @@
 To add a new column to the result list, do the followg tasks:
 
 
-1. add a field to CLocateDlg::DetailType enumeration, change also LastType
+1. add a field to DetailType enumeration, change also LastType
 
 2. a new resource string: ID to lan_resources.h file (IDS_LISTXXXX), line to 
 lres_base.rc and english.rlf files
