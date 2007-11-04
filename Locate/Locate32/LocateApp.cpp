@@ -120,9 +120,9 @@ BOOL CLocateApp::InitInstance()
 	while (*pCommandLine==L' ') pCommandLine++;
 	
 	DebugFormatMessage("CommandLine: %S",pCommandLine);
+	InitCommonRegKey(pCommandLine);
 	ParseParameters(pCommandLine,m_pStartData);
 
-	InitCommonRegKey();
 
 
 	m_nStartup=m_pStartData->m_nStartup;
@@ -267,6 +267,16 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 	{
 		switch(lpCmdLine[++idx])
 		{
+		case L'X': // settings branch, ignore
+			idx++;
+			if (lpCmdLine[idx]==L':')
+				idx++;
+			while(lpCmdLine[idx]==L' ') idx++;
+			while(lpCmdLine[idx]!=L' ' && lpCmdLine[idx]!='\0') idx++;
+
+			if (lpCmdLine[idx]=='\0')
+				return TRUE;
+			break;		
 		case L'-':
 			if (lpCmdLine[++idx]!=L'\0')
 			{
@@ -275,17 +285,6 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				ChangeAndAlloc(pStartData->m_pStartString,lpCmdLine+idx);
 			}
 			return TRUE;
-		case L'X': // settings branch
-			idx++;
-			if (lpCmdLine[idx]==L':')
-				idx++;
-			while(lpCmdLine[idx]==L' ') idx++;
-			temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
-			ChangeAndAlloc(pStartData->m_pSettingBranch,lpCmdLine+idx,temp);
-			if (temp<0)
-				return TRUE;
-			idx+=temp;
-			break;				
 		case L'P': // put 'path' to 'Look in' field
 			idx++;
 			if (lpCmdLine[idx]==L':')
@@ -950,6 +949,30 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 	}
 	if (lpCmdLine[idx]!=L'\0')
 		ChangeAndAlloc(pStartData->m_pStartString,lpCmdLine+idx);
+	return TRUE;
+}
+
+BOOL CLocateApp::ParseSettingsBranch(LPCWSTR lpCmdLine,LPWSTR& rpSettingBranch)
+{
+	for (int idx=0;lpCmdLine[idx]!='\0';idx++)
+	{
+		if ((lpCmdLine[idx]==L'/' || lpCmdLine[idx]==L'-') &&
+			lpCmdLine[idx+1]==L'X')
+		{
+			idx+=2;
+			if (lpCmdLine[idx]==L':')
+				idx++;
+			while(lpCmdLine[idx]==L' ') idx++;
+			
+			int temp=(int)FirstCharIndex(lpCmdLine+idx,L' ');
+			ChangeAndAlloc(rpSettingBranch,lpCmdLine+idx,temp);
+
+			if (temp<0)
+				return TRUE;
+			idx+=temp;
+		}
+	}
+	
 	return TRUE;
 }
 
@@ -4081,11 +4104,20 @@ BOOL CLocateAppWnd::RunStartupSchedules()
 	return bShouldBeCalledAgain;
 }
 
-BOOL CLocateApp::InitCommonRegKey()
+BOOL CLocateApp::InitCommonRegKey(LPCWSTR lpCmdLine)
 {
-	m_szCommonRegKey=ReadIniFile(&m_szCommonRegFile,
-		m_pStartData!=NULL?W2A(m_pStartData->m_pSettingBranch):NULL,m_bFileIsReg);
+	LPWSTR pSettingBranch=NULL;
+
+	// Parse parameters
+	ParseSettingsBranch(lpCmdLine,pSettingBranch);
+
 	
+	m_szCommonRegKey=ReadIniFile(&m_szCommonRegFile,
+		pSettingBranch!=NULL?W2A(pSettingBranch):NULL,m_bFileIsReg);
+	
+	if (pSettingBranch!=NULL)
+		delete[] pSettingBranch;
+
 	if (m_szCommonRegKey!=NULL)
 	{
 		if (m_szCommonRegFile!=NULL)

@@ -4727,12 +4727,12 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(pDistInfo->item.iItem);
 			if (pItem==NULL)
 			{
-				// Not allowed for other fields than Name
+				// Unexpected situation
 				SetWindowLong(dwlMsgResult,FALSE);
 				return FALSE;
 			}
 
-			BOOL bOK;
+			BOOL bOK=FALSE;
 
 			if (pItem->GetFileTitle()!=pItem->GetName())
 			{
@@ -4744,16 +4744,18 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					return FALSE;
 				}
 				int nNewTitleLen=istrlen(pDistInfo->item.pszText);
+				if (nNewTitleLen>0)
+				{
+					ASSERT(pItem->GetNameLen()>=(UINT)nOldTitleLen);
 
-				ASSERT(pItem->GetNameLen()>=(UINT)nOldTitleLen);
-
-				WCHAR* pNewName=new WCHAR[nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1];
-				MemCopyAtoW(pNewName,pDistInfo->item.pszText,nNewTitleLen);
-				MemCopyW(pNewName+nNewTitleLen,pItem->GetName()+nOldTitleLen,pItem->GetNameLen()-nOldTitleLen+1);
-				bOK=pItem->ChangeName(this,pNewName,nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1);
-				delete[] pNewName;
+					WCHAR* pNewName=new WCHAR[nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1];
+					MemCopyAtoW(pNewName,pDistInfo->item.pszText,nNewTitleLen);
+					MemCopyW(pNewName+nNewTitleLen,pItem->GetName()+nOldTitleLen,pItem->GetNameLen()-nOldTitleLen+1);
+					bOK=pItem->ChangeName(this,pNewName,nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1);
+					delete[] pNewName;
+				}
 			}
-			else
+			else if (pDistInfo->item.pszText[0]!='\0')
 				bOK=pItem->ChangeName(this,A2W(pDistInfo->item.pszText));
 
 			
@@ -4779,12 +4781,12 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(pDistInfo->item.iItem);
 			if (pItem==NULL)
 			{
-				// Not allowed for other fields than Name
+				// This sould not happen
 				SetWindowLong(dwlMsgResult,FALSE);
 				return FALSE;
 			}
 
-			BOOL bOK;
+			BOOL bOK=FALSE;
 
 			if (pItem->GetFileTitle()!=pItem->GetName())
 			{
@@ -4796,16 +4798,18 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					return FALSE;
 				}
 				int nNewTitleLen=istrlen(pDistInfo->item.pszText);
+				if (nNewTitleLen>0)
+				{
+					ASSERT(pItem->GetNameLen()>=(UINT)nOldTitleLen);
 
-				ASSERT(pItem->GetNameLen()>=(UINT)nOldTitleLen);
-
-				WCHAR* pNewName=new WCHAR[nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1];
-				MemCopyW(pNewName,pDistInfo->item.pszText,nNewTitleLen);
-				MemCopyW(pNewName+nNewTitleLen,pItem->GetName()+nOldTitleLen,pItem->GetNameLen()-nOldTitleLen+1);
-				bOK=pItem->ChangeName(this,pNewName,nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1);
-				delete[] pNewName;
+					WCHAR* pNewName=new WCHAR[nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1];
+					MemCopyW(pNewName,pDistInfo->item.pszText,nNewTitleLen);
+					MemCopyW(pNewName+nNewTitleLen,pItem->GetName()+nOldTitleLen,pItem->GetNameLen()-nOldTitleLen+1);
+					bOK=pItem->ChangeName(this,pNewName,nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1);
+					delete[] pNewName;
+				}
 			}
-			else
+			else if (pDistInfo->item.pszText[0]!='\0')
 				bOK=pItem->ChangeName(this,pDistInfo->item.pszText);
 				
 

@@ -235,7 +235,7 @@ public:
 		LPWSTR m_pTypeString;
 		LPWSTR m_pFindText;
 		LPWSTR m_pLoadPreset;
-		LPWSTR m_pSettingBranch;
+		
 
 		DWORD m_nStatus;
 		Priority m_nPriority;
@@ -328,6 +328,7 @@ protected:
 	
 public:
 	static BOOL ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData);
+	static BOOL ParseSettingsBranch(LPCWSTR lpCmdLine,LPWSTR& rpSettingBranch);
 	static BOOL CALLBACK EnumLocateSTWindows(HWND hwnd,LPARAM lParam);
 
 	BOOL ActivateOtherInstances(LPCWSTR pCmdLine);
@@ -429,7 +430,7 @@ protected:
 
 
 
-	BOOL InitCommonRegKey();
+	BOOL InitCommonRegKey(LPCWSTR lpCmdLine=NULL);
 	void FinalizeCommonRegKey();
 
 	LPSTR m_szCommonRegKey;
@@ -479,7 +480,7 @@ inline CLocateApp::CStartData::CStartData()
     m_nSorting(BYTE(-1)),m_nPriority(priorityDontChange),
 	m_pStartPath(NULL),m_pStartString(NULL),
 	m_pTypeString(NULL),m_pFindText(NULL),m_pLoadPreset(NULL),
-	m_nActivateInstance(0),m_pSettingBranch(NULL),
+	m_nActivateInstance(0),
 	m_nActivateControl(None)
 { 
 }
@@ -496,8 +497,6 @@ inline CLocateApp::CStartData::~CStartData()
 		delete[] m_pFindText;
 	if (m_pLoadPreset!=NULL)
 		delete[] m_pLoadPreset;
-	if (m_pSettingBranch!=NULL)
-		delete[] m_pSettingBranch;
 
 }
 
