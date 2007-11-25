@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,7,11040
- PRODUCTVERSION 3,0,7,11040
+ FILEVERSION 3,0,7,11250
+ PRODUCTVERSION 3,0,7,11250
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 build 7.11040"
+            VALUE "FileVersion", "3.0 build 7.11250"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2007 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 build 7.11040"
+            VALUE "ProductVersion", "3.0 build 7.11250"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -448,7 +448,8 @@ BEGIN
                     WS_DISABLED
     GROUPBOX        "Schedule:",IDC_STATIC,2,3,283,
                     292
-    LTEXT           "",IDC_LASTRUN,7,269,205,24
+    LTEXT           "",IDC_LASTRUN,7,262,205,12
+	LTEXT           "Note that, to use scheduled updates, you need to keep Locate32.exe running. \nYou can also use Windows' own Task Scheduler, for example, with command: ""C:\Program Files\Locate\locate32"" -U.",IDC_STATIC,7,273,280,34
 END
 
 IDD_DATABASESETTINGS DIALOGEX 0, 0, 287, 301
@@ -542,16 +543,18 @@ CAPTION "Advanced database settings"
 FONT 8, "Tahoma", 0, 0, 0x1
 EXSTYLE WS_EX_CONTEXTHELP
 BEGIN
-	LTEXT           "Exclude files pattern (e.g., ""*.tmp;*~""):",10,10,9,248,8
-    EDITTEXT        IDC_EXCLUDEFILES,9,20,250,13,ES_AUTOHSCROLL
-    GROUPBOX        "Exclude files and directories:",IDC_STATIC,3,0,262,167
-    LTEXT           "Enter directory ('*' and '?' are allowed):",9,10,39,246,8
-    EDITTEXT        IDC_DIRECTORYNAME,9,51,187,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "&Browse",IDC_BROWSE,203,51,55,14
-    LTEXT           "Excluded directories:",IDC_STATIC,10,71,111,8
-    PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,125,69,64,13
-    PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,193,69,65,13
-    LISTBOX         IDC_DIRECTORIES,9,83,250,78,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+	GROUPBOX        "Exclude files and directories:",IDC_STATIC,3,0,262,167
+    LTEXT           "Include files pattern (e.g., ""*.doc;*.xls"", leave empty to include all):",IDC_STATIC,10,9,248,8
+    EDITTEXT        IDC_INCLUDEFILES,9,20,250,13,ES_AUTOHSCROLL
+    LTEXT           "Exclude files pattern (e.g., ""*.tmp;*~""):",IDC_STATIC,10,36,248,8
+    EDITTEXT        IDC_EXCLUDEFILES,9,49,250,13,ES_AUTOHSCROLL
+    LTEXT           "Enter directory ('*' and '?' are allowed):",IDC_STATIC,10,65,246,8
+    EDITTEXT        IDC_DIRECTORYNAME,9,77,187,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "&Browse",IDC_BROWSE,203,76,55,14
+    LTEXT           "Excluded directories:",IDC_STATIC,10,96,111,8
+    PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,125,94,64,13
+    PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,193,94,65,13
+    LISTBOX         IDC_DIRECTORIES,9,108,250,53,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Choose a drive or directory and give a name which is used in database:",IDC_STATIC,10,179,247,8
     CONTROL         "",IDC_FOLDERS,"SysListView32",LVS_REPORT | WS_BORDER | WS_TABSTOP |
                     LVS_SHAREIMAGELISTS | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,9,189,250,60,WS_EX_CLIENTEDGE
@@ -1290,7 +1293,7 @@ END
 STRINGTABLE 
 BEGIN
     IDS_ERRORCANNOTCREATE			"Cannot create file '%s'."
-    IDS_ERRORNODRIVES				"No any drives selected."
+    IDS_ERRORNODRIVES				"No drives selected."
     IDS_ERRORUNKNOWN				"Unknown error. Low of memory or corrupted database?"
     IDS_ERRORUNKNOWNOS				"Unknown error. Latest OS error: %s"
     IDS_ERRORUNKNOWNWRITEDB			" State: writing database to file '%s'."

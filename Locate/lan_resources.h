@@ -402,6 +402,7 @@
 #define IDC_DIRECTORYNAME               1136
 #define IDC_CLOSEBUTTONMINIMIZESWINDOW  1137
 #define IDC_EXCLUDEFILES                1137
+#define IDC_INCLUDEFILES                1138
 #define IDC_MINIMIZETOSYSTEMTRAY        1139
 #define IDC_REMEMBERSTATES              1140
 #define IDC_CLOSETOSYSTEMTRAY           1141

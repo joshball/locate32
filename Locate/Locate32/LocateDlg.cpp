@@ -8282,7 +8282,7 @@ void CLocateDlg::OnSelectDetails()
 }
 
 void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)
-{
+{	
 	// Loading preset first
 	if (pStartData->m_pLoadPreset!=NULL)
 		LoadPreset(pStartData->m_pLoadPreset);
@@ -10908,7 +10908,7 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCWSTR szPath)
 
 		EnterCriticalSection(&m_cBrowse);
 
-		if (m_pBrowse!=NULL && FileSystem::IsDirectory(szPath)) 
+		if (m_pBrowse!=NULL /* && FileSystem::IsDirectory(szPath) */) 
 		{
 			COMBOBOXEXITEMW ci;
 			SHFILEINFOW fi;

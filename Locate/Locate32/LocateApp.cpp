@@ -3715,10 +3715,13 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 		
 
 		EnterCriticalSection(&m_csAnimBitmaps);
-		m_nCurUpdateAnimBitmap++;
-		if (m_nCurUpdateAnimBitmap>12)
-			m_nCurUpdateAnimBitmap=0;
-		SetUpdateStatusInformation(m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]);
+		if (m_pUpdateAnimIcons!=NULL)
+		{
+			m_nCurUpdateAnimBitmap++;
+			if (m_nCurUpdateAnimBitmap>=COUNT_UPDATEANIMATIONS)
+				m_nCurUpdateAnimBitmap=0;
+			SetUpdateStatusInformation(m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]);
+		}
 		LeaveCriticalSection(&m_csAnimBitmaps);
 		break;
 	case ID_SYNCSCHEDULES:
@@ -3786,7 +3789,15 @@ DWORD CLocateAppWnd::OnActivateAnotherInstance(ATOM aCommandLine)
 			if (m_pLocateDlgThread!=NULL)
 			{
 				GetLocateDlg()->SetStartData(pStartData);
-				GetLocateDlg()->ShowWindow(swRestore);
+				
+				// Restore if minimized
+				WINDOWPLACEMENT wp;
+				wp.length=sizeof(WINDOWPLACEMENT);
+				GetLocateDlg()->GetWindowPlacement(&wp);
+				if (wp.showCmd==SW_SHOWMINIMIZED)
+					GetLocateDlg()->ShowWindow(swRestore);
+
+
 				GetLocateDlg()->SetActiveWindow();
 				m_pLocateDlgThread->m_pLocate->ForceForegroundAndFocus();
 

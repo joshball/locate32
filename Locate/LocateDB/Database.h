@@ -93,7 +93,9 @@ public:
 
 	LPSTR GetValidKey(DWORD dwUniqueNum=0) const; // free returned pointer with delete[]
 
+	LPCWSTR GetIncludedFiles() const;
 	LPCWSTR GetExcludedFiles() const;
+	void SetIncludedFiles(LPCWSTR szIncludedDirectories);
 	void SetExcludedFiles(LPCWSTR szExcludedDirectories);
 
 	const CArrayFAP<LPWSTR>& GetExcludedDirectories() const;
@@ -177,7 +179,8 @@ private:
 	ArchiveType m_ArchiveType;
 	LPWSTR m_szArchiveName;
 
-	LPWSTR m_szExcludedFiles;
+	LPWSTR m_szIncludedFiles; // Include files pattern, empty=include all
+	LPWSTR m_szExcludedFiles; // Exclude files pattern
 	CArrayFAP<LPWSTR> m_aExcludedDirectories;
 };
 
@@ -187,7 +190,7 @@ inline CDatabase::CDatabase()
 // Default values:
 :	m_szCreator(NULL),m_szDescription(NULL),m_szRoots(NULL),
 	m_wFlags(flagEnabled|flagGlobalUpdate|flagStopIfRootUnavailable),m_wThread(0),m_szArchiveName(NULL),
-	m_ArchiveType(archiveFile),m_wID(0),m_szExcludedFiles(NULL),m_szRootMaps(NULL)
+	m_ArchiveType(archiveFile),m_wID(0),m_szIncludedFiles(NULL),m_szExcludedFiles(NULL),m_szRootMaps(NULL)
 {
 	if (!IsUnicodeSystem())
 		m_wFlags|=flagAnsiCharset;
@@ -205,6 +208,8 @@ inline CDatabase::~CDatabase()
 		delete[] m_szArchiveName;
 	if (m_szRoots!=NULL)
 		delete[] m_szRoots;
+	if (m_szIncludedFiles!=NULL)
+		delete[] m_szIncludedFiles;
 	if (m_szExcludedFiles!=NULL)
 		delete[] m_szExcludedFiles;
 	if (m_szRootMaps!=NULL)
@@ -369,6 +374,16 @@ inline void CDatabase::SetArchiveType(ArchiveType nType)
 	m_ArchiveType=nType;
 }
 
+inline void CDatabase::SetIncludedFiles(LPCWSTR szIncludedDirectories)
+{
+	if (m_szIncludedFiles!=NULL)
+		delete[] m_szIncludedFiles;
+	if (szIncludedDirectories[0]!='\0')
+		m_szIncludedFiles=alloccopy(szIncludedDirectories);
+	else
+		m_szIncludedFiles=NULL;
+}
+
 inline void CDatabase::SetExcludedFiles(LPCWSTR szExcludedDirectories)
 {
 	if (m_szExcludedFiles!=NULL)
@@ -441,6 +456,11 @@ inline void CDatabase::SetFlag(DatabaseFlags nFlag,BOOL bSet)
 		m_wFlags|=nFlag;
 	else
 		m_wFlags&=~WORD(nFlag);
+}
+
+inline LPCWSTR CDatabase::GetIncludedFiles() const
+{
+	return m_szIncludedFiles;
 }
 
 inline LPCWSTR CDatabase::GetExcludedFiles() const

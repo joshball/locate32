@@ -19,6 +19,8 @@ CDatabase::CDatabase(CDatabase& src)
 		m_szDescription=alloccopy(m_szDescription);
 	if (m_szArchiveName!=NULL)
 		m_szArchiveName=alloccopy(m_szArchiveName);
+	if (m_szIncludedFiles!=NULL)
+		m_szIncludedFiles=alloccopy(m_szIncludedFiles);
 	if (m_szExcludedFiles!=NULL)
 		m_szExcludedFiles=alloccopy(m_szExcludedFiles);
 	if (m_szRootMaps!=NULL)
@@ -210,6 +212,11 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	}
 	*pPtr=L'\0';
 		
+	if (m_szIncludedFiles!=NULL)
+		RegKey.SetValue(L"Included Files",m_szIncludedFiles);
+	else
+		RegKey.SetValue("Included Files",szEmpty);
+
 	if (m_szExcludedFiles!=NULL)
 		RegKey.SetValue(L"Excluded Files",m_szExcludedFiles);
 	else
@@ -293,6 +300,14 @@ CDatabase* CDatabase::FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 		pDatabase->m_szRoots=new WCHAR[dwLength+1];
 		RegKey.QueryValue(L"Roots",pDatabase->m_szRoots,dwLength+1);
 		pDatabase->m_szRoots[dwLength]='\0';
+	}
+
+	// Included files
+	dwLength=RegKey.QueryValueLength("Included Files");
+	if (dwLength>1)
+	{
+		pDatabase->m_szIncludedFiles=new WCHAR[dwLength];
+		RegKey.QueryValue(L"Included Files",pDatabase->m_szIncludedFiles,dwLength);
 	}
 
 	// Excluded files
@@ -597,6 +612,11 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 					aRoots.RemoveAll();
 				else
 					aRoots.Add(sValue.GiveBuffer());
+				break;
+			case L'I':
+			case L'i':
+                if (pPtr[1]==L'F')
+					pDatabase->m_szIncludedFiles=sValue.GiveBuffer();
 				break;
 			case L'E':
 			case L'e':
@@ -1327,6 +1347,20 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 			str << L'$';
 			pStr++;
 		}
+	}
+
+	// Included files
+	if (m_szIncludedFiles!=NULL)
+	{
+		// Creator
+		str << L"IF:";
+		for (int i=0;m_szIncludedFiles[i]!=L'\0';i++)
+		{
+			if (m_szIncludedFiles[i]==L'$')
+				str << L'\\';
+			str << m_szIncludedFiles[i];
+		}
+		str << L'$';
 	}
 
 	// Excluded files

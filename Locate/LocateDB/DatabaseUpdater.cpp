@@ -20,7 +20,7 @@ CDatabaseUpdater::CDatabaseUpdater(LPCWSTR szDatabaseFile,LPCWSTR szAuthor,LPCWS
 	UpdDebugMessage("CDatabaseUpdater::CDatabaseUpdater(1)");
 
 	m_aDatabases.Add(new DBArchive(szDatabaseFile,CDatabase::archiveFile,
-		szAuthor,szComment,pszRoots,nNumberOfRoots,0,NULL,NULL,0,NULL));
+		szAuthor,szComment,pszRoots,nNumberOfRoots,0,NULL,NULL,NULL,0,NULL));
 }
 
 CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
@@ -648,6 +648,31 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 			throw ueStopped;
 		}
 
+		// Include files pattern used
+		if (m_aIncludeFilesPatternsA!=NULL && !_FindIsFolder(&fd))
+		{
+			BOOL bIncluded=FALSE;
+			LPSTR* pPtr=m_aExcludeFilesPatternsA;
+			while (*pPtr!=NULL)
+			{
+				if (ContainString(_FindGetName(&fd),*pPtr))
+				{
+					bIncluded=TRUE;
+					break;
+				}
+
+				pPtr++;
+			}
+
+			if (!bIncluded)
+			{
+				if(!_FindNextFile(hFind,&fd))
+					break;
+				continue;
+			}	
+		}
+
+		// Exclude files pattern used
 		if (m_aExcludeFilesPatternsA!=NULL && !_FindIsFolder(&fd))
 		{
 			BOOL bExcluded=FALSE;
@@ -670,6 +695,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 				continue;
 			}				
 		}
+
 
 		DWORD sNameLength=istrlen(_FindGetName(&fd));
 		ASSERT(sNameLength<256);
@@ -862,6 +888,31 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 		}
 
 
+		// Include files pattern used
+		if (m_aIncludeFilesPatternsW!=NULL && !_FindIsFolder(&fd))
+		{
+			BOOL bIncluded=FALSE;
+			LPWSTR* pPtr=m_aIncludeFilesPatternsW;
+			while (*pPtr!=NULL)
+			{
+				if (ContainString(_FindGetName(&fd),*pPtr))
+				{
+					bIncluded=TRUE;
+					break;
+				}
+
+				pPtr++;
+			}
+
+			if (!bIncluded)
+			{
+				if(!_FindNextFile(hFind,&fd))
+					break;
+				continue;
+			}				
+		}
+
+		// Exclude files pattern used
 		if (m_aExcludeFilesPatternsW!=NULL && !_FindIsFolder(&fd))
 		{
 			BOOL bExcluded=FALSE;
@@ -1306,7 +1357,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::WriteW(CFile* dbFile)
 CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 :	m_sAuthor(pDatabase->GetCreator()),m_sComment(pDatabase->GetDescription()),
 	m_nArchiveType(pDatabase->GetArchiveType()),m_pFirstRoot(NULL),m_nFlags(0),
-	m_szExtra1(NULL),m_szExtra2(NULL),m_aExcludeFilesPatternsA(NULL)
+	m_szExtra1(NULL),m_szExtra2(NULL),m_aIncludeFilesPatternsA(NULL),m_aExcludeFilesPatternsA(NULL)
 {
 	m_szArchive=alloccopy(pDatabase->GetArchiveName());
 	m_dwNameLength=(DWORD)wcslen(pDatabase->GetName());
@@ -1392,7 +1443,7 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 		m_dwExpectedFiles,m_dwExpectedDirectories);
 
 	// Excluded directories
-	ParseExcludedFilesAndDirectories(pDatabase->GetExcludedFiles(),
+	ParseFilePatternsAndExcludedDirectories(pDatabase->GetIncludedFiles(),pDatabase->GetExcludedFiles(),
 		pDatabase->GetExcludedDirectories().GetData(),pDatabase->GetExcludedDirectories().GetSize());
 	
 	m_szExtra2=pDatabase->ConstructExtraBlock();
@@ -1400,10 +1451,10 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 		
 CDatabaseUpdater::DBArchive::DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveType nArchiveType,
 											  LPCWSTR szAuthor,LPCWSTR szComment,LPCWSTR* pszRoots,DWORD nNumberOfRoots,BYTE nFlags,
-											  LPCWSTR szExcludedFiles,LPCWSTR* ppExcludedDirectories,int nExcludedDirectories,LPCWSTR szRootMaps)
+											  LPCWSTR szIncludedFiles,LPCWSTR szExcludedFiles,LPCWSTR* ppExcludedDirectories,int nExcludedDirectories,LPCWSTR szRootMaps)
 :	m_sAuthor(szAuthor),m_sComment(szComment),m_nArchiveType(nArchiveType),
 	m_szName(NULL),m_dwNameLength(0),m_nFlags(nFlags),
-	m_szExtra1(NULL),m_szExtra2(NULL),m_aExcludeFilesPatternsA(NULL)
+	m_szExtra1(NULL),m_szExtra2(NULL),m_aIncludeFilesPatternsA(NULL),m_aExcludeFilesPatternsA(NULL)
 {
 	m_szArchive=alloccopy(szArchiveName);
 	
@@ -1424,7 +1475,7 @@ CDatabaseUpdater::DBArchive::DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveT
 		CreateRootDirectories(pCurrent,pszRoots[i],istrlen(pszRoots[i]),szRootMaps);
 	pCurrent->m_pNext=NULL;
 
-	ParseExcludedFilesAndDirectories(szExcludedFiles,ppExcludedDirectories,nExcludedDirectories);
+	ParseFilePatternsAndExcludedDirectories(szIncludedFiles,szExcludedFiles,ppExcludedDirectories,nExcludedDirectories);
 
 	CDatabaseInfo::ReadFilesAndDirectoriesCount(m_nArchiveType,m_szArchive,
 		m_dwExpectedFiles,m_dwExpectedDirectories);
@@ -1456,15 +1507,30 @@ CDatabaseUpdater::DBArchive::~DBArchive()
 	if (m_szExtra2!=NULL)
 		delete[] m_szExtra2;
 
-	if (m_aExcludeFilesPatternsA!=NULL)
+	if (m_nFlags&Unicode)
 	{
-		if (m_nFlags&Unicode)
+		if (m_aIncludeFilesPatternsA!=NULL)
+		{
+			for (int i=0;m_aIncludeFilesPatternsW[i]!=NULL;i++)
+				delete[] m_aIncludeFilesPatternsW[i];
+			delete[] m_aIncludeFilesPatternsW;
+		}
+		if (m_aExcludeFilesPatternsA!=NULL)
 		{
 			for (int i=0;m_aExcludeFilesPatternsW[i]!=NULL;i++)
 				delete[] m_aExcludeFilesPatternsW[i];
 			delete[] m_aExcludeFilesPatternsW;
 		}
-		else
+	}
+	else
+	{
+		if (m_aIncludeFilesPatternsA!=NULL)
+		{
+			for (int i=0;m_aIncludeFilesPatternsA[i]!=NULL;i++)
+				delete[] m_aIncludeFilesPatternsA[i];
+			delete[] m_aIncludeFilesPatternsA;
+		}
+		if (m_aExcludeFilesPatternsA!=NULL)
 		{
 			for (int i=0;m_aExcludeFilesPatternsA[i]!=NULL;i++)
 				delete[] m_aExcludeFilesPatternsA[i];
@@ -1638,11 +1704,59 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 
 }
 
-void CDatabaseUpdater::DBArchive::ParseExcludedFilesAndDirectories(LPCWSTR szExcludedFiles,
-																   const LPCWSTR* ppExcludedDirs,
-																   int nExcludedDirectories)
+void CDatabaseUpdater::DBArchive::ParseFilePatternsAndExcludedDirectories(LPCWSTR szIncludedFiles,
+																		  LPCWSTR szExcludedFiles,
+																		  const LPCWSTR* ppExcludedDirs,
+																		  int nExcludedDirectories)
 {
-	// Parsing files
+	// Parsing included files
+	if (szIncludedFiles!=NULL)
+	{
+		if (szIncludedFiles[0]!='\0')
+		{
+			// Counting
+			DWORD nPatterns=1;
+			LPCWSTR pPtr;
+
+			for (pPtr=szIncludedFiles;*pPtr!='\0';pPtr++)
+			{
+				if (*pPtr==';' || *pPtr==',')
+					nPatterns++;
+			}
+
+			if (m_nFlags&Unicode)
+				m_aIncludeFilesPatternsW=new WCHAR*[nPatterns+1];
+			else
+				m_aIncludeFilesPatternsA=new CHAR*[nPatterns+1];
+
+			nPatterns=0;
+			pPtr=szIncludedFiles;
+
+			for (;;)
+			{
+				DWORD nLength;
+				for (nLength=0;pPtr[nLength]!='\0' && pPtr[nLength]!=';' && pPtr[nLength]!=',';nLength++);
+
+				if (m_nFlags&Unicode)
+					m_aIncludeFilesPatternsW[nPatterns]=alloccopy(pPtr,nLength);
+				else
+					m_aIncludeFilesPatternsA[nPatterns]=alloccopyWtoA(pPtr,nLength);
+				nPatterns++;
+
+				pPtr+=nLength;
+
+				if (*pPtr=='\0')
+					break;
+
+				pPtr++;
+			}
+
+			m_aIncludeFilesPatternsA[nPatterns]=NULL;
+		}
+	}
+
+
+	// Parsing excluded files
 	if (szExcludedFiles!=NULL)
 	{
 		if (szExcludedFiles[0]!='\0')
@@ -1688,14 +1802,16 @@ void CDatabaseUpdater::DBArchive::ParseExcludedFilesAndDirectories(LPCWSTR szExc
 		}
 	}
 
+	// Parsing excluded directories
 	if (nExcludedDirectories==0)
 	{
 		// Just place excluded files and exit
-		if (m_aExcludeFilesPatternsA!=NULL)
+		if (m_aIncludeFilesPatternsA!=NULL || m_aExcludeFilesPatternsA!=NULL)
 		{
 			CRootDirectory* pRoot=m_pFirstRoot;
 			while (pRoot!=NULL)
 			{
+				pRoot->m_aIncludeFilesPatternsA=m_aIncludeFilesPatternsA;
 				pRoot->m_aExcludeFilesPatternsA=m_aExcludeFilesPatternsA;
 				pRoot=pRoot->m_pNext;
 			}
@@ -1766,7 +1882,7 @@ void CDatabaseUpdater::DBArchive::ParseExcludedFilesAndDirectories(LPCWSTR szExc
 
 
 
-	// Then set excluded files and directories for roots
+	// Then set included/excluded files and directories for roots
 	CRootDirectory* pRoot=m_pFirstRoot;
 	
 	while (pRoot!=NULL)
@@ -1837,7 +1953,8 @@ void CDatabaseUpdater::DBArchive::ParseExcludedFilesAndDirectories(LPCWSTR szExc
 			continue;
 		}
 		
-		// Inserting excluded files pattern
+		// Inserting included/excluded files pattern
+		pRoot->m_aIncludeFilesPatternsA=m_aIncludeFilesPatternsA;
 		pRoot->m_aExcludeFilesPatternsA=m_aExcludeFilesPatternsA;
 			
 		// Next root

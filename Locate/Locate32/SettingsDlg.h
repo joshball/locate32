@@ -199,7 +199,8 @@ public:
 			class CAdvancedDialog : public CDialog
 			{
 			public:
-				CAdvancedDialog(LPCWSTR szFiles,
+				CAdvancedDialog(LPCWSTR szIncludedFiles,
+					LPCWSTR szExcludedFiles,
 					const CArrayFAP<LPWSTR>& rDirectories,
 					const CListCtrl* pCopyItemsFrom,
 					LPCWSTR szRootMaps);
@@ -222,8 +223,9 @@ public:
 				void EnableControlsAndSetMaps();
 
 			public:
-				CStringW m_sFiles;
-				CArrayFAP<LPWSTR> m_aDirectories;
+				CStringW m_sIncludedFiles;
+				CStringW m_sExcludedFiles;
+				CArrayFAP<LPWSTR> m_aExcludedDirectories;
 				CStringW m_sRootMaps;
 
 			protected:

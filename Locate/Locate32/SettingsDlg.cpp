@@ -3457,15 +3457,17 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::ItemUpOrDown(
 
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAdvanced()
 {
-	CAdvancedDialog edd(m_pDatabase->GetExcludedFiles(),
+	CAdvancedDialog edd(m_pDatabase->GetIncludedFiles(),
+		m_pDatabase->GetExcludedFiles(),
 		m_pDatabase->GetExcludedDirectories(),
 		IsDlgButtonChecked(IDC_CUSTOMDRIVES)?m_pList:NULL,
 		m_pDatabase->GetRootMaps());
 	
 	if (edd.DoModal(*this))
 	{
-		m_pDatabase->SetExcludedFiles(edd.m_sFiles);
-		m_pDatabase->SetExcludedDirectories(edd.m_aDirectories);
+		m_pDatabase->SetIncludedFiles(edd.m_sIncludedFiles);
+		m_pDatabase->SetExcludedFiles(edd.m_sExcludedFiles);
+		m_pDatabase->SetExcludedDirectories(edd.m_aExcludedDirectories);
 		m_pDatabase->SetRootMapsPtr(alloccopy(edd.m_sRootMaps));
 	}
 }
@@ -3856,11 +3858,12 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 	CDialog::OnInitDialog(hwndFocus);
 	CListBox List(GetDlgItem(IDC_DIRECTORIES));
 
-	SetDlgItemText(IDC_EXCLUDEFILES,m_sFiles);
+	SetDlgItemText(IDC_INCLUDEFILES,m_sIncludedFiles);
+	SetDlgItemText(IDC_EXCLUDEFILES,m_sExcludedFiles);
 
 	// Inserting strings
-	for (int i=0;i<m_aDirectories.GetSize();i++)
-		List.AddString(m_aDirectories[i]);
+	for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
+		List.AddString(m_aExcludedDirectories[i]);
 	
 	
 	// Initialize drive list
@@ -4079,7 +4082,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 
 	EnableControlsExclude();
 	EnableControlsAndSetMaps();
-	SetFocus(IDC_EXCLUDEFILES);
+	SetFocus(IDC_INCLUDEFILES);
 	return FALSE;
 }
 
@@ -4308,9 +4311,10 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 {
 	EndDialog(1);
 
-	GetDlgItemText(IDC_EXCLUDEFILES,m_sFiles);
+	GetDlgItemText(IDC_INCLUDEFILES,m_sIncludedFiles);
+	GetDlgItemText(IDC_EXCLUDEFILES,m_sExcludedFiles);
 	
-	m_aDirectories.RemoveAll();
+	m_aExcludedDirectories.RemoveAll();
 
 	CListBox Directories(GetDlgItem(IDC_DIRECTORIES));
 	int nCount=Directories.GetCount();
@@ -4319,7 +4323,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 		DWORD iLength=Directories.GetTextLen(i)+1;
 		WCHAR* pText=new WCHAR[max(iLength,2)];
 		Directories.GetText(i,pText);
-		m_aDirectories.Add(pText);
+		m_aExcludedDirectories.Add(pText);
 	}
 
 	m_sRootMaps.Empty();
