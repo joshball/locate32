@@ -333,6 +333,16 @@ public:
 		void LoadControlStates(CRegKey& RegKey);
 		void SaveControlStates(CRegKey& RegKey);
 
+
+		// Subclassing Type control
+		struct TypeControlData {
+			WNDPROC pOldWndProc;
+			CAdvancedDlg* pParent;
+		};
+		static LRESULT CALLBACK TypeWindowProc(HWND hWnd,UINT uMessage,
+			WPARAM wParam,LPARAM lParam);
+	
+
 	private:
 		struct FileType
 		{

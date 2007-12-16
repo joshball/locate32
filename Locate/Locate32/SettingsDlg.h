@@ -130,7 +130,7 @@ public:
         BOOL ListNotifyHandler(NMLISTVIEW *pNm);
 		static int CALLBACK ThreadSortProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
-		void OnNew(CDatabase* pDatabaseTempl=NULL);
+		BOOL OnNew(CDatabase* pDatabaseTempl=NULL);
 		void OnEdit();
 		void OnRemove();
 		void OnEnable(BOOL nEnable);
@@ -200,6 +200,7 @@ public:
 			{
 			public:
 				CAdvancedDialog(LPCWSTR szIncludedFiles,
+					LPCWSTR szIncludedDirectories,
 					LPCWSTR szExcludedFiles,
 					const CArrayFAP<LPWSTR>& rDirectories,
 					const CListCtrl* pCopyItemsFrom,
@@ -224,6 +225,7 @@ public:
 
 			public:
 				CStringW m_sIncludedFiles;
+				CStringW m_sIncludedDirectories;
 				CStringW m_sExcludedFiles;
 				CArrayFAP<LPWSTR> m_aExcludedDirectories;
 				CStringW m_sRootMaps;

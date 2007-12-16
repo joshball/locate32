@@ -1110,6 +1110,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateRoot(IDS_ADVSETLOOKINCOMBO,LookInItems),
 		CreateCheckBox(IDS_ADVSETDONTSAVELISTITEMS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::efNameDontSaveNameTypeAndDirectories,&m_pSettings->m_dwLocateDialogExtraFlags),
+		CreateCheckBox(IDS_ADVSETLOADTYPES,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLoadRegistryTypes,&m_pSettings->m_dwLocateDialogFlags),
 		CreateCheckBox(IDS_ADVSETTOPMOST,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgDialogTopMost,&m_pSettings->m_dwLocateDialogFlags),
 		NULL, // For transparency
@@ -1131,7 +1133,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	if (GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes")!=NULL)
 	{
 		// Needs at least Win2k
-		LocateDialogItems[6]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
+		LocateDialogItems[7]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nTransparency);
 		StatusTooltipItems[8]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,255),&m_pSettings->m_nToolTipTransparency);
@@ -2015,7 +2017,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnCommand(WORD wID,WORD wNotif
 	return CPropertyPage::OnCommand(wID,wNotifyCode,hControl);
 }
 
-void CSettingsProperties::CDatabasesSettingsPage::OnNew(CDatabase* pDatabaseTempl)
+BOOL CSettingsProperties::CDatabasesSettingsPage::OnNew(CDatabase* pDatabaseTempl)
 {
 	CWaitCursor wait;
 
@@ -2037,6 +2039,8 @@ void CSettingsProperties::CDatabasesSettingsPage::OnNew(CDatabase* pDatabaseTemp
 			iItem=m_pList->GetNextItem(iItem,LVNI_ALL);
 		}
 	}
+
+	BOOL bRet=FALSE;
 
 	if (dbd.DoModal(*this,LanguageSpecificResource))
 	{
@@ -2085,6 +2089,8 @@ void CSettingsProperties::CDatabasesSettingsPage::OnNew(CDatabase* pDatabaseTemp
 		m_pList->SetCheckState(li.iItem,bEnabled);
 
 		m_pList->EnsureVisible(li.iItem,FALSE);
+
+		bRet=TRUE;
 	}
 	else
 		delete dbd.m_pDatabase;
@@ -2092,6 +2098,8 @@ void CSettingsProperties::CDatabasesSettingsPage::OnNew(CDatabase* pDatabaseTemp
 
 	EnableButtons();
 	m_pList->SetFocus();
+
+	return bRet;
 }
 
 void CSettingsProperties::CDatabasesSettingsPage::OnEdit()
@@ -2384,15 +2392,23 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 	if (pDatabaseInfo!=NULL)
 	{
 		if (!pDatabaseInfo->sExtra2.IsEmpty())
+		{
+			DebugFormatMessage(L"DBIMPORT: db from extra2 block: %s",(LPCWSTR)pDatabaseInfo->sExtra2);
 			pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->sExtra2);
+		}
 		if (pDatabase==NULL && !pDatabaseInfo->sExtra1.IsEmpty())
+		{
+			DebugFormatMessage(L"DBIMPORT: db from extra block: %s",(LPCWSTR)pDatabaseInfo->sExtra1);
 			pDatabase=CDatabase::FromExtraBlock(pDatabaseInfo->sExtra1);
+		}
 
 		if (pDatabase!=NULL)
 		{
 			pDatabase->SetArchiveType(CDatabase::archiveFile);
 			pDatabase->SetArchiveName(Path);
 		}
+
+		delete pDatabaseInfo;
 	}
 	else
 	{
@@ -2407,6 +2423,10 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 			pFile->CloseOnDelete();
 
 			DWORD dwLength=pFile->GetLength();
+
+			if (dwLength<2)
+				throw 1;
+
 			pFileContent=new char[dwLength+1];
 			pFile->Read(pFileContent,dwLength);
 			pFileContent[dwLength]='\0';
@@ -2418,7 +2438,15 @@ void CSettingsProperties::CDatabasesSettingsPage::OnImport()
 		}
         
 		if (!bError)
-			pDatabase=CDatabase::FromExtraBlock(A2W(pFileContent));
+		{
+			if (pFileContent[1]=='\0')
+			{
+				// String is probable UNICODE
+				pDatabase=CDatabase::FromExtraBlock((LPCWSTR)pFileContent);
+			}
+			else			
+				pDatabase=CDatabase::FromExtraBlock(A2W(pFileContent));
+		}
 
 		if (pFile!=NULL)
 			delete pFile;
@@ -2504,12 +2532,11 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 
 	CFile* pFile=NULL;
 	LPWSTR pExtra=pDatabase->ConstructExtraBlock();
-	DWORD dwExtraLen=(int)istrlenw(pExtra);
-
+	
 	try {
 		pFile=new CFile(Path,CFile::defWrite,TRUE);
 		pFile->CloseOnDelete();
-		pFile->Write(pExtra,dwExtraLen);
+		pFile->Write(pExtra);
 	}
 	catch (...)
 	{
@@ -2926,6 +2953,8 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	// Setting local drives
 	if (m_pDatabase->GetRoots()!=NULL)
 	{
+		DebugMessage("DBDIALOG: CUSTOM DRIVES");
+
 		CheckDlgButton(IDC_CUSTOMDRIVES,1);
 		
 		EnableControls();
@@ -2941,12 +2970,21 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 				if (pPtr[0]=='\\' && pPtr[1]=='\\')
 				{
 					if (!FileSystem::IsDirectory(pPtr))
+					{
+						DebugFormatMessage(L"DBDIALOG: adding computer %s",pPtr);
 						AddComputerToList(pPtr);
+					}
 					else
+					{
+						DebugFormatMessage(L"DBDIALOG: adding UNC directory %s",pPtr);
 						AddDirectoryToList(pPtr,dwLength);
+					}
 				}			
 				else
+				{
+					DebugFormatMessage(L"DBDIALOG: adding computer %s",pPtr);
 					AddDirectoryToList(pPtr,dwLength);
+				}
 			}
 			else if (pPtr[1]==':')
 			{
@@ -2955,14 +2993,27 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 				root[0]=pPtr[0];
 				UINT uRet=FileSystem::GetDriveType(root);
 				if (uRet==DRIVE_UNKNOWN || uRet==DRIVE_NO_ROOT_DIR)
+				{
+					DebugFormatMessage(L"DBDIALOG: adding drive %s",pPtr);
 					AddDriveToList(root); // Unavailable
-				
+				}
+				else
+				{
+					DebugFormatMessage(L"DBDIALOG: drive %s is not valid, ignored",pPtr);
+				}
 			}
+			else
+			{
+				DebugFormatMessage(L"DBDIALOG: root %s too short and therefore ignored",pPtr);
+			}
+
 			pPtr+=dwLength+1;
 		}
 	}
 	else
 	{
+		DebugMessage("DBDIALOG: LOCAL DRIVES");
+
 		CheckDlgButton(IDC_LOCALDRIVES,1);
 		EnableDlgItem(IDC_FOLDERS,FALSE);
 		EnableDlgItem(IDC_ADDFOLDER,FALSE);
@@ -3458,6 +3509,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::ItemUpOrDown(
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAdvanced()
 {
 	CAdvancedDialog edd(m_pDatabase->GetIncludedFiles(),
+		m_pDatabase->GetIncludedDirectories(),
 		m_pDatabase->GetExcludedFiles(),
 		m_pDatabase->GetExcludedDirectories(),
 		IsDlgButtonChecked(IDC_CUSTOMDRIVES)?m_pList:NULL,
@@ -3466,6 +3518,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAdvanced()
 	if (edd.DoModal(*this))
 	{
 		m_pDatabase->SetIncludedFiles(edd.m_sIncludedFiles);
+		m_pDatabase->SetIncludedDirectories(edd.m_sIncludedDirectories);
 		m_pDatabase->SetExcludedFiles(edd.m_sExcludedFiles);
 		m_pDatabase->SetExcludedDirectories(edd.m_aExcludedDirectories);
 		m_pDatabase->SetRootMapsPtr(alloccopy(edd.m_sRootMaps));
@@ -3682,7 +3735,10 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 	{
 		int nIndex=FirstCharIndex(szPath,L'\\');
 		if (nIndex==-1 || szPath[nIndex+1]!=L'\\')
+		{
+			DebugMessage("CDatabaseDialog::AddDirectoryToList: not valid path %s, ignoring");
 			return -1;
+		}
 		
 		nIndex=NextCharIndex(szPath,L'\\',nIndex+1);
 		if (nIndex==-1)
@@ -3826,7 +3882,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToL
 		if (GetFileInfo(szName,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
 			li.iImage=fi.iIcon;
 		else
-			return -1;
+			li.iImage=DIR_IMAGE;
 	}
 
 	li.iSubItem=0;
@@ -3859,6 +3915,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 	CListBox List(GetDlgItem(IDC_DIRECTORIES));
 
 	SetDlgItemText(IDC_INCLUDEFILES,m_sIncludedFiles);
+	SetDlgItemText(IDC_INCLUDEDIRECTORIES,m_sIncludedDirectories);
 	SetDlgItemText(IDC_EXCLUDEFILES,m_sExcludedFiles);
 
 	// Inserting strings
@@ -4312,6 +4369,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 	EndDialog(1);
 
 	GetDlgItemText(IDC_INCLUDEFILES,m_sIncludedFiles);
+	GetDlgItemText(IDC_INCLUDEDIRECTORIES,m_sIncludedDirectories);
 	GetDlgItemText(IDC_EXCLUDEFILES,m_sExcludedFiles);
 	
 	m_aExcludedDirectories.RemoveAll();

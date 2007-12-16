@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.8190                 */
+   database updater v3.0.7.12160                 */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -21,6 +21,8 @@ CDatabase::CDatabase(CDatabase& src)
 		m_szArchiveName=alloccopy(m_szArchiveName);
 	if (m_szIncludedFiles!=NULL)
 		m_szIncludedFiles=alloccopy(m_szIncludedFiles);
+	if (m_szIncludedDirectories!=NULL)
+		m_szIncludedDirectories=alloccopy(m_szIncludedDirectories);
 	if (m_szExcludedFiles!=NULL)
 		m_szExcludedFiles=alloccopy(m_szExcludedFiles);
 	if (m_szRootMaps!=NULL)
@@ -217,6 +219,11 @@ BOOL CDatabase::SaveToRegistry(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	else
 		RegKey.SetValue("Included Files",szEmpty);
 
+	if (m_szIncludedDirectories!=NULL)
+		RegKey.SetValue(L"Included Directories",m_szIncludedDirectories);
+	else
+		RegKey.SetValue("Included Directories",szEmpty);
+
 	if (m_szExcludedFiles!=NULL)
 		RegKey.SetValue(L"Excluded Files",m_szExcludedFiles);
 	else
@@ -308,6 +315,14 @@ CDatabase* CDatabase::FromKey(HKEY hKeyRoot,LPCSTR szPath,LPCSTR szKey)
 	{
 		pDatabase->m_szIncludedFiles=new WCHAR[dwLength];
 		RegKey.QueryValue(L"Included Files",pDatabase->m_szIncludedFiles,dwLength);
+	}
+
+	// Included directories
+	dwLength=RegKey.QueryValueLength("Included Directories");
+	if (dwLength>1)
+	{
+		pDatabase->m_szIncludedDirectories=new WCHAR[dwLength];
+		RegKey.QueryValue(L"Included Directories",pDatabase->m_szIncludedDirectories,dwLength);
 	}
 
 	// Excluded files
@@ -609,14 +624,22 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 			case L'R':
 			case L'r':
 				if (sValue.Compare(L"1")==0)
+				{
+					DebugMessage("DBIMPORT: using local roots");
 					aRoots.RemoveAll();
+				}
 				else
+				{
+					DebugFormatMessage(L"DBIMPORT: found root: %s",(LPCWSTR)sValue);
 					aRoots.Add(sValue.GiveBuffer());
+				}
 				break;
 			case L'I':
 			case L'i':
                 if (pPtr[1]==L'F')
 					pDatabase->m_szIncludedFiles=sValue.GiveBuffer();
+				else if (pPtr[1]==L'D')
+					pDatabase->m_szIncludedDirectories=sValue.GiveBuffer();
 				break;
 			case L'E':
 			case L'e':
@@ -1352,7 +1375,7 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 	// Included files
 	if (m_szIncludedFiles!=NULL)
 	{
-		// Creator
+		// Include files
 		str << L"IF:";
 		for (int i=0;m_szIncludedFiles[i]!=L'\0';i++)
 		{
@@ -1363,10 +1386,24 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		str << L'$';
 	}
 
+	// Included files
+	if (m_szIncludedDirectories!=NULL)
+	{
+		// Include directories
+		str << L"ID:";
+		for (int i=0;m_szIncludedDirectories[i]!=L'\0';i++)
+		{
+			if (m_szIncludedDirectories[i]==L'$')
+				str << L'\\';
+			str << m_szIncludedDirectories[i];
+		}
+		str << L'$';
+	}
+
 	// Excluded files
 	if (m_szExcludedFiles!=NULL)
 	{
-		// Creator
+		// Exclude files
 		str << L"EF:";
 		for (int i=0;m_szExcludedFiles[i]!=L'\0';i++)
 		{

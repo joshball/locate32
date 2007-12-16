@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.8190                 */
+   database updater v3.0.7.12160                 */
 
 #if !defined(DATABASE_H)
 #define DATABASE_H
@@ -94,9 +94,11 @@ public:
 	LPSTR GetValidKey(DWORD dwUniqueNum=0) const; // free returned pointer with delete[]
 
 	LPCWSTR GetIncludedFiles() const;
+	LPCWSTR GetIncludedDirectories() const;
 	LPCWSTR GetExcludedFiles() const;
-	void SetIncludedFiles(LPCWSTR szIncludedDirectories);
-	void SetExcludedFiles(LPCWSTR szExcludedDirectories);
+	void SetIncludedFiles(LPCWSTR szIncludedFiles);
+	void SetIncludedDirectories(LPCWSTR szIncludedDirectories);
+	void SetExcludedFiles(LPCWSTR szExcludedFiles);
 
 	const CArrayFAP<LPWSTR>& GetExcludedDirectories() const;
 	void SetExcludedDirectories(const CArrayFAP<LPWSTR>& aExcludedDirectories);
@@ -180,6 +182,7 @@ private:
 	LPWSTR m_szArchiveName;
 
 	LPWSTR m_szIncludedFiles; // Include files pattern, empty=include all
+	LPWSTR m_szIncludedDirectories; // Include files pattern, empty=include all
 	LPWSTR m_szExcludedFiles; // Exclude files pattern
 	CArrayFAP<LPWSTR> m_aExcludedDirectories;
 };
@@ -190,7 +193,9 @@ inline CDatabase::CDatabase()
 // Default values:
 :	m_szCreator(NULL),m_szDescription(NULL),m_szRoots(NULL),
 	m_wFlags(flagEnabled|flagGlobalUpdate|flagStopIfRootUnavailable),m_wThread(0),m_szArchiveName(NULL),
-	m_ArchiveType(archiveFile),m_wID(0),m_szIncludedFiles(NULL),m_szExcludedFiles(NULL),m_szRootMaps(NULL)
+	m_ArchiveType(archiveFile),m_wID(0),
+	m_szIncludedFiles(NULL),m_szIncludedDirectories(NULL),
+	m_szExcludedFiles(NULL),m_szRootMaps(NULL)
 {
 	if (!IsUnicodeSystem())
 		m_wFlags|=flagAnsiCharset;
@@ -210,6 +215,8 @@ inline CDatabase::~CDatabase()
 		delete[] m_szRoots;
 	if (m_szIncludedFiles!=NULL)
 		delete[] m_szIncludedFiles;
+	if (m_szIncludedDirectories!=NULL)
+		delete[] m_szIncludedDirectories;
 	if (m_szExcludedFiles!=NULL)
 		delete[] m_szExcludedFiles;
 	if (m_szRootMaps!=NULL)
@@ -374,22 +381,32 @@ inline void CDatabase::SetArchiveType(ArchiveType nType)
 	m_ArchiveType=nType;
 }
 
-inline void CDatabase::SetIncludedFiles(LPCWSTR szIncludedDirectories)
+inline void CDatabase::SetIncludedFiles(LPCWSTR szIncludedFiles)
 {
 	if (m_szIncludedFiles!=NULL)
 		delete[] m_szIncludedFiles;
-	if (szIncludedDirectories[0]!='\0')
-		m_szIncludedFiles=alloccopy(szIncludedDirectories);
+	if (szIncludedFiles[0]!='\0')
+		m_szIncludedFiles=alloccopy(szIncludedFiles);
 	else
 		m_szIncludedFiles=NULL;
 }
 
-inline void CDatabase::SetExcludedFiles(LPCWSTR szExcludedDirectories)
+inline void CDatabase::SetIncludedDirectories(LPCWSTR szIncludedDirectories)
+{
+	if (m_szIncludedDirectories!=NULL)
+		delete[] m_szIncludedDirectories;
+	if (szIncludedDirectories[0]!='\0')
+		m_szIncludedDirectories=alloccopy(szIncludedDirectories);
+	else
+		m_szIncludedDirectories=NULL;
+}
+
+inline void CDatabase::SetExcludedFiles(LPCWSTR szExcludedFiles)
 {
 	if (m_szExcludedFiles!=NULL)
 		delete[] m_szExcludedFiles;
-	if (szExcludedDirectories[0]!='\0')
-		m_szExcludedFiles=alloccopy(szExcludedDirectories);
+	if (szExcludedFiles[0]!='\0')
+		m_szExcludedFiles=alloccopy(szExcludedFiles);
 	else
 		m_szExcludedFiles=NULL;
 }
@@ -461,6 +478,11 @@ inline void CDatabase::SetFlag(DatabaseFlags nFlag,BOOL bSet)
 inline LPCWSTR CDatabase::GetIncludedFiles() const
 {
 	return m_szIncludedFiles;
+}
+
+inline LPCWSTR CDatabase::GetIncludedDirectories() const
+{
+	return m_szIncludedDirectories;
 }
 
 inline LPCWSTR CDatabase::GetExcludedFiles() const

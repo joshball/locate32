@@ -2060,7 +2060,19 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 	}
 	case FinishedLocating:
 	{
+		// Stop animations
 		((CLocateDlg*)dwParam)->StopLocateAnimation();
+		
+		// Selecting and focusing the first item in the list if not any selected
+		if (((CLocateDlg*)dwParam)->m_pListCtrl->GetItemCount()>0 && 
+			((CLocateDlg*)dwParam)->m_pListCtrl->GetSelectedCount()==0)
+		{
+			int nItem=((CLocateDlg*)dwParam)->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
+			if (nItem!=-1)
+				((CLocateDlg*)dwParam)->m_pListCtrl->SetItemState(nItem,LVIS_SELECTED|LVIS_FOCUSED,LVIS_SELECTED|LVIS_FOCUSED);
+		}
+
+		// Enable/disable dialog items		
 		((CLocateDlg*)dwParam)->SendMessage(WM_ENABLEITEMS,TRUE);
 
 
@@ -2754,6 +2766,15 @@ void CLocateDlg::OnDestroy()
 	{
 		if ((m_pListCtrl->GetStyle() & LVS_TYPEMASK)==LVS_REPORT)
 			m_pListCtrl->SaveColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\General","ListWidths");
+		
+		// Free list font
+		HFONT hFont=m_pListCtrl->GetFont();
+		if (hFont!=m_hDialogFont)
+		{
+			DebugCloseGdiObject(hFont);
+			DeleteObject(hFont);
+		}
+		
 		delete m_pListCtrl;
 		m_pListCtrl=NULL;
 	}
@@ -2829,12 +2850,14 @@ void CLocateDlg::OnTimer(DWORD dwTimerID)
 	switch (LOWORD(dwTimerID))
 	{
 	case ID_REDRAWITEMS:
+		
 		KillTimer(ID_REDRAWITEMS);
 		m_pListCtrl->InvalidateRect(NULL,FALSE);
 		m_pListCtrl->UpdateWindow();
 		break;
 	case ID_UPDATESELECTED:
 		{
+			
 			KillTimer(ID_UPDATESELECTED);
 				
 			int nSelecetedCount=m_pListCtrl->GetSelectedCount();
@@ -2912,6 +2935,8 @@ void CLocateDlg::OnTimer(DWORD dwTimerID)
 		PostMessage(WM_SETITEMFOCUS,(WPARAM)dwTimerID);
 		break;
 	}
+
+		
 }
 
 inline void CLocateDlg::SetControlPositions(UINT nType,int cx, int cy)
@@ -5234,24 +5259,12 @@ void CLocateDlg::EnableItems(BOOL bEnable)
 	{
 		HWND hFocus=GetFocus();
 			
-		if ((GetFlags()&fgLVActivateFirstResult) && m_pListCtrl->GetItemCount()>0 &&
-			m_pListCtrl->GetSelectedCount()==0)
+		if ((GetFlags()&fgLVActivateFirstResult) && m_pListCtrl->GetItemCount()>0)
 		{
-			if (hFocus==NULL)
+			if (hFocus==NULL || hFocus==*m_pListCtrl)
 			{
-				// Not any controls activated
-				int nItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
-				if (nItem!=-1)
-					m_pListCtrl->SetItemState(nItem,LVIS_SELECTED|LVIS_FOCUSED,LVIS_SELECTED|LVIS_FOCUSED);
-
-				PostMessage(WM_SETITEMFOCUS,(WPARAM)(HWND)*m_pListCtrl);
-			}
-			else if (hFocus==*m_pListCtrl && m_pListCtrl->GetSelectedCount()==0)
-			{
-				// Result list where activated but not any items selected
-				int nItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
-				if (nItem!=-1)
-					m_pListCtrl->SetItemState(nItem,LVIS_SELECTED|LVIS_FOCUSED,LVIS_SELECTED|LVIS_FOCUSED);
+				if (hFocus==NULL)
+					PostMessage(WM_SETITEMFOCUS,(WPARAM)(HWND)*m_pListCtrl);
 			}
 		}
 		else
@@ -12100,8 +12113,26 @@ BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 
 	// Adding (by extension)
 	SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(szwEmpty));
+	//AddBuildInFileTypes();
 	OnClear(TRUE);
+
+	// Subclassing type combo
+	TypeControlData* pTypeData=new TypeControlData;
+	pTypeData->pParent=this;
+	pTypeData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(GetDlgItem(IDC_FILETYPE),
+		GWLP_WNDPROC,(LONG_PTR)TypeWindowProc);
+
+	if (pTypeData->pOldWndProc==NULL)
+	{
+		// Subclassing didn't success
+		delete pTypeData;
+	}
+	else
+		::SetWindowLongPtr(GetDlgItem(IDC_FILETYPE),GWLP_USERDATA,(LONG_PTR)pTypeData);
 	
+
+
+	// Resolve control sizes
 	RECT rc1,rc2;
 	GetWindowRect(&rc1);
 	::GetWindowRect(GetDlgItem(IDC_CHECK),&rc2);
@@ -12381,6 +12412,121 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 	}
 	
 	return CDialog::OnCommand(wID,wNotifyCode,hControl);
+}
+
+
+LRESULT CALLBACK CLocateDlg::CAdvancedDlg::TypeWindowProc(HWND hWnd,UINT uMsg,
+														  WPARAM wParam,LPARAM lParam)
+{
+	TypeControlData* pTypeData=(TypeControlData*)::GetWindowLongPtr(hWnd,GWLP_USERDATA);
+	LRESULT lRet=FALSE;
+
+	if (pTypeData==NULL)
+		return FALSE;
+
+	
+	switch (uMsg)
+	{
+	case WM_DESTROY:
+		// Calling original window procedure
+		lRet=CallWindowProc(pTypeData->pOldWndProc,hWnd,uMsg,wParam,lParam);
+
+		// Desubclassing
+		::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pTypeData->pOldWndProc);
+		
+		// Free memory
+		delete pTypeData;
+		return lRet;
+	case WM_KEYDOWN:
+		if (wParam==VK_DOWN || wParam==VK_UP)
+			pTypeData->pParent->UpdateTypeList();
+		
+		lRet=CallWindowProc(pTypeData->pOldWndProc,hWnd,uMsg,wParam,lParam);
+		break;
+	case WM_CHAR:
+	case WM_UNICHAR:
+		{
+			WCHAR cPressed;
+			if (uMsg==WM_CHAR)
+				cPressed=A2Wc((char)wParam);
+			else
+				cPressed=(WCHAR)wParam;
+
+			
+			// Key pressed, selecting item based on this key
+			pTypeData->pParent->UpdateTypeList();
+			CharLowerBuffW(&cPressed,1);
+
+
+			// Checking selected item
+			int nIndex=(int)CallWindowProc(pTypeData->pOldWndProc,hWnd,CB_GETCURSEL,0,0);
+			int nCount=(int)CallWindowProc(pTypeData->pOldWndProc,hWnd,CB_GETCOUNT,0,0);
+			
+			if (nIndex!=CB_ERR)
+			{
+				WCHAR cFirstChar;
+				if (nIndex==0)
+				{
+					WCHAR szTemp[2];
+					LoadString(IDS_BYEXTENSION,szTemp,2);
+					cFirstChar=szTemp[0];
+				}
+				else
+				{
+					FileType* pType=(FileType*)CallWindowProc(pTypeData->pOldWndProc,hWnd,CB_GETITEMDATA,nIndex,0);
+					if (pType!=NULL)
+						cFirstChar=pType->szTitle[0];
+				}
+
+				CharLowerBuffW(&cFirstChar,1);
+
+				if (cFirstChar==wParam)
+					nIndex++;
+				else
+					nIndex=0;
+			}
+			else
+				nIndex=0;
+
+			
+
+			// Finding item which starts with this key
+			for (;nIndex<nCount;nIndex++)
+			{
+				WCHAR cFirstChar;
+				if (nIndex==0)
+				{
+					WCHAR szTemp[2];
+					LoadString(IDS_BYEXTENSION,szTemp,2);
+					cFirstChar=szTemp[0];
+				}else
+				{
+					FileType* pType=(FileType*)CallWindowProc(pTypeData->pOldWndProc,hWnd,CB_GETITEMDATA,nIndex,0);
+					if (pType!=NULL)
+						cFirstChar=pType->szTitle[0];
+				}
+
+				CharLowerBuffW(&cFirstChar,1);
+
+				if (cFirstChar==wParam)
+				{
+					CallWindowProc(pTypeData->pOldWndProc,hWnd,CB_SETCURSEL,nIndex,0);
+					return 0;
+				}
+			}
+
+
+
+			lRet=CallWindowProc(pTypeData->pOldWndProc,hWnd,uMsg,wParam,lParam);
+			break;
+		}
+	
+	default:
+		lRet=CallWindowProc(pTypeData->pOldWndProc,hWnd,uMsg,wParam,lParam);
+		break;
+	}
+
+	return lRet;
 }
 
 BOOL CLocateDlg::CAdvancedDlg::IsChanged()

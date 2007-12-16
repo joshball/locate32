@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.8190                 */
+   database updater v3.0.7.12160                 */
 
 #if !defined(DATABASEINFO_H)
 #define DATABASEINFO_H

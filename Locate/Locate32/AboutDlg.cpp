@@ -16,14 +16,14 @@ BOOL CAboutDlg::OnCommand(WORD wID, WORD wNotifyCode, HWND hControl)
 	case IDC_MAILME:
 		{
 			CWaitCursor wait;
-			ShellExecute(*this,NULL,"http://venda.uku.fi/~jmhuttun/soft/bugreport",
+			ShellExecute(*this,NULL,"http://locate32.net/content/view/51/43/",
 				NULL,NULL,0);
 			break;
 		}
 	case IDC_GOTOHOMEPAGE:
 		{
 			CWaitCursor wait;
-			ShellExecute(*this,NULL,"http://locate32.webhop.org", //http://venda.uku.fi/~jmhuttun/soft",
+			ShellExecute(*this,NULL,"http://www.locate32.net", //http://locate32.webhop.or",
 				NULL,NULL,0);
 			break;
 		}

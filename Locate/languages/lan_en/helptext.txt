@@ -10,9 +10,12 @@ utf8:Hello			search unicode (UTF8) string 'Hello'
 utf7:Hello			search unicode (UTF7) string 'Hello'
 hex:12AAFF		search binary data '12AAFF' from files
 bin:12AAFF		same as 'hex:12AAFF'
-dword(16):12345678		search double word  (32-bit value) '12345678' (base is 16)
-dword(10):12345678		search double word '12345678' (base is 10)
-word(16):1234		search word (16-bit value) '1234' from files
+dword(16):12345678		search double word  (32-bit value) 
+			'12345678' (base is 16)
+dword(10):12345678		search double word '12345678' (base 
+			is 10)
+word(16):1234		search word (16-bit value) '1234' from 
+			files
 byte(16):12		search byte (8-bit value) 12 from files
 regexp:cat|dog		search 'cat' or 'dog' 
 

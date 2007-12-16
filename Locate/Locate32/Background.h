@@ -55,6 +55,7 @@ public:
 		DIRCHANGEDATA** m_pChangeDatas;
 	};
 
+	
 	LPWSTR m_pFile; // Used in RunningProcNew
 	
 	BOOL (WINAPI* m_pReadDirectoryChangesW)(HANDLE,LPVOID,DWORD,BOOL,DWORD,LPDWORD,LPOVERLAPPED,LPOVERLAPPED_COMPLETION_ROUTINE);
@@ -155,6 +156,7 @@ inline CCheckFileNotificationsThread::CCheckFileNotificationsThread()
 {
 	DebugMessage("CCheckFileNotificationsThread::CCheckFileNotificationsThread()");
 
+	
 	if ((GetLocateDlg()->GetExtraFlags()&CLocateDlg::efTrackingMask)==CLocateDlg::efEnableFSTrackingOld)
 		m_pReadDirectoryChangesW=NULL;
 	else
@@ -183,6 +185,8 @@ inline CCheckFileNotificationsThread::~CCheckFileNotificationsThread()
 	else
 		GetLocateDlg()->m_pFileNotificationsThread=NULL;
 
+
+	
 }
 
 inline void CCheckFileNotificationsThread::CouldStop()

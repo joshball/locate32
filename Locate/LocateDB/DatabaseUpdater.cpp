@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.8190                 */
+   database updater v3.0.7.12160                 */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -20,7 +20,7 @@ CDatabaseUpdater::CDatabaseUpdater(LPCWSTR szDatabaseFile,LPCWSTR szAuthor,LPCWS
 	UpdDebugMessage("CDatabaseUpdater::CDatabaseUpdater(1)");
 
 	m_aDatabases.Add(new DBArchive(szDatabaseFile,CDatabase::archiveFile,
-		szAuthor,szComment,pszRoots,nNumberOfRoots,0,NULL,NULL,NULL,0,NULL));
+		szAuthor,szComment,pszRoots,nNumberOfRoots,0,NULL,NULL,NULL,NULL,0,NULL));
 }
 
 CDatabaseUpdater::CDatabaseUpdater(const PDATABASE* ppDatabases,
@@ -648,54 +648,105 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 			throw ueStopped;
 		}
 
-		// Include files pattern used
-		if (m_aIncludeFilesPatternsA!=NULL && !_FindIsFolder(&fd))
+		
+		if (!_FindIsFolder(&fd))
 		{
-			BOOL bIncluded=FALSE;
-			LPSTR* pPtr=m_aExcludeFilesPatternsA;
-			while (*pPtr!=NULL)
+			// Tests for files
+
+			// Include files pattern used
+			if (m_aIncludeFilesPatternsA!=NULL)
 			{
-				if (ContainString(_FindGetName(&fd),*pPtr))
+				// Make name lower
+				char* pNameLower=alloccopy(_FindGetName(&fd));
+				CharLower(pNameLower);
+
+				BOOL bIncluded=FALSE;
+				LPSTR* pPtr=m_aIncludeDirectoriesPatternsA;
+				while (*pPtr!=NULL)
 				{
-					bIncluded=TRUE;
-					break;
+					if (ContainString(pNameLower,*pPtr))
+					{
+						bIncluded=TRUE;
+						break;
+					}
+
+					pPtr++;
 				}
 
-				pPtr++;
+				delete[] pNameLower;
+
+				if (!bIncluded)
+				{
+					if(!_FindNextFile(hFind,&fd))
+						break;
+					continue;
+				}	
 			}
 
-			if (!bIncluded)
+			// Exclude files pattern used
+			if (m_aExcludeFilesPatternsA!=NULL)
 			{
-				if(!_FindNextFile(hFind,&fd))
-					break;
-				continue;
-			}	
-		}
-
-		// Exclude files pattern used
-		if (m_aExcludeFilesPatternsA!=NULL && !_FindIsFolder(&fd))
-		{
-			BOOL bExcluded=FALSE;
-			LPSTR* pPtr=m_aExcludeFilesPatternsA;
-			while (*pPtr!=NULL)
-			{
-				if (ContainString(_FindGetName(&fd),*pPtr))
+				// Make name lower
+				char* pNameLower=alloccopy(_FindGetName(&fd));
+				CharLower(pNameLower);
+				
+				BOOL bExcluded=FALSE;
+				LPSTR* pPtr=m_aExcludeFilesPatternsA;
+				while (*pPtr!=NULL)
 				{
-					bExcluded=TRUE;
-					break;
+					if (ContainString(pNameLower,*pPtr))
+					{
+						bExcluded=TRUE;
+						break;
+					}
+
+					pPtr++;
 				}
 
-				pPtr++;
+				delete[] pNameLower;
+
+				if (bExcluded)
+				{
+					if(!_FindNextFile(hFind,&fd))
+						break;
+					continue;
+				}				
 			}
-
-			if (bExcluded)
-			{
-				if(!_FindNextFile(hFind,&fd))
-					break;
-				continue;
-			}				
 		}
+		else
+		{
+			// Tests for directories
+			
+			// Include files pattern used
+			if (m_aIncludeDirectoriesPatternsA!=NULL)
+			{
+				// Make name lower
+				char* pNameLower=alloccopy(_FindGetName(&fd));
+				CharLower(pNameLower);
+				
+				BOOL bIncluded=FALSE;
+				LPSTR* pPtr=m_aIncludeDirectoriesPatternsA;
+				while (*pPtr!=NULL)
+				{
+					if (ContainString(pNameLower,*pPtr))
+					{
+						bIncluded=TRUE;
+						break;
+					}
 
+					pPtr++;
+				}
+
+				delete[] pNameLower;
+
+				if (!bIncluded)
+				{
+					if(!_FindNextFile(hFind,&fd))
+						break;
+					continue;
+				}	
+			}
+		}
 
 		DWORD sNameLength=istrlen(_FindGetName(&fd));
 		ASSERT(sNameLength<256);
@@ -887,54 +938,105 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 			throw ueStopped;
 		}
 
-
-		// Include files pattern used
-		if (m_aIncludeFilesPatternsW!=NULL && !_FindIsFolder(&fd))
+		if (!_FindIsFolder(&fd))
 		{
-			BOOL bIncluded=FALSE;
-			LPWSTR* pPtr=m_aIncludeFilesPatternsW;
-			while (*pPtr!=NULL)
+			// Tests for files
+
+			// Include files pattern used
+			if (m_aIncludeFilesPatternsW!=NULL)
 			{
-				if (ContainString(_FindGetName(&fd),*pPtr))
+				// Make name lower
+				WCHAR* pNameLower=alloccopy(_FindGetName(&fd));
+				CharLowerW(pNameLower);
+				
+				BOOL bIncluded=FALSE;
+				LPWSTR* pPtr=m_aIncludeFilesPatternsW;
+				while (*pPtr!=NULL)
 				{
-					bIncluded=TRUE;
-					break;
+					if (ContainString(pNameLower,*pPtr))
+					{
+						bIncluded=TRUE;
+						break;
+					}
+
+					pPtr++;
 				}
 
-				pPtr++;
+				delete[] pNameLower;
+
+				if (!bIncluded)
+				{
+					if(!_FindNextFile(hFind,&fd))
+						break;
+					continue;
+				}				
 			}
 
-			if (!bIncluded)
+			// Exclude files pattern used
+			if (m_aExcludeFilesPatternsW!=NULL)
 			{
-				if(!_FindNextFile(hFind,&fd))
-					break;
-				continue;
-			}				
-		}
-
-		// Exclude files pattern used
-		if (m_aExcludeFilesPatternsW!=NULL && !_FindIsFolder(&fd))
-		{
-			BOOL bExcluded=FALSE;
-			LPWSTR* pPtr=m_aExcludeFilesPatternsW;
-			while (*pPtr!=NULL)
-			{
-				if (ContainString(_FindGetName(&fd),*pPtr))
+				// Make name lower
+				WCHAR* pNameLower=alloccopy(_FindGetName(&fd));
+				CharLowerW(pNameLower);
+				
+				BOOL bExcluded=FALSE;
+				LPWSTR* pPtr=m_aExcludeFilesPatternsW;
+				while (*pPtr!=NULL)
 				{
-					bExcluded=TRUE;
-					break;
+					if (ContainString(pNameLower,*pPtr))
+					{
+						bExcluded=TRUE;
+						break;
+					}
+
+					pPtr++;
 				}
 
-				pPtr++;
-			}
+				delete[] pNameLower;
 
-			if (bExcluded)
-			{
-				if(!_FindNextFile(hFind,&fd))
-					break;
-				continue;
-			}				
+				if (bExcluded)
+				{
+					if(!_FindNextFile(hFind,&fd))
+						break;
+					continue;
+				}				
+			}
 		}
+		else
+		{
+			// Tests for directories
+
+			// Include directories pattern used
+			if (m_aIncludeDirectoriesPatternsW!=NULL)
+			{
+				// Make name lower
+				WCHAR* pNameLower=alloccopy(_FindGetName(&fd));
+				CharLowerW(pNameLower);
+				
+				BOOL bIncluded=FALSE;
+				LPWSTR* pPtr=m_aIncludeDirectoriesPatternsW;
+				while (*pPtr!=NULL)
+				{
+					if (ContainString(pNameLower,*pPtr))
+					{
+						bIncluded=TRUE;
+						break;
+					}
+
+					pPtr++;
+				}
+
+				delete[] pNameLower;
+
+				if (!bIncluded)
+				{
+					if(!_FindNextFile(hFind,&fd))
+						break;
+					continue;
+				}				
+			}
+		}
+
 
 		DWORD sNameLength=istrlenw(_FindGetName(&fd));
 		ASSERT(sNameLength<256);
@@ -1357,7 +1459,9 @@ UpdateError CDatabaseUpdater::CRootDirectory::WriteW(CFile* dbFile)
 CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 :	m_sAuthor(pDatabase->GetCreator()),m_sComment(pDatabase->GetDescription()),
 	m_nArchiveType(pDatabase->GetArchiveType()),m_pFirstRoot(NULL),m_nFlags(0),
-	m_szExtra1(NULL),m_szExtra2(NULL),m_aIncludeFilesPatternsA(NULL),m_aExcludeFilesPatternsA(NULL)
+	m_szExtra1(NULL),m_szExtra2(NULL),
+	m_aIncludeFilesPatternsA(NULL),m_aIncludeDirectoriesPatternsA(NULL),
+	m_aExcludeFilesPatternsA(NULL)
 {
 	m_szArchive=alloccopy(pDatabase->GetArchiveName());
 	m_dwNameLength=(DWORD)wcslen(pDatabase->GetName());
@@ -1443,18 +1547,23 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 		m_dwExpectedFiles,m_dwExpectedDirectories);
 
 	// Excluded directories
-	ParseFilePatternsAndExcludedDirectories(pDatabase->GetIncludedFiles(),pDatabase->GetExcludedFiles(),
-		pDatabase->GetExcludedDirectories().GetData(),pDatabase->GetExcludedDirectories().GetSize());
+	ParseFilePatternsAndExcludedDirectories(pDatabase->GetIncludedFiles(),
+		pDatabase->GetIncludedDirectories(),
+		pDatabase->GetExcludedFiles(),
+		pDatabase->GetExcludedDirectories().GetData(),
+		pDatabase->GetExcludedDirectories().GetSize());
 	
 	m_szExtra2=pDatabase->ConstructExtraBlock();
 }
 		
 CDatabaseUpdater::DBArchive::DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveType nArchiveType,
 											  LPCWSTR szAuthor,LPCWSTR szComment,LPCWSTR* pszRoots,DWORD nNumberOfRoots,BYTE nFlags,
-											  LPCWSTR szIncludedFiles,LPCWSTR szExcludedFiles,LPCWSTR* ppExcludedDirectories,int nExcludedDirectories,LPCWSTR szRootMaps)
+											  LPCWSTR szIncludedFiles,LPCWSTR szIncludedDirectories,LPCWSTR szExcludedFiles,LPCWSTR* ppExcludedDirectories,int nExcludedDirectories,LPCWSTR szRootMaps)
 :	m_sAuthor(szAuthor),m_sComment(szComment),m_nArchiveType(nArchiveType),
 	m_szName(NULL),m_dwNameLength(0),m_nFlags(nFlags),
-	m_szExtra1(NULL),m_szExtra2(NULL),m_aIncludeFilesPatternsA(NULL),m_aExcludeFilesPatternsA(NULL)
+	m_szExtra1(NULL),m_szExtra2(NULL),
+	m_aIncludeFilesPatternsA(NULL),m_aIncludeDirectoriesPatternsA(NULL),
+	m_aExcludeFilesPatternsA(NULL)
 {
 	m_szArchive=alloccopy(szArchiveName);
 	
@@ -1475,7 +1584,7 @@ CDatabaseUpdater::DBArchive::DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveT
 		CreateRootDirectories(pCurrent,pszRoots[i],istrlen(pszRoots[i]),szRootMaps);
 	pCurrent->m_pNext=NULL;
 
-	ParseFilePatternsAndExcludedDirectories(szIncludedFiles,szExcludedFiles,ppExcludedDirectories,nExcludedDirectories);
+	ParseFilePatternsAndExcludedDirectories(szIncludedFiles,szIncludedDirectories,szExcludedFiles,ppExcludedDirectories,nExcludedDirectories);
 
 	CDatabaseInfo::ReadFilesAndDirectoriesCount(m_nArchiveType,m_szArchive,
 		m_dwExpectedFiles,m_dwExpectedDirectories);
@@ -1515,6 +1624,12 @@ CDatabaseUpdater::DBArchive::~DBArchive()
 				delete[] m_aIncludeFilesPatternsW[i];
 			delete[] m_aIncludeFilesPatternsW;
 		}
+		if (m_aIncludeDirectoriesPatternsA!=NULL)
+		{
+			for (int i=0;m_aIncludeDirectoriesPatternsW[i]!=NULL;i++)
+				delete[] m_aIncludeDirectoriesPatternsW[i];
+			delete[] m_aIncludeDirectoriesPatternsW;
+		}
 		if (m_aExcludeFilesPatternsA!=NULL)
 		{
 			for (int i=0;m_aExcludeFilesPatternsW[i]!=NULL;i++)
@@ -1529,6 +1644,12 @@ CDatabaseUpdater::DBArchive::~DBArchive()
 			for (int i=0;m_aIncludeFilesPatternsA[i]!=NULL;i++)
 				delete[] m_aIncludeFilesPatternsA[i];
 			delete[] m_aIncludeFilesPatternsA;
+		}
+		if (m_aIncludeDirectoriesPatternsA!=NULL)
+		{
+			for (int i=0;m_aIncludeDirectoriesPatternsA[i]!=NULL;i++)
+				delete[] m_aIncludeDirectoriesPatternsA[i];
+			delete[] m_aIncludeDirectoriesPatternsA;
 		}
 		if (m_aExcludeFilesPatternsA!=NULL)
 		{
@@ -1705,6 +1826,7 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 }
 
 void CDatabaseUpdater::DBArchive::ParseFilePatternsAndExcludedDirectories(LPCWSTR szIncludedFiles,
+																		  LPCWSTR szIncludedDirectories,
 																		  LPCWSTR szExcludedFiles,
 																		  const LPCWSTR* ppExcludedDirs,
 																		  int nExcludedDirectories)
@@ -1738,9 +1860,15 @@ void CDatabaseUpdater::DBArchive::ParseFilePatternsAndExcludedDirectories(LPCWST
 				for (nLength=0;pPtr[nLength]!='\0' && pPtr[nLength]!=';' && pPtr[nLength]!=',';nLength++);
 
 				if (m_nFlags&Unicode)
+				{
 					m_aIncludeFilesPatternsW[nPatterns]=alloccopy(pPtr,nLength);
+					CharLowerBuffW(m_aIncludeFilesPatternsW[nPatterns],nLength);
+				}
 				else
+				{
 					m_aIncludeFilesPatternsA[nPatterns]=alloccopyWtoA(pPtr,nLength);
+					CharLowerBuffA(m_aIncludeFilesPatternsA[nPatterns],nLength);
+				}
 				nPatterns++;
 
 				pPtr+=nLength;
@@ -1752,6 +1880,58 @@ void CDatabaseUpdater::DBArchive::ParseFilePatternsAndExcludedDirectories(LPCWST
 			}
 
 			m_aIncludeFilesPatternsA[nPatterns]=NULL;
+		}
+	}
+
+	// Parsing included directories
+	if (szIncludedDirectories!=NULL)
+	{
+		if (szIncludedDirectories[0]!='\0')
+		{
+			// Counting
+			DWORD nPatterns=1;
+			LPCWSTR pPtr;
+
+			for (pPtr=szIncludedDirectories;*pPtr!='\0';pPtr++)
+			{
+				if (*pPtr==';' || *pPtr==',')
+					nPatterns++;
+			}
+
+			if (m_nFlags&Unicode)
+				m_aIncludeDirectoriesPatternsW=new WCHAR*[nPatterns+1];
+			else
+				m_aIncludeDirectoriesPatternsA=new CHAR*[nPatterns+1];
+
+			nPatterns=0;
+			pPtr=szIncludedDirectories;
+
+			for (;;)
+			{
+				DWORD nLength;
+				for (nLength=0;pPtr[nLength]!='\0' && pPtr[nLength]!=';' && pPtr[nLength]!=',';nLength++);
+
+				if (m_nFlags&Unicode)
+				{
+					m_aIncludeDirectoriesPatternsW[nPatterns]=alloccopy(pPtr,nLength);
+					CharLowerBuffW(m_aIncludeDirectoriesPatternsW[nPatterns],nLength);
+				}
+				else
+				{
+					m_aIncludeDirectoriesPatternsA[nPatterns]=alloccopyWtoA(pPtr,nLength);
+					CharLowerBuffA(m_aIncludeDirectoriesPatternsA[nPatterns],nLength);
+				}
+				nPatterns++;
+
+				pPtr+=nLength;
+
+				if (*pPtr=='\0')
+					break;
+
+				pPtr++;
+			}
+
+			m_aIncludeDirectoriesPatternsA[nPatterns]=NULL;
 		}
 	}
 
@@ -1785,9 +1965,15 @@ void CDatabaseUpdater::DBArchive::ParseFilePatternsAndExcludedDirectories(LPCWST
 				for (nLength=0;pPtr[nLength]!='\0' && pPtr[nLength]!=';' && pPtr[nLength]!=',';nLength++);
 
 				if (m_nFlags&Unicode)
+				{
 					m_aExcludeFilesPatternsW[nPatterns]=alloccopy(pPtr,nLength);
+					CharLowerBuffW(m_aExcludeFilesPatternsW[nPatterns],nLength);
+				}
 				else
+				{
 					m_aExcludeFilesPatternsA[nPatterns]=alloccopyWtoA(pPtr,nLength);
+					CharLowerBuffA(m_aExcludeFilesPatternsA[nPatterns],nLength);
+				}
 				nPatterns++;
 
 				pPtr+=nLength;
@@ -1802,16 +1988,17 @@ void CDatabaseUpdater::DBArchive::ParseFilePatternsAndExcludedDirectories(LPCWST
 		}
 	}
 
-	// Parsing excluded directories
+	// Parsing included/excluded files and directories
 	if (nExcludedDirectories==0)
 	{
 		// Just place excluded files and exit
-		if (m_aIncludeFilesPatternsA!=NULL || m_aExcludeFilesPatternsA!=NULL)
+		if (m_aIncludeFilesPatternsA!=NULL || m_aIncludeDirectoriesPatternsA!=NULL || m_aExcludeFilesPatternsA!=NULL)
 		{
 			CRootDirectory* pRoot=m_pFirstRoot;
 			while (pRoot!=NULL)
 			{
 				pRoot->m_aIncludeFilesPatternsA=m_aIncludeFilesPatternsA;
+				pRoot->m_aIncludeDirectoriesPatternsA=m_aIncludeDirectoriesPatternsA;
 				pRoot->m_aExcludeFilesPatternsA=m_aExcludeFilesPatternsA;
 				pRoot=pRoot->m_pNext;
 			}
@@ -1955,6 +2142,7 @@ void CDatabaseUpdater::DBArchive::ParseFilePatternsAndExcludedDirectories(LPCWST
 		
 		// Inserting included/excluded files pattern
 		pRoot->m_aIncludeFilesPatternsA=m_aIncludeFilesPatternsA;
+		pRoot->m_aIncludeDirectoriesPatternsA=m_aIncludeDirectoriesPatternsA;
 		pRoot->m_aExcludeFilesPatternsA=m_aExcludeFilesPatternsA;
 			
 		// Next root

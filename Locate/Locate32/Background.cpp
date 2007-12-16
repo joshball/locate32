@@ -210,9 +210,10 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 		DWORD nRet=WaitForMultipleObjects(m_nHandles,m_pHandles,FALSE,INFINITE);
 		BkgDebugNumMessage("CCheckFileNotificationsThread::RunningProc(), WAKED nRet=%X",nRet);
 
+
 		if (nRet==WAIT_OBJECT_0) // The first is end event
 		{
-			CAppData::stdfunc();
+			//CAppData::stdfunc();
 			break;
 		}
 		else if (nRet>WAIT_OBJECT_0 && nRet<WAIT_OBJECT_0+m_nHandles)
@@ -223,6 +224,7 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 			if (pLocateDlg==NULL)
 				break;
 
+			
 			DIRCHANGEDATA* pChangeData=m_pChangeDatas[nRet-WAIT_OBJECT_0];
 			
 			// Asking changes
@@ -281,6 +283,7 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 			
 			BkgDebugMessage("CCheckFileNotificationsThread::RunningProc() Coing to listen changes");
 
+			
 			// Coing to listen changes
 			BOOL bRet=m_pReadDirectoryChangesW(pChangeData->hDir,pChangeData->pBuffer,CHANGE_BUFFER_LEN,TRUE,
 				FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|
@@ -443,6 +446,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 	CArrayFAP<LPWSTR> aRoots;
 	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases(),TRUE);
 	
+	
     m_pHandles=new HANDLE[aRoots.GetSize()+2];
 	m_pChangeDatas=new DIRCHANGEDATA*[aRoots.GetSize()+2];
 	DIRCHANGEDATA* pChangeData=NULL;
@@ -561,6 +565,8 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 
 	if (pChangeData!=NULL)
 		delete pChangeData;
+
+	
 	
 	BkgDebugMessage("CCheckFileNotificationsThread::CreateHandlesNew() END");
 	return TRUE;
@@ -572,8 +578,10 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 
 	BkgDebugMessage("CCheckFileNotificationsThread::CreateHandlesOld() BEGIN");
 	
+
 	CArrayFAP<LPWSTR> aRoots;
 	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases());
+	
 	
 	m_pHandles=new HANDLE[aRoots.GetSize()+1];
 	m_pRoots=new LPWSTR[aRoots.GetSize()+1];
@@ -654,6 +662,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 			}
 		}
 	}
+
 	
 
 	BkgDebugMessage("CCheckFileNotificationsThread::CreateHandlesOld() END");
@@ -671,11 +680,12 @@ BOOL CCheckFileNotificationsThread::DestroyHandles()
 	m_pHandles=NULL;
 	DWORD nHandles=m_nHandles;
 
+
 	if (m_pReadDirectoryChangesW!=NULL)
 	{
-		DIRCHANGEDATA** pChangeDatas=m_pChangeDatas;
-		m_pChangeDatas=NULL;
-	
+		ASSERT(m_pChangeDatas[0]==NULL);
+
+			
 		// Pointers used with ReadDirectoryChangesW		
 		CloseHandle(pHandles[0]);
 		DebugCloseEvent(pHandles[0]);
@@ -683,15 +693,17 @@ BOOL CCheckFileNotificationsThread::DestroyHandles()
 		{
 			//DebugFormatMessage("Deleting CHANGEDIR for %s",pChangeDatas[n]->szRoot);
 			
-			ASSERT(pHandles[n]==pChangeDatas[n]->ol.hEvent);
+			ASSERT(pHandles[n]==m_pChangeDatas[n]->ol.hEvent);
 
 			// Destructor also closes this handle
 			// CloseHandle(pHandles[n]);
 
-			delete pChangeDatas[n];
+			delete m_pChangeDatas[n];
 		}
 		delete[] pHandles;
-		delete[] pChangeDatas;
+		delete[] m_pChangeDatas;
+
+		m_pChangeDatas=NULL;
 	}
 	else
 	{
@@ -706,8 +718,12 @@ BOOL CCheckFileNotificationsThread::DestroyHandles()
 		}
 		delete[] pHandles;
 		delete[] m_pRoots;
+
+		m_pRoots=NULL;
 	}
-	m_pRoots=NULL;
+	
+
+	
 	BkgDebugMessage("CCheckFileNotificationsThread::DestroyHandles() END");
 	return TRUE;
 }

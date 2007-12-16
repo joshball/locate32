@@ -139,7 +139,21 @@ BOOL CLocateApp::InitInstance()
 	// Setting prioriy if needed
 	if (m_pStartData->m_nPriority!=CStartData::priorityDontChange)
 		SetPriorityClass(GetCurrentProcess(),m_pStartData->m_nPriority);
+
+
+	// Setting up language files
+	if (!SetLanguageSpecifigHandles())
+	{
+		m_nStartup|=CStartData::startupExitedBeforeInitialization;
+		return FALSE;
+	}
+
+
+	// Load date and time format strings from registry	
+	LoadRegistry();
+
 	
+	// Startup updategin if '-U' argument is given
 	if (m_pStartData->m_nStartup&CStartData::startupUpdate && 
 		m_pStartData->m_nStartup&CStartData::startupDoNotOpenDialog &&
 		(m_pStartData->m_nStartup&CStartData::startupLeaveBackground)==0)
@@ -155,10 +169,9 @@ BOOL CLocateApp::InitInstance()
 		return FALSE;
 	}
 	
-	
+	// Chechkin whether locate32 is already running
 	if ((m_pStartData->m_nStartup&CStartData::startupNewInstance)==0)
 	{
-		// Chechkin whether locate32 is already running
 		if (ActivateOtherInstances(pCommandLine))
 		{
 			m_nStartup|=CStartData::startupExitedBeforeInitialization;
@@ -167,11 +180,6 @@ BOOL CLocateApp::InitInstance()
 	}
 
 
-	if (!SetLanguageSpecifigHandles())
-	{
-		m_nStartup|=CStartData::startupExitedBeforeInitialization;
-		return FALSE;
-	}
 	
 	// Ppreventing error messages when e.g. CDROM is not available
 	SetErrorMode(SEM_NOOPENFILEERRORBOX|SEM_FAILCRITICALERRORS); 
@@ -192,9 +200,7 @@ BOOL CLocateApp::InitInstance()
 	CoInitialize(NULL);
 	
 	
-	// Load date and time format strings from registry	
-	LoadRegistry();
-
+	
 	// Retrieving default icons
 	SetDeleteAndDefaultImage();
 
@@ -1953,15 +1959,8 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			((CLocateAppWnd*)dwParam)->SetUpdateStatusInformation(NULL,IDS_NOTIFYUPDATING);
 		return TRUE;
 	}
-	case FinishedUpdating:
-		if (ueCode!=ueStopped) // This is done at the end of CLocateApp::StopUpdating
-		{
-			CLocateDlg* pLocateDlg=GetLocateDlg();
-			if (pLocateDlg!=NULL)
-				pLocateDlg->PostMessage(WM_UPDATINGSTOPPED);
-			
-		}
-		break;
+	//case FinishedUpdating:
+	//	break;
 	case FinishedDatabase:
 	{
 		CLocateDlg* pLocateDlg=GetLocateDlg();
@@ -2033,6 +2032,14 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 
 				LeaveCriticalSection(&GetLocateApp()->m_cUpdatersPointersInUse);
 	
+				/*
+				// Stop update animation if already not stopped
+				if (ueCode!=ueStopped) 
+				{
+					CLocateDlg* pLocateDlg=GetLocateDlg();
+					if (pLocateDlg!=NULL)
+						pLocateDlg->PostMessage(WM_UPDATINGSTOPPED);
+				}*/
 
 				if (dwParam!=NULL && GetLocateApp()->m_nStartup&CStartData::startupExitAfterUpdating)
 					((CLocateAppWnd*)dwParam)->PostMessage(WM_COMMAND,IDM_EXIT,NULL);
@@ -2053,9 +2060,12 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			return TRUE;
 		}
 	case ErrorOccured:
-		if (((CLocateAppWnd*)dwParam)->m_pUpdateStatusWnd!=NULL)
+		if (dwParam!=NULL)
+		{
+			if (((CLocateAppWnd*)dwParam)->m_pUpdateStatusWnd!=NULL)
 			((CLocateAppWnd*)dwParam)->m_pUpdateStatusWnd->FormatErrorForStatusTooltip(ueCode,pUpdater);
-			
+		}
+
 		switch(ueCode)
 		{
 		case ueUnknown:

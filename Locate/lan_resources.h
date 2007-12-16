@@ -404,6 +404,7 @@
 #define IDC_EXCLUDEFILES                1137
 #define IDC_INCLUDEFILES                1138
 #define IDC_MINIMIZETOSYSTEMTRAY        1139
+#define IDC_INCLUDEDIRECTORIES          1139
 #define IDC_REMEMBERSTATES              1140
 #define IDC_CLOSETOSYSTEMTRAY           1141
 #define IDC_LOCATEONMYCOMPUTER          1142

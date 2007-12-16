@@ -1458,6 +1458,10 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\HFCDebug.log"
+			>
+		</File>
+		<File
 			RelativePath="..\misc\Instructions to add new column to result list.txt"
 			>
 		</File>

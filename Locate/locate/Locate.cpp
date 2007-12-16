@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   locate.exe v3.0.7.11040                 */
+   locate.exe v3.0.7.12160                 */
 
-const char* szVersionStr="locate 3.0 build 7.11040";
+const char* szVersionStr="locate 3.0 build 7.12160";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -312,8 +312,8 @@ int wmain (int argc,wchar_t * argv[])
 		BYTE noargs:1;
 	} options={0,0,0,0};
 
-	DWORD dwMinSize=DWORD(-1);
-	DWORD dwMaxSize=DWORD(-1);
+	ULONGLONG ulMinSize=ULONGLONG(-1);
+	ULONGLONG ulMaxSize=ULONGLONG(-1);
 	WORD wMaxDate=WORD(-1);
 	WORD wMinDate=WORD(-1);
 
@@ -502,23 +502,23 @@ int wmain (int argc,wchar_t * argv[])
 					break;
 				case L'm':
             		if (argv[i][3]==L':')
-            			dwMinSize=wcstoul(argv[i]+4,&ep,0);
+            			ulMinSize=_wcstoi64(argv[i]+4,&ep,0);
             		else
-            			dwMinSize=wcstoul(argv[i]+3,&ep,0);
+            			ulMinSize=_wcstoi64(argv[i]+3,&ep,0);
                     if (*ep==L'k' || *ep==L'K')
-                       dwMinSize*=1024;
+                       ulMinSize*=1024;
                     else if (*ep==L'M' || *ep==L'm')
-                         dwMinSize*=1024*1024;
+                         ulMinSize*=1024*1024;
 	           		break;
             	case L'M':
             		if (argv[i][3]==L':')
-            			dwMaxSize=wcstoul(argv[i]+4,&ep,0);
+            			ulMaxSize=_wcstoi64(argv[i]+4,&ep,0);
             		else
-            			dwMaxSize=wcstoul(argv[i]+3,&ep,0);
+            			ulMaxSize=_wcstoi64(argv[i]+3,&ep,0);
                     if (*ep==L'k' || *ep==L'K')
-                       dwMaxSize*=1024;
+                       ulMaxSize*=1024;
                     else if (*ep==L'M' || *ep==L'm')
-                         dwMaxSize*=1024*1024;
+                         ulMaxSize*=1024*1024;
 	           		break;
             	case L'f':
             		dwFlags&=~LOCATE_FOLDERNAMES;
@@ -763,7 +763,7 @@ int wmain (int argc,wchar_t * argv[])
 	
    
 	CLocater locater(aDatabases);
-	locater.SetSizeAndDate(dwFlags,dwMinSize,dwMaxSize,wMinDate,wMaxDate);
+	locater.SetSizeAndDate(dwFlags,ulMinSize,ulMaxSize,wMinDate,wMaxDate);
 	locater.SetAdvanced(dwFlags,pContainData,(DWORD)min(dwContainDataLength,MAXDWORD),dwMaxFoundFiles);
 
 	locater.SetFunctions(LocateProc,LocateFoundProc,LocateFoundProcW,NULL);

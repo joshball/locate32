@@ -85,9 +85,11 @@ inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CDatabaseDi
 
 
 inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::CAdvancedDialog(
-	LPCWSTR szIncludedFiles,LPCWSTR szExcludedFiles,const CArrayFAP<LPWSTR>& rDirectories,
+	LPCWSTR szIncludedFiles,LPCWSTR szIncludedDirectories,
+	LPCWSTR szExcludedFiles,const CArrayFAP<LPWSTR>& rDirectories,
 	const CListCtrl* pCopyItemsFrom,LPCWSTR szRootMaps)
-:	CDialog(IDD_DBADVANCED),m_sIncludedFiles(szIncludedFiles),
+:	CDialog(IDD_DBADVANCED),
+	m_sIncludedFiles(szIncludedFiles),m_sIncludedDirectories(szIncludedDirectories),
 	m_sExcludedFiles(szExcludedFiles),m_pDriveList(NULL),
 	m_pCopyItemsFrom(pCopyItemsFrom),m_sRootMaps(szRootMaps)
 {
