@@ -3,6 +3,6 @@ CONTENT=
 <div id="menucommands">
 <H1><A NAME="hid_special_copypathtoclipboard"></A>Copy path to clipboard (Special menu)</H1>
 
-<P>Copies the path of the selected files to the clipboard.</P>
+<P>Copies the paths of the selected files to the clipboard.</P>
 
 </div>

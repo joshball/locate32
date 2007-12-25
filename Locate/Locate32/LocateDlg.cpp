@@ -2076,7 +2076,7 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 		((CLocateDlg*)dwParam)->SendMessage(WM_ENABLEITEMS,TRUE);
 
 
-		CString NumberOfFiles;
+		CStringW NumberOfFiles;
 		if (pLocater->GetNumberOfFoundFiles()>0)
 		{
 			if (pLocater->GetNumberOfFoundDirectories()>0)
@@ -10487,7 +10487,7 @@ void CLocateDlg::CNameDlg::OnClear(BOOL bInitial)
 		if (m_LookIn.GetItemData(i)==MAKELPARAM(Everywhere,Original))
 		{
 			m_LookIn.SetCurSel(i);
-			m_LookIn.SetItemText(-1,m_LookIn.GetItemText(i));
+			m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(i));
 			break;
 		}
 	}

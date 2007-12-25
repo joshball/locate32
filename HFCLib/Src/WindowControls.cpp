@@ -181,7 +181,7 @@ int CComboBox::GetLBText(int nIndex, CStringW& rString) const
 int CComboBox::FindString(int nStartAfter, LPCWSTR lpszString) const
 {
 	if (IsUnicodeSystem())
-		return (int)::SendMessageW(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)lpszString);
+		return (int)::SendMessageW(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCWSTR)lpszString);
 	else
 		return (int)::SendMessageA(m_hWnd,CB_FINDSTRING,(WPARAM)nStartAfter,(LPARAM)(LPCSTR)W2A(lpszString));
 }
@@ -189,7 +189,7 @@ int CComboBox::FindString(int nStartAfter, LPCWSTR lpszString) const
 int CComboBox::AddString(LPCWSTR lpszString)
 {
 	if (IsUnicodeSystem())
-		return (int)::SendMessageW(m_hWnd,CB_ADDSTRING,0,(LPARAM)lpszString);
+		return (int)::SendMessageW(m_hWnd,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)lpszString);
 	else
 		return (int)::SendMessageA(m_hWnd,CB_ADDSTRING,0,(LPARAM)(LPCSTR)W2A(lpszString));
 }
@@ -197,7 +197,7 @@ int CComboBox::AddString(LPCWSTR lpszString)
 int CComboBox::InsertString(int nIndex,LPCWSTR lpszString)
 {
 	if (IsUnicodeSystem())
-		return (int)::SendMessageW(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)lpszString);
+		return (int)::SendMessageW(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)(LPCWSTR)lpszString);
 	else
 		return (int)::SendMessageA(m_hWnd,CB_INSERTSTRING,nIndex,(LPARAM)(LPCSTR)W2A(lpszString));
 }

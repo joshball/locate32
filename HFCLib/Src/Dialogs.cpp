@@ -2362,31 +2362,107 @@ LRESULT CALLBACK CAppData::FolderDialogProc(HWND hWnd,UINT uMsg,LPARAM lParam,LP
 }
 
 CFolderDialog::CFolderDialog(LPCSTR lpszTitle,UINT ulFlags,LPCITEMIDLIST pidlRoot)
-:	m_hWnd(NULL),m_lpil(NULL),m_lpDefaultIL(NULL)
+:	m_hWnd(NULL),m_lpil(NULL),m_lpDefaultIL(NULL),
+	m_szTitle(NULL),m_szDefaultFolder(NULL)
 {
 	CoInitialize(NULL);
-	m_strTitle=lpszTitle;
-	m_bi.pszDisplayName=m_strDisplayName.GetBuffer(_MAX_PATH);
-	m_bi.ulFlags=ulFlags;
-	m_bi.pidlRoot=pidlRoot;
-	m_bi.lpfn=(BFFCALLBACK)CAppData::FolderDialogProc;
-	m_bi.iImage=0;
+	m_szwDisplayName[0]='\0';
+	
+	
+	if (IsUnicodeSystem())
+	{
+		m_szwTitle=alloccopyAtoW(lpszTitle);
+		m_biw.pszDisplayName=m_szwDisplayName;
+		m_biw.ulFlags=ulFlags;
+		m_biw.pidlRoot=pidlRoot;
+		m_biw.lpfn=(BFFCALLBACK)CAppData::FolderDialogProc;
+		m_biw.iImage=0;
+	}
+	else
+	{
+		m_szTitle=alloccopy(lpszTitle);
+		m_bi.pszDisplayName=m_szDisplayName;
+		m_bi.ulFlags=ulFlags;
+		m_bi.pidlRoot=pidlRoot;
+		m_bi.lpfn=(BFFCALLBACK)CAppData::FolderDialogProc;
+		m_bi.iImage=0;
+	}
+
+}
+
+CFolderDialog::CFolderDialog(LPCWSTR lpszTitle,UINT ulFlags,LPCITEMIDLIST pidlRoot)
+:	m_hWnd(NULL),m_lpil(NULL),m_lpDefaultIL(NULL),
+	m_szTitle(NULL),m_szDefaultFolder(NULL)
+{
+	CoInitialize(NULL);
+	m_szwDisplayName[0]='\0';
+	
+	
+	if (IsUnicodeSystem())
+	{
+		m_szwTitle=alloccopy(lpszTitle);
+		m_biw.pszDisplayName=m_szwDisplayName;
+		m_biw.ulFlags=ulFlags;
+		m_biw.pidlRoot=pidlRoot;
+		m_biw.lpfn=(BFFCALLBACK)CAppData::FolderDialogProc;
+		m_biw.iImage=0;
+	}
+	else
+	{
+		m_szTitle=alloccopyWtoA(lpszTitle);
+		m_bi.pszDisplayName=m_szDisplayName;
+		m_bi.ulFlags=ulFlags;
+		m_bi.pidlRoot=pidlRoot;
+		m_bi.lpfn=(BFFCALLBACK)CAppData::FolderDialogProc;
+		m_bi.iImage=0;
+	}
+
 }
 
 CFolderDialog::CFolderDialog(UINT nTitleID,UINT ulFlags,LPCITEMIDLIST pidlRoot)
-:	m_hWnd(NULL),m_lpil(NULL),m_lpDefaultIL(NULL)
+:	m_hWnd(NULL),m_lpil(NULL),m_lpDefaultIL(NULL),
+	m_szTitle(NULL),m_szDefaultFolder(NULL)
 {
 	CoInitialize(NULL);
-	m_strTitle.LoadString(nTitleID);
-	m_bi.pszDisplayName=m_strDisplayName.GetBuffer(_MAX_PATH);
-	m_bi.ulFlags=ulFlags;
-	m_bi.pidlRoot=pidlRoot;
-	m_bi.lpfn=(BFFCALLBACK)CAppData::FolderDialogProc;
-	m_bi.iImage=0;
+	m_szwDisplayName[0]='\0';
+
+	if (IsUnicodeSystem())
+	{
+		m_szwTitle=allocstringW(nTitleID);
+		m_biw.pszDisplayName=m_szwDisplayName;
+		m_biw.ulFlags=ulFlags;
+		m_biw.pidlRoot=pidlRoot;
+		m_biw.lpfn=(BFFCALLBACK)CAppData::FolderDialogProc;
+		m_biw.iImage=0;
+	}
+	else
+	{
+		m_szTitle=allocstring(nTitleID);
+		m_bi.pszDisplayName=m_szDisplayName;
+		m_bi.ulFlags=ulFlags;
+		m_bi.pidlRoot=pidlRoot;
+		m_bi.lpfn=(BFFCALLBACK)CAppData::FolderDialogProc;
+		m_bi.iImage=0;
+	}
 }
 	
 CFolderDialog::~CFolderDialog()
 {
+	if (IsUnicodeSystem())
+	{
+		if (m_szwTitle!=NULL)
+			delete[] m_szwTitle;
+		if (m_szwDefaultFolder!=NULL)
+			delete[] m_szwDefaultFolder;
+	}
+	else
+	{
+		if (m_szTitle!=NULL)
+			delete[] m_szTitle;
+		if (m_szDefaultFolder!=NULL)
+			delete[] m_szDefaultFolder;
+	}
+
 	if (m_lpil!=NULL)
 	{
 		CoTaskMemFree(m_lpil);
@@ -2397,10 +2473,21 @@ CFolderDialog::~CFolderDialog()
 
 BOOL CFolderDialog::DoModal(HWND hOwner)
 {
-	m_bi.lpszTitle=m_strTitle;
-	m_bi.lParam=(LPARAM)this;
-	m_bi.hwndOwner=hOwner;
-	m_lpil=SHBrowseForFolder(&m_bi);
+	if (IsUnicodeSystem())
+	{
+		m_biw.lpszTitle=m_szwTitle;
+		m_biw.lParam=(LPARAM)this;
+		m_biw.hwndOwner=hOwner;
+		m_lpil=SHBrowseForFolderW(&m_biw);
+	}
+	else
+	{
+		m_bi.lpszTitle=m_szTitle;
+		m_bi.lParam=(LPARAM)this;
+		m_bi.hwndOwner=hOwner;
+		m_lpil=SHBrowseForFolder(&m_bi);
+	}
+
 	if (m_lpil==NULL)
 		return FALSE;
 	return TRUE;
@@ -2409,28 +2496,88 @@ BOOL CFolderDialog::DoModal(HWND hOwner)
 
 BOOL CFolderDialog::GetDisplayName(CString& strDisplayName) const
 {
-	strDisplayName=m_strDisplayName;
-	strDisplayName.FreeExtra();
+	if (IsUnicodeSystem())
+		strDisplayName.Copy(m_szwDisplayName);
+	else
+		strDisplayName.Copy(m_szDisplayName);
 	return TRUE;
 }
 
+BOOL CFolderDialog::GetDisplayName(CStringW& strDisplayName) const
+{
+	if (IsUnicodeSystem())
+		strDisplayName.Copy(m_szwDisplayName);
+	else
+		strDisplayName.Copy(m_szDisplayName);
+	return TRUE;
+}
 
 
 BOOL CFolderDialog::GetDisplayName(LPSTR szDisplayName,DWORD nSize)
 {
 	if (!nSize)
 		return FALSE;
-	m_strDisplayName.FreeExtra();
-	if ((int)nSize<=m_strDisplayName.GetLength())
+	
+	if (IsUnicodeSystem())
 	{
-		MemCopy(szDisplayName,(LPCSTR)m_strDisplayName,nSize-1);
-		szDisplayName[nSize-1]='\0';
+		int nDisplayNameLen=istrlenw(m_szwDisplayName);
+
+		if ((int)nSize<=nDisplayNameLen)
+		{
+			MemCopyWtoA(szDisplayName,m_szwDisplayName,nSize-1);
+			szDisplayName[nSize-1]='\0';
+		}
+		else
+			MemCopyWtoA(szDisplayName,m_szwDisplayName,nDisplayNameLen+1);
 	}
 	else
-		MemCopy(szDisplayName,(LPCSTR)m_strDisplayName,m_strDisplayName.GetLength()+1);
+	{
+		int nDisplayNameLen=istrlen(m_szDisplayName);
+
+		if ((int)nSize<=nDisplayNameLen)
+		{
+			MemCopy(szDisplayName,m_szDisplayName,nSize-1);
+			szDisplayName[nSize-1]='\0';
+		}
+		else
+			MemCopy(szDisplayName,m_szDisplayName,nDisplayNameLen+1);
+	}
+
 	return TRUE;
 }
 
+BOOL CFolderDialog::GetDisplayName(LPWSTR szDisplayName,DWORD nSize)
+{
+	if (!nSize)
+		return FALSE;
+	
+	if (IsUnicodeSystem())
+	{
+		int nDisplayNameLen=istrlenw(m_szwDisplayName);
+
+		if ((int)nSize<=nDisplayNameLen)
+		{
+			MemCopyW(szDisplayName,m_szwDisplayName,nSize-1);
+			szDisplayName[nSize-1]='\0';
+		}
+		else
+			MemCopyW(szDisplayName,m_szwDisplayName,nDisplayNameLen+1);
+	}
+	else
+	{
+		int nDisplayNameLen=istrlen(m_szDisplayName);
+
+		if ((int)nSize<=nDisplayNameLen)
+		{
+			MemCopyAtoW(szDisplayName,m_szDisplayName,nSize-1);
+			szDisplayName[nSize-1]='\0';
+		}
+		else
+			MemCopyAtoW(szDisplayName,m_szDisplayName,nDisplayNameLen+1);
+	}
+
+	return TRUE;
+}
 
 
 BOOL CFolderDialog::EnableOK(BOOL bEnable)
@@ -2446,7 +2593,17 @@ BOOL CFolderDialog::SetSelection(LPITEMIDLIST lpil)
 	if (m_hWnd==NULL)
 	{
 		m_lpDefaultIL=lpil;
-		m_strDefaultFolder.Empty();
+		if (IsUnicodeSystem())
+		{
+			if (m_szwDefaultFolder!=NULL)
+				delete[] m_szwDefaultFolder;
+		}
+		else
+		{
+			if (m_szDefaultFolder!=NULL)
+				delete[] m_szDefaultFolder;
+		}
+		m_szDefaultFolder=NULL;
 		return TRUE;
 	}
 	SendMessage(m_hWnd,BFFM_SETSELECTION,FALSE,(LPARAM)lpil);
@@ -2457,11 +2614,48 @@ BOOL CFolderDialog::SetSelection(LPCSTR lpFolder)
 {
 	if (m_hWnd==NULL)
 	{
-		m_strDefaultFolder=lpFolder;
 		m_lpDefaultIL=NULL;
+		if (IsUnicodeSystem())
+		{
+			if (m_szwDefaultFolder!=NULL)
+				delete[] m_szwDefaultFolder;
+			m_szwDefaultFolder=alloccopyAtoW(lpFolder);
+		}
+		else
+		{
+			if (m_szDefaultFolder!=NULL)
+				delete[] m_szDefaultFolder;
+			m_szDefaultFolder=alloccopy(lpFolder);
+		}
 		return TRUE;
 	}
 	SendMessage(m_hWnd,BFFM_SETSELECTION,TRUE,(LPARAM)lpFolder);
+	return TRUE;
+}
+
+BOOL CFolderDialog::SetSelection(LPCWSTR lpFolder)
+{
+	if (m_hWnd==NULL)
+	{
+		m_lpDefaultIL=NULL;
+		if (IsUnicodeSystem())
+		{
+			if (m_szwDefaultFolder!=NULL)
+				delete[] m_szwDefaultFolder;
+			m_szwDefaultFolder=alloccopy(lpFolder);
+		}
+		else
+		{
+			if (m_szDefaultFolder!=NULL)
+				delete[] m_szDefaultFolder;
+			m_szDefaultFolder=alloccopyWtoA(lpFolder);
+		}
+		return TRUE;
+	}
+	if (IsUnicodeSystem())
+		SendMessageW(m_hWnd,BFFM_SETSELECTIONW,TRUE,(LPARAM)lpFolder);
+	else
+		SendMessage(m_hWnd,BFFM_SETSELECTION,TRUE,(LPARAM)(LPCSTR)W2A(lpFolder));
 	return TRUE;
 }
 
@@ -2473,12 +2667,32 @@ BOOL CFolderDialog::SetStatusText(LPCSTR lpStatus)
 	return TRUE;
 }
 
+BOOL CFolderDialog::SetStatusText(LPCWSTR lpStatus)
+{
+	if (m_hWnd==NULL)
+		return FALSE;
+	if (IsUnicodeSystem())
+		SendMessageW(m_hWnd,BFFM_SETSTATUSTEXTW,0,(LPARAM)lpStatus);
+	else
+		SendMessage(m_hWnd,BFFM_SETSTATUSTEXT,0,(LPARAM)(LPCSTR)W2A(lpStatus));
+
+	return TRUE;
+}
+
 BOOL CFolderDialog::OnInitialized()
 {
-	if (!m_strDefaultFolder.IsEmpty())
-		SetSelection(m_strDefaultFolder);
+	if (m_hWnd==NULL)
+		return FALSE;
+	if (m_szwDefaultFolder!=NULL)
+	{
+		if (IsUnicodeSystem())
+			SendMessageW(m_hWnd,BFFM_SETSELECTIONW,TRUE,(LPARAM)m_szwDefaultFolder);
+		else
+			SendMessageW(m_hWnd,BFFM_SETSELECTION,TRUE,(LPARAM)m_szDefaultFolder);
+	}
 	else if (m_lpDefaultIL!=NULL)
-		SetSelection(m_lpDefaultIL);
+		SendMessage(m_hWnd,BFFM_SETSELECTION,FALSE,(LPARAM)m_lpDefaultIL);
+	
 	return TRUE;
 }
 
@@ -2690,6 +2904,7 @@ BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
 		UserData* pUserData=new UserData;
 		pUserData->pDialog=this;
 		pUserData->pOldWndProc=(WNDPROC)m_pTree->SetWindowLong(gwlWndProc,(LONG_PTR)TreeSubClassFunc);
+		
 
 		if (pUserData->pOldWndProc==NULL)
 		{
@@ -2797,16 +3012,33 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 		case Item::Edit:
 		case Item::File:
 			{
-				pItems[i]->hControl=CreateWindow("EDIT","",
-					ES_AUTOHSCROLL|WS_CHILDWINDOW|WS_BORDER,
-					10,10,100,13,*this,(HMENU)IDC_EDITCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				if (IsUnicodeSystem())
+				{
+					pItems[i]->hControl=CreateWindowW(L"EDIT",L"",
+						ES_AUTOHSCROLL|WS_CHILDWINDOW|WS_BORDER,
+						10,10,100,13,*this,(HMENU)IDC_EDITCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				}
+				else
+				{
+					pItems[i]->hControl=CreateWindow("EDIT","",
+						ES_AUTOHSCROLL|WS_CHILDWINDOW|WS_BORDER,
+						10,10,100,13,*this,(HMENU)IDC_EDITCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				}
 				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
 
 				// Subclassing control
 				UserData* pUserData=new UserData;
 				pUserData->pDialog=this;
-				pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
-					GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
+				if (IsUnicodeSystem())
+				{
+					pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtrW(pItems[i]->hControl,
+						GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
+				}
+				else
+				{
+					pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
+						GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
+				}
 
 				if (pUserData->pOldWndProc==NULL)
 				{
@@ -2835,9 +3067,18 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 			}
 		case Item::Numeric:
 			{
-				pItems[i]->hControl=CreateWindow("EDIT","",
-					ES_AUTOHSCROLL|WS_CHILDWINDOW|WS_BORDER|ES_NUMBER,
-					10,10,50,20,*this,(HMENU)IDC_EDITCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				if (IsUnicodeSystem())
+				{
+					pItems[i]->hControl=CreateWindowW(L"EDIT",L"",
+						ES_AUTOHSCROLL|WS_CHILDWINDOW|WS_BORDER|ES_NUMBER,
+						10,10,50,20,*this,(HMENU)IDC_EDITCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				}
+				else
+				{
+					pItems[i]->hControl=CreateWindow("EDIT","",
+						ES_AUTOHSCROLL|WS_CHILDWINDOW|WS_BORDER|ES_NUMBER,
+						10,10,50,20,*this,(HMENU)IDC_EDITCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				}
 				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
 
 				// Setting subclass info struct
@@ -2869,16 +3110,33 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 			break;
 		case Item::List:
 			{
-				pItems[i]->hControl=CreateWindow("COMBOBOX","",
-					CBS_DROPDOWNLIST|WS_VSCROLL|WS_CHILDWINDOW|WS_BORDER,
-					10,10,100,100,*this,(HMENU)IDC_COMBOCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				if (IsUnicodeSystem())
+				{
+					pItems[i]->hControl=CreateWindowW(L"COMBOBOX",L"",
+						CBS_DROPDOWNLIST|WS_VSCROLL|WS_CHILDWINDOW|WS_BORDER,
+						10,10,100,100,*this,(HMENU)IDC_COMBOCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				}
+				else
+				{
+					pItems[i]->hControl=CreateWindow("COMBOBOX","",
+						CBS_DROPDOWNLIST|WS_VSCROLL|WS_CHILDWINDOW|WS_BORDER,
+						10,10,100,100,*this,(HMENU)IDC_COMBOCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				}
 				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
 				
 				// Subclassing control
 				UserData* pUserData=new UserData;
 				pUserData->pDialog=this;
-				pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
-					GWLP_WNDPROC,(LONG_PTR)ComboSubClassFunc);
+				if (IsUnicodeSystem())
+				{
+					pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtrW(pItems[i]->hControl,
+						GWLP_WNDPROC,(LONG_PTR)ComboSubClassFunc);
+				}
+				else
+				{
+					pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
+						GWLP_WNDPROC,(LONG_PTR)ComboSubClassFunc);
+				}
 
 				if (pUserData->pOldWndProc==NULL)
 				{
@@ -2900,16 +3158,34 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 			}			
 		case Item::Combo:
 			{
-				pItems[i]->hControl=CreateWindow("COMBOBOX","",
-					CBS_DROPDOWN|WS_VSCROLL|WS_CHILDWINDOW|WS_BORDER,
-					10,10,100,100,*this,(HMENU)IDC_COMBOCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				if (IsUnicodeSystem())
+				{
+					pItems[i]->hControl=CreateWindowW(L"COMBOBOX",L"",
+						CBS_DROPDOWN|WS_VSCROLL|WS_CHILDWINDOW|WS_BORDER,
+						10,10,100,100,*this,(HMENU)IDC_COMBOCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				}
+				else
+				{
+					pItems[i]->hControl=CreateWindow("COMBOBOX","",
+						CBS_DROPDOWN|WS_VSCROLL|WS_CHILDWINDOW|WS_BORDER,
+						10,10,100,100,*this,(HMENU)IDC_COMBOCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				}
 				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
 
 				// Subclassing control
 				UserData* pUserData=new UserData;
 				pUserData->pDialog=this;
-				pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
-					GWLP_WNDPROC,(LONG_PTR)ComboSubClassFunc);
+				if (IsUnicodeSystem())
+				{
+					pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtrW(pItems[i]->hControl,
+						GWLP_WNDPROC,(LONG_PTR)ComboSubClassFunc);
+				}
+				else
+				{
+					pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
+						GWLP_WNDPROC,(LONG_PTR)ComboSubClassFunc);
+				}
+
 
 				if (pUserData->pOldWndProc==NULL)
 				{
@@ -2924,8 +3200,17 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 				{
 					UserData* pUserData=new UserData;
 					pUserData->pDialog=this;
-					pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(hEdit,
-						GWLP_WNDPROC,(LONG_PTR)ComboSubClassFunc);
+					if (IsUnicodeSystem())
+					{
+						pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtrW(hEdit,
+							GWLP_WNDPROC,(LONG_PTR)ComboSubClassFunc);
+					}
+					else
+					{
+						pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(hEdit,
+							GWLP_WNDPROC,(LONG_PTR)ComboSubClassFunc);
+					}
+						
 
 					if (pUserData->pOldWndProc==NULL)
 					{
@@ -2963,19 +3248,30 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 		case Item::Font:
 			{
 				if (IsUnicodeSystem())
+				{
 					pItems[i]->hControl=CreateWindowW(L"BUTTON",m_ChangeText,BS_PUSHBUTTON|WS_CHILDWINDOW,
 						10,10,100,13,*this,(HMENU)IDC_FONTBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				}
 				else
+				{
 					pItems[i]->hControl=CreateWindow("BUTTON",W2A(m_ChangeText),BS_PUSHBUTTON|WS_CHILDWINDOW,
 						10,10,100,13,*this,(HMENU)IDC_FONTBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
-
+				}
 				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
 
 				// Subclassing control
 				UserData* pUserData=new UserData;
 				pUserData->pDialog=this;
-				pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
-					GWLP_WNDPROC,(LONG_PTR)ButtonSubClassFunc);
+				if (IsUnicodeSystem())
+				{
+					pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtrW(pItems[i]->hControl,
+						GWLP_WNDPROC,(LONG_PTR)ButtonSubClassFunc);
+				}
+				else
+				{
+					pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
+						GWLP_WNDPROC,(LONG_PTR)ButtonSubClassFunc);
+				}
 
 				if (pUserData->pOldWndProc==NULL)
 				{
@@ -2997,19 +3293,30 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 		case Item::Color:
 			{
 				if (IsUnicodeSystem())
+				{
 					pItems[i]->hControl=CreateWindowW(L"BUTTON",m_ChangeText,BS_PUSHBUTTON|WS_CHILDWINDOW,
 						10,10,100,13,*this,(HMENU)IDC_COLORBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+				}
 				else
+				{
 					pItems[i]->hControl=CreateWindow("BUTTON",W2A(m_ChangeText),BS_PUSHBUTTON|WS_CHILDWINDOW,
 						10,10,100,13,*this,(HMENU)IDC_COLORBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
-
+				}
 				::SendMessage(pItems[i]->hControl,WM_SETFONT,SendMessage(WM_GETFONT),TRUE);
 
 				// Subclassing control
 				UserData* pUserData=new UserData;
 				pUserData->pDialog=this;
-				pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
-					GWLP_WNDPROC,(LONG_PTR)ButtonSubClassFunc);
+				if (IsUnicodeSystem())
+				{
+					pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtrW(pItems[i]->hControl,
+						GWLP_WNDPROC,(LONG_PTR)ButtonSubClassFunc);
+				}
+				else
+				{
+					pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItems[i]->hControl,
+						GWLP_WNDPROC,(LONG_PTR)ButtonSubClassFunc);
+				}
 
 				if (pUserData->pOldWndProc==NULL)
 				{
@@ -3587,7 +3894,12 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 						if (pUserData!=NULL)
 						{
 							if (pUserData->pOldWndProc!=NULL)
-								::SetWindowLongPtr(pItem->hControl,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
+							{
+								if (IsUnicodeSystem())
+									::SetWindowLongPtrW(pItem->hControl,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
+								else
+									::SetWindowLongPtr(pItem->hControl,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
+							}
 							pUserData->pOldWndProc=NULL;
 						}
 					}
@@ -3649,26 +3961,51 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 					if (pItem->nType==Item::Numeric)
 					{
 						// Creating Up/Down control
-						pItem->hControl2=CreateWindow("msctls_updown32","",
-							UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_ARROWKEYS|WS_CHILDWINDOW|WS_VISIBLE|UDS_NOTHOUSANDS,
-							rc.right+20,rc.top-1,10,10,*this,(HMENU)IDC_SPINCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
-						::SendMessage(pItem->hControl2,UDM_SETBUDDY,WPARAM(pItem->hControl),NULL);
-						
+						if (IsUnicodeSystem())
+						{
+							pItem->hControl2=CreateWindowW(L"msctls_updown32",L"",
+								UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_ARROWKEYS|WS_CHILDWINDOW|WS_VISIBLE|UDS_NOTHOUSANDS,
+								rc.right+20,rc.top-1,10,10,*this,(HMENU)IDC_SPINCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+							::SendMessageW(pItem->hControl2,UDM_SETBUDDY,WPARAM(pItem->hControl),NULL);
+						}
+						else
+						{
+							pItem->hControl2=CreateWindow("msctls_updown32","",
+								UDS_SETBUDDYINT|UDS_ALIGNRIGHT|UDS_ARROWKEYS|WS_CHILDWINDOW|WS_VISIBLE|UDS_NOTHOUSANDS,
+								rc.right+20,rc.top-1,10,10,*this,(HMENU)IDC_SPINCONTROLFORSELECTEDITEM,GetInstanceHandle(),NULL);
+							::SendMessage(pItem->hControl2,UDM_SETBUDDY,WPARAM(pItem->hControl),NULL);
+						}
 						
 						// Subclassing edit control
 						UserData* pUserData=(UserData*)::GetWindowLongPtr(pItem->hControl,GWLP_USERDATA);
 						if (pUserData!=NULL)
 						{
-							pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItem->hControl,
-								GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
+							if (IsUnicodeSystem())
+							{
+								pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtrW(pItem->hControl,
+									GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
+							}
+							else
+							{
+								pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItem->hControl,
+									GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
+							}
 						}
 
 
 						// Subclassing updown control
 						pUserData=new UserData;
 						pUserData->pDialog=this;
-						pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItem->hControl2,
-							GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
+						if (IsUnicodeSystem())
+						{
+							pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtrW(pItem->hControl2,
+								GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
+						}
+						else
+						{
+							pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItem->hControl2,
+								GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
+						}
 
 						if (pUserData->pOldWndProc==NULL)
 						{
@@ -3697,9 +4034,18 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 					else if (pItem->nType==Item::File)
 					{
 						// Browse control
-						pItem->hControl2=CreateWindow("BUTTON","...",
-							BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW|WS_VISIBLE,
-							rc.right+20,rc.top-1,20,21,*this,(HMENU)IDC_BROWSEBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+						if (IsUnicodeSystem())
+						{
+							pItem->hControl2=CreateWindowW(L"BUTTON",L"...",
+								BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW|WS_VISIBLE,
+								rc.right+20,rc.top-1,20,21,*this,(HMENU)IDC_BROWSEBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+						}
+						else
+						{
+							pItem->hControl2=CreateWindow("BUTTON","...",
+								BS_PUSHBUTTON|WS_TABSTOP|WS_CHILDWINDOW|WS_VISIBLE,
+								rc.right+20,rc.top-1,20,21,*this,(HMENU)IDC_BROWSEBUTTONFORSELECTEDITEM,GetInstanceHandle(),NULL);
+						}
 						::SendMessage(pItem->hControl2,WM_SETFONT,SendMessage(WM_GETFONT),0);
 						
 						::SetWindowPos(pItem->hControl2,HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE|SWP_SHOWWINDOW);
@@ -3707,9 +4053,17 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 						// Subclassing control
 						UserData* pUserData=new UserData;
 						pUserData->pDialog=this;
-						pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItem->hControl2,
-							GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
-
+						if (IsUnicodeSystem())
+						{
+							pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtrW(pItem->hControl2,
+								GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
+						}
+						else
+						{
+							pUserData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(pItem->hControl2,
+								GWLP_WNDPROC,(LONG_PTR)EditSubClassFunc);
+						}
+	
 						if (pUserData->pOldWndProc==NULL)
 						{
 							// Subclassing didn't success
@@ -3758,7 +4112,12 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 					{
 						::SetWindowLongPtr(pItem->hControl,GWLP_USERDATA,NULL);
 						if (pData->pOldWndProc!=NULL)
-							::SetWindowLongPtr(pItem->hControl,GWLP_WNDPROC,(LONG_PTR)pData->pOldWndProc);
+						{
+							if (IsUnicodeSystem())
+								::SetWindowLongPtrW(pItem->hControl,GWLP_WNDPROC,(LONG_PTR)pData->pOldWndProc);
+							else
+								::SetWindowLongPtr(pItem->hControl,GWLP_WNDPROC,(LONG_PTR)pData->pOldWndProc);
+						}
 
 						delete pData;
 					}
@@ -4456,7 +4815,10 @@ LRESULT CALLBACK COptionsPropertyPage::TreeSubClassFunc(HWND hWnd,UINT uMsg,
 		lRet=CallWindowProc(pUserData->pOldWndProc,hWnd,uMsg,wParam,lParam);
 
 		// Desubclassing
-		::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
+		if (IsUnicodeSystem())
+			::SetWindowLongPtrW(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
+		else
+			::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
 		
 		// Free memory
 		delete pUserData;
@@ -4527,7 +4889,10 @@ LRESULT CALLBACK COptionsPropertyPage::ButtonSubClassFunc(HWND hWnd,UINT uMsg,
 		lRet=CallWindowProc(pUserData->pOldWndProc,hWnd,uMsg,wParam,lParam);
 
 		// Desubclassing
-		::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
+		if (IsUnicodeSystem())
+			::SetWindowLongPtrW(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
+		else
+			::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
 		
 		// Free memory
 		delete pUserData;
@@ -4563,7 +4928,10 @@ LRESULT CALLBACK COptionsPropertyPage::EditSubClassFunc(HWND hWnd,UINT uMsg,
 		lRet=CallWindowProc(pUserData->pOldWndProc,hWnd,uMsg,wParam,lParam);
 
 		// Desubclassing
-		::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
+		if (IsUnicodeSystem())
+			::SetWindowLongPtrW(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
+		else
+			::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
 		
 		// Free memory
 		delete pUserData;
@@ -4599,7 +4967,10 @@ LRESULT CALLBACK COptionsPropertyPage::ComboSubClassFunc(HWND hWnd,UINT uMsg,
 		lRet=CallWindowProc(pUserData->pOldWndProc,hWnd,uMsg,wParam,lParam);
 
 		// Desubclassing
-		::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
+		if (IsUnicodeSystem())
+			::SetWindowLongPtrW(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
+		else
+			::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pUserData->pOldWndProc);
 		
 		// Free memory
 		delete pUserData;

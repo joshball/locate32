@@ -11,7 +11,7 @@ actual files are used in searches.
 <p>
 Locate32 uses only 
 a simple binary search routine so that file types are not recognized.
-However, in the case of some file formats, text is not typiclly 
+However, in the case of some file formats, text is not typically 
 packed or encoded and therefore searching routine may work. 
 You may also try to search using unicode character sets (see below).
 Older MS Office file formats stores text in plain ANSI format so this 
@@ -20,25 +20,25 @@ search feature can typically be used with them. Newer MS office files uses unico
 not work with PDF files. 
 </p>
 <p>
-The searching routine allows the following searching temrs.
+The searching routine allows the following searching terms.
 
 <TABLE cols=2 width="100%">
 <TBODY>
-<TR><TD width=30%>Hello</TD><TD width=70%>search text 'Hello' from files</TD></TR>
+<TR><TD width=30%>Hello</TD><TD width=70%>search for files containing text 'Hello'</TD></TR>
 <TR><TD width=30%>str:Hello</TD><TD width=70%>same as 'Hello'</TD></TR>
-<TR><TD width=30%>str:Hello\0</TD><TD width=70%>search 'Hello' with zero byte</TD></TR>
-<TR><TD width=30%>uni:Hello</TD><TD width=70%>search unicode (UTF16) string 'Hello'</TD></TR>
-<TR><TD width=30%>wstr:Hello</TD><TD width=70%>search unicode (UTF16) string 'Hello'</TD></TR>
-<TR><TD width=30%>utf16:Hello</TD><TD width=70%>search unicode (UTF16) string 'Hello'</TD></TR>
-<TR><TD width=30%>utf8:Hello</TD><TD width=70%>search unicode (UTF8) string 'Hello'</TD></TR>
-<TR><TD width=30%>utf7:Hello</TD><TD width=70%>search unicode (UTF7) string 'Hello'</TD></TR>
-<TR><TD width=30%>hex:12AAFF</TD><TD width=70%>search binary data '12AAFF' from files</TD></TR>
+<TR><TD width=30%>str:Hello\0</TD><TD width=70%>same as 'Hello' but string is terminated with zero byte</TD></TR>
+<TR><TD width=30%>uni:Hello</TD><TD width=70%>search for unicode (UTF16) string 'Hello'</TD></TR>
+<TR><TD width=30%>wstr:Hello</TD><TD width=70%>search for unicode (UTF16) string 'Hello'</TD></TR>
+<TR><TD width=30%>utf16:Hello</TD><TD width=70%>search for unicode (UTF16) string 'Hello'</TD></TR>
+<TR><TD width=30%>utf8:Hello</TD><TD width=70%>search for unicode (UTF8) string 'Hello'</TD></TR>
+<TR><TD width=30%>utf7:Hello</TD><TD width=70%>search for unicode (UTF7) string 'Hello'</TD></TR>
+<TR><TD width=30%>hex:12AAFF</TD><TD width=70%>search for binary data '12AAFF' from files</TD></TR>
 <TR><TD width=30%>bin:12AAFF</TD><TD width=70%>same as 'hex:12AAFF'</TD></TR>
-<TR><TD width=30%>dword(16):1234ABCD</TD><TD width=70%>search double word  (32-bit value) '1234ABCD' (base is 16)</TD></TR>
-<TR><TD width=30%>dword(10):12345678</TD><TD width=70%>search double word '12345678' (base is 10)</TD></TR>
-<TR><TD width=30%>word(16):123E</TD><TD width=70%>search word (16-bit value) '123E' from files</TD></TR>
-<TR><TD width=30%>byte(16):1E</TD><TD width=70%>search byte (8-bit value) 1E from files</TD></TR>
-<TR><TD width=30%>regexp:cat|dog</TD><TD width=70%>search 'cat' or 'dog'</TD></TR>
+<TR><TD width=30%>dword(16):1234ABCD</TD><TD width=70%>search for double word  (32-bit value) '1234ABCD' (base is 16)</TD></TR>
+<TR><TD width=30%>dword(10):12345678</TD><TD width=70%>search for double word '12345678' (base is 10)</TD></TR>
+<TR><TD width=30%>word(16):123E</TD><TD width=70%>search for word (16-bit value) '123E' from files</TD></TR>
+<TR><TD width=30%>byte(16):1E</TD><TD width=70%>search for byte (8-bit value) 1E from files</TD></TR>
+<TR><TD width=30%>regexp:cat|dog</TD><TD width=70%>search for 'cat' or 'dog'</TD></TR>
 </TBODY>
 </TABLE>			
 </P>
@@ -58,7 +58,7 @@ With 'str:' and 'uni:' you can use:
 <TR><TD width=10%>'\0':</TD><TD width=90%>zero byte</TD></TR>
 <TR><TD width=10%>'\n':</TD><TD width=90%>line break</TD></TR>
 <TR><TD width=10%>'\r':</TD><TD width=90%>carriage return (\r\n is default line break in Windows)</TD></TR>
-<TR><TD width=10%>'\t':</TD><TD width=90%>tabulatur</TD></TR>
+<TR><TD width=10%>'\t':</TD><TD width=90%>tabulation char</TD></TR>
 <TR><TD width=10%>'\b':</TD><TD width=90%>bell</TD></TR>
 <TR><TD width=10%>'\XX':</TD><TD width=90%>hex byte 'XX', for example \FF</TD></TR>
 </TBODY>

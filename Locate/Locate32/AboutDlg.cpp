@@ -44,7 +44,7 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 	CWaitCursor wait;
 	OSVERSIONINFO ver;
 	MEMORYSTATUS mem;
-	CString text,text2;
+	CStringW text,text2;
 
 	// Setting banner
 	SendDlgItemMessage(IDC_ABOUTBANNER,STM_SETIMAGE,IMAGE_BITMAP,
@@ -196,7 +196,7 @@ void CAboutDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 		CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
 		tm.tmPitchAndFamily,szFace);
 	HFONT hOldFont=(HFONT)dc.SelectObject(font);
-	CString text;
+	CStringW text;
 	GetDlgItemText(idCtl,text);
 	dc.SetTextColor(RGB(0,0,255));
 	dc.DrawText(text,&(lpdis->rcItem),DT_LEFT|DT_SINGLELINE|DT_VCENTER);

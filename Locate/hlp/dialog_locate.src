@@ -10,8 +10,8 @@ CONTENT=
 <P>These tab are used to specify search criterias. <a href="tab_name.htm">Name & Location tab</a> 
 is used to specify name of files, file extension and locations,  
 <a href="tab_sizedate.htm">Size and Date tab</a> can be used to specify the 
-minumum and maximum of the files and the file dates, and <a href="tab_advanced.htm">Advanced tab</a>
-contains some special options for searches. If any field in tabs are changed, the label 
+minumum and maximum of the file size and dates, and <a href="tab_advanced.htm">Advanced tab</a>
+contains some special options for searches. If any field in tabs is changed, the label 
 of the tab is marked as '*'.
 </P>
 

@@ -6,5 +6,8 @@ CONTENT=
 <div id="menucommands">
 <H1><A NAME="hid_file_close"></A>Close (File menu)</H1>
 
-<P>Closes Locate dialog. Locate32 may stay running in background.</P>
+<P>Closes Locate dialog. It is possible that Locate32 stays running in background. This usually 
+happens when any of the following options is enabled: "Close button minimized window" (General 
+settings), "Leave program background when dialog is closed" (General settings) or "Run Locate 
+at system startup" (Advanced settings).</P>
 </div>

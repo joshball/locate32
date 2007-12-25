@@ -16,7 +16,7 @@ However, it usually contains at least the following commands:
 
 <TR VALIGN="top">
 <TD width=20%><A HREF="hid_file_opencontainingfolder.htm">Open Containing Folder</A></TD>
-<TD width=80%>Opens folder in which the selectec files are.</TD>
+<TD width=80%>Opens folder in which the selected files are located.</TD>
 </TR>
 
 
@@ -53,7 +53,7 @@ Files are removed if a file operatoin is executed.</TD>
 
 <TR VALIGN="top">
 <TD width=20%><A HREF="hid_file_createshortcut.htm">Create Shortcut</A></TD>
-<TD width=80%>Create a shortcut to desktop.</TD>
+<TD width=80%>Create a shortcut on desktop.</TD>
 </TR>
 
 <TR VALIGN="top">
@@ -105,7 +105,7 @@ Files are removed if a file operatoin is executed.</TD>
 </TR>
 <TR VALIGN="top">
 <TD width=20%><A HREF="hid_file_databaseinfo.htm">Database Info</A></TD>
-<TD width=80%>Shows informatino about databases.</TD>
+<TD width=80%>Shows information about databases.</TD>
 </TR>
 
 

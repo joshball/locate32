@@ -71,6 +71,7 @@ private:
 	friend BOOL CPageSetupDialog::DoModal(HWND);
 	friend CFindReplaceDialog::CFindReplaceDialog();
 	friend CFolderDialog::CFolderDialog(LPCSTR,UINT,LPCITEMIDLIST);
+	friend CFolderDialog::CFolderDialog(LPCWSTR,UINT,LPCITEMIDLIST);
 	friend CFolderDialog::CFolderDialog(UINT,UINT,LPCITEMIDLIST);
 	friend BOOL RegisterWndClass(LPCTSTR,UINT,HCURSOR,HBRUSH,HICON,HICON);
 	friend BOOL RegisterMDIChildClass(LPCTSTR,UINT,HCURSOR,HBRUSH,HICON,HICON);

@@ -13,8 +13,7 @@ of the drive and press Edit or create a new database,</li>
 to the list of drivers and directories.</li>
 </ul></p>
 
-<p>You may want to choose "Stop if root unavailable". If this option is not chosen and a drive (e.g.,  
-network share) is unavailable the database is updated, this drive is just skipped causing that the 
-content of the drive is removed from the database.
+<p>You can choose "Stop if root unavailable". If this option is not chosen and a drive (e.g.,  
+network share) is unavailable when database is updated, this drive is just skipped causing the removal of drive content from database.
 </p>
 

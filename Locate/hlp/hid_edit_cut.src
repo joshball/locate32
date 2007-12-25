@@ -5,7 +5,7 @@ CONTENT=
 <P>Use this command to copy select files to clipboard. The selected files moved when 
 a file operation is executed (e.g., by using Windows Explorer). 
 
-This command is unavailable if no files are selected.</P>
+This command is unavailable if no file is selected.</P>
 
 <P>Copying data to the clipboard replaces the contents previously stored there.</P>
 

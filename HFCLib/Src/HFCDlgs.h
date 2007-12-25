@@ -430,11 +430,15 @@ class CFolderDialog
 {
 public:
 	CFolderDialog(LPCSTR lpszTitle,UINT ulFlags,LPCITEMIDLIST pidlRoot=NULL);
+	CFolderDialog(LPCWSTR lpszTitle,UINT ulFlags,LPCITEMIDLIST pidlRoot=NULL);
 	CFolderDialog(UINT nTitleID,UINT ulFlags,LPCITEMIDLIST pidlRoot=NULL);
 	virtual ~CFolderDialog();
 
 	void DontFreeLPIL() { m_lpil=NULL; } // GetFolder() must call before this
-	BROWSEINFO m_bi;
+	union {
+		BROWSEINFOA m_bi;
+		BROWSEINFOW m_biw;
+	};
 	HWND m_hWnd;
 	LPITEMIDLIST m_lpil;
 
@@ -446,22 +450,36 @@ public:
 	BOOL GetFolder(LPSTR szFolder) const;
 	BOOL GetFolder(LPWSTR szFolder) const;
 	BOOL GetDisplayName(CString& strDisplayName) const;
+	BOOL GetDisplayName(CStringW& strDisplayName) const;
 	BOOL GetDisplayName(LPSTR szDisplayName,DWORD nSize);
+	BOOL GetDisplayName(LPWSTR szDisplayName,DWORD nSize);
 	int GetImage() const { return m_bi.iImage; } 
 
 	BOOL EnableOK(BOOL bEnable=TRUE);
 	BOOL SetSelection(LPITEMIDLIST lpil);
 	BOOL SetSelection(LPCSTR lpFolder);
+	BOOL SetSelection(LPCWSTR lpFolder);
 	BOOL SetStatusText(LPCSTR lpStatus);
+	BOOL SetStatusText(LPCWSTR lpStatus);
 
 	virtual BOOL OnInitialized();
 	virtual BOOL OnSelChanged(LPITEMIDLIST lpil);
 	virtual BOOL OnValidateFailed(LPITEMIDLIST lpil);
 
 protected:
-	CString m_strTitle;
-	CString m_strDisplayName;
-	CString m_strDefaultFolder;
+	union {	
+		LPSTR m_szTitle;
+		LPWSTR m_szwTitle;
+	};
+	union {
+		char m_szDisplayName[MAX_PATH];
+		WCHAR m_szwDisplayName[MAX_PATH];
+	};
+	union {
+		LPSTR m_szDefaultFolder;
+		LPWSTR m_szwDefaultFolder;
+	};
+	
 	LPITEMIDLIST m_lpDefaultIL;
 
 };

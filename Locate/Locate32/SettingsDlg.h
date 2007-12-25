@@ -75,8 +75,8 @@ public:
 		static BOOL CALLBACK TrayIconProc(BASICPARAMS* pParams); 
 		
 
-		static BOOL CALLBACK EnumDateFormatsProc(LPTSTR lpDateFormatString);
-		static BOOL CALLBACK EnumTimeFormatsProc(LPTSTR lpDateFormatString);
+		static BOOL CALLBACK EnumDateFormatsProc(LPSTR lpDateFormatString);
+		static BOOL CALLBACK EnumTimeFormatsProc(LPSTR lpDateFormatString);
 
 		CArrayFAP<LPSTR> m_aBuffer;
 

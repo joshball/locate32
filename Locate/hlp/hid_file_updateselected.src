@@ -3,5 +3,5 @@ CONTENT=
 <div id="menucommands">
 <H1><A NAME="hid_file_updateselected"></A>Update Selected... (File menu/System tray menu)</H1>
 
-<P>Shows dialog from which databases can be chosen and then updates selected databases. </P>
+<P>Shows dialog for database selection. The selected databases will be updated after the dialog is closed. </P>
 </div>
