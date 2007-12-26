@@ -3386,6 +3386,9 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnCommand(WOR
 	case IDC_CANCEL:
 		EndDialog(0);
 		break;
+	case IDC_HELP:
+		OnHelp(NULL);
+		break;
 	case IDC_LOCALDRIVES:
 		CheckDlgButton(IDC_CUSTOMDRIVES,0);
 		EnableControls();

@@ -112,7 +112,7 @@
 			<param name="Local" value="settings_languages.htm">
 			</OBJECT>
 		<LI> <OBJECT type="text/sitemap">
-			<param name="Name" value="Database tab">
+			<param name="Name" value="Databases tab">
 			<param name="Local" value="settings_databases.htm">
 			</OBJECT>
 		<LI> <OBJECT type="text/sitemap">

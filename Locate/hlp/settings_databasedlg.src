@@ -3,6 +3,90 @@ CONTENT=
 <div id="settings">
 <H1><A NAME="settings_databasedlg"></A>Database dialog / Database Settings</H1>
 
-<p>This page is under construction.</p>
+<p>You can use this tab to specify the settings of databases. This dialog contains the following options.</p>
+
+<div id="settings_databases_fields">
+<p>
+<b><A NAME="setting_databasedlg_enable"></A>Enable</b>:
+Use this option to enable and disable the database. If a database is enabled,
+it will be used in normal searches (when you press Find Now button or Enter). 
+This enabled/disabled state do not have effect on the "Update databases" command. 
+</p>
+<p>
+<b><A NAME="setting_databasedlg_updateglobally"></A>Update Globally</b>:
+Use this button to change the update globally state for the database. 
+If this Update Globally -state is enabled, the database will be updated when
+"Update databases" command is chosen.  
+</p>
+<p>
+<b><A NAME="setting_databasedlg_name"></A>Name</b>:
+Use this field to give a name for the database. Every database should have an unique name.
+</p>
+<p>
+<b><A NAME="setting_databasedlg_file"></A>File</b>:
+Use this field to specify a file to which the content of the database is stored. 
+The file name should be valid and user should have sufficient access (read and write the file) 
+to the given location. 
+</p>
+<p>
+<b><A NAME="setting_databasedlg_unicode"></A>Use Unicode character set</b>:
+If this option is enabled, filenames are stored using Unicode character set. 
+This option should be enabled if you have files using Cyrillic or Chinese 
+alphabets or other special characters. It is also recommended to enable this 
+option also in other cases. 
+</p>
+<p>
+<b><A NAME="setting_databasedlg_donotoverwriteexistingdata"></A>Do not overwrite existing data</b>:
+If this option is enabled and the database is updated, the database file is not overwritten and the 
+content of scanned drives is added to the tail of database. 
+For example, this option can be used to cataloging CD-ROM and DVD discs (to create a 
+database containing all files in several discs, setup a database containing CD/
+DVD rom drive and enable this option, insert a disc to drive and update database, insert another disc 
+and update database again). 
+</p>
+<p>
+<b><A NAME="setting_databasedlg_creator"></A>Creator</b>:
+Use this field to specify the name of the creator of the database. This information is shown
+in Database Info dialog (File menu). 
+</p>
+<p>
+<b><A NAME="setting_databasedlg_description"></A>Description</b>:
+Use this field to specify the description for the database. This information is shown
+in Database Info dialog (File menu). 
+</p>
+<p>
+<b><A NAME="setting_databasedlg_checklocaldrives"></A>Check local drives</b>:
+If this option is enabled, the database contains files that are the local drives 
+(external hard discs are often treated as a local drive). 
+</p>
+<p>
+<b><A NAME="setting_databasedlg_custom"></A>Custom</b>:
+Enable this option to choose drives and directories that will be included to the database. 
+Use the "Drives and Directories" list below and "Add Directory" button to specify these drives and directories. 
+</p>
+<p>
+<b><A NAME="setting_databasedlg_stopifrootunavailable"></A>Stop if root unavailable</b>:
+If this option is enabled, updating the database will be stopped if some of drives or directories is unavailable. 
+This option can be used with network shares or external drives. Note that, since the database is written 
+only just at the end of updating process, this stopping means that the database file is not updated at all. 
+More information <A HREF="howto_externaldrives.htm">here.</a>
+</p>
+<p>
+<b><A NAME="setting_databasedlg_advanced"></A>Advanced</b>:
+This button will show a dialog settings that can be used to include/exclude files and directories 
+and specify directory maps. 
+</p>
+<p>
+<b><A NAME="setting_databasedlg_advanced"></A>Drives and Directories</b>:
+This list contains the drives, directories and network shares which are included to the database when 
+Custom option is checked. You can add new drive or directory to the list using "Add Directory" -button 
+and remove a directory using "Remove" -button. The order of the directories can be changed using "Up" and
+"Down" -buttons.
+</p>
+
+
+
+</div>
+
 
 </div>

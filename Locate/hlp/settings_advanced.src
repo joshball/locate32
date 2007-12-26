@@ -3,6 +3,84 @@ CONTENT=
 <div id="settings">
 <H1><A NAME="settings_advanced"></A>Advanced Settings</H1>
 
-<p>This page is under construction.</p>
+
+
+<p>The Advanced tab in the Settings dialog contains several options. 
+You can change, for example, the behaviour of Locate32 dialog, the way how the results are 
+shown and change the setting of the update process and tool tips. There are also some setting
+which have effect to the whole system. 
+</p>
+
+<p><b>This page is still under construction and some of options which requires some 
+note are listed here.</b></p>
+
+
+<div id="advanced_settings">
+
+<h2>Locating files and result list</h2>
+<p>This group contains options that are related to search process and the result list.</p>
+
+<div id="advanced_settings_level1">
+
+
+<h2>Results list</h2>
+<div id="advanced_settings_level2">
+<p>
+<b><A NAME="setting_advanced_showfoundfilesonlyonce"></A>Show found files only once</b>:
+It is possible that some of files are listed several times in the results list, if you 
+have setup databases such that multiple databases contains same directories and files.
+You can use this option to prevent to appear multiple times in the result list. 
+<b>Note:</b> This option may have large effect on CPU usage (at least when there are
+lots of results). Therefore it is strongly recommended to leave this option disabled and
+setup databases so that same directories are not included in multiple databases.
+</p>
+</div>
+
+</div>
+
+<h2>System</h2>
+<p>This group contains options to run Locate32 at system startup and to add items to 
+the file popup menus in Windows Explorer.</p>
+
+<div id="advanced_settings_level1">
+<p>
+<b><A NAME="setting_advanced_runlocateatsystemstartup"></A>Run Locate at system startup</b>:
+If this option is enabled, Locate32 will be loaded when Windows is started. For that,
+this option will create a shortcut to Startup folder in Start menu. 
+</p>
+
+<h2>Shell Context menu commands</h2>
+<div id="advanced_settings_level2">
+
+<p>
+<b><A NAME="setting_advanced_locatetoMyComputer"></A>"Locate" item to My Computer</b>:
+This option creates "Locate..." item to the popup menu which appears when you right-click 
+"My Computer" icon. This option requires Administrator privileges.</p>
+
+<p>
+<b><A NAME="setting_advanced_locatetoMyDocuments"></A>"Locate" item to My Documents</b>:
+This option creates "Locate..." item to the popup menu which appears when you right-click 
+"My Documents" icon. This option requires Administrator privileges.</p>
+
+<p>
+<b><A NAME="setting_advanced_locatetodrives"></A>"Locate" item to drives</b>:
+This option creates "Locate..." item to the pop up menu which appears when you right-click 
+drives in Windows Explorer. This option requires Administrator privileges.</p>
+
+<p>
+<b><A NAME="setting_advanced_locatetodolders"></A>"Locate" item to folders</b>:
+This option creates "Locate..." item to the popup menu which appears when you right-
+click folders in Windows Explorer. This option requires Administrator privileges.</p>
+
+<p>
+<b><A NAME="setting_advanced_updatetoMyCompuTer"></A>"Update Database" item to My Computer</b>:
+This option creates "Update Database" item to the popup menu which appears when you right-click 
+"My Computer" shortcut. This option requires Administrator privileges.</p>
+</div>
+
+
+
+</div>
+
 
 </div>

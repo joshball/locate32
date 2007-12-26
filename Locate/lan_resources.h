@@ -1110,6 +1110,11 @@
 #define IDM_DEFCOLSELITEM               53000
 #define IDM_DEFUPDATEDBITEM             54000
 
+
+#ifndef IDC_HELP
+#define IDC_HELP            32651
+#endif
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED

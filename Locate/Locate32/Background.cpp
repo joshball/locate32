@@ -877,33 +877,35 @@ inline BOOL CBackgroundUpdater::RunningProc()
 			break;
 		else if (nRet==WAIT_OBJECT_0+1)
 		{
+			BkgDebugNumMessage("CBackgroundUpdater::RunningProc(): Waked. %d item to be updated",m_aUpdateList.GetSize());
+
+
+			// Resolve list style, list control size and icon size
+			// Do this everytime because size of dialog or list style may be changed or 
 			RECT rcViewRect;
+			int nIconSizeX,nIconSizeY;
+
 			DWORD nListStyle=m_pList->GetStyle()&LVS_TYPEMASK;
 			m_pList->GetClientRect(&rcViewRect);
-			
-
-
-			int nIconSizeX,nIconSizeY;
 			ImageList_GetIconSize(
 				m_pList->GetImageList(nListStyle==LVS_ICON?LVSIL_NORMAL:LVSIL_SMALL),
 				&nIconSizeX,&nIconSizeY);
 
 			
-			BkgDebugNumMessage("CBackgroundUpdater::RunningProc(): Waked. %d item to be updated",m_aUpdateList.GetSize());
 
 			for (;;)
 			{
-				// Swapping items about to be updated to local variable
-				// to prevend data access error between threads
+				// We use local variable for the array so that
+				// other operations are not delayed
 				
 				CArrayFP<CBackgroundUpdater::Item*>* pList=GetUpdaterListPtr();
 				if (pList==NULL)
 					continue;
-
 				CArrayFP<Item*> aUpdateList;
 				aUpdateList.Swap(*pList);
 				ReleaseUpdaterListPtr();
                 
+				// No items in list, there is no need to do anything
 				if (aUpdateList.GetSize()==0)
 					break;
 			
@@ -912,32 +914,46 @@ inline BOOL CBackgroundUpdater::RunningProc()
 				{
 					Item* pItem=aUpdateList.GetAt(i);
 
+					// At first, check that item is visible and threfore needs to be updated
 					BkgDebugFormatMessage("Checking whether item %s needs to be updated ",pItem->m_pItem->GetName());
 
 					POINT pt;
 					if (m_pList->GetItemPosition(pItem->m_iItem,&pt))
 					{
-						BkgDebugFormatMessage4("step two for %s, pt.x=%d, pt.y=%d",
-							pItem->m_pItem->GetName(),pt.x,pt.y,0);
-
 						// X axes does not need to be checked when report mode is on
-						POINT ptOrigin;
-						if (!m_pList->GetOrigin(&ptOrigin))
+						if (nListStyle==LVS_REPORT)
 						{
-							ptOrigin.x=0;
-							ptOrigin.y=0;
+							if (pt.y >= -nIconSizeY && pt.y<=rcViewRect.bottom)
+							{
+								BOOL bReDraw=FALSE;
+								
+								BkgDebugFormatMessage("Refreshing %s",pItem->m_pItem->GetName());
+								pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
+
+								if (bReDraw)
+									m_pList->PostMessage(LVM_REDRAWITEMS,pItem->m_iItem,pItem->m_iItem);
+							}
 						}
-
-						if (pt.y >= ptOrigin.y-nIconSizeY && pt.y<=rcViewRect.bottom+ptOrigin.y &&
-							(nListStyle==LVS_REPORT || (pt.x >= ptOrigin.x-nIconSizeX && pt.x<=rcViewRect.right+ptOrigin.x)))
+						else
 						{
-							BOOL bReDraw=FALSE;
-							
-							BkgDebugFormatMessage("Refreshing %s",pItem->m_pItem->GetName());
-							pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
+							POINT ptOrigin;
+							if (!m_pList->GetOrigin(&ptOrigin))
+							{
+								ptOrigin.x=0;
+								ptOrigin.y=0;
+							}
 
-							if (bReDraw)
-								m_pList->PostMessage(LVM_REDRAWITEMS,pItem->m_iItem,pItem->m_iItem);
+							if (pt.y >= ptOrigin.y-nIconSizeY && pt.y<=rcViewRect.bottom+ptOrigin.y &&
+								pt.x >= ptOrigin.x-nIconSizeX && pt.x<=rcViewRect.right+ptOrigin.x)
+							{
+								BOOL bReDraw=FALSE;
+								
+								BkgDebugFormatMessage("Refreshing %s",pItem->m_pItem->GetName());
+								pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
+
+								if (bReDraw)
+									m_pList->PostMessage(LVM_REDRAWITEMS,pItem->m_iItem,pItem->m_iItem);
+							}
 						}
 					}
 					

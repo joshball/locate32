@@ -265,3 +265,46 @@ a.li:hover { color: #660000; }
 	
 }
 
+
+
+#advanced_settings_level1 p 
+{
+	margin-left: 8pt;
+	margin-bottom: 2pt;
+}
+
+#advanced_settings_level1 h2
+{
+	font-family: Arial, sans-serif;
+	font-size: 105%;
+	margin-left: 8pt;
+	margin-bottom: 2pt;
+}
+
+#advanced_settings_level2 p 
+{
+	margin-left: 14pt;
+	margin-bottom: 2pt;
+}
+
+#advanced_settings_level2 h2
+{
+	font-family: Arial, sans-serif;
+	font-size: 105%;
+	margin-left: 14pt;
+	margin-bottom: 2pt;
+}
+
+#advanced_settings_level3 p 
+{
+	margin-left: 18pt;
+	margin-bottom: 2pt;
+	
+}
+
+#settings_databases_fields p 
+{
+	margin-left: 8pt;
+	margin-bottom: 2pt;
+	
+}
