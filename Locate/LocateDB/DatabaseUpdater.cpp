@@ -466,7 +466,8 @@ UpdateError CDatabaseUpdater::Update(BOOL bThreaded,int nThreadPriority)
 		UpdDebugFormatMessage1("CDatabaseUpdater::Update this=%lX",ULONG_PTR(this));
 		m_hThread=CreateThread(NULL,0,UpdateThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
 		DebugOpenThread(m_hThread);
-		
+		DebugFormatMessage("UPD: thread started ID=%X",dwThreadID);
+
 		if (m_hThread!=NULL)
 		{
 			SetThreadPriority(m_hThread,nThreadPriority);
@@ -482,12 +483,18 @@ UpdateError CDatabaseUpdater::Update(BOOL bThreaded,int nThreadPriority)
 
 BOOL CDatabaseUpdater::StopUpdating(BOOL bForce)
 {
-	HANDLE hThread=m_hThread;
-	DWORD status;
-	if (hThread==NULL)
+	if (m_hThread==NULL)
 		return TRUE;
 	
-	BOOL bRet=::GetExitCodeThread(m_hThread,&status);
+	HANDLE hThread;
+	DuplicateHandle(GetCurrentProcess(),m_hThread,GetCurrentProcess(),
+                    &hThread,0,FALSE,DUPLICATE_SAME_ACCESS);
+	DebugOpenThread(hThread);
+
+
+
+	DWORD status;
+	BOOL bRet=::GetExitCodeThread(hThread,&status);
 	if (bRet && status==STILL_ACTIVE)
 	{
 		InterlockedExchange(&m_lForceQuit,TRUE);
@@ -502,10 +509,15 @@ BOOL CDatabaseUpdater::StopUpdating(BOOL bForce)
 			::TerminateThread(hThread,1,TRUE);
 			
 			m_pProc(m_dwData,FinishedUpdating,ueStopped,this);
+			
+			// Class should deleted
 			if (m_hThread!=NULL)
 				m_pProc(m_dwData,ClassShouldDelete,ueStopped,this);
 		}
 	}
+
+	CloseHandle(hThread);
+	DebugCloseThread(hThread);
 	return TRUE;
 }
 #else
@@ -1825,168 +1837,176 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 
 }
 
+LPSTR* CDatabaseUpdater::DBArchive::ParsePatternListFromStringA(LPCWSTR szString)
+{
+	// Parsing included files
+	if (szString==NULL)
+		return NULL;
+
+	if (szString[0]=='\0')
+		return NULL;
+
+	// Counting
+	DWORD nPatterns=0;
+	LPCWSTR pPtr;
+	BOOL bPatternEmpty=TRUE;
+
+	for (pPtr=szString;*pPtr!='\0';pPtr++)
+	{
+		if (*pPtr==L';' || *pPtr==L',')
+		{
+			if (!bPatternEmpty)
+			{
+				nPatterns++;
+				bPatternEmpty=TRUE;
+			}
+		}
+		else if (*pPtr!=L' ')
+			bPatternEmpty=FALSE;
+	}
+	// Last pattern ok
+	if (!bPatternEmpty)
+		nPatterns++;
+
+	if (nPatterns==0)
+		return NULL;
+
+
+	LPSTR* pRet=new CHAR*[nPatterns+1];
+
+	nPatterns=0;
+	pPtr=szString;
+
+	for (;;)
+	{
+		DWORD nLength,nActualLength;
+		bPatternEmpty=TRUE;
+		
+		while (*pPtr==L' ')
+			pPtr++;
+		
+		for (nLength=0;pPtr[nLength]!='\0' && pPtr[nLength]!=';' && pPtr[nLength]!=',';nLength++);
+
+		for (nActualLength=nLength;nActualLength>0 && pPtr[nActualLength-1]==L' ';nActualLength--);
+
+
+		if (nActualLength>0)
+		{
+
+			pRet[nPatterns]=alloccopyWtoA(pPtr,nActualLength);
+			CharLowerBuffA(pRet[nPatterns],nActualLength);
+			nPatterns++;
+		}
+
+		pPtr+=nLength;
+
+		if (*pPtr=='\0')
+			break;
+
+		pPtr++;
+	}
+
+	pRet[nPatterns]=NULL;
+
+	return pRet;
+}
+
+LPWSTR* CDatabaseUpdater::DBArchive::ParsePatternListFromStringW(LPCWSTR szString)
+{
+	// Parsing included files
+	if (szString==NULL)
+		return NULL;
+
+	if (szString[0]=='\0')
+		return NULL;
+
+	// Counting
+	DWORD nPatterns=0;
+	LPCWSTR pPtr;
+	BOOL bPatternEmpty=TRUE;
+
+	for (pPtr=szString;*pPtr!='\0';pPtr++)
+	{
+		if (*pPtr==L';' || *pPtr==L',')
+		{
+			if (!bPatternEmpty)
+			{
+				nPatterns++;
+				bPatternEmpty=TRUE;
+			}
+		}
+		else if (*pPtr!=L' ')
+			bPatternEmpty=FALSE;
+	}
+	// Last pattern ok
+	if (!bPatternEmpty)
+		nPatterns++;
+
+	if (nPatterns==0)
+		return NULL;
+
+
+	LPWSTR* pRet=new WCHAR*[nPatterns+1];
+
+	nPatterns=0;
+	pPtr=szString;
+
+	for (;;)
+	{
+		DWORD nLength,nActualLength;
+		bPatternEmpty=TRUE;
+		
+		while (*pPtr==L' ')
+			pPtr++;
+		
+		for (nLength=0;pPtr[nLength]!='\0' && pPtr[nLength]!=';' && pPtr[nLength]!=',';nLength++);
+
+		for (nActualLength=nLength;nActualLength>0 && pPtr[nActualLength-1]==L' ';nActualLength--);
+
+
+		if (nActualLength>0)
+		{
+			pRet[nPatterns]=alloccopy(pPtr,nActualLength);
+			CharLowerBuffW(pRet[nPatterns],nActualLength);
+			nPatterns++;
+		}
+
+		pPtr+=nLength;
+
+		if (*pPtr=='\0')
+			break;
+
+		pPtr++;
+	}
+
+	pRet[nPatterns]=NULL;
+
+	return pRet;
+}
+
+
+
 void CDatabaseUpdater::DBArchive::ParseFilePatternsAndExcludedDirectories(LPCWSTR szIncludedFiles,
 																		  LPCWSTR szIncludedDirectories,
 																		  LPCWSTR szExcludedFiles,
 																		  const LPCWSTR* ppExcludedDirs,
 																		  int nExcludedDirectories)
 {
-	// Parsing included files
-	if (szIncludedFiles!=NULL)
+	// Parse included files and directories and excluded files
+	if (m_nFlags&Unicode)
 	{
-		if (szIncludedFiles[0]!='\0')
-		{
-			// Counting
-			DWORD nPatterns=1;
-			LPCWSTR pPtr;
-
-			for (pPtr=szIncludedFiles;*pPtr!='\0';pPtr++)
-			{
-				if (*pPtr==';' || *pPtr==',')
-					nPatterns++;
-			}
-
-			if (m_nFlags&Unicode)
-				m_aIncludeFilesPatternsW=new WCHAR*[nPatterns+1];
-			else
-				m_aIncludeFilesPatternsA=new CHAR*[nPatterns+1];
-
-			nPatterns=0;
-			pPtr=szIncludedFiles;
-
-			for (;;)
-			{
-				DWORD nLength;
-				for (nLength=0;pPtr[nLength]!='\0' && pPtr[nLength]!=';' && pPtr[nLength]!=',';nLength++);
-
-				if (m_nFlags&Unicode)
-				{
-					m_aIncludeFilesPatternsW[nPatterns]=alloccopy(pPtr,nLength);
-					CharLowerBuffW(m_aIncludeFilesPatternsW[nPatterns],nLength);
-				}
-				else
-				{
-					m_aIncludeFilesPatternsA[nPatterns]=alloccopyWtoA(pPtr,nLength);
-					CharLowerBuffA(m_aIncludeFilesPatternsA[nPatterns],nLength);
-				}
-				nPatterns++;
-
-				pPtr+=nLength;
-
-				if (*pPtr=='\0')
-					break;
-
-				pPtr++;
-			}
-
-			m_aIncludeFilesPatternsA[nPatterns]=NULL;
-		}
+		m_aIncludeFilesPatternsW=ParsePatternListFromStringW(szIncludedFiles);
+		m_aIncludeDirectoriesPatternsW=ParsePatternListFromStringW(szIncludedDirectories);
+		m_aExcludeFilesPatternsW=ParsePatternListFromStringW(szExcludedFiles);
 	}
-
-	// Parsing included directories
-	if (szIncludedDirectories!=NULL)
+	else
 	{
-		if (szIncludedDirectories[0]!='\0')
-		{
-			// Counting
-			DWORD nPatterns=1;
-			LPCWSTR pPtr;
-
-			for (pPtr=szIncludedDirectories;*pPtr!='\0';pPtr++)
-			{
-				if (*pPtr==';' || *pPtr==',')
-					nPatterns++;
-			}
-
-			if (m_nFlags&Unicode)
-				m_aIncludeDirectoriesPatternsW=new WCHAR*[nPatterns+1];
-			else
-				m_aIncludeDirectoriesPatternsA=new CHAR*[nPatterns+1];
-
-			nPatterns=0;
-			pPtr=szIncludedDirectories;
-
-			for (;;)
-			{
-				DWORD nLength;
-				for (nLength=0;pPtr[nLength]!='\0' && pPtr[nLength]!=';' && pPtr[nLength]!=',';nLength++);
-
-				if (m_nFlags&Unicode)
-				{
-					m_aIncludeDirectoriesPatternsW[nPatterns]=alloccopy(pPtr,nLength);
-					CharLowerBuffW(m_aIncludeDirectoriesPatternsW[nPatterns],nLength);
-				}
-				else
-				{
-					m_aIncludeDirectoriesPatternsA[nPatterns]=alloccopyWtoA(pPtr,nLength);
-					CharLowerBuffA(m_aIncludeDirectoriesPatternsA[nPatterns],nLength);
-				}
-				nPatterns++;
-
-				pPtr+=nLength;
-
-				if (*pPtr=='\0')
-					break;
-
-				pPtr++;
-			}
-
-			m_aIncludeDirectoriesPatternsA[nPatterns]=NULL;
-		}
+		m_aIncludeFilesPatternsA=ParsePatternListFromStringA(szIncludedFiles);
+		m_aIncludeDirectoriesPatternsA=ParsePatternListFromStringA(szIncludedDirectories);
+		m_aExcludeFilesPatternsA=ParsePatternListFromStringA(szExcludedFiles);
 	}
 
 
-	// Parsing excluded files
-	if (szExcludedFiles!=NULL)
-	{
-		if (szExcludedFiles[0]!='\0')
-		{
-			// Counting
-			DWORD nPatterns=1;
-			LPCWSTR pPtr;
-
-			for (pPtr=szExcludedFiles;*pPtr!='\0';pPtr++)
-			{
-				if (*pPtr==';' || *pPtr==',')
-					nPatterns++;
-			}
-
-			if (m_nFlags&Unicode)
-				m_aExcludeFilesPatternsW=new WCHAR*[nPatterns+1];
-			else
-				m_aExcludeFilesPatternsA=new CHAR*[nPatterns+1];
-
-			nPatterns=0;
-			pPtr=szExcludedFiles;
-
-			for (;;)
-			{
-				DWORD nLength;
-				for (nLength=0;pPtr[nLength]!='\0' && pPtr[nLength]!=';' && pPtr[nLength]!=',';nLength++);
-
-				if (m_nFlags&Unicode)
-				{
-					m_aExcludeFilesPatternsW[nPatterns]=alloccopy(pPtr,nLength);
-					CharLowerBuffW(m_aExcludeFilesPatternsW[nPatterns],nLength);
-				}
-				else
-				{
-					m_aExcludeFilesPatternsA[nPatterns]=alloccopyWtoA(pPtr,nLength);
-					CharLowerBuffA(m_aExcludeFilesPatternsA[nPatterns],nLength);
-				}
-				nPatterns++;
-
-				pPtr+=nLength;
-
-				if (*pPtr=='\0')
-					break;
-
-				pPtr++;
-			}
-
-			m_aExcludeFilesPatternsA[nPatterns]=NULL;
-		}
-	}
 
 	// Parsing included/excluded files and directories
 	if (nExcludedDirectories==0)

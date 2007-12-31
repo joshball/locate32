@@ -3235,7 +3235,7 @@ BYTE CLocateAppWnd::OnSettings()
 
 BYTE CLocateAppWnd::OnLocate()
 {
-	DebugMessage("CLocateAppWnd::OnLocate() BEGIN");
+	//DebugMessage("CLocateAppWnd::OnLocate() BEGIN");
 	GetLocateApp()->ClearStartupFlag(CLocateApp::CStartData::startupExitAfterUpdating);
 	
 	// Refreshing icon
@@ -3306,7 +3306,7 @@ BYTE CLocateAppWnd::OnLocate()
 		pLocateDlg->ForceForegroundAndFocus();
 	}
 
-	DebugMessage("CLocateAppWnd::OnLocate() END");
+	//DebugMessage("CLocateAppWnd::OnLocate() END");
 	return TRUE;
 }
 
@@ -3383,6 +3383,8 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThrea
 		// Starting thread which stops updating		
 		DWORD dwThreadID;
 		HANDLE hThread=CreateThread(NULL,0,KillUpdaterProc,(void*)this,0,&dwThreadID);
+		DebugFormatMessage("KILLUPDATER: thread started ID=%X",dwThreadID);
+
 		DebugOpenThread(hThread);
 		if (hThread!=NULL)
 		{
@@ -3423,20 +3425,24 @@ void CLocateAppWnd::OnDestroy()
 		m_pAbout=NULL;
 	}
 	
-	HANDLE hLocateThread;
 	
 	if (m_pLocateDlgThread!=NULL)
 	{
-		hLocateThread=m_pLocateDlgThread->m_hThread;
+		HANDLE hLocateThread;
+		DuplicateHandle(GetCurrentProcess(),m_pLocateDlgThread->m_hThread,GetCurrentProcess(),
+                    &hLocateThread,0,FALSE,DUPLICATE_SAME_ACCESS);
+		DebugOpenThread(hLocateThread);
 
 		if (m_pLocateDlgThread->IsRunning())
 		{
 			GetLocateDlg()->PostMessage(WM_CLOSEDIALOG);
 			
-			if (m_pLocateDlgThread!=NULL)
-			{
-				WaitForSingleObject(hLocateThread,1000);
-			}
+#ifdef _DEBUG_LOGGING
+			WaitForSingleObject(hLocateThread,5000);
+#else
+			WaitForSingleObject(hLocateThread,500);
+#endif
+
 		
 			if (m_pLocateDlgThread!=NULL)
 			{
@@ -3453,6 +3459,9 @@ void CLocateAppWnd::OnDestroy()
 			delete m_pLocateDlgThread;
 			m_pLocateDlgThread=NULL;
 		}
+
+		CloseHandle(hLocateThread);
+		DebugCloseThread(hLocateThread);
 	}
 
 	((CLocateApp*)GetApp())->StopUpdating();
@@ -4445,11 +4454,17 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 		CDC dc(this);
 		dc.SetMapMode(MM_TEXT);
 		dc.SelectObject(m_Font);
-		CSize sz=dc.GetTextExtent(szNewPtr,(int)nLength);
-	
-		if (m_WindowSize.cx<sz.cx)
-			m_WindowSize.cx=sz.cx;
-		m_WindowSize.cy+=sz.cy+EXTRA_MARGINSY;
+		
+		CRect rc(0,0,0,0);
+		dc.DrawText(szNewPtr,-1,&rc,DT_SINGLELINE|DT_CALCRECT);
+		if (m_WindowSize.cx<rc.Width())
+			m_WindowSize.cx=rc.Width();
+		m_WindowSize.cy+=rc.Height()+EXTRA_MARGINSY;
+
+		//CSize sz=dc.GetTextExtent(szNewPtr,(int)nLength);
+		//if (m_WindowSize.cx<sz.cx)
+		//	m_WindowSize.cx=sz.cx;
+		//m_WindowSize.cy+=sz.cy+EXTRA_MARGINSY;
 	}
 	
 	LeaveCriticalSection(&m_cUpdate);
@@ -5018,42 +5033,59 @@ CLocateApp::LocaleNumberFormat::LocaleNumberFormat()
 {
 	
 	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,"Control Panel\\International",CRegKey::defRead)==ERROR_SUCCESS)
+
+	BOOL bRet=RegKey.OpenKey(HKCU,"Control Panel\\International",CRegKey::defRead)==ERROR_SUCCESS;
+
+	if (!bRet)
+		bRet=RegKey.OpenKey(HKEY_USERS,".DEFAULT\\Control Panel\\International",CRegKey::defRead)==ERROR_SUCCESS;
+
+	if (!bRet)
 	{
-		WCHAR szTemp[10];
-		int nLen;
-
-		if (RegKey.QueryValue(L"iLZero",szTemp,10)>1)
-			uLeadingZero=_wtoi(szTemp);
-		if (RegKey.QueryValue(L"sGrouping",szTemp,10)>1)
-			uGrouping=_wtoi(szTemp);
-
-		nLen=RegKey.QueryValueLength(L"sDecimal");
-		if (nLen>1)
-		{
-			pDecimal=new WCHAR[nLen+1];
-			RegKey.QueryValue(L"sDecimal",pDecimal,nLen);
-		}
-		else
-		{
-			pDecimal=new WCHAR[2];
-			pDecimal[0]=L'.';
-			pDecimal[1]=L'\0';
-		}
-
-		nLen=RegKey.QueryValueLength(L"sThousand");
-		if (nLen>1)
-		{
-			pThousand=new WCHAR[nLen+1];
-			RegKey.QueryValue(L"sThousand",pThousand,nLen);
-		}
-		else
-		{
-			pThousand=new WCHAR[2];
-			pThousand[0]=L' ';
-			pThousand[1]=L'\0';
-		}
+		pDecimal=new WCHAR[2];
+		pDecimal[0]=L'.';
+		pDecimal[1]=L'\0';
+		pThousand=new WCHAR[2];
+		pThousand[0]=L' ';
+		pThousand[1]=L'\0';
+		return;
 	}
+
+
+
+	WCHAR szTemp[10];
+	int nLen;
+
+	if (RegKey.QueryValue(L"iLZero",szTemp,10)>1)
+		uLeadingZero=_wtoi(szTemp);
+	if (RegKey.QueryValue(L"sGrouping",szTemp,10)>1)
+		uGrouping=_wtoi(szTemp);
+
+	nLen=RegKey.QueryValueLength(L"sDecimal");
+	if (nLen>1)
+	{
+		pDecimal=new WCHAR[nLen+1];
+		RegKey.QueryValue(L"sDecimal",pDecimal,nLen);
+	}
+	else
+	{
+		pDecimal=new WCHAR[2];
+		pDecimal[0]=L'.';
+		pDecimal[1]=L'\0';
+	}
+
+	nLen=RegKey.QueryValueLength(L"sThousand");
+	if (nLen>1)
+	{
+		pThousand=new WCHAR[nLen+1];
+		RegKey.QueryValue(L"sThousand",pThousand,nLen);
+	}
+	else
+	{
+		pThousand=new WCHAR[2];
+		pThousand[0]=L' ';
+		pThousand[1]=L'\0';
+	}
+
 }
 
 

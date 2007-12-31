@@ -25,6 +25,8 @@ public:
 	CStringW m_sReturnedPreset;
 };
 
+/* This is a class for autocompletion. But it's still unfinished and therefore
+not used anywhere */
 
 class CComboBoxAutoComplete : public CComboBox
 {

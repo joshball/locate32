@@ -3386,7 +3386,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnCommand(WOR
 	case IDC_CANCEL:
 		EndDialog(0);
 		break;
-	case IDC_HELP:
+	case IDC_HELPBUTTON:
 		OnHelp(NULL);
 		break;
 	case IDC_LOCALDRIVES:
@@ -4390,7 +4390,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 	GetDlgItemText(IDC_INCLUDEFILES,m_sIncludedFiles);
 	GetDlgItemText(IDC_INCLUDEDIRECTORIES,m_sIncludedDirectories);
 	GetDlgItemText(IDC_EXCLUDEFILES,m_sExcludedFiles);
-	
+
 	m_aExcludedDirectories.RemoveAll();
 
 	CListBox Directories(GetDlgItem(IDC_DIRECTORIES));

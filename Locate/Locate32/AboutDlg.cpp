@@ -27,6 +27,14 @@ BOOL CAboutDlg::OnCommand(WORD wID, WORD wNotifyCode, HWND hControl)
 				NULL,NULL,0);
 			break;
 		}
+	case IDC_DONATE:
+		{
+			CWaitCursor wait;
+			ShellExecute(*this,NULL,
+				"https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=jmhuttun%40venda%2euku%2efi&item_name=Locate32%20%20donations&no_shipping=0&no_note=1&tax=0&currency_code=EUR&lc=FI&bn=PP%2dDonationsBF&charset=UTF%2d8",
+				NULL,NULL,0);
+			break;
+		}
 	}
 	return FALSE;
 }
@@ -46,9 +54,11 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 	MEMORYSTATUS mem;
 	CStringW text,text2;
 
-	// Setting banner
+	// Setting banner and donate button
 	SendDlgItemMessage(IDC_ABOUTBANNER,STM_SETIMAGE,IMAGE_BITMAP,
 		(LPARAM)LoadImage(IDB_ABOUTBANNER,IMAGE_BITMAP,0,0,LR_SHARED|LR_DEFAULTSIZE));
+	SendDlgItemMessage(IDC_DONATE,STM_SETIMAGE,IMAGE_BITMAP,
+		(LPARAM)LoadImage(IDB_DONATE,IMAGE_BITMAP,0,0,LR_SHARED|LR_DEFAULTSIZE));
 	
 	// Creating copyright and version strings
 	{

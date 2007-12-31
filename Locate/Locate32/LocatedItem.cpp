@@ -1637,7 +1637,7 @@ void CLocatedItem::SetToDeleted()
 
 	dwFlags&=~LITEM_PARENTICONOK;
 	dwFlags|=LITEM_ICONOK|LITEM_TYPEOK|LITEM_TIMEDATEOK|LITEM_FILESIZEOK;
-	DebugFormatMessage(L"dwFlags|=LITEM_ICONOK by SetToDeleted for %s",GetPath());
+	//DebugFormatMessage(L"dwFlags|=LITEM_ICONOK by SetToDeleted for %s",GetPath());
 
 	ItemDebugMessage("CLocatedItem::SetToDeleted END");
 }

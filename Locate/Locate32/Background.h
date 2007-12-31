@@ -35,27 +35,69 @@ protected:
 	
 
 public:
+	// Handle to this thread
 	HANDLE m_hThread;
 
+	
+	// Number of handles
 	UINT m_nHandles;
-	HANDLE* m_pHandles;
-	struct DIRCHANGEDATA{
+	
+
+	// Stucture containing required information for
+	// new method (ReadDirectoryChangesW)
+	struct DIRCHANGEDATA
+	{
 		DIRCHANGEDATA();
 		~DIRCHANGEDATA();
 
-		OVERLAPPED ol;
-		HANDLE hDir;
-		BYTE* pBuffer;
-		WCHAR* szRoot;
+		// Root and its length
+		WCHAR* pRoot;
 		DWORD dwRootLength;
+		
+		// Handle to root via CreateFile
+		HANDLE hDirHandle;
+		
+		// Overlapped structure
+		OVERLAPPED ol;
 
+		// Buffer 
+		BYTE* pBuffer;
 	};
-	union {
-		LPWSTR* m_pRoots;
-		DIRCHANGEDATA** m_pChangeDatas;
-	};
-
 	
+
+
+	// Stop event
+	HANDLE m_hStopEvent;
+
+	// Event handles, first event handle is stop event
+	HANDLE* m_pEventHandles;
+	
+	// Arrays
+	union {
+		DIRCHANGEDATA** m_pDirDatas;
+		LPWSTR* m_pRoots;
+	};
+
+
+	// Flags
+	enum State {
+		sInitializing = 0,
+		sWaiting = 1,
+		sProcessing = 2,
+		sStopping = 3,
+		sTerminated = 4
+	};
+	volatile LONG m_lState;
+
+	enum Flags {
+		fwStopWhenPossible = 0x1,
+	};
+	volatile LONG m_lFlags;
+	
+
+
+
+
 	LPWSTR m_pFile; // Used in RunningProcNew
 	
 	BOOL (WINAPI* m_pReadDirectoryChangesW)(HANDLE,LPVOID,DWORD,BOOL,DWORD,LPDWORD,LPOVERLAPPED,LPOVERLAPPED_COMPLETION_ROUTINE);
@@ -121,7 +163,7 @@ public:
 };
 
 inline CCheckFileNotificationsThread::DIRCHANGEDATA::DIRCHANGEDATA()
-:	hDir(NULL),pBuffer(NULL),szRoot(NULL)
+:   pRoot(NULL),hDirHandle(NULL),pBuffer(NULL)
 {
 	ol.hEvent=NULL;
 }
@@ -129,78 +171,64 @@ inline CCheckFileNotificationsThread::DIRCHANGEDATA::DIRCHANGEDATA()
 
 inline CCheckFileNotificationsThread::DIRCHANGEDATA::~DIRCHANGEDATA()
 {
-	if (hDir!=NULL)
+	// Closing directory handle
+	if (hDirHandle!=NULL)
 	{
 		BOOL (WINAPI *pCancelIo)(HANDLE)=
 			(BOOL (WINAPI *)(HANDLE))GetProcAddress(GetModuleHandle("kernel32.dll"),"CancelIo");
 
 		if (pCancelIo!=NULL)
-            pCancelIo(hDir);
-		CloseHandle(hDir);
-		DebugCloseFile(hDir);
+            pCancelIo(hDirHandle);
+		CloseHandle(hDirHandle);
+		DebugCloseFile(hDirHandle);
 	}
+
+	// Closing event handle
 	if (ol.hEvent!=NULL)
 	{
 		CloseHandle(ol.hEvent);
 		DebugCloseEvent(ol.hEvent);
 	}
+
+	// Free Buffer
 	if (pBuffer!=NULL)
 		delete[] pBuffer;
-	if (szRoot!=NULL)
-		delete[] szRoot;
+
+	// Free root
+	if (pRoot!=NULL)
+		delete[] pRoot;
 }
 
 
 inline CCheckFileNotificationsThread::CCheckFileNotificationsThread()
-:	m_hThread(NULL),m_nHandles(0),m_pHandles(NULL),m_pRoots(NULL),m_pFile(NULL)
+:	m_hThread(NULL),m_lFlags(0),m_lState(sInitializing),m_pEventHandles(NULL),m_pDirDatas(NULL),m_pFile(NULL)
 {
-	DebugMessage("CCheckFileNotificationsThread::CCheckFileNotificationsThread()");
-
-	
 	if ((GetLocateDlg()->GetExtraFlags()&CLocateDlg::efTrackingMask)==CLocateDlg::efEnableFSTrackingOld)
 		m_pReadDirectoryChangesW=NULL;
 	else
 		m_pReadDirectoryChangesW=(BOOL (WINAPI*)(HANDLE,LPVOID,DWORD,BOOL,DWORD,LPDWORD,LPOVERLAPPED,LPOVERLAPPED_COMPLETION_ROUTINE))
 			GetProcAddress(GetModuleHandle("kernel32.dll"),"ReadDirectoryChangesW");
 	
+
+	m_hStopEvent=CreateEvent(NULL,FALSE,FALSE,STRNULL);
+	DebugOpenEvent(m_hStopEvent);
 }
 
-inline CCheckFileNotificationsThread::~CCheckFileNotificationsThread()
-{	
-	DestroyHandles();
-		
-	if (m_pFile!=NULL)
-		delete[] m_pFile;
 
-	if (m_hThread!=NULL)
-	{
-		
-		GetLocateDlg()->m_pFileNotificationsThread=NULL;
-		HANDLE hThread=m_hThread;
-		m_hThread=NULL;
-
-		CloseHandle(hThread);
-		DebugCloseThread(hThread);
-	}
-	else
-		GetLocateDlg()->m_pFileNotificationsThread=NULL;
-
-
-	
-}
 
 inline void CCheckFileNotificationsThread::CouldStop()
 {
-	if (m_pHandles==NULL)
+	if (m_pEventHandles==NULL)
 		return;
-	SetEvent(m_pHandles[0]);
+	
+	// Set stop event
+	SetEvent(m_hStopEvent);
 }
 
 
 inline CBackgroundUpdater::CBackgroundUpdater(CListCtrl* pList)
 :	m_pList(pList),m_hThread(NULL)
 {
-	BkgDebugMessage("CBackgroundUpdater::CBackgroundUpdater()");
 }
 
 
@@ -208,22 +236,22 @@ inline CBackgroundUpdater::CBackgroundUpdater(CListCtrl* pList)
 inline CArrayFP<CBackgroundUpdater::Item*>* CBackgroundUpdater::GetUpdaterListPtr()
 {
 	// Waiting for other thread to complete
-	BkgDebugMessage("CBackgroundUpdater::GetUpdaterListPtr() waiting for mutex");
+	//BkgDebugMessage("CBackgroundUpdater::GetUpdaterListPtr() waiting for mutex");
 
 	if (WaitForMutex(m_hUpdateListPtrInUse,BACKGROUNDUPDATERMUTEXTIMEOUT))
 	{
-		BkgDebugMessage("CBackgroundUpdater::GetUpdaterListPtr() WaitForMutex returns error");
+		//BkgDebugMessage("CBackgroundUpdater::GetUpdaterListPtr() WaitForMutex returns error");
 		return NULL;
 	}
-	BkgDebugMessage("CBackgroundUpdater::GetUpdaterListPtr() got mutex");
+	//BkgDebugMessage("CBackgroundUpdater::GetUpdaterListPtr() got mutex");
 	return &m_aUpdateList;
 }
 
 inline void CBackgroundUpdater::ReleaseUpdaterListPtr()
 {
-	BkgDebugMessage("CBackgroundUpdater::ReleaseUpdaterListPtr() releasing mutex");
+	//BkgDebugMessage("CBackgroundUpdater::ReleaseUpdaterListPtr() releasing mutex");
 	ReleaseMutex(m_hUpdateListPtrInUse);
-	BkgDebugMessage("CBackgroundUpdater::ReleaseUpdaterListPtr() releasing mutex done");
+	//BkgDebugMessage("CBackgroundUpdater::ReleaseUpdaterListPtr() releasing mutex done");
 }
 
 
@@ -233,7 +261,7 @@ inline void CBackgroundUpdater::StopWaiting()
 
 	if (m_aUpdateList.GetSize()==0)
 	{
-		BkgDebugMessage("CBackgroundUpdater::StopWaiting() END (no wake)");
+		//BkgDebugMessage("CBackgroundUpdater::StopWaiting() END (no wake)");
 	
 		return; // No reason to wake
 	}

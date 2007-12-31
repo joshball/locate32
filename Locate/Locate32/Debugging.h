@@ -19,7 +19,8 @@
 //#define DEBUGMSG_DIALOG
 //#define DEBUGMSG_ITEMS
 //#define DEBUGMSG_DBCALLBACK
-//#define DEBUGMSG_BACKGROUND
+//#define DEBUGMSG_FILENOTIFICATIONS
+//#define DEBUGMSG_BACKGROUNDUPDATER
 //#define DEBUGMSG_FILEOBJECT
 
 
@@ -39,18 +40,36 @@
 #define ItemDebugFormatMessage4(a,b1,b2,b3,b4)
 #endif
 
-#ifdef DEBUGMSG_BACKGROUND
-#define BkgDebugMessage(a)						DebugMessage(a)
-#define BkgDebugNumMessage(a,b)					DebugFormatMessage(a,(DWORD)(b))
-#define BkgDebugFormatMessage(a,b)				DebugFormatMessage(a,b)
-#define BkgDebugFormatMessage4(a,b1,b2,b3,b4)	DebugFormatMessage(a,b1,b2,b3,b4)
-#define BkgDebugFormatMessage5(a,b1,b2,b3,b4,b5)	DebugFormatMessage(a,b1,b2,b3,b4,b5)
+#ifdef DEBUGMSG_FILENOTIFICATIONS
+#define FnDebugMessage(a)						DebugMessage(a)
+#define FnDebugMessage1(a,b1)					DebugFormatMessage(a,b1)
+#define FnDebugMessage2(a,b1,b2)				DebugFormatMessage(a,b1,b2)
+#define FnDebugMessage3(a,b1,b2,b3)				DebugFormatMessage(a,b1,b2,b3)
+#define FnDebugMessage4(a,b1,b2,b3,b4)			DebugFormatMessage(a,b1,b2,b3,b4)
+#define FnDebugMessage5(a,b1,b2,b3,b4,b5)		DebugFormatMessage(a,b1,b2,b3,b4,b5)
 #else
-#define BkgDebugMessage(a)
-#define BkgDebugNumMessage(a,b)
-#define BkgDebugFormatMessage(a,b) 
-#define BkgDebugFormatMessage4(a,b1,b2,b3,b4)
-#define BkgDebugFormatMessage5(a,b1,b2,b3,b4,b5)
+#define FnDebugMessage(a)		
+#define FnDebugMessage1(a,b1)		
+#define FnDebugMessage2(a,b1,b2)			
+#define FnDebugMessage3(a,b1,b2,b3)			
+#define FnDebugMessage4(a,b1,b2,b3,b4)			
+#define FnDebugMessage5(a,b1,b2,b3,b4,b5)		
+#endif
+
+#ifdef DEBUGMSG_BACKGROUNDUPDATER
+#define BuDebugMessage(a)						DebugMessage(a)
+#define BuDebugMessage1(a,b1)					DebugFormatMessage(a,b1)
+#define BuDebugMessage2(a,b1,b2)				DebugFormatMessage(a,b1,b2)
+#define BuDebugMessage3(a,b1,b2,b3)				DebugFormatMessage(a,b1,b2,b3)
+#define BuDebugMessage4(a,b1,b2,b3,b4)			DebugFormatMessage(a,b1,b2,b3,b4)
+#define BuDebugMessage5(a,b1,b2,b3,b4,b5)		DebugFormatMessage(a,b1,b2,b3,b4,b5)
+#else
+#define BuDebugMessage(a)		
+#define BuDebugMessage1(a,b1)		
+#define BuDebugMessage2(a,b1,b2)			
+#define BuDebugMessage3(a,b1,b2,b3)			
+#define BuDebugMessage4(a,b1,b2,b3,b4)			
+#define BuDebugMessage5(a,b1,b2,b3,b4,b5)		
 #endif
 
 #ifdef DEBUGMSG_DBCALLBACK
@@ -81,10 +100,19 @@
 #define ItemDebugFormatMessage1
 #define ItemDebugFormatMessage4
 
-#define BkgDebugMessage(a)
-#define BkgDebugFormatMessage(a,b)
-#define BkgDebugFormatMessage4(a,b1,b2,b3,b4)
-#define BkgDebugNumMessage(a,b)
+#define FnDebugMessage(a)		
+#define FnDebugMessage1(a,b1)		
+#define FnDebugMessage2(a,b1,b2)			
+#define FnDebugMessage3(a,b1,b2,b3)			
+#define FnDebugMessage4(a,b1,b2,b3,b4)			
+#define FnDebugMessage5(a,b1,b2,b3,b4,b5)		
+
+#define BuDebugMessage(a)		
+#define BuDebugMessage1(a,b1)		
+#define BuDebugMessage2(a,b1,b2)			
+#define BuDebugMessage3(a,b1,b2,b3)			
+#define BuDebugMessage4(a,b1,b2,b3,b4)			
+#define BuDebugMessage5(a,b1,b2,b3,b4,b5)		
 
 #define DbcDebugMessage(a)
 #define DbcDebugFormatMessage2(a,b1,b2)

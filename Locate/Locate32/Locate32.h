@@ -52,9 +52,6 @@ extern LPWSTR g_szwBuffer;
 //#define DEBUGALLOCATORTYPE					CDebugAllocator<DEBUGALLOC_EXTRALEN>
 #define DEBUGALLOCATORTYPE					CAllocator
 
-//#define THREADDISABLE_BACKROUNDUPDATER
-//#define THREADDISABLE_CHANGENOTIFIER
-
 
 
 // Defaults:

@@ -166,6 +166,9 @@ public:
 			LPCWSTR szExcludedFiles,const LPCWSTR* ppExcludedDirectories,int nExcludedDirectories);
 		void CreateRootDirectories(CRootDirectory*& pCurrent,LPCWSTR pRoot,DWORD dwLength,LPCWSTR szMaps);		
 
+		static LPSTR* ParsePatternListFromStringA(LPCWSTR szString);
+		static LPWSTR* ParsePatternListFromStringW(LPCWSTR szString);
+
 	protected:
 
 		LPWSTR m_szArchive;

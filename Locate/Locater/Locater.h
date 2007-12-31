@@ -107,7 +107,7 @@ public:
 
 #if defined(WIN32) & !defined(LOCATER_NOTHREAD)
 	BOOL StopLocating();
-	void CouldStop();
+	//void CouldStop();
 #endif
 
 	void SetSizeAndDate(DWORD dwFlags,

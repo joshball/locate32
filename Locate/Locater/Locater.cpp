@@ -846,8 +846,11 @@ BOOL CLocater::LocatingProc()
 		dbFile=NULL;
 	}
 	
-	m_pProc(m_dwData,FinishedLocating,ueResult,0,this);
-	m_pProc(m_dwData,ClassShouldDelete,ueResult,0,this);
+	if (!m_lForceQuit)
+	{
+		m_pProc(m_dwData,FinishedLocating,ueResult,0,this);
+		m_pProc(m_dwData,ClassShouldDelete,ueResult,0,this);
+	}
 	
 	// This class is deleted in the previous call, do not access this
 	
@@ -902,10 +905,9 @@ inline BOOL CLocater::SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCWSTR* szD
 	if (bThreaded)
 	{
 		DWORD dwThreadID;
-		LocaterDebugMessage("CLocater::LocateFiles CREATING THREAD");
 		m_hThread=CreateThread(NULL,0,CLocater::LocateThreadProc,this,0,&dwThreadID);
 		DebugOpenThread(m_hThread);
-		LocaterDebugMessage("CLocater::LocateFiles CREATING THREAD OK?");
+		DebugFormatMessage("LOC: creating thread ID=%X",dwThreadID);
 		return m_hThread!=NULL;
 	}
 	else
@@ -1036,14 +1038,19 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR szRegExp,BOOL bCaseSensitive,L
 BOOL CLocater::StopLocating()
 {
 	LocaterDebugMessage("CLocater::StopLocating() BEGIN");
-		
-	HANDLE hThread=m_hThread;
-	DWORD status;
-	if (hThread==NULL)
+	
+	if (m_hThread==NULL)
 		return FALSE;
 
+	HANDLE hThread;
+	DuplicateHandle(GetCurrentProcess(),m_hThread,GetCurrentProcess(),
+                    &hThread,0,FALSE,DUPLICATE_SAME_ACCESS);
+	DebugOpenThread(hThread);
+	DWORD status;
+	
 
-	BOOL bRet=::GetExitCodeThread(m_hThread,&status);
+
+	BOOL bRet=::GetExitCodeThread(hThread,&status);
 	if (bRet && status==STILL_ACTIVE)
 	{
 		InterlockedExchange(&m_lForceQuit,TRUE);
@@ -1052,25 +1059,38 @@ BOOL CLocater::StopLocating()
 		CWinThread* pThread=GetCurrentWinThread();
 		if (pThread!=NULL)
 		{
-			// Processing messages
-			PostQuitMessage(0);
-			pThread->ModalLoop();			
+			// This Stop() is called from CLocateDlg, it is possible
+			// that RunninProcNew sens messages to this window.
+			// Taking care of that
+			for (int i=0;i<40;i++)
+			{
+				PostQuitMessage(0);
+				pThread->ModalLoop();
+				if (WaitForSingleObject(hThread,30)!=WAIT_TIMEOUT)
+					break;
+			}
+
 		}
-		WaitForSingleObject(hThread,50);
+		else
+			WaitForSingleObject(hThread,1000);
 		bRet=::GetExitCodeThread(hThread,&status);
 		
 		if (bRet && status==STILL_ACTIVE)
 		{
 			TerminateThread(hThread,1,TRUE);
-			
-			m_pProc(m_dwData,FinishedDatabase,ueStopped,0,this);
-			m_pProc(m_dwData,FinishedLocating,ueStopped,0,this);
-			
-			if (m_hThread!=NULL)
-				m_pProc(m_dwData,ClassShouldDelete,ueStopped,0,this);
-			
 		}
+
+		m_pProc(m_dwData,FinishedDatabase,ueStopped,0,this);
+		m_pProc(m_dwData,FinishedLocating,ueStopped,0,this);
+			
+		// Classes didn't deleted
+		if (m_hThread!=NULL)
+			m_pProc(m_dwData,ClassShouldDelete,ueStopped,0,this);
 	}
+
+	
+	CloseHandle(hThread);
+	DebugCloseThread(hThread);
 
 	LocaterDebugMessage("CLocater::StopLocating() END");
 	return TRUE;

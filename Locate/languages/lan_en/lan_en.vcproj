@@ -550,6 +550,10 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
 			>
 			<File
+				RelativePath=".\commonres\aboutbanner.bmp"
+				>
+			</File>
+			<File
 				RelativePath="englishrc.rc"
 				>
 				<FileConfiguration
@@ -600,6 +604,10 @@
 						AdditionalIncludeDirectories="..\.."
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\commonres\x-click-but04.bmp"
+				>
 			</File>
 		</Filter>
 		<File

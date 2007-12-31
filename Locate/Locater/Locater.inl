@@ -501,13 +501,6 @@ inline DWORD CLocater::RemoveAdvancedFlags(DWORD dwRemoveFlag)
 }
 
 
-#if defined(WIN32) & !defined(LOCATER_NOTHREAD)
-inline void CLocater::CouldStop()
-{
-	InterlockedExchange(&m_lForceQuit,TRUE);
-}
-#endif
-
 
 inline CLocater::DBArchive::DBArchive(LPCWSTR szName_,CDatabase::ArchiveType nArchiveType_,
 									  LPCWSTR szArchive_,WORD wID_,BOOL bEnable_,LPCWSTR szRootMaps_)

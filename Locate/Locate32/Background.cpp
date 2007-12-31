@@ -6,106 +6,179 @@
 
 #define CHANGE_BUFFER_LEN		10000
 
+inline CCheckFileNotificationsThread::~CCheckFileNotificationsThread()
+{	
+	FnDebugMessage("FN: destructor called");
+	
+	ASSERT(m_lState==sStopping || m_lState==sTerminated);
+	ASSERT(m_lState==sTerminated || m_hThread!=NULL);
+	
 
+	InterlockedExchangePointer((PVOID*)&GetLocateDlg()->m_pFileNotificationsThread,NULL);
+
+
+
+	// Freeing handles
+	DestroyHandles();
+	
+	
+
+	// Delete file 
+	if (m_pFile!=NULL)
+		delete[] m_pFile;
+
+
+
+	// Closing stop event
+	CloseHandle(m_hStopEvent);
+	DebugCloseEvent(m_hStopEvent);
+
+
+	// Closing handle
+	if (m_hThread!=NULL)
+	{
+		// We are still running
+		CloseHandle(m_hThread);
+		DebugCloseThread(m_hThread);
+		m_hThread=NULL;
+	}
+}
 
 BOOL CCheckFileNotificationsThread::Start()
 {
-#ifdef THREADDISABLE_CHANGENOTIFIER
-	return TRUE;
-#else
-
-	BkgDebugMessage("CCheckFileNotificationsThread::Start BEGIN");
-	
-
 	if (m_hThread!=NULL)
 	{
-		BkgDebugMessage("CCheckFileNotificationsThread::Start() ALREADY STARTED");
 		return FALSE;
 	}
 
 	DWORD dwThreadID;
 	m_hThread=CreateThread(NULL,0,NotificationThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
 	DebugOpenHandle(dhtThread,m_hThread,"CheckFileNotifications");
-
+	DebugFormatMessage("FN: thread started ID=%X",(DWORD)dwThreadID);
+	
 	if (m_hThread==NULL)
 		return FALSE;
 	SetThreadPriority(m_hThread,THREAD_PRIORITY_BELOW_NORMAL);
 	ResumeThread(m_hThread);
 	
 	
-	BkgDebugMessage("CCheckFileNotificationsThread::Start END");
 	return TRUE;
-#endif
 }
 
 BOOL CCheckFileNotificationsThread::Stop()
 {
-#ifdef THREADDISABLE_CHANGENOTIFIER
-	return TRUE;
-#else
-
-	BkgDebugMessage("CCheckFileNotificationsThread::Stop BEGIN");
+	// Stopping background notifier
+	FnDebugMessage("FN: stopping");
 	
-	HANDLE hThread=m_hThread;
-	DWORD status=0;
-	if (hThread==NULL)
+	// First check whether thread is already stopped
+	if (m_hThread==NULL)
 	{
-		BkgDebugMessage("CCheckFileNotificationsThread::Stop END_1");
-		if (GetLocateDlg()->m_pFileNotificationsThread!=NULL)
-			delete this;
+		FnDebugMessage("FN: already stopped");
 		return FALSE;
 	}
+
+	// Creating a copy of thread handle and using
+	HANDLE hThread;
+	DuplicateHandle(GetCurrentProcess(),m_hThread,GetCurrentProcess(),
+                    &hThread,0,FALSE,DUPLICATE_SAME_ACCESS);
+	DebugOpenThread(hThread);
 	
-	BOOL bRet=::GetExitCodeThread(m_hThread,&status);
-	if (bRet && status==STILL_ACTIVE)
+	
+	ASSERT(m_lState==sInitializing || m_lState==sWaiting || 
+		m_lState==sProcessing || m_lState==sStopping);
+
+	// First, try some friendly ways to terminate thread
+
+	switch (m_lState)
 	{
-		if (m_pHandles!=NULL)
+	case sInitializing:
+		// Still initializing, say that processing can be stopped
+		FnDebugMessage("FN: thread still initializing");
+		InterlockedExchange(&m_lFlags,m_lFlags|fwStopWhenPossible);
+		
+		// First wait that initialization is ended
+		if (WaitForSingleObject(m_hStopEvent,2000)!=WAIT_OBJECT_0)
+			break;
+		
+		// Wait that ending processes are handled
+		WaitForSingleObject(m_hThread,1000);
+		break;
+	case sWaiting:
+		FnDebugMessage("FN: thread waiting");
+		
+		// Waiting events, so give it
+		SetEvent(m_hStopEvent);
+		
+		// Wait that ending processes are handled
+		WaitForSingleObject(m_hThread,1000);
+		break;
+	case sProcessing:
+		FnDebugMessage("FN: thread is processing");
+		InterlockedExchange(&m_lFlags,m_lFlags|fwStopWhenPossible);
+		
+		
+		// Wait that ending processes are handled
+		if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
 		{
-			BkgDebugFormatMessage("CCheckFileNotificationsThread::Stop set event %X",DWORD(m_pHandles[0]));
-
-			SetEvent(m_pHandles[0]);
-			for (int i=0;i<30 && GetLocateDlg()->m_pFileNotificationsThread!=NULL;i++)
-				Sleep(10);
-		}
-		if (GetLocateDlg()->m_pFileNotificationsThread!=NULL)
-		{
-			status=0;
-			bRet=::GetExitCodeThread(hThread,&status);
-			BOOL bTerminated=FALSE;
-	
-			
-			if (bRet && status==STILL_ACTIVE)
+			// This Stop() is called from CLocateDlg, it is possible
+			// that RunninProcNew sens messages to this window.
+			// Taking care of that
+			for (int i=0;i<40;i++)
 			{
-				if (::TerminateThread(hThread,1,TRUE))
-					bTerminated=TRUE;
+				PostQuitMessage(0);
+				GetLocateAppWnd()->m_pLocateDlgThread->ModalLoop();
+				if (WaitForSingleObject(hThread,50)!=WAIT_TIMEOUT)
+					break;
 			}
-	
-			if (bTerminated && m_hThread!=NULL)
-				delete this;
 		}
-	}
-	
-	BkgDebugMessage("CCheckFileNotificationsThread::Stop END");
-	return TRUE;
+		else
+			WaitForSingleObject(hThread,2000);
+		break;
+		
+	};			
 
-#endif
+	
+	
+	if (GetLocateDlg()->m_pFileNotificationsThread!=NULL)
+	{
+		// So that didn't go very well, use harder ways
+		InterlockedExchange(&m_lState,sTerminated);
+
+		DWORD status=0;
+		BOOL bRet=::GetExitCodeThread(hThread,&status);
+		BOOL bTerminated=FALSE;
+
+		
+		if (bRet && status==STILL_ACTIVE)
+		{
+			if (::TerminateThread(hThread,1,TRUE))
+				bTerminated=TRUE;
+		}
+
+		if (bTerminated)
+			delete this;
+	}
+
+	// Closing dublicated handle
+	CloseHandle(hThread);	
+	DebugCloseThread(hThread);
+	return TRUE;
 }
 
 inline void CCheckFileNotificationsThread::FileCreated(LPCWSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg)
 {
-	BkgDebugNumMessage("File created: %S",DWORD(szFile));
+	//BkgDebugNumMessage("File created: %S",DWORD(szFile));
 
 	if (pLocateDlg->m_pListCtrl==NULL)
 		return;
-	if (pLocateDlg->m_pListCtrl->GetItemCount()==0)
-		return;
-
-
-
+	
 	WCHAR szPath[MAX_PATH];
 	int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
 	{
+		if (m_lFlags&fwStopWhenPossible)
+			break;
+
 		CLocatedItem* pItem=(CLocatedItem*)pLocateDlg->m_pListCtrl->GetItemData(nItem);
 		if (pItem!=NULL)
 		{
@@ -126,22 +199,23 @@ inline void CCheckFileNotificationsThread::FileCreated(LPCWSTR szFile,DWORD dwLe
 		nItem=pLocateDlg->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
 	}
 
-	BkgDebugMessage("File created ENF");
+	//BkgDebugMessage("File created ENF");
 }
 
 inline void CCheckFileNotificationsThread::FileModified(LPCWSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg)
 {
-	BkgDebugNumMessage("File modified: %S",DWORD(szFile));
+	//BkgDebugNumMessage("File modified: %S",DWORD(szFile));
 
 	if (pLocateDlg->m_pListCtrl==NULL)
 		return;
-	if (pLocateDlg->m_pListCtrl->GetItemCount()==0)
-		return;
-
+	
 	WCHAR szPath[MAX_PATH];
 	int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
 	{
+		if (m_lFlags&fwStopWhenPossible)
+			break;
+
 		CLocatedItem* pItem=(CLocatedItem*)pLocateDlg->m_pListCtrl->GetItemData(nItem);
 		if (pItem!=NULL)
 		{
@@ -158,22 +232,23 @@ inline void CCheckFileNotificationsThread::FileModified(LPCWSTR szFile,DWORD dwL
 		}
 		nItem=pLocateDlg->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
 	}
-	BkgDebugMessage("File modified END");
+	//BkgDebugMessage("File modified END");
 }
 
 inline void CCheckFileNotificationsThread::FileDeleted(LPCWSTR szFile,DWORD dwLength,CLocateDlg* pLocateDlg)
 {
-	BkgDebugNumMessage("File deleted: %S",DWORD(szFile));
+	//BkgDebugNumMessage("File deleted: %S",DWORD(szFile));
 
 	if (pLocateDlg->m_pListCtrl==NULL)
 		return;
-	if (pLocateDlg->m_pListCtrl->GetItemCount()==0)
-		return;
-
+	
 	WCHAR szPath[MAX_PATH];
 	int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
 	{
+		if (m_lFlags&fwStopWhenPossible)
+			break;
+
 		CLocatedItem* pItem=(CLocatedItem*)pLocateDlg->m_pListCtrl->GetItemData(nItem);
 		if (pItem!=NULL)
 		{
@@ -194,26 +269,45 @@ inline void CCheckFileNotificationsThread::FileDeleted(LPCWSTR szFile,DWORD dwLe
 		nItem=pLocateDlg->m_pListCtrl->GetNextItem(nItem,LVNI_ALL);
 	}
 
-	BkgDebugMessage("File deleted END");
+	//BkgDebugMessage("File deleted END");
 }
 
 
 BOOL CCheckFileNotificationsThread::RunningProcNew()
 {
-	BkgDebugMessage("CCheckFileNotificationsThread::RunningProcNew() BEGIN");
+	FnDebugMessage("FN: RunningProcNew started");
+	
+	// Creating handles
 	CreateHandlesNew();
+	
+	if (m_lFlags&fwStopWhenPossible)
+	{
+		SetEvent(m_hStopEvent);
+
+		InterlockedExchange(&m_lState,sStopping);
+	
+		delete this;
+		return FALSE;
+	}
+
+
+	
 	DWORD dwOut;
 
 	for (;;)
 	{
-		BkgDebugFormatMessage("CCheckFileNotificationsThread::RunningProc(), GOING TO SLEEP, m_pHandles[0]=%X",DWORD(m_pHandles[0]));
-		DWORD nRet=WaitForMultipleObjects(m_nHandles,m_pHandles,FALSE,INFINITE);
-		BkgDebugNumMessage("CCheckFileNotificationsThread::RunningProc(), WAKED nRet=%X",nRet);
+		FnDebugMessage("FN goes to sleep");
+		InterlockedExchange(&m_lState,sWaiting);
+		DWORD nRet=WaitForMultipleObjects(m_nHandles,m_pEventHandles,FALSE,INFINITE);
+		InterlockedExchange(&m_lState,sProcessing);
+		FnDebugMessage1("FN waked nRet=%X",nRet);
 
 
-		if (nRet==WAIT_OBJECT_0) // The first is end event
+		if (nRet==WAIT_OBJECT_0) 
 		{
-			//CAppData::stdfunc();
+			// First event signalled, this event is for stopping
+			// So do nothing here and exit
+			FnDebugMessage("FN stopping event signalled, exiting");
 			break;
 		}
 		else if (nRet>WAIT_OBJECT_0 && nRet<WAIT_OBJECT_0+m_nHandles)
@@ -225,28 +319,38 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 				break;
 
 			
-			DIRCHANGEDATA* pChangeData=m_pChangeDatas[nRet-WAIT_OBJECT_0];
+			DIRCHANGEDATA* pChangeData=m_pDirDatas[nRet-WAIT_OBJECT_0];
 			
 			// Asking changes
 			if (!pLocateDlg->IsLocating()) // if locating in process, do nothing
 			{
-				if (GetOverlappedResult(pChangeData->hDir,&pChangeData->ol,&dwOut,FALSE))
+				if (GetOverlappedResult(pChangeData->hDirHandle,&pChangeData->ol,&dwOut,FALSE))
 				{
+					// If GetOverlappedResults took so long that Stop() has given during this time
+					// stop right now
+					if (m_lFlags&fwStopWhenPossible)
+						break;
+					
 					while (pLocateDlg->m_pBackgroundUpdater!=NULL &&
 						!pLocateDlg->m_pBackgroundUpdater->m_lIsWaiting)
 						Sleep(200);
 					
+					
 					if (dwOut==0)
-						UpdateItemsInRoot(pChangeData->szRoot,pLocateDlg);
+						UpdateItemsInRoot(pChangeData->pRoot,pLocateDlg);
 					else
 					{
 						FILE_NOTIFY_INFORMATION* pStruct=(FILE_NOTIFY_INFORMATION*)pChangeData->pBuffer;
 						while (1)
 						{
+							// Check stop state again
+							if (m_lFlags&fwStopWhenPossible)
+								break;
+
 							DWORD dwLength=pStruct->FileNameLength/2;
 							
 							m_pFile=new WCHAR[pChangeData->dwRootLength+dwLength+2];
-							MemCopyW(m_pFile,pChangeData->szRoot,pChangeData->dwRootLength);
+							MemCopyW(m_pFile,pChangeData->pRoot,pChangeData->dwRootLength);
 							MemCopyW(m_pFile+pChangeData->dwRootLength,pStruct->FileName,dwLength);
 							dwLength+=pChangeData->dwRootLength;
 							m_pFile[dwLength]='\0';
@@ -266,39 +370,59 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 								FileModified(m_pFile,dwLength,pLocateDlg);
 								break;
 							}
+							
 							delete[] m_pFile;
 							m_pFile=NULL;
-							
-							BkgDebugMessage("CCheckFileNotificationsThread::RunningProc() 1");
 							
 							if (pStruct->NextEntryOffset==0)
 								break;
 							*((char**)&pStruct)+=pStruct->NextEntryOffset;
 
-							BkgDebugMessage("CCheckFileNotificationsThread::RunningProc() 2");
+							
 						}		
 					}
 				}
 			}
 			
-			BkgDebugMessage("CCheckFileNotificationsThread::RunningProc() Coing to listen changes");
+			// Check this again 
+			if (m_lFlags&fwStopWhenPossible)
+				break;
 
 			
 			// Coing to listen changes
-			BOOL bRet=m_pReadDirectoryChangesW(pChangeData->hDir,pChangeData->pBuffer,CHANGE_BUFFER_LEN,TRUE,
+			FnDebugMessage("FN: going to listen changes");
+			BOOL bRet=m_pReadDirectoryChangesW(pChangeData->hDirHandle,pChangeData->pBuffer,CHANGE_BUFFER_LEN,TRUE,
 				FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|
 				FILE_NOTIFY_CHANGE_ATTRIBUTES|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE|
 				FILE_NOTIFY_CHANGE_CREATION|FILE_NOTIFY_CHANGE_SECURITY,
 				&dwOut,&pChangeData->ol,NULL);
+			FnDebugMessage("FN: m_pReadDirectoryChangesW returned");
+			
 
 			if (!bRet)
+			{
+				// ReadDirectoryChangesW failed, reset event manually
+				FnDebugMessage("FN: ReadDirectoryChangesW failed");
 				ResetEvent(pChangeData->ol.hEvent);
+			}
+
+
+			// Finally, before going to sleep, check that shell we continue
+			if (m_lFlags&fwStopWhenPossible)
+				break;
+
 		}
 	}
+
+
+	InterlockedExchange(&m_lState,sStopping);
+			
+
+	// Delete this structure
 	delete this;
 	
 	
-	BkgDebugMessage("CCheckFileNotificationsThread::RunningProcNew() END");
+	//FnDebugMessage("FN RunningProcNew ends");
 	return FALSE;
 }
 
@@ -306,18 +430,41 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 
 BOOL CCheckFileNotificationsThread::RunningProcOld()
 {
-	BkgDebugNumMessage("CCheckFileNotificationsThread::RunningProcOld() BEGIN, thread is 0x%X",GetCurrentThreadId());
+	//BkgDebugNumMessage("CCheckFileNotificationsThread::RunningProcOld() BEGIN, thread is 0x%X",GetCurrentThreadId());
 	CreateHandlesOld();
+
+	if (m_lFlags&fwStopWhenPossible)
+	{
+		SetEvent(m_hStopEvent);
+		
+		InterlockedExchange(&m_lState,sStopping);
+	
+		delete this;
+		return FALSE;
+	}
+
+
+
 	for (;;)
 	{
-		BkgDebugMessage("CCheckFileNotificationsThread::RunningProcOld(), GOING TO SLEEP");
-		DWORD nRet=WaitForMultipleObjects(m_nHandles,m_pHandles,FALSE,INFINITE);
-		BkgDebugNumMessage("CCheckFileNotificationsThread::RunningProcOld(), WAKED nRet=%X",nRet);
+		FnDebugMessage("FN goes to sleep");
+		InterlockedExchange(&m_lState,sWaiting);
+		DWORD nRet=WaitForMultipleObjects(m_nHandles,m_pEventHandles,FALSE,INFINITE);
+		InterlockedExchange(&m_lState,sProcessing);
+		FnDebugMessage1("FN waked nRet=%X",nRet);
+
+		
+		
 		if (nRet==WAIT_OBJECT_0) // The first is end event
+		{
+			// First event signalled, this event is for stopping
+			// So do nothing here and exit
+			FnDebugMessage("FN stopping event signalled, exiting");
 			break;
+		}
 		else if (nRet>WAIT_OBJECT_0 && nRet<WAIT_OBJECT_0+m_nHandles)
 		{
-			BkgDebugFormatMessage4("Something is changed in %S",m_pRoots[nRet-WAIT_OBJECT_0],0,0,0);
+			//BkgDebugFormatMessage4("Something is changed in %S",m_pRoots[nRet-WAIT_OBJECT_0],0,0,0);
 
 			CLocateDlg* pLocateDlg=GetLocateDlg();
 			
@@ -331,32 +478,51 @@ BOOL CCheckFileNotificationsThread::RunningProcOld()
 					!pLocateDlg->m_pBackgroundUpdater->m_lIsWaiting)
 					Sleep(200);
 				
+				// Stop if required
+				if (m_lFlags&fwStopWhenPossible)
+					break;
+					
 				// Updating changed items by checking all items
 				UpdateItemsInRoot(m_pRoots[nRet-WAIT_OBJECT_0],pLocateDlg);		
 			}
 
+			// Check this again 
+			if (m_lFlags&fwStopWhenPossible)
+				break;
+
 #ifdef _DEBUG_LOGGING
-			BOOL bRet=FindNextChangeNotification(m_pHandles[nRet-WAIT_OBJECT_0]);
-			BkgDebugFormatMessage4("CCheckFileNotificationsThread::RunningProcOld(): FindNextChangeNotification returns %X, nret=%X, nRet-WAIT_OBJECT_0=%X",bRet,nRet,nRet-WAIT_OBJECT_0,0);
+			BOOL bRet=FindNextChangeNotification(m_pEventHandles[nRet-WAIT_OBJECT_0]);
+			FnDebugMessage3("CCheckFileNotificationsThread::RunningProcOld(): FindNextChangeNotification returns %X, nret=%X, nRet-WAIT_OBJECT_0=%X",bRet,nRet,nRet-WAIT_OBJECT_0);
 #else	
-			FindNextChangeNotification(m_pHandles[nRet-WAIT_OBJECT_0]);
+			FindNextChangeNotification(m_pEventHandles[nRet-WAIT_OBJECT_0]);
 #endif		
+
+			// Finally, before going to sleep, check that shell we continue
+			if (m_lFlags&fwStopWhenPossible)
+				break;
 		}
 		else 
-			BkgDebugFormatMessage4("CCheckFileNotificationsThread::RunningProcOld(): nRet not handled, nRet=0x%X, handles=%d, GetLastError()=0x%X",nRet,m_nHandles,GetLastError(),0);
-
-
+		{
+			FnDebugMessage3("FN nRet not handled, nRet=0x%X, handles=%d, GetLastError()=0x%X",nRet,m_nHandles,GetLastError());
+		}
 	}
+	
+
+
+	InterlockedExchange(&m_lState,sStopping);
+			
+
+	// Delete this structure
 	delete this;
 	
 	
-	BkgDebugMessage("CCheckFileNotificationsThread::RunningProcOld() END");
+	//BkgDebugMessage("CCheckFileNotificationsThread::RunningProcOld() END");
 	return FALSE;
 }
 
 void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCWSTR szRoot,CLocateDlg* pLocateDlg)
 {
-	BkgDebugFormatMessage("CCheckFileNotificationsThread::UpdateItemsInRoot BEGIN szRoot=%s",szRoot);
+	//BkgDebugFormatMessage("CCheckFileNotificationsThread::UpdateItemsInRoot BEGIN szRoot=%s",szRoot);
 	
 	if (pLocateDlg->m_pListCtrl==NULL)
 		return;
@@ -367,17 +533,20 @@ void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCWSTR szRoot,CLocateDlg*
 	// Updating changed items by checking all items
 	if (szRoot[1]=='\0')
 	{
-		BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot 1a");
+		//BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot 1a");
 
 		WCHAR szDriveLower=szRoot[0];
 		WCHAR szDriveUpper=szRoot[0];
 		MakeUpper(&szDriveUpper,1);
 
-		BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot 2a");
+		//BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot 2a");
 
 		int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 		while (nItem!=-1)
 		{
+			if (m_lFlags&fwStopWhenPossible)
+				break;
+
 			CLocatedItem* pItem=(CLocatedItem*)pLocateDlg->m_pListCtrl->GetItemData(nItem);
 
 			if (pItem!=NULL)
@@ -400,11 +569,14 @@ void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCWSTR szRoot,CLocateDlg*
 	{
 		DWORD dwLength=(DWORD)istrlenw(szRoot);
 
-		BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot 1b");
+		//BkgDebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot 1b");
 
 		int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 		while (nItem!=-1)
 		{
+			if (m_lFlags&fwStopWhenPossible)
+				break;
+
 			CLocatedItem* pItem=(CLocatedItem*)pLocateDlg->m_pListCtrl->GetItemData(nItem);
 
 			if (pItem!=NULL)
@@ -427,7 +599,7 @@ void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCWSTR szRoot,CLocateDlg*
 		}
 	}
 
-	DebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot END");
+	//DebugMessage("CCheckFileNotificationsThread::UpdateItemsInRoot END");
 }
 
 DWORD WINAPI CCheckFileNotificationsThread::NotificationThreadProc(LPVOID lpParameter)
@@ -439,292 +611,359 @@ DWORD WINAPI CCheckFileNotificationsThread::NotificationThreadProc(LPVOID lpPara
 
 BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 {
-	BkgDebugMessage("CCheckFileNotificationsThread::CreateHandlesNew() BEGIN");
-	
-	ASSERT(m_pHandles==NULL);
+	ASSERT(m_pEventHandles==NULL);
+	ASSERT(m_lState==sInitializing);
 
+	FnDebugMessage("FN: creating handles");
+
+	
+	// Loads roods from databases so that we know what to listen
 	CArrayFAP<LPWSTR> aRoots;
 	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases(),TRUE);
 	
 	
-    m_pHandles=new HANDLE[aRoots.GetSize()+2];
-	m_pChangeDatas=new DIRCHANGEDATA*[aRoots.GetSize()+2];
-	DIRCHANGEDATA* pChangeData=NULL;
 	
-	ASSERT(m_pHandles!=NULL);
+	// Create arrays for event handles and data structures
+	//
+	// The first handle in m_pEventHandles is stop event, the rest of
+	// handles are events which are used in overlay structure (m_pDirDatas[i].ol)
+	// The first pointer in m_pDirDatas is NULL, the rest are pointers
+	// to DIRCHANGEDATA structures. 
+	// The lists are terminated with NULL
+    
+	// Allocating arraysn, note that the size of the list is not 
+	// necessary aRoots.GetSize()+2 if CreateFileW or m_pReadDirectoryChangesW
+	// return error
+	m_pEventHandles=new HANDLE[aRoots.GetSize()+2];
+	m_pDirDatas=new DIRCHANGEDATA*[aRoots.GetSize()+2];
+	
+	ASSERT(m_pEventHandles!=NULL);
+	ASSERT(m_pDirDatas!=NULL);
 
-	m_pHandles[0]=CreateEvent(NULL,FALSE,FALSE,NULL);
-	DebugOpenEvent(m_pHandles[0]);
-	m_pChangeDatas[0]=NULL;
 
-	m_nHandles=1;
-	DWORD dwOut;
+	// First event in events array is stop event and first pointer to 
+	// DIRCHANGEDATA structure is NULL, so that each element in m_pEventHandles (with index >0) 
+	// corresponds to element in m_pChangeDatas with the same index
+	m_pEventHandles[0]=m_hStopEvent;
+	m_pDirDatas[0]=NULL;
 
 
+
+
+
+	// Creating handles and DIRCHANGEDATA structures for directories in aRoots array
+	m_nHandles=1; // Number of handles currently in arrays, first element is stop event / NULL
+	DIRCHANGEDATA* pDirData=NULL; 
+	
 	for (int i=0;i<aRoots.GetSize();i++)
 	{
-		LPWSTR szRoot=aRoots.GetAt(i);
-		if (szRoot[1]==':' && szRoot[2]=='\0')
+		if (m_lFlags&fwStopWhenPossible)
 		{
-			szRoot=alloccopy(szRoot,3);
-			szRoot[2]=L'\\';
+			// Notify to Stop() that we are going to stop what 
+			// we are doing
+			SetEvent(m_hStopEvent);
+			break;
 		}
+
+
+		CStringW sRoot=aRoots.GetAt(i);
+
+		// If root of the type "X:", change it to "X:\"
+		if (sRoot[1]==':' && sRoot[2]=='\0')
+			sRoot << L'\\';
 		
+
+	/*	
 #ifdef _DEBUG_LOGGING
 		// If logging is on, do not use change notifications for root containing log file
 		LPCSTR pLogFile=GetDebugLoggingFile();
 		if (pLogFile!=NULL)
 		{
-			if (szRoot[1]==':' && szRoot[2]=='\0')
-			{
-				char szDrive[]="X:\\";
-				szDrive[0]=W2Ac(szRoot[0]);
-				MakeLower(szDrive,1);
-				if (szDrive[0]==pLogFile[0] && pLogFile[1]==':')
-					continue;
-			}
-			else
-			{
-				char* szPath=alloccopyWtoA(szRoot);
-				MakeLower(szPath);
-				BOOL bSame=strcmp(szPath,pLogFile)==0;
-				delete[] szPath;
-                if (bSame)
-					continue;
-			}		
+			// No debug logging for drive containing hfcdebug.log
+
+			char* szPath=alloccopyWtoA(sRoot);
+			MakeLower(szPath);
+			BOOL bSame=strncmp(szPath,pLogFile,sRoot.GetLength())==0;
+			delete[] szPath;
+            if (bSame)
+				continue;
 		}
 #endif
-		
-		// Allocating new CHANGEDATA struct
-		if (pChangeData==NULL)
+		*/
+
+		// Allocating new DIRCHANGEDATA struct
+		if (pDirData==NULL)
 		{
-			pChangeData=new DIRCHANGEDATA;
-			pChangeData->ol.hEvent=CreateEvent(NULL,FALSE,FALSE,NULL);
-			DebugOpenEvent(pChangeData->ol.hEvent);
-			pChangeData->pBuffer=new BYTE[CHANGE_BUFFER_LEN];
+			pDirData=new DIRCHANGEDATA;
+			// Create event for overlay structure
+			pDirData->ol.hEvent=CreateEvent(NULL,FALSE,FALSE,NULL);
+			DebugOpenEvent(pDirData->ol.hEvent);
+			
+			// Allocate buffer
+			pDirData->pBuffer=new BYTE[CHANGE_BUFFER_LEN];
 		}
 
+		// Create handle to directory
 		if (IsUnicodeSystem())
-			pChangeData->hDir=CreateFileW(szRoot,GENERIC_READ /*FILE_LIST_DIRECTORY*/,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
+			pDirData->hDirHandle=CreateFileW(sRoot,GENERIC_READ /*FILE_LIST_DIRECTORY*/,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
 				NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED,NULL);
 		else
-			pChangeData->hDir=CreateFile(W2A(szRoot),GENERIC_READ /*FILE_LIST_DIRECTORY*/,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
+			pDirData->hDirHandle=CreateFile(W2A(sRoot),GENERIC_READ /*FILE_LIST_DIRECTORY*/,FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
 				NULL,OPEN_EXISTING,FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED,NULL);
-		DebugOpenHandle(dhtFile,pChangeData->hDir,szRoot);
-
-
-		if (pChangeData->hDir==INVALID_HANDLE_VALUE)
+		
+		// If pDirData handle is invalid, skip this root
+		if (pDirData->hDirHandle==INVALID_HANDLE_VALUE)
 			continue;
 
+		
+		DebugOpenHandle(dhtFile,pDirData->hDirHandle,sRoot);
 
-		BOOL bRet=m_pReadDirectoryChangesW(pChangeData->hDir,pChangeData->pBuffer,CHANGE_BUFFER_LEN,TRUE,
+
+		// Test this again
+		if (m_lFlags&fwStopWhenPossible)
+		{
+			// Notify to Stop() that we are going to stop what 
+			// we are doing
+			SetEvent(m_hStopEvent);
+			break;
+		}
+
+
+
+		
+		// Start to read directory changes, asynchronous mode
+		BOOL bRet=m_pReadDirectoryChangesW(pDirData->hDirHandle,pDirData->pBuffer,CHANGE_BUFFER_LEN,TRUE,
 			FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|
             FILE_NOTIFY_CHANGE_ATTRIBUTES|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE|
             FILE_NOTIFY_CHANGE_CREATION|FILE_NOTIFY_CHANGE_SECURITY,
-			&dwOut,&pChangeData->ol,NULL);
+			NULL,&pDirData->ol,NULL);
 		
 				
-		if (bRet)
+		if (!bRet)
 		{
-			pChangeData->dwRootLength=(DWORD)istrlenw(szRoot);
-			if (szRoot[pChangeData->dwRootLength-1]=='\\')
-			{
-				if (szRoot!=aRoots.GetAt(i))
-					pChangeData->szRoot=szRoot;
-				else
-				{
-					pChangeData->szRoot=new WCHAR[pChangeData->dwRootLength+4];
-					MemCopyW(pChangeData->szRoot,szRoot,pChangeData->dwRootLength+1);
-				}
-				MakeLower(pChangeData->szRoot);
-			}
-			else
-			{
-				pChangeData->szRoot=new WCHAR[pChangeData->dwRootLength+4];
-				MemCopyW(pChangeData->szRoot,szRoot,pChangeData->dwRootLength);
-				pChangeData->szRoot[pChangeData->dwRootLength++]='\\';
-				pChangeData->szRoot[pChangeData->dwRootLength]='\0';
-				MakeLower(pChangeData->szRoot);
-			}
-			m_pHandles[m_nHandles]=pChangeData->ol.hEvent;
-			m_pChangeDatas[m_nHandles]=pChangeData;
-
-
-			pChangeData=NULL;
-			m_nHandles++;
-
+			// Cannot read directory changes (maybe UNC path), closing directory handle and skipping 
+			// this directory. Allocated pDirData can be left untouched for the next try
+			CloseHandle(pDirData->hDirHandle);
+			DebugCloseHandle(dhtFile,pDirData->hDirHandle,sRoot);
+			continue;
 		}
-		else
+
+
+		// And yet again
+		if (m_lFlags&fwStopWhenPossible)
 		{
-			CloseHandle(pChangeData->hDir);
-			DebugCloseHandle(dhtFile,pChangeData->hDir,szRoot);
+			// Notify to Stop() that we are going to stop what 
+			// we are doing
+			SetEvent(m_hStopEvent);
+			break;
 		}
+
+
+
+		// Copy root path to pDirData structure
+		if (sRoot.LastChar()!=L'\\')
+			sRoot << L'\\';
+		sRoot.MakeLower();
+		sRoot.FreeExtra();
+		pDirData->dwRootLength=sRoot.GetLength();
+		pDirData->pRoot=sRoot.GiveBuffer();
+
+
+		// Handle in m_pEventHandles was the event used in overlay structure, set it
+		m_pEventHandles[m_nHandles]=pDirData->ol.hEvent;
+
+		// Add pointer to m_pDirDatas structure
+		m_pDirDatas[m_nHandles]=pDirData;
+		m_nHandles++;
+
+
+		// New DIRCHANGEDATA structure should be allocated
+		pDirData=NULL;
+
 
 	}
 
-
-	if (pChangeData!=NULL)
-		delete pChangeData;
-
 	
-	
-	BkgDebugMessage("CCheckFileNotificationsThread::CreateHandlesNew() END");
+	// Free extra DIRCHANGEDATA structure
+	if (pDirData!=NULL)
+		delete pDirData;
+
+	// Terminate lists
+	m_pEventHandles[m_nHandles]=NULL;
+	m_pDirDatas[m_nHandles]=NULL;
+
+
+
+	FnDebugMessage("FN handles created");
 	return TRUE;
 }
 
 BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 {
-	ASSERT(m_pHandles==NULL);
+	ASSERT(m_pEventHandles==NULL);
+	ASSERT(m_lState==sInitializing);
 
-	BkgDebugMessage("CCheckFileNotificationsThread::CreateHandlesOld() BEGIN");
+	FnDebugMessage("FN: creating handles (old method)");
 	
 
+	// Loads roods from databases so that we know what to listen
 	CArrayFAP<LPWSTR> aRoots;
 	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases());
 	
 	
-	m_pHandles=new HANDLE[aRoots.GetSize()+1];
+	
+	// Create arrays for event handles and data structures
+	//
+	// The first handle in m_pEventHandles is stop event, the rest are change notification 
+	// objects returned by FindFirstChangeNotification function.
+	// The first pointer in m_pRoots is NULL, the rest are pointers
+	// to root directory. The lists are terminated with NULL
+    
+	// Allocating arraysn, note that the size of the list is not 
+	// necessary aRoots.GetSize()+2 if FindFirstChangeNotification returns error
+	m_pEventHandles=new HANDLE[aRoots.GetSize()+1];
 	m_pRoots=new LPWSTR[aRoots.GetSize()+1];
 	
-	ASSERT(m_pHandles!=NULL);
+	ASSERT(m_pEventHandles!=NULL);
+	ASSERT(m_pRoots!=NULL);
 
-	m_pHandles[0]=CreateEvent(NULL,FALSE,FALSE,STRNULL);
-	DebugOpenEvent(m_pHandles[0]);
+	// First handle in event handles array is stop handle and 
+	// first pointer to root directory is NULL,
+	// so that each element in m_pEventHandles (with index >0) 
+	// corresponds to element in m_pRoots array with the same index
+	m_pEventHandles[0]=m_hStopEvent;
 	m_pRoots[0]=NULL;
 
+
+	// Creating handles for directories in aRoots array using FindFirstChangeNotification
 	m_nHandles=1;
+	
 	for (int i=0;i<aRoots.GetSize();i++)
 	{
-		const LPWSTR szRoot=aRoots.GetAt(i);
-		if (szRoot[1]==':' && szRoot[2]=='\0')
+		if (m_lFlags&fwStopWhenPossible)
 		{
-			char szDrive[]="X:\\";
-			szDrive[0]=W2Ac(szRoot[0]);
-			
-#ifdef _DEBUG_LOGGING
-			// If logging is on, do not use change notifications for root containing log file
-			LPCSTR pLogFile=GetDebugLoggingFile();
-			if (pLogFile!=NULL)
-			{
-				MakeLower(szDrive,1);
-				if (szDrive[0]==pLogFile[0] && pLogFile[1]==':')
-					continue;
-			}			
-#endif
-			
+			// Notify to Stop() that we are going to stop what 
+			// we are doing
+			SetEvent(m_hStopEvent);
+			break;
+		}
 
-			BkgDebugFormatMessage4("Type of %s is 0x%X",szDrive,FileSystem::GetDriveType(szRoot),0,0);
-			m_pHandles[m_nHandles]=FindFirstChangeNotification(szDrive,TRUE,
+
+		CStringW sRoot=aRoots.GetAt(i);
+
+		// If root of the type "X:", change it to "X:\"
+		if (sRoot[1]==':' && sRoot[2]=='\0')
+			sRoot << L'\\';
+		
+				
+#ifdef _DEBUG_LOGGING
+		// If logging is on, do not use change notifications for root containing log file
+		LPCSTR pLogFile=GetDebugLoggingFile();
+		if (pLogFile!=NULL)
+		{
+			// No debug logging for drive containing hfcdebug.log
+
+			char* szPath=alloccopyWtoA(sRoot);
+			MakeLower(szPath);
+			BOOL bSame=strncmp(szPath,pLogFile,sRoot.GetLength())==0;
+			delete[] szPath;
+            if (bSame)
+				continue;
+		}
+#endif
+		
+
+		// Create find change notification objects
+		if (IsUnicodeSystem())
+			m_pEventHandles[m_nHandles]=FindFirstChangeNotificationW(sRoot,TRUE,
 				FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
-			DebugOpenHandle(dhtMisc,m_pHandles[m_nHandles],STRNULL);
-
-			BkgDebugFormatMessage4("FindFirstChangeNotification1,%d returned: 0x%X, drive is %s, GetLastError()=0x%X",i,m_pHandles[m_nHandles],szDrive,GetLastError());
-			if (m_pHandles[m_nHandles]!=INVALID_HANDLE_VALUE)
-			{
-				m_pRoots[m_nHandles]=new WCHAR[2];
-				m_pRoots[m_nHandles][0]=szRoot[0];
-				m_pRoots[m_nHandles][1]='\0';
-				MakeLower(m_pRoots[m_nHandles],1);
-				m_nHandles++;
-			}
-		}
 		else
+			m_pEventHandles[m_nHandles]=FindFirstChangeNotification(W2A(sRoot),TRUE,
+				FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
+		
+		if (m_pEventHandles[m_nHandles]==INVALID_HANDLE_VALUE)
 		{
-			
-#ifdef _DEBUG_LOGGING
-			// If logging is on, do not use change notifications for root containing log file
-			LPCSTR pLogFile=GetDebugLoggingFile();
-			if (pLogFile!=NULL)
-			{
-				char* szPath=alloccopyWtoA(szRoot);
-                MakeLower(szPath);
-
-				BOOL bSame=strcmp(szPath,pLogFile)==0;
-				delete[] szPath;
-                if (bSame)
-					continue;
-			}			
-#endif
-			if (IsUnicodeSystem())
-				m_pHandles[m_nHandles]=FindFirstChangeNotificationW(szRoot,TRUE,
-					FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
-			else
-				m_pHandles[m_nHandles]=FindFirstChangeNotification(W2A(szRoot),TRUE,
-					FILE_NOTIFY_CHANGE_FILE_NAME|FILE_NOTIFY_CHANGE_DIR_NAME|FILE_NOTIFY_CHANGE_SIZE|FILE_NOTIFY_CHANGE_LAST_WRITE);
-			DebugOpenEvent(m_pHandles[m_nHandles]);
-
-			BkgDebugFormatMessage4("FindFirstChangeNotification2,%d returned: 0x%X, drive is %S, GetLastError()=0x%X",i,m_pHandles[m_nHandles],szRoot,GetLastError());
-			if (m_pHandles[m_nHandles]!=INVALID_HANDLE_VALUE)
-			{
-				m_pRoots[m_nHandles]=alloccopy(szRoot);
-				MakeLower(m_pRoots[m_nHandles]);
-				m_nHandles++;
-			}
+			// FindFirstChangeNotification returned error, skipping this directory
+			continue;
 		}
+
+		DebugOpenEvent(m_pEventHandles[m_nHandles]);
+
+
+		sRoot.MakeLower();
+		sRoot.FreeExtra();
+		m_pRoots[m_nHandles]=sRoot.GiveBuffer();
+		m_nHandles++;
+
 	}
 
-	
 
-	BkgDebugMessage("CCheckFileNotificationsThread::CreateHandlesOld() END");
+	// Terminate lists
+	m_pEventHandles[m_nHandles]=NULL;
+	m_pDirDatas[m_nHandles]=NULL;
+
+
+	FnDebugMessage("FN handles created");
 	return TRUE;
 }
 
 BOOL CCheckFileNotificationsThread::DestroyHandles()
 {
-	BkgDebugMessage("CCheckFileNotificationsThread::DestroyHandles() BEGIN");
+	FnDebugMessage("FN: starting to destroy handles");
 	
-	if (m_pHandles==NULL)
+	// Various tests
+	ASSERT(m_pDirDatas[0]==NULL);
+	ASSERT(m_lState==sStopping || m_lState==sTerminated);
+
+	
+	if (m_pEventHandles==NULL)
 		return TRUE;
 
-	HANDLE* pHandles=m_pHandles;
-	m_pHandles=NULL;
-	DWORD nHandles=m_nHandles;
-
+	
 
 	if (m_pReadDirectoryChangesW!=NULL)
 	{
-		ASSERT(m_pChangeDatas[0]==NULL);
-
-			
-		// Pointers used with ReadDirectoryChangesW		
-		CloseHandle(pHandles[0]);
-		DebugCloseEvent(pHandles[0]);
-		for (UINT n=1;n<nHandles;n++)
+		// ReadDirectoryChangesW used, deleting DIRCHANGEDATA structures
+		for (UINT n=1;n<m_nHandles;n++)
 		{
-			//DebugFormatMessage("Deleting CHANGEDIR for %s",pChangeDatas[n]->szRoot);
-			
-			ASSERT(pHandles[n]==m_pChangeDatas[n]->ol.hEvent);
+			//Handle in event array and event in overlay structure should be same
+			ASSERT(m_pEventHandles[n]==m_pDirDatas[n]->ol.hEvent);
+
+			// Destructor of DIRCHANGEDATA closes ol.hEvent (i.e. handle in m_pEventHandles)
+			delete m_pDirDatas[n];
 
 			// Destructor also closes this handle
-			// CloseHandle(pHandles[n]);
+			//CloseHandle(pHandles[n]);
 
-			delete m_pChangeDatas[n];
 		}
-		delete[] pHandles;
-		delete[] m_pChangeDatas;
 
-		m_pChangeDatas=NULL;
+		delete[] m_pDirDatas;
 	}
 	else
 	{
-		// Pointers used with traditional method
-		CloseHandle(pHandles[0]);
-		DebugCloseEvent(pHandles[0]);
-		for (UINT n=1;n<nHandles;n++)
+		// Close change notifaction objects returned by FindFirstChangeNotifcation 
+		// and free root directory string
+		for (UINT n=1;n<m_nHandles;n++)
 		{
-			FindCloseChangeNotification(pHandles[n]);
-			DebugCloseHandle(dhtMisc,pHandles[n],STRNULL);
+			FindCloseChangeNotification(m_pEventHandles[n]);
+			DebugCloseEvent(m_pEventHandles[n]);
+
 			delete[] m_pRoots[n];
 		}
-		delete[] pHandles;
 		delete[] m_pRoots;
-
-		m_pRoots=NULL;
 	}
 	
 
+	// Free event handle array
+	delete[] m_pEventHandles;
+
 	
-	BkgDebugMessage("CCheckFileNotificationsThread::DestroyHandles() END");
+	// Just for sure
+	m_pEventHandles=NULL;
+	m_pDirDatas=NULL;
+
+	
+	FnDebugMessage("FN: handles destroyed");
 	return TRUE;
 }
 
@@ -735,32 +974,31 @@ BOOL CCheckFileNotificationsThread::DestroyHandles()
 
 BOOL CBackgroundUpdater::Start()
 {
-#ifdef THREADDISABLE_BACKROUNDUPDATER
-	return TRUE;
-#else
-    BkgDebugMessage("CBackgroundUpdater::Start() BEGIN");
+    BuDebugMessage("CBackgroundUpdater::Start() BEGIN");
 
 	if (m_hThread!=NULL)
 	{
-		BkgDebugMessage("CBackgroundUpdater::Start() ALREADY STARTED");
+		BuDebugMessage("CBackgroundUpdater::Start() ALREADY STARTED");
 		return FALSE;
 	}
 
 	DWORD dwThreadID;
 	HANDLE hThread=CreateThread(NULL,0,UpdaterThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
 	DebugOpenHandle(dhtThread,hThread,"BackgroundUpdater");
+	DebugFormatMessage("BU started, thread ID=%X",dwThreadID);
+
+
 	if (hThread==NULL)
 		return FALSE;
-	
+
 	InterlockedExchangePointer(&m_hThread,hThread);
 	SetThreadPriority(m_hThread,THREAD_PRIORITY_BELOW_NORMAL);
 	
 	InterlockedExchange(&m_lIsWaiting,FALSE);
 	ResumeThread(m_hThread);
 
-	BkgDebugMessage("CBackgroundUpdater::Start() END");
+	BuDebugMessage("CBackgroundUpdater::Start() END");
 	return TRUE;
-#endif
 }
 
 
@@ -777,20 +1015,9 @@ void CBackgroundUpdater::CreateEventsAndMutex()
 
 CBackgroundUpdater::~CBackgroundUpdater()
 {	
-	if (m_hThread!=NULL)
-	{
-		InterlockedExchangePointer((PVOID*)&GetLocateDlg()->m_pBackgroundUpdater,NULL);
-		HANDLE hThread=m_hThread;
-		InterlockedExchangePointer(&m_hThread,NULL);
-		m_hThread=NULL;
-
-		BkgDebugMessage("CBackgroundUpdater::~CBackgroundUpdater()");
-		CloseHandle(hThread);
-		DebugCloseThread(hThread);
-	}
-	else
-		InterlockedExchangePointer((PVOID*)&GetLocateDlg()->m_pBackgroundUpdater,NULL);
+	InterlockedExchangePointer((PVOID*)&GetLocateDlg()->m_pBackgroundUpdater,NULL);
 	
+
 	
 	CloseHandle(m_phEvents[0]);
 	DebugCloseEvent(m_phEvents[0]);
@@ -803,6 +1030,16 @@ CBackgroundUpdater::~CBackgroundUpdater()
 		DebugCloseMutex(m_hUpdateListPtrInUse);
 		m_hUpdateListPtrInUse=NULL;
 	}
+
+
+	// Closing handle
+	if (m_hThread!=NULL)
+	{
+		// We are still running
+		CloseHandle(m_hThread);
+		DebugCloseThread(m_hThread);
+		m_hThread=NULL;
+	}
 }
 
 
@@ -811,26 +1048,34 @@ BOOL CBackgroundUpdater::Stop()
 #ifdef THREADDISABLE_BACKROUNDUPDATER
 	return TRUE;
 #else
-	BkgDebugMessage("CBackgroundUpdater::Stop() BEGIN");
+	BuDebugMessage("BU: Stop");
 
-	HANDLE hThread=m_hThread;
-	DWORD status=0;
-	if (hThread==NULL)
+	if (m_hThread==NULL)
 	{
-		BkgDebugMessage("CBackgroundUpdater::Stop() END_1");
 		if (GetLocateDlg()->m_pBackgroundUpdater!=NULL)
 			delete this;
 		return FALSE;
 	}
-	
-	BOOL bRet=::GetExitCodeThread(m_hThread,&status);
+		
+		
+	// Creating a copy of thread handle and using
+	HANDLE hThread;
+	DuplicateHandle(GetCurrentProcess(),m_hThread,GetCurrentProcess(),
+                    &hThread,0,FALSE,DUPLICATE_SAME_ACCESS);
+	DebugOpenThread(hThread);
+
+
+	DWORD status;
+	BOOL bRet=::GetExitCodeThread(hThread,&status);
 	if (bRet && status==STILL_ACTIVE)
 	{
 		InterlockedExchange(&m_lGoToSleep,TRUE);
 
-		SetEvent(m_phEvents[0]); // 0 = end envent
-		for (int i=0;i<30 && GetLocateDlg()->m_pBackgroundUpdater!=NULL;i++)
-			Sleep(10);
+		// Signal stop event
+		SetEvent(m_phEvents[0]);
+		
+		// Wait for ending
+		WaitForSingleObject(hThread,750);
 
 		if (GetLocateDlg()->m_pBackgroundUpdater!=NULL)
 		{
@@ -844,31 +1089,32 @@ BOOL CBackgroundUpdater::Stop()
 					bTerminated=TRUE;
 			}
 	
-			if (bTerminated && m_hThread!=NULL)
+			if (bTerminated)
 				delete this;
 		}
 	}
 
-	BkgDebugMessage("CBackgroundUpdater::Stop() END");
+	CloseHandle(hThread);
+	DebugCloseThread(hThread);
 	return TRUE;
 #endif
 }
 
 inline BOOL CBackgroundUpdater::RunningProc()
 {
-	BkgDebugNumMessage("CBackgroundUpdater::RunningProc() BEGIN, running thread 0x%X",GetCurrentThreadId());
+	BuDebugMessage1("CBackgroundUpdater::RunningProc() BEGIN, running thread 0x%X",GetCurrentThreadId());
 
 	for (;;)
 	{
 		InterlockedExchange(&m_lGoToSleep,FALSE);
 		InterlockedExchange(&m_lIsWaiting,TRUE);
 
-		BkgDebugMessage("CBackgroundUpdater::RunningProc(): Going to sleep.");
+		BuDebugMessage("CBackgroundUpdater::RunningProc(): Going to sleep.");
 		
 		DWORD nRet=WaitForMultipleObjects(2,m_phEvents,FALSE,INFINITE);
 		InterlockedExchange(&m_lIsWaiting,FALSE);
 
-		BkgDebugFormatMessage4("CBackgroundUpdater::RunningProc(): Woked, nRet=%d.",nRet,0,0,0);
+		BuDebugMessage1("CBackgroundUpdater::RunningProc(): Woked, nRet=%d.",nRet);
 
 
 		if (nRet==WAIT_TIMEOUT)
@@ -877,7 +1123,7 @@ inline BOOL CBackgroundUpdater::RunningProc()
 			break;
 		else if (nRet==WAIT_OBJECT_0+1)
 		{
-			BkgDebugNumMessage("CBackgroundUpdater::RunningProc(): Waked. %d item to be updated",m_aUpdateList.GetSize());
+			BuDebugMessage1("CBackgroundUpdater::RunningProc(): Waked. %d item to be updated",m_aUpdateList.GetSize());
 
 
 			// Resolve list style, list control size and icon size
@@ -915,7 +1161,7 @@ inline BOOL CBackgroundUpdater::RunningProc()
 					Item* pItem=aUpdateList.GetAt(i);
 
 					// At first, check that item is visible and threfore needs to be updated
-					BkgDebugFormatMessage("Checking whether item %s needs to be updated ",pItem->m_pItem->GetName());
+					BuDebugMessage1("Checking whether item %s needs to be updated ",pItem->m_pItem->GetName());
 
 					POINT pt;
 					if (m_pList->GetItemPosition(pItem->m_iItem,&pt))
@@ -927,7 +1173,7 @@ inline BOOL CBackgroundUpdater::RunningProc()
 							{
 								BOOL bReDraw=FALSE;
 								
-								BkgDebugFormatMessage("Refreshing %s",pItem->m_pItem->GetName());
+								BuDebugMessage1("Refreshing %s",pItem->m_pItem->GetName());
 								pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
 
 								if (bReDraw)
@@ -948,7 +1194,7 @@ inline BOOL CBackgroundUpdater::RunningProc()
 							{
 								BOOL bReDraw=FALSE;
 								
-								BkgDebugFormatMessage("Refreshing %s",pItem->m_pItem->GetName());
+								BuDebugMessage1("Refreshing %s",pItem->m_pItem->GetName());
 								pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
 
 								if (bReDraw)
@@ -962,16 +1208,16 @@ inline BOOL CBackgroundUpdater::RunningProc()
 				
 			}
 			ResetEvent(m_phEvents[1]);
-			BkgDebugMessage("CBackgroundUpdater::RunningProc(): I am tired");
+			BuDebugMessage("CBackgroundUpdater::RunningProc(): I am tired");
 			
 			InterlockedExchange(&m_lGoToSleep,FALSE);
 		}
 		else 
-			BkgDebugFormatMessage4("CBackgroundUpdater::RunningProc(): nRet not handled, nRet:0x%X, events=2, GetLastError()=0x%X",nRet,GetLastError(),0,0);
+			BuDebugMessage2("CBackgroundUpdater::RunningProc(): nRet not handled, nRet:0x%X, events=2, GetLastError()=0x%X",nRet,GetLastError());
 	}
 	delete this;
 	
-	DebugMessage("CBackgroundUpdater::RunningProc() END");
+	BuDebugMessage("CBackgroundUpdater::RunningProc() END");
 	return TRUE;
 }
 
@@ -982,7 +1228,7 @@ DWORD WINAPI CBackgroundUpdater::UpdaterThreadProc(LPVOID lpParameter)
 
 void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailType nDetail)
 {
-	BkgDebugFormatMessage("CBackgroundUpdater::AddToUpdateList BEGIN this is %X",this);
+	BuDebugMessage1("CBackgroundUpdater::AddToUpdateList BEGIN this is %X",this);
 	
 	CArrayFP<Item*>* pUpdateList=GetUpdaterListPtr();
 	if (pUpdateList==NULL)
@@ -992,7 +1238,7 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 	{
 		Item* pListItem=pUpdateList->GetAt(i);
 
-		BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Checking whether pItem=%X is pListItem=%X, i=%d, listsize=%d",
+		BuDebugMessage4("CBackgroundUpdater::AddToUpdateList Checking whether pItem=%X is pListItem=%X, i=%d, listsize=%d",
 			(DWORD_PTR)pItem,(DWORD_PTR)pListItem,i,pUpdateList->GetSize());
 
 		if (pListItem==NULL)
@@ -1004,7 +1250,7 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 		{
 			if (nDetail==Needed)
 			{
-				BkgDebugMessage("CBackgroundUpdater::AddToUpdateList checking whether all needed details");
+				BuDebugMessage("CBackgroundUpdater::AddToUpdateList checking whether all needed details");
 				
 				for (int type=0;type<=LastType;type++)
 				{
@@ -1018,7 +1264,7 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 						}
 						if (j<0) // Not found
 						{
-							BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new(1) detail %d to item %X",nDetail,(DWORD_PTR)pListItem,0,0);
+							BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new(1) detail %d to item %X",nDetail,(DWORD_PTR)pListItem);
 							pListItem->m_aDetails.Add((DetailType)type);
 						}
 					}
@@ -1026,7 +1272,7 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 			}
             else
 			{
-				BkgDebugFormatMessage("CBackgroundUpdater::AddToUpdateList checking wheter detail %d exists",nDetail);
+				BuDebugMessage1("CBackgroundUpdater::AddToUpdateList checking wheter detail %d exists",nDetail);
 					
 				int j;
 				for (j=pListItem->m_aDetails.GetSize()-1;j>=0;j--)
@@ -1037,35 +1283,35 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 				if (j<0)
 				{
 					// Not found
-					BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new(2) detail %d to item %X",nDetail,(DWORD_PTR)pListItem,0,0);
+					BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new(2) detail %d to item %X",nDetail,(DWORD_PTR)pListItem);
 					pListItem->m_aDetails.Add(nDetail);
 				}
 			}
 			ReleaseUpdaterListPtr();
 			
-			BkgDebugMessage("CBackgroundUpdater::AddToUpdateList END (loop)");
+			BuDebugMessage("CBackgroundUpdater::AddToUpdateList END (loop)");
 			return;
 		}
 	}
 	
 
-	BkgDebugMessage("CBackgroundUpdater::AddToUpdateList END (loop)");
+	BuDebugMessage("CBackgroundUpdater::AddToUpdateList END (loop)");
 			
 	if (nDetail!=Needed)
 	{
 		Item* pNewItem=new Item(pItem,iItem,nDetail);
-		BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new item (%X) %X list size=%d",(DWORD_PTR)pItem,(DWORD_PTR)pNewItem,pUpdateList->GetSize(),0);
+		BuDebugMessage3("CBackgroundUpdater::AddToUpdateList Adding new item (%X) %X list size=%d",(DWORD_PTR)pItem,(DWORD_PTR)pNewItem,pUpdateList->GetSize());
 		pUpdateList->Add(pNewItem);
 		ReleaseUpdaterListPtr();
 
-		BkgDebugMessage("CBackgroundUpdater::AddToUpdateList END (newitem)");
+		BuDebugMessage("CBackgroundUpdater::AddToUpdateList END (newitem)");
 		return;
 	}
 
 	// Adding needed
 	ReleaseUpdaterListPtr();
 	
-	BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new item with all necessary details (%X,%d)",pItem,iItem,0,0);
+	BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new item with all necessary details (%X,%d)",pItem,iItem);
 	Item* pUpdateItem=new Item(pItem,iItem);
 
 	for (int type=0;type<=LastType;type++)
@@ -1076,8 +1322,8 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 	if (pUpdateItem->m_aDetails.GetSize()>0)
 	{
 		pUpdateList=GetUpdaterListPtr();
-		BkgDebugFormatMessage4("CBackgroundUpdater::AddToUpdateList Adding new item (%X), list size=%d",
-			(DWORD_PTR)pUpdateItem,pUpdateList->GetSize(),0,0);
+		BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new item (%X), list size=%d",
+			(DWORD_PTR)pUpdateItem,pUpdateList->GetSize());
 		pUpdateList->Add(pUpdateItem); 
 		ReleaseUpdaterListPtr();
 	}
@@ -1085,5 +1331,5 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 		delete pUpdateItem;
 	
 
-	BkgDebugMessage("CBackgroundUpdater::AddToUpdateList END (normal)");
+	BuDebugMessage("CBackgroundUpdater::AddToUpdateList END (normal)");
 }

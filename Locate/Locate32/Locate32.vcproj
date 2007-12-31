@@ -1034,6 +1034,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\commonres\x-click-but04.bmp"
+				>
+			</File>
+			<File
 				RelativePath=".\commonres\yes.ico"
 				>
 			</File>

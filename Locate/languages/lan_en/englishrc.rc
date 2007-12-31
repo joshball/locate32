@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,7,12260
- PRODUCTVERSION 3,0,7,12260
+ FILEVERSION 3,0,7,12310
+ PRODUCTVERSION 3,0,7,12310
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 build 7.12260"
+            VALUE "FileVersion", "3.0 build 7.12310"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2007 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 build 7.12260"
+            VALUE "ProductVersion", "3.0 build 7.12310"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -397,7 +397,7 @@ BEGIN
                     WS_TABSTOP,102+0,90,125,8
     LTEXT           "",IDC_VERSION,42,44,191,10
     CONTROL         "",IDC_ABOUTBANNER,"Static",SS_BITMAP,0,0,236,40
-    
+	CONTROL         "",IDC_DONATE,"Static",SS_BITMAP | SS_NOTIFY,2,138,35,16
 END
 
 IDD_DATABASEINFO DIALOGEX  0,0, 245, 233
@@ -538,7 +538,7 @@ BEGIN
                     WS_BORDER | WS_TABSTOP,7,241,257,82
     DEFPUSHBUTTON      "OK",IDC_OK,83,329,55,13
     PUSHBUTTON      "Cancel",IDC_CANCEL,143,329,55,13
-	PUSHBUTTON      "Help",IDC_HELP,203,329,55,13	
+	PUSHBUTTON      "Help",IDC_HELPBUTTON,203,329,55,13	
 END
 
 

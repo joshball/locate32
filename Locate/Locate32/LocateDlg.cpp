@@ -589,7 +589,7 @@ CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
 
 BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 {
-	DebugMessage("CLocateDlg::OnInitDialog BEGIN");
+	//DebugMessage("CLocateDlg::OnInitDialog BEGIN");
 
 	ShowDlgItem(IDC_FILELIST,swHide);
 	ShowDlgItem(IDC_STATUS,swHide);
@@ -808,7 +808,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 		title << L" (" << DWORD(GetLocateApp()->m_nInstance+1) << L')';
 	SetText(title);
 	
-	DebugMessage("CLocateDlg::OnInitDialog END");
+	//DebugMessage("CLocateDlg::OnInitDialog END");
 	return FALSE;
 }
 
@@ -2518,7 +2518,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const 
 	else if (dwResults%30==29)
 		Sleep(((CLocateDlg*)dwParam)->m_WaitEvery30);
 
-	
+
 	if (((CLocateDlg*)dwParam)->m_nSorting==BYTE(-1))
 	{
 		//li.iItem=((CLocateDlg*)dwParam)->m_pListCtrl->GetItemCount();
@@ -2536,7 +2536,6 @@ BOOL CALLBACK CLocateDlg::LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const 
 	
 	((CLocateDlg*)dwParam)->m_pListCtrl->InsertItem(&li);
 
-	
 	DbcDebugMessage("CLocateDlg::LocateFoundProc END");
 	return TRUE;
 }
@@ -2830,7 +2829,7 @@ void CLocateDlg::ResetFileNotificators()
 		
 	if (m_pFileNotificationsThread!=NULL)
 		m_pFileNotificationsThread->Stop();
-	if (GetFlags()&fgLargeMode)
+	if (GetFlags()&fgLargeMode && GetExtraFlags()&efEnableFSTracking)
 	{
 		m_pFileNotificationsThread=new CCheckFileNotificationsThread;
 		m_pFileNotificationsThread->Start();
@@ -4849,6 +4848,9 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 		{
 			SetTimer(ID_UPDATESELECTED,100,NULL);
 		}
+		break;
+	case NM_KILLFOCUS:
+		CAppData::stdfunc();
 		break;
 	}
 	return FALSE;
@@ -8909,10 +8911,12 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		case BN_CLICKED:
 			OnBrowse();
 			break;
+		/*
 		case EN_KILLFOCUS:
 			::SendMessage(hControl,BM_SETSTYLE,BS_PUSHBUTTON,0);
 			::SendDlgItemMessage(GetParent(),IDC_OK,BM_SETSTYLE,BS_DEFPUSHBUTTON,0);
 			break;
+		*/
 		}
 		break;
 	case IDC_NAME:
@@ -12511,6 +12515,7 @@ LRESULT CALLBACK CLocateDlg::CAdvancedDlg::TypeWindowProc(HWND hWnd,UINT uMsg,
 				if (cFirstChar==wParam)
 				{
 					CallWindowProc(pTypeData->pOldWndProc,hWnd,CB_SETCURSEL,nIndex,0);
+					pTypeData->pParent->OnCommand(IDC_FILETYPE,1,hWnd);
 					return 0;
 				}
 			}
@@ -13036,6 +13041,8 @@ void CLocateDlg::CAdvancedDlg::UpdateTypeList()
 		DWORD dwID;
 		m_hTypeUpdaterThread=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)UpdaterProc,this,0,&dwID);
 		DebugOpenThread(m_hTypeUpdaterThread);
+
+		DebugFormatMessage("LISTUPDATE: thread started ID=%X",dwID);
 
 		if (m_hTypeUpdaterThread==NULL)
 			DebugFormatMessage("m_hTypeUpdaterThread==NULL, last error=%d",GetLastError());

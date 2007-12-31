@@ -328,6 +328,7 @@
 #define IDC_GOTOHOMEPAGE                1074
 #define IDC_MINSIZETYPE                 1074
 #define IDC_MAXSIZETYPE                 1075
+#define IDC_DONATE						1075
 #define IDC_MINDATEMODE                 1076
 #define IDC_MAXDATEMODE                 1077
 #define IDC_UPDATES                     1079
@@ -1111,9 +1112,9 @@
 #define IDM_DEFUPDATEDBITEM             54000
 
 
-#ifndef IDC_HELP
-#define IDC_HELP            32651
-#endif
+
+#define IDC_HELPBUTTON					32651
+
 
 // Next default values for new objects
 // 

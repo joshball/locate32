@@ -2341,6 +2341,8 @@ void CPropertiesSheet::Open()
 	DWORD dwThreadID;
 	m_hThread=CreateThread(NULL,0,StartThreadProc,this,0,&dwThreadID);
 	DebugOpenThread(m_hThread);
+
+	DebugFormatMessage("PROPERTIES: thread started ID=%X",dwThreadID);
 	
 }
 	
@@ -2361,6 +2363,10 @@ CPropertiesSheet::CPropertiesPage::CPropertiesPage(int nItems,CLocatedItem** pIt
 	DWORD dwThread;
 	m_hThread=CreateThread(NULL,0,CountingThreadProc,this,0,&dwThread);
 	DebugOpenThread(m_hThread);
+
+	DebugFormatMessage("COUNTING: thread started ID=%X",dwThread);
+
+
 
 	DWORD dwError=GetLastError();
 
