@@ -49,7 +49,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright © 1997-2007 Janne Huttunen"
             VALUE "OriginalFilename", "Locate32.exe"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 build 7.12310"
+            VALUE "ProductVersion", "3.0 build 7.12310a"
         END
     END
     BLOCK "VarFileInfo"

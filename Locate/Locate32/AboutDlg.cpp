@@ -31,7 +31,7 @@ BOOL CAboutDlg::OnCommand(WORD wID, WORD wNotifyCode, HWND hControl)
 		{
 			CWaitCursor wait;
 			ShellExecute(*this,NULL,
-				"https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=jmhuttun%40venda%2euku%2efi&item_name=Locate32%20%20donations&no_shipping=0&no_note=1&tax=0&currency_code=EUR&lc=FI&bn=PP%2dDonationsBF&charset=UTF%2d8",
+				"https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=Janne%2eHuttunen%40locate32%2enet&item_name=Locate32%20donations&page_style=Primary&no_shipping=0&no_note=1&cn=Optional%20comments&tax=0&currency_code=EUR&lc=FI&bn=PP%2dDonationsBF&charset=UTF%2d8",
 				NULL,NULL,0);
 			break;
 		}

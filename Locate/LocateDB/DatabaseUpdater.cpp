@@ -673,7 +673,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 				CharLower(pNameLower);
 
 				BOOL bIncluded=FALSE;
-				LPSTR* pPtr=m_aIncludeDirectoriesPatternsA;
+				LPSTR* pPtr=m_aIncludeFilesPatternsA;
 				while (*pPtr!=NULL)
 				{
 					if (ContainString(pNameLower,*pPtr))
