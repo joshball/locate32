@@ -2151,12 +2151,19 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 		return TRUE;
 	}
 	case SearchingStarted:
-	{
-		CStringW text;
-		text.Format(IDS_SEARCHINGFROMFILE,pLocater->GetFileName());
-		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(text,STATUSBAR_SEARCHFROMFILE,0);
+		if (pLocater->IsCurrentDatabaseUnicode())
+		{
+			CStringW text;
+			text.Format(IDS_SEARCHINGFROMFILE,pLocater->GetFileNameW());
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(text,STATUSBAR_SEARCHFROMFILE,0);
+		}
+		else
+		{
+			CString text;
+			text.Format(IDS_SEARCHINGFROMFILE,pLocater->GetFileName());
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(text,STATUSBAR_SEARCHFROMFILE,0);
+		}
 		break;
-	}
 	case SearchingEnded:
 		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(STRNULL,STATUSBAR_SEARCHFROMFILE,0);
 		break;
@@ -8727,7 +8734,6 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 			SHGetSpecialFolderLocation(*this,CSIDL_NETWORK,&idl);
 			GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 			ci.iImage=fi.iIcon;
-			GetFileInfo(m_pBrowse!=NULL?m_pBrowse[0]:L"C:\\",0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 			ci.iSelectedImage=fi.iIcon;
 			LoadString(IDS_ROOTS,Buffer,100);
 			ci.pszText=Buffer;
