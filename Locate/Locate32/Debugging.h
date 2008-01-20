@@ -1,3 +1,5 @@
+/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+
 #if !defined(DEBUGGING_H)
 #define DEBUGGING_H
 

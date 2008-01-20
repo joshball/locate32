@@ -1,3 +1,5 @@
+/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+
 #if !defined(LOCATEDLG_H)
 #define LOCATEDLG_H
 
@@ -607,8 +609,6 @@ protected:
 	void LoadPreset(LPCWSTR szPreset);
 	static DWORD CheckExistenceOfPreset(LPCWSTR szName,DWORD* pdwPresets); // Returns index to preset or FFFFFFFF
 
-	BOOL IsLocating() const { return m_pLocater!=NULL; }
-
 
 	static BOOL CALLBACK LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueCode,DWORD_PTR dwFoundFiles,const CLocater* pLocater);
 	static BOOL CALLBACK LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater);
@@ -616,6 +616,9 @@ protected:
 
 public:
 	static void SetSystemImagelists(CListCtrl* pList,HICON* phIcon=NULL);
+
+	BOOL IsLocating() const { return m_pLocater!=NULL; }
+	HANDLE GetLocaterThread(BOOL bDuplicate=FALSE);
 	
 public:
 	
@@ -789,10 +792,12 @@ protected:
 	CBitmap m_CircleBitmap;
 	
 	HICON* m_pUpdateAnimBitmaps;
-	HICON* m_pLocateAnimBitmaps;
 	WORD m_nCurUpdateAnimBitmap;
+	CRITICAL_SECTION m_csUpdateAnimBitmaps;
+
+	HICON* m_pLocateAnimBitmaps;
 	WORD m_nCurLocateAnimBitmap;
-	CRITICAL_SECTION m_csAnimBitmaps;
+	CRITICAL_SECTION m_csLocateAnimBitmaps;
 
 	
 	WORD m_nMaxYMinimized;

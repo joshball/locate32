@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.12160                 */
+/* Copyright (c) 1997-2008 Janne Huttunen
+   database locater v3.0.8.1200              */
 
 #if !defined(DBDEFINITIONS_H)
 #define DBDEFINITIONS_H
@@ -19,9 +19,15 @@ enum CallingReason {
 	BeginningDatabase=5, 
 	ErrorOccured=6,
 	RootChanged=7,
-	SearchingStarted=8, // Only for CLocater
-	SearchingEnded=9, // Only for CLocater
-	RootInformationAvail=10 // Only for CLocater
+
+	// Only for CDatabaseUpdater
+	InitializeWriting=8,
+	WritingDatabase=9, 
+	
+	// Only for CLocater
+	SearchingStarted=8, 
+	SearchingEnded=9, 
+	RootInformationAvail=10 
 };
 
 enum UpdateError {
@@ -42,5 +48,20 @@ enum UpdateError {
 	ueWrongCharset = 14,
 	ueStillWorking = 0xF000
 };
+
+
+// Status flags (statusNotChanged is not by CDatabaseUpdater)
+enum UpdateStatus {
+	statusNotChanged,
+	statusInitializing,
+	statusScanning,
+	statusWritingDB,
+	statusInitializeWriting,
+	statusFinishing,
+	statusFinished,
+	statusCustom1, // Application can use these
+	statusCustom2
+};	
+
 
 #endif

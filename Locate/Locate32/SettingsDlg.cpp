@@ -1,3 +1,5 @@
+/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+
 #include <HFCLib.h>
 #include "Locate32.h"
 
@@ -246,8 +248,10 @@ BOOL CSettingsProperties::LoadSettings()
 		SetSettingsFlags(settingsUseOtherProgramsToOpenFolders,nTemp);
 		LocRegKey.QueryValue(L"Open folders with",m_OpenFoldersWith);
 
-		if (LocRegKey.QueryValue("Transparency",nTemp))
-			m_nTransparency=min(nTemp,255);
+		if (LocRegKey.QueryValue("Transparency100",nTemp))
+			m_nTransparency=min(nTemp,100);
+		else if (LocRegKey.QueryValue("Transparency",nTemp))
+			m_nTransparency=(min(nTemp,255)*100)/255;
 
 
 		if (LocRegKey.QueryValue("TooltipDelayAutopop",m_dwTooltipDelayAutopop))
@@ -322,8 +326,12 @@ BOOL CSettingsProperties::LoadSettings()
 	if (LocRegKey.OpenKey(HKCU,"\\Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		DWORD dwTemp;
-		if (LocRegKey.QueryValue("Transparency",dwTemp))
+		if (LocRegKey.QueryValue("Transparency100",dwTemp))
 			m_nToolTipTransparency=min(dwTemp,255);
+		else if (LocRegKey.QueryValue("Transparency",dwTemp))
+			m_nToolTipTransparency=(min(dwTemp,255)*100)/255;
+		
+			
 		if (LocRegKey.QueryValue("TextColor",dwTemp))
 			m_cToolTipTextColor=dwTemp;
 		if (LocRegKey.QueryValue("TitleColor",dwTemp))
@@ -393,7 +401,8 @@ BOOL CSettingsProperties::SaveSettings()
 		LocRegKey.SetValue("Use other program to open folders",(DWORD)IsSettingsFlagSet(settingsUseOtherProgramsToOpenFolders));
 		LocRegKey.SetValue(L"Open folders with",m_OpenFoldersWith);
 
-		LocRegKey.SetValue("Transparency",m_nTransparency);
+		LocRegKey.SetValue("Transparency100",m_nTransparency);
+		LocRegKey.DeleteValue("Transparency");
 
 		if (m_dwSettingsFlags&settingsSetTooltipDelays)
 		{
@@ -628,7 +637,8 @@ BOOL CSettingsProperties::SaveSettings()
 	if (LocRegKey.OpenKey(HKCU,"\\Dialogs\\Updatestatus",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
 	{
 		
-		LocRegKey.SetValue("Transparency",m_nToolTipTransparency);
+		LocRegKey.SetValue("Transparency100",m_nToolTipTransparency);
+		LocRegKey.DeleteValue("Transparency");
 		LocRegKey.SetValue("TextFont",(LPSTR)&m_lToolTipTextFont,sizeof(LOGFONT));
 		LocRegKey.SetValue("TitleFont",(LPSTR)&m_lToolTipTitleFont,sizeof(LOGFONT));
 		LocRegKey.SetValue("TextColor",(DWORD)m_cToolTipTextColor);
@@ -1134,9 +1144,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	{
 		// Needs at least Win2k
 		LocateDialogItems[7]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
-			MAKELONG(0,255),&m_pSettings->m_nTransparency);
+			MAKELONG(0,100),&m_pSettings->m_nTransparency);
 		StatusTooltipItems[8]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
-			MAKELONG(0,255),&m_pSettings->m_nToolTipTransparency);
+			MAKELONG(0,100),&m_pSettings->m_nToolTipTransparency);
 
 	}
 		
@@ -1889,16 +1899,18 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnInitDialog(HWND hwndFocus)
 	m_pList->InsertColumn(0,ID2W(IDS_DATABASENAME),LVCFMT_LEFT,100,0);
 	m_pList->InsertColumn(1,ID2W(IDS_DATABASEFILE),LVCFMT_LEFT,130,0);
 	m_pList->InsertColumn(2,ID2W(IDS_GLOBALUPDATE),LVCFMT_LEFT,70,0);
+	m_pList->InsertColumn(3,ID2W(IDS_LASTTIMEUPDATED),LVCFMT_LEFT,130,0);
+	
 	if (((CLocateApp*)GetApp())->m_wComCtrlVersion<0x0600)
 	{
-		m_pList->InsertColumn(3,ID2W(IDS_THREADID),LVCFMT_LEFT,40,0);
+		m_pList->InsertColumn(4,ID2W(IDS_THREADID),LVCFMT_LEFT,40,0);
 		int oa[]={3,0,1,2};
 		m_pList->SetColumnOrderArray(4,oa);
 	}
 	if (IsUnicodeSystem())
 		m_pList->SetUnicodeFormat(TRUE);
 
-	m_pList->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Databases Settings List Widths");
+	//m_pList->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Databases Settings List Widths");
 	
 	// Setting threads counter
 	CSpinButtonCtrl Spin(GetDlgItem(IDC_THREADSPIN));
@@ -2600,7 +2612,11 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 				
 			ISDLGTHREADOK
 			if (g_szBuffer!=NULL)
+			{
 				delete[] g_szBuffer;
+				g_szBuffer=NULL;
+			}
+			
 			
 			switch (pLvdi->item.iSubItem)
 			{
@@ -2623,6 +2639,34 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 				pLvdi->item.pszText=g_szBuffer;
 				break;
 			case 3:
+				{
+					CDatabaseInfo* di=CDatabaseInfo::GetFromDatabase(pDatabase);
+					if (di!=NULL)
+					{
+						if (di->tCreationTime.m_time>0)
+						{
+							FILETIME ft;
+							SYSTEMTIME st=di->tCreationTime;
+							WORD wDate,wTime;
+							SystemTimeToFileTime(&st,&ft);
+							FileTimeToDosDateTime(&ft,&wDate,&wTime);
+							
+							LPWSTR szDate=GetLocateApp()->FormatDateAndTimeString(wDate,wTime);
+							g_szBuffer=alloccopyWtoA(szDate);
+							delete[] szDate;
+						}
+						delete di;
+					}
+
+					if (g_szBuffer==NULL)
+					{
+						g_szBuffer=new char[100];
+						LoadString(IDS_UNKNOWN,g_szBuffer,100);
+					}
+					pLvdi->item.pszText=g_szBuffer;
+					break;
+				}
+			case 4:
 				g_szBuffer=new char[20];
 				_itoa_s(pDatabase->GetThreadId()+1,g_szBuffer,20,10);
 				pLvdi->item.pszText=g_szBuffer;
@@ -2664,6 +2708,35 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 				pLvdi->item.pszText=g_szwBuffer;
 				break;
 			case 3:
+				{
+					CDatabaseInfo* di=CDatabaseInfo::GetFromDatabase(pDatabase);
+					if (g_szwBuffer!=NULL)
+						delete[] g_szwBuffer;
+					g_szwBuffer=NULL;
+					if (di!=NULL)
+					{
+						if (di->tCreationTime.m_time>0)
+						{
+							FILETIME ft;
+							SYSTEMTIME st=di->tCreationTime;
+							WORD wDate,wTime;
+							SystemTimeToFileTime(&st,&ft);
+							FileTimeToDosDateTime(&ft,&wDate,&wTime);
+							
+							g_szwBuffer=GetLocateApp()->FormatDateAndTimeString(wDate,wTime);
+						}
+						delete di;
+					}
+
+					if (g_szwBuffer==NULL)
+					{
+						g_szwBuffer=new WCHAR[100];
+						LoadString(IDS_UNKNOWN,g_szwBuffer,100);
+					}
+					pLvdi->item.pszText=g_szwBuffer;
+					break;
+				}
+			case 4: // Thread 
 				if (g_szwBuffer!=NULL)
 					delete[] g_szwBuffer;
 				g_szwBuffer=new WCHAR[20];

@@ -1,3 +1,5 @@
+/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+
 #include <HFCLib.h>
 #include "Locate32.h"
 
@@ -27,6 +29,7 @@ BOOL CAboutDlg::OnCommand(WORD wID, WORD wNotifyCode, HWND hControl)
 				NULL,NULL,0);
 			break;
 		}
+	case IDC_YOURRIGHT:
 	case IDC_DONATE:
 		{
 			CWaitCursor wait;
@@ -64,10 +67,10 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 	{
 		CStringW str;
 #ifdef _DEBUG
-		str.Format(L"%s © 1997-2007 Janne Huttunen\nTHIS IS DEBUG VERSION, %s %s",
+		str.Format(L"%s © 1997-2008 Janne Huttunen\nTHIS IS DEBUG VERSION, %s %s",
 			(LPCWSTR)ID2W(IDS_COPYRIGHT),(LPCWSTR)A2W(__DATE__),(LPCWSTR)A2W(__TIME__));
 #else
-		str.Format(L"%s © 1997-2007 Janne Huttunen",(LPCWSTR)ID2W(IDS_COPYRIGHT));
+		str.Format(L"%s © 1997-2008 Janne Huttunen",(LPCWSTR)ID2W(IDS_COPYRIGHT));
 #endif
 		SetDlgItemText(IDC_COPYRIGHT,str);
 
@@ -195,23 +198,75 @@ void CAboutDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 {
 	CDialog::OnDrawItem(idCtl,lpdis);
 	CDC dc(lpdis->hDC);
-	CFont font;
+	CFont FontRegular,FontUnderline;
 	TEXTMETRIC tm;
 	char szFace[100];
 	dc.GetTextMetrics(&tm);
 	dc.GetTextFace(100,szFace);
-	font.CreateFont(tm.tmHeight,0,0,0,
+	
+	FontRegular.CreateFont(tm.tmHeight,0,0,0,
+		tm.tmWeight,tm.tmItalic,0,tm.tmStruckOut,
+		tm.tmCharSet,OUT_CHARACTER_PRECIS,
+		CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
+		tm.tmPitchAndFamily,szFace);
+	
+	FontUnderline.CreateFont(tm.tmHeight,0,0,0,
 		tm.tmWeight,tm.tmItalic,1,tm.tmStruckOut,
 		tm.tmCharSet,OUT_CHARACTER_PRECIS,
 		CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,
 		tm.tmPitchAndFamily,szFace);
-	HFONT hOldFont=(HFONT)dc.SelectObject(font);
+	
+	HFONT hOldFont=(HFONT)dc.SelectObject(FontRegular);
+	
+	
 	CStringW text;
 	GetDlgItemText(idCtl,text);
-	dc.SetTextColor(RGB(0,0,255));
-	dc.DrawText(text,&(lpdis->rcItem),DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+	
+	RECT rc=lpdis->rcItem;
+
+	LPCWSTR pPtr=text;
+	while (*pPtr!=L'\0')
+	{
+		int nLength=FirstCharIndex(pPtr,L'[');
+		
+		
+		// Paint regular part
+		dc.SetTextColor(RGB(0,0,0));
+		RECT rc2=rc;
+		dc.DrawText(pPtr,nLength,&rc2,DT_LEFT|DT_SINGLELINE|DT_VCENTER|DT_CALCRECT);
+		dc.DrawText(pPtr,nLength,&rc2,DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+		rc.left=rc2.right;
+		
+		if (nLength==-1)
+			break;
+
+		pPtr+=nLength+1;
+
+		// URL part
+		nLength=FirstCharIndex(pPtr,L']');
+
+		
+		dc.SetTextColor(RGB(0,0,255));
+		dc.SelectObject(FontUnderline);
+		rc2=rc;
+		dc.DrawText(pPtr,nLength,&rc2,DT_LEFT|DT_SINGLELINE|DT_VCENTER|DT_CALCRECT);
+		dc.DrawText(pPtr,nLength,&rc2,DT_LEFT|DT_SINGLELINE|DT_VCENTER);
+		rc.left=rc2.right;
+
+		if (nLength==-1)
+			break;
+
+		dc.SelectObject(FontRegular);
+
+		pPtr+=nLength+1;
+				
+	}
+			
+
 	dc.SelectObject(hOldFont);
-	font.DeleteObject();
+
+	FontRegular.DeleteObject();
+	FontUnderline.DeleteObject();
 }
 
 LRESULT CAboutDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)

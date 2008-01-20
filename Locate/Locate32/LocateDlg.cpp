@@ -1,3 +1,5 @@
+/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+
 #include <HFCLib.h>
 #include "Locate32.h"
 #include <uxtheme.h>
@@ -378,8 +380,17 @@ BOOL CLocateDlgThread::InitInstance()
 		if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 		{
 			DWORD dwTransparency=0;
-			if (RegKey.QueryValue("Transparency",dwTransparency))
+			if (RegKey.QueryValue("Transparency100",dwTransparency))
 			{
+				if (dwTransparency>0)
+				{
+					m_pLocate->SetWindowLong(CWnd::gwlExStyle,WS_EX_CONTROLPARENT|WS_EX_LAYERED);
+					pSetLayeredWindowAttributes(*m_pLocate,0,BYTE(255-(min(dwTransparency,100)*255)/100),LWA_ALPHA);
+				}
+			}
+			else if (RegKey.QueryValue("Transparency",dwTransparency))
+			{
+				// Old setting
 				if (dwTransparency>0)
 				{
 					m_pLocate->SetWindowLong(CWnd::gwlExStyle,WS_EX_CONTROLPARENT|WS_EX_LAYERED);
@@ -544,7 +555,8 @@ CLocateDlg::~CLocateDlg()
 	if (m_pDesktopFolder!=NULL)
 		m_pDesktopFolder->Release();
 
-	DeleteCriticalSection(&m_csAnimBitmaps);
+	DeleteCriticalSection(&m_csUpdateAnimBitmaps);
+	DeleteCriticalSection(&m_csLocateAnimBitmaps);
 }
 
 CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
@@ -1315,8 +1327,11 @@ BOOL CLocateDlg::UpdateSettings()
 		// Transparency
 		if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 		{
-			if (!RegKey.QueryValue("Transparency",temp))
+			if (RegKey.QueryValue("Transparency100",temp))
+				temp=(temp*255)/100;
+			else if (!RegKey.QueryValue("Transparency",temp))
 				temp=0;
+			
 
 			if (temp>255)
 				temp=255;
@@ -2026,6 +2041,13 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 	
 	switch (crReason)
 	{
+	case BeginningDatabase:
+		while (GetLocateApp()->IsWritingDatabases())
+		{
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2W(IDS_LOCATINGWAITDBWRITING),STATUSBAR_OPERATIONSTATUS,0);
+			Sleep(200);
+		}
+		break;
 	case Initializing:
 	{
 		if (ueCode!=ueStillWorking && ueCode!=ueSuccess) // Initializing failed
@@ -2922,19 +2944,19 @@ void CLocateDlg::OnTimer(DWORD dwTimerID)
 		m_nCurLocateAnimBitmap++;
 		if (m_nCurLocateAnimBitmap>5)
 			m_nCurLocateAnimBitmap=0;
-		EnterCriticalSection(&m_csAnimBitmaps);
+		EnterCriticalSection(&m_csLocateAnimBitmaps);
 		if (m_pStatusCtrl!=NULL && m_pLocateAnimBitmaps!=NULL)
 			m_pStatusCtrl->SetText((LPCSTR)m_pLocateAnimBitmaps[m_nCurLocateAnimBitmap],STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
-		LeaveCriticalSection(&m_csAnimBitmaps);
+		LeaveCriticalSection(&m_csLocateAnimBitmaps);
 		break;
 	case ID_UPDATEANIM:
 		m_nCurUpdateAnimBitmap++;
 		if (m_nCurUpdateAnimBitmap>12)
 			m_nCurUpdateAnimBitmap=0;
-		EnterCriticalSection(&m_csAnimBitmaps);
+		EnterCriticalSection(&m_csUpdateAnimBitmaps);
 		if (m_pStatusCtrl!=NULL && m_pUpdateAnimBitmaps!=NULL)
 			m_pStatusCtrl->SetText((LPCSTR)m_pUpdateAnimBitmaps[m_nCurUpdateAnimBitmap],STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
-		LeaveCriticalSection(&m_csAnimBitmaps);
+		LeaveCriticalSection(&m_csUpdateAnimBitmaps);
 		break;
 	default:
 		KillTimer(dwTimerID);
@@ -7688,10 +7710,10 @@ BOOL CLocateDlg::SetListSelStyle()
 
 BOOL CLocateDlg::StartLocateAnimation()
 {
-	EnterCriticalSection(&m_csAnimBitmaps);
+	EnterCriticalSection(&m_csLocateAnimBitmaps);
 	if (m_pLocateAnimBitmaps!=NULL)
 	{
-		LeaveCriticalSection(&m_csAnimBitmaps);
+		LeaveCriticalSection(&m_csLocateAnimBitmaps);
 		return TRUE;
 	}
 	
@@ -7706,13 +7728,13 @@ BOOL CLocateDlg::StartLocateAnimation()
 	SetTimer(ID_LOCATEANIM,200);
 	m_nCurLocateAnimBitmap=0;
 	m_pStatusCtrl->SetText((LPCSTR)m_pLocateAnimBitmaps[0],STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
-	LeaveCriticalSection(&m_csAnimBitmaps);
+	LeaveCriticalSection(&m_csLocateAnimBitmaps);
 	return TRUE;
 }
 
 BOOL CLocateDlg::StopLocateAnimation()
 {
-	EnterCriticalSection(&m_csAnimBitmaps);
+	EnterCriticalSection(&m_csLocateAnimBitmaps);
 	if (m_pLocateAnimBitmaps!=NULL)
 	{
 		KillTimer(ID_LOCATEANIM);
@@ -7723,13 +7745,13 @@ BOOL CLocateDlg::StopLocateAnimation()
 		}
 		delete[] m_pLocateAnimBitmaps;
 		m_pLocateAnimBitmaps=NULL;
-		LeaveCriticalSection(&m_csAnimBitmaps);
+		LeaveCriticalSection(&m_csLocateAnimBitmaps);
 		
 		if (m_pStatusCtrl!=NULL)
 			m_pStatusCtrl->SetText(STRNULL,STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
 		return TRUE;
 	}
-	LeaveCriticalSection(&m_csAnimBitmaps);
+	LeaveCriticalSection(&m_csLocateAnimBitmaps);
 	return TRUE;
 }
 	
@@ -7738,10 +7760,10 @@ BOOL CLocateDlg::StartUpdateAnimation()
 	if (m_pStatusCtrl==NULL)
 		return FALSE;
 
-	EnterCriticalSection(&m_csAnimBitmaps);
+	EnterCriticalSection(&m_csUpdateAnimBitmaps);
 	if (m_pUpdateAnimBitmaps!=NULL)
 	{
-		LeaveCriticalSection(&m_csAnimBitmaps);
+		LeaveCriticalSection(&m_csUpdateAnimBitmaps);
 		return TRUE;
 	}
 	
@@ -7756,13 +7778,13 @@ BOOL CLocateDlg::StartUpdateAnimation()
 	m_nCurUpdateAnimBitmap=0;
 	m_pStatusCtrl->SetText((LPCSTR)m_pUpdateAnimBitmaps[0],STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
 	
-	LeaveCriticalSection(&m_csAnimBitmaps);
+	LeaveCriticalSection(&m_csUpdateAnimBitmaps);
 	return TRUE;
 }
 
 BOOL CLocateDlg::StopUpdateAnimation()
 {
-	EnterCriticalSection(&m_csAnimBitmaps);
+	EnterCriticalSection(&m_csUpdateAnimBitmaps);
 	if (m_pUpdateAnimBitmaps!=NULL)
 	{
 		KillTimer(ID_UPDATEANIM);
@@ -7773,13 +7795,13 @@ BOOL CLocateDlg::StopUpdateAnimation()
 		}
 		delete[] m_pUpdateAnimBitmaps;
 		m_pUpdateAnimBitmaps=NULL;
-		LeaveCriticalSection(&m_csAnimBitmaps);
+		LeaveCriticalSection(&m_csUpdateAnimBitmaps);
 		if (m_pStatusCtrl!=NULL)
 			m_pStatusCtrl->SetText(STRNULL,STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
 	
 		return TRUE;
 	}
-	LeaveCriticalSection(&m_csAnimBitmaps);
+	LeaveCriticalSection(&m_csUpdateAnimBitmaps);
 	return TRUE;
 }
 

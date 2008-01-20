@@ -1,3 +1,5 @@
+/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+
 #if !defined(LOCATEDLG_INL)
 #define LOCATEDLG_INL
 
@@ -24,7 +26,8 @@ inline CLocateDlg::CLocateDlg()
 	if (FAILED(SHGetDesktopFolder(&m_pDesktopFolder)))
 		m_pDesktopFolder=NULL;
 
-	InitializeCriticalSection(&m_csAnimBitmaps);
+	InitializeCriticalSection(&m_csUpdateAnimBitmaps);
+	InitializeCriticalSection(&m_csLocateAnimBitmaps);
 
 	//DebugFormatMessage("CLocateDlg::CLocateDlg() END",DWORD_PTR(this));
 
@@ -344,6 +347,13 @@ inline void CLocateDlg::ClearResultlistActions()
 	}
 }
 
+inline HANDLE CLocateDlg::GetLocaterThread(BOOL bDuplicate)
+{
+	if (m_pLocater==NULL)
+		return NULL;
+	return m_pLocater->GetThreadHandle(bDuplicate);
+}
+
 inline void CLocateDlg::CNameDlg::HilightTab(BOOL bHilight)
 {
 	GetLocateDlg()->HilightTab(0,IDS_NAME,bHilight);
@@ -358,5 +368,6 @@ inline void CLocateDlg::CAdvancedDlg::HilightTab(BOOL bHilight)
 {
 	GetLocateDlg()->HilightTab(2,IDS_ADVANCED,bHilight);
 }
+
 
 #endif

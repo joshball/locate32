@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2007 Janne Huttunen
-   database locater v3.0.7.12160               */
+/* Copyright (c) 1997-2008 Janne Huttunen
+   database locater v3.0.8.1200              */
 
 #if !defined(LOCATER_H)
 #define LOCATER_H
@@ -91,6 +91,8 @@ protected:
 	BOOL LocatingProc();
 
 public:
+
+	HANDLE GetThreadHandle(BOOL bDuplicate);
 	
 	void SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC pFoundProc,LOCATEFOUNDPROC pFoundProcW,DWORD_PTR dwParam=0);
 	

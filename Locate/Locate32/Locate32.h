@@ -1,3 +1,5 @@
+/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+
 #ifndef LOCATE32_H
 #define LOCATE32_H
 

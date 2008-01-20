@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2007 Janne Huttunen
-   database locater v3.0.7.12160               */
+/* Copyright (c) 1997-2008 Janne Huttunen
+   database locater v3.0.8.1200              */
 
 #include <HFCLib.h>
 
@@ -271,7 +271,7 @@ BOOL CLocater::LocatingProc()
 	ASSERT(dbFile==NULL);
 	
 	
-	for (int i=0;i<m_aDatabases.GetSize() && bContinueToNextDB;i++)
+	for (int i=0;i<m_aDatabases.GetSize() && bContinueToNextDB && !m_lForceQuit;i++)
 	{
 		LocaterDebugMessage("CLocater::LocatingProc() DBSTART");
 	

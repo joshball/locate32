@@ -1,3 +1,5 @@
+/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+
 #if !defined(ABOUTDLG_H)
 #define ABOUTDLG_H
 

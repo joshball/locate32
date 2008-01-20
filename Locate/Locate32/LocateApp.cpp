@@ -1,3 +1,5 @@
+/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+
 #include <HFCLib.h>
 #include "Locate32.h"
 
@@ -1721,6 +1723,30 @@ BOOL CLocateApp::StopUpdating(BOOL bForce)
 	return bRet;
 }
 
+BOOL CLocateApp::IsWritingDatabases()
+{
+	if (!IsUpdating())
+		return FALSE; // Not updating in progress
+
+	// Checking whether some updater is writing a database
+	BOOL bWriting=FALSE;
+	EnterCriticalSection(&m_cUpdatersPointersInUse);
+	for (int i=0;m_ppUpdaters!=NULL && m_ppUpdaters[i]!=NULL;i++)
+	{
+		if (!IS_UPDATER_EXITED(m_ppUpdaters[i]))
+		{
+			if (m_ppUpdaters[i]->GetStatus()==statusWritingDB)
+			{
+				LeaveCriticalSection(&m_cUpdatersPointersInUse);
+				return TRUE;
+			}
+		}
+	}
+	LeaveCriticalSection(&m_cUpdatersPointersInUse);
+
+	return FALSE;
+}
+
 void CLocateApp::SetDatabases(const CArray<CDatabase*>& rDatabases)
 {
 	m_aDatabases.RemoveAll();
@@ -1938,18 +1964,29 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 		{
 			CStringW str;
 
-			if (pUpdater->GetCurrentRoot()!=NULL)
-			{
-				str.Format(IDS_UPDATINGDATABASE2,
-					pUpdater->GetCurrentDatabaseName(),
-					(LPCWSTR)pUpdater->GetCurrentRoot()->m_Path);
-			}
-			else
-			{
-				str.Format(IDS_UPDATINGDATABASE2,
-					pUpdater->GetCurrentDatabaseName(),
-					(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
-			}
+			str.Format(IDS_UPDATINGDATABASE2,
+				pUpdater->GetCurrentDatabaseName(),
+				pUpdater->GetCurrentRoot()!=NULL?
+				(LPCWSTR)pUpdater->GetCurrentRoot()->m_Path:
+				(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
+
+			pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
+		}
+	
+		
+		if (dwParam!=NULL)
+			((CLocateAppWnd*)dwParam)->SetUpdateStatusInformation(NULL,IDS_NOTIFYUPDATING);
+		return TRUE;
+	}
+	case WritingDatabase:
+	{
+		CLocateDlg* pLocateDlg=GetLocateDlg();
+		if (pLocateDlg!=NULL)
+		{
+			CStringW str;
+			str.Format(IDS_UPDATINGDATABASE2,
+				pUpdater->GetCurrentDatabaseName(),
+				(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
 			
 			pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
 		}
@@ -1959,6 +1996,34 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			((CLocateAppWnd*)dwParam)->SetUpdateStatusInformation(NULL,IDS_NOTIFYUPDATING);
 		return TRUE;
 	}
+	case InitializeWriting:
+	{
+		CLocateDlg* pLocateDlg=GetLocateDlg();
+		if (pLocateDlg!=NULL)
+		{
+			// Locating in progress, waiting
+			
+			// statusCustom1 is for delay writing
+			pUpdater->SetStatus(statusCustom1);
+
+			HANDLE hThread=pLocateDlg->GetLocaterThread(TRUE);
+			if (hThread!=NULL)
+			{
+				CStringW str;
+				str.Format(IDS_UPDATINGDATABASE2,
+					pUpdater->GetCurrentDatabaseName(),
+					(LPCWSTR)ID2W(IDS_UPDATINGDELAYWRITING));
+
+				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
+
+				WaitForSingleObject(hThread,INFINITE);
+
+				CloseHandle(hThread);
+			}
+		}
+		return TRUE;
+	}
+
 	//case FinishedUpdating:
 	//	break;
 	case FinishedDatabase:
@@ -2674,28 +2739,28 @@ BOOL CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootI
 			pRootInfos[i].pName=NULL;
 			pRootInfos[i].pRoot=NULL;
 			pRootInfos[i].ueError=GET_UPDATER_CODE(GetLocateApp()->m_ppUpdaters[i]);
+			pRootInfos[i].usStatus=statusFinished;
 		}
 		else 
 		{
 			wRunning++;
 
+			pRootInfos[i].usStatus=GetLocateApp()->m_ppUpdaters[i]->GetStatus();
 			pRootInfos[i].ueError=ueStillWorking;
 
 			if (GetLocateApp()->m_ppUpdaters[i]->GetCurrentDatabaseName()==NULL)
 			{
 				// Not started yet
-				pRootInfos[i].pName=allocemptyW();
+				pRootInfos[i].pName=NULL;
 				pRootInfos[i].pRoot=NULL;
 
-				if (GetLocateApp()->m_ppUpdaters[i]->GetStatus()==CDatabaseUpdater::statusFinishing)
+				if (pRootInfos[i].usStatus==statusFinishing)
 					pRootInfos[i].ueError=ueSuccess;
 
-				if (m_pUpdateStatusWnd!=NULL)
-				{
-					pRootInfos[i].dwNumberOfDatabases=GetLocateApp()->m_ppUpdaters[i]->GetNumberOfDatabases();
-					pRootInfos[i].dwCurrentDatabase=0;
-					pRootInfos[i].wProgressState=0;
-				}
+				pRootInfos[i].dwNumberOfDatabases=GetLocateApp()->m_ppUpdaters[i]->GetNumberOfDatabases();
+				pRootInfos[i].dwCurrentDatabase=0;
+				pRootInfos[i].wProgressState=0;
+				
 			}
 			else
 			{
@@ -2705,13 +2770,10 @@ BOOL CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootI
 				else
 					pRootInfos[i].pRoot=GetLocateApp()->m_ppUpdaters[i]->GetCurrentRootPathStr();
 				
-				if (m_pUpdateStatusWnd!=NULL)
-				{
-					pRootInfos[i].dwNumberOfDatabases=GetLocateApp()->m_ppUpdaters[i]->GetNumberOfDatabases();
-					pRootInfos[i].dwCurrentDatabase=GetLocateApp()->m_ppUpdaters[i]->GetCurrentDatabase();
-					pRootInfos[i].wProgressState=GetLocateApp()->m_ppUpdaters[i]->GetProgressStatus();
-				}
-
+				pRootInfos[i].dwNumberOfDatabases=GetLocateApp()->m_ppUpdaters[i]->GetNumberOfDatabases();
+				pRootInfos[i].dwCurrentDatabase=GetLocateApp()->m_ppUpdaters[i]->GetCurrentDatabase();
+				pRootInfos[i].wProgressState=GetLocateApp()->m_ppUpdaters[i]->GetProgressStatus();
+	
 			}
 			
 		}
@@ -3014,8 +3076,11 @@ BOOL CLocateAppWnd::StartUpdateStatusNotification()
 			if (RegKey.OpenKey(HKCU,"Dialogs\\Updatestatus",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 			{
 				DWORD dwTemp;
-				if (RegKey.QueryValue("Transparency",dwTemp))
+				if (RegKey.QueryValue("Transparency100",dwTemp))
+					nTransparency=(BYTE)((min(dwTemp,100)*255)/100);
+				else if (RegKey.QueryValue("Transparency",dwTemp))
 					nTransparency=(BYTE)min(dwTemp,255);
+
 			}
 
 			if (nTransparency>0)
@@ -4479,8 +4544,21 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatStatusTextLine(CStringW& str,const C
 	if (nThreadID!=-1)
 		str << L'#' << (int)nThreadID;
 
-	if (pRootInfo.pName==NULL)
+	switch (pRootInfo.usStatus)
 	{
+	case statusInitializing:
+		// Initializing
+		if (nThreadID!=-1)
+			str << L": ";
+		str.AddString(IDS_NOTIFYINITIALIZING);
+		break;
+	case statusFinishing:
+		// Finishing
+		if (nThreadID!=-1)
+			str << L": ";
+		str.AddString(IDS_NOTIFYFINISHING);
+		break;
+	case statusFinished:
 		// Finished
 		if (nThreadID!=-1)
 			str << L": ";
@@ -4498,20 +4576,8 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatStatusTextLine(CStringW& str,const C
 			str.AddString(IDS_UPDATINGFAILED2);
 			break;
 		}
-	}
-	else if (pRootInfo.pName[0]==L'\0')
-	{
-		// Initializing/finishing
-		if (nThreadID!=-1)
-			str << L": ";
-
-		if (pRootInfo.ueError==ueSuccess)
-			str.AddString(IDS_NOTIFYFINISHING);
-		else
-			str.AddString(IDS_NOTIFYINITIALIZING);
-	}
-	else
-	{
+		break;
+	default:
 		if (pRootInfo.dwNumberOfDatabases>1)
 		{
 			if (nThreadID!=-1)
@@ -4523,14 +4589,18 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatStatusTextLine(CStringW& str,const C
 		str.AddString(IDS_UPDATINGUPDATING);
 		str << pRootInfo.pName;
 
-		
-		if (pRootInfo.pRoot==NULL)
+		switch (pRootInfo.usStatus)
 		{
+		case statusInitializeWriting:
+		case statusWritingDB:
 			str << L": ";
 			str.AddString(IDS_NOTIFYWRITINGDATABASE);
-		}
-		else
-		{
+			break;
+		case statusCustom1: // delaying
+			str << L": ";
+			str.AddString(IDS_UPDATINGDELAYWRITING);
+			break;
+		case statusScanning:
 			if (pRootInfo.wProgressState!=WORD(-1))
 			{
 				str << L' ' << (int)((int)(pRootInfo.wProgressState)/10) << L'%';
@@ -4539,7 +4609,9 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatStatusTextLine(CStringW& str,const C
 			str << L": ";
 			str.AddString(IDS_UPDATINGSCANNINGROOT);
 			str << pRootInfo.pRoot;
+			break;
 		}
+		break;
 	}
 }
 
@@ -4754,21 +4826,27 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 				ri.pRoot=NULL;
 				ri.ueError=ueSuccess;
 				ri.wProgressState=1000;
-
-				// Cheking how much space "finished" will take
+				
+				// Cheking how much space "initializing" will take
 				str.Empty();
+				ri.usStatus=statusInitializing;
 				FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
 				CSize szThisLine=dc.GetTextExtent(str);
 				
-				// Cheking how much space "initializing/finished" will take
-				ri.pName=(LPWSTR)szwEmpty;
+				
+				// Cheking how much space "finishing" will take
 				str.Empty();
-				ri.ueError=ueStillWorking;
+				ri.usStatus=statusFinishing;
 				FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
 				EnlargeSizeForText(dc,str,szThisLine);
-				ri.ueError=ueSuccess;
+				
+				// Cheking how much space "finished" will take
+				str.Empty();
+				ri.usStatus=statusFinished;
 				FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
 				EnlargeSizeForText(dc,str,szThisLine);
+				
+				
 					
 				
 				LPWSTR szFile=NULL;
@@ -4777,12 +4855,23 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 				ri.dwNumberOfDatabases=GetLocateApp()->m_ppUpdaters[i]->GetNumberOfDatabases();
 				for (ri.dwCurrentDatabase=0;GetLocateApp()->m_ppUpdaters[i]->EnumDatabases(ri.dwCurrentDatabase,ri.pName,szFile,nArchiveType,pRoot);ri.dwCurrentDatabase++)
 				{
-					// Checking how much space "writing database" will take
 					ri.pRoot=NULL;	
+					
+					// Checking how much space "delay writing" will take
 					str.Empty();
+					ri.usStatus=statusCustom1;
 					FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
 					EnlargeSizeForText(dc,str,szThisLine);
 				
+					// Checking how much space "writing database" will take
+					str.Empty();
+					ri.usStatus=statusWritingDB;
+					FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
+					EnlargeSizeForText(dc,str,szThisLine);
+				
+
+					ri.usStatus=statusScanning;
+					
 					while (pRoot!=NULL)
 					{
 						// Checking how much space "scanning root" will take

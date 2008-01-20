@@ -1,3 +1,5 @@
+/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+
 #if !defined(LOCATEAPP_H)
 #define LOCATEAPP_H
 
@@ -28,6 +30,8 @@ public:
 		DWORD dwCurrentDatabase;
 		WORD wProgressState;
 		UpdateError ueError;
+		UpdateStatus usStatus;
+		
 	};
 
 	class CUpdateStatusWnd : public CFrameWnd 
@@ -344,6 +348,7 @@ public:
 
 	BOOL StopUpdating(BOOL bForce=TRUE);
     BOOL IsUpdating() const;
+	BOOL IsWritingDatabases();
 	
 	
 	BOOL GlobalUpdate(CArray<PDATABASE>* paDatabases=NULL,int nThreadPriority=THREAD_PRIORITY_NORMAL);

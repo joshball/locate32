@@ -1,3 +1,5 @@
+/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+
 #include <HFCLib.h>
 #include "Locate32.h"
 
@@ -95,17 +97,15 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 		//Setting created date
 		if (di->tCreationTime.m_time>0)
 		{
+			FILETIME ft;
 			SYSTEMTIME st=di->tCreationTime;
-			CString tempA;
-			int nTemp=GetDateFormat(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,NULL,tempA.GetBuffer(200),200);
-			if (nTemp>=0)
-			{
-				GetTimeFormat(LOCALE_USER_DEFAULT,0,&st,NULL,tempA.GetBuffer()+nTemp,200-nTemp);
-				tempA[nTemp-1]=' ';
-				SetDlgItemText(IDC_CREATED,tempA);
-			}		
-			else
-				SetDlgItemText(IDC_CREATED,ID2W(IDS_UNKNOWN));
+			WORD wDate,wTime;
+			SystemTimeToFileTime(&st,&ft);
+			FileTimeToDosDateTime(&ft,&wDate,&wTime);
+			
+			LPWSTR szDate=GetLocateApp()->FormatDateAndTimeString(wDate,wTime);
+			SetDlgItemText(IDC_CREATED,szDate);
+			delete[] szDate;
 		}
 		else
 			SetDlgItemText(IDC_CREATED,ID2W(IDS_UNKNOWN));

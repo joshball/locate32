@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,7,12310
- PRODUCTVERSION 3,0,7,12310
+ FILEVERSION 3,0,8,1200
+ PRODUCTVERSION 3,0,8,1200
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 build 7.12310"
+            VALUE "FileVersion", "3.0 build 8.1200"
             VALUE "InternalName", "lan_en"
-            VALUE "LegalCopyright", "Copyright © 1997-2007 Janne Huttunen"
+            VALUE "LegalCopyright", "Copyright © 1997-2008 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 build 7.12310"
+            VALUE "ProductVersion", "3.0 build 8.1200"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -383,18 +383,16 @@ CAPTION "About:"
 FONT 10, "Tahoma", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "OK",IDC_OK,186,141,42,13
-    LTEXT           "If you have found a bug or have comments",IDC_YOURRIGHT2,42,80,145-1,8
-	CONTROL         "click here",IDC_MAILME,"Button",BS_OWNERDRAW | 
-                    BS_RIGHT | BS_VCENTER | BS_FLAT | WS_TABSTOP,188-1,80,40+1,
-                    8
-    LTEXT           "Copyright ",IDC_COPYRIGHT,42,54,191,19
+    CONTROL         "If you have found a bug or have comments, [click here]",IDC_MAILME,"Button",BS_OWNERDRAW | 
+                    BS_RIGHT | BS_VCENTER | BS_FLAT | WS_TABSTOP,42,80,191,8
+	LTEXT           "Copyright ",IDC_COPYRIGHT,42,54,191,19
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,42,104,191,1
-    LTEXT           "This program is freeware.",IDC_YOURRIGHT,42,71,191,8
+    CONTROL         "This program is freeware, [donations] are welcome though",IDC_YOURRIGHT,"Button",BS_OWNERDRAW | 
+                    BS_RIGHT | BS_VCENTER | BS_FLAT | WS_TABSTOP,42,71,191,8
     LTEXT           "A\nB\nC\nD",IDC_SYSINFO,42,106,191,33
-    LTEXT           "New versions on",IDC_STATIC,42,90,60+0,8
-    CONTROL         "http://www.locate32.net",IDC_GOTOHOMEPAGE,
+    CONTROL         "New versions on [http://www.locate32.net]",IDC_GOTOHOMEPAGE,
                     "Button",BS_OWNERDRAW | BS_LEFT | BS_VCENTER | BS_FLAT | 
-                    WS_TABSTOP,102+0,90,125,8
+                    WS_TABSTOP,42,90,191,8
     LTEXT           "",IDC_VERSION,42,44,191,10
     CONTROL         "",IDC_ABOUTBANNER,"Static",SS_BITMAP,0,0,236,40
 	CONTROL         "",IDC_DONATE,"Static",SS_BITMAP | SS_NOTIFY,2,138,35,16
@@ -1206,6 +1204,7 @@ BEGIN
 	IDS_UPDATINGENDED		"Updating finished:"
 	IDS_UPDATINGUNAVAILABLEROOT "unavailable root"
 	IDS_UPDATINGUPDATING	"database "
+	IDS_UPDATINGDELAYWRITING "delay database writing"
 	IDS_NOTIFYINITIALIZING  "initializing"
 	IDS_NOTIFYFINISHING		"finishing"
 	IDS_UPDATINGSCANNINGROOT "scanning "
@@ -1215,6 +1214,7 @@ BEGIN
     IDS_LOCATINGFAILED      "Locating failed"
     IDS_LOCATINGFAILED2      "Locating finished with error (%s)"
     IDS_LOCATINGCANCELLED   "Locating interrupted"
+	IDS_LOCATINGWAITDBWRITING "Waiting until databases are written"
     IDS_SEARCHINGFROMFILE   "Searching from file %s."
 END
 
@@ -1420,6 +1420,7 @@ BEGIN
     IDS_DATABASENAME        "Name"
 	IDS_DATABASEFILE        "Database File"
 	IDS_GLOBALUPDATE        "Update globally"
+	IDS_LASTTIMEUPDATED		"Last update"
 	IDS_THREADID            "Thread"
 	IDS_DATABASECREATOR		"Creator"
 	IDS_DATABASEDESCRIPTION	"Description"
@@ -1608,7 +1609,7 @@ BEGIN
 	IDS_ADVSETSHOWCRITICALERRORS	"Show critical errors (e.g., cannot write database, ...)"
 	IDS_ADVSETSHOWNONCRITICALERRORS	"Show non-critical errors (e.g., path is not available, ...)"
 	IDS_ADVSETSHOWUPDATESTATUSTOOLTIP	"Show update status in tooltip"
-	IDS_ADVSETTRANSPARENCY			"Locate dialog transparency (0-255):"
+	IDS_ADVSETTRANSPARENCY			"Locate dialog transparency (0-100 %):"
 	IDS_ADVSETTOPMOST				"Locate dialog always on top"
 	IDS_ADVSETTOOLTIPTEXTCOLOR		"Text color"
 	IDS_ADVSETTOOLTIPTITLECOLOR		"Title text color"
@@ -1616,7 +1617,7 @@ BEGIN
 	IDS_ADVSETTOOLTIPBACKCOLOR		"Background color"
 	IDS_ADVSETTOOLTIPTITLEFONT		"Title font:"
 	IDS_ADVSETTOOLTIPTEXTFONT		"Text font:"
-	IDS_ADVSETTOOLTIPTRANSPARENCY	"Transparency (0-255):"
+	IDS_ADVSETTOOLTIPTRANSPARENCY	"Transparency (0-100 %):"
 	IDS_ADVSETTOOLTIPWINDOWPOSITION	"Tooltip position:"
 	IDS_ADVSETTOOLTIPPOSNEARCLOCK	"near system tray"
 	IDS_ADVSETTOOLTIPPOSUPPERLEFT	"upper left corner"

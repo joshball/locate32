@@ -1,6 +1,6 @@
 # English language file 
 #	
-# Copyright (C) 2003-2007 Janne Huttunen <Janne.Huttunen@uku.fi>
+# Copyright (C) 2003-2008 Janne Huttunen <Janne.Huttunen@uku.fi>
 #
 
 FOR_PROGRAM=LOCATE32
@@ -29,9 +29,9 @@ CODEPAGE=1252
 
 # FILEVERSION_NUMERIC must in in format A, B, C, D where A, B, C and D are integers between 0-65535
 ORIGINALFILENAME=lan_en.dll
-LEGALCOPYRIGHT=Copyright © 1997-2007 Janne Huttunen
+LEGALCOPYRIGHT=Copyright © 1997-2008 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.0 build 7.12310
+FILEVERSION=3.0 build 8.1200
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -172,12 +172,11 @@ DLGABOUT_CAPTION=About:
 DLGABOUT_FONT=10, "Tahoma", 0, 0, 0x0
 DLGABOUT_OK=OK
 DLGABOUT_COPYRIGHT=Copyright
-DLGABOUT_CLICKHERE=click here
 DLGABOUT_CLICKHEREEXTRALEN=1
-DLGABOUT_NEWVERSIONSON=New versions on
+DLGABOUT_NEWVERSIONSON=New versions on [http://www.locate32.net]
 DLGABOUT_NEWVERSIONSONEXTRALEN=0
-DLGABOUT_FREEWAREINFO=This program is freeware.
-DLGABOUT_BUGFEEDBACKINFO=If you have found a bug or have comments
+DLGABOUT_FREEWAREINFO=This program is freeware, [donations] are welcome though
+DLGABOUT_BUGFEEDBACKINFO=If you have found a bug or have comments, [click here]
 STRABOUT_VERSION=Version 
 STRABOUT_SYSTEMINFO_WIN32S=Running on Windows %d.%d with Win32s Build:%d
 STRABOUT_SYSTEMINFO_WIN95=Running on Windows'95 version %d.%d.%d
@@ -304,7 +303,7 @@ STRADVANCEDSETTINGS_UPDATEPROCESS=Update process
 STRADVANCEDSETTINGS_SHOWCRITICALERRORS=Show critical errors (e.g., cannot write database, ...)
 STRADVANCEDSETTINGS_SHOWNONCRITICALERRORS=Show non-critical errors (e.g., path is not available, ...)
 STRADVANCEDSETTINGS_SHOWUPDATESTATUSINTOOLTIP=Show update status in tooltip
-STRADVANCEDSETTINGS_TRANSPARENCY=Locate dialog transparency (0-255):
+STRADVANCEDSETTINGS_TRANSPARENCY=Locate dialog transparency (0-100 %):
 STRADVANCEDSETTINGS_TOPMOST=Locate dialog always on top
 STRADVANCEDSETTINGS_TOOLTIPTEXTCOLOR=Text color
 STRADVANCEDSETTINGS_TOOLTIPTITLECOLOR=Title text color
@@ -325,7 +324,7 @@ STRADVANCEDSETTINGS_TOOLTIPTOPIFFOREGROUNDNOTMAXIMIZED=when foreground window is
 STRADVANCEDSETTINGS_TOOLTIPTOPIFFOREGROUNDNOTFULLSCREEN=when foreground window is not in fullscreen mode
 STRADVANCEDSETTINGS_TOOLTIPNEVERONTOP=never
 STRADVANCEDSETTINGS_UPDATETHREADPRIORITY=Thread priority:
-STRADVANCEDSETTINGS_TOOLTIPTRANSPARENCY=Transparency (0-255):
+STRADVANCEDSETTINGS_TOOLTIPTRANSPARENCY=Transparency (0-100 %):
 STRADVANCEDSETTINGS_SETTOOLTIPDELAYS=Set tooltip delay times
 STRADVANCEDSETTINGS_SHOWTOOLTIPDELAY=Delay until tooltip appears (ms):
 STRADVANCEDSETTINGS_SHOWTOOLTIPDURATION=Tooltip remains visible (ms):
@@ -1039,6 +1038,7 @@ STR_LOCATING_NORESULTS=no results
 STR_LOCATING_FILESFOUND=%d file(s) found
 STR_LOCATING_DIRECTORIESFOUND=%d directories found
 STR_LOCATING_ITEMSFOUND=%d files and %d directories found
+STR_LOCATING_WAITDBWRITING=Waiting until databases are written
 STR_UPDATING=Updating database...
 STR_UPDATING_TOOLTIPTITLE=Updating database:
 STR_UPDATING_DATABASE=Updating database (%s: %s)...
@@ -1056,6 +1056,7 @@ STR_UPDATING_UPDATING=database
 STR_UPDATING_SCANNINGROOT=scanning
 STR_UPDATING_INITIALIZING=initializing
 STR_UPDATING_FINISHING=finishing
+STR_UPDATING_DELAYWRITING=delay database writing
 
 ###########################
 # Tray icon 
@@ -1073,6 +1074,7 @@ STR_TRAYICON_WRITINGDATABASE=writing database
 STRDATABASE_DATABASENAME=Name
 STRDATABASE_DATABASEFILE=Database File
 STRDATABASE_UPDATEGLOBALLY=Update globally
+STRDATABASE_LASTUPDATE=Last update
 STRDATABASE_THREADID=Thread
 STRDATABASE_CREATOR=Creator
 STRDATABASE_DESCRIPTION=Description

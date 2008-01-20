@@ -76,6 +76,7 @@
 #define IDS_LISTFILEVERSION             63
 #define IDS_LISTPRODUCTNAME             64
 #define IDS_LISTPRODUCTVERSION          65
+#define IDS_LOCATINGWAITDBWRITING       66
 #define IDS_HELPINFO                    70
 #define IDS_FILEINFORMATION             71
 #define IDS_FILEINFORMATIONFMT          72
@@ -184,6 +185,7 @@
 #define IDS_UPDATINGFAILED2             310
 #define IDS_UPDATINGUPDATING            311
 #define IDS_UPDATINGSCANNINGROOT        312
+#define IDS_UPDATINGDELAYWRITING		313
 #define IDS_PRIORITYHIGH                390
 #define IDS_PRIORITYABOVENORMAL         391
 #define IDS_PRIORITYNORMAL              392
@@ -648,6 +650,7 @@
 #define IDS_FRI                         5142
 #define IDS_SAT                         5143
 #define IDS_SUN                         5144
+#define IDS_LASTTIMEUPDATED             5200
 #define IDS_DATABASENAME                5201
 #define IDS_DATABASEFILE                5202
 #define IDS_GLOBALUPDATE                5203

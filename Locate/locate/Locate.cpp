@@ -1,7 +1,7 @@
-/* Copyright (c) 1997-2007 Janne Huttunen
-   locate.exe v3.0.7.12310                 */
+/* Copyright (c) 1997-2008 Janne Huttunen
+   database locater v3.0.8.1200              */
 
-const char* szVersionStr="locate 3.0 build 7.12310";
+const char* szVersionStr="locate 3.0 build 8.1200";
 
 #include <hfclib.h>
 #ifndef WIN32

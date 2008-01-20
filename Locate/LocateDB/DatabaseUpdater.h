@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.12160                 */
+/* Copyright (c) 1997-2008 Janne Huttunen
+   database locater v3.0.8.1200              */
 
 #if !defined(DATABASEUPDATER_H)
 #define DATABASEUPDATER_H
@@ -292,15 +292,8 @@ private:
 	friend CRootDirectory;
 
 public:
-	// Status flags (statusNotChanged is not by CDatabaseUpdater)
-	enum UpdateStatus {
-		statusNotChanged,
-		statusInitializing,
-		statusScanning,
-		statusWritingDB,
-		statusFinishing
-	};	
 	UpdateStatus GetStatus() const { return sStatus; }
+	void SetStatus(UpdateStatus sStatus) { this->sStatus=sStatus; }
 private:
 	UpdateStatus sStatus;
 };

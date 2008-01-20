@@ -149,10 +149,16 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 
 			UpdDebugFormatMessage1("CDatabaseUpdater::UpdatingProc(): writing to %s",m_aDatabases[m_dwCurrentDatabase]->m_szArchive);
 		
-			// Start writing database
-			m_pProc(m_dwData,RootChanged,ueResult,this);
-			m_pCurrentRoot=NULL; // Writing header
+			// Begin to write database
+			m_pCurrentRoot=NULL; 
+
+			// First, tell to application that we are going to write database
+			sStatus=statusInitializeWriting;
+			m_pProc(m_dwData,InitializeWriting,ueResult,this);
+
+			// Writing database
 			sStatus=statusWritingDB;
+			m_pProc(m_dwData,WritingDatabase,ueResult,this);
 			
 			
 			BOOL bWriteHeader=TRUE;
@@ -334,18 +340,18 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 			UpdDebugMessage("CDatabaseUpdater::UpdatingProc(): writing directory data");
 
 			// Writing root directory datas
-			m_pCurrentRoot=m_aDatabases[m_dwCurrentDatabase]->m_pFirstRoot;
-			while (m_pCurrentRoot!=NULL && (ueResult==ueSuccess || ueResult==ueFolderUnavailable))
+			CRootDirectory* pWriteRoot=m_aDatabases[m_dwCurrentDatabase]->m_pFirstRoot;
+			while (pWriteRoot!=NULL && (ueResult==ueSuccess || ueResult==ueFolderUnavailable))
 			{
 				sStatus=statusWritingDB;
 				
 				// Writing root data
 				if (bUnicode)
-					ueResult=m_pCurrentRoot->WriteW(dbFile);
+					ueResult=pWriteRoot->WriteW(dbFile);
 				else
-					ueResult=m_pCurrentRoot->Write(dbFile);
+					ueResult=pWriteRoot->Write(dbFile);
 
-				m_pCurrentRoot=m_pCurrentRoot->m_pNext;
+				pWriteRoot=pWriteRoot->m_pNext;
 			}
 
 			UpdDebugMessage("CDatabaseUpdater::UpdatingProc(): end of directory data");
