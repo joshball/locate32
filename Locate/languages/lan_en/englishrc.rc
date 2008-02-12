@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,0,8,1200
- PRODUCTVERSION 3,0,8,1200
+ FILEVERSION 3,1,8,2110
+ PRODUCTVERSION 3,1,8,2110
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.0 build 8.1200"
+            VALUE "FileVersion", "3.1 beta build 8.2110"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2008 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.0 build 8.1200"
+            VALUE "ProductVersion", "3.1 beta build 8.2110"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1694,6 +1694,16 @@ BEGIN
 	IDS_ADVSETSPACEISSEPARATOR		"Use space as a separator for searches"
 	IDS_ADVSETDONTSHOWSTICON		"Do not show system tray icon"
 	IDS_ADVSETSYSTEMTRAYICON		"System tray icon"
+	IDS_ADVSETISENABLE				"Enable search while typing"
+	IDS_ADVSETISLIMIT				"Limit the number of results"
+	IDS_ADVSETISNAMEDCHANGED		"Search when ""Named:"" is changed"
+	IDS_ADVSETISTYPECHANGED			"Search when ""Extensions:"" is changed"
+	IDS_ADVSETISLOOKINCHANGED		"Search when ""Look In:"" is changed"
+	IDS_ADVSETISSIZESCHANGED		"Search when file sizes are changed"
+	IDS_ADVSETISDATESCHANGED		"Search when file dates are changed"
+	IDS_ADVSETISDATACHANGED			"Search when ""File containing text"" is changed"
+	IDS_ADVSETISOTHERCHANGED		"Search when other fields are changed"
+	IDS_ADVSETISDISABLEIFDATASEARCH "Disable if ""File containing text:"" is enabled"
 END
 
 STRINGTABLE
@@ -1786,6 +1796,7 @@ BEGIN
 	IDS_ACTIONRESITEMEXECUTENTHITEM		"Execute %s%s file"
 	IDS_ACTIONADVSENDMESSAGE			"Send message"
 	IDS_ACTIONADVPOSTMESSAGE			"Post message"
+	IDS_ACTIONADVINSERTASTERISKS		"Insert Asterisks"
 	IDS_ACTIONHELPSHOW					"Show Help for Item"
 	IDS_ACTIONHELPCLOSE					"Close Help"
 	IDS_ACTIONHELPTOPICS				"Show Topics"

@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2007 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 
@@ -140,6 +140,8 @@ public:
 
 	HANDLE m_hThread;
 	operator HANDLE() const;
+
+	DWORD GetThreadId() const { return m_nThreadID; }
 	
 	HACCEL GetAccelTable() const;
 	void SetAccelTable(HACCEL hAccel);
@@ -200,7 +202,7 @@ protected:
 	CArray<HWND> m_Dialogs;
 	MSG m_currentMessage;
 
-public:
+protected:
 	CTargetWnd* m_pMainWnd;
 	CTargetWnd* m_pMouseMessagesTo;
 	DWORD m_nThreadID;

@@ -190,7 +190,11 @@ public:
 		void ChangeNumberOfItemsInLists(int iNumberOfNames,int iNumberOfTypes,int iNumberOfDirectories);
 		
 	private:
-		BOOL OnOk(CStringW& sName,CArray<LPWSTR>& aExtensions,CArrayFAP<LPWSTR>& aDirectories);
+		// Get name, extensions and directories
+		BOOL GetNameExtensionsAndDirectories(CStringW& sName,CArray<LPWSTR>& aExtensions,
+			CArrayFAP<LPWSTR>& aDirectories,BOOL bForInstantSearch);
+		
+		
 		void OnClear(BOOL bInitial=FALSE);
 
 		void OnMoreDirectories();
@@ -278,7 +282,7 @@ public:
 		virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 		
 	public:
-		BOOL OnOk(CLocater* pLocater);
+		BOOL SetSizesAndDaterForLocater(CLocater* pLocater);
 		void OnClear(BOOL bInitial=FALSE);
 		
 		void EnableItems(BOOL bEnable);
@@ -316,12 +320,9 @@ public:
 		// Return codes for OnOk
 		enum {
 			flagMatchCase=0x1,
-			flagReplaceSpaces=0x2,
-			flagNameIsRegularExpression=0x4, // These are not returned, 
-			flagUseWholePath=0x8,
-			flagRexExpIsCaleSensitive=0x10 // These are not returned, 
+			flagReplaceSpaces=0x2
 		};
-		DWORD OnOk(CLocater* pLocater);
+		DWORD SetAdvancedFlagsForLocater(CLocater* pLocater,BOOL bForInstantSearch);
 		void OnClear(BOOL bInitial=FALSE);
 		
 		void EnableItems(BOOL bEnable);
@@ -513,7 +514,6 @@ public:
 	void EnableItems(BOOL bEnable=TRUE);
 	void ResetFileNotificators();
 	void StartBackgroundOperations();
-	void StopBackgroundOperations();
 	void ChangeBackgroundOperationsPriority(BOOL bLower);
 
 	void BeginDragFiles(CListCtrl* pList);
@@ -610,7 +610,13 @@ protected:
 	static DWORD CheckExistenceOfPreset(LPCWSTR szName,DWORD* pdwPresets); // Returns index to preset or FFFFFFFF
 
 
+
+
+	CLocater* ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& aExtensions,CArrayFAP<LPWSTR>& aDirectories,
+													CArrayFAP<LPWSTR>& aNames,BOOL bForInstantSearch,BOOL bShowDatabasesDialog);
+	
 	static BOOL CALLBACK LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueCode,DWORD_PTR dwFoundFiles,const CLocater* pLocater);
+	static BOOL CALLBACK LocateInstantProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueCode,DWORD_PTR dwFoundFiles,const CLocater* pLocater);
 	static BOOL CALLBACK LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater);
 	static BOOL CALLBACK LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater);
 
@@ -762,6 +768,26 @@ public:
 		efSave = efLocateProcessSave|efLocateDialogSave|efLVSave|efNameSave|efBackgroundSave
 	};
 
+protected:
+	DWORD m_dwFlags;
+	DWORD m_dwExtraFlags;
+
+public:
+
+	// Accessors
+	DWORD GetFlags() const { return m_dwFlags; }
+	BOOL IsFlagSet(LocateDialogFlags nFlag) const { return m_dwFlags&nFlag?1:0; }
+	void AddFlags(DWORD dwFlags) { m_dwFlags|=dwFlags; }
+	void RemoveFlags(DWORD dwFlags) { m_dwFlags&=~dwFlags; }
+	
+	DWORD GetExtraFlags() const { return m_dwExtraFlags; }
+	BOOL IsExtraFlagSet(LocateDialogExtraFlags nFlag) const { return m_dwExtraFlags&nFlag?1:0; }
+	void AddExtraFlags(DWORD dwFlags) { m_dwExtraFlags|=dwFlags; }
+	void RemoveExtraFlags(DWORD dwFlags) { m_dwExtraFlags&=~dwFlags; }
+	
+	
+
+	
 
 protected:
 	CTabCtrl* m_pTabCtrl;
@@ -777,9 +803,6 @@ protected:
 	int m_iTooltipSubItem;
 	BOOL m_bTooltipActive;
 	
-protected:
-	DWORD m_dwFlags;
-	DWORD m_dwExtraFlags;
 
 	
 	ContextMenuStuff* m_pActiveContextMenu;
@@ -825,7 +848,7 @@ protected:
 	CLocater* m_pLocater;
 	CCheckFileNotificationsThread* m_pFileNotificationsThread;
 	CBackgroundUpdater* m_pBackgroundUpdater;
-
+	
 	BYTE m_nSorting;	// used for sorting list item, 0-6 bits: detail type, 7 bit: if 1 ascend sorting
 	BYTE m_ClickWait;
 
@@ -854,20 +877,58 @@ protected:
 
 	CSubAction* m_aResultListActions[TypeCount][ListActionCount];
 
-
-
-	// Accessors
 public:
-	DWORD GetFlags() const { return m_dwFlags; }
-	BOOL IsFlagSet(LocateDialogFlags nFlag) const { return m_dwExtraFlags&nFlag?1:0; }
-	void AddFlags(DWORD dwFlags) { m_dwFlags|=dwFlags; }
-	void RemoveFlags(DWORD dwFlags) { m_dwFlags&=~dwFlags; }
+	// Instant searching
+	enum InstantSearchingFlags {
+		isEnable = 0x000000001,
+		isRunning = 0x000000002,
+		isIgnoreChangeMessages = 0x00000004,
+		isDisableIfDataSearch	= 0x00000008,
+		
+		isGeneralDefault = isDisableIfDataSearch,
+		isGeneralSave = isEnable|isDisableIfDataSearch,
+
+
+		isSearchIfNameChanged   = 0x00010000,
+		isSearchIfTypeChanged   = 0x00020000,
+		isSearchIfLookInChanged = 0x00040000,
+		isSearchIfSizesChanged  = 0x00080000,
+		isSearchIfDatesChanged  = 0x00100000,
+		isSearchIfDataChanged   = 0x00200000,
+		isSearchIfOtherChanged  = 0x00400000,
+		isAllChanged  			= 0x00FF0000,
+
+		isSearchIfDefault	    = isSearchIfNameChanged|isSearchIfTypeChanged|isSearchIfLookInChanged,
+		isSearchIfSave		    = 0x00FF0000,
+		
+
+		
+
+		isDefault =	isGeneralDefault | isSearchIfDefault,
+		isSave = isGeneralSave | isSearchIfSave
+
+	};
+
+protected:
+
 	
-	DWORD GetExtraFlags() const { return m_dwExtraFlags; }
-	BOOL IsExtraFlagSet(LocateDialogExtraFlags nFlag) const { return m_dwExtraFlags&nFlag?1:0; }
-	void AddExtraFlags(DWORD dwFlags) { m_dwExtraFlags|=dwFlags; }
-	void RemoveExtraFlags(DWORD dwFlags) { m_dwExtraFlags&=~dwFlags; }
-	
+	DWORD m_dwInstantFlags;
+	DWORD m_dwInstantLimit;
+
+	void InstantSearch(DWORD dwWhatChanged);
+
+public:
+	DWORD GetInstantSearchingFlags() const { return m_dwInstantFlags; }
+	BOOL IsInstantSearchingFlagSet(InstantSearchingFlags nFlag) const { return m_dwInstantFlags&nFlag?1:0; }
+	void AddInstantSearchingFlags(DWORD dwFlags) { m_dwInstantFlags|=dwFlags; }
+	void RemoveInstantSearchingFlags(DWORD dwFlags) { m_dwInstantFlags&=~dwFlags; }
+	DWORD GetInstantSearchingLimit() const { return m_dwInstantLimit; }
+	void SetInstantSearchLimit(DWORD dwValue) { m_dwInstantLimit=dwValue; }
+
+
+
+
+public:
 	DWORD GetMaxFoundFiles() const { return m_dwMaxFoundFiles; }
 	void SetMaxFoundFiles(DWORD dwValue) { m_dwMaxFoundFiles=dwValue; }
 

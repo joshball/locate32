@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2007 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #ifndef HFCFILE_INL
@@ -325,6 +325,10 @@ inline HMODULE FileSystem::LoadLibrary(LPCSTR lpFileName,DWORD dwFlags)
 	return ::LoadLibraryExA(lpFileName,NULL,dwFlags);
 }
 
+inline DWORD WINAPI FileSystem::GetModuleFileName(HMODULE hModule,LPSTR lpFilename,DWORD nSize)
+{
+	return ::GetModuleFileNameA(hModule,lpFilename,nSize);
+}
 	
 #ifdef DEF_WCHAR
 inline BOOL FileSystem::CreateDirectory(LPCWSTR lpPathName,LPSECURITY_ATTRIBUTES lpSecurityAttributes)

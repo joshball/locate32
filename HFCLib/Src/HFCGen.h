@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2007 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 
@@ -366,6 +366,9 @@ namespace FileSystem {
 	UINT GetWindowsDirectory(LPSTR lpBuffer,UINT uSize);
 	UINT GetSystemDirectory(LPSTR lpBuffer,UINT uSize);
 	HMODULE LoadLibrary(LPCSTR lpFileName,DWORD dwFlags=NULL);
+	
+	DWORD WINAPI GetModuleFileName(HMODULE hModule,LPSTR lpFilename,DWORD nSize);
+
 
 
 
@@ -428,6 +431,9 @@ namespace FileSystem {
 	UINT GetWindowsDirectory(LPWSTR lpBuffer,UINT uSize);
 	UINT GetSystemDirectory(LPWSTR lpBuffer,UINT uSize);
 	HMODULE LoadLibrary(LPCWSTR lpFileName,DWORD dwFlags=NULL);
+
+
+	DWORD WINAPI GetModuleFileName(HMODULE hModule,LPWSTR lpFilename,DWORD nSize);
 
 #endif	
 

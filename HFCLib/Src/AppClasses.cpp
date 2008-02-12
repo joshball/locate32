@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2007 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -18,7 +18,7 @@ CWinThread* GetCurrentWinThread()
 		pThread=GetAppData()->m_pThreads->GetAt(pPos);
 		if (pThread!=NULL)
 		{
-			if (pThread->m_nThreadID==nThreadID)
+			if (pThread->GetThreadId()==nThreadID)
 				return pThread;
 		}
 		pPos=GetAppData()->m_pThreads->GetNextPosition(pPos);
@@ -35,7 +35,7 @@ CWinThread* GetWinThread(DWORD nThreadID)
 		pThread=GetAppData()->m_pThreads->GetAt(pPos);
 		if (pThread!=NULL)
 		{
-			if (pThread->m_nThreadID==nThreadID)
+			if (pThread->GetThreadId()==nThreadID)
 				return pThread;
 		}
 		pPos=GetAppData()->m_pThreads->GetNextPosition(pPos);

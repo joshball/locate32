@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2007 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 // Inline funktions for manipulating strings
 ////////////////////////////////////////////////////////////////////
@@ -308,6 +308,18 @@ int FirstCharIndex(const CHARTYPE* str,CHARTYPE ch)
 }
 
 template<class CHARTYPE>
+int FirstCharIndex(const CHARTYPE* str,CHARTYPE ch,int iLength)
+{
+	int i;
+	for (i=0;i<iLength;i++)
+	{
+		if (str[i]==ch)
+			return i;
+	}
+	return -1;
+}
+
+template<class CHARTYPE>
 int LastCharIndex(const CHARTYPE* str,CHARTYPE ch)
 {
 	int i,ret=-1;
@@ -317,6 +329,14 @@ int LastCharIndex(const CHARTYPE* str,CHARTYPE ch)
 			ret=i;
 	}
 	return ret;
+}
+
+template<class CHARTYPE>
+int LastCharIndex(const CHARTYPE* str,CHARTYPE ch,int iLength)
+{
+	int i;
+	for (i=iLength-1;i>=0 && str[i]!=ch;i--);
+	return i;
 }
 
 template<class CHARTYPE>
@@ -331,6 +351,17 @@ int NextCharIndex(const CHARTYPE* str,CHARTYPE ch,int oldidx)
    return -1;
 }
 
+template<class CHARTYPE>
+int NextCharIndex(const CHARTYPE* str,CHARTYPE ch,int oldidx,int iLength)
+{
+   int i;
+   for (i=oldidx+1;i<iLength;i++)
+   {
+      if (str[i]==ch)
+         return i;
+   }
+   return -1;
+}
 
 inline int sprintfex( char *buffer, int buffersize, const char *format,...)
 {

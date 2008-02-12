@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2007 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -1026,7 +1026,7 @@ void CMDIFrameWnd::OnWindowNew()
 BOOL CMDIChildWnd::Create(LPCTSTR lpszClassName,LPCTSTR lpszWindowName,DWORD dwStyle,const RECT* rect,CMDIFrameWnd* pParentWnd)
 {
 	if (pParentWnd==NULL)
-		pParentWnd=(CMDIFrameWnd*)GetApp()->m_pMainWnd;
+		pParentWnd=(CMDIFrameWnd*)GetApp()->GetMainWnd();
 	m_pParent=pParentWnd;
 	MDICREATESTRUCT mcs;
 	mcs.szClass=lpszClassName;

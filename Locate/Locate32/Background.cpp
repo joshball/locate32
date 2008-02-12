@@ -56,7 +56,7 @@ BOOL CCheckFileNotificationsThread::Start()
 	DWORD dwThreadID;
 	m_hThread=CreateThread(NULL,0,NotificationThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
 	DebugOpenHandle(dhtThread,m_hThread,"CheckFileNotifications");
-	DebugFormatMessage("FN: thread started ID=%X",(DWORD)dwThreadID);
+	FnDebugMessage1("FN: thread started ID=%X",(DWORD)dwThreadID);
 	
 	if (m_hThread==NULL)
 		return FALSE;
@@ -120,7 +120,7 @@ BOOL CCheckFileNotificationsThread::Stop()
 		
 		
 		// Wait that ending processes are handled
-		if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
+		if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->GetThreadId())
 		{
 			// This Stop() is called from CLocateDlg, it is possible
 			// that RunninProcNew sens messages to this window.
@@ -1004,17 +1004,6 @@ BOOL CBackgroundUpdater::Start()
 }
 
 
-void CBackgroundUpdater::CreateEventsAndMutex()
-{
-	m_phEvents[0]=CreateEvent(NULL,TRUE,FALSE,NULL);
-	DebugOpenEvent(m_phEvents[0]);
-	m_phEvents[1]=CreateEvent(NULL,TRUE,FALSE,NULL);
-	DebugOpenEvent(m_phEvents[1]);
-
-	m_hUpdateListPtrInUse=CreateMutex(NULL,FALSE,NULL);
-	DebugOpenMutex(m_hUpdateListPtrInUse);
-}
-
 CBackgroundUpdater::~CBackgroundUpdater()
 {	
 	InterlockedExchangePointer((PVOID*)&GetLocateDlg()->m_pBackgroundUpdater,NULL);
@@ -1026,12 +1015,7 @@ CBackgroundUpdater::~CBackgroundUpdater()
 	CloseHandle(m_phEvents[1]);
 	DebugCloseEvent(m_phEvents[1]);
 
-	if (m_hUpdateListPtrInUse!=NULL)
-	{
-		CloseHandle(m_hUpdateListPtrInUse);
-		DebugCloseMutex(m_hUpdateListPtrInUse);
-		m_hUpdateListPtrInUse=NULL;
-	}
+	DeleteCriticalSection(&m_csUpdateList);
 
 
 	// Closing handle
@@ -1071,7 +1055,7 @@ BOOL CBackgroundUpdater::Stop()
 	BOOL bRet=::GetExitCodeThread(hThread,&status);
 	if (bRet && status==STILL_ACTIVE)
 	{
-		InterlockedExchange(&m_lGoToSleep,TRUE);
+		InterlockedExchange(&m_lIgnoreItemsAndGoToSleep,TRUE);
 
 		// Signal stop event
 		SetEvent(m_phEvents[0]);
@@ -1102,20 +1086,41 @@ BOOL CBackgroundUpdater::Stop()
 #endif
 }
 
+
+void CBackgroundUpdater::IgnoreItemsAndGoToSleep()
+{
+	InterlockedExchange(&m_lIgnoreItemsAndGoToSleep,TRUE);
+
+	ISDLGTHREADOK
+
+
+	PostQuitMessage(0);
+	GetLocateAppWnd()->m_pLocateDlgThread->ModalLoop();
+		
+	while (!m_lIsWaiting)
+		Sleep(20);
+	
+	EnterCriticalSection(&m_csUpdateList);
+	m_aUpdateList.RemoveAll();
+	LeaveCriticalSection(&m_csUpdateList);
+
+	ASSERT(m_lIgnoreItemsAndGoToSleep);
+}
+
 inline BOOL CBackgroundUpdater::RunningProc()
 {
 	BuDebugMessage1("CBackgroundUpdater::RunningProc() BEGIN, running thread 0x%X",GetCurrentThreadId());
 
 	for (;;)
 	{
-		InterlockedExchange(&m_lGoToSleep,FALSE);
 		InterlockedExchange(&m_lIsWaiting,TRUE);
 
 		BuDebugMessage("CBackgroundUpdater::RunningProc(): Going to sleep.");
 		
 		DWORD nRet=WaitForMultipleObjects(2,m_phEvents,FALSE,INFINITE);
 		InterlockedExchange(&m_lIsWaiting,FALSE);
-
+		InterlockedExchange(&m_lIgnoreItemsAndGoToSleep,FALSE);
+		
 		BuDebugMessage1("CBackgroundUpdater::RunningProc(): Woked, nRet=%d.",nRet);
 
 
@@ -1146,24 +1151,24 @@ inline BOOL CBackgroundUpdater::RunningProc()
 				// We use local variable for the array so that
 				// other operations are not delayed
 				
-				CArrayFP<CBackgroundUpdater::Item*>* pList=GetUpdaterListPtr();
-				if (pList==NULL)
-					continue;
-				CArrayFP<Item*> aUpdateList;
-				aUpdateList.Swap(*pList);
-				ReleaseUpdaterListPtr();
+				EnterCriticalSection(&m_csUpdateList);
+				
+				CArrayFP<Item*> aLocalUpdateList;
+				aLocalUpdateList.Swap(m_aUpdateList);
+
+				LeaveCriticalSection(&m_csUpdateList);
                 
 				// No items in list, there is no need to do anything
-				if (aUpdateList.GetSize()==0)
+				if (aLocalUpdateList.GetSize()==0)
 					break;
 			
 				
-				for (int i=0;i<aUpdateList.GetSize() && !m_lGoToSleep;i++)
+				for (int i=0;i<aLocalUpdateList.GetSize() && !m_lIgnoreItemsAndGoToSleep;i++)
 				{
-					Item* pItem=aUpdateList.GetAt(i);
+					Item* pItem=aLocalUpdateList.GetAt(i);
 
 					// At first, check that item is visible and threfore needs to be updated
-					BuDebugMessage1("Checking whether item %s needs to be updated ",pItem->m_pItem->GetName());
+					//BuDebugMessage1("Checking whether item %S needs to be updated ",pItem->m_pItem->GetName());
 
 					POINT pt;
 					if (m_pList->GetItemPosition(pItem->m_iItem,&pt))
@@ -1196,7 +1201,7 @@ inline BOOL CBackgroundUpdater::RunningProc()
 							{
 								BOOL bReDraw=FALSE;
 								
-								BuDebugMessage1("Refreshing %s",pItem->m_pItem->GetName());
+								BuDebugMessage1("Refreshing %S",pItem->m_pItem->GetName());
 								pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
 
 								if (bReDraw)
@@ -1206,13 +1211,12 @@ inline BOOL CBackgroundUpdater::RunningProc()
 					}
 					
 				}
-				aUpdateList.RemoveAll();
+				aLocalUpdateList.RemoveAll();
 				
 			}
 			ResetEvent(m_phEvents[1]);
 			BuDebugMessage("CBackgroundUpdater::RunningProc(): I am tired");
 			
-			InterlockedExchange(&m_lGoToSleep,FALSE);
 		}
 		else 
 			BuDebugMessage2("CBackgroundUpdater::RunningProc(): nRet not handled, nRet:0x%X, events=2, GetLastError()=0x%X",nRet,GetLastError());
@@ -1230,29 +1234,33 @@ DWORD WINAPI CBackgroundUpdater::UpdaterThreadProc(LPVOID lpParameter)
 
 void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailType nDetail)
 {
-	BuDebugMessage1("CBackgroundUpdater::AddToUpdateList BEGIN this is %X",this);
+	//BuDebugMessage1("CBackgroundUpdater::AddToUpdateList BEGIN this is %X",this);
 	
-	CArrayFP<Item*>* pUpdateList=GetUpdaterListPtr();
-	if (pUpdateList==NULL)
-		return;
 
-	for (int i=pUpdateList->GetSize()-1;i>=0;i--)
+	if (m_lIgnoreItemsAndGoToSleep)
 	{
-		Item* pListItem=pUpdateList->GetAt(i);
+		// Thread is asked to ignore all items and go to sleep/quit
+		return; 
+	}
 
-		BuDebugMessage4("CBackgroundUpdater::AddToUpdateList Checking whether pItem=%X is pListItem=%X, i=%d, listsize=%d",
-			(DWORD_PTR)pItem,(DWORD_PTR)pListItem,i,pUpdateList->GetSize());
+	EnterCriticalSection(&m_csUpdateList);
+	
+
+	for (int i=m_aUpdateList.GetSize()-1;i>=0;i--)
+	{
+		Item* pListItem=m_aUpdateList.GetAt(i);
+
+		//BuDebugMessage4("CBackgroundUpdater::AddToUpdateList Checking whether pItem=%X is pListItem=%X, i=%d, listsize=%d",
+		//	(DWORD_PTR)pItem,(DWORD_PTR)pListItem,i,pUpdateList->GetSize());
 
 		if (pListItem==NULL)
 			continue;
 		
-		
-
-		if (pUpdateList->GetAt(i)->m_pItem==pItem)
+		if (pListItem->m_pItem==pItem)
 		{
 			if (nDetail==Needed)
 			{
-				BuDebugMessage("CBackgroundUpdater::AddToUpdateList checking whether all needed details");
+				//BuDebugMessage("CBackgroundUpdater::AddToUpdateList checking whether all needed details");
 				
 				for (int type=0;type<=LastType;type++)
 				{
@@ -1266,7 +1274,7 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 						}
 						if (j<0) // Not found
 						{
-							BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new(1) detail %d to item %X",nDetail,(DWORD_PTR)pListItem);
+							//BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new(1) detail %d to item %X",nDetail,(DWORD_PTR)pListItem);
 							pListItem->m_aDetails.Add((DetailType)type);
 						}
 					}
@@ -1274,7 +1282,7 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 			}
             else
 			{
-				BuDebugMessage1("CBackgroundUpdater::AddToUpdateList checking wheter detail %d exists",nDetail);
+				//BuDebugMessage1("CBackgroundUpdater::AddToUpdateList checking wheter detail %d exists",nDetail);
 					
 				int j;
 				for (j=pListItem->m_aDetails.GetSize()-1;j>=0;j--)
@@ -1285,53 +1293,48 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 				if (j<0)
 				{
 					// Not found
-					BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new(2) detail %d to item %X",nDetail,(DWORD_PTR)pListItem);
+					//BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new(2) detail %d to item %X",nDetail,(DWORD_PTR)pListItem);
 					pListItem->m_aDetails.Add(nDetail);
 				}
 			}
-			ReleaseUpdaterListPtr();
+			LeaveCriticalSection(&m_csUpdateList);
 			
-			BuDebugMessage("CBackgroundUpdater::AddToUpdateList END (loop)");
+			//BuDebugMessage("CBackgroundUpdater::AddToUpdateList END (loop)");
 			return;
 		}
 	}
 	
 
-	BuDebugMessage("CBackgroundUpdater::AddToUpdateList END (loop)");
-			
 	if (nDetail!=Needed)
 	{
 		Item* pNewItem=new Item(pItem,iItem,nDetail);
-		BuDebugMessage3("CBackgroundUpdater::AddToUpdateList Adding new item (%X) %X list size=%d",(DWORD_PTR)pItem,(DWORD_PTR)pNewItem,pUpdateList->GetSize());
-		pUpdateList->Add(pNewItem);
-		ReleaseUpdaterListPtr();
+		//BuDebugMessage3("CBackgroundUpdater::AddToUpdateList Adding new item (%X) %X list size=%d",(DWORD_PTR)pItem,(DWORD_PTR)pNewItem,pUpdateList->GetSize());
+		m_aUpdateList.Add(pNewItem);
+		LeaveCriticalSection(&m_csUpdateList);
 
-		BuDebugMessage("CBackgroundUpdater::AddToUpdateList END (newitem)");
 		return;
 	}
 
-	// Adding needed
-	ReleaseUpdaterListPtr();
-	
-	BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new item with all necessary details (%X,%d)",pItem,iItem);
+	// Create new items with desired details
 	Item* pUpdateItem=new Item(pItem,iItem);
-
 	for (int type=0;type<=LastType;type++)
 	{
 		if (pItem->ShouldUpdateByDetail((DetailType)type))
 			pUpdateItem->m_aDetails.Add((DetailType)type);
 	}
+
+	// Adding item to the list
 	if (pUpdateItem->m_aDetails.GetSize()>0)
 	{
-		pUpdateList=GetUpdaterListPtr();
-		BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new item (%X), list size=%d",
-			(DWORD_PTR)pUpdateItem,pUpdateList->GetSize());
-		pUpdateList->Add(pUpdateItem); 
-		ReleaseUpdaterListPtr();
+		//BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new item (%X), list size=%d",
+		//	(DWORD_PTR)pUpdateItem,m_aUpdateList.GetSize());
+		m_aUpdateList.Add(pUpdateItem); 
 	}
 	else
 		delete pUpdateItem;
-	
 
-	BuDebugMessage("CBackgroundUpdater::AddToUpdateList END (normal)");
+
+	LeaveCriticalSection(&m_csUpdateList);
+	
+		
 }

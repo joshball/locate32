@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.0.8.1200              */
+   database locater v3.1.8.2110              */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -661,26 +661,66 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 	return NULL;
 }
 
+LPWSTR CDatabase::ResolveLocateDir(LPCWSTR szFileName,DWORD dwNameLength)
+{
+	if (dwNameLength==DWORD(-1))
+		dwNameLength=(DWORD)istrlenw(szFileName);
+	
+	int nIndex=FirstCharIndex(szFileName,L'%',(int)dwNameLength);
+	if (nIndex==-1)
+		return (LPWSTR)szFileName;
+
+	if (_wcsnicmp(szFileName+nIndex+1,L"locatedir%",10)!=0)
+		return NULL;
+
+	// Resolve locatedir
+	WCHAR szLocateDir[MAX_PATH+2];
+	int nLength=FileSystem::GetModuleFileName(NULL,szLocateDir,MAX_PATH+2);
+	nLength=LastCharIndex(szLocateDir,L'\\',nLength);
+	if (nLength==-1)
+		return NULL;
+
+	WCHAR* pNewPath=new WCHAR[dwNameLength-11+nLength+1];
+	MemCopyW(pNewPath,szFileName,nIndex);
+	MemCopyW(pNewPath+nIndex,szLocateDir,nLength);
+	MemCopyW(pNewPath+nIndex+nLength,szFileName+nIndex+11,dwNameLength-nIndex-11+1);
+
+	return pNewPath;
+}
+
 LPWSTR CDatabase::GetCorrertFileName(LPCWSTR szFileName,DWORD dwNameLength)
 {
 	if (dwNameLength==DWORD(-1))
 		dwNameLength=(DWORD)istrlenw(szFileName);
 	
+	if (FirstCharIndex(szFileName,L'%',(int)dwNameLength)!=-1)
+	{
+		// There is '%' in name, check that is that for %locatedir%
+		LPCWSTR szResolvedPath=ResolveLocateDir(szFileName,dwNameLength);
+
+		if (szResolvedPath==NULL)
+			return NULL; // Not valid
+
+		if (!FileSystem::IsValidFileName(szResolvedPath))
+		{
+			delete[] szResolvedPath;
+			return NULL;
+		}
+
+		return alloccopy(szFileName,dwNameLength);
+	}
+
 	LPWSTR szFile;
-	if (szFileName[0]!=L'\\' && szFileName[1]!=L':')
+	if (szFileName[0]!=L'\\' && szFileName[1]!=L':') // Not UNC or on drive
 		szFile=GetDefaultFileLocation(szFileName);
 	else
-	{
-		szFile=new WCHAR[dwNameLength+1];
-		MemCopyW(szFile,szFileName,DWORD(dwNameLength));
-		szFile[dwNameLength]=L'\0';
-	}
+		szFile=alloccopy(szFileName,dwNameLength);
 
 	// Checking whether file name is valid
 	if (!FileSystem::IsValidFileName(szFile))
 	{
 		delete[] szFile;
-		return allocemptyW();
+		return NULL;
 	}
 	return szFile;
 }
@@ -1022,9 +1062,17 @@ BOOL CDatabase::IsFileNamesOEM() const
 		switch (m_ArchiveType)
 		{
 		case archiveFile:
-			dbFile=new CFile(GetArchiveName(),CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
-			dbFile->CloseOnDelete();
-			break;
+			{
+				BOOL bFree;
+				LPWSTR szFileName=GetResolvedArchiveName(bFree);
+				dbFile=new CFile(szFileName,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
+				dbFile->CloseOnDelete();
+
+				if (bFree)
+					delete[] szFileName;
+
+				break;
+			}
 		default:
 			return -1;
 		}

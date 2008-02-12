@@ -426,6 +426,8 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 
 					}
 					::SendMessage(pData->m_hSpinWnd,UDM_SETPOS32,0,nVal);
+
+					::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),EN_CHANGE),(LPARAM)hWnd);
 				}
 				break;
 			}
@@ -450,7 +452,16 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 			//::SendMessage(pData->m_hEditWnd,WM_SETTEXT,0,(LPARAM)szEmpty);
 			pData->SetRelativeDate(nNewPos,DTXF_NOSPINCHANGE|DTXF_NOMODECHANGE);			
 
+			
 			pData->m_dwFlags&=~SpinBoxIsUpdating;
+
+			::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),EN_CHANGE),(LPARAM)hWnd);
+
+		}
+		else if (((LPNMHDR)lParam)->idFrom==IDC_EXPLICITIDATE && 
+			((LPNMHDR)lParam)->code==DTN_DATETIMECHANGE)
+		{
+			::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),EN_CHANGE),(LPARAM)hWnd);
 		}
 		break;
 	case DTMX_SETRELDATE:

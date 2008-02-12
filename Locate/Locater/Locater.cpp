@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.0.8.1200              */
+   database locater v3.1.8.2110              */
 
 #include <HFCLib.h>
 
@@ -208,7 +208,7 @@ CLocater::~CLocater()
 		dbFile=NULL;
 	}
 
-	if (m_dwFlags&LOCATE_REGULAREXPRESSION)
+	if (m_dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
 		if (m_regexp!=NULL)
 		{
@@ -940,97 +940,82 @@ void CLocater::SetAdvanced(DWORD dwFlags,BYTE* pContainData,DWORD dwContainDataL
 	}
 }
 
-/*BOOL CLocater::LocateFiles(BOOL bThreaded,LPCSTR* szNames,DWORD nNames,
-								LPCSTR* szExtensions,DWORD nExtensions,
-								LPCSTR* szDirectories,DWORD nDirectories)
-{
-
-	DWORD i;
-	for (i=0;i<nNames;i++)
-	{
-		if (szNames[i]!=NULL && szNames[i][0]!='\0')
-		{
-			CStringW* pName=new CStringW(szNames[i]);
-			pName->MakeLower();
-            m_aNames.Add(pName);
-		}
-	}
-	for (i=0;i<nExtensions;i++)
-		m_aExtensions.Add(new CStringW(szExtensions[i]));
-
-	return SetDirectoriesAndStartToLocate(bThreaded,szDirectories,nDirectories);	
-}
-*/
-
 BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR* szNames,DWORD nNames,
 								LPCWSTR* szExtensions,DWORD nExtensions,
 								LPCWSTR* szDirectories,DWORD nDirectories)
 {
-
-	DWORD i;
-	for (i=0;i<nNames;i++)
+	if (m_dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
-		if (szNames[i]!=NULL && szNames[i][0]!='\0')
+		ASSERT(nNames==1);
+		LPCWSTR szRegExp=szNames[0];
+
+		if (szRegExp[0]!='\0')
 		{
-			CStringW* pName=new CStringW(szNames[i]);
-			pName->MakeLower();
-            m_aNames.Add(pName);
-		}
-	}
-	for (i=0;i<nExtensions;i++)
-	{
-		CStringW* pExtenstion=new CStringW(szExtensions[i]);
-		pExtenstion->MakeLower();
-		m_aExtensions.Add(pExtenstion);
-	}
+			const char *error;
+			int erroffset;
 
-	return SetDirectoriesAndStartToLocate(bThreaded,szDirectories,nDirectories);	
-}
-
-BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR szRegExp,BOOL bCaseSensitive,LPCWSTR* szDirectories,DWORD nDirectories)
-{
-	LocaterDebugMessage5("CLocater::LocateFiles BEGIN, \r\nszRegExp:%S\r\nszDirectories:%X\r\nnDirectories:%d",
-		szRegExp,(DWORD_PTR)szDirectories,nDirectories,0,0,0);
-
-	if (szRegExp[0]!='\0')
-	{
-		m_dwFlags|=LOCATE_REGULAREXPRESSION;
-		
-		const char *error;
-		int erroffset;
-
-		if (IsUnicodeSystem())
-		{
-			int nLen=istrlen(szRegExp)+1;
-			char* szRegExpUTF8=new char[nLen*2];
-			if (WideCharToMultiByte(CP_UTF8,0,szRegExp,nLen,szRegExpUTF8,nLen*2,NULL,NULL)==0)
-				m_regexp=pcre_compile(W2A(szRegExp),!bCaseSensitive?PCRE_CASELESS:0,&error,&erroffset,NULL);
+			if (IsUnicodeSystem())
+			{
+				int nLen=istrlen(szRegExp)+1;
+				char* szRegExpUTF8=new char[nLen*2];
+				if (WideCharToMultiByte(CP_UTF8,0,szRegExp,nLen,szRegExpUTF8,nLen*2,NULL,NULL)==0)
+				{	
+					m_regexp=pcre_compile(W2A(szRegExp),m_dwFlags&LOCATE_REGEXPCASESENSITIVE?0:PCRE_CASELESS,
+						&error,&erroffset,NULL);
+				}
+				else
+				{
+					m_regexp=pcre_compile(szRegExpUTF8,
+						PCRE_UTF8|(m_dwFlags&LOCATE_REGEXPCASESENSITIVE?0:PCRE_CASELESS),
+						&error,&erroffset,NULL);
+					m_dwFlags|=LOCATE_NAMEREGEXPISUTF8;
+				}
+				delete[] szRegExpUTF8;
+			}
 			else
 			{
-				m_regexp=pcre_compile(szRegExpUTF8,
-					PCRE_UTF8|(!bCaseSensitive?PCRE_CASELESS:0),
+				m_regexp=pcre_compile(W2A(szRegExp),m_dwFlags&LOCATE_REGEXPCASESENSITIVE?0:PCRE_CASELESS,
 					&error,&erroffset,NULL);
-				m_dwFlags|=LOCATE_NAMEREGEXPISUTF8;
 			}
-			delete[] szRegExpUTF8;
+
+			if (m_regexp==NULL)
+			{
+				DebugFormatMessage("pcre_compile returns error: %s",error);
+	#ifdef _CONSOLE
+				fprintf(stderr,"pcre_compile returns error: %s\n",error);
+	#endif
+				return FALSE;
+			}
+
+			m_regextra=pcre_study(m_regexp,0,&error); 
+
 		}
-		else
-			m_regexp=pcre_compile(W2A(szRegExp),!bCaseSensitive?PCRE_CASELESS:0,&error,&erroffset,NULL);
-
-		if (m_regexp==NULL)
-		{
-			DebugFormatMessage("pcre_compile returns error: %s",error);
-#ifdef _CONSOLE
-			fprintf(stderr,"pcre_compile returns error: %s\n",error);
-#endif
-			return FALSE;
-		}
-
-		m_regextra=pcre_study(m_regexp,0,&error); 
-
 	}
+	else
+	{
+		// Normal search
+
+		DWORD i;
+		for (i=0;i<nNames;i++)
+		{
+			if (szNames[i]!=NULL && szNames[i][0]!='\0')
+			{
+				CStringW* pName=new CStringW(szNames[i]);
+				pName->MakeLower();
+				m_aNames.Add(pName);
+			}
+		}
+		for (i=0;i<nExtensions;i++)
+		{
+			CStringW* pExtenstion=new CStringW(szExtensions[i]);
+			pExtenstion->MakeLower();
+			m_aExtensions.Add(pExtenstion);
+		}
+	}
+
 	return SetDirectoriesAndStartToLocate(bThreaded,szDirectories,nDirectories);	
 }
+
 
 
 
@@ -1099,7 +1084,7 @@ BOOL CLocater::StopLocating()
 
 inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 {
-	if (m_dwFlags&LOCATE_REGULAREXPRESSION)
+	if (m_dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
 		int ovector[OVECCOUNT];
 		if (m_dwFlags&LOCATE_NAMEREGEXPISUTF8)
@@ -1323,7 +1308,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 
 inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 {
-	if (m_dwFlags&LOCATE_REGULAREXPRESSION)
+	if (m_dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
 		// Regular expression
 
@@ -1541,7 +1526,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 
 inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 {
-	if (m_dwFlags&LOCATE_REGULAREXPRESSION)
+	if (m_dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
 		int ovector[OVECCOUNT];
 		if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
@@ -1659,7 +1644,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 
 inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 {
-	if (m_dwFlags&LOCATE_REGULAREXPRESSION)
+	if (m_dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
 		int ovector[OVECCOUNT];
 		if (m_dwFlags&LOCATE_CHECKWHOLEPATH)

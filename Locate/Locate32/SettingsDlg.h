@@ -430,9 +430,11 @@ public:
 	//General
 	DWORD m_dwLocateDialogFlags;  // Used with CLocateDlg::LocateDialogFlags
 	DWORD m_dwLocateDialogExtraFlags;  // Used with CLocateDlg::LocateDialogExtraFlags
+	DWORD m_dwInstantSearchingFlags;  // Used with CLocateDlg::InstantSearchingFlags
 	DWORD m_dwProgramFlags; // Used with CLocateAppWnd::ProgramFlags
 	
 	DWORD m_nMaximumFoundFiles;
+	DWORD m_nInstantSearchingLimit;
 	DWORD m_nNumberOfNames; // Directoried in NameDlg 
 	DWORD m_nNumberOfTypes; // Directoried in NameDlg 
 	DWORD m_nNumberOfDirectories; // Directoried in NameDlg 

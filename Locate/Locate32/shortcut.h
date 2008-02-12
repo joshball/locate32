@@ -233,8 +233,9 @@ public:
 		SendMessage = 0,
 		PostMessage = 1,
 		ExecuteCommandMisc = 2,
+		InsertAsterisks = 3,
 		
-		MiscLast = ExecuteCommandMisc
+		MiscLast = InsertAsterisks
 	};
 
 	enum ActionHelp {

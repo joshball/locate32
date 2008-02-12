@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.0.7.12160                 */
+   database updater v3.1.8.2110                 */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -1481,7 +1481,11 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 	m_aIncludeFilesPatternsA(NULL),m_aIncludeDirectoriesPatternsA(NULL),
 	m_aExcludeFilesPatternsA(NULL)
 {
-	m_szArchive=alloccopy(pDatabase->GetArchiveName());
+	BOOL bFree;
+	m_szArchive=pDatabase->GetResolvedArchiveName(bFree);
+	if (!bFree)
+		m_szArchive=alloccopy(m_szArchive);
+
 	m_dwNameLength=(DWORD)wcslen(pDatabase->GetName());
 	m_szName=alloccopy(pDatabase->GetName(),m_dwNameLength);
 

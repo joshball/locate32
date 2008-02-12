@@ -1,12 +1,12 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   Updatedb.exe v3.0.8.1200 */
+   Updatedb.exe v3.1.8.2110 */
 
 #include <HFCLib.h>
 #include "../locatedb/locatedb.h"
 #include "../lan_resources.h"
 #include "../common/common.h"
 
-LPCSTR szVersionStr="updtdb32 3.0 build 8.1200";
+LPCSTR szVersionStr="updtdb32 3.1 beta build 8.2110";
 
 
 
@@ -546,7 +546,11 @@ int wmain (int argc,wchar_t ** argv)
 				BOOL bNameChanged=FALSE;
 				if (aDatabases[i]->GetRoots()==0)
 				{
-					CDatabaseInfo* pDatabaseInfo=CDatabaseInfo::GetFromFile(aDatabases[i]->GetArchiveName());
+					BOOL bFree;
+					LPWSTR pFile=aDatabases[i]->GetResolvedArchiveName(bFree);
+					CDatabaseInfo* pDatabaseInfo=CDatabaseInfo::GetFromFile(pFile);
+					if (bFree)
+						delete[] pFile;
 					if (pDatabaseInfo!=NULL)
 					{
 						CDatabase* pDatabase;

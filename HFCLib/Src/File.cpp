@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2007 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -2216,6 +2216,21 @@ BOOL FileSystem::LookupAccountSid(LPCWSTR lpSystemName,PSID lpSid,LPWSTR lpName,
 		delete[] aReferencedDomainName;
 		delete[] aName;
 		return bRet;
+	}
+}
+
+DWORD WINAPI FileSystem::GetModuleFileName(HMODULE hModule,LPWSTR lpFilename,DWORD nSize)
+{
+	if (IsUnicodeSystem())
+		return ::GetModuleFileNameW(hModule,lpFilename,nSize);
+	else
+	{
+		CHAR sPathA[MAX_PATH+10];
+		DWORD dwRet=::GetModuleFileNameA(hModule,sPathA,MAX_PATH+10);
+		if (dwRet==0)
+			return 0;
+		MultiByteToWideChar(CP_ACP,0,sPathA,dwRet+1,lpFilename,nSize);
+		return dwRet;
 	}
 }
 #endif

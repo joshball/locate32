@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.0.8.1200              */
+   database locater v3.1.8.2110              */
 
 #if !defined(LOCATER_INL)
 #define LOCATER_INL
@@ -77,9 +77,13 @@ inline void CLocater::SetDatabases(const PDATABASE* pDatabases,int nDatabases)
 	m_aDatabases.RemoveAll();
 	for (int i=0;i<nDatabases;i++)
 	{
+		BOOL bFree;
+		LPWSTR pFile=pDatabases[i]->GetResolvedArchiveName(bFree);
 		m_aDatabases.Add(new DBArchive(pDatabases[i]->GetName(),
-			pDatabases[i]->GetArchiveType(),pDatabases[i]->GetArchiveName(),
+			pDatabases[i]->GetArchiveType(),pFile,
 			pDatabases[i]->GetID(),pDatabases[i]->IsEnabled(),pDatabases[i]->GetRootMaps()));
+		if (bFree)
+			delete[] pFile;
 	}
 }
 
@@ -88,9 +92,13 @@ inline void CLocater::SetDatabases(const CDatabase* pDatabases,int nDatabases)
 	m_aDatabases.RemoveAll();
 	for (int i=0;i<nDatabases;i++)
 	{
+		BOOL bFree;
+		LPWSTR pFile=pDatabases[i].GetResolvedArchiveName(bFree);
 		m_aDatabases.Add(new DBArchive(pDatabases[i].GetName(),
-			pDatabases[i].GetArchiveType(),pDatabases[i].GetArchiveName(),
+			pDatabases[i].GetArchiveType(),pFile,
 			pDatabases[i].GetID(),pDatabases[i].IsEnabled(),pDatabases[i].GetRootMaps()));
+		if (bFree)
+			delete[] pFile;
 	}
 }
 
@@ -99,8 +107,12 @@ inline void CLocater::SetDatabases(const CArray<PDATABASE>& aDatabases)
 	m_aDatabases.RemoveAll();
 	for (int i=0;i<aDatabases.GetSize();i++)
 	{
+		BOOL bFree;
+		LPWSTR pFile=aDatabases[i]->GetResolvedArchiveName(bFree);
 		m_aDatabases.Add(new DBArchive(aDatabases[i]->GetName(),aDatabases[i]->GetArchiveType(),
-			aDatabases[i]->GetArchiveName(),aDatabases[i]->GetID(),aDatabases[i]->IsEnabled(),aDatabases[i]->GetRootMaps()));
+			pFile,aDatabases[i]->GetID(),aDatabases[i]->IsEnabled(),aDatabases[i]->GetRootMaps()));
+		if (bFree)
+			delete[] pFile;
 	}
 }
 
@@ -109,8 +121,12 @@ inline void CLocater::SetDatabases(const CArray<CDatabase>& aDatabases)
 	m_aDatabases.RemoveAll();
 	for (int i=0;i<aDatabases.GetSize();i++)
 	{
+		BOOL bFree;
+		LPWSTR pFile=aDatabases[i].GetResolvedArchiveName(bFree);
 		m_aDatabases.Add(new DBArchive(aDatabases[i].GetName(),aDatabases[i].GetArchiveType(),
-			aDatabases[i].GetArchiveName(),aDatabases[i].GetID(),aDatabases[i].IsEnabled(),aDatabases[i].GetRootMaps()));
+			pFile,aDatabases[i].GetID(),aDatabases[i].IsEnabled(),aDatabases[i].GetRootMaps()));
+		if (bFree)
+			delete[] pFile;
 	}
 }
 

@@ -1013,7 +1013,7 @@ void CSubAction::DoActivateControl()
 	if (pLocateDlg==NULL)
 		return;
 	
-	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
+	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->GetThreadId())
 		pLocateDlg->OnCommand(LOWORD(m_nControl),1,NULL);
 	else
 		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nControl),1),0);
@@ -1026,7 +1026,7 @@ void CSubAction::DoMenuCommand()
 	if (pLocateDlg==NULL)
 		return;
 
-	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
+	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->GetThreadId())
 		pLocateDlg->OnCommand(LOWORD(m_nMenuCommand),0,NULL);
 	else
 		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nMenuCommand),0),0);
@@ -1467,6 +1467,60 @@ void CSubAction::DoMisc()
 	{
 		if (m_szCommand!=NULL)
 			CLocateDlg::ExecuteCommand(m_szCommand);
+		return;
+	}
+	else if (m_nMisc==InsertAsterisks)
+	{
+		CLocateDlg* pLocateDlg=GetLocateDlg();
+		if (pLocateDlg==NULL)
+			return;
+
+		CStringW Text;
+		pLocateDlg->m_NameDlg.m_Name.GetText(Text);
+		DWORD dwSelStart=pLocateDlg->m_NameDlg.m_Name.GetEditSel();
+		WORD wSelEnd=HIWORD(dwSelStart);
+		dwSelStart&=0xFFFF;
+
+		// If asterisks are already at the beginning and the end, replace spaces
+		if (Text[0]==L'*' && Text.LastChar()==L'*')
+			Text.ReplaceChars(L' ',L'*');
+		else 
+		{
+			if (Text[0]!=L'*')
+			{
+				Text.InsChar(0,L'*');
+				
+				// Update selection
+				if (dwSelStart==wSelEnd)
+				{
+					dwSelStart++;
+					wSelEnd++;
+				}
+				else 
+				{
+					if (dwSelStart>0)
+						dwSelStart++;
+					wSelEnd++;
+				}
+			}
+			
+			if (Text.LastChar()!=L'*')
+			{
+				// Update selection first
+				if (wSelEnd==Text.GetLength())
+				{
+					if (dwSelStart==wSelEnd)
+						dwSelStart++;
+					wSelEnd++; 
+				}
+
+				Text.Append(L'*');
+			}
+		}
+
+		pLocateDlg->m_NameDlg.m_Name.SetText(Text);
+		pLocateDlg->m_NameDlg.m_Name.SetEditSel(dwSelStart,wSelEnd);
+		pLocateDlg->InstantSearch(CLocateDlg::isSearchIfNameChanged);
 		return;
 	}
 	
@@ -1996,6 +2050,8 @@ int CSubAction::GetMiscActionLabelStringId(CAction::ActionMisc uSubAction)
 		return IDS_ACTIONADVPOSTMESSAGE;
 	case CAction::ExecuteCommandMisc:
 		return IDS_ACTIONRESITEMEXECUTECOMMAND;
+	case CAction::InsertAsterisks:
+		return IDS_ACTIONADVINSERTASTERISKS;
 	default:
 		return 0;
 	}

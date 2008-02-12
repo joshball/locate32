@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.0.8.1200              */
+   database locater v3.1.8.2110              */
 
 #if !defined(LOCATER_H)
 #define LOCATER_H
@@ -39,11 +39,12 @@ typedef BOOL (CALLBACK* LOCATEFOUNDPROC)(DWORD_PTR dwParam,BOOL bFolder,const CL
 #define LOCATE_MAXACCESSDATE			0x00000100
 #define LOCATE_CONTAINTEXTISMATCHCASE	0x00000200
 #define LOCATE_EXTENSIONWITHNAME		0x00000400
-#define LOCATE_REGULAREXPRESSION		0x00000800
+#define LOCATE_NAMEREGULAREXPRESSION	0x00000800
 #define LOCATE_CHECKWHOLEPATH			0x00001000
-#define LOCATE_REGULAREXPRESSIONSEARCH  0x00002000
+#define LOCATE_REGULAREXPRESSIONSEARCH  0x00002000 // Contain data is regular expression
 #define LOCATE_NAMEREGEXPISUTF8			0x00004000 
 #define LOCATE_LOGICALOPERATIONS		0x00010000 
+#define LOCATE_REGEXPCASESENSITIVE		0x00020000 // Regular expression for name is case sensitive
 
 #define SYSTEMTIMETODOSDATE(st)	((((st).wDay&0x1F))|(((st).wMonth&0x0F)<<5)|((((st).wYear-1980))<<9))
 #define DOSDATETODAY(dt)		BYTE((dt)&0x1F)

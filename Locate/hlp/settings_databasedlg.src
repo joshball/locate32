@@ -27,6 +27,10 @@ Use this field to give a name for the database. Every database should have an un
 Use this field to specify a file to which the content of the database is stored. 
 The file name should be valid and user should have sufficient access (read and write the file) 
 to the given location. 
+<br>
+A file name can contain "%locatedir%" which means the directory to which
+Locate32 is installed. For example, you can use "%locatedir%\files.dbs" for
+a database which is in Locate32's directory.
 </p>
 <p>
 <b><A NAME="setting_databasedlg_unicode"></A>Use Unicode character set</b>:

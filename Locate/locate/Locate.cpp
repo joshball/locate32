@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.0.8.1200              */
+   database locater v3.1.8.2110              */
 
-const char* szVersionStr="locate 3.0 build 8.1200";
+const char* szVersionStr="locate 3.1 beta build 8.2110";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -16,7 +16,6 @@ const char* szVersionStr="locate 3.0 build 8.1200";
 #include "../common/common.h"
 
 
-#define LOCATE_EX_REGEXPISCASESENSITIVE	0x10000000 // this if for name, LOCATE_CONTAINTEXTISMATCHCASE is for text
 
 
 int Lines=0;
@@ -448,9 +447,9 @@ int wmain (int argc,wchar_t * argv[])
                     aExtensions.Add(alloccopy(argv[i]+2));
 				break;
 			case L'r':
-				dwFlags|=LOCATE_REGULAREXPRESSION;
+				dwFlags|=LOCATE_NAMEREGULAREXPRESSION;
 				if (argv[i][2]==L'c' || argv[i][2]==L'C')
-					dwFlags|=LOCATE_EX_REGEXPISCASESENSITIVE;
+					dwFlags|=LOCATE_REGEXPCASESENSITIVE;
 				break;
 			case L'w':
 			case L'W':
@@ -670,7 +669,7 @@ int wmain (int argc,wchar_t * argv[])
       }
       else
       {
-		  if (dwFlags&LOCATE_REGULAREXPRESSION)
+		  if (dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 		  {
 				if (argv[i][0]==L'\"')
 				{
@@ -769,7 +768,7 @@ int wmain (int argc,wchar_t * argv[])
 	locater.SetFunctions(LocateProc,LocateFoundProc,LocateFoundProcW,NULL);
 
 	
-	if (dwFlags&LOCATE_REGULAREXPRESSION)
+	if (dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
 		if (options.verbose)
 		{
@@ -785,7 +784,9 @@ int wmain (int argc,wchar_t * argv[])
 			putchar('\n');
 		}
 
-		locater.LocateFiles(FALSE,String,dwFlags&LOCATE_EX_REGEXPISCASESENSITIVE,
+		LPCWSTR names[1];
+		names[1]=String;
+		locater.LocateFiles(FALSE,names,1,NULL,0,
 			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
 	}
 	else if (!String.IsEmpty())

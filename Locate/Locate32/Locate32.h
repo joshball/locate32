@@ -36,7 +36,7 @@ extern LPWSTR g_szwBuffer;
 
 // This macro is defined to ensure that g_szBuffer is only used in 
 // LocateDlg thread, not simultaneously by several threaad. 
-#define ISDLGTHREADOK		{ASSERT(GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID); }
+#define ISDLGTHREADOK		{ASSERT(GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->GetThreadId()); }
 
 
 // Wait times for thread safe system

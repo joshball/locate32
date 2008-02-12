@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2007 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -914,7 +914,11 @@ BYTE* dataparser(LPCWSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataL
 		
 		if (pdwDataLength!=NULL)
 			*pdwDataLength=dwStrLen;
-		return (BYTE*)alloccopyWtoA(pStr,dwStrLen);
+
+		char* pNew=(char*)pMalloc(dwStrLen+1);
+		MemCopyWtoA(pNew,pStr,dwStrLen);
+		pNew[dwStrLen]='\0';
+		return (BYTE*)pNew;
 	}
 }
 #endif

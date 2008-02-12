@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.0.8.1200              */
+   database locater v3.1.8.2110              */
 
 #if !defined(DATABASE_H)
 #define DATABASE_H
@@ -85,7 +85,8 @@ public:
 	void UpdateGlobally(BOOL bUpdate=TRUE);
 
 	ArchiveType GetArchiveType() const;
-	LPCWSTR GetArchiveName() const;
+	LPCWSTR GetArchiveName(BOOL bCanReturnNULL=FALSE) const;
+	LPWSTR GetResolvedArchiveName(BOOL& bFree) const;
 
 	void SetArchiveName(LPCWSTR szArchiveName);
 	void SetArchiveNamePtr(LPWSTR szArchiveName);
@@ -141,7 +142,12 @@ public:
 	
 	static BOOL IsNameValid(LPCWSTR szName);
 	static void MakeNameValid(LPWSTR szName);
+
+	// Return correct file name (new allocated string), or NULL if not valid filename
 	static LPWSTR GetCorrertFileName(LPCWSTR szFileName,DWORD dwNameLength=-1);
+
+	// Replaces %locatedir% with actual path. Returns szFileName or new allocated string (if changed). 
+	static LPWSTR ResolveLocateDir(LPCWSTR szFileName,DWORD dwNameLength);
 
 	static WORD GetUniqueIndex(CArray<PDATABASE>& aDatabases);
 	static WORD GetUniqueIndex(PDATABASE* ppDatabases,int nDatabases);
@@ -267,9 +273,28 @@ inline CDatabase::ArchiveType CDatabase::GetArchiveType() const
 	return m_ArchiveType; 
 }
 
-inline LPCWSTR CDatabase::GetArchiveName() const 
+inline LPCWSTR CDatabase::GetArchiveName(BOOL bCanReturnNULL) const 
 { 
+	if (!bCanReturnNULL && m_szArchiveName==NULL)
+		szwEmpty;
 	return m_szArchiveName; 
+}
+
+inline LPWSTR CDatabase::GetResolvedArchiveName(BOOL& bFree) const
+{
+	if (m_szArchiveName==NULL)
+	{
+		bFree=FALSE;
+		return (LPWSTR)szwEmpty;
+	}
+	LPWSTR szResolved=ResolveLocateDir(m_szArchiveName,DWORD(-1));
+	if (szResolved==NULL || szResolved==m_szArchiveName)
+	{
+		bFree=FALSE;
+		return m_szArchiveName;
+	}
+	bFree=TRUE;
+	return szResolved;
 }
 
 inline INT CDatabase::LoadFromRegistry(HKEY hKeyRoot,LPCSTR szPath,CDatabase**& ppDatabases)
@@ -370,10 +395,7 @@ inline void CDatabase::SetArchiveNamePtr(LPWSTR szArchiveName)
 {
 	if (m_szArchiveName!=NULL)
 		delete[] m_szArchiveName;
-	if (szArchiveName!=NULL)
-		m_szArchiveName=szArchiveName;
-	else
-		m_szArchiveName=allocemptyW();
+	m_szArchiveName=szArchiveName;
 }
 
 inline void CDatabase::SetArchiveType(ArchiveType nType)
@@ -456,8 +478,15 @@ inline BOOL CDatabase::DoDatabaseFileExist() const
 	switch (m_ArchiveType)
 	{
 	case archiveFile:
-		ASSERT_VALID(m_szArchiveName);
-		return FileSystem::IsFile(m_szArchiveName);
+		{
+			ASSERT_VALID(m_szArchiveName);
+			BOOL bFree;
+			LPWSTR pFile=GetResolvedArchiveName(bFree);
+			BOOL bRet=FileSystem::IsFile(pFile);
+			if (bFree)
+				delete[] pFile;
+			return bRet;
+		}
 	}
 	return FALSE;
 }

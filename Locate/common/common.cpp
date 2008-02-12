@@ -60,23 +60,11 @@ LPWSTR GetDefaultFileLocation(LPCWSTR szFileName,BOOL bMustExists,DWORD* lpdwSiz
 
 	int iLen;
 	LPWSTR pStr;
-	if (IsUnicodeSystem())
-	{
-		WCHAR szExeName[MAX_PATH];
-		GetModuleFileNameW(NULL,szExeName,MAX_PATH);
-		iLen=LastCharIndex(szExeName,L'\\')+1;
-		pStr=new WCHAR[iLen+nFileNameLen+1];
-		MemCopyW(pStr,szExeName,iLen);
-	}	
-	else
-	{
-		char szExeName[MAX_PATH];
-		GetModuleFileName(NULL,szExeName,MAX_PATH);
-		iLen=LastCharIndex(szExeName,'\\')+1;
-		pStr=new WCHAR[iLen+nFileNameLen+1];
-		MemCopyAtoW(pStr,szExeName,iLen);
-	}
-
+	WCHAR szExeName[MAX_PATH];
+	FileSystem::GetModuleFileName(NULL,szExeName,MAX_PATH);
+	iLen=LastCharIndex(szExeName,L'\\')+1;
+	pStr=new WCHAR[iLen+nFileNameLen+1];
+	MemCopyW(pStr,szExeName,iLen);
 	
 	MemCopyW(pStr+iLen,szFileName,nFileNameLen+1);
 	if (lpdwSize!=NULL)

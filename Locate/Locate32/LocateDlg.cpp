@@ -1275,6 +1275,13 @@ BOOL CLocateDlg::UpdateSettings()
         m_dwExtraFlags&=~efSave;
 		m_dwExtraFlags|=temp&efSave;
 
+		//Instant searching
+		temp=m_dwInstantFlags;
+		RegKey.QueryValue("Instant Searching",temp);
+		m_dwInstantFlags&=~isSave;
+		m_dwInstantFlags|=temp&isSave;
+
+
 		if ((m_dwExtraFlags&efItemUpdatingMask)==efDisableItemUpdating)
 			m_dwExtraFlags|=efLVNoUpdateWhileSorting;
 
@@ -1366,31 +1373,15 @@ BOOL CLocateDlg::UpdateSettings()
 
 
 
-	// Background operations
-	if ((GetExtraFlags()&efItemUpdatingMask)==efEnableItemUpdating)
+	// Enable/disable file system tracking
+	if (GetExtraFlags()&efEnableFSTracking)
 	{
-		// This would mess things
-		if (m_pFileNotificationsThread!=NULL)
-		{
-			MSG msg;
-			while (PeekMessage(&msg,NULL,0,0,PM_REMOVE))
-			{
-				do {
-					TranslateMessage(&msg);
-					DispatchMessage(&msg);
-				} while (PeekMessage(&msg,NULL,0,0,PM_REMOVE));
-				Sleep(50);
-			}
-			
-			m_pFileNotificationsThread->Stop();
-		}
-		StartBackgroundOperations(); 
+		if (m_pFileNotificationsThread==NULL)
+			StartBackgroundOperations();
 	}
-	else
-		StopBackgroundOperations();
+	else if (m_pFileNotificationsThread!=NULL)
+		m_pFileNotificationsThread->Stop();
 
-
-	
 	return TRUE;
 }
 
@@ -1431,42 +1422,31 @@ void CLocateDlg::OnInvertSelection()
 
 void CLocateDlg::StartBackgroundOperations()
 {
-	//DebugMessage("CLocateDlg::StartBackgroundOperations():  BEGIN");
+	DlgDebugMessage("StartBackgroundOperations BEGIN");
 	if (m_pBackgroundUpdater==NULL)
 	{
-		InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
-		m_pBackgroundUpdater->CreateEventsAndMutex();
+		m_pBackgroundUpdater=new CBackgroundUpdater(m_pListCtrl);
+		m_pBackgroundUpdater->Start();
 	}
+	else
+		m_pBackgroundUpdater->StopIgnoringItems();
 
-	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
-		return;
 
 
-	if (GetExtraFlags()&efEnableFSTracking)
+	if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating)
 	{
-		if (m_pFileNotificationsThread==NULL)
-			InterlockedExchangePointer((PVOID*)&m_pFileNotificationsThread,new CCheckFileNotificationsThread);
-		
-		m_pFileNotificationsThread->Start();
+		if (GetExtraFlags()&efEnableFSTracking)
+		{
+			if (m_pFileNotificationsThread==NULL)
+				InterlockedExchangePointer((PVOID*)&m_pFileNotificationsThread,new CCheckFileNotificationsThread);
+			
+			m_pFileNotificationsThread->Start();
+		}
+		else if (m_pFileNotificationsThread!=NULL)
+			m_pFileNotificationsThread->CouldStop();
 	}
-	else if (m_pFileNotificationsThread!=NULL)
-		m_pFileNotificationsThread->CouldStop();
 
-	//DebugMessage("CLocateDlg::StartBackgroundOperations():  END");
-	
-}
-
-void CLocateDlg::StopBackgroundOperations()
-{
-	//DebugMessage("CLocateDlg::StopBackgroundOperations():  BEGIN");
-	if (IsLocating())
-		return;
-
-	if (m_pFileNotificationsThread!=NULL)
-		m_pFileNotificationsThread->CouldStop();
-	if (m_pBackgroundUpdater!=NULL)
-		m_pBackgroundUpdater->CouldStop();
-	//DebugMessage("CLocateDlg::StopBackgroundOperations():  END");
+	DlgDebugMessage("StartBackgroundOperations END");
 }
 
 void CLocateDlg::ChangeBackgroundOperationsPriority(BOOL bLower)
@@ -1620,28 +1600,31 @@ void CLocateDlg::DeleteTooltipTools()
 	*/
 }
 
+
+
 void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 {
 	DlgDebugMessage("CLocateDlg::OnOk BEGIN");
 	
 	CWaitCursor wait;
-	CStringW Name,Title;
-	CArrayFAP<LPWSTR> aExtensions,aDirectories,aNames;
-	DWORD nAdvancedFlags;
-
-	// String contains logical operations '+' and '-':
-	BOOL bPlusOrMinusFound=FALSE;
-
-	// Stop background operations
-	if (m_pBackgroundUpdater!=NULL)
-		m_pBackgroundUpdater->Stop();
-	if (m_pFileNotificationsThread!=NULL)
-		m_pFileNotificationsThread->Stop();
-
+	
+	/////////////////////////////////////////////////////////////////////////////
+	// STEP 1 INITIALIZATIONS: Stopping background operatins, clearing list, etc
+	/////////////////////////////////////////////////////////////////////////////
+	
 	// Stop locating process if still active
 	if (IsLocating())
+	{
 		m_pLocater->StopLocating();
-	
+		RemoveInstantSearchingFlags(isRunning);
+	}
+
+	// Disable FS tracking
+	if (m_pFileNotificationsThread!=NULL)
+		m_pFileNotificationsThread->Stop();
+	// Tell backgroundupdater to clear the list and go waiting
+	if (m_pBackgroundUpdater!=NULL)
+		m_pBackgroundUpdater->IgnoreItemsAndGoToSleep();
 
 	// Deleting previous items and clear tooltips
 	RemoveResultsFromList();
@@ -1649,7 +1632,7 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 		DeleteTooltipTools();
 
 
-	// If OnOk is not initaited using shortcuts and
+	// If OnOk is not initialized using shortcuts and
 	// control is pressed, open select databases dialog
 	if (!bShortcut && GetKeyState(VK_CONTROL)&0x8000)
 		bSelectDatabases=TRUE;
@@ -1663,19 +1646,170 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 	m_pStatusCtrl->SetText("",STATUSBAR_UPDATEICON,0);
 	
 	
+
+	
+	/////////////////////////////////////////////////////////////////////////////
+	// STEP 2 RESOLVE PARAMETERS: Stopping background operatins, clearing list, etc
+	/////////////////////////////////////////////////////////////////////////////
+	
+	CArrayFAP<LPWSTR> aExtensions,aDirectories,aNames;
+	m_pLocater=ResolveParametersAndInitializeLocater(aExtensions,aDirectories,
+		aNames,FALSE,bSelectDatabases);
+
+	if (m_pLocater==NULL)
+		return;
+	
+	// Set funtion pointers
+	m_pLocater->SetFunctions(LocateProc,LocateFoundProc,LocateFoundProcW,DWORD(this));
+
+	
+	/////////////////////////////////////////////////////////////////////////////
+	// STEP 3 SET DIALOG, START BACKGROUND OPERATIONS AND START LOCATING
+	/////////////////////////////////////////////////////////////////////////////
+	
+	
+	// If dialog is not large mode, change it
+	SetDialogMode(TRUE);
+
+	// Starting background operations (which are not yet started)
+	StartBackgroundOperations();
+
+	// Save last focus
+	m_hLastFocus=GetFocus();
+
+
+	// Starting location
+	m_pLocater->LocateFiles(TRUE,(LPCWSTR*)aNames.GetData(),aNames.GetSize(),
+		(LPCWSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+		(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
+
+	DlgDebugMessage("CLocateDlg::OnOk END");
+	
+}
+
+void CLocateDlg::InstantSearch(DWORD dwWhatChanged)
+{
+	DlgDebugMessage("IS BEGIN");
+	
+	// Stop if IS disabled
+	if (!(m_dwInstantFlags&isEnable))
+		return;
+	
+	// Stop if message should be ignored (e.g., during initialization)
+	if (m_dwInstantFlags&isIgnoreChangeMessages)
+		return;
+
+	// Stop if going to searching string inside files and that is not desired
+	if (m_dwInstantFlags&isDisableIfDataSearch && m_AdvancedDlg.IsDlgButtonChecked(IDC_CONTAINDATACHECK))
+		return;
+
+	// Stop if not the right place
+	if (!(m_dwInstantFlags&dwWhatChanged))
+		return;
+
+	
+	/////////////////////////////////////////////////////////////////////////////
+	// STEP 1 INITIALIZATIONS: Stopping background operatins, clearing list, etc
+	/////////////////////////////////////////////////////////////////////////////
+	
+	
+	// Stop locating process if still active
+	if (IsLocating())
+	{
+		m_pLocater->StopLocating();
+		RemoveInstantSearchingFlags(isRunning);
+	}
+
+	// Disable FS tracking
+	if (m_pFileNotificationsThread!=NULL)
+		m_pFileNotificationsThread->Stop();
+	
+	// Tell backgroundupdater to clear the list and go waiting
+	if (m_pBackgroundUpdater!=NULL)
+	{
+		m_pBackgroundUpdater->IgnoreItemsAndGoToSleep();
+
+				
+		DlgDebugMessage("IS: ignoring items");
+
+		while (!m_pBackgroundUpdater->IsWaiting())
+			Sleep(25);
+	}
+
+
+	
+	// Clear tooltips
+	if (m_pListTooltips!=NULL)
+		DeleteTooltipTools();
+
+	// Deleting previous items
+	RemoveResultsFromList();
+	DlgDebugMessage("IS: items removed");
+
+
+	
+
+	/////////////////////////////////////////////////////////////////////////////
+	// STEP 2 RESOLVE PARAMETERS: Stopping background operatins, clearing list, etc
+	/////////////////////////////////////////////////////////////////////////////
+	
+	CArrayFAP<LPWSTR> aExtensions,aDirectories,aNames;
+	m_pLocater=ResolveParametersAndInitializeLocater(aExtensions,aDirectories,
+		aNames,TRUE,FALSE);
+
+	if (m_pLocater==NULL)
+		return;
+	
+	// Set funtion pointers
+	m_pLocater->SetFunctions(LocateInstantProc,LocateFoundProc,LocateFoundProcW,DWORD(this));
+
+	
+	/////////////////////////////////////////////////////////////////////////////
+	// STEP 3 SET DIALOG, START BACKGROUND OPERATIONS AND START LOCATING
+	/////////////////////////////////////////////////////////////////////////////
+	
+	
+	// If dialog is not large mode, change it
+	SetDialogMode(TRUE);
+
+	// LocateFoundProc uses UpdateList
+	StartBackgroundOperations();
+
+	AddInstantSearchingFlags(isRunning);
+
+	// Starting location
+	m_pLocater->LocateFiles(TRUE,(LPCWSTR*)aNames.GetData(),aNames.GetSize(),
+		(LPCWSTR*)aExtensions.GetData(),aExtensions.GetSize(),
+		(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
+
+	DlgDebugMessage("IS END");
+}
+
+CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& aExtensions,CArrayFAP<LPWSTR>& aDirectories,
+															CArrayFAP<LPWSTR>& aNames,BOOL bForInstantSearch,BOOL bShowDatabasesDialog)
+{
 	// Resolving Name and Type, CNameDlg::OnOk can
 	// stop execution of this function if Look In directory
 	// is not ok
-	if (!m_NameDlg.OnOk(Name,aExtensions,aDirectories))
+	CStringW Name;
+	if (!m_NameDlg.GetNameExtensionsAndDirectories(Name,aExtensions,aDirectories,bForInstantSearch))
 	{
-		return;
+		return NULL;
 	}
-	
+
+	if (bForInstantSearch)
+	{
+		// Check if there is something which would restrict the number of results
+		if (Name.IsEmpty() && aExtensions.GetSize()==0 && 
+			aDirectories.GetSize()==0 && !m_SizeDateDlg.IsChanged())
+			return NULL;
+	}
+
 
 
 	// Loading databases
 	CArray<PDATABASE>* pDatabases;
-	if (bSelectDatabases)
+	if (bShowDatabasesDialog)
 	{
 		// Use Select databases dialog
 		pDatabases=new CArray<PDATABASE>;
@@ -1685,7 +1819,7 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 		if (!dbd.DoModal(*this))
 		{
 			delete pDatabases;
-			return;
+			return NULL;
 		}
 	}
 	else
@@ -1694,47 +1828,54 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 		pDatabases=GetLocateApp()->GetDatabasesPtr();
 		if (pDatabases->GetSize()==0)
 		{
-			ShowErrorMessage(IDS_ERRORCNODATABASESSELECTED,IDS_ERROR);
-			return;
+			if (!bForInstantSearch)
+				ShowErrorMessage(IDS_ERRORCNODATABASESSELECTED,IDS_ERROR);
+			return NULL;
 		}
 	}
 
-	
-	// No returns before the end anymore
 
-
-	// If dialog is not large mode, change it
-	SetDialogMode(TRUE);
 
 	// Create locater object
-	m_pLocater=new CLocater(*pDatabases);
+	CLocater* pLocater=new CLocater(*pDatabases);
+
+	// Databases pointer are not needed anymore
+	if (bShowDatabasesDialog)
+		delete pDatabases; 
+
 
 	// Calling routines for subdialogs
-	m_SizeDateDlg.OnOk(m_pLocater);
-	nAdvancedFlags=m_AdvancedDlg.OnOk(m_pLocater);
+	m_SizeDateDlg.SetSizesAndDaterForLocater(pLocater);
+	DWORD dwAdvancedFlags=m_AdvancedDlg.SetAdvancedFlagsForLocater(pLocater,bForInstantSearch);
 
-	
+
 	// Checking name 
+
+	// String contains logical operations '+' and '-':
+	BOOL bPlusOrMinusFound=FALSE;
+
 	if (!Name.IsEmpty()) 
 	{
 		if (Name[0]==':') 
 		{
 			// Name is regular expression, PCRE will be used
 			Name.DelChar(0);
-			nAdvancedFlags|=CAdvancedDlg::flagNameIsRegularExpression;
+			pLocater->AddAdvancedFlags(LOCATE_NAMEREGULAREXPRESSION);
 			if (Name[0]==':')
 			{
 				Name.DelChar(0);
-				nAdvancedFlags|=CAdvancedDlg::flagUseWholePath;
+				pLocater->AddAdvancedFlags(LOCATE_CHECKWHOLEPATH);
 			}
 			else if (Name[0]==' ')
 				Name.DelChar(0);
+
+			aNames.Add(Name.GiveBuffer());
 		}
 		else
 		{
 			// If replace spaces with asterisks is chosen, 
 			// replace ' ' -> '*'
-			if (nAdvancedFlags&CAdvancedDlg::flagReplaceSpaces)
+			if (dwAdvancedFlags&CAdvancedDlg::flagReplaceSpaces)
 			{
 				// Replacing spaces with asterisks
 				for (int i=0;i<Name.GetLength();i++)
@@ -1821,7 +1962,7 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 				if (nIndex>0)
 				{
 					// Add possible asterisks
-					if (nAdvancedFlags&CAdvancedDlg::flagMatchCase)
+					if (dwAdvancedFlags&CAdvancedDlg::flagMatchCase)
 					{
 						// Match case search, do not add asterisks
 						if (nType==NotSpecified)
@@ -1928,70 +2069,12 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 			}
 		}
 	}
-	
-	// Extension no extensions, checking if name contains extension
-	// No extension needed if "use whole path" is set
-	if (nAdvancedFlags&CAdvancedDlg::flagUseWholePath)
-	{
-		aExtensions.RemoveAll();
-		m_pLocater->AddAdvancedFlags(LOCATE_EXTENSIONWITHNAME|LOCATE_CHECKWHOLEPATH);
-	}
-    else if (aExtensions.GetSize()==0 && 
-		(m_pLocater->GetAdvancedFlags()&(LOCATE_FILENAMES|LOCATE_FOLDERNAMES))!=LOCATE_FOLDERNAMES)
-		m_pLocater->AddAdvancedFlags(LOCATE_EXTENSIONWITHNAME);
 
-	// Subdirectories
-	if (m_NameDlg.IsDlgButtonChecked(IDC_NOSUBDIRECTORIES))
-		m_pLocater->AddAdvancedFlags(LOCATE_NOSUBDIRECTORIES);
-
-	
-
-	// Set funtion pointers
-	m_pLocater->SetFunctions(LocateProc,LocateFoundProc,LocateFoundProcW,DWORD(this));
-	
-	// This is not needed anymore
-	if (bSelectDatabases)
-		delete pDatabases; 
-
-
-	// Making title
-	Title.LoadString(IDS_TITLE);
-	if (nAdvancedFlags&CAdvancedDlg::flagNameIsRegularExpression)
-	{
-		if (nAdvancedFlags&CAdvancedDlg::flagUseWholePath)
-			Title.AddString(IDS_REGULAREXPRESSIONFULLPATH);
-		else
-			Title.AddString(IDS_REGULAREXPRESSION);
-		Title << Name;
-	}
-	else if (aNames.GetSize()==0)
-	{
-		if (aExtensions.GetSize()==1)
-		{
-			Title.AddString(IDS_FILESNAMED);
-			Title << L"*." << aExtensions[0];
-		}
-		else
-			Title.AddString(IDS_ALLFILES);
-	}
-	else
-	{
-		Title.AddString(IDS_FILESNAMED);
-		Title << Name;
-		if (aExtensions.GetSize()==1 && aNames.GetSize()==1)
-			Title << L"." << aExtensions[0];
-	}
-
-	if (GetLocateApp()->m_nInstance>0)
-		Title << L" (" << DWORD(GetLocateApp()->m_nInstance+1) << L')';
-	SetText(Title);
-
-
-	// Enable LogicalOperations
+	// Enable Logical Operations
 	if (bPlusOrMinusFound)
 	{
 		// '+' or '-' found
-		m_pLocater->AddAdvancedFlags(LOCATE_LOGICALOPERATIONS);
+		pLocater->AddAdvancedFlags(LOCATE_LOGICALOPERATIONS);
 
 		// Insert '+' for string which does not have '+' or '-'
 		for (int i=0;i<aNames.GetSize();i++)
@@ -2009,31 +2092,75 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 	}
 				
 
-	// LocateFoundProc uses UpdateList
-	StartBackgroundOperations();
-
-	// Save last focus
-	m_hLastFocus=GetFocus();
-
-
-	// Starting location
-	if (nAdvancedFlags&CAdvancedDlg::flagNameIsRegularExpression)
-	{
-		// Regular expression
-		m_pLocater->LocateFiles(TRUE,Name,nAdvancedFlags&CAdvancedDlg::flagRexExpIsCaleSensitive,
-			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
-	}
-	else
-	{
-		// Normal search
-		m_pLocater->LocateFiles(TRUE,(LPCWSTR*)aNames.GetData(),aNames.GetSize(),
-			(LPCWSTR*)aExtensions.GetData(),aExtensions.GetSize(),
-			(LPCWSTR*)aDirectories.GetData(),aDirectories.GetSize());
-	}
 	
-	DlgDebugMessage("CLocateDlg::OnOk END");
+	
+	
+
+	// Extensions related checks
+	if (pLocater->GetAdvancedFlags()&LOCATE_CHECKWHOLEPATH)
+	{
+		// Extensions are ignored if "use whole path" is set
+		aExtensions.RemoveAll();
+		pLocater->AddAdvancedFlags(LOCATE_EXTENSIONWITHNAME);
+	}
+    else if (aExtensions.GetSize()==0 && 
+		(pLocater->GetAdvancedFlags()&(LOCATE_FILENAMES|LOCATE_FOLDERNAMES))!=LOCATE_FOLDERNAMES)
+	{
+		// No extensions given, checking if name contains extension
+		pLocater->AddAdvancedFlags(LOCATE_EXTENSIONWITHNAME);
+	}
+
+
+
+	// No bubdirectories checkbox set?
+	if (m_NameDlg.IsDlgButtonChecked(IDC_NOSUBDIRECTORIES))
+		pLocater->AddAdvancedFlags(LOCATE_NOSUBDIRECTORIES);
+
+
+
+
+
+	if (!bForInstantSearch)
+	{
+		CStringW Title;
+		// Making title
+		Title.LoadString(IDS_TITLE);
+		if (pLocater->GetAdvancedFlags()&LOCATE_NAMEREGULAREXPRESSION)
+		{
+			if (pLocater->GetAdvancedFlags()&LOCATE_CHECKWHOLEPATH)
+				Title.AddString(IDS_REGULAREXPRESSIONFULLPATH);
+			else
+				Title.AddString(IDS_REGULAREXPRESSION);
+			Title << Name;
+		}
+		else if (aNames.GetSize()==0)
+		{
+			if (aExtensions.GetSize()==1)
+			{
+				Title.AddString(IDS_FILESNAMED);
+				Title << L"*." << aExtensions[0];
+			}
+			else
+				Title.AddString(IDS_ALLFILES);
+		}
+		else
+		{
+			Title.AddString(IDS_FILESNAMED);
+			Title << Name;
+			if (aExtensions.GetSize()==1 && aNames.GetSize()==1)
+				Title << L"." << aExtensions[0];
+		}
+
+		if (GetLocateApp()->m_nInstance>0)
+			Title << L" (" << DWORD(GetLocateApp()->m_nInstance+1) << L')';
+		SetText(Title);
+
+	}
+
+	return pLocater;
 	
 }
+
 
 BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueCode,DWORD_PTR dwInfo,const CLocater* pLocater)
 {
@@ -2193,9 +2320,6 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 		InterlockedExchangePointer((PVOID*)&((CLocateDlg*)dwParam)->m_pLocater,NULL);
 		delete pLocater;
 		
-		((CLocateDlg*)dwParam)->StartBackgroundOperations();
-		((CLocateDlg*)dwParam)->m_pBackgroundUpdater->StopWaiting();
-		
 		// To update items, looks like this is only way
 		((CLocateDlg*)dwParam)->SetTimer(ID_REDRAWITEMS,50);
 		return TRUE;
@@ -2275,6 +2399,90 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 	DbcDebugMessage("CLocateDlg::LocateProc END");
 	return TRUE;
 }
+
+BOOL CLocateDlg::LocateInstantProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ueCode,DWORD_PTR dwInfo,const CLocater* pLocater)
+{
+	switch (crReason)
+	{
+	case BeginningDatabase:
+		while (GetLocateApp()->IsWritingDatabases())
+			Sleep(100);
+		break;
+	case Initializing:
+	{
+		if (ueCode!=ueStillWorking && ueCode!=ueSuccess) // Initializing failed
+			return FALSE;
+
+		// Selecting path column
+		int nColumn=-1;
+		if (((CLocateDlg*)dwParam)->m_nSorting==BYTE(-1))
+			nColumn=((CLocateDlg*)dwParam)->m_pListCtrl->GetVisibleColumn(((CLocateDlg*)dwParam)->m_pListCtrl->GetColumnFromID(InFolder));
+		else if ((((CLocateDlg*)dwParam)->m_nSorting&127)!=Extension)
+			nColumn=((CLocateDlg*)dwParam)->m_pListCtrl->GetVisibleColumn(((CLocateDlg*)dwParam)->m_pListCtrl->GetColumnFromID(((CLocateDlg*)dwParam)->m_nSorting&127));
+		
+		if (nColumn!=-1)
+			((CLocateDlg*)dwParam)->m_pListCtrl->SendMessage(LVM_FIRST+140/* LVM_SETSELECTEDCOLUMN */,nColumn,0);
+
+
+		// Clearing volume information
+		((CLocateDlg*)dwParam)->m_aVolumeInformation.RemoveAll();
+		return TRUE;
+	}
+	case FinishedLocating:
+	{
+		CStringW NumberOfFiles;
+		if (pLocater->GetNumberOfFoundFiles()>0)
+		{
+			if (pLocater->GetNumberOfFoundDirectories()>0)
+				NumberOfFiles.Format(IDS_ITEMSFOUND,pLocater->GetNumberOfFoundFiles(),pLocater->GetNumberOfFoundDirectories());
+			else
+				NumberOfFiles.Format(IDS_FILESFOUND,pLocater->GetNumberOfFoundFiles());
+		}
+		else if (pLocater->GetNumberOfFoundDirectories()>0)
+			NumberOfFiles.Format(IDS_DIRECTORIESFOUND,pLocater->GetNumberOfFoundDirectories());
+		else
+			NumberOfFiles.LoadString(IDS_NORESULTS);
+
+		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(NumberOfFiles,STATUSBAR_OPERATIONSTATUS,0);		
+		((CLocateDlg*)dwParam)->m_pStatusCtrl->InvalidateRect(NULL,TRUE);
+		return TRUE;
+	}
+	case SearchingStarted:
+		if (pLocater->IsCurrentDatabaseUnicode())
+		{
+			CStringW text;
+			text.Format(IDS_SEARCHINGFROMFILE,pLocater->GetFileNameW());
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(text,STATUSBAR_SEARCHFROMFILE,0);
+		}
+		else
+		{
+			CString text;
+			text.Format(IDS_SEARCHINGFROMFILE,pLocater->GetFileName());
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(text,STATUSBAR_SEARCHFROMFILE,0);
+		}
+		break;
+	case SearchingEnded:
+		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(STRNULL,STATUSBAR_SEARCHFROMFILE,0);
+		break;
+	case ClassShouldDelete:
+		InterlockedExchangePointer((PVOID*)&((CLocateDlg*)dwParam)->m_pLocater,NULL);
+		delete pLocater;
+		
+		((CLocateDlg*)dwParam)->RemoveInstantSearchingFlags(isRunning);
+
+		// To update items, looks like this is only way
+		((CLocateDlg*)dwParam)->SetTimer(ID_REDRAWITEMS,50);
+		return TRUE;
+	case RootInformationAvail:
+		((CLocateDlg*)dwParam)->m_aVolumeInformation.Add(new VolumeInformation(
+			pLocater->GetCurrentDatabaseID(),pLocater->GetCurrentDatabaseRootID(),
+			pLocater->GetCurrentDatabaseRootType(),pLocater->GetCurrentDatabaseVolumeSerial(),
+			pLocater->GetCurrentDatabaseVolumeLabel(),pLocater->GetCurrentDatabaseFileSystem()));
+		break;
+	}
+	return TRUE;
+}
+
 
 BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater)
 {
@@ -2650,9 +2858,9 @@ void CLocateDlg::OnSettingsTool()
 void CLocateDlg::OnStop()
 {
 	CWaitCursor wait;
-	StartBackgroundOperations();
-	if (m_pBackgroundUpdater!=NULL)
-		m_pBackgroundUpdater->StopWaiting();
+	
+	//if (m_pBackgroundUpdater!=NULL)
+	//	m_pBackgroundUpdater->StopWaiting();
 
 	if (IsLocating())
 		m_pLocater->StopLocating();
@@ -2661,18 +2869,18 @@ void CLocateDlg::OnStop()
 void CLocateDlg::OnNewSearch()
 {
 	CWaitCursor wait;
-	// Backgorund operation should end
-	StopBackgroundOperations();
 		
-	// StopBackgroundOperations uses only CouldStop
+	// Stop Locating
+	if (IsLocating())
+		m_pLocater->StopLocating();
+
+	// Backgorund operation should end
 	if (m_pFileNotificationsThread!=NULL)
 		m_pFileNotificationsThread->Stop();
 	if (m_pBackgroundUpdater!=NULL)
 		m_pBackgroundUpdater->Stop();
 	
-	if (IsLocating())
-		m_pLocater->StopLocating();
-
+	
 	RemoveResultsFromList();
 	if (m_pListTooltips!=NULL)
 		DeleteTooltipTools();
@@ -3952,6 +4160,7 @@ void CLocateDlg::SaveRegistry()
 		CMenu menu(GetMenu());
 		RegKey.SetValue("Program Status",m_dwFlags&fgSave);
 		RegKey.SetValue("Program StatusExtra",m_dwExtraFlags&efSave);
+		RegKey.SetValue("Instant Searching",m_dwInstantFlags&isSave);
 		
 		SavePosition(RegKey,NULL,"Position");
 		
@@ -4002,6 +4211,7 @@ void CLocateDlg::LoadRegistry()
 	if (RegKey.OpenKey(HKCU,"\\Locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		RegKey.QueryValue("MaximumFoundFiles",(LPTSTR)&m_dwMaxFoundFiles,sizeof(DWORD));
+		RegKey.QueryValue("Instant Search Limit",(LPTSTR)&m_dwInstantLimit,sizeof(DWORD));
 		RegKey.CloseKey();
 	}
 
@@ -4020,6 +4230,11 @@ void CLocateDlg::LoadRegistry()
 		if ((m_dwExtraFlags&efItemUpdatingMask)==efDisableItemUpdating)
 			m_dwExtraFlags|=efLVNoUpdateWhileSorting;
 
+		temp=m_dwInstantFlags;
+		RegKey.QueryValue("Instant Searching",temp);
+		m_dwInstantFlags&=~isSave;
+		m_dwInstantFlags|=temp&isSave;
+		
 		
 
 		DWORD dwOldFlags=m_dwFlags;
@@ -4092,6 +4307,8 @@ void CLocateDlg::LoadDialogTexts()
 
 		m_AdvancedDlg.LoadControlStates(RegKey);
 		m_AdvancedDlg.EnableItems(TRUE);
+
+		InstantSearch(isAllChanged);
 	}
 	
 }
@@ -4499,12 +4716,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				case Name:
 					if (pItem->ShouldUpdateFileTitle() || pItem->ShouldUpdateIcon())
 					{
-						if (m_pBackgroundUpdater==NULL)
-						{
-							InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
-							m_pBackgroundUpdater->CreateEventsAndMutex();
-						}
-						
+						ASSERT (m_pBackgroundUpdater!=NULL);
+
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Name);
 						
 						if (!IsLocating()) // Locating in process
@@ -4528,13 +4741,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				case InFolder:
 					if (pItem->ShouldUpdateParentIcon())
 					{
-						if (m_pBackgroundUpdater==NULL)
-						{
-							InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
-							m_pBackgroundUpdater->CreateEventsAndMutex();
-						}
+						ASSERT (m_pBackgroundUpdater!=NULL);
 
-						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,InFolder)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,InFolder);
 						if (!IsLocating()) // Locating is not in process
 							m_pBackgroundUpdater->StopWaiting();
@@ -4550,14 +4758,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
 						pItem->ShouldUpdateByDetail(nDetail))
 					{
-						if (m_pBackgroundUpdater==NULL)
-						{
-							InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
-							m_pBackgroundUpdater->CreateEventsAndMutex();
-						}
+						ASSERT (m_pBackgroundUpdater!=NULL);
 
-						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,%d)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem,DWORD(nDetail));
-						
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,nDetail);
 						if (!IsLocating()) // Locating is not in process
 							m_pBackgroundUpdater->StopWaiting();
@@ -4641,13 +4843,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				case Name:
 					if (pItem->ShouldUpdateFileTitle() || pItem->ShouldUpdateIcon())
 					{
-						if (m_pBackgroundUpdater==NULL)
-						{
-							InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
-							m_pBackgroundUpdater->CreateEventsAndMutex();
-						}
-						
-						
+						ASSERT (m_pBackgroundUpdater!=NULL);
+
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Name);
 						
 						if (!IsLocating()) // Locating in process
@@ -4671,12 +4868,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				case InFolder:
 					if (pItem->ShouldUpdateParentIcon())
 					{
-						if (m_pBackgroundUpdater==NULL)
-						{
-							InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
-							m_pBackgroundUpdater->CreateEventsAndMutex();
-						}
-
+						ASSERT (m_pBackgroundUpdater!=NULL);
 
 						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,InFolder)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem);
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,InFolder);
@@ -4694,14 +4886,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
 						pItem->ShouldUpdateByDetail(nDetail))
 					{
-						if (m_pBackgroundUpdater==NULL)
-						{
-							InterlockedExchangePointer((PVOID*)&m_pBackgroundUpdater,new CBackgroundUpdater(m_pListCtrl));
-							m_pBackgroundUpdater->CreateEventsAndMutex();
-						}
+						ASSERT (m_pBackgroundUpdater!=NULL);
 
-						//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,%d)",m_pBackgroundUpdater,pItem,pLvdi->item.iItem,DWORD(nDetail));
-						
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,nDetail);
 						if (!IsLocating()) // Locating is not in process
 							m_pBackgroundUpdater->StopWaiting();
@@ -5898,7 +6084,12 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 	}
 	*pFiles='\0';
 	
-	StopBackgroundOperations();
+	
+	// Stop background operations
+	if (m_pFileNotificationsThread!=NULL)
+		m_pFileNotificationsThread->Stop();
+	if (m_pBackgroundUpdater!=NULL)
+		m_pBackgroundUpdater->IgnoreItemsAndGoToSleep();
 	
 	
 	// Delete files
@@ -8374,6 +8565,10 @@ void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)
 		SetTimer((UINT)(HWND)*m_pListCtrl,100);
 		break;
 	}
+
+	m_NameDlg.HilightTab(m_NameDlg.IsChanged());
+	m_SizeDateDlg.HilightTab(m_SizeDateDlg.IsChanged());
+	m_AdvancedDlg.HilightTab(m_AdvancedDlg.IsChanged());
 }
 
 
@@ -8497,6 +8692,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 
 	// Handle to locate dialog
 	CLocateDlg* pLocateDlg=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate;
+	pLocateDlg->AddInstantSearchingFlags(isIgnoreChangeMessages);
 
 	COMBOBOXEXITEMW ci;
 	LPITEMIDLIST idl;
@@ -8846,7 +9042,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(nSelection));
 	}
 
-	//DebugMessage("CNameDlg::InitDriveBox END");
+	pLocateDlg->RemoveInstantSearchingFlags(isIgnoreChangeMessages);
 	return TRUE;
 }
 	
@@ -8954,13 +9150,18 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			if (hControl==NULL)
 				m_Name.SetFocus();
 			else
+			{
 				HilightTab(IsChanged());
+				GetLocateDlg()->InstantSearch(isSearchIfNameChanged);
+			}
+
 			break;
 		case CBN_SETFOCUS:
 			m_Name.SetEditSel(0,-1);
 			break;
 		case CBN_EDITCHANGE:
 			HilightTab(m_Name.GetTextLength()>0);
+			GetLocateDlg()->InstantSearch(isSearchIfNameChanged);
 			break;
 		}
 		break;
@@ -8974,6 +9175,7 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			{
 				GetLocateDlg()->m_AdvancedDlg.ChangeEnableStateForCheck();
 				HilightTab(IsChanged());
+				GetLocateDlg()->InstantSearch(isSearchIfTypeChanged);
 			}
 			break;
 		case CBN_SETFOCUS:
@@ -8982,6 +9184,7 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		case CBN_EDITCHANGE:
 			GetLocateDlg()->m_AdvancedDlg.ChangeEnableStateForCheck();
 			HilightTab(IsChanged());
+			GetLocateDlg()->InstantSearch(isSearchIfTypeChanged);
 			break;
 		}
 		break;
@@ -8992,10 +9195,14 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			if (hControl==NULL)
 				m_LookIn.SetFocus();
 			else
+			{
 				HilightTab(IsChanged());
+				GetLocateDlg()->InstantSearch(isSearchIfLookInChanged);
+			}
 			break;
 		case CBN_EDITCHANGE:
 			HilightTab(IsChanged());
+			GetLocateDlg()->InstantSearch(isSearchIfLookInChanged);
 			break;
 		}
 		break;	
@@ -9019,6 +9226,7 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			SetFocus(wID);
 		}
 		HilightTab(IsChanged());
+		GetLocateDlg()->InstantSearch(isSearchIfOtherChanged);
 		break;
 	}
 	return FALSE;
@@ -9129,49 +9337,58 @@ void CLocateDlg::CNameDlg::OnDestroy()
 }
 
 
-BOOL CLocateDlg::CNameDlg::OnOk(CStringW& sName,CArray<LPWSTR>& aExtensions,CArrayFAP<LPWSTR>& aDirectories)
+BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArray<LPWSTR>& aExtensions,CArrayFAP<LPWSTR>& aDirectories,BOOL bForInstantSearch)
 {
-	DlgDebugMessage("CLocateDlg::CNameDlg::OnOk BEGIN");
-	
-	
 	// Setting recent combobox for name
 	CStringW Buffer;
 	m_Name.GetText(sName);
-	for (int i=m_Name.GetCount()-1;i>=0;i--)
+
+	if (!bForInstantSearch)
 	{
-		m_Name.GetLBText(i,Buffer);
-		if (sName.CompareNoCase(Buffer)==0)
-			m_Name.DeleteString(i);
-	}	
-	m_Name.InsertString(0,sName);
-	m_Name.SetText(sName);
+		// Save name to the list
+		for (int i=m_Name.GetCount()-1;i>=0;i--)
+		{
+			m_Name.GetLBText(i,Buffer);
+			if (sName.CompareNoCase(Buffer)==0)
+				m_Name.DeleteString(i);
+		}	
+		m_Name.InsertString(0,sName);
+		m_Name.SetText(sName);
 
-	if (m_Name.GetCount()>int(m_nMaxNamesInList))
-		m_Name.DeleteString(m_nMaxNamesInList);
-
+		if (m_Name.GetCount()>int(m_nMaxNamesInList))
+			m_Name.DeleteString(m_nMaxNamesInList);
+	}
 	
+
+
 	// Setting recent combobox for type
 	if (!GetLocateDlg()->m_AdvancedDlg.IsDlgButtonChecked(IDC_USEWHOLEPATH))
 	{
-		CStringW sType;
-		m_Type.GetText(sType);
-		
-
 		if (m_Type.GetCurSel()==0) // Empty extension
 			aExtensions.Add(allocemptyW());
 		else
 		{
-			for (int i=m_Type.GetCount()-1;i>=1;i--)
-			{
-				m_Type.GetLBText(i,Buffer);
-				if (sType.CompareNoCase(Buffer)==0)
-					m_Type.DeleteString(i);
-			}	
+			CStringW sType;
+			m_Type.GetText(sType);
+		
 
-			m_Type.InsertString(1,sType); // 0 == (none)
-			m_Type.SetText(sType);
-			if (m_Type.GetCount()>int(m_nMaxTypesInList)+1)
-				m_Type.DeleteString(m_nMaxTypesInList+1);
+			if (!bForInstantSearch)
+			{
+				// Save extension to the list
+
+				for (int i=m_Type.GetCount()-1;i>=1;i--)
+				{
+					m_Type.GetLBText(i,Buffer);
+					if (sType.CompareNoCase(Buffer)==0)
+						m_Type.DeleteString(i);
+				}	
+
+				m_Type.InsertString(1,sType); // 0 == (none)
+				m_Type.SetText(sType);
+				if (m_Type.GetCount()>int(m_nMaxTypesInList)+1)
+					m_Type.DeleteString(m_nMaxTypesInList+1);
+			}
+
 
 			// Parsing extensions
 			LPCWSTR pType=sType;
@@ -9223,7 +9440,7 @@ BOOL CLocateDlg::CNameDlg::OnOk(CStringW& sName,CArray<LPWSTR>& aExtensions,CArr
 			}
 		}
 
-		if (bEverywhereSelected && bOtherSelected)
+		if (bEverywhereSelected && bOtherSelected && !bForInstantSearch)
 		{
 			switch(ShowErrorMessage(IDS_LOOKINCONTRADICTION,IDS_LOOKIN,MB_ICONQUESTION|MB_YESNOCANCEL))
 			{
@@ -9241,10 +9458,12 @@ BOOL CLocateDlg::CNameDlg::OnOk(CStringW& sName,CArray<LPWSTR>& aExtensions,CArr
 		return FALSE;
 
 
-	// Saves searches
-	SaveRegistry();
+	if (!bForInstantSearch)
+	{
+		// Saves searches
+		SaveRegistry();
+	}
 	
-	DlgDebugMessage("CLocateDlg::CNameDlg::OnOk END");
 	return TRUE;
 }
 
@@ -10425,6 +10644,8 @@ void CLocateDlg::CNameDlg::OnLookInNewSelection()
 	SetDlgItemText(IDC_MOREDIRECTORIES,szName);
 
 	HilightTab(TRUE);
+	GetLocateDlg()->InstantSearch(isSearchIfLookInChanged);
+			
 }
 
 void CLocateDlg::CNameDlg::OnLookInRemoveSelection()
@@ -10470,6 +10691,8 @@ void CLocateDlg::CNameDlg::OnLookInRemoveSelection()
 	SetDlgItemText(IDC_MOREDIRECTORIES,szName);
 
 	HilightTab(IsChanged());
+	GetLocateDlg()->InstantSearch(isSearchIfLookInChanged);
+			
 }
 		
 
@@ -10811,7 +11034,6 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 void CLocateDlg::CNameDlg::OnBrowse()
 {
 	CWaitCursor wait;
-	DebugMessage("CLocateDlg::CNameDlg::OnBrowse() BEGIN");
 	CFolderDialog fd(IDS_GETFOLDER,BIF_RETURNONLYFSDIRS|BIF_USENEWUI|BIF_NONEWFOLDERBUTTON);
 	if (fd.DoModal(*this))
 	{
@@ -10833,11 +11055,11 @@ void CLocateDlg::CNameDlg::OnBrowse()
 		m_LookIn.SetFocus();
 
 		HilightTab(TRUE);
-		DebugMessage("CLocateDlg::CNameDlg::OnBrowse() END1");
+		GetLocateDlg()->InstantSearch(isSearchIfLookInChanged);
+			
 		return;
 	}
 	
-	DebugMessage("CLocateDlg::CNameDlg::OnBrowse() END2");
 }
 
 void CLocateDlg::CNameDlg::EnableItems(BOOL bEnable)
@@ -11374,6 +11596,7 @@ void CLocateDlg::CNameDlg::LoadControlStates(CRegKey& RegKey)
 
 
 	HilightTab(IsChanged());
+	
 }
 
 void CLocateDlg::CNameDlg::SaveControlStates(CRegKey& RegKey)
@@ -11572,6 +11795,7 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		}
 		GetLocateDlg()->m_AdvancedDlg.ChangeEnableStateForCheck();
 		
+		GetLocateDlg()->InstantSearch(isSearchIfSizesChanged);
 		break;
 	case IDC_CHECKMAXIMUMSIZE:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
@@ -11598,6 +11822,8 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			HilightTab(IsChanged());
 		}
 		GetLocateDlg()->m_AdvancedDlg.ChangeEnableStateForCheck();
+		
+		GetLocateDlg()->InstantSearch(isSearchIfSizesChanged);
 		break;
 	case IDC_CHECKMINDATE:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
@@ -11620,6 +11846,8 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 				SetFocus(IDC_CHECKMINDATE);
 			HilightTab(IsChanged());
 		}
+		
+		GetLocateDlg()->InstantSearch(isSearchIfDatesChanged);
 		break;
 	case IDC_CHECKMAXDATE:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
@@ -11642,6 +11870,8 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 				SetFocus(IDC_CHECKMAXDATE);
 			HilightTab(IsChanged());
 		}
+
+		GetLocateDlg()->InstantSearch(isSearchIfDatesChanged);
 		break;
 	case IDC_MINIMUMSIZE:
 	case IDC_MAXIMUMSIZE:
@@ -11649,6 +11879,8 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			SetFocus(wID);
 		else if (wNotifyCode==EN_SETFOCUS)
 			::SendMessage(hControl,EM_SETSEL,0,MAKELPARAM(0,-1));
+		else if (wNotifyCode==EN_CHANGE)
+			GetLocateDlg()->InstantSearch(isSearchIfSizesChanged);
 		break;
 	case IDC_MAXDATEMODE:
 	case IDC_MINDATEMODE:
@@ -11657,16 +11889,30 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 				wID==IDC_MAXDATEMODE?IDC_MAXDATE:IDC_MINDATE,DTMX_GETCLASS);
 			if (pCtrl->IsWindowEnabled())
 				pCtrl->ChangeMode(!pCtrl->GetMode());
+
+			GetLocateDlg()->InstantSearch(isSearchIfDatesChanged);
 			break;
 		}
-	case IDC_MINSIZETYPE:
-	case IDC_MAXSIZETYPE:
 	case IDC_MINDATE:
 	case IDC_MAXDATE:
+		if (hControl==NULL && wNotifyCode==1) // Accelerator
+			SetFocus(wID);
+		else if (wNotifyCode==EN_CHANGE)
+			GetLocateDlg()->InstantSearch(isSearchIfDatesChanged);
+		break;
+	case IDC_MINSIZETYPE:
+	case IDC_MAXSIZETYPE:
+		if (hControl==NULL && wNotifyCode==1) // Accelerator
+			SetFocus(wID);
+		else if (wNotifyCode==CBN_SELCHANGE)
+			GetLocateDlg()->InstantSearch(isSearchIfSizesChanged);
+		break;
 	case IDC_MINTYPE:
 	case IDC_MAXTYPE:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
 			SetFocus(wID);
+		else if (wNotifyCode==CBN_SELCHANGE)
+			GetLocateDlg()->InstantSearch(isSearchIfDatesChanged);
 		break;
 		
 	}
@@ -11676,10 +11922,8 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 
 
 
-BOOL CLocateDlg::CSizeDateDlg::OnOk(CLocater* pLocater)
+BOOL CLocateDlg::CSizeDateDlg::SetSizesAndDaterForLocater(CLocater* pLocater)
 {
-	DlgDebugMessage("CLocateDlg::CSizeDateDlg::OnOk BEGIN");
-	
 	DWORD dwFlags=0;
 	ULONGLONG ullMinSize=ULONGLONG(-1),ullMaxSize=ULONGLONG(-1);
 	WORD wMinDate=WORD(-1),wMaxDate=WORD(-1);
@@ -11751,8 +11995,7 @@ BOOL CLocateDlg::CSizeDateDlg::OnOk(CLocater* pLocater)
 
 	pLocater->SetSizeAndDate(dwFlags,ullMinSize,ullMaxSize,wMinDate,wMaxDate);
 	
-	DlgDebugMessage("CLocateDlg::CSizeDateDlg::OnOk END");
-	return IsDlgButtonChecked(IDC_MATCHWHOLENAME);
+	return TRUE;
 }
 	
 void CLocateDlg::CSizeDateDlg::OnClear(BOOL bInitial)
@@ -12048,6 +12291,7 @@ void CLocateDlg::CSizeDateDlg::LoadControlStates(CRegKey& RegKey,BOOL bPreset)
 	}
 		
 	HilightTab(IsChanged());
+
 }
 
 void CLocateDlg::CSizeDateDlg::SaveControlStates(CRegKey& RegKey)
@@ -12299,6 +12543,8 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			HilightTab(IsChanged());
 		}
 		ChangeEnableStateForCheck();
+
+		GetLocateDlg()->InstantSearch(isSearchIfDataChanged);
 		break;
 	case IDC_USEWHOLEPATH:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
@@ -12323,6 +12569,8 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			GetLocateDlg()->m_NameDlg.m_Type.EnableWindow(TRUE);
 		}
 		HilightTab(IsChanged());
+
+		GetLocateDlg()->InstantSearch(isSearchIfOtherChanged);
 		break;
 	case IDC_FILETYPE:
 		DebugFormatMessage("IDC_FILETYPE, wNotifuCode=%d, hControl=%X this=%X",wNotifyCode,hControl,this);
@@ -12367,6 +12615,8 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			
 			}
 			HilightTab(IsChanged());
+
+			GetLocateDlg()->InstantSearch(isSearchIfOtherChanged);
 			break;
 		case CBN_DROPDOWN:
 			UpdateTypeList();
@@ -12410,6 +12660,9 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		case EN_SETFOCUS:
 			::SendMessage(hControl,EM_SETSEL,0,MAKELPARAM(0,-1));
 			break;
+		case EN_CHANGE:
+			GetLocateDlg()->InstantSearch(isSearchIfDataChanged);
+			break;
 		}		
 		break;
 	case IDC_CHECK:
@@ -12419,7 +12672,10 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			if (hControl==NULL && wNotifyCode==1 && IsDlgItemEnabled(IDC_CHECK)) // Accelerator
 				SetFocus(IDC_CHECK);
 			else
+			{
 				HilightTab(IsChanged());
+				GetLocateDlg()->InstantSearch(isSearchIfOtherChanged);
+			}
 			break;
 		}
 		break;
@@ -12431,6 +12687,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			SetFocus(wID);
 		}
 		HilightTab(IsChanged());
+		GetLocateDlg()->InstantSearch(isSearchIfOtherChanged);
 		break;
 	case IDC_DATAMATCHCASE:
 		if (hControl==NULL && wNotifyCode==1 && IsDlgButtonChecked(IDC_CONTAINDATACHECK)) // Accelerator
@@ -12439,6 +12696,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			SetFocus(IDC_DATAMATCHCASE);
 		}
 		HilightTab(IsChanged());
+		GetLocateDlg()->InstantSearch(isSearchIfDataChanged);
 		break;
 
 	}
@@ -12650,12 +12908,15 @@ void CLocateDlg::CAdvancedDlg::OnSize(UINT nType, int cx, int cy)
 	SetDlgItemPos(IDC_HELPTOOLBAR,HWND_BOTTOM,max(cx-43,125),m_nMatchCaseTop-3,0,0,SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOZORDER);
 }
 
-DWORD CLocateDlg::CAdvancedDlg::OnOk(CLocater* pLocater)
+DWORD CLocateDlg::CAdvancedDlg::SetAdvancedFlagsForLocater(CLocater* pLocater,BOOL bForInstantSearch)
 {
-	DlgDebugMessage("CLocateDlg::CAdvancedDlg::OnOk BEGIN");
-	
-	DWORD dwFlags=0;
-	
+	DWORD dwFlags=0,dwMaxFiles=(DWORD)-1;
+	if (bForInstantSearch)
+		dwMaxFiles=GetLocateDlg()->m_dwInstantLimit;
+	else if (GetLocateDlg()->m_dwMaxFoundFiles>0)
+		dwMaxFiles=GetLocateDlg()->m_dwMaxFoundFiles;
+
+
 	if (IsDlgItemEnabled(IDC_CHECK))
 	{
 		switch (SendDlgItemMessage(IDC_CHECK,CB_GETCURSEL))
@@ -12698,17 +12959,18 @@ DWORD CLocateDlg::CAdvancedDlg::OnOk(CLocater* pLocater)
 			pData=dataparser(str,&dwDataLength);
 			
 
-		pLocater->SetAdvanced(dwFlags,pData,dwDataLength,GetLocateDlg()->m_dwMaxFoundFiles==0?-1:GetLocateDlg()->m_dwMaxFoundFiles);
+		
+		pLocater->SetAdvanced(dwFlags,pData,dwDataLength,dwMaxFiles);
 		if (pData!=NULL)
 			free(pData);
 	}
 	else
-		pLocater->SetAdvanced(dwFlags,NULL,0,GetLocateDlg()->m_dwMaxFoundFiles==0?-1:GetLocateDlg()->m_dwMaxFoundFiles);
+		pLocater->SetAdvanced(dwFlags,NULL,0,dwMaxFiles);
 
-	DlgDebugMessage("CLocateDlg::CAdvancedDlg::OnOk END");
+	if (IsDlgButtonChecked(IDC_USEWHOLEPATH))
+		pLocater->AddAdvancedFlags(LOCATE_CHECKWHOLEPATH);
 
 	return (IsDlgButtonChecked(IDC_MATCHWHOLENAME)?flagMatchCase:0)|
-		(IsDlgButtonChecked(IDC_USEWHOLEPATH)?flagUseWholePath:0)|
 		(IsDlgButtonChecked(IDC_REPLACESPACES)?flagReplaceSpaces:0);
 
 }
@@ -13022,6 +13284,7 @@ void CLocateDlg::CAdvancedDlg::LoadControlStates(CRegKey& RegKey)
 	delete[] pData;
 
 	HilightTab(IsChanged());
+	
 }
 
 void CLocateDlg::CAdvancedDlg::SaveControlStates(CRegKey& RegKey)

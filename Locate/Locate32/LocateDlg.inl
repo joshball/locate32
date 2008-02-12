@@ -8,7 +8,8 @@
 #endif
 
 inline CLocateDlg::CLocateDlg()
-:	CDialog(IDD_MAIN),m_dwFlags(fgDefault),m_dwExtraFlags(efDefault),m_nSorting(BYTE(-1)),
+:	CDialog(IDD_MAIN),m_dwFlags(fgDefault),m_dwExtraFlags(efDefault),
+	m_nSorting(BYTE(-1)),m_dwInstantFlags(isDefault),m_dwInstantLimit(50),
 	m_nMaxYMinimized(0),m_nMaxYMaximized(0),m_nLargeY(354),
 	m_ClickWait(FALSE),m_hSendToListFont(NULL),m_hActivePopupMenu(NULL),
 	m_pListCtrl(NULL),m_pTabCtrl(NULL),m_pStatusCtrl(NULL),m_pListTooltips(NULL),
@@ -18,8 +19,6 @@ inline CLocateDlg::CLocateDlg()
 	m_pImageHandler(NULL),m_iTooltipItem(-1),m_iTooltipSubItem(-1),m_bTooltipActive(FALSE),
 	m_hLastFocus(NULL),m_WaitEvery30(0),m_WaitEvery60(0),m_hDialogFont(NULL)
 {
-	//DebugFormatMessage("CLocateDlg::CLocateDlg() this is %X",DWORD_PTR(this));
-
 	ZeroMemory(m_aResultListActions,TypeCount*ListActionCount*sizeof(void*));
 
 	
@@ -28,9 +27,6 @@ inline CLocateDlg::CLocateDlg()
 
 	InitializeCriticalSection(&m_csUpdateAnimBitmaps);
 	InitializeCriticalSection(&m_csLocateAnimBitmaps);
-
-	//DebugFormatMessage("CLocateDlg::CLocateDlg() END",DWORD_PTR(this));
-
 }
 
 inline CLocateDlg::CNameDlg::CNameDlg()
@@ -76,7 +72,7 @@ inline CLocateDlg::CSizeDateDlg::CSizeDateDlg()
 
 inline BOOL CLocateDlg::CSizeDateDlg::IsChanged()
 {
-	return (IsDlgButtonChecked(IDC_CHECKMINIMUMSIZE)||
+	return (IsDlgButtonChecked(IDC_CHECKMINIMUMSIZE) ||
 			IsDlgButtonChecked(IDC_CHECKMAXIMUMSIZE) ||
 			IsDlgButtonChecked(IDC_CHECKMINDATE) ||
 			IsDlgButtonChecked(IDC_CHECKMAXDATE));

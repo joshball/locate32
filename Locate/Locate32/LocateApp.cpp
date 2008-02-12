@@ -4470,22 +4470,22 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatErrorForStatusTooltip(UpdateError ue
 	case ueCreate:
 	case ueOpen:
 		LoadString(IDS_LASTERRORCANNOTOPEN,error+nLabelLength,300-nLabelLength);
-		szExtra=pUpdater->GetCurrentDatabaseName();
+		szExtra=pUpdater->GetCurrentDatabaseFile();
 		break;
 	case ueRead:
 		LoadString(IDS_LASTERRORCANNOTREAD,error+nLabelLength,300-nLabelLength);
-		szExtra=pUpdater->GetCurrentDatabaseName();
+		szExtra=pUpdater->GetCurrentDatabaseFile();
 		break;
 	case ueWrite:
 		LoadString(IDS_LASTERRORCANNOTWRITE,error+nLabelLength,300-nLabelLength);
-		szExtra=pUpdater->GetCurrentDatabaseName();
+		szExtra=pUpdater->GetCurrentDatabaseFile();
 		break;
 	case ueAlloc:
 		LoadString(IDS_LASTERRORCANNOTALLOCATE,error+nLabelLength,300-nLabelLength);
 		break;
 	case ueInvalidDatabase:
 		LoadString(IDS_LASTERRORINVALIDDB,error+nLabelLength,300-nLabelLength);
-		szExtra=pUpdater->GetCurrentDatabaseName();
+		szExtra=pUpdater->GetCurrentDatabaseFile();
 		break;
 	case ueFolderUnavailable:
 		LoadString(IDS_LASTERRORROOTUNAVAILABLE,error+nLabelLength,300-nLabelLength);

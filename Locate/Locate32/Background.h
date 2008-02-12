@@ -113,13 +113,13 @@ public:
 	~CBackgroundUpdater();
 
 public:
-	void CreateEventsAndMutex();
-
 	BOOL Start();
 	BOOL Stop();
-	void GoToSleep();
-
+	
+	
 	void CouldStop();
+	void IgnoreItemsAndGoToSleep();
+	void StopIgnoringItems();
 
 	static DWORD WINAPI UpdaterThreadProc(LPVOID lpParameter);
 	BOOL RunningProc();
@@ -148,20 +148,14 @@ public:
 	CListCtrl* m_pList;
 
 	volatile LONG m_lIsWaiting;
-	volatile LONG m_lGoToSleep;
+	volatile LONG m_lIgnoreItemsAndGoToSleep;
 
 
 	// Creating m_aUpdateList as threadsafe
 protected:
 	CArrayFP<Item*> m_aUpdateList;
-	HANDLE m_hUpdateListPtrInUse;
-
-public:
-	CArrayFP<Item*>* GetUpdaterListPtr();
-	void ReleaseUpdaterListPtr();
+	CRITICAL_SECTION m_csUpdateList;
 	
-	
-
 };
 
 inline CCheckFileNotificationsThread::DIRCHANGEDATA::DIRCHANGEDATA()
@@ -231,35 +225,19 @@ inline void CCheckFileNotificationsThread::CouldStop()
 inline CBackgroundUpdater::CBackgroundUpdater(CListCtrl* pList)
 :	m_pList(pList),m_hThread(NULL)
 {
-}
+	m_phEvents[0]=CreateEvent(NULL,TRUE,FALSE,NULL);
+	DebugOpenEvent(m_phEvents[0]);
+	m_phEvents[1]=CreateEvent(NULL,TRUE,FALSE,NULL);
+	DebugOpenEvent(m_phEvents[1]);
 
-
-
-inline CArrayFP<CBackgroundUpdater::Item*>* CBackgroundUpdater::GetUpdaterListPtr()
-{
-	// Waiting for other thread to complete
-	//BkgDebugMessage("CBackgroundUpdater::GetUpdaterListPtr() waiting for mutex");
-
-	if (WaitForMutex(m_hUpdateListPtrInUse,BACKGROUNDUPDATERMUTEXTIMEOUT))
-	{
-		//BkgDebugMessage("CBackgroundUpdater::GetUpdaterListPtr() WaitForMutex returns error");
-		return NULL;
-	}
-	//BkgDebugMessage("CBackgroundUpdater::GetUpdaterListPtr() got mutex");
-	return &m_aUpdateList;
-}
-
-inline void CBackgroundUpdater::ReleaseUpdaterListPtr()
-{
-	//BkgDebugMessage("CBackgroundUpdater::ReleaseUpdaterListPtr() releasing mutex");
-	ReleaseMutex(m_hUpdateListPtrInUse);
-	//BkgDebugMessage("CBackgroundUpdater::ReleaseUpdaterListPtr() releasing mutex done");
+	InitializeCriticalSection(&m_csUpdateList);
 }
 
 
 inline void CBackgroundUpdater::StopWaiting()
 {
 	ASSERT(this!=NULL);
+	ASSERT(m_hThread!=NULL);
 
 	if (m_aUpdateList.GetSize()==0)
 	{
@@ -267,13 +245,10 @@ inline void CBackgroundUpdater::StopWaiting()
 	
 		return; // No reason to wake
 	}
-    if (m_hThread==NULL)
-		Start();
+
 	if (m_lIsWaiting)
 		SetEvent(m_phEvents[1]);
 
-	InterlockedExchange(&m_lIsWaiting,FALSE);
-	
 }
 
 inline void CBackgroundUpdater::CouldStop()
@@ -281,8 +256,8 @@ inline void CBackgroundUpdater::CouldStop()
 	if (m_hThread==NULL)
 		return;
 	
-	InterlockedExchange(&m_lGoToSleep,TRUE);
-	SetEvent(m_phEvents[0]); // 0 = end envent
+	InterlockedExchange(&m_lIgnoreItemsAndGoToSleep,TRUE);
+	SetEvent(m_phEvents[0]); // 0 = end envent, so stop processing
 }
 
 inline BOOL CBackgroundUpdater::IsWaiting() const
@@ -290,9 +265,10 @@ inline BOOL CBackgroundUpdater::IsWaiting() const
 	return m_lIsWaiting;
 }
 
-inline void CBackgroundUpdater::GoToSleep()
+
+inline void CBackgroundUpdater::StopIgnoringItems()
 {
-	InterlockedExchange(&m_lGoToSleep,TRUE);
+	InterlockedExchange(&m_lIgnoreItemsAndGoToSleep,FALSE);
 }
 
 inline DWORD CBackgroundUpdater::GetUpdateListSize() const

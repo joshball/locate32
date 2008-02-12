@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2007 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #ifndef HFCMEMORY_INL
@@ -132,8 +132,6 @@ template<class TYPE>
 CDataContainer<TYPE>::CDataContainer(TYPE* data)
 :	m_data(data),m_dwCount(1)
 {
-	if (m_data!=NULL)
-		delete m_data;
 }
 
 template<class TYPE> 
@@ -162,8 +160,6 @@ template<class TYPE>
 CDataContainerA<TYPE>::CDataContainerA(TYPE* data)
 :	m_data(data),m_dwCount(1)
 {
-	if (m_data!=NULL)
-		delete m_data;
 }
 
 template<class TYPE> 

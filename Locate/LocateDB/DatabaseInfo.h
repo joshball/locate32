@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.0.8.1200              */
+   database locater v3.1.8.2110              */
 
 #if !defined(DATABASEINFO_H)
 #define DATABASEINFO_H
@@ -108,7 +108,12 @@ inline CDatabaseInfo* CDatabaseInfo::GetFromFile(LPCWSTR szArchivePath)
 
 inline BOOL CDatabaseInfo::GetInfo(const CDatabase* pDatabase)
 {
-	return GetInfo(pDatabase->GetArchiveType(),pDatabase->GetArchiveName(),pDatabase->GetRootMaps());
+	BOOL bFree;
+	LPWSTR pFile=pDatabase->GetResolvedArchiveName(bFree);
+	BOOL bRet=GetInfo(pDatabase->GetArchiveType(),pFile,pDatabase->GetRootMaps());
+	if (bFree)
+		delete[] pFile;
+	return bRet;
 } 
 
 

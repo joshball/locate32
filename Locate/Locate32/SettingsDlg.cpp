@@ -29,9 +29,12 @@ inline BOOL operator!=(const SYSTEMTIME& s1,const SYSTEMTIME& s2)
 
 CSettingsProperties::CSettingsProperties(HWND hParent)
 :	CPropertySheet(IDS_SETTINGS,hParent,0),
-	m_nMaximumFoundFiles(0),m_nUpdateThreadPriority(THREAD_PRIORITY_NORMAL),
+	m_nMaximumFoundFiles(0),
+	m_nInstantSearchingLimit(50),
+	m_nUpdateThreadPriority(THREAD_PRIORITY_NORMAL),
 	m_dwLocateDialogFlags(CLocateDlg::fgDefault),
 	m_dwLocateDialogExtraFlags(CLocateDlg::efDefault),
+	m_dwInstantSearchingFlags(CLocateDlg::isDefault),
 	m_bDefaultFlag(defaultDefault),m_bSorting(BYTE(-1)),
 	m_dwSettingsFlags(settingsDefault),
 	m_nNumberOfDirectories(DEFAULT_NUMBEROFDIRECTORIES),
@@ -138,6 +141,7 @@ BOOL CSettingsProperties::LoadSettings()
 	{
 		m_dwLocateDialogFlags=GetLocateDlg()->GetFlags();
 		m_dwLocateDialogExtraFlags=GetLocateDlg()->GetExtraFlags();
+		m_dwInstantSearchingFlags=GetLocateDlg()->GetInstantSearchingFlags();
 
 		// read efLVNoUpdateWhileSorting from registry
 		if (LocRegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
@@ -160,6 +164,11 @@ BOOL CSettingsProperties::LoadSettings()
 		m_dwLocateDialogExtraFlags&=~CLocateDlg::efSave;
 		m_dwLocateDialogExtraFlags|=temp&CLocateDlg::efSave;
 
+		temp=m_dwInstantSearchingFlags;
+		LocRegKey.QueryValue("Instant Searching",temp);
+		m_dwInstantSearchingFlags&=~CLocateDlg::isSave;
+		m_dwInstantSearchingFlags|=temp&CLocateDlg::isSave;
+
 
 	}
 	if (LocRegKey.OpenKey(HKCU,"\\Recent Strings",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
@@ -173,10 +182,16 @@ BOOL CSettingsProperties::LoadSettings()
 	if (GetLocateDlg()==NULL)
 	{
 		if (LocRegKey.OpenKey(HKCU,"\\Locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+		{
 			LocRegKey.QueryValue("MaximumFoundFiles",m_nMaximumFoundFiles);
+			LocRegKey.QueryValue("Instant Search Limit",m_nInstantSearchingLimit);
+		}
 	}
 	else
+	{
 		m_nMaximumFoundFiles=GetLocateDlg()->GetMaxFoundFiles();
+		m_nInstantSearchingLimit=GetLocateDlg()->GetInstantSearchingLimit();
+	}
     	
 	
 	// Retrieving databases
@@ -383,6 +398,7 @@ BOOL CSettingsProperties::SaveSettings()
 	{
 		LocRegKey.SetValue("Program Status",m_dwLocateDialogFlags&CLocateDlg::fgSave);
 		LocRegKey.SetValue("Program StatusExtra",m_dwLocateDialogExtraFlags&CLocateDlg::efSave);
+		LocRegKey.SetValue("Instant Searching",m_dwInstantSearchingFlags&CLocateDlg::isSave);
 		LocRegKey.SetValue("General Flags",m_dwProgramFlags&CLocateApp::pfSave);
 		
 		LocRegKey.SetValue(L"DateFormat",m_DateFormat);
@@ -446,10 +462,15 @@ BOOL CSettingsProperties::SaveSettings()
 	}
 
 	if (LocRegKey.OpenKey(HKCU,"\\Locate",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
-		LocRegKey.SetValue("MaximumFoundFiles",(LPTSTR)&m_nMaximumFoundFiles,4,REG_DWORD);
+	{
+		LocRegKey.SetValue("MaximumFoundFiles",m_nMaximumFoundFiles);
+		LocRegKey.SetValue("Instant Search Limit",m_nInstantSearchingLimit);
+	}
+
 	if (GetLocateDlg()!=NULL)
 	{
 		GetLocateDlg()->SetMaxFoundFiles(m_nMaximumFoundFiles);
+		GetLocateDlg()->SetInstantSearchLimit(m_nInstantSearchingLimit);
 		GetLocateDlg()->m_NameDlg.ChangeNumberOfItemsInLists(m_nNumberOfNames,m_nNumberOfTypes,m_nNumberOfDirectories);
 	}
 
@@ -1018,6 +1039,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CLocateDlg::fgLVAllowInPlaceRenaming,&m_pSettings->m_dwLocateDialogFlags),
 		NULL
 	};
+	
 	Item* LimitMaximumResults[]={
 		CreateNumeric(IDS_ADVSETMAXNUMBEROFRESULTS,DefaultNumericProc,
 			DWORD(-1),&m_pSettings->m_nMaximumFoundFiles),
@@ -1054,6 +1076,29 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL
 	};
 		
+	Item* InstantSearching[]={
+		CreateNumeric(IDS_ADVSETISLIMIT,DefaultNumericProc,
+			DWORD(-1),&m_pSettings->m_nInstantSearchingLimit),
+		CreateCheckBox(IDS_ADVSETISDISABLEIFDATASEARCH,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isDisableIfDataSearch,&m_pSettings->m_dwInstantSearchingFlags),
+		CreateCheckBox(IDS_ADVSETISNAMEDCHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfNameChanged,&m_pSettings->m_dwInstantSearchingFlags),
+		CreateCheckBox(IDS_ADVSETISTYPECHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfTypeChanged,&m_pSettings->m_dwInstantSearchingFlags),
+		CreateCheckBox(IDS_ADVSETISLOOKINCHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfLookInChanged,&m_pSettings->m_dwInstantSearchingFlags),
+		CreateCheckBox(IDS_ADVSETISSIZESCHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfSizesChanged,&m_pSettings->m_dwInstantSearchingFlags),
+		CreateCheckBox(IDS_ADVSETISDATESCHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfDatesChanged,&m_pSettings->m_dwInstantSearchingFlags),
+		CreateCheckBox(IDS_ADVSETISDATACHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfDataChanged,&m_pSettings->m_dwInstantSearchingFlags),
+		CreateCheckBox(IDS_ADVSETISOTHERCHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfOtherChanged,&m_pSettings->m_dwInstantSearchingFlags),
+		NULL
+	};	
+
+
 
 	Item* LocateProcessAndResultsItems[]={
 		CreateCheckBox(IDS_ADVSETLIMITRESULTS,LimitMaximumResults,LimitResultsCheckBoxProc,
@@ -1062,6 +1107,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CLocateDlg::efAllowSpacesAsSeparators,&m_pSettings->m_dwLocateDialogExtraFlags),
 		CreateCheckBox(IDS_ADVSETLOGICALOPERATIONS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::efEnableLogicalOperations,&m_pSettings->m_dwLocateDialogExtraFlags),
+		CreateCheckBox(IDS_ADVSETISENABLE,InstantSearching,DefaultCheckBoxProc,
+			CLocateDlg::isEnable,&m_pSettings->m_dwInstantSearchingFlags),
 		CreateRoot(IDS_ADVSETRESULTSLIST,ResultsListItems),
 		CreateRoot(IDS_ADVSETUPDATERESULTS,UpdateResults),
 		NULL
@@ -1910,7 +1957,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnInitDialog(HWND hwndFocus)
 	if (IsUnicodeSystem())
 		m_pList->SetUnicodeFormat(TRUE);
 
-	//m_pList->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Databases Settings List Widths");
+	m_pList->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Databases Settings List Widths");
 	
 	// Setting threads counter
 	CSpinButtonCtrl Spin(GetDlgItem(IDC_THREADSPIN));
@@ -2199,14 +2246,19 @@ void CSettingsProperties::CDatabasesSettingsPage::OnRemove()
 	CDatabase* pDatabase=(CDatabase*)m_pList->GetItemData(nItem);
 	if (pDatabase->GetArchiveType()==CDatabase::archiveFile)
 	{
-		if (FileSystem::IsFile(pDatabase->GetArchiveName()))
+		BOOL bFree;
+		LPWSTR pFileName=pDatabase->GetResolvedArchiveName(bFree);
+		if (FileSystem::IsFile(pFileName))
 		{
 			CStringW str;
-			str.Format(IDS_DELETEDATABASEQUESTION,pDatabase->GetArchiveName());
+			str.Format(IDS_DELETEDATABASEQUESTION,pFileName);
 			int nRet=MessageBox(str,ID2W(IDS_DELETEDATABASE),MB_ICONQUESTION|MB_YESNO);
 			if (nRet==IDYES)
-				FileSystem::Remove(pDatabase->GetArchiveName());
+				FileSystem::Remove(pFileName);
 		}
+
+		if (bFree)
+			delete[] pFileName;
 	}
 	m_pList->DeleteItem(nItem);
 
@@ -2518,12 +2570,13 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 	// Set wait cursor
 	CWaitCursor wait;
 	
-	LPCWSTR pCurFile=szwEmpty;
-	if (pDatabase->GetArchiveType()==CDatabase::archiveFile)
-		pCurFile=pDatabase->GetArchiveName();
+	LPWSTR pArchiveFile;
+	BOOL bFree;
+	pArchiveFile=pDatabase->GetResolvedArchiveName(bFree);
+	CAutoPtrA<WCHAR> ap(bFree?pArchiveFile:NULL);
 
 	// Initializing file name dialog
-	CFileDialog fd(FALSE,L"*",pCurFile,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,
+	CFileDialog fd(FALSE,L"*",pArchiveFile,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,
 		IDS_EXPORTDATABASEFILTERS);
 	fd.EnableFeatures();
 	fd.SetTitle(ID2W(IDS_EXPORTDATABASESETTINGS));
@@ -2532,17 +2585,18 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 	// Ask file name
 	if (!fd.DoModal(*this))
 		return;
-	
+
+
 	CStringW Path;
 	fd.GetFilePath(Path);
 	
-	if (FileSystem::IsFile(pDatabase->GetArchiveName()))
+	if (FileSystem::IsFile(pArchiveFile))
 	{
-		if (Path.CompareNoCase(pDatabase->GetArchiveName())!=-1 &&
+		if (Path.CompareNoCase(pArchiveFile)!=-1 &&
 			fd.GetFilterIndex()==1)
 		{
 			// Destination is not same as the database file, copy content of file
-			FileSystem::CopyFile(pDatabase->GetArchiveName(),Path,FALSE);
+			FileSystem::CopyFile(pArchiveFile,Path,FALSE);
 		}
 		
 		if (FileSystem::IsFile(Path))
@@ -2557,6 +2611,11 @@ void CSettingsProperties::CDatabasesSettingsPage::OnExport()
 				return;			
 		}
 	}
+
+
+
+
+	// Export extra block
 
 	CFile* pFile=NULL;
 	LPWSTR pExtra=pDatabase->ConstructExtraBlock();
@@ -3213,7 +3272,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 	GetDlgItemText(IDC_DBFILE,pText,iLength);
 	m_pDatabase->SetArchiveNamePtr(CDatabase::GetCorrertFileName(pText));
 	
-	if (m_pDatabase->GetArchiveName()==NULL)
+	if (m_pDatabase->GetArchiveName(TRUE)==NULL)
 	{
 		// Path was not ok, is this intended
 		CStringW msg;
