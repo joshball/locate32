@@ -60,6 +60,8 @@ extern LPWSTR g_szwBuffer;
 #define DEFAULT_NUMBEROFDIRECTORIES		4
 #define DEFAULT_NUMBEROFNAMES			10
 #define DEFAULT_NUMBEROFTYPES			10
+#define DEFAULT_INSTANTSEARCHLIMIT		50
+#define DEFAULT_INSTANTSEARCHDELAY		500
 
 
 // Timer IDs, if timer ID is not one of those, ID is HWND to control to get focus
@@ -72,6 +74,7 @@ extern LPWSTR g_szwBuffer;
 #define ID_CHECKSCHEDULES			8
 #define ID_ENSUREVISIBLEICON		9
 #define ID_RUNSTARTUPSCHEDULES		10
+#define ID_INSTANTSEARCHTIMER		11
 
 
 // Actual id is 30 <= x < 30+Nshortcuts

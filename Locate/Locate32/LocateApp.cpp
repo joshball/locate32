@@ -1694,26 +1694,40 @@ BOOL CLocateApp::StopUpdating(BOOL bForce)
     if (!IsUpdating())
 		return TRUE; // Already stopped
 
+	// Return falue
 	BOOL bRet=TRUE;
+
+	// Stop every updater thread
 	EnterCriticalSection(&m_cUpdatersPointersInUse);
 	for (int i=0;m_ppUpdaters!=NULL && m_ppUpdaters[i]!=NULL;i++)
 	{
 		if (!IS_UPDATER_EXITED(m_ppUpdaters[i]))
 		{
+			// StopUpdating() may want to use m_pUpdaters points 
+			// trough UpdateProc. UpdateProc dows not change order
+			// or the size of m_ppUpdaters but may free it and set to NULL
 			LeaveCriticalSection(&m_cUpdatersPointersInUse);
+
 			if (!m_ppUpdaters[i]->StopUpdating(bForce))
 				bRet=FALSE;
+			
 			EnterCriticalSection(&m_cUpdatersPointersInUse);
 		}
 	}
 	LeaveCriticalSection(&m_cUpdatersPointersInUse);
 	
+	// Closes update status window and stops animation
 	GetLocateAppWnd()->StopUpdateStatusNotification();
+
+
+	/// Notify the dialog so that it can reset lookin combo etc
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg!=NULL)
 		pLocateDlg->SendMessage(WM_UPDATINGSTOPPED);
 		
-	GetLocateAppWnd()->SetUpdateStatusInformation(DEFAPPICON,IDS_NOTIFYLOCATE);
+
+	// Set tray icon
+	GetLocateAppWnd()->SetTrayIcon(DEFAPPICON,IDS_NOTIFYLOCATE);
 	
 	// I think pointers are removed elsewhere
 	ASSERT(m_ppUpdaters==NULL);
@@ -1975,7 +1989,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 	
 		
 		if (dwParam!=NULL)
-			((CLocateAppWnd*)dwParam)->SetUpdateStatusInformation(NULL,IDS_NOTIFYUPDATING);
+			((CLocateAppWnd*)dwParam)->SetTrayIcon(NULL,IDS_NOTIFYUPDATING);
 		return TRUE;
 	}
 	case WritingDatabase:
@@ -1993,7 +2007,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 	
 		
 		if (dwParam!=NULL)
-			((CLocateAppWnd*)dwParam)->SetUpdateStatusInformation(NULL,IDS_NOTIFYUPDATING);
+			((CLocateAppWnd*)dwParam)->SetTrayIcon(NULL,IDS_NOTIFYUPDATING);
 		return TRUE;
 	}
 	case InitializeWriting:
@@ -2119,7 +2133,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 					// dwParam can be NULL, if updating process is started via 
 					// command line parameters such that dialog is not opened
 				
-					((CLocateAppWnd*)dwParam)->SetUpdateStatusInformation(NULL,IDS_NOTIFYUPDATING);
+					((CLocateAppWnd*)dwParam)->SetTrayIcon(NULL,IDS_NOTIFYUPDATING);
 				}
 			}
 			return TRUE;
@@ -2700,7 +2714,7 @@ BOOL CLocateApp::UpdateSettings()
 			m_dwProgramFlags&pfDontShowSystemTrayIcon)
 		{
 			m_AppWnd.AddTaskbarIcon(TRUE);
-			m_AppWnd.SetUpdateStatusInformation(NULL,IDS_NOTIFYLOCATE);
+			m_AppWnd.SetTrayIcon(NULL,IDS_NOTIFYLOCATE);
 		}
 				
 
@@ -2801,7 +2815,7 @@ void CLocateAppWnd::FreeRootInfos(WORD wThreads,RootInfo* pRootInfos)
 #define MAXINFOTEXTLENGTH		256
 #define MAXINFOTITLELENGTH		64
 
-BOOL CLocateAppWnd::SetUpdateStatusInformation(HICON hIcon,UINT uTip,LPCWSTR szText)
+BOOL CLocateAppWnd::SetTrayIcon(HICON hIcon,UINT uTip,LPCWSTR szText)
 {
 	if (CLocateApp::GetProgramFlags()&CLocateApp::pfDontShowSystemTrayIcon)
 		return TRUE;
@@ -3118,7 +3132,7 @@ BOOL CLocateAppWnd::StopUpdateStatusNotification()
 		}
 		delete[] m_pUpdateAnimIcons;
 		m_pUpdateAnimIcons=NULL;
-		GetLocateAppWnd()->SetUpdateStatusInformation(DEFAPPICON,IDS_NOTIFYLOCATE);
+		GetLocateAppWnd()->SetTrayIcon(DEFAPPICON,IDS_NOTIFYLOCATE);
 	}
 	LeaveCriticalSection(&m_csAnimBitmaps);
 	return TRUE;
@@ -3273,7 +3287,7 @@ BYTE CLocateAppWnd::OnSettings()
 
 			// Set icon
 			LoadAppIcon();
-			SetUpdateStatusInformation(DEFAPPICON,0);
+			SetTrayIcon(DEFAPPICON,0);
 			
 			// Set LocateDlg to use new seetings
 			CLocateDlg* pLocateDlg=GetLocateDlg();
@@ -3305,7 +3319,7 @@ BYTE CLocateAppWnd::OnLocate()
 	
 	// Refreshing icon
 	EnterCriticalSection(&m_csAnimBitmaps);
-	SetUpdateStatusInformation(m_pUpdateAnimIcons!=NULL?m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]:NULL);
+	SetTrayIcon(m_pUpdateAnimIcons!=NULL?m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]:NULL);
 	LeaveCriticalSection(&m_csAnimBitmaps);
 	
 	
@@ -3410,31 +3424,43 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThrea
 		}
 		else
 		{
-			CArrayFP<PDATABASE> aDatabases;
 			const CArray<PDATABASE>& aGlobalDatabases=GetLocateApp()->GetDatabases();
-			for (int i=0;i<aGlobalDatabases.GetSize();i++)
+			CArrayFP<PDATABASE> aDatabases;
+			
+			
+			
+			LPWSTR pPtr=pDatabases;
+			while (*pPtr!=NULL)
 			{
-				LPWSTR pPtr=pDatabases;
-				BOOL bFound=FALSE;
-				while (*pPtr!=NULL)
+				int iStrLen=istrlenw(pPtr);
+				int iNameLen=FirstCharIndex(pPtr,L'\\');
+				
+				if (iNameLen==-1)
+					iNameLen=iStrLen;
+
+				int iDB;
+				for (iDB=0;iDB<aGlobalDatabases.GetSize();iDB++)
 				{
-					int iStrLen=istrlenw(pPtr)+1;
-					if (wcsncmp(pPtr,aGlobalDatabases[i]->GetName(),iStrLen)==0)
+					if (wcsncmp(pPtr,aGlobalDatabases[iDB]->GetName(),iNameLen)==0)
 					{
-						bFound=TRUE;
-						break;
+						if (pPtr[iNameLen]==L'\\' || pPtr[iNameLen]==L'\\')
+						{
+							CDatabase* pDatabase=new CDatabase(*aGlobalDatabases[iDB]);
+							pDatabase->UpdateGlobally(TRUE);
+							if (iNameLen!=iStrLen)
+								pDatabase->SetThreadId(_wtoi(pPtr+iNameLen+1));
+							else
+								pDatabase->SetThreadId(0);
+							aDatabases.Add(pDatabase);
+							break;
+						}
 					}
-					pPtr+=iStrLen;
 				}
-				if (bFound)
-				{
-					CDatabase* pDatabase=new CDatabase(*aGlobalDatabases[i]);
-					pDatabase->UpdateGlobally(TRUE);
-					pDatabase->SetThreadId(0);
-					aDatabases.Add(pDatabase);
-				}
+				
+				pPtr+=iStrLen+1;
 			}
 
+			
 			if (aDatabases.GetSize()==0)
 				return FALSE;
 			if (!GetLocateApp()->GlobalUpdate(&aDatabases,nThreadPriority))
@@ -3804,7 +3830,7 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 			m_nCurUpdateAnimBitmap++;
 			if (m_nCurUpdateAnimBitmap>=COUNT_UPDATEANIMATIONS)
 				m_nCurUpdateAnimBitmap=0;
-			SetUpdateStatusInformation(m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]);
+			SetTrayIcon(m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]);
 		}
 		LeaveCriticalSection(&m_csAnimBitmaps);
 		break;

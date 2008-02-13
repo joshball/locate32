@@ -18,7 +18,7 @@ LPWSTR GetDefaultFileLocation(LPCWSTR szFileName,BOOL bMustExists,DWORD* lpdwSiz
 {
 	int nFileNameLen=istrlen(szFileName);
 	
-
+	// Check first that is there 
 	PFNSHGETFOLDERPATH pGetFolderPath=(PFNSHGETFOLDERPATH)GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetFolderPathW");
 	if (pGetFolderPath!=NULL)
 	{
@@ -27,37 +27,58 @@ LPWSTR GetDefaultFileLocation(LPCWSTR szFileName,BOOL bMustExists,DWORD* lpdwSiz
 			SHGFP_TYPE_CURRENT,szAppDataPath)))
 		{
 			int nPathLen=istrlen(szAppDataPath);
+
+			// Insert \\ if already not there
 			if (szAppDataPath[nPathLen-1]!=L'\\')
 				szAppDataPath[nPathLen++]=L'\\';
 			
+			// Buffer for default path
 			LPWSTR pStr=new WCHAR[nPathLen+9+nFileNameLen+1];
 			MemCopyW(pStr,szAppDataPath,nPathLen);
-
 			MemCopyW(pStr+nPathLen,L"Locate32",9);
-			if (!FileSystem::IsDirectory(pStr))
-				FileSystem::CreateDirectory(pStr);
-			
 			nPathLen+=8;
-			pStr[nPathLen++]='\\';
 
-			
+			// Now pStr contains X:\UsersFolder\AppPath\Locate32
+
+			BOOL bDirectoryExists=FileSystem::IsDirectory(pStr);
+
+			// Copy file name part at tail 
+			pStr[nPathLen++]='\\';
 			MemCopyW(pStr+nPathLen,szFileName,nFileNameLen+1);
-			
 			if (lpdwSize!=NULL)
 				*lpdwSize=nPathLen+nFileNameLen;
-			
-			if (!bMustExists)
-				return pStr;	
+				
+				
+			// Check whether directory exists
+			if (bDirectoryExists)
+			{
+				// Directory does exist
+				
+				if (!bMustExists)
+					return pStr;	
 
-			if (FileSystem::IsFile(pStr))
-				return pStr;
+				// Checking file
+				if (FileSystem::IsFile(pStr))
+					return pStr;
+			}
+			else
+			{
+				// Create directory if does not already exists 
+				// and bMustExists is not set (this function is called
+				// for default databases with bMustExists=FALSE)
+				if (!bMustExists)
+				{
+					FileSystem::CreateDirectory(pStr);
+					return pStr;
+				}
+			}
+				
 
-			// Check also programs directory
 			delete[] pStr;
 		}
 	}
 
-
+	// Check also Locate32's directory, maybe there is that file
 	int iLen;
 	LPWSTR pStr;
 	WCHAR szExeName[MAX_PATH];

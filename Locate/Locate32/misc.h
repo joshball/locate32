@@ -9,13 +9,17 @@
 
 // Messages
 
-#define DTMX_SETRELDATE			DTM_FIRST+20 // wParam=date, lParam flags
-#define DTMX_GETRELDATE			DTM_FIRST+21 
-#define DTMX_GETCLASS			DTM_FIRST+22 // Returns pointer to CDateTimePickEx
-#define DTMX_CHANGEMODE			DTM_FIRST+23 // wParam: 0 for explicit mode, 1 for relative mode
-#define DTMX_GETMODE			DTM_FIRST+24 // returns 0 for explicit mode, 1 for relative mode
-#define DTMX_GETSYSTEMTIME		DTM_GETSYSTEMTIME
-#define DTMX_SETSYSTEMTIME		DTM_SETSYSTEMTIME
+#define DTXM_SETRELDATE			DTM_FIRST+20 // wParam=date, lParam flags
+#define DTXM_GETRELDATE			DTM_FIRST+21 
+#define DTXM_GETCLASS			DTM_FIRST+22 // Returns pointer to CDateTimePickEx
+#define DTXM_CHANGEMODE			DTM_FIRST+23 // wParam: 0 for explicit mode, 1 for relative mode
+#define DTXM_GETMODE			DTM_FIRST+24 // returns 0 for explicit mode, 1 for relative mode
+#define DTXX_GETSYSTEMTIME		DTM_GETSYSTEMTIME
+#define DTXX_SETSYSTEMTIME		DTM_SETSYSTEMTIME
+
+// Notifications
+#define DTXN_CHANGE				0x300
+#define DTXN_MODECHANGED		0x400
 
 // For lParam of DTMX_SETRELDATE & DTMX_SETSYSTEMTIME
 #define DTXF_NOMODECHANGE		0x10000000
@@ -26,6 +30,7 @@
 #define DTXF_FORSAVE			0x80000000
 
 #define DTXF_MSGMASK			0xF0000000
+
 
 
 // Functions
@@ -48,7 +53,8 @@ public:
 		Pressed=0x0004,
 		ButtonStateMask=0x0006,
 
-		SpinBoxIsUpdating=0x0008
+		SpinBoxIsUpdating=0x0008,
+		DontSendNotifications=0x0010
 	};
 
 public:

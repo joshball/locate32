@@ -1329,36 +1329,48 @@ BOOL CSelectDatabasesDlg::InsertSelected()
 	if (m_pSelectDatabases==NULL)
 		return FALSE;
 
-	InsertDatabases();
+	CArray<WORD> aDatabaseIDs;
+	CArray<WORD> aThreads;
+	WORD wThreads=1;
 
-	if (m_List.GetItemCount()>0)
+	LPWSTR pPtr=m_pSelectDatabases;
+	while (*pPtr!=L'\0')
 	{
-		int nItem=m_List.GetNextItem(-1,LVNI_ALL);
+		int iStrLen=istrlenw(pPtr);
+		int iNameLen=FirstCharIndex(pPtr,L'\\');
 		
-		while (nItem!=-1)
-		{
-			CDatabase* pDatabase=(CDatabase*)m_List.GetItemData(nItem);
-			if (pDatabase!=NULL)
-			{
-				BOOL bFound=FALSE;
-				LPWSTR pPtr=m_pSelectDatabases;
-				while (*pPtr!=L'\0')
-				{
-					int iStrLen=istrlenw(pPtr)+1;
-					if (wcsncmp(pPtr,pDatabase->GetName(),iStrLen)==0)
-					{
-						bFound=TRUE;
-						break;
-					}
-					pPtr+=iStrLen;
-				}
-				EnableItem(pDatabase,bFound);
-				m_List.SetCheckState(nItem,bFound);
-			}
+		if (iNameLen==-1)
+			iNameLen=iStrLen;
 
-			nItem=m_List.GetNextItem(nItem,LVNI_ALL);
+	
+		for (int i=0;i<m_rOrigDatabases.GetSize();i++)
+		{
+			if (wcsncmp(pPtr,m_rOrigDatabases[i]->GetName(),iNameLen)==0)
+			{
+				if (pPtr[iNameLen]==L'\0' || pPtr[iNameLen]==L'\\')
+				{
+					aDatabaseIDs.Add(m_rOrigDatabases[i]->GetID());
+					WORD wThread=0;
+					if (iNameLen!=iStrLen)
+						wThread=_wtoi(pPtr+iNameLen+1);
+					aThreads.Add(wThread);
+					if (wThreads<=wThread)
+						wThreads=wThread+1;
+					break;
+				}
+			}
 		}
+		pPtr+=iStrLen+1;
 	}
+
+	for (int i=0;i<m_rOrigDatabases.GetSize();i++)
+	{
+		if (wThreads<=m_rOrigDatabases[i]->GetThreadId())
+			wThreads=m_rOrigDatabases[i]->GetThreadId()+1;
+	}
+
+	InsertDatabases(aDatabaseIDs.GetSize(),wThreads,aDatabaseIDs.GetData(),
+		aThreads.GetData(),aDatabaseIDs.GetSize(),aDatabaseIDs.GetData());
 	return TRUE;
 }
 	
@@ -1624,6 +1636,29 @@ BOOL CSelectDatabasesDlg::IncreaseThread(int nItem,CDatabase* pDatabase,BOOL bDe
 	EnableButtons();
 	return TRUE;
 }
+
+BOOL CSelectDatabasesDlg::SetThread(int nItem,CDatabase* pDatabase,WORD wThread)
+{
+	if (pDatabase->GetThreadId()>=m_nThreadsCurrently)
+		ChangeNumberOfThreads(wThread+1);
+
+	pDatabase->SetThreadId(wThread);
+
+	if (GetLocateApp()->m_wComCtrlVersion>=0x0600)
+	{
+		LVITEM li;
+		li.mask=LVIF_GROUPID;
+		li.iItem=nItem;
+		li.iSubItem=0;
+		li.iGroupId=pDatabase->GetThreadId();
+		m_List.SetItem(&li);
+	}
+	else
+		m_List.RedrawItems(nItem,nItem);
+	
+	return TRUE;
+}
+
 
 void CSelectDatabasesDlg::EnableButtons()
 {

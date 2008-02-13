@@ -125,6 +125,7 @@ public:
 	void ChangeNumberOfThreads(int nThreads);
 	BOOL ItemUpOrDown(BOOL bUp);
 	BOOL IncreaseThread(int nItem,CDatabase* pDatabase,BOOL bDecrease=FALSE);
+	BOOL SetThread(int nItem,CDatabase* pDatabase,WORD wThread);
 
 	void EnableButtons();
 	BOOL IsItemEnabled(const CDatabase* pDatabase);

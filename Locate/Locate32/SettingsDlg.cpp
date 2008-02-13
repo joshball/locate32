@@ -30,7 +30,8 @@ inline BOOL operator!=(const SYSTEMTIME& s1,const SYSTEMTIME& s2)
 CSettingsProperties::CSettingsProperties(HWND hParent)
 :	CPropertySheet(IDS_SETTINGS,hParent,0),
 	m_nMaximumFoundFiles(0),
-	m_nInstantSearchingLimit(50),
+	m_nInstantSearchingLimit(DEFAULT_INSTANTSEARCHLIMIT),
+	m_nInstantSearchingDelay(DEFAULT_INSTANTSEARCHDELAY),
 	m_nUpdateThreadPriority(THREAD_PRIORITY_NORMAL),
 	m_dwLocateDialogFlags(CLocateDlg::fgDefault),
 	m_dwLocateDialogExtraFlags(CLocateDlg::efDefault),
@@ -185,12 +186,14 @@ BOOL CSettingsProperties::LoadSettings()
 		{
 			LocRegKey.QueryValue("MaximumFoundFiles",m_nMaximumFoundFiles);
 			LocRegKey.QueryValue("Instant Search Limit",m_nInstantSearchingLimit);
+			LocRegKey.QueryValue("Instant Search Delay",m_nInstantSearchingDelay);
 		}
 	}
 	else
 	{
 		m_nMaximumFoundFiles=GetLocateDlg()->GetMaxFoundFiles();
 		m_nInstantSearchingLimit=GetLocateDlg()->GetInstantSearchingLimit();
+		m_nInstantSearchingDelay=GetLocateDlg()->GetInstantSearchingDelay();
 	}
     	
 	
@@ -465,12 +468,14 @@ BOOL CSettingsProperties::SaveSettings()
 	{
 		LocRegKey.SetValue("MaximumFoundFiles",m_nMaximumFoundFiles);
 		LocRegKey.SetValue("Instant Search Limit",m_nInstantSearchingLimit);
+		LocRegKey.SetValue("Instant Search Delay",m_nInstantSearchingDelay);
 	}
 
 	if (GetLocateDlg()!=NULL)
 	{
 		GetLocateDlg()->SetMaxFoundFiles(m_nMaximumFoundFiles);
 		GetLocateDlg()->SetInstantSearchLimit(m_nInstantSearchingLimit);
+		GetLocateDlg()->SetInstantSearchDelay(m_nInstantSearchingDelay);
 		GetLocateDlg()->m_NameDlg.ChangeNumberOfItemsInLists(m_nNumberOfNames,m_nNumberOfTypes,m_nNumberOfDirectories);
 	}
 
@@ -1079,6 +1084,10 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	Item* InstantSearching[]={
 		CreateNumeric(IDS_ADVSETISLIMIT,DefaultNumericProc,
 			DWORD(-1),&m_pSettings->m_nInstantSearchingLimit),
+		CreateNumeric(IDS_ADVSETISDELAY,DefaultNumericProc,
+			DWORD(-1),&m_pSettings->m_nInstantSearchingDelay),
+		CreateCheckBox(IDS_ADVSETISUPDOWNGORESULTS,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isUpDownGoesToResults,&m_pSettings->m_dwInstantSearchingFlags),
 		CreateCheckBox(IDS_ADVSETISDISABLEIFDATASEARCH,NULL,DefaultCheckBoxProc,
 			CLocateDlg::isDisableIfDataSearch,&m_pSettings->m_dwInstantSearchingFlags),
 		CreateCheckBox(IDS_ADVSETISNAMEDCHANGED,NULL,DefaultCheckBoxProc,
@@ -1107,6 +1116,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CLocateDlg::efAllowSpacesAsSeparators,&m_pSettings->m_dwLocateDialogExtraFlags),
 		CreateCheckBox(IDS_ADVSETLOGICALOPERATIONS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::efEnableLogicalOperations,&m_pSettings->m_dwLocateDialogExtraFlags),
+		CreateCheckBox(IDS_ADVSETMATCHWHOLENAMEIFASTERISKS,NULL,DefaultCheckBoxProc,
+			CLocateDlg::efMatchWhileNameIfAsterisks,&m_pSettings->m_dwLocateDialogExtraFlags),
 		CreateCheckBox(IDS_ADVSETISENABLE,InstantSearching,DefaultCheckBoxProc,
 			CLocateDlg::isEnable,&m_pSettings->m_dwInstantSearchingFlags),
 		CreateRoot(IDS_ADVSETRESULTSLIST,ResultsListItems),
@@ -5320,7 +5331,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnDatabas
 {
 	CArray<PDATABASE> aDatabases;
 		
-	CSelectDatabasesDlg dbd(GetLocateApp()->GetDatabases(),aDatabases,0,
+	CSelectDatabasesDlg dbd(GetLocateApp()->GetDatabases(),aDatabases,CSelectDatabasesDlg::flagShowThreads,
 		CRegKey2::GetCommonKey()+"\\Dialogs\\SelectDatabases/Schedule");
 	dbd.SelectDatabases(m_pSchedule->m_pDatabases);
 
@@ -5345,14 +5356,32 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnDatabas
 			DWORD dwLength=1;
 			int i=0;
 			for (i=0;i<aDatabases.GetSize();i++)
-				dwLength+=istrlenw(aDatabases[i]->GetName())+1;
+			{
+				// Space for name, '\\' (thread separator) and '\0'
+				dwLength+=istrlenw(aDatabases[i]->GetName())+2;
+				
+				// Space for thread
+				WCHAR szThread[10];
+				_itow_s(aDatabases[i]->GetThreadId(),szThread,10,10);
+
+				dwLength+=istrlenw(szThread);
+			}
 
 			m_pSchedule->m_pDatabases=new WCHAR[dwLength];
 			LPWSTR pPtr=m_pSchedule->m_pDatabases;
 			for (i=0;i<aDatabases.GetSize();i++)
 			{
-				int iStrlen=istrlenw(aDatabases[i]->GetName())+1;
+				int iStrlen=istrlenw(aDatabases[i]->GetName());
 				MemCopyW(pPtr,aDatabases[i]->GetName(),iStrlen);
+				pPtr+=iStrlen;
+
+				*(pPtr++)=L'\\';
+
+				// Space for thread
+				WCHAR szThread[10];
+				_itow_s(aDatabases[i]->GetThreadId(),szThread,10,10);
+				iStrlen=istrlenw(szThread)+1;
+				MemCopyW(pPtr,szThread,iStrlen);
 				pPtr+=iStrlen;
 			}
 			*pPtr='\0';

@@ -242,6 +242,17 @@ public:
 		void LoadRegistry();
 
 
+		// Subclassing "Named:" control
+		struct NameControlData {
+			WNDPROC pOldWndProc;
+			CComboBox* pNameCombo;
+			CLocateDlg* pLocateDlg;			
+		};
+		static LRESULT CALLBACK NameWindowProc(HWND hWnd,UINT uMessage,
+			WPARAM wParam,LPARAM lParam);
+		static BOOL CALLBACK EnumAndSubclassNameChilds(HWND hwnd,LPARAM lParam);
+
+	
 	private:
 		WORD m_nFieldLeft;
 		WORD m_nButtonWidth;
@@ -319,7 +330,7 @@ public:
 	public:
 		// Return codes for OnOk
 		enum {
-			flagMatchCase=0x1,
+			flagMatchWholeNameOnly=0x1,
 			flagReplaceSpaces=0x2
 		};
 		DWORD SetAdvancedFlagsForLocater(CLocater* pLocater,BOOL bForInstantSearch);
@@ -512,7 +523,6 @@ public:
 	static int GetSendToMenuPos(HMENU hMenu);
 	BOOL CheckClipboard();
 	void EnableItems(BOOL bEnable=TRUE);
-	void ResetFileNotificators();
 	void StartBackgroundOperations();
 	void ChangeBackgroundOperationsPriority(BOOL bLower);
 
@@ -542,6 +552,7 @@ public:
 	void ClearShortcuts();
 	void SetMenus();
 	void SetResultListFont();
+	void SetDialogTransparency();
 
 	void LoadResultlistActions();
 	void SaveResultlistActions();
@@ -573,7 +584,6 @@ protected:
 	void OnShowFileInformation();
 	void OnRemoveDeletedFiles();
 	
-	
 	void OnExecuteFile(LPCWSTR szVerb,int nItem=-1);
 	void OnRenameFile(int nItem=-1);
 	void OnCopy(BOOL bCut,int nItem=-1);
@@ -585,6 +595,8 @@ protected:
 		BasedOnShift = 2
 	};
 	void OnDelete(DeleteFlag DeleteFlag=BasedOnShift,int nItem=-1);
+	
+	void OnFieldChange(DWORD dwWhatChanged);
 	
 
 	BOOL SetListStyle(int id,BOOL bInit=FALSE);
@@ -727,8 +739,9 @@ public:
 		// Locate process
 		efEnableLogicalOperations = 0x00000010,
 		efAllowSpacesAsSeparators = 0x00000020,
+		efMatchWhileNameIfAsterisks = 0x00000040,
 		efLocateProcessDefaults = efEnableLogicalOperations|efAllowSpacesAsSeparators,
-		efLocateProcessSave = 0x00000030,
+		efLocateProcessSave = 0x00000070,
 
 		// Locate dialog
 		efFocusToResultListWhenAppActivated = 0x01000000,
@@ -881,12 +894,15 @@ public:
 	// Instant searching
 	enum InstantSearchingFlags {
 		isEnable = 0x000000001,
-		isRunning = 0x000000002,
-		isIgnoreChangeMessages = 0x00000004,
+		isSearching = 0x000000002, 
+		isRunning = 0x00000004,
 		isDisableIfDataSearch	= 0x00000008,
+		isIgnoreChangeMessages  = 0x00000010,
+		isUpDownGoesToResults   = 0x00000020,
 		
+
 		isGeneralDefault = isDisableIfDataSearch,
-		isGeneralSave = isEnable|isDisableIfDataSearch,
+		isGeneralSave = isEnable | isDisableIfDataSearch | isUpDownGoesToResults,
 
 
 		isSearchIfNameChanged   = 0x00010000,
@@ -914,16 +930,22 @@ protected:
 	
 	DWORD m_dwInstantFlags;
 	DWORD m_dwInstantLimit;
+	DWORD m_dwInstantDelay;
 
-	void InstantSearch(DWORD dwWhatChanged);
+	void InstantSearch();
+	void CancelInstantSearch();
 
 public:
 	DWORD GetInstantSearchingFlags() const { return m_dwInstantFlags; }
 	BOOL IsInstantSearchingFlagSet(InstantSearchingFlags nFlag) const { return m_dwInstantFlags&nFlag?1:0; }
 	void AddInstantSearchingFlags(DWORD dwFlags) { m_dwInstantFlags|=dwFlags; }
 	void RemoveInstantSearchingFlags(DWORD dwFlags) { m_dwInstantFlags&=~dwFlags; }
+
 	DWORD GetInstantSearchingLimit() const { return m_dwInstantLimit; }
 	void SetInstantSearchLimit(DWORD dwValue) { m_dwInstantLimit=dwValue; }
+
+	DWORD GetInstantSearchingDelay() const { return m_dwInstantDelay; }
+	void SetInstantSearchDelay(DWORD dwValue) { m_dwInstantDelay=dwValue; }
 
 
 

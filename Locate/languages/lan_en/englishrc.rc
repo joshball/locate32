@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,8,2110
- PRODUCTVERSION 3,1,8,2110
+ FILEVERSION 3,1,8,2130
+ PRODUCTVERSION 3,1,8,2130
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 beta build 8.2110"
+            VALUE "FileVersion", "3.1 beta build 8.2130"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2008 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 beta build 8.2110"
+            VALUE "ProductVersion", "3.1 beta build 8.2130"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1692,10 +1692,13 @@ BEGIN
 	IDS_ADVSETDONTRESOLVEDRIVEICONS	"Do not resolve icon for local drives"
 	IDS_ADVSETLOGICALOPERATIONS		"Allow logical operations (+ and -) for searches"
 	IDS_ADVSETSPACEISSEPARATOR		"Use space as a separator for searches"
+	IDS_ADVSETMATCHWHOLENAMEIFASTERISKS	"If asterisks given, search as if ""Match whole name"" is enabled"
 	IDS_ADVSETDONTSHOWSTICON		"Do not show system tray icon"
 	IDS_ADVSETSYSTEMTRAYICON		"System tray icon"
 	IDS_ADVSETISENABLE				"Enable search while typing"
-	IDS_ADVSETISLIMIT				"Limit the number of results"
+	IDS_ADVSETISLIMIT				"Limit the number of results:"
+	IDS_ADVSETISDELAY				"Delay before searching (ms):"
+	IDS_ADVSETISUPDOWNGORESULTS		"Up or Down key in ""Named:"" will activate first found item"
 	IDS_ADVSETISNAMEDCHANGED		"Search when ""Named:"" is changed"
 	IDS_ADVSETISTYPECHANGED			"Search when ""Extensions:"" is changed"
 	IDS_ADVSETISLOOKINCHANGED		"Search when ""Look In:"" is changed"
@@ -1796,7 +1799,7 @@ BEGIN
 	IDS_ACTIONRESITEMEXECUTENTHITEM		"Execute %s%s file"
 	IDS_ACTIONADVSENDMESSAGE			"Send message"
 	IDS_ACTIONADVPOSTMESSAGE			"Post message"
-	IDS_ACTIONADVINSERTASTERISKS		"Insert Asterisks"
+	IDS_ACTIONADVINSERTASTERISKS		"Insert asterisks to ""Named:"""
 	IDS_ACTIONHELPSHOW					"Show Help for Item"
 	IDS_ACTIONHELPCLOSE					"Close Help"
 	IDS_ACTIONHELPTOPICS				"Show Topics"

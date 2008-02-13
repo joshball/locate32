@@ -9,7 +9,9 @@
 
 inline CLocateDlg::CLocateDlg()
 :	CDialog(IDD_MAIN),m_dwFlags(fgDefault),m_dwExtraFlags(efDefault),
-	m_nSorting(BYTE(-1)),m_dwInstantFlags(isDefault),m_dwInstantLimit(50),
+	m_nSorting(BYTE(-1)),m_dwInstantFlags(isDefault),
+	m_dwInstantLimit(DEFAULT_INSTANTSEARCHLIMIT),
+	m_dwInstantDelay(DEFAULT_INSTANTSEARCHDELAY),
 	m_nMaxYMinimized(0),m_nMaxYMaximized(0),m_nLargeY(354),
 	m_ClickWait(FALSE),m_hSendToListFont(NULL),m_hActivePopupMenu(NULL),
 	m_pListCtrl(NULL),m_pTabCtrl(NULL),m_pStatusCtrl(NULL),m_pListTooltips(NULL),

@@ -98,7 +98,7 @@ BOOL GetIMAPIBurningDevices(CArray<LPWSTR>& aDevicePaths)
 CDateTimeCtrlEx::CDateTimeCtrlEx(HWND hWnd)
 :	CDateTimeCtrl(hWnd),m_hTimePickerWnd(NULL),m_hEditWnd(NULL),
 	m_hSpinWnd(NULL),m_hTheme(NULL),m_pDrawThemeBackground(NULL),
-	m_bDeleteOnDestroy(FALSE),m_dwFlags(ModeExplicit|Normal)
+	m_bDeleteOnDestroy(FALSE),m_dwFlags(ModeExplicit|Normal|DontSendNotifications)
 {
 	m_hUxTheme=LoadLibrary("uxtheme.dll");
 	if (m_hUxTheme!=NULL)
@@ -155,6 +155,8 @@ void CDateTimeCtrlEx::CreateControls()
 
 	
 	SetRelativeDate(0,DTXF_NOMODECHANGE);
+
+	m_dwFlags&=~DontSendNotifications;
 }
 
 
@@ -364,7 +366,10 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 			case IDM_RELATIVEDATE:
 				pData->ChangeMode(TRUE);
 				break;
-			}			
+			}	
+
+			if (!(pData->m_dwFlags&DontSendNotifications))
+				::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),DTXN_MODECHANGED),(LPARAM)hWnd);
 
 			pData->m_dwFlags&=~ButtonStateMask;
 			pData->m_dwFlags|=Normal;
@@ -427,7 +432,8 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 					}
 					::SendMessage(pData->m_hSpinWnd,UDM_SETPOS32,0,nVal);
 
-					::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),EN_CHANGE),(LPARAM)hWnd);
+					if (!(pData->m_dwFlags&DontSendNotifications))
+						::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),DTXN_CHANGE),(LPARAM)hWnd);
 				}
 				break;
 			}
@@ -455,27 +461,29 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 			
 			pData->m_dwFlags&=~SpinBoxIsUpdating;
 
-			::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),EN_CHANGE),(LPARAM)hWnd);
+			if (!(pData->m_dwFlags&DontSendNotifications))
+				::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),DTXN_CHANGE),(LPARAM)hWnd);
 
 		}
 		else if (((LPNMHDR)lParam)->idFrom==IDC_EXPLICITIDATE && 
 			((LPNMHDR)lParam)->code==DTN_DATETIMECHANGE)
 		{
-			::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),EN_CHANGE),(LPARAM)hWnd);
+			if (!(pData->m_dwFlags&DontSendNotifications))
+				::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),DTXN_CHANGE),(LPARAM)hWnd);
 		}
 		break;
-	case DTMX_SETRELDATE:
+	case DTXM_SETRELDATE:
 		// wParam is new pos, lparam contains flags (DTXF_*)
 		pData->SetRelativeDate((int)wParam,(DWORD)lParam);
 		break;
-	case DTMX_GETRELDATE:
+	case DTXM_GETRELDATE:
 		return pData->GetRelativeDate();
-	case DTMX_GETCLASS:
+	case DTXM_GETCLASS:
 		return (LRESULT)pData;
-	case DTMX_CHANGEMODE:
+	case DTXM_CHANGEMODE:
 		pData->ChangeMode((BOOL)wParam);
 		break;
-	case DTMX_GETMODE:
+	case DTXM_GETMODE:
 		return pData->GetMode();
 	case WM_SETFOCUS:
 		if ((pData->m_dwFlags&ModeMask)==ModeExplicit)
@@ -494,18 +502,22 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 	
 int CDateTimeCtrlEx::SetExplicitDate(LPSYSTEMTIME pSystemTime,DWORD dwFlags)
 {
+	m_dwFlags|=DontSendNotifications;
 	if (pSystemTime->wYear==0xFFFF && pSystemTime->wMonth==0xFFFF)
 	{
 		// Relative
 		if (!(dwFlags&DTXF_NOMODECHANGE))
 			ChangeMode(TRUE);
 		SetRelativeDate(pSystemTime->wDay,dwFlags);
+		
+		m_dwFlags&=~DontSendNotifications;
 		return 1;
 	}
 	else
 	{
 		if (!(dwFlags&DTXF_NOMODECHANGE))
 			ChangeMode(FALSE);
+		m_dwFlags&=~DontSendNotifications;
 		return (int)::SendMessage(m_hTimePickerWnd,DTM_SETSYSTEMTIME,dwFlags&~DTXF_MSGMASK,(LPARAM)pSystemTime);
 	}
 }
@@ -542,6 +554,8 @@ int CDateTimeCtrlEx::GetRelativeDate() const
 
 void CDateTimeCtrlEx::SetRelativeDate(int nNewPos,DWORD dwFlags)
 {
+	m_dwFlags|=DontSendNotifications;
+	
 	if (!(dwFlags&DTXF_NOMODECHANGE))
 		ChangeMode(TRUE);
 
@@ -573,6 +587,8 @@ void CDateTimeCtrlEx::SetRelativeDate(int nNewPos,DWORD dwFlags)
 
 	if (!(dwFlags&DTXF_NOSPINCHANGE))
 		::SendMessage(m_hSpinWnd,UDM_SETPOS32,0,nNewPos);
+
+	m_dwFlags&=~DontSendNotifications;
 }
 
 BOOL RegisterDataTimeExCltr()

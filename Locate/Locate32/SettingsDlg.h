@@ -433,8 +433,10 @@ public:
 	DWORD m_dwInstantSearchingFlags;  // Used with CLocateDlg::InstantSearchingFlags
 	DWORD m_dwProgramFlags; // Used with CLocateAppWnd::ProgramFlags
 	
-	DWORD m_nMaximumFoundFiles;
-	DWORD m_nInstantSearchingLimit;
+	DWORD m_nMaximumFoundFiles; // Maximum number of results for normal searches
+	DWORD m_nInstantSearchingLimit; // Maximum number of results for search while typing
+	DWORD m_nInstantSearchingDelay; // Delay after typing before searching is started
+
 	DWORD m_nNumberOfNames; // Directoried in NameDlg 
 	DWORD m_nNumberOfTypes; // Directoried in NameDlg 
 	DWORD m_nNumberOfDirectories; // Directoried in NameDlg 
