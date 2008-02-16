@@ -1,48 +1,51 @@
 TITLE=Advanced tab
 CONTENT=
 <div id="tabs">
-<H1><A NAME="tab_advanced"></A>Advanced tab</H1>
+<H1><A NAME="tab_advanced"></A>$STRADVANCED_TABCAPTION@A$ tab</H1>
 
-<P>The <b>Advanced</b> tab contains the following fields:
+<P>The <b>$STRADVANCED_TABCAPTION@A$</b> tab contains the following fields:
 
 <div id="controls">
-<H2><A NAME="hid_advanced_check"></A>Check:</H2>
+<H2><A NAME="ta_check"></A>$DLGADVANCED_CHECK@M$</H2>
 <P>Use this field to specify that is searching done among files, directories, or both. 
 The default setting for this field can be specified in General settings.
 </P>
 
-<H2><A NAME="hid_advanced_matchwholename"></A>Match whole name only</H2>
-<P>By default asterisks are inserted to the begin and the enf of a string given in 
-"Named:" field. You can prevent this by using this field.
-The default setting for this field can be specified in General settings.
+<H2><A NAME="ta_matchwholename"></A>$DLGADVANCED_MATCHWHOLENAME@M$</H2>
+<P>If this check box is enabled, a given search term should match whole while name, 
+not only to a part of file name. On the contrary, if this check box is not turned on,
+a given search term is treated as if asterisks would be added to the begin and the end to the search term. 
+The default state for this field can be specified in the 
+<a href="settings_general.htm">General settings</a>.
 </P>
 
-<H2><A NAME="hid_advanced_replacespaces"></A>Replace spaces with asterisks</H2>
-<P>If this field is selected, spaces in a string given in "Named:" field are 
-replaced with asterisks '*'. The default setting for this field can be specified 
-in General settings.
+<H2><A NAME="ta_replacespaces"></A>$DLGADVANCED_REPLACESPACES@M$</H2>
+<P>If this field is selected, spaces in a string given in "$DLGNAME_NAMED@M$" field are 
+replaced with asterisks '*'. The default state for this field can be specified 
+in the <a href="settings_general.htm">General settings</a>.
 </P>
 
-<H2><A NAME="hid_advanced_usewholepath"></A>Use whole path</H2>
+<H2><A NAME="ta_usewholepath"></A>$DLGADVANCED_USEWHOLEPATH@M$</H2>
 <P>If this field is selected, whole path of files are used in comparison (instead 
 of just file name). For example, if this field is selected, "*foo*bar*" would
-find a file "C:\foo\bar.txt". The default setting for this field can be specified 
-in General settings.
+find a file "C:\foo\bar.txt". The default state for this field can be specified 
+in the <a href="settings_general.htm">General settings</a>.
 </P>
 
-<H2><A NAME="hid_advanced_typeoffile"></A>Type of file:</H2>
+<H2><A NAME="ta_typeoffile"></A>$DLGADVANCED_TYPEOFFILE@M$</H2>
 <P>You can specify the type of files by using this field. If this field is used,
-"Type:" field in Name & Location tab is disabled and the extension 
-corresponding to the chosen file type are shown in this "Type:" field.
+"$DLGNAME_EXTENSIONS@M$" field in $STRNAME_TABCAPTION@A$ tab is disabled and the extension 
+corresponding to the chosen file type are shown in this "$DLGNAME_EXTENSIONS@M$" field.
 </P>
 
-<H2><A NAME="hid_advanced_filecontainingtext"></A>File containing text:</H2>
+<H2><A NAME="ta_fileconttext"></A>$DLGADVANCED_CONTAININGTEXT@M$</H2>
 <P>Use this field to find texts inside of files. See <A href="issue_datasearch.htm">details</A>.
 </P>
 
-<H2><A NAME="hid_advanced_matchcase"></A>Match case</H2>
-<P>Use this field to specify whether the text fiven in "File containing text:" field is 
-case sensitive or not. 
+<H2><A NAME="ta_matchcase"></A>$DLGADVANCED_MATCHCASE@M$</H2>
+<P>Use this field to specify whether the text fiven in <b>$DLGADVANCED_CONTAININGTEXT@M$</b> field is 
+case sensitive or not. The default state for this field can be specified 
+in the <a href="settings_general.htm">General settings</a>.
 </P>
 
 </div>

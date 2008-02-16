@@ -6,7 +6,7 @@ CONTENT=
 
 <P>The Options menu offers the following commands:
 
-<TABLE cols=2 width=900>
+<TABLE id="menutable" cols=2>
 <TBODY>
 
 <TR VALIGN="top">

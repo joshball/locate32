@@ -1425,6 +1425,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\hlp\settings_databaseadv.src"
+				>
+			</File>
+			<File
 				RelativePath="..\hlp\settings_databasedlg.src"
 				>
 			</File>

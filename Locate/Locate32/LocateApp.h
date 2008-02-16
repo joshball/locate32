@@ -468,6 +468,17 @@ public:
 
 	static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);
 
+
+
+
+	// Help system
+	struct HelpID { int nID;LPCSTR lpName; };
+	static BOOL OpenHelp(HWND hWnd,HelpID* pHelpID,int nIDs,LPCSTR szHelpPage,HELPINFO* pInfo);
+   
+
+
+
+	// Friends
 	friend CLocateAppWnd;
 	friend CLocateAppWnd::CUpdateStatusWnd;
 	friend CLocateAppWnd* GetLocateAppWnd();

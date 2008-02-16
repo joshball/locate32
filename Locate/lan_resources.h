@@ -34,6 +34,7 @@
 #define IDS_LISTVOLUMEFILESYSTEM        20
 #define IDS_LISTMD5SUM                  21
 #define IDS_LISTAUTHOR                  22
+#define IDS_TITLEEXTENSIONS				23
 #define IDI_LENS                        23
 #define IDS_LOCATINGLIMITREACHED        24
 #define IDS_LOCATINGSUCCESS             25
@@ -50,7 +51,7 @@
 #define IDS_DIRECTORYTYPE               36
 #define IDS_TITLE                       37
 #define IDS_ALLFILES                    38
-#define IDS_FILESNAMED                  39
+#define IDS_TITLESEARCHRESULTS          39
 #define IDS_SHORTCUT                    40
 #define IDS_SHORTCUTTO                  41
 #define IDS_REGULAREXPRESSION           42
@@ -107,6 +108,7 @@
 #define IDS_DOCUMENTFOLDERS             103
 #define IDD_ABOUT                       104
 #define IDS_GETFOLDER                   104
+#define IDC_USEDTHREADLABEL             104
 #define IDD_ADVANCED                    105
 #define IDC_COMEWITHME                  105
 #define IDC_USEDTHREAD                  105
@@ -233,6 +235,7 @@
 #define IDS_SHORTCUTTODESKTOP           1004
 #define IDS_ERRORINVALIDFILEFORMAT      1005
 #define IDC_FILELIST                    1006
+#define IDC_NAMELABEL                   1006
 #define IDC_STATUS                      1007
 #define IDS_ERRCANNOTFIND               1007
 #define IDC_NAME                        1008
@@ -292,6 +295,7 @@
 #define IDC_FINDTARGET                  1036
 #define IDC_SHORTCUTKEY                 1038
 #define IDC_DATABASEFILEICON            1039
+#define IDC_DBFILELABEL                 1041
 #define IDC_PROPSHEET                   1042
 #define IDC_USEDDATABASE                1043
 #define IDC_DBFILE                      1044
@@ -306,9 +310,11 @@
 #define IDC_NEXTTAB                     1054
 #define IDC_PREVTAB                     1055
 #define IDC_WRITEINI                    1056
+#define IDC_CREATORLABEL                1056
 #define IDC_CREATOR                     1057
 #define IDC_POINTUNDERLINE              1057
 #define IDC_DESCRIPTION                 1058
+#define IDC_DESCRIPTIONLABEL            1059
 #define IDC_VERSION                     1059
 #define IDC_DIRECTORIES                 1060
 #define IDC_ALWAYSUNDERLINE             1061
@@ -391,6 +397,7 @@
 #define IDC_DESCENDINGORDER             1123
 #define IDC_OWNTYPE                     1124
 #define IDC_SHELLTYPE                   1125
+#define IDC_FOLDERSLABEL                1125
 #define IDC_FOLDERS                     1126
 #define IDC_ADDFOLDER                   1127
 #define IDC_REMOVEFOLDER                1128
@@ -412,17 +419,14 @@
 #define IDC_CLOSETOSYSTEMTRAY           1141
 #define IDC_LOCATEONMYCOMPUTER          1142
 #define IDC_SORTING                     1143
-#define IDC_LOCATEONMYDOCUMENTS         1144
-#define IDC_LOCATEONDRIVES              1145
+#define IDC_SORTINGLABEL				1144
 #define IDC_MATCHWHOLEFILENAMEONLY      1145
-#define IDC_UPDATEONMYCOMPUTER          1146
 #define IDC_REPLACESPACES               1146
-#define IDC_LOCATEONFOLDERS             1147
 #define IDC_CHECKIN                     1147
 #define IDC_MATCHCASE                   1148
 #define IDC_LANGUAGE                    1148
 #define IDC_USEWITHCONSOLEAPPS          1149
-#define IDC_MATCHCASE2                  1149
+#define IDC_CHECKINLABEL				1149
 #define IDC_STATICWHEN                  1150
 #define IDC_IMAGE                       1150
 #define IDC_ABOUTBANNER                 1150
@@ -700,7 +704,6 @@
 #define IDS_ADVSETDISABLEFSCHANGETRACKING 5417
 #define IDS_ADVSETENABLEFSCHANGETRACKING 5418
 #define IDS_ADVSETENABLEFSCHANGETRACKINGOLD 5419
-#define IDS_ADVSETLOCATE                5420
 #define IDS_ADVSETLIMITRESULTS          5421
 #define IDS_ADVSETCHANGE                5422
 #define IDS_ADVSETMAXNUMBEROFRESULTS    5423
@@ -733,7 +736,7 @@
 #define IDS_ADVSETTOOLTIPTRANSPARENCY   5450
 #define IDS_ADVSETUSEGETTITLE           5451
 #define IDS_ADVSETUSEOWNMETHODFORTITLE  5452
-#define IDS_ADVSETSHOWTYPEICONS         5453
+#define IDS_ADVSETUSESIMPLEICONS        5453
 #define IDS_ADVSETSHOWFILETYPES         5454
 #define IDS_ADVSETUSESHELLFORTYPE       5455
 #define IDS_ADVSETUSEOWNMETHODFORTYPE   5456
@@ -745,7 +748,7 @@
 #define IDS_ADVSETDONTSHOWHIDDENFILES   5462
 #define IDS_ADVSETUSEPROGRAMFORFOLDERS  5463
 #define IDS_ADVSETOPENFOLDERWITH        5464
-#define IDS_ADVSETDONTSHOWTOOLTIPS      5465
+#define IDS_ADVSETSHOWTOOLTIPS			5465
 #define IDS_ADVSETNODOUBLERESULTS       5466
 #define IDS_ADVSETFILESIZEFORMATLESS1KB 5467
 #define IDS_ADVSETFILESIZEFORMATDEPENGINGSIZE 5468

@@ -7,18 +7,18 @@ CONTENT=
 
 <H1><A NAME="menu_contextmenu"></A>File context menu commands</H1>
 
-<p>The context menu is the popup menu which appears if the results
+<p>The context menu is the pop up menu which appears if the results
 list is clicked by using second mouse button.</p>
 
 <P>The content of context menus varies depending which items are selected.
-For files, context menus usually contain at least the following commands:
+For files, context menus usually contain at least the following commands:</P>
 
-<TABLE cols=2 width=900>
+<TABLE id="menutable" cols=2>
 <TBODY>
 
 <TR VALIGN="top">
 <TD width=20%><A HREF="hid_file_opencontainingfolder.htm">Open Containing Folder</A></TD>
-<TD width=80%>Opens folder in which the selectec files are.</TD>
+<TD width=80%>Opens folder in which the selected files are.</TD>
 </TR>
 
 
@@ -45,7 +45,7 @@ For files, context menus usually contain at least the following commands:
 <TR VALIGN="top">
 <TD width=20%><A HREF="hid_file_cut.htm">Cut</A></TD>
 <TD width=80%>Copy selected results to clipboard. 
-Files are removed if a file operatoin is executed.</TD>
+Files are removed if a file operation is executed.</TD>
 </TR>
 
 <TR VALIGN="top">
@@ -75,6 +75,6 @@ Files are removed if a file operatoin is executed.</TD>
 
 </TBODY>
 </TABLE>
-</P>
+
 </div>
 

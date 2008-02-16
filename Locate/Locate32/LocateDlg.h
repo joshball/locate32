@@ -219,8 +219,8 @@ public:
 		BOOL SelectByCustomName(LPCWSTR szDirectory);
 		DWORD GetCurrentlySelectedComboItem() const;
 
-		BOOL GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDirectories,TypeOfItem* pType=NULL,BOOL bNoWarningIfNotExists=FALSE);
-		BOOL GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirectories,LPCWSTR szCustomText,DWORD dwLength,BOOL bCurrentSelection,BOOL bNoWarningIfNotExists=FALSE);
+		BOOL GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDirectories,BOOL bAlsoSet,TypeOfItem* pType=NULL,BOOL bNoWarningIfNotExists=FALSE);
+		BOOL GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirectories,LPCWSTR szCustomText,DWORD dwLength,BOOL bAlsoSet,BOOL bNoWarningIfNotExists=FALSE);
 		BOOL GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories,LPARAM lParam);
 		BOOL GetDirectoriesForSelection(CArray<LPWSTR>& aDirectories,const DirSelection* pSelection,BOOL bNoWarnings=FALSE);
 
@@ -901,7 +901,7 @@ public:
 		isUpDownGoesToResults   = 0x00000020,
 		
 
-		isGeneralDefault = isDisableIfDataSearch,
+		isGeneralDefault = isEnable | isDisableIfDataSearch,
 		isGeneralSave = isEnable | isDisableIfDataSearch | isUpDownGoesToResults,
 
 

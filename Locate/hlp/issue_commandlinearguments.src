@@ -10,7 +10,7 @@ CONTENT=
 <TR><TD width=10%>-p path</TD><TD width=90%>put 'path' to 'Look in' field (checks also that path is correct)</TD></TR>
 <TR><TD width=10%>-t type</TD><TD width=90%>put 'type' to 'Extensions' field</TD></TR>
 <TR><TD width=10%>-r</TD><TD width=90%>start locating when Locate32 is opened</TD></TR>
-<TR><TD width=10%>-Ax</TD><TD width=90%>Acticate control, x can be 'n' (Named), 
+<TR><TD width=10%>-Ax</TD><TD width=90%>Activate control, x can be 'n' (Named), 
 't' (Extentions), 'l' (Look In), or 'r' (results list).</TD></TR>
 <TR><TD width=10%>-c</TD><TD width=90%>put clipboard content to 'Named field'</TD></TR>
 <TR><TD width=10%>-s</TD><TD width=90%>leave locate32 background when Locate dialog is closed</TD></TR>
@@ -28,7 +28,7 @@ CONTENT=
 <TR><TD width=10%>-lr</TD><TD width=90%>check 'Replace spaces with asterisk' field</TD></TR>
 <TR><TD width=10%>-lW</TD><TD width=90%>check 'Use whole path' field</TD></TR>
 <TR><TD width=10%>-lrn</TD><TD width=90%>uncheck 'Replace spaces with asterisk' field</TD></TR>
-<TR><TD width=10%>-lm size</TD><TD width=90%>set minumum file size</TD></TR>
+<TR><TD width=10%>-lm size</TD><TD width=90%>set minimum file size</TD></TR>
 <TR><TD width=10%>-lM size</TD><TD width=90%>set maximum file size</TD></TR>
 <TR><TD width=10%>-lDmDAY</TD><TD width=90%>set minimum file modification date, DAY can be exact date in the 
 			form of YYMMDD, or number (0 is today, 1 is yesterday, etc)</TD></TR>
@@ -43,7 +43,7 @@ CONTENT=
 <TR><TD width=10%>-lP preset</TD><TD width=90%>load preset</TD></TR>
 <TR><TD width=10%>-d file</TD><TD width=90%>uses database in file 'file'</TD></TR>
 <TR><TD width=10%>-D name</TD><TD width=90%>uses database named 'name'</TD></TR>
-<TR><TD width=10%>-Lpath</TD><TD width=90%>include path into the dabase</TD></TR>
+<TR><TD width=10%>-Lpath</TD><TD width=90%>include path into the database</TD></TR>
 <TR><TD width=10%>-L1</TD><TD width=90%>include all local hard drives into the database</TD></TR>
 <TR><TD width=10%>-u</TD><TD width=90%>start update process at start</TD></TR>
 <TR><TD width=10%>-U</TD><TD width=90%>update database (do not open Locate dialog)</TD></TR>

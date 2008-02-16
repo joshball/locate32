@@ -6,7 +6,7 @@ CONTENT=
 <p>The language tab in the settings dialog can be used to change language of
 the user interface. To change the language, select the desirable language from the list. 
 If you want to use same language also with console applications,
-enable also "Use same language locate.exe and updtdb32.exe" option.
+enable also <b>Use same language locate.exe and updtdb32.exe</b> option.
 Note that Locate32 needs to be restarted before language is changed (ensure that 
 the system tray icon is also disappeared).
 </p>

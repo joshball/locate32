@@ -214,9 +214,13 @@ BOOL CIdentifiers::InsertToOutputFile(LPCSTR szNewFile,LPCSTR szBaseFile,BOOL bS
 			pWrited=pPointer;
 			if (*pPointer=='\0')
 				break;
+
+			// Skip first '$'
 			pPointer++;
+
+			// Count length
 			int nIndex=0;
-			for (;pPointer[nIndex]!='$';nIndex++)
+			for (;pPointer[nIndex]!='$' && pPointer[nIndex]!='@';nIndex++)
 			{
 				if (!ISVALIDCHAR(pPointer[nIndex]))
 				{
@@ -227,7 +231,51 @@ BOOL CIdentifiers::InsertToOutputFile(LPCSTR szNewFile,LPCSTR szBaseFile,BOOL bS
 			}
 
             CString name(pPointer,nIndex);
-			pPointer+=nIndex+1;
+			pPointer+=nIndex;
+			
+			enum Flags {
+				fMemoveDoubleAndChar = 0x1, // 'A'
+				fDoubpleApostrophes = 0x2, // 'P'
+				fAddColonToEnd = 0x4, // 'c'
+				fRemoveColonFromEnd = 0x8,  // 'C'
+				fRemoveMnemonics = 0x10, // 'M'
+				fRemoveTextInParenthesis = 0x20 // 'p'
+			};
+			DWORD dwFlags=0;
+
+			if (*pPointer=='@')
+			{
+				// Parsing needed
+				pPointer++;
+
+				for (;*pPointer!='$';pPointer++)
+				{
+					switch (*pPointer)
+					{
+					case 'A':
+						dwFlags|=fMemoveDoubleAndChar;
+						break;
+					case 'P':
+						dwFlags|=fDoubpleApostrophes;
+						break;
+					case 'c':
+						dwFlags|=fAddColonToEnd;
+						break;
+					case 'C':
+						dwFlags|=fRemoveColonFromEnd;
+						break;
+					case 'M':
+						dwFlags|=fRemoveMnemonics;
+						break;
+					case 'p':
+						dwFlags|=fRemoveTextInParenthesis;
+						break;
+					};
+				}
+			}
+			
+
+			pPointer++;
 			
 			// Finding identified and merging
 			IDENTIFIER* pID=FindIdentifier(name);
@@ -243,7 +291,66 @@ BOOL CIdentifiers::InsertToOutputFile(LPCSTR szNewFile,LPCSTR szBaseFile,BOOL bS
 			}
 			else
 			{
-				file.Write(pID->text);
+				if (dwFlags==0)
+					file.Write(pID->text);
+				else
+				{
+					CString text(pID->text);
+					if (dwFlags&fDoubpleApostrophes)
+					{
+						// Add another apostrophis
+						for (int i=0;i<text.GetLength();i++)
+						{
+							if (text[i]=='\"')
+								text.InsChar(++i,'\"');
+						}
+					}
+
+					if (dwFlags&fAddColonToEnd && text.LastChar()!=':')
+						text.Append(':');
+				
+					if (dwFlags&fRemoveColonFromEnd && text.LastChar()==':')
+						text.DelLastChar();
+	
+					if (dwFlags&fRemoveMnemonics)
+					{
+						for (int i=0;i<text.GetLength();i++)
+						{
+							if (text[i]=='&')
+								text.DelChar(i--);
+						}
+					}
+
+					if (dwFlags&fMemoveDoubleAndChar)
+					{
+						for (int i=0;i<text.GetLength();i++)
+						{
+							if (text[i]=='&' && text[i+1]=='&')
+								text.DelChar(i);
+						}
+					}
+
+					if (dwFlags&fRemoveTextInParenthesis)
+					{
+						CString origText;
+						origText.Swap(text);
+						for (int i=0;i<origText.GetLength();i++)
+						{
+							if (origText[i]=='(')
+							{
+								if (text.LastChar()==' ')
+									text.DelLastChar();
+
+								while (origText[i]!=')')
+									i++;
+							}
+							else
+								text << origText[i];
+						}
+					}
+
+					file.Write(text);
+				}
 				pID->bUsed=TRUE;
 			}
 

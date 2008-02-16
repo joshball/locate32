@@ -1166,7 +1166,46 @@ BOOL CLocateDlg::SetListStyle(int id,BOOL bInit)
 
 void CLocateDlg::OnHelp(LPHELPINFO lphi)
 {
-	//CTargetWnd::OnHelp(lphi);
+	CLocateApp::HelpID id[]= {
+		{IDC_OK, "dialog_locate.htm#ld_findnow" },
+		{IDC_STOP, "dialog_locate.htm#ld_stop" },
+		{IDC_NEWSEARCH, "dialog_locate.htm#ld_newbutton" },
+		{IDC_PRESETS,"dialog_locate.htm#ld_presets" },
+		{IDC_NAME,"tab_name.htm#tn_name"},
+		{IDC_TYPE,"tab_name.htm#tn_type"},
+		{IDC_LOOKIN, "tab_name.htm#tn_lookin"},
+		{IDC_MOREDIRECTORIES,"tab_name.htm#tn_lookin"},
+		{IDC_NOSUBDIRECTORIES,"tab_name.htm#tn_nosubdirs"},
+		{IDC_BROWSE,"tab_name.htm#tn_browse"},
+		{IDC_CHECKMINIMUMSIZE,"tab_sizedate.htm#ts_minfilesize"},
+		{IDC_MINIMUMSIZE,"tab_sizedate.htm#ts_minfilesize"},
+		{IDC_MINSIZETYPE,"tab_sizedate.htm#ts_minfilesize"},
+		{IDC_MINIMUMSIZESPIN,"tab_sizedate.htm#ts_minfilesize"},
+		{IDC_CHECKMAXIMUMSIZE,"tab_sizedate.htm#ts_maxfilesize"},
+		{IDC_MAXIMUMSIZE,"tab_sizedate.htm#ts_maxfilesize"},
+		{IDC_MAXSIZETYPE,"tab_sizedate.htm#ts_maxfilesize"},
+		{IDC_MAXIMUMSIZESPIN,"tab_sizedate.htm#ts_maxfilesize"},
+		{IDC_CHECKMINDATE,"tab_sizedate.htm#ts_filesnewerthan"},
+		{IDC_MINDATE,"tab_sizedate.htm#ts_filesnewerthan"},
+		{IDC_MINTYPE,"tab_sizedate.htm#ts_filesnewerthan"},
+		{IDC_CHECKMAXDATE,"tab_sizedate.htm#ts_filesolderthan"},
+		{IDC_MAXDATE,"tab_sizedate.htm#ts_filesolderthan"},
+		{IDC_MAXTYPE,"tab_sizedate.htm#ts_filesolderthan"},
+		{IDC_CHECK,"tab_advanced.htm#ta_check"},
+		{IDC_MATCHWHOLENAME,"tab_advanced.htm#ta_matchwholename"},
+		{IDC_REPLACESPACES,"tab_advanced.htm#ta_replacespaces"},
+		{IDC_USEWHOLEPATH,"tab_advanced.htm#ta_usewholepath"},
+		{IDC_FILETYPE,"tab_advanced.htm#ta_typeoffile"},
+		{IDC_CONTAINDATACHECK,"tab_advanced.htm#ta_fileconttext"},
+		{IDC_CONTAINDATA,"tab_advanced.htm#ta_fileconttext"},
+		{IDC_DATAMATCHCASE,"tab_advanced.htm#ta_matchcase"},
+		{IDC_HELPTOOLBAR,"tab_advanced.htm#ta_fileconttext"}
+	};
+
+
+	if (CLocateApp::OpenHelp(*this,id,sizeof(id)/sizeof(CLocateApp::HelpID),NULL,lphi))
+		return;
+
 
 	// Menu item
 	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
@@ -1695,15 +1734,15 @@ void CLocateDlg::OnFieldChange(DWORD dwWhatChanged)
 	KillTimer(ID_INSTANTSEARCHTIMER);
 
 	// Stop if IS disabled
-	if (!(m_dwInstantFlags&isEnable))
+	if (!IsInstantSearchingFlagSet(isEnable))
 		return;
 	
 	// Stop if message should be ignored (e.g., during initialization)
-	if (m_dwInstantFlags&isIgnoreChangeMessages)
+	if (IsInstantSearchingFlagSet(isIgnoreChangeMessages))
 		return;
 
 	// Stop if going to searching string inside files and that is not desired
-	if (m_dwInstantFlags&isDisableIfDataSearch && m_AdvancedDlg.IsDlgButtonChecked(IDC_CONTAINDATACHECK))
+	if (IsInstantSearchingFlagSet(isDisableIfDataSearch) && m_AdvancedDlg.IsDlgButtonChecked(IDC_CONTAINDATACHECK))
 		return;
 
 	// Stop if not the right place
@@ -1883,16 +1922,22 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 		{
 			// Name is regular expression, PCRE will be used
 			Name.DelChar(0);
-			pLocater->AddAdvancedFlags(LOCATE_NAMEREGULAREXPRESSION);
-			if (Name[0]==':')
+				
+			if (Name.IsEmpty() || (Name.GetLength()==1 && Name[0]==L':'))
+				Name.Empty(); // ":" or "::" only, tread as all files
+			else
 			{
-				Name.DelChar(0);
-				pLocater->AddAdvancedFlags(LOCATE_CHECKWHOLEPATH);
-			}
-			else if (Name[0]==' ')
-				Name.DelChar(0);
+				pLocater->AddAdvancedFlags(LOCATE_NAMEREGULAREXPRESSION);
+				if (Name[0]==':')
+				{
+					Name.DelChar(0);
+					pLocater->AddAdvancedFlags(LOCATE_CHECKWHOLEPATH);
+				}
+				else if (Name[0]==' ')
+					Name.DelChar(0);
 
-			aNames.Add(Name.GiveBuffer());
+				aNames.Add(Name.GiveBuffer());
+			}
 		}
 		else
 		{
@@ -2154,24 +2199,35 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 				Title.AddString(IDS_REGULAREXPRESSIONFULLPATH);
 			else
 				Title.AddString(IDS_REGULAREXPRESSION);
-			Title << Name;
+			Title << aNames[0];
 		}
 		else if (aNames.GetSize()==0)
 		{
-			if (aExtensions.GetSize()==1)
-			{
-				Title.AddString(IDS_FILESNAMED);
-				Title << L"*." << aExtensions[0];
-			}
-			else
+			if (aExtensions.GetSize()==0)
 				Title.AddString(IDS_ALLFILES);
+			else
+			{
+				CStringW Extensions,Format;
+				for (int i=0;i<aExtensions.GetSize();i++)
+					Extensions << aExtensions[i] << L' ';
+				Format.Format(IDS_TITLEEXTENSIONS,(LPCWSTR)Extensions);
+				Title << Format;
+			}
 		}
 		else
 		{
-			Title.AddString(IDS_FILESNAMED);
-			Title << Name;
-			if (aExtensions.GetSize()==1 && aNames.GetSize()==1)
-				Title << L"." << aExtensions[0];
+			CStringW Format;
+			
+			if (aNames.GetSize()==1 && aExtensions.GetSize()==1)
+			{
+				CStringW Files(Name);
+				Files << L'.' << aExtensions[0];
+				Format.Format(IDS_TITLESEARCHRESULTS,LPCWSTR(Files));
+			}
+			else
+				Format.Format(IDS_TITLESEARCHRESULTS,LPCWSTR(Name));
+
+			Title << Format;
 		}
 
 		if (GetLocateApp()->m_nInstance>0)
@@ -2476,7 +2532,10 @@ BOOL CLocateDlg::LocateInstantProc(DWORD_PTR dwParam,CallingReason crReason,Upda
 		else
 			NumberOfFiles.LoadString(IDS_NORESULTS);
 
-		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(NumberOfFiles,STATUSBAR_OPERATIONSTATUS,0);		
+		if (ueCode==ueLimitReached)
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(CString(IDS_LOCATINGLIMITREACHED)+L", "+NumberOfFiles,STATUSBAR_OPERATIONSTATUS,0);		
+		else
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(NumberOfFiles,STATUSBAR_OPERATIONSTATUS,0);		
 		((CLocateDlg*)dwParam)->m_pStatusCtrl->InvalidateRect(NULL,TRUE);
 		return TRUE;
 	}
@@ -9323,7 +9382,8 @@ LRESULT CALLBACK CLocateDlg::CNameDlg::NameWindowProc(HWND hWnd,UINT uMsg,
 	case WM_KEYDOWN:
 		if (wParam==VK_DOWN || wParam==VK_UP)
 		{
-			if (pNameData->pLocateDlg->IsInstantSearchingFlagSet(CLocateDlg::isRunning))
+			if (pNameData->pLocateDlg->IsInstantSearchingFlagSet(CLocateDlg::isUpDownGoesToResults) && 
+				pNameData->pLocateDlg->IsInstantSearchingFlagSet(CLocateDlg::isRunning))
 			{
 				if (!pNameData->pNameCombo->GetDroppedState() && 
 					pNameData->pLocateDlg->m_pListCtrl->GetItemCount()>0)
@@ -9533,7 +9593,7 @@ BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArra
 			if (m_pMultiDirs[i]->bSelected)
 			{
 				TypeOfItem nType;
-				if (!GetDirectoriesForActiveSelection(aDirectories,&nType,(GetKeyState(VK_CONTROL)&0x8000)?TRUE:FALSE))
+				if (!GetDirectoriesForActiveSelection(aDirectories,!bForInstantSearch,&nType,(GetKeyState(VK_CONTROL)&0x8000)?TRUE:FALSE))
 					return FALSE;
 
 				if (nType==Everywhere)
@@ -9568,7 +9628,7 @@ BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArra
 			}
 		}
 	}
-	else if (!GetDirectoriesForActiveSelection(aDirectories,NULL,(GetKeyState(VK_CONTROL)&0x8000)?TRUE:FALSE))
+	else if (!GetDirectoriesForActiveSelection(aDirectories,!bForInstantSearch,NULL,(GetKeyState(VK_CONTROL)&0x8000)?TRUE:FALSE))
 		return FALSE;
 
 
@@ -9598,7 +9658,7 @@ DWORD CLocateDlg::CNameDlg::GetCurrentlySelectedComboItem() const
 	return nCurSel;
 }
 
-BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDirectories,TypeOfItem* pType,BOOL bNoWarningIfNotExists)
+BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDirectories,BOOL bAlsoSet,TypeOfItem* pType,BOOL bNoWarningIfNotExists)
 {
 	//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection BEGIN");
 	
@@ -9635,7 +9695,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDir
                 break;
 		}
 
-		BOOL bRet=GetDirectoriesFromCustomText(aDirectories,pFolder,dwLength,TRUE,bNoWarningIfNotExists);
+		BOOL bRet=GetDirectoriesFromCustomText(aDirectories,pFolder,dwLength,bAlsoSet,bNoWarningIfNotExists);
         delete[] pFolder;
 		
 		if (pType!=NULL)
@@ -9676,7 +9736,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDir
 	//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection END 3");
 }
 
-BOOL CLocateDlg::CNameDlg::GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirectories,LPCWSTR szCustomText,DWORD dwLength,BOOL bCurrentSelection,BOOL bNoWarning)
+BOOL CLocateDlg::CNameDlg::GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirectories,LPCWSTR szCustomText,DWORD dwLength,BOOL bAlsoSet,BOOL bNoWarning)
 {
 	// Removing spaces and \\ from beginning and end
 	LPCWSTR pPtr=szCustomText;
@@ -9689,7 +9749,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirecto
 		dwLength--;
 	if (pPtr[dwLength-1]=='\\')
 		dwLength--;
-	if (!CheckAndAddDirectory(pPtr,dwLength,bCurrentSelection,bNoWarning))
+	if (!CheckAndAddDirectory(pPtr,dwLength,bAlsoSet,bNoWarning))
 		return FALSE;
 	AddDirectoryToList(aDirectories,pPtr,dwLength);
 	return TRUE;
@@ -11025,8 +11085,8 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 	{
 		for (int i=0;i<m_LookIn.GetCount();i++)
 		{
-			LPARAM lParam=m_LookIn.GetItemData(i);
-			if (static_cast<TypeOfItem>(LOWORD(lParam))!=Drive)
+			LPARAM lParam=static_cast<TypeOfItem>(m_LookIn.GetItemData(i));
+			if (static_cast<TypeOfItem>(LOWORD(lParam))==Drive)
 			{
 				WCHAR cDrive=(WCHAR)HIWORD(lParam);
 				MakeLower(&cDrive,1);
@@ -13030,7 +13090,10 @@ DWORD CLocateDlg::CAdvancedDlg::SetAdvancedFlagsForLocater(CLocater* pLocater,BO
 {
 	DWORD dwFlags=0,dwMaxFiles=(DWORD)-1;
 	if (bForInstantSearch)
-		dwMaxFiles=GetLocateDlg()->m_dwInstantLimit;
+	{
+		if (GetLocateDlg()->m_dwInstantLimit>0)
+			dwMaxFiles=GetLocateDlg()->m_dwInstantLimit;
+	}
 	else if (GetLocateDlg()->m_dwMaxFoundFiles>0)
 		dwMaxFiles=GetLocateDlg()->m_dwMaxFoundFiles;
 

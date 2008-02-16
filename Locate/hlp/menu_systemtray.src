@@ -5,7 +5,7 @@ CONTENT=
 
 <P>The menu for system tray icon contains the following commands:
 
-<TABLE cols=2 width=900>
+<TABLE id="menutable" cols=2>
 <TBODY>
 
 <TR VALIGN="top">

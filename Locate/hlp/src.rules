@@ -7,7 +7,7 @@
 		<CustomBuildRule
 			Name="lrestoolHTML"
 			DisplayName="HTML Help Page Compiler"
-			CommandLine="lrestool -h [AllOptions] [AdditionalOptions] -n LOCATE32 -o &quot;$(InputDir)\$(InputName).htm&quot; &quot;$(InputPath)&quot;"
+			CommandLine="lrestool -h [AllOptions] [AdditionalOptions] -o &quot;$(InputDir)\$(InputName).htm&quot; ..\languages\lan_en\english.lrf &quot;$(InputPath)&quot;"
 			Outputs="$(InputDir)\$(InputName).htm"
 			FileExtensions="*.src"
 			ExecutionDescription="Generating $(InputName).htm ..."

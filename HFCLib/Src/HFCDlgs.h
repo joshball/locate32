@@ -550,12 +550,21 @@ public:
 
 	typedef BOOL (CALLBACK* CALLBACKPROC)(BASICPARAMS* pParams);
 
-	// lParam is pointer to DWORD value which is will be set
-	// wParam is used mask
+	// Default procedure for check boxes
+	// lParam is pointer to DWORD value which bit will altered
+	// wParam is used mask which defines this bit
 	static BOOL CALLBACK DefaultCheckBoxProc(BASICPARAMS* pParams); 
-	
+
+	// Default procedure for check boxes
+	// lParam is pointer to DWORD value which bit will altered
+	// wParam is used mask which defines this bit
+	// This inverse for the previous function such that
+	// bit is cleared when option is checked
+	static BOOL CALLBACK DefaultInverseCheckBoxProc(BASICPARAMS* pParams); 
+
+	// Default procedure for radio boxes
 	// lParam is pointer to DWORD value which is will be set
-	// HIWORD of wParam is mask to be setted, LOWORD is value
+	// HIWORD of wParam is bit mask, LOWORD is value
 	static BOOL CALLBACK DefaultRadioBoxProc(BASICPARAMS* pParams); 
 
 	// lParam is pointer to DWORD value which is will be set
@@ -616,6 +625,9 @@ public:
 			LOGFONT* pLogFont;
 		};
 
+		// Help ID
+		LPSTR pHelpID;
+
 		// Callback
 		CALLBACKPROC pProc;
 		DWORD wParam;
@@ -625,9 +637,9 @@ public:
 
 	private:
 		Item(ItemType nType,Item* pParent,Item** pChilds,LPWSTR pString,
-			CALLBACKPROC pProc,DWORD wParam,void* lParam);
+			CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
 		Item(ItemType nType,Item* pParent,Item** pChilds,UINT nStringID,
-			CALLBACKPROC pProc,DWORD wParam,void* lParam);
+			CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
 		~Item();
 
 		int GetStateImage(CImageList* pImageList) const;
@@ -691,26 +703,29 @@ public:
 
 	BOOL Initialize(Item** pItems);
 	
-	static Item* CreateRoot(LPWSTR szText,Item** pChilds);
-	static Item* CreateRoot(UINT nTextID,Item** pChilds);
-	static Item* CreateCheckBox(LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateCheckBox(UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateRadioBox(LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateRadioBox(UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateEdit(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateEdit(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateListBox(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateListBox(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateComboBox(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateComboBox(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateNumeric(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateNumeric(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateColor(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateColor(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateFont(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateFont(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateFile(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam);
-	static Item* CreateFile(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam);
+	static Item* CreateRoot(LPWSTR szText,Item** pChilds,LPCSTR pHelpID=NULL);
+	static Item* CreateRoot(UINT nTextID,Item** pChilds,LPCSTR pHelpID=NULL);
+	static Item* CreateCheckBox(LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateCheckBox(UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateRadioBox(LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateRadioBox(UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateEdit(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateEdit(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateListBox(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateListBox(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateComboBox(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateComboBox(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateNumeric(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateNumeric(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateColor(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateColor(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateFont(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateFont(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateFile(LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+	static Item* CreateFile(UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID=NULL);
+
+	// Get ID to the help file for the selected item, can be used in OnHelp()
+	LPCSTR GetHelpID(HELPINFO* pHelpInfo) const;
 
 private:
     BOOL InsertItemsToTree(HTREEITEM hParent,Item** pItems,Item* pParent=NULL);
@@ -1273,122 +1288,122 @@ inline COptionsPropertyPage::COptionsPropertyPage(const COptionsPropertyPage::OP
 }
 
 
-inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRoot(LPWSTR szText,Item** pChilds)
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRoot(LPWSTR szText,Item** pChilds,LPCSTR pHelpID)
 {
-	return new Item(Item::Root,NULL,pChilds,szText,NULL,0,0);
+	return new Item(Item::Root,NULL,pChilds,szText,NULL,0,0,pHelpID);
 }
 
-inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRoot(UINT nTextID,Item** pChilds)
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRoot(UINT nTextID,Item** pChilds,LPCSTR pHelpID)
 {
-	return new Item(Item::Root,NULL,pChilds,nTextID,NULL,0,0);
-}
-
-inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateCheckBox(
-	LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam)
-{
-	return new Item(Item::CheckBox,NULL,pChilds,szText,pProc,wParam,lParam);
+	return new Item(Item::Root,NULL,pChilds,nTextID,NULL,0,0,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateCheckBox(
-	UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::CheckBox,NULL,pChilds,nTextID,pProc,wParam,lParam);
+	return new Item(Item::CheckBox,NULL,pChilds,szText,pProc,wParam,lParam,pHelpID);
+}
+
+inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateCheckBox(
+	UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
+{
+	return new Item(Item::CheckBox,NULL,pChilds,nTextID,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRadioBox(
-	LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	LPWSTR szText,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::RadioBox,NULL,pChilds,szText,pProc,wParam,lParam);
+	return new Item(Item::RadioBox,NULL,pChilds,szText,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateRadioBox(
-	UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	UINT nTextID,Item** pChilds,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::RadioBox,NULL,pChilds,nTextID,pProc,wParam,lParam);
+	return new Item(Item::RadioBox,NULL,pChilds,nTextID,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateComboBox(
-	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::Combo,NULL,NULL,szText,pProc,wParam,lParam);
+	return new Item(Item::Combo,NULL,NULL,szText,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateComboBox(
-	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::Combo,NULL,NULL,nTextID,pProc,wParam,lParam);
+	return new Item(Item::Combo,NULL,NULL,nTextID,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateEdit(
-	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::Edit,NULL,NULL,szText,pProc,wParam,lParam);
+	return new Item(Item::Edit,NULL,NULL,szText,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateEdit(
-	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::Edit,NULL,NULL,nTextID,pProc,wParam,lParam);
+	return new Item(Item::Edit,NULL,NULL,nTextID,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateListBox(
-	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::List,NULL,NULL,szText,pProc,wParam,lParam);
+	return new Item(Item::List,NULL,NULL,szText,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateListBox(
-	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::List,NULL,NULL,nTextID,pProc,wParam,lParam);
+	return new Item(Item::List,NULL,NULL,nTextID,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateNumeric(
-	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::Numeric,NULL,NULL,szText,pProc,wParam,lParam);
+	return new Item(Item::Numeric,NULL,NULL,szText,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateNumeric(
-	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::Numeric,NULL,NULL,nTextID,pProc,wParam,lParam);
+	return new Item(Item::Numeric,NULL,NULL,nTextID,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateColor(
-	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::Color,NULL,NULL,szText,pProc,wParam,lParam);
+	return new Item(Item::Color,NULL,NULL,szText,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateColor(
-	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::Color,NULL,NULL,nTextID,pProc,wParam,lParam);
+	return new Item(Item::Color,NULL,NULL,nTextID,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateFont(
-	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::Font,NULL,NULL,szText,pProc,wParam,lParam);
+	return new Item(Item::Font,NULL,NULL,szText,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateFont(
-	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::Font,NULL,NULL,nTextID,pProc,wParam,lParam);
+	return new Item(Item::Font,NULL,NULL,nTextID,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateFile(
-	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	LPWSTR szText,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::File,NULL,NULL,szText,pProc,wParam,lParam);
+	return new Item(Item::File,NULL,NULL,szText,pProc,wParam,lParam,pHelpID);
 }
 
 inline COptionsPropertyPage::Item* COptionsPropertyPage::CreateFile(
-	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam)
+	UINT nTextID,CALLBACKPROC pProc,DWORD wParam,void* lParam,LPCSTR pHelpID)
 {
-	return new Item(Item::File,NULL,NULL,nTextID,pProc,wParam,lParam);
+	return new Item(Item::File,NULL,NULL,nTextID,pProc,wParam,lParam,pHelpID);
 }
 
 inline int COptionsPropertyPage::Item::GetStateImage(CImageList* pImageList) const

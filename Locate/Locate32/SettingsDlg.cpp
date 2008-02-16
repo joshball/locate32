@@ -18,9 +18,6 @@ inline BOOL operator!=(const SYSTEMTIME& s1,const SYSTEMTIME& s2)
 }
 
 
-//#define sMemCopyW	MemCopyW
-
-
 
 
 ////////////////////////////////////////
@@ -683,6 +680,9 @@ BOOL CSettingsProperties::SaveSettings()
 	return TRUE;
 }
 
+
+
+
 ////////////////////////////////////////
 // CGeneralSettingsPage
 ////////////////////////////////////////
@@ -954,6 +954,32 @@ BYTE CSettingsProperties::CGeneralSettingsPage::OnAlwaysUnderline()
 
 void CSettingsProperties::CGeneralSettingsPage::OnHelp(LPHELPINFO lphi)
 {
+	CLocateApp::HelpID id[]= {
+		{ IDC_SYSTEMSETTINGS,"sg_sysset" },
+		{ IDC_POINTTOSELECT,"sg_point" },
+		{ IDC_NEVERUNDERLINE,"sg_neverunderline" },
+		{ IDC_POINTUNDERLINE,"sg_hover" },
+		{ IDC_ALWAYSUNDERLINE,"sg_alwaysunderline" },
+		{ IDC_CLICKTOSELECT,"sg_click" },
+		{ IDC_MINIMIZETOSYSTEMTRAY,"sg_min2st" },
+		{ IDC_CLOSEBUTTONMINIMIZESWINDOW,"sg_close2min" },
+		{ IDC_REMEMBERSTATES,"sg_savestates" },
+		{ IDC_CLOSETOSYSTEMTRAY,"sg_close2st" },
+		{ IDC_SORTINGLABEL,"sg_sorting" },
+		{ IDC_SORTING,"sg_sorting" },
+		{ IDC_ASCENDINGORDER,"sg_sorting" },
+		{ IDC_DESCENDINGORDER,"sg_sorting" },
+		{ IDC_MATCHWHOLEFILENAMEONLY,"sg_matchwn" },
+		{ IDC_CHECKIN,"sg_check" },
+		{ IDC_CHECKINLABEL,"sg_check" },
+		{ IDC_REPLACESPACES,"sg_repspaces" },
+		{ IDC_USEWHOLEPATH,"sg_wholepath" },
+		{ IDC_MATCHCASE,"sg_matchcase" }
+	};
+	
+	if (CLocateApp::OpenHelp(*this,id,sizeof(id)/sizeof(CLocateApp::HelpID),"settings_general.htm",lphi))
+		return;
+
 	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_GENERAL)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
@@ -968,233 +994,249 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 {
 	COptionsPropertyPage::OnInitDialog(hwndFocus);
 
-	Item* TitleMethodItems[]={
-		CreateCheckBox(IDS_ADVSETFIRSTCHARUPPER,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLV1stCharUpper,&m_pSettings->m_dwLocateDialogFlags),
-		CreateRadioBox(IDS_ADVSETALWAYSSHOWEXT,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateDlg::fgLVAlwaysShowExtensions,CLocateDlg::fgLVExtensionFlag),&m_pSettings->m_dwLocateDialogFlags),
-		CreateRadioBox(IDS_ADVSETHIDEEXTFORKNOWN,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateDlg::fgLVHideKnownExtensions,CLocateDlg::fgLVExtensionFlag),&m_pSettings->m_dwLocateDialogFlags),
-		CreateRadioBox(IDS_ADVSETNEVERSHOWEXT,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateDlg::fgLVNeverShowExtensions,CLocateDlg::fgLVExtensionFlag),&m_pSettings->m_dwLocateDialogFlags),
-		NULL
-	};
-	Item* TypeMethodItems[]={
-		CreateRadioBox(IDS_ADVSETUSESHELLFORTYPE,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateDlg::fgLVShowShellType,CLocateDlg::fgLVShowShellType),&m_pSettings->m_dwLocateDialogFlags),
-		CreateRadioBox(IDS_ADVSETUSEOWNMETHODFORTYPE,NULL,DefaultRadioBoxProc,
-			MAKELONG(0,CLocateDlg::fgLVShowShellType),&m_pSettings->m_dwLocateDialogFlags),
-		NULL
-	};
-	Item* OtherExplorerProgram[]={
-		CreateFile(IDS_ADVSETOPENFOLDERWITH,ExternalCommandProc,0,&m_pSettings->m_OpenFoldersWith),
-		NULL
-	};
+	/////////////////////////////////////////////////////////////////////////
+	// Items under LOCATING FILES AND RESULTS LIST category
 
-	Item* TooltipDelayItems[]={
-		CreateNumeric(IDS_ADVSETSHOWTOOLTIPDELAY,DefaultNumericProc,
-			MAKELONG(0,1000000),&m_pSettings->m_dwTooltipDelayInitial),
-		CreateNumeric(IDS_ADVSETSHOWTOOLTIPDURATION,DefaultNumericProc,
-			MAKELONG(0,1000000),&m_pSettings->m_dwTooltipDelayAutopop),
+	
+	
+	Item* LimitMaximumResults[]={
+		CreateNumeric(IDS_ADVSETMAXNUMBEROFRESULTS,DefaultNumericProc,
+			DWORD(-1),&m_pSettings->m_nMaximumFoundFiles,"sa_limit"),
 		NULL
 	};
+	
+	Item* InstantSearching[]={
+		CreateNumeric(IDS_ADVSETISLIMIT,DefaultNumericProc,
+			DWORD(-1),&m_pSettings->m_nInstantSearchingLimit,"sa_islimit"),
+		CreateNumeric(IDS_ADVSETISDELAY,DefaultNumericProc,
+			DWORD(-1),&m_pSettings->m_nInstantSearchingDelay,"sa_isdelay"),
+		CreateCheckBox(IDS_ADVSETISUPDOWNGORESULTS,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isUpDownGoesToResults,
+			&m_pSettings->m_dwInstantSearchingFlags,"sa_isupdown"),
+		CreateCheckBox(IDS_ADVSETISDISABLEIFDATASEARCH,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isDisableIfDataSearch,
+			&m_pSettings->m_dwInstantSearchingFlags,"sa_isdisifdata"),
+		CreateCheckBox(IDS_ADVSETISNAMEDCHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfNameChanged,
+			&m_pSettings->m_dwInstantSearchingFlags,"sa_isname"),
+		CreateCheckBox(IDS_ADVSETISTYPECHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfTypeChanged,
+			&m_pSettings->m_dwInstantSearchingFlags,"sa_istype"),
+		CreateCheckBox(IDS_ADVSETISLOOKINCHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfLookInChanged,
+			&m_pSettings->m_dwInstantSearchingFlags,"sa_islookin"),
+		CreateCheckBox(IDS_ADVSETISSIZESCHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfSizesChanged,
+			&m_pSettings->m_dwInstantSearchingFlags,"sa_issizes"),
+		CreateCheckBox(IDS_ADVSETISDATESCHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfDatesChanged,
+			&m_pSettings->m_dwInstantSearchingFlags,"sa_isdates"),
+		CreateCheckBox(IDS_ADVSETISDATACHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfDataChanged,
+			&m_pSettings->m_dwInstantSearchingFlags,"sa_isdata"),
+		CreateCheckBox(IDS_ADVSETISOTHERCHANGED,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isSearchIfOtherChanged,
+			&m_pSettings->m_dwInstantSearchingFlags,"sa_isother"),
+		NULL
+	};	
+
 	Item* ResultListFontItems[]={
 		CreateFont(IDS_ADVSETRESULTLISTFONT,DefaultFontProc,NULL,&m_pSettings->m_lResultListFont),
 		NULL
 	};
-	Item* ResultsListItems[]={
-		CreateCheckBox(IDS_ADVSETUSECUSTOMFONTINRESULTLIST,ResultListFontItems,DefaultCheckBoxProc,
-			CSettingsProperties::settingsUseCustomResultListFont,&m_pSettings->m_dwSettingsFlags),
-		CreateCheckBox(IDS_ADVSETNODELAYEDUPDATING,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLVNoDelayedUpdate,&m_pSettings->m_dwLocateDialogFlags),
-		CreateRadioBox(IDS_ADVSETUSEGETTITLE,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateDlg::fgLVUseGetFileTitle,CLocateDlg::fgLVMethodFlag),&m_pSettings->m_dwLocateDialogFlags),
-		CreateRadioBox(IDS_ADVSETUSEOWNMETHODFORTITLE,TitleMethodItems,DefaultRadioBoxProc,
-			MAKELONG(CLocateDlg::fgLVUseOwnMethod,CLocateDlg::fgLVMethodFlag),&m_pSettings->m_dwLocateDialogFlags),
-		CreateCheckBox(IDS_ADVSETSHOWTYPEICONS,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLVShowIcons,&m_pSettings->m_dwLocateDialogFlags),
-		CreateCheckBox(IDS_ADVSETSHOWFILETYPES,TypeMethodItems,DefaultCheckBoxProc,
-			CLocateDlg::fgLVShowFileTypes,&m_pSettings->m_dwLocateDialogFlags),
-		CreateCheckBox(IDS_ADVSETDONTSHOWTOOLTIPS,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLVDontShowTooltips,&m_pSettings->m_dwLocateDialogFlags),
-		CreateCheckBox(IDS_ADVSETSETTOOLTIPDELAYS,TooltipDelayItems,DefaultCheckBoxProc,
-			CSettingsProperties::settingsSetTooltipDelays,&m_pSettings->m_dwSettingsFlags),
-		CreateCheckBox(IDS_ADVSETDONTSHOWHIDDENFILES,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLVDontShowHiddenFiles,&m_pSettings->m_dwLocateDialogFlags),
-		CreateCheckBox(IDS_ADVSETDONTSHOWDELETEDFILES,NULL,DefaultCheckBoxProc,
-			CLocateDlg::efLVDontShowDeletedFiles,&m_pSettings->m_dwLocateDialogExtraFlags),
-		CreateCheckBox(IDS_ADVSETNODOUBLERESULTS,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLVNoDoubleItems,&m_pSettings->m_dwLocateDialogFlags),
-		CreateCheckBox(IDS_ADVSETFOLDERSFIRST,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLVFoldersFirst,&m_pSettings->m_dwLocateDialogFlags),
-		CreateCheckBox(IDS_ADVSETFULLROWSELECT,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLVSelectFullRow,&m_pSettings->m_dwLocateDialogFlags),
-		CreateCheckBox(IDS_ADVSETACTIVATEFIRSTITEM,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLVActivateFirstResult,&m_pSettings->m_dwLocateDialogFlags),
-		CreateComboBox(IDS_ADVSETSHOWDATESINFORMAT,DateFormatComboProc,0,0),
-		CreateComboBox(IDS_ADVSETSHOWTIMESINFORMAT,TimeFormatComboProc,0,0),
-		CreateListBox(IDS_ADVSETSHOWFILESIZESINFORMAT,FileSizeListProc,0,&m_pSettings->m_nFileSizeFormat),
-		CreateCheckBox(IDS_ADVSETFORMATWITHUSERLOCALE,NULL,DefaultCheckBoxProc,
-			CLocateApp::pfFormatUseLocaleFormat,&m_pSettings->m_dwProgramFlags),
-		CreateCheckBox(IDS_ADVSETUSEPROGRAMFORFOLDERS,OtherExplorerProgram,DefaultCheckBoxProc,
-			CSettingsProperties::settingsUseOtherProgramsToOpenFolders,&m_pSettings->m_dwSettingsFlags),
-		CreateCheckBox(IDS_ADVSETCOMPUTEMD5SUMS,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLVComputeMD5Sums,&m_pSettings->m_dwLocateDialogFlags),
-		CreateCheckBox(IDS_ADVSETALLOWINPLACERENAMING,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLVAllowInPlaceRenaming,&m_pSettings->m_dwLocateDialogFlags),
+	
+	Item* TitleMethodItems[]={
+		CreateCheckBox(IDS_ADVSETFIRSTCHARUPPER,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLV1stCharUpper,&m_pSettings->m_dwLocateDialogFlags,"sa_1stcharup"),
+		CreateRadioBox(IDS_ADVSETALWAYSSHOWEXT,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateDlg::fgLVAlwaysShowExtensions,CLocateDlg::fgLVExtensionFlag),
+			&m_pSettings->m_dwLocateDialogFlags,"sa_extalways"),
+		CreateRadioBox(IDS_ADVSETHIDEEXTFORKNOWN,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateDlg::fgLVHideKnownExtensions,CLocateDlg::fgLVExtensionFlag),
+			&m_pSettings->m_dwLocateDialogFlags,"sa_extforknown"),
+		CreateRadioBox(IDS_ADVSETNEVERSHOWEXT,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateDlg::fgLVNeverShowExtensions,CLocateDlg::fgLVExtensionFlag),
+			&m_pSettings->m_dwLocateDialogFlags,"sa_extnever"),
+		NULL
+	};
+	Item* TypeMethodItems[]={
+		CreateRadioBox(IDS_ADVSETUSESHELLFORTYPE,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateDlg::fgLVShowShellType,CLocateDlg::fgLVShowShellType),
+			&m_pSettings->m_dwLocateDialogFlags,"is_shellfortype"),
+		CreateRadioBox(IDS_ADVSETUSEOWNMETHODFORTYPE,NULL,DefaultRadioBoxProc,
+			MAKELONG(0,CLocateDlg::fgLVShowShellType),
+			&m_pSettings->m_dwLocateDialogFlags,"is_ownfortype"),
 		NULL
 	};
 	
-	Item* LimitMaximumResults[]={
-		CreateNumeric(IDS_ADVSETMAXNUMBEROFRESULTS,DefaultNumericProc,
-			DWORD(-1),&m_pSettings->m_nMaximumFoundFiles),
+	Item* TooltipDelayItems[]={
+		CreateNumeric(IDS_ADVSETSHOWTOOLTIPDELAY,DefaultNumericProc,
+			MAKELONG(0,1000000),&m_pSettings->m_dwTooltipDelayInitial,"sa_tooltipdelays"),
+		CreateNumeric(IDS_ADVSETSHOWTOOLTIPDURATION,DefaultNumericProc,
+			MAKELONG(0,1000000),&m_pSettings->m_dwTooltipDelayAutopop,"sa_tooltipdelays"),
 		NULL
-	};		
+	};
+	Item* OtherExplorerProgram[]={
+			CreateFile(IDS_ADVSETOPENFOLDERWITH,ExternalCommandProc,0,
+				&m_pSettings->m_OpenFoldersWith,"sa_ownprogforfolders"),
+			NULL
+		};
+	Item* ResultsListItems[]={
+		CreateCheckBox(IDS_ADVSETUSECUSTOMFONTINRESULTLIST,ResultListFontItems,DefaultCheckBoxProc,
+			CSettingsProperties::settingsUseCustomResultListFont,
+			&m_pSettings->m_dwSettingsFlags,"sa_customfont"),
+		CreateCheckBox(IDS_ADVSETNODELAYEDUPDATING,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVNoDelayedUpdate,
+			&m_pSettings->m_dwLocateDialogFlags,"sa_immediateupdate"),
+		CreateRadioBox(IDS_ADVSETUSEGETTITLE,NULL,DefaultRadioBoxProc,
+			MAKELONG(CLocateDlg::fgLVUseGetFileTitle,
+			CLocateDlg::fgLVMethodFlag),&m_pSettings->m_dwLocateDialogFlags,"sa_usegetfiletitle"),
+		CreateRadioBox(IDS_ADVSETUSEOWNMETHODFORTITLE,TitleMethodItems,DefaultRadioBoxProc,
+			MAKELONG(CLocateDlg::fgLVUseOwnMethod,CLocateDlg::fgLVMethodFlag),
+			&m_pSettings->m_dwLocateDialogFlags,"sa_ownmethodfortitle"),
+		CreateCheckBox(IDS_ADVSETUSESIMPLEICONS,NULL,DefaultInverseCheckBoxProc,
+			CLocateDlg::fgLVShowIcons,
+			&m_pSettings->m_dwLocateDialogFlags,"sa_simpleicons"),
+		CreateCheckBox(IDS_ADVSETSHOWFILETYPES,TypeMethodItems,DefaultCheckBoxProc,
+			CLocateDlg::fgLVShowFileTypes,&m_pSettings->m_dwLocateDialogFlags,"sa_filetypes"),
+		CreateCheckBox(IDS_ADVSETSHOWTOOLTIPS,NULL,DefaultInverseCheckBoxProc,
+			CLocateDlg::fgLVDontShowTooltips,
+			&m_pSettings->m_dwLocateDialogFlags,"sa_showtooltips"),
+		CreateCheckBox(IDS_ADVSETSETTOOLTIPDELAYS,TooltipDelayItems,DefaultCheckBoxProc,
+			CSettingsProperties::settingsSetTooltipDelays,
+			&m_pSettings->m_dwSettingsFlags,"sa_tooltipdelays"),
+		CreateCheckBox(IDS_ADVSETDONTSHOWHIDDENFILES,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVDontShowHiddenFiles,&m_pSettings->m_dwLocateDialogFlags,"sa_nosysorhid"),
+		CreateCheckBox(IDS_ADVSETDONTSHOWDELETEDFILES,NULL,DefaultCheckBoxProc,
+			CLocateDlg::efLVDontShowDeletedFiles,&m_pSettings->m_dwLocateDialogExtraFlags,"sa_nodeleted"),
+		CreateCheckBox(IDS_ADVSETNODOUBLERESULTS,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVNoDoubleItems,&m_pSettings->m_dwLocateDialogFlags,"sa_nodoubles"),
+		CreateCheckBox(IDS_ADVSETFOLDERSFIRST,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVFoldersFirst,&m_pSettings->m_dwLocateDialogFlags,"sa_foldersfirst"),
+		CreateCheckBox(IDS_ADVSETFULLROWSELECT,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVSelectFullRow,&m_pSettings->m_dwLocateDialogFlags,"sa_fullrowselect"),
+		CreateCheckBox(IDS_ADVSETACTIVATEFIRSTITEM,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVActivateFirstResult,&m_pSettings->m_dwLocateDialogFlags,"sa_act1st"),
+		CreateComboBox(IDS_ADVSETSHOWDATESINFORMAT,DateFormatComboProc,0,0,"sa_dateformat"),
+		CreateComboBox(IDS_ADVSETSHOWTIMESINFORMAT,TimeFormatComboProc,0,0,"sa_timeformat"),
+		CreateListBox(IDS_ADVSETSHOWFILESIZESINFORMAT,FileSizeListProc,0,
+			&m_pSettings->m_nFileSizeFormat,"sa_sizeformat"),
+		CreateCheckBox(IDS_ADVSETFORMATWITHUSERLOCALE,NULL,DefaultCheckBoxProc,
+			CLocateApp::pfFormatUseLocaleFormat,&m_pSettings->m_dwProgramFlags,"sa_locatesize"),
+		CreateCheckBox(IDS_ADVSETUSEPROGRAMFORFOLDERS,OtherExplorerProgram,DefaultCheckBoxProc,
+			CSettingsProperties::settingsUseOtherProgramsToOpenFolders,&m_pSettings->m_dwSettingsFlags,"sa_ownprogforfolders"),
+		CreateCheckBox(IDS_ADVSETCOMPUTEMD5SUMS,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVComputeMD5Sums,&m_pSettings->m_dwLocateDialogFlags,"sa_md5sums"),
+		CreateCheckBox(IDS_ADVSETALLOWINPLACERENAMING,NULL,DefaultCheckBoxProc,
+			CLocateDlg::fgLVAllowInPlaceRenaming,
+			&m_pSettings->m_dwLocateDialogFlags,"sa_exprenaming"),
+		NULL
+	};
+	
+			
 	
 	
 	Item* FileBackgroundOperations[]={
 		CreateRadioBox(IDS_ADVSETDISABLEFSCHANGETRACKING,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateDlg::efDisableFSTracking,CLocateDlg::efTrackingMask),&m_pSettings->m_dwLocateDialogExtraFlags),
+			MAKELONG(CLocateDlg::efDisableFSTracking,CLocateDlg::efTrackingMask),
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_nofstracking"),
 		CreateRadioBox(IDS_ADVSETENABLEFSCHANGETRACKING,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateDlg::efEnableFSTracking,CLocateDlg::efTrackingMask),&m_pSettings->m_dwLocateDialogExtraFlags),
-		NULL,
+			MAKELONG(CLocateDlg::efEnableFSTracking,CLocateDlg::efTrackingMask),
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_fstrackingnew"),
 		CreateCheckBox(IDS_ADVSETWHILESORTINGDONOTREADINFO,NULL,DefaultCheckBoxProc,
-			CLocateDlg::efLVNoUpdateWhileSorting,&m_pSettings->m_dwLocateDialogExtraFlags),
+			CLocateDlg::efLVNoUpdateWhileSorting,
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_noupdwhilesorting"),
+		NULL,
 		NULL
 	};
 	if (GetProcAddress(GetModuleHandle("kernel32.dll"),"ReadDirectoryChangesW")!=NULL)
 	{
+		FileBackgroundOperations[3]=FileBackgroundOperations[2];
 		FileBackgroundOperations[2]=CreateRadioBox(IDS_ADVSETENABLEFSCHANGETRACKINGOLD,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateDlg::efEnableFSTrackingOld,CLocateDlg::efTrackingMask),&m_pSettings->m_dwLocateDialogExtraFlags);
-	}
-	else
-	{
-		FileBackgroundOperations[2]=FileBackgroundOperations[3];
-		FileBackgroundOperations[3]=NULL;
+			MAKELONG(CLocateDlg::efEnableFSTrackingOld,CLocateDlg::efTrackingMask),
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_fstrackingold");
 	}
 
 	Item* UpdateResults[]={
 		CreateRadioBox(IDS_ADVSETDISABLEUPDATING,NULL,DefaultRadioBoxProc,
-			MAKELONG(CLocateDlg::efDisableItemUpdating,CLocateDlg::efItemUpdatingMask),&m_pSettings->m_dwLocateDialogExtraFlags),
+			MAKELONG(CLocateDlg::efDisableItemUpdating,CLocateDlg::efItemUpdatingMask),
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_disableupdating"),
 		CreateRadioBox(IDS_ADVSETENABLEUPDATING,FileBackgroundOperations,DefaultRadioBoxProc,
-			MAKELONG(CLocateDlg::efEnableItemUpdating,CLocateDlg::efItemUpdatingMask),&m_pSettings->m_dwLocateDialogExtraFlags),
+			MAKELONG(CLocateDlg::efEnableItemUpdating,CLocateDlg::efItemUpdatingMask),
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_enableupdating"),
 		NULL
 	};
 		
-	Item* InstantSearching[]={
-		CreateNumeric(IDS_ADVSETISLIMIT,DefaultNumericProc,
-			DWORD(-1),&m_pSettings->m_nInstantSearchingLimit),
-		CreateNumeric(IDS_ADVSETISDELAY,DefaultNumericProc,
-			DWORD(-1),&m_pSettings->m_nInstantSearchingDelay),
-		CreateCheckBox(IDS_ADVSETISUPDOWNGORESULTS,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isUpDownGoesToResults,&m_pSettings->m_dwInstantSearchingFlags),
-		CreateCheckBox(IDS_ADVSETISDISABLEIFDATASEARCH,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isDisableIfDataSearch,&m_pSettings->m_dwInstantSearchingFlags),
-		CreateCheckBox(IDS_ADVSETISNAMEDCHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfNameChanged,&m_pSettings->m_dwInstantSearchingFlags),
-		CreateCheckBox(IDS_ADVSETISTYPECHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfTypeChanged,&m_pSettings->m_dwInstantSearchingFlags),
-		CreateCheckBox(IDS_ADVSETISLOOKINCHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfLookInChanged,&m_pSettings->m_dwInstantSearchingFlags),
-		CreateCheckBox(IDS_ADVSETISSIZESCHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfSizesChanged,&m_pSettings->m_dwInstantSearchingFlags),
-		CreateCheckBox(IDS_ADVSETISDATESCHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfDatesChanged,&m_pSettings->m_dwInstantSearchingFlags),
-		CreateCheckBox(IDS_ADVSETISDATACHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfDataChanged,&m_pSettings->m_dwInstantSearchingFlags),
-		CreateCheckBox(IDS_ADVSETISOTHERCHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfOtherChanged,&m_pSettings->m_dwInstantSearchingFlags),
-		NULL
-	};	
+	
 
 
 
 	Item* LocateProcessAndResultsItems[]={
 		CreateCheckBox(IDS_ADVSETLIMITRESULTS,LimitMaximumResults,LimitResultsCheckBoxProc,
-			0,&m_pSettings->m_nMaximumFoundFiles),
+			0,&m_pSettings->m_nMaximumFoundFiles,"sa_limit"),
 		CreateCheckBox(IDS_ADVSETSPACEISSEPARATOR,NULL,DefaultCheckBoxProc,
-			CLocateDlg::efAllowSpacesAsSeparators,&m_pSettings->m_dwLocateDialogExtraFlags),
+			CLocateDlg::efAllowSpacesAsSeparators,
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_spaceisseparator"),
 		CreateCheckBox(IDS_ADVSETLOGICALOPERATIONS,NULL,DefaultCheckBoxProc,
-			CLocateDlg::efEnableLogicalOperations,&m_pSettings->m_dwLocateDialogExtraFlags),
+			CLocateDlg::efEnableLogicalOperations,
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_logicalops"),
 		CreateCheckBox(IDS_ADVSETMATCHWHOLENAMEIFASTERISKS,NULL,DefaultCheckBoxProc,
-			CLocateDlg::efMatchWhileNameIfAsterisks,&m_pSettings->m_dwLocateDialogExtraFlags),
+			CLocateDlg::efMatchWhileNameIfAsterisks,
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_matchwholenameifasterisks"),
 		CreateCheckBox(IDS_ADVSETISENABLE,InstantSearching,DefaultCheckBoxProc,
-			CLocateDlg::isEnable,&m_pSettings->m_dwInstantSearchingFlags),
-		CreateRoot(IDS_ADVSETRESULTSLIST,ResultsListItems),
-		CreateRoot(IDS_ADVSETUPDATERESULTS,UpdateResults),
+			CLocateDlg::isEnable,&m_pSettings->m_dwInstantSearchingFlags,"sa_isenable"),
+		CreateRoot(IDS_ADVSETRESULTSLIST,ResultsListItems,"sa_results"),
+		CreateRoot(IDS_ADVSETUPDATERESULTS,UpdateResults,"sa_updateresults"),
 		NULL
 	};
 		
 
-	Item* ShellContextMenuItems[]={
-		CreateCheckBox(IDS_ADVSETLOCATEINMYCOMPUTER,NULL,
-			DefaultCheckBoxProc,CSettingsProperties::cmLocateOnMyComputer,&m_pSettings->m_bAdvancedAndContextMenuFlag),
-		CreateCheckBox(IDS_ADVSETLOCATEINMYDOCUMENTS,NULL,
-			DefaultCheckBoxProc,CSettingsProperties::cmLocateOnMyDocuments,&m_pSettings->m_bAdvancedAndContextMenuFlag),
-		CreateCheckBox(IDS_ADVSETLOCATEINDRIVES,NULL,
-			DefaultCheckBoxProc,CSettingsProperties::cmLocateOnDrives,&m_pSettings->m_bAdvancedAndContextMenuFlag),
-		CreateCheckBox(IDS_ADVSETLOCATEINFOLFERS,NULL,
-			DefaultCheckBoxProc,CSettingsProperties::cmLocateOnFolders,&m_pSettings->m_bAdvancedAndContextMenuFlag),
-		CreateCheckBox(IDS_ADVSETUPDATEINMYCOMPUTER,NULL,
-			DefaultCheckBoxProc,CSettingsProperties::cmUpdateOnMyComputer,&m_pSettings->m_bAdvancedAndContextMenuFlag),
-		NULL
-	};
-
 	
-
-	Item* SystemItems[]={
-		CreateCheckBox(IDS_ADVSETRUNATSYSTEMSTARTUP,NULL,
-			DefaultCheckBoxProc,CSettingsProperties::settingsStartLocateAtStartup,&m_pSettings->m_dwSettingsFlags),
-		CreateRoot(IDS_ADVSETSHELLCONTEXTMENU,ShellContextMenuItems),
-		NULL
-	};
-
 	
+	/////////////////////////////////////////////////////////////////////////
+	// Items under Locate dialog category
+
 	Item* LookInItems[]={
 		CreateNumeric(IDS_ADVSETNUMBEROFDIRECTORIES,DefaultNumericProc,
-			MAKELONG(0,100),&m_pSettings->m_nNumberOfDirectories),
+			MAKELONG(0,100),&m_pSettings->m_nNumberOfDirectories,"sa_nosavedfolders"),
 		CreateCheckBox(IDS_ADVSETDONTSAVENETWORKDRIVES,NULL,DefaultCheckBoxProc,
-			CLocateDlg::efNameDontSaveNetworkDrivesAndDirectories,&m_pSettings->m_dwLocateDialogExtraFlags),
+			CLocateDlg::efNameDontSaveNetworkDrivesAndDirectories,
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_dontsaveUNC"),
 		CreateCheckBox(IDS_ADVSETDONTRESOLVEDRIVEICONS,NULL,DefaultCheckBoxProc,
-			CLocateDlg::efNameDontResolveIconAndDisplayNameForDrives,&m_pSettings->m_dwLocateDialogExtraFlags),
+			CLocateDlg::efNameDontResolveIconAndDisplayNameForDrives,
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_nolocaldrivesicons"),
 		CreateRadioBox(IDS_ADVSETADDSELECTEDROOTS,NULL,DefaultRadioBoxShiftProc,
-			MAKELONG(CLocateDlg::fgNameAddEnabledRoots>>16,CLocateDlg::fgNameRootFlag>>16),&m_pSettings->m_dwLocateDialogFlags),
+			MAKELONG(CLocateDlg::fgNameAddEnabledRoots>>16,CLocateDlg::fgNameRootFlag>>16),
+			&m_pSettings->m_dwLocateDialogFlags,"sa_drvsfromenablesdbs"),
 		CreateRadioBox(IDS_ADVSETADDALLROOTS,NULL,DefaultRadioBoxShiftProc,
-			MAKELONG(CLocateDlg::fgNameAddAllRoots>>16,CLocateDlg::fgNameRootFlag>>16),&m_pSettings->m_dwLocateDialogFlags),
+			MAKELONG(CLocateDlg::fgNameAddAllRoots>>16,CLocateDlg::fgNameRootFlag>>16),
+			&m_pSettings->m_dwLocateDialogFlags,"sa_drvsfromalldbs"),
 		CreateRadioBox(IDS_ADVSETDONTADDANYROOTS,NULL,DefaultRadioBoxShiftProc,
-			MAKELONG(CLocateDlg::fgNameDontAddRoots>>16,CLocateDlg::fgNameRootFlag>>16),&m_pSettings->m_dwLocateDialogFlags),
+			MAKELONG(CLocateDlg::fgNameDontAddRoots>>16,CLocateDlg::fgNameRootFlag>>16),
+			&m_pSettings->m_dwLocateDialogFlags,"sa_drvsfromnodb"),
 		CreateCheckBox(IDS_ADVSETMULTIPLEDIRECTORIES,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgNameMultibleDirectories,&m_pSettings->m_dwLocateDialogFlags),
+			CLocateDlg::fgNameMultibleDirectories,
+			&m_pSettings->m_dwLocateDialogFlags,"sa_multidir"),
 		NULL
 	};
 
 	Item* LocateDialogItems[]={
 		CreateCheckBox(IDS_ADVSETLARGEMODEONLY,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgDialogLargeModeOnly,&m_pSettings->m_dwLocateDialogFlags),
+			CLocateDlg::fgDialogLargeModeOnly,&m_pSettings->m_dwLocateDialogFlags,"sa_largemode"),
 		CreateNumeric(IDS_ADVSETNUMBEROFNAMES,DefaultNumericProc,
-			MAKELONG(0,256),&m_pSettings->m_nNumberOfNames),
+			MAKELONG(0,256),&m_pSettings->m_nNumberOfNames,"sa_itemsinnamed"),
 		CreateNumeric(IDS_ADVSETNUMBEROFTYPES,DefaultNumericProc,
-			MAKELONG(0,256),&m_pSettings->m_nNumberOfTypes),
-		CreateRoot(IDS_ADVSETLOOKINCOMBO,LookInItems),
+			MAKELONG(0,256),&m_pSettings->m_nNumberOfTypes,"sa_itemsintype"),
+		CreateRoot(IDS_ADVSETLOOKINCOMBO,LookInItems,"sa_lookin"),
 		CreateCheckBox(IDS_ADVSETDONTSAVELISTITEMS,NULL,DefaultCheckBoxProc,
-			CLocateDlg::efNameDontSaveNameTypeAndDirectories,&m_pSettings->m_dwLocateDialogExtraFlags),
+			CLocateDlg::efNameDontSaveNameTypeAndDirectories,
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_nosave"),
 		CreateCheckBox(IDS_ADVSETLOADTYPES,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgLoadRegistryTypes,&m_pSettings->m_dwLocateDialogFlags),
+			CLocateDlg::fgLoadRegistryTypes,
+			&m_pSettings->m_dwLocateDialogFlags,"sa_regfiletypes"),
 		CreateCheckBox(IDS_ADVSETTOPMOST,NULL,DefaultCheckBoxProc,
-			CLocateDlg::fgDialogTopMost,&m_pSettings->m_dwLocateDialogFlags),
-		NULL, // For transparency
-		NULL
-	};
-	
-	Item* StatusTooltipItems[]={
-		CreateColor(IDS_ADVSETTOOLTIPTEXTCOLOR,DefaultColorProc,NULL,&m_pSettings->m_cToolTipTextColor),
-		CreateColor(IDS_ADVSETTOOLTIPTITLECOLOR,DefaultColorProc,NULL,&m_pSettings->m_cToolTipTitleColor),
-		CreateColor(IDS_ADVSETTOOLTIPERRORCOLOR,DefaultColorProc,NULL,&m_pSettings->m_cToolTipErrorColor),
-		CreateColor(IDS_ADVSETTOOLTIPBACKCOLOR,DefaultColorProc,NULL,&m_pSettings->m_cToolTipBackColor),
-		CreateFont(IDS_ADVSETTOOLTIPTEXTFONT,DefaultFontProc,NULL,&m_pSettings->m_lToolTipTextFont),
-		CreateFont(IDS_ADVSETTOOLTIPTITLEFONT,DefaultFontProc,NULL,&m_pSettings->m_lToolTipTitleFont),
-		CreateListBox(IDS_ADVSETTOOLTIPWINDOWPOSITION,UpdateTooltipPositionProc,0,&m_pSettings->m_dwProgramFlags),
-		CreateListBox(IDS_ADVSETTOOLTIPWINDOWONTOP,UpdateTooltipTopmostProc,0,&m_pSettings->m_dwProgramFlags),
+			CLocateDlg::fgDialogTopMost,
+			&m_pSettings->m_dwLocateDialogFlags,"sa_alwaysontop"),
 		NULL, // For transparency
 		NULL
 	};
@@ -1202,63 +1244,185 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	{
 		// Needs at least Win2k
 		LocateDialogItems[7]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
-			MAKELONG(0,100),&m_pSettings->m_nTransparency);
-		StatusTooltipItems[8]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
-			MAKELONG(0,100),&m_pSettings->m_nToolTipTransparency);
+			MAKELONG(0,100),&m_pSettings->m_nTransparency,"sa_transparency");
+	}
 
+
+
+	/////////////////////////////////////////////////////////////////////////
+	// Items under Update Process category
+
+	
+	Item* StatusTooltipItems[]={
+		CreateColor(IDS_ADVSETTOOLTIPTEXTCOLOR,DefaultColorProc,NULL,
+			&m_pSettings->m_cToolTipTextColor,"sa_tip_textcolor"),
+		CreateColor(IDS_ADVSETTOOLTIPTITLECOLOR,DefaultColorProc,NULL,
+			&m_pSettings->m_cToolTipTitleColor,"sa_tip_titlecolor"),
+		CreateColor(IDS_ADVSETTOOLTIPERRORCOLOR,DefaultColorProc,NULL,
+			&m_pSettings->m_cToolTipErrorColor,"sa_tip_errorcolor"),
+		CreateColor(IDS_ADVSETTOOLTIPBACKCOLOR,DefaultColorProc,NULL,
+			&m_pSettings->m_cToolTipBackColor,"sa_tip_bgcolor"),
+		CreateFont(IDS_ADVSETTOOLTIPTEXTFONT,DefaultFontProc,NULL,
+			&m_pSettings->m_lToolTipTextFont,"sa_tip_textfont"),
+		CreateFont(IDS_ADVSETTOOLTIPTITLEFONT,DefaultFontProc,NULL,
+			&m_pSettings->m_lToolTipTitleFont,"sa_tip_titlefont"),
+		CreateListBox(IDS_ADVSETTOOLTIPWINDOWPOSITION,UpdateTooltipPositionProc,0,
+			&m_pSettings->m_dwProgramFlags,"sa_tip_pos"),
+		CreateListBox(IDS_ADVSETTOOLTIPWINDOWONTOP,UpdateTooltipTopmostProc,0,
+			&m_pSettings->m_dwProgramFlags,"sa_tip_ontop"),
+		NULL, // For transparency
+		NULL
+	};
+	
+	
+	
+	if (GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes")!=NULL)
+	{
+		// Needs at least Win2k
+		StatusTooltipItems[8]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
+			MAKELONG(0,100),&m_pSettings->m_nToolTipTransparency,"sa_tip_trans");
 	}
 		
 
 	Item* UpdateProcessItems[]={
 		CreateCheckBox(IDS_ADVSETSHOWUPDATESTATUSTOOLTIP,StatusTooltipItems,
-			DefaultCheckBoxProc,CLocateApp::pfEnableUpdateTooltip,&m_pSettings->m_dwProgramFlags),
-		CreateListBox(IDS_ADVSETUPDATETHREADPRIORITY,UpdateThreadPriorityProc,0,&m_pSettings->m_nUpdateThreadPriority),
+			DefaultCheckBoxProc,CLocateApp::pfEnableUpdateTooltip,
+			&m_pSettings->m_dwProgramFlags,"sa_enableupdatetooltip"),
+		CreateListBox(IDS_ADVSETUPDATETHREADPRIORITY,UpdateThreadPriorityProc,0,
+			&m_pSettings->m_nUpdateThreadPriority,"sa_threadpriority"),
 		NULL
 	};
+	
+	
+
+	/////////////////////////////////////////////////////////////////////////
+	// Items under System Tray Icon category
+
 	
 	Item* SystemTrayIconItems[]={
-		CreateFile(IDS_ADVSETICONFILE,TrayIconProc,0,&m_pSettings->m_CustomTrayIcon),
+		CreateFile(IDS_ADVSETICONFILE,TrayIconProc,0,
+			&m_pSettings->m_CustomTrayIcon,"sa_customSTicon"),
 		NULL
 	};
-	
+
 	Item* SystemTrayIcon[]={
 		CreateCheckBox(IDS_ADVSETDONTSHOWSTICON,NULL,DefaultCheckBoxProc,
-			CLocateApp::pfDontShowSystemTrayIcon,&m_pSettings->m_dwProgramFlags),
+			CLocateApp::pfDontShowSystemTrayIcon,
+			&m_pSettings->m_dwProgramFlags,"sa_noSTicon"),
 		CreateCheckBox(IDS_ADVSETCLICKACTIVATETRAYICON,NULL,
-			DefaultCheckBoxProc,CLocateApp::pfTrayIconClickActivate,&m_pSettings->m_dwProgramFlags),
+			DefaultCheckBoxProc,CLocateApp::pfTrayIconClickActivate,
+			&m_pSettings->m_dwProgramFlags,"sa_singleclkopens"),
 		CreateCheckBox(IDS_ADVSETCUSTOMTRAYICON,SystemTrayIconItems,DefaultCheckBoxProc,
-			CSettingsProperties::settingsCustomUseTrayIcon,&m_pSettings->m_dwSettingsFlags),
+			CSettingsProperties::settingsCustomUseTrayIcon,
+			&m_pSettings->m_dwSettingsFlags,"sa_customSTicon"),
 		NULL
 	};
+
+
+
+	/////////////////////////////////////////////////////////////////////////
+	// Items under Miscellaneous category
 
 	Item* MiscItems[]={
 		CreateCheckBox(IDS_ADVSETDONTSHOWEXTINRENAME,NULL,DefaultCheckBoxProc,
-			CSettingsProperties::settingsDontShowExtensionInRenameDialog,&m_pSettings->m_dwSettingsFlags),
+			CSettingsProperties::settingsDontShowExtensionInRenameDialog,
+			&m_pSettings->m_dwSettingsFlags,"sa_noextinrename"),
 		CreateCheckBox(IDS_ADVSETSHOWCRITICALERRORS,NULL,
-			DefaultCheckBoxProc,CLocateApp::pfShowCriticalErrors,&m_pSettings->m_dwProgramFlags),
+			DefaultCheckBoxProc,CLocateApp::pfShowCriticalErrors,
+			&m_pSettings->m_dwProgramFlags,"sa_criticalerrors"),
 		CreateCheckBox(IDS_ADVSETSHOWNONCRITICALERRORS,NULL,
-			DefaultCheckBoxProc,CLocateApp::pfShowNonCriticalErrors,&m_pSettings->m_dwProgramFlags),
+			DefaultCheckBoxProc,CLocateApp::pfShowNonCriticalErrors,
+			&m_pSettings->m_dwProgramFlags,"sa_noncriticalerrors"),
 		CreateCheckBox(IDS_ADVSETUSEDEFDIRECTORYICON,NULL,DefaultCheckBoxProc,
-			CLocateApp::pfUseDefaultIconForDirectories,&m_pSettings->m_dwProgramFlags),
+			CLocateApp::pfUseDefaultIconForDirectories,
+			&m_pSettings->m_dwProgramFlags,"sa_defdiricons"),
+		NULL
+	};
+
+
+
+
+	
+
+
+	/////////////////////////////////////////////////////////////////////////
+	// Items under system category
+	
+	Item* ShellContextMenuItems[]={
+		CreateCheckBox(IDS_ADVSETLOCATEINMYCOMPUTER,NULL,
+			DefaultCheckBoxProc,CSettingsProperties::cmLocateOnMyComputer,
+			&m_pSettings->m_bAdvancedAndContextMenuFlag,"sa_locMyComp"),
+		CreateCheckBox(IDS_ADVSETLOCATEINMYDOCUMENTS,NULL,
+			DefaultCheckBoxProc,CSettingsProperties::cmLocateOnMyDocuments,
+			&m_pSettings->m_bAdvancedAndContextMenuFlag,"sa_locMyDocu"),
+		CreateCheckBox(IDS_ADVSETLOCATEINDRIVES,NULL,
+			DefaultCheckBoxProc,CSettingsProperties::cmLocateOnDrives,
+			&m_pSettings->m_bAdvancedAndContextMenuFlag,"sa_locdrives"),
+		CreateCheckBox(IDS_ADVSETLOCATEINFOLFERS,NULL,
+			DefaultCheckBoxProc,CSettingsProperties::cmLocateOnFolders,
+			&m_pSettings->m_bAdvancedAndContextMenuFlag,"sa_locfolders"),
+		CreateCheckBox(IDS_ADVSETUPDATEINMYCOMPUTER,NULL,
+			DefaultCheckBoxProc,CSettingsProperties::cmUpdateOnMyComputer,
+			&m_pSettings->m_bAdvancedAndContextMenuFlag,"sa_updMyComp"),
+		NULL
+	};
+
+	Item* SystemItems[]={
+		CreateCheckBox(IDS_ADVSETRUNATSYSTEMSTARTUP,NULL,
+			DefaultCheckBoxProc,CSettingsProperties::settingsStartLocateAtStartup,
+			&m_pSettings->m_dwSettingsFlags,"sa_locateatstartup"),
+		CreateRoot(IDS_ADVSETSHELLCONTEXTMENU,ShellContextMenuItems,"sa_contextmenu"),
 		NULL
 	};
 
 	
+
+	/////////////////////////////////////////////////////////////////////////
+	// Main sections
+	
 	Item* Parents[]={
-		CreateRoot(IDS_ADVSETLOCATEPROCESS,LocateProcessAndResultsItems),
-		CreateRoot(IDS_ADVSETDIALOGS,LocateDialogItems),
-		CreateRoot(IDS_ADVSETUPDATEPROCESS,UpdateProcessItems),
-		CreateRoot(IDS_ADVSETSYSTEMTRAYICON,SystemTrayIcon),
-		CreateRoot(IDS_ADVSETMISCELLANEOUS,MiscItems),
-		CreateRoot(IDS_ADVSETSYSTEM,SystemItems),
+		CreateRoot(IDS_ADVSETLOCATEPROCESS,LocateProcessAndResultsItems,"sa_locateandresults"),
+		CreateRoot(IDS_ADVSETDIALOGS,LocateDialogItems,"sa_dialog"),
+		CreateRoot(IDS_ADVSETUPDATEPROCESS,UpdateProcessItems,"sa_update"),
+		CreateRoot(IDS_ADVSETSYSTEMTRAYICON,SystemTrayIcon,"sa_STicon"),
+		CreateRoot(IDS_ADVSETMISCELLANEOUS,MiscItems,"sa_misc"),
+		CreateRoot(IDS_ADVSETSYSTEM,SystemItems,"sa_system"),
 		NULL};
 
 	Initialize(Parents);
 	return FALSE;
 }
 
+
 void CSettingsProperties::CAdvancedSettingsPage::OnHelp(LPHELPINFO lphi)
 {
+	LPCWSTR szwHelpFile=GetApp()->m_szHelpFile;
+	if (szwHelpFile!=NULL)
+	{	
+		LPCSTR pHelpID=GetHelpID(lphi);
+		if (pHelpID!=NULL)
+		{
+
+			// Form path to help file
+			CStringW sHelpFile=GetApp()->GetExeNameW();
+			sHelpFile.FreeExtra(sHelpFile.FindLast(L'\\')+1);
+			sHelpFile << szwHelpFile << "::/settings_advanced.htm#" << pHelpID;
+
+
+			if (IsUnicodeSystem())
+			{
+				if (HtmlHelpW(*this,sHelpFile,HH_DISPLAY_TOPIC,NULL)!=NULL)
+					return;
+			}
+			else
+			{
+				if (HtmlHelpA(*this,W2A(sHelpFile),HH_DISPLAY_TOPIC,NULL)!=NULL)
+					return;
+			}
+		}		
+	}
+	
+	
 	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_ADVANCED)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
@@ -2003,6 +2167,26 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::OnInitDialog(HWND hwndFocus)
 
 void CSettingsProperties::CDatabasesSettingsPage::OnHelp(LPHELPINFO lphi)
 {
+	CLocateApp::HelpID id[]= {
+		{ IDC_DATABASES,"sd_list" },
+		{ IDC_NEW,"sd_new" },
+		{ IDC_EDIT,"sd_edit" },
+		{ IDC_REMOVE,"sd_remove" },
+		{ IDC_ENABLE,"sd_enable" },
+		{ IDC_DISABLE,"sd_enable" },
+		{ IDC_UPDATE,"sd_globalupdate" },
+		{ IDC_UP,"sd_up" },
+		{ IDC_DOWN,"sd_up" },
+		{ IDC_IMPORT,"sd_import" },
+		{ IDC_EXPORT,"sd_export" },
+		{ IDC_THREADS,"sd_threads" },
+		{ IDC_THREADSPIN,"sd_threads" },
+		{ IDC_RESTORE,"sd_restore" }
+	};
+	
+	if (CLocateApp::OpenHelp(*this,id,sizeof(id)/sizeof(CLocateApp::HelpID),"settings_databases.htm",lphi))
+		return;
+
 	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_DATABASES)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
@@ -3183,6 +3367,38 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnHelp(LPHELPINFO lphi)
 {
+	CLocateApp::HelpID id[]= {
+		{ IDC_ENABLE,"sdd_enable" },
+		{ IDC_GLOBALUPDATE,"sdd_updglob" },
+		{ IDC_USEDTHREADLABEL,"sdd_thread" },
+		{ IDC_USEDTHREAD,"sdd_thread" },
+		{ IDC_NAMELABEL,"sdd_name" },
+		{ IDC_NAME,"sdd_name" },
+		{ IDC_DBFILELABEL,"sdd_file" },
+		{ IDC_DBFILE,"sdd_file" },
+		{ IDC_BROWSE,"sdd_file" },
+		{ IDC_UNICODE,"sdd_unicode" },
+		{ IDC_INCREMENTALUPDATE,"sdd_noowerwrite" },
+		{ IDC_CREATORLABEL,"sdd_creator" },
+		{ IDC_CREATOR,"sdd_creator" },
+		{ IDC_DESCRIPTIONLABEL,"sdd_description" },
+		{ IDC_DESCRIPTION,"sdd_description" },
+		{ IDC_LOCALDRIVES,"sdd_local" },
+		{ IDC_CUSTOMDRIVES,"sdd_custom" },
+		{ IDC_STOPIFROOTUNAVAILABLE,"sdd_stopifunavailable" },
+		{ IDC_ADVANCED,"sdd_advanced" },
+		{ IDC_FOLDERSLABEL,"sdd_drives" },
+		{ IDC_FOLDERS,"sdd_drives" },
+		{ IDC_ADDFOLDER,"sdd_adddir" },
+		{ IDC_REMOVEFOLDER,"sdd_removedir" },
+		{ IDC_UP,"sdd_updown" },
+		{ IDC_DOWN,"sdd_updown" }
+	};
+	
+	if (CLocateApp::OpenHelp(*this,id,sizeof(id)/sizeof(CLocateApp::HelpID),"settings_databasedlg.htm",lphi))
+		return;
+
+
 	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_DATABASEDLG)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
@@ -4308,7 +4524,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnHelp(LPHELPINFO lphi)
 {
-	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_DATABASEADVANCED)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 

@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,8,2130
- PRODUCTVERSION 3,1,8,2130
+ FILEVERSION 3,1,8,2160
+ PRODUCTVERSION 3,1,8,2160
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 beta build 8.2130"
+            VALUE "FileVersion", "3.1 beta build 8.8160"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2008 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 beta build 8.2130"
+            VALUE "ProductVersion", "3.1 beta build 8.2160"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -112,7 +112,7 @@ STYLE DS_SETFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
-	CONTROL         "Mi&nimum filesize:",IDC_CHECKMINIMUMSIZE,
+	CONTROL         "Mi&nimum file size:",IDC_CHECKMINIMUMSIZE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,6,84+0,10
     EDITTEXT        IDC_MINIMUMSIZE,99+0,5,36,12,ES_AUTOHSCROLL | ES_NUMBER | 
                     WS_DISABLED,WS_EX_RIGHT
@@ -120,7 +120,7 @@ BEGIN
                     WS_DISABLED | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Spin2",IDC_MINIMUMSIZESPIN,"msctls_updown32",
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,139,6,10,12
-    CONTROL         "M&aximum filesize:",IDC_CHECKMAXIMUMSIZE,
+    CONTROL         "M&aximum file size:",IDC_CHECKMAXIMUMSIZE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,6,20,84+0,10
     EDITTEXT        IDC_MAXIMUMSIZE,99+0,19,36,12,ES_AUTOHSCROLL | ES_NUMBER | 
                     WS_DISABLED,WS_EX_RIGHT
@@ -141,7 +141,7 @@ BEGIN
                     75+0,49,65,13 
     COMBOBOX        IDC_MAXTYPE,134+11+0,49,55+0,52,CBS_DROPDOWNLIST | WS_DISABLED | 
                     WS_VSCROLL | WS_TABSTOP
-	LTEXT           "Size and date are looked up from the database. If the database does not contain size and dateinformation, these options will be ignored.",IDC_STATIC,5,71-(0),225+(0),16+(0)
+	LTEXT           "Size and date are looked up from the database. If the database does not contain size and date information, these options will be ignored.",IDC_STATIC,5,71-(0),225+(0),16+(0)
 END
 
 IDD_ADVANCED DIALOGEX 9, 21, 221, 88
@@ -338,20 +338,20 @@ BEGIN
                     IDC_ALWAYSUNDERLINE,21,71,220,10
     RADIOBUTTON     "&Click file to select",IDC_CLICKTOSELECT,
                     8,85,252,10
-    LTEXT           "This option has only effect to that how result list items are selected. To specify how files are opened, use 'Select Details' dialog (View menu).",
+    LTEXT           "This option has only an effect on how items in the results list are selected. To specify how files are opened, use 'Select Details' dialog (under View menu).",
                     IDC_STATIC,8,97,272,30
 	GROUPBOX        "Locate dialog:",IDC_STATIC,2,135,281,79
     CONTROL         "&Minimize to system tray",IDC_MINIMIZETOSYSTEMTRAY,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,151,157,10
-    CONTROL         "&Close button minimizes window",IDC_CLOSEBUTTONMINIMIZESWINDOW,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,166,207,10
-    CONTROL         "&Remember content of fields",IDC_REMEMBERSTATES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,8,181,207,10
-    CONTROL         "&Leave program background when dialog is closed",
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,151,237,10
+    CONTROL         "&Close button minimizes the main dialog",IDC_CLOSEBUTTONMINIMIZESWINDOW,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,166,237,10
+    CONTROL         "&Save content of fields and restore when dialog is opened again",IDC_REMEMBERSTATES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,8,181,237,10
+    CONTROL         "&Leave Locate32 running on background when the main dialog is closed",
                     IDC_CLOSETOSYSTEMTRAY,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,8,197,222,10
+                    WS_TABSTOP,8,197,237,10
 	GROUPBOX        "Defaults (states after ""New Search"" button is pressed):",IDC_STATIC,2,221,281,79
-	LTEXT           "&Sorting:",IDC_STATIC,8,237,
+	LTEXT           "&Sorting:",IDC_SORTINGLABEL,8,237,
 					27+0,10
     COMBOBOX        IDC_SORTING,36+0,235,
 					80+10,70,CBS_DROPDOWNLIST| WS_VSCROLL | WS_TABSTOP   
@@ -364,7 +364,7 @@ BEGIN
     CONTROL         "M&atch whole name only",
                     IDC_MATCHWHOLEFILENAMEONLY,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,8,255,115,10
-    LTEXT           "&Check in:",IDC_STATIC,128,255,54,10
+    LTEXT           "&Check:",IDC_CHECKINLABEL,128,255,54,10
     COMBOBOX        IDC_CHECKIN,174,252,100,76,CBS_DROPDOWNLIST| WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "R&eplace spaces with '*'",IDC_REPLACESPACES,
@@ -497,12 +497,12 @@ BEGIN
                     WS_TABSTOP,7,11,58,11
     CONTROL         "Update &Globally",IDC_GLOBALUPDATE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,76,11,88,11
-    RTEXT           "T&hread:",IDC_STATIC,182,11,47,11
+    RTEXT           "T&hread:",IDC_USEDTHREADLABEL,182,11,47,11
     COMBOBOX        IDC_USEDTHREAD,233,9,32,52,CBS_DROPDOWNLIST |  
                     WS_VSCROLL | WS_TABSTOP
-    LTEXT           "&Name:",IDC_STATIC,7,27,44,9
+    LTEXT           "&Name:",IDC_NAMELABEL,7,27,44,9
     EDITTEXT        IDC_NAME,50,25,148,13,ES_AUTOHSCROLL
-    LTEXT           "&File:",IDC_STATIC,7,45,34,9
+    LTEXT           "&File:",IDC_DBFILELABEL,7,45,34,9
     EDITTEXT        IDC_DBFILE,50,43,148,13,ES_AUTOHSCROLL
     PUSHBUTTON      "&Browse",IDC_BROWSE,205,43,60,14
     CONTROL         "Use Unicode character set",
@@ -512,9 +512,9 @@ BEGIN
                     IDC_INCREMENTALUPDATE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,73,256,11
     GROUPBOX        "Information:",IDC_STATIC,2,93,270,92
-    LTEXT           "Crea&tor:",IDC_STATIC,7,103,126,9
+    LTEXT           "Crea&tor:",IDC_CREATORLABEL,7,103,126,9
     EDITTEXT        IDC_CREATOR,7,115,257,14,ES_AUTOHSCROLL
-    LTEXT           "D&escription:",IDC_STATIC,7,131,148,8
+    LTEXT           "D&escription:",IDC_DESCRIPTIONLABEL,7,131,148,8
     EDITTEXT        IDC_DESCRIPTION,7,142,257,38,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_VSCROLL
     GROUPBOX        "Include:",IDC_STATIC,2,187,270,140
@@ -526,11 +526,11 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,213,150,10
     PUSHBUTTON      "&Advanced",IDC_ADVANCED,179,211,85,
                     13
-    LTEXT           "Drives and Directories:",8,8,230,96,8
     PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,104,227,55,13
     PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,161,227,45,13
     PUSHBUTTON      "&Up",IDC_UP,209,227,28,13
     PUSHBUTTON      "&Down",IDC_DOWN,237,227,28,13
+    LTEXT           "Drives and Directories:",IDC_FOLDERSLABEL,8,230,96,8
     CONTROL         "",IDC_FOLDERS,"SysListView32",LVS_REPORT | WS_TABSTOP |
                     LVS_SINGLESEL | LVS_SHAREIMAGELISTS | LVS_NOSORTHEADER | 
                     WS_BORDER | WS_TABSTOP,7,241,257,82
@@ -928,7 +928,7 @@ BEGIN
             MENUITEM "by &Date", IDM_ARRANGEDATE
             MENUITEM "by &Extension", IDM_ARRANGEEXTENSION
             MENUITEM SEPARATOR
-            //MENUITEM "$MENUMAIN_VIEW_ARRANGEICONS_SHOWINGROUPS$", IDM_SHOWINGROUPS, GRAYED
+            //MENUITEM "$MENUMAIN_VIEW_ARRANGEICONS_SHOWINGROUPS@P$", IDM_SHOWINGROUPS, GRAYED
             MENUITEM "&Auto Arrange", 
                                                     IDM_AUTOARRANGE
             MENUITEM "Align to &Grid", 
@@ -1242,7 +1242,8 @@ BEGIN
     IDS_DIRECTORYTYPE       "Directory"
     IDS_TITLE               "Locate: "
     IDS_ALLFILES            "All Files"
-    IDS_FILESNAMED          "Files named "
+    IDS_TITLESEARCHRESULTS  "'%s' search results"
+	IDS_TITLEEXTENSIONS		"extensions %s"
     IDS_REGULAREXPRESSION   "regular expression: "
 	IDS_REGULAREXPRESSIONFULLPATH   "regular expression (full path): "
 	IDS_SHORTCUT            "Shortcut"
@@ -1576,7 +1577,7 @@ END
 
 STRINGTABLE
 BEGIN
-	IDS_ADVSETLOCATEPROCESS			"Locating files and result list"
+	IDS_ADVSETLOCATEPROCESS			"Locating files and results list"
 	IDS_ADVSETRESULTSLIST			"Results list"
 	IDS_ADVSETNODELAYEDUPDATING		"Show icon, title and other information before locating is finished"
 	IDS_ADVSETSHOWDATESINFORMAT		"Show dates in format:"
@@ -1592,7 +1593,6 @@ BEGIN
 	IDS_ADVSETFILESIZEFORMATKBNOUNITS	"kilobytes (no unit)"
 	IDS_ADVSETFILESIZEFORMATMB		"megabytes"
 	IDS_ADVSETFILESIZEFORMATMBNOUNITS	"megabytes (no unit)"
-	IDS_ADVSETLOCATE				"Locate"
 	IDS_ADVSETLIMITRESULTS			"Limit the number of results"
 	IDS_ADVSETMAXNUMBEROFRESULTS	"Maximum number of found files:"
 	IDS_ADVSETSHELLCONTEXTMENU		"Shell context menu commands"
@@ -1636,38 +1636,38 @@ END
 	
 STRINGTABLE
 BEGIN
-	IDS_ADVSETUSEGETTITLE			"Use GetFileTitle function to formulate a file titles"
-	IDS_ADVSETUSEOWNMETHODFORTITLE	"Use own method to generate file titles"
-	IDS_ADVSETSHOWTYPEICONS			"Show type specified icons"
+	IDS_ADVSETUSEGETTITLE			"Use Windows' method to form file titles"
+	IDS_ADVSETUSEOWNMETHODFORTITLE	"Use own method to form file titles"
+	IDS_ADVSETUSESIMPLEICONS		"Use simple icons"
 	IDS_ADVSETSHOWFILETYPES			"Show file type (otherwise show extension)"
-	IDS_ADVSETUSESHELLFORTYPE		"Use shell function to get file types"
-	IDS_ADVSETUSEOWNMETHODFORTYPE	"Use own method to get file types"
+	IDS_ADVSETUSESHELLFORTYPE		"Use Windows shell function to determine file types"
+	IDS_ADVSETUSEOWNMETHODFORTYPE	"Use own method to determine file types"
 	IDS_ADVSETFIRSTCHARUPPER		"First character is uppercase only"
 	IDS_ADVSETALWAYSSHOWEXT			"Always show file extensions"
 	IDS_ADVSETHIDEEXTFORKNOWN		"Hide file extensions for known types"
 	IDS_ADVSETNEVERSHOWEXT			"Never show extensions"
 	IDS_ADVSETDIALOGS				"Locate dialog"
-	IDS_ADVSETLOADTYPES				"Load file types from registry (""Type of file"" combo)"
-	IDS_ADVSETLARGEMODEONLY			"Result list is always shown"
+	IDS_ADVSETLOADTYPES				"Load file types from registry (""Type of file"" combo box)"
+	IDS_ADVSETLARGEMODEONLY			"Results list is always shown"
 	IDS_ADVSETNUMBEROFDIRECTORIES	"Number of saved folders:"
 	IDS_ADVSETDONTSAVENETWORKDRIVES	"Do not save network drives and directories"
-	IDS_ADVSETNUMBEROFNAMES			"Number of items in the list of the ""Named"" combo:"
-	IDS_ADVSETNUMBEROFTYPES			"Number of items in the list of the ""Type"" combo:"
+	IDS_ADVSETNUMBEROFNAMES			"Number of items in the drop-down list of the ""Named"" combo box:"
+	IDS_ADVSETNUMBEROFTYPES			"Number of items in the drop-down list of the ""Type"" combo box:"
 	IDS_ADVSETDONTADDANYROOTS		"Do not add directories (except local drives) to the list"
-	IDS_ADVSETDONTSAVELISTITEMS		"Do not save list items in ""Named"", ""Type"" and ""Look In"" combos"
+	IDS_ADVSETDONTSAVELISTITEMS		"Do not save list items in ""Named"", ""Type"" and ""Look In"" combo boxes"
 	IDS_ADVSETADDSELECTEDROOTS		"Add drives and directories of enabled databases"
 	IDS_ADVSETADDALLROOTS			"Add drives and directories of all databases to the list"
 	IDS_ADVSETMULTIPLEDIRECTORIES	"Possible to choose more than one directory"
-	IDS_ADVSETLOOKINCOMBO			"""Look In"" Combo (Name tab):"
+	IDS_ADVSETLOOKINCOMBO			"""Look In"" combo box (Name tab):"
 	IDS_ADVSETDONTSHOWHIDDENFILES	"Do not show hidden and system files"
-	IDS_ADVSETDONTSHOWTOOLTIPS		"Do not show tooltips"
+	IDS_ADVSETSHOWTOOLTIPS			"Show tooltips when pointing results"
 	IDS_ADVSETDONTSHOWDELETEDFILES	"Do not show deleted/renamed/moved files"
 	IDS_ADVSETNODOUBLERESULTS		"Show found files only once (see note in help)"
 	IDS_ADVSETFOLDERSFIRST			"Show folders first"
-	IDS_ADVSETACTIVATEFIRSTITEM		"Activate the first found item after search is completed"
+	IDS_ADVSETACTIVATEFIRSTITEM		"Activate the first found file after completing search"
 	IDS_ADVSETFULLROWSELECT			"Highlight whole row when item selected"
-	IDS_ADVSETUSEPROGRAMFORFOLDERS	"Use other program to open folders"
-	IDS_ADVSETOPENFOLDERWITH		"Program (path=%d):"
+	IDS_ADVSETUSEPROGRAMFORFOLDERS	"Use an another program (not explorer) to open folders"
+	IDS_ADVSETOPENFOLDERWITH		"Command (path=%d):"
 	IDS_ADVSETCOMPUTEMD5SUMS		"Compute MD5 sums (slow)"
 	IDS_ADVSETUPDATERESULTS			"Update results"
 	IDS_ADVSETDISABLEUPDATING		"Disable updating (file information from database)"
@@ -1675,7 +1675,7 @@ BEGIN
 	IDS_ADVSETDISABLEFSCHANGETRACKING	"Do not track file system changes"
 	IDS_ADVSETENABLEFSCHANGETRACKING	"Track file system changes"
 	IDS_ADVSETENABLEFSCHANGETRACKINGOLD	"Track file system changes (old method)"
-	IDS_ADVSETSETTOOLTIPDELAYS		"Set tooltip delay times"
+	IDS_ADVSETSETTOOLTIPDELAYS		"Set tooltip delay times (otherwise use defaults)"
 	IDS_ADVSETSHOWTOOLTIPDELAY		"Delay until tooltip appears (ms):"
 	IDS_ADVSETSHOWTOOLTIPDURATION	"Tooltip remains visible (ms):"
 	IDS_ADVSETUPDATETHREADPRIORITY	"Thread priority:"
@@ -1683,22 +1683,22 @@ BEGIN
 	IDS_ADVSETDONTSHOWEXTINRENAME	"Do not show an extension in the rename dialog"
 	IDS_ADVSETCLICKACTIVATETRAYICON	"Single-clicking tray icon will open Locate dialog"
 	IDS_ADVSETCUSTOMTRAYICON		"Custom system tray icon"
-	IDS_ADVSETICONFILE				"File:"
+	IDS_ADVSETICONFILE				"Icon file:"
 	IDS_ADVSETSELECTICONFILE		"Select icon file"
-	IDS_ADVSETSELECTPROGRAM			"Select program"
+	IDS_ADVSETSELECTPROGRAM			"Select a program"
 	IDS_ADVSETALLOWINPLACERENAMING	"Explorer style renaming"
-	IDS_ADVSETUSEDEFDIRECTORYICON	"Use default icon for directories (use with slow network drives)"
-	IDS_ADVSETWHILESORTINGDONOTREADINFO	"While sorting, do not read information from files"
+	IDS_ADVSETUSEDEFDIRECTORYICON	"Use default icons for directories (use with slow network drives)"
+	IDS_ADVSETWHILESORTINGDONOTREADINFO	"Do not read information from files when sorting results"
 	IDS_ADVSETDONTRESOLVEDRIVEICONS	"Do not resolve icon for local drives"
 	IDS_ADVSETLOGICALOPERATIONS		"Allow logical operations (+ and -) for searches"
 	IDS_ADVSETSPACEISSEPARATOR		"Use space as a separator for searches"
 	IDS_ADVSETMATCHWHOLENAMEIFASTERISKS	"If asterisks given, search as if ""Match whole name"" is enabled"
 	IDS_ADVSETDONTSHOWSTICON		"Do not show system tray icon"
 	IDS_ADVSETSYSTEMTRAYICON		"System tray icon"
-	IDS_ADVSETISENABLE				"Enable search while typing"
-	IDS_ADVSETISLIMIT				"Limit the number of results:"
+	IDS_ADVSETISENABLE				"Search as type"
+	IDS_ADVSETISLIMIT				"Limit the number of results (0 = no limit):"
 	IDS_ADVSETISDELAY				"Delay before searching (ms):"
-	IDS_ADVSETISUPDOWNGORESULTS		"Up or Down key in ""Named:"" will activate first found item"
+	IDS_ADVSETISUPDOWNGORESULTS		"Up or Down key in ""Named:"" activates the first found file"
 	IDS_ADVSETISNAMEDCHANGED		"Search when ""Named:"" is changed"
 	IDS_ADVSETISTYPECHANGED			"Search when ""Extensions:"" is changed"
 	IDS_ADVSETISLOOKINCHANGED		"Search when ""Look In:"" is changed"
@@ -1734,8 +1734,8 @@ BEGIN
 	IDS_SHORTCUTMODALT				"Alt+"
 	IDS_SHORTCUTMODSHIFT			"Shift+"
 	IDS_SHORTCUTSCANCODE			"%d (scancode)"
-	IDS_SHORTCUTWHENFOCUSINRESULTLIST	"Focus in the result list"
-	IDS_SHORTCUTWHENFOCUSNOTINRESULTLIST	"Focus not in the result list"
+	IDS_SHORTCUTWHENFOCUSINRESULTLIST	"Focus in the results list"
+	IDS_SHORTCUTWHENFOCUSNOTINRESULTLIST	"Focus not in the results list"
 	IDS_SHORTCUTWHENNAMETABSHOWN	"Name tab shown"
 	IDS_SHORTCUTWHENSIZEDATETABSHOWN	"Size and date tab shown"
 	IDS_SHORTCUTWHENADVANCEDTABSHOWN "Advanced tab shown"
@@ -1761,7 +1761,7 @@ BEGIN
 	IDS_ACTIONCATACTIVATETAB			"Activate Tab"
 	IDS_ACTIONCATMENUCOMMAND			"Menu Command"
 	IDS_ACTIONCATSHOWHIDEDIALOG			"Show / Hide dialog"
-	IDS_ACTIONCATTRESULTLIST			"Result list"
+	IDS_ACTIONCATTRESULTLIST			"Results list"
 	IDS_ACTIONCATMISC					"Miscellaneous"
 	IDS_ACTIONCATHELP					"Help"
 	IDS_ACTIONCATCHANGEVALUE			"Change field"
@@ -1832,7 +1832,7 @@ BEGIN
 	IDS_KEYPREVCONTROL				"Previous control"
 	IDS_KEYNEXTTAB					"Next tab"
 	IDS_KEYPREVTAB					"Previous tab"
-	IDS_KEYRESULTLIST				"Result list"
+	IDS_KEYRESULTLIST				"Results list"
 	IDS_KEYMOREDIRECTORIES			"More Directories button"
 	IDS_KEYTEXTHELPBUTTON			"Containing Text Help"
 	IDS_KEYMINSIZETYPE				"Minimum size (type)"

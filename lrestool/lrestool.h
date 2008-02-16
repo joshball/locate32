@@ -36,7 +36,7 @@ inline CIdentifier::CIdentifier(LPCSTR szName)
 
 struct Data{
 	CString strLResFile; // In difference mode this is new file, in register mode, this is name
-	CString strReference; // In difference mode this is old file
+	CString strReference; // In difference mode this is old file, in help mode, this is src file
 	CString strBaseFile;
 	CString strOutFile;	
 	

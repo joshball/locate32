@@ -5,7 +5,7 @@ CONTENT=
 
 <P>The <b> View</b> menu offers the following commands:
 
-<TABLE cols=2 width=900>
+<TABLE id="menutable" cols=2>
 <TBODY>
 <TR VALIGN="top">
 <TD width=18%><A HREF="hid_view_largeicons.htm">Large Icons</A></TD>
@@ -46,7 +46,7 @@ specify actions for mouse commands.</TD>
 
 <TR VALIGN="top">
 <TD width=18%><A HREF="hid_view_refresh.htm">Refresh</A></TD>
-<TD width=82%>Refreshs the result list.</TD>
+<TD width=82%>You can use this command refresh the result list.</TD>
 </TR>
 </TBODY>
 </TABLE>

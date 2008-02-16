@@ -1135,329 +1135,284 @@ BOOL CLocateApp::ActivateOtherInstances(LPCWSTR pCmdLine)
 	
 LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 {
-	DWORD dwLength=2;
-	
-	enum {
-		fDateIsDefault = 0x1,
-		fTimeIsDefault = 0x2
-	};
-	BYTE fFlags=0;
+	WCHAR szDate[201],szTime[201];
+	DWORD dwDateLen=0,dwTimeLen=0;
 
-	// wDate/wTime is 0xFFFFFFFF, omit date/time
+	// First, format date to szDate
+	// If wDate is 0 or -1, skip date
 	if (wDate!=WORD(-1) && wDate!=0)
 	{
-		if (m_strDateFormat.IsEmpty())
-		{
-			// Using default format
-			fFlags|=fDateIsDefault;
-
-			// Using GetDateFormat as default
-			SYSTEMTIME st;
-			st.wDay=DOSDATETODAY(wDate);
-			st.wMonth=DOSDATETOMONTH(wDate);
-			st.wYear=DOSDATETOYEAR(wDate);
-
-			if (IsUnicodeSystem())
-			{
-				GetDateFormatW(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,
-					NULL,m_strDateFormat.GetBuffer(1000),1000);
-				m_strDateFormat.FreeExtra();
-			}
-			else
-			{
-				char szFormat[1000];
-				GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,
-					NULL,szFormat,1000);
-				m_strDateFormat=szFormat;
-			}
-
+		// No formatting string, using system default (GetDateFormat)
 			
+		SYSTEMTIME st;
+		st.wDay=DOSDATETODAY(wDate);
+		st.wMonth=DOSDATETOMONTH(wDate);
+		st.wYear=DOSDATETOYEAR(wDate);
+		st.wHour=1;
+		st.wMinute=1;
+		st.wSecond=1;
 
-			dwLength+=(DWORD)m_strDateFormat.GetLength();
+		if (IsUnicodeSystem())
+		{
+			dwDateLen=GetDateFormatW(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,
+				m_strDateFormat.IsEmpty()?NULL:LPCWSTR(m_strDateFormat),szDate,200);
+			if (dwDateLen>0)
+				dwDateLen--;
 		}
 		else
-            dwLength+=(DWORD)m_strDateFormat.GetLength()*2;
-	}
-	
-	
-	if (wTime!=WORD(-1) && wTime!=0)
-	{
-		if (m_strTimeFormat.IsEmpty())
 		{
-			// Using default format
-			fFlags|=fTimeIsDefault;
-
-			// Using GetTimeFormat as default
-			SYSTEMTIME st;
-			st.wHour=DOSTIMETO24HOUR(wTime);
-			st.wMinute=DOSTIMETOMINUTE(wTime);
-			st.wSecond=DOSTIMETOSECOND(wTime);
-			st.wMilliseconds=0;
-			
-			if (IsUnicodeSystem())
-			{
-				GetTimeFormatW(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,
-					NULL,m_strTimeFormat.GetBuffer(1000),1000);
-				m_strTimeFormat.FreeExtra();
-			}
-			else
-			{
-				char szTimeFormat[1000];
-				GetTimeFormat(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,
-					NULL,szTimeFormat,1000);
-				m_strTimeFormat=szTimeFormat;
-			}
-
-			dwLength+=(DWORD)m_strTimeFormat.GetLength();
+			char szDateA[201];
+			dwDateLen=GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,
+				m_strDateFormat.IsEmpty()?NULL:(LPCSTR)W2A(m_strDateFormat),szDateA,200);
+			if (dwDateLen>0)
+				MemCopyAtoW(szDate,szDateA,dwDateLen--);
 		}
-		else
-			dwLength+=(DWORD)m_strTimeFormat.GetLength()*2;
-	
-		
-	}
 
-	LPWSTR szRet=new WCHAR[dwLength];
-	LPWSTR pPtr=szRet;
+		// If GetDateFormat fails and m_strDateFormat is not empty,
+		// parse file date by own
 
-	//Formatting date
-
-	// TODO: GetTimeFormat and GetDateFormat ?
-
-    if (wDate!=WORD(-1) && wDate!=0)
-	{
-		for (int i=0;i<m_strDateFormat.GetLength();i++)
+		if (dwDateLen==0 && !m_strDateFormat.IsEmpty())
 		{
-			switch (m_strDateFormat[i])
+			for (int i=0;i<m_strDateFormat.GetLength();i++)
 			{
-			case L'd':
-				if (m_strDateFormat[i+1]=='d') // "dd" , "ddd" and "dddd" will not be handled
+				if (dwDateLen>196)
+					break;
+
+				switch (m_strDateFormat[i])
 				{
-					pPtr[0]=DOSDATETODAY(wDate)/10+L'0';
-					pPtr[1]=DOSDATETODAY(wDate)%10+L'0';
-					pPtr+=2;
-					i++;
-				}
-				else // "d"
-				{
-					if (DOSDATETODAY(wDate)>9)
+				case L'd':
+					if (m_strDateFormat[i+1]=='d') // "dd" , "ddd" and "dddd" will not be handled
 					{
-						pPtr[0]=DOSDATETODAY(wDate)/10+L'0';
-						pPtr[1]=DOSDATETODAY(wDate)%10+L'0';
-						pPtr+=2;
+						szDate[dwDateLen++]=DOSDATETODAY(wDate)/10+L'0';
+						szDate[dwDateLen++]=DOSDATETODAY(wDate)%10+L'0';
+						i++;
 					}
-					else
+					else // "d"
 					{
-						*pPtr=DOSDATETODAY(wDate)+L'0';
-						pPtr++;
-					}
-				}
-				break;
-			case L'M':
-				if (m_strDateFormat[i+1]==L'M') // "MM", "MMM" & "MMMM" will not be handled
-				{
-					pPtr[0]=DOSDATETOMONTH(wDate)/10+L'0';
-					pPtr[1]=DOSDATETOMONTH(wDate)%10+L'0';
-					pPtr+=2;
-					i++;
-				}
-				else // "M"
-				{
-					if (DOSDATETOMONTH(wDate)>9)
-					{
-						pPtr[0]=DOSDATETOMONTH(wDate)/10+L'0';
-						pPtr[1]=DOSDATETOMONTH(wDate)%10+L'0';
-						pPtr+=2;
-					}
-					else
-					{
-						*pPtr=DOSDATETOMONTH(wDate)+L'0';
-						pPtr++;
-					}
-				}
-				break;
-			case L'y':
-				if (m_strDateFormat[i+1]==L'y')
-				{
-					if (m_strDateFormat[i+2]==L'y') // "yyy" & "yyyy"
-					{
-						pPtr[0]=DOSDATETOYEAR(wDate)/1000+L'0';
-						pPtr[1]=(DOSDATETOYEAR(wDate)/100)%10+L'0';
-						pPtr[2]=(DOSDATETOYEAR(wDate)/10)%10+L'0';
-						pPtr[3]=DOSDATETOYEAR(wDate)%10+L'0';
-						if (m_strDateFormat[i+3]==L'y')
-							i+=3;
+						if (DOSDATETODAY(wDate)>9)
+						{
+							szDate[dwDateLen++]=DOSDATETODAY(wDate)/10+L'0';
+							szDate[dwDateLen++]=DOSDATETODAY(wDate)%10+L'0';
+						}
 						else
-							i+=2;
-						pPtr+=4;
+							szDate[dwDateLen++]=DOSDATETODAY(wDate)+L'0';
 					}
-					else // "yy"
+					break;
+				case L'M':
+					if (m_strDateFormat[i+1]==L'M') // "MM", "MMM" & "MMMM" will not be handled
 					{
-						pPtr[0]=(DOSDATETOYEAR(wDate)/10)%10+L'0';
-						pPtr[1]=DOSDATETOYEAR(wDate)%10+L'0';
-						pPtr+=2;
+						szDate[dwDateLen++]=DOSDATETOMONTH(wDate)/10+L'0';
+						szDate[dwDateLen++]=DOSDATETOMONTH(wDate)%10+L'0';
 						i++;
-					}			
-				}
-				else // "y"
-				{
-					if (DOSDATETOYEAR(wDate)/1000>9)
-					{
-						pPtr[0]=(DOSDATETOYEAR(wDate)/10)%10+L'0';
-						pPtr[1]=DOSDATETOYEAR(wDate)%10+L'0';
-						pPtr+=2;
 					}
-					else
+					else // "M"
 					{
-						*pPtr=DOSDATETOYEAR(wDate)%10+L'0';
-						pPtr++;
+						if (DOSDATETOMONTH(wDate)>9)
+						{
+							szDate[dwDateLen++]=DOSDATETOMONTH(wDate)/10+L'0';
+							szDate[dwDateLen++]=DOSDATETOMONTH(wDate)%10+L'0';
+						}
+						else
+							szDate[dwDateLen++]=DOSDATETOMONTH(wDate)+L'0';
+						
 					}
+					break;
+				case L'y':
+					if (m_strDateFormat[i+1]==L'y')
+					{
+						if (m_strDateFormat[i+2]==L'y') // "yyy" & "yyyy"
+						{
+							szDate[dwDateLen++]=DOSDATETOYEAR(wDate)/1000+L'0';
+							szDate[dwDateLen++]=(DOSDATETOYEAR(wDate)/100)%10+L'0';
+							szDate[dwDateLen++]=(DOSDATETOYEAR(wDate)/10)%10+L'0';
+							szDate[dwDateLen++]=DOSDATETOYEAR(wDate)%10+L'0';
+							if (m_strDateFormat[i+3]==L'y')
+								i+=3;
+							else
+								i+=2;
+						}
+						else // "yy"
+						{
+							szDate[dwDateLen++]=(DOSDATETOYEAR(wDate)/10)%10+L'0';
+							szDate[dwDateLen++]=DOSDATETOYEAR(wDate)%10+L'0';
+							i++;
+						}			
+					}
+					else // "y"
+					{
+						if (DOSDATETOYEAR(wDate)/1000>9)
+						{
+							szDate[dwDateLen++]=(DOSDATETOYEAR(wDate)/10)%10+L'0';
+							szDate[dwDateLen++]=DOSDATETOYEAR(wDate)%10+L'0';
+						}
+						else
+							szDate[dwDateLen++]=DOSDATETOYEAR(wDate)%10+L'0';
+					}
+					break;
+				case L'\'':
+					continue;
+				default:
+					szDate[dwDateLen++]=m_strDateFormat[i];
+					break;
 				}
-				break;
-			case L'\'':
-				continue;
-			default:
-				*pPtr=m_strDateFormat[i];
-				pPtr++;
-				break;
 			}
 		}
 	}
 	
-	// Formatting time
+	// Format time to szTime
+	// If wTime is 0 or -1, skip time
 	if (wTime!=WORD(-1) && wTime!=0)
 	{
-		*pPtr=' ';
-		pPtr++;
+		// Using GetTimeFormat as default
+		SYSTEMTIME st;
+		st.wHour=DOSTIMETO24HOUR(wTime);
+		st.wMinute=DOSTIMETOMINUTE(wTime);
+		st.wSecond=DOSTIMETOSECOND(wTime);
+		st.wMilliseconds=0;
+		st.wDay=1;
+		st.wMonth=1;
+		st.wYear=2000;
 		
-		for (int i=0;i<m_strTimeFormat.GetLength();i++)
+		if (IsUnicodeSystem())
 		{
-			switch (m_strTimeFormat[i])
+			dwTimeLen=GetTimeFormatW(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,
+				m_strTimeFormat.IsEmpty()?NULL:LPCWSTR(m_strTimeFormat),szTime,200);
+			if (dwTimeLen>0)
+				dwTimeLen--;
+		}
+		else
+		{
+			char szTimeA[201];
+			dwTimeLen=GetTimeFormatA(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,
+				m_strTimeFormat.IsEmpty()?NULL:(LPCSTR)W2A(m_strTimeFormat),szTimeA,200);
+			if (dwTimeLen>0)
+				MemCopyAtoW(szTime,szTimeA,dwTimeLen--);
+		}
+
+
+
+		// If GetTimeFormat fails and m_strTimeFormat is not empty,
+		// parse file date by own
+
+		if (dwTimeLen==0 && !m_strTimeFormat.IsEmpty())
+		{
+			for (int i=0;i<m_strTimeFormat.GetLength();i++)
 			{
-			case L'h':
-				if (m_strTimeFormat[i+1]==L'h')
+				if (dwTimeLen>196)
+					break;
+
+				switch (m_strTimeFormat[i])
 				{
-					pPtr[0]=DOSTIMETO12HOUR(wTime)/10+L'0';
-					pPtr[1]=DOSTIMETO12HOUR(wTime)%10+L'0';
-					pPtr+=2;
-					i++;
-				}
-				else
-				{
-					if (DOSTIMETO12HOUR(wTime)>9)
+				case L'h':
+					if (m_strTimeFormat[i+1]==L'h')
 					{
-						pPtr[0]=DOSTIMETO12HOUR(wTime)/10+L'0';
-						pPtr[1]=DOSTIMETO12HOUR(wTime)%10+L'0';
-						pPtr+=2;
-					}
-					else
-					{
-						*pPtr=DOSTIMETO12HOUR(wTime)%10+L'0';
-						pPtr++;
-					}
-				}
-				break;
-			case L'H':
-				if (m_strTimeFormat[i+1]==L'H')
-				{
-					pPtr[0]=DOSTIMETO24HOUR(wTime)/10+L'0';
-					pPtr[1]=DOSTIMETO24HOUR(wTime)%10+L'0';
-					pPtr+=2;
-					i++;
-				}
-				else
-				{
-					if (DOSTIMETO24HOUR(wTime)>9)
-					{
-						pPtr[0]=DOSTIMETO24HOUR(wTime)/10+L'0';
-						pPtr[1]=DOSTIMETO24HOUR(wTime)%10+L'0';
-						pPtr+=2;
-					}
-					else
-					{
-						*pPtr=DOSTIMETO24HOUR(wTime)%10+L'0';
-						pPtr++;
-					}
-				}
-				break;
-			case L'm':
-				if (m_strTimeFormat[i+1]==L'm')
-				{
-					pPtr[0]=DOSTIMETOMINUTE(wTime)/10+L'0';
-					pPtr[1]=DOSTIMETOMINUTE(wTime)%10+L'0';
-					pPtr+=2;
-					i++;
-				}
-				else
-				{
-					if (DOSTIMETOMINUTE(wTime)>9)
-					{
-						pPtr[0]=DOSTIMETOMINUTE(wTime)/10+L'0';
-						pPtr[1]=DOSTIMETOMINUTE(wTime)%10+L'0';
-						pPtr+=2;
-					}
-					else
-					{
-						*pPtr=DOSTIMETOMINUTE(wTime)%10+L'0';
-						pPtr++;
-					}
-				}
-				break;
-			case L's':
-				if (m_strTimeFormat[i+1]==L's')
-				{
-					pPtr[0]=DOSTIMETOSECOND(wTime)/10+L'0';
-					pPtr[1]=DOSTIMETOSECOND(wTime)%10+L'0';
-					pPtr+=2;
-					i++;
-				}
-				else
-				{
-					if (DOSTIMETOSECOND(wTime)>9)
-					{
-						pPtr[0]=DOSTIMETOSECOND(wTime)/10+L'0';
-						pPtr[1]=DOSTIMETOSECOND(wTime)%10+L'0';
-						pPtr+=2;
-					}
-					else
-					{
-						*pPtr=DOSTIMETOSECOND(wTime)%10+L'0';
-						pPtr++;
-					}
-				}
-				break;
-			case 't':
-				{
-					WCHAR szAMPM[10];
-					LoadString(DOSTIMETO24HOUR(wTime)>11?IDS_PM:IDS_AM,szAMPM,10);
-					
-					if (m_strTimeFormat[i+1]==L't')
-					{
-						for (WCHAR* ptr=szAMPM;*ptr!=L'\0';ptr++,pPtr++)
-							*pPtr=*ptr;
+						szTime[dwTimeLen++]=DOSTIMETO12HOUR(wTime)/10+L'0';
+						szTime[dwTimeLen++]=DOSTIMETO12HOUR(wTime)%10+L'0';
 						i++;
 					}
 					else
-						*pPtr=szAMPM[0];
+					{
+						if (DOSTIMETO12HOUR(wTime)>9)
+						{
+							szTime[dwTimeLen++]=DOSTIMETO12HOUR(wTime)/10+L'0';
+							szTime[dwTimeLen++]=DOSTIMETO12HOUR(wTime)%10+L'0';
+						}
+						else
+							szTime[dwTimeLen++]=DOSTIMETO12HOUR(wTime)%10+L'0';
+					}
+					break;
+				case L'H':
+					if (m_strTimeFormat[i+1]==L'H')
+					{
+						szTime[dwTimeLen++]=DOSTIMETO24HOUR(wTime)/10+L'0';
+						szTime[dwTimeLen++]=DOSTIMETO24HOUR(wTime)%10+L'0';
+						i++;
+					}
+					else
+					{
+						if (DOSTIMETO24HOUR(wTime)>9)
+						{
+							szTime[dwTimeLen++]=DOSTIMETO24HOUR(wTime)/10+L'0';
+							szTime[dwTimeLen++]=DOSTIMETO24HOUR(wTime)%10+L'0';
+						}
+						else
+							szTime[dwTimeLen++]=DOSTIMETO24HOUR(wTime)%10+L'0';
+					}
+					break;
+				case L'm':
+					if (m_strTimeFormat[i+1]==L'm')
+					{
+						szTime[dwTimeLen++]=DOSTIMETOMINUTE(wTime)/10+L'0';
+						szTime[dwTimeLen++]=DOSTIMETOMINUTE(wTime)%10+L'0';
+						i++;
+					}
+					else
+					{
+						if (DOSTIMETOMINUTE(wTime)>9)
+						{
+							szTime[dwTimeLen++]=DOSTIMETOMINUTE(wTime)/10+L'0';
+							szTime[dwTimeLen++]=DOSTIMETOMINUTE(wTime)%10+L'0';
+						}
+						else
+							szTime[dwTimeLen++]=DOSTIMETOMINUTE(wTime)%10+L'0';
+					}
+					break;
+				case L's':
+					if (m_strTimeFormat[i+1]==L's')
+					{
+						szTime[dwTimeLen++]=DOSTIMETOSECOND(wTime)/10+L'0';
+						szTime[dwTimeLen++]=DOSTIMETOSECOND(wTime)%10+L'0';
+						i++;
+					}
+					else
+					{
+						if (DOSTIMETOSECOND(wTime)>9)
+						{
+							szTime[dwTimeLen++]=DOSTIMETOSECOND(wTime)/10+L'0';
+							szTime[dwTimeLen++]=DOSTIMETOSECOND(wTime)%10+L'0';
+						}
+						else
+							szTime[dwTimeLen++]=DOSTIMETOSECOND(wTime)%10+L'0';
+					}
+					break;
+				case 't':
+					{
+						WCHAR szAMPM[10];
+						LoadString(DOSTIMETO24HOUR(wTime)>11?IDS_PM:IDS_AM,szAMPM,10);
+						
+						if (m_strTimeFormat[i+1]==L't')
+						{
+							for (WCHAR* ptr=szAMPM;*ptr!=L'\0';ptr++)
+								szTime[dwTimeLen++]=*ptr;
+							i++;
+						}
+						else
+							szTime[dwTimeLen++]=szAMPM[0];
+					}
+					break;
+				case L'\'':
+					continue;
+				default:
+					szTime[dwTimeLen++]=m_strTimeFormat[i];
+					break;
 				}
-				break;
-			case L'\'':
-				continue;
-			default:
-				*pPtr=m_strTimeFormat[i];
-				pPtr++;
-				break;
 			}
 		}
+		
 	}
 
-	*pPtr=L'\0';
+	if (dwTimeLen==0 && dwDateLen>0)
+		return alloccopy(szDate,dwDateLen);
+	if (dwDateLen==0 && dwTimeLen>0)
+		return alloccopy(szTime,dwTimeLen);
 
-	if (fFlags&fDateIsDefault)
-		m_strDateFormat.Empty();
-	if (fFlags&fTimeIsDefault)
-		m_strTimeFormat.Empty();
-	
-	return szRet;
+	// Combine date and time
+	WCHAR* pRet=new WCHAR[dwDateLen+dwTimeLen+2];
+	MemCopyW(pRet,szDate,dwDateLen);
+	pRet[dwDateLen]=L' ';
+	MemCopyW(pRet+dwDateLen+1,szTime,dwTimeLen);
+	pRet[dwDateLen+dwTimeLen+1]='\0';
+	return pRet;
 }
 
 LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) const
@@ -5142,6 +5097,47 @@ void CLocateAppWnd::OnHelp(LPHELPINFO lphi)
 	}
 }
 
+BOOL CLocateApp::OpenHelp(HWND hWnd,HelpID* pHelpID,int nIDs,LPCSTR szHelpPage,HELPINFO* lphi)
+{
+	LPCWSTR szwHelpFile=GetApp()->m_szHelpFile;
+	if (szwHelpFile!=NULL && lphi->iContextType==HELPINFO_WINDOW)
+	{	
+		// Form path to help file
+		CStringW sHelpFile=GetApp()->GetExeNameW();
+		sHelpFile.FreeExtra(sHelpFile.FindLast(L'\\')+1);
+		sHelpFile << szwHelpFile << "::/";
+		
+		
+		if (szHelpPage!=NULL)
+			sHelpFile << szHelpPage;
+
+		
+
+		for (int i=0;i<nIDs;i++)
+		{
+			if (pHelpID[i].nID==lphi->iCtrlId)
+			{
+				if (szHelpPage!=NULL)
+					sHelpFile << '#';
+				sHelpFile << pHelpID[i].lpName;
+				break;
+			}
+		}
+
+		if (IsUnicodeSystem())
+		{
+			if (HtmlHelpW(hWnd,sHelpFile,HH_DISPLAY_TOPIC,NULL)!=NULL)
+				return TRUE;
+		}
+		else
+		{
+			if (HtmlHelpA(hWnd,W2A(sHelpFile),HH_DISPLAY_TOPIC,NULL)!=NULL)
+				return TRUE;
+		}
+		
+	}
+	return FALSE;
+}
 
 CLocateApp::LocaleNumberFormat::LocaleNumberFormat()
 :	uLeadingZero(1),uGrouping(3)

@@ -93,6 +93,7 @@ settings_databases.htm
 settings_autoupdate.htm
 settings_shortcuts.htm
 settings_databasedlg.htm
+settings_databaseadv.htm
 settings_autoupdatedlg.htm
 settings_shortcutsadvanced.htm
 
@@ -184,49 +185,16 @@ settings_databases					= settings_databases.htm
 settings_autoupdate					= settings_autoupdate.htm
 settings_shortcuts					= settings_shortcuts.htm
 settings_databasedlg				= settings_databasedlg.htm
+settings_databaseadv				= settings_databaseadv.htm
 settings_autoupdatedlg				= settings_autoupdatedlg.htm
 settings_shortcutsadvanced			= settings_shortcutsadvanced.htm
 
 IDC_TAB								= dialog_locate.htm
 IDC_FRAME							= dialog_locate.htm
-IDC_OK								= dialog_locate.htm
-IDC_STOP							= dialog_locate.htm
-IDC_NEWSEARCH						= dialog_locate.htm
-IDC_PRESETS							= dialog_locate.htm
 IDC_FILELIST						= dialog_locate.htm
 IDC_STATUS							= dialog_locate.htm
 
-IDC_NAME							= tab_name.htm
-IDC_TYPE							= tab_name.htm
-IDC_LOOKIN							= tab_name.htm
-IDC_MOREDIRECTORIES					= tab_name.htm
-IDC_NOSUBDIRECTORIES				= tab_name.htm
-IDC_BROWSE							= tab_name.htm
 
-IDC_CHECKMINIMUMSIZE				= tab_sizedate.htm
-IDC_MINIMUMSIZE						= tab_sizedate.htm
-IDC_MINSIZETYPE						= tab_sizedate.htm
-IDC_MINIMUMSIZESPIN					= tab_sizedate.htm	
-IDC_CHECKMAXIMUMSIZE				= tab_sizedate.htm
-IDC_MAXIMUMSIZE						= tab_sizedate.htm
-IDC_MAXSIZETYPE						= tab_sizedate.htm
-IDC_MAXIMUMSIZESPIN					= tab_sizedate.htm
-IDC_CHECKMINDATE					= tab_sizedate.htm
-IDC_MINDATE							= tab_sizedate.htm
-IDC_MINTYPE							= tab_sizedate.htm
-IDC_CHECKMAXDATE					= tab_sizedate.htm
-IDC_MAXDATE							= tab_sizedate.htm
-IDC_MAXTYPE							= tab_sizedate.htm
-
-IDC_CHECK							= tab_advanced.htm
-IDC_MATCHWHOLENAME					= tab_advanced.htm
-IDC_REPLACESPACES					= tab_advanced.htm
-IDC_USEWHOLEPATH					= tab_advanced.htm
-IDC_FILETYPE						= tab_advanced.htm
-IDC_CONTAINDATACHECK				= tab_advanced.htm
-IDC_CONTAINDATA						= tab_advanced.htm
-IDC_DATAMATCHCASE					= tab_advanced.htm
-IDC_HELPTOOLBA						= tab_advanced.htm
 
 
 IDM_EDIT_COPY						= hid_edit_copy.htm
@@ -289,6 +257,7 @@ HELP_SETTINGS_SHORTCUTS				= settings_shortcuts.htm
 HELP_SETTINGS_DATABASEDLG			= settings_databasedlg.htm
 HELP_SETTINGS_AUTOUPDATEDLG			= settings_autoupdatedlg.htm
 HELP_SETTINGS_SHORTCUTADVANCED		= settings_shortcutsadvanced.htm
+HELP_SETTINGS_DATABASEADVANCED		= settings_databaseadv.htm
 
 
 HID_UPDATEMENU_ITEM0				= hid_file_updatedatabase.htm
@@ -324,8 +293,12 @@ HID_SENDTOMENU_ITEM12				= hid_file_sendto.htm
 HID_SENDTOMENU_ITEM13				= hid_file_sendto.htm
 HID_SENDTOMENU_ITEM14				= hid_file_sendto.htm
 
+
+
 [MAP]
 #include "HTMLDefines.h"
+
+
 
 [TEXT POPUPS]
 HTMLDefines.h

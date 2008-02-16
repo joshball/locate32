@@ -2,7 +2,7 @@
 #include <conio.h>
 #include "lrestool.h"
 
-#define COPYRIGHTTEXT "lrestool v 3.0.7.6170 (C) 2003-2007 Janne Huttunen: language resource tool\n\n"
+#define COPYRIGHTTEXT "lrestool v 3.1.8.2150 (C) 2003-2008 Janne Huttunen: language resource tool\n\n"
 
 
 FILE* _stderr=stderr;
@@ -134,13 +134,69 @@ int DifferenceMode(Data& o)
 
 int GenerateHelpPage(Data& o)
 {
-	IDENTIFIERS iSrcFile;
+	IDENTIFIERS iSrcFile,iLRFFile;
 	
-	// First load identifiers from file
+	// First, load indentifiers from language files
 	if (o.bVerbose)
 		printf("Loading identifiers from file %s\n",LPCSTR(o.strLResFile));
 
-	if (!iSrcFile.LoadFromHtmlRawFile(o.strLResFile,o.bDoubleVerbose))
+	if (!iLRFFile.LoadFromLResFile(o.strLResFile,FALSE))
+	{
+		fprintf(_stderr,"error: cannot read from file %s\n",LPCSTR(o.strLResFile));
+		return 1;
+	}
+	
+	if (o.bVerbose)
+		printf("\t%d identifiers found.\n",iLRFFile.GetCount());
+
+	
+
+	// Now parse source file to temporary file
+	CHAR szTempFile[MAX_PATH],szTempDir[MAX_PATH];
+	if (!GetTempPath(MAX_PATH,szTempDir))
+		strcpy_s(szTempDir,MAX_PATH,".");
+
+	GetTempFileName(szTempDir,"lrs_",0,szTempFile);
+
+	if (o.bVerbose)
+		printf("Parsing %s and inserting strings from translation file\n",LPCSTR(o.strReference));
+
+	if (!iLRFFile.InsertToOutputFile(szTempFile,o.strReference,o.bDoubleVerbose,TRUE))
+	{
+		if (o.bVerbose)
+			fprintf(_stderr,"Exiting due error...\n");
+		return 1;
+	}
+
+
+	// Read base file from registry
+	if (o.strBaseFile.IsEmpty())
+	{
+		PIDENTIFIER pID=iLRFFile.FindIdentifier("FOR_PROGRAM");
+		LPCSTR pProgramName="LOCATE32";
+		
+		if (pID==NULL)
+			printf("Program name is not specified in %s, using \"LOCATE32\"\n",o.strLResFile);
+		else
+			pProgramName=pID->text;
+
+		GetBaseFileFromRegistry(pProgramName,o.strBaseFile,TRUE);
+			
+		if (o.strBaseFile.IsEmpty())
+		{
+			printf("No information about base file, using \"page_raw.htm\"\n",o.strLResFile);
+			o.strBaseFile="page_raw.htm";
+		}
+	}
+
+	iLRFFile.RemoveAll(FALSE);
+	
+	
+	// First load identifiers from file
+	if (o.bVerbose)
+		printf("Loading the html source file\n");
+
+	if (!iSrcFile.LoadFromHtmlRawFile(szTempFile,o.bDoubleVerbose))
 	{
 		if (o.bVerbose)
 			fprintf(_stderr,"Exiting due error...\n");
@@ -150,6 +206,11 @@ int GenerateHelpPage(Data& o)
 	if (o.bVerbose)
 		printf("\t%d identifiers found.\n",iSrcFile.GetCount());
 
+	DeleteFile(szTempFile);
+
+	
+
+	// Check output file
 	if (o.strOutFile.IsEmpty())
 	{
 		o.strOutFile.Copy(o.strLResFile,o.strLResFile.FindLast('.'));
@@ -161,6 +222,9 @@ int GenerateHelpPage(Data& o)
 	if (o.bVerbose)
 		printf("Merging identifies to file '%s'\n",LPCSTR(o.strOutFile));
 	
+
+
+
 	if (!iSrcFile.InsertToOutputFile(o.strOutFile,o.strBaseFile,o.bDoubleVerbose,TRUE))
 	{
 		if (o.bVerbose)
@@ -168,6 +232,7 @@ int GenerateHelpPage(Data& o)
 		return 1;
 	}
 
+	
 	// Clearing memory
 	iSrcFile.RemoveAll(!o.bVerbose);
 	return 0;
@@ -335,12 +400,6 @@ int main(int argc,char* argv[])
 				else
 					o.bShowHelp=TRUE;
 				break;
-			case 'n':
-				if (o.nMode!=Data::GenHelpPage)
-					o.bShowHelp=TRUE;
-				else if (!SetArgString(i,o.strReference,argc,argv))
-					o.bShowHelp=TRUE;
-				break;
 			case 'v':
 				if (argv[i][2]=='v')
 				{
@@ -378,6 +437,15 @@ int main(int argc,char* argv[])
 			else
 				o.bShowHelp=TRUE;
 		}
+		else if (o.nMode==Data::GenHelpPage)
+		{
+			if (o.strLResFile.IsEmpty())
+				o.strLResFile=argv[i];
+			else if (o.strReference.IsEmpty())
+				o.strReference=argv[i];
+			else
+				o.bShowHelp=TRUE;
+		}
 		else if (o.strLResFile.IsEmpty())
 			o.strLResFile=argv[i];
 		else
@@ -389,7 +457,7 @@ int main(int argc,char* argv[])
 		printf("usage: lrestool [-o outfile] [-b basefile] lrffile\n");
 		printf("or:    lrestool -c [-i] [-r lrffile] [-o outfile] [-b basefile] lrffile\n");
 		printf("or:    lrestool -d 1stfile 2ndfile \n");
-		printf("or:    lrestool -h -n name  -o helppage.htm helppage.src \n");
+		printf("or:    lrestool -h  -o helppage.htm language.lrf helppage.src \n");
 		printf("or:    lrestool -R[a,s,d] name [basefile]\n");
 		printf("or:    lrestool -H[a,s,d] name [basefile]\n\n");
 		printf("\t-o outfile:\tset output file to 'outfile'\n");
@@ -423,19 +491,7 @@ int main(int argc,char* argv[])
 		if (o.strBaseFile.IsEmpty())
 			o.strBaseFile="lres_base.rc";
 	}
-	else if (o.nMode==Data::GenHelpPage && o.strBaseFile.IsEmpty())
-	{
-		if (o.strReference.IsEmpty())
-		{
-			printf("No program name give, using default (LOCATE32)\n");
-			o.strReference="LOCATE32";
-		}
-		
-		GetBaseFileFromRegistry(o.strReference,o.strBaseFile,TRUE);
-			
-		if (o.strBaseFile.IsEmpty())
-			o.strBaseFile="page_raw.htm";
-	}
+	
 
 	if (o.bDoubleVerbose)
 	{
@@ -462,10 +518,10 @@ int main(int argc,char* argv[])
 			break;
 		case Data::GenHelpPage:
 			printf("generate help file:\n");
-			printf("\tinput file: %s\n",LPCSTR(o.strLResFile));
+			printf("\tlanguage file: %s\n",LPCSTR(o.strLResFile));
+			printf("\tinput file: %s\n",LPCSTR(o.strReference));
 			printf("\toutput file: %s\n",LPCSTR(o.strOutFile));
 			printf("\tbase file: %s\n",LPCSTR(o.strBaseFile));
-			printf("\tprogram name: %s\n",LPCSTR(o.strReference));
 			break;
 		case Data::SetBaseName:
 			printf("set base name mode with parameters:\n");

@@ -26,7 +26,8 @@ public:
 	void ClearSettingsFlags(DWORD dwFlags);
 	BOOL IsSettingsFlagSet(DWORD dwFlags);
 	BOOL IsAllFlagsSet(DWORD dwFlags);
-    
+
+	 
 public:
 	class CGeneralSettingsPage : public CPropertyPage 
 	{

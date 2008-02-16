@@ -7,7 +7,7 @@
 // CSchedule
 
 CSchedule::CSchedule()
-:	m_bFlags(flagEnabled),m_nType(typeDaily),m_pDatabases(NULL),
+:	m_bFlags(flagEnabled|flagAtThisTime),m_nType(typeDaily),m_pDatabases(NULL),
 	m_nThreadPriority(THREAD_PRIORITY_NORMAL),m_wCpuUsageTheshold(WORD(-1))
 {
 	SYSTEMTIME st;

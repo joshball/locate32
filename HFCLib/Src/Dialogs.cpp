@@ -2754,15 +2754,13 @@ BOOL CFolderDialog::GetFolder(LPWSTR szFolder) const
 
 COptionsPropertyPage::Item::Item(
 	ItemType nType_,Item* pParent_,Item** pChilds_,LPWSTR pString_,
-	CALLBACKPROC pProc_,DWORD wParam_,void* lParam_)
+	CALLBACKPROC pProc_,DWORD wParam_,void* lParam_,LPCSTR pHelpId_)
 :	nType(nType_),pParent(pParent_),pData(NULL),bEnabled(TRUE),
 	wParam(wParam_),lParam(lParam_),pProc(pProc_),
 	m_nStateIcon(-1),hControl(NULL),hControl2(NULL)
 {
-	if (pString_!=NULL)
-		pString=alloccopy(pString_);
-	else 
-		pString=NULL;
+	pString=pString_!=NULL?alloccopy(pString_):NULL;
+	pHelpID=pHelpId_!=NULL?alloccopy(pHelpId_):NULL;
 	
 	if (pChilds_!=NULL)
 	{
@@ -2780,13 +2778,15 @@ COptionsPropertyPage::Item::Item(
 
 COptionsPropertyPage::Item::Item(
 	ItemType nType_,Item* pParent_,Item** pChilds_,UINT nStringID,
-	CALLBACKPROC pProc_,DWORD wParam_,void* lParam_)
+	CALLBACKPROC pProc_,DWORD wParam_,void* lParam_,LPCSTR pHelpId_)
 :	nType(nType_),pParent(pParent_),pData(NULL),bEnabled(TRUE),
 	wParam(wParam_),lParam(lParam_),pProc(pProc_),
 	m_nStateIcon(-1),hControl(NULL),hControl2(NULL)
 {
 	int nCurLen=50;
 	int iLength;
+	
+	pHelpID=pHelpId_!=NULL?alloccopy(pHelpId_):NULL;
 	
 	if (!IsUnicodeSystem())
 	{
@@ -2845,6 +2845,8 @@ COptionsPropertyPage::Item::~Item()
 	}
 	if (pString!=NULL)
 		delete[] pString;
+	if (pHelpID!=NULL)
+		delete[] pHelpID;
 
 	switch (nType)
 	{
@@ -3801,6 +3803,7 @@ BOOL COptionsPropertyPage::OnNotify(int idCtrl,LPNMHDR pnmh)
 	return CPropertyPage::OnNotify(idCtrl,pnmh);
 }
 
+
 BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 {
 	switch (pTvdi->hdr.code)
@@ -4571,6 +4574,31 @@ BOOL CALLBACK COptionsPropertyPage::DefaultCheckBoxProc(COptionsPropertyPage::BA
 }
 
 // lParam is pointer to DWORD value which is will be set
+// wParam is used mask
+BOOL CALLBACK COptionsPropertyPage::DefaultInverseCheckBoxProc(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch (pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		break;
+	case BASICPARAMS::Get:
+		pParams->bChecked=(*((DWORD*)pParams->lParam))&pParams->wParam?FALSE:TRUE;
+		break;
+	case BASICPARAMS::Set:
+		break;
+	case BASICPARAMS::Apply:
+		if (pParams->bChecked)
+			*((DWORD*)pParams->lParam)&=~DWORD(pParams->wParam);
+		else
+			*((DWORD*)pParams->lParam)|=DWORD(pParams->wParam);
+		break;
+	case BASICPARAMS::ChangingValue:
+		break;
+	}
+	return TRUE;
+}
+
+// lParam is pointer to DWORD value which is will be set
 // HIWORD of wParam is mask to be setted, LOWORD is value
 BOOL CALLBACK COptionsPropertyPage::DefaultRadioBoxProc(COptionsPropertyPage::BASICPARAMS* pParams)
 {
@@ -5000,5 +5028,35 @@ LRESULT CALLBACK COptionsPropertyPage::ComboSubClassFunc(HWND hWnd,UINT uMsg,
 
 
 
+
+LPCSTR COptionsPropertyPage::GetHelpID(HELPINFO* pHelpInfo) const
+{
+	// Not the tree control
+	if (pHelpInfo->iContextType!=HELPINFO_WINDOW && pHelpInfo->iCtrlId!=m_nTreeID)
+		return NULL;
+
+	HTREEITEM hItem;
+	if (GetKeyState(VK_F1) & 0x8000)
+	{
+		// F1 pressed to open help, use selected item
+		hItem=m_pTree->GetSelectedItem();
+	}
+	else
+	{
+		// '?' used to open file, using cursor
+		POINT ptWrtClient=pHelpInfo->MousePos;
+		m_pTree->ScreenToClient(&ptWrtClient);
+		hItem=m_pTree->HitTest(ptWrtClient);
+	}
+
+
+	if (hItem!=NULL)
+	{
+		Item* pItem=(Item*)m_pTree->GetItemData(hItem);
+		return pItem!=NULL?pItem->pHelpID:NULL;
+	}
+	return NULL;
+
+}
 
 #endif

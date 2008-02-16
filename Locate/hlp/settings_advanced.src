@@ -11,76 +11,619 @@ shown and change the setting of the update process and tool tips. There are also
 which have effect to the whole system. 
 </p>
 
-<p><b>This page is still under construction and some of options which requires some 
-note are listed here.</b></p>
-
-
 <div id="advanced_settings">
 
-<h2>Locating files and result list</h2>
-<p>This group contains options that are related to search process and the result list.</p>
+
+
+
+<!-- LOCATING FILES AND RESULTS LIST section -->
+
+<h2><A NAME="sa_locateandresults"></A>$STRADVANCEDSETTINGS_LOCATEPROCESS@C$</h2>
+<p>This category contains options that are related to search process and the result list.</p>
 
 <div id="advanced_settings_level1">
 
 
-<h2>Results list</h2>
+
+<p><b><A NAME="sa_limit"></A>$STRADVANCEDSETTINGS_LIMITRESULTS@C$</b>:
+This option can be used to limit the number of results. This option has only effect on
+normal searches (when "Find Now" or Enter is pressed), not for searches which are carried out
+as you type (see "Search as you type" below). </p>
+
+<p><b><A NAME="sa_spaceisseparator"></A>$STRADVANCEDSETTINGS_SPACEISSEPARATOR@C$</b>:
+If this option is enabled, space is also considered as a separator (in addition to comma ',' and
+semicolon ';'). For example, if enabled, the search term "cat dog" can be used to find files which 
+names contain words "cat" <b>or</b> "dog". For more information, see 
+<a href="issue_searchterms.htm">Search terms</a>.</p>
+
+<p><b><A NAME="sa_logicalops"></A>$STRADVANCEDSETTINGS_ENABLELOGICALOPERATIONS@Cp$</b>:
+If this option is enabled, logical operators '+' and '-' can be used in search terms.
+For example, if enabled, the search term "+cat,+dog" can be used to find files
+which names contain the words "cat" <b>and</b> "dog". 
+In addition, "+cat,-dog" will search filenames containing the word "cat" and
+<b>not</b> the work dog. For more information, see <a href="issue_searchterms.htm">Search terms</a>.
+</p>
+
+<p><b><A NAME="sa_matchwholenameifasterisks"></A>$STRADVANCEDSETTINGS_MATCHWHOLENAMEIFASTERISKS@C$</b>:
+If this option is enabled and asterisks '*' are given in a search term, 
+the search is carried out in same way if the  
+<a href="tan_name.htm#ta_matchwholename">Match whole name only</a> check box is turned on (i.e., 
+a given search have to match to whole file name, not only a part of it). 
+</p>
+
+<p><b><A NAME="sa_isenable"></A>$STRADVANCEDSETTINGS_ISENABLE@C$</b>:
+If this option is enabled, results will be shown at the same time (or after 
+some small delay, see below) when you start typing to "$DLGNAME_NAMED@M$" field or 
+change change search parameters. The following options can be used to change behaviour of the
+"Search as you type" feature:
+
+</p>
 <div id="advanced_settings_level2">
+
+<p><b><A NAME="sa_islimit"></A>$STRADVANCEDSETTINGS_ISLIMIT@Cp$</b>:
+This option can be used to specify limit for the number of results for "Search as you type" searches. 
+If you don't want to use any limits, set this value to zero (0). 
+If you want to limit the number of results for normal searches, use the "$STRADVANCEDSETTINGS_LIMITRESULTS@C$" 
+option above. 
+</p>
+
+<p><b><A NAME="sa_isdelay"></A>$STRADVANCEDSETTINGS_ISDELAY@Cp$</b>:
+This option can be used to specify the delay between time when you 
+stop typing and time when searching is started. The unit is milliseconds (i.e., 1/1000 seconds).
+</p>
+
+<p><b><A NAME="sa_isupdown"></A>$STRADVANCEDSETTINGS_ISUPDOWNGOESTORESULTLIST@C$</b>:
+When enabled, Up and Down keys pressed in "$DLGNAME_NAMED@M$" field will activate 
+the results list and its first file. This option can be useful if 
+<a href="settings_advanced.htm#sa_act1st">$STRADVANCEDSETTINGS_ACTIVATEFIRSTITEM@C$</a>
+option is enabled and you are used to use Up and Down keys to navigate through results. 
+Note that the results list is not activated if no results are shown. 
+</p>
+
+<p><b><A NAME="sa_isdisifdata"></A>$STRADVANCEDSETTINGS_ISDISABLEIFDATASEARCH@C$</b>:
+If this option is enabled, "Search as you type" is disabled when you have checked 
+<a href="tab_advanced.htm"ta_fileconttext">$DLGADVANCED_CONTAININGTEXT@M$</a> check box. 
+</p>
+
 <p>
-<b><A NAME="setting_advanced_showfoundfilesonlyonce"></A>Show found files only once</b>:
+<b><A NAME="sa_isname"></A>$STRADVANCEDSETTINGS_ISNAMECHANGED@C$</b>,
+<b><A NAME="sa_istype"></A>$STRADVANCEDSETTINGS_ISTYPECHANGED@C$</b>,
+<b><A NAME="sa_islookin"></A>$STRADVANCEDSETTINGS_ISLOOKINCHANGED@C$</b>,
+<b><A NAME="sa_issizes"></A>$STRADVANCEDSETTINGS_ISSIZECHANGED@C$</b>,
+<b><A NAME="sa_isdates"></A>$STRADVANCEDSETTINGS_ISDATESCHANGED@C$</b>,
+<b><A NAME="sa_isdata"></A>$STRADVANCEDSETTINGS_ISDATACHANGED@C$</b> and
+<b><A NAME="sa_isother"></A>$STRADVANCEDSETTINGS_ISOTHERCHANGED@C$</b>:
+These option can be used to specify whether the results list is updated when 
+the "$DLGNAME_NAMED@M$" field, the "$DLGNAME_EXTENSIONS@M$" field, 
+the "$DLGNAME_LOOKIN@M$" field, file sizes (in $STRSIZEDATE_TABCAPTION@A$ tab),
+files dates (in $STRSIZEDATE_TABCAPTION@A$ tab), $DLGADVANCED_CONTAININGTEXT@M$ field 
+(in $STRADVANCED_TABCAPTION@A$ tab), or any other field is changed.</p>
+
+</div> <!-- advanced_settings_level2@sa_isenable -->
+
+<h2><A NAME="sa_results"></A>$STRADVANCEDSETTINGS_RESULTSLIST@C$</h2>
+<p>This group of options can be used to change appearance and behaviour of 
+the results list and that how files in the results list are shown. </p>
+<div id="advanced_settings_level2">
+
+<p><b><A NAME="sa_customfont"></A>$STRADVANCEDSETTINGS_USECUSTOMFONTINRESULTLIST@C$</b>:
+This option can be used to specify custom font for the results list (e.g., to make
+font smaller). </p>
+
+<p><b><A NAME="sa_immediateupdate"></A>$STRADVANCEDSETTINGS_NODELAYEDUPDATING@C$</b>:
+Normally file information like title, icon, type and some other information is read after the search is finished.
+If this option is enabled, file these are read immediately when the file is added to the results list.
+</p>
+
+<p>
+<b><A NAME="sa_usegetfiletitle"></A>$STRADVANCEDSETTINGS_USEGETTITLE@C$</b> and 
+<b><A NAME="sa_ownmethodfortitle"></A>$STRADVANCEDSETTINGS_USEOWNMETHODFORTITLE@C$</b>:
+These options can be used to specify whether Locate32 uses Windows' method 
+to form file titles (file titles are those which are shown in Name column) or  
+build in method. The reason for the existence of these options 
+is historical: in late 90's the Windows' own method seemed to be quite resource hog and 
+therefore own method was developed, and in these days you probably won't see any significant 
+difference between these methods. However, the possibility to choose between these methods is 
+left just for sure. 
+<br><br>
+If <b>$STRADVANCEDSETTINGS_USEOWNMETHODFORTITLE@C$</b> option is chosen, you can use the following options 
+to change the way how file titles are formed:
+<div id="advanced_settings_level3">
+<p><b><A NAME="sa_1stcharup"></A>$STRADVANCEDSETTINGS_FIRSTCHARUPPER@C$</b>:
+When enabled, the first character in the title is always uppercase.
+</p>
+<p><b><A NAME="sa_extalways"></A>$STRADVANCEDSETTINGS_ALWAYSSHOWEXTENTION@C$</b>:
+When enabled, the extension of a file is always shown in the title.</p>
+<p><b><A NAME="sa_extforknown"></A>$STRADVANCEDSETTINGS_HIDEEXTENSIONFORKNOWNTYPES@C$</b>:
+When enabled, the extension of a file is not shown in the title if the extension is known 
+(by operation system). For example, extensions are not usually shown for executable files 
+(.exe), but for .tmp files extensions are usually shown. This is the default way how 
+the Windows Explorer (and that Windows' method) forms the file title.
+</p>
+<p><b><A NAME="sa_extnever"></A>$STRADVANCEDSETTINGS_NEVERSHOWEXTENSION@C$</b>:
+When enabled, the extensions of files are never shown in the file titles.
+</p>
+</div> <!-- advanced_settings_level3@sa_ownmethodfortitle -->
+
+
+<p><b><A NAME="sa_simpleicons"></A>$STRADVANCEDSETTINGS_USESIMPLEICONS@C$</b>:
+If this option is enabled, all files the result list have same generic icon. 
+This can be useful for slow-speed media such as floppy disks, 
+or if you have slow or off-line network shares (reading icons 
+for files in such shares can cause delays when the program does not answer at all).
+</p>
+
+<p><b><A NAME="sa_filetypes"></A>$STRADVANCEDSETTINGS_SHOWFILETYPES@Cp$</b>:
+If this option is enabled, Locate32 will determine file types (e.g., "Application") 
+and shows them in the Type column. It this option is not enabled, the extension is shown in 
+the Type column. When enabled, you can choose between options
+<b><A NAME="is_shellfortype"></A>$STRADVANCEDSETTINGS_USESHELLFORTYPE@C$</b> and
+<b><A NAME="is_ownfortype"></A>$STRADVANCEDSETTINGS_USEOWNMETHODFORTYPE@C$</b>
+to decide which method is used to determine file types.
+Like the <b>$STRADVANCEDSETTINGS_USEGETTITLE@C$</b> option above, the reason for these
+options is historical. In late 90's, the build in method seemed to be faster and used less system 
+resources than the shell method in the system at the previous decade. However, the build in method should 
+be a safe choise, but the shell method is left just for sure. </p>
+
+<p><b><A NAME="sa_showtooltips"></A>$STRADVANCEDSETTINGS_SHOWTOOLTIPS@C$</b>:
+When enabled, a tooltip showing information for a file is shown when you point the file. 
+</p>
+
+<p><b><A NAME="sa_tooltipdelays"></A>$STRADVANCEDSETTINGS_SETTOOLTIPDELAYS@Cp$</b>:
+You can specify delay and visible time for tooltips showing information about files.
+This can be useful if system defaults times are, for example, too short. 
+When enabled, you can use 
+<b>$STRADVANCEDSETTINGS_SHOWTOOLTIPDELAY@Cp$</b> option 
+to specify the delay between you point a file and when the tooltip appears, and 
+<b>$STRADVANCEDSETTINGS_SHOWTOOLTIPDURATION@Cp$</b> 
+option to specify the time how long the tooltip will remain visible. 
+The unit for these times are milliseconds (i.e., 1/1000 seconds). 
+</p>
+
+<p><b><A NAME="sa_nosysorhid"></A>$STRADVANCEDSETTINGS_DONTSHOWSYSTEMANDHIDDENFILES@C$</b>:
+If this option is enabled, system or hidden files are not shown in the results list.
+</p>
+
+<p><b><A NAME="sa_nodeleted"></A>$STRADVANCEDSETTINGS_DONTSHOWDELETEDFILES@C$</b>:
+If this option is enabled, the files which are deleted, moved or renamed after the last
+database update are not shown in the results list.
+</p>
+
+<p><b><A NAME="sa_nodoubles"></A>$STRADVANCEDSETTINGS_SHOWONLYONCE@Cp$</b>:
 It is possible that some of files are listed several times in the results list, if you 
 have setup databases such that multiple databases contains same directories and files.
 You can use this option to prevent to appear multiple times in the result list. 
 <b>Note:</b> This option may have large effect on CPU usage (at least when there are
 lots of results). Therefore it is strongly recommended to leave this option disabled and
-setup databases so that same directories are not included in multiple databases.
+setup databases so that same directories are not included in multiple databases. </p>
+
+<p><b><A NAME="sa_foldersfirst"></A>$STRADVANCEDSETTINGS_FOLDERSFIRST@C$</b>:
+If this option is enabled, the folders (directories) are shown on top in the results list.</p>
+
+
+<p><b><A NAME="sa_fullrowselect"></A>$STRADVANCEDSETTINGS_FULLROWSELECT@C$</b>:
+When enabled, the rectangle showing current selection covers whole row in the results list, 
+otherwise the rectangle bounds the file title.</p>
+
+
+<p><b><A NAME="sa_act1st"></A>$STRADVANCEDSETTINGS_ACTIVATEFIRSTITEM@C$</b>:
+If this option is enabled, the results list is activated and the first item selected after 
+a search is finished. The results list is not, however, activated if no results are shown. 
 </p>
-</div>
 
-</div>
 
-<h2>System</h2>
-<p>This group contains options to run Locate32 at system startup and to add items to 
-the file popup menus in Windows Explorer.</p>
-
-<div id="advanced_settings_level1">
+<p><b><A NAME="sa_dateformat"></A>$STRADVANCEDSETTINGS_SHOWDATESINFORMAT@C$</b>:
+This option can be used to specify how file dates are formatted. 
+You can use the following elements to construct a string: 
+<TABLE id="formattable" cols=2>
+<TBODY>
+<TR class="toprow"><TD width=15%>Element</b></TD><TD width=85%>Meaning</TD></TR>
+<TR><TD width=15%>d</TD><TD width=85%>Day of month as digits with no leading zero for single-digit days.</TD></TR>
+<TR><TD width=15%>dd</TD><TD width=85%>Day of month as digits with leading zero for single-digit days.</TD></TR>
+<TR><TD width=15%>M</TD><TD width=85%>Month as digits with no leading zero for single-digit months.</TD></TR>
+<TR><TD width=15%>MM</TD><TD width=85%>Month as digits with leading zero for single-digit months.</TD></TR>
+<TR><TD width=15%>y</TD><TD width=85%>Year as last two digits, but with no leading zero for years less than 10.</TD></TR>
+<TR><TD width=15%>yy</TD><TD width=85%>Year as last two digits, but with leading zero for years less than 10.</TD></TR>
+<TR><TD width=15%>yyyy</TD><TD width=85%>Year represented by full four or five digits, depending on the calendar used.</TD></TR>
+</TBODY>
+</TABLE>
 <p>
-<b><A NAME="setting_advanced_runlocateatsystemstartup"></A>Run Locate at system startup</b>:
-If this option is enabled, Locate32 will be loaded when Windows is started. For that,
-this option will create a shortcut to Startup folder in Start menu. 
+
+<p><b><A NAME="sa_timeformat"></A>$STRADVANCEDSETTINGS_SHOWTIMESINFORMAT@C$</b>:
+This option can be used to specify how file times are formatted. The following elements can be used:
+<TABLE id="formattable" cols=2>
+<TBODY>
+<TR class="toprow"><TD width=15%>Element</TD><TD width=85%>Meaning</TD></TR>
+<TR><TD width=15%>h</TD><TD width=85%>Hours with no leading zero for single-digit hours; 12-hour clock.</TD></TR>
+<TR><TD width=15%>hh</TD><TD width=85%>Hours with leading zero for single-digit hours; 12-hour clock.</TD></TR>
+<TR><TD width=15%>H</TD><TD width=85%>Hours with no leading zero for single-digit hours; 24-hour clock.</TD></TR>
+<TR><TD width=15%>HH</TD><TD width=85%>Hours with leading zero for single-digit hours; 24-hour clock.</TD></TR>
+<TR><TD width=15%>m</TD><TD width=85%>Minutes with no leading zero for single-digit minutes.</TD></TR>
+<TR><TD width=15%>mm</TD><TD width=85%>Minutes with leading zero for single-digit minutes.</TD></TR>
+<TR><TD width=15%>s</TD><TD width=85%>Seconds with no leading zero for single-digit seconds.</TD></TR>
+<TR><TD width=15%>ss</TD><TD width=85%>Seconds with leading zero for single-digit seconds.</TD></TR>
+<TR><TD width=15%>t</TD><TD width=85%>One character time-marker string, such as A or P.</TD></TR>
+<TR><TD width=15%>tt</TD><TD width=85%>Multicharacter time-marker string, such as AM or PM.</TD></TR>
+</TBODY>
+</TABLE>
 </p>
 
-<h2>Shell Context menu commands</h2>
+
+<p><b><A NAME="sa_sizeformat"></A>$STRADVANCEDSETTINGS_SHOWFILESIZESINFORMAT@C$</b>:
+This option specified how file sizes are formatted. The value
+"STRADVANCEDSETTINGS_FILESIZEFORMATDEPENGINGSIZE" means that the closest unit is used
+ e.g., a file size of 2150 bytes is shown using kilobytes and 16000000 bytes using megabystes).</p>
+
+<p><b><A NAME="sa_locatesize"></A>$STRADVANCEDSETTINGS_FORMATWITHUSERLOCALESETTINGS@C$</b>:
+If this option is enabled, the number part of file sizes are formatted using system 
+regional settings. To view and change the regional settings. go to 
+Windows' Control Panel. </p>
+
+<p><b><A NAME="sa_ownprogforfolders"></A>$STRADVANCEDSETTINGS_USEOTHERPROGRAMSTOOPENFOLDERS@C$</b>:
+This option can be used to specify an other program to open directories. You need to specify a 
+command to open the directory. In this commands, the directory is marked as %d. Note that 
+it typically required that the directories names containing spaces should put in double quotes,
+so "%d" should be used. For example, for <a href="http://www.ghisler.com">Total Commander</a>, 
+the command can be: totalcmd.exe "%d" or: totalcmd.exe /R="%d".</p>
+
+<p><b><A NAME="sa_md5sums"></A>$STRADVANCEDSETTINGS_COMPUTEMD5SUMS@Cp$</b>:
+When enabled, MD5 check sums are automatically computed for files in the results list.
+To see MD5 check sums, "$STRMAIN_FILELISTCOLUMN_MD5SUM$" column have to be visible 
+(see <a href="hid_view_details.htm">Details</a> in View Menu to make the column visible). 
+The computation of the MD5 sums is very slow operation (especially for large files), and 
+it is typically worthwhile to keep this option disabled. However, even if this option is disabled, 
+MD5 sums for selected files can be computed using 
+<a href="hid_special_computeMD5sums.htm">$MENUPOPUP_CONTEXTMENU_COMPUTEMD5SUM$</a>
+or <a href="hid_special_computeMD5sumsforequalsizefiles.htm">
+$MENUPOPUP_CONTEXTMENU_MD5SUMSFORSAMESIZEFILES$</a> commands in 
+<a href="menu_special.htm">$MENUPOPUP_CONTEXTMENU_SPECIAL@M$ menu</a>. </p>
+
+<p><b><A NAME="sa_exprenaming"></A>$STRADVANCEDSETTINGS_ALLOWINPLACERENAMING@C$</b>:
+If this option is enabled, the files can be renamed using the results list like in Windows 
+Explorer. If disabled, a dialog for a new name is shown. </p>
+
+</div> <!-- advanced_settings_level2@sa_results -->
+
+<h2><A NAME="sa_updateresults"></A>$STRADVANCEDSETTINGS_UPDATERESULTS@C$</h2>
+<p>This group of options specifies that how files are updated after the files are 
+added to the results list.
+</p>
 <div id="advanced_settings_level2">
 
 <p>
-<b><A NAME="setting_advanced_locatetoMyComputer"></A>"Locate" item to My Computer</b>:
+<b><A NAME="sa_disableupdating"></A>$STRADVANCEDSETTINGS_DISABLEUPDATING@C$</b> 
+and <b><A NAME="sa_enableupdating"></A>$STRADVANCEDSETTINGS_ENABLEUPDATING@C$</b>:
+These options specify whether the information shown in the result list 
+is updated (read from files) after files are added to the list or not. In other words, 
+if the updating is disabled, the information 
+shown in the results list is from the used databases. Meanwhile if the updating is enabled, 
+the information shown in the list corresponds to actual files. 
+Note that if updating is disabled, the information which is not stored in databases is not 
+shown (Author, Comments, File and product versions, etc). You can, however, update the 
+selected files manually using <a href="hid_special_updatefileinformation.htm">
+$MENUPOPUP_CONTEXTMENU_FORCEUPDATE$</a> commands in 
+<a href="menu_special.htm">$MENUPOPUP_CONTEXTMENU_SPECIAL@M$ menu</a>.
+<br><br>
+Turning updating off can be useful if files are on low-speed media such as floppy disks 
+or network shares, or if you want to view files which are on a non-present media such as 
+an USB memory stick (if updating is turned on, files are regarded as deleted/renamed/moved 
+files and file information is not shown). 
+<br><br>
+If this updating is enabled, you can choose between the following options:
+</p>
+<div id="advanced_settings_level3">
+<p>
+<b><A NAME="sa_nofstracking"></A>$STRADVANCEDSETTINGS_DONTTRACKFILESYSTEMCHANGES@C$</b>,
+<b><A NAME="sa_fstrackingnew"></A>$STRADVANCEDSETTINGS_TRACKFILESYSTEMCHANGES@C$</b> and
+<b><A NAME="sa_fstrackingold"></A>$STRADVANCEDSETTINGS_TRACKFILESYSTEMCHANGESOLD@C$</b>:
+If $STRADVANCEDSETTINGS_TRACKFILESYSTEMCHANGES@C$ is enabled,
+the program listens file system changes and updates information shown 
+in the results list when files are changed. These options have <b>no</b> 
+effect on databases. The difference between new 
+and old methods is that the old method is only notified when file system 
+change occurs without information about changed files and the whole results 
+list have to be checked, meanwhile the new method will get also information 
+about changed changed file and therefore the new method is usually more
+efficient. However, the new method is not available on Windows 98/ME. 
+Furthermore, the have been some stability issues in the new method, 
+so it's worthwhile to try the old method if crashes have occurred. 
+</p>
+
+<p><b><A NAME="sa_noupdwhilesorting"></A>$STRADVANCEDSETTINGS_WHILESORTINGDONOTREADINFO@C$</b>:
+If this option is enabled, updating is disabled when retults are sorted so 
+that sorting is faster.</p>
+
+</div> <!-- advanced_settings_level3@sa_enableupdating -->
+
+
+</div> <!-- advanced_settings_level2@sa_updateresults -->
+
+
+</div> <!-- advanced_settings_level1@sa_locateandresults -->
+
+
+
+<!-- LOCATE DIALOG section -->
+
+<h2><A NAME="sa_dialog"></A>$STRADVANCEDSETTINGS_LOCATEDIALOG@C$</h2>
+<p>This category contains the following options related to the Locate32 main dialog:</p>
+
+<div id="advanced_settings_level1">
+
+<p><b><A NAME="sa_largemode"></A>$STRADVANCEDSETTINGS_ALWAYSSHOWRESULTLIST@C$</b>:
+Normally the result list is not visible when the Locate32 dialog is opened and to make it 
+visible you have to run a search. The results list is hidden again when you press 
+<a href="dialog_locate.htm#ld_newbutton">New Search</a> button. If this option is enabled, 
+the results list is shown when the Locate32 is opened and it won't be hidden even if you
+press New Search. 
+</p>
+
+<p><b><A NAME="sa_itemsinnamed"></A>$STRADVANCEDSETTINGS_NUMBEROFNAMESINNAMEDLG@C$</b>:
+This option specifies how many recent searches are shown in the list which appears when 
+you press the down arrow on the right of the <a href="tab_name.htm#tn_name">$DLGNAME_NAMED@M$</a> field. 
+</p>
+
+<p><b><A NAME="sa_itemsintype"></A>$STRADVANCEDSETTINGS_NUMBEROFTYPESINNAMEDLG@$</b>:
+This option specifies how many recently used extensions are shown in the list which appears when 
+you press the down arrow on the right of the <a href="tab_name.htm#tn_type">$DLGNAME_EXTENSIONS@M$</a> field. 
+</p>
+
+
+<h2><A NAME="sa_lookin"></A>$STRADVANCEDSETTINGS_LOOKINCOMBO@C$</h2>
+<p>This group of options can be used to change parameters of the 
+<a href="tab_name.htm#tn_lookin">$DLGNAME_LOOKIN@M$</a> field in $STRNAME_TABCAPTION@A$ tab. </p>
+
+<div id="advanced_settings_level2">
+<p><b><A NAME="sa_nosavedfolders"></A>$STRADVANCEDSETTINGS_NUMBEROFDIRECTORIESINNAMEDLG@C$</b>:
+This option specifies how many recently used directories are shown in the $DLGNAME_LOOKIN@M$ combo box. 
+These directories are at the end of the list which appears when press the down arrow on the right of 
+the $DLGNAME_LOOKIN@M$ field. 
+</p>
+
+<p><b><A NAME="sa_dontsaveUNC"></A>$STRADVANCEDSETTINGS_DONTSAVENETWORKDRIVES@C$</b>:
+If this option is enabled, directories on network drives are not saved to the list of recently used 
+directories in the $DLGNAME_LOOKIN@M$ combo box. Such directories are one which are specified using UNC 
+paths (e.g., \\server\share\file) or which are on mapped network drive. If you have network shares which 
+are slow or are often offline, this option may help to prevent Locate32 to become unresponsible (e.g. when 
+Locate32 is started). 
+</p>
+
+<p><b><A NAME="sa_nolocaldrivesicons"></A>$STRADVANCEDSETTINGS_DONTRESOLVEDRIVEICONS@C$</b>:
+If this option is enabled, the same generic icon are used for all local drives. You can use 
+if you often keep your hard drives in the shutdown state (loading icon for drive will
+activate this kind of drives). 
+</p>
+
+<p><b><A NAME="sa_drvsfromenablesdbs"></A>$STRADVANCEDSETTINGS_ADDENABLEDROOTS@C$</b>:
+If this option is enabled, the list marked as "Directories included in databases"
+contains all directories which are included to enabled databases.
+</p>
+
+<p><b><A NAME="sa_drvsfromalldbs"></A>$STRADVANCEDSETTINGS_ADDALLROOTS@C$</b>:
+If this option is enabled, the list marked as "Directories included in databases"
+contains all directories which are included to databases even if database is disabled.
+</p>
+
+<p><b><A NAME="sa_drvsfromnodb"></A>$STRADVANCEDSETTINGS_DONTADDANYROOTS@C$</b>:
+If this optoin is enabled, the "Directories included in databases" list is not shown at all. 
+</p>
+
+<p><b><A NAME="sa_multidir"></A>$STRADVANCEDSETTINGS_MULTIPLEDIRECTORIES@C$</b>:
+If this option is enabled, you can to specify multiple directories using $DLGNAME_LOOKIN@M$.
+This directory can be selected using "#1" button which appears on the right size of 
+$DLGNAME_LOOKIN@M$ field when this option is enabled. Note that even if you have 
+not enabled this option, you can specify multiple directories using semicolon (e.g., type
+"C:\Windows;C:\Program Files"). </p>
+
+
+</div> <!-- advanced_settings_level2@sa_lookin -->
+
+<p><b><A NAME="sa_nosave"></A>$STRADVANCEDSETTINGS_DONTSAVELISTITEMS@C$</b>:
+</p>
+
+<p><b><A NAME="sa_regfiletypes"></A>$STRADVANCEDSETTINGS_LOADTYPEFROMREGISTRY@C$</b>:
+This option has an effect on <a href="tab_advanced.htm#ta_typeoffile">Type of file</a> combo box. 
+If this option is enabled, Locate32 will enumerate and show all registered file types 
+("Application", "Text file", ...) the combo is opened first time, otherwise only few
+build in file types are added. 
+</p>
+
+<p><b><A NAME="sa_alwaysontop"></A>$STRADVANCEDSETTINGS_TOPMOST@C$</b>:
+If this option is enabled, the Locate32 dialog is always on top.</p>
+
+<p><b><A NAME="sa_transparency"></A>$STRADVANCEDSETTINGS_TRANSPARENCY@C$</b>:
+This options specifies transparency level for the main dialog. The value is between 0-100%
+where 0% is fully opaque and 100% is fully transparent (not visible at all). 
+Windows 2000 or later is required for this option. </p>
+
+</div> <!-- advanced_settings_level1@sa_dialog -->
+
+
+
+
+
+
+
+<!-- UPDATE PROCESS section -->
+
+<h2><A NAME="sa_update"></A>$STRADVANCEDSETTINGS_UPDATEPROCESS@C$</h2>
+<p>This category contains the following options for the database update process and its status tooltip:</p>
+
+<div id="advanced_settings_level1">
+
+<p><b><A NAME="sa_enableupdatetooltip"></A>$STRADVANCEDSETTINGS_SHOWUPDATESTATUSINTOOLTIP@C$</b>:
+It this option is enabled, a tooltip showing status information for update process 
+is shown. The appearance and other properties of the update status tooltip can be changed using 
+the following options. Note that these options affect to the tooltips which are created <b>after</b>
+changing the options, not to tooltips which are already visible.</p>
+
+<div id="advanced_settings_level2">
+
+<p>
+<b><A NAME="sa_tip_textcolor"></A>$STRADVANCEDSETTINGS_TOOLTIPTEXTCOLOR@C$</b>,
+<b><A NAME="sa_tip_titlecolor"></A>$STRADVANCEDSETTINGS_TOOLTIPTITLECOLOR@C$</b> and
+<b><A NAME="sa_tip_errorcolor"></A>$STRADVANCEDSETTINGS_TOOLTIPERRORCOLOR@C$</b>:
+These options specify the color for normal text, the title and the error 
+messages (resp.) in the update status tooltip.</p>
+
+<p><b><A NAME="sa_tip_bgcolor"></A>$STRADVANCEDSETTINGS_TOOLTIPBACKCOLOR@C$</b>:
+This option specifies the background color of the update status tooltip.</p>
+
+<p>
+<b><A NAME="sa_tip_textfont"></A>$STRADVANCEDSETTINGS_TOOLTIPTEXTFONT@C$</b>
+<b><A NAME="sa_tip_titlefont"></A>$STRADVANCEDSETTINGS_TOOLTIPTITLEFONT@C$</b>:
+These options can be used to change fhe font for normal text and the title.</p>
+
+<p><b><A NAME="sa_tip_pos"></A>$STRADVANCEDSETTINGS_TOOLTIPWINDOWPOSITION@C$</b>:
+This option species position for the update status tooltip. Possible choices are:
+$STRADVANCEDSETTINGS_TOOLTIPPOSNEARCLOCK$ (the clock in the task bar), 
+$STRADVANCEDSETTINGS_TOOLTIPPOSUPPERLEFT$ (of the screen), 
+$STRADVANCEDSETTINGS_TOOLTIPPOSUPPERRIGHT$, 
+$STRADVANCEDSETTINGS_TOOLTIPPOSLOWERLEFT$, 
+$STRADVANCEDSETTINGS_TOOLTIPPOSLOWERRIGHT$, and 
+$STRADVANCEDSETTINGS_TOOLTIPPOSLASTPOSITION$ (the tooltip is moveable). </p>
+
+<p><b><A NAME="sa_tip_ontop"></A>$STRADVANCEDSETTINGS_TOOLTIPWINDOWISONTOP@C$</b>:
+This option specifies whether the tooltip is always on top. Possible choices are:
+$STRADVANCEDSETTINGS_TOOLTIPALWAYSONTOP$, 
+$STRADVANCEDSETTINGS_TOOLTIPTOPIFFOREGROUNDNOTMAXIMIZED$,
+$STRADVANCEDSETTINGS_TOOLTIPTOPIFFOREGROUNDNOTFULLSCREEN$, and 
+$STRADVANCEDSETTINGS_TOOLTIPNEVERONTOP$. If this option is set to 
+"$STRADVANCEDSETTINGS_TOOLTIPALWAYSONTOP$", the update status tooltip 
+will be always on top (even if you have playing games or watching 
+video). </p>
+
+<p><b><A NAME="sa_tip_trans"></A>$STRADVANCEDSETTINGS_TOOLTIPTRANSPARENCY@C$</b>:
+This options specifies transparency level for the status tooltip. The value is between 0-100%
+where 0% is fully opaque and 100% is fully transparent (not visible at all). 
+Windows 2000 or later is required for this option. 
+</p>
+
+</div> <!-- advanced_settings_level2@sa_update -->
+
+<p><b><A NAME="sa_threadpriority"></A>$STRADVANCEDSETTINGS_UPDATETHREADPRIORITY@C$</b>:
+This option can be used to change the priority level for database updating processes. This 
+priority have an effect on how much CPU time this process will get from the operation system 
+(higher priority level means more CPU time). For example, if you want to update databases on 
+background so that it does not have much effect on system performance, you can choose 
+"below normal" or "low" priority level. Note that each scheduled update in the 
+<a href="settings_autoupdate.htm">auto updates</a> tab has its own 
+<a href="settings_autoupdatedlg.htm">priority setting</a> and therefore this option 
+does not have any effect on scheduled updates.  </p>
+
+
+</div> <!-- advanced_settings_level1@sa_update -->
+
+
+
+<!-- SYSTEM TRAY ICON section -->
+
+<h2><A NAME="sa_STicon"></A>$STRADVANCEDSETTINGS_SYSTEMTRAYICON@C$</h2>
+<p>This category contains the following options for the database update process and its status tooltip:</p>
+<div id="advanced_settings_level1">
+
+<p><b><A NAME="sa_noSTicon"></A>$STRADVANCEDSETTINGS_DONOTSHOWSSYSTEMTRAYICON@C$</b>:
+If this option is enabled, the system tray icon (the icon on left of 
+the clock in the Windows' task bar) for Locate32 is not shown. 
+</p>
+
+<p><b><A NAME="sa_singleclkopens"></A>$STRADVANCEDSETTINGS_CLICKACTIVATETRAYICON@C$</b>:
+If this option is enabled, Locate32 dialog will be opened if you click the Locate32 icon in 
+the system tray (otherwise double click is required).
+</p>
+
+<p><b><A NAME="sa_customSTicon"></A>$STRADVANCEDSETTINGS_CUSTOMTRAYICON@C$</b>:
+You can use this option to change the icon which is shown in the system tray. Only icon files (.ico)
+are allowed.
+</p>
+
+</div> <!-- advanced_settings_level1@sa_STicon -->
+
+
+
+
+
+<!-- MISCELLANEOUS section -->
+
+<h2><A NAME="sa_misc"></A>$STRADVANCEDSETTINGS_MISCELLANEOUS@C$</h2>
+<p>This category contains miscellaneous options including options error reporting.</p>
+<div id="advanced_settings_level1">
+
+<p><b><A NAME="sa_noextinrename"></A>$STRADVANCEDSETTINGS_DONTSHOWEXTINRENAME@C$</b>:
+If this option is enabled, the extension is not shown when renaming file using a rename 
+dialog. This rename dialog is shown if you choose <A HREF="hid_special_changefilename.htm">"Change Filename"</A>
+from the <A HREF="menu_special.htm">Special menu</A> or if you are not enabled 
+<A HREF="settings_advanced.htm#sa_exprenaming">"Explorer style renaming"</A> option.</p>
+
+
+<p><b><A NAME="sa_criticalerrors"></A>$STRADVANCEDSETTINGS_SHOWCRITICALERRORS@C$</b>:
+This option specifies whether a error message box is shown when critical errors occur. 
+This kind of errors occurs if Locate32 was unable to open, read or write a database file,
+a database has corrupted. Memory allocation errors and unknown errors are also considered as 
+critical errors. However, the error messages are usually shown in a update status tooltip or in 
+the status bar in the Locate32 dialog even if this option is disabled. </p>
+
+<p><b><A NAME="sa_noncriticalerrors"></A>$STRADVANCEDSETTINGS_SHOWNONCRITICALERRORS@C$</b>:
+When this option is enabled, Locate32 will shown an error message box if a noncritical error occurs. 
+Noncritical errors occur if some directory is not available while updating databases or 
+if <A HREF="settings_databasedlg.htm#sdd_noowerwrite">"Do not overwrite existing data"</A> is 
+enabled for a database but Locate32 cannot keep up existing data. Noncritical errors are also shown in 
+a update status tooltip even if this option is disabled. </p>
+
+<p><b><A NAME="sa_defdiricons"></A>$STRADVANCEDSETTINGS_USEDEFAULTDIRECTORYICON@C$</b>:
+If this option is enabled, Locate32 will use the same generic icon for all directories. 
+You option can be useful if you are indexing network shares which are slow or may become offline: 
+reading icons for such shares may cause delays when the program does not answer at all, even if 
+the any results from such shares are not shown (delay happens when icons for "Look In:" field
+are read). </p>
+
+
+</div> <!-- advanced_settings_level1@sa_misc-->
+
+
+
+<!-- SYSTEM section -->
+
+<h2><A NAME="sa_system"></A>$STRADVANCEDSETTINGS_SYSTEM@C$</h2>
+<p>This group contains options to run Locate32 at system startup and to add items to 
+the file pop up menus in Windows Explorer.</p>
+
+<div id="advanced_settings_level1">
+
+<p><b><A NAME="sa_locateatstartup"></A>$STRARVANCEDSETTINGS_RUNATSYSTEMSTARTUP@C$</b>:
+If this option is enabled, Locate32 will be loaded when Windows is started. For that,
+this option will create a shortcut to Startup folder in Start menu. </p>
+
+
+<h2><A NAME="sa_contextmenu"></A>$STRADVANCEDSETTINGS_SHELLCONTEXTMENUCOMMANDS@C$</h2>
+<div id="advanced_settings_level2">
+
+<p><b><A NAME="sa_locMyComp"></A>$STRADVANCEDSETTINGS_LOCATEINMYCOMPUTER@C$</b>:
 This option creates "Locate..." item to the popup menu which appears when you right-click 
 "My Computer" icon. This option requires Administrator privileges.</p>
 
-<p>
-<b><A NAME="setting_advanced_locatetoMyDocuments"></A>"Locate" item to My Documents</b>:
+<p><b><A NAME="sa_locMyDocu"></A>$STRADVANCEDSETTINGS_LOCATEINMYDOCUMENTS@C$</b>:
 This option creates "Locate..." item to the popup menu which appears when you right-click 
 "My Documents" icon. This option requires Administrator privileges.</p>
 
-<p>
-<b><A NAME="setting_advanced_locatetodrives"></A>"Locate" item to drives</b>:
+<p><b><A NAME="sa_locdrives"></A>$STRADVANCEDSETTINGS_LOCATEINDRIVES@C$</b>:
 This option creates "Locate..." item to the pop up menu which appears when you right-click 
 drives in Windows Explorer. This option requires Administrator privileges.</p>
 
-<p>
-<b><A NAME="setting_advanced_locatetodolders"></A>"Locate" item to folders</b>:
-This option creates "Locate..." item to the popup menu which appears when you right-
-click folders in Windows Explorer. This option requires Administrator privileges.</p>
+<p><b><A NAME="sa_locfolders"></A>$STRADVANCEDSETTINGS_LOCATEINFOLDERS@C$</b>:
+This option creates "Locate..." item to the popup menu which appears when you right-click 
+folders in Windows Explorer. This option requires Administrator privileges.</p>
 
-<p>
-<b><A NAME="setting_advanced_updatetoMyCompuTer"></A>"Update Database" item to My Computer</b>:
-This option creates "Update Database" item to the popup menu which appears when you right-click 
+<p><b><A NAME="sa_updMyComp"></A>$STRADVANCEDSETTINGS_UPDATEINMYCOMPUTER@C$</b>:
+This option creates "Update Database" item to the pop up menu which appears when you right-click 
 "My Computer" shortcut. This option requires Administrator privileges.</p>
-</div>
 
 
+</div> <!-- advanced_settings_level2@sa_contextmenu -->
 
-</div>
+
+</div> <!-- advanced_settings_level1@sa_system -->
 
 
-</div>
+</div> <!-- advanced_settings -->
+</div> <!-- settings -->

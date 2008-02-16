@@ -11,7 +11,7 @@ CONTENT=
 <P>The content of the <b>File</b> menu varies depending on selected files. 
 However, it usually contains at least the following commands:
 
-<TABLE cols=2 width=900>
+<TABLE id="menutable" cols=2>
 <TBODY>
 
 <TR VALIGN="top">
@@ -43,7 +43,7 @@ However, it usually contains at least the following commands:
 <TR VALIGN="top">
 <TD width=20%><A HREF="hid_file_cut.htm">Cut</A></TD>
 <TD width=80%>Copy selected results to clipboard. 
-Files are removed if a file operatoin is executed.</TD>
+Files are removed if a file operation is executed.</TD>
 </TR>
 
 <TR VALIGN="top">

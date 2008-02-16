@@ -2,9 +2,10 @@ TITLE=Special menu commands
 CONTENT=
 <H1><A NAME="menu_edit"></A>Special menu (File menu or context menus for the selected items)</H1>
 
-<P>The <b> Special</b> menu offers the following commands:
+<P>The <b> Special</b> menu is shown as a submenu in a <a href="menu_contextmenu.htm">context menu for files</a> 
+or in <a href="menu_file.htm">File menu</a>. It offers the following commands:
 
-<TABLE cols=2 width=900>
+<TABLE id="menutable" cols=2>
 <TBODY>
 
 <TR VALIGN="top">

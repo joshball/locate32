@@ -11,8 +11,8 @@ parameters:
     -Epath      Exclude directory from updating
     -epattern   Exclude files from updating
     -I          incrementally update database
-    -cU         use unicode charset
-    -cA         use ANSI charset
+    -cU         use unicode character set
+    -cA         use ANSI character set
     -Tc         set creator
     -Td         set description
     -n          following databases uses another thread

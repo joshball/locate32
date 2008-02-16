@@ -223,7 +223,7 @@ inline void CCheckFileNotificationsThread::CouldStop()
 
 
 inline CBackgroundUpdater::CBackgroundUpdater(CListCtrl* pList)
-:	m_pList(pList),m_hThread(NULL)
+:	m_pList(pList),m_hThread(NULL),m_lIgnoreItemsAndGoToSleep(FALSE)
 {
 	m_phEvents[0]=CreateEvent(NULL,TRUE,FALSE,NULL);
 	DebugOpenEvent(m_phEvents[0]);
