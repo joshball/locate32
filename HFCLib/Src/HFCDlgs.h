@@ -232,9 +232,11 @@ public:
 	OPENFILENAME* m_pofn;
 #endif
 
+	// You should set bSetHook TRUE if you want to get OnApply and OnCancel to work
 	CFileDialog(BOOL bOpenFileDialog,LPCSTR lpszDefExt=NULL,LPCSTR lpszFileName=NULL,
-		DWORD dwFlags=OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT,	LPCSTR lpszFilter=NULL);
-	CFileDialog(BOOL bOpenFileDialog,LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,	UINT uFilterId);
+		DWORD dwFlags=OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT,	LPCSTR lpszFilter=NULL,BOOL bSetHook=FALSE);
+	CFileDialog(BOOL bOpenFileDialog,LPCSTR lpszDefExt,LPCSTR lpszFileName,
+		DWORD dwFlags,UINT uFilterId,BOOL bSetHook=FALSE);
 	virtual ~CFileDialog();
 
 	BOOL EnableFeatures(DWORD nFlags=efCheck);
@@ -265,8 +267,9 @@ public:
 
 #ifdef DEF_WCHAR
 	CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,LPCWSTR lpszFileName=NULL,
-		DWORD dwFlags=OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT,	LPCWSTR lpszFilter=NULL);
-	CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,UINT uFilterId);	
+		DWORD dwFlags=OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT,	LPCWSTR lpszFilter=NULL,BOOL bSetHook=FALSE);
+	CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,LPCWSTR lpszFileName,
+		DWORD dwFlags,UINT uFilterId,BOOL bSetHook=FALSE);	
 
 	void SetTitle(LPCWSTR szTitle);
 
@@ -292,9 +295,9 @@ protected:
 	virtual void OnFolderChange();
 	virtual void OnTypeChange();
 
-	void Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCSTR lpszFilter);
+	void Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCSTR lpszFilter,BOOL bSetHook=FALSE);
 #ifdef DEF_WCHAR
-	void Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPCWSTR lpszFilter);
+	void Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPCWSTR lpszFilter,BOOL bSetHook=FALSE);
 #endif
 
 protected:
@@ -317,10 +320,10 @@ public:
 	CHOOSEFONT m_cf;
 
 	CFontDialog(LPLOGFONT lplfInitial=NULL,DWORD dwFlags=CF_EFFECTS|CF_SCREENFONTS,
-		HDC hdcPrinter=NULL);
+		HDC hdcPrinter=NULL,BOOL bSetHook=FALSE);
 	CFontDialog(const CHARFORMAT& charformat,
 		DWORD dwFlags=CF_SCREENFONTS,
-		HDC hdcPrinter=NULL);
+		HDC hdcPrinter=NULL,BOOL bSetHook=FALSE);
 	
 	BOOL DoModal(HWND hParentWnd=NULL);
 
@@ -347,7 +350,7 @@ class CColorDialog : public CCommonDialog
 public:
 	CHOOSECOLOR m_cc;
 
-	CColorDialog(COLORREF clrInit=0,DWORD dwFlags=0);
+	CColorDialog(COLORREF clrInit=0,DWORD dwFlags=0,BOOL bSetHook=FALSE);
 	
 	BOOL DoModal(HWND hParentWnd=NULL);
 
@@ -360,7 +363,7 @@ class CPageSetupDialog : public CCommonDialog
 public:
 	PAGESETUPDLG m_psd;
 
-	CPageSetupDialog(DWORD dwFlags=PSD_MARGINS|PSD_INWININIINTLMEASURE);
+	CPageSetupDialog(DWORD dwFlags=PSD_MARGINS|PSD_INWININIINTLMEASURE,BOOL bSetHook=FALSE);
 	~CPageSetupDialog();
 	LPDEVMODE GetDevMode() const;
 	CString GetDriverName() const;
@@ -382,7 +385,8 @@ public:
 	PRINTDLG m_pd;
 
 	CPrintDialog(BOOL bPrintSetupOnly,
-		DWORD dwFlags=PD_ALLPAGES|PD_USEDEVMODECOPIES|PD_NOPAGENUMS|PD_HIDEPRINTTOFILE|PD_NOSELECTION);
+		DWORD dwFlags=PD_ALLPAGES|PD_USEDEVMODECOPIES|PD_NOPAGENUMS|PD_HIDEPRINTTOFILE|PD_NOSELECTION,
+		BOOL bSetHook=FALSE);
 	~CPrintDialog();
 	BOOL DoModal(HWND hParentWnd=NULL);
 
@@ -408,7 +412,7 @@ class CFindReplaceDialog : public CCommonDialog
 public:
 	FINDREPLACE m_fr;
 
-	CFindReplaceDialog();
+	CFindReplaceDialog(BOOL bSetHook=FALSE);
 	BOOL Create(BOOL bFindDialogOnly,LPCTSTR lpszFindWhat,
 			LPCTSTR lpszReplaceWith=NULL,DWORD dwFlags=FR_DOWN,HWND hParentWnd=NULL);
 
@@ -958,31 +962,17 @@ inline void CPropertySheet::SetWizardButtons(DWORD dwFlags)
 // Class CFileDialog
 
 inline CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCSTR lpszDefExt,
-						 LPCSTR lpszFileName,DWORD dwFlags,LPCSTR lpszFilter)
+						 LPCSTR lpszFileName,DWORD dwFlags,LPCSTR lpszFilter,BOOL bSetHook)
 :	CCommonDialog(),m_bOpenFileDialog(bOpenFileDialog)
 {
-	Init(lpszDefExt,lpszFileName,dwFlags,lpszFilter);
-}
-
-inline CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,
-						 LPCWSTR lpszFileName,DWORD dwFlags,LPCWSTR lpszFilter)
-:	CCommonDialog(),m_bOpenFileDialog(bOpenFileDialog)
-{
-	Init(lpszDefExt,lpszFileName,dwFlags,lpszFilter);
+	Init(lpszDefExt,lpszFileName,dwFlags,lpszFilter,bSetHook);
 }
 
 inline CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCSTR lpszDefExt,
-						 LPCSTR lpszFileName,DWORD dwFlags,UINT nFilderID)
+						 LPCSTR lpszFileName,DWORD dwFlags,UINT nFilderID,BOOL bSetHook)
 :	CCommonDialog(),m_bOpenFileDialog(bOpenFileDialog)
 {
-	Init(lpszDefExt,lpszFileName,dwFlags,CString(nFilderID));
-}
-
-inline CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,
-						 LPCWSTR lpszFileName,DWORD dwFlags,UINT nFilderID)
-:	CCommonDialog(),m_bOpenFileDialog(bOpenFileDialog)
-{
-	Init(lpszDefExt,lpszFileName,dwFlags,CStringW(nFilderID));
+	Init(lpszDefExt,lpszFileName,dwFlags,CString(nFilderID),bSetHook);
 }
 
 inline void CFileDialog::GetFileTitle(CString& sFileTitle) const
@@ -1002,21 +992,6 @@ inline void CFileDialog::GetFileTitle(LPSTR pFileTitle,DWORD nMaxLen) const
 }
 
 
-inline void CFileDialog::GetFileTitle(CStringW& sFileTitle) const
-{
-	if (IsUnicodeSystem())	
-		sFileTitle=m_pwofn->lpstrFileTitle;
-	else
-		sFileTitle=m_pofn->lpstrFileTitle;
-}
-
-inline void CFileDialog::GetFileTitle(LPWSTR pFileTitle,DWORD nMaxLen) const
-{
-	if (IsUnicodeSystem())	
-		StringCbCopyW(pFileTitle,nMaxLen*2,m_pwofn->lpstrFileTitle);
-	else
-		MultiByteToWideChar(CP_ACP,0,m_pofn->lpstrFileTitle,-1,pFileTitle,nMaxLen);
-}
 
 inline void CFileDialog::SetTemplate(UINT nID,TypeOfResourceHandle bType)
 {
@@ -1061,7 +1036,40 @@ inline void CFileDialog::SetTitle(LPCSTR pTitle)
 		m_pofn->lpstrTitle=alloccopy(pTitle);
 	}
 }
+
+
 #ifdef DEF_WCHAR
+inline CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,
+						 LPCWSTR lpszFileName,DWORD dwFlags,LPCWSTR lpszFilter,BOOL bSetHook)
+:	CCommonDialog(),m_bOpenFileDialog(bOpenFileDialog)
+{
+	Init(lpszDefExt,lpszFileName,dwFlags,lpszFilter,bSetHook);
+}
+
+
+inline CFileDialog::CFileDialog(BOOL bOpenFileDialog,LPCWSTR lpszDefExt,
+						 LPCWSTR lpszFileName,DWORD dwFlags,UINT nFilderID,BOOL bSetHook)
+:	CCommonDialog(),m_bOpenFileDialog(bOpenFileDialog)
+{
+	Init(lpszDefExt,lpszFileName,dwFlags,CStringW(nFilderID),bSetHook);
+}
+
+inline void CFileDialog::GetFileTitle(CStringW& sFileTitle) const
+{
+	if (IsUnicodeSystem())	
+		sFileTitle=m_pwofn->lpstrFileTitle;
+	else
+		sFileTitle=m_pofn->lpstrFileTitle;
+}
+
+inline void CFileDialog::GetFileTitle(LPWSTR pFileTitle,DWORD nMaxLen) const
+{
+	if (IsUnicodeSystem())	
+		StringCbCopyW(pFileTitle,nMaxLen*2,m_pwofn->lpstrFileTitle);
+	else
+		MultiByteToWideChar(CP_ACP,0,m_pofn->lpstrFileTitle,-1,pFileTitle,nMaxLen);
+}
+
 inline void CFileDialog::SetFileTitle(LPCWSTR pFileTitle)
 {
 	if (IsUnicodeSystem())	
@@ -1087,7 +1095,10 @@ inline void CFileDialog::SetTitle(LPCWSTR pTitle)
 		m_pofn->lpstrTitle=alloccopyWtoA(pTitle);
 	}
 }
+
 #endif
+
+
 
 ///////////////////////////
 // Class CFontDialog

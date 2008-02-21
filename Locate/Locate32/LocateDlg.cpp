@@ -585,6 +585,8 @@ CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
 	return pRet;
 }
 
+
+
 BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 {
 	//DebugMessage("CLocateDlg::OnInitDialog BEGIN");
@@ -646,9 +648,28 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	}
 	delete[] pDetails;
 
+
+	// Enable d'n'd support for the header
 	m_pListCtrl->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP,LVS_EX_HEADERDRAGDROP);
+	
+	// Enable double buffer in Vista
+	m_pListCtrl->SetExtendedListViewStyle(LVS_EX_DOUBLEBUFFER,LVS_EX_DOUBLEBUFFER);
+	
+	
+	//m_pListCtrl->SetExtendedListViewStyle(0x02000000 ,0x02000000 );
+	
+	// Loading column widths
 	m_pListCtrl->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\General","ListWidths");
 
+
+	
+	// 0x56201348: WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_VSCROLL|LVS_OWNERDATA|
+	//             LVS_EDITLABELS|LVS_AUTOARRANGE|LVS_SHAREIMAGELISTS|LVS_SHOWSELALWAYS
+	// 0xd7014c10: LVS_EX_HEADERDRAGDROP|LVS_EX_UNDERLINEHOT|LVS_EX_INFOTIP|LVS_EX_LABELTIP|
+	//             LVS_EX_DOUBLEBUFFER|LVS_EX_AUTOAUTOARRANGE|LVS_EX_HEADERINALLVIEWS|0x04000000|
+	//             LVS_EX_AUTOSIZECOLUMNS|LVS_EX_COLUMNSNAPPOINTS|LVS_EX_COLUMNOVERFLOW
+
+	
 	// Initializing drop target
 	OleInitialize(NULL);
 	m_pDropTarget=new CFileTarget;
@@ -806,7 +827,6 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 		title << L" (" << DWORD(GetLocateApp()->m_nInstance+1) << L')';
 	SetText(title);
 	
-	//DebugMessage("CLocateDlg::OnInitDialog END");
 	return FALSE;
 }
 
@@ -1124,6 +1144,7 @@ BOOL CLocateDlg::SetListStyle(int id,BOOL bInit)
 	CMenu menu(GetMenu());
 	DWORD dwStyle=m_pListCtrl->GetStyle();
 
+	// Changing from Details view, saving list widths
 	if ((dwStyle & LVS_TYPEMASK)==LVS_REPORT && id!=3)
 	{
 		m_pListCtrl->SaveColumnsState(HKCU,
@@ -1617,6 +1638,8 @@ void CLocateDlg::InitTooltips()
 
 void CLocateDlg::DeleteTooltipTools()
 {
+	ASSERT (m_pListTooltips!=NULL);
+
 	m_pListTooltips->Pop();
 
 	m_iTooltipItem=-1;
@@ -1626,17 +1649,7 @@ void CLocateDlg::DeleteTooltipTools()
 	ti.cbSize=TTTOOLINFOA_V2_SIZE;
 	for (int i=m_pListTooltips->GetToolCount()-1;m_pListTooltips->EnumTools(i,&ti) && i>=0;i--)
 		m_pListTooltips->DelTool(&ti);
-	
-	/*
-	if (m_pListTooltips->GetToolCount()>0)
-	{
-		for (int i=0;i<m_pListTooltips->GetToolCount();i++)
-		{
-			BOOL bRet=m_pListTooltips->EnumTools(i,&ti);
-			DebugFormatMessage("bRet=%X, ti.hwnd=%X ti.uID=%X ti.uFlags=%X",bRet,ti.hwnd,ti.uId,ti.uFlags);
-		}
-	}
-	*/
+
 }
 
 
@@ -1730,9 +1743,7 @@ void CLocateDlg::OnOk(BOOL bShortcut,BOOL bSelectDatabases)
 
 void CLocateDlg::OnFieldChange(DWORD dwWhatChanged)
 {
-	// If search while typing and under delay, cancel timer
-	KillTimer(ID_INSTANTSEARCHTIMER);
-
+	
 	// Stop if IS disabled
 	if (!IsInstantSearchingFlagSet(isEnable))
 		return;
@@ -1741,6 +1752,10 @@ void CLocateDlg::OnFieldChange(DWORD dwWhatChanged)
 	if (IsInstantSearchingFlagSet(isIgnoreChangeMessages))
 		return;
 
+	// If search while typing and under delay, cancel timer
+	KillTimer(ID_INSTANTSEARCHTIMER);
+
+	
 	// Stop if going to searching string inside files and that is not desired
 	if (IsInstantSearchingFlagSet(isDisableIfDataSearch) && m_AdvancedDlg.IsDlgButtonChecked(IDC_CONTAINDATACHECK))
 		return;
@@ -1859,7 +1874,7 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 	if (bForInstantSearch)
 	{
 		// Check if there is something which would restrict the number of results
-		if (Name.IsEmpty() && aExtensions.GetSize()==0 && 
+		if (Name.GetLength()<(int)max(m_dwInstantChars,1) && aExtensions.GetSize()==0 && 
 			aDirectories.GetSize()==0 && !m_SizeDateDlg.IsChanged())
 			return NULL;
 	}
@@ -1945,12 +1960,8 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 			// replace ' ' -> '*'
 			if (dwAdvancedFlags&CAdvancedDlg::flagReplaceSpaces)
 			{
-				// Replacing spaces with asterisks
-				for (int i=0;i<Name.GetLength();i++)
-				{
-					if (Name[i]==' ')
-						Name[i]='*';
-				}
+
+				m_AdvancedDlg.ReplacesCharsWithAsterisks(Name);
 
 				// Remove multiple (and therefore
 				// meaningless) asterisks
@@ -3095,7 +3106,8 @@ void CLocateDlg::OnDestroy()
 	// List control and related stuff
 	if (m_pListCtrl!=NULL)
 	{
-		if ((m_pListCtrl->GetStyle() & LVS_TYPEMASK)==LVS_REPORT)
+		if ((m_pListCtrl->GetStyle() & LVS_TYPEMASK)==LVS_REPORT || 
+			(m_dwExtraFlags&efLVHeaderInAllViews && GetSystemFeaturesFlag()&efWinVista))
 			m_pListCtrl->SaveColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\General","ListWidths");
 		
 		// Free list font
@@ -4203,6 +4215,9 @@ void CLocateDlg::OnActivateApp(BOOL fActive,DWORD dwThreadID)
 			AddExtraFlags(efFocusToResultListWhenAppActivated);
 			RemoveExtraFlags(efLVRenamingActivated);
 		}
+
+		// Hide tooltip if shown
+		m_pListTooltips->Pop();
 	}
 	else
 	{
@@ -4296,6 +4311,7 @@ void CLocateDlg::LoadRegistry()
 		RegKey.QueryValue("MaximumFoundFiles",(LPTSTR)&m_dwMaxFoundFiles,sizeof(DWORD));
 		RegKey.QueryValue("Instant Search Limit",(LPTSTR)&m_dwInstantLimit,sizeof(DWORD));
 		RegKey.QueryValue("Instant Search Delay",(LPTSTR)&m_dwInstantDelay,sizeof(DWORD));
+		RegKey.QueryValue("Instant Search Chars",(LPTSTR)&m_dwInstantChars,sizeof(DWORD));
 		RegKey.CloseKey();
 	}
 
@@ -4376,6 +4392,7 @@ void CLocateDlg::LoadRegistry()
 		if (RegKey.QueryValue("WaitEvery60",dwTemp))
 			m_WaitEvery60=WORD(dwTemp);
 	}
+
 }
 
 void CLocateDlg::LoadDialogTexts()
@@ -6069,7 +6086,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 {
 	if (DeleteFlag==BasedOnShift)
 	{
-		if (HIBYTE(GetKeyState(VK_SHIFT)))
+		if (GetKeyState(VK_SHIFT)& 0x8000)
 			DeleteFlag=Delete;
 		else
 			DeleteFlag=Recycle;
@@ -6152,7 +6169,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 		fo.fFlags=FOF_ALLOWUNDO;
 		break;
 	default:
-		if (HIBYTE(GetKeyState(VK_SHIFT)))
+		if (GetKeyState(VK_SHIFT)& 0x8000)
 			fo.fFlags=0;
 		else
 			fo.fFlags=FOF_ALLOWUNDO;
@@ -7979,7 +7996,10 @@ BOOL CLocateDlg::SetListSelStyle()
 		m_pListCtrl->SetExtendedListViewStyle(
 			LVS_EX_UNDERLINECOLD|LVS_EX_UNDERLINEHOT|LVS_EX_TWOCLICKACTIVATE|LVS_EX_ONECLICKACTIVATE|LVS_EX_TRACKSELECT,0);
 	
-	m_pListCtrl->SetExtendedListViewStyle(LVS_EX_FULLROWSELECT,m_dwFlags&fgLVSelectFullRow?LVS_EX_FULLROWSELECT:0);
+	m_pListCtrl->SetExtendedListViewStyle(LVS_EX_FULLROWSELECT,
+		m_dwFlags&fgLVSelectFullRow?LVS_EX_FULLROWSELECT:0);
+	m_pListCtrl->SetExtendedListViewStyle(0x02000000 /* LVS_EX_HEADERINALLVIEWS */,
+		m_dwExtraFlags&efLVHeaderInAllViews?0x02000000:0);
 	return TRUE;
 }
 
@@ -8660,6 +8680,7 @@ void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)
 BOOL CLocateDlg::CNameDlg::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
+	GetLocateDlg()->AddInstantSearchingFlags(isIgnoreChangeMessages);
 
 	m_Name.AssignToDlgItem(*this,IDC_NAME);
 	m_Type.AssignToDlgItem(*this,IDC_TYPE);
@@ -8702,6 +8723,8 @@ BOOL CLocateDlg::CNameDlg::OnInitDialog(HWND hwndFocus)
 
 	EnumChildWindows(m_Name,EnumAndSubclassNameChilds,(LPARAM)&m_Name);
 
+
+	GetLocateDlg()->RemoveInstantSearchingFlags(isIgnoreChangeMessages);
 	return FALSE;
 }
 
@@ -9254,12 +9277,6 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		case BN_CLICKED:
 			OnBrowse();
 			break;
-		/*
-		case EN_KILLFOCUS:
-			::SendMessage(hControl,BM_SETSTYLE,BS_PUSHBUTTON,0);
-			::SendDlgItemMessage(GetParent(),IDC_OK,BM_SETSTYLE,BS_DEFPUSHBUTTON,0);
-			break;
-		*/
 		}
 		break;
 	case IDC_NAME:
@@ -9288,6 +9305,10 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			HilightTab(m_Name.GetTextLength()>0);
 			GetLocateDlg()->OnFieldChange(isSearchIfNameChanged);
 			break;
+		case CBN_KILLFOCUS:
+			if (GetLocateDlg()->IsInstantSearchingFlagSet(isRunning))
+				AddCurrentNameToList();
+			break;
 		}
 		break;
 	case IDC_TYPE:
@@ -9311,6 +9332,10 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			HilightTab(IsChanged());
 			GetLocateDlg()->OnFieldChange(isSearchIfTypeChanged);
 			break;
+		case CBN_KILLFOCUS:
+			if (GetLocateDlg()->IsInstantSearchingFlagSet(isRunning))
+				AddCurrentTypeToList();
+			break;
 		}
 		break;
 	case IDC_LOOKIN:
@@ -9326,6 +9351,7 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			}
 			break;
 		case CBN_EDITCHANGE:
+			DebugMessage("LOOKIN EDITCHANGE");
 			HilightTab(IsChanged());
 			GetLocateDlg()->OnFieldChange(isSearchIfLookInChanged);
 			break;
@@ -9357,6 +9383,25 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	return FALSE;
 }
 
+BOOL CLocateDlg::CNameDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
+{
+	if (idCtrl==IDC_LOOKIN)
+	{
+		if (((pnmh->code==CBEN_ENDEDITA && ((PNMCBEENDEDITA)pnmh)->iWhy==CBENF_KILLFOCUS) ||
+			(pnmh->code==CBEN_ENDEDITW && ((PNMCBEENDEDITW)pnmh)->iWhy==CBENF_KILLFOCUS)) &&
+			GetLocateDlg()->IsInstantSearchingFlagSet(isRunning))
+		{
+			CArrayFAP<LPWSTR> aDirectories;
+			GetLocateDlg()->AddInstantSearchingFlags(isIgnoreChangeMessages);
+			GetDirectoriesForActiveSelection(aDirectories,FALSE,NULL,TRUE);
+			GetLocateDlg()->RemoveInstantSearchingFlags(isIgnoreChangeMessages);
+			return TRUE;
+		}
+	}
+
+	return CDialog::OnNotify(idCtrl,pnmh);
+}
+	
 LRESULT CALLBACK CLocateDlg::CNameDlg::NameWindowProc(HWND hWnd,UINT uMsg,
 													  WPARAM wParam,LPARAM lParam)
 {
@@ -9383,7 +9428,8 @@ LRESULT CALLBACK CLocateDlg::CNameDlg::NameWindowProc(HWND hWnd,UINT uMsg,
 		if (wParam==VK_DOWN || wParam==VK_UP)
 		{
 			if (pNameData->pLocateDlg->IsInstantSearchingFlagSet(CLocateDlg::isUpDownGoesToResults) && 
-				pNameData->pLocateDlg->IsInstantSearchingFlagSet(CLocateDlg::isRunning))
+				pNameData->pLocateDlg->IsInstantSearchingFlagSet(CLocateDlg::isRunning) &&
+				!((GetKeyState(VK_CONTROL)|GetKeyState(VK_SHIFT)|GetKeyState(VK_MENU)) & 0x8000))
 			{
 				if (!pNameData->pNameCombo->GetDroppedState() && 
 					pNameData->pLocateDlg->m_pListCtrl->GetItemCount()>0)
@@ -9510,29 +9556,55 @@ void CLocateDlg::CNameDlg::OnDestroy()
 
 }
 
+void CLocateDlg::CNameDlg::AddCurrentNameToList()
+{
+	// Save name to the list
+	CStringW sName,Buffer;
+	m_Name.GetText(sName);
+
+	for (int i=m_Name.GetCount()-1;i>=0;i--)
+	{
+		m_Name.GetLBText(i,Buffer);
+		if (sName.CompareNoCase(Buffer)==0)
+			m_Name.DeleteString(i);
+	}	
+	m_Name.InsertString(0,sName);
+	m_Name.SetText(sName);
+
+	if (m_Name.GetCount()>int(m_nMaxNamesInList))
+		m_Name.DeleteString(m_nMaxNamesInList);
+}
+
+void CLocateDlg::CNameDlg::AddCurrentTypeToList()
+{
+	if (m_Type.GetCurSel()==0) // Empty extension
+		return;
+	
+	// Save extension to the list
+	CStringW sType,Buffer;
+	m_Type.GetText(sType);
+		
+	for (int i=m_Type.GetCount()-1;i>=1;i--)
+	{
+		m_Type.GetLBText(i,Buffer);
+		if (sType.CompareNoCase(Buffer)==0)
+			m_Type.DeleteString(i);
+	}	
+
+	m_Type.InsertString(1,sType); // 0 == (none)
+	m_Type.SetText(sType);
+	if (m_Type.GetCount()>int(m_nMaxTypesInList)+1)
+		m_Type.DeleteString(m_nMaxTypesInList+1);
+}
+
 
 BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArray<LPWSTR>& aExtensions,CArrayFAP<LPWSTR>& aDirectories,BOOL bForInstantSearch)
 {
 	// Setting recent combobox for name
-	CStringW Buffer;
 	m_Name.GetText(sName);
 
 	if (!bForInstantSearch)
-	{
-		// Save name to the list
-		for (int i=m_Name.GetCount()-1;i>=0;i--)
-		{
-			m_Name.GetLBText(i,Buffer);
-			if (sName.CompareNoCase(Buffer)==0)
-				m_Name.DeleteString(i);
-		}	
-		m_Name.InsertString(0,sName);
-		m_Name.SetText(sName);
-
-		if (m_Name.GetCount()>int(m_nMaxNamesInList))
-			m_Name.DeleteString(m_nMaxNamesInList);
-	}
-	
+		AddCurrentNameToList();
 
 
 	// Setting recent combobox for type
@@ -9545,25 +9617,9 @@ BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArra
 			CStringW sType;
 			m_Type.GetText(sType);
 		
-
 			if (!bForInstantSearch)
-			{
-				// Save extension to the list
-
-				for (int i=m_Type.GetCount()-1;i>=1;i--)
-				{
-					m_Type.GetLBText(i,Buffer);
-					if (sType.CompareNoCase(Buffer)==0)
-						m_Type.DeleteString(i);
-				}	
-
-				m_Type.InsertString(1,sType); // 0 == (none)
-				m_Type.SetText(sType);
-				if (m_Type.GetCount()>int(m_nMaxTypesInList)+1)
-					m_Type.DeleteString(m_nMaxTypesInList+1);
-			}
-
-
+				AddCurrentTypeToList();
+			
 			// Parsing extensions
 			LPCWSTR pType=sType;
 			for (;pType[0]==L' ';pType++);
@@ -9593,7 +9649,7 @@ BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArra
 			if (m_pMultiDirs[i]->bSelected)
 			{
 				TypeOfItem nType;
-				if (!GetDirectoriesForActiveSelection(aDirectories,!bForInstantSearch,&nType,(GetKeyState(VK_CONTROL)&0x8000)?TRUE:FALSE))
+				if (!GetDirectoriesForActiveSelection(aDirectories,bForInstantSearch,&nType,FALSE))
 					return FALSE;
 
 				if (nType==Everywhere)
@@ -9604,7 +9660,7 @@ BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArra
 			}
 			else
 			{
-				if (!GetDirectoriesForSelection(aDirectories,m_pMultiDirs[i],FALSE))
+				if (!GetDirectoriesForNonActiveSelection(aDirectories,m_pMultiDirs[i],FALSE))
 					return FALSE;
 
 				if (m_pMultiDirs[i]->nType==Everywhere)
@@ -9628,7 +9684,7 @@ BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArra
 			}
 		}
 	}
-	else if (!GetDirectoriesForActiveSelection(aDirectories,!bForInstantSearch,NULL,(GetKeyState(VK_CONTROL)&0x8000)?TRUE:FALSE))
+	else if (!GetDirectoriesForActiveSelection(aDirectories,bForInstantSearch,NULL,FALSE))
 		return FALSE;
 
 
@@ -9658,17 +9714,12 @@ DWORD CLocateDlg::CNameDlg::GetCurrentlySelectedComboItem() const
 	return nCurSel;
 }
 
-BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDirectories,BOOL bAlsoSet,TypeOfItem* pType,BOOL bNoWarningIfNotExists)
+BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDirectories,BOOL bInstantSearch,TypeOfItem* pType,BOOL bNoWarningIfNotExists)
 {
-	//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection BEGIN");
-	
 	DWORD nCurSel=GetCurrentlySelectedComboItem();
 	
 	if (nCurSel==DWORD(CB_ERR))
 	{
-		//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection A");
-	
-
 		// Getting directory from combo
 		DWORD dwBufferSize=MAX_PATH;
 		WCHAR* pFolder;
@@ -9695,19 +9746,16 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDir
                 break;
 		}
 
-		BOOL bRet=GetDirectoriesFromCustomText(aDirectories,pFolder,dwLength,bAlsoSet,bNoWarningIfNotExists);
+		BOOL bRet=GetDirectoriesFromCustomText(aDirectories,pFolder,dwLength,!bInstantSearch,bNoWarningIfNotExists);
         delete[] pFolder;
 		
 		if (pType!=NULL)
 			*pType=Custom;
 
-		//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection END 1");
 		return bRet;
 	}
 	else
 	{
-		//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection B");
-			
 		COMBOBOXEXITEMW ci;
 		ci.mask=CBEIF_LPARAM;
 		ci.iItem=nCurSel;
@@ -9723,20 +9771,17 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDir
 			ci.cchTextMax=MAX_PATH+10;
 			ci.mask=CBEIF_TEXT;
 			m_LookIn.GetItem(&ci);
-			AddDirectoryToList(aDirectories,szPath);
+			ParseGivenDirectoryForMultipleDirectories(aDirectories,szPath);
 			return TRUE;
 		}
 		else
-		{
-			//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection END 2");
 			return GetDirectoriesFromLParam(aDirectories,ci.lParam);
-		}
+		
 	}
 
-	//DebugMessage("CNameDlg::GetDirectoriesForActiveSelection END 3");
 }
 
-BOOL CLocateDlg::CNameDlg::GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirectories,LPCWSTR szCustomText,DWORD dwLength,BOOL bAlsoSet,BOOL bNoWarning)
+BOOL CLocateDlg::CNameDlg::GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirectories,LPCWSTR szCustomText,DWORD dwLength,BOOL bSaveAndSet,BOOL bNoWarning)
 {
 	// Removing spaces and \\ from beginning and end
 	LPCWSTR pPtr=szCustomText;
@@ -9749,9 +9794,9 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirecto
 		dwLength--;
 	if (pPtr[dwLength-1]=='\\')
 		dwLength--;
-	if (!CheckAndAddDirectory(pPtr,dwLength,bAlsoSet,bNoWarning))
+	if (!CheckAndAddDirectory(pPtr,dwLength,bSaveAndSet,bNoWarning))
 		return FALSE;
-	AddDirectoryToList(aDirectories,pPtr,dwLength);
+	ParseGivenDirectoryForMultipleDirectories(aDirectories,pPtr,dwLength);
 	return TRUE;
 }
 
@@ -9776,7 +9821,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							szDir[nLength-2]='\0';
 							nLength--;
 						}
-						AddDirectoryToList(aDirectories,szDir);
+						ParseGivenDirectoryForMultipleDirectories(aDirectories,szDir);
 						
 						nLength=RegKey.QueryValueLength(L"Personal");
 						szDir=new WCHAR[nLength];
@@ -9786,7 +9831,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							szDir[nLength-2]='\0';
 							nLength--;
 						}
-						AddDirectoryToList(aDirectories,szDir);
+						ParseGivenDirectoryForMultipleDirectories(aDirectories,szDir);
 						
 					}
 					break;
@@ -9804,7 +9849,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							szDir[nLength-2]=L'\0';
 							nLength--;
 						}
-						AddDirectoryToList(aDirectories,szDir);
+						ParseGivenDirectoryForMultipleDirectories(aDirectories,szDir);
 					}
 					break;
 				}
@@ -9821,7 +9866,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 							szDir[nLength-2]=L'\0';
 							nLength--;
 						}
-						AddDirectoryToList(aDirectories,szDir,nLength);
+						ParseGivenDirectoryForMultipleDirectories(aDirectories,szDir,nLength);
 					}
 					break;
 				}
@@ -9835,7 +9880,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 						for (LPWSTR szDrive=szDrives;szDrive[0]!=L'\0';szDrive+=4)
 						{
 							if (FileSystem::GetDriveType(szDrive)!=DRIVE_REMOTE)
-								AddDirectoryToList(aDirectories,szDrive,2);
+								ParseGivenDirectoryForMultipleDirectories(aDirectories,szDrive,2);
 						}
 						delete[] szDrives;
 					}
@@ -9850,13 +9895,13 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 			szDir[0]=static_cast<WCHAR>(HIWORD(lParam));
 			szDir[1]=':';
 			szDir[2]=L'\0';
-			AddDirectoryToList(aDirectories,szDir);
+			ParseGivenDirectoryForMultipleDirectories(aDirectories,szDir);
 			break;
 		}
 	case Custom:
 		EnterCriticalSection(&m_cBrowse);	
 		if (m_pBrowse!=NULL && HIWORD(lParam)<m_nMaxBrowse)
-			AddDirectoryToList(aDirectories,(LPCWSTR)m_pBrowse[HIWORD(lParam)],m_pBrowse[HIWORD(lParam)].GetLength());
+			ParseGivenDirectoryForMultipleDirectories(aDirectories,(LPCWSTR)m_pBrowse[HIWORD(lParam)],m_pBrowse[HIWORD(lParam)].GetLength());
 		LeaveCriticalSection(&m_cBrowse);
 		break;
 	case Root:
@@ -9871,7 +9916,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 
 
 
-void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory)
+void CLocateDlg::CNameDlg::ParseGivenDirectoryForMultipleDirectories(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory)
 {
 	CStringW sDirectory;
 	int nLength;
@@ -11047,7 +11092,7 @@ void CLocateDlg::CNameDlg::LoadRegistry()
 	}
 }
 
-BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,BOOL bAlsoSet,BOOL bNoWarning)
+BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,BOOL bSaveAndSet,BOOL bNoWarning)
 {
 	CStringW FolderLower(pFolder,dwLength);
 	FolderLower.MakeLower();
@@ -11090,7 +11135,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 			{
 				WCHAR cDrive=(WCHAR)HIWORD(lParam);
 				MakeLower(&cDrive,1);
-				if (cDrive==FolderLower[0] && bAlsoSet)
+				if (cDrive==FolderLower[0] && bSaveAndSet)
 				{
 					m_LookIn.SetCurSel(i);
 					m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(i));
@@ -11099,6 +11144,9 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 			}
 		}
 	}
+
+	if (!bSaveAndSet)
+		return TRUE;
 
 	if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efNameDontSaveNetworkDrivesAndDirectories)
 	{
@@ -11190,13 +11238,13 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 			ci.iItem++;
 		}
 
-		if (bAlsoSet)
-		{
+		//if (bAlsoSet)
+		//{
 			m_LookIn.SetCurSel(nSel);
 			m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(nSel));
-		}
-		else
-			m_LookIn.SetCurSel(nCurSel);
+		//}
+		//else
+		//	m_LookIn.SetCurSel(nCurSel);
 	
 	}			
 	
@@ -11561,8 +11609,10 @@ LPARAM CLocateDlg::CNameDlg::DirSelection::GetLParam(const CStringW* pBrowse,int
 	}
 }
 
-BOOL CLocateDlg::CNameDlg::GetDirectoriesForSelection(CArray<LPWSTR>& aDirectories,const DirSelection* pSelection,BOOL bNoWarnings)
+BOOL CLocateDlg::CNameDlg::GetDirectoriesForNonActiveSelection(CArray<LPWSTR>& aDirectories,const DirSelection* pSelection,BOOL bNoWarnings)
 {
+	ASSERT(!pSelection->bSelected);
+
 	switch (pSelection->nType)
 	{
 	case Everywhere:
@@ -11572,7 +11622,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForSelection(CArray<LPWSTR>& aDirectori
 	case Drive:
 		return GetDirectoriesFromLParam(aDirectories,MAKELPARAM(Drive,pSelection->cDriveLetter));
 	case Custom:
-		return GetDirectoriesFromCustomText(aDirectories,pSelection->pTitleOrDirectory,istrlenw(pSelection->pTitleOrDirectory),pSelection->bSelected,bNoWarnings);
+		return GetDirectoriesFromCustomText(aDirectories,pSelection->pTitleOrDirectory,istrlenw(pSelection->pTitleOrDirectory),FALSE,bNoWarnings);
 	case Root:
 		aDirectories.Add(alloccopy(pSelection->pTitleOrDirectory));
 		return TRUE;
@@ -11894,6 +11944,8 @@ BOOL CLocateDlg::CSizeDateDlg::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
 	
+	GetLocateDlg()->AddInstantSearchingFlags(isIgnoreChangeMessages);
+
 	// Set spins
 	SendDlgItemMessage(IDC_MINIMUMSIZESPIN,UDM_SETBUDDY,(WPARAM)GetDlgItem(IDC_MINIMUMSIZE),0);
 	SendDlgItemMessage(IDC_MAXIMUMSIZESPIN,UDM_SETBUDDY,(WPARAM)GetDlgItem(IDC_MAXIMUMSIZE),0);
@@ -11939,6 +11991,8 @@ BOOL CLocateDlg::CSizeDateDlg::OnInitDialog(HWND hwndFocus)
 	Max.AddString(str);
 	
 	OnClear(TRUE);
+	
+	GetLocateDlg()->RemoveInstantSearchingFlags(isIgnoreChangeMessages);
 	return FALSE;
 }
 
@@ -12540,7 +12594,8 @@ void CLocateDlg::CSizeDateDlg::SaveControlStates(CRegKey& RegKey)
 BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
-	
+	GetLocateDlg()->AddInstantSearchingFlags(isIgnoreChangeMessages);
+
 	// Initializing Imagelists
 	m_ToolbarIL.Create(IDB_TOOLBARBITMAPS,12,1,RGB(255,255,255));
 	m_ToolbarILHover.Create(IDB_TOOLBARBITMAPSH,12,1,RGB(255,255,255));
@@ -12550,6 +12605,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 	SendDlgItemMessage(IDC_HELPTOOLBAR,TB_SETIMAGELIST,0,LPARAM(HIMAGELIST(m_ToolbarIL)));
 	SendDlgItemMessage(IDC_HELPTOOLBAR,TB_SETHOTIMAGELIST,0,LPARAM(HIMAGELIST(m_ToolbarILHover)));
 	SendDlgItemMessage(IDC_HELPTOOLBAR,TB_SETDISABLEDIMAGELIST,0,LPARAM(HIMAGELIST(m_ToolbarILDisabled)));
+
 	// Inserting Help button to toolbar
 	TBBUTTON tb;
 	memset(&tb,0,sizeof(TBBUTTON));
@@ -12564,6 +12620,11 @@ BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 	Check.AddString(ID2W(IDS_FILEANDFOLDERNAMES));
 	Check.AddString(ID2W(IDS_FOLDERNAMESONLY));
 	
+
+	// Loading m_aReplaceChars array and change label
+	LoadReplaceCharsFromRegistry();
+	RenameReplaceSpaces();
+
 
 	// Adding (by extension)
 	SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(szwEmpty));
@@ -12595,6 +12656,9 @@ BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 	m_nMatchCaseTop=WORD(rc2.top-rc1.top);
 	::GetClientRect(GetDlgItem(IDC_DATAMATCHCASE),&rc2);
 	m_nMatchCaseWidth=WORD(rc2.right);
+	
+
+	GetLocateDlg()->RemoveInstantSearchingFlags(isIgnoreChangeMessages);
 	return FALSE;
 }
 
@@ -12858,11 +12922,28 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		}
 		break;
 	case IDC_REPLACESPACES:
+		if (GetKeyState(VK_CONTROL) & 0x8000)
+		{
+			CheckDlgButton(IDC_REPLACESPACES,TRUE);
+			CReplaceCharsDlg d(m_aReplaceChars);
+			if (d.DoModal(*this))
+				RenameReplaceSpaces();
+
+		}
+		else
+		{
+			CheckDlgButton(IDC_REPLACESPACES,!IsDlgButtonChecked(IDC_REPLACESPACES));
+			if (hControl==NULL && wNotifyCode==1) // Accelerator
+				SetFocus(IDC_REPLACESPACES);
+		}
+		HilightTab(IsChanged());
+		GetLocateDlg()->OnFieldChange(isSearchIfOtherChanged);
+		break;
 	case IDC_MATCHWHOLENAME:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
 		{
-			CheckDlgButton(wID,!IsDlgButtonChecked(wID));
-			SetFocus(wID);
+			CheckDlgButton(IDC_MATCHWHOLENAME,!IsDlgButtonChecked(IDC_MATCHWHOLENAME));
+			SetFocus(IDC_MATCHWHOLENAME);
 		}
 		HilightTab(IsChanged());
 		GetLocateDlg()->OnFieldChange(isSearchIfOtherChanged);
@@ -13039,9 +13120,6 @@ BOOL CLocateDlg::CAdvancedDlg::IsChanged()
 	
 	return FALSE;
 }
-
-
-
 
 
 void CLocateDlg::CAdvancedDlg::ReArrangeAllocatedData()
@@ -13397,6 +13475,10 @@ void CLocateDlg::CAdvancedDlg::OnDestroy()
 	SendDlgItemMessage(IDC_FILETYPE,CB_RESETCONTENT);
 
 	m_ToolbarIL.DeleteImageList();
+
+
+	SaveReplaceCharsSaveRegistry();
+	m_aReplaceChars.RemoveAll();
 
 }
 
@@ -13810,3 +13892,260 @@ void CLocateDlg::CAdvancedDlg::FileType::ExtractIconFromPath()
 }
 
 
+
+
+void CLocateDlg::CAdvancedDlg::RenameReplaceSpaces()
+{
+	CRegKey2 RegKey;
+	
+	if (m_aReplaceChars.GetSize()>0)
+	{
+		CStringW Chars,Label;
+		for (int i=0;i<m_aReplaceChars.GetSize();i++)
+		{
+			if (i+1==m_aReplaceChars.GetSize())
+				Chars << L' ' << ID2W(IDS_AND) << L' ';
+			else if (i!=0)
+				Chars << L", ";
+			Chars << L'\'' << m_aReplaceChars[i] << L'\'';
+		}
+
+		Label.Format(IDS_REPLACEOTHER,(LPCWSTR)Chars);
+		SetDlgItemText(IDC_REPLACESPACES,Label);
+	}
+	else
+		SetDlgItemText(IDC_REPLACESPACES,ID2W(IDS_REPLACESPACES));
+}
+
+
+BOOL CLocateDlg::CAdvancedDlg::LoadReplaceCharsFromRegistry()
+{
+
+	m_aReplaceChars.RemoveAll();
+
+	LPWSTR pData=NULL;
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\Locate",CRegKey::defRead)!=ERROR_SUCCESS)
+		return FALSE;
+
+	DWORD dwLength=RegKey.QueryValueLength("ReplaceCharsWithAsterisks");
+
+	if (dwLength==0)
+		return TRUE; // No "ReplaceCharsWithAsterisks"
+
+
+	pData=new WCHAR[dwLength+1];
+	if (RegKey.QueryValue(L"ReplaceCharsWithAsterisks",pData,dwLength+1)<dwLength)
+	{
+		delete[] pData;
+		return FALSE;
+	}
+
+	LPCWSTR pStr=pData;
+	while (*pStr!='\0')
+	{
+		int nLen=istrlen(pStr);
+		m_aReplaceChars.Add(alloccopy(pStr,nLen));
+		pStr+=nLen+1;
+	}
+
+
+	delete[] pData;
+	return TRUE;
+}
+
+BOOL CLocateDlg::CAdvancedDlg::SaveReplaceCharsSaveRegistry()
+{
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\Locate",CRegKey::defWrite)!=ERROR_SUCCESS)
+		return FALSE;
+
+	if (m_aReplaceChars.GetSize()>0)
+	{
+		DWORD dwLength=1;
+		for (int i=0;i<m_aReplaceChars.GetSize();i++)
+			dwLength+=istrlen(m_aReplaceChars[i])+1;
+			
+		LPWSTR pData=new WCHAR[dwLength];
+		LPWSTR pPtr=pData;
+		for (int i=0;i<m_aReplaceChars.GetSize();i++)
+		{
+			int iLen=istrlen(m_aReplaceChars[i])+1;
+			MemCopyW(pPtr,m_aReplaceChars[i],iLen);
+			pPtr+=iLen;
+		}
+		*pPtr='\0';
+	
+		return RegKey.SetValue(L"ReplaceCharsWithAsterisks",pData,dwLength,REG_MULTI_SZ)==dwLength;
+	}
+
+	return RegKey.DeleteValue("ReplaceCharsWithAsterisks")==ERROR_SUCCESS;
+}
+
+
+void CLocateDlg::CAdvancedDlg::ReplacesCharsWithAsterisks(CStringW& sString)
+{
+	// Replace all desired char in sString
+
+	if (m_aReplaceChars.GetSize()==0)
+	{
+		// Just replace space
+		sString.ReplaceChars(L' ',L'*');
+	}
+	else
+	{
+		// Go trhough all desired chars
+		for (int i=0;i<m_aReplaceChars.GetSize();i++)
+		{
+			if (m_aReplaceChars[i][1]=='\0')
+				sString.ReplaceChars(m_aReplaceChars[i][0],L'*');
+			else
+			{
+				// "Character" is actually a string
+				int nLen=istrlen(m_aReplaceChars[i]);
+				int nIndex=sString.Find(m_aReplaceChars[i]);
+				while (nIndex!=-1)
+				{
+					CStringW sNewString(sString,nIndex);
+					sNewString << L'*' << ((LPCWSTR)sString)+nIndex+nLen;
+					sString.Swap(sNewString);
+					nIndex=sString.Find(m_aReplaceChars[i]);
+				}
+			}
+		}
+	}
+	
+}
+
+
+
+BOOL CLocateDlg::CAdvancedDlg::CReplaceCharsDlg::OnInitDialog(HWND hwndFocus)
+{
+	CDialog::OnInitDialog(hwndFocus);
+	
+	if (m_raChars.GetSize()>0)
+	{
+		CStringW Custom;
+		for (int i=0;i<m_raChars.GetSize();i++)
+		{
+			if (m_raChars[i][1]=='\0')
+			{
+				switch (m_raChars[i][0])
+				{
+				case ' ':
+					CheckDlgButton(IDC_SPACE,TRUE);
+					break;
+				case '-':
+					CheckDlgButton(IDC_HYPHEN,TRUE);
+					break;
+				case '_':
+					CheckDlgButton(IDC_UNDERLINE,TRUE);
+					break;
+				default:
+					Custom << m_raChars[i][0] << ';';
+				}
+			}
+			else
+			{
+				Custom << m_raChars[i] << ';';
+			}
+		}
+
+
+		if (Custom.LastChar()==';')
+			Custom.DelLastChar();
+
+		SetDlgItemText(IDC_CUSTOM,Custom);
+	}
+	else
+		CheckDlgButton(IDC_SPACE,TRUE);
+
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","ReplaceCharsPos",fgOnlyNormalPosition|fgNoSize))
+		CenterWindow();
+
+	return FALSE;
+}
+
+void CLocateDlg::CAdvancedDlg::CReplaceCharsDlg::OnDestroy()
+{
+	CDialog::OnDestroy();
+	SavePosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","ReplaceCharsPos");
+}
+
+BOOL CLocateDlg::CAdvancedDlg::CReplaceCharsDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
+{
+	switch (wID)
+	{
+	case IDC_OK:
+		{
+			m_raChars.RemoveAll();
+
+			
+			if (IsDlgButtonChecked(IDC_SPACE))
+				m_raChars.Add(alloccopy(L" "));
+			if (IsDlgButtonChecked(IDC_HYPHEN))
+				m_raChars.Add(alloccopy(L"-"));
+			if (IsDlgButtonChecked(IDC_UNDERLINE))
+				m_raChars.Add(alloccopy(L"_"));
+
+			CStringW sCustom;
+			GetDlgItemText(IDC_CUSTOM,sCustom);
+
+			LPCWSTR pPtr=sCustom;
+			
+			for (;;)
+			{
+				// Ignore extra semi-colons
+				while (*pPtr==';') 
+					pPtr++;
+
+				if (*pPtr=='\0')
+					break;
+
+				int nLen;
+				for (nLen=0;pPtr[nLen]!='\0' && pPtr[nLen]!=';';nLen++);
+
+				WCHAR* pNew=alloccopy(pPtr,nLen);
+
+				// Check whether already in list
+				int i;
+				for (i=0;i<m_raChars.GetSize();i++)
+				{
+					if (wcscmp(m_raChars[i],pNew)==0)
+						break;
+				}
+
+				if (i<m_raChars.GetSize())
+					delete[] pNew;
+				else
+					m_raChars.Add(pNew);
+
+				pPtr+=nLen;
+			}
+
+			if (m_raChars.GetSize()==1)
+			{
+				if (wcscmp(m_raChars[0],L" ")==0)
+				{
+					// Only space, remove the list
+					m_raChars.RemoveAll();
+				}
+			}
+
+			EndDialog(1);
+			break;
+		}
+	case IDCANCEL:
+	case IDC_CANCEL:
+		EndDialog(0);
+		break;
+	}
+	return CDialog::OnCommand(wID,wNotifyCode,hControl);
+}
+
+BOOL CLocateDlg::CAdvancedDlg::CReplaceCharsDlg::OnClose()
+{
+	CDialog::OnClose();
+	EndDialog(0);
+	return FALSE;
+}

@@ -90,7 +90,9 @@ DWORD GetSystemFeaturesFlag()
 		nFlags|=efWin95;
 		break;
 	case osWinNT:
-		if (info.hiWINVer>=5)
+		if (info.hiWINVer>=6)
+			nFlags|=efWinXP|efWin2000|efWinVista;
+		else if (info.hiWINVer>=5)
 		{
 			if (info.loWINVer>=1)
 				nFlags|=efWinXP;
@@ -107,6 +109,8 @@ DWORD GetSystemFeaturesFlag()
 		nFlags|=efIE5;
 	if (info.hiIEVer>=6)
 		nFlags|=efIE6;
+	if (info.hiIEVer>=7)
+		nFlags|=efIE7;
 	return nFlags;
 #else
 	return 0;

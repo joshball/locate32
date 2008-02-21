@@ -31,7 +31,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2008 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.1 beta build 8.8160
+FILEVERSION=3.1 beta build 8.2210
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -157,6 +157,7 @@ DLGADVANCED_TYPEOFFILE=&Type of file:
 DLGADVANCED_CONTAININGTEXT=File containing te&xt:
 DLGADVANCED_MATCHCASE=Match &case
 DLGADVANCED_REPLACESPACES=Replace &spaces with asterisk
+DLGADVANCED_REPLACEOTHER=Replace %s with asterisk
 DLGADVANCED_USEWHOLEPATH=&Use whole path
 STRADVANCED_TYPES_BYEXTENSION=(by extension)
 STRADVANCED_CHECK_FILENAMES=File names only
@@ -241,6 +242,7 @@ STRADVANCEDSETTINGS_MATCHWHOLENAMEIFASTERISKS=If asterisks given, search as if "
 STRADVANCEDSETTINGS_ISENABLE=Search as type
 STRADVANCEDSETTINGS_ISLIMIT=Limit the number of results (0 = no limit):
 STRADVANCEDSETTINGS_ISDELAY=Delay before searching (ms):
+STRADVANCEDSETTINGS_ISCHARS=Required characters in a search term until searching:
 STRADVANCEDSETTINGS_ISUPDOWNGOESTORESULTLIST=Up or Down key in "Named:" activates the first found file
 STRADVANCEDSETTINGS_ISDISABLEIFDATASEARCH=Disable if "File containing text:" is enabled
 STRADVANCEDSETTINGS_ISNAMECHANGED=Search when "Named:" is changed
@@ -293,6 +295,7 @@ STRADVANCEDSETTINGS_OPENFOLDERWITH=Command (path=%d):
 STRADVANCEDSETTINGS_SELECTPROGRAM=Select a program
 STRADVANCEDSETTINGS_COMPUTEMD5SUMS=Compute MD5 sums (slow)
 STRADVANCEDSETTINGS_ALLOWINPLACERENAMING=Explorer style renaming
+STRADVANCEDSETTINGS_HEADERINALLVIEWMODES=Show column headers in all view modes
 STRADVANCEDSETTINGS_UPDATERESULTS=Update results
 STRADVANCEDSETTINGS_DISABLEUPDATING=Disable updating (file information from database)
 STRADVANCEDSETTINGS_ENABLEUPDATING=Enable updating (information corresponds files)
@@ -355,7 +358,7 @@ STRADVANCEDSETTINGS_SHOWNONCRITICALERRORS=Show non-critical errors (e.g., path i
 STRADVANCEDSETTINGS_USEDEFAULTDIRECTORYICON=Use default icons for directories (use with slow network drives)
 
 STRADVANCEDSETTINGS_SYSTEM=System
-STRARVANCEDSETTINGS_RUNATSYSTEMSTARTUP=Run Locate at system startup
+STRADVANCEDSETTINGS_RUNATSYSTEMSTARTUP=Run Locate at system startup
 STRADVANCEDSETTINGS_SHELLCONTEXTMENUCOMMANDS=Shell context menu commands
 STRADVANCEDSETTINGS_LOCATEINMYCOMPUTER="Locate" item to My Computer
 STRADVANCEDSETTINGS_LOCATEINMYDOCUMENTS="Locate" item to My Documents
@@ -603,15 +606,15 @@ STRACTION_MISC=Miscellaneous
 STRACTION_HELP=Help
 STRACTION_CHANGEFIELD=Change field
 STRACTION_PRESETS=Presets
-STRACTION_DIALOGSHOW=Show dialog
+STRACTION_DIALOGSHOW=Open dialog
 STRACTION_DIALOGMINIMIZE=Minimize dialog
 STRACTION_DIALOGCLOSE=Close dialog
-STRACTION_DIALOGSHOWORHIDE=Show / Hide dialog
+STRACTION_DIALOGSHOWORHIDE=Restore / Minimize dialog
 STRACTION_DIALOGOPENORCLOSE=Open / Close dialog
 STRACTION_DIALOGRESTORE=Restore dialog
 STRACTION_DIALOGMAXIMIZE=Maximize dialog
 STRACTION_DIALOGMAXIMIZEORRESTORE=Maximize / Restore dialog
-STRACTION_DIALOGSHOWOPENORHIDE=Show or Open / Hide dialog
+STRACTION_DIALOGSHOWOPENORHIDE=Restore or Open / Minimize dialog
 STRACTION_DIALOGSHOWANDDIRFROMEXPLORER=Show dialog and path from Explorer
 STRACTION_DIALOGSTOPLOCATINGORCLOSE=Stop locating or close dialog
 STRACTION_EXECUTE=Execute item
@@ -823,6 +826,9 @@ STRSELECTDETAILS_RIGHTCLICK=Right button click
 STRSELECTDETAILS_RIGHTDBLCLICK=Right button double-click
 STRSELECTDETAILS_MIDDLECLICK=Middle button click
 STRSELECTDETAILS_MIDDLEDBLCLICK=Middle button double-click
+# Use this if you want more space for Action field
+DLGSELECTDETAILS_EXTRAWIDTH=15
+
 
 ###########################
 # Select databases dialog
@@ -898,6 +904,18 @@ STRFILEPROPERTIESPAGE_MULTIPLETYPES=Multiple Types
 STRFILEPROPERTIESPAGE_FILESDIRECTORIESFMT=%d Files, %d Directories
 STRFILEPROPERTIESPAGE_SIZEFMT=%s (%s)
 STRFILEPROPERTIESPAGE_ALLOFTYPE=All of type %s
+
+
+###########################
+# Replace characters dialog
+STRREPLACECHARSDLG_CAPTION=Replace characters with asterisks
+STRREPLACECHARSDLG_OK=OK
+STRREPLACECHARSDLG_CANCEL=Cancel
+STRREPLACECHARSDLG_TITLE=Replace the following characters with asterisks:
+STRREPLACECHARSDLG_SPACE=&Space ' '
+STRREPLACECHARSDLG_HYPHEN=&Hyphen '-'
+STRREPLACECHARSDLG_UNDERLINE=&Underline '_'
+STRREPLACECHARSDLG_CUSTOM=&Custom (a list separated with semi-colon ';'):
 
 
 ###################################################
@@ -1175,6 +1193,7 @@ STR_UNKNOWN=(Unknown)
 STR_NONE=None
 STR_EMPTY=(empty)
 STR_DEFAULT=(default)
+STR_AND=and
 STR_RESULTFILEHEADER=Locate32 Results (%d files)
 STR_QUITNOW=Locate32 is updating database.\nDo you want quit now?
 STR_QUITNOW2=Locate32 is updating database and will exit after updating success.\nDo you want quit now?\n\nIf you don't want exit after updating press cancel.

@@ -11,7 +11,7 @@ BOOL CSelectColumnsDlg::OnInitDialog(HWND hwndFocus)
 {
 	ASSERT(m_aIDs.GetSize()==m_aWidths.GetSize());
 
-	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","SelectColumnsWindowPos",fgOnlyNormalPosition))
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","SelectColumnsWindowPos",fgOnlyNormalPosition|fgNoSize))
 		CenterWindow();
 
 	m_pList=new CListCtrl(GetDlgItem(IDC_COLUMNS));
@@ -743,7 +743,7 @@ BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
 	
-	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","SelectDatabasesWindowPos",fgOnlyNormalPosition))
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","SelectDatabasesWindowPos",fgOnlyNormalPosition|fgNoSize))
 		CenterWindow();
 
 
@@ -1978,7 +1978,7 @@ BOOL CSavePresetDlg::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
 
-	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","SavePresetWindowPos",fgOnlyNormalPosition))
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","SavePresetWindowPos",fgOnlyNormalPosition|fgNoSize))
 		CenterWindow();
 
 	return FALSE;
@@ -2096,7 +2096,7 @@ BOOL CChangeCaseDlg::OnInitDialog(HWND hwndFocus)
 	}
 	CheckDlgButton(IDC_EXTENSIONS,bForExtension);
 
-	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","ChangeCaseWindowPos",fgOnlyNormalPosition))
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","ChangeCaseWindowPos",fgOnlyNormalPosition|fgNoSize))
 		CenterWindow();
 
 	return FALSE;
@@ -2158,7 +2158,7 @@ BOOL CChangeFilenameDlg::OnInitDialog(HWND hwndFocus)
 		SetDlgItemText(IDC_EDIT,m_sFileName);
 
 
-	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","ChangeFilenameWindowPos",fgOnlyNormalPosition))
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","ChangeFilenameWindowPos",fgOnlyNormalPosition|fgNoSize))
 		CenterWindow();
 	return FALSE;
 }
@@ -2230,7 +2230,7 @@ BOOL CChangeFilenameDlg::OnClose()
 BOOL CLocateDlg::CRemovePresetDlg::OnInitDialog(HWND hwndFocus)
 {
 	CDialog::OnInitDialog(hwndFocus);
-	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","RemovePresetWindowPos",fgOnlyNormalPosition))
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","RemovePresetWindowPos",fgOnlyNormalPosition|fgNoSize))
 		CenterWindow();
 
 

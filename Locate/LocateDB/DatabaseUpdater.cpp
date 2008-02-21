@@ -1766,13 +1766,17 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 				NETRESOURCE* nro;
 			};
 				
+			nro=(NETRESOURCE*)GlobalAlloc(GPTR,cbBuffer);
+			DebugOpenMemBlock(nro);
+
 			for(;;)
 			{
-				nro=(NETRESOURCE*)GlobalAlloc(GPTR,cbBuffer);
 				if (IsUnicodeSystem())
 					dwRet=WNetEnumResourceW(hEnum,&dwEntries,nrow,&cbBuffer);
 				else
 					dwRet=WNetEnumResource(hEnum,&dwEntries,nro,&cbBuffer);
+
+				ASSERT(cbBuffer==16384);
 
 				if (dwRet==ERROR_NO_MORE_ITEMS)
 					break;
@@ -1827,9 +1831,11 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 					if (!IsUnicodeSystem())
 						delete[] pRemoteName;
 				}
-				GlobalFree((HGLOBAL)nro);
+
 			}
 	
+			DebugCloseMemBlock(nro);
+			GlobalFree((HGLOBAL)nro);
 			WNetCloseEnum(hEnum);	
 		}
 	}

@@ -72,6 +72,10 @@ This option can be used to specify the delay between time when you
 stop typing and time when searching is started. The unit is milliseconds (i.e., 1/1000 seconds).
 </p>
 
+<p><b><A NAME="sa_ischars"></A>$STRADVANCEDSETTINGS_ISCHARS@Cp$</b>:
+This option specifies how many characters should be typed "$DLGNAME_NAMED@M$" field
+before searching is started. </p>
+
 <p><b><A NAME="sa_isupdown"></A>$STRADVANCEDSETTINGS_ISUPDOWNGOESTORESULTLIST@C$</b>:
 When enabled, Up and Down keys pressed in "$DLGNAME_NAMED@M$" field will activate 
 the results list and its first file. This option can be useful if 
@@ -281,6 +285,10 @@ $MENUPOPUP_CONTEXTMENU_MD5SUMSFORSAMESIZEFILES$</a> commands in
 <p><b><A NAME="sa_exprenaming"></A>$STRADVANCEDSETTINGS_ALLOWINPLACERENAMING@C$</b>:
 If this option is enabled, the files can be renamed using the results list like in Windows 
 Explorer. If disabled, a dialog for a new name is shown. </p>
+
+<p><b><A NAME="sa_headerinallmodes"></A>$STRADVANCEDSETTINGS_HEADERINALLVIEWMODES@C$</b>:
+If this option is enabled, the deader is shown in the list control also for other modes
+than "Details". This option requires Windows Vista or later.</p>
 
 </div> <!-- advanced_settings_level2@sa_results -->
 
@@ -590,7 +598,7 @@ the file pop up menus in Windows Explorer.</p>
 
 <div id="advanced_settings_level1">
 
-<p><b><A NAME="sa_locateatstartup"></A>$STRARVANCEDSETTINGS_RUNATSYSTEMSTARTUP@C$</b>:
+<p><b><A NAME="sa_locateatstartup"></A>$STRADVANCEDSETTINGS_RUNATSYSTEMSTARTUP@C$</b>:
 If this option is enabled, Locate32 will be loaded when Windows is started. For that,
 this option will create a shortcut to Startup folder in Start menu. </p>
 

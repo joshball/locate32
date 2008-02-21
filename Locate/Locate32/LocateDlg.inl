@@ -12,6 +12,7 @@ inline CLocateDlg::CLocateDlg()
 	m_nSorting(BYTE(-1)),m_dwInstantFlags(isDefault),
 	m_dwInstantLimit(DEFAULT_INSTANTSEARCHLIMIT),
 	m_dwInstantDelay(DEFAULT_INSTANTSEARCHDELAY),
+	m_dwInstantChars(DEFAULT_INSTANTSEARCHCHARS),
 	m_nMaxYMinimized(0),m_nMaxYMaximized(0),m_nLargeY(354),
 	m_ClickWait(FALSE),m_hSendToListFont(NULL),m_hActivePopupMenu(NULL),
 	m_pListCtrl(NULL),m_pTabCtrl(NULL),m_pStatusCtrl(NULL),m_pListTooltips(NULL),
@@ -35,7 +36,7 @@ inline CLocateDlg::CNameDlg::CNameDlg()
 :	CDialog(IDD_NAME),m_nMaxBrowse(DEFAULT_NUMBEROFDIRECTORIES),
 	m_nMaxNamesInList(DEFAULT_NUMBEROFNAMES),
 	m_nMaxTypesInList(DEFAULT_NUMBEROFTYPES),
-	m_pBrowse(NULL),m_pMultiDirs(NULL)
+	m_pBrowse(NULL),m_pMultiDirs(NULL),bStopDebug(FALSE)
 {
 	InitializeCriticalSection(&m_cBrowse);
 }
@@ -84,6 +85,13 @@ inline CLocateDlg::CAdvancedDlg::CAdvancedDlg()
 :	CDialog(IDD_ADVANCED),m_hTypeUpdaterThread(NULL),m_hDefaultTypeIcon(NULL),m_dwFlags(0)
 {
 }
+
+
+inline CLocateDlg::CAdvancedDlg::CReplaceCharsDlg::CReplaceCharsDlg(CArrayFAP<LPWSTR>& raChars)
+:	CDialog(IDD_REPLACECHARS),m_raChars(raChars)
+{
+}
+
 
 inline void CLocateDlg::ClearMenuVariables()
 {
@@ -211,10 +219,10 @@ inline CLocateDlg::CAdvancedDlg::FileType::FileType(LPWSTR frType,LPWSTR frTitle
 {
 }
 
-inline void CLocateDlg::CNameDlg::AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,DWORD sLen)
+inline void CLocateDlg::CNameDlg::ParseGivenDirectoryForMultipleDirectories(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,DWORD sLen)
 {
 	LPWSTR pDirectories=alloccopy(szDirectory,sLen);
-	AddDirectoryToList(aDirectories,pDirectories);
+	ParseGivenDirectoryForMultipleDirectories(aDirectories,pDirectories);
 	delete[] pDirectories;
 }
 

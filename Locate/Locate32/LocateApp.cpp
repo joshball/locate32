@@ -2428,6 +2428,8 @@ CLocateAppWnd::CLocateAppWnd()
 {
 	DebugMessage("CLocateAppWnd::CLocateAppWnd()");
 
+
+
 	InitializeCriticalSection(&m_csAnimBitmaps);
 }
 
@@ -2461,7 +2463,7 @@ int CLocateAppWnd::OnCreate(LPCREATESTRUCT lpcs)
 
 	LoadAppIcon();
 
-	SetTimer(ID_ENSUREVISIBLEICON,2000,NULL);
+	//SetTimer(ID_ENSUREVISIBLEICON,2000,NULL);
 	
 	return CFrameWnd::OnCreate(lpcs);
 }
@@ -3398,7 +3400,7 @@ BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThrea
 				{
 					if (wcsncmp(pPtr,aGlobalDatabases[iDB]->GetName(),iNameLen)==0)
 					{
-						if (pPtr[iNameLen]==L'\\' || pPtr[iNameLen]==L'\\')
+						if (pPtr[iNameLen]==L'\0' || pPtr[iNameLen]==L'\\')
 						{
 							CDatabase* pDatabase=new CDatabase(*aGlobalDatabases[iDB]);
 							pDatabase->UpdateGlobally(TRUE);
@@ -3452,7 +3454,7 @@ void CLocateAppWnd::OnDestroy()
 	m_Menu.DestroyMenu();
 
 	KillTimer(ID_CHECKSCHEDULES);
-	KillTimer(ID_ENSUREVISIBLEICON);
+	//KillTimer(ID_ENSUREVISIBLEICON);
 	
 	// Ensure that update animation and status window are stopped
 	StopUpdateStatusNotification();
@@ -3795,6 +3797,8 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 	case ID_CHECKSCHEDULES:
 		CheckSchedules();
 		break;
+	/*
+	
 	case ID_ENSUREVISIBLEICON:
 		if (!(CLocateApp::GetProgramFlags()&CLocateApp::pfDontShowSystemTrayIcon))
 		{
@@ -3809,6 +3813,7 @@ void CLocateAppWnd::OnTimer(DWORD wTimerID)
 				AddTaskbarIcon();
 		}
 		break;
+	*/
 	case ID_RUNSTARTUPSCHEDULES:
 		KillTimer(ID_RUNSTARTUPSCHEDULES);
 		if (RunStartupSchedules())

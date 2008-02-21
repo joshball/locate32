@@ -81,6 +81,8 @@
 #define IDS_HELPINFO                    70
 #define IDS_FILEINFORMATION             71
 #define IDS_FILEINFORMATIONFMT          72
+#define IDS_REPLACESPACES				78
+#define IDS_REPLACEOTHER				79
 #define IDS_NAME                        80
 #define IDS_ADVANCED                    81
 #define IDS_SIZEDATE                    82
@@ -481,10 +483,13 @@
 #define IDC_CHECK1                      1192
 #define IDC_LOCATEDIALOG                1192
 #define IDC_MODSHIFT                    1192
+#define IDC_SPACE                       1192
 #define IDC_EXECUTEWHENKEYISDOWN        1193
 #define IDC_MODALT                      1193
+#define IDC_HYPHEN                      1193
 #define IDC_REMOVEDOWNMESSAGE           1194
 #define IDC_MODCTRL                     1194
+#define IDC_UNDERLINE                   1194
 #define IDC_EXECUTEWHENKEYISUP          1195
 #define IDC_MODWIN                      1195
 #define IDC_REMOVEUPMESSAGE             1196
@@ -502,6 +507,7 @@
 #define IDC_ALIGN                       1202
 #define IDC_STATICWHEREPRESSED          1202
 #define IDC_TYPES                       1202
+#define IDC_CUSTOM                      1202
 #define IDC_EXPORT                      1203
 #define IDC_STATICCLASS                 1203
 #define IDC_INCREMENTALUPDATE           1204
@@ -526,6 +532,7 @@
 #define IDC_STATICACTIONS               1216
 #define IDD_FILEPROPERTIES              1216
 #define IDC_STATICACTION                1217
+#define IDD_REPLACECHARS                1217
 #define IDC_STATICSUBACTION             1218
 #define IDC_STATICSHORTCUT              1219
 #define IDC_HOTKEYRADIO                 1220
@@ -610,6 +617,7 @@
 #define IDS_EMPTY                       3000
 #define IDS_NONE                        3001
 #define IDS_UNKNOWN                     3002
+#define IDS_AND							3003
 #define IDS_NOSORTNG                    3999
 #define IDS_CHANGEICON                  4000
 #define IDS_IMPORTDATABASEFILTERS       4001
@@ -968,6 +976,8 @@
 #define IDS_ADVSETISDELAY				5825
 #define IDS_ADVSETISUPDOWNGORESULTS		5826
 #define	IDS_ADVSETMATCHWHOLENAMEIFASTERISKS	5827
+#define IDS_ADVSETISCHARS				5828
+#define IDS_ADVSETHEADERINALLVIEWMODES  5829
 #define IDS_SCHEDULEUPDATE              5901
 #define IDS_MINUTELY                    5909
 #define IDS_HOURLY                      5910

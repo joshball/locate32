@@ -167,7 +167,6 @@ public:
 	CArrayFP<CShortcut*> m_aShortcuts;
 	HHOOK m_hHook;
 
-
 	
 	friend inline CLocateDlg* GetLocateWnd();
 

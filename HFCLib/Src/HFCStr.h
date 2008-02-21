@@ -452,7 +452,7 @@ public:
 	BOOL Insert(int idx,WCHAR ch) { return InsChar(idx,ch); }
 	BOOL DelChar(int idx);
 	BOOL Delete(int idx,int nCount=1);
-	void ReplaceChars(char from,char to);
+	void ReplaceChars(WCHAR from,WCHAR to);
 	void Trim(); // Deletes spaces from begin and end
 
 	void Swap(CStringW& str);

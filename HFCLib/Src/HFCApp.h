@@ -65,11 +65,11 @@ private:
 	friend void CPropertyPage::Construct(UINT,TypeOfResourceHandle);
 	friend void CPropertyPage::Construct(LPCSTR,TypeOfResourceHandle);
 	friend void CPropertyPage::Construct(LPCWSTR,TypeOfResourceHandle);
-	friend CColorDialog::CColorDialog(COLORREF,DWORD);
-	friend CPageSetupDialog::CPageSetupDialog(DWORD);
-	friend CPrintDialog::CPrintDialog(BOOL,DWORD);
+	friend CColorDialog::CColorDialog(COLORREF,DWORD,BOOL);
+	friend CPageSetupDialog::CPageSetupDialog(DWORD,BOOL);
+	friend CPrintDialog::CPrintDialog(BOOL,DWORD,BOOL);
 	friend BOOL CPageSetupDialog::DoModal(HWND);
-	friend CFindReplaceDialog::CFindReplaceDialog();
+	friend CFindReplaceDialog::CFindReplaceDialog(BOOL);
 	friend CFolderDialog::CFolderDialog(LPCSTR,UINT,LPCITEMIDLIST);
 	friend CFolderDialog::CFolderDialog(LPCWSTR,UINT,LPCITEMIDLIST);
 	friend CFolderDialog::CFolderDialog(UINT,UINT,LPCITEMIDLIST);

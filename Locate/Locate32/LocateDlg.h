@@ -184,7 +184,8 @@ public:
 		virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 		virtual void OnDestroy();
 		virtual void OnSize(UINT nType, int cx, int cy);	
-		
+		virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
+	
 	public:
 		BOOL InitDriveBox(BYTE nFirstTime=FALSE);
 		void ChangeNumberOfItemsInLists(int iNumberOfNames,int iNumberOfTypes,int iNumberOfDirectories);
@@ -219,15 +220,23 @@ public:
 		BOOL SelectByCustomName(LPCWSTR szDirectory);
 		DWORD GetCurrentlySelectedComboItem() const;
 
-		BOOL GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDirectories,BOOL bAlsoSet,TypeOfItem* pType=NULL,BOOL bNoWarningIfNotExists=FALSE);
-		BOOL GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirectories,LPCWSTR szCustomText,DWORD dwLength,BOOL bAlsoSet,BOOL bNoWarningIfNotExists=FALSE);
+		BOOL GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDirectories,BOOL bInstantSearch,TypeOfItem* pType=NULL,BOOL bNoWarningIfNotExists=FALSE);
+		BOOL GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirectories,LPCWSTR szCustomText,DWORD dwLength,BOOL bSaveAndSet,BOOL bNoWarningIfNotExists=FALSE);
 		BOOL GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories,LPARAM lParam);
-		BOOL GetDirectoriesForSelection(CArray<LPWSTR>& aDirectories,const DirSelection* pSelection,BOOL bNoWarnings=FALSE);
+		BOOL GetDirectoriesForNonActiveSelection(CArray<LPWSTR>& aDirectories,const DirSelection* pSelection,BOOL bNoWarnings=FALSE);
 
-		static void AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory);
-		static void AddDirectoryToList(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,DWORD sLength);
 		
-		BOOL CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,BOOL bAlsoSet=TRUE,BOOL bNoWarning=FALSE);
+		// Do various checks (database contains directory, is a drive, ...) and saves directory to Look In list
+		BOOL CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,BOOL bSaveAndSet=TRUE,BOOL bNoWarning=FALSE);
+		
+			
+		// Checks szDirectory if multiple directories is specifieds and adds directories to aDirectories
+		static void ParseGivenDirectoryForMultipleDirectories(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory);
+		static void ParseGivenDirectoryForMultipleDirectories(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,DWORD sLength);
+		
+		void AddCurrentNameToList();
+		void AddCurrentTypeToList();
+
 
 		static WORD ComputeChecksumFromDir(LPCWSTR szDir);
 
@@ -271,7 +280,7 @@ public:
 
 		DirSelection** m_pMultiDirs;
 		
-
+		BOOL bStopDebug;
 
 
 	public:
@@ -312,6 +321,21 @@ public:
 
 	class CAdvancedDlg : public CDialog  
 	{
+	private:
+		class CReplaceCharsDlg: public CDialog  
+		{
+		public:
+			CReplaceCharsDlg(CArrayFAP<LPWSTR>& raChars);
+
+			virtual BOOL OnInitDialog(HWND hwndFocus);
+			virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
+			virtual BOOL OnClose();
+			virtual void OnDestroy();
+
+		private:
+			CArrayFAP<LPWSTR>& m_raChars;
+		};
+
 	public:
 		CAdvancedDlg();
 		
@@ -326,6 +350,10 @@ public:
 		BOOL IsChanged();
 		void HilightTab(BOOL bHilight);
 
+		void RenameReplaceSpaces();
+		BOOL LoadReplaceCharsFromRegistry();
+		BOOL SaveReplaceCharsSaveRegistry();
+		void ReplacesCharsWithAsterisks(CStringW& sString);
 
 	public:
 		// Return codes for OnOk
@@ -402,6 +430,8 @@ public:
 			fgOtherTypeAdded=0x2
 		};
 		BYTE m_dwFlags;
+
+		CArrayFAP<LPWSTR> m_aReplaceChars;
 
 		CSubAction* m_aResultListActions[TypeCount];
 
@@ -484,7 +514,7 @@ public:
 	virtual void OnSize(UINT nType, int cx, int cy);	
 	virtual void OnTimer(DWORD wTimerID); 
 	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
-	
+
 	void OnInitMainMenu(HMENU hPopupMenu,UINT nIndex);
 	void OnInitFileMenu(HMENU hPopupMenu);
 	void OnInitSendToMenu(HMENU hPopupMenu);
@@ -492,6 +522,7 @@ public:
 	void OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo,int nItem=-1,DetailType nDetail=Name);
 	static void ExecuteCommand(LPCWSTR szCommand,int nItem=-1);
 	
+
 	void SortItems(DetailType nDetail,BYTE bDescending=-1,BOOL bNoneIsPossible=FALSE); // bDescending:0=ascending order, 1=desc, -1=default
 	void SetSorting(BYTE bSorting=BYTE(-2)); // bSorting==BYTE(-2): default
 
@@ -752,8 +783,9 @@ public:
 		efLVDontShowDeletedFiles = 0x10000000,
 		efLVNoUpdateWhileSorting = 0x20000000,
 		efLVRenamingActivated = 0x40000000,
+		efLVHeaderInAllViews = 0x80000000,
 		efLVDefault = efLVNoUpdateWhileSorting,
-		efLVSave = 0x30000000,
+		efLVSave = 0xB0000000,
 
 		// Name dialog
 		efNameDontSaveNetworkDrivesAndDirectories =  0x00010000,
@@ -931,6 +963,7 @@ protected:
 	DWORD m_dwInstantFlags;
 	DWORD m_dwInstantLimit;
 	DWORD m_dwInstantDelay;
+	DWORD m_dwInstantChars;
 
 	void InstantSearch();
 	void CancelInstantSearch();
@@ -947,6 +980,8 @@ public:
 	DWORD GetInstantSearchingDelay() const { return m_dwInstantDelay; }
 	void SetInstantSearchDelay(DWORD dwValue) { m_dwInstantDelay=dwValue; }
 
+	DWORD GetInstantSearchingChars() const { return m_dwInstantChars; }
+	void SetInstantSearchChars(DWORD dwValue) { m_dwInstantChars=dwValue; }
 
 
 

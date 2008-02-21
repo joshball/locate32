@@ -19,18 +19,24 @@ The default state for this field can be specified in the
 <a href="settings_general.htm">General settings</a>.
 </P>
 
-<H2><A NAME="ta_replacespaces"></A>$DLGADVANCED_REPLACESPACES@M$</H2>
-<P>If this field is selected, spaces in a string given in "$DLGNAME_NAMED@M$" field are 
-replaced with asterisks '*'. The default state for this field can be specified 
-in the <a href="settings_general.htm">General settings</a>.
-</P>
-
 <H2><A NAME="ta_usewholepath"></A>$DLGADVANCED_USEWHOLEPATH@M$</H2>
 <P>If this field is selected, whole path of files are used in comparison (instead 
 of just file name). For example, if this field is selected, "*foo*bar*" would
 find a file "C:\foo\bar.txt". The default state for this field can be specified 
 in the <a href="settings_general.htm">General settings</a>.
 </P>
+
+
+<H2><A NAME="ta_replacespaces"></A>$DLGADVANCED_REPLACESPACES@M$</H2>
+<P>If this field is selected, spaces in a string given in "$DLGNAME_NAMED@M$" field are 
+replaced with asterisks '*'. The default state for this field can be specified 
+in the <a href="settings_general.htm">General settings</a>.
+<br><br>
+You can also specify other characters which are replaced with '*'. Hold Ctrl key 
+down when you click the check box to open a dialog which be used to specify 
+which characters are replaced. 
+</P>
+
 
 <H2><A NAME="ta_typeoffile"></A>$DLGADVANCED_TYPEOFFILE@M$</H2>
 <P>You can specify the type of files by using this field. If this field is used,

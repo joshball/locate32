@@ -437,6 +437,7 @@ public:
 	DWORD m_nMaximumFoundFiles; // Maximum number of results for normal searches
 	DWORD m_nInstantSearchingLimit; // Maximum number of results for search while typing
 	DWORD m_nInstantSearchingDelay; // Delay after typing before searching is started
+	DWORD m_nInstantSearchingChars; // Required chars in name before starting searching
 
 	DWORD m_nNumberOfNames; // Directoried in NameDlg 
 	DWORD m_nNumberOfTypes; // Directoried in NameDlg 

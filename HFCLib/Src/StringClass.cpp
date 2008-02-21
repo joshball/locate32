@@ -2787,7 +2787,8 @@ CStringW& CStringW::Copy(LPCSTR str)
 		delete[] m_pData;
 	for (m_nDataLen=0;str[m_nDataLen]!='\0';m_nDataLen++);
 	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+1];
-	MemCopyAtoW(m_pData,str,m_nDataLen+1);
+	MemCopyAtoW(m_pData,str,m_nDataLen);
+	m_pData[m_nDataLen]='\0';
 	return *this;
 }
 
@@ -2805,7 +2806,8 @@ CStringW& CStringW::Copy(LPCSTR str,int iLength)
 	else
 		m_nDataLen=iLength;
 	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+1];
-	MemCopyAtoW(m_pData,str,m_nDataLen+1);
+	MemCopyAtoW(m_pData,str,m_nDataLen);
+	m_pData[m_nDataLen]='\0';
 	return *this;
 }
 
@@ -4223,7 +4225,7 @@ BOOL CStringW::DelChar(int idx)
 	return TRUE;
 }
 
-void CStringW::ReplaceChars(char from,char to)
+void CStringW::ReplaceChars(WCHAR from,WCHAR to)
 {
 	for (int i=0;i<m_nDataLen;i++)
 	{

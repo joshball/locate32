@@ -135,6 +135,92 @@ INTERFACE (CCoEnumFORMATETC, IEnumFORMATETC)
 	virtual HRESULT STDMETHODCALLTYPE Clone(IEnumFORMATETC __RPC_FAR *__RPC_FAR *ppenum)=0;
 };
 
+
+// Smart pointer for COM interfaces
+
+template<class INTERFACE> 
+class CComPtr
+{
+public:
+	CComPtr(INTERFACE* pInterface=NULL) { m_pInterface=pInterface;  }
+	~CComPtr();
+
+	
+	operator INTERFACE*() const { return m_pInterface; }
+	operator INTERFACE*&() { return m_pInterface; }
+	
+	INTERFACE* operator ->() { return m_pInterface; }
+
+	void Attach(INTERFACE* pInterface);
+	INTERFACE* UnAttach();
+	
+	CComPtr<INTERFACE>& operator=(INTERFACE* pInterface);
+
+
+	HRESULT CoCreateInstance(LPCOLESTR szProgID,LPUNKNOWN pUnkOuter=NULL,DWORD dwClsContext=CLSCTX_ALL);
+	HRESULT CoCreateInstance(REFCLSID rclsid,LPUNKNOWN pUnkOuter=NULL,DWORD dwClsContext=CLSCTX_ALL);
+
+	
+private:
+	INTERFACE* m_pInterface;
+
+};
+
+
+template<class INTERFACE> 
+inline CComPtr<INTERFACE>::~CComPtr()
+{
+	if (m_pInterface!=NULL)
+		m_pInterface->Release();
+}
+
+template<class INTERFACE> 
+inline INTERFACE* CComPtr<INTERFACE>::UnAttach()
+{
+	TYPE* tmp=m_pInterface;
+	m_pInterface=NULL;
+	return tmp;
+}
+
+template<class INTERFACE> 
+inline void CComPtr<INTERFACE>::Attach(INTERFACE* pInterface)
+{
+	if (m_data!=NULL)
+		delete pInterface;
+	m_pInterface=pInterface;
+}
+
+
+
+template<class INTERFACE> 
+inline CComPtr<INTERFACE>& CComPtr<INTERFACE>::operator=(INTERFACE* pInterface)
+{
+	Attach(pInterface);
+	return *this;
+}
+
+
+template<class INTERFACE> 
+HRESULT CComPtr<INTERFACE>::CoCreateInstance(LPCOLESTR szProgID,LPUNKNOWN pUnkOuter,DWORD dwClsContext)
+{
+	CLSID clsid;
+	HRESULT hr=CLSIDFromProgID(szProgID,&clsid);
+	if (!SUCCEEDED(hr))
+		return hr;
+
+	return ::CoCreateInstance(clsid,pUnkOuter,dwClsContext,__uuidof(INTERFACE), (void**)&m_pInterface);	
+}
+
+template<class INTERFACE> 
+HRESULT CComPtr<INTERFACE>::CoCreateInstance(REFCLSID rclsid,LPUNKNOWN pUnkOuter,DWORD dwClsContext)
+{
+	if (m_pInterface!=NULL)
+		m_pInterface->Release();
+
+	return ::CoCreateInstance(rclsid,pUnkOuter,dwClsContext,__uuidof(INTERFACE), (void**)&m_pInterface);	
+}
+
+
 #endif
 
 #endif

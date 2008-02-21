@@ -412,7 +412,8 @@ public:
 		fgAllowMaximized = 0x2,
 		fgAllowHide = 0x4,
 		fgOnlyNormalPosition = 0x8,
-		fgOnlySpecifiedPosition = 0x10
+		fgOnlySpecifiedPosition = 0x10,
+		fgNoSize = 0x20
 	};
 
 	enum WindowLongIndex {

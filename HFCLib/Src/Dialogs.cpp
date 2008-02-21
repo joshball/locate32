@@ -988,7 +988,7 @@ void CCommonDialog::OnCancel()
 ///////////////////////////
 
 
-void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCSTR lpszFilter)
+void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCSTR lpszFilter,BOOL bSetHook)
 {
 	DebugMessage("CFileDialog::Init BEGIN");
 
@@ -1026,8 +1026,11 @@ void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCST
 
 
 		m_pwofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
-		m_pwofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
-		m_pwofn->lCustData=(LPARAM)this;
+		if (bSetHook)
+		{
+			m_pwofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+			m_pwofn->lCustData=(LPARAM)this;
+		}
 		m_pwofn->lpstrFileTitle=new WCHAR[65];
 		m_pwofn->lpstrFileTitle[0]='\0';
 		m_pwofn->nMaxFileTitle=64;
@@ -1108,8 +1111,11 @@ void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCST
 
 
 		m_pofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
-		m_pofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
-		m_pofn->lCustData=(LPARAM)this;
+		if (bSetHook)
+		{
+			m_pofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+			m_pofn->lCustData=(LPARAM)this;
+		}
 		m_pofn->lpstrFileTitle=new char[65];
 		m_pofn->lpstrFileTitle[0]='\0';
 		m_pofn->nMaxFileTitle=64;
@@ -1160,7 +1166,7 @@ void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCST
 }
 
 
-void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPCWSTR lpszFilter)
+void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPCWSTR lpszFilter,BOOL bSetHook)
 {
 	DebugMessage("CFileDialog::Init BEGIN");
 	
@@ -1198,8 +1204,11 @@ void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPC
 
 
 		m_pwofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
-		m_pwofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
-		m_pwofn->lCustData=(LPARAM)this;
+		if (bSetHook)
+		{
+			m_pwofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+			m_pwofn->lCustData=(LPARAM)this;
+		}
 		m_pwofn->lpstrFileTitle=new WCHAR[65];
 		m_pwofn->lpstrFileTitle[0]='\0';
 		m_pwofn->nMaxFileTitle=64;
@@ -1280,8 +1289,11 @@ void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPC
 
 
 		m_pofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
-		m_pofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
-		m_pofn->lCustData=(LPARAM)this;
+		if (bSetHook)
+		{
+			m_pofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+			m_pofn->lCustData=(LPARAM)this;
+		}
 		m_pofn->lpstrFileTitle=new char[65];
 		m_pofn->lpstrFileTitle[0]='\0';
 		m_pofn->nMaxFileTitle=64;
@@ -1921,9 +1933,11 @@ BOOL CFileDialog::OnNotify(int idCtrl,LPNMHDR pnmh)
 // Class CFontDialog
 ///////////////////////////
 
-CFontDialog::CFontDialog(LPLOGFONT lplfInitial,DWORD dwFlags,HDC hdcPrinter)
+CFontDialog::CFontDialog(LPLOGFONT lplfInitial,DWORD dwFlags,HDC hdcPrinter,BOOL bSetHook)
 :	CCommonDialog()
 {
+	ZeroMemory(&m_cf,sizeof(CHOOSEFONT));
+
 	m_cf.lStructSize=sizeof(CHOOSEFONT);
 	m_cf.Flags=dwFlags|CF_ENABLEHOOK;
 	if (lplfInitial!=NULL)
@@ -1933,8 +1947,11 @@ CFontDialog::CFontDialog(LPLOGFONT lplfInitial,DWORD dwFlags,HDC hdcPrinter)
 	}
 	m_cf.lpLogFont=&m_lf;
 	m_cf.rgbColors=NULL;
-	m_cf.lCustData=(LPARAM)this;
-	m_cf.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+	if (bSetHook)
+	{
+		m_cf.lCustData=(LPARAM)this;
+		m_cf.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+	}
 	m_cf.lpTemplateName=NULL;
 	m_cf.hInstance=GetLanguageSpecificResourceHandle();
 	m_cf.lpszStyle=m_szStyleName;
@@ -1946,16 +1963,21 @@ CFontDialog::CFontDialog(LPLOGFONT lplfInitial,DWORD dwFlags,HDC hdcPrinter)
 	m_szStyleName[0]='\0';
 }
 
-CFontDialog::CFontDialog(const CHARFORMAT& charformat,DWORD dwFlags,HDC hdcPrinter)
+CFontDialog::CFontDialog(const CHARFORMAT& charformat,DWORD dwFlags,HDC hdcPrinter,BOOL bSetHook)
 :	CCommonDialog()
 {
+	ZeroMemory(&m_cf,sizeof(CHOOSEFONT));
+
 	m_cf.lStructSize=sizeof(CHOOSEFONT);
 	m_cf.Flags=dwFlags|CF_ENABLEHOOK|CF_INITTOLOGFONTSTRUCT;
 	FillInLogFont(charformat);
 	m_cf.lpLogFont=&m_lf;
 	m_cf.rgbColors=NULL;
-	m_cf.lCustData=(LPARAM)this;
-	m_cf.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+	if (bSetHook)
+	{
+		m_cf.lCustData=(LPARAM)this;
+		m_cf.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+	}
 	m_cf.lpTemplateName=NULL;
 	m_cf.hInstance=GetLanguageSpecificResourceHandle();
 	m_cf.lpszStyle=m_szStyleName;
@@ -2048,7 +2070,7 @@ DWORD CFontDialog::FillInLogFont(const CHARFORMAT& cf)
 // Class CColorDialog
 ///////////////////////////
 
-CColorDialog::CColorDialog(COLORREF clrInit,DWORD dwFlags)
+CColorDialog::CColorDialog(COLORREF clrInit,DWORD dwFlags,BOOL bSetHook)
 :	CCommonDialog()
 {
 	ZeroMemory(&m_cc,sizeof(CHOOSECOLOR));
@@ -2058,8 +2080,13 @@ CColorDialog::CColorDialog(COLORREF clrInit,DWORD dwFlags)
 	if (m_cc.rgbResult=clrInit)
 		m_cc.Flags|=CC_RGBINIT;
 	
-	m_cc.lCustData=(LPARAM)this;
-	m_cc.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+	if (bSetHook)
+	{
+		m_cc.lCustData=(LPARAM)this;
+		m_cc.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+	}
+
+
 	//m_cc.lpTemplateName=NULL;
 
 	
@@ -2095,9 +2122,11 @@ LRESULT CALLBACK CAppData::PagePaintProc(HWND hWnd,UINT uMsg,WPARAM wParam,LPARA
 	return ((CPageSetupDialog*)GetAppData()->m_pCommonDialog)->OnDrawPage((HDC)wParam,uMsg,(LPRECT)lParam);
 }
 
-CPageSetupDialog::CPageSetupDialog(DWORD dwFlags)
+CPageSetupDialog::CPageSetupDialog(DWORD dwFlags,BOOL bSetHook)
 :	CCommonDialog()
 {
+	ZeroMemory(&m_psd,sizeof(PAGESETUPDLG));
+
 	m_psd.lStructSize=sizeof(PAGESETUPDLG);
 	m_psd.hDevMode=NULL;
 	m_psd.hDevNames=NULL;
@@ -2105,9 +2134,12 @@ CPageSetupDialog::CPageSetupDialog(DWORD dwFlags)
 	fMemSet(&m_psd.rtMinMargin,0,sizeof(RECT));
 	fMemSet(&m_psd.rtMargin,0,sizeof(RECT));
 	m_psd.hInstance=GetLanguageSpecificResourceHandle();
-	m_psd.lCustData=(LPARAM)this;
-	m_psd.lpfnPageSetupHook=(LPPAGESETUPHOOK)CAppData::CommonDialogProc;
-	m_psd.lpfnPagePaintHook=(LPPAGEPAINTHOOK)CAppData::PagePaintProc;
+	if (bSetHook)
+	{
+		m_psd.lCustData=(LPARAM)this;
+		m_psd.lpfnPageSetupHook=(LPPAGESETUPHOOK)CAppData::CommonDialogProc;
+		m_psd.lpfnPagePaintHook=(LPPAGEPAINTHOOK)CAppData::PagePaintProc;
+	}
 	GetAppData()->m_pCommonDialog=this;
 	m_psd.lpPageSetupTemplateName=NULL;
 	m_psd.hPageSetupTemplate=NULL;
@@ -2197,8 +2229,10 @@ UINT CPageSetupDialog::OnDrawPage(HDC hDC,UINT nMessage,LPRECT lpRect)
 // Class CPrintDialog
 ///////////////////////////
 
-CPrintDialog::CPrintDialog(BOOL bPrintSetupOnly,DWORD dwFlags)
+CPrintDialog::CPrintDialog(BOOL bPrintSetupOnly,DWORD dwFlags,BOOL bSetHook)
 {
+	ZeroMemory(&m_pd,sizeof(PRINTDLG));
+
 	m_pd.lStructSize=sizeof(PRINTDLG);
 	m_pd.hDC=NULL;
 	m_pd.Flags=dwFlags|PD_ENABLEPRINTHOOK;
@@ -2207,8 +2241,11 @@ CPrintDialog::CPrintDialog(BOOL bPrintSetupOnly,DWORD dwFlags)
 	else
 		m_pd.Flags|=PD_RETURNDC;
 	m_pd.hInstance=GetLanguageSpecificResourceHandle();
-	m_pd.lCustData=(LPARAM)this;
-	m_pd.lpfnPrintHook=(LPPRINTHOOKPROC)CAppData::CommonDialogProc;
+	if (bSetHook)
+	{
+		m_pd.lCustData=(LPARAM)this;
+		m_pd.lpfnPrintHook=(LPPRINTHOOKPROC)CAppData::CommonDialogProc;
+	}
 	m_pd.lpfnSetupHook=NULL;
 	m_pd.lpPrintTemplateName=NULL;
 	m_pd.lpSetupTemplateName=NULL;
@@ -2312,16 +2349,20 @@ HDC CPrintDialog::CreatePrinterDC()
 // Class CFindReplaceDialog
 ///////////////////////////
 
-CFindReplaceDialog::CFindReplaceDialog()
+CFindReplaceDialog::CFindReplaceDialog(BOOL bSetHook)
 {	
+	ZeroMemory(&m_fr,sizeof(FINDREPLACE));
 	m_fr.lStructSize=sizeof(FINDREPLACE);
 	m_fr.hInstance=GetLanguageSpecificResourceHandle();
 	m_fr.lpstrFindWhat=m_szFindWhat;
 	m_fr.lpstrReplaceWith=m_szReplaceWith;
 	m_fr.wFindWhatLen=128;
 	m_fr.wReplaceWithLen=128;
-	m_fr.lCustData=(LPARAM)this;
-	m_fr.lpfnHook=(LPFRHOOKPROC)CAppData::CommonDialogProc;
+	if (bSetHook)
+	{
+		m_fr.lCustData=(LPARAM)this;
+		m_fr.lpfnHook=(LPFRHOOKPROC)CAppData::CommonDialogProc;
+	}
 	m_fr.lpTemplateName=NULL;
 }
 

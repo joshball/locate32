@@ -29,6 +29,7 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_nMaximumFoundFiles(0),
 	m_nInstantSearchingLimit(DEFAULT_INSTANTSEARCHLIMIT),
 	m_nInstantSearchingDelay(DEFAULT_INSTANTSEARCHDELAY),
+	m_nInstantSearchingChars(DEFAULT_INSTANTSEARCHCHARS),
 	m_nUpdateThreadPriority(THREAD_PRIORITY_NORMAL),
 	m_dwLocateDialogFlags(CLocateDlg::fgDefault),
 	m_dwLocateDialogExtraFlags(CLocateDlg::efDefault),
@@ -184,6 +185,7 @@ BOOL CSettingsProperties::LoadSettings()
 			LocRegKey.QueryValue("MaximumFoundFiles",m_nMaximumFoundFiles);
 			LocRegKey.QueryValue("Instant Search Limit",m_nInstantSearchingLimit);
 			LocRegKey.QueryValue("Instant Search Delay",m_nInstantSearchingDelay);
+			LocRegKey.QueryValue("Instant Search Chars",m_nInstantSearchingChars);
 		}
 	}
 	else
@@ -191,6 +193,7 @@ BOOL CSettingsProperties::LoadSettings()
 		m_nMaximumFoundFiles=GetLocateDlg()->GetMaxFoundFiles();
 		m_nInstantSearchingLimit=GetLocateDlg()->GetInstantSearchingLimit();
 		m_nInstantSearchingDelay=GetLocateDlg()->GetInstantSearchingDelay();
+		m_nInstantSearchingChars=GetLocateDlg()->GetInstantSearchingChars();
 	}
     	
 	
@@ -466,6 +469,7 @@ BOOL CSettingsProperties::SaveSettings()
 		LocRegKey.SetValue("MaximumFoundFiles",m_nMaximumFoundFiles);
 		LocRegKey.SetValue("Instant Search Limit",m_nInstantSearchingLimit);
 		LocRegKey.SetValue("Instant Search Delay",m_nInstantSearchingDelay);
+		LocRegKey.SetValue("Instant Search Chars",m_nInstantSearchingChars);
 	}
 
 	if (GetLocateDlg()!=NULL)
@@ -473,6 +477,7 @@ BOOL CSettingsProperties::SaveSettings()
 		GetLocateDlg()->SetMaxFoundFiles(m_nMaximumFoundFiles);
 		GetLocateDlg()->SetInstantSearchLimit(m_nInstantSearchingLimit);
 		GetLocateDlg()->SetInstantSearchDelay(m_nInstantSearchingDelay);
+		GetLocateDlg()->SetInstantSearchChars(m_nInstantSearchingChars);
 		GetLocateDlg()->m_NameDlg.ChangeNumberOfItemsInLists(m_nNumberOfNames,m_nNumberOfTypes,m_nNumberOfDirectories);
 	}
 
@@ -1010,6 +1015,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			DWORD(-1),&m_pSettings->m_nInstantSearchingLimit,"sa_islimit"),
 		CreateNumeric(IDS_ADVSETISDELAY,DefaultNumericProc,
 			DWORD(-1),&m_pSettings->m_nInstantSearchingDelay,"sa_isdelay"),
+		CreateNumeric(IDS_ADVSETISCHARS,DefaultNumericProc,
+			MAKELONG(1,100),&m_pSettings->m_nInstantSearchingChars,"sa_ischars"),
 		CreateCheckBox(IDS_ADVSETISUPDOWNGORESULTS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::isUpDownGoesToResults,
 			&m_pSettings->m_dwInstantSearchingFlags,"sa_isupdown"),
@@ -1130,9 +1137,15 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETALLOWINPLACERENAMING,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgLVAllowInPlaceRenaming,
 			&m_pSettings->m_dwLocateDialogFlags,"sa_exprenaming"),
+		NULL,
 		NULL
 	};
-	
+
+	if (GetSystemFeaturesFlag()&efWinVista)
+	{
+		ResultsListItems[21]=CreateCheckBox(IDS_ADVSETHEADERINALLVIEWMODES,NULL,DefaultCheckBoxProc,
+			CLocateDlg::efLVHeaderInAllViews,&m_pSettings->m_dwLocateDialogExtraFlags,"sa_headerinallmodes");
+	}
 			
 	
 	
@@ -2445,11 +2458,20 @@ void CSettingsProperties::CDatabasesSettingsPage::OnRemove()
 		LPWSTR pFileName=pDatabase->GetResolvedArchiveName(bFree);
 		if (FileSystem::IsFile(pFileName))
 		{
-			CStringW str;
-			str.Format(IDS_DELETEDATABASEQUESTION,pFileName);
-			int nRet=MessageBox(str,ID2W(IDS_DELETEDATABASE),MB_ICONQUESTION|MB_YESNO);
-			if (nRet==IDYES)
-				FileSystem::Remove(pFileName);
+			DWORD dwNoDelete=FALSE;
+
+			CRegKey2 RegKey;
+			if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+				RegKey.QueryValue("NoDeleteDatabaseFile",dwNoDelete);
+
+			if (!dwNoDelete)
+			{
+				CStringW str;
+				str.Format(IDS_DELETEDATABASEQUESTION,pFileName);
+				int nRet=MessageBox(str,ID2W(IDS_DELETEDATABASE),MB_ICONQUESTION|MB_YESNO);
+				if (nRet==IDYES)
+					FileSystem::Remove(pFileName);
+			}
 		}
 
 		if (bFree)

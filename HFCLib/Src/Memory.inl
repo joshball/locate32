@@ -35,7 +35,7 @@ inline CAutoPtr<TYPE>::~CAutoPtr()
 }
 
 template<class TYPE> 
-inline TYPE* CAutoPtr<TYPE>::Release()
+inline TYPE* CAutoPtr<TYPE>::UnAttach()
 {
 	TYPE* tmp=m_data;
 	m_data=NULL;
@@ -43,7 +43,7 @@ inline TYPE* CAutoPtr<TYPE>::Release()
 }
 
 template<class TYPE> 
-inline void CAutoPtr<TYPE>::Assign(TYPE* data)
+inline void CAutoPtr<TYPE>::Attach(TYPE* data)
 {
 	if (m_data!=NULL)
 		delete m_data;
@@ -51,17 +51,17 @@ inline void CAutoPtr<TYPE>::Assign(TYPE* data)
 }
 
 template<class TYPE> 
-inline void CAutoPtr<TYPE>::Assign(CAutoPtr<TYPE>& another)
+inline void CAutoPtr<TYPE>::Attach(CAutoPtr<TYPE>& another)
 {
 	if (m_data!=NULL)
 		delete m_data;
-	m_data=another.Release();
+	m_data=another.UnAttach();
 }
 
 template<class TYPE> 
 inline CAutoPtr<TYPE>& CAutoPtr<TYPE>::operator=(TYPE* data)
 {
-	Assign(data);
+	Attach(data);
 	return *this;
 }
 
@@ -69,7 +69,7 @@ inline CAutoPtr<TYPE>& CAutoPtr<TYPE>::operator=(TYPE* data)
 template<class TYPE> 
 inline CAutoPtr<TYPE>& CAutoPtr<TYPE>::operator=(CAutoPtr<TYPE>& another)
 {
-	Assign(another);
+	Attach(another);
 	return *this;
 }
 
@@ -86,7 +86,7 @@ inline CAutoPtrA<TYPE>::~CAutoPtrA()
 }
 
 template<class TYPE> 
-inline TYPE* CAutoPtrA<TYPE>::Release()
+inline TYPE* CAutoPtrA<TYPE>::UnAttach()
 {
 	TYPE* tmp=m_data;
 	m_data=NULL;
@@ -94,7 +94,7 @@ inline TYPE* CAutoPtrA<TYPE>::Release()
 }
 
 template<class TYPE> 
-inline void CAutoPtrA<TYPE>::Assign(TYPE* data)
+inline void CAutoPtrA<TYPE>::Attach(TYPE* data)
 {
 	if (m_data!=NULL)
 		delete[] m_data;
@@ -102,24 +102,24 @@ inline void CAutoPtrA<TYPE>::Assign(TYPE* data)
 }
 
 template<class TYPE> 
-inline void CAutoPtrA<TYPE>::Assign(CAutoPtr<TYPE>& another)
+inline void CAutoPtrA<TYPE>::Attach(CAutoPtr<TYPE>& another)
 {
 	if (m_data!=NULL)
 		delete[] m_data;
-	m_data=another.Release();
+	m_data=another.UnAttach();
 }
 
 template<class TYPE> 
 inline CAutoPtrA<TYPE>& CAutoPtrA<TYPE>::operator=(TYPE* data)
 {
-	Assign(data);
+	Attach(data);
 	return *this;
 }
 	
 template<class TYPE> 
 inline CAutoPtrA<TYPE>& CAutoPtrA<TYPE>::operator=(CAutoPtrA<TYPE>& another)
 {
-	Assign(another);
+	Attach(another);
 	return *this;
 }
 

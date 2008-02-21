@@ -175,9 +175,11 @@ enum efFlags {
 	efWinNT4=0x0008,
 	efWinME=0x0010,
 	efWinXP=0x0020,
-	efIE4=0x1000,
-	efIE5=0x2000,
-	efIE6=0x4000
+	efWinVista=0x0040,
+	efIE4=0x10000,
+	efIE5=0x20000,
+	efIE6=0x40000,
+	efIE7=0x80000
 };
 
 typedef struct {

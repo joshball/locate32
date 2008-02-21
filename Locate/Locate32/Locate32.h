@@ -62,6 +62,7 @@ extern LPWSTR g_szwBuffer;
 #define DEFAULT_NUMBEROFTYPES			10
 #define DEFAULT_INSTANTSEARCHLIMIT		0
 #define DEFAULT_INSTANTSEARCHDELAY		500
+#define DEFAULT_INSTANTSEARCHCHARS		1
 
 
 // Timer IDs, if timer ID is not one of those, ID is HWND to control to get focus
@@ -72,7 +73,7 @@ extern LPWSTR g_szwBuffer;
 #define ID_UPDATEANIM				6
 #define ID_SYNCSCHEDULES			7
 #define ID_CHECKSCHEDULES			8
-#define ID_ENSUREVISIBLEICON		9
+//#define ID_ENSUREVISIBLEICON		9
 #define ID_RUNSTARTUPSCHEDULES		10
 #define ID_INSTANTSEARCHTIMER		11
 

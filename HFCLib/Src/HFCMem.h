@@ -266,16 +266,16 @@ public:
 	CAutoPtr(CAutoPtr<TYPE>& another) { m_data=another.Release(); }
 	~CAutoPtr();
 
-	TYPE* Release();
 	
 	operator TYPE*() const { return m_data; }
 	operator TYPE*&() { return m_data; }
 	
 	TYPE* operator ->() { return m_data; }
 
-	void Assign(TYPE* data);
-	void Assign(CAutoPtr<TYPE>& another);
-
+	void Attach(TYPE* data);
+	void Attach(CAutoPtr<TYPE>& another);
+	TYPE* UnAttach();
+	
 	CAutoPtr<TYPE>& operator=(TYPE* data);
 	CAutoPtr<TYPE>& operator=(CAutoPtr<TYPE>& another);
 
@@ -295,16 +295,16 @@ public:
 	CAutoPtrA(CAutoPtrA<TYPE>& another) { m_data=another.Release(); }
 	~CAutoPtrA();
 
-	TYPE* Release();
 	
 	operator TYPE*() const { return m_data; }
 	operator TYPE*&() { return m_data; }
 	
 	TYPE* operator ->() { return m_data; }
 
-	void Assign(TYPE* data);
-	void Assign(CAutoPtr<TYPE>& another);
-
+	void Attach(TYPE* data);
+	void Attach(CAutoPtr<TYPE>& another);
+	TYPE* UnAttach();
+	
 	CAutoPtrA<TYPE>& operator=(TYPE* data);
 	CAutoPtrA<TYPE>& operator=(CAutoPtrA<TYPE>& another);
 

@@ -162,6 +162,8 @@ BOOL CWnd::LoadPosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey,DWORD fFlags)
 					RegKey.m_hKey=NULL;
                 return TRUE;
 			}
+
+
 			SetWindowPos(HWND_TOP,wp.rcNormalPosition.left,wp.rcNormalPosition.top,
 				wp.rcNormalPosition.right-wp.rcNormalPosition.left,wp.rcNormalPosition.bottom-wp.rcNormalPosition.top,
 				SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOREDRAW);
@@ -171,29 +173,44 @@ BOOL CWnd::LoadPosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey,DWORD fFlags)
 					RegKey.m_hKey=NULL;
                 return TRUE;
 			}
+
+
+
 			if (!(fFlags&fgAllowMaximized))
 				wp.showCmd=SW_SHOWNORMAL;
 			break;
+		case SW_SHOWMINIMIZED:
 		case SW_MINIMIZE:
 			if (fFlags&fgOnlySpecifiedPosition)
 			{
-				if (fFlags&fgAllowMinimized)
+				if (wp.flags&WPF_RESTORETOMAXIMIZED)
+				{
+					if (fFlags&fgAllowMaximized)
+						ShowWindow(swMaximize);
+				}
+				else if (fFlags&fgAllowMinimized)
 					ShowWindow(swMinimize);
+
 				if (lpKey==NULL)
 					RegKey.m_hKey=NULL;
                 return TRUE;
 			}
+
+			
 			SetWindowPos(HWND_TOP,wp.rcNormalPosition.left,wp.rcNormalPosition.top,
 				wp.rcNormalPosition.right-wp.rcNormalPosition.left,wp.rcNormalPosition.bottom-wp.rcNormalPosition.top,
 				SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOREDRAW);
+
 			if (fFlags&fgOnlyNormalPosition)
 			{
 				if (lpKey==NULL)
 					RegKey.m_hKey=NULL;
                 return TRUE;
 			}
+			
+				
 			if (!(fFlags&fgAllowMinimized))
-				wp.showCmd=SW_SHOWNORMAL;
+				wp.showCmd=wp.flags&WPF_RESTORETOMAXIMIZED?SW_SHOWMAXIMIZED:SW_SHOWNORMAL;
 			break;
 		case SW_HIDE:
 			if (fFlags&fgOnlySpecifiedPosition)
@@ -227,6 +244,18 @@ BOOL CWnd::LoadPosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey,DWORD fFlags)
 			RegKey.m_hKey=NULL;
 		return FALSE;
 	}
+
+	if (fFlags&fgNoSize)
+	{
+		WINDOWPLACEMENT wpCurrent;
+		wpCurrent.length=sizeof(WINDOWPLACEMENT);
+		GetWindowPlacement(&wpCurrent);
+		wp.rcNormalPosition.right=wp.rcNormalPosition.left+
+			(wpCurrent.rcNormalPosition.right-wpCurrent.rcNormalPosition.left);
+		wp.rcNormalPosition.bottom=wp.rcNormalPosition.top+
+			(wpCurrent.rcNormalPosition.bottom-wpCurrent.rcNormalPosition.top);
+	}
+
 	SetWindowPlacement(&wp);
 	if (lpKey==NULL)
 		RegKey.m_hKey=NULL;
