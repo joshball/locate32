@@ -19,6 +19,10 @@ inline LPWSTR CLocatedItem::FormatAttributes() const
 
 		LPWSTR pPtr=g_szwBuffer;
 
+		if (IsJunkction())
+			*(pPtr++)=L'J';
+		if (IsSymlink())
+			*(pPtr++)=L'L';
 		if (IsFolder())
 			*(pPtr++)=L'D';
 		if (IsReadOnly())
@@ -275,63 +279,6 @@ inline CLocatedItem::~CLocatedItem()
 
 
 
-inline void CLocatedItem::UpdateIcon()
-{
-	SHFILEINFOW fi;
-	ItemDebugMessage("CLocatedItem::UpdateIcon BEGIN");
-	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
-	{
-        if (GetFileInfo(GetPath(),0,&fi,/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
-			iIcon=fi.iIcon;
-		else
-			iIcon=GetLocateApp()->m_nDelImage;
-	}
-	else if (IsDeleted())
-		iIcon=GetLocateApp()->m_nDelImage;
-	else if (IsFolder())
-		iIcon=GetLocateApp()->m_nDirImage;
-	else
-		iIcon=GetLocateApp()->m_nDefImage;
-
-	dwFlags|=LITEM_ICONOK;
-
-	ItemDebugMessage("CLocatedItem::UpdateIcon END");
-	
-}
-
-inline void CLocatedItem::UpdateParentIcon()
-{
-	ItemDebugMessage("CLocatedItem::UpdateParentIcon BEGIN");
-	SHFILEINFOW fi;
-	LPWSTR szParent=GetParent();
-	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
-	{
-		if (szParent[1]==L':' && szParent[2]==L'\0')
-		{
-			WCHAR szDrive[]=L"X:\\";
-			szDrive[0]=szParent[0];
-			if (GetFileInfo(szDrive,0,&fi,/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
-				iParentIcon=fi.iIcon;
-			else
-				iParentIcon=((CLocateApp*)GetApp())->m_nDelImage;
-		}
-		else
-		{
-			if (GetFileInfo(GetParent(),0,&fi,/*SHGFI_ICON|*/SHGFI_SYSICONINDEX))
-				iParentIcon=fi.iIcon;
-			else
-				iParentIcon=((CLocateApp*)GetApp())->m_nDelImage;
-		}
-	}
-	else if (IsDeleted())
-		iIcon=GetLocateApp()->m_nDelImage;
-	else
-    	iIcon=GetLocateApp()->m_nDefImage;
-
-	dwFlags|=LITEM_PARENTICONOK;
-
-	ItemDebugMessage("CLocatedItem::UpdateParentIcon END");
-}
 
 
 inline void CLocatedItem::ReFresh(CArray<DetailType>& aDetails,BOOL& bReDraw)

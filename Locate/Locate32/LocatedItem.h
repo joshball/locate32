@@ -26,11 +26,14 @@ class CLocater;
 #define LITEMATTRIB_ARCHIVE			0x4
 #define LITEMATTRIB_SYSTEM			0x8
 #define LITEMATTRIB_CUTTED			0x10
-#define LITEMATTRIB_COMPRESSED		0x20
-#define LITEMATTRIB_ENCRYPTED		0x40
+#define LITEMATTRIB_SYMLINK			0x20
+#define LITEMATTRIB_JUNCTION		0x40
 #define LITEMATTRIB_DIRECTORY		0x80
 
-#define LITEMATTRIB_DBATTRIBFLAG	0x8F
+#define LITEMATTRIB_COMPRESSED		0x0200
+#define LITEMATTRIB_ENCRYPTED		0x0400
+
+#define LITEMATTRIB_DBATTRIBFLAG	0x00FF
 
 class CLocatedItem 
 {
@@ -113,6 +116,8 @@ public:
 	BOOL IsCutted() const { return wAttribs&LITEMATTRIB_CUTTED; }
 	BOOL IsCompressed() const { return wAttribs&LITEMATTRIB_COMPRESSED; }
 	BOOL IsEncrypted() const { return wAttribs&LITEMATTRIB_ENCRYPTED; }
+	BOOL IsSymlink() const { return wAttribs&LITEMATTRIB_SYMLINK; }
+	BOOL IsJunkction() const { return wAttribs&LITEMATTRIB_JUNCTION; }
 	
 	LPWSTR GetName() const { return szName; }
 	DWORD GetNameLen() const { return bNameLength; }
@@ -156,6 +161,7 @@ public:
 
 private:
 	static WORD GetAttributesFromSystemAttributes(DWORD dwSystemAttributess);
+	static DWORD GetSystemAttributesFromAttributes(WORD wAttributess);
 	
 
 

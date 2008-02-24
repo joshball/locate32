@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.1.8.2110                 */
+   database updater v3.1.8.2240                 */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -813,8 +813,12 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 				_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+3);
 				pPoint+=sizeof(WORD)*4;
 			
-				ScanFolder(szFolder,nLength+sNameLength,lForceQuit);
-				//szFolder[nLength+sTemp]='\0';
+				if (m_bScanJunctions ||	!(fd.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) || 
+					(fd.dwReserved0!=IO_REPARSE_TAG_MOUNT_POINT && fd.dwReserved0!=IO_REPARSE_TAG_SYMLINK))
+				{
+					ScanFolder(szFolder,nLength+sNameLength,lForceQuit);
+					//szFolder[nLength+sTemp]='\0';
+				}
 				*pPoint='\0'; // No more files and directories
 				pPoint++;
 
@@ -1068,6 +1072,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 			// less than MAX_PATH, otherwise ignore
 			if (nLength+sNameLength<MAX_PATH)
 			{
+				// First check whether directory is Junction or Symlink
 				
 				// Check whether new buffer is needed
 				if (pPoint+MAX_PATH*2+14>pCurrentBuffer->pData+BFSIZE)
@@ -1105,8 +1110,13 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 				_FindGetLastAccessDosDate(&fd,(WORD*)pPoint+4,(WORD*)pPoint+5);
 				pPoint+=sizeof(WORD)*6;
 			
-				ScanFolder(szFolder,nLength+sNameLength,lForceQuit);
-				//szFolder[nLength+sTemp]='\0';
+				if (m_bScanJunctions || !(fd.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT) || 
+					(fd.dwReserved0!=IO_REPARSE_TAG_MOUNT_POINT && fd.dwReserved0!=IO_REPARSE_TAG_SYMLINK))
+				{
+					// Scan files and directories if not reparse point
+					ScanFolder(szFolder,nLength+sNameLength,lForceQuit);
+					//szFolder[nLength+sTemp]='\0';
+				}
 				*pPoint='\0'; // No more files and directories
 				pPoint++;
 
@@ -1492,6 +1502,8 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 	// Retrieving flags
 	if (pDatabase->IsFlagged(CDatabase::flagStopIfRootUnavailable))
 		m_nFlags|=StopIfUnuavailable;
+	if (pDatabase->IsFlagged(CDatabase::flagScanSymLinksAndJunctions))
+		m_nFlags|=ScanJunctions;
 	if (pDatabase->IsFlagged(CDatabase::flagIncrementalUpdate))
 		m_nFlags|=IncrementalUpdate;
 	if (IsUnicodeSystem() && !pDatabase->IsFlagged(CDatabase::flagAnsiCharset))
@@ -1516,7 +1528,8 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 				
 				int nMapLen;
 				LPCWSTR pDriveInDb=pDatabase->FindRootMap(drive,nMapLen);
-				CRootDirectory* pNewDirectory=new CRootDirectory(drive,pDriveInDb,nMapLen);
+				CRootDirectory* pNewDirectory=new CRootDirectory(drive,pDriveInDb,
+					nMapLen,m_nFlags&ScanJunctions);
 
 				if (m_pFirstRoot==NULL)
 					tmp=m_pFirstRoot=pNewDirectory;
@@ -1693,7 +1706,8 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 
 		int nMapLen;
 		LPCWSTR pDriveInDb=CDatabase::FindRootMap(szRootMaps,drive,nMapLen);
-		CRootDirectory* pNewDirectory=new CRootDirectory(drive,dwLength,pDriveInDb,nMapLen);
+		CRootDirectory* pNewDirectory=new CRootDirectory(drive,dwLength,pDriveInDb,
+			nMapLen,m_nFlags&ScanJunctions);
 
 		if (pCurrent==NULL)
 			pCurrent=m_pFirstRoot=pNewDirectory;
@@ -1707,7 +1721,8 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 			
 		if (FileSystem::IsDirectory(pRoot))
 		{
-			CRootDirectory* pNewDirectory=new CRootDirectory(pRoot,dwLength,pDriveInDb,nMapLen);
+			CRootDirectory* pNewDirectory=new CRootDirectory(pRoot,dwLength,
+				pDriveInDb,nMapLen,m_nFlags&ScanJunctions);
 
 			if (pCurrent==NULL)
 				pCurrent=m_pFirstRoot=pNewDirectory;
@@ -1751,7 +1766,8 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 
 			if (dwRet!=NOERROR)
 			{
-				CRootDirectory* pNewDirectory=new CRootDirectory(pRoot,dwLength,pDriveInDb,nMapLen);
+				CRootDirectory* pNewDirectory=new CRootDirectory(pRoot,dwLength,
+					pDriveInDb,nMapLen,m_nFlags&ScanJunctions);
 
 				if (pCurrent==NULL)
 					pCurrent=m_pFirstRoot=pNewDirectory;
@@ -1783,7 +1799,8 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 
 				if (dwRet!=ERROR_MORE_DATA && dwRet!=NOERROR)
 				{
-					CRootDirectory* pNewDirectory=new CRootDirectory(pRoot,dwLength,pDriveInDb,nMapLen);
+					CRootDirectory* pNewDirectory=new CRootDirectory(pRoot,dwLength,pDriveInDb,
+						nMapLen,m_nFlags&ScanJunctions);
 
 					if (pCurrent==NULL)
 						pCurrent=m_pFirstRoot=pNewDirectory;
@@ -1810,7 +1827,7 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 							WCHAR* szMap=new WCHAR[nMapLen+nLen+1];
 							MemCopyW(szMap,pDriveInDb,nMapLen);
 							MemCopyW(szMap+nMapLen,pRemoteName+dwLength,nLen+1);
-							pNewDirectory=new CRootDirectory(pRemoteName,szMap,nMapLen+nLen);
+							pNewDirectory=new CRootDirectory(pRemoteName,szMap,nMapLen+nLen,m_nFlags&ScanJunctions);
 							bAdded=TRUE;
 						}
 					}
@@ -1820,7 +1837,7 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 						// Check chares individially
 						int nMapLen2;
 						LPCWSTR pDriveInDb2=CDatabase::FindRootMap(szRootMaps,pRemoteName,nMapLen2);
-						pNewDirectory=new CRootDirectory(pRemoteName,pDriveInDb2,nMapLen2);
+						pNewDirectory=new CRootDirectory(pRemoteName,pDriveInDb2,nMapLen2,m_nFlags&ScanJunctions);
 					}
 					
 					if (pCurrent==NULL)
@@ -1843,7 +1860,7 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 	{
 		int nMapLen;
 		LPCWSTR pDriveInDb=CDatabase::FindRootMap(szRootMaps,pRoot,nMapLen);
-		CRootDirectory* pNewDirectory=new CRootDirectory(pRoot,dwLength,pDriveInDb,nMapLen);
+		CRootDirectory* pNewDirectory=new CRootDirectory(pRoot,dwLength,pDriveInDb,nMapLen,m_nFlags&ScanJunctions);
 
 		if (pCurrent==NULL)
 			pCurrent=m_pFirstRoot=pNewDirectory;

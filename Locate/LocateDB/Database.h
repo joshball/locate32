@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.1.8.2110              */
+   database updater v3.1.8.2240              */
 
 #if !defined(DATABASE_H)
 #define DATABASE_H
@@ -32,7 +32,8 @@ public:
 		flagGlobalUpdate=0x2,
 		flagStopIfRootUnavailable=0x4,
 		flagIncrementalUpdate=0x8,
-		flagAnsiCharset=0x10 // Unicode is default
+		flagAnsiCharset=0x10, // Unicode is default
+		flagScanSymLinksAndJunctions=0x20
 	};
 		
 	enum ArchiveType {

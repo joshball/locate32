@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.1.8.2110              */
+   database updater v3.1.8.2240              */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -546,6 +546,21 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 							else
 								pDatabase->m_wFlags|=flagGlobalUpdate;
 							break;
+							break;
+						case L'J':
+						case L'j':
+							if (*pTemp==L'1')
+							{
+								pDatabase->m_wFlags|=flagScanSymLinksAndJunctions;
+								pTemp++;
+							}
+							else if (*pTemp==L'0')
+							{
+								pDatabase->m_wFlags&=~flagScanSymLinksAndJunctions;
+								pTemp++;
+							}
+							else
+								pDatabase->m_wFlags|=flagScanSymLinksAndJunctions;
 							break;
 						case L'S':
 						case L's':
@@ -1332,6 +1347,10 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 			str << L"G1";
 		else
 			str << L"G0";
+		if (m_wFlags&flagScanSymLinksAndJunctions)
+			str << L"J1";
+		else
+			str << L"J0";
 		if (m_wFlags&flagStopIfRootUnavailable)
 			str << L"S1";
 		else

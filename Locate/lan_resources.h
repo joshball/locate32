@@ -68,6 +68,7 @@
 #define IDS_GB                          53
 #define IDS_AM                          54
 #define IDS_PM                          55
+#define IDS_SYMLINK						56
 #define IDS_LISTTITLE                   57
 #define IDS_LISTSUBJECT                 58
 #define IDS_LISTCATEGORY                59
@@ -78,6 +79,8 @@
 #define IDS_LISTPRODUCTNAME             64
 #define IDS_LISTPRODUCTVERSION          65
 #define IDS_LOCATINGWAITDBWRITING       66
+#define IDS_JUNCTION					67
+#define IDS_SYMLINKDIR					68
 #define IDS_HELPINFO                    70
 #define IDS_FILEINFORMATION             71
 #define IDS_FILEINFORMATIONFMT          72
@@ -290,6 +293,7 @@
 #define IDS_ERRORCANNOTLOADDEFAULTSHORTUCS 1030
 #define IDC_TARGETLOCATION              1031
 #define IDS_ERRORDIFFERENTCHARSETINDB   1031
+#define IDS_ERRORJUNCTIONS				1032
 #define IDC_TARGETTYPE                  1032
 #define IDC_STARTIN                     1033
 #define IDS_ERRORCANNOTCREATETHREAD     1034
@@ -460,6 +464,7 @@
 #define IDC_UPDATE2                     1169
 #define IDC_OVERRIDETXT                 1169
 #define IDC_RESETACTIONS                1170
+#define IDS_SCANSYMLINKSANDJUNCTIONS	1171
 #define IDC_STOPIFROOTUNAVAILABLE       1172
 #define IDC_THREADSLABEL                1172
 #define IDC_SENTENCECASE                1173
@@ -819,6 +824,8 @@
 #define IDS_SHORTCUTSUBACTIONTAB        5531
 #define IDS_SHORTCUTSUBACTIONMENUITEM   5532
 #define IDS_SHORTCUTSUBACTIONPRESET     5533
+#define IDS_SHORTCUTWHENIFISRUNNING		5534
+#define IDS_SHORTCUTWHENIFISNOTRUNNING	5535
 #define IDS_KEYCONTAINDATA              5554
 #define IDS_SHORTCUTMENUFILENOITEM      5560
 #define IDS_SHORTCUTMENUFILEITEM        5561
@@ -978,6 +985,7 @@
 #define	IDS_ADVSETMATCHWHOLENAMEIFASTERISKS	5827
 #define IDS_ADVSETISCHARS				5828
 #define IDS_ADVSETHEADERINALLVIEWMODES  5829
+#define IDS_ADVSETICONSNOFILEACCESS		5830
 #define IDS_SCHEDULEUPDATE              5901
 #define IDS_MINUTELY                    5909
 #define IDS_HOURLY                      5910

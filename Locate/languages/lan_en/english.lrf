@@ -31,7 +31,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2008 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.1 beta build 8.2210
+FILEVERSION=3.1 beta build 8.2240
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -196,7 +196,7 @@ STRABOUT_SYSTEMINFO_PHYSMEM=\nPhysical memory: %d KB Free: %d KB
 ###########################
 # Settings dialogs
 STRSETTINGS_CAPTION=Settings:
-DLGSETTINGS_PROPERTYPAGESIZE=287, 301
+DLGSETTINGS_PROPORTYPAGEEXTRAWIDTH=0
 
 # General page
 STRGENERALSETTINGS_TABCAPTION=General
@@ -355,6 +355,7 @@ STRADVANCEDSETTINGS_MISCELLANEOUS=Miscellaneous
 STRADVANCEDSETTINGS_DONTSHOWEXTINRENAME=Do not show an extension in the rename dialog
 STRADVANCEDSETTINGS_SHOWCRITICALERRORS=Show critical errors (e.g., cannot write database, ...)
 STRADVANCEDSETTINGS_SHOWNONCRITICALERRORS=Show non-critical errors (e.g., path is not available, ...)
+STRADVANCEDSETTINGS_ICONSNOFILEACCESS=Avoid to access files when reading icons 
 STRADVANCEDSETTINGS_USEDEFAULTDIRECTORYICON=Use default icons for directories (use with slow network drives)
 
 STRADVANCEDSETTINGS_SYSTEM=System
@@ -564,6 +565,8 @@ STRSHORTCUTSSETTINGS_WHENFOCUSNOTINRESULTLIST=Focus not in the results list
 STRSHORTCUTSSETTINGS_WHENNAMETABISSHOWN=Name tab shown
 STRSHORTCUTSSETTINGS_WHENSIZEDATETABSHOWN=Size and date tab shown
 STRSHORTCUTSSETTINGS_WHENADVANCEDTABSHOWN=Advanced tab shown
+STRSHORTCUTSSETTINGS_WHENIFISRUNNING="Find as you type" is active
+STRSHORTCUTSSETTINGS_WHENIFISNOTRUNNING="Find as you type" is not active
 STRSHORTCUTSSETTINGS_MENUFILENOITEM=File/%s
 STRSHORTCUTSSETTINGS_MENUFILEITEM=File/%s
 STRSHORTCUTSSETTINGS_MENUSPECIAL=File/Special/%s
@@ -596,6 +599,17 @@ STRSHORTCUTSSETTINGS_PAUSE=PAUSE
 STRSHORTCUTSSETTINGS_CAPSLOCK=CAPS LOCK
 STRSHORTCUTSSETTINGS_NUMLOCK=NUM LOCK
 STRSHORTCUTSSETTINGS_FUNCTION=F
+
+# Increase this if you want more space for
+# Key and Virtual key check boxes or "Pressed when:" label
+STRSHORTCUTSSETTINGS_OFFSET1=0
+# Extra space for "When pressed"
+STRSHORTCUTSSETTINGS_WHENPRESSETEXTRALEN=0
+# Extra space for "Action:" combo box (subaction will be adjusted
+# based on DLGSETTINGS_PROPORTYPAGEEXTRAWIDTH field).
+# This can't be 0 (otherwise fields dissappears for unknown reason)
+STRSHORTCUTSSETTINGS_ACTIONEXTRALEN=1
+
 
 STRACTION_ACTIVATECONTROL=Activate Control
 STRACTION_ACTIVATETAB=Activate Tab
@@ -674,6 +688,12 @@ STRSHORTCUTSSETTINGSADVANCED_LOCAL=Local
 STRSHORTCUTSSETTINGSADVANCED_GLOBALHOTKEY=Global (hotkey)
 STRSHORTCUTSSETTINGSADVANCED_GLOBALHOOK=Global (hook)
 
+# Dialog extra width
+DLGSHORTCUTSSETTINGSADVANCED_DIALOGEXTRAWIDTH=0
+# Extra space for "Key is pressed" and "Key down"
+# Can't be 0 for unknown reason (otherwise checkboxes disappear)
+DLGSHORTCUTSSETTINGSADVANCED_PRESSEDEXTRAWIDTH=1
+
 ###########################
 # Database dialog
 DLGDATABASEDIALOG_OK=OK
@@ -686,6 +706,7 @@ DLGDATABASEDIALOG_UNICODE=Use Unicode character set
 DLGDATABASEDIALOG_DONOTOVERWRITEEXISTING=&Do not overwrite existing data (e.g, use for cataloguing CD-ROMs)
 DLGDATABASEDIALOG_THREAD=T&hread:
 DLGDATABASEDIALOG_STOPIFROOTUNAVAILABLE=&Stop if root unavailable (see note in help)
+DLGDATABASEDIALOG_SCANSYMLINKSANDJUNCTIONS=&Scan directories which are junctions or symbolic links
 DLGDATABASEDIALOG_NAME=&Name:
 DLGDATABASEDIALOG_DBFILE=&File:
 DLGDATABASEDIALOG_BROWSE=&Browse
@@ -1059,6 +1080,9 @@ STR_FILESIZE_GB=GB
 STR_FILETYPE_FILE=File
 STR_FILETYPE_DIRECTORY=Directory
 STR_FILETYPE_DELETED=Deleted / Moved / Offline file
+STR_FILETYPE_SYMLINK=Symbolic link
+STR_FILETYPE_SYMLINKDIR=Symbolic link (directory)
+STR_FILETYPE_JUNCTION=Junction / Mount point
 STR_FILEDATE_AM=AM
 STR_FILEDATE_PM=PM
 
@@ -1175,7 +1199,7 @@ STRERROR_DIFFERENTCHARSETINDB=The existing content of the database cannot be kep
 STRERROR_CANNOTSAVESHORTCUTS=Cannot save keyboard shortcuts to the registry.
 STRERROR_CANNOTLOADDEFAULTSHORTCUTS=Cannot load default keyboard shortcuts.
 STRERROR_CANNOTCREATETHREAD=Cannot create thread.
-
+STRERROR_DELETINGJUNCTIONS=You are going to delete directories which are either junctions or mount points. This can be unsafe using standard methods (files in target directories may also be deleted). Thus these junctions and mount points are deleted using an another safe method which, however, does not allow you to restore files using the "Recycle bin".\n\nIf you choose "Yes", the selected junctions and mount points will deleted (without an another confirmation prompt). You can also skip the selected junctions and mount points by choosing "No".
 STRERROR_LASTERROR=Error:
 STRERROR_LASTERROR_UNKNOWN=unknown (db %s)
 STRERROR_LASTERROR_UNKNOWN2=unknown

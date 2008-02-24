@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.1.8.2110              */
+   database updater v3.1.8.2240              */
 
 #if !defined(DATABASEUPDATER_H)
 #define DATABASEUPDATER_H
@@ -50,8 +50,8 @@ public:
 	class CRootDirectory
 	{
 	private:
-		CRootDirectory(LPCWSTR szPath,LPCWSTR szPathInDb,int iPathInDbLen);
-		CRootDirectory(LPCWSTR szPath,int iPathLen,LPCWSTR szPathInDb,int iPathInDbLen);
+		CRootDirectory(LPCWSTR szPath,LPCWSTR szPathInDb,int iPathInDbLen,BOOL bScanJunctions);
+		CRootDirectory(LPCWSTR szPath,int iPathLen,LPCWSTR szPathInDb,int iPathInDbLen,BOOL bScanJunctions);
 		
 		~CRootDirectory();
 	
@@ -135,6 +135,8 @@ public:
 			LPWSTR* m_aExcludeFilesPatternsW; 
 		};
 
+		BOOL m_bScanJunctions;
+
 		friend CDatabaseUpdater;
 		friend DBArchive;
 	
@@ -157,7 +159,8 @@ public:
 		enum DBFlags {
 			StopIfUnuavailable = 0x1, // Stops updating if root is unavailable
 			IncrementalUpdate = 0x2, // Incremental update
-			Unicode = 0x4
+			Unicode = 0x4,
+			ScanJunctions = 0x8 // Scan directories which are junctions and symlinks
 		};
 
 		BOOL IsFlagged(DBFlags flag);
@@ -359,11 +362,37 @@ inline LPCWSTR CDatabaseUpdater::CRootDirectory::_FindGetName(FIND_DATAW* fd)
 
 inline BYTE CDatabaseUpdater::CRootDirectory::_FindGetAttribFlag(FIND_DATA* fd)
 {
-	return CDatabaseUpdater::GetAttribFlag(fd->dwFileAttributes);
+	BYTE bAttrib=CDatabaseUpdater::GetAttribFlag(fd->dwFileAttributes);
+	if (fd->dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
+	{
+		switch (fd->dwReserved0)
+		{
+		case IO_REPARSE_TAG_MOUNT_POINT:
+			bAttrib|=UDBATTRIB_JUNCTION;
+			break;
+		case IO_REPARSE_TAG_SYMLINK:
+			bAttrib|=UDBATTRIB_SYMLINK;
+			break;
+		}		
+	}
+	return bAttrib;
 }
 inline BYTE CDatabaseUpdater::CRootDirectory::_FindGetAttribFlag(FIND_DATAW* fd)
 {
-	return CDatabaseUpdater::GetAttribFlag(fd->dwFileAttributes);
+	BYTE bAttrib=CDatabaseUpdater::GetAttribFlag(fd->dwFileAttributes);
+	if (fd->dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
+	{
+		switch (fd->dwReserved0)
+		{
+		case IO_REPARSE_TAG_MOUNT_POINT:
+			bAttrib|=UDBATTRIB_JUNCTION;
+			break;
+		case IO_REPARSE_TAG_SYMLINK:
+			bAttrib|=UDBATTRIB_SYMLINK;
+			break;
+		}		
+	}
+	return bAttrib;
 }
 
 
@@ -426,11 +455,12 @@ inline DWORD CDatabaseUpdater::CRootDirectory::_FindGetFileSizeHi(FIND_DATAW* fd
 	return fd->nFileSizeHigh;
 }
 
-inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,
-														LPCWSTR szPathInDb,int iPathInDbLen)
+inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,LPCWSTR szPathInDb,
+														int iPathInDbLen,BOOL bScanJunctions)
 :	m_Path(szPath),m_dwFiles(0),m_dwDirectories(0),
 	m_pFirstBuffer(NULL),m_aIncludeFilesPatternsA(NULL),
-	m_aIncludeDirectoriesPatternsA(NULL),m_aExcludeFilesPatternsA(NULL)
+	m_aIncludeDirectoriesPatternsA(NULL),m_aExcludeFilesPatternsA(NULL),
+	m_bScanJunctions(bScanJunctions)
 {
 	if (szPathInDb!=NULL)
 		m_PathInDatabase.Copy(szPathInDb,iPathInDbLen);
@@ -438,11 +468,13 @@ inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,
 		m_PathInDatabase.Copy(m_Path);
 }
 
-inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,
-														int iLength,LPCWSTR szPathInDb,int iPathInDbLen)
+inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,int iLength,
+														LPCWSTR szPathInDb,int iPathInDbLen,
+														BOOL bScanJunctions)
 :	m_Path(szPath,iLength),m_dwFiles(0),m_dwDirectories(0),
 	m_pFirstBuffer(NULL),m_aIncludeFilesPatternsA(NULL),
-	m_aIncludeDirectoriesPatternsA(NULL),m_aExcludeFilesPatternsA(NULL)
+	m_aIncludeDirectoriesPatternsA(NULL),m_aExcludeFilesPatternsA(NULL),
+	m_bScanJunctions(bScanJunctions)
 {
 	if (szPathInDb!=NULL)
 		m_PathInDatabase.Copy(szPathInDb,iPathInDbLen);

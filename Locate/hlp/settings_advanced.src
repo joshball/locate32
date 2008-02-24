@@ -152,10 +152,13 @@ When enabled, the extensions of files are never shown in the file titles.
 
 <p><b><A NAME="sa_simpleicons"></A>$STRADVANCEDSETTINGS_USESIMPLEICONS@C$</b>:
 If this option is enabled, all files the result list have same generic icon. 
-This can be useful for slow-speed media such as floppy disks, 
-or if you have slow or off-line network shares (reading icons 
-for files in such shares can cause delays when the program does not answer at all).
-</p>
+You can use this option for slow-speed media such as floppy disks, 
+or if you have slow or off-line network shares, because reading icons 
+for files in such shares can cause delays when the program does not answer at all.
+<b>Note:</b> it is not necessary to use simple icons if either 
+<A href="settings_advanced.htm#sa_disableupdating">$STRADVANCEDSETTINGS_DISABLEUPDATING@C$</A>
+or <A href="settings_advanced.htm#sa_iconsnofileaccess">$STRADVANCEDSETTINGS_ICONSNOFILEACCESS@C$</A>
+option is enabled. </p>
 
 <p><b><A NAME="sa_filetypes"></A>$STRADVANCEDSETTINGS_SHOWFILETYPES@Cp$</b>:
 If this option is enabled, Locate32 will determine file types (e.g., "Application") 
@@ -397,9 +400,11 @@ Locate32 is started).
 </p>
 
 <p><b><A NAME="sa_nolocaldrivesicons"></A>$STRADVANCEDSETTINGS_DONTRESOLVEDRIVEICONS@C$</b>:
-If this option is enabled, the same generic icon are used for all local drives. You can use 
-if you often keep your hard drives in the shutdown state (loading icon for drive will
-activate this kind of drives). 
+If this option is enabled, the same generic icon are used for all local drives. This option can be 
+useful if you hard drives are often in the turned off (loading icon for drive will
+start up this kind of drives). However, you can also try 
+<A href="settings_advanced.htm#sa_iconsnofileaccess">$STRADVANCEDSETTINGS_ICONSNOFILEACCESS@C$</A>
+instead of this option.
 </p>
 
 <p><b><A NAME="sa_drvsfromenablesdbs"></A>$STRADVANCEDSETTINGS_ADDENABLEDROOTS@C$</b>:
@@ -578,12 +583,21 @@ if <A HREF="settings_databasedlg.htm#sdd_noowerwrite">"Do not overwrite existing
 enabled for a database but Locate32 cannot keep up existing data. Noncritical errors are also shown in 
 a update status tooltip even if this option is disabled. </p>
 
-<p><b><A NAME="sa_defdiricons"></A>$STRADVANCEDSETTINGS_USEDEFAULTDIRECTORYICON@C$</b>:
-If this option is enabled, Locate32 will use the same generic icon for all directories. 
-You option can be useful if you are indexing network shares which are slow or may become offline: 
+<p><b><A NAME="sa_iconsnofileaccess"></A>$STRADVANCEDSETTINGS_ICONSNOFILEACCESS@C$</b>:
+When this option is enabled, target files are not accessed when icons are
+loaded (icons are formed based on extension and attributes). This option can be useful if 
+you are indexing network shares which are slow or may become offline: 
 reading icons for such shares may cause delays when the program does not answer at all, even if 
 the any results from such shares are not shown (delay happens when icons for "Look In:" field
-are read). </p>
+are read). 
+
+<p><b><A NAME="sa_defdiricons"></A>$STRADVANCEDSETTINGS_USEDEFAULTDIRECTORYICON@C$</b>:
+If this option is enabled, Locate32 will use the same generic icon for all directories. 
+You can use this option if you using network shares which are slow or may become offline
+(reading icons may cause delays). You can also try
+<A href="settings_advanced.htm#sa_iconsnofileaccess">$STRADVANCEDSETTINGS_ICONSNOFILEACCESS@C$</A>
+instead of this option.
+</p>
 
 
 </div> <!-- advanced_settings_level1@sa_misc-->

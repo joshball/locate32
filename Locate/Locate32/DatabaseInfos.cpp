@@ -208,7 +208,8 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 			if (GetFileInfo(di->aRootFolders[i]->sRootMap.IsEmpty()?
 				di->aRootFolders.GetAt(i)->sPath+L'\\':
 				di->aRootFolders.GetAt(i)->sRootMap+L'\\',
-				0,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+				FILE_ATTRIBUTE_NORMAL,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX|
+				(GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons?SHGFI_USEFILEATTRIBUTES:0)))
 				li.iImage=fi.iIcon;
 			else
 				li.iImage=DEL_IMAGE;

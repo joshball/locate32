@@ -1346,6 +1346,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETSHOWNONCRITICALERRORS,NULL,
 			DefaultCheckBoxProc,CLocateApp::pfShowNonCriticalErrors,
 			&m_pSettings->m_dwProgramFlags,"sa_noncriticalerrors"),
+		CreateCheckBox(IDS_ADVSETICONSNOFILEACCESS,NULL,DefaultCheckBoxProc,
+			CLocateApp::pfAvoidToAccessWhenReadingIcons,
+			&m_pSettings->m_dwProgramFlags,"sa_iconsnofileaccess"),
 		CreateCheckBox(IDS_ADVSETUSEDEFDIRECTORYICON,NULL,DefaultCheckBoxProc,
 			CLocateApp::pfUseDefaultIconForDirectories,
 			&m_pSettings->m_dwProgramFlags,"sa_defdiricons"),
@@ -3295,6 +3298,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	CheckDlgButton(IDC_ENABLE,m_pDatabase->IsEnabled());
 	CheckDlgButton(IDC_GLOBALUPDATE,m_pDatabase->IsGloballyUpdated());
 	CheckDlgButton(IDC_STOPIFROOTUNAVAILABLE,m_pDatabase->IsFlagged(CDatabase::flagStopIfRootUnavailable));
+	CheckDlgButton(IDS_SCANSYMLINKSANDJUNCTIONS,m_pDatabase->IsFlagged(CDatabase::flagScanSymLinksAndJunctions));
 	CheckDlgButton(IDC_INCREMENTALUPDATE,m_pDatabase->IsFlagged(CDatabase::flagIncrementalUpdate));
 	
 	if (IsUnicodeSystem())
@@ -3407,6 +3411,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnHelp(LPHELP
 		{ IDC_DESCRIPTION,"sdd_description" },
 		{ IDC_LOCALDRIVES,"sdd_local" },
 		{ IDC_CUSTOMDRIVES,"sdd_custom" },
+		{ IDS_SCANSYMLINKSANDJUNCTIONS,"sdd_scanjunctions" },
 		{ IDC_STOPIFROOTUNAVAILABLE,"sdd_stopifunavailable" },
 		{ IDC_ADVANCED,"sdd_advanced" },
 		{ IDC_FOLDERSLABEL,"sdd_drives" },
@@ -3564,6 +3569,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 	m_pDatabase->Enable(IsDlgButtonChecked(IDC_ENABLE));
 	m_pDatabase->UpdateGlobally(IsDlgButtonChecked(IDC_GLOBALUPDATE));
 	m_pDatabase->SetFlag(CDatabase::flagStopIfRootUnavailable,IsDlgButtonChecked(IDC_STOPIFROOTUNAVAILABLE));
+	m_pDatabase->SetFlag(CDatabase::flagScanSymLinksAndJunctions,IsDlgButtonChecked(IDS_SCANSYMLINKSANDJUNCTIONS));
 	m_pDatabase->SetFlag(CDatabase::flagIncrementalUpdate,IsDlgButtonChecked(IDC_INCREMENTALUPDATE));
 	m_pDatabase->SetFlag(CDatabase::flagAnsiCharset,!IsDlgButtonChecked(IDC_UNICODE));
 
@@ -4032,7 +4038,10 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	else
 	{
 		SHFILEINFOW fi;
-		if (GetFileInfo(szDrive,0,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+		DWORD dwFlags=SHGFI_SYSICONINDEX|SHGFI_SMALLICON;
+		if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
+			dwFlags|=SHGFI_USEFILEATTRIBUTES;
+		if (GetFileInfo(szDrive,FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags))
 			li.iImage=fi.iIcon;
 		else
 			li.iImage=DEL_IMAGE;
@@ -4172,7 +4181,8 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 	}
 	else
 	{
-		if (GetFileInfo(szPath,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+		if (GetFileInfo(szPath,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX|
+			(GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons?SHGFI_USEFILEATTRIBUTES:0)))
 			li.iImage=fi.iIcon;
 		else
 			li.iImage=DEL_IMAGE;
@@ -4279,7 +4289,8 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToL
 	else
 	{
 		// Resolving icon,
-		if (GetFileInfo(szName,0,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+		if (GetFileInfo(szName,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX|
+			(GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons?SHGFI_USEFILEATTRIBUTES:0)))
 			li.iImage=fi.iIcon;
 		else
 			li.iImage=DIR_IMAGE;
@@ -4370,7 +4381,8 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 			else
 			{
 				SHFILEINFOW fi;
-				if (GetFileInfo(szDrive,0,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX))
+				if (GetFileInfo(szDrive,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX|
+					(GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons?SHGFI_USEFILEATTRIBUTES:0)))
 					li.iImage=fi.iIcon;
 				else
 					li.iImage=DEL_IMAGE;
@@ -4496,7 +4508,8 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 			}
 			else
 			{
-				if (GetFileInfo(szBuffer,0,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX|SHGFI_DISPLAYNAME))
+				if (GetFileInfo(szBuffer,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX|SHGFI_DISPLAYNAME)|
+					(GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons?SHGFI_USEFILEATTRIBUTES:0))
 					li.iImage=fi.iIcon;
 				else
 					li.iImage=DEL_IMAGE;
@@ -4607,7 +4620,9 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 					}
 					else
 					{
-						if (GetFileInfo(szBuffer,0,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX|SHGFI_DISPLAYNAME))
+						if (GetFileInfo(szBuffer,FILE_ATTRIBUTE_DIRECTORY,&fi,
+							SHGFI_SMALLICON|SHGFI_SYSICONINDEX|SHGFI_DISPLAYNAME|
+							(GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons?SHGFI_USEFILEATTRIBUTES:0)))
 							li.iImage=fi.iIcon;
 						else
 							li.iImage=DEL_IMAGE;
@@ -6182,8 +6197,10 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_pToolBar->SetWindowPos(HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);
 
 	
+	RECT rc;
 	m_pWhenPressedList=new CListCtrl(GetDlgItem(IDC_WHENPRESSED));
-	m_pWhenPressedList->InsertColumn(0,"",LVCFMT_LEFT,150);
+	m_pWhenPressedList->GetClientRect(&rc);
+	m_pWhenPressedList->InsertColumn(0,"",LVCFMT_LEFT,rc.right-GetSystemMetrics(SM_CXVSCROLL));
 	m_pWhenPressedList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES,LVS_EX_CHECKBOXES);
 	if (IsUnicodeSystem())
 		m_pWhenPressedList->SetUnicodeFormat(TRUE);
@@ -6193,6 +6210,8 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,2,ID2W(IDS_SHORTCUTWHENNAMETABSHOWN),0,0,0,CShortcut::wpNameTabShown);
 	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,3,ID2W(IDS_SHORTCUTWHENSIZEDATETABSHOWN),0,0,0,CShortcut::wpSizeDateTabShown);
 	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,4,ID2W(IDS_SHORTCUTWHENADVANCEDTABSHOWN),0,0,0,CShortcut::wpAdvancedTabShown);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,5,ID2W(IDS_SHORTCUTWHENIFISRUNNING),0,0,0,CShortcut::wpDisableWhenISRunning|CShortcut::wpInvert);
+	m_pWhenPressedList->InsertItem(LVIF_TEXT|LVIF_PARAM,6,ID2W(IDS_SHORTCUTWHENIFISNOTRUNNING),0,0,0,CShortcut::wpDisableWhenISNotRunning|CShortcut::wpInvert);
 	
 	
 	// Check wheter Advanced items should be added
@@ -7834,12 +7853,19 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForShortcut(CShortcut
 	{
 		if ((pShortcut->m_dwFlags&CShortcut::sfKeyTypeMask)==CShortcut::sfLocal)
 		{
-			CShortcut::WhenPresssed wpMask=(CShortcut::WhenPresssed)m_pWhenPressedList->GetItemData(nItem);
-			m_pWhenPressedList->SetCheckState(nItem,(pShortcut->m_wWhenPressed&wpMask)?TRUE:FALSE);
+			WORD wpMask=(CShortcut::WhenPresssed)m_pWhenPressedList->GetItemData(nItem);
+			if (wpMask&CShortcut::wpInvert)
+			{
+				wpMask&=~CShortcut::wpInvert;
+				m_pWhenPressedList->SetCheckState(nItem,(pShortcut->m_wWhenPressed&wpMask)?FALSE:TRUE);
+			}
+			else
+				m_pWhenPressedList->SetCheckState(nItem,(pShortcut->m_wWhenPressed&wpMask)?TRUE:FALSE);
 		}
 		else
 			m_pWhenPressedList->SetCheckState(nItem,TRUE);
-			nItem=m_pWhenPressedList->GetNextItem(nItem,LVNI_ALL);
+			
+		nItem=m_pWhenPressedList->GetNextItem(nItem,LVNI_ALL);
 	}
 
 }
@@ -7882,12 +7908,23 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForShortcut(CShortcu
 		int nItem=m_pWhenPressedList->GetNextItem(-1,LVNI_ALL);
 		while (nItem!=-1)
 		{	
-			CShortcut::WhenPresssed wpMask=(CShortcut::WhenPresssed)m_pWhenPressedList->GetItemData(nItem);
-			
-			if (m_pWhenPressedList->GetCheckState(nItem))
-				pShortcut->m_wWhenPressed|=wpMask;
+			WORD wpMask=(CShortcut::WhenPresssed)m_pWhenPressedList->GetItemData(nItem);
+			if (wpMask&CShortcut::wpInvert)
+			{
+				wpMask&=~CShortcut::wpInvert;
+				if (m_pWhenPressedList->GetCheckState(nItem))
+					pShortcut->m_wWhenPressed&=~wpMask;
+				else
+					pShortcut->m_wWhenPressed|=wpMask;
+
+			}
 			else
-				pShortcut->m_wWhenPressed&=~wpMask;
+			{
+				if (m_pWhenPressedList->GetCheckState(nItem))
+					pShortcut->m_wWhenPressed|=wpMask;
+				else
+					pShortcut->m_wWhenPressed&=~wpMask;
+			}
 
 			
 			nItem=m_pWhenPressedList->GetNextItem(nItem,LVNI_ALL);

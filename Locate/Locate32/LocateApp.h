@@ -157,7 +157,7 @@ public:
 	
 	HICON m_hAppIcon;
 	HICON* m_pUpdateAnimIcons;
-	int m_nCurUpdateAnimBitmap;
+	WORD m_nCurUpdateAnimBitmap;
 	CRITICAL_SECTION m_csAnimBitmaps;
 
 	CListFP <CSchedule*> m_Schedules;
@@ -297,8 +297,9 @@ public:
 		pfTrayIconClickActivate = 0x1000,
 		pfUseDefaultIconForDirectories =  0x2000,
 		pfDontShowSystemTrayIcon = 0x4000,
+		pfAvoidToAccessWhenReadingIcons = 0x8000,
 		pfMiscDefault = 0,
-		pfMiscSave = 0x7000,
+		pfMiscSave = 0xF000,
 
 		// Filesize/time/date format
 		pfFormatUseLocaleFormat = 0x4, // Option

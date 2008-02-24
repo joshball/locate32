@@ -53,7 +53,7 @@ void CLocatedItem::SetFolder(const CLocater* pLocater)
     wAccessedTime=pLocater->GetFolderAccessedTime();
 	
 	// Setting attributes
-	wAttribs=pLocater->GetFolderAttributes()&LITEMATTRIB_DBATTRIBFLAG;
+	wAttribs=WORD(pLocater->GetFolderAttributes())&LITEMATTRIB_DBATTRIBFLAG;
 	
 	iIcon=DIR_IMAGE;
 	if (nPathLen<=3)
@@ -105,7 +105,7 @@ void CLocatedItem::SetFolderW(const CLocater* pLocater)
     wAccessedTime=pLocater->GetFolderAccessedTimeW();
 	
 	// Setting attributes
-	wAttribs=pLocater->GetFolderAttributes()&LITEMATTRIB_DBATTRIBFLAG;
+	wAttribs=WORD(pLocater->GetFolderAttributes())&LITEMATTRIB_DBATTRIBFLAG;
 	
 	iIcon=DIR_IMAGE;
 	if (nPathLen<=3)
@@ -157,7 +157,7 @@ void CLocatedItem::SetFile(const CLocater* pLocater)
 	wAccessedTime=pLocater->GetFileAccessedTime();
 
 	// Setting attributes
-	wAttribs=pLocater->GetFileAttributes()&LITEMATTRIB_DBATTRIBFLAG;
+	wAttribs=WORD(pLocater->GetFileAttributes())&LITEMATTRIB_DBATTRIBFLAG;
 
 	iIcon=DEF_IMAGE;
 	if (nPathLen<=3)
@@ -211,7 +211,7 @@ void CLocatedItem::SetFileW(const CLocater* pLocater)
 	wAccessedTime=pLocater->GetFileAccessedTimeW();
 
 	// Setting attributes
-	wAttribs=pLocater->GetFileAttributes()&LITEMATTRIB_DBATTRIBFLAG;
+	wAttribs=WORD(pLocater->GetFileAttributes())&LITEMATTRIB_DBATTRIBFLAG;
 
 	iIcon=DEF_IMAGE;
 	if (nPathLen<=3)
@@ -454,6 +454,7 @@ void CLocatedItem::UpdateFileTitle()
 								else if (RegQueryValueEx(RegKey,"NeverShowExt",NULL,NULL,NULL,&nTemp)==ERROR_SUCCESS)
 									bShowExtension=FALSE;
 
+								/*
 								if (ShouldUpdateType() && (GetLocateDlg()->GetFlags()&(CLocateDlg::fgLVShowFileTypes|CLocateDlg::fgLVShowShellType))==CLocateDlg::fgLVShowFileTypes)
 								{
 									// Taking type now
@@ -473,6 +474,7 @@ void CLocatedItem::UpdateFileTitle()
 											delete[] pNewType;
 									}
 								}
+								*/
 								RegKey.CloseKey();
 							}
 						}
@@ -535,7 +537,16 @@ void CLocatedItem::UpdateType()
 	
 	WCHAR* pNewType=NULL;
 		
-	if (!(GetLocateDlg()->GetFlags()&CLocateDlg::fgLVShowFileTypes))
+	if (IsSymlink())
+	{
+		if (IsFolder())
+			pNewType=allocstringW(IDS_SYMLINKDIR);
+		else
+			pNewType=allocstringW(IDS_SYMLINK);
+	}
+	else if (IsJunkction())
+		pNewType=allocstringW(IDS_JUNCTION);
+	else if (!(GetLocateDlg()->GetFlags()&CLocateDlg::fgLVShowFileTypes))
 	{
 		WCHAR buf[300];
 		DWORD dwLength;
@@ -556,20 +567,15 @@ void CLocatedItem::UpdateType()
 	{
 		// Using shell functions
 		SHFILEINFOW fi;
-		if (ShouldUpdateIcon() && GetLocateDlg()->GetFlags()&CLocateDlg::fgLVShowIcons)
+		DWORD dwAttribs=0;
+		DWORD dwFlags=SHGFI_TYPENAME;
+		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
 		{
-			// Taking icon now too
-			if (!GetFileInfo(GetPath(),0,&fi,SHGFI_TYPENAME|SHGFI_ICON|SHGFI_SYSICONINDEX))
-			{
-				// File does not exist
-				SetToDeleted();
-				ItemDebugMessage("CLocatedItem::UpdateType END1");
-			}
-			iIcon=fi.iIcon;
-			DebugFormatMessage("dwFlags|=LITEM_ICONOK by UpdateType for %s",GetPath());
-			dwFlags|=LITEM_ICONOK;
+			dwAttribs=GetSystemAttributesFromAttributes(GetAttributes());
+			dwFlags|=SHGFI_USEFILEATTRIBUTES;
 		}
-		else if (!GetFileInfo(GetPath(),0,&fi,SHGFI_TYPENAME))
+
+		if (!GetFileInfo(GetPath(),dwAttribs,&fi,dwFlags))
 		{
 			// File does not exist
 			SetToDeleted();
@@ -581,22 +587,28 @@ void CLocatedItem::UpdateType()
 	}
 	else if (IsFolder())
 	{
-		if (!FileSystem::IsDirectory(GetPath()))
+		if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating)
 		{
-			// Folder does not exist
-			SetToDeleted();
-			ItemDebugMessage("CLocatedItem::UpdateType END3");
-			return;
+			if (!FileSystem::IsDirectory(GetPath()))
+			{
+				// Folder does not exist
+				SetToDeleted();
+				ItemDebugMessage("CLocatedItem::UpdateType END3");
+				return;
+			}
 		}
 		pNewType=allocstringW(IDS_DIRECTORYTYPE);
 	}
 	else
 	{
-		if (!FileSystem::IsFile(GetPath()))
+		if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating)
 		{
-			SetToDeleted();
-			ItemDebugMessage("CLocatedItem::UpdateType END4");
-			return;
+			if (!FileSystem::IsFile(GetPath()))
+			{
+				SetToDeleted();
+				ItemDebugMessage("CLocatedItem::UpdateType END4");
+				return;
+			}
 		}
 	
 		CRegKey RegKey;
@@ -661,6 +673,82 @@ void CLocatedItem::UpdateType()
 	ItemDebugMessage("CLocatedItem::UpdateType END");
 }
 
+void CLocatedItem::UpdateIcon()
+{
+	ItemDebugMessage("CLocatedItem::UpdateIcon BEGIN");
+	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
+	{
+		DWORD dwFlags=SHGFI_SYSICONINDEX;
+		DWORD dwAttributes=0;
+		
+		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating) ||
+			GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
+		{
+			dwFlags|=SHGFI_USEFILEATTRIBUTES;
+			dwAttributes=GetSystemAttributesFromAttributes(GetAttributes());
+		}		
+		SHFILEINFOW fi;
+		if (GetFileInfo(GetPath(),dwAttributes,&fi,dwFlags))
+			iIcon=fi.iIcon;
+		else 
+			iIcon=GetLocateApp()->m_nDelImage;
+	}
+	else if (IsDeleted())
+		iIcon=GetLocateApp()->m_nDelImage;
+	else if (IsFolder())
+		iIcon=GetLocateApp()->m_nDirImage;
+	else
+		iIcon=GetLocateApp()->m_nDefImage;
+
+	dwFlags|=LITEM_ICONOK;
+
+	ItemDebugMessage("CLocatedItem::UpdateIcon END");
+	
+}
+
+
+
+void CLocatedItem::UpdateParentIcon()
+{
+	ItemDebugMessage("CLocatedItem::UpdateParentIcon BEGIN");
+	SHFILEINFOW fi;
+	LPWSTR szParent=GetParent();
+	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
+	{
+		DWORD dwFlags=SHGFI_SYSICONINDEX;
+		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating) ||
+			GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
+			dwFlags|=SHGFI_USEFILEATTRIBUTES;
+		
+			
+		if (szParent[1]==L':' && szParent[2]==L'\0')
+		{
+			WCHAR szDrive[]=L"X:\\";
+			szDrive[0]=szParent[0];
+			if (GetFileInfo(szDrive,FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags))
+				iParentIcon=fi.iIcon;
+			else
+				iParentIcon=((CLocateApp*)GetApp())->m_nDelImage;
+		}
+		else
+		{
+			if (GetFileInfo(GetParent(),FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags))
+				iParentIcon=fi.iIcon;
+			else
+				iParentIcon=((CLocateApp*)GetApp())->m_nDelImage;
+		}
+	}
+	else if (IsDeleted())
+		iIcon=GetLocateApp()->m_nDelImage;
+	else
+    	iIcon=GetLocateApp()->m_nDefImage;
+
+	dwFlags|=LITEM_PARENTICONOK;
+
+	ItemDebugMessage("CLocatedItem::UpdateParentIcon END");
+}
+
+
 void CLocatedItem::UpdateAttributes()
 {
 	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
@@ -673,16 +761,41 @@ void CLocatedItem::UpdateAttributes()
 	if (IsDeleted())
 		return;
 
+	union {
+		WIN32_FIND_DATAA fda;
+		WIN32_FIND_DATAW fdw;
+	};
+	HANDLE hFind;
+	if (IsUnicodeSystem())
+		hFind=FindFirstFileW(GetPath(),&fdw);
+	else
+		hFind=FindFirstFileA(W2A(GetPath()),&fda);
 
-	DWORD dwAttributes=FileSystem::GetFileAttributes(GetPath());
-	if (dwAttributes==DWORD(-1))
+	if (hFind==INVALID_HANDLE_VALUE)
 	{
 		SetToDeleted();
 		return;
 	}
-	wAttribs=GetAttributesFromSystemAttributes(dwAttributes)|(wAttribs&LITEMATTRIB_DIRECTORY);
 
+	ASSERT(fda.dwFileAttributes==fdw.dwFileAttributes);
+	ASSERT(fda.dwReserved0==fdw.dwReserved0);
 
+	wAttribs=GetAttributesFromSystemAttributes(fda.dwFileAttributes)|(wAttribs&LITEMATTRIB_DIRECTORY);
+
+	if (fda.dwFileAttributes&FILE_ATTRIBUTE_REPARSE_POINT)
+	{
+		switch (fda.dwReserved0)
+		{
+		case IO_REPARSE_TAG_MOUNT_POINT:
+			wAttribs|=LITEMATTRIB_JUNCTION;
+			break;
+		case IO_REPARSE_TAG_SYMLINK:
+			wAttribs|=LITEMATTRIB_SYMLINK;
+			break;
+		}		
+	}
+
+	FindClose(hFind);
 	
 	ItemDebugMessage("CLocatedItem::UpdateAttributes END");
 }
@@ -1621,25 +1734,28 @@ void CLocatedItem::SetToDeleted()
 {
 	ItemDebugMessage("CLocatedItem::SetToDeleted BEGIN");
 	
-	WCHAR* pTmp=szType;
-	InterlockedExchangePointer((PVOID*)&szType,allocstringW(IDS_DELETEDFILE));
-	if (pTmp!=NULL)
-		delete[] pTmp;
-	iIcon=DEL_IMAGE;
-	
-	dwFileSize=DWORD(-1);
-	wModifiedDate=WORD(-1);
-	wModifiedTime=WORD(-1);
-	wCreatedDate=WORD(-1);
-	wCreatedTime=WORD(-1);
-	wAccessedDate=WORD(-1);
-	wAccessedTime=WORD(-1);
+	if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating)
+	{
+		WCHAR* pTmp=szType;
+		InterlockedExchangePointer((PVOID*)&szType,allocstringW(IDS_DELETEDFILE));
+		if (pTmp!=NULL)
+			delete[] pTmp;
+		iIcon=DEL_IMAGE;
+		
+		dwFileSize=DWORD(-1);
+		wModifiedDate=WORD(-1);
+		wModifiedTime=WORD(-1);
+		wCreatedDate=WORD(-1);
+		wCreatedTime=WORD(-1);
+		wAccessedDate=WORD(-1);
+		wAccessedTime=WORD(-1);
 
-    DeleteAllExtraFields();
+		DeleteAllExtraFields();
 
-	dwFlags&=~LITEM_PARENTICONOK;
-	dwFlags|=LITEM_ICONOK|LITEM_TYPEOK|LITEM_TIMEDATEOK|LITEM_FILESIZEOK;
-	//DebugFormatMessage(L"dwFlags|=LITEM_ICONOK by SetToDeleted for %s",GetPath());
+		dwFlags&=~LITEM_PARENTICONOK;
+		dwFlags|=LITEM_ICONOK|LITEM_TYPEOK|LITEM_TIMEDATEOK|LITEM_FILESIZEOK;
+		//DebugFormatMessage(L"dwFlags|=LITEM_ICONOK by SetToDeleted for %s",GetPath());
+	}
 
 	ItemDebugMessage("CLocatedItem::SetToDeleted END");
 }
@@ -2087,20 +2203,43 @@ LPWSTR CLocatedItem::GetToolTipText() const
 	return g_szwBuffer;
 }
 
-WORD CLocatedItem::GetAttributesFromSystemAttributes(DWORD dwSystemAttributess)
+WORD CLocatedItem::GetAttributesFromSystemAttributes(DWORD dwSystemAttributes)
 {
 	WORD wRet=0;
-	if (dwSystemAttributess&FILE_ATTRIBUTE_ARCHIVE)
+	if (dwSystemAttributes&FILE_ATTRIBUTE_ARCHIVE)
 		wRet|=LITEMATTRIB_ARCHIVE;
-	if (dwSystemAttributess&FILE_ATTRIBUTE_HIDDEN)
+	if (dwSystemAttributes&FILE_ATTRIBUTE_HIDDEN)
 		wRet|=LITEMATTRIB_HIDDEN;
-	if (dwSystemAttributess&FILE_ATTRIBUTE_READONLY)
+	if (dwSystemAttributes&FILE_ATTRIBUTE_READONLY)
 		wRet|=LITEMATTRIB_READONLY;
-	if (dwSystemAttributess&FILE_ATTRIBUTE_SYSTEM)
+	if (dwSystemAttributes&FILE_ATTRIBUTE_SYSTEM)
 		wRet|=LITEMATTRIB_SYSTEM;
-	if (dwSystemAttributess&FILE_ATTRIBUTE_COMPRESSED)
+	if (dwSystemAttributes&FILE_ATTRIBUTE_COMPRESSED)
 		wRet|=LITEMATTRIB_COMPRESSED;
-	if (dwSystemAttributess&FILE_ATTRIBUTE_ENCRYPTED)
+	if (dwSystemAttributes&FILE_ATTRIBUTE_ENCRYPTED)
 		wRet|=LITEMATTRIB_ENCRYPTED;
 	return wRet;
 }
+
+DWORD CLocatedItem::GetSystemAttributesFromAttributes(WORD wAttributes)
+{
+	DWORD dwRet=0;
+	if (wAttributes&LITEMATTRIB_DIRECTORY)
+		dwRet|=FILE_ATTRIBUTE_DIRECTORY;
+	if (wAttributes&LITEMATTRIB_ARCHIVE)
+		dwRet|=FILE_ATTRIBUTE_ARCHIVE;
+	if (wAttributes&LITEMATTRIB_HIDDEN)
+		dwRet|=FILE_ATTRIBUTE_HIDDEN;
+	if (wAttributes&LITEMATTRIB_READONLY)
+		dwRet|=FILE_ATTRIBUTE_READONLY;
+	if (wAttributes&LITEMATTRIB_SYSTEM)
+		dwRet|=FILE_ATTRIBUTE_SYSTEM;
+	if (wAttributes&LITEMATTRIB_COMPRESSED)
+		dwRet|=FILE_ATTRIBUTE_COMPRESSED;
+	if (wAttributes&LITEMATTRIB_ENCRYPTED)
+		dwRet|=FILE_ATTRIBUTE_ENCRYPTED;
+	if (wAttributes&(LITEMATTRIB_JUNCTION|LITEMATTRIB_SYMLINK))
+		dwRet|=FILE_ATTRIBUTE_REPARSE_POINT;
+	return dwRet;
+}
+	

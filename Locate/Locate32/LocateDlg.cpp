@@ -1097,30 +1097,26 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 				// Checking Win key state
 				if ((GetKeyState(VK_LWIN)|GetKeyState(VK_RWIN)) & 0x8000)
 				{
-					if (pShortcutList[0]->m_bModifiers&CShortcut::ModifierWin)
+					if ((*pShortcutList)->m_bModifiers&CShortcut::ModifierWin)
 					{
-						if (pShortcutList[0]->IsWhenAndWhereSatisfied(*this))
-							pShortcutList[0]->ExecuteAction();
+						if ((*pShortcutList)->IsWhenAndWhereSatisfied(*this))
+							(*pShortcutList)->ExecuteAction();
+						else
+							(*pShortcutList)->SendEventBackToControl();
 					}
 				}
-				else if (!(pShortcutList[0]->m_bModifiers&CShortcut::ModifierWin))
+				else if (!((*pShortcutList)->m_bModifiers&CShortcut::ModifierWin))
 				{
-					if (pShortcutList[0]->IsWhenAndWhereSatisfied(*this))
-						pShortcutList[0]->ExecuteAction();
+					if ((*pShortcutList)->IsWhenAndWhereSatisfied(*this))
+						(*pShortcutList)->ExecuteAction();
+					else
+						(*pShortcutList)->SendEventBackToControl();
 				}
 				else
 				{
 					// Shortcut wants Win but it is not pressed, acceltable has stolen
-					// enevent, send that event to control
-					HWND hControl=GetFocus();
-					if (hControl!=NULL)
-					{
-						DWORD lParam=1;
-						if ((GetKeyState(VK_LMENU)|GetKeyState(VK_RMENU)) & 0x8000)
-							lParam|=1<<29;
-						::SendMessage(hControl,WM_CHAR,pShortcutList[0]->m_bVirtualKey,lParam);
-					}
-
+					// the event, send that event to control
+					(*pShortcutList)->SendEventBackToControl();
 				}
 	
 				pShortcutList++;
@@ -3239,19 +3235,19 @@ void CLocateDlg::OnTimer(DWORD dwTimerID)
 		m_ClickWait=FALSE;
 		break;
 	case ID_LOCATEANIM:
-		m_nCurLocateAnimBitmap++;
-		if (m_nCurLocateAnimBitmap>5)
-			m_nCurLocateAnimBitmap=0;
 		EnterCriticalSection(&m_csLocateAnimBitmaps);
+		m_nCurLocateAnimBitmap++;
+		if (m_nCurLocateAnimBitmap>=COUNT_LOCATEANIMATIONS)
+			m_nCurLocateAnimBitmap=0;
 		if (m_pStatusCtrl!=NULL && m_pLocateAnimBitmaps!=NULL)
 			m_pStatusCtrl->SetText((LPCSTR)m_pLocateAnimBitmaps[m_nCurLocateAnimBitmap],STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
 		LeaveCriticalSection(&m_csLocateAnimBitmaps);
 		break;
 	case ID_UPDATEANIM:
-		m_nCurUpdateAnimBitmap++;
-		if (m_nCurUpdateAnimBitmap>12)
-			m_nCurUpdateAnimBitmap=0;
 		EnterCriticalSection(&m_csUpdateAnimBitmaps);
+		m_nCurUpdateAnimBitmap++;
+		if (m_nCurUpdateAnimBitmap>=COUNT_UPDATEANIMATIONS)
+			m_nCurUpdateAnimBitmap=0;
 		if (m_pStatusCtrl!=NULL && m_pUpdateAnimBitmaps!=NULL)
 			m_pStatusCtrl->SetText((LPCSTR)m_pUpdateAnimBitmaps[m_nCurUpdateAnimBitmap],STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
 		LeaveCriticalSection(&m_csUpdateAnimBitmaps);
@@ -4792,8 +4788,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				default:
 					ASSERT (nDetail<=LastType);
 			
-					if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
-						pItem->ShouldUpdateByDetail(nDetail))
+					if (pItem->ShouldUpdateByDetail(nDetail))
 						pItem->UpdateByDetail(nDetail);
 					pLvdi->item.mask=LVIF_TEXT;
 					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetDetailText(nDetail));
@@ -4856,8 +4851,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				default:
 					ASSERT (nDetail<=LastType);
 			
-					if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
-						pItem->ShouldUpdateByDetail(nDetail))
+					if (pItem->ShouldUpdateByDetail(nDetail))
 					{
 						ASSERT (m_pBackgroundUpdater!=NULL);
 
@@ -4924,8 +4918,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				default:
 					ASSERT (nDetail<=LastType);
 			
-					if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
-						pItem->ShouldUpdateByDetail(nDetail))
+					if (pItem->ShouldUpdateByDetail(nDetail))
 						pItem->UpdateByDetail(nDetail);
 					pLvdi->item.mask=LVIF_TEXT;
 					pLvdi->item.pszText=pItem->GetDetailText(nDetail);
@@ -4984,8 +4977,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				default:
 					ASSERT (nDetail<=LastType);
 			
-					if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating &&
-						pItem->ShouldUpdateByDetail(nDetail))
+					if (pItem->ShouldUpdateByDetail(nDetail))
 					{
 						ASSERT (m_pBackgroundUpdater!=NULL);
 
@@ -5552,9 +5544,9 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 void CLocateDlg::SetSystemImagelists(CListCtrl* pList,HICON* phIcon)
 {
 	SHFILEINFO fi;
-	HIMAGELIST hList=(HIMAGELIST)SHGetFileInfo(szEmpty,0,&fi,sizeof(SHFILEINFO),/*SHGFI_ICON|*/SHGFI_SYSICONINDEX);
+	HIMAGELIST hList=(HIMAGELIST)SHGetFileInfo(szEmpty,0,&fi,sizeof(SHFILEINFO),SHGFI_SYSICONINDEX);
 	pList->SetImageList(hList,LVSIL_NORMAL);
-	hList=(HIMAGELIST)SHGetFileInfo(szEmpty,0,&fi,sizeof(SHFILEINFO),/*SHGFI_ICON|*/SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
+	hList=(HIMAGELIST)SHGetFileInfo(szEmpty,0,&fi,sizeof(SHFILEINFO),SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
 	pList->SetImageList(hList,LVSIL_SMALL);
 	if (phIcon!=NULL)
 		*phIcon=ImageList_ExtractIcon(NULL,hList,DEF_IMAGE);
@@ -6094,9 +6086,13 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 
 	CWaitCursor wait;
 	CArray<CLocatedItem*> aItems;
-	int nBufferLength=1; // For buffer length
+	BOOL bSymlinkAndJunctions=FALSE;
+
+
+
+
 	
-	// Resolving files
+	// First collect selected files
 	int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
 	if (iItem==-1)
 	{
@@ -6104,24 +6100,20 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 			return;
 
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+
 		LPCWSTR szPath=pItem->GetPath();
 		if (pItem->IsFolder())
 		{
 			if (FileSystem::IsDirectory(szPath))
 			{
+				if (pItem->IsJunkction() || pItem->IsSymlink())
+					bSymlinkAndJunctions=TRUE;
+
                 aItems.Add(pItem);
-				nBufferLength+=pItem->GetPathLen()+1;
 			}
 		}
-		else
-		{
-			if (FileSystem::IsFile(szPath))
-			{
-                aItems.Add(pItem);
-				nBufferLength+=pItem->GetPathLen()+1;
-			}
-		}
-	
+		else if (FileSystem::IsFile(szPath))
+			aItems.Add(pItem);
 	}
 	else
 	{
@@ -6129,27 +6121,49 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 		{
 			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
 			LPCWSTR szPath=pItem->GetPath();
+
 			if (pItem->IsFolder())
 			{
 				if (FileSystem::IsDirectory(szPath))
 				{
+					if (pItem->IsJunkction() || pItem->IsSymlink())
+						bSymlinkAndJunctions=TRUE;
 					aItems.Add(pItem);
-					nBufferLength+=pItem->GetPathLen()+1;
 				}
 			}
-			else
-			{
-				if (FileSystem::IsFile(szPath))
-				{
-					aItems.Add(pItem);
-					nBufferLength+=pItem->GetPathLen()+1;
-				}
-			}
+			else if (FileSystem::IsFile(szPath))
+				aItems.Add(pItem);
+
 			iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
 		}
 	}
 
 
+
+
+	
+	if (bSymlinkAndJunctions && !(GetSystemFeaturesFlag()&efWinVista) )
+	{
+		// Junctions and Windows Vista not in use
+		int nRet=MessageBox(ID2W(IDS_ERRORJUNCTIONS),0,MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+		if (nRet==IDCANCEL)
+			return;
+
+		for (int i=0;i<aItems.GetSize();i++)
+		{
+			if (aItems[i]->IsJunkction() || aItems[i]->IsSymlink())
+			{
+				if (nRet==IDYES)
+					FileSystem::RemoveDirectory(aItems[i]->GetPath());
+
+				aItems.RemoveAt(i--);
+			}
+			
+		}
+	}
+
+	
+	// No files anymore? then retusn
 	if (aItems.GetSize()==0) // No files
 		return;
 
@@ -6175,7 +6189,14 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 			fo.fFlags=FOF_ALLOWUNDO;
 		break;
 	}
+	
+
+
 	// Creating file buffer: file1\0file2\0...filen\0\0
+	// Calculating the length of required buffer
+	int nBufferLength=1; 
+	for (int i=0;i<aItems.GetSize();i++)
+		nBufferLength+=aItems[i]->GetPathLen()+1;
 	WCHAR* pFiles=new WCHAR[nBufferLength];
 	fo.pFrom=pFiles;
 	for (int i=0;i<aItems.GetSize();i++)
@@ -8836,11 +8857,14 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	CLocateDlg* pLocateDlg=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate;
 	pLocateDlg->AddInstantSearchingFlags(isIgnoreChangeMessages);
 
+	CRegKey RegKey;
 	COMBOBOXEXITEMW ci;
 	LPITEMIDLIST idl;
 	SHFILEINFOW fi;
-	CRegKey RegKey;
-
+	DWORD dwGetIconFlags=SHGFI_SYSICONINDEX|SHGFI_SMALLICON;
+	if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
+		dwGetIconFlags|=SHGFI_USEFILEATTRIBUTES;
+	
 	// Buffers
 	CStringW temp;
 	WCHAR szBuf[]=L"X:\\";
@@ -9002,9 +9026,9 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 			FileSystem::GetWindowsDirectory(szWindowsDir,MAX_PATH);
 			if (szWindowsDir[1]==L':' && szWindowsDir[2]==L'\\')
 				szWindowsDir[3]='\0';
-			GetFileInfo(szWindowsDir,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+			GetFileInfo(szWindowsDir,0,&fi,dwGetIconFlags|SHGFI_OPENICON);
 			ci.iSelectedImage=fi.iIcon;
-			GetFileInfo(szWindowsDir,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+			GetFileInfo(szWindowsDir,0,&fi,dwGetIconFlags);
 			ci.iImage=fi.iIcon;
 			
 			fi.szDisplayName[0]='\0';
@@ -9021,9 +9045,9 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		}
 		else
 		{
-			GetFileInfo(szBuf,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+			GetFileInfo(szBuf,FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags|SHGFI_OPENICON);
 			ci.iSelectedImage=fi.iIcon;
-			GetFileInfo(szBuf,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_DISPLAYNAME);
+			GetFileInfo(szBuf,FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags|SHGFI_DISPLAYNAME);
 			ci.iImage=fi.iIcon;
 		}
 
@@ -9117,9 +9141,9 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 				}
 				else
 				{
-					GetFileInfo(aRoots[i],0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+					GetFileInfo(aRoots[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags);
 					ci.iImage=fi.iIcon;
-					GetFileInfo(aRoots[i],0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+					GetFileInfo(aRoots[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags|SHGFI_OPENICON);
 					ci.iSelectedImage=fi.iIcon;
 				}
 				ci.pszText=aRoots[i];
@@ -9159,9 +9183,9 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 			}
 			else
 			{
-				GetFileInfo(m_pBrowse[j],0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+				GetFileInfo(m_pBrowse[j],FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags);
 				ci.iImage=fi.iIcon;
-				GetFileInfo(m_pBrowse[j],0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+				GetFileInfo(m_pBrowse[j],FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags|SHGFI_OPENICON);
 				ci.iSelectedImage=fi.iIcon;
 			}
 			ci.pszText=m_pBrowse[j].GetBuffer();
@@ -11100,7 +11124,6 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 	DebugFormatMessage(L"Directory to add: %s",(LPCWSTR)FolderLower);
 
 	COMBOBOXEXITEMW ci;
-	SHFILEINFOW fi;
 			
 	CArrayFAP<LPWSTR> aRoots;
 	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases());
@@ -11225,9 +11248,13 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 			}
 			else
 			{
-				GetFileInfo(m_pBrowse[i],0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+				SHFILEINFOW fi;
+				DWORD dwFlags=SHGFI_SYSICONINDEX|SHGFI_SMALLICON;
+				if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
+					dwFlags|=SHGFI_USEFILEATTRIBUTES;
+				GetFileInfo(m_pBrowse[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags);
 				ci.iImage=fi.iIcon;
-				GetFileInfo(m_pBrowse[i],0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+				GetFileInfo(m_pBrowse[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags|SHGFI_OPENICON);
 				ci.iSelectedImage=fi.iIcon;
 			}
 
@@ -11404,7 +11431,6 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCWSTR szPath)
 		if (m_pBrowse!=NULL /* && FileSystem::IsDirectory(szPath) */) 
 		{
 			COMBOBOXEXITEMW ci;
-			SHFILEINFOW fi;
 			CStringW FolderLower(szPath);
 			FolderLower.MakeLower();
 
@@ -11460,9 +11486,13 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCWSTR szPath)
 				}
 				else
 				{
-					GetFileInfo(m_pBrowse[i],0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+					SHFILEINFOW fi;
+					DWORD dwFlags=SHGFI_SYSICONINDEX|SHGFI_SMALLICON;
+					if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
+						dwFlags|=SHGFI_USEFILEATTRIBUTES;
+					GetFileInfo(m_pBrowse[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags);
 					ci.iImage=fi.iIcon;
-					GetFileInfo(m_pBrowse[i],0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+					GetFileInfo(m_pBrowse[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags|SHGFI_OPENICON);
 					ci.iSelectedImage=fi.iIcon;
 				}
 

@@ -1,4 +1,5 @@
-Locate DB fileformat reference for version 20 ((C) 2001-2008 Janne Huttunen)
+Locate DB fileformat reference for version 20b (additions 24.2.2008)
+Copyright (C) 2001-2008 Janne Huttunen
 
 
 1. The content of database is following:
@@ -57,7 +58,8 @@ DWORD         null (0)
 3.1 Format for directory
 
 BYTE          type and attribute, the compination of the following: 10h = file
-              80h = directory, hidden = 01h, read only = 02h, archive = 04h, system = 08h
+              80h = directory, hidden = 01h, read only = 02h, archive = 04h, system = 08h,
+              10h = symlink, 20h = junction/mount point
 DWORD         data length (actual length = this value + 1)
 BYTE          the length of directory name          
 varible       directory name as a null-terminated string
@@ -73,7 +75,8 @@ BYTE          null (0)
 3.2 Format for file
 
 BYTE          type and attribute, the compination of the following: 10h = file, 
-              (0h no files, 80h = directory), hidden = 01h, read only = 02h, archive = 04h, system = 08h
+              (0h no files, 80h = directory), hidden = 01h, read only = 02h, archive = 04h, 
+              system = 08h, symlink = 10h
 BYTE          the length of file name    
 BYTE          index to extension      
 varible       file name as a null-terminated string

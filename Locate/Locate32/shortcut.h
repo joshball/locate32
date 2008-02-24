@@ -425,6 +425,7 @@ public:
 	BOOL IsWhenAndWhereSatisfied(HWND hSystemTrayWnd) const;
 	
 	void ExecuteAction();
+	void SendEventBackToControl();
 
 	// Flags
 	enum Flags {
@@ -469,6 +470,11 @@ public:
 		wpNameTabShown = 0x0002,
 		wpSizeDateTabShown = 0x0004,
 		wpAdvancedTabShown = 0x0008,
+		wpDisableWhenISRunning = 0x0100,
+		wpDisableWhenISNotRunning = 0x0200,
+		
+
+		wpInvert = 0x8000, // If set, meaning in "When Pressed:" is inverted
 		
 		wpDefault = wpFocusInResultList|wpFocusNotInResultList|wpNameTabShown|wpSizeDateTabShown|wpAdvancedTabShown
 

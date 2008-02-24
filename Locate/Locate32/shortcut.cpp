@@ -2105,24 +2105,40 @@ BOOL CShortcut::IsWhenAndWhereSatisfied(HWND hSystemTrayWnd)  const
 		CLocateDlg* pLocateDlg=GetLocateDlg();
 		if (pLocateDlg!=NULL)
 		{
+			// Check if desired tab is chosen
 			switch (pLocateDlg->GetCurrentTab())
 			{
 			case 0: // Name tab
-				if (m_wWhenPressed&wpNameTabShown)
-					return TRUE;
+				if (!(m_wWhenPressed&wpNameTabShown))
+					return FALSE;
 				break;
 			case 1: // Size and Date tab
-				if (m_wWhenPressed&wpSizeDateTabShown)
-					return TRUE;
+				if (!(m_wWhenPressed&wpSizeDateTabShown))
+					return FALSE;
 				break;
 			case 2: // Advanced tab
-				if (m_wWhenPressed&wpAdvancedTabShown)
-					return TRUE;
+				if (!(m_wWhenPressed&wpAdvancedTabShown))
+					return FALSE;
 				break;
 			}
+
+			// Check if "Find as you tybe" is running when not desired and vise verca
+			if (pLocateDlg->IsInstantSearchingFlagSet(CLocateDlg::isRunning))
+			{
+				if (m_wWhenPressed&wpDisableWhenISRunning)
+					return FALSE;
+			}
+			else
+			{
+				if (m_wWhenPressed&wpDisableWhenISNotRunning)
+					return FALSE;
+			}
+
 		}
-#endif
+		return TRUE;
+#else
 		return FALSE;
+#endif
 	}
 
 	if (m_pClass==NULL && m_pTitle==NULL)
@@ -2139,7 +2155,7 @@ BOOL CShortcut::IsWhenAndWhereSatisfied(HWND hSystemTrayWnd)  const
 			return HWND(SendMessage(hSystemTrayWnd,WM_GETLOCATEDLG,0,0))==hWnd;
 		
 
-		char szClassName[200];
+		char szClassName[200]="";
 		GetClassName(hWnd,szClassName,200);
 
 		if (!DoClassOrTitleMatch(szClassName,m_pClass))
@@ -2156,4 +2172,17 @@ BOOL CShortcut::IsWhenAndWhereSatisfied(HWND hSystemTrayWnd)  const
 			return FALSE;
 	}
 	return TRUE;
+}
+
+
+void CShortcut::SendEventBackToControl()
+{
+	HWND hControl=GetFocus();
+	if (hControl!=NULL)
+	{
+		DWORD lParam=1;
+		if ((GetKeyState(VK_LMENU)|GetKeyState(VK_RMENU)) & 0x8000)
+			lParam|=1<<29;
+		::SendMessage(hControl,WM_CHAR,m_bVirtualKey,lParam);
+	}
 }
