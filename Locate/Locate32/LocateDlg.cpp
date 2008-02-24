@@ -3,7 +3,7 @@
 #include <HFCLib.h>
 #include "Locate32.h"
 #include <uxtheme.h>
-#include <tmschema.h>
+#include <vssym32.h>
 
 
 #define COUNT_LOCATEANIMATIONS 6
@@ -4213,7 +4213,8 @@ void CLocateDlg::OnActivateApp(BOOL fActive,DWORD dwThreadID)
 		}
 
 		// Hide tooltip if shown
-		m_pListTooltips->Pop();
+		if (m_pListTooltips!=NULL)
+			m_pListTooltips->Pop();
 	}
 	else
 	{
@@ -4222,7 +4223,8 @@ void CLocateDlg::OnActivateApp(BOOL fActive,DWORD dwThreadID)
 			RemoveExtraFlags(efFocusToResultListWhenAppActivated);
 
 			// Give focus for the result list
-			m_pListCtrl->SetFocus();
+			if (m_pListCtrl!=NULL)
+				m_pListCtrl->SetFocus();
 
 			return;
 		}

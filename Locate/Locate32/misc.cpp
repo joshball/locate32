@@ -6,7 +6,7 @@
 #include <rpcsal.h>  // Imapi.h requires this
 #include <imapi.h>
 #include <uxtheme.h>
-#include <tmschema.h>
+#include <vssym32.h>
 
 #define BUTTON_WIDTHORIG		18
 #define BUTTON_WIDTHTHEME		13
