@@ -66,6 +66,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include <tchar.h>
 #include <strsafe.h>
 #include "HFCDef.h"
 

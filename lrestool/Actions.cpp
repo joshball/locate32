@@ -29,7 +29,7 @@ BOOL CIdentifiers::LoadFromRCFile(LPCSTR szFile,BOOL bShowFound)
 		pPointer++;
 		
 		int nIndex=0;
-		for (;pPointer[nIndex]!='$';nIndex++)
+		for (;pPointer[nIndex]!='$' && pPointer[nIndex]!='@';nIndex++)
 		{
 			if (!ISVALIDCHAR(pPointer[nIndex]))
 			{
@@ -39,8 +39,16 @@ BOOL CIdentifiers::LoadFromRCFile(LPCSTR szFile,BOOL bShowFound)
 			}
 		}
 
-        CString name(pPointer,nIndex);
-		pPointer+=nIndex+1;
+		CString name(pPointer,nIndex);
+		
+
+		// Ignore formattings
+		if (pPointer[nIndex]=='@')
+		{
+			for (nIndex++;pPointer[nIndex]!='$';nIndex++);
+		}
+
+        pPointer+=nIndex+1;
 		
 		// Finding identified and merging
 		PIDENTIFIER pNew=FindIdentifier(name);

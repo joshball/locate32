@@ -27,6 +27,8 @@ public:
 	BOOL IsSettingsFlagSet(DWORD dwFlags);
 	BOOL IsAllFlagsSet(DWORD dwFlags);
 
+	BOOL GetStartupPath(LPWSTR szPath);
+
 	 
 public:
 	class CGeneralSettingsPage : public CPropertyPage 
@@ -453,6 +455,7 @@ public:
 	
 	CStringW m_OpenFoldersWith;
 	CStringW m_CustomTrayIcon;
+	CStringW m_CustomDialogIcon;
 	
  	// Database
 	CArrayFP<PDATABASE> m_aDatabases;
@@ -475,7 +478,8 @@ public:
 		settingsSetTooltipDelays=0x0040,
 		settingsUseCustomResultListFont=0x0080,
 		settingsDontShowExtensionInRenameDialog=0x0100,
-		settingsCustomUseTrayIcon = 0x0200,
+		settingsUseCustomTrayIcon = 0x0200,
+		settingsUseCustomDialogIcon = 0x0400,
 				
 		settingsDefault=settingsUseLanguageWithConsoleApps
 	};

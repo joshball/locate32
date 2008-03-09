@@ -5,51 +5,54 @@ CONTENT=
 <p>Locate32.exe has the following command line arguments:
 <TABLE cols=2 width="100%">
 <TBODY>
-<TR><TD width=10%>--</TD><TD width=90%>terminate parameter list</TD></TR>
-<TR><TD width=10%>-P path</TD><TD width=90%>put 'path' to 'Look in' field</TD></TR>
-<TR><TD width=10%>-p path</TD><TD width=90%>put 'path' to 'Look in' field (checks also that path is correct)</TD></TR>
-<TR><TD width=10%>-t type</TD><TD width=90%>put 'type' to 'Extensions' field</TD></TR>
-<TR><TD width=10%>-r</TD><TD width=90%>start locating when Locate32 is opened</TD></TR>
-<TR><TD width=10%>-Ax</TD><TD width=90%>Activate control, x can be 'n' (Named), 
+<TR><TD width=20%>--</TD><TD width=80%>terminate parameter list</TD></TR>
+<TR><TD width=20%>-P path</TD><TD width=80%>put 'path' to 'Look in' field</TD></TR>
+<TR><TD width=20%>-p path</TD><TD width=80%>put 'path' to 'Look in' field (checks also that path is correct)</TD></TR>
+<TR><TD width=20%>-t type</TD><TD width=80%>put 'type' to 'Extensions' field</TD></TR>
+<TR><TD width=20%>-r</TD><TD width=80%>start locating when Locate32 is opened</TD></TR>
+<TR><TD width=20%>-Ax</TD><TD width=80%>Activate control, x can be 'n' (Named), 
 't' (Extentions), 'l' (Look In), or 'r' (results list).</TD></TR>
-<TR><TD width=10%>-c</TD><TD width=90%>put clipboard content to 'Named field'</TD></TR>
-<TR><TD width=10%>-s</TD><TD width=90%>leave locate32 background when Locate dialog is closed</TD></TR>
-<TR><TD width=10%>-S</TD><TD width=90%>start locate32 to background mode (does not open Locate dialog)</TD></TR>
-<TR><TD width=10%>-i</TD><TD width=90%>start new instance (experimental)</TD></TR>
-<TR><TD width=10%>-a</TD><TD width=90%>activate existing instance (use e.g. "-a2" to activate the 2nd instance)</TD></TR>
-<TR><TD width=10%>-ln</TD><TD width=90%>set the number of maximum found files</TD></TR>
-<TR><TD width=10%>-lf</TD><TD width=90%>Select 'File Names Only' in Advanced tab</TD></TR>
-<TR><TD width=10%>-ld</TD><TD width=90%>Select 'Folder Names Only' in Advanced tab</TD></TR>
-<TR><TD width=10%>-lfd</TD><TD width=90%>Select 'File and folder names' in Advanced tab</TD></TR>
-<TR><TD width=10%>-lc text</TD><TD width=90%>put 'text' to the 'file containing text' field</TD></TR>
-<TR><TD width=10%>-lcnm </TD><TD width=90%>uncheck 'Match case' field</TD></TR>
-<TR><TD width=10%>-lw</TD><TD width=90%>check 'Match whole name only' field</TD></TR>
-<TR><TD width=10%>-lwn</TD><TD width=90%>uncheck 'Match whole name only' field</TD></TR>
-<TR><TD width=10%>-lr</TD><TD width=90%>check 'Replace spaces with asterisk' field</TD></TR>
-<TR><TD width=10%>-lW</TD><TD width=90%>check 'Use whole path' field</TD></TR>
-<TR><TD width=10%>-lrn</TD><TD width=90%>uncheck 'Replace spaces with asterisk' field</TD></TR>
-<TR><TD width=10%>-lm size</TD><TD width=90%>set minimum file size</TD></TR>
-<TR><TD width=10%>-lM size</TD><TD width=90%>set maximum file size</TD></TR>
-<TR><TD width=10%>-lDmDAY</TD><TD width=90%>set minimum file modification date, DAY can be exact date in the 
+<TR><TD width=20%>-c</TD><TD width=80%>put clipboard content to 'Named field'</TD></TR>
+<TR><TD width=20%>-s</TD><TD width=80%>leave locate32 background when Locate dialog is closed</TD></TR>
+<TR><TD width=20%>-S</TD><TD width=80%>start locate32 to background mode (does not open Locate dialog)</TD></TR>
+<TR><TD width=20%>-i</TD><TD width=80%>start new instance (experimental)</TD></TR>
+<TR><TD width=20%>-a</TD><TD width=80%>activate existing instance (use e.g. "-a2" to activate the 2nd instance)</TD></TR>
+<TR><TD width=20%>-ln</TD><TD width=80%>set the number of maximum found files</TD></TR>
+<TR><TD width=20%>-lf</TD><TD width=80%>Select 'File Names Only' in Advanced tab</TD></TR>
+<TR><TD width=20%>-ld</TD><TD width=80%>Select 'Folder Names Only' in Advanced tab</TD></TR>
+<TR><TD width=20%>-lfd</TD><TD width=80%>Select 'File and folder names' in Advanced tab</TD></TR>
+<TR><TD width=20%>-lc text</TD><TD width=80%>put 'text' to the 'file containing text' field</TD></TR>
+<TR><TD width=20%>-lcnm </TD><TD width=80%>uncheck 'Match case' field</TD></TR>
+<TR><TD width=20%>-lw</TD><TD width=80%>check 'Match whole name only' field</TD></TR>
+<TR><TD width=20%>-lwn</TD><TD width=80%>uncheck 'Match whole name only' field</TD></TR>
+<TR><TD width=20%>-lr</TD><TD width=80%>check 'Replace spaces with asterisk' field</TD></TR>
+<TR><TD width=20%>-lW</TD><TD width=80%>check 'Use whole path' field</TD></TR>
+<TR><TD width=20%>-lrn</TD><TD width=80%>uncheck 'Replace spaces with asterisk' field</TD></TR>
+<TR><TD width=20%>-lm size</TD><TD width=80%>set minimum file size</TD></TR>
+<TR><TD width=20%>-lM size</TD><TD width=80%>set maximum file size</TD></TR>
+<TR><TD width=20%>-lDmDAY</TD><TD width=80%>set minimum file modification date, DAY can be exact date in the 
 			form of YYMMDD, or number (0 is today, 1 is yesterday, etc)</TD></TR>
-<TR><TD width=10%>-lDcDAY</TD><TD width=90%>set minimum file creation date</TD></TR>
-<TR><TD width=10%>-lDaDAY</TD><TD width=90%>set minimum file last access date</TD></TR>
-<TR><TD width=10%>-lDMDAY</TD><TD width=90%>set maximum file modification date</TD></TR>
-<TR><TD width=10%>-lDCDAY</TD><TD width=90%>set maximum file creation date</TD></TR>
-<TR><TD width=10%>-lDADAY</TD><TD width=90%>set maximum file last access date</TD></TR>
-<TR><TD width=10%>-lsXY</TD><TD width=90%>sort located items where X is 'n' (sort by name), 
+<TR><TD width=20%>-lDcDAY</TD><TD width=80%>set minimum file creation date</TD></TR>
+<TR><TD width=20%>-lDaDAY</TD><TD width=80%>set minimum file last access date</TD></TR>
+<TR><TD width=20%>-lDMDAY</TD><TD width=80%>set maximum file modification date</TD></TR>
+<TR><TD width=20%>-lDCDAY</TD><TD width=80%>set maximum file creation date</TD></TR>
+<TR><TD width=20%>-lDADAY</TD><TD width=80%>set maximum file last access date</TD></TR>
+<TR><TD width=20%>-lsXY</TD><TD width=80%>sort located items where X is 'n' (sort by name), 
 			'f' (directory), 's' (size), 't' (type) or 'd' (modified date) 
 			and Y is 'a' (ascending order) or 'd' (descending order)</TD></TR>
-<TR><TD width=10%>-lP preset</TD><TD width=90%>load preset</TD></TR>
-<TR><TD width=10%>-d file</TD><TD width=90%>uses database in file 'file'</TD></TR>
-<TR><TD width=10%>-D name</TD><TD width=90%>uses database named 'name'</TD></TR>
-<TR><TD width=10%>-Lpath</TD><TD width=90%>include path into the database</TD></TR>
-<TR><TD width=10%>-L1</TD><TD width=90%>include all local hard drives into the database</TD></TR>
-<TR><TD width=10%>-u</TD><TD width=90%>start update process at start</TD></TR>
-<TR><TD width=10%>-U</TD><TD width=90%>update database (do not open Locate dialog)</TD></TR>
-<TR><TD width=10%>-RX</TD><TD width=90%>set the priority class of process, X is 'h' (high), 'a' (above), 
+<TR><TD width=20%>-lP preset</TD><TD width=80%>load preset</TD></TR>
+<TR><TD width=20%>-d file</TD><TD width=80%>uses database in file 'file'</TD></TR>
+<TR><TD width=20%>-D name</TD><TD width=80%>uses database named 'name'</TD></TR>
+<TR><TD width=20%>-Lpath</TD><TD width=80%>include path into the database</TD></TR>
+<TR><TD width=20%>-L1</TD><TD width=80%>include all local hard drives into the database</TD></TR>
+<TR><TD width=20%>-u</TD><TD width=80%>start update process at start</TD></TR>
+<TR><TD width=20%>-U</TD><TD width=80%>update database (do not open Locate dialog)</TD></TR>
+<TR><TD width=20%>-RX</TD><TD width=80%>set the priority class of process, X is 'h' (high), 'a' (above), 
 			'n' (normal), 'b' (below), 'i' (idle) or 'r' (realtime)</TD></TR>
-<TR><TD width=10%>-X:CUSTOM</TD><TD width=90%>use different settings branch (see locate.ini.example file)</TD></TR>
+<TR><TD width=20%>-X:CUSTOM</TD><TD width=80%>use different settings branch (see locate.ini.example file)</TD></TR>
+<TR><TD width=20%>-W:search:parameters</TD><TD width=80%>parse Windows search protocol URL. Parameters "qyery=" and 
+"crumb=location:" are only handled. You can also use '-WR:' (run search)  and '-WQ:' (run if nonempty query string 
+given). </TD></TR>
 </TBODY>
 </TABLE>
 </p>

@@ -190,7 +190,12 @@ BOOL CWnd::LoadPosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey,DWORD fFlags)
 				}
 				else if (fFlags&fgAllowMinimized)
 					ShowWindow(swMinimize);
-
+				else
+				{
+					wp.showCmd=SW_SHOWNORMAL;
+					break;
+				}
+				
 				if (lpKey==NULL)
 					RegKey.m_hKey=NULL;
                 return TRUE;

@@ -948,6 +948,68 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				break;
 			}
 			break;
+		case 'W':
+			{
+				BOOL bAlsoRun=FALSE;
+
+				// Search protocol query
+				idx++;
+				if (lpCmdLine[idx]=='R')
+				{
+					pStartData->m_nStatus|=CStartData::statusRunAtStartUp;
+					idx++;
+				}
+				else
+				{
+					bAlsoRun=TRUE,
+					idx++;
+				}
+				if (lpCmdLine[idx]==':') idx++;
+				
+				// Check "search:" part
+				if (_wcsnicmp(lpCmdLine+idx,L"search:",7)!=0)
+					break;
+				idx+=7;
+
+				// 
+				for (;;)
+				{
+					if (_wcsnicmp(lpCmdLine+idx,L"query=",6)==0)
+					{
+						idx+=6;
+						idx+=ParseSearchProtocolString(&pStartData->m_pStartString,lpCmdLine+idx);
+						if (bAlsoRun && pStartData->m_pStartString!=NULL)
+							pStartData->m_nStatus|=CStartData::statusRunAtStartUp;
+			
+					}
+					else if (_wcsnicmp(lpCmdLine+idx,L"crumb=",6)==0)
+					{
+						idx+=6;
+						if (_wcsnicmp(lpCmdLine+idx,L"location:",9)==0)
+						{
+							idx+=9;
+							idx+=ParseSearchProtocolString(&pStartData->m_pStartPath,lpCmdLine+idx);
+						}
+						else
+						{
+							// Ignore this parameter
+							idx+=ParseSearchProtocolString(NULL,lpCmdLine+idx);
+						}
+					}
+					else
+					{
+						// Ignore this parameter
+						idx+=ParseSearchProtocolString(NULL,lpCmdLine+idx);
+					}
+
+
+					if (lpCmdLine[idx]!='&')
+						break;
+
+					idx++;
+				}
+				break;
+			}
 		default:
 			idx++;
 			break;
@@ -959,6 +1021,67 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 		ChangeAndAlloc(pStartData->m_pStartString,lpCmdLine+idx);
 	return TRUE;
 }
+
+void CLocateApp::ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText)
+{
+	DWORD dwLength=istrlenw(szText);
+	if (pVar!=NULL)
+		delete[] pVar;
+	pVar=new WCHAR [dwLength+1];
+	MemCopyW(pVar,szText,dwLength+1);
+}
+
+void CLocateApp::ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText,DWORD dwLength)
+{
+	if (dwLength==DWORD(-1))
+		dwLength=(DWORD)istrlenw(szText);
+	
+	if (pVar!=NULL)
+		delete[] pVar;
+	pVar=new WCHAR [dwLength+1];
+	MemCopyW(pVar,szText,dwLength);
+	pVar[dwLength]='\0';
+}
+
+int CLocateApp::ParseSearchProtocolString(LPWSTR* ppVar,LPCWSTR szText)
+{
+	// Parse text
+	CStringW pNewText;
+	LPCWSTR pPtr=szText;
+	for (;*pPtr!=L' ' && *pPtr!=L'&' && *pPtr!=L'\0';)
+	{
+		if (*pPtr==L'%')
+		{
+			pPtr++;
+
+			WCHAR szTemp[3],*temp;
+			*((DWORD*)szTemp)=*((DWORD*)pPtr);
+			szTemp[2]='\0';
+
+			pNewText << (char)wcstoul(szTemp,&temp,16);
+			pPtr+=int(temp-szTemp);
+		}
+		else
+			pNewText << *(pPtr++);
+	}
+	
+	if (ppVar!=NULL)
+	{
+		if (*ppVar!=NULL)
+			delete[] *ppVar;
+
+		if (!pNewText.IsEmpty())
+		{
+			pNewText.FreeExtra();
+			*ppVar=pNewText.GiveBuffer();
+		}
+		else
+			*ppVar=NULL;
+	}
+
+	return int(pPtr-szText);
+}
+
 
 BOOL CLocateApp::ParseSettingsBranch(LPCWSTR lpCmdLine,LPWSTR& rpSettingBranch)
 {
@@ -1090,7 +1213,7 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 				pPtr+=istrlenw(pPtr)+1;
 			}
 
-			GetFileInfo(*pPtr!='\0'?pPtr:szDrives,0,&fi,SHGFI_ICON|SHGFI_SMALLICON|SHGFI_SYSICONINDEX);
+			GetFileInfo(*pPtr!='\0'?pPtr:szDrives,0,&fi,SHGFI_SYSICONINDEX);
 			m_nDriveImage=fi.iIcon;
 		}
 		
@@ -2483,14 +2606,14 @@ void CLocateAppWnd::LoadAppIcon()
 		CStringW CustomTrayIcon;
 		if (RegKey.QueryValue(L"CustomTrayIcon",CustomTrayIcon))
 		{
-			m_hAppIcon=(HICON)LoadImage(CustomTrayIcon,IMAGE_ICON,16,16,LR_LOADFROMFILE);
+			m_hAppIcon=(HICON)LoadImage(CustomTrayIcon,IMAGE_ICON,GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),LR_LOADFROMFILE);
 			DebugOpenGdiObject(m_hAppIcon);
 			if (m_hAppIcon!=NULL)
 				return;
 		}
 	}
 
-	m_hAppIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,16,16,0);
+	m_hAppIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),0);
 	DebugOpenGdiObject(m_hAppIcon);
 }
 
@@ -3125,6 +3248,12 @@ BOOL CLocateAppWnd::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		OnLocate();
 		break;
 	case IDM_GLOBALUPDATEDB:
+		if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfAskConfirmationForUpdateDatabases)
+		{
+			CLocateDlg* pLocateDlg=GetLocateDlg();
+			if ((pLocateDlg!=NULL?(CWnd*)pLocateDlg:this)->ShowErrorMessage(IDS_UPDATINGCONFIRMATION,IDS_UPDATINGDATABASE,MB_ICONQUESTION|MB_YESNO)==IDNO)
+				break;
+		}
 		OnUpdate(FALSE);
 		break;
 	case IDM_UPDATEDATABASES:
@@ -4722,6 +4851,16 @@ LRESULT CLocateAppWnd::CUpdateStatusWnd::WindowProc(UINT msg,WPARAM wParam,LPARA
 			ReleaseCapture();			
 		}
 		break;
+	case WM_RBUTTONDOWN:
+		{
+			POINT pt;
+			GetCursorPos(&pt);
+			SetForegroundWindow();
+			TrackPopupMenu(GetLocateAppWnd()->m_Menu.GetSubMenu(0),
+				TPM_RIGHTALIGN|TPM_BOTTOMALIGN|TPM_RIGHTBUTTON,pt.x,pt.y,0,
+				*GetLocateAppWnd(),NULL);
+			//DebugMessage("OpenPopupMenu END");
+		}
 	}
 	return CTargetWnd::WindowProc(msg,wParam,lParam);
 }

@@ -212,7 +212,7 @@ public:
 		BOOL SetPath(LPCWSTR szPath);
 
 		void EnableItems(BOOL bEnable=TRUE);
-		void SetStartData(const CLocateApp::CStartData* pStartData);
+		void SetStartData(const CLocateApp::CStartData* pStartData,DWORD& rdwChanged);
 		
 		BOOL EnableMultiDirectorySupport(BOOL bEnable);
 		BOOL SelectByLParam(LPARAM lParam);
@@ -307,7 +307,7 @@ public:
 		
 		void EnableItems(BOOL bEnable);
 		BOOL LookOnlyFiles() const;
-		void SetStartData(const CLocateApp::CStartData* pStartData);
+		void SetStartData(const CLocateApp::CStartData* pStartData,DWORD& rdwChanged);
 
 		void LoadControlStates(CRegKey& RegKey,BOOL bPreset);
 		void SaveControlStates(CRegKey& RegKey);
@@ -353,7 +353,7 @@ public:
 		void RenameReplaceSpaces();
 		BOOL LoadReplaceCharsFromRegistry();
 		BOOL SaveReplaceCharsSaveRegistry();
-		void ReplacesCharsWithAsterisks(CStringW& sString);
+		void ReplaceCharsWithAsterisks(CStringW& sString);
 
 	public:
 		// Return codes for OnOk
@@ -370,7 +370,7 @@ public:
 		void UpdateTypeList();
 		void AddBuildInFileTypes();
 		void ReArrangeAllocatedData();
-		void SetStartData(const CLocateApp::CStartData* pStartData);
+		void SetStartData(const CLocateApp::CStartData* pStartData,DWORD& rdwChanged);
 
 		static DWORD WINAPI UpdaterProc(CAdvancedDlg* pAdvancedDlg);
 	
@@ -587,6 +587,8 @@ public:
 
 	void LoadResultlistActions();
 	void SaveResultlistActions();
+	void LoadDialogIcon();
+
 	void ClearResultlistActions();
 	void SetDefaultActions(CSubAction*** pActions) const;
 
@@ -771,8 +773,9 @@ public:
 		efEnableLogicalOperations = 0x00000010,
 		efAllowSpacesAsSeparators = 0x00000020,
 		efMatchWhileNameIfAsterisks = 0x00000040,
+		efAsteriskAtEndEvenIfExtensionExists = 0x00000080,
 		efLocateProcessDefaults = efEnableLogicalOperations|efAllowSpacesAsSeparators,
-		efLocateProcessSave = 0x00000070,
+		efLocateProcessSave = 0x000000F0,
 
 		// Locate dialog
 		efFocusToResultListWhenAppActivated = 0x01000000,
@@ -900,6 +903,9 @@ protected:
 	WORD m_WaitEvery30;
 	WORD m_WaitEvery60;
 
+	HICON m_hLargeDialogIcon;
+	HICON m_hSmallDialogIcon;
+
 	// For volume serial and label information 
 	struct VolumeInformation {
 		WORD wDB;
@@ -933,20 +939,20 @@ public:
 		isUpDownGoesToResults   = 0x00000020,
 		
 
-		isGeneralDefault = isEnable | isDisableIfDataSearch,
-		isGeneralSave = isEnable | isDisableIfDataSearch | isUpDownGoesToResults,
+		isGeneralDefault		= isEnable | isDisableIfDataSearch,
+		isGeneralSave			= isEnable | isDisableIfDataSearch | isUpDownGoesToResults,
 
 
-		isSearchIfNameChanged   = 0x00010000,
-		isSearchIfTypeChanged   = 0x00020000,
-		isSearchIfLookInChanged = 0x00040000,
-		isSearchIfSizesChanged  = 0x00080000,
-		isSearchIfDatesChanged  = 0x00100000,
-		isSearchIfDataChanged   = 0x00200000,
-		isSearchIfOtherChanged  = 0x00400000,
+		isNameChanged			= 0x00010000,
+		isTypeChanged			= 0x00020000,
+		isLookInChanged			= 0x00040000,
+		isSizesChanged			= 0x00080000,
+		isDatesChanged			= 0x00100000,
+		isDataChanged			= 0x00200000,
+		isOtherChanged			= 0x00400000,
 		isAllChanged  			= 0x00FF0000,
 
-		isSearchIfDefault	    = isSearchIfNameChanged|isSearchIfTypeChanged|isSearchIfLookInChanged,
+		isSearchIfDefault	    = isNameChanged|isTypeChanged|isLookInChanged|isSizesChanged|isDatesChanged|isDataChanged|isOtherChanged,
 		isSearchIfSave		    = 0x00FF0000,
 		
 

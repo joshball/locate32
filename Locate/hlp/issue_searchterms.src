@@ -4,7 +4,8 @@ CONTENT=
 <H1><A NAME="issue_searchterms"></A>Search terms</H1>
 
 <p>
-The following issues may clear out what kind of search terms can be used in "Named:" field.
+The following issues may clear out what kind of search terms can be used in 
+<a href="tab_name.htm#tn_name">$DLGNAME_NAMED@M$</a> field.
 
 <ul>
 <li>By default, Locate finds files which contain a given text. For example, 
@@ -13,31 +14,37 @@ a search term "bar" will find files foobar, barbox and foobarbox. </li>
 <li>You can use * and ? as usually. For example, "foo*bar" will find any file which name contains "foo" 
 followed by "bar" and "foo?bar" will find files, for example, "foo1bar", "fooabar" but not "foo11bar".</li>
 
-<li>You can also use "Named:" field to specify extension, for example, use "foobar*.txt". </li>
+<li>You can also use "Named:" field to specify extension, for example, type "foobar*.txt". </li>
 
-<li>If you want to find the files which names are exactly "foobar", check "Match whole name only" option 
-in Advanced tab. If you want this option to be enabled by default, check the corresponding 
-option in General settings. 
-More precisely, "foobar" without "Match whole name only" is same as "*foobar*" with "Match whole name only".
-If extension is specified in "Named:" field (i.e., there is dot '.' in name), * is not added to the end.</li>
+<li>
+You can use <a href="tab_advanced.htm#ta_matchwholename">$DLGADVANCED_MATCHWHOLENAME@M$</a> check box
+if you want to find the files which names are exactly "foobar".  
+Generally, "foobar" without <a href="tab_advanced.htm#ta_matchwholename">$DLGADVANCED_MATCHWHOLENAME@M$</a>
+checked is effectively the same as "*foobar*" with 
+<a href="tab_advanced.htm#ta_matchwholename">$DLGADVANCED_MATCHWHOLENAME@M$</a> checked.
+However, if "<a href="settings_advanced.htm#sa_noasterisktoendifextension">
+$STRADVANCEDSETTINGS_NOASTERISKTOTAILIFEXTENSIONGIVEN@C$</a>" option is enabled, 
+the asterisk * is not added to the end when an extension is specified in "Named:" field, i.e., the name 
+contains a dot '.'.
+</li>
 	
 <li>You can specify several searching terms by using comma, for example "foo,bar" will search files which name 
 contains foo or bar. If you want to search files including commas, use apostrophes (e.g., type "foo,bar","cat*dog").
-Space can also be used as the separator if "Use space as a separator in "Named:" field" option
-in Advanced setting is enabled.
+Space can also be used as the separator if 
+"<a href="settings_advanced.htm#sa_spaceisseparator">$STRADVANCEDSETTINGS_SPACEISSEPARATOR@C$</a>" option is enabled.
 </li>
 
 
 <li>If you want to search files which names contain "foo" and "bar" (but not necessarily in that order", you 
 can use "+foo,+bar". If you want to search files, which name does <b>not</b> contain "foo" but contains "bar", use 
 "-foo","+bar". To find files which name contains + or -, use apostrophe (e.g., type: +"-foo",+"+bar").
-<b>Note: to use + or -, it is required that "Allow logical operations + and -" option in Advanced 
-settings is enabled.</b>
+<b>Note: to use + or -, it is required that 
+"<a href="settings_advanced.htm#sa_logicalops">$STRADVANCEDSETTINGS_ENABLELOGICALOPERATIONS@Cp$</a>" option is enabled.</b>
 </li>
 
-<li>Spaces processing depends on the option
-"Use space as a separator in "Named:" field". If that option is
-disabled, all spaces are treated as a part of search criteria. For example,
+<li>Spaces processing depends on 
+<a href="settings_advanced.htm#sa_spaceisseparator">$STRADVANCEDSETTINGS_SPACEISSEPARATOR@C$</a> option. 
+If that option is disabled, all spaces are treated as a part of search criteria. For example,
 if you have extra space after comma, that space is treated as a part of the given file name 
 (e.g., "cat, dog" will find files containing "cat" and " dog"). If that option is enabled,
 all extra spaces are ignored. </li>
@@ -46,12 +53,10 @@ all extra spaces are ignored. </li>
 
 <li>You can use PERL compatible regular expression. For example, you can search files which contain 
 "foo" or "bar", type: ":foo|bar" (':' at the beginning tells that the given string is a regular expression). 
-Regular expressions are implemented by using <a href="www.pcre.org/">PCRE library</a>.  
+Regular expressions are implemented by using <a href="http://www.pcre.org/">PCRE library</a>.  
 <a href="http://www.tutorialized.com/view/tutorial/An-Introduction-to-Perl-Regular-Expressions/26007">An introduction to 
 PERL regular expressions</a>.
 </li>
 </ul>
 </p>
-<p>
-Note: "Advanced tab" above refers to Advanced tab in Locate dialog, and "General settings" and "Advanced settings" 
-refers to General and Advanced tab in Settings dialog.</p>
+

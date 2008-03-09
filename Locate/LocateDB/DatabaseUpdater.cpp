@@ -504,7 +504,7 @@ BOOL CDatabaseUpdater::StopUpdating(BOOL bForce)
 	if (bRet && status==STILL_ACTIVE)
 	{
 		InterlockedExchange(&m_lForceQuit,TRUE);
-		WaitForSingleObject(hThread,200);
+		WaitForSingleObject(hThread,300);
 		bRet=::GetExitCodeThread(hThread,&status);
 		
 		if (!bForce)

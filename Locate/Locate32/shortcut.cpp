@@ -1520,7 +1520,7 @@ void CSubAction::DoMisc()
 
 		pLocateDlg->m_NameDlg.m_Name.SetText(Text);
 		pLocateDlg->m_NameDlg.m_Name.SetEditSel(dwSelStart,wSelEnd);
-		pLocateDlg->OnFieldChange(CLocateDlg::isSearchIfNameChanged);
+		pLocateDlg->OnFieldChange(CLocateDlg::isNameChanged);
 		return;
 	}
 	

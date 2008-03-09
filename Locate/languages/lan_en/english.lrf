@@ -31,7 +31,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2008 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.1 beta build 8.2240
+FILEVERSION=3.1 beta build 8.3090
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -239,6 +239,7 @@ STRADVANCEDSETTINGS_MAXNUMBEROFRESULTS=Maximum number of found files:
 STRADVANCEDSETTINGS_SPACEISSEPARATOR=Use space as a separator for searches
 STRADVANCEDSETTINGS_ENABLELOGICALOPERATIONS=Allow logical operations (+ and -) for searches
 STRADVANCEDSETTINGS_MATCHWHOLENAMEIFASTERISKS=If asterisks given, search as if "Match whole name" is enabled
+STRADVANCEDSETTINGS_NOASTERISKTOTAILIFEXTENSIONGIVEN=If extension is given, file name should match to the extension
 STRADVANCEDSETTINGS_ISENABLE=Search as type
 STRADVANCEDSETTINGS_ISLIMIT=Limit the number of results (0 = no limit):
 STRADVANCEDSETTINGS_ISDELAY=Delay before searching (ms):
@@ -319,6 +320,8 @@ STRADVANCEDSETTINGS_MULTIPLEDIRECTORIES=Possible to choose more than one directo
 STRADVANCEDSETTINGS_DONTSAVELISTITEMS=Do not save list items in "Named", "Type" and "Look In" combo boxes
 STRADVANCEDSETTINGS_LOADTYPEFROMREGISTRY=Load file types from registry ("Type of file" combo box)
 STRADVANCEDSETTINGS_TOPMOST=Locate dialog always on top
+STRADVANCEDSETTINGS_CUSTOMDIALOGICON=Custom dialog icon
+STRADVANCEDSETTINGS_ICONFILE=Icon file:
 STRADVANCEDSETTINGS_TRANSPARENCY=Locate dialog transparency (0-100 %):
 
 STRADVANCEDSETTINGS_UPDATEPROCESS=Update process
@@ -348,13 +351,13 @@ STRADVANCEDSETTINGS_SYSTEMTRAYICON=System tray icon
 STRADVANCEDSETTINGS_DONOTSHOWSSYSTEMTRAYICON=Do not show system tray icon
 STRADVANCEDSETTINGS_CLICKACTIVATETRAYICON=Single-clicking tray icon will open Locate dialog
 STRADVANCEDSETTINGS_CUSTOMTRAYICON=Custom system tray icon
-STRADVANCEDSETTINGS_ICONFILE=Icon file:
 STRADVANCEDSETTINGS_SELECTICONFILE=Select icon file
 
 STRADVANCEDSETTINGS_MISCELLANEOUS=Miscellaneous
 STRADVANCEDSETTINGS_DONTSHOWEXTINRENAME=Do not show an extension in the rename dialog
 STRADVANCEDSETTINGS_SHOWCRITICALERRORS=Show critical errors (e.g., cannot write database, ...)
 STRADVANCEDSETTINGS_SHOWNONCRITICALERRORS=Show non-critical errors (e.g., path is not available, ...)
+STRADVANCEDSETTINGS_CONFIRMATIONFORUPDATEDATABASES=Ask confirmatioon when "Update databases" is chosen
 STRADVANCEDSETTINGS_ICONSNOFILEACCESS=Avoid to access files when reading icons 
 STRADVANCEDSETTINGS_USEDEFAULTDIRECTORYICON=Use default icons for directories (use with slow network drives)
 
@@ -1119,6 +1122,7 @@ STR_UPDATING_SCANNINGROOT=scanning
 STR_UPDATING_INITIALIZING=initializing
 STR_UPDATING_FINISHING=finishing
 STR_UPDATING_DELAYWRITING=delay database writing
+STR_UPDATING_CONFIRMATION=Do you want to update your databases?
 
 ###########################
 # Tray icon 

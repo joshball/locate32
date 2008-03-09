@@ -298,8 +298,9 @@ public:
 		pfUseDefaultIconForDirectories =  0x2000,
 		pfDontShowSystemTrayIcon = 0x4000,
 		pfAvoidToAccessWhenReadingIcons = 0x8000,
+		pfAskConfirmationForUpdateDatabases = 0x10000,
 		pfMiscDefault = 0,
-		pfMiscSave = 0xF000,
+		pfMiscSave = 0x1F000,
 
 		// Filesize/time/date format
 		pfFormatUseLocaleFormat = 0x4, // Option
@@ -430,7 +431,7 @@ protected:
 
 	static void ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText);
 	static void ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText,DWORD dwLength);
-
+	static int ParseSearchProtocolString(LPWSTR* ppVar,LPCWSTR szText);
 
 
 
@@ -566,26 +567,7 @@ inline BOOL CLocateApp::IsUpdating() const
 
 
 
-inline void CLocateApp::ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText)
-{
-	DWORD dwLength=istrlenw(szText);
-	if (pVar!=NULL)
-		delete[] pVar;
-	pVar=new WCHAR [dwLength+1];
-	MemCopyW(pVar,szText,dwLength+1);
-}
 
-inline void CLocateApp::ChangeAndAlloc(LPWSTR& pVar,LPCWSTR szText,DWORD dwLength)
-{
-	if (dwLength==DWORD(-1))
-		dwLength=(DWORD)istrlenw(szText);
-	
-	if (pVar!=NULL)
-		delete[] pVar;
-	pVar=new WCHAR [dwLength+1];
-	MemCopyW(pVar,szText,dwLength);
-	pVar[dwLength]='\0';
-}
 
 inline DWORD CLocateApp::GetProgramFlags()
 {

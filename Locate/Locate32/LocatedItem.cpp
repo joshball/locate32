@@ -189,7 +189,7 @@ void CLocatedItem::SetFileW(const CLocater* pLocater)
 	else
 		bExtensionPos++;
 	
-	ASSERT(!FileSystem::IsDirectory(GetPath()));
+	//ASSERT(!FileSystem::IsDirectory(GetPath()));
 
 	// Settig title (maybe)
 	if ((GetLocateDlg()->GetFlags()&(CLocateDlg::fgLVAlwaysShowExtensions|CLocateDlg::fgLV1stCharUpper))==CLocateDlg::fgLVAlwaysShowExtensions)

@@ -47,9 +47,17 @@ In addition, "+cat,-dog" will search filenames containing the word "cat" and
 <p><b><A NAME="sa_matchwholenameifasterisks"></A>$STRADVANCEDSETTINGS_MATCHWHOLENAMEIFASTERISKS@C$</b>:
 If this option is enabled and asterisks '*' are given in a search term, 
 the search is carried out in same way if the  
-<a href="tan_name.htm#ta_matchwholename">Match whole name only</a> check box is turned on (i.e., 
+<a href="tan_name.htm#ta_matchwholename">Match whole name only</a> check box is checked (i.e., 
 a given search have to match to whole file name, not only a part of it). 
 </p>
+
+<p><b><A NAME="sa_noasterisktoendifextension"></A>$STRADVANCEDSETTINGS_NOASTERISKTOTAILIFEXTENSIONGIVEN@C$</b>:
+This option has only an effect when <a href="tan_name.htm#ta_matchwholename">Match whole name only</a> 
+check box is not checked. If this option is enabled and you have specified an extension (i.e., given name
+contains dot '.'), filenames should match to this given extension. On the contrary, if this option <b>not</b> 
+is enabled and you have typed, e.g., "*.txt", the mask "*.txt*" is effectively used and temporary files txt~
+(among others) are also returned. </p>
+
 
 <p><b><A NAME="sa_isenable"></A>$STRADVANCEDSETTINGS_ISENABLE@C$</b>:
 If this option is enabled, results will be shown at the same time (or after 
@@ -155,10 +163,11 @@ If this option is enabled, all files the result list have same generic icon.
 You can use this option for slow-speed media such as floppy disks, 
 or if you have slow or off-line network shares, because reading icons 
 for files in such shares can cause delays when the program does not answer at all.
-<b>Note:</b> it is not necessary to use simple icons if either 
+<b>Note:</b> file accesses are significantly reduced when 
 <A href="settings_advanced.htm#sa_disableupdating">$STRADVANCEDSETTINGS_DISABLEUPDATING@C$</A>
 or <A href="settings_advanced.htm#sa_iconsnofileaccess">$STRADVANCEDSETTINGS_ICONSNOFILEACCESS@C$</A>
-option is enabled. </p>
+option is enabled. However, icon for exe files are still read from files. Thus, 
+if you want to completely avaid file accesses, you simple icons has to be used. </p>
 
 <p><b><A NAME="sa_filetypes"></A>$STRADVANCEDSETTINGS_SHOWFILETYPES@Cp$</b>:
 If this option is enabled, Locate32 will determine file types (e.g., "Application") 
@@ -444,6 +453,12 @@ build in file types are added.
 <p><b><A NAME="sa_alwaysontop"></A>$STRADVANCEDSETTINGS_TOPMOST@C$</b>:
 If this option is enabled, the Locate32 dialog is always on top.</p>
 
+<p><b><A NAME="sa_customdialogicon"></A>$STRADVANCEDSETTINGS_CUSTOMDIALOGICON@C$</b>:
+This option can be used specify the icon for the main dialog. The same icon is also 
+showin in the taskbar. To specify the system tray icon, see 
+<a href="settings_advanced.htm#sa_customSTicon">$STRADVANCEDSETTINGS_CUSTOMTRAYICON@C$</a>
+option below. </p>
+
 <p><b><A NAME="sa_transparency"></A>$STRADVANCEDSETTINGS_TRANSPARENCY@C$</b>:
 This options specifies transparency level for the main dialog. The value is between 0-100%
 where 0% is fully opaque and 100% is fully transparent (not visible at all). 
@@ -575,6 +590,11 @@ This kind of errors occurs if Locate32 was unable to open, read or write a datab
 a database has corrupted. Memory allocation errors and unknown errors are also considered as 
 critical errors. However, the error messages are usually shown in a update status tooltip or in 
 the status bar in the Locate32 dialog even if this option is disabled. </p>
+
+<p><b><A NAME="sa_confirmupdate"></A>$STRADVANCEDSETTINGS_CONFIRMATIONFORUPDATEDATABASES@C$</b>:
+When enabled, a confirmation is asked before updating is started by choosing
+<a href="hid_file_updatedatabases.htm">Update databases</a>.  </p>
+
 
 <p><b><A NAME="sa_noncriticalerrors"></A>$STRADVANCEDSETTINGS_SHOWNONCRITICALERRORS@C$</b>:
 When this option is enabled, Locate32 will shown an error message box if a noncritical error occurs. 

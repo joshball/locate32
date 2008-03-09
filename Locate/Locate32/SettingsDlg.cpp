@@ -286,8 +286,10 @@ BOOL CSettingsProperties::LoadSettings()
 
 
 		if (LocRegKey.QueryValue(L"CustomTrayIcon",m_CustomTrayIcon))
-			m_dwSettingsFlags|=settingsCustomUseTrayIcon;
+			m_dwSettingsFlags|=settingsUseCustomTrayIcon;
 
+		if (LocRegKey.QueryValue(L"CustomDialogIcon",m_CustomDialogIcon))
+			m_dwSettingsFlags|=settingsUseCustomDialogIcon;
 	}
 
 	// m_bAdvancedAndContextMenuFlag
@@ -326,16 +328,16 @@ BOOL CSettingsProperties::LoadSettings()
 	}
 		
 	// Checking wheter locate is runned at system startup
-	if (GenRegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		CStringW Path;
-		if (GenRegKey.QueryValue(L"Startup",Path))
+		WCHAR szPath[MAX_PATH];
+		if (GetStartupPath(szPath))
 		{
-			if (Path.LastChar()!='\\')
-				Path << '\\';
-			Path<<L"Locate32 Autorun.lnk";
-			
-			SetSettingsFlags(settingsStartLocateAtStartup,FileSystem::IsFile(Path));
+			int nLen=istrlen(szPath);
+			if (szPath[nLen-1]!='\\')
+				szPath[nLen++]='\\';
+			wcscpy_s(szPath+nLen,MAX_PATH-nLen,L"Locate32 Autorun.lnk");
+	
+			SetSettingsFlags(settingsStartLocateAtStartup,FileSystem::IsFile(szPath));
 			
 		}
 	}
@@ -389,6 +391,30 @@ BOOL CSettingsProperties::LoadSettings()
 	return TRUE;
 }
 
+BOOL CSettingsProperties::GetStartupPath(LPWSTR szPath)
+{
+	if (GetSystemFeaturesFlag()&efWin2000)
+	{
+		HRESULT (STDAPICALLTYPE* pSHGetFolderPathW)(HWND,int,HANDLE,DWORD,LPWSTR)=
+			(HRESULT (STDAPICALLTYPE*)(HWND,int,HANDLE,DWORD,LPWSTR))GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetFolderPathW");
+		if (pSHGetFolderPathW!=NULL)
+		{
+			if (pSHGetFolderPathW(*this,CSIDL_STARTUP,NULL,SHGFP_TYPE_CURRENT,szPath)==S_OK)
+				return TRUE;
+		}
+	}
+
+
+	CRegKey GenRegKey;
+	if (GenRegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		CStringW Path;
+		if (GenRegKey.QueryValue(L"Startup",szPath,MAX_PATH)>1)
+			return TRUE;
+	}
+
+	return FALSE;
+}
 
 BOOL CSettingsProperties::SaveSettings()
 {
@@ -445,10 +471,15 @@ BOOL CSettingsProperties::SaveSettings()
 		else
 			LocRegKey.DeleteValue("ResultListFont");
 
-		if (m_dwSettingsFlags&settingsCustomUseTrayIcon)
+		if (m_dwSettingsFlags&settingsUseCustomTrayIcon)
 			LocRegKey.SetValue(L"CustomTrayIcon",m_CustomTrayIcon);
 		else
 			LocRegKey.DeleteValue("CustomTrayIcon");
+
+		if (m_dwSettingsFlags&settingsUseCustomDialogIcon)
+			LocRegKey.SetValue(L"CustomDialogIcon",m_CustomDialogIcon);
+		else
+			LocRegKey.DeleteValue("CustomDialogIcon");
 
 	}
 
@@ -638,24 +669,24 @@ BOOL CSettingsProperties::SaveSettings()
 	}	
 
 	// Creating or deleting shortcut to Startup mene if necessary
-	if (GenRegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		CStringW Path;
-		if (GenRegKey.QueryValue(L"Startup",Path))
+		WCHAR szPath[MAX_PATH];
+		if (GetStartupPath(szPath))
 		{
-			if (Path.LastChar()!=L'\\')
-				Path << L'\\';
-			Path<<L"Locate32 Autorun.lnk";
+			int nLen=istrlen(szPath);
+			if (szPath[nLen-1]!='\\')
+				szPath[nLen++]='\\';
+			wcscpy_s(szPath+nLen,MAX_PATH-nLen,L"Locate32 Autorun.lnk");
 			
 			if (IsSettingsFlagSet(settingsStartLocateAtStartup))
 			{
-				if (!FileSystem::IsFile(Path))
-					CreateShortcut(Path,GetApp()->GetExeNameW(),L"",L" /S");
+				if (!FileSystem::IsFile(szPath))
+					CreateShortcut(szPath,GetApp()->GetExeNameW(),L"",L" /S");
 			}
 			else 
 			{
-				if (FileSystem::IsFile(Path))
-					FileSystem::Remove(Path);
+				if (FileSystem::IsFile(szPath))
+					FileSystem::Remove(szPath);
 			}
 
 		}	
@@ -1024,26 +1055,19 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CLocateDlg::isDisableIfDataSearch,
 			&m_pSettings->m_dwInstantSearchingFlags,"sa_isdisifdata"),
 		CreateCheckBox(IDS_ADVSETISNAMEDCHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfNameChanged,
-			&m_pSettings->m_dwInstantSearchingFlags,"sa_isname"),
+			CLocateDlg::isNameChanged,&m_pSettings->m_dwInstantSearchingFlags,"sa_isname"),
 		CreateCheckBox(IDS_ADVSETISTYPECHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfTypeChanged,
-			&m_pSettings->m_dwInstantSearchingFlags,"sa_istype"),
+			CLocateDlg::isTypeChanged,&m_pSettings->m_dwInstantSearchingFlags,"sa_istype"),
 		CreateCheckBox(IDS_ADVSETISLOOKINCHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfLookInChanged,
-			&m_pSettings->m_dwInstantSearchingFlags,"sa_islookin"),
+			CLocateDlg::isLookInChanged,&m_pSettings->m_dwInstantSearchingFlags,"sa_islookin"),
 		CreateCheckBox(IDS_ADVSETISSIZESCHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfSizesChanged,
-			&m_pSettings->m_dwInstantSearchingFlags,"sa_issizes"),
+			CLocateDlg::isSizesChanged,&m_pSettings->m_dwInstantSearchingFlags,"sa_issizes"),
 		CreateCheckBox(IDS_ADVSETISDATESCHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfDatesChanged,
-			&m_pSettings->m_dwInstantSearchingFlags,"sa_isdates"),
+			CLocateDlg::isDatesChanged,&m_pSettings->m_dwInstantSearchingFlags,"sa_isdates"),
 		CreateCheckBox(IDS_ADVSETISDATACHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfDataChanged,
-			&m_pSettings->m_dwInstantSearchingFlags,"sa_isdata"),
+			CLocateDlg::isDataChanged,&m_pSettings->m_dwInstantSearchingFlags,"sa_isdata"),
 		CreateCheckBox(IDS_ADVSETISOTHERCHANGED,NULL,DefaultCheckBoxProc,
-			CLocateDlg::isSearchIfOtherChanged,
-			&m_pSettings->m_dwInstantSearchingFlags,"sa_isother"),
+			CLocateDlg::isOtherChanged,&m_pSettings->m_dwInstantSearchingFlags,"sa_isother"),
 		NULL
 	};	
 
@@ -1196,6 +1220,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETMATCHWHOLENAMEIFASTERISKS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::efMatchWhileNameIfAsterisks,
 			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_matchwholenameifasterisks"),
+		CreateCheckBox(IDS_ADVSETNOASTERISKATENDIFEXTENSIONGIVEN,NULL,DefaultInverseCheckBoxProc,
+			CLocateDlg::efAsteriskAtEndEvenIfExtensionExists,
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_noasterisktoendifextension"),
 		CreateCheckBox(IDS_ADVSETISENABLE,InstantSearching,DefaultCheckBoxProc,
 			CLocateDlg::isEnable,&m_pSettings->m_dwInstantSearchingFlags,"sa_isenable"),
 		CreateRoot(IDS_ADVSETRESULTSLIST,ResultsListItems,"sa_results"),
@@ -1233,6 +1260,12 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL
 	};
 
+	Item* CustomDialogIconItems[]={
+		CreateFile(IDS_ADVSETICONFILE,TrayIconProc,0,
+			&m_pSettings->m_CustomDialogIcon,"sa_customdialogicon"),
+		NULL
+	};
+	
 	Item* LocateDialogItems[]={
 		CreateCheckBox(IDS_ADVSETLARGEMODEONLY,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgDialogLargeModeOnly,&m_pSettings->m_dwLocateDialogFlags,"sa_largemode"),
@@ -1250,13 +1283,16 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETTOPMOST,NULL,DefaultCheckBoxProc,
 			CLocateDlg::fgDialogTopMost,
 			&m_pSettings->m_dwLocateDialogFlags,"sa_alwaysontop"),
+		CreateCheckBox(IDS_ADVSETCUSTOMDIALOGICON,CustomDialogIconItems,DefaultCheckBoxProc,
+			CSettingsProperties::settingsUseCustomDialogIcon,
+			&m_pSettings->m_dwSettingsFlags,"sa_customdialogicon"),
 		NULL, // For transparency
 		NULL
 	};
 	if (GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes")!=NULL)
 	{
 		// Needs at least Win2k
-		LocateDialogItems[7]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
+		LocateDialogItems[8]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,100),&m_pSettings->m_nTransparency,"sa_transparency");
 	}
 
@@ -1326,7 +1362,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			DefaultCheckBoxProc,CLocateApp::pfTrayIconClickActivate,
 			&m_pSettings->m_dwProgramFlags,"sa_singleclkopens"),
 		CreateCheckBox(IDS_ADVSETCUSTOMTRAYICON,SystemTrayIconItems,DefaultCheckBoxProc,
-			CSettingsProperties::settingsCustomUseTrayIcon,
+			CSettingsProperties::settingsUseCustomTrayIcon,
 			&m_pSettings->m_dwSettingsFlags,"sa_customSTicon"),
 		NULL
 	};
@@ -1346,6 +1382,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETSHOWNONCRITICALERRORS,NULL,
 			DefaultCheckBoxProc,CLocateApp::pfShowNonCriticalErrors,
 			&m_pSettings->m_dwProgramFlags,"sa_noncriticalerrors"),
+		CreateCheckBox(IDS_ADVSETCONFIRMATIONFORUPDATEDATABASES,NULL,DefaultCheckBoxProc,
+			CLocateApp::pfAskConfirmationForUpdateDatabases,
+			&m_pSettings->m_dwProgramFlags,"sa_confirmupdate"),
 		CreateCheckBox(IDS_ADVSETICONSNOFILEACCESS,NULL,DefaultCheckBoxProc,
 			CLocateApp::pfAvoidToAccessWhenReadingIcons,
 			&m_pSettings->m_dwProgramFlags,"sa_iconsnofileaccess"),
@@ -8126,11 +8165,12 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 		if ((int)pAction->m_nMisc==CB_ERR)
 			pAction->m_nMisc=CAction::SendMessage;
 
-		pAction->m_pSendMessage=new CAction::SendMessageInfo;
 		
 		if (pAction->m_nMisc==CAction::SendMessage || 
 			pAction->m_nMisc==CAction::PostMessage)
 		{
+			pAction->m_pSendMessage=new CAction::SendMessageInfo;
+			
 			// Get message
 			BOOL bTranslated;
 			pAction->m_pSendMessage->nMessage=GetDlgItemInt(IDC_MESSAGE,&bTranslated,FALSE);
