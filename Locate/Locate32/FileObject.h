@@ -36,14 +36,13 @@ public:
 
 	BYTE SetFile(LPCWSTR szFile); 
 	BYTE SetFiles(CListCtrl* pList,BOOL bNoDeleted=FALSE);
-	HGLOBAL GetFileNameA();
-	HGLOBAL GetFileNameW();
-
+	
 	HGLOBAL GetHDrop();
 	HGLOBAL GetItemIDList();
-	//HGLOBAL GetItemIDListOffset();
-	HGLOBAL GetFileNameMapA();
-	HGLOBAL GetFileNameMapW();
+
+	// Use only with clipboard copy
+	HGLOBAL GetFileNameA(); 
+	HGLOBAL GetFileNameW();
 
 	virtual HRESULT STDMETHODCALLTYPE GetData(FORMATETC *pformatetcIn,STGMEDIUM *pmedium);
 	virtual HRESULT STDMETHODCALLTYPE GetDataHere(FORMATETC *pformatetc,STGMEDIUM *pmedium);

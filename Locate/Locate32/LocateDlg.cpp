@@ -8016,7 +8016,7 @@ void CLocateDlg::BeginDragFiles(CListCtrl* pList)
 		
 		pfo->AutoDelete();
 		pfo->AddRef();
-		pfo->SetFiles(pList,FALSE);
+		pfo->SetFiles(pList,TRUE);
 
 		pfs->AutoDelete();
 		pfs->AddRef();

@@ -850,7 +850,7 @@ BOOL CFile::Flush()
 
 	
 
-ULONG_PTR CFile::GetPosition(PLONG pHigh) const
+ULONG CFile::GetPosition(PLONG pHigh) const
 {
 	DWORD dwPos=::SetFilePointer(m_hFile,0,pHigh,FILE_CURRENT);
 	if (dwPos==(DWORD)-1)
