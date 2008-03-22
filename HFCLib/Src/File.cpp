@@ -270,7 +270,7 @@ CStringW CFile::GetFileTitleW() const
 #endif
 
 
-BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError)
+BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags)
 {
 	if (m_bCloseOnDelete)
 		Close();
@@ -336,13 +336,13 @@ BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError)
 	if (m_hFile==INVALID_HANDLE_VALUE)
 	{
 		SetHFCError(HFC_CANNOTOPEN);
-		if (pError!=NULL)
+		if (m_pFileException!=NULL)
 		{
-			pError->m_lOsError = ::GetLastError();
-			pError->m_cause = CFileException::OsErrorToException(pError->m_lOsError);
-			pError->m_strFileName = lpszFileName;
+			m_pFileException->m_lOsError = ::GetLastError();
+			m_pFileException->m_cause = CFileException::OsErrorToException(m_pFileException->m_lOsError);
+			m_pFileException->m_strFileName = lpszFileName;
 			if (m_bThrow)
-				throw *pError;
+				throw *m_pFileException;
 		}
 		else if (m_bThrow)
 			throw CFileException(CFileException::OsErrorToException(::GetLastError()),::GetLastError(),lpszFileName);
@@ -351,8 +351,8 @@ BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError)
 	
 	DebugOpenHandle(dhtFile,m_hFile,m_strFileName);
 
-	if (pError!=NULL)
-		pError->m_cause=CException::none;
+	if (m_pFileException!=NULL)
+		m_pFileException->m_cause=CException::none;
 	return TRUE;
 #else
 	char mode[4]={ 0,0,0,0 };
@@ -415,13 +415,13 @@ BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError)
 	if (m_hFile==NULL)
 	{
 		SetHFCError(HFC_CANNOTCREATE);
-		if (pError != NULL)
+		if (m_pFileException != NULL)
 		{
 			if (nOpenFlags&modeWrite)
-				pError->m_cause = CFileException::invalidFile;
+				m_pFileException->m_cause = CFileException::invalidFile;
 			else
-				pError->m_cause = CFileException::fileNotFound;
-			pError->m_strFileName = lpszFileName;
+				m_pFileException->m_cause = CFileException::fileNotFound;
+			m_pFileException->m_strFileName = lpszFileName;
 			if (m_bThrow)
 				throw *pError;
 		}
@@ -440,10 +440,10 @@ BOOL CFile::Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError)
 
 #ifdef DEF_WCHAR
 
-BOOL CFile::Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError)
+BOOL CFile::Open(LPCWSTR lpszFileName, int nOpenFlags)
 {
 	if (!IsUnicodeSystem())
-		return Open(W2A(lpszFileName),nOpenFlags,pError);
+		return Open(W2A(lpszFileName),nOpenFlags);
 
 	if (m_bCloseOnDelete)
 		Close();
@@ -506,13 +506,13 @@ BOOL CFile::Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError)
 	if (m_hFile==INVALID_HANDLE_VALUE)
 	{
 		SetHFCError(HFC_CANNOTOPEN);
-		if (pError!=NULL)
+		if (m_pFileException!=NULL)
 		{
-			pError->m_lOsError = ::GetLastError();
-			pError->m_cause = CFileException::OsErrorToException(pError->m_lOsError);
-			pError->m_strFileName = lpszFileName;
+			m_pFileException->m_lOsError = ::GetLastError();
+			m_pFileException->m_cause = CFileException::OsErrorToException(m_pFileException->m_lOsError);
+			m_pFileException->m_strFileName = lpszFileName;
 			if (m_bThrow)
-				throw *pError;
+				throw *m_pFileException;
 		}
 		else if (m_bThrow)
 			throw CFileException(CFileException::OsErrorToException(::GetLastError()),::GetLastError(),m_strFileName);
@@ -521,26 +521,26 @@ BOOL CFile::Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError)
 
 	DebugOpenHandle(dhtFile,m_hFile,m_strFileName);
 
-	if (pError!=NULL)
-		pError->m_cause=CException::none;
+	if (m_pFileException!=NULL)
+		m_pFileException->m_cause=CException::none;
 	return TRUE;
 }
 #endif
 
-#ifdef WIN32
-DWORD CFile::Seek(LONG lOff, DWORD nFrom,CFileException* pError,LONG* pHighPos)
+
+DWORD CFile::Seek(LONG lOff, SeekPosition nFrom,LONG* pHighPos)
 {
 	DWORD dwNew=::SetFilePointer(m_hFile,lOff,pHighPos,(DWORD)nFrom);
-	if (dwNew  == (LONG_PTR)-1)
+	if (dwNew  == (DWORD)-1)
 	{
 		SetHFCError(HFC_BADSEEK);
-		if (pError != NULL)
+		if (m_pFileException != NULL)
 		{
-			pError->m_lOsError = ::GetLastError();
-			pError->m_cause = CFileException::OsErrorToException(pError->m_lOsError);
-			pError->m_strFileName = m_strFileName;
+			m_pFileException->m_lOsError = ::GetLastError();
+			m_pFileException->m_cause = CFileException::OsErrorToException(m_pFileException->m_lOsError);
+			m_pFileException->m_strFileName = m_strFileName;
 			if (m_bThrow)
-				throw *pError;
+				throw *m_pFileException;
 		}
 		else if (m_bThrow)
 			throw CFileException(CFileException::OsErrorToException(::GetLastError()),::GetLastError(),m_strFileName);
@@ -548,59 +548,26 @@ DWORD CFile::Seek(LONG lOff, DWORD nFrom,CFileException* pError,LONG* pHighPos)
 	}
 	return dwNew;
 }
-#else
-LONG_PTR CFile::Seek(ULONG_PTR lOff,ULONG_PTR nFrom,CFileException* pError)
-{
-	LONG_PTR ret=fseek((FILE*)m_hFile,lOff,nFrom);
-	if (ret)
-	{
-		SetHFCError(HFC_BADSEEK);
-		if (pError != NULL)
-		{
-			pError->m_cause=CFileException::badSeek;
-			pError->m_strFileName=m_strFileName;
-			if (m_bThrow)
-				throw *pError;
-		}
-		else if (m_bThrow)
-			throw CFileException(CFileException::badSeek,m_strFileName);
-		return FALSE;
-	}
-	return TRUE;
-}
-#endif
 
-#ifdef WIN32
-BOOL CFile::SetLength(LONG dwNewLen,LONG* pHigh)
-{
-	this->Seek((LONG)dwNewLen,(UINT)begin,NULL,pHigh);
-	return ::SetEndOfFile(m_hFile);
-}
-BOOL CFile::SetLength(ULONGLONG dwNewLen)
-{
-	LONG l=(LONG)(dwNewLen>>32);
-	this->Seek((LONG)dwNewLen,(UINT)begin,NULL,&l);
-	return ::SetEndOfFile(m_hFile);
-}
-#endif
 
-DWORD CFile::Read(void* lpBuf, DWORD nCount,CFileException* pError)
+
+DWORD CFile::Read(void* lpBuf, DWORD nCount) const
 {
 	if (nCount == 0)
 		return 0;
-#ifdef WIN32
+
 	DWORD dwRead;
 	BOOL ret=::ReadFile(m_hFile,lpBuf,nCount,&dwRead,NULL);
 	if (ret && dwRead<nCount && m_nOpenFlags&otherErrorWhenEOF) 
 	{
 		SetHFCError(HFC_ENDOFFILE);
-		if (pError!=NULL)
+		if (m_pFileException!=NULL)
 		{
-			pError->m_lOsError = ERROR_HANDLE_EOF;
-			pError->m_cause = (CException::exceptionCode)CFileException::endOfFile;
-			pError->m_strFileName = m_strFileName;
+			m_pFileException->m_lOsError = ERROR_HANDLE_EOF;
+			m_pFileException->m_cause = (CException::exceptionCode)CFileException::endOfFile;
+			m_pFileException->m_strFileName = m_strFileName;
 			if (m_bThrow)
-				throw *pError;
+				throw *m_pFileException;
 		}
 		else if (m_bThrow)
 			throw CFileException(CFileException::endOfFile,ERROR_HANDLE_EOF,m_strFileName);
@@ -609,57 +576,26 @@ DWORD CFile::Read(void* lpBuf, DWORD nCount,CFileException* pError)
 	else if (!ret)
 	{
 		SetHFCError(HFC_CANNOTREAD);
-		if (pError!=NULL)
+		if (m_pFileException!=NULL)
 		{
-			pError->m_lOsError = ::GetLastError();
-			pError->m_cause = CFileException::OsErrorToException(pError->m_lOsError);
-			pError->m_strFileName = m_strFileName;
+			m_pFileException->m_lOsError = ::GetLastError();
+			m_pFileException->m_cause = CFileException::OsErrorToException(m_pFileException->m_lOsError);
+			m_pFileException->m_strFileName = m_strFileName;
 			if (m_bThrow)
-				throw *pError;
+				throw *m_pFileException;
 		}
 		else if (m_bThrow)
 			throw CFileException (CFileException::OsErrorToException(::GetLastError()),::GetLastError(),m_strFileName);
 		return 0;
 	}
 	return (UINT)dwRead;
-#else
-	DWORD ret=fread(lpBuf,1,nCount,(FILE*)m_hFile);
-	if (ret<nCount) // Error occured
-	{
-		if (feof((FILE*)m_hFile))
-		{
-			if (m_nOpenFlags&otherErrorWhenEOF)
-			{
-				if (pError!=NULL)
-				{
-					pError->m_cause = CFileException::endOfFile;
-					pError->m_strFileName = m_strFileName;
-				}
-				else if (m_bThrow)
-					throw CFileException (CFileException::endOfFile,m_strFileName);
-			}
-			return 0;
-		}
-
-		if (pError!=NULL)
-		{
-			pError->m_cause = CFileException::readFault;
-			pError->m_strFileName = m_strFileName;
-		}
-		else if (m_bThrow)
-			throw CFileException (CFileException::readFault,m_strFileName);
-		return 0;
-	}
-	return ret;
-#endif
 }
 
-BOOL CFile::Read(CStringA& str,CFileException* pError)
+BOOL CFile::Read(CStringA& str) const
 {
 	str.Empty();
 	CHAR bChar;
 
-#ifdef WIN32
 	DWORD dwRead;
 	
 	if (m_nOpenFlags&typeText)
@@ -681,13 +617,13 @@ BOOL CFile::Read(CStringA& str,CFileException* pError)
 			if (str.IsEmpty() && m_nOpenFlags&otherErrorWhenEOF)
 			{
 				SetHFCError(HFC_ENDOFFILE);
-				if (pError!=NULL)
+				if (m_pFileException!=NULL)
 				{
-					pError->m_lOsError = ERROR_HANDLE_EOF;
-					pError->m_cause = (CException::exceptionCode)CFileException::endOfFile;
-					pError->m_strFileName = m_strFileName;
+					m_pFileException->m_lOsError = ERROR_HANDLE_EOF;
+					m_pFileException->m_cause = (CException::exceptionCode)CFileException::endOfFile;
+					m_pFileException->m_strFileName = m_strFileName;
 					if (m_bThrow)
-						throw *pError;
+						throw *m_pFileException;
 				}
 				else if (m_bThrow)
 					throw CFileException(CFileException::endOfFile,ERROR_HANDLE_EOF,m_strFileName);
@@ -711,13 +647,13 @@ BOOL CFile::Read(CStringA& str,CFileException* pError)
 			if (str.IsEmpty() && m_nOpenFlags&otherErrorWhenEOF)
 			{
 				SetHFCError(HFC_ENDOFFILE);
-				if (pError!=NULL)
+				if (m_pFileException!=NULL)
 				{
-					pError->m_lOsError = ERROR_HANDLE_EOF;
-					pError->m_cause = (CException::exceptionCode)CFileException::endOfFile;
-					pError->m_strFileName = m_strFileName;
+					m_pFileException->m_lOsError = ERROR_HANDLE_EOF;
+					m_pFileException->m_cause = (CException::exceptionCode)CFileException::endOfFile;
+					m_pFileException->m_strFileName = m_strFileName;
 					if (m_bThrow)
-						throw *pError;
+						throw *m_pFileException;
 				}
 				else if (m_bThrow)
 					throw CFileException(CFileException::endOfFile,ERROR_HANDLE_EOF,m_strFileName);
@@ -727,65 +663,27 @@ BOOL CFile::Read(CStringA& str,CFileException* pError)
 		}
 	}
 
-	if (pError!=NULL)
+	if (m_pFileException!=NULL)
 	{
-		pError->m_lOsError = ::GetLastError();
-		pError->m_cause = CFileException::OsErrorToException(pError->m_lOsError);
-		pError->m_strFileName = m_strFileName;
+		m_pFileException->m_lOsError = ::GetLastError();
+		m_pFileException->m_cause = CFileException::OsErrorToException(m_pFileException->m_lOsError);
+		m_pFileException->m_strFileName = m_strFileName;
 		if (m_bThrow)
-			throw *pError;
+			throw *m_pFileException;
 	}
 	else if (m_bThrow)
 		throw CFileException (CFileException::OsErrorToException(::GetLastError()),::GetLastError(),m_strFileName);
 	
 	return FALSE;
-#else
-	if (m_nOpenFlags&typeText)
-	{
-		BOOL ret=::fread(&bChar,1,1,(FILE*)m_hFile);
-		if (ret)
-		{
-			do {
-				if (bChar=='\r' || bChar=='\n' || bChar=='\t' || bChar==' ')
-					return TRUE;	
-				str<< bChar;
-				ret=::fread(&bChar,1,1,(FILE*)m_hFile);
-			}
-			while (ret);       
-			return TRUE;
-		}
-	}
-	else
-	{
-		DWORD ret=fread(&bChar,1,1,(FILE*)m_hFile);
-		while (ret)
-		{
-			if (bChar=='\0')
-				return TRUE;
-			str << bChar;
-			ret=fread(&bChar,1,1,(FILE*)m_hFile);
-		}
-	}
-	if (pError!=NULL)
-	{
-		pError->m_cause = feof(FILE*)m_hFile)?CFileException::endOfFile:CFileException::readFault;
-		pError->m_strFileName = m_strFileName;
-		if (m_bThrow)
-			throw *pError;
-	}
-	else if (m_bThrow)
-		throw CFileException (feof(FILE*)m_hFile)?CFileException::endOfFile:CFileException::readFault,m_strFileName);
-	return FALSE;
-#endif
+
 }
 
 #ifdef DEF_WCHAR
-BOOL CFile::Read(CStringW& str,CFileException* pError)
+BOOL CFile::Read(CStringW& str) const
 {
 	str.Empty();
 	WCHAR bChar;
 
-#ifdef WIN32
 	DWORD dwRead;
 	
 	if (m_nOpenFlags&typeText)
@@ -807,13 +705,13 @@ BOOL CFile::Read(CStringW& str,CFileException* pError)
 			if (str.IsEmpty() && m_nOpenFlags&otherErrorWhenEOF)
 			{
 				SetHFCError(HFC_ENDOFFILE);
-				if (pError!=NULL)
+				if (m_pFileException!=NULL)
 				{
-					pError->m_lOsError = ERROR_HANDLE_EOF;
-					pError->m_cause = (CException::exceptionCode)CFileException::endOfFile;
-					pError->m_strFileName = m_strFileName;
+					m_pFileException->m_lOsError = ERROR_HANDLE_EOF;
+					m_pFileException->m_cause = (CException::exceptionCode)CFileException::endOfFile;
+					m_pFileException->m_strFileName = m_strFileName;
 					if (m_bThrow)
-						throw *pError;
+						throw *m_pFileException;
 				}
 				else if (m_bThrow)
 					throw CFileException(CFileException::endOfFile,ERROR_HANDLE_EOF,m_strFileName);
@@ -837,13 +735,13 @@ BOOL CFile::Read(CStringW& str,CFileException* pError)
 			if (str.IsEmpty() && m_nOpenFlags&otherErrorWhenEOF)
 			{
 				SetHFCError(HFC_ENDOFFILE);
-				if (pError!=NULL)
+				if (m_pFileException!=NULL)
 				{
-					pError->m_lOsError = ERROR_HANDLE_EOF;
-					pError->m_cause = (CException::exceptionCode)CFileException::endOfFile;
-					pError->m_strFileName = m_strFileName;
+					m_pFileException->m_lOsError = ERROR_HANDLE_EOF;
+					m_pFileException->m_cause = (CException::exceptionCode)CFileException::endOfFile;
+					m_pFileException->m_strFileName = m_strFileName;
 					if (m_bThrow)
-						throw *pError;
+						throw *m_pFileException;
 				}
 				else if (m_bThrow)
 					throw CFileException(CFileException::endOfFile,ERROR_HANDLE_EOF,m_strFileName);
@@ -853,111 +751,51 @@ BOOL CFile::Read(CStringW& str,CFileException* pError)
 		}
 	}
 
-	if (pError!=NULL)
+	if (m_pFileException!=NULL)
 	{
-		pError->m_lOsError = ::GetLastError();
-		pError->m_cause = CFileException::OsErrorToException(pError->m_lOsError);
-		pError->m_strFileName = m_strFileName;
+		m_pFileException->m_lOsError = ::GetLastError();
+		m_pFileException->m_cause = CFileException::OsErrorToException(m_pFileException->m_lOsError);
+		m_pFileException->m_strFileName = m_strFileName;
 		if (m_bThrow)
-			throw *pError;
+			throw *m_pFileException;
 	}
 	else if (m_bThrow)
 		throw CFileException (CFileException::OsErrorToException(::GetLastError()),::GetLastError(),m_strFileName);
 	
 	return FALSE;
-#else
-	
-	if (m_nOpenFlags&typeText)
-	{
-		BOOL ret=fread(&bChar,2,1,(FILE*)m_hFile);
-		if (ret)
-		{
-			do {
-				if (bChar==L'\r' || bChar==L'\n' || bChar==L'\t' || bChar==L' ')
-					return TRUE;	
-				str<< bChar;
-				ret=fread(&bChar,2,1,(FILE*)m_hFile);
-			}
-			while (ret);         			
-			return TRUE;
-		}
-	}
-	else
-	{
-		DWORD ret=fread(&bChar,2,1,(FILE*)m_hFile);
-		while (ret)
-		{
-			if (bChar=='\0')
-				return TRUE;
-			str << bChar;
-			ret=fread(&bChar,2,1,(FILE*)m_hFile);
-		}
-	}
 
-	if (pError!=NULL)
-	{
-		pError->m_cause = feof(FILE*)m_hFile)?CFileException::endOfFile:CFileException::readFault;
-		pError->m_strFileName = m_strFileName;
-		if (m_bThrow)
-			throw *pError;
-	}
-	else if (m_bThrow)
-		throw CFileException (feof(FILE*)m_hFile)?CFileException::endOfFile:CFileException::readFault,m_strFileName);
-	return FALSE;
-#endif
 }
 #endif
 
-BOOL CFile::Write(const void* lpBuf, DWORD nCount,CFileException* pError)
+BOOL CFile::Write(const void* lpBuf, DWORD nCount)
 {
 	if (nCount == 0)
 		return TRUE;
-#ifdef WIN32
+
 	DWORD nWritten;
 	BOOL ret=::WriteFile(m_hFile,lpBuf,nCount,&nWritten,NULL);
 	if (!ret || nWritten<nCount)
 	{
-		if (pError!=NULL)
+		if (m_pFileException!=NULL)
 		{
-			pError->m_lOsError = ::GetLastError();
-			pError->m_cause = CFileException::OsErrorToException(pError->m_lOsError);
-			pError->m_strFileName = m_strFileName;
+			m_pFileException->m_lOsError = ::GetLastError();
+			m_pFileException->m_cause = CFileException::OsErrorToException(m_pFileException->m_lOsError);
+			m_pFileException->m_strFileName = m_strFileName;
 			if (m_bThrow)
-				throw *pError;
+				throw *m_pFileException;
 		}
 		else if (m_bThrow)
 			throw CFileException(CFileException::OsErrorToException(::GetLastError()),::GetLastError(),m_strFileName);
 		return FALSE;
 	}
 	return TRUE;
-#else
-	DWORD ret=fwrite(lpBuf,1,nCount,(FILE*)m_hFile);
-	if (!ret)
-	{
-		if (pError!=NULL)
-		{
-			pError->m_cause = CFileException::writeFault;
-			pError->m_strFileName = m_strFileName;
-			if (m_bThrow)
-				throw *pError;
-		}
-		else if (m_bThrow)
-			throw CFileException(CFileException::writeFault,m_strFileName);
-		return FALSE;
-	}
-	return TRUE;
-#endif
 }
 
 BOOL CFile::Close()
 {
 	BOOL bError = FALSE;
 	if (m_hFile != FILE_NULL)
-#ifdef WIN32
 		bError = !::CloseHandle(m_hFile);
-#else
-		bError = !fclose((FILE*)m_hFile);
-#endif
 	DebugCloseHandle(dhtFile,m_hFile,W2A(m_strFileName));
 	m_hFile = FILE_NULL;
 	m_bCloseOnDelete = FALSE;
@@ -967,7 +805,6 @@ BOOL CFile::Close()
 
 BOOL CFile::IsEndOfFile() const
 {
-#ifdef WIN32
 	DWORD dwPos=::SetFilePointer(m_hFile,0,NULL,FILE_CURRENT);
     if (dwPos==(DWORD)-1)
 	{
@@ -977,16 +814,14 @@ BOOL CFile::IsEndOfFile() const
 		return FALSE;
 	}
 	return dwPos==::GetFileSize(m_hFile,NULL);
-#else
-	return feof((FILE*)m_hFile);
-#endif
 }
 
-#ifdef WIN32
+
 DWORD CFile::GetLength(DWORD* pHigh) const
 {
 	return ::GetFileSize(m_hFile,pHigh);
 }
+
 ULONGLONG CFile::GetLength64() const
 {
 	DWORD high;
@@ -994,12 +829,6 @@ ULONGLONG CFile::GetLength64() const
 
 	return (((ULONGLONG)high)<<32)|((ULONGLONG)low);
 }
-#else
-DWORD CFile::GetLength() const
-{
-	return filelength(fileno((FILE*)m_hFile));
-}
-#endif
 
 #ifdef WIN32
 void CFile::LockRange(DWORD dwPos, DWORD dwCount)
@@ -1015,11 +844,7 @@ void CFile::UnlockRange(DWORD dwPos, DWORD dwCount)
 
 BOOL CFile::Flush()
 {
-#ifdef WIN32
 	return ::FlushFileBuffers(m_hFile);
-#else
-	return (BYTE)::fflush((FILE*)m_hFile);
-#endif
 }
 
 
@@ -1027,7 +852,6 @@ BOOL CFile::Flush()
 
 ULONG_PTR CFile::GetPosition(PLONG pHigh) const
 {
-#ifdef WIN32
 	DWORD dwPos=::SetFilePointer(m_hFile,0,pHigh,FILE_CURRENT);
 	if (dwPos==(DWORD)-1)
 	{
@@ -1037,14 +861,10 @@ ULONG_PTR CFile::GetPosition(PLONG pHigh) const
 		return FALSE;
 	}
 	return dwPos;
-#else
-	return (DWORD)ftell((FILE*)m_hFile);
-#endif
 }
 
 
 
-#ifdef WIN32
 ULONGLONG CFile::GetPosition64() const
 {
 	LONG high=0;
@@ -1058,7 +878,6 @@ ULONGLONG CFile::GetPosition64() const
 	}
 	return (((ULONGLONG)high)<<32)|((ULONGLONG)dwPos);
 }
-#endif
 
 ///////////////////////////////////////////
 // namespace FileSystem

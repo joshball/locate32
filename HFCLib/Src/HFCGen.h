@@ -134,6 +134,56 @@ protected:
 	BOOL m_bThrow;
 };
 
+
+// Abstarct stream class
+class CStream : public CExceptionObject
+{
+public:
+	CStream();
+	CStream(BOOL bThrow);
+	
+public:
+	// Set length
+	virtual DWORD GetLength(DWORD* pHigh=NULL) const=0;
+	virtual ULONGLONG GetLength64() const=0;
+	virtual BOOL SetLength(DWORD dwNewLen,LONG* pHigh=NULL)=0;
+	virtual BOOL SetLength64(ULONGLONG ullNewLen)=0;
+
+	// Set position
+	enum SeekPosition { begin = 0x0, current = 0x1, end = 0x2 };
+	DWORD SeekToEnd() { return this->Seek(0,end); }
+	BOOL SeekToBegin() { return this->Seek(0,begin)>0; }
+	virtual DWORD Seek(LONG lOff, SeekPosition nFrom,LONG* pHighPos=NULL)=0;
+	virtual DWORD Seek64(ULONGLONG lOff, SeekPosition nFrom)=0;
+
+	// Get position
+	virtual ULONG GetPosition(PLONG pHigh=NULL) const=0;
+	virtual ULONGLONG GetPosition64() const=0;
+
+	// Reading/writing
+	virtual DWORD Read(void* lpBuf, DWORD nCount) const=0;
+	virtual BOOL Write(const void* lpBuf, DWORD nCount)=0;
+
+
+	// Helpers
+	BOOL Read(BYTE& bNum) const;
+	BOOL Read(WORD& wNum) const;
+	BOOL Read(DWORD& dwNum) const;
+
+	BOOL Write(const CStringA& str);
+#ifdef DEF_WCHAR
+	BOOL Write(const CStringW& str);
+#endif
+	BOOL Write(BYTE bNum);
+	BOOL Write(WORD wNum);
+	BOOL Write(DWORD dwNum);
+	BOOL Write(char ch);
+	BOOL Write(LPCSTR szNullTerminatedString);
+#ifdef DEF_WCHAR
+	BOOL Write(LPCWSTR szNullTerminatedString);
+#endif
+};
+
 #ifdef WIN32
 #define FILE_NULL	INVALID_HANDLE_VALUE
 #else
@@ -142,7 +192,7 @@ protected:
 
 
 
-class CFile : public CExceptionObject
+class CFile : public CStream
 {
 public:
 	enum OpenFlags {
@@ -195,20 +245,17 @@ public:
 		encrypted=	0x400
 	};
 
-	enum SeekPosition { begin = 0x0, current = 0x1, end = 0x2 };
 	
-	CFile();
-	CFile(BOOL bThrowExceptions);
-	CFile(HANDLE hFile,BOOL bThrowExceptions=FALSE);
-	CFile(LPCSTR lpszFileName,int nOpenFlags,CFileException* e);
-	CFile(LPCSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions=FALSE);
+	CFile(CFileException* e=NULL);
+	CFile(BOOL bThrowExceptions,CFileException* e=NULL);
+	CFile(HANDLE hFile,BOOL bThrowExceptions=TRUE,CFileException* e=NULL);
+	CFile(LPCSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions=TRUE,CFileException* e=NULL);
 #ifdef DEF_WCHAR
-	CFile(LPCWSTR lpszFileName,int nOpenFlags,CFileException* e);
-	CFile(LPCWSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions=FALSE);
+	CFile(LPCWSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions=TRUE,CFileException* e=NULL);
 #endif
 
 #ifndef WIN32
-	CFile(FILE* pFile,BOOL bThrowExceptions=FALSE);
+	CFile(FILE* pFile,BOOL bThrowExceptions=FALSE,CFileException* e=NULL);
 #endif
 	virtual ~CFile();
 	
@@ -216,6 +263,7 @@ public:
 	BOOL m_bCloseOnDelete;
 	CStringW m_strFileName;
 	int m_nOpenFlags;
+	CFileException* m_pFileException;
 
 	operator HANDLE() const;
 #ifndef WIN32
@@ -223,12 +271,8 @@ public:
 #endif
 	BOOL IsOpen() const { return m_hFile!=FILE_NULL; }
 
-#ifdef WIN32
-	virtual ULONG_PTR GetPosition(PLONG pHigh=NULL) const;
-	ULONGLONG GetPosition64() const;
-#else
-	virtual ULONG_PTR GetPosition() const;
-#endif
+	virtual ULONG GetPosition(PLONG pHigh=NULL) const;
+	virtual ULONGLONG GetPosition64() const;
 
 	void CloseOnDelete(BOOL bCloseOnDelete=TRUE) { m_bCloseOnDelete=bCloseOnDelete; }
 	BOOL IsClosingOnDelete() const { return m_bCloseOnDelete; }
@@ -238,62 +282,51 @@ public:
 	virtual CString GetFilePath() const;
 	virtual void SetFilePath(LPCSTR lpszNewName);
 
-	virtual BOOL Open(LPCSTR lpszFileName, int nOpenFlags,CFileException* pError = NULL);
+	virtual BOOL Open(LPCSTR lpszFileName, int nOpenFlags);
 #ifdef DEF_WCHAR
-	virtual BOOL Open(LPCWSTR lpszFileName, int nOpenFlags,CFileException* pError = NULL);
+	virtual BOOL Open(LPCWSTR lpszFileName, int nOpenFlags);
 
 	virtual CStringW GetFilePathW() const;
 	virtual CStringW GetFileTitleW() const;
 	virtual void SetFilePath(LPCWSTR lpszNewName);
 #endif	
-	BOOL OpenRead(LPCSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defRead,pError); }
-	BOOL OpenRead(LPCWSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defRead,pError); }
-	BOOL OpenWrite(LPCSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defWrite,pError); }
-	BOOL OpenWrite(LPCWSTR lpszFileName,CFileException* pError = NULL) { return Open(lpszFileName,CFile::defWrite,pError); }
-
-	
-	DWORD SeekToEnd() { return this->Seek(0,end); }
-	BOOL SeekToBegin() { return this->Seek(0,begin)>0; }
-#ifdef WIN32
-	virtual DWORD Seek(LONG lOff, DWORD nFrom,CFileException* pError=NULL,LONG* pHighPos=NULL);
-
-	virtual BOOL SetLength(LONG dwNewLen,LONG* pHigh=NULL);
-	virtual BOOL SetLength(ULONGLONG dwNewLen);
-#else
-	virtual LONG_PTR Seek(LONG lOff, ULONG_PTR nFrom,CFileException* pError=NULL);
+	BOOL OpenRead(LPCSTR lpszFileName) { return Open(lpszFileName,CFile::defRead); }
+	BOOL OpenWrite(LPCSTR lpszFileName) { return Open(lpszFileName,CFile::defWrite); }
+#ifdef DEF_WCHAR
+	BOOL OpenRead(LPCWSTR lpszFileName) { return Open(lpszFileName,CFile::defRead); }
+	BOOL OpenWrite(LPCWSTR lpszFileName) { return Open(lpszFileName,CFile::defWrite); }
 #endif
-
 	
-#ifdef WIN32
+	virtual DWORD Seek(LONG lOff, SeekPosition nFrom,LONG* pHighPos=NULL);
+	virtual DWORD Seek64(ULONGLONG lOff, SeekPosition nFrom);
+
+	virtual BOOL SetLength(DWORD dwNewLen,LONG* pHigh=NULL);
+	virtual BOOL SetLength64(ULONGLONG ullNewLen);
+
 	virtual DWORD GetLength(DWORD* pHigh=NULL) const;
-	ULONGLONG GetLength64() const;
-#else
-	virtual LONG GetLength() const;
-#endif
+	virtual ULONGLONG GetLength64() const;
 
-	virtual DWORD Read(void* lpBuf, DWORD nCount,CFileException* pError=NULL);
-	virtual BOOL Write(const void* lpBuf, DWORD nCount,CFileException* pError=NULL);
+	virtual DWORD Read(void* lpBuf, DWORD nCount) const;
+	virtual BOOL Write(const void* lpBuf, DWORD nCount);
 	
-	// Helpers
-	BOOL Read(CStringA& str,CFileException* pError=NULL);
-#ifdef DEF_WCHAR
-	BOOL Read(CStringW& str,CFileException* pError=NULL);
-#endif
-	BOOL Read(BYTE& bNum,CFileException* pError=NULL);
-	BOOL Read(WORD& wNum,CFileException* pError=NULL);
-	BOOL Read(DWORD& dwNum,CFileException* pError=NULL);
 
-	BOOL Write(const CStringA& str,CFileException* pError=NULL);
+	// Helpers
+	BOOL Read(BYTE& bNum) const { return CStream::Read(bNum); }
+	BOOL Read(WORD& wNum) const { return CStream::Read(wNum); }
+	BOOL Read(DWORD& dwNum) const { return CStream::Read(dwNum); }
+
+	BOOL Write(BYTE bNum) { return CStream::Write(bNum); }
+	BOOL Write(WORD wNum) { return CStream::Write(wNum); }
+	BOOL Write(DWORD dwNum) { return CStream::Write(dwNum); }
+	BOOL Write(char ch)  { return CStream::Write(ch); }
+	
+	BOOL Read(CStringA& str) const;
+	BOOL Write(const CStringA& str);
+	BOOL Write(LPCSTR szNullTerminatedString);
 #ifdef DEF_WCHAR
-	BOOL Write(const CStringW& str,CFileException* pError=NULL);
-#endif
-	BOOL Write(BYTE bNum,CFileException* pError=NULL);
-	BOOL Write(WORD wNum,CFileException* pError=NULL);
-	BOOL Write(DWORD dwNum,CFileException* pError=NULL);
-	BOOL Write(char ch,CFileException* pError=NULL);
-	BOOL Write(LPCSTR szNullTerminatedString,CFileException* pError=NULL);
-#ifdef DEF_WCHAR
-	BOOL Write(LPCWSTR szNullTerminatedString,CFileException* pError=NULL);
+	BOOL Read(CStringW& str) const;
+	BOOL Write(const CStringW& str);
+	BOOL Write(LPCWSTR szNullTerminatedString);
 #endif
 
 	virtual BOOL IsEndOfFile() const;
@@ -963,27 +996,6 @@ public:
 #include "GdiObject.inl"
 #include "File.inl"
 
-///////////////////////////////////////
-// CExceptionObject
 
-inline CExceptionObject::CExceptionObject()
-:	m_bThrow(FALSE)
-{
-}
-
-inline CExceptionObject::CExceptionObject(BOOL bThrow)
-:	m_bThrow(bThrow)
-{
-}
-
-inline void CExceptionObject::SetToThrow(BOOL bThrow)
-{
-	m_bThrow=bThrow;
-}
-
-inline BOOL CExceptionObject::IsThrowing() const
-{
-	return m_bThrow;
-}
 
 #endif

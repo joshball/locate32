@@ -9,49 +9,38 @@
 // CFile
 
 #ifdef WIN32
-inline CFile::CFile()
-:	m_bCloseOnDelete(FALSE),m_nOpenFlags(0),m_hFile(FILE_NULL)
+inline CFile::CFile(CFileException* e)
+:	m_bCloseOnDelete(FALSE),m_nOpenFlags(0),m_hFile(FILE_NULL),m_pFileException(e)
 {
 }
 
-inline CFile::CFile(BOOL bThrowExceptions)
+inline CFile::CFile(BOOL bThrowExceptions,CFileException* e)
 :	m_bCloseOnDelete(FALSE),m_nOpenFlags(0),m_hFile(FILE_NULL),
-	CExceptionObject(bThrowExceptions)
+	CStream(bThrowExceptions),m_pFileException(e)
 {
 }
 
-inline CFile::CFile(HANDLE hFile,BOOL bThrowExceptions)
+inline CFile::CFile(HANDLE hFile,BOOL bThrowExceptions,CFileException* e)
 :	m_hFile(hFile),m_bCloseOnDelete(FALSE),m_nOpenFlags(0),
-	CExceptionObject(bThrowExceptions)
+	CStream(bThrowExceptions),m_pFileException(e)
 {
 }
 
-inline CFile::CFile(LPCSTR lpszFileName,int nOpenFlags,CFileException* e)
-:	m_hFile(FILE_NULL),m_bCloseOnDelete(FALSE)
-{
-	Open(lpszFileName,nOpenFlags,e);
-}
 
-inline CFile::CFile(LPCSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions)
+inline CFile::CFile(LPCSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions,CFileException* e)
 :	m_hFile(FILE_NULL),m_bCloseOnDelete(FALSE),
-	CExceptionObject(bThrowExceptions)
+	CStream(bThrowExceptions),m_pFileException(e)
 {
-	Open(lpszFileName,nOpenFlags,NULL);
+	Open(lpszFileName,nOpenFlags);
 }
 #endif
 
 #ifdef DEF_WCHAR
-inline CFile::CFile(LPCWSTR lpszFileName,int nOpenFlags,CFileException* e)
-:	m_hFile(FILE_NULL),m_bCloseOnDelete(FALSE)
-{
-	Open(lpszFileName,nOpenFlags,e);
-}
-
-inline CFile::CFile(LPCWSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions)
+inline CFile::CFile(LPCWSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions,CFileException* e)
 :	m_hFile(FILE_NULL),m_bCloseOnDelete(FALSE),
-	CExceptionObject(bThrowExceptions)
+	CStream(bThrowExceptions),m_pFileException(e)
 {
-	Open(lpszFileName,nOpenFlags,NULL);
+	Open(lpszFileName,nOpenFlags);
 }
 #endif
 
@@ -105,66 +94,48 @@ inline void CFile::SetFilePath(LPCWSTR lpszNewName)
 #endif
 
 
-inline BOOL CFile::Read(BYTE& bNum,CFileException* pError)
+inline BOOL CFile::Write(const CStringA& str) 
 { 
-	return this->Read(&bNum,sizeof(BYTE),pError)==sizeof(BYTE); 
-}
-
-inline BOOL CFile::Read(WORD& wNum,CFileException* pError) 
-{ 
-	return this->Read(&wNum,sizeof(WORD),pError)==sizeof(WORD); 
-}
-
-inline BOOL CFile::Read(DWORD& dwNum,CFileException* pError) 
-{ 
-	return this->Read(&dwNum,sizeof(DWORD),pError)==sizeof(DWORD); 
-}
-
-inline BOOL CFile::Write(const CStringA& str,CFileException* pError) 
-{ 
-	return this->Write((LPCSTR)str,(DWORD)(str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0)),pError); 
+	return this->Write((LPCSTR)str,(DWORD)(str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0))); 
 }
 
 #ifdef DEF_WCHAR
-inline BOOL CFile::Write(const CStringW& str,CFileException* pError) 
+inline BOOL CFile::Write(const CStringW& str) 
 { 
-	return this->Write((LPCWSTR)str,(DWORD)(str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0))*2,pError); 
+	return this->Write((LPCWSTR)str,(DWORD)(str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0))*2); 
 }
 #endif
 
-
-
-inline BOOL CFile::Write(BYTE bNum,CFileException* pError) 
+inline BOOL CFile::Write(LPCSTR szNullTerminatedString) 
 { 
-	return this->Write(&bNum,sizeof(BYTE),pError); 
-}
-
-inline BOOL CFile::Write(WORD wNum,CFileException* pError)
-{ 
-	return this->Write(&wNum,sizeof(WORD),pError); 
-}
-
-inline BOOL CFile::Write(DWORD dwNum,CFileException* pError) 
-{ 
-	return this->Write(&dwNum,sizeof(DWORD),pError); 
-}
-
-inline BOOL CFile::Write(char ch,CFileException* pError) 
-{ 
-	return this->Write(&ch,sizeof(char),pError); 
-}
-
-inline BOOL CFile::Write(LPCSTR szNullTerminatedString,CFileException* pError) 
-{ 
-	return this->Write(szNullTerminatedString,(DWORD)istrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0),pError); 
+	return this->Write(szNullTerminatedString,(DWORD)istrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0)); 
 }
 
 #ifdef DEF_WCHAR
-inline BOOL CFile::Write(LPCWSTR szNullTerminatedString,CFileException* pError) 
+inline BOOL CFile::Write(LPCWSTR szNullTerminatedString) 
 { 
-	return this->Write(szNullTerminatedString,(DWORD)(2*istrlenw(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?2:0)),pError); 
+	return this->Write(szNullTerminatedString,(DWORD)(2*istrlenw(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?2:0))); 
 }
 #endif
+
+inline BOOL CFile::SetLength(DWORD dwNewLen,LONG* pHigh)
+{
+	this->Seek((LONG)dwNewLen,begin,pHigh);
+	return ::SetEndOfFile(m_hFile);
+}
+
+inline BOOL CFile::SetLength64(ULONGLONG ullNewLen)
+{
+	this->Seek64(ullNewLen,begin);
+	return ::SetEndOfFile(m_hFile);
+}
+
+inline DWORD CFile::Seek64(ULONGLONG lOff, SeekPosition nFrom)
+{
+	LONG l=(LONG)(lOff>>32);
+	this->Seek((LONG)lOff,nFrom,&l);
+	return ::SetEndOfFile(m_hFile);
+}
 
 ////////////////////////////////////////
 // namespace FileSystem

@@ -363,6 +363,58 @@ private:
 
 };
 
+// Memory stream
+class CMemoryStream : public CStream
+{
+
+public:
+	CMemoryStream(BOOL bThrow=TRUE);
+	CMemoryStream(DWORD dwInitialSize,BOOL bThrow=TRUE);
+	virtual ~CMemoryStream();
+	
+public:
+	// Set length
+	virtual DWORD GetLength(DWORD* pHigh=NULL) const;
+	virtual ULONGLONG GetLength64() const;
+	virtual BOOL SetLength(DWORD dwNewLen,LONG* pHigh=NULL);
+	virtual BOOL SetLength64(ULONGLONG dwNewLen);
+
+	// Set position
+	virtual DWORD Seek(LONG lOff, SeekPosition nFrom,LONG* pHighPos=NULL);
+	virtual DWORD Seek64(ULONGLONG lOff, SeekPosition nFrom);
+
+	// Get position
+	virtual ULONG GetPosition(PLONG pHigh=NULL) const;
+	virtual ULONGLONG GetPosition64() const;
+
+	// Reading/writing
+	virtual DWORD Read(void* lpBuf, DWORD nCount) const;
+	virtual BOOL Write(const void* lpBuf, DWORD nCount);
+
+
+	/*
+	// Helpers
+	BOOL Read(BYTE& bNum) const { return CStream::Read(bNum); }
+	BOOL Read(WORD& wNum) const { return CStream::Read(wNum); }
+	BOOL Read(DWORD& dwNum) const { return CStream::Read(dwNum); }
+
+	BOOL Write(BYTE bNum) { return CStream::Write(bNum); }
+	BOOL Write(WORD wNum) { return CStream::Write(wNum); }
+	BOOL Write(DWORD dwNum) { return CStream::Write(dwNum); }
+	BOOL Write(char ch) { return CStream::Write(ch); }
+	
+	*/
+
+	DWORD GetAllocLength() const;
+	void FreeExtraAlloc(); 
+
+private:
+	DWORD m_dwSize,m_dwAllocSize;
+	mutable DWORD m_dwPosition;
+	BYTE* m_pData;
+};
+
+
 
 #include "Memory.inl"
 

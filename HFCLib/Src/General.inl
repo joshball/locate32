@@ -584,4 +584,118 @@ inline DWORD CRegKey::QueryValue(LPCWSTR lpszValueName,LPSTR lpbData,DWORD cbDat
 }
 #endif
 
+///////////////////////////////////////
+// CExceptionObject
+
+inline CExceptionObject::CExceptionObject()
+:	m_bThrow(TRUE)
+{
+}
+
+inline CExceptionObject::CExceptionObject(BOOL bThrow)
+:	m_bThrow(bThrow)
+{
+}
+
+inline void CExceptionObject::SetToThrow(BOOL bThrow)
+{
+	m_bThrow=bThrow;
+}
+
+inline BOOL CExceptionObject::IsThrowing() const
+{
+	return m_bThrow;
+}
+
+
+
+///////////////////////////
+// Class CRegKey
+
+
+inline CStream::CStream()
+{
+}
+
+inline CStream::CStream(BOOL bThrow)
+:	CExceptionObject(bThrow)
+{
+}
+
+inline BOOL CStream::Read(BYTE& bNum) const
+{ 
+	return this->Read(&bNum,sizeof(BYTE))==sizeof(BYTE); 
+}
+
+inline BOOL CStream::Read(WORD& wNum) const
+{ 
+	return this->Read(&wNum,sizeof(WORD))==sizeof(WORD); 
+}
+
+inline BOOL CStream::Read(DWORD& dwNum) const
+{ 
+	return this->Read(&dwNum,sizeof(DWORD))==sizeof(DWORD); 
+}
+
+inline BOOL CStream::Write(const CStringA& str) 
+{ 
+	return this->Write((LPCSTR)str,(DWORD)str.GetLength()); 
+}
+
+#ifdef DEF_WCHAR
+inline BOOL CStream::Write(const CStringW& str) 
+{ 
+	return this->Write((LPCWSTR)str,(DWORD)(str.GetLength())*2); 
+}
+#endif
+
+
+
+inline BOOL CStream::Write(BYTE bNum) 
+{ 
+	return this->Write(&bNum,sizeof(BYTE)); 
+}
+
+inline BOOL CStream::Write(WORD wNum)
+{ 
+	return this->Write(&wNum,sizeof(WORD)); 
+}
+
+inline BOOL CStream::Write(DWORD dwNum) 
+{ 
+	return this->Write(&dwNum,sizeof(DWORD)); 
+}
+
+inline BOOL CStream::Write(char ch) 
+{ 
+	return this->Write(&ch,sizeof(char)); 
+}
+
+inline BOOL CStream::Write(LPCSTR szNullTerminatedString) 
+{ 
+	return this->Write(szNullTerminatedString,(DWORD)istrlen(szNullTerminatedString)); 
+}
+
+#ifdef DEF_WCHAR
+inline BOOL CStream::Write(LPCWSTR szNullTerminatedString) 
+{ 
+	return this->Write(szNullTerminatedString,(DWORD)(2*istrlenw(szNullTerminatedString))); 
+}
+#endif
+
+template<class TYPE>
+inline CStream& operator <<(CStream& stream,TYPE data)
+{
+	(&stream)->Write(&data,sizeof(TYPE));
+	return stream;
+}
+
+template<class TYPE>
+inline const CStream& operator >>(const CStream& stream,TYPE& data)
+{
+	(&stream)->Read(&data,sizeof(TYPE));
+	return stream;
+}
+
+
 #endif

@@ -350,32 +350,60 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 								break;
 
 							DWORD dwLength=pStruct->FileNameLength/2;
-							
-							m_pFile=new WCHAR[pChangeData->dwRootLength+dwLength+2];
-							MemCopyW(m_pFile,pChangeData->pRoot,pChangeData->dwRootLength);
-							MemCopyW(m_pFile+pChangeData->dwRootLength,pStruct->FileName,dwLength);
-							dwLength+=pChangeData->dwRootLength;
-							m_pFile[dwLength]='\0';
-							MakeLower(m_pFile);
 
-							switch(pStruct->Action)
+							// Skip log files
+							BOOL bSkipThisFile=FALSE;
+							int nFilePart;
+							for (nFilePart=dwLength-1;nFilePart>=0 && pStruct->FileName[nFilePart]!=L'\\';nFilePart--);
+							nFilePart++;
+
+							// Skipping ntuser.dat.log file
+							if (dwLength-nFilePart==14)
 							{
-							case FILE_ACTION_ADDED:
-							case FILE_ACTION_RENAMED_NEW_NAME:
-								FileCreated(m_pFile,dwLength,pLocateDlg);
-								break;
-							case FILE_ACTION_REMOVED:
-							case FILE_ACTION_RENAMED_OLD_NAME:
-								FileDeleted(m_pFile,dwLength,pLocateDlg);
-								break;
-							case FILE_ACTION_MODIFIED:
-								FileModified(m_pFile,dwLength,pLocateDlg);
-								break;
+								if (_wcsnicmp(pStruct->FileName+nFilePart,L"ntuser.dat.log",14)==0)
+									bSkipThisFile=TRUE;
 							}
-							
-							delete[] m_pFile;
-							m_pFile=NULL;
-							
+
+#ifdef _DEBUG
+							// Skipping HFCDebug.log
+							if (dwLength-nFilePart==12)
+							{
+								if (_wcsnicmp(pStruct->FileName+nFilePart,L"HFCDebug.log",12)==0)
+									bSkipThisFile=TRUE;
+							}
+#endif
+
+							if (!bSkipThisFile)
+							{
+								m_pFile=new WCHAR[pChangeData->dwRootLength+dwLength+2];
+								MemCopyW(m_pFile,pChangeData->pRoot,pChangeData->dwRootLength);
+								MemCopyW(m_pFile+pChangeData->dwRootLength,pStruct->FileName,dwLength);
+								dwLength+=pChangeData->dwRootLength;
+								m_pFile[dwLength]='\0';
+								MakeLower(m_pFile);
+
+								
+								//DebugFormatMessage("BN: file=%S action=%d",m_pFile,pStruct->Action);
+
+								switch(pStruct->Action)
+								{
+								case FILE_ACTION_ADDED:
+								case FILE_ACTION_RENAMED_NEW_NAME:
+									FileCreated(m_pFile,dwLength,pLocateDlg);
+									break;
+								case FILE_ACTION_REMOVED:
+								case FILE_ACTION_RENAMED_OLD_NAME:
+									FileDeleted(m_pFile,dwLength,pLocateDlg);
+									break;
+								case FILE_ACTION_MODIFIED:
+									FileModified(m_pFile,dwLength,pLocateDlg);
+									break;
+								}
+								
+								delete[] m_pFile;
+								m_pFile=NULL;
+							}
+
 							if (pStruct->NextEntryOffset==0)
 								break;
 							*((char**)&pStruct)+=pStruct->NextEntryOffset;
@@ -675,7 +703,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 			sRoot << L'\\';
 		
 
-	/*	
+	/*
 #ifdef _DEBUG_LOGGING
 		// If logging is on, do not use change notifications for root containing log file
 		LPCSTR pLogFile=GetDebugLoggingFile();
@@ -691,7 +719,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 				continue;
 		}
 #endif
-		*/
+	*/	
 
 		// Allocating new DIRCHANGEDATA struct
 		if (pDirData==NULL)

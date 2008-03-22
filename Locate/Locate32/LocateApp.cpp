@@ -2862,7 +2862,7 @@ BOOL CLocateAppWnd::GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootI
 				if (GetLocateApp()->m_ppUpdaters[i]->GetCurrentRoot()==NULL)
 					pRootInfos[i].pRoot=NULL; // Is writing database
 				else
-					pRootInfos[i].pRoot=GetLocateApp()->m_ppUpdaters[i]->GetCurrentRootPathStr();
+					pRootInfos[i].pRoot=GetLocateApp()->m_ppUpdaters[i]->GetCurrentRootPathInDatabaseStr();
 				
 				pRootInfos[i].dwNumberOfDatabases=GetLocateApp()->m_ppUpdaters[i]->GetNumberOfDatabases();
 				pRootInfos[i].dwCurrentDatabase=GetLocateApp()->m_ppUpdaters[i]->GetCurrentDatabase();
@@ -4658,7 +4658,7 @@ void CLocateAppWnd::CUpdateStatusWnd::FormatStatusTextLine(CStringW& str,const C
 	// #X  thread number
 	if (nThreadID!=-1)
 		str << L'#' << (int)nThreadID;
-
+ 
 	switch (pRootInfo.usStatus)
 	{
 	case statusInitializing:
@@ -5000,7 +5000,7 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 					while (pRoot!=NULL)
 					{
 						// Checking how much space "scanning root" will take
-						ri.pRoot=pRoot->m_Path.GetBuffer();
+						ri.pRoot=pRoot->m_PathInDatabase.GetBuffer();
 						str.Empty();
 						FormatStatusTextLine(str,ri,wThreads>1?i+1:-1,wThreads);
 						EnlargeSizeForText(dc,str,szThisLine);
@@ -5102,7 +5102,7 @@ void CLocateAppWnd::CUpdateStatusWnd::SetPosition()
 	m_WindowSize=szSize;
 }
 
-void CLocateAppWnd::CUpdateStatusWnd::Update()
+void CLocateAppWnd::CUpdateStatusWnd::Update() 
 {
 	WORD wThreads,wRunning;
 	RootInfo* pRootInfos;

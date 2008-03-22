@@ -1705,7 +1705,7 @@ void CDatabaseUpdater::DBArchive::CreateRootDirectories(CRootDirectory*& pCurren
 		drive[0]=pRoot[0];
 
 		int nMapLen;
-		LPCWSTR pDriveInDb=CDatabase::FindRootMap(szRootMaps,drive,nMapLen);
+		LPCWSTR pDriveInDb=CDatabase::FindRootMap(szRootMaps,pRoot,nMapLen);
 		CRootDirectory* pNewDirectory=new CRootDirectory(drive,dwLength,pDriveInDb,
 			nMapLen,m_nFlags&ScanJunctions);
 

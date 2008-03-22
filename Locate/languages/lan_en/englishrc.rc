@@ -226,16 +226,16 @@ BEGIN
 END
 
 
-IDD_SCHEDULEDUPDATE DIALOGEX 0, 0, 230, 190
+IDD_SCHEDULEDUPDATE DIALOGEX 0, 0, 230+0, 190
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Scheduled update"
 FONT 8, "Tahoma", 0, 0, 0x1
 EXSTYLE WS_EX_CONTEXTHELP
 BEGIN
-    DEFPUSHBUTTON   "OK",IDC_OK,178,4,
+    DEFPUSHBUTTON   "OK",IDC_OK,178+0,4,
                     48,14
     PUSHBUTTON      "Cancel",
-                    IDC_CANCEL,178,21,48,14
+                    IDC_CANCEL,178+0,21,48,14
     LTEXT           "&Schedule Update:",
                     IDC_STATIC,7,4,82,10
     LTEXT           "S&tart Time:",
@@ -244,11 +244,11 @@ BEGIN
                     WS_TABSTOP
     CONTROL         "",IDC_TIME,"SysDateTimePick32",DTS_UPDOWN | WS_TABSTOP | DTS_TIMEFORMAT,
                     89,16,61,12,WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE
-    GROUPBOX        "Schedule_update:",IDC_FRAME,7,35,213,71
+    GROUPBOX        "Schedule_update:",IDC_FRAME,7,35,213+0,71
     LTEXT           "&Every",
                     IDC_EVERYTXT,15,50,25,11
     EDITTEXT        IDC_EVERY,40,48,32,13,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        IDC_MEVERY,48,48,24,13,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_MEVERY,48+0,48,24,13,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "Spin1",IDC_EVERYSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
                     UDS_ALIGNRIGHT | UDS_ARROWKEYS,87,34,9,11
     LTEXT           "day",IDC_DAYS,
@@ -277,24 +277,24 @@ BEGIN
     CONTROL         "Sun",IDC_SUN,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,175,75,37,11
     CONTROL         "Th&e",IDC_MTHE,
-                    "Button",BS_AUTORADIOBUTTON,14,73,27,12
-    COMBOBOX        IDC_MTYPE,48,73,48,76,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    "Button",BS_AUTORADIOBUTTON,14,73,27+0,12
+    COMBOBOX        IDC_MTYPE,48+0,73,48,76,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
-    COMBOBOX        IDC_MDAYS,99,73,48,87,CBS_DROPDOWNLIST | WS_VSCROLL | 
+    COMBOBOX        IDC_MDAYS,99+0,73,53,87,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "week(s) on:",
                     IDC_WEEKS,77,50,40,9
     CONTROL         "Da&y",IDC_MDAY,
-                    "Button",BS_AUTORADIOBUTTON,14,49,27,12
+                    "Button",BS_AUTORADIOBUTTON,14,49,27+0,12
     CONTROL         "Spin1",IDC_MSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
                     UDS_ALIGNRIGHT | UDS_ARROWKEYS,74,34,9,11
     LTEXT           "of the month(s)",
-                    IDC_OFTHEMONTHS,78,49,53,12,SS_CENTERIMAGE
+                    IDC_OFTHEMONTHS,78+0,49,53,12,SS_CENTERIMAGE
     CONTROL         "",IDC_ONCETIME,"SysDateTimePick32",WS_TABSTOP,76,48,99,
                     12,WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE
     LTEXT           "&Run on:",IDC_RUNON,15,50,47,9
     LTEXT           "of the month(s)",
-                    IDC_OFTHEMONTHS2,153,73,54,12,SS_CENTERIMAGE
+                    IDC_OFTHEMONTHS2,158+0,73,54,12,SS_CENTERIMAGE
     CONTROL         "&Enabled",
                     IDC_ENABLED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,110,
                     50,11
@@ -306,15 +306,15 @@ BEGIN
                     7,124,100,10
 	CONTROL         "Start only when CPU usage is below:",
                     IDC_CPUUSAGECHECK,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    7,138,135,10
-	EDITTEXT        IDC_CPUUSAGE,147,136,32,13,ES_AUTOHSCROLL | ES_NUMBER
+                    7,138,165+0,10
+	EDITTEXT        IDC_CPUUSAGE,177+0,136,32,13,ES_AUTOHSCROLL | ES_NUMBER
 	CONTROL         "Spin1",IDC_CPUUSAGESPIN,"msctls_updown32",UDS_SETBUDDYINT | 
-					UDS_ALIGNRIGHT | UDS_ARROWKEYS,150,140,9,11
-    LTEXT           "%",IDC_CPUUSAGEEXTRALABEL,182,139,10,10
+					UDS_ALIGNRIGHT | UDS_ARROWKEYS,210+0,140,9,11
+    LTEXT           "%",IDC_CPUUSAGEEXTRALABEL,210+0,139,10,10
 	LTEXT           "Thread Priority:",IDC_THREADPRIORITYLABEL,8,156,70,10
 	COMBOBOX        IDC_THREADPRIORITY,80,154,75,98,CBS_DROPDOWNLIST |  
                     WS_VSCROLL | WS_TABSTOP | CBS_HASSTRINGS
-    PUSHBUTTON      "Databases",IDC_DATABASES,178,154,48,14
+    PUSHBUTTON      "Databases",IDC_DATABASES,178+0,154,48,14
 	LTEXT           "",IDC_LASTRUN,8,173,208,13
 END
 
@@ -464,17 +464,17 @@ BEGIN
                     200,12
     CONTROL         "",IDC_DATABASES,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,
-					6,22,225+0,255
-    PUSHBUTTON      "&New",IDC_NEW,235+0,22,45,14
-    PUSHBUTTON      "&Edit",IDC_EDIT,235+0,40,45,14
-    PUSHBUTTON      "&Remove",IDC_REMOVE,235+0,58,45,14
-    PUSHBUTTON      "E&nable",IDC_ENABLE,235+0,78,45,14
-    PUSHBUTTON      "D&isable",IDC_DISABLE,235+0,96,45,14
-    PUSHBUTTON      "&Global U.",IDC_UPDATE,235+0,116,45,14
-    PUSHBUTTON      "&Up",IDC_UP,235+0,136,45,14
-    PUSHBUTTON      "&Down",IDC_DOWN,235+0,154,45,14
-    PUSHBUTTON      "Im&port",IDC_IMPORT,235+0,172,45,14
-    PUSHBUTTON      "Exp&ort",IDC_EXPORT,235+0,190,45,14
+					6,22,225+0-1,255
+    PUSHBUTTON      "&New",IDC_NEW,235+0-1,22,45+1,14
+    PUSHBUTTON      "&Edit",IDC_EDIT,235+0-1,40,45+1,14
+    PUSHBUTTON      "&Remove",IDC_REMOVE,235+0-1,58,45+1,14
+    PUSHBUTTON      "E&nable",IDC_ENABLE,235+0-1,78,45+1,14
+    PUSHBUTTON      "D&isable",IDC_DISABLE,235+0-1,96,45+1,14
+    PUSHBUTTON      "&Global U.",IDC_UPDATE,235+0-1,116,45+1,14
+    PUSHBUTTON      "&Up",IDC_UP,235+0-1,136,45+1,14
+    PUSHBUTTON      "&Down",IDC_DOWN,235+0-1,154,45+1,14
+    PUSHBUTTON      "Im&port",IDC_IMPORT,235+0-1,172,45+1,14
+    PUSHBUTTON      "Exp&ort",IDC_EXPORT,235+0-1,190,45+1,14
     LTEXT           "Threads used for updating (only one is recommended):",IDC_STATIC,
                     6,282,228+0,11
     EDITTEXT        IDC_THREADS,245+0,280,45,13,ES_AUTOHSCROLL
@@ -487,56 +487,56 @@ BEGIN
                     15
 END
 
-IDD_DATABASEDIALOG DIALOGEX 0, 0, 274, 358
+IDD_DATABASEDIALOG DIALOGEX 0, 0, 274+0, 358
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Database"
 FONT 8, "Tahoma", 0, 0, 0x1
 EXSTYLE WS_EX_CONTEXTHELP
 BEGIN
-    GROUPBOX        "Database settings:",IDC_STATIC,2,0,270,88
+    GROUPBOX        "Database settings:",IDC_STATIC,2,0,270+0,88
     CONTROL         "&Enable",IDC_ENABLE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,11,58,11
     CONTROL         "Update &Globally",IDC_GLOBALUPDATE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,76,11,88,11
-    RTEXT           "T&hread:",IDC_USEDTHREADLABEL,182,11,47,11
-    COMBOBOX        IDC_USEDTHREAD,233,9,32,52,CBS_DROPDOWNLIST |  
+    RTEXT           "T&hread:",IDC_USEDTHREADLABEL,182+0,11,47,11
+    COMBOBOX        IDC_USEDTHREAD,233+0,9,32,52,CBS_DROPDOWNLIST |  
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "&Name:",IDC_NAMELABEL,7,27,44,9
-    EDITTEXT        IDC_NAME,50,25,148,13,ES_AUTOHSCROLL
+    EDITTEXT        IDC_NAME,50,25,148+0,13,ES_AUTOHSCROLL
     LTEXT           "&File:",IDC_DBFILELABEL,7,45,34,9
-    EDITTEXT        IDC_DBFILE,50,43,148,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "&Browse",IDC_BROWSE,205,43,60,14
+    EDITTEXT        IDC_DBFILE,50,43,148+0,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "&Browse",IDC_BROWSE,205+0,43,60,14
     CONTROL         "Use Unicode character set",
                     IDC_UNICODE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,61,256,11
+                    WS_TABSTOP,7,61,256+0,11
     CONTROL         "&Do not overwrite existing data (e.g, use for cataloguing CD-ROMs)",
                     IDC_INCREMENTALUPDATE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,73,256,11
-    GROUPBOX        "Information:",IDC_STATIC,2,93,270,92
-    LTEXT           "Crea&tor:",IDC_CREATORLABEL,7,103,126,9
-    EDITTEXT        IDC_CREATOR,7,115,257,14,ES_AUTOHSCROLL
-    LTEXT           "D&escription:",IDC_DESCRIPTIONLABEL,7,131,148,8
-    EDITTEXT        IDC_DESCRIPTION,7,142,257,38,ES_MULTILINE | 
+                    WS_TABSTOP,7,73,256+0,11
+    GROUPBOX        "Information:",IDC_STATIC,2,93,270+0,92
+    LTEXT           "Crea&tor:",IDC_CREATORLABEL,7,103,126+0,9
+    EDITTEXT        IDC_CREATOR,7,115,257+0,14,ES_AUTOHSCROLL
+    LTEXT           "D&escription:",IDC_DESCRIPTIONLABEL,7,131,148+0,8
+    EDITTEXT        IDC_DESCRIPTION,7,142,257+0,38,ES_MULTILINE | 
                     ES_AUTOVSCROLL | ES_AUTOHSCROLL | WS_VSCROLL
-    GROUPBOX        "Include:",IDC_STATIC,2,187,270,140
+    GROUPBOX        "Include:",IDC_STATIC,2,187,270+0,153
     CONTROL         "Check &local drives",IDC_LOCALDRIVES,"Button",
                     BS_AUTORADIOBUTTON,7,200,105,10
     CONTROL         "&Custom",IDC_CUSTOMDRIVES,"Button",BS_AUTORADIOBUTTON,
                     129,200,70,10
     CONTROL         "&Scan directories which are junctions or symbolic links",IDS_SCANSYMLINKSANDJUNCTIONS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,213,2600,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,213,263+0,10
     CONTROL         "&Stop if root unavailable (see note in help)",IDC_STOPIFROOTUNAVAILABLE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,226,170,10
-    PUSHBUTTON      "&Advanced",IDC_ADVANCED,179,224,85,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,226,170+0,10
+    PUSHBUTTON      "&Advanced",IDC_ADVANCED,179+0,224,85,
                     13
-    PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,104,240,55,13
-    PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,161,240,45,13
-    PUSHBUTTON      "&Up",IDC_UP,209,240,28,13
-    PUSHBUTTON      "&Down",IDC_DOWN,237,240,28,13
-    LTEXT           "Drives and Directories:",IDC_FOLDERSLABEL,8,243,96,8
+    PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,94-1+0,240,55+1,13
+    PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,151+0,240,45,13
+    PUSHBUTTON      "&Up",IDC_UP,197+0,240,33,13
+    PUSHBUTTON      "&Down",IDC_DOWN,232+0,240,33,13
+    LTEXT           "Drives and Directories:",IDC_FOLDERSLABEL,8,243,86+0-1,8
     CONTROL         "",IDC_FOLDERS,"SysListView32",LVS_REPORT | WS_TABSTOP |
                     LVS_SINGLESEL | LVS_SHAREIMAGELISTS | LVS_NOSORTHEADER | 
-                    WS_BORDER | WS_TABSTOP,7,254,257,82
+                    WS_BORDER | WS_TABSTOP,7,254,257+0,82
     DEFPUSHBUTTON      "OK",IDC_OK,83,342,55,13
     PUSHBUTTON      "Cancel",IDC_CANCEL,143,342,55,13
 	PUSHBUTTON      "Help",IDC_HELPBUTTON,203,342,55,13	
@@ -560,8 +560,8 @@ BEGIN
     EDITTEXT        IDC_DIRECTORYNAME,9,103,187+0,13,ES_AUTOHSCROLL
     PUSHBUTTON      "&Browse",IDC_BROWSE,203+0,102,55,14
     LTEXT           "Excluded directories:",IDC_STATIC,10,122,111,8
-    PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,125+0,120,64,13
-    PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,193+0,120,65,13
+    PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,105+0,120,75,13
+    PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,182+0,120,75,13
     LISTBOX         IDC_DIRECTORIES,9,135,250+0,53,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Choose a drive or directory and give a name which is used in database:",IDC_STATIC,10,210,247+0,8
     CONTROL         "",IDC_FOLDERS,"SysListView32",LVS_REPORT | LVS_SHAREIMAGELISTS | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_BORDER | WS_TABSTOP,9,220,250+0,63,WS_EX_CLIENTEDGE
@@ -691,7 +691,7 @@ BEGIN
     COMBOBOX        IDC_TYPE,45,14,75,84,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "Given virtual key is scancode",IDC_VKISSCANCODE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,141,16,129,11
+                    BS_AUTOCHECKBOX | WS_TABSTOP,141,16,122+0,11
 	GROUPBOX        "Where pressed:",IDC_STATICWHEREPRESSED,
 					4,41,263+0,50
     LTEXT           "Window title:",IDC_STATICWINDOWTITLE,10,56,47,8
@@ -722,9 +722,9 @@ BEGIN
     CONTROL         "None",IDC_WAITNONE,"Button",BS_AUTORADIOBUTTON,10,173,
                     49,11
     CONTROL         "Delay (ms):",IDC_WAITDELAY,"Button",BS_AUTORADIOBUTTON,
-                    61,173,55,11
-    EDITTEXT        IDC_WAITMS,121,172,40,12,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Post",IDC_WAITPOST,"Button",BS_AUTORADIOBUTTON,182,173,
+                    61,173,55+10,11
+    EDITTEXT        IDC_WAITMS,121+10,172,40,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Post",IDC_WAITPOST,"Button",BS_AUTORADIOBUTTON,182+10,173,
                     35,11
     DEFPUSHBUTTON   "OK",IDC_OK,71,197,50,14
     PUSHBUTTON      "Cancel",IDC_CANCEL,149,197,50,14
@@ -1670,7 +1670,7 @@ BEGIN
 	IDS_ADVSETUSECUSTOMFONTINRESULTLIST "Use custom font"
 	IDS_ADVSETRESULTLISTFONT		"Font:"
 	IDS_ADVSETNOASTERISKATENDIFEXTENSIONGIVEN "If extension is given, file name should match to the extension"
-	IDS_ADVSETCONFIRMATIONFORUPDATEDATABASES "Ask confirmatioon when ""Update databases"" is chosen"
+	IDS_ADVSETCONFIRMATIONFORUPDATEDATABASES "Ask confirmation when ""Update databases"" is chosen"
 END
 	
 STRINGTABLE

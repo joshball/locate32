@@ -545,7 +545,8 @@ public:
 	
 	CLocatedItem** GetSeletedItems(int& nItems,int nIncludeIfNoneSeleted=-1);
 	
-	BOOL GetSimpleIDLsandParentForSelectedItems(int& nItems,LPITEMIDLIST& rpParentIDL,LPITEMIDLIST*& rpSimpleIDLs);
+	UINT GetSimpleIDLsandParentForFiles(LPCWSTR* ppFiles,UINT nFiles,LPITEMIDLIST& rpParentIDL,LPITEMIDLIST*& rpSimpleIDLs);
+	//BOOL GetSimpleIDLsandParentForSelectedItems(int& nItems,LPITEMIDLIST& rpParentIDL,LPITEMIDLIST*& rpSimpleIDLs);
 	BOOL GetSimpleIDLsandParentfromIDLs(int nItems,LPITEMIDLIST* pFullIDLs,LPITEMIDLIST* rpParentIDL,LPITEMIDLIST* rpSimpleIDLs,int* pParentIDLLevel=NULL);
 	
 	void InitTooltips();

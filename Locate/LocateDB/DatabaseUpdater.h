@@ -249,6 +249,7 @@ public:
 	const CRootDirectory* GetCurrentRoot() const;
 	LPCWSTR GetCurrentRootPath() const;
 	LPWSTR GetCurrentRootPathStr() const;
+	LPWSTR GetCurrentRootPathInDatabaseStr() const;
 
 	BOOL EnumDatabases(int iDatabase,LPWSTR& szName,LPWSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot);
 	
@@ -578,6 +579,14 @@ inline LPWSTR CDatabaseUpdater::GetCurrentRootPathStr() const
 		return NULL;
 	return alloccopy(m_pCurrentRoot->m_Path,m_pCurrentRoot->m_Path.GetLength());
 }
+
+inline LPWSTR CDatabaseUpdater::GetCurrentRootPathInDatabaseStr() const
+{
+	if (m_pCurrentRoot==NULL)
+		return NULL;
+	return alloccopy(m_pCurrentRoot->m_PathInDatabase,m_pCurrentRoot->m_PathInDatabase.GetLength());
+}
+
 
 inline const LPCWSTR CDatabaseUpdater::GetCurrentDatabaseName() const
 {

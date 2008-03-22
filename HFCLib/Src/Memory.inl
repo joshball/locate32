@@ -313,5 +313,36 @@ inline BOOL CHeap::Destroy()
 
 #endif
 
+////////////////////////////////////////////
+// CMemoryStream
+
+inline CMemoryStream::CMemoryStream(BOOL bThrow)
+:	CStream(bThrow),m_dwSize(0),m_dwAllocSize(0),
+	m_dwPosition(0),m_pData(NULL)
+{
+}
+
+inline CMemoryStream::CMemoryStream(DWORD dwInitialSize,BOOL bThrow)
+:	CStream(bThrow),m_dwPosition(0),m_dwAllocSize(dwInitialSize),
+	m_dwSize(dwInitialSize)
+{
+	m_pData=new BYTE[dwInitialSize];
+	if (m_pData==NULL && bThrow)
+		throw CException(CException::cannotAllocate);
+}
+
+inline CMemoryStream::~CMemoryStream()
+{
+	if (m_pData!=NULL)
+		delete[] m_pData;
+}
+
+inline DWORD CMemoryStream::GetAllocLength() const
+{
+	return m_dwAllocSize;
+}
+
+	
+
 #endif
 

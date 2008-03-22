@@ -589,6 +589,8 @@ CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
 
 BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 {
+	
+
 	//DebugMessage("CLocateDlg::OnInitDialog BEGIN");
 
 	ShowDlgItem(IDC_FILELIST,swHide);
@@ -603,8 +605,12 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	}
 
 
-	
 	CDialog::OnInitDialog(hwndFocus);
+
+	// Load icons
+	LoadDialogIcon();
+
+	
 	
 	m_hNextClipboardViewer=SetClipboardViewer(*this);
 
@@ -656,18 +662,11 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	m_pListCtrl->SetExtendedListViewStyle(LVS_EX_DOUBLEBUFFER,LVS_EX_DOUBLEBUFFER);
 	
 	
-	//m_pListCtrl->SetExtendedListViewStyle(0x02000000 ,0x02000000 );
-	
 	// Loading column widths
 	m_pListCtrl->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\General","ListWidths");
 
 
-	
-	// 0x56201348: WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_VSCROLL|LVS_OWNERDATA|
-	//             LVS_EDITLABELS|LVS_AUTOARRANGE|LVS_SHAREIMAGELISTS|LVS_SHOWSELALWAYS
-	// 0xd7014c10: LVS_EX_HEADERDRAGDROP|LVS_EX_UNDERLINEHOT|LVS_EX_INFOTIP|LVS_EX_LABELTIP|
-	//             LVS_EX_DOUBLEBUFFER|LVS_EX_AUTOAUTOARRANGE|LVS_EX_HEADERINALLVIEWS|0x04000000|
-	//             LVS_EX_AUTOSIZECOLUMNS|LVS_EX_COLUMNSNAPPOINTS|LVS_EX_COLUMNOVERFLOW
+
 
 	
 	// Initializing drop target
@@ -727,6 +726,8 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	// Refreshing dialog box
 	m_NameDlg.InitDriveBox(TRUE);
 
+	
+
 
 	// Check default shortcut integrity
 #ifdef _DEBUG
@@ -752,11 +753,9 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 
 
 	
+	
 
-
-    // Setting icons
-	LoadDialogIcon();
-
+    
 	// Setting tooltips
 	InitTooltips();
 	
@@ -1085,6 +1084,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		if (wID>=IDM_DEFSHORTCUTITEM && wID<IDM_DEFSHORTCUTITEM+m_aActiveShortcuts.GetSize())
 		{
 			CShortcut** pShortcutList=m_aActiveShortcuts[wID-IDM_DEFSHORTCUTITEM];
+			BOOL bSendBackToControl=TRUE;
 
 			while (*pShortcutList!=NULL)
 			{
@@ -1094,27 +1094,31 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 					if ((*pShortcutList)->m_bModifiers&CShortcut::ModifierWin)
 					{
 						if ((*pShortcutList)->IsWhenAndWhereSatisfied(*this))
+						{
 							(*pShortcutList)->ExecuteAction();
-						else
-							(*pShortcutList)->SendEventBackToControl();
+							bSendBackToControl=FALSE;
+						}
 					}
 				}
 				else if (!((*pShortcutList)->m_bModifiers&CShortcut::ModifierWin))
 				{
 					if ((*pShortcutList)->IsWhenAndWhereSatisfied(*this))
+					{
 						(*pShortcutList)->ExecuteAction();
-					else
-						(*pShortcutList)->SendEventBackToControl();
+						bSendBackToControl=FALSE;
+					}
 				}
-				else
-				{
-					// Shortcut wants Win but it is not pressed, acceltable has stolen
-					// the event, send that event to control
-					(*pShortcutList)->SendEventBackToControl();
-				}
-	
+
 				pShortcutList++;
 			}
+
+
+			if (bSendBackToControl && *m_aActiveShortcuts[wID-IDM_DEFSHORTCUTITEM]!=NULL)				
+			{
+				// Shortcut was not executed, send message to control
+				(*m_aActiveShortcuts[wID-IDM_DEFSHORTCUTITEM])->SendEventBackToControl();
+			}
+
 		}
 		else if (wID>=IDM_DEFCOLSELITEM && wID<IDM_DEFCOLSELITEM+1000)
 			m_pListCtrl->ColumnSelectionMenuProc(wID,IDM_DEFCOLSELITEM);
@@ -5897,7 +5901,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 
 	delete[] pItems;
 }
-
+/*
 BOOL CLocateDlg::GetSimpleIDLsandParentForSelectedItems(int& nItems,LPITEMIDLIST& rpParentIDL,LPITEMIDLIST*& rpSimpleIDLs)
 {
 	int nSelected=m_pListCtrl->GetSelectedCount();
@@ -5939,7 +5943,39 @@ BOOL CLocateDlg::GetSimpleIDLsandParentForSelectedItems(int& nItems,LPITEMIDLIST
 	
 	return bRet;
 }
+*/
+UINT CLocateDlg::GetSimpleIDLsandParentForFiles(LPCWSTR* ppFiles,UINT nFiles,LPITEMIDLIST& rpParentIDL,LPITEMIDLIST*& rpSimpleIDLs)
+{
+	if (m_pDesktopFolder==NULL)
+		return 0;
+
+	LPITEMIDLIST* pFullIDLs=new LPITEMIDLIST[nFiles];
 	
+	UINT nItems=0;
+
+	for (UINT i=0;i<nFiles;i++)
+	{	
+		if (SUCCEEDED(m_pDesktopFolder->ParseDisplayName(*this,NULL,(LPWSTR)ppFiles[i],NULL,&pFullIDLs[nItems],NULL)))
+			nItems++;
+	}
+
+	ASSERT(nItems==nFiles);
+
+	BOOL bRet=GetSimpleIDLsandParentfromIDLs(nItems,pFullIDLs,&rpParentIDL,rpSimpleIDLs);
+
+	for (UINT  i=0;i<nItems;i++)
+		CoTaskMemFree(pFullIDLs[i]);
+	delete[] pFullIDLs;
+
+	if (!bRet)
+	{
+		delete[] rpSimpleIDLs;	
+		return 0;
+	}
+	
+	return nItems;
+}
+
 BOOL CLocateDlg::GetSimpleIDLsandParentfromIDLs(int nItems,LPITEMIDLIST* pFullIDLs,LPITEMIDLIST* rpParentIDL,LPITEMIDLIST* rpSimpleIDLs,int* pParentIDLLevel)
 {
 	if (m_pDesktopFolder==NULL)
@@ -7980,7 +8016,7 @@ void CLocateDlg::BeginDragFiles(CListCtrl* pList)
 		
 		pfo->AutoDelete();
 		pfo->AddRef();
-		pfo->SetFiles(pList,TRUE);
+		pfo->SetFiles(pList,FALSE);
 
 		pfs->AutoDelete();
 		pfs->AddRef();
@@ -8155,8 +8191,8 @@ BOOL CLocateDlg::StartUpdateAnimation()
 		return TRUE;
 	}
 	
-	m_pUpdateAnimBitmaps=new HICON[COUNT_LOCATEANIMATIONS];
-	for (int i=0;i<COUNT_LOCATEANIMATIONS;i++)
+	m_pUpdateAnimBitmaps=new HICON[COUNT_UPDATEANIMATIONS];
+	for (int i=0;i<COUNT_UPDATEANIMATIONS;i++)
 	{
 		m_pUpdateAnimBitmaps[i]=(HICON)LoadImage(IDI_UANIM1+i,IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
 		DebugOpenGdiObject(m_pUpdateAnimBitmaps[i]);

@@ -3,7 +3,8 @@
 #include <HFCLib.h>
 #include "Locate32.h"
 
-#define DEF_FORMATS		7
+//#define DEF_FORMATS		8
+#define DEF_FORMATS		3
 
 
 
@@ -29,33 +30,38 @@ HRESULT STDMETHODCALLTYPE CFileObject::CEnumFORMATETC::Next(ULONG celt,FORMATETC
 		switch (m_format)
 		{
 		case 1:
-			rgelt[counter].cfFormat=CF_HDROP;
-			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=CF_HDROP",counter,0);
-			break;
-		case 2:
-			rgelt[counter].cfFormat=RegisterClipboardFormat(CFSTR_FILENAME);
-			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=%X='CFSTR_FILENAME'",counter,rgelt[counter].cfFormat);
-			break;
-		case 3:
-			rgelt[counter].cfFormat=RegisterClipboardFormat(CFSTR_FILENAMEW);
-			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=%X='CFSTR_FILENAMEW'",counter,rgelt[counter].cfFormat);
-			break;
-		case 4:
-			rgelt[counter].cfFormat=RegisterClipboardFormat(CFSTR_FILENAMEMAPA);
-			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=%X='CFSTR_FILENAMEMAPA'",counter,rgelt[counter].cfFormat);
-			break;
-		case 5:
-			rgelt[counter].cfFormat=RegisterClipboardFormat(CFSTR_FILENAMEMAPW);
-			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=%X='CFSTR_FILENAMEMAPW'",counter,rgelt[counter].cfFormat);
-			break;
-		case 6:
 			rgelt[counter].cfFormat=RegisterClipboardFormat(CFSTR_SHELLIDLIST);
 			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=%X='CFSTR_SHELLIDLIST'",counter,rgelt[counter].cfFormat);
 			break;
-		case 7:
-			rgelt[counter].cfFormat=RegisterClipboardFormat(CFSTR_SHELLIDLISTOFFSET);
+		case 2:
+			rgelt[counter].cfFormat=CF_HDROP;
+			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=CF_HDROP",counter,0);
+			break;
+		case 3:
+			rgelt[counter].cfFormat=RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT);
 			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=%X='CFSTR_SHELLIDLISTOFFSET'",counter,rgelt[counter].cfFormat);
 			break;
+		/*
+		case 3:
+			rgelt[counter].cfFormat=RegisterClipboardFormat(CFSTR_FILENAME);
+			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=%X='CFSTR_FILENAME'",counter,rgelt[counter].cfFormat);
+			break;
+		case 4:
+			rgelt[counter].cfFormat=RegisterClipboardFormat(CFSTR_FILENAMEW);
+			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=%X='CFSTR_FILENAMEW'",counter,rgelt[counter].cfFormat);
+			break;
+		case 5:
+			rgelt[counter].cfFormat=RegisterClipboardFormat(CFSTR_FILENAMEMAPA);
+			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=%X='CFSTR_FILENAMEMAPA'",counter,rgelt[counter].cfFormat);
+			break;
+		case 6:
+			rgelt[counter].cfFormat=RegisterClipboardFormat(CFSTR_FILENAMEMAPW);
+			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=%X='CFSTR_FILENAMEMAPW'",counter,rgelt[counter].cfFormat);
+			break;
+		case 8:
+			rgelt[counter].cfFormat=RegisterClipboardFormat(CFSTR_SHELLIDLISTOFFSET);
+			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, rgelt[%d].cfFormat=%X='CFSTR_SHELLIDLISTOFFSET'",counter,rgelt[counter].cfFormat);
+			break;*/
 		default:
 			FoDebugFormatMessage2("CFileObject::CEnumFORMATETC::Next, format %d is unknown",m_format,0);
 			break;
@@ -106,18 +112,31 @@ HRESULT STDMETHODCALLTYPE CFileObject::CEnumFORMATETC::Clone(IEnumFORMATETC __RP
 
 HRESULT STDMETHODCALLTYPE CFileObject::GetData(FORMATETC *pformatetcIn,STGMEDIUM *pmedium)
 {
+
 	FoDebugFormatMessage4("CFileObject::GetData(%X,%X), cfFormat=%X",pformatetcIn,pmedium,pformatetcIn->cfFormat,NULL);
 
 	if (m_Files.GetSize()==0)
 		return DV_E_FORMATETC;
 	if (pformatetcIn==NULL || pmedium==NULL)
+	{
+		FoDebugMessage("CFileObject::GetData: Returning E_INVALIDARG");
 		return E_INVALIDARG;
+	}
 	if (pformatetcIn->lindex!=-1)
+	{
+		FoDebugMessage("CFileObject::GetData: Returning DV_E_LINDEX");
 		return DV_E_LINDEX;
+	}
 	if ((pformatetcIn->tymed&TYMED_HGLOBAL)==0)
+	{
+		FoDebugMessage("CFileObject::GetData: Returning DV_E_TYMED");
 		return DV_E_TYMED;
+	}
 	if (pformatetcIn->dwAspect!=DVASPECT_CONTENT)
+	{
+		FoDebugMessage("CFileObject::GetData: Returning DV_E_DVASPECT");
 		return DV_E_DVASPECT;
+	}
 	
 	pmedium->tymed=TYMED_HGLOBAL;
 	pmedium->pUnkForRelease=NULL;
@@ -130,41 +149,64 @@ HRESULT STDMETHODCALLTYPE CFileObject::GetData(FORMATETC *pformatetcIn,STGMEDIUM
 	{
 		char szFormat[100];
 		GetClipboardFormatName(pformatetcIn->cfFormat,szFormat,100);
+		FoDebugFormatMessage2("CFileObject::GetData: format is %s",szFormat,0);
 		if (strcasecmp(CFSTR_SHELLIDLIST,szFormat)==0)
 			pmedium->hGlobal=GetItemIDList();
 		/*else if (strcasecmp(CFSTR_SHELLIDLISTOFFSET,szFormat)==0 && m_Points.GetSize()>0)
 			pmedium->hGlobal=GetItemIDListOffset();*/
-		else if (strcasecmp(CFSTR_FILENAME,szFormat)==0)
+		/*else if (strcasecmp(CFSTR_FILENAME,szFormat)==0)
 		{
 			int len=(int)m_Files[0]->GetLength();
-			pmedium->hGlobal=GlobalAlloc(GMEM_DDESHARE|GMEM_FIXED,len+2);
-			WideCharToMultiByte(CP_ACP,0,(LPCWSTR)*m_Files[0],len+1,(LPSTR)pmedium->hGlobal,len+2,NULL,0);
+			pmedium->hGlobal=GlobalAlloc(GHND|GMEM_SHARE,len+2);
+			LPSTR pStr=(LPSTR)GlobalLock(pmedium->hGlobal);
+			WideCharToMultiByte(CP_ACP,0,(LPCWSTR)*m_Files[0],len+1,pStr,len+2,NULL,0);
+			GlobalUnlock(pmedium->hGlobal);
 		}
 		else if (strcasecmp(CFSTR_FILENAMEW,szFormat)==0)
 		{
 			int len=(int)m_Files[0]->GetLength();
-			pmedium->hGlobal=GlobalAlloc(GMEM_DDESHARE|GMEM_FIXED,len*2+2);
-			MemCopyW((LPWSTR)pmedium->hGlobal,(LPCWSTR)*m_Files[0],len+1);
-		}
-		else if (strcasecmp(CFSTR_FILENAMEMAPA,szFormat)==0)
+			pmedium->hGlobal=GlobalAlloc(GHND|GMEM_SHARE,len*2+2);
+			LPWSTR pStr=(LPWSTR)GlobalLock(pmedium->hGlobal);
+			MemCopyW(pStr,(LPCWSTR)*m_Files[0],len+1);
+			GlobalUnlock(pmedium->hGlobal);
+		}*/
+		/*else if (strcasecmp(CFSTR_FILENAMEMAPA,szFormat)==0)
 			pmedium->hGlobal=GetFileNameMapA();
 		else if (strcasecmp(CFSTR_FILENAMEMAPW,szFormat)==0)
-			pmedium->hGlobal=GetFileNameMapW();
+			pmedium->hGlobal=GetFileNameMapW();*/
+		else if (strcasecmp(CFSTR_PREFERREDDROPEFFECT,szFormat)==0)
+		{
+			pmedium->hGlobal=GlobalAlloc(GHND|GMEM_SHARE,4);
+			int* pDropTarget=(int*)GlobalLock(pmedium->hGlobal);
+			*pDropTarget=DROPEFFECT_COPY|DROPEFFECT_LINK;
+			GlobalUnlock(pmedium->hGlobal);
+		}
 		else if (strcasecmp("Locate Item positions",szFormat)==0)
 		{
-			pmedium->hGlobal=GlobalAlloc(GMEM_FIXED,sizeof(POINT));
-			sMemCopy(pmedium->hGlobal,&m_StartPosition,sizeof(POINT));
+			pmedium->hGlobal=GlobalAlloc(GHND|GMEM_SHARE,sizeof(POINT));
+			POINT* pPt=(POINT*)GlobalLock(pmedium->hGlobal);
+			sMemCopy(pPt,&m_StartPosition,sizeof(POINT));
+			GlobalUnlock(pmedium->hGlobal);
 		}
 		else
+		{
+			FoDebugMessage("CFileObject::GetData: Returning DV_E_FORMATETC (1)");
 			return DV_E_FORMATETC;
+		}
 	}
 	else
+	{
+		FoDebugMessage("CFileObject::GetData: Returning DV_E_FORMATETC (2)");
 		return DV_E_FORMATETC;
+	}
+
+	FoDebugMessage("CFileObject::GetData: Returning S_OK");
 	return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CFileObject::GetDataHere(FORMATETC *pformatetc,STGMEDIUM *pmedium)
 {
+	/*
 	FoDebugFormatMessage4("CFileObject::GetDataHere(%X,%X), cfFormat=%X",pformatetc,pmedium,pformatetc->cfFormat,NULL);
 
 	HRESULT hRes;
@@ -177,6 +219,8 @@ HRESULT STDMETHODCALLTYPE CFileObject::GetDataHere(FORMATETC *pformatetc,STGMEDI
 	sMemCopy(pmedium->hGlobal,med.hGlobal,GlobalSize(med.hGlobal));
 	GlobalFree(med.hGlobal);
 	return hRes;
+	*/
+	return E_NOTIMPL;
 }
 	
 HRESULT STDMETHODCALLTYPE CFileObject::QueryGetData(FORMATETC *pformatetc)
@@ -234,10 +278,10 @@ HRESULT STDMETHODCALLTYPE CFileObject::QueryGetData(FORMATETC *pformatetc)
 			return S_OK;
 		/*if (strcasecmp(szFormat,CFSTR_SHELLIDLISTOFFSET)==0)
 			return S_OK;*/
-		if (strcasecmp(szFormat,CFSTR_FILENAME)==0)
-			return S_OK;
-		if (strcasecmp(szFormat,CFSTR_FILENAMEW)==0)
-			return S_OK;
+		//if (strcasecmp(szFormat,CFSTR_FILENAME)==0)
+		//	return S_OK;
+		//if (strcasecmp(szFormat,CFSTR_FILENAMEW)==0)
+		//	return S_OK;
 		if (strcasecmp(szFormat,"Locate Item positions")==0)
 			return S_OK;
 	}
@@ -250,8 +294,8 @@ HRESULT STDMETHODCALLTYPE CFileObject::QueryGetData(FORMATETC *pformatetc)
 
 HRESULT STDMETHODCALLTYPE CFileObject::GetCanonicalFormatEtc(FORMATETC *pformatectIn,FORMATETC *pformatetcOut)
 {
-	FoDebugFormatMessage2("CFileObject::QueryGetData(%X,%X)",pformatectIn,pformatetcOut);
-	return 0;
+	//FoDebugFormatMessage2("CFileObject::QueryGetData(%X,%X)",pformatectIn,pformatetcOut);
+	return E_NOTIMPL;
 }
 
 HRESULT STDMETHODCALLTYPE CFileObject::SetData(FORMATETC *pformatetc,STGMEDIUM *pmedium,BOOL fRelease)
@@ -401,7 +445,7 @@ HGLOBAL CFileObject::GetHDrop()
 		int i;
 		for (i=0;i<m_Files.GetSize();i++)
 			nDataLength+=((DWORD)m_Files[i]->GetLength()+1)*2;
-		hGlobal=GlobalAlloc(GPTR,nDataLength);
+		hGlobal=GlobalAlloc(GHND|GMEM_SHARE,nDataLength);
 		BYTE* pLock=(BYTE*)GlobalLock(hGlobal);
 
 
@@ -425,21 +469,24 @@ HGLOBAL CFileObject::GetHDrop()
 	{
 		for (int i=0;i<m_Files.GetSize();i++)
 			nDataLength+=(DWORD)m_Files[i]->GetLength()+1;
-		hGlobal=GlobalAlloc(GPTR,nDataLength);
-		if (hGlobal==NULL)
+		hGlobal=GlobalAlloc(GHND|GMEM_SHARE,nDataLength);
+		BYTE* pLock=(BYTE*)GlobalLock(hGlobal);
+
+		if (pLock==NULL)
 			return NULL;
-		((DROPFILES*)hGlobal)->fNC=TRUE;
-		GetCursorPos(&((DROPFILES*)hGlobal)->pt);
-		((DROPFILES*)hGlobal)->fWide=FALSE;
-		((DROPFILES*)hGlobal)->pFiles=sizeof(DROPFILES);
-		LPSTR pDst=(LPSTR)hGlobal+sizeof(DROPFILES);
+		((DROPFILES*)pLock)->fNC=TRUE;
+		GetCursorPos(&((DROPFILES*)pLock)->pt);
+		((DROPFILES*)pLock)->fWide=FALSE;
+		((DROPFILES*)pLock)->pFiles=sizeof(DROPFILES);
+		LPSTR pDst=(LPSTR)pLock+sizeof(DROPFILES);
 		for (int i=0;i<m_Files.GetSize();i++)
 		{
-			DebugFormatMessage(L"HDROP: file: %s",(LPCWSTR)*m_Files[i]);
 			MemCopyWtoA(pDst,(LPCWSTR)*m_Files[i],m_Files[i]->GetLength()+1);
 			pDst+=m_Files[i]->GetLength()+1;
 		}
 		*pDst='\0';
+
+		GlobalUnlock(hGlobal);
 	}
 	
 	
@@ -451,8 +498,10 @@ HGLOBAL CFileObject::GetFileNameA()
 	if (m_Files.GetSize()==0)
 		return NULL;
 
-	HGLOBAL hGlobal=GlobalAlloc(GPTR,m_Files.GetAt(0)->GetLength()+1);
-	MemCopyWtoA((LPSTR)hGlobal,m_Files.GetAt(0)->GetBuffer(),m_Files.GetAt(0)->GetLength()+1);
+	HGLOBAL hGlobal=GlobalAlloc(GHND|GMEM_SHARE,m_Files.GetAt(0)->GetLength()+1);
+	LPSTR pStr=(LPSTR)GlobalLock(hGlobal);
+	MemCopyWtoA(pStr,m_Files.GetAt(0)->GetBuffer(),m_Files.GetAt(0)->GetLength()+1);
+	GlobalUnlock(hGlobal);
 	return hGlobal;
 }
 
@@ -462,13 +511,63 @@ HGLOBAL CFileObject::GetFileNameW()
 		return NULL;
 
 	HGLOBAL hGlobal=GlobalAlloc(GPTR,(m_Files.GetAt(0)->GetLength()+1)*2);
-	MemCopyW((LPWSTR)hGlobal,m_Files.GetAt(0)->GetBuffer(),m_Files.GetAt(0)->GetLength()+1);
+	LPWSTR pStr=(LPWSTR)GlobalLock(hGlobal);
+	MemCopyW(pStr,m_Files.GetAt(0)->GetBuffer(),m_Files.GetAt(0)->GetLength()+1);
+	GlobalUnlock(hGlobal);
 	return hGlobal;
 }
 
-
 HGLOBAL CFileObject::GetItemIDList()
 {
+	/* NEW METHOD
+	LPCWSTR* pFiles=new LPCWSTR[m_Files.GetSize()];
+	for (int i=0;i<m_Files.GetSize();i++)
+		pFiles[i]=*m_Files[i];
+
+
+	LPITEMIDLIST* ppSimpleIDLs=new LPITEMIDLIST[m_Files.GetSize()];
+	LPITEMIDLIST pParentIDL;
+
+	UINT nItems=GetLocateDlg()->GetSimpleIDLsandParentForFiles(pFiles,m_Files.GetSize(),pParentIDL,ppSimpleIDLs);
+
+
+
+	
+	
+	DWORD dwParentLength=GetIDListSize(pParentIDL);
+	DWORD* pItemLengths=new DWORD[nItems];
+	UINT i,nDataLength=sizeof(CIDA)+nItems*sizeof(UINT)+dwParentLength;
+	
+	// ID list lengths
+	for (i=0;i<nItems;i++)
+		nDataLength+=pItemLengths[i]=GetIDListSize(ppSimpleIDLs[i]);
+
+	
+	CIDA* pida=(CIDA*)GlobalAlloc(GPTR,nDataLength);
+	pida->cidl=nItems;
+	DWORD nOffset=sizeof(CIDA)+nItems*sizeof(UINT);
+	
+	// Copy parent
+	pida->aoffset[0]=nOffset;
+	sMemCopy((LPSTR)pida+nOffset,pParentIDL,dwParentLength);
+	CoTaskMemFree(pParentIDL);
+	nOffset+=dwParentLength;
+
+	for (i=0;i<nItems;i++)
+	{
+		pida->aoffset[i+1]=nOffset;
+		sMemCopy((LPSTR)pida+nOffset,ppSimpleIDLs[i],pItemLengths[i]);
+		CoTaskMemFree(ppSimpleIDLs[i]);
+		nOffset+=pItemLengths[i];
+	}
+
+	delete[] ppSimpleIDLs;
+	delete[] pFiles;
+	return (HGLOBAL)pida;*/
+	
+	
+
+	/* ORIGINAL METHOD */
 	int i,nFiles=0;
 	LPITEMIDLIST* pItemLists=new LPITEMIDLIST[m_Files.GetSize()+1];
 	DWORD* pItemLengths=new DWORD[m_Files.GetSize()+1];
@@ -486,19 +585,16 @@ HGLOBAL CFileObject::GetItemIDList()
 			nFiles++;
 		}
 	}
-	CIDA* pida=(CIDA*)GlobalAlloc(GPTR,nDataLength);
+	HGLOBAL hGlobal=GlobalAlloc(GHND|GMEM_SHARE,nDataLength);
+	CIDA* pida=(CIDA*)GlobalLock(hGlobal);
 	pida->cidl=nFiles;
 	DWORD nOffset=pida->aoffset[0]=sizeof(CIDA)+nFiles*sizeof(UINT);
-	if (pItemLists[0]==NULL)
-	{
-		*(WORD*)((LPSTR)pida+nOffset)=0;
-		nOffset+=2;
-		i=1;
-	}
-	else
-		i=0;
 	
-	for (;i<=nFiles;i++)
+	// Parent item
+	*(WORD*)((LPSTR)pida+nOffset)=0;
+	nOffset+=2;
+		
+	for (i=1;i<=nFiles;i++)
 	{
 		pida->aoffset[i]=nOffset;
 		sMemCopy((LPSTR)pida+nOffset,pItemLists[i],pItemLengths[i]);
@@ -508,7 +604,9 @@ HGLOBAL CFileObject::GetItemIDList()
 
 	delete[] pItemLists;
 	delete[] pItemLengths;
-	return (HGLOBAL)pida;
+
+	GlobalUnlock(hGlobal);
+	return hGlobal;
 }
 
 /*
@@ -536,10 +634,10 @@ HGLOBAL CFileObject::GetFileNameMapA()
 		pNameStartPos[i]=(int)m_Files[i]->FindLast('\\')+1;
 		nDataLength+=(DWORD)m_Files[i]->GetLength()+1-pNameStartPos[i];
 	}
-	HGLOBAL hGlobal=GlobalAlloc(GPTR,nDataLength);
-	if (hGlobal==NULL)
+	HGLOBAL hGlobal=GlobalAlloc(GHND|GMEM_SHARE,nDataLength);
+	LPSTR pDst=(LPSTR)GlobalLock(hGlobal);
+	if (pDst==NULL)
 		return NULL;
-	LPSTR pDst=(LPSTR)hGlobal;
 	for (i=0;i<m_Files.GetSize();i++)
 	{
 		MemCopyWtoA(pDst,(LPCWSTR)(*m_Files[i])+pNameStartPos[i],m_Files[i]->GetLength()+1-pNameStartPos[i]);
@@ -547,6 +645,7 @@ HGLOBAL CFileObject::GetFileNameMapA()
 	}
 	*pDst=L'\0';
 	delete[] pNameStartPos;
+	GlobalUnlock(hGlobal);
 	return hGlobal;
 }
 
@@ -560,10 +659,10 @@ HGLOBAL CFileObject::GetFileNameMapW()
 		pNameStartPos[i]=(int)m_Files[i]->FindLast('\\')+1;
 		nDataLength+=(int)m_Files[i]->GetLength()+1-pNameStartPos[i];
 	}
-	HGLOBAL hGlobal=GlobalAlloc(GPTR,nDataLength*2);
-	if (hGlobal==NULL)
+	HGLOBAL hGlobal=GlobalAlloc(GHND|GMEM_SHARE,nDataLength*2);
+	LPWSTR pDst=(LPWSTR)GlobalLock(hGlobal);
+	if (pDst==NULL)
 		return NULL;
-	LPWSTR pDst=(LPWSTR)hGlobal;
 	for (i=0;i<m_Files.GetSize();i++)
 	{
 		MemCopyW(pDst,(LPCWSTR)(*m_Files[i])+pNameStartPos[i],m_Files[i]->GetLength()+1-pNameStartPos[i]);
@@ -571,6 +670,7 @@ HGLOBAL CFileObject::GetFileNameMapW()
 	}
 	*pDst='\0';
 	delete[] pNameStartPos;
+	GlobalUnlock(hGlobal);
 	return hGlobal;
 }
 
@@ -592,6 +692,46 @@ HRESULT STDMETHODCALLTYPE CFileSource::GiveFeedback(DWORD dwEffect)
 HRESULT STDMETHODCALLTYPE CFileTarget::DragEnter(IDataObject __RPC_FAR *pDataObj,
 		DWORD grfKeyState,POINTL pt,DWORD __RPC_FAR *pdwEffect)
 {
+#ifdef _DEBUG
+	// Quoery formats
+	IEnumFORMATETC* pEnumFormatETC;
+	if (SUCCEEDED(pDataObj->EnumFormatEtc(DATADIR_GET,&pEnumFormatETC)))
+	{
+		DebugMessage("IEnumFORMATETC gives following GET formats");
+
+		ULONG nFethecd;
+		FORMATETC formatetc;
+		while (pEnumFormatETC->Next(1,&formatetc,&nFethecd)==S_OK)
+		{
+			char szFormat[100]="";
+			GetClipboardFormatName(formatetc.cfFormat,szFormat,100);
+			DebugFormatMessage("cfFormat=%X (%s) tymed=%X lindex=%X",
+				formatetc.cfFormat,szFormat,formatetc.tymed,formatetc.lindex);
+		}
+
+		pEnumFormatETC->Release();
+	}
+
+	if (SUCCEEDED(pDataObj->EnumFormatEtc(DATADIR_SET,&pEnumFormatETC)))
+	{
+		DebugMessage("IEnumFORMATETC gives following SET formats");
+
+		ULONG nFethecd;
+		FORMATETC formatetc;
+		while (pEnumFormatETC->Next(1,&formatetc,&nFethecd)==S_OK)
+		{
+			char szFormat[100]="";
+			GetClipboardFormatName(formatetc.cfFormat,szFormat,100);
+			DebugFormatMessage("cfFormat=%X (%s) tymed=%X lindex=%X",
+				formatetc.cfFormat,szFormat,formatetc.tymed,formatetc.lindex);
+		}
+
+		pEnumFormatETC->Release();
+	}
+
+#endif
+
+
 	if (grfKeyState&MK_LBUTTON)
 	{
 		FORMATETC FormatEtc;
@@ -674,7 +814,7 @@ HRESULT STDMETHODCALLTYPE CFileTarget::Drop(IDataObject __RPC_FAR *pDataObj,
 	STGMEDIUM Medium;
 	if (pDataObj->GetData(&FormatEtc,&Medium)!=S_OK)
 		return E_UNEXPECTED;
-	POINT* pPoint=(POINT*)Medium.hGlobal;
+	POINT* pPoint=(POINT*)GlobalLock(Medium.hGlobal);
 	int nItem=pList->GetNextItem(-1,LVNI_SELECTED);
 	while (nItem!=-1)
 	{
@@ -685,6 +825,7 @@ HRESULT STDMETHODCALLTYPE CFileTarget::Drop(IDataObject __RPC_FAR *pDataObj,
 		pList->SetItemPosition(nItem,pos);
 		nItem=pList->GetNextItem(nItem,LVNI_SELECTED);
 	}
+	GlobalUnlock(Medium.hGlobal);
 	ReleaseStgMedium(&Medium);
 	return S_OK;
 }

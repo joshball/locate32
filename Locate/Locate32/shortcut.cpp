@@ -2177,12 +2177,24 @@ BOOL CShortcut::IsWhenAndWhereSatisfied(HWND hSystemTrayWnd)  const
 
 void CShortcut::SendEventBackToControl()
 {
-	HWND hControl=GetFocus();
-	if (hControl!=NULL)
+#ifndef KEYHOOK_EXPORTS
+	CWinThread* pThread=GetLocateAppWnd()->m_pLocateDlgThread;
+	if (pThread!=NULL)
 	{
-		DWORD lParam=1;
-		if ((GetKeyState(VK_LMENU)|GetKeyState(VK_RMENU)) & 0x8000)
-			lParam|=1<<29;
-		::SendMessage(hControl,WM_CHAR,m_bVirtualKey,lParam);
+		const MSG* pMsg=pThread->GetCurrentMessage();
+		ASSERT(pMsg!=NULL);
+
+
+		if (pMsg->message==WM_SYSKEYDOWN || pMsg->message==WM_SYSKEYUP)
+		{
+			::SendMessage(pMsg->hwnd,WM_SYSKEYDOWN,pMsg->wParam,pMsg->lParam&~(1<<30|1<<31));
+			::SendMessage(pMsg->hwnd,WM_SYSKEYUP,pMsg->wParam,pMsg->lParam|(1<<30)|(1<<31));
+		}
+		else if (pMsg->message==WM_KEYDOWN || pMsg->message==WM_KEYUP)
+		{
+			::SendMessage(pMsg->hwnd,WM_KEYDOWN,pMsg->wParam,pMsg->lParam&~(1<<30|1<<31));
+			::SendMessage(pMsg->hwnd,WM_KEYUP,pMsg->wParam,pMsg->lParam|(1<<30)|(1<<31));
+		}
 	}
+#endif
 }
