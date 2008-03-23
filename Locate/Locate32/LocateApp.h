@@ -7,171 +7,9 @@
 #pragma once
 #endif
 
-class CLocateAppWnd;
-class CAboutDlg;
-class CSettingsProperties;
-class CUpdateThread;
-class CLocateDlgThread;
 
-class CCpuUsage;
-
-
-// For SetUpdateStatusInformation
-#define	DEFAPPICON		(HICON)INVALID_HANDLE_VALUE  
-
-class CLocateAppWnd : public CFrameWnd
-{
-public:
-	
-	struct RootInfo {
-		LPWSTR pName;
-		LPWSTR pRoot;
-		DWORD dwNumberOfDatabases;
-		DWORD dwCurrentDatabase;
-		WORD wProgressState;
-		UpdateError ueError;
-		UpdateStatus usStatus;
-		
-	};
-
-	class CUpdateStatusWnd : public CFrameWnd 
-	{
-	public:
-		CUpdateStatusWnd();
-		virtual ~CUpdateStatusWnd();
-	
-		virtual int OnCreate(LPCREATESTRUCT lpcs);
-		virtual void OnDestroy();
-		virtual void OnNcDestroy();
-		virtual void OnTimer(DWORD wTimerID);
-		virtual void OnPaint();
-		virtual void OnMouseMove(UINT fwKeys,WORD xPos,WORD yPos);
-		
-	
-		virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
-	
-		
-
-	public:
-		void Update();
-		void Update(WORD wThreads,WORD wRunning,RootInfo* pRootInfos);
-		void IdleClose();
-		virtual BOOL DestroyWindow();
-		void CheckForegroundWindow();
-
-		void SetFonts();
-		void SetPosition();
-		void FormatErrorForStatusTooltip(UpdateError ueError,CDatabaseUpdater* pUpdater);
-		void FormatStatusTextLine(CStringW& str,const CLocateAppWnd::RootInfo& pRootInfo,int nThreadID=-1,int nThreads=1);
-		static void EnlargeSizeForText(CDC& dc,CStringW& str,CSize& szSize);
-		static void EnlargeSizeForText(CDC& dc,LPCWSTR szText,int nLength,CSize& szSize);
-		static void FillFontStructs(LOGFONT* pTextFont,LOGFONT* pTitleFont);
-
-			
-		CStringW m_sStatusText;
-		CArrayFAP<LPWSTR> m_aErrors;
-		
-		CFont m_TitleFont,m_Font;
-		CSize m_WindowSize;
-
-		COLORREF m_cTextColor;
-		COLORREF m_cTitleColor;
-		COLORREF m_cErrorColor;
-		COLORREF m_cBackColor;
-		
-		CRITICAL_SECTION m_cUpdate;
-
-
-		// Mouse move
-		struct MouseMove {
-			SHORT nStartPointX; // Point in client in which cursor is pressed
-			SHORT nStartPointY;
-		};
-		MouseMove* m_pMouseMove;
-
-	};
-
-public:
-	CLocateAppWnd();
-	virtual ~CLocateAppWnd();
-
-public:
-
-	virtual int OnCreate(LPCREATESTRUCT lpcs);
-	virtual BOOL OnCreateClient(LPCREATESTRUCT lpcs);
-	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
-	virtual void OnDestroy();
-	virtual void OnTimer(DWORD wTimerID); 
-	virtual void OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu);
-	virtual void OnHelp(LPHELPINFO lphi);
-	virtual LRESULT WindowProc(UINT msg,WPARAM wParam,LPARAM lParam);
-	
-	DWORD OnActivateAnotherInstance(ATOM aCommandLine);
-	DWORD OnSystemTrayMessage(UINT uID,UINT msg);
-	BOOL SetTrayIcon(HICON hIcon=NULL,UINT uTip=0,LPCWSTR szText=NULL);
-	BOOL GetRootInfos(WORD& wThreads,WORD& wRunning,RootInfo*& pRootInfos);
-	static void FreeRootInfos(WORD wThreads,RootInfo* pRootInfos);
-
-	void AddTaskbarIcon(BOOL bForce=FALSE);
-	void DeleteTaskbarIcon(BOOL bForce=FALSE);
-	void LoadAppIcon();
-	
-	DWORD SetSchedules(CList<CSchedule*>* pSchedules=NULL);
-	BOOL SaveSchedules();
-	void CheckSchedules();
-	BOOL RunStartupSchedules(); // return value = Should run again?
-
-	BOOL StartUpdateStatusNotification();
-	BOOL StopUpdateStatusNotification();
-	void NotifyFinishingUpdating();
-
-	BOOL TurnOnShortcuts();
-	BOOL TurnOffShortcuts();
-
-
-
-	BYTE OnAbout();
-	BYTE OnSettings();
-	BYTE OnLocate();
-	
-	// If pDatabases is:
-	//  NULL: Global update
-	//  0xFFFFFFFF: Select databases
-	//  otherwise Use databases in pDatabase array which is 
-	//  double zero terminated seqeuence of strings
-	BYTE OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases=NULL); 
-	BYTE OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThreadPriority); 
-
-	static DWORD WINAPI KillUpdaterProc(LPVOID lpParameter);
-    
-public:
-	
-public:
-	CMenu m_Menu;
-	CAboutDlg* m_pAbout;
-	CSettingsProperties* m_pSettings;
-	
-
-	CLocateDlgThread* m_pLocateDlgThread;
-	CUpdateStatusWnd* m_pUpdateStatusWnd;
-	
-	HICON m_hAppIcon;
-	HICON* m_pUpdateAnimIcons;
-	WORD m_nCurUpdateAnimBitmap;
-	CRITICAL_SECTION m_csAnimBitmaps;
-
-	CListFP <CSchedule*> m_Schedules;
-	CCpuUsage* m_pCpuUsage;
-
-	// Keyboard shortcuts
-	CArrayFP<CShortcut*> m_aShortcuts;
-	HHOOK m_hHook;
-
-	
-	friend inline CLocateDlg* GetLocateWnd();
-
-};
-
+////////////////////////////////////////////////////////////
+// CLocateApp - Main application class
 
 class CLocateApp : public CWinApp  
 {
@@ -417,7 +255,7 @@ public:
 
 protected:
 	CStartData* m_pStartData;
-	CLocateAppWnd m_AppWnd;
+	CTrayIconWnd m_AppWnd;
 
 	BYTE m_nStartup;
 	
@@ -480,142 +318,15 @@ public:
 
 
 	// Friends
-	friend CLocateAppWnd;
-	friend CLocateAppWnd::CUpdateStatusWnd;
-	friend CLocateAppWnd* GetLocateAppWnd();
+	friend CTrayIconWnd;
+	friend CTrayIconWnd::CUpdateStatusWnd;
+	friend CTrayIconWnd* GetTrayIconWnd();
 	friend CLocateDlg* GetLocateDlg();
 	friend CRegKey2;
 
 };
 
-inline CLocateApp::CStartData::CStartData()
-:	m_nStatus(0),m_nStartup(0),m_dwMaxFoundFiles(DWORD(-1)),
-	m_dwMaxFileSize(DWORD(-1)),m_dwMinFileSize(DWORD(-1)),
-    m_dwMaxDate(DWORD(-1)),m_dwMinDate(DWORD(-1)),
-    m_cMaxSizeType(0),m_cMinSizeType(0),
-    m_cMaxDateType(0),m_cMinDateType(0),
-    m_nSorting(BYTE(-1)),m_nPriority(priorityDontChange),
-	m_pStartPath(NULL),m_pStartString(NULL),
-	m_pTypeString(NULL),m_pFindText(NULL),m_pLoadPreset(NULL),
-	m_nActivateInstance(0),
-	m_nActivateControl(None)
-{ 
-}
 
-inline CLocateApp::CStartData::~CStartData()
-{
-	if (m_pStartPath!=NULL)
-		delete[] m_pStartPath;
-	if (m_pStartString!=NULL)
-		delete[] m_pStartString;
-	if (m_pTypeString!=NULL)
-		delete[] m_pTypeString;
-	if (m_pFindText!=NULL)
-		delete[] m_pFindText;
-	if (m_pLoadPreset!=NULL)
-		delete[] m_pLoadPreset;
-
-}
-
-inline void CLocateApp::SetStartData(CStartData* pStarData)
-{
-	if (m_pStartData!=NULL)
-		delete m_pStartData;
-	m_pStartData=pStarData;
-}
-
-inline const CDatabase* CLocateApp::GetDatabase(WORD wID) const
-{
-	if (m_pLastDatabase->GetID()==wID)
-		return m_pLastDatabase;
-
-	for (int i=0;i<m_aDatabases.GetSize();i++)
-	{
-		m_pLastDatabase=m_aDatabases[i];
-		if (m_pLastDatabase->GetID()==wID)
-			return m_pLastDatabase;
-	}
-	return NULL;
-}
-
-	
-inline BOOL CLocateApp::IsDatabaseMenu(HMENU hMenu)
-{
-	UINT nID=GetMenuItemID(hMenu,0);
-	return nID>=IDM_DEFUPDATEDBITEM && nID<IDM_DEFUPDATEDBITEM+1000;
-}
-
-
-inline CLocateApp* GetLocateApp()
-{
-	extern CLocateApp theApp;
-	return &theApp;
-}
-
-inline CLocateAppWnd* GetLocateAppWnd()
-{
-	extern CLocateApp theApp;
-	return (CLocateAppWnd*)&theApp.m_AppWnd;
-}
-
-
-
-inline BOOL CLocateApp::IsUpdating() const
-{
-	return m_ppUpdaters!=NULL;
-}
-
-
-
-
-
-inline DWORD CLocateApp::GetProgramFlags()
-{
-	extern CLocateApp theApp;
-	return theApp.m_dwProgramFlags;
-}
-
-
-
-inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,CStringW& str,CSize& szSize)
-{
-	EnlargeSizeForText(dc,str,(int)str.GetLength(),szSize);
-}
-
-inline void CLocateAppWnd::CUpdateStatusWnd::EnlargeSizeForText(CDC& dc,LPCWSTR szText,int nLength,CSize& szSize)
-{
-	CRect rc(0,0,0,0);
-	dc.DrawText(szText,nLength,&rc,DT_SINGLELINE|DT_CALCRECT);
-	if (szSize.cx<rc.Width())
-		szSize.cx=rc.Width();
-	if (szSize.cy<rc.Height())
-		szSize.cy=rc.Height();
-}
-
-inline BYTE CLocateAppWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases)
-{
-	DWORD nThreadPriority=THREAD_PRIORITY_NORMAL;
-
-	CRegKey2 RegKey;
-	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
-		RegKey.QueryValue("Update Process Priority",nThreadPriority);
-	
-	return OnUpdate(bStopIfProcessing,pDatabases,(int)nThreadPriority);
-}
-
-
-
-inline CString CRegKey2::GetCommonKey()
-{
-	extern CLocateApp theApp;
-	return CString(theApp.m_szCommonRegKey)+="\\Locate32";
-}
-
-inline CStringW CRegKey2::GetCommonKeyW()
-{
-	extern CLocateApp theApp;
-	return CStringW(theApp.m_szCommonRegKey)+="\\Locate32";
-}
-
+#include "LocateApp.inl"
 
 #endif

@@ -7,6 +7,29 @@
 #pragma once
 #endif
 
+// CSavePresetDlg - Used as a base class for "Save presets" dialogs 
+// "Save preset" dialogs will inherit this class
+
+class CSavePresetDlg: public CDialog  
+{
+public:
+	CSavePresetDlg();
+
+	virtual BOOL OnInitDialog(HWND hwndFocus);
+	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
+	virtual void OnDestroy();
+
+	
+	virtual void OnOK();
+	virtual void OnCancel();
+
+public:
+	CStringW m_sReturnedPreset;
+};
+
+
+// CSelectColumnsDlg - Used to choose columnt in the results list
+
 class CSelectColumnsDlg : public CDialog  
 {
 public:
@@ -68,6 +91,7 @@ private:
 };
 
 
+// CSelectDatabasesDlg - Used to select database ("Find using databases" and "Update selected")
 
 #define CUSTOM_PRESET		0
 #define GLOBAL_PRESET		1
@@ -165,6 +189,10 @@ public:
 
 };
 
+
+
+// CChangeCaseDlg - Used with Special / Change case
+
 class CChangeCaseDlg: public CDialog  
 {
 public:
@@ -186,6 +214,11 @@ public:
 	BOOL bForExtension;
 };
 
+
+
+
+// CChangeFilenameDlg - Used with Special / Change file name
+
 class CChangeFilenameDlg: public CDialog  
 {
 public:
@@ -203,6 +236,10 @@ public:
 	};
 	DWORD m_dwFlags;
 };
+
+
+
+// CPropertiesSheet - Used with Properties dialog
 
 typedef BOOL (WINAPI* GETVOLUMEPATHNAMEW)(LPCWSTR,LPWSTR,DWORD);
 typedef BOOL (WINAPI* GETDISKFREESPACEEX)(LPCSTR,PULARGE_INTEGER, PULARGE_INTEGER, PULARGE_INTEGER);

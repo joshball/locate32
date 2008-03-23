@@ -36,7 +36,7 @@ extern LPWSTR g_szwBuffer;
 
 // This macro is defined to ensure that g_szBuffer is only used in 
 // LocateDlg thread, not simultaneously by several threaad. 
-#define ISDLGTHREADOK		{ASSERT(GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->GetThreadId()); }
+#define ISDLGTHREADOK		{ASSERT(GetCurrentThreadId()==GetTrayIconWnd()->m_pLocateDlgThread->GetThreadId()); }
 
 
 // Wait times for thread safe system
@@ -44,16 +44,9 @@ extern LPWSTR g_szwBuffer;
 #define LOCATEAPPUPDATERSMUTEXTIMEOUT	5000
 
 
-#define BUFFERALLOC_EXTRALEN				0
-#define DEBUGALLOC_EXTRALEN					10
-
-//DONT USE #define FASTALLOCATORTYPE					CBufferAllocator<BYTE*,65535,BUFFERALLOC_EXTRALEN>
-//#define FASTALLOCATORTYPE					CBufferAllocatorThreadSafe<BYTE*,65535,BUFFERALLOC_EXTRALEN>
-#define FASTALLOCATORTYPE					CAllocator
-
-//#define DEBUGALLOCATORTYPE					CDebugAllocator<DEBUGALLOC_EXTRALEN>
-#define DEBUGALLOCATORTYPE					CAllocator
-
+// Number of bitmaps in animations
+#define COUNT_LOCATEANIMATIONS 6
+#define COUNT_UPDATEANIMATIONS 13
 
 
 // Defaults:
@@ -101,18 +94,20 @@ extern LPWSTR g_szwBuffer;
 #include "messages.h"
 #include "Data.h"
 #include "FileObject.h"
+#include "TrayIconWnd.h"
 #include "LocateApp.h"
 #include "SettingsDlg.h"
+#include "SmallDialogs.h"
 #include "LocateDlg.h"
 #include "LocatedItem.h"
 #include "Background.h"
 #include "ResultsDialogs.h"
 #include "DatabaseInfos.h"
-#include "SmallDialogs.h"
 #include "AboutDlg.h"
 
 #include "shortcuts.inl"
 #include "LocatedItem.inl"
+#include "LocateDlg_Tabs.inl"
 #include "LocateDlg.inl"
 #include "SettingsDlg.inl"
 

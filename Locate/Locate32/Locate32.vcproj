@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9,00"
+	Version="8,00"
 	Name="locate32"
 	ProjectGUID="{CA6495C9-9B2D-406A-8DCD-9AF07EDD18FC}"
 	RootNamespace="locate32"
 	Keyword="Win32Proj"
-	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -81,8 +80,6 @@
 				MapFileName="$(OutDir)\$(ProjectName).map"
 				MapExports="true"
 				SubSystem="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -102,6 +99,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -165,8 +165,6 @@
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
 				SubSystem="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -186,6 +184,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -250,8 +251,6 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -271,6 +270,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -334,8 +336,6 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -355,6 +355,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -418,8 +421,6 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -439,6 +440,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -503,8 +507,6 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -524,6 +526,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -626,6 +631,22 @@
 			</File>
 			<File
 				RelativePath=".\LocateDlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\LocateDlg_Events.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\LocateDlg_Menu.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\LocateDlg_ResultsList.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\LocateDlg_Tabs.cpp"
 				>
 			</File>
 			<File
@@ -748,6 +769,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\TrayIconWnd.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -799,6 +824,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\LocateApp.inl"
+				>
+			</File>
+			<File
 				RelativePath=".\LocatedItem.h"
 				>
 			</File>
@@ -815,11 +844,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\LocateDlg_Tabs.inl"
+				>
+			</File>
+			<File
 				RelativePath=".\messages.h"
 				>
 			</File>
 			<File
 				RelativePath=".\misc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\misc.inl"
 				>
 			</File>
 			<File
@@ -848,6 +885,14 @@
 			</File>
 			<File
 				RelativePath=".\SmallDialogs.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\TrayIconWnd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TrayIconWnd.inl"
 				>
 			</File>
 		</Filter>

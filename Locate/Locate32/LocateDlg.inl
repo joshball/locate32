@@ -7,6 +7,63 @@
 #pragma once
 #endif
 
+
+//////////////////////////////////////////////////////////////////////////////
+// CLocateDlgThread
+//////////////////////////////////////////////////////////////////////////////
+
+inline CLocateDlgThread::CLocateDlgThread()
+:	m_pLocate(NULL)
+{
+	m_bAutoDelete=TRUE;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+// CLocateDlg::VolumeInformation
+//////////////////////////////////////////////////////////////////////////////
+
+
+
+inline CLocateDlg::VolumeInformation::VolumeInformation(WORD wDB_,WORD wRootID_,BYTE bType_,DWORD dwVolumeSerial,LPCWSTR szVolumeLabel,LPCWSTR szFileSystem)
+:	wDB(wDB_),wRootID(wRootID_),bType(bType_)
+{
+	if (dwVolumeSerial!=0 && dwVolumeSerial!=DWORD(-1))
+	{
+		szVolumeSerial=new WCHAR[12];
+		StringCbPrintfW(szVolumeSerial,12*sizeof(WCHAR),L"%0X-%0X",HIWORD(dwVolumeSerial),LOWORD(dwVolumeSerial));
+	}
+	else
+		szVolumeSerial=NULL;
+
+	if (szVolumeLabel!=NULL)
+		this->szVolumeLabel=alloccopy(szVolumeLabel);
+	else
+		this->szVolumeLabel=NULL;
+	if (szFileSystem!=NULL)
+		this->szFileSystem=alloccopy(szFileSystem);
+	else
+		this->szFileSystem=NULL;
+}
+
+inline CLocateDlg::VolumeInformation::~VolumeInformation()
+{
+	if (szVolumeLabel!=NULL)
+		delete[] szVolumeLabel;
+	if (szFileSystem!=NULL)
+		delete[] szFileSystem;
+	if (szVolumeSerial!=NULL)
+		delete[] szVolumeSerial;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+// CLocateDlg
+//////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////
+// Constructor
+
 inline CLocateDlg::CLocateDlg()
 :	CDialog(IDD_MAIN),m_dwFlags(fgDefault),m_dwExtraFlags(efDefault),
 	m_nSorting(BYTE(-1)),m_dwInstantFlags(isDefault),
@@ -33,83 +90,8 @@ inline CLocateDlg::CLocateDlg()
 	InitializeCriticalSection(&m_csLocateAnimBitmaps);
 }
 
-inline CLocateDlg::CNameDlg::CNameDlg()
-:	CDialog(IDD_NAME),m_nMaxBrowse(DEFAULT_NUMBEROFDIRECTORIES),
-	m_nMaxNamesInList(DEFAULT_NUMBEROFNAMES),
-	m_nMaxTypesInList(DEFAULT_NUMBEROFTYPES),
-	m_pBrowse(NULL),m_pMultiDirs(NULL),bStopDebug(FALSE)
-{
-	InitializeCriticalSection(&m_cBrowse);
-}
-
-inline WORD CLocateDlg::CNameDlg::ComputeChecksumFromDir(LPCWSTR szDir)
-{				
-	WORD wCheksum=0;
-	for (int j=0;szDir[j]!=L'\0';j++)
-		wCheksum+=WORD(szDir[j]*(j+1));
-	return wCheksum;
-}
-
-inline CLocateDlg::CNameDlg::DirSelection::DirSelection(BYTE bSelected_)
-:	nType(CLocateDlg::CNameDlg::NotSelected),pTitleOrDirectory(NULL),bSelected(bSelected_)
-{
-}
-
-inline CLocateDlg::CNameDlg::DirSelection::~DirSelection()
-{
-	FreeData();
-}
-
-inline void CLocateDlg::CNameDlg::DirSelection::FreeData()
-{
-	if (pTitleOrDirectory!=NULL)
-	{
-		delete[] pTitleOrDirectory;
-		pTitleOrDirectory=NULL;
-	}
-}
-
-inline CLocateDlg::CSizeDateDlg::CSizeDateDlg()
-:	CDialog(IDD_SIZEDATE)
-{
-}
-
-inline BOOL CLocateDlg::CSizeDateDlg::IsChanged()
-{
-	return (IsDlgButtonChecked(IDC_CHECKMINIMUMSIZE) ||
-			IsDlgButtonChecked(IDC_CHECKMAXIMUMSIZE) ||
-			IsDlgButtonChecked(IDC_CHECKMINDATE) ||
-			IsDlgButtonChecked(IDC_CHECKMAXDATE));
-}
-
-inline CLocateDlg::CAdvancedDlg::CAdvancedDlg()
-:	CDialog(IDD_ADVANCED),m_hTypeUpdaterThread(NULL),m_hDefaultTypeIcon(NULL),m_dwFlags(0)
-{
-}
-
-
-inline CLocateDlg::CAdvancedDlg::CReplaceCharsDlg::CReplaceCharsDlg(CArrayFAP<LPWSTR>& raChars)
-:	CDialog(IDD_REPLACECHARS),m_raChars(raChars)
-{
-}
-
-
-inline void CLocateDlg::ClearMenuVariables()
-{
-	if (m_pActiveContextMenu!=NULL)
-	{
-		//m_pActiveContextMenu->Release();
-		delete m_pActiveContextMenu;
-		m_pActiveContextMenu=NULL;
-	}
-	if (m_hActivePopupMenu!=NULL)
-	{
-		FreeSendToMenuItems(m_hActivePopupMenu);
-		DestroyMenu(m_hActivePopupMenu);
-		m_hActivePopupMenu=NULL;
-	}
-
-}
+////////////////////////////////////////////////////////////
+// Dialog, tabs and items
 
 inline void CLocateDlg::OnActivateTab(int nIndex)
 {
@@ -133,6 +115,10 @@ inline void CLocateDlg::OnActivateNextTab(BOOL bPrev)
 	SetVisibleWindowInTab();
 }
 
+
+////////////////////////////////////////////////////////////
+// Menu related functions
+
 inline BOOL CLocateDlg::IsSendToMenu(HMENU hMenu)
 {
 	/*UINT nID=GetMenuItemID(hMenu,0);
@@ -141,17 +127,116 @@ inline BOOL CLocateDlg::IsSendToMenu(HMENU hMenu)
 	return GetMenuItemID(hMenu,0)==IDM_DEFSENDTOITEM;
 }
 	
-inline BOOL CLocateDlg::CSizeDateDlg::LookOnlyFiles() const
+
+////////////////////////////////////////////////////////////
+// Results list
+	
+inline void CLocateDlg::RemoveResultsFromList()
 {
-	return IsDlgButtonChecked(IDC_CHECKMINIMUMSIZE) ||
-		IsDlgButtonChecked(IDC_CHECKMAXIMUMSIZE);
+	ClearMenuVariables();
+	m_pListCtrl->DeleteAllItems();
+	m_aVolumeInformation.RemoveAll();
+
+	m_pStatusCtrl->SetText("",STATUSBAR_MISC,0);
+	m_pStatusCtrl->SetText("",STATUSBAR_OPERATIONSTATUS,0);
+	m_pStatusCtrl->SetText("",STATUSBAR_LOCATEICON,0);
+	m_pStatusCtrl->SetText("",STATUSBAR_UPDATEICON,0);
+}
+			
+
+inline LPCWSTR CLocateDlg::GetDBVolumeLabel(WORD wDB,WORD wRootID) 
+{
+	CArrayFP<VolumeInformation*>& aVolumeInformation=GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
+
+	for (int i=0;i<aVolumeInformation.GetSize();i++)
+	{
+		if (aVolumeInformation[i]->wDB==wDB && aVolumeInformation[i]->wRootID==wRootID)
+			return aVolumeInformation[i]->szVolumeLabel!=NULL?aVolumeInformation[i]->szVolumeLabel:szwEmpty;
+	}
+	return szwEmpty;
 }
 
-inline CLocateDlgThread::CLocateDlgThread()
-:	m_pLocate(NULL)
+inline LPCWSTR CLocateDlg::GetDBVolumeSerial(WORD wDB,WORD wRootID) 
 {
-	m_bAutoDelete=TRUE;
+	CArrayFP<VolumeInformation*>& aVolumeInformation=GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
+
+	for (int i=0;i<aVolumeInformation.GetSize();i++)
+	{
+		if (aVolumeInformation[i]->wDB==wDB && aVolumeInformation[i]->wRootID==wRootID)
+			return aVolumeInformation[i]->szVolumeSerial!=NULL?aVolumeInformation[i]->szVolumeSerial:szwEmpty;
+	}
+	return szwEmpty;
 }
+
+inline LPCWSTR CLocateDlg::GetDBVolumeFileSystem(WORD wDB,WORD wRootID) 
+{
+	CArrayFP<VolumeInformation*>& aVolumeInformation=GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
+
+	for (int i=0;i<aVolumeInformation.GetSize();i++)
+	{
+		if (aVolumeInformation[i]->wDB==wDB && aVolumeInformation[i]->wRootID==wRootID)
+			return aVolumeInformation[i]->szFileSystem!=NULL?aVolumeInformation[i]->szFileSystem:szwEmpty;
+	}
+	return szwEmpty;
+}
+
+
+
+////////////////////////////////////////////////////////////
+// Keyboard shortcuts and results list mouse actions
+
+
+inline void CLocateDlg::ClearResultlistActions()
+{
+	for (int iCol=0;iCol<TypeCount;iCol++)
+	{
+		for (int iAct=0;iAct<ListActionCount;iAct++)
+		{
+			if (m_aResultListActions[iCol][iAct]!=NULL)
+			{
+				delete m_aResultListActions[iCol][iAct];
+				m_aResultListActions[iCol][iAct]=NULL;
+			}
+		}
+	}
+}
+
+inline void CLocateDlg::SetDefaultActions(CSubAction*** pActions) const
+{
+	pActions[Name][
+		GetFlags()&fgLVStylePointToSelect?LeftMouseButtonClick:LeftMouseButtonDblClick]=new CSubAction(CSubAction::Execute);
+	pActions[Name][RightMouseButtonClick]=new CSubAction(CSubAction::OpenContextMenu);
+}
+
+
+////////////////////////////////////////////////////////////
+// Misc helpers
+
+inline HANDLE CLocateDlg::GetLocaterThread(BOOL bDuplicate)
+{
+	if (m_pLocater==NULL)
+		return NULL;
+	return m_pLocater->GetThreadHandle(bDuplicate);
+}
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+// CLocateDlg::CRemovePresetDlg
+//////////////////////////////////////////////////////////////////////////////
+
+
+inline CLocateDlg::CRemovePresetDlg::CRemovePresetDlg()
+: CDialog(IDD_PRESETREMOVE)
+{
+}
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+// CLocateDlg::ImageHandlerDll
+//////////////////////////////////////////////////////////////////////////////
 
 inline CLocateDlg::ImageHandlerDll::ImageHandlerDll()
 :	pGetImageDimensionsW(NULL),uToken(0)
@@ -210,101 +295,12 @@ inline BOOL CLocateDlg::ImageHandlerDll::IsLoaded()
 	return hModule!=NULL;
 }
 
-inline CLocateDlg::CAdvancedDlg::FileType::FileType()
-:	szExtensions(NULL),szTitle(NULL),szType(NULL),hIcon(NULL),szIconPath(NULL)
-{
-}
-			
-inline CLocateDlg::CAdvancedDlg::FileType::FileType(LPWSTR frType,LPWSTR frTitle)
-:	szExtensions(NULL),szTitle(frTitle),szType(frType),szIconPath(NULL),hIcon(NULL)
-{
-}
 
-inline void CLocateDlg::CNameDlg::ParseGivenDirectoryForMultipleDirectories(CArray<LPWSTR>& aDirectories,LPCWSTR szDirectory,DWORD sLen)
-{
-	LPWSTR pDirectories=alloccopy(szDirectory,sLen);
-	ParseGivenDirectoryForMultipleDirectories(aDirectories,pDirectories);
-	delete[] pDirectories;
-}
 
-inline void CLocateDlg::RemoveResultsFromList()
-{
-	ClearMenuVariables();
-	m_pListCtrl->DeleteAllItems();
-	m_aVolumeInformation.RemoveAll();
+//////////////////////////////////////////////////////////////////////////////
+// CLocateDlg::ContextMenuStuff
+//////////////////////////////////////////////////////////////////////////////
 
-	m_pStatusCtrl->SetText("",STATUSBAR_MISC,0);
-	m_pStatusCtrl->SetText("",STATUSBAR_OPERATIONSTATUS,0);
-	m_pStatusCtrl->SetText("",STATUSBAR_LOCATEICON,0);
-	m_pStatusCtrl->SetText("",STATUSBAR_UPDATEICON,0);
-}
-			
-inline CLocateDlg::VolumeInformation::VolumeInformation(WORD wDB_,WORD wRootID_,BYTE bType_,DWORD dwVolumeSerial,LPCWSTR szVolumeLabel,LPCWSTR szFileSystem)
-:	wDB(wDB_),wRootID(wRootID_),bType(bType_)
-{
-	if (dwVolumeSerial!=0 && dwVolumeSerial!=DWORD(-1))
-	{
-		szVolumeSerial=new WCHAR[12];
-		StringCbPrintfW(szVolumeSerial,12*sizeof(WCHAR),L"%0X-%0X",HIWORD(dwVolumeSerial),LOWORD(dwVolumeSerial));
-	}
-	else
-		szVolumeSerial=NULL;
-
-	if (szVolumeLabel!=NULL)
-		this->szVolumeLabel=alloccopy(szVolumeLabel);
-	else
-		this->szVolumeLabel=NULL;
-	if (szFileSystem!=NULL)
-		this->szFileSystem=alloccopy(szFileSystem);
-	else
-		this->szFileSystem=NULL;
-}
-
-inline CLocateDlg::VolumeInformation::~VolumeInformation()
-{
-	if (szVolumeLabel!=NULL)
-		delete[] szVolumeLabel;
-	if (szFileSystem!=NULL)
-		delete[] szFileSystem;
-	if (szVolumeSerial!=NULL)
-		delete[] szVolumeSerial;
-}
-
-inline LPCWSTR CLocateDlg::GetDBVolumeLabel(WORD wDB,WORD wRootID) 
-{
-	CArrayFP<VolumeInformation*>& aVolumeInformation=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
-
-	for (int i=0;i<aVolumeInformation.GetSize();i++)
-	{
-		if (aVolumeInformation[i]->wDB==wDB && aVolumeInformation[i]->wRootID==wRootID)
-			return aVolumeInformation[i]->szVolumeLabel!=NULL?aVolumeInformation[i]->szVolumeLabel:szwEmpty;
-	}
-	return szwEmpty;
-}
-
-inline LPCWSTR CLocateDlg::GetDBVolumeSerial(WORD wDB,WORD wRootID) 
-{
-	CArrayFP<VolumeInformation*>& aVolumeInformation=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
-
-	for (int i=0;i<aVolumeInformation.GetSize();i++)
-	{
-		if (aVolumeInformation[i]->wDB==wDB && aVolumeInformation[i]->wRootID==wRootID)
-			return aVolumeInformation[i]->szVolumeSerial!=NULL?aVolumeInformation[i]->szVolumeSerial:szwEmpty;
-	}
-	return szwEmpty;
-}
-
-inline LPCWSTR CLocateDlg::GetDBVolumeFileSystem(WORD wDB,WORD wRootID) 
-{
-	CArrayFP<VolumeInformation*>& aVolumeInformation=GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
-
-	for (int i=0;i<aVolumeInformation.GetSize();i++)
-	{
-		if (aVolumeInformation[i]->wDB==wDB && aVolumeInformation[i]->wRootID==wRootID)
-			return aVolumeInformation[i]->szFileSystem!=NULL?aVolumeInformation[i]->szFileSystem:szwEmpty;
-	}
-	return szwEmpty;
-}
 
 inline CLocateDlg::ContextMenuStuff::ContextMenuStuff()
 :	pContextMenu3(NULL),pContextMenu2(NULL),pContextMenu(NULL),
@@ -336,44 +332,6 @@ inline CLocateDlg::ContextMenuStuff::~ContextMenuStuff()
 	}
 
 	//delete[] apcidl;
-}
-
-
-inline void CLocateDlg::ClearResultlistActions()
-{
-	for (int iCol=0;iCol<TypeCount;iCol++)
-	{
-		for (int iAct=0;iAct<ListActionCount;iAct++)
-		{
-			if (m_aResultListActions[iCol][iAct]!=NULL)
-			{
-				delete m_aResultListActions[iCol][iAct];
-				m_aResultListActions[iCol][iAct]=NULL;
-			}
-		}
-	}
-}
-
-inline HANDLE CLocateDlg::GetLocaterThread(BOOL bDuplicate)
-{
-	if (m_pLocater==NULL)
-		return NULL;
-	return m_pLocater->GetThreadHandle(bDuplicate);
-}
-
-inline void CLocateDlg::CNameDlg::HilightTab(BOOL bHilight)
-{
-	GetLocateDlg()->HilightTab(0,IDS_NAME,bHilight);
-}
-
-inline void CLocateDlg::CSizeDateDlg::HilightTab(BOOL bHilight)
-{
-	GetLocateDlg()->HilightTab(1,IDS_SIZEDATE,bHilight);
-}
-
-inline void CLocateDlg::CAdvancedDlg::HilightTab(BOOL bHilight)
-{
-	GetLocateDlg()->HilightTab(2,IDS_ADVANCED,bHilight);
 }
 
 

@@ -1025,11 +1025,12 @@ void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCST
 #endif
 
 
-		m_pwofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
+		m_pwofn->Flags=dwFlags|OFN_EXPLORER;
 		if (bSetHook)
 		{
 			m_pwofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
 			m_pwofn->lCustData=(LPARAM)this;
+			m_pwofn->Flags|=OFN_ENABLEHOOK;
 		}
 		m_pwofn->lpstrFileTitle=new WCHAR[65];
 		m_pwofn->lpstrFileTitle[0]='\0';
@@ -1110,11 +1111,12 @@ void CFileDialog::Init(LPCSTR lpszDefExt,LPCSTR lpszFileName,DWORD dwFlags,LPCST
 #endif
 
 
-		m_pofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
+		m_pofn->Flags=dwFlags|OFN_EXPLORER;
 		if (bSetHook)
 		{
 			m_pofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
 			m_pofn->lCustData=(LPARAM)this;
+			m_pofn->Flags|=OFN_ENABLEHOOK;
 		}
 		m_pofn->lpstrFileTitle=new char[65];
 		m_pofn->lpstrFileTitle[0]='\0';
@@ -1203,10 +1205,11 @@ void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPC
 #endif
 
 
-		m_pwofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
+		m_pwofn->Flags=dwFlags|OFN_EXPLORER;
 		if (bSetHook)
 		{
 			m_pwofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+			m_pwofn->Flags|=OFN_ENABLEHOOK;
 			m_pwofn->lCustData=(LPARAM)this;
 		}
 		m_pwofn->lpstrFileTitle=new WCHAR[65];
@@ -1288,10 +1291,11 @@ void CFileDialog::Init(LPCWSTR lpszDefExt,LPCWSTR lpszFileName,DWORD dwFlags,LPC
 #endif
 
 
-		m_pofn->Flags=dwFlags|OFN_ENABLEHOOK|OFN_EXPLORER;
+		m_pofn->Flags=dwFlags|OFN_EXPLORER;
 		if (bSetHook)
 		{
 			m_pofn->lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
+			m_pofn->Flags|=OFN_ENABLEHOOK;
 			m_pofn->lCustData=(LPARAM)this;
 		}
 		m_pofn->lpstrFileTitle=new char[65];
@@ -1939,7 +1943,7 @@ CFontDialog::CFontDialog(LPLOGFONT lplfInitial,DWORD dwFlags,HDC hdcPrinter,BOOL
 	ZeroMemory(&m_cf,sizeof(CHOOSEFONT));
 
 	m_cf.lStructSize=sizeof(CHOOSEFONT);
-	m_cf.Flags=dwFlags|CF_ENABLEHOOK;
+	m_cf.Flags=dwFlags;
 	if (lplfInitial!=NULL)
 	{
 		m_lf=*lplfInitial;
@@ -1950,6 +1954,7 @@ CFontDialog::CFontDialog(LPLOGFONT lplfInitial,DWORD dwFlags,HDC hdcPrinter,BOOL
 	if (bSetHook)
 	{
 		m_cf.lCustData=(LPARAM)this;
+		m_cf.Flags|=CF_ENABLEHOOK;
 		m_cf.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
 	}
 	m_cf.lpTemplateName=NULL;
@@ -1969,13 +1974,14 @@ CFontDialog::CFontDialog(const CHARFORMAT& charformat,DWORD dwFlags,HDC hdcPrint
 	ZeroMemory(&m_cf,sizeof(CHOOSEFONT));
 
 	m_cf.lStructSize=sizeof(CHOOSEFONT);
-	m_cf.Flags=dwFlags|CF_ENABLEHOOK|CF_INITTOLOGFONTSTRUCT;
+	m_cf.Flags=dwFlags|CF_INITTOLOGFONTSTRUCT;
 	FillInLogFont(charformat);
 	m_cf.lpLogFont=&m_lf;
 	m_cf.rgbColors=NULL;
 	if (bSetHook)
 	{
 		m_cf.lCustData=(LPARAM)this;
+		m_cf.Flags|=CF_ENABLEHOOK;
 		m_cf.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
 	}
 	m_cf.lpTemplateName=NULL;
@@ -2075,7 +2081,7 @@ CColorDialog::CColorDialog(COLORREF clrInit,DWORD dwFlags,BOOL bSetHook)
 {
 	ZeroMemory(&m_cc,sizeof(CHOOSECOLOR));
 	m_cc.lStructSize=sizeof(CHOOSECOLOR);
-	m_cc.Flags=dwFlags|CC_ENABLEHOOK;
+	m_cc.Flags=dwFlags;
 	m_cc.hInstance=(HWND)GetLanguageSpecificResourceHandle();
 	if (m_cc.rgbResult=clrInit)
 		m_cc.Flags|=CC_RGBINIT;
@@ -2083,6 +2089,7 @@ CColorDialog::CColorDialog(COLORREF clrInit,DWORD dwFlags,BOOL bSetHook)
 	if (bSetHook)
 	{
 		m_cc.lCustData=(LPARAM)this;
+		m_cc.Flags|=CC_ENABLEHOOK;
 		m_cc.lpfnHook=(LPOFNHOOKPROC)CAppData::CommonDialogProc;
 	}
 
@@ -2360,6 +2367,7 @@ CFindReplaceDialog::CFindReplaceDialog(BOOL bSetHook)
 	m_fr.wReplaceWithLen=128;
 	if (bSetHook)
 	{
+		m_fr.Flags|=FR_ENABLEHOOK;
 		m_fr.lCustData=(LPARAM)this;
 		m_fr.lpfnHook=(LPFRHOOKPROC)CAppData::CommonDialogProc;
 	}
@@ -2369,7 +2377,7 @@ CFindReplaceDialog::CFindReplaceDialog(BOOL bSetHook)
 BOOL CFindReplaceDialog::Create(BOOL bFindDialogOnly,LPCTSTR lpszFindWhat,LPCTSTR lpszReplaceWith,DWORD dwFlags,HWND hParentWnd)
 {
 	m_fr.hwndOwner=hParentWnd;
-	m_fr.Flags=dwFlags|FR_ENABLEHOOK;
+	m_fr.Flags|=dwFlags;
 	StringCbCopy(m_szFindWhat,128,lpszFindWhat);
 	StringCbCopy(m_szReplaceWith,128,lpszReplaceWith);
 	if (bFindDialogOnly)

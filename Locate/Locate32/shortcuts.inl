@@ -198,15 +198,15 @@ inline void CShortcut::ExecuteAction()
 
 inline void CSubAction::DoActivateTab()
 {
-	if (GetLocateAppWnd()->m_pLocateDlgThread==NULL)
+	if (GetTrayIconWnd()->m_pLocateDlgThread==NULL)
 		return;
 
 	if (m_nActivateTab==PrevTab)
-		GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->OnActivateNextTab(TRUE);
+		GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->OnActivateNextTab(TRUE);
 	else if (m_nActivateTab==NextTab)
-		GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->OnActivateNextTab(FALSE);
+		GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->OnActivateNextTab(FALSE);
 	else
-		GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->OnActivateTab((int)m_nActivateTab);
+		GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->OnActivateTab((int)m_nActivateTab);
 }
 
 inline void CShortcut::ResolveMnemonics(CArrayFP<CShortcut*>& aShortcuts,HWND* hDialogs)

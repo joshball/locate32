@@ -676,7 +676,7 @@ void CLocatedItem::UpdateType()
 void CLocatedItem::UpdateIcon()
 {
 	ItemDebugMessage("CLocatedItem::UpdateIcon BEGIN");
-	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
+	if (GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
 	{
 		DWORD dwFlags=SHGFI_SYSICONINDEX;
 		DWORD dwAttributes=0;
@@ -713,7 +713,7 @@ void CLocatedItem::UpdateParentIcon()
 	ItemDebugMessage("CLocatedItem::UpdateParentIcon BEGIN");
 	SHFILEINFOW fi;
 	LPWSTR szParent=GetParent();
-	if (GetLocateAppWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
+	if (GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
 	{
 		DWORD dwFlags=SHGFI_SYSICONINDEX;
 		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating) ||

@@ -434,7 +434,7 @@ public:
 	DWORD m_dwLocateDialogFlags;  // Used with CLocateDlg::LocateDialogFlags
 	DWORD m_dwLocateDialogExtraFlags;  // Used with CLocateDlg::LocateDialogExtraFlags
 	DWORD m_dwInstantSearchingFlags;  // Used with CLocateDlg::InstantSearchingFlags
-	DWORD m_dwProgramFlags; // Used with CLocateAppWnd::ProgramFlags
+	DWORD m_dwProgramFlags; // Used with CTrayIconWnd::ProgramFlags
 	
 	DWORD m_nMaximumFoundFiles; // Maximum number of results for normal searches
 	DWORD m_nInstantSearchingLimit; // Maximum number of results for search while typing

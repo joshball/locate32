@@ -120,7 +120,7 @@ BOOL CCheckFileNotificationsThread::Stop()
 		
 		
 		// Wait that ending processes are handled
-		if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->GetThreadId())
+		if (GetCurrentThreadId()==GetTrayIconWnd()->m_pLocateDlgThread->GetThreadId())
 		{
 			// This Stop() is called from CLocateDlg, it is possible
 			// that RunninProcNew sens messages to this window.
@@ -128,7 +128,7 @@ BOOL CCheckFileNotificationsThread::Stop()
 			for (int i=0;i<40;i++)
 			{
 				PostQuitMessage(0);
-				GetLocateAppWnd()->m_pLocateDlgThread->ModalLoop();
+				GetTrayIconWnd()->m_pLocateDlgThread->ModalLoop();
 				if (WaitForSingleObject(hThread,50)!=WAIT_TIMEOUT)
 					break;
 			}
@@ -1123,7 +1123,7 @@ void CBackgroundUpdater::IgnoreItemsAndGoToSleep()
 
 
 	PostQuitMessage(0);
-	GetLocateAppWnd()->m_pLocateDlgThread->ModalLoop();
+	GetTrayIconWnd()->m_pLocateDlgThread->ModalLoop();
 		
 	while (!m_lIsWaiting)
 		Sleep(20);

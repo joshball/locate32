@@ -1737,7 +1737,7 @@ BEGIN
 	IDS_ADVSETMATCHWHOLENAMEIFASTERISKS	"If asterisks given, search as if ""Match whole name"" is enabled"
 	IDS_ADVSETDONTSHOWSTICON		"Do not show system tray icon"
 	IDS_ADVSETSYSTEMTRAYICON		"System tray icon"
-	IDS_ADVSETISENABLE				"Search as type"
+	IDS_ADVSETISENABLE				"Search as you type"
 	IDS_ADVSETISLIMIT				"Limit the number of results (0 = no limit):"
 	IDS_ADVSETISDELAY				"Delay before searching (ms):"
 	IDS_ADVSETISCHARS				"Required characters in a search term until searching:"

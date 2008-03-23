@@ -7,7 +7,10 @@
 #pragma once
 #endif
 
+
+////////////////////////////////////////////////////////////
 // Messages
+////////////////////////////////////////////////////////////
 
 #define DTXM_SETRELDATE			DTM_FIRST+20 // wParam=date, lParam flags
 #define DTXM_GETRELDATE			DTM_FIRST+21 
@@ -17,14 +20,10 @@
 #define DTXX_GETSYSTEMTIME		DTM_GETSYSTEMTIME
 #define DTXX_SETSYSTEMTIME		DTM_SETSYSTEMTIME
 
-// Notifications
-#define DTXN_CHANGE				0x300
-#define DTXN_MODECHANGED		0x400
 
 // For lParam of DTMX_SETRELDATE & DTMX_SETSYSTEMTIME
 #define DTXF_NOMODECHANGE		0x10000000
 #define DTXF_NOSPINCHANGE		0x20000000
-
 
 // For wParam of DTMX_GETSYSTEMTIME 
 #define DTXF_FORSAVE			0x80000000
@@ -32,14 +31,32 @@
 #define DTXF_MSGMASK			0xF0000000
 
 
+////////////////////////////////////////////////////////////
+// Notifications
+////////////////////////////////////////////////////////////
+#define DTXN_CHANGE				0x300
+#define DTXN_MODECHANGED		0x400
 
+
+
+////////////////////////////////////////////////////////////
 // Functions
+////////////////////////////////////////////////////////////
+
 BOOL GetIMAPIBurningDevices(CArray<LPWSTR>& aDevicePaths);
 BOOL RegisterDataTimeExCltr();
 
 
 
+////////////////////////////////////////////////////////////
 // Classes
+////////////////////////////////////////////////////////////
+
+
+
+
+// CDateTimeCtrlEx - Used in Size & Date tab
+
 class CDateTimeCtrlEx : public CDateTimeCtrl 
 {
 public:
@@ -96,20 +113,75 @@ private:
 	friend BOOL RegisterDataTimeExCltr();
 };
 
-inline int CDateTimeCtrlEx::GetValueFromText(LPCWSTR szText)
-{
-	return _wtoi(szText);
-}
+/* CComboBoxAutoComplete - This is a class for autocompleting combo boxes. But it's still 
+unfinished and therefore not used anywhere */
 
-inline BOOL CDateTimeCtrlEx::GetMode() const
+class CComboBoxAutoComplete : public CComboBox
 {
-	return (m_dwFlags&ModeMask)==ModeRelative;
-}
+public:
+	CComboBoxAutoComplete();
+	CComboBoxAutoComplete(HWND hWnd);
+	~CComboBoxAutoComplete();
 
-inline CDateTimeCtrlEx* CDateTimeCtrlEx::GetClass(HWND hWnd)
-{
-	return (CDateTimeCtrlEx*)::GetWindowLongPtr(hWnd,GWLP_USERDATA);
-}
+	void EnableAutoComplete(BOOL bEnable);
+	BOOL IsAutoCompleteEnabled() const;
+
+	int GetCount() const;
+	int GetCurSel() const;
+	int SetCurSel(int nSelect);
+	int GetTopIndex() const;
+	int SetTopIndex(int nIndex);
+	
+	int GetLBText(int nIndex, LPSTR lpszText) const;
+	int GetLBText(int nIndex, CStringA& rString) const;
+	int GetLBTextLen(int nIndex) const;
+
+	int FindStringExact(int nIndexStart, LPCSTR lpszFind) const;
+	BOOL GetDroppedState() const;
+
+	void ShowDropDown(BOOL bShowIt = TRUE);
+
+	int AddString(LPCSTR lpszString);
+	int DeleteString(UINT nIndex);
+	int InsertString(int nIndex, LPCSTR lpszString);
+	void ResetContent();
+	
+	int FindString(int nStartAfter,LPCSTR lpszString) const;
+	int SelectString(int nStartAfter,LPCSTR lpszString);
+
+	BOOL HandleOnCommand(WORD wNotifyCode);
+
+#ifdef DEF_WCHAR
+	int GetLBText(int nIndex, LPWSTR lpszText) const;
+	int GetLBText(int nIndex, CStringW& rString) const;
+	int FindStringExact(int nIndexStart, LPCWSTR lpszFind) const;
+	int AddString(LPCWSTR lpszString);
+	int InsertString(int nIndex, LPCWSTR lpszString);
+	int FindString(int nStartAfter,LPCWSTR lpszString) const;
+	int SelectString(int nStartAfter,LPCWSTR lpszString);
+#endif
+
+
+private:
+	struct ACDATA {
+		enum ACFLags {
+			afAutoCompleting = 0x1
+		};
+		BYTE bFlags;
+
+		CArrayFAP<LPWSTR> aItems;	
+		CIntArray aItemsInList;
+
+	};	
+
+	ACDATA* m_pACData;
+};
+
+
+
+
+// CRegKey2 - Registry operations relative to "Software\Update" (or whatever is the common key)
+
 
 class CRegKey2 : public CRegKey
 {
@@ -134,29 +206,10 @@ public:
 	static CStringW GetCommonKeyW();
 };
 
-inline CRegKey2::CRegKey2()
-:	CRegKey()
-{
-}
-
-inline CRegKey2::CRegKey2(HKEY hKey)
-:	CRegKey(hKey)
-{
-}
-
-inline CRegKey2::CRegKey2(HKEY hKey,LPCSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
-:	CRegKey()
-{
-	OpenKey(hKey,lpszSubKey,fStatus,lpSecurityAttributes);
-}
-
-inline CRegKey2::CRegKey2(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTRIBUTES lpSecurityAttributes)
-:	CRegKey()
-{
-	OpenKey(hKey,lpszSubKey,fStatus,lpSecurityAttributes);
-}
 
 
+
+#include "misc.inl"
 
 
 

@@ -240,7 +240,7 @@ STRADVANCEDSETTINGS_SPACEISSEPARATOR=Use space as a separator for searches
 STRADVANCEDSETTINGS_ENABLELOGICALOPERATIONS=Allow logical operations (+ and -) for searches
 STRADVANCEDSETTINGS_MATCHWHOLENAMEIFASTERISKS=If asterisks given, search as if "Match whole name" is enabled
 STRADVANCEDSETTINGS_NOASTERISKTOTAILIFEXTENSIONGIVEN=If extension is given, file name should match to the extension
-STRADVANCEDSETTINGS_ISENABLE=Search as type
+STRADVANCEDSETTINGS_ISENABLE=Search as you type
 STRADVANCEDSETTINGS_ISLIMIT=Limit the number of results (0 = no limit):
 STRADVANCEDSETTINGS_ISDELAY=Delay before searching (ms):
 STRADVANCEDSETTINGS_ISCHARS=Required characters in a search term until searching:

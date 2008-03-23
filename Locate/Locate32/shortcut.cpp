@@ -1013,7 +1013,7 @@ void CSubAction::DoActivateControl()
 	if (pLocateDlg==NULL)
 		return;
 	
-	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->GetThreadId())
+	if (GetCurrentThreadId()==GetTrayIconWnd()->m_pLocateDlgThread->GetThreadId())
 		pLocateDlg->OnCommand(LOWORD(m_nControl),1,NULL);
 	else
 		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nControl),1),0);
@@ -1026,7 +1026,7 @@ void CSubAction::DoMenuCommand()
 	if (pLocateDlg==NULL)
 		return;
 
-	if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->GetThreadId())
+	if (GetCurrentThreadId()==GetTrayIconWnd()->m_pLocateDlgThread->GetThreadId())
 		pLocateDlg->OnCommand(LOWORD(m_nMenuCommand),0,NULL);
 	else
 		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nMenuCommand),0),0);
@@ -1039,7 +1039,7 @@ void CSubAction::DoShowHideDialog()
 	switch(m_nDialogCommand)
 	{
 	case ShowDialog:
-		GetLocateAppWnd()->OnLocate();
+		GetTrayIconWnd()->OnLocate();
 		break;
 	case MinimizeDialog:
 		if (pLocateDlg!=NULL)
@@ -1058,7 +1058,7 @@ void CSubAction::DoShowHideDialog()
 			if (wp.showCmd!=SW_SHOWMINIMIZED &&wp.showCmd!=SW_HIDE)
 				pLocateDlg->ShowWindow(CWnd::swMinimize);
 			else 
-				GetLocateAppWnd()->OnLocate();
+				GetTrayIconWnd()->OnLocate();
 		}
 		break;
 	case OpenOrCloseDialog:
@@ -1070,10 +1070,10 @@ void CSubAction::DoShowHideDialog()
 			if (wp.showCmd!=SW_SHOWMINIMIZED && wp.showCmd!=SW_HIDE)
 				pLocateDlg->PostMessage(WM_CLOSE);
 			else
-				GetLocateAppWnd()->OnLocate();
+				GetTrayIconWnd()->OnLocate();
 		}
 		else
-			GetLocateAppWnd()->OnLocate();
+			GetTrayIconWnd()->OnLocate();
 		break;
 	case RestoreDialog:
 		if (pLocateDlg!=NULL)
@@ -1097,7 +1097,7 @@ void CSubAction::DoShowHideDialog()
 		break;        
 	case ShowOpenOrHideDialog:  
 		if (pLocateDlg==NULL)
-			GetLocateAppWnd()->OnLocate();
+			GetTrayIconWnd()->OnLocate();
 		else if (pLocateDlg!=NULL)
 		{
 			WINDOWPLACEMENT wp;
@@ -1106,13 +1106,13 @@ void CSubAction::DoShowHideDialog()
 			if (wp.showCmd!=SW_SHOWMINIMIZED &&wp.showCmd!=SW_HIDE)
 				pLocateDlg->ShowWindow(CWnd::swMinimize);
 			else 
-				GetLocateAppWnd()->OnLocate();
+				GetTrayIconWnd()->OnLocate();
 		}
 		break;
 	case ShowDialogAndGetDirFromExplorer:
 		{
 			LPWSTR pPath=GetPathFromExplorer();
-			GetLocateAppWnd()->OnLocate();
+			GetTrayIconWnd()->OnLocate();
 
 			if (pPath!=NULL)
 			{
@@ -1141,7 +1141,7 @@ void CSubAction::DoHelp()
 {
 	CTargetWnd* pWnd=GetLocateDlg();
 	if (pWnd==NULL)
-		pWnd=GetLocateAppWnd();
+		pWnd=GetTrayIconWnd();
 	
 	switch(m_nHelp)
 	{
@@ -1419,7 +1419,7 @@ void CSubAction::DoResultListItems()
 	if (pLocateDlg==NULL)
 		return;
 
-	/*if (GetCurrentThreadId()==GetLocateAppWnd()->m_pLocateDlgThread->m_nThreadID)
+	/*if (GetCurrentThreadId()==GetTrayIconWnd()->m_pLocateDlgThread->m_nThreadID)
 		pLocateDlg->OnExecuteResultAction(m_nResultList,m_pExtraInfo);
 	else*/
 		pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_pExtraInfo);
@@ -1547,7 +1547,7 @@ void CSubAction::DoMisc()
 	else if (GetLocateDlg()!=NULL && strcasecmp(m_pSendMessage->szWindow,L"LOCATEDLG")==0)
 		hWnd=*GetLocateDlg();
 	else if (strcasecmp(m_pSendMessage->szWindow,L"LOCATEST")==0)
-		hWnd=*GetLocateAppWnd();
+		hWnd=*GetTrayIconWnd();
 	else if (wcsncmp(m_pSendMessage->szWindow,L"Find",4)==0)
 	{
 		int nIndex=(int)FirstCharIndex(m_pSendMessage->szWindow,L'(');
@@ -2178,7 +2178,7 @@ BOOL CShortcut::IsWhenAndWhereSatisfied(HWND hSystemTrayWnd)  const
 void CShortcut::SendEventBackToControl()
 {
 #ifndef KEYHOOK_EXPORTS
-	CWinThread* pThread=GetLocateAppWnd()->m_pLocateDlgThread;
+	CWinThread* pThread=GetTrayIconWnd()->m_pLocateDlgThread;
 	if (pThread!=NULL)
 	{
 		const MSG* pMsg=pThread->GetCurrentMessage();

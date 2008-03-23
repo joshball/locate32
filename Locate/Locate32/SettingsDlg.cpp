@@ -86,7 +86,7 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	StringCbCopy(m_lResultListFont.lfFaceName,LF_FACESIZE,"Tahoma");
 	
 
-	CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(&m_lToolTipTextFont,&m_lToolTipTitleFont);
+	CTrayIconWnd::CUpdateStatusWnd::FillFontStructs(&m_lToolTipTextFont,&m_lToolTipTitleFont);
 
 
 
@@ -133,7 +133,7 @@ BOOL CSettingsProperties::LoadSettings()
 	m_TimeFormat=((CLocateApp*)GetApp())->m_strTimeFormat;
 	m_nFileSizeFormat=((CLocateApp*)GetApp())->m_nFileSizeFormat;
 	
-	// GetLocateAppWnd() is alwyas present
+	// GetTrayIconWnd() is alwyas present
 	m_dwProgramFlags=CLocateApp::GetProgramFlags();
 
 	if (GetLocateDlg()!=NULL)
@@ -223,11 +223,11 @@ BOOL CSettingsProperties::LoadSettings()
 	if (GetLocateApp()->m_nInstance==0)
 	{
 		// Loading schedules
-		POSITION pPos=GetLocateAppWnd()->m_Schedules.GetHeadPosition();
+		POSITION pPos=GetTrayIconWnd()->m_Schedules.GetHeadPosition();
 		while (pPos!=NULL)
 		{
-			m_Schedules.AddTail(new CSchedule(GetLocateAppWnd()->m_Schedules.GetAt(pPos)));
-			pPos=GetLocateAppWnd()->m_Schedules.GetNextPosition(pPos);
+			m_Schedules.AddTail(new CSchedule(GetTrayIconWnd()->m_Schedules.GetAt(pPos)));
+			pPos=GetTrayIconWnd()->m_Schedules.GetNextPosition(pPos);
 		}	
 	}
 
@@ -363,10 +363,10 @@ BOOL CSettingsProperties::LoadSettings()
 
 	
 		if (LocRegKey.QueryValue("TextFont",(LPSTR)&m_lToolTipTextFont,sizeof(LOGFONT))<sizeof(LOGFONT))
-			CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(&m_lToolTipTextFont,NULL);
+			CTrayIconWnd::CUpdateStatusWnd::FillFontStructs(&m_lToolTipTextFont,NULL);
 		
 		if (LocRegKey.QueryValue("TitleFont",(LPSTR)&m_lToolTipTitleFont,sizeof(LOGFONT))<sizeof(LOGFONT))
-			CLocateAppWnd::CUpdateStatusWnd::FillFontStructs(NULL,&m_lToolTipTitleFont);
+			CTrayIconWnd::CUpdateStatusWnd::FillFontStructs(NULL,&m_lToolTipTitleFont);
 		
 	}
 
@@ -530,7 +530,7 @@ BOOL CSettingsProperties::SaveSettings()
 	{
 		ShowErrorMessage(IDS_ERRORCANNOTSAVESHORTCUTS,IDS_ERROR);
 	}
-	GetLocateAppWnd()->PostMessage(WM_RESETSHORTCUTS);
+	GetTrayIconWnd()->PostMessage(WM_RESETSHORTCUTS);
 	if (GetLocateDlg()!=NULL)
 		GetLocateDlg()->PostMessage(WM_RESETSHORTCUTS);
 	
@@ -1859,13 +1859,13 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::FileSizeListProc(COpti
 
 BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::EnumTimeFormatsProc(LPSTR lpTimeFormatString)
 {
-	GetLocateAppWnd()->m_pSettings->m_pAdvanced->m_aBuffer.Add(alloccopy(lpTimeFormatString));
+	GetTrayIconWnd()->m_pSettings->m_pAdvanced->m_aBuffer.Add(alloccopy(lpTimeFormatString));
 	return TRUE;
 }
 
 BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::EnumDateFormatsProc(LPSTR lpDateFormatString)
 {
-	GetLocateAppWnd()->m_pSettings->m_pAdvanced->m_aBuffer.Add(alloccopy(lpDateFormatString));
+	GetTrayIconWnd()->m_pSettings->m_pAdvanced->m_aBuffer.Add(alloccopy(lpDateFormatString));
 	return TRUE;
 }
 
@@ -3432,38 +3432,40 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnHelp(LPHELPINFO lphi)
 {
-	CLocateApp::HelpID id[]= {
-		{ IDC_ENABLE,"sdd_enable" },
-		{ IDC_GLOBALUPDATE,"sdd_updglob" },
-		{ IDC_USEDTHREADLABEL,"sdd_thread" },
-		{ IDC_USEDTHREAD,"sdd_thread" },
-		{ IDC_NAMELABEL,"sdd_name" },
-		{ IDC_NAME,"sdd_name" },
-		{ IDC_DBFILELABEL,"sdd_file" },
-		{ IDC_DBFILE,"sdd_file" },
-		{ IDC_BROWSE,"sdd_file" },
-		{ IDC_UNICODE,"sdd_unicode" },
-		{ IDC_INCREMENTALUPDATE,"sdd_noowerwrite" },
-		{ IDC_CREATORLABEL,"sdd_creator" },
-		{ IDC_CREATOR,"sdd_creator" },
-		{ IDC_DESCRIPTIONLABEL,"sdd_description" },
-		{ IDC_DESCRIPTION,"sdd_description" },
-		{ IDC_LOCALDRIVES,"sdd_local" },
-		{ IDC_CUSTOMDRIVES,"sdd_custom" },
-		{ IDS_SCANSYMLINKSANDJUNCTIONS,"sdd_scanjunctions" },
-		{ IDC_STOPIFROOTUNAVAILABLE,"sdd_stopifunavailable" },
-		{ IDC_ADVANCED,"sdd_advanced" },
-		{ IDC_FOLDERSLABEL,"sdd_drives" },
-		{ IDC_FOLDERS,"sdd_drives" },
-		{ IDC_ADDFOLDER,"sdd_adddir" },
-		{ IDC_REMOVEFOLDER,"sdd_removedir" },
-		{ IDC_UP,"sdd_updown" },
-		{ IDC_DOWN,"sdd_updown" }
-	};
-	
-	if (CLocateApp::OpenHelp(*this,id,sizeof(id)/sizeof(CLocateApp::HelpID),"settings_databasedlg.htm",lphi))
-		return;
-
+	if (lphi!=NULL)
+	{
+		CLocateApp::HelpID id[]= {
+			{ IDC_ENABLE,"sdd_enable" },
+			{ IDC_GLOBALUPDATE,"sdd_updglob" },
+			{ IDC_USEDTHREADLABEL,"sdd_thread" },
+			{ IDC_USEDTHREAD,"sdd_thread" },
+			{ IDC_NAMELABEL,"sdd_name" },
+			{ IDC_NAME,"sdd_name" },
+			{ IDC_DBFILELABEL,"sdd_file" },
+			{ IDC_DBFILE,"sdd_file" },
+			{ IDC_BROWSE,"sdd_file" },
+			{ IDC_UNICODE,"sdd_unicode" },
+			{ IDC_INCREMENTALUPDATE,"sdd_noowerwrite" },
+			{ IDC_CREATORLABEL,"sdd_creator" },
+			{ IDC_CREATOR,"sdd_creator" },
+			{ IDC_DESCRIPTIONLABEL,"sdd_description" },
+			{ IDC_DESCRIPTION,"sdd_description" },
+			{ IDC_LOCALDRIVES,"sdd_local" },
+			{ IDC_CUSTOMDRIVES,"sdd_custom" },
+			{ IDS_SCANSYMLINKSANDJUNCTIONS,"sdd_scanjunctions" },
+			{ IDC_STOPIFROOTUNAVAILABLE,"sdd_stopifunavailable" },
+			{ IDC_ADVANCED,"sdd_advanced" },
+			{ IDC_FOLDERSLABEL,"sdd_drives" },
+			{ IDC_FOLDERS,"sdd_drives" },
+			{ IDC_ADDFOLDER,"sdd_adddir" },
+			{ IDC_REMOVEFOLDER,"sdd_removedir" },
+			{ IDC_UP,"sdd_updown" },
+			{ IDC_DOWN,"sdd_updown" }
+		};
+		
+		if (CLocateApp::OpenHelp(*this,id,sizeof(id)/sizeof(CLocateApp::HelpID),"settings_databasedlg.htm",lphi))
+			return;
+	}
 
 	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_DATABASEDLG)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);

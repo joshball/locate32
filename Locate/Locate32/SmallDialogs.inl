@@ -7,6 +7,8 @@
 #pragma once
 #endif
 
+
+
 ////////////////////////////////////////////////////////////
 // CSelectColumnsDlg
 
@@ -82,6 +84,8 @@ inline CSavePresetDlg::CSavePresetDlg()
 {
 }
 
+
+
 ///////////////////////////////////////////////////////////
 // CSelectDatabasesDlg::CSavePresetDlg
 
@@ -89,6 +93,8 @@ inline CSelectDatabasesDlg::CSavePresetDlg::CSavePresetDlg(CSelectDatabasesDlg* 
 :	::CSavePresetDlg(),m_pParent(pParent)
 {
 }
+
+
 
 ////////////////////////////////////////////////////////////
 // CChangeCaseDlg
@@ -98,6 +104,8 @@ inline CChangeCaseDlg::CChangeCaseDlg()
 {
 }
 
+
+
 ////////////////////////////////////////////////////////////
 // CChangeFilenameDlg
 
@@ -106,13 +114,7 @@ inline CChangeFilenameDlg::CChangeFilenameDlg()
 {
 }
 
-////////////////////////////////////////////////////////////
-// CLocateDlg::CRemovePresetDlg
 
-inline CLocateDlg::CRemovePresetDlg::CRemovePresetDlg()
-: CDialog(IDD_PRESETREMOVE)
-{
-}
 
 
 #endif

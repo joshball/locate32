@@ -15,6 +15,11 @@
 #define IDC_RELATIVEDATE		101
 #define IDC_RELATIVEDATESPIN	102
 
+////////////////////////////////////////////////////////////
+// Functions
+////////////////////////////////////////////////////////////
+
+
 
 BOOL GetIMAPIBurningDevices(CArray<LPWSTR>& aDevicePaths)
 {
@@ -93,6 +98,9 @@ BOOL GetIMAPIBurningDevices(CArray<LPWSTR>& aDevicePaths)
 }
 
 
+////////////////////////////////////////////////////////////
+// CDateTimeCtrlEx
+////////////////////////////////////////////////////////////
 
 
 CDateTimeCtrlEx::CDateTimeCtrlEx(HWND hWnd)
@@ -616,9 +624,358 @@ BOOL RegisterDataTimeExCltr()
 
 
 
+////////////////////////////////////////////////////////////
+// CComboBoxAutoComplete
+////////////////////////////////////////////////////////////
+
+CComboBoxAutoComplete::CComboBoxAutoComplete()
+:	CComboBox(),m_pACData(NULL)
+{
+}	
+
+CComboBoxAutoComplete::CComboBoxAutoComplete(HWND hWnd)
+:	CComboBox(hWnd),m_pACData(NULL)
+{
+}
+
+CComboBoxAutoComplete::~CComboBoxAutoComplete()
+{
+	if (m_pACData!=NULL)
+		delete m_pACData;
+}
+
+void CComboBoxAutoComplete::EnableAutoComplete(BOOL bEnable)
+{
+	// Do not work with ownerdraw items
+	ASSERT(!(GetStyle()&(CBS_OWNERDRAWFIXED|CBS_OWNERDRAWVARIABLE)))
+
+	if (bEnable)
+	{
+		if (m_pACData!=NULL)
+			return;
+
+		// Initializing structure
+		m_pACData=new ACDATA;
+		m_pACData->bFlags=0;
+
+		// Probing current items
+		int nCount=CComboBox::GetCount();
+		for (int i=0;i<nCount;i++)
+		{
+			int nLength=(int)CComboBox::GetLBTextLen(i);
+			WCHAR* pText=new WCHAR[max(nLength+1,2)];
+			CComboBox::GetLBText(i,pText);
+			m_pACData->aItems.Add(pText);		
+		}
+	}
+	else if (m_pACData!=NULL)
+	{
+		if (m_pACData->bFlags&ACDATA::afAutoCompleting)
+		{
+			CComboBox::ResetContent();
+			for (int i=0;i<m_pACData->aItems.GetSize();i++)
+				CComboBox::AddString(m_pACData->aItems[i]);
+		}
+
+		delete m_pACData;
+		m_pACData=NULL;
+	}
+}
+
+BOOL CComboBoxAutoComplete::IsAutoCompleteEnabled() const
+{
+	return m_pACData!=NULL;
+}
+
+int CComboBoxAutoComplete::GetCount() const
+{
+	if (m_pACData==NULL)
+		return CComboBox::GetCount();
+
+	return m_pACData->aItems.GetSize();
+}
+
+int CComboBoxAutoComplete::GetCurSel() const
+{
+	if (m_pACData!=NULL)
+	{
+		if (m_pACData->bFlags&ACDATA::afAutoCompleting)
+		{
+			int nCurSel=CComboBox::GetCurSel();
+			if (nCurSel==CB_ERR || nCurSel>=m_pACData->aItemsInList.GetSize())
+				return CB_ERR;
+			return m_pACData->aItemsInList[nCurSel];
+		}
+	}	
+	return CComboBox::GetCurSel();
+}
+
+int CComboBoxAutoComplete::SetCurSel(int nSelect)
+{
+	if (m_pACData!=NULL)
+	{
+		if (m_pACData->bFlags&ACDATA::afAutoCompleting)
+		{
+			int nIndex=m_pACData->aItemsInList.Find(nSelect);
+			if (nIndex==-1)
+				return CB_ERR;
+			return CComboBox::SetCurSel(nIndex);
+		}	
+	}
+		
+	return CComboBox::SetCurSel(nSelect);
+}
+
+int CComboBoxAutoComplete::GetTopIndex() const
+{
+	if (m_pACData!=NULL)
+	{
+		if (m_pACData->bFlags&ACDATA::afAutoCompleting)
+		{
+			int nTopIndex=CComboBox::GetTopIndex();
+			if (nTopIndex==CB_ERR || nTopIndex>=m_pACData->aItemsInList.GetSize())
+				return CB_ERR;
+			return m_pACData->aItemsInList[nTopIndex];
+		}
+	}			
+	return CComboBox::GetTopIndex();
+}
+
+int CComboBoxAutoComplete::SetTopIndex(int nSelect)
+{
+	if (m_pACData!=NULL)
+	{
+		if (m_pACData->bFlags&ACDATA::afAutoCompleting)
+		{
+			int nIndex=m_pACData->aItemsInList.Find(nSelect);
+			if (nIndex==-1)
+				return CB_ERR;
+			return CComboBox::SetTopIndex(nIndex);
+		}	
+	}
+		
+	return CComboBox::SetTopIndex(nSelect);
+}
+
+
+int CComboBoxAutoComplete::GetLBText(int nIndex, LPSTR lpszText) const
+{
+	if (m_pACData==NULL)
+		return CComboBox::GetLBText(nIndex, lpszText);
+
+	if (nIndex>=m_pACData->aItems.GetSize())
+		return CB_ERR;
+	
+	DWORD nLength=istrlenw(m_pACData->aItems[nIndex]);
+	MemCopyWtoA(lpszText,m_pACData->aItems[nIndex],nLength+1);
+	return nLength;
+}
+
+int CComboBoxAutoComplete::GetLBText(int nIndex, CStringA& rString) const
+{
+	if (m_pACData==NULL)
+		return CComboBox::GetLBText(nIndex,rString);
+
+	if (nIndex>=m_pACData->aItems.GetSize())
+		return CB_ERR;
+	
+	rString.Copy(m_pACData->aItems[nIndex]);
+	return rString.GetLength();
+}
+
+#ifdef DEF_WCHAR
+int CComboBoxAutoComplete::GetLBText(int nIndex, LPWSTR lpszText) const
+{
+	if (m_pACData==NULL)
+		return CComboBox::GetLBText(nIndex, lpszText);
+
+	if (nIndex>=m_pACData->aItems.GetSize())
+		return CB_ERR;
+	
+	DWORD nLength=istrlenw(m_pACData->aItems[nIndex]);
+	MemCopy(lpszText,m_pACData->aItems[nIndex],nLength+1);
+	return nLength;
+}
+
+int CComboBoxAutoComplete::GetLBText(int nIndex, CStringW& rString) const
+{
+	if (m_pACData==NULL)
+		return CComboBox::GetLBText(nIndex,rString);
+
+	if (nIndex>=m_pACData->aItems.GetSize())
+		return CB_ERR;
+	
+	rString.Copy(m_pACData->aItems[nIndex]);
+	return rString.GetLength();
+}
+#endif
+
+int CComboBoxAutoComplete::GetLBTextLen(int nIndex) const
+{
+	if (m_pACData==NULL)
+		return CComboBox::GetLBTextLen(nIndex);
+
+	if (nIndex>=m_pACData->aItems.GetSize())
+		return CB_ERR;
+	
+	return istrlenw(m_pACData->aItems[nIndex]);
+}
 
 
 
+int CComboBoxAutoComplete::FindStringExact(int nIndex, LPCSTR lpszFind) const
+{
+	if (m_pACData==NULL)
+		return CComboBox::FindStringExact(nIndex, lpszFind);
+
+	for (;nIndex<m_pACData->aItems.GetSize();nIndex++)
+	{
+		if (wcscmp(m_pACData->aItems[nIndex],A2W(lpszFind))==0)
+			return nIndex;
+	}
+	return -1;
+}
+
+#ifdef DEF_WCHAR
+int CComboBoxAutoComplete::FindStringExact(int nIndex, LPCWSTR lpszFind) const
+{
+	if (m_pACData==NULL)
+		return CComboBox::FindStringExact(nIndex, lpszFind);
+
+	for (;nIndex<m_pACData->aItems.GetSize();nIndex++)
+	{
+		if (wcscmp(m_pACData->aItems[nIndex],lpszFind)==0)
+			return nIndex;
+	}
+	return -1;
+}
+#endif
+
+BOOL CComboBoxAutoComplete::GetDroppedState() const
+{
+	if (m_pACData!=NULL)
+	{
+		if (m_pACData->bFlags&ACDATA::afAutoCompleting)
+			return FALSE;
+	}
+	return CComboBox::GetDroppedState();
+}
+
+
+void CComboBoxAutoComplete::ShowDropDown(BOOL bShowIt)
+{
+	if (m_pACData!=NULL)
+	{
+		if (m_pACData->bFlags&ACDATA::afAutoCompleting)
+		{
+			// TODO: You know
+		
+		}
+	}
+	return CComboBox::ShowDropDown(bShowIt);
+}
+
+
+int CComboBoxAutoComplete::AddString(LPCSTR lpszString)
+{
+	if (m_pACData==NULL)
+		return CComboBox::AddString(lpszString);
+
+	return 0;
+}
+
+int CComboBoxAutoComplete::DeleteString(UINT nIndex)
+{
+	if (m_pACData==NULL)
+		return CComboBox::DeleteString(nIndex);
+
+	return 0;
+}
+
+int CComboBoxAutoComplete::InsertString(int nIndex, LPCSTR lpszString)
+{
+	if (m_pACData==NULL)
+		return CComboBox::InsertString(nIndex, lpszString);
+
+	return 0;
+}
+
+void CComboBoxAutoComplete::ResetContent()
+{
+	if (m_pACData==NULL)
+		return CComboBox::ResetContent();
+
+}
+
+
+int CComboBoxAutoComplete::FindString(int nStartAfter,LPCSTR lpszString) const
+{
+	if (m_pACData==NULL)
+		return CComboBox::FindString(nStartAfter,lpszString);
+
+	return 0;
+}
+
+int CComboBoxAutoComplete::SelectString(int nStartAfter,LPCSTR lpszString)
+{
+	if (m_pACData==NULL)
+		return CComboBox::SelectString(nStartAfter,lpszString);
+
+	return 0;
+}
+
+
+BOOL CComboBoxAutoComplete::HandleOnCommand(WORD wNotifyCode)
+{
+	if (m_pACData==NULL)
+		return FALSE;
+
+	return FALSE;
+}
+
+
+#ifdef DEF_WCHAR
+
+
+int CComboBoxAutoComplete::AddString(LPCWSTR lpszString)
+{
+	if (m_pACData==NULL)
+		return CComboBox::AddString(lpszString);
+
+	return 0;
+}
+
+int CComboBoxAutoComplete::InsertString(int nIndex, LPCWSTR lpszString)
+{
+	if (m_pACData==NULL)
+		return CComboBox::InsertString(nIndex, lpszString);
+
+	return 0;
+}
+
+int CComboBoxAutoComplete::FindString(int nStartAfter,LPCWSTR lpszString) const
+{
+	if (m_pACData==NULL)
+		return CComboBox::FindString(nStartAfter,lpszString);
+
+	return 0;
+}
+
+int CComboBoxAutoComplete::SelectString(int nStartAfter,LPCWSTR lpszString)
+{
+	if (m_pACData==NULL)
+		return CComboBox::SelectString(nStartAfter,lpszString);
+
+	return 0;
+}
+
+#endif
+
+
+
+////////////////////////////////////////////////////////////
+// CRegKey2
+////////////////////////////////////////////////////////////
 
 
 
