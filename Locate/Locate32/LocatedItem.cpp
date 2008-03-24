@@ -304,6 +304,12 @@ void CLocatedItem::UpdateByDetail(DetailType nDetail)
 	case ProductVersion:
 		UpdateVersionInformation();
 		break;
+	case Thumbnail:
+		LoadThumbnail();
+		break;
+	case IfDeleted:
+		CheckIfDeleted();
+		break;
 	}	
 }
 
@@ -671,6 +677,28 @@ void CLocatedItem::UpdateType()
 	dwFlags|=LITEM_TYPEOK;
 
 	ItemDebugMessage("CLocatedItem::UpdateType END");
+}
+
+void CLocatedItem::CheckIfDeleted()
+{
+	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		return;
+	
+
+	if (IsDeleted())
+		return;
+	if (IsFolder())
+	{
+		if (!FileSystem::IsDirectory(GetPath()))
+			SetToDeleted();
+	}
+	else
+	{
+		if (!FileSystem::IsFile(GetPath()))
+			SetToDeleted();
+	}
+
+	dwFlags|=LITEM_ISDELETEDOK;
 }
 
 void CLocatedItem::UpdateIcon()
@@ -1730,6 +1758,77 @@ void CLocatedItem::UpdateVersionInformation()
 	}
 }
 
+void CLocatedItem::LoadThumbnail()
+{
+	ItemDebugFormatMessage1("CLocatedItem::LoadThumbnail for %S",GetPath());
+
+	ExtraInfo* pField;
+	pField=CreateExtraInfoField(Thumbnail);
+	pField->bShouldUpdate=FALSE;
+		
+	// LoadThumbnail already called?
+	if (pField->pThumbnail!=NULL)
+		return;
+
+	pField->pThumbnail=new ExtraInfo::ThumbnailData;
+	pField->pThumbnail->hBitmap=NULL;
+
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg->m_dwThumbnailFlags&CLocateDlg::tfVistaFeaturesAvailable)
+	{
+		// Using IIthumbnailProvider to extract bitmap
+		CComPtr<IThumbnailProvider> pThumbnailProv=pLocateDlg->GetThumbnailProvider(GetPath());
+		if (pThumbnailProv!=NULL)
+		{
+			HBITMAP hBitmap;
+			WTS_ALPHATYPE at;
+			HRESULT hRes=pThumbnailProv->GetThumbnail(pLocateDlg->m_sCurrentIconSize.cx,&hBitmap,&at);
+			if (SUCCEEDED(hRes))
+			{
+				pField->pThumbnail->hBitmap=hBitmap;
+
+				// Load size
+				BITMAP bi;
+				GetObject(hBitmap,sizeof(BITMAP),&bi);
+				pField->pThumbnail->sThumbnailSize.cx=bi.bmWidth;
+				pField->pThumbnail->sThumbnailSize.cy=bi.bmHeight;
+			}
+			return;
+		}
+	}
+
+	// Extracting thumbnail icon
+	CComPtr<IExtractImage> pExtractImage=pLocateDlg->GetExtractImageInterface(GetPath());
+
+	if (pExtractImage!=NULL)
+	{
+		WCHAR szPath[MAX_PATH];
+		DWORD dwPriority,dwFlags=0;
+
+		HRESULT hRes=pExtractImage->GetLocation(szPath,MAX_PATH,&dwPriority,&pLocateDlg->m_sCurrentIconSize,32,&dwFlags);
+
+		if (SUCCEEDED(hRes))
+		{
+			HBITMAP hBitmap;
+			hRes=pExtractImage->Extract((HBITMAP*)&hBitmap);
+			if (SUCCEEDED(hRes))
+			{
+				pField->pThumbnail->hBitmap=hBitmap;
+								
+				// Load size
+				BITMAP b;
+				GetObject(hBitmap,sizeof(BITMAP),&b);
+				pField->pThumbnail->sThumbnailSize.cx=b.bmWidth;
+				pField->pThumbnail->sThumbnailSize.cy=b.bmHeight;
+				return;
+			}
+		}
+	}
+
+	ItemDebugMessage("CLocatedItem::LoadThumbnail end");
+
+}
+
 void CLocatedItem::SetToDeleted()
 {
 	ItemDebugMessage("CLocatedItem::SetToDeleted BEGIN");
@@ -1860,6 +1959,9 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 		wAttribs=GetAttributesFromSystemAttributes(fd.dwFileAttributes)|(wAttribs&LITEMATTRIB_DIRECTORY);
 				
 		dwFlags|=LITEM_TIMEDATEOK|LITEM_FILESIZEOK|LITEM_ATTRIBOK;
+
+		// Read extra fields again
+		DeleteAllExtraFields();
 		
 		ItemDebugFormatMessage4("CLocatedItem::RemoveFlagsForChanged END2, flagsnow=%X",dwFlags,0,0,0);
 		return TRUE;

@@ -174,6 +174,8 @@ inline void CCheckFileNotificationsThread::FileCreated(LPCWSTR szFile,DWORD dwLe
 	if (pLocateDlg->m_pListCtrl==NULL)
 		return;
 	
+	BOOL bIsDirectory=FileSystem::IsDirectory(szFile);
+
 	WCHAR szPath[MAX_PATH];
 	int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 	while (nItem!=-1)
@@ -193,7 +195,22 @@ inline void CCheckFileNotificationsThread::FileCreated(LPCWSTR szFile,DWORD dwLe
 					if (wcsncmp(szPath,szFile,dwLength)==0)
 					{
 						if (pItem->RemoveFlagsForChanged())
-							pLocateDlg->PostMessage(WM_UPDATENEEDEDDETAILTS,WPARAM(nItem),LPARAM(pItem));
+							pLocateDlg->m_pListCtrl->RedrawItems(nItem,nItem);
+					}
+				}
+			}
+			else if (bIsDirectory && pItem->GetPathLen()>dwLength)
+			{
+				if (pItem->IsDeleted() && pItem->GetPath()[dwLength]=='\\')
+				{
+					MemCopyW(szPath,pItem->GetPath(),dwLength);
+					MakeLower(szPath,dwLength);
+				
+					// Can be subdiretory
+					if (wcsncmp(szPath,szFile,dwLength)==0)
+					{
+						if (pItem->RemoveFlagsForChanged())
+							pLocateDlg->m_pListCtrl->RedrawItems(nItem,nItem);
 					}
 				}
 			}
@@ -210,6 +227,7 @@ inline void CCheckFileNotificationsThread::FileModified(LPCWSTR szFile,DWORD dwL
 
 	if (pLocateDlg->m_pListCtrl==NULL)
 		return;
+	
 	
 	WCHAR szPath[MAX_PATH];
 	int nItem=pLocateDlg->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
@@ -228,7 +246,7 @@ inline void CCheckFileNotificationsThread::FileModified(LPCWSTR szFile,DWORD dwL
 			    if (wcsncmp(szPath,szFile,dwLength)==0)
 				{
 					if (pItem->RemoveFlagsForChanged())
-						pLocateDlg->PostMessage(WM_UPDATENEEDEDDETAILTS,WPARAM(nItem),LPARAM(pItem));
+						pLocateDlg->m_pListCtrl->RedrawItems(nItem,nItem);
 				}
 			}
 		}
@@ -263,7 +281,22 @@ inline void CCheckFileNotificationsThread::FileDeleted(LPCWSTR szFile,DWORD dwLe
 					if (wcsncmp(szPath,szFile,dwLength)==0)
 					{
 						pItem->SetToDeleted();
-						pLocateDlg->PostMessage(WM_UPDATENEEDEDDETAILTS,WPARAM(nItem),LPARAM(pItem));
+						pLocateDlg->m_pListCtrl->RedrawItems(nItem,nItem);
+					}
+				}
+			}
+			else if (pItem->GetPathLen()>dwLength)
+			{
+				if (!pItem->IsDeleted() && pItem->GetPath()[dwLength]=='\\')
+				{
+					MemCopyW(szPath,pItem->GetPath(),dwLength);
+					MakeLower(szPath,dwLength);
+				
+					// Can be subdiretory
+					if (wcsncmp(szPath,szFile,dwLength)==0)
+					{
+						if (pItem->RemoveFlagsForChanged())
+							pLocateDlg->m_pListCtrl->RedrawItems(nItem,nItem);
 					}
 				}
 			}
@@ -588,7 +621,8 @@ void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCWSTR szRoot,CLocateDlg*
 				{
 					// Just disabling flags, let background thread do the rest
 					if (pItem->RemoveFlagsForChanged())
-						pLocateDlg->PostMessage(WM_UPDATENEEDEDDETAILTS,WPARAM(nItem),LPARAM(pItem));
+						pLocateDlg->m_pListCtrl->RedrawItems(nItem,nItem);
+					
 				}
 			}
 
@@ -620,7 +654,8 @@ void CCheckFileNotificationsThread::UpdateItemsInRoot(LPCWSTR szRoot,CLocateDlg*
 					{
 						// Just disabling flags, let background thread do the rest
 						if (pItem->RemoveFlagsForChanged())
-							pLocateDlg->PostMessage(WM_UPDATENEEDEDDETAILTS,WPARAM(nItem),LPARAM(pItem));
+							pLocateDlg->m_pListCtrl->RedrawItems(nItem,nItem);
+						
 					}
 					delete[] szPath;
 				}
@@ -803,6 +838,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 		m_pEventHandles[m_nHandles]=pDirData->ol.hEvent;
 
 		// Add pointer to m_pDirDatas structure
+		ASSERT(m_nHandles<UINT(aRoots.GetSize()+2));
 		m_pDirDatas[m_nHandles]=pDirData;
 		m_nHandles++;
 
@@ -1139,6 +1175,9 @@ inline BOOL CBackgroundUpdater::RunningProc()
 {
 	BuDebugMessage1("CBackgroundUpdater::RunningProc() BEGIN, running thread 0x%X",GetCurrentThreadId());
 
+	// CLocatedItem::LoadThumbnail needs this
+	CoInitialize(NULL);
+
 	for (;;)
 	{
 		InterlockedExchange(&m_lIsWaiting,TRUE);
@@ -1252,6 +1291,8 @@ inline BOOL CBackgroundUpdater::RunningProc()
 	delete this;
 	
 	BuDebugMessage("CBackgroundUpdater::RunningProc() END");
+
+	CoUninitialize();
 	return TRUE;
 }
 
@@ -1286,44 +1327,19 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 		
 		if (pListItem->m_pItem==pItem)
 		{
-			if (nDetail==Needed)
-			{
-				//BuDebugMessage("CBackgroundUpdater::AddToUpdateList checking whether all needed details");
+			//BuDebugMessage1("CBackgroundUpdater::AddToUpdateList checking wheter detail %d exists",nDetail);
 				
-				for (int type=0;type<=LastType;type++)
-				{
-					if (pItem->ShouldUpdateByDetail((DetailType)type))
-					{
-						int j;
-                        for (j=pListItem->m_aDetails.GetSize()-1;j>=0;j--)
-						{
-							if (pListItem->m_aDetails[j]==(DetailType)type)
-								break;
-						}
-						if (j<0) // Not found
-						{
-							//BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new(1) detail %d to item %X",nDetail,(DWORD_PTR)pListItem);
-							pListItem->m_aDetails.Add((DetailType)type);
-						}
-					}
-				}
-			}
-            else
+			int j;
+			for (j=pListItem->m_aDetails.GetSize()-1;j>=0;j--)
 			{
-				//BuDebugMessage1("CBackgroundUpdater::AddToUpdateList checking wheter detail %d exists",nDetail);
-					
-				int j;
-				for (j=pListItem->m_aDetails.GetSize()-1;j>=0;j--)
-				{
-					if (pListItem->m_aDetails[j]==nDetail)
-						break;
-				}
-				if (j<0)
-				{
-					// Not found
-					//BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new(2) detail %d to item %X",nDetail,(DWORD_PTR)pListItem);
-					pListItem->m_aDetails.Add(nDetail);
-				}
+				if (pListItem->m_aDetails[j]==nDetail)
+					break;
+			}
+			if (j<0)
+			{
+				// Not found
+				//BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new(2) detail %d to item %X",nDetail,(DWORD_PTR)pListItem);
+				pListItem->m_aDetails.Add(nDetail);
 			}
 			LeaveCriticalSection(&m_csUpdateList);
 			
@@ -1333,36 +1349,8 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 	}
 	
 
-	if (nDetail!=Needed)
-	{
-		Item* pNewItem=new Item(pItem,iItem,nDetail);
-		//BuDebugMessage3("CBackgroundUpdater::AddToUpdateList Adding new item (%X) %X list size=%d",(DWORD_PTR)pItem,(DWORD_PTR)pNewItem,pUpdateList->GetSize());
-		m_aUpdateList.Add(pNewItem);
-		LeaveCriticalSection(&m_csUpdateList);
-
-		return;
-	}
-
-	// Create new items with desired details
-	Item* pUpdateItem=new Item(pItem,iItem);
-	for (int type=0;type<=LastType;type++)
-	{
-		if (pItem->ShouldUpdateByDetail((DetailType)type))
-			pUpdateItem->m_aDetails.Add((DetailType)type);
-	}
-
-	// Adding item to the list
-	if (pUpdateItem->m_aDetails.GetSize()>0)
-	{
-		//BuDebugMessage2("CBackgroundUpdater::AddToUpdateList Adding new item (%X), list size=%d",
-		//	(DWORD_PTR)pUpdateItem,m_aUpdateList.GetSize());
-		m_aUpdateList.Add(pUpdateItem); 
-	}
-	else
-		delete pUpdateItem;
-
-
+	Item* pNewItem=new Item(pItem,iItem,nDetail);
+	//BuDebugMessage3("CBackgroundUpdater::AddToUpdateList Adding new item (%X) %X list size=%d",(DWORD_PTR)pItem,(DWORD_PTR)pNewItem,pUpdateList->GetSize());
+	m_aUpdateList.Add(pNewItem);
 	LeaveCriticalSection(&m_csUpdateList);
-	
-		
 }

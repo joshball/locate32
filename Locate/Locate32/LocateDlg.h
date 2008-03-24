@@ -125,14 +125,14 @@ public:
 	// Another 32 set for settings
 	enum LocateDialogExtraFlags {
 		
-		
 		// Locate process
 		efEnableLogicalOperations = 0x00000010,
 		efAllowSpacesAsSeparators = 0x00000020,
 		efMatchWhileNameIfAsterisks = 0x00000040,
 		efAsteriskAtEndEvenIfExtensionExists = 0x00000080,
+		efAndModeAlways = 0x00000100,
 		efLocateProcessDefaults = efEnableLogicalOperations|efAllowSpacesAsSeparators,
-		efLocateProcessSave = 0x000000F0,
+		efLocateProcessSave = 0x000001F0,
 
 		// Locate dialog
 		efFocusToResultListWhenAppActivated = 0x01000000,
@@ -554,6 +554,9 @@ protected:
 	// General variables
 	IShellFolder* m_pDesktopFolder;
 
+
+
+
 	////////////////////////////////////////////////////////////
 	// Virtual message handlers
 public:
@@ -612,13 +615,7 @@ protected:
 	void OnDelete(DeleteFlag DeleteFlag=BasedOnShift,int nItem=-1);
 
 	
-	
-	
-
-
-
-	
-
+		
 	////////////////////////////////////////////////////////////
 	// Dialog, tabs and items
 protected:
@@ -638,7 +635,6 @@ public:
 	// Variables
 protected:
 	CTabCtrl* m_pTabCtrl;
-	CListCtrlEx* m_pListCtrl;
 	CStatusBarCtrl* m_pStatusCtrl;
 	CNameDlg m_NameDlg;
 	CSizeDateDlg m_SizeDateDlg;
@@ -762,16 +758,16 @@ protected:
 	// List style and outlook
 	void SetResultListFont();
 	BOOL ResolveSystemLVStatus();
-	BOOL SetListStyle(int id,BOOL bInit=FALSE);
-	void SetMenuCheckMarkForListStyle();
 	BOOL SetListSelStyle();
 	void RemoveResultsFromList();
 
 
+protected:
 	// Viewing items
 	BOOL ListNotifyHandler(NMLISTVIEW *pNm);
+	HRESULT ListCustomDrawHandler(NMLVCUSTOMDRAW* pLVCD);
 	
-	
+protected:
 	// Sorting
 	void SortItems(DetailType nDetail,BYTE bDescending=-1,BOOL bNoneIsPossible=FALSE); // bDescending:0=ascending order, 1=desc, -1=default
 	void SetSorting(BYTE bSorting=BYTE(-2)); // bSorting==BYTE(-2): default
@@ -791,6 +787,7 @@ protected:
 	void OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo,int nItem=-1,DetailType nDetail=Name);
 	void OnExecuteFile(LPCWSTR szVerb,int nItem=-1);
 			
+	
 	// Helpers
 	void OpenFolder(LPCWSTR szFolder);
 	void OpenSelectedFolder(BOOL bContaining,int nItem=-1);
@@ -799,7 +796,12 @@ public:
 	static LPCWSTR GetDBVolumeLabel(WORD wDB,WORD wRootID);
 	static LPCWSTR GetDBVolumeSerial(WORD wDB,WORD wRootID);
 	static LPCWSTR GetDBVolumeFileSystem(WORD wDB,WORD wRootID);
-	static void SetSystemImagelists(CListCtrl* pList,HICON* phIcon=NULL);
+	
+	static void SetSystemImageLists(CListCtrl* pList,HICON* phIcon=NULL);
+	enum ImageListSize { ilMedium, ilLarge, ilExtraLarge };
+	BOOL LoadSystemImageList(ImageListSize& iImageList,SIZE& rsIconSize);
+	
+	
 	
 public:
 	// Default details
@@ -814,7 +816,9 @@ public:
 
 	// Variables
 protected:
+	CListCtrlEx* m_pListCtrl;
 	CFileTarget* m_pDropTarget; // Drop target class for the results list
+	
 	BYTE m_nSorting;	// used for sorting list item, 0-6 bits: detail type, 7 bit: if 1 ascend sorting
 	
 	BYTE m_ClickWait;   // If m_ClickWait is TRUE, result list actions are ignored
@@ -824,6 +828,51 @@ protected:
 	WORD m_WaitEvery30; // Delay (in ms) after 30 items are added to the retults list
 	WORD m_WaitEvery60; // Delay (in ms) after 60 items are added to the retults list
 
+	// List type
+	enum ListType {
+		ltSmallIcons = 0,
+		ltMediumIcons = 1,
+		ltLargeIcons = 2,
+		ltExtraLargeIcons = 3,
+		ltList = 4,
+		ltDetails = 5,
+	} m_nCurrentListType;
+	void SetListType(ListType nType,BOOL bResetIfSame=FALSE);
+	void SetMenuCheckMarkForListType();
+
+	// Thumbnail support:
+	enum ThumbnailFlags {
+		tfVistaFeaturesAvailable=0x1,
+		tfSystemImageListIsInterface=0x2,
+		tfThumbnailsInMediumIcons=0x4,
+
+		tfDefault = tfThumbnailsInMediumIcons,
+		tfSave = tfThumbnailsInMediumIcons
+	};
+	DWORD m_dwThumbnailFlags;
+
+	
+	DWORD GetThumbnailFlags() const { return m_dwThumbnailFlags; }
+	BOOL IsThumbnailFlagSet(ThumbnailFlags nFlag) const { return m_dwThumbnailFlags&nFlag?1:0; }
+	void AddThumbnailFlags(DWORD dwFlags) { m_dwThumbnailFlags|=dwFlags; }
+	void RemoveThumbnailFlags(DWORD dwFlags) { m_dwThumbnailFlags&=~dwFlags; }
+
+
+
+	// System image list
+	union { 
+		IImageList* m_pSystemImageList; // Large and extra large icons (SHGetImageList needed)
+		HIMAGELIST m_hSystemImageList; // Medium size icons (got using SHGetFileInfo)
+	};
+	SIZE m_sSystemImageList;
+	
+	// Custom image list
+	CImageList m_ilOwnImageList; // The list is used only to set correct icon size if 
+	SIZE m_sCurrentIconSize;    // m_hSystemImageList of that size is not available 
+	UINT m_nBorders;
+
+
+	
 	// Results list mouse actions
 	enum ResultListAction {
 		LeftMouseButtonClick = 0,
@@ -1016,6 +1065,10 @@ public:
 	UINT GetSimpleIDLsandParentForFiles(LPCWSTR* ppFiles,UINT nFiles,LPITEMIDLIST& rpParentIDL,LPITEMIDLIST*& rpSimpleIDLs);
 	BOOL GetSimpleIDLsandParentfromIDLs(int nItems,LPITEMIDLIST* pFullIDLs,LPITEMIDLIST* rpParentIDL,LPITEMIDLIST* rpSimpleIDLs,int* pParentIDLLevel=NULL);
 	
+	// Thumbnail support
+	IExtractImage* GetExtractImageInterface(LPCWSTR szFile);
+	IThumbnailProvider* GetThumbnailProvider(LPCWSTR szFile);
+	
 
 
 	////////////////////////////////////////////////////////////
@@ -1038,6 +1091,7 @@ public:
 	friend class CSettingsProperties::CKeyboardShortcutsPage;
 	friend BOOL CTrayIconWnd::TurnOnShortcuts();
 	friend BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg);
+	friend class CLocatedItem;
 
 };
 

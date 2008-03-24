@@ -34,7 +34,9 @@ hid_file_stopupdating.htm
 hid_file_databaseinfo.htm
 hid_file_close.htm
 hid_file_exit.htm
+hid_view_extralargeicons.htm
 hid_view_largeicons.htm
+hid_view_mediumicons.htm
 hid_view_smallicons.htm
 hid_view_list.htm
 hid_view_details.htm
@@ -130,6 +132,8 @@ hid_file_databaseinfo				= hid_file_databaseinfo.htm
 hid_file_close						= hid_file_close.htm
 hid_file_exit						= hid_file_exit.htm
 hid_view_largeicons					= hid_view_largeicons.htm
+hid_view_mediumicons				= hid_view_mediumicons.htm
+hid_view_extralargeicons			= hid_view_extralargeicons.htm
 hid_view_smallicons					= hid_view_smallicons.htm
 hid_view_list						= hid_view_list.htm
 hid_view_details					= hid_view_details.htm
@@ -218,7 +222,9 @@ IDM_STOPUPDATING					= hid_file_stopupdating.htm
 IDM_DATABASEINFO					= hid_file_databaseinfo.htm
 IDM_CLOSE							= hid_file_close.htm
 IDM_EXIT							= hid_file_exit.htm
+IDM_EXTRALARGEICONS					= hid_view_extralargeicons.htm
 IDM_LARGEICONS						= hid_view_largeicons.htm
+IDM_MEDIUMICONS						= hid_view_mediumicons.htm
 IDM_SMALLICONS						= hid_view_smallicons.htm
 IDM_LIST							= hid_view_list.htm
 IDM_DETAILS							= hid_view_details.htm

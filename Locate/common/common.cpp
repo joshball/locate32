@@ -40,19 +40,15 @@ LPWSTR GetDefaultFileLocation(LPCWSTR szFileName,BOOL bMustExists,DWORD* lpdwSiz
 
 			// Now pStr contains X:\UsersFolder\AppPath\Locate32
 
-			BOOL bDirectoryExists=FileSystem::IsDirectory(pStr);
-
-			// Copy file name part at tail 
-			pStr[nPathLen++]='\\';
-			MemCopyW(pStr+nPathLen,szFileName,nFileNameLen+1);
-			if (lpdwSize!=NULL)
-				*lpdwSize=nPathLen+nFileNameLen;
-				
-				
 			// Check whether directory exists
-			if (bDirectoryExists)
+			if (FileSystem::IsDirectory(pStr))
 			{
 				// Directory does exist
+				// Copy file name part at tail 
+				pStr[nPathLen++]='\\';
+				MemCopyW(pStr+nPathLen,szFileName,nFileNameLen+1);
+				if (lpdwSize!=NULL)
+					*lpdwSize=nPathLen+nFileNameLen;
 				
 				if (!bMustExists)
 					return pStr;	
@@ -69,8 +65,15 @@ LPWSTR GetDefaultFileLocation(LPCWSTR szFileName,BOOL bMustExists,DWORD* lpdwSiz
 				if (!bMustExists)
 				{
 					FileSystem::CreateDirectory(pStr);
+					// Copy file name part at tail 
+					pStr[nPathLen++]='\\';
+					MemCopyW(pStr+nPathLen,szFileName,nFileNameLen+1);
+					if (lpdwSize!=NULL)
+						*lpdwSize=nPathLen+nFileNameLen;
+					
 					return pStr;
-				}
+				}	
+			
 			}
 				
 

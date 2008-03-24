@@ -28,15 +28,17 @@ void CLocateDlg::SetMenus()
 	if (GetLocateApp()->m_wComCtrlVersion<0x0600) // Disabling features
 	{
 		::EnableMenuItem(hSubMenu,IDM_ALIGNTOGRID,MF_GRAYED|MF_BYCOMMAND);
-		::EnableMenuItem(hSubMenu,IDM_ALIGNTOGRID,MF_GRAYED|MF_BYCOMMAND);
+		::EnableMenuItem(hSubMenu,IDM_LINEUPICONS,MF_GRAYED|MF_BYCOMMAND);
 	}
 
-	if (hSubMenu!=NULL)
+	if (hSubMenu!=NULL && !(m_dwThumbnailFlags&tfVistaFeaturesAvailable))
 	{
-		::SetMenuItemBitmaps(hSubMenu,0,MF_BYPOSITION,NULL,m_CircleBitmap);
-		::SetMenuItemBitmaps(hSubMenu,1,MF_BYPOSITION,NULL,m_CircleBitmap);
-		::SetMenuItemBitmaps(hSubMenu,2,MF_BYPOSITION,NULL,m_CircleBitmap);
-		::SetMenuItemBitmaps(hSubMenu,3,MF_BYPOSITION,NULL,m_CircleBitmap);
+		::SetMenuItemBitmaps(hSubMenu,IDM_EXTRALARGEICONS,MF_BYCOMMAND,NULL,m_CircleBitmap);
+		::SetMenuItemBitmaps(hSubMenu,IDM_LARGEICONS,MF_BYCOMMAND,NULL,m_CircleBitmap);
+		::SetMenuItemBitmaps(hSubMenu,IDM_MEDIUMICONS,MF_BYCOMMAND,NULL,m_CircleBitmap);
+		::SetMenuItemBitmaps(hSubMenu,IDM_SMALLICONS,MF_BYCOMMAND,NULL,m_CircleBitmap);
+		::SetMenuItemBitmaps(hSubMenu,IDM_LIST,MF_BYCOMMAND,NULL,m_CircleBitmap);
+		::SetMenuItemBitmaps(hSubMenu,IDM_DETAILS,MF_BYCOMMAND,NULL,m_CircleBitmap);
 	}
 
 	CShortcut::ModifyMenus(m_aShortcuts,hMenu,m_Menu);
@@ -45,7 +47,7 @@ void CLocateDlg::SetMenus()
 	if (hOldMenu!=NULL)
 		DestroyMenu(hOldMenu);
 
-	SetMenuCheckMarkForListStyle();
+	SetMenuCheckMarkForListType();
 }
 
 void CLocateDlg::OnInitMainMenu(HMENU hPopupMenu,UINT nIndex)

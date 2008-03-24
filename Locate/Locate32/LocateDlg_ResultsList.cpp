@@ -3,6 +3,9 @@
 #include <HFCLib.h>
 #include "Locate32.h"
 
+#include <commoncontrols.h>
+
+
 ////////////////////////////////////////////////////////////
 // CLocateDlg - Results list - List style and outlook
 ////////////////////////////////////////////////////////////
@@ -78,70 +81,6 @@ BOOL CLocateDlg::ResolveSystemLVStatus()
 	return TRUE;
 }
 
-void CLocateDlg::SetMenuCheckMarkForListStyle()
-{
-	ASSERT(m_pListCtrl!=NULL);
-
-	CMenu menu(GetMenu());
-
-	DWORD dwListStyle=m_pListCtrl->GetStyle()&LVS_TYPEMASK;
-
-
-	// Check marks for menu
-	menu.CheckMenuItem(IDM_LARGEICONS,MF_BYCOMMAND|(dwListStyle==LVS_ICON?MF_CHECKED:MF_UNCHECKED));
-	menu.CheckMenuItem(IDM_SMALLICONS,MF_BYCOMMAND|(dwListStyle==LVS_SMALLICON?MF_CHECKED:MF_UNCHECKED));
-	menu.CheckMenuItem(IDM_LIST,MF_BYCOMMAND|(dwListStyle==LVS_LIST?MF_CHECKED:MF_UNCHECKED));
-	menu.CheckMenuItem(IDM_DETAILS,MF_BYCOMMAND|(dwListStyle==LVS_REPORT?MF_CHECKED:MF_UNCHECKED));
-	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LARGEICONS,MF_BYCOMMAND|(dwListStyle==LVS_ICON?MF_CHECKED:MF_UNCHECKED));
-	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_SMALLICONS,MF_BYCOMMAND|(dwListStyle==LVS_SMALLICON?MF_CHECKED:MF_UNCHECKED));
-	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LIST,MF_BYCOMMAND|(dwListStyle==LVS_LIST?MF_CHECKED:MF_UNCHECKED));
-	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_DETAILS,MF_BYCOMMAND|(dwListStyle==LVS_REPORT?MF_CHECKED:MF_UNCHECKED));
-			
-	
-	// Enable/disable "Line up icons" and "Auto arrange"
-	if (dwListStyle==LVS_LIST || dwListStyle==LVS_REPORT)
-	{
-		menu.EnableMenuItem(IDM_LINEUPICONS,MF_BYCOMMAND|MF_GRAYED);
-		menu.EnableMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LINEUPICONS,MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_GRAYED);
-	
-		menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
-	}
-	else
-	{
-		menu.EnableMenuItem(IDM_LINEUPICONS,MF_BYCOMMAND|MF_ENABLED);
-		menu.EnableMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_ENABLED);
-
-		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LINEUPICONS,MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_ENABLED);
-
-		if (((CLocateApp*)GetApp())->m_wComCtrlVersion>=0x0600)
-		{
-			menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_ENABLED);
-			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_ENABLED);
-		}
-		else
-		{
-			menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
-			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
-		}
-	}
-			
-	
-	if (m_pListCtrl->GetStyle()&LVS_AUTOARRANGE)
-	{
-		menu.CheckMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_CHECKED);
-		CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_CHECKED);
-	}
-
-	if (m_pListCtrl->GetExtendedListViewStyle()&LVS_EX_SNAPTOGRID)
-	{
-		menu.CheckMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_CHECKED);
-		CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_CHECKED);
-	}
-}
 
 BOOL CLocateDlg::SetListSelStyle()
 {
@@ -175,51 +114,6 @@ BOOL CLocateDlg::SetListSelStyle()
 	return TRUE;
 }
 
-
-BOOL CLocateDlg::SetListStyle(int id,BOOL bInit)
-{
-	CMenu menu(GetMenu());
-	DWORD dwStyle=m_pListCtrl->GetStyle();
-
-	// Changing from Details view, saving list widths
-	if ((dwStyle & LVS_TYPEMASK)==LVS_REPORT && id!=3)
-	{
-		m_pListCtrl->SaveColumnsState(HKCU,
-			CRegKey2::GetCommonKey()+"\\General","ListWidths");
-	}
-
-	switch(id)
-	{
-	case 0:
-		if ((dwStyle & LVS_TYPEMASK)!=LVS_ICON || bInit)
-		{
-			m_pListCtrl->SetStyle((dwStyle & ~LVS_TYPEMASK)|LVS_ICON);
-			m_pListCtrl->Arrange(LVA_DEFAULT);
-		}
-		break;
-	case 1:
-		if ((dwStyle & LVS_TYPEMASK)!=LVS_SMALLICON || bInit)
-		{
-			m_pListCtrl->SetStyle((dwStyle & ~LVS_TYPEMASK)|LVS_SMALLICON);
-			m_pListCtrl->Arrange(LVA_DEFAULT);
-		}
-		break;
-	case 2:
-		if ((dwStyle  &LVS_TYPEMASK)!=LVS_LIST || bInit)
-		{
-			m_pListCtrl->SetStyle((dwStyle & ~LVS_TYPEMASK)|LVS_LIST);
-			m_pListCtrl->Arrange(LVA_DEFAULT);
-		}
-		break;
-	case 3:
-		if ((dwStyle & LVS_TYPEMASK)!=LVS_REPORT || bInit)
-			m_pListCtrl->SetStyle((dwStyle & ~LVS_TYPEMASK)|LVS_REPORT);
-		break;
-	}
-
-	SetMenuCheckMarkForListStyle();
-	return TRUE;
-}
 
 
 
@@ -364,9 +258,10 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				case Name:
 					if (pItem->ShouldUpdateFileTitle())
 						pItem->UpdateFileTitle();
-
 					if (pItem->ShouldUpdateIcon())
                         pItem->UpdateIcon();
+					if (pItem->ShouldCheckIfDeleted())
+                        pItem->CheckIfDeleted();
 
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
 					if (pItem->GetFileTitle()!=NULL)
@@ -421,6 +316,16 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						ASSERT (m_pBackgroundUpdater!=NULL);
 
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Name);
+						
+						if (!IsLocating()) // Locating in process
+							m_pBackgroundUpdater->StopWaiting();
+					}
+					
+					if (pItem->ShouldCheckIfDeleted())
+					{
+						ASSERT (m_pBackgroundUpdater!=NULL);
+
+						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,IfDeleted);
 						
 						if (!IsLocating()) // Locating in process
 							m_pBackgroundUpdater->StopWaiting();
@@ -497,6 +402,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						pItem->UpdateFileTitle();
 					if (pItem->ShouldUpdateIcon())
                         pItem->UpdateIcon();
+					if (pItem->ShouldCheckIfDeleted())
+						pItem->CheckIfDeleted();
 
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
 					if (pItem->GetFileTitle()!=NULL)
@@ -546,6 +453,16 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						ASSERT (m_pBackgroundUpdater!=NULL);
 
 						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,Name);
+						
+						if (!IsLocating()) // Locating in process
+							m_pBackgroundUpdater->StopWaiting();
+					}
+					
+					if (pItem->ShouldCheckIfDeleted())
+					{
+						ASSERT (m_pBackgroundUpdater!=NULL);
+
+						m_pBackgroundUpdater->AddToUpdateList(pItem,pLvdi->item.iItem,IfDeleted);
 						
 						if (!IsLocating()) // Locating in process
 							m_pBackgroundUpdater->StopWaiting();
@@ -763,14 +680,356 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			SetTimer(ID_UPDATESELECTED,100,NULL);
 		}
 		break;
-	case NM_KILLFOCUS:
-		CAppData::stdfunc();
-		break;
+	case NM_CUSTOMDRAW:
+		{
+			SetWindowLong(dwlMsgResult,
+				ListCustomDrawHandler((NMLVCUSTOMDRAW*)pNm));
+			return TRUE;
+		}
+			
 	}
 	return FALSE;
 }
 
 
+HRESULT CLocateDlg::ListCustomDrawHandler(NMLVCUSTOMDRAW* pLVCD)
+{
+	switch (pLVCD->nmcd.dwDrawStage)
+	{
+	case CDDS_PREPAINT:
+		// We want notification messages
+		return CDRF_NOTIFYITEMDRAW;
+	case CDDS_ITEMPREPAINT:
+		// Let control paint item if in Details, List or Small Icons  view mode
+		if (m_nCurrentListType==ltMediumIcons &&
+			!IsThumbnailFlagSet(tfThumbnailsInMediumIcons))
+			return CDRF_DODEFAULT;
+		
+		//DebugFormatMessage("%d %d",pLVCD->nmcd.rc.right-pLVCD->nmcd.rc.left,
+		//	pLVCD->nmcd.rc.bottom-pLVCD->nmcd.rc.top);
+
+		if (m_sCurrentIconSize.cx!=0 && 
+			//!(pLVCD->clrText==0 && pLVCD->clrTextBk==0 && pLVCD->clrFace==0)
+			pLVCD->nmcd.rc.right-pLVCD->nmcd.rc.left!=0 && pLVCD->nmcd.rc.bottom-pLVCD->nmcd.rc.top
+			)			
+		{
+			// Large image mode, lets paint item itself
+			CDC dc(pLVCD->nmcd.hdc);
+			CRect rcItem,rcAnother;
+			int iItem=static_cast<int>(pLVCD->nmcd.dwItemSpec);
+			HBRUSH hBrush;
+			BOOL bListHasFocus=::GetFocus()==*m_pListCtrl;
+			int nRoundRectExtra=1;
+
+
+			
+			// Get item state and FileItem (lParam), the state is not 
+			// necessaryly the same as in pLVCD->nmcd.uItemState
+
+			LVITEM li;
+			li.mask=LVIF_PARAM|LVIF_STATE;
+			li.iItem=iItem;
+			li.iSubItem=0;
+			li.stateMask=LVIS_SELECTED|LVIS_FOCUSED;
+			m_pListCtrl->GetItem(&li);
+			CLocatedItem* pItem=(CLocatedItem*)li.lParam;
+
+			// LVN_GETDISPINFO is not called, requesting update here
+			if (GetFlags()&fgLVNoDelayedUpdate) 
+			{
+				if (pItem->ShouldUpdateFileTitle())
+					pItem->UpdateFileTitle();
+				if (pItem->ShouldUpdateIcon())
+					pItem->UpdateIcon();
+				if (pItem->ShouldCheckIfDeleted())
+					pItem->CheckIfDeleted();
+				if (pItem->ShouldUpdateExtra(Thumbnail))
+					pItem->LoadThumbnail();
+			}
+			else
+			{
+				if (pItem->ShouldUpdateFileTitle() || pItem->ShouldUpdateIcon())
+				{
+					ASSERT (m_pBackgroundUpdater!=NULL);
+
+					m_pBackgroundUpdater->AddToUpdateList(pItem,iItem,Name);
+					
+					if (!IsLocating()) // Locating in process
+						m_pBackgroundUpdater->StopWaiting();
+				}
+				if (pItem->ShouldCheckIfDeleted())
+				{
+					ASSERT (m_pBackgroundUpdater!=NULL);
+
+					m_pBackgroundUpdater->AddToUpdateList(pItem,iItem,IfDeleted);
+					
+					if (!IsLocating()) // Locating in process
+						m_pBackgroundUpdater->StopWaiting();			
+				}
+				if (pItem->ShouldUpdateExtra(Thumbnail))
+				{
+					ASSERT (m_pBackgroundUpdater!=NULL);
+
+					m_pBackgroundUpdater->AddToUpdateList(pItem,iItem,Thumbnail);
+					
+					if (!IsLocating()) // Locating in process
+						m_pBackgroundUpdater->StopWaiting();			
+				}
+			}
+			
+			// Loading thumbnail if necessary
+			SIZE sThumbnailSize;
+			HBITMAP hThumbnail=pItem->GetThumbnail(sThumbnailSize);
+			if (hThumbnail==NULL)
+				sThumbnailSize=m_sSystemImageList;
+		
+			// Get Icon area to rcItem
+			m_pListCtrl->GetItemRect(iItem,&rcItem,LVIR_ICON);
+
+		
+		
+
+			// Calculate area for thumbnail rect
+			POINT ptThumb={rcItem.left+(rcItem.Width()-sThumbnailSize.cx)/2,
+					  rcItem.top+(rcItem.Height()-sThumbnailSize.cy)/2} ;
+		
+			// Drawing icon/thumbnail
+			if (hThumbnail!=NULL)
+			{
+				// Valid thumbnail, drawing it
+				
+				//if (pFileItem->m_nThumbnailType==FileItem::Icon)
+				//	dc.DrawState(ptThumb,pFileItem->m_sThumbnailSize,pFileItem->m_hIcon,DST_ICON);
+				//else 
+				
+				if (m_dwThumbnailFlags&tfVistaFeaturesAvailable)
+				{
+					// In Windows Vista this seems to be the only suitable way to 
+					// draw images, otherwise some wierd RGBA images (such as 
+					// folder thumbnails get black background)
+					CImageList List;
+					List.Create(sThumbnailSize.cx,sThumbnailSize.cy,ILC_COLOR32,1,0);
+					int nIndex=List.Add(hThumbnail,(HBITMAP)NULL);
+					List.Draw(dc,nIndex,ptThumb,ILD_NORMAL);
+					List.DeleteImageList();
+				}
+				else
+					dc.DrawState(ptThumb,sThumbnailSize,hThumbnail,DST_BITMAP);
+					
+			}
+			else 
+			{
+				ImageList_Draw(m_dwThumbnailFlags&tfSystemImageListIsInterface?
+					IImageListToHIMAGELIST(m_pSystemImageList):m_hSystemImageList,
+					pItem->GetIcon(),dc,ptThumb.x,ptThumb.y,
+					ILD_NORMAL|ILD_TRANSPARENT|(li.state&LVIS_SELECTED?ILD_SELECTED:0)|(li.state&LVIS_FOCUSED?ILD_FOCUS:0));
+			}
+			
+			
+	
+			// Draw bounding box if mode is large or extra large mode or medium and thumbnail is image
+			if ((/*pFileItem->m_nThumbnailType==FileItem::Bitmap &&*/ hThumbnail!=NULL) ||
+				(sThumbnailSize.cx<m_sCurrentIconSize.cx &&
+				sThumbnailSize.cy<m_sCurrentIconSize.cy))
+			{
+
+				// Pen for rounding rect;
+				CPen Pen;
+				if (bListHasFocus && li.state&LVIS_SELECTED)
+				{
+					Pen.CreatePen(PS_SOLID,nRoundRectExtra=3,RGB(0,0,0));
+					nRoundRectExtra=2;
+				}
+				else
+					Pen.CreatePen(PS_SOLID,1,RGB(128,128,128));
+				
+				// Calculate area for thumbnail and rounding rect
+				rcAnother.left=rcItem.left+(rcItem.Width()-m_sCurrentIconSize.cx)/2-nRoundRectExtra;
+				rcAnother.top=rcItem.top+(rcItem.Height()-m_sCurrentIconSize.cy)/2-nRoundRectExtra;
+				rcAnother.right=rcAnother.left+m_sCurrentIconSize.cx+2*nRoundRectExtra;
+				rcAnother.bottom=rcAnother.top+m_sCurrentIconSize.cy+2*nRoundRectExtra;
+
+					
+				// Draw rounding rect
+				dc.SelectStockObject(NULL_BRUSH);
+				dc.SelectObject(Pen);
+				dc.Rectangle(&rcAnother);
+			}
+			
+			// Get area for label
+			m_pListCtrl->GetItemRect(iItem,&rcItem,LVIR_LABEL);
+
+
+			// Choose text and background colors
+			if (li.state&LVIS_SELECTED)
+            {
+				if (bListHasFocus) 
+				{
+					hBrush=(HBRUSH)(COLOR_HIGHLIGHT+1);
+					dc.SetTextColor(GetSysColor(COLOR_HIGHLIGHTTEXT));
+				}
+				else
+				{
+					hBrush=(HBRUSH)(COLOR_BTNFACE+1);
+					dc.SetTextColor(GetSysColor(COLOR_BTNTEXT));
+				}
+            }
+			else
+            {
+				hBrush=(HBRUSH)(COLOR_WINDOW+1);
+				dc.SetTextColor(GetSysColor(COLOR_BTNTEXT));
+            }
+			
+			// Fill background and set background mode to transparent
+			dc.FillRect(&rcItem,hBrush);
+			dc.SetBkMode(TRANSPARENT);
+
+
+
+			// Draw text
+			LPCWSTR lpText=pItem->GetFileTitleSafe();
+			int iStrlen=istrlen(pItem->GetFileTitleSafe());
+
+			CRect rcCalculated=rcItem;
+			dc.DrawText(lpText,iStrlen,&rcCalculated,DT_VCENTER|DT_CENTER|DT_CALCRECT|DT_WORDBREAK);
+
+			if (rcCalculated.right<=rcItem.right && rcCalculated.bottom<=rcItem.bottom)
+			{
+				// Text fits to control, draw it as is
+				dc.DrawText(lpText,iStrlen,&rcItem,DT_VCENTER|DT_CENTER|DT_WORDBREAK);
+			}
+			else
+			{
+				// Text do not fit to control
+
+				// Calculate size as a single line (to check how many lines we can use)
+				ZeroMemory(&rcCalculated,sizeof(CRect));
+				dc.DrawText(lpText,iStrlen,&rcCalculated,DT_VCENTER|DT_CENTER|DT_CALCRECT|DT_SINGLELINE);
+
+				int nLines=rcItem.Height()/rcCalculated.Height();
+
+				if (nLines==1)
+				{
+					// Just one line, take so line as possible
+
+					// Estimated cut position
+					int iCutPos=(rcItem.Width()*iStrlen)/rcCalculated.Width()+4;
+					CStringW Text(lpText,iCutPos);
+					Text << L"....";
+
+					while (iCutPos>0)
+					{
+						// Calculate new width
+						rcCalculated=rcItem;
+						dc.DrawText(Text,&rcCalculated,DT_VCENTER|DT_CENTER|DT_CALCRECT);
+
+
+						if (rcCalculated.right<=rcItem.right)
+						{
+							// Fits to area
+							break;
+						}
+
+						// Reduce cut position and try again
+						Text.DelChar(iCutPos);
+						iCutPos--;
+					}
+					
+					dc.DrawText(Text,&rcItem,DT_VCENTER|DT_CENTER);
+				}
+				else
+				{
+					// Find line breaks
+					CStringW Text(lpText,iStrlen);
+
+					int nStartPos=0;
+
+					for (;;)
+					{
+						// Calculate line break position
+						
+						// Estimatee for  cut position
+						int iCutPos=(rcItem.Width()*iStrlen)/rcCalculated.Width()+4;
+						CStringW Temp((LPCWSTR)Text+nStartPos,iCutPos);
+						Temp << L"\ni";
+						
+							
+						while (iCutPos>0)
+						{
+							// Calculate new width
+							ZeroMemory(&rcCalculated,sizeof(CRect));
+							dc.DrawText(Temp,&rcCalculated,DT_VCENTER|DT_CENTER|DT_CALCRECT);
+
+							if (rcCalculated.right<=rcItem.Width())
+							{
+								// Fits to area, position is ok
+								break;
+							}
+
+							// Reduce cut position and try again
+							Temp.DelChar(--iCutPos);
+						}
+
+						// Check if there is a space in this line
+						int iSpacePos;
+						for (iSpacePos=iCutPos;iSpacePos>0 && Temp[iSpacePos]!=' ';iSpacePos--);
+
+						if (iSpacePos>0)
+						{
+							// There is a space
+							Text[nStartPos+iSpacePos]=L'\n';
+							nStartPos+=iSpacePos+1;
+							iStrlen-=iSpacePos+1;
+						}
+						else
+						{
+							// Insert line break
+							Text.InsChar(nStartPos+iCutPos,L'\n');
+
+							// Set start position
+							nStartPos+=iCutPos+1;
+							iStrlen-=iCutPos;	
+
+							// Ignore one space if it is just after the line break
+							if (Text[nStartPos]==' ')
+							{
+								Text.DelChar(nStartPos);
+								iStrlen--;
+							}
+						}
+
+						// Should not happen but just for sure 
+						ASSERT(iStrlen>0);
+						
+						// Calculate length for the rest of the string
+						ZeroMemory(&rcCalculated,sizeof(CRect));
+						dc.DrawText((LPCWSTR)Text+nStartPos,iStrlen,&rcCalculated,DT_VCENTER|DT_CENTER|DT_CALCRECT|DT_SINGLELINE);
+
+						if (rcCalculated.right<=rcItem.Width())
+						{
+							// There is enough space for the rest of string
+							break;
+						}
+
+					}
+
+					dc.DrawText(Text,&rcItem,DT_VCENTER|DT_CENTER);
+				}
+			}
+
+			// Draw a focus rect aroung the item 
+			if (bListHasFocus && li.state&LVIS_FOCUSED)
+				dc.DrawFocusRect(&rcItem);
+			
+
+			return CDRF_SKIPDEFAULT;
+		}
+
+		// Let control paint item if in Details, List or Small Icons  view mode
+		return CDRF_DODEFAULT;
+	}
+	return NOERROR;
+}
 
 ////////////////////////////////////////////////////////////
 // CLocateDlg - Results list - Sorting
@@ -1284,16 +1543,9 @@ void CLocateDlg::BeginDragFiles(CListCtrl* pList)
 		DebugFormatMessage("CLocateDlg::WM_UPDATEITEMS: updating item %X",pItem);
         
 		// Just disabling flags, let background thread do the rest
-		pItem->RemoveFlags(LITEM_COULDCHANGE);
-		DebugMessage("CLocateDlg::WM_UPDATEITEMS: removed flags");
+		if (pItem->RemoveFlagsForChanged())
+			m_pListCtrl->RedrawItems(pSelectedItems[i],pSelectedItems[i]);
 
-		if (m_pBackgroundUpdater!=NULL)
-		{
-			m_pBackgroundUpdater->AddToUpdateList(pItem,pSelectedItems[i],Needed);
-
-			DebugMessage("CLocateDlg::WM_UPDATEITEMS: calling m_pBackgroundUpdater->StopWaiting()");
-			m_pBackgroundUpdater->StopWaiting();
-		}
 	}
 	
 	delete[] pSelectedItems;
@@ -2030,7 +2282,8 @@ CLocatedItem** CLocateDlg::GetSeletedItems(int& nItems,int nIncludeIfNoneSeleted
 	return pRet;
 }
 
-void CLocateDlg::SetSystemImagelists(CListCtrl* pList,HICON* phIcon)
+
+void CLocateDlg::SetSystemImageLists(CListCtrl* pList,HICON* phIcon)
 {
 	SHFILEINFO fi;
 	HIMAGELIST hList=(HIMAGELIST)SHGetFileInfo(szEmpty,0,&fi,sizeof(SHFILEINFO),SHGFI_SYSICONINDEX);
@@ -2040,6 +2293,74 @@ void CLocateDlg::SetSystemImagelists(CListCtrl* pList,HICON* phIcon)
 	if (phIcon!=NULL)
 		*phIcon=ImageList_ExtractIcon(NULL,hList,DEF_IMAGE);
 }
+
+BOOL CLocateDlg::LoadSystemImageList(ImageListSize& iImageList,SIZE& rIconSize)
+{
+	HRESULT (STDAPICALLTYPE* pSHGetImageList)(int,REFIID riid,void **ppv)=
+		(HRESULT (STDAPICALLTYPE*)(int,REFIID riid,void **ppv))GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetImageList");
+
+	
+	if (iImageList==ilMedium || pSHGetImageList==0)
+	{
+		m_dwThumbnailFlags&=~tfSystemImageListIsInterface;
+		iImageList=ilMedium;
+		SHFILEINFO fi;
+		m_hSystemImageList=(HIMAGELIST)GetFileInfo("",0,&fi,SHGFI_LARGEICON|SHGFI_SYSICONINDEX);
+		if (m_hSystemImageList==NULL)
+			return FALSE;
+		
+		HICON hIconForSize=ImageList_ExtractIcon(GetInstanceHandle(),m_hSystemImageList,fi.iIcon);
+		if (hIconForSize!=NULL)
+		{
+			ICONINFO ii;
+			if (GetIconInfo(hIconForSize,&ii))
+			{
+				BITMAP bi;
+				GetObject(ii.hbmColor,sizeof(BITMAP),&bi);
+
+				rIconSize.cx=bi.bmWidth;
+				rIconSize.cy=bi.bmHeight;
+
+				DeleteObject(ii.hbmColor);
+				DeleteObject(ii.hbmMask);
+			}
+
+			DestroyIcon(hIconForSize);
+		}
+		else
+		{
+			rIconSize.cx=GetSystemMetrics(SM_CXICON);
+			rIconSize.cy=GetSystemMetrics(SM_CYICON);
+		}
+		return TRUE;
+	}
+	
+
+	m_dwThumbnailFlags|=tfSystemImageListIsInterface;
+	if (iImageList==ilExtraLarge)
+	{
+		if (SUCCEEDED(pSHGetImageList(SHIL_JUMBO,IID_IImageList,(void**)&m_pSystemImageList)))
+		{
+			ASSERT(sizeof(int)==sizeof(LONG));
+			m_pSystemImageList->GetIconSize((int*)&rIconSize.cx,(int*)&rIconSize.cy);
+			return TRUE;
+		}
+
+		iImageList=ilLarge;	
+	}
+
+	if (SUCCEEDED(pSHGetImageList(SHIL_EXTRALARGE,IID_IImageList,(void**)&m_pSystemImageList)))
+	{
+		ASSERT(sizeof(int)==sizeof(LONG));
+		m_pSystemImageList->GetIconSize((int*)&rIconSize.cx,(int*)&rIconSize.cy);
+		return TRUE;
+	}
+	
+
+	iImageList=ilMedium;
+	return LoadSystemImageList(iImageList,rIconSize);
+}
+
 
 CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
 {
@@ -2079,4 +2400,191 @@ CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
 	ViewDetails* pRet=new ViewDetails[sizeof(aDetails)/sizeof(ViewDetails)];
 	CopyMemory(pRet,aDetails,sizeof(aDetails));
 	return pRet;
+}
+
+////////////////////////////////////////////////////////////
+// CLocateDlg - Results list - List type
+////////////////////////////////////////////////////////////
+
+
+void CLocateDlg::SetListType(ListType nType,BOOL bResetIfSame)
+{
+	if (m_nCurrentListType==nType && !bResetIfSame)
+		return;
+
+	if (m_nCurrentListType==ltDetails && nType!=ltDetails)
+	{
+		// Changing from details view, saving column states
+		m_pListCtrl->SaveColumnsState(HKCU,
+			CRegKey2::GetCommonKey()+"\\General","ListWidths");
+	}
+
+	DWORD dwStyle=m_pListCtrl->GetStyle()&~LVS_TYPEMASK;
+
+
+	// Delete existing image list
+	m_ilOwnImageList.DeleteImageList();
+
+
+	// Releasing m_pSystemImageList
+	if (m_pSystemImageList!=NULL && m_dwThumbnailFlags&tfSystemImageListIsInterface)
+		m_pSystemImageList->Release();
+	m_pSystemImageList=NULL;
+	
+	m_sCurrentIconSize.cx=0; // Icon size is set to 0 in SmallIcons, 
+	m_sCurrentIconSize.cy=0; // List and Details mode (when thumbnail not needed)
+	m_nBorders=0;
+
+	// Remove thumbnail images
+	int iItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
+	while (iItem!=-1)
+	{
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
+		if (pItem!=NULL)
+		{
+			// Free thumbnail 
+			pItem->DeleteThumbnail();
+		}
+		iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
+	}
+
+	switch (nType)
+	{
+	case ltList:
+		dwStyle|=LVS_LIST;
+		break;
+	case ltDetails:
+		dwStyle|=LVS_REPORT;
+		break;
+	case ltSmallIcons:
+		dwStyle|=LVS_SMALLICON;
+		break;
+	case ltMediumIcons:
+		{
+			dwStyle|=LVS_ICON;
+			ImageListSize iSize=ilMedium;
+			LoadSystemImageList(iSize,m_sSystemImageList);
+			m_sCurrentIconSize=m_sSystemImageList;
+			m_pListCtrl->SetImageList(m_dwThumbnailFlags&tfSystemImageListIsInterface?
+				IImageListToHIMAGELIST(m_pSystemImageList):m_hSystemImageList,LVSIL_NORMAL);
+			
+		}
+		break;
+	case ltLargeIcons:
+		{
+			dwStyle|=LVS_ICON;
+			ImageListSize iSize=ilLarge;
+			LoadSystemImageList(iSize,m_sSystemImageList);
+			m_sCurrentIconSize.cx=DEFAULT_LARGEICONSIZE;
+	
+			CRegKey2 RegKey;
+			if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+				RegKey.QueryValue("Thumbnail Large Icon Size",(LPSTR)&m_sCurrentIconSize.cx,sizeof(LONG));
+			m_sCurrentIconSize.cy=m_sCurrentIconSize.cx;
+	
+			m_nBorders=2;
+			m_ilOwnImageList.Create(m_sCurrentIconSize.cx+2,m_sCurrentIconSize.cy+2,ILC_COLOR32,1,1);
+			m_pListCtrl->SetImageList(m_ilOwnImageList,LVSIL_NORMAL);
+		}
+		break;
+	case ltExtraLargeIcons:
+		{
+			dwStyle|=LVS_ICON;
+			ImageListSize iSize=ilLarge;
+			LoadSystemImageList(iSize,m_sSystemImageList);
+			m_sCurrentIconSize.cx=DEFAULT_EXTRALARGEICONSIZE;
+			CRegKey2 RegKey;
+			if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+				RegKey.QueryValue("Thumbnail Extra Large Icon Size",(LPSTR)&m_sCurrentIconSize.cx,sizeof(LONG));
+			m_sCurrentIconSize.cy=m_sCurrentIconSize.cx;
+			m_nBorders=2;
+			m_ilOwnImageList.Create(m_sCurrentIconSize.cx+2,m_sCurrentIconSize.cy+2,ILC_COLOR32,1,1);
+			m_pListCtrl->SetImageList(m_ilOwnImageList,LVSIL_NORMAL);
+			break;
+		}
+	}
+	
+		
+
+		
+	m_pListCtrl->SetStyle(dwStyle&~LVS_NOSCROLL);
+	
+
+
+	// Arrange list
+	m_pListCtrl->Arrange(LVA_DEFAULT);
+	m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount());
+	m_pListCtrl->UpdateWindow();
+		
+	m_nCurrentListType=nType;
+
+	SetMenuCheckMarkForListType();
+}
+
+
+void CLocateDlg::SetMenuCheckMarkForListType()
+{
+	ASSERT(m_pListCtrl!=NULL);
+
+	CMenu menu(GetMenu());
+
+	// Check marks for menu
+	menu.CheckMenuItem(IDM_EXTRALARGEICONS,MF_BYCOMMAND|(m_nCurrentListType==ltExtraLargeIcons?MF_CHECKED:MF_UNCHECKED));
+	menu.CheckMenuItem(IDM_LARGEICONS,MF_BYCOMMAND|(m_nCurrentListType==ltLargeIcons?MF_CHECKED:MF_UNCHECKED));
+	menu.CheckMenuItem(IDM_MEDIUMICONS,MF_BYCOMMAND|(m_nCurrentListType==ltMediumIcons?MF_CHECKED:MF_UNCHECKED));
+	menu.CheckMenuItem(IDM_SMALLICONS,MF_BYCOMMAND|(m_nCurrentListType==ltSmallIcons?MF_CHECKED:MF_UNCHECKED));
+	menu.CheckMenuItem(IDM_LIST,MF_BYCOMMAND|(m_nCurrentListType==ltList?MF_CHECKED:MF_UNCHECKED));
+	menu.CheckMenuItem(IDM_DETAILS,MF_BYCOMMAND|(m_nCurrentListType==ltDetails?MF_CHECKED:MF_UNCHECKED));
+	
+	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_EXTRALARGEICONS,MF_BYCOMMAND|(m_nCurrentListType==ltExtraLargeIcons?MF_CHECKED:MF_UNCHECKED));
+	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LARGEICONS,MF_BYCOMMAND|(m_nCurrentListType==ltLargeIcons?MF_CHECKED:MF_UNCHECKED));
+	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_MEDIUMICONS,MF_BYCOMMAND|(m_nCurrentListType==ltMediumIcons?MF_CHECKED:MF_UNCHECKED));
+	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_SMALLICONS,MF_BYCOMMAND|(m_nCurrentListType==ltSmallIcons?MF_CHECKED:MF_UNCHECKED));
+	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LIST,MF_BYCOMMAND|(m_nCurrentListType==ltList?MF_CHECKED:MF_UNCHECKED));
+	CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_DETAILS,MF_BYCOMMAND|(m_nCurrentListType==ltDetails?MF_CHECKED:MF_UNCHECKED));
+			
+	
+	// Enable/disable "Line up icons" and "Auto arrange"
+	if (m_nCurrentListType==ltList || m_nCurrentListType==ltDetails)
+	{
+		menu.EnableMenuItem(IDM_LINEUPICONS,MF_BYCOMMAND|MF_GRAYED);
+		menu.EnableMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LINEUPICONS,MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_GRAYED);
+	
+		menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
+		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
+	}
+	else
+	{
+		menu.EnableMenuItem(IDM_LINEUPICONS,MF_BYCOMMAND|MF_ENABLED);
+		menu.EnableMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_ENABLED);
+
+		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_LINEUPICONS,MF_BYCOMMAND|MF_ENABLED);
+		EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_ENABLED);
+
+		if (((CLocateApp*)GetApp())->m_wComCtrlVersion>=0x0600)
+		{
+			menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_ENABLED);
+			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_ENABLED);
+		}
+		else
+		{
+			menu.EnableMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
+			EnableMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_GRAYED);
+		}
+	}
+			
+	
+	if (m_pListCtrl->GetStyle()&LVS_AUTOARRANGE)
+	{
+		menu.CheckMenuItem(IDM_AUTOARRANGE,MF_BYCOMMAND|MF_CHECKED);
+		CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_AUTOARRANGE,MF_BYCOMMAND|MF_CHECKED);
+	}
+
+	if (m_pListCtrl->GetExtendedListViewStyle()&LVS_EX_SNAPTOGRID)
+	{
+		menu.CheckMenuItem(IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_CHECKED);
+		CheckMenuItem(m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUNOITEMS),IDM_ALIGNTOGRID,MF_BYCOMMAND|MF_CHECKED);
+	}
 }

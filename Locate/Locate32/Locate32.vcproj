@@ -860,6 +860,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ResultsDialogs.h"
 				>
 			</File>
@@ -1372,6 +1376,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\hlp\hid_view_extralargeicons.src"
+				>
+			</File>
+			<File
 				RelativePath="..\hlp\hid_view_largeicons.src"
 				>
 			</File>
@@ -1381,6 +1389,10 @@
 			</File>
 			<File
 				RelativePath="..\hlp\hid_view_list.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\hid_view_mediumicons.src"
 				>
 			</File>
 			<File

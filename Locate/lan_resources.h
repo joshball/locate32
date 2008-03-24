@@ -84,6 +84,8 @@
 #define IDS_HELPINFO                    70
 #define IDS_FILEINFORMATION             71
 #define IDS_FILEINFORMATIONFMT          72
+#define IDS_SELECTEDONEFILE				76
+#define IDS_SELECTEDONEFOLDER			77
 #define IDS_REPLACESPACES				78
 #define IDS_REPLACEOTHER				79
 #define IDS_NAME                        80
@@ -380,7 +382,7 @@
 #define IDC_DELETEAFTERRUN              1108
 #define IDC_LASTRUN                     1109
 #define IDC_TITLE                       1110
-#define IDC_ATTHISTIME                  1110
+#define IDC_UPDATEWHENPOSSIBLE          1110
 #define IDC_TITLE2                      1111
 #define IDC_DATE                        1111
 #define IDC_HOURS                       1112
@@ -564,7 +566,9 @@
 #define IDC_VALUEHELPTEXT               1240
 #define IDC_CPUUSAGECHECK               1241
 #define IDC_CPUUSAGESPIN                1242
+#define IDC_DELAYSPIN					1242
 #define IDC_CPUUSAGE                    1243
+#define IDC_DELAY						1243
 #define IDC_CPUUSAGEEXTRALABEL          1244
 #define IDC_SET							1245
 #define IDC_PATHINDATABASE				1246
@@ -990,6 +994,11 @@
 #define IDS_ADVSETCUSTOMDIALOGICON		5831
 #define IDS_ADVSETNOASTERISKATENDIFEXTENSIONGIVEN 5832
 #define IDS_ADVSETCONFIRMATIONFORUPDATEDATABASES 5833
+#define IDS_ADVSETVIEWMODES				5834
+#define IDS_ADVSETTHUMBSWITHMEDIUMICONS 5835
+#define IDS_ADVSETLARGEICONSIZE			5836
+#define IDS_ADVSETEXTRALARGEICONSIZE	5837
+#define IDS_ADVSETANDMODEALWAYS			5838
 #define IDS_SCHEDULEUPDATE              5901
 #define IDS_MINUTELY                    5909
 #define IDS_HOURLY                      5910
@@ -1114,6 +1123,8 @@
 #define IDM_PRESETSAVE                  40027
 #define IDM_PRESETREMOVE                40028
 #define IDM_ARRANGEEXTENSION            40029
+#define IDM_EXTRALARGEICONS             40030
+#define IDM_MEDIUMICONS                 40031
 #define IDM_SETTINGS                    40033
 #define IDM_SETTOOL						40034
 #define IDM_DATABASEINFO                40035

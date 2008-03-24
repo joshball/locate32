@@ -346,6 +346,15 @@ table#formattable {
 	margin: 12px 6px 16px 8px;
 }
 
+table#separatortable {
+    background-color:#FFFFFF;
+	border-spacing: 0px;
+    border-collapse: collapse;
+	width: 500px;
+	margin: 12px 6px 16px 8px;
+	text-align: left;
+}
+
 table#formattable td {
     border: solid #6666BB 2px;
 	padding: 4px;

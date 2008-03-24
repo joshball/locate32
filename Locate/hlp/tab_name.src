@@ -10,13 +10,8 @@ CONTENT=
 <P>Use this field to specify file name. Leave this field empty if file does not matter. 
 You can also use '*' (any characters) or '?' (any one character) as usually. Several names
 can be specified by using comma ',' as the separator. You can use apostrophes "" if file 
-name contains special characters such as commas.
+name contains special characters such as commas. <b>See also <a href="issue_searchterms.htm">searching terms</a></b>.
 </P>
-<P><b>Note:</b>If <b>$DLGADVANCED_MATCHWHOLENAME@M$</b> check box in $STRADVANCED_TABCAPTION@A$ tab is not chosen,
-asterisks are automatically inserted to the begin and the end of the given string (if an 
-extension is given in this field, a asterisk is inserted only the begin). So
-"foo" is effectively the same as "*foo*". 
-See also <a href="issue_searchterms.htm">searching terms</a>.</P>
 
 <H2><A NAME="tn_type"></A>$DLGNAME_EXTENSIONS@M$</H2>
 <P>

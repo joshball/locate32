@@ -2917,7 +2917,7 @@ void CPropertiesSheet::CPropertiesPage::FormatSizes(ULONGLONG ulSize,WCHAR* szBe
 	{
 		_ultow_s(DWORD(ulSize),szBestFitPre,100,10);
 	
-		//LoadString(IDS_BYTES,unit,10);
+		LoadString(IDS_BYTES,unit,10);
 	}
 
 	LoadString(IDS_BYTES,unit2,10);

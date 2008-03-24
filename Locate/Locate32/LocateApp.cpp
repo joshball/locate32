@@ -1145,65 +1145,110 @@ BYTE CLocateApp::CheckDatabases()
 
 BYTE CLocateApp::SetDeleteAndDefaultImage()
 {
-	//DebugMessage("SetDeleteAndDefaultImage BEGIN");
-
-	CRegKey Key;
+	WCHAR szDirectory[MAX_PATH];
+	WCHAR szTempFileName[MAX_PATH];
 	SHFILEINFOW fi;
-	CStringW Path(GetExeNameW());
-	Path << L",1";
+			
 	
-	if (Key.OpenKey(HKCR,".ltmp",CRegKey::createNew|CRegKey::samCreateSubkey|CRegKey::samWrite)==NOERROR)
-		Key.SetValue(szEmpty,"LTMPFile",8,REG_SZ);
-	if (Key.OpenKey(HKCR,"LTMPFile",CRegKey::createNew|CRegKey::samCreateSubkey|CRegKey::samWrite)==NOERROR)
-		Key.SetValue(szEmpty,"Deleted / Moved File (REMOVE THIS TYPE)",39,REG_SZ);
-	if (Key.OpenKey(HKCR,"LTMPFile\\DefaultIcon",CRegKey::createNew|CRegKey::samCreateSubkey|CRegKey::samWrite)==NOERROR)
-		Key.SetValue(szwEmpty,Path);
-	Key.CloseKey();
+	if (!FileSystem::GetTempPath(MAX_PATH,szDirectory))
+		return FALSE;
 
-	FileSystem::GetTempPath(_MAX_PATH,Path.GetBuffer(_MAX_PATH));
-	Path.FreeExtra();
-	if (Path.LastChar()!='\\')
-		Path << '\\';
-	Path << L"temp.ltmp";
 
-	try {
-		// Create file
-		CFile File(Path,CFile::defWrite,TRUE);
-		File.Close();
-
-		fi.iIcon=1;
-		GetFileInfo(Path,0,&fi,/*SHGFI_ICON|SHGFI_SMALLICON|*/ SHGFI_SYSICONINDEX);
-		m_nDelImage=fi.iIcon;
-
-		FileSystem::Remove(Path);
-	}
-	catch(...)
+	if (FileSystem::GetTempFileName(szDirectory,L"locfil",0,szTempFileName))
 	{
+		wcscat_s(szTempFileName,MAX_PATH,L".ico");
+
+		CFile File(TRUE);
+		HGLOBAL hGlobal=NULL;
+		BYTE* pData=NULL;
+
+		try 
+		{
+			File.OpenWrite(szTempFileName);
+			HRSRC hRsrc=FindResource(GetCommonResourceHandle(),MAKEINTRESOURCE(IDI_FILE),"DATA");
+
+			if (hRsrc==NULL)
+				throw CException(CException::cannotReadResource);
+
+			DWORD nSize=SizeofResource(GetCommonResourceHandle(),hRsrc);
+			hGlobal=LoadResource(GetCommonResourceHandle(),hRsrc);
+			if (hGlobal==NULL)
+				throw CException(CException::cannotReadResource);
+
+			pData=(BYTE*)LockResource(hGlobal);
+
+			File.Write(pData,nSize);
+
+			File.Close();
+
+
+			if (GetFileInfo(szTempFileName,0,&fi,SHGFI_SYSICONINDEX))
+				m_nDefImage=fi.iIcon;
+		}
+		catch (...)
+		{
+		}
+
+		if (hGlobal!=NULL)
+		{
+			if (pData!=NULL)
+				UnlockResource(hGlobal);
+			FreeResource(hGlobal);
+		}
+
+		FileSystem::Remove(szTempFileName);
 	}
-	RegDeleteKey(HKCR,".ltmp");
-	RegDeleteKey(HKCR,"LTMPFile\\DefaultIcon");
-	RegDeleteKey(HKCR,"LTMPFile");
 
-	Path << L'2';
-	try {
-		// Create file
-		CFile File(Path,CFile::defWrite,TRUE);
-		File.Close();
-
-		fi.iIcon=1;
-		GetFileInfo(Path,0,&fi,/*SHGFI_ICON|SHGFI_SMALLICON|*/ SHGFI_SYSICONINDEX);
-		m_nDefImage=fi.iIcon;
-
-		FileSystem::Remove(Path);
-	}
-	catch(...)
+	if (FileSystem::GetTempFileName(szDirectory,L"locdel",0,szTempFileName))
 	{
+		wcscat_s(szTempFileName,MAX_PATH,L".ico");
+
+		CFile File(TRUE);
+		HGLOBAL hGlobal=NULL;
+		BYTE* pData=NULL;
+
+		try 
+		{
+			File.OpenWrite(szTempFileName);
+			HRSRC hRsrc=FindResource(GetCommonResourceHandle(),MAKEINTRESOURCE(IDI_DELETEDFILE),"DATA");
+
+			if (hRsrc==NULL)
+				throw CException(CException::cannotReadResource);
+
+			DWORD nSize=SizeofResource(GetCommonResourceHandle(),hRsrc);
+			hGlobal=LoadResource(GetCommonResourceHandle(),hRsrc);
+			if (hGlobal==NULL)
+				throw CException(CException::cannotReadResource);
+
+			pData=(BYTE*)LockResource(hGlobal);
+
+			File.Write(pData,nSize);
+
+			File.Close();
+
+
+			if (GetFileInfo(szTempFileName,0,&fi,SHGFI_SYSICONINDEX))
+				m_nDelImage=fi.iIcon;
+		}
+		catch (...)
+		{
+		}
+
+		if (hGlobal!=NULL)
+		{
+			if (pData!=NULL)
+				UnlockResource(hGlobal);
+			FreeResource(hGlobal);
+		}
+
+		FileSystem::Remove(szTempFileName);
 	}
 
-	if (FileSystem::GetSystemDirectory(Path.GetBuffer(_MAX_PATH+3),_MAX_PATH)>0)
+	
+	if (FileSystem::GetSystemDirectory(szDirectory,_MAX_PATH)>0)
 	{
 		fi.iIcon=1;
-		GetFileInfo(Path,0,&fi,/*SHGFI_ICON|SHGFI_SMALLICON|*/SHGFI_SYSICONINDEX);
+		GetFileInfo(szDirectory,0,&fi,/*SHGFI_ICON|SHGFI_SMALLICON|*/SHGFI_SYSICONINDEX);
 		m_nDirImage=fi.iIcon;
 
 		WCHAR szDrives[100];
@@ -1213,7 +1258,7 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 			while (*pPtr!='\0')
 			{
 				if (FileSystem::GetDriveType(pPtr)==DRIVE_FIXED &&
-					(*pPtr!=Path[0] || Path[1]!=':'))
+					(*pPtr!=szDirectory[0] || szDirectory[1]!=':'))
 					break;
 
 				pPtr+=istrlenw(pPtr)+1;

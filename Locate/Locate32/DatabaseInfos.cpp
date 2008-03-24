@@ -65,7 +65,7 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 		
 		// Initializing list control
 		m_pList=new CListCtrl(GetDlgItem(IDC_FOLDERS));
-		CLocateDlg::SetSystemImagelists(m_pList);
+		CLocateDlg::SetSystemImageLists(m_pList);
 		m_pList->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP,LVS_EX_HEADERDRAGDROP);
 		if (IsUnicodeSystem())
 			m_pList->SetUnicodeFormat(TRUE);

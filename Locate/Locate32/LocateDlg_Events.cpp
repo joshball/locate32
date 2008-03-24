@@ -3,10 +3,12 @@
 #include <HFCLib.h>
 #include "Locate32.h"
 
+#include <commoncontrols.h>
 
 ////////////////////////////////////////////////////////////
 // CLocateDlg - Virtual message handlers
 ////////////////////////////////////////////////////////////
+
 
 
 void CLocateDlg::OnActivateApp(BOOL fActive,DWORD dwThreadID)
@@ -100,17 +102,23 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDM_HELPTOPICS:
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 		break;
+	case IDM_EXTRALARGEICONS:
+		SetListType(ltExtraLargeIcons);
+		break;
 	case IDM_LARGEICONS:
-		SetListStyle(0);
+		SetListType(ltLargeIcons);
+		break;
+	case IDM_MEDIUMICONS:
+		SetListType(ltMediumIcons);
 		break;
 	case IDM_SMALLICONS:
-		SetListStyle(1);
+		SetListType(ltSmallIcons);
 		break;
 	case IDM_LIST:
-		SetListStyle(2);
+		SetListType(ltList);
 		break;
 	case IDM_DETAILS:
-		SetListStyle(3);
+		SetListType(ltDetails);
 		break;
 	case IDM_ARRANGENAME:
 		SortItems(Name);
@@ -522,6 +530,12 @@ void CLocateDlg::OnDestroy()
 		delete m_pImageHandler;
 		m_pImageHandler=NULL;
 	}
+	
+	if (m_pSystemImageList!=NULL && m_dwThumbnailFlags&tfSystemImageListIsInterface)
+	{
+		m_pSystemImageList->Release();
+		m_pSystemImageList=NULL;
+	}
 
 
 
@@ -906,8 +920,9 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	if (GetFlags()&fgDialogTopMost)
 		SetWindowPos(HWND_TOPMOST,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);
 	
-	// Setting list control imagelists and style
-	SetSystemImagelists(m_pListCtrl,&m_AdvancedDlg.m_hDefaultTypeIcon);
+	// Setting list control imagelists, type and selection style
+	SetSystemImageLists(m_pListCtrl,&m_AdvancedDlg.m_hDefaultTypeIcon);
+	SetListType(m_nCurrentListType,TRUE);
 	SetListSelStyle();
 	if (GetFlags()&fgLVAllowInPlaceRenaming)
 		m_pListCtrl->ModifyStyle(0,LVS_EDITLABELS);
@@ -1315,12 +1330,44 @@ void CLocateDlg::OnTimer(DWORD dwTimerID)
 		break;
 	case ID_UPDATESELECTED:
 		{
-			
 			KillTimer(ID_UPDATESELECTED);
 				
 			int nSelecetedCount=m_pListCtrl->GetSelectedCount();
 			int nFolders=0;
-			if (nSelecetedCount>0)
+			
+			if (nSelecetedCount==0)
+				m_pStatusCtrl->SetText("",STATUSBAR_MISC,0);
+			else if (nSelecetedCount==1 && m_nCurrentListType!=ltDetails)
+			{
+				int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+				ASSERT(nItem!=-1);
+				CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+				if (pItem!=NULL)
+				{
+					// TODO: locatation could be shorten with ... if it's long
+						
+					CStringW str;
+					if (pItem->IsFolder() || pItem->IsDeleted())
+						str.Format(IDS_SELECTEDONEFOLDER,pItem->GetParent());
+					else
+					{
+						ULONGLONG nSize=0;
+						if (pItem->GetFileSizeLo()!=DWORD(-1))
+							nSize+=pItem->GetFileSize();
+
+						LPWSTR pFileSize=GetLocateApp()->FormatFileSizeString((DWORD)nSize,(DWORD)(nSize>>32));
+					
+						str.Format(IDS_SELECTEDONEFILE,pFileSize,pItem->GetParent());
+						delete[] pFileSize;
+					}
+
+					m_pStatusCtrl->SetText(str,STATUSBAR_MISC,0);
+				}
+				else
+					m_pStatusCtrl->SetText("",STATUSBAR_MISC,0);
+				
+			}
+			else // nSelectedCount > 1
 			{
 				ULONGLONG nTotalSize=0;
 				int nIntex=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
@@ -1362,8 +1409,6 @@ void CLocateDlg::OnTimer(DWORD dwTimerID)
 				m_pStatusCtrl->SetText(str,STATUSBAR_MISC,0);
 				
 			}
-			else
-				m_pStatusCtrl->SetText("",STATUSBAR_MISC,0);
 			break;
 		}
 	case ID_CLICKWAIT:
@@ -1420,13 +1465,6 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 				m_pStatusCtrl->SetText((LPCWSTR)lParam,STATUSBAR_OPERATIONSTATUS,0);
 			if (wParam!=0)
 				m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,(LPCSTR)wParam)),STATUSBAR_UPDATEICON,SBT_OWNERDRAW);
-		}
-		break;
-	case WM_UPDATENEEDEDDETAILTS:
-		if (m_pBackgroundUpdater!=NULL)
-		{
-			m_pBackgroundUpdater->AddToUpdateList((CLocatedItem*)lParam,int(wParam),Needed);
-			m_pBackgroundUpdater->StopWaiting();
 		}
 		break;
 	case WM_GETMINMAXINFO:
@@ -2245,13 +2283,10 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
 			pItem->CheckIfDeleted();
 			ASSERT(m_pBackgroundUpdater!=NULL);
-			//DebugFormatMessage("Calling %X->AddToUpdateList(%X,%X,CLocateDlg::Needed)",m_pBackgroundUpdater,pItem,nItem);
-					
-			m_pBackgroundUpdater->AddToUpdateList(pItem,iItem,Needed);			
+			
+			m_pListCtrl->RedrawItems(iItem,iItem);
 			iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
 		}
-
-		m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount());
 	}
 	
 	m_pListCtrl->UpdateWindow();

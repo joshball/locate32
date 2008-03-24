@@ -121,7 +121,7 @@ public:
 	void DeleteTaskbarIcon(BOOL bForce=FALSE);
 	void LoadAppIcon();
 	
-	DWORD SetSchedules(CList<CSchedule*>* pSchedules=NULL);
+	DWORD SetSchedules(CList<CSchedule*>* pSchedules=NULL,BOOL bRunStartupSchedulses=FALSE);
 	BOOL SaveSchedules();
 	void CheckSchedules();
 	BOOL RunStartupSchedules(); // return value = Should run again?

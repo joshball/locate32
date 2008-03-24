@@ -16,7 +16,7 @@ extern LPWSTR g_szwBuffer;
 
 
 
-
+#include "thumbcache.h"
 
 #include "../hlp/HTMLDefines.h"
 
@@ -56,6 +56,8 @@ extern LPWSTR g_szwBuffer;
 #define DEFAULT_INSTANTSEARCHLIMIT		0
 #define DEFAULT_INSTANTSEARCHDELAY		500
 #define DEFAULT_INSTANTSEARCHCHARS		1
+#define DEFAULT_LARGEICONSIZE			92
+#define DEFAULT_EXTRALARGEICONSIZE		256
 
 
 // Timer IDs, if timer ID is not one of those, ID is HWND to control to get focus

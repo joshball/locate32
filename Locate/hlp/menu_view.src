@@ -9,7 +9,19 @@ CONTENT=
 <TBODY>
 <TR VALIGN="top">
 <TD width=18%><A HREF="hid_view_largeicons.htm">Large Icons</A></TD>
-<TD width=82%>Shows results by using large icons.</TD>
+<TD width=82%>Shows results by using extra large icons. Images in this
+mode are shown as thumbnails.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><A HREF="hid_view_largeicons.htm">Large Icons</A></TD>
+<TD width=82%>Shows results by using large icons. Images in this mode 
+are shown as thumbnails.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=18%><A HREF="hid_view_mediumicons.htm">Small Icons</A></TD>
+<TD width=82%>Shows results by using medium size icons.</TD>
 </TR>
 
 <TR VALIGN="top">

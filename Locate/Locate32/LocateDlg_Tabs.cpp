@@ -730,11 +730,44 @@ BOOL CLocateDlg::CNameDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 			(pnmh->code==CBEN_ENDEDITW && ((PNMCBEENDEDITW)pnmh)->iWhy==CBENF_KILLFOCUS)) &&
 			GetLocateDlg()->IsInstantSearchingFlagSet(isRunning))
 		{
-			CArrayFAP<LPWSTR> aDirectories;
-			GetLocateDlg()->AddInstantSearchingFlags(isIgnoreChangeMessages);
-			GetDirectoriesForActiveSelection(aDirectories,FALSE,NULL,TRUE);
-			GetLocateDlg()->RemoveInstantSearchingFlags(isIgnoreChangeMessages);
-			return TRUE;
+			if (GetCurrentlySelectedComboItem()==DWORD(CB_ERR))
+			{
+				// Getting directory from combo
+				DWORD dwBufferSize=MAX_PATH;
+				WCHAR* pFolder;
+				
+				DWORD dwLength;
+				for(;;)
+				{
+					pFolder=new WCHAR[dwBufferSize];
+					
+					if (!m_LookIn.GetItemText(-1,pFolder,dwBufferSize))
+					{
+						delete[] pFolder;
+						return FALSE;
+					}
+
+					dwLength=istrlenw(pFolder);
+					
+					if (dwLength==dwBufferSize-1)
+					{
+						delete[] pFolder;
+						dwBufferSize*=2;
+					}
+					else
+						break;
+				}
+
+				CArrayFAP<LPWSTR> aDirectories;
+				GetLocateDlg()->AddInstantSearchingFlags(isIgnoreChangeMessages);
+				BOOL bRet=GetDirectoriesFromCustomText(aDirectories,pFolder,dwLength,FALSE,TRUE);
+				GetLocateDlg()->RemoveInstantSearchingFlags(isIgnoreChangeMessages);
+			
+				delete[] pFolder;
+				
+				return bRet;
+			}
+			//return TRUE;
 		}
 	}
 
@@ -1090,14 +1123,14 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirecto
 {
 	// Removing spaces and \\ from beginning and end
 	LPCWSTR pPtr=szCustomText;
-	while (*pPtr==' ')
+	while (*pPtr==' ' && dwLength>0)
 	{
 		pPtr++;
 		dwLength--;
 	}
-	while (pPtr[dwLength-1]==' ')
+	while (dwLength>0 && pPtr[dwLength-1]==' ')
 		dwLength--;
-	if (pPtr[dwLength-1]=='\\')
+	if (dwLength>0 && pPtr[dwLength-1]=='\\')
 		dwLength--;
 	if (!CheckAndAddDirectory(pPtr,dwLength,bSaveAndSet,bNoWarning))
 		return FALSE;

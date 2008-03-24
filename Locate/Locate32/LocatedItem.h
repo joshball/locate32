@@ -19,7 +19,8 @@ class CLocater;
 #define LITEM_PARENTICONOK			0x40
 #define LITEM_FILENAMEOK			0x80 // Only case is checked
 #define LITEM_EXTRASOK				0x100 // Only for refreshing
-#define LITEM_COULDCHANGE			LITEM_TYPEOK|LITEM_ICONOK|LITEM_FILESIZEOK|LITEM_TIMEDATEOK|LITEM_ATTRIBOK|LITEM_EXTRASOK|LITEM_FILENAMEOK
+#define LITEM_ISDELETEDOK			0x200
+#define LITEM_COULDCHANGE			LITEM_TYPEOK|LITEM_ICONOK|LITEM_FILESIZEOK|LITEM_TIMEDATEOK|LITEM_ATTRIBOK|LITEM_EXTRASOK|LITEM_FILENAMEOK|LITEM_ISDELETEDOK
 
 #define LITEMATTRIB_HIDDEN			0x1
 #define LITEMATTRIB_READONLY		0x2
@@ -73,6 +74,8 @@ public:
 	void UpdateSummaryProperties();
 	void UpdateDocSummaryProperties();
 	void UpdateVersionInformation();
+	void LoadThumbnail();
+	void CheckIfDeleted();
 	
 	void SetToDeleted();
 	
@@ -82,8 +85,7 @@ public:
 	void AddFlags(DWORD dwAdd) { dwFlags|=dwAdd; }
 	void RemoveFlags(DWORD dwRemove) { dwFlags&=~dwRemove; }
 	BOOL RemoveFlagsForChanged(); // Returing ok if changed
-	void CheckIfDeleted();
-
+	
 	BOOL ShouldUpdateByDetail(DetailType nDetail) const;
 	BOOL ShouldUpdateFileTitle() const;
 	BOOL ShouldUpdateFilename() const;
@@ -95,6 +97,7 @@ public:
 	BOOL ShouldUpdateAttributes() const;
 	BOOL ShouldUpdateParentIcon() const;
 	BOOL ShouldUpdateParentIcon2() const;
+	BOOL ShouldCheckIfDeleted() const;
 	
 	BOOL ShouldUpdateExtra(DetailType nDetail) const;
 
@@ -149,9 +152,11 @@ public:
 	BOOL GetImageDimensions(SIZE& dim) const;
 	int GetImageDimensionsProduct() const;
 	int GetPages() const;
+	HBITMAP GetThumbnail(SIZE& size) const;
 	LPWSTR GetExtraText(DetailType nDetailType) const; 
 	void ExtraSetUpdateWhenFileSizeChanged();
-	void DeleteAllExtraFields();
+	void DeleteThumbnail();
+    void DeleteAllExtraFields();
     BOOL IsItemShortcut() const;
 
 	LPWSTR FormatAttributes() const;
@@ -196,10 +201,17 @@ private:
 		BOOL ShouldUpdate() const;
 
 		DetailType nType;
+		
+		struct ThumbnailData {
+			HBITMAP hBitmap;
+			CSize sThumbnailSize;
+		};
+
 		union {
 			SIZE szImageDimension;
 			WCHAR* szText;
 			UINT nPages;
+			ThumbnailData* pThumbnail;
 		};
 		BYTE bShouldUpdate;
 

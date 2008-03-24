@@ -34,6 +34,9 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_dwLocateDialogFlags(CLocateDlg::fgDefault),
 	m_dwLocateDialogExtraFlags(CLocateDlg::efDefault),
 	m_dwInstantSearchingFlags(CLocateDlg::isDefault),
+	m_dwThumbnailFlags(CLocateDlg::tfDefault),
+	m_dwThumbnailLargeIconSize(DEFAULT_LARGEICONSIZE),
+	m_dwThumbnailExtraLargeIconSize(DEFAULT_EXTRALARGEICONSIZE),
 	m_bDefaultFlag(defaultDefault),m_bSorting(BYTE(-1)),
 	m_dwSettingsFlags(settingsDefault),
 	m_nNumberOfDirectories(DEFAULT_NUMBEROFDIRECTORIES),
@@ -41,7 +44,8 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_nNumberOfTypes(DEFAULT_NUMBEROFTYPES),
 	m_nTransparency(0),m_nToolTipTransparency(0),
 	m_dwTooltipDelayAutopop(DWORD(-1)),
-	m_dwTooltipDelayInitial(DWORD(-1))
+	m_dwTooltipDelayInitial(DWORD(-1)),
+	m_dwSchedulesDelay(0)
 {
 	AddFlags(PSH_NOAPPLYNOW);
 
@@ -141,6 +145,7 @@ BOOL CSettingsProperties::LoadSettings()
 		m_dwLocateDialogFlags=GetLocateDlg()->GetFlags();
 		m_dwLocateDialogExtraFlags=GetLocateDlg()->GetExtraFlags();
 		m_dwInstantSearchingFlags=GetLocateDlg()->GetInstantSearchingFlags();
+		m_dwThumbnailFlags=GetLocateDlg()->GetThumbnailFlags();
 
 		// read efLVNoUpdateWhileSorting from registry
 		if (LocRegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
@@ -168,8 +173,12 @@ BOOL CSettingsProperties::LoadSettings()
 		m_dwInstantSearchingFlags&=~CLocateDlg::isSave;
 		m_dwInstantSearchingFlags|=temp&CLocateDlg::isSave;
 
-
+		temp=m_dwThumbnailFlags;
+		LocRegKey.QueryValue("Thumbnail Flags",temp);
+		m_dwThumbnailFlags&=~CLocateDlg::tfSave;
+		m_dwThumbnailFlags|=temp&CLocateDlg::tfSave;
 	}
+
 	if (LocRegKey.OpenKey(HKCU,"\\Recent Strings",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		LocRegKey.QueryValue("NumberOfDirectories",m_nNumberOfDirectories);
@@ -290,6 +299,14 @@ BOOL CSettingsProperties::LoadSettings()
 
 		if (LocRegKey.QueryValue(L"CustomDialogIcon",m_CustomDialogIcon))
 			m_dwSettingsFlags|=settingsUseCustomDialogIcon;
+
+
+		LocRegKey.QueryValue("Thumbnail Large Icon Size",m_dwThumbnailLargeIconSize);
+		LocRegKey.QueryValue("Thumbnail Extra Large Icon Size",m_dwThumbnailExtraLargeIconSize);
+		
+
+		LocRegKey.QueryValue("Schedules Delay",m_dwSchedulesDelay);
+		
 	}
 
 	// m_bAdvancedAndContextMenuFlag
@@ -428,11 +445,15 @@ BOOL CSettingsProperties::SaveSettings()
 		LocRegKey.SetValue("Program Status",m_dwLocateDialogFlags&CLocateDlg::fgSave);
 		LocRegKey.SetValue("Program StatusExtra",m_dwLocateDialogExtraFlags&CLocateDlg::efSave);
 		LocRegKey.SetValue("Instant Searching",m_dwInstantSearchingFlags&CLocateDlg::isSave);
+		LocRegKey.SetValue("Thumbnail Flags",m_dwThumbnailFlags&CLocateDlg::tfSave);
 		LocRegKey.SetValue("General Flags",m_dwProgramFlags&CLocateApp::pfSave);
 		
 		LocRegKey.SetValue(L"DateFormat",m_DateFormat);
 		LocRegKey.SetValue(L"TimeFormat",m_TimeFormat);
 
+		LocRegKey.SetValue("Thumbnail Large Icon Size",m_dwThumbnailLargeIconSize);
+		LocRegKey.SetValue("Thumbnail Extra Large Icon Size",m_dwThumbnailExtraLargeIconSize);
+		
 
 		// Default flags
 		LocRegKey.SetValue("Default CheckIn",m_bDefaultFlag&defaultCheckInFlag);
@@ -480,6 +501,9 @@ BOOL CSettingsProperties::SaveSettings()
 			LocRegKey.SetValue(L"CustomDialogIcon",m_CustomDialogIcon);
 		else
 			LocRegKey.DeleteValue("CustomDialogIcon");
+
+
+		LocRegKey.SetValue("Schedules Delay",m_dwSchedulesDelay);
 
 	}
 
@@ -1171,7 +1195,16 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CLocateDlg::efLVHeaderInAllViews,&m_pSettings->m_dwLocateDialogExtraFlags,"sa_headerinallmodes");
 	}
 			
-	
+	Item* ViewModeItems[]={
+		CreateCheckBox(IDS_ADVSETTHUMBSWITHMEDIUMICONS,NULL,DefaultCheckBoxProc,
+			CLocateDlg::tfThumbnailsInMediumIcons,
+			&m_pSettings->m_dwThumbnailFlags,"sa_thumbsinmedium"),
+		CreateNumeric(IDS_ADVSETLARGEICONSIZE,DefaultNumericProc,
+			MAKELONG(16,1024),&m_pSettings->m_dwThumbnailLargeIconSize,"sa_largeiconsize"),
+		CreateNumeric(IDS_ADVSETEXTRALARGEICONSIZE,DefaultNumericProc,
+			MAKELONG(16,1024),&m_pSettings->m_dwThumbnailExtraLargeIconSize,"sa_extlargeiconsize"),
+		NULL
+	};
 	
 	Item* FileBackgroundOperations[]={
 		CreateRadioBox(IDS_ADVSETDISABLEFSCHANGETRACKING,NULL,DefaultRadioBoxProc,
@@ -1217,6 +1250,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETLOGICALOPERATIONS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::efEnableLogicalOperations,
 			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_logicalops"),
+		CreateCheckBox(IDS_ADVSETANDMODEALWAYS,NULL,DefaultCheckBoxProc,
+			CLocateDlg::efAndModeAlways,
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_andmodealways"),
 		CreateCheckBox(IDS_ADVSETMATCHWHOLENAMEIFASTERISKS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::efMatchWhileNameIfAsterisks,
 			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_matchwholenameifasterisks"),
@@ -1226,6 +1262,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETISENABLE,InstantSearching,DefaultCheckBoxProc,
 			CLocateDlg::isEnable,&m_pSettings->m_dwInstantSearchingFlags,"sa_isenable"),
 		CreateRoot(IDS_ADVSETRESULTSLIST,ResultsListItems,"sa_results"),
+		CreateRoot(IDS_ADVSETVIEWMODES,ViewModeItems,"sa_viewmodes"),
 		CreateRoot(IDS_ADVSETUPDATERESULTS,UpdateResults,"sa_updateresults"),
 		NULL
 	};
@@ -3303,7 +3340,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	
 	// Initializing list control
 	m_pList=new CListCtrl(GetDlgItem(IDC_FOLDERS));
-	CLocateDlg::SetSystemImagelists(m_pList);
+	CLocateDlg::SetSystemImageLists(m_pList);
 	m_pList->SetExtendedListViewStyle(LVS_EX_CHECKBOXES|LVS_EX_HEADERDRAGDROP,
 		LVS_EX_CHECKBOXES|LVS_EX_HEADERDRAGDROP);
 	if (IsUnicodeSystem())
@@ -4377,7 +4414,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 	
 	// Initialize drive list
 	m_pDriveList=new CListCtrl(GetDlgItem(IDC_FOLDERS));
-	CLocateDlg::SetSystemImagelists(m_pDriveList);
+	CLocateDlg::SetSystemImageLists(m_pDriveList);
 	m_pDriveList->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT,
 		LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT);
 	if (IsUnicodeSystem())
@@ -4983,6 +5020,16 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnInitDialog(HWND hwndFocus)
 {
 	CPropertyPage::OnInitDialog(hwndFocus);
 	m_pSchedules=new CListBox(GetDlgItem(IDC_UPDATES));
+	
+	// Set spin
+	CSpinButtonCtrl Spin(GetDlgItem(IDC_DELAYSPIN));
+	Spin.SetBuddy(GetDlgItem(IDC_DELAY));
+	Spin.SetRange(1,1000);
+	Spin.SetPos(m_pSettings->m_dwSchedulesDelay);
+
+
+	// Load schedules
+	
 	POSITION pPos=m_pSettings->m_Schedules.GetHeadPosition();
 	while (pPos!=NULL)
 	{
@@ -5240,6 +5287,12 @@ void CSettingsProperties::CAutoUpdateSettingsPage::OnMeasureItem(int nIDCtl,LPME
 BOOL CSettingsProperties::CAutoUpdateSettingsPage::OnApply()
 {
 	CPropertyPage::OnApply();
+
+	BOOL bTranslated;
+	m_pSettings->m_dwSchedulesDelay=GetDlgItemInt(IDC_DELAY,&bTranslated,FALSE);
+	if (!bTranslated)
+		m_pSettings->m_dwSchedulesDelay=0;
+
 	return TRUE;
 }
 
@@ -5393,8 +5446,8 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 		CheckDlgButton(IDC_ENABLED,BST_CHECKED);
 	if (m_pSchedule->m_bFlags&CSchedule::flagDeleteAfterRun)
 		CheckDlgButton(IDC_DELETEAFTERRUN,BST_CHECKED);
-	if (m_pSchedule->m_bFlags&CSchedule::flagAtThisTime)
-		CheckDlgButton(IDC_ATTHISTIME,BST_CHECKED);
+	if (!(m_pSchedule->m_bFlags&CSchedule::flagAtThisTime))
+		CheckDlgButton(IDC_UPDATEWHENPOSSIBLE,BST_CHECKED);
 
 	
 	// CPU usage
@@ -5751,10 +5804,10 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnOK()
 		m_pSchedule->m_bFlags|=CSchedule::flagDeleteAfterRun;
 	else
 		m_pSchedule->m_bFlags&=~CSchedule::flagDeleteAfterRun;
-	if (IsDlgButtonChecked(IDC_ATTHISTIME))
-		m_pSchedule->m_bFlags|=CSchedule::flagAtThisTime;
-	else
+	if (IsDlgButtonChecked(IDC_UPDATEWHENPOSSIBLE))
 		m_pSchedule->m_bFlags&=~CSchedule::flagAtThisTime;
+	else
+		m_pSchedule->m_bFlags|=CSchedule::flagAtThisTime;
 
 	
 	SYSTEMTIME st;
@@ -5887,7 +5940,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnTypeCha
 
 	EnableDlgItem(IDC_TIME,nType!=CSchedule::typeMinutely && 
 		nType!=CSchedule::typeHourly && nType!=CSchedule::typeAtStartup);
-	EnableDlgItem(IDC_ATTHISTIME,nType!=CSchedule::typeMinutely && nType!=CSchedule::typeAtStartup);
+	EnableDlgItem(IDC_UPDATEWHENPOSSIBLE,nType!=CSchedule::typeMinutely && nType!=CSchedule::typeAtStartup);
 	
     switch (nType)
 	{

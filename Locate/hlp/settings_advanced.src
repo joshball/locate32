@@ -41,7 +41,16 @@ If this option is enabled, logical operators '+' and '-' can be used in search t
 For example, if enabled, the search term "+cat,+dog" can be used to find files
 which names contain the words "cat" <b>and</b> "dog". 
 In addition, "+cat,-dog" will search filenames containing the word "cat" and
-<b>not</b> the work dog. For more information, see <a href="issue_searchterms.htm">Search terms</a>.
+<b>not</b> the work dog. See also <a href="issue_searchterms.htm">Search terms</a>.
+</p>
+
+<p><b><A NAME="sa_andmodealways"></A>$STRADVANCEDSETTINGS_ANDMODEALWAYS@C$</b>:
+When enabled, all given terms should match to a file name. For example,
+if you type "cat,dog", Locate will find files that have both "cat" <b>and</b> "dog" in it's name.
+Instead, if this option is disabled, search terms are treated as "OR" sense, i.e., "cat,dog" will
+give files that have either "cat" <b>or</b> "dog" in it's name (or both). If this option is enabled,
+you can search as "OR" sense using '|' (e.g. "cat|dog"). See also
+<a href="issue_searchterms.htm">Search terms</a>.
 </p>
 
 <p><b><A NAME="sa_matchwholenameifasterisks"></A>$STRADVANCEDSETTINGS_MATCHWHOLENAMEIFASTERISKS@C$</b>:
@@ -57,6 +66,8 @@ check box is not checked. If this option is enabled and you have specified an ex
 contains dot '.'), filenames should match to this given extension. On the contrary, if this option <b>not</b> 
 is enabled and you have typed, e.g., "*.txt", the mask "*.txt*" is effectively used and temporary files txt~
 (among others) are also returned. </p>
+
+
 
 
 <p><b><A NAME="sa_isenable"></A>$STRADVANCEDSETTINGS_ISENABLE@C$</b>:
@@ -303,6 +314,28 @@ If this option is enabled, the deader is shown in the list control also for othe
 than "Details". This option requires Windows Vista or later.</p>
 
 </div> <!-- advanced_settings_level2@sa_results -->
+
+
+<h2><A NAME="sa_viewmodes"></A>$STRADVANCEDSETTINGS_VIEWMODES@C$</h2>
+<p>This group contains options which can be used to 
+change properties of different view modes (e.g. "Large icons" and "Details") in the results list.
+</p>
+<div id="advanced_settings_level2">
+
+<p><b><A NAME="sa_thumbsinmedium"></A>$STRADVANCEDSETTINGS_THUMBNAILSWITHMEDIUMICONS@C$</b>:
+If this option is enabled, the results list shows thumbnails for images also in "Medium icons" mode.
+</p>
+
+<p><b><A NAME="sa_largeiconsize"></A>$STRADVANCEDSETTINGS_LARGEICONSIZE@C$</b>:
+This options specifies the icon size of "Large Icons" mode. The default size is 96.</p>
+
+<p><b><A NAME="sa_extlargeiconsize"></A>$STRADVANCEDSETTINGS_EXTRALARGEICONSIZE@C$</b>:
+This options specifies the icon size of "Extra Large Icons" mode. The default size is 256.</p>
+
+
+</div> <!-- advanced_settings_level2@sa_viewmodes -->
+
+
 
 <h2><A NAME="sa_updateresults"></A>$STRADVANCEDSETTINGS_UPDATERESULTS@C$</h2>
 <p>This group of options specifies that how files are updated after the files are 

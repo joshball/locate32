@@ -230,6 +230,11 @@ inline BOOL CLocatedItem::ShouldUpdateParentIcon2() const
 	return !(dwFlags&LITEM_PARENTICONOK); 
 }
 
+inline BOOL CLocatedItem::ShouldCheckIfDeleted() const 
+{
+	return dwFlags&LITEM_ISDELETEDOK?FALSE:(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating?TRUE:FALSE);
+}
+
 inline BOOL CLocatedItem::ShouldUpdateExtra(DetailType nDetail) const
 {
 	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
@@ -245,25 +250,7 @@ inline BOOL CLocatedItem::ShouldUpdateExtra(DetailType nDetail) const
 	return TRUE;
 }
 
-inline void CLocatedItem::CheckIfDeleted()
-{
-	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
-		return;
-	
 
-	if (IsDeleted())
-		return;
-	if (IsFolder())
-	{
-		if (!FileSystem::IsDirectory(GetPath()))
-			SetToDeleted();
-	}
-	else
-	{
-		if (!FileSystem::IsFile(GetPath()))
-			SetToDeleted();
-	}
-}
 
 inline CLocatedItem::CLocatedItem()
 :	szFileTitle(NULL),szType(NULL),dwFlags(0),pFirstExtraInfo(NULL)
@@ -353,6 +340,18 @@ inline int CLocatedItem::GetPages() const
 	return 0;
 }
 
+inline HBITMAP CLocatedItem::GetThumbnail(SIZE& size) const
+{
+	ExtraInfo* pInfo=GetFieldForType(Thumbnail);
+	if (pInfo!=NULL)
+	{
+		ASSERT (pInfo->pThumbnail!=NULL);
+		size=pInfo->pThumbnail->sThumbnailSize;
+		return pInfo->pThumbnail->hBitmap;
+	}
+	return NULL;
+}
+	
 
 inline LPWSTR CLocatedItem::GetExtraText(DetailType nDetail) const
 {
@@ -392,15 +391,21 @@ inline void CLocatedItem::ExtraSetUpdateWhenFileSizeChanged()
 	}
 }
 
+
 inline void CLocatedItem::DeleteAllExtraFields()
 {
-    while (pFirstExtraInfo!=NULL)
+	while (pFirstExtraInfo!=NULL)
 	{
 		ExtraInfo*pTmp=pFirstExtraInfo;
 		pFirstExtraInfo=pTmp->pNext;
 		delete pTmp;
 	}
 } 
+
+inline void CLocatedItem::DeleteThumbnail()
+{
+	DeleteExtraInfoField(Thumbnail);
+}
 
 
 inline CLocatedItem::ExtraInfo::ExtraInfo(DetailType nType_)
@@ -427,6 +432,14 @@ inline CLocatedItem::ExtraInfo::~ExtraInfo()
 	case ProductVersion:
 		if (szText!=NULL && szText!=szwEmpty)
 			delete[] szText;
+		break;
+	case Thumbnail:
+		if (pThumbnail!=NULL)
+		{
+			if (pThumbnail->hBitmap!=NULL)
+				DeleteObject(pThumbnail->hBitmap);
+			delete pThumbnail;
+		}
 		break;
 	}
 }

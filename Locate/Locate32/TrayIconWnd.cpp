@@ -54,9 +54,8 @@ int CTrayIconWnd::OnCreate(LPCREATESTRUCT lpcs)
 
 
 	// Set schedules
-	SetSchedules();
-	SetTimer(ID_RUNSTARTUPSCHEDULES,500,NULL);
-
+	SetSchedules(NULL,TRUE);
+	
 	SetMenuDefaultItem(m_Menu.GetSubMenu(0),IDM_OPENLOCATE,FALSE);
 	
 	// Setting icons
@@ -1395,26 +1394,35 @@ DWORD CTrayIconWnd::OnActivateAnotherInstance(ATOM aCommandLine)
 		CLocateApp::ParseParameters(szCmdLine,pStartData);
 		if (pStartData->m_nStartup&CLocateApp::CStartData::startupDoNotOpenDialog &&
 			pStartData->m_nStartup&CLocateApp::CStartData::startupUpdate)
+		{
 			OnUpdate(FALSE);
+			delete pStartData;
+		}
 		else
 		{
 			BOOL bUpdate=pStartData->m_nStartup&CLocateApp::CStartData::startupUpdate;
 			if (m_pLocateDlgThread!=NULL)
 			{
-				GetLocateDlg()->SetStartData(pStartData);
+				ForceForegroundAndFocus();
+		
+				CLocateDlg* pLocateDlg=GetLocateDlg();
+				pLocateDlg->SetStartData(pStartData);
+				delete pStartData;
 				
 				// Restore if minimized
 				WINDOWPLACEMENT wp;
 				wp.length=sizeof(WINDOWPLACEMENT);
-				GetLocateDlg()->GetWindowPlacement(&wp);
+				pLocateDlg->GetWindowPlacement(&wp);
 				if (wp.showCmd==SW_SHOWMINIMIZED)
-					GetLocateDlg()->ShowWindow(swRestore);
+					pLocateDlg->ShowWindow(swRestore);
 
 
-				GetLocateDlg()->SetActiveWindow();
-				m_pLocateDlgThread->m_pLocate->ForceForegroundAndFocus();
+				//GetLocateDlg()->SetActiveWindow();
+		
+				pLocateDlg->BringWindowToTop();
 
-				delete pStartData;
+				pLocateDlg->ForceForegroundAndFocus();m_pLocateDlgThread->m_pLocate->ForceForegroundAndFocus();
+
 			}
 			else
 			{
@@ -1428,7 +1436,7 @@ DWORD CTrayIconWnd::OnActivateAnotherInstance(ATOM aCommandLine)
 	return 0;
 }
 		
-DWORD CTrayIconWnd::SetSchedules(CList<CSchedule*>* pSchedules)
+DWORD CTrayIconWnd::SetSchedules(CList<CSchedule*>* pSchedules,BOOL bRunStartupSchedules)
 {
 	if (GetLocateApp()->m_nInstance!=0)
 		return 0;
@@ -1438,6 +1446,7 @@ DWORD CTrayIconWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 	m_Schedules.RemoveAll();
 
 	BOOL bNeedCpuUsage=FALSE;
+	DWORD m_dwDelay=0;
 	
 	//DebugFormatMessage("CTrayIconWnd::SetSchedules(0x%X) START",(DWORD)pSchedules);
 	if (pSchedules==NULL)
@@ -1447,6 +1456,7 @@ DWORD CTrayIconWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 		{
 			DWORD nKeyLen=RegKey.QueryValueLength("Schedules");
 			BYTE* pSchedules=new BYTE[nKeyLen];
+			RegKey.QueryValue("Schedules Delay",m_dwDelay);
 			RegKey.QueryValue("Schedules",(LPSTR)pSchedules,nKeyLen);
 #ifdef _DEBUG
 			char* pTmpData=new char[nKeyLen*2+2];
@@ -1540,8 +1550,14 @@ DWORD CTrayIconWnd::SetSchedules(CList<CSchedule*>* pSchedules)
 
 	SYSTEMTIME st;
 	GetLocalTime(&st);
-	SetTimer(ID_SYNCSCHEDULES,(bNeedCpuUsage?2000:1000)-st.wMilliseconds,NULL);
+
+
+	SetTimer(ID_SYNCSCHEDULES,m_dwDelay*1000+(bNeedCpuUsage?2000:1000)-st.wMilliseconds,NULL);
 	//DebugMessage("CTrayIconWnd::SetSchedules END");
+
+	if (bRunStartupSchedules)
+		SetTimer(ID_RUNSTARTUPSCHEDULES,m_dwDelay*1000+500,NULL);
+
 	return m_Schedules.GetCount();
 }
 

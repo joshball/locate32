@@ -197,6 +197,36 @@ BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg)
 // CLocateDlg - Initialization / deinitialization
 ////////////////////////////////////////////////////////////
 
+inline CLocateDlg::CLocateDlg()
+:	CDialog(IDD_MAIN),m_dwFlags(fgDefault),m_dwExtraFlags(efDefault),
+	m_nSorting(BYTE(-1)),m_dwInstantFlags(isDefault),
+	m_dwInstantLimit(DEFAULT_INSTANTSEARCHLIMIT),
+	m_dwInstantDelay(DEFAULT_INSTANTSEARCHDELAY),
+	m_dwInstantChars(DEFAULT_INSTANTSEARCHCHARS),
+	m_nMaxYMinimized(0),m_nMaxYMaximized(0),m_nLargeY(354),
+	m_ClickWait(FALSE),m_hSendToListFont(NULL),m_hActivePopupMenu(NULL),
+	m_pListCtrl(NULL),m_pTabCtrl(NULL),m_pStatusCtrl(NULL),m_pListTooltips(NULL),
+	m_pLocater(NULL),m_pBackgroundUpdater(NULL),m_pActiveContextMenu(NULL),
+	m_pLocateAnimBitmaps(NULL),m_pUpdateAnimBitmaps(NULL),
+	m_pFileNotificationsThread(NULL),m_dwMaxFoundFiles(0),m_pDropTarget(NULL),
+	m_pImageHandler(NULL),m_iTooltipItem(-1),m_iTooltipSubItem(-1),m_bTooltipActive(FALSE),
+	m_hLastFocus(NULL),m_WaitEvery30(0),m_WaitEvery60(0),m_hDialogFont(NULL),
+	m_hLargeDialogIcon(NULL),m_hSmallDialogIcon(NULL),
+	m_nCurrentListType(ltDetails),m_dwThumbnailFlags(tfDefault),m_pSystemImageList(NULL)
+{
+	ZeroMemory(m_aResultListActions,TypeCount*ListActionCount*sizeof(void*));
+
+	if (GetSystemFeaturesFlag()&efWinVista)
+		m_dwThumbnailFlags|=tfVistaFeaturesAvailable;
+	
+	if (FAILED(SHGetDesktopFolder(&m_pDesktopFolder)))
+		m_pDesktopFolder=NULL;
+
+	InitializeCriticalSection(&m_csUpdateAnimBitmaps);
+	InitializeCriticalSection(&m_csLocateAnimBitmaps);
+}
+
+
 CLocateDlg::~CLocateDlg()
 {
 	DebugFormatMessage("CLocateDlg::~CLocateDlg() this is %X",DWORD(this));
@@ -267,7 +297,7 @@ void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)
 	m_AdvancedDlg.HilightTab(m_AdvancedDlg.IsChanged());
 
 	if (pStartData->m_nStatus&CLocateApp::CStartData::statusRunAtStartUp)
-		OnOk(FALSE,FALSE);
+		PostMessage(WM_COMMAND,IDC_OK);
 	else if (dwChanged)
 		OnFieldChange(dwChanged);
 
@@ -276,8 +306,7 @@ void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)
 void CLocateDlg::SaveRegistry()
 {
 	CRegKey2 RegKey;
-	DWORD temp;
-
+	
 	if(RegKey.OpenKey(HKCU,"\\General",CRegKey::defWrite)==ERROR_SUCCESS)
 	{
 		CRect rect;
@@ -286,6 +315,7 @@ void CLocateDlg::SaveRegistry()
 		RegKey.SetValue("Program Status",m_dwFlags&fgSave);
 		RegKey.SetValue("Program StatusExtra",m_dwExtraFlags&efSave);
 		RegKey.SetValue("Instant Searching",m_dwInstantFlags&isSave);
+		RegKey.SetValue("Thumbnail Flags",m_dwThumbnailFlags&tfSave);
 		
 		SavePosition(RegKey,NULL,"Position");
 		
@@ -299,26 +329,7 @@ void CLocateDlg::SaveRegistry()
 
 		RegKey.SetValue("LargeCY",(LPCTSTR)&m_nLargeY,4,REG_DWORD);
 		
-		
-
-		//for (temp=0;menu.GetMenuState(temp,MF_BYPOSITION)!=MF_CHECKED && temp<3;temp++);
-		switch (m_pListCtrl->GetStyle()&LVS_TYPEMASK)
-		{
-		case LVS_ICON:
-			temp=0;
-			break;
-		case LVS_SMALLICON:
-			temp=1;
-			break;
-		case LVS_LIST:
-			temp=2;
-			break;
-		default:
-			temp=3;
-			break;
-		}
-
-		RegKey.SetValue("ListView",temp);
+		RegKey.SetValue("ListType",(DWORD)m_nCurrentListType);
 		RegKey.SetValue("AutoArrange",(m_pListCtrl->GetStyle()&LVS_AUTOARRANGE)?1L:0L);
 		RegKey.SetValue("AlignToGrid",(m_pListCtrl->GetExtendedListViewStyle()&LVS_EX_SNAPTOGRID)?1L:0L);
 	
@@ -362,7 +373,10 @@ void CLocateDlg::LoadRegistry()
 		m_dwInstantFlags&=~isSave;
 		m_dwInstantFlags|=temp&isSave;
 		
-		
+		temp=m_dwThumbnailFlags;
+		RegKey.QueryValue("Thumbnail Flags",temp);
+		m_dwThumbnailFlags&=~tfSave;
+		m_dwThumbnailFlags|=temp&tfSave;	
 
 		DWORD dwOldFlags=m_dwFlags;
 		m_dwFlags|=fgLargeMode;
@@ -392,14 +406,12 @@ void CLocateDlg::LoadRegistry()
 		if (temp)
 			m_pListCtrl->SetExtendedListViewStyle(LVS_EX_SNAPTOGRID,LVS_EX_SNAPTOGRID);
 		
-		temp=3;
-		RegKey.QueryValue("ListView",temp);
-		SetListStyle(LOBYTE(temp)&3,TRUE);
+		temp=ltDetails;
+		RegKey.QueryValue("ListType",temp);
+		m_nCurrentListType=(ListType)temp;
 	}
 	else
 	{	
-		SetListStyle(3,TRUE);
-
 		// Could not load previous position, we will cause OnSize to be runned
 		WINDOWPLACEMENT wp;
 		wp.length=sizeof(wp);
@@ -441,6 +453,10 @@ BOOL CLocateDlg::UpdateSettings()
         m_dwExtraFlags&=~efSave;
 		m_dwExtraFlags|=temp&efSave;
 
+		if ((m_dwExtraFlags&efItemUpdatingMask)==efDisableItemUpdating)
+			m_dwExtraFlags|=efLVNoUpdateWhileSorting;
+
+
 		//Instant searching
 		temp=m_dwInstantFlags;
 		RegKey.QueryValue("Instant Searching",temp);
@@ -448,11 +464,58 @@ BOOL CLocateDlg::UpdateSettings()
 		m_dwInstantFlags|=temp&isSave;
 
 
-		if ((m_dwExtraFlags&efItemUpdatingMask)==efDisableItemUpdating)
-			m_dwExtraFlags|=efLVNoUpdateWhileSorting;
+		
+		// Thumbnails
+		temp=m_dwThumbnailFlags;
+		RegKey.QueryValue("Thumbnail Flags",temp);
 
+		BOOL bSetListTypeAgain=FALSE;
+
+		switch (m_nCurrentListType)
+		{
+		case ltMediumIcons:
+			if ((m_dwThumbnailFlags&tfSave) != (temp&tfSave))
+				bSetListTypeAgain=TRUE;
+			break;
+		case ltLargeIcons:
+			{
+				CRegKey2 RegKey;
+				DWORD dwIconSize;
+				if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+				{				
+					if (RegKey.QueryValue("Thumbnail Large Icon Size",dwIconSize))
+					{
+						if (dwIconSize!=m_sCurrentIconSize.cx)
+							bSetListTypeAgain=TRUE;
+					}
+				}
+				break;
+			}
+		case ltExtraLargeIcons:
+			{
+				CRegKey2 RegKey;
+				DWORD dwIconSize;
+				if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
+				{				
+					if (RegKey.QueryValue("Thumbnail Extra Large Icon Size",dwIconSize))
+					{
+						if (dwIconSize!=m_sCurrentIconSize.cx)
+							bSetListTypeAgain=TRUE;
+					}
+				}
+				break;
+			}
+		}
+
+		m_dwThumbnailFlags&=~tfSave;
+		m_dwThumbnailFlags|=temp&tfSave;
+
+		if (bSetListTypeAgain)
+			SetListType(m_nCurrentListType,TRUE);
 
 	}
+
+
 	m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount());
 	SetListSelStyle();
 
@@ -1507,12 +1570,12 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 				else if (IsExtraFlagSet(efAllowSpacesAsSeparators))
 				{
 					// Calculate length, separators are ' ', ',' and ';'
-					for (nIndex=0;pStr[nIndex]!=L' ' && pStr[nIndex]!=L',' && pStr[nIndex]!=L';' && pStr[nIndex]!=L'\0';nIndex++);
+					for (nIndex=0;pStr[nIndex]!=L' ' && pStr[nIndex]!=L',' && pStr[nIndex]!=L';' && pStr[nIndex]!=L'|' && pStr[nIndex]!=L'\0';nIndex++);
 				}
 				else
 				{
 					// Calculate length, separators are ',' and ';'
-					for (nIndex=0;pStr[nIndex]!=L',' && pStr[nIndex]!=L';' && pStr[nIndex]!=L'\0';nIndex++);
+					for (nIndex=0;pStr[nIndex]!=L',' && pStr[nIndex]!=L';' && pStr[nIndex]!=L'|' && pStr[nIndex]!=L'\0';nIndex++);
 				}
 
 				// If length > 0, insert to aNames list 
@@ -1615,7 +1678,7 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 				if (IsExtraFlagSet(efAllowSpacesAsSeparators))
 				{
 					// Ignore all separators
-					while (*pStr==L' ' || *pStr==',' || *pStr==';')
+					while (*pStr==L' ' || *pStr==',' || *pStr==';' || *pStr==L'|')
 						pStr++;
 					if (*pStr=='\0')
 						break;
@@ -1623,7 +1686,7 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 				else
 				{
 					// Separator must found
-					if (*pStr!=L',' && *pStr!=L';')
+					if (*pStr!=L',' && *pStr!=L';' && *pStr!=L'|')
 						break;
 					pStr++;
 				}
@@ -1633,7 +1696,8 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 	}
 
 	// Enable Logical Operations
-	if (bPlusOrMinusFound)
+	if (!(pLocater->GetAdvancedFlags()&LOCATE_NAMEREGULAREXPRESSION) &&
+		(bPlusOrMinusFound || (IsExtraFlagSet(efAndModeAlways) && Name.Find(L'|')==-1)))
 	{
 		// '+' or '-' found
 		pLocater->AddAdvancedFlags(LOCATE_LOGICALOPERATIONS);
@@ -3090,6 +3154,80 @@ BOOL CLocateDlg::GetSimpleIDLsandParentfromIDLs(int nItems,LPITEMIDLIST* pFullID
 	return TRUE;
 }
 
+IExtractImage* CLocateDlg::GetExtractImageInterface(LPCWSTR szFile)
+{
+	if (m_pDesktopFolder==NULL)
+		return NULL;
+
+
+	// Initializing pDesktopFolder
+	IShellFolder* pParentFolder;
+	IExtractImage* pExtractImage=NULL;
+			
+	LPITEMIDLIST pParentIDList,pItemIDList;
+				
+	int nParentLen=LastCharIndex(szFile,L'\\');
+	CStringW sParent(szFile,++nParentLen);
+
+	// Getting ID list of parent
+	
+	if (!SUCCEEDED(m_pDesktopFolder->ParseDisplayName(*this,NULL,(LPOLESTR)(LPCWSTR)sParent,NULL,&pParentIDList,NULL)))
+		return NULL;
+
+	// Querying IShellFolder interface for parent
+	HRESULT hRes=m_pDesktopFolder->BindToObject(pParentIDList,NULL,IID_IShellFolder,(void**)&pParentFolder);
+	CoTaskMemFree(pParentIDList);
+
+	if (SUCCEEDED(hRes))
+	{
+		hRes=pParentFolder->ParseDisplayName(*this,NULL,(LPOLESTR)(LPCWSTR)szFile+nParentLen,NULL,&pItemIDList,NULL);
+		if (SUCCEEDED(hRes))
+		{
+			hRes=pParentFolder->GetUIObjectOf(*this,1,(LPCITEMIDLIST*)&pItemIDList,IID_IExtractImage,NULL,(void**)&pExtractImage);
+			CoTaskMemFree(pItemIDList);
+
+			if (!SUCCEEDED(hRes))
+				pExtractImage=NULL;
+		}
+		
+		pParentFolder->Release();
+	}
+
+	return pExtractImage;
+}
+
+#undef DEFINE_GUID
+#define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+    EXTERN_C const GUID DECLSPEC_SELECTANY name \
+            = { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } }
+
+DEFINE_GUID(BHID_ThumbnailHandler, 0x7b2e650a, 0x8e20, 0x4f4a, 0xb0, 0x9e, 0x65, 0x97, 0xaf, 0xc7, 0x2f, 0xb0);
+DEFINE_GUID(IID_IThumbnailProvider,0xe357fccd, 0xa995, 0x4576, 0xb0, 0x1f, 0x23, 0x46, 0x30, 0x15, 0x4e, 0x96);
+
+IThumbnailProvider* CLocateDlg::GetThumbnailProvider(LPCWSTR szFile)
+{
+	IShellItem* pFileItem;
+
+	HRESULT(STDAPICALLTYPE* pSHCreateItemFromParsingName)(PCWSTR,IBindCtx*,REFIID,void **)=
+		(HRESULT(STDAPICALLTYPE*)(PCWSTR,IBindCtx*,REFIID,void **))GetProcAddress(GetModuleHandle("shell32.dll"),"SHCreateItemFromParsingName");
+
+	if (pSHCreateItemFromParsingName==NULL)
+		return NULL;
+	
+	HRESULT hRes=pSHCreateItemFromParsingName(szFile,NULL,IID_IShellItem,(void**)&pFileItem);
+	if (SUCCEEDED(hRes))
+	{
+		IThumbnailProvider* pThumbProv;
+		hRes=pFileItem->BindToHandler(NULL,BHID_ThumbnailHandler,IID_IThumbnailProvider,(void**)&pThumbProv);
+		pFileItem->Release();
+
+
+		if (SUCCEEDED(hRes))
+			return pThumbProv;
+	}	
+
+	return NULL;
+}
 
 ////////////////////////////////////////////////////////////
 // CLocateDlg - Debug related stuff

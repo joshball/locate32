@@ -433,13 +433,19 @@ public:
 	//General
 	DWORD m_dwLocateDialogFlags;  // Used with CLocateDlg::LocateDialogFlags
 	DWORD m_dwLocateDialogExtraFlags;  // Used with CLocateDlg::LocateDialogExtraFlags
-	DWORD m_dwInstantSearchingFlags;  // Used with CLocateDlg::InstantSearchingFlags
 	DWORD m_dwProgramFlags; // Used with CTrayIconWnd::ProgramFlags
 	
 	DWORD m_nMaximumFoundFiles; // Maximum number of results for normal searches
+	
+	DWORD m_dwInstantSearchingFlags;  // Used with CLocateDlg::InstantSearchingFlags
 	DWORD m_nInstantSearchingLimit; // Maximum number of results for search while typing
 	DWORD m_nInstantSearchingDelay; // Delay after typing before searching is started
 	DWORD m_nInstantSearchingChars; // Required chars in name before starting searching
+
+	DWORD m_dwThumbnailFlags;  // Used with CLocateDlg::ThumbnailFlags
+	DWORD m_dwThumbnailLargeIconSize; // Icon size in "Large icon" mode
+	DWORD m_dwThumbnailExtraLargeIconSize; // Icon size in "Large icon" mode
+
 
 	DWORD m_nNumberOfNames; // Directoried in NameDlg 
 	DWORD m_nNumberOfTypes; // Directoried in NameDlg 
@@ -465,6 +471,7 @@ public:
 
 	// Schedules
 	CListFP <CSchedule*> m_Schedules;
+	DWORD m_dwSchedulesDelay;
 	
 
 	// General settings flags	

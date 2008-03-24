@@ -47,8 +47,11 @@ enum DetailType {
 
 
 
-	Extension=127, // Not column, for sorting
-	Needed=255
+	Extension=127, // Not column in the results list, for sorting
+	
+	IfDeleted=253, // Not a column in the results list
+	Thumbnail=254, // Not a column in the results list
+	//Needed=255
 };
 
 class CSchedule
