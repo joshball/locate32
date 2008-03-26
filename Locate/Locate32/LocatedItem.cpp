@@ -1770,8 +1770,17 @@ void CLocatedItem::LoadThumbnail()
 	if (pField->pThumbnail!=NULL)
 		return;
 
+
 	pField->pThumbnail=new ExtraInfo::ThumbnailData;
 	pField->pThumbnail->hBitmap=NULL;
+
+	// No thumbnails for icons and cursors
+	if (_wcsicmp(GetExtension(),L"ico")==0)
+		return;
+	if (_wcsicmp(GetExtension(),L"cur")==0)
+		return;
+
+	
 
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg->m_dwThumbnailFlags&CLocateDlg::tfVistaFeaturesAvailable)

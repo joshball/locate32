@@ -3,10 +3,12 @@
 #include <HFCLib.h>
 #include "Locate32.h"
 
+typedef HRESULT (__stdcall * PFNSHGETFOLDERPATH)(HWND, int, HANDLE, DWORD, LPWSTR);  // "SHGetFolderPathW"
 
 //////////////////////////////////////////////////////////////////////////////
 // CLocateDlg::CNameDlg
 //////////////////////////////////////////////////////////////////////////////
+
 
 CLocateDlg::CNameDlg::~CNameDlg()
 {
@@ -1138,6 +1140,8 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirecto
 	return TRUE;
 }
 
+
+
 BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories,LPARAM lParam)
 {
 	switch (static_cast<TypeOfItem>(LOWORD(lParam)))
@@ -1148,6 +1152,39 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 			{
 			case Documents:
 				{
+					PFNSHGETFOLDERPATH pGetFolderPath=(PFNSHGETFOLDERPATH)GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetFolderPathW");
+					if (pGetFolderPath!=NULL)
+					{
+						WCHAR szDir[MAX_PATH];
+						if (SUCCEEDED(pGetFolderPath(NULL,CSIDL_DESKTOP,NULL,
+							SHGFP_TYPE_CURRENT,szDir)))
+						{
+							int nLength=istrlen(szDir);
+							while (szDir[nLength-2]==L'\\')
+							{
+								szDir[nLength-2]='\0';
+								nLength--;
+							}
+							ParseGivenDirectoryForMultipleDirectories(aDirectories,szDir);
+						}
+		
+						if (SUCCEEDED(pGetFolderPath(NULL,CSIDL_PERSONAL,NULL,
+							SHGFP_TYPE_CURRENT,szDir)))
+						{
+							int nLength=istrlen(szDir);
+							while (szDir[nLength-2]==L'\\')
+							{
+								szDir[nLength-2]='\0';
+								nLength--;
+							}
+							ParseGivenDirectoryForMultipleDirectories(aDirectories,szDir);
+						}
+
+						break;
+		
+					}
+
+
 					CRegKey RegKey;
 					if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 					{
@@ -1176,6 +1213,26 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 				}
 			case Desktop:
 				{
+					PFNSHGETFOLDERPATH pGetFolderPath=(PFNSHGETFOLDERPATH)GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetFolderPathW");
+					if (pGetFolderPath!=NULL)
+					{
+						WCHAR szDir[MAX_PATH];
+						if (SUCCEEDED(pGetFolderPath(NULL,CSIDL_DESKTOP,NULL,
+							SHGFP_TYPE_CURRENT,szDir)))
+						{
+							int nLength=istrlen(szDir);
+							while (szDir[nLength-2]==L'\\')
+							{
+								szDir[nLength-2]='\0';
+								nLength--;
+							}
+							ParseGivenDirectoryForMultipleDirectories(aDirectories,szDir);
+							break;
+						}
+		
+					}
+
+					
 					CRegKey RegKey;
 					if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 					{
@@ -1193,6 +1250,26 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 				}
 			case Personal:
 				{
+					PFNSHGETFOLDERPATH pGetFolderPath=(PFNSHGETFOLDERPATH)GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetFolderPathW");
+					if (pGetFolderPath!=NULL)
+					{
+						WCHAR szDir[MAX_PATH];
+						if (SUCCEEDED(pGetFolderPath(NULL,CSIDL_PERSONAL,NULL,
+							SHGFP_TYPE_CURRENT,szDir)))
+						{
+							int nLength=istrlen(szDir);
+							while (szDir[nLength-2]==L'\\')
+							{
+								szDir[nLength-2]='\0';
+								nLength--;
+							}
+							ParseGivenDirectoryForMultipleDirectories(aDirectories,szDir);
+							break;
+						}
+
+		
+					}
+
 					CRegKey RegKey;
 					if (RegKey.OpenKey(HKCU,"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 					{

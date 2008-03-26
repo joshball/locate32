@@ -705,23 +705,59 @@ HRESULT CLocateDlg::ListCustomDrawHandler(NMLVCUSTOMDRAW* pLVCD)
 			!IsThumbnailFlagSet(tfThumbnailsInMediumIcons))
 			return CDRF_DODEFAULT;
 		
-		//DebugFormatMessage("%d %d",pLVCD->nmcd.rc.right-pLVCD->nmcd.rc.left,
-		//	pLVCD->nmcd.rc.bottom-pLVCD->nmcd.rc.top);
+		/*
+		
+		DebugFormatMessage("pLVCD: clrText=%X clrTextBk=%X dwItemType=%X clrFace=%X iIconEffect=%d iIconPhase=%d",
+			pLVCD->clrText,
+			pLVCD->clrTextBk,
+			pLVCD->dwItemType,
+			pLVCD->clrFace,
+			pLVCD->iIconEffect,
+			pLVCD->iIconPhase);
+		
+		DebugFormatMessage("pLVCD(cont): iPartId=%d iStateId=%d rcText=(%d,%d,%d,%d) uAlign=%X",
+			pLVCD->iPartId,
+			pLVCD->iStateId,
+			pLVCD->rcText.left,pLVCD->rcText.right,
+			pLVCD->rcText.top,pLVCD->rcText.bottom,
+			pLVCD->uAlign);
 
-		if (m_sCurrentIconSize.cx!=0 && 
-			//!(pLVCD->clrText==0 && pLVCD->clrTextBk==0 && pLVCD->clrFace==0)
-			pLVCD->nmcd.rc.right-pLVCD->nmcd.rc.left!=0 && pLVCD->nmcd.rc.bottom-pLVCD->nmcd.rc.top
-			)			
+		DebugFormatMessage("nmcd: dwItemSpec=%d, dwDrawStage=%X rc=(%d,%d,%d,%d) uItemState=%X lItemlParam=%X",
+			pLVCD->nmcd.dwItemSpec,
+			pLVCD->nmcd.dwDrawStage,
+			pLVCD->nmcd.rc.left,pLVCD->nmcd.rc.right,
+			pLVCD->nmcd.rc.top,pLVCD->nmcd.rc.bottom,
+			pLVCD->nmcd.uItemState,
+			pLVCD->nmcd.lItemlParam);
+		
+		
+		*/
+
+		if (m_sCurrentIconSize.cx!=0)			
 		{
 			// Large image mode, lets paint item itself
-			CDC dc(pLVCD->nmcd.hdc);
-			CRect rcItem,rcAnother;
+			
+			// First check some anomalies (may we skip this)
 			int iItem=static_cast<int>(pLVCD->nmcd.dwItemSpec);
+			
+			// In vista, these may be 0 when we should skip this
+			if (pLVCD->clrText==0 && pLVCD->clrTextBk==0 && pLVCD->clrFace==0)
+				return CDRF_DODEFAULT;
+
+
+			CDC dc(pLVCD->nmcd.hdc);
+			CRect rcItem,rcCalculated;
 			HBRUSH hBrush;
 			BOOL bListHasFocus=::GetFocus()==*m_pListCtrl;
 			int nRoundRectExtra=1;
 
-
+			// Get Icon area to rcItem
+			m_pListCtrl->GetItemRect(iItem,&rcItem,LVIR_ICON);
+			
+			// In Windows XP these can be 0, then skip
+			if (rcItem.left==0 && rcItem.right==0 && rcItem.top==0 && rcItem.bottom==0)
+				return CDRF_DODEFAULT;
+		
 			
 			// Get item state and FileItem (lParam), the state is not 
 			// necessaryly the same as in pLVCD->nmcd.uItemState
@@ -734,6 +770,11 @@ HRESULT CLocateDlg::ListCustomDrawHandler(NMLVCUSTOMDRAW* pLVCD)
 			m_pListCtrl->GetItem(&li);
 			CLocatedItem* pItem=(CLocatedItem*)li.lParam;
 
+			ASSERT(li.lParam==pLVCD->nmcd.lItemlParam);
+
+			
+			
+			
 			// LVN_GETDISPINFO is not called, requesting update here
 			if (GetFlags()&fgLVNoDelayedUpdate) 
 			{
@@ -783,11 +824,12 @@ HRESULT CLocateDlg::ListCustomDrawHandler(NMLVCUSTOMDRAW* pLVCD)
 			if (hThumbnail==NULL)
 				sThumbnailSize=m_sSystemImageList;
 		
-			// Get Icon area to rcItem
-			m_pListCtrl->GetItemRect(iItem,&rcItem,LVIR_ICON);
+			BOOL bDrawBoundingBox=(/*pFileItem->m_nThumbnailType==FileItem::Bitmap &&*/ hThumbnail!=NULL) ||
+				(sThumbnailSize.cx<m_sCurrentIconSize.cx &&
+				sThumbnailSize.cy<m_sCurrentIconSize.cy);
 
-		
-		
+
+			
 
 			// Calculate area for thumbnail rect
 			POINT ptThumb={rcItem.left+(rcItem.Width()-sThumbnailSize.cx)/2,
@@ -819,18 +861,20 @@ HRESULT CLocateDlg::ListCustomDrawHandler(NMLVCUSTOMDRAW* pLVCD)
 			}
 			else 
 			{
+				UINT fStyle=ILD_NORMAL|ILD_TRANSPARENT;
+				if (!bDrawBoundingBox)
+					fStyle|=(li.state&LVIS_SELECTED?ILD_SELECTED:0)|(li.state&LVIS_FOCUSED?ILD_FOCUS:0);
+
+
 				ImageList_Draw(m_dwThumbnailFlags&tfSystemImageListIsInterface?
 					IImageListToHIMAGELIST(m_pSystemImageList):m_hSystemImageList,
-					pItem->GetIcon(),dc,ptThumb.x,ptThumb.y,
-					ILD_NORMAL|ILD_TRANSPARENT|(li.state&LVIS_SELECTED?ILD_SELECTED:0)|(li.state&LVIS_FOCUSED?ILD_FOCUS:0));
+					pItem->GetIcon(),dc,ptThumb.x,ptThumb.y,fStyle);
 			}
 			
 			
 	
 			// Draw bounding box if mode is large or extra large mode or medium and thumbnail is image
-			if ((/*pFileItem->m_nThumbnailType==FileItem::Bitmap &&*/ hThumbnail!=NULL) ||
-				(sThumbnailSize.cx<m_sCurrentIconSize.cx &&
-				sThumbnailSize.cy<m_sCurrentIconSize.cy))
+			if (bDrawBoundingBox)
 			{
 
 				// Pen for rounding rect;
@@ -844,21 +888,21 @@ HRESULT CLocateDlg::ListCustomDrawHandler(NMLVCUSTOMDRAW* pLVCD)
 					Pen.CreatePen(PS_SOLID,1,RGB(128,128,128));
 				
 				// Calculate area for thumbnail and rounding rect
-				rcAnother.left=rcItem.left+(rcItem.Width()-m_sCurrentIconSize.cx)/2-nRoundRectExtra;
-				rcAnother.top=rcItem.top+(rcItem.Height()-m_sCurrentIconSize.cy)/2-nRoundRectExtra;
-				rcAnother.right=rcAnother.left+m_sCurrentIconSize.cx+2*nRoundRectExtra;
-				rcAnother.bottom=rcAnother.top+m_sCurrentIconSize.cy+2*nRoundRectExtra;
+				rcCalculated.left=rcItem.left+(rcItem.Width()-m_sCurrentIconSize.cx)/2-nRoundRectExtra;
+				rcCalculated.top=rcItem.top+(rcItem.Height()-m_sCurrentIconSize.cy)/2-nRoundRectExtra;
+				rcCalculated.right=rcCalculated.left+m_sCurrentIconSize.cx+2*nRoundRectExtra;
+				rcCalculated.bottom=rcCalculated.top+m_sCurrentIconSize.cy+2*nRoundRectExtra;
 
 					
 				// Draw rounding rect
 				dc.SelectStockObject(NULL_BRUSH);
 				dc.SelectObject(Pen);
-				dc.Rectangle(&rcAnother);
+				dc.Rectangle(&rcCalculated);
 			}
 			
 			// Get area for label
 			m_pListCtrl->GetItemRect(iItem,&rcItem,LVIR_LABEL);
-
+			
 
 			// Choose text and background colors
 			if (li.state&LVIS_SELECTED)
@@ -890,7 +934,7 @@ HRESULT CLocateDlg::ListCustomDrawHandler(NMLVCUSTOMDRAW* pLVCD)
 			LPCWSTR lpText=pItem->GetFileTitleSafe();
 			int iStrlen=istrlen(pItem->GetFileTitleSafe());
 
-			CRect rcCalculated=rcItem;
+			rcCalculated=rcItem;
 			dc.DrawText(lpText,iStrlen,&rcCalculated,DT_VCENTER|DT_CENTER|DT_CALCRECT|DT_WORDBREAK);
 
 			if (rcCalculated.right<=rcItem.right && rcCalculated.bottom<=rcItem.bottom)
