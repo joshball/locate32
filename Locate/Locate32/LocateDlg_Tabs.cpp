@@ -948,29 +948,26 @@ BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArra
 
 
 	// Setting recent combobox for type
-	if (!GetLocateDlg()->m_AdvancedDlg.IsDlgButtonChecked(IDC_USEWHOLEPATH))
+	if (m_Type.GetCurSel()==0) // Empty extension
+		aExtensions.Add(allocemptyW());
+	else
 	{
-		if (m_Type.GetCurSel()==0) // Empty extension
-			aExtensions.Add(allocemptyW());
-		else
-		{
-			CStringW sType;
-			m_Type.GetText(sType);
+		CStringW sType;
+		m_Type.GetText(sType);
+	
+		if (!bForInstantSearch)
+			AddCurrentTypeToList();
 		
-			if (!bForInstantSearch)
-				AddCurrentTypeToList();
-			
-			// Parsing extensions
-			LPCWSTR pType=sType;
+		// Parsing extensions
+		LPCWSTR pType=sType;
+		for (;pType[0]==L' ';pType++);
+		while (*pType!=L'\0')
+		{
+			DWORD nLength;
+			for (nLength=0;pType[nLength]!=L'\0' && pType[nLength]!=L' ';nLength++);		
+			aExtensions.Add(alloccopy(pType,nLength));
+			pType+=nLength;
 			for (;pType[0]==L' ';pType++);
-			while (*pType!=L'\0')
-			{
-				DWORD nLength;
-				for (nLength=0;pType[nLength]!=L'\0' && pType[nLength]!=L' ';nLength++);		
-				aExtensions.Add(alloccopy(pType,nLength));
-				pType+=nLength;
-				for (;pType[0]==L' ';pType++);
-			}
 		}
 	}
 	
@@ -2011,8 +2008,7 @@ void CLocateDlg::CNameDlg::EnableItems(BOOL bEnable)
 {
 	m_Name.EnableWindow(bEnable);
 	m_Type.EnableWindow(bEnable && 
-		GetLocateDlg()->m_AdvancedDlg.SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL)==0 &&
-		!GetLocateDlg()->m_AdvancedDlg.IsDlgButtonChecked(IDC_USEWHOLEPATH));
+		GetLocateDlg()->m_AdvancedDlg.SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL)==0);
 	m_LookIn.EnableWindow(bEnable);
 	EnableDlgItem(IDC_MOREDIRECTORIES,bEnable);
 	EnableDlgItem(IDC_NOSUBDIRECTORIES,bEnable);
@@ -3559,22 +3555,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			CheckDlgButton(wID,!IsDlgButtonChecked(wID));
 			SetFocus(wID);
 		}
-		if (IsDlgButtonChecked(IDC_USEWHOLEPATH))
-		{
-			SendDlgItemMessage(IDC_FILETYPE,CB_SETCURSEL,0);
-			EnableDlgItem(IDC_FILETYPE,FALSE);
-			
-			CLocateDlg* pLocateDlg=GetLocateDlg();
-			pLocateDlg->m_NameDlg.m_Type.EnableWindow(FALSE);
-			pLocateDlg->m_NameDlg.m_Type.SetText(szEmpty);
-			
-			ChangeEnableStateForCheck();
-		}
-		else
-		{
-			EnableDlgItem(IDC_FILETYPE,TRUE);
-			GetLocateDlg()->m_NameDlg.m_Type.EnableWindow(TRUE);
-		}
+		
 		HilightTab(IsChanged());
 
 		GetLocateDlg()->OnFieldChange(isOtherChanged);

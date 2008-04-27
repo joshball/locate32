@@ -1016,9 +1016,11 @@ public:
 		isDataChanged			= 0x00200000,
 		isOtherChanged			= 0x00400000,
 		isAllChanged  			= 0x00FF0000,
-
+		
+		isByCommandLine			= 0x01000000,
+		
 		isSearchIfDefault	    = isNameChanged|isTypeChanged|isLookInChanged|isSizesChanged|isDatesChanged|isDataChanged|isOtherChanged,
-		isSearchIfSave		    = 0x00FF0000,
+		isSearchIfSave		    = 0x01FF0000,
 		
 
 		isDefault =	isGeneralDefault | isSearchIfDefault,

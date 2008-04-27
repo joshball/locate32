@@ -300,6 +300,11 @@ BOOL CSettingsProperties::LoadSettings()
 		if (LocRegKey.QueryValue(L"CustomDialogIcon",m_CustomDialogIcon))
 			m_dwSettingsFlags|=settingsUseCustomDialogIcon;
 
+		nTemp=0;
+		LocRegKey.QueryValue(L"SimpleFileMenu",nTemp);
+		if (nTemp)
+			m_dwSettingsFlags|=settingsSimpleFileMenu;
+
 
 		LocRegKey.QueryValue("Thumbnail Large Icon Size",m_dwThumbnailLargeIconSize);
 		LocRegKey.QueryValue("Thumbnail Extra Large Icon Size",m_dwThumbnailExtraLargeIconSize);
@@ -502,7 +507,8 @@ BOOL CSettingsProperties::SaveSettings()
 		else
 			LocRegKey.DeleteValue("CustomDialogIcon");
 
-
+		LocRegKey.SetValue(L"SimpleFileMenu",m_dwSettingsFlags&settingsSimpleFileMenu?DWORD(1):DWORD(0));
+		
 		LocRegKey.SetValue("Schedules Delay",m_dwSchedulesDelay);
 
 	}
@@ -1092,6 +1098,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			CLocateDlg::isDataChanged,&m_pSettings->m_dwInstantSearchingFlags,"sa_isdata"),
 		CreateCheckBox(IDS_ADVSETISOTHERCHANGED,NULL,DefaultCheckBoxProc,
 			CLocateDlg::isOtherChanged,&m_pSettings->m_dwInstantSearchingFlags,"sa_isother"),
+		CreateCheckBox(IDS_ADVSETISBYCOMMANDLINE,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isByCommandLine,&m_pSettings->m_dwInstantSearchingFlags,"sa_isbycommandline"),
 		NULL
 	};	
 
@@ -1428,6 +1436,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETUSEDEFDIRECTORYICON,NULL,DefaultCheckBoxProc,
 			CLocateApp::pfUseDefaultIconForDirectories,
 			&m_pSettings->m_dwProgramFlags,"sa_defdiricons"),
+		CreateCheckBox(IDS_ADVSETSIMPLEFILEMENU,NULL,DefaultCheckBoxProc,
+			CSettingsProperties::settingsSimpleFileMenu,
+			&m_pSettings->m_dwSettingsFlags,"sa_simplefilemenu"),
 		NULL
 	};
 

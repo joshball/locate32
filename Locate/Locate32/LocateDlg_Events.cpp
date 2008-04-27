@@ -1021,6 +1021,12 @@ void CLocateDlg::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
 	if (hPopupMenu==GetSubMenu(GetMenu(),0))
 	{
 		// File menu in main menu bar
+		DWORD dwSimpleMenu=FALSE;
+
+		CRegKey2 RegKey;
+		if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+			RegKey.QueryValue(L"SimpleFileMenu",dwSimpleMenu);
+
 
 		// Inserting default menu items
 		int nSelectedItems=m_pListCtrl->GetSelectedCount();
@@ -1034,11 +1040,11 @@ void CLocateDlg::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
 				iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
 			}
 			
-			CreateFileContextMenu(hPopupMenu,pItems,nSelectedItems);
+			CreateFileContextMenu(hPopupMenu,pItems,nSelectedItems,dwSimpleMenu);
 			delete[] pItems;
 		}
 		else
-			CreateFileContextMenu(hPopupMenu,NULL,0);
+			CreateFileContextMenu(hPopupMenu,NULL,0,dwSimpleMenu);
 			
 
 		// Enable items

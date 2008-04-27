@@ -299,7 +299,7 @@ void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)
 	if (pStartData->m_nStatus&CLocateApp::CStartData::statusRunAtStartUp)
 		PostMessage(WM_COMMAND,IDC_OK);
 	else if (dwChanged)
-		OnFieldChange(dwChanged);
+		OnFieldChange(dwChanged|isByCommandLine);
 
 }
 
@@ -1723,13 +1723,7 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 	
 
 	// Extensions related checks
-	if (pLocater->GetAdvancedFlags()&LOCATE_CHECKWHOLEPATH)
-	{
-		// Extensions are ignored if "use whole path" is set
-		aExtensions.RemoveAll();
-		pLocater->AddAdvancedFlags(LOCATE_EXTENSIONWITHNAME);
-	}
-    else if (aExtensions.GetSize()==0 && 
+	if (aExtensions.GetSize()==0 && 
 		(pLocater->GetAdvancedFlags()&(LOCATE_FILENAMES|LOCATE_FOLDERNAMES))!=LOCATE_FOLDERNAMES)
 	{
 		// No extensions given, checking if name contains extension
@@ -2724,10 +2718,15 @@ void CLocateDlg::OnFieldChange(DWORD dwWhatChanged)
 	if (IsInstantSearchingFlagSet(isDisableIfDataSearch) && m_AdvancedDlg.IsDlgButtonChecked(IDC_CONTAINDATACHECK))
 		return;
 
-	// Stop if not the right place
-	if (!(m_dwInstantFlags&dwWhatChanged))
+	// Check if changes are given by command line
+	if (dwWhatChanged&isByCommandLine && !(m_dwInstantFlags&isByCommandLine))
 		return;
 
+	// Stop if not the right place
+	if (!(m_dwInstantFlags&(dwWhatChanged&isAllChanged)))
+		return;
+
+	
 	AddInstantSearchingFlags(isRunning);
 
 	if (m_dwInstantDelay>0)

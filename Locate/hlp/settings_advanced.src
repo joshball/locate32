@@ -122,6 +122,12 @@ the "$DLGNAME_LOOKIN@M$" field, file sizes (in $STRSIZEDATE_TABCAPTION@A$ tab),
 files dates (in $STRSIZEDATE_TABCAPTION@A$ tab), $DLGADVANCED_CONTAININGTEXT@M$ field 
 (in $STRADVANCED_TABCAPTION@A$ tab), or any other field is changed.</p>
 
+<p><b><A NAME="sa_isbycommandline"></A>$STRADVANCEDSETTINGS_ISBYCOMMANDLINE@C$</b>:
+If this option is enabled, "Search as you type" search is executed when some field is changed
+by using command line arguments or using shell context menus (see options under gruop "Shell 
+context menu commands" in Advanced settings). 
+</p>
+
 </div> <!-- advanced_settings_level2@sa_isenable -->
 
 <h2><A NAME="sa_results"></A>$STRADVANCEDSETTINGS_RESULTSLIST@C$</h2>
@@ -651,6 +657,14 @@ You can use this option if you using network shares which are slow or may become
 <A href="settings_advanced.htm#sa_iconsnofileaccess">$STRADVANCEDSETTINGS_ICONSNOFILEACCESS@C$</A>
 instead of this option.
 </p>
+
+<p><b><A NAME="sa_simplefilemenu"></A>$STRADVANCEDSETTINGS_SIMPLEFILEMENU@C$</b>:
+If this option is enabled, File menu in the main dialog does not show shell context menu
+items associated for the selected file type. This significantly reduces the time to 
+show menu. 
+</p>
+
+
 
 
 </div> <!-- advanced_settings_level1@sa_misc-->

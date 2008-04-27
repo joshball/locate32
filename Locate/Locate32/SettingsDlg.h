@@ -487,6 +487,7 @@ public:
 		settingsDontShowExtensionInRenameDialog=0x0100,
 		settingsUseCustomTrayIcon = 0x0200,
 		settingsUseCustomDialogIcon = 0x0400,
+		settingsSimpleFileMenu=0x800,
 				
 		settingsDefault=settingsUseLanguageWithConsoleApps
 	};

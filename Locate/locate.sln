@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "locate32", "locate32\locate32.vcproj", "{CA6495C9-9B2D-406A-8DCD-9AF07EDD18FC}"
 	ProjectSection(ProjectDependencies) = postProject
 		{AF62CD1A-2F00-485D-A394-E7DC9BC87B81} = {AF62CD1A-2F00-485D-A394-E7DC9BC87B81}

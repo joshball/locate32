@@ -312,7 +312,7 @@ BEGIN
 	LTEXT           "Thread Priority:",IDC_THREADPRIORITYLABEL,8,156,70,10
 	COMBOBOX        IDC_THREADPRIORITY,80,154,75,98,CBS_DROPDOWNLIST |  
                     WS_VSCROLL | WS_TABSTOP | CBS_HASSTRINGS
-    PUSHBUTTON      "Databases",IDC_DATABASES,178+0,154,48,14
+    PUSHBUTTON      "Databases",IDC_DATABASES,175+0,154,53,14
 	LTEXT           "",IDC_LASTRUN,8,173,208,13
 END
 
@@ -1500,7 +1500,7 @@ BEGIN
 	IDS_NAMEALREADYEXISTS	"Name '%s' already exists."
 	IDS_FILEALREADYEXISTS   "File '%s' is already used for databases."
 	IDS_INVALIDFILENAME		"'%s' is not valid file name."
-	IDS_INVALIDFILENAMEISOK	"'%s' is not valid file name or it points to a file system which is not currently available now. Is this your intention?"
+	IDS_INVALIDFILENAMEISOK	"The given file name '%s' (in ""File:"" box) is not valid or it points to a drive or network share which is not currently available. Is this intentional?"
 	IDS_INVALIDDBNAME       "'%s' is not valid name for database."
 	IDS_NAMEISRESERVED		"Names 'DEFAULTX??' and 'PARAMX??' are reserved."
 	IDS_COMMANDLINEARGUMENT "Command line"
@@ -1753,18 +1753,20 @@ BEGIN
 	IDS_ADVSETISDELAY				"Delay before searching (ms):"
 	IDS_ADVSETISCHARS				"Required characters in ""Named:"" before starting to search:"
 	IDS_ADVSETISUPDOWNGORESULTS		"Up or Down key in ""Named:"" activates the first found file"
-	IDS_ADVSETISNAMEDCHANGED		"Search when ""Named:"" is changed"
-	IDS_ADVSETISTYPECHANGED			"Search when ""Extensions:"" is changed"
-	IDS_ADVSETISLOOKINCHANGED		"Search when ""Look In:"" is changed"
-	IDS_ADVSETISSIZESCHANGED		"Search when file sizes are changed"
-	IDS_ADVSETISDATESCHANGED		"Search when file dates are changed"
-	IDS_ADVSETISDATACHANGED			"Search when ""File containing text"" is changed"
-	IDS_ADVSETISOTHERCHANGED		"Search when other fields are changed"
+	IDS_ADVSETISNAMEDCHANGED		"Search if ""Named:"" is changed"
+	IDS_ADVSETISTYPECHANGED			"Search if ""Extensions:"" is changed"
+	IDS_ADVSETISLOOKINCHANGED		"Search if ""Look In:"" is changed"
+	IDS_ADVSETISSIZESCHANGED		"Search if file sizes are changed"
+	IDS_ADVSETISDATESCHANGED		"Search if file dates are changed"
+	IDS_ADVSETISDATACHANGED			"Search if ""File containing text"" is changed"
+	IDS_ADVSETISOTHERCHANGED		"Search if other fields are changed"
 	IDS_ADVSETISDISABLEIFDATASEARCH "Disable if ""File containing text:"" is enabled"
+	IDS_ADVSETISBYCOMMANDLINE		"Search if field is changed by command line or by shell menu"
 	IDS_ADVSETVIEWMODES				"Results list view modes"
 	IDS_ADVSETTHUMBSWITHMEDIUMICONS "Show thumbnails also in ""Medium Icons"" mode"
 	IDS_ADVSETLARGEICONSIZE			"Icon size in ""Large icons"" mode:"
 	IDS_ADVSETEXTRALARGEICONSIZE	"Icon size in ""Extra Large icons"" mode:"
+	IDS_ADVSETSIMPLEFILEMENU		"Simple File menu (no shell context menu items)"
 
 END
 
