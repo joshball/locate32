@@ -2184,17 +2184,11 @@ void CShortcut::SendEventBackToControl()
 		const MSG* pMsg=pThread->GetCurrentMessage();
 		ASSERT(pMsg!=NULL);
 
-
-		if (pMsg->message==WM_SYSKEYDOWN || pMsg->message==WM_SYSKEYUP)
-		{
-			::SendMessage(pMsg->hwnd,WM_SYSKEYDOWN,pMsg->wParam,pMsg->lParam&~(1<<30|1<<31));
-			::SendMessage(pMsg->hwnd,WM_SYSKEYUP,pMsg->wParam,pMsg->lParam|(1<<30)|(1<<31));
-		}
-		else if (pMsg->message==WM_KEYDOWN || pMsg->message==WM_KEYUP)
-		{
-			::SendMessage(pMsg->hwnd,WM_KEYDOWN,pMsg->wParam,pMsg->lParam&~(1<<30|1<<31));
-			::SendMessage(pMsg->hwnd,WM_KEYUP,pMsg->wParam,pMsg->lParam|(1<<30)|(1<<31));
-		}
+		TranslateMessage(pMsg);
+		if (IsUnicodeSystem())
+			DispatchMessageW(pMsg);
+		else
+			DispatchMessageA(pMsg);
 	}
 #endif
 }

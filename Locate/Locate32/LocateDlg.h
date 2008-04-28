@@ -266,6 +266,7 @@ public:
 			CArrayFAP<LPWSTR>& aDirectories,BOOL bForInstantSearch);
 		
 		
+
 		void OnClear(BOOL bInitial=FALSE);
 
 		void OnMoreDirectories();

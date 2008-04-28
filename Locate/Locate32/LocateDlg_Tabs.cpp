@@ -23,6 +23,7 @@ BOOL CLocateDlg::CNameDlg::OnInitDialog(HWND hwndFocus)
 	m_Name.AssignToDlgItem(*this,IDC_NAME);
 	m_Type.AssignToDlgItem(*this,IDC_TYPE);
 	m_LookIn.AssignToDlgItem(*this,IDC_LOOKIN);
+
 		
 	LoadRegistry();
 	//InitDriveBox(TRUE);
@@ -44,12 +45,12 @@ BOOL CLocateDlg::CNameDlg::OnInitDialog(HWND hwndFocus)
 	m_nMoreDirsTop=WORD(rc2.top-rc1.top);
 	m_nMoreDirsWidth=BYTE(rc2.right-rc2.left);
 
-
 	// Subclassing "Named:" combo
 	NameControlData* pNameData=new NameControlData;
 	pNameData->pLocateDlg=GetLocateDlg();
 	pNameData->pNameCombo=&m_Name;
-	pNameData->pOldWndProc=(WNDPROC)m_Name.SetWindowLong(gwlWndProc,(LONG_PTR)NameWindowProc);
+	if (IsUnicodeSystem())
+		pNameData->pOldWndProc=(WNDPROC)m_Name.SetWindowLong(gwlWndProc,(LONG_PTR)NameWindowProc);
 
 	if (pNameData->pOldWndProc==NULL)
 	{
@@ -60,11 +61,14 @@ BOOL CLocateDlg::CNameDlg::OnInitDialog(HWND hwndFocus)
 		m_Name.SetWindowLong(gwlUserData,(LONG_PTR)pNameData);
 
 	EnumChildWindows(m_Name,EnumAndSubclassNameChilds,(LPARAM)&m_Name);
-
-
+	
 	GetLocateDlg()->RemoveInstantSearchingFlags(isIgnoreChangeMessages);
+	
+	
 	return FALSE;
 }
+
+		
 
 BOOL CALLBACK CLocateDlg::CNameDlg::EnumAndSubclassNameChilds(HWND hwnd,LPARAM lParam)
 {
@@ -72,7 +76,10 @@ BOOL CALLBACK CLocateDlg::CNameDlg::EnumAndSubclassNameChilds(HWND hwnd,LPARAM l
 	NameControlData* pNameData=new NameControlData;
 	pNameData->pLocateDlg=GetLocateDlg();
 	pNameData->pNameCombo=(CComboBox*)lParam;
-	pNameData->pOldWndProc=(WNDPROC)::SetWindowLongPtr(hwnd,GWLP_WNDPROC,(LONG_PTR)NameWindowProc);
+	if (IsUnicodeSystem())
+		pNameData->pOldWndProc=(WNDPROC)::SetWindowLongPtrW(hwnd,GWLP_WNDPROC,(LONG_PTR)NameWindowProc);
+	else
+		pNameData->pOldWndProc=(WNDPROC)::SetWindowLongPtrA(hwnd,GWLP_WNDPROC,(LONG_PTR)NameWindowProc);
 
 	if (pNameData->pOldWndProc==NULL)
 	{
@@ -307,7 +314,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	
 	// Drives
 	CArrayFAP<LPWSTR> aRoots;
-	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases());
+	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases(),TRUE);
 	
 	for (int j=0;j<aRoots.GetSize();j++)
 	{
@@ -789,11 +796,23 @@ LRESULT CALLBACK CLocateDlg::CNameDlg::NameWindowProc(HWND hWnd,UINT uMsg,
 	switch (uMsg)
 	{
 	case WM_DESTROY:
-		// Calling original window procedure
-		lRet=CallWindowProc(pNameData->pOldWndProc,hWnd,uMsg,wParam,lParam);
+		if (IsUnicodeSystem())
+		{
+			// Calling original window procedure
+			lRet=CallWindowProcW(pNameData->pOldWndProc,hWnd,uMsg,wParam,lParam);
 
-		// Desubclassing
-		::SetWindowLongPtr(hWnd,GWLP_WNDPROC,(LONG_PTR)pNameData->pOldWndProc);
+			// Desubclassing
+			::SetWindowLongPtrW(hWnd,GWLP_WNDPROC,(LONG_PTR)pNameData->pOldWndProc);
+		}
+		else
+		{
+			// Calling original window procedure
+			lRet=CallWindowProcA(pNameData->pOldWndProc,hWnd,uMsg,wParam,lParam);
+
+			// Desubclassing
+			::SetWindowLongPtrA(hWnd,GWLP_WNDPROC,(LONG_PTR)pNameData->pOldWndProc);
+		}
+		
 		
 		// Free memory
 		delete pNameData;
@@ -814,10 +833,12 @@ LRESULT CALLBACK CLocateDlg::CNameDlg::NameWindowProc(HWND hWnd,UINT uMsg,
 				}
 			}
 		}
-		lRet=CallWindowProc(pNameData->pOldWndProc,hWnd,uMsg,wParam,lParam);
-		break;
+		// Continuing to default section
 	default:
-		lRet=CallWindowProc(pNameData->pOldWndProc,hWnd,uMsg,wParam,lParam);
+		if (IsUnicodeSystem())
+			lRet=CallWindowProcW(pNameData->pOldWndProc,hWnd,uMsg,wParam,lParam);
+		else
+			lRet=CallWindowProcA(pNameData->pOldWndProc,hWnd,uMsg,wParam,lParam);
 		break;
 	}
 
@@ -1813,29 +1834,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 	DebugFormatMessage(L"Directory to add: %s",(LPCWSTR)FolderLower);
 
 	COMBOBOXEXITEMW ci;
-			
-	CArrayFAP<LPWSTR> aRoots;
-	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases());
-	
-	// Checking whether Folder is subdirectory of any aRoots
-	BOOL bFound=FALSE;
-	for (int i=0;i<aRoots.GetSize();i++)
-	{
-		CStringW Path(aRoots.GetAt(i));
-		Path.MakeLower();
-		
-		if (wcsncmp(Path,FolderLower,min((DWORD)Path.GetLength(),dwLength))==0)
-			bFound=TRUE;
-	}
-	if (!bFound)
-	{
-		if (!bNoWarning)
-		{
-			ShowErrorMessage(IDS_ERRORWRONGDRIVE,IDS_ERROR);	
-			return FALSE;
-		}
-		return TRUE;
-	}
+
 
 	// Checking whether path is drive which already exists
 	if (dwLength==2 && pFolder[1]==L':')

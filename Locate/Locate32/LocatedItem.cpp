@@ -554,15 +554,14 @@ void CLocatedItem::UpdateType()
 		pNewType=allocstringW(IDS_JUNCTION);
 	else if (!(GetLocateDlg()->GetFlags()&CLocateDlg::fgLVShowFileTypes))
 	{
-		WCHAR buf[300];
-		DWORD dwLength;
-
+		
 		// No extension
 		if (IsFolder())
 			pNewType=allocstringW(IDS_DIRECTORYTYPE);
 		else
 		{
-			dwLength=LoadString(IDS_UNKNOWNTYPE,buf,300)+1;		
+			WCHAR buf[300];
+			DWORD dwLength=LoadString(IDS_UNKNOWNTYPE,buf,300)+1;		
 			pNewType=new WCHAR[GetExtensionLength()+dwLength+1];
 			MemCopyW(pNewType,GetExtension(),GetExtensionLength());
 			pNewType[GetExtensionLength()]=L' ';
@@ -573,23 +572,44 @@ void CLocatedItem::UpdateType()
 	{
 		// Using shell functions
 		SHFILEINFOW fi;
-		DWORD dwAttribs=0;
-		DWORD dwFlags=SHGFI_TYPENAME;
-		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
+		if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating)
 		{
-			dwAttribs=GetSystemAttributesFromAttributes(GetAttributes());
-			dwFlags|=SHGFI_USEFILEATTRIBUTES;
-		}
-
-		if (!GetFileInfo(GetPath(),dwAttribs,&fi,dwFlags))
-		{
-			// File does not exist
-			SetToDeleted();
-			ItemDebugMessage("CLocatedItem::UpdateType END2");
-			return;
+			if (GetFileInfo(GetPath(),0,&fi,SHGFI_TYPENAME))
+				pNewType=alloccopy(fi.szTypeName);
+			else
+			{
+				if (!(IsFolder()?FileSystem::IsDirectory(GetPath()):FileSystem::IsFile(GetPath())))
+				{
+					// File does not exist
+					SetToDeleted();
+					ItemDebugMessage("CLocatedItem::UpdateType END2");
+					return;
+				}
+			}
 		}
 		
-		pNewType=alloccopy(fi.szTypeName);
+		// Try without accessing file
+		if (pNewType==NULL)
+		{
+			if (GetFileInfo(GetPath(),GetSystemAttributesFromAttributes(GetAttributes()),&fi,SHGFI_TYPENAME|SHGFI_USEFILEATTRIBUTES))
+				pNewType=alloccopy(fi.szTypeName);
+			else
+			{
+				if (IsFolder())
+					pNewType=allocstringW(IDS_DIRECTORYTYPE);
+				else
+				{
+					WCHAR buf[300];
+					DWORD dwLength=LoadString(IDS_UNKNOWNTYPE,buf,300)+1;		
+					pNewType=new WCHAR[GetExtensionLength()+dwLength+1];
+					MemCopyW(pNewType,GetExtension(),GetExtensionLength());
+					pNewType[GetExtensionLength()]=L' ';
+					MemCopyW(pNewType+GetExtensionLength()+1,buf,dwLength);
+				}
+			}
+		}
+
+		dwFlags|=SHGFI_USEFILEATTRIBUTES;
 	}
 	else if (IsFolder())
 	{
@@ -706,20 +726,31 @@ void CLocatedItem::UpdateIcon()
 	ItemDebugMessage("CLocatedItem::UpdateIcon BEGIN");
 	if (GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
 	{
-		DWORD dwFlags=SHGFI_SYSICONINDEX;
-		DWORD dwAttributes=0;
-		
+		SHFILEINFOW fi;
 		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating) ||
 			GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
 		{
-			dwFlags|=SHGFI_USEFILEATTRIBUTES;
-			dwAttributes=GetSystemAttributesFromAttributes(GetAttributes());
+			if (GetFileInfo(GetPath(),GetSystemAttributesFromAttributes(GetAttributes()),&fi,SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES))
+				iIcon=fi.iIcon;
+			else
+				iIcon=GetLocateApp()->m_nDefImage;
 		}		
-		SHFILEINFOW fi;
-		if (GetFileInfo(GetPath(),dwAttributes,&fi,dwFlags))
-			iIcon=fi.iIcon;
-		else 
-			iIcon=GetLocateApp()->m_nDelImage;
+		else
+		{
+			if (GetFileInfo(GetPath(),0,&fi,SHGFI_SYSICONINDEX))
+				iIcon=fi.iIcon;
+			else if (IsFolder()?FileSystem::IsDirectory(GetPath()):FileSystem::IsFile(GetPath()))
+			{
+				// Try again without accessing file
+				if (GetFileInfo(GetPath(),GetSystemAttributesFromAttributes(GetAttributes()),&fi,SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES))
+					iIcon=fi.iIcon;
+				else
+					iIcon=GetLocateApp()->m_nDefImage;
+			}
+			else
+				iIcon=GetLocateApp()->m_nDelImage;
+		}		
+
 	}
 	else if (IsDeleted())
 		iIcon=GetLocateApp()->m_nDelImage;
@@ -739,37 +770,54 @@ void CLocatedItem::UpdateIcon()
 void CLocatedItem::UpdateParentIcon()
 {
 	ItemDebugMessage("CLocatedItem::UpdateParentIcon BEGIN");
-	SHFILEINFOW fi;
 	LPWSTR szParent=GetParent();
 	if (GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
 	{
-		DWORD dwFlags=SHGFI_SYSICONINDEX;
-		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating) ||
-			GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
-			dwFlags|=SHGFI_USEFILEATTRIBUTES;
-		
-			
+		LPWSTR pParent;
 		if (szParent[1]==L':' && szParent[2]==L'\0')
 		{
-			WCHAR szDrive[]=L"X:\\";
-			szDrive[0]=szParent[0];
-			if (GetFileInfo(szDrive,FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags))
-				iParentIcon=fi.iIcon;
-			else
-				iParentIcon=((CLocateApp*)GetApp())->m_nDelImage;
+			pParent=new WCHAR[4];
+			pParent[0]=szParent[0];
+			pParent[0]=L':';
+			pParent[0]=L'\\';
+			pParent[0]=L'\0';
 		}
 		else
+			pParent=szParent;
+		
+
+		SHFILEINFOW fi;
+		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating) ||
+			GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
 		{
-			if (GetFileInfo(GetParent(),FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags))
+			if (GetFileInfo(pParent,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES))
 				iParentIcon=fi.iIcon;
 			else
-				iParentIcon=((CLocateApp*)GetApp())->m_nDelImage;
-		}
+				iParentIcon=GetLocateApp()->m_nDirImage;
+		}		
+		else
+		{
+			if (GetFileInfo(pParent,0,&fi,SHGFI_SYSICONINDEX))
+				iParentIcon=fi.iIcon;
+			else if (FileSystem::IsDirectory(pParent))
+			{
+				// Try again without accessing file
+				if (GetFileInfo(pParent,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES))
+					iParentIcon=fi.iIcon;
+				else
+					iParentIcon=GetLocateApp()->m_nDirImage;
+			}
+			else
+				iParentIcon=GetLocateApp()->m_nDelImage;
+		}		
+		
+		if (pParent!=szParent)
+			delete[] pParent;
 	}
 	else if (IsDeleted())
-		iIcon=GetLocateApp()->m_nDelImage;
+		iParentIcon=GetLocateApp()->m_nDelImage;
 	else
-    	iIcon=GetLocateApp()->m_nDefImage;
+    	iParentIcon=GetLocateApp()->m_nDirImage;
 
 	dwFlags|=LITEM_PARENTICONOK;
 

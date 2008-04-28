@@ -243,7 +243,16 @@ public:
 
 		};
 
-		
+		// Threaded database modification date reading
+		struct ModificationDateData 
+		{
+			CStringW sDatabaseFile;
+			HWND hListWnd;
+			int nItem;
+		};
+		static DWORD WINAPI ReadModificationData(LPVOID lpParameter);
+
+
 
 	protected:
 		

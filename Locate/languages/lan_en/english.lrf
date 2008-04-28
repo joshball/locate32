@@ -31,7 +31,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2008 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.1 beta build 8.3260
+FILEVERSION=3.1 beta build 8.4270
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -1211,7 +1211,6 @@ STRERROR_INVALIDDATABASE=Invalid database format in file '%s'. Update database.
 STRERROR_CANNOTWRITEDATABASE=Cannot write database to file '%s'.
 STRERROR_INVALIDFILEFORMAT=Error loading file %s. Invalid file format.
 STRERROR_NODRIVESSELECTED=No drives selected.
-STRERROR_DRIVENOTINDATABASE=Path is found in drive that was not included in file database.
 STRERROR_NOCULUMNSSELECTED=No any columns selected. Select at least one.
 STRERROR_CANNOTADDITEM=Cannot add item.
 STRERROR_CANNOTADDITEM2=Cannot add item '%s'.

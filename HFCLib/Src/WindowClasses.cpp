@@ -802,7 +802,10 @@ LRESULT CTargetWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 	void DebugCommandsProc(HWND hWnd,UINT msg,WPARAM wParam,LPARAM lParam);
 	DebugCommandsProc(*this,msg,wParam,lParam);
 #endif
-	return DefWindowProc(m_hWnd,msg,wParam,lParam);
+	if (IsUnicodeSystem())
+		return DefWindowProcW(m_hWnd,msg,wParam,lParam);
+	else
+		return DefWindowProcA(m_hWnd,msg,wParam,lParam);
 }
 
 #ifdef DEF_WCHAR

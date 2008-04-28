@@ -145,125 +145,261 @@ DWORD CWinThread::ModalLoop()
 		else if (m_pMainWnd==NULL)
 			m_Accels.RemoveAll();
 	}
-	while (1)
+
+	if (IsUnicodeSystem())
 	{
-		while (!::PeekMessage(&m_currentMessage,NULL,0,0,PM_NOREMOVE) && bIdle)
-		{
-			if (nIdleTime)
-			{
-				if (!OnIdle(nIdleTime))
-					bIdle=FALSE;
-			}
-			nIdleTime++;
-		}
-		while (::PeekMessage(&m_currentMessage,NULL,0,0,PM_NOREMOVE) || !bIdle)
-		{
-			if (nIdleTime)
-			{
-				OnIdle(0);
-				nIdleTime=0;
-			}
-			if (!GetMessage(&m_currentMessage,NULL,0,0))
-				return (DWORD)m_currentMessage.wParam;
-			
-			// If OnThreadMessage returns true, do nothing
-			if (OnThreadMessage(&m_currentMessage))
-				continue;
-			
-			
+		/////////////////////////////////////////////////
+		// Unicode modal loop
 
-
-			switch (m_currentMessage.message)
+		while (1)
+		{
+			while (!::PeekMessageW(&m_currentMessage,NULL,0,0,PM_NOREMOVE) && bIdle)
 			{
-			case WM_NCDESTROY:
-				for (nAccel=0;nAccel<m_Accels.GetSize();nAccel++)
+				if (nIdleTime)
 				{
-					if (m_Accels[nAccel].hWnd==m_currentMessage.hwnd)
-					{
-						m_Accels.RemoveAt(nAccel);
-						break;
-					}
+					if (!OnIdle(nIdleTime))
+						bIdle=FALSE;
 				}
-				for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
+				nIdleTime++;
+			}
+			while (::PeekMessageW(&m_currentMessage,NULL,0,0,PM_NOREMOVE) || !bIdle)
+			{
+				if (nIdleTime)
 				{
-					if (m_Dialogs[nAccel]==m_currentMessage.hwnd)
-					{
-						m_Dialogs.RemoveAt(nAccel);
-						break;
-					}
+					OnIdle(0);
+					nIdleTime=0;
 				}
+				if (!GetMessageW(&m_currentMessage,NULL,0,0))
+					return (DWORD)m_currentMessage.wParam;
 				
-				TranslateMessage(&m_currentMessage);
-				DispatchMessage(&m_currentMessage);
-				break;
-			case WM_KEYDOWN:
-			case WM_KEYUP:
-			case WM_SYSKEYDOWN:
-			case WM_SYSKEYUP:
+				// If OnThreadMessage returns true, do nothing
+				if (OnThreadMessage(&m_currentMessage))
+					continue;
+				
+				
+
+
+				switch (m_currentMessage.message)
 				{
-					hAccel=NULL;
+				case WM_NCDESTROY:
 					for (nAccel=0;nAccel<m_Accels.GetSize();nAccel++)
 					{
 						if (m_Accels[nAccel].hWnd==m_currentMessage.hwnd)
 						{
-							if (m_currentMessage.message==WM_NCDESTROY)
-								m_Accels.RemoveAt(nAccel);
-							else
-								hAccel=m_Accels[nAccel].hAccel;
+							m_Accels.RemoveAt(nAccel);
 							break;
 						}
 					}
-					if (hAccel!=NULL)
+					for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
 					{
-						if (!TranslateAccelerator(m_Accels[nAccel].hWndTo,hAccel,&m_currentMessage))
+						if (m_Dialogs[nAccel]==m_currentMessage.hwnd)
+						{
+							m_Dialogs.RemoveAt(nAccel);
+							break;
+						}
+					}
+					
+					TranslateMessage(&m_currentMessage);
+					DispatchMessageW(&m_currentMessage);
+					break;
+				case WM_KEYDOWN:
+				case WM_KEYUP:
+				case WM_SYSKEYDOWN:
+				case WM_SYSKEYUP:
+					{
+						hAccel=NULL;
+						for (nAccel=0;nAccel<m_Accels.GetSize();nAccel++)
+						{
+							if (m_Accels[nAccel].hWnd==m_currentMessage.hwnd)
+							{
+								if (m_currentMessage.message==WM_NCDESTROY)
+									m_Accels.RemoveAt(nAccel);
+								else
+									hAccel=m_Accels[nAccel].hAccel;
+								break;
+							}
+						}
+						if (hAccel!=NULL)
+						{
+							if (!TranslateAcceleratorW(m_Accels[nAccel].hWndTo,hAccel,&m_currentMessage))
+							{
+								// Check dialog messages
+								for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
+								{
+									if (IsDialogMessageW(m_Dialogs[nAccel],&m_currentMessage))
+										break;
+								}
+								if (nAccel==m_Dialogs.GetSize())
+								{			
+									TranslateMessage(&m_currentMessage);
+									DispatchMessageW(&m_currentMessage);
+									
+								}
+							}
+						}
+						else
 						{
 							// Check dialog messages
 							for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
 							{
-								if (IsDialogMessage(m_Dialogs[nAccel],&m_currentMessage))
+								if (IsDialogMessageW(m_Dialogs[nAccel],&m_currentMessage))
 									break;
 							}
 							if (nAccel==m_Dialogs.GetSize())
 							{			
 								TranslateMessage(&m_currentMessage);
-								DispatchMessage(&m_currentMessage);
+								DispatchMessageW(&m_currentMessage);
 							}
 						}
+						break;
 					}
-					else
+				default:
+					// Check dialog messages
+					for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
 					{
-						// Check dialog messages
-						for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
-						{
-							if (IsDialogMessage(m_Dialogs[nAccel],&m_currentMessage))
-								break;
-						}
-						if (nAccel==m_Dialogs.GetSize())
-						{			
-							TranslateMessage(&m_currentMessage);
-							DispatchMessage(&m_currentMessage);
-						}
+						if (IsDialogMessageW(m_Dialogs[nAccel],&m_currentMessage))
+							break;
+					}
+					if (nAccel==m_Dialogs.GetSize())
+					{			
+						TranslateMessage(&m_currentMessage);
+						DispatchMessageW(&m_currentMessage);
 					}
 					break;
+
 				}
-			default:
-				// Check dialog messages
-				for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
-				{
-					if (IsDialogMessage(m_Dialogs[nAccel],&m_currentMessage))
-						break;
-				}
-				if (nAccel==m_Dialogs.GetSize())
-				{			
-					TranslateMessage(&m_currentMessage);
-					DispatchMessage(&m_currentMessage);
-				}
-				break;
+				if (m_currentMessage.message!=WM_PAINT && m_currentMessage.message!=0x0118)
+					bIdle=TRUE;
 			}
-			if (m_currentMessage.message!=WM_PAINT && m_currentMessage.message!=0x0118)
-				bIdle=TRUE;
 		}
 	}
+	else
+	{
+		/////////////////////////////////////////////////
+		// ANSI modal loop
+
+		while (1)
+		{
+			while (!::PeekMessageA(&m_currentMessage,NULL,0,0,PM_NOREMOVE) && bIdle)
+			{
+				if (nIdleTime)
+				{
+					if (!OnIdle(nIdleTime))
+						bIdle=FALSE;
+				}
+				nIdleTime++;
+			}
+			while (::PeekMessageA(&m_currentMessage,NULL,0,0,PM_NOREMOVE) || !bIdle)
+			{
+				if (nIdleTime)
+				{
+					OnIdle(0);
+					nIdleTime=0;
+				}
+				if (!GetMessageA(&m_currentMessage,NULL,0,0))
+					return (DWORD)m_currentMessage.wParam;
+				
+				// If OnThreadMessage returns true, do nothing
+				if (OnThreadMessage(&m_currentMessage))
+					continue;
+				
+				
+
+
+				switch (m_currentMessage.message)
+				{
+				case WM_NCDESTROY:
+					for (nAccel=0;nAccel<m_Accels.GetSize();nAccel++)
+					{
+						if (m_Accels[nAccel].hWnd==m_currentMessage.hwnd)
+						{
+							m_Accels.RemoveAt(nAccel);
+							break;
+						}
+					}
+					for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
+					{
+						if (m_Dialogs[nAccel]==m_currentMessage.hwnd)
+						{
+							m_Dialogs.RemoveAt(nAccel);
+							break;
+						}
+					}
+					
+					TranslateMessage(&m_currentMessage);
+					DispatchMessageA(&m_currentMessage);
+					break;
+				case WM_KEYDOWN:
+				case WM_KEYUP:
+				case WM_SYSKEYDOWN:
+				case WM_SYSKEYUP:
+					{
+						hAccel=NULL;
+						for (nAccel=0;nAccel<m_Accels.GetSize();nAccel++)
+						{
+							if (m_Accels[nAccel].hWnd==m_currentMessage.hwnd)
+							{
+								if (m_currentMessage.message==WM_NCDESTROY)
+									m_Accels.RemoveAt(nAccel);
+								else
+									hAccel=m_Accels[nAccel].hAccel;
+								break;
+							}
+						}
+						if (hAccel!=NULL)
+						{
+							if (!TranslateAcceleratorA(m_Accels[nAccel].hWndTo,hAccel,&m_currentMessage))
+							{
+								// Check dialog messages
+								for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
+								{
+									if (IsDialogMessageA(m_Dialogs[nAccel],&m_currentMessage))
+										break;
+								}
+								if (nAccel==m_Dialogs.GetSize())
+								{			
+									TranslateMessage(&m_currentMessage);
+									DispatchMessageA(&m_currentMessage);
+								}
+							}
+						}
+						else
+						{
+							// Check dialog messages
+							for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
+							{
+								if (IsDialogMessageA(m_Dialogs[nAccel],&m_currentMessage))
+									break;
+							}
+							if (nAccel==m_Dialogs.GetSize())
+							{			
+								TranslateMessage(&m_currentMessage);
+								DispatchMessageA(&m_currentMessage);
+							}
+						}
+						break;
+					}
+				default:
+					// Check dialog messages
+					for (nAccel=0;nAccel<m_Dialogs.GetSize();nAccel++)
+					{
+						if (IsDialogMessageA(m_Dialogs[nAccel],&m_currentMessage))
+							break;
+					}
+					if (nAccel==m_Dialogs.GetSize())
+					{			
+						TranslateMessage(&m_currentMessage);
+						DispatchMessageA(&m_currentMessage);
+					}
+					break;
+
+				}
+				if (m_currentMessage.message!=WM_PAINT && m_currentMessage.message!=0x0118)
+					bIdle=TRUE;
+			}
+		}
+	}
+
 	return (DWORD)m_currentMessage.wParam;
 }
 

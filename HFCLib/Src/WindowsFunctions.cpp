@@ -76,7 +76,10 @@ LRESULT CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 			Wnd->OnDropFiles((HDROP) wParam);
 			return FALSE;
 		case WM_GETICON:
-			return DefWindowProc(hWnd,msg,wParam,lParam);
+			if (IsUnicodeSystem())	
+				return DefWindowProcW(hWnd,msg,wParam,lParam);
+			else
+				return DefWindowProcA(hWnd,msg,wParam,lParam);
 		case WM_INITMENU:
 			Wnd->OnInitMenu((HMENU)wParam);
 			return FALSE;

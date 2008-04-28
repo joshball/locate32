@@ -126,7 +126,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 {
 	switch(pNm->hdr.code)
 	{
-	case NMX_CLICK:
+	case NM_CLICK:
 		{
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(((NMHDR_MOUSE*)pNm)->iSubItem));
 			if (nDetail>LastType || nDetail<0)
@@ -160,7 +160,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			}
 			break;
 		}
-	case NMX_RCLICK:
+	case NM_RCLICK:
 		{
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(((NMHDR_MOUSE*)pNm)->iSubItem));
 			if (nDetail>LastType || nDetail<0)

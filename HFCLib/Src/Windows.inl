@@ -1330,6 +1330,41 @@ inline BOOL CWnd::DestroyWindow()
 	return ::DestroyWindow(m_hWnd);
 }
 
+
+inline LONGPTR CWnd::GetWindowLong(WindowLongIndex nIndex) const 
+{
+	if (IsUnicodeSystem())
+		return ::GetWindowLongPtrW(m_hWnd,nIndex); 
+	else
+		return ::GetWindowLongPtrA(m_hWnd,nIndex); 
+}	
+
+inline LONGPTR CWnd::SetWindowLong(WindowLongIndex nIndex,LONGPTR lNewLong)
+{
+	if (IsUnicodeSystem())
+		return ::SetWindowLongPtrW(m_hWnd,nIndex,lNewLong); 
+	else
+		return ::SetWindowLongPtrA(m_hWnd,nIndex,lNewLong);
+}
+
+
+inline LONGPTR CWnd::GetClassLong(ClassLongIndex nIndex) const
+{
+	if (IsUnicodeSystem())
+		return ::GetClassLongPtrW(m_hWnd,nIndex); 
+	else
+		return ::GetClassLongPtrA(m_hWnd,nIndex); 
+}	
+
+inline LONGPTR CWnd::SetClassLong(ClassLongIndex nIndex,LONGPTR lNewVal)
+{ 
+	if (IsUnicodeSystem())
+		return ::SetClassLongPtrW(m_hWnd,nIndex,lNewVal); 
+	else
+		return ::SetClassLongPtrA(m_hWnd,nIndex,lNewVal); 
+}
+
+
 inline BOOL CWnd::GetWindowPlacement(WINDOWPLACEMENT* lpwndpl) const
 {
 	lpwndpl->length=sizeof(WINDOWPLACEMENT);

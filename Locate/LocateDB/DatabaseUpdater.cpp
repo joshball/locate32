@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2007 Janne Huttunen
-   database updater v3.1.8.2240                 */
+/* Copyright (c) 1997-2008 Janne Huttunen
+   database updater v3.1.8.4270                 */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -617,23 +617,6 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanRootW(volatile LONG& lForceQui
 
 UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nLength,volatile LONG& lForceQuit)
 {
-	if (m_aExcludedDirectories.GetSize()>0)
-	{
-		// Checking whether directory is excluded
-		WCHAR* pLowerFolder=alloccopyAtoW(szFolder,nLength);
-		MakeLower(pLowerFolder);
-
-		for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
-		{
-			if (ContainString(pLowerFolder,m_aExcludedDirectories[i]))
-			{
-				delete[] pLowerFolder;
-				return ueSuccess;
-			}
-		}
-		delete[] pLowerFolder;
-	}	
-	
 	szFolder[nLength++]='\\';
 	szFolder[nLength]='*';
 	szFolder[nLength+1]='.';
@@ -648,7 +631,14 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 	
 
 	if (!VALID_HFIND(hFind))
+	{
+		// It is possible that directory has no files, 
+		// checking whether directory actually exists
+		szFolder[nLength-1]='\0';
+		if (FileSystem::IsDirectory(szFolder))
+			return ueSuccess;	
 		return ueFolderUnavailable;
+	}
 
 	for(;;)
 	{
@@ -666,109 +656,11 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 			throw ueStopped;
 		}
 
-		
-		if (!_FindIsFolder(&fd))
-		{
-			// Tests for files
-
-			// Include files pattern used
-			if (m_aIncludeFilesPatternsA!=NULL)
-			{
-				// Make name lower
-				char* pNameLower=alloccopy(_FindGetName(&fd));
-				CharLower(pNameLower);
-
-				BOOL bIncluded=FALSE;
-				LPSTR* pPtr=m_aIncludeFilesPatternsA;
-				while (*pPtr!=NULL)
-				{
-					if (ContainString(pNameLower,*pPtr))
-					{
-						bIncluded=TRUE;
-						break;
-					}
-
-					pPtr++;
-				}
-
-				delete[] pNameLower;
-
-				if (!bIncluded)
-				{
-					if(!_FindNextFile(hFind,&fd))
-						break;
-					continue;
-				}	
-			}
-
-			// Exclude files pattern used
-			if (m_aExcludeFilesPatternsA!=NULL)
-			{
-				// Make name lower
-				char* pNameLower=alloccopy(_FindGetName(&fd));
-				CharLower(pNameLower);
-				
-				BOOL bExcluded=FALSE;
-				LPSTR* pPtr=m_aExcludeFilesPatternsA;
-				while (*pPtr!=NULL)
-				{
-					if (ContainString(pNameLower,*pPtr))
-					{
-						bExcluded=TRUE;
-						break;
-					}
-
-					pPtr++;
-				}
-
-				delete[] pNameLower;
-
-				if (bExcluded)
-				{
-					if(!_FindNextFile(hFind,&fd))
-						break;
-					continue;
-				}				
-			}
-		}
-		else
-		{
-			// Tests for directories
-			
-			// Include files pattern used
-			if (m_aIncludeDirectoriesPatternsA!=NULL)
-			{
-				// Make name lower
-				char* pNameLower=alloccopy(_FindGetName(&fd));
-				CharLower(pNameLower);
-				
-				BOOL bIncluded=FALSE;
-				LPSTR* pPtr=m_aIncludeDirectoriesPatternsA;
-				while (*pPtr!=NULL)
-				{
-					if (ContainString(pNameLower,*pPtr))
-					{
-						bIncluded=TRUE;
-						break;
-					}
-
-					pPtr++;
-				}
-
-				delete[] pNameLower;
-
-				if (!bIncluded)
-				{
-					if(!_FindNextFile(hFind,&fd))
-						break;
-					continue;
-				}	
-			}
-		}
-
 		DWORD sNameLength=istrlen(_FindGetName(&fd));
 		ASSERT(sNameLength<256);
-			
+		
+
+
 
 		if (_FindIsFolder(&fd))
 		{
@@ -776,8 +668,69 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 			// less than MAX_PATH, otherwise ignore
 			if (nLength+sNameLength<MAX_PATH)
 			{
+				// First checks
+				// Include files pattern used
+				if (m_aIncludeDirectoriesPatternsA!=NULL)
+				{
+					// Make name lower
+					char* pNameLower=alloccopy(_FindGetName(&fd));
+					CharLower(pNameLower);
+					
+					BOOL bIncluded=FALSE;
+					LPSTR* pPtr=m_aIncludeDirectoriesPatternsA;
+					while (*pPtr!=NULL)
+					{
+						if (ContainString(pNameLower,*pPtr))
+						{
+							bIncluded=TRUE;
+							break;
+						}
+
+						pPtr++;
+					}
+
+					delete[] pNameLower;
+
+					if (!bIncluded)
+					{
+						if(!_FindNextFile(hFind,&fd))
+							break;
+						continue;
+					}	
+				}
+
+				// Append folder to form full path
+				sMemCopy(szFolder+nLength,_FindGetName(&fd),sNameLength+1);
 				
-				// Check whether new buffer is needed
+				// Checking whether directory is excluded
+				if (m_aExcludedDirectories.GetSize()>0)
+				{
+					// Construct full path
+					char* pLowerFolder=alloccopy(szFolder,nLength+sNameLength);
+					CharLower(pLowerFolder);
+					
+					BOOL bExcluded=FALSE;
+					
+					for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
+					{
+						if (ContainString(pLowerFolder,m_aExcludedDirectories[i]))
+						{
+							bExcluded=TRUE;
+							break;
+						}
+					}
+					delete[] pLowerFolder;
+
+					if (bExcluded)
+					{
+						if(!_FindNextFile(hFind,&fd))
+							break;
+						continue;
+					}		
+				}	
+
+				
+				// Check whether there is enough space in buffer
 				if (pPoint+_MAX_PATH+10>pCurrentBuffer->pData+BFSIZE)
 				{
 					// New buffer
@@ -800,7 +753,6 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 				*(pPoint++)=(BYTE)sNameLength;
 				
 				// Copy path
-				sMemCopy(szFolder+nLength,_FindGetName(&fd),sNameLength);
 				sMemCopy(pPoint,_FindGetName(&fd),sNameLength+1);
 
 				// Move pointer
@@ -855,6 +807,66 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 			
 			if(nLength+sNameLength<MAX_PATH)
 			{
+				// Include files pattern used
+				if (m_aIncludeFilesPatternsA!=NULL)
+				{
+					// Make name lower
+					char* pNameLower=alloccopy(_FindGetName(&fd));
+					CharLower(pNameLower);
+
+					BOOL bIncluded=FALSE;
+					LPSTR* pPtr=m_aIncludeFilesPatternsA;
+					while (*pPtr!=NULL)
+					{
+						if (ContainString(pNameLower,*pPtr))
+						{
+							bIncluded=TRUE;
+							break;
+						}
+
+						pPtr++;
+					}
+
+					delete[] pNameLower;
+
+					if (!bIncluded)
+					{
+						if(!_FindNextFile(hFind,&fd))
+							break;
+						continue;
+					}	
+				}
+
+				// Exclude files pattern used
+				if (m_aExcludeFilesPatternsA!=NULL)
+				{
+					// Make name lower
+					char* pNameLower=alloccopy(_FindGetName(&fd));
+					CharLower(pNameLower);
+					
+					BOOL bExcluded=FALSE;
+					LPSTR* pPtr=m_aExcludeFilesPatternsA;
+					while (*pPtr!=NULL)
+					{
+						if (ContainString(pNameLower,*pPtr))
+						{
+							bExcluded=TRUE;
+							break;
+						}
+
+						pPtr++;
+					}
+
+					delete[] pNameLower;
+
+					if (bExcluded)
+					{
+						if(!_FindNextFile(hFind,&fd))
+							break;
+						continue;
+					}				
+				}
+				
 				if (pPoint+MAX_PATH+15>pCurrentBuffer->pData+BFSIZE)
 				{
 					// New buffer
@@ -903,23 +915,6 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPSTR szFolder,DWORD nL
 
 UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD nLength,volatile LONG& lForceQuit)
 {
-	if (m_aExcludedDirectories.GetSize()>0)
-	{
-		// Checking whether directory is excluded
-		WCHAR* pLowerFolder=alloccopy(szFolder,nLength);
-		MakeLower(pLowerFolder);
-
-		for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
-		{
-			if (ContainString(pLowerFolder,m_aExcludedDirectories[i]))
-			{
-				delete[] pLowerFolder;
-				return ueSuccess;
-			}
-		}
-		delete[] pLowerFolder;
-	}	
-	
 	szFolder[nLength++]=L'\\';
 	szFolder[nLength]=L'*';
 	szFolder[nLength+1]=L'.';
@@ -960,110 +955,10 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 			throw ueStopped;
 		}
 
-		if (!_FindIsFolder(&fd))
-		{
-			// Tests for files
-
-			// Include files pattern used
-			if (m_aIncludeFilesPatternsW!=NULL)
-			{
-				// Make name lower
-				WCHAR* pNameLower=alloccopy(_FindGetName(&fd));
-				CharLowerW(pNameLower);
-				
-				BOOL bIncluded=FALSE;
-				LPWSTR* pPtr=m_aIncludeFilesPatternsW;
-				while (*pPtr!=NULL)
-				{
-					if (ContainString(pNameLower,*pPtr))
-					{
-						bIncluded=TRUE;
-						break;
-					}
-
-					pPtr++;
-				}
-
-				delete[] pNameLower;
-
-				if (!bIncluded)
-				{
-					if(!_FindNextFile(hFind,&fd))
-						break;
-					continue;
-				}				
-			}
-
-			// Exclude files pattern used
-			if (m_aExcludeFilesPatternsW!=NULL)
-			{
-				// Make name lower
-				WCHAR* pNameLower=alloccopy(_FindGetName(&fd));
-				CharLowerW(pNameLower);
-				
-				BOOL bExcluded=FALSE;
-				LPWSTR* pPtr=m_aExcludeFilesPatternsW;
-				while (*pPtr!=NULL)
-				{
-					if (ContainString(pNameLower,*pPtr))
-					{
-						bExcluded=TRUE;
-						break;
-					}
-
-					pPtr++;
-				}
-
-				delete[] pNameLower;
-
-				if (bExcluded)
-				{
-					if(!_FindNextFile(hFind,&fd))
-						break;
-					continue;
-				}				
-			}
-		}
-		else
-		{
-			// Tests for directories
-
-			// Include directories pattern used
-			if (m_aIncludeDirectoriesPatternsW!=NULL)
-			{
-				// Make name lower
-				WCHAR* pNameLower=alloccopy(_FindGetName(&fd));
-				CharLowerW(pNameLower);
-				
-				BOOL bIncluded=FALSE;
-				LPWSTR* pPtr=m_aIncludeDirectoriesPatternsW;
-				while (*pPtr!=NULL)
-				{
-					if (ContainString(pNameLower,*pPtr))
-					{
-						bIncluded=TRUE;
-						break;
-					}
-
-					pPtr++;
-				}
-
-				delete[] pNameLower;
-
-				if (!bIncluded)
-				{
-					if(!_FindNextFile(hFind,&fd))
-						break;
-					continue;
-				}				
-			}
-		}
-
-
 		DWORD sNameLength=istrlenw(_FindGetName(&fd));
 		ASSERT(sNameLength<256);
 
-		
+				
 			
 
 		if (_FindIsFolder(&fd))
@@ -1072,9 +967,70 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 			// less than MAX_PATH, otherwise ignore
 			if (nLength+sNameLength<MAX_PATH)
 			{
-				// First check whether directory is Junction or Symlink
+				// First checks
+				// Include directories pattern used
+				if (m_aIncludeDirectoriesPatternsW!=NULL)
+				{
+					// Make name lower
+					WCHAR* pNameLower=alloccopy(_FindGetName(&fd),sNameLength);
+					CharLowerW(pNameLower);
+					
+					BOOL bIncluded=FALSE;
+					LPWSTR* pPtr=m_aIncludeDirectoriesPatternsW;
+					while (*pPtr!=NULL)
+					{
+						if (ContainString(pNameLower,*pPtr))
+						{
+							bIncluded=TRUE;
+							break;
+						}
+
+						pPtr++;
+					}
+
+					delete[] pNameLower;
+
+					if (!bIncluded)
+					{
+						if(!_FindNextFile(hFind,&fd))
+							break;
+						continue;
+					}				
+				}
+
+				// Append folder to form full path
+				MemCopyW(szFolder+nLength,_FindGetName(&fd),sNameLength+1);
 				
-				// Check whether new buffer is needed
+				// Checking whether directory is excluded
+				if (m_aExcludedDirectories.GetSize()>0)
+				{
+					// Construct full path
+					WCHAR* pLowerFolder=alloccopy(szFolder,nLength+sNameLength);
+					CharLowerW(pLowerFolder);
+					
+					BOOL bExcluded=FALSE;
+					
+					for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
+					{
+						if (ContainString(pLowerFolder,m_aExcludedDirectories[i]))
+						{
+							bExcluded=TRUE;
+							break;
+						}
+					}
+					delete[] pLowerFolder;
+
+					if (bExcluded)
+					{
+						if(!_FindNextFile(hFind,&fd))
+							break;
+						continue;
+					}		
+				}	
+
+
+				
+				// Check whether there is enough space in buffer
 				if (pPoint+MAX_PATH*2+14>pCurrentBuffer->pData+BFSIZE)
 				{
 					// New buffer
@@ -1097,7 +1053,6 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 				*(pPoint++)=(BYTE)sNameLength;
 				
 				// Copy path
-				MemCopyW(szFolder+nLength,_FindGetName(&fd),sNameLength);
 				MemCopyW((LPWSTR)pPoint,_FindGetName(&fd),sNameLength+1);
 
 				// Move pointer
@@ -1150,9 +1105,71 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 		else
 		{
 			// File name
-			
 			if(nLength+sNameLength<MAX_PATH)
 			{
+				// Checks
+
+				// Include files pattern used
+				if (m_aIncludeFilesPatternsW!=NULL)
+				{
+					// Make name lower
+					WCHAR* pNameLower=alloccopy(_FindGetName(&fd),sNameLength);
+					CharLowerW(pNameLower);
+					
+					BOOL bIncluded=FALSE;
+					LPWSTR* pPtr=m_aIncludeFilesPatternsW;
+					while (*pPtr!=NULL)
+					{
+						if (ContainString(pNameLower,*pPtr))
+						{
+							bIncluded=TRUE;
+							break;
+						}
+
+						pPtr++;
+					}
+
+					delete[] pNameLower;
+
+					if (!bIncluded)
+					{
+						if(!_FindNextFile(hFind,&fd))
+							break;
+						continue;
+					}				
+				}
+
+				// Exclude files pattern used
+				if (m_aExcludeFilesPatternsW!=NULL)
+				{
+					// Make name lower
+					WCHAR* pNameLower=alloccopy(_FindGetName(&fd),sNameLength);
+					CharLowerW(pNameLower);
+					
+					BOOL bExcluded=FALSE;
+					LPWSTR* pPtr=m_aExcludeFilesPatternsW;
+					while (*pPtr!=NULL)
+					{
+						if (ContainString(pNameLower,*pPtr))
+						{
+							bExcluded=TRUE;
+							break;
+						}
+
+						pPtr++;
+					}
+
+					delete[] pNameLower;
+
+					if (bExcluded)
+					{
+						if(!_FindNextFile(hFind,&fd))
+							break;
+						continue;
+					}				
+				}
+
+				// Check whether there is enough space in buffer
 				if (pPoint+MAX_PATH*2+20>pCurrentBuffer->pData+BFSIZE)
 				{
 					// New buffer

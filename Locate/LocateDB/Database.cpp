@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database updater v3.1.8.2240              */
+   database updater v3.1.8.4270              */
 
 #include <HFCLib.h>
 #include "Locatedb.h"
@@ -1032,14 +1032,9 @@ CDatabase* CDatabase::FindByFile(PDATABASE* ppDatabases,int nDatabases,LPCWSTR s
 		delete[] pPath1;
 	for (int i=0;i<nDatabases;i++)
 	{
-		WCHAR szPath2[MAX_PATH];
 		ASSERT_VALID(ppDatabases[i]->m_szArchiveName);
-		dwRet=FileSystem::GetShortPathName(ppDatabases[i]->m_szArchiveName,szPath2,MAX_PATH);
-		if (dwRet!=0)
-		{
-			if (strcasecmp(szPath1,szPath2)==0)
-				return ppDatabases[i];
-		}
+		if (strcasecmp(szPath1,ppDatabases[i]->m_szArchiveName)==0)
+			return ppDatabases[i];
 	}
 	return NULL;
 }

@@ -3075,31 +3075,28 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 				break;
 			case 3:
 				{
-					CDatabaseInfo* di=CDatabaseInfo::GetFromDatabase(pDatabase);
-					if (g_szwBuffer!=NULL)
-						delete[] g_szwBuffer;
-					g_szwBuffer=NULL;
-					if (di!=NULL)
+				
+					ModificationDateData* pData=new ModificationDateData;
+					pData->hListWnd=*m_pList;
+					pData->nItem=pLvdi->item.iItem;
+					pData->sDatabaseFile=pDatabase->GetArchiveName();
+					DWORD dwThreadID;
+					HANDLE m_hThread=CreateThread(NULL,0,ReadModificationData,(LPVOID)pData,0,&dwThreadID);
+					if (m_hThread!=NULL)
 					{
-						if (di->tCreationTime.m_time>0)
-						{
-							FILETIME ft;
-							SYSTEMTIME st=di->tCreationTime;
-							WORD wDate,wTime;
-							SystemTimeToFileTime(&st,&ft);
-							FileTimeToDosDateTime(&ft,&wDate,&wTime);
-							
-							g_szwBuffer=GetLocateApp()->FormatDateAndTimeString(wDate,wTime);
-						}
-						delete di;
+						pLvdi->item.pszText=const_cast<LPWSTR>(szwEmpty);
+						CloseHandle(m_hThread);
 					}
-
-					if (g_szwBuffer==NULL)
+					else
 					{
+						delete pData;
+						if (g_szwBuffer!=NULL)
+							delete[] g_szwBuffer;
+
 						g_szwBuffer=new WCHAR[100];
 						LoadString(IDS_UNKNOWN,g_szwBuffer,100);
+						pLvdi->item.pszText=g_szwBuffer;
 					}
-					pLvdi->item.pszText=g_szwBuffer;
 					break;
 				}
 			case 4: // Thread 
@@ -3116,6 +3113,50 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 	return 0;
 }
 	
+DWORD WINAPI CSettingsProperties::CDatabasesSettingsPage::ReadModificationData(LPVOID lpParameter)
+{
+	ModificationDateData* pData=(ModificationDateData*)lpParameter;
+	LPWSTR pText=NULL;
+
+	ASSERT(pData!=NULL);
+
+	CDatabaseInfo* di=CDatabaseInfo::GetFromFile(pData->sDatabaseFile);
+	if (di!=NULL)
+	{
+		if (di->tCreationTime.m_time>0)
+		{
+			FILETIME ft;
+			SYSTEMTIME st=di->tCreationTime;
+			WORD wDate,wTime;
+			SystemTimeToFileTime(&st,&ft);
+			FileTimeToDosDateTime(&ft,&wDate,&wTime);
+			
+			pText=GetLocateApp()->FormatDateAndTimeString(wDate,wTime);
+		}
+		delete di;
+	}
+	
+	
+	if (pText==NULL)
+	{
+		pText=new WCHAR[100];
+		LoadString(IDS_UNKNOWN,pText,100);
+	}
+
+	
+	LVITEMW li;
+	li.mask=LVIF_TEXT;
+	li.pszText=pText;
+	li.iItem=pData->nItem;
+	li.iSubItem=3;
+	::SendMessage(pData->hListWnd,LVM_SETITEMTEXTW,li.iItem,(LPARAM)&li);
+
+	delete[] pText;
+	delete pData;
+		
+	return 0;
+}
+
 
 
 BOOL CSettingsProperties::CDatabasesSettingsPage::OnApply()

@@ -267,7 +267,6 @@
 #define IDC_FILETYPE                    1017
 #define IDS_ERRORCANNOTWRITEDB          1017
 #define IDC_FILELOCATION                1018
-#define IDS_ERRORWRONGDRIVE             1018
 #define IDC_FILESIZE                    1019
 #define IDS_ERRORWRONGDRIVE2            1019
 #define IDS_ERRORNOCOLUMNSSELECTED      1019
