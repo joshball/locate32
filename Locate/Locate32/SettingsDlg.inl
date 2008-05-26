@@ -89,11 +89,13 @@ inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CDatabaseDi
 inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::CAdvancedDialog(
 	LPCWSTR szIncludedFiles,LPCWSTR szIncludedDirectories,
 	LPCWSTR szExcludedFiles,const CArrayFAP<LPWSTR>& rDirectories,
-	const CListCtrl* pCopyItemsFrom,LPCWSTR szRootMaps)
+	const CListCtrl* pCopyItemsFrom,LPCWSTR szRootMaps,
+	BOOL bExcludeOnlyContentOfDirectories)
 :	CDialog(IDD_DBADVANCED),
 	m_sIncludedFiles(szIncludedFiles),m_sIncludedDirectories(szIncludedDirectories),
 	m_sExcludedFiles(szExcludedFiles),m_pDriveList(NULL),
-	m_pCopyItemsFrom(pCopyItemsFrom),m_sRootMaps(szRootMaps)
+	m_pCopyItemsFrom(pCopyItemsFrom),m_sRootMaps(szRootMaps),
+	m_bExcludeOnlyContentOfDirectories(bExcludeOnlyContentOfDirectories)
 {
 	for (int i=0;i<rDirectories.GetSize();i++)
 		m_aExcludedDirectories.Add(alloccopy(rDirectories[i]));

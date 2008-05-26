@@ -2638,21 +2638,25 @@ LPWSTR CLocateApp::FormatLastOsError()
 	}
 }
 
-BOOL CLocateApp::OpenHelp(HWND hWnd,HelpID* pHelpID,int nIDs,LPCSTR szHelpPage,HELPINFO* lphi)
+BOOL CLocateApp::OpenHelp(HWND hWnd,LPCSTR szHelpPage,HELPINFO* lphi,HelpID* pHelpID,int nIDs)
 {
 	LPCWSTR szwHelpFile=GetApp()->m_szHelpFile;
-	if (szwHelpFile!=NULL && lphi->iContextType==HELPINFO_WINDOW)
-	{	
-		// Form path to help file
-		CStringW sHelpFile=GetApp()->GetExeNameW();
-		sHelpFile.FreeExtra(sHelpFile.FindLast(L'\\')+1);
-		sHelpFile << szwHelpFile << "::/";
-		
-		
-		if (szHelpPage!=NULL)
-			sHelpFile << szHelpPage;
+	if (szwHelpFile==NULL)
+		return FALSE;
 
-		
+	// Form path to help file
+	CStringW sHelpFile=GetApp()->GetExeNameW();
+	sHelpFile.FreeExtra(sHelpFile.FindLast(L'\\')+1);
+	sHelpFile << szwHelpFile << "::/";
+	
+	if (szHelpPage!=NULL)
+		sHelpFile << szHelpPage;
+
+	if (lphi!=NULL)
+	{
+		if (lphi->iContextType!=HELPINFO_WINDOW || pHelpID==NULL)
+			return FALSE;
+
 
 		for (int i=0;i<nIDs;i++)
 		{
@@ -2664,18 +2668,18 @@ BOOL CLocateApp::OpenHelp(HWND hWnd,HelpID* pHelpID,int nIDs,LPCSTR szHelpPage,H
 				break;
 			}
 		}
+	}
 
-		if (IsUnicodeSystem())
-		{
-			if (HtmlHelpW(hWnd,sHelpFile,HH_DISPLAY_TOPIC,NULL)!=NULL)
-				return TRUE;
-		}
-		else
-		{
-			if (HtmlHelpA(hWnd,W2A(sHelpFile),HH_DISPLAY_TOPIC,NULL)!=NULL)
-				return TRUE;
-		}
-		
+
+	if (IsUnicodeSystem())
+	{
+		if (HtmlHelpW(hWnd,sHelpFile,HH_DISPLAY_TOPIC,NULL)!=NULL)
+			return TRUE;
+	}
+	else
+	{
+		if (HtmlHelpA(hWnd,W2A(sHelpFile),HH_DISPLAY_TOPIC,NULL)!=NULL)
+			return TRUE;
 	}
 	return FALSE;
 }

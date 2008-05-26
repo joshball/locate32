@@ -17,6 +17,7 @@
 #define WM_SETITEMFOCUS				WM_APP+112 // wParam is handle to window
 #define WM_CLOSEDIALOG				WM_APP+113 
 #define WM_OPENDIALOG				WM_APP+114 
+#define WM_REMOVEIGNORECLICKSFLAG	WM_APP+115
 
 
 

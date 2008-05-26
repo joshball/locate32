@@ -312,7 +312,7 @@ public:
 
 	// Help system
 	struct HelpID { int nID;LPCSTR lpName; };
-	static BOOL OpenHelp(HWND hWnd,HelpID* pHelpID,int nIDs,LPCSTR szHelpPage,HELPINFO* pInfo);
+	static BOOL OpenHelp(HWND hWnd,LPCSTR szHelpPage,HELPINFO* pInfo=NULL,HelpID* pHelpID=NULL,int nIDs=0);
    
 
 

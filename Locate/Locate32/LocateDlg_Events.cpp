@@ -750,7 +750,7 @@ void CLocateDlg::OnHelp(LPHELPINFO lphi)
 	};
 
 
-	if (CLocateApp::OpenHelp(*this,id,sizeof(id)/sizeof(CLocateApp::HelpID),NULL,lphi))
+	if (CLocateApp::OpenHelp(*this,NULL,lphi,id,sizeof(id)/sizeof(CLocateApp::HelpID)))
 		return;
 
 
@@ -1616,6 +1616,10 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		break;
 	case WM_SETFONT:
 		m_hDialogFont=HFONT(wParam);
+		break;
+	case WM_REMOVEIGNORECLICKSFLAG:
+		DebugMessage("DND: removing ignore flag");
+		RemoveExtraFlags(efLVIgnoreListClicks);
 		break;
 #ifdef _DEBUG
 	case WM_SYSCOMMAND:

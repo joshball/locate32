@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,8,4270
- PRODUCTVERSION 3,1,8,4270
+ FILEVERSION 3,1,8,5260
+ PRODUCTVERSION 3,1,8,5260
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 beta build 8.4270"
+            VALUE "FileVersion", "3.1 beta build 8.5260"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2008 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 beta build 8.4270"
+            VALUE "ProductVersion", "3.1 beta build 8.5260"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -317,38 +317,38 @@ BEGIN
 END
 
 
-IDD_GENERALSETTINGS DIALOGEX  0, 0, 287+0, 301
+IDD_GENERALSETTINGS DIALOGEX  0, 0, 287+10, 301
 STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | WS_POPUP
 FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Mouse Selection:",IDC_STATIC,2,3,281+0,
+    GROUPBOX        "Mouse Selection:",IDC_STATIC,2,3,281+10,
                     127
     CONTROL         "&Use current system folder settings",
                     IDC_SYSTEMSETTINGS,"Button",BS_AUTOCHECKBOX | WS_GROUP | 
-                    WS_TABSTOP,8,15,230+0,10
+                    WS_TABSTOP,8,15,230+10,10
     RADIOBUTTON     "&Point file to select",IDC_POINTTOSELECT,
-                    8,28,252+0,10,WS_GROUP | WS_TABSTOP
+                    8,28,252+10,10,WS_GROUP | WS_TABSTOP
     RADIOBUTTON     "&Never underline file names",
-                    IDC_NEVERUNDERLINE,21,43,220+0,10
+                    IDC_NEVERUNDERLINE,21,43,220+10,10
     RADIOBUTTON     "Underline file names when I &point at them",
-                    IDC_POINTUNDERLINE,21,57,220+0,10
+                    IDC_POINTUNDERLINE,21,57,220+10,10
     RADIOBUTTON     "Al&ways underline file names",
-                    IDC_ALWAYSUNDERLINE,21,71,220+0,10
+                    IDC_ALWAYSUNDERLINE,21,71,220+10,10
     RADIOBUTTON     "&Click file to select",IDC_CLICKTOSELECT,
-                    8,85,252+0,10
+                    8,85,252+10,10
     LTEXT           "This option has only an effect on how items in the results list are selected. To specify how files are opened, use 'Select Details' dialog (under View menu).",
-                    IDC_STATIC,8,97,272+0,30
-	GROUPBOX        "Locate dialog:",IDC_STATIC,2,135,281+0,79
+                    IDC_STATIC,8,97,272+10,30
+	GROUPBOX        "Locate dialog:",IDC_STATIC,2,135,281+10,79
     CONTROL         "&Minimize to system tray",IDC_MINIMIZETOSYSTEMTRAY,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,151,237+0,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,151,273+10,10
     CONTROL         "&Close button minimizes the main dialog",IDC_CLOSEBUTTONMINIMIZESWINDOW,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,166,237+0,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,166,273+10,10
     CONTROL         "&Save content of fields and restore when dialog is opened again",IDC_REMEMBERSTATES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,8,181,237+0,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,8,181,273+10,10
     CONTROL         "&Leave Locate32 running on background when the main dialog is closed",
                     IDC_CLOSETOSYSTEMTRAY,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,8,197,237+0,10
-	GROUPBOX        "Defaults (states after ""New Search"" button is pressed):",IDC_STATIC,2,221,281+0,79
+                    WS_TABSTOP,8,197,273+10,10
+	GROUPBOX        "Defaults (states after ""New Search"" button is pressed):",IDC_STATIC,2,221,281+10,79
 	LTEXT           "&Sorting:",IDC_SORTINGLABEL,8,237,
 					27+0,10
     COMBOBOX        IDC_SORTING,36+0,235,
@@ -429,63 +429,63 @@ BEGIN
                     WS_TABSTOP,10,142,226+0+0,87
 END
 
-IDD_AUTOUPDATESETTINGS DIALOGEX 0, 0, 287+0, 301
+IDD_AUTOUPDATESETTINGS DIALOGEX 0, 0, 287+10, 301
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Schedule:",IDC_STATIC,2,3,283+0,
+    GROUPBOX        "Schedule:",IDC_STATIC,2,3,283+10,
                     292
     LTEXT           "Scheduled Updates:",IDC_STATIC,7,
                     14,180,10
-    LISTBOX         IDC_UPDATES,7,25,222+0,190,LBS_OWNERDRAWVARIABLE | 
+    LISTBOX         IDC_UPDATES,7,25,222+10,190,LBS_OWNERDRAWVARIABLE | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | 
                     WS_TABSTOP
-    PUSHBUTTON      "&Add",IDC_ADD,236+0,25,43,14
-    PUSHBUTTON      "&Edit",IDC_EDIT,236+0,42,43,14,
+    PUSHBUTTON      "&Add",IDC_ADD,236+10,25,43,14
+    PUSHBUTTON      "&Edit",IDC_EDIT,236+10,42,43,14,
                     WS_DISABLED
-    PUSHBUTTON      "&Delete",IDC_DELETE,236+0,59,43,14,
+    PUSHBUTTON      "&Delete",IDC_DELETE,236+10,59,43,14,
                     WS_DISABLED
-    PUSHBUTTON      "&Up",IDC_UP,236+0,76,43,14,
+    PUSHBUTTON      "&Up",IDC_UP,236+10,76,43,14,
                     WS_DISABLED
-    PUSHBUTTON      "D&own",IDC_DOWN,236+0,93,43,14,
+    PUSHBUTTON      "D&own",IDC_DOWN,236+10,93,43,14,
                     WS_DISABLED
-    LTEXT           "",IDC_LASTRUN,7,220,205+0,12
+    LTEXT           "",IDC_LASTRUN,7,220,205+10,12
 	LTEXT           "Delay in seconds before starting updates at startup:",IDC_STATIC,7,237,170+0,12
 	EDITTEXT        IDC_DELAY,179+0,235,50,13,ES_AUTOHSCROLL | ES_NUMBER
 	CONTROL         "Spin1",IDC_DELAYSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
 					UDS_ALIGNRIGHT | UDS_ARROWKEYS,180,240,9,11
- 	LTEXT           "Note that, to use scheduled updates, you need to keep Locate32.exe running. \nYou can also use Windows' own Task Scheduler, for example, with command: ""C:\Program Files\Locate\locate32"" -U.",IDC_STATIC,7,254,275+0,40
+ 	LTEXT           "Note that, to use scheduled updates, you need to keep Locate32.exe running. \nYou can also use Windows' own Task Scheduler, for example, with command: ""C:\Program Files\Locate\locate32"" -U.",IDC_STATIC,7,254,275+10,40
 END
 
-IDD_DATABASESETTINGS DIALOGEX 0, 0, 287+0, 301
+IDD_DATABASESETTINGS DIALOGEX 0, 0, 287+10, 301
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Databases",IDC_STATIC,2,0,283+0,300
+    GROUPBOX        "Databases",IDC_STATIC,2,0,283+10,300
     LTEXT           "Databases currently in use:",IDC_STATIC,6,10,
                     200,12
     CONTROL         "",IDC_DATABASES,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,
-					6,22,225+0-1,255
-    PUSHBUTTON      "&New",IDC_NEW,235+0-1,22,45+1,14
-    PUSHBUTTON      "&Edit",IDC_EDIT,235+0-1,40,45+1,14
-    PUSHBUTTON      "&Remove",IDC_REMOVE,235+0-1,58,45+1,14
-    PUSHBUTTON      "E&nable",IDC_ENABLE,235+0-1,78,45+1,14
-    PUSHBUTTON      "D&isable",IDC_DISABLE,235+0-1,96,45+1,14
-    PUSHBUTTON      "&Global U.",IDC_UPDATE,235+0-1,116,45+1,14
-    PUSHBUTTON      "&Up",IDC_UP,235+0-1,136,45+1,14
-    PUSHBUTTON      "&Down",IDC_DOWN,235+0-1,154,45+1,14
-    PUSHBUTTON      "Im&port",IDC_IMPORT,235+0-1,172,45+1,14
-    PUSHBUTTON      "Exp&ort",IDC_EXPORT,235+0-1,190,45+1,14
+					6,22,225+10-1,255
+    PUSHBUTTON      "&New",IDC_NEW,235+10-1,22,45+1,14
+    PUSHBUTTON      "&Edit",IDC_EDIT,235+10-1,40,45+1,14
+    PUSHBUTTON      "&Remove",IDC_REMOVE,235+10-1,58,45+1,14
+    PUSHBUTTON      "E&nable",IDC_ENABLE,235+10-1,78,45+1,14
+    PUSHBUTTON      "D&isable",IDC_DISABLE,235+10-1,96,45+1,14
+    PUSHBUTTON      "&Global U.",IDC_UPDATE,235+10-1,116,45+1,14
+    PUSHBUTTON      "&Up",IDC_UP,235+10-1,136,45+1,14
+    PUSHBUTTON      "&Down",IDC_DOWN,235+10-1,154,45+1,14
+    PUSHBUTTON      "Im&port",IDC_IMPORT,235+10-1,172,45+1,14
+    PUSHBUTTON      "Exp&ort",IDC_EXPORT,235+10-1,190,45+1,14
     LTEXT           "Threads used for updating (only one is recommended):",IDC_STATIC,
-                    6,282,228+0,11
-    EDITTEXT        IDC_THREADS,245+0,280,45,13,ES_AUTOHSCROLL
+                    6,282,228+10,11
+    EDITTEXT        IDC_THREADS,245+10,280,45,13,ES_AUTOHSCROLL
     CONTROL         "",IDC_THREADSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
                     UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS,220,190,10,
                     10
     LTEXT           "Database settings are currently overridden via command line arguments.",IDC_OVERRIDETXT,6,
-                    280,210+0,17
-    PUSHBUTTON      "Re&store",IDC_RESTORE,220+0,282,60,
+                    280,210+10,17
+    PUSHBUTTON      "Re&store",IDC_RESTORE,220+10,282,60,
                     15
 END
 
@@ -558,14 +558,16 @@ BEGIN
     EDITTEXT        IDC_INCLUDEDIRECTORIES,9,48,250+0,13,ES_AUTOHSCROLL
     LTEXT           "Exclude files pattern (e.g., ""*.tmp;*~""):",IDC_STATIC,10,64,248+0,8
     EDITTEXT        IDC_EXCLUDEFILES,9,75,250+0,13,ES_AUTOHSCROLL
-    LTEXT           "Enter directory ('*' and '?' are allowed):",IDC_STATIC,10,91,246+0,8
+    LTEXT           "Enter directory to be excluded and press ""Add Directory"" ('*', '?' allowed):",IDC_STATIC,10,91,246+0,8
     EDITTEXT        IDC_DIRECTORYNAME,9,103,187+0,13,ES_AUTOHSCROLL
     PUSHBUTTON      "&Browse",IDC_BROWSE,203+0,102,55,14
     LTEXT           "Excluded directories:",IDC_STATIC,10,122,111,8
     PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,105+0,120,75,13
     PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,182+0,120,75,13
-    LISTBOX         IDC_DIRECTORIES,9,135,250+0,53,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Choose a drive or directory and give a name which is used in database:",IDC_STATIC,10,210,247+0,8
+    LISTBOX         IDC_DIRECTORIES,9,135,250+0,53-12,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Exclude only the content of directory (directory itself will be included)",IDC_EXCLUDEONLYCONTENT,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,9,177,250+0,11
+   	LTEXT           "Choose a drive or directory and give a name which is used in database:",IDC_STATIC,10,210,247+0,8
     CONTROL         "",IDC_FOLDERS,"SysListView32",LVS_REPORT | LVS_SHAREIMAGELISTS | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_BORDER | WS_TABSTOP,9,220,250+0,63,WS_EX_CLIENTEDGE
     LTEXT           "Path in database:",IDC_PATHINDATABASELABEL,10,287,111,8
     EDITTEXT        IDC_PATHINDATABASE,9,296,197+0,13,ES_AUTOHSCROLL
@@ -590,34 +592,34 @@ IDD_LANGUAGESETTINGS DIALOGEX 0, 0, 287, 301
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Language:",IDC_STATIC,2,0,283+0,298
+    GROUPBOX        "Language:",IDC_STATIC,2,0,283+10,298
     CONTROL         "Use same language with locate.exe and updtdb32.exe",
                     IDC_USEWITHCONSOLEAPPS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,6,13,273+0,11
+                    WS_TABSTOP,6,13,273+10,11
     LTEXT           "Select language:",IDC_STATIC,6,31,
                     273,9
     CONTROL         "",IDC_LANGUAGE,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SHAREIMAGELISTS | 
-                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,6,44,273+0,238
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,6,44,273+10,238
     LTEXT           "Application needs to be restarted to take this effect",IDC_STATIC,6,286,
-                    273+0,10
+                    273+10,10
 END
 
-IDD_KEYBOARDSHORTCUTS DIALOGEX 0, 0, 287+0, 301
+IDD_KEYBOARDSHORTCUTS DIALOGEX 0, 0, 287+10, 301
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
 FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Shortcuts:",IDC_STATIC,2,0,283+0,153
+    GROUPBOX        "Shortcuts:",IDC_STATIC,2,0,283+10,153
     LTEXT           "Assigned:",IDC_STATIC,8,13,59,10
-    PUSHBUTTON      "New",IDC_NEW,69+0,11,41,12
-    PUSHBUTTON      "Remove",IDC_REMOVE,115+0,11,41,12
-    PUSHBUTTON      "Up",IDC_UP,161+0,11,35,12
-    PUSHBUTTON      "Down",IDC_DOWN,199+0,11,35,12
-	PUSHBUTTON      "Reset",IDC_RESET,238+0,11,41,12
+    PUSHBUTTON      "New",IDC_NEW,69+10,11,41,12
+    PUSHBUTTON      "Remove",IDC_REMOVE,115+10,11,41,12
+    PUSHBUTTON      "Up",IDC_UP,161+10,11,35,12
+    PUSHBUTTON      "Down",IDC_DOWN,199+10,11,35,12
+	PUSHBUTTON      "Reset",IDC_RESET,238+10,11,41,12
     CONTROL         "",IDC_KEYLIST,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SHAREIMAGELISTS | 
-                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,25,272+0,122
-    GROUPBOX        "Shortcut:",IDC_STATICSHORTCUT,2,155,283+0,79
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,25,272+10,122
+    GROUPBOX        "Shortcut:",IDC_STATICSHORTCUT,2,155,283+10,79
     RADIOBUTTON     "Key:",IDC_HOTKEYRADIO,8,165,59+0,12
     CONTROL         "",IDC_SHORTCUTKEY,"msctls_hotkey32",WS_BORDER | 
                     WS_TABSTOP,69+0,166,129,14
@@ -639,42 +641,42 @@ BEGIN
                     LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | 
                     WS_BORDER | WS_TABSTOP,69+0,203,147+0,26,WS_EX_STATICEDGE
     PUSHBUTTON      "Advanced",IDC_ADVANCED,220+0+0,205,59,13
-	GROUPBOX        "",IDC_STATICACTIONS,2,235,283+0,65
+	GROUPBOX        "",IDC_STATICACTIONS,2,235,283+10,65
     CONTROL         "",IDC_ACTIONTOOLBAR,"ToolbarWindow32",WS_CLIPSIBLINGS | 
-                    0x834d,175+0,243,106,13
+                    0x834d,175+10,243,106,13
     LTEXT           "Action:",IDC_STATICACTION,8,261,27,9
     COMBOBOX        IDC_ACTION,35,259,76+1,108,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "SubAction:",IDC_STATICSUBACTION,115+1,261,42,9
     COMBOBOX        IDC_SUBACTION,158+1,259,
-					122+0-1,108,CBS_DROPDOWNLIST | 
+					122+10-1,108,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
 	LTEXT           "Operation:",IDC_STATICVERB,115+1,281,41,9
     COMBOBOX        IDC_VERB,158+1,279,
-					122+0-1,119,CBS_DROPDOWN | WS_VSCROLL | 
+					122+10-1,119,CBS_DROPDOWN | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "Wnd:",IDC_STATICWINDOW,8,281,22,8
     EDITTEXT        IDC_WINDOW,30,279,42,12,ES_AUTOHSCROLL
     LTEXT           "Msg:",IDC_STATICMESSAGE,76,281,16,8
     EDITTEXT        IDC_MESSAGE,95,279,33,12,ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "WParam:",IDC_STATICWPARAM,131,281,30,8
+    LTEXT           "wParam:",IDC_STATICWPARAM,131,281,30,8
     EDITTEXT        IDC_WPARAM,165,279,39,12,ES_AUTOHSCROLL
-    LTEXT           "LParam:",IDC_STATICLPARAM,206,281,27,8
+    LTEXT           "lParam:",IDC_STATICLPARAM,206,281,27,8
     EDITTEXT        IDC_LPARAM,236,279,42,12,ES_AUTOHSCROLL
-	LTEXT           "Command (file path=%d, parent=%p):",IDC_STATICCOMMAND,8,281,149,8
+	LTEXT           "Command (see help for parameters):",IDC_STATICCOMMAND,8,281,149,8
     EDITTEXT        IDC_COMMAND,158+1,279,
-					122+0-1,12,ES_AUTOHSCROLL
+					122+10-1,12,ES_AUTOHSCROLL
 	LTEXT           "Value:",IDC_STATICVALUE,115+1,281,42,8
     EDITTEXT        IDC_VALUE,158+1,279,
-					107+0-1,12,ES_AUTOHSCROLL
-	PUSHBUTTON      "?",IDC_VALUEHELPTEXT,268+0,278,12,12
+					107+10-1,12,ES_AUTOHSCROLL
+	PUSHBUTTON      "?",IDC_VALUEHELPTEXT,268+10,278,12,12
 	LTEXT           "File:",IDC_STATICWHICHFILE,115+1,281,41,9
     COMBOBOX        IDC_WHICHFILE,158+1,279,
-					122+0-1,119,CBS_DROPDOWNLIST | WS_VSCROLL | 
+					122+10-1,119,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "Item:",IDC_STATICITEM,115+1,281,41,9
     EDITTEXT        IDC_ITEM,158+1,279,
-					122+0-1,12,ES_AUTOHSCROLL|ES_NUMBER
+					122+10-1,12,ES_AUTOHSCROLL|ES_NUMBER
 	CONTROL         "Spin1",IDC_ITEMSPIN,"msctls_updown32",
                     UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS,
 					258,279,22,12	
@@ -770,7 +772,7 @@ BEGIN
                     WS_VSCROLL | WS_TABSTOP
 	LTEXT           "&Operation:",IDC_STATICVERB,140,292,32,8
     COMBOBOX        IDC_VERB,176,290,95+15,100,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Command (path=%d, parent=%p):",IDC_STATICCOMMAND,9,292,130,8
+    LTEXT           "Command (see help for parameters):",IDC_STATICCOMMAND,9,292,130,8
     EDITTEXT        IDC_COMMAND,140,290,134+15,12,ES_AUTOHSCROLL
     LTEXT           "Item:",IDC_STATICITEM,9,292,130,8
     EDITTEXT        IDC_ITEM,140,290,134+15,12,ES_AUTOHSCROLL
@@ -851,14 +853,14 @@ BEGIN
     PUSHBUTTON      "Cancel",IDC_CANCEL,103,67,50,14
 END
 
-IDD_ADVANCEDSETTINGS DIALOGEX 0, 0, 287+0, 301
+IDD_ADVANCEDSETTINGS DIALOGEX 0, 0, 287+10, 301
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP
 FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Advanced settings:",-1,2,0,283+0,298
+    GROUPBOX        "Advanced settings:",-1,2,0,283+10,298
     CONTROL         "",IDC_SETTINGS,"SysTreeView32",TVS_LINESATROOT | 
 					TVS_DISABLEDRAGDROP | WS_BORDER | WS_TABSTOP,
-					6,12,273+0,280
+					6,12,273+10,280
 END
 
 IDD_PRESETNAME DIALOGEX 100, 100, 196, 68
@@ -1171,8 +1173,6 @@ END
 // HELPTEXT
 //
 
-IDR_SEARCHFROMFILE      HELPTEXT                "helptext.txt"
-IDR_CHANGEVALUEHELP     HELPTEXT                "helptext2.txt"
 IDR_LOCATEHELP			HELPTEXT                "usage_loc.txt"
 IDR_UPDATEDBHELP		HELPTEXT                "usage_updt.txt"
 
@@ -1242,12 +1242,12 @@ BEGIN
 	IDS_UPDATINGTHREAD		"thread"
 	IDS_UPDATINGENDED		"Updating finished:"
 	IDS_UPDATINGUNAVAILABLEROOT "unavailable root"
-	IDS_UPDATINGUPDATING	"database "
+	IDS_UPDATINGUPDATING	"database %s"
 	IDS_UPDATINGDELAYWRITING "delay database writing"
 	IDS_UPDATINGCONFIRMATION  "Do you want to update your databases?"
 	IDS_NOTIFYINITIALIZING  "initializing"
 	IDS_NOTIFYFINISHING		"finishing"
-	IDS_UPDATINGSCANNINGROOT "scanning "
+	IDS_UPDATINGSCANNINGROOT "scanning %s"
     IDS_LOCATINGSUCCESS     "Locating finished"
 	IDS_LOCATINGLIMITREACHED "Results limit reached"
     IDS_LOCATING            "Locating files..."
@@ -1320,7 +1320,7 @@ BEGIN
     IDS_SETTINGS            "Settings:"
     IDS_GENERALSETTINGS     "General"
     IDS_DATABASESETTINGS    "Databases"
-    IDS_AUTOUPDATESETTINGS  "Auto update"
+    IDS_AUTOUPDATESETTINGS  "Scheduled updates"
     IDS_ADVANCEDSETTINGS    "Advanced"
     IDS_LANGUAGESETTINGS    "Language"
     IDS_SHORTCUTSETTINGS    "Keyboard shortcuts"
@@ -1415,7 +1415,7 @@ BEGIN
     IDS_ADVANCED            "Advanced"
     IDS_SIZEDATE            "Size and Date"
     IDS_BYEXTENSION         "(by extension)"
-    IDS_BUILDINTYPES        "Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps|0|Web Files|html htm asp shtm css|6|Document files|doc dot xls wpd rtf pdf|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h inl rc pas java|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 wma voc aif aiff cda ogg mpc ape flac|3|Video files|mpeg mpg avi mov ogm rm rmvb|4||"
+    IDS_BUILDINTYPES        "Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps wmf odg otg|0|Web Files|html htm asp shtm shtm css|6|Document files|doc docx dot xls xlw ppt pps wpd rtf pdf odt ods odp sxw sxc stw stc sxi sti|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h hxx hpp inl rc pas java pl py|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 mp2 wma voc aif aiff cda ogg mpa mpc ape flac aac ac3 m4a|3|Video files|mpeg mpg avi mov ogm rm rmvb wmv asf m4v mkv vob ts|4||"
     IDS_FILENAMESONLY       "File names only"
     IDS_FILEANDFOLDERNAMES  "File and folder names"
     IDS_FOLDERNAMESONLY     "Folder names only"
@@ -1648,7 +1648,7 @@ BEGIN
 	IDS_ADVSETLOCATEINFOLFERS		"""Locate"" item to folders"
 	IDS_ADVSETUPDATEINMYCOMPUTER	"""Update Database"" item to My Computer"
 	IDS_ADVSETSYSTEM				"System"
-	IDS_ADVSETRUNATSYSTEMSTARTUP	"Run Locate at system startup"
+	IDS_ADVSETRUNATSYSTEMSTARTUP	"Run Locate on system startup"
 	IDS_ADVSETCHANGE				"&Change"
 	IDS_ADVSETSYSTEMDEFAULT			"(system default)"
 	IDS_ADVSETUPDATEPROCESS			"Update process"
@@ -1678,7 +1678,7 @@ BEGIN
 	IDS_ADVSETTOOLTIPNEVERONTOP		"never"
 	IDS_ADVSETUSECUSTOMFONTINRESULTLIST "Use custom font"
 	IDS_ADVSETRESULTLISTFONT		"Font:"
-	IDS_ADVSETNOASTERISKATENDIFEXTENSIONGIVEN "If extension is given, file name should match to the extension"
+	IDS_ADVSETNOASTERISKATENDIFEXTENSIONGIVEN "If extension is given (term contains '.'), files with the extension are only found"
 	IDS_ADVSETANDMODEALWAYS			"Use AND mode as a default"
 	IDS_ADVSETCONFIRMATIONFORUPDATEDATABASES "Ask confirmation when ""Update databases"" is chosen"
 END
@@ -1765,7 +1765,7 @@ BEGIN
 	IDS_ADVSETTHUMBSWITHMEDIUMICONS "Show thumbnails also in ""Medium Icons"" mode"
 	IDS_ADVSETLARGEICONSIZE			"Icon size in ""Large icons"" mode:"
 	IDS_ADVSETEXTRALARGEICONSIZE	"Icon size in ""Extra Large icons"" mode:"
-	IDS_ADVSETSIMPLEFILEMENU		"Simple File menu (no shell context menu items)"
+	IDS_ADVSETSIMPLEFILEMENU		"Simple File menu (no special shell items for files)"
 
 END
 
@@ -1821,7 +1821,7 @@ STRINGTABLE
 BEGIN
 	IDS_ACTIONCATACTIVATECONTROL		"Activate Control"
 	IDS_ACTIONCATACTIVATETAB			"Activate Tab"
-	IDS_ACTIONCATMENUCOMMAND			"Menu Command"
+	IDS_ACTIONCATMENUCOMMAND			"Menu commands"
 	IDS_ACTIONCATSHOWHIDEDIALOG			"Show / Hide dialog"
 	IDS_ACTIONCATTRESULTLIST			"Results list"
 	IDS_ACTIONCATMISC					"Miscellaneous"
@@ -2046,7 +2046,7 @@ BEGIN
 	IDS_SECOND					"'nd"
 	IDS_THIRD					"'rd"
 	IDS_NTH						"'th"
-    IDS_DOCUMENTFOLDERS			"Document Folders"
+   	IDS_DOCUMENTFOLDERS			"Document Folders"
     IDS_GETFOLDER				"Get Folder:"
 	IDS_EVERYWERE				"Everywhere"
 	IDS_ROOTS					"Directories included in databases:"

@@ -1043,7 +1043,7 @@ void CSettingsProperties::CGeneralSettingsPage::OnHelp(LPHELPINFO lphi)
 		{ IDC_MATCHCASE,"sg_matchcase" }
 	};
 	
-	if (CLocateApp::OpenHelp(*this,id,sizeof(id)/sizeof(CLocateApp::HelpID),"settings_general.htm",lphi))
+	if (CLocateApp::OpenHelp(*this,"settings_general.htm",lphi,id,sizeof(id)/sizeof(CLocateApp::HelpID)))
 		return;
 
 	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_GENERAL)==NULL)
@@ -2287,7 +2287,7 @@ void CSettingsProperties::CDatabasesSettingsPage::OnHelp(LPHELPINFO lphi)
 		{ IDC_RESTORE,"sd_restore" }
 	};
 	
-	if (CLocateApp::OpenHelp(*this,id,sizeof(id)/sizeof(CLocateApp::HelpID),"settings_databases.htm",lphi))
+	if (CLocateApp::OpenHelp(*this,"settings_databases.htm",lphi,id,sizeof(id)/sizeof(CLocateApp::HelpID)))
 		return;
 
 	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_DATABASES)==NULL)
@@ -3425,12 +3425,12 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 
 	CheckDlgButton(IDC_ENABLE,m_pDatabase->IsEnabled());
 	CheckDlgButton(IDC_GLOBALUPDATE,m_pDatabase->IsGloballyUpdated());
-	CheckDlgButton(IDC_STOPIFROOTUNAVAILABLE,m_pDatabase->IsFlagged(CDatabase::flagStopIfRootUnavailable));
-	CheckDlgButton(IDS_SCANSYMLINKSANDJUNCTIONS,m_pDatabase->IsFlagged(CDatabase::flagScanSymLinksAndJunctions));
-	CheckDlgButton(IDC_INCREMENTALUPDATE,m_pDatabase->IsFlagged(CDatabase::flagIncrementalUpdate));
+	CheckDlgButton(IDC_STOPIFROOTUNAVAILABLE,m_pDatabase->IsFlagSet(CDatabase::flagStopIfRootUnavailable));
+	CheckDlgButton(IDS_SCANSYMLINKSANDJUNCTIONS,m_pDatabase->IsFlagSet(CDatabase::flagScanSymLinksAndJunctions));
+	CheckDlgButton(IDC_INCREMENTALUPDATE,m_pDatabase->IsFlagSet(CDatabase::flagIncrementalUpdate));
 	
 	if (IsUnicodeSystem())
-		CheckDlgButton(IDC_UNICODE,!m_pDatabase->IsFlagged(CDatabase::flagAnsiCharset));
+		CheckDlgButton(IDC_UNICODE,!m_pDatabase->IsFlagSet(CDatabase::flagAnsiCharset));
 	else
 		EnableDlgItem(IDC_UNICODE,FALSE);
 
@@ -3552,7 +3552,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnHelp(LPHELP
 			{ IDC_DOWN,"sdd_updown" }
 		};
 		
-		if (CLocateApp::OpenHelp(*this,id,sizeof(id)/sizeof(CLocateApp::HelpID),"settings_databasedlg.htm",lphi))
+		if (CLocateApp::OpenHelp(*this,"settings_databasedlg.htm",lphi,id,sizeof(id)/sizeof(CLocateApp::HelpID)))
 			return;
 	}
 
@@ -4049,7 +4049,9 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAdvanced()
 		m_pDatabase->GetExcludedFiles(),
 		m_pDatabase->GetExcludedDirectories(),
 		IsDlgButtonChecked(IDC_CUSTOMDRIVES)?m_pList:NULL,
-		m_pDatabase->GetRootMaps());
+		m_pDatabase->GetRootMaps(),
+		m_pDatabase->IsFlagSet(CDatabase::flagExcludeContentOfDirsOnly)
+		);
 	
 	if (edd.DoModal(*this))
 	{
@@ -4058,6 +4060,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAdvanced()
 		m_pDatabase->SetExcludedFiles(edd.m_sExcludedFiles);
 		m_pDatabase->SetExcludedDirectories(edd.m_aExcludedDirectories);
 		m_pDatabase->SetRootMapsPtr(alloccopy(edd.m_sRootMaps));
+		m_pDatabase->SetFlag(CDatabase::flagExcludeContentOfDirsOnly,edd.m_bExcludeOnlyContentOfDirectories);
 	}
 }
 
@@ -4458,6 +4461,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 	SetDlgItemText(IDC_INCLUDEFILES,m_sIncludedFiles);
 	SetDlgItemText(IDC_INCLUDEDIRECTORIES,m_sIncludedDirectories);
 	SetDlgItemText(IDC_EXCLUDEFILES,m_sExcludedFiles);
+	CheckDlgButton(IDC_EXCLUDEONLYCONTENT,m_bExcludeOnlyContentOfDirectories);
 
 	// Inserting strings
 	for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
@@ -4916,7 +4920,11 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 	GetDlgItemText(IDC_INCLUDEFILES,m_sIncludedFiles);
 	GetDlgItemText(IDC_INCLUDEDIRECTORIES,m_sIncludedDirectories);
 	GetDlgItemText(IDC_EXCLUDEFILES,m_sExcludedFiles);
-
+	m_bExcludeOnlyContentOfDirectories=IsDlgButtonChecked(IDC_EXCLUDEONLYCONTENT);
+	
+	
+	
+	
 	m_aExcludedDirectories.RemoveAll();
 
 	CListBox Directories(GetDlgItem(IDC_DIRECTORIES));
@@ -6447,6 +6455,71 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 
 void CSettingsProperties::CKeyboardShortcutsPage::OnHelp(LPHELPINFO lphi)
 {
+	if (lphi->iCtrlId==IDC_SUBACTION || lphi->iCtrlId==IDC_VERB ||
+		lphi->iCtrlId==IDC_WINDOW || lphi->iCtrlId==IDC_MESSAGE ||
+		lphi->iCtrlId==IDC_WPARAM || lphi->iCtrlId==IDC_LPARAM ||
+		lphi->iCtrlId==IDC_COMMAND || lphi->iCtrlId==IDC_VALUE ||
+		lphi->iCtrlId==IDC_VALUEHELPTEXT || lphi->iCtrlId==IDC_WHICHFILE ||
+		lphi->iCtrlId==IDC_ITEM || lphi->iCtrlId==IDC_ITEMSPIN)
+	{
+		LPCSTR pPage=NULL;
+		switch (GetSelectedAction())
+		{
+		case CAction::ShowHideDialog:
+			pPage="actions_showhide.htm#ash%d";
+			break;
+		case CAction::ResultListItems:
+			pPage="actions_resultslist.htm#alist%d";
+			break;
+		case CAction::Misc:
+			pPage="actions_misc.htm#amisc%d";
+			break;
+		case CAction::ChangeValue:
+			pPage="actions_changefields.htm";
+			break;
+		case CAction::Help:
+			pPage="actions_help.htm#ahlp%d";
+			break;
+		}
+
+		if (pPage!=NULL)
+		{
+			char szPage[50];
+			StringCbPrintf(szPage,50,pPage,m_SubActionCombo.GetCurSel()+1);
+			if (CLocateApp::OpenHelp(*this,szPage))
+				return;		
+		}				
+	}
+
+	CLocateApp::HelpID id[]= {
+		{ IDC_KEYLIST,"sk_list" },
+		{ IDC_NEW,"sk_new" },
+		{ IDC_REMOVE,"sk_remove" },
+		{ IDC_UP,"sk_up" },
+		{ IDC_DOWN,"sk_down" },
+		{ IDC_RESET,"sk_reset" },
+		{ IDC_STATICSHORTCUT,"sk_shortcutgroup" },
+		{ IDC_HOTKEYRADIO,"sk_key" },
+		{ IDC_SHORTCUTKEY,"sk_key" },
+		{ IDC_FROMMNEMONIC,"sk_frommnemonic" },
+		{ IDC_CODERADIO,"sk_virtualkey" },
+		{ IDC_CODE,"sk_virtualkey" },
+		{ IDC_MODCTRL,"sk_modifiers" },
+		{ IDC_MODALT,"sk_modifiers" },
+		{ IDC_MODSHIFT,"sk_modifiers" },
+		{ IDC_MODWIN,"sk_modifiers" },
+		{ IDC_STATICWHENPRESSED,"sk_whenpressed" },
+		{ IDC_WHENPRESSED,"sk_whenpressed" },
+		{ IDC_ADVANCED,"sk_advanced" },
+		{ IDC_STATICACTIONS,"sk_actionsgroup" },
+		{ IDC_ACTIONTOOLBAR,"sk_actionstoolbar" },
+		{ IDC_ACTION,"sk_action" },
+		{ IDC_SUBACTION,"sk_action" }
+	};
+
+	if (CLocateApp::OpenHelp(*this,"settings_shortcuts.htm",lphi,id,sizeof(id)/sizeof(CLocateApp::HelpID)))
+		return;
+
 	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_SHORTCUTS)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
@@ -7334,20 +7407,17 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnCommand(WORD wID,WORD wNotif
 		break;
 	case IDC_VALUEHELPTEXT:
 		{
-			HRSRC hRc=FindResource(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDR_CHANGEVALUEHELP),"HELPTEXT");
-			HGLOBAL hGlobal=LoadResource(GetLanguageSpecificResourceHandle(),hRc);
-			LPCSTR pStr=(LPCSTR)LockResource(hGlobal);
-
-			// Counting length
-			int len;
-			for (len=0;pStr[len]!='\0';len++)
-			{
-				if (pStr[len]=='E' && pStr[len+1]=='O' && pStr[len+2]=='F')
-					break;
+			CStringW sHelpPage;
+			if (GetApp()->m_szHelpFile!=NULL)
+			{	
+				// Form path to help file
+				CStringW sHelpFile=GetApp()->GetExeNameW();
+				sHelpFile.FreeExtra(sHelpFile.FindLast(L'\\')+1);
+				sHelpFile << GetApp()->m_szHelpFile << L"::/actions_changefields.htm";
+				
+				HtmlHelpW(*this,sHelpFile,HH_DISPLAY_TOPIC,NULL);
+			
 			}
-
-
-			MessageBox(CString(pStr,len),ID2A(IDS_HELPINFO),MB_OK|MB_ICONINFORMATION);
 			break;
 		}
 	}

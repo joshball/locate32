@@ -3503,24 +3503,9 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 	switch (wID)
 	{
 	case IDC_TEXTHELP:
-		{
-			HRSRC hRc=FindResource(GetLanguageSpecificResourceHandle(),MAKEINTRESOURCE(IDR_SEARCHFROMFILE),"HELPTEXT");
-			HGLOBAL hGlobal=LoadResource(GetLanguageSpecificResourceHandle(),hRc);
-			LPCSTR pStr=(LPCSTR)LockResource(hGlobal);
-
-			// Counting length
-			int len;
-			for (len=0;pStr[len]!='\0';len++)
-			{
-				if (pStr[len]=='E' && pStr[len+1]=='O' && pStr[len+2]=='F')
-					break;
-			}
-
-
-			MessageBox(CString(pStr,len),ID2A(IDS_HELPINFO),MB_OK|MB_ICONINFORMATION);
-			
-			break;
-		}
+		// Menu item
+		HtmlHelp(HH_HELP_CONTEXT,HELP_ISSUE_DATASEARCH);
+		break;
 	case IDC_CONTAINDATACHECK:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
 			CheckDlgButton(IDC_CONTAINDATACHECK,!IsDlgButtonChecked(IDC_CONTAINDATACHECK));
@@ -3826,7 +3811,7 @@ LRESULT CALLBACK CLocateDlg::CAdvancedDlg::TypeWindowProc(HWND hWnd,UINT uMsg,
 
 BOOL CLocateDlg::CAdvancedDlg::IsChanged()
 {
-	DWORD dwDefaultCheck=0,dwDefaultMatchWholeName=0,dwDefaultReplaceSpaces=0,dwDefaultUseWholePath=0;
+	DWORD dwDefaultCheck=1,dwDefaultMatchWholeName=0,dwDefaultReplaceSpaces=0,dwDefaultUseWholePath=0;
 
 	CRegKey2 RegKey;
 	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)

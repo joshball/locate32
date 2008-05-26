@@ -58,6 +58,10 @@
 			<param name="Name" value="Advanced tab">
 			<param name="Local" value="tab_advanced.htm">
 			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Select Details">
+			<param name="Local" value="dialog_selectdetails.htm">
+			</OBJECT>
 		
 	</UL>
 	

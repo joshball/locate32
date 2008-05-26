@@ -312,7 +312,7 @@ $MENUPOPUP_CONTEXTMENU_MD5SUMSFORSAMESIZEFILES$</a> commands in
 <a href="menu_special.htm">$MENUPOPUP_CONTEXTMENU_SPECIAL@M$ menu</a>. </p>
 
 <p><b><A NAME="sa_exprenaming"></A>$STRADVANCEDSETTINGS_ALLOWINPLACERENAMING@C$</b>:
-If this option is enabled, the files can be renamed using the results list like in Windows 
+If this option is enabled, the files can be renamed in the results list just like in Windows 
 Explorer. If disabled, a dialog for a new name is shown. </p>
 
 <p><b><A NAME="sa_headerinallmodes"></A>$STRADVANCEDSETTINGS_HEADERINALLVIEWMODES@C$</b>:
@@ -661,11 +661,11 @@ instead of this option.
 <p><b><A NAME="sa_simplefilemenu"></A>$STRADVANCEDSETTINGS_SIMPLEFILEMENU@C$</b>:
 If this option is enabled, File menu in the main dialog does not show shell context menu
 items associated for the selected file type. This significantly reduces the time to 
-show menu. 
+show menu. <b>Note</b>: this option has only effect on File menu. If you want to use a 
+simple form for the context menu which appears when you right-click a file in the 
+results list, go to <a href="hid_view_selectdetails.htm">Select Details</a>, select "Name" 
+and  choose the action "Open context menu (simple)" for "right button click". 
 </p>
-
-
-
 
 </div> <!-- advanced_settings_level1@sa_misc-->
 

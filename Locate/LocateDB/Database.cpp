@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database updater v3.1.8.4270              */
+   database updater v3.1.8.5260              */
 
 #include <HFCLib.h>
 #include "Locatedb.h"

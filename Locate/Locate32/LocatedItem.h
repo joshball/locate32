@@ -147,6 +147,7 @@ public:
 	DWORD GetFileSizeHi() const { return wFileSizeHi; }
 	ULONGLONG GetFileSize() const { return ((ULONGLONG)wFileSizeHi)<<32|(ULONGLONG)dwFileSize; }
 	LPWSTR GetExtension() const { return szName+bExtensionPos; }
+	BYTE GetExtensionPos() const { return bExtensionPos; }
 	DWORD GetExtensionLength() const { return bNameLength-bExtensionPos; }
 
 	BOOL GetImageDimensions(SIZE& dim) const;

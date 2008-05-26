@@ -114,7 +114,40 @@ BOOL CSelectColumnsDlg::OnInitDialog(HWND hwndFocus)
 
 void CSelectColumnsDlg::OnHelp(LPHELPINFO lphi)
 {
-	if (HtmlHelp(HH_HELP_CONTEXT,lphi->iCtrlId)==NULL)
+	if (m_ActionCombo.GetCurSel()>0 &&
+		(lphi->iCtrlId==IDC_ACTION || lphi->iCtrlId==IDC_VERB ||
+		lphi->iCtrlId==IDC_COMMAND || lphi->iCtrlId==IDC_VALUE ||
+		lphi->iCtrlId==IDC_WHICHFILE ||
+		lphi->iCtrlId==IDC_ITEM || lphi->iCtrlId==IDC_ITEMSPIN))
+	{
+		char szPage[50];
+		StringCbPrintf(szPage,50,"actions_resultslist.htm#alist%d",m_ActionCombo.GetCurSel());
+		if (CLocateApp::OpenHelp(*this,szPage))
+			return;		
+		
+	}
+
+	CLocateApp::HelpID id[]= {
+		{ IDC_COLUMNS,"sdd_list"},
+		{ IDC_UP,"sdd_move" },
+		{ IDC_DOWN,"sdd_move" },
+		{ IDC_SHOW,"sdd_show" },
+		{ IDC_HIDE,"sdd_hide" },
+		{ IDC_RESET,"sdd_reset" },
+		{ IDC_RESETACTIONS,"sdd_resetactions" },
+		{ IDC_WIDTH,"sdd_width" },
+		{ IDC_WIDTHSPIN,"sdd_width" },
+		{ IDC_LEFT,"sdd_left" },
+		{ IDC_RIGHT,"sdd_right" },
+		{ IDC_CENTER,"sdd_center" },
+		{ IDC_WHEN,"sdd_when" },
+		{ IDC_ACTION,"sdd_action" }		
+	};
+
+	if (CLocateApp::OpenHelp(*this,"dialog_selectdetails.htm",lphi,id,sizeof(id)/sizeof(CLocateApp::HelpID)))
+		return;
+
+	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_SHORTCUTS)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
 

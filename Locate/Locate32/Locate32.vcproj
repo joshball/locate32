@@ -1179,7 +1179,31 @@
 			Name="HTML Help Topics"
 			>
 			<File
+				RelativePath="..\hlp\actions_changefields.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\actions_help.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\actions_misc.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\actions_resultslist.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\actions_showhide.src"
+				>
+			</File>
+			<File
 				RelativePath="..\hlp\dialog_locate.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\dialog_selectdetails.src"
 				>
 			</File>
 			<File

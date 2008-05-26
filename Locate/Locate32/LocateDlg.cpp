@@ -2832,7 +2832,7 @@ void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 		return;
 	
 	int nIndexToPercent=nIndexToPercent=(int)FirstCharIndex(szCommand,L'%');
-	if (nIndexToPercent==-1 || (szCommand[nIndexToPercent+1]!=L'd' && szCommand[nIndexToPercent+1]!=L'p'))
+	if (nIndexToPercent==-1)
 	{
 		// Just execute command
 		PROCESS_INFORMATION pi;
@@ -2885,15 +2885,37 @@ void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 			{
 				int nLen;
 				LPCWSTR pPath;
-                if (pCommand[nIndex+1]==L'd')
+                switch (pCommand[nIndex+1])
 				{
+				case L'd':
+				case L'D':
 					nLen=(int)pItems[i]->GetPathLen();
 					pPath=pItems[i]->GetPath();
-				}
-				else 
-				{
+					break;
+				case L'p':
+				case L'P':
 					pPath=pItems[i]->GetParent();
 					nLen=(int)istrlenw(pPath);					
+					break;
+				case L'f':
+				case L'F':
+					pPath=pItems[i]->GetName();
+					nLen=(int)pItems[i]->GetNameLen();
+					break;
+				case L'n':
+				case L'N':
+					pPath=pItems[i]->GetName();
+					nLen=pItems[i]->GetExtensionLength()>0?(int)pItems[i]->GetExtensionPos()-1:pItems[i]->GetNameLen();
+					break;
+				case L'e':
+				case L'E':
+					pPath=pItems[i]->GetExtension();
+					nLen=(int)pItems[i]->GetExtensionLength();
+					break;
+				default:
+					pPath=pCommand+nIndex+1;
+					nLen=1;
+					break;
 				}
 
 
@@ -2909,8 +2931,10 @@ void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 					delete[] pCommand;
 
 				pCommand=pNewCommand;
+
+				nIndex=NextCharIndex(pCommand,L'%',nIndex+nLen);
 			}
-			while ((nIndex=(int)FirstCharIndex(pCommand,L'%'))!=-1 && (pCommand[nIndex+1]==L'd' || pCommand[nIndex+1]==L'p'));
+			while (nIndex!=-1);
 	
 			// Execute command
 			PROCESS_INFORMATION pi;

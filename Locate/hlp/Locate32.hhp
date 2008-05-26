@@ -68,6 +68,7 @@ hid_special_computeMD5sumsforequalsizefiles.htm
 hid_special_removedeletedfiles.htm
 
 dialog_locate.htm
+dialog_selectdetails.htm
 
 tab_name.htm
 tab_sizedate.htm
@@ -99,8 +100,20 @@ settings_databaseadv.htm
 settings_autoupdatedlg.htm
 settings_shortcutsadvanced.htm
 
+actions_changefields.htm
+actions_help.htm
+actions_misc.htm
+actions_resultslist.htm
+actions_showhide.htm
+
 main_index.htm
 
+images/sk_addaction.gif
+images/sk_next.gif
+images/sk_prev.gif	
+images/sk_removeaction.gif
+images/sk_swapwprev.gif
+images/sk_swapwnext.gif
 
 [ALIAS]
 HIDR_MAINFRAME = main_index.htm
@@ -165,6 +178,7 @@ hid_special_computeMD5sumsforequalsizefiles = hid_special_computeMD5sumsforequal
 hid_special_removedeletedfiles		= hid_special_removedeletedfiles.htm
 
 dialog_locate						= dialog_locate.htm
+dialog_selectdetails				= dialog_selectdetails.htm
 tab_name							= tab_name.htm
 tab_sizedate						= tab_sizedate.htm
 tab_advanced						= tab_advanced.htm
@@ -192,6 +206,12 @@ settings_databasedlg				= settings_databasedlg.htm
 settings_databaseadv				= settings_databaseadv.htm
 settings_autoupdatedlg				= settings_autoupdatedlg.htm
 settings_shortcutsadvanced			= settings_shortcutsadvanced.htm
+
+actions_changefields				= actions_changefields.htm
+actions_help						= actions_help.htm
+actions_misc						= actions_misc.htm
+actions_resultslist					= actions_resultslist.htm
+actions_showhide					= actions_showhide.htm
 
 IDC_TAB								= dialog_locate.htm
 IDC_FRAME							= dialog_locate.htm
@@ -265,6 +285,7 @@ HELP_SETTINGS_AUTOUPDATEDLG			= settings_autoupdatedlg.htm
 HELP_SETTINGS_SHORTCUTADVANCED		= settings_shortcutsadvanced.htm
 HELP_SETTINGS_DATABASEADVANCED		= settings_databaseadv.htm
 
+HELP_ISSUE_DATASEARCH				= issue_datasearch.htm
 
 HID_UPDATEMENU_ITEM0				= hid_file_updatedatabase.htm
 HID_UPDATEMENU_ITEM1				= hid_file_updatedatabase.htm

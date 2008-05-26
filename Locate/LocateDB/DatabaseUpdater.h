@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database updater v3.1.8.4270              */
+   database updater v3.1.8.5260              */
 
 #if !defined(DATABASEUPDATER_H)
 #define DATABASEUPDATER_H
@@ -50,8 +50,8 @@ public:
 	class CRootDirectory
 	{
 	private:
-		CRootDirectory(LPCWSTR szPath,LPCWSTR szPathInDb,int iPathInDbLen,BOOL bScanJunctions);
-		CRootDirectory(LPCWSTR szPath,int iPathLen,LPCWSTR szPathInDb,int iPathInDbLen,BOOL bScanJunctions);
+		CRootDirectory(LPCWSTR szPath,LPCWSTR szPathInDb,int iPathInDbLen,BYTE bFlags);
+		CRootDirectory(LPCWSTR szPath,int iPathLen,LPCWSTR szPathInDb,int iPathInDbLen,BYTE bFlags);
 		
 		~CRootDirectory();
 	
@@ -135,7 +135,8 @@ public:
 			LPWSTR* m_aExcludeFilesPatternsW; 
 		};
 
-		BOOL m_bScanJunctions;
+		// Flags are the same as in DBArchive
+		BYTE m_bFlags;
 
 		friend CDatabaseUpdater;
 		friend DBArchive;
@@ -160,7 +161,8 @@ public:
 			StopIfUnuavailable = 0x1, // Stops updating if root is unavailable
 			IncrementalUpdate = 0x2, // Incremental update
 			Unicode = 0x4,
-			ScanJunctions = 0x8 // Scan directories which are junctions and symlinks
+			ScanJunctions = 0x8, // Scan directories which are junctions and symlinks,
+			ExcludeOnlyContentOfDirs = 0x10 // Exludes the content of directories, but includes the directory itself
 		};
 
 		BOOL IsFlagged(DBFlags flag);
@@ -210,6 +212,9 @@ public:
 			LPSTR* m_aExcludeFilesPatternsA; 
 			LPWSTR* m_aExcludeFilesPatternsW; 
 		};
+
+
+		friend CRootDirectory;
 	};
 
 protected:
@@ -457,11 +462,11 @@ inline DWORD CDatabaseUpdater::CRootDirectory::_FindGetFileSizeHi(FIND_DATAW* fd
 }
 
 inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,LPCWSTR szPathInDb,
-														int iPathInDbLen,BOOL bScanJunctions)
+														int iPathInDbLen,BYTE bFlags)
 :	m_Path(szPath),m_dwFiles(0),m_dwDirectories(0),
 	m_pFirstBuffer(NULL),m_aIncludeFilesPatternsA(NULL),
 	m_aIncludeDirectoriesPatternsA(NULL),m_aExcludeFilesPatternsA(NULL),
-	m_bScanJunctions(bScanJunctions)
+	m_bFlags(bFlags)
 {
 	if (szPathInDb!=NULL)
 		m_PathInDatabase.Copy(szPathInDb,iPathInDbLen);
@@ -471,11 +476,11 @@ inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,LPCWSTR s
 
 inline CDatabaseUpdater::CRootDirectory::CRootDirectory(LPCWSTR szPath,int iLength,
 														LPCWSTR szPathInDb,int iPathInDbLen,
-														BOOL bScanJunctions)
+														BYTE bFlags)
 :	m_Path(szPath,iLength),m_dwFiles(0),m_dwDirectories(0),
 	m_pFirstBuffer(NULL),m_aIncludeFilesPatternsA(NULL),
 	m_aIncludeDirectoriesPatternsA(NULL),m_aExcludeFilesPatternsA(NULL),
-	m_bScanJunctions(bScanJunctions)
+	m_bFlags(bFlags)
 {
 	if (szPathInDb!=NULL)
 		m_PathInDatabase.Copy(szPathInDb,iPathInDbLen);

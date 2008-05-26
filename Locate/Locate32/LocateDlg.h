@@ -131,7 +131,7 @@ public:
 		efMatchWhileNameIfAsterisks = 0x00000040,
 		efAsteriskAtEndEvenIfExtensionExists = 0x00000080,
 		efAndModeAlways = 0x00000100,
-		efLocateProcessDefaults = efEnableLogicalOperations|efAllowSpacesAsSeparators,
+		efLocateProcessDefaults = efEnableLogicalOperations|efAllowSpacesAsSeparators|efAsteriskAtEndEvenIfExtensionExists,
 		efLocateProcessSave = 0x000001F0,
 
 		// Locate dialog
@@ -140,6 +140,7 @@ public:
 		efLocateDialogSave = 0,
 		
 		// List view (continued)
+		efLVIgnoreListClicks = 0x02000000,
 		efLVDontShowDeletedFiles = 0x10000000,
 		efLVNoUpdateWhileSorting = 0x20000000,
 		efLVRenamingActivated = 0x40000000,

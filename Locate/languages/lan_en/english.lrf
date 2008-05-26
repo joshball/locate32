@@ -31,7 +31,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2008 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.1 beta build 8.4270
+FILEVERSION=3.1 beta build 8.5260
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -196,7 +196,7 @@ STRABOUT_SYSTEMINFO_PHYSMEM=\nPhysical memory: %d KB Free: %d KB
 ###########################
 # Settings dialogs
 STRSETTINGS_CAPTION=Settings:
-DLGSETTINGS_PROPORTYPAGEEXTRAWIDTH=0
+DLGSETTINGS_PROPORTYPAGEEXTRAWIDTH=10
 
 # General page
 STRGENERALSETTINGS_TABCAPTION=General
@@ -240,7 +240,7 @@ STRADVANCEDSETTINGS_SPACEISSEPARATOR=Use space as a separator for searches
 STRADVANCEDSETTINGS_ENABLELOGICALOPERATIONS=Allow logical operations (+ and -) for searches
 STRADVANCEDSETTINGS_ANDMODEALWAYS=Use AND mode as a default
 STRADVANCEDSETTINGS_MATCHWHOLENAMEIFASTERISKS=If asterisks given, search as if "Match whole name" is enabled
-STRADVANCEDSETTINGS_NOASTERISKTOTAILIFEXTENSIONGIVEN=If extension is given, file name should match to the extension
+STRADVANCEDSETTINGS_NOASTERISKTOTAILIFEXTENSIONGIVEN=If extension is given (term contains '.'), files with the extension are only found
 STRADVANCEDSETTINGS_ISENABLE=Search as you type
 STRADVANCEDSETTINGS_ISLIMIT=Limit the number of results (0 = no limit):
 STRADVANCEDSETTINGS_ISDELAY=Delay before searching (ms):
@@ -366,10 +366,10 @@ STRADVANCEDSETTINGS_SHOWNONCRITICALERRORS=Show non-critical errors (e.g., path i
 STRADVANCEDSETTINGS_CONFIRMATIONFORUPDATEDATABASES=Ask confirmation when "Update databases" is chosen
 STRADVANCEDSETTINGS_ICONSNOFILEACCESS=Avoid to access files when reading icons 
 STRADVANCEDSETTINGS_USEDEFAULTDIRECTORYICON=Use default icons for directories (use with slow network drives)
-STRADVANCEDSETTINGS_SIMPLEFILEMENU=Simple File menu (no shell context menu items)
+STRADVANCEDSETTINGS_SIMPLEFILEMENU=Simple File menu (no special shell items for files)
 
 STRADVANCEDSETTINGS_SYSTEM=System
-STRADVANCEDSETTINGS_RUNATSYSTEMSTARTUP=Run Locate at system startup
+STRADVANCEDSETTINGS_RUNATSYSTEMSTARTUP=Run Locate on system startup
 STRADVANCEDSETTINGS_SHELLCONTEXTMENUCOMMANDS=Shell context menu commands
 STRADVANCEDSETTINGS_LOCATEINMYCOMPUTER="Locate" item to My Computer
 STRADVANCEDSETTINGS_LOCATEINMYDOCUMENTS="Locate" item to My Documents
@@ -421,7 +421,7 @@ STRDATABASESETTINGS_CANNOTWRITESETTINGS=Cannot write settings to file '%s'.
 STRDATABASESETTINGS_BUTTONSEXTRAWIDTH=1
 
 # Autoupdate page
-SRTAUTOUPDATESETTINGS_TABCAPTION=Auto update
+SRTAUTOUPDATESETTINGS_TABCAPTION=Scheduled updates
 DLGAUTOUPDATESETTINGS_SCHEDULEDUPDATES=Scheduled Updates:
 DLGAUTOUPDATESETTINGS_ADD=&Add
 DLGAUTOUPDATESETTINGS_EDIT=&Edit
@@ -532,9 +532,9 @@ DLGSHORTCUTSSETTINGS_SUBACTION=SubAction:
 DLGSHORTCUTSSETTINGS_OPERATION=Operation:
 DLGSHORTCUTSSETTINGS_WINDOW=Wnd:
 DLGSHORTCUTSSETTINGS_MESSAGE=Msg:
-DLGSHORTCUTSSETTINGS_WPARAM=WParam:
-DLGSHORTCUTSSETTINGS_LPARAM=LParam:
-DLGSHORTCUTSSETTINGS_COMMAND=Command (file path=%d, parent=%p):
+DLGSHORTCUTSSETTINGS_WPARAM=wParam:
+DLGSHORTCUTSSETTINGS_LPARAM=lParam:
+DLGSHORTCUTSSETTINGS_COMMAND=Command (see help for parameters):
 DLGSHORTCUTSSETTINGS_ITEM=Item:
 DLGSHORTCUTSSETTINGS_FILE=File:
 DLGSHORTCUTSSETTINGS_VALUE=Value:
@@ -631,7 +631,7 @@ STRSHORTCUTSSETTINGS_ACTIONEXTRALEN=1
 
 STRACTION_ACTIVATECONTROL=Activate Control
 STRACTION_ACTIVATETAB=Activate Tab
-STRACTION_MENUCOMMAND=Menu Command
+STRACTION_MENUCOMMAND=Menu commands
 STRACTION_SHOWHIDEDIALOG=Show / Hide dialog
 STRACTION_RESULTLIST=Results list
 STRACTION_MISC=Miscellaneous
@@ -767,11 +767,12 @@ DLGDBADVANCEDDIALOG_INCLUDEPATTERN=Include files pattern (e.g., "*.doc;*.xls", l
 DLGDBADVANCEDDIALOG_INCLUDEDIRECTORIESPATTERN=Include directories pattern (e.g., "pics;docs*", leave empty to include all):
 DLGDBADVANCEDDIALOG_PATTERN=Exclude files pattern (e.g., "*.tmp;*~"):
 DLGDBADVANCEDDIALOG_EXCLUDEFILESANDDIRECTORIES=Exclude files and directories:
-DLGDBADVANCEDDIALOG_DIRECTORY=Enter directory ('*' and '?' are allowed):
+DLGDBADVANCEDDIALOG_DIRECTORY=Enter directory to be excluded and press "Add Directory" ('*', '?' allowed):
 DLGDBADVANCEDDIALOG_EXCLUDED=Excluded directories:
 DLGDBADVANCEDDIALOG_ADDFOLDER=&Add Directory
 DLGDBADVANCEDDIALOG_REMOVE=&Remove
 DLGDBADVANCEDDIALOG_BROWSE=&Browse
+DLGDBADVANCEDDIALOG_EXCLUDEONLYCONTENT=Exclude only the content of directory (directory itself will be included)
 DLGDBADVANCEDDIALOG_DRIVEANDDIRECTORYMAPS=Drive and directory maps:
 DLGDBADVANCEDDIALOG_MAPSINFOTEXT=Choose a drive or directory and give a name which is used in database:
 DLGDBADVANCEDDIALOG_PATHINDATABASE=Path in database:
@@ -862,7 +863,7 @@ DLGSELECTDETAILS_ACTION=&Action:
 DLGSELECTDETAILS_WHEN=&When:
 DLGSELECTDETAILS_FILE=&File:
 DLGSELECTDETAILS_OPERATION=&Operation:
-DLGSELECTDETAILS_COMMAND=Command (path=%d, parent=%p):
+DLGSELECTDETAILS_COMMAND=Command (see help for parameters):
 DLGSELECTDETAILS_ITEM=Item:
 STRSELECTDETAILS_LEFTCLICK=Left button click
 STRSELECTDETAILS_LEFTDBLCLICK=Left button double-click
@@ -1143,8 +1144,8 @@ STR_UPDATING_INTERRUPTED2=interrupted
 STR_UPDATING_UNAVAILABLEROOT=unavailable root
 STR_UPDATING_INTERRUPTED=Updating interrupted
 STR_UPDATING_THREAD=thread
-STR_UPDATING_UPDATING=database
-STR_UPDATING_SCANNINGROOT=scanning
+STR_UPDATING_UPDATING=database %s
+STR_UPDATING_SCANNINGROOT=scanning %s
 STR_UPDATING_INITIALIZING=initializing
 STR_UPDATING_FINISHING=finishing
 STR_UPDATING_DELAYWRITING=delay database writing
@@ -1183,7 +1184,7 @@ STR_FILETYPEMASK_DATABASEFILES=Database files|*.dbs|All Files|*.*||
 STR_FILETYPEMASK_RESULTFILES=Text File|*.txt|HTML file|*.html|All Files|*.*||
 STR_FILETYPEMASK_IMPORTDATABASESETTINGS=Supported file types (.dbs, .dbi, .txt)|*.dbs;*.dbi;*.txt|Database files (.dbs)|*.dbs|Text Files (.dbi, .txt)|*.dbi;*.txt|All Files|*.*||
 STR_FILETYPEMASK_EXPORTDATABASESETTINGS=Database files (.dbs)|*.dbs|Database setting (.dbi)|*.dbi|Text Files|*.txt|All Files|*.*||
-STR_FILETYPEMASK_BUILDINTYPES=Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps|0|Web Files|html htm asp shtm css|6|Document files|doc dot xls wpd rtf pdf|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h inl rc pas java|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 wma voc aif aiff cda ogg mpc ape flac|3|Video files|mpeg mpg avi mov ogm rm rmvb|4||
+STR_FILETYPEMASK_BUILDINTYPES=Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps wmf odg otg|0|Web Files|html htm asp shtm shtm css|6|Document files|doc docx dot xls xlw ppt pps wpd rtf pdf odt ods odp sxw sxc stw stc sxi sti|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h hxx hpp inl rc pas java pl py|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 mp2 wma voc aif aiff cda ogg mpa mpc ape flac aac ac3 m4a|3|Video files|mpeg mpg avi mov ogm rm rmvb wmv asf m4v mkv vob ts|4||
 STR_FILETYPEMASK_ICONS=Icon files|*.ico||
 STR_FILETYPEMASK_PROGRAMS=Programs|*.exe;*.com;*bat||
 

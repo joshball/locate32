@@ -34,7 +34,6 @@
 #define IDB_ABOUTBANNER                 216
 #define IDB_DEFAULTTYPEICONS            217
 #define IDB_TOOLBARBITMAPS              221
-#define IDR_SEARCHFROMFILE              222
 #define IDR_RT_MANIFEST1                223
 #define IDB_SAVERESTOOLBARBITMAPS       226
 #define IDB_SAVERESTOOLBARBITMAPSH      227

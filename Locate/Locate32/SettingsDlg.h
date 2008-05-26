@@ -209,7 +209,8 @@ public:
 					LPCWSTR szExcludedFiles,
 					const CArrayFAP<LPWSTR>& rDirectories,
 					const CListCtrl* pCopyItemsFrom,
-					LPCWSTR szRootMaps);
+					LPCWSTR szRootMaps,
+					BOOL bExcludeOnlyContentOfDirectories);
 
 				virtual BOOL OnInitDialog(HWND hwndFocus);
 				virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
@@ -234,7 +235,7 @@ public:
 				CStringW m_sExcludedFiles;
 				CArrayFAP<LPWSTR> m_aExcludedDirectories;
 				CStringW m_sRootMaps;
-
+				BOOL m_bExcludeOnlyContentOfDirectories;
 			protected:
 				CListCtrl* m_pDriveList;
 				const CListCtrl* m_pCopyItemsFrom;

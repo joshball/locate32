@@ -126,7 +126,9 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 {
 	switch(pNm->hdr.code)
 	{
-	case NM_CLICK:
+	case NMX_CLICK:
+		DebugMessage("NMX_CLICK");
+		if (!IsExtraFlagSet(efLVIgnoreListClicks))
 		{
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(((NMHDR_MOUSE*)pNm)->iSubItem));
 			if (nDetail>LastType || nDetail<0)
@@ -138,9 +140,26 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				OnExecuteResultAction(m_aResultListActions[nDetail][LeftMouseButtonClick]->m_nResultList,
 					m_aResultListActions[nDetail][LeftMouseButtonClick]->m_pExtraInfo,((NMHDR_MOUSE*)pNm)->iItem,nDetail);
 			}
-			break;
 		}
+		break;
+	case NMX_RCLICK:
+		DebugMessage("NMX_RCLICK");
+		if (!IsExtraFlagSet(efLVIgnoreListClicks))		
+		{
+			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(((NMHDR_MOUSE*)pNm)->iSubItem));
+			if (nDetail>LastType || nDetail<0)
+				break;
+
+			if (m_aResultListActions[nDetail][RightMouseButtonClick]!=NULL)
+			{
+				CWaitCursor wait;
+				OnExecuteResultAction(m_aResultListActions[nDetail][RightMouseButtonClick]->m_nResultList,
+					m_aResultListActions[nDetail][RightMouseButtonClick]->m_pExtraInfo,((NMHDR_MOUSE*)pNm)->iItem,nDetail);
+			}
+		}
+		break;
 	case NMX_DBLCLICK:
+		if (!IsExtraFlagSet(efLVIgnoreListClicks))		
 		{
             if (m_ClickWait)
 				break;
@@ -158,23 +177,10 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 
 				SetTimer(ID_CLICKWAIT,500,NULL);
 			}
-			break;
 		}
-	case NM_RCLICK:
-		{
-			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(((NMHDR_MOUSE*)pNm)->iSubItem));
-			if (nDetail>LastType || nDetail<0)
-				break;
-
-			if (m_aResultListActions[nDetail][RightMouseButtonClick]!=NULL)
-			{
-				CWaitCursor wait;
-				OnExecuteResultAction(m_aResultListActions[nDetail][RightMouseButtonClick]->m_nResultList,
-					m_aResultListActions[nDetail][RightMouseButtonClick]->m_pExtraInfo,((NMHDR_MOUSE*)pNm)->iItem,nDetail);
-			}
-			break;
-		}
+		break;
 	case NMX_RDBLCLICK:
+		if (!IsExtraFlagSet(efLVIgnoreListClicks))		
 		{
             if (m_ClickWait)
 				break;
@@ -192,9 +198,10 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 
 				SetTimer(ID_CLICKWAIT,500,NULL);
 			}
-			break;
 		}
+		break;
 	case NMX_MCLICK:
+		if (!IsExtraFlagSet(efLVIgnoreListClicks))		
 		{
 			DetailType nDetail=DetailType(m_pListCtrl->GetColumnIDFromSubItem(((NMHDR_MOUSE*)pNm)->iSubItem));
 			if (nDetail>LastType || nDetail<0)
@@ -206,9 +213,10 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				OnExecuteResultAction(m_aResultListActions[nDetail][MiddleMouseButtonClick]->m_nResultList,
 					m_aResultListActions[nDetail][MiddleMouseButtonClick]->m_pExtraInfo,((NMHDR_MOUSE*)pNm)->iItem,nDetail);
 			}
-			break;
 		}
+		break;
 	case NMX_MDBLCLICK:
+		if (!IsExtraFlagSet(efLVIgnoreListClicks))		
 		{
             if (m_ClickWait)
 				break;
@@ -226,8 +234,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 
 				SetTimer(ID_CLICKWAIT,500,NULL);
 			}
-			break;
 		}
+		break;
 	case LVN_COLUMNCLICK:
 		SortItems(DetailType(m_pListCtrl->GetColumnIDFromSubItem(pNm->iSubItem)),-1,TRUE);
 		break;
@@ -1574,18 +1582,19 @@ void CLocateDlg::BeginDragFiles(CListCtrl* pList)
 	
 
 	DWORD nEffect;
-	DebugMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): DoDragDrop is about to be called");
+	AddExtraFlags(efLVIgnoreListClicks);
+	DebugMessage("DND started");
 	HRESULT hRes=DoDragDrop(pfo,pfs,DROPEFFECT_COPY|DROPEFFECT_MOVE|DROPEFFECT_LINK|DROPEFFECT_SCROLL,&nEffect);
-	DebugFormatMessage("CLocateDlg::BeginDragFiles(CListCtrl* pList): DoDragDrop returned %X",hRes);
-
+	DebugMessage("DND succeeded");
+	PostMessage(WM_REMOVEIGNORECLICKSFLAG);
+	
 	pfo->Release();
 	pfs->Release();
 
 	for (int i=0;i<nSelectedItems;i++)
 	{
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(pSelectedItems[i]);
-		DebugFormatMessage("CLocateDlg::WM_UPDATEITEMS: updating item %X",pItem);
-        
+		
 		// Just disabling flags, let background thread do the rest
 		if (pItem->RemoveFlagsForChanged())
 			m_pListCtrl->RedrawItems(pSelectedItems[i],pSelectedItems[i]);

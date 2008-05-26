@@ -3,7 +3,7 @@ CONTENT=
 <div id="settings">
 <H1><A NAME="settings_languages"></A>Language Settings</H1>
 
-<p>The language tab in the settings dialog can be used to change language of
+<p>The language page can be used to change language of
 the user interface. To change the language, select the desirable language from the list. 
 If you want to use same language also with console applications,
 enable also <b>Use same language locate.exe and updtdb32.exe</b> option.
@@ -12,7 +12,7 @@ the system tray icon is also disappeared).
 </p>
 
 <p>Tranlations for Locate can be found 
-from <a href="http://www.uku.fi/~jmhuttun/translations.shtml">
+from <a href="http://locate32.net/content/section/5/39/">
 here</a>. Language files can be installed by copying lan_xx.dll 
 file to the Locate32 installation directory. </p>
 

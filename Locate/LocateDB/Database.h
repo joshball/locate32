@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database updater v3.1.8.4270              */
+   database updater v3.1.8.5260              */
 
 #if !defined(DATABASE_H)
 #define DATABASE_H
@@ -33,7 +33,11 @@ public:
 		flagStopIfRootUnavailable=0x4,
 		flagIncrementalUpdate=0x8,
 		flagAnsiCharset=0x10, // Unicode is default
-		flagScanSymLinksAndJunctions=0x20
+		flagScanSymLinksAndJunctions=0x20,
+		
+		
+		// If some directory is chosen to be excluded, exclude only the content of directory and add directory
+		flagExcludeContentOfDirsOnly=0x40, 
 	};
 		
 	enum ArchiveType {
@@ -79,7 +83,7 @@ public:
 	BOOL IsEnabled() const;
 	BOOL IsGloballyUpdated() const;
 	
-	BOOL IsFlagged(DatabaseFlags nFlag) const;
+	BOOL IsFlagSet(DatabaseFlags nFlag) const;
 	void SetFlag(DatabaseFlags nFlag,BOOL bSet=TRUE);
 
 	void Enable(BOOL bEnable=TRUE);
@@ -492,9 +496,9 @@ inline BOOL CDatabase::DoDatabaseFileExist() const
 	return FALSE;
 }
 
-inline BOOL CDatabase::IsFlagged(DatabaseFlags nFlag) const
+inline BOOL CDatabase::IsFlagSet(DatabaseFlags nFlag) const
 {
-	return m_wFlags&nFlag;
+	return (m_wFlags&nFlag)?TRUE:FALSE;
 }
 
 inline void CDatabase::SetFlag(DatabaseFlags nFlag,BOOL bSet)

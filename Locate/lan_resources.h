@@ -172,7 +172,6 @@
 #define IDR_LOCATEHELP                  223
 #define IDR_UPDATEDBHELP                224
 #define IDD_INPUTBOX                    225
-#define IDR_CHANGEVALUEHELP             226
 #define IDM_SELECTDETAILS               227
 #define IDD_SELECTDETAILS               229
 #define IDD_DATABASEDIALOG              230
@@ -477,6 +476,7 @@
 #define IDC_KEYLIST                     1176
 #define IDC_UPPERCASE                   1177
 #define IDC_SHORTCUT                    1177
+#define IDC_EXCLUDEONLYCONTENT			1178
 #define IDC_ACTION                      1179
 #define IDC_ACTION2                     1181
 #define IDC_SUBACTION                   1181

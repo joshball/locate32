@@ -249,7 +249,7 @@ void CSchedule::GetString(CStringW& str) const
 		else
 		{
 			CStringW type;
-			type.LoadString(IDS_FIRST+m_tMonthly.nWeek);
+			type.LoadString(IDS_WEEKFIRST+m_tMonthly.nWeek);
 			type.MakeLower();
 			st.wYear=1999;
 			st.wMonth=8;

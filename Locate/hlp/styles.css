@@ -325,6 +325,20 @@ a.li:hover { color: #660000; }
 	
 }
 
+#keyboard_settings_level1 p 
+{
+	margin-left: 8pt;
+	margin-top: 6pt;
+	margin-bottom: 10pt;
+}
+
+#keyboard_settings_level1 h2
+{
+	font-family: Arial, sans-serif;
+	font-size: 105%;
+	margin-left: 8pt;
+	margin-bottom: 2pt;
+}
 
 table#menutable {
     width: 95%;
@@ -359,7 +373,38 @@ table#formattable td {
     border: solid #6666BB 2px;
 	padding: 4px;
 }
+
+table#actionstable {
+    background-color:#FFFFFF;
+	border-spacing: 0px;
+    border-collapse: collapse;
+	width: 95%;
+	margin: 12px 6px 16px 8px;
+}
+
+.action_name {
+    width: 150px;
+}
+
+.action_description {
+    /*width: 60%;*/
+}
     
+table#variablestable {
+    background-color:#FFFFFF;
+	border-spacing: 0px;
+    border-collapse: collapse;
+	width: 90%;
+	margin: 12px 16px 16px 8px;
+}
+
+.variable_name {
+    width: 30px;
+}
+
+.variable_description {
+    /*width: 60%;*/
+}
 
 .toprow {
     background-color: #6666DD;
@@ -370,4 +415,13 @@ table#formattable td {
 	color: #FFFFFF;
 	font-weight: bold;
 	font-size: 105%;
+}
+
+
+
+#actions p 
+{
+	margin-left: 8pt;
+	margin-top: 6pt;
+	margin-bottom: 10pt;
 }

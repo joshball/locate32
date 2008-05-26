@@ -1535,6 +1535,7 @@ int vsprintfex( char *buffer, int buffersize,const char *format, va_list argList
 		else
 			buffer[ptr++]=*(in++);
 	}
+	buffer[ptr]='\0';
 	return ptr;
 }
 
@@ -1614,6 +1615,7 @@ int vswprintfex( wchar_t *buffer, int buffersize, const wchar_t *format, va_list
 		else
 			buffer[ptr++]=*(in++);
 	}
+	buffer[ptr]='\0';
 	return ptr;
 }
 #endif

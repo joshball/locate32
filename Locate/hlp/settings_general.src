@@ -3,7 +3,7 @@ CONTENT=
 <div id="settings">
 <H1><A NAME="settings_general"></A>General Settings</H1>
 
-<p>The General tab in the settings dialog contains some options 
+<p>The General page in the settings dialog contains some options 
 which can be used to change behaviour of Locate32 dialog.
 The General tab contains the following options:
 </p>

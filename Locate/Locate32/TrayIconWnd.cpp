@@ -17,6 +17,8 @@
 #define EXTRA_MARGINSX 3
 #define EXTRA_MARGINSY 3
 #define EXTRA_LINES 2
+#define CLOSEBUTTON_CX 9
+#define CLOSEBUTTON_CY 9
 
 
 
@@ -33,6 +35,7 @@ CTrayIconWnd::CTrayIconWnd()
 
 
 	InitializeCriticalSection(&m_csAnimBitmaps);
+	InitializeCriticalSection(&m_csLocateThread);
 }
 
 CTrayIconWnd::~CTrayIconWnd()
@@ -41,6 +44,7 @@ CTrayIconWnd::~CTrayIconWnd()
 	//m_Schedules.RemoveAll();
 
 	DeleteCriticalSection(&m_csAnimBitmaps);
+	DeleteCriticalSection(&m_csLocateThread);
 	
 	if (m_pCpuUsage!=NULL)
 		delete m_pCpuUsage;
@@ -821,21 +825,16 @@ BYTE CTrayIconWnd::OnLocate()
 	SetTrayIcon(m_pUpdateAnimIcons!=NULL?m_pUpdateAnimIcons[m_nCurUpdateAnimBitmap]:NULL);
 	LeaveCriticalSection(&m_csAnimBitmaps);
 	
-	
+	EnterCriticalSection(&m_csLocateThread);
 	if (m_pLocateDlgThread==NULL)
 	{
-		//DebugMessage("CTrayIconWnd::OnLocate() 1a");
-
 		// Hiding LocateST
 		if (GetFocus()==NULL)
 			ForceForegroundAndFocus();
 		
-		//DebugMessage("CTrayIconWnd::OnLocate() 1b");
-
 		m_pLocateDlgThread=new CLocateDlgThread;
 		m_pLocateDlgThread->CreateThread();
 
-		//DebugMessage("CTrayIconWnd::OnLocate() 1c");
 
 
 		while (m_pLocateDlgThread->m_pLocate==NULL)
@@ -845,46 +844,39 @@ BYTE CTrayIconWnd::OnLocate()
 
 		ShowWindow(swHide);
 
-		//DebugFormatMessage("CTrayIconWnd::OnLocate() 1e, pLocate=%X",DWORD(m_pLocateDlgThread->m_pLocate));
-		//DebugFormatMessage("CTrayIconWnd::OnLocate() 1e, hWnd=%X",DWORD(m_pLocateDlgThread->m_pLocate->GetHandle()));
 		
 		m_pLocateDlgThread->m_pLocate->ForceForegroundAndFocus();
-
-		//DebugMessage("CTrayIconWnd::OnLocate() 1f");
 		
 
 		
 	}
 	else
 	{
-		//DebugMessage("CTrayIconWnd::OnLocate() 2a");
 
 		ForceForegroundAndFocus();
 		
-		//DebugMessage("CTrayIconWnd::OnLocate() 2b");
-
 		CLocateDlg* pLocateDlg=GetLocateDlg();
+		
+		// pLocateDlg should not be NULL, but just for sure
+		if (pLocateDlg!=NULL)
+		{
+			
+			// Restore dialog if needed
+			WINDOWPLACEMENT wp;
+			wp.length=sizeof(WINDOWPLACEMENT);
+			pLocateDlg->GetWindowPlacement(&wp);
+			if (wp.showCmd!=SW_MAXIMIZE)
+				pLocateDlg->ShowWindow(swRestore);
 
-		//DebugFormatMessage("CTrayIconWnd::OnLocate() 2c %X",DWORD(pLocateDlg));
-
-		// Restore dialog if needed
-		WINDOWPLACEMENT wp;
-		wp.length=sizeof(WINDOWPLACEMENT);
-		pLocateDlg->GetWindowPlacement(&wp);
-		if (wp.showCmd!=SW_MAXIMIZE)
-            pLocateDlg->ShowWindow(swRestore);
-
-		//DebugMessage("CTrayIconWnd::OnLocate() 2d");
 
 
-		pLocateDlg->BringWindowToTop();
+			pLocateDlg->BringWindowToTop();
 
-		//DebugMessage("CTrayIconWnd::OnLocate() 2e");
 
-		pLocateDlg->ForceForegroundAndFocus();
+			pLocateDlg->ForceForegroundAndFocus();
+		}
 	}
-
-	//DebugMessage("CTrayIconWnd::OnLocate() END");
+	LeaveCriticalSection(&m_csLocateThread);
 	return TRUE;
 }
 
@@ -907,7 +899,9 @@ BYTE CTrayIconWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases,int nThread
 				CSelectDatabasesDlg::flagShowThreads|CSelectDatabasesDlg::flagSetUpdateState|CSelectDatabasesDlg::flagEnablePriority,
 				CRegKey2::GetCommonKey()+"\\Dialogs\\SelectDatabases/Update");
 			dbd.SetThreadPriority(nThreadPriority);
-			if (!dbd.DoModal(m_pLocateDlgThread!=NULL?HWND(*GetLocateDlg()):HWND(*this)))
+			
+			CLocateDlg* pLocateDlg=GetLocateDlg();
+			if (!dbd.DoModal(pLocateDlg!=NULL?HWND(*pLocateDlg):HWND(*this)))
                 return FALSE;
 			
 
@@ -2005,6 +1999,14 @@ void CTrayIconWnd::CUpdateStatusWnd::OnPaint()
 	//rcClient.top+=EXTRA_MARGINSY;
 
 	
+	// Draw close button
+	rc2.left=rcClient.right-CLOSEBUTTON_CX-1;
+	rc2.right=rcClient.right-1;
+	rc2.top=rcClient.top+1;
+	rc2.bottom=rcClient.top+CLOSEBUTTON_CY+1;
+	dc.DrawFrameControl(&rc2,DFC_CAPTION,DFCS_CAPTIONCLOSE|DFCS_TRANSPARENT|DFCS_FLAT);
+	
+
     // Drawing title
 	LPCWSTR pPtr=m_sStatusText;
 	int nLength=(int)FirstCharIndex(pPtr,L'\n');
@@ -2175,40 +2177,45 @@ void CTrayIconWnd::CUpdateStatusWnd::FormatStatusTextLine(CStringW& str,const CT
 		}
 		break;
 	default:
-		if (pRootInfo.dwNumberOfDatabases>1)
 		{
-			if (nThreadID!=-1)
-                str << L' ';
-			str << (int)(pRootInfo.dwCurrentDatabase+1) << L'/' << (int)pRootInfo.dwNumberOfDatabases << L": ";
-		}
-		else if (nThreadID!=-1)
-			str << L": ";
-		str.AddString(IDS_UPDATINGUPDATING);
-		str << pRootInfo.pName;
+			CStringW tmp;
 
-		switch (pRootInfo.usStatus)
-		{
-		case statusInitializeWriting:
-		case statusWritingDB:
-			str << L": ";
-			str.AddString(IDS_NOTIFYWRITINGDATABASE);
-			break;
-		case statusCustom1: // delaying
-			str << L": ";
-			str.AddString(IDS_UPDATINGDELAYWRITING);
-			break;
-		case statusScanning:
-			if (pRootInfo.wProgressState!=WORD(-1))
+			if (pRootInfo.dwNumberOfDatabases>1)
 			{
-				str << L' ' << (int)((int)(pRootInfo.wProgressState)/10) << L'%';
+				if (nThreadID!=-1)
+					str << L' ';
+				str << (int)(pRootInfo.dwCurrentDatabase+1) << L'/' << (int)pRootInfo.dwNumberOfDatabases << L": ";
 			}
+			else if (nThreadID!=-1)
+				str << L": ";
+			
+			tmp.Format(IDS_UPDATINGUPDATING,pRootInfo.pName);
+			str << tmp;
+			
+			switch (pRootInfo.usStatus)
+			{
+			case statusInitializeWriting:
+			case statusWritingDB:
+				str << L": ";
+				str.AddString(IDS_NOTIFYWRITINGDATABASE);
+				break;
+			case statusCustom1: // delaying
+				str << L": ";
+				str.AddString(IDS_UPDATINGDELAYWRITING);
+				break;
+			case statusScanning:
+				if (pRootInfo.wProgressState!=WORD(-1))
+				{
+					str << L' ' << (int)((int)(pRootInfo.wProgressState)/10) << L'%';
+				}
 
-			str << L": ";
-			str.AddString(IDS_UPDATINGSCANNINGROOT);
-			str << pRootInfo.pRoot;
+				str << L": ";
+				tmp.Format(IDS_UPDATINGSCANNINGROOT,pRootInfo.pRoot);
+				str << tmp;
+				break;
+			}
 			break;
 		}
-		break;
 	}
 }
 
@@ -2314,9 +2321,20 @@ LRESULT CTrayIconWnd::CUpdateStatusWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM
 	case WM_LBUTTONDOWN:
 		if (m_pMouseMove==NULL)
 		{
+			SHORT x=SHORT(LOWORD(lParam)),y=SHORT(HIWORD(lParam));
+			
+			// First check if "close button" area clicked
+			RECT rcClient;
+			GetClientRect(&rcClient);
+			if (x>=rcClient.right-CLOSEBUTTON_CX-1 && y<=CLOSEBUTTON_CY+1)
+			{
+				DestroyWindow();
+				return FALSE;
+			}
+
 			m_pMouseMove=new MouseMove;
-			m_pMouseMove->nStartPointX=SHORT(LOWORD(lParam));
-			m_pMouseMove->nStartPointY=SHORT(HIWORD(lParam));
+			m_pMouseMove->nStartPointX=x;
+			m_pMouseMove->nStartPointY=y;
 
 			ASSERT(m_pMouseMove->nStartPointX>=0 && m_pMouseMove->nStartPointX<1600);
 			ASSERT(m_pMouseMove->nStartPointY>=0 && m_pMouseMove->nStartPointY<1600);
