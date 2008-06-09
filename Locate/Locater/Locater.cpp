@@ -864,33 +864,6 @@ DWORD WINAPI CLocater::LocateThreadProc(LPVOID lpParameter)
 }
 
 
-/*
-inline BOOL CLocater::SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCSTR* szDirectories,DWORD nDirectories)
-{
-	for (DWORD i=0;i<nDirectories;i++)
-	{
-		CString* pTmp=new CString(szDirectories[i]);
-		while (pTmp->LastChar()=='\\')
-			pTmp->DelChar(pTmp->GetLength()-1);
-		m_aDirectories.Add(pTmp);
-	}
-	
-#ifdef WIN32
-	if (bThreaded)
-	{
-		DWORD dwThreadID;
-		LocaterDebugMessage("CLocater::LocateFiles CREATING THREAD");
-		m_hThread=CreateThread(NULL,0,CLocater::LocateThreadProc,this,0,&dwThreadID);
-		DebugOpenThread(dhtThread,m_hThread,STRNULL);
-		LocaterDebugMessage("CLocater::LocateFiles CREATING THREAD OK?");
-		return m_hThread!=NULL;
-	}
-	else
-#endif
-		return LocatingProc();
-}
-*/
-
 inline BOOL CLocater::SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCWSTR* szDirectories,DWORD nDirectories)
 {
 	for (DWORD i=0;i<nDirectories;i++)
@@ -2043,7 +2016,6 @@ void CLocater::LocateValidFolder(DWORD nPathLen)
 void CLocater::LocateValidFolderW(DWORD nPathLen)
 {
 	while (*pPoint!='\0' && !m_lForceQuit)
-
 	{
 		if ((*pPoint&UDBATTRIB_TYPEFLAG)==UDBATTRIB_DIRECTORY)
 		{

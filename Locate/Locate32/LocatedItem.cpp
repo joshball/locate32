@@ -251,9 +251,6 @@ void CLocatedItem::UpdateByDetail(DetailType nDetail)
 {
 	switch(nDetail)
 	{
-	case FullPath:
-		UpdateFilename();
-		break;
 	case Name:
 		UpdateFileTitle();
 		UpdateIcon();
@@ -320,7 +317,7 @@ BOOL CLocatedItem::ShouldUpdateByDetail(DetailType nDetail) const
 	switch(nDetail)
 	{
 	case FullPath:
-		return ShouldUpdateFilename();
+	case Extension:
 	case Database:
 	case DatabaseDescription:
 	case DatabaseArchive:
@@ -348,62 +345,12 @@ BOOL CLocatedItem::ShouldUpdateByDetail(DetailType nDetail) const
 }
 
 
-NDEBUGINLINE void CLocatedItem::UpdateFilename()
-{
-	/*
-#ifdef _DEBUG
-	// Convert short file name to long file name
-	WCHAR szFullPath[MAX_PATH];
-	ItemDebugMessage("CLocatedItem::UpdateFilename() BEGIN");
-	
-	DWORD dwLength=GetLocateApp()->m_pGetLongPathName(GetPath(),szFullPath,MAX_PATH);
 
-	if (wcscmp(GetPath(),szFullPath)!=0)
-	{
-		CAppData::stdfunc();
-	}
-
-	if (dwLength==GetPathLen())
-	{
-		// Checking assumptions, i.e. length of file name and extension does not change 
-		// and extension is same
-		ASSERT(szFullPath[DWORD(szName-szPath)-1]=='\\' && 
-			(szFullPath[DWORD(szName-szPath)+bExtensionPos-1]=='.' || 
-			szFullPath[DWORD(szName-szPath)+bExtensionPos]=='\0'));
-
-        //This fixes case
-		MemCopyW(szPath,szFullPath,dwLength);
-	}
-	else if (dwLength>0)
-	{
-		WCHAR* pTmp=szPath;
-		InterlockedExchangePointer((PVOID*)&szPath,alloccopy(szFullPath,dwLength));
-		delete[] pTmp;
-
-		InterlockedExchangePointer((PVOID*)&szName,szPath+LastCharIndex(szPath,L'\\')+1);
-		bNameLength=BYTE(dwLength-DWORD(szName-szPath));
-
-		for (bExtensionPos=bNameLength-1; szName[bExtensionPos-1]!=L'.' && bExtensionPos>0 ;bExtensionPos--);
-		if (bExtensionPos==0)
-			bExtensionPos=bNameLength;
-	}
-    
-#endif
-	*/
-
-	dwFlags|=LITEM_FILENAMEOK;
-
-	ItemDebugMessage("CLocatedItem::UpdateFilename() END");
-}
-	
 
 void CLocatedItem::UpdateFileTitle()
 {
 	ItemDebugMessage("CLocatedItem::UpdateFileTitle BEGIN");
 	
-	
-	if (!(dwFlags&LITEM_FILENAMEOK))
-		UpdateFilename();
 
 	WCHAR* pNewFileTitle=NULL;
 	BOOL bCheckCase=TRUE;
@@ -1970,7 +1917,6 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 			RemoveFlags(LITEM_FILETITLEOK);   
 			MemCopyW(szPath,szFullPath,dwLength);
 		}
-		AddFlags(LITEM_FILENAMEOK);
 	}
 	else if (dwLength>0)
 	{
@@ -1986,7 +1932,6 @@ BOOL CLocatedItem::RemoveFlagsForChanged()
 		if (bExtensionPos==0)
 			bExtensionPos=bNameLength;
 	
-		AddFlags(LITEM_FILENAMEOK);
 		RemoveFlags(LITEM_FILETITLEOK);
 	}
 
@@ -2199,8 +2144,6 @@ BOOL CLocatedItem::ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
 
 	delete[] szOldPath;
 
-	AddFlags(LITEM_FILENAMEOK);
-	
 	UpdateFileTitle();
 
 	return TRUE;

@@ -308,8 +308,10 @@ public:
 	static INT_PTR CALLBACK DummyDialogProc(HWND hwndDlg,UINT uMsg,WPARAM wParam,LPARAM lParam);
 
 
+private:
+	CDatabase* GetDatabaseNonConst(WORD wID) const;
 
-
+public:
 	// Help system
 	struct HelpID { int nID;LPCSTR lpName; };
 	static BOOL OpenHelp(HWND hWnd,LPCSTR szHelpPage,HELPINFO* pInfo=NULL,HelpID* pHelpID=NULL,int nIDs=0);

@@ -17,10 +17,9 @@ class CLocater;
 #define LITEM_TIMEDATEOK			0x10
 #define LITEM_ATTRIBOK				0x20
 #define LITEM_PARENTICONOK			0x40
-#define LITEM_FILENAMEOK			0x80 // Only case is checked
 #define LITEM_EXTRASOK				0x100 // Only for refreshing
 #define LITEM_ISDELETEDOK			0x200
-#define LITEM_COULDCHANGE			LITEM_TYPEOK|LITEM_ICONOK|LITEM_FILESIZEOK|LITEM_TIMEDATEOK|LITEM_ATTRIBOK|LITEM_EXTRASOK|LITEM_FILENAMEOK|LITEM_ISDELETEDOK
+#define LITEM_COULDCHANGE			LITEM_TYPEOK|LITEM_ICONOK|LITEM_FILESIZEOK|LITEM_TIMEDATEOK|LITEM_ATTRIBOK|LITEM_EXTRASOK|LITEM_ISDELETEDOK
 
 #define LITEMATTRIB_HIDDEN			0x1
 #define LITEMATTRIB_READONLY		0x2
@@ -65,7 +64,6 @@ public:
 	void UpdateFileTime();
 	void UpdateFileSizeAndTime();
 	void UpdateAttributes();
-	void UpdateFilename();
 	void UpdateDimensions();
 	void UpdateOwner();
 	void UpdateShortFileName();
@@ -88,7 +86,6 @@ public:
 	
 	BOOL ShouldUpdateByDetail(DetailType nDetail) const;
 	BOOL ShouldUpdateFileTitle() const;
-	BOOL ShouldUpdateFilename() const;
 	BOOL ShouldUpdateType() const;
 	BOOL ShouldUpdateIcon() const;
 	BOOL ShouldUpdateFileSize() const;

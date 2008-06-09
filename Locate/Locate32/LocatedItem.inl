@@ -93,6 +93,8 @@ inline LPWSTR CLocatedItem::GetDetailText(DetailType nDetailType) const
 			return GetFileTitle();
 		else
 			return GetName();		
+	case Extension:
+		return GetExtension();
 	case InFolder:
 		return GetParent();
 	case FullPath:
@@ -172,18 +174,9 @@ inline LPWSTR CLocatedItem::GetDetailText(DetailType nDetailType) const
 inline BOOL CLocatedItem::ShouldUpdateFileTitle() const 
 { 
 	// do not depend on efEnableUpdating
-	return !(dwFlags&LITEM_FILETITLEOK && dwFlags&LITEM_FILENAMEOK); 
+	return !(dwFlags&LITEM_FILETITLEOK); 
 }
 
-inline BOOL CLocatedItem::ShouldUpdateFilename() const 
-{ 
-#ifdef _DEBUG
-	// do not depend on efEnableUpdating
-	return !(dwFlags&LITEM_FILENAMEOK); 
-#else
-	return FALSE;
-#endif
-}
 
 inline BOOL CLocatedItem::ShouldUpdateType() const 
 {

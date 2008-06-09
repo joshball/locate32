@@ -18,7 +18,7 @@ inline void CLocateApp::SetStartData(CStartData* pStarData)
 	m_pStartData=pStarData;
 }
 
-inline const CDatabase* CLocateApp::GetDatabase(WORD wID) const
+inline CDatabase* CLocateApp::GetDatabaseNonConst(WORD wID) const
 {
 	if (m_pLastDatabase->GetID()==wID)
 		return m_pLastDatabase;
@@ -32,7 +32,11 @@ inline const CDatabase* CLocateApp::GetDatabase(WORD wID) const
 	return NULL;
 }
 
-	
+inline const CDatabase* CLocateApp::GetDatabase(WORD wID) const
+{
+	return GetDatabaseNonConst(wID);
+}
+
 inline BOOL CLocateApp::IsDatabaseMenu(HMENU hMenu)
 {
 	UINT nID=GetMenuItemID(hMenu,0);

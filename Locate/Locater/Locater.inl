@@ -160,19 +160,19 @@ inline bool _strncmp(const WCHAR* p1,const WCHAR* p2,int a)
 
 inline CLocater::ValidType CLocater::IsFolderValid(DWORD nPathLen)
 {
-	if (m_aDirectories.GetSize())
+	if (m_aDirectories.GetSize()>0)
 	{
 		for (int i=0;i<m_aDirectories.GetSize();i++)
 		{
 			if ((DWORD)m_aDirectories.GetAt(i)->GetLength()>nPathLen)
 			{
-				if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLower,nPathLen))
+				if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLower,nPathLen) && 
+					m_aDirectories.GetAt(i)->GetAt(nPathLen)=='\\')
 					return SomeValidFolders;
 			}
 			else if ((DWORD)m_aDirectories.GetAt(i)->GetLength()==nPathLen)
 			{
-				if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLower,
-					(int)m_aDirectories.GetAt(i)->GetLength()))
+				if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLower,nPathLen))
 					return ValidFolders;
 			}
 		}
@@ -184,19 +184,19 @@ inline CLocater::ValidType CLocater::IsFolderValid(DWORD nPathLen)
 
 inline CLocater::ValidType CLocater::IsFolderValidW(DWORD nPathLen)
 {
-	if (m_aDirectories.GetSize())
+	if (m_aDirectories.GetSize()>0)
 	{
 		for (int i=0;i<m_aDirectories.GetSize();i++)
 		{
 			if ((DWORD)m_aDirectories.GetAt(i)->GetLength()>nPathLen)
 			{
-				if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,nPathLen))
+				if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,nPathLen) && 
+					m_aDirectories.GetAt(i)->GetAt(nPathLen)==L'\\')
 					return SomeValidFolders;
 			}
 			else if (m_aDirectories.GetAt(i)->GetLength()==nPathLen)
 			{
-				if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,
-					(int)m_aDirectories.GetAt(i)->GetLength()))
+				if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,nPathLen))
 					return ValidFolders;
 			}
 		}

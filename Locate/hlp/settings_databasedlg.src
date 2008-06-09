@@ -86,7 +86,11 @@ also scanned and files and directories are included to databases.
 If this option is enabled, updating the database will be stopped if some of drives or directories is unavailable. 
 This option can be used with network shares or external drives. Note that, since the database is written 
 only just at the end of updating process, this stopping means that the database file is not updated at all. 
-More information <A HREF="howto_externaldrives.htm">here</a>.
+More information <A HREF="howto_externaldrives.htm">here</a>. <b>Note:</b> if 
+<a href="settings_advanced.htm#sa_noncriticalerrors">$STRADVANCEDSETTINGS_SHOWNONCRITICALERRORS@Cp$</a> option 
+in Advanced settings is enabled, in the case of an unavailable drive or directory you will get an error message
+which also aks whether you want to continue updating the database or skip it. In that case this option is used only as 
+a default choise (which is chosen if you just press enter when the error message appears).
 </p>
 <p>
 <b><A NAME="sdd_advanced"></A>$DLGDATABASEDIALOG_ADVANCED@MC$</b>:

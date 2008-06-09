@@ -11,6 +11,7 @@ You can also specify global keys which works also when Locate32 dialog is not ac
 
 <h2><a name="sk_list"></a>Shortcuts list</h2>
 
+<p>
 To specify new shortcut, click <b><a name="sk_new"></a>New</b> button on top, specify which 
 key want to assign using fields in <b>Shortcut</b> group and specify an action (multiple 
 actions are also allowed) for the shortcut using fields in <b>Action</b> group (fields in 

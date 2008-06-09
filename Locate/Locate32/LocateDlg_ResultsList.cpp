@@ -553,8 +553,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			}
 
 			ASSERT(!pItem->ShouldUpdateFileTitle());
-			ASSERT(!pItem->ShouldUpdateFilename());
-
+			
 			if (pItem->GetFileTitle()!=pItem->GetName())
 			{
 				int nTitleLen=istrlen(pItem->GetFileTitle());
@@ -2447,7 +2446,8 @@ CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
 		{/*Description,*/IDS_LISTDESCRIPTION,FALSE,LVCFMT_LEFT,100},
 		{/*FileVersion,*/IDS_LISTFILEVERSION,FALSE,LVCFMT_LEFT,100},
 		{/*ProductName,*/IDS_LISTPRODUCTNAME,FALSE,LVCFMT_LEFT,100},
-		{/*ProductVersion,*/IDS_LISTPRODUCTVERSION,FALSE,LVCFMT_LEFT,100}
+		{/*ProductVersion,*/IDS_LISTPRODUCTVERSION,FALSE,LVCFMT_LEFT,100},
+		{/*Extension,*/IDS_LISTEXTENSION,FALSE,LVCFMT_LEFT,60}
 	};
 
 	ViewDetails* pRet=new ViewDetails[sizeof(aDetails)/sizeof(ViewDetails)];

@@ -40,15 +40,14 @@ enum DetailType {
 	FileVersion=27,
 	ProductName=28,
 	ProductVersion=29,
+	Extension=30,
 
-	LastType=29,
+	LastType=30,
 
 	TypeCount=LastType+1,
 
 
 
-	Extension=127, // Not column in the results list, for sorting
-	
 	IfDeleted=253, // Not a column in the results list
 	Thumbnail=254, // Not a column in the results list
 	//Needed=255

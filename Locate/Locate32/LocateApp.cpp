@@ -1969,128 +1969,125 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 	switch (crReason)
 	{
 	case Initializing:
-	{
-		// Start animations
-		if (GetTrayIconWnd()->GetHandle()!=NULL)
 		{
-			GetTrayIconWnd()->StartUpdateStatusNotification();
-		
+			// Start animations
+			if (GetTrayIconWnd()->GetHandle()!=NULL)
+			{
+				GetTrayIconWnd()->StartUpdateStatusNotification();
+			
+				CLocateDlg* pLocateDlg=GetLocateDlg();
+				if (pLocateDlg!=NULL)
+				{
+					pLocateDlg->StartUpdateAnimation();
+				
+					//pLocateDlg->m_pStatusCtrl->SetText(szEmpty,0,0);
+					pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)ID2W(IDS_UPDATINGDATABASE));							
+				}
+			}
+
+			return TRUE;
+		}
+	case RootChanged:
+		{
 			CLocateDlg* pLocateDlg=GetLocateDlg();
 			if (pLocateDlg!=NULL)
 			{
-				pLocateDlg->StartUpdateAnimation();
-			
-				//pLocateDlg->m_pStatusCtrl->SetText(szEmpty,0,0);
-				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)ID2W(IDS_UPDATINGDATABASE));							
+				CStringW str;
+
+				str.Format(IDS_UPDATINGDATABASE2,
+					pUpdater->GetCurrentDatabaseName(),
+					pUpdater->GetCurrentRoot()!=NULL?
+					(LPCWSTR)pUpdater->GetCurrentRoot()->m_Path:
+					(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
+
+				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
 			}
-		}
-
-		return TRUE;
-	}
-	case RootChanged:
-	{
-		CLocateDlg* pLocateDlg=GetLocateDlg();
-		if (pLocateDlg!=NULL)
-		{
-			CStringW str;
-
-			str.Format(IDS_UPDATINGDATABASE2,
-				pUpdater->GetCurrentDatabaseName(),
-				pUpdater->GetCurrentRoot()!=NULL?
-				(LPCWSTR)pUpdater->GetCurrentRoot()->m_Path:
-				(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
-
-			pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
-		}
-	
 		
-		if (dwParam!=NULL)
-			((CTrayIconWnd*)dwParam)->SetTrayIcon(NULL,IDS_NOTIFYUPDATING);
-		return TRUE;
-	}
+			
+			if (dwParam!=NULL)
+				((CTrayIconWnd*)dwParam)->SetTrayIcon(NULL,IDS_NOTIFYUPDATING);
+			return TRUE;
+		}
 	case WritingDatabase:
-	{
-		CLocateDlg* pLocateDlg=GetLocateDlg();
-		if (pLocateDlg!=NULL)
 		{
-			CStringW str;
-			str.Format(IDS_UPDATINGDATABASE2,
-				pUpdater->GetCurrentDatabaseName(),
-				(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
-			
-			pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
-		}
-	
+			CLocateDlg* pLocateDlg=GetLocateDlg();
+			if (pLocateDlg!=NULL)
+			{
+				CStringW str;
+				str.Format(IDS_UPDATINGDATABASE2,
+					pUpdater->GetCurrentDatabaseName(),
+					(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
+				
+				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
+			}
 		
-		if (dwParam!=NULL)
-			((CTrayIconWnd*)dwParam)->SetTrayIcon(NULL,IDS_NOTIFYUPDATING);
-		return TRUE;
-	}
-	case InitializeWriting:
-	{
-		CLocateDlg* pLocateDlg=GetLocateDlg();
-		if (pLocateDlg!=NULL)
-		{
-			// Locating in progress, waiting
 			
-			// statusCustom1 is for delay writing
-			pUpdater->SetStatus(statusCustom1);
-
-			HANDLE hThread=pLocateDlg->GetLocaterThread(TRUE);
-			if (hThread!=NULL)
-			{
-				CStringW str;
-				str.Format(IDS_UPDATINGDATABASE2,
-					pUpdater->GetCurrentDatabaseName(),
-					(LPCWSTR)ID2W(IDS_UPDATINGDELAYWRITING));
-
-				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
-
-				WaitForSingleObject(hThread,INFINITE);
-
-				CloseHandle(hThread);
-			}
+			if (dwParam!=NULL)
+				((CTrayIconWnd*)dwParam)->SetTrayIcon(NULL,IDS_NOTIFYUPDATING);
+			return TRUE;
 		}
-		return TRUE;
-	}
-
-	//case FinishedUpdating:
-	//	break;
-	case FinishedDatabase:
-	{
-		CLocateDlg* pLocateDlg=GetLocateDlg();
-		if (pLocateDlg!=NULL)
+	case InitializeWriting:
 		{
-			if (ueCode==ueStopped)
+			CLocateDlg* pLocateDlg=GetLocateDlg();
+			if (pLocateDlg!=NULL)
 			{
-				CStringW str;
-				str.Format(IDS_UPDATINGDATABASE2,
-					pUpdater->GetCurrentDatabaseName(),
-					(LPCWSTR)ID2W(IDS_UPDATINGCANCELLED2));
+				// Locating in progress, waiting
+				
+				// statusCustom1 is for delay writing
+				pUpdater->SetStatus(statusCustom1);
 
-				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
-				return FALSE;
+				HANDLE hThread=pLocateDlg->GetLocaterThread(TRUE);
+				if (hThread!=NULL)
+				{
+					CStringW str;
+					str.Format(IDS_UPDATINGDATABASE2,
+						pUpdater->GetCurrentDatabaseName(),
+						(LPCWSTR)ID2W(IDS_UPDATINGDELAYWRITING));
+
+					pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
+
+					WaitForSingleObject(hThread,INFINITE);
+
+					CloseHandle(hThread);
+				}
 			}
-			else if (ueCode!=ueSuccess)
-			{
-				CStringW str;
-				str.Format(IDS_UPDATINGDATABASE2,
-					pUpdater->GetCurrentDatabaseName(),
-					(LPCWSTR)ID2W(IDS_UPDATINGFAILED));
-
-				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
-				return FALSE;
-			}
-			CStringW str;
-			str.Format(IDS_UPDATINGDATABASE2,
-				pUpdater->GetCurrentDatabaseName(),
-				(LPCWSTR)ID2W(IDS_UPDATINGDONE));
-
-			pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
+			return TRUE;
 		}
+	case FinishedDatabase:
+		{
+			CLocateDlg* pLocateDlg=GetLocateDlg();
+			if (pLocateDlg!=NULL)
+			{
+				if (ueCode==ueStopped)
+				{
+					CStringW str;
+					str.Format(IDS_UPDATINGDATABASE2,
+						pUpdater->GetCurrentDatabaseName(),
+						(LPCWSTR)ID2W(IDS_UPDATINGCANCELLED2));
 
-		return TRUE;
-	}
+					pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
+					return FALSE;
+				}
+				else if (ueCode!=ueSuccess)
+				{
+					CStringW str;
+					str.Format(IDS_UPDATINGDATABASE2,
+						pUpdater->GetCurrentDatabaseName(),
+						(LPCWSTR)ID2W(IDS_UPDATINGFAILED));
+
+					pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
+					return FALSE;
+				}
+				CStringW str;
+				str.Format(IDS_UPDATINGDATABASE2,
+					pUpdater->GetCurrentDatabaseName(),
+					(LPCWSTR)ID2W(IDS_UPDATINGDONE));
+
+				pLocateDlg->SendMessage(WM_SETOPERATIONSTATUSBAR,0,(LPARAM)(LPCWSTR)str);
+			}
+
+			return TRUE;
+		}
 	case ClassShouldDelete:
 		{
 			if (!GetLocateApp()->IsUpdating())
@@ -2158,7 +2155,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 		if (dwParam!=NULL)
 		{
 			if (((CTrayIconWnd*)dwParam)->m_pUpdateStatusWnd!=NULL)
-			((CTrayIconWnd*)dwParam)->m_pUpdateStatusWnd->FormatErrorForStatusTooltip(ueCode,pUpdater);
+				((CTrayIconWnd*)dwParam)->m_pUpdateStatusWnd->FormatErrorForStatusTooltip(ueCode,pUpdater);
 		}
 
 		switch(ueCode)
@@ -2234,8 +2231,55 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowNonCriticalErrors)
 			{
 				CStringW str;
-				str.Format(IDS_ERRORROOTNOTAVAILABLE,pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():L"");
-				ErrorBox(str);
+				
+				// Check if drive could be removed from database settings and, if possibl, ask that
+				WORD wID=pUpdater->GetCurrentDatabaseID();
+				if (wID!=0 && pUpdater->GetCurrentRootPath()!=NULL && 
+					!(GetLocateApp()->GetStartupFlags()&CStartData::startupDatabasesOverridden))
+				{
+					CDatabase* pDatabase=GetLocateApp()->GetDatabaseNonConst(wID);
+					if (pDatabase!=NULL)
+					{
+						CArray<LPWSTR> aRoots;
+						pDatabase->GetRoots(aRoots);
+						
+						if (aRoots.GetSize()>1)
+						{
+							int nRoot;
+							for (nRoot=0;nRoot<aRoots.GetSize();nRoot++)
+							{
+								if (_wcsicmp(aRoots[nRoot],pUpdater->GetCurrentRootPath())==0)
+									break;
+							}
+
+							if (nRoot<aRoots.GetSize())
+							{
+								str.Format(IDS_ERRORROOTNOTAVAILABLEASKREMOVE,
+									pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():ID2W(IDS_UNKNOWN),
+									pUpdater->GetCurrentDatabaseName()!=NULL?pUpdater->GetCurrentDatabaseName():ID2W(IDS_UNKNOWN));
+								switch(ErrorBox(str,MB_ICONERROR|MB_YESNOCANCEL|(pUpdater->IsStopIfUnuavailableSet()?MB_DEFBUTTON3:MB_DEFBUTTON2)))
+								{
+								case IDYES:
+									aRoots.RemoveAt(nRoot);
+									pDatabase->SetRoots(aRoots);
+
+									// Save databases to registry
+									CDatabase::SaveToRegistry(HKCU,CLocateApp::GetRegKey("Databases"),GetLocateApp()->GetDatabases());
+									return 1;
+								case IDNO:
+									return 1;
+								default:
+									return -1;
+								}
+							}
+						}
+					}
+				}
+
+				str.Format(IDS_ERRORROOTNOTAVAILABLE,
+						pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():L"",
+						pUpdater->GetCurrentDatabaseName()!=NULL?pUpdater->GetCurrentDatabaseName():L"");
+				return ErrorBox(str,MB_ICONERROR|MB_YESNO|(pUpdater->IsStopIfUnuavailableSet()?MB_DEFBUTTON2:MB_DEFBUTTON1))==IDYES?1:-1;
 			}
 			return FALSE;
 		case ueCannotIncrement:

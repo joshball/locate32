@@ -128,9 +128,15 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 
 				if (ueResult==ueFolderUnavailable)
 				{
-					m_pProc(m_dwData,ErrorOccured,ueResult,this);
-					if (m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::StopIfUnuavailable))
+					switch(m_pProc(m_dwData,ErrorOccured,ueResult,this))
+					{
+					case 0:
+						if (m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::StopIfUnuavailable))
+							throw ueFolderUnavailable; // Next database
+						break;
+					case -1:
 						throw ueFolderUnavailable; // Next database
+					}
 				}
 				else if (ueResult!=ueSuccess)
 					throw ueResult;
@@ -1523,6 +1529,7 @@ CDatabaseUpdater::DBArchive::DBArchive(const CDatabase* pDatabase)
 
 	m_dwNameLength=(DWORD)wcslen(pDatabase->GetName());
 	m_szName=alloccopy(pDatabase->GetName(),m_dwNameLength);
+	m_wID=pDatabase->GetID();
 
 	// Retrieving flags
 	if (pDatabase->IsFlagSet(CDatabase::flagStopIfRootUnavailable))
@@ -1606,7 +1613,7 @@ CDatabaseUpdater::DBArchive::DBArchive(LPCWSTR szArchiveName,CDatabase::ArchiveT
 	m_szName(NULL),m_dwNameLength(0),m_nFlags(nFlags),
 	m_szExtra1(NULL),m_szExtra2(NULL),
 	m_aIncludeFilesPatternsA(NULL),m_aIncludeDirectoriesPatternsA(NULL),
-	m_aExcludeFilesPatternsA(NULL)
+	m_aExcludeFilesPatternsA(NULL),m_wID(0)
 {
 	m_szArchive=alloccopy(szArchiveName);
 	

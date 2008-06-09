@@ -73,8 +73,8 @@ You can use threads to parallelize the update process. For example, if
 you have two databases, one for local drives and one for a network share or external USB drive, 
 you can use two threads so that the first database containing the file in local drives are updated 
 using the first thread and the second database using the another thread. Then these database will 
-be updated simultaneously and lots of time is saved. <br>
-Note that it is not reasonable to use multiple threads for drives which are physically in 
+be updated simultaneously and lots of time is saved. <b>Note:</b>
+it is not reasonable to use multiple threads for drives which are physically in 
 the same disk. Namely it is significantly slower to read the disc from two 
 different locations at the same time. 
 </p>

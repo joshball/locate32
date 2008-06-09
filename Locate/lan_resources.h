@@ -81,6 +81,7 @@
 #define IDS_LOCATINGWAITDBWRITING       66
 #define IDS_JUNCTION					67
 #define IDS_SYMLINKDIR					68
+#define IDS_LISTEXTENSION				69
 #define IDS_HELPINFO                    70
 #define IDS_FILEINFORMATION             71
 #define IDS_FILEINFORMATIONFMT          72
@@ -297,6 +298,7 @@
 #define IDS_ERRORJUNCTIONS				1032
 #define IDC_TARGETTYPE                  1032
 #define IDC_STARTIN                     1033
+#define IDS_ERRORROOTNOTAVAILABLEASKREMOVE 1033
 #define IDS_ERRORCANNOTCREATETHREAD     1034
 #define IDC_RUNMODE                     1035
 #define IDC_FINDTARGET                  1036

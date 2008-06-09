@@ -213,7 +213,7 @@ BOOL CSettingsProperties::LoadSettings()
 		m_aDatabases.Add(new CDatabase(*rOrigDatabases[i]));
 	
 	SetSettingsFlags(settingsDatabasesOverridden,
-		((CLocateApp*)GetApp())->GetStartupFlags()&CLocateApp::CStartData::startupDatabasesOverridden);
+		GetLocateApp()->GetStartupFlags()&CLocateApp::CStartData::startupDatabasesOverridden);
 	
 	
 	// Loading shortcuts
@@ -4693,6 +4693,26 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 
 void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDialog::OnHelp(LPHELPINFO lphi)
 {
+	CLocateApp::HelpID id[]= {
+		{ IDC_INCLUDEFILES,"sda_includefiles" },
+		{ IDC_INCLUDEDIRECTORIES,"sda_includedirectories" },
+		{ IDC_EXCLUDEFILES,"sda_excludefiles" },
+		{ IDC_DIRECTORYNAME,"sda_excludedirectories" },
+		{ IDC_BROWSE,"sda_excludedirectories" },
+		{ IDC_ADDFOLDER,"sda_excludedirectories" },
+		{ IDC_REMOVEFOLDER,"sda_excludedirectories" },
+		{ IDC_DIRECTORIES,"sda_excludedirectories" },
+		{ IDC_EXCLUDEONLYCONTENT,"sda_onlycontent" },
+		{ IDC_FOLDERS,"sda_maps" },
+		{ IDC_PATHINDATABASELABEL,"sda_maps" },
+		{ IDC_PATHINDATABASE,"sda_maps" },
+		{ IDC_SET,"sda_maps" }		
+	};
+	
+	if (CLocateApp::OpenHelp(*this,"settings_databaseadv.htm",lphi,id,sizeof(id)/sizeof(CLocateApp::HelpID)))
+		return;
+
+	
 	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_DATABASEADVANCED)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }
@@ -8562,6 +8582,32 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnInitDialog(HWN
 
 void CSettingsProperties::CKeyboardShortcutsPage::CAdvancedDlg::OnHelp(LPHELPINFO lphi)
 {
+		CLocateApp::HelpID id[]= {
+		{ IDC_TYPE,"ska_type" },
+		{ IDC_VKISSCANCODE,"ska_scancode" },
+		{ IDC_STATICWINDOWTITLE,"ska_window" },
+		{ IDC_WINDOWTITLE,"ska_window" },
+		{ IDC_STATICCLASS,"ska_class" },
+		{ IDC_WINDOWCLASS,"ska_class" },
+		{ IDC_LOCATEDIALOG,"ska_locatedlg" },
+		{ IDC_EXECUTEWHENSTATIC,"ska_execute" },
+		{ IDC_EXECUTEWHENKEYISDOWN,"ska_execute" },
+		{ IDC_EXECUTEWHENKEYISUP,"ska_execute" },
+		{ IDC_REMOVEMESSAGESTATIC,"ska_remove" },
+		{ IDC_REMOVEDOWNMESSAGE,"ska_remove" },
+		{ IDC_REMOVEUPMESSAGE,"ska_remove" },
+		{ IDC_SENDKEYRELEASEBEFOREWIN,"ska_beforewin" },
+		{ IDC_STATICWAITBEFOREEXECUTE,"ska_wait" },
+		{ IDC_WAITNONE,"ska_wait" },
+		{ IDC_WAITNONE,"ska_wait" },
+		{ IDC_WAITMS,"ska_wait" },
+		{ IDC_WAITPOST,"ska_wait" }
+	};
+	
+	if (CLocateApp::OpenHelp(*this,"settings_shortcutsadvanced.htm",lphi,id,sizeof(id)/sizeof(CLocateApp::HelpID)))
+		return;
+
+	
 	if (HtmlHelp(HH_HELP_CONTEXT,HELP_SETTINGS_SHORTCUTADVANCED)==NULL)
 		HtmlHelp(HH_DISPLAY_TOPIC,0);
 }

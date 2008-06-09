@@ -181,6 +181,7 @@ public:
 		
 		LPWSTR m_szName;
 		DWORD m_dwNameLength;
+		WORD m_wID;
 
 		CStringW m_sAuthor;
 		CStringW m_sComment;
@@ -258,15 +259,17 @@ public:
 
 	BOOL EnumDatabases(int iDatabase,LPWSTR& szName,LPWSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot);
 	
-	const LPCWSTR GetCurrentDatabaseName() const;
-	const LPCWSTR GetCurrentDatabaseFile() const;
-	LPWSTR GetCurrentDatabaseNameStr() const;
 	
 	DWORD GetNumberOfDatabases() const;
 	DWORD GetCurrentDatabase() const;
+	WORD GetCurrentDatabaseID() const;
 	WORD GetProgressStatus() const; // Estimated progress status between 0-1000
-
+	const LPCWSTR GetCurrentDatabaseName() const;
+	const LPCWSTR GetCurrentDatabaseFile() const;
+	LPWSTR GetCurrentDatabaseNameStr() const; // Returns a pointer to a allocated copy, must be eventually freed using delete[]
+	
 	BOOL IsIncrementUpdate() const;
+	BOOL IsStopIfUnuavailableSet() const;
 
 #ifdef WIN32
 	static BYTE GetAttribFlag(DWORD dwAttribs);
@@ -493,7 +496,7 @@ inline CDatabaseUpdater::DBArchive::DBArchive()
 	m_dwExpectedDirectories(DWORD(-1)),m_dwExpectedFiles(DWORD(-1)),
 	m_szExtra1(NULL),m_szExtra2(NULL),
 	m_aIncludeFilesPatternsA(NULL),m_aIncludeDirectoriesPatternsA(NULL),
-	m_aExcludeFilesPatternsA(NULL)
+	m_aExcludeFilesPatternsA(NULL),m_wID(0)
 {
 }
 
@@ -627,6 +630,22 @@ inline BOOL CDatabaseUpdater::IsIncrementUpdate() const
 	return m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::IncrementalUpdate);
 }
 
+inline BOOL CDatabaseUpdater::IsStopIfUnuavailableSet() const
+{
+	if (m_dwCurrentDatabase==DWORD(-1))
+		return FALSE;
+	
+	return m_aDatabases[m_dwCurrentDatabase]->IsFlagged(DBArchive::StopIfUnuavailable);
+}
+
+inline WORD CDatabaseUpdater::GetCurrentDatabaseID() const
+{
+	if (m_dwCurrentDatabase==DWORD(-1))
+		return 0;
+	
+	return m_aDatabases[m_dwCurrentDatabase]->m_wID;
+}
+	
 inline BOOL CDatabaseUpdater::EnumDatabases(int iDatabase,LPWSTR& szName,LPWSTR& szFile,CDatabase::ArchiveType& nArchiveType,CRootDirectory*& pFirstRoot)
 {
 	if (iDatabase<0 || iDatabase>=m_aDatabases.GetSize())

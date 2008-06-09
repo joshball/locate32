@@ -909,7 +909,7 @@ void CDatabase::GetRoots(CArray<LPWSTR>& aRoots) const
 		{
 			DWORD dwLength=istrlenw(pPtr);
 			aRoots.Add(alloccopy(pPtr,dwLength));
-			pPtr+=dwLength;
+			pPtr+=dwLength+1;
 		}
 	}
 }

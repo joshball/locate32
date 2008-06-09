@@ -2847,7 +2847,7 @@ void CLocateDlg::OnChangeFileNameCase()
 				}
 
 				FileSystem::MoveFile(pItem->GetPath(),pItem->GetPath());
-				pItem->RemoveFlags(LITEM_FILETITLEOK|LITEM_FILENAMEOK);
+				pItem->RemoveFlags(LITEM_FILETITLEOK);
 				m_pListCtrl->RedrawItems(iItem,iItem);
 				
 
