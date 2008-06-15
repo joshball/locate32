@@ -594,6 +594,7 @@ public:
 	static BOOL CALLBACK DefaultFontProc(BASICPARAMS* pParams); 
 
 
+	
 public:
 	// Item class
 	struct Item {
@@ -651,14 +652,21 @@ public:
 		void SetValuesForBasicParams(COptionsPropertyPage::BASICPARAMS* pParams);
 		void GetValuesFromBasicParams(const COptionsPropertyPage::BASICPARAMS* pParams);
 
-		LPWSTR GetText(BOOL bActive=FALSE) const;
 		void FreeText(LPWSTR pText) const;
 
 		int IconFromColor(CImageList* pImageList,int nReplace=-1) const;
 		
 		friend COptionsPropertyPage;
 
-
+	public:
+		ItemType GetItemType() const { return nType; }
+		LPWSTR GetText(BOOL bActive=FALSE) const;
+		LPCSTR GetHelpID() const { return pHelpID; }
+		BOOL IsEnabled() const { return bEnabled; }
+		Item* const  GetParent() const { return pParent; }
+		Item** const GetChilds() const { return pChilds; }
+		HWND GetControl() const { return hControl; }
+		HWND GetControl2() const { return hControl2; }
 	};
 	
 	
@@ -730,6 +738,14 @@ public:
 
 	// Get ID to the help file for the selected item, can be used in OnHelp()
 	LPCSTR GetHelpID(HELPINFO* pHelpInfo) const;
+
+
+	const Item* GetItem(HTREEITEM hItem) const;
+	BOOL IsItemEnabled(HTREEITEM hItem) const;
+
+	// Finds item based on text, set bPartial to TRUE if you want that partial match is OK
+	HTREEITEM FindItem(LPCSTR pText,BOOL bBackwardDirection=FALSE,BOOL bPartial=TRUE,BOOL bNoDisabled=TRUE,HTREEITEM hBegin=NULL,HTREEITEM hEnd=NULL) const; 
+	HTREEITEM FindItem(LPCWSTR pText,BOOL bBackwardDirection=FALSE,BOOL bPartial=TRUE,BOOL bNoDisabled=TRUE,HTREEITEM hBegin=NULL,HTREEITEM hEnd=NULL) const; 
 
 private:
     BOOL InsertItemsToTree(HTREEITEM hParent,Item** pItems,Item* pParent=NULL);
@@ -1510,8 +1526,16 @@ inline void COptionsPropertyPage::Item::FreeText(LPWSTR pText) const
 }
 
 
+inline BOOL COptionsPropertyPage::IsItemEnabled(HTREEITEM hItem) const
+{
+	Item* pItem=(Item*)m_pTree->GetItemData(hItem);
+	return pItem!=NULL?pItem->bEnabled:FALSE;
+}
 
-
+inline const COptionsPropertyPage::Item* COptionsPropertyPage::GetItem(HTREEITEM hItem) const
+{
+	return (Item*)m_pTree->GetItemData(hItem);
+}
 
 
 

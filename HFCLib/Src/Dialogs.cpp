@@ -2794,12 +2794,12 @@ BOOL CFolderDialog::GetFolder(LPWSTR szFolder) const
 // Class COptionsPropertyPage
 ///////////////////////////
 
-#define IDC_EDITCONTROLFORSELECTEDITEM  1300
-#define IDC_SPINCONTROLFORSELECTEDITEM  1301
-#define IDC_COMBOCONTROLFORSELECTEDITEM 1302
-#define IDC_COLORBUTTONFORSELECTEDITEM	1303
-#define IDC_FONTBUTTONFORSELECTEDITEM	1304
-#define IDC_BROWSEBUTTONFORSELECTEDITEM	1305
+#define IDC_EDITCONTROLFORSELECTEDITEM  64300
+#define IDC_SPINCONTROLFORSELECTEDITEM  64301
+#define IDC_COMBOCONTROLFORSELECTEDITEM 64302
+#define IDC_COLORBUTTONFORSELECTEDITEM	64303
+#define IDC_FONTBUTTONFORSELECTEDITEM	64304
+#define IDC_BROWSEBUTTONFORSELECTEDITEM	64305
 
 COptionsPropertyPage::Item::Item(
 	ItemType nType_,Item* pParent_,Item** pChilds_,LPWSTR pString_,
@@ -5107,5 +5107,34 @@ LPCSTR COptionsPropertyPage::GetHelpID(HELPINFO* pHelpInfo) const
 	return NULL;
 
 }
+
+
+HTREEITEM COptionsPropertyPage::FindItem(LPCSTR pText,BOOL bBackwardDirection,BOOL bPartial,BOOL bNoDisabled,HTREEITEM hItem,HTREEITEM hEnd) const
+{
+	if (!bNoDisabled)
+		return m_pTree->FindItem(pText,bBackwardDirection,bPartial,hItem,hEnd);
+
+	while ((hItem=m_pTree->FindItem(pText,bBackwardDirection,bPartial,hItem,hEnd))!=NULL)
+	{
+		if (IsItemEnabled(hItem))
+			return hItem;
+	}
+	return NULL;
+}
+
+HTREEITEM COptionsPropertyPage::FindItem(LPCWSTR pText,BOOL bBackwardDirection,BOOL bPartial,BOOL bNoDisabled,HTREEITEM hItem,HTREEITEM hEnd) const
+{
+	if (!bNoDisabled)
+		return m_pTree->FindItem(pText,bBackwardDirection,bPartial,hItem,hEnd);
+
+	while ((hItem=m_pTree->FindItem(pText,bBackwardDirection,bPartial,hItem,hEnd))!=NULL)
+	{
+		if (IsItemEnabled(hItem))
+			return hItem;
+	}
+	return NULL;
+}
+
+	
 
 #endif

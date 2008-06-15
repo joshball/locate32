@@ -1138,6 +1138,217 @@ HTREEITEM CTreeCtrl::HitTest(const POINT& pt,UINT* pFlags) const
 	return hi.hItem;
 }
 
+HTREEITEM CTreeCtrl::GetNextItem(HTREEITEM hItem) const
+{
+	if (hItem==NULL)
+		return GetRootItem();
+
+	// First check childs
+	HTREEITEM hNewItem=GetNextItem(hItem,TVGN_CHILD);
+	if (hNewItem!=NULL)
+	{
+		// Item has childs, return first child
+		return hNewItem;
+	}
+
+	// Check next item
+	hNewItem=GetNextItem(hItem,TVGN_NEXT);
+	if (hNewItem!=NULL)
+	{
+		// Item has siblings below, return first such sibling
+		return hNewItem;
+	}
+
+	// Check parent
+	HTREEITEM hParent=GetParentItem(hItem);
+	while (hParent!=NULL)
+	{
+		hNewItem=GetNextItem(hParent,TVGN_NEXT);
+		if (hNewItem!=NULL)
+			return hNewItem;
+
+		// Get parent to parent
+		hParent=GetParentItem(hParent);
+	}
+
+	return NULL;
+}
+
+	
+HTREEITEM CTreeCtrl::GetPrevItem(HTREEITEM hItem) const
+{
+	if (hItem==NULL)
+		return GetLastItem();
+
+	// First check sibling on above
+	HTREEITEM hSibling=GetNextItem(hItem,TVGN_PREVIOUS);
+	if (hSibling!=NULL)
+	{
+		// Item has siblings above
+		for (;;)
+		{
+			// Now check wheter this sibling has childs
+			HTREEITEM hChild=GetNextItem(hSibling,TVGN_CHILD);
+			if (hChild==NULL)
+			{
+				// No childs, return this sibling
+				return hSibling;
+			}
+
+			// Get last child to hSibling
+			do {
+				hSibling=hChild;
+			}
+			while ((hChild=GetNextItem(hChild,TVGN_NEXT))!=NULL);
+				
+		}		
+	}
+
+	// Return parent item
+	return GetParentItem(hItem);
+}
+
+HTREEITEM CTreeCtrl::FindItem(LPCSTR pText,BOOL bBackwardDirection,BOOL bPartial,HTREEITEM hItem,HTREEITEM hEnd) const
+{
+	TV_ITEMA ti;
+	char szBuffer[1000];
+	ti.mask=TVIF_TEXT;
+	ti.hItem=hItem;
+	ti.pszText=szBuffer;
+	ti.cchTextMax=1000;
+
+	LPSTR pTextMod;
+	
+	if (bPartial)
+	{
+		int iStrLen=istrlen(pText);
+		pTextMod=new char[iStrLen+3];
+		if (pText[0]!='*')
+		{
+			pTextMod[0]='*';
+			MemCopy(pTextMod+1,pText,iStrLen++);
+		}
+		else
+			MemCopy(pTextMod,pText,iStrLen);
+		if (pTextMod[iStrLen-1]!='*')
+			pTextMod[iStrLen++]='*';
+		pTextMod[iStrLen]='\0';
+		MakeLower(pTextMod);
+	}
+		
+	while ((ti.hItem=bBackwardDirection?GetPrevItem(ti.hItem):GetNextItem(ti.hItem))!=NULL)
+	{
+		// Get next item
+		if (ti.hItem==hEnd)
+			return NULL;
+
+		// Check text
+		if (!GetItem(&ti))
+			continue;
+
+		
+
+		if (bPartial)
+		{
+			MakeLower(szBuffer);
+			if (ContainString(szBuffer,pTextMod))
+			{
+				delete[] pTextMod;
+				return ti.hItem;
+			}
+		}
+		else if (_stricmp(szBuffer,pText)==0)
+			return ti.hItem;		
+	}
+
+	if (bPartial)
+		delete[] pTextMod;
+	return NULL;
+}
+
+
+HTREEITEM CTreeCtrl::FindItem(LPCWSTR pText,BOOL bBackwardDirection,BOOL bPartial,HTREEITEM hItem,HTREEITEM hEnd) const
+{
+	TV_ITEMW ti;
+	WCHAR szBuffer[1000];
+	ti.mask=TVIF_TEXT;
+	ti.hItem=hItem;
+	ti.pszText=szBuffer;
+	ti.cchTextMax=1000;
+
+	LPWSTR pTextMod;
+	
+	if (bPartial)
+	{
+		int iStrLen=istrlen(pText);
+		pTextMod=new WCHAR[iStrLen+3];
+		if (pText[0]!='*')
+		{
+			pTextMod[0]='*';
+			MemCopyW(pTextMod+1,pText,iStrLen++);
+		}
+		else
+			MemCopyW(pTextMod,pText,iStrLen);
+		if (pTextMod[iStrLen-1]!='*')
+			pTextMod[iStrLen++]='*';
+		pTextMod[iStrLen]='\0';
+		MakeLower(pTextMod);
+	}
+		
+	while ((ti.hItem=bBackwardDirection?GetPrevItem(ti.hItem):GetNextItem(ti.hItem))!=NULL)
+	{
+		// Get next item
+		if (ti.hItem==hEnd)
+			return NULL;
+
+		// Check text
+		if (!GetItem(&ti))
+			continue;
+
+		
+
+		if (bPartial)
+		{
+			MakeLower(szBuffer);
+			if (ContainString(szBuffer,pTextMod))
+			{
+				delete[] pTextMod;
+				return ti.hItem;
+			}
+		}
+		else if (_wcsicmp(szBuffer,pText)==0)
+			return ti.hItem;		
+	}
+
+	if (bPartial)
+		delete[] pTextMod;
+	return NULL;
+}
+
+HTREEITEM CTreeCtrl::GetLastItem() const
+{
+	// Begin from the root item
+	HTREEITEM hItem=GetRootItem(),hTemp;
+	
+	for (;;)
+	{
+		// Find last sibling
+		while ((hTemp=GetNextItem(hItem,TVGN_NEXT))!=NULL)
+			hItem=hTemp;
+
+		hTemp=GetNextItem(hItem,TVGN_CHILD);
+		if (hTemp==NULL)
+		{
+			// No childs, return this item
+			return hItem;
+		}
+		
+		// Check all childs
+		hItem=hTemp;
+	}
+}
+
+
 ///////////////////////////////////////////
 // CComboBoxEx
 ///////////////////////////////////////////

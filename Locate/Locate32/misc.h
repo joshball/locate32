@@ -207,7 +207,8 @@ public:
 };
 
 
-
+// Alternative _StrCmp 
+int STDAPICALLTYPE _StrCmpW(LPCWSTR,LPCWSTR);
 
 #include "misc.inl"
 

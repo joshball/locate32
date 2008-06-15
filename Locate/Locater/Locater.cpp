@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.1.8.4270              */
+   database locater v3.1.8.6150              */
 
 #include <HFCLib.h>
 
@@ -200,6 +200,7 @@ CLocater::~CLocater()
 
 	m_aDatabases.RemoveAll();
 	m_aDirectories.RemoveAll();
+	m_aExcludedDirectories.RemoveAll();
 
 	if (dbFile!=NULL)
 	{
@@ -223,8 +224,20 @@ CLocater::~CLocater()
 	}
 	else
 	{
-		m_aNames.RemoveAll();
-		m_aExtensions.RemoveAll();
+		if (m_dwNamesCount>0)
+		{
+			for (DWORD i=0;i<m_dwNamesCount;i++)
+				delete[] m_ppNames[i];
+			delete[] m_ppNames;
+			delete[] m_piNameLengths;
+		}
+		if (m_dwExtCount>0)
+		{
+			for (DWORD i=0;i<m_dwExtCount;i++)
+				delete[] m_ppExtensions[i];
+			delete[] m_ppExtensions;
+			delete[] m_piExtLengths;
+		}
 	}
 
 
@@ -264,6 +277,8 @@ BOOL CLocater::LocatingProc()
 
 	for (int i=0;i<m_aDirectories.GetSize();i++)
 		m_aDirectories.GetAt(i)->MakeLower();
+	for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
+		m_aExcludedDirectories.GetAt(i)->MakeLower();
 
 	// Opening database file
 	
@@ -334,177 +349,79 @@ BOOL CLocater::LocatingProc()
 			if (m_pCurrentDatabase->bUnicode)
 			{
 				// Unicode implementation
-				if (m_aDirectories.GetSize()>0)
-				{
-					// There is directories in which files should be
-					dbFile->Read(dwBlockSize);
-					
-					if (dwBlockSize>ulFileSize-dbFile->GetPosition64())
-					{
-						// Invalid database
-						throw CFileException(CFileException::invalidFile);
-					}
-
-					LocaterDebugMessage("CLocater::LocatingProc(W) block size readed A");
-
-					while (dwBlockSize>0 && !m_lForceQuit)
-					{
-						LocaterDebugMessage("CLocater::LocatingProc(W) new root");
-
-						m_pProc(m_dwData,RootChanged,ueStillWorking,0,this);
-						
-						// Reading type data
-						LocaterDebugMessage("CLocater::LocatingProc(W) read block");
-						dbFile->Read(m_bCurrentRootType);
-						LocaterDebugMessage("CLocater::LocatingProc(W) block readed");
 				
-						
-						// Reading path
-						{
-							WORD wTemp;
-							dbFile->Read(wTemp);
-							for (nPathLen=0;wTemp!=L'\0';nPathLen++)
-							{
-								szCurrentPathW[nPathLen]=wTemp;
-								szCurrentPathLowerW[nPathLen]=wTemp;
-								dbFile->Read(wTemp);
-							}
-							szCurrentPathW[nPathLen]=L'\0';
-							dwBlockSize-=(nPathLen+1)*2+1; // second 1 is type
-							
-							
-							// Check whether there is root map
-							int nActualPathLen;
-							BOOL bFree;
-							LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
-								m_pCurrentDatabase->szRootMaps,szCurrentPathW,nActualPathLen,bFree);
-							if (pActualPath!=NULL)
-							{
-								MemCopyW(szCurrentPathW,pActualPath,nActualPathLen);
-								MemCopyW(szCurrentPathLowerW,pActualPath,nActualPathLen);
-								szCurrentPathW[nPathLen=nActualPathLen]=L'\0';
-							
-								if (bFree)
-									delete[] pActualPath;
-							}
-
-
-							// Lower case
-							szCurrentPathLowerW[nPathLen]=L'\0';
-							MakeLower(szCurrentPathLowerW);
-						}
-						
-						ValidType vtType=IsRootValidW(nPathLen);
-						LocaterDebugNumMessage("CLocater::LocatingProc(W) vtType=%X",DWORD(vtType));
-						
-						if (vtType!=NoValidFolders)
-						{
-							// Reading data to buffer
-							delete[] szBuffer;
-							
-						
-			
-							pPoint=szBuffer=new BYTE[dwBlockSize];
-							
-							dbFile->Read(szBuffer,dwBlockSize);
-
-							// Resolving volume name 
-							m_sVolumeName=(LPCWSTR)pPoint;
-							pPoint+=(m_sVolumeName.GetLength()+1)*2;
-							
-							// Resolving volume serial
-							m_dwVolumeSerial=*((DWORD*)pPoint);
-							pPoint+=sizeof(DWORD); // 1 == '\0' in volumename
-						
-							// Resolving file system
-							m_sFileSystem=(LPCWSTR)pPoint;
-							pPoint+=(m_sFileSystem.GetLength()+1)*2;
-
-							// Skipping the number of files and directories
-							pPoint+=2*sizeof(DWORD);
-
-							// Telling that volume information is available
-							m_pProc(m_dwData,RootInformationAvail,ueStillWorking,0,this);
-						
-							// OK, now we are beginning of folder data
-							if (vtType==ValidFolders)
-								CheckFolderW(nPathLen);
-							else
-								LocateValidFolderW(nPathLen);
-						
-						}
-						else // Skipping root
-							dbFile->Seek(dwBlockSize,CFile::current);
+				// Read block size
+				dbFile->Read(dwBlockSize);
 					
-						LocaterDebugMessage("CLocater::LocatingProc(W) reading next root");
-					
-						// New root
-						m_wCurrentRootIndex++;
-						dbFile->Read(dwBlockSize);
-					}
-
-					// m_aDirectories.GetSize()>0 END
-				}
-				else
+				if (dwBlockSize>ulFileSize-dbFile->GetPosition64())
 				{
-					// m_aDirectories.GetSize()==0 
+					// Invalid database
+					throw CFileException(CFileException::invalidFile);
+				}
 
-					// No restrinctions about directories
-					dbFile->Read(dwBlockSize);
+				LocaterDebugMessage("CLocater::LocatingProc(W) block size readed A");
 
-					if (dwBlockSize>ulFileSize-dbFile->GetPosition64())
-					{
-						// Invalid database
-						throw CFileException(CFileException::invalidFile);
-					}
+				while (dwBlockSize>0 && !m_lForceQuit)
+				{
+					LocaterDebugMessage("CLocater::LocatingProc(W) new root");
 
-					LocaterDebugMessage("CLocater::LocatingProc(W) block size readed B");
+					m_pProc(m_dwData,RootChanged,ueStillWorking,0,this);
 					
-					while (dwBlockSize>0 && !m_lForceQuit)
-					{
-						LocaterDebugMessage("CLocater::LocatingProc(W) 1");
-
-						m_pProc(m_dwData,RootChanged,ueStillWorking,0,this);
+					// Reading type data
+					LocaterDebugMessage("CLocater::LocatingProc(W) read block");
+					dbFile->Read(m_bCurrentRootType);
+					LocaterDebugMessage("CLocater::LocatingProc(W) block readed");
+			
 					
-						// Reading type data
-						dbFile->Read(m_bCurrentRootType);
-									
-						// Reading path
+					// Reading path
+					{
+						WORD wTemp;
+						dbFile->Read(wTemp);
+						for (nPathLen=0;wTemp!=L'\0';nPathLen++)
 						{
-							WORD wTemp;
+							szCurrentPathW[nPathLen]=wTemp;
+							szCurrentPathLowerW[nPathLen]=wTemp;
 							dbFile->Read(wTemp);
-							for (nPathLen=0;wTemp!=L'\0';nPathLen++)
-							{
-								szCurrentPathW[nPathLen]=wTemp;
-								dbFile->Read(wTemp);
-							}
-							szCurrentPathW[nPathLen]=L'\0';
-							
-							dwBlockSize-=(nPathLen+1)*2+1; // second 1 is type
-
-							// Check whether there is root map
-							int nActualPathLen;
-							BOOL bFree;
-							LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
-								m_pCurrentDatabase->szRootMaps,szCurrentPathW,nActualPathLen,bFree);
-							if (pActualPath!=NULL)
-							{
-								MemCopyW(szCurrentPathW,pActualPath,nActualPathLen);
-								szCurrentPathW[nPathLen=nActualPathLen]=L'\0';
-
-								if (bFree)
-									delete[] pActualPath;
-							}
-
 						}
+						szCurrentPathW[nPathLen]=L'\0';
+						dwBlockSize-=(nPathLen+1)*2+1; // second 1 is type
 						
+						
+						// Check whether there is root map
+						int nActualPathLen;
+						BOOL bFree;
+						LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
+							m_pCurrentDatabase->szRootMaps,szCurrentPathW,nActualPathLen,bFree);
+						if (pActualPath!=NULL)
+						{
+							MemCopyW(szCurrentPathW,pActualPath,nActualPathLen);
+							MemCopyW(szCurrentPathLowerW,pActualPath,nActualPathLen);
+							szCurrentPathW[nPathLen=nActualPathLen]=L'\0';
+						
+							if (bFree)
+								delete[] pActualPath;
+						}
+
+
+						// Lower case
+						szCurrentPathLowerW[nPathLen]=L'\0';
+						MakeLower(szCurrentPathLowerW);
+					}
+					
+					// Check if root is valid
+					ValidType vtType=IsFolderValidW(nPathLen);
+					LocaterDebugNumMessage("CLocater::LocatingProc(W) vtType=%X",DWORD(vtType));
+					
+					if (vtType!=NoValidFolders)
+					{
 						// Reading data to buffer
 						delete[] szBuffer;
+						
+					
+		
 						pPoint=szBuffer=new BYTE[dwBlockSize];
 						
 						dbFile->Read(szBuffer,dwBlockSize);
-
-						LocaterDebugMessage("CLocater::LocatingProc(W) 2");
 
 						// Resolving volume name 
 						m_sVolumeName=(LPCWSTR)pPoint;
@@ -513,205 +430,110 @@ BOOL CLocater::LocatingProc()
 						// Resolving volume serial
 						m_dwVolumeSerial=*((DWORD*)pPoint);
 						pPoint+=sizeof(DWORD); // 1 == '\0' in volumename
-						
+					
 						// Resolving file system
 						m_sFileSystem=(LPCWSTR)pPoint;
 						pPoint+=(m_sFileSystem.GetLength()+1)*2;
 
-						LocaterDebugMessage("CLocater::LocatingProc(W) 3");
-						
 						// Skipping the number of files and directories
 						pPoint+=2*sizeof(DWORD);
 
 						// Telling that volume information is available
 						m_pProc(m_dwData,RootInformationAvail,ueStillWorking,0,this);
-						
-						// OK, now we are at the beginning of folder data
-						CheckFolderW(nPathLen);
-						
-						LocaterDebugMessage("CLocater::LocatingProc(W) reading next root");
-
-						// New root
-						m_wCurrentRootIndex++;
-						dbFile->Read(dwBlockSize);
+					
+						// OK, now we are beginning of folder data
+						if (vtType==ValidFolders)
+							CheckFolderW(nPathLen);
+						else
+							LocateValidFolderW(nPathLen);
+					
 					}
-					// m_aDirectories.GetSize()==0 END
+					else // Skipping root
+						dbFile->Seek(dwBlockSize,CFile::current);
+				
+					LocaterDebugMessage("CLocater::LocatingProc(W) reading next root");
+				
+					// New root
+					m_wCurrentRootIndex++;
+					dbFile->Read(dwBlockSize);
 				}
+
 
 				// Unicode implementation END
 			}
 			else
 			{
 				// Ansi implementation
-				if (m_aDirectories.GetSize()>0)
+
+				// Read block size
+				dbFile->Read(dwBlockSize);
+
+				if (dwBlockSize>ulFileSize-dbFile->GetPosition64())
 				{
-					// There is directories in which files should be
-
-					dbFile->Read(dwBlockSize);
-
-					if (dwBlockSize>ulFileSize-dbFile->GetPosition64())
-					{
-						// Invalid database
-						throw CFileException(CFileException::invalidFile);
-					}
-
-
-					LocaterDebugMessage("CLocater::LocatingProc() block size readed A");
-
-					while (dwBlockSize>0 && !m_lForceQuit)
-					{
-						LocaterDebugMessage("CLocater::LocatingProc() new root");
-
-						m_pProc(m_dwData,RootChanged,ueStillWorking,0,this);
-						
-						// Reading type data
-						LocaterDebugMessage("CLocater::LocatingProc() read block");
-						dbFile->Read(m_bCurrentRootType);
-						LocaterDebugMessage("CLocater::LocatingProc() block readed");
-				
-						
-						// Reading path
-						{
-							BYTE cTemp;
-							dbFile->Read(cTemp);
-							for (nPathLen=0;cTemp!='\0';nPathLen++)
-							{
-								szCurrentPath[nPathLen]=cTemp;
-								szCurrentPathLower[nPathLen]=cTemp;
-								dbFile->Read(cTemp);
-							}
-							szCurrentPath[nPathLen]='\0';
-							dwBlockSize-=nPathLen+1+1; // second 1 is type
-
-							// Check whether there is root map
-							int nActualPathLen;
-							BOOL bFree;
-							LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
-								m_pCurrentDatabase->szRootMaps,A2W(szCurrentPath),nActualPathLen,bFree);
-							if (pActualPath!=NULL)
-							{
-								MemCopyWtoA(szCurrentPath,pActualPath,nActualPathLen);
-								MemCopyWtoA(szCurrentPathLower,pActualPath,nActualPathLen);
-								szCurrentPathW[nPathLen=nActualPathLen]=L'\0';
-							
-								if (bFree)
-									delete[] pActualPath;
-							}
-
-							// Lower case
-							szCurrentPathLower[nPathLen]='\0';
-							MakeLower(szCurrentPathLower);
-
-						}
-						
-						ValidType vtType=IsRootValid(nPathLen);
-						LocaterDebugNumMessage("CLocater::LocatingProc() vtType=%X",DWORD(vtType));
-						
-						if (vtType!=NoValidFolders)
-						{
-							// Reading data to buffer
-							delete[] szBuffer;
-							pPoint=szBuffer=new BYTE[dwBlockSize];
-
-							dbFile->Read(szBuffer,dwBlockSize);
-
-							// Resolving volume name 
-							m_sVolumeName=(LPCSTR)pPoint;
-							pPoint+=m_sVolumeName.GetLength()+1;
-							
-							// Resolving volume serial
-							m_dwVolumeSerial=*((DWORD*)pPoint);
-							pPoint+=sizeof(DWORD); // 1 == '\0' in volumename
-						
-							// Resolving file system
-							m_sFileSystem=(LPCSTR)pPoint;
-							pPoint+=m_sFileSystem.GetLength()+1;
-
-							// Skipping the number of files and directories
-							pPoint+=2*sizeof(DWORD);
-
-							// Telling that volume information is available
-							m_pProc(m_dwData,RootInformationAvail,ueStillWorking,0,this);
-						
-							// OK, now we are beginning of folder data
-							if (vtType==ValidFolders)
-								CheckFolder(nPathLen);
-							else
-								LocateValidFolder(nPathLen);
-						
-						}
-						else // Skipping root
-							dbFile->Seek(dwBlockSize,CFile::current);
-					
-						LocaterDebugMessage("CLocater::LocatingProc() reading next root");
-					
-						// New root
-						m_wCurrentRootIndex++;
-						dbFile->Read(dwBlockSize);
-					}
-
-					// m_aDirectories.GetSize()>0 END
+					// Invalid database
+					throw CFileException(CFileException::invalidFile);
 				}
-				else
+
+
+				LocaterDebugMessage("CLocater::LocatingProc() block size readed A");
+
+				while (dwBlockSize>0 && !m_lForceQuit)
 				{
-					// m_aDirectories.GetSize()==0 
+					LocaterDebugMessage("CLocater::LocatingProc() new root");
 
-					// No restrinctions about directories
-					dbFile->Read(dwBlockSize);
-
-					if (dwBlockSize>ulFileSize-dbFile->GetPosition64())
-					{
-						// Invalid database
-						throw CFileException(CFileException::invalidFile);
-					}
-
-
-					LocaterDebugMessage("CLocater::LocatingProc() block size readed B");
+					m_pProc(m_dwData,RootChanged,ueStillWorking,0,this);
 					
-					while (dwBlockSize>0 && !m_lForceQuit)
-					{
-						LocaterDebugMessage("CLocater::LocatingProc() 1");
-
-						m_pProc(m_dwData,RootChanged,ueStillWorking,0,this);
+					// Reading type data
+					LocaterDebugMessage("CLocater::LocatingProc() read block");
+					dbFile->Read(m_bCurrentRootType);
+					LocaterDebugMessage("CLocater::LocatingProc() block readed");
+			
 					
-						// Reading type data
-						dbFile->Read(m_bCurrentRootType);
-									
-						// Reading path
+					// Reading path
+					{
+						BYTE cTemp;
+						dbFile->Read(cTemp);
+						for (nPathLen=0;cTemp!='\0';nPathLen++)
 						{
-							BYTE cTemp;
+							szCurrentPath[nPathLen]=cTemp;
+							szCurrentPathLower[nPathLen]=cTemp;
 							dbFile->Read(cTemp);
-							for (nPathLen=0;cTemp!='\0';nPathLen++)
-							{
-								szCurrentPath[nPathLen]=cTemp;
-								dbFile->Read(cTemp);
-							}
-							szCurrentPath[nPathLen]='\0';
-							
-							dwBlockSize-=nPathLen+1+1; // second 1 is type
-
-							// Check whether there is root map
-							int nActualPathLen;
-							BOOL bFree;
-							LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
-								m_pCurrentDatabase->szRootMaps,A2W(szCurrentPath),nActualPathLen,bFree);
-							if (pActualPath!=NULL)
-							{
-								MemCopyWtoA(szCurrentPath,pActualPath,nActualPathLen);
-								szCurrentPath[nPathLen=nActualPathLen]=L'\0';
-
-								if (bFree)
-									delete[] pActualPath;
-							}
 						}
+						szCurrentPath[nPathLen]='\0';
+						dwBlockSize-=nPathLen+1+1; // second 1 is type
+
+						// Check whether there is root map
+						int nActualPathLen;
+						BOOL bFree;
+						LPCWSTR pActualPath=CDatabase::FindActualPathForMap(
+							m_pCurrentDatabase->szRootMaps,A2W(szCurrentPath),nActualPathLen,bFree);
+						if (pActualPath!=NULL)
+						{
+							MemCopyWtoA(szCurrentPath,pActualPath,nActualPathLen);
+							MemCopyWtoA(szCurrentPathLower,pActualPath,nActualPathLen);
+							szCurrentPathW[nPathLen=nActualPathLen]=L'\0';
 						
+							if (bFree)
+								delete[] pActualPath;
+						}
+
+						// Lower case
+						szCurrentPathLower[nPathLen]='\0';
+						MakeLower(szCurrentPathLower);
+
+					}
+					
+					// Check if root is valid
+					ValidType vtType=IsFolderValid(nPathLen);
+					LocaterDebugNumMessage("CLocater::LocatingProc() vtType=%X",DWORD(vtType));
+					
+					if (vtType!=NoValidFolders)
+					{
 						// Reading data to buffer
 						delete[] szBuffer;
 						pPoint=szBuffer=new BYTE[dwBlockSize];
-						
-						dbFile->Read(szBuffer,dwBlockSize);
 
-						LocaterDebugMessage("CLocater::LocatingProc() 2");
+						dbFile->Read(szBuffer,dwBlockSize);
 
 						// Resolving volume name 
 						m_sVolumeName=(LPCSTR)pPoint;
@@ -720,29 +542,32 @@ BOOL CLocater::LocatingProc()
 						// Resolving volume serial
 						m_dwVolumeSerial=*((DWORD*)pPoint);
 						pPoint+=sizeof(DWORD); // 1 == '\0' in volumename
-						
+					
 						// Resolving file system
 						m_sFileSystem=(LPCSTR)pPoint;
 						pPoint+=m_sFileSystem.GetLength()+1;
 
-						LocaterDebugMessage("CLocater::LocatingProc() 3");
-						
 						// Skipping the number of files and directories
 						pPoint+=2*sizeof(DWORD);
 
 						// Telling that volume information is available
 						m_pProc(m_dwData,RootInformationAvail,ueStillWorking,0,this);
-						
-						// OK, now we are at the beginning of folder data
-						CheckFolder(nPathLen);
-						
-						LocaterDebugMessage("CLocater::LocatingProc() reading next root");
-
-						// New root
-						m_wCurrentRootIndex++;
-						dbFile->Read(dwBlockSize);
+					
+						// OK, now we are beginning of folder data
+						if (vtType==ValidFolders)
+							CheckFolder(nPathLen);
+						else
+							LocateValidFolder(nPathLen);
+					
 					}
-					// m_aDirectories.GetSize()==0 END
+					else // Skipping root
+						dbFile->Seek(dwBlockSize,CFile::current);
+				
+					LocaterDebugMessage("CLocater::LocatingProc() reading next root");
+				
+					// New root
+					m_wCurrentRootIndex++;
+					dbFile->Read(dwBlockSize);
 				}
 
 				// Ansi implementation END
@@ -868,10 +693,20 @@ inline BOOL CLocater::SetDirectoriesAndStartToLocate(BOOL bThreaded,LPCWSTR* szD
 {
 	for (DWORD i=0;i<nDirectories;i++)
 	{
-		CStringW* pTmp=new CStringW(szDirectories[i]);
-		while (pTmp->LastChar()=='\\')
-			pTmp->DelChar(pTmp->GetLength()-1);
-		m_aDirectories.Add(pTmp);
+		if (szDirectories[i][0]==L'-')
+		{
+			CStringW* pTmp=new CStringW(szDirectories[i]+1);
+			while (pTmp->LastChar()=='\\')
+				pTmp->DelChar(pTmp->GetLength()-1);
+			m_aExcludedDirectories.Add(pTmp);
+		}
+		else
+		{
+			CStringW* pTmp=new CStringW(szDirectories[i]);
+			while (pTmp->LastChar()=='\\')
+				pTmp->DelChar(pTmp->GetLength()-1);
+			m_aDirectories.Add(pTmp);
+		}
 	}
 	
 #ifdef WIN32
@@ -964,25 +799,48 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR* szNames,DWORD nNames,
 
 		}
 	}
-	else
+	else 
 	{
 		// Normal search
-
 		DWORD i;
-		for (i=0;i<nNames;i++)
+		m_dwNamesCount=0;
+		if (nNames>0)
 		{
-			if (szNames[i]!=NULL && szNames[i][0]!='\0')
+			m_ppNames=new LPWSTR[nNames];
+			m_piNameLengths=new int[nNames];
+			for (i=0;i<nNames;i++)
 			{
-				CStringW* pName=new CStringW(szNames[i]);
-				pName->MakeLower();
-				m_aNames.Add(pName);
+				if (szNames[i]!=NULL && szNames[i][0]!='\0')
+				{
+					m_piNameLengths[m_dwNamesCount]=istrlen(szNames[i]);
+					m_ppNames[m_dwNamesCount]=alloccopy(szNames[i],m_piNameLengths[m_dwNamesCount]);
+					m_dwNamesCount++;
+				}
+			}
+
+			if (m_dwNamesCount==0)
+			{
+				delete[] m_piNameLengths;
+				delete[] m_ppNames;
 			}
 		}
-		for (i=0;i<nExtensions;i++)
+		
+		m_dwExtCount=nExtensions;
+		m_dwExclusiveExtCount=0;
+		if (nExtensions>0)
 		{
-			CStringW* pExtenstion=new CStringW(szExtensions[i]);
-			pExtenstion->MakeLower();
-			m_aExtensions.Add(pExtenstion);
+			m_ppExtensions=new LPWSTR[nExtensions];
+			m_piExtLengths=new int[nExtensions];
+			for (i=0;i<nExtensions;i++)
+			{
+				m_piExtLengths[i]=istrlen(szExtensions[i]);
+				m_ppExtensions[i]=alloccopy(szExtensions[i],m_piExtLengths[i]);
+				if (m_dwFlags&LOCATE_LOGICALOPERATIONSINEXT && m_ppExtensions[i][0]=='-')
+				{
+					m_piExtLengths[i]--; // Do not count '-' character
+					m_dwExclusiveExtCount++;
+				}
+			}
 		}
 	}
 
@@ -1055,10 +913,13 @@ BOOL CLocater::StopLocating()
 }
 #endif
 
+
 inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 {
 	if (m_dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
+		// Regular expression
+
 		int ovector[OVECCOUNT];
 		if (m_dwFlags&LOCATE_NAMEREGEXPISUTF8)
 		{
@@ -1123,20 +984,22 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 	}
 
 	
-	if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
+	if (m_dwNamesCount==0 && m_dwExtCount==0)
 		return TRUE;
 
+	
+
 	// Checking extension first
-	if (m_aExtensions.GetSize()>0)
+	if (m_dwExtCount>0)
 	{
 		BOOL bFound=FALSE;
 		
 		if (!HaveFileExtension())
 		{
 			// No extension
-			for (int i=0;i<m_aExtensions.GetSize();i++)
+			for (DWORD i=0;i<m_dwExtCount;i++)
 			{
-				if (m_aExtensions[i]->GetLength()==0)
+				if (m_piExtLengths[i]==0)
 				{
 					bFound=TRUE;
 					break;
@@ -1147,11 +1010,11 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 		{
 			// Resolving extension length
 			DWORD dwExtensionLen=GetFileNameLen()-GetFileExtensionPos()-1;
-			char* szExtension=NULL;
+			CAutoPtrA<char> szExtension=NULL;
 
-			for (int i=0;i<m_aExtensions.GetSize();i++)
+			for (DWORD i=0;i<m_dwExtCount;i++)
 			{
-				if (dwExtensionLen!=m_aExtensions[i]->GetLength())
+				if (dwExtensionLen!=m_piExtLengths[i])
 					continue;
 
 				if (szExtension==NULL)
@@ -1162,25 +1025,26 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 					MakeLower(szExtension,dwExtensionLen);
 				}
 				
-				if (_strncmp(*m_aExtensions[i],szExtension,dwExtensionLen))
+				if (m_dwFlags&LOCATE_LOGICALOPERATIONSINEXT && m_ppExtensions[i][0]=='-')
+				{
+					if (_strncmp(m_ppExtensions[i]+1,szExtension,dwExtensionLen))
+						return FALSE;
+				}
+				else if (_strncmp(m_ppExtensions[i],szExtension,dwExtensionLen))
 				{
 					bFound=TRUE;
 					break;
 				}
 			}
-			if (szExtension!=NULL)
-				delete[] szExtension;
-
-			
 		}
 
-		if (!bFound)
+		if (!bFound && m_dwExclusiveExtCount<m_dwExtCount)
 			return FALSE;
 	}
 
 	
 	
-	if (m_aNames.GetSize()==0)
+	if (m_dwNamesCount==0)
 		return TRUE;
 
 
@@ -1192,7 +1056,6 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 		// Copying whole path to buffer
 		dwNameLength=dwCurrentPathLen+1+GetFileNameLen();
 		szName=new char[dwNameLength+2];
-		
 		sMemCopy(szName,szCurrentPath,dwCurrentPathLen);
 		szName[dwCurrentPathLen]='\\';
 		sMemCopy(szName+dwCurrentPathLen+1,GetFileName(),GetFileNameLen());
@@ -1212,9 +1075,7 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 		}
 		
 		// Copying to buffer
-		szName=new char[dwNameLength+2];
-		sMemCopy(szName,GetFileName(),dwNameLength);
-		szName[dwNameLength]='\0';
+		szName=alloccopy(GetFileName(),dwNameLength);
 		MakeLower(szName,dwNameLength);
 	}
 
@@ -1224,30 +1085,30 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 	if (m_dwFlags&LOCATE_LOGICALOPERATIONS)
 	{
 		// Search type is AND
-		for (int i=0;i<m_aNames.GetSize();i++)
+		for (DWORD i=0;i<m_dwNamesCount;i++)
 		{
 			BOOL bFound=FALSE;
+			LPWSTR szCondition=m_ppNames[i];
 
-			if (m_aNames[i]->LastChar()=='.')
+			if (szCondition[m_piNameLengths[i]-1]=='.') // Last character is '.'?
 			{
 				if (!HaveFileExtension())
 				{
 					// No extension, that is what are we looking for
-					LPWSTR szCondition=m_aNames[i]->GetBuffer();
-					szCondition[m_aNames[i]->GetLength()-1]='\0';
+					szCondition[m_piNameLengths[i]-1]='\0';
 					bFound=ContainString(szName,szCondition+1);
-					szCondition[m_aNames[i]->GetLength()-1]='.';
+					szCondition[m_piNameLengths[i]-1]='.';
 				}
 			}
 			else 
-				bFound=ContainString(szName,m_aNames[i]->GetBuffer()+1);
+				bFound=ContainString(szName,szCondition+1);
 
 			if (bFound)
 			{
-				if (m_aNames[i]->GetAt(0)==L'-')
+				if (m_ppNames[i][0]==L'-')
 					return FALSE;
 			}
-			else if (m_aNames[i]->GetAt(0)==L'+')
+			else if (m_ppNames[i][0]==L'+')
 				return FALSE;
 		
 		}	
@@ -1255,25 +1116,23 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 	}
 
 	// Search type is OR
-	for (int i=0;i<m_aNames.GetSize();i++)
+	for (DWORD i=0;i<m_dwNamesCount;i++)
 	{
-		if (m_aNames[i]->LastChar()=='.')
+		if (m_ppNames[i][m_piNameLengths[i]-1]=='.') // Last character is '.'?
 		{
 			if (!HaveFileExtension())
 			{
 				// No extension, that is what are we looking for
-				LPWSTR szCondition=m_aNames[i]->GetBuffer();
-				szCondition[m_aNames[i]->GetLength()-1]='\0';
+				LPWSTR szCondition=m_ppNames[i];
+				szCondition[m_piNameLengths[i]-1]='\0';
 
-				if (ContainString(szName,szCondition))
-				{
-					szCondition[m_aNames[i]->GetLength()-1]='.';
+				BOOL bRet=ContainString(szName,szCondition);
+				szCondition[m_piNameLengths[i]-1]='.';
+				if (bRet)
 					return TRUE;
-				}
-				szCondition[m_aNames[i]->GetLength()-1]='.';
 			}
 		}
-		else if (ContainString(szName,*m_aNames[i]))
+		else if (ContainString(szName,m_ppNames[i]))
 			return TRUE;
 	}	
 	return FALSE;
@@ -1335,25 +1194,20 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 		}
 	}
 
-	
-
-	
-	
-	
-	if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
+	if (m_dwNamesCount==0 && m_dwExtCount==0)
 		return TRUE;
 
 	// Checking extension first
-	if (m_aExtensions.GetSize()>0)
+	if (m_dwExtCount>0)
 	{
 		BOOL bFound=FALSE;
 		
 		if (!HaveFileExtensionW())
 		{
 			// No extension
-			for (int i=0;i<m_aExtensions.GetSize();i++)
+			for (DWORD i=0;i<m_dwExtCount;i++)
 			{
-				if (m_aExtensions[i]->GetLength()==0)
+				if (m_piExtLengths[i]==0)
 				{
 					bFound=TRUE;
 					break;
@@ -1364,11 +1218,11 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 		{
 			// Resolving extension length
 			DWORD dwExtensionLen=GetFileNameLen()-GetFileExtensionPos()-1;
-			WCHAR* szExtension=NULL;
-
-			for (int i=0;i<m_aExtensions.GetSize();i++)
-			{
-				if (dwExtensionLen!=m_aExtensions[i]->GetLength())
+			CAutoPtrA<WCHAR> szExtension=NULL;
+			
+			for (DWORD i=0;i<m_dwExtCount;i++)
+			{	
+				if (dwExtensionLen!=m_piExtLengths[i])
 					continue;
 
 				if (szExtension==NULL)
@@ -1379,25 +1233,26 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 					MakeLower(szExtension,dwExtensionLen);
 				}
 				
-				if (_strncmp(*m_aExtensions[i],szExtension,dwExtensionLen))
+				if (m_dwFlags&LOCATE_LOGICALOPERATIONSINEXT && m_ppExtensions[i][0]=='-')
+				{
+					if (_strncmp(m_ppExtensions[i]+1,szExtension,dwExtensionLen))
+						return FALSE;
+				}
+				else if (_strncmp(m_ppExtensions[i],szExtension,dwExtensionLen))
 				{
 					bFound=TRUE;
 					break;
 				}
 			}
-			if (szExtension!=NULL)
-				delete[] szExtension;
-
-			
 		}
 
-		if (!bFound)
+		if (!bFound && m_dwExclusiveExtCount<m_dwExtCount)
 			return FALSE;
 	}
 
 	
 	
-	if (m_aNames.GetSize()==0)
+	if (m_dwNamesCount==0)
 		return TRUE;
 
 	DWORD dwNameLength;
@@ -1428,40 +1283,41 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 		}
 		
 		// Copying to buffer
-		szName=new WCHAR[dwNameLength+2];
-		MemCopyW(szName,GetFileNameW(),dwNameLength);
-		szName[dwNameLength]='\0';
+		szName=alloccopy(GetFileNameW(),dwNameLength);
 		MakeLower(szName,dwNameLength);
 	}
 	
+
+
+
 	if (m_dwFlags&LOCATE_LOGICALOPERATIONS)
 	{
 		// Search type is AND
-		for (int i=0;i<m_aNames.GetSize();i++)
+		for (DWORD i=0;i<m_dwNamesCount;i++)
 		{
 			BOOL bFound=FALSE;
+			LPWSTR szCondition=m_ppNames[i];
 
-			if (m_aNames[i]->LastChar()=='.')
+			if (szCondition[m_piNameLengths[i]-1]=='.') // Last character is '.'?
 			{
 				// No extension required			
 				if (!HaveFileExtensionW())
 				{
 					// No extension, that is what are we looking for
-					LPWSTR szCondition=m_aNames[i]->GetBuffer();
-					szCondition[m_aNames[i]->GetLength()-1]='\0';
+					szCondition[m_piNameLengths[i]-1]='\0';
 					bFound=ContainString(szName,szCondition+1);
-					szCondition[m_aNames[i]->GetLength()-1]='.';
+					szCondition[m_piNameLengths[i]-1]='.';
 				}
 			}
 			else 
-				bFound=ContainString(szName,m_aNames[i]->GetBuffer()+1);
+				bFound=ContainString(szName,szCondition+1);
 
 			if (bFound)
 			{
-				if (m_aNames[i]->GetAt(0)==L'-')
+				if (m_ppNames[i][0]==L'-')
 					return FALSE;
 			}
-			else if (m_aNames[i]->GetAt(0)==L'+')
+			else if (m_ppNames[i][0]==L'+')
 				return FALSE;
 			
 		}
@@ -1472,26 +1328,24 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 
 
 	// Search type is OR
-	for (int i=0;i<m_aNames.GetSize();i++)
+	for (DWORD i=0;i<m_dwNamesCount;i++)
 	{
-		if (m_aNames[i]->LastChar()=='.')
+		if (m_ppNames[i][m_piNameLengths[i]-1]=='.') // Last character is '.'?
 		{
 			// No extension required			
 			if (!HaveFileExtensionW())
 			{
 				// No extension, that is what are we looking for
-				LPWSTR szCondition=m_aNames[i]->GetBuffer();
-				szCondition[m_aNames[i]->GetLength()-1]='\0';
+				LPWSTR szCondition=m_ppNames[i];
+				szCondition[m_piNameLengths[i]-1]='\0';
 
-				if (ContainString(szName,szCondition))
-				{
-					szCondition[m_aNames[i]->GetLength()-1]='.';
+				BOOL bRet=ContainString(szName,szCondition);
+				szCondition[m_piNameLengths[i]-1]='.';
+				if (bRet)
 					return TRUE;
-				}
-				szCondition[m_aNames[i]->GetLength()-1]='.';
 			}
 		}
-		else if (ContainString(szName,*m_aNames[i]))
+		else if (ContainString(szName,m_ppNames[i]))
 			return TRUE;
 	}	
 	return FALSE;
@@ -1504,12 +1358,8 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 		int ovector[OVECCOUNT];
 		if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
 		{
-			szCurrentPath[dwCurrentPathLen]='\\';
-			dMemCopy(szCurrentPath+dwCurrentPathLen+1,GetFolderName(),GetFolderNameLen()+1);
-			int rc = pcre_exec(m_regexp,m_regextra,szCurrentPath,dwCurrentPathLen+GetFolderNameLen()+1,
-				0,0,ovector,OVECCOUNT);
-			szCurrentPath[dwCurrentPathLen]='\0';
-			return rc>=0;
+			return pcre_exec(m_regexp,m_regextra,szCurrentPath,dwCurrentPathLen,
+				0,0,ovector,OVECCOUNT)>=0;
 		}
 		else
 		{
@@ -1520,15 +1370,17 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 	}
 
 
-	if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
+	if (m_dwNamesCount==0 && m_dwExtCount==0)
 		return TRUE;
 
+
+
 	// Checking extension first
-	if (m_aExtensions.GetSize()>0)
+	if (m_dwExtCount>0)
 	{
 		BOOL bFound=FALSE;
 
-		for (int i=0;i<m_aExtensions.GetSize();i++)
+		for (DWORD i=0;i<m_dwExtCount;i++)
 		{
 			// Resolving extension length
 			DWORD dwExtensionPos=(DWORD)(LastCharIndex(GetFolderName(),'.')+1);
@@ -1537,27 +1389,30 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 
 			DWORD dwExtensionLen=GetFolderNameLen()-dwExtensionPos;
 			
-			if (dwExtensionLen!=m_aExtensions[i]->GetLength())
+			if (dwExtensionLen!=m_piExtLengths[i])
 				continue;
 
 			// Copying extension to buffer
-			char* szExtension=new char[dwExtensionLen];
-			sMemCopy(szExtension,GetFolderName()+dwExtensionPos,dwExtensionLen);
+			CAutoPtrA<char> szExtension=alloccopy(GetFolderName()+dwExtensionPos,dwExtensionLen);
 			MakeLower(szExtension,dwExtensionLen);
-			if (_strncmp(*m_aExtensions[i],szExtension,dwExtensionLen))
+
+			if (m_dwFlags&LOCATE_LOGICALOPERATIONSINEXT && m_ppExtensions[i][0]=='-')
 			{
-				delete[] szExtension;
+				if (_strncmp(m_ppExtensions[i]+1,szExtension,dwExtensionLen))
+					return FALSE;
+			}				
+			else if (_strncmp(m_ppExtensions[i],szExtension,dwExtensionLen))
+			{
 				bFound=TRUE;
 				break;
 			}
-			delete[] szExtension;
 		}
 
-		if (!bFound)
+		if (!bFound && m_dwExclusiveExtCount<m_dwExtCount)
 			return FALSE;
 	}
 	
-	if (m_aNames.GetSize()==0)
+	if (m_dwNamesCount==0)
 		return TRUE;
 
 	if (GetFolderNameLen()==0)
@@ -1568,36 +1423,25 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 	CAutoPtrA<char> szName;
 	
 	if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
-	{
-		DWORD dwPathLen=dwCurrentPathLen+1+GetFolderNameLen();
-		szName=new char[dwPathLen+2];
-		sMemCopy(szName,szCurrentPath,dwCurrentPathLen);
-		szName[dwCurrentPathLen]='\\';
-		sMemCopy(szName+dwCurrentPathLen+1,GetFolderName(),GetFolderNameLen());
-		szName[dwPathLen]='\0';
-		MakeLower(szName,dwPathLen);
-	}
+		szName.Attach((LPSTR)szCurrentPathLower,FALSE);
 	else
 	{
-		szName=new char[GetFolderNameLen()+1];
-		sMemCopy(szName,GetFolderName(),GetFolderNameLen());
-		szName[GetFolderNameLen()]='\0';
+		szName=alloccopy(GetFolderName(),GetFolderNameLen());
 		MakeLower(szName);
 	}
 
 	if (m_dwFlags&LOCATE_LOGICALOPERATIONS)
 	{
-	
-		for (int i=0;i<m_aNames.GetSize();i++)
+		for (DWORD i=0;i<m_dwNamesCount;i++)
 		{
-			if (ContainString(szName,m_aNames[i]->GetBuffer()+1))
+			if (ContainString(szName,m_ppNames[i]+1))
 			{
-				if (m_aNames[i]->GetAt(0)==L'-')
+				if (m_ppNames[i][0]==L'-')
 					return FALSE;
 			}
 			else
 			{
-				if (m_aNames[i]->GetAt(0)==L'+')
+				if (m_ppNames[i][0]==L'+')
 					return FALSE;
 			}
 		}
@@ -1605,9 +1449,9 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 	}
 
 
-	for (int i=0;i<m_aNames.GetSize();i++)
+	for (DWORD i=0;i<m_dwNamesCount;i++)
 	{
-		if (ContainString(szName,*m_aNames[i]))
+		if (ContainString(szName,m_ppNames[i]))
 			return TRUE;
 	}
 	return FALSE;
@@ -1622,11 +1466,7 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 		int ovector[OVECCOUNT];
 		if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
 		{
-			char szPath[MAX_PATH];
-			MemCopyWtoA(szPath,szCurrentPathW,dwCurrentPathLen);
-			szPath[dwCurrentPathLen]='\\';
-			MemCopyWtoA(szPath+dwCurrentPathLen+1,GetFolderNameW(),GetFolderNameLen()+1);
-			return pcre_exec(m_regexp,m_regextra,szPath,dwCurrentPathLen+GetFileNameLen()+1,
+			return pcre_exec(m_regexp,m_regextra,W2A(szCurrentPathW),dwCurrentPathLen,
 				0,0,ovector,OVECCOUNT)>=0;
 		}
 		else
@@ -1639,19 +1479,15 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 
 
 
-
-	
-
-	
-	if (m_aNames.GetSize()==0 && m_aExtensions.GetSize()==0)
+	if (m_dwNamesCount==0 && m_dwExtCount==0)
 		return TRUE;
 
 	// Checking extension first
-	if (m_aExtensions.GetSize()>0)
+	if (m_dwExtCount>0)
 	{
 		BOOL bFound=FALSE;
 
-		for (int i=0;i<m_aExtensions.GetSize();i++)
+		for (DWORD i=0;i<m_dwExtCount;i++)
 		{
 			// Resolving extension length
 			DWORD dwExtensionPos=(DWORD)(LastCharIndex(GetFolderNameW(),L'.')+1);
@@ -1660,27 +1496,30 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 
 			DWORD dwExtensionLen=GetFolderNameLen()-dwExtensionPos;
 			
-			if (dwExtensionLen!=m_aExtensions[i]->GetLength())
+			if (dwExtensionLen!=m_piExtLengths[i])
 				continue;
 
 			// Copying extension to buffer
-			WCHAR* szExtension=new WCHAR[dwExtensionLen];
-			MemCopyW(szExtension,GetFolderNameW()+dwExtensionPos,dwExtensionLen);
+			CAutoPtrA<WCHAR> szExtension(alloccopy(GetFolderNameW()+dwExtensionPos,dwExtensionLen));
 			MakeLower(szExtension,dwExtensionLen);
-			if (_strncmp(*m_aExtensions[i],szExtension,dwExtensionLen))
+			
+			if (m_dwFlags&LOCATE_LOGICALOPERATIONSINEXT && m_ppExtensions[i][0]=='-')
 			{
-				delete[] szExtension;
+				if (_strncmp(m_ppExtensions[i]+1,szExtension,dwExtensionLen))
+					return FALSE;
+			}				
+			else if (_strncmp(m_ppExtensions[i],szExtension,dwExtensionLen))
+			{
 				bFound=TRUE;
 				break;
 			}
-			delete[] szExtension;
 		}
 
-		if (!bFound)
+		if (!bFound && m_dwExclusiveExtCount<m_dwExtCount)
 			return FALSE;
 	}
 	
-	if (m_aNames.GetSize()==0)
+	if (m_dwNamesCount==0)
 		return TRUE;
 
 	if (GetFolderNameLen()==0)
@@ -1691,45 +1530,34 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 	CAutoPtrA<WCHAR> szName;
 	
 	if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
-	{
-		DWORD dwPathLen=dwCurrentPathLen+1+GetFolderNameLen();
-		szName=new WCHAR[dwPathLen+2];
-		MemCopyW(szName,szCurrentPathW,dwCurrentPathLen);
-		szName[dwCurrentPathLen]='\\';
-		MemCopyW(szName+dwCurrentPathLen+1,GetFolderNameW(),GetFolderNameLen());
-		szName[dwPathLen]='\0';
-		MakeLower(szName,dwPathLen);
-	}
+		szName.Attach((LPWSTR)szCurrentPathLowerW,FALSE);
 	else
 	{
-		szName=new WCHAR[GetFolderNameLen()+1];
-		MemCopyW(szName,GetFolderNameW(),GetFolderNameLen());
-		szName[GetFolderNameLen()]='\0';
+		szName=alloccopy(GetFolderNameW(),GetFolderNameLen());
 		MakeLower(szName);
 	}
 
 	if (m_dwFlags&LOCATE_LOGICALOPERATIONS)
 	{
-	
-		for (int i=0;i<m_aNames.GetSize();i++)
+		for (DWORD i=0;i<m_dwNamesCount;i++)
 		{
-			if (ContainString(szName,m_aNames[i]->GetBuffer()+1))
+			if (ContainString(szName,m_ppNames[i]+1))
 			{
-				if (m_aNames[i]->GetAt(0)==L'-')
+				if (m_ppNames[i][0]==L'-')
 					return FALSE;
 			}
 			else
 			{
-				if (m_aNames[i]->GetAt(0)==L'+')
+				if (m_ppNames[i][0]==L'+')
 					return FALSE;
 			}
 		}
 		return TRUE;
 	}
 
-	for (int i=0;i<m_aNames.GetSize();i++)
+	for (DWORD i=0;i<m_dwNamesCount;i++)
 	{
-		if (ContainString(szName,*m_aNames[i]))
+		if (ContainString(szName,m_ppNames[i]))
 			return TRUE;
 	}
 	return FALSE;
@@ -2075,6 +1903,7 @@ void CLocater::LocateValidFolderW(DWORD nPathLen)
 void CLocater::CheckFolder(DWORD nPathLen)
 {
 	szCurrentPath[nPathLen]='\0';
+	szCurrentPathLower[nPathLen]='\0';
 	dwCurrentPathLen=nPathLen;
 				
 	while (*pPoint!='\0' && !m_lForceQuit)
@@ -2082,31 +1911,50 @@ void CLocater::CheckFolder(DWORD nPathLen)
 		if ((*pPoint&UDBATTRIB_TYPEFLAG)==UDBATTRIB_DIRECTORY)
 		{
 			// This item is folder
-			
-			
 			DWORD dwNameLen=pPoint[5];
 			pPoint+=1+4+1;
+
+			// Copy path to szCurrentPathW and szCurrentPathLowerW
+			szCurrentPath[nPathLen]='\\';
+			szCurrentPathLower[nPathLen]='\\';
+			sMemCopy(szCurrentPath+nPathLen+1,pPoint,dwNameLen+1);
+			sMemCopy(szCurrentPathLower+nPathLen+1,pPoint,dwNameLen+1);
+			MakeLower(szCurrentPathLower+nPathLen+1);
+			dwCurrentPathLen=nPathLen+1+dwNameLen;
 			
+			// First check if directory is excluded
+			if (IsDirectoryExcluded(dwCurrentPathLen))
+			{
+				// Skip this folder
+				pPoint+=*((DWORD*)(pPoint-5))-6+1;
+				szCurrentPath[nPathLen]='\0';
+				szCurrentPathLower[nPathLen]='\0';
+				dwCurrentPathLen=nPathLen;
+				continue;
+			}
+
 			if (m_dwFlags&LOCATE_FOLDERNAMES)
 			{
 				if (IsFolderNameWhatAreWeLookingFor())
 				{
-					szCurrentPath[nPathLen]='\0';
-					dwCurrentPathLen=nPathLen;
 					if (IsFolderAdvancedWhatAreWeLookingFor())
 					{
+						szCurrentPath[nPathLen]='\0';
+						dwCurrentPathLen=nPathLen;
+					
 						if (!m_pFoundProc(m_dwData,TRUE,this))
 							throw CException(CException::none);
 
 						m_dwFoundDirectories++;
 						if (m_dwFoundFiles+m_dwFoundDirectories>=m_dwMaxFoundFiles)
 							throw ueLimitReached;
+
+						szCurrentPath[nPathLen]='\\';
+						dwCurrentPathLen=nPathLen+1+dwNameLen;
 					}
 				}
 			}
 
-			szCurrentPath[nPathLen]='\\';
-			sMemCopy(szCurrentPath+nPathLen+1,pPoint,dwNameLen+1);
 			
 			if (m_aDirectories.GetSize()>0 && m_dwFlags&LOCATE_NOSUBDIRECTORIES)
 				pPoint+=*((DWORD*)(pPoint-5))-6;
@@ -2119,6 +1967,7 @@ void CLocater::CheckFolder(DWORD nPathLen)
 			
 			// Putting these back to correct ones
 			szCurrentPath[nPathLen]='\0';
+			szCurrentPathLower[nPathLen]='\0';
 			dwCurrentPathLen=nPathLen;
 
 
@@ -2160,6 +2009,7 @@ void CLocater::CheckFolder(DWORD nPathLen)
 void CLocater::CheckFolderW(DWORD nPathLen)
 {
 	szCurrentPathW[nPathLen]='\0';
+	szCurrentPathLowerW[nPathLen]='\0';
 	dwCurrentPathLen=nPathLen;
 				
 	while (*pPoint!='\0' && !m_lForceQuit )
@@ -2167,31 +2017,51 @@ void CLocater::CheckFolderW(DWORD nPathLen)
 		if ((*pPoint&UDBATTRIB_TYPEFLAG)==UDBATTRIB_DIRECTORY)
 		{
 			// This item is folder
-						
 			DWORD dwNameLen=pPoint[5];
 			pPoint+=1+4+1;
+			
+
+			// Copy path to szCurrentPathW and szCurrentPathLowerW
+			szCurrentPathW[nPathLen]='\\';
+			szCurrentPathLowerW[nPathLen]='\\';
+			MemCopyW(szCurrentPathW+nPathLen+1,(LPCWSTR)pPoint,dwNameLen+1);
+			MemCopyW(szCurrentPathLowerW+nPathLen+1,(LPCWSTR)pPoint,dwNameLen+1);
+			MakeLower(szCurrentPathLowerW+nPathLen+1);
+			dwCurrentPathLen=nPathLen+1+dwNameLen;
+			
+			// First check if directory is excluded
+			if (IsDirectoryExcludedW(nPathLen+dwNameLen+1))
+			{
+				// Skip this folder
+				pPoint+=*((DWORD*)(pPoint-5))-6+1;
+				szCurrentPathW[nPathLen]='\0';
+				szCurrentPathLowerW[nPathLen]='\0';
+				dwCurrentPathLen=nPathLen;
+				continue;
+			}
 			
 			if (m_dwFlags&LOCATE_FOLDERNAMES)
 			{
 				if (IsFolderNameWhatAreWeLookingForW())
 				{
-					szCurrentPathW[nPathLen]='\0';
-					dwCurrentPathLen=nPathLen;
 					if (IsFolderAdvancedWhatAreWeLookingForW())
 					{
+						szCurrentPathW[nPathLen]='\0';
+						dwCurrentPathLen=nPathLen;
+					
 						if (!m_pFoundProcW(m_dwData,TRUE,this))
 							throw CException(CException::none);
 
 						m_dwFoundDirectories++;
 						if (m_dwFoundFiles+m_dwFoundDirectories>=m_dwMaxFoundFiles)
 							throw ueLimitReached;
+						
+						szCurrentPathW[nPathLen]='\\';
+						dwCurrentPathLen=nPathLen+1+dwNameLen;
 					}
 				}
 			}
 
-			szCurrentPathW[nPathLen]='\\';
-			MemCopyW(szCurrentPathW+nPathLen+1,(LPCWSTR)pPoint,dwNameLen+1);
-			
 			if (m_aDirectories.GetSize()>0 && m_dwFlags&LOCATE_NOSUBDIRECTORIES)
 				pPoint+=*((DWORD*)(pPoint-5))-6;
 			else
@@ -2203,6 +2073,7 @@ void CLocater::CheckFolderW(DWORD nPathLen)
 			
 			// Putting these back to correct ones
 			szCurrentPathW[nPathLen]='\0';
+			szCurrentPathLowerW[nPathLen]='\0';
 			dwCurrentPathLen=nPathLen;
 
 

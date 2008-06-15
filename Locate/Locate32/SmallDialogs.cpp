@@ -1114,6 +1114,8 @@ void CSelectDatabasesDlg::OnDeletePreset()
 
 	SendDlgItemMessage(IDC_PRESETS,CB_SETCURSEL,CUSTOM_PRESET);
 
+	// Enable/disable delete
+	EnableButtons();
 }
 
 BOOL CSelectDatabasesDlg::CheckRegistryIntegrity(CRegKey& RegKey)
@@ -1162,6 +1164,9 @@ void CSelectDatabasesDlg::OnThreads()
 
 void CSelectDatabasesDlg::OnPresetCombo()
 {
+	// Enable/disable delete
+	EnableButtons();
+
 	int nCurSel=(int)SendDlgItemMessage(IDC_PRESETS,CB_GETCURSEL);
 	if (nCurSel==CB_ERR)
 		return;
@@ -1943,6 +1948,7 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCWSTR szName,BOOL bAskOverwrite)
 			m_PresetCombo.SetCurSel(iOverwriteItem);
 	}
 
+	EnableButtons();
 	return TRUE;
 }
 

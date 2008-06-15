@@ -78,7 +78,7 @@ the table below. If you want to search files which name has these character, use
 <TR><TD width=25%>;</TD><TD width=75%></TD></TR>
 <TR><TD width=25%> &nbsp;&nbsp; (space)</TD><TD width=85%>
 Only if <b><a href="settings_advanced.htm#sa_spaceisseparator">$STRADVANCEDSETTINGS_SPACEISSEPARATOR@C$</a></b> 
-option is enabled</TD></TR>
+option in Advanced settings is enabled</TD></TR>
 <TR><TD width=25%>| </TD><TD width=75%>
 If <b><a href="settings_advanced.htm#sa_andmodealways">$STRADVANCEDSETTINGS_ANDMODEALWAYS@C$</a></b> is enabled, 
 switches also to OR mode</TD></TR>

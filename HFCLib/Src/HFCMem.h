@@ -262,8 +262,8 @@ template<class TYPE>
 class CAutoPtr
 {
 public:
-	CAutoPtr(TYPE* data=NULL) { m_data=data;  }
-	CAutoPtr(CAutoPtr<TYPE>& another) { m_data=another.Release(); }
+	CAutoPtr(TYPE* data=NULL) { m_data=data;  m_bFree=bFree;}
+	CAutoPtr(CAutoPtr<TYPE>& another) { m_bFree=another.m_bFree; m_data=another.UnAttach(); }
 	~CAutoPtr();
 
 	
@@ -272,7 +272,7 @@ public:
 	
 	TYPE* operator ->() { return m_data; }
 
-	void Attach(TYPE* data);
+	void Attach(TYPE* data,BOOL bFree=TRUE);
 	void Attach(CAutoPtr<TYPE>& another);
 	TYPE* UnAttach();
 	
@@ -282,7 +282,7 @@ public:
 
 private:
 	TYPE* m_data;
-
+	BOOL m_bFree;
 };
 
 
@@ -291,8 +291,8 @@ template<class TYPE>
 class CAutoPtrA
 {
 public:
-	CAutoPtrA(TYPE* data=NULL) { m_data=data;  }
-	CAutoPtrA(CAutoPtrA<TYPE>& another) { m_data=another.Release(); }
+	CAutoPtrA(TYPE* data=NULL,BOOL bFree=TRUE) { m_data=data; m_bFree=bFree; }
+	CAutoPtrA(CAutoPtrA<TYPE>& another) { m_bFree=another.m_bFree; m_data=another.UnAttach(); }
 	~CAutoPtrA();
 
 	
@@ -301,7 +301,7 @@ public:
 	
 	TYPE* operator ->() { return m_data; }
 
-	void Attach(TYPE* data);
+	void Attach(TYPE* data,BOOL bFree=TRUE);
 	void Attach(CAutoPtr<TYPE>& another);
 	TYPE* UnAttach();
 	
@@ -316,6 +316,7 @@ public:
 
 private:
 	TYPE* m_data;
+	BOOL m_bFree;
 
 };
 

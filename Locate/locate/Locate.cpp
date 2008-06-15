@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.1.8.5260              */
+   database locater v3.1.8.6150              */
 
-const char* szVersionStr="locate 3.1 beta build 8.5260";
+const char* szVersionStr="locate 3.1 beta build 8.6150";
 
 #include <hfclib.h>
 #ifndef WIN32

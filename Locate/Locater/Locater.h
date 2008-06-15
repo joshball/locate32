@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.1.8.4270              */
+   database locater v3.1.8.6150              */
 
 #if !defined(LOCATER_H)
 #define LOCATER_H
@@ -45,6 +45,7 @@ typedef BOOL (CALLBACK* LOCATEFOUNDPROC)(DWORD_PTR dwParam,BOOL bFolder,const CL
 #define LOCATE_NAMEREGEXPISUTF8			0x00004000 
 #define LOCATE_LOGICALOPERATIONS		0x00010000 
 #define LOCATE_REGEXPCASESENSITIVE		0x00020000 // Regular expression for name is case sensitive
+#define LOCATE_LOGICALOPERATIONSINEXT	0x00100000 // Extensions may contain - to mean that exclude extension
 
 #define SYSTEMTIMETODOSDATE(st)	((((st).wDay&0x1F))|(((st).wMonth&0x0F)<<5)|((((st).wYear-1980))<<9))
 #define DOSDATETODAY(dt)		BYTE((dt)&0x1F)
@@ -153,6 +154,8 @@ private:
 	BOOL IsFolderAdvancedWhatAreWeLookingFor() const;
 	BOOL IsFolderAdvancedWhatAreWeLookingForW() const;
 
+	BOOL IsDirectoryExcluded(DWORD nPathLen) const;
+	BOOL IsDirectoryExcludedW(DWORD nPathLen) const;
 	
 
 	enum ValidType {
@@ -162,8 +165,6 @@ private:
 	};
 	ValidType IsFolderValid(DWORD nPathLen);
 	ValidType IsFolderValidW(DWORD nPathLen);
-	ValidType IsRootValid(DWORD nPathLen);
-	ValidType IsRootValidW(DWORD nPathLen);
 
 public:
 	// These are possible to call only in pFoundProc
@@ -247,8 +248,13 @@ private:
 	// Locate information
 	union {
 		struct {
-			CArrayFP<CStringW*> m_aNames;
-			CArrayFP<CStringW*> m_aExtensions;
+			LPWSTR* m_ppNames;
+			int* m_piNameLengths;
+			DWORD m_dwNamesCount;
+			LPWSTR* m_ppExtensions;
+			int* m_piExtLengths;
+			DWORD m_dwExtCount;
+			DWORD m_dwExclusiveExtCount;
 		};
 		struct {
 #ifdef _PCRE_H
@@ -261,6 +267,7 @@ private:
 		};
 	};
 	CArrayFP<CStringW*> m_aDirectories;
+	CArrayFP<CStringW*> m_aExcludedDirectories;
 
 	//  Needed information from CDatabase
 	struct DBArchive {

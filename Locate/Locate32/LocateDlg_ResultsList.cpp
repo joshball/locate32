@@ -4,7 +4,10 @@
 #include "Locate32.h"
 
 #include <commoncontrols.h>
+#include <shlwapi.h>
+#include "3rdparty/strnatcmp.h"
 
+#pragma comment(lib,"shlwapi.lib")
 
 ////////////////////////////////////////////////////////////
 // CLocateDlg - Results list - List style and outlook
@@ -1129,7 +1132,7 @@ void CLocateDlg::SortItems(DetailType nDetail,BYTE bDescending,BOOL bNoneIsPossi
 	{ 
 		// Ascending
 		DebugFormatMessage("Going to sort(1), nColumn is %X",LPARAM(nDetail));
-		BOOL bRet=m_pListCtrl->SortItems(ListViewCompareProc,(DWORD)(nDetail));
+		BOOL bRet=m_pListCtrl->SortItems(ListCompareProc,(DWORD)(nDetail));
 		DebugFormatMessage("bRet=%X",bRet);
 		m_nSorting=nDetail&127;
 	}
@@ -1137,7 +1140,7 @@ void CLocateDlg::SortItems(DetailType nDetail,BYTE bDescending,BOOL bNoneIsPossi
 	{
 		// Descending
 		DebugFormatMessage("Going to sort(2), nColumn is %X",LPARAM(nDetail));
-		BOOL bRet=m_pListCtrl->SortItems(ListViewCompareProc,(DWORD)(nDetail|128));
+		BOOL bRet=m_pListCtrl->SortItems(ListCompareProc,(DWORD)(nDetail|128));
 		DebugFormatMessage("bRet=%X",bRet);
 		m_nSorting=nDetail|128;
 	}
@@ -1182,13 +1185,15 @@ void CLocateDlg::SetSorting(BYTE bSorting)
 	SetSortArrowToHeader(DetailType(bSorting&127),FALSE,(bSorting&128)?TRUE:FALSE);
 }
 
-int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
+int CALLBACK CLocateDlg::ListCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 {
 	CLocatedItem* pItem1=(CLocatedItem*)lParam1;
 	CLocatedItem* pItem2=(CLocatedItem*)lParam2;
+	
+	CLocateDlg* pLocateDlg=GetLocateDlg();
 
 	// If "Show folders first" is chosen, separate files and directories
-	if (GetLocateDlg()->GetFlags()&fgLVFoldersFirst)
+	if (pLocateDlg->GetFlags()&fgLVFoldersFirst)
 	{
 		if (pItem1->IsFolder() && !pItem2->IsFolder())
 			return -1;
@@ -1196,14 +1201,7 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			return 1;
 	}
 
-	// Search criteria is Extension
-	if ((lParamSort&127)==Extension)
-	{
-		// Sort by extension
-		if (lParamSort&128)
-			return _wcsicmp(pItem2->GetExtension(),pItem1->GetExtension());
-		return _wcsicmp(pItem1->GetExtension(),pItem2->GetExtension());
-	}
+	
 
 	DetailType nDetail=DetailType(lParamSort&127);
 	switch (nDetail)
@@ -1215,16 +1213,21 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 			pItem2->UpdateFileTitle();
 		
 		if (lParamSort&128)
-			return _wcsicmp(pItem2->GetFileTitle(),pItem1->GetFileTitle());
-		return _wcsicmp(pItem1->GetFileTitle(),pItem2->GetFileTitle());
+			return pLocateDlg->m_pStrCmp(pItem2->GetFileTitle(),pItem1->GetFileTitle());
+		return pLocateDlg->m_pStrCmp(pItem1->GetFileTitle(),pItem2->GetFileTitle());
 	case InFolder:
 		if (lParamSort&128)
-			return _wcsicmp(pItem2->GetParent(),pItem1->GetParent());
-		return _wcsicmp(pItem1->GetParent(),pItem2->GetParent());
+			return pLocateDlg->m_pStrCmp(pItem2->GetParent(),pItem1->GetParent());
+		return pLocateDlg->m_pStrCmp(pItem1->GetParent(),pItem2->GetParent());
 	case FullPath:
 		if (lParamSort&128)
-			return _wcsicmp(pItem2->GetPath(),pItem1->GetPath());
-		return _wcsicmp(pItem1->GetPath(),pItem2->GetPath());
+			return pLocateDlg->m_pStrCmp(pItem2->GetPath(),pItem1->GetPath());
+		return pLocateDlg->m_pStrCmp(pItem1->GetPath(),pItem2->GetPath());
+	case Extension:
+		// Sort by extension
+		if (lParamSort&128)
+			return pLocateDlg->m_pStrCmp(pItem2->GetExtension(),pItem1->GetExtension());
+		return pLocateDlg->m_pStrCmp(pItem1->GetExtension(),pItem2->GetExtension());
 	case FileSize:
 		if (!(GetLocateDlg()->GetExtraFlags()&efLVNoUpdateWhileSorting))
 		{
@@ -1263,8 +1266,8 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 		if (pItem2->ShouldUpdateType())
 			pItem2->UpdateType();
 		if (lParamSort&128)
-			return _wcsicmp(pItem2->GetType(),pItem1->GetType());
-		return _wcsicmp(pItem1->GetType(),pItem2->GetType());
+			return pLocateDlg->m_pStrCmp(pItem2->GetType(),pItem1->GetType());
+		return pLocateDlg->m_pStrCmp(pItem1->GetType(),pItem2->GetType());
 	case DateModified:
 		if (!(GetLocateDlg()->GetExtraFlags()&efLVNoUpdateWhileSorting))
 		{
@@ -1406,56 +1409,56 @@ int CALLBACK CLocateDlg::ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPA
 				return lParamSort&128?1:-1;
 			
 			if (lParamSort&128)
-				return _wcsicmp(pText2,pText1);
-			return _wcsicmp(pText1,pText2);
+				return pLocateDlg->m_pStrCmp(pText2,pText1);
+			return pLocateDlg->m_pStrCmp(pText1,pText2);
 		}
 	case Database:
 		if (lParamSort&128)
 		{
-			return _wcsicmp(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetName(),
+			return pLocateDlg->m_pStrCmp(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetName(),
 				GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetName());
 		}
-		return _wcsicmp(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetName(),
+		return pLocateDlg->m_pStrCmp(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetName(),
 			GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetName());
 	case DatabaseDescription:
 		if (lParamSort&128)
 		{
-			return _wcsicmp(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetDescription(),
+			return pLocateDlg->m_pStrCmp(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetDescription(),
 				GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetDescription());
 		}
-		return _wcsicmp(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetDescription(),
+		return pLocateDlg->m_pStrCmp(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetDescription(),
 			GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetDescription());
 	case DatabaseArchive:
 		if (lParamSort&128)
 		{
-			return _wcsicmp(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetArchiveName(),
+			return pLocateDlg->m_pStrCmp(GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetArchiveName(),
 				GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetArchiveName());
 		}
-		return _wcsicmp(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetArchiveName(),
+		return pLocateDlg->m_pStrCmp(GetLocateApp()->GetDatabase(pItem1->GetDatabaseID())->GetArchiveName(),
 			GetLocateApp()->GetDatabase(pItem2->GetDatabaseID())->GetArchiveName());
 	case VolumeLabel:
 		if (lParamSort&128)
 		{
-			return _wcsicmp(CLocateDlg::GetDBVolumeLabel(pItem2->GetDatabaseID(),pItem2->GetRootID()),
+			return pLocateDlg->m_pStrCmp(CLocateDlg::GetDBVolumeLabel(pItem2->GetDatabaseID(),pItem2->GetRootID()),
 				CLocateDlg::GetDBVolumeLabel(pItem1->GetDatabaseID(),pItem1->GetRootID()));
 		}
-		return _wcsicmp(CLocateDlg::GetDBVolumeLabel(pItem1->GetDatabaseID(),pItem1->GetRootID()),
+		return pLocateDlg->m_pStrCmp(CLocateDlg::GetDBVolumeLabel(pItem1->GetDatabaseID(),pItem1->GetRootID()),
 			CLocateDlg::GetDBVolumeLabel(pItem2->GetDatabaseID(),pItem2->GetRootID()));
 	case VolumeSerial:
 		if (lParamSort&128)
 		{
-			return _wcsicmp(CLocateDlg::GetDBVolumeSerial(pItem2->GetDatabaseID(),pItem2->GetRootID()),
+			return pLocateDlg->m_pStrCmp(CLocateDlg::GetDBVolumeSerial(pItem2->GetDatabaseID(),pItem2->GetRootID()),
 				CLocateDlg::GetDBVolumeSerial(pItem1->GetDatabaseID(),pItem1->GetRootID()));
 		}
-		return _wcsicmp(CLocateDlg::GetDBVolumeSerial(pItem1->GetDatabaseID(),pItem1->GetRootID()),
+		return pLocateDlg->m_pStrCmp(CLocateDlg::GetDBVolumeSerial(pItem1->GetDatabaseID(),pItem1->GetRootID()),
 			CLocateDlg::GetDBVolumeSerial(pItem2->GetDatabaseID(),pItem2->GetRootID()));
 	case VolumeFileSystem:
 		if (lParamSort&128)
 		{
-			return _wcsicmp(CLocateDlg::GetDBVolumeFileSystem(pItem2->GetDatabaseID(),pItem2->GetRootID()),
+			return pLocateDlg->m_pStrCmp(CLocateDlg::GetDBVolumeFileSystem(pItem2->GetDatabaseID(),pItem2->GetRootID()),
 				CLocateDlg::GetDBVolumeFileSystem(pItem1->GetDatabaseID(),pItem1->GetRootID()));
 		}
-		return _wcsicmp(CLocateDlg::GetDBVolumeFileSystem(pItem1->GetDatabaseID(),pItem1->GetRootID()),
+		return pLocateDlg->m_pStrCmp(CLocateDlg::GetDBVolumeFileSystem(pItem1->GetDatabaseID(),pItem1->GetRootID()),
 			CLocateDlg::GetDBVolumeFileSystem(pItem2->GetDatabaseID(),pItem2->GetRootID()));
 	}
 	
@@ -1481,7 +1484,7 @@ int CLocateDlg::SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSortin
 			return 0;
 		}
 
-		int nRet=ListViewCompareProc(LPARAM(pItem),LPARAM(pNewItem),bSorting);
+		int nRet=ListCompareProc(LPARAM(pItem),LPARAM(pNewItem),bSorting);
 		if (nRet<0) // New item should be later
 		{
 			a=c+1;
@@ -1511,7 +1514,7 @@ int CLocateDlg::SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSortin
 					break;
 				pItem=(CLocatedItem*)pList->GetItemData(c);
 			}
-			while (ListViewCompareProc(LPARAM(pItem),LPARAM(pNewItem),bSorting)==0);
+			while (ListCompareProc(LPARAM(pItem),LPARAM(pNewItem),bSorting)==0);
 			
 			ASSERT(c>=0 && c<=int(dwMaxItems));
 			return c;
@@ -1547,7 +1550,34 @@ void CLocateDlg::SetSortArrowToHeader(DetailType nType,BOOL bRemove,BOOL bDownAr
 
 }
 
-
+void CLocateDlg::SetListCompareFunction()
+{
+	DWORD dwMethod=DEFAULT_SORTINGMETHOD;
+	CRegKey2 LocRegKey;
+	if (LocRegKey.OpenKey(HKCU,"\\Locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+		LocRegKey.QueryValue("Sorting Method",dwMethod);
+	
+	switch (dwMethod)
+	{
+	case 0: // Standard ASCII
+		m_pStrCmp=StrCmpIW;
+		break;
+	case 1: // Standard ASCII (case sensitive)
+		m_pStrCmp=_StrCmpW;
+		break;
+	case 2: // Natural order 
+		m_pStrCmp=(int (STDAPICALLTYPE*)(LPCWSTR,LPCWSTR))GetProcAddress(GetModuleHandle("Shlwapi.dll"),"StrCmpLogicalW");
+		if (m_pStrCmp==NULL)
+			m_pStrCmp=strnatcasecmp;
+		break;
+	case 3: // Natural order (case sensitive)
+		m_pStrCmp=strnatcmp;
+		break;
+	default:
+		m_pStrCmp=strnatcasecmp;
+		break;
+	}
+}
 
 
 ////////////////////////////////////////////////////////////

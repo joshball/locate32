@@ -973,6 +973,8 @@ BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArra
 		aExtensions.Add(allocemptyW());
 	else
 	{
+		BOOL bPlusOrMinusFound=FALSE; // String contains logical operations '+' and '-':
+
 		CStringW sType;
 		m_Type.GetText(sType);
 	
@@ -984,16 +986,17 @@ BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArra
 		for (;pType[0]==L' ';pType++);
 		while (*pType!=L'\0')
 		{
+			// Calculate length, separators are ' ', ',' and ';'
 			DWORD nLength;
-			for (nLength=0;pType[nLength]!=L'\0' && pType[nLength]!=L' ';nLength++);		
+			for (nLength=0;pType[nLength]!=L'\0' && pType[nLength]!=L' '&& pType[nLength]!=L','&& pType[nLength]!=L';';nLength++);		
+
+			// Add to extensions list
 			aExtensions.Add(alloccopy(pType,nLength));
+
 			pType+=nLength;
 			for (;pType[0]==L' ';pType++);
 		}
 	}
-	
-	
-
 
 	// Resolving directories
 	if (m_pMultiDirs!=NULL)
@@ -1940,9 +1943,12 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 				DWORD dwFlags=SHGFI_SYSICONINDEX|SHGFI_SMALLICON;
 				if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
 					dwFlags|=SHGFI_USEFILEATTRIBUTES;
-				GetFileInfo(m_pBrowse[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags);
+				LPCWSTR pPath=m_pBrowse[i];
+				if (pPath[0]==L'-')
+					pPath++;
+				GetFileInfo(pPath,FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags);
 				ci.iImage=fi.iIcon;
-				GetFileInfo(m_pBrowse[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags|SHGFI_OPENICON);
+				GetFileInfo(pPath,FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags|SHGFI_OPENICON);
 				ci.iSelectedImage=fi.iIcon;
 			}
 

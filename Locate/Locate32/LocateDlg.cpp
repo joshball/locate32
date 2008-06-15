@@ -212,7 +212,8 @@ inline CLocateDlg::CLocateDlg()
 	m_pImageHandler(NULL),m_iTooltipItem(-1),m_iTooltipSubItem(-1),m_bTooltipActive(FALSE),
 	m_hLastFocus(NULL),m_WaitEvery30(0),m_WaitEvery60(0),m_hDialogFont(NULL),
 	m_hLargeDialogIcon(NULL),m_hSmallDialogIcon(NULL),
-	m_nCurrentListType(ltDetails),m_dwThumbnailFlags(tfDefault),m_pSystemImageList(NULL)
+	m_nCurrentListType(ltDetails),m_dwThumbnailFlags(tfDefault),m_pSystemImageList(NULL),
+	m_pStrCmp(NULL)
 {
 	ZeroMemory(m_aResultListActions,TypeCount*ListActionCount*sizeof(void*));
 
@@ -532,6 +533,9 @@ BOOL CLocateDlg::UpdateSettings()
 
 	// Set icon
 	LoadDialogIcon();
+
+	// Set compare function
+	SetListCompareFunction();
 
     
 	if (m_NameDlg.EnableMultiDirectorySupport(GetFlags()&fgNameMultibleDirectories?TRUE:FALSE))
@@ -1525,7 +1529,6 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 			
 			for(;;)
 			{
-				
 				// First, if logical operations are enabled, 
 				// check whether + or - is present
 				enum {
@@ -1718,7 +1721,18 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 	}
 				
 
-	
+	// Check if extension contains logicical operations
+	if (IsExtraFlagSet(efEnableLogicalOperations))
+	{
+		for (int i=0;i<aExtensions.GetSize();i++)
+		{
+			if (aExtensions[0][0]==L'-')
+			{
+				pLocater->AddAdvancedFlags(LOCATE_LOGICALOPERATIONSINEXT);
+				break;
+			}
+		}
+	}
 	
 	
 

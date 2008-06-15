@@ -58,6 +58,7 @@ extern LPWSTR g_szwBuffer;
 #define DEFAULT_INSTANTSEARCHCHARS		1
 #define DEFAULT_LARGEICONSIZE			92
 #define DEFAULT_EXTRALARGEICONSIZE		256
+#define DEFAULT_SORTINGMETHOD			2 // 0=Standard, 1=Standard (case), 2=Natural order, 3=Natural order (case)
 
 
 // Timer IDs, if timer ID is not one of those, ID is HWND to control to get focus

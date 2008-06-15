@@ -1082,3 +1082,9 @@ LONG CRegKey2::DeleteCommonKey(LPCWSTR lpszSubKey)
 
 	return lRet;
 }
+
+
+int STDAPICALLTYPE _StrCmpW(LPCWSTR a,LPCWSTR b)
+{
+	return wcscmp(a,b);
+}

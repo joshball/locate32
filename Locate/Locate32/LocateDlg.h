@@ -773,10 +773,11 @@ protected:
 	// Sorting
 	void SortItems(DetailType nDetail,BYTE bDescending=-1,BOOL bNoneIsPossible=FALSE); // bDescending:0=ascending order, 1=desc, -1=default
 	void SetSorting(BYTE bSorting=BYTE(-2)); // bSorting==BYTE(-2): default
-	static int CALLBACK ListViewCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
+	static int CALLBACK ListCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 	static int SortNewItem(CListCtrl* pList,CLocatedItem* pNewItem,BYTE bSorting);
 	void SetSortArrowToHeader(DetailType nDetail,BOOL bRemove,BOOL bDownArrow);
-	
+	void SetListCompareFunction();
+
 	// Drag and drop
 	void BeginDragFiles(CListCtrl* pList);
 	
@@ -822,7 +823,12 @@ protected:
 	CFileTarget* m_pDropTarget; // Drop target class for the results list
 	
 	BYTE m_nSorting;	// used for sorting list item, 0-6 bits: detail type, 7 bit: if 1 ascend sorting
+	int (STDAPICALLTYPE * m_pStrCmp)(LPCWSTR,LPCWSTR); 	// Function used to compare strings, can be _wcsicmp, StrCmpLogicalW or strnatcasecmp
+
 	
+
+
+
 	BYTE m_ClickWait;   // If m_ClickWait is TRUE, result list actions are ignored
 						// this is set to TRUE when item in the results list is double
 						// clicked and timer sets it to FALSE after 500 ms

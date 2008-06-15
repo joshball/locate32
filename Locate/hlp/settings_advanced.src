@@ -287,10 +287,19 @@ This option specified how file sizes are formatted. The value
 "STRADVANCEDSETTINGS_FILESIZEFORMATDEPENGINGSIZE" means that the closest unit is used
  e.g., a file size of 2150 bytes is shown using kilobytes and 16000000 bytes using megabystes).</p>
 
-<p><b><A NAME="sa_locatesize"></A>$STRADVANCEDSETTINGS_FORMATWITHUSERLOCALESETTINGS@C$</b>:
+<p><b><A NAME="sa_localesize"></A>$STRADVANCEDSETTINGS_FORMATWITHUSERLOCALESETTINGS@C$</b>:
 If this option is enabled, the number part of file sizes are formatted using system 
 regional settings. To view and change the regional settings. go to 
 Windows' Control Panel. </p>
+
+<p><b><A NAME="sa_sortingmethod"></A>$STRADVANCEDSETTINGS_SORTINGMETHOD@C$</b>:
+Specifies the comparisong method which is used when items in the results list are sorted:
+the methods "$STRADVANCEDSETTINGS_SORTINGMETHODSTANDARD@P$" and 
+"$STRADVANCEDSETTINGS_SORTINGMETHODSTANDARDCASES@P$" are based on ASCII value based and 
+"$STRADVANCEDSETTINGS_SORTINGMETHODNATURAL@P$" and 
+"$STRADVANCEDSETTINGS_SORTINGMETHODNATURALCASES@P$" considers digits in the strings as numerical 
+content (e.g. files "file1, file10, file2" are sorted as "file1, file2, file10").
+</p>
 
 <p><b><A NAME="sa_ownprogforfolders"></A>$STRADVANCEDSETTINGS_USEOTHERPROGRAMSTOOPENFOLDERS@C$</b>:
 This option can be used to specify an other program to open directories. You need to specify a 

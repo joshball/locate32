@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,8,5260
- PRODUCTVERSION 3,1,8,5260
+ FILEVERSION 3,1,8,6150
+ PRODUCTVERSION 3,1,8,6150
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 beta build 8.5260"
+            VALUE "FileVersion", "3.1 beta build 8.6150"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2008 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 beta build 8.5260"
+            VALUE "ProductVersion", "3.1 beta build 8.6150"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -860,7 +860,14 @@ BEGIN
     GROUPBOX        "Advanced settings:",-1,2,0,283+10,298
     CONTROL         "",IDC_SETTINGS,"SysTreeView32",TVS_LINESATROOT | 
 					TVS_DISABLEDRAGDROP | WS_BORDER | WS_TABSTOP,
-					6,12,273+10,280
+					6,12,273+10,260
+	LTEXT           "Search:",IDC_STATIC,7,282,33,11
+    EDITTEXT        IDC_FINDTEXT,40,280,85,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Find Next",IDC_FINDNEXT,127,280,50,13
+	CONTROL         "Search up",IDC_SEARCHUP,"Button",
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,183,282,52,10
+    CONTROL         "Search down",IDC_SEARCHDOWN,"Button",
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,237,282,55,10
 END
 
 IDD_PRESETNAME DIALOGEX 100, 100, 196, 68
@@ -1632,6 +1639,11 @@ BEGIN
 	IDS_ADVSETSHOWTIMESINFORMAT		"Show times in format:"
 	IDS_ADVSETSHOWFILESIZESINFORMAT	"Show file sizes as:"
 	IDS_ADVSETFORMATWITHUSERLOCALE	"Use user locale settings to format file size"
+	IDS_ADVSETSORTINGMETHOD			"Sorting method:"
+	IDS_ADVSETSORTINGSTANDARD		"standard"
+	IDS_ADVSETSORTINGSTANDARDCS		"standard (case sensitive)"
+	IDS_ADVSETSORTINGNATURAL		"natural ordering"
+	IDS_ADVSETSORTINGNATURALCS		"natural ordering (case sensitive)	"
 	IDS_ADVSETFILESIZEFORMATLESS1KB	"sizes less than 1KB as bytes, other as kilobytes"
 	IDS_ADVSETFILESIZEFORMATLESS1MB	"sizes more than 1MB as megabytes"
 	IDS_ADVSETFILESIZEFORMATDEPENGINGSIZE	"depending on size"
@@ -1652,6 +1664,7 @@ BEGIN
 	IDS_ADVSETSYSTEM				"System"
 	IDS_ADVSETRUNATSYSTEMSTARTUP	"Run Locate on system startup"
 	IDS_ADVSETCHANGE				"&Change"
+	IDS_ADVSETCANNOTFINDOPTION		"Cannot find any options containing '%s'"
 	IDS_ADVSETSYSTEMDEFAULT			"(system default)"
 	IDS_ADVSETUPDATEPROCESS			"Update process"
 	IDS_ADVSETSHOWCRITICALERRORS	"Show critical errors (e.g., cannot write database, ...)"

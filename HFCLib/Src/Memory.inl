@@ -30,31 +30,32 @@ inline void fMemSet(void* dst,BYTE byte,SIZE_T count) // faster when count is sm
 template<class TYPE> 
 inline CAutoPtr<TYPE>::~CAutoPtr()
 {
-	if (m_data!=NULL)
+	if (m_data!=NULL && m_bFree)
 		delete m_data;
 }
 
 template<class TYPE> 
 inline TYPE* CAutoPtr<TYPE>::UnAttach()
 {
-	TYPE* tmp=m_data;
-	m_data=NULL;
-	return tmp;
+	m_bFree=FALSE;
+	return m_data;
 }
 
 template<class TYPE> 
-inline void CAutoPtr<TYPE>::Attach(TYPE* data)
+inline void CAutoPtr<TYPE>::Attach(TYPE* data,BOOL bFree)
 {
-	if (m_data!=NULL)
+	if (m_data!=NULL && m_bFree)
 		delete m_data;
 	m_data=data;
+	m_bFree=bFree;
 }
 
 template<class TYPE> 
 inline void CAutoPtr<TYPE>::Attach(CAutoPtr<TYPE>& another)
 {
-	if (m_data!=NULL)
+	if (m_data!=NULL && m_bFree)
 		delete m_data;
+	m_bFree=another.m_bFree;
 	m_data=another.UnAttach();
 }
 
@@ -81,31 +82,32 @@ inline CAutoPtr<TYPE>& CAutoPtr<TYPE>::operator=(CAutoPtr<TYPE>& another)
 template<class TYPE> 
 inline CAutoPtrA<TYPE>::~CAutoPtrA()
 {
-	if (m_data!=NULL)
+	if (m_data!=NULL && m_bFree)
 		delete[] m_data;
 }
 
 template<class TYPE> 
 inline TYPE* CAutoPtrA<TYPE>::UnAttach()
 {
-	TYPE* tmp=m_data;
-	m_data=NULL;
-	return tmp;
+	m_bFree=FALSE;
+	return m_data;
 }
 
 template<class TYPE> 
-inline void CAutoPtrA<TYPE>::Attach(TYPE* data)
+inline void CAutoPtrA<TYPE>::Attach(TYPE* data,BOOL bFree)
 {
-	if (m_data!=NULL)
+	if (m_data!=NULL && m_bFree)
 		delete[] m_data;
 	m_data=data;
+	m_bFree=bFree;
 }
 
 template<class TYPE> 
 inline void CAutoPtrA<TYPE>::Attach(CAutoPtr<TYPE>& another)
 {
-	if (m_data!=NULL)
+	if (m_data!=NULL && m_bFree)
 		delete[] m_data;
+	m_bFree=another.m_bFree;
 	m_data=another.UnAttach();
 }
 

@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.1.8.4270              */
+   database locater v3.1.8.6150              */
 
 #if !defined(LOCATER_INL)
 #define LOCATER_INL
@@ -157,9 +157,50 @@ inline bool _strncmp(const WCHAR* p1,const WCHAR* p2,int a)
 	return TRUE;
 }
 
+inline BOOL CLocater::IsDirectoryExcluded(DWORD nPathLen) const
+{
+	for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
+	{
+		if ((DWORD)m_aExcludedDirectories.GetAt(i)->GetLength()<nPathLen)
+		{
+			if (_strncmp(*m_aExcludedDirectories.GetAt(i),szCurrentPathLower,m_aExcludedDirectories.GetAt(i)->GetLength()) && 
+				szCurrentPathLowerW[m_aExcludedDirectories.GetAt(i)->GetLength()]==L'\\')
+				return TRUE;
+		}
+		else if ((DWORD)m_aExcludedDirectories.GetAt(i)->GetLength()==nPathLen)
+		{
+			if (_strncmp(*m_aExcludedDirectories.GetAt(i),szCurrentPathLower,nPathLen))
+				return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+inline BOOL CLocater::IsDirectoryExcludedW(DWORD nPathLen) const
+{
+	for (int i=0;i<m_aExcludedDirectories.GetSize();i++)
+	{
+		if ((DWORD)m_aExcludedDirectories.GetAt(i)->GetLength()<nPathLen)
+		{
+			if (_strncmp(*m_aExcludedDirectories.GetAt(i),szCurrentPathLowerW,m_aExcludedDirectories.GetAt(i)->GetLength()) && 
+				szCurrentPathLowerW[m_aExcludedDirectories.GetAt(i)->GetLength()]==L'\\')
+				return TRUE;
+		}
+		else if ((DWORD)m_aExcludedDirectories.GetAt(i)->GetLength()==nPathLen)
+		{
+			if (_strncmp(*m_aExcludedDirectories.GetAt(i),szCurrentPathLowerW,nPathLen))
+				return TRUE;
+		}
+	}
+	return FALSE;
+}
 
 inline CLocater::ValidType CLocater::IsFolderValid(DWORD nPathLen)
 {
+	// Check first if root is excluded
+	if (IsDirectoryExcluded(nPathLen))
+		return NoValidFolders;
+
 	if (m_aDirectories.GetSize()>0)
 	{
 		for (int i=0;i<m_aDirectories.GetSize();i++)
@@ -184,6 +225,12 @@ inline CLocater::ValidType CLocater::IsFolderValid(DWORD nPathLen)
 
 inline CLocater::ValidType CLocater::IsFolderValidW(DWORD nPathLen)
 {
+	// Check first if root is excluded
+	if (IsDirectoryExcludedW(nPathLen))
+		return NoValidFolders;
+
+
+	// Check if directory is one of wanted
 	if (m_aDirectories.GetSize()>0)
 	{
 		for (int i=0;i<m_aDirectories.GetSize();i++)
@@ -204,44 +251,6 @@ inline CLocater::ValidType CLocater::IsFolderValidW(DWORD nPathLen)
 	}
 	else
 		return ValidFolders;					
-}
-
-inline CLocater::ValidType CLocater::IsRootValid(DWORD nPathLen)
-{
-	for (int i=0;i<m_aDirectories.GetSize();i++)
-	{
-		if ((DWORD)m_aDirectories.GetAt(i)->GetLength()>nPathLen)
-		{
-			if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLower,nPathLen))
-				return SomeValidFolders;
-		}
-		else
-		{
-			if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLower,
-				m_aDirectories.GetAt(i)->GetLength()))
-				return ValidFolders;
-		}
-	}
-	return NoValidFolders;
-}
-
-inline CLocater::ValidType CLocater::IsRootValidW(DWORD nPathLen)
-{
-	for (int i=0;i<m_aDirectories.GetSize();i++)
-	{
-		if ((DWORD)m_aDirectories.GetAt(i)->GetLength()>nPathLen)
-		{
-			if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,nPathLen))
-				return SomeValidFolders;
-		}
-		else
-		{
-			if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,
-				(int)m_aDirectories.GetAt(i)->GetLength()))
-				return ValidFolders;
-		}
-	}
-	return NoValidFolders;
 }
 
 inline LPCSTR CLocater::GetFolderName() const

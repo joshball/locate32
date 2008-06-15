@@ -63,8 +63,10 @@ public:
 		virtual BOOL OnInitDialog(HWND hwndFocus);
 		virtual void OnCancel();
 		virtual void OnHelp(LPHELPINFO lphi);
-
+		virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 		
+		void DoSearch();
+
 	protected:
 		friend CSettingsProperties;
 		CSettingsProperties* m_pSettings;
@@ -73,6 +75,7 @@ public:
 		static BOOL CALLBACK DateFormatComboProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK UpdateThreadPriorityProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK FileSizeListProc(COptionsPropertyPage::BASICPARAMS* pParams);
+		static BOOL CALLBACK SortingMethodProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK LimitResultsCheckBoxProc(COptionsPropertyPage::BASICPARAMS* pParams); 
 		static BOOL CALLBACK UpdateTooltipPositionProc(COptionsPropertyPage::BASICPARAMS* pParams);
 		static BOOL CALLBACK UpdateTooltipTopmostProc(COptionsPropertyPage::BASICPARAMS* pParams);
@@ -468,6 +471,7 @@ public:
 	CStringW m_TimeFormat;
 	CStringW m_DateFormat;
 	CLocateApp::FileSizeFormats m_nFileSizeFormat;
+	DWORD m_dwSortingMethod;
 	
 	CStringW m_OpenFoldersWith;
 	CStringW m_CustomTrayIcon;

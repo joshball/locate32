@@ -898,6 +898,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 
 	// Loading registry
 	LoadRegistry();
+
 	// Refreshing dialog box
 	m_NameDlg.InitDriveBox(TRUE);
 
@@ -915,7 +916,10 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 
 	// Set result list font
 	SetResultListFont();
-		
+	
+	// Set correct function for string comparisons
+	SetListCompareFunction();
+
 	// Setting topmost mode if needed
 	if (GetFlags()&fgDialogTopMost)
 		SetWindowPos(HWND_TOPMOST,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);

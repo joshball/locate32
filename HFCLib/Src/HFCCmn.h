@@ -637,12 +637,13 @@ public:
 	HTREEITEM GetSelectedItem() const;
 	HTREEITEM GetDropHilightItem() const;
 	HTREEITEM GetRootItem() const;
-	BOOL GetItem(TV_ITEM* pItem) const;
+	BOOL GetItem(TV_ITEMA* pItem) const;
+	BOOL GetItem(TV_ITEMW* pItem) const;
 	CString GetItemText(HTREEITEM hItem) const;
 	BOOL GetItemImage(HTREEITEM hItem,int& nImage, int& nSelectedImage) const;
 	UINT GetItemState(HTREEITEM hItem,UINT nStateMask) const;
 	DWORD_PTR GetItemData(HTREEITEM hItem) const;
-	BOOL SetItem(TV_ITEM* pItem);
+	BOOL SetItem(TV_ITEMA* pItem);
 	BOOL SetItem(TV_ITEMW* pItem);
 	BOOL SetItem(HTREEITEM hItem,UINT nMask,LPCSTR lpszItem,int nImage,
 		int nSelectedImage,UINT nState=0,UINT nStateMask=0, LPARAM lParam=0);
@@ -692,6 +693,27 @@ public:
 	BOOL SortChildren(HTREEITEM hItem);
 	BOOL EnsureVisible(HTREEITEM hItem);
 	BOOL SortChildrenCB(LPTV_SORTCB pSort);
+
+
+	// Get last item
+	HTREEITEM GetLastItem() const;
+	
+	// Returns next item which is: first child (if have childs), next sibling (if have any), 
+	// or next item for parent. Calling GetNextItem until it returns gives items in tree
+	// in the same order as in the tree. If hItem is NULL, returns the first item in the list
+	HTREEITEM GetNextItem(HTREEITEM hItem) const; 
+	
+	// Returns previous item. Works similarly as GetNextItem but to opposite direction (i.e. 
+	// GetNextItem(GetPrevItem(pItem))==pItem and GetPrevItem(GetNextItem(pItem))==pItem).
+	// If hItem is NULL, returns the last item in the list
+	HTREEITEM GetPrevItem(HTREEITEM hItem) const; 
+
+
+	// Finds item based on text, set bPartial to TRUE if you want that partial match is OK
+	HTREEITEM FindItem(LPCSTR pText,BOOL bBackwardDirection=FALSE,BOOL bPartial=TRUE,HTREEITEM hBegin=NULL,HTREEITEM hEnd=NULL) const; 
+	HTREEITEM FindItem(LPCWSTR pText,BOOL bBackwardDirection=FALSE,BOOL bPartial=TRUE,HTREEITEM hBegin=NULL,HTREEITEM hEnd=NULL) const; 
+	
+	
 };
 
 class CComboBoxEx : public CCommonCtrl, public CComboBox, public CEdit

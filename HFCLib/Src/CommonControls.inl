@@ -1981,14 +1981,19 @@ inline HTREEITEM CTreeCtrl::GetRootItem() const
 	return (HTREEITEM)::SendMessage(m_hWnd,TVM_GETNEXTITEM,TVGN_ROOT,(WPARAM)NULL);
 }
 
-inline BOOL CTreeCtrl::GetItem(TV_ITEM* pItem) const
+inline BOOL CTreeCtrl::GetItem(TV_ITEMA* pItem) const
 {
-	return (BOOL)::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_GETITEMA,0,(LPARAM)pItem);
 }
 
-inline BOOL CTreeCtrl::SetItem(TV_ITEM* pItem)
+inline BOOL CTreeCtrl::GetItem(TV_ITEMW* pItem) const
 {
-	return (BOOL)::SendMessage(m_hWnd,TVM_SETITEM,0,(LPARAM)pItem);
+	return (BOOL)::SendMessage(m_hWnd,TVM_GETITEMW,0,(LPARAM)pItem);
+}
+
+inline BOOL CTreeCtrl::SetItem(TV_ITEMA* pItem)
+{
+	return (BOOL)::SendMessage(m_hWnd,TVM_SETITEMA,0,(LPARAM)pItem);
 }
 
 inline BOOL CTreeCtrl::SetItem(TV_ITEMW* pItem)

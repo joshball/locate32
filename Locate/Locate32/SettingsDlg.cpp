@@ -45,7 +45,8 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_nTransparency(0),m_nToolTipTransparency(0),
 	m_dwTooltipDelayAutopop(DWORD(-1)),
 	m_dwTooltipDelayInitial(DWORD(-1)),
-	m_dwSchedulesDelay(0)
+	m_dwSchedulesDelay(0),
+	m_dwSortingMethod(DEFAULT_SORTINGMETHOD)
 {
 	AddFlags(PSH_NOAPPLYNOW);
 
@@ -203,6 +204,11 @@ BOOL CSettingsProperties::LoadSettings()
 		m_nInstantSearchingLimit=GetLocateDlg()->GetInstantSearchingLimit();
 		m_nInstantSearchingDelay=GetLocateDlg()->GetInstantSearchingDelay();
 		m_nInstantSearchingChars=GetLocateDlg()->GetInstantSearchingChars();
+	}
+
+	if (LocRegKey.OpenKey(HKCU,"\\Locate",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		LocRegKey.QueryValue("Sorting Method",m_dwSortingMethod);
 	}
     	
 	
@@ -531,6 +537,7 @@ BOOL CSettingsProperties::SaveSettings()
 		LocRegKey.SetValue("Instant Search Limit",m_nInstantSearchingLimit);
 		LocRegKey.SetValue("Instant Search Delay",m_nInstantSearchingDelay);
 		LocRegKey.SetValue("Instant Search Chars",m_nInstantSearchingChars);
+		LocRegKey.SetValue("Sorting Method",m_dwSortingMethod);
 	}
 
 	if (GetLocateDlg()!=NULL)
@@ -1185,7 +1192,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateListBox(IDS_ADVSETSHOWFILESIZESINFORMAT,FileSizeListProc,0,
 			&m_pSettings->m_nFileSizeFormat,"sa_sizeformat"),
 		CreateCheckBox(IDS_ADVSETFORMATWITHUSERLOCALE,NULL,DefaultCheckBoxProc,
-			CLocateApp::pfFormatUseLocaleFormat,&m_pSettings->m_dwProgramFlags,"sa_locatesize"),
+			CLocateApp::pfFormatUseLocaleFormat,&m_pSettings->m_dwProgramFlags,"sa_localesize"),
+		CreateListBox(IDS_ADVSETSORTINGMETHOD,SortingMethodProc,0,
+			&m_pSettings->m_dwSortingMethod,"sa_sortingmethod"),
 		CreateCheckBox(IDS_ADVSETUSEPROGRAMFORFOLDERS,OtherExplorerProgram,DefaultCheckBoxProc,
 			CSettingsProperties::settingsUseOtherProgramsToOpenFolders,&m_pSettings->m_dwSettingsFlags,"sa_ownprogforfolders"),
 		CreateCheckBox(IDS_ADVSETCOMPUTEMD5SUMS,NULL,DefaultCheckBoxProc,
@@ -1493,9 +1502,90 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL};
 
 	Initialize(Parents);
+
+
+	CheckDlgButton(IDC_SEARCHDOWN,1);
 	return FALSE;
 }
 
+BOOL CSettingsProperties::CAdvancedSettingsPage::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
+{
+	int nid=GetDefID();
+	switch (wID)
+	{
+	case IDC_FINDTEXT:
+		switch (wNotifyCode)
+		{
+		case EN_SETFOCUS:
+			SetDefID(IDC_FINDNEXT);
+			::SendMessage(hControl,EM_SETSEL,0,-1);
+			break;
+		case EN_KILLFOCUS:
+			SetDefID(IDOK);
+			SetDlgItemStyle(IDC_FINDNEXT,GetDlgItemStyle(IDC_FINDNEXT)&~BS_DEFPUSHBUTTON);
+			break;
+		case EN_CHANGE:
+			EnableDlgItem(IDC_FINDNEXT,GetDlgItemTextLength(IDC_FINDTEXT)>0);
+			break;				
+		case 1:
+			DoSearch();
+			break;
+		}
+		break;
+	case IDC_FINDNEXT:
+		DoSearch();
+		break;
+	}
+	return COptionsPropertyPage::OnCommand(wID,wNotifyCode,hControl);
+}
+
+
+
+	
+
+
+void CSettingsProperties::CAdvancedSettingsPage::DoSearch()
+{
+	
+	CStringW SearchTerm;
+	GetDlgItemText(IDC_FINDTEXT,SearchTerm);
+
+	if (SearchTerm.IsEmpty())
+		return;
+
+	BOOL bDirection=IsDlgButtonChecked(IDC_SEARCHDOWN);
+	
+	HTREEITEM hSelectedItem=m_pTree->GetSelectedItem(),hItem;
+	if (hSelectedItem!=NULL)
+	{
+		// Try starting from selected item
+		hItem=FindItem(SearchTerm,!bDirection,TRUE,TRUE,hSelectedItem);
+		if (hItem==NULL)
+		{
+			// Start from begining
+			hItem=FindItem(SearchTerm,!bDirection,TRUE,TRUE,NULL,hSelectedItem);
+		}
+	}
+	else
+	{
+		// Check the whole list
+		hItem=FindItem(SearchTerm,!bDirection,TRUE,TRUE);
+	}
+
+	if (hItem==NULL)
+	{
+		CStringW Message;
+		Message.Format(IDS_ADVSETCANNOTFINDOPTION,(LPCWSTR)SearchTerm);
+		MessageBox(Message);
+		SetFocus(IDC_FINDTEXT);		
+	}
+	else
+	{
+		m_pTree->SetFocus();
+		m_pTree->SelectItem(hItem);
+	}
+}
+		
 
 void CSettingsProperties::CAdvancedSettingsPage::OnHelp(LPHELPINFO lphi)
 {
@@ -1869,25 +1959,15 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::FileSizeListProc(COpti
 		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
 		{
 			CComboBox cb(((INITIALIZEPARAMS*)pParams)->hControl);
-			CStringW text(IDS_ADVSETFILESIZEFORMATLESS1KB);
-			cb.AddString(text);		
-			text.LoadString(IDS_ADVSETFILESIZEFORMATDEPENGINGSIZE);
-			cb.AddString(text);		
-			text.LoadString(IDS_ADVSETFILESIZEFORMATBYTES);
-			cb.AddString(text);		
-			text.LoadString(IDS_ADVSETFILESIZEFORMATBYTENOUNITS);
-			cb.AddString(text);		
-			text.LoadString(IDS_ADVSETFILESIZEFORMATKB);
-			cb.AddString(text);		
-			text.LoadString(IDS_ADVSETFILESIZEFORMATKBNOUNITS);
-			cb.AddString(text);		
-			text.LoadString(IDS_ADVSETFILESIZEFORMATMB);
-			cb.AddString(text);		
-			text.LoadString(IDS_ADVSETFILESIZEFORMATMBNOUNITS);
-			cb.AddString(text);		
-			text.LoadString(IDS_ADVSETFILESIZEFORMATLESS1MB);
-			cb.AddString(text);		
-			
+			cb.AddString(ID2W(IDS_ADVSETFILESIZEFORMATLESS1KB));		
+			cb.AddString(ID2W(IDS_ADVSETFILESIZEFORMATDEPENGINGSIZE));		
+			cb.AddString(ID2W(IDS_ADVSETFILESIZEFORMATBYTES));		
+			cb.AddString(ID2W(IDS_ADVSETFILESIZEFORMATBYTENOUNITS));		
+			cb.AddString(ID2W(IDS_ADVSETFILESIZEFORMATKB));		
+			cb.AddString(ID2W(IDS_ADVSETFILESIZEFORMATKBNOUNITS));		
+			cb.AddString(ID2W(IDS_ADVSETFILESIZEFORMATMB));		
+			cb.AddString(ID2W(IDS_ADVSETFILESIZEFORMATMBNOUNITS));		
+			cb.AddString(ID2W(IDS_ADVSETFILESIZEFORMATLESS1MB));		
 		}
 
 		break;
@@ -1904,6 +1984,36 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::FileSizeListProc(COpti
 	}
 	return TRUE;
 }
+
+BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::SortingMethodProc(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch(pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		// File size formats
+		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
+		{
+			CComboBox cb(((INITIALIZEPARAMS*)pParams)->hControl);
+			cb.AddString(ID2W(IDS_ADVSETSORTINGSTANDARD));		
+			cb.AddString(ID2W(IDS_ADVSETSORTINGSTANDARDCS));		
+			cb.AddString(ID2W(IDS_ADVSETSORTINGNATURAL));		
+			cb.AddString(ID2W(IDS_ADVSETSORTINGNATURALCS));		
+		}
+		break;
+	case BASICPARAMS::Get:
+		pParams->lValue=*((DWORD*)pParams->lParam);
+		break;
+	case BASICPARAMS::Set:
+		break;
+	case BASICPARAMS::Apply:
+		*((DWORD*)pParams->lParam)=((COMBOAPPLYPARAMS*)pParams)->nCurSel;
+		break;
+	case BASICPARAMS::ChangingValue:
+		break;
+	}
+	return TRUE;
+}
+
 
 BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::EnumTimeFormatsProc(LPSTR lpTimeFormatString)
 {
