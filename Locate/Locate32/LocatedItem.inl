@@ -187,7 +187,7 @@ inline BOOL CLocatedItem::ShouldUpdateType() const
 inline BOOL CLocatedItem::ShouldUpdateIcon() const 
 {
 	// do not depend on efEnableUpdating
-	return !(dwFlags&LITEM_ICONOK) && GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons;
+	return !(dwFlags&LITEM_ICONOK) && GetTrayIconWnd()->GetLocateDlgThread()->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons;
 }
 
 
@@ -215,7 +215,7 @@ inline BOOL CLocatedItem::ShouldUpdateAttributes() const
 
 inline BOOL CLocatedItem::ShouldUpdateParentIcon() const 
 {
-	return !(dwFlags&LITEM_PARENTICONOK) && GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons;
+	return !(dwFlags&LITEM_PARENTICONOK) && GetTrayIconWnd()->GetLocateDlgThread()->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons;
 }
 
 inline BOOL CLocatedItem::ShouldUpdateParentIcon2() const 

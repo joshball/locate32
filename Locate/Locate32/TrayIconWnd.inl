@@ -21,6 +21,11 @@ inline BYTE CTrayIconWnd::OnUpdate(BOOL bStopIfProcessing,LPWSTR pDatabases)
 	return OnUpdate(bStopIfProcessing,pDatabases,(int)nThreadPriority);
 }
 
+inline CLocateDlg* CTrayIconWnd::GetLocateDlg() const 
+{ 
+	return m_pLocateDlgThread==NULL?NULL:m_pLocateDlgThread->m_pLocate; 
+}
+
 
 ////////////////////////////////////////////////////////////
 // CTrayIconWnd::CUpdateStatusWnd

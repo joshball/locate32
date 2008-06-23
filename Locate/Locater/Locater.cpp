@@ -290,9 +290,7 @@ BOOL CLocater::LocatingProc()
 	{
 		LocaterDebugMessage("CLocater::LocatingProc() DBSTART");
 	
-		if (!m_aDatabases[i]->bEnable)
-			continue;
-		
+	
 		m_pCurrentDatabase=m_aDatabases[i];
 		m_wCurrentDatabaseID=m_pCurrentDatabase->wID;
 		m_wCurrentRootIndex=0;
@@ -814,6 +812,7 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR* szNames,DWORD nNames,
 				{
 					m_piNameLengths[m_dwNamesCount]=istrlen(szNames[i]);
 					m_ppNames[m_dwNamesCount]=alloccopy(szNames[i],m_piNameLengths[m_dwNamesCount]);
+					MakeLower(m_ppNames[m_dwNamesCount]);
 					m_dwNamesCount++;
 				}
 			}
@@ -835,6 +834,7 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR* szNames,DWORD nNames,
 			{
 				m_piExtLengths[i]=istrlen(szExtensions[i]);
 				m_ppExtensions[i]=alloccopy(szExtensions[i],m_piExtLengths[i]);
+				MakeLower(m_ppExtensions[i]);
 				if (m_dwFlags&LOCATE_LOGICALOPERATIONSINEXT && m_ppExtensions[i][0]=='-')
 				{
 					m_piExtLengths[i]--; // Do not count '-' character

@@ -129,7 +129,7 @@ CSettingsProperties::~CSettingsProperties()
 
 BOOL CSettingsProperties::LoadSettings()
 {
-	DebugMessage("CSettingsProperties::LoadSettings()");
+	SdDebugMessage("CSettingsProperties::LoadSettings()");
 	
 	CRegKey GenRegKey;
 	CRegKey2 LocRegKey;
@@ -446,7 +446,7 @@ BOOL CSettingsProperties::GetStartupPath(LPWSTR szPath)
 
 BOOL CSettingsProperties::SaveSettings()
 {
-	DebugMessage("CSettingsProperties::SaveSettings()");
+	SdDebugMessage("CSettingsProperties::SaveSettings()");
 	
 	CRegKey GenRegKey;
 	CRegKey2 LocRegKey;
@@ -1147,9 +1147,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL
 	};
 	Item* OtherExplorerProgram[]={
-			CreateFile(IDS_ADVSETOPENFOLDERWITH,ExternalCommandProc,0,
-				&m_pSettings->m_OpenFoldersWith,"sa_ownprogforfolders"),
-			NULL
+		CreateFile(IDS_ADVSETOPENFOLDERWITH,ExternalCommandProc,0,
+			&m_pSettings->m_OpenFoldersWith,"sa_ownprogforfolders"),
+		NULL
 		};
 	Item* ResultsListItems[]={
 		CreateCheckBox(IDS_ADVSETUSECUSTOMFONTINRESULTLIST,ResultListFontItems,DefaultCheckBoxProc,
@@ -1208,7 +1208,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 
 	if (GetSystemFeaturesFlag()&efWinVista)
 	{
-		ResultsListItems[21]=CreateCheckBox(IDS_ADVSETHEADERINALLVIEWMODES,NULL,DefaultCheckBoxProc,
+		ResultsListItems[sizeof(ResultsListItems)/sizeof(ResultsListItems[0])-2]=CreateCheckBox(IDS_ADVSETHEADERINALLVIEWMODES,NULL,DefaultCheckBoxProc,
 			CLocateDlg::efLVHeaderInAllViews,&m_pSettings->m_dwLocateDialogExtraFlags,"sa_headerinallmodes");
 	}
 			
@@ -1346,7 +1346,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	if (GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes")!=NULL)
 	{
 		// Needs at least Win2k
-		LocateDialogItems[8]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
+		LocateDialogItems[sizeof(LocateDialogItems)/sizeof(LocateDialogItems[0])-2]=CreateNumeric(IDS_ADVSETTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,100),&m_pSettings->m_nTransparency,"sa_transparency");
 	}
 
@@ -1382,7 +1382,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 	if (GetProcAddress(GetModuleHandle("user32.dll"),"SetLayeredWindowAttributes")!=NULL)
 	{
 		// Needs at least Win2k
-		StatusTooltipItems[8]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
+		StatusTooltipItems[sizeof(StatusTooltipItems)/sizeof(StatusTooltipItems[0])-2]=CreateNumeric(IDS_ADVSETTOOLTIPTRANSPARENCY,DefaultNumericProc,
 			MAKELONG(0,100),&m_pSettings->m_nToolTipTransparency,"sa_tip_trans");
 	}
 		
@@ -2017,13 +2017,13 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::SortingMethodProc(COpt
 
 BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::EnumTimeFormatsProc(LPSTR lpTimeFormatString)
 {
-	GetTrayIconWnd()->m_pSettings->m_pAdvanced->m_aBuffer.Add(alloccopy(lpTimeFormatString));
+	GetTrayIconWnd()->GetSettingsDialog()->m_pAdvanced->m_aBuffer.Add(alloccopy(lpTimeFormatString));
 	return TRUE;
 }
 
 BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::EnumDateFormatsProc(LPSTR lpDateFormatString)
 {
-	GetTrayIconWnd()->m_pSettings->m_pAdvanced->m_aBuffer.Add(alloccopy(lpDateFormatString));
+	GetTrayIconWnd()->GetSettingsDialog()->m_pAdvanced->m_aBuffer.Add(alloccopy(lpDateFormatString));
 	return TRUE;
 }
 
@@ -2323,6 +2323,7 @@ void CSettingsProperties::CLanguageSettingsPage::FindLanguages()
 // CDatabasesSettingsPage
 ////////////////////////////////////////
 
+
 BOOL CSettingsProperties::CDatabasesSettingsPage::OnInitDialog(HWND hwndFocus)
 {
 	CPropertyPage::OnInitDialog(hwndFocus);
@@ -2450,6 +2451,22 @@ void CSettingsProperties::CDatabasesSettingsPage::OnDestroy()
 		delete m_pList;
 		m_pList=NULL;
 	}
+
+	
+	// Terminate existing modification date reading threads
+	EnterCriticalSection(&m_csModDateThreads);
+	for (int i=0;i<m_ModDateThreads.GetSize();i++)
+	{
+		if (::TerminateThread(m_ModDateThreads[i]->hThread,1,TRUE))
+		{
+			SdDebugMessage1("SDLG: terminated date reading thread for %S",m_ModDateThreads[i]->sDatabaseFile);
+			delete m_ModDateThreads[i];
+		}
+	}
+	m_ModDateThreads.RemoveAll();
+	LeaveCriticalSection(&m_csModDateThreads);
+	DeleteCriticalSection(&m_csModDateThreads);
+
 	CPropertyPage::OnDestroy();
 }
 
@@ -3115,33 +3132,17 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 				pLvdi->item.pszText=g_szBuffer;
 				break;
 			case 3:
+				if (ReadModificationDate(pLvdi->item.iItem,pDatabase))
 				{
-					CDatabaseInfo* di=CDatabaseInfo::GetFromDatabase(pDatabase);
-					if (di!=NULL)
-					{
-						if (di->tCreationTime.m_time>0)
-						{
-							FILETIME ft;
-							SYSTEMTIME st=di->tCreationTime;
-							WORD wDate,wTime;
-							SystemTimeToFileTime(&st,&ft);
-							FileTimeToDosDateTime(&ft,&wDate,&wTime);
-							
-							LPWSTR szDate=GetLocateApp()->FormatDateAndTimeString(wDate,wTime);
-							g_szBuffer=alloccopyWtoA(szDate);
-							delete[] szDate;
-						}
-						delete di;
-					}
-
-					if (g_szBuffer==NULL)
-					{
-						g_szBuffer=new char[100];
-						LoadString(IDS_UNKNOWN,g_szBuffer,100);
-					}
+					if (g_szBuffer!=NULL)
+						delete[] g_szBuffer;
+					g_szBuffer=new char[100];
+					LoadString(IDS_UNKNOWN,g_szBuffer,100);
 					pLvdi->item.pszText=g_szBuffer;
-					break;
 				}
+				else
+					pLvdi->item.pszText=const_cast<LPSTR>(szEmpty);
+				break;
 			case 4:
 				g_szBuffer=new char[20];
 				_itoa_s(pDatabase->GetThreadId()+1,g_szBuffer,20,10);
@@ -3184,31 +3185,18 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 				pLvdi->item.pszText=g_szwBuffer;
 				break;
 			case 3:
+				if (ReadModificationDate(pLvdi->item.iItem,pDatabase))
 				{
-				
-					ModificationDateData* pData=new ModificationDateData;
-					pData->hListWnd=*m_pList;
-					pData->nItem=pLvdi->item.iItem;
-					pData->sDatabaseFile=pDatabase->GetArchiveName();
-					DWORD dwThreadID;
-					HANDLE m_hThread=CreateThread(NULL,0,ReadModificationData,(LPVOID)pData,0,&dwThreadID);
-					if (m_hThread!=NULL)
-					{
-						pLvdi->item.pszText=const_cast<LPWSTR>(szwEmpty);
-						CloseHandle(m_hThread);
-					}
-					else
-					{
-						delete pData;
-						if (g_szwBuffer!=NULL)
-							delete[] g_szwBuffer;
-
-						g_szwBuffer=new WCHAR[100];
-						LoadString(IDS_UNKNOWN,g_szwBuffer,100);
-						pLvdi->item.pszText=g_szwBuffer;
-					}
-					break;
+					if (g_szwBuffer!=NULL)
+						delete[] g_szwBuffer;
+					g_szwBuffer=new WCHAR[100];
+					LoadString(IDS_UNKNOWN,g_szwBuffer,100);
+					pLvdi->item.pszText=g_szwBuffer;
 				}
+				else
+					pLvdi->item.pszText=const_cast<LPWSTR>(szwEmpty);
+							
+				break;
 			case 4: // Thread 
 				if (g_szwBuffer!=NULL)
 					delete[] g_szwBuffer;
@@ -3223,45 +3211,94 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 	return 0;
 }
 	
-DWORD WINAPI CSettingsProperties::CDatabasesSettingsPage::ReadModificationData(LPVOID lpParameter)
+BOOL CSettingsProperties::CDatabasesSettingsPage::ReadModificationDate(int nItem,CDatabase* pDatabase)
+{
+	// Check if there is already a thread reading date
+	EnterCriticalSection(&m_csModDateThreads);
+	for (int i=0;i<m_ModDateThreads.GetSize();i++)
+	{
+		if (m_ModDateThreads[i]->nItem==nItem)
+			return TRUE;
+	}
+	LeaveCriticalSection(&m_csModDateThreads);
+
+
+
+	// Initiate thread for reading date
+	ModificationDateData* pData=new ModificationDateData;
+	pData->hListWnd=*m_pList;
+	pData->nItem=nItem;
+	pData->sDatabaseFile=pDatabase->GetArchiveName();
+	pData->pPage=this;
+	DWORD dwThreadID;
+	pData->hThread=CreateThread(NULL,0,ReadModificationDateProc,(LPVOID)pData,0,&dwThreadID);
+	if (pData->hThread!=NULL)
+	{
+		EnterCriticalSection(&m_csModDateThreads);
+		m_ModDateThreads.Add(pData);
+		LeaveCriticalSection(&m_csModDateThreads);
+		
+		return TRUE;
+	}
+
+
+
+	delete pData;
+	return FALSE;
+}
+
+DWORD WINAPI CSettingsProperties::CDatabasesSettingsPage::ReadModificationDateProc(LPVOID lpParameter)
 {
 	ModificationDateData* pData=(ModificationDateData*)lpParameter;
-	LPWSTR pText=NULL;
+	
+	SdDebugMessage2("SDLG: ReadModificationData for %S BEGIN nItem=%d",pData->sDatabaseFile,pData->nItem);
+
 
 	ASSERT(pData!=NULL);
 
-	CDatabaseInfo* di=CDatabaseInfo::GetFromFile(pData->sDatabaseFile);
-	if (di!=NULL)
+	CDatabaseInfo::GetFromFile(pData->sDatabaseFile,pData->di);
+	if (pData->di!=NULL)
 	{
-		if (di->tCreationTime.m_time>0)
+		if (pData->di->tCreationTime.m_time>0)
 		{
 			FILETIME ft;
-			SYSTEMTIME st=di->tCreationTime;
+			SYSTEMTIME st=pData->di->tCreationTime;
 			WORD wDate,wTime;
 			SystemTimeToFileTime(&st,&ft);
 			FileTimeToDosDateTime(&ft,&wDate,&wTime);
 			
-			pText=GetLocateApp()->FormatDateAndTimeString(wDate,wTime);
+			pData->pText=GetLocateApp()->FormatDateAndTimeString(wDate,wTime);
 		}
-		delete di;
+		delete pData->di;
+		pData->di=NULL;
 	}
 	
 	
-	if (pText==NULL)
+	if (pData->pText==NULL)
 	{
-		pText=new WCHAR[100];
-		LoadString(IDS_UNKNOWN,pText,100);
+		pData->pText=new WCHAR[100];
+		LoadString(IDS_UNKNOWN,pData->pText,100);
 	}
 
 	
 	LVITEMW li;
 	li.mask=LVIF_TEXT;
-	li.pszText=pText;
+	li.pszText=pData->pText;
 	li.iItem=pData->nItem;
 	li.iSubItem=3;
 	::SendMessage(pData->hListWnd,LVM_SETITEMTEXTW,li.iItem,(LPARAM)&li);
 
-	delete[] pText;
+	
+	CDatabasesSettingsPage* pPage=pData->pPage;
+
+	EnterCriticalSection(&pPage->m_csModDateThreads);
+	int nIndex=pPage->m_ModDateThreads.Find(pData);
+	if (nIndex!=-1)
+		pPage->m_ModDateThreads.RemoveAt(nIndex);
+	LeaveCriticalSection(&pData->pPage->m_csModDateThreads);
+	
+	SdDebugMessage1("SDLG: ReadModificationData for %S END",pData->sDatabaseFile);
+
 	delete pData;
 		
 	return 0;
@@ -3560,7 +3597,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	// Setting local drives
 	if (m_pDatabase->GetRoots()!=NULL)
 	{
-		DebugMessage("DBDIALOG: CUSTOM DRIVES");
+		SdDebugMessage("DBDIALOG: CUSTOM DRIVES");
 
 		CheckDlgButton(IDC_CUSTOMDRIVES,1);
 		
@@ -3578,18 +3615,18 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 				{
 					if (!FileSystem::IsDirectory(pPtr))
 					{
-						DebugFormatMessage(L"DBDIALOG: adding computer %s",pPtr);
+						SdDebugMessage1(L"DBDIALOG: adding computer %s",pPtr);
 						AddComputerToList(pPtr);
 					}
 					else
 					{
-						DebugFormatMessage(L"DBDIALOG: adding UNC directory %s",pPtr);
+						SdDebugMessage1(L"DBDIALOG: adding UNC directory %s",pPtr);
 						AddDirectoryToList(pPtr,dwLength);
 					}
 				}			
 				else
 				{
-					DebugFormatMessage(L"DBDIALOG: adding computer %s",pPtr);
+					SdDebugMessage1(L"DBDIALOG: adding computer %s",pPtr);
 					AddDirectoryToList(pPtr,dwLength);
 				}
 			}
@@ -3601,17 +3638,17 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 				UINT uRet=FileSystem::GetDriveType(root);
 				if (uRet==DRIVE_UNKNOWN || uRet==DRIVE_NO_ROOT_DIR)
 				{
-					DebugFormatMessage(L"DBDIALOG: adding drive %s",pPtr);
+					SdDebugMessage1(L"DBDIALOG: adding drive %s",pPtr);
 					AddDriveToList(root); // Unavailable
 				}
 				else
 				{
-					DebugFormatMessage(L"DBDIALOG: drive %s is not valid, ignored",pPtr);
+					SdDebugMessage1(L"DBDIALOG: drive %s is not valid, ignored",pPtr);
 				}
 			}
 			else
 			{
-				DebugFormatMessage(L"DBDIALOG: root %s too short and therefore ignored",pPtr);
+				SdDebugMessage1(L"DBDIALOG: root %s too short and therefore ignored",pPtr);
 			}
 
 			pPtr+=dwLength+1;
@@ -3619,7 +3656,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnInitDialog(
 	}
 	else
 	{
-		DebugMessage("DBDIALOG: LOCAL DRIVES");
+		SdDebugMessage("DBDIALOG: LOCAL DRIVES");
 
 		CheckDlgButton(IDC_LOCALDRIVES,1);
 		EnableDlgItem(IDC_FOLDERS,FALSE);
@@ -3961,13 +3998,13 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 			{
 				char error[1000];
 				exp.GetErrorMessage(error,1000);
-				DebugFormatMessage("CDatabaseDialog::OnAddFolder() throwed OLE exception: %s",error);
+				SdDebugMessage1("CDatabaseDialog::OnAddFolder() throwed OLE exception: %s",error);
 				ShowErrorMessage(IDS_ERRORCANNOTADDITEM,IDS_ERROR,MB_ICONERROR|MB_OK);
 			}
 	#endif
 			catch (...)
 			{
-				DebugMessage("CDatabaseDialog::OnAddFolder() throwed unknown exception");
+				SdDebugMessage("CDatabaseDialog::OnAddFolder() throwed unknown exception");
 
 				ShowErrorMessage(IDS_ERRORCANNOTADDITEM,IDS_ERROR,MB_ICONERROR|MB_OK);
 			}
@@ -4388,7 +4425,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 		int nIndex=FirstCharIndex(szPath,L'\\');
 		if (nIndex==-1 || szPath[nIndex+1]!=L'\\')
 		{
-			DebugMessage("CDatabaseDialog::AddDirectoryToList: not valid path %s, ignoring");
+			SdDebugMessage("CDatabaseDialog::AddDirectoryToList: not valid path %s, ignoring");
 			return -1;
 		}
 		
@@ -6976,7 +7013,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnApply()
 {
 	CPropertyPage::OnApply();
 	
-	DebugMessage("CKeyboardShortcutsPage::OnApply() BEGIN");
+	SdDebugMessage("CKeyboardShortcutsPage::OnApply() BEGIN");
 
 	if (m_pCurrentShortcut!=NULL)
 		SaveFieldsForShortcut(m_pCurrentShortcut);
@@ -6998,14 +7035,14 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnApply()
 		}
 	}
 
-	DebugMessage("CKeyboardShortcutsPage::OnApply() END");
+	SdDebugMessage("CKeyboardShortcutsPage::OnApply() END");
 	
 	return TRUE;
 }
 
 void CSettingsProperties::CKeyboardShortcutsPage::OnDestroy()
 {
-	DebugMessage("CKeyboardShortcutsPage::OnDestroy() BEGIN");
+	SdDebugMessage("CKeyboardShortcutsPage::OnDestroy() BEGIN");
 
 	CPropertyPage::OnDestroy();
 
@@ -7030,7 +7067,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnDestroy()
 		m_pWhenPressedList=NULL;
 	}
 
-	DebugMessage("CKeyboardShortcutsPage::OnDestroy() END");
+	SdDebugMessage("CKeyboardShortcutsPage::OnDestroy() END");
 }
 		
 void CSettingsProperties::CKeyboardShortcutsPage::OnCancel()

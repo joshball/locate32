@@ -671,7 +671,7 @@ void CLocatedItem::CheckIfDeleted()
 void CLocatedItem::UpdateIcon()
 {
 	ItemDebugMessage("CLocatedItem::UpdateIcon BEGIN");
-	if (GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
+	if (GetTrayIconWnd()->GetLocateDlg()->GetFlags()&CLocateDlg::fgLVShowIcons)
 	{
 		SHFILEINFOW fi;
 		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating) ||
@@ -718,7 +718,7 @@ void CLocatedItem::UpdateParentIcon()
 {
 	ItemDebugMessage("CLocatedItem::UpdateParentIcon BEGIN");
 	LPWSTR szParent=GetParent();
-	if (GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->GetFlags()&CLocateDlg::fgLVShowIcons)
+	if (GetTrayIconWnd()->GetLocateDlg()->GetFlags()&CLocateDlg::fgLVShowIcons)
 	{
 		LPWSTR pParent;
 		if (szParent[1]==L':' && szParent[2]==L'\0')

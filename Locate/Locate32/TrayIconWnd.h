@@ -133,7 +133,7 @@ public:
 	BOOL TurnOnShortcuts();
 	BOOL TurnOffShortcuts();
 
-
+	void SetLocateDlgThreadToNull();
 
 	BYTE OnAbout();
 	BYTE OnSettings();
@@ -149,25 +149,36 @@ public:
 
 	static DWORD WINAPI KillUpdaterProc(LPVOID lpParameter);
     
+
 public:
-	
-public:
+	CLocateDlg* GetLocateDlg() const;
+	CLocateDlgThread* GetLocateDlgThread() const { return m_pLocateDlgThread; }
+	POSITION GetSchedules() const { return m_Schedules.GetHeadPosition(); }
+	BOOL IsUpdateAnimationRunning() const { return m_pUpdateAnimIcons!=NULL; }
+	CSettingsProperties* GetSettingsDialog() const { return m_pSettings; }
+
+
+	CUpdateStatusWnd* m_pUpdateStatusWnd;
+	CCpuUsage* m_pCpuUsage;
+	CListFP <CSchedule*> m_Schedules;
+
+protected:
 	CMenu m_Menu;
 	CAboutDlg* m_pAbout;
 	CSettingsProperties* m_pSettings;
 	
 
+	
 	CLocateDlgThread* m_pLocateDlgThread;
-	CUpdateStatusWnd* m_pUpdateStatusWnd;
+	CRITICAL_SECTION m_csLocateThread;
+	
 	
 	HICON m_hAppIcon;
 	HICON* m_pUpdateAnimIcons;
 	WORD m_nCurUpdateAnimBitmap;
-	CRITICAL_SECTION m_csAnimBitmaps,m_csLocateThread;
+	CRITICAL_SECTION m_csAnimBitmaps;
 	
 
-	CListFP <CSchedule*> m_Schedules;
-	CCpuUsage* m_pCpuUsage;
 
 	// Keyboard shortcuts
 	CArrayFP<CShortcut*> m_aShortcuts;
@@ -175,11 +186,11 @@ public:
 
 	
 	friend inline CLocateDlg* GetLocateWnd();
-
+	
 };
 
 
-#include "TrayIconWnd.inl"
+
 
 
 #endif

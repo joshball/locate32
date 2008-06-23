@@ -974,8 +974,8 @@ BOOL CSelectDatabasesDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 
 void CSelectDatabasesDlg::OnOK()
 {
-	DebugFormatMessage("CSelectDatabasesDlg::OnOK() BEGIN, Update: %d, bReturnNotSelected: %d",
-		m_bFlags&flagSetUpdateState?TRUE:FALSE,m_bFlags&flagReturnNotSelected?TRUE:FALSE);
+	//DebugFormatMessage("CSelectDatabasesDlg::OnOK() BEGIN, Update: %d, bReturnNotSelected: %d",
+	//	m_bFlags&flagSetUpdateState?TRUE:FALSE,m_bFlags&flagReturnNotSelected?TRUE:FALSE);
 
 	// Saves last set
 	if (!(m_bFlags&flagDisablePresets))
@@ -1027,7 +1027,7 @@ void CSelectDatabasesDlg::OnOK()
 
 			if (m_bFlags&flagReturnNotSelected || IsItemEnabled(pDatabase))
 			{
-				DebugFormatMessage("Database %s is selected",pDatabase->GetName());
+				//DebugFormatMessage("Database %S is selected",pDatabase->GetName());
 
 				m_rSelectedDatabases.Add(pDatabase);
 				m_List.SetItemData(nItem,NULL);
@@ -1043,26 +1043,26 @@ void CSelectDatabasesDlg::OnOK()
 	}
 
 	int nCurSel=m_PresetCombo.GetCurSel();
-	DebugFormatMessage("Selection: %d",nCurSel);
+	//DebugFormatMessage("Selection: %d",nCurSel);
 	m_bFlags&=~flagSelectedMask;
 	switch (nCurSel)
 	{
 	case GLOBAL_PRESET:
 		m_bFlags|=flagGlobalIsSelected;
-		DebugMessage("global selected");
+		//DebugMessage("preset chosen: global selected");
 		break;
 	case CUSTOM_PRESET:
         m_bFlags|=flagCustomIsSelected;
-		DebugMessage("preset");
+		//DebugMessage("preset chosen: preset");
 		break;
 	case LATEST_PRESET:
 		m_bFlags|=flagLasestIsSelected;
-		DebugMessage("latest");
+		//DebugMessage("preset chosen: latest");
 		break;
 	}
 	EndDialog(1);
 
-	DebugMessage("CSelectDatabasesDlg::OnOK() END");
+	//DebugMessage("CSelectDatabasesDlg::OnOK() END");
 }
 
 void CSelectDatabasesDlg::OnDeletePreset()

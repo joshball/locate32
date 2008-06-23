@@ -76,7 +76,7 @@ public:
 	CLocater(const PDATABASE* pDatabases,int nDatabases);
 	CLocater(const CDatabase* pDatabases,int nDatabases);
 	CLocater(const CArray<PDATABASE>& aDatabases);
-	CLocater(const CArray<CDatabase>& aDatabases);
+	
 
 	~CLocater();
 	
@@ -84,8 +84,7 @@ public:
 	void SetDatabases(const PDATABASE* pDatabases,int nDatabases);
 	void SetDatabases(const CDatabase* pDatabases,int nDatabases);
 	void SetDatabases(const CArray<PDATABASE>& aDatabases);
-	void SetDatabases(const CArray<CDatabase>& aDatabases);
-
+	
 
 protected:
 	// Thread procs
@@ -272,7 +271,7 @@ private:
 	//  Needed information from CDatabase
 	struct DBArchive {
 		DBArchive(LPCWSTR szName,CDatabase::ArchiveType nArchiveType,
-			LPCWSTR szArchive,WORD wID,BOOL bEnable,LPCWSTR szRootMaps);
+			LPCWSTR szArchive,WORD wID,LPCWSTR szRootMaps);
 		~DBArchive();
 		
 		LPWSTR szName;
@@ -283,7 +282,6 @@ private:
 
 		WORD wID;
 
-		BYTE bEnable:1;
 		BYTE bUnicode:1;
 
 		LPCWSTR szRootMaps;

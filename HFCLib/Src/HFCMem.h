@@ -262,7 +262,7 @@ template<class TYPE>
 class CAutoPtr
 {
 public:
-	CAutoPtr(TYPE* data=NULL) { m_data=data;  m_bFree=bFree;}
+	CAutoPtr(TYPE* data=NULL,BOOL bFree=TRUE) { m_data=data;  m_bFree=bFree;}
 	CAutoPtr(CAutoPtr<TYPE>& another) { m_bFree=another.m_bFree; m_data=another.UnAttach(); }
 	~CAutoPtr();
 

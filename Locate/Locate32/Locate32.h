@@ -36,7 +36,7 @@ extern LPWSTR g_szwBuffer;
 
 // This macro is defined to ensure that g_szBuffer is only used in 
 // LocateDlg thread, not simultaneously by several threaad. 
-#define ISDLGTHREADOK		{ASSERT(GetCurrentThreadId()==GetTrayIconWnd()->m_pLocateDlgThread->GetThreadId()); }
+#define ISDLGTHREADOK		{ASSERT(GetCurrentThreadId()==GetTrayIconWnd()->GetLocateDlgThread()->GetThreadId()); }
 
 
 // Wait times for thread safe system
@@ -108,6 +108,7 @@ extern LPWSTR g_szwBuffer;
 #include "DatabaseInfos.h"
 #include "AboutDlg.h"
 
+#include "TrayIconWnd.inl"
 #include "shortcuts.inl"
 #include "LocatedItem.inl"
 #include "LocateDlg_Tabs.inl"

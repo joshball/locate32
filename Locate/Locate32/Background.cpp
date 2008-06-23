@@ -49,10 +49,8 @@ inline CCheckFileNotificationsThread::~CCheckFileNotificationsThread()
 BOOL CCheckFileNotificationsThread::Start()
 {
 	if (m_hThread!=NULL)
-	{
 		return FALSE;
-	}
-
+	
 	DWORD dwThreadID;
 	m_hThread=CreateThread(NULL,0,NotificationThreadProc,this,CREATE_SUSPENDED,&dwThreadID);
 	DebugOpenHandle(dhtThread,m_hThread,"CheckFileNotifications");
@@ -99,7 +97,7 @@ BOOL CCheckFileNotificationsThread::Stop()
 		InterlockedExchange(&m_lFlags,m_lFlags|fwStopWhenPossible);
 		
 		// First wait that initialization is ended
-		if (WaitForSingleObject(m_hStopEvent,2000)!=WAIT_OBJECT_0)
+		if (WaitForSingleObject(m_hStopEvent,500)!=WAIT_OBJECT_0)
 			break;
 		
 		// Wait that ending processes are handled
@@ -120,7 +118,7 @@ BOOL CCheckFileNotificationsThread::Stop()
 		
 		
 		// Wait that ending processes are handled
-		if (GetCurrentThreadId()==GetTrayIconWnd()->m_pLocateDlgThread->GetThreadId())
+		if (GetCurrentThreadId()==GetTrayIconWnd()->GetLocateDlgThread()->GetThreadId())
 		{
 			// This Stop() is called from CLocateDlg, it is possible
 			// that RunninProcNew sens messages to this window.
@@ -128,7 +126,7 @@ BOOL CCheckFileNotificationsThread::Stop()
 			for (int i=0;i<40;i++)
 			{
 				PostQuitMessage(0);
-				GetTrayIconWnd()->m_pLocateDlgThread->ModalLoop();
+				GetTrayIconWnd()->GetLocateDlgThread()->ModalLoop();
 				if (WaitForSingleObject(hThread,50)!=WAIT_TIMEOUT)
 					break;
 			}
@@ -312,20 +310,13 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 {
 	FnDebugMessage("FN: RunningProcNew started");
 	
+	// Delete this when this functions ends
+	CAutoPtr<CCheckFileNotificationsThread> thisPtr=this;
+
 	// Creating handles
-	CreateHandlesNew();
-	
-	if (m_lFlags&fwStopWhenPossible)
-	{
-		SetEvent(m_hStopEvent);
-
-		InterlockedExchange(&m_lState,sStopping);
-	
-		delete this;
+	if (!CreateHandlesNew())
 		return FALSE;
-	}
-
-
+	
 	
 	DWORD dwOut;
 
@@ -479,13 +470,8 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 
 
 	InterlockedExchange(&m_lState,sStopping);
-			
 
-	// Delete this structure
-	delete this;
-	
-	
-	//FnDebugMessage("FN RunningProcNew ends");
+	FnDebugMessage("FN RunningProcNew ends");
 	return FALSE;
 }
 
@@ -493,21 +479,14 @@ BOOL CCheckFileNotificationsThread::RunningProcNew()
 
 BOOL CCheckFileNotificationsThread::RunningProcOld()
 {
-	//BkgDebugNumMessage("CCheckFileNotificationsThread::RunningProcOld() BEGIN, thread is 0x%X",GetCurrentThreadId());
-	CreateHandlesOld();
+	// Delete this when this functions ends
+	CAutoPtr<CCheckFileNotificationsThread> thisPtr=this;
 
-	if (m_lFlags&fwStopWhenPossible)
-	{
-		SetEvent(m_hStopEvent);
-		
-		InterlockedExchange(&m_lState,sStopping);
-	
-		delete this;
+	if (!CreateHandlesOld())
 		return FALSE;
-	}
 
-
-
+	
+	
 	for (;;)
 	{
 		FnDebugMessage("FN goes to sleep");
@@ -575,8 +554,6 @@ BOOL CCheckFileNotificationsThread::RunningProcOld()
 	InterlockedExchange(&m_lState,sStopping);
 			
 
-	// Delete this structure
-	delete this;
 	
 	
 	//BkgDebugMessage("CCheckFileNotificationsThread::RunningProcOld() END");
@@ -681,11 +658,23 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 
 	FnDebugMessage("FN: creating handles");
 
-	
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	ASSERT(pLocateDlg!=NULL);
+
 	// Loads roods from databases so that we know what to listen
 	CArrayFAP<LPWSTR> aRoots;
-	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases(),TRUE);
-	
+	const CArray<PDATABASE>& aAllDatabases=GetLocateApp()->GetDatabases();
+	CArray<PDATABASE> aUsedDatabases;
+	for (int i=0;i<aAllDatabases.GetSize();i++)
+	{
+		if (pLocateDlg->IsDatabaseUsedInSearch(aAllDatabases[i]->GetID()))
+			aUsedDatabases.Add(aAllDatabases[i]);
+	}
+	if (aUsedDatabases.GetSize()==0)
+		return FALSE;
+	CDatabaseInfo::GetRootsFromDatabases(aRoots,aUsedDatabases);
+	if (aRoots.GetSize()==0)
+		return FALSE;
 	
 	
 	// Create arrays for event handles and data structures
@@ -699,20 +688,19 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 	// Allocating arraysn, note that the size of the list is not 
 	// necessary aRoots.GetSize()+2 if CreateFileW or m_pReadDirectoryChangesW
 	// return error
-	m_pEventHandles=new HANDLE[aRoots.GetSize()+2];
-	m_pDirDatas=new DIRCHANGEDATA*[aRoots.GetSize()+2];
-	
+	m_pEventHandles=new HANDLE[aRoots.GetSize()+1];
 	ASSERT(m_pEventHandles!=NULL);
+	
+	m_pDirDatas=new DIRCHANGEDATA*[aRoots.GetSize()+1];
 	ASSERT(m_pDirDatas!=NULL);
-
+	
+	
 
 	// First event in events array is stop event and first pointer to 
 	// DIRCHANGEDATA structure is NULL, so that each element in m_pEventHandles (with index >0) 
 	// corresponds to element in m_pChangeDatas with the same index
 	m_pEventHandles[0]=m_hStopEvent;
 	m_pDirDatas[0]=NULL;
-
-
 
 
 
@@ -726,6 +714,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 		{
 			// Notify to Stop() that we are going to stop what 
 			// we are doing
+			InterlockedExchange(&m_lState,sStopping);
 			SetEvent(m_hStopEvent);
 			break;
 		}
@@ -789,6 +778,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 		{
 			// Notify to Stop() that we are going to stop what 
 			// we are doing
+			InterlockedExchange(&m_lState,sStopping);
 			SetEvent(m_hStopEvent);
 			break;
 		}
@@ -820,6 +810,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 			// Notify to Stop() that we are going to stop what 
 			// we are doing
 			SetEvent(m_hStopEvent);
+			InterlockedExchange(&m_lState,sStopping);
 			break;
 		}
 
@@ -854,10 +845,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesNew()
 	if (pDirData!=NULL)
 		delete pDirData;
 
-	// Terminate lists
-	m_pEventHandles[m_nHandles]=NULL;
-	m_pDirDatas[m_nHandles]=NULL;
-
+	
 
 
 	FnDebugMessage("FN handles created");
@@ -872,12 +860,25 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 	FnDebugMessage("FN: creating handles (old method)");
 	
 
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	ASSERT(pLocateDlg!=NULL);
+	
 	// Loads roods from databases so that we know what to listen
 	CArrayFAP<LPWSTR> aRoots;
-	CDatabaseInfo::GetRootsFromDatabases(aRoots,GetLocateApp()->GetDatabases());
+	const CArray<PDATABASE>& aAllDatabases=GetLocateApp()->GetDatabases();
+	CArray<PDATABASE> aUsedDatabases;
+	for (int i=0;i<aAllDatabases.GetSize();i++)
+	{
+		if (pLocateDlg->IsDatabaseUsedInSearch(aAllDatabases[i]->GetID()))
+			aUsedDatabases.Add(aAllDatabases[i]);
+	}
+	if (aUsedDatabases.GetSize()==0)
+		return FALSE;
+	CDatabaseInfo::GetRootsFromDatabases(aRoots,aUsedDatabases);
+	if (aRoots.GetSize()==0)
+		return FALSE;
 	
-	
-	
+
 	// Create arrays for event handles and data structures
 	//
 	// The first handle in m_pEventHandles is stop event, the rest are change notification 
@@ -888,11 +889,12 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 	// Allocating arraysn, note that the size of the list is not 
 	// necessary aRoots.GetSize()+2 if FindFirstChangeNotification returns error
 	m_pEventHandles=new HANDLE[aRoots.GetSize()+1];
-	m_pRoots=new LPWSTR[aRoots.GetSize()+1];
-	
 	ASSERT(m_pEventHandles!=NULL);
+	
+	m_pRoots=new LPWSTR[aRoots.GetSize()+1];
 	ASSERT(m_pRoots!=NULL);
-
+	
+	
 	// First handle in event handles array is stop handle and 
 	// first pointer to root directory is NULL,
 	// so that each element in m_pEventHandles (with index >0) 
@@ -911,6 +913,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 			// Notify to Stop() that we are going to stop what 
 			// we are doing
 			SetEvent(m_hStopEvent);
+			InterlockedExchange(&m_lState,sStopping);
 			break;
 		}
 
@@ -964,10 +967,7 @@ BOOL CCheckFileNotificationsThread::CreateHandlesOld()
 	}
 
 
-	// Terminate lists
-	m_pEventHandles[m_nHandles]=NULL;
-	m_pDirDatas[m_nHandles]=NULL;
-
+	
 
 	FnDebugMessage("FN handles created");
 	return TRUE;
@@ -978,17 +978,16 @@ BOOL CCheckFileNotificationsThread::DestroyHandles()
 	FnDebugMessage("FN: starting to destroy handles");
 	
 	// Various tests
-	ASSERT(m_pDirDatas[0]==NULL);
 	ASSERT(m_lState==sStopping || m_lState==sTerminated);
 
-	
 	if (m_pEventHandles==NULL)
 		return TRUE;
 
-	
-
 	if (m_pReadDirectoryChangesW!=NULL)
 	{
+		ASSERT(m_pDirDatas[0]==NULL);
+	
+
 		// ReadDirectoryChangesW used, deleting DIRCHANGEDATA structures
 		for (UINT n=1;n<m_nHandles;n++)
 		{
@@ -1157,13 +1156,16 @@ void CBackgroundUpdater::IgnoreItemsAndGoToSleep()
 
 	ISDLGTHREADOK
 
+	BuDebugMessage("BU: IgnoreItemsAndGoToSleep, executing modal loop");
 
 	PostQuitMessage(0);
-	GetTrayIconWnd()->m_pLocateDlgThread->ModalLoop();
+	GetTrayIconWnd()->GetLocateDlgThread()->ModalLoop();
 		
 	while (!m_lIsWaiting)
 		Sleep(20);
-	
+
+	BuDebugMessage("BU: modal loop out");
+
 	EnterCriticalSection(&m_csUpdateList);
 	m_aUpdateList.RemoveAll();
 	LeaveCriticalSection(&m_csUpdateList);
@@ -1173,7 +1175,7 @@ void CBackgroundUpdater::IgnoreItemsAndGoToSleep()
 
 inline BOOL CBackgroundUpdater::RunningProc()
 {
-	BuDebugMessage1("CBackgroundUpdater::RunningProc() BEGIN, running thread 0x%X",GetCurrentThreadId());
+	BuDebugMessage1("BU RunningProc() BEGIN, running thread 0x%X",GetCurrentThreadId());
 
 	// CLocatedItem::LoadThumbnail needs this
 	CoInitialize(NULL);
@@ -1182,14 +1184,13 @@ inline BOOL CBackgroundUpdater::RunningProc()
 	{
 		InterlockedExchange(&m_lIsWaiting,TRUE);
 
-		BuDebugMessage("CBackgroundUpdater::RunningProc(): Going to sleep.");
+		BuDebugMessage("BU: Going to sleep.");
 		
 		DWORD nRet=WaitForMultipleObjects(2,m_phEvents,FALSE,INFINITE);
 		InterlockedExchange(&m_lIsWaiting,FALSE);
 		InterlockedExchange(&m_lIgnoreItemsAndGoToSleep,FALSE);
 		
-		BuDebugMessage1("CBackgroundUpdater::RunningProc(): Woked, nRet=%d.",nRet);
-
+		BuDebugMessage2("BU: nRet=%d, %d item to be updated",nRet,m_aUpdateList.GetSize());
 
 		if (nRet==WAIT_TIMEOUT)
 			continue;
@@ -1197,9 +1198,6 @@ inline BOOL CBackgroundUpdater::RunningProc()
 			break;
 		else if (nRet==WAIT_OBJECT_0+1)
 		{
-			BuDebugMessage1("CBackgroundUpdater::RunningProc(): Waked. %d item to be updated",m_aUpdateList.GetSize());
-
-
 			// Resolve list style, list control size and icon size
 			// Do this everytime because size of dialog or list style may be changed or 
 			RECT rcViewRect;
@@ -1247,7 +1245,7 @@ inline BOOL CBackgroundUpdater::RunningProc()
 							{
 								BOOL bReDraw=FALSE;
 								
-								BuDebugMessage1("Refreshing %s",pItem->m_pItem->GetName());
+								BuDebugMessage1("BU: Refreshing %s (1)",pItem->m_pItem->GetName());
 								pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
 
 								if (bReDraw)
@@ -1268,7 +1266,7 @@ inline BOOL CBackgroundUpdater::RunningProc()
 							{
 								BOOL bReDraw=FALSE;
 								
-								BuDebugMessage1("Refreshing %S",pItem->m_pItem->GetName());
+								BuDebugMessage1("BU: Refreshing %S (2)",pItem->m_pItem->GetName());
 								pItem->m_pItem->ReFresh(pItem->m_aDetails,bReDraw); // Item is visible
 
 								if (bReDraw)
@@ -1282,15 +1280,12 @@ inline BOOL CBackgroundUpdater::RunningProc()
 				
 			}
 			ResetEvent(m_phEvents[1]);
-			BuDebugMessage("CBackgroundUpdater::RunningProc(): I am tired");
 			
 		}
-		else 
-			BuDebugMessage2("CBackgroundUpdater::RunningProc(): nRet not handled, nRet:0x%X, events=2, GetLastError()=0x%X",nRet,GetLastError());
 	}
 	delete this;
 	
-	BuDebugMessage("CBackgroundUpdater::RunningProc() END");
+	BuDebugMessage("BU: RunningProc() END");
 
 	CoUninitialize();
 	return TRUE;

@@ -4361,7 +4361,7 @@ void CStringW::FormatEx(LPCWSTR lpszFormat,...)
 	m_nDataLen=vswprintfex(temp,STR_LOADSTRINGBUFLEN,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
-		if (m_pData==NULL)
+		if (m_pData!=NULL)
 			delete[] m_pData;
 		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
@@ -4434,7 +4434,7 @@ void CStringW::FormatEx(UINT nFormatID,...)
 	m_nDataLen=vswprintfex(temp,STR_LOADSTRINGBUFLEN,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
-		if (m_pData==NULL)
+		if (m_pData!=NULL)
 			delete[] m_pData;
 		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
@@ -4506,7 +4506,7 @@ void CStringW::FormatExC(UINT nFormatID,...)
 	m_nDataLen=vswprintfex(temp,STR_LOADSTRINGBUFLEN,lpszFormat,argList);
 	if (m_nDataLen>=m_nAllocLen || m_nDataLen<m_nAllocLen-10)
 	{
-		if (m_pData==NULL)
+		if (m_pData!=NULL)
 			delete[] m_pData;
 		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)

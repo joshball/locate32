@@ -4,6 +4,17 @@
 #include <HFCLib.h>
 #include "Locatedb.h"
 
+CDatabaseInfo::~CDatabaseInfo()
+{
+	if (m_pFile!=NULL)
+	{
+		CancelIo(*m_pFile);
+		delete m_pFile;
+	}
+	if (m_szBuffer!=NULL)
+		delete[] m_szBuffer;
+
+}
 
 BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchivePath,LPCWSTR szRootMaps)
 {
@@ -11,95 +22,94 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 	sDescription.Empty();
 	aRootFolders.RemoveAll();
 
-	BYTE* szBuffer=NULL;
 	BOOL bRet=TRUE;
 
-	CFile* dbFile=NULL;
 	
 	try
 	{
 		switch (nArchiveType)
 		{
 		case CDatabase::archiveFile:
-			dbFile=new CFile(szArchivePath,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
+			m_pFile=new CFile(TRUE);
+			m_pFile->Open(szArchivePath,CFile::defRead|CFile::otherErrorWhenEOF);
 			break;
 		default:
 			throw CFileException(CFileException::notImplemented,-1,szArchivePath);
 		}
 			
-		szBuffer=new BYTE[10];
+		m_szBuffer=new BYTE[10];
 		
-		dwFileSize=dbFile->GetLength();
+		dwFileSize=m_pFile->GetLength();
 		
-		dbFile->Read(szBuffer,9);
+		m_pFile->Read(m_szBuffer,9);
 
-		if (szBuffer[0]!='L' || szBuffer[1]!='O' || 
-			szBuffer[2]!='C' || szBuffer[3]!='A' || 
-			szBuffer[4]!='T' || szBuffer[5]!='E' || 
-			szBuffer[6]!='D' || szBuffer[7]!='B')
+		if (m_szBuffer[0]!='L' || m_szBuffer[1]!='O' || 
+			m_szBuffer[2]!='C' || m_szBuffer[3]!='A' || 
+			m_szBuffer[4]!='T' || m_szBuffer[5]!='E' || 
+			m_szBuffer[6]!='D' || m_szBuffer[7]!='B')
 		{
 			throw CFileException(CFileException::invalidFormat,-1,szArchivePath);
 		}
 	
-		if (szBuffer[8]>='0') // New database format
+		if (m_szBuffer[8]>='0') // New database format
 		{
 			DWORD dwTemp;
-			bVersion=(szBuffer[8]-'0')*10;
+			bVersion=(m_szBuffer[8]-'0')*10;
 			
-			dbFile->Read(szBuffer,2);
-			bVersion+=(szBuffer[0]-'0');
-			bLongFilenames=szBuffer[1]&0x1;
-			if (szBuffer[1]&0x20)
+			m_pFile->Read(m_szBuffer,2);
+			bVersion+=(m_szBuffer[0]-'0');
+			bLongFilenames=m_szBuffer[1]&0x1;
+			if (m_szBuffer[1]&0x20)
 				cCharset=Unicode;
-			else if (szBuffer[1]&0x10)
+			else if (m_szBuffer[1]&0x10)
 				cCharset=Ansi;
 			else
 				cCharset=OEM;
-			delete[] szBuffer;
-			szBuffer=NULL;
+			delete[] m_szBuffer;
+			m_szBuffer=NULL;
 
 
 			// Reading header size
-			dbFile->Read(dwTemp);
+			m_pFile->Read(dwTemp);
 
 			if (cCharset==Unicode)
 			{
 				// Reading creator and description
-				dbFile->Read(sCreator);
-				dbFile->Read(sDescription);
-				dbFile->Read(sExtra1);
-				dbFile->Read(sExtra2);
+				m_pFile->Read(sCreator);
+				m_pFile->Read(sDescription);
+				m_pFile->Read(sExtra1);
+				m_pFile->Read(sExtra2);
 			}
 			else
 			{
 				CString strA;
 				// Reading creator and description
-				dbFile->Read(strA);
+				m_pFile->Read(strA);
 				sCreator=strA;
 
-				dbFile->Read(strA);
+				m_pFile->Read(strA);
 				sDescription=strA;
 
 				// Reading extra data, for future use
-				dbFile->Read(strA);
+				m_pFile->Read(strA);
 				sExtra1=strA;
-				dbFile->Read(strA);
+				m_pFile->Read(strA);
 				sExtra2=strA;
 			}
 
 			
 
 			// Reading time
-			dbFile->Read(dwTemp);
+			m_pFile->Read(dwTemp);
 			tCreationTime=CTime(LOWORD(dwTemp),HIWORD(dwTemp));
 
 			// Reading number of files and directories
-			dbFile->Read(dwNumberOfFiles);
-			dbFile->Read(dwNumberOfDirectories);
+			m_pFile->Read(dwNumberOfFiles);
+			m_pFile->Read(dwNumberOfDirectories);
 
 			// Reading drive/directory information
 			DWORD dwBlockSize;
-			dbFile->Read(dwBlockSize);
+			m_pFile->Read(dwBlockSize);
 			while (dwBlockSize>0)
 			{
 				CRoot* pRoot=new CRoot;
@@ -107,17 +117,17 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 				DWORD dwSeekLength=dwBlockSize-1-4-4-4;
 
 				// Reading type and path
-				dbFile->Read((BYTE*)&pRoot->rtType,1);
+				m_pFile->Read((BYTE*)&pRoot->rtType,1);
 				
 				if (cCharset==Unicode)
 				{
-					dbFile->Read(pRoot->sPath);
+					m_pFile->Read(pRoot->sPath);
 	
-					dbFile->Read(pRoot->sVolumeName);
+					m_pFile->Read(pRoot->sVolumeName);
 
-					dbFile->Read(pRoot->dwVolumeSerial);
+					m_pFile->Read(pRoot->dwVolumeSerial);
 				
-					dbFile->Read(pRoot->sFileSystem);
+					m_pFile->Read(pRoot->sFileSystem);
 
 					dwSeekLength-=((DWORD)pRoot->sPath.GetLength()+1+
 						(DWORD)pRoot->sVolumeName.GetLength()+1+(DWORD)pRoot->sFileSystem.GetLength()+1)*2;
@@ -127,16 +137,16 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 				else
 				{
 					CString strA;
-					dbFile->Read(strA);
+					m_pFile->Read(strA);
 					pRoot->sPath=strA;
 				
 					// Reading volume name and serial and filesystem
-					dbFile->Read(strA);
+					m_pFile->Read(strA);
 					pRoot->sVolumeName=strA;
 
-					dbFile->Read(pRoot->dwVolumeSerial);
+					m_pFile->Read(pRoot->dwVolumeSerial);
 				
-					dbFile->Read(strA);
+					m_pFile->Read(strA);
 					pRoot->sFileSystem=strA;
 
 					dwSeekLength-=(DWORD)pRoot->sPath.GetLength()+1+
@@ -146,8 +156,8 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 				
 		
 				// Reading number of files and directories
-				dbFile->Read(pRoot->dwNumberOfFiles);
-				dbFile->Read(pRoot->dwNumberOfDirectories);
+				m_pFile->Read(pRoot->dwNumberOfFiles);
+				m_pFile->Read(pRoot->dwNumberOfDirectories);
 				
 
 				// Resolve map
@@ -165,17 +175,17 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 				aRootFolders.Add(pRoot);
 
 				
-				dbFile->Seek(dwSeekLength,CFile::current);
-				dbFile->Read(dwBlockSize);
+				m_pFile->Seek(dwSeekLength,CFile::current);
+				m_pFile->Read(dwBlockSize);
 			}
 
-			dbFile->Close();
+			m_pFile->Close();
 		}
-		else if (szBuffer[8]>=1 && szBuffer[8]<=4)
+		else if (m_szBuffer[8]>=1 && m_szBuffer[8]<=4)
 		{
-			bVersion=szBuffer[8];
-			delete[] szBuffer;
-			szBuffer=NULL;
+			bVersion=m_szBuffer[8];
+			delete[] m_szBuffer;
+			m_szBuffer=NULL;
 
 			cCharset=OEM;
 			switch (bVersion)
@@ -191,22 +201,22 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 			
 			CString strA;
 			// Reading creator and description
-			dbFile->Read(strA);
+			m_pFile->Read(strA);
 			sCreator=strA;
-			dbFile->Read(strA);
+			m_pFile->Read(strA);
 			sDescription=strA;
 			
 			// Resolving drives
 			CString sDrives;
-			dbFile->Read(sDrives);
+			m_pFile->Read(sDrives);
 			
 			for (int i=0;i<sDrives.GetLength();i++)
 				aRootFolders.Add(new CRoot(sDrives[i]));	
 				
 			DWORD nTime;
-			dbFile->Read(&nTime,4);
+			m_pFile->Read(&nTime,4);
 			tCreationTime=(time_t)nTime;
-			dbFile->Close();
+			m_pFile->Close();
 		}
 		else
 			throw CFileException(CFileException::invalidFormat,-1,szArchivePath);
@@ -215,10 +225,16 @@ BOOL CDatabaseInfo::GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchiv
 	{
 		bRet=FALSE;
 	}
-	if (dbFile!=NULL)
-		delete dbFile;
-	if (szBuffer!=NULL)
-		delete[] szBuffer;
+	if (m_pFile!=NULL)
+	{
+		delete m_pFile;
+		m_pFile=NULL;
+	}
+	if (m_szBuffer!=NULL)
+	{
+		delete[] m_szBuffer;
+		m_szBuffer=NULL;
+	}
 	return bRet;
 }
 

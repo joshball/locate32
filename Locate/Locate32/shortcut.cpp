@@ -1013,7 +1013,7 @@ void CSubAction::DoActivateControl()
 	if (pLocateDlg==NULL)
 		return;
 	
-	if (GetCurrentThreadId()==GetTrayIconWnd()->m_pLocateDlgThread->GetThreadId())
+	if (GetCurrentThreadId()==GetTrayIconWnd()->GetLocateDlgThread()->GetThreadId())
 		pLocateDlg->OnCommand(LOWORD(m_nControl),1,NULL);
 	else
 		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nControl),1),0);
@@ -1026,7 +1026,7 @@ void CSubAction::DoMenuCommand()
 	if (pLocateDlg==NULL)
 		return;
 
-	if (GetCurrentThreadId()==GetTrayIconWnd()->m_pLocateDlgThread->GetThreadId())
+	if (GetCurrentThreadId()==GetTrayIconWnd()->GetLocateDlgThread()->GetThreadId())
 		pLocateDlg->OnCommand(LOWORD(m_nMenuCommand),0,NULL);
 	else
 		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nMenuCommand),0),0);
@@ -2178,7 +2178,7 @@ BOOL CShortcut::IsWhenAndWhereSatisfied(HWND hSystemTrayWnd)  const
 void CShortcut::SendEventBackToControl()
 {
 #ifndef KEYHOOK_EXPORTS
-	CWinThread* pThread=GetTrayIconWnd()->m_pLocateDlgThread;
+	CWinThread* pThread=GetTrayIconWnd()->GetLocateDlgThread();
 	if (pThread!=NULL)
 	{
 		const MSG* pMsg=pThread->GetCurrentMessage();

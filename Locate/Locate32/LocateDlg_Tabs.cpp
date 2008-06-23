@@ -178,7 +178,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	//DebugFormatMessage("CNameDlg::InitDriveBox BEGIN, items in list %d",m_LookIn.GetCount());
 
 	// Handle to locate dialog
-	CLocateDlg* pLocateDlg=GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate;
+	CLocateDlg* pLocateDlg=GetTrayIconWnd()->GetLocateDlg();
 	pLocateDlg->AddInstantSearchingFlags(isIgnoreChangeMessages);
 
 	CRegKey RegKey;
@@ -699,7 +699,7 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			}
 			break;
 		case CBN_EDITCHANGE:
-			DebugMessage("LOOKIN EDITCHANGE");
+			//DebugMessage("LOOKIN EDITCHANGE");
 			HilightTab(IsChanged());
 			GetLocateDlg()->OnFieldChange(isLookInChanged);
 			break;

@@ -19,6 +19,8 @@ inline CLocateDlgThread::CLocateDlgThread()
 }
 
 
+	
+
 //////////////////////////////////////////////////////////////////////////////
 // CLocateDlg::VolumeInformation
 //////////////////////////////////////////////////////////////////////////////
@@ -107,6 +109,7 @@ inline void CLocateDlg::RemoveResultsFromList()
 	ClearMenuVariables();
 	m_pListCtrl->DeleteAllItems();
 	m_aVolumeInformation.RemoveAll();
+	m_DatabasesUsedInSearch.RemoveAll();
 
 	m_pStatusCtrl->SetText("",STATUSBAR_MISC,0);
 	m_pStatusCtrl->SetText("",STATUSBAR_OPERATIONSTATUS,0);
@@ -117,7 +120,7 @@ inline void CLocateDlg::RemoveResultsFromList()
 
 inline LPCWSTR CLocateDlg::GetDBVolumeLabel(WORD wDB,WORD wRootID) 
 {
-	CArrayFP<VolumeInformation*>& aVolumeInformation=GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
+	CArrayFP<VolumeInformation*>& aVolumeInformation=GetTrayIconWnd()->GetLocateDlg()->m_aVolumeInformation;
 
 	for (int i=0;i<aVolumeInformation.GetSize();i++)
 	{
@@ -129,7 +132,7 @@ inline LPCWSTR CLocateDlg::GetDBVolumeLabel(WORD wDB,WORD wRootID)
 
 inline LPCWSTR CLocateDlg::GetDBVolumeSerial(WORD wDB,WORD wRootID) 
 {
-	CArrayFP<VolumeInformation*>& aVolumeInformation=GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
+	CArrayFP<VolumeInformation*>& aVolumeInformation=GetTrayIconWnd()->GetLocateDlg()->m_aVolumeInformation;
 
 	for (int i=0;i<aVolumeInformation.GetSize();i++)
 	{
@@ -141,7 +144,7 @@ inline LPCWSTR CLocateDlg::GetDBVolumeSerial(WORD wDB,WORD wRootID)
 
 inline LPCWSTR CLocateDlg::GetDBVolumeFileSystem(WORD wDB,WORD wRootID) 
 {
-	CArrayFP<VolumeInformation*>& aVolumeInformation=GetTrayIconWnd()->m_pLocateDlgThread->m_pLocate->m_aVolumeInformation;
+	CArrayFP<VolumeInformation*>& aVolumeInformation=GetTrayIconWnd()->GetLocateDlg()->m_aVolumeInformation;
 
 	for (int i=0;i<aVolumeInformation.GetSize();i++)
 	{

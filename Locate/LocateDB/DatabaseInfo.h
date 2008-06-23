@@ -48,6 +48,8 @@ protected:
 	BOOL GetInfo(CDatabase::ArchiveType nArchiveType,LPCWSTR szArchivePath,LPCWSTR szRootMaps);
 
 public:
+	~CDatabaseInfo();
+
 	BYTE bVersion;
 	BYTE bLongFilenames;
 	enum Charset { OEM,	Ansi,Unicode } cCharset;
@@ -66,7 +68,7 @@ public:
 public:
 	static CDatabaseInfo* GetFromDatabase(const CDatabase* pDatabase);
 	static CDatabaseInfo* GetFromFile(LPCWSTR szArchivePath);
-
+	static void GetFromFile(LPCWSTR szArchivePath,CDatabaseInfo*& pInfo);
 		
 	static BOOL GetRootsFromDatabase(CArray<LPWSTR>& aRoots,const CDatabase* pDatabase);
 	
@@ -75,12 +77,19 @@ public:
 	static BOOL GetRootsFromDatabases(CArray<LPWSTR>& aRoots,const CArray<CDatabase*>& aDatabases,BOOL bOnlyEnabled=FALSE);
 
 	static BOOL ReadFilesAndDirectoriesCount(CDatabase::ArchiveType,LPCWSTR szArchive,DWORD& dwFiles,DWORD& dwDirectories);
+
+private:
+	// We keep these variables as members, because GetInfo may take long time and it can be terminated
+	CFile* m_pFile;
+	BYTE* m_szBuffer;
+	
 };
 
 inline 	CDatabaseInfo::CDatabaseInfo()
-:	bVersion(0), bLongFilenames(0),dwNumberOfDirectories(DWORD(-1)),dwNumberOfFiles(DWORD(-1))
+:	bVersion(0), bLongFilenames(0),dwNumberOfDirectories(DWORD(-1)),dwNumberOfFiles(DWORD(-1)),m_pFile(NULL),m_szBuffer(NULL)
 {
 }
+
 
 inline CDatabaseInfo* CDatabaseInfo::GetFromDatabase(const CDatabase* pDatabase)
 {
@@ -104,6 +113,17 @@ inline CDatabaseInfo* CDatabaseInfo::GetFromFile(LPCWSTR szArchivePath)
 		return NULL;
 	}
 	return pRet;
+}
+
+inline void CDatabaseInfo::GetFromFile(LPCWSTR szArchivePath,CDatabaseInfo*& pInfo)
+{
+	pInfo=new CDatabaseInfo;
+	
+	if (!pInfo->GetInfo(CDatabase::archiveFile,szArchivePath,NULL))
+	{
+		delete pInfo;
+		pInfo=NULL;
+	}
 }
 
 inline BOOL CDatabaseInfo::GetInfo(const CDatabase* pDatabase)

@@ -24,6 +24,7 @@
 //#define DEBUGMSG_FILENOTIFICATIONS
 //#define DEBUGMSG_BACKGROUNDUPDATER
 //#define DEBUGMSG_FILEOBJECT
+//#define DEBUGMSG_SETTINGSDLG
 
 
 #ifdef DEBUGMSG_DIALOGS
@@ -93,6 +94,24 @@
 #define FoDebugFormatMessage4(a,b1,b2,b3,b4)
 #endif
 
+
+
+#ifdef DEBUGMSG_SETTINGSDLG
+#define SdDebugMessage(a)						DebugMessage(a)
+#define SdDebugMessage1(a,b1)					DebugFormatMessage(a,b1)
+#define SdDebugMessage2(a,b1,b2)				DebugFormatMessage(a,b1,b2)
+#define SdDebugMessage3(a,b1,b2,b3)				DebugFormatMessage(a,b1,b2,b3)
+#define SdDebugMessage4(a,b1,b2,b3,b4)			DebugFormatMessage(a,b1,b2,b3,b4)
+#define SdDebugMessage5(a,b1,b2,b3,b4,b5)		DebugFormatMessage(a,b1,b2,b3,b4,b5)
+#else
+#define SdDebugMessage(a)		
+#define SdDebugMessage1(a,b1)		
+#define SdDebugMessage2(a,b1,b2)			
+#define SdDebugMessage3(a,b1,b2,b3)			
+#define SdDebugMessage4(a,b1,b2,b3,b4)			
+#define SdDebugMessage5(a,b1,b2,b3,b4,b5)		
+#endif
+
 #else
 
 // Release version
@@ -122,6 +141,13 @@
 #define FoDebugMessage(a) 
 #define FoDebugFormatMessage2(a,b1,b2)
 #define FoDebugFormatMessage4(a,b1,b2,b3,b4)
+
+#define SdDebugMessage(a)		
+#define SdDebugMessage1(a,b1)		
+#define SdDebugMessage2(a,b1,b2)			
+#define SdDebugMessage3(a,b1,b2,b3)			
+#define SdDebugMessage4(a,b1,b2,b3,b4)			
+#define SdDebugMessage5(a,b1,b2,b3,b4,b5)
 #endif
 
 #endif

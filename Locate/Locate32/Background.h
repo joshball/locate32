@@ -197,7 +197,8 @@ inline CCheckFileNotificationsThread::DIRCHANGEDATA::~DIRCHANGEDATA()
 
 
 inline CCheckFileNotificationsThread::CCheckFileNotificationsThread()
-:	m_hThread(NULL),m_lFlags(0),m_lState(sInitializing),m_pEventHandles(NULL),m_pDirDatas(NULL),m_pFile(NULL)
+:	m_hThread(NULL),m_lFlags(0),m_lState(sInitializing),m_pEventHandles(NULL),
+	m_pDirDatas(NULL),m_pFile(NULL),m_nHandles(0)
 {
 	if ((GetLocateDlg()->GetExtraFlags()&CLocateDlg::efTrackingMask)==CLocateDlg::efEnableFSTrackingOld)
 		m_pReadDirectoryChangesW=NULL;

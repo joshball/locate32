@@ -880,6 +880,14 @@ BYTE CTrayIconWnd::OnLocate()
 	return TRUE;
 }
 
+
+void CTrayIconWnd::SetLocateDlgThreadToNull()
+{
+	EnterCriticalSection(&m_csLocateThread);
+	InterlockedExchangePointer((PVOID*)&m_pLocateDlgThread,NULL);
+	LeaveCriticalSection(&m_csLocateThread);
+}
+
 DWORD WINAPI CTrayIconWnd::KillUpdaterProc(LPVOID lpParameter)
 {
 	return ((CLocateApp*)GetApp())->StopUpdating(TRUE);
@@ -1009,7 +1017,10 @@ void CTrayIconWnd::OnDestroy()
 		m_pAbout=NULL;
 	}
 	
-	
+
+
+	//EnterCriticalSection(m_csLocateThread);
+	EnterCriticalSection(&m_csLocateThread);
 	if (m_pLocateDlgThread!=NULL)
 	{
 		HANDLE hLocateThread;
@@ -1019,7 +1030,10 @@ void CTrayIconWnd::OnDestroy()
 
 		if (m_pLocateDlgThread->IsRunning())
 		{
-			GetLocateDlg()->PostMessage(WM_CLOSEDIALOG);
+			LeaveCriticalSection(&m_csLocateThread);
+			
+			
+			::GetLocateDlg()->PostMessage(WM_CLOSEDIALOG);
 			
 #ifdef _DEBUG_LOGGING
 			WaitForSingleObject(hLocateThread,5000);
@@ -1028,6 +1042,8 @@ void CTrayIconWnd::OnDestroy()
 #endif
 
 		
+			EnterCriticalSection(&m_csLocateThread);
+	
 			if (m_pLocateDlgThread!=NULL)
 			{
 				DebugFormatMessage("Terminating locate dialog thread %X",(DWORD)m_pLocateDlgThread);
@@ -1047,6 +1063,8 @@ void CTrayIconWnd::OnDestroy()
 		CloseHandle(hLocateThread);
 		DebugCloseThread(hLocateThread);
 	}
+	LeaveCriticalSection(&m_csLocateThread);
+			
 
 	((CLocateApp*)GetApp())->StopUpdating();
 	
@@ -2588,7 +2606,7 @@ void CTrayIconWnd::CUpdateStatusWnd::SetPosition()
 		ptUpperLeft.x=rcDesktopRect.left+2;
 
 		
-	CLocateDlg* pLocateDlg=GetLocateDlg();
+	CLocateDlg* pLocateDlg=::GetLocateDlg();
 	
 	if (pLocateDlg!=NULL)
 	{

@@ -52,11 +52,6 @@ CLOCATERINITIALIATIONS
 	SetDatabases(aDatabases);
 }
 
-inline CLocater::CLocater(const CArray<CDatabase>& aDatabases)
-CLOCATERINITIALIATIONS
-{
-	SetDatabases(aDatabases);
-}
 
 inline void CLocater::SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC pFoundProc,LOCATEFOUNDPROC pFoundProcW,DWORD_PTR dwParam)
 {
@@ -69,7 +64,7 @@ inline void CLocater::SetFunctions(LOCATEPROC pProc,LOCATEFOUNDPROC pFoundProc,L
 inline void CLocater::SetDatabases(LPCWSTR szDatabaseFile)
 {
 	m_aDatabases.RemoveAll();
-	m_aDatabases.Add(new DBArchive(L"custom",CDatabase::archiveFile,szDatabaseFile,0,TRUE,NULL));
+	m_aDatabases.Add(new DBArchive(L"custom",CDatabase::archiveFile,szDatabaseFile,0,NULL));
 }
 
 inline void CLocater::SetDatabases(const PDATABASE* pDatabases,int nDatabases)
@@ -77,13 +72,16 @@ inline void CLocater::SetDatabases(const PDATABASE* pDatabases,int nDatabases)
 	m_aDatabases.RemoveAll();
 	for (int i=0;i<nDatabases;i++)
 	{
-		BOOL bFree;
-		LPWSTR pFile=pDatabases[i]->GetResolvedArchiveName(bFree);
-		m_aDatabases.Add(new DBArchive(pDatabases[i]->GetName(),
-			pDatabases[i]->GetArchiveType(),pFile,
-			pDatabases[i]->GetID(),pDatabases[i]->IsEnabled(),pDatabases[i]->GetRootMaps()));
-		if (bFree)
-			delete[] pFile;
+		if (pDatabases[i]->IsEnabled())
+		{
+			BOOL bFree;
+			LPWSTR pFile=pDatabases[i]->GetResolvedArchiveName(bFree);
+			m_aDatabases.Add(new DBArchive(pDatabases[i]->GetName(),
+				pDatabases[i]->GetArchiveType(),pFile,
+				pDatabases[i]->GetID(),pDatabases[i]->GetRootMaps()));
+			if (bFree)
+				delete[] pFile;
+		}
 	}
 }
 
@@ -92,13 +90,16 @@ inline void CLocater::SetDatabases(const CDatabase* pDatabases,int nDatabases)
 	m_aDatabases.RemoveAll();
 	for (int i=0;i<nDatabases;i++)
 	{
-		BOOL bFree;
-		LPWSTR pFile=pDatabases[i].GetResolvedArchiveName(bFree);
-		m_aDatabases.Add(new DBArchive(pDatabases[i].GetName(),
-			pDatabases[i].GetArchiveType(),pFile,
-			pDatabases[i].GetID(),pDatabases[i].IsEnabled(),pDatabases[i].GetRootMaps()));
-		if (bFree)
-			delete[] pFile;
+		if (pDatabases[i].IsEnabled())
+		{
+			BOOL bFree;
+			LPWSTR pFile=pDatabases[i].GetResolvedArchiveName(bFree);
+			m_aDatabases.Add(new DBArchive(pDatabases[i].GetName(),
+				pDatabases[i].GetArchiveType(),pFile,
+				pDatabases[i].GetID(),pDatabases[i].GetRootMaps()));
+			if (bFree)
+				delete[] pFile;
+		}
 	}
 }
 
@@ -107,28 +108,19 @@ inline void CLocater::SetDatabases(const CArray<PDATABASE>& aDatabases)
 	m_aDatabases.RemoveAll();
 	for (int i=0;i<aDatabases.GetSize();i++)
 	{
-		BOOL bFree;
-		LPWSTR pFile=aDatabases[i]->GetResolvedArchiveName(bFree);
-		m_aDatabases.Add(new DBArchive(aDatabases[i]->GetName(),aDatabases[i]->GetArchiveType(),
-			pFile,aDatabases[i]->GetID(),aDatabases[i]->IsEnabled(),aDatabases[i]->GetRootMaps()));
-		if (bFree)
-			delete[] pFile;
+		if (aDatabases[i]->IsEnabled())
+		{
+			BOOL bFree;
+			LPWSTR pFile=aDatabases[i]->GetResolvedArchiveName(bFree);
+			m_aDatabases.Add(new DBArchive(aDatabases[i]->GetName(),aDatabases[i]->GetArchiveType(),
+				pFile,aDatabases[i]->GetID(),aDatabases[i]->GetRootMaps()));
+			if (bFree)
+				delete[] pFile;
+		}
 	}
 }
 
-inline void CLocater::SetDatabases(const CArray<CDatabase>& aDatabases)
-{
-	m_aDatabases.RemoveAll();
-	for (int i=0;i<aDatabases.GetSize();i++)
-	{
-		BOOL bFree;
-		LPWSTR pFile=aDatabases[i].GetResolvedArchiveName(bFree);
-		m_aDatabases.Add(new DBArchive(aDatabases[i].GetName(),aDatabases[i].GetArchiveType(),
-			pFile,aDatabases[i].GetID(),aDatabases[i].IsEnabled(),aDatabases[i].GetRootMaps()));
-		if (bFree)
-			delete[] pFile;
-	}
-}
+
 
 inline void CLocater::SetSizeAndDate(DWORD dwFlags,ULONGLONG ullMinSize,ULONGLONG ullMaxSize,
 									 WORD wMinDate,WORD wMaxDate)
@@ -205,15 +197,21 @@ inline CLocater::ValidType CLocater::IsFolderValid(DWORD nPathLen)
 	{
 		for (int i=0;i<m_aDirectories.GetSize();i++)
 		{
-			if ((DWORD)m_aDirectories.GetAt(i)->GetLength()>nPathLen)
+			if ((DWORD)m_aDirectories[i]->GetLength()>nPathLen)
 			{
-				if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLower,nPathLen) && 
-					m_aDirectories.GetAt(i)->GetAt(nPathLen)=='\\')
+				if (_strncmp(*m_aDirectories[i],szCurrentPathLower,nPathLen) && 
+					m_aDirectories[i]->GetAt(nPathLen)=='\\')
 					return SomeValidFolders;
 			}
-			else if ((DWORD)m_aDirectories.GetAt(i)->GetLength()==nPathLen)
+			else if ((DWORD)m_aDirectories[i]->GetLength()==nPathLen)
 			{
-				if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLower,nPathLen))
+				if (_strncmp(*m_aDirectories[i],szCurrentPathLower,nPathLen))
+					return ValidFolders;
+			}
+			else // if (m_aDirectories[i]->GetLength()<nPathLen)
+			{
+				if (_strncmp(*m_aDirectories[i],szCurrentPathLower,m_aDirectories[i]->GetLength()) && 
+					szCurrentPathLower[m_aDirectories[i]->GetLength()]==L'\\')
 					return ValidFolders;
 			}
 		}
@@ -235,15 +233,21 @@ inline CLocater::ValidType CLocater::IsFolderValidW(DWORD nPathLen)
 	{
 		for (int i=0;i<m_aDirectories.GetSize();i++)
 		{
-			if ((DWORD)m_aDirectories.GetAt(i)->GetLength()>nPathLen)
+			if ((DWORD)m_aDirectories[i]->GetLength()>nPathLen)
 			{
-				if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,nPathLen) && 
-					m_aDirectories.GetAt(i)->GetAt(nPathLen)==L'\\')
+				if (_strncmp(*m_aDirectories[i],szCurrentPathLowerW,nPathLen) && 
+					m_aDirectories[i]->GetAt(nPathLen)==L'\\')
 					return SomeValidFolders;
 			}
-			else if (m_aDirectories.GetAt(i)->GetLength()==nPathLen)
+			else if (m_aDirectories[i]->GetLength()==nPathLen)
 			{
-				if (_strncmp(*m_aDirectories.GetAt(i),szCurrentPathLowerW,nPathLen))
+				if (_strncmp(*m_aDirectories[i],szCurrentPathLowerW,nPathLen))
+					return ValidFolders;
+			}
+			else // if (m_aDirectories[i]->GetLength()<nPathLen)
+			{
+				if (_strncmp(*m_aDirectories[i],szCurrentPathLowerW,m_aDirectories[i]->GetLength()) && 
+					szCurrentPathLowerW[m_aDirectories[i]->GetLength()]==L'\\')
 					return ValidFolders;
 			}
 		}
@@ -528,8 +532,8 @@ inline DWORD CLocater::RemoveAdvancedFlags(DWORD dwRemoveFlag)
 
 
 inline CLocater::DBArchive::DBArchive(LPCWSTR szName_,CDatabase::ArchiveType nArchiveType_,
-									  LPCWSTR szArchive_,WORD wID_,BOOL bEnable_,LPCWSTR szRootMaps_)
-:	nArchiveType(nArchiveType_),wID(wID_),bEnable(bEnable_),bUnicode(FALSE)
+									  LPCWSTR szArchive_,WORD wID_,LPCWSTR szRootMaps_)
+:	nArchiveType(nArchiveType_),wID(wID_),bUnicode(FALSE)
 {
 	szName=alloccopy(szName_);
 	szArchive=alloccopy(szArchive_);

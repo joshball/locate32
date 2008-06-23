@@ -962,6 +962,7 @@ public:
 	BOOL StopLocateAnimation();
 	BOOL StartUpdateAnimation();
 	BOOL StopUpdateAnimation();
+	BOOL IsDatabaseUsedInSearch(WORD wID) const;
 	
 protected:
 	DWORD GetMaxFoundFiles() const { return m_dwMaxFoundFiles; }
@@ -981,7 +982,7 @@ protected:
 	WORD m_nCurLocateAnimBitmap;
 	CRITICAL_SECTION m_csLocateAnimBitmaps;
 
-	
+	CArray<WORD> m_DatabasesUsedInSearch;
 	
 
 	////////////////////////////////////////////////////////////
@@ -1109,9 +1110,9 @@ inline CLocateDlg* GetLocateDlg()
 {
 	extern CLocateApp theApp;
 	
-	if (theApp.m_AppWnd.m_pLocateDlgThread==NULL)
+	if (theApp.m_AppWnd.GetLocateDlgThread()==NULL)
 		return NULL;
-	return theApp.m_AppWnd.m_pLocateDlgThread->m_pLocate;
+	return theApp.m_AppWnd.GetLocateDlgThread()->m_pLocate;
 }
 
 

@@ -103,12 +103,18 @@ void StartDebugLogging()
 			
 			SetFilePointer(hLogFile,0,NULL,FILE_END);
 			char Text[400];
+			DWORD writed;
 			DWORD verMS=GetHFCLibVerMS();
 			DWORD verLS=GetHFCLibVerLS();
 			DWORD verFlags=GetHFCLibFlags();
-			StringCbPrintf(Text,400,"HFCLIB: LOGGING STARTED. HFCLIB Ver: %d.%d.%d.%d  %s %s %s",
+
+			char szHeader[]="\r\n#################################################################\r\n";
+			WriteFile(hLogFile,szHeader,(DWORD)strlen(szHeader),&writed,NULL);
+			StringCbPrintf(Text,400,"# LOGGING STARTED. HFCLIB Ver: %d.%d.%d.%d  %s %s %s",
 				HIWORD(verMS),LOWORD(verMS),HIWORD(verLS),LOWORD(verLS),(verFlags&HFCFLAG_DEBUG?"DEBUG":"RELEASE"),(verFlags&HFCFLAG_DLL?"DLL":"STATIC"),(verFlags&HFCFLAG_WIN32?"WIN32":"DOS")); 
-			DebugMessage(Text);
+			WriteFile(hLogFile,Text,(DWORD)strlen(Text),&writed,NULL);
+			WriteFile(hLogFile,szHeader,(DWORD)strlen(szHeader),&writed,NULL);
+			FlushFileBuffers(hLogFile);
 			
 			CAppData* pAppData=GetAppData();
 #ifdef DEF_APP
@@ -765,13 +771,46 @@ BOOL WINAPI  TerminateThread(HANDLE hThread,DWORD dwExitCode,BOOL bWaitUntilExit
 	return TRUE;
 }
 
+#ifdef _DEBUG
+static void* hfc_debugnew(size_t nSize, LPCSTR lpszFileName, int nLine,DWORD wBlockType)
+{
+	BYTE* pBlock=(BYTE*)::operator new(nSize+10,wBlockType,lpszFileName,nLine);
+	// Writing header
+	pBlock[0]=0xab;
+	pBlock[5]=0xba;
+	*((DWORD*)(pBlock+1))=DWORD(min(nSize,0xFFFFFFFF));
+	MemSet(pBlock+nSize+6,0xfa,4);
+	return pBlock+6;
+}
+
+static void hfc_debugdelete(void* p, LPCSTR lpszFileName, int nLine,DWORD wBlockType)
+{
+	// Header is valid?
+	ASSERT(((BYTE*)p)[-6]==0xab && ((BYTE*)p)[-1]==0xba);
+	DWORD dwLen=*(DWORD*)(((BYTE*)p)-5);
+	if (dwLen!=0xFFFFFFFF)
+	{
+		ASSERT(((BYTE*)p)[dwLen]==0xfa && ((BYTE*)p)[dwLen+1]==0xfa &&
+			((BYTE*)p)[dwLen+2]==0xfa && ((BYTE*)p)[dwLen+3]==0xfa);
+	}
+
+	((BYTE*)p)[-6]=0xaf;
+	((BYTE*)p)[-5]=0xaf;
+	((BYTE*)p)[-4]=0xaf;
+	((BYTE*)p)[-3]=0xaf;
+	((BYTE*)p)[-2]=0xaf;
+	((BYTE*)p)[-1]=0xaf;
+
+	_free_dbg(((BYTE*)p)-6,wBlockType);
+}
+#endif
 
 
 // Memory alloction with tracking, corresponds to DEBUG_NEW
 void* operator new(size_t nSize, LPCSTR lpszFileName, int nLine)
 {
 #ifdef _DEBUG
-	void* pBlock=::operator new(nSize,HFC_NORMAL_BLOCK,lpszFileName,nLine);
+	void* pBlock=hfc_debugnew(nSize,lpszFileName,nLine,HFC_NORMAL_BLOCK);
 #else
 	void* pBlock=::operator new(nSize);
 #endif
@@ -783,7 +822,7 @@ void* operator new(size_t nSize, LPCSTR lpszFileName, int nLine)
 void* operator new[](size_t nSize, LPCSTR lpszFileName, int nLine)
 {
 #ifdef _DEBUG	
-	void* pBlock=::operator new(nSize,HFC_ARRAY_BLOCK,lpszFileName,nLine);
+	void* pBlock= hfc_debugnew(nSize,lpszFileName,nLine,HFC_ARRAY_BLOCK);
 #else
 	void* pBlock=::operator new(nSize);
 #endif
@@ -795,7 +834,7 @@ void operator delete(void* p, LPCSTR lpszFileName, int nLine)
 {
 	DebugCloseHandle2(dhtMemoryBlock,p,STRNULL,nLine,lpszFileName);
 #ifdef _DEBUG	
-	::operator delete(p,HFC_NORMAL_BLOCK,lpszFileName,nLine);
+	hfc_debugdelete(p,lpszFileName,nLine,HFC_NORMAL_BLOCK);
 #else
 	::operator delete(p);
 #endif
@@ -805,7 +844,7 @@ void operator delete[](void* p, LPCSTR lpszFileName, int nLine)
 {
 	DebugCloseHandle2(dhtMemoryBlock,p,STRNULL,nLine,lpszFileName);
 #ifdef _DEBUG	
-	::operator delete(p,HFC_ARRAY_BLOCK,lpszFileName,nLine);
+	hfc_debugdelete(p,lpszFileName,nLine,HFC_ARRAY_BLOCK);
 #else
 	::operator delete(p);
 #endif
@@ -817,7 +856,7 @@ void operator delete[](void* p, LPCSTR lpszFileName, int nLine)
 void * operator new(size_t nSize)
 {
 #ifdef _DEBUG
-	void* pBlock=::operator new(nSize,HFC_NORMAL_BLOCK,0,NULL);
+	void* pBlock=hfc_debugnew(nSize,NULL,0,HFC_NORMAL_BLOCK);
 #else
 	void* pBlock=malloc(nSize);
 #endif
@@ -832,7 +871,7 @@ void * operator new(size_t nSize)
 void * operator new[](size_t nSize)
 {
 #ifdef _DEBUG
-	void* pBlock=::operator new(nSize,HFC_ARRAY_BLOCK,0,NULL);
+	void* pBlock=hfc_debugnew(nSize,NULL,0,HFC_ARRAY_BLOCK);
 #else
 	void* pBlock=::operator new(nSize);
 #endif
@@ -842,29 +881,21 @@ void * operator new[](size_t nSize)
 
 void operator delete(void *p)
 {
-	if (p == NULL)
-		return;
-
-	DebugCloseHandle3(dhtMemoryBlock,p,STRNULL,0,NULL);
-
-#ifdef _DEBUG
-	_free_dbg(p,HFC_NORMAL_BLOCK);
+	DebugCloseHandle2(dhtMemoryBlock,p,STRNULL,0,NULL);
+#ifdef _DEBUG	
+	hfc_debugdelete(p,NULL,0,HFC_NORMAL_BLOCK);
 #else
-	free(p);
+	::operator delete(p);
 #endif
 }
 
 void operator delete[](void *p )
 {
-	if (p == NULL)
-		return;
-
-	DebugCloseHandle3(dhtMemoryBlock,p,STRNULL,0,NULL);
-	
-#ifdef _DEBUG
-	_free_dbg(p,HFC_ARRAY_BLOCK);
+	DebugCloseHandle2(dhtMemoryBlock,p,STRNULL,0,NULL);
+#ifdef _DEBUG	
+	hfc_debugdelete(p,NULL,0,HFC_ARRAY_BLOCK);
 #else
-	free(p);
+	::operator delete(p);
 #endif
 }
 

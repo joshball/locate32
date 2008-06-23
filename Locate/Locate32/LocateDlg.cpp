@@ -54,7 +54,7 @@ int CLocateDlgThread::ExitInstance()
 	m_pLocate=NULL;
 	
 	// Set global locate dialog handle to NULL
-	InterlockedExchangePointer((PVOID*)&GetTrayIconWnd()->m_pLocateDlgThread,NULL);
+	GetTrayIconWnd()->SetLocateDlgThreadToNull();
 	
 	
 	// Unitilialize OLE/COM
@@ -590,7 +590,7 @@ BOOL CLocateDlg::UpdateSettings()
 	// Enable/disable file system tracking
 	if (GetExtraFlags()&efEnableFSTracking)
 	{
-		if (m_pFileNotificationsThread==NULL)
+		if (m_pFileNotificationsThread==NULL && m_DatabasesUsedInSearch.GetSize()>0)
 			StartBackgroundOperations();
 	}
 	else if (m_pFileNotificationsThread!=NULL)
@@ -1193,7 +1193,7 @@ void CLocateDlg::SaveDialogTexts()
 
 void CLocateDlg::SetShortcuts()
 {
-	CLocateDlgThread* pLocateDlgThread=GetTrayIconWnd()->m_pLocateDlgThread;
+	CLocateDlgThread* pLocateDlgThread=GetTrayIconWnd()->GetLocateDlgThread();
 	// This function should not be called from other thread than dialog's thread
 	// (to be sure that m_Accels is not accessed during this call
 	ASSERT(GetCurrentThread()!=*pLocateDlgThread);
@@ -1366,7 +1366,7 @@ void CLocateDlg::SetShortcuts()
 
 void CLocateDlg::ClearShortcuts()
 {
-	CLocateDlgThread* pLocateDlgThread=GetTrayIconWnd()->m_pLocateDlgThread;
+	CLocateDlgThread* pLocateDlgThread=GetTrayIconWnd()->GetLocateDlgThread();
 	// This function should not be called from other thread than dialog's thread
 	// (to be sure that m_Accels is not accessed during this call
 	ASSERT(GetCurrentThread()!=*pLocateDlgThread);
@@ -1437,6 +1437,8 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 			CRegKey2::GetCommonKey()+"\\Dialogs\\SelectDatabases/Locate");
 		if (!dbd.DoModal(*this))
 		{
+			for (int i=0;i<pDatabases->GetSize();i++)
+				delete pDatabases->GetAt(i);
 			delete pDatabases;
 			return NULL;
 		}
@@ -1452,7 +1454,12 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 			return NULL;
 		}
 	}
-
+	m_DatabasesUsedInSearch.RemoveAll();
+	for (int i=0;i<pDatabases->GetSize();i++)
+	{
+		if (pDatabases->GetAt(i)->IsEnabled())
+			m_DatabasesUsedInSearch.Add(pDatabases->GetAt(i)->GetID());
+	}
 
 
 	// Create locater object
@@ -1460,7 +1467,11 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 
 	// Databases pointer are not needed anymore
 	if (bShowDatabasesDialog)
+	{
+		for (int i=0;i<pDatabases->GetSize();i++)
+			delete pDatabases->GetAt(i);
 		delete pDatabases; 
+	}
 
 
 	// Calling routines for subdialogs
@@ -2536,6 +2547,15 @@ BOOL CLocateDlg::StopUpdateAnimation()
 	return TRUE;
 }
 
+BOOL CLocateDlg::IsDatabaseUsedInSearch(WORD wID) const
+{
+	for (int i=0;i<m_DatabasesUsedInSearch.GetSize();i++)
+	{
+		if (m_DatabasesUsedInSearch[i]==wID)
+			return TRUE;
+	}
+	return FALSE;
+}
 
 ////////////////////////////////////////////////////////////
 // CLocateDlg - Background operations

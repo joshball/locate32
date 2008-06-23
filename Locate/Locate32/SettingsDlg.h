@@ -250,12 +250,22 @@ public:
 		// Threaded database modification date reading
 		struct ModificationDateData 
 		{
+			ModificationDateData() { pText=NULL; di=NULL;}
+			~ModificationDateData() { if (pText!=NULL) delete[] pText; if (hThread!=NULL) CloseHandle(hThread); if (di!=NULL) delete di; }
+
 			CStringW sDatabaseFile;
+			LPWSTR pText;
 			HWND hListWnd;
 			int nItem;
+			HANDLE hThread;
+			CDatabasesSettingsPage* pPage;
+			CDatabaseInfo* di;
 		};
-		static DWORD WINAPI ReadModificationData(LPVOID lpParameter);
+		BOOL ReadModificationDate(int nItem,CDatabase* pDatabase);
+		static DWORD WINAPI ReadModificationDateProc(LPVOID lpParameter);
 
+		CRITICAL_SECTION m_csModDateThreads;
+		CArray<ModificationDateData*> m_ModDateThreads;
 
 
 	protected:

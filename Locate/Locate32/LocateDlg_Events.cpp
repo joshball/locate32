@@ -779,7 +779,6 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 		m_pImageHandler=NULL;
 	}
 
-
 	CDialog::OnInitDialog(hwndFocus);
 
 	// Load icons
@@ -966,7 +965,7 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 
 
 	// If updating is started via command line arguments or otherwise, start animation
-	if (GetTrayIconWnd()->m_pUpdateAnimIcons!=NULL)
+	if (GetTrayIconWnd()->IsUpdateAnimationRunning())
 		StartUpdateAnimation();
 
 #ifdef _DEBUG

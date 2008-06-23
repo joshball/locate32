@@ -46,7 +46,7 @@ inline CSettingsProperties::CGeneralSettingsPage::CGeneralSettingsPage()
 
 inline CSettingsProperties::CAdvancedSettingsPage::CAdvancedSettingsPage()
 {	
-	DebugMessage("CSettingsProperties::CAdvancedSettingsPage::CAdvancedSettingsPage()"); 
+	//DebugMessage("CSettingsProperties::CAdvancedSettingsPage::CAdvancedSettingsPage()"); 
 
 	
 	OPTIONPAGE op;
@@ -78,7 +78,11 @@ inline CSettingsProperties::CDatabasesSettingsPage::CDatabasesSettingsPage()
 :	CPropertyPage(IDD_DATABASESETTINGS,IDS_DATABASESETTINGS),m_pList(NULL)
 {
 	AddFlags(PSP_HASHELP);
+
+	InitializeCriticalSection(&m_csModDateThreads);
 }
+
+
 
 inline CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CDatabaseDialog()
 :	CDialog(IDD_DATABASEDIALOG),m_pList(NULL),m_bDontEditName(FALSE)

@@ -52,14 +52,14 @@ inline BOOL CSelectDatabasesDlg::EnableItem(CDatabase* pDatabase,BOOL bEnable)
 		if (pDatabase->IsGloballyUpdated()==bEnable?1:0)
 			return FALSE;
 		pDatabase->UpdateGlobally(bEnable);
-		DebugFormatMessage("db %s is %s (update)",pDatabase->GetName(),bEnable?"enabled":"disabled");
+		DebugFormatMessage("db %S is %s (update)",pDatabase->GetName(),bEnable?"enabled":"disabled");
 	}
 	else
 	{
 		if (pDatabase->IsEnabled()==bEnable?1:0)
 			return FALSE;
 		pDatabase->Enable(bEnable);
-		DebugFormatMessage("db %s is %s (locate)",pDatabase->GetName(),bEnable?"enabled":"disabled");
+		DebugFormatMessage("db %S is %s (locate)",pDatabase->GetName(),bEnable?"enabled":"disabled");
 	}
 	return TRUE;	
 }
