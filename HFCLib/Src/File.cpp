@@ -879,6 +879,101 @@ ULONGLONG CFile::GetPosition64() const
 	return (((ULONGLONG)high)<<32)|((ULONGLONG)dwPos);
 }
 
+
+///////////////////////////////////////////
+// CFileEncoding
+///////////////////////////////////////////
+
+
+#ifdef DEF_WCHAR
+
+/*
+BOOL Read(CStringW& str) const
+{
+}
+
+BOOL Read(LPWSTR szBuffer,DWORD nBufferLength)
+{
+}
+*/
+
+BOOL CFileEncode::Write(WCHAR ch)
+{
+	switch (m_nEncoding)
+	{
+	case Unicode:
+		return CFile::Write(WORD(ch));
+	case UTF8:
+		{
+			char szBuffer[4];
+			int nRet=WideCharToMultiByte(CP_UTF8,0,&ch,1,szBuffer,4,NULL,NULL);
+			return CFile::Write(szBuffer,nRet-1);
+		}
+	case ANSI:
+	default:
+		return CFile::Write(W2Ac(ch));
+	}		
+}
+
+BOOL CFileEncode::Write(const CStringW& str)
+{
+	switch (m_nEncoding)
+	{
+	case Unicode:
+		return CFile::Write(str);
+	case UTF8:
+		{
+			int nBufferLen=str.GetLength()*3+3;
+			char* szBuffer=new char[nBufferLen];
+			int nRet=WideCharToMultiByte(CP_UTF8,0,str,str.GetLength(),szBuffer,nBufferLen,NULL,NULL);
+			return CFile::Write(szBuffer,nRet);
+		}
+	case ANSI:
+	default:
+		return CFile::Write(W2A(str));
+	}		
+}
+
+BOOL CFileEncode::Write(LPCWSTR szNullTerminatedString)
+{
+	switch (m_nEncoding)
+	{
+	case Unicode:
+		return CFile::Write(szNullTerminatedString);
+	case UTF8:
+		{
+			int nBufferLen=istrlen(szNullTerminatedString)*3+3;
+			char* szBuffer=new char[nBufferLen];
+			int nRet=WideCharToMultiByte(CP_UTF8,0,szNullTerminatedString,-1,szBuffer,nBufferLen,NULL,NULL);
+			return CFile::Write(szBuffer,nRet-1);
+		}
+	case ANSI:
+	default:
+		return CFile::Write(W2A(szNullTerminatedString));
+	}		
+}
+
+BOOL CFileEncode::Write(LPCWSTR szString,DWORD nCount)
+{
+	switch (m_nEncoding)
+	{
+	case Unicode:
+		return CFile::Write(szString,nCount*2);
+	case UTF8:
+		{
+			int nBufferLen=nCount*3+3;
+			char* szBuffer=new char[nBufferLen];
+			int nRet=WideCharToMultiByte(CP_UTF8,0,szString,nCount,szBuffer,nBufferLen,NULL,NULL);
+			return CFile::Write(szBuffer,nRet);
+		}
+	case ANSI:
+	default:
+		return CFile::Write(W2A(szString,nCount),nCount);
+	}	
+}
+
+#endif
+
 ///////////////////////////////////////////
 // namespace FileSystem
 ///////////////////////////////////////////

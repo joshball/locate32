@@ -236,7 +236,7 @@
 #define IDS_ERRORCANNOTOPENDB           1001
 #define IDC_EDIT                        1002
 #define IDC_NEWSEARCH                   1002
-#define IDS_ERRORCANNOTREADDB           1002
+#define IDS_ERRORCANNOTREADDB			1002
 #define IDC_TEXT                        1003
 #define IDS_ERRORCANNOTALLOCATE         1003
 #define IDC_TAB                         1004
@@ -251,7 +251,9 @@
 #define IDS_ERRORCANNOTRENAME           1009
 #define IDC_MOREDIRECTORIES             1009
 #define IDC_LOOKIN                      1010
+#define IDS_ERRORCANNOTOPENDBFORWRITE   1010
 #define IDC_BROWSE                      1011
+#define IDS_ERRORCANNOTOPENDBFORREAD	1011
 #define IDC_FRAME                       1012
 #define IDS_CANNOTREADDRIVE             1012
 #define IDC_UPDATENOW                   1012
@@ -260,6 +262,7 @@
 #define IDS_ERRORNODRIVES               1013
 #define IDC_NOSUBDIRECTORIES            1014
 #define IDC_FRAME3                      1014
+#define IDS_ERRORCANNOTREADDBWITHOSERROR 1014
 #define IDC_FILEICON                    1015
 #define IDS_ERRORUNKNOWN                1015
 #define IDC_FILENAME                    1016
@@ -267,6 +270,7 @@
 #define IDC_FILETYPE                    1017
 #define IDS_ERRORCANNOTWRITEDB          1017
 #define IDC_FILELOCATION                1018
+#define IDS_ERRORCANNOTWRITEDBWITHOSERROR 1018
 #define IDC_FILESIZE                    1019
 #define IDS_ERRORWRONGDRIVE2            1019
 #define IDS_ERRORNOCOLUMNSSELECTED      1019
@@ -483,6 +487,7 @@
 #define IDC_ACTION2                     1181
 #define IDC_SUBACTION                   1181
 #define IDC_FROMMNEMONIC                1184
+#define IDC_ENCODING					1185
 #define IDC_WAITDELAY                   1186
 #define IDC_WAITPOST                    1187
 #define IDC_WAITMS                      1188
@@ -655,6 +660,9 @@
 #define IDS_SAVERESULTSDBFILE           4022
 #define IDS_SAVERESULTSTITLE            4023
 #define IDS_SAVERESULTSTITLE2           4024
+#define IDS_SAVERESULTSANSI				4025
+#define IDS_SAVERESULTSUNICODE			4026
+#define IDS_SAVERESULTSUTF8				4027
 #define IDS_SETTINGS                    5000
 #define IDS_GENERALSETTINGS             5001
 #define IDS_DATABASESETTINGS            5002
@@ -1012,6 +1020,7 @@
 #define IDS_ADVSETSORTINGNATURAL		5844
 #define IDS_ADVSETSORTINGNATURALCS		5845
 #define IDS_ADVSETCANNOTFINDOPTION		5846
+#define IDS_ADVSETDONTMOVETOOLTIPS		5847
 #define IDS_SCHEDULEUPDATE              5901
 #define IDS_MINUTELY                    5909
 #define IDS_HOURLY                      5910

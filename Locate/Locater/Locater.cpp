@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.1.8.6150              */
+   database locater v3.1.8.7200              */
 
 #include <HFCLib.h>
 
@@ -1010,27 +1010,17 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 		{
 			// Resolving extension length
 			DWORD dwExtensionLen=GetFileNameLen()-GetFileExtensionPos()-1;
-			CAutoPtrA<char> szExtension=NULL;
+			CAutoPtrA<char> szExtension=alloccopy(GetFileName()+GetFileExtensionPos()+1,dwExtensionLen);
+			MakeLower(szExtension,dwExtensionLen);
 
 			for (DWORD i=0;i<m_dwExtCount;i++)
 			{
-				if (dwExtensionLen!=m_piExtLengths[i])
-					continue;
-
-				if (szExtension==NULL)
-				{
-					// Copying extension to buffer
-					szExtension=new char[dwExtensionLen];
-					sMemCopy(szExtension,GetFileName()+GetFileExtensionPos()+1,dwExtensionLen);
-					MakeLower(szExtension,dwExtensionLen);
-				}
-				
 				if (m_dwFlags&LOCATE_LOGICALOPERATIONSINEXT && m_ppExtensions[i][0]=='-')
 				{
-					if (_strncmp(m_ppExtensions[i]+1,szExtension,dwExtensionLen))
+					if (ContainString(szExtension,m_ppExtensions[i]+1))
 						return FALSE;
 				}
-				else if (_strncmp(m_ppExtensions[i],szExtension,dwExtensionLen))
+				else if (ContainString(szExtension,m_ppExtensions[i]))
 				{
 					bFound=TRUE;
 					break;
@@ -1218,27 +1208,18 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 		{
 			// Resolving extension length
 			DWORD dwExtensionLen=GetFileNameLen()-GetFileExtensionPos()-1;
-			CAutoPtrA<WCHAR> szExtension=NULL;
+			CAutoPtrA<WCHAR> szExtension=alloccopy(GetFileNameW()+GetFileExtensionPos()+1,dwExtensionLen);
+			MakeLower(szExtension,dwExtensionLen);
 			
+
 			for (DWORD i=0;i<m_dwExtCount;i++)
 			{	
-				if (dwExtensionLen!=m_piExtLengths[i])
-					continue;
-
-				if (szExtension==NULL)
-				{
-					// Copying extension to buffer
-					szExtension=new WCHAR[dwExtensionLen];
-					MemCopyW(szExtension,GetFileNameW()+GetFileExtensionPos()+1,dwExtensionLen);
-					MakeLower(szExtension,dwExtensionLen);
-				}
-				
 				if (m_dwFlags&LOCATE_LOGICALOPERATIONSINEXT && m_ppExtensions[i][0]=='-')
 				{
-					if (_strncmp(m_ppExtensions[i]+1,szExtension,dwExtensionLen))
+					if (ContainString(szExtension,m_ppExtensions[i]+1))
 						return FALSE;
 				}
-				else if (_strncmp(m_ppExtensions[i],szExtension,dwExtensionLen))
+				else if (ContainString(szExtension,m_ppExtensions[i]))
 				{
 					bFound=TRUE;
 					break;

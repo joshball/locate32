@@ -1448,6 +1448,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETSIMPLEFILEMENU,NULL,DefaultCheckBoxProc,
 			CSettingsProperties::settingsSimpleFileMenu,
 			&m_pSettings->m_dwSettingsFlags,"sa_simplefilemenu"),
+		CreateCheckBox(IDS_ADVSETDONTMOVETOOLTIPS,NULL,DefaultCheckBoxProc,
+			CLocateDlg::efLVDontMoveTooltips,
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_dontmovetooltips"),
 		NULL
 	};
 

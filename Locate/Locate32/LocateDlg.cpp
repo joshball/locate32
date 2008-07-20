@@ -225,6 +225,17 @@ inline CLocateDlg::CLocateDlg()
 
 	InitializeCriticalSection(&m_csUpdateAnimBitmaps);
 	InitializeCriticalSection(&m_csLocateAnimBitmaps);
+
+
+	// If "Show results list always shown", enable large mode  now
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		DWORD temp=0;
+		RegKey.QueryValue("Program Status",temp);
+		if (temp&fgDialogLargeModeOnly)
+			m_dwFlags|=fgLargeMode;
+	}
 }
 
 
@@ -604,11 +615,11 @@ BOOL CLocateDlg::UpdateSettings()
 // CLocateDlg - Dialog, tabs and items
 ////////////////////////////////////////////////////////////
 
-void CLocateDlg::SetDialogMode(BOOL bLarge)
+void CLocateDlg::SetDialogMode(BOOL bLarge,BOOL bForceRepositionIfMaximized)
 {
 	if (bLarge || GetFlags()&fgDialogLargeModeOnly)
 	{
-		if (!(m_dwFlags&fgLargeMode))
+		if (!(m_dwFlags&fgLargeMode) || bForceRepositionIfMaximized)
 		{
 			m_dwFlags|=fgLargeMode;
 			m_pListCtrl->SetStyle(m_pListCtrl->GetStyle()|WS_TABSTOP);
@@ -623,7 +634,8 @@ void CLocateDlg::SetDialogMode(BOOL bLarge)
 			{
 				wp.rcNormalPosition.bottom=wp.rcNormalPosition.top+m_nLargeY;
 				SetWindowPlacement(&wp);
-				SetWindowPos(HWND_BOTTOM,0,0,rect.Width(),m_nMaxYMaximized,SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
+				if (m_nMaxYMaximized>0)
+					SetWindowPos(HWND_BOTTOM,0,0,rect.Width(),m_nMaxYMaximized,SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
 			}
 			else
 				SetWindowPos(HWND_BOTTOM,0,0,rect.Width(),m_nLargeY,SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
@@ -2017,7 +2029,12 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 				str.Format(IDS_ERRORCANNOTOPENDB,pLocater->GetCurrentDatabaseFile());
 				((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
 				if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
+				{
+					WCHAR* pError=CLocateApp::FormatLastOsError();
+					if (pError!=NULL)
+						str.Format(IDS_ERRORCANNOTOPENDBFORREAD,pLocater->GetCurrentDatabaseFile(),pError);
 					((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+				}
 			}
 			return FALSE;
 		case ueRead:
@@ -2026,8 +2043,12 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 				str.Format(IDS_ERRORCANNOTREADDB,pLocater->GetCurrentDatabaseFile());
 				((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
 				if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
+				{
+					WCHAR* pError=CLocateApp::FormatLastOsError();
+					if (pError!=NULL)
+						str.Format(IDS_ERRORCANNOTREADDBWITHOSERROR,pLocater->GetCurrentDatabaseFile(),pError);
 					((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
-				
+				}				
 				return FALSE;
 			}
 		case ueAlloc:

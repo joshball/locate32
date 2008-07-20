@@ -2041,7 +2041,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 ////////////////////////////////////////////////////////////
 
 
-void CLocateDlg::OpenFolder(LPCWSTR szFolder)
+void CLocateDlg::OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile)
 {
 	CString sProgram;
 	
@@ -2093,7 +2093,15 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder)
 				sTemp<< szFolder;
 				nIndex+=2;
 			}
-			else
+			else if (sProgram[nIndex+1]=='f')
+			{
+				if (szSelectedFile!=NULL)
+					sTemp<< szSelectedFile;
+				else
+					sTemp<< szFolder;
+				nIndex+=2;
+			}
+			else 
 			{
 				sTemp<<'%';
 				nIndex++;
@@ -2192,6 +2200,7 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 					IShellFolder* pParentFolder;
 					LPITEMIDLIST pParentIDList;
 					HRESULT hRes;
+					BOOL bAllOK=TRUE;
 
 					
 								
@@ -2220,27 +2229,45 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 
                         // Querying id lists for files
 						LPCITEMIDLIST* pItemPids=new LPCITEMIDLIST[aFolders[i]->aItems.GetSize()];
+						int nPids=0;
                         for (int j=0;j<aFolders[i]->aItems.GetSize();j++)
 						{
-							hRes=pParentFolder->ParseDisplayName(*this,NULL,(LPOLESTR)aFolders[i]->aItems[j],NULL,(LPITEMIDLIST*)&pItemPids[j],NULL);
-							if (!SUCCEEDED(hRes))
-								pItemPids[j]=NULL;
+							hRes=pParentFolder->ParseDisplayName(*this,NULL,(LPOLESTR)aFolders[i]->aItems[j],NULL,(LPITEMIDLIST*)&pItemPids[nPids],NULL);
+							if (SUCCEEDED(hRes))
+								nPids++;
 						}
 
 
 						// Opening folder and selecting items
-						hRes=pSHOpenFolderAndSelectItems(pParentIDList,aFolders[i]->aItems.GetSize(),pItemPids,0);
-
+						if (nPids>0)
+							hRes=pSHOpenFolderAndSelectItems(pParentIDList,nPids,pItemPids,0);
+						else
+							hRes=S_OK;
+						
 						// Free 
-						for (int j=0;j<aFolders[i]->aItems.GetSize();j++)
+						for (int j=0;j<nPids;j++)
 							CoTaskMemFree((void*)pItemPids[j]);
 
 						CoTaskMemFree(pParentIDList);
 
 						pParentFolder->Release();
+
+
+						if (!SUCCEEDED(hRes))
+						{
+							bAllOK=FALSE;
+							break;
+						}
+					}
+
+					if (bAllOK)
+					{
+						delete[] pItems;
+						return;
 					}
 				}
-				else if (IsUnicodeSystem())
+				
+				if (IsUnicodeSystem())
 				{
 					CStringW sArg;
 					SHELLEXECUTEINFOW sxi;
@@ -2298,7 +2325,8 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 		}
 
         // Retrieving folders
-		CArray<LPCWSTR> aFolders;
+		CArrayFAP<LPCWSTR> aFolders;
+		CArrayFAP<LPCWSTR> aSelectedFiles;
 		
 		for (int i=0;i<nSelectedItems;i++)
 		{
@@ -2314,14 +2342,16 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 						break;
 					}
 				}
-				if (!bFound)
-					aFolders.Add(pItems[i]->GetParent());
+				if (!bFound) {
+					aFolders.Add(alloccopy(pItems[i]->GetParent()));
+					aSelectedFiles.Add(alloccopy(pItems[i]->GetPath()));
+				}
 			}
 		    
 		}
 
 		for (int i=0;i<aFolders.GetSize();i++)
-			OpenFolder(aFolders[i]);
+			OpenFolder(aFolders[i],aSelectedFiles[i]);
 	}
 	else
 	{

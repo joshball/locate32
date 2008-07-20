@@ -137,6 +137,38 @@ inline DWORD CFile::Seek64(ULONGLONG lOff, SeekPosition nFrom)
 	return ::SetEndOfFile(m_hFile);
 }
 
+
+
+/////////////////////////////////////////////////
+// CFile
+#ifdef DEF_WCHAR
+inline CFileEncode::CFileEncode(CFileException* e)
+:	m_nEncoding(ANSI),CFile(e)
+{
+}
+
+inline CFileEncode::CFileEncode(BOOL bThrowExceptions,CFileException* e)
+:	m_nEncoding(ANSI),CFile(bThrowExceptions,e)
+{
+}
+
+inline CFileEncode::CFileEncode(HANDLE hFile,BOOL bThrowExceptions,CFileException* e)
+:	m_nEncoding(ANSI),CFile(hFile,bThrowExceptions,e)
+{
+}
+
+inline CFileEncode::CFileEncode(LPCSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions,CFileException* e)
+:	m_nEncoding(ANSI),CFile(lpszFileName,nOpenFlags,bThrowExceptions,e)
+{
+}
+
+inline CFileEncode::CFileEncode(LPCWSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions,CFileException* e)
+:	m_nEncoding(ANSI),CFile(lpszFileName,nOpenFlags,bThrowExceptions,e)
+{
+}
+
+#endif
+
 ////////////////////////////////////////
 // namespace FileSystem
 

@@ -1984,21 +1984,43 @@ void CLocateDlg::CNameDlg::OnBrowse()
 	CFolderDialog fd(IDS_GETFOLDER,BIF_RETURNONLYFSDIRS|BIF_USENEWUI|BIF_NONEWFOLDERBUTTON);
 	if (fd.DoModal(*this))
 	{
-	
-
 		CStringW Folder;
-		if (fd.GetFolder(Folder))
-			CheckAndAddDirectory(Folder,Folder.GetLength(),TRUE,FALSE);
-		else
+		if (!fd.GetFolder(Folder))
 		{
-			WCHAR szName[500];
-			if (GetComputerNameFromIDList(fd.m_lpil,szName,500))
+			DWORD dwLength=GetComputerNameFromIDList(fd.m_lpil,Folder.GetBuffer(500),500);
+			if (dwLength)
 			{
-				if (szName[0]==L'\\' && szName[1]==L'\\')
-					CheckAndAddDirectory(szName,istrlenw(szName),TRUE,FALSE);
+				Folder.FreeExtra(dwLength);
+				if (Folder[0]!=L'\\' || Folder[1]!=L'\\')
+					Folder.Empty();
 			}
-	
 		}
+
+		if (!Folder.IsEmpty())
+		{
+			CStringW sCurrentLookIn;
+			int nCurSel=m_LookIn.GetCurSel();
+			if (nCurSel!=CB_ERR)
+			{
+				LPARAM lParam=m_LookIn.GetItemData(nCurSel);
+				if (static_cast<TypeOfItem>(LOWORD(lParam))==Custom)
+					sCurrentLookIn=m_LookIn.GetItemTextW(nCurSel);
+			}
+			else
+				sCurrentLookIn=m_LookIn.GetItemTextW(-1);
+			
+					
+			if (sCurrentLookIn.Find(L';')!=-1)
+			{
+				if (sCurrentLookIn.LastChar()!=L';')
+					sCurrentLookIn<<L';';
+				sCurrentLookIn << Folder;
+				m_LookIn.SetItemText(-1,sCurrentLookIn);
+			}
+			else
+				CheckAndAddDirectory(Folder,Folder.GetLength(),TRUE,FALSE);
+		}
+
 		m_LookIn.SetFocus();
 
 		HilightTab(TRUE);

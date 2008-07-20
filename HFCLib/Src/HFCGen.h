@@ -290,11 +290,11 @@ public:
 	virtual CStringW GetFileTitleW() const;
 	virtual void SetFilePath(LPCWSTR lpszNewName);
 #endif	
-	BOOL OpenRead(LPCSTR lpszFileName) { return Open(lpszFileName,CFile::defRead); }
-	BOOL OpenWrite(LPCSTR lpszFileName) { return Open(lpszFileName,CFile::defWrite); }
+	BOOL OpenRead(LPCSTR lpszFileName) { return this->Open(lpszFileName,CFile::defRead); }
+	BOOL OpenWrite(LPCSTR lpszFileName) { return this->Open(lpszFileName,CFile::defWrite); }
 #ifdef DEF_WCHAR
-	BOOL OpenRead(LPCWSTR lpszFileName) { return Open(lpszFileName,CFile::defRead); }
-	BOOL OpenWrite(LPCWSTR lpszFileName) { return Open(lpszFileName,CFile::defWrite); }
+	BOOL OpenRead(LPCWSTR lpszFileName) { return this->Open(lpszFileName,CFile::defRead); }
+	BOOL OpenWrite(LPCWSTR lpszFileName) { return this->Open(lpszFileName,CFile::defWrite); }
 #endif
 	
 	virtual DWORD Seek(LONG lOff, SeekPosition nFrom,LONG* pHighPos=NULL);
@@ -339,6 +339,38 @@ public:
 	virtual BOOL Close();
 
 };
+
+#ifdef DEF_WCHAR
+class CFileEncode : public CFile
+{
+public:
+	enum Encoding {
+		ANSI=0,
+		Unicode=1,
+		UTF8=2
+	};
+private:
+	Encoding m_nEncoding;
+
+public:
+	CFileEncode(CFileException* e=NULL);
+	CFileEncode(BOOL bThrowExceptions,CFileException* e=NULL);
+	CFileEncode(HANDLE hFile,BOOL bThrowExceptions=TRUE,CFileException* e=NULL);
+	CFileEncode(LPCSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions=TRUE,CFileException* e=NULL);
+	CFileEncode(LPCWSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions=TRUE,CFileException* e=NULL);
+
+	void SetEncoding(Encoding nEncoding) { m_nEncoding=nEncoding; }
+
+	//BOOL Read(CStringW& str) const;
+	//BOOL Read(LPWSTR szBuffer,DWORD nBufferLength);
+
+	BOOL Write(WCHAR ch);
+	BOOL Write(const CStringW& str);
+	BOOL Write(LPCWSTR szNullTerminatedString);
+	BOOL Write(LPCWSTR szString,DWORD nCount);
+
+};
+#endif
 
 namespace FileSystem {
 	#ifndef WIN32
@@ -473,6 +505,8 @@ namespace FileSystem {
 
 
 };
+
+
 
 class CFileFind : public CObject
 {

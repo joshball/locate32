@@ -303,10 +303,11 @@ content (e.g. files "file1, file10, file2" are sorted as "file1, file2, file10")
 
 <p><b><A NAME="sa_ownprogforfolders"></A>$STRADVANCEDSETTINGS_USEOTHERPROGRAMSTOOPENFOLDERS@C$</b>:
 This option can be used to specify an other program to open directories. You need to specify a 
-command to open the directory. In this commands, the directory is marked as %d. Note that 
-it typically required that the directories names containing spaces should put in double quotes,
-so "%d" should be used. For example, for <a href="http://www.ghisler.com">Total Commander</a>, 
-the command can be: totalcmd.exe "%d" or: totalcmd.exe /R="%d".</p>
+command to open the directory. In the command, the path in the command is given with %d and 
+the select file with %f. Note that if directory or file name contains spaces, quotes should be 
+used (e.g. "%d"). For example, if you want to open parent directory to 
+<a href="http://www.ghisler.com">Total Commander</a> such that the select file is also chosen in 
+Total Command, you can use: totalcmd.exe /O /R="%f".</p>
 
 <p><b><A NAME="sa_md5sums"></A>$STRADVANCEDSETTINGS_COMPUTEMD5SUMS@Cp$</b>:
 When enabled, MD5 check sums are automatically computed for files in the results list.
@@ -674,6 +675,15 @@ show menu. <b>Note</b>: this option has only effect on File menu. If you want to
 simple form for the context menu which appears when you right-click a file in the 
 results list, go to <a href="hid_view_selectdetails.htm">Select Details</a>, select "Name" 
 and  choose the action "Open context menu (simple)" for "right button click". 
+</p>
+
+<p><b><A NAME="sa_dontmovetooltips"></A>$STRADVANCEDSETTINGS_DONTMOVETOOLTIPS@C$</b>:
+If, for example, a parent directory is too long to be shown in "In Folder" column,
+the whole name is shown in a tooltip when you point the directory directory name long enough. 
+Normally this tooltip is placed such that it is over the directory name. However, it is observed
+the tooltip can steal focus from the main dialog if a "point-to-activate" focus model is used 
+and tooltips are placed in the such way. This option can be used to prevent stealing focus 
+in such situations. 
 </p>
 
 </div> <!-- advanced_settings_level1@sa_misc-->

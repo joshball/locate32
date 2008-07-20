@@ -31,7 +31,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2008 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.1 beta build 8.6150
+FILEVERSION=3.1 RC1 build 8.7200
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -378,6 +378,7 @@ STRADVANCEDSETTINGS_CONFIRMATIONFORUPDATEDATABASES=Ask confirmation when "Update
 STRADVANCEDSETTINGS_ICONSNOFILEACCESS=Avoid to access files when reading icons 
 STRADVANCEDSETTINGS_USEDEFAULTDIRECTORYICON=Use default icons for directories (use with slow network drives)
 STRADVANCEDSETTINGS_SIMPLEFILEMENU=Simple File menu (no special shell items for files)
+STRADVANCEDSETTINGS_DONTMOVETOOLTIPS=Prevent moving tooltips (use if tooltips steal focus)
 
 STRADVANCEDSETTINGS_SYSTEM=System
 STRADVANCEDSETTINGS_RUNATSYSTEMSTARTUP=Run Locate on system startup
@@ -801,6 +802,7 @@ DLGDBADVANCEDDIALOG_EXTRAWIDTH=0
 ###########################
 # Subdialog in Save Results 
 STRSAVERESULTS_CAPTION=Save results
+DLGSAVERESULTS_ENCODING=Encoding:
 DLGSAVERESULTS_INCLUDE=Include:
 DLGSAVERESULTS_DATE=date
 DLGSAVERESULTS_COLUMNLABELS=column labels
@@ -818,6 +820,9 @@ STRSAVERESULTS_DATABASEINFONAME=Name
 STRSAVERESULTS_DATABASEINFOCREATOR=Creator
 STRSAVERESULTS_DATABASEINFODESCRIPTION=Description
 STRSAVERESULTS_DATABASEINFOFILE=File
+STRSAVERESULTS_ANSI=ANSI
+STRSAVERESULTS_UNICODE=Unicode
+STRSAVERESULTS_UTF8=UTF-8
 
 ###########################
 # Database info dialog
@@ -1217,10 +1222,14 @@ STRERROR_CANNOTALLOCATE=Cannot allocate memory.
 STRERROR_CANNOTRENAME=Cannot rename file. %s
 STRERROR_CANNOTCREATEFILE=Cannot create file '%s'.
 STRERROR_CANNOTFOUNDORINVALIDFILE=File '%s' cannot found or invalid file format.
-STRERROR_CANNOTOPENDATABASE=Cannot open database file '%s'.
+STRERROR_CANNOTOPENDATABASE=Cannot open database file '%s'. 
+STRERROR_CANNOTOPENDATABASEFORREAD=Cannot open database file '%s'. \n\nThis error usually happens if you are trying to execute a search before databases are created. In this case, choose "Update databases" from File menu to create database files and wait until update process is finished). \n\nLast system error: %s
+STRERROR_CANNOTOPENDATABASEFORWRITE=Cannot open database file '%s'. \n\nCheck that the file path is correct and you have permissions to write into the file. \n\nLast system error: %s
 STRERROR_CANNOTREADDATABASE=Cannot read database file '%s'.
+STRERROR_CANNOTREADDATABASEWITHOSERROR=Cannot read database file '%s'. \n\nLast system error: %s
 STRERROR_INVALIDDATABASE=Invalid database format in file '%s'. Update database.
 STRERROR_CANNOTWRITEDATABASE=Cannot write database to file '%s'.
+STRERROR_CANNOTWRITEDATABASEWITHOSERROR=Cannot write database to file '%s'. \n\nLast system error: %s
 STRERROR_INVALIDFILEFORMAT=Error loading file %s. Invalid file format.
 STRERROR_NODRIVESSELECTED=No drives selected.
 STRERROR_NOCULUMNSSELECTED=No any columns selected. Select at least one.

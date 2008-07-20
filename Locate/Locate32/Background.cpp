@@ -12,7 +12,7 @@ inline CCheckFileNotificationsThread::~CCheckFileNotificationsThread()
 {	
 	FnDebugMessage("FN: destructor called");
 	
-	ASSERT(m_lState==sStopping || m_lState==sTerminated);
+	ASSERT((m_lState==sInitializing && m_nHandles==0) || m_lState==sStopping || m_lState==sTerminated);
 	ASSERT(m_lState==sTerminated || m_hThread!=NULL);
 	
 
@@ -978,7 +978,7 @@ BOOL CCheckFileNotificationsThread::DestroyHandles()
 	FnDebugMessage("FN: starting to destroy handles");
 	
 	// Various tests
-	ASSERT(m_lState==sStopping || m_lState==sTerminated);
+	ASSERT(m_lState==sStopping || m_lState==sTerminated || (m_lState==sInitializing && m_nHandles==0));
 
 	if (m_pEventHandles==NULL)
 		return TRUE;

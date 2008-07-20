@@ -141,12 +141,13 @@ public:
 		
 		// List view (continued)
 		efLVIgnoreListClicks = 0x02000000,
+		efLVDontMoveTooltips = 0x04000000,
 		efLVDontShowDeletedFiles = 0x10000000,
 		efLVNoUpdateWhileSorting = 0x20000000,
 		efLVRenamingActivated = 0x40000000,
 		efLVHeaderInAllViews = 0x80000000,
 		efLVDefault = efLVNoUpdateWhileSorting,
-		efLVSave = 0xB0000000,
+		efLVSave = 0xB4000000,
 
 		// Name dialog
 		efNameDontSaveNetworkDrivesAndDirectories =  0x00010000,
@@ -621,7 +622,7 @@ protected:
 	////////////////////////////////////////////////////////////
 	// Dialog, tabs and items
 protected:
-	void SetDialogMode(BOOL bLarge);
+	void SetDialogMode(BOOL bLarge,BOOL bForceRepositionIfMaximized=FALSE);
 	void EnableItems(BOOL bEnable=TRUE);
 	void LoadDialogIcon();
 	void SetControlPositions(UINT nType,int cx, int cy); // OnSize calls this to resize/reposition controls
@@ -792,7 +793,7 @@ protected:
 			
 	
 	// Helpers
-	void OpenFolder(LPCWSTR szFolder);
+	void OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile=NULL);
 	void OpenSelectedFolder(BOOL bContaining,int nItem=-1);
 	CLocatedItem** GetSeletedItems(int& nItems,int nIncludeIfNoneSeleted=-1);
 public:

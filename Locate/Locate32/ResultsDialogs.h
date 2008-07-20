@@ -11,19 +11,19 @@ class CResults : public CExceptionObject
 {
 public:
 	CResults(BOOL bThrowExceptions=FALSE);
-	CResults(DWORD dwFlags,LPCSTR szDescription,BOOL bThrowExceptions);
+	CResults(DWORD dwFlags,LPCWSTR szDescription,BOOL bThrowExceptions);
 	~CResults();
 
-	BOOL Initialize(DWORD dwFlags,LPCSTR szDescription);
+	BOOL Initialize(DWORD dwFlags,LPCWSTR szDescription);
 	void Close();
 
 	BOOL Create(CListCtrl* pList,int* pDetails,int nDetails);
-	BOOL SaveToFile(LPCSTR szFile) const;
-	BOOL SaveToHtmlFile(LPCSTR szFile) const;
+	BOOL SaveToFile(LPCWSTR szFile) const;
+	BOOL SaveToHtmlFile(LPCWSTR szFile) const;
 
 private:
 	DWORD m_dwFlags;
-	CString m_strDescription;
+	CStringW m_strDescription;
 
 	int m_nDetails;
 	int* m_pDetails;
@@ -34,7 +34,7 @@ private:
 	
 	CWordArray m_aFromDatabases;
 
-	CString m_sTempFile;
+	CStringW m_sTempFile;
 	
 
 
@@ -56,7 +56,7 @@ public:
 public:
 	DWORD m_nFlags;
 	CIntArray m_aDetails;
-	CString m_strDescription;
+	CStringW m_strDescription;
 
 private:
 	CListCtrl* m_pList;
@@ -70,7 +70,7 @@ inline CResults::CResults(BOOL bThrowExceptions)
 {
 }
 
-inline CResults::CResults(DWORD dwFlags,LPCSTR szDescription,BOOL bThrowExceptions)
+inline CResults::CResults(DWORD dwFlags,LPCWSTR szDescription,BOOL bThrowExceptions)
 :	m_nDetails(0),m_pDetails(NULL),m_pLengths(NULL),CExceptionObject(bThrowExceptions)
 {
 	Initialize(dwFlags,szDescription);

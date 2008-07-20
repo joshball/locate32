@@ -910,8 +910,8 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	ASSERT(CShortcut::GetDefaultShortcuts(aDefaultShortcuts,CShortcut::loadAll));
 #endif
 
-	// Set dialog more
-	SetDialogMode(FALSE);
+	// Set dialog mode
+	SetDialogMode(FALSE,TRUE);
 
 	// Set result list font
 	SetResultListFont();
@@ -1211,8 +1211,10 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 					}
 
 					rc.left+=3;
-					
-					m_pListTooltips->SetWindowPos(HWND_TOPMOST,rc.left,rc.top,0,0,SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOZORDER);
+
+					if (!IsExtraFlagSet(efLVDontMoveTooltips))
+						m_pListTooltips->SetWindowPos(HWND_TOPMOST,rc.left,rc.top,0,0,
+							SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOZORDER|SWP_ASYNCWINDOWPOS|SWP_NOOWNERZORDER|SWP_NOSENDCHANGING);
 					SetWindowLong(dwlMsgResult,1);
 
 					return 1;
@@ -2640,7 +2642,7 @@ void CLocateDlg::OnSaveResults()
 		CResults Results(SaveResultsDlg.m_nFlags,SaveResultsDlg.m_strDescription,TRUE);
 		Results.Create(m_pListCtrl,SaveResultsDlg.m_aDetails,SaveResultsDlg.m_aDetails.GetSize());
 
-		CString File;
+		CStringW File;
 		SaveResultsDlg.GetFilePath(File);
 		if (SaveResultsDlg.GetFilterIndex()==2)
 			Results.SaveToHtmlFile(File);

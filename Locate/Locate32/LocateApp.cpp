@@ -861,7 +861,7 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 					idx++;
 					while (lpCmdLine[idx]==L' ')
 						idx++;
-                    int nLength=(int)LastCharIndex(lpCmdLine+idx,L' ');
+                    int nLength=(int)FirstCharIndex(lpCmdLine+idx,L' ');
 					if (nLength<0)
 					{
 						nLength=(int)wcslen(lpCmdLine+idx);
@@ -2194,7 +2194,11 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
 				CStringW str;
-				str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
+				WCHAR* pError=CLocateApp::FormatLastOsError();
+				if (pError!=NULL)
+					str.Format(IDS_ERRORCANNOTOPENDBFORWRITE,pUpdater->GetCurrentDatabaseFile(),pError);
+				else
+					str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
 				ErrorBox(str);
 			}
 			return FALSE;
@@ -2202,7 +2206,11 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
 				CStringW str;
-				str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
+				WCHAR* pError=CLocateApp::FormatLastOsError();
+				if (pError!=NULL)
+					str.Format(IDS_ERRORCANNOTREADDBWITHOSERROR,pUpdater->GetCurrentDatabaseFile(),pError);
+				else
+					str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
 				ErrorBox(str);
 			}
 			return FALSE;
@@ -2210,7 +2218,11 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			if (CLocateApp::GetProgramFlags()&CLocateApp::pfShowCriticalErrors)
 			{
 				CStringW str;
-				str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
+				WCHAR* pError=CLocateApp::FormatLastOsError();
+				if (pError!=NULL)
+					str.Format(IDS_ERRORCANNOTWRITEDBWITHOSERROR,pUpdater->GetCurrentDatabaseFile(),pError);
+				else
+					str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
 				ErrorBox(str);
 			}
 			return FALSE;
