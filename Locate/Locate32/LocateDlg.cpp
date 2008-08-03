@@ -267,6 +267,10 @@ void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)
 	m_SizeDateDlg.SetStartData(pStartData,dwChanged);
 	m_AdvancedDlg.SetStartData(pStartData,dwChanged);
 
+	// Set view mode
+	if (pStartData->m_nListMode!=BYTE(-1))
+		SetListType((CLocateDlg::ListType)pStartData->m_nListMode);
+
 	// Set sorting
 	if (pStartData->m_nSorting!=BYTE(-1))
 	{
@@ -548,7 +552,11 @@ BOOL CLocateDlg::UpdateSettings()
 	// Set compare function
 	SetListCompareFunction();
 
-    
+	// Do not use selected databases anymore
+	RemoveExtraFlags(efUseLastSelectedDatabases);
+
+
+
 	if (m_NameDlg.EnableMultiDirectorySupport(GetFlags()&fgNameMultibleDirectories?TRUE:FALSE))
 	{
 		// This trick causes OnSize call
@@ -1440,12 +1448,16 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 
 	// Loading databases
 	CArray<PDATABASE>* pDatabases;
+	BOOL bFreeDatabases=FALSE;
 	if (bShowDatabasesDialog)
 	{
 		// Use Select databases dialog
 		pDatabases=new CArray<PDATABASE>;
+		bFreeDatabases=TRUE;
+
 		CSelectDatabasesDlg dbd(GetLocateApp()->GetDatabases(),*pDatabases,
-			GetLocateApp()->GetStartupFlags()&CLocateApp::CStartData::startupDatabasesOverridden?CSelectDatabasesDlg::flagDisablePresets:0,
+			CSelectDatabasesDlg::flagEnableUseDatabases|
+			(GetLocateApp()->GetStartupFlags()&CLocateApp::CStartData::startupDatabasesOverridden?CSelectDatabasesDlg::flagDisablePresets:0),
 			CRegKey2::GetCommonKey()+"\\Dialogs\\SelectDatabases/Locate");
 		if (!dbd.DoModal(*this))
 		{
@@ -1454,6 +1466,27 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 			delete pDatabases;
 			return NULL;
 		}
+
+		if (dbd.m_bUseTemporally)
+			AddExtraFlags(efUseLastSelectedDatabases);
+		else
+			RemoveExtraFlags(efUseLastSelectedDatabases);
+
+	}
+	else if (IsExtraFlagSet(efUseLastSelectedDatabases))
+	{
+		pDatabases=new CArray<PDATABASE>;
+		bFreeDatabases=TRUE;
+
+		if (!CSelectDatabasesDlg::GetLastSelectedDatabases(CRegKey2::GetCommonKey()+"\\Dialogs\\SelectDatabases/Locate",
+			GetLocateApp()->GetDatabases(),*pDatabases))
+		{
+			for (int i=0;i<pDatabases->GetSize();i++)
+				delete pDatabases->GetAt(i);
+			delete pDatabases;
+			return NULL;
+		}
+
 	}
 	else
 	{
@@ -1466,6 +1499,8 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 			return NULL;
 		}
 	}
+
+
 	m_DatabasesUsedInSearch.RemoveAll();
 	for (int i=0;i<pDatabases->GetSize();i++)
 	{
@@ -1478,7 +1513,7 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 	CLocater* pLocater=new CLocater(*pDatabases);
 
 	// Databases pointer are not needed anymore
-	if (bShowDatabasesDialog)
+	if (bFreeDatabases)
 	{
 		for (int i=0;i<pDatabases->GetSize();i++)
 			delete pDatabases->GetAt(i);

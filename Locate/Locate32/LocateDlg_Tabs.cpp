@@ -994,7 +994,7 @@ BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArra
 			aExtensions.Add(alloccopy(pType,nLength));
 
 			pType+=nLength;
-			for (;pType[0]==L' ';pType++);
+			for (;pType[0]==L' ' || pType[0]==L',' || pType[0]==L';';pType++);
 		}
 	}
 

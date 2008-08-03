@@ -1,12 +1,12 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   Updatedb.exe v3.1.8.7200 */
+   Updatedb.exe v3.1.8.8030 */
 
 #include <HFCLib.h>
 #include "../locatedb/locatedb.h"
 #include "../lan_resources.h"
 #include "../common/common.h"
 
-LPCSTR szVersionStr="updtdb32 3.1 RC1 build 8.7200";
+LPCSTR szVersionStr="updtdb32 3.1 RC2 build 8.8030";
 
 
 

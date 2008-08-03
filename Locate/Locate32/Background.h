@@ -269,6 +269,7 @@ inline BOOL CBackgroundUpdater::IsWaiting() const
 
 inline void CBackgroundUpdater::StopIgnoringItems()
 {
+	BuDebugMessage("BU StopIgnoringItems");
 	InterlockedExchange(&m_lIgnoreItemsAndGoToSleep,FALSE);
 }
 

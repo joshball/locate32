@@ -230,6 +230,9 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDM_MD5SUMSFORSAMESIZEFILES:
 		OnComputeMD5Sums(TRUE);
 		break;
+	case IDM_COPYMD5SUMTOCLIPBOARD:
+		OnCopyMD5SumsToClipboard();
+		break;
 	case IDM_SHOWFILEINFORMATION:
 		OnShowFileInformation();
 		break;
@@ -1845,7 +1848,9 @@ void CLocateDlg::OnNewSearch()
 		m_pTabCtrl->SetCurSel(0);
 	}
 	
-	
+	// Do not use selected databases anymore
+	RemoveExtraFlags(efUseLastSelectedDatabases);
+
 	// Make title
 	CStringW title;
 	title.LoadString(IDS_TITLE);
@@ -2954,6 +2959,97 @@ void CLocateDlg::OnComputeMD5Sums(BOOL bForSameSizeFilesOnly)
 		}
 	
         
+	}
+}
+
+void CLocateDlg::OnCopyMD5SumsToClipboard()
+{
+	CWaitCursor e;
+	CStringW Text;
+	int nSelectedFiles=0;
+	
+	// Count selected files
+	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+	while (nItem!=-1)
+	{
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+		if (pItem!=NULL)
+		{
+			if (!pItem->IsFolder())
+				nSelectedFiles++;
+		}
+		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+	}
+	
+	if (nSelectedFiles>0)
+	{
+		nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+		while (nItem!=-1)
+		{
+			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+			if (pItem!=NULL)
+			{
+				if (!pItem->IsFolder())
+				{
+					pItem->ComputeMD5sum(TRUE,TRUE);
+					m_pListCtrl->RedrawItems(nItem,nItem);
+
+					if (!Text.IsEmpty())
+						Text << L"\r\n";
+
+					if (nSelectedFiles>1)
+						Text << pItem->GetName() << L' ';
+
+
+					Text << pItem->GetExtraText(MD5sum);
+				}
+			}
+
+			nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+		}
+	}
+
+	
+	if (IsUnicodeSystem())
+	{
+		HGLOBAL hMem=GlobalAlloc(GHND,(Text.GetLength()+1)*2);
+		if (hMem==NULL)
+		{
+			ShowErrorMessage(IDS_ERRORCANNOTALLOCATE);
+			return;
+		}
+		
+		BYTE* pData=(BYTE*)GlobalLock(hMem);
+		MemCopyW((LPWSTR)pData,LPCWSTR(Text),Text.GetLength()+1);
+		GlobalUnlock(hMem);
+
+		if (OpenClipboard())
+		{
+			EmptyClipboard();
+			SetClipboardData(CF_UNICODETEXT,hMem);
+			CloseClipboard();
+		}
+	}
+	else
+	{
+		HGLOBAL hMem=GlobalAlloc(GHND,Text.GetLength()+1);
+		if (hMem==NULL)
+		{
+			ShowErrorMessage(IDS_ERRORCANNOTALLOCATE);
+			return;
+		}
+
+		BYTE* pData=(BYTE*)GlobalLock(hMem);
+		WideCharToMultiByte(CP_ACP,0,LPCWSTR(Text),(int)Text.GetLength()+1,(LPSTR)pData,Text.GetLength()+1,NULL,NULL);
+		GlobalUnlock(hMem);
+
+		if (OpenClipboard())
+		{
+			EmptyClipboard();
+			SetClipboardData(CF_TEXT,hMem);
+			CloseClipboard();
+		}
+
 	}
 }
 

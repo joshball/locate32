@@ -725,9 +725,9 @@ void CLocatedItem::UpdateParentIcon()
 		{
 			pParent=new WCHAR[4];
 			pParent[0]=szParent[0];
-			pParent[0]=L':';
-			pParent[0]=L'\\';
-			pParent[0]=L'\0';
+			pParent[1]=L':';
+			pParent[2]=L'\\';
+			pParent[3]=L'\0';
 		}
 		else
 			pParent=szParent;
@@ -1174,7 +1174,7 @@ void CLocatedItem::UpdateDimensions()
 	ItemDebugMessage("CLocatedItem::UpdateDimensions END");
 }
 
-void CLocatedItem::ComputeMD5sum(BOOL bForce)
+void CLocatedItem::ComputeMD5sum(BOOL bForce,BOOL bOnlyIfNotComputedYet)
 {
 	if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating))
 		return;
@@ -1182,11 +1182,16 @@ void CLocatedItem::ComputeMD5sum(BOOL bForce)
 	ItemDebugMessage("CLocatedItem::ComputeMD5sum BEGIN");
 
 	ExtraInfo* pField=CreateExtraInfoField(MD5sum);
+	
+	if (bOnlyIfNotComputedYet && pField->szText!=NULL && !pField->bShouldUpdate)
+		return;
+	
 	pField->bShouldUpdate=FALSE;
 
 	if (!bForce && !(GetLocateDlg()->GetFlags()&CLocateDlg::fgLVComputeMD5Sums))
 		return; 
-		
+
+	
 	if (pField->szText!=NULL)
 	{
 		WCHAR* pTmp=pField->szText;

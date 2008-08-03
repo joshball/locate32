@@ -4150,7 +4150,8 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::ItemUpOrDown(
 	li2.mask=LVIF_TEXT|LVIF_IMAGE|LVIF_STATE;
 	li1.stateMask=LVIS_FOCUSED|LVIS_SELECTED;
 
-		// Subitem 0
+
+	// Subitem 0
 	li1.iSubItem=li2.iSubItem=0;
 	m_pList->GetItem(&li1);
 	m_pList->GetItem(&li2);
@@ -4185,6 +4186,12 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::ItemUpOrDown(
 	m_pList->SetItem(&li1);
 	m_pList->SetItem(&li2);
 
+	// Check state
+	BOOL bState=m_pList->GetCheckState(nSelected);
+	m_pList->SetCheckState(nSelected,m_pList->GetCheckState(nOther));
+	m_pList->SetCheckState(nOther,bState);
+
+		
 	m_pList->EnsureVisible(nOther,FALSE);
 
 	EnableControls();

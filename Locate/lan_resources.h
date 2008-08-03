@@ -582,6 +582,9 @@
 #define IDC_STATICITEM                  1248
 #define IDC_ITEM                        1249
 #define IDC_ITEMSPIN                    1250
+#define IDC_USEDATABASESLABEL			1251
+#define IDC_USEDATABASESTEMPORALLY      1252
+#define IDC_USEDATABASESONCE            1253
 #define IDC_FINDTEXT					1300
 #define IDC_FINDNEXT					1301
 #define IDC_SEARCHUP					1302
@@ -1170,6 +1173,7 @@
 #define IDM_DEFOPEN                     40062
 #define IDM_COPYPATHTOCB                40063
 #define IDM_CHANGEFILENAME              40064
+#define IDM_COPYMD5SUMTOCLIPBOARD       40065
 #define IDM_CHANGECASE                  40066
 #define IDM_COPYSHORTPATHTOCB           40067
 #define IDM_FORCEUPDATE                 40068

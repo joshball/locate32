@@ -70,7 +70,7 @@ inline CLocateApp::CStartData::CStartData()
     m_nSorting(BYTE(-1)),m_nPriority(priorityDontChange),
 	m_pStartPath(NULL),m_pStartString(NULL),
 	m_pTypeString(NULL),m_pFindText(NULL),m_pLoadPreset(NULL),
-	m_nActivateInstance(0),
+	m_nActivateInstance(0),m_nListMode(BYTE(-1)),
 	m_nActivateControl(None)
 { 
 }

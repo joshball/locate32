@@ -93,6 +93,8 @@ public:
 		char m_cMinDateType;
 		BYTE m_nSorting; 
 		SHORT m_nActivateInstance; // 0 not set, -1 first instance, X instance no
+		BYTE m_nListMode; // -1 not set, otherwise same as CLocateDlg::ListType
+
 
 		CArrayFP<CDatabase*> m_aDatabases;
 

@@ -2043,7 +2043,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 
 void CLocateDlg::OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile)
 {
-	CString sProgram;
+	CStringW sProgram;
 	
 	// Loading some general settings
 	CRegKey2 RegKey;
@@ -2052,37 +2052,39 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile)
 		DWORD dwTemp=0;
 		RegKey.QueryValue("Use other program to open folders",dwTemp);
 		if (dwTemp)	
-			RegKey.QueryValue("Open folders with",sProgram);
+			RegKey.QueryValue(L"Open folders with",sProgram);
 	}
 	
 	if (sProgram.IsEmpty())
 	{
 		SHELLEXECUTEINFOW sxi;
 		sxi.cbSize=sizeof(SHELLEXECUTEINFO);
-		sxi.fMask=SEE_MASK_NOCLOSEPROCESS;
+		sxi.fMask=SEE_MASK_NOCLOSEPROCESS|SEE_MASK_IDLIST;
 		sxi.hwnd=*this;
 		sxi.nShow=SW_SHOWNORMAL;
 		sxi.lpParameters=szwEmpty;
 		sxi.lpDirectory=szwEmpty;
-			
+		sxi.lpFile=NULL;
+		sxi.lpIDList=GetIDList(szFolder);
+
 		if (IsUnicodeSystem())		
 		{
 			sxi.lpVerb=L"open";
-			sxi.lpFile=szFolder;
 			ShellExecuteExW(&sxi);	
 		}
 		else
 		{
 			sxi.lpVerb=(LPWSTR)"open";
-			sxi.lpFile=(LPWSTR)alloccopyWtoA(szFolder);
 			ShellExecuteEx((SHELLEXECUTEINFOA*)&sxi);	
 			delete[] (LPSTR)sxi.lpFile;
 		}
+
+		CoTaskMemFree(sxi.lpIDList);
 		
 	}
 	else
 	{
-		CString sTemp;
+		CStringW sTemp;
 		int nIndex=sProgram.FindFirst('%');
 		int nAdded=0;
         while (nIndex!=-1)
@@ -2109,7 +2111,7 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile)
 			nAdded=nIndex;
 			nIndex=sProgram.FindNext('%',nIndex);
 		}
-		sTemp<<(LPCSTR(sProgram)+nAdded);
+		sTemp<<(LPCWSTR(sProgram)+nAdded);
 
 		PROCESS_INFORMATION pi;
 		STARTUPINFO si;
@@ -2122,12 +2124,25 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile)
 		si.dwFlags=STARTF_USESHOWWINDOW;
 		si.wShowWindow=SW_SHOWDEFAULT;
 		
-		if (CreateProcess(NULL,sTemp.GetBuffer(),NULL,
-			NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
-			NULL,NULL,&si,&pi))
+		if (IsUnicodeSystem())
 		{
-			CloseHandle(pi.hThread);
-			CloseHandle(pi.hProcess);
+			if (CreateProcessW(NULL,sTemp.GetBuffer(),NULL,
+				NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
+				NULL,NULL,(STARTUPINFOW*)&si,&pi))
+			{
+				CloseHandle(pi.hThread);
+				CloseHandle(pi.hProcess);
+			}
+		}
+		else
+		{
+			if (CreateProcessA(NULL,(LPSTR)(LPCSTR)W2A(sTemp.GetBuffer()),NULL,
+				NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
+				NULL,NULL,&si,&pi))
+			{
+				CloseHandle(pi.hThread);
+				CloseHandle(pi.hProcess);
+			}
 		}
 
 	}

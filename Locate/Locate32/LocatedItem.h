@@ -68,7 +68,7 @@ public:
 	void UpdateOwner();
 	void UpdateShortFileName();
 	void UpdateShortFilePath();
-	void ComputeMD5sum(BOOL bForce=FALSE);
+	void ComputeMD5sum(BOOL bForce=FALSE,BOOL bOnlyIfNotComputedYet=FALSE);
 	void UpdateSummaryProperties();
 	void UpdateDocSummaryProperties();
 	void UpdateVersionInformation();

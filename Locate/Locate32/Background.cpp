@@ -1162,15 +1162,25 @@ void CBackgroundUpdater::IgnoreItemsAndGoToSleep()
 	GetTrayIconWnd()->GetLocateDlgThread()->ModalLoop();
 		
 	while (!m_lIsWaiting)
+	{
 		Sleep(20);
+		PostQuitMessage(0);
+		GetTrayIconWnd()->GetLocateDlgThread()->ModalLoop();
+	}
+	
 
 	BuDebugMessage("BU: modal loop out");
 
-	EnterCriticalSection(&m_csUpdateList);
-	m_aUpdateList.RemoveAll();
-	LeaveCriticalSection(&m_csUpdateList);
+	if (m_lIgnoreItemsAndGoToSleep)
+	{
+		EnterCriticalSection(&m_csUpdateList);
+		m_aUpdateList.RemoveAll();
+		LeaveCriticalSection(&m_csUpdateList);
+	}
 
-	ASSERT(m_lIgnoreItemsAndGoToSleep);
+	
+	BuDebugMessage("BU: IgnoreItemsAndGoToSleep END");
+
 }
 
 inline BOOL CBackgroundUpdater::RunningProc()

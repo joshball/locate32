@@ -269,13 +269,10 @@ LPITEMIDLIST GetIDList(LPCWSTR lpszFileName)
 	if (FAILED(SHGetDesktopFolder(&pDesktop)))
 		return NULL;
 
+	HRESULT hRes=pDesktop->ParseDisplayName(NULL,NULL,(LPOLESTR)lpszFileName,NULL,&pidl,NULL);
+	pDesktop->Release();
 	
-	if (FAILED(pDesktop->ParseDisplayName(NULL,NULL,(LPOLESTR)lpszFileName,NULL,&pidl,NULL)))
-	{
-		pDesktop->Release();
-		return NULL;
-	}
-	return pidl;
+	return FAILED(hRes)?NULL:pidl;
 }
 
 LPITEMIDLIST GetIDListForParent(LPCWSTR lpszFileName)
@@ -295,13 +292,10 @@ LPITEMIDLIST GetIDListForParent(LPCWSTR lpszFileName)
 		return NULL;
 	}
 	
-	if (FAILED(pDesktop->ParseDisplayName(NULL,NULL,(LPOLESTR)szFolder,NULL,&pidl,NULL)))
-	{
-		pDesktop->Release();
-		delete[] szFolder;
-		return NULL;
-	}
-	return pidl;
+	HRESULT hRes=pDesktop->ParseDisplayName(NULL,NULL,(LPOLESTR)szFolder,NULL,&pidl,NULL);
+	pDesktop->Release();
+	
+	return FAILED(hRes)?NULL:pidl;
 }
 
 HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc,LPCWSTR pszParams)

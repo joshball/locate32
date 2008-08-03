@@ -160,6 +160,12 @@ public:
 	void SetThreadPriority(int nThreadPriority);
 	int GetThreadPriority() const;
 
+
+	static BOOL LoadPreset(LPCSTR szRegKey,LPCWSTR szName,WORD& wDatabases,WORD*& pDatabaseIDs,
+		WORD& wThreads,WORD*& pThreadsIDs,WORD& wSelectedDatabases,WORD*& pSelectedIDs);
+	static BOOL GetLastSelectedDatabases(LPCSTR szRegKey,const CArray<PDATABASE>& rOrigDatabases,CArray<PDATABASE>& rSelectedDatabases);
+
+
 public:
 	enum Flags {
 		flagDisablePresets=0x1,
@@ -170,7 +176,8 @@ public:
 		flagCustomIsSelected=0x20,
 		flagLasestIsSelected=0x30,
 		flagSelectedMask=0x30,
-		flagEnablePriority=0x40
+		flagEnablePriority=0x40,
+		flagEnableUseDatabases=0x80
 	};
 	const CArray<PDATABASE>& m_rOrigDatabases;
 	CArray<PDATABASE>& m_rSelectedDatabases;
@@ -185,7 +192,10 @@ public:
 	CString m_Buffer;
 	CStringW m_BufferW;
 
+	union {
 	int m_nThreadPriority;
+	BOOL m_bUseTemporally;
+	};
 
 };
 

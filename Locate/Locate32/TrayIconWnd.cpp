@@ -1789,7 +1789,7 @@ void CTrayIconWnd::NotifyFinishingUpdating()
 		StopUpdateStatusNotification();
 	}
 
-	CLocateDlg* pLocateDlg=GetLocateDlg();
+	CLocateDlg* pLocateDlg=::GetLocateDlg();
 	if (pLocateDlg!=NULL)
 	{
 		pLocateDlg->StopUpdateAnimation();

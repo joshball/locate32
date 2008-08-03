@@ -874,6 +874,16 @@ BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 		ShowDlgItem(IDC_THREADPRIORITY,swHide);
 		ShowDlgItem(IDC_THREADPRIORITYLABEL,swHide);
 	}
+	
+	
+	if (m_bFlags&flagEnableUseDatabases)
+		CheckDlgButton(m_bUseTemporally?IDC_USEDATABASESTEMPORALLY:IDC_USEDATABASESONCE,TRUE);
+	else
+	{
+		ShowDlgItem(IDC_USEDATABASESLABEL,swHide);
+		ShowDlgItem(IDC_USEDATABASESONCE,swHide);
+		ShowDlgItem(IDC_USEDATABASESTEMPORALLY,swHide);
+	}
 
 	m_List.LoadColumnsState(HKCU,m_pRegKey,"Database List Widths");
 	
@@ -1005,6 +1015,14 @@ void CSelectDatabasesDlg::OnOK()
 		    m_nThreadPriority=THREAD_PRIORITY_NORMAL;
             break;
 		}
+	}
+	else if (m_bFlags&flagEnableUseDatabases)
+	{
+		m_bUseTemporally=IsDlgButtonChecked(IDC_USEDATABASESTEMPORALLY);
+
+		CRegKey RegKey;
+		if(RegKey.OpenKey(HKCU,m_pRegKey,CRegKey::defWrite)==ERROR_SUCCESS)
+			RegKey.SetValue("Use databases temporally",(DWORD)m_bUseTemporally);
 	}
 	
 	if (m_List.GetItemCount()>0)
@@ -1512,6 +1530,8 @@ BOOL CSelectDatabasesDlg::InsertDatabases(WORD wCount,WORD wThreads,const WORD* 
 }
 
 
+
+
 void CSelectDatabasesDlg::EnableThreadGroups(int nThreadGroups)
 {
 	if (m_List.IsGroupViewEnabled())
@@ -1954,8 +1974,25 @@ BOOL CSelectDatabasesDlg::SavePreset(LPCWSTR szName,BOOL bAskOverwrite)
 
 BOOL CSelectDatabasesDlg::LoadPreset(LPCWSTR szName)
 {
+	WORD wDatabases,wThreads,wSelectedDatabases;
+	WORD *pDatabaseIDs,*pThreadsIDs,*pSelectedIDs;
+
+	if (!LoadPreset(m_pRegKey,szName,wDatabases,pDatabaseIDs,wThreads,pThreadsIDs,wSelectedDatabases,pSelectedIDs))
+		return FALSE;
+
+	BOOL bRet=InsertDatabases(wDatabases,wThreads,pDatabaseIDs,pThreadsIDs,wSelectedDatabases,pSelectedIDs);
+	
+	delete[] pDatabaseIDs;
+	delete[] pThreadsIDs;
+	delete[] pSelectedIDs;
+	
+	return bRet;
+}
+
+BOOL CSelectDatabasesDlg::LoadPreset(LPCSTR szRegKey,LPCWSTR szName,WORD& wDatabases,WORD*& pDatabaseIDs,WORD& wThreads,WORD*& pThreadsIDs,WORD& wSelectedDatabases,WORD*& pSelectedIDs)
+{
 	CRegKey RegKey;
-	if (RegKey.OpenKey(HKCU,m_pRegKey,CRegKey::openExist|CRegKey::samRead|CRegKey::samQueryValue)!=ERROR_SUCCESS)
+	if (RegKey.OpenKey(HKCU,szRegKey,CRegKey::openExist|CRegKey::samRead|CRegKey::samQueryValue)!=ERROR_SUCCESS)
 		return FALSE;
 
 	CStringW sName;
@@ -1995,21 +2032,81 @@ BOOL CSelectDatabasesDlg::LoadPreset(LPCWSTR szName)
 
 	if (dwType==REG_BINARY && dwRet>0)
 	{	
-		WORD wDatabases=pData[0];
-		if (sizeof(WORD)*(3+2*wDatabases+pData[2])!=dwLength)
+		wDatabases=pData[0];
+		wThreads=pData[1];
+		wSelectedDatabases=pData[2];
+
+		if (sizeof(WORD)*(3+2*wDatabases+wSelectedDatabases)!=dwLength)
+		{
+			delete[] pData;
 			return FALSE;
+		}
 
-		WORD* pDatabaseIDs=pData+3;
-		WORD* pThreadsIDs=pDatabaseIDs+wDatabases;
-		WORD* pSelectedIDs=pThreadsIDs+wDatabases;
+		pDatabaseIDs=new WORD[max(wDatabases,2)];
+		CopyMemory(pDatabaseIDs,pData+3,wDatabases*sizeof(WORD));
+		pThreadsIDs=new WORD[max(wDatabases,2)];
+		CopyMemory(pThreadsIDs,pData+3+wDatabases,wDatabases*sizeof(WORD));
+			
+		pSelectedIDs=new WORD[max(wSelectedDatabases,2)];
+		CopyMemory(pSelectedIDs,pData+3+2*wDatabases,wSelectedDatabases*sizeof(WORD));
 
-		InsertDatabases(wDatabases,pData[1],pDatabaseIDs,pThreadsIDs,pData[2],pSelectedIDs);
+		
 	}
 
 	delete[] pData;
 	return dwType==REG_BINARY && dwRet>0;
 }	
 
+
+BOOL CSelectDatabasesDlg::GetLastSelectedDatabases(LPCSTR szRegKey,const CArray<PDATABASE>& rOrigDatabases,CArray<PDATABASE>& rSelectedDatabases)
+{
+	WORD wDatabases,wThreads,wSelectedDatabases;
+	WORD *pDatabaseIDs,*pThreadsIDs,*pSelectedIDs;
+
+	if (!LoadPreset(szRegKey,NULL,wDatabases,pDatabaseIDs,wThreads,pThreadsIDs,wSelectedDatabases,pSelectedIDs))
+		return FALSE;
+
+	
+
+	for (int i=0;i<wDatabases;i++)
+	{
+		// Check first whether database is selected
+		BOOL bSelected=FALSE;
+		for (int j=0;j<wSelectedDatabases;j++)
+		{
+			if (pDatabaseIDs[i]==pSelectedIDs[j])
+			{
+				bSelected=TRUE;
+				break;
+			}
+		}
+		if (!bSelected)
+			continue;
+
+
+
+		
+		// Searching database
+		CDatabase* pDatabase=NULL;
+		for (int j=0;j<rOrigDatabases.GetSize();j++)
+		{
+			if (rOrigDatabases[j]->GetID()==pDatabaseIDs[i])
+			{
+				CDatabase* pDatabase=new CDatabase(*rOrigDatabases[j]);
+				pDatabase->Enable();
+				rSelectedDatabases.Add(pDatabase);
+				break;
+			}
+		}
+
+	}
+
+	delete[] pDatabaseIDs;
+	delete[] pThreadsIDs;
+	delete[] pSelectedIDs;
+
+	return TRUE;
+}
 ///////////////////////////////////////////////////////////
 // CSelectDatabasesDlg::CPresetNameDlg
 

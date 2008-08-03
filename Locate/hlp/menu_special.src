@@ -50,6 +50,11 @@ or in <a href="menu_file.htm">File menu</a>. It offers the following commands:
 </TR>
 
 <TR VALIGN="top">
+<TD width=30%><A HREF="hid_special_copyMD5sumstoclipboard.htm">Copy MD5 sums to clipboard</A></TD>
+<TD width=70%>Copies MD5 sums to clipboard.</TD>
+</TR>
+
+<TR VALIGN="top">
 <TD width=30%><A HREF="hid_special_removedeletedfiles.htm">Remove deleted files</A></TD>
 <TD width=70%>Remove deleted files from the result list.</TD>
 </TR>

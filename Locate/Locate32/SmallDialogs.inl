@@ -27,14 +27,27 @@ inline CSelectColumnsDlg::ColumnItem::ColumnItem(int nCol,DetailType nType,int n
 inline CSelectDatabasesDlg::CSelectDatabasesDlg(const CArray<PDATABASE>& rOrigDatabases,CArray<PDATABASE>& rSelectedDatabases,BYTE bFlags,LPCSTR szRegKey)
 :	CDialog(IDD_SELECTDATABASES),
 	m_rOrigDatabases(rOrigDatabases),m_rSelectedDatabases(rSelectedDatabases),
-	m_bFlags(bFlags),m_nThreadsCurrently(1),m_pSelectDatabases(NULL),
-	m_nThreadPriority(THREAD_PRIORITY_NORMAL)
+	m_bFlags(bFlags),m_nThreadsCurrently(1),m_pSelectDatabases(NULL)
 {
 	if (szRegKey!=NULL)
 		m_pRegKey=alloccopy(szRegKey);
 	else
 		m_pRegKey=NULL;
 
+
+	if (bFlags&flagEnablePriority)
+		m_nThreadPriority=THREAD_PRIORITY_NORMAL;
+	else
+	{
+		m_bUseTemporally=FALSE;
+	
+		if (m_pRegKey!=NULL)
+		{
+			CRegKey RegKey;
+			if(RegKey.OpenKey(HKCU,m_pRegKey,CRegKey::defRead)==ERROR_SUCCESS)
+				RegKey.QueryValue("Use databases temporally",(LPSTR)&m_bUseTemporally,sizeof(DWORD));
+		}
+	}
 }
 
 inline BOOL CSelectDatabasesDlg::IsItemEnabled(const CDatabase* pDatabase)

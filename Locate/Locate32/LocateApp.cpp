@@ -524,7 +524,10 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			pStartData->m_nStartup|=CStartData::startupNewInstance;
 			break;
 		case L'A': // Activate control
-			switch(lpCmdLine[++idx])
+			idx++;
+			if (lpCmdLine[idx]==L':')
+				idx++;
+			switch(lpCmdLine[idx])
 			{
 			case L'n':
 			case L'N':
@@ -544,7 +547,41 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 				break;	
 			}
 			idx++;
-			break;case L'a': // Activate instance
+			break;
+		case L'V': // Set view mode
+			idx++;
+			if (lpCmdLine[idx]==L':')
+				idx++;
+			switch(lpCmdLine[idx])
+			{
+			case L's':
+			case L'S':
+				pStartData->m_nListMode=CLocateDlg::ltSmallIcons;
+				break;	
+			case L'm':
+			case L'M':
+				pStartData->m_nListMode=CLocateDlg::ltMediumIcons;
+				break;
+			case L'l':
+			case L'L':
+				pStartData->m_nListMode=CLocateDlg::ltLargeIcons;
+				break;	
+			case L'x':
+			case L'X':
+				pStartData->m_nListMode=CLocateDlg::ltExtraLargeIcons;
+				break;	
+			case L'i':
+			case L'I':
+				pStartData->m_nListMode=CLocateDlg::ltList;
+				break;	
+			case L'd':
+			case L'D':
+				pStartData->m_nListMode=CLocateDlg::ltDetails;
+				break;	
+			}
+			idx++;
+			break;
+		case L'a': // Activate instance
 			idx++;
 			if (lpCmdLine[idx]==L':')
 				idx++;

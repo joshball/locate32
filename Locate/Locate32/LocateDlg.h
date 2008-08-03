@@ -131,6 +131,7 @@ public:
 		efMatchWhileNameIfAsterisks = 0x00000040,
 		efAsteriskAtEndEvenIfExtensionExists = 0x00000080,
 		efAndModeAlways = 0x00000100,
+		efUseLastSelectedDatabases = 0x00000200,
 		efLocateProcessDefaults = efEnableLogicalOperations|efAllowSpacesAsSeparators|efAsteriskAtEndEvenIfExtensionExists,
 		efLocateProcessSave = 0x000001F0,
 
@@ -609,6 +610,7 @@ protected:
 	void OnChangeFileNameCase();
 	void OnUpdateLocatedItem();
 	void OnComputeMD5Sums(BOOL bForSameSizeFilesOnly);
+	void OnCopyMD5SumsToClipboard();
 	void OnShowFileInformation();
 	void OnRemoveDeletedFiles();
 	void OnRenameFile(int nItem=-1);
@@ -837,6 +839,7 @@ protected:
 	WORD m_WaitEvery30; // Delay (in ms) after 30 items are added to the retults list
 	WORD m_WaitEvery60; // Delay (in ms) after 60 items are added to the retults list
 
+public:
 	// List type
 	enum ListType {
 		ltSmallIcons = 0,
@@ -846,6 +849,7 @@ protected:
 		ltList = 4,
 		ltDetails = 5,
 	} m_nCurrentListType;
+protected:
 	void SetListType(ListType nType,BOOL bResetIfSame=FALSE);
 	void SetMenuCheckMarkForListType();
 
@@ -1104,7 +1108,7 @@ public:
 	friend BOOL CTrayIconWnd::TurnOnShortcuts();
 	friend BOOL CLocateDlgThread::OnThreadMessage(MSG* pMsg);
 	friend class CLocatedItem;
-
+	
 };
 
 inline CLocateDlg* GetLocateDlg()
