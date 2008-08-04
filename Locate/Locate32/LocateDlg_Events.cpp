@@ -2033,7 +2033,6 @@ void CLocateDlg::OnProperties(int nItem)
 		return;
 
 	
-	
 	int nItems;
 	CLocatedItem** pItems=GetSeletedItems(nItems,nItem);
 	ContextMenuStuff* pContextMenu=GetContextMenuForItems(nItems,pItems);
@@ -2042,25 +2041,34 @@ void CLocateDlg::OnProperties(int nItem)
 	{
 		if (pContextMenu->nIDLParentLevel>1)
 		{
-			CMINVOKECOMMANDINFO cii;
-			cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
-			cii.fMask=0;
-			cii.hwnd=*this;
-			cii.lpVerb="properties";
-			cii.lpParameters=NULL;
-			cii.lpDirectory=NULL;
-			cii.nShow=SW_SHOWDEFAULT;
+			// Quote context menu items
 			HMENU hMenu=CreatePopupMenu();
-			pContextMenu->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
-			pContextMenu->pContextMenu->InvokeCommand(&cii);
+			HRESULT hRes=pContextMenu->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_CANRENAME);
+			if (SUCCEEDED(hRes))
+			{
+				CMINVOKECOMMANDINFO cii;
+				cii.cbSize=sizeof(CMINVOKECOMMANDINFO);
+				cii.fMask=0;
+				cii.hwnd=*this;
+				cii.lpVerb="properties";
+				cii.lpParameters=NULL;
+				cii.lpDirectory=NULL;
+				cii.nShow=SW_SHOWDEFAULT;
+				hRes=pContextMenu->pContextMenu->InvokeCommand(&cii);
+			}
 			DestroyMenu(hMenu);
 			delete[] pItems;
 			delete pContextMenu;		
-			return;
+			
+			if (SUCCEEDED(hRes))
+				return;
+			
 		}
-		delete pContextMenu;		
+		else
+			delete pContextMenu;		
 	}
 
+	
 	CPropertiesSheet* fileprops=new CPropertiesSheet(nItems,pItems);
 	delete[] pItems;
 
