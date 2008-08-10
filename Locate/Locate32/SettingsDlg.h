@@ -103,6 +103,7 @@ public:
 		virtual void OnHelp(LPHELPINFO lphi);
 			
 		BOOL ListNotifyHandler(NMLISTVIEW *pNm);
+		HRESULT ListCustomDrawHandler(NMLVCUSTOMDRAW* pLVCD);
 				
 	protected:
 		friend CSettingsProperties;
@@ -111,14 +112,22 @@ public:
 		void FindLanguages();
         
 		struct LanguageItem {
-			CStringW Language;
-			CStringW File;
-			CStringW Description;
+			CStringW sLanguage;
+			CStringW sFile;
+			CStringW sDescription;
+			CStringW sForVersion;
+
+			DWORD dwForVersionHi;
+			DWORD dwForVersionLo;
 		};
 
 	private:
 		CListCtrl* m_pList;
 		int nLastSel;
+		CFont m_fBoldFont;
+
+		DWORD dwVersionHi;
+		DWORD dwVersionLo;
 	};
 
 	class CDatabasesSettingsPage : public CPropertyPage 

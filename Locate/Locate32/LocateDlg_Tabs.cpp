@@ -95,82 +95,90 @@ BOOL CALLBACK CLocateDlg::CNameDlg::EnumAndSubclassNameChilds(HWND hwnd,LPARAM l
 
 void CLocateDlg::CNameDlg::ChangeNumberOfItemsInLists(int iNumberOfNames,int iNumberOfTypes,int iNumberOfDirectories)
 {
-	if (iNumberOfNames<=0)
+	if (iNumberOfNames!=-1)
 	{
-		m_Name.ResetContent();
-		m_nMaxNamesInList=0;
-	}
-	else if (iNumberOfNames!=m_nMaxNamesInList)
-	{
-		while (m_Name.GetCount()>iNumberOfNames)
-			m_Name.DeleteString(iNumberOfNames);
-		m_nMaxNamesInList=iNumberOfNames;
-	}
-
-	if (iNumberOfTypes<=0)
-	{
-		m_Type.ResetContent();
-		m_Type.AddString(ID2A(IDS_NOEXTENSION));
-		m_nMaxTypesInList=0;
-	}
-	else if (iNumberOfTypes!=m_nMaxTypesInList)
-	{
-		while (m_Type.GetCount()>iNumberOfTypes+1)
-			m_Type.DeleteString(iNumberOfTypes+1);
-		m_nMaxTypesInList=iNumberOfTypes;
-	}
-
-	EnterCriticalSection(&m_cBrowse);
-	if (iNumberOfDirectories<=0)
-	{
-		if (m_pBrowse!=NULL)
+		if (iNumberOfNames<=0)
 		{
-			for (int i=0;i<m_LookIn.GetCount();i++)
+			m_Name.ResetContent();
+			m_nMaxNamesInList=0;
+		}
+		else if (iNumberOfNames!=m_nMaxNamesInList)
+		{
+			while (m_Name.GetCount()>iNumberOfNames)
+				m_Name.DeleteString(iNumberOfNames);
+			m_nMaxNamesInList=iNumberOfNames;
+		}
+	}
+
+	if (iNumberOfTypes!=-1)
+	{
+		if (iNumberOfTypes<=0)
+		{
+			m_Type.ResetContent();
+			m_Type.AddString(ID2A(IDS_NOEXTENSION));
+			m_nMaxTypesInList=0;
+		}
+		else if (iNumberOfTypes!=m_nMaxTypesInList)
+		{
+			while (m_Type.GetCount()>iNumberOfTypes+1)
+				m_Type.DeleteString(iNumberOfTypes+1);
+			m_nMaxTypesInList=iNumberOfTypes;
+		}
+	}
+
+	if (iNumberOfDirectories!=-1)
+	{
+		EnterCriticalSection(&m_cBrowse);
+		if (iNumberOfDirectories<=0)
+		{
+			if (m_pBrowse!=NULL)
 			{
-				LPARAM lParam=m_LookIn.GetItemData(i);
-				if (LOWORD(lParam)==Custom)
+				for (int i=0;i<m_LookIn.GetCount();i++)
 				{
-					m_LookIn.DeleteItem(i);
-					i--;
+					LPARAM lParam=m_LookIn.GetItemData(i);
+					if (LOWORD(lParam)==Custom)
+					{
+						m_LookIn.DeleteItem(i);
+						i--;
+					}
 				}
+				
+				for (int i=0;i<int(m_nMaxBrowse);i++)
+					m_pBrowse[i].Empty();
+				delete[] m_pBrowse;
+				m_pBrowse=NULL;
 			}
+			m_nMaxBrowse=0;
+		}
+		else if (iNumberOfDirectories!=m_nMaxBrowse)
+		{
+			CStringW* pBrowseNew=new CStringW[iNumberOfDirectories];
+			int i;
+			for (i=0;i<iNumberOfDirectories && i<int(m_nMaxBrowse);i++)
+				pBrowseNew[i].Swap(m_pBrowse[i]);
 			
-			for (int i=0;i<int(m_nMaxBrowse);i++)
-				m_pBrowse[i].Empty();
-			delete[] m_pBrowse;
-			m_pBrowse=NULL;
-		}
-		m_nMaxBrowse=0;
-	}
-	else if (iNumberOfDirectories!=m_nMaxBrowse)
-	{
-		CStringW* pBrowseNew=new CStringW[iNumberOfDirectories];
-		int i;
-		for (i=0;i<iNumberOfDirectories && i<int(m_nMaxBrowse);i++)
-			pBrowseNew[i].Swap(m_pBrowse[i]);
-		
-		if (iNumberOfDirectories<int(m_nMaxBrowse))
-		{
-			for (;i<int(m_nMaxBrowse);i++)
-				m_pBrowse[i].Empty();
-
-			// Removing items from combobox
-			for (i=0;i<m_LookIn.GetCount();i++)
+			if (iNumberOfDirectories<int(m_nMaxBrowse))
 			{
-				LPARAM lParam=m_LookIn.GetItemData(i);
-				if (HIWORD(lParam)>=iNumberOfDirectories && LOWORD(lParam)==Custom)
+				for (;i<int(m_nMaxBrowse);i++)
+					m_pBrowse[i].Empty();
+
+				// Removing items from combobox
+				for (i=0;i<m_LookIn.GetCount();i++)
 				{
-					m_LookIn.DeleteItem(i);
-					i--;
+					LPARAM lParam=m_LookIn.GetItemData(i);
+					if (HIWORD(lParam)>=iNumberOfDirectories && LOWORD(lParam)==Custom)
+					{
+						m_LookIn.DeleteItem(i);
+						i--;
+					}
 				}
 			}
+			delete[] m_pBrowse;
+			m_pBrowse=pBrowseNew;
+			m_nMaxBrowse=iNumberOfDirectories;
 		}
-		delete[] m_pBrowse;
-		m_pBrowse=pBrowseNew;
-		m_nMaxBrowse=iNumberOfDirectories;
+		LeaveCriticalSection(&m_cBrowse);
 	}
-	LeaveCriticalSection(&m_cBrowse);
-
 }
 
 BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)

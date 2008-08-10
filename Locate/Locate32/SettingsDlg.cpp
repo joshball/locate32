@@ -2067,12 +2067,42 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnInitDialog(HWND hwndFocus)
 	if (IsUnicodeSystem())
 		m_pList->SetUnicodeFormat(TRUE);
 	
-	m_pList->InsertColumn(0,ID2W(IDS_LANGUAGE),LVCFMT_LEFT,130);
+	m_pList->InsertColumn(0,ID2W(IDS_LANGUAGE),LVCFMT_LEFT,90);
 	m_pList->InsertColumn(1,ID2W(IDS_LANGUAGEFILE),LVCFMT_LEFT,80);
-	m_pList->InsertColumn(2,ID2W(IDS_LANGUAGEDESC),LVCFMT_LEFT,100);
+	m_pList->InsertColumn(2,ID2W(IDS_LANGUAGEDESC),LVCFMT_LEFT,150);
+	m_pList->InsertColumn(3,ID2W(IDS_LANGUAGEVERSION),LVCFMT_LEFT,140);
 	
 	m_pList->SetExtendedListViewStyle(LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT ,LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT );
 	m_pList->LoadColumnsState(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","Language Settings List Widths");
+
+	DWORD dwTemp,nLen;
+	CStringW sExeName=GetApp()->GetExeNameW();
+	dwVersionHi=0;
+	dwVersionLo=0;
+	if (IsUnicodeSystem())
+		nLen=GetFileVersionInfoSizeW(sExeName,&dwTemp);
+	else
+		nLen=GetFileVersionInfoSizeA(W2A(sExeName),&dwTemp);
+	if (nLen>0)
+	{
+		BYTE* pVersion=new BYTE[nLen+2];
+		if (IsUnicodeSystem())
+			nLen=GetFileVersionInfoW(sExeName,0,nLen,pVersion);
+		else
+			nLen=GetFileVersionInfoA(W2A(sExeName),0,nLen,pVersion);
+			
+		if (nLen>0)
+		{
+			VS_FIXEDFILEINFO* pffi;
+			UINT nflen;
+			VerQueryValue(pVersion,"\\",(void**)&pffi,&nflen);
+			dwVersionHi=pffi->dwFileVersionMS;
+			dwVersionLo=pffi->dwFileVersionLS;
+		}       
+		delete[] pVersion;
+	}
+
+	
 
 	FindLanguages();
 	
@@ -2097,7 +2127,11 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnApply()
 	if (nItem!=-1)
 	{
 		LanguageItem* pli=(LanguageItem*)m_pList->GetItemData(nItem);
-		m_pSettings->m_strLangFile=pli->File;
+		
+		if (m_pSettings->m_strLangFile.CompareNoCase(pli->sFile)!=0)
+			ShowErrorMessage(IDS_LANGUAGENOTE,IDS_NOTE,MB_ICONINFORMATION|MB_OK);
+		
+		m_pSettings->m_strLangFile=pli->sFile;
 	}
 	return TRUE;
 }
@@ -2134,8 +2168,7 @@ BOOL CSettingsProperties::CLanguageSettingsPage::OnNotify(int idCtrl,LPNMHDR pnm
 	switch (idCtrl)
 	{
 	case IDC_LANGUAGE:
-		ListNotifyHandler((NMLISTVIEW*)pnmh);
-		break;
+		return ListNotifyHandler((NMLISTVIEW*)pnmh);
 	}
 	return CPropertyPage::OnNotify(idCtrl,pnmh);
 }
@@ -2162,13 +2195,16 @@ BOOL CSettingsProperties::CLanguageSettingsPage::ListNotifyHandler(NMLISTVIEW *p
 			switch (pLvdi->item.iSubItem)
 			{
 			case 0:
-				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->Language,li->Language.GetLength());
+				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->sLanguage,li->sLanguage.GetLength());
 				break;
 			case 1:
-				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->File,li->File.GetLength());
+				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->sFile,li->sFile.GetLength());
 				break;
 			case 2:
-				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->Description,li->Description.GetLength());
+				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->sDescription,li->sDescription.GetLength());
+				break;
+			case 3:
+				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->sForVersion,li->sForVersion.GetLength());
 				break;
 			}
 			break;
@@ -2185,13 +2221,16 @@ BOOL CSettingsProperties::CLanguageSettingsPage::ListNotifyHandler(NMLISTVIEW *p
 			switch (pLvdi->item.iSubItem)
 			{
 			case 0:
-				pLvdi->item.pszText=li->Language.GetBuffer();
+				pLvdi->item.pszText=li->sLanguage.GetBuffer();
 				break;
 			case 1:
-				pLvdi->item.pszText=li->File.GetBuffer();
+				pLvdi->item.pszText=li->sFile.GetBuffer();
 				break;
 			case 2:
-				pLvdi->item.pszText=li->Description.GetBuffer();
+				pLvdi->item.pszText=li->sDescription.GetBuffer();
+				break;
+			case 3:
+				pLvdi->item.pszText=li->sForVersion.GetBuffer();
 				break;
 			}
 			break;
@@ -2205,10 +2244,71 @@ BOOL CSettingsProperties::CLanguageSettingsPage::ListNotifyHandler(NMLISTVIEW *p
 		if ((pNm->uOldState&LVIS_SELECTED) && (pNm->uNewState&LVIS_SELECTED)==0)
 			SetTimer(0,100,NULL);
 		break;
+	case NM_CUSTOMDRAW:
+		{
+			SetWindowLong(dwlMsgResult,
+				ListCustomDrawHandler((NMLVCUSTOMDRAW*)pNm));
+			return TRUE;
+		}
 	}
-	return TRUE;
+	return FALSE;
 }
 
+
+HRESULT CSettingsProperties::CLanguageSettingsPage::ListCustomDrawHandler(NMLVCUSTOMDRAW* pLVCD)
+{
+	switch (pLVCD->nmcd.dwDrawStage)
+	{
+	case CDDS_PREPAINT:
+		// We want notification messages
+		return CDRF_NOTIFYITEMDRAW;
+	case CDDS_ITEMPREPAINT:
+		return CDRF_NOTIFYSUBITEMDRAW;
+	case CDDS_ITEMPREPAINT | CDDS_SUBITEM:
+		if (pLVCD->iSubItem==3 &&  // Version
+			pLVCD->nmcd.lItemlParam!=NULL && dwVersionHi!=0) 
+		{
+			LanguageItem* pItem=(LanguageItem*)pLVCD->nmcd.lItemlParam;
+				
+			if ((HFONT)m_fBoldFont==NULL)
+			{
+				char szFace[100];
+				TEXTMETRIC tm;
+				GetTextFace(pLVCD->nmcd.hdc,100,szFace);
+				GetTextMetrics(pLVCD->nmcd.hdc,&tm);
+				m_fBoldFont.CreateFont(tm.tmHeight,0,0,0,tm.tmWeight+300,tm.tmItalic,tm.tmUnderlined,tm.tmStruckOut,
+					tm.tmCharSet,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,tm.tmPitchAndFamily,szFace);
+			}
+
+			if (pItem->dwForVersionHi!=dwVersionHi)
+			{
+				if (m_pList->GetItemState(pLVCD->nmcd.dwItemSpec,LVIS_SELECTED)&LVIS_SELECTED)
+					SelectObject(pLVCD->nmcd.hdc,m_fBoldFont);
+				pLVCD->clrText = RGB(0xFF, 0, 0 );
+				return CDRF_NEWFONT;
+			}
+			else if (pItem->dwForVersionLo<dwVersionLo)
+			{
+				if (m_pList->GetItemState(pLVCD->nmcd.dwItemSpec,LVIS_SELECTED)&LVIS_SELECTED)
+					SelectObject(pLVCD->nmcd.hdc,m_fBoldFont);
+				pLVCD->clrText = RGB(0xFF, 0, 0 );
+				return CDRF_NEWFONT;
+			}
+			else if (pItem->dwForVersionLo>dwVersionLo)
+			{
+				if (m_pList->GetItemState(pLVCD->nmcd.dwItemSpec,LVIS_SELECTED)&LVIS_SELECTED)
+					SelectObject(pLVCD->nmcd.hdc,m_fBoldFont);
+				pLVCD->clrText = RGB(0, 0, 0xFF );
+				return CDRF_NEWFONT;
+			}
+
+		}
+		return CDRF_DODEFAULT;
+	default:
+		return CDRF_DODEFAULT;
+	}
+}
+		
 void CSettingsProperties::CLanguageSettingsPage::FindLanguages()
 {
 	typedef void  (*LANGCALL)(
@@ -2268,23 +2368,31 @@ void CSettingsProperties::CLanguageSettingsPage::FindLanguages()
 		if (IsUnicodeSystem())
 		{
 			// Retrieving language from version resource
-			if (!GetVersionText(szPathTemp,"ProvidesLanguage",pli->Language.GetBuffer(200),200))
+			if (!GetVersionText(szPathTemp,"ProvidesLanguage",pli->sLanguage.GetBuffer(200),200))
 			{
 				delete pli;
 				bRet=ff.FindNextFile();
 				continue;
 			}
 				
-			pli->Language.FreeExtra();
+			pli->sLanguage.FreeExtra();
 
 
 			// Retrieving description from version resource
-			if (GetVersionText(szPathTemp,"FileDescription",pli->Description.GetBuffer(1000),1000))
-				pli->Description.FreeExtra();
+			if (GetVersionText(szPathTemp,"FileDescription",pli->sDescription.GetBuffer(1000),1000))
+				pli->sDescription.FreeExtra();
+			else
+				pli->sDescription.Empty();
+
+			// Retrieving description from version resource
+			if (GetVersionText(szPathTemp,"ProductVersion",pli->sForVersion.GetBuffer(1000),1000))
+				pli->sForVersion.FreeExtra();
+			else
+				pli->sForVersion.Empty();
 		}
 		else
 		{
-			char szLanguage[200],szDescription[1000];
+			char szLanguage[200],szTemp[1000];
 			// Retrieving language from version resource
 			if (!GetVersionText(W2A(szPathTemp),"ProvidesLanguage",szLanguage,200))
 			{
@@ -2294,17 +2402,52 @@ void CSettingsProperties::CLanguageSettingsPage::FindLanguages()
 			}
 				
 				
-			pli->Language=szLanguage;
+			pli->sLanguage=szLanguage;
 
 			// Retrieving description from version resource
-			if (GetVersionText(W2A(szPathTemp),"FileDescription",szDescription,1000))
-				pli->Description=szDescription;
+			if (GetVersionText(W2A(szPathTemp),"FileDescription",szTemp,1000))
+				pli->sDescription=szTemp;
+
+			// Retrieving description from version resource
+			if (GetVersionText(W2A(szPathTemp),"ProductVersion",szTemp,1000))
+				pli->sForVersion=szTemp;
 		}
 
-		ff.GetFileName(pli->File);
+		// Get numeric version
+		DWORD dwTemp,nLen;
+		pli->dwForVersionHi=0;
+		pli->dwForVersionLo=0;
+		if (IsUnicodeSystem())
+			nLen=GetFileVersionInfoSizeW(szPathTemp,&dwTemp);
+		else
+			nLen=GetFileVersionInfoSizeA(W2A(szPathTemp),&dwTemp);
+		if (nLen>0)
+		{
+			BYTE* pVersion=new BYTE[nLen+2];
+			if (IsUnicodeSystem())
+				nLen=GetFileVersionInfoW(szPathTemp,0,nLen,pVersion);
+			else
+				nLen=GetFileVersionInfoA(W2A(szPathTemp),0,nLen,pVersion);
+
+			
+			if (nLen>0)
+			{
+				VS_FIXEDFILEINFO* pffi;
+				UINT nflen;
+				VerQueryValue(pVersion,"\\",(void**)&pffi,&nflen);
+				pli->dwForVersionHi=pffi->dwFileVersionMS;
+				pli->dwForVersionLo=pffi->dwFileVersionLS;
+			}       
+
+			delete[] pVersion;
+		}
+
+
+
+		ff.GetFileName(pli->sFile);
 		li.lParam=(LPARAM)pli;
 		li.iSubItem=0;
-		if (m_pSettings->m_strLangFile.CompareNoCase(pli->File)==0)
+		if (m_pSettings->m_strLangFile.CompareNoCase(pli->sFile)==0)
 		{
 			li.state=LVIS_SELECTED;
 			nLastSel=li.iItem;
@@ -2312,6 +2455,8 @@ void CSettingsProperties::CLanguageSettingsPage::FindLanguages()
 		else
 			li.state=0;
 
+
+		
 		m_pList->InsertItem(&li);
 		li.iItem++;
 

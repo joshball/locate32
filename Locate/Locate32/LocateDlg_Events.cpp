@@ -153,6 +153,9 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDM_SETTOOL:
 		OnSettingsTool();
 		break;
+	case IDM_DELETEPRIVATEDATA:
+		OnDeletePrivateData();
+		break;
 	case IDM_SELECTDETAILS:
 		OnSelectDetails();
 		break;
@@ -2026,6 +2029,38 @@ void CLocateDlg::OnSettingsTool()
 		NULL,NULL,SW_SHOW);
 
 }
+
+void CLocateDlg::OnDeletePrivateData()
+{	
+	CDeletePrivateData dpd;
+	if (dpd.DoModal(*this))
+	{
+		OnNewSearch();
+
+		if (dpd.m_dwFlags&CDeletePrivateData::clearNamed)
+		{	
+			int nOrig=m_NameDlg.m_nMaxNamesInList;
+			m_NameDlg.ChangeNumberOfItemsInLists(0,-1,-1);
+			m_NameDlg.ChangeNumberOfItemsInLists(nOrig,-1,-1);
+		}
+
+		if (dpd.m_dwFlags&CDeletePrivateData::clearExtensions)
+		{
+			int nOrig=m_NameDlg.m_nMaxTypesInList;
+			m_NameDlg.ChangeNumberOfItemsInLists(-1,0,-1);
+			m_NameDlg.ChangeNumberOfItemsInLists(-1,nOrig,-1);
+		}
+
+		if (dpd.m_dwFlags&CDeletePrivateData::clearLookIn)
+		{
+			int nOrig=m_NameDlg.m_nMaxBrowse;
+			m_NameDlg.ChangeNumberOfItemsInLists(-1,-1,0);
+			m_NameDlg.ChangeNumberOfItemsInLists(-1,-1,nOrig);
+		}
+
+	}
+}
+
 
 void CLocateDlg::OnProperties(int nItem)
 {

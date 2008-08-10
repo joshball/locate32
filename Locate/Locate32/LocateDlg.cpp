@@ -210,7 +210,7 @@ inline CLocateDlg::CLocateDlg()
 	m_pLocateAnimBitmaps(NULL),m_pUpdateAnimBitmaps(NULL),
 	m_pFileNotificationsThread(NULL),m_dwMaxFoundFiles(0),m_pDropTarget(NULL),
 	m_pImageHandler(NULL),m_iTooltipItem(-1),m_iTooltipSubItem(-1),m_bTooltipActive(FALSE),
-	m_hLastFocus(NULL),m_WaitEvery30(0),m_WaitEvery60(0),m_hDialogFont(NULL),
+	m_hLastFocus(NULL),m_WaitEvery30(15),m_WaitEvery60(30),m_hDialogFont(NULL),
 	m_hLargeDialogIcon(NULL),m_hSmallDialogIcon(NULL),
 	m_nCurrentListType(ltDetails),m_dwThumbnailFlags(tfDefault),m_pSystemImageList(NULL),
 	m_pStrCmp(NULL)
@@ -1925,7 +1925,12 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 		{
 			int nItem=((CLocateDlg*)dwParam)->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 			if (nItem!=-1)
-				((CLocateDlg*)dwParam)->m_pListCtrl->SetItemState(nItem,LVIS_SELECTED|LVIS_FOCUSED,LVIS_SELECTED|LVIS_FOCUSED);
+			{
+				if (((CLocateDlg*)dwParam)->IsFlagSet(fgLVActivateFirstResult))
+					((CLocateDlg*)dwParam)->m_pListCtrl->SetItemState(nItem,LVIS_FOCUSED|LVIS_SELECTED,LVIS_FOCUSED|LVIS_SELECTED);
+				else
+					((CLocateDlg*)dwParam)->m_pListCtrl->SetItemState(nItem,LVIS_FOCUSED,LVIS_FOCUSED);
+			}
 		}
 
 		// Enable/disable dialog items		
@@ -2152,7 +2157,13 @@ BOOL CLocateDlg::LocateInstantProc(DWORD_PTR dwParam,CallingReason crReason,Upda
 		{
 			int nItem=((CLocateDlg*)dwParam)->m_pListCtrl->GetNextItem(-1,LVNI_ALL);
 			if (nItem!=-1)
-				((CLocateDlg*)dwParam)->m_pListCtrl->SetItemState(nItem,LVIS_SELECTED|LVIS_FOCUSED,LVIS_SELECTED|LVIS_FOCUSED);
+			{
+				if (((CLocateDlg*)dwParam)->IsFlagSet(fgLVActivateFirstResult))
+					((CLocateDlg*)dwParam)->m_pListCtrl->SetItemState(nItem,LVIS_FOCUSED|LVIS_SELECTED,LVIS_FOCUSED|LVIS_SELECTED);
+				else
+					((CLocateDlg*)dwParam)->m_pListCtrl->SetItemState(nItem,LVIS_FOCUSED,LVIS_FOCUSED);
+			}
+				
 		}
 
 		

@@ -540,7 +540,25 @@ private:
 		void OnOK();
 	};
 
+	class CDeletePrivateData: public CDialog  
+	{
+	public:
+		CDeletePrivateData();
 
+		virtual void OnOK();
+		virtual BOOL OnClose();
+		virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
+		virtual BOOL OnInitDialog(HWND hwndFocus);
+		virtual void OnDestroy();
+	
+		enum {
+			clearNamed=0x1,
+			clearExtensions=0x2,
+			clearLookIn=0x4
+		};
+
+		DWORD m_dwFlags;
+	};
 
 	////////////////////////////////////////////////////////////
 	// Initialization / deinitialization
@@ -599,6 +617,7 @@ protected:
 	void OnRefresh();
 	void OnSettings() { GetTrayIconWnd()->OnSettings(); }
 	void OnSettingsTool();
+	void OnDeletePrivateData();
 	void OnProperties(int nItem=1);
 	void OnRemoveFromThisList();
 	void OnSelectAll();
@@ -618,7 +637,6 @@ protected:
 	void OnCreateShortcut();
 	enum DeleteFlag {Recycle = 0,Delete = 1,BasedOnShift = 2};
 	void OnDelete(DeleteFlag DeleteFlag=BasedOnShift,int nItem=-1);
-
 	
 		
 	////////////////////////////////////////////////////////////

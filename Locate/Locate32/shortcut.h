@@ -145,8 +145,9 @@ public:
 		ViewSelectDetails= MAKELONG(IDM_SELECTDETAILS,IDS_SHORTCUTMENUVIEW),
 		ViewRefresh = MAKELONG(IDM_REFRESH,IDS_SHORTCUTMENUVIEW),
 
-		OptionsSettings = MAKELONG(IDM_SETTINGS,IDS_SHORTCUTMENUOPTIONS),
-		OptionsSettingsTool = MAKELONG(IDM_SETTOOL,IDS_SHORTCUTMENUOPTIONS),
+		ToolsDeletePrivateData = MAKELONG(IDM_DELETEPRIVATEDATA,IDS_SHORTCUTMENUTOOLS),
+		ToolsSettings = MAKELONG(IDM_SETTINGS,IDS_SHORTCUTMENUTOOLS),
+		ToolsSettingsTool = MAKELONG(IDM_SETTOOL,IDS_SHORTCUTMENUTOOLS),
 
 		HelpTopics = MAKELONG(IDM_HELPTOPICS,IDS_SHORTCUTMENUHELP),
 		HelpAbout = MAKELONG(IDM_ABOUT,IDS_SHORTCUTMENUHELP),
@@ -176,7 +177,8 @@ public:
             ViewArrangeIconsByType,ViewArrangeIconsByDate,ViewArrangeIconsBySize,
 			ViewArrangeIconsByExtension,ViewArrangeIconsAutoArrange,
 			ViewArrangeIconsAlignToGrid,ViewLineUpIcons,
-			ViewSelectDetails,ViewRefresh,OptionsSettings,OptionsSettingsTool,
+			ViewSelectDetails,ViewRefresh,
+			ToolsDeletePrivateData,ToolsSettings,ToolsSettingsTool,
 			HelpTopics,HelpAbout,PresetSave,PresetRemove,MultidirNextSelection,MultidirPrevSelection,
 			MultidirNewDirectory,MultidirRemoveSelection,NullMenuCommand};
 		ActionMenuCommands* b=new ActionMenuCommands[sizeof(a)/sizeof(ActionMenuCommands)];

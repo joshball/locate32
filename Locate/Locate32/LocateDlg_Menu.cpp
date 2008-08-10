@@ -685,6 +685,7 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 							DWORD dwDriveType=FileSystem::GetDriveType(drive);
 							if (dwDriveType==DRIVE_REMOVABLE)
 							{
+								mi.hSubMenu=NULL;
 								mi.dwItemData=(DWORD)GetIDList(drive);
 								if (mi.dwItemData!=NULL)
 								{
@@ -701,6 +702,7 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 					{
 						for (int i=0;i<Burners.GetSize();i++)
 						{
+							mi.hSubMenu=NULL;
 							mi.dwItemData=(DWORD)GetIDList(Burners[i]);
 							if (mi.dwItemData!=NULL)
 							{

@@ -125,6 +125,8 @@ STRNAME_MULTIDIRMENU_PREV=P&revious selection
 STRNAME_LOOKIN=Look In:
 STRNAME_CONTRADICTIONINLOOKDIRECTORIES=You have chosen "Everywhere" and also other directories which leads to conflict. Do you want ignore "Everywhere"? Otherwise, press "No" to ignore other choices.
 STRNAME_NOEXTENSION=(no extension)
+# Extra space for "No subdirectories"
+DLGNAME_NOSUBDIRECTORIESEXTRALEN=1
 
 # Size & Date dialog (A tab in the main dialog)
 STRSIZEDATE_TABCAPTION=Size and Date
@@ -141,10 +143,14 @@ STRSIZEDATE_RELATIVEDATE=&Relative dates
 STRSIZEDATE_TODAY=today
 STRSIZEDATE_DAY=1 day
 STRSIZEDATE_NDAYS=days
-# The extra width for "Minimum/maximum file size:" and "Files newer/older than" check boxes
-DLGSIZEDATE_CONTROLWIDTHEXTRA=0
+# The extra width for "Minimum/maximum file size:" 
+DLGSIZEDATE_SIZECONTROLWIDTHEXTRA=-21
 # The extra width for type compo boxes of Minimum/maximum file size
 DLGSIZEDATE_SIZETYPECOMBOWIDTHEXTRA=0
+# The extra width size spin boxes
+DLGSIZEDATE_SIZESPINWIDTHEXTRA=5
+# The extra width for "Files newer/older than" check boxes
+DLGSIZEDATE_DATECONTROLWIDTHEXTRA=3
 # The extra width for type compos of "File newer/older than"
 DLGSIZEDATE_DATETYPECOMBOWIDTHEXTRA=0
 DLGSIZEDATE_INFOWIDTHEXTRA=0
@@ -401,6 +407,8 @@ DLGLANGUAGESETTINGS_NEEDRESTARTINFO=Application needs to be restarted to take th
 STRLANGUAGESETTINGS_LANGUAGELIST_LANGUAGE=Language
 STRLANGUAGESETTINGS_LANGUAGELIST_FILE=File
 STRLANGUAGESETTINGS_LANGUAGELIST_DESCRIPTION=Description
+STRLANGUAGESETTINGS_LANGUAGELIST_VERSION=For version
+STRLANGUAGESETTINGS_LANGUAGELIST_NOTE=You have chosen to use different language. Note that this change does not take effect until Locate32 is restarted.
 
 
 # Database page
@@ -604,7 +612,7 @@ STRSHORTCUTSSETTINGS_MENUSPECIAL=File/Special/%s
 STRSHORTCUTSSETTINGS_MENUEDIT=Edit/%s
 STRSHORTCUTSSETTINGS_MENUVIEW=View/%s
 STRSHORTCUTSSETTINGS_MENUVIEWARRANGEICONS=View/Arrange Icons/%s 
-STRSHORTCUTSSETTINGS_MENUOPTIONS=Options/%s
+STRSHORTCUTSSETTINGS_MENUTOOLS=Tools/%s
 STRSHORTCUTSSETTINGS_MENUHELP=Help/%s
 STRSHORTCUTSSETTINGS_MENUPRESETS=Presets/%s
 STRSHORTCUTSSETTINGS_MENUDIRECTORIES=Look In Popup/%s
@@ -914,14 +922,14 @@ STRSELECTDATABASES_SELECTED=Selected
 STRSELECTDATABASES_CUSTOM=Custom
 STRSELECTDATABASES_PARAMS=Command line
 DLGSELECTDATABASES_PRIORITY=Thread priority:
-DLGSELECTDATABASES_USEDATABASES=Use selected datases:
+DLGSELECTDATABASES_USEDATABASES=Use selected databases:
 DLGSELECTDATABASES_ONLYONCE=only once
 DLGSELECTDATABASES_TEMPORALLY=until "New search" pressed
 
 # Extra space for "Thread priority" label, cannot be 0
 DLGSELECTDATABASES_PRIORITYLABELEXTRALEN=1
 # Extra space for "Use selected datases" label, cannot be 0
-DLGSELECTDATABASES_USEDATABASESLABELEXTRALEN=1
+DLGSELECTDATABASES_USEDATABASESLABELEXTRALEN=7
 
 ###########################
 # Preset name dialog
@@ -990,6 +998,16 @@ STRREPLACECHARSDLG_HYPHEN=&Hyphen '-'
 STRREPLACECHARSDLG_UNDERLINE=&Underline '_'
 STRREPLACECHARSDLG_CUSTOM=&Custom (a list separated with semi-colon ';'):
 
+###########################
+# Delete Private Data
+DLGDELETEPRIVATEDATA_CAPTION=Delete Private Data
+DLGDELETEPRIVATEDATA_OK=OK
+DLGDELETEPRIVATEDATA_CANCEL=Cancel
+DLGDELETEPRIVATEDATA_LABEL=The following data will be deleted:
+DLGDELETEPRIVATEDATA_CLEARNAMED=Items in "Named:" drop down list
+DLGDELETEPRIVATEDATA_CLEAREXTENSIONS=Items in "Extensions:" drop down list
+DLGDELETEPRIVATEDATA_CLEARLOOKIN=User specified directories in "Look In:" drop down list
+
 
 ###################################################
 # MENUS
@@ -1036,9 +1054,10 @@ MENUMAIN_VIEW_ARRANGEICONS_ALIGNTOGRID=Align to &Grid
 MENUMAIN_VIEW_LINEUPICONS=&Line Up Icons
 MENUMAIN_VIEW_SELECTDETAILS=&Select Details
 MENUMAIN_VIEW_REFRESH=&Refresh
-MENUMAIN_OPTIONS=&Options
-MENUMAIN_OPTIONS_SETTINGS=&Settings
-MENUMAIN_OPTIONS_SETTINGSTOOL=Settings Backup tool
+MENUMAIN_TOOLS=&Tools
+MENUMAIN_TOOLS_DELETEPRIVATEDATA=&Delete Private Data
+MENUMAIN_TOOLS_SETTINGS=&Settings
+MENUMAIN_TOOLS_SETTINGSTOOL=Settings &Backup tool
 MENUMAIN_HELP=&Help
 MENUMAIN_HELP_HELPTOPICS=Help &Topics
 MENUMAIN_HELP_ABOUT=&About
@@ -1279,6 +1298,7 @@ STRERROR_LASTERROR_CANNOTINCREMENT=database %s cannot be written incrementally
 # Misc messages
 STR_UNKNOWN=(Unknown)
 STR_NONE=None
+STR_NOTE=Note
 STR_EMPTY=(empty)
 STR_DEFAULT=(default)
 STR_AND=and

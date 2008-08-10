@@ -1795,7 +1795,7 @@ BYTE CSubAction::GetMenuAndSubMenu(CAction::ActionMenuCommands nMenuCommand)
 	case IDS_SHORTCUTMENUVIEW:
 	case IDS_SHORTCUTMENUVIEWARRANGEICONS:
 		return 128|2;
-	case IDS_SHORTCUTMENUOPTIONS:
+	case IDS_SHORTCUTMENUTOOLS:
 		return 128|3;		
 	case IDS_SHORTCUTMENUHELP:
 		return 128|4;

@@ -181,6 +181,7 @@
 #define IDD_CHANGEFILENAME              233
 #define IDD_PRESETNAME                  234
 #define IDD_PRESETREMOVE                235
+#define IDD_DELETEPRIVATEDATA           236
 #define IDS_UPDATINGDATABASE            300
 #define IDS_UPDATINGDATABASE2           301
 #define IDS_UPDATINGWRITINGDATABASE     302
@@ -589,6 +590,9 @@
 #define IDC_FINDNEXT					1301
 #define IDC_SEARCHUP					1302
 #define IDC_SEARCHDOWN					1303
+#define IDC_CLEARNAMED					1400
+#define IDC_CLEAREXTENSTIONS			1401
+#define IDC_CLEARLOOKIN					1402
 #define IDS_LASTERROR                   1900
 #define IDS_LASTERRORUNKNOWN            1901
 #define IDS_LASTERRORINVALIDDB          1902
@@ -641,6 +645,7 @@
 #define IDS_NONE                        3001
 #define IDS_UNKNOWN                     3002
 #define IDS_AND							3003
+#define IDS_NOTE						3004
 #define IDS_NOSORTNG                    3999
 #define IDS_CHANGEICON                  4000
 #define IDS_IMPORTDATABASEFILTERS       4001
@@ -719,6 +724,8 @@
 #define IDS_LANGUAGE                    5301
 #define IDS_LANGUAGEFILE                5302
 #define IDS_LANGUAGEDESC                5303
+#define IDS_LANGUAGEVERSION             5304
+#define IDS_LANGUAGENOTE                5305
 #define IDS_ADVSETDIALOGS               5401
 #define IDS_ADVSETLOADTYPES             5402
 #define IDS_ADVSETNUMBEROFDIRECTORIES   5403
@@ -853,7 +860,7 @@
 #define IDS_SHORTCUTMENUEDIT            5562
 #define IDS_SHORTCUTMENUVIEW            5563
 #define IDS_SHORTCUTMENUVIEWARRANGEICONS 5564
-#define IDS_SHORTCUTMENUOPTIONS         5565
+#define IDS_SHORTCUTMENUTOOLS         5565
 #define IDS_SHORTCUTMENUHELP            5566
 #define IDS_SHORTCUTMENUSPECIAL         5567
 #define IDS_SHORTCUTMENUPRESETS         5568
@@ -1153,6 +1160,7 @@
 #define IDM_SETTINGS                    40033
 #define IDM_SETTOOL						40034
 #define IDM_DATABASEINFO                40035
+#define IDM_DELETEPRIVATEDATA			40036
 #define IDM_SAVERESULT                  40038
 #define IDM_HELPTOPICS					40039
 #define IDM_EXIT                        40040

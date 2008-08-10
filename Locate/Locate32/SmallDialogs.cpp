@@ -2476,6 +2476,71 @@ void CLocateDlg::CRemovePresetDlg::OnOK()
 	EndDialog(1);
 }
 
+
+///////////////////////////////////////////////////////////
+// CLocateDlg::CDeletePrivateData
+
+
+BOOL CLocateDlg::CDeletePrivateData::OnInitDialog(HWND hwndFocus)
+{
+	CDialog::OnInitDialog(hwndFocus);
+	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","DeletePrivateData",fgOnlyNormalPosition|fgNoSize))
+		CenterWindow();
+
+	CheckDlgButton(IDC_CLEARNAMED,TRUE);
+	CheckDlgButton(IDC_CLEAREXTENSTIONS,TRUE);
+	CheckDlgButton(IDC_CLEARLOOKIN,TRUE);
+	
+	return FALSE;
+}
+
+void CLocateDlg::CDeletePrivateData::OnDestroy()
+{
+	CDialog::OnDestroy();
+	SavePosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","DeletePrivateData");
+}
+
+
+BOOL CLocateDlg::CDeletePrivateData::OnClose()
+{
+	CDialog::OnClose();
+	EndDialog(0);
+	return FALSE;
+}
+
+BOOL CLocateDlg::CDeletePrivateData::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
+{
+	CDialog::OnCommand(wID,wNotifyCode,hControl);
+	switch (wID)
+	{
+	case IDC_OK:
+		OnOK();
+		break;
+	case IDCANCEL:
+	case IDC_CANCEL:
+		EndDialog(0);
+		break;
+	}
+	return FALSE;
+}
+
+
+
+void CLocateDlg::CDeletePrivateData::OnOK()
+{
+	m_dwFlags=0;
+	if (IsDlgButtonChecked(IDC_CLEARNAMED))
+		m_dwFlags|=clearNamed;
+	if (IsDlgButtonChecked(IDC_CLEAREXTENSTIONS))
+		m_dwFlags|=clearExtensions;
+	if (IsDlgButtonChecked(IDC_CLEARLOOKIN))
+		m_dwFlags|=clearLookIn;
+
+
+	EndDialog(1);
+}
+
+
 ///////////////////////////////////////////////////////////
 // CPropertiesSheet
 
