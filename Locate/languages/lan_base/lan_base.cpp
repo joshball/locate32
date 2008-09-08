@@ -1,6 +1,8 @@
 #include <windows.h>
 #include <stdio.h>
 
+#include "../../common/win95crtfixes.h"
+
 /* 
 An example of source code for locate32 language file 
 Copyright (C) 2003-2006 Janne Huttunen <jmhuttun@venda.uku.fi>

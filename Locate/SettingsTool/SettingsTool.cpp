@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include "resource.h"
 
+#include "../common/win95crtfixes.h"
+
 #define MAX_LOADSTRING 100
 
 

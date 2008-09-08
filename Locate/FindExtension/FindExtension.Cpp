@@ -16,6 +16,8 @@
 #include <windowsx.h>
 #include <shlobj.h>
 
+#include "../common/win95crtfixes.h"
+
 #define ResultFromShort(i)  ResultFromScode(MAKE_SCODE(SEVERITY_SUCCESS, 0, (USHORT)(i)))
 
 

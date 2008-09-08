@@ -1952,7 +1952,6 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 
 
 		CStringW str;
-			
 		if (ueCode==ueStopped)
 		{
 			str.LoadString(IDS_LOCATINGCANCELLED);
@@ -1965,41 +1964,48 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 		}
 		else if (ueCode!=ueStillWorking && ueCode!=ueSuccess) // Locating failed
 		{
-			CStringW str2;
+			CStringW error;
+			str.LoadString(IDS_LOCATINGFAILED);
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_ERROR)),STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
+				
 			switch (ueCode)
 			{
 			case ueUnknown:
-				str2.LoadString(IDS_LASTERRORUNKNOWN);
+				error.LoadString(IDS_LASTERRORUNKNOWN);
 				break;
 			case ueOpen:
-				str2.LoadString(IDS_LASTERRORCANNOTOPEN);
+				error.LoadString(IDS_LASTERRORCANNOTOPEN);
 				break;
 			case ueRead:
-				str2.LoadString(IDS_LASTERRORCANNOTREAD);
+				error.LoadString(IDS_LASTERRORCANNOTREAD);
 				break;
 			case ueAlloc:
-				str2.LoadString(IDS_LASTERRORCANNOTALLOCATE);
+				error.LoadString(IDS_LASTERRORCANNOTALLOCATE);
 				break;
 			case ueInvalidDatabase:
-				str2.LoadString(IDS_LASTERRORINVALIDDB);
+				error.LoadString(IDS_LASTERRORINVALIDDB);
 				break;
 			}
-			if (str2.IsEmpty())
+			if (!error.IsEmpty())
 			{
-				((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_ERROR)),STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
-				str.LoadString(IDS_LOCATINGFAILED);
-			}
-			else
-			{
-				int nIndex=str2.Find(L'%');
+				CStringW str2;
+				int nIndex=error.Find(L'%');
 				if (nIndex!=-1)
 				{
-					str2.DelChar(nIndex);
-					str2.DelChar(nIndex);
-					if (nIndex>0 && str2[nIndex-1]==' ')
-						str2.DelChar(nIndex-1);
+					error.DelChar(nIndex);
+					error.DelChar(nIndex);
+					if (nIndex>0 && error[nIndex-1]==' ')
+						error.DelChar(nIndex-1);
 				}
-				str.Format(IDS_LOCATINGFAILED2,(LPCWSTR)str2);
+				
+				LPCWSTR szDBName=pLocater->GetLastErrorDatabaseName();
+				if (szDBName!=NULL)
+					str2.FormatEx(IDS_ERROROCCUREDWITHDB,szDBName,LPCWSTR(error));
+				else
+					str2.FormatEx(IDS_ERROROCCURED,LPCWSTR(error));
+				str << L" " << str2;
+
+				((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_ERROR)),STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
 			}
 		}
 		else
@@ -2127,12 +2133,20 @@ BOOL CLocateDlg::LocateInstantProc(DWORD_PTR dwParam,CallingReason crReason,Upda
 	{
 	case BeginningDatabase:
 		while (GetLocateApp()->IsWritingDatabases())
+		{
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2W(IDS_LOCATINGWAITDBWRITING),STATUSBAR_OPERATIONSTATUS,0);
 			Sleep(100);
+		}
 		break;
 	case Initializing:
 	{
 		if (ueCode!=ueStillWorking && ueCode!=ueSuccess) // Initializing failed
 			return FALSE;
+
+		// Enable stop
+		((CLocateDlg*)dwParam)->EnableDlgItem(IDC_STOP,TRUE);
+		
+
 
 		// Selecting path column
 		int nColumn=-1;
@@ -2166,7 +2180,15 @@ BOOL CLocateDlg::LocateInstantProc(DWORD_PTR dwParam,CallingReason crReason,Upda
 				
 		}
 
-		
+		// Disable stop and return default button state
+		CButton FindNow(((CLocateDlg*)dwParam)->GetDlgItem(IDC_OK));
+		CButton Stop(((CLocateDlg*)dwParam)->GetDlgItem(IDC_STOP));
+		Stop.EnableWindow(FALSE);
+		Stop.SetButtonStyle(BS_PUSHBUTTON);
+		FindNow.SetButtonStyle(BS_DEFPUSHBUTTON);
+	
+
+
 		CStringW NumberOfFiles;
 		if (pLocater->GetNumberOfFoundFiles()>0)
 		{
@@ -2180,11 +2202,65 @@ BOOL CLocateDlg::LocateInstantProc(DWORD_PTR dwParam,CallingReason crReason,Upda
 		else
 			NumberOfFiles.LoadString(IDS_NORESULTS);
 
+		// Minimal messages
+		CStringW str;
 		if (ueCode==ueLimitReached)
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(CString(IDS_LOCATINGLIMITREACHED)+L", "+NumberOfFiles,STATUSBAR_OPERATIONSTATUS,0);		
+		{
+			str.LoadString(IDS_LOCATINGLIMITREACHED);
+			str << L", " << NumberOfFiles;
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_INFORMATION)),STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
+		}
 		else
-			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(NumberOfFiles,STATUSBAR_OPERATIONSTATUS,0);		
+			str=NumberOfFiles;
+
+		if (ueCode!=ueStillWorking && ueCode!=ueSuccess &&
+			ueCode!=ueLimitReached && ueCode!=ueStopped) // Locating failed, format error message
+		{
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(LPCSTR(::LoadIcon(NULL,IDI_ERROR)),STATUSBAR_LOCATEICON,SBT_OWNERDRAW);
+			
+			CStringW error;
+			switch (ueCode)
+			{
+			case ueUnknown:
+				error.LoadString(IDS_LASTERRORUNKNOWN);
+				break;
+			case ueOpen:
+				error.LoadString(IDS_LASTERRORCANNOTOPEN);
+				break;
+			case ueRead:
+				error.LoadString(IDS_LASTERRORCANNOTREAD);
+				break;
+			case ueAlloc:
+				error.LoadString(IDS_LASTERRORCANNOTALLOCATE);
+				break;
+			case ueInvalidDatabase:
+				error.LoadString(IDS_LASTERRORINVALIDDB);
+				break;
+			}
+			if (!error.IsEmpty())
+			{
+				CStringW str2;
+				int nIndex=error.Find(L'%');
+				if (nIndex!=-1)
+				{
+					error.DelChar(nIndex);
+					error.DelChar(nIndex);
+					if (nIndex>0 && error[nIndex-1]==' ')
+						error.DelChar(nIndex-1);
+				}
+
+				LPCWSTR szDBName=pLocater->GetLastErrorDatabaseName();
+				if (szDBName!=NULL)
+					str2.FormatEx(IDS_ERROROCCUREDWITHDB,szDBName,LPCWSTR(error));
+				else
+					str2.FormatEx(IDS_ERROROCCURED,LPCWSTR(error));
+				str << L" " << str2;
+			}
+		}
+
+		((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_OPERATIONSTATUS,0);		
 		((CLocateDlg*)dwParam)->m_pStatusCtrl->InvalidateRect(NULL,TRUE);
+
 		return TRUE;
 	}
 	case SearchingStarted:
@@ -2213,6 +2289,53 @@ BOOL CLocateDlg::LocateInstantProc(DWORD_PTR dwParam,CallingReason crReason,Upda
 		// To update items, looks like this is only way
 		((CLocateDlg*)dwParam)->SetTimer(ID_REDRAWITEMS,50);
 		return TRUE;
+	case ErrorOccured:
+		switch (ueCode)
+		{
+		case ueUnknown:
+			{
+				WCHAR* pError=CLocateApp::FormatLastOsError();
+				if (pError!=NULL)
+				{
+					CStringW str;
+					str.Format(IDS_ERRORUNKNOWNOS,pError);
+					while (str.LastChar()=='\n' || str.LastChar()=='\r')
+					str.DelLastChar();
+						
+					((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
+					LocalFree(pError);
+				}
+				else
+					((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2W(IDS_ERRORUNKNOWN),STATUSBAR_LOCATEERRORS,0);
+			}
+			return FALSE;
+		case ueOpen:
+		case ueCreate:
+			{
+				CStringW str;
+				str.Format(IDS_ERRORCANNOTOPENDB,pLocater->GetCurrentDatabaseFile());
+				((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
+			}
+			return FALSE;
+		case ueRead:
+			{
+				CStringW str;
+				str.Format(IDS_ERRORCANNOTREADDB,pLocater->GetCurrentDatabaseFile());
+				((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
+				return FALSE;
+			}
+		case ueAlloc:
+			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2W(IDS_ERRORCANNOTALLOCATE),STATUSBAR_LOCATEERRORS,0);
+			return FALSE;
+		case ueInvalidDatabase:
+			{
+				CStringW str;
+				str.Format(IDS_ERRORINVALIDDB,pLocater->GetCurrentDatabaseFile());
+				((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(str,STATUSBAR_LOCATEERRORS,0);
+				return FALSE;
+			}
+		}
+		break;
 	case RootInformationAvail:
 		((CLocateDlg*)dwParam)->m_aVolumeInformation.Add(new VolumeInformation(
 			pLocater->GetCurrentDatabaseID(),pLocater->GetCurrentDatabaseRootID(),

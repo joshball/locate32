@@ -171,6 +171,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				WholeProgramOptimization="false"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;LOCATER_COMBILELIB,PCRE_STATIC"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="2"

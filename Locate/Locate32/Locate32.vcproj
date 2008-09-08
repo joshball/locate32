@@ -105,6 +105,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description=""
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
@@ -219,6 +221,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="..\keyhook;..;..\ImageHandler;..\LocateDb;..\Locater"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
@@ -239,6 +242,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalOptions="/FORCE:MULTIPLE"
 				AdditionalDependencies="locater.lib locatedb.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(OutDir)"
@@ -274,6 +278,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Patching file for OS version 4.0"
+				CommandLine="patchbin &quot;$(OutDir)\$(ProjectName).exe&quot;"
 			/>
 		</Configuration>
 		<Configuration

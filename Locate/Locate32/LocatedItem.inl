@@ -338,7 +338,8 @@ inline HBITMAP CLocatedItem::GetThumbnail(SIZE& size) const
 	ExtraInfo* pInfo=GetFieldForType(Thumbnail);
 	if (pInfo!=NULL)
 	{
-		ASSERT (pInfo->pThumbnail!=NULL);
+		if (pInfo->pThumbnail==NULL)
+			return NULL;
 		size=pInfo->pThumbnail->sThumbnailSize;
 		return pInfo->pThumbnail->hBitmap;
 	}

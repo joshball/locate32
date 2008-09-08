@@ -235,9 +235,11 @@ public:
 	LPCWSTR GetCurrentDatabaseVolumeLabel() const;
 	DWORD GetCurrentDatabaseVolumeSerial() const;
 	LPCWSTR GetCurrentDatabaseFileSystem() const;
-	
+
 	// allocates memory to szName & copies database name to szName
 	void GetCurrentDatabaseName(LPWSTR& szName) const; 
+
+	LPCWSTR GetLastErrorDatabaseName() const;
 
 	DWORD GetNumberOfDatabases() const;
 
@@ -289,6 +291,7 @@ private:
 	};
 	CArrayFP<DBArchive*> m_aDatabases;
 	DBArchive* m_pCurrentDatabase;
+	DBArchive* m_pLastErrorDatabase;
 	WORD m_wCurrentDatabaseID;
 	WORD m_wCurrentRootIndex;
 	

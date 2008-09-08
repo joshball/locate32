@@ -4,6 +4,8 @@
 #include "Locate32.h"
 #include <wchar.h>
 
+
+
 BOOL CResults::Initialize(DWORD dwFlags,LPCWSTR szDescription)
 {
 	m_dwFlags=dwFlags;
@@ -495,6 +497,10 @@ BOOL CResults::SaveToFile(LPCWSTR szFile) const
 	return TRUE;
 }
 
+BOOL CResults::SaveToHtmlThumbnailPage(LPCWSTR szFile) const
+{
+	return TRUE;
+}
 
 CSaveResultsDlg::CSaveResultsDlg()
 :	CFileDialog(FALSE,L"*",szwEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,IDS_SAVERESULTSFILTERS,TRUE),

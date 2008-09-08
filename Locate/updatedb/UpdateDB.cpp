@@ -5,6 +5,8 @@
 #include "../locatedb/locatedb.h"
 #include "../lan_resources.h"
 #include "../common/common.h"
+#include "../common/win95crtfixes.h"
+
 
 LPCSTR szVersionStr="updtdb32 3.1 RC2 build 8.8030";
 

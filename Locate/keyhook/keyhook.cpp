@@ -14,6 +14,7 @@ Copyright (C) 2004-2007 Janne Huttunen				*/
 
 #include "../locate32/shortcuts.inl"
 
+#include "../common/win95crtfixes.h"
 
 //#pragma data_seg(".SHRDATA")
 // Shared variables here

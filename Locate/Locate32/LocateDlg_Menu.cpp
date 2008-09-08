@@ -355,16 +355,6 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 	ASSERT(wID>=IDM_DEFCONTEXTITEM && m_pActiveContextMenu!=NULL);
 
 	
-	/*
-	CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_pListCtrl->GetNextItem(-1,LVNI_SELECTED));
-	
-	
-	if (!pItem->IsFolder() && !FileSystem::IsFile(pItem->GetPath()))
-		return;
-	if (pItem->IsFolder() && !FileSystem::IsDirectory(pItem->GetPath()))
-		return;
-	*/
-
 	WCHAR szName[221];  
 	
 	if (IsUnicodeSystem())
@@ -384,37 +374,45 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 	}
 
 	// Overriding these command, works better
+	if (wcscmp(szName,L"open")==0)
+	{
+		// Opening URLs to Avant Browser fails if this is not handled this way.
+		// However, I'm not sure that do this way work in all cases.
+		OnExecuteFile(szName);
+		ClearMenuVariables();
+		return;
+	}
 	if (wcscmp(szName,L"copy")==0)
 	{
 		OnCopy(FALSE);
 		ClearMenuVariables();
 		return;
 	}
-	else if (wcscmp(szName,L"cut")==0)
+	if (wcscmp(szName,L"cut")==0)
 	{
 		OnCopy(TRUE);
 		ClearMenuVariables();
 		return;
 	}
-	else if (wcscmp(szName,L"link")==0)
+	if (wcscmp(szName,L"link")==0)
 	{
 		OnCreateShortcut();
 		ClearMenuVariables();
 		return;
 	}
-	else if (wcscmp(szName,L"delete")==0)
+	if (wcscmp(szName,L"delete")==0)
 	{
 		OnDelete();
 		ClearMenuVariables();
 		return;
 	}
-	else if (wcscmp(szName,L"rename")==0)
+	if (wcscmp(szName,L"rename")==0)
 	{
 		OnRenameFile();
 		ClearMenuVariables();
 		return;
 	}
-	else if (wcscmp(szName,L"properties")==0 && m_pActiveContextMenu->nIDLParentLevel<=1)
+	if (wcscmp(szName,L"properties")==0 && m_pActiveContextMenu->nIDLParentLevel<=1)
 	{
 		ClearMenuVariables();
 		
@@ -426,8 +424,9 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 		return;
 	}
 	
-	CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_pListCtrl->GetNextItem(-1,LVNI_SELECTED));
-	
+	int nSelected;
+	CLocatedItem** pItems=GetSeletedItems(nSelected);
+
 	CMINVOKECOMMANDINFOEX cii;
 	ZeroMemory(&cii,sizeof(CMINVOKECOMMANDINFOEX));
 	cii.cbSize=sizeof(CMINVOKECOMMANDINFOEX);
@@ -435,14 +434,20 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 	cii.hwnd=*this;
 	cii.lpVerb=(LPCSTR)MAKELONG(wID-IDM_DEFCONTEXTITEM,0);
 	cii.lpVerbW=(LPCWSTR)MAKELONG(wID-IDM_DEFCONTEXTITEM,0);
-	cii.lpDirectoryW=pItem->GetParent();
-	cii.lpDirectory=alloccopyWtoA(cii.lpDirectoryW);
 	cii.nShow=SW_SHOWDEFAULT;
-	m_pActiveContextMenu->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
-	delete[] (LPSTR)cii.lpDirectory;
+	if (nSelected==1)
+	{
+		cii.lpDirectoryW=pItems[0]->GetParent();
+		cii.lpDirectory=alloccopyWtoA(cii.lpDirectoryW);
+	}
+	HRESULT hRes=m_pActiveContextMenu->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
+	
+	if (nSelected==1)
+		delete[] (LPSTR)cii.lpDirectory;
 	
 	//ClearMenuVariables();
 
+	delete[] pItems;
 }
 
 

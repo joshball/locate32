@@ -57,7 +57,6 @@
 #define IDS_REGULAREXPRESSION           42
 #define IDS_REGULAREXPRESSIONFULLPATH   43
 #define IDS_DEFAULT                     44
-#define IDS_LOCATINGFAILED2             45
 #define IDS_FIRST						46
 #define IDS_SECOND						47
 #define	IDS_THIRD						48
@@ -85,6 +84,8 @@
 #define IDS_HELPINFO                    70
 #define IDS_FILEINFORMATION             71
 #define IDS_FILEINFORMATIONFMT          72
+#define IDS_ERROROCCURED				73
+#define IDS_ERROROCCUREDWITHDB			74
 #define IDS_SELECTEDONEFILE				76
 #define IDS_SELECTEDONEFOLDER			77
 #define IDS_REPLACESPACES				78

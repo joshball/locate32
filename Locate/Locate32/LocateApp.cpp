@@ -2,6 +2,7 @@
 
 #include <HFCLib.h>
 #include "Locate32.h"
+#include "../common/win95crtfixes.h"
 
 //#include "wfext.h"
 

@@ -65,6 +65,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\Updtdb32.exe"
+				Version=""
 				LinkIncremental="2"
 				GenerateManifest="false"
 				GenerateDebugInformation="true"
@@ -199,6 +200,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				WholeProgramOptimization="false"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -217,7 +219,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalOptions="/FORCE:MULTIPLE"
 				OutputFile="$(OutDir)\Updtdb32.exe"
+				Version=""
 				LinkIncremental="1"
 				GenerateManifest="false"
 				GenerateDebugInformation="true"
@@ -249,6 +253,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Patching file for OS version 4.0"
+				CommandLine="patchbin &quot;$(OutDir)\Updtdb32.exe&quot;"
 			/>
 		</Configuration>
 		<Configuration

@@ -228,6 +228,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalOptions="/FORCE:MULTIPLE"
 				OutputFile="$(OutDir)\$(ProjectName).dll"
 				LinkIncremental="1"
 				GenerateManifest="false"
@@ -261,6 +262,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Patching file for OS version 4.0"
+				CommandLine="patchbin &quot;$(OutDir)\$(ProjectName).dll&quot;"
 			/>
 		</Configuration>
 		<Configuration

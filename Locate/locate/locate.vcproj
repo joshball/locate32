@@ -195,6 +195,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				WholeProgramOptimization="false"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;LOCATER_NOTHREAD;PCRE_STATIC"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -213,6 +214,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalOptions="/FORCE:MULTIPLE"
 				LinkIncremental="1"
 				GenerateManifest="false"
 				GenerateDebugInformation="true"
@@ -244,6 +246,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Patching file for OS version 4.0"
+				CommandLine="patchbin &quot;$(OutDir)\$(ProjectName).exe&quot;"
 			/>
 		</Configuration>
 		<Configuration

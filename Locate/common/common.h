@@ -20,4 +20,7 @@ LPSTR ReadIniFile(LPSTR* pFile,LPCSTR szSection,BYTE& bFileIsReg); // will retur
 BOOL LoadSettingsFromFile(LPCSTR szKey,LPCSTR szFile,BYTE bFileIsReg);
 BOOL SaveSettingsToFile(LPCSTR szKey,LPCSTR szFile,BYTE bFileIsReg);
 
+// Save JPEG 
+BOOL SaveBitmapToJpegFile(HBITMAP hBitmap,LPCWSTR szFile,int nQuality);
+
 #endif

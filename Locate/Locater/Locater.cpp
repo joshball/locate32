@@ -271,6 +271,7 @@ BOOL CLocater::LocatingProc()
 #endif
 	m_dwFoundFiles=0;
 	m_dwFoundDirectories=0;
+	m_pLastErrorDatabase=NULL;
 
 	m_pProc(m_dwData,Initializing,ueStillWorking,0,this);
 	DWORD nPathLen;
@@ -580,6 +581,7 @@ BOOL CLocater::LocatingProc()
 
 		catch (CFileException ex)
 		{
+			m_pLastErrorDatabase=m_pCurrentDatabase;
 			switch (ex.m_cause)
 			{
 			case CFileException::fileOpen:
@@ -625,6 +627,7 @@ BOOL CLocater::LocatingProc()
 			switch (ex.m_cause)
 			{
 			case CException::cannotAllocate:
+				m_pLastErrorDatabase=m_pCurrentDatabase;
 				m_pProc(m_dwData,ErrorOccured,ueResult=ueAlloc,0,this);
 				bContinueToNextDB=FALSE;
 				break;
@@ -633,6 +636,7 @@ BOOL CLocater::LocatingProc()
 				bContinueToNextDB=FALSE;
 				break;
 			default:
+				m_pLastErrorDatabase=m_pCurrentDatabase;
 				m_pProc(m_dwData,ErrorOccured,ueResult=ueUnknown,0,this);
 				break;
 			}
@@ -645,10 +649,14 @@ BOOL CLocater::LocatingProc()
 				bContinueToNextDB=FALSE;
 			}
 			else if (ue!=ueSuccess && ue!=ueStillWorking && ue!=ueFolderUnavailable)
+			{
+				m_pLastErrorDatabase=m_pCurrentDatabase;
 				m_pProc(m_dwData,ErrorOccured,ueResult=ue,0,this);
+			}
 		}
 		catch (...)
 		{
+			m_pLastErrorDatabase=m_pCurrentDatabase;
 			m_pProc(m_dwData,ErrorOccured,ueResult=ueUnknown,0,this);
 		}
 		

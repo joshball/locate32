@@ -2282,21 +2282,21 @@ HRESULT CSettingsProperties::CLanguageSettingsPage::ListCustomDrawHandler(NMLVCU
 
 			if (pItem->dwForVersionHi!=dwVersionHi)
 			{
-				if (m_pList->GetItemState(pLVCD->nmcd.dwItemSpec,LVIS_SELECTED)&LVIS_SELECTED)
+				if (m_pList->GetItemState((int)pLVCD->nmcd.dwItemSpec,LVIS_SELECTED)&LVIS_SELECTED)
 					SelectObject(pLVCD->nmcd.hdc,m_fBoldFont);
 				pLVCD->clrText = RGB(0xFF, 0, 0 );
 				return CDRF_NEWFONT;
 			}
 			else if (pItem->dwForVersionLo<dwVersionLo)
 			{
-				if (m_pList->GetItemState(pLVCD->nmcd.dwItemSpec,LVIS_SELECTED)&LVIS_SELECTED)
+				if (m_pList->GetItemState((int)pLVCD->nmcd.dwItemSpec,LVIS_SELECTED)&LVIS_SELECTED)
 					SelectObject(pLVCD->nmcd.hdc,m_fBoldFont);
 				pLVCD->clrText = RGB(0xFF, 0, 0 );
 				return CDRF_NEWFONT;
 			}
 			else if (pItem->dwForVersionLo>dwVersionLo)
 			{
-				if (m_pList->GetItemState(pLVCD->nmcd.dwItemSpec,LVIS_SELECTED)&LVIS_SELECTED)
+				if (m_pList->GetItemState((int)pLVCD->nmcd.dwItemSpec,LVIS_SELECTED)&LVIS_SELECTED)
 					SelectObject(pLVCD->nmcd.hdc,m_fBoldFont);
 				pLVCD->clrText = RGB(0, 0, 0xFF );
 				return CDRF_NEWFONT;

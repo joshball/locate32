@@ -568,6 +568,13 @@ inline LPCWSTR CLocater::GetCurrentDatabaseName() const
 	return m_pCurrentDatabase->szName;
 }
 
+inline LPCWSTR CLocater::GetLastErrorDatabaseName() const
+{
+	if (m_pLastErrorDatabase!=NULL)
+		return m_pLastErrorDatabase->szName;
+	return NULL;
+}
+
 inline void CLocater::GetCurrentDatabaseName(LPWSTR& szName) const
 {
 	szName=alloccopy(m_pCurrentDatabase->szName,m_pCurrentDatabase->dwNameLength);

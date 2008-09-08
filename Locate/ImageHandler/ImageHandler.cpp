@@ -6,6 +6,8 @@ Copyright (C) 2003-2007 Janne Huttunen				*/
 
 #include "ImageHandler.h"
 
+#include "../common/win95crtfixes.h"
+
 using namespace Gdiplus;
 
 IMAGEHANDLER_API BOOL GetImageDimensionsA(LPCSTR szFile,SIZE* dim)

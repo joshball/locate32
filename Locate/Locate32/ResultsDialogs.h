@@ -20,6 +20,7 @@ public:
 	BOOL Create(CListCtrl* pList,int* pDetails,int nDetails);
 	BOOL SaveToFile(LPCWSTR szFile) const;
 	BOOL SaveToHtmlFile(LPCWSTR szFile) const;
+	BOOL SaveToHtmlThumbnailPage(LPCWSTR szFile) const;
 
 private:
 	DWORD m_dwFlags;

@@ -1290,9 +1290,10 @@ BEGIN
 	IDS_LOCATINGLIMITREACHED "Results limit reached"
     IDS_LOCATING            "Locating files..."
     IDS_LOCATINGFAILED      "Locating failed"
-    IDS_LOCATINGFAILED2      "Locating finished with error (%s)"
     IDS_LOCATINGCANCELLED   "Locating interrupted"
 	IDS_LOCATINGWAITDBWRITING "Waiting until databases are written"
+    IDS_ERROROCCURED		"(error occured: %s)"
+    IDS_ERROROCCUREDWITHDB	"(error with database %s: %s)"
     IDS_SEARCHINGFROMFILE   "Searching from file %s."
 END
 
