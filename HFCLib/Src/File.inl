@@ -102,19 +102,19 @@ inline BOOL CFile::Write(const CStringA& str)
 #ifdef DEF_WCHAR
 inline BOOL CFile::Write(const CStringW& str) 
 { 
-	return this->Write((LPCWSTR)str,(DWORD)(str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0))*2); 
+	return this->Write((LPCWSTR)str,(DWORD)(str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0))); 
 }
 #endif
 
 inline BOOL CFile::Write(LPCSTR szNullTerminatedString) 
 { 
-	return this->Write(szNullTerminatedString,(DWORD)istrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0)); 
+	return this->Write(szNullTerminatedString,((DWORD)istrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0))); 
 }
 
 #ifdef DEF_WCHAR
 inline BOOL CFile::Write(LPCWSTR szNullTerminatedString) 
 { 
-	return this->Write(szNullTerminatedString,(DWORD)(2*istrlenw(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?2:0))); 
+	return this->Write(szNullTerminatedString,(DWORD)(istrlenw(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0))); 
 }
 #endif
 
@@ -352,7 +352,7 @@ inline BOOL FileSystem::RemoveDirectory(LPCWSTR lpPathName)
 
 inline BOOL FileSystem::MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,DWORD dwFlags)
 {
-	if (!IsUnicodeSystem())
+	if (IsUnicodeSystem())
 		return ::MoveFileExW(lpExistingFileName,lpNewFileName,dwFlags);	
 	else
 		return ::MoveFileExA(W2A(lpExistingFileName),W2A(lpNewFileName),dwFlags);	

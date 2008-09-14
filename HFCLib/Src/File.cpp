@@ -791,6 +791,13 @@ BOOL CFile::Write(const void* lpBuf, DWORD nCount)
 	return TRUE;
 }
 
+#ifdef DEF_WCHAR
+BOOL CFile::Write(LPCWSTR szString,DWORD dwCount) 
+{ 
+	return CFile::Write((const void*)szString,(DWORD)(2*dwCount)); 
+}
+#endif 
+
 BOOL CFile::Close()
 {
 	BOOL bError = FALSE;
@@ -920,12 +927,13 @@ BOOL CFileEncode::Write(const CStringW& str)
 	switch (m_nEncoding)
 	{
 	case Unicode:
-		return CFile::Write(str);
+		return CFile::Write((const void*)(LPCWSTR)str,(str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0))*2);
 	case UTF8:
 		{
-			int nBufferLen=str.GetLength()*3+3;
+			int nLen=str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0);
+			int nBufferLen=nLen*3;
 			char* szBuffer=new char[nBufferLen];
-			int nRet=WideCharToMultiByte(CP_UTF8,0,str,str.GetLength(),szBuffer,nBufferLen,NULL,NULL);
+			int nRet=WideCharToMultiByte(CP_UTF8,0,str,nLen,szBuffer,nBufferLen,NULL,NULL);
 			return CFile::Write(szBuffer,nRet);
 		}
 	case ANSI:
@@ -939,13 +947,14 @@ BOOL CFileEncode::Write(LPCWSTR szNullTerminatedString)
 	switch (m_nEncoding)
 	{
 	case Unicode:
-		return CFile::Write(szNullTerminatedString);
+		return CFile::Write((const void*)(LPCWSTR)szNullTerminatedString,(istrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0))*2);
 	case UTF8:
 		{
-			int nBufferLen=istrlen(szNullTerminatedString)*3+3;
+			int nLen=istrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0);
+			int nBufferLen=nLen*3;
 			char* szBuffer=new char[nBufferLen];
-			int nRet=WideCharToMultiByte(CP_UTF8,0,szNullTerminatedString,-1,szBuffer,nBufferLen,NULL,NULL);
-			return CFile::Write(szBuffer,nRet-1);
+			int nRet=WideCharToMultiByte(CP_UTF8,0,szNullTerminatedString,nLen,szBuffer,nBufferLen,NULL,NULL);
+			return CFile::Write(szBuffer,nRet);
 		}
 	case ANSI:
 	default:
@@ -958,7 +967,7 @@ BOOL CFileEncode::Write(LPCWSTR szString,DWORD nCount)
 	switch (m_nEncoding)
 	{
 	case Unicode:
-		return CFile::Write(szString,nCount*2);
+		return CFile::Write((const void*)(LPCWSTR)szString,nCount*2);
 	case UTF8:
 		{
 			int nBufferLen=nCount*3+3;

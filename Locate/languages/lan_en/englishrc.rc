@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,8,8100
- PRODUCTVERSION 3,1,8,8100
+ FILEVERSION 3,1,8,9070
+ PRODUCTVERSION 3,1,8,9070
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 RC2 build 8.8030"
+            VALUE "FileVersion", "3.1 RC2.5 build 8.9070"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2008 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 RC2 build 8.8100"
+            VALUE "ProductVersion", "3.1 RC2.5 build 8.9070"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1340,10 +1340,10 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_SAVERESULTSFILTERS			"Text File|*.txt|HTML file|*.html|All Files|*.*||"
+    IDS_SAVERESULTSFILTERS			"Text File|*.txt|HTML file (list)|*.html|HTML file (thumbnails)|*.html|All Files|*.*||"
     IDS_SAVERESULTS					"Save results"
 	IDS_SAVERESULTSHEADER			"Results: %d items including %d files and %d directories"
-	IDS_SAVERESULTSDATE				"Date: "
+	IDS_SAVERESULTSDATE				"Date:"
 	IDS_SAVERESULTSDBCAPTION		"Results are from following databases:"
 	IDS_SAVERESULTSDB				"Name: %s  Creator: %s  Description: %s  File: %s"
 	IDS_SAVERESULTSDBNAME			"Name"
@@ -1355,6 +1355,8 @@ BEGIN
 	IDS_SAVERESULTSANSI				"ANSI"
 	IDS_SAVERESULTSUNICODE			"Unicode"
 	IDS_SAVERESULTSUTF8				"UTF-8"
+	IDS_SAVERESULTSINVALIDFORMAT	"Template file is invalid or corrupted. "
+	IDS_SAVERESULTSCANNOTSAVERESULTS "Cannot save results. Last system error: %s"
 END
 
 STRINGTABLE 

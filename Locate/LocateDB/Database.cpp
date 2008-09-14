@@ -1599,7 +1599,7 @@ BOOL CDatabase::SaveExtraBlockToDbFile(LPCWSTR szArchive)
 			pOutFile->Write(Creator);
 			pOutFile->Write(Description);
 			pOutFile->Write(Extra1);
-			pOutFile->Write(szExtra,dwExtraLen*2);
+			pOutFile->Write(szExtra,dwExtraLen);
 		}
 		else
 		{

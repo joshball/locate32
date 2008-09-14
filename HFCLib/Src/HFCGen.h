@@ -163,12 +163,16 @@ public:
 	// Reading/writing
 	virtual DWORD Read(void* lpBuf, DWORD nCount) const=0;
 	virtual BOOL Write(const void* lpBuf, DWORD nCount)=0;
+#ifdef DEF_WCHAR
+	virtual BOOL Write(LPCWSTR lpString, DWORD nCount)=0;
+#endif
 
 
 	// Helpers
 	BOOL Read(BYTE& bNum) const;
 	BOOL Read(WORD& wNum) const;
 	BOOL Read(DWORD& dwNum) const;
+	
 
 	BOOL Write(const CStringA& str);
 #ifdef DEF_WCHAR
@@ -308,19 +312,22 @@ public:
 
 	virtual DWORD Read(void* lpBuf, DWORD nCount) const;
 	virtual BOOL Write(const void* lpBuf, DWORD nCount);
-	
+#ifdef DEF_WCHAR
+	virtual BOOL Write(LPCWSTR lpString, DWORD nCount);
+#endif
+
 
 	// Helpers
 	BOOL Read(BYTE& bNum) const { return CStream::Read(bNum); }
 	BOOL Read(WORD& wNum) const { return CStream::Read(wNum); }
 	BOOL Read(DWORD& dwNum) const { return CStream::Read(dwNum); }
-
+	BOOL Read(CStringA& str) const;
+	
 	BOOL Write(BYTE bNum) { return CStream::Write(bNum); }
 	BOOL Write(WORD wNum) { return CStream::Write(wNum); }
 	BOOL Write(DWORD dwNum) { return CStream::Write(dwNum); }
 	BOOL Write(char ch)  { return CStream::Write(ch); }
 	
-	BOOL Read(CStringA& str) const;
 	BOOL Write(const CStringA& str);
 	BOOL Write(LPCSTR szNullTerminatedString);
 #ifdef DEF_WCHAR
@@ -367,7 +374,7 @@ public:
 	BOOL Write(WCHAR ch);
 	BOOL Write(const CStringW& str);
 	BOOL Write(LPCWSTR szNullTerminatedString);
-	BOOL Write(LPCWSTR szString,DWORD nCount);
+	virtual BOOL Write(LPCWSTR szString,DWORD nCount);
 
 };
 #endif

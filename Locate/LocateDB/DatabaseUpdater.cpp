@@ -274,12 +274,12 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 					
 					// Writing free data
 					if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra1!=NULL)
-						dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1,dwExtraSize1*2);
+						dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra1,dwExtraSize1);
 					else
 						dbFile->Write((WORD)0);
 
 					if (m_aDatabases[m_dwCurrentDatabase]->m_szExtra2!=NULL)
-						dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2,dwExtraSize2*2);
+						dbFile->Write(m_aDatabases[m_dwCurrentDatabase]->m_szExtra2,dwExtraSize2);
 					else
 						dbFile->Write((WORD)0);
 				}

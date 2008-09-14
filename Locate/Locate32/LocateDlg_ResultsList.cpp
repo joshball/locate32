@@ -869,7 +869,8 @@ HRESULT CLocateDlg::ListCustomDrawHandler(NMLVCUSTOMDRAW* pLVCD)
 					List.DeleteImageList();
 
 
-					SaveBitmapToJpegFile(hThumbnail,L"C:\\Temp\\Test.jpg",75);
+					// SaveBitmapToJpegFile(hThumbnail,L"C:\\Temp\\Test.jpg",75);
+
 					/*
 					IPicture* pPic;
 					PICTDESC pd;

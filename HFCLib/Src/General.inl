@@ -645,7 +645,7 @@ inline BOOL CStream::Write(const CStringA& str)
 #ifdef DEF_WCHAR
 inline BOOL CStream::Write(const CStringW& str) 
 { 
-	return this->Write((LPCWSTR)str,(DWORD)(str.GetLength())*2); 
+	return this->Write((LPCWSTR)str,(DWORD)(str.GetLength())); 
 }
 #endif
 
@@ -679,7 +679,7 @@ inline BOOL CStream::Write(LPCSTR szNullTerminatedString)
 #ifdef DEF_WCHAR
 inline BOOL CStream::Write(LPCWSTR szNullTerminatedString) 
 { 
-	return this->Write(szNullTerminatedString,(DWORD)(2*istrlenw(szNullTerminatedString))); 
+	return this->Write(szNullTerminatedString,(DWORD)istrlenw(szNullTerminatedString)); 
 }
 #endif
 

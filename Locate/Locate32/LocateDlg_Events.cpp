@@ -2688,33 +2688,92 @@ void CLocateDlg::OnSaveResults()
 	try {
 		// Initializing results
 		CResults Results(SaveResultsDlg.m_nFlags,SaveResultsDlg.m_strDescription,TRUE);
-		Results.Create(m_pListCtrl,SaveResultsDlg.m_aDetails,SaveResultsDlg.m_aDetails.GetSize());
+		int nFilter=SaveResultsDlg.GetFilterIndex();
+
+		Results.Create(m_pListCtrl,SaveResultsDlg.m_aDetails,SaveResultsDlg.m_aDetails.GetSize(),nFilter!=3);
 
 		CStringW File;
 		SaveResultsDlg.GetFilePath(File);
-		if (SaveResultsDlg.GetFilterIndex()==2)
+		switch (nFilter)
+		{
+		case 2:
 			Results.SaveToHtmlFile(File);
-		else
+			break;
+		case 3:
+			Results.SaveToHtmlFile(File,L"C:\\Program Files\\Locate\\templates\\htmllist.ret");
+			break;
+		default:
 			Results.SaveToFile(File);
+			break;
+		}
 	}
 	catch (CFileException ex)
 	{
+		if (ex.m_cause==CFileException::invalidFile)
+		{
+			ShowErrorMessage(IDS_SAVERESULTSINVALIDFORMAT,IDS_ERROR);
+			return;
+		}
+		else if (ex.m_lOsError!=-1)
+		{
+			WCHAR* pError=CLocateApp::FormatLastOsError();
+			if (pError!=NULL)
+			{
+				CStringW str;
+				str.Format(IDS_SAVERESULTSCANNOTSAVERESULTS,pError);
+				while (str.LastChar()=='\n' || str.LastChar()=='\r')
+				str.DelLastChar();
+				MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+				LocalFree(pError);
+				return;
+			}
+			
+		}
+		
 		char szError[2000];
 		ex.GetErrorMessage(szError,2000);
 		MessageBox(szError,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
+		return;
+
 	}
 	catch (CException ex)
 	{
+		if (ex.m_lOsError!=-1)
+		{
+			WCHAR* pError=CLocateApp::FormatLastOsError();
+			if (pError!=NULL)
+			{
+				CStringW str;
+				str.Format(IDS_SAVERESULTSCANNOTSAVERESULTS,pError);
+				while (str.LastChar()=='\n' || str.LastChar()=='\r')
+				str.DelLastChar();
+				MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+				LocalFree(pError);
+				return;
+			}
+			
+		}
+		
 		char szError[2000];
 		ex.GetErrorMessage(szError,2000);
 		MessageBox(szError,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
 	}
 	catch (...)
 	{
-		char szError[2000];
-		CException ex(CException::unknown,GetLastError());
-		ex.GetErrorMessage(szError,2000);
-		MessageBox(szError,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
+		WCHAR* pError=CLocateApp::FormatLastOsError();
+		CStringW str;
+		if (pError!=NULL)
+		{
+			str.Format(IDS_SAVERESULTSCANNOTSAVERESULTS,pError);
+			LocalFree(pError);
+		}
+		else
+			str.Format(IDS_SAVERESULTSCANNOTSAVERESULTS,(LPCWSTR)ID2W(IDS_UNKNOWN));
+
+		while (str.LastChar()=='\n' || str.LastChar()=='\r')
+		str.DelLastChar();
+		MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+		return;
 	}
 }
 

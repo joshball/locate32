@@ -17,17 +17,17 @@ public:
 	BOOL Initialize(DWORD dwFlags,LPCWSTR szDescription);
 	void Close();
 
-	BOOL Create(CListCtrl* pList,int* pDetails,int nDetails);
+	BOOL Create(CListCtrl* pList,int* pSelectedDetails,int nSelectedDetails,BOOL bDataToTmpFile);
 	BOOL SaveToFile(LPCWSTR szFile) const;
 	BOOL SaveToHtmlFile(LPCWSTR szFile) const;
-	BOOL SaveToHtmlThumbnailPage(LPCWSTR szFile) const;
-
+	BOOL SaveToHtmlFile(LPCWSTR szFile,LPCWSTR szTemplateFile);
+	
 private:
 	DWORD m_dwFlags;
 	CStringW m_strDescription;
 
-	int m_nDetails;
-	int* m_pDetails;
+	int m_nSelectedDetails;
+	int* m_pSelectedDetails;
 	DWORD* m_pLengths;
 	int m_nResults;
 	int m_nFiles;
@@ -36,7 +36,37 @@ private:
 	CWordArray m_aFromDatabases;
 
 	CStringW m_sTempFile;
+
+	CAutoPtrA<CLocateDlg::ViewDetails> m_AllDetails;
+	CArray<CLocatedItem*> m_Items;	
+
+private:
+	struct Variable {
+		enum Type {
+			Integer,
+			String
+		} nType;
+		union {
+			int nInteger;
+			LPCWSTR pString;
+		};
+
+		Variable() { nType=Integer; nInteger=0; }
+		~Variable() { if (nType==String && pString!=NULL) delete[] pString; }
+	};
+
+	CStringMapFP<CHAR,Variable*> m_Variables;
+
 	
+	const Variable* GetVariable(LPCSTR szName) const;
+	BOOL SetVariable(LPCSTR szName,int newInteger);
+	BOOL SetVariable(LPCSTR szName,LPCWSTR pString);
+	
+	BOOL ParseBuffer(CStream& outFile,LPCWSTR pBuffer,int iBufferLen);
+	BOOL ParseBlockLength(LPCWSTR pBuffer,int iBufferLen,int& riBlockLen) const;
+	
+	int EvalCondition(LPCWSTR pBuffer,int iConditionLength);
+	void EvalCondition(LPCWSTR pBuffer,int iConditionLength,CStringW& output);
 
 
 };
@@ -67,12 +97,12 @@ private:
 };
 
 inline CResults::CResults(BOOL bThrowExceptions)
-:	m_nDetails(0),m_pDetails(NULL),m_pLengths(NULL),m_dwFlags(0),CExceptionObject(bThrowExceptions)
+:	m_nSelectedDetails(0),m_pSelectedDetails(NULL),m_pLengths(NULL),m_dwFlags(0),CExceptionObject(bThrowExceptions)
 {
 }
 
 inline CResults::CResults(DWORD dwFlags,LPCWSTR szDescription,BOOL bThrowExceptions)
-:	m_nDetails(0),m_pDetails(NULL),m_pLengths(NULL),CExceptionObject(bThrowExceptions)
+:	m_nSelectedDetails(0),m_pSelectedDetails(NULL),m_pLengths(NULL),CExceptionObject(bThrowExceptions)
 {
 	Initialize(dwFlags,szDescription);
 }
@@ -82,4 +112,14 @@ inline CResults::~CResults()
 	Close();
 }
 
+inline const CResults::Variable* CResults::GetVariable(LPCSTR szName) const
+{
+	POSITION pPos=m_Variables.Find(szName);
+	if (pPos==NULL)
+		return FALSE;
+	return m_Variables.GetAt(pPos);
+}
+
+
+	
 #endif

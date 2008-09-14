@@ -126,6 +126,17 @@ inline CAutoPtrA<TYPE>& CAutoPtrA<TYPE>::operator=(CAutoPtrA<TYPE>& another)
 }
 
 
+////////////////////////////////////////////////
+// CAutoPtrGlobal
+
+template<class TYPE> 
+inline CAutoPtrGlobal<TYPE>::~CAutoPtrGlobal()
+{
+	Unlock();
+	if (m_bFree)
+		GlobalFree(m_hGlobal);
+}
+
 
 ////////////////////////////////////////////////
 // CDataContainer

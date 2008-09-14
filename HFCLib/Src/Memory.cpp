@@ -280,10 +280,17 @@ BOOL CMemoryStream::Write(const void* lpBuf, DWORD nCount)
 		m_dwSize=m_dwPosition+nCount;
 	}
 
-	CopyMemory(m_pData,lpBuf,nCount);
+	CopyMemory(m_pData+m_dwPosition,lpBuf,nCount);
 	m_dwPosition+=nCount;
 	return TRUE;		
 }
+
+#ifdef DEF_WCHAR
+BOOL CMemoryStream::Write(LPCWSTR szString,DWORD dwCount) 
+{ 
+	return CMemoryStream::Write((const void*)szString,(DWORD)(2*dwCount)); 
+}
+#endif 
 
 void CMemoryStream::FreeExtraAlloc()
 {

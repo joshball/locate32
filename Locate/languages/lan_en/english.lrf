@@ -31,7 +31,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2008 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.1 RC2 build 8.8030
+FILEVERSION=3.1 RC2.5 build 8.9070
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -824,7 +824,7 @@ DLGSAVERESULTS_DESCRIPTION=Description:
 DLGSAVERESULTS_ALLITEMS=All items
 DLGSAVERESULTS_SELECTEDITEMS=Selected items
 STRSAVERESULTS_HEADER=Results: %d items including %d files and %d directories
-STRSAVERESULTS_DATE=Date: 
+STRSAVERESULTS_DATE=Date:
 STRSAVERESULTS_TITLE=Locate results
 STRSAVERESULTS_TITLE2=Locate results:
 STRSAVERESULTS_DATABASEINFOCAPTION=Results are from following databases:
@@ -835,6 +835,8 @@ STRSAVERESULTS_DATABASEINFOFILE=File
 STRSAVERESULTS_ANSI=ANSI
 STRSAVERESULTS_UNICODE=Unicode
 STRSAVERESULTS_UTF8=UTF-8
+STRSAVERESULTS_INVALIDFORMAT=Template file is invalid or corrupted. 
+STRSAVERESULTS_CANNOTSAVERESULTS=Cannot save results. Last system error: %s
 
 ###########################
 # Database info dialog
@@ -1231,7 +1233,7 @@ STR_SHORTCUT_TODESKTOP=Do you want the shortcut to be placed on the desktop (pre
 ###########################
 # Filetype masks
 STR_FILETYPEMASK_DATABASEFILES=Database files|*.dbs|All Files|*.*||
-STR_FILETYPEMASK_RESULTFILES=Text File|*.txt|HTML file|*.html|All Files|*.*||
+STR_FILETYPEMASK_RESULTFILES=Text File|*.txt|HTML file (list)|*.html|HTML file (thumbnails)|*.html|All Files|*.*||
 STR_FILETYPEMASK_IMPORTDATABASESETTINGS=Supported file types (.dbs, .dbi, .txt)|*.dbs;*.dbi;*.txt|Database files (.dbs)|*.dbs|Text Files (.dbi, .txt)|*.dbi;*.txt|All Files|*.*||
 STR_FILETYPEMASK_EXPORTDATABASESETTINGS=Database files (.dbs)|*.dbs|Database setting (.dbi)|*.dbi|Text Files|*.txt|All Files|*.*||
 STR_FILETYPEMASK_BUILDINTYPES=Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps wmf odg otg|0|Web Files|html htm asp shtm shtm css|6|Document files|doc docx dot xls xlw ppt pps wpd rtf pdf odt ods odp sxw sxc stw stc sxi sti|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h hxx hpp inl rc pas java pl py|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 mp2 wma voc aif aiff cda ogg mpa mpc ape flac aac ac3 m4a|3|Video files|mpeg mpg avi mov ogm rm rmvb wmv asf m4v mkv vob ts|4||

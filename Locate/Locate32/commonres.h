@@ -45,7 +45,7 @@
 #define IDB_SHORTCUTACTIONSBITMAPSD     231
 #define IDB_ADVANCEDSETTINGSBITMAPS     232
 #define IDR_DEFAULTSHORTCUTS            233
-#define IDB_BITMAP1                     235
+#define IDR_HTMLPAGESTYLES				234
 #define IDB_DONATE                      235
 #define IDS_ERROR                       1000
 #define IDS_ERRORCANNOTLOADLANGUAGEFILE 1018

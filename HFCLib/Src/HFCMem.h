@@ -320,6 +320,31 @@ private:
 
 };
 
+// CAutoPtrGlobal, same as CAutoPtr but works with GlobalXXX functions
+// This is a simple version of GlobalAlloc
+template<class TYPE> 
+class CAutoPtrGlobal
+{
+public:
+	CAutoPtrGlobal(HGLOBAL hGlobal,BOOL bFree=TRUE) { m_data=NULL; m_hGlobal=hGlobal; m_bFree=bFree;}
+	~CAutoPtrGlobal();
+
+	TYPE* Lock() { if (m_data==NULL) { m_data=(TYPE*)GlobalLock(m_hGlobal); } return m_data; }
+	void Unlock() { if (m_data!=NULL) { GlobalUnlock(m_hGlobal); m_data=NULL;} }
+	
+	operator TYPE*() const { return Lock(); }
+	operator TYPE*&() { Lock(); return m_data; }
+	
+	TYPE* operator ->() { return Lock(); }
+	
+
+private:
+	HGLOBAL m_hGlobal;
+	TYPE* m_data;
+	BOOL m_bFree;
+};
+
+
 // CDataContainer, keeps memory until m_dwCount==0
 template<class TYPE> 
 class CDataContainer
@@ -391,7 +416,9 @@ public:
 	// Reading/writing
 	virtual DWORD Read(void* lpBuf, DWORD nCount) const;
 	virtual BOOL Write(const void* lpBuf, DWORD nCount);
-
+#ifdef DEF_WCHAR
+	virtual BOOL Write(LPCWSTR lpString, DWORD nCount);
+#endif
 
 	/*
 	// Helpers
@@ -405,6 +432,8 @@ public:
 	BOOL Write(char ch) { return CStream::Write(ch); }
 	
 	*/
+
+	const BYTE* GetData() const { return m_pData; }
 
 	DWORD GetAllocLength() const;
 	void FreeExtraAlloc(); 
