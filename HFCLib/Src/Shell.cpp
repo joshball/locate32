@@ -6,7 +6,7 @@
 
 
 #ifdef WIN32
-BOOL StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,LPSTR szString,DWORD cchBufferLen)
+BOOL ShellFunctions::StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,LPSTR szString,DWORD cchBufferLen)
 {
 	switch (strret.uType)
 	{
@@ -24,7 +24,7 @@ BOOL StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,LPSTR szString,DWORD cchBuffe
 	return FALSE;
 }
 
-void StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,CString& sString)
+void ShellFunctions::StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,CString& sString)
 {
 	switch (strret.uType)
 	{
@@ -41,7 +41,7 @@ void StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,CString& sString)
 	}	
 }
 
-LPSTR StrRetToPtr(STRRET& strret,LPITEMIDLIST lpiil)
+LPSTR ShellFunctions::StrRetToPtr(STRRET& strret,LPITEMIDLIST lpiil)
 {
 	LPSTR pRet=NULL;
 	switch (strret.uType)
@@ -61,7 +61,7 @@ LPSTR StrRetToPtr(STRRET& strret,LPITEMIDLIST lpiil)
 }
 
 #ifdef DEF_WCHAR
-BOOL StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,LPWSTR szString,DWORD cchBufferLen)
+BOOL ShellFunctions::StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,LPWSTR szString,DWORD cchBufferLen)
 {
 	switch (strret.uType)
 	{
@@ -81,7 +81,7 @@ BOOL StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,LPWSTR szString,DWORD cchBuff
 	return FALSE;
 }
 
-void StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,CStringW& sString)
+void ShellFunctions::StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,CStringW& sString)
 {
 	switch (strret.uType)
 	{
@@ -98,7 +98,7 @@ void StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,CStringW& sString)
 	}	
 }
 
-LPWSTR StrRetToPtrW(STRRET& strret,LPITEMIDLIST lpiil)
+LPWSTR ShellFunctions::StrRetToPtrW(STRRET& strret,LPITEMIDLIST lpiil)
 {
 	LPWSTR pRet=NULL;
 	switch (strret.uType)
@@ -118,7 +118,7 @@ LPWSTR StrRetToPtrW(STRRET& strret,LPITEMIDLIST lpiil)
 }
 #endif
 
-LPITEMIDLIST GetIDList(LPCSTR lpszFileName)
+LPITEMIDLIST ShellFunctions::GetIDList(LPCSTR lpszFileName)
 {
 	LPITEMIDLIST pidl=NULL;
 	IShellFolder *pDesktop;
@@ -134,7 +134,22 @@ LPITEMIDLIST GetIDList(LPCSTR lpszFileName)
 	return pidl;
 }
 
-LPITEMIDLIST GetIDListForParent(LPCSTR lpszFileName)
+#ifdef DEF_WCHAR
+LPITEMIDLIST ShellFunctions::GetIDList(LPCWSTR lpszFileName)
+{
+	LPITEMIDLIST pidl=NULL;
+	IShellFolder *pDesktop;
+	if (FAILED(SHGetDesktopFolder(&pDesktop)))
+		return NULL;
+
+	HRESULT hRes=pDesktop->ParseDisplayName(NULL,NULL,(LPOLESTR)lpszFileName,NULL,&pidl,NULL);
+	pDesktop->Release();
+	
+	return FAILED(hRes)?NULL:pidl;
+}
+#endif
+
+LPITEMIDLIST ShellFunctions::GetIDListForParent(LPCSTR lpszFileName)
 {
 		int temp=LastCharIndex(lpszFileName,'\\');
 	LPCWSTR szFolder;
@@ -160,7 +175,32 @@ LPITEMIDLIST GetIDListForParent(LPCSTR lpszFileName)
 	return pidl;
 }
 
-DWORD GetIDListSize(LPITEMIDLIST lpil)
+#ifdef DEF_WCHAR
+LPITEMIDLIST ShellFunctions::GetIDListForParent(LPCWSTR lpszFileName)
+{
+	int temp=LastCharIndex(lpszFileName,L'\\');
+	LPCWSTR szFolder;
+	if (temp==-1)
+		szFolder=alloccopy(lpszFileName);
+	else
+		szFolder=alloccopy(lpszFileName,temp+1);
+	
+	LPITEMIDLIST pidl=NULL;
+	IShellFolder *pDesktop;
+	if (FAILED(SHGetDesktopFolder(&pDesktop)))
+	{
+		delete[] szFolder;
+		return NULL;
+	}
+	
+	HRESULT hRes=pDesktop->ParseDisplayName(NULL,NULL,(LPOLESTR)szFolder,NULL,&pidl,NULL);
+	pDesktop->Release();
+	
+	return FAILED(hRes)?NULL:pidl;
+}
+#endif
+
+DWORD ShellFunctions::GetIDListSize(LPITEMIDLIST lpil)
 {
 	DWORD nSize=0;
 	while(*((WORD*)((LPCSTR)lpil+nSize))!=0)
@@ -169,7 +209,7 @@ DWORD GetIDListSize(LPITEMIDLIST lpil)
 }
 
 
-HRESULT CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc,LPCSTR pszParams)
+HRESULT ShellFunctions::CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc,LPCSTR pszParams)
 {
 	HRESULT hres;
 	IShellLink* psl;
@@ -208,7 +248,7 @@ HRESULT CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc,LPCS
 	return hres;
 }
 
-HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath)
+HRESULT ShellFunctions::ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath)
 {
 	HRESULT hres;  
 	IShellLink* psl;
@@ -237,7 +277,7 @@ HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath)
 	return hres;
 }
 
-HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,DWORD nBufSize)
+HRESULT ShellFunctions::GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,DWORD nBufSize)
 {
 	HRESULT hres;  
 	IShellLink* psl;
@@ -262,43 +302,9 @@ HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,DWORD nBufSize)
 }
 
 #ifdef DEF_WCHAR
-LPITEMIDLIST GetIDList(LPCWSTR lpszFileName)
-{
-	LPITEMIDLIST pidl=NULL;
-	IShellFolder *pDesktop;
-	if (FAILED(SHGetDesktopFolder(&pDesktop)))
-		return NULL;
 
-	HRESULT hRes=pDesktop->ParseDisplayName(NULL,NULL,(LPOLESTR)lpszFileName,NULL,&pidl,NULL);
-	pDesktop->Release();
-	
-	return FAILED(hRes)?NULL:pidl;
-}
 
-LPITEMIDLIST GetIDListForParent(LPCWSTR lpszFileName)
-{
-	int temp=LastCharIndex(lpszFileName,L'\\');
-	LPCWSTR szFolder;
-	if (temp==-1)
-		szFolder=alloccopy(lpszFileName);
-	else
-		szFolder=alloccopy(lpszFileName,temp+1);
-	
-	LPITEMIDLIST pidl=NULL;
-	IShellFolder *pDesktop;
-	if (FAILED(SHGetDesktopFolder(&pDesktop)))
-	{
-		delete[] szFolder;
-		return NULL;
-	}
-	
-	HRESULT hRes=pDesktop->ParseDisplayName(NULL,NULL,(LPOLESTR)szFolder,NULL,&pidl,NULL);
-	pDesktop->Release();
-	
-	return FAILED(hRes)?NULL:pidl;
-}
-
-HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc,LPCWSTR pszParams)
+HRESULT ShellFunctions::CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc,LPCWSTR pszParams)
 {
 	HRESULT hres;
 	
@@ -374,7 +380,7 @@ HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc,L
 	return hres;
 }
 
-HRESULT ResolveShortcut(HWND hWnd,LPCWSTR pszShortcutFile,LPWSTR pszPath)
+HRESULT ShellFunctions::ResolveShortcut(HWND hWnd,LPCWSTR pszShortcutFile,LPWSTR pszPath)
 {
 	HRESULT hres;  
 	pszPath[0]='\0';
@@ -436,7 +442,7 @@ HRESULT ResolveShortcut(HWND hWnd,LPCWSTR pszShortcutFile,LPWSTR pszPath)
 	return hres;
 }
 
-HRESULT GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,DWORD nBufSize)
+HRESULT ShellFunctions::GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,DWORD nBufSize)
 {
 	HRESULT hres;
 	if (IsUnicodeSystem())
@@ -487,7 +493,7 @@ HRESULT GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,DWORD nBufSiz
 #endif
 
 
-BOOL RunRegistryCommand(HKEY hKey,LPCSTR szFile)
+BOOL ShellFunctions::RunRegistryCommand(HKEY hKey,LPCSTR szFile)
 {
 	PROCESS_INFORMATION pi;
 	STARTUPINFO si;
@@ -538,7 +544,7 @@ BOOL RunRegistryCommand(HKEY hKey,LPCSTR szFile)
 }
 
 #ifdef DEF_WCHAR
-BOOL RunRegistryCommand(HKEY hKey,LPCWSTR szFile)
+BOOL ShellFunctions::RunRegistryCommand(HKEY hKey,LPCWSTR szFile)
 {
 	if (!IsUnicodeSystem())
 		return RunRegistryCommand(hKey,W2A(szFile));
@@ -593,173 +599,17 @@ BOOL RunRegistryCommand(HKEY hKey,LPCWSTR szFile)
 }
 #endif
 
-DWORD GetComputerNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen)
-{
-	// May be computer?
-	IShellFolder *psf;
-	
-	if (!SUCCEEDED(SHGetDesktopFolder(&psf)))
-		return 0;
-
-	SHDESCRIPTIONID di;
-	if (!SUCCEEDED(SHGetDataFromIDList(psf,lpiil,SHGDFIL_DESCRIPTIONID,&di,sizeof(SHDESCRIPTIONID))))
-	{
-		psf->Release();
-		return 0;
-	}
-
-	if (di.clsid!=CLSID_NetworkPlaces)
-	{
-		psf->Release();
-		return 0;
-	}
-
-	STRRET str;
-	if (!SUCCEEDED(psf->GetDisplayNameOf(lpiil,SHGDN_FORPARSING,&str)))
-	{
-		psf->Release();
-		return 0;
-	}
-	psf->Release();
-
-	if (StrRetToStr(str,lpiil,szName,dwBufferLen))
-		return istrlen(szName);
-	return 0;
-}
 
 #ifdef DEF_WCHAR
-DWORD GetComputerNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,DWORD dwBufferLen)
-{
-	// May be computer?
-	IShellFolder *psf;
-	
-	if (!SUCCEEDED(SHGetDesktopFolder(&psf)))
-		return 0;
-
-	SHDESCRIPTIONID di;
-	if (!SUCCEEDED(SHGetDataFromIDList(psf,lpiil,SHGDFIL_DESCRIPTIONID,&di,sizeof(SHDESCRIPTIONID))))
-	{
-		psf->Release();
-		return 0;
-	}
-
-	if (di.clsid!=CLSID_NetworkPlaces)
-	{
-		psf->Release();
-		return 0;
-	}
-
-	STRRET str;
-	if (!SUCCEEDED(psf->GetDisplayNameOf(lpiil,SHGDN_NORMAL | SHGDN_FORPARSING,&str)))
-	{
-		psf->Release();
-		return 0;
-	}
-	psf->Release();
-
-	if (StrRetToStr(str,lpiil,szName,dwBufferLen))
-		return istrlenw(szName);
-	return 0;
-}
-#endif
 
 
-BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,DWORD nBufferLen)
-{
-	CStringW file(szFolder);
-	if (file.LastChar()!=L'\\')
-		file << L'\\';
-	file << L"desktop.ini";
-
-	WCHAR cls[300];
-	if (IsUnicodeSystem())
-	{
-		if (!GetPrivateProfileStringW(L".ShellClassInfo",L"CLSID2",szwEmpty,cls,300,file))
-			return FALSE;
-	}
-	else
-	{
-		char clsA[300];
-		if (!GetPrivateProfileString(".ShellClassInfo","CLSID2",szEmpty,clsA,300,W2A(file)))
-			return FALSE;
-		MultiByteToWideChar(CP_ACP,0,clsA,-1,cls,300);
-	}
-
-
-	if (wcscmp(cls,L"{0AFACED1-E828-11D1-9187-B532F1E9575D}")!=0)
-		return FALSE; // Folder shortcut
-
-	
-	IShellLink* psl;
-	if (!SUCCEEDED(CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl)))
-		return FALSE;
-
-	IPersistFile* ppf;
-	if (!SUCCEEDED(psl->QueryInterface(IID_IPersistFile,(void**)&ppf)))
-	{
-		psl->Release();
-		return FALSE;
-	}
-
-	IShellFolder* psf;
-	if (!SUCCEEDED(SHGetDesktopFolder(&psf)))
-	{
-		ppf->Release();
-		psl->Release();
-		return FALSE;
-	}
-
-	file=szFolder;
-	if (file.LastChar()!=L'\\')
-		file << L'\\';
-	file << L"target.lnk";
-
-
-	BOOL bRet=FALSE;
-
-	if (SUCCEEDED(ppf->Load(file,0)))
-	{
-		LPITEMIDLIST il;
-		if (SUCCEEDED(psl->GetIDList(&il)))
-		{
-			STRRET str;
-			if (SUCCEEDED(psf->GetDisplayNameOf(il,SHGDN_FORPARSING,&str)))
-			{
-				if (StrRetToStr(str,il,szTarget,nBufferLen))
-					bRet=2;
-			}
-			else
-			{
-				SHDESCRIPTIONID di;
-				if (SUCCEEDED(SHGetDataFromIDList(psf,il,SHGDFIL_DESCRIPTIONID,&di,sizeof(SHDESCRIPTIONID))))
-				{
-                    if (di.clsid==CLSID_NetworkPlaces)
-					{		
-						if (SUCCEEDED(psf->GetDisplayNameOf(il,SHGDN_FORPARSING,&str)))
-						{
-							if (StrRetToStr(str,il,szTarget,nBufferLen))
-								bRet=szTarget[0]=='\\' && szTarget[1]=='\\';
-						}
-					}
-				}
-			}
-			CoTaskMemFree(il);
-		}
-	}
-	
-	psf->Release();
-	ppf->Release();
-	psl->Release();
-	return bRet;
-}
-
-DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags)
+DWORD_PTR ShellFunctions::GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags)
 {
 	if (IsUnicodeSystem())
-		return SHGetFileInfoW(pszPath,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags);
+		return ::SHGetFileInfoW(pszPath,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags);
 
 	SHFILEINFO fi;
-	DWORD_PTR ret=SHGetFileInfoA(W2A(pszPath),dwFileAttributes,&fi,sizeof(SHFILEINFO),uFlags);
+	DWORD_PTR ret=::SHGetFileInfoA(W2A(pszPath),dwFileAttributes,&fi,sizeof(SHFILEINFO),uFlags);
 	if (ret==0)
 		return 0;
 
@@ -774,13 +624,13 @@ DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,U
 	return ret;	
 }
 
-DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags)
+DWORD_PTR ShellFunctions::GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags)
 {
 	if (IsUnicodeSystem())
-		return SHGetFileInfoW((LPCWSTR)piil,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags|SHGFI_PIDL);
+		return ::SHGetFileInfoW((LPCWSTR)piil,dwFileAttributes,psfi,sizeof(SHFILEINFOW),uFlags|SHGFI_PIDL);
 
 	SHFILEINFO fi;
-	DWORD_PTR ret=SHGetFileInfoA((LPCSTR)piil,dwFileAttributes,&fi,sizeof(SHFILEINFO),uFlags|SHGFI_PIDL);
+	DWORD_PTR ret=::SHGetFileInfoA((LPCSTR)piil,dwFileAttributes,&fi,sizeof(SHFILEINFO),uFlags|SHGFI_PIDL);
 	if (ret==0)
 		return 0;
 
@@ -796,10 +646,10 @@ DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi
 }
 
 
-int FileOperation(LPSHFILEOPSTRUCTW lpFileOp)
+int ShellFunctions::FileOperation(LPSHFILEOPSTRUCTW lpFileOp)
 {
 	if (IsUnicodeSystem())
-		return SHFileOperationW(lpFileOp);
+		return ::SHFileOperationW(lpFileOp);
 
 	LPCWSTR pFrom=lpFileOp->pFrom;
 	LPCWSTR pTo=lpFileOp->pTo;
@@ -819,7 +669,7 @@ int FileOperation(LPSHFILEOPSTRUCTW lpFileOp)
 	if (pProgressTitle!=NULL)
 		lpFileOp->lpszProgressTitle=(LPCWSTR)alloccopyWtoA(pProgressTitle);
 
-	int nRet=SHFileOperationA((LPSHFILEOPSTRUCTA)lpFileOp);
+	int nRet=::SHFileOperationA((LPSHFILEOPSTRUCTA)lpFileOp);
 	
 	if (pFrom!=NULL)
 	{
@@ -841,5 +691,65 @@ int FileOperation(LPSHFILEOPSTRUCTW lpFileOp)
 
 	return nRet;
 }
+
+
+int ShellFunctions::ShellExecute(HWND hwnd,LPCWSTR lpOperation,LPCWSTR lpFile,LPCWSTR lpParameters,LPCWSTR lpDirectory,INT nShowCmd)
+{
+	if (lpOperation!=NULL)
+	{
+		if (lpOperation[0]=='\0')
+			lpOperation=NULL;
+	}
+
+	if (IsUnicodeSystem())
+		return (int)::ShellExecuteW(hwnd,lpOperation,lpFile,lpParameters,lpDirectory,nShowCmd);
+	else
+	{
+		return (int)::ShellExecuteA(hwnd,(LPCSTR)W2A(lpOperation),(LPCSTR)W2A(lpFile),
+			(LPCSTR)W2A(lpParameters),(LPCSTR)W2A(lpDirectory),
+			nShowCmd);
+	}
+}
+
+BOOL ShellFunctions::ShellExecuteEx(LPSHELLEXECUTEINFOW lpExecInfo)
+{
+	if (IsUnicodeSystem())
+		return ::ShellExecuteExW(lpExecInfo);
+
+	ASSERT(sizeof(LPSHELLEXECUTEINFOA)==sizeof(LPSHELLEXECUTEINFOW));
+	ASSERT(lpExecInfo->cbSize>sizeof(LPSHELLEXECUTEINFOA));
+
+	SHELLEXECUTEINFO eia;
+	CopyMemory(&eia,lpExecInfo,lpExecInfo->cbSize);
+
+	if (lpExecInfo->lpVerb!=NULL)
+		eia.lpVerb=alloccopyWtoA(lpExecInfo->lpVerb);
+	if (lpExecInfo->lpFile!=NULL)
+		eia.lpFile=alloccopyWtoA(lpExecInfo->lpFile);
+	if (lpExecInfo->lpParameters!=NULL)
+		eia.lpParameters=alloccopyWtoA(lpExecInfo->lpParameters);
+	if (lpExecInfo->lpDirectory!=NULL)
+		eia.lpDirectory=alloccopyWtoA(lpExecInfo->lpDirectory);
+	if (lpExecInfo->fMask&SEE_MASK_CLASSNAME && lpExecInfo->lpClass!=NULL)
+		eia.lpClass=alloccopyWtoA(lpExecInfo->lpClass);
+
+	BOOL bRet=::ShellExecuteExA(&eia);
+
+	if (lpExecInfo->lpVerb!=NULL)
+		delete[] eia.lpVerb;
+	if (lpExecInfo->lpFile!=NULL)
+		delete[] eia.lpFile;
+	if (lpExecInfo->lpParameters!=NULL)
+		delete[] eia.lpParameters;
+	if (lpExecInfo->lpDirectory!=NULL)
+		delete[] eia.lpDirectory;
+	if (lpExecInfo->fMask&SEE_MASK_CLASSNAME && lpExecInfo->lpClass!=NULL)
+		delete[] eia.lpClass;
+	
+	return bRet;
+}
+
+#endif
+
 
 #endif

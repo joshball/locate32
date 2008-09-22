@@ -334,5 +334,74 @@ int ReportSystemError(HWND hWnd,LPCSTR szTitle,DWORD dwError,DWORD dwExtra,LPCST
 	return nRet;
 }
 
+HBITMAP ScaleImage(HBITMAP hBitmap,int nMaxX,int nMaxY)
+{
+	// Get current size
+	BITMAP bi;
+	GetObject(hBitmap,sizeof(BITMAP),&bi);
+	int cx,cy; // New size
+
+	// Determine new size
+	// Which axis determines scaling ratio?
+
+	double scaleX=double(nMaxX)/bi.bmWidth;
+	double scaleY=double(nMaxY)/bi.bmHeight;
+
+	if (nMaxX*bi.bmHeight<=nMaxY*bi.bmWidth) // double(nMaxX)/bi.bmWidth<=double(nMaxY)/bi.bmHeight
+	{
+		// X determines size
+		cx=nMaxX;
+		cy=bi.bmHeight*nMaxX/bi.bmWidth;
+	}
+	else
+	{
+		// Y determines size
+		cx=bi.bmWidth*nMaxY/bi.bmHeight;
+		cy=nMaxY;
+	}
+
+	// Calculations correct?
+	ASSERT(cx<=nMaxX && cx<=nMaxY && (cx==nMaxX || cy==nMaxY));
+
+	
+	// Create a bitmap in correct 24 bit format
+	BITMAPINFO  dibInfo;
+	BYTE* pBuffer;
+	dibInfo.bmiHeader.biBitCount = 24;
+	dibInfo.bmiHeader.biClrImportant = 0;
+	dibInfo.bmiHeader.biClrUsed = 0;
+	dibInfo.bmiHeader.biCompression = 0;
+	dibInfo.bmiHeader.biHeight = cy;
+	dibInfo.bmiHeader.biPlanes = 1;
+	dibInfo.bmiHeader.biSize = 40;
+	dibInfo.bmiHeader.biWidth = cx;
+	dibInfo.bmiHeader.biSizeImage = cx*cy*3;
+	dibInfo.bmiHeader.biXPelsPerMeter = 3780;
+	dibInfo.bmiHeader.biYPelsPerMeter = 3780;
+	dibInfo.bmiColors[0].rgbBlue = 0;
+	dibInfo.bmiColors[0].rgbGreen = 0;
+	dibInfo.bmiColors[0].rgbRed = 0;
+	dibInfo.bmiColors[0].rgbReserved = 0;
+	HDC hDC=::GetDC(NULL);
+	HBITMAP hNewBitmap = CreateDIBSection(hDC,(const BITMAPINFO*)&dibInfo,DIB_RGB_COLORS,(void**)&pBuffer,NULL,0);
+	::ReleaseDC(NULL,hDC);
+	
+
+	// Copy the original to the new bitmap
+	CDC srcDC,dstDC;
+	srcDC.CreateCompatibleDC(NULL);
+	dstDC.CreateCompatibleDC(NULL);
+	HBITMAP hOldBitmap1 = (HBITMAP)srcDC.SelectObject(hBitmap);
+	HBITMAP hOldBitmap2 = (HBITMAP)dstDC.SelectObject(hNewBitmap);
+
+	dstDC.StretchBlt(0,0,cx,cy,srcDC,0,0,bi.bmWidth,bi.bmHeight,SRCCOPY);
+
+	srcDC.SelectObject(hOldBitmap1);
+	dstDC.SelectObject(hOldBitmap2);
+
+
+	return hNewBitmap;
+}
+
 
 #endif

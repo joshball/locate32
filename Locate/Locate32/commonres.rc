@@ -44,7 +44,8 @@ BEGIN
     "\0"
 END
 
-#endif
+#endif    // APSTUDIO_INVOKED
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -52,8 +53,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,8,9070
- PRODUCTVERSION 3,1,8,9070
+ FILEVERSION 3,1,8,9210
+ PRODUCTVERSION 3,1,8,9210
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -69,12 +70,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "Locate32"
-            VALUE "FileVersion", "3, 1, 8, 9070"
+            VALUE "FileVersion", "3, 1, 8, 9210"
             VALUE "InternalName", "Locate32"
             VALUE "LegalCopyright", "Copyright © 1997-2008 Janne Huttunen"
             VALUE "OriginalFilename", "Locate32.exe"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 RC2.5 build 8.9070"
+            VALUE "ProductVersion", "3.1 RC3 build 8.9210"
         END
     END
     BLOCK "VarFileInfo"
@@ -166,7 +167,6 @@ END
 
 #endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
-
 
 
 /////////////////////////////////////////////////////////////////////////////

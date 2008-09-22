@@ -481,10 +481,10 @@ HGLOBAL CFileObject::GetItemIDList()
 	
 	for (i=0;i<m_Files.GetSize();i++)
 	{
-		pItemLists[nFiles+1]=GetIDList(*m_Files[i]);
+		pItemLists[nFiles+1]=ShellFunctions::GetIDList(*m_Files[i]);
 		if (pItemLists[nFiles+1]!=NULL)
 		{
-			nDataLength+=pItemLengths[nFiles+1]=GetIDListSize(pItemLists[nFiles+1]);
+			nDataLength+=pItemLengths[nFiles+1]=ShellFunctions::GetIDListSize(pItemLists[nFiles+1]);
 			nFiles++;
 		}
 	}

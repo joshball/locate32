@@ -125,8 +125,12 @@ void CArray<TYPE>::SetSize(int nNewSize)
 				SetHFCError(HFC_CANNOTALLOC);
 			return;
 		}
-		MemCopy(m_pData,temp,min(m_nSize,nNewSize)*sizeof(TYPE));
-		delete[] temp;	
+
+		if (temp!=NULL)
+		{
+			MemCopy(m_pData,temp,min(m_nSize,nNewSize)*sizeof(TYPE));
+			delete[] temp;	
+		}
 		m_nSize=nNewSize;
 	}
 }

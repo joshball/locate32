@@ -105,7 +105,6 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				Description=""
 				CommandLine=""
 			/>
 		</Configuration>
@@ -1369,14 +1368,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\hid_options_settings.src"
-				>
-			</File>
-			<File
-				RelativePath="..\hlp\hid_options_settingstool.src"
-				>
-			</File>
-			<File
 				RelativePath="..\hlp\hid_special_changecaseforfilename.src"
 				>
 			</File>
@@ -1418,6 +1409,18 @@
 			</File>
 			<File
 				RelativePath="..\hlp\hid_systemtray_openlocate.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\hid_tools_deleteprivatedata.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\hid_tools_settings.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\hid_tools_settingstool.src"
 				>
 			</File>
 			<File
@@ -1529,15 +1532,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\hlp\menu_options.src"
-				>
-			</File>
-			<File
 				RelativePath="..\hlp\menu_special.src"
 				>
 			</File>
 			<File
 				RelativePath="..\hlp\menu_systemtray.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\menu_tools.src"
 				>
 			</File>
 			<File
@@ -1604,6 +1607,10 @@
 		</Filter>
 		<File
 			RelativePath=".\HFCDebug.log"
+			>
+		</File>
+		<File
+			RelativePath=".\commonres\htmlpage_styles.css"
 			>
 		</File>
 		<File

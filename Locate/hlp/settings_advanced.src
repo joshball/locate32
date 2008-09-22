@@ -686,6 +686,15 @@ and tooltips are placed in the such way. This option can be used to prevent stea
 in such situations. 
 </p>
 
+<p><b><A NAME="sa_executeitemsmode"></A>$STRADVANCEDSETTINGS_EXECUTEMODE@C$</b>:
+This option can be used to change the way how Locate32 executes files. 
+The <b>$STRADVANCEDSETTINGS_EXECUTEMODEDEFAULT@C$</b> mode uses shell function to 
+execute files, <b>$STRADVANCEDSETTINGS_EXECUTEMODECONTEXTMENU@C$</b> mode executes 
+action for the default (bolded) item in the context menu which would appear when file 
+is clicked uring right mouse button. This latter is little bit slower (items in the context menu has to
+be populated), but can work better in certain situation (like with Flexisign).
+</p>
+
 </div> <!-- advanced_settings_level1@sa_misc-->
 
 

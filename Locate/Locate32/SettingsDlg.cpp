@@ -718,7 +718,7 @@ BOOL CSettingsProperties::SaveSettings()
 			if (IsSettingsFlagSet(settingsStartLocateAtStartup))
 			{
 				if (!FileSystem::IsFile(szPath))
-					CreateShortcut(szPath,GetApp()->GetExeNameW(),L"",L" /S");
+					ShellFunctions::CreateShortcut(szPath,GetApp()->GetExeNameW(),L"",L" /S");
 			}
 			else 
 			{
@@ -1451,6 +1451,8 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETDONTMOVETOOLTIPS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::efLVDontMoveTooltips,
 			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_dontmovetooltips"),
+		CreateListBox(IDS_ADVSETEXECUTEMODE,ExecuteItemsModeProc,0,
+			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_executeitemsmode"),
 		NULL
 	};
 
@@ -1659,24 +1661,13 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateThreadPriorityPr
 	case BASICPARAMS::Initialize:
 		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
 		{
-			if (IsUnicodeSystem())
-			{
-				::SendMessageW(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)ID2W(IDS_PRIORITYHIGH));		
-				::SendMessageW(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)ID2W(IDS_PRIORITYABOVENORMAL));		
-				::SendMessageW(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)ID2W(IDS_PRIORITYNORMAL));		
-				::SendMessageW(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)ID2W(IDS_PRIORITYBELOWNORMAL));		
-				::SendMessageW(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)ID2W(IDS_PRIORITYLOW));		
-				::SendMessageW(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCWSTR)ID2W(IDS_PRIORITYIDLE));		
-			}
-			else
-			{
-				::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYHIGH));		
-				::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYABOVENORMAL));		
-				::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYNORMAL));		
-				::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYBELOWNORMAL));		
-				::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYLOW));		
-				::SendMessage(((INITIALIZEPARAMS*)pParams)->hControl,CB_ADDSTRING,0,(LPARAM)(LPCSTR)ID2A(IDS_PRIORITYIDLE));		
-			}
+			CComboBox cb(((INITIALIZEPARAMS*)pParams)->hControl);
+			cb.AddString(ID2W(IDS_PRIORITYHIGH));		
+			cb.AddString(ID2W(IDS_PRIORITYABOVENORMAL));		
+			cb.AddString(ID2W(IDS_PRIORITYNORMAL));		
+			cb.AddString(ID2W(IDS_PRIORITYBELOWNORMAL));		
+			cb.AddString(ID2W(IDS_PRIORITYLOW));		
+			cb.AddString(ID2W(IDS_PRIORITYIDLE));		
 		}
 		break;
 	case BASICPARAMS::Get:
@@ -2053,6 +2044,49 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::TrayIconProc(BASICPARA
 	return DefaultEditStrWProc(pParams);
 }
 
+BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::ExecuteItemsModeProc(COptionsPropertyPage::BASICPARAMS* pParams)
+{
+	switch(pParams->crReason)
+	{
+	case BASICPARAMS::Initialize:
+		if (((INITIALIZEPARAMS*)pParams)->hControl!=NULL)
+		{
+			CComboBox cb(((INITIALIZEPARAMS*)pParams)->hControl);
+			cb.AddString(ID2W(IDS_ADVSETEXECUTEMODEDEFAULT));		
+			cb.AddString(ID2W(IDS_ADVSETEXECUTEMODECONTEXT));		
+			
+		}
+		break;
+	case BASICPARAMS::Get:
+		switch ((*((DWORD*)pParams->lParam))&CLocateDlg::efExecuteModeMask)
+		{
+		case CLocateDlg::efExecuteModeBoldedContextMenuItemMode:
+            pParams->lValue=1;
+			break;
+		default:
+            pParams->lValue=0;
+			break;
+		}
+		break;
+	case BASICPARAMS::Set:
+		break;
+	case BASICPARAMS::Apply:
+		(*((DWORD*)pParams->lParam))&=~CLocateDlg::efExecuteModeMask;
+		switch (((COMBOAPPLYPARAMS*)pParams)->nCurSel)
+		{
+		case 0:
+			*((int*)pParams->lParam)|=CLocateDlg::efExecuteModeDefaultMode;
+			break;
+		case 1:
+            *((int*)pParams->lParam)|=CLocateDlg::efExecuteModeBoldedContextMenuItemMode;
+			break;
+		}
+		break;
+	case BASICPARAMS::ChangingValue:
+		break;
+	}		
+	return TRUE;
+}
 
 ////////////////////////////////////////
 // CLanguageSettingsPage
@@ -4077,7 +4111,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 		if (fd.GetFolder(Folder))
 		{
 			WCHAR szNetHood[MAX_PATH];
-			switch (GetNethoodTarget(Folder,szNetHood,MAX_PATH))
+			switch (Network::GetNethoodTarget(Folder,szNetHood,MAX_PATH))
 			{
 			case 1:
 				AddComputerToList(szNetHood);
@@ -4119,7 +4153,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 				if (FAILED(hRes))
 					throw COleException(hRes);
 				
-				pComputer=StrRetToPtrW(str,fd.m_lpil);
+				pComputer=ShellFunctions::StrRetToPtrW(str,fd.m_lpil);
 				if (pComputer==NULL)
 					throw COleException(hRes);
 					
@@ -4476,7 +4510,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 		DWORD dwFlags=SHGFI_SYSICONINDEX|SHGFI_SMALLICON;
 		if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
 			dwFlags|=SHGFI_USEFILEATTRIBUTES;
-		if (GetFileInfo(szDrive,FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags))
+		if (ShellFunctions::GetFileInfo(szDrive,FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags))
 			li.iImage=fi.iIcon;
 		else
 			li.iImage=DEL_IMAGE;
@@ -4616,7 +4650,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 	}
 	else
 	{
-		if (GetFileInfo(szPath,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX|
+		if (ShellFunctions::GetFileInfo(szPath,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX|
 			(GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons?SHGFI_USEFILEATTRIBUTES:0)))
 			li.iImage=fi.iIcon;
 		else
@@ -4724,7 +4758,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToL
 	else
 	{
 		// Resolving icon,
-		if (GetFileInfo(szName,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX|
+		if (ShellFunctions::GetFileInfo(szName,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_DISPLAYNAME|SHGFI_SMALLICON|SHGFI_SYSICONINDEX|
 			(GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons?SHGFI_USEFILEATTRIBUTES:0)))
 			li.iImage=fi.iIcon;
 		else
@@ -4817,7 +4851,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 			else
 			{
 				SHFILEINFOW fi;
-				if (GetFileInfo(szDrive,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX|
+				if (ShellFunctions::GetFileInfo(szDrive,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX|
 					(GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons?SHGFI_USEFILEATTRIBUTES:0)))
 					li.iImage=fi.iIcon;
 				else
@@ -4944,7 +4978,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 			}
 			else
 			{
-				if (GetFileInfo(szBuffer,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX|SHGFI_DISPLAYNAME)|
+				if (ShellFunctions::GetFileInfo(szBuffer,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX|SHGFI_DISPLAYNAME)|
 					(GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons?SHGFI_USEFILEATTRIBUTES:0))
 					li.iImage=fi.iIcon;
 				else
@@ -5076,7 +5110,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 					}
 					else
 					{
-						if (GetFileInfo(szBuffer,FILE_ATTRIBUTE_DIRECTORY,&fi,
+						if (ShellFunctions::GetFileInfo(szBuffer,FILE_ATTRIBUTE_DIRECTORY,&fi,
 							SHGFI_SMALLICON|SHGFI_SYSICONINDEX|SHGFI_DISPLAYNAME|
 							(GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons?SHGFI_USEFILEATTRIBUTES:0)))
 							li.iImage=fi.iIcon;

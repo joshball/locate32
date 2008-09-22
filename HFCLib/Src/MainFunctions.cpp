@@ -7,13 +7,13 @@
 
 
 // Library variables
-#define  HFCVERSIONMS		MAKEVERSION(6,40)
-#define  HFCVERSIONLS		MAKEVERSION(8,9140)
+#define  HFCVERSIONMS		MAKEVERSION(6,50)
+#define  HFCVERSIONLS		MAKEVERSION(8,9210)
 
 #ifdef _DEBUG
-#define  HFCVERSIONSTR		"HFC Library (DEBUG) v6.40.8.9140";
+#define  HFCVERSIONSTR		"HFC Library (DEBUG) v6.50.8.9210";
 #else
-#define  HFCVERSIONSTR		"HFC Library v6.40.8.9140";
+#define  HFCVERSIONSTR		"HFC Library v6.50.8.9210";
 #endif
 
 LPCSTR szEmpty="";

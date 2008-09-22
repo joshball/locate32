@@ -2775,7 +2775,7 @@ void CPropertiesSheet::CPropertiesPage::UpdateFields()
 	if (m_bIsSameType)
 	{
 		SHFILEINFOW fi;
-		if (GetFileInfo(m_ppFiles[0],0,&fi,SHGFI_TYPENAME))
+		if (ShellFunctions::GetFileInfo(m_ppFiles[0],0,&fi,SHGFI_TYPENAME))
 			Text.Format(IDS_FILEPROPERTIESALLOFTYPE,fi.szTypeName);
 		else
 			Text.Format(IDS_FILEPROPERTIESALLOFTYPE,(LPCWSTR)ID2W(IDS_UNKNOWN));

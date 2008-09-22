@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.1.8.8030              */
+   database locater v3.1.8.9210              */
 
-const char* szVersionStr="locate 3.1 RC2 build 8.8030";
+const char* szVersionStr="locate 3.1 RC3 build 8.9210";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -411,12 +411,11 @@ int wmain (int argc,wchar_t * argv[])
 					else
 					{
 						++i;
-						if (argv[i][0]=='.' && argv[i][1]==L'\0')
-						{
-							WCHAR* pPath=new WCHAR[MAX_PATH];
-							FileSystem::GetCurrentDirectory(MAX_PATH,pPath);
-							aDirectories.Add(pPath);
-						}
+						
+						WCHAR szPath[MAX_PATH];
+						int nRet=FileSystem::GetFullPathName(argv[i],MAX_PATH,szPath,NULL);
+						if (nRet>0)
+							aDirectories.Add(alloccopy(szPath,nRet));
 						else
 							aDirectories.Add(alloccopy(argv[i]));
 					}

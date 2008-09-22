@@ -225,13 +225,13 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 
 	
 
-	m_LookIn.SetImageList((HIMAGELIST)GetFileInfo(szwEmpty,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON));
+	m_LookIn.SetImageList((HIMAGELIST)ShellFunctions::GetFileInfo(szwEmpty,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON));
 
 	// Everywhere, icon from Network Neighborhood
 	SHGetSpecialFolderLocation(*this,CSIDL_NETWORK,&idl);
-	GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+	ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
 	ci.iImage=fi.iIcon;
-	GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+	ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 	ci.iSelectedImage=fi.iIcon;
 	LoadString(IDS_EVERYWERE,Buffer,100);
 	ci.pszText=Buffer;
@@ -247,9 +247,9 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 
 	// Document folders
 	SHGetSpecialFolderLocation(*this,CSIDL_PERSONAL,&idl);
-	GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+	ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
 	ci.iImage=fi.iIcon;
-	GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+	ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 	ci.iSelectedImage=fi.iIcon;
 	LoadString(IDS_DOCUMENTFOLDERS,Buffer,80);
 	ci.pszText=Buffer;
@@ -264,11 +264,11 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	
 	// Desktop
 	SHGetSpecialFolderLocation(*this,CSIDL_DESKTOP,&idl);
-	GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+	ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
 	ci.iImage=fi.iIcon;
-	GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+	ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 	ci.iSelectedImage=fi.iIcon;
-	GetFileInfo(idl,0,&fi,SHGFI_DISPLAYNAME);
+	ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_DISPLAYNAME);
 	ci.pszText=fi.szDisplayName;
 	ci.iItem++;
 	ci.iIndent=1;
@@ -288,11 +288,11 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	}	
 	if	(FileSystem::IsDirectory(temp))
 	{
-		GetFileInfo(temp,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+		ShellFunctions::GetFileInfo(temp,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
 		ci.iImage=fi.iIcon;
-		GetFileInfo(temp,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+		ShellFunctions::GetFileInfo(temp,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 		ci.iSelectedImage=fi.iIcon;
-		GetFileInfo(temp,0,&fi,SHGFI_DISPLAYNAME);
+		ShellFunctions::GetFileInfo(temp,0,&fi,SHGFI_DISPLAYNAME);
 		ci.pszText=fi.szDisplayName;
 		ci.iItem++;
 		ci.iIndent=1;
@@ -305,11 +305,11 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 	
 	// My Computer
 	SHGetSpecialFolderLocation(*this,CSIDL_DRIVES,&idl);
-	GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
+	ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON);
 	ci.iImage=fi.iIcon;
-	GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+	ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 	ci.iSelectedImage=fi.iIcon;
-	GetFileInfo(idl,0,&fi,SHGFI_DISPLAYNAME);
+	ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_DISPLAYNAME);
 	ci.pszText=fi.szDisplayName;
 	ci.iItem++;
 	ci.iIndent=0;
@@ -358,9 +358,9 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 			FileSystem::GetWindowsDirectory(szWindowsDir,MAX_PATH);
 			if (szWindowsDir[1]==L':' && szWindowsDir[2]==L'\\')
 				szWindowsDir[3]='\0';
-			GetFileInfo(szWindowsDir,0,&fi,dwGetIconFlags|SHGFI_OPENICON);
+			ShellFunctions::GetFileInfo(szWindowsDir,0,&fi,dwGetIconFlags|SHGFI_OPENICON);
 			ci.iSelectedImage=fi.iIcon;
-			GetFileInfo(szWindowsDir,0,&fi,dwGetIconFlags);
+			ShellFunctions::GetFileInfo(szWindowsDir,0,&fi,dwGetIconFlags);
 			ci.iImage=fi.iIcon;
 			
 			fi.szDisplayName[0]='\0';
@@ -377,9 +377,9 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 		}
 		else
 		{
-			GetFileInfo(szBuf,FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags|SHGFI_OPENICON);
+			ShellFunctions::GetFileInfo(szBuf,FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags|SHGFI_OPENICON);
 			ci.iSelectedImage=fi.iIcon;
-			GetFileInfo(szBuf,FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags|SHGFI_DISPLAYNAME);
+			ShellFunctions::GetFileInfo(szBuf,FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags|SHGFI_DISPLAYNAME);
 			ci.iImage=fi.iIcon;
 		}
 
@@ -448,7 +448,7 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 			EnterCriticalSection(&m_cBrowse);
 			
 			SHGetSpecialFolderLocation(*this,CSIDL_NETWORK,&idl);
-			GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
+			ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_SYSICONINDEX|SHGFI_SMALLICON|SHGFI_OPENICON);
 			ci.iImage=fi.iIcon;
 			ci.iSelectedImage=fi.iIcon;
 			LoadString(IDS_ROOTS,Buffer,100);
@@ -473,9 +473,9 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 				}
 				else
 				{
-					GetFileInfo(aRoots[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags);
+					ShellFunctions::GetFileInfo(aRoots[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags);
 					ci.iImage=fi.iIcon;
-					GetFileInfo(aRoots[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags|SHGFI_OPENICON);
+					ShellFunctions::GetFileInfo(aRoots[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags|SHGFI_OPENICON);
 					ci.iSelectedImage=fi.iIcon;
 				}
 				ci.pszText=aRoots[i];
@@ -515,9 +515,9 @@ BOOL CLocateDlg::CNameDlg::InitDriveBox(BYTE nFirstTime)
 			}
 			else
 			{
-				GetFileInfo(m_pBrowse[j],FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags);
+				ShellFunctions::GetFileInfo(m_pBrowse[j],FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags);
 				ci.iImage=fi.iIcon;
-				GetFileInfo(m_pBrowse[j],FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags|SHGFI_OPENICON);
+				ShellFunctions::GetFileInfo(m_pBrowse[j],FILE_ATTRIBUTE_DIRECTORY,&fi,dwGetIconFlags|SHGFI_OPENICON);
 				ci.iSelectedImage=fi.iIcon;
 			}
 			ci.pszText=m_pBrowse[j].GetBuffer();
@@ -1954,9 +1954,9 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 				LPCWSTR pPath=m_pBrowse[i];
 				if (pPath[0]==L'-')
 					pPath++;
-				GetFileInfo(pPath,FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags);
+				ShellFunctions::GetFileInfo(pPath,FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags);
 				ci.iImage=fi.iIcon;
-				GetFileInfo(pPath,FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags|SHGFI_OPENICON);
+				ShellFunctions::GetFileInfo(pPath,FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags|SHGFI_OPENICON);
 				ci.iSelectedImage=fi.iIcon;
 			}
 
@@ -1995,7 +1995,7 @@ void CLocateDlg::CNameDlg::OnBrowse()
 		CStringW Folder;
 		if (!fd.GetFolder(Folder))
 		{
-			DWORD dwLength=GetComputerNameFromIDList(fd.m_lpil,Folder.GetBuffer(500),500);
+			DWORD dwLength=Network::GetComputerNameFromIDList(fd.m_lpil,Folder.GetBuffer(500),500);
 			if (dwLength)
 			{
 				Folder.FreeExtra(dwLength);
@@ -2235,9 +2235,9 @@ BOOL CLocateDlg::CNameDlg::SetPath(LPCWSTR szPath)
 					DWORD dwFlags=SHGFI_SYSICONINDEX|SHGFI_SMALLICON;
 					if (GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
 						dwFlags|=SHGFI_USEFILEATTRIBUTES;
-					GetFileInfo(m_pBrowse[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags);
+					ShellFunctions::GetFileInfo(m_pBrowse[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags);
 					ci.iImage=fi.iIcon;
-					GetFileInfo(m_pBrowse[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags|SHGFI_OPENICON);
+					ShellFunctions::GetFileInfo(m_pBrowse[i],FILE_ATTRIBUTE_DIRECTORY,&fi,dwFlags|SHGFI_OPENICON);
 					ci.iSelectedImage=fi.iIcon;
 				}
 

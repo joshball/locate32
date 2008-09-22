@@ -355,69 +355,69 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 	ASSERT(wID>=IDM_DEFCONTEXTITEM && m_pActiveContextMenu!=NULL);
 
 	
-	WCHAR szName[221];  
+	WCHAR szVerb[221];  
 	
 	if (IsUnicodeSystem())
 	{
 		if (m_pActiveContextMenu->pContextMenu->GetCommandString(wID-IDM_DEFCONTEXTITEM,
-			GCS_VERBW,NULL,(LPSTR)szName,200)!=NOERROR)
-			szName[0]=L'\0';
+			GCS_VERBW,NULL,(LPSTR)szVerb,200)!=NOERROR)
+			szVerb[0]=L'\0';
 	}
 	else
 	{
-		char szNameA[401];   // Some stupid context menu handlers tries to put help text as UNICODE anyway
+		char szVerbA[401];   // Some stupid context menu handlers tries to put help text as UNICODE anyway
 		if (m_pActiveContextMenu->pContextMenu->GetCommandString(wID-IDM_DEFCONTEXTITEM,
-			GCS_VERBA,NULL,szNameA,200)!=NOERROR)
-			szName[0]=L'\0';
+			GCS_VERBA,NULL,szVerbA,200)!=NOERROR)
+			szVerb[0]=L'\0';
 		else
-			MultiByteToWideChar(CP_ACP,0,szNameA,-1,szName,401);
+			MultiByteToWideChar(CP_ACP,0,szVerbA,-1,szVerb,401);
 	}
 
 	// Overriding these command, works better
-	if (wcscmp(szName,L"open")==0)
+	if (wcscmp(szVerb,L"open")==0)
 	{
 		// Opening URLs to Avant Browser fails if this is not handled this way.
 		// However, I'm not sure that do this way work in all cases.
-		OnExecuteFile(szName);
+		OnExecuteFile(szVerb);
 		ClearMenuVariables();
 		return;
 	}
-	if (wcscmp(szName,L"copy")==0)
+	if (wcscmp(szVerb,L"copy")==0)
 	{
 		OnCopy(FALSE);
 		ClearMenuVariables();
 		return;
 	}
-	if (wcscmp(szName,L"cut")==0)
+	if (wcscmp(szVerb,L"cut")==0)
 	{
 		OnCopy(TRUE);
 		ClearMenuVariables();
 		return;
 	}
-	if (wcscmp(szName,L"link")==0)
+	if (wcscmp(szVerb,L"link")==0)
 	{
 		OnCreateShortcut();
 		ClearMenuVariables();
 		return;
 	}
-	if (wcscmp(szName,L"delete")==0)
+	if (wcscmp(szVerb,L"delete")==0)
 	{
 		OnDelete();
 		ClearMenuVariables();
 		return;
 	}
-	if (wcscmp(szName,L"rename")==0)
+	if (wcscmp(szVerb,L"rename")==0)
 	{
 		OnRenameFile();
 		ClearMenuVariables();
 		return;
 	}
-	if (wcscmp(szName,L"properties")==0 && m_pActiveContextMenu->nIDLParentLevel<=1)
+	if (wcscmp(szVerb,L"properties")==0 && m_pActiveContextMenu->nIDLParentLevel<=1)
 	{
 		ClearMenuVariables();
 		
 		int nItems;
-		CLocatedItem** pItems=GetSeletedItems(nItems);
+		CLocatedItem** pItems=GetSelectedItems(nItems);
 		CPropertiesSheet* fileprops=new CPropertiesSheet(nItems,pItems);
 		delete[] pItems;
 		fileprops->Open();
@@ -425,7 +425,7 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 	}
 	
 	int nSelected;
-	CLocatedItem** pItems=GetSeletedItems(nSelected);
+	CAutoPtrA<CLocatedItem*> pItems=GetSelectedItems(nSelected);
 
 	CMINVOKECOMMANDINFOEX cii;
 	ZeroMemory(&cii,sizeof(CMINVOKECOMMANDINFOEX));
@@ -441,13 +441,19 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 		cii.lpDirectory=alloccopyWtoA(cii.lpDirectoryW);
 	}
 	HRESULT hRes=m_pActiveContextMenu->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
-	
-	if (nSelected==1)
+	if (cii.lpDirectory!=NULL)
 		delete[] (LPSTR)cii.lpDirectory;
+
+	if (!SUCCEEDED(hRes))
+	{
+		// Try shell execute
+		for (int i=0;i<nSelected;i++)
+			ShellFunctions::ShellExecute(*this,szVerb[0]!='\0'?szVerb:NULL,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
+	}
+	
 	
 	//ClearMenuVariables();
 
-	delete[] pItems;
 }
 
 
@@ -516,7 +522,7 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 		if (psf!=NULL)
 		{
 			IEnumIDList* peidl;
-			DWORD dwParentListSize=GetIDListSize(pIDListToPath)-sizeof(WORD);
+			DWORD dwParentListSize=ShellFunctions::GetIDListSize(pIDListToPath)-sizeof(WORD);
 
 			hRes=psf->EnumObjects(NULL,SHCONTF_FOLDERS|SHCONTF_NONFOLDERS,&peidl);
 			if (SUCCEEDED(hRes))
@@ -525,7 +531,7 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 				
 				while (peidl->Next(1,&pidl,NULL)==S_OK)
 				{
-					DWORD dwListSize=GetIDListSize(pidl);
+					DWORD dwListSize=ShellFunctions::GetIDListSize(pidl);
 					// Form full ID list
 					pidlFull=(LPITEMIDLIST)CoTaskMemAlloc(dwParentListSize+dwListSize);
 					CopyMemory(pidlFull,pIDListToPath,dwParentListSize);
@@ -567,7 +573,7 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 									hRes=psf->GetDisplayNameOf(pidl,SHGDN_FORPARSING,&str);
 									if (SUCCEEDED(hRes))
 									{
-										LPWSTR pStr=StrRetToPtrW(str,pidl);
+										LPWSTR pStr=ShellFunctions::StrRetToPtrW(str,pidl);
 										if (pStr!=NULL)
 										{
 											hRes=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(void**)&psl);
@@ -620,7 +626,7 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 									hRes=psf->GetDisplayNameOf(pidl,SHGDN_FORPARSING,&str);
 									if (SUCCEEDED(hRes))
 									{
-										LPWSTR pStr=StrRetToPtrW(str,pidl);
+										LPWSTR pStr=ShellFunctions::StrRetToPtrW(str,pidl);
 										if (pStr!=NULL)
 										{
 											hRes=CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl);
@@ -691,7 +697,7 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 							if (dwDriveType==DRIVE_REMOVABLE)
 							{
 								mi.hSubMenu=NULL;
-								mi.dwItemData=(DWORD)GetIDList(drive);
+								mi.dwItemData=(DWORD)ShellFunctions::GetIDList(drive);
 								if (mi.dwItemData!=NULL)
 								{
 									Menu.InsertMenu(mi.wID,FALSE,&mi);
@@ -708,7 +714,7 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 						for (int i=0;i<Burners.GetSize();i++)
 						{
 							mi.hSubMenu=NULL;
-							mi.dwItemData=(DWORD)GetIDList(Burners[i]);
+							mi.dwItemData=(DWORD)ShellFunctions::GetIDList(Burners[i]);
 							if (mi.dwItemData!=NULL)
 							{
 								Menu.InsertMenu(mi.wID,FALSE,&mi);
@@ -765,7 +771,7 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 			if (szPath[0]!=L'.' && !Find.IsSystem() && !Find.IsHidden())
 			{
 				Find.GetFilePath(szPath,MAX_PATH);
-				mi.dwItemData=(DWORD)GetIDList(szPath);
+				mi.dwItemData=(DWORD)ShellFunctions::GetIDList(szPath);
 				
 				if (Find.IsDirectory())
 				{

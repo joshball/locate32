@@ -165,6 +165,8 @@ BOOL CResults::Create(CListCtrl* pList,int* pSelectedDetails,int nSelectedDetail
 
 BOOL CResults::SaveToFile(LPCWSTR szFile) const
 {
+	ASSERT(m_Items.GetSize()==0);
+
 	// Opening files
 	CFileEncode outFile(szFile,CFile::defWrite,TRUE);
 	CFile tmpFile(m_sTempFile,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
@@ -317,6 +319,8 @@ BOOL CResults::SaveToFile(LPCWSTR szFile) const
 
 BOOL CResults::SaveToHtmlFile(LPCWSTR szFile) const
 {
+	ASSERT(m_Items.GetSize()==0);
+
 	// Opening files
 	CFileEncode outFile(szFile,CFile::defWrite,TRUE);
 	CFile tmpFile(m_sTempFile,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
@@ -537,7 +541,9 @@ BOOL CResults::SaveToHtmlFile(LPCWSTR szFile) const
 
 
 BOOL CResults::SaveToHtmlFile(LPCWSTR szFile,LPCWSTR szTemplate)
-{
+{	
+	ASSERT(m_nResults==m_Items.GetSize());
+
 	// Opening files
 	CStringW str;
 	CAutoPtrA<WCHAR> pBuffer;
@@ -1064,6 +1070,7 @@ CSaveResultsDlg::CSaveResultsDlg()
 	m_aDetails.Add(FullPath);
 	m_aDetails.Add(FileSize);
 	m_aDetails.Add(DateModified);
+
 }
 
 CSaveResultsDlg::~CSaveResultsDlg()
@@ -1117,6 +1124,9 @@ BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
 		cEncoding.SetCurSel(1);
 	else
 		cEncoding.SetCurSel(0);
+
+
+	AddTemplates();
 	
 	// Setting dialog items to correspond with m_nFlags
 	if (m_nFlags&RESULT_INCLUDEDATE)
@@ -1176,6 +1186,40 @@ BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
 }
 
 
+void CSaveResultsDlg::AddTemplates()
+{
+	CComboBox cTemplate(GetDlgItem(IDC_TEMPLATE));
+	cTemplate.ResetContent();
+	cTemplate.AddString(ID2W(IDS_SAVERESULTSNOTEMPLATE));
+	cTemplate.SetCurSel(0);
+	
+	CStringW TemplatePath(GetLocateApp()->GetExeNameW());
+	TemplatePath.FreeExtra(TemplatePath.FindLast(L'\\')+1);
+	TemplatePath << L"templates\\";
+	
+	CFileFind ff;
+	BOOL bRet=ff.FindFile(TemplatePath+L"*.ret");
+	while (bRet)
+	{
+		CStringW Name;
+		ff.GetFileName(Name);
+		if (!Name.IsEmpty())
+		{
+			int iLen=Name.FindLast(L'.');
+			if (iLen!=-1 && Name.GetLength()-iLen==4)
+			{
+				m_TemplateFiles.Add((TemplatePath+Name).GiveBuffer());
+			
+				Name.FreeExtra(iLen);
+				cTemplate.AddString(Name);
+			}
+		}
+
+		bRet=ff.FindNextFile();
+	}
+
+}
+
 BOOL CSaveResultsDlg::ItemUpOrDown(BOOL bUp)
 {
 	int nSelected=m_pList->GetNextItem(-1,LVNI_SELECTED);
@@ -1223,6 +1267,13 @@ BOOL CSaveResultsDlg::OnFileNameOK()
 		m_strDescription.Empty();
 	if (IsDlgButtonChecked(IDC_SELECTEDITEMS))
 		m_nFlags|=RESULT_INCLUDESELECTEDITEMS;
+
+	int nTemplateSel=SendDlgItemMessage(IDC_TEMPLATE,CB_GETCURSEL)-1;
+	if (nTemplateSel>=0 && nTemplateSel<m_TemplateFiles.GetSize())
+		m_strTemplate=m_TemplateFiles[nTemplateSel];
+	else
+		m_strTemplate.Empty();
+
 
 	switch (SendDlgItemMessage(IDC_ENCODING,CB_GETCURSEL))
 	{

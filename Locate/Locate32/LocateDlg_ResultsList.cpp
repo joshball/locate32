@@ -1817,7 +1817,7 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 			ClearMenuVariables();
 
 			int nSelectedItems;
-			CLocatedItem** pSelectedItems=GetSeletedItems(nSelectedItems,nItem);
+			CLocatedItem** pSelectedItems=GetSelectedItems(nSelectedItems,nItem);
 			m_hActivePopupMenu=CreateFileContextMenu(NULL,pSelectedItems,nSelectedItems,
 				m_nResultAction==CAction::OpenContextMenuSimple);
 			delete[] pSelectedItems;
@@ -1990,7 +1990,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 	CWaitCursor wait;
 
 	int nSelectedItems;
-	CLocatedItem** pItems=GetSeletedItems(nSelectedItems,nItem);
+	CAutoPtrA<CLocatedItem*> pItems=GetSelectedItems(nSelectedItems,nItem);
 	
 	for (int i=0;i<nSelectedItems;i++)
 	{
@@ -2006,57 +2006,112 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 			OpenFolder(pItems[i]->GetPath());
 		else 
 		{
-			int nRet;
-			if (IsUnicodeSystem())
+			BOOL bOnlyNULLAsVerb=FALSE;
+			if ((GetExtraFlags()&efExecuteModeMask)==efExecuteModeDefaultMode)
 			{
-				CStringW sParent(pItems[i]->GetParent());
-				nRet=(int)ShellExecuteW(*this,szVerb,pItems[i]->GetPath(),NULL,sParent,SW_SHOW);
+				// Default mode, use ShellExecute
+				if (ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW)>32)
+				{
+					// Succeeded, next item...
+					continue;
+				}
+
+				// If ShellExecute didn't success, using InvokeCommand
+				// this usually brings a window which ask that in which 
+				// application the document is opened
+				bOnlyNULLAsVerb=TRUE;
+			}
+
+			CAutoPtr<ContextMenuStuff> pContextMenuStuff=GetContextMenuForItems(1,&pItems[i]);
+			if (pContextMenuStuff==NULL)
+			{
+				// Error, use ShellExecute anyway
+				ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
+				continue;
+			}
+
+			// Populate context menu
+			CMINVOKECOMMANDINFOEX cii;
+			ZeroMemory(&cii,sizeof(CMINVOKECOMMANDINFOEX));
+			cii.cbSize=sizeof(CMINVOKECOMMANDINFOEX);
+			cii.fMask=CMIC_MASK_UNICODE;
+			cii.hwnd=*this;
+			cii.nShow=SW_SHOWDEFAULT;
+			
+			CMenu Menu;
+			Menu.CreatePopupMenu();
+			
+			if (!SUCCEEDED(pContextMenuStuff->pContextMenu->QueryContextMenu(Menu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY)))
+			{
+				// Error, free allocated data and use ShellExecute 
+				ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
+				continue;
+			}
+
+			if (szVerb==NULL || bOnlyNULLAsVerb)
+			{
+				// Try to retvieve default verb
+				BOOL bFound=FALSE;
+				
+				if (!bOnlyNULLAsVerb)
+				{
+					MENUITEMINFO mii;
+					mii.cbSize=sizeof(MENUITEMINFO);
+					mii.fMask=MIIM_ID|MIIM_STATE;
+					for (int iItem=0;Menu.GetMenuItemInfo(iItem,TRUE,&mii);iItem++)
+					{
+						if (mii.fState&MFS_DEFAULT)
+						{
+							cii.lpVerb=(LPCSTR)MAKELONG(mii.wID-IDM_DEFCONTEXTITEM,0);
+							cii.lpVerbW=(LPCWSTR)MAKELONG(mii.wID-IDM_DEFCONTEXTITEM,0);
+							bFound=TRUE;
+							break;
+						}
+					}
+				}
+
+				if (bFound)
+				{
+					if (!SUCCEEDED(pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii)) && cii.lpVerb!=NULL)
+					{
+						// Try execute default
+						cii.lpVerbW=NULL;
+						cii.lpVerb=NULL;
+						pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
+					}
+				}
+				else
+				{
+					// No default item, execute with lpVerb=NULL and, if it fails, use ShellExecute
+					cii.lpVerbW=NULL;
+					cii.lpVerb=NULL;
+					if (!SUCCEEDED(pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii)))
+						ShellFunctions::ShellExecute(*this,NULL,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
+				}
 			}
 			else
 			{
-				CString sParent(pItems[i]->GetParent());
-				nRet=(int)ShellExecuteA(*this,szVerb==NULL?NULL:(LPCSTR)W2A(szVerb),W2A(pItems[i]->GetPath()),NULL,sParent,SW_SHOW);
+				// Verb given, using it
+				cii.lpVerbW=szVerb;
+				cii.lpVerb=alloccopyWtoA(szVerb);
+				if (!SUCCEEDED(pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii)))
+					ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
+				delete[] (LPSTR)cii.lpVerb;
 			}
-
-
-			// If ShellExecute didn't success, using InvokeCommand
-			// this usually brings a window which ask that in which 
-			// application the document is opened
-			if (nRet<=32)
-			{
-				ContextMenuStuff* pContextMenuStuff=GetContextMenuForItems(1,&pItems[i]);
-				if (pContextMenuStuff!=NULL)
-				{
-					CMINVOKECOMMANDINFOEX cii;
-					ZeroMemory(&cii,sizeof(CMINVOKECOMMANDINFOEX));
-					cii.cbSize=sizeof(CMINVOKECOMMANDINFOEX);
-					cii.fMask=CMIC_MASK_UNICODE;
-					cii.hwnd=*this;
-					cii.lpVerbW=szVerb;
-					cii.lpVerb=szVerb!=NULL?alloccopyWtoA(szVerb):NULL;
-					cii.nShow=SW_SHOWDEFAULT;
-					cii.lpDirectoryW=alloccopy(pItems[i]->GetParent());
-					cii.lpDirectory=alloccopyWtoA(pItems[i]->GetParent());
-					
-					HMENU hMenu=CreatePopupMenu();
-					pContextMenuStuff->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY);
-					pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
-					
-					delete[] cii.lpDirectory;
-					delete[] cii.lpDirectoryW;
-
-					if (szVerb!=NULL)
-						delete[] (LPSTR)cii.lpVerb;
-					
-					delete pContextMenuStuff;
-					DestroyMenu(hMenu);
-				}
-			}
+				
 		}
-		
-	}
 
-	delete[] pItems;
+
+
+						/*
+			int nRet=32;
+			if (IsUnicodeSystem())
+				nRet=(int)ShellExecuteW(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
+			else
+				nRet=(int)ShellExecuteA(*this,szVerb==NULL?NULL:(LPCSTR)W2A(szVerb),W2A(pItems[i]->GetPath()),NULL,W2A(pItems[i]->GetParent()),SW_SHOW);
+			*/
+
+	}
 }
 
 
@@ -2091,22 +2146,11 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile)
 		sxi.lpParameters=szwEmpty;
 		sxi.lpDirectory=szwEmpty;
 		sxi.lpFile=NULL;
-		sxi.lpIDList=GetIDList(szFolder);
-
-		if (IsUnicodeSystem())		
-		{
-			sxi.lpVerb=L"open";
-			ShellExecuteExW(&sxi);	
-		}
-		else
-		{
-			sxi.lpVerb=(LPWSTR)"open";
-			ShellExecuteEx((SHELLEXECUTEINFOA*)&sxi);	
-			delete[] (LPSTR)sxi.lpFile;
-		}
+		sxi.lpIDList=ShellFunctions::GetIDList(szFolder);
+		sxi.lpVerb=L"open";
+		ShellFunctions::ShellExecuteEx(&sxi);	
 
 		CoTaskMemFree(sxi.lpIDList);
-		
 	}
 	else
 	{
@@ -2187,14 +2231,11 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 	CWaitCursor wait;
 	
 	int nSelectedItems;
-	CLocatedItem** pItems=GetSeletedItems(nSelectedItems,nItem);
+	CAutoPtrA<CLocatedItem*> pItems=GetSelectedItems(nSelectedItems,nItem);
 
 	if (nSelectedItems==0)
-	{
-		delete[] pItems;
 		return;
-	}
-
+	
 
 	if (bContaining)
 	{
@@ -2302,64 +2343,31 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 					}
 
 					if (bAllOK)
-					{
-						delete[] pItems;
 						return;
+				}
+				
+				CStringW sArg;
+				SHELLEXECUTEINFOW sxi;
+				sxi.cbSize=sizeof(SHELLEXECUTEINFOW);
+				sxi.fMask=SEE_MASK_NOCLOSEPROCESS;
+				sxi.hwnd=*this;
+				sxi.lpVerb=L"open";
+				sxi.lpFile=L"explorer.exe";
+				sxi.lpDirectory=szwEmpty;
+				sxi.nShow=SW_SHOWNORMAL;
+						
+				for (int i=0;i<nSelectedItems;i++)
+				{
+					if (pItems[i]->IsDeleted())
+						OpenFolder(pItems[i]->GetParent());
+					else
+					{
+						sArg.Format(L"/e,/select,\"%s\"",pItems[i]->GetPath());
+						sxi.lpParameters=sArg;
+						ShellFunctions::ShellExecuteEx(&sxi);
 					}
 				}
 				
-				if (IsUnicodeSystem())
-				{
-					CStringW sArg;
-					SHELLEXECUTEINFOW sxi;
-					sxi.cbSize=sizeof(SHELLEXECUTEINFOW);
-					sxi.fMask=SEE_MASK_NOCLOSEPROCESS;
-					sxi.hwnd=*this;
-					sxi.lpVerb=L"open";
-					sxi.lpFile=L"explorer.exe";
-					sxi.lpDirectory=szwEmpty;
-					sxi.nShow=SW_SHOWNORMAL;
-						
-					for (int i=0;i<nSelectedItems;i++)
-					{
-						if (pItems[i]->IsDeleted())
-							OpenFolder(pItems[i]->GetParent());
-						else
-						{
-                            sArg.Format(L"/e,/select,\"%s\"",pItems[i]->GetPath());
-							sxi.lpParameters=sArg;
-							ShellExecuteExW(&sxi);
-						}
-					}
-					
-				}
-				else
-				{
-					CString sArg;
-					SHELLEXECUTEINFO sxi;
-					sxi.cbSize=sizeof(SHELLEXECUTEINFO);
-					sxi.fMask=SEE_MASK_NOCLOSEPROCESS;
-					sxi.hwnd=*this;
-					sxi.lpVerb="open";
-					sxi.lpFile="explorer.exe";
-					sxi.lpDirectory=szEmpty;
-					sxi.nShow=SW_SHOWNORMAL;
-						
-					for (int i=0;i<nSelectedItems;i++)
-					{
-						if (pItems[i]->IsDeleted())
-							OpenFolder(pItems[i]->GetParent());
-						else
-						{
-                            sArg.Format("/e,/select,\"%S\"",pItems[i]->GetPath());
-							sxi.lpParameters=sArg;
-							ShellExecuteEx(&sxi);
-						}
-					}
-					
-				}
-
-				delete[] pItems;
 				return;
 			}
 			
@@ -2403,10 +2411,9 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 		}
 	}
 
-	delete[] pItems;
 }
 
-CLocatedItem** CLocateDlg::GetSeletedItems(int& nItems,int nIncludeIfNoneSeleted)
+CLocatedItem** CLocateDlg::GetSelectedItems(int& nItems,int nIncludeIfNoneSeleted)
 {
 	nItems=m_pListCtrl->GetSelectedCount();
 
@@ -2458,7 +2465,7 @@ BOOL CLocateDlg::LoadSystemImageList(ImageListSize& iImageList,SIZE& rIconSize)
 		m_dwThumbnailFlags&=~tfSystemImageListIsInterface;
 		iImageList=ilMedium;
 		SHFILEINFO fi;
-		m_hSystemImageList=(HIMAGELIST)GetFileInfo("",0,&fi,SHGFI_LARGEICON|SHGFI_SYSICONINDEX);
+		m_hSystemImageList=(HIMAGELIST)ShellFunctions::GetFileInfo("",0,&fi,SHGFI_LARGEICON|SHGFI_SYSICONINDEX);
 		if (m_hSystemImageList==NULL)
 			return FALSE;
 		

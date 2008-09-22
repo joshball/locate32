@@ -172,6 +172,8 @@ class CObject;
 #include "HFCCmnEx.h"
 #include "HFCApp.h"
 #include "HFCMath.h"
+#include "HFCShell.h"
+#include "HFCNetwork.h"
 
 #include "HFCCom.h"
 

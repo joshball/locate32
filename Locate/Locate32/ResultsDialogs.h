@@ -17,7 +17,12 @@ public:
 	BOOL Initialize(DWORD dwFlags,LPCWSTR szDescription);
 	void Close();
 
+
+	// Initialize structures. bDataToTmpFile has to be FALSE if SaveToHtmlFile
+	// with template file going to be used, otherwise bDataTmpFile has to be TRUE
 	BOOL Create(CListCtrl* pList,int* pSelectedDetails,int nSelectedDetails,BOOL bDataToTmpFile);
+
+
 	BOOL SaveToFile(LPCWSTR szFile) const;
 	BOOL SaveToHtmlFile(LPCWSTR szFile) const;
 	BOOL SaveToHtmlFile(LPCWSTR szFile,LPCWSTR szTemplateFile);
@@ -83,15 +88,19 @@ public:
 	
 	BOOL ListNotifyHandler(NMLISTVIEW *pNm);
 	BOOL ItemUpOrDown(BOOL bUp);
+	void AddTemplates();
 	
 public:
 	DWORD m_nFlags;
 	CIntArray m_aDetails;
 	CStringW m_strDescription;
+	CStringW m_strTemplate;
 
 private:
 	CListCtrl* m_pList;
 	CImageList m_ToolbarIL,m_ToolbarILHover,m_ToolbarILDisabled;
+
+	CArrayFAP<LPCWSTR> m_TemplateFiles;
 
 
 };

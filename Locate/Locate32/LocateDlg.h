@@ -157,6 +157,13 @@ public:
 		efNameDefault = 0,
 		efNameSave = 0x000F0000,
 
+		// Execute mode 
+		efExecuteModeDefaultMode = 0,
+		efExecuteModeBoldedContextMenuItemMode = 0x00100000,
+		efExecuteModeMask = 0x00300000, // Reserving 0x00200000 for extra mode
+		efExecuteModeDefaults = 0,
+		efExecuteModeSave = efExecuteModeMask,
+
 		// Background operations
 		efDisableItemUpdating = 0x00000000,
         efEnableItemUpdating = 0x00000001,
@@ -172,8 +179,8 @@ public:
 		efBackgroundDefault = efEnableItemUpdating|efEnableFSTracking,
 		efBackgroundSave = efItemUpdatingSave|efTrackingSave,
 
-		efDefault = efLocateProcessDefaults|efLocateDialogDefault|efLVDefault|efNameDefault|efBackgroundDefault,
-		efSave = efLocateProcessSave|efLocateDialogSave|efLVSave|efNameSave|efBackgroundSave
+		efDefault = efLocateProcessDefaults|efLocateDialogDefault|efLVDefault|efNameDefault|efExecuteModeDefaults|efBackgroundDefault,
+		efSave = efLocateProcessSave|efLocateDialogSave|efLVSave|efNameSave|efExecuteModeSave|efBackgroundSave
 	};
 
 protected:
@@ -815,7 +822,7 @@ protected:
 	// Helpers
 	void OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile=NULL);
 	void OpenSelectedFolder(BOOL bContaining,int nItem=-1);
-	CLocatedItem** GetSeletedItems(int& nItems,int nIncludeIfNoneSeleted=-1);
+	CLocatedItem** GetSelectedItems(int& nItems,int nIncludeIfNoneSeleted=-1);
 public:
 	static LPCWSTR GetDBVolumeLabel(WORD wDB,WORD wRootID);
 	static LPCWSTR GetDBVolumeSerial(WORD wDB,WORD wRootID);

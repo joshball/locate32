@@ -18,14 +18,14 @@ BOOL CAboutDlg::OnCommand(WORD wID, WORD wNotifyCode, HWND hControl)
 	case IDC_MAILME:
 		{
 			CWaitCursor wait;
-			ShellExecute(*this,NULL,"http://locate32.net/content/view/51/43/",
+			ShellFunctions::ShellExecute(*this,NULL,"http://locate32.net/content/view/51/43/",
 				NULL,NULL,0);
 			break;
 		}
 	case IDC_GOTOHOMEPAGE:
 		{
 			CWaitCursor wait;
-			ShellExecute(*this,NULL,"http://www.locate32.net", //http://locate32.webhop.or",
+			ShellFunctions::ShellExecute(*this,NULL,"http://www.locate32.net", //http://locate32.webhop.or",
 				NULL,NULL,0);
 			break;
 		}
@@ -33,7 +33,7 @@ BOOL CAboutDlg::OnCommand(WORD wID, WORD wNotifyCode, HWND hControl)
 	case IDC_DONATE:
 		{
 			CWaitCursor wait;
-			ShellExecute(*this,NULL,
+			ShellFunctions::ShellExecute(*this,NULL,
 				"https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=Janne%2eHuttunen%40locate32%2enet&item_name=Locate32%20donations&page_style=Primary&no_shipping=0&no_note=1&cn=Optional%20comments&tax=0&currency_code=EUR&lc=FI&bn=PP%2dDonationsBF&charset=UTF%2d8",
 				NULL,NULL,0);
 			break;

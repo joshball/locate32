@@ -521,7 +521,7 @@ void CLocatedItem::UpdateType()
 		SHFILEINFOW fi;
 		if (GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating)
 		{
-			if (GetFileInfo(GetPath(),0,&fi,SHGFI_TYPENAME))
+			if (ShellFunctions::GetFileInfo(GetPath(),0,&fi,SHGFI_TYPENAME))
 				pNewType=alloccopy(fi.szTypeName);
 			else
 			{
@@ -538,7 +538,7 @@ void CLocatedItem::UpdateType()
 		// Try without accessing file
 		if (pNewType==NULL)
 		{
-			if (GetFileInfo(GetPath(),GetSystemAttributesFromAttributes(GetAttributes()),&fi,SHGFI_TYPENAME|SHGFI_USEFILEATTRIBUTES))
+			if (ShellFunctions::GetFileInfo(GetPath(),GetSystemAttributesFromAttributes(GetAttributes()),&fi,SHGFI_TYPENAME|SHGFI_USEFILEATTRIBUTES))
 				pNewType=alloccopy(fi.szTypeName);
 			else
 			{
@@ -677,19 +677,19 @@ void CLocatedItem::UpdateIcon()
 		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating) ||
 			GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
 		{
-			if (GetFileInfo(GetPath(),GetSystemAttributesFromAttributes(GetAttributes()),&fi,SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES))
+			if (ShellFunctions::GetFileInfo(GetPath(),GetSystemAttributesFromAttributes(GetAttributes()),&fi,SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES))
 				iIcon=fi.iIcon;
 			else
 				iIcon=GetLocateApp()->m_nDefImage;
 		}		
 		else
 		{
-			if (GetFileInfo(GetPath(),0,&fi,SHGFI_SYSICONINDEX))
+			if (ShellFunctions::GetFileInfo(GetPath(),0,&fi,SHGFI_SYSICONINDEX))
 				iIcon=fi.iIcon;
 			else if (IsFolder()?FileSystem::IsDirectory(GetPath()):FileSystem::IsFile(GetPath()))
 			{
 				// Try again without accessing file
-				if (GetFileInfo(GetPath(),GetSystemAttributesFromAttributes(GetAttributes()),&fi,SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES))
+				if (ShellFunctions::GetFileInfo(GetPath(),GetSystemAttributesFromAttributes(GetAttributes()),&fi,SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES))
 					iIcon=fi.iIcon;
 				else
 					iIcon=GetLocateApp()->m_nDefImage;
@@ -737,19 +737,19 @@ void CLocatedItem::UpdateParentIcon()
 		if (!(GetLocateDlg()->GetExtraFlags()&CLocateDlg::efEnableItemUpdating) ||
 			GetLocateApp()->GetProgramFlags()&CLocateApp::pfAvoidToAccessWhenReadingIcons)
 		{
-			if (GetFileInfo(pParent,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES))
+			if (ShellFunctions::GetFileInfo(pParent,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES))
 				iParentIcon=fi.iIcon;
 			else
 				iParentIcon=GetLocateApp()->m_nDirImage;
 		}		
 		else
 		{
-			if (GetFileInfo(pParent,0,&fi,SHGFI_SYSICONINDEX))
+			if (ShellFunctions::GetFileInfo(pParent,0,&fi,SHGFI_SYSICONINDEX))
 				iParentIcon=fi.iIcon;
 			else if (FileSystem::IsDirectory(pParent))
 			{
 				// Try again without accessing file
-				if (GetFileInfo(pParent,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES))
+				if (ShellFunctions::GetFileInfo(pParent,FILE_ATTRIBUTE_DIRECTORY,&fi,SHGFI_SYSICONINDEX|SHGFI_USEFILEATTRIBUTES))
 					iParentIcon=fi.iIcon;
 				else
 					iParentIcon=GetLocateApp()->m_nDirImage;
@@ -1758,6 +1758,8 @@ void CLocatedItem::UpdateVersionInformation()
 	}
 }
 
+
+
 void CLocatedItem::LoadThumbnail()
 {
 	ItemDebugFormatMessage1("CLocatedItem::LoadThumbnail for %S",GetPath());
@@ -1794,15 +1796,34 @@ void CLocatedItem::LoadThumbnail()
 			HRESULT hRes=pThumbnailProv->GetThumbnail(pLocateDlg->m_sCurrentIconSize.cx,&hBitmap,&at);
 			if (SUCCEEDED(hRes))
 			{
-				pField->pThumbnail->hBitmap=hBitmap;
 
 				// Load size
 				BITMAP bi;
 				GetObject(hBitmap,sizeof(BITMAP),&bi);
+				
+				if (bi.bmWidth>pLocateDlg->m_sCurrentIconSize.cx || 
+					bi.bmHeight>pLocateDlg->m_sCurrentIconSize.cy)
+				{
+					// Image extractor does not handle size correctly
+					pField->pThumbnail->hBitmap=ScaleImage(hBitmap,pLocateDlg->m_sCurrentIconSize.cx,pLocateDlg->m_sCurrentIconSize.cy);
+					if (pField->pThumbnail->hBitmap!=NULL)
+					{
+						// Read dimensions again
+						GetObject(pField->pThumbnail->hBitmap,sizeof(BITMAP),&bi);
+					}
+					else
+						pField->pThumbnail->hBitmap=hBitmap;
+				}
+				else
+					pField->pThumbnail->hBitmap=hBitmap;
+
+
+
 				pField->pThumbnail->sThumbnailSize.cx=bi.bmWidth;
 				pField->pThumbnail->sThumbnailSize.cy=bi.bmHeight;
+
+				return;
 			}
-			return;
 		}
 	}
 
@@ -1822,13 +1843,31 @@ void CLocatedItem::LoadThumbnail()
 			hRes=pExtractImage->Extract((HBITMAP*)&hBitmap);
 			if (SUCCEEDED(hRes))
 			{
-				pField->pThumbnail->hBitmap=hBitmap;
-								
 				// Load size
-				BITMAP b;
-				GetObject(hBitmap,sizeof(BITMAP),&b);
-				pField->pThumbnail->sThumbnailSize.cx=b.bmWidth;
-				pField->pThumbnail->sThumbnailSize.cy=b.bmHeight;
+				BITMAP bi;
+				GetObject(hBitmap,sizeof(BITMAP),&bi);
+				
+				if (bi.bmWidth>pLocateDlg->m_sCurrentIconSize.cx || 
+					bi.bmHeight>pLocateDlg->m_sCurrentIconSize.cy)
+				{
+					// Image extractor does not handle size correctly
+					pField->pThumbnail->hBitmap=ScaleImage(hBitmap,pLocateDlg->m_sCurrentIconSize.cx,pLocateDlg->m_sCurrentIconSize.cy);
+					if (pField->pThumbnail->hBitmap!=NULL)
+					{
+						// Read dimensions again
+						GetObject(pField->pThumbnail->hBitmap,sizeof(BITMAP),&bi);
+					}
+					else
+						pField->pThumbnail->hBitmap=hBitmap;
+				}
+				else
+					pField->pThumbnail->hBitmap=hBitmap;
+
+
+
+				pField->pThumbnail->sThumbnailSize.cx=bi.bmWidth;
+				pField->pThumbnail->sThumbnailSize.cy=bi.bmHeight;
+				
 				return;
 			}
 		}

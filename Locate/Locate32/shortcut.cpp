@@ -1245,7 +1245,7 @@ BOOL CALLBACK CSubAction::EnumExplorerChilds(HWND hWnd,LPARAM lParam)
 	LPITEMIDLIST idl;
 	SHGetSpecialFolderLocation(NULL,CSIDL_DESKTOP,&idl);
 	SHFILEINFOW fi;
-	if (GetFileInfo(idl,0,&fi,SHGFI_DISPLAYNAME))
+	if (ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_DISPLAYNAME))
 	{
 		if (wcscmp(fi.szDisplayName,(LPCWSTR)lParam)==0)
 		{
@@ -1260,7 +1260,7 @@ BOOL CALLBACK CSubAction::EnumExplorerChilds(HWND hWnd,LPARAM lParam)
 
 	// Check wheter lParam is My Computer
 	SHGetSpecialFolderLocation(NULL,CSIDL_DRIVES,&idl);
-	if (GetFileInfo(idl,0,&fi,SHGFI_DISPLAYNAME))
+	if (ShellFunctions::GetFileInfo(idl,0,&fi,SHGFI_DISPLAYNAME))
 	{
 		if (wcscmp(fi.szDisplayName,(LPCWSTR)lParam)==0)
 		{
@@ -1283,7 +1283,7 @@ BOOL CALLBACK CSubAction::EnumExplorerChilds(HWND hWnd,LPARAM lParam)
 
 		if	(FileSystem::IsDirectory(temp))
 		{
-			if (GetFileInfo(temp,0,&fi,SHGFI_DISPLAYNAME))
+			if (ShellFunctions::GetFileInfo(temp,0,&fi,SHGFI_DISPLAYNAME))
 			{
 				if (wcscmp(fi.szDisplayName,(LPCWSTR)lParam)==0)
 				{

@@ -108,6 +108,7 @@ BYTE InitHFCControls();
 BOOL WaitForWindow(CWnd* pWnd,DWORD dwMilliseconds=INFINITE);
 BOOL ForceForegroundAndFocus(HWND hWindow);
 int ReportSystemError(HWND hWnd,LPCSTR szTitle=NULL,DWORD dwError=DWORD(-1),DWORD dwExtra=0,LPCSTR szPrefix=NULL);
+HBITMAP ScaleImage(HBITMAP hBitmap,int nMaxX,int nMaxY);
 #endif
 
 // Resource functions
@@ -226,41 +227,6 @@ BOOL GetVersionText(LPCWSTR szModulePath,LPCSTR szBlock,LPWSTR szText,DWORD dwMa
 #endif
 
 
-// Shell functions
-#ifdef WIN32
-BOOL StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,LPSTR szString,DWORD cchBufferLen);
-void StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,CString& sString);
-LPSTR StrRetToPtr(STRRET& strret,LPITEMIDLIST lpiil);
-
-LPITEMIDLIST GetIDList(LPCSTR lpszFileName);
-LPITEMIDLIST GetIDListForParent(LPCSTR lpszFileName);
-DWORD_PTR GetFileInfo(LPCSTR pszPath,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags);
-DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags);
-int FileOperation(LPSHFILEOPSTRUCT lpFileOp);
-DWORD GetIDListSize(LPITEMIDLIST lpil);
-HRESULT CreateShortcut(LPCSTR pszShortcutFile,LPCSTR pszLink,LPCSTR pszDesc=NULL,LPCSTR pszParams=NULL);
-HRESULT GetShortcutTarget(LPCSTR pszShortcutFile,LPSTR pszTarget,DWORD nBufSize);
-HRESULT ResolveShortcut(HWND hWnd,LPCSTR pszShortcutFile,LPSTR pszPath=NULL);
-BOOL RunRegistryCommand(HKEY hKey,LPCSTR szFile);
-DWORD GetComputerNameFromIDList(LPITEMIDLIST lpiil,LPSTR szName,DWORD dwBufferLen);
-DWORD GetComputerNameFromIDList(LPITEMIDLIST lpiil,LPWSTR szName,DWORD dwBufferLen);
-BOOL GetNethoodTarget(LPCWSTR szFolder,LPWSTR szTarget,DWORD nBufferLen);
-
-#ifdef DEF_WCHAR
-BOOL StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,LPWSTR szString,DWORD cchBufferLen);
-void StrRetToStr(STRRET& strret,LPITEMIDLIST lpiil,CStringW& sString);
-LPWSTR StrRetToPtrW(STRRET& strret,LPITEMIDLIST lpiil);
-
-LPITEMIDLIST GetIDList(LPCWSTR lpszFileName);
-LPITEMIDLIST GetIDListForParent(LPCWSTR lpszFileName);
-DWORD_PTR GetFileInfo(LPCWSTR pszPath,DWORD dwFileAttributes,SHFILEINFOW *psfi,UINT uFlags);
-DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags);
-int FileOperation(LPSHFILEOPSTRUCTW lpFileOp);
-HRESULT CreateShortcut(LPCWSTR pszShortcutFile,LPCWSTR pszLink,LPCWSTR pszDesc=NULL,LPCWSTR pszParams=NULL);
-HRESULT GetShortcutTarget(LPCWSTR pszShortcutFile,LPWSTR pszTarget,DWORD nBufSize);
-#endif
-
-#endif
 
 // Variable manipulation
 UINT BinToInt(LPCSTR);
@@ -307,26 +273,6 @@ inline DWORD WaitForMutex(HANDLE hMutex,DWORD dwTimeOut=5000)
 	}
 	return 3;
 }
-
-
-
-
-#ifdef WIN32
-inline DWORD_PTR GetFileInfo(LPCSTR pszPath,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags)
-{
-	return SHGetFileInfo(pszPath,dwFileAttributes,psfi,sizeof(SHFILEINFO),uFlags);
-}
-
-inline DWORD_PTR GetFileInfo(LPITEMIDLIST piil,DWORD dwFileAttributes,SHFILEINFO *psfi,UINT uFlags)
-{
-	return SHGetFileInfo((LPCSTR)piil,dwFileAttributes,psfi,sizeof(SHFILEINFO),uFlags|SHGFI_PIDL);
-}
-
-inline int FileOperation(LPSHFILEOPSTRUCT lpFileOp)
-{
-	return SHFileOperation(lpFileOp);
-}
-#endif
 
 #ifdef DEF_WINDOWS
 inline LONG GetWindowStyle(HWND hWnd)

@@ -4,7 +4,6 @@
 #define LOCATE32_H
 
 class CLocateDlg;
-class CFileProperties;
 class CLocater;
 class CLocatedItem;
 class CLocateApp;

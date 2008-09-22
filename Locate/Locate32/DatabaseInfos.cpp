@@ -205,7 +205,7 @@ BOOL CDatabaseInfos::CDatabaseInfoPage::OnInitDialog(HWND hwndFocus)
 			li.mask=LVIF_TEXT|LVIF_IMAGE;
 			li.iItem=i;
 			SHFILEINFOW fi;
-			if (GetFileInfo(di->aRootFolders[i]->sRootMap.IsEmpty()?
+			if (ShellFunctions::GetFileInfo(di->aRootFolders[i]->sRootMap.IsEmpty()?
 				di->aRootFolders.GetAt(i)->sPath+L'\\':
 				di->aRootFolders.GetAt(i)->sRootMap+L'\\',
 				FILE_ATTRIBUTE_NORMAL,&fi,SHGFI_SMALLICON|SHGFI_SYSICONINDEX|

@@ -488,6 +488,8 @@
 #define IDC_ACTION                      1179
 #define IDC_ACTION2                     1181
 #define IDC_SUBACTION                   1181
+#define IDC_TEMPLATE                    1182
+#define IDC_ENCODING					1185
 #define IDC_FROMMNEMONIC                1184
 #define IDC_ENCODING					1185
 #define IDC_WAITDELAY                   1186
@@ -674,6 +676,7 @@
 #define IDS_SAVERESULTSUTF8				4027
 #define IDS_SAVERESULTSINVALIDFORMAT	4028
 #define IDS_SAVERESULTSCANNOTSAVERESULTS 4029
+#define IDS_SAVERESULTSNOTEMPLATE		4030
 #define IDS_SETTINGS                    5000
 #define IDS_GENERALSETTINGS             5001
 #define IDS_DATABASESETTINGS            5002
@@ -1034,6 +1037,9 @@
 #define IDS_ADVSETSORTINGNATURALCS		5845
 #define IDS_ADVSETCANNOTFINDOPTION		5846
 #define IDS_ADVSETDONTMOVETOOLTIPS		5847
+#define IDS_ADVSETEXECUTEMODE			5848
+#define IDS_ADVSETEXECUTEMODEDEFAULT	5849
+#define IDS_ADVSETEXECUTEMODECONTEXT	5850
 #define IDS_SCHEDULEUPDATE              5901
 #define IDS_MINUTELY                    5909
 #define IDS_HOURLY                      5910

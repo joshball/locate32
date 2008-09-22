@@ -38,7 +38,7 @@ BOOL CLocateDlgThread::InitInstance()
 	m_pLocate->Create(NULL);
 	
 	// Settings transparency
-	m_pLocate->SetDialogTransparency();
+	//m_pLocate->SetDialogTransparency();
 	
 
 	// Register dialog for this thread
@@ -3095,7 +3095,7 @@ void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 		return;
 
 	int nItems;
-	CLocatedItem** pItems=pLocateDlg->GetSeletedItems(nItems,nItem);
+	CAutoPtrA<CLocatedItem*> pItems=pLocateDlg->GetSelectedItems(nItems,nItem);
 	
 	for (int i=0;i<nItems;i++)
 	{
@@ -3200,7 +3200,6 @@ void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 		}
 	}
 
-	delete[] pItems;
 }
 
 IDropTarget* CLocateDlg::GetDropTarget(LPITEMIDLIST pidl) const
@@ -3375,6 +3374,8 @@ BOOL CLocateDlg::GetSimpleIDLsandParentfromIDLs(int nItems,LPITEMIDLIST* pFullID
 		
 	}
 
+	delete[] pPtr;
+
 	if (nEqualLevels==0)
 	{
 		delete[] pPtr;
@@ -3393,7 +3394,7 @@ BOOL CLocateDlg::GetSimpleIDLsandParentfromIDLs(int nItems,LPITEMIDLIST* pFullID
 	// Copy simple IDLs
 	for (int i=0;i<nItems;i++)
 	{
-		DWORD nLength=GetIDListSize((LPITEMIDLIST)(LPBYTE(pFullIDLs[i])+nParentLength));
+		DWORD nLength=ShellFunctions::GetIDListSize((LPITEMIDLIST)(LPBYTE(pFullIDLs[i])+nParentLength));
 
 		rpSimpleIDLs[i]=(LPITEMIDLIST)CoTaskMemAlloc(nLength);
 		CopyMemory(rpSimpleIDLs[i],LPBYTE(pFullIDLs[i])+nParentLength,nLength);

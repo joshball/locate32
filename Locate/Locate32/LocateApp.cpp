@@ -1220,7 +1220,7 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 			File.Close();
 
 
-			if (GetFileInfo(szTempFileName,0,&fi,SHGFI_SYSICONINDEX))
+			if (ShellFunctions::GetFileInfo(szTempFileName,0,&fi,SHGFI_SYSICONINDEX))
 				m_nDefImage=fi.iIcon;
 		}
 		catch (...)
@@ -1265,7 +1265,7 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 			File.Close();
 
 
-			if (GetFileInfo(szTempFileName,0,&fi,SHGFI_SYSICONINDEX))
+			if (ShellFunctions::GetFileInfo(szTempFileName,0,&fi,SHGFI_SYSICONINDEX))
 				m_nDelImage=fi.iIcon;
 		}
 		catch (...)
@@ -1286,7 +1286,7 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 	if (FileSystem::GetSystemDirectory(szDirectory,_MAX_PATH)>0)
 	{
 		fi.iIcon=1;
-		GetFileInfo(szDirectory,0,&fi,/*SHGFI_ICON|SHGFI_SMALLICON|*/SHGFI_SYSICONINDEX);
+		ShellFunctions::GetFileInfo(szDirectory,0,&fi,/*SHGFI_ICON|SHGFI_SMALLICON|*/SHGFI_SYSICONINDEX);
 		m_nDirImage=fi.iIcon;
 
 		WCHAR szDrives[100];
@@ -1302,7 +1302,7 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 				pPtr+=istrlenw(pPtr)+1;
 			}
 
-			GetFileInfo(*pPtr!='\0'?pPtr:szDrives,0,&fi,SHGFI_SYSICONINDEX);
+			ShellFunctions::GetFileInfo(*pPtr!='\0'?pPtr:szDrives,0,&fi,SHGFI_SYSICONINDEX);
 			m_nDriveImage=fi.iIcon;
 		}
 		

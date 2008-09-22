@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,8,9070
- PRODUCTVERSION 3,1,8,9070
+ FILEVERSION 3,1,8,9210
+ PRODUCTVERSION 3,1,8,9210
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 RC2.5 build 8.9070"
+            VALUE "FileVersion", "3.1 RC3 build 8.9210"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2008 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 RC2.5 build 8.9070"
+            VALUE "ProductVersion", "3.1 RC3 build 8.9210"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -171,7 +171,7 @@ BEGIN
                     0x894d,149,59,14,13
 END
 
-IDD_RESULTSAVEDIALOG DIALOGEX 0, 0, 239, 137
+IDD_RESULTSAVEDIALOG DIALOGEX 0, 0, 239, 157
 STYLE DS_SETFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | 
     WS_CLIPSIBLINGS
 FONT 8, "Tahoma", 0, 0, 0x1
@@ -179,56 +179,62 @@ BEGIN
     LTEXT           "Encoding:",IDC_STATIC,2,2,60,8
     COMBOBOX        IDC_ENCODING,64,0,130,90,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
-	LTEXT           "Include:",IDC_STATIC,2,16,30,8
+	LTEXT           "Template:",IDC_STATIC,2,20,60,8
+    COMBOBOX        IDC_TEMPLATE,64,18,164,90,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+	LTEXT           "Include:",IDC_STATIC,2,16+20,30,8
     CONTROL         "date",IDC_DATE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,37,16,37,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,37,16+20,37,10
     CONTROL         "column labels",IDC_LABELS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,77,16,60,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,77,16+20,60,10
     CONTROL         "database info",IDC_DBINFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,142,16,93,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,142,16+20,93,10
     CONTROL         "Description:",IDC_DESCRIPTIONTOGGLE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,2,29,75,12
-    EDITTEXT        IDC_DESCRIPTION,78,29,158,12,ES_AUTOHSCROLL
-    CONTROL         "All items",IDC_ALLITEMS,"Button",BS_AUTORADIOBUTTON,2,
-                    45,104,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,2,29+20,75,12
+    EDITTEXT        IDC_DESCRIPTION,78,29+20,158,12,ES_AUTOHSCROLL
+	CONTROL         "All items",IDC_ALLITEMS,"Button",BS_AUTORADIOBUTTON,2,
+                    45+20,104,10
     CONTROL         "Selected items",IDC_SELECTEDITEMS,"Button",
-                    BS_AUTORADIOBUTTON,121,45,111,10
-    LTEXT           "Details:",IDC_STATIC,2,57,50,8
+                    BS_AUTORADIOBUTTON,121,45+20,111,10
+    LTEXT           "Details:",IDC_STATIC,2,57+20,50,8
     CONTROL         "",IDC_TOOLBAR,"ToolbarWindow32",WS_CLIPSIBLINGS | 
-                    0x894d,200,55,30,13
+                    0x894d,200,55+20,30,13
     CONTROL         "",IDC_DETAILS,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | 
-                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,2,68,227,64
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,2,68+20,227,64
 END
 
-IDD_RESULTSAVEDIALOG2000 DIALOGEX 0, 0, 302, 137
+IDD_RESULTSAVEDIALOG2000 DIALOGEX 0, 0, 302, 157
 STYLE DS_SETFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | 
     WS_CLIPSIBLINGS
 FONT 8, "Tahoma", 0, 0, 0x1
 BEGIN
     LTEXT           "Encoding:",IDC_STATIC,68,2,60,8
-    COMBOBOX        IDC_ENCODING,130,0,130,90,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_ENCODING,130,0,80,90,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
-	LTEXT           "Include:",IDC_STATIC,68,16,30,8
+	LTEXT           "Template:",IDC_STATIC,68,20,60,8
+    COMBOBOX        IDC_TEMPLATE,130,18,164,90,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+	LTEXT           "Include:",IDC_STATIC,68,16+20,30,8
     CONTROL         "date",IDC_DATE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,103,16,37,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,103,16+20,37,10
     CONTROL         "column labels",IDC_LABELS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,143,16,90,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,143,16+20,90,10
     CONTROL         "database info",IDC_DBINFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,237,16,100,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,237,16+20,100,10
     CONTROL         "Description:",IDC_DESCRIPTIONTOGGLE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,68,29,65,12
-    EDITTEXT        IDC_DESCRIPTION,140,29,158,12,ES_AUTOHSCROLL
-    CONTROL         "All items",IDC_ALLITEMS,"Button",BS_AUTORADIOBUTTON,68,
-                    45,104,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,68,29+20,65,12
+    EDITTEXT        IDC_DESCRIPTION,140,29+20,155,12,ES_AUTOHSCROLL
+	CONTROL         "All items",IDC_ALLITEMS,"Button",BS_AUTORADIOBUTTON,66+2,
+                    45+20,104,10
     CONTROL         "Selected items",IDC_SELECTEDITEMS,"Button",
-                    BS_AUTORADIOBUTTON,187,45,111,10
-    LTEXT           "Details:",IDC_STATIC,68,57,50,8
+                    BS_AUTORADIOBUTTON,66+121,45+20,111,10
+    LTEXT           "Details:",IDC_STATIC,66+2,57+20,50,8
     CONTROL         "",IDC_TOOLBAR,"ToolbarWindow32",WS_CLIPSIBLINGS | 
-                    0x894d,266,55,30,13
+                    0x894d,66+200,55+20,30,13
     CONTROL         "",IDC_DETAILS,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | 
-                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,68,68,227,64
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,66+2,68+20,227,64
 END
 
 
@@ -1340,7 +1346,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    IDS_SAVERESULTSFILTERS			"Text File|*.txt|HTML file (list)|*.html|HTML file (thumbnails)|*.html|All Files|*.*||"
+    IDS_SAVERESULTSFILTERS			"Text File|*.txt|HTML file|*.html|All Files|*.*||"
     IDS_SAVERESULTS					"Save results"
 	IDS_SAVERESULTSHEADER			"Results: %d items including %d files and %d directories"
 	IDS_SAVERESULTSDATE				"Date:"
@@ -1355,6 +1361,7 @@ BEGIN
 	IDS_SAVERESULTSANSI				"ANSI"
 	IDS_SAVERESULTSUNICODE			"Unicode"
 	IDS_SAVERESULTSUTF8				"UTF-8"
+	IDS_SAVERESULTSNOTEMPLATE		"(no template)"
 	IDS_SAVERESULTSINVALIDFORMAT	"Template file is invalid or corrupted. "
 	IDS_SAVERESULTSCANNOTSAVERESULTS "Cannot save results. Last system error: %s"
 END
@@ -1739,7 +1746,6 @@ BEGIN
 	IDS_ADVSETNOASTERISKATENDIFEXTENSIONGIVEN "If extension is given (term contains '.'), files with the extension are only found"
 	IDS_ADVSETANDMODEALWAYS			"Use AND mode as a default"
 	IDS_ADVSETCONFIRMATIONFORUPDATEDATABASES "Ask confirmation when ""Update databases"" is chosen"
-	IDS_ADVSETDONTMOVETOOLTIPS		"Prevent moving tooltips (use if tooltips steal focus)"
 END
 	
 STRINGTABLE
@@ -1825,6 +1831,10 @@ BEGIN
 	IDS_ADVSETLARGEICONSIZE			"Icon size in ""Large icons"" mode:"
 	IDS_ADVSETEXTRALARGEICONSIZE	"Icon size in ""Extra Large icons"" mode:"
 	IDS_ADVSETSIMPLEFILEMENU		"Simple File menu (no special shell items for files)"
+	IDS_ADVSETDONTMOVETOOLTIPS		"Prevent moving tooltips (use if tooltips steal focus)"
+	IDS_ADVSETEXECUTEMODE			"Execute items mode:"
+	IDS_ADVSETEXECUTEMODEDEFAULT	"default"
+	IDS_ADVSETEXECUTEMODECONTEXT	"execute default (bolded) item in context menu"
 
 END
 

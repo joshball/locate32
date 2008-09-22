@@ -364,7 +364,7 @@ void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 		GetCursorPos(&pos);
 
 		int nSelectedItems;
-		CLocatedItem** pSelectedItems=GetSeletedItems(nSelectedItems);
+		CLocatedItem** pSelectedItems=GetSelectedItems(nSelectedItems);
 		if (nSelectedItems>0)
 		{
 			ClearMenuVariables();
@@ -642,7 +642,7 @@ void CLocateDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 			SHFILEINFOW fi;
 			fi.hIcon=NULL;
 			HGDIOBJ hOld=dc.SelectObject(m_hSendToListFont);
-			GetFileInfo((LPITEMIDLIST)(lpdis->itemData),0,&fi,SHGFI_DISPLAYNAME|SHGFI_ICON|SHGFI_SMALLICON);
+			ShellFunctions::GetFileInfo((LPITEMIDLIST)(lpdis->itemData),0,&fi,SHGFI_DISPLAYNAME|SHGFI_ICON|SHGFI_SMALLICON);
 			dc.SetTextColor(forecolor);
 			dc.SetBkColor(backcolor);
 			if (fi.hIcon!=NULL)
@@ -790,9 +790,13 @@ BOOL CLocateDlg::OnInitDialog(HWND hwndFocus)
 	// Load icons
 	LoadDialogIcon();
 
+	// Set dialog transparency
+	SetDialogTransparency();
 	
-	
+	// Initialize clipboard handler
 	m_hNextClipboardViewer=SetClipboardViewer(*this);
+
+
 
 	m_CircleBitmap.LoadBitmap(IDB_CIRCLE);
 	
@@ -1096,7 +1100,7 @@ void CLocateDlg::OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpmis)
 		
 		SHFILEINFOW fi;
 		fi.hIcon=NULL;
-		GetFileInfo((LPITEMIDLIST)lpmis->itemData,0,&fi,SHGFI_DISPLAYNAME|SHGFI_ICON|SHGFI_SMALLICON);
+		ShellFunctions::GetFileInfo((LPITEMIDLIST)lpmis->itemData,0,&fi,SHGFI_DISPLAYNAME|SHGFI_ICON|SHGFI_SMALLICON);
 			
 		CSize sz=dc.GetTextExtent(fi.szDisplayName,(int)wcslen(fi.szDisplayName));
 		lpmis->itemWidth=40+sz.cx;
@@ -2025,7 +2029,7 @@ void CLocateDlg::OnSettingsTool()
 
 
 	CStringW sExeName(GetApp()->GetExeNameW());
-	ShellExecuteW(*this,NULL,sExeName.Left(sExeName.FindLast('\\')+1)+L"settool.exe",
+	ShellFunctions::ShellExecute(*this,NULL,sExeName.Left(sExeName.FindLast('\\')+1)+L"settool.exe",
 		NULL,NULL,SW_SHOW);
 
 }
@@ -2069,8 +2073,8 @@ void CLocateDlg::OnProperties(int nItem)
 
 	
 	int nItems;
-	CLocatedItem** pItems=GetSeletedItems(nItems,nItem);
-	ContextMenuStuff* pContextMenu=GetContextMenuForItems(nItems,pItems);
+	CAutoPtrA<CLocatedItem*> pItems=GetSelectedItems(nItems,nItem);
+	CAutoPtr<ContextMenuStuff> pContextMenu=GetContextMenuForItems(nItems,pItems);
 
 	if (pContextMenu!=NULL)
 	{
@@ -2092,20 +2096,15 @@ void CLocateDlg::OnProperties(int nItem)
 				hRes=pContextMenu->pContextMenu->InvokeCommand(&cii);
 			}
 			DestroyMenu(hMenu);
-			delete[] pItems;
-			delete pContextMenu;		
 			
 			if (SUCCEEDED(hRes))
 				return;
 			
 		}
-		else
-			delete pContextMenu;		
 	}
 
 	
 	CPropertiesSheet* fileprops=new CPropertiesSheet(nItems,pItems);
-	delete[] pItems;
 
 	fileprops->Open();
 }
@@ -2294,7 +2293,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 	
 	
 	// Delete files
-	int iRet=FileOperation(&fo);
+	int iRet=ShellFunctions::FileOperation(&fo);
 
 	
 	delete[] fo.pFrom;
@@ -2690,17 +2689,19 @@ void CLocateDlg::OnSaveResults()
 		CResults Results(SaveResultsDlg.m_nFlags,SaveResultsDlg.m_strDescription,TRUE);
 		int nFilter=SaveResultsDlg.GetFilterIndex();
 
-		Results.Create(m_pListCtrl,SaveResultsDlg.m_aDetails,SaveResultsDlg.m_aDetails.GetSize(),nFilter!=3);
+		Results.Create(m_pListCtrl,SaveResultsDlg.m_aDetails,SaveResultsDlg.m_aDetails.GetSize(),
+			nFilter!=2 || SaveResultsDlg.m_strTemplate.IsEmpty());
 
 		CStringW File;
 		SaveResultsDlg.GetFilePath(File);
 		switch (nFilter)
 		{
 		case 2:
-			Results.SaveToHtmlFile(File);
-			break;
-		case 3:
-			Results.SaveToHtmlFile(File,L"C:\\Program Files\\Locate\\templates\\htmllist.ret");
+			if (!SaveResultsDlg.m_strTemplate.IsEmpty())
+				Results.SaveToHtmlFile(File,SaveResultsDlg.m_strTemplate);
+			else
+				Results.SaveToHtmlFile(File);
+
 			break;
 		default:
 			Results.SaveToFile(File);

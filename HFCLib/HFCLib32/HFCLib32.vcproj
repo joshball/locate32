@@ -1580,62 +1580,12 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\Src\ShellExtension.cpp"
+				RelativePath="..\Src\Network.cpp"
 				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="2"
-						PrecompiledHeaderThrough="HFCLib.h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="2"
-						PrecompiledHeaderThrough="HFCLib.h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="2"
-						PrecompiledHeaderThrough="HFCLib.h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="2"
-						PrecompiledHeaderThrough="HFCLib.h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="2"
-						PrecompiledHeaderThrough="HFCLib.h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="RelLogging|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="2"
-						PrecompiledHeaderThrough="HFCLib.h"
-					/>
-				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Src\Shell.cpp"
+				>
 			</File>
 			<File
 				RelativePath="..\Src\StdHFCLibrary.cpp"
@@ -2171,11 +2121,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\Src\HFCNetwork.h"
+				>
+			</File>
+			<File
 				RelativePath="..\Src\HFCNmsp.h"
 				>
 			</File>
 			<File
 				RelativePath="..\Src\HFCRc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Src\HFCShell.h"
 				>
 			</File>
 			<File

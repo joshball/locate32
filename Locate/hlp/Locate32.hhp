@@ -52,8 +52,9 @@ hid_view_arrange_bydate.htm
 hid_view_arrange_byextension.htm
 hid_view_arrange_autoarrange.htm
 hid_view_arrange_aligntogrid.htm
-hid_options_settings.htm
-hid_options_settingstool.htm
+hid_tools_deleteprivatedata.htm
+hid_tools_settings.htm
+hid_tools_settingstool.htm
 hid_help_about.htm
 hid_help_index.htm
 hid_systemtray_openlocate.htm
@@ -78,7 +79,7 @@ tab_advanced.htm
 menu_file.htm
 menu_edit.htm
 menu_view.htm
-menu_options.htm
+menu_tools.htm
 menu_help.htm
 menu_special.htm
 menu_contextmenu.htm
@@ -163,8 +164,9 @@ hid_view_arrange_bydate				= hid_view_arrange_bydate.htm
 hid_view_arrange_byextension		= hid_view_arrange_byextension.htm
 hid_view_arrange_autoarrange		= hid_view_arrange_autoarrange.htm
 hid_view_arrange_aligntogrid		= hid_view_arrange_aligntogrid.htm
-hid_options_settings				= hid_options_settings.htm
-hid_options_settingstool			= hid_options_settingstool.htm
+hid_tools_settings					= hid_tools_settings.htm
+hid_tools_settingstool				= hid_tools_settingstool.htm
+hid_tools_deleteprivatedata			= hid_tools_deleteprivatedata.htm
 hid_help_about						= hid_help_about.htm
 hid_help_index						= hid_help_index.htm
 hid_systemtray_openlocate			= hid_systemtray_openlocate.htm
@@ -261,8 +263,9 @@ IDM_ARRANGEDATE						= hid_view_arrange_bydate.htm
 IDM_ARRANGEEXTENSION				= hid_view_arrange_byextension.htm
 IDM_AUTOARRANGE						= hid_view_arrange_autoarrange.htm
 IDM_ALIGNTOGRID						= hid_view_arrange_aligntogrid.htm
-IDM_SETTINGS						= hid_options_settings.htm
-IDM_SETTOOL							= hid_options_settingstool.htm
+IDM_SETTINGS						= hid_tools_settings.htm
+IDM_SETTOOL							= hid_tools_settingstool.htm
+IDM_DELETEPRIVATEDATA				= hid_tools_deleteprivatedata.htm
 IDM_ABOUT							= hid_help_about.htm
 IDM_HELPTOPICS						= hid_help_index.htm
 IDM_OPENLOCATE						= hid_systemtray_openlocate.htm
