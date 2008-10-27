@@ -226,6 +226,7 @@ BOOL CResults::SaveToFile(LPCWSTR szFile) const
 	{
 		WCHAR szDate[200];
 		outFile.Write(ID2W(IDS_SAVERESULTSDATE));
+		outFile.Write(L' ');
 		DWORD dwLength;
 		if (IsUnicodeSystem())
 			dwLength=GetDateFormatW(NULL,DATE_SHORTDATE,NULL,NULL,szDate,200);

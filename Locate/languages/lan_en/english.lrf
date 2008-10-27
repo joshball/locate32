@@ -1,6 +1,6 @@
 # English language file 
 #	
-# Copyright (C) 2003-2008 Janne Huttunen <Janne.Huttunen@uku.fi>
+# Copyright (C) 2003-2008 Janne Huttunen <Janne.Huttunen@locate32.net>
 #
 
 FOR_PROGRAM=LOCATE32
@@ -245,6 +245,9 @@ STRADVANCEDSETTINGS_SEARCH=&Search:
 STRADVANCEDSETTINGS_FINDNEXT=Find Next
 STRADVANCEDSETTINGS_SEARCHUP=Search up
 STRADVANCEDSETTINGS_SEARCHDOWN=Search down
+# Cannot be 0
+STRADVANCEDSETTINGS_FINDNEXTEXTRALEN=1
+
 
 STRADVANCEDSETTINGS_LOCATEPROCESS=Locating files and results list
 STRADVANCEDSETTINGS_LIMITRESULTS=Limit the number of results
@@ -529,6 +532,7 @@ STRAUTOUPDATESETTINGSSCHEDULEDUPDATE_FRAMETEXT=Schedule Update %s:
 STRAUTOUPDATESETTINGSSCHEDULEDUPDATE_DATABASES=Databases
 DLGAUTOUPDATESETTINGSSCHEDULEDUPDATE_PRIORITY=Thread Priority:
 DLGAUTOUPDATESETTINGSSCHEDULEDUPDATE_STARTONLYIFCPUUSAGEBELOW=Start only when CPU usage is below:
+DLGAUTOUPDATESETTINGSSCHEDULEDUPDATE_EVERYEXTRAWIDTH=0 
 DLGAUTOUPDATESETTINGSSCHEDULEDUPDATE_DIALOGEXTRAWIDTH=0
 DLGAUTOUPDATESETTINGSSCHEDULEDUPDATE_THEANDDAYEXTRAWIDTH=0
 
@@ -665,6 +669,7 @@ STRACTION_MISC=Miscellaneous
 STRACTION_HELP=Help
 STRACTION_CHANGEFIELD=Change field
 STRACTION_PRESETS=Presets
+STRACTION_SETTINGS=Settings
 STRACTION_DIALOGSHOW=Open dialog
 STRACTION_DIALOGMINIMIZE=Minimize dialog
 STRACTION_DIALOGCLOSE=Close dialog
@@ -705,6 +710,7 @@ STRACTION_HELPTOPICS=Show Topics
 STRACTION_HELPINDEX=Show Index
 STRACTION_HELPTOC=Table of Contents
 STRACTION_HELPSEARCH=Search
+STRACTION_OPENSETTINGSTAB=Open %s settings
 
 # Keyboard shortcuts - Advanced settings dialog
 DLGSHORTCUTSSETTINGSADVANCED_CAPTION=Advanced settings:
@@ -740,6 +746,8 @@ DLGSHORTCUTSSETTINGSADVANCED_DIALOGEXTRAWIDTH=0
 DLGSHORTCUTSSETTINGSADVANCED_PRESSEDEXTRAWIDTH=1
 # Extra width for "Delay (ms):"
 DLGSHORTCUTSSETTINGSADVANCED_DELAYMSEXTRAWIDTH=10
+# Extra for "Remove when:", cannot be 0
+DLGSHORTCUTSSETTINGSADVANCED_REMOVEWHENEXTRAWIDTH=1 
 
 ###########################
 # Database dialog
@@ -747,7 +755,7 @@ DLGDATABASEDIALOG_EXTRAWIDTH=0
 DLGDATABASEDIALOG_OK=OK
 DLGDATABASEDIALOG_CANCEL=Cancel
 DLGDATABASEDIALOG_HELP=Help
-DLGDATABASEDIALOG_CAPTION=Database
+DLGDATABASEDIALOG_CAPTION=Database options
 DLGDATABASEDIALOG_ENABLE=&Enable
 DLGDATABASEDIALOG_GLOBALUPDATE=Update &Globally
 DLGDATABASEDIALOG_UNICODE=Use Unicode character set
@@ -773,7 +781,7 @@ DLGDATABASEDIALOG_INFORMATION=Information:
 DLGDATABASEDIALOG_INCLUDE=Include:
 STRDATABASEDIALOG_FLOPPY=Floppy
 STRDATABASEDIALOG_CDROM=CD-ROM
-STRDATABASEDIALOG_SELECTDATABASE=Select Database
+STRDATABASEDIALOG_SELECTDATABASE=Choose database file
 STRDATABASEDIALOG_FOLDEREXISTS=Directory %s already exist.
 STRDATABASEDIALOG_SUBFOLDER=Directory '%s' is inside of '%s'. '%s' is removed.
 STRDATABASEDIALOG_ADDFOLDER=Directory folder.
@@ -933,6 +941,8 @@ DLGSELECTDATABASES_USEDATABASES=Use selected databases:
 DLGSELECTDATABASES_ONLYONCE=only once
 DLGSELECTDATABASES_TEMPORALLY=until "New search" pressed
 
+# Dialog extra width
+DLGSELECTDATABASES_EXTRAWIDTH=0
 # Extra space for "Thread priority" label, cannot be 0
 DLGSELECTDATABASES_PRIORITYLABELEXTRALEN=1
 # Extra space for "Use selected datases" label, cannot be 0
@@ -1240,7 +1250,7 @@ STR_FILETYPEMASK_DATABASEFILES=Database files|*.dbs|All Files|*.*||
 STR_FILETYPEMASK_RESULTFILES=Text File|*.txt|HTML file|*.html|All Files|*.*||
 STR_FILETYPEMASK_IMPORTDATABASESETTINGS=Supported file types (.dbs, .dbi, .txt)|*.dbs;*.dbi;*.txt|Database files (.dbs)|*.dbs|Text Files (.dbi, .txt)|*.dbi;*.txt|All Files|*.*||
 STR_FILETYPEMASK_EXPORTDATABASESETTINGS=Database files (.dbs)|*.dbs|Database setting (.dbi)|*.dbi|Text Files|*.txt|All Files|*.*||
-STR_FILETYPEMASK_BUILDINTYPES=Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps wmf odg otg|0|Web Files|html htm asp shtm shtm css|6|Document files|doc docx dot xls xlw ppt pps wpd rtf pdf odt ods odp sxw sxc stw stc sxi sti|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h hxx hpp inl rc pas java pl py|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 mp2 wma voc aif aiff cda ogg mpa mpc ape flac aac ac3 m4a|3|Video files|mpeg mpg avi mov ogm rm rmvb wmv asf m4v mkv vob ts|4||
+STR_FILETYPEMASK_BUILDINTYPES=Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps wmf odg otg|0|Web Files|html htm asp shtm css|6|Document files|doc docx dot xls xlw ppt pps wpd rtf pdf odt ods odp sxw sxc stw stc sxi sti|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h hxx hpp inl rc pas java pl py|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 mp2 wma voc aif aiff cda ogg mpa mpc ape flac aac ac3 m4a|3|Video files|mpeg mpg avi mov ogm rm rmvb wmv asf m4v mkv vob ts|4||
 STR_FILETYPEMASK_ICONS=Icon files|*.ico||
 STR_FILETYPEMASK_PROGRAMS=Programs|*.exe;*.com;*bat||
 
@@ -1291,6 +1301,7 @@ STRERROR_CANNOTSAVESHORTCUTS=Cannot save keyboard shortcuts to the registry.
 STRERROR_CANNOTLOADDEFAULTSHORTCUTS=Cannot load default keyboard shortcuts.
 STRERROR_CANNOTCREATETHREAD=Cannot create thread.
 STRERROR_DELETINGJUNCTIONS=You are going to delete directories which are either junctions or mount points. This can be unsafe using standard methods (files in target directories may also be deleted). Thus these junctions and mount points are deleted using an another safe method which, however, does not allow you to restore files using the "Recycle bin".\n\nIf you choose "Yes", the selected junctions and mount points will deleted (without an another confirmation prompt). You can also skip the selected junctions and mount points by choosing "No".
+STRERROR_COUNITIALIZEERROR=An critical exception occured when Locate32 tries to uninitialize COM/OLE interfaces. This is often caused by a badly written shell extension. \n\nChoose "Yes" if you want to see this error message again if an exception occurs, or "No" if you want to ignore the error message in future.
 STRERROR_LASTERROR=Error:
 STRERROR_LASTERROR_UNKNOWN=unknown (db %s)
 STRERROR_LASTERROR_UNKNOWN2=unknown

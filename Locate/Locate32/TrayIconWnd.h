@@ -136,7 +136,7 @@ public:
 	void SetLocateDlgThreadToNull();
 
 	BYTE OnAbout();
-	BYTE OnSettings();
+	BYTE OnSettings(int nPage=-1);
 	BYTE OnLocate();
 	
 	// If pDatabases is:

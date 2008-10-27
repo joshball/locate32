@@ -5341,7 +5341,7 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 	CListBox Directories(GetDlgItem(IDC_DIRECTORIES));
 	
 	DirectoryName.GetText(sDirectoryPre);
-
+	sDirectoryPre.ReplaceChars('/','\\');
 	if (sDirectoryPre.Find('*')==-1 && sDirectory.Find('.')==-1)
 	{
 		// Exact path
@@ -6741,6 +6741,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATCHANGEVALUE));
 	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATPRESETS));
 	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATHELP));
+	m_ActionCombo.AddString(ID2W(IDS_ACTIONCATSETTINGS));
 
 	m_VerbCombo.AddString(ID2W(IDS_DEFAULT));
 
@@ -6835,6 +6836,9 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnHelp(LPHELPINFO lphi)
 			break;
 		case CAction::Help:
 			pPage="actions_help.htm#ahlp%d";
+			break;
+		case CAction::Settings:
+			pPage="actions_settings.htm#aset%d";
 			break;
 		}
 
@@ -6994,6 +6998,10 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::IndexToSubAction(CAction::Acti
 		if (nIndex>CAction::HelpLast)
 			return (UINT)-1;
 		return nIndex;
+	case CAction::Settings:
+		if (nIndex>CAction::SettingsLast)
+			return (UINT)-1;
+		return nIndex;
 	}
 	return (UINT)-1;
 }
@@ -7050,7 +7058,11 @@ UINT CSettingsProperties::CKeyboardShortcutsPage::SubActionToIndex(CAction::Acti
 			return (UINT)-1;
 		}
 	case CAction::Help:
-		if (nSubAction>CAction::Help)
+		if (nSubAction>CAction::HelpLast)
+			return (UINT)-1;
+		return nSubAction;
+	case CAction::Settings:
+		if (nSubAction>CAction::SettingsLast)
 			return (UINT)-1;
 		return nSubAction;
 	default:
@@ -7188,6 +7200,10 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 	case CAction::Help:
 		str.LoadString(CAction::GetHelpActionLabelStringId(
 			(CAction::ActionHelp)IndexToSubAction(CAction::Help,uSubAction)));		
+		break;
+	case CAction::Settings:
+		CAction::GetSettingsActionLabelString(
+			(CAction::ActionSettings)IndexToSubAction(CAction::Help,uSubAction),str);
 		break;
 	default:
 		ASSERT(0);
@@ -8630,6 +8646,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 	case CAction::ActivateTab:
 	case CAction::ShowHideDialog:
 	case CAction::Help:
+	case CAction::Settings:
 		pAction->m_nSubAction=m_SubActionCombo.GetCurSel();
 		if ((int)pAction->m_nSubAction==CB_ERR)
 			pAction->m_nSubAction=0;
@@ -8811,6 +8828,9 @@ void CSettingsProperties::CKeyboardShortcutsPage::FormatActionLabel(CStringW& st
 		break;
 	case CAction::Help:
 		str.LoadString(IDS_ACTIONCATHELP);
+		break;
+	case CAction::Settings:
+		str.LoadString(IDS_ACTIONCATSETTINGS);
 		break;
 	case CAction::ShowHideDialog:
 	case CAction::ResultListItems:

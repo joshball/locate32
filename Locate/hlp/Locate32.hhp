@@ -90,6 +90,7 @@ issue_searchterms.htm
 issue_commandlinearguments.htm
 issue_datasearch.htm
 howto_externaldrives.htm
+howto_defaultsearchapp.htm
 
 settings_general.htm
 settings_advanced.htm
@@ -199,6 +200,7 @@ issue_searchterms					= issue_searchterms.htm
 issue_commandlinearguments			= issue_commandlinearguments.htm
 issue_datasearch					= issue_datasearch.htm
 howto_externaldrives				= howto_externaldrives.htm
+howto_defaultsearchapp				= howto_defaultsearchapp.htm
 
 settings_general					= settings_general.htm
 settings_advanced					= settings_advanced.htm
@@ -213,6 +215,7 @@ settings_shortcutsadvanced			= settings_shortcutsadvanced.htm
 
 actions_changefields				= actions_changefields.htm
 actions_help						= actions_help.htm
+actions_Settings					= actions_settings.htm
 actions_misc						= actions_misc.htm
 actions_resultslist					= actions_resultslist.htm
 actions_showhide					= actions_showhide.htm

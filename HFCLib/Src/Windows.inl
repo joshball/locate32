@@ -1300,9 +1300,16 @@ inline BOOL CWnd::Create(LPCTSTR lpszClassName,
 		LPCTSTR lpszWindowName, DWORD dwStyle,
 		const RECT* rect,HWND hParentWnd, UINT nID)
 {
+	int x=CW_USEDEFAULT,y=CW_USEDEFAULT,cx=CW_USEDEFAULT,cy=CW_USEDEFAULT;
+	if (rect!=NULL)
+	{
+		x=rect->left;
+		y=rect->top;
+		cx=rect->right-rect->left;
+		cy=rect->bottom-rect->top;
+	}
 	return (m_hWnd=CreateWindow(lpszClassName,lpszWindowName,
-		dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
-		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
+		dwStyle,x,y,cx,cy,hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),NULL))!=NULL;
 }
 
 inline BOOL CWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
@@ -1320,8 +1327,16 @@ inline BOOL CWnd::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName,
 		const RECT* rect,HWND hParentWnd, UINT nID,
 		LPVOID lpParam)
 {
+	int x=CW_USEDEFAULT,y=CW_USEDEFAULT,cx=CW_USEDEFAULT,cy=CW_USEDEFAULT;
+	if (rect!=NULL)
+	{
+		x=rect->left;
+		y=rect->top;
+		cx=rect->right-rect->left;
+		cy=rect->bottom-rect->top;
+	}
 	return (m_hWnd=CreateWindowEx(dwExStyle,lpszClassName,
-		lpszWindowName,dwStyle,rect->left,rect->top,rect->right-rect->left,rect->bottom-rect->top,
+		lpszWindowName,dwStyle,x,y,cx,cy,
 		hParentWnd,(HMENU)(LONG_PTR)nID,GetInstanceHandle(),lpParam))!=NULL;
 }
 

@@ -98,6 +98,8 @@ and an action using <b>SubAction</b> combo box (the label for this combo box can
 	<TD class="action_description">Can be used to load presets using keyboard.</TD></TR>
 <TR><TD class="action_name">$STRACTION_HELP$</TD>
 	<TD class="action_description">Actions associated to the help file. The actions in this category are described <a href="actions_help.htm">here</a>.</TD></TR>
+<TR><TD class="action_name">$STRACTION_SETTINGS$</TD>
+	<TD class="action_description">Actions associated to settings. The actions in this category are described <a href="actions_settings.htm">here</a>.</TD></TR>
 </TBODY>
 </TABLE>
 </p>

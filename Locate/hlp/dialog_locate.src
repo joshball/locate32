@@ -17,7 +17,8 @@ of the tab is marked as '*'.
 
 <H2><A NAME="ld_findnow"></A>$DLGMAIN_FINDNOW@M$</H2>
 <P>
-This button can be used to execute searches. 
+This button can be used to execute searches. If you hold Ctrl-key down, this button will execute 
+<a href="hid_file_findusingdatabases.htm">Find Using Databases</a> command. 
 </P>
 
 <H2><A NAME="ld_stop"></A>$DLGMAIN_STOP@M$</H2>

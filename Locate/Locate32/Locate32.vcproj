@@ -1256,6 +1256,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\hlp\actions_settings.src"
+				>
+			</File>
+			<File
 				RelativePath="..\hlp\actions_showhide.src"
 				>
 			</File>
@@ -1493,6 +1497,10 @@
 			</File>
 			<File
 				RelativePath="..\hlp\hid_view_smallicons.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\howto_defaultsearchapp.src"
 				>
 			</File>
 			<File

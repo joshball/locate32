@@ -722,14 +722,29 @@ LPWSTR CDatabase::GetCorrertFileName(LPCWSTR szFileName,DWORD dwNameLength)
 			return NULL;
 		}
 
-		return alloccopy(szFileName,dwNameLength);
+		LPWSTR pRet=alloccopy(szFileName,dwNameLength);
+		
+		//Replace '/' with '\\'
+		for (DWORD i=0;i<dwNameLength;i++)
+		{
+			if (pRet[i]=='/')
+				pRet[i]='\\';
+		}
+		return pRet;
 	}
 
 	LPWSTR szFile;
-	if (szFileName[0]!=L'\\' && szFileName[1]!=L':') // Not UNC or on drive
+	if (szFileName[0]!=L'\\' && szFileName[0]!=L'/' && szFileName[1]!=L':') // Not UNC or on drive
 		szFile=GetDefaultFileLocation(szFileName);
 	else
 		szFile=alloccopy(szFileName,dwNameLength);
+
+	//Replace '/' with '\\'
+	for (DWORD i=0;szFile[i]!='\0';i++)
+	{
+		if (szFile[i]=='/')
+			szFile[i]='\\';
+	}
 
 	// Checking whether file name is valid
 	if (!FileSystem::IsValidFileName(szFile))
@@ -804,7 +819,7 @@ void CDatabase::CheckValidNames(PDATABASE* ppDatabases,int nDatabases)
 
 
 #define ISVALIDFORNAME(a) \
-	( (a)!=L'\\' && (a)!=L'\"' && (a)!=L'\'' )
+	( (a)!=L'\\' && (a)!=L'\"'  )
 
 #define ISVALIDFORKEY(a) \
 	( ((a)>=L'0' && (a)<=L'9') || \
@@ -812,8 +827,19 @@ void CDatabase::CheckValidNames(PDATABASE* ppDatabases,int nDatabases)
 	  ((a)>=L'A' && (a)<=L'Z') || \
 	  (a)==L' ' || \
 	  (a)==L'#' || \
+	  (a)==L'@' || \
+	  (a)==L'%' || \
+	  (a)==L'[' || \
+	  (a)==L']' || \
+	  (a)==L'~' || \
+	  (a)==L'+' || \
 	  (a)==L'-' || \
-	  (a)==L'_' )
+	  (a)==L'_' || \
+	  (a)==L'(' || \
+	  (a)==L')' || \
+	  (a)==L'!' || \
+	  (a)==L'\"' || \
+	  (a)==L'\'' )
 	
 BOOL CDatabase::IsNameValid(LPCWSTR szName)
 {

@@ -357,7 +357,7 @@ int wmain (int argc,wchar_t * argv[])
 				break;
             case L'd':
 				{
-					// Using database file
+					// Using database by file
 					CStringW sFile;
 					if (argv[i][2]==L'\0')
 					{
@@ -368,7 +368,7 @@ int wmain (int argc,wchar_t * argv[])
 					}
 					else
 	                    sFile=(argv[i]+2);
-	
+					sFile.ReplaceChars('/','\\');
 					if (CDatabase::FindByFile(aDatabases,sFile)==NULL)
 					{
 						CDatabase* pDatabase=CDatabase::FromFile(sFile);
@@ -379,6 +379,7 @@ int wmain (int argc,wchar_t * argv[])
 				}
 			case L'D':
 				{
+					// Using database by name
 					CStringW sName;
 					if (argv[i][2]==L'\0')
 					{
@@ -404,33 +405,29 @@ int wmain (int argc,wchar_t * argv[])
 				}
 			case L'p':
 			case L'P':
-                if (argv[i][2]==L'\0')
 				{
-					if (i>=argc-1)
-						aDirectories.Add(allocemptyW());
-					else
+					CStringW sDirectory;
+					if (argv[i][2]==L'\0')
 					{
-						++i;
+						if (i<argc-1)
+						{
+							++i;
+							sDirectory=argv[i];
+						}
+					}
+					else
+						sDirectory=argv[i]+(argv[i][2]==L':'?3:2);
+	
+					sDirectory.ReplaceChars('/','\\');
+
+					WCHAR szPath[MAX_PATH];
+					int nRet=FileSystem::GetFullPathName(sDirectory,MAX_PATH,szPath,NULL);
 						
-						WCHAR szPath[MAX_PATH];
-						int nRet=FileSystem::GetFullPathName(argv[i],MAX_PATH,szPath,NULL);
-						if (nRet>0)
-							aDirectories.Add(alloccopy(szPath,nRet));
-						else
-							aDirectories.Add(alloccopy(argv[i]));
-					}
-				}
-                else
-				{
-					int j=argv[i][2]==L':'?3:2;
-					if (argv[i][j]==L'.' && argv[i][j+1]==L'\0')
-					{
-						WCHAR* pPath=new WCHAR[MAX_PATH];
-						FileSystem::GetCurrentDirectory(MAX_PATH,pPath);
-						aDirectories.Add(pPath);
-					}
+
+					if (nRet>0)
+						aDirectories.Add(alloccopy(szPath,nRet));
 					else
-						aDirectories.Add(alloccopy(argv[i]+j));
+						aDirectories.Add(alloccopy(sDirectory));
 				}
 				break;
 			case 't':
@@ -696,7 +693,8 @@ int wmain (int argc,wchar_t * argv[])
 		}
 	}
 
-	
+	if (!(dwFlags&LOCATE_NAMEREGULAREXPRESSION))
+		String.ReplaceChars('/','\\');		
 
    
 	if (options.helps==1)

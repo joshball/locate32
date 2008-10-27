@@ -1001,6 +1001,9 @@ void CAction::ExecuteAction()
 	case Help:
 		DoHelp();
 		break;
+	case Settings:
+		DoSettings();
+		break;
 	default:
 		ASSERT(0);
 		break;
@@ -1197,6 +1200,13 @@ void CSubAction::DoHelp()
 		}
 	};
 
+}
+
+void CSubAction::DoSettings()
+{
+	CTrayIconWnd* pWnd=GetTrayIconWnd();
+	if (pWnd!=NULL)
+		pWnd->OnSettings(m_nSettings);
 }
 
 LPWSTR CSubAction::GetPathFromExplorer()
@@ -2077,6 +2087,32 @@ int CSubAction::GetHelpActionLabelStringId(CAction::ActionHelp uSubAction)
 		return 0;
 	}
 }
+
+void CSubAction::GetSettingsActionLabelString(ActionSettings uSubAction,CStringW& str)
+{
+	switch (uSubAction)
+	{
+	case OpenGeneralSettings:
+		str.Format(IDS_ACTIONOPENSETTINGSTAB,(LPCWSTR)ID2W(IDS_GENERALSETTINGS));
+		break;
+	case OpenAdvancedSettings:
+		str.Format(IDS_ACTIONOPENSETTINGSTAB,(LPCWSTR)ID2W(IDS_ADVANCEDSETTINGS));
+		break;
+	case OpenLanguageSettings:
+		str.Format(IDS_ACTIONOPENSETTINGSTAB,(LPCWSTR)ID2W(IDS_LANGUAGESETTINGS));
+		break;
+	case OpenDatabaseSettings:
+		str.Format(IDS_ACTIONOPENSETTINGSTAB,(LPCWSTR)ID2W(IDS_DATABASESETTINGS));
+		break;
+	case OpenAutoUpdateSettings:
+		str.Format(IDS_ACTIONOPENSETTINGSTAB,(LPCWSTR)ID2W(IDS_AUTOUPDATESETTINGS));
+		break;
+	case OpenKeyboardShortcutSettings:
+		str.Format(IDS_ACTIONOPENSETTINGSTAB,(LPCWSTR)ID2W(IDS_SHORTCUTSETTINGS));
+		break;
+	}
+}
+
 #endif
 
 BOOL CShortcut::DoClassOrTitleMatch(LPCSTR pClass,LPCSTR pCondition)

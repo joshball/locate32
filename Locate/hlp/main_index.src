@@ -20,8 +20,9 @@ The following list contains solutions for most common problems. See also <A HREF
 Support forum</A>.
 <UL>
 <LI><A HREF="issue_searchterms.htm">How to form correct search expression (logical operations, regular expressions, etc...).</A></LI>
-<LI><A HREF="issue_datasearch.htm">Howto search text or other data inside of files.</A></LI>
-<LI><A HREF="howto_externaldrives.htm">Howto index network drives, USB memory sticks, external drives, etc...</A></LI>
+<LI><A HREF="issue_datasearch.htm">How to search text or other data inside of files.</A></LI>
+<LI><A HREF="howto_externaldrives.htm">How to index network drives, USB memory sticks, external drives, etc...</A></LI>
+<LI><A HREF="howto_defaultsearchapp.htm">How to use Locate32 as a default desktop search application in Windows Vista (requires SP1)</A></LI>
 <LI><A HREF="issue_commandLInearguments.htm">Command line arguments for Locate32.exe.</A></LI>
 </UL>
 </P>

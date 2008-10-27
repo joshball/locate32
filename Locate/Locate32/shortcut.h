@@ -255,6 +255,17 @@ public:
 
 		HelpLast = HelpSearch
 	};
+
+	enum ActionSettings {
+		OpenGeneralSettings = 0,
+		OpenAdvancedSettings = 1,
+		OpenLanguageSettings = 2,
+		OpenDatabaseSettings = 3,
+		OpenAutoUpdateSettings = 4,
+		OpenKeyboardShortcutSettings = 5,
+
+		SettingsLast = 5
+	};
 		
 	union { // Action specifig type
 		DWORD m_nSubAction;
@@ -265,6 +276,7 @@ public:
 		ActionResultList m_nResultList;
 		ActionMisc m_nMisc;
 		ActionHelp m_nHelp;
+		ActionSettings m_nSettings;
 	};
 
 	struct SendMessageInfo {
@@ -306,11 +318,14 @@ public:
 	// other bits = nSubMenu
 	static BYTE GetMenuAndSubMenu(ActionMenuCommands nMenuCommand);
 
+#ifdef HFCLIB
 	static int GetActivateTabsActionLabelStringId(ActionActivateTabs uSubAction);
 	static int GetShowHideDialogActionLabelStringId(ActionShowHideDialog uSubAction);
 	static int GetResultItemActionLabelStringId(ActionResultList uSubAction);
 	static int GetMiscActionLabelStringId(ActionMisc uSubAction);
 	static int GetHelpActionLabelStringId(ActionHelp uSubAction);
+	static void GetSettingsActionLabelString(ActionSettings uSubAction,CStringW& str);
+#endif
 
 	void DoActivateControl();
 	void DoActivateTab();
@@ -321,6 +336,7 @@ public:
 	void DoChangeValue();
 	void DoPresets();
 	void DoHelp();
+	void DoSettings();
 
 
 	DWORD GetData(DWORD nAction,BYTE* pData,BOOL bHeader=TRUE) const;
@@ -357,7 +373,8 @@ public:
 		Misc = 5,
 		ChangeValue = 6,
 		Presets = 7,
-		Help = 8
+		Help = 8,
+		Settings = 9
 	};
 	
 	union {

@@ -998,6 +998,18 @@ BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArra
 			DWORD nLength;
 			for (nLength=0;pType[nLength]!=L'\0' && pType[nLength]!=L' '&& pType[nLength]!=L','&& pType[nLength]!=L';';nLength++);		
 
+			// If dot '.' found, use only the part after the dot
+			for (int i=nLength-1;i>=0;i--)
+			{
+				if (pType[i]=='.')
+				{
+					pType+=i+1;
+					nLength-=i+1;
+					break;
+				}
+			}
+
+
 			// Add to extensions list
 			aExtensions.Add(alloccopy(pType,nLength));
 
@@ -1103,7 +1115,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDir
 				delete[] pFolder;
 				return FALSE;
 			}
-
+			
 			dwLength=istrlenw(pFolder);
 			
 			if (dwLength==dwBufferSize-1)
@@ -1113,6 +1125,13 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesForActiveSelection(CArray<LPWSTR>& aDir
 			}
 			else
                 break;
+		}
+
+		// Replace '/' with '\\'
+		for (DWORD i=0;i<dwLength;i++)
+		{
+			if (pFolder[i]=='/')
+				pFolder[i]='\\';
 		}
 
 		BOOL bRet=GetDirectoriesFromCustomText(aDirectories,pFolder,dwLength,!bInstantSearch,bNoWarningIfNotExists);
@@ -1163,6 +1182,7 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirecto
 		dwLength--;
 	if (dwLength>0 && pPtr[dwLength-1]=='\\')
 		dwLength--;
+
 	if (!CheckAndAddDirectory(pPtr,dwLength,bSaveAndSet,bNoWarning))
 		return FALSE;
 	ParseGivenDirectoryForMultipleDirectories(aDirectories,pPtr,dwLength);
@@ -1847,7 +1867,7 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 	COMBOBOXEXITEMW ci;
 
 
-	// Checking whether path is drive which already exists
+	// Checking whether path is a drive which already exists
 	if (dwLength==2 && pFolder[1]==L':')
 	{
 		for (int i=0;i<m_LookIn.GetCount();i++)

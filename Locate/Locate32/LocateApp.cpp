@@ -231,11 +231,44 @@ int CLocateApp::ExitInstance()
 
 	if (!(m_nStartup&CStartData::startupExitedBeforeInitialization))
 	{
-		// Unitializing COM
-		CoUninitialize();
-
 		// Savind date and time format strings
 		SaveRegistry();
+
+
+		// Unitializing COM
+		// Use expection handling, because some extensions may cause Locate32
+		// to crash (maybe this does not help at all, but let's try anyway)
+		try {
+			CoUninitialize();
+
+		}
+		catch(...)
+		{
+			DWORD dwIgnoreMessage=FALSE;
+
+			CRegKey2 RegKey;
+			if (RegKey.OpenKey(HKCU,"\\General",
+				CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+			{
+				RegKey.QueryValue("Ignore CoUnitialize error",dwIgnoreMessage);
+				RegKey.CloseKey();
+			}
+		
+			if (!dwIgnoreMessage)
+			{
+				ForceForegroundAndFocus(NULL);
+				if (::MessageBoxW(NULL,ID2W(IDS_ERRORCOUNINITIALIZE),ID2W(IDS_ERROR),MB_YESNO|MB_ICONERROR|MB_SETFOREGROUND)==IDNO)
+				{
+					if (RegKey.OpenKey(HKCU,"\\General",
+					CRegKey::openExist|CRegKey::samWrite)==ERROR_SUCCESS) 
+					{
+						RegKey.SetValue("Ignore CoUnitialize error",DWORD(TRUE));
+						RegKey.CloseKey();
+					}
+				}
+			}
+		}
+		
 		
 	}
 

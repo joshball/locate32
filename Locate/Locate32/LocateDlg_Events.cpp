@@ -2733,7 +2733,7 @@ void CLocateDlg::OnSaveResults()
 		
 		char szError[2000];
 		ex.GetErrorMessage(szError,2000);
-		MessageBox(szError,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
+		MessageBox(A2W(szError),ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
 		return;
 
 	}
@@ -2757,7 +2757,7 @@ void CLocateDlg::OnSaveResults()
 		
 		char szError[2000];
 		ex.GetErrorMessage(szError,2000);
-		MessageBox(szError,ID2A(IDS_ERROR),MB_ICONERROR|MB_OK);
+		MessageBox(A2W(szError),ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
 	}
 	catch (...)
 	{
@@ -3180,7 +3180,7 @@ void CLocateDlg::OnShowFileInformation()
 
 	if (dwFiles>0 || dwDirectories>0)
 	{
-		CString str;
+		CStringW str;
 		char number[200],*numberfmt=NULL;
 
 		_ui64toa_s(llTotalSize,number,200,10);
@@ -3222,7 +3222,7 @@ void CLocateDlg::OnShowFileInformation()
 		}
 		else
 			str.FormatEx(IDS_FILEINFORMATIONFMT,dwFiles,dwDirectories,number);
-		MessageBox(str,ID2A(IDS_FILEINFORMATION),MB_OK|MB_ICONINFORMATION);
+		MessageBox(str,ID2W(IDS_FILEINFORMATION),MB_OK|MB_ICONINFORMATION);
 	}
 }
 

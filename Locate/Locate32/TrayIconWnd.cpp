@@ -757,7 +757,7 @@ BYTE CTrayIconWnd::OnAbout()
 	return TRUE;
 }
 
-BYTE CTrayIconWnd::OnSettings()
+BYTE CTrayIconWnd::OnSettings(int nPage)
 {
 	GetLocateApp()->ClearStartupFlag(CLocateApp::CStartData::startupExitAfterUpdating);
 	
@@ -771,6 +771,10 @@ BYTE CTrayIconWnd::OnSettings()
 
 		// Loading settings
 		m_pSettings->LoadSettings();
+
+		// Set active page
+		if (nPage!=-1)
+			m_pSettings->SetActivePage(nPage);
 
 		// Opening dialog
 		m_pSettings->DoModal();
@@ -808,6 +812,10 @@ BYTE CTrayIconWnd::OnSettings()
 	else
 	{
 		// Settings dialog is already opened, just activating it
+
+		// Set active page
+		if (nPage!=-1)
+			m_pSettings->SetActivePage(nPage);
 
 		m_pSettings->SetWindowPos(HWND_TOP,0,0,0,0,SWP_NOSIZE|SWP_NOMOVE);
 		m_pSettings->SetForegroundWindow();

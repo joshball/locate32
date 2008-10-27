@@ -1580,7 +1580,9 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 			}
 
 			
-			
+			// First replace '/' with '\\'
+			Name.ReplaceChars('/','\\');
+
 			// Parse string, split into separate string etc...
 			LPCWSTR pStr=Name;
 			UINT nIndex;

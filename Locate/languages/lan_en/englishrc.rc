@@ -258,36 +258,36 @@ BEGIN
                     89,16,61,12,WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE
     GROUPBOX        "Schedule_update:",IDC_FRAME,7,35,213+0,71
     LTEXT           "&Every",
-                    IDC_EVERYTXT,15,50,25,11
-    EDITTEXT        IDC_EVERY,40,48,32,13,ES_AUTOHSCROLL | ES_NUMBER
+                    IDC_EVERYTXT,15,50,25+0 ,11
+    EDITTEXT        IDC_EVERY,40+0 ,48,32,13,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        IDC_MEVERY,48+0,48,24,13,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "Spin1",IDC_EVERYSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
                     UDS_ALIGNRIGHT | UDS_ARROWKEYS,87,34,9,11
     LTEXT           "day",IDC_DAYS,
-                    77,50,25,9
+                    77+0 ,50,25,9
     LTEXT           "hour on",IDC_HOURS,
-                    77,50,25,9
+                    77+0 ,50,25,9
     LTEXT           "minute",IDC_MINUTE,
-                    77,50,25,9
-    EDITTEXT        IDC_MINUTEONHOUR,105,48,32,13,ES_AUTOHSCROLL | ES_NUMBER
+                    77+0 ,50,25,9
+    EDITTEXT        IDC_MINUTEONHOUR,105+0 ,48,32,13,ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "'th minute of hour",IDC_MINUTEONHOURLBL,
-                    140,50,78,9
+                    140+0 ,50,78,9
     CONTROL         "Spin1",IDC_MINUTESPIN,"msctls_updown32",UDS_SETBUDDYINT | 
                     UDS_ALIGNRIGHT | UDS_ARROWKEYS,127,34,9,11
     CONTROL         "Mon",IDC_MON,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,49,36,11
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,131+0 ,49,36,11
     CONTROL         "Tue",IDC_TUE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,62,35,11
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,131+0 ,62,35,11
     CONTROL         "Wed",IDC_WED,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,75,33,11
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,131+0 ,75,33,11
     CONTROL         "Thu",IDC_THU,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,88,33,11
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,131+0 ,88,33,11
     CONTROL         "Fri",IDC_FRI,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,175,49,37,11
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,175+0 ,49,37,11
     CONTROL         "Sat",IDC_SAT,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,175,62,35,11
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,175+0 ,62,35,11
     CONTROL         "Sun",IDC_SUN,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,175,75,37,11
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,175+0 ,75,37,11
     CONTROL         "Th&e",IDC_MTHE,
                     "Button",BS_AUTORADIOBUTTON,14,73,27+0,12
     COMBOBOX        IDC_MTYPE,48+0,73,48,76,CBS_DROPDOWNLIST | WS_VSCROLL | 
@@ -295,7 +295,7 @@ BEGIN
     COMBOBOX        IDC_MDAYS,99+0,73,53,87,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "week(s) on:",
-                    IDC_WEEKS,77,50,40,9
+                    IDC_WEEKS,77+0 ,50,40,9
     CONTROL         "Da&y",IDC_MDAY,
                     "Button",BS_AUTORADIOBUTTON,14,49,27+0,12
     CONTROL         "Spin1",IDC_MSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
@@ -363,8 +363,8 @@ BEGIN
 	GROUPBOX        "Defaults (states after ""New Search"" button is pressed):",IDC_STATIC,2,221,281+10,79
 	LTEXT           "&Sorting:",IDC_SORTINGLABEL,8,237,
 					27+0,10
-    COMBOBOX        IDC_SORTING,36+0,235,
-					80+10,70,CBS_DROPDOWNLIST| WS_VSCROLL | WS_TABSTOP   
+    COMBOBOX        IDC_SORTING,37+0,235,
+					79+10,70,CBS_DROPDOWNLIST| WS_VSCROLL | WS_TABSTOP   
 	CONTROL         "Ascending",IDC_ASCENDINGORDER,"Button",
                     BS_AUTORADIOBUTTON,119+0+10,
 					237,45+5,10
@@ -375,7 +375,7 @@ BEGIN
                     IDC_MATCHWHOLEFILENAMEONLY,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,8,255,115,10
     LTEXT           "&Check:",IDC_CHECKINLABEL,128,255,54,10
-    COMBOBOX        IDC_CHECKIN,174,252,100,76,CBS_DROPDOWNLIST| WS_VSCROLL | 
+    COMBOBOX        IDC_CHECKIN,174,252,100+10,76,CBS_DROPDOWNLIST| WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "R&eplace spaces with '*'",IDC_REPLACESPACES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,270,119,10
@@ -503,7 +503,7 @@ END
 
 IDD_DATABASEDIALOG DIALOGEX 0, 0, 274+0, 358
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Database"
+CAPTION "Database options"
 FONT 8, "Tahoma", 0, 0, 0x1
 EXSTYLE WS_EX_CONTEXTHELP
 BEGIN
@@ -718,21 +718,21 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,173,71,87,9
     GROUPBOX        "Execute options:",IDC_STATICEXECUTAIONOPTIONS,
 					4,99,263+0,89
-    LTEXT           "When execute:",IDC_EXECUTEWHENSTATIC,10,113,108,8
+    LTEXT           "When execute:",IDC_EXECUTEWHENSTATIC,10,113,108+1 ,8
     CONTROL         "Key is pressed",IDC_EXECUTEWHENKEYISDOWN,"Button",
-                    BS_AUTORADIOBUTTON,119,113,67+1,10
+                    BS_AUTORADIOBUTTON,119+1 ,113,67+1,10
     CONTROL         "Key is released",IDC_EXECUTEWHENKEYISUP,"Button",
-                    BS_AUTORADIOBUTTON,190+1,113,
-					72+0-1,10
+                    BS_AUTORADIOBUTTON,190+1 +1,113,
+					72+0-1-1 ,10
     LTEXT           "Remove messages from queue:",IDC_REMOVEMESSAGESTATIC,10,
-                    130,108,8
+                    130,108+1 ,8
     CONTROL         "Key down",IDC_REMOVEDOWNMESSAGE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,119,130,67+1,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,119+1 ,130,67+1,10
     CONTROL         "Key up",IDC_REMOVEUPMESSAGE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,190+1,130,
-					72+0-1,10
+                    WS_TABSTOP,190+1 ,130,
+					72+0-1-1 ,10
     CONTROL         "Send a key release event before Win key is handled (use with Win+F)",IDC_SENDKEYRELEASEBEFOREWIN,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,10,144,256+0,11
+                    WS_TABSTOP,10,144,255+0,11
     LTEXT           "&Wait before execute:",IDC_STATICWAITBEFOREEXECUTE,10,
                     160,117,11
     CONTROL         "None",IDC_WAITNONE,"Button",BS_AUTORADIOBUTTON,10,173,
@@ -800,7 +800,7 @@ END
 
 
 
-IDD_SELECTDATABASES DIALOGEX 160, 100, 265, 311
+IDD_SELECTDATABASES DIALOGEX 160, 100, 265+0, 311
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
     WS_SYSMENU
 CAPTION "Select databases:"
@@ -810,7 +810,7 @@ BEGIN
     LTEXT           "Selected &databases:",IDC_STATIC,6,10,142,12
     CONTROL         "",IDC_DATABASES,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,6,
-                    22,252,203
+                    22,252+0,203
     LTEXT           "&Threads:",IDC_THREADSLABEL,7,232,50,11
     EDITTEXT        IDC_THREADS,59,230,40,13,ES_AUTOHSCROLL
     CONTROL         "",IDC_THREADSPIN,"msctls_updown32",UDS_SETBUDDYINT | 
@@ -830,7 +830,7 @@ BEGIN
 	CONTROL         "only once",IDC_USEDATABASESONCE,"Button",
                     BS_AUTORADIOBUTTON,82+7,270,48,13
     CONTROL         "until ""New search"" pressed",IDC_USEDATABASESTEMPORALLY,"Button",
-                    BS_AUTORADIOBUTTON,131+7,270,135-7,13
+                    BS_AUTORADIOBUTTON,131+7,270,135+0-7,13
     DEFPUSHBUTTON   "OK",IDC_OK,149,290,50,14
     PUSHBUTTON      "Cancel",IDC_CANCEL,208,290,50,14
 END
@@ -880,11 +880,11 @@ BEGIN
 					6,12,273+10,260
 	LTEXT           "&Search:",IDC_STATIC,7,282,33,11
     EDITTEXT        IDC_FINDTEXT,40,280,75,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Find Next",IDC_FINDNEXT,117,280,55,13
+    PUSHBUTTON      "Find Next",IDC_FINDNEXT,117,280,55+1,13
 	CONTROL         "Search up",IDC_SEARCHUP,"Button",
-                    BS_AUTORADIOBUTTON | WS_TABSTOP,178,282,52,10
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,178+1,282,52,10
     CONTROL         "Search down",IDC_SEARCHDOWN,"Button",
-                    BS_AUTORADIOBUTTON | WS_TABSTOP,231,282,52+10,10
+                    BS_AUTORADIOBUTTON | WS_TABSTOP,231+1,282,52+10-1,10
 END
 
 IDD_PRESETNAME DIALOGEX 100, 100, 196, 68
@@ -1416,6 +1416,7 @@ BEGIN
 	IDS_ERRORDIFFERENTCHARSETINDB	"The existing content of the database cannot be kept because the character set in the database is different than used at this time. Do you want to overwrite database?"
 	IDS_ERRORCANNOTCREATETHREAD		"Cannot create thread."
 	IDS_ERRORJUNCTIONS				"You are going to delete directories which are either junctions or mount points. This can be unsafe using standard methods (files in target directories may also be deleted). Thus these junctions and mount points are deleted using an another safe method which, however, does not allow you to restore files using the ""Recycle bin"".\n\nIf you choose ""Yes"", the selected junctions and mount points will deleted (without an another confirmation prompt). You can also skip the selected junctions and mount points by choosing ""No""."
+	IDS_ERRORCOUNINITIALIZE				"An critical exception occured when Locate32 tries to uninitialize COM/OLE interfaces. This is often caused by a badly written shell extension. \n\nChoose ""Yes"" if you want to see this error message again if an exception occurs, or ""No"" if you want to ignore the error message in future."
 END
 
 STRINGTABLE 
@@ -1472,7 +1473,7 @@ BEGIN
     IDS_ADVANCED            "Advanced"
     IDS_SIZEDATE            "Size and Date"
     IDS_BYEXTENSION         "(by extension)"
-    IDS_BUILDINTYPES        "Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps wmf odg otg|0|Web Files|html htm asp shtm shtm css|6|Document files|doc docx dot xls xlw ppt pps wpd rtf pdf odt ods odp sxw sxc stw stc sxi sti|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h hxx hpp inl rc pas java pl py|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 mp2 wma voc aif aiff cda ogg mpa mpc ape flac aac ac3 m4a|3|Video files|mpeg mpg avi mov ogm rm rmvb wmv asf m4v mkv vob ts|4||"
+    IDS_BUILDINTYPES        "Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps wmf odg otg|0|Web Files|html htm asp shtm css|6|Document files|doc docx dot xls xlw ppt pps wpd rtf pdf odt ods odp sxw sxc stw stc sxi sti|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h hxx hpp inl rc pas java pl py|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 mp2 wma voc aif aiff cda ogg mpa mpc ape flac aac ac3 m4a|3|Video files|mpeg mpg avi mov ogm rm rmvb wmv asf m4v mkv vob ts|4||"
     IDS_FILENAMESONLY       "File names only"
     IDS_FILEANDFOLDERNAMES  "File and folder names"
     IDS_FOLDERNAMESONLY     "Folder names only"
@@ -1548,7 +1549,7 @@ END
 STRINGTABLE 
 BEGIN
 	IDS_DATABASEFILTERS     "Database files|*.dbs|All Files|*.*||"
-    IDS_SELECTDATABASE      "Select Database"
+    IDS_SELECTDATABASE      "Choose database file"
     IDS_NOTEXIST            "File not exist"
     IDS_FOLDEREXIST         "Directory %s already exist."
     IDS_SUBFOLDER           "Directory '%s' is inside of '%s'. '%s' is removed."
@@ -1897,6 +1898,7 @@ BEGIN
 	IDS_ACTIONCATHELP					"Help"
 	IDS_ACTIONCATCHANGEVALUE			"Change field"
 	IDS_ACTIONCATPRESETS				"Presets"
+	IDS_ACTIONCATSETTINGS				"Settings"
 	IDS_ACTIONSWDIALOGSHOW				"Open dialog"
 	IDS_ACTIONSWDIALOGMINIMINZE			"Minimize dialog"
 	IDS_ACTIONSWDIALOGCLOSE				"Close dialog"
@@ -1937,6 +1939,8 @@ BEGIN
 	IDS_ACTIONHELPINDEX					"Show Index"
 	IDS_ACTIONHELPTOC					"Table of Contents"
 	IDS_ACTIONHELPSEARCH				"Search"
+	IDS_ACTIONOPENSETTINGSTAB			"Open %s settings"
+	
 END
 
 

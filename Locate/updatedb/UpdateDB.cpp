@@ -6,7 +6,7 @@
 #include "../lan_resources.h"
 #include "../common/common.h"
 #include "../common/win95crtfixes.h"
-
+#include <locale.h>
 
 LPCSTR szVersionStr="updtdb32 3.1 RC3 build 8.9210";
 
@@ -223,6 +223,8 @@ int wmain (int argc,wchar_t ** argv)
 {
 	CAppData::stdfunc();
 	
+	_wsetlocale(LC_CTYPE,L".OCP"); 
+
 	SetRegKey(argc,argv);
 
 	if (!SetLanguageSpecifigHandles(argv[0]))
@@ -281,6 +283,7 @@ int wmain (int argc,wchar_t ** argv)
 					
 					if (pStr->GetLength()>1)
 					{
+						pStr->ReplaceChars('/','\\');
 						if ((*pStr)[1]==':' && pStr->GetLength()==2)
 							aDatabases.GetLast()->AddRoot(pStr->GiveBuffer());
 						else if (FileSystem::IsDirectory(*pStr))
@@ -341,6 +344,7 @@ int wmain (int argc,wchar_t ** argv)
 					
 					if (pStr->GetLength()>1)
 					{
+						pStr->ReplaceChars('/','\\');
 						if (!aDatabases.GetLast()->AddExcludedDirectory(*pStr))
 							fwprintf(stderr,ID2W(IDS_UPDATEDB32DIRECTORYISNOTVALID),(LPCWSTR)*pStr);
 					}
@@ -423,7 +427,7 @@ int wmain (int argc,wchar_t ** argv)
 						sFile=argv[++i];
 					else
 						sFile=(argv[i]+2);
-					
+					sFile.ReplaceChars('/','\\');
 					if (aDatabases.GetSize()==1 && wcscmp(aDatabases[0]->GetName(),L"DEFAULTX")==0)
 					{
 						aDatabases[0]->SetNamePtr(alloccopy(L"PARAMX"));
