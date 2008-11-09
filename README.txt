@@ -3,6 +3,7 @@
 ********************************************************************
 * Changes:                                                         *
 *  31.12.07 Janne Huttunen: initial version                        *
+*  02.10.08 Janne Huttunen: Notification about VS2008 solutions    
 ********************************************************************
 
 
@@ -13,7 +14,8 @@ Table of Contents
 2. Downloading sources
 3. Preliminary arrangements
 4. Building sources
-5. Other compilers
+5. Using Visual Studio 2005
+6. Other compilers
 
 
 ********************************************************************
@@ -21,12 +23,11 @@ Table of Contents
 ********************************************************************
 
 This file is intended to be a guide for downloading sources from SVN repository 
-and compiling them. Instructions given this guide is dedicated for MS Visual Studio 2005
-(and Visual Studio 2008 with minor quite obvious changes). This is due to the fact that 
-I haven't tried other compilers yet. If you have managed to compile the sources using 
-some other compiler, please contact the author (janne.huttunen@locate32.net) and share 
-your experiences with us. 
-´
+and compiling them. Instructions given this guide is dedicated for MS Visual Studio 2008
+(Visual Studio 2005, see note below). This is due to the fact that I haven't tried other 
+compilers yet. If you have managed to compile the sources using some other compiler, 
+please contact the author (janne.huttunen@locate32.net) and share your experiences with us. 
+
 You can also contact the author if you have comments or problems, or if something 
 did went like described in this file. All comments are also very welcome. If you wish, 
 you can also modify this document directly to add better description or just for spell checking. 
@@ -94,8 +95,8 @@ To do that, do the following steps:
    Properties from the pop up menu to open System Properties dialog. Environment Variables can 
    be found from Advanced tab. 
 
-4. You need to setup Visual Studio to use these include and library paths. To do this in 
-   Visual Studio 2005, choose Tools -> Options from the menu and choose 
+4. You need to setup Visual Studio to use these include and library paths. To do this on 
+   Visual Studio 2008, choose Tools -> Options from the menu and choose 
    "Projects and Solutions" -> "VC++ Directories" from the list on left. Specify the following 
    directories (change "C:\HFC" to correspond your own path if necessary):
 
@@ -144,17 +145,54 @@ The latest lrestool.exe is also in the latest locate_lan-X.XXXXX.zip package in
 http://www.locate32.net/files/devel (these packages are dedicated for translators).  
 
 
+********************************************************************
+5. Using Visual Studio 2005
+********************************************************************
+
+The solution and project files were converted to Visual Studio 2008 on April 2008. 
+The change was done in subversion repository 196.  This means that 
+you can found solution and project files for 2005 from revision prior to 196 (e.g. 195).
+However, these files do not contain changes made after this date, so you have to update
+the solution and project files by yourself. The changes between 195 and the latest (210 
+so far) are listed below:
+
+** Changes in HFC Library solution:
+
+HFCLib32 and HFCCon32/Header files:
+- add HFCNetwork.h and HFCShell.h
+
+HFCLib32 and HFCCon32/Source files:
+- remove ShellExtension.cpp 
+- add Shell.cpp and Network.cpp
+
+** Changes in Locate solution:
+
+common/Header files:
+- add win95srcfixes.h
+
+lan_en:
+- helptext.txt and helptext2.txt are not used anymore. 
+
+locate32/Header files
+- Add strnatcmp.h from directory 3rdparty
+
+locate32/Source files
+- Add strnatcmp.cpp from directory 3rdparty
+
+locate32/HTML Help Topics:
+- There are so many changes that is not worthfile to give a list, an easier way is to 
+remove all src files from project and then add all src files which are in Locate/hlp 
+directory. 
 
 
 
 ********************************************************************
-5. Other compilers
+6. Other compilers
 ********************************************************************
 
-As mentioned above, this guide was designed for Visual Studio 2005 and 2008. 
-
-You can try makefiles by yourself. In the following I have listed that which libraries
-and modules you have to compile. 
+This section gives a brief introduction to compile sources using other combilers than
+Visual Studio 2008 or 2005. In that case you have to create project/make files by yourself. 
+In the following I have listed that which libraries and modules you have to compile. 
 
 
 1. HFC Libraries:

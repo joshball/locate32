@@ -2414,7 +2414,7 @@ CFolderDialog::CFolderDialog(LPCSTR lpszTitle,UINT ulFlags,LPCITEMIDLIST pidlRoo
 :	m_hWnd(NULL),m_lpil(NULL),m_lpDefaultIL(NULL),
 	m_szTitle(NULL),m_szDefaultFolder(NULL)
 {
-	CoInitialize(NULL);
+	CoInitializeEx(NULL,COINIT_MULTITHREADED);
 	m_szwDisplayName[0]='\0';
 	
 	
@@ -2443,7 +2443,7 @@ CFolderDialog::CFolderDialog(LPCWSTR lpszTitle,UINT ulFlags,LPCITEMIDLIST pidlRo
 :	m_hWnd(NULL),m_lpil(NULL),m_lpDefaultIL(NULL),
 	m_szTitle(NULL),m_szDefaultFolder(NULL)
 {
-	CoInitialize(NULL);
+	CoInitializeEx(NULL,COINIT_MULTITHREADED);
 	m_szwDisplayName[0]='\0';
 	
 	
@@ -2472,7 +2472,7 @@ CFolderDialog::CFolderDialog(UINT nTitleID,UINT ulFlags,LPCITEMIDLIST pidlRoot)
 :	m_hWnd(NULL),m_lpil(NULL),m_lpDefaultIL(NULL),
 	m_szTitle(NULL),m_szDefaultFolder(NULL)
 {
-	CoInitialize(NULL);
+	CoInitializeEx(NULL,COINIT_MULTITHREADED);
 	m_szwDisplayName[0]='\0';
 
 	if (IsUnicodeSystem())

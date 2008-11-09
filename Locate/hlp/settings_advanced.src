@@ -93,7 +93,9 @@ stop typing and time when searching is started. The unit is milliseconds (i.e., 
 
 <p><b><A NAME="sa_ischars"></A>$STRADVANCEDSETTINGS_ISCHARS@Cp$</b>:
 This option specifies how many characters should be typed "$DLGNAME_NAMED@M$" field
-before searching is started. </p>
+before searching is started. <b>Note:</b> the character limit is valid only when the name is
+merely used as a search criteria. The limit is ignored if you give other criterias, for example, 
+give extensions in "Type:" field or enter a path into "Look in:".</p>
 
 <p><b><A NAME="sa_isupdown"></A>$STRADVANCEDSETTINGS_ISUPDOWNGOESTORESULTLIST@C$</b>:
 When enabled, Up and Down keys pressed in "$DLGNAME_NAMED@M$" field will activate 

@@ -198,6 +198,8 @@ BOOL LoadSettingsFromFile(LPCSTR szKey,LPCSTR szFile,BYTE bFileIsReg)
 		return TRUE;
 	}
 
+	// TODO: szFile without \ refers to installation directory
+
 	if (bFileIsReg)
 	{
 				

@@ -206,7 +206,7 @@ BOOL CLocateApp::InitInstance()
 	m_wShellDllVersion=WORD(dwTemp>>8|LOBYTE(dwTemp));
 	
 	// Initializing COM 
-	CoInitialize(NULL);
+	//CoInitialize(NULL);
 	
 	
 	
@@ -234,7 +234,7 @@ int CLocateApp::ExitInstance()
 		// Savind date and time format strings
 		SaveRegistry();
 
-
+		/*
 		// Unitializing COM
 		// Use expection handling, because some extensions may cause Locate32
 		// to crash (maybe this does not help at all, but let's try anyway)
@@ -269,7 +269,7 @@ int CLocateApp::ExitInstance()
 			}
 		}
 		
-		
+		*/
 	}
 
 

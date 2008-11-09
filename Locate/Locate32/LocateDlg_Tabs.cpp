@@ -4174,7 +4174,7 @@ void CLocateDlg::CAdvancedDlg::ChangeEnableStateForCheck()
 	}
 	else
 	{
-		if (GetLocateDlg()->m_NameDlg.m_Type.GetTextLength()>0)
+		if (GetLocateDlg()->m_NameDlg.m_Type.GetLBTextLen(nCurSel)>0)
 			bEnable=FALSE;
 	}
 	

@@ -710,7 +710,7 @@
 #define IDS_DATABASEDESCRIPTION         5207
 #define IDS_DELETEDATABASE              5208
 #define IDS_DELETEDATABASEQUESTION      5209
-#define IDS_FLOPPYSTRING                5210
+#define IDS_REMOVABLESTRING                5210
 #define IDS_CDROMSTRING                 5211
 #define IDS_DATABASEFILTERS             5212
 #define IDS_SELECTDATABASE              5213

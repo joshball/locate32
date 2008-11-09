@@ -4477,27 +4477,31 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	
 	
 	if (nType==DRIVE_REMOVABLE)
-        LoadString(IDS_FLOPPYSTRING,szLabel,20);
+	{
+		SHFILEINFOW fi;
+		if (ShellFunctions::GetFileInfo(szDrive,0,&fi,SHGFI_DISPLAYNAME|SHGFI_USEFILEATTRIBUTES))
+			wcscpy_s(szLabel,20,fi.szDisplayName);
+		else
+			LoadString(IDS_REMOVABLESTRING,szLabel,20);
+	}
 	else
 	{
 		DWORD dwTemp;
 		UINT nOldMode=SetErrorMode(SEM_FAILCRITICALERRORS);
-	
+				
 		if (!FileSystem::GetVolumeInformation(szDrive,szLabel,20,&dwTemp,&dwTemp,&dwTemp,szFileSystem,20))
 		{
-			switch (nType)
-			{
-			case DRIVE_CDROM:
-				LoadString(IDS_CDROMSTRING,szLabel,20);
-				break;
-			default:	
-				szLabel[0]='\0';
-				break;
-			}
+			szLabel[0]='\0';
 			szFileSystem[0]='\0';
 		}
 
 		SetErrorMode(nOldMode);
+
+		SHFILEINFOW fi;
+		if (ShellFunctions::GetFileInfo(szDrive,0,&fi,SHGFI_DISPLAYNAME|SHGFI_USEFILEATTRIBUTES))
+			wcscpy_s(szLabel,20,fi.szDisplayName);
+		else if (nType==DRIVE_CDROM && szLabel[0]=='\0')
+			LoadString(IDS_CDROMSTRING,szLabel,20);
 	}
 
 	// Resolving icon,
