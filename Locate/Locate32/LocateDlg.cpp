@@ -28,8 +28,7 @@ BOOL CLocateDlgThread::InitInstance()
 	CWinThread::InitInstance();
 	
 	// Initialize OLE/COM
-	//CoInitializeEx(NULL,COINIT_MULTITHREADED);
-	CoInitialize(NULL);
+	CoInitializeEx(NULL,COINIT_APARTMENTTHREADED);
 	
 	// Size & Date tab uses "in house" date time picker
 	RegisterDataTimeExCltr();

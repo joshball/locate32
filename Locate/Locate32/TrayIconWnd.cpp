@@ -1044,7 +1044,7 @@ void CTrayIconWnd::OnDestroy()
 			::GetLocateDlg()->PostMessage(WM_CLOSEDIALOG);
 			
 #ifdef _DEBUG_LOGGING
-			WaitForSingleObject(hLocateThread,5000);
+			WaitForSingleObject(hLocateThread,1000);
 #else
 			WaitForSingleObject(hLocateThread,500);
 #endif

@@ -140,6 +140,75 @@ void CLocateDlg::OnInitSendToMenu(HMENU hPopupMenu)
 // CLocateDlg - Menu - Context menu/file menu helpers
 ////////////////////////////////////////////////////////////
 
+inline CLocateDlg::ContextMenuStuff::~ContextMenuStuff()
+{
+	CheckThread();
+	
+	// Releasing memory
+	if (pContextMenu3!=NULL)
+		pContextMenu3->Release();
+	if (pContextMenu2!=NULL)
+		pContextMenu2->Release();
+	if (pContextMenu!=NULL)
+		pContextMenu->Release();
+	if (pParentFolder!=NULL)
+		pParentFolder->Release();
+	
+	if (pParentIDL!=NULL)
+		CoTaskMemFree(pParentIDL);
+
+	if (ppSimpleIDLs!=NULL)
+	{
+		for (int i=0;i<nIDLCount;i++)
+			CoTaskMemFree((void*)ppSimpleIDLs[i]);
+		delete[] ppSimpleIDLs;
+	}
+
+	if (hCallBackWnd!=NULL)
+	{
+		::DestroyWindow(hCallBackWnd);
+	}
+
+	//delete[] apcidl;
+}
+
+
+
+BOOL CLocateDlg::ContextMenuStuff::AddContextMenuItems(HMENU hMenu,UINT uFirstID,UINT uLastID,UINT uFlags)
+{
+	ASSERT_VALID(pContextMenu);
+
+	HRESULT hRes;
+	if (pContextMenu2!=NULL)
+	{
+		try {
+			hRes=pContextMenu2->QueryContextMenu(hMenu,0,uFirstID,uLastID,uFlags);
+			
+		}
+		catch (...)
+		{
+			return FALSE;
+		}
+
+		if (!SUCCEEDED(hRes))
+			return FALSE;
+
+
+		return TRUE;
+	}
+
+	
+	try {
+		hRes=pContextMenu->QueryContextMenu(hMenu,0,uFirstID,uLastID,uFlags);
+	}
+	catch (...)
+	{
+		return FALSE;
+	}
+
+	return (SUCCEEDED(hRes));
+	
+}
 
 HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,int nItems,BOOL bSimple)
 {
@@ -172,59 +241,24 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 
 		if (m_pActiveContextMenu!=NULL)
 		{
+			m_pActiveContextMenu->CheckThread();
+
 			// IContextMenu interface has created succesfully,
 			// so they can insert their own menu items
 
-			HRESULT hRes;
+			UINT uFlags=CMF_EXPLORE|CMF_CANRENAME;
 			if (hFileMenu==NULL)
 			{
 				hFileMenu=CreatePopupMenu();
-
+				
 				if (HIBYTE(GetKeyState(VK_SHIFT)))
-				{
-					hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
-						IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_EXTENDEDVERBS|CMF_CANRENAME);
-
-				}
-				else
-				{
-					hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
-						IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_CANRENAME);
-				}
+					uFlags|=CMF_EXTENDEDVERBS;
 			}
 			else
+				uFlags|=CMF_VERBSONLY;
+			
+			if (m_pActiveContextMenu->AddContextMenuItems(hFileMenu,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,uFlags))
 			{
-				hRes=m_pActiveContextMenu->pContextMenu->QueryContextMenu(hFileMenu,0,
-					IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_VERBSONLY|CMF_CANRENAME);
-			}
-			if (SUCCEEDED(hRes))
-			{
-				
-				
-
-				/* Insert "Rename" 
-				UINT uID;
-				if (IsUnicodeSystem())
-				{
-					for (int iPos=0;(uID=FileMenu.GetMenuItemID(iPos))!=UINT(-1);iPos++)
-					{
-						if (uID>=IDM_DEFCONTEXTITEM && uID<IDM_DEFCONTEXTITEM+1000)
-						{
-							WCHAR szName[200];
-							HRESULT hRes=m_pActiveContextMenu->pContextMenu->GetCommandString(
-								uID-IDM_DEFCONTEXTITEM,GCS_VERBW,NULL,(LPSTR)szName,200);
-							
-							if (hRes!=NOERROR)
-							{
-								if (wcscmp(szName,L"delete")==0)
-								{
-									CAppData::stdfunc();
-								}
-							}
-						}							
-					}
-				}*/
-
 				// Insert special menu, ...
 				InsertMenuItemsFromTemplate(CMenu(hFileMenu),m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
 				return hFileMenu;
@@ -257,6 +291,9 @@ CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForItems(int nItems,CLoc
 {
 	if (m_pDesktopFolder==NULL)
 		return NULL;
+	
+	if (nItems==0)
+		return NULL;
 
 	LPITEMIDLIST* ppFullIDLs=new LPITEMIDLIST[nItems];
 	LPITEMIDLIST pParentIDL;
@@ -269,8 +306,11 @@ CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForItems(int nItems,CLoc
 	}
 	nItems=iItem;
 
-	if (iItem==0)
+	if (nItems==0)
+	{
+		delete[] ppFullIDLs;
 		return NULL;
+	}
 
 	LPITEMIDLIST* ppSimpleIDLs=new LPITEMIDLIST[nItems];
 	ContextMenuStuff* pContextMenuStuff=NULL;
@@ -283,8 +323,10 @@ CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForItems(int nItems,CLoc
 		{
 			for (int i=0;i<nItems;i++)
 				CoTaskMemFree(ppSimpleIDLs[i]);
-			CoTaskMemFree(pParentIDL);
 			delete[] ppSimpleIDLs;
+
+			CoTaskMemFree(pParentIDL);
+			
 		}
 	}
 	else
@@ -295,6 +337,8 @@ CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForItems(int nItems,CLoc
 	delete[] ppFullIDLs;
 	
 	return pContextMenuStuff;
+
+	
 }
 	
 	
@@ -329,16 +373,29 @@ CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForFiles(int nItems,LPIT
 		delete pcs;
 		return NULL;
 	}
+	// It is not certain why this should be called?
+	pcs->pContextMenu->AddRef();
 
 	pcs->pParentIDL=pParentIDL;
 	pcs->ppSimpleIDLs=ppSimpleIDLs;
 
+	
 	hRes=pcs->pContextMenu->QueryInterface(IID_IContextMenu2,(void**)&pcs->pContextMenu2);
-	if (!SUCCEEDED(hRes))
+	if (SUCCEEDED(hRes))
+	{
+		// QueryInterface should call this, but for some reason, this helps much 
+		pcs->pContextMenu2->AddRef();
+	}
+	else
 		pcs->pContextMenu2=NULL;
 
 	hRes=pcs->pContextMenu->QueryInterface(IID_IContextMenu3,(void**)&pcs->pContextMenu3);
-	if (!SUCCEEDED(hRes))
+	if (SUCCEEDED(hRes))
+	{
+		// QueryInterface should call this, but for some reason, this helps much 
+		pcs->pContextMenu3->AddRef();
+	}
+	else
 		pcs->pContextMenu3=NULL;
 
 	return pcs;
@@ -354,6 +411,7 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 
 	ASSERT(wID>=IDM_DEFCONTEXTITEM && m_pActiveContextMenu!=NULL);
 
+	m_pActiveContextMenu->CheckThread();
 	
 	WCHAR szVerb[221];  
 	
@@ -461,7 +519,7 @@ void CLocateDlg::ClearMenuVariables()
 {
 	if (m_pActiveContextMenu!=NULL)
 	{
-		//m_pActiveContextMenu->Release();
+		m_pActiveContextMenu->CheckThread();
 		delete m_pActiveContextMenu;
 		m_pActiveContextMenu=NULL;
 	}

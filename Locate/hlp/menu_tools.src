@@ -11,7 +11,7 @@ CONTENT=
 
 <TR VALIGN="top">
 <TD width=21%><A HREF="hid_tools_deleteprivatedata.htm">Delete Private Data</A></TD>
-<TD width=79%>This feature can be used to clear some private data such as drobdown boxes in main dialog.</TD>
+<TD width=79%>This feature can be used to clear some private data such as dropdown boxes in main dialog.</TD>
 </TR>
 
 

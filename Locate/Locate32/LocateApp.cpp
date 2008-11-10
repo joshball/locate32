@@ -206,7 +206,8 @@ BOOL CLocateApp::InitInstance()
 	m_wShellDllVersion=WORD(dwTemp>>8|LOBYTE(dwTemp));
 	
 	// Initializing COM 
-	//CoInitialize(NULL);
+	CoInitializeEx(NULL,COINIT_APARTMENTTHREADED);
+	
 	
 	
 	
@@ -234,7 +235,7 @@ int CLocateApp::ExitInstance()
 		// Savind date and time format strings
 		SaveRegistry();
 
-		/*
+		
 		// Unitializing COM
 		// Use expection handling, because some extensions may cause Locate32
 		// to crash (maybe this does not help at all, but let's try anyway)
@@ -269,7 +270,7 @@ int CLocateApp::ExitInstance()
 			}
 		}
 		
-		*/
+		
 	}
 
 
@@ -1399,15 +1400,16 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 
 		if (IsUnicodeSystem())
 		{
-			dwDateLen=GetDateFormatW(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,
+			dwDateLen=GetDateFormatW(LOCALE_USER_DEFAULT,m_strDateFormat.IsEmpty()?DATE_SHORTDATE:0,&st,
 				m_strDateFormat.IsEmpty()?NULL:LPCWSTR(m_strDateFormat),szDate,200);
 			if (dwDateLen>0)
-				dwDateLen--;
+				dwDateLen--; 
+
 		}
 		else
 		{
 			char szDateA[201];
-			dwDateLen=GetDateFormatA(LOCALE_USER_DEFAULT,DATE_SHORTDATE,&st,
+			dwDateLen=GetDateFormatA(LOCALE_USER_DEFAULT,m_strDateFormat.IsEmpty()?DATE_SHORTDATE:0,&st,
 				m_strDateFormat.IsEmpty()?NULL:(LPCSTR)W2A(m_strDateFormat),szDateA,200);
 			if (dwDateLen>0)
 				MemCopyAtoW(szDate,szDateA,dwDateLen--);
@@ -1444,7 +1446,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 					}
 					break;
 				case L'M':
-					if (m_strDateFormat[i+1]==L'M') // "MM", "MMM" & "MMMM" will not be handled
+					if (m_strDateFormat[i+1]==L'M')  // 'MMM' and 'MMMM' are not handled
 					{
 						szDate[dwDateLen++]=DOSDATETOMONTH(wDate)/10+L'0';
 						szDate[dwDateLen++]=DOSDATETOMONTH(wDate)%10+L'0';

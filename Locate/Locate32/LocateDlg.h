@@ -728,10 +728,14 @@ protected:
 	////////////////////////////////////////////////////////////
 	// Menu related functions
 protected:
-	struct ContextMenuStuff {
+	class ContextMenuStuff {
+	public:
 		ContextMenuStuff();
 		~ContextMenuStuff();
 		
+		BOOL AddContextMenuItems(HMENU hMenu,UINT uFirstID,UINT uLastID,UINT uFlags);
+
+	public:
         IContextMenu* pContextMenu;
 		IContextMenu2* pContextMenu2;
 		IContextMenu3* pContextMenu3;
@@ -741,6 +745,18 @@ protected:
 		LPITEMIDLIST* ppSimpleIDLs;
 		int nIDLCount;
 		int nIDLParentLevel;
+		HWND hCallBackWnd;
+
+	public:
+#ifdef _DEBUG
+		void CheckThread() { ASSERT(m_dwThreadId==GetCurrentThreadId()); }
+	private:
+		DWORD m_dwThreadId;
+#else
+		void CheckThread() {  }
+#endif
+
+
 
 	};
 

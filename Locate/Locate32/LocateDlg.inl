@@ -285,35 +285,12 @@ inline BOOL CLocateDlg::ImageHandlerDll::IsLoaded()
 
 
 inline CLocateDlg::ContextMenuStuff::ContextMenuStuff()
-:	pContextMenu3(NULL),pContextMenu2(NULL),pContextMenu(NULL),
+:	pContextMenu3(NULL),pContextMenu2(NULL),pContextMenu(NULL),hCallBackWnd(NULL),
 	pParentFolder(NULL),pParentIDL(NULL),ppSimpleIDLs(NULL)
 {
-}
-
-inline CLocateDlg::ContextMenuStuff::~ContextMenuStuff()
-{
-	// Releasing memory
-	
-	if (pContextMenu3!=NULL)
-		pContextMenu3->Release();
-	if (pContextMenu2!=NULL)
-		pContextMenu2->Release();
-	if (pContextMenu!=NULL)
-		pContextMenu->Release();
-	if (pParentFolder!=NULL)
-		pParentFolder->Release();
-	
-
-	CoTaskMemFree(pParentIDL);
-
-	if (ppSimpleIDLs!=NULL)
-	{
-		for (int i=0;i<nIDLCount;i++)
-			CoTaskMemFree((void*)ppSimpleIDLs[i]);
-		delete[] ppSimpleIDLs;
-	}
-
-	//delete[] apcidl;
+#ifdef _DEBUG
+	m_dwThreadId=GetCurrentThreadId();
+#endif
 }
 
 

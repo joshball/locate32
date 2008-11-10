@@ -1269,7 +1269,7 @@ BOOL CSaveResultsDlg::OnFileNameOK()
 	if (IsDlgButtonChecked(IDC_SELECTEDITEMS))
 		m_nFlags|=RESULT_INCLUDESELECTEDITEMS;
 
-	int nTemplateSel=SendDlgItemMessage(IDC_TEMPLATE,CB_GETCURSEL)-1;
+	int nTemplateSel=(int)SendDlgItemMessage(IDC_TEMPLATE,CB_GETCURSEL)-1;
 	if (nTemplateSel>=0 && nTemplateSel<m_TemplateFiles.GetSize())
 		m_strTemplate=m_TemplateFiles[nTemplateSel];
 	else

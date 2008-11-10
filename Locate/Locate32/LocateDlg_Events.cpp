@@ -1547,13 +1547,15 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 	case WM_INITMENUPOPUP:
 		if (m_pActiveContextMenu!=NULL)
 		{
+			m_pActiveContextMenu->CheckThread();
+
 			if (m_pActiveContextMenu->pContextMenu3!=NULL)
 			{
 				HRESULT hRes;
-				LRESULT hRet;
-				hRes=m_pActiveContextMenu->pContextMenu3->HandleMenuMsg2(msg,wParam,lParam,&hRet);
+				LRESULT lRet;
+				hRes=m_pActiveContextMenu->pContextMenu3->HandleMenuMsg2(msg,wParam,lParam,&lRet);
 				if (hRes==NOERROR)
-					return hRet;
+					return lRet;
 			}
 			if (m_pActiveContextMenu->pContextMenu2!=NULL)
 				m_pActiveContextMenu->pContextMenu2->HandleMenuMsg(msg,wParam,lParam);
@@ -1561,22 +1563,6 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			return (msg==WM_INITMENUPOPUP ? 0 : TRUE); // handled
 		}
 		break;
-	/*case WM_MENUCHAR:
-		if (m_pActiveContextMenu!=NULL)
-		{
-			if (m_pActiveContextMenu->pContextMenu3!=NULL)
-			{
-				HRESULT hRet,hRes;
-				hRes=m_pActiveContextMenu->pContextMenu3->HandleMenuMsg2(msg,wParam,lParam,&hRet);
-				if (hRes==NOERROR)
-					return hRet;
-			}
-			if (m_pActiveContextMenu->pContextMenu2!=NULL)
-				m_pActiveContextMenu->pContextMenu2->HandleMenuMsg(msg,wParam,lParam);
-		}
-		break;*/
-
-
 	case WM_GETICON:
 	case WM_SETICON:
 		DefWindowProc(*this,msg,wParam,lParam);

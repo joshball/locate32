@@ -119,8 +119,8 @@ LPWSTR GetDefaultFileLocation(LPCWSTR szFileName,BOOL bMustExists,DWORD* lpdwSiz
 
 LPSTR ReadIniFile(LPSTR* pFile,LPCSTR szSection,BYTE& bFileIsReg)
 {
-	LPWSTR pPath=GetDefaultFileLocation(L"locate.ini",TRUE);
-	if (pPath==NULL)
+	CAutoPtrA<WCHAR> pIniFile=GetDefaultFileLocation(L"locate.ini",TRUE);
+	if (pIniFile==NULL)
 		return NULL;
 
 	bFileIsReg=TRUE;
@@ -128,7 +128,7 @@ LPSTR ReadIniFile(LPSTR* pFile,LPCSTR szSection,BYTE& bFileIsReg)
 	char* pFileContent=NULL;
 	try
 	{
-		CFile Ini(pPath,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
+		CFile Ini(pIniFile,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
 		DWORD dwSize=Ini.GetLength();
 		pFileContent=new char[dwSize+1];
 		Ini.Read(pFileContent,dwSize);
@@ -139,10 +139,8 @@ LPSTR ReadIniFile(LPSTR* pFile,LPCSTR szSection,BYTE& bFileIsReg)
 	{
 		if (pFileContent!=NULL)
 			delete[] pFileContent;
-		delete[] pPath;
 		return NULL;
 	}
-	delete[] pPath;
 		
 
 	LPCSTR pPtr=NULL;
@@ -169,7 +167,19 @@ LPSTR ReadIniFile(LPSTR* pFile,LPCSTR szSection,BYTE& bFileIsReg)
 		else if (Key.CompareNoCase("FILE")==0)
 		{
 			if (pFile!=NULL)
-				*pFile=Value.GiveBuffer();
+			{
+				if (Value.FindFirst('\\')==-1)
+				{
+					int nDirLength=LastCharIndex((LPCWSTR)pIniFile,L'\\')+1;
+					*pFile=new CHAR[nDirLength+Value.GetLength()+1];
+
+					MemCopyWtoA(*pFile,pIniFile,nDirLength);
+					MemCopy(*pFile+nDirLength,(LPCSTR)Value,Value.GetLength()+1);
+
+				}
+				else
+					*pFile=Value.GiveBuffer();
+			}
 		}
 		else if (Key.CompareNoCase("FILETYPE")==0)
 		{
@@ -197,8 +207,6 @@ BOOL LoadSettingsFromFile(LPCSTR szKey,LPCSTR szFile,BYTE bFileIsReg)
 		RegCloseKey(hKey);
 		return TRUE;
 	}
-
-	// TODO: szFile without \ refers to installation directory
 
 	if (bFileIsReg)
 	{

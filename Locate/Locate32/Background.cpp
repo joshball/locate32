@@ -1188,9 +1188,8 @@ inline BOOL CBackgroundUpdater::RunningProc()
 	BuDebugMessage1("BU RunningProc() BEGIN, running thread 0x%X",GetCurrentThreadId());
 
 	// CLocatedItem::LoadThumbnail needs this
-	//CoInitializeEx(NULL,COINIT_MULTITHREADED);
-	CoInitialize(NULL);
-
+	CoInitializeEx(NULL,COINIT_APARTMENTTHREADED);
+	
 	for (;;)
 	{
 		InterlockedExchange(&m_lIsWaiting,TRUE);
@@ -1298,7 +1297,6 @@ inline BOOL CBackgroundUpdater::RunningProc()
 	
 	BuDebugMessage("BU: RunningProc() END");
 
-	// TODO: Should this also be called in try block?
 	CoUninitialize();
 	return TRUE;
 }
