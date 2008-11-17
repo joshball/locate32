@@ -235,7 +235,7 @@ inline CLocateDlg::CLocateDlg()
 	m_dwInstantDelay(DEFAULT_INSTANTSEARCHDELAY),
 	m_dwInstantChars(DEFAULT_INSTANTSEARCHCHARS),
 	m_nMaxYMinimized(0),m_nMaxYMaximized(0),m_nLargeY(354),
-	m_ClickWait(FALSE),m_hSendToListFont(NULL),m_hActivePopupMenu(NULL),
+	m_ClickWait(FALSE),m_hSendToListFont(NULL),
 	m_pListCtrl(NULL),m_pTabCtrl(NULL),m_pStatusCtrl(NULL),m_pListTooltips(NULL),
 	m_pLocater(NULL),m_pBackgroundUpdater(NULL),m_pActiveContextMenu(NULL),
 	m_pLocateAnimBitmaps(NULL),m_pUpdateAnimBitmaps(NULL),
@@ -274,7 +274,6 @@ CLocateDlg::~CLocateDlg()
 {
 	DebugFormatMessage("CLocateDlg::~CLocateDlg() this is %X",DWORD(this));
 
-	ASSERT(m_hActivePopupMenu==NULL);
 	ASSERT(m_pActiveContextMenu==NULL);
 
 	if (m_pDesktopFolder!=NULL)

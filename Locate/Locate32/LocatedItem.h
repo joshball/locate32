@@ -201,8 +201,15 @@ private:
 		DetailType nType;
 		
 		struct ThumbnailData {
+			ThumbnailData(HANDLE hMutex);
+			~ThumbnailData();
+			
+			void CloseMutex();
+			void WaitForLoading();
+
 			HBITMAP hBitmap;
 			CSize sThumbnailSize;
+			HANDLE hLoadingMutex;
 		};
 
 		union {

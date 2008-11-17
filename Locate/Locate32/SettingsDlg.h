@@ -453,7 +453,7 @@ public:
 		CArrayFAP<LPWSTR> m_aPossiblePresets;
 
 		
-		CComboBox m_ActionCombo,m_SubActionCombo,m_VerbCombo,m_WhichFileCombo;
+		CComboBox m_ActionCombo,m_SubActionCombo,m_VerbCombo,m_WhichFileCombo,m_ContextMenuForCombo;
 
 		HWND hDialogs[5];
 		BOOL bFreeDialogs;
@@ -522,6 +522,7 @@ public:
 		settingsUseCustomTrayIcon = 0x0200,
 		settingsUseCustomDialogIcon = 0x0400,
 		settingsSimpleFileMenu=0x800,
+		settingsEnableAddRefFix=0x1000,
 				
 		settingsDefault=settingsUseLanguageWithConsoleApps
 	};

@@ -57,6 +57,7 @@ BOOL CSelectColumnsDlg::OnInitDialog(HWND hwndFocus)
 	m_ActionCombo.AssignToDlgItem(*this,IDC_ACTION);
 	m_WhenCombo.AssignToDlgItem(*this,IDC_WHEN);
 	m_WhichFileCombo.AssignToDlgItem(*this,IDC_WHICHFILE);
+	m_ContextMenuForCombo.AssignToDlgItem(*this,IDC_CONTEXTMENUFOR);
 	m_VerbCombo.AssignToDlgItem(*this,IDC_VERB);
 
 	
@@ -105,6 +106,13 @@ BOOL CSelectColumnsDlg::OnInitDialog(HWND hwndFocus)
 	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMNEXTNONDELETEDFILE));
 	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMPREVNONDELETEDFILE));
 	m_WhichFileCombo.SetCurSel(0);
+	
+	// Insert "file/folder"/"Parent"
+	m_ContextMenuForCombo.AddString(ID2W(IDS_ACTIONCONTEXTMENUFORFILE));
+	m_ContextMenuForCombo.AddString(ID2W(IDS_ACTIONCONTEXTMENUFORPARENT));
+	
+	
+	
 	EnableItems();
 	
 	return CDialog::OnInitDialog(hwndFocus);
@@ -117,7 +125,7 @@ void CSelectColumnsDlg::OnHelp(LPHELPINFO lphi)
 	if (m_ActionCombo.GetCurSel()>0 &&
 		(lphi->iCtrlId==IDC_ACTION || lphi->iCtrlId==IDC_VERB ||
 		lphi->iCtrlId==IDC_COMMAND || lphi->iCtrlId==IDC_VALUE ||
-		lphi->iCtrlId==IDC_WHICHFILE ||
+		lphi->iCtrlId==IDC_WHICHFILE || lphi->iCtrlId==IDC_CONTEXTMENUFOR ||
 		lphi->iCtrlId==IDC_ITEM || lphi->iCtrlId==IDC_ITEMSPIN))
 	{
 		char szPage[50];
@@ -208,6 +216,12 @@ void CSelectColumnsDlg::SaveActionFields(ColumnItem* pColumn)
 				}
 				break;
 			}
+		case CAction::OpenContextMenu:
+		case CAction::OpenContextMenuSimple:
+			pColumn->m_pActions[nWhen]->m_nContextMenuFor=(CSubAction::ContextMenuFor)m_ContextMenuForCombo.GetCurSel();
+			if (int(pColumn->m_pActions[nWhen]->m_nContextMenuFor)==CB_ERR)
+				pColumn->m_pActions[nWhen]->m_nContextMenuFor=CSubAction::FileOrFolder;
+			break;
 		case CAction::SelectFile:
 			pColumn->m_pActions[nWhen]->m_nSelectFileType=(CSubAction::SelectFileType)m_WhichFileCombo.GetCurSel();
 			if (int(pColumn->m_pActions[nWhen]->m_nSelectFileType)==CB_ERR)
@@ -239,6 +253,7 @@ void CSelectColumnsDlg::SetActionFields(ColumnItem* pColumn)
 
 	m_VerbCombo.SetCurSel(0);
 	m_WhichFileCombo.SetCurSel(0);
+	m_ContextMenuForCombo.SetCurSel(0);
 	SetDlgItemText(IDC_COMMAND,szEmpty);
 	SendDlgItemMessage(IDC_ITEMSPIN,UDM_SETPOS32,0,1);
 
@@ -263,6 +278,10 @@ void CSelectColumnsDlg::SetActionFields(ColumnItem* pColumn)
 		case CSubAction::ExecuteCommand:
 			if (pColumn->m_pActions[nWhen]->m_szCommand!=NULL)
 				SetDlgItemText(IDC_COMMAND,pColumn->m_pActions[nWhen]->m_szCommand);
+			break;
+		case CSubAction::OpenContextMenu:
+		case CSubAction::OpenContextMenuSimple:
+			m_ContextMenuForCombo.SetCurSel(pColumn->m_pActions[nWhen]->m_nContextMenuFor);	
 			break;
 		case CSubAction::SelectFile:
 			m_WhichFileCombo.SetCurSel(pColumn->m_pActions[nWhen]->m_nSelectFileType);	
@@ -387,6 +406,7 @@ BOOL CSelectColumnsDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDC_COMMAND:
 	case IDC_VERB:
 	case IDC_WHICHFILE:
+	case IDC_CONTEXTMENUFOR:
 		if (wNotifyCode==CBN_SELCHANGE || wNotifyCode==CBN_EDITCHANGE)
 		{
 			int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
@@ -556,7 +576,7 @@ BOOL CSelectColumnsDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 
 void CSelectColumnsDlg::EnableItems()
 {
-	ShowState ssCommand=swHide,ssVerb=swHide,ssWhichFile=swHide,ssItem=swHide;
+	ShowState ssCommand=swHide,ssVerb=swHide,ssWhichFile=swHide,ssItem=swHide,ssContextMenuFor=swHide;
 	
 	int nItem=m_pList->GetNextItem(-1,LVNI_SELECTED);
 	
@@ -573,20 +593,24 @@ void CSelectColumnsDlg::EnableItems()
 		EnableDlgItem(IDC_HIDE,bChecked);
 
 		int nAction=m_ActionCombo.GetCurSel();
-		switch (nAction)
+		switch (nAction-1)
 		{
-		case CSubAction::Execute+1:
+		case CSubAction::Execute:
 			ssVerb=swShow;
 			break;
-		case CSubAction::ExecuteCommand+1:
+		case CSubAction::ExecuteCommand:
 			ssCommand=swShow;
 			break;
-		case CSubAction::SelectFile+1:
+		case CSubAction::SelectFile:
 			ssWhichFile=swShow;
 			break;
-		case CSubAction::SelectNthFile+1:
-		case CSubAction::ExecuteNthFile+1:
+		case CSubAction::SelectNthFile:
+		case CSubAction::ExecuteNthFile:
 			ssItem=swShow;
+			break;
+		case CSubAction::OpenContextMenu:
+		case CSubAction::OpenContextMenuSimple:
+			ssContextMenuFor=swShow;
 			break;
 		}
 
@@ -628,6 +652,8 @@ void CSelectColumnsDlg::EnableItems()
 	ShowDlgItem(IDC_STATICWHICHFILE,ssWhichFile);
 	m_WhichFileCombo.ShowWindow(ssWhichFile);
 	
+	ShowDlgItem(IDC_STATICCONTEXTMENUFOR,ssContextMenuFor);
+	m_ContextMenuForCombo.ShowWindow(ssContextMenuFor);
 }
 
 void CSelectColumnsDlg::OnOK()

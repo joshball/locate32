@@ -350,7 +350,7 @@ BYTE CFileObject::SetFile(LPCWSTR szFile)
 	return TRUE;
 }
 
-BYTE CFileObject::SetFiles(CListCtrl* pList,BOOL bNoDeleted)
+BYTE CFileObject::SetFiles(CListCtrl* pList,BOOL bNoDeleted,BOOL bForParents)
 {
 	m_Files.RemoveAll();
 	m_Points.RemoveAll();
@@ -364,15 +364,22 @@ BYTE CFileObject::SetFiles(CListCtrl* pList,BOOL bNoDeleted)
 		{
 			if (bNoDeleted)
 			{
-				if (!FileSystem::IsFile(pData->GetPath()) &&
-					!FileSystem::IsDirectory(pData->GetPath()))
+				BOOL bDeleted;
+				if (bForParents)
+					bDeleted=!FileSystem::IsDirectory(pData->GetParent());
+				else if (pData->IsFolder())
+					bDeleted=!FileSystem::IsDirectory(pData->GetPath());
+				else	
+					bDeleted=!FileSystem::IsFile(pData->GetPath());
+
+				if (bDeleted)
 				{
 					nItem=pList->GetNextItem(nItem,LVNI_SELECTED);
 					continue;
 				}
 			}
 
-			m_Files.Add(new CStringW(pData->GetPath()));
+			m_Files.Add(new CStringW(bForParents?pData->GetParent():pData->GetPath()));
 			if (bGetPoints)
 			{
 				CPoint* pt=new CPoint;

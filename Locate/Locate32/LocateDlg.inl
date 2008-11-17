@@ -284,9 +284,9 @@ inline BOOL CLocateDlg::ImageHandlerDll::IsLoaded()
 //////////////////////////////////////////////////////////////////////////////
 
 
-inline CLocateDlg::ContextMenuStuff::ContextMenuStuff()
-:	pContextMenu3(NULL),pContextMenu2(NULL),pContextMenu(NULL),hCallBackWnd(NULL),
-	pParentFolder(NULL),pParentIDL(NULL),ppSimpleIDLs(NULL)
+inline CLocateDlg::ContextMenuInformation::ContextMenuInformation()
+:	pContextMenu3(NULL),pContextMenu2(NULL),pContextMenu(NULL),
+	pParentFolder(NULL),bForParents(FALSE),hPopupMenu(NULL)
 {
 #ifdef _DEBUG
 	m_dwThreadId=GetCurrentThreadId();

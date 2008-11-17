@@ -14,7 +14,6 @@ void CLocateDlg::SetMenus()
 	HMENU hMenu=::LoadMenu(IDR_MAINMENU);
     	
 	ClearMenuVariables();
-	FreeSendToMenuItems(GetSubMenu(GetMenu(),0));
 	
 
 	// Load popup menus
@@ -140,41 +139,46 @@ void CLocateDlg::OnInitSendToMenu(HMENU hPopupMenu)
 // CLocateDlg - Menu - Context menu/file menu helpers
 ////////////////////////////////////////////////////////////
 
-inline CLocateDlg::ContextMenuStuff::~ContextMenuStuff()
+inline CLocateDlg::ContextMenuInformation::~ContextMenuInformation()
 {
-	CheckThread();
-	
+	ReleaseShellInterfaces();
+
 	// Releasing memory
-	if (pContextMenu3!=NULL)
-		pContextMenu3->Release();
-	if (pContextMenu2!=NULL)
-		pContextMenu2->Release();
-	if (pContextMenu!=NULL)
-		pContextMenu->Release();
-	if (pParentFolder!=NULL)
-		pParentFolder->Release();
+	if (hPopupMenu!=NULL && bFreeMenu)
+		DestroyMenu(hPopupMenu);
 	
-	if (pParentIDL!=NULL)
-		CoTaskMemFree(pParentIDL);
-
-	if (ppSimpleIDLs!=NULL)
-	{
-		for (int i=0;i<nIDLCount;i++)
-			CoTaskMemFree((void*)ppSimpleIDLs[i]);
-		delete[] ppSimpleIDLs;
-	}
-
-	if (hCallBackWnd!=NULL)
-	{
-		::DestroyWindow(hCallBackWnd);
-	}
-
-	//delete[] apcidl;
 }
 
 
+inline void CLocateDlg::ContextMenuInformation::ReleaseShellInterfaces()
+{
+	CheckThread();
+	
+	if (pContextMenu3!=NULL)
+	{
+		pContextMenu3->Release();
+		pContextMenu3=NULL;
+	}
+	if (pContextMenu2!=NULL)
+	{
+		pContextMenu2->Release();
+		pContextMenu2=NULL;
+	}
+	if (pContextMenu!=NULL)
+	{
+		pContextMenu->Release();
+		pContextMenu=NULL;
+	}
+	if (pParentFolder!=NULL)
+	{
+		pParentFolder->Release();
+		pParentFolder=NULL;
+	}
 
-BOOL CLocateDlg::ContextMenuStuff::AddContextMenuItems(HMENU hMenu,UINT uFirstID,UINT uLastID,UINT uFlags)
+}
+
+
+BOOL CLocateDlg::ContextMenuInformation::AddContextMenuItems(UINT uFirstID,UINT uLastID,UINT uFlags)
 {
 	ASSERT_VALID(pContextMenu);
 
@@ -182,7 +186,7 @@ BOOL CLocateDlg::ContextMenuStuff::AddContextMenuItems(HMENU hMenu,UINT uFirstID
 	if (pContextMenu2!=NULL)
 	{
 		try {
-			hRes=pContextMenu2->QueryContextMenu(hMenu,0,uFirstID,uLastID,uFlags);
+			hRes=pContextMenu2->QueryContextMenu(hPopupMenu,0,uFirstID,uLastID,uFlags);
 			
 		}
 		catch (...)
@@ -199,7 +203,7 @@ BOOL CLocateDlg::ContextMenuStuff::AddContextMenuItems(HMENU hMenu,UINT uFirstID
 
 	
 	try {
-		hRes=pContextMenu->QueryContextMenu(hMenu,0,uFirstID,uLastID,uFlags);
+		hRes=pContextMenu->QueryContextMenu(hPopupMenu,0,uFirstID,uLastID,uFlags);
 	}
 	catch (...)
 	{
@@ -210,17 +214,20 @@ BOOL CLocateDlg::ContextMenuStuff::AddContextMenuItems(HMENU hMenu,UINT uFirstID
 	
 }
 
-HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,int nItems,BOOL bSimple)
+BOOL CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,int nItems,BOOL bSimple,BOOL bForParents)
 {
+	// Free old structure and create new
 	ClearMenuVariables();
+	m_pActiveContextMenu=new ContextMenuInformation;
+	m_pActiveContextMenu->bForParents=bForParents;
 	
 	if (hFileMenu!=NULL)
 	{
 		CMenu FileMenu(hFileMenu);
 
-		// Freeing memyry in SentToMenuItems
-		FreeSendToMenuItems(FileMenu);
-		
+		m_pActiveContextMenu->hPopupMenu=hFileMenu;
+		m_pActiveContextMenu->bFreeMenu=FALSE;
+
 		// Removing all items
 		for (int i=FileMenu.GetMenuItemCount()-1;i>=0;i--)
 			FileMenu.DeleteMenu(i,MF_BYPOSITION);
@@ -229,7 +236,7 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 		if (nItems==0)
 		{
 			InsertMenuItemsFromTemplate(FileMenu,m_Menu.GetSubMenu(SUBMENU_FILEMENUNOITEMS),0);
-			return hFileMenu;
+			return TRUE;
 		}
 		InsertMenuItemsFromTemplate(FileMenu,m_Menu.GetSubMenu(SUBMENU_FILEMENU),0);
 	}
@@ -237,9 +244,7 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 	if (!bSimple)
 	{
 		// Creating context menu for file items
-		m_pActiveContextMenu=GetContextMenuForItems(nItems,pItems);
-
-		if (m_pActiveContextMenu!=NULL)
+		if (GetContextMenuForItems(m_pActiveContextMenu,nItems,pItems))
 		{
 			m_pActiveContextMenu->CheckThread();
 
@@ -247,9 +252,10 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 			// so they can insert their own menu items
 
 			UINT uFlags=CMF_EXPLORE|CMF_CANRENAME;
-			if (hFileMenu==NULL)
+			if (m_pActiveContextMenu->hPopupMenu==NULL)
 			{
-				hFileMenu=CreatePopupMenu();
+				m_pActiveContextMenu->hPopupMenu=CreatePopupMenu();
+				m_pActiveContextMenu->bFreeMenu=TRUE;
 				
 				if (HIBYTE(GetKeyState(VK_SHIFT)))
 					uFlags|=CMF_EXTENDEDVERBS;
@@ -257,43 +263,45 @@ HMENU CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,in
 			else
 				uFlags|=CMF_VERBSONLY;
 			
-			if (m_pActiveContextMenu->AddContextMenuItems(hFileMenu,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,uFlags))
+			if (m_pActiveContextMenu->AddContextMenuItems(IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,uFlags))
 			{
 				// Insert special menu, ...
-				InsertMenuItemsFromTemplate(CMenu(hFileMenu),m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
-				return hFileMenu;
+				InsertMenuItemsFromTemplate(CMenu(m_pActiveContextMenu->hPopupMenu),m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
+				return TRUE;
 			}
 
-			// Didn't succee, so freeing pointer
-			delete m_pActiveContextMenu;
-			m_pActiveContextMenu=NULL;
+			// Didn't succees, release interfaces
+			m_pActiveContextMenu->ReleaseShellInterfaces();
 		}
 	}
 
-	if (hFileMenu==NULL)
+	if (m_pActiveContextMenu->hPopupMenu==NULL)
 	{
-		CMenu FileMenu;
-		FileMenu.CreatePopupMenu();
-		InsertMenuItemsFromTemplate(FileMenu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN),0,IDM_DEFOPEN);
-		InsertMenuItemsFromTemplate(FileMenu,m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
-		return FileMenu;
+		CMenu Menu;
+		Menu.CreatePopupMenu();
+		InsertMenuItemsFromTemplate(Menu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN),0,IDM_DEFOPEN);
+		InsertMenuItemsFromTemplate(Menu,m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
+
+		m_pActiveContextMenu->hPopupMenu=Menu;
+		m_pActiveContextMenu->bFreeMenu=TRUE;
+		return TRUE;
 	}
 	else
-		InsertMenuItemsFromTemplate(CMenu(hFileMenu),m_Menu.GetSubMenu(SUBMENU_OPENITEMFORFILEMENU),0);
+		InsertMenuItemsFromTemplate(CMenu(m_pActiveContextMenu->hPopupMenu),m_Menu.GetSubMenu(SUBMENU_OPENITEMFORFILEMENU),0);
 		
 			
 
-	return hFileMenu;
+	return TRUE;
 	
 }
 
-CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForItems(int nItems,CLocatedItem** ppItems)
+BOOL CLocateDlg::GetContextMenuForItems(CLocateDlg::ContextMenuInformation* pContextMenuInfo,int nItems,CLocatedItem** ppItems)
 {
 	if (m_pDesktopFolder==NULL)
-		return NULL;
+		return FALSE;
 	
 	if (nItems==0)
-		return NULL;
+		return FALSE;
 
 	LPITEMIDLIST* ppFullIDLs=new LPITEMIDLIST[nItems];
 	LPITEMIDLIST pParentIDL;
@@ -301,7 +309,8 @@ CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForItems(int nItems,CLoc
 	int iItem=0;
 	for (int i=0;i<nItems;i++)
 	{
-		if (SUCCEEDED(m_pDesktopFolder->ParseDisplayName(*this,NULL,ppItems[i]->GetPath(),NULL,&ppFullIDLs[iItem],NULL)))
+		if (SUCCEEDED(m_pDesktopFolder->ParseDisplayName(*this,NULL,
+			pContextMenuInfo->bForParents?ppItems[i]->GetParent():ppItems[i]->GetPath(),NULL,&ppFullIDLs[iItem],NULL)))
 			iItem++;
 	}
 	nItems=iItem;
@@ -309,108 +318,116 @@ CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForItems(int nItems,CLoc
 	if (nItems==0)
 	{
 		delete[] ppFullIDLs;
-		return NULL;
+		return FALSE;
 	}
 
 	LPITEMIDLIST* ppSimpleIDLs=new LPITEMIDLIST[nItems];
-	ContextMenuStuff* pContextMenuStuff=NULL;
 	int nParentIDLLevel=-1;
 
+	BOOL bRet=TRUE;
 	if (GetSimpleIDLsandParentfromIDLs(nItems,ppFullIDLs,&pParentIDL,ppSimpleIDLs,&nParentIDLLevel))
 	{
-		pContextMenuStuff=GetContextMenuForFiles(nItems,pParentIDL,ppSimpleIDLs,nParentIDLLevel);
-		if (pContextMenuStuff==NULL)
-		{
-			for (int i=0;i<nItems;i++)
-				CoTaskMemFree(ppSimpleIDLs[i]);
-			delete[] ppSimpleIDLs;
+		bRet=GetContextMenuForFiles(pContextMenuInfo,nItems,pParentIDL,ppSimpleIDLs,nParentIDLLevel);
 
-			CoTaskMemFree(pParentIDL);
-			
-		}
-	}
-	else
+		// Free ID lists
+		CoTaskMemFree(pParentIDL);
+		for (int i=0;i<nItems;i++)
+			CoTaskMemFree(ppSimpleIDLs[i]);
 		delete[] ppSimpleIDLs;
+	}
+
 				
+	// Free ID lists
 	for (int i=0;i<nItems;i++)
 		CoTaskMemFree(ppFullIDLs[i]);
 	delete[] ppFullIDLs;
 	
-	return pContextMenuStuff;
-
-	
+	return bRet;
 }
 	
 	
-CLocateDlg::ContextMenuStuff* CLocateDlg::GetContextMenuForFiles(int nItems,LPITEMIDLIST pParentIDL,LPITEMIDLIST* ppSimpleIDLs,int nParentIDLlevel)
+BOOL CLocateDlg::GetContextMenuForFiles(CLocateDlg::ContextMenuInformation* pContextMenuInfo,int nItems,LPITEMIDLIST pParentIDL,LPITEMIDLIST* ppSimpleIDLs,int nParentIDLlevel)
 {
+	ASSERT(pContextMenuInfo!=NULL);
+
 	if (m_pDesktopFolder==NULL)
-		return NULL;
+		return FALSE;
 
 	if (nParentIDLlevel<=1)
-		return NULL; // Not enough?
+		return FALSE; // Not enough?
 	
 	ASSERT(nItems!=0);
 
 
-	ContextMenuStuff* pcs=new ContextMenuStuff;
-	pcs->nIDLCount=nItems;
-	pcs->nIDLParentLevel=nParentIDLlevel;
+	pContextMenuInfo->nIDLParentLevel=nParentIDLlevel;
 	
 	// Querying IShellFolder interface for parent
-	HRESULT hRes=m_pDesktopFolder->BindToObject(pParentIDL,NULL,IID_IShellFolder,(void**)&pcs->pParentFolder);
+	HRESULT hRes=m_pDesktopFolder->BindToObject(pParentIDL,NULL,IID_IShellFolder,(void**)&pContextMenuInfo->pParentFolder);
 	if (!SUCCEEDED(hRes))
+		return FALSE;
+	
+	// Check if AddRef fix is enabled
+	DWORD bForceAddRef=GetSystemFeaturesFlag()&efWinVista?FALSE:TRUE;
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
-		delete pcs;
-		return NULL;
+		RegKey.QueryValue("EnableAddRefFix",bForceAddRef);
+		RegKey.CloseKey();
 	}
+	
 
-
-	pcs->pParentFolder->GetUIObjectOf(*this,nItems,(LPCITEMIDLIST*)ppSimpleIDLs,
-		IID_IContextMenu,NULL,(void**)&pcs->pContextMenu);
+	pContextMenuInfo->pParentFolder->GetUIObjectOf(*this,nItems,(LPCITEMIDLIST*)ppSimpleIDLs,
+		IID_IContextMenu,NULL,(void**)&pContextMenuInfo->pContextMenu);
 	if (!SUCCEEDED(hRes))
+		return FALSE;
+	
+	if (bForceAddRef)
 	{
-		delete pcs;
-		return NULL;
+		// Force call AddRef?, QueryInterface SHOULD call this, but for some reason, 
+		// this helps much 
+		pContextMenuInfo->pContextMenu->AddRef();
 	}
-	// It is not certain why this should be called?
-	pcs->pContextMenu->AddRef();
+	
+	
+	hRes=pContextMenuInfo->pContextMenu->QueryInterface(IID_IContextMenu2,(void**)&pContextMenuInfo->pContextMenu2);
+	if (SUCCEEDED(hRes))
+	{
+		// Force call AddRef?
+		if (bForceAddRef)
+			pContextMenuInfo->pContextMenu2->AddRef();
+	}
+	else
+		pContextMenuInfo->pContextMenu2=NULL;
 
-	pcs->pParentIDL=pParentIDL;
-	pcs->ppSimpleIDLs=ppSimpleIDLs;
+	hRes=pContextMenuInfo->pContextMenu->QueryInterface(IID_IContextMenu3,(void**)&pContextMenuInfo->pContextMenu3);
+	if (SUCCEEDED(hRes))
+	{
+		// QueryInterface should call this, but for some reason, this helps much 
+		if (bForceAddRef)
+			pContextMenuInfo->pContextMenu3->AddRef();
+	}
+	else
+		pContextMenuInfo->pContextMenu3=NULL;
 
 	
-	hRes=pcs->pContextMenu->QueryInterface(IID_IContextMenu2,(void**)&pcs->pContextMenu2);
-	if (SUCCEEDED(hRes))
-	{
-		// QueryInterface should call this, but for some reason, this helps much 
-		pcs->pContextMenu2->AddRef();
-	}
-	else
-		pcs->pContextMenu2=NULL;
-
-	hRes=pcs->pContextMenu->QueryInterface(IID_IContextMenu3,(void**)&pcs->pContextMenu3);
-	if (SUCCEEDED(hRes))
-	{
-		// QueryInterface should call this, but for some reason, this helps much 
-		pcs->pContextMenu3->AddRef();
-	}
-	else
-		pcs->pContextMenu3=NULL;
-
-	return pcs;
+	return TRUE;
 } 
 
 
 
-void CLocateDlg::OnContextMenuCommands(WORD wID)
+BOOL CLocateDlg::HandleShellCommands(WORD wID)
 {
-	CWaitCursor wait;
+	if (m_pActiveContextMenu==NULL || 
+		!(wID>=IDM_DEFCONTEXTITEM && wID<IDM_DEFCONTEXTITEM+1000))
+		return FALSE;
+
 	if (m_pListCtrl->GetSelectedCount()==0)
-		return;
+		return FALSE;
 
-	ASSERT(wID>=IDM_DEFCONTEXTITEM && m_pActiveContextMenu!=NULL);
 
+	CWaitCursor wait;
+	
+	
 	m_pActiveContextMenu->CheckThread();
 	
 	WCHAR szVerb[221];  
@@ -438,37 +455,37 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 		// However, I'm not sure that do this way work in all cases.
 		OnExecuteFile(szVerb);
 		ClearMenuVariables();
-		return;
+		return TRUE;
 	}
 	if (wcscmp(szVerb,L"copy")==0)
 	{
 		OnCopy(FALSE);
 		ClearMenuVariables();
-		return;
+		return TRUE;
 	}
 	if (wcscmp(szVerb,L"cut")==0)
 	{
 		OnCopy(TRUE);
 		ClearMenuVariables();
-		return;
+		return  TRUE;
 	}
 	if (wcscmp(szVerb,L"link")==0)
 	{
 		OnCreateShortcut();
 		ClearMenuVariables();
-		return;
+		return TRUE;
 	}
 	if (wcscmp(szVerb,L"delete")==0)
 	{
 		OnDelete();
 		ClearMenuVariables();
-		return;
+		return TRUE;
 	}
 	if (wcscmp(szVerb,L"rename")==0)
 	{
 		OnRenameFile();
 		ClearMenuVariables();
-		return;
+		return TRUE;
 	}
 	if (wcscmp(szVerb,L"properties")==0 && m_pActiveContextMenu->nIDLParentLevel<=1)
 	{
@@ -479,7 +496,7 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 		CPropertiesSheet* fileprops=new CPropertiesSheet(nItems,pItems);
 		delete[] pItems;
 		fileprops->Open();
-		return;
+		return TRUE;
 	}
 	
 	int nSelected;
@@ -511,7 +528,7 @@ void CLocateDlg::OnContextMenuCommands(WORD wID)
 	
 	
 	//ClearMenuVariables();
-
+	return TRUE;
 }
 
 
@@ -520,15 +537,14 @@ void CLocateDlg::ClearMenuVariables()
 	if (m_pActiveContextMenu!=NULL)
 	{
 		m_pActiveContextMenu->CheckThread();
+		
+		if (m_pActiveContextMenu->hPopupMenu!=NULL)
+			FreeSendToMenuItems(m_pActiveContextMenu->hPopupMenu);
+		
 		delete m_pActiveContextMenu;
 		m_pActiveContextMenu=NULL;
 	}
-	if (m_hActivePopupMenu!=NULL)
-	{
-		FreeSendToMenuItems(m_hActivePopupMenu);
-		DestroyMenu(m_hActivePopupMenu);
-		m_hActivePopupMenu=NULL;
-	}
+	
 }
 
 
@@ -729,7 +745,9 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 
 							
 						}
+						DebugOpenMemBlock((LPVOID)pidlFull);
 						mi.dwItemData=(DWORD)pidlFull;
+
 						Menu.InsertMenu(mi.wID,FALSE,&mi);
 						mi.wID++;
 					}
@@ -756,6 +774,8 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 							{
 								mi.hSubMenu=NULL;
 								mi.dwItemData=(DWORD)ShellFunctions::GetIDList(drive);
+								DebugOpenMemBlock((LPVOID)mi.dwItemData);
+									
 								if (mi.dwItemData!=NULL)
 								{
 									Menu.InsertMenu(mi.wID,FALSE,&mi);
@@ -773,6 +793,8 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 						{
 							mi.hSubMenu=NULL;
 							mi.dwItemData=(DWORD)ShellFunctions::GetIDList(Burners[i]);
+							DebugOpenMemBlock((LPVOID)mi.dwItemData);
+
 							if (mi.dwItemData!=NULL)
 							{
 								Menu.InsertMenu(mi.wID,FALSE,&mi);
@@ -830,6 +852,7 @@ UINT CLocateDlg::AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST pIDListToPath,UINT 
 			{
 				Find.GetFilePath(szPath,MAX_PATH);
 				mi.dwItemData=(DWORD)ShellFunctions::GetIDList(szPath);
+				DebugOpenMemBlock((LPVOID)mi.dwItemData);
 				
 				if (Find.IsDirectory())
 				{
@@ -871,7 +894,12 @@ void CLocateDlg::FreeSendToMenuItems(HMENU hMenu)
 	while (GetMenuItemInfo(hMenu,wID,FALSE,&mii))
 	{
 		if (mii.dwItemData!=NULL)
+		{
+			DebugCloseMemBlock((LPVOID)mii.dwItemData);
 			CoTaskMemFree((LPVOID)mii.dwItemData);
+			mii.dwItemData=NULL;
+			SetMenuItemInfo(hMenu,wID,FALSE,&mii);
+		}
 		wID++;
 	}
 }
@@ -893,30 +921,35 @@ int CLocateDlg::GetSendToMenuPos(HMENU hMenu)
 }
 
 
-void CLocateDlg::OnSendToCommand(WORD wID)
+BOOL CLocateDlg::HandleSendToCommand(WORD wID)
 {
+	if (wID<IDM_DEFSENDTOITEM || wID>=IDM_DEFSENDTOITEM+1000)
+		return FALSE;
+		
 	if (m_pDesktopFolder==NULL)
-		return;
+		return FALSE;
 
 	CWaitCursor wait;
 	MENUITEMINFO mii;
 	mii.cbSize=sizeof(MENUITEMINFO);
 	mii.fMask=MIIM_DATA;
-	if (m_hActivePopupMenu!=NULL)
-		GetMenuItemInfo(m_hActivePopupMenu,wID,FALSE,&mii);
+	if (m_pActiveContextMenu!=NULL && m_pActiveContextMenu->hPopupMenu!=NULL)
+		GetMenuItemInfo(m_pActiveContextMenu->hPopupMenu,wID,FALSE,&mii);
 	else
 		GetMenuItemInfo(GetSubMenu(GetMenu(),0),wID,FALSE,&mii);
 	if (mii.dwItemData==NULL)
-		return;
+		return TRUE;
 
 	IDropTarget* pdt=GetDropTarget((LPITEMIDLIST)mii.dwItemData);
 	if (pdt==NULL)
-		return;
+		return TRUE;
+
+	ASSERT_VALID(m_pActiveContextMenu);
 	
 	CFileObject *pfoSrc=new CFileObject;
 	pfoSrc->AutoDelete();
 	pfoSrc->AddRef();
-	pfoSrc->SetFiles(m_pListCtrl,TRUE);
+	pfoSrc->SetFiles(m_pListCtrl,TRUE,m_pActiveContextMenu->bForParents);
 		
 	
 	DWORD dwEffect=DROPEFFECT_COPY | DROPEFFECT_MOVE | DROPEFFECT_LINK;
@@ -938,6 +971,8 @@ void CLocateDlg::OnSendToCommand(WORD wID)
 	pfoSrc->Release();
 	
 	pdt->Release();
+
+	return TRUE;
 }
 
 

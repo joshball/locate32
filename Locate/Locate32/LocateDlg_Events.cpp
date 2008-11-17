@@ -71,6 +71,9 @@ BOOL CLocateDlg::OnClose()
 
 BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
+	if (HandleContextMenuCommand(wID))
+		return 0;
+
 	switch(wID)
 	{
 	case IDC_FILELIST:
@@ -180,29 +183,6 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	case IDM_EXIT:
 		GetTrayIconWnd()->PostMessage(WM_COMMAND,IDM_EXIT,NULL);
 		break;
-	case IDM_CUT:
-	case IDM_EDIT_CUT:
-		OnCopy(TRUE);
-		break;
-	case IDM_COPY:
-	case IDM_EDIT_COPY:
-		OnCopy(FALSE);
-		break;
-	case IDM_OPENCONTAININGFOLDER:
-		OpenSelectedFolder(TRUE);
-		break;
-	case IDM_CREATESHORTCUT:
-		OnCreateShortcut();
-		break;
-	case IDM_DELETE:
-		OnDelete();
-		break;
-	case IDM_RENAME:
-		OnRenameFile();
-		break;
-	case IDM_REMOVEFROMTHISLIST:
-		OnRemoveFromThisList();
-		break;
 	case IDC_SELECTALLKEY:
 		if (GetFocus()!=GetDlgItem(IDC_FILELIST))
 			break;
@@ -214,36 +194,6 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		break;
 	case IDM_LINEUPICONS:
 		m_pListCtrl->Arrange(LVA_SNAPTOGRID);
-		break;
-	case IDM_COPYPATHTOCB:
-		OnCopyPathToClipboard(FALSE);
-		break;
-	case IDM_COPYSHORTPATHTOCB:
-		OnCopyPathToClipboard(TRUE);
-		break;
-	case IDM_CHANGECASE:
-		OnChangeFileNameCase();
-		break;
-	case IDM_FORCEUPDATE:
-		OnUpdateLocatedItem();
-		break;
-	case IDM_COMPUTEMD5SUM:
-		OnComputeMD5Sums(FALSE);
-		break;
-	case IDM_MD5SUMSFORSAMESIZEFILES:
-		OnComputeMD5Sums(TRUE);
-		break;
-	case IDM_COPYMD5SUMTOCLIPBOARD:
-		OnCopyMD5SumsToClipboard();
-		break;
-	case IDM_SHOWFILEINFORMATION:
-		OnShowFileInformation();
-		break;
-	case IDM_REMOVEDELETEDFILES:
-		OnRemoveDeletedFiles();
-		break;
-	case IDM_CHANGEFILENAME:
-		OnChangeFileName();
 		break;
 	case IDC_NAME:
 	case IDC_TYPE:
@@ -341,18 +291,92 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			}
 
 		}
-		else if (wID>=IDM_DEFCOLSELITEM && wID<IDM_DEFCOLSELITEM+1000)
-			m_pListCtrl->ColumnSelectionMenuProc(wID,IDM_DEFCOLSELITEM);
-		else if (wID>=IDM_DEFSENDTOITEM && wID<IDM_DEFSENDTOITEM+1000)
-			OnSendToCommand(wID);
-		else if (m_pActiveContextMenu!=NULL && wID>=IDM_DEFCONTEXTITEM && wID<IDM_DEFCONTEXTITEM+1000)
-			OnContextMenuCommands(wID);
 		else if (wID>=IDM_DEFUPDATEDBITEM && wID<IDM_DEFUPDATEDBITEM+1000)
 			GetTrayIconWnd()->SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
 		break;
 	}
 	return CDialog::OnCommand(wID,wNotifyCode,hControl);
 }
+
+BOOL CLocateDlg::HandleContextMenuCommand(WORD wID)
+{
+	// Check if wID corresponds to Send to menu item
+	if (HandleSendToCommand(wID))
+		return TRUE;
+
+	// Check if wID corresponds to shell context menu command
+	if (HandleShellCommands(wID))
+		return TRUE;
+
+
+	switch(wID)
+	{
+	default:
+		return FALSE;
+	case IDM_CUT:
+	case IDM_EDIT_CUT:
+		OnCopy(TRUE);
+		break;
+	case IDM_COPY:
+	case IDM_EDIT_COPY:
+		OnCopy(FALSE);
+		break;
+	case IDM_OPENCONTAININGFOLDER:
+		OpenSelectedFolder(TRUE);
+		break;
+	case IDM_CREATESHORTCUT:
+		OnCreateShortcut();
+		break;
+	case IDM_DELETE:
+		OnDelete();
+		break;
+	case IDM_RENAME:
+		OnRenameFile();
+		break;
+	case IDM_REMOVEFROMTHISLIST:
+		OnRemoveFromThisList();
+		break;
+	case IDM_COPYPATHTOCB:
+		OnCopyPathToClipboard(FALSE);
+		break;
+	case IDM_COPYSHORTPATHTOCB:
+		OnCopyPathToClipboard(TRUE);
+		break;
+	case IDM_CHANGECASE:
+		OnChangeFileNameCase();
+		break;
+	case IDM_FORCEUPDATE:
+		OnUpdateLocatedItem();
+		break;
+	case IDM_COMPUTEMD5SUM:
+		OnComputeMD5Sums(FALSE);
+		break;
+	case IDM_MD5SUMSFORSAMESIZEFILES:
+		OnComputeMD5Sums(TRUE);
+		break;
+	case IDM_COPYMD5SUMTOCLIPBOARD:
+		OnCopyMD5SumsToClipboard();
+		break;
+	case IDM_SHOWFILEINFORMATION:
+		OnShowFileInformation();
+		break;
+	case IDM_REMOVEDELETEDFILES:
+		OnRemoveDeletedFiles();
+		break;
+	case IDM_CHANGEFILENAME:
+		OnChangeFileName();
+		break;
+	case IDM_PROPERTIES:
+		OnProperties();
+		break;
+	case IDM_DEFOPEN:
+		OnExecuteFile(NULL);
+		break;
+	}
+	
+	return TRUE;
+}
+
 
 void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 {
@@ -369,10 +393,9 @@ void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 		{
 			ClearMenuVariables();
 
-			m_hActivePopupMenu=CreateFileContextMenu(NULL,pSelectedItems,nSelectedItems);
-			if (m_hActivePopupMenu!=NULL)
+			if (CreateFileContextMenu(NULL,pSelectedItems,nSelectedItems))
 			{
-				TrackPopupMenu(m_hActivePopupMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,
+				TrackPopupMenu(*m_pActiveContextMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,
 					pos.x,pos.y,0,*this,NULL);	
 			}
 		}
@@ -484,7 +507,6 @@ void CLocateDlg::OnDestroy()
 	// Freeing target paths in dwItemData
 	ClearMenuVariables();
 	HMENU hOldMenu=GetMenu();
-	FreeSendToMenuItems(GetSubMenu(hOldMenu,0));
 	::DestroyMenu(hOldMenu);
 	m_Menu.DestroyMenu(); // Destroy submenu
 
@@ -1053,17 +1075,17 @@ void CLocateDlg::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
 				iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
 			}
 			
-			CreateFileContextMenu(hPopupMenu,pItems,nSelectedItems,dwSimpleMenu);
+			CreateFileContextMenu(hPopupMenu,pItems,nSelectedItems,dwSimpleMenu,FALSE);
 			delete[] pItems;
 		}
 		else
-			CreateFileContextMenu(hPopupMenu,NULL,0,dwSimpleMenu);
+			CreateFileContextMenu(hPopupMenu,NULL,0,dwSimpleMenu,FALSE);
 			
 
 		// Enable items
 		OnInitFileMenu(hPopupMenu);
 	}
-	else if (hPopupMenu==m_hActivePopupMenu)
+	else if (m_pActiveContextMenu!=NULL && hPopupMenu==m_pActiveContextMenu->hPopupMenu)
 	{
 		// Context menu for file item(s)		
 		// Enable items
@@ -2060,15 +2082,15 @@ void CLocateDlg::OnProperties(int nItem)
 	
 	int nItems;
 	CAutoPtrA<CLocatedItem*> pItems=GetSelectedItems(nItems,nItem);
-	CAutoPtr<ContextMenuStuff> pContextMenu=GetContextMenuForItems(nItems,pItems);
-
-	if (pContextMenu!=NULL)
+	ContextMenuInformation ci;
+	
+	if (GetContextMenuForItems(&ci,nItems,pItems))
 	{
-		if (pContextMenu->nIDLParentLevel>1)
+		if (ci.nIDLParentLevel>1)
 		{
 			// Quote context menu items
 			HMENU hMenu=CreatePopupMenu();
-			HRESULT hRes=pContextMenu->pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_CANRENAME);
+			HRESULT hRes=ci.pContextMenu->QueryContextMenu(hMenu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_EXPLORE|CMF_CANRENAME);
 			if (SUCCEEDED(hRes))
 			{
 				CMINVOKECOMMANDINFO cii;
@@ -2079,7 +2101,7 @@ void CLocateDlg::OnProperties(int nItem)
 				cii.lpParameters=NULL;
 				cii.lpDirectory=NULL;
 				cii.nShow=SW_SHOWDEFAULT;
-				hRes=pContextMenu->pContextMenu->InvokeCommand(&cii);
+				hRes=ci.pContextMenu->InvokeCommand(&cii);
 			}
 			DestroyMenu(hMenu);
 			
@@ -2140,6 +2162,8 @@ void CLocateDlg::OnRefresh()
 		
 void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 {
+	// TODO: Just partially fixed to handle bForParents
+
 	if (DeleteFlag==BasedOnShift)
 	{
 		if (GetKeyState(VK_SHIFT)& 0x8000)
@@ -2149,11 +2173,12 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 	}
 
 	CWaitCursor wait;
+	
 	CArray<CLocatedItem*> aItems;
 	BOOL bSymlinkAndJunctions=FALSE;
 
 
-
+	BOOL bDeleteParent=m_pActiveContextMenu!=NULL?m_pActiveContextMenu->bForParents:FALSE;
 
 	
 	// First collect selected files
@@ -2165,8 +2190,8 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
 
-		LPCWSTR szPath=pItem->GetPath();
-		if (pItem->IsFolder())
+		LPCWSTR szPath=bDeleteParent?pItem->GetParent():pItem->GetPath();
+		if (pItem->IsFolder() || bDeleteParent)
 		{
 			if (FileSystem::IsDirectory(szPath))
 			{
@@ -2184,9 +2209,10 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 		while (iItem!=-1)
 		{
 			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-			LPCWSTR szPath=pItem->GetPath();
+			
+			LPCWSTR szPath=bDeleteParent?pItem->GetParent():pItem->GetPath();
 
-			if (pItem->IsFolder())
+			if (pItem->IsFolder() || bDeleteParent)
 			{
 				if (FileSystem::IsDirectory(szPath))
 				{
@@ -2406,9 +2432,9 @@ void CLocateDlg::OnCopy(BOOL bCut,int nItem)
 	CWaitCursor wait;
 	CArray<CLocatedItem*> aItems;
 	CFileObject fo;
-
+	
 	if (m_pListCtrl->GetSelectedCount()>0)
-		fo.SetFiles(m_pListCtrl,TRUE);
+		fo.SetFiles(m_pListCtrl,TRUE,m_pActiveContextMenu!=NULL?m_pActiveContextMenu->bForParents:FALSE);
     else
 	{
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
@@ -2416,7 +2442,10 @@ void CLocateDlg::OnCopy(BOOL bCut,int nItem)
 			!FileSystem::IsDirectory(pItem->GetPath()))
 			return;
 
-		fo.SetFile(pItem->GetPath());
+		if (m_pActiveContextMenu!=NULL && m_pActiveContextMenu->bForParents)
+			fo.SetFile(pItem->GetParent());
+		else
+			fo.SetFile(pItem->GetPath());
 	}
 
 
@@ -2451,11 +2480,9 @@ void CLocateDlg::OnCreateShortcut()
 	
 	CWaitCursor wait;
 	CStringW sTargetFolder;
-	union {
-		IShellLinkW* pslw;
-		IShellLink* psl;
-	};
-	IPersistFile* ppf;
+	
+	CComPtr<IShellLinkW> pslw;
+	CComPtr<IShellLink> psl;
 	
 	// Resolving desktop path
 	if (IsUnicodeSystem())
@@ -2526,6 +2553,7 @@ void CLocateDlg::OnCreateShortcut()
 
 
 
+	CComPtr<IPersistFile> ppf;
 	if (IsUnicodeSystem())
 	{
 		// Creating instance to shell link handler
@@ -2534,10 +2562,7 @@ void CLocateDlg::OnCreateShortcut()
 
 		// Creating instance to PersistFile interface
 		if (!SUCCEEDED(pslw->QueryInterface(IID_IPersistFile,(void**)&ppf)))
-		{
-			pslw->Release();
 			return;
-		}
 	}
 	else
 	{
@@ -2547,81 +2572,85 @@ void CLocateDlg::OnCreateShortcut()
 
 		// Creating instance to PersistFile interface
 		if (!SUCCEEDED(psl->QueryInterface(IID_IPersistFile,(void**)&ppf)))
-		{
-			psl->Release();
 			return;
-		}
 
 	}
 	
-
 
 	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
 	BOOL bMsgShowed=FALSE;
 	
-	while (nItem!=-1)
+	if (m_pActiveContextMenu!=NULL?m_pActiveContextMenu->bForParents:FALSE)
 	{
-		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
-		
+		// Create shortcuts for parents
 	
-		if (pItem->ShouldUpdateFileTitle())
-			pItem->UpdateFileTitle();
-			
-		if (IsUnicodeSystem())
+		while (nItem!=-1)
 		{
-			// Setting link path
-			if (!SUCCEEDED(pslw->SetPath(pItem->GetPath())))
+			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+			if (pItem!=NULL)
 			{
-				ppf->Release();
-				pslw->Release();
-				return;
-			}
-		
-			if (!SUCCEEDED(pslw->SetDescription(CStringW(IDS_SHORTCUTTO)+pItem->GetFileTitle())))
-			{
-				ppf->Release();
-				pslw->Release();
-				return;
-			}
-		}
-		else
-		{
-			// Setting link path
-			if (!SUCCEEDED(psl->SetPath(W2A(pItem->GetPath()))))
-			{
-				ppf->Release();
-				psl->Release();
-				return;
-			}
-		
-			if (!SUCCEEDED(psl->SetDescription(CStringA(IDS_SHORTCUTTO)+W2A(pItem->GetFileTitle()))))
-			{
-				ppf->Release();
-				psl->Release();
-				return;
-			}
-		}
+				WCHAR szTitle[MAX_PATH];
+				//if (!FileSystem::GetFileTitle(pItem->GetParent(),szTitle,MAX_PATH))
+					wcscpy_s(szTitle,MAX_PATH,pItem->GetParent()+LastCharIndex(pItem->GetParent(),L'\\')+1);
+					
+				if (IsUnicodeSystem())
+				{
+					if (!SUCCEEDED(pslw->SetPath(pItem->GetParent())))
+						return;
+					
+					pslw->SetDescription(CStringW(IDS_SHORTCUTTO)+szTitle);
+				}
+				else
+				{
+					if (!SUCCEEDED(psl->SetPath(W2A(pItem->GetParent()))))
+						return;
+					
+					psl->SetDescription(CStringA(IDS_SHORTCUTTO)+W2A(szTitle));
+				}
 
-		
-		if (!SUCCEEDED(ppf->Save(sTargetFolder+pItem->GetFileTitle()+L".lnk",TRUE)))
-		{
-			ppf->Release();
-			if (IsUnicodeSystem())
-				pslw->Release();
-			else
-				psl->Release();
-
-			return;
+				
+				if (!SUCCEEDED(ppf->Save(sTargetFolder+szTitle+L".lnk",TRUE)))
+					return;
+				
+			}
+			nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
 		}
-		
-		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
 	}
-
-	ppf->Release();
-	if (IsUnicodeSystem())
-		pslw->Release();
 	else
-		psl->Release();
+	{
+		while (nItem!=-1)
+		{
+			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+			if (pItem!=NULL)
+			{
+		
+				if (pItem->ShouldUpdateFileTitle())
+					pItem->UpdateFileTitle();
+					
+				if (IsUnicodeSystem())
+				{
+					if (!SUCCEEDED(pslw->SetPath(pItem->GetPath())))
+						return;
+
+					pslw->SetDescription(CStringW(IDS_SHORTCUTTO)+pItem->GetFileTitle());
+				}
+				else
+				{
+					if (!SUCCEEDED(psl->SetPath(W2A(pItem->GetPath()))))
+						return;
+				
+					psl->SetDescription(CStringA(IDS_SHORTCUTTO)+W2A(pItem->GetFileTitle()));
+				}
+
+				
+				if (!SUCCEEDED(ppf->Save(sTargetFolder+pItem->GetFileTitle()+L".lnk",TRUE)))
+					return;
+
+			}
+			nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+		}
+	}
+	
 }
 
 

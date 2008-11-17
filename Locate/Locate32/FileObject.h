@@ -35,7 +35,7 @@ public:
 	virtual ~CFileObject();
 
 	BYTE SetFile(LPCWSTR szFile); 
-	BYTE SetFiles(CListCtrl* pList,BOOL bNoDeleted=FALSE);
+	BYTE SetFiles(CListCtrl* pList,BOOL bNoDeleted=FALSE,BOOL bParents=FALSE);
 	
 	HGLOBAL GetHDrop();
 	HGLOBAL GetItemIDList();

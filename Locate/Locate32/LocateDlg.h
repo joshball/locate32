@@ -728,12 +728,15 @@ protected:
 	////////////////////////////////////////////////////////////
 	// Menu related functions
 protected:
-	class ContextMenuStuff {
+	class ContextMenuInformation {
 	public:
-		ContextMenuStuff();
-		~ContextMenuStuff();
+		ContextMenuInformation();
+		~ContextMenuInformation();
 		
-		BOOL AddContextMenuItems(HMENU hMenu,UINT uFirstID,UINT uLastID,UINT uFlags);
+		void ReleaseShellInterfaces();
+		BOOL AddContextMenuItems(UINT uFirstID,UINT uLastID,UINT uFlags);
+		
+		operator HMENU() const { return hPopupMenu; }
 
 	public:
         IContextMenu* pContextMenu;
@@ -741,12 +744,13 @@ protected:
 		IContextMenu3* pContextMenu3;
 		IShellFolder* pParentFolder;
 
-		LPITEMIDLIST pParentIDL;
-		LPITEMIDLIST* ppSimpleIDLs;
-		int nIDLCount;
 		int nIDLParentLevel;
-		HWND hCallBackWnd;
+		BOOL bForParents;
 
+		HMENU hPopupMenu;
+		BOOL bFreeMenu; // Free menu when deleted if not file menu
+	
+		
 	public:
 #ifdef _DEBUG
 		void CheckThread() { ASSERT(m_dwThreadId==GetCurrentThreadId()); }
@@ -770,19 +774,20 @@ protected:
 	void OnInitSendToMenu(HMENU hPopupMenu);
 	
 	// Context menu/file menu helpers
-	HMENU CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pSelectedItems,int nSelectedItems,BOOL bSimple=FALSE);
-	ContextMenuStuff* GetContextMenuForItems(int nItems,CLocatedItem** ppItems);
-	ContextMenuStuff* GetContextMenuForFiles(int nItems,LPITEMIDLIST pParentIDL,LPITEMIDLIST* ppSimpleIDLs,int nParentIDLlevel=-1);
-	void OnContextMenuCommands(WORD wID);
-	void ClearMenuVariables();     
+	BOOL CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pSelectedItems,int nSelectedItems,BOOL bSimple=FALSE,BOOL bForParents=FALSE);
+	BOOL GetContextMenuForItems(ContextMenuInformation* pContextMenuInfo,int nItems,CLocatedItem** ppItems);
+	BOOL GetContextMenuForFiles(ContextMenuInformation* pContextMenuInfo,int nItems,LPITEMIDLIST pParentIDL,LPITEMIDLIST* ppSimpleIDLs,int nParentIDLlevel=-1);
+	void ClearMenuVariables();  
 	
-
+	BOOL HandleContextMenuCommand(WORD wID);
+	BOOL HandleShellCommands(WORD wID);
+	BOOL HandleSendToCommand(WORD wID);
+	
 	// Send To menu helpers
 	UINT AddSendToMenuItems(CMenu& Menu,LPITEMIDLIST sIDListToPath,UINT wStartID);
 	static void FreeSendToMenuItems(HMENU hMenu);
 	static BOOL IsSendToMenu(HMENU hMenu);
 	static int GetSendToMenuPos(HMENU hMenu);
-	void OnSendToCommand(WORD wID);
 	
 	// Misc funtions
 	static BOOL InsertMenuItemsFromTemplate(CMenu& Menu,HMENU hTemplate,UINT uStartPosition,int nDefaultItem=-1);
@@ -790,10 +795,9 @@ protected:
 	// Variables
 protected:
 	CMenu m_Menu;
-	ContextMenuStuff* m_pActiveContextMenu;
+	ContextMenuInformation* m_pActiveContextMenu;
 	HFONT m_hSendToListFont;
 	CBitmap m_CircleBitmap; // Used in menu
-	HMENU m_hActivePopupMenu;
 	
 
 
@@ -838,7 +842,8 @@ protected:
 	// Helpers
 	void OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile=NULL);
 	void OpenSelectedFolder(BOOL bContaining,int nItem=-1);
-	CLocatedItem** GetSelectedItems(int& nItems,int nIncludeIfNoneSeleted=-1);
+	CLocatedItem** GetSelectedItems(int& nItems,int nIncludeIfNoneSelected=-1);
+	void MakeItemSelected(int nItem);
 public:
 	static LPCWSTR GetDBVolumeLabel(WORD wDB,WORD wRootID);
 	static LPCWSTR GetDBVolumeSerial(WORD wDB,WORD wRootID);

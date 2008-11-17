@@ -101,6 +101,9 @@ CSettingsProperties::CSettingsProperties(HWND hParent)
 	m_cToolTipErrorColor=GetSysColor(COLOR_INFOTEXT);
 
 
+	// Set default for AddRefFix
+	SetSettingsFlags(settingsEnableAddRefFix,GetSystemFeaturesFlag()&efWinVista?FALSE:TRUE);
+
 }
 
 CSettingsProperties::~CSettingsProperties()
@@ -307,7 +310,7 @@ BOOL CSettingsProperties::LoadSettings()
 			m_dwSettingsFlags|=settingsUseCustomDialogIcon;
 
 		nTemp=0;
-		LocRegKey.QueryValue(L"SimpleFileMenu",nTemp);
+		LocRegKey.QueryValue("SimpleFileMenu",nTemp);
 		if (nTemp)
 			m_dwSettingsFlags|=settingsSimpleFileMenu;
 
@@ -317,7 +320,10 @@ BOOL CSettingsProperties::LoadSettings()
 		
 
 		LocRegKey.QueryValue("Schedules Delay",m_dwSchedulesDelay);
-		
+
+
+		if (LocRegKey.QueryValue("EnableAddRefFix",nTemp))
+			SetSettingsFlags(settingsEnableAddRefFix,nTemp);
 	}
 
 	// m_bAdvancedAndContextMenuFlag
@@ -517,6 +523,8 @@ BOOL CSettingsProperties::SaveSettings()
 		
 		LocRegKey.SetValue("Schedules Delay",m_dwSchedulesDelay);
 
+
+		LocRegKey.SetValue("EnableAddRefFix",(DWORD)IsSettingsFlagSet(settingsEnableAddRefFix));
 	}
 
 
@@ -1453,6 +1461,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_dontmovetooltips"),
 		CreateListBox(IDS_ADVSETEXECUTEMODE,ExecuteItemsModeProc,0,
 			&m_pSettings->m_dwLocateDialogExtraFlags,"sa_executeitemsmode"),
+		CreateCheckBox(IDS_ADVSETENABLEADDREFFIX,NULL,DefaultCheckBoxProc,
+			CSettingsProperties::settingsEnableAddRefFix,
+			&m_pSettings->m_dwSettingsFlags,"sa_enableaddreffix"),
 		NULL
 	};
 
@@ -6733,6 +6744,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_SubActionCombo.AssignToDlgItem(*this,IDC_SUBACTION);
 	m_VerbCombo.AssignToDlgItem(*this,IDC_VERB);
 	m_WhichFileCombo.AssignToDlgItem(*this,IDC_WHICHFILE);
+	m_ContextMenuForCombo.AssignToDlgItem(*this,IDC_CONTEXTMENUFOR);
 
 	// Insert action categories
 	m_ActionCombo.AddString(ID2W(IDS_NONE));
@@ -6755,7 +6767,10 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMNEXTNONDELETEDFILE));
 	m_WhichFileCombo.AddString(ID2W(IDS_ACTIONRESITEMPREVNONDELETEDFILE));
 
-
+	// Insert "file/folder"/"Parent"
+	m_ContextMenuForCombo.AddString(ID2W(IDS_ACTIONCONTEXTMENUFORFILE));
+	m_ContextMenuForCombo.AddString(ID2W(IDS_ACTIONCONTEXTMENUFORPARENT));
+	
 	// Insert verbs
 	m_VerbCombo.AddString("open");
 	m_VerbCombo.AddString("edit");
@@ -6801,6 +6816,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	m_ActionCombo.SetCurSel(0);
 	m_VerbCombo.SetCurSel(0);
 	m_WhichFileCombo.SetCurSel(0);
+	m_ContextMenuForCombo.SetCurSel(0);
 
 	// Inserting items
 	InsertShortcuts();
@@ -6821,6 +6837,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::OnHelp(LPHELPINFO lphi)
 		lphi->iCtrlId==IDC_WPARAM || lphi->iCtrlId==IDC_LPARAM ||
 		lphi->iCtrlId==IDC_COMMAND || lphi->iCtrlId==IDC_VALUE ||
 		lphi->iCtrlId==IDC_VALUEHELPTEXT || lphi->iCtrlId==IDC_WHICHFILE ||
+		lphi->iCtrlId==IDC_CONTEXTMENUFOR ||
 		lphi->iCtrlId==IDC_ITEM || lphi->iCtrlId==IDC_ITEMSPIN)
 	{
 		LPCSTR pPage=NULL;
@@ -8226,7 +8243,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 	m_SubActionCombo.EnableWindow(nItem!=-1); // Subaction combo
 
 	ShowState ssVerb=swHide,ssMessage=swHide,ssCommand=swHide,ssWhichFile=swHide;
-	ShowState ssChangeValue=swHide,ssItem=swHide;
+	ShowState ssChangeValue=swHide,ssItem=swHide,ssContextMenuFor=swHide;
 	
 	if (nItem!=-1)
 	{
@@ -8285,6 +8302,10 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 			case CAction::SelectNthFile:
 			case CAction::ExecuteNthFile:
 				ssItem=swShow;
+				break;
+			case CAction::OpenContextMenu:
+			case CAction::OpenContextMenuSimple:
+				ssContextMenuFor=swShow;
 				break;
 			}
             break;
@@ -8350,6 +8371,9 @@ void CSettingsProperties::CKeyboardShortcutsPage::EnableItems()
 
 	ShowDlgItem(IDC_STATICWHICHFILE,ssWhichFile);
 	m_WhichFileCombo.ShowWindow(ssWhichFile);
+
+	ShowDlgItem(IDC_STATICCONTEXTMENUFOR,ssContextMenuFor);
+	m_ContextMenuForCombo.ShowWindow(ssContextMenuFor);
 
 	
 	ShowDlgItem(IDC_STATICITEM,ssItem);
@@ -8554,6 +8578,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 	SetDlgItemText(IDC_VALUE,szEmpty);
 	SendDlgItemMessage(IDC_ITEMSPIN,UDM_SETPOS32,0,1);
 	m_WhichFileCombo.SetCurSel(0);
+	m_ContextMenuForCombo.SetCurSel(0);
 
 
 	switch (pAction->m_nAction)
@@ -8576,6 +8601,10 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 			break;
 		case CAction::SelectFile:
 			m_WhichFileCombo.SetCurSel(pAction->m_nSelectFileType);	
+			break;
+		case CAction::OpenContextMenu:
+		case CAction::OpenContextMenuSimple:
+			m_ContextMenuForCombo.SetCurSel(pAction->m_nContextMenuFor);	
 			break;
 		case CAction::SelectNthFile:
 		case CAction::ExecuteNthFile:
@@ -8691,6 +8720,12 @@ void CSettingsProperties::CKeyboardShortcutsPage::SaveFieldsForAction(CAction* p
 					}
 					break;
 				}
+			case CAction::OpenContextMenu:
+			case CAction::OpenContextMenuSimple:
+				pAction->m_nContextMenuFor=(CSubAction::ContextMenuFor)m_ContextMenuForCombo.GetCurSel();
+				if (int(pAction->m_nContextMenuFor)==CB_ERR)
+					pAction->m_nContextMenuFor=CSubAction::FileOrFolder;
+				break;
 			case CAction::SelectFile:
 				pAction->m_nSelectFileType=(CSubAction::SelectFileType)m_WhichFileCombo.GetCurSel();
 				if (int(pAction->m_nSelectFileType)==CB_ERR)

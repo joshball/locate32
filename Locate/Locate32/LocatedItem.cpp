@@ -1772,9 +1772,9 @@ void CLocatedItem::LoadThumbnail()
 	if (pField->pThumbnail!=NULL)
 		return;
 
-
-	pField->pThumbnail=new ExtraInfo::ThumbnailData;
-	pField->pThumbnail->hBitmap=NULL;
+	pField->pThumbnail=new ExtraInfo::ThumbnailData(CreateMutex(NULL,TRUE,NULL));
+	
+	
 
 	// No thumbnails for icons and cursors
 	if (_wcsicmp(GetExtension(),L"ico")==0)
@@ -1822,6 +1822,10 @@ void CLocatedItem::LoadThumbnail()
 				pField->pThumbnail->sThumbnailSize.cx=bi.bmWidth;
 				pField->pThumbnail->sThumbnailSize.cy=bi.bmHeight;
 
+
+				pField->pThumbnail->CloseMutex();
+
+
 				return;
 			}
 		}
@@ -1868,11 +1872,15 @@ void CLocatedItem::LoadThumbnail()
 				pField->pThumbnail->sThumbnailSize.cx=bi.bmWidth;
 				pField->pThumbnail->sThumbnailSize.cy=bi.bmHeight;
 				
+				pField->pThumbnail->CloseMutex();
 				return;
 			}
 		}
 	}
 
+	
+	pField->pThumbnail->CloseMutex();
+	
 	ItemDebugMessage("CLocatedItem::LoadThumbnail end");
 
 }

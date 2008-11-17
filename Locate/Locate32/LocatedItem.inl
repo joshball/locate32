@@ -340,6 +340,10 @@ inline HBITMAP CLocatedItem::GetThumbnail(SIZE& size) const
 	{
 		if (pInfo->pThumbnail==NULL)
 			return NULL;
+		
+		// Wait until thumbnail is loaded
+		pInfo->pThumbnail->WaitForLoading();
+
 		size=pInfo->pThumbnail->sThumbnailSize;
 		return pInfo->pThumbnail->hBitmap;
 	}
@@ -430,12 +434,37 @@ inline CLocatedItem::ExtraInfo::~ExtraInfo()
 	case Thumbnail:
 		if (pThumbnail!=NULL)
 		{
-			if (pThumbnail->hBitmap!=NULL)
-				DeleteObject(pThumbnail->hBitmap);
+			pThumbnail->WaitForLoading();
 			delete pThumbnail;
 		}
 		break;
 	}
+}
+
+inline CLocatedItem::ExtraInfo::ThumbnailData::ThumbnailData(HANDLE hMutex)
+:	hBitmap(NULL),hLoadingMutex(hMutex)
+{
+}
+
+inline void CLocatedItem::ExtraInfo::ThumbnailData::CloseMutex()
+{
+	if (hLoadingMutex!=NULL)
+	{
+		HANDLE hMutex=hLoadingMutex;
+		ReleaseMutex(hMutex);
+		InterlockedExchange((LONG*)&hLoadingMutex,NULL);
+		hLoadingMutex=NULL;
+		CloseHandle(hMutex);
+	}
+}
+
+inline CLocatedItem::ExtraInfo::ThumbnailData::~ThumbnailData()
+{
+	CloseMutex();
+
+	if (hBitmap!=NULL)
+		DeleteObject(hBitmap);
+			
 }
 
 
@@ -451,6 +480,11 @@ inline CLocatedItem::ExtraInfo* CLocatedItem::GetFieldForType(DetailType nType) 
 	return NULL;
 }
 
+inline void CLocatedItem::ExtraInfo::ThumbnailData::WaitForLoading()
+{
+	if (hLoadingMutex!=NULL)
+		WaitForSingleObject(hLoadingMutex,INFINITE);
+}
 
 
 inline CLocatedItem::ExtraInfo* CLocatedItem::CreateExtraInfoField(DetailType nType)

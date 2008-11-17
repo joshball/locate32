@@ -301,6 +301,11 @@ public:
 		PrevNonDeletedFile=3
 	};
 
+	enum ContextMenuFor {
+		FileOrFolder=0,
+		Parent=1
+	};
+
 	union { // Extra action data
 		void* m_pExtraInfo;	
 		
@@ -311,6 +316,7 @@ public:
 		LPWSTR m_szValue;
 		SelectFileType m_nSelectFileType;
 		int m_nItem;
+		ContextMenuFor m_nContextMenuFor;
 	};
 
 	// highest bit = 1 : mainmenu

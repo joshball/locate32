@@ -1817,25 +1817,21 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 			ClearMenuVariables();
 
 			int nSelectedItems;
-			CLocatedItem** pSelectedItems=GetSelectedItems(nSelectedItems,nItem);
-			m_hActivePopupMenu=CreateFileContextMenu(NULL,pSelectedItems,nSelectedItems,
-				m_nResultAction==CAction::OpenContextMenuSimple);
-			delete[] pSelectedItems;
-			if (m_hActivePopupMenu==NULL)
+			MakeItemSelected(nItem);
+			CAutoPtrA<CLocatedItem*> pSelectedItems=GetSelectedItems(nSelectedItems);
+			if (!CreateFileContextMenu(NULL,pSelectedItems,nSelectedItems,
+				m_nResultAction==CAction::OpenContextMenuSimple,int(pExtraInfo)==CAction::Parent))
 				break;
 
-			if (pExtraInfo!=NULL)
-			{
-	            TrackPopupMenu(m_hActivePopupMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,
-					((POINT*)pExtraInfo)->x,((POINT*)pExtraInfo)->y,0,*this,NULL);	
-			}
-			else
-			{
-				POINT pos;
-				GetCursorPos(&pos);
-				TrackPopupMenu(m_hActivePopupMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,
-					pos.x,pos.y,0,*this,NULL);	
-			}
+			POINT pos;
+			GetCursorPos(&pos);
+			int nCmd=TrackPopupMenu(*m_pActiveContextMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON|TPM_RETURNCMD,
+				pos.x,pos.y,0,*this,NULL);	
+
+			if (nCmd>0)
+				HandleContextMenuCommand(nCmd);
+
+			ClearMenuVariables();
 			break;
 		}
 	case CAction::OpenFolder:
@@ -2022,8 +2018,8 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 				bOnlyNULLAsVerb=TRUE;
 			}
 
-			CAutoPtr<ContextMenuStuff> pContextMenuStuff=GetContextMenuForItems(1,&pItems[i]);
-			if (pContextMenuStuff==NULL)
+			ContextMenuInformation ci;
+			if (!GetContextMenuForItems(&ci,1,&pItems[i]))
 			{
 				// Error, use ShellExecute anyway
 				ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
@@ -2041,7 +2037,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 			CMenu Menu;
 			Menu.CreatePopupMenu();
 			
-			if (!SUCCEEDED(pContextMenuStuff->pContextMenu->QueryContextMenu(Menu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY)))
+			if (!SUCCEEDED(ci.pContextMenu->QueryContextMenu(Menu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY)))
 			{
 				// Error, free allocated data and use ShellExecute 
 				ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
@@ -2072,12 +2068,12 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 
 				if (bFound)
 				{
-					if (!SUCCEEDED(pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii)) && cii.lpVerb!=NULL)
+					if (!SUCCEEDED(ci.pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii)) && cii.lpVerb!=NULL)
 					{
 						// Try execute default
 						cii.lpVerbW=NULL;
 						cii.lpVerb=NULL;
-						pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
+						ci.pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii);
 					}
 				}
 				else
@@ -2085,7 +2081,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 					// No default item, execute with lpVerb=NULL and, if it fails, use ShellExecute
 					cii.lpVerbW=NULL;
 					cii.lpVerb=NULL;
-					if (!SUCCEEDED(pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii)))
+					if (!SUCCEEDED(ci.pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii)))
 						ShellFunctions::ShellExecute(*this,NULL,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
 				}
 			}
@@ -2094,7 +2090,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 				// Verb given, using it
 				cii.lpVerbW=szVerb;
 				cii.lpVerb=alloccopyWtoA(szVerb);
-				if (!SUCCEEDED(pContextMenuStuff->pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii)))
+				if (!SUCCEEDED(ci.pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii)))
 					ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
 				delete[] (LPSTR)cii.lpVerb;
 			}
@@ -2413,15 +2409,15 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 
 }
 
-CLocatedItem** CLocateDlg::GetSelectedItems(int& nItems,int nIncludeIfNoneSeleted)
+CLocatedItem** CLocateDlg::GetSelectedItems(int& nItems,int nIncludeIfNoneSelected)
 {
 	nItems=m_pListCtrl->GetSelectedCount();
 
 	if (nItems==0)
 	{
 		CLocatedItem** pRet=new CLocatedItem*[nItems=1];
-		if (nIncludeIfNoneSeleted!=-1)
-            pRet[0]=(CLocatedItem*)m_pListCtrl->GetItemData(nIncludeIfNoneSeleted);
+		if (nIncludeIfNoneSelected!=-1)
+            pRet[0]=(CLocatedItem*)m_pListCtrl->GetItemData(nIncludeIfNoneSelected);
 		else
 		{
 			nItems=0;
@@ -2440,6 +2436,22 @@ CLocatedItem** CLocateDlg::GetSelectedItems(int& nItems,int nIncludeIfNoneSelete
 	}   
 
 	return pRet;
+}
+
+void CLocateDlg::MakeItemSelected(int nSelectItem)
+{
+	if (m_pListCtrl->GetItemState(nSelectItem,LVNI_SELECTED)&LVNI_SELECTED)
+	{
+		// Item is already selected, all OK
+		return;
+	}
+
+	// Item is not selected, deselect all other items and selected this
+	int nItem;
+	while ((nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED))!=-1)
+		m_pListCtrl->SetItemState(nItem,0,LVNI_SELECTED|LVNI_FOCUSED);
+
+	m_pListCtrl->SetItemState(nSelectItem,LVNI_SELECTED|LVNI_FOCUSED,LVNI_SELECTED|LVNI_FOCUSED);
 }
 
 
@@ -2676,6 +2688,8 @@ void CLocateDlg::SetListType(ListType nType,BOOL bResetIfSame)
 	m_pListCtrl->Arrange(LVA_DEFAULT);
 	m_pListCtrl->RedrawItems(0,m_pListCtrl->GetItemCount());
 	m_pListCtrl->UpdateWindow();
+	if (nType==ltLargeIcons || nType==ltExtraLargeIcons)
+		m_pListCtrl->Invalidate();
 		
 	m_nCurrentListType=nType;
 

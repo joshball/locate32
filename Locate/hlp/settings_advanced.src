@@ -697,6 +697,17 @@ is clicked uring right mouse button. This latter is little bit slower (items in 
 be populated), but can work better in certain situation (like with Flexisign).
 </p>
 
+<p><b><A NAME="sa_enableaddreffix"></A>$STRADVANCEDSETTINGS_ENABLEADDREFFIX@C$</b>:
+Some shell extensions which adds extra features into File and context menu, may cause crashed and other 
+problems while exiting Locate32. This fix tries to prevent such problems. 
+<br>
+Technically speaking, when enabled, Locate32 increases reference counters after initializing shell 
+interfaces (extra calls of AddRef after GetUIObjectOf and QueryInterface). Although this is agains 
+rules (shell extensions should take care of this) and may cause memory leaks, this has been 
+observed to prevent problems in such cases. This fix is enabled by default except in Windows Vista 
+(these problems has not observed in Windows Vista).
+</p>
+
 </div> <!-- advanced_settings_level1@sa_misc-->
 
 

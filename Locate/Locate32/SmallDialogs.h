@@ -87,7 +87,7 @@ public:
 
 private:
 	CListCtrl* m_pList;
-	CComboBox m_ActionCombo,m_WhenCombo,m_WhichFileCombo,m_VerbCombo;
+	CComboBox m_ActionCombo,m_WhenCombo,m_WhichFileCombo,m_VerbCombo,m_ContextMenuForCombo;
 };
 
 
