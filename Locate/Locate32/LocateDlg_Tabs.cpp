@@ -20,9 +20,9 @@ BOOL CLocateDlg::CNameDlg::OnInitDialog(HWND hwndFocus)
 	CDialog::OnInitDialog(hwndFocus);
 	GetLocateDlg()->AddInstantSearchingFlags(isIgnoreChangeMessages);
 
-	m_Name.AssignToDlgItem(*this,IDC_NAME);
-	m_Type.AssignToDlgItem(*this,IDC_TYPE);
-	m_LookIn.AssignToDlgItem(*this,IDC_LOOKIN);
+	m_Name.AttachToDlgItem(*this,IDC_NAME);
+	m_Type.AttachToDlgItem(*this,IDC_TYPE);
+	m_LookIn.AttachToDlgItem(*this,IDC_LOOKIN);
 
 		
 	LoadRegistry();
@@ -2781,8 +2781,8 @@ BOOL CLocateDlg::CSizeDateDlg::OnInitDialog(HWND hwndFocus)
 	Min.AddString(str);
 	Max.AddString(str);
 	
-	Min.AssignToDlgItem(*this,IDC_MINSIZETYPE);
-	Max.AssignToDlgItem(*this,IDC_MAXSIZETYPE);
+	Min.AttachToDlgItem(*this,IDC_MINSIZETYPE);
+	Max.AttachToDlgItem(*this,IDC_MAXSIZETYPE);
 	str.LoadString(IDS_SIZEBYTES);
 	Min.AddString(str);
 	Max.AddString(str);

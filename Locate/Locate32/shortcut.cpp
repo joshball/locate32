@@ -1321,11 +1321,11 @@ void CSubAction::DoChangeValue()
 	HWND hInDialog=*pLocateDlg;
 
 	if (Control.GetHandle()==NULL)
-		Control.SetHandle(pLocateDlg->m_NameDlg.GetDlgItem(LOWORD(m_nControl)));
+		Control.AttachToDlgItem(pLocateDlg->m_NameDlg,LOWORD(m_nControl));
 	if (Control.GetHandle()==NULL)
-		Control.SetHandle(pLocateDlg->m_SizeDateDlg.GetDlgItem(LOWORD(m_nControl)));
+		Control.AttachToDlgItem(pLocateDlg->m_SizeDateDlg,LOWORD(m_nControl));
 	if (Control.GetHandle()==NULL)
-		Control.SetHandle(pLocateDlg->m_AdvancedDlg.GetDlgItem(LOWORD(m_nControl)));
+		Control.AttachToDlgItem(pLocateDlg->m_AdvancedDlg,LOWORD(m_nControl));
 
 	ASSERT(Control.GetHandle()!=NULL);
 

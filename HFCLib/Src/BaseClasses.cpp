@@ -108,11 +108,18 @@ BOOL CFont::CreatePointFontIndirect(const LOGFONT* lpLogFont,HDC hDC)
 CDC::CDC(CWnd* pWnd)
 {
 	if (pWnd!=NULL)
+	{
 		m_hWnd=*pWnd;
-	else
+		m_hDC=::GetDC(m_hWnd);
+		m_nFreeMethod=CallReleaseDC;
+		DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
+	}
+	else 
+	{
+		m_hDC=NULL;
 		m_hWnd=NULL;
-	m_hDC=GetDC(m_hWnd);
-	DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
+		m_nFreeMethod=None;
+	}
 	m_bPrinting=FALSE;
 }
 
@@ -121,43 +128,74 @@ CDC::CDC(CWnd* pWnd)
 BOOL CDC::CreateDC(LPCTSTR lpszDriverName,LPCTSTR lpszDeviceName,
 	LPCTSTR lpszOutput,const void* lpInitData)
 {
-	if (m_hWnd!=NULL)
-		ReleaseDC();
-	if (m_hDC!=NULL)
-		DeleteDC();
+	FreeDC();
+
 	m_hDC=::CreateDC(lpszDriverName,lpszDeviceName,lpszOutput,(CONST DEVMODE*)lpInitData);
 	DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
 	if (m_hDC==NULL)
 		return FALSE;
+	m_hWnd=NULL;
+	m_nFreeMethod=CallDeleteDC;
 	return TRUE;
 }
 
 BOOL CDC::CreateIC(LPCTSTR lpszDriverName, LPCTSTR lpszDeviceName,
 	LPCTSTR lpszOutput,const void* lpInitData)
 {
-	if (m_hWnd!=NULL)
-		ReleaseDC();
-	if (m_hDC!=NULL)
-		DeleteDC();
+	FreeDC();
+
 	m_hDC=::CreateIC(lpszDriverName,lpszDeviceName,lpszOutput,(CONST DEVMODE*)lpInitData);
-	DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
 	if (m_hDC==NULL)
 		return FALSE;
+	DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
+	m_hWnd=NULL;
+	m_nFreeMethod=CallDeleteDC;
+	return TRUE;
+}
+
+BOOL CDC::GetDC(HWND hWnd)
+{
+	FreeDC();
+
+	m_hDC=::GetDC(hWnd);
+	if (m_hDC==NULL)
+		return FALSE;
+	DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
+	m_hWnd=hWnd;
+	m_nFreeMethod=CallReleaseDC;
 	return TRUE;
 }
 
 BOOL CDC::CreateCompatibleDC(HDC hDC)
 {
-	if (m_hWnd!=NULL)
-		::ReleaseDC(m_hWnd,m_hDC);
-	else if (m_hDC!=NULL)
-		::DeleteDC(m_hDC);
+	FreeDC();
+
 	m_hDC=::CreateCompatibleDC(hDC);
-	DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
-	m_hWnd=NULL;
 	if (m_hDC==NULL)
 		return FALSE;
+	DebugOpenHandle(dhtGdiObject,m_hDC,STRNULL);
+	m_hWnd=NULL;
+	m_nFreeMethod=CallDeleteDC;
 	return TRUE;
+}
+
+void CDC::FreeDC() 
+{
+	if (m_hDC==NULL)
+		return;
+	switch (m_nFreeMethod)
+	{
+	case CallReleaseDC:
+		::ReleaseDC(m_hWnd,m_hDC);
+		DebugCloseHandle(dhtGdiObject,m_hDC,STRNULL);
+		break;
+	case CallDeleteDC:
+		::DeleteDC(m_hDC);
+		DebugCloseHandle(dhtGdiObject,m_hDC,STRNULL);
+		break;
+	}	
+	m_hDC=NULL;
+	m_hWnd=NULL;
 }
 
 BOOL CDC::DeleteDC()
@@ -168,16 +206,32 @@ BOOL CDC::DeleteDC()
 		return FALSE;
 	DebugCloseHandle(dhtGdiObject,m_hDC,STRNULL);
 	m_hDC=NULL;
+	m_hWnd=NULL;
+	m_nFreeMethod=None;
 	return TRUE;
 }
+
+void CDC::ReleaseDC()
+{
+	ASSERT_VALID(m_hDC);
+	
+	::ReleaseDC(m_hWnd,m_hDC);
+	DebugCloseHandle(dhtGdiObject,m_hDC,STRNULL);
+	m_hWnd=NULL;
+	m_hDC=NULL;
+	m_nFreeMethod=None;
+}
+
 
 BOOL CDC::ResetDC(const DEVMODE* lpDevMode)
 {
 	if (m_hDC==NULL)
 		return FALSE;
 	HDC hDC=::ResetDC(m_hDC,lpDevMode);
+	DebugCloseHandle(dhtGdiObject,m_hDC,STRNULL);
 	if (hDC==NULL)
 		return FALSE;
+	DebugOpenHandle(dhtGdiObject,hDC,STRNULL);
 	m_hDC=hDC;
 	return TRUE;
 }

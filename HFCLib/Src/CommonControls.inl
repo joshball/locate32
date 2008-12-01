@@ -77,6 +77,13 @@ inline CImageList::~CImageList()
 		ImageList_Destroy(m_hImageList);
 }
 
+inline void CImageList::Attach(HIMAGELIST hImagelist)
+{
+	if (m_hImageList!=NULL)
+		ImageList_Destroy(m_hImageList);
+	m_hImageList=hImagelist;
+}
+
 inline BOOL CImageList::Create(UINT nBitmapID, int cx, int nGrow, COLORREF crMask)
 {
 	if (m_hImageList!=NULL)
@@ -2137,14 +2144,14 @@ inline CComboBoxEx::CComboBoxEx(HWND hWnd)
 	CEdit::m_hWnd=(HWND)::SendMessage(hWnd,CBEM_GETEDITCONTROL,0,0);
 }
 
-inline void CComboBoxEx::AssignToDlgItem(HWND hDialog,int nID)
+inline void CComboBoxEx::AttachToDlgItem(HWND hDialog,int nID)
 { 
 	CCommonCtrl::m_hWnd=::GetDlgItem(hDialog,nID); 
 	CComboBox::m_hWnd=(HWND)::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETCOMBOCONTROL,0,0);
 	CEdit::m_hWnd=(HWND)::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETEDITCONTROL,0,0);
 }
 
-inline void CComboBoxEx::SetHandle(HWND hWnd) 
+inline void CComboBoxEx::Attach(HWND hWnd) 
 {
 	CCommonCtrl::m_hWnd=hWnd; 
 	CComboBox::m_hWnd=(HWND)::SendMessage(hWnd,CBEM_GETCOMBOCONTROL,0,0);

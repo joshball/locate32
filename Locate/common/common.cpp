@@ -8,7 +8,6 @@
 #include "common.h"
 
 #include <parsers.h>
-
 extern "C" {
 	#include "JpegLib/jpeglib.h"
 }
@@ -380,6 +379,8 @@ BOOL SaveBitmapToJpegFile(HBITMAP hBitmap,LPCWSTR szFile,int nQuality)
 	{
 		// Create a bitmap in correct 24 bit format
 		BITMAPINFO  dibInfo;
+		CDC dc;
+
 		dibInfo.bmiHeader.biBitCount = 24;
 		dibInfo.bmiHeader.biClrImportant = 0;
 		dibInfo.bmiHeader.biClrUsed = 0;
@@ -395,25 +396,25 @@ BOOL SaveBitmapToJpegFile(HBITMAP hBitmap,LPCWSTR szFile,int nQuality)
 		dibInfo.bmiColors[0].rgbGreen = 0;
 		dibInfo.bmiColors[0].rgbRed = 0;
 		dibInfo.bmiColors[0].rgbReserved = 0;
-		HDC hDC = ::GetDC(NULL);
-		ASSERT(hDC!=NULL);
-		hNewBitmap = CreateDIBSection(hDC,(const BITMAPINFO*)&dibInfo,DIB_RGB_COLORS,(void**)&pBuffer,NULL,0);
-		::ReleaseDC(NULL, hDC);
+		
+
+		dc.GetDC(NULL);
+		hNewBitmap=CreateDIBSection(dc,(const BITMAPINFO*)&dibInfo,DIB_RGB_COLORS,(void**)&pBuffer,NULL,0);
+		dc.ReleaseDC();
 
 		// Copy the original to the new bitmap
-		HDC hMemDc=CreateCompatibleDC(NULL);
-		HDC hTargetDC=CreateCompatibleDC(NULL);
+		CDC MemDC,TargetDC;
+		MemDC.CreateCompatibleDC(NULL);
+		TargetDC.CreateCompatibleDC(NULL);
 		
-		HBITMAP hOldBitmap1 = (HBITMAP)::SelectObject(hMemDc,hBitmap);
-		HBITMAP hOldBitmap2 = (HBITMAP)::SelectObject(hTargetDC,hNewBitmap);
+		HBITMAP hOldBitmap1 = (HBITMAP)MemDC.SelectObject(hBitmap);
+		HBITMAP hOldBitmap2 = (HBITMAP)MemDC.SelectObject(hNewBitmap);
 
-		::BitBlt(hTargetDC,0,0,bm.bmWidth,bm.bmHeight,hMemDc,0,0,SRCCOPY);
+		TargetDC.BitBlt(0,0,bm.bmWidth,bm.bmHeight,MemDC,0,0,SRCCOPY);
 
-		::SelectObject(hMemDc, hOldBitmap1);
-		::SelectObject(hTargetDC, hOldBitmap2);
+		MemDC.SelectObject(hOldBitmap1);
+		TargetDC.SelectObject(hOldBitmap2);
 		
-		::DeleteDC(hMemDc);
-		::DeleteDC(hTargetDC);
 	}
 	
 	// Save bitmap to jpeg file

@@ -308,68 +308,106 @@ BOOL CLocateDlg::HandleContextMenuCommand(WORD wID)
 	if (HandleShellCommands(wID))
 		return TRUE;
 
-
+	
 	switch(wID)
 	{
 	default:
 		return FALSE;
 	case IDM_CUT:
 	case IDM_EDIT_CUT:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnCopy(TRUE);
 		break;
 	case IDM_COPY:
 	case IDM_EDIT_COPY:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnCopy(FALSE);
 		break;
 	case IDM_OPENCONTAININGFOLDER:
-		OpenSelectedFolder(TRUE);
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
+		OpenSelectedFolder(TRUE,-1,m_pActiveContextMenu->bForParents);
 		break;
 	case IDM_CREATESHORTCUT:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnCreateShortcut();
 		break;
 	case IDM_DELETE:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnDelete();
 		break;
 	case IDM_RENAME:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnRenameFile();
 		break;
 	case IDM_REMOVEFROMTHISLIST:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnRemoveFromThisList();
 		break;
 	case IDM_COPYPATHTOCB:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnCopyPathToClipboard(FALSE);
 		break;
 	case IDM_COPYSHORTPATHTOCB:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnCopyPathToClipboard(TRUE);
 		break;
 	case IDM_CHANGECASE:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnChangeFileNameCase();
 		break;
 	case IDM_FORCEUPDATE:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnUpdateLocatedItem();
 		break;
 	case IDM_COMPUTEMD5SUM:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnComputeMD5Sums(FALSE);
 		break;
 	case IDM_MD5SUMSFORSAMESIZEFILES:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnComputeMD5Sums(TRUE);
 		break;
 	case IDM_COPYMD5SUMTOCLIPBOARD:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnCopyMD5SumsToClipboard();
 		break;
 	case IDM_SHOWFILEINFORMATION:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnShowFileInformation();
 		break;
 	case IDM_REMOVEDELETEDFILES:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnRemoveDeletedFiles();
 		break;
 	case IDM_CHANGEFILENAME:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnChangeFileName();
 		break;
 	case IDM_PROPERTIES:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnProperties();
 		break;
 	case IDM_DEFOPEN:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnExecuteFile(NULL);
 		break;
 	}
@@ -2076,6 +2114,8 @@ void CLocateDlg::OnDeletePrivateData()
 
 void CLocateDlg::OnProperties(int nItem)
 {
+	// TODO: Implement and test support for parent support
+
 	if (m_pListCtrl->GetSelectedCount()==0)
 		return;
 
@@ -2162,6 +2202,7 @@ void CLocateDlg::OnRefresh()
 		
 void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 {
+	// TODO: Implement and test support for parent support
 	// TODO: Just partially fixed to handle bForParents
 
 	if (DeleteFlag==BasedOnShift)
@@ -2407,6 +2448,8 @@ void CLocateDlg::OnRemoveDeletedFiles()
 
 void CLocateDlg::OnRenameFile(int nItem)
 {
+	// TODO: Implement and test support for parent support
+
 	if (m_pListCtrl->GetSelectedCount()==0 && nItem==-1)
 		return;
 	
@@ -2426,6 +2469,8 @@ void CLocateDlg::OnRenameFile(int nItem)
 
 void CLocateDlg::OnCopy(BOOL bCut,int nItem)
 {
+	// TODO: Implement and test support for parent support
+
 	if (m_pListCtrl->GetSelectedCount()==0 && nItem==-1)
 		return;
 
@@ -2475,6 +2520,8 @@ typedef HRESULT (__stdcall * PFNSHGETFOLDERPATHW)(HWND, int, HANDLE, DWORD, LPWS
 
 void CLocateDlg::OnCreateShortcut()
 {
+	// TODO: Implement and test support for parent support
+
 	if (m_pListCtrl->GetSelectedCount()==0)
 		return;
 	
@@ -2795,6 +2842,8 @@ void CLocateDlg::OnSaveResults()
 
 void CLocateDlg::OnCopyPathToClipboard(BOOL bShortPath)
 {
+	// TODO: Implement and test support for parent support
+
 	CStringW Text;
 
 	int nItems=0;
@@ -2865,6 +2914,8 @@ void CLocateDlg::OnCopyPathToClipboard(BOOL bShortPath)
 
 void CLocateDlg::OnChangeFileName()
 {
+	// TODO: Implement and test support for parent support
+
 	CChangeFilenameDlg fnd;
 	
 	CRegKey2 RegKey;
@@ -2909,6 +2960,8 @@ void CLocateDlg::OnChangeFileName()
 
 void CLocateDlg::OnChangeFileNameCase()
 {
+	// TODO: Implement and test support for parent support
+
 	if (m_pListCtrl->GetNextItem(-1,LVNI_SELECTED)==-1)
 		return;
 
@@ -3173,6 +3226,8 @@ void CLocateDlg::OnCopyMD5SumsToClipboard()
 
 void CLocateDlg::OnShowFileInformation()
 {
+	// TODO: Implement and test support for parent support
+
 	DWORD dwFiles=0,dwDirectories=0;
 	LONGLONG llTotalSize=0;
 	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);

@@ -1075,6 +1075,7 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 {
 	COptionsPropertyPage::OnInitDialog(hwndFocus);
 
+
 	/////////////////////////////////////////////////////////////////////////
 	// Items under LOCATING FILES AND RESULTS LIST category
 
@@ -1518,7 +1519,6 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		NULL};
 
 	Initialize(Parents);
-
 
 	CheckDlgButton(IDC_SEARCHDOWN,1);
 	return FALSE;
@@ -5761,7 +5761,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 	Combo.AddString(ID2W(IDS_WEEKLAST));
 	
 	// Days combo
-	Combo.AssignToDlgItem(*this,IDC_MDAYS);
+	Combo.AttachToDlgItem(*this,IDC_MDAYS);
 	Combo.AddString(ID2W(IDS_MONDAY));
 	Combo.AddString(ID2W(IDS_TUESDAY));
 	Combo.AddString(ID2W(IDS_WEDNESDAY));
@@ -5818,7 +5818,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 	}
 
 	// "Every Month" spin
-	SpinControl.AssignToDlgItem(*this,IDC_MSPIN);
+	SpinControl.AttachToDlgItem(*this,IDC_MSPIN);
 	SpinControl.SetRange(1,31);
 	SpinControl.SetBuddy(GetDlgItem(IDC_MEVERY));
 	if (m_pSchedule->m_nType==CSchedule::typeMonthly)
@@ -5852,7 +5852,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 
 
 	// Setting minute spin
-	SpinControl.AssignToDlgItem(*this,IDC_MINUTESPIN);
+	SpinControl.AttachToDlgItem(*this,IDC_MINUTESPIN);
 	SpinControl.SetRange(0,59);
 	SpinControl.SetBuddy(GetDlgItem(IDC_MINUTEONHOUR));
 	SpinControl.SetPos(m_pSchedule->m_nType==CSchedule::typeHourly?
@@ -5882,7 +5882,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 
 	
 	// CPU usage
-	SpinControl.AssignToDlgItem(*this,IDC_CPUUSAGESPIN);
+	SpinControl.AttachToDlgItem(*this,IDC_CPUUSAGESPIN);
 	SpinControl.SetRange(0,100);
 	SpinControl.SetBuddy(GetDlgItem(IDC_CPUUSAGE));
 	if (m_pSchedule->m_wCpuUsageTheshold!=WORD(-1))
@@ -5900,7 +5900,7 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 
 
 	// Thread priority
-	Combo.AssignToDlgItem(*this,IDC_THREADPRIORITY);
+	Combo.AttachToDlgItem(*this,IDC_THREADPRIORITY);
 	Combo.AddString(ID2W(IDS_PRIORITYHIGH));
 	Combo.AddString(ID2W(IDS_PRIORITYABOVENORMAL));
 	Combo.AddString(ID2W(IDS_PRIORITYNORMAL));
@@ -6740,11 +6740,11 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnInitDialog(HWND hwndFocus)
 	
 	
 	// Check wheter Advanced items should be added
-	m_ActionCombo.AssignToDlgItem(*this,IDC_ACTION);
-	m_SubActionCombo.AssignToDlgItem(*this,IDC_SUBACTION);
-	m_VerbCombo.AssignToDlgItem(*this,IDC_VERB);
-	m_WhichFileCombo.AssignToDlgItem(*this,IDC_WHICHFILE);
-	m_ContextMenuForCombo.AssignToDlgItem(*this,IDC_CONTEXTMENUFOR);
+	m_ActionCombo.AttachToDlgItem(*this,IDC_ACTION);
+	m_SubActionCombo.AttachToDlgItem(*this,IDC_SUBACTION);
+	m_VerbCombo.AttachToDlgItem(*this,IDC_VERB);
+	m_WhichFileCombo.AttachToDlgItem(*this,IDC_WHICHFILE);
+	m_ContextMenuForCombo.AttachToDlgItem(*this,IDC_CONTEXTMENUFOR);
 
 	// Insert action categories
 	m_ActionCombo.AddString(ID2W(IDS_NONE));
@@ -7120,7 +7120,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::GetSubActionLabel(CStringW& st
 				CWnd Control;
 				for (int i=0;hDialogs[i]!=NULL;i++)
 				{
-					Control.AssignToDlgItem(hDialogs[i],wControlID);
+					Control.AttachToDlgItem(hDialogs[i],wControlID);
 					if (HWND(Control)!=NULL)
 						break;
 				}

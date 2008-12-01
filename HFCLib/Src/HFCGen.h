@@ -819,6 +819,9 @@ public:
 	BOOL CreateBitmapIndirect(LPBITMAP lpBitmap);
 	BOOL CreateCompatibleBitmap(HDC hDC,int nWidth,int nHeight);
 
+	BOOL CreateDIBitmap(HDC hdc,CONST BITMAPINFOHEADER *lpbmih,DWORD fdwInit,CONST VOID *lpbInit,CONST BITMAPINFO *lpbmi,UINT fuUsage);
+	BOOL CreateDIBSection(HDC hdc,CONST BITMAPINFO *pbmi,UINT iUsage,VOID **ppvBits,HANDLE hSection,DWORD dwOffset);
+
 	operator HBITMAP() const;
 	
 	DWORD SetBitmapBits(DWORD dwCount, const void* lpBits);

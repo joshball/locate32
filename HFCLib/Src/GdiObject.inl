@@ -457,6 +457,33 @@ inline BOOL CBitmap::CreateCompatibleBitmap(HDC hDC, int nWidth, int nHeight)
 	return m_hObject!=NULL;
 }
 
+inline BOOL CBitmap::CreateDIBitmap(HDC hdc,CONST BITMAPINFOHEADER *lpbmih,DWORD fdwInit,CONST VOID *lpbInit,CONST BITMAPINFO *lpbmi,UINT fuUsage)
+{
+	if (m_hObject!=NULL)
+	{
+		::DeleteObject(m_hObject);
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::CreateDIBitmap(hdc,lpbmih,fdwInit,lpbInit,lpbmi,fuUsage);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
+}
+	
+inline BOOL CBitmap::CreateDIBSection(HDC hdc,CONST BITMAPINFO *pbmi,UINT iUsage,VOID **ppvBits,HANDLE hSection,DWORD dwOffset)
+{
+	if (m_hObject!=NULL)
+	{
+		::DeleteObject(m_hObject);
+		DebugCloseHandle(dhtGdiObject,m_hObject,STRNULL);
+	}
+
+	m_hObject=(HGDIOBJ)::CreateDIBSection(hdc,pbmi,iUsage,ppvBits,hSection,dwOffset);
+	DebugOpenHandle(dhtGdiObject,m_hObject,STRNULL);
+	return m_hObject!=NULL;
+}
+
+
 inline CSize CBitmap::SetBitmapDimension(int nWidth, int nHeight)
 {
 	CSize size;

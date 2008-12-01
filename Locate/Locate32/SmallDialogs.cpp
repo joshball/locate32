@@ -54,11 +54,11 @@ BOOL CSelectColumnsDlg::OnInitDialog(HWND hwndFocus)
 	spin.SetBuddy(GetDlgItem(IDC_WIDTH));
 	
 
-	m_ActionCombo.AssignToDlgItem(*this,IDC_ACTION);
-	m_WhenCombo.AssignToDlgItem(*this,IDC_WHEN);
-	m_WhichFileCombo.AssignToDlgItem(*this,IDC_WHICHFILE);
-	m_ContextMenuForCombo.AssignToDlgItem(*this,IDC_CONTEXTMENUFOR);
-	m_VerbCombo.AssignToDlgItem(*this,IDC_VERB);
+	m_ActionCombo.AttachToDlgItem(*this,IDC_ACTION);
+	m_WhenCombo.AttachToDlgItem(*this,IDC_WHEN);
+	m_WhichFileCombo.AttachToDlgItem(*this,IDC_WHICHFILE);
+	m_ContextMenuForCombo.AttachToDlgItem(*this,IDC_CONTEXTMENUFOR);
+	m_VerbCombo.AttachToDlgItem(*this,IDC_VERB);
 
 	
 	m_ActionCombo.AddString(ID2W(IDS_NONE));
@@ -807,10 +807,10 @@ BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 
 
 
-	m_PresetCombo.AssignToDlgItem(*this,IDC_PRESETS);
+	m_PresetCombo.AttachToDlgItem(*this,IDC_PRESETS);
 
 	// Creating list control
-	m_List.AssignToDlgItem(*this,IDC_DATABASES);
+	m_List.AttachToDlgItem(*this,IDC_DATABASES);
 	if (IsUnicodeSystem())
 		m_List.SetUnicodeFormat(TRUE);
 	m_List.SetExtendedListViewStyle(LVS_EX_CHECKBOXES|LVS_EX_HEADERDRAGDROP|LVS_EX_FULLROWSELECT,

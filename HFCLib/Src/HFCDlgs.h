@@ -747,6 +747,11 @@ public:
 	HTREEITEM FindItem(LPCSTR pText,BOOL bBackwardDirection=FALSE,BOOL bPartial=TRUE,BOOL bNoDisabled=TRUE,HTREEITEM hBegin=NULL,HTREEITEM hEnd=NULL) const; 
 	HTREEITEM FindItem(LPCWSTR pText,BOOL bBackwardDirection=FALSE,BOOL bPartial=TRUE,BOOL bNoDisabled=TRUE,HTREEITEM hBegin=NULL,HTREEITEM hEnd=NULL) const; 
 
+	BOOL SetBitmaps(LPCTSTR lpBitmap,int cx=16,COLORREF crMask=RGB(255,255,255));
+	BOOL SetBitmaps(int iBitmap,int cx=16,COLORREF crMask=RGB(255,255,255));
+	BOOL SetBitmaps(HIMAGELIST hImagelist,BOOL bTakeList=FALSE);
+			
+
 private:
     BOOL InsertItemsToTree(HTREEITEM hParent,Item** pItems,Item* pParent=NULL);
 	BOOL TreeNotifyHandler(NMTVDISPINFO *pTvdi);

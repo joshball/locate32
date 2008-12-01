@@ -37,6 +37,8 @@ public:
 	operator HIMAGELIST() const;
 	HIMAGELIST GetSafeHandle() const;
 
+	void Attach(HIMAGELIST hImagelist);
+
 	BOOL Create(int cx, int cy, UINT nFlags, int nInitial, int nGrow);
 	BOOL Create(UINT nBitmapID, int cx, int nGrow, COLORREF crMask);
 	BOOL Create(LPCTSTR lpszBitmapID, int cx, int nGrow, COLORREF crMask);
@@ -761,8 +763,8 @@ public:
 	BOOL HasEditChanged() const;
 
 	HWND GetHandle() const { return CCommonCtrl::m_hWnd; }
-	void SetHandle(HWND hWnd);
-	void AssignToDlgItem(HWND hDialog,int nID);
+	void Attach(HWND hWnd);
+	void AttachToDlgItem(HWND hDialog,int nID);
 	
 	using CCommonCtrl::DestroyWindow;
 	

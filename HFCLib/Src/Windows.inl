@@ -9,29 +9,36 @@
 // Class CDC
 
 inline CDC::CDC()
-:	m_hDC(NULL),m_bPrinting(FALSE),m_hWnd(NULL)
+:	m_hDC(NULL),m_bPrinting(FALSE),m_hWnd(NULL),m_nFreeMethod(None)
 {
 }
 
-inline CDC::CDC(HDC hDC)
-:	m_hDC(hDC),m_bPrinting(FALSE),m_hWnd(NULL)
+inline CDC::CDC(HDC hDC,HWND hWnd)
+:	m_hDC(hDC),m_bPrinting(FALSE),m_hWnd(hWnd),m_nFreeMethod(None)
 {
 }
 
 inline CDC::~CDC()
 {
-	if (m_hWnd!=NULL)
-		ReleaseDC();
+	FreeDC();
 }
+
 
 inline HGDIOBJ CDC::SelectStockObject(int nIndex)
 {
 	return (HGDIOBJ)::SelectObject(m_hDC,::GetStockObject(nIndex));
 }
 
-inline void CDC::SetDC(HDC hDC)
+
+inline void CDC::Attach(HDC hDC,HWND hWnd)
 {
+	ASSERT_VALID(hDC);
+
+	FreeDC();
+
 	m_hDC=hDC;
+	m_hWnd=hWnd;
+	m_nFreeMethod=None;
 }
 
 inline int CDC::SaveDC()
@@ -44,13 +51,6 @@ inline BOOL CDC::RestoreDC(int nSavedDC)
 	return ::RestoreDC(m_hDC,nSavedDC);
 }
 
-inline void CDC::ReleaseDC()
-{
-	::ReleaseDC(m_hWnd,m_hDC);
-	DebugCloseHandle(dhtGdiObject,m_hDC,STRNULL);
-	m_hWnd=NULL;
-	m_hDC=NULL;
-}
 
 inline int CDC::GetClipBox(LPRECT lpRect) const
 {
@@ -296,10 +296,13 @@ inline CSize CDC::ScaleWindowExt(int xNum,int xDenom,int yNum,int yDenom)
 
 inline void CDC::ReleaseDC(HWND hWnd)
 {
+	ASSERT_VALID(m_hDC);
+
 	::ReleaseDC(hWnd,m_hDC);
 	DebugCloseHandle(dhtGdiObject,m_hDC,STRNULL);
 	m_hWnd=NULL;
 	m_hDC=NULL;
+	m_nFreeMethod=None;
 }
 
 inline CDC::operator HDC() const
@@ -307,7 +310,7 @@ inline CDC::operator HDC() const
 	return m_hDC;
 }
 
-inline HDC CDC::GetSafeHdc() const
+inline HDC CDC::GetHandle() const
 {
 	return m_hDC;
 }

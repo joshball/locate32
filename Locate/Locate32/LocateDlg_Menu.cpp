@@ -267,6 +267,8 @@ BOOL CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,int
 			{
 				// Insert special menu, ...
 				InsertMenuItemsFromTemplate(CMenu(m_pActiveContextMenu->hPopupMenu),m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
+
+				DeleteImpossibleItemsInContextMenu(pItems,nItems);
 				return TRUE;
 			}
 
@@ -282,15 +284,15 @@ BOOL CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,int
 		InsertMenuItemsFromTemplate(Menu,m_Menu.GetSubMenu(SUBMENU_CONTEXTMENUPLAIN),0,IDM_DEFOPEN);
 		InsertMenuItemsFromTemplate(Menu,m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
 
+
 		m_pActiveContextMenu->hPopupMenu=Menu;
 		m_pActiveContextMenu->bFreeMenu=TRUE;
-		return TRUE;
 	}
 	else
 		InsertMenuItemsFromTemplate(CMenu(m_pActiveContextMenu->hPopupMenu),m_Menu.GetSubMenu(SUBMENU_OPENITEMFORFILEMENU),0);
 		
-			
 
+	DeleteImpossibleItemsInContextMenu(pItems,nItems);
 	return TRUE;
 	
 }
@@ -425,6 +427,8 @@ BOOL CLocateDlg::HandleShellCommands(WORD wID)
 		return FALSE;
 
 
+	ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
+
 	CWaitCursor wait;
 	
 	
@@ -489,6 +493,7 @@ BOOL CLocateDlg::HandleShellCommands(WORD wID)
 	}
 	if (wcscmp(szVerb,L"properties")==0 && m_pActiveContextMenu->nIDLParentLevel<=1)
 	{
+		// TODO: Implement and test support for parent support
 		ClearMenuVariables();
 		
 		int nItems;
@@ -498,6 +503,9 @@ BOOL CLocateDlg::HandleShellCommands(WORD wID)
 		fileprops->Open();
 		return TRUE;
 	}
+
+
+	// TODO: Implement and test support for parent support
 	
 	int nSelected;
 	CAutoPtrA<CLocatedItem*> pItems=GetSelectedItems(nSelected);
@@ -545,6 +553,36 @@ void CLocateDlg::ClearMenuVariables()
 		m_pActiveContextMenu=NULL;
 	}
 	
+}
+
+void CLocateDlg::DeleteImpossibleItemsInContextMenu(CLocatedItem** pItems,int nItems)
+{
+	// Check if only folders are selected and, if so, disable menu items which 
+	// which requires files
+
+	ASSERT_VALID(m_pActiveContextMenu);
+	ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
+
+	BOOL bFoldersOnly=TRUE;
+	if (!m_pActiveContextMenu->bForParents)
+	{
+		for (int i=0;i<nItems;i++)
+		{
+			if (!pItems[i]->IsFolder())
+			{
+				bFoldersOnly=FALSE;
+				break;
+			}
+		}
+	}
+
+	if (bFoldersOnly)
+	{
+		DeleteMenu(m_pActiveContextMenu->hPopupMenu,IDM_COMPUTEMD5SUM,MF_BYCOMMAND);
+		DeleteMenu(m_pActiveContextMenu->hPopupMenu,IDM_MD5SUMSFORSAMESIZEFILES,MF_BYCOMMAND);
+		DeleteMenu(m_pActiveContextMenu->hPopupMenu,IDM_COPYMD5SUMTOCLIPBOARD,MF_BYCOMMAND);
+	}
+
 }
 
 
@@ -923,11 +961,15 @@ int CLocateDlg::GetSendToMenuPos(HMENU hMenu)
 
 BOOL CLocateDlg::HandleSendToCommand(WORD wID)
 {
+
 	if (wID<IDM_DEFSENDTOITEM || wID>=IDM_DEFSENDTOITEM+1000)
 		return FALSE;
 		
 	if (m_pDesktopFolder==NULL)
 		return FALSE;
+
+	ASSERT_VALID(m_pActiveContextMenu);
+	ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 
 	CWaitCursor wait;
 	MENUITEMINFO mii;

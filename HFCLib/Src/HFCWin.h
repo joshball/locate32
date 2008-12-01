@@ -12,24 +12,30 @@ class CDC : public CObject
 {
 public:
 	CDC();
-	CDC(HDC hDC);
+	CDC(HDC hDC,HWND hWnd=NULL);
 	CDC(CWnd* pWnd);
 	virtual ~CDC();
 	
 	HDC m_hDC;
-	HWND m_hWnd;
+	HWND m_hWnd; 
 	BOOL m_bPrinting;
 	operator HDC() const;
+
+	enum DeleteMethod { None, CallReleaseDC, CallDeleteDC };
+	DeleteMethod m_nFreeMethod;
+
 	
+	void Attach(HDC hDC,HWND hWnd=NULL);
+	void SetFreeMethod(DeleteMethod nFreeMethod) { m_nFreeMethod=nFreeMethod; }
+
 	HGDIOBJ SelectStockObject(int nIndex);
 	HGDIOBJ SelectObject(HGDIOBJ hGdiObj); 
 	int SelectRegion(HRGN hRgn);
 
-	HDC GetSafeHdc() const;
+	HDC GetHandle() const;
 	
 	void SetWindow(HWND hWnd);
 	HWND GetWindow() const;
-	void SetDC(HDC hDC);
 	void ReleaseDC();
 	void ReleaseDC(HWND hWnd);
 
@@ -41,6 +47,7 @@ public:
 	HFONT GetCurrentFont() const;
 	HBITMAP GetCurrentBitmap() const;
 
+	BOOL GetDC(HWND hWnd);
 	BOOL CreateDC(LPCTSTR lpszDriverName,LPCTSTR lpszDeviceName,
 		LPCTSTR lpszOutput,const void* lpInitData);
 	BOOL CreateIC(LPCTSTR lpszDriverName, LPCTSTR lpszDeviceName,
@@ -48,6 +55,9 @@ public:
 	BOOL CreateCompatibleDC(HDC hDC);
 
 	BOOL DeleteDC();
+
+	// Calls ReleaseDC or DeleteDC based on m_nFreeMethod
+	void FreeDC(); 
 
 	int SaveDC();
 	BOOL RestoreDC(int nSavedDC);
@@ -454,8 +464,8 @@ public:
 	CWnd(HWND hWnd=NULL) { m_hWnd=hWnd; }
 
 	HWND GetHandle() const { return m_hWnd; }
-	void SetHandle(HWND hWnd) { m_hWnd=hWnd; }
-	void AssignToDlgItem(HWND hDialog,int nID) { m_hWnd=::GetDlgItem(hDialog,nID); }
+	void Attach(HWND hWnd) { m_hWnd=hWnd; }
+	void AttachToDlgItem(HWND hDialog,int nID) { m_hWnd=::GetDlgItem(hDialog,nID); }
 	operator HWND() const { return m_hWnd; }
 	
 	BOOL operator==(const CWnd& wnd) const { return (m_hWnd==wnd.m_hWnd); }

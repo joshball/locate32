@@ -1411,8 +1411,11 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 			char szDateA[201];
 			dwDateLen=GetDateFormatA(LOCALE_USER_DEFAULT,m_strDateFormat.IsEmpty()?DATE_SHORTDATE:0,&st,
 				m_strDateFormat.IsEmpty()?NULL:(LPCSTR)W2A(m_strDateFormat),szDateA,200);
-			if (dwDateLen>0)
-				MemCopyAtoW(szDate,szDateA,dwDateLen--);
+			if (dwDateLen>0) 
+			{
+				MemCopyAtoW(szDate,szDateA,dwDateLen);
+				dwDateLen--;
+			}
 		}
 
 		// If GetDateFormat fails and m_strDateFormat is not empty,
@@ -1532,8 +1535,11 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 			char szTimeA[201];
 			dwTimeLen=GetTimeFormatA(LOCALE_USER_DEFAULT,TIME_NOSECONDS,&st,
 				m_strTimeFormat.IsEmpty()?NULL:(LPCSTR)W2A(m_strTimeFormat),szTimeA,200);
-			if (dwTimeLen>0)
-				MemCopyAtoW(szTime,szTimeA,dwTimeLen--);
+			if (dwTimeLen>0) 
+			{
+				MemCopyAtoW(szTime,szTimeA,dwTimeLen);
+				dwTimeLen--;
+			}
 		}
 
 

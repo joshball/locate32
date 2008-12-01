@@ -270,7 +270,7 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 		else
 		{
 			pData=(CDateTimeCtrlEx*)pCreateStruct->lpCreateParams;
-			pData->SetHandle(hWnd);
+			pData->Attach(hWnd);
 		}
 		
 		::SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)pData);

@@ -15,7 +15,7 @@ LRESULT CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 	if (msg==WM_INITDIALOG)
 	{
 		Wnd=(CTargetWnd*)lParam;
-		Wnd->SetHandle(hWnd);
+		Wnd->Attach(hWnd);
 		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)Wnd);
 		return ((CDialog*)Wnd)->OnInitDialog((HWND)wParam);
 	} else 
@@ -23,7 +23,7 @@ LRESULT CALLBACK CAppData::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 	if (msg==WM_NCCREATE)
 	{
 		Wnd=(CTargetWnd*)((LPCREATESTRUCT)lParam)->lpCreateParams;
-		Wnd->SetHandle(hWnd);
+		Wnd->Attach(hWnd);
 		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)Wnd);
 		return Wnd->OnNcCreate((LPCREATESTRUCT)lParam);
 	}
@@ -171,7 +171,7 @@ LRESULT CALLBACK CAppData::MdiWndProc(HWND hWnd, UINT msg,
 	if (msg==WM_NCCREATE)
 	{
 		CTargetWnd* Wnd=(CTargetWnd*)((MDICREATESTRUCT*)((LPCREATESTRUCT)lParam)->lpCreateParams)->lParam;
-		Wnd->SetHandle(hWnd);
+		Wnd->Attach(hWnd);
 		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)Wnd);
 		return Wnd->OnNcCreate((LPCREATESTRUCT)lParam);
 	}
@@ -185,7 +185,7 @@ LRESULT CALLBACK CAppData::PropPageWndProc(HWND hWnd,UINT msg,
 	if (msg==WM_INITDIALOG)
 	{
 		CTargetWnd* Wnd=(CTargetWnd*)(((PROPSHEETPAGE*)lParam)->lParam);
-		Wnd->SetHandle(hWnd);
+		Wnd->Attach(hWnd);
 		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)Wnd);
 		return ((CPropertyPage*)Wnd)->OnInitDialog((HWND)wParam);
 	}

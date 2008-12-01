@@ -3,8 +3,7 @@
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
-
-
+#include <vsstyle.h>
 
 #if defined(DEF_RESOURCES) && defined(DEF_WINDOWS)
 
@@ -949,7 +948,7 @@ LRESULT CALLBACK CAppData::CommonDialogProc(HWND hWnd,UINT uMsg,WPARAM wParam,LP
 		if (Wnd==NULL)
 			return FALSE;
 		
-		Wnd->SetHandle(hWnd);
+		Wnd->Attach(hWnd);
 		SetWindowLongPtr(hWnd,GWLP_USERDATA,(LONG_PTR)Wnd);
 		return Wnd->OnInitDialog((HWND)wParam);
 	}
@@ -2946,7 +2945,7 @@ BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
 	if (m_pTree==NULL)
 	{
 		m_pTree=new CTreeCtrl(GetDlgItem(IDC_SETTINGS));
-		m_Images.Create(IDB_OPTIONSPROPERTYPAGEBITMAPS,16,256,RGB(255,255,255),IMAGE_BITMAP,LR_SHARED|LR_CREATEDIBSECTION);
+		m_Images.Create(IDB_OPTIONSPROPERTYPAGEBITMAPS,16,0,RGB(255,255,255),IMAGE_BITMAP,LR_SHARED|LR_CREATEDIBSECTION);
 		m_pTree->SetImageList(m_Images,TVSIL_STATE);
 		if (IsUnicodeSystem())
 			m_pTree->SetUnicodeFormat(TRUE);
@@ -2966,6 +2965,106 @@ BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
 			m_pTree->SetWindowLong(gwlUserData,(LONG_PTR)pUserData);
 
 		
+		// Replace images in the image list with themed/frame control images
+		HANDLE hTheme=NULL;
+		HMODULE hUxTheme=GetModuleHandle("uxtheme.dll");
+
+		HRESULT(STDAPICALLTYPE *pDrawThemeBackground)(HANDLE,HDC,int,int,const RECT*,const RECT*)=NULL;
+		HANDLE(STDAPICALLTYPE * pOpenThemeData)(HWND,LPCWSTR)=NULL;
+		HRESULT(STDAPICALLTYPE * pCloseThemeData)(HANDLE)=NULL;
+
+			
+		if (hUxTheme!=NULL)
+		{
+			pDrawThemeBackground=(HRESULT(STDAPICALLTYPE *)(HANDLE,HDC,int,int,const RECT*,const RECT*))GetProcAddress(hUxTheme,"DrawThemeBackground");
+			pOpenThemeData=(HANDLE(STDAPICALLTYPE*)(HWND,LPCWSTR))GetProcAddress(hUxTheme,"OpenThemeData");
+			pCloseThemeData=(HRESULT(STDAPICALLTYPE *)(HANDLE))GetProcAddress(GetModuleHandle("uxtheme.dll"),"CloseThemeData");
+			if (pOpenThemeData!=NULL && pDrawThemeBackground!=NULL)
+				hTheme=pOpenThemeData(*this,L"BUTTON");
+		}
+
+
+		CBitmap Bitmap,Mask;
+		BYTE* pBitmap,*pMask;
+		BITMAPINFO  dibInfo;
+		CDC dc,MemDC;
+		CBrush white(RGB(255,255,255));
+		CRect rc(0,0,16,16);
+		
+		dibInfo.bmiHeader.biBitCount = 32;
+		dibInfo.bmiHeader.biClrImportant = 0;
+		dibInfo.bmiHeader.biClrUsed = 0;
+		dibInfo.bmiHeader.biCompression = 0;
+		dibInfo.bmiHeader.biHeight = 16;
+		dibInfo.bmiHeader.biPlanes = 1;
+		dibInfo.bmiHeader.biSize = 40;
+		dibInfo.bmiHeader.biWidth = ( ( 16 + 3 ) / 4 ) * 4;
+		dibInfo.bmiHeader.biSizeImage = 16*16*4;
+		dibInfo.bmiHeader.biXPelsPerMeter = 3780;
+		dibInfo.bmiHeader.biYPelsPerMeter = 3780;
+		dibInfo.bmiColors[0].rgbBlue = 0;
+		dibInfo.bmiColors[0].rgbGreen = 0;
+		dibInfo.bmiColors[0].rgbRed = 0;
+		dibInfo.bmiColors[0].rgbReserved = 0;
+
+		dc.GetDC(NULL);
+		Bitmap.CreateDIBSection(dc,(const BITMAPINFO*)&dibInfo,DIB_RGB_COLORS,(void**)&pBitmap,NULL,0);
+		Mask.CreateDIBSection(dc,(const BITMAPINFO*)&dibInfo,DIB_RGB_COLORS,(void**)&pMask,NULL,0);
+		dc.ReleaseDC();
+
+		MemDC.CreateCompatibleDC(NULL);
+
+		// Draw first bitmap
+		HBITMAP hOldBitmap = (HBITMAP)MemDC.SelectObject(Bitmap);
+		MemDC.FillRect(&rc,white);
+		if (hTheme!=NULL)
+			pDrawThemeBackground(hTheme,MemDC,BP_CHECKBOX,CBS_UNCHECKEDNORMAL,&rc,NULL);
+		else
+			DrawFrameControl(MemDC,&rc,DFC_BUTTON,DFCS_BUTTONCHECK);
+		MemDC.SelectObject(hOldBitmap);
+		// Fill out mask
+		for (int i=0;i<16*16;i++)
+			((DWORD*)pMask)[i]=((DWORD*)pBitmap)[i]&0x00FFFFFF?0xFFFFFFFF:0;
+		m_Images.Replace(1,Bitmap,Mask);
+		
+		
+		hOldBitmap = (HBITMAP)MemDC.SelectObject(Bitmap);
+		MemDC.FillRect(&rc,white);
+		if (hTheme!=NULL)
+			pDrawThemeBackground(hTheme,MemDC,BP_CHECKBOX,CBS_CHECKEDNORMAL,&rc,NULL);
+		else
+			DrawFrameControl(MemDC,&rc,DFC_BUTTON,DFCS_BUTTONCHECK|DFCS_CHECKED);
+		MemDC.SelectObject(hOldBitmap);
+		for (int i=0;i<16*16;i++)
+			((DWORD*)pMask)[i]=((DWORD*)pBitmap)[i]&0x00FFFFFF?0xFFFFFFFF:0;
+		m_Images.Replace(2,Bitmap,Mask);
+		
+		hOldBitmap = (HBITMAP)MemDC.SelectObject(Bitmap);
+		MemDC.FillRect(&rc,white);
+		if (hTheme)
+			pDrawThemeBackground(hTheme,MemDC,BP_RADIOBUTTON,RBS_UNCHECKEDNORMAL,&rc,NULL);
+		else
+			DrawFrameControl(MemDC,&rc,DFC_BUTTON,DFCS_BUTTONRADIOIMAGE);
+		MemDC.SelectObject(hOldBitmap);
+		for (int i=0;i<16*16;i++)
+			((DWORD*)pMask)[i]=((DWORD*)pBitmap)[i]&0x00FFFFFF?0xFFFFFFFF:0;
+		m_Images.Replace(3,Bitmap,Mask);
+
+		hOldBitmap = (HBITMAP)MemDC.SelectObject(Bitmap);
+		MemDC.FillRect(&rc,white);
+		if (hTheme!=NULL)
+			pDrawThemeBackground(hTheme,MemDC,BP_RADIOBUTTON,RBS_CHECKEDNORMAL,&rc,NULL);
+		else
+			DrawFrameControl(MemDC,&rc,DFC_BUTTON,DFCS_BUTTONRADIOIMAGE|DFCS_CHECKED);
+		MemDC.SelectObject(hOldBitmap);
+		for (int i=0;i<16*16;i++)
+			((DWORD*)pMask)[i]=((DWORD*)pBitmap)[i]&0x00FFFFFF?0xFFFFFFFF:0;
+		m_Images.Replace(4,Bitmap,Mask);
+		
+		
+		if (pCloseThemeData!=NULL && hTheme!=NULL)
+			pCloseThemeData(hTheme);
+		
 	}
 
 	if (pItems==NULL)
@@ -2982,7 +3081,33 @@ BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
 	
 }
 
+BOOL COptionsPropertyPage::SetBitmaps(LPCTSTR lpBitmap,int cx,COLORREF crMask)
+{
+	m_Images.DeleteImageList();
+	if (!m_Images.Create(lpBitmap,cx,0,crMask,IMAGE_BITMAP,LR_SHARED|LR_CREATEDIBSECTION))
+		return FALSE;
+	m_pTree->SetImageList(m_Images,TVSIL_STATE);
+	return TRUE;
+}
 
+BOOL COptionsPropertyPage::SetBitmaps(int iBitmap,int cx,COLORREF crMask)
+{
+	m_Images.DeleteImageList();
+	if (!m_Images.Create(iBitmap,cx,0,crMask,IMAGE_BITMAP,LR_SHARED|LR_CREATEDIBSECTION))
+		return FALSE;
+	m_pTree->SetImageList(m_Images,TVSIL_STATE);
+	return TRUE;
+}
+
+BOOL COptionsPropertyPage::SetBitmaps(HIMAGELIST hImagelist,BOOL bTakeList)
+{
+	m_Images.DeleteImageList();
+	if (bTakeList)
+		m_Images.Attach(hImagelist);
+
+	m_pTree->SetImageList(m_Images,TVSIL_STATE);
+	return TRUE;
+}
 
 BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyPage::Item** pItems,COptionsPropertyPage::Item* pParent)
 {

@@ -1835,10 +1835,10 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 			break;
 		}
 	case CAction::OpenFolder:
-		OpenSelectedFolder(FALSE,nItem);
+		OpenSelectedFolder(FALSE,nItem,FALSE);
 		break;
 	case CAction::OpenContainingFolder:
-		OpenSelectedFolder(TRUE,nItem);
+		OpenSelectedFolder(TRUE,nItem,FALSE);
 		break;
 	case CAction::Properties:
 		OnProperties(nItem);
@@ -1983,6 +1983,8 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 
 void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 {
+	// TODO: Implement and test support for parent support
+
 	CWaitCursor wait;
 
 	int nSelectedItems;
@@ -2215,15 +2217,8 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile)
 }
 
 
-void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
+void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 {
-	struct FolderInfo{
-		CStringW sFolder;
-		CArrayFAP<LPCWSTR> aItems;
-
-		FolderInfo(LPCWSTR szFolder) { sFolder=szFolder;}
-	};
-
 	CWaitCursor wait;
 	
 	int nSelectedItems;
@@ -2235,6 +2230,75 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 
 	if (bContaining)
 	{
+		// Open containing folders
+				
+		// Collect folders
+		struct FolderInfo{
+			CStringW sFolder;
+			CArrayFAP<LPCWSTR> aItems;
+
+			FolderInfo(LPCWSTR szFolder) { sFolder=szFolder;}
+		};
+		CArrayFP<FolderInfo*> aFolders;
+
+		if (bForParents)
+		{
+			for (int i=0;i<nSelectedItems;i++)
+			{
+				int j;
+				int nParentLen=LastCharIndex(pItems[i]->GetParent(),L'\\');
+				if (nParentLen==-1)
+					continue;
+
+				CStringW sParent(pItems[i]->GetParent(),nParentLen);
+				
+				for (j=0;j<aFolders.GetSize();j++)
+				{
+					if (aFolders[j]->sFolder.Compare(sParent)==0)
+					{
+						int k;
+						for (k=0;k<aFolders[j]->aItems.GetSize();k++)
+						{
+							if (wcscmp(aFolders[j]->aItems[k],pItems[i]->GetParent()+nParentLen+1)==0)
+								break;
+						}
+						if (k==aFolders[j]->aItems.GetSize())
+							aFolders[j]->aItems.Add(alloccopy(pItems[i]->GetParent()+nParentLen+1));
+						break;
+					}
+				}
+
+				if (j==aFolders.GetSize())
+				{
+					aFolders.Add(new FolderInfo(sParent));
+					aFolders.GetLast()->aItems.Add(alloccopy(pItems[i]->GetParent()+nParentLen+1));
+				}
+			}
+		}
+		else
+		{
+			for (int i=0;i<nSelectedItems;i++)
+			{
+				int j;
+				for (j=0;j<aFolders.GetSize();j++)
+				{
+					if (aFolders[j]->sFolder.Compare(pItems[i]->GetParent())==0)
+					{
+						if (!pItems[i]->IsDeleted())
+							aFolders[j]->aItems.Add(alloccopy(pItems[i]->GetName()));
+						break;
+					}
+				}
+
+				if (j==aFolders.GetSize())
+				{
+					aFolders.Add(new FolderInfo(pItems[i]->GetParent()));
+					if (!pItems[i]->IsDeleted())
+						aFolders.GetLast()->aItems.Add(alloccopy(pItems[i]->GetName()));
+				}
+			}
+		}
+
 		// Loading some general settings
 		CRegKey2 RegKey;
 		if (RegKey.OpenKey(HKCU,"\\General",CRegKey::defRead)==ERROR_SUCCESS)
@@ -2251,29 +2315,6 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 				
 				if (pSHOpenFolderAndSelectItems!=NULL && m_pDesktopFolder!=NULL)
 				{
-					CArrayFP<FolderInfo*> aFolders;
-					int i;
-
-					// Sorting folders
-					for (i=0;i<nSelectedItems;i++)
-					{
-						int j;
-						for (j=0;j<aFolders.GetSize();j++)
-						{
-							if (aFolders[j]->sFolder.Compare(pItems[i]->GetParent())==0)
-							{
-								aFolders[j]->aItems.Add(alloccopy(pItems[i]->GetName()));
-								break;
-							}
-						}
-
-						if (j==aFolders.GetSize())
-						{
-							aFolders.Add(new FolderInfo(pItems[i]->GetParent()));
-							aFolders.GetLast()->aItems.Add(alloccopy(pItems[i]->GetName()));
-						}
-					}
-
 					// Initializing pDesktopFolder
 					IShellFolder* pParentFolder;
 					LPITEMIDLIST pParentIDList;
@@ -2283,7 +2324,7 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 					
 								
 					// Open folders
-					for (i=0;i<aFolders.GetSize();i++)
+					for (int i=0;i<aFolders.GetSize();i++)
 					{
 						CStringW sFolder(aFolders[i]->sFolder);
 
@@ -2352,13 +2393,13 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 				sxi.lpDirectory=szwEmpty;
 				sxi.nShow=SW_SHOWNORMAL;
 						
-				for (int i=0;i<nSelectedItems;i++)
-				{
-					if (pItems[i]->IsDeleted())
-						OpenFolder(pItems[i]->GetParent());
+				for (int i=0;i<aFolders.GetSize();i++)
+				{	
+					if (aFolders[i]->aItems.GetSize()==0)
+						OpenFolder(aFolders[i]->sFolder);
 					else
 					{
-						sArg.Format(L"/e,/select,\"%s\"",pItems[i]->GetPath());
+						sArg.Format(L"/e,/select,\"%s\\%s\"",(LPCWSTR)aFolders[i]->sFolder,aFolders[i]->aItems[0]);
 						sxi.lpParameters=sArg;
 						ShellFunctions::ShellExecuteEx(&sxi);
 					}
@@ -2370,40 +2411,24 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem)
 		}
 
         // Retrieving folders
-		CArrayFAP<LPCWSTR> aFolders;
-		CArrayFAP<LPCWSTR> aSelectedFiles;
-		
-		for (int i=0;i<nSelectedItems;i++)
-		{
-			
-			if (pItems[i]!=NULL)
-			{
-				BOOL bFound=FALSE;
-				for (int j=0;i<aFolders.GetSize();i++)
-				{
-					if (wcscmp(aFolders[j],pItems[i]->GetParent())==0)
-					{
-						bFound=TRUE;
-						break;
-					}
-				}
-				if (!bFound) {
-					aFolders.Add(alloccopy(pItems[i]->GetParent()));
-					aSelectedFiles.Add(alloccopy(pItems[i]->GetPath()));
-				}
-			}
-		    
-		}
-
 		for (int i=0;i<aFolders.GetSize();i++)
-			OpenFolder(aFolders[i],aSelectedFiles[i]);
+		{
+			if (aFolders[i]->aItems.GetSize()==0)
+				OpenFolder(aFolders[i]->sFolder);
+			else
+			{
+				for (int j=0;j<aFolders[i]->aItems.GetSize();j++)
+					OpenFolder(aFolders[i]->sFolder,aFolders[i]->sFolder+L'\\'+aFolders[i]->aItems[j]);
+			}
+		}
 	}
 	else
 	{
+		// Open folders
 		for (int i=0;i<nSelectedItems;i++)
 		{
 			if (pItems[i]!=NULL)
-				OpenFolder(pItems[i]->GetPath());
+				OpenFolder(bForParents?pItems[i]->GetParent():pItems[i]->GetPath());
 		}
 	}
 

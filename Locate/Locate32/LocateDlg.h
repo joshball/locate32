@@ -777,7 +777,8 @@ protected:
 	BOOL CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pSelectedItems,int nSelectedItems,BOOL bSimple=FALSE,BOOL bForParents=FALSE);
 	BOOL GetContextMenuForItems(ContextMenuInformation* pContextMenuInfo,int nItems,CLocatedItem** ppItems);
 	BOOL GetContextMenuForFiles(ContextMenuInformation* pContextMenuInfo,int nItems,LPITEMIDLIST pParentIDL,LPITEMIDLIST* ppSimpleIDLs,int nParentIDLlevel=-1);
-	void ClearMenuVariables();  
+	void ClearMenuVariables();
+	void DeleteImpossibleItemsInContextMenu(CLocatedItem** pItems,int nItems);
 	
 	BOOL HandleContextMenuCommand(WORD wID);
 	BOOL HandleShellCommands(WORD wID);
@@ -841,7 +842,7 @@ protected:
 	
 	// Helpers
 	void OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile=NULL);
-	void OpenSelectedFolder(BOOL bContaining,int nItem=-1);
+	void OpenSelectedFolder(BOOL bContaining,int nItem=-1,BOOL bForParents=FALSE);
 	CLocatedItem** GetSelectedItems(int& nItems,int nIncludeIfNoneSelected=-1);
 	void MakeItemSelected(int nItem);
 public:
