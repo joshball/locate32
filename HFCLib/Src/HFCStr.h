@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 // All definitions for manipulating strings
 ////////////////////////////////////////////////////////////////////
@@ -329,6 +329,7 @@ public:
 	CStringW(const CString& str);
 	CStringW(CHAR ch,int nRepeat=1);
 	CStringW(LPCSTR lpsz);
+	CStringW(LPCSTR lpsz,int nLength);
 	
 	~CStringW();
 

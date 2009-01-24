@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -2442,12 +2442,14 @@ CLocatedItem** CLocateDlg::GetSelectedItems(int& nItems,int nIncludeIfNoneSelect
 	{
 		CLocatedItem** pRet=new CLocatedItem*[nItems=1];
 		if (nIncludeIfNoneSelected!=-1)
-            pRet[0]=(CLocatedItem*)m_pListCtrl->GetItemData(nIncludeIfNoneSelected);
-		else
-		{
-			nItems=0;
-			pRet[0]=NULL;
+		{	
+			pRet[0]=(CLocatedItem*)m_pListCtrl->GetItemData(nIncludeIfNoneSelected);
+			nItems=pRet[0]==NULL?0:1;
+			return pRet;
 		}
+
+		nItems=0;
+		pRet[0]=NULL;
 		return pRet;
 	}
 

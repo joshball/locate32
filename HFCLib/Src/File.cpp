@@ -1,143 +1,11 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
 
 
 
-LONGLONG FileSystem::GetDiskFreeSpace(LPCSTR szDrive)
-{
-#ifdef WIN32
-	ULARGE_INTEGER i64FreeBytesToCaller;
-	BOOL (CALLBACK *pGetDiskFreeSpaceEx)(LPCSTR lpDirectoryName,
-		PULARGE_INTEGER lpFreeBytesAvailable,PULARGE_INTEGER lpTotalNumberOfBytes,
-		PULARGE_INTEGER lpTotalNumberOfFreeBytes);
-	*((FARPROC*)&pGetDiskFreeSpaceEx) = GetProcAddress( GetModuleHandle("kernel32.dll"),
-                         "GetDiskFreeSpaceExA");
-	if (pGetDiskFreeSpaceEx!=NULL)
-	{
-		ULARGE_INTEGER i64TotalBytes,i64FreeBytes;
-		if (!pGetDiskFreeSpaceEx (szDrive,&i64FreeBytesToCaller,&i64TotalBytes,&i64FreeBytes))
-			return 0;
-	}
-	else
-	{
-		DWORD nSectors,nBytes,nFreeClusters,nTolalClusters;
-		if (!::GetDiskFreeSpace(szDrive,&nSectors,
-			&nBytes,&nFreeClusters,&nTolalClusters))
-			return 0;
-		i64FreeBytesToCaller.QuadPart=nBytes*nSectors*nFreeClusters;
-	}
-	return i64FreeBytesToCaller.QuadPart;
-#else
-	UCHAR drive[2];
-	drive[0]=szDrive[0];
-	drive[1]='\0';
-	strupr((char*)drive);
-	
-	struct dfree df;
-	getdfree(drive[0]-'A'+1,&df);
-	return df.df_bsec*df.df_sclus*df.df_avail;
-#endif
-}
-
-
-#ifdef DEF_WCHAR
-LONGLONG FileSystem::GetDiskFreeSpace(LPCWSTR szDrive)
-{
-	if (!IsUnicodeSystem())
-		return FileSystem::GetDiskFreeSpace(W2A(szDrive));
-
-	ULARGE_INTEGER i64FreeBytesToCaller;
-	BOOL (CALLBACK *pGetDiskFreeSpaceExW)(LPCWSTR lpDirectoryName,
-		PULARGE_INTEGER lpFreeBytesAvailable,PULARGE_INTEGER lpTotalNumberOfBytes,
-		PULARGE_INTEGER lpTotalNumberOfFreeBytes);
-	*((FARPROC*)&pGetDiskFreeSpaceExW) = GetProcAddress( GetModuleHandle("kernel32.dll"),
-                         "GetDiskFreeSpaceExW");
-	if (pGetDiskFreeSpaceExW!=NULL)
-	{
-		ULARGE_INTEGER i64TotalBytes,i64FreeBytes;
-		if (!pGetDiskFreeSpaceExW(szDrive,&i64FreeBytesToCaller,&i64TotalBytes,&i64FreeBytes))
-			return 0;
-	}
-	else
-	{
-		DWORD nSectors,nBytes,nFreeClusters,nTolalClusters;
-		if (!GetDiskFreeSpaceW(szDrive,&nSectors,
-			&nBytes,&nFreeClusters,&nTolalClusters))
-			return 0;
-		i64FreeBytesToCaller.QuadPart=nBytes*nSectors*nFreeClusters;
-	}
-	return i64FreeBytesToCaller.QuadPart;
-}
-#endif
-
-
-#ifndef WIN32
-
-BYTE FileSystem::CopyFile(LPCTSTR src,LPCTSTR dst)
-{
-	LPSTR buffer;
-	FILE *fp;
-	DWORD Size;
-	UINT temp,temp2;
-
-	fp=fopen(src,"rb");
-	if (fp==NULL)
-	{
-		SetHFCError(HFC_CANNOTOPEN);
-		return FALSE;
-	}
-	DebugOpenHandle(File,fp,src);
-	Size=filelength(fileno(fp));
-	buffer=new char[Size+2];
-	if (buffer==NULL)
-	{
-		fclose(fp);
-		DebugCloseHandle(dhtFile,fp,src);
-		SetHFCError(HFC_CANNOTALLOC);
-		return FALSE;
-	}
-	if (!fread(buffer,1,Size,fp))
-	{
-		delete[] buffer;
-		fclose(fp);
-		DebugCloseHandle(dhtFile,fp,src);
-		SetHFCError(HFC_CANNOTREAD);
-		return FALSE;
-	}
-	_dos_getftime(fileno(fp),&temp,&temp2);
-	fclose(fp);
-	DebugCloseHandle(dhtFile,fp,src);
-
-	fp=fopen(src,"wb");
-	
-	if (fp==NULL)
-	{
-		delete[] buffer;
-		SetHFCError(HFC_CANNOTCREATE);
-		return FALSE;
-	}
-	DebugOpenHandle(dhtFile,fp,src);
-	
-	if (fwrite(buffer,1,Size,fp))
-	{
-		delete[] buffer;
-		fclose(fp);
-		DebugCloseHandle(dhtFile,fp,src);
-		SetHFCError(HFC_CANNOTWRITE);
-		return FALSE;
-	}
-	_dos_setftime(fileno(fp),temp,temp2);
-	fclose(fp);
-	DebugCloseHandle(dhtFile,fp,src);
-	_dos_getfileattr(src,&temp);
-	_dos_setfileattr(dst,temp);
-	return TRUE;
-}
-
-#endif
 
 /////////////////////////////////////////////
 // CFile
@@ -886,7 +754,35 @@ ULONGLONG CFile::GetPosition64() const
 	return (((ULONGLONG)high)<<32)|((ULONGLONG)dwPos);
 }
 
+BOOL CFile::GetFileTime(LPSYSTEMTIME lpCreationTime,LPSYSTEMTIME lpLastAccessTime,LPSYSTEMTIME lpLastWriteTime) const
+{
+	FILETIME cr,la,lw;
+	if (!::GetFileTime(m_hFile,&cr,&la,&lw))
+		return FALSE;
 
+	if (lpCreationTime!=NULL)
+		FileTimeToSystemTime(&cr,lpCreationTime);
+	if (lpLastAccessTime!=NULL)
+		FileTimeToSystemTime(&la,lpLastAccessTime);
+	if (lpLastWriteTime!=NULL)
+		FileTimeToSystemTime(&lw,lpLastWriteTime);
+
+	return TRUE;
+}
+
+
+BOOL CFile::SetFileTime(const SYSTEMTIME* lpCreationTime,const SYSTEMTIME* lpLastAccessTime,const SYSTEMTIME* lpLastWriteTime)
+{
+	FILETIME cr,la,lw;
+	if (lpCreationTime!=NULL)
+		SystemTimeToFileTime(lpCreationTime,&cr);
+	if (lpLastAccessTime!=NULL)
+		SystemTimeToFileTime(lpLastAccessTime,&la);
+	if (lpLastWriteTime!=NULL)
+		SystemTimeToFileTime(lpLastWriteTime,&lw);
+	return ::SetFileTime(m_hFile,lpCreationTime!=NULL?&cr:NULL,
+		lpLastAccessTime!=NULL?&la:NULL,lpLastWriteTime!=NULL?&lw:NULL);
+}
 ///////////////////////////////////////////
 // CFileEncoding
 ///////////////////////////////////////////
@@ -983,9 +879,735 @@ BOOL CFileEncode::Write(LPCWSTR szString,DWORD nCount)
 
 #endif
 
+
+
+///////////////////////////////////////////
+// CFileFind
+///////////////////////////////////////////
+
+#ifdef WIN32
+void CFileFind::Close()
+{
+	if (m_hFind!=NULL)
+	{
+		FindClose(m_hFind);
+		DebugCloseHandle(dhtFileFind,m_hFind,STRNULL);
+		m_hFind=NULL;
+	}
+}
+#endif
+
+BOOL CFileFind::FindFile(LPCSTR pstrName)
+{
+	strRoot.Copy(pstrName,LastCharIndex(pstrName,'\\')+1);
+#ifdef WIN32
+	if (m_hFind!=NULL)
+	{
+		::FindClose(m_hFind);
+		DebugCloseHandle(dhtFileFind,m_hFind,STRNULL);
+	}
+	
+	if (IsUnicodeSystem())
+	{
+		if (pstrName!=NULL)
+			m_hFind=::FindFirstFileW(A2W(pstrName),&m_fdw);
+		else
+			m_hFind=::FindFirstFileW(L"*.*",&m_fdw);
+	}
+	else
+	{
+		if (pstrName!=NULL)
+			m_hFind=::FindFirstFile(pstrName,&m_fd);
+		else
+			m_hFind=::FindFirstFile("*.*",&m_fd);
+	}
+	
+	if (m_hFind==INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	DebugOpenHandle(dhtFileFind,m_hFind,STRNULL);
+	return TRUE;
+#else
+	if (pstrName==NULL)
+        return !findfirst("*.*",&m_fd,FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_DIREC|FA_ARCH);
+	else
+        return !findfirst(pstrName,&m_fd,FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_DIREC|FA_ARCH);
+#endif
+}
+
+
+BOOL CFileFind::FindNextFile()
+{
+#ifdef WIN32
+	if (m_hFind==NULL)
+		return FindFile();
+	if (IsUnicodeSystem())
+		return ::FindNextFileW(m_hFind,&m_fdw);
+	else
+		return ::FindNextFileA(m_hFind,&m_fd);
+#else
+	return !findnext(&m_fd);
+#endif
+}
+
+void CFileFind::GetFilePath(LPSTR szPath,DWORD nMaxLen) const
+{
+#ifdef WIN32
+	int nRet=WideCharToMultiByte(CP_ACP,0,(LPCWSTR)strRoot,(int)strRoot.GetLength(),szPath,nMaxLen,0,0);
+
+	if (IsUnicodeSystem())
+		WideCharToMultiByte(CP_ACP,0,m_fdw.cFileName,-1,szPath+nRet,nMaxLen-nRet,0,0);
+	else
+		StringCbCopy(szPath+nRet,nMaxLen-nRet,m_fd.cFileName);
+#else
+	memcpy_s(szPath,nMaxLen,strRoot,strRoot.GetLength());
+	strcpy_s(szPath+strRoot.GetLength(),nMaxLen-strRoot.GetLength(),m_fd.ff_name);
+#endif
+}
+
+
+
+
+void CFileFind::GetFilePath(CString& path) const
+{
+	path=strRoot;
+#ifdef WIN32
+	if (IsUnicodeSystem())
+		path<<m_fdw.cFileName;
+	else
+		path<<m_fd.cFileName;
+#else
+	path<<m_fd.ff_name;
+#endif
+}
+
+#ifdef WIN32
+
+BOOL CFileFind::GetFileTitle(CString& title) const
+{
+
+	if (IsUnicodeSystem())
+	{
+		WCHAR szTitle[MAX_PATH],szPath[MAX_PATH];
+		if (StringCbCopyNW(szPath,MAX_PATH*2,strRoot,strRoot.GetLength()*2)!=S_OK)
+			return FALSE;
+
+		if (StringCbCopyW(szPath+strRoot.GetLength(),(MAX_PATH-strRoot.GetLength())*2,m_fdw.cFileName)!=S_OK)
+			return FALSE;
+
+		int len=::GetFileTitleW(szPath,szTitle,MAX_PATH);
+		if (len==0)
+			title=szTitle;
+		else
+		{
+			title.Empty();
+			return FALSE;
+		}
+	}
+	else
+	{
+		CHAR szPath[MAX_PATH];
+		if (WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0)==0)
+			return FALSE;
+		
+		if (StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName)!=S_OK)
+			return FALSE;
+		int len=::GetFileTitle(szPath,title.GetBuffer(MAX_PATH),MAX_PATH);
+		
+		if (len==0)
+			title.FreeExtra();
+		else
+		{
+			title.Empty();
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+BOOL CFileFind::GetFileTitle(LPSTR szFileTitle,DWORD nMaxLen) const
+{
+	if (IsUnicodeSystem())
+	{
+		WCHAR szTitle[MAX_PATH],szPath[MAX_PATH];
+		if (StringCbCopyNW(szPath,MAX_PATH*2,strRoot,strRoot.GetLength()*2)!=S_OK)
+			return FALSE;
+		if (StringCbCopyW(szPath+strRoot.GetLength(),(MAX_PATH-strRoot.GetLength())*2,m_fdw.cFileName)!=S_OK)
+			return FALSE;
+		short ret=::GetFileTitleW(szPath,szTitle,MAX_PATH);
+		if (ret!=0)
+			return FALSE;
+		
+		WideCharToMultiByte(CP_ACP,0,szTitle,-1,szFileTitle,nMaxLen,0,0);
+		return TRUE;
+	}
+	else
+	{
+		CHAR szPath[MAX_PATH];
+		if (WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0)==0)
+			return FALSE;
+
+		if (StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName)!=S_OK)
+			return FALSE;
+		return ::GetFileTitle(szPath,szFileTitle,(WORD)min(nMaxLen,0xFFFF))==0;
+	}
+}
+
+
+#endif
+
+#ifndef WIN32
+
+BOOL CFileFind::GetFileTime(CTime& refTime) const
+{
+	struct tm lt;
+	lt.tm_sec=(m_fd.ff_ftime&~0xFFE0)<<1;
+	lt.tm_min=(m_fd.ff_ftime&~0xF800)>>5;
+	lt.tm_hour=m_fd.ff_ftime>>11;
+	lt.tm_mday=m_fd.ff_fdate&~0xFFE0;
+	lt.tm_mon=((m_fd.ff_fdate&~0xFE00)>>5)-1;
+	lt.tm_year=(m_fd.ff_fdate>>9)+80;
+	lt.tm_isdst=0;
+	refTime.msec=0;
+	refTime.m_time=mktime(&lt);
+	return TRUE;
+}
+#endif
+
+
+#ifdef DEF_WCHAR
+void CFileFind::GetFilePath(CStringW& path) const
+{
+	path=strRoot;
+	if (IsUnicodeSystem())
+		path<<m_fdw.cFileName;
+	else
+		path<<m_fd.cFileName;
+}
+
+BOOL CFileFind::FindFile(LPCWSTR pstrName)
+{
+	strRoot.Copy(pstrName,LastCharIndex(pstrName,L'\\')+1);
+	if (m_hFind!=NULL)
+	{	
+		::FindClose(m_hFind);
+		DebugCloseHandle(dhtFileFind,m_hFind,STRNULL);
+	}
+	
+	if (IsUnicodeSystem())
+	{
+		if (pstrName!=NULL)
+			m_hFind=::FindFirstFileW(pstrName,&m_fdw);
+		else
+			m_hFind=::FindFirstFileW(L"*.*",&m_fdw);
+	}
+	else
+	{
+		if (pstrName!=NULL)
+			m_hFind=::FindFirstFile(W2A(pstrName),&m_fd);
+		else
+			m_hFind=::FindFirstFile("*.*",&m_fd);
+	}
+	DebugOpenHandle(dhtFileFind,m_hFind,STRNULL);
+		
+	if (m_hFind==INVALID_HANDLE_VALUE)
+		return FALSE;
+	return TRUE;
+}
+
+void CFileFind::GetFilePath(LPWSTR szPath,DWORD nMaxLen) const
+{
+	StringCbCopyNW(szPath,nMaxLen*sizeof(WCHAR),(LPCWSTR)strRoot,strRoot.GetLength()*sizeof(WCHAR));
+	if (IsUnicodeSystem())	
+		StringCbCopyW(szPath+(int)strRoot.GetLength(),(nMaxLen-(int)strRoot.GetLength())*sizeof(WCHAR),m_fdw.cFileName);
+	else
+		MultiByteToWideChar(CP_ACP,0,m_fd.cFileName,-1,szPath+(int)strRoot.GetLength(),nMaxLen-(int)strRoot.GetLength());
+}
+
+
+BOOL CFileFind::GetFileTitle(CStringW& title) const
+{
+
+	if (IsUnicodeSystem())
+	{
+		WCHAR szPath[MAX_PATH];
+		if (StringCbCopyNW(szPath,MAX_PATH*2,strRoot,strRoot.GetLength()*2)!=S_OK)
+			return FALSE;
+		if (StringCbCopyW(szPath+strRoot.GetLength(),(MAX_PATH-strRoot.GetLength())*2,m_fdw.cFileName)!=S_OK)
+			return FALSE;
+		short ret=::GetFileTitleW(szPath,title.GetBuffer(),MAX_PATH);
+		if (ret==0)
+			title.FreeExtra();
+		else
+		{
+			title.Empty();
+			return FALSE;
+		}
+	}
+	else
+	{
+		CHAR szPath[MAX_PATH],szTitle[MAX_PATH];
+		if (WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0)==0)
+			return FALSE;
+		if (StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-(int)strRoot.GetLength(),m_fd.cFileName)!=S_OK)
+			return FALSE;
+		short ret=::GetFileTitle(szPath,szTitle,MAX_PATH);
+		
+		if (ret==0)
+			title=szTitle;
+		else
+		{
+			title.Empty();
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+
+BOOL CFileFind::GetFileTitle(LPWSTR szFileTitle,DWORD nMaxLen) const
+{
+
+	if (IsUnicodeSystem())
+	{
+		WCHAR szPath[MAX_PATH];
+		if (StringCbCopyNW(szPath,MAX_PATH*2,strRoot,strRoot.GetLength()*2)!=S_OK)
+			return FALSE;
+		if (StringCbCopyW(szPath+strRoot.GetLength(),(MAX_PATH-strRoot.GetLength())*2,m_fdw.cFileName)!=S_OK)
+			return FALSE;
+		return ::GetFileTitleW(szPath,szFileTitle,(WORD)min(nMaxLen,0xFFFF))==0;
+	}
+	else
+	{
+		CHAR szPath[MAX_PATH],szTitle[MAX_PATH];
+		if (WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0)!=0)
+			return FALSE;
+		if (StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-(int)strRoot.GetLength(),m_fd.cFileName)!=S_OK)
+			return FALSE;
+		short ret=::GetFileTitle(szPath,szTitle,MAX_PATH);
+		if (ret!=0)
+			return FALSE;
+		MultiByteToWideChar(CP_ACP,0,szTitle,-1,szFileTitle,nMaxLen);
+		return TRUE;
+	}
+
+	
+}
+#endif
+
+///////////////////////////////////////////
+// CSearchFromFile
+///////////////////////////////////////////
+
+void CSearchFromFile::OpenFile(LPCSTR szFile)
+{
+	if (hFile!=NULL)
+		this->CloseFile();
+#ifdef WIN32
+	hFile=CreateFile(szFile,GENERIC_READ,FILE_SHARE_READ,NULL,
+		OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	if (hFile==INVALID_HANDLE_VALUE)
+		hFile=NULL;
+#else
+	hFile=fopen(szFile,"rb");
+#endif
+
+	if (hFile==NULL)
+		SetHFCError2(HFC_CANNOTOPEN,__LINE__,__FILE__);
+	else
+	{
+		DebugOpenHandle(dhtFile,hFile,szFile);
+	}
+
+}
+
+#ifdef DEF_WCHAR
+void CSearchFromFile::OpenFile(LPCWSTR szFile)
+{
+	if (!IsUnicodeSystem())
+	{
+		OpenFile(W2A(szFile));
+		return;
+	}
+
+	if (hFile!=NULL)
+		this->CloseFile();
+	hFile=CreateFileW(szFile,GENERIC_READ,FILE_SHARE_READ,NULL,
+		OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	if (hFile==INVALID_HANDLE_VALUE)
+		hFile=NULL;
+	else
+		DebugOpenHandle(dhtFile,hFile,szFile);
+
+
+
+
+	if (hFile==NULL)
+		SetHFCError2(HFC_CANNOTOPEN,__LINE__,__FILE__);
+
+}
+#endif
+
+void CSearchFromFile::CloseFile()
+{
+	if (hFile!=NULL)
+	{
+#ifdef WIN32
+		CloseHandle(hFile);
+#else
+		fclose(hFile);
+#endif
+		DebugCloseHandle(dhtFile,hFile,STRNULL);
+	}
+		
+	hFile=NULL;
+
+}
+
+
+
+///////////////////////////////////////////
+// CSearchHexFromFile
+///////////////////////////////////////////
+
+#define SEARCH_BUFFERLEN	10000
+
+CSearchHexFromFile::~CSearchHexFromFile()
+{
+	CloseFile();
+	if (pSearchValue!=NULL)
+		delete[] pSearchValue;
+}
+
+CSearchFromFile::~CSearchFromFile()
+{
+	this->CloseFile();
+}
+
+ULONG_PTR CSearchHexFromFile::GetFoundPosition() const
+{
+	return dwFilePtr+dwBufferPtr;
+}
+
+void CSearchHexFromFile::CloseFile()
+{
+	if (hFile!=NULL)
+	{
+#ifdef WIN32
+		CloseHandle(hFile);
+#else
+		fclose(hFile);
+#endif
+		DebugCloseHandle(dhtFile,hFile,STRNULL);
+	}
+	hFile=NULL;
+
+	if (pBuffer!=NULL)
+	{
+		// Ensures that buffer is clear
+		delete[] pBuffer;
+		pBuffer=NULL;
+	}
+}
+
+BOOL CSearchHexFromFile::Search(LPCSTR szFile)
+{
+    if (hFile==NULL)
+	{
+		OpenFile(szFile);
+				
+		
+		if (hFile==NULL)
+			return FALSE;
+	}
+	return DoSearching();
+}
+
+#ifdef DEF_WCHAR
+BOOL CSearchHexFromFile::Search(LPCWSTR szFile)
+{
+    if (hFile==NULL)
+	{
+		OpenFile(szFile);
+				
+		
+		if (hFile==NULL)
+			return FALSE;
+	}
+	return DoSearching();
+}
+#endif
+
+BOOL CSearchHexFromFile::DoSearching()
+{
+	if (pBuffer==NULL)
+	{
+#ifdef WIN32
+		DWORD dwFileSizeHi;
+		dwFileSize=GetFileSize(hFile,&dwFileSizeHi);
+#ifdef _WIN64
+		dwFileSize|=(SIZE_T)dwFileSizeHi<<32;
+#endif
+#else
+		dwFileSize=filelength(fileno(hFile));
+#endif
+		
+		if (dwFileSize<dwLength)
+			return FALSE; // File size if smaller than length of search value
+
+		dwBufferLen=(DWORD)min(SEARCH_BUFFERLEN,dwFileSize);
+		pBuffer=new BYTE[max(dwBufferLen,1)+1];
+		DWORD dwReaded;
+#ifdef WIN32
+		BOOL bRet=ReadFile(hFile,pBuffer,dwBufferLen,&dwReaded,NULL);
+		if (!bRet || dwReaded<dwBufferLen)
+		{
+			SetHFCError(HFC_CANNOTREAD);
+			return FALSE;
+		}
+#else
+		dwReaded=fread(pBuffer,1,dwBufferLen,hFile);
+		if (dwReaded<dwBufferLen)
+		{
+			SetHFCError(HFC_CANNOTREAD);
+			return FALSE;
+		}
+#endif
+		if (!bMatchCase)
+		{
+#ifdef WIN32
+			CharLowerBuff(LPSTR(pBuffer),dwBufferLen);
+#else
+			pBuffer[dwBufferLen]='\0';
+			strlwr(LPSTR(pBuffer));
+#endif
+		}
+		
+		dwBufferLen-=(dwLength-1);
+#ifdef WIN32
+		SetFilePointer(hFile,1-int(dwLength),NULL,FILE_CURRENT);
+#else
+		fseek(hFile,1-int(dwLength),SEEK_CUR);
+#endif
+		dwFilePtr=0;
+		dwBufferPtr=0;
+	}
+	else
+		dwBufferPtr++;
+
+	while (1)
+	{
+		for (;dwBufferPtr<dwBufferLen;dwBufferPtr++)
+		{
+			DWORD i=0;
+			for (;i<dwLength;i++)
+			{
+				if (pBuffer[dwBufferPtr+i]!=pSearchValue[i])
+					break;
+			}
+			if (i==dwLength)
+				return TRUE;
+		}
+
+		// Marking buffer readed
+		dwFilePtr+=dwBufferLen;
+
+		// Not enough of file left
+		if (dwFileSize-dwFilePtr<dwLength)
+			return FALSE;
+		
+		// Allocating new buffer if necessary
+		if (dwFilePtr+SEARCH_BUFFERLEN>dwFileSize)
+		{
+			delete[] pBuffer;
+			dwBufferLen=DWORD(dwFileSize-dwFilePtr);
+			pBuffer=new BYTE[max(1,dwBufferLen)+1];
+		}
+		else
+			dwBufferLen=SEARCH_BUFFERLEN;
+		
+		DWORD dwReaded;
+#ifdef WIN32
+		BOOL bRet=ReadFile(hFile,pBuffer,dwBufferLen,&dwReaded,NULL);
+		if (!bRet || dwReaded<dwBufferLen)
+		{
+			SetHFCError(HFC_CANNOTREAD);
+			return FALSE;
+		}
+#else
+		dwReaded=fread(pBuffer,1,dwBufferLen,hFile);
+		if (dwReaded<dwBufferLen)
+		{
+			SetHFCError(HFC_CANNOTREAD);
+			return FALSE;
+		}
+
+#endif
+		if (!bMatchCase)
+		{
+#ifdef WIN32
+			CharLowerBuff(LPSTR(pBuffer),dwBufferLen);
+#else
+            pBuffer[dwBufferLen]='\0';
+            strlwr(LPSTR(pBuffer));
+#endif
+		}
+		
+		dwBufferLen-=(dwLength-1);
+#ifdef WIN32
+		SetFilePointer(hFile,1-int(dwLength),NULL,FILE_CURRENT);
+#else
+		fseek(hFile,1-int(dwLength),SEEK_CUR);
+#endif
+		dwBufferPtr=0;
+	}
+	return FALSE;
+}
+
+
+
+
 ///////////////////////////////////////////
 // namespace FileSystem
 ///////////////////////////////////////////
+
+
+LONGLONG FileSystem::GetDiskFreeSpace(LPCSTR szDrive)
+{
+#ifdef WIN32
+	ULARGE_INTEGER i64FreeBytesToCaller;
+	BOOL (CALLBACK *pGetDiskFreeSpaceEx)(LPCSTR lpDirectoryName,
+		PULARGE_INTEGER lpFreeBytesAvailable,PULARGE_INTEGER lpTotalNumberOfBytes,
+		PULARGE_INTEGER lpTotalNumberOfFreeBytes);
+	*((FARPROC*)&pGetDiskFreeSpaceEx) = GetProcAddress( GetModuleHandle("kernel32.dll"),
+                         "GetDiskFreeSpaceExA");
+	if (pGetDiskFreeSpaceEx!=NULL)
+	{
+		ULARGE_INTEGER i64TotalBytes,i64FreeBytes;
+		if (!pGetDiskFreeSpaceEx (szDrive,&i64FreeBytesToCaller,&i64TotalBytes,&i64FreeBytes))
+			return 0;
+	}
+	else
+	{
+		DWORD nSectors,nBytes,nFreeClusters,nTolalClusters;
+		if (!::GetDiskFreeSpace(szDrive,&nSectors,
+			&nBytes,&nFreeClusters,&nTolalClusters))
+			return 0;
+		i64FreeBytesToCaller.QuadPart=nBytes*nSectors*nFreeClusters;
+	}
+	return i64FreeBytesToCaller.QuadPart;
+#else
+	UCHAR drive[2];
+	drive[0]=szDrive[0];
+	drive[1]='\0';
+	strupr((char*)drive);
+	
+	struct dfree df;
+	getdfree(drive[0]-'A'+1,&df);
+	return df.df_bsec*df.df_sclus*df.df_avail;
+#endif
+}
+
+
+#ifdef DEF_WCHAR
+LONGLONG FileSystem::GetDiskFreeSpace(LPCWSTR szDrive)
+{
+	if (!IsUnicodeSystem())
+		return FileSystem::GetDiskFreeSpace(W2A(szDrive));
+
+	ULARGE_INTEGER i64FreeBytesToCaller;
+	BOOL (CALLBACK *pGetDiskFreeSpaceExW)(LPCWSTR lpDirectoryName,
+		PULARGE_INTEGER lpFreeBytesAvailable,PULARGE_INTEGER lpTotalNumberOfBytes,
+		PULARGE_INTEGER lpTotalNumberOfFreeBytes);
+	*((FARPROC*)&pGetDiskFreeSpaceExW) = GetProcAddress( GetModuleHandle("kernel32.dll"),
+                         "GetDiskFreeSpaceExW");
+	if (pGetDiskFreeSpaceExW!=NULL)
+	{
+		ULARGE_INTEGER i64TotalBytes,i64FreeBytes;
+		if (!pGetDiskFreeSpaceExW(szDrive,&i64FreeBytesToCaller,&i64TotalBytes,&i64FreeBytes))
+			return 0;
+	}
+	else
+	{
+		DWORD nSectors,nBytes,nFreeClusters,nTolalClusters;
+		if (!GetDiskFreeSpaceW(szDrive,&nSectors,
+			&nBytes,&nFreeClusters,&nTolalClusters))
+			return 0;
+		i64FreeBytesToCaller.QuadPart=nBytes*nSectors*nFreeClusters;
+	}
+	return i64FreeBytesToCaller.QuadPart;
+}
+#endif
+
+
+#ifndef WIN32
+
+BYTE FileSystem::CopyFile(LPCTSTR src,LPCTSTR dst)
+{
+	LPSTR buffer;
+	FILE *fp;
+	DWORD Size;
+	UINT temp,temp2;
+
+	fp=fopen(src,"rb");
+	if (fp==NULL)
+	{
+		SetHFCError(HFC_CANNOTOPEN);
+		return FALSE;
+	}
+	DebugOpenHandle(File,fp,src);
+	Size=filelength(fileno(fp));
+	buffer=new char[Size+2];
+	if (buffer==NULL)
+	{
+		fclose(fp);
+		DebugCloseHandle(dhtFile,fp,src);
+		SetHFCError(HFC_CANNOTALLOC);
+		return FALSE;
+	}
+	if (!fread(buffer,1,Size,fp))
+	{
+		delete[] buffer;
+		fclose(fp);
+		DebugCloseHandle(dhtFile,fp,src);
+		SetHFCError(HFC_CANNOTREAD);
+		return FALSE;
+	}
+	_dos_getftime(fileno(fp),&temp,&temp2);
+	fclose(fp);
+	DebugCloseHandle(dhtFile,fp,src);
+
+	fp=fopen(src,"wb");
+	
+	if (fp==NULL)
+	{
+		delete[] buffer;
+		SetHFCError(HFC_CANNOTCREATE);
+		return FALSE;
+	}
+	DebugOpenHandle(dhtFile,fp,src);
+	
+	if (fwrite(buffer,1,Size,fp))
+	{
+		delete[] buffer;
+		fclose(fp);
+		DebugCloseHandle(dhtFile,fp,src);
+		SetHFCError(HFC_CANNOTWRITE);
+		return FALSE;
+	}
+	_dos_setftime(fileno(fp),temp,temp2);
+	fclose(fp);
+	DebugCloseHandle(dhtFile,fp,src);
+	_dos_getfileattr(src,&temp);
+	_dos_setfileattr(dst,temp);
+	return TRUE;
+}
+
+#endif
+
+
 
 BOOL FileSystem::IsFile(LPCSTR szFileName)
 {
@@ -2236,589 +2858,4 @@ BOOL  FileSystem::SetStatus(LPCSTR lpszFileName,const CFileStatus& status)
 	fclose(fp);
 	return TRUE;
 #endif
-}
-
-///////////////////////////////////////////
-// CFileFind
-///////////////////////////////////////////
-
-#ifdef WIN32
-void CFileFind::Close()
-{
-	if (m_hFind!=NULL)
-	{
-		FindClose(m_hFind);
-		DebugCloseHandle(dhtFileFind,m_hFind,STRNULL);
-		m_hFind=NULL;
-	}
-}
-#endif
-
-BOOL CFileFind::FindFile(LPCSTR pstrName)
-{
-	strRoot.Copy(pstrName,LastCharIndex(pstrName,'\\')+1);
-#ifdef WIN32
-	if (m_hFind!=NULL)
-	{
-		::FindClose(m_hFind);
-		DebugCloseHandle(dhtFileFind,m_hFind,STRNULL);
-	}
-	
-	if (IsUnicodeSystem())
-	{
-		if (pstrName!=NULL)
-			m_hFind=::FindFirstFileW(A2W(pstrName),&m_fdw);
-		else
-			m_hFind=::FindFirstFileW(L"*.*",&m_fdw);
-	}
-	else
-	{
-		if (pstrName!=NULL)
-			m_hFind=::FindFirstFile(pstrName,&m_fd);
-		else
-			m_hFind=::FindFirstFile("*.*",&m_fd);
-	}
-	
-	if (m_hFind==INVALID_HANDLE_VALUE)
-		return FALSE;
-
-	DebugOpenHandle(dhtFileFind,m_hFind,STRNULL);
-	return TRUE;
-#else
-	if (pstrName==NULL)
-        return !findfirst("*.*",&m_fd,FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_DIREC|FA_ARCH);
-	else
-        return !findfirst(pstrName,&m_fd,FA_RDONLY|FA_HIDDEN|FA_SYSTEM|FA_DIREC|FA_ARCH);
-#endif
-}
-
-
-BOOL CFileFind::FindNextFile()
-{
-#ifdef WIN32
-	if (m_hFind==NULL)
-		return FindFile();
-	if (IsUnicodeSystem())
-		return ::FindNextFileW(m_hFind,&m_fdw);
-	else
-		return ::FindNextFileA(m_hFind,&m_fd);
-#else
-	return !findnext(&m_fd);
-#endif
-}
-
-void CFileFind::GetFilePath(LPSTR szPath,DWORD nMaxLen) const
-{
-#ifdef WIN32
-	int nRet=WideCharToMultiByte(CP_ACP,0,(LPCWSTR)strRoot,(int)strRoot.GetLength(),szPath,nMaxLen,0,0);
-
-	if (IsUnicodeSystem())
-		WideCharToMultiByte(CP_ACP,0,m_fdw.cFileName,-1,szPath+nRet,nMaxLen-nRet,0,0);
-	else
-		StringCbCopy(szPath+nRet,nMaxLen-nRet,m_fd.cFileName);
-#else
-	memcpy_s(szPath,nMaxLen,strRoot,strRoot.GetLength());
-	strcpy_s(szPath+strRoot.GetLength(),nMaxLen-strRoot.GetLength(),m_fd.ff_name);
-#endif
-}
-
-
-
-
-void CFileFind::GetFilePath(CString& path) const
-{
-	path=strRoot;
-#ifdef WIN32
-	if (IsUnicodeSystem())
-		path<<m_fdw.cFileName;
-	else
-		path<<m_fd.cFileName;
-#else
-	path<<m_fd.ff_name;
-#endif
-}
-
-#ifdef WIN32
-
-BOOL CFileFind::GetFileTitle(CString& title) const
-{
-
-	if (IsUnicodeSystem())
-	{
-		WCHAR szTitle[MAX_PATH],szPath[MAX_PATH];
-		if (StringCbCopyNW(szPath,MAX_PATH*2,strRoot,strRoot.GetLength()*2)!=S_OK)
-			return FALSE;
-
-		if (StringCbCopyW(szPath+strRoot.GetLength(),(MAX_PATH-strRoot.GetLength())*2,m_fdw.cFileName)!=S_OK)
-			return FALSE;
-
-		int len=::GetFileTitleW(szPath,szTitle,MAX_PATH);
-		if (len==0)
-			title=szTitle;
-		else
-		{
-			title.Empty();
-			return FALSE;
-		}
-	}
-	else
-	{
-		CHAR szPath[MAX_PATH];
-		if (WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0)==0)
-			return FALSE;
-		
-		if (StringCbCopy(szPath+strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName)!=S_OK)
-			return FALSE;
-		int len=::GetFileTitle(szPath,title.GetBuffer(MAX_PATH),MAX_PATH);
-		
-		if (len==0)
-			title.FreeExtra();
-		else
-		{
-			title.Empty();
-			return FALSE;
-		}
-	}
-
-	return TRUE;
-}
-
-BOOL CFileFind::GetFileTitle(LPSTR szFileTitle,DWORD nMaxLen) const
-{
-	if (IsUnicodeSystem())
-	{
-		WCHAR szTitle[MAX_PATH],szPath[MAX_PATH];
-		if (StringCbCopyNW(szPath,MAX_PATH*2,strRoot,strRoot.GetLength()*2)!=S_OK)
-			return FALSE;
-		if (StringCbCopyW(szPath+strRoot.GetLength(),(MAX_PATH-strRoot.GetLength())*2,m_fdw.cFileName)!=S_OK)
-			return FALSE;
-		short ret=::GetFileTitleW(szPath,szTitle,MAX_PATH);
-		if (ret!=0)
-			return FALSE;
-		
-		WideCharToMultiByte(CP_ACP,0,szTitle,-1,szFileTitle,nMaxLen,0,0);
-		return TRUE;
-	}
-	else
-	{
-		CHAR szPath[MAX_PATH];
-		if (WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0)==0)
-			return FALSE;
-
-		if (StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-strRoot.GetLength(),m_fd.cFileName)!=S_OK)
-			return FALSE;
-		return ::GetFileTitle(szPath,szFileTitle,(WORD)min(nMaxLen,0xFFFF))==0;
-	}
-}
-
-
-#endif
-
-#ifndef WIN32
-
-BOOL CFileFind::GetFileTime(CTime& refTime) const
-{
-	struct tm lt;
-	lt.tm_sec=(m_fd.ff_ftime&~0xFFE0)<<1;
-	lt.tm_min=(m_fd.ff_ftime&~0xF800)>>5;
-	lt.tm_hour=m_fd.ff_ftime>>11;
-	lt.tm_mday=m_fd.ff_fdate&~0xFFE0;
-	lt.tm_mon=((m_fd.ff_fdate&~0xFE00)>>5)-1;
-	lt.tm_year=(m_fd.ff_fdate>>9)+80;
-	lt.tm_isdst=0;
-	refTime.msec=0;
-	refTime.m_time=mktime(&lt);
-	return TRUE;
-}
-#endif
-
-
-#ifdef DEF_WCHAR
-void CFileFind::GetFilePath(CStringW& path) const
-{
-	path=strRoot;
-	if (IsUnicodeSystem())
-		path<<m_fdw.cFileName;
-	else
-		path<<m_fd.cFileName;
-}
-
-BOOL CFileFind::FindFile(LPCWSTR pstrName)
-{
-	strRoot.Copy(pstrName,LastCharIndex(pstrName,L'\\')+1);
-	if (m_hFind!=NULL)
-	{	
-		::FindClose(m_hFind);
-		DebugCloseHandle(dhtFileFind,m_hFind,STRNULL);
-	}
-	
-	if (IsUnicodeSystem())
-	{
-		if (pstrName!=NULL)
-			m_hFind=::FindFirstFileW(pstrName,&m_fdw);
-		else
-			m_hFind=::FindFirstFileW(L"*.*",&m_fdw);
-	}
-	else
-	{
-		if (pstrName!=NULL)
-			m_hFind=::FindFirstFile(W2A(pstrName),&m_fd);
-		else
-			m_hFind=::FindFirstFile("*.*",&m_fd);
-	}
-	DebugOpenHandle(dhtFileFind,m_hFind,STRNULL);
-		
-	if (m_hFind==INVALID_HANDLE_VALUE)
-		return FALSE;
-	return TRUE;
-}
-
-void CFileFind::GetFilePath(LPWSTR szPath,DWORD nMaxLen) const
-{
-	StringCbCopyNW(szPath,nMaxLen*sizeof(WCHAR),(LPCWSTR)strRoot,strRoot.GetLength()*sizeof(WCHAR));
-	if (IsUnicodeSystem())	
-		StringCbCopyW(szPath+(int)strRoot.GetLength(),(nMaxLen-(int)strRoot.GetLength())*sizeof(WCHAR),m_fdw.cFileName);
-	else
-		MultiByteToWideChar(CP_ACP,0,m_fd.cFileName,-1,szPath+(int)strRoot.GetLength(),nMaxLen-(int)strRoot.GetLength());
-}
-
-
-BOOL CFileFind::GetFileTitle(CStringW& title) const
-{
-
-	if (IsUnicodeSystem())
-	{
-		WCHAR szPath[MAX_PATH];
-		if (StringCbCopyNW(szPath,MAX_PATH*2,strRoot,strRoot.GetLength()*2)!=S_OK)
-			return FALSE;
-		if (StringCbCopyW(szPath+strRoot.GetLength(),(MAX_PATH-strRoot.GetLength())*2,m_fdw.cFileName)!=S_OK)
-			return FALSE;
-		short ret=::GetFileTitleW(szPath,title.GetBuffer(),MAX_PATH);
-		if (ret==0)
-			title.FreeExtra();
-		else
-		{
-			title.Empty();
-			return FALSE;
-		}
-	}
-	else
-	{
-		CHAR szPath[MAX_PATH],szTitle[MAX_PATH];
-		if (WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0)==0)
-			return FALSE;
-		if (StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-(int)strRoot.GetLength(),m_fd.cFileName)!=S_OK)
-			return FALSE;
-		short ret=::GetFileTitle(szPath,szTitle,MAX_PATH);
-		
-		if (ret==0)
-			title=szTitle;
-		else
-		{
-			title.Empty();
-			return FALSE;
-		}
-	}
-
-	return TRUE;
-}
-
-
-BOOL CFileFind::GetFileTitle(LPWSTR szFileTitle,DWORD nMaxLen) const
-{
-
-	if (IsUnicodeSystem())
-	{
-		WCHAR szPath[MAX_PATH];
-		if (StringCbCopyNW(szPath,MAX_PATH*2,strRoot,strRoot.GetLength()*2)!=S_OK)
-			return FALSE;
-		if (StringCbCopyW(szPath+strRoot.GetLength(),(MAX_PATH-strRoot.GetLength())*2,m_fdw.cFileName)!=S_OK)
-			return FALSE;
-		return ::GetFileTitleW(szPath,szFileTitle,(WORD)min(nMaxLen,0xFFFF))==0;
-	}
-	else
-	{
-		CHAR szPath[MAX_PATH],szTitle[MAX_PATH];
-		if (WideCharToMultiByte(CP_ACP,0,strRoot,(int)strRoot.GetLength(),szPath,MAX_PATH,0,0)!=0)
-			return FALSE;
-		if (StringCbCopy(szPath+(int)strRoot.GetLength(),MAX_PATH-(int)strRoot.GetLength(),m_fd.cFileName)!=S_OK)
-			return FALSE;
-		short ret=::GetFileTitle(szPath,szTitle,MAX_PATH);
-		if (ret!=0)
-			return FALSE;
-		MultiByteToWideChar(CP_ACP,0,szTitle,-1,szFileTitle,nMaxLen);
-		return TRUE;
-	}
-
-	
-}
-#endif
-
-///////////////////////////////////////////
-// CSearchFromFile
-///////////////////////////////////////////
-
-void CSearchFromFile::OpenFile(LPCSTR szFile)
-{
-	if (hFile!=NULL)
-		this->CloseFile();
-#ifdef WIN32
-	hFile=CreateFile(szFile,GENERIC_READ,FILE_SHARE_READ,NULL,
-		OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-	if (hFile==INVALID_HANDLE_VALUE)
-		hFile=NULL;
-#else
-	hFile=fopen(szFile,"rb");
-#endif
-
-	if (hFile==NULL)
-		SetHFCError2(HFC_CANNOTOPEN,__LINE__,__FILE__);
-	else
-	{
-		DebugOpenHandle(dhtFile,hFile,szFile);
-	}
-
-}
-
-#ifdef DEF_WCHAR
-void CSearchFromFile::OpenFile(LPCWSTR szFile)
-{
-	if (!IsUnicodeSystem())
-	{
-		OpenFile(W2A(szFile));
-		return;
-	}
-
-	if (hFile!=NULL)
-		this->CloseFile();
-	hFile=CreateFileW(szFile,GENERIC_READ,FILE_SHARE_READ,NULL,
-		OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
-	if (hFile==INVALID_HANDLE_VALUE)
-		hFile=NULL;
-	else
-		DebugOpenHandle(dhtFile,hFile,szFile);
-
-
-
-
-	if (hFile==NULL)
-		SetHFCError2(HFC_CANNOTOPEN,__LINE__,__FILE__);
-
-}
-#endif
-
-void CSearchFromFile::CloseFile()
-{
-	if (hFile!=NULL)
-	{
-#ifdef WIN32
-		CloseHandle(hFile);
-#else
-		fclose(hFile);
-#endif
-		DebugCloseHandle(dhtFile,hFile,STRNULL);
-	}
-		
-	hFile=NULL;
-
-}
-
-
-
-///////////////////////////////////////////
-// CSearchHexFromFile
-///////////////////////////////////////////
-
-#define SEARCH_BUFFERLEN	10000
-
-CSearchHexFromFile::~CSearchHexFromFile()
-{
-	CloseFile();
-	if (pSearchValue!=NULL)
-		delete[] pSearchValue;
-}
-
-CSearchFromFile::~CSearchFromFile()
-{
-	this->CloseFile();
-}
-
-ULONG_PTR CSearchHexFromFile::GetFoundPosition() const
-{
-	return dwFilePtr+dwBufferPtr;
-}
-
-void CSearchHexFromFile::CloseFile()
-{
-	if (hFile!=NULL)
-	{
-#ifdef WIN32
-		CloseHandle(hFile);
-#else
-		fclose(hFile);
-#endif
-		DebugCloseHandle(dhtFile,hFile,STRNULL);
-	}
-	hFile=NULL;
-
-	if (pBuffer!=NULL)
-	{
-		// Ensures that buffer is clear
-		delete[] pBuffer;
-		pBuffer=NULL;
-	}
-}
-
-BOOL CSearchHexFromFile::Search(LPCSTR szFile)
-{
-    if (hFile==NULL)
-	{
-		OpenFile(szFile);
-				
-		
-		if (hFile==NULL)
-			return FALSE;
-	}
-	return DoSearching();
-}
-
-#ifdef DEF_WCHAR
-BOOL CSearchHexFromFile::Search(LPCWSTR szFile)
-{
-    if (hFile==NULL)
-	{
-		OpenFile(szFile);
-				
-		
-		if (hFile==NULL)
-			return FALSE;
-	}
-	return DoSearching();
-}
-#endif
-
-BOOL CSearchHexFromFile::DoSearching()
-{
-	if (pBuffer==NULL)
-	{
-#ifdef WIN32
-		DWORD dwFileSizeHi;
-		dwFileSize=GetFileSize(hFile,&dwFileSizeHi);
-#ifdef _WIN64
-		dwFileSize|=(SIZE_T)dwFileSizeHi<<32;
-#endif
-#else
-		dwFileSize=filelength(fileno(hFile));
-#endif
-		
-		if (dwFileSize<dwLength)
-			return FALSE; // File size if smaller than length of search value
-
-		dwBufferLen=(DWORD)min(SEARCH_BUFFERLEN,dwFileSize);
-		pBuffer=new BYTE[max(dwBufferLen,1)+1];
-		DWORD dwReaded;
-#ifdef WIN32
-		BOOL bRet=ReadFile(hFile,pBuffer,dwBufferLen,&dwReaded,NULL);
-		if (!bRet || dwReaded<dwBufferLen)
-		{
-			SetHFCError(HFC_CANNOTREAD);
-			return FALSE;
-		}
-#else
-		dwReaded=fread(pBuffer,1,dwBufferLen,hFile);
-		if (dwReaded<dwBufferLen)
-		{
-			SetHFCError(HFC_CANNOTREAD);
-			return FALSE;
-		}
-#endif
-		if (!bMatchCase)
-		{
-#ifdef WIN32
-			CharLowerBuff(LPSTR(pBuffer),dwBufferLen);
-#else
-			pBuffer[dwBufferLen]='\0';
-			strlwr(LPSTR(pBuffer));
-#endif
-		}
-		
-		dwBufferLen-=(dwLength-1);
-#ifdef WIN32
-		SetFilePointer(hFile,1-int(dwLength),NULL,FILE_CURRENT);
-#else
-		fseek(hFile,1-int(dwLength),SEEK_CUR);
-#endif
-		dwFilePtr=0;
-		dwBufferPtr=0;
-	}
-	else
-		dwBufferPtr++;
-
-	while (1)
-	{
-		for (;dwBufferPtr<dwBufferLen;dwBufferPtr++)
-		{
-			DWORD i=0;
-			for (;i<dwLength;i++)
-			{
-				if (pBuffer[dwBufferPtr+i]!=pSearchValue[i])
-					break;
-			}
-			if (i==dwLength)
-				return TRUE;
-		}
-
-		// Marking buffer readed
-		dwFilePtr+=dwBufferLen;
-
-		// Not enough of file left
-		if (dwFileSize-dwFilePtr<dwLength)
-			return FALSE;
-		
-		// Allocating new buffer if necessary
-		if (dwFilePtr+SEARCH_BUFFERLEN>dwFileSize)
-		{
-			delete[] pBuffer;
-			dwBufferLen=DWORD(dwFileSize-dwFilePtr);
-			pBuffer=new BYTE[max(1,dwBufferLen)+1];
-		}
-		else
-			dwBufferLen=SEARCH_BUFFERLEN;
-		
-		DWORD dwReaded;
-#ifdef WIN32
-		BOOL bRet=ReadFile(hFile,pBuffer,dwBufferLen,&dwReaded,NULL);
-		if (!bRet || dwReaded<dwBufferLen)
-		{
-			SetHFCError(HFC_CANNOTREAD);
-			return FALSE;
-		}
-#else
-		dwReaded=fread(pBuffer,1,dwBufferLen,hFile);
-		if (dwReaded<dwBufferLen)
-		{
-			SetHFCError(HFC_CANNOTREAD);
-			return FALSE;
-		}
-
-#endif
-		if (!bMatchCase)
-		{
-#ifdef WIN32
-			CharLowerBuff(LPSTR(pBuffer),dwBufferLen);
-#else
-            pBuffer[dwBufferLen]='\0';
-            strlwr(LPSTR(pBuffer));
-#endif
-		}
-		
-		dwBufferLen-=(dwLength-1);
-#ifdef WIN32
-		SetFilePointer(hFile,1-int(dwLength),NULL,FILE_CURRENT);
-#else
-		fseek(hFile,1-int(dwLength),SEEK_CUR);
-#endif
-		dwBufferPtr=0;
-	}
-	return FALSE;
 }

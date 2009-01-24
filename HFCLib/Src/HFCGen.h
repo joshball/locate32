@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 
@@ -315,6 +315,19 @@ public:
 #ifdef DEF_WCHAR
 	virtual BOOL Write(LPCWSTR lpString, DWORD nCount);
 #endif
+
+	BOOL GetFileTime(LPFILETIME lpCreationTime,LPFILETIME lpLastAccessTime,LPFILETIME lpLastWriteTime) const;
+	BOOL GetFileTime(LPSYSTEMTIME lpCreationTime,LPSYSTEMTIME lpLastAccessTime,LPSYSTEMTIME lpLastWriteTime) const;
+	BOOL SetFileTime(const FILETIME* lpCreationTime,const FILETIME* lpLastAccessTime,const FILETIME* lpLastWriteTime);
+	BOOL SetFileTime(const SYSTEMTIME* lpCreationTime,const SYSTEMTIME* lpLastAccessTime,const SYSTEMTIME* lpLastWriteTime);
+	DWORD GetFileType() const;
+
+
+	BOOL SetFileShortName(LPCSTR lpShortName);
+#ifdef DEF_WCHAR
+	BOOL SetFileShortName(LPCWSTR lpShortName);
+#endif
+
 
 
 	// Helpers

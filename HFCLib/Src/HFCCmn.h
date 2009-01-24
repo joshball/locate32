@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 
@@ -749,9 +749,10 @@ public:
 	BOOL SetItemText(int nItem,LPCWSTR lpszText);
 	
 	DWORD_PTR GetItemData(int nIndex) const;
-	int SetItemData(int nIndex, DWORD_PTR dwItemData);
+	DWORD_PTR GetItemDataSafe(int nIndex) const;
 	void* GetItemDataPtr(int nIndex) const;
-
+	int SetItemData(int nIndex, DWORD_PTR dwItemData);
+	
 	using CCommonCtrl::GetWindowLong;
 	using CCommonCtrl::SetWindowLong;
 	using CCommonCtrl::ModifyStyle;

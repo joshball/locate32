@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"

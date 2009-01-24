@@ -952,6 +952,12 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanFolder(LPWSTR szFolder,DWORD n
 
 	for(;;)
 	{
+
+		if (wcscmp(_FindGetName(&fd),L"TEST.avi")==0)
+		{
+			CAppData::stdfunc();
+		}
+
 		if (_FindGetName(&fd)[0]==L'.' && (_FindGetName(&fd)[1]==L'\0' || _FindGetName(&fd)[1]==L'.'))
 		{
 			if(!_FindNextFile(hFind,&fd))

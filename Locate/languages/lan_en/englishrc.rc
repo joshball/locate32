@@ -44,7 +44,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 RC3c build 8.11160"
+            VALUE "FileVersion", "3.1 RC3d build 9.1240"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2008 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"

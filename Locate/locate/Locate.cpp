@@ -1,4 +1,4 @@
-/* Copyright (c) 1997-2008 Janne Huttunen
+/* Copyright (c) 1997-2009 Janne Huttunen
    database locater v3.1.8.9210              */
 
 const char* szVersionStr="locate 3.1 RC3 build 8.9210";

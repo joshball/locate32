@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2008 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
 
 #ifndef SHORTCUT_H
 #define SHORTCUT_H

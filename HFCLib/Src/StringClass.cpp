@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -2623,6 +2623,30 @@ CStringW::CStringW(const CString& str)
 		m_nDataLen=0;
 		m_nAllocLen=0;
 		m_nBase=10;
+	}
+}
+
+CStringW::CStringW(LPCSTR lpsz,int nLength)
+:	m_nBase(10)
+{
+	if (lpsz!=NULL)
+	{
+		m_nDataLen=nLength;
+		
+		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		if (m_pData==NULL)
+		{
+			SetHFCError(HFC_CANNOTALLOCATE);
+			return;
+		}
+		MemCopyAtoW(m_pData,lpsz,m_nDataLen);
+		m_pData[m_nDataLen]='\0';
+	}
+	else
+	{
+		m_pData=NULL;
+		m_nDataLen=0;
+		m_nAllocLen=0;
 	}
 }
 

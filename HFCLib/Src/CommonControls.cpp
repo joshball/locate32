@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -620,9 +620,12 @@ BOOL CListCtrl::GetItemText(CString& str,int nItem, int nSubItem) const
 	li.iSubItem=nSubItem;
 	li.pszText=str.GetBuffer(1000);
 	li.cchTextMax=1000;
-	::SendMessage(m_hWnd,LVM_GETITEMTEXT,nItem,(LPARAM)&li);
-	str.FreeExtra();
-	return TRUE;
+	int nRet=::SendMessage(m_hWnd,LVM_GETITEMTEXT,nItem,(LPARAM)&li);
+	if (nRet==0)
+		str.Empty();
+	else 
+		str.FreeExtra(nRet);
+	return nRet>0;
 }
 	
 int CListCtrl::GetItemText(int nItem, int nSubItem, LPTSTR lpszText, int nLen) const
@@ -664,8 +667,9 @@ DWORD_PTR CListCtrl::GetItemData(int nItem) const
 	li.mask=LVIF_PARAM;
 	li.iItem=nItem;
 	li.iSubItem=0;
-	::SendMessage(m_hWnd,LVM_GETITEM,0,(LPARAM)&li);
-	return li.lParam;
+	if (::SendMessage(m_hWnd,LVM_GETITEM,0,(LPARAM)&li))
+		return li.lParam;
+	return NULL;
 }
 
 int CListCtrl::InsertItem(int nItem, LPCSTR lpszItem)
@@ -695,7 +699,8 @@ int CListCtrl::HitTest(POINT pt, UINT* pFlags) const
 	lh.pt=pt;
 	if (pFlags!=NULL)
 		lh.flags=*pFlags;
-	::SendMessage(m_hWnd,LVM_HITTEST,0,(LPARAM)&lh);
+	if (::SendMessage(m_hWnd,LVM_HITTEST,0,(LPARAM)&lh)==-1)
+		return -1;
 	if (pFlags!=NULL)
 		*pFlags=lh.flags;
 	return lh.iItem;
@@ -889,9 +894,12 @@ BOOL CListCtrl::GetItemText(CStringW& str,int nItem, int nSubItem) const
 	li.iSubItem=nSubItem;
 	li.pszText=str.GetBuffer(1000);
 	li.cchTextMax=1000;
-	::SendMessage(m_hWnd,LVM_GETITEMTEXTW,nItem,(LPARAM)&li);
-	str.FreeExtra();
-	return TRUE;
+	int nRet=::SendMessage(m_hWnd,LVM_GETITEMTEXTW,nItem,(LPARAM)&li);
+	if (nRet>0)
+		str.FreeExtra(nRet);
+	else
+		str.Empty();
+	return nRet>0;
 }
 	
 int CListCtrl::GetItemText(int nItem, int nSubItem, LPWSTR lpszText, int nLen) const
@@ -950,8 +958,11 @@ CString CTreeCtrl::GetItemText(HTREEITEM hItem) const
 	ti.hItem=hItem;
 	ti.pszText=str.GetBuffer(1000);
 	ti.cchTextMax=1000;
-	::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)&ti);
-	str.FreeExtra();
+	int nRet=::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)&ti);
+	if (nRet>0)
+		str.FreeExtra(nRet);
+	else
+		str.Empty();
 	return str;
 }
 
@@ -973,8 +984,9 @@ UINT CTreeCtrl::GetItemState(HTREEITEM hItem,UINT nStateMask) const
 	ti.mask=TVIF_STATE;
 	ti.hItem=hItem;
 	ti.stateMask=nStateMask;
-	::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)&ti);
-	return ti.state;
+	if (::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)&ti))
+		return ti.state;
+	return 0;
 }
 
 DWORD_PTR CTreeCtrl::GetItemData(HTREEITEM hItem) const
@@ -982,8 +994,9 @@ DWORD_PTR CTreeCtrl::GetItemData(HTREEITEM hItem) const
 	TV_ITEM ti;
 	ti.mask=TVIF_PARAM	;
 	ti.hItem=hItem;
-	::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)&ti);
-	return ti.lParam;
+	if (::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)&ti))
+		return ti.lParam;
+	return NULL;
 }
 
 BOOL CTreeCtrl::SetItem(HTREEITEM hItem,UINT nMask,LPCSTR lpszItem,int nImage,int nSelectedImage,UINT nState,UINT nStateMask,LPARAM lParam)
@@ -1132,7 +1145,8 @@ HTREEITEM CTreeCtrl::HitTest(const POINT& pt,UINT* pFlags) const
 {
 	TV_HITTESTINFO hi;
 	MemCopy(&hi.pt,&pt,sizeof(POINT));
-	::SendMessage(m_hWnd,TVM_HITTEST,0,(LPARAM)&hi);
+	if (::SendMessage(m_hWnd,TVM_HITTEST,0,(LPARAM)&hi)==-1)
+		return NULL;
 	if (pFlags!=NULL)
 		*pFlags=hi.flags;
 	return hi.hItem;
@@ -1425,44 +1439,42 @@ int CComboBoxEx::InsertItem(LPCWSTR pszText,int iImage,int iSelectedImage,int iO
 	
 CString CComboBoxEx::GetItemText(int nItem) const
 {
-	CString str;
+	char szBuffer[2000];
 	COMBOBOXEXITEM ce;
 	ce.iItem=nItem;
 	ce.cchTextMax=2000;
-	ce.pszText=str.GetBuffer(2000);
+	ce.pszText=szBuffer;
 	ce.mask=CBEIF_TEXT;
-	::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETITEM,0,(LPARAM)&ce);
-	str.FreeExtra();
-	return str;
+	if (::SendMessage(CCommonCtrl::m_hWnd,CBEM_GETITEM,0,(LPARAM)&ce))
+		return CString(szBuffer);
+	return CString();
 }
 
 CStringW CComboBoxEx::GetItemTextW(int nItem) const
 {
 	if (IsUnicodeSystem())
 	{
-		CStringW str;
 		COMBOBOXEXITEMW ce;
+		WCHAR szBuffer[2000];
 		ce.iItem=nItem;
 		ce.cchTextMax=2000;
-		ce.pszText=str.GetBuffer(2000);
+		ce.pszText=szBuffer;
 		ce.mask=CBEIF_TEXT;
-		::SendMessageW(CCommonCtrl::m_hWnd,CBEM_GETITEMW,0,(LPARAM)&ce);
-		str.FreeExtra();
-		return str;
+		if (::SendMessageW(CCommonCtrl::m_hWnd,CBEM_GETITEMW,0,(LPARAM)&ce))
+			return CStringW(szBuffer);
 	}
 	else
 	{
-		CString str;
 		COMBOBOXEXITEM ce;
+		char szBuffer[2000];
 		ce.iItem=nItem;
 		ce.cchTextMax=2000;
-		ce.pszText=str.GetBuffer(2000);
+		ce.pszText=szBuffer;
 		ce.mask=CBEIF_TEXT;
-		::SendMessageA(CCommonCtrl::m_hWnd,CBEM_GETITEMA,0,(LPARAM)&ce);
-		str.FreeExtra();
-
-		return CStringW(str);
+		if (::SendMessageA(CCommonCtrl::m_hWnd,CBEM_GETITEMA,0,(LPARAM)&ce))
+			return CStringW(szBuffer);
 	}
+	return CStringW();
 }
 
 int CComboBoxEx::GetItemText(int nItem,LPSTR lpszText,int nLen) const

@@ -1,4 +1,4 @@
-/* Copyright (c) 1997-2008 Janne Huttunen
+/* Copyright (c) 1997-2009 Janne Huttunen
    Updatedb.exe v3.1.8.9210 */
 
 #include <HFCLib.h>

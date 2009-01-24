@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2008 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #ifndef HFCFILE_INL
@@ -136,6 +136,37 @@ inline DWORD CFile::Seek64(ULONGLONG lOff, SeekPosition nFrom)
 	this->Seek((LONG)lOff,nFrom,&l);
 	return ::SetEndOfFile(m_hFile);
 }
+
+inline BOOL CFile::GetFileTime(LPFILETIME lpCreationTime,LPFILETIME lpLastAccessTime,LPFILETIME lpLastWriteTime) const
+{
+	return ::GetFileTime(m_hFile,lpCreationTime,lpLastAccessTime,lpLastWriteTime);
+}
+
+inline BOOL CFile::SetFileTime(const FILETIME* lpCreationTime,const FILETIME* lpLastAccessTime,const FILETIME* lpLastWriteTime)
+{
+	return ::SetFileTime(m_hFile,lpCreationTime,lpLastAccessTime,lpLastWriteTime);
+}
+
+inline DWORD CFile::GetFileType() const
+{
+	return ::GetFileType(m_hFile);
+}
+
+inline BOOL CFile::SetFileShortName(LPCSTR lpShortName)
+{
+	return ::SetFileShortNameA(m_hFile,lpShortName);
+}
+
+#ifdef DEF_WCHAR
+inline BOOL CFile::SetFileShortName(LPCWSTR lpShortName)
+{
+	if (IsUnicodeSystem())
+		return ::SetFileShortNameW(m_hFile,lpShortName);
+	else
+		return ::SetFileShortNameA(m_hFile,W2A(lpShortName));
+}
+#endif
+
 
 
 
