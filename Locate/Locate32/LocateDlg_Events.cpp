@@ -2448,29 +2448,25 @@ void CLocateDlg::OnRemoveDeletedFiles()
 
 void CLocateDlg::OnRenameFile(int nItem)
 {
-	// TODO: Implement and test support for parent support
-
 	if (m_pListCtrl->GetSelectedCount()==0 && nItem==-1)
 		return;
 	
 
-	if (GetFlags()&fgLVAllowInPlaceRenaming)
+	if (!(GetFlags()&fgLVAllowInPlaceRenaming) || (m_pActiveContextMenu!=NULL && m_pActiveContextMenu->bForParents))
+		OnChangeFileName();
+	else
 	{
 		if (m_pListCtrl->GetSelectedCount()>0)
 			m_pListCtrl->EditLabel(m_pListCtrl->GetNextItem(-1,LVNI_SELECTED));
 		else if (nItem!=-1)
 			m_pListCtrl->EditLabel(nItem);
 	}
-	else
-		OnChangeFileName();
 }
 	
 
 
 void CLocateDlg::OnCopy(BOOL bCut,int nItem)
 {
-	// TODO: Implement and test support for parent support
-
 	if (m_pListCtrl->GetSelectedCount()==0 && nItem==-1)
 		return;
 
@@ -2483,14 +2479,20 @@ void CLocateDlg::OnCopy(BOOL bCut,int nItem)
     else
 	{
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
-		if (!FileSystem::IsFile(pItem->GetPath()) &&
-			!FileSystem::IsDirectory(pItem->GetPath()))
-			return;
-
+		
 		if (m_pActiveContextMenu!=NULL && m_pActiveContextMenu->bForParents)
+		{
+			if (!FileSystem::IsDirectory(pItem->GetParent()))
+				return;
 			fo.SetFile(pItem->GetParent());
+		}
 		else
+		{
+			if (!FileSystem::IsFile(pItem->GetPath()) &&
+				!FileSystem::IsDirectory(pItem->GetPath()))
+				return;
 			fo.SetFile(pItem->GetPath());
+		}
 	}
 
 
@@ -2520,8 +2522,6 @@ typedef HRESULT (__stdcall * PFNSHGETFOLDERPATHW)(HWND, int, HANDLE, DWORD, LPWS
 
 void CLocateDlg::OnCreateShortcut()
 {
-	// TODO: Implement and test support for parent support
-
 	if (m_pListCtrl->GetSelectedCount()==0)
 		return;
 	
@@ -2842,8 +2842,6 @@ void CLocateDlg::OnSaveResults()
 
 void CLocateDlg::OnCopyPathToClipboard(BOOL bShortPath)
 {
-	// TODO: Implement and test support for parent support
-
 	CStringW Text;
 
 	int nItems=0;
@@ -2855,16 +2853,24 @@ void CLocateDlg::OnCopyPathToClipboard(BOOL bShortPath)
 		if (nItems>0)
 			Text << L"\r\n";
 		if (!bShortPath)
-			Text<<pItem->GetPath();
-		else
 		{
-			WCHAR szPath[MAX_PATH];
-			if (FileSystem::GetShortPathName(pItem->GetPath(),szPath,MAX_PATH))
-				Text<<szPath;
+			if (m_pActiveContextMenu!=NULL && m_pActiveContextMenu->bForParents)
+				Text<<pItem->GetParent();
 			else
 				Text<<pItem->GetPath();
 		}
-        nItems++;
+		else 
+		{
+			WCHAR szBuffer[MAX_PATH];
+			LPCWSTR pPath=m_pActiveContextMenu!=NULL && m_pActiveContextMenu->bForParents?
+				pItem->GetParent():pItem->GetPath();
+			if (FileSystem::GetShortPathName(pPath,szBuffer,MAX_PATH))
+				Text<<szBuffer;
+			else
+				Text<<pPath;
+		}
+		
+		nItems++;
 		nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
 	}
   
@@ -2914,12 +2920,12 @@ void CLocateDlg::OnCopyPathToClipboard(BOOL bShortPath)
 
 void CLocateDlg::OnChangeFileName()
 {
-	// TODO: Implement and test support for parent support
-
 	CChangeFilenameDlg fnd;
 	
 	CRegKey2 RegKey;
 	BOOL bNoExtension=FALSE;
+	BOOL bChangeParentName=m_pActiveContextMenu!=NULL && m_pActiveContextMenu->bForParents;
+
 	if (RegKey.OpenKey(HKCU,"\\Misc",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		DWORD dwTemp=0;;
@@ -2928,24 +2934,52 @@ void CLocateDlg::OnChangeFileName()
 			bNoExtension=TRUE;
 	}
 
+
 	int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
 	while (iItem!=-1)
 	{
 		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
 		if (pItem!=NULL)
 		{
-			fnd.m_sParent=pItem->GetParent();
-			fnd.m_sFileName.Copy(pItem->GetName(),pItem->GetNameLen());
-			
-			if (!bNoExtension || pItem->IsFolder())
+			if (bChangeParentName)
+			{
+				int nSlashIndex=LastCharIndex(pItem->GetParent(),L'\\');
+				if (nSlashIndex==-1)
+				{
+					iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
+					continue;
+				}
+
+				fnd.m_sParent.Copy(pItem->GetParent(),nSlashIndex);
+				fnd.m_sFileName=pItem->GetParent()+nSlashIndex+1;
+			}
+			else
+			{
+				fnd.m_sParent=pItem->GetParent();
+				fnd.m_sFileName.Copy(pItem->GetName(),pItem->GetNameLen());
+			}
+
+
+
+			if (bChangeParentName || !bNoExtension || pItem->IsFolder())
 				fnd.m_dwFlags&=~CChangeFilenameDlg::fNoExtension;
 			else
 				fnd.m_dwFlags|=CChangeFilenameDlg::fNoExtension;
 
 			if (fnd.DoModal(*this))
 			{
-				if (fnd.m_sFileName.Compare(pItem->GetName())!=0)
-					pItem->ChangeName(this,fnd.m_sFileName,fnd.m_sFileName.GetLength());
+				if (bChangeParentName)
+				{
+					int nSlashIndex=LastCharIndex(pItem->GetParent(),L'\\');
+					if (fnd.m_sFileName.Compare(pItem->GetParent()+nSlashIndex+1)!=0)
+						pItem->ChangeParentName(this,fnd.m_sFileName,fnd.m_sFileName.GetLength());
+				}
+				else
+				{
+					if (fnd.m_sFileName.Compare(pItem->GetName())!=0)
+						pItem->ChangeName(this,fnd.m_sFileName,fnd.m_sFileName.GetLength());
+				}
+
 				for (int iColumn=0;iColumn<m_pListCtrl->GetColumnCount();iColumn++)
 					m_pListCtrl->SetItemText(iItem,iColumn,LPSTR_TEXTCALLBACKW);
 
@@ -2960,8 +2994,6 @@ void CLocateDlg::OnChangeFileName()
 
 void CLocateDlg::OnChangeFileNameCase()
 {
-	// TODO: Implement and test support for parent support
-
 	if (m_pListCtrl->GetNextItem(-1,LVNI_SELECTED)==-1)
 		return;
 
@@ -2975,17 +3007,32 @@ void CLocateDlg::OnChangeFileNameCase()
             if (pItem!=NULL)
 			{
 				int iLength;
-				CStringW sOldName(pItem->GetName());
-				LPWSTR szName=pItem->GetName();
-
-				if (!cd.bForExtension)
+				LPWSTR szName;
+				if (m_pActiveContextMenu!=NULL && m_pActiveContextMenu->bForParents)
 				{
-					iLength=LastCharIndex(szName,L'.')+1;
-					if (iLength==0)
-						iLength=pItem->GetNameLen();
+					int iParentPos=LastCharIndex(pItem->GetParent(),L'\\');
+					if (iParentPos==-1)
+					{
+						iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
+						continue;
+					}
+
+					szName=pItem->GetParent()+iParentPos+1;
+					iLength=istrlen(szName);
 				}
 				else
-					iLength=pItem->GetNameLen();
+				{
+					szName=pItem->GetName();
+					if (!cd.bForExtension)
+					{
+						iLength=LastCharIndex(szName,L'.')+1;
+						if (iLength==0)
+							iLength=pItem->GetNameLen();
+					}
+					else
+						iLength=pItem->GetNameLen();
+				}
+
 
 				switch (cd.nSelectedCase)
 				{
@@ -3027,7 +3074,11 @@ void CLocateDlg::OnChangeFileNameCase()
 					break;
 				}
 
-				FileSystem::MoveFile(pItem->GetPath(),pItem->GetPath());
+
+				if (m_pActiveContextMenu!=NULL && m_pActiveContextMenu->bForParents)
+					FileSystem::MoveFile(pItem->GetParent(),pItem->GetParent());
+				else
+					FileSystem::MoveFile(pItem->GetPath(),pItem->GetPath());
 				pItem->RemoveFlags(LITEM_FILETITLEOK);
 				m_pListCtrl->RedrawItems(iItem,iItem);
 				
@@ -3226,8 +3277,6 @@ void CLocateDlg::OnCopyMD5SumsToClipboard()
 
 void CLocateDlg::OnShowFileInformation()
 {
-	// TODO: Implement and test support for parent support
-
 	DWORD dwFiles=0,dwDirectories=0;
 	LONGLONG llTotalSize=0;
 	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
@@ -3251,47 +3300,69 @@ void CLocateDlg::OnShowFileInformation()
 	if (dwFiles>0 || dwDirectories>0)
 	{
 		CStringW str;
-		char number[200],*numberfmt=NULL;
+		WCHAR number[200],*numberfmt=number;
 
-		_ui64toa_s(llTotalSize,number,200,10);
+		_ui64tow_s(llTotalSize,number,200,10);
 		CRegKey RegKey;
 		if (RegKey.OpenKey(HKCU,"Control Panel\\International",CRegKey::defRead)==ERROR_SUCCESS)
 		{
-			numberfmt=new char[200];
-			char szTemp[10]=".",szTemp2[10]=" ";
-
-			NUMBERFMT fmt;
-			
-			// Defaults;
-			fmt.NumDigits=0; 
-			fmt.LeadingZero=1;
-			fmt.Grouping=3; 
-			fmt.lpDecimalSep=szTemp; 
-			fmt.lpThousandSep=szTemp2; 
-			fmt.NegativeOrder=1; 
-			
-			if (RegKey.QueryValue("iLZero",szTemp,10)>1)
-				fmt.LeadingZero=atoi(szTemp);
-			if (RegKey.QueryValue("sGrouping",szTemp,10)>1)
-				fmt.Grouping=atoi(szTemp);
-			RegKey.QueryValue("sDecimal",szTemp,10);
-			RegKey.QueryValue("sThousand",szTemp2,10);
-
-			
-			if (GetNumberFormat(LOCALE_USER_DEFAULT,0,number,&fmt,numberfmt,200)==0)
+			if (IsUnicodeSystem())
 			{
-				numberfmt=NULL;
-				delete[] numberfmt;
+				numberfmt=new WCHAR[200];
+				WCHAR szTemp[10]=L".",szTemp2[10]=L" ";
+				NUMBERFMTW fmt;
+				
+				// Defaults;
+				fmt.NumDigits=0; 
+				fmt.LeadingZero=1;
+				fmt.Grouping=3; 
+				fmt.lpDecimalSep=szTemp; 
+				fmt.lpThousandSep=szTemp2; 
+				fmt.NegativeOrder=1; 
+				
+				if (RegKey.QueryValue(L"iLZero",szTemp,10)>1)
+					fmt.LeadingZero=_wtoi(szTemp);
+				if (RegKey.QueryValue(L"sGrouping",szTemp,10)>1)
+					fmt.Grouping=_wtoi(szTemp);
+				RegKey.QueryValue(L"sDecimal",szTemp,10);
+				RegKey.QueryValue(L"sThousand",szTemp2,10);
+
+				
+				if (GetNumberFormatW(LOCALE_USER_DEFAULT,0,number,&fmt,numberfmt,200)==0)
+				{
+					delete[] numberfmt;
+					numberfmt=number;					
+				}
+			}
+			else
+			{
+				char szBuffer[200],szTemp[10]=".",szTemp2[10]=" ";
+				NUMBERFMT fmt;
+				
+				// Defaults;
+				fmt.NumDigits=0; 
+				fmt.LeadingZero=1;
+				fmt.Grouping=3; 
+				fmt.lpDecimalSep=szTemp; 
+				fmt.lpThousandSep=szTemp2; 
+				fmt.NegativeOrder=1; 
+				
+				if (RegKey.QueryValue("iLZero",szTemp,10)>1)
+					fmt.LeadingZero=atoi(szTemp);
+				if (RegKey.QueryValue("sGrouping",szTemp,10)>1)
+					fmt.Grouping=atoi(szTemp);
+				RegKey.QueryValue("sDecimal",szTemp,10);
+				RegKey.QueryValue("sThousand",szTemp2,10);
+
+				if (GetNumberFormat(LOCALE_USER_DEFAULT,0,W2A(number),&fmt,szBuffer,200)!=0)
+					numberfmt=alloccopyAtoW(szBuffer);
 			}
 		}
 
-		if (numberfmt!=NULL)
-		{
-			str.FormatEx(IDS_FILEINFORMATIONFMT,dwFiles,dwDirectories,numberfmt);
+		
+		str.FormatEx(IDS_FILEINFORMATIONFMT,dwFiles,dwDirectories,numberfmt);
+		if (numberfmt!=number)
 			delete[] numberfmt;
-		}
-		else
-			str.FormatEx(IDS_FILEINFORMATIONFMT,dwFiles,dwDirectories,number);
 		MessageBox(str,ID2W(IDS_FILEINFORMATION),MB_OK|MB_ICONINFORMATION);
 	}
 }

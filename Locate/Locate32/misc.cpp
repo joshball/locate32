@@ -441,7 +441,7 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 					::SendMessage(pData->m_hSpinWnd,UDM_SETPOS32,0,nVal);
 
 					if (!(pData->m_dwFlags&DontSendNotifications))
-						::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),DTXN_CHANGE),(LPARAM)hWnd);
+						::SendMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),DTXN_CHANGE),(LPARAM)hWnd);
 				}
 				break;
 			}
@@ -470,14 +470,14 @@ LRESULT CALLBACK CDateTimeCtrlEx::WndProc(HWND hWnd,UINT msg,WPARAM wParam,LPARA
 			pData->m_dwFlags&=~SpinBoxIsUpdating;
 
 			if (!(pData->m_dwFlags&DontSendNotifications))
-				::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),DTXN_CHANGE),(LPARAM)hWnd);
+				::SendMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),DTXN_CHANGE),(LPARAM)hWnd);
 
 		}
 		else if (((LPNMHDR)lParam)->idFrom==IDC_EXPLICITIDATE && 
 			((LPNMHDR)lParam)->code==DTN_DATETIMECHANGE)
 		{
 			if (!(pData->m_dwFlags&DontSendNotifications))
-				::PostMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),DTXN_CHANGE),(LPARAM)hWnd);
+				::SendMessage(::GetParent(hWnd),WM_COMMAND,MAKEWPARAM(::GetWindowLong(hWnd,GWL_ID),DTXN_CHANGE),(LPARAM)hWnd);
 		}
 		break;
 	case DTXM_SETRELDATE:

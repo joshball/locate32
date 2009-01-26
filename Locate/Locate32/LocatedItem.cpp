@@ -2201,6 +2201,77 @@ BOOL CLocatedItem::ChangeName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
 	return TRUE;
 }
 
+BOOL CLocatedItem::ChangeParentName(CWnd* pWnd,LPCWSTR szNewName,int iLength)
+{
+	if (iLength==-1)
+		iLength=(int)istrlenw(szNewName);
+
+	int iParentNamePos=LastCharIndex(GetParent(),L'\\')+1;
+	if (iParentNamePos==0)
+		return FALSE; // Cannot change drive letter
+
+	WCHAR* szOldPath=GetParent();;
+	WCHAR* szNewPath=new WCHAR[iParentNamePos+iLength+GetNameLen()+2];
+	
+	// Copying directory
+	MemCopyW(szNewPath,szOldPath,iParentNamePos);
+	MemCopyW(szNewPath+iParentNamePos,szNewName,iLength);
+	szNewPath[iParentNamePos+iLength]=L'\0';	
+
+	if (!FileSystem::MoveFile(szOldPath,szNewPath))
+	{
+		
+		CHAR* pError;
+		CStringW str;
+			
+		if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,NULL,
+			GetLastError(),LANG_USER_DEFAULT,(LPSTR)&pError,0,NULL))
+		{
+			str.Format(IDS_ERRORCANNOTRENAME,(LPCWSTR)A2W(pError));
+			LocalFree(pError);
+		}
+		else
+			str.Format(IDS_ERRORCANNOTRENAME,L"");
+
+		pWnd->MessageBox(str,ID2W(IDS_ERROR),MB_OK|MB_ICONERROR);
+
+		delete[] szNewPath;
+		return FALSE;
+	}
+
+	// Copy name part to file
+	iLength+=iParentNamePos+1;
+	MemCopyW(szNewPath+iLength,GetName(),GetNameLen());
+	szNewPath[iLength+GetNameLen()]='\0';
+
+
+	// Do fileoperation first
+	if (szFileTitle!=szName && szFileTitle!=NULL)
+	{	
+		// Nullify title
+		WCHAR* pTemp=szFileTitle;
+		InterlockedExchangePointer((PVOID*)&szFileTitle,NULL);
+		delete[] pTemp;
+	}
+	else
+		InterlockedExchangePointer((PVOID*)&szFileTitle,szNewPath+iLength);
+
+
+	InterlockedExchangePointer((PVOID*)&szName,szNewPath+iLength);
+	InterlockedExchangePointer((PVOID*)&szPath,szNewPath);
+	
+	// Finding extension
+	for (bExtensionPos=bNameLength-1; szName[bExtensionPos-1]!=L'.' && bExtensionPos>0 ;bExtensionPos--);
+	if (bExtensionPos==0)
+		bExtensionPos=bNameLength;
+
+	delete[] szOldPath;
+
+	UpdateFileTitle();
+
+	return TRUE;
+}
+
 LPWSTR CLocatedItem::GetToolTipText() const
 {
 	ISDLGTHREADOK

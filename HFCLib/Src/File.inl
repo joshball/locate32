@@ -383,10 +383,10 @@ inline BOOL FileSystem::RemoveDirectory(LPCWSTR lpPathName)
 
 inline BOOL FileSystem::MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,DWORD dwFlags)
 {
-	if (IsUnicodeSystem())
+	if (IsUnicodeSystem()) 
 		return ::MoveFileExW(lpExistingFileName,lpNewFileName,dwFlags);	
-	else
-		return ::MoveFileExA(W2A(lpExistingFileName),W2A(lpNewFileName),dwFlags);	
+	else // We don't use MoveFileEx here, because system without Unicode system probably does not have it
+		return ::MoveFileA(W2A(lpExistingFileName),W2A(lpNewFileName));	
 }
 
 inline BOOL FileSystem::CopyFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,BOOL bFailIfExists)

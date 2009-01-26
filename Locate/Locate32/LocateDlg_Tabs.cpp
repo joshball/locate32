@@ -622,6 +622,12 @@ BOOL CLocateDlg::CNameDlg::SelectByCustomName(LPCWSTR szDirectory)
 BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
 	CDialog::OnCommand(wID,wNotifyCode,hControl);
+
+	// I don't understand how GetLocateDlg() could return NULL, but crashes occrus anyway if not checked
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg==NULL)
+		return FALSE;
+				
 	switch (wID)
 	{
 	case IDC_BROWSE:
@@ -644,7 +650,7 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			else
 			{
 				HilightTab(IsChanged());
-				GetLocateDlg()->OnFieldChange(isNameChanged);
+				pLocateDlg->OnFieldChange(isNameChanged);
 			}
 
 			break;
@@ -652,17 +658,17 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			m_Name.SetEditSel(0,-1);
 			break;
 		case CBN_EDITCHANGE:
-			if (GetLocateDlg()->IsExtraFlagSet(efMatchWhileNameIfAsterisks))
+			if (pLocateDlg->IsExtraFlagSet(efMatchWhileNameIfAsterisks))
 			{
 				CStringW Name;
 				m_Name.GetText(Name);
-				GetLocateDlg()->m_AdvancedDlg.EnableDlgItem(IDC_MATCHWHOLENAME,Name.Find(L'*')==-1);
+				pLocateDlg->m_AdvancedDlg.EnableDlgItem(IDC_MATCHWHOLENAME,Name.Find(L'*')==-1);
 			}
 			HilightTab(m_Name.GetTextLength()>0);
-			GetLocateDlg()->OnFieldChange(isNameChanged);
+			pLocateDlg->OnFieldChange(isNameChanged);
 			break;
 		case CBN_KILLFOCUS:
-			if (GetLocateDlg()->IsInstantSearchingFlagSet(isRunning))
+			if (pLocateDlg->IsInstantSearchingFlagSet(isRunning))
 				AddCurrentNameToList();
 			break;
 		}
@@ -675,21 +681,21 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 				m_Type.SetFocus();
 			else
 			{
-				GetLocateDlg()->m_AdvancedDlg.ChangeEnableStateForCheck();
+				pLocateDlg->m_AdvancedDlg.ChangeEnableStateForCheck();
 				HilightTab(IsChanged());
-				GetLocateDlg()->OnFieldChange(isTypeChanged);
+				pLocateDlg->OnFieldChange(isTypeChanged);
 			}
 			break;
 		case CBN_SETFOCUS:
 			m_Type.SetEditSel(0,-1);
 			break;
 		case CBN_EDITCHANGE:
-			GetLocateDlg()->m_AdvancedDlg.ChangeEnableStateForCheck();
+			pLocateDlg->m_AdvancedDlg.ChangeEnableStateForCheck();
 			HilightTab(IsChanged());
-			GetLocateDlg()->OnFieldChange(isTypeChanged);
+			pLocateDlg->OnFieldChange(isTypeChanged);
 			break;
 		case CBN_KILLFOCUS:
-			if (GetLocateDlg()->IsInstantSearchingFlagSet(isRunning))
+			if (pLocateDlg->IsInstantSearchingFlagSet(isRunning))
 				AddCurrentTypeToList();
 			break;
 		}
@@ -703,13 +709,13 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			else
 			{
 				HilightTab(IsChanged());
-				GetLocateDlg()->OnFieldChange(isLookInChanged);
+				pLocateDlg->OnFieldChange(isLookInChanged);
 			}
 			break;
 		case CBN_EDITCHANGE:
 			//DebugMessage("LOOKIN EDITCHANGE");
 			HilightTab(IsChanged());
-			GetLocateDlg()->OnFieldChange(isLookInChanged);
+			pLocateDlg->OnFieldChange(isLookInChanged);
 			break;
 		}
 		break;	
@@ -733,7 +739,7 @@ BOOL CLocateDlg::CNameDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			SetFocus(wID);
 		}
 		HilightTab(IsChanged());
-		GetLocateDlg()->OnFieldChange(isOtherChanged);
+		pLocateDlg->OnFieldChange(isOtherChanged);
 		break;
 	}
 	return FALSE;
@@ -743,9 +749,14 @@ BOOL CLocateDlg::CNameDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 {
 	if (idCtrl==IDC_LOOKIN)
 	{
+		// I don't understand how GetLocateDlg() could return NULL, but crashes occrus anyway if not checked
+		CLocateDlg* pLocateDlg=GetLocateDlg();
+		if (pLocateDlg==NULL)
+			return FALSE;
+	
 		if (((pnmh->code==CBEN_ENDEDITA && ((PNMCBEENDEDITA)pnmh)->iWhy==CBENF_KILLFOCUS) ||
 			(pnmh->code==CBEN_ENDEDITW && ((PNMCBEENDEDITW)pnmh)->iWhy==CBENF_KILLFOCUS)) &&
-			GetLocateDlg()->IsInstantSearchingFlagSet(isRunning))
+			pLocateDlg->IsInstantSearchingFlagSet(isRunning))
 		{
 			if (GetCurrentlySelectedComboItem()==DWORD(CB_ERR))
 			{
@@ -776,9 +787,9 @@ BOOL CLocateDlg::CNameDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 				}
 
 				CArrayFAP<LPWSTR> aDirectories;
-				GetLocateDlg()->AddInstantSearchingFlags(isIgnoreChangeMessages);
+				pLocateDlg->AddInstantSearchingFlags(isIgnoreChangeMessages);
 				BOOL bRet=GetDirectoriesFromCustomText(aDirectories,pFolder,dwLength,FALSE,TRUE);
-				GetLocateDlg()->RemoveInstantSearchingFlags(isIgnoreChangeMessages);
+				pLocateDlg->RemoveInstantSearchingFlags(isIgnoreChangeMessages);
 			
 				delete[] pFolder;
 				
@@ -799,6 +810,9 @@ LRESULT CALLBACK CLocateDlg::CNameDlg::NameWindowProc(HWND hWnd,UINT uMsg,
 
 	if (pNameData==NULL)
 		return FALSE;
+
+	ASSERT_VALID(pNameData);
+	ASSERT_VALID(pNameData->pOldWndProc);
 
 	
 	switch (uMsg)
@@ -1690,7 +1704,8 @@ void CLocateDlg::CNameDlg::OnSize(UINT nType, int cx, int cy)
 	SetDlgItemPos(IDC_NOSUBDIRECTORIES,HWND_BOTTOM,cx-m_nButtonWidth-m_nCheckWidth-12,m_nBrowseTop+3,0,0,SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOCOPYBITS);
 	SetDlgItemPos(IDC_BROWSE,HWND_BOTTOM,cx-m_nButtonWidth-8,m_nBrowseTop,0,0,SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOCOPYBITS);
 	
-	if (GetLocateDlg()->GetFlags()&CLocateDlg::fgNameMultibleDirectories)
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg!=NULL && pLocateDlg->GetFlags()&CLocateDlg::fgNameMultibleDirectories)
 	{
 		m_LookIn.SetWindowPos(HWND_BOTTOM,0,0,cx-m_nFieldLeft-m_nMoreDirsWidth-11,rc.Height(),SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOCOPYBITS);
 		SetDlgItemPos(IDC_MOREDIRECTORIES,HWND_BOTTOM,cx-m_nMoreDirsWidth-8,m_nMoreDirsTop,0,0,SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOZORDER|SWP_NOCOPYBITS);
@@ -2801,6 +2816,10 @@ BOOL CLocateDlg::CSizeDateDlg::OnInitDialog(HWND hwndFocus)
 
 BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg==NULL)
+		return FALSE;
+
 	CDialog::OnCommand(wID,wNotifyCode,hControl);
 	switch (wID)
 	{
@@ -2828,9 +2847,9 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 
 			HilightTab(IsChanged());
 		}
-		GetLocateDlg()->m_AdvancedDlg.ChangeEnableStateForCheck();
+		pLocateDlg->m_AdvancedDlg.ChangeEnableStateForCheck();
 		
-		GetLocateDlg()->OnFieldChange(isSizesChanged);
+		pLocateDlg->OnFieldChange(isSizesChanged);
 		break;
 	case IDC_CHECKMAXIMUMSIZE:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
@@ -2856,9 +2875,9 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 
 			HilightTab(IsChanged());
 		}
-		GetLocateDlg()->m_AdvancedDlg.ChangeEnableStateForCheck();
+		pLocateDlg->m_AdvancedDlg.ChangeEnableStateForCheck();
 		
-		GetLocateDlg()->OnFieldChange(isSizesChanged);
+		pLocateDlg->OnFieldChange(isSizesChanged);
 		break;
 	case IDC_CHECKMINDATE:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
@@ -2882,7 +2901,7 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			HilightTab(IsChanged());
 		}
 		
-		GetLocateDlg()->OnFieldChange(isDatesChanged);
+		pLocateDlg->OnFieldChange(isDatesChanged);
 		break;
 	case IDC_CHECKMAXDATE:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
@@ -2906,7 +2925,7 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			HilightTab(IsChanged());
 		}
 
-		GetLocateDlg()->OnFieldChange(isDatesChanged);
+		pLocateDlg->OnFieldChange(isDatesChanged);
 		break;
 	case IDC_MINIMUMSIZE:
 	case IDC_MAXIMUMSIZE:
@@ -2915,7 +2934,7 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		else if (wNotifyCode==EN_SETFOCUS)
 			::SendMessage(hControl,EM_SETSEL,0,MAKELPARAM(0,-1));
 		else if (wNotifyCode==EN_CHANGE)
-			GetLocateDlg()->OnFieldChange(isSizesChanged);
+			pLocateDlg->OnFieldChange(isSizesChanged);
 		break;
 	case IDC_MAXDATEMODE:
 	case IDC_MINDATEMODE:
@@ -2925,7 +2944,7 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			if (pCtrl->IsWindowEnabled())
 				pCtrl->ChangeMode(!pCtrl->GetMode());
 
-			GetLocateDlg()->OnFieldChange(isDatesChanged);
+			pLocateDlg->OnFieldChange(isDatesChanged);
 			break;
 		}
 	case IDC_MINDATE:
@@ -2933,21 +2952,21 @@ BOOL CLocateDlg::CSizeDateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
 			SetFocus(wID);
 		else if (wNotifyCode==DTXN_CHANGE || wNotifyCode==DTXN_MODECHANGED)
-			GetLocateDlg()->OnFieldChange(isDatesChanged);
+			pLocateDlg->OnFieldChange(isDatesChanged);
 		break;
 	case IDC_MINSIZETYPE:
 	case IDC_MAXSIZETYPE:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
 			SetFocus(wID);
 		else if (wNotifyCode==CBN_SELCHANGE)
-			GetLocateDlg()->OnFieldChange(isSizesChanged);
+			pLocateDlg->OnFieldChange(isSizesChanged);
 		break;
 	case IDC_MINTYPE:
 	case IDC_MAXTYPE:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
 			SetFocus(wID);
 		else if (wNotifyCode==CBN_SELCHANGE)
-			GetLocateDlg()->OnFieldChange(isDatesChanged);
+			pLocateDlg->OnFieldChange(isDatesChanged);
 		break;
 		
 	}
@@ -3556,6 +3575,10 @@ LRESULT CLocateDlg::CAdvancedDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lPara
 
 BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
+	CLocateDlg* pLocateDlg=GetLocateDlg();
+	if (pLocateDlg==NULL)
+		return FALSE;
+
 	switch (wID)
 	{
 	case IDC_TEXTHELP:
@@ -3587,7 +3610,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		}
 		ChangeEnableStateForCheck();
 
-		GetLocateDlg()->OnFieldChange(isDataChanged);
+		pLocateDlg->OnFieldChange(isDataChanged);
 		break;
 	case IDC_USEWHOLEPATH:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
@@ -3598,7 +3621,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		
 		HilightTab(IsChanged());
 
-		GetLocateDlg()->OnFieldChange(isOtherChanged);
+		pLocateDlg->OnFieldChange(isOtherChanged);
 		break;
 	case IDC_FILETYPE:
 		DebugFormatMessage("IDC_FILETYPE, wNotifuCode=%d, hControl=%X this=%X",wNotifyCode,hControl,this);
@@ -3621,8 +3644,8 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 					if (ft==NULL || ft==(FileType*)szwEmpty)
 					{
 						ft=NULL;
-						if (!GetLocateDlg()->m_NameDlg.m_Type.IsWindowEnabled())
-							GetLocateDlg()->m_NameDlg.m_Type.SetText("");
+						if (!pLocateDlg->m_NameDlg.m_Type.IsWindowEnabled())
+							pLocateDlg->m_NameDlg.m_Type.SetText("");
 					}
 					else
 					{
@@ -3633,18 +3656,18 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 							if (pEx[i]==L'\0')
 								pEx[i]=L' ';
 						}
-						GetLocateDlg()->m_NameDlg.m_Type.SetText(pEx);
+						pLocateDlg->m_NameDlg.m_Type.SetText(pEx);
 						delete[] pEx;
 					}
 					
 				}
-				GetLocateDlg()->m_NameDlg.m_Type.EnableWindow(ft==NULL);
+				pLocateDlg->m_NameDlg.m_Type.EnableWindow(ft==NULL);
 				ChangeEnableStateForCheck();
 			
 			}
 			HilightTab(IsChanged());
 
-			GetLocateDlg()->OnFieldChange(isOtherChanged);
+			pLocateDlg->OnFieldChange(isOtherChanged);
 			break;
 		case CBN_DROPDOWN:
 			UpdateTypeList();
@@ -3689,7 +3712,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			::SendMessage(hControl,EM_SETSEL,0,MAKELPARAM(0,-1));
 			break;
 		case EN_CHANGE:
-			GetLocateDlg()->OnFieldChange(isDataChanged);
+			pLocateDlg->OnFieldChange(isDataChanged);
 			break;
 		}		
 		break;
@@ -3702,7 +3725,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			else
 			{
 				HilightTab(IsChanged());
-				GetLocateDlg()->OnFieldChange(isOtherChanged);
+				pLocateDlg->OnFieldChange(isOtherChanged);
 			}
 			break;
 		}
@@ -3723,7 +3746,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 				SetFocus(IDC_REPLACESPACES);
 		}
 		HilightTab(IsChanged());
-		GetLocateDlg()->OnFieldChange(isOtherChanged);
+		pLocateDlg->OnFieldChange(isOtherChanged);
 		break;
 	case IDC_MATCHWHOLENAME:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
@@ -3732,7 +3755,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			SetFocus(IDC_MATCHWHOLENAME);
 		}
 		HilightTab(IsChanged());
-		GetLocateDlg()->OnFieldChange(isOtherChanged);
+		pLocateDlg->OnFieldChange(isOtherChanged);
 		break;
 	case IDC_DATAMATCHCASE:
 		if (hControl==NULL && wNotifyCode==1 && IsDlgButtonChecked(IDC_CONTAINDATACHECK)) // Accelerator
@@ -3741,7 +3764,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 			SetFocus(IDC_DATAMATCHCASE);
 		}
 		HilightTab(IsChanged());
-		GetLocateDlg()->OnFieldChange(isDataChanged);
+		pLocateDlg->OnFieldChange(isDataChanged);
 		break;
 
 	}
