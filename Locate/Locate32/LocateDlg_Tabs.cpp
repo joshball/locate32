@@ -1386,7 +1386,6 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromLParam(CArray<LPWSTR>& aDirectories
 		break;
 	case Everywhere:
 		// None
-		// TODO: May be good if all roots are added
 		break;
 	}
 	return TRUE;

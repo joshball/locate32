@@ -43,13 +43,13 @@ public:
 
 	POSITION GetHeadPosition() const;
 	POSITION GetTailPosition() const;
-	static POSITION GetNextPosition(POSITION& rPosition);
-	static POSITION GetPrevPosition(POSITION& rPosition);
+	static POSITION GetNextPosition(POSITION pPosition);
+	static POSITION GetPrevPosition(POSITION pPosition);
 
-	TYPE& GetNext(POSITION& rPosition); 
-	TYPE GetNext(POSITION& rPosition) const;
-	TYPE& GetPrev(POSITION& rPosition); 
-	TYPE GetPrev(POSITION& rPosition) const; 
+	TYPE& GetNext(POSITION pPosition); 
+	TYPE GetNext(POSITION pPosition) const;
+	TYPE& GetPrev(POSITION pPosition); 
+	TYPE GetPrev(POSITION pPosition) const; 
 
 	static TYPE& GetAtRef(POSITION position);
 	static TYPE* GetAtPtr(POSITION position);
@@ -516,15 +516,15 @@ inline POSITION CList<TYPE>::GetTailPosition() const
 { return (POSITION) m_pNodeTail; }
 
 template<class TYPE>
-inline POSITION CList<TYPE>::GetNextPosition(POSITION& rPosition)
+inline POSITION CList<TYPE>::GetNextPosition(POSITION rPosition)
 {   return (POSITION)(((CNode*)rPosition)->pNext); }
 
 template<class TYPE>
-inline POSITION CList<TYPE>::GetPrevPosition(POSITION& rPosition)
+inline POSITION CList<TYPE>::GetPrevPosition(POSITION rPosition)
 {   return (POSITION)(((CNode*)rPosition)->pPrev); }
 
 template<class TYPE>
-TYPE& CList<TYPE>::GetNext(POSITION& rPosition)
+TYPE& CList<TYPE>::GetNext(POSITION rPosition)
 {
 	rPosition=(POSITION)(((CNode*)rPosition)->pNext);
 	TYPE temp=0;
@@ -532,14 +532,14 @@ TYPE& CList<TYPE>::GetNext(POSITION& rPosition)
 }
 
 template<class TYPE>
-TYPE CList<TYPE>::GetNext(POSITION& rPosition) const
+TYPE CList<TYPE>::GetNext(POSITION rPosition) const
 {
 	rPosition=(POSITION)(((CNode*)rPosition)->pNext);
 	return (rPosition==NULL?NULL:((CNode*)rPosition)->data);
 }
 
 template<class TYPE>
-TYPE& CList<TYPE>::GetPrev(POSITION& rPosition)
+TYPE& CList<TYPE>::GetPrev(POSITION rPosition)
 {
 	rPosition=(POSITION)(((CNode*)rPosition)->pPrev);
 	TYPE temp=0;
@@ -547,7 +547,7 @@ TYPE& CList<TYPE>::GetPrev(POSITION& rPosition)
 }
 
 template<class TYPE>
-TYPE CList<TYPE>::GetPrev(POSITION& rPosition) const
+TYPE CList<TYPE>::GetPrev(POSITION rPosition) const
 {
 	rPosition=(POSITION)(((CNode*)rPosition)->pPrev);
 	return (rPosition==NULL?NULL:((CNode*)rPosition)->data);

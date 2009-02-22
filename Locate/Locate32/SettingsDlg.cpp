@@ -4460,7 +4460,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	
 
 	CStringW Temp;
-	WCHAR szLabel[20],szFileSystem[20]=L"";
+	WCHAR szLabel[100],szFileSystem[20]=L"";
 	switch (nType)
 	{
 	case DRIVE_FIXED:
@@ -4491,7 +4491,7 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDriveToList
 	{
 		SHFILEINFOW fi;
 		if (ShellFunctions::GetFileInfo(szDrive,0,&fi,SHGFI_DISPLAYNAME|SHGFI_USEFILEATTRIBUTES))
-			wcscpy_s(szLabel,20,fi.szDisplayName);
+			wcscpy_s(szLabel,100,fi.szDisplayName);
 		else
 			LoadString(IDS_REMOVABLESTRING,szLabel,20);
 	}

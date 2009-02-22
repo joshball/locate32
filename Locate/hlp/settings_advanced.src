@@ -215,8 +215,8 @@ option to specify the time how long the tooltip will remain visible.
 The unit for these times are milliseconds (i.e., 1/1000 seconds). 
 </p>
 
-<p><b><A NAME="sa_nosysorhid"></A>$STRADVANCEDSETTINGS_DONTSHOWSYSTEMANDHIDDENFILES@C$</b>:
-If this option is enabled, system or hidden files are not shown in the results list.
+<p><b><A NAME="sa_nosysorhid"></A>$STRADVANCEDSETTINGS_DONTSHOWHIDDENFILES@C$</b>:
+If this option is enabled, the files and directories with H (hidden) attribute are not shown in the results list.
 </p>
 
 <p><b><A NAME="sa_nodeleted"></A>$STRADVANCEDSETTINGS_DONTSHOWDELETEDFILES@C$</b>:

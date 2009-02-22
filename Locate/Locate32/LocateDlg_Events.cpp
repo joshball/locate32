@@ -408,7 +408,10 @@ BOOL CLocateDlg::HandleContextMenuCommand(WORD wID)
 	case IDM_DEFOPEN:
 		ASSERT_VALID(m_pActiveContextMenu);
 		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
-		OnExecuteFile(NULL);
+		if (m_pActiveContextMenu->bForParents)
+			OpenSelectedFolder(TRUE,-1);
+		else	
+			OnExecuteFile(NULL);
 		break;
 	}
 	
@@ -465,7 +468,7 @@ void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 	{
 		// Show context menu for header
 		
-		CMenu ColMenu(m_pListCtrl->CreateColumnSelectionMenu(IDM_DEFCOLSELITEM));
+		CMenu ColMenu(m_pListCtrl->CreateColumnSelectionMenu(1));
 		CStringW text(IDS_SELECTDETAILS);
 		
 		MENUITEMINFOW mii;
@@ -480,7 +483,11 @@ void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 		mii.wID=IDM_SELECTDETAILS;
 		ColMenu.InsertMenu(WORD(-1),FALSE,&mii);
 		
-		TrackPopupMenu(ColMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON,pos.x,pos.y,0,*this,NULL);	
+		int iID=TrackPopupMenu(ColMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON|TPM_RETURNCMD,pos.x,pos.y,0,*this,NULL);	
+		
+		if (iID!=0)
+			m_pListCtrl->ColumnSelectionMenuProc(iID,1);
+		
 		ColMenu.DestroyMenu();
 	}
 	else
@@ -1682,6 +1689,8 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		DebugMessage("DND: removing ignore flag");
 		RemoveExtraFlags(efLVIgnoreListClicks);
 		break;
+	case WM_SETSTARTDATA:
+		SetStartData((CLocateApp::CStartData*)lParam);
 #ifdef _DEBUG
 	case WM_SYSCOMMAND:
 		if (wParam==0x76)
@@ -2114,8 +2123,6 @@ void CLocateDlg::OnDeletePrivateData()
 
 void CLocateDlg::OnProperties(int nItem)
 {
-	// TODO: Implement and test support for parent support
-
 	if (m_pListCtrl->GetSelectedCount()==0)
 		return;
 
@@ -2123,6 +2130,7 @@ void CLocateDlg::OnProperties(int nItem)
 	int nItems;
 	CAutoPtrA<CLocatedItem*> pItems=GetSelectedItems(nItems,nItem);
 	ContextMenuInformation ci;
+	ci.bForParents=m_pActiveContextMenu!=NULL?m_pActiveContextMenu->bForParents:FALSE;
 	
 	if (GetContextMenuForItems(&ci,nItems,pItems))
 	{
@@ -2152,7 +2160,7 @@ void CLocateDlg::OnProperties(int nItem)
 	}
 
 	
-	CPropertiesSheet* fileprops=new CPropertiesSheet(nItems,pItems);
+	CPropertiesSheet* fileprops=new CPropertiesSheet(nItems,pItems,ci.bForParents);
 
 	fileprops->Open();
 }
@@ -2202,9 +2210,6 @@ void CLocateDlg::OnRefresh()
 		
 void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 {
-	// TODO: Implement and test support for parent support
-	// TODO: Just partially fixed to handle bForParents
-
 	if (DeleteFlag==BasedOnShift)
 	{
 		if (GetKeyState(VK_SHIFT)& 0x8000)
@@ -2215,87 +2220,110 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 
 	CWaitCursor wait;
 	
-	CArray<CLocatedItem*> aItems;
-	BOOL bSymlinkAndJunctions=FALSE;
-
+	CArrayFAP<LPWSTR> aPaths;
+	CUIntArray aPathLengths;
+	CIntArray aSymlinksOrJunctions;
+	CIntArray aIdsForSymlinksOrJunctions;
+	
 
 	BOOL bDeleteParent=m_pActiveContextMenu!=NULL?m_pActiveContextMenu->bForParents:FALSE;
 
 	
 	// First collect selected files
 	int iItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+	BOOL bOnlyOne=FALSE;
 	if (iItem==-1)
 	{
 		if (nItem==-1)
 			return;
+		
+		iItem=nItem;
+		bOnlyOne=TRUE;
+	}
 
-		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
-
-		LPCWSTR szPath=bDeleteParent?pItem->GetParent():pItem->GetPath();
-		if (pItem->IsFolder() || bDeleteParent)
+	while (iItem!=-1)
+	{
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
+		
+		if (bDeleteParent)
 		{
-			if (FileSystem::IsDirectory(szPath))
+			if (FileSystem::IsDirectory(pItem->GetParent()))
+			{
+				if (GetFileAttributesW(pItem->GetParent())&FILE_ATTRIBUTE_REPARSE_POINT)
+				{
+					aSymlinksOrJunctions.Add(aPaths.GetSize());		
+					aIdsForSymlinksOrJunctions.Add(iItem);
+				}
+				int nLen=istrlen(pItem->GetParent());
+				aPaths.Add(alloccopy(pItem->GetParent(),nLen));
+				aPathLengths.Add(nLen);
+			}
+		}
+		else if (pItem->IsFolder())
+		{
+			if (FileSystem::IsDirectory(pItem->GetPath()))
 			{
 				if (pItem->IsJunkction() || pItem->IsSymlink())
-					bSymlinkAndJunctions=TRUE;
-
-                aItems.Add(pItem);
-			}
-		}
-		else if (FileSystem::IsFile(szPath))
-			aItems.Add(pItem);
-	}
-	else
-	{
-		while (iItem!=-1)
-		{
-			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-			
-			LPCWSTR szPath=bDeleteParent?pItem->GetParent():pItem->GetPath();
-
-			if (pItem->IsFolder() || bDeleteParent)
-			{
-				if (FileSystem::IsDirectory(szPath))
 				{
-					if (pItem->IsJunkction() || pItem->IsSymlink())
-						bSymlinkAndJunctions=TRUE;
-					aItems.Add(pItem);
+					aSymlinksOrJunctions.Add(aPaths.GetSize());		
+					aIdsForSymlinksOrJunctions.Add(iItem);
 				}
+				int nLen=istrlen(pItem->GetPath());
+				aPaths.Add(alloccopy(pItem->GetPath()));
+				aPathLengths.Add(nLen);
 			}
-			else if (FileSystem::IsFile(szPath))
-				aItems.Add(pItem);
-
-			iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
 		}
+		else if (FileSystem::IsFile(pItem->GetPath()))
+		{
+			if (pItem->IsJunkction() || pItem->IsSymlink())
+			{
+				aSymlinksOrJunctions.Add(aPaths.GetSize());	
+				aIdsForSymlinksOrJunctions.Add(iItem);
+			}
+			int nLen=istrlen(pItem->GetPath());
+			aPaths.Add(alloccopy(pItem->GetPath()));
+			aPathLengths.Add(nLen);
+		}
+		
+		if (bOnlyOne)
+			break;
+		
+		iItem=m_pListCtrl->GetNextItem(iItem,LVNI_SELECTED);
 	}
-
+	
 
 
 
 	
-	if (bSymlinkAndJunctions && !(GetSystemFeaturesFlag()&efWinVista) )
+	if (aSymlinksOrJunctions.GetSize()>0 && !(GetSystemFeaturesFlag()&efWinVista) )
 	{
 		// Junctions and Windows Vista not in use
 		int nRet=MessageBox(ID2W(IDS_ERRORJUNCTIONS),0,MB_ICONEXCLAMATION|MB_YESNOCANCEL);
 		if (nRet==IDCANCEL)
 			return;
 
-		for (int i=0;i<aItems.GetSize();i++)
+		for (int i=aSymlinksOrJunctions.GetSize()-1;i>=0;i--)
 		{
-			if (aItems[i]->IsJunkction() || aItems[i]->IsSymlink())
-			{
-				if (nRet==IDYES)
-					FileSystem::RemoveDirectory(aItems[i]->GetPath());
+			int j=aSymlinksOrJunctions[i];
+			if (nRet==IDYES)
+				FileSystem::RemoveDirectory(aPaths[j]);
 
-				aItems.RemoveAt(i--);
+			aPaths.RemoveAt(j);	
+			aPathLengths.RemoveAt(j);
+			m_pListCtrl->DeleteItem(aIdsForSymlinksOrJunctions[i]);
+
+			// Fix indeces
+			for (int k=0;k<aIdsForSymlinksOrJunctions.GetSize();k++)
+			{
+				if (i!=k && aIdsForSymlinksOrJunctions[k]>aIdsForSymlinksOrJunctions[i])
+					aIdsForSymlinksOrJunctions[k]--;
 			}
-			
 		}
 	}
 
 	
-	// No files anymore? then retusn
-	if (aItems.GetSize()==0) // No files
+	// No files anymore? then return
+	if (aPaths.GetSize()==0) // No files
 		return;
 
 
@@ -2326,14 +2354,14 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 	// Creating file buffer: file1\0file2\0...filen\0\0
 	// Calculating the length of required buffer
 	int nBufferLength=1; 
-	for (int i=0;i<aItems.GetSize();i++)
-		nBufferLength+=aItems[i]->GetPathLen()+1;
+	for (int i=0;i<aPaths.GetSize();i++)
+		nBufferLength+=aPathLengths[i]+1;
 	WCHAR* pFiles=new WCHAR[nBufferLength];
 	fo.pFrom=pFiles;
-	for (int i=0;i<aItems.GetSize();i++)
+	for (int i=0;i<aPaths.GetSize();i++)
 	{
-		MemCopyW(pFiles,aItems.GetAt(i)->GetPath(),aItems.GetAt(i)->GetPathLen()+1);
-		pFiles+=aItems.GetAt(i)->GetPathLen()+1;
+		MemCopyW(pFiles,aPaths[i],aPathLengths[i]+1);
+		pFiles+=aPathLengths[i]+1;
 	}
 	*pFiles='\0';
 	
@@ -2359,50 +2387,51 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 		if (m_pListTooltips!=NULL)
 			DeleteTooltipTools();
 		
-		// Removing deleted items from list
-		int iItem;
-		int iSeekStart=-1;
-		while ((iItem=m_pListCtrl->GetNextItem(iSeekStart,LVNI_SELECTED))!=-1)
+		// Todo: change this code to check items which are in deleted folders and
+		// remove them		
+		if (m_pListCtrl->GetItemCount()>0)
 		{
-			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-			LPCWSTR szPath=pItem->GetPath();
-		
-			if (FileSystem::IsFile(szPath))
-			{
-				iSeekStart=iItem;
-				continue;
-			}
-			else if (FileSystem::IsDirectory(szPath))
-			{
-				iSeekStart=iItem;
-				continue;
-			}
+			iItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
+			ASSERT(iItem==0); // Checking assumption
 
-			
-			m_pListCtrl->SetItemData(iItem,NULL);
-			delete pItem;
-			// File or directory do not exist, deleting it
-			m_pListCtrl->DeleteItem(iItem);
+			while(iItem!=-1)
+			{
+				CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
+	
+
+				BOOL bDelete=FALSE;
+				for (int i=0;i<aPaths.GetSize();i++)
+				{
+					if (aPathLengths[i]==pItem->GetPathLen())
+					{
+						if (_wcsnicmp(aPaths[i],pItem->GetPath(),aPathLengths[i])==0)
+						{
+							bDelete=TRUE;
+							break;
+						}
+					}
+					else if (aPathLengths[i]<pItem->GetPathLen())
+					{
+						if (pItem->GetPath()[aPathLengths[i]]==L'\\' &&
+							_wcsnicmp(aPaths[i],pItem->GetPath(),aPathLengths[i])==0)
+						{
+							bDelete=TRUE;
+							break;
+						}
+					}
+				}
+
+				if (bDelete)
+					m_pListCtrl->DeleteItem(iItem); 
+				else
+					iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
+			}
 		}
 	}
 
 	StartBackgroundOperations();
 
-	// Todo: change this code to check items which are in deleted folders and
-	// remove them		
-	if (m_pListCtrl->GetItemCount()>0)
-	{
-		iItem=m_pListCtrl->GetNextItem(-1,LVNI_ALL);
-		while(iItem!=-1)
-		{
-			CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-			pItem->CheckIfDeleted();
-			ASSERT(m_pBackgroundUpdater!=NULL);
-			
-			m_pListCtrl->RedrawItems(iItem,iItem);
-			iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
-		}
-	}
+	
 	
 	m_pListCtrl->UpdateWindow();
 	m_pBackgroundUpdater->StopWaiting();
@@ -2713,14 +2742,18 @@ void CLocateDlg::OnSaveResults()
 		RegKey.QueryValue("SaveResultsFlags",(LPTSTR)&SaveResultsDlg.m_nFlags,4);
 		SaveResultsDlg.m_nFlags&=RESULT_SAVESTATE;
 
-		DWORD dwLength=RegKey.QueryValueLength("SaveResultsDetails");
-			
-		if (dwLength>0)
+		DWORD dwTemp=RegKey.QueryValueLength("SaveResultsDetails");
+		if (dwTemp>0)
 		{
-			SaveResultsDlg.m_aDetails.SetSize(dwLength/sizeof(int));
+			SaveResultsDlg.m_aDetails.SetSize(dwTemp/sizeof(int));
 			RegKey.QueryValue("SaveResultsDetails",
-				(LPSTR)(LPINT)SaveResultsDlg.m_aDetails,dwLength);
+				(LPSTR)(LPINT)SaveResultsDlg.m_aDetails,dwTemp);
 		}
+
+		if (RegKey.QueryValue("SaveResultsExtension",dwTemp))
+			SaveResultsDlg.m_pofn->nFilterIndex=dwTemp<3?WORD(dwTemp):0;
+
+		RegKey.QueryValue(L"SaveResultsTemplate",SaveResultsDlg.m_strTemplate);
 
 		RegKey.CloseKey();
 	}
@@ -2743,13 +2776,19 @@ void CLocateDlg::OnSaveResults()
 		RegKey.SetValue("SaveResultsFlags",SaveResultsDlg.m_nFlags&RESULT_SAVESTATE);
 		RegKey.SetValue("SaveResultsDetails",(LPCTSTR)(const int*)SaveResultsDlg.m_aDetails,
 			SaveResultsDlg.m_aDetails.GetSize()*sizeof(int),REG_BINARY);
+		RegKey.SetValue("SaveResultsExtension",DWORD(SaveResultsDlg.GetFilterIndex()));
+		if (SaveResultsDlg.m_strTemplate.IsEmpty())
+			RegKey.DeleteValue(L"SaveResultsTemplate");
+		else
+			RegKey.SetValue(L"SaveResultsTemplate",LPCWSTR(SaveResultsDlg.m_strTemplate)+SaveResultsDlg.m_strTemplate.FindLast(L'\\')+1);
+
 		RegKey.CloseKey();
 	}
 
 	try {
 		// Initializing results
 		CResults Results(SaveResultsDlg.m_nFlags,SaveResultsDlg.m_strDescription,TRUE);
-		int nFilter=SaveResultsDlg.GetFilterIndex();
+		int nFilter=SaveResultsDlg.GetFilterIndex(); 
 
 		Results.Create(m_pListCtrl,SaveResultsDlg.m_aDetails,SaveResultsDlg.m_aDetails.GetSize(),
 			nFilter!=2 || SaveResultsDlg.m_strTemplate.IsEmpty());
@@ -3065,7 +3104,6 @@ void CLocateDlg::OnChangeFileNameCase()
 				case CChangeCaseDlg::Toggle:
 					for (int i=0;i<iLength;i++)
 					{
-						// Todo: check these in Win9X
 						if (IsCharUpper(szName[i]))
 							MakeLower(szName+i,1);
 						else if (IsCharLower(szName[i]))

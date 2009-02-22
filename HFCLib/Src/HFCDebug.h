@@ -19,6 +19,7 @@ void Assert(BOOL bIsOK,int line,char* file);
 
 #define ASSERT(_a)			Assert(_a,__LINE__,__FILE__);
 #define ASSERT_VALID(_a)	Assert(_a!=NULL && _a!=(void*)-1,__LINE__,__FILE__);
+#define ASSERT_RET(_a,_b) 	Assert(_a==_b,__LINE__,__FILE__),_b; // Check return value
 
 #define _DEBUG_LOGGING
 
@@ -36,6 +37,7 @@ void Assert(BOOL bIsOK,int line,char* file);
 
 #define ASSERT(_a)
 #define ASSERT_VALID(_a)
+#define ASSERT_RET(_a,_b) 	_a
 
 #define DEBUGVIRTUAL
 #define DEBUGINLINE

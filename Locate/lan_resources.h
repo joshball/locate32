@@ -1212,7 +1212,6 @@
 #define IDM_DEFMENUITEM                 50000
 #define IDM_DEFCONTEXTITEM              51000
 #define IDM_DEFSENDTOITEM               52000
-#define IDM_DEFCOLSELITEM               53000
 #define IDM_DEFUPDATEDBITEM             54000
 
 

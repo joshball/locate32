@@ -223,14 +223,10 @@ protected:
 class CFileDialog : public CCommonDialog
 {
 public:
-#ifdef DEF_WCHAR
 	union {
 		OPENFILENAME* m_pofn;
 		OPENFILENAMEW* m_pwofn;
 	};
-#else
-	OPENFILENAME* m_pofn;
-#endif
 
 	// You should set bSetHook TRUE if you want to get OnApply and OnCancel to work
 	CFileDialog(BOOL bOpenFileDialog,LPCSTR lpszDefExt=NULL,LPCSTR lpszFileName=NULL,

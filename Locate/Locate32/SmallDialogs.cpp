@@ -2570,7 +2570,7 @@ void CLocateDlg::CDeletePrivateData::OnOK()
 ///////////////////////////////////////////////////////////
 // CPropertiesSheet
 
-CPropertiesSheet::CPropertiesSheet(int nItems,CLocatedItem** pItems)
+CPropertiesSheet::CPropertiesSheet(int nItems,CLocatedItem** pItems,BOOL bForParents)
 :	m_hThread(NULL)
 {
 	CStringW Title;
@@ -2581,7 +2581,7 @@ CPropertiesSheet::CPropertiesSheet(int nItems,CLocatedItem** pItems)
 	
 	Construct(Title,NULL,0);
 
-	m_pPropertiesPage=new CPropertiesPage(nItems,pItems);
+	m_pPropertiesPage=new CPropertiesPage(nItems,pItems,bForParents);
 	AddPage((CPropertyPage*)m_pPropertiesPage);	
 }
 
@@ -2610,7 +2610,7 @@ void CPropertiesSheet::Open()
 	
 }
 	
-CPropertiesSheet::CPropertiesPage::CPropertiesPage(int nItems,CLocatedItem** pItems)
+CPropertiesSheet::CPropertiesPage::CPropertiesPage(int nItems,CLocatedItem** pItems,BOOL bForParents)
 :	CPropertyPage(IDD_FILEPROPERTIES,IDS_FILEPROPERTIESPAGETITLE),
 	m_nItems(nItems),m_nFiles(0),m_nDirectories(0),m_nSize(0),m_nSizeOnDisk(0),
 	m_bIsSameType(TRUE),m_bReadOnly(0),m_bHidden(0),m_bArchive(0),
@@ -2618,11 +2618,24 @@ CPropertiesSheet::CPropertiesPage::CPropertiesPage(int nItems,CLocatedItem** pIt
 {
 	m_ppFiles=new LPWSTR[nItems];
 	m_pbIsDirectory=new BOOL[nItems];
-	for (int i=0;i<nItems;i++)
+	
+	if (bForParents)
 	{
-		m_ppFiles[i]=alloccopy(pItems[i]->GetPath());
-		m_pbIsDirectory[i]=pItems[i]->IsFolder();
+		for (int i=0;i<nItems;i++)
+		{
+			m_ppFiles[i]=alloccopy(pItems[i]->GetParent());
+			m_pbIsDirectory[i]=TRUE;
+		}
 	}
+	else
+	{
+		for (int i=0;i<nItems;i++)
+		{
+			m_ppFiles[i]=alloccopy(pItems[i]->GetPath());
+			m_pbIsDirectory[i]=pItems[i]->IsFolder();
+		}
+	}
+
 
 	DWORD dwThread;
 	m_hThread=CreateThread(NULL,0,CountingThreadProc,this,0,&dwThread);
@@ -2634,7 +2647,7 @@ CPropertiesSheet::CPropertiesPage::CPropertiesPage(int nItems,CLocatedItem** pIt
 
 	DWORD dwError=GetLastError();
 
-	m_pGetVolumePathName=(GETVOLUMEPATHNAMEW)GetProcAddress(GetModuleHandle("kernel32.dll"),"GetVolumePathNameW");
+	m_pGetVolumePathName=(BOOL (WINAPI*)(LPCWSTR,LPWSTR,DWORD))GetProcAddress(GetModuleHandle("kernel32.dll"),"GetVolumePathNameW");
 	
 	if (m_pGetVolumePathName==NULL)
 		m_pGetVolumePathName=GetVolumePathNameAlt;
@@ -2901,7 +2914,7 @@ void CPropertiesSheet::CPropertiesPage::CheckFiles()
 		if (m_pbIsDirectory[i])
 		{
 			m_nDirectories++;
-				if (i>0 && m_bIsSameType && !m_pbIsDirectory[0])
+			if (i>0 && m_bIsSameType && !m_pbIsDirectory[0])
 				m_bIsSameType=FALSE;
 			
 			CheckDirectory(m_ppFiles[i],i==0);

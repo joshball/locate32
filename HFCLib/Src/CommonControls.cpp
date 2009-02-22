@@ -620,7 +620,7 @@ BOOL CListCtrl::GetItemText(CString& str,int nItem, int nSubItem) const
 	li.iSubItem=nSubItem;
 	li.pszText=str.GetBuffer(1000);
 	li.cchTextMax=1000;
-	int nRet=::SendMessage(m_hWnd,LVM_GETITEMTEXT,nItem,(LPARAM)&li);
+	int nRet=(int)::SendMessage(m_hWnd,LVM_GETITEMTEXT,nItem,(LPARAM)&li);
 	if (nRet==0)
 		str.Empty();
 	else 
@@ -894,7 +894,7 @@ BOOL CListCtrl::GetItemText(CStringW& str,int nItem, int nSubItem) const
 	li.iSubItem=nSubItem;
 	li.pszText=str.GetBuffer(1000);
 	li.cchTextMax=1000;
-	int nRet=::SendMessage(m_hWnd,LVM_GETITEMTEXTW,nItem,(LPARAM)&li);
+	int nRet=(int)::SendMessage(m_hWnd,LVM_GETITEMTEXTW,nItem,(LPARAM)&li);
 	if (nRet>0)
 		str.FreeExtra(nRet);
 	else
@@ -958,7 +958,7 @@ CString CTreeCtrl::GetItemText(HTREEITEM hItem) const
 	ti.hItem=hItem;
 	ti.pszText=str.GetBuffer(1000);
 	ti.cchTextMax=1000;
-	int nRet=::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)&ti);
+	int nRet=(int)::SendMessage(m_hWnd,TVM_GETITEM,0,(LPARAM)&ti);
 	if (nRet>0)
 		str.FreeExtra(nRet);
 	else

@@ -1228,6 +1228,8 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 
 	if (FileSystem::GetTempFileName(szDirectory,L"locfil",0,szTempFileName))
 	{
+		FileSystem::Remove(szTempFileName);
+
 		wcscat_s(szTempFileName,MAX_PATH,L".ico");
 
 		CFile File(TRUE);
@@ -1273,6 +1275,8 @@ BYTE CLocateApp::SetDeleteAndDefaultImage()
 
 	if (FileSystem::GetTempFileName(szDirectory,L"locdel",0,szTempFileName))
 	{
+		FileSystem::Remove(szTempFileName);
+
 		wcscat_s(szTempFileName,MAX_PATH,L".ico");
 
 		CFile File(TRUE);

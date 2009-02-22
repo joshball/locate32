@@ -95,6 +95,63 @@ int vswprintfex( wchar_t *buffer, int buffersize, const wchar_t *format, va_list
 
 
 
+// Secure library extensions, let StringCBXXX does the job, because strxxx_s functions can't do that
+inline errno_t _strcpy_s(LPSTR dst,size_t len,LPCSTR src)
+{
+	HRESULT hRet=StringCbCopyA(dst,len,src);
+	ASSERT(hRet==S_OK);
+	return (errno_t)hRet;
+}
+
+inline errno_t _strncpy_s(LPSTR dst,size_t len,LPCSTR src,size_t srclen)
+{
+	HRESULT hRet=StringCbCopyNA(dst,len,src,srclen);
+	ASSERT(hRet==S_OK);
+	return (errno_t)hRet;
+}
+
+inline errno_t _strcat_s(LPSTR dst,size_t len,LPCSTR src)
+{
+	HRESULT hRet=StringCbCatA(dst,len,src);
+	ASSERT(hRet==S_OK);
+	return (errno_t)hRet;
+}
+
+#ifdef DEF_WCHAR
+inline errno_t _wcscpy_s(LPWSTR dst,size_t len,LPCWSTR src)
+{
+	HRESULT hRet=StringCbCopyW(dst,len*2,src);
+	ASSERT(hRet==S_OK);
+	return (errno_t)hRet;
+}
+
+inline errno_t _wcsncpy_s(LPWSTR dst,size_t len,LPCWSTR src,size_t srclen)
+{
+	HRESULT hRet=StringCbCopyNW(dst,len*2,src,srclen*2);
+	ASSERT(hRet==S_OK);
+	return (errno_t)hRet;
+}
+
+inline errno_t _wcscat_s(LPWSTR dst,size_t len,LPCWSTR src)
+{
+	HRESULT hRet=StringCbCatW(dst,len*2,src);
+	ASSERT(hRet==S_OK);
+	return (errno_t)hRet;
+}
+#endif
+
+#ifndef DEF_NOSECUREOVERDRIVE
+#define strcpy_s _strcpy_s
+#define strncpy_s _strncpy_s
+#define strcat_s _strcat_s
+
+
+#ifdef DEF_WCHAR
+#define wcscpy_s _wcscpy_s
+#define wcsncpy_s _wcsncpy_s
+#define wcscat_s _wcscat_s
+#endif
+#endif
 
 //////////////////////////////////////////////////
 // Class CString

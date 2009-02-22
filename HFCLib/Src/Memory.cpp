@@ -277,11 +277,13 @@ BOOL CMemoryStream::Write(const void* lpBuf, DWORD nCount)
 			delete[] m_pData;
 		}
 		m_pData=pNew;
-		m_dwSize=m_dwPosition+nCount;
 	}
 
 	CopyMemory(m_pData+m_dwPosition,lpBuf,nCount);
 	m_dwPosition+=nCount;
+	
+	if (m_dwPosition>m_dwSize)
+		m_dwSize=m_dwPosition;
 	return TRUE;		
 }
 

@@ -386,6 +386,7 @@ inline BYTE CDatabaseUpdater::CRootDirectory::_FindGetAttribFlag(FIND_DATA* fd)
 	}
 	return bAttrib;
 }
+
 inline BYTE CDatabaseUpdater::CRootDirectory::_FindGetAttribFlag(FIND_DATAW* fd)
 {
 	BYTE bAttrib=CDatabaseUpdater::GetAttribFlag(fd->dwFileAttributes);

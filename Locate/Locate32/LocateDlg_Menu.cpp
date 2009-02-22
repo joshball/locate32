@@ -453,7 +453,7 @@ BOOL CLocateDlg::HandleShellCommands(WORD wID)
 	}
 
 	// Overriding these command, works better
-	if (wcscmp(szVerb,L"open")==0)
+	if (wcscmp(szVerb,L"open")==0 && !m_pActiveContextMenu->bForParents)
 	{
 		// Opening URLs to Avant Browser fails if this is not handled this way.
 		// However, I'm not sure that do this way work in all cases.
@@ -493,20 +493,17 @@ BOOL CLocateDlg::HandleShellCommands(WORD wID)
 	}
 	if (wcscmp(szVerb,L"properties")==0 && m_pActiveContextMenu->nIDLParentLevel<=1)
 	{
-		// TODO: Implement and test support for parent support
 		ClearMenuVariables();
 		
 		int nItems;
 		CLocatedItem** pItems=GetSelectedItems(nItems);
-		CPropertiesSheet* fileprops=new CPropertiesSheet(nItems,pItems);
+		CPropertiesSheet* fileprops=new CPropertiesSheet(nItems,pItems,m_pActiveContextMenu->bForParents);
 		delete[] pItems;
 		fileprops->Open();
 		return TRUE;
 	}
 
 
-	// TODO: Implement and test support for parent support
-	
 	int nSelected;
 	CAutoPtrA<CLocatedItem*> pItems=GetSelectedItems(nSelected);
 

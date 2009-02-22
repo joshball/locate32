@@ -46,33 +46,138 @@ private:
 	CArray<CLocatedItem*> m_Items;	
 
 private:
-	struct Variable {
+	class Value {
+	public:
+		enum OperatorType {
+			None=0,
+			Not, // !
+			Equal, // = or ==
+			NotEqual, // !=
+			Less,  // <
+			Greater,  // >
+			LessOrEqual, // <=
+			GreaterOrEqual, // >=
+			Add, // +
+			Subtract, // -
+			Multiply, // *
+			Divide, // /
+			DivideAndRoundToInfinity, // // 
+			Remainder, // %
+			And, // // 
+			Or // %
+		};
+
+	private:
 		enum Type {
 			Integer,
-			String
+			String,
+			Operator
 		} nType;
+		
 		union {
 			int nInteger;
 			LPCWSTR pString;
+			OperatorType nOperator;
 		};
 
-		Variable() { nType=Integer; nInteger=0; }
-		~Variable() { if (nType==String && pString!=NULL) delete[] pString; }
+	private:
+		Value(Type nType,LPCWSTR pString);
+
+	public:
+		Value(int nValue);
+		Value(LPCWSTR pValue);
+		Value(LPCWSTR pValue,size_t nLen);
+		Value(OperatorType nValue);
+
+		Value(const Value& val);
+		Value(Value& val,BOOL bTakePtr);
+		
+		
+		~Value();
+
+		BOOL GetType() const {return nType; };
+		BOOL IsInteger() const;
+		BOOL IsOperator() const { return nType==Operator; }
+		BOOL GetOperator() const;
+		void ToString();
+		BOOL ToInteger(BOOL bForce);
+		BOOL OnlySpaces() const;
+		
+		operator int() const;
+		operator LPCWSTR() const;
+
+		void Set(int nNewValue);
+		void Set(OperatorType nNewValue);
+		void Set(LPCWSTR pNewValue);
+		void Set(LPCWSTR pNewValue,size_t nLen);
+		void Set(Value& value,BOOL bTakePtr);
+		void SetPtr(LPCWSTR pNewValue);
+		
+		void GetString(CStringW& str) const;
+		void Write(CStream& stream,BOOL bGiveThis);
+
+		BOOL AddString(LPCWSTR pAdd);
+		BOOL AddString(LPCWSTR pAdd,size_t nLen);
+		
+		static Value* FromPtr(LPCWSTR pValue);
+
+		Value SwapToNew();
+
 	};
 
-	CStringMapFP<CHAR,Variable*> m_Variables;
+	class CValueStream : public CStream
+	{
+	public:
+		CValueStream();
+		virtual ~CValueStream();
+	
+		// Set length
+		virtual DWORD GetLength(DWORD* pHigh=NULL) const;
+		virtual ULONGLONG GetLength64() const;
+		virtual BOOL SetLength(DWORD dwNewLen,LONG* pHigh=NULL);
+		virtual BOOL SetLength64(ULONGLONG dwNewLen);
+
+		// Set position
+		virtual DWORD Seek(LONG lOff, SeekPosition nFrom,LONG* pHighPos=NULL);
+		virtual DWORD Seek64(ULONGLONG lOff, SeekPosition nFrom);
+
+		// Get position
+		virtual ULONG GetPosition(PLONG pHigh=NULL) const;
+		virtual ULONGLONG GetPosition64() const;
+
+		// Reading/writing
+		virtual DWORD Read(void* lpBuf, DWORD nCount) const;
+		virtual BOOL Write(const void* lpBuf, DWORD nCount);
+		virtual BOOL Write(LPCWSTR lpString, DWORD nCount);
+
+		void AddToList(int nValue);
+		void AddToList(CResults::Value::OperatorType nValue);
+		//void AddToList(LPCWSTR pValue);
+		void AddToList(LPCWSTR pValue,size_t nLen);
+		void AddToListPtr(LPCWSTR pValue);
+		
+		BOOL EvaluateOperators();
+		Value ToSingleValue();
+		UINT ParseOperatorsFromString(LPCWSTR pString,BOOL bCanHavePtr); // Returns 2 if pointer taken, 1 if ok, 0 if failed
+
+	private:
+		CListFP<Value*> m_Values;
+	};
+
+	CStringMapFP<CHAR,Value*> m_Variables;
 
 	
-	const Variable* GetVariable(LPCSTR szName) const;
+	Value* GetVariable(LPCSTR szName) const;
+	BOOL SetVariable(LPCSTR szName,Value& value,BOOL bTakePtr=FALSE);
 	BOOL SetVariable(LPCSTR szName,int newInteger);
 	BOOL SetVariable(LPCSTR szName,LPCWSTR pString);
+	BOOL SetVariable(LPCSTR szName,LPCWSTR pString,size_t nLen);
 	
-	BOOL ParseBuffer(CStream& outFile,LPCWSTR pBuffer,int iBufferLen);
-	BOOL ParseBlockLength(LPCWSTR pBuffer,int iBufferLen,int& riBlockLen) const;
+	BOOL ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL bHandleParenthesis);
+	BOOL ParseBlockLength(LPCWSTR& pBuffer,int& iBufferLen,int& riBlockLen) const;
 	
-	int EvalCondition(LPCWSTR pBuffer,int iConditionLength);
-	void EvalCondition(LPCWSTR pBuffer,int iConditionLength,CStringW& output);
-
+	Value EvaluateCondition(LPCWSTR pBuffer,int iConditionLength);
+	
 
 };
 
@@ -101,9 +206,218 @@ private:
 	CImageList m_ToolbarIL,m_ToolbarILHover,m_ToolbarILDisabled;
 
 	CArrayFAP<LPCWSTR> m_TemplateFiles;
-
-
 };
+
+
+
+
+
+
+/////////////////////////////////////////////////////
+// Inline function for CResults::Value
+
+inline CResults::Value::Value(Type nTyp,LPCWSTR pStr)
+: nType(nTyp),pString(pStr)
+{
+}
+
+inline CResults::Value::Value(int nValue) 
+: nType(Integer),nInteger(nValue)
+{
+}
+
+inline CResults::Value::Value(OperatorType nValue) 
+: nType(Operator),nOperator(nValue)
+{
+}
+
+inline CResults::Value::Value(LPCWSTR pValue) 
+:	nType(String)
+{
+	pString=alloccopy(pValue); 
+}
+
+inline CResults::Value::Value(LPCWSTR pValue,size_t nLen)
+: nType(String)
+{
+	pString=alloccopy(pValue,nLen); 
+}
+
+inline CResults::Value::~Value()
+{ 
+	if (nType==String && pString!=NULL) 
+		delete[] pString; 
+}
+
+inline CResults::Value::Value(const Value& val)
+:	nType(val.nType)
+{ 
+	if (nType==String && val.pString!=NULL)
+		pString=alloccopy(val.pString);
+	else
+		nInteger=val.nInteger;
+}
+
+inline CResults::Value::Value(Value& val,BOOL bTakePtr)
+:	nType(val.nType)
+{ 
+	if (nType==String && val.pString!=NULL)
+	{
+		if (bTakePtr)
+		{
+			pString=val.pString;
+			val.pString=NULL;
+		}
+		else
+			pString=alloccopy(val.pString);
+	}
+	else
+		nInteger=val.nInteger;
+}
+
+inline CResults::Value::operator int() const 
+{ 
+	ASSERT(nType!=Operator) // Do not use with operators
+
+	if (nType==String && pString!=NULL)
+	{
+		int nSpaces;
+		for (nSpaces=0;pString[nSpaces]==' ' || pString[nSpaces]=='\t';nSpaces++);
+		return _wtoi(pString+nSpaces);
+	}
+	return nInteger; 
+}
+
+inline void CResults::Value::Set(int nNewValue)
+{
+	if (nType==String && pString!=NULL) 
+		delete[] pString; 
+	nType=Integer;
+	nInteger=nNewValue;
+}
+
+inline void CResults::Value::Set(CResults::Value::OperatorType nNewValue)
+{
+	if (nType==String && pString!=NULL) 
+		delete[] pString; 
+	nType=Operator;
+	nOperator=nNewValue;
+}
+
+inline void CResults::Value::Set(CResults::Value& val, BOOL bTakePtr)
+{
+	if (nType==String && pString!=NULL) 
+		delete[] pString; 
+	nType=val.nType;
+	if (nType==String && val.pString!=NULL)
+	{
+		if (bTakePtr)
+		{
+			pString=val.pString;
+			val.pString=NULL;
+		}
+		else
+			pString=alloccopy(val.pString);
+	}
+	else
+		nInteger=val.nInteger;
+}
+
+inline void CResults::Value::Set(LPCWSTR pNewValue)
+{
+	if (nType==String && pString!=NULL) 
+		delete[] pString; 
+	nType=String;
+	pString=alloccopy(pNewValue);
+}
+
+inline void CResults::Value::Set(LPCWSTR pNewValue,size_t nLen)
+{
+	if (nType==String && pString!=NULL) 
+		delete[] pString; 
+	nType=String;
+	pString=alloccopy(pNewValue,nLen);
+}
+
+inline void CResults::Value::SetPtr(LPCWSTR pNewValue)
+{
+	if (nType==String && pString!=NULL) 
+		delete[] pString; 
+	nType=String;
+	pString=pNewValue;
+}
+
+inline CResults::Value* CResults::Value::FromPtr(LPCWSTR pValue)
+{
+	return new Value(String,pValue);
+}
+
+inline CResults::Value CResults::Value::SwapToNew()
+{
+	LPCWSTR pTemp=pString;
+	pString=NULL;	
+	return Value(nType,pTemp);
+}
+
+
+inline BOOL CResults::Value::GetOperator() const
+{
+	if (nType!=Operator)
+		return None;
+	return nOperator;
+}
+
+/////////////////////////////////////////////////////
+// Inline function for CResults::Value
+
+inline CResults::CValueStream::CValueStream()
+{
+}
+
+
+inline void CResults::CValueStream::AddToList(int nValue)
+{
+	m_Values.AddTail(new Value(nValue));
+}
+
+inline void CResults::CValueStream::AddToList(CResults::Value::OperatorType nValue)
+{
+	m_Values.AddTail(new Value(nValue));
+}
+		
+/*inline void CResults::CValueStream::AddToList(LPCWSTR pValue)
+{
+	if (m_Values.GetCount()>0 &&m_Values.GetTail()->AddString(pValue))
+		return;
+
+	m_Values.AddTail(new Value(pValue));
+}*/
+
+
+
+
+
+inline void CResults::CValueStream::AddToList(LPCWSTR pValue,size_t nLen)
+{
+	if (m_Values.GetCount()>0 && m_Values.GetTail()->AddString(pValue,nLen))
+		return;
+	
+	m_Values.AddTail(new Value(pValue,nLen));
+}
+
+
+
+
+
+inline void CResults::CValueStream::AddToListPtr(LPCWSTR pValue)
+{
+	m_Values.AddTail(Value::FromPtr(pValue));
+}
+
+		
+
+/////////////////////////////////////////////////////
+// Inline function for CResults
 
 inline CResults::CResults(BOOL bThrowExceptions)
 :	m_nSelectedDetails(0),m_pSelectedDetails(NULL),m_pLengths(NULL),m_dwFlags(0),CExceptionObject(bThrowExceptions)
@@ -121,14 +435,53 @@ inline CResults::~CResults()
 	Close();
 }
 
-inline const CResults::Variable* CResults::GetVariable(LPCSTR szName) const
+inline CResults::Value* CResults::GetVariable(LPCSTR szName) const
 {
 	POSITION pPos=m_Variables.Find(szName);
 	if (pPos==NULL)
-		return FALSE;
+		return NULL;
 	return m_Variables.GetAt(pPos);
 }
 
+inline BOOL CResults::SetVariable(LPCSTR szName,int newInteger)
+{
+	POSITION pPos=m_Variables.Find(szName);
+	if (pPos!=NULL)
+		m_Variables.GetAt(pPos)->Set(newInteger);
+	else
+		m_Variables.AddTail(szName,new Value(newInteger));
+	return TRUE;
+}
 
-	
+inline BOOL CResults::SetVariable(LPCSTR szName,Value& value,BOOL bTakePtr)
+{
+	POSITION pPos=m_Variables.Find(szName);
+	if (pPos!=NULL)
+		m_Variables.GetAt(pPos)->Set(value,bTakePtr);
+	else 
+		m_Variables.AddTail(szName,new Value(value,bTakePtr));
+	return TRUE;
+}
+
+inline BOOL CResults::SetVariable(LPCSTR szName,LPCWSTR pString)
+{
+	POSITION pPos=m_Variables.Find(szName);
+	if (pPos!=NULL)
+		m_Variables.GetAt(pPos)->Set(pString);
+	else
+		m_Variables.AddTail(szName,new Value(pString));
+	return TRUE;
+}
+
+inline BOOL CResults::SetVariable(LPCSTR szName,LPCWSTR pString,size_t nLen)
+{
+	POSITION pPos=m_Variables.Find(szName);
+	if (pPos!=NULL)
+		m_Variables.GetAt(pPos)->Set(pString);
+	else
+		m_Variables.AddTail(szName,new Value(pString,nLen));
+	return TRUE;
+}
+
+
 #endif

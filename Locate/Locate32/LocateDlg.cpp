@@ -286,6 +286,8 @@ CLocateDlg::~CLocateDlg()
 
 void CLocateDlg::SetStartData(const CLocateApp::CStartData* pStartData)
 {	
+	ISDLGTHREADOK
+
 	DWORD dwChanged=0;
 
 	// Loading preset first
@@ -2388,13 +2390,13 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const C
 	{
 		if (bFolder)
 		{
-			if (pLocater->GetFolderAttributes()&(LITEMATTRIB_HIDDEN|LITEMATTRIB_SYSTEM))
+			if (pLocater->GetFolderAttributes()&(LITEMATTRIB_HIDDEN))
 			{
 				pLocater->IgnoreThisResult(TRUE);
 				return TRUE;
 			}
 		}
-		else if (pLocater->GetFileAttributes()&(LITEMATTRIB_HIDDEN|LITEMATTRIB_SYSTEM))
+		else if (pLocater->GetFileAttributes()&(LITEMATTRIB_HIDDEN))
 		{
 			pLocater->IgnoreThisResult(FALSE);
 			return TRUE;
@@ -2537,13 +2539,13 @@ BOOL CALLBACK CLocateDlg::LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const 
 	{
 		if (bFolder)
 		{
-			if (pLocater->GetFolderAttributes()&(LITEMATTRIB_HIDDEN|LITEMATTRIB_SYSTEM))
+			if (pLocater->GetFolderAttributes()&(LITEMATTRIB_HIDDEN))
 			{
 				pLocater->IgnoreThisResult(TRUE);
 				return TRUE;
 			}
 		}
-		else if (pLocater->GetFileAttributes()&(LITEMATTRIB_HIDDEN|LITEMATTRIB_SYSTEM))
+		else if (pLocater->GetFileAttributes()&(LITEMATTRIB_HIDDEN))
 		{
 			pLocater->IgnoreThisResult(FALSE);
 			return TRUE;

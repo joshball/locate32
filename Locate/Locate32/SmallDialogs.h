@@ -251,20 +251,18 @@ public:
 
 // CPropertiesSheet - Used with Properties dialog
 
-typedef BOOL (WINAPI* GETVOLUMEPATHNAMEW)(LPCWSTR,LPWSTR,DWORD);
-typedef BOOL (WINAPI* GETDISKFREESPACEEX)(LPCSTR,PULARGE_INTEGER, PULARGE_INTEGER, PULARGE_INTEGER);
 
 
 class CPropertiesSheet : public CPropertySheet  
 {
 public:
-	CPropertiesSheet(int nItems,CLocatedItem** pItems);
+	CPropertiesSheet(int nItems,CLocatedItem** pItems,BOOL bForParents);
 	virtual ~CPropertiesSheet();
 
 	class CPropertiesPage : public CPropertyPage 
 	{
 	public:
-		CPropertiesPage(int nItems,CLocatedItem** pItems);
+		CPropertiesPage(int nItems,CLocatedItem** pItems,BOOL bForParents);
 		virtual ~CPropertiesPage();
 
 		virtual BOOL OnInitDialog(HWND hwndFocus);
@@ -302,7 +300,7 @@ public:
 
 		int m_nExPos0;
 
-		GETVOLUMEPATHNAMEW m_pGetVolumePathName;
+		BOOL (WINAPI* m_pGetVolumePathName)(LPCWSTR,LPWSTR,DWORD);
 		
 	};
 

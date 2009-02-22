@@ -186,9 +186,9 @@ BEGIN
     CONTROL         "date",IDC_DATE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,37,16+20,37,10
     CONTROL         "column labels",IDC_LABELS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,77,16+20,60,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,77,16+20,70,10
     CONTROL         "database info",IDC_DBINFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,142,16+20,93,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,148,16+20,93,10
     CONTROL         "Description:",IDC_DESCRIPTIONTOGGLE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,2,29+20,75,12
     EDITTEXT        IDC_DESCRIPTION,78,29+20,158,12,ES_AUTOHSCROLL
@@ -220,9 +220,9 @@ BEGIN
     CONTROL         "date",IDC_DATE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,66+37,16+20,37,10
     CONTROL         "column labels",IDC_LABELS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,66+77,16+20,90,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,66+77,16+20,70,10
     CONTROL         "database info",IDC_DBINFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,66+142,16+20,100,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,66+148,16+20,100,10
     CONTROL         "Description:",IDC_DESCRIPTIONTOGGLE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,66+2,29+20,65,12
     EDITTEXT        IDC_DESCRIPTION,66+67,29+20,155,12,ES_AUTOHSCROLL
@@ -1782,7 +1782,7 @@ BEGIN
 	IDS_ADVSETADDALLROOTS			"Add drives and directories of all databases to the list"
 	IDS_ADVSETMULTIPLEDIRECTORIES	"Possible to choose more than one directory"
 	IDS_ADVSETLOOKINCOMBO			"""Look In"" combo box (Name tab):"
-	IDS_ADVSETDONTSHOWHIDDENFILES	"Do not show hidden and system files"
+	IDS_ADVSETDONTSHOWHIDDENFILES	"Do not show hidden files and directories"
 	IDS_ADVSETSHOWTOOLTIPS			"Show tooltips when pointing results"
 	IDS_ADVSETDONTSHOWDELETEDFILES	"Do not show deleted/renamed/moved files"
 	IDS_ADVSETNODOUBLERESULTS		"Show found files only once (see note in help)"

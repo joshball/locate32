@@ -205,8 +205,16 @@ inline CFileEncode::CFileEncode(LPCWSTR lpszFileName,int nOpenFlags,BOOL bThrowE
 
 inline BOOL FileSystem::Rename(LPCSTR lpszOldName,LPCSTR lpszNewName)
 {
+	DWORD GetSystemFeaturesFlag();
 #ifdef WIN32
-	return ::MoveFile(lpszOldName,lpszNewName);
+	if (GetSystemFeaturesFlag()&(efWin2000|efWinXP|efWinVista))
+		return ::MoveFileA(lpszOldName,lpszNewName);	
+	else 
+	{
+		if (::CopyFileA(lpszOldName,lpszNewName,TRUE))
+			return ::DeleteFileA(lpszOldName);
+		return FALSE;	
+	}
 #else
 	return (BYTE)_rename(lpszOldName,lpszNewName);	
 #endif
@@ -215,7 +223,7 @@ inline BOOL FileSystem::Rename(LPCSTR lpszOldName,LPCSTR lpszNewName)
 inline BOOL FileSystem::Remove(LPCSTR lpszFileName)
 {
 #ifdef WIN32
-	return ::DeleteFile(lpszFileName);
+	return ::DeleteFileA(lpszFileName);
 #else
 	return (BYTE)::remove(lpszFileName);
 #endif
@@ -227,7 +235,11 @@ inline BOOL FileSystem::Rename(LPCWSTR lpszOldName,LPCWSTR lpszNewName)
 	if (IsUnicodeSystem())
 		return ::MoveFileW(lpszOldName,lpszNewName);
 	else
-		return ::MoveFile(W2A(lpszOldName),W2A(lpszNewName));
+	{
+		if (::CopyFileA(W2A(lpszOldName),W2A(lpszNewName),TRUE))
+			return ::DeleteFileA(W2A(lpszOldName));
+		return FALSE;	
+	}
 }
 
 inline BOOL FileSystem::Remove(LPCWSTR lpszFileName)
@@ -295,7 +307,15 @@ inline short FileSystem::GetFileTitle(LPCSTR lpszFile,LPSTR lpszTitle,WORD cbBuf
 	
 inline BOOL FileSystem::MoveFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,DWORD dwFlags)
 {
-	return ::MoveFileEx(lpExistingFileName,lpNewFileName,dwFlags);	
+	DWORD GetSystemFeaturesFlag();
+	if (GetSystemFeaturesFlag()&(efWin2000|efWinXP|efWinVista))
+		return ::MoveFileEx(lpExistingFileName,lpNewFileName,dwFlags);	
+	else 
+	{
+		if (::CopyFile(lpExistingFileName,lpNewFileName,TRUE))
+			return ::DeleteFile(lpExistingFileName);
+		return FALSE;	
+	}
 }
 	
 inline BOOL FileSystem::CopyFile(LPCSTR lpExistingFileName,LPCSTR lpNewFileName,BOOL bFailIfExists)
@@ -385,8 +405,13 @@ inline BOOL FileSystem::MoveFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileNam
 {
 	if (IsUnicodeSystem()) 
 		return ::MoveFileExW(lpExistingFileName,lpNewFileName,dwFlags);	
-	else // We don't use MoveFileEx here, because system without Unicode system probably does not have it
-		return ::MoveFileA(W2A(lpExistingFileName),W2A(lpNewFileName));	
+	else
+	{
+		// We don't use MoveFileEx here, because system without Unicode system probably does not have it
+		if (::CopyFileA(W2A(lpExistingFileName),W2A(lpNewFileName),TRUE))
+			return ::DeleteFileA(W2A(lpExistingFileName));
+		return FALSE;	
+	}
 }
 
 inline BOOL FileSystem::CopyFile(LPCWSTR lpExistingFileName,LPCWSTR lpNewFileName,BOOL bFailIfExists)

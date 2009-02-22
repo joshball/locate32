@@ -1983,8 +1983,6 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 
 void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 {
-	// TODO: Implement and test support for parent support
-
 	CWaitCursor wait;
 
 	int nSelectedItems;

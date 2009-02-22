@@ -1426,7 +1426,7 @@ DWORD CTrayIconWnd::OnActivateAnotherInstance(ATOM aCommandLine)
 				ForceForegroundAndFocus();
 		
 				CLocateDlg* pLocateDlg=GetLocateDlg();
-				pLocateDlg->SetStartData(pStartData);
+				pLocateDlg->SendMessage(WM_SETSTARTDATA,0,(LPARAM)pStartData);
 				delete pStartData;
 				
 				// Restore if minimized
