@@ -18,6 +18,7 @@ extern "C" {
 #endif
 
 
+#include <commoncontrols.h>
 
 
 
@@ -360,195 +361,215 @@ BOOL SaveSettingsToFile(LPCSTR szKey,LPCSTR szFile,BYTE bFileIsReg)
 	return TRUE;
 }
 
+
+
+
 // Save JPEG 
-BOOL SaveBitmapToJpegFile(HBITMAP hBitmap,LPCWSTR szFile,int nQuality)
+BOOL SaveToJpegFile(HBITMAP hBitmap,LPCWSTR szFile,int nQuality)
 {
 	HBITMAP hNewBitmap;
-	BYTE* pBuffer;
-
-	// First read size of bitmap to BITMAP struct
 	BITMAP bm;
 	GetObject(hBitmap, sizeof(BITMAP), &bm);
+
+
+	struct jpeg_compress_struct cinfo;
+	struct jpeg_error_mgr jerr;
+	FILE * outfile;
+	JSAMPLE* scanline;
+	COLORREF pixel;
+
+	CDC dc1,dc2;
+	dc1.GetDC(NULL);
+	hNewBitmap = ::CreateCompatibleBitmap(dc1,bm.bmWidth,bm.bmHeight);
+	dc1.ReleaseDC();
+	if(hNewBitmap==NULL) 
+		return FALSE;
 	
-	
-	if (bm.bmBitsPixel==24 && 0)
-	{
-		// Image already in 24 bit format
-	}
-	else
-	{
-		// Create a bitmap in correct 24 bit format
-		BITMAPINFO  dibInfo;
-		CDC dc;
+	dc1.CreateCompatibleDC(NULL);
+	dc1.SelectObject(hBitmap);
 
-		dibInfo.bmiHeader.biBitCount = 24;
-		dibInfo.bmiHeader.biClrImportant = 0;
-		dibInfo.bmiHeader.biClrUsed = 0;
-		dibInfo.bmiHeader.biCompression = 0;
-		dibInfo.bmiHeader.biHeight = bm.bmHeight;
-		dibInfo.bmiHeader.biPlanes = 1;
-		dibInfo.bmiHeader.biSize = 40;
-		dibInfo.bmiHeader.biWidth = ( ( bm.bmWidth + 3 ) / 4 ) * 4;
-		dibInfo.bmiHeader.biSizeImage = dibInfo.bmiHeader.biWidth*bm.bmHeight*3;
-		dibInfo.bmiHeader.biXPelsPerMeter = 3780;
-		dibInfo.bmiHeader.biYPelsPerMeter = 3780;
-		dibInfo.bmiColors[0].rgbBlue = 0;
-		dibInfo.bmiColors[0].rgbGreen = 0;
-		dibInfo.bmiColors[0].rgbRed = 0;
-		dibInfo.bmiColors[0].rgbReserved = 0;
-		
+	dc2.CreateCompatibleDC(NULL);
+	dc2.SelectObject(hNewBitmap);
+	dc2.BitBlt(0, 0, bm.bmWidth, bm.bmHeight, dc1, 0, 0, SRCCOPY);
 
-		dc.GetDC(NULL);
-		hNewBitmap=CreateDIBSection(dc,(const BITMAPINFO*)&dibInfo,DIB_RGB_COLORS,(void**)&pBuffer,NULL,0);
-		dc.ReleaseDC();
-
-		// Copy the original to the new bitmap
-		CDC MemDC,TargetDC;
-		MemDC.CreateCompatibleDC(NULL);
-		TargetDC.CreateCompatibleDC(NULL);
-		
-		HBITMAP hOldBitmap1 = (HBITMAP)MemDC.SelectObject(hBitmap);
-		HBITMAP hOldBitmap2 = (HBITMAP)MemDC.SelectObject(hNewBitmap);
-
-		TargetDC.BitBlt(0,0,bm.bmWidth,bm.bmHeight,MemDC,0,0,SRCCOPY);
-
-		MemDC.SelectObject(hOldBitmap1);
-		TargetDC.SelectObject(hOldBitmap2);
-		
-	}
-	
-	// Save bitmap to jpeg file
-	jpeg_compress_struct cinfo;
-	struct jpeg_error_mgr error_mgr;
-	JSAMPROW row_pointer[1];
-	int row_stride;
-
-	FILE* outfile;
+	cinfo.err = jpeg_std_error(&jerr);
+	jpeg_create_compress(&cinfo);
 	if (_wfopen_s(&outfile,szFile,L"wb")!=0) {
 		return FALSE;
 	}
-
-	// JPEG lib error routines
-	cinfo.err = jpeg_std_error(&error_mgr);
-	//error_mgr.error_exit = extended_error_exit;
-	//error_mgr.output_message = extended_output_message;
-	//error_mgr.reset_error_mgr = extended_reset_error_mgr;
-
-	// Create cinfo structure
-	jpeg_create_compress(&cinfo);
 	
-	// Set destination to outfile
 	jpeg_stdio_dest(&cinfo, outfile);
-
-	// Set image destination
-	cinfo.image_width = bm.bmWidth; 	
+	cinfo.image_width = bm.bmWidth;
 	cinfo.image_height = bm.bmHeight;
-	cinfo.input_components = 3;	
-	cinfo.in_color_space = JCS_RGB; 	
-
-	// Set defaults and quality
+	cinfo.input_components = 3;
+	cinfo.in_color_space = JCS_RGB;
 	jpeg_set_defaults(&cinfo);
-	jpeg_set_quality(&cinfo, nQuality, TRUE);
-
-	// Start compressing
+	jpeg_set_quality(&cinfo, nQuality, FALSE);
 	jpeg_start_compress(&cinfo, TRUE);
-
-	row_stride = bm.bmWidth * 3;
-
-	while (cinfo.next_scanline < cinfo.image_height) {
-		row_pointer[0] = & pBuffer[cinfo.next_scanline * row_stride];
-		jpeg_write_scanlines(&cinfo, row_pointer, 1);
+	scanline = new JSAMPLE[bm.bmWidth*3+4];
+	for(int posy = 0; posy < bm.bmHeight; posy++) 
+	{
+		for(int posx = 0; posx < bm.bmWidth; posx++)
+		{
+			pixel = dc2.GetPixel(posx,posy);
+			*((DWORD*)(scanline+posx*3))=pixel;
+			/*scanline[posx*3+0] = GetRValue(pixel);
+			scanline[posx*3+1] = GetGValue(pixel);
+			scanline[posx*3+2] = GetBValue(pixel);*/
+		}
+		jpeg_write_scanlines(&cinfo, &scanline, 1);
 	}
-
-	// Finish compressing and close file
 	jpeg_finish_compress(&cinfo);
-	fclose(outfile);
+
 	jpeg_destroy_compress(&cinfo);
-
+	delete[] scanline;
+	fclose(outfile);
 	
-
-
-
-
-	DeleteObject(hNewBitmap);
-
-
-
+	dc1.DeleteDC();
+	dc2.DeleteDC();
 	return TRUE;
 
-	/* CSTScreenBufferin Create
-	BITMAP bm;
-	GetObject(hBitmap, sizeof(BITMAP), &bm);
-	CreateBitmap(bm.bmWidth, bm.bmHeight);
-
-	CDC memDc;
-	CDC targetDc;
-	memDc.CreateCompatibleDC(NULL);
-	targetDc.CreateCompatibleDC(NULL);
-
-	HBITMAP hOldBitmap1 = (HBITMAP)::SelectObject(memDc.GetSafeHdc(), hBitmap);
-	HBITMAP hOldBitmap2 = (HBITMAP)::SelectObject(targetDc.GetSafeHdc(), m_hBitmap);
-
-	targetDc.BitBlt(0, 0, bm.bmWidth, bm.bmHeight, &memDc, 0, 0, SRCCOPY);
-
-	::SelectObject(memDc.GetSafeHdc(), hOldBitmap1);
-	::SelectObject(targetDc.GetSafeHdc(), hOldBitmap2);
-	memDc.DeleteDC();
-	targetDc.DeleteDC();
-	*/
-
-	/* CorrectedWidth
-	return ( ( nWidth + 3 ) / 4 ) * 4;
-	*/
-
-
-	/* Clipboard viewerin kuvan tallennuksesta
-	CDC dc(GetMainWnd());
-	BITMAPINFO bi;
-	UINT nColorData;
-	bi.bmiHeader.biSize=sizeof(BITMAPINFOHEADER);
-	bi.bmiHeader.biBitCount=0;
-	GetDIBits(dc,(HBITMAP)m_pData,0,0,NULL,&bi,DIB_RGB_COLORS);
 	
-	DWORD nSize=sizeof(BITMAPINFOHEADER);
-	switch(bi.bmiHeader.biBitCount)
-	{
-	case 1:
-	case 4:
-	case 8:
-		nColorData=powi2(BYTE(bi.bmiHeader.biBitCount))*4;
-		nSize+=nColorData+bi.bmiHeader.biSizeImage;
-		break;
-	case 16:
-		if (bi.bmiHeader.biCompression==BI_BITFIELDS)
-			nColorData=4*3*bi.bmiHeader.biWidth*abs(bi.bmiHeader.biHeight);
-		else
-			nColorData=0;
-		nSize+=nColorData+2*bi.bmiHeader.biWidth*abs(bi.bmiHeader.biHeight);
-		break;
-	case 24:
-		nColorData=0;
-		nSize+=3*bi.bmiHeader.biWidth*abs(bi.bmiHeader.biHeight);
-		break;
-	case 32:
-		if (bi.bmiHeader.biCompression==BI_BITFIELDS)
-			nColorData=4*3*bi.bmiHeader.biWidth*abs(bi.bmiHeader.biHeight);
-		else
-			nColorData=0;
-		nSize+=nColorData+4*bi.bmiHeader.biWidth*abs(bi.bmiHeader.biHeight);
-		break;
+}
+
+// Save JPEG from imagelist
+BOOL SaveToJpegFile(HIMAGELIST hImageList,int nIndex,LPCWSTR szFile,int nQuality)
+{
+	HBITMAP hNewBitmap;
+	int cx=32,cy=32;
+	ImageList_GetIconSize(hImageList,&cx,&cy);
+	
+
+	struct jpeg_compress_struct cinfo;
+	struct jpeg_error_mgr jerr;
+	FILE * outfile;
+	JSAMPLE* scanline;
+	COLORREF pixel;
+
+	CDC dc;
+	dc.GetDC(NULL);
+	hNewBitmap = ::CreateCompatibleBitmap(dc,cx,cy);
+	dc.ReleaseDC();
+	if(hNewBitmap==NULL) 
+		return FALSE;
+	
+	dc.CreateCompatibleDC(NULL);
+	dc.SelectObject(hNewBitmap);
+	
+	ImageList_Draw(hImageList,nIndex,dc,0,0,ILD_NORMAL);
+
+	cinfo.err = jpeg_std_error(&jerr);
+	jpeg_create_compress(&cinfo);
+	if (_wfopen_s(&outfile,szFile,L"wb")!=0) {
+		return FALSE;
 	}
-	nColorData+=sizeof(BITMAPINFOHEADER);
-	rFile.Write(&nSize,4,&fe);
-	if (fe.m_cause!=CFileException::none)
+	
+	jpeg_stdio_dest(&cinfo, outfile);
+	cinfo.image_width = cx;
+	cinfo.image_height = cy;
+	cinfo.input_components = 3;
+	cinfo.in_color_space = JCS_RGB;
+	jpeg_set_defaults(&cinfo);
+	jpeg_set_quality(&cinfo, nQuality, FALSE);
+	jpeg_start_compress(&cinfo, TRUE);
+	scanline = new JSAMPLE[cx*3+4];
+	for(int posy = 0; posy < cy; posy++) 
+	{
+		for(int posx = 0; posx < cx; posx++)
+		{
+			pixel = dc.GetPixel(posx,posy);
+			*((DWORD*)(scanline+posx*3))=pixel;
+			/*scanline[posx*3+0] = GetRValue(pixel);
+			scanline[posx*3+1] = GetGValue(pixel);
+			scanline[posx*3+2] = GetBValue(pixel);*/
+		}
+		jpeg_write_scanlines(&cinfo, &scanline, 1);
+	}
+	jpeg_finish_compress(&cinfo);
+
+	jpeg_destroy_compress(&cinfo);
+	delete[] scanline;
+	fclose(outfile);
+	
+	dc.DeleteDC();
+	return TRUE;
+
+	
+}
+
+
+// Save JPEG from imagelist
+BOOL SaveToJpegFile(IImageList* pImageList,int nIndex,LPCWSTR szFile,int nQuality)
+{
+	HBITMAP hNewBitmap;
+	int cx=32,cy=32;
+	pImageList->GetIconSize(&cx,&cy);
+	
+
+	struct jpeg_compress_struct cinfo;
+	struct jpeg_error_mgr jerr;
+	FILE * outfile;
+	JSAMPLE* scanline;
+	COLORREF pixel;
+
+	CDC dc;
+	dc.GetDC(NULL);
+	hNewBitmap = ::CreateCompatibleBitmap(dc,cx,cy);
+	dc.ReleaseDC();
+	if(hNewBitmap==NULL) 
 		return FALSE;
-	BITMAPINFO* lpData=(BITMAPINFO*)new BYTE[nSize+2];
-	MemCopy(lpData,&bi,sizeof(BITMAPINFOHEADER));
-	GetDIBits(dc,(HBITMAP)m_pData,0,abs(bi.bmiHeader.biHeight),(BYTE*)lpData+nColorData,lpData,DIB_RGB_COLORS);
-	rFile.Write(lpData,nSize,&fe);
-	delete[] (BYTE*)lpData;
-	if (fe.m_cause!=CFileException::none)
+	
+	dc.CreateCompatibleDC(NULL);
+	dc.SelectObject(hNewBitmap);
+	
+	IMAGELISTDRAWPARAMS ip;
+	ZeroMemory(&ip,sizeof(IMAGELISTDRAWPARAMS));
+	ip.cbSize=sizeof(IMAGELISTDRAWPARAMS);
+	ip.i=nIndex;
+	ip.hdcDst=dc;
+	ip.fStyle=ILD_TRANSPARENT;
+	ip.dwRop=WHITENESS;
+	ip.rgbBk=CLR_NONE;
+	ip.rgbFg=CLR_NONE;
+
+	pImageList->Draw(&ip);
+
+	cinfo.err = jpeg_std_error(&jerr);
+	jpeg_create_compress(&cinfo);
+	if (_wfopen_s(&outfile,szFile,L"wb")!=0) {
 		return FALSE;
-		*/
+	}
+	
+	jpeg_stdio_dest(&cinfo, outfile);
+	cinfo.image_width = cx;
+	cinfo.image_height = cy;
+	cinfo.input_components = 3;
+	cinfo.in_color_space = JCS_RGB;
+	jpeg_set_defaults(&cinfo);
+	jpeg_set_quality(&cinfo, nQuality, FALSE);
+	jpeg_start_compress(&cinfo, TRUE);
+	scanline = new JSAMPLE[cx*3+4];
+	for(int posy = 0; posy < cy; posy++) 
+	{
+		for(int posx = 0; posx < cx; posx++)
+		{
+			pixel = dc.GetPixel(posx,posy);
+			*((DWORD*)(scanline+posx*3))=pixel;
+			/*scanline[posx*3+0] = GetRValue(pixel);
+			scanline[posx*3+1] = GetGValue(pixel);
+			scanline[posx*3+2] = GetBValue(pixel);*/
+		}
+		jpeg_write_scanlines(&cinfo, &scanline, 1);
+	}
+	jpeg_finish_compress(&cinfo);
+
+	jpeg_destroy_compress(&cinfo);
+	delete[] scanline;
+	fclose(outfile);
+	
+	dc.DeleteDC();
+	return TRUE;
+
+	
 }
 

@@ -10,7 +10,7 @@
 
 
 // Common routines 
-
+interface IImageList;
 
 // Returns string containing default location for file (allocated with new)
 LPWSTR GetDefaultFileLocation(LPCWSTR szFileName,BOOL bMustExists=NULL,DWORD* lpdwSize=NULL);
@@ -21,6 +21,8 @@ BOOL LoadSettingsFromFile(LPCSTR szKey,LPCSTR szFile,BYTE bFileIsReg);
 BOOL SaveSettingsToFile(LPCSTR szKey,LPCSTR szFile,BYTE bFileIsReg);
 
 // Save JPEG 
-BOOL SaveBitmapToJpegFile(HBITMAP hBitmap,LPCWSTR szFile,int nQuality);
+BOOL SaveToJpegFile(HBITMAP hBitmap,LPCWSTR szFile,int nQuality);
+BOOL SaveToJpegFile(HIMAGELIST hImageList,int nIndex,LPCWSTR szFile,int nQuality);
+BOOL SaveToJpegFile(IImageList* pImageList,int nIndex,LPCWSTR szFile,int nQuality);
 
 #endif

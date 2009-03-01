@@ -867,29 +867,7 @@ HRESULT CLocateDlg::ListCustomDrawHandler(NMLVCUSTOMDRAW* pLVCD)
 					int nIndex=List.Add(hThumbnail,(HBITMAP)NULL);
 					List.Draw(dc,nIndex,ptThumb,ILD_NORMAL);
 					List.DeleteImageList();
-
-
-					// SaveBitmapToJpegFile(hThumbnail,L"C:\\Temp\\Test.jpg",75);
-
-					/*
-					IPicture* pPic;
-					PICTDESC pd;
-					pd.cbSizeofstruct=sizeof(PICTDESC);
-					pd.picType=PICTYPE_BITMAP;
-					pd.bmp.hbitmap=hThumbnail;
-					pd.bmp.hpal=NULL;
-					if (SUCCEEDED(OleCreatePictureIndirect(&pd,IID_IPicture,TRUE,(LPVOID*)&pPic)))
-					{
-						long hmWidth=0,hmHeight=0; // HIMETRIC units
-						pPic->get_Width(&hmWidth);
-						pPic->get_Height(&hmHeight);
-						
-						pPic->Render(dc,ptThumb.x,ptThumb.y, 
-							sThumbnailSize.cx,sThumbnailSize.cy,
-							0, hmHeight, hmWidth, -hmHeight, NULL);
-
-						pPic->Release();
-					}*/
+			
 				}
 				else
 					dc.DrawState(ptThumb,sThumbnailSize,hThumbnail,DST_BITMAP);

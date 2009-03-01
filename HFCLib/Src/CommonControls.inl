@@ -113,18 +113,18 @@ inline BOOL CImageList::Create(HIMAGELIST imagelist1, int nImage1, HIMAGELIST im
 	return (m_hImageList=ImageList_Merge(imagelist1,nImage1,imagelist2,nImage2,dx,dy))!=NULL;
 }
 
-inline BOOL CImageList::Create(LPCTSTR lpbmp,int cx,int cGrow,COLORREF crMask,UINT uType,UINT uFlags,BOOL nOem)
+inline BOOL CImageList::Create(LPCTSTR lpbmp,int cx,int cGrow,COLORREF crMask,UINT uFlags,BOOL nOem)
 {
 	if (m_hImageList!=NULL)
 		ImageList_Destroy(m_hImageList);
-	return (m_hImageList=ImageList_LoadImage(nOem?NULL:GetCommonResourceHandle(),lpbmp,cx,cGrow,crMask,uType,uFlags))!=NULL;
+	return (m_hImageList=ImageList_LoadImage(nOem?NULL:GetCommonResourceHandle(),lpbmp,cx,cGrow,crMask,IMAGE_BITMAP,uFlags))!=NULL;
 }
 
-inline BOOL CImageList::Create(UINT uBitmapID,int cx,int cGrow,COLORREF crMask,UINT uType,UINT uFlags,BOOL nOem)
+inline BOOL CImageList::Create(UINT uBitmapID,int cx,int cGrow,COLORREF crMask,UINT uFlags,BOOL nOem)
 {
 	if (m_hImageList!=NULL)
 		ImageList_Destroy(m_hImageList);
-	return (m_hImageList=ImageList_LoadImage(nOem?NULL:GetCommonResourceHandle(),MAKEINTRESOURCE(uBitmapID),cx,cGrow,crMask,uType,uFlags))!=NULL;
+	return (m_hImageList=ImageList_LoadImage(nOem?NULL:GetCommonResourceHandle(),MAKEINTRESOURCE(uBitmapID),cx,cGrow,crMask,IMAGE_BITMAP,uFlags))!=NULL;
 }
 
 inline BOOL CImageList::Duplicate(HIMAGELIST himl)

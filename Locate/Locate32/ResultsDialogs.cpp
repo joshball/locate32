@@ -3,6 +3,7 @@
 #include <HFCLib.h>
 #include "Locate32.h"
 #include <wchar.h>
+#include <commoncontrols.h>
 
 BOOL CResults::Value::IsInteger() const
 {
@@ -349,7 +350,7 @@ BOOL CResults::CValueStream::Write(LPCWSTR lpString, DWORD nCount)
 CResults::Value CResults::CValueStream::ToSingleValue()
 {
 	if (!EvaluateOperators())
-		return Value(L"!INVALIDFORMAT!");
+		return Value(L"INVALIDFORMAT");
 	if (m_Values.GetCount()==0)
 		return Value(L"");
 	else if (m_Values.GetCount()==1)
@@ -623,6 +624,35 @@ BOOL CResults::Initialize(DWORD dwFlags,LPCWSTR szDescription)
 	return TRUE;
 }
 
+void CResults::InitializeSystemImageList(int cx) 
+{
+	if (m_hSystemImageList!=NULL)
+	{
+		if ((m_nSystemImageListSize&(~(1<<31)))==cx)
+			return;
+
+		if (m_nSystemImageListSize&(1<<31))
+			m_pSystemImageList->Release();
+	}
+
+	HRESULT (STDAPICALLTYPE* pSHGetImageList)(int,REFIID riid,void **ppv)=
+		(HRESULT (STDAPICALLTYPE*)(int,REFIID riid,void **ppv))GetProcAddress(GetModuleHandle("shell32.dll"),"SHGetImageList");
+
+	
+	if (pSHGetImageList!=NULL)
+	{
+		if (SUCCEEDED(pSHGetImageList(cx>=128?SHIL_JUMBO:SHIL_EXTRALARGE,IID_IImageList,(void**)&m_pSystemImageList)))
+		{	
+			m_nSystemImageListSize=cx|(1<<31);
+			return;
+		}
+	}
+
+	SHFILEINFO fi;
+	m_nSystemImageListSize=cx;
+	m_hSystemImageList=(HIMAGELIST)ShellFunctions::GetFileInfo("",0,&fi,SHGFI_LARGEICON|SHGFI_SYSICONINDEX);
+}
+
 void CResults::Close()
 {
 	if (m_pSelectedDetails!=NULL)
@@ -640,6 +670,9 @@ void CResults::Close()
 		FileSystem::Remove(m_sTempFile);
 		m_sTempFile.Empty();
 	}
+
+	if (m_pSystemImageList!=NULL && m_nSystemImageListSize&(1<<31))
+		m_pSystemImageList->Release();
 }
 
 
@@ -1174,6 +1207,25 @@ BOOL CResults::SaveToHtmlFile(LPCWSTR szFile,LPCWSTR szTemplate)
 	SetVariable("INCLUDEDBINFO",(m_dwFlags&RESULT_INCLUDEDBINFO)?TRUE:FALSE);
 	SetVariable("INCLUDECOLUMNLABELS",(m_dwFlags&RESULT_INCLUDELABELS)?TRUE:FALSE);
 
+	
+	int nDirectoryLen=LastCharIndex(szFile,L'\\');
+	LPCWSTR szFileName=szFile+nDirectoryLen+1;
+	int nExtensionPos=LastCharIndex(szFileName,L'.');
+	
+	SetVariable("RESULTSFILE_PATH",szFile);
+	SetVariable("RESULTSFILE_DIRECTORY",CStringW(szFile,nDirectoryLen));
+	SetVariable("RESULTSFILE_NAME",szFileName);
+	if (nExtensionPos>0)
+	{
+		SetVariable("RESULTSFILE_TITLE",CStringW(szFileName,nExtensionPos));
+		SetVariable("RESULTSFILE_EXTENSION",szFileName+nExtensionPos+1);
+	}
+	else
+	{
+		SetVariable("RESULTSFILE_TITLE",szFileName);
+		SetVariable("RESULTSFILE_EXTENSION",szwEmpty);
+	}
+
 
 	SetVariable("NUM_RESULTS",m_nResults);
 	SetVariable("NUM_FILES",m_nFiles);
@@ -1324,7 +1376,7 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL b
 			if (pValue!=NULL)
 				pValue->Write(stream,FALSE);
 			else
-				stream.Write(L"!UNKNOWNVARIABLE!");
+				stream.Write(L"UNKNOWNVARIABLE");
 			
 			pPtr+=nLength+1;
 			iBufferLen-=nLength+1;
@@ -1359,7 +1411,7 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL b
 					}
 				}
 				else
-					stream.Write(L"!INVALIDARGUMENT!");
+					stream.Write(L"INVALIDARGUMENT");
 
 				pPtr+=iBlockLength+2;
 				iBufferLen-=iBlockLength+2;
@@ -1441,10 +1493,10 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL b
 					else if (nLength==4 && _wcsnicmp(pName,L"FILE",4)==0)
 						stream.Write(pDatabase->GetArchiveName());
 					else
-						stream.Write(L"!INVALIDFUNCTION!");
+						stream.Write(L"INVALIDFUNCTION");
 				}
 				else
-					stream.Write(L"!INVALIDARGUMENT!");
+					stream.Write(L"INVALIDARGUMENT");
 
 				pPtr+=iParametersLen+2;
 				iBufferLen-=iParametersLen+2;
@@ -1467,7 +1519,7 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL b
 				if (iDetail>=0 && iDetail<TypeCount)
 					stream.Write(ID2W(m_AllDetails[iDetail].nString));
 				else
-					stream.Write(L"!INVALIDARGUMENT!");
+					stream.Write(L"INDEXOUTOFBOUNDS");
 
 				pPtr+=iParametersLen+2;
 				iBufferLen-=iParametersLen+2;
@@ -1490,7 +1542,7 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL b
 				if (iDetail>=0 && iDetail<m_nSelectedDetails)
 					Value(m_pSelectedDetails[iDetail]+1).Write(stream,TRUE);
 				else
-					stream.Write(L"!INVALIDARGUMENT!");
+					stream.Write(L"INDEXOUTOFBOUNDS");
 
 				pPtr+=iParametersLen+2;
 				iBufferLen-=iParametersLen+2;
@@ -1531,10 +1583,126 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL b
 					stream.Write(m_Items[iFile]->GetDetailText((DetailType)iDetail));
 				}
 				else
-					stream.Write(L"!INVALIDARGUMENT!");
+					stream.Write(L"INDEXOUTOFBOUNDS");
 
 				pPtr+=iParametersLen+2;
 				iBufferLen-=iParametersLen+2;
+
+			}
+			else if (nLength==7 && _wcsnicmp(pPtr,L"GETPATH",7)==0)
+			{
+				// GETPATH
+				pPtr+=7;
+				iBufferLen-=7;
+				
+				int iConditionLength;
+				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+					throw CFileException(CFileException::invalidFile);
+
+				Value ID=EvaluateCondition(pPtr+1,iConditionLength);
+				int iFile=int(ID)-1;
+				if (iFile>=0 && iFile<m_nResults)
+					stream.Write(m_Items[iFile]->GetPath());
+				else
+					stream.Write(L"INDEXOUTOFBOUNDS");
+			
+					
+				pPtr+=2+iConditionLength;
+				iBufferLen-=iConditionLength+2;
+
+			}
+			else if (nLength==7 && _wcsnicmp(pPtr,L"GETNAME",7)==0)
+			{
+				// GETNAME
+				pPtr+=7;
+				iBufferLen-=7;
+				
+				int iConditionLength;
+				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+					throw CFileException(CFileException::invalidFile);
+
+				Value ID=EvaluateCondition(pPtr+1,iConditionLength);
+				int iFile=int(ID)-1;
+				if (iFile>=0 && iFile<m_nResults)
+					stream.Write(m_Items[iFile]->GetName());
+				else
+					stream.Write(L"INDEXOUTOFBOUNDS");
+			
+					
+				pPtr+=2+iConditionLength;
+				iBufferLen-=iConditionLength+2;
+
+			}
+			else if (nLength==9 && _wcsnicmp(pPtr,L"GETPARENT",9)==0)
+			{
+				// GETPARENT
+				pPtr+=9;
+				iBufferLen-=9;
+				
+				int iConditionLength;
+				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+					throw CFileException(CFileException::invalidFile);
+
+				Value ID=EvaluateCondition(pPtr+1,iConditionLength);
+				int iFile=int(ID)-1;
+				if (iFile>=0 && iFile<m_nResults)
+					stream.Write(m_Items[iFile]->GetParent());
+				else
+					stream.Write(L"INDEXOUTOFBOUNDS");
+			
+					
+				pPtr+=2+iConditionLength;
+				iBufferLen-=iConditionLength+2;
+
+			}
+			else if (nLength==8 && _wcsnicmp(pPtr,L"GETTITLE",8)==0)
+			{
+				// GETTITLE
+				pPtr+=8;
+				iBufferLen-=8;
+				
+				int iConditionLength;
+				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+					throw CFileException(CFileException::invalidFile);
+
+				Value ID=EvaluateCondition(pPtr+1,iConditionLength);
+				int iFile=int(ID)-1;
+				if (iFile>=0 && iFile<m_nResults) 
+				{
+					// Updating if necessary
+					if (m_Items[iFile]->ShouldUpdateFileTitle())
+						m_Items[iFile]->UpdateFileTitle();
+					
+					stream.Write(m_Items[iFile]->GetFileTitle());
+				}
+				else
+					stream.Write(L"INDEXOUTOFBOUNDS");
+			
+					
+				pPtr+=2+iConditionLength;
+				iBufferLen-=iConditionLength+2;
+
+			}
+			else if (nLength==12 && _wcsnicmp(pPtr,L"GETEXTENSION",12)==0)
+			{
+				// GETEXTENSION
+				pPtr+=12;
+				iBufferLen-=12;
+				
+				int iConditionLength;
+				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+					throw CFileException(CFileException::invalidFile);
+
+				Value ID=EvaluateCondition(pPtr+1,iConditionLength);
+				int iFile=int(ID)-1;
+				if (iFile>=0 && iFile<m_nResults)
+					stream.Write(m_Items[iFile]->GetExtension());
+				else
+					stream.Write(L"INDEXOUTOFBOUNDS");
+			
+					
+				pPtr+=2+iConditionLength;
+				iBufferLen-=iConditionLength+2;
 
 			}
 			else if (nLength==3 && _wcsnicmp(pPtr,L"SET",3)==0)
@@ -1550,7 +1718,7 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL b
 				int iVariableLen;
 				for (iVariableLen=0;pPtr[iVariableLen+1]!=L'=' && iVariableLen<iParametersLen;iVariableLen++);
 				if (iVariableLen==iParametersLen)
-					stream.Write(L"!INVALIDARGUMENT!");
+					stream.Write(L"INVALIDARGUMENT");
 				else
 				{
 					Value sValue=EvaluateCondition(pPtr+iVariableLen+1+1,iParametersLen-iVariableLen-1);
@@ -1576,6 +1744,110 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL b
 
 				pPtr+=2+iConditionLength;
 				iBufferLen-=iConditionLength+2;
+
+			}
+			else if (nLength==5 && _wcsnicmp(pPtr,L"MKDIR",5)==0)
+			{
+				// MKDIR (Make Directory)
+				pPtr+=5;
+				iBufferLen-=5;
+				
+				int iConditionLength;
+				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+					throw CFileException(CFileException::invalidFile);
+
+				Value Directory=EvaluateCondition(pPtr+1,iConditionLength);
+				Directory.ToString();
+
+				FileSystem::CreateDirectory((LPCWSTR)Directory);
+
+				
+				pPtr+=2+iConditionLength;
+				iBufferLen-=iConditionLength+2;
+
+			}
+			else if (nLength==15 && _wcsnicmp(pPtr,L"CREATETHUMBNAIL",15)==0)
+			{
+				// GETDETAIL
+				pPtr+=15;
+				iBufferLen-=15;
+				
+				int iParametersLen;
+				if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
+					throw CFileException(CFileException::invalidFile);
+
+				// Remove '['
+				pPtr++;
+				iBufferLen--;
+
+
+				int iFirstArgLen,iSecondArgLen;
+				for (iFirstArgLen=0;pPtr[iFirstArgLen]!=L',' && iFirstArgLen<iParametersLen;iFirstArgLen++);
+				Value vPath=EvaluateCondition(pPtr,iFirstArgLen);
+
+				pPtr+=iFirstArgLen+1;
+				iBufferLen-=iFirstArgLen+1;
+				iParametersLen-=iFirstArgLen+1;
+
+				for (iSecondArgLen=0;pPtr[iSecondArgLen]!=L',' && iSecondArgLen<iParametersLen;iSecondArgLen++);
+				Value vThumbnailFile=EvaluateCondition(pPtr,iSecondArgLen);
+				
+				if (!vPath.IsEmptyString() && !vThumbnailFile.IsEmptyString())
+				{
+					int nThumbnailSize=128;
+					if (iSecondArgLen+1<iParametersLen)
+					{
+						Value vThumbnailSize=EvaluateCondition(pPtr+iSecondArgLen+1,iParametersLen-iSecondArgLen-1);
+						if (vThumbnailSize.IsInteger()>0)
+							nThumbnailSize=(int)vThumbnailSize;
+					}
+
+					CLocateDlg* pLocateDlg=GetLocateDlg();
+					if (pLocateDlg!=NULL)
+					{
+						SIZE sz;
+						LPCWSTR szFile=(LPCWSTR)vPath;
+						HBITMAP hBitmap=pLocateDlg->CreateThumbnail(szFile,&CSize(nThumbnailSize,nThumbnailSize),&sz);
+						if (hBitmap!=NULL)
+						{
+							if (SaveToJpegFile(hBitmap,(LPCWSTR)vThumbnailFile,75))
+								stream.Write((LPCWSTR)vThumbnailFile);	
+							else
+								stream.Write(L"ERROR:COULDNOTSAVEFILE");	
+
+							DeleteObject(hBitmap);
+						}
+						else
+						{
+							// Try system image list
+							InitializeSystemImageList(nThumbnailSize);
+
+							BOOL bRet=FALSE;
+							if (m_hSystemImageList!=NULL)
+							{
+								SHFILEINFOW fi;
+								if (ShellFunctions::GetFileInfo(szFile,0,&fi,SHGFI_SYSICONINDEX))
+								{
+									if (m_nSystemImageListSize&(1<<31))
+										bRet=SaveToJpegFile(m_pSystemImageList,fi.iIcon,(LPCWSTR)vThumbnailFile,75);
+									else 
+										bRet=SaveToJpegFile(m_hSystemImageList,fi.iIcon,(LPCWSTR)vThumbnailFile,75);
+								}
+							}
+							
+							stream.Write(bRet?(LPCWSTR)vThumbnailFile:L"ERROR:COULDNOTCREATETHUMBNAIL");	
+								
+						}
+					}
+					else 
+						stream.Write("ERROR:LOC=NULL)");
+					
+				}
+				else
+					stream.Write(L"INVALIDARGUMENTS");
+
+				pPtr+=iParametersLen+1;
+				iBufferLen-=iParametersLen+1;
 
 			}
 			else

@@ -44,8 +44,8 @@ public:
 	BOOL Create(LPCTSTR lpszBitmapID, int cx, int nGrow, COLORREF crMask);
 	BOOL Create(HIMAGELIST imagelist1, int nImage1, HIMAGELIST imagelist2,
 		int nImage2, int dx, int dy);
-	BOOL Create(LPCTSTR lpbmp,int cx,int cGrow,COLORREF crMask,UINT uType,UINT uFlags,BOOL nOem=FALSE);
-	BOOL Create(UINT nBitmapID,int cx,int cGrow,COLORREF crMask,UINT uType,UINT uFlags,BOOL nOem=FALSE);
+	BOOL Create(LPCTSTR lpbmp,int cx,int cGrow,COLORREF crMask,UINT uFlags,BOOL nOem);
+	BOOL Create(UINT nBitmapID,int cx,int cGrow,COLORREF crMask,UINT uFlags,BOOL nOem);
    
 	BOOL DeleteImageList();
 

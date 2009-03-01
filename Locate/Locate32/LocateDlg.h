@@ -1123,15 +1123,18 @@ protected:
 	static void ExecuteCommand(LPCWSTR szCommand,int nItem=-1);
 	// Returns IDropTarget for item id list
 	IDropTarget* GetDropTarget(LPITEMIDLIST pidl) const;
+
+	// Thumbnail support
+	IExtractImage* GetExtractImageInterface(LPCWSTR szFile) const;
+	IThumbnailProvider* GetThumbnailProvider(LPCWSTR szFile) const;
+	
 public:
 	HANDLE GetLocaterThread(BOOL bDuplicate=FALSE);
 	UINT GetSimpleIDLsandParentForFiles(LPCWSTR* ppFiles,UINT nFiles,LPITEMIDLIST& rpParentIDL,LPITEMIDLIST*& rpSimpleIDLs);
 	BOOL GetSimpleIDLsandParentfromIDLs(int nItems,LPITEMIDLIST* pFullIDLs,LPITEMIDLIST* rpParentIDL,LPITEMIDLIST* rpSimpleIDLs,int* pParentIDLLevel=NULL);
 	
-	// Thumbnail support
-	IExtractImage* GetExtractImageInterface(LPCWSTR szFile);
-	IThumbnailProvider* GetThumbnailProvider(LPCWSTR szFile);
 	
+	HBITMAP CreateThumbnail(LPCWSTR szFile,SIZE* pDesiredSize,SIZE* pActualSize=NULL) const;
 
 
 	////////////////////////////////////////////////////////////

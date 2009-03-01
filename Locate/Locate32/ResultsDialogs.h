@@ -41,7 +41,9 @@ private:
 	CWordArray m_aFromDatabases;
 
 	CStringW m_sTempFile;
-
+	
+	
+	
 	CAutoPtrA<CLocateDlg::ViewDetails> m_AllDetails;
 	CArray<CLocatedItem*> m_Items;	
 
@@ -86,7 +88,7 @@ private:
 	public:
 		Value(int nValue);
 		Value(LPCWSTR pValue);
-		Value(LPCWSTR pValue,size_t nLen);
+		Value(LPCWSTR pValue,DWORD nLen);
 		Value(OperatorType nValue);
 
 		Value(const Value& val);
@@ -101,6 +103,7 @@ private:
 		BOOL GetOperator() const;
 		void ToString();
 		BOOL ToInteger(BOOL bForce);
+		BOOL IsEmptyString() const { return nType==String && (pString==NULL || pString[0]==L'\0'); }
 		BOOL OnlySpaces() const;
 		
 		operator int() const;
@@ -109,7 +112,7 @@ private:
 		void Set(int nNewValue);
 		void Set(OperatorType nNewValue);
 		void Set(LPCWSTR pNewValue);
-		void Set(LPCWSTR pNewValue,size_t nLen);
+		void Set(LPCWSTR pNewValue,DWORD nLen);
 		void Set(Value& value,BOOL bTakePtr);
 		void SetPtr(LPCWSTR pNewValue);
 		
@@ -178,7 +181,16 @@ private:
 	
 	Value EvaluateCondition(LPCWSTR pBuffer,int iConditionLength);
 	
-
+	
+	
+	
+	
+	void InitializeSystemImageList(int cx);
+	union { 
+		IImageList* m_pSystemImageList; // Large and extra large icons (SHGetImageList needed)
+		HIMAGELIST m_hSystemImageList; // Medium size icons (got using SHGetFileInfo)
+	};
+	DWORD m_nSystemImageListSize; // if MSB is 1, list is interface
 };
 
 class CSaveResultsDlg : public CFileDialog  
@@ -237,7 +249,7 @@ inline CResults::Value::Value(LPCWSTR pValue)
 	pString=alloccopy(pValue); 
 }
 
-inline CResults::Value::Value(LPCWSTR pValue,size_t nLen)
+inline CResults::Value::Value(LPCWSTR pValue,DWORD nLen)
 : nType(String)
 {
 	pString=alloccopy(pValue,nLen); 
@@ -331,7 +343,7 @@ inline void CResults::Value::Set(LPCWSTR pNewValue)
 	pString=alloccopy(pNewValue);
 }
 
-inline void CResults::Value::Set(LPCWSTR pNewValue,size_t nLen)
+inline void CResults::Value::Set(LPCWSTR pNewValue,DWORD nLen)
 {
 	if (nType==String && pString!=NULL) 
 		delete[] pString; 
@@ -420,12 +432,14 @@ inline void CResults::CValueStream::AddToListPtr(LPCWSTR pValue)
 // Inline function for CResults
 
 inline CResults::CResults(BOOL bThrowExceptions)
-:	m_nSelectedDetails(0),m_pSelectedDetails(NULL),m_pLengths(NULL),m_dwFlags(0),CExceptionObject(bThrowExceptions)
+:	m_nSelectedDetails(0),m_pSelectedDetails(NULL),m_pLengths(NULL),
+	m_dwFlags(0),m_hSystemImageList(NULL),CExceptionObject(bThrowExceptions)
 {
 }
 
 inline CResults::CResults(DWORD dwFlags,LPCWSTR szDescription,BOOL bThrowExceptions)
-:	m_nSelectedDetails(0),m_pSelectedDetails(NULL),m_pLengths(NULL),CExceptionObject(bThrowExceptions)
+:	m_nSelectedDetails(0),m_pSelectedDetails(NULL),m_pLengths(NULL),
+	m_hSystemImageList(NULL),CExceptionObject(bThrowExceptions)
 {
 	Initialize(dwFlags,szDescription);
 }

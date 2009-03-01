@@ -1777,108 +1777,19 @@ void CLocatedItem::LoadThumbnail()
 	
 
 	// No thumbnails for icons and cursors
-	if (_wcsicmp(GetExtension(),L"ico")==0)
+	if (_wcsicmp(GetExtension(),L"ico")==0 || _wcsicmp(GetExtension(),L"cur")==0)
+	{
+		pField->pThumbnail->CloseMutex();
 		return;
-	if (_wcsicmp(GetExtension(),L"cur")==0)
-		return;
-
+	}
 	
-
 	CLocateDlg* pLocateDlg=GetLocateDlg();
-	if (pLocateDlg->m_dwThumbnailFlags&CLocateDlg::tfVistaFeaturesAvailable)
+	if (pLocateDlg!=NULL)
 	{
-		// Using IIthumbnailProvider to extract bitmap
-		CComPtr<IThumbnailProvider> pThumbnailProv=pLocateDlg->GetThumbnailProvider(GetPath());
-		if (pThumbnailProv!=NULL)
-		{
-			HBITMAP hBitmap;
-			WTS_ALPHATYPE at;
-			HRESULT hRes=pThumbnailProv->GetThumbnail(pLocateDlg->m_sCurrentIconSize.cx,&hBitmap,&at);
-			if (SUCCEEDED(hRes))
-			{
-
-				// Load size
-				BITMAP bi;
-				GetObject(hBitmap,sizeof(BITMAP),&bi);
-				
-				if (bi.bmWidth>pLocateDlg->m_sCurrentIconSize.cx || 
-					bi.bmHeight>pLocateDlg->m_sCurrentIconSize.cy)
-				{
-					// Image extractor does not handle size correctly
-					pField->pThumbnail->hBitmap=ScaleImage(hBitmap,pLocateDlg->m_sCurrentIconSize.cx,pLocateDlg->m_sCurrentIconSize.cy);
-					if (pField->pThumbnail->hBitmap!=NULL)
-					{
-						// Read dimensions again
-						GetObject(pField->pThumbnail->hBitmap,sizeof(BITMAP),&bi);
-					}
-					else
-						pField->pThumbnail->hBitmap=hBitmap;
-				}
-				else
-					pField->pThumbnail->hBitmap=hBitmap;
-
-
-
-				pField->pThumbnail->sThumbnailSize.cx=bi.bmWidth;
-				pField->pThumbnail->sThumbnailSize.cy=bi.bmHeight;
-
-
-				pField->pThumbnail->CloseMutex();
-
-
-				return;
-			}
-		}
+		pField->pThumbnail->hBitmap=pLocateDlg->CreateThumbnail(GetPath(),
+			&pLocateDlg->m_sCurrentIconSize,&pField->pThumbnail->sThumbnailSize);
 	}
 
-	// Extracting thumbnail icon
-	CComPtr<IExtractImage> pExtractImage=pLocateDlg->GetExtractImageInterface(GetPath());
-
-	if (pExtractImage!=NULL)
-	{
-		WCHAR szPath[MAX_PATH];
-		DWORD dwPriority,dwFlags=0;
-
-		HRESULT hRes=pExtractImage->GetLocation(szPath,MAX_PATH,&dwPriority,&pLocateDlg->m_sCurrentIconSize,32,&dwFlags);
-
-		if (SUCCEEDED(hRes))
-		{
-			HBITMAP hBitmap;
-			hRes=pExtractImage->Extract((HBITMAP*)&hBitmap);
-			if (SUCCEEDED(hRes))
-			{
-				// Load size
-				BITMAP bi;
-				GetObject(hBitmap,sizeof(BITMAP),&bi);
-				
-				if (bi.bmWidth>pLocateDlg->m_sCurrentIconSize.cx || 
-					bi.bmHeight>pLocateDlg->m_sCurrentIconSize.cy)
-				{
-					// Image extractor does not handle size correctly
-					pField->pThumbnail->hBitmap=ScaleImage(hBitmap,pLocateDlg->m_sCurrentIconSize.cx,pLocateDlg->m_sCurrentIconSize.cy);
-					if (pField->pThumbnail->hBitmap!=NULL)
-					{
-						// Read dimensions again
-						GetObject(pField->pThumbnail->hBitmap,sizeof(BITMAP),&bi);
-					}
-					else
-						pField->pThumbnail->hBitmap=hBitmap;
-				}
-				else
-					pField->pThumbnail->hBitmap=hBitmap;
-
-
-
-				pField->pThumbnail->sThumbnailSize.cx=bi.bmWidth;
-				pField->pThumbnail->sThumbnailSize.cy=bi.bmHeight;
-				
-				pField->pThumbnail->CloseMutex();
-				return;
-			}
-		}
-	}
-
-	
 	pField->pThumbnail->CloseMutex();
 	
 	ItemDebugMessage("CLocatedItem::LoadThumbnail end");

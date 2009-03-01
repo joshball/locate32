@@ -3436,7 +3436,7 @@ BOOL CLocateDlg::GetSimpleIDLsandParentfromIDLs(int nItems,LPITEMIDLIST* pFullID
 	return TRUE;
 }
 
-IExtractImage* CLocateDlg::GetExtractImageInterface(LPCWSTR szFile)
+IExtractImage* CLocateDlg::GetExtractImageInterface(LPCWSTR szFile) const
 {
 	if (m_pDesktopFolder==NULL)
 		return NULL;
@@ -3478,6 +3478,96 @@ IExtractImage* CLocateDlg::GetExtractImageInterface(LPCWSTR szFile)
 	return pExtractImage;
 }
 
+HBITMAP CLocateDlg::CreateThumbnail(LPCWSTR szFile,SIZE* pDesiredSize,SIZE* pActualSize) const
+{
+	if (m_dwThumbnailFlags&CLocateDlg::tfVistaFeaturesAvailable)
+	{
+		// Using IIthumbnailProvider to extract bitmap
+		CComPtr<IThumbnailProvider> pThumbnailProv=GetThumbnailProvider(szFile);
+		if (pThumbnailProv!=NULL)
+		{
+			HBITMAP hBitmap;
+			WTS_ALPHATYPE at;
+			HRESULT hRes=pThumbnailProv->GetThumbnail(pDesiredSize->cx,&hBitmap,&at);
+			if (SUCCEEDED(hRes))
+			{
+
+				// Load size
+				BITMAP bi;
+				GetObject(hBitmap,sizeof(BITMAP),&bi);
+				
+				if (bi.bmWidth>pDesiredSize->cx || bi.bmHeight>pDesiredSize->cy)
+				{
+					// Image extractor does not handle size correctly
+					HBITMAP hScaledBitmap=ScaleImage(hBitmap,pDesiredSize->cx,pDesiredSize->cy);
+					if (hScaledBitmap!=NULL)
+					{
+						// Read dimensions again
+						GetObject(hBitmap,sizeof(BITMAP),&bi);
+						DeleteObject(hBitmap);
+						hBitmap=hScaledBitmap;
+					}
+				}
+
+				if (pActualSize!=NULL)
+				{
+					pActualSize->cx=bi.bmWidth;
+					pActualSize->cy=bi.bmHeight;
+				}
+
+				return hBitmap;
+			}
+		}
+	}
+
+	// Extracting thumbnail icon
+	CComPtr<IExtractImage> pExtractImage=GetExtractImageInterface(szFile);
+
+	if (pExtractImage!=NULL)
+	{
+		WCHAR szPath[MAX_PATH];
+		DWORD dwPriority,dwFlags=0;
+
+		HRESULT hRes=pExtractImage->GetLocation(szPath,MAX_PATH,&dwPriority,pDesiredSize,32,&dwFlags);
+
+		if (SUCCEEDED(hRes))
+		{
+			HBITMAP hBitmap;
+			hRes=pExtractImage->Extract((HBITMAP*)&hBitmap);
+			if (SUCCEEDED(hRes))
+			{
+				// Load size
+				BITMAP bi;
+				GetObject(hBitmap,sizeof(BITMAP),&bi);
+				
+				if (bi.bmWidth>pDesiredSize->cx || bi.bmHeight>pDesiredSize->cy)
+				{
+					// Image extractor does not handle size correctly
+					HBITMAP hScaledBitmap=ScaleImage(hBitmap,pDesiredSize->cx,pDesiredSize->cy);
+					if (hScaledBitmap!=NULL)
+					{
+						// Read dimensions again
+						GetObject(hBitmap,sizeof(BITMAP),&bi);
+						DeleteObject(hBitmap);
+						hBitmap=hScaledBitmap;
+					}
+				}
+				
+				if (pActualSize!=NULL)
+				{
+					pActualSize->cx=bi.bmWidth;
+					pActualSize->cy=bi.bmHeight;
+				}
+	
+				return hBitmap;
+			}
+		}
+	}
+
+	return NULL;	
+}
+
+
 #undef DEFINE_GUID
 #define DEFINE_GUID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
     EXTERN_C const GUID DECLSPEC_SELECTANY name \
@@ -3486,7 +3576,7 @@ IExtractImage* CLocateDlg::GetExtractImageInterface(LPCWSTR szFile)
 DEFINE_GUID(BHID_ThumbnailHandler, 0x7b2e650a, 0x8e20, 0x4f4a, 0xb0, 0x9e, 0x65, 0x97, 0xaf, 0xc7, 0x2f, 0xb0);
 DEFINE_GUID(IID_IThumbnailProvider,0xe357fccd, 0xa995, 0x4576, 0xb0, 0x1f, 0x23, 0x46, 0x30, 0x15, 0x4e, 0x96);
 
-IThumbnailProvider* CLocateDlg::GetThumbnailProvider(LPCWSTR szFile)
+IThumbnailProvider* CLocateDlg::GetThumbnailProvider(LPCWSTR szFile) const
 {
 	IShellItem* pFileItem;
 

@@ -3431,9 +3431,9 @@ BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 	GetLocateDlg()->AddInstantSearchingFlags(isIgnoreChangeMessages);
 
 	// Initializing Imagelists
-	m_ToolbarIL.Create(IDB_TOOLBARBITMAPS,12,1,RGB(255,255,255));
-	m_ToolbarILHover.Create(IDB_TOOLBARBITMAPSH,12,1,RGB(255,255,255));
-	m_ToolbarILDisabled.Create(IDB_TOOLBARBITMAPSD,12,1,RGB(255,255,255));
+	m_ToolbarIL.Create(IDB_TOOLBARBITMAPS,12,1,RGB(255,255,255),LR_CREATEDIBSECTION,FALSE);
+	m_ToolbarILHover.Create(IDB_TOOLBARBITMAPSH,12,1,RGB(255,255,255),LR_CREATEDIBSECTION,FALSE);
+	m_ToolbarILDisabled.Create(IDB_TOOLBARBITMAPSD,12,1,RGB(255,255,255),LR_CREATEDIBSECTION,FALSE);
 	
 	// Sets imagelists for toolbar
 	SendDlgItemMessage(IDC_HELPTOOLBAR,TB_SETIMAGELIST,0,LPARAM(HIMAGELIST(m_ToolbarIL)));
@@ -3448,7 +3448,6 @@ BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 	tb.fsState=TBSTATE_ENABLED;
 	SendDlgItemMessage(IDC_HELPTOOLBAR,TB_INSERTBUTTON,0,LPARAM(&tb));
 
-	SetLastError(0);
 	CComboBox Check(GetDlgItem(IDC_CHECK));
 	Check.AddString(ID2W(IDS_FILENAMESONLY));
 	Check.AddString(ID2W(IDS_FILEANDFOLDERNAMES));
@@ -3535,8 +3534,85 @@ void CLocateDlg::CAdvancedDlg::AddBuildInFileTypes()
 	// This is not very best way to do this
 	strTypes.ReplaceChars(L'|',L'\0');
 	LPCWSTR pPtr=strTypes;
+
+
+	// Load image list and replace some ions
 	CImageList il;
-	il.Create(IDB_DEFAULTTYPEICONS,16,0,RGB(255,0,255));
+	il.Create(IDB_DEFAULTTYPEICONS,16,0,RGB(255,0,255),LR_CREATEDIBSECTION,FALSE);
+
+	CBitmap Bitmap,Mask;
+	BYTE* pBitmap,*pMask;
+	BITMAPINFO  dibInfo;
+	CDC dc;
+	CBrush white(RGB(255,255,255));
+	CRect rc(0,0,16,16);
+		
+	dibInfo.bmiHeader.biBitCount = 32;
+	dibInfo.bmiHeader.biClrImportant = 0;
+	dibInfo.bmiHeader.biClrUsed = 0;
+	dibInfo.bmiHeader.biCompression = 0;
+	dibInfo.bmiHeader.biHeight = 16;
+	dibInfo.bmiHeader.biPlanes = 1;
+	dibInfo.bmiHeader.biSize = 40;
+	dibInfo.bmiHeader.biWidth = ( ( 16 + 3 ) / 4 ) * 4;
+	dibInfo.bmiHeader.biSizeImage = 16*16*4;
+	dibInfo.bmiHeader.biXPelsPerMeter = 3780;
+	dibInfo.bmiHeader.biYPelsPerMeter = 3780;
+	dibInfo.bmiColors[0].rgbBlue = 0;
+	dibInfo.bmiColors[0].rgbGreen = 0;
+	dibInfo.bmiColors[0].rgbRed = 0;
+	dibInfo.bmiColors[0].rgbReserved = 0;
+
+	dc.GetDC(NULL);
+	Bitmap.CreateDIBSection(dc,(const BITMAPINFO*)&dibInfo,DIB_RGB_COLORS,(void**)&pBitmap,NULL,0);
+	Mask.CreateDIBSection(dc,(const BITMAPINFO*)&dibInfo,DIB_RGB_COLORS,(void**)&pMask,NULL,0);
+	dc.ReleaseDC();
+	dc.CreateCompatibleDC(NULL);	
+
+	HMODULE hModule=LoadLibrary("shell32.dll");
+	if (hModule!=NULL)
+	{
+		struct PAIR { int a;int b; };
+		PAIR pairs[]={ { 224,4},{246,3}};
+
+		for (int p=0;p<sizeof(pairs)/sizeof(pairs[0]);p++)
+		{
+			HICON hIcon=(HICON)::LoadImage(hModule,MAKEINTRESOURCE(pairs[p].a),IMAGE_ICON,16,16,LR_DEFAULTCOLOR|LR_LOADTRANSPARENT);
+			if (hIcon!=NULL) 
+			{
+				HBITMAP hOldBitmap = (HBITMAP)dc.SelectObject(Bitmap);
+				dc.FillRect(&rc,white);
+				dc.DrawIcon(0,0,hIcon,16,16,0,NULL,DI_NORMAL);
+				dc.SelectObject(hOldBitmap);
+				for (int i=0;i<16*16;i++)
+					((DWORD*)pMask)[i]=((DWORD*)pBitmap)[i]&0x00FFFFFF?0xFFFFFFFF:0;
+				il.Replace(pairs[p].b,Bitmap,Mask);
+			}
+		}
+	}
+
+	hModule=LoadLibrary("imageres.dll");
+	if (hModule!=NULL)
+	{
+		struct PAIR { int a;int b; };
+		PAIR pairs[]={ { 15,5} , {90,2}, {72,0},{102,1} };
+
+		for (int p=0;p<sizeof(pairs)/sizeof(pairs[0]);p++)
+		{
+			HICON hIcon=(HICON)::LoadImage(hModule,MAKEINTRESOURCE(pairs[p].a),IMAGE_ICON,16,16,LR_DEFAULTCOLOR|LR_LOADTRANSPARENT);
+			if (hIcon!=NULL) 
+			{
+				HBITMAP hOldBitmap = (HBITMAP)dc.SelectObject(Bitmap);
+				dc.FillRect(&rc,white);
+				dc.DrawIcon(0,0,hIcon,16,16,0,NULL,DI_NORMAL);
+				dc.SelectObject(hOldBitmap);
+				for (int i=0;i<16*16;i++)
+					((DWORD*)pMask)[i]=((DWORD*)pBitmap)[i]&0x00FFFFFF?0xFFFFFFFF:0;
+				il.Replace(pairs[p].b,Bitmap,Mask);
+			}
+		}
+	}
+
 	while (*pPtr!=L'\0')
 		SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(new FileType(pPtr,il)));
 	il.DeleteImageList();

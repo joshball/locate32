@@ -2945,7 +2945,7 @@ BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
 	if (m_pTree==NULL)
 	{
 		m_pTree=new CTreeCtrl(GetDlgItem(IDC_SETTINGS));
-		m_Images.Create(IDB_OPTIONSPROPERTYPAGEBITMAPS,16,0,RGB(255,255,255),IMAGE_BITMAP,LR_SHARED|LR_CREATEDIBSECTION);
+		m_Images.Create(IDB_OPTIONSPROPERTYPAGEBITMAPS,16,0,RGB(255,255,255),LR_SHARED|LR_CREATEDIBSECTION,FALSE);
 		m_pTree->SetImageList(m_Images,TVSIL_STATE);
 		if (IsUnicodeSystem())
 			m_pTree->SetUnicodeFormat(TRUE);
@@ -2987,7 +2987,7 @@ BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
 		CBitmap Bitmap,Mask;
 		BYTE* pBitmap,*pMask;
 		BITMAPINFO  dibInfo;
-		CDC dc,MemDC;
+		CDC dc;
 		CBrush white(RGB(255,255,255));
 		CRect rc(0,0,16,16);
 		
@@ -3012,58 +3012,76 @@ BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
 		Mask.CreateDIBSection(dc,(const BITMAPINFO*)&dibInfo,DIB_RGB_COLORS,(void**)&pMask,NULL,0);
 		dc.ReleaseDC();
 
-		MemDC.CreateCompatibleDC(NULL);
+		dc.CreateCompatibleDC(NULL);
 
 		// Draw first bitmap
-		HBITMAP hOldBitmap = (HBITMAP)MemDC.SelectObject(Bitmap);
-		MemDC.FillRect(&rc,white);
+		HBITMAP hOldBitmap = (HBITMAP)dc.SelectObject(Bitmap);
+		dc.FillRect(&rc,white);
 		if (hTheme!=NULL)
-			pDrawThemeBackground(hTheme,MemDC,BP_CHECKBOX,CBS_UNCHECKEDNORMAL,&rc,NULL);
+			pDrawThemeBackground(hTheme,dc,BP_CHECKBOX,CBS_UNCHECKEDNORMAL,&rc,NULL);
 		else
-			DrawFrameControl(MemDC,&rc,DFC_BUTTON,DFCS_BUTTONCHECK);
-		MemDC.SelectObject(hOldBitmap);
+			DrawFrameControl(dc,&rc,DFC_BUTTON,DFCS_BUTTONCHECK);
+		dc.SelectObject(hOldBitmap);
 		// Fill out mask
 		for (int i=0;i<16*16;i++)
 			((DWORD*)pMask)[i]=((DWORD*)pBitmap)[i]&0x00FFFFFF?0xFFFFFFFF:0;
 		m_Images.Replace(1,Bitmap,Mask);
 		
 		
-		hOldBitmap = (HBITMAP)MemDC.SelectObject(Bitmap);
-		MemDC.FillRect(&rc,white);
+		hOldBitmap = (HBITMAP)dc.SelectObject(Bitmap);
+		dc.FillRect(&rc,white);
 		if (hTheme!=NULL)
-			pDrawThemeBackground(hTheme,MemDC,BP_CHECKBOX,CBS_CHECKEDNORMAL,&rc,NULL);
+			pDrawThemeBackground(hTheme,dc,BP_CHECKBOX,CBS_CHECKEDNORMAL,&rc,NULL);
 		else
-			DrawFrameControl(MemDC,&rc,DFC_BUTTON,DFCS_BUTTONCHECK|DFCS_CHECKED);
-		MemDC.SelectObject(hOldBitmap);
+			DrawFrameControl(dc,&rc,DFC_BUTTON,DFCS_BUTTONCHECK|DFCS_CHECKED);
+		dc.SelectObject(hOldBitmap);
 		for (int i=0;i<16*16;i++)
 			((DWORD*)pMask)[i]=((DWORD*)pBitmap)[i]&0x00FFFFFF?0xFFFFFFFF:0;
 		m_Images.Replace(2,Bitmap,Mask);
 		
-		hOldBitmap = (HBITMAP)MemDC.SelectObject(Bitmap);
-		MemDC.FillRect(&rc,white);
+		hOldBitmap = (HBITMAP)dc.SelectObject(Bitmap);
+		dc.FillRect(&rc,white);
 		if (hTheme)
-			pDrawThemeBackground(hTheme,MemDC,BP_RADIOBUTTON,RBS_UNCHECKEDNORMAL,&rc,NULL);
+			pDrawThemeBackground(hTheme,dc,BP_RADIOBUTTON,RBS_UNCHECKEDNORMAL,&rc,NULL);
 		else
-			DrawFrameControl(MemDC,&rc,DFC_BUTTON,DFCS_BUTTONRADIOIMAGE);
-		MemDC.SelectObject(hOldBitmap);
+			DrawFrameControl(dc,&rc,DFC_BUTTON,DFCS_BUTTONRADIOIMAGE);
+		dc.SelectObject(hOldBitmap);
 		for (int i=0;i<16*16;i++)
 			((DWORD*)pMask)[i]=((DWORD*)pBitmap)[i]&0x00FFFFFF?0xFFFFFFFF:0;
 		m_Images.Replace(3,Bitmap,Mask);
 
-		hOldBitmap = (HBITMAP)MemDC.SelectObject(Bitmap);
-		MemDC.FillRect(&rc,white);
+		hOldBitmap = (HBITMAP)dc.SelectObject(Bitmap);
+		dc.FillRect(&rc,white);
 		if (hTheme!=NULL)
-			pDrawThemeBackground(hTheme,MemDC,BP_RADIOBUTTON,RBS_CHECKEDNORMAL,&rc,NULL);
+			pDrawThemeBackground(hTheme,dc,BP_RADIOBUTTON,RBS_CHECKEDNORMAL,&rc,NULL);
 		else
-			DrawFrameControl(MemDC,&rc,DFC_BUTTON,DFCS_BUTTONRADIOIMAGE|DFCS_CHECKED);
-		MemDC.SelectObject(hOldBitmap);
+			DrawFrameControl(dc,&rc,DFC_BUTTON,DFCS_BUTTONRADIOIMAGE|DFCS_CHECKED);
+		dc.SelectObject(hOldBitmap);
 		for (int i=0;i<16*16;i++)
 			((DWORD*)pMask)[i]=((DWORD*)pBitmap)[i]&0x00FFFFFF?0xFFFFFFFF:0;
 		m_Images.Replace(4,Bitmap,Mask);
 		
-		
 		if (pCloseThemeData!=NULL && hTheme!=NULL)
 			pCloseThemeData(hTheme);
+
+
+		HMODULE hModule=::LoadLibrary("imageres.dll");
+		if (hModule!=NULL) 
+		{
+			HICON hIcon=(HICON)::LoadImage(hModule,MAKEINTRESOURCE(3),IMAGE_ICON,16,16,LR_DEFAULTCOLOR);
+			if (hIcon!=NULL) 
+			{	
+				hOldBitmap = (HBITMAP)dc.SelectObject(Bitmap);
+				dc.FillRect(&rc,white);
+				dc.DrawIcon(0,0,hIcon,16,16,0,NULL,DI_NORMAL);
+				dc.SelectObject(hOldBitmap);
+				for (int i=0;i<16*16;i++)
+					((DWORD*)pMask)[i]=((DWORD*)pBitmap)[i]&0x00FFFFFF?0xFFFFFFFF:0;
+				m_Images.Replace(5,Bitmap,Mask);
+				
+				DestroyIcon(hIcon);
+			}
+		}	
 		
 	}
 
@@ -3084,7 +3102,7 @@ BOOL COptionsPropertyPage::Initialize(COptionsPropertyPage::Item** pItems)
 BOOL COptionsPropertyPage::SetBitmaps(LPCTSTR lpBitmap,int cx,COLORREF crMask)
 {
 	m_Images.DeleteImageList();
-	if (!m_Images.Create(lpBitmap,cx,0,crMask,IMAGE_BITMAP,LR_SHARED|LR_CREATEDIBSECTION))
+	if (!m_Images.Create(lpBitmap,cx,0,crMask,LR_SHARED|LR_CREATEDIBSECTION,FALSE))
 		return FALSE;
 	m_pTree->SetImageList(m_Images,TVSIL_STATE);
 	return TRUE;
@@ -3093,7 +3111,7 @@ BOOL COptionsPropertyPage::SetBitmaps(LPCTSTR lpBitmap,int cx,COLORREF crMask)
 BOOL COptionsPropertyPage::SetBitmaps(int iBitmap,int cx,COLORREF crMask)
 {
 	m_Images.DeleteImageList();
-	if (!m_Images.Create(iBitmap,cx,0,crMask,IMAGE_BITMAP,LR_SHARED|LR_CREATEDIBSECTION))
+	if (!m_Images.Create(iBitmap,cx,0,crMask,LR_SHARED|LR_CREATEDIBSECTION,FALSE))
 		return FALSE;
 	m_pTree->SetImageList(m_Images,TVSIL_STATE);
 	return TRUE;
