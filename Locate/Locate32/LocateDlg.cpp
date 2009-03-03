@@ -793,10 +793,10 @@ void CLocateDlg::LoadDialogIcon()
 		if (RegKey.QueryValue(L"CustomDialogIcon",CustomDialogIcon))
 		{
 			m_hLargeDialogIcon=(HICON)LoadImage(CustomDialogIcon,
-				IMAGE_ICON,GetSystemMetrics(SM_CXICON),GetSystemMetrics(SM_CYICON),LR_LOADFROMFILE);
+				IMAGE_ICON,GetSystemMetrics(SM_CXICON),GetSystemMetrics(SM_CYICON),LR_LOADFROMFILE|LR_CREATEDIBSECTION);
 			DebugOpenGdiObject(m_hLargeDialogIcon);
 			m_hSmallDialogIcon=(HICON)LoadImage(CustomDialogIcon,
-				IMAGE_ICON,GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),LR_LOADFROMFILE);
+				IMAGE_ICON,GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),LR_LOADFROMFILE|LR_CREATEDIBSECTION);
 			DebugOpenGdiObject(m_hSmallDialogIcon);
 		}
 	}
@@ -804,14 +804,14 @@ void CLocateDlg::LoadDialogIcon()
 	if (m_hLargeDialogIcon==NULL)
 	{
 		m_hLargeDialogIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,
-			GetSystemMetrics(SM_CXICON),GetSystemMetrics(SM_CYICON),LR_DEFAULTCOLOR);
+			GetSystemMetrics(SM_CXICON),GetSystemMetrics(SM_CYICON),LR_DEFAULTCOLOR|LR_CREATEDIBSECTION);
 		DebugOpenGdiObject(m_hLargeDialogIcon);	
 	}
 
 	if (m_hSmallDialogIcon==NULL)
 	{
 		m_hSmallDialogIcon=(HICON)LoadImage(IDI_APPLICATIONICON,IMAGE_ICON,
-			GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),LR_DEFAULTCOLOR);
+			GetSystemMetrics(SM_CXSMICON),GetSystemMetrics(SM_CYSMICON),LR_DEFAULTCOLOR|LR_CREATEDIBSECTION);
 		DebugOpenGdiObject(m_hSmallDialogIcon);	
 	}
 
