@@ -22,7 +22,7 @@ BOOL SaveSettingsToFile(LPCSTR szKey,LPCSTR szFile,BYTE bFileIsReg);
 
 // Save JPEG 
 BOOL SaveToJpegFile(HBITMAP hBitmap,LPCWSTR szFile,int nQuality);
-BOOL SaveToJpegFile(HIMAGELIST hImageList,int nIndex,LPCWSTR szFile,int nQuality);
-BOOL SaveToJpegFile(IImageList* pImageList,int nIndex,LPCWSTR szFile,int nQuality);
+BOOL SaveToJpegFile(HIMAGELIST hImageList,int nIndex,LPCWSTR szFile,int nQuality,SIZE* pSize=NULL);
+BOOL SaveToJpegFile(IImageList* pImageList,int nIndex,LPCWSTR szFile,int nQuality,SIZE* pSize=NULL);
 
 #endif

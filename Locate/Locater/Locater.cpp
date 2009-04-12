@@ -1450,6 +1450,9 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 
 inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 {
+	//TODO: Fix
+	
+
 	if (m_dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
 		int ovector[OVECCOUNT];

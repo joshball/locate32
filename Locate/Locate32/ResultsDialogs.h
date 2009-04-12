@@ -71,6 +71,7 @@ private:
 
 	private:
 		enum Type {
+			Null,
 			Integer,
 			String,
 			Operator
@@ -86,6 +87,7 @@ private:
 		Value(Type nType,LPCWSTR pString);
 
 	public:
+		Value();
 		Value(int nValue);
 		Value(LPCWSTR pValue);
 		Value(LPCWSTR pValue,DWORD nLen);
@@ -99,12 +101,15 @@ private:
 
 		BOOL GetType() const {return nType; };
 		BOOL IsInteger() const;
+		BOOL IsActualInteger() const { return nType==Integer; }
+		BOOL IsNull() const { return nType==Null; }
+		BOOL IsString() const { return nType==String; }
 		BOOL IsOperator() const { return nType==Operator; }
 		BOOL GetOperator() const;
 		void ToString();
 		BOOL ToInteger(BOOL bForce);
 		BOOL IsEmptyString() const { return nType==String && (pString==NULL || pString[0]==L'\0'); }
-		BOOL OnlySpaces() const;
+		//BOOL OnlySpaces() const;
 		
 		operator int() const;
 		operator LPCWSTR() const;
@@ -117,55 +122,17 @@ private:
 		void SetPtr(LPCWSTR pNewValue);
 		
 		void GetString(CStringW& str) const;
-		void Write(CStream& stream,BOOL bGiveThis);
+		void Write(CStream& stream);
 
 		BOOL AddString(LPCWSTR pAdd);
-		BOOL AddString(LPCWSTR pAdd,size_t nLen);
+		BOOL AddString(LPCWSTR pAdd,DWORD nLen);
 		
-		static Value* FromPtr(LPCWSTR pValue);
-
-		Value SwapToNew();
+		Value MakeStatic();
+		Value* MakeDynamic();
 
 	};
 
-	class CValueStream : public CStream
-	{
-	public:
-		CValueStream();
-		virtual ~CValueStream();
 	
-		// Set length
-		virtual DWORD GetLength(DWORD* pHigh=NULL) const;
-		virtual ULONGLONG GetLength64() const;
-		virtual BOOL SetLength(DWORD dwNewLen,LONG* pHigh=NULL);
-		virtual BOOL SetLength64(ULONGLONG dwNewLen);
-
-		// Set position
-		virtual DWORD Seek(LONG lOff, SeekPosition nFrom,LONG* pHighPos=NULL);
-		virtual DWORD Seek64(ULONGLONG lOff, SeekPosition nFrom);
-
-		// Get position
-		virtual ULONG GetPosition(PLONG pHigh=NULL) const;
-		virtual ULONGLONG GetPosition64() const;
-
-		// Reading/writing
-		virtual DWORD Read(void* lpBuf, DWORD nCount) const;
-		virtual BOOL Write(const void* lpBuf, DWORD nCount);
-		virtual BOOL Write(LPCWSTR lpString, DWORD nCount);
-
-		void AddToList(int nValue);
-		void AddToList(CResults::Value::OperatorType nValue);
-		//void AddToList(LPCWSTR pValue);
-		void AddToList(LPCWSTR pValue,size_t nLen);
-		void AddToListPtr(LPCWSTR pValue);
-		
-		BOOL EvaluateOperators();
-		Value ToSingleValue();
-		UINT ParseOperatorsFromString(LPCWSTR pString,BOOL bCanHavePtr); // Returns 2 if pointer taken, 1 if ok, 0 if failed
-
-	private:
-		CListFP<Value*> m_Values;
-	};
 
 	CStringMapFP<CHAR,Value*> m_Variables;
 
@@ -174,10 +141,11 @@ private:
 	BOOL SetVariable(LPCSTR szName,Value& value,BOOL bTakePtr=FALSE);
 	BOOL SetVariable(LPCSTR szName,int newInteger);
 	BOOL SetVariable(LPCSTR szName,LPCWSTR pString);
-	BOOL SetVariable(LPCSTR szName,LPCWSTR pString,size_t nLen);
+	BOOL SetVariable(LPCSTR szName,LPCWSTR pString,DWORD nLen);
 	
-	BOOL ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL bHandleParenthesis);
+	BOOL ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen);
 	BOOL ParseBlockLength(LPCWSTR& pBuffer,int& iBufferLen,int& riBlockLen) const;
+	Value* ParseFunctionsAndVariables(LPCWSTR& pPtr,int& iBufferLen,BOOL& bFreeReturnedValue);
 	
 	Value EvaluateCondition(LPCWSTR pBuffer,int iConditionLength);
 	
@@ -232,6 +200,12 @@ inline CResults::Value::Value(Type nTyp,LPCWSTR pStr)
 : nType(nTyp),pString(pStr)
 {
 }
+
+inline CResults::Value::Value()
+: nType(Null),pString(NULL)
+{
+}
+
 
 inline CResults::Value::Value(int nValue) 
 : nType(Integer),nInteger(nValue)
@@ -359,18 +333,6 @@ inline void CResults::Value::SetPtr(LPCWSTR pNewValue)
 	pString=pNewValue;
 }
 
-inline CResults::Value* CResults::Value::FromPtr(LPCWSTR pValue)
-{
-	return new Value(String,pValue);
-}
-
-inline CResults::Value CResults::Value::SwapToNew()
-{
-	LPCWSTR pTemp=pString;
-	pString=NULL;	
-	return Value(nType,pTemp);
-}
-
 
 inline BOOL CResults::Value::GetOperator() const
 {
@@ -379,54 +341,22 @@ inline BOOL CResults::Value::GetOperator() const
 	return nOperator;
 }
 
-/////////////////////////////////////////////////////
-// Inline function for CResults::Value
-
-inline CResults::CValueStream::CValueStream()
-{
-}
-
-
-inline void CResults::CValueStream::AddToList(int nValue)
-{
-	m_Values.AddTail(new Value(nValue));
-}
-
-inline void CResults::CValueStream::AddToList(CResults::Value::OperatorType nValue)
-{
-	m_Values.AddTail(new Value(nValue));
-}
 		
-/*inline void CResults::CValueStream::AddToList(LPCWSTR pValue)
+inline CResults::Value* CResults::Value::MakeDynamic()
 {
-	if (m_Values.GetCount()>0 &&m_Values.GetTail()->AddString(pValue))
-		return;
+	Value* pRet=new Value(nType,pString);
+	pString=NULL;
+	return pRet;
+}
 
-	m_Values.AddTail(new Value(pValue));
-}*/
-
-
-
-
-
-inline void CResults::CValueStream::AddToList(LPCWSTR pValue,size_t nLen)
+inline CResults::Value CResults::Value::MakeStatic()
 {
-	if (m_Values.GetCount()>0 && m_Values.GetTail()->AddString(pValue,nLen))
-		return;
-	
-	m_Values.AddTail(new Value(pValue,nLen));
+	LPCWSTR pTemp=pString;
+	pString=NULL;	
+	return Value(nType,pTemp);
 }
 
 
-
-
-
-inline void CResults::CValueStream::AddToListPtr(LPCWSTR pValue)
-{
-	m_Values.AddTail(Value::FromPtr(pValue));
-}
-
-		
 
 /////////////////////////////////////////////////////
 // Inline function for CResults
@@ -487,7 +417,7 @@ inline BOOL CResults::SetVariable(LPCSTR szName,LPCWSTR pString)
 	return TRUE;
 }
 
-inline BOOL CResults::SetVariable(LPCSTR szName,LPCWSTR pString,size_t nLen)
+inline BOOL CResults::SetVariable(LPCSTR szName,LPCWSTR pString,DWORD nLen)
 {
 	POSITION pPos=m_Variables.Find(szName);
 	if (pPos!=NULL)

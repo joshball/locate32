@@ -390,7 +390,9 @@ BOOL SaveToJpegFile(HBITMAP hBitmap,LPCWSTR szFile,int nQuality)
 
 	dc2.CreateCompatibleDC(NULL);
 	dc2.SelectObject(hNewBitmap);
-	dc2.BitBlt(0, 0, bm.bmWidth, bm.bmHeight, dc1, 0, 0, SRCCOPY);
+	dc2.FillRect(&CRect(0,0,bm.bmWidth,bm.bmHeight),(HBRUSH)GetStockObject(GRAY_BRUSH));
+	dc2.DrawState(CPoint(0,0),CSize(bm.bmWidth,bm.bmHeight),hNewBitmap,DST_BITMAP,(HBRUSH)GetStockObject(WHITE_BRUSH));
+	//dc2.BitBlt(0, 0, bm.bmWidth, bm.bmHeight, dc1, 0, 0, SRCCOPY);
 
 	cinfo.err = jpeg_std_error(&jerr);
 	jpeg_create_compress(&cinfo);
@@ -427,17 +429,31 @@ BOOL SaveToJpegFile(HBITMAP hBitmap,LPCWSTR szFile,int nQuality)
 	
 	dc1.DeleteDC();
 	dc2.DeleteDC();
+	DeleteObject(hNewBitmap);
 	return TRUE;
 
 	
 }
 
+
+
+
+
+
 // Save JPEG from imagelist
-BOOL SaveToJpegFile(HIMAGELIST hImageList,int nIndex,LPCWSTR szFile,int nQuality)
+BOOL SaveToJpegFile(HIMAGELIST hImageList,int nIndex,LPCWSTR szFile,int nQuality,SIZE* pSize)
 {
 	HBITMAP hNewBitmap;
-	int cx=32,cy=32;
-	ImageList_GetIconSize(hImageList,&cx,&cy);
+	int cxOrig=32,cyOrig=32;
+	ImageList_GetIconSize(hImageList,&cxOrig,&cyOrig);
+	
+	int cx=cxOrig,cy=cyOrig;
+	if (pSize!=NULL &&  pSize->cx>=cx && pSize->cy>=cy)
+	{
+		cx=pSize->cx;
+		cy=pSize->cy;
+		pSize=NULL;
+	}
 	
 
 	struct jpeg_compress_struct cinfo;
@@ -455,8 +471,47 @@ BOOL SaveToJpegFile(HIMAGELIST hImageList,int nIndex,LPCWSTR szFile,int nQuality
 	
 	dc.CreateCompatibleDC(NULL);
 	dc.SelectObject(hNewBitmap);
-	
-	ImageList_Draw(hImageList,nIndex,dc,0,0,ILD_NORMAL);
+	dc.FillRect(&CRect(0,0,cx,cy),(HBRUSH)GetStockObject(WHITE_BRUSH));
+
+	ImageList_Draw(hImageList,nIndex,dc,(cx-cxOrig)/2,(cy-cyOrig)/2,ILD_NORMAL);
+
+	if (pSize!=NULL)
+	{
+		// We need to rescale
+		HBITMAP hOrigBitmap=hNewBitmap;
+		CDC dcOrig;
+		dcOrig.Attach(dc);
+		cx=pSize->cx;
+		cy=pSize->cy;
+
+		BITMAPINFO  dibInfo;
+		BYTE* pBuffer;
+		dibInfo.bmiHeader.biBitCount = 24;
+		dibInfo.bmiHeader.biClrImportant = 0;
+		dibInfo.bmiHeader.biClrUsed = 0;
+		dibInfo.bmiHeader.biCompression = 0;
+		dibInfo.bmiHeader.biHeight = cy;
+		dibInfo.bmiHeader.biPlanes = 1;
+		dibInfo.bmiHeader.biSize = 40;
+		dibInfo.bmiHeader.biWidth = cx;
+		dibInfo.bmiHeader.biSizeImage = cx*cy*3;
+		dibInfo.bmiHeader.biXPelsPerMeter = 3780;
+		dibInfo.bmiHeader.biYPelsPerMeter = 3780;
+		dibInfo.bmiColors[0].rgbBlue = 0;
+		dibInfo.bmiColors[0].rgbGreen = 0;
+		dibInfo.bmiColors[0].rgbRed = 0;
+		dibInfo.bmiColors[0].rgbReserved = 0;
+		dc.GetDC(NULL);
+		hNewBitmap = CreateDIBSection(dc,(const BITMAPINFO*)&dibInfo,DIB_RGB_COLORS,(void**)&pBuffer,NULL,0);
+		dc.ReleaseDC();
+
+		dc.CreateCompatibleDC(NULL);
+		dc.SelectObject(hNewBitmap);
+
+		dc.StretchBlt(0,0,cx,cy,dcOrig,0,0,cxOrig,cyOrig,SRCCOPY);
+
+		DeleteObject(hOrigBitmap);
+	}
 
 	cinfo.err = jpeg_std_error(&jerr);
 	jpeg_create_compress(&cinfo);
@@ -492,6 +547,7 @@ BOOL SaveToJpegFile(HIMAGELIST hImageList,int nIndex,LPCWSTR szFile,int nQuality
 	fclose(outfile);
 	
 	dc.DeleteDC();
+	DeleteObject(hNewBitmap);
 	return TRUE;
 
 	
@@ -499,11 +555,19 @@ BOOL SaveToJpegFile(HIMAGELIST hImageList,int nIndex,LPCWSTR szFile,int nQuality
 
 
 // Save JPEG from imagelist
-BOOL SaveToJpegFile(IImageList* pImageList,int nIndex,LPCWSTR szFile,int nQuality)
+BOOL SaveToJpegFile(IImageList* pImageList,int nIndex,LPCWSTR szFile,int nQuality,SIZE* pSize)
 {
 	HBITMAP hNewBitmap;
-	int cx=32,cy=32;
-	pImageList->GetIconSize(&cx,&cy);
+	int cxOrig=32,cyOrig=32;
+	pImageList->GetIconSize(&cxOrig,&cyOrig);
+	
+	int cx=cxOrig,cy=cyOrig;
+	if (pSize!=NULL &&  pSize->cx>=cx && pSize->cy>=cy)
+	{
+		cx=pSize->cx;
+		cy=pSize->cy;
+		pSize=NULL;
+	}
 	
 
 	struct jpeg_compress_struct cinfo;
@@ -521,7 +585,8 @@ BOOL SaveToJpegFile(IImageList* pImageList,int nIndex,LPCWSTR szFile,int nQualit
 	
 	dc.CreateCompatibleDC(NULL);
 	dc.SelectObject(hNewBitmap);
-	
+	dc.FillRect(&CRect(0,0,cx,cy),(HBRUSH)GetStockObject(WHITE_BRUSH));
+
 	IMAGELISTDRAWPARAMS ip;
 	ZeroMemory(&ip,sizeof(IMAGELISTDRAWPARAMS));
 	ip.cbSize=sizeof(IMAGELISTDRAWPARAMS);
@@ -531,8 +596,50 @@ BOOL SaveToJpegFile(IImageList* pImageList,int nIndex,LPCWSTR szFile,int nQualit
 	ip.dwRop=WHITENESS;
 	ip.rgbBk=CLR_NONE;
 	ip.rgbFg=CLR_NONE;
-
+	ip.x=(cx-cxOrig)/2;
+	ip.y=(cy-cyOrig)/2;
+	ip.cx=cxOrig;
+	ip.cy=cyOrig;
+	
 	pImageList->Draw(&ip);
+
+	if (pSize!=NULL)
+	{
+		// We need to rescale
+		HBITMAP hOrigBitmap=hNewBitmap;
+		CDC dcOrig;
+		dcOrig.Attach(dc);
+		cx=pSize->cx;
+		cy=pSize->cy;
+
+		BITMAPINFO  dibInfo;
+		BYTE* pBuffer;
+		dibInfo.bmiHeader.biBitCount = 24;
+		dibInfo.bmiHeader.biClrImportant = 0;
+		dibInfo.bmiHeader.biClrUsed = 0;
+		dibInfo.bmiHeader.biCompression = 0;
+		dibInfo.bmiHeader.biHeight = cy;
+		dibInfo.bmiHeader.biPlanes = 1;
+		dibInfo.bmiHeader.biSize = 40;
+		dibInfo.bmiHeader.biWidth = cx;
+		dibInfo.bmiHeader.biSizeImage = cx*cy*3;
+		dibInfo.bmiHeader.biXPelsPerMeter = 3780;
+		dibInfo.bmiHeader.biYPelsPerMeter = 3780;
+		dibInfo.bmiColors[0].rgbBlue = 0;
+		dibInfo.bmiColors[0].rgbGreen = 0;
+		dibInfo.bmiColors[0].rgbRed = 0;
+		dibInfo.bmiColors[0].rgbReserved = 0;
+		dc.GetDC(NULL);
+		hNewBitmap = CreateDIBSection(dc,(const BITMAPINFO*)&dibInfo,DIB_RGB_COLORS,(void**)&pBuffer,NULL,0);
+		dc.ReleaseDC();
+
+		dc.CreateCompatibleDC(NULL);
+		dc.SelectObject(hNewBitmap);
+
+		dc.StretchBlt(0,0,cx,cy,dcOrig,0,0,cxOrig,cyOrig,SRCCOPY);
+
+		DeleteObject(hOrigBitmap);
+	}
 
 	cinfo.err = jpeg_std_error(&jerr);
 	jpeg_create_compress(&cinfo);
@@ -568,6 +675,7 @@ BOOL SaveToJpegFile(IImageList* pImageList,int nIndex,LPCWSTR szFile,int nQualit
 	fclose(outfile);
 	
 	dc.DeleteDC();
+	DeleteObject(hNewBitmap);
 	return TRUE;
 
 	

@@ -26,6 +26,7 @@ public:
 
 	
 	void Attach(HDC hDC,HWND hWnd=NULL);
+	void Attach(CDC& dc);
 	void SetFreeMethod(DeleteMethod nFreeMethod) { m_nFreeMethod=nFreeMethod; }
 
 	HGDIOBJ SelectStockObject(int nIndex);

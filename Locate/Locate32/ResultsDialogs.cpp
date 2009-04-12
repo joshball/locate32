@@ -71,7 +71,7 @@ BOOL CResults::Value::AddString(LPCWSTR pAdd)
 	return TRUE;
 }
 
-BOOL CResults::Value::AddString(LPCWSTR pAdd,size_t nLen)
+BOOL CResults::Value::AddString(LPCWSTR pAdd,DWORD nLen)
 {
 	if (IsOperator() || IsInteger())
 		return FALSE;
@@ -86,508 +86,8 @@ BOOL CResults::Value::AddString(LPCWSTR pAdd,size_t nLen)
 	return TRUE;
 }
 
-UINT CResults::CValueStream::ParseOperatorsFromString(LPCWSTR pString,BOOL bCanHavePtr)
-{
-	LPCWSTR pPtr=pString;
-	while (*pPtr!='\0')
-	{
-		int nLen;
-		CResults::Value::OperatorType nOperator=CResults::Value::None;
-		int nOperatorLen=1;
-
-		for (nLen=0;pPtr[nLen]!='\0';nLen++)
-		{
-			switch (pPtr[nLen])
-			{
-			case '!':
-				if (pPtr[nLen+1]=='=')
-				{
-					nOperator=CResults::Value::NotEqual;
-					nOperatorLen=2;
-				}
-				else
-					nOperator=CResults::Value::Not;
-				break;
-			case '=':
-				if (pPtr[nLen+1]=='=')
-					nOperatorLen=2;
-				nOperator=CResults::Value::Equal;
-				break;
-			case '<':
-				if (pPtr[nLen+1]=='=')
-				{
-					nOperator=CResults::Value::LessOrEqual;
-					nOperatorLen=2;
-				}
-				else
-					nOperator=CResults::Value::Less;
-				break;
-			case '>':
-				if (pPtr[nLen+1]=='=')
-				{
-					nOperator=CResults::Value::GreaterOrEqual;
-					nOperatorLen=2;
-				}
-				else
-					nOperator=CResults::Value::Greater;
-				break;
-			case '+':
-				nOperator=CResults::Value::Add;
-				break;
-			case '-':
-				nOperator=CResults::Value::Subtract;
-				break;
-			case '*':
-				nOperator=CResults::Value::Multiply;
-				break;
-			case '/':
-				if (pPtr[nLen+1]=='/')
-				{
-					nOperator=CResults::Value::DivideAndRoundToInfinity;
-					nOperatorLen=2;
-				}
-				else
-					nOperator=CResults::Value::Divide;
-				break;
-			case '%':
-				nOperator=CResults::Value::Remainder;
-				break;
-			case '&':
-				if (pPtr[nLen+1]=='&')
-					nOperatorLen=2;
-				nOperator=CResults::Value::And;
-				break;
-			case '|':
-				if (pPtr[nLen+1]=='|')
-					nOperatorLen=2;
-				nOperator=CResults::Value::Or;
-				break;
-			}
-
-			if (nOperator!=CResults::Value::None)
-				break;
-		}
-
-		if (nOperator==CResults::Value::None) // End of string?
-		{
-			if (pPtr==pString && bCanHavePtr)
-			{
-				// Just one pointer
-				AddToListPtr(pString);
-				return 2;
-			}
-			else
-			{
-				AddToList(pPtr,nLen);
-				return 1;
-			}
-		}
-		
-		if (nLen>0)
-			AddToList(pPtr,nLen);
-			
-		AddToList(nOperator);
-		pPtr+=nLen+nOperatorLen;		
-	}
-	return 1;
-}
-
-void CResults::Value::Write(CStream& stream,BOOL bGivePtr) 
-{
-	CResults::CValueStream* pValueStream=dynamic_cast<CResults::CValueStream*>(&stream);
-	if (pValueStream!=NULL)
-	{
-		switch (nType)
-		{
-		case Integer:
-			pValueStream->AddToList(nInteger);
-			return;
-		case Operator:
-			pValueStream->AddToList(nOperator);
-			return;
-		case String:
-			if (pValueStream->ParseOperatorsFromString(pString,bGivePtr)==2)
-				pString=NULL;
-			return;
-		}
-	}
-
-	ASSERT(nType!=Operator);
-
-	if (nType==String && pString!=NULL)
-		stream.Write(pString);
-	else
-	{
-		WCHAR buffer[20];
-		_itow_s(nInteger,buffer,20,10);
-		stream.Write(buffer);
-	}	
-}
-
-void CResults::Value::ToString()
-{
-	ASSERT(nType!=Operator);
-
-	if (nType==Integer)
-	{
-		WCHAR buffer[20];
-		_itow_s(nInteger,buffer,20,10);
-		nType=String;
-		pString=alloccopy(buffer);
-	}	
-}
-
-BOOL CResults::Value::OnlySpaces() const
-{
-	if (nType==String && pString!=NULL)
-	{
-		int i=0;
-		for (i=0;pString[i]==' ' || pString[i]=='\t';i++);
-		return pString[i]=='\0';
-	}
-	return FALSE;
-}
 
 
-BOOL CResults::Value::ToInteger(BOOL bForce)
-{	
-	ASSERT(nType!=Operator);
-
-
-	if (nType==String)
-	{
-		if (!bForce)
-		{
-			for (int i=0;pString[i]!='\0';i++)
-			{
-				if (pString[i]<'0' || pString[i]>'9')
-					return FALSE;
-			}
-		}
-
-		int nValue=_wtoi(pString);
-		delete[] pString;
-		nType=Integer;
-		nInteger=nValue;
-	}
-
-	return TRUE;
-}
-
-CResults::CValueStream::~CValueStream()
-{
-}
-	
-DWORD CResults::CValueStream::GetLength(DWORD* pHigh) const
-{
-	// No need to implement
-	return 0;
-}
-
-ULONGLONG CResults::CValueStream::GetLength64() const
-{
-	// No need to implement
-	return 0;
-}
-
-BOOL CResults::CValueStream::SetLength(DWORD dwNewLen,LONG* pHigh)
-{
-	// No need to implement
-	return 0;
-}
-
-BOOL CResults::CValueStream::SetLength64(ULONGLONG dwNewLen)
-{
-	// No need to implement
-	return 0;
-}
-
-DWORD CResults::CValueStream::Seek(LONG lOff, SeekPosition nFrom,LONG* pHighPos)
-{
-	// No need to implement
-	return 0;
-}
-
-DWORD CResults::CValueStream::Seek64(ULONGLONG lOff, SeekPosition nFrom)
-{
-	// No need to implement
-	return 0;
-}
-
-ULONG CResults::CValueStream::GetPosition(PLONG pHigh) const
-{
-	// No need to implement
-	return 0;
-}
-
-ULONGLONG CResults::CValueStream::GetPosition64() const
-{
-	// No need to implement
-	return 0;
-}
-
-DWORD CResults::CValueStream::Read(void* lpBuf, DWORD nCount) const
-{
-	// No need to implement
-	return 0;
-}
-
-BOOL CResults::CValueStream::Write(const void* lpBuf, DWORD nCount)
-{
-	// No need to implement
-	return FALSE;
-}
-
-BOOL CResults::CValueStream::Write(LPCWSTR lpString, DWORD nCount)
-{
-	LPWSTR pCopy=alloccopy(lpString,nCount);
-	if (ParseOperatorsFromString(pCopy,TRUE)==2)
-		return TRUE;
-	delete[] pCopy;
-	return TRUE;
-}
-
-CResults::Value CResults::CValueStream::ToSingleValue()
-{
-	if (!EvaluateOperators())
-		return Value(L"INVALIDFORMAT");
-	if (m_Values.GetCount()==0)
-		return Value(L"");
-	else if (m_Values.GetCount()==1)
-		return m_Values.GetHead()->SwapToNew();
-	else {
-		CMemoryStream str;
-		POSITION pPos=m_Values.GetHeadPosition();
-		while (pPos!=NULL)
-		{
-			m_Values.GetAt(pPos)->Write(str,FALSE);
-			pPos=m_Values.GetNextPosition(pPos);
-		}
-		m_Values.RemoveAll();
-		return Value((LPCWSTR)str.GetData(),str.GetLength()/2);
-	}	
-}
-
-BOOL CResults::CValueStream::EvaluateOperators()
-{
-	// First, if there is two non-operators in row, combine them
-	POSITION pPos=m_Values.GetHeadPosition();
-	while (pPos!=NULL)
-	{
-		Value* pThis=m_Values.GetAt(pPos);
-		if (!pThis->IsOperator())
-		{
-			Value* pNext=m_Values.GetNext(pPos);
-			while (pNext!=NULL && !pNext->IsOperator())
-			{
-				pThis->ToString();
-				pNext->ToString();
-				pThis->AddString((LPCWSTR)*pNext);
-				m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
-				pNext=m_Values.GetNext(pPos);
-			}
-		}
-
-		pPos=m_Values.GetNextPosition(pPos);
-	}
-
-	// Calculate *, /, //, and % operators
-	Value* pPrev=NULL;
-	pPos=m_Values.GetHeadPosition();
-	while (pPos!=NULL)
-	{
-		Value* pThis=m_Values.GetAt(pPos);
-		Value* pNext=m_Values.GetNext(pPos);
-
-		switch(pThis->GetOperator())
-		{
-		case CResults::Value::Multiply:
-		case CResults::Value::Divide:
-		case CResults::Value::DivideAndRoundToInfinity:
-		case CResults::Value::Remainder:
-			if (pNext==NULL || pPrev==NULL)
-				return FALSE;
-			if (pPrev->IsInteger() && pNext->IsInteger())
-			{
-				int lVal=(int)*pPrev;
-				int rVal=(int)*pNext;
-				switch (pThis->GetOperator())
-				{
-				case CResults::Value::Multiply:
-					pThis->Set(lVal*rVal);
-					break;
-				case CResults::Value::Divide:
-					pThis->Set(lVal/rVal);
-					break;
-				case CResults::Value::DivideAndRoundToInfinity:
-					pThis->Set(lVal/rVal+(lVal%rVal!=0?1:0));
-					break;
-				case CResults::Value::Remainder:
-					pThis->Set(lVal%rVal);
-					break;
-				}
-				m_Values.RemoveAt(m_Values.GetPrevPosition(pPos));
-				m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
-			}
-			else
-				return FALSE;
-			break;
-		}
-
-		pPrev=pThis;
-		pPos=m_Values.GetNextPosition(pPos);
-	}
-
-	
-	// Then !, + and -
-	pPrev=NULL;
-	pPos=m_Values.GetHeadPosition();
-	while (pPos!=NULL)
-	{
-		Value* pThis=m_Values.GetAt(pPos);
-		Value* pNext=m_Values.GetNext(pPos);
-
-		switch(pThis->GetOperator())
-		{
-		case CResults::Value::Not:
-			if (pNext==NULL)
-				return FALSE; 
-			if (!pNext->IsInteger())
-				return FALSE;
-			pThis->Set(!(int)*pNext);
-			m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
-			break;
-		case CResults::Value::Add:
-		case CResults::Value::Subtract:
-			if (pNext==NULL || pPrev==NULL)
-				return FALSE;
-			if (pPrev->IsInteger() && pNext->IsInteger())
-			{
-				int lVal=(int)*pPrev;
-				int rVal=(int)*pNext;
-				
-				pThis->Set(pThis->GetOperator()==CResults::Value::Add?lVal+rVal:lVal-rVal);
-				
-				m_Values.RemoveAt(m_Values.GetPrevPosition(pPos));
-				m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
-			}
-			else
-				return FALSE;
-			break;
-		}
-
-		pPrev=pThis;
-		pPos=m_Values.GetNextPosition(pPos);
-	}
-
-	// Then equalities
-	pPrev=NULL;
-	pPos=m_Values.GetHeadPosition();
-	while (pPos!=NULL)
-	{
-		Value* pThis=m_Values.GetAt(pPos);
-		Value* pNext=m_Values.GetNext(pPos);
-
-		switch(pThis->GetOperator())
-		{
-		case CResults::Value::Equal:
-		case CResults::Value::NotEqual:
-			if (pNext==NULL || pPrev==NULL)
-				return FALSE;
-			if (pPrev->IsInteger())
-			{
-				if (!pNext->IsInteger())
-					return FALSE;
-
-				int bEqual=(int)*pPrev==(int)*pNext;
-				pThis->Set(pThis->GetOperator()==CResults::Value::NotEqual?!bEqual:bEqual);
-			}
-			else 
-			{
-				int bEqual=FALSE;
-				LPCWSTR pszPrev=(LPCWSTR)*pPrev;
-				LPCWSTR pszNext=(LPCWSTR)*pNext;
-				if (pszNext!=NULL)
-					bEqual=wcscmp(pszPrev,pszNext)==0;
-				pThis->Set(pThis->GetOperator()==CResults::Value::NotEqual?!bEqual:bEqual);
-				
-			}
-			m_Values.RemoveAt(m_Values.GetPrevPosition(pPos));
-			m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
-			break;
-		case CResults::Value::Less:
-		case CResults::Value::Greater:
-		case CResults::Value::LessOrEqual:
-		case CResults::Value::GreaterOrEqual:
-			if (pNext==NULL || pPrev==NULL)
-				return FALSE;
-			if (pPrev->IsInteger() && pNext->IsInteger())
-			{
-				int lVal=(int)*pPrev;
-				int rVal=(int)*pNext;
-				switch (pThis->GetOperator())
-				{
-				case CResults::Value::Less:
-					pThis->Set(lVal<rVal);
-					break;
-				case CResults::Value::Greater:
-					pThis->Set(lVal>rVal);
-					break;
-				case CResults::Value::LessOrEqual:
-					pThis->Set(lVal<=rVal);
-					break;
-				case CResults::Value::GreaterOrEqual:
-					pThis->Set(lVal>=rVal);
-					break;
-				}
-				m_Values.RemoveAt(m_Values.GetPrevPosition(pPos));
-				m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
-			}
-			else
-				return FALSE;
-			break;
-		}
-
-		pPrev=pThis;
-		pPos=m_Values.GetNextPosition(pPos);
-	}
-
-	// And finally AND and OR
-	pPrev=NULL;
-	pPos=m_Values.GetHeadPosition();
-	while (pPos!=NULL)
-	{
-		Value* pThis=m_Values.GetAt(pPos);
-		Value* pNext=m_Values.GetNext(pPos);
-
-		switch(pThis->GetOperator())
-		{
-		case CResults::Value::And:
-		case CResults::Value::Or:
-			if (pNext==NULL || pPrev==NULL)
-				return FALSE;
-			if (pPrev->IsInteger() && pNext->IsInteger())
-			{
-				int lVal=(int)*pPrev;
-				int rVal=(int)*pNext;
-				
-				pThis->Set(pThis->GetOperator()==CResults::Value::And?(lVal&&rVal):(lVal||rVal));
-				 
-				m_Values.RemoveAt(m_Values.GetPrevPosition(pPos));
-				m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
-			}
-			else
-				return FALSE;
-			break;
-		}
-
-		pPrev=pThis;
-		pPos=m_Values.GetNextPosition(pPos);
-	}
-
-
-	return TRUE;
-}
 	
 
 
@@ -641,7 +141,17 @@ void CResults::InitializeSystemImageList(int cx)
 	
 	if (pSHGetImageList!=NULL)
 	{
-		if (SUCCEEDED(pSHGetImageList(cx>=128?SHIL_JUMBO:SHIL_EXTRALARGE,IID_IImageList,(void**)&m_pSystemImageList)))
+		int nList;
+		if (cx>=256)
+			nList=SHIL_JUMBO;
+		else if (cx>=48)
+			nList=SHIL_EXTRALARGE;
+		else if (cx>=32)
+			nList=SHIL_LARGE;
+		else
+			nList=SHIL_SMALL;
+
+		if (SUCCEEDED(pSHGetImageList(nList,IID_IImageList,(void**)&m_pSystemImageList)))
 		{	
 			m_nSystemImageListSize=cx|(1<<31);
 			return;
@@ -652,6 +162,8 @@ void CResults::InitializeSystemImageList(int cx)
 	m_nSystemImageListSize=cx;
 	m_hSystemImageList=(HIMAGELIST)ShellFunctions::GetFileInfo("",0,&fi,SHGFI_LARGEICON|SHGFI_SYSICONINDEX);
 }
+
+
 
 void CResults::Close()
 {
@@ -1315,80 +827,28 @@ BOOL CResults::SaveToHtmlFile(LPCWSTR szFile,LPCWSTR szTemplate)
 		tmlFile.Close();
 	}
 
-	return ParseBuffer(outFile,pBuffer,dwTemplateLen,FALSE);
+	return ParseBuffer(outFile,pBuffer,dwTemplateLen);
 }
 
-BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL bHandleParenthesis)
+
+BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen)
 {
 	LPCWSTR pPtr=pBuffer;
-	int nLength;
-
 	while (iBufferLen>0)
 	{
-		// Find next '$' or '(' 
-		for (nLength=0;nLength<iBufferLen && pPtr[nLength]!=L'$' && (pPtr[nLength]!=L'(' || !bHandleParenthesis);nLength++);
-
-		if (nLength>0)
+		switch (*pPtr)
 		{
-			// Write buffer to output file
-			stream.Write(pPtr,nLength);
-			pPtr+=nLength;
-			iBufferLen-=nLength;
-		}
-
-		// If no '$' anymore, all done
-		if (iBufferLen==0)
-			return TRUE;
-
-		// Handle parenthesis
-		if (pPtr[nLength]==L'(' && bHandleParenthesis)
-		{
-			int iBlockLength;
-			if (!ParseBlockLength(pPtr,iBufferLen,iBlockLength))
-				throw CFileException(CFileException::invalidFile);
-
-			EvaluateCondition(pPtr+1,iBlockLength).Write(stream,TRUE);
-
-			pPtr+=iBlockLength+2;
-			iBufferLen-=iBlockLength+2;
-			continue;
-		}
-		
-
-		// Skip '$'
-		pPtr++;iBufferLen--;
-		
-		// Find '$' or '['
-		for (nLength=0;nLength<iBufferLen && pPtr[nLength]!=L'$' && pPtr[nLength]!=L'[';nLength++);
-
-		if (nLength==iBufferLen)
-		{
-			// No '$' or '[', write the rest of file and exit.
-			stream.Write(pPtr,nLength);
-			return FALSE;
-		}
-		
-		if (pPtr[nLength]==L'$')
-		{
-			// Variable
-			W2A variable(pPtr,nLength);
-			Value* pValue=GetVariable(variable);
-			if (pValue!=NULL)
-				pValue->Write(stream,FALSE);
-			else
-				stream.Write(L"UNKNOWNVARIABLE");
-			
-			pPtr+=nLength+1;
-			iBufferLen-=nLength+1;
-		}
-		else 
-		{
-			// IF/FOR or function
-			if (nLength==2 && _wcsnicmp(pPtr,L"IF",2)==0)
+		case L'\\':
+			stream.Write(pPtr+1,1);
+			pPtr+=2;
+			iBufferLen-=2;
+			break;
+		case L'$':
+			if (_wcsnicmp(pPtr+1,L"IF[",3)==0)
 			{
 				// IF
-				pPtr+=2;
-				iBufferLen-=2;
+				pPtr+=3;
+				iBufferLen-=3;
 
 				int iConditionLength,iBlockLength;
 				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
@@ -1406,7 +866,7 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL b
 				{
 					if (int(Condition))
 					{
-						if (!ParseBuffer(stream,pPtr+1,iBlockLength,TRUE))
+						if (!ParseBuffer(stream,pPtr+1,iBlockLength))
 							throw CFileException(CFileException::invalidFile);
 					}
 				}
@@ -1417,11 +877,11 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL b
 				iBufferLen-=iBlockLength+2;
 
 			}
-			else if (nLength==3 && _wcsnicmp(pPtr,L"FOR",3)==0)
+			else if (_wcsnicmp(pPtr+1,L"FOR[",4)==0)
 			{
 				// FOR
-				pPtr+=3;
-				iBufferLen-=3;
+				pPtr+=4;
+				iBufferLen-=4;
 
 				int iConditionLength,iBlockLength;
 				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
@@ -1454,7 +914,7 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL b
 				for (int i=nMin;i<=nMax;i++)
 				{
 					SetVariable(W2A(sVariable),i);
-					if (!ParseBuffer(stream,pPtr+1,iBlockLength,TRUE))
+					if (!ParseBuffer(stream,pPtr+1,iBlockLength))
 						throw CFileException(CFileException::invalidFile);
 				}
 
@@ -1462,401 +922,23 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen,BOOL b
 				iBufferLen-=iBlockLength+2;
 
 			}
-			else if (nLength>5 && _wcsnicmp(pPtr,L"GETDB",5)==0)
+			else 
 			{
-				// GETDBNAME etc
-				pPtr+=5;
-				iBufferLen-=5;
-				nLength-=5;
-
-				int iParametersLen;
-				LPCWSTR pName=pPtr;
-				pPtr+=nLength;
-				iBufferLen-=nLength;
-
-				if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
-					throw CFileException(CFileException::invalidFile);
-
-
-				Value Var=EvaluateCondition(pPtr+1,iParametersLen);
-				int iDB=int(Var)-1;
+				BOOL bFree=FALSE;
+				Value* pValue=ParseFunctionsAndVariables(pPtr,iBufferLen,bFree);
+				if (pValue==NULL)
+					return FALSE;
 				
-				if (iDB>=0 && iDB<m_aFromDatabases.GetSize() && Var.IsInteger())
-				{
-					const CDatabase* pDatabase=GetLocateApp()->GetDatabase(m_aFromDatabases[iDB]);
-					if (nLength==4 && _wcsnicmp(pName,L"NAME",4)==0)
-						stream.Write(pDatabase->GetName());
-					else if (nLength==7 && _wcsnicmp(pName,L"CREATOR",7)==0)
-						stream.Write(pDatabase->GetCreator());
-					else if (nLength==11 && _wcsnicmp(pName,L"DESCRIPTION",11)==0)
-						stream.Write(pDatabase->GetDescription());
-					else if (nLength==4 && _wcsnicmp(pName,L"FILE",4)==0)
-						stream.Write(pDatabase->GetArchiveName());
-					else
-						stream.Write(L"INVALIDFUNCTION");
-				}
-				else
-					stream.Write(L"INVALIDARGUMENT");
-
-				pPtr+=iParametersLen+2;
-				iBufferLen-=iParametersLen+2;
-
+				pValue->Write(stream);
+				if (bFree)
+					delete pValue;
 			}
-			else if (nLength==13 && _wcsnicmp(pPtr,L"GETDETAILNAME",13)==0)
-			{
-				// GETDETAILNAME
-				pPtr+=13;
-				iBufferLen-=13;
-				
-				int iParametersLen,iDetail=-1;
-				if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
-					throw CFileException(CFileException::invalidFile);
-
-				Value Var=EvaluateCondition(pPtr+1,iParametersLen);
-				if (Var.IsInteger())
-					iDetail=int(Var)-1;
-				
-				if (iDetail>=0 && iDetail<TypeCount)
-					stream.Write(ID2W(m_AllDetails[iDetail].nString));
-				else
-					stream.Write(L"INDEXOUTOFBOUNDS");
-
-				pPtr+=iParametersLen+2;
-				iBufferLen-=iParametersLen+2;
-
-			}
-			else if (nLength==17 && _wcsnicmp(pPtr,L"GETSELECTEDDETAIL",17)==0)
-			{
-				// GETSELECTEDDETAIL
-				pPtr+=17;
-				iBufferLen-=17;
-				
-				int iParametersLen,iDetail=-1;
-				if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
-					throw CFileException(CFileException::invalidFile);
-
-				Value Var=EvaluateCondition(pPtr+1,iParametersLen);
-				if (Var.IsInteger())
-					iDetail=int(Var)-1;
-				
-				if (iDetail>=0 && iDetail<m_nSelectedDetails)
-					Value(m_pSelectedDetails[iDetail]+1).Write(stream,TRUE);
-				else
-					stream.Write(L"INDEXOUTOFBOUNDS");
-
-				pPtr+=iParametersLen+2;
-				iBufferLen-=iParametersLen+2;
-
-			}
-			else if (nLength==9 && _wcsnicmp(pPtr,L"GETDETAIL",9)==0)
-			{
-				// GETDETAIL
-				pPtr+=9;
-				iBufferLen-=9;
-				
-				int iParametersLen;
-				if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
-					throw CFileException(CFileException::invalidFile);
-
-				int iFirstArgLen,iFile=-1,iDetail=-1;
-				for (iFirstArgLen=0;pPtr[iFirstArgLen+1]!=L',' && iFirstArgLen<iParametersLen;iFirstArgLen++);
-
-				Value vFile=EvaluateCondition(pPtr+1,iFirstArgLen);
-				if (vFile.IsInteger())
-				{
-					iFile=int(vFile)-1,iDetail=0;
-					if (iFirstArgLen<iParametersLen)
-					{
-						Value vDetail=EvaluateCondition(pPtr+iFirstArgLen+1+1,iParametersLen-iFirstArgLen-1);
-						if (vDetail.IsInteger())
-							iDetail=int(vDetail)-1;
-					}
-				}
-
-				if (iFile>=0 && iFile<m_nResults && iDetail>=0 && iDetail<TypeCount)
-				{
-					// Updating if necessary
-					if (m_Items[iFile]->ShouldUpdateByDetail((DetailType)iDetail))
-						m_Items[iFile]->UpdateByDetail((DetailType)iDetail);
-					
-					// Format detail and write to the file
-					stream.Write(m_Items[iFile]->GetDetailText((DetailType)iDetail));
-				}
-				else
-					stream.Write(L"INDEXOUTOFBOUNDS");
-
-				pPtr+=iParametersLen+2;
-				iBufferLen-=iParametersLen+2;
-
-			}
-			else if (nLength==7 && _wcsnicmp(pPtr,L"GETPATH",7)==0)
-			{
-				// GETPATH
-				pPtr+=7;
-				iBufferLen-=7;
-				
-				int iConditionLength;
-				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
-					throw CFileException(CFileException::invalidFile);
-
-				Value ID=EvaluateCondition(pPtr+1,iConditionLength);
-				int iFile=int(ID)-1;
-				if (iFile>=0 && iFile<m_nResults)
-					stream.Write(m_Items[iFile]->GetPath());
-				else
-					stream.Write(L"INDEXOUTOFBOUNDS");
-			
-					
-				pPtr+=2+iConditionLength;
-				iBufferLen-=iConditionLength+2;
-
-			}
-			else if (nLength==7 && _wcsnicmp(pPtr,L"GETNAME",7)==0)
-			{
-				// GETNAME
-				pPtr+=7;
-				iBufferLen-=7;
-				
-				int iConditionLength;
-				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
-					throw CFileException(CFileException::invalidFile);
-
-				Value ID=EvaluateCondition(pPtr+1,iConditionLength);
-				int iFile=int(ID)-1;
-				if (iFile>=0 && iFile<m_nResults)
-					stream.Write(m_Items[iFile]->GetName());
-				else
-					stream.Write(L"INDEXOUTOFBOUNDS");
-			
-					
-				pPtr+=2+iConditionLength;
-				iBufferLen-=iConditionLength+2;
-
-			}
-			else if (nLength==9 && _wcsnicmp(pPtr,L"GETPARENT",9)==0)
-			{
-				// GETPARENT
-				pPtr+=9;
-				iBufferLen-=9;
-				
-				int iConditionLength;
-				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
-					throw CFileException(CFileException::invalidFile);
-
-				Value ID=EvaluateCondition(pPtr+1,iConditionLength);
-				int iFile=int(ID)-1;
-				if (iFile>=0 && iFile<m_nResults)
-					stream.Write(m_Items[iFile]->GetParent());
-				else
-					stream.Write(L"INDEXOUTOFBOUNDS");
-			
-					
-				pPtr+=2+iConditionLength;
-				iBufferLen-=iConditionLength+2;
-
-			}
-			else if (nLength==8 && _wcsnicmp(pPtr,L"GETTITLE",8)==0)
-			{
-				// GETTITLE
-				pPtr+=8;
-				iBufferLen-=8;
-				
-				int iConditionLength;
-				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
-					throw CFileException(CFileException::invalidFile);
-
-				Value ID=EvaluateCondition(pPtr+1,iConditionLength);
-				int iFile=int(ID)-1;
-				if (iFile>=0 && iFile<m_nResults) 
-				{
-					// Updating if necessary
-					if (m_Items[iFile]->ShouldUpdateFileTitle())
-						m_Items[iFile]->UpdateFileTitle();
-					
-					stream.Write(m_Items[iFile]->GetFileTitle());
-				}
-				else
-					stream.Write(L"INDEXOUTOFBOUNDS");
-			
-					
-				pPtr+=2+iConditionLength;
-				iBufferLen-=iConditionLength+2;
-
-			}
-			else if (nLength==12 && _wcsnicmp(pPtr,L"GETEXTENSION",12)==0)
-			{
-				// GETEXTENSION
-				pPtr+=12;
-				iBufferLen-=12;
-				
-				int iConditionLength;
-				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
-					throw CFileException(CFileException::invalidFile);
-
-				Value ID=EvaluateCondition(pPtr+1,iConditionLength);
-				int iFile=int(ID)-1;
-				if (iFile>=0 && iFile<m_nResults)
-					stream.Write(m_Items[iFile]->GetExtension());
-				else
-					stream.Write(L"INDEXOUTOFBOUNDS");
-			
-					
-				pPtr+=2+iConditionLength;
-				iBufferLen-=iConditionLength+2;
-
-			}
-			else if (nLength==3 && _wcsnicmp(pPtr,L"SET",3)==0)
-			{
-				// SET
-				pPtr+=3;
-				iBufferLen-=3;
-				
-				int iParametersLen;
-				if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
-					throw CFileException(CFileException::invalidFile);
-
-				int iVariableLen;
-				for (iVariableLen=0;pPtr[iVariableLen+1]!=L'=' && iVariableLen<iParametersLen;iVariableLen++);
-				if (iVariableLen==iParametersLen)
-					stream.Write(L"INVALIDARGUMENT");
-				else
-				{
-					Value sValue=EvaluateCondition(pPtr+iVariableLen+1+1,iParametersLen-iVariableLen-1);
-					SetVariable(W2A(pPtr+1,iVariableLen),sValue,TRUE);
-				}
-
-				pPtr+=iParametersLen+2;
-				iBufferLen-=iParametersLen+2;
-
-			}
-			else if (nLength==4 && _wcsnicmp(pPtr,L"EVAL",4)==0)
-			{
-				// EVALueate
-				pPtr+=4;
-				iBufferLen-=4;
-				
-				int iConditionLength;
-				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
-					throw CFileException(CFileException::invalidFile);
-
-				Value Condition=EvaluateCondition(pPtr+1,iConditionLength);
-				Condition.Write(stream,TRUE);
-
-				pPtr+=2+iConditionLength;
-				iBufferLen-=iConditionLength+2;
-
-			}
-			else if (nLength==5 && _wcsnicmp(pPtr,L"MKDIR",5)==0)
-			{
-				// MKDIR (Make Directory)
-				pPtr+=5;
-				iBufferLen-=5;
-				
-				int iConditionLength;
-				if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
-					throw CFileException(CFileException::invalidFile);
-
-				Value Directory=EvaluateCondition(pPtr+1,iConditionLength);
-				Directory.ToString();
-
-				FileSystem::CreateDirectory((LPCWSTR)Directory);
-
-				
-				pPtr+=2+iConditionLength;
-				iBufferLen-=iConditionLength+2;
-
-			}
-			else if (nLength==15 && _wcsnicmp(pPtr,L"CREATETHUMBNAIL",15)==0)
-			{
-				// GETDETAIL
-				pPtr+=15;
-				iBufferLen-=15;
-				
-				int iParametersLen;
-				if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
-					throw CFileException(CFileException::invalidFile);
-
-				// Remove '['
-				pPtr++;
-				iBufferLen--;
-
-
-				int iFirstArgLen,iSecondArgLen;
-				for (iFirstArgLen=0;pPtr[iFirstArgLen]!=L',' && iFirstArgLen<iParametersLen;iFirstArgLen++);
-				Value vPath=EvaluateCondition(pPtr,iFirstArgLen);
-
-				pPtr+=iFirstArgLen+1;
-				iBufferLen-=iFirstArgLen+1;
-				iParametersLen-=iFirstArgLen+1;
-
-				for (iSecondArgLen=0;pPtr[iSecondArgLen]!=L',' && iSecondArgLen<iParametersLen;iSecondArgLen++);
-				Value vThumbnailFile=EvaluateCondition(pPtr,iSecondArgLen);
-				
-				if (!vPath.IsEmptyString() && !vThumbnailFile.IsEmptyString())
-				{
-					int nThumbnailSize=128;
-					if (iSecondArgLen+1<iParametersLen)
-					{
-						Value vThumbnailSize=EvaluateCondition(pPtr+iSecondArgLen+1,iParametersLen-iSecondArgLen-1);
-						if (vThumbnailSize.IsInteger()>0)
-							nThumbnailSize=(int)vThumbnailSize;
-					}
-
-					CLocateDlg* pLocateDlg=GetLocateDlg();
-					if (pLocateDlg!=NULL)
-					{
-						SIZE sz;
-						LPCWSTR szFile=(LPCWSTR)vPath;
-						HBITMAP hBitmap=pLocateDlg->CreateThumbnail(szFile,&CSize(nThumbnailSize,nThumbnailSize),&sz);
-						if (hBitmap!=NULL)
-						{
-							if (SaveToJpegFile(hBitmap,(LPCWSTR)vThumbnailFile,75))
-								stream.Write((LPCWSTR)vThumbnailFile);	
-							else
-								stream.Write(L"ERROR:COULDNOTSAVEFILE");	
-
-							DeleteObject(hBitmap);
-						}
-						else
-						{
-							// Try system image list
-							InitializeSystemImageList(nThumbnailSize);
-
-							BOOL bRet=FALSE;
-							if (m_hSystemImageList!=NULL)
-							{
-								SHFILEINFOW fi;
-								if (ShellFunctions::GetFileInfo(szFile,0,&fi,SHGFI_SYSICONINDEX))
-								{
-									if (m_nSystemImageListSize&(1<<31))
-										bRet=SaveToJpegFile(m_pSystemImageList,fi.iIcon,(LPCWSTR)vThumbnailFile,75);
-									else 
-										bRet=SaveToJpegFile(m_hSystemImageList,fi.iIcon,(LPCWSTR)vThumbnailFile,75);
-								}
-							}
-							
-							stream.Write(bRet?(LPCWSTR)vThumbnailFile:L"ERROR:COULDNOTCREATETHUMBNAIL");	
-								
-						}
-					}
-					else 
-						stream.Write("ERROR:LOC=NULL)");
-					
-				}
-				else
-					stream.Write(L"INVALIDARGUMENTS");
-
-				pPtr+=iParametersLen+1;
-				iBufferLen-=iParametersLen+1;
-
-			}
-			else
-			{
-				pPtr+=nLength;
-				iBufferLen-=nLength;
-			}
+			break;
+		default:
+			stream.Write(pPtr++,1);
+			iBufferLen--;
+			break;
 		}
-		
 	}
 	return TRUE;
 }
@@ -1919,16 +1001,991 @@ BOOL CResults::ParseBlockLength(LPCWSTR& pPtr,int& iLen,int& riBlockLen) const
 	return FALSE;
 }
 
+CResults::Value* CResults::ParseFunctionsAndVariables(LPCWSTR& pPtr,int& iBufferLen,BOOL& bFree)
+{
+	// Free value is default
+	bFree=TRUE;
+				
+	// Skip '$'
+	pPtr++;iBufferLen--;
+
+	// Find '$' or '['
+	int nLength;
+	for (nLength=0;nLength<iBufferLen && pPtr[nLength]!=L'$' && pPtr[nLength]!=L'[';nLength++);
+
+	if (nLength==iBufferLen)
+	{
+		pPtr+=nLength;
+		iBufferLen-=nLength;
+		return new Value(L"INVALIDFORMAT");
+	}
+
+	if (pPtr[nLength]==L'$')
+	{
+		// Variable
+		W2A variable(pPtr,nLength);
+		Value* pValue=GetVariable(variable);
+		bFree=FALSE;
+		if (pValue==NULL)
+		{
+			pValue=new Value(L"UNKNOWNVARIABLE");
+			bFree=TRUE;
+		}		
+		pPtr+=nLength+1;
+		iBufferLen-=nLength+1;
+		return pValue;
+	}
+	else 
+	{
+		if (nLength>5 && _wcsnicmp(pPtr,L"GETDB",5)==0)
+		{
+			// GETDBNAME,GETDBCREATOR,GETDBDESCRIBTION,GETDBFILE
+			pPtr+=5;
+			iBufferLen-=5;
+			nLength-=5;
+
+			int iParametersLen;
+			LPCWSTR pName=pPtr;
+			pPtr+=nLength;
+			iBufferLen-=nLength;
+
+			if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
+				throw CFileException(CFileException::invalidFile);
+
+
+			Value Var=EvaluateCondition(pPtr+1,iParametersLen),*pRet;
+			int iDB=int(Var)-1;
+			
+			if (iDB>=0 && iDB<m_aFromDatabases.GetSize() && Var.IsInteger())
+			{
+				const CDatabase* pDatabase=GetLocateApp()->GetDatabase(m_aFromDatabases[iDB]);
+				LPCWSTR pStr=NULL;
+				if (nLength==4 && _wcsnicmp(pName,L"NAME",4)==0) 
+					pStr=pDatabase->GetName();
+				else if (nLength==7 && _wcsnicmp(pName,L"CREATOR",7)==0)
+					pStr=pDatabase->GetCreator();
+				else if (nLength==11 && _wcsnicmp(pName,L"DESCRIPTION",11)==0)
+					pStr=pDatabase->GetDescription();
+				else if (nLength==4 && _wcsnicmp(pName,L"FILE",4)==0)
+					pStr=pDatabase->GetArchiveName();
+
+				pRet=new Value(pStr!=NULL?pStr:L"INVALIDFUNCTION");
+			}
+			else
+				pRet=new Value(L"INVALIDARGUMENT");
+
+			pPtr+=iParametersLen+2;
+			iBufferLen-=iParametersLen+2;
+
+			return pRet;
+		}
+		else if (nLength==13 && _wcsnicmp(pPtr,L"GETDETAILNAME",13)==0)
+		{
+			// GETDETAILNAME
+			pPtr+=13;
+			iBufferLen-=13;
+			
+			int iParametersLen,iDetail=-1;
+			if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
+				throw CFileException(CFileException::invalidFile);
+
+			Value Var=EvaluateCondition(pPtr+1,iParametersLen),*pRet;
+			if (Var.IsInteger())
+				iDetail=int(Var)-1;
+			
+			if (iDetail>=0 && iDetail<TypeCount)
+				pRet=new Value(ID2W(m_AllDetails[iDetail].nString));
+			else
+				pRet=new Value(L"INDEXOUTOFBOUNDS");
+
+			pPtr+=iParametersLen+2;
+			iBufferLen-=iParametersLen+2;
+
+			return pRet;
+		}
+		else if (nLength==17 && _wcsnicmp(pPtr,L"GETSELECTEDDETAIL",17)==0)
+		{
+			// GETSELECTEDDETAIL
+			pPtr+=17;
+			iBufferLen-=17;
+			
+			int iParametersLen,iDetail=-1;
+			if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
+				throw CFileException(CFileException::invalidFile);
+
+			Value Var=EvaluateCondition(pPtr+1,iParametersLen),*pRet;
+			if (Var.IsInteger())
+				iDetail=int(Var)-1;
+			
+			if (iDetail>=0 && iDetail<m_nSelectedDetails)
+				pRet=new Value(m_pSelectedDetails[iDetail]+1);
+			else
+				pRet=new Value(L"INDEXOUTOFBOUNDS");
+
+			pPtr+=iParametersLen+2;
+			iBufferLen-=iParametersLen+2;
+
+			return pRet;
+		}
+		else if (nLength==9 && _wcsnicmp(pPtr,L"GETDETAIL",9)==0)
+		{
+			// GETDETAIL
+			pPtr+=9;
+			iBufferLen-=9;
+			
+			int iParametersLen;
+			if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
+				throw CFileException(CFileException::invalidFile);
+
+			int iFirstArgLen,iFile=-1,iDetail=-1;
+			for (iFirstArgLen=0;pPtr[iFirstArgLen+1]!=L',' && iFirstArgLen<iParametersLen;iFirstArgLen++);
+
+			Value vFile=EvaluateCondition(pPtr+1,iFirstArgLen),*pRet;
+			if (vFile.IsInteger())
+			{
+				iFile=int(vFile)-1,iDetail=0;
+				if (iFirstArgLen<iParametersLen)
+				{
+					Value vDetail=EvaluateCondition(pPtr+iFirstArgLen+1+1,iParametersLen-iFirstArgLen-1);
+					if (vDetail.IsInteger())
+						iDetail=int(vDetail)-1;
+				}
+			}
+
+			if (iFile>=0 && iFile<m_nResults && iDetail>=0 && iDetail<TypeCount)
+			{
+				// Updating if necessary
+				if (m_Items[iFile]->ShouldUpdateByDetail((DetailType)iDetail))
+					m_Items[iFile]->UpdateByDetail((DetailType)iDetail);
+				
+				// Format detail and write to the file
+				pRet=new Value(m_Items[iFile]->GetDetailText((DetailType)iDetail));					
+			}
+			else
+				pRet=new Value(L"INDEXOUTOFBOUNDS");
+
+			pPtr+=iParametersLen+2;
+			iBufferLen-=iParametersLen+2;
+
+			return pRet;
+		}
+		else if (nLength==7 && _wcsnicmp(pPtr,L"GETPATH",7)==0)
+		{
+			// GETPATH
+			pPtr+=7;
+			iBufferLen-=7;
+			
+			int iConditionLength;
+			if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+				throw CFileException(CFileException::invalidFile);
+
+			Value ID=EvaluateCondition(pPtr+1,iConditionLength),*pRet;
+			int iFile=int(ID)-1;
+			if (iFile>=0 && iFile<m_nResults)
+				pRet=new Value(m_Items[iFile]->GetPath());
+			else
+				pRet=new Value(L"INDEXOUTOFBOUNDS");
+		
+				
+			pPtr+=2+iConditionLength;
+			iBufferLen-=iConditionLength+2;
+
+			return pRet;
+		}
+		else if (nLength==7 && _wcsnicmp(pPtr,L"GETNAME",7)==0)
+		{
+			// GETNAME
+			pPtr+=7;
+			iBufferLen-=7;
+			
+			int iConditionLength;
+			if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+				throw CFileException(CFileException::invalidFile);
+
+			Value ID=EvaluateCondition(pPtr+1,iConditionLength),*pRet;
+			int iFile=int(ID)-1;
+			if (iFile>=0 && iFile<m_nResults)
+				pRet=new Value(m_Items[iFile]->GetName());
+			else
+				pRet=new Value(L"INDEXOUTOFBOUNDS");
+		
+				
+			pPtr+=2+iConditionLength;
+			iBufferLen-=iConditionLength+2;
+
+			return pRet;
+		}
+		else if (nLength==9 && _wcsnicmp(pPtr,L"GETPARENT",9)==0)
+		{
+			// GETPARENT
+			pPtr+=9;
+			iBufferLen-=9;
+			
+			int iConditionLength;
+			if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+				throw CFileException(CFileException::invalidFile);
+
+			Value ID=EvaluateCondition(pPtr+1,iConditionLength),*pRet;
+			int iFile=int(ID)-1;
+			if (iFile>=0 && iFile<m_nResults)
+				pRet=new Value(m_Items[iFile]->GetParent());
+			else
+				pRet=new Value(L"INDEXOUTOFBOUNDS");
+		
+				
+			pPtr+=2+iConditionLength;
+			iBufferLen-=iConditionLength+2;
+			return pRet;
+
+		}
+		else if (nLength==8 && _wcsnicmp(pPtr,L"GETTITLE",8)==0)
+		{
+			// GETTITLE
+			pPtr+=8;
+			iBufferLen-=8;
+			
+			int iConditionLength;
+			if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+				throw CFileException(CFileException::invalidFile);
+
+			Value ID=EvaluateCondition(pPtr+1,iConditionLength),*pRet;
+			int iFile=int(ID)-1;
+			if (iFile>=0 && iFile<m_nResults) 
+			{
+				// Updating if necessary
+				if (m_Items[iFile]->ShouldUpdateFileTitle())
+					m_Items[iFile]->UpdateFileTitle();
+				pRet=new Value(m_Items[iFile]->GetFileTitle());					
+			}
+			else
+				pRet=new Value(L"INDEXOUTOFBOUNDS");
+		
+				
+			pPtr+=2+iConditionLength;
+			iBufferLen-=iConditionLength+2;
+			return pRet;
+
+		}
+		else if (nLength==12 && _wcsnicmp(pPtr,L"GETEXTENSION",12)==0)
+		{
+			// GETEXTENSION
+			pPtr+=12;
+			iBufferLen-=12;
+			
+			int iConditionLength;
+			if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+				throw CFileException(CFileException::invalidFile);
+
+			Value ID=EvaluateCondition(pPtr+1,iConditionLength),*pRet;
+			int iFile=int(ID)-1;
+			if (iFile>=0 && iFile<m_nResults)
+				pRet=new Value(m_Items[iFile]->GetExtension());
+			else
+				pRet=new Value(L"INDEXOUTOFBOUNDS");
+
+			pPtr+=2+iConditionLength;
+			iBufferLen-=iConditionLength+2;
+			return pRet;
+
+		}
+		else if (nLength==3 && _wcsnicmp(pPtr,L"SET",3)==0)
+		{
+			// SET
+			pPtr+=3;
+			iBufferLen-=3;
+			
+			int iParametersLen;
+			if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
+				throw CFileException(CFileException::invalidFile);
+
+			Value* pRet;
+			int iVariableLen;
+			for (iVariableLen=0;pPtr[iVariableLen+1]!=L'=' && iVariableLen<iParametersLen;iVariableLen++);
+			if (iVariableLen==iParametersLen)
+				pRet=new Value(L"INVALIDARGUMENT");
+			else
+			{
+				Value sValue=EvaluateCondition(pPtr+iVariableLen+1+1,iParametersLen-iVariableLen-1);
+				SetVariable(W2A(pPtr+1,iVariableLen),sValue,TRUE);
+				pRet=new Value;
+			}
+
+			pPtr+=iParametersLen+2;
+			iBufferLen-=iParametersLen+2;
+			return pRet;
+		}
+		else if (nLength==4  && _wcsnicmp(pPtr,L"EVAL",4)==0)
+		{
+			// EVALueate
+			pPtr+=4;
+			iBufferLen-=4;
+			
+			int iConditionLength;
+			if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+				throw CFileException(CFileException::invalidFile);
+
+			Value Ret=EvaluateCondition(pPtr+1,iConditionLength);
+			
+			pPtr+=2+iConditionLength;
+			iBufferLen-=iConditionLength+2;
+
+			return Ret.MakeDynamic();
+
+		}
+		else if (nLength==5 && _wcsnicmp(pPtr,L"MKDIR",5)==0)
+		{
+			// MKDIR (Make Directory)
+			pPtr+=5;
+			iBufferLen-=5;
+			
+			int iConditionLength;
+			if (!ParseBlockLength(pPtr,iBufferLen,iConditionLength))
+				throw CFileException(CFileException::invalidFile);
+
+			Value Directory=EvaluateCondition(pPtr+1,iConditionLength);
+			Directory.ToString();
+
+			FileSystem::CreateDirectory((LPCWSTR)Directory);
+
+			
+			pPtr+=2+iConditionLength;
+			iBufferLen-=iConditionLength+2;
+
+			return new Value;
+		}
+		else if (nLength==15 && _wcsnicmp(pPtr,L"CREATETHUMBNAIL",15)==0)
+		{
+			// GETDETAIL
+			pPtr+=15;
+			iBufferLen-=15;
+			
+			int iParametersLen;
+			if (!ParseBlockLength(pPtr,iBufferLen,iParametersLen))
+				throw CFileException(CFileException::invalidFile);
+
+			// Remove '['
+			pPtr++;
+			iBufferLen--;
+
+
+			int iFirstArgLen,iSecondArgLen;
+			for (iFirstArgLen=0;pPtr[iFirstArgLen]!=L',' && iFirstArgLen<iParametersLen;iFirstArgLen++);
+			Value vPath=EvaluateCondition(pPtr,iFirstArgLen);
+
+			pPtr+=iFirstArgLen+1;
+			iBufferLen-=iFirstArgLen+1;
+			iParametersLen-=iFirstArgLen+1;
+
+			for (iSecondArgLen=0;pPtr[iSecondArgLen]!=L',' && iSecondArgLen<iParametersLen;iSecondArgLen++);
+			Value vThumbnailFile=EvaluateCondition(pPtr,iSecondArgLen),*pRet;
+			
+			if (!vPath.IsEmptyString() && !vThumbnailFile.IsEmptyString())
+			{
+				CSize ThumbnailSize(128,128);
+				if (iSecondArgLen+1<iParametersLen)
+				{
+					Value vThumbnailSize=EvaluateCondition(pPtr+iSecondArgLen+1,iParametersLen-iSecondArgLen-1);
+					if (vThumbnailSize.IsInteger()) 
+					{
+						ThumbnailSize.cx=(int)vThumbnailSize;
+						ThumbnailSize.cy=ThumbnailSize.cx;
+					}
+				}
+				
+				CLocateDlg* pLocateDlg=GetLocateDlg();
+				if (pLocateDlg!=NULL)
+				{
+					SIZE sz;
+					LPCWSTR szFile=(LPCWSTR)vPath;
+					HBITMAP hBitmap=pLocateDlg->CreateThumbnail(szFile,&ThumbnailSize,&sz);
+					if (hBitmap!=NULL)
+					{
+						CImageList List;
+						List.Create(sz.cx,sz.cy,ILC_COLOR32,1,0);
+						int nIndex=List.Add(hBitmap,(HBITMAP)NULL);
+										
+						if (SaveToJpegFile(List,nIndex,(LPCWSTR)vThumbnailFile,75,&ThumbnailSize))
+							pRet=new Value((LPCWSTR)vThumbnailFile);	
+						else
+							pRet=new Value(L"ERROR:COULDNOTSAVEFILE");	
+						List.DeleteImageList();
+
+						DeleteObject(hBitmap);
+					}
+					else
+					{
+						// Try system image list
+						InitializeSystemImageList(ThumbnailSize.cx);
+
+						BOOL bRet=FALSE;
+						if (m_hSystemImageList!=NULL)
+						{
+							SHFILEINFOW fi;
+							if (ShellFunctions::GetFileInfo(szFile,0,&fi,SHGFI_SYSICONINDEX))
+							{
+								if (m_nSystemImageListSize&(1<<31))
+									bRet=SaveToJpegFile(m_pSystemImageList,fi.iIcon,(LPCWSTR)vThumbnailFile,75,&ThumbnailSize);
+								else 
+									bRet=SaveToJpegFile(m_hSystemImageList,fi.iIcon,(LPCWSTR)vThumbnailFile,75,&ThumbnailSize);
+							}
+						}
+						
+
+						pRet=new Value(bRet?(LPCWSTR)vThumbnailFile:L"ERROR:COULDNOTCREATETHUMBNAIL");
+					}
+				}
+				else 
+					pRet=new Value(L"ERROR:LOC=NULL)");
+				
+			}
+			else
+				pRet=new Value(L"INVALIDARGUMENTS");
+
+			pPtr+=iParametersLen+1;
+			iBufferLen-=iParametersLen+1;
+
+			return pRet;
+		}
+		else
+		{
+			
+			pPtr+=nLength;
+			iBufferLen-=nLength;
+
+			return new Value(L"INVALIDFUNCTION");
+		}
+	}
+}
+	
 
 
 CResults::Value CResults::EvaluateCondition(LPCWSTR pBuffer,int iConditionLength)
 {
-	CValueStream stream;
-	if (!ParseBuffer(stream,pBuffer,iConditionLength,TRUE))
-		throw CFileException(CFileException::invalidFile);
-	return stream.ToSingleValue();
+	CListFP<Value*> m_Values;
+
+	///////////////////////////////////////////////////////
+	// First parse string to list of values
+	///////////////////////////////////////////////////////
+
+	LPCWSTR pPtr=pBuffer;
+	while (iConditionLength>0)
+	{
+		switch (*pPtr)
+		{
+		case L'(':
+			{
+				int iBlockLength;
+				if (!ParseBlockLength(pPtr,iConditionLength,iBlockLength))
+					throw CFileException(CFileException::invalidFile);
+
+				Value Val=EvaluateCondition(pPtr+1,iBlockLength);
+				if (!Val.IsNull())
+					m_Values.AddTail(Val.MakeDynamic());
+
+				pPtr+=iBlockLength+2;
+				iConditionLength-=iBlockLength+2;
+				break;
+			}
+		case L'\"':
+			{
+				// String
+				pPtr++;
+				iConditionLength--;
+
+				int nLength=0;
+				for (;pPtr[nLength]!=L'\"' && nLength<iConditionLength;nLength++);
+
+				if (pPtr[nLength]!=L'\"')
+					return Value(L"INVALIDFORMAT");
+
+				m_Values.AddTail(new Value(pPtr,nLength));
+
+				pPtr+=nLength+1;
+				iConditionLength-=nLength+1;
+				break;				
+			}
+		case L'$':
+			{
+				// Function or variable
+				BOOL bFree=FALSE;
+				Value* pValue=ParseFunctionsAndVariables(pPtr,iConditionLength,bFree);
+				if (pValue==NULL)
+					return FALSE;
+				if (pValue->IsNull())
+				{
+					if (bFree)
+						delete pValue;
+				}
+				else if (!bFree)
+					m_Values.AddTail(new Value(*pValue,FALSE));
+				else
+					m_Values.AddTail(pValue);
+				break;
+			}
+		case L'!':
+			if (pPtr[1]=='=')
+			{
+				m_Values.AddTail(new Value(CResults::Value::NotEqual));
+				pPtr+=2;
+				iConditionLength-=2;
+			}
+			else
+			{
+				m_Values.AddTail(new Value(CResults::Value::Not));
+				pPtr++;
+				iConditionLength--;
+			}
+			break;
+		case L'=':
+			m_Values.AddTail(new Value(CResults::Value::Equal));
+			if (pPtr[1]=='=') 
+			{
+				pPtr+=2;
+				iConditionLength-=2;
+			}
+			else
+			{
+				pPtr++;
+				iConditionLength--;
+			}
+			break;
+		case L'<':
+			if (pPtr[1]=='=')
+			{
+				m_Values.AddTail(new Value(CResults::Value::LessOrEqual));
+				pPtr+=2;
+				iConditionLength-=2;
+			}
+			else
+			{
+				m_Values.AddTail(new Value(CResults::Value::Less));
+				pPtr++;
+				iConditionLength--;
+			}
+			break;
+		case L'>':
+			if (pPtr[1]=='=')
+			{
+				m_Values.AddTail(new Value(CResults::Value::GreaterOrEqual));
+				pPtr+=2;
+				iConditionLength-=2;
+			}
+			else
+			{
+				m_Values.AddTail(new Value(CResults::Value::Greater));
+				pPtr++;
+				iConditionLength--;
+			}
+			break;
+		case L'+':
+			m_Values.AddTail(new Value(CResults::Value::Add));
+			pPtr++;
+			iConditionLength--;
+			break;
+		case L'-':
+			m_Values.AddTail(new Value(CResults::Value::Subtract));
+			pPtr++;
+			iConditionLength--;
+			break;
+		case L'*':
+			m_Values.AddTail(new Value(CResults::Value::Multiply));
+			pPtr++;
+			iConditionLength--;
+			break;
+		case L'/':
+			if (pPtr[1]=='/')
+			{
+				m_Values.AddTail(new Value(CResults::Value::DivideAndRoundToInfinity));
+				pPtr+=2;
+				iConditionLength-=2;
+			}
+			else
+			{
+				m_Values.AddTail(new Value(CResults::Value::Divide));
+				pPtr++;
+				iConditionLength--;
+			}
+			break;
+		case L'%':
+			m_Values.AddTail(new Value(CResults::Value::Remainder));
+			pPtr++;
+			iConditionLength--;
+			break;
+		case L'&':
+			m_Values.AddTail(new Value(CResults::Value::And));
+			if (pPtr[1]=='&') 
+			{
+				pPtr+=2;
+				iConditionLength-=2;
+			}
+			else
+			{
+				pPtr++;
+				iConditionLength--;
+			}
+			break;
+		case L'|':
+			m_Values.AddTail(new Value(CResults::Value::Or));
+			if (pPtr[1]=='|') 
+			{
+				pPtr+=2;
+				iConditionLength-=2;
+			}
+			else
+			{
+				pPtr++;
+				iConditionLength--;
+			}
+			break;
+		case L' ':
+			// Ignore spaces
+			pPtr++;
+			iConditionLength--;
+			break;		
+		default:
+			{
+				// Numeric value?
+				int nLength=0;
+				for (;pPtr[nLength]>=L'0' && pPtr[nLength]<=L'9' && nLength<iConditionLength; nLength++);
+				
+				if (nLength==0)
+					return Value(L"INVALIDFORMAT");
+
+				LPWSTR pValue=alloccopy(pPtr,nLength);
+				m_Values.AddTail(new Value(_wtoi(pValue)));
+				delete[] pValue;
+				pPtr+=nLength;
+				iConditionLength-=nLength;
+				break;
+			}			
+		}
+	}
+
+
+	///////////////////////////////////////////////////////
+	// Evaluate operatos
+	///////////////////////////////////////////////////////
+		
+	// Calculate *, /, //, and % operators
+	Value* pPrev=NULL;
+	POSITION pPos=m_Values.GetHeadPosition();
+	while (pPos!=NULL)
+	{
+		Value* pThis=m_Values.GetAt(pPos);
+		Value* pNext=m_Values.GetNext(pPos);
+
+		switch(pThis->GetOperator())
+		{
+		case CResults::Value::Multiply:
+		case CResults::Value::Divide:
+		case CResults::Value::DivideAndRoundToInfinity:
+		case CResults::Value::Remainder:
+			if (pNext==NULL || pPrev==NULL)
+				return FALSE;
+			if (pPrev->IsInteger() && pNext->IsInteger())
+			{
+				int lVal=(int)*pPrev;
+				int rVal=(int)*pNext;
+				switch (pThis->GetOperator())
+				{
+				case CResults::Value::Multiply:
+					pThis->Set(lVal*rVal);
+					break;
+				case CResults::Value::Divide:
+					pThis->Set(lVal/rVal);
+					break;
+				case CResults::Value::DivideAndRoundToInfinity:
+					pThis->Set(lVal/rVal+(lVal%rVal!=0?1:0));
+					break;
+				case CResults::Value::Remainder:
+					pThis->Set(lVal%rVal);
+					break;
+				}
+				m_Values.RemoveAt(m_Values.GetPrevPosition(pPos));
+				m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
+			}
+			else
+				return FALSE;
+			break;
+		}
+
+		pPrev=pThis;
+		pPos=m_Values.GetNextPosition(pPos);
+	}
+
+	
+	// Then !, + and -
+	pPrev=NULL;
+	pPos=m_Values.GetHeadPosition();
+	while (pPos!=NULL)
+	{
+		Value* pThis=m_Values.GetAt(pPos);
+		Value* pNext=m_Values.GetNext(pPos);
+
+		switch(pThis->GetOperator())
+		{
+		case CResults::Value::Not:
+			if (pNext==NULL)
+				return FALSE; 
+			if (!pNext->IsInteger())
+				return FALSE;
+			pThis->Set(!(int)*pNext);
+			m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
+			break;
+		case CResults::Value::Add:
+			if (pNext==NULL || pPrev==NULL)
+				return FALSE;
+			if (pPrev->IsInteger() && pNext->IsInteger())
+			{
+				int lVal=(int)*pPrev;
+				int rVal=(int)*pNext;
+				
+				pThis->Set(pThis->GetOperator()==CResults::Value::Add?lVal+rVal:lVal-rVal);
+				
+				m_Values.RemoveAt(m_Values.GetPrevPosition(pPos));
+				m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
+			}
+			else 
+			{
+				pNext->ToString();
+				pPrev->ToString();
+				pPrev->AddString((LPCWSTR)*pNext);
+				
+				// Chancing pPos and pThis to point previous
+				m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
+				POSITION pPos2=pPos;
+				pPos=m_Values.GetPrevPosition(pPos);
+				m_Values.RemoveAt(pPos2);				
+				pThis=pPrev;
+			}
+			break;
+		case CResults::Value::Subtract:
+			if (pNext==NULL || pPrev==NULL)
+				return FALSE;
+			if (pPrev->IsInteger() && pNext->IsInteger())
+			{
+				int lVal=(int)*pPrev;
+				int rVal=(int)*pNext;
+				
+				pThis->Set(lVal-rVal);
+				
+				m_Values.RemoveAt(m_Values.GetPrevPosition(pPos));
+				m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
+			}
+			else
+				return FALSE;
+			break;
+		}
+
+		pPrev=pThis;
+		pPos=m_Values.GetNextPosition(pPos);
+	}
+
+	// Then equalities
+	pPrev=NULL;
+	pPos=m_Values.GetHeadPosition();
+	while (pPos!=NULL)
+	{
+		Value* pThis=m_Values.GetAt(pPos);
+		Value* pNext=m_Values.GetNext(pPos);
+
+		switch(pThis->GetOperator())
+		{
+		case CResults::Value::Equal:
+		case CResults::Value::NotEqual:
+			if (pNext==NULL || pPrev==NULL)
+				return FALSE;
+			if (pPrev->IsInteger())
+			{
+				if (!pNext->IsInteger())
+					return FALSE;
+
+				int bEqual=(int)*pPrev==(int)*pNext;
+				pThis->Set(pThis->GetOperator()==CResults::Value::NotEqual?!bEqual:bEqual);
+			}
+			else 
+			{
+				int bEqual=FALSE;
+				LPCWSTR pszPrev=(LPCWSTR)*pPrev;
+				LPCWSTR pszNext=(LPCWSTR)*pNext;
+				if (pszNext!=NULL)
+					bEqual=wcscmp(pszPrev,pszNext)==0;
+				pThis->Set(pThis->GetOperator()==CResults::Value::NotEqual?!bEqual:bEqual);
+				
+			}
+			m_Values.RemoveAt(m_Values.GetPrevPosition(pPos));
+			m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
+			break;
+		case CResults::Value::Less:
+		case CResults::Value::Greater:
+		case CResults::Value::LessOrEqual:
+		case CResults::Value::GreaterOrEqual:
+			if (pNext==NULL || pPrev==NULL)
+				return FALSE;
+			if (pPrev->IsInteger() && pNext->IsInteger())
+			{
+				int lVal=(int)*pPrev;
+				int rVal=(int)*pNext;
+				switch (pThis->GetOperator())
+				{
+				case CResults::Value::Less:
+					pThis->Set(lVal<rVal);
+					break;
+				case CResults::Value::Greater:
+					pThis->Set(lVal>rVal);
+					break;
+				case CResults::Value::LessOrEqual:
+					pThis->Set(lVal<=rVal);
+					break;
+				case CResults::Value::GreaterOrEqual:
+					pThis->Set(lVal>=rVal);
+					break;
+				}
+				m_Values.RemoveAt(m_Values.GetPrevPosition(pPos));
+				m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
+			}
+			else
+				return FALSE;
+			break;
+		}
+
+		pPrev=pThis;
+		pPos=m_Values.GetNextPosition(pPos);
+	}
+
+	// And finally AND and OR
+	pPrev=NULL;
+	pPos=m_Values.GetHeadPosition();
+	while (pPos!=NULL)
+	{
+		Value* pThis=m_Values.GetAt(pPos);
+		Value* pNext=m_Values.GetNext(pPos);
+
+		switch(pThis->GetOperator())
+		{
+		case CResults::Value::And:
+		case CResults::Value::Or:
+			if (pNext==NULL || pPrev==NULL)
+				return FALSE;
+			if (pPrev->IsInteger() && pNext->IsInteger())
+			{
+				int lVal=(int)*pPrev;
+				int rVal=(int)*pNext;
+				
+				pThis->Set(pThis->GetOperator()==CResults::Value::And?(lVal&&rVal):(lVal||rVal));
+				 
+				m_Values.RemoveAt(m_Values.GetPrevPosition(pPos));
+				m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
+			}
+			else
+				return FALSE;
+			break;
+		}
+
+		pPrev=pThis;
+		pPos=m_Values.GetNextPosition(pPos);
+	}
+	
+	/*
+	// First, if there is strings, combine them
+	POSITION pPos=m_Values.GetHeadPosition();
+	while (pPos!=NULL)
+	{
+		Value* pThis=m_Values.GetAt(pPos);
+		if (pThis->IsString())
+		{
+			Value* pNext=m_Values.GetNext(pPos);
+			while (pNext!=NULL && pNext->IsString())
+			{
+				pThis->AddString((LPCWSTR)*pNext);
+				m_Values.RemoveAt(m_Values.GetNextPosition(pPos));
+				pNext=m_Values.GetNext(pPos);
+			}
+		}
+
+		pPos=m_Values.GetNextPosition(pPos);
+	}
+	*/
+
+
+	if (m_Values.GetCount()==0)
+		return Value();
+	else if (m_Values.GetCount()==1)
+		return m_Values.GetHead()->MakeStatic();
+	else
+		return Value(L"INVALIDARGUMENT");
+
+
+
+	
+	return TRUE;
 }
 
+
+
+void CResults::Value::ToString()
+{
+	ASSERT(nType!=Operator);
+
+	if (nType==Integer)
+	{
+		WCHAR buffer[20];
+		_itow_s(nInteger,buffer,20,10);
+		nType=String;
+		pString=alloccopy(buffer);
+	}	
+}
+
+
+
+
+
+BOOL CResults::Value::ToInteger(BOOL bForce)
+{	
+	ASSERT(nType!=Operator);
+
+
+	if (nType==String)
+	{
+		if (!bForce)
+		{
+			for (int i=0;pString[i]!='\0';i++)
+			{
+				if (pString[i]<'0' || pString[i]>'9')
+					return FALSE;
+			}
+		}
+
+		int nValue=_wtoi(pString);
+		delete[] pString;
+		nType=Integer;
+		nInteger=nValue;
+	}
+
+	return TRUE;
+}
+	
+void CResults::Value::Write(CStream& stream) 
+{
+	ASSERT(nType!=Operator);
+
+	if (nType==Null)
+		return;
+	else if (nType==Operator)
+		stream.Write(L"ERROR:OPERATORNOTINRIGHTPLACE");
+	else if (nType==String && pString!=NULL) 
+		stream.Write(pString);
+	else
+	{
+		WCHAR buffer[20];
+		_itow_s(nInteger,buffer,20,10);
+		stream.Write(buffer);
+	}	
+}
+
+
+	
+		
 CSaveResultsDlg::CSaveResultsDlg()
 :	CFileDialog(FALSE,L"*",szwEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,IDS_SAVERESULTSFILTERS,TRUE),
 	m_nFlags(IDC_TITLE|RESULT_INCLUDEDATE|RESULT_INCLUDELABELS),m_pList(NULL)

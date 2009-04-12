@@ -1421,11 +1421,12 @@ DWORD CTrayIconWnd::OnActivateAnotherInstance(ATOM aCommandLine)
 		else
 		{
 			BOOL bUpdate=pStartData->m_nStartup&CLocateApp::CStartData::startupUpdate;
-			if (m_pLocateDlgThread!=NULL)
+			CLocateDlg* pLocateDlg=GetLocateDlg();
+			if (pLocateDlg!=NULL)
 			{
 				ForceForegroundAndFocus();
 		
-				CLocateDlg* pLocateDlg=GetLocateDlg();
+				
 				pLocateDlg->SendMessage(WM_SETSTARTDATA,0,(LPARAM)pStartData);
 				delete pStartData;
 				

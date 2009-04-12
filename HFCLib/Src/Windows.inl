@@ -41,6 +41,21 @@ inline void CDC::Attach(HDC hDC,HWND hWnd)
 	m_nFreeMethod=None;
 }
 
+inline void CDC::Attach(CDC& dc)
+{
+	ASSERT_VALID(dc.m_hDC);
+
+	FreeDC();
+
+	m_hDC=dc.m_hDC;
+	m_hWnd=dc.m_hWnd;
+	m_nFreeMethod=dc.m_nFreeMethod;
+
+	dc.m_hDC=NULL;
+	dc.m_nFreeMethod=None;
+}
+
+	
 inline int CDC::SaveDC()
 {
 	return ::SaveDC(m_hDC);
