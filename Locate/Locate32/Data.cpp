@@ -392,7 +392,7 @@ DWORD CSchedule::WhenShouldRun(STIME& tTime,SDATE& tDate,UINT nDayOfWeek) const
 			}
 			return (DWORD)-1;
 		}
-	case typeDaily: // Checked 140103, OK
+	case typeDaily: 
 		{
 			if (m_bFlags&flagRunned) // This has been runned before, 
 									 // thus there should be at least one day between new run
@@ -433,7 +433,7 @@ DWORD CSchedule::WhenShouldRun(STIME& tTime,SDATE& tDate,UINT nDayOfWeek) const
 			}
 			return (DWORD)-1;
 		}
-	case typeWeekly: // Checked 140103, Should be OK
+	case typeWeekly: 
 		{
 			if (m_tWeekly.bDays==0)
 				return (DWORD)-1;
@@ -492,7 +492,7 @@ DWORD CSchedule::WhenShouldRun(STIME& tTime,SDATE& tDate,UINT nDayOfWeek) const
 			}
 			return (DWORD)-1;
 		}
-	case typeMonthly: // Checked 140103, Should be OK
+	case typeMonthly: 
 		{
 			ASSERT(tDate>=m_tLastStartDate);
 
@@ -568,7 +568,7 @@ DWORD CSchedule::WhenShouldRun(STIME& tTime,SDATE& tDate,UINT nDayOfWeek) const
 			}
 			break;
 		}
-	case typeOnce: // Checked 140103, OK
+	case typeOnce: 
 		if (m_bFlags&flagRunned)
 			return (DWORD)-1;
 		if (tDate==m_dStartDate)
@@ -586,7 +586,7 @@ DWORD CSchedule::WhenShouldRun(STIME& tTime,SDATE& tDate,UINT nDayOfWeek) const
 		else
 			return (DWORD)-1;
 		break;		
-	case typeAtStartup: // Checked 140103, OK
+	case typeAtStartup: 
 		return (DWORD)-1;
 	}
 	return (DWORD)-1;

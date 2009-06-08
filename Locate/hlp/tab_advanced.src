@@ -6,7 +6,7 @@ CONTENT=
 <P>The <b>$STRADVANCED_TABCAPTION@A$</b> tab contains the following fields:
 
 <div id="controls">
-<H2><A NAME="ta_check"></A>$DLGADVANCED_CHECK@M$</H2>
+<H2><A NAME="ta_check"></A>$DLGADVANCED_LOOKFOR@M$</H2>
 <P>Use this field to specify that is searching done among files, directories, or both. 
 The default setting for this field can be specified in General settings.
 </P>

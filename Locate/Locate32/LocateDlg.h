@@ -450,7 +450,6 @@ public:
 		void ChangeEnableStateForCheck();
 		void UpdateTypeList();
 		void AddBuildInFileTypes();
-		void ReArrangeAllocatedData();
 		void SetStartData(const CLocateApp::CStartData* pStartData,DWORD& rdwChanged);
 
 		static DWORD WINAPI UpdaterProc(CAdvancedDlg* pAdvancedDlg);
@@ -1063,10 +1062,10 @@ public:
 		isDisableIfDataSearch	= 0x00000008,
 		isIgnoreChangeMessages  = 0x00000010,
 		isUpDownGoesToResults   = 0x00000020,
-		
+		isUpdateTitle			= 0x00000040,
 
-		isGeneralDefault		= isEnable | isDisableIfDataSearch,
-		isGeneralSave			= isEnable | isDisableIfDataSearch | isUpDownGoesToResults,
+		isGeneralDefault		= isEnable | isDisableIfDataSearch | isUpdateTitle,
+		isGeneralSave			= isEnable | isDisableIfDataSearch | isUpDownGoesToResults | isUpdateTitle,
 
 
 		isNameChanged			= 0x00010000,

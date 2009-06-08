@@ -1844,9 +1844,7 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 
 
 
-
-
-	if (!bForInstantSearch)
+	if (!bForInstantSearch || IsInstantSearchingFlagSet(isUpdateTitle))
 	{
 		CStringW Title;
 		// Making title

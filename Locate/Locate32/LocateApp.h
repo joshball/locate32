@@ -35,7 +35,8 @@ public:
 			statusReplaceSpacesWithAsterisks=0x200,
 			statusNoReplaceSpacesWithAsterisks=0x400,
 			statusUseWholePath=0x800,
-			statusNoUseWholePath=0x1000
+			statusNoUseWholePath=0x1000,
+			statusNoExtension=0x2000
 		};
 
 		enum StartupFlags {

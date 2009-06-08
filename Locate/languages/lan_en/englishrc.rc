@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,9,1250
- PRODUCTVERSION 3,1,9,1250
+ FILEVERSION 3,1,9,6030
+ PRODUCTVERSION 3,1,9,6030
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 RC3e build 9.1250"
+            VALUE "FileVersion", "3.1 RC3g build 9.6030"
             VALUE "InternalName", "lan_en"
-            VALUE "LegalCopyright", "Copyright © 1997-2008 Janne Huttunen"
+            VALUE "LegalCopyright", "Copyright © 1997-2009 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 RC3e build 9.1250"
+            VALUE "ProductVersion", "3.1 RC3g build 9.6030"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -149,12 +149,12 @@ STYLE DS_SETFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "C&heck:",IDC_CHECKSTATIC,8,8,38+0,9
+    LTEXT           "Look &for:",IDC_CHECKSTATIC,8,8,38+0,9
     COMBOBOX        IDC_CHECK,50+0,5,145,53,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
-    CONTROL         "&Match whole name only",IDC_MATCHWHOLENAME,"Button",
+    CONTROL         "&Match whole file name",IDC_MATCHWHOLENAME,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,8,21,100+0,9
-    CONTROL         "&Use whole path",IDC_USEWHOLEPATH,"Button",
+    CONTROL         "&Use entire path",IDC_USEWHOLEPATH,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,110+0,21,90+0,9
     CONTROL         "Replace &spaces with asterisk",IDC_REPLACESPACES,"Button",
                     BS_CHECKBOX | WS_TABSTOP,205+0+0,21,180,9
@@ -1482,9 +1482,9 @@ BEGIN
     IDS_SIZEDATE            "Size and Date"
     IDS_BYEXTENSION         "(by extension)"
     IDS_BUILDINTYPES        "Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps wmf odg otg|0|Web Files|html htm asp shtm css|6|Document files|doc docx dot xls xlw ppt pps wpd rtf pdf odt ods odp sxw sxc stw stc sxi sti|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h hxx hpp inl rc pas java pl py|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 mp2 wma voc aif aiff cda ogg mpa mpc ape flac aac ac3 m4a|3|Video files|mpeg mpg avi mov ogm rm rmvb wmv asf m4v mkv vob ts|4||"
-    IDS_FILENAMESONLY       "File names only"
-    IDS_FILEANDFOLDERNAMES  "File and folder names"
-    IDS_FOLDERNAMESONLY     "Folder names only"
+    IDS_FILENAMESONLY       "Files only"
+    IDS_FILEANDFOLDERNAMES  "Files and folders"
+    IDS_FOLDERNAMESONLY     "Folders only"
     IDS_REPLACESPACES		"Replace &spaces with asterisk"
     IDS_REPLACEOTHER		"Replace %s with asterisk"
     IDS_MODIFIED            "Modified"
@@ -1559,7 +1559,7 @@ BEGIN
 	IDS_DATABASEFILTERS     "Database files|*.dbs|All Files|*.*||"
     IDS_SELECTDATABASE      "Choose database file"
     IDS_NOTEXIST            "File not exist"
-    IDS_FOLDEREXIST         "Directory %s already exist."
+    IDS_FOLDEREXIST         "Directory %s is already in the list."
     IDS_SUBFOLDER           "Directory '%s' is inside of '%s'. '%s' is removed."
     IDS_ADDFOLDER           "Directory folder."
 	IDS_NAMEALREADYEXISTS	"Name '%s' already exists."
@@ -1576,7 +1576,7 @@ BEGIN
    	IDS_VOLUMEINDATABASE    "In Database"    
 	IDS_INVALIDCHARACTERS   "The characters '>' or '|' are not allowed."
 	IDS_CANNOTEXCLUDESELECTED	"Cannot exclude selected item."
-	IDS_ALREADYEXCLUDED			"Directory is already in the list."
+	IDS_ALREADYEXCLUDED			"The directory is already in the list."
 	IDS_NEWMAP					"New map"
 	IDS_CLKFORNEWMAP		"(click for new directory)"
 	IDS_ENTERNEWDIRECTORY	"Enter a new directory:"
@@ -1825,7 +1825,8 @@ BEGIN
 	IDS_ADVSETISLIMIT				"Limit the number of results (0 = no limit):"
 	IDS_ADVSETISDELAY				"Delay before searching (ms):"
 	IDS_ADVSETISCHARS				"Required characters in ""Named:"" before starting to search:"
-	IDS_ADVSETISUPDOWNGORESULTS		"Up or Down key in ""Named:"" activates the first found file"
+	IDS_ADVSETISUPDOWNGORESULTS		"Up/Down key and mouse wheen in ""Named:"" activates the first found file"
+	IDS_ADVSETISUPDATETITLE			"Update title bar when executing search"
 	IDS_ADVSETISNAMEDCHANGED		"Search if ""Named:"" is changed"
 	IDS_ADVSETISTYPECHANGED			"Search if ""Extensions:"" is changed"
 	IDS_ADVSETISLOOKINCHANGED		"Search if ""Look In:"" is changed"
@@ -2056,7 +2057,7 @@ BEGIN
 	IDS_PRESETSELECTED		"Selected"
 	IDS_PRESETCUSTOM		"Custom"
 	IDS_PRESETSAVETITLE		"Save preset"
-	IDS_OVERWRITEPRESET		"Item '%s' already found in preset list. Overwrite?"
+	IDS_OVERWRITEPRESET		"Item '%s' is already found in the preset list. Overwrite?"
 	IDS_CHANGEFILENAMEALREADYEXISTS	"A file with name '%s' already exists."
 END
 

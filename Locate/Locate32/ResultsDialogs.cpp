@@ -2010,7 +2010,7 @@ CSaveResultsDlg::CSaveResultsDlg()
 
 CSaveResultsDlg::~CSaveResultsDlg()
 {
-		if (m_pofn->lpstrTitle!=NULL)
+	if (m_pofn->lpstrTitle!=NULL)
 	{
 		delete[] (LPSTR)m_pofn->lpstrTitle;
 		m_pofn->lpstrTitle=NULL;
@@ -2096,7 +2096,7 @@ BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
 
 	// Inserting details to list view and checking selected
 	int nItem;
-	CString Title;
+	CStringW Title;
 	for (nItem=0;nItem<m_aDetails.GetSize();nItem++)
 	{
 		Title.LoadString(pDetails[m_aDetails[nItem]].nString,LanguageSpecificResource);
@@ -2169,22 +2169,22 @@ BOOL CSaveResultsDlg::ItemUpOrDown(BOOL bUp)
 	int nOther=m_pList->GetNextItem(nSelected,bUp?LVNI_ABOVE:LVNI_BELOW);
 	if (nOther==-1 || nOther==nSelected)
 		return FALSE;
-
-	// This is found to be the best way to do this
-	LVITEM li;
-	BOOL bSelected=m_pList->GetCheckState(nSelected);
-	li.mask=LVIF_STATE|LVIF_PARAM;
+	
+	BOOL bChecked=m_pList->GetCheckState(nSelected);
+	WCHAR szBuffer[256];
+	LVITEMW li;
+	li.mask=LVIF_STATE|LVIF_PARAM|LVIF_TEXT;
 	li.stateMask=0xFFFFFFFF;
 	li.iItem=nSelected;
 	li.iSubItem=0;
+	li.pszText=szBuffer;
+	li.cchTextMax=256;
 	m_pList->GetItem(&li);
 	m_pList->SetItemData(nSelected,NULL);
 	m_pList->DeleteItem(nSelected);
 	li.iItem=nOther;
-	li.mask=LVIF_PARAM|LVIF_STATE|LVIF_TEXT;
-	li.pszText=LPSTR_TEXTCALLBACK;
 	nOther=m_pList->InsertItem(&li);
-	m_pList->SetCheckState(nOther,bSelected);
+	m_pList->SetCheckState(nOther,bChecked);
 	m_pList->EnsureVisible(nOther,FALSE);
 	m_pList->SetFocus();
 	return TRUE;
@@ -2254,7 +2254,7 @@ BOOL CSaveResultsDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 {
 	switch(pNm->hdr.code)
 	{
-	case LVN_GETDISPINFO:
+	/*case LVN_GETDISPINFO:
 		{
 			LV_DISPINFO *pLvdi=(LV_DISPINFO *)pNm;
 			if (pLvdi->item.lParam<=LastType)
@@ -2279,7 +2279,7 @@ BOOL CSaveResultsDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 				pLvdi->item.pszText=g_szwBuffer;
 			}
 			break;
-		}
+		}*/
 	case LVN_ITEMCHANGED:
 		if (pNm->uNewState&LVIS_SELECTED)
 		{

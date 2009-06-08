@@ -1,5 +1,5 @@
 Locate DB fileformat reference for version 20b (additions 24.2.2008)
-Copyright (C) 2001-2008 Janne Huttunen
+Copyright (C) 2001-2009 Janne Huttunen
 
 
 1. The content of database is following:

@@ -1097,6 +1097,9 @@ BOOL CSettingsProperties::CAdvancedSettingsPage::OnInitDialog(HWND hwndFocus)
 		CreateCheckBox(IDS_ADVSETISUPDOWNGORESULTS,NULL,DefaultCheckBoxProc,
 			CLocateDlg::isUpDownGoesToResults,
 			&m_pSettings->m_dwInstantSearchingFlags,"sa_isupdown"),
+		CreateCheckBox(IDS_ADVSETISUPDATETITLE,NULL,DefaultCheckBoxProc,
+			CLocateDlg::isUpdateTitle,
+			&m_pSettings->m_dwInstantSearchingFlags,"sa_isupdatetitle"),
 		CreateCheckBox(IDS_ADVSETISDISABLEIFDATASEARCH,NULL,DefaultCheckBoxProc,
 			CLocateDlg::isDisableIfDataSearch,
 			&m_pSettings->m_dwInstantSearchingFlags,"sa_isdisifdata"),
@@ -4114,7 +4117,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 	CWaitCursor wait;
 	
 	// Ask folder
-	CFolderDialog fd(IDS_ADDFOLDER,BIF_RETURNONLYFSDIRS|BIF_USENEWUI);
+	CFolderDialog fd(IDS_ADDFOLDER,BIF_USENEWUI);
 	if (fd.DoModal(*this))
 	{
 		// Insert folder to list
@@ -4152,10 +4155,8 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnAddFolder()
 					throw COleException(hRes);
 
 				
-			
-				if (di.clsid!=CLSID_NetworkPlaces)
+				if (di.clsid!=CLSID_NetworkPlaces && di.clsid!=CLSID_NetworkExplorerFolder)
 					throw FALSE;
-
 				
 
 				STRRET str;
@@ -4580,6 +4581,8 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 	while (rFolder.LastChar()=='\\')
 		rFolder.DelLastChar();
 
+	
+	// Check if folder already exists in the list
 	LVITEMW li;
 	li.iItem=m_pList->GetNextItem(-1,LVNI_ALL);
 	while (li.iItem!=-1)
@@ -4602,6 +4605,8 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddDirectoryTo
 		}
 		li.iItem=m_pList->GetNextItem(li.iItem,LVNI_ALL);
 	}
+
+
 	li.iItem=AddDirectoryToList(rFolder);
 	m_pList->SetItemState(li.iItem,LVIS_SELECTED|LVIS_FOCUSED,LVIS_SELECTED|LVIS_FOCUSED);
 	m_pList->EnsureVisible(li.iItem,FALSE);
@@ -4755,8 +4760,34 @@ int CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::AddComputerToL
 {
 	WCHAR szLabel[100];
 	
-	// Resolving label
+	
+	// Check if the computer already exists in the list
 	LVITEMW li;
+	li.iItem=m_pList->GetNextItem(-1,LVNI_ALL);
+	while (li.iItem!=-1)
+	{
+		WCHAR szPath[MAX_PATH];
+		li.mask=LVIF_TEXT;
+		li.iSubItem=1;
+		li.pszText=szPath;
+		li.cchTextMax=_MAX_PATH;
+		m_pList->GetItem(&li);
+		if (_wcsicmp(szName,szPath)==0)
+		{
+			CStringW str;
+			str.Format(IDS_FOLDEREXIST,(LPCWSTR)szName);
+			MessageBox(str,ID2W(IDS_ADDFOLDER),MB_ICONINFORMATION|MB_OK);
+			m_pList->SetFocus();
+			m_pList->SetCheckState(li.iItem,TRUE);
+			m_pList->EnsureVisible(li.iItem,FALSE);
+			return -1;
+		}
+		li.iItem=m_pList->GetNextItem(li.iItem,LVNI_ALL);
+	}
+
+
+
+	// Resolving label
 	li.iItem=m_pList->GetItemCount();
 
 	// Setting data

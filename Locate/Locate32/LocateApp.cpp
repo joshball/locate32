@@ -558,6 +558,19 @@ BOOL CLocateApp::ParseParameters(LPCWSTR lpCmdLine,CStartData* pStartData)
 			idx++;
 			pStartData->m_nStartup|=CStartData::startupNewInstance;
 			break;
+		case L'n': // 'no'
+			idx++;
+			switch(lpCmdLine[idx])
+			{
+			case L't':
+				pStartData->m_nStatus|=CStartData::statusNoExtension;
+				break;	
+			case L'f':
+				ChangeAndAlloc(pStartData->m_pStartString,L"");
+				break;	
+			}
+			idx++;
+			break;
 		case L'A': // Activate control
 			idx++;
 			if (lpCmdLine[idx]==L':')

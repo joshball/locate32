@@ -17,8 +17,9 @@
 #define EXTRA_MARGINSX 3
 #define EXTRA_MARGINSY 3
 #define EXTRA_LINES 2
-#define CLOSEBUTTON_CX 9
-#define CLOSEBUTTON_CY 9
+#define UPDATETIPBUTTON_CX 9
+#define UPDATETIPBUTTON_CY 9
+#define UPDATETIPBUTTON_SPACEX 2
 
 
 
@@ -186,7 +187,7 @@ BOOL CTrayIconWnd::TurnOnShortcuts()
 		case CShortcut::sfGlobalHotkey:
 			if (!RegisterHotKey(*this,i,m_aShortcuts[i]->m_bModifiers,m_aShortcuts[i]->m_bVirtualKey))
 			{
-				// TODO: Virhe viesti jos settings dialog auki
+				// TODO: Error message if settings dialog is already open
 			}
 			break;
 		}
@@ -678,8 +679,8 @@ BOOL CTrayIconWnd::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		break;
 	case IDM_STOPUPDATING:
 		// Stopping updating quite nicely
-		ASSERT(GetLocateApp()->IsUpdating());
-		OnUpdate(TRUE);
+		if (GetLocateApp()->IsUpdating())
+			OnUpdate(TRUE);
 		break;
 	case IDM_SETTINGS:
 		if (GetLocateDlg()!=NULL)
@@ -2026,12 +2027,25 @@ void CTrayIconWnd::CUpdateStatusWnd::OnPaint()
 	//rcClient.top+=EXTRA_MARGINSY;
 
 	
+	// Draw stop button
+
+	rc2.left=rcClient.right-2*UPDATETIPBUTTON_CX-UPDATETIPBUTTON_SPACEX-1;
+	rc2.right=rcClient.right-UPDATETIPBUTTON_CX-UPDATETIPBUTTON_SPACEX-1;
+	rc2.top=rcClient.top+1;
+	rc2.bottom=rcClient.top+UPDATETIPBUTTON_CY+1;
+	dc.DrawFrameControl(&rc2,DFC_CAPTION,DFCS_CAPTIONMIN|DFCS_TRANSPARENT|DFCS_FLAT);
+	dc.SelectStockObject(GRAY_BRUSH);
+	dc.SelectStockObject(NULL_PEN);
+	rc2.left+=2;	rc2.top+=2;	rc2.right-=1;	rc2.bottom-=1;
+	dc.Rectangle(&rc2);
+
+	
 	// Draw close button
-	rc2.left=rcClient.right-CLOSEBUTTON_CX-1;
+	rc2.left=rcClient.right-UPDATETIPBUTTON_CX-1;
 	rc2.right=rcClient.right-1;
 	rc2.top=rcClient.top+1;
-	rc2.bottom=rcClient.top+CLOSEBUTTON_CY+1;
-	dc.DrawFrameControl(&rc2,DFC_CAPTION,DFCS_CAPTIONCLOSE|DFCS_TRANSPARENT|DFCS_FLAT);
+	rc2.bottom=rcClient.top+UPDATETIPBUTTON_CY+1;
+	dc.DrawFrameControl(&rc2,DFC_CAPTION,DFCS_CAPTIONCLOSE/*|DFCS_TRANSPARENT*/|DFCS_FLAT);
 	
 
     // Drawing title
@@ -2353,7 +2367,13 @@ LRESULT CTrayIconWnd::CUpdateStatusWnd::WindowProc(UINT msg,WPARAM wParam,LPARAM
 			// First check if "close button" area clicked
 			RECT rcClient;
 			GetClientRect(&rcClient);
-			if (x>=rcClient.right-CLOSEBUTTON_CX-1 && y<=CLOSEBUTTON_CY+1)
+			if (x>=rcClient.right-2*UPDATETIPBUTTON_CX-UPDATETIPBUTTON_SPACEX-1 && 
+				x<=rcClient.right-UPDATETIPBUTTON_CX-UPDATETIPBUTTON_SPACEX-1 && y<=UPDATETIPBUTTON_CY+1)
+			{
+				GetTrayIconWnd()->PostMessage(WM_COMMAND,MAKEWPARAM(IDM_STOPUPDATING,0),NULL);
+				return FALSE;
+			}
+			else if (x>=rcClient.right-UPDATETIPBUTTON_CX-1 && y<=UPDATETIPBUTTON_CY+1)
 			{
 				DestroyWindow();
 				return FALSE;

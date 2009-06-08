@@ -239,6 +239,7 @@ BOOL CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,int
 			return TRUE;
 		}
 		InsertMenuItemsFromTemplate(FileMenu,m_Menu.GetSubMenu(SUBMENU_FILEMENU),0);
+		
 	}
 	
 	if (!bSimple)
@@ -275,7 +276,8 @@ BOOL CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,int
 			// Didn't succees, release interfaces
 			m_pActiveContextMenu->ReleaseShellInterfaces();
 		}
-	}
+	} 
+
 
 	if (m_pActiveContextMenu->hPopupMenu==NULL)
 	{
@@ -288,8 +290,10 @@ BOOL CLocateDlg::CreateFileContextMenu(HMENU hFileMenu,CLocatedItem** pItems,int
 		m_pActiveContextMenu->hPopupMenu=Menu;
 		m_pActiveContextMenu->bFreeMenu=TRUE;
 	}
-	else
+	else {
 		InsertMenuItemsFromTemplate(CMenu(m_pActiveContextMenu->hPopupMenu),m_Menu.GetSubMenu(SUBMENU_OPENITEMFORFILEMENU),0);
+		InsertMenuItemsFromTemplate(CMenu(m_pActiveContextMenu->hPopupMenu),m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),0);
+	}
 		
 
 	DeleteImpossibleItemsInContextMenu(pItems,nItems);

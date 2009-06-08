@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2009 Janne Huttunen
-   Updatedb.exe v3.1.8.9210 */
+   Updatedb.exe v3.1.9.6070 */
 
 #include <HFCLib.h>
 #include "../locatedb/locatedb.h"
@@ -8,7 +8,7 @@
 #include "../common/win95crtfixes.h"
 #include <locale.h>
 
-LPCSTR szVersionStr="updtdb32 3.1 RC3 build 8.9210";
+LPCSTR szVersionStr="updtdb32 3.1 RC3g build 9.6070";
 
 
 

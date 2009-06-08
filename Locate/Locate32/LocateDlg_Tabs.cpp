@@ -2126,22 +2126,52 @@ BOOL CLocateDlg::CNameDlg::EnableMultiDirectorySupport(BOOL bEnable)
 
 void CLocateDlg::CNameDlg::SetStartData(const CLocateApp::CStartData* pStartData,DWORD& rdwChanged)
 {
+	// Set string
 	if (pStartData->m_pStartString!=NULL)
 	{
 		m_Name.SetText(pStartData->m_pStartString);
 		rdwChanged|=isNameChanged;
 	}
-	if (pStartData->m_pTypeString!=NULL)
-	{
-		if (pStartData->m_pTypeString[0]=='\0')
-			m_Type.SetCurSel(0);
-		else
-			m_Type.SetText(pStartData->m_pTypeString);
+
+	if (pStartData->m_nStatus&CLocateApp::CStartData::statusNoExtension)
+	{	
+		m_Type.SetCurSel(0);
 		rdwChanged|=isTypeChanged;
 	}
+	else if (pStartData->m_pTypeString!=NULL)
+	{
+		m_Type.SetText(pStartData->m_pTypeString);
+		rdwChanged|=isTypeChanged;
+	}
+
 	if (pStartData->m_pStartPath!=NULL)
 	{
-		SetPath(pStartData->m_pStartPath);
+		if (pStartData->m_pStartPath[1]==L'\0')
+		{
+			switch (pStartData->m_pStartPath[0])
+			{
+			case '0': // 'Everywhere'
+				SelectByLParam(MAKELPARAM(Everywhere,Original));
+				break;
+			case '1': // 'Document folders'
+				SelectByLParam(MAKELPARAM(Special,Documents));
+				break;
+			case '2': // 'Desktop'
+				SelectByLParam(MAKELPARAM(Special,Desktop));
+				break;
+			case '3': // 'Documents'
+				SelectByLParam(MAKELPARAM(Special,Personal));
+				break;
+			case '4': // 'Computer'
+				SelectByLParam(MAKELPARAM(Special,MyComputer));
+				break;
+			default:
+				SetPath(pStartData->m_pStartPath);
+				break;
+			}
+		}
+		else
+			SetPath(pStartData->m_pStartPath);
 		rdwChanged|=isLookInChanged;
 	}
 }
@@ -2985,12 +3015,18 @@ BOOL CLocateDlg::CSizeDateDlg::SetSizesAndDaterForLocater(CLocater* pLocater)
 		GetDlgItemTextLength(IDC_MINIMUMSIZE)>0)
 	{
 		BOOL bError;
-		ullMinSize=(ULONGLONG)SendDlgItemMessage(IDC_MINIMUMSIZESPIN,UDM_GETPOS32,0,(LPARAM)&bError);
-		if (bError)
+		WCHAR szBuffer[128],*pEnd;
+		GetDlgItemText(IDC_MINIMUMSIZE,szBuffer,128);
+		ullMinSize=_wcstoi64(szBuffer,&pEnd,10);
+		if (ullMinSize==0)
 		{
-			ullMinSize=GetDlgItemInt(IDC_MINIMUMSIZE,&bError,FALSE);
-			if (!bError)
-				ullMinSize=ULONGLONG(-1);
+			ullMinSize=(ULONGLONG)SendDlgItemMessage(IDC_MINIMUMSIZESPIN,UDM_GETPOS32,0,(LPARAM)&bError);
+			if (bError)
+			{
+				ullMinSize=GetDlgItemInt(IDC_MINIMUMSIZE,&bError,FALSE);
+				if (!bError)
+					ullMinSize=ULONGLONG(-1);
+			}
 		}
 		
 		if (ullMinSize!=ULONGLONG(-1))
@@ -3006,12 +3042,18 @@ BOOL CLocateDlg::CSizeDateDlg::SetSizesAndDaterForLocater(CLocater* pLocater)
 		GetDlgItemTextLength(IDC_MAXIMUMSIZE)>0)
 	{
 		BOOL bError;
-		ullMaxSize=(ULONGLONG)SendDlgItemMessage(IDC_MAXIMUMSIZESPIN,UDM_GETPOS32,0,(LPARAM)&bError);
-		if (bError)
+		WCHAR szBuffer[128],*pEnd;
+		GetDlgItemText(IDC_MAXIMUMSIZE,szBuffer,128);
+		ullMaxSize=_wcstoi64(szBuffer,&pEnd,10);
+		if (ullMaxSize==0)
 		{
-			ullMaxSize=GetDlgItemInt(IDC_MAXIMUMSIZE,&bError,FALSE);
-			if (!bError)
-				ullMaxSize=ULONGLONG(-1);
+			ullMaxSize=(ULONGLONG)SendDlgItemMessage(IDC_MAXIMUMSIZESPIN,UDM_GETPOS32,0,(LPARAM)&bError);
+			if (bError)
+			{
+				ullMaxSize=GetDlgItemInt(IDC_MAXIMUMSIZE,&bError,FALSE);
+				if (!bError)
+					ullMaxSize=ULONGLONG(-1);
+			}
 		}
 
 		if (ullMaxSize!=ULONGLONG(-1))
@@ -3771,8 +3813,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 					}
 				}
 
-				// Arranging allocated data
-				ReArrangeAllocatedData();			
+				
 			}
 			break;
 		}
@@ -4006,36 +4047,6 @@ BOOL CLocateDlg::CAdvancedDlg::IsChanged()
 }
 
 
-void CLocateDlg::CAdvancedDlg::ReArrangeAllocatedData()
-{
-	//TODO: Buffered allocator does not work
-	/*
-
-	int nCount=SendDlgItemMessage(IDC_FILETYPE,CB_GETCOUNT)-1;
-	void*** pBlocks=new void**[nCount*2];
-	FileType** pft=new FileType*[nCount];
-	
-	// Firstly moving FileType classes
-	for (int i=0;i<nCount;i++)
-	{
-		pft[i]=(FileType*)SendDlgItemMessage(IDC_FILETYPE,CB_GETITEMDATA,i+1);
-		pBlocks[i]=(void**)&(pft[i]);
-	}
-	FileTypeAllocator.ReArrange(pBlocks,nCount);
-	for (i=0;i<nCount;i++)
-		SendDlgItemMessage(IDC_FILETYPE,CB_SETITEMDATA,i+1,LPARAM(pft[i]));
-	
-	// and now, moving rest of data
-	for (i=0;i<nCount;i++)
-	{
-		pBlocks[i*2]=(void**)&(pft[i]->szTitle);
-		pBlocks[i*2+1]=(void**)&(pft[i]->szExtensions);
-	}
-	FileTypeAllocator.ReArrange(pBlocks,nCount*2);
-	delete[] pBlocks;
-	delete[] pft;
-	*/
-}
 
 void CLocateDlg::CAdvancedDlg::OnSize(UINT nType, int cx, int cy)
 {
@@ -4157,8 +4168,6 @@ void CLocateDlg::CAdvancedDlg::OnClear(BOOL bInitial)
 	EnableDlgItem(IDC_HELPTOOLBAR,FALSE);
 	SetDlgItemText(IDC_CONTAINDATA,"");	
 
-	if (m_hTypeUpdaterThread==NULL)
-		ReArrangeAllocatedData();
 
 	ChangeEnableStateForCheck();
 	HilightTab(FALSE);
@@ -4649,9 +4658,6 @@ DWORD WINAPI CLocateDlg::CAdvancedDlg::UpdaterProc(CLocateDlg::CAdvancedDlg* pAd
 	CloseHandle(pAdvancedDlg->m_hTypeUpdaterThread);
 	DebugCloseThread(pAdvancedDlg->m_hTypeUpdaterThread);
 	pAdvancedDlg->m_hTypeUpdaterThread=NULL;
-	
-	if (!pAdvancedDlg->SendDlgItemMessage(IDC_FILETYPE,CB_GETDROPPEDSTATE))
-		pAdvancedDlg->ReArrangeAllocatedData(); // Drop down is closed, arranging data
 	
 	DebugMessage("CLocateDlg::CAdvancedDlg::UpdaterProc END");
 	return 0;

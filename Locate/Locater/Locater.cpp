@@ -1,5 +1,5 @@
-/* Copyright (c) 1997-2008 Janne Huttunen
-   database locater v3.1.8.9210              */
+/* Copyright (c) 1997-2009 Janne Huttunen
+   database locater v3.1.9.6070              */
 
 #include <HFCLib.h>
 
@@ -927,7 +927,6 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 	if (m_dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
 		// Regular expression
-
 		int ovector[OVECCOUNT];
 		if (m_dwFlags&LOCATE_NAMEREGEXPISUTF8)
 		{
@@ -935,14 +934,14 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 			{
 				int nTotalLength=dwCurrentPathLen+GetFileNameLen()+1;
 				WCHAR* szPathW=new WCHAR[nTotalLength];
-				char* szPathUTF8=new char[nTotalLength*2];
+				char* szPathUTF8=new char[nTotalLength*3];
 				
 				MemCopyAtoW(szPathW,szCurrentPath,dwCurrentPathLen);
 				szPathW[dwCurrentPathLen]=L'\\';
 				MemCopyAtoW(szPathW+dwCurrentPathLen+1,GetFileName(),GetFileNameLen());
 				
 				nTotalLength=WideCharToMultiByte(CP_UTF8,0,szPathW,nTotalLength,
-					szPathUTF8,nTotalLength*2,NULL,NULL);
+					szPathUTF8,nTotalLength*3,NULL,NULL);
 
 				int rc = pcre_exec(m_regexp,m_regextra,szPathUTF8,nTotalLength,0,0,
 					ovector,OVECCOUNT);
@@ -1141,18 +1140,18 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 	if (m_dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
 		// Regular expression
-
 		int ovector[OVECCOUNT];
+		
 		if (m_dwFlags&LOCATE_NAMEREGEXPISUTF8)
 		{
 			if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
 			{
-				char* szPathUTF8=new char[(dwCurrentPathLen+GetFileNameLen()+1)*2];
+				char* szPathUTF8=new char[(dwCurrentPathLen+GetFileNameLen()+1)*3];
 				int nLen=WideCharToMultiByte(CP_UTF8,0,szCurrentPathW,dwCurrentPathLen,
-					szPathUTF8,dwCurrentPathLen*2,NULL,NULL);
+					szPathUTF8,dwCurrentPathLen*3,NULL,NULL);
 				szPathUTF8[nLen++]='\\';
 				nLen+=WideCharToMultiByte(CP_UTF8,0,GetFileNameW(),GetFileNameLen(),
-					szPathUTF8+nLen,GetFileNameLen()*2,NULL,NULL);
+					szPathUTF8+nLen,GetFileNameLen()*3,NULL,NULL);
 
 				int rc=pcre_exec(m_regexp,m_regextra,szPathUTF8,nLen,
 					0,0,ovector,OVECCOUNT);
@@ -1163,9 +1162,9 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 			else
 			{
 				// Converting to UTF8
-				char* pNameUTF8=new char[GetFileNameLen()*2];
+				char* pNameUTF8=new char[GetFileNameLen()*3];
 				int nLen=WideCharToMultiByte(CP_UTF8,0,GetFileNameW(),GetFileNameLen(),
-					pNameUTF8,GetFileNameLen()*2,NULL,NULL);
+					pNameUTF8,GetFileNameLen()*3,NULL,NULL);
 				
 				int rc=pcre_exec(m_regexp,m_regextra,pNameUTF8,nLen,0,0,ovector,OVECCOUNT);
 
@@ -1345,17 +1344,49 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 	if (m_dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
 		int ovector[OVECCOUNT];
-		if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
+		if (m_dwFlags&LOCATE_NAMEREGEXPISUTF8)
 		{
-			return pcre_exec(m_regexp,m_regextra,szCurrentPath,dwCurrentPathLen,
-				0,0,ovector,OVECCOUNT)>=0;
+			if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
+			{
+				WCHAR* szPathW=new WCHAR[dwCurrentPathLen];
+				char* szPathUTF8=new char[dwCurrentPathLen*3];
+				MemCopyAtoW(szPathW,szCurrentPath,dwCurrentPathLen);
+				int nTotalLength=WideCharToMultiByte(CP_UTF8,0,szPathW,dwCurrentPathLen,
+					szPathUTF8,dwCurrentPathLen*3,NULL,NULL);
+				int rc = pcre_exec(m_regexp,m_regextra,szPathUTF8,nTotalLength,0,0,
+					ovector,OVECCOUNT);
+				delete[] szPathW;
+				delete[] szPathUTF8;
+				return rc>=0;
+			}
+			else
+			{
+				// Converting to UTF8
+				WCHAR* szNameW=new WCHAR[GetFolderNameLen()];
+				char* szNameUTF8=new char[GetFolderNameLen()*3];
+				MemCopyAtoW(szNameW,GetFolderName(),GetFolderNameLen());
+				int nLen=WideCharToMultiByte(CP_UTF8,0,szNameW,GetFolderNameLen(),
+					szNameUTF8,GetFolderNameLen()*3,NULL,NULL);
+				int rc=pcre_exec(m_regexp,m_regextra,szNameUTF8,nLen,
+					0,0,ovector,OVECCOUNT);
+				delete[] szNameW;
+				delete[] szNameUTF8;
+				return rc>=0;
+			}
 		}
 		else
 		{
-			return pcre_exec(m_regexp,m_regextra,GetFolderName(),GetFolderNameLen(),
-				0,0,ovector,OVECCOUNT)>=0;
+			if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
+			{
+				return pcre_exec(m_regexp,m_regextra,szCurrentPath,dwCurrentPathLen,
+					0,0,ovector,OVECCOUNT)>=0;
+			}
+			else
+			{
+				return pcre_exec(m_regexp,m_regextra,GetFolderName(),GetFolderNameLen(),
+					0,0,ovector,OVECCOUNT)>=0;
+			}
 		}
-		
 	}
 
 
@@ -1450,23 +1481,49 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 
 inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 {
-	//TODO: Fix
-	
-
 	if (m_dwFlags&LOCATE_NAMEREGULAREXPRESSION)
 	{
 		int ovector[OVECCOUNT];
-		if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
+
+		if (m_dwFlags&LOCATE_NAMEREGEXPISUTF8)
 		{
-			return pcre_exec(m_regexp,m_regextra,W2A(szCurrentPathW),dwCurrentPathLen,
-				0,0,ovector,OVECCOUNT)>=0;
+			if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
+			{
+				char* szPathUTF8=new char[dwCurrentPathLen*3];
+				int nLen=WideCharToMultiByte(CP_UTF8,0,szCurrentPathW,dwCurrentPathLen,
+					szPathUTF8,dwCurrentPathLen*3,NULL,NULL);
+				int rc=pcre_exec(m_regexp,m_regextra,szPathUTF8,nLen,
+					0,0,ovector,OVECCOUNT);
+
+				delete[] szPathUTF8;
+				return rc>=0;
+			}
+			else
+			{
+				// Converting to UTF8
+				char* pNameUTF8=new char[GetFolderNameLen()*3];
+				int nLen=WideCharToMultiByte(CP_UTF8,0,GetFolderNameW(),GetFolderNameLen(),
+					pNameUTF8,GetFolderNameLen()*3,NULL,NULL);
+				
+				int rc=pcre_exec(m_regexp,m_regextra,pNameUTF8,nLen,0,0,ovector,OVECCOUNT);
+
+				delete[] pNameUTF8;
+				return rc>=0;
+			}
 		}
 		else
 		{
-			return pcre_exec(m_regexp,m_regextra,W2A(GetFolderNameW(),GetFolderNameLen()),GetFolderNameLen(),
-				0,0,ovector,OVECCOUNT)>=0;
+			if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
+			{
+				return pcre_exec(m_regexp,m_regextra,W2A(szCurrentPathW),dwCurrentPathLen,
+					0,0,ovector,OVECCOUNT)>=0;
+			}
+			else
+			{
+				return pcre_exec(m_regexp,m_regextra,W2A(GetFolderNameW(),GetFolderNameLen()),GetFolderNameLen(),
+					0,0,ovector,OVECCOUNT)>=0;
+			}
 		}
-		
 	}
 
 

@@ -98,12 +98,19 @@ merely used as a search criteria. The limit is ignored if you give other criteri
 give extensions in "Type:" field or enter a path into "Look in:".</p>
 
 <p><b><A NAME="sa_isupdown"></A>$STRADVANCEDSETTINGS_ISUPDOWNGOESTORESULTLIST@C$</b>:
-When enabled, Up and Down keys pressed in "$DLGNAME_NAMED@M$" field will activate 
+When enabled and the focus is in "$DLGNAME_NAMED@M$" field, Up/Down keys and mouse wheel will activate 
 the results list and its first file. This option can be useful if 
 <a href="settings_advanced.htm#sa_act1st">$STRADVANCEDSETTINGS_ACTIVATEFIRSTITEM@C$</a>
 option is enabled and you are used to use Up and Down keys to navigate through results. 
 Note that the results list is not activated if no results are shown. 
 </p>
+
+<p><b><A NAME="sa_isupdatetitle"></A>$STRADVANCEDSETTINGS_ISUPDATETITLE@C$</b>:
+When enabled, the title bar is updated to show information about the seearch. 
+If disabled, the titlebar is updated only when a search is executed using the "$DLGMAIN_FINDNOW@M$" button or Enter key.
+</p>
+
+
 
 <p><b><A NAME="sa_isdisifdata"></A>$STRADVANCEDSETTINGS_ISDISABLEIFDATASEARCH@C$</b>:
 If this option is enabled, "Search as you type" is disabled when you have checked 
