@@ -70,8 +70,6 @@ int CTrayIconWnd::OnCreate(LPCREATESTRUCT lpcs)
 
 	LoadAppIcon();
 
-	//SetTimer(ID_ENSUREVISIBLEICON,2000,NULL);
-	
 	return CFrameWnd::OnCreate(lpcs);
 }
 
@@ -1007,7 +1005,6 @@ void CTrayIconWnd::OnDestroy()
 	m_Menu.DestroyMenu();
 
 	KillTimer(ID_CHECKSCHEDULES);
-	//KillTimer(ID_ENSUREVISIBLEICON);
 	
 	// Ensure that update animation and status window are stopped
 	StopUpdateStatusNotification();
@@ -1360,23 +1357,6 @@ void CTrayIconWnd::OnTimer(DWORD wTimerID)
 	case ID_CHECKSCHEDULES:
 		CheckSchedules();
 		break;
-	/*
-	
-	case ID_ENSUREVISIBLEICON:
-		if (!(CLocateApp::GetProgramFlags()&CLocateApp::pfDontShowSystemTrayIcon))
-		{
-			// Check icon
-			NOTIFYICONDATA nid;
-			nid.cbSize=NOTIFYICONDATA_V1_SIZE;
-			nid.hWnd=*this;
-			nid.uID=10000;
-			nid.uFlags=0;
-			
-			if (!Shell_NotifyIcon(NIM_MODIFY,&nid))
-				AddTaskbarIcon();
-		}
-		break;
-	*/
 	case ID_RUNSTARTUPSCHEDULES:
 		KillTimer(ID_RUNSTARTUPSCHEDULES);
 		if (RunStartupSchedules())
@@ -1428,8 +1408,6 @@ DWORD CTrayIconWnd::OnActivateAnotherInstance(ATOM aCommandLine)
 				ForceForegroundAndFocus();
 		
 				
-				pLocateDlg->SendMessage(WM_SETSTARTDATA,0,(LPARAM)pStartData);
-				delete pStartData;
 				
 				// Restore if minimized
 				WINDOWPLACEMENT wp;
@@ -1437,14 +1415,12 @@ DWORD CTrayIconWnd::OnActivateAnotherInstance(ATOM aCommandLine)
 				pLocateDlg->GetWindowPlacement(&wp);
 				if (wp.showCmd==SW_SHOWMINIMIZED)
 					pLocateDlg->ShowWindow(swRestore);
-
-
-				//GetLocateDlg()->SetActiveWindow();
 		
 				pLocateDlg->BringWindowToTop();
-
 				pLocateDlg->ForceForegroundAndFocus();m_pLocateDlgThread->m_pLocate->ForceForegroundAndFocus();
 
+				pLocateDlg->SendMessage(WM_SETSTARTDATA,0,(LPARAM)pStartData);
+				delete pStartData;
 			}
 			else
 			{

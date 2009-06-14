@@ -393,6 +393,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="..\keyhook;..;..\ImageHandler;..\LocateDb;..\Locater"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_DEBUG_LOGGING;HFC_NOALLOCTRACKING"
 				RuntimeLibrary="0"
@@ -1405,6 +1406,10 @@
 			</File>
 			<File
 				RelativePath="..\hlp\hid_special_showtotalsize.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\hid_special_updatedatabasesforselectedfiles.src"
 				>
 			</File>
 			<File

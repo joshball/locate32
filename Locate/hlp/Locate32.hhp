@@ -68,6 +68,7 @@ hid_special_computeMD5sums.htm
 hid_special_computeMD5sumsforequalsizefiles.htm
 hid_special_copyMD5sumstoclipboard.htm
 hid_special_removedeletedfiles.htm
+hid_special_updatedatabasesforselectedfiles.htm
 
 dialog_locate.htm
 dialog_selectdetails.htm
@@ -181,6 +182,7 @@ hid_special_computeMD5sums			= hid_special_computeMD5sums.htm
 hid_special_computeMD5sumsforequalsizefiles = hid_special_computeMD5sumsforequalsizefiles.htm
 hid_special_copyMD5sumstoclipboard			= hid_special_copyMD5sumstoclipboard.htm
 hid_special_removedeletedfiles		= hid_special_removedeletedfiles.htm
+hid_special_updatedatabasesforselectedfiles = hid_special_updatedatabasesforselectedfiles.htm
 
 dialog_locate						= dialog_locate.htm
 dialog_selectdetails				= dialog_selectdetails.htm
@@ -282,6 +284,7 @@ IDM_COMPUTEMD5SUM					= hid_special_computeMD5sums.htm
 IDM_MD5SUMSFORSAMESIZEFILES			= hid_special_computeMD5sumsforequalsizefiles.htm
 IDM_COPYMD5SUMTOCLIPBOARD			= hid_special_copyMD5sumstoclipboard.htm
 IDM_REMOVEDELETEDFILES				= hid_special_removedeletedfiles.htm
+IDM_UPDATEDATABASESOFSELECTEDFILES  = hid_special_updatedatabasesforselectedfiles.htm
 
 HELP_SETTINGS_GENERAL				= settings_general.htm
 HELP_SETTINGS_ADVANCED				= settings_advanced.htm

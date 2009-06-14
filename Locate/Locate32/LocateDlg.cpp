@@ -1160,6 +1160,9 @@ void CLocateDlg::LoadPreset(LPCWSTR szPreset)
 	m_AdvancedDlg.LoadControlStates(PresetKey);
 	m_AdvancedDlg.EnableItems(TRUE);
 
+	// Give focus for "Named:" if the button is used
+	if (GetFocus()==GetDlgItem(IDC_PRESETS))
+		SetFocus(IDC_NAME);
 }
 
 DWORD CLocateDlg::CheckExistenceOfPreset(LPCWSTR szName,DWORD* pdwPresets) // Returns index to preset or FFFFFFFF
@@ -3409,11 +3412,8 @@ BOOL CLocateDlg::GetSimpleIDLsandParentfromIDLs(int nItems,LPITEMIDLIST* pFullID
 	delete[] pPtr;
 
 	if (nEqualLevels==0)
-	{
-		delete[] pPtr;
 		return FALSE;
-	}
-
+	
 	if (pParentIDLLevel!=NULL)
 		*pParentIDLLevel=nEqualLevels;
 	

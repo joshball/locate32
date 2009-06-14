@@ -1984,7 +1984,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 			if ((GetExtraFlags()&efExecuteModeMask)==efExecuteModeDefaultMode)
 			{
 				// Default mode, use ShellExecute
-				if (ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW)>32)
+				if (ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParentSafe(),SW_SHOW)>32)
 				{
 					// Succeeded, next item...
 					continue;
@@ -2000,7 +2000,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 			if (!GetContextMenuForItems(&ci,1,&pItems[i]))
 			{
 				// Error, use ShellExecute anyway
-				ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
+				ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParentSafe(),SW_SHOW);
 				continue;
 			}
 
@@ -2018,7 +2018,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 			if (!SUCCEEDED(ci.pContextMenu->QueryContextMenu(Menu,0,IDM_DEFCONTEXTITEM,IDM_DEFSENDTOITEM,CMF_DEFAULTONLY|CMF_VERBSONLY)))
 			{
 				// Error, free allocated data and use ShellExecute 
-				ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
+				ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParentSafe(),SW_SHOW);
 				continue;
 			}
 
@@ -2060,7 +2060,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 					cii.lpVerbW=NULL;
 					cii.lpVerb=NULL;
 					if (!SUCCEEDED(ci.pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii)))
-						ShellFunctions::ShellExecute(*this,NULL,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
+						ShellFunctions::ShellExecute(*this,NULL,pItems[i]->GetPath(),NULL,pItems[i]->GetParentSafe(),SW_SHOW);
 				}
 			}
 			else
@@ -2069,21 +2069,11 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 				cii.lpVerbW=szVerb;
 				cii.lpVerb=alloccopyWtoA(szVerb);
 				if (!SUCCEEDED(ci.pContextMenu->InvokeCommand((CMINVOKECOMMANDINFO*)&cii)))
-					ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
+					ShellFunctions::ShellExecute(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParentSafe(),SW_SHOW);
 				delete[] (LPSTR)cii.lpVerb;
 			}
 				
 		}
-
-
-
-						/*
-			int nRet=32;
-			if (IsUnicodeSystem())
-				nRet=(int)ShellExecuteW(*this,szVerb,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
-			else
-				nRet=(int)ShellExecuteA(*this,szVerb==NULL?NULL:(LPCSTR)W2A(szVerb),W2A(pItems[i]->GetPath()),NULL,W2A(pItems[i]->GetParent()),SW_SHOW);
-			*/
 
 	}
 }
@@ -2196,14 +2186,18 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile)
 void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 {
 	CWaitCursor wait;
-	
+
+	DebugMessage("CLocateDlg::OpenSelectedFolder");
+
 	int nSelectedItems;
 	CAutoPtrA<CLocatedItem*> pItems=GetSelectedItems(nSelectedItems,nItem);
 
-	if (nSelectedItems==0)
+	if (nSelectedItems==0 || pItems==NULL)
 		return;
 	
-
+	DebugFormatMessage("nSelectedItems=%d bContaining=%d nItem=%d bForParents=%d",
+		nSelectedItems,bContaining,nItem,bForParents);
+	
 	if (bContaining)
 	{
 		// Open containing folders
@@ -2226,8 +2220,10 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 				if (nParentLen==-1)
 					continue;
 
-				CStringW sParent(pItems[i]->GetParent(),nParentLen);
-				
+				CAutoPtrA<WCHAR> sParent=alloccopy(pItems[i]->GetParent(),nParentLen);
+				DebugFormatMessage("Parent is %S",(LPCWSTR)sParent);
+
+
 				for (j=0;j<aFolders.GetSize();j++)
 				{
 					if (aFolders[j]->sFolder.Compare(sParent)==0)
@@ -2239,13 +2235,17 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 								break;
 						}
 						if (k==aFolders[j]->aItems.GetSize())
+						{
+							DebugFormatMessage("Adding directory %S for existing parent",pItems[i]->GetParent()+nParentLen+1);
 							aFolders[j]->aItems.Add(alloccopy(pItems[i]->GetParent()+nParentLen+1));
+						}
 						break;
 					}
 				}
 
 				if (j==aFolders.GetSize())
 				{
+					DebugFormatMessage("New parent for directory %S",pItems[i]->GetParent()+nParentLen+1);
 					aFolders.Add(new FolderInfo(sParent));
 					aFolders.GetLast()->aItems.Add(alloccopy(pItems[i]->GetParent()+nParentLen+1));
 				}
@@ -2261,13 +2261,17 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 					if (aFolders[j]->sFolder.Compare(pItems[i]->GetParent())==0)
 					{
 						if (!pItems[i]->IsDeleted())
+						{
+							DebugFormatMessage("New dir for existing item: %S",pItems[i]->GetName());
 							aFolders[j]->aItems.Add(alloccopy(pItems[i]->GetName()));
+						}
 						break;
 					}
 				}
 
 				if (j==aFolders.GetSize())
 				{
+					DebugFormatMessage("New parent/dir pair %S / %S",(LPCWSTR)pItems[i]->GetParentSafe(),pItems[i]->GetName());
 					aFolders.Add(new FolderInfo(pItems[i]->GetParent()));
 					if (!pItems[i]->IsDeleted())
 						aFolders.GetLast()->aItems.Add(alloccopy(pItems[i]->GetName()));
@@ -2285,6 +2289,8 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 
 			if (!dwTemp)	
 			{
+				DebugMessage("Trying SHOpenFolderAndItems");
+
 				// No program specified, using explorer
 				HRESULT(STDAPICALLTYPE * pSHOpenFolderAndSelectItems)(LPCITEMIDLIST,UINT,LPCITEMIDLIST*,DWORD)=
 					(HRESULT(STDAPICALLTYPE *)(LPCITEMIDLIST,UINT,LPCITEMIDLIST*,DWORD))GetProcAddress(GetModuleHandle("shell32.dll"),"SHOpenFolderAndSelectItems");
@@ -2389,13 +2395,25 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
         // Retrieving folders
 		for (int i=0;i<aFolders.GetSize();i++)
 		{
+			DebugMessage("Calling OpenFolder...");
+				
 			if (aFolders[i]->aItems.GetSize()==0)
+			{
+				DebugFormatMessage("OpenFolder for %S",(LPCWSTR)aFolders[i]->sFolder);
 				OpenFolder(aFolders[i]->sFolder);
+			}
 			else
 			{
+				DebugMessage("Multiple directories");
 				for (int j=0;j<aFolders[i]->aItems.GetSize();j++)
+				{
+					DebugFormatMessage("OpenFolder for %S \\ %S",(LPCWSTR)aFolders[i]->sFolder,(LPCWSTR)aFolders[i]->aItems[j]);
 					OpenFolder(aFolders[i]->sFolder,aFolders[i]->sFolder+L'\\'+aFolders[i]->aItems[j]);
+				}
 			}
+
+			DebugMessage("... done");
+			
 		}
 	}
 	else

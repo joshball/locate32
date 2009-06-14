@@ -58,6 +58,13 @@ or in <a href="menu_file.htm">File menu</a>. It offers the following commands:
 <TD width=30%><A HREF="hid_special_removedeletedfiles.htm">Remove deleted files</A></TD>
 <TD width=70%>Remove deleted files from the result list.</TD>
 </TR>
+
+<TR VALIGN="top">
+<TD width=30%><A HREF="hid_special_updatedatabasesforselectedfiles.htm">Update databases of selected files</A></TD>
+<TD width=70%>Update databases that correspond to the selected files.</TD>
+</TR>
+
+
 </TBODY>
 </TABLE>
 </p>

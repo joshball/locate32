@@ -10,7 +10,26 @@
 ////////////////////////////////////////////////////////////
 
 
+void CLocateDlg::OnActivate(WORD fActive,BOOL fMinimized,HWND hwnd)
+{
+	if (fActive!=WA_CLICKACTIVE || fMinimized || m_pListCtrl==NULL)
+		return;
 
+	if (GetFlags()&fgLVAllowInPlaceRenaming)
+	{
+		// When Locate32 dialog is activate by a mouseclieck, we check if 
+		// an item in the result is clicked. If so, we clear its "Selected"
+		// state to prevent the item be edited
+		POINT ptCursor;
+		GetCursorPos(&ptCursor);
+		m_pListCtrl->ScreenToClient(&ptCursor);
+		UINT uiFlags;
+		int nItem=m_pListCtrl->HitTest(ptCursor,&uiFlags);
+		if (nItem!=-1 && m_pListCtrl->GetItemState(nItem,LVIS_SELECTED))
+			m_pListCtrl->SetItemState(nItem,0,LVIS_SELECTED);
+	}	
+}
+	
 void CLocateDlg::OnActivateApp(BOOL fActive,DWORD dwThreadID)
 {
 	if (!fActive)
@@ -26,6 +45,7 @@ void CLocateDlg::OnActivateApp(BOOL fActive,DWORD dwThreadID)
 		// Hide tooltip if shown
 		if (m_pListTooltips!=NULL)
 			m_pListTooltips->Pop();
+
 	}
 	else
 	{
@@ -34,11 +54,12 @@ void CLocateDlg::OnActivateApp(BOOL fActive,DWORD dwThreadID)
 			RemoveExtraFlags(efFocusToResultListWhenAppActivated);
 
 			// Give focus for the result list
-			if (m_pListCtrl!=NULL)
+			if (m_pListCtrl!=NULL && GetFocus()!=*m_pListCtrl)
 				m_pListCtrl->SetFocus();
 
 			return;
 		}
+
 	}
 
 	CDialog::OnActivateApp(fActive,dwThreadID);
@@ -400,6 +421,11 @@ BOOL CLocateDlg::HandleContextMenuCommand(WORD wID)
 		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnChangeFileName();
 		break;
+	case IDM_UPDATEDATABASESOFSELECTEDFILES:
+		ASSERT_VALID(m_pActiveContextMenu);
+		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
+		OnUpdateDatabasesOfSelectedFiles();
+		break;
 	case IDM_PROPERTIES:
 		ASSERT_VALID(m_pActiveContextMenu);
 		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
@@ -484,8 +510,9 @@ void CLocateDlg::OnContextMenu(HWND hWnd,CPoint& pos)
 		ColMenu.InsertMenu(WORD(-1),FALSE,&mii);
 		
 		int iID=TrackPopupMenu(ColMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON|TPM_RETURNCMD,pos.x,pos.y,0,*this,NULL);	
-		
-		if (iID!=0)
+		if (iID==IDM_SELECTDETAILS)
+			OnSelectDetails();
+		else if (iID!=0)
 			m_pListCtrl->ColumnSelectionMenuProc(iID,1);
 		
 		ColMenu.DestroyMenu();
@@ -1411,7 +1438,6 @@ void CLocateDlg::OnTimer(DWORD dwTimerID)
 	switch (LOWORD(dwTimerID))
 	{
 	case ID_REDRAWITEMS:
-		
 		KillTimer(ID_REDRAWITEMS);
 		m_pListCtrl->InvalidateRect(NULL,FALSE);
 		m_pListCtrl->UpdateWindow();
@@ -1691,6 +1717,7 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		break;
 	case WM_SETSTARTDATA:
 		SetStartData((CLocateApp::CStartData*)lParam);
+		break;
 #ifdef _DEBUG
 	case WM_SYSCOMMAND:
 		if (wParam==0x76)
@@ -1876,7 +1903,7 @@ void CLocateDlg::OnNewSearch()
 	CWaitCursor wait;
 		
 	CancelInstantSearch();
-
+	
 
 	// Stop Locating
 	if (IsLocating())
@@ -1897,7 +1924,9 @@ void CLocateDlg::OnNewSearch()
 	// Sorting
 	SetSorting();
 	
-    
+    // Tell OnFieldChange to skip messages
+	AddInstantSearchingFlags(isIgnoreChangeMessages);
+
 	// Clear dialogs
 	m_NameDlg.OnClear(FALSE);
 	m_SizeDateDlg.OnClear(FALSE);
@@ -1913,6 +1942,9 @@ void CLocateDlg::OnNewSearch()
 	// Do not use selected databases anymore
 	RemoveExtraFlags(efUseLastSelectedDatabases);
 
+	// OnFieldChange can work again
+	RemoveInstantSearchingFlags(isIgnoreChangeMessages);
+
 	// Make title
 	CStringW title;
 	title.LoadString(IDS_TITLE);
@@ -1923,6 +1955,8 @@ void CLocateDlg::OnNewSearch()
 	SetText(title);
 
 	m_NameDlg.m_Name.SetFocus();
+
+	
 }
 
 void CLocateDlg::OnPresets()
@@ -2666,8 +2700,7 @@ void CLocateDlg::OnCreateShortcut()
 			if (pItem!=NULL)
 			{
 				WCHAR szTitle[MAX_PATH];
-				//if (!FileSystem::GetFileTitle(pItem->GetParent(),szTitle,MAX_PATH))
-					wcscpy_s(szTitle,MAX_PATH,pItem->GetParent()+LastCharIndex(pItem->GetParent(),L'\\')+1);
+				wcscpy_s(szTitle,MAX_PATH,pItem->GetParent()+LastCharIndex(pItem->GetParent(),L'\\')+1);
 					
 				if (IsUnicodeSystem())
 				{
@@ -3149,6 +3182,68 @@ void CLocateDlg::OnUpdateLocatedItem()
         nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
 	}
 }
+
+void CLocateDlg::OnUpdateDatabasesOfSelectedFiles()
+{
+	// Collect database IDs	
+	CArray<WORD> awDatabases;
+	int nItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
+	while (nItem!=-1)
+	{
+		CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
+		if (pItem!=NULL)
+		{
+			WORD wID=pItem->GetDatabaseID();
+			BOOL bFound=FALSE;
+			for (int i=0;i<awDatabases.GetSize();i++)
+			{
+				if (awDatabases[i]==wID)
+					bFound=TRUE;
+			}
+			if (!bFound)
+				awDatabases.Add(wID);
+		}
+	
+        nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
+	}
+
+	// Find database names
+	const CArray<PDATABASE>& raAllDatabases=GetLocateApp()->GetDatabases();
+	int nValidDatabases=0,nStringLength=1,i;
+	LPCWSTR* pDatabases=new LPCWSTR[awDatabases.GetSize()+1];
+	for (i=0;i<awDatabases.GetSize();i++)
+	{
+		for (int j=0;j<raAllDatabases.GetSize();j++)
+		{
+			if (raAllDatabases[j]->GetID()==awDatabases[i])
+			{
+				pDatabases[nValidDatabases]=raAllDatabases[j]->GetName();
+				nStringLength+=istrlen(pDatabases[nValidDatabases])+1;
+				nValidDatabases++;
+				break;
+			}
+		}
+	}
+
+
+	// Form zero separated database name string
+	LPWSTR pString=new WCHAR[nStringLength],pPtr=pString;
+	for (i=0;i<nValidDatabases;i++)
+	{
+		int nLen=istrlen(pDatabases[i])+1;
+		MemCopyW(pPtr,pDatabases[i],nLen);
+		pPtr+=nLen;
+	}
+	*pPtr='\0';
+
+	// Start updating
+	GetTrayIconWnd()->OnUpdate(FALSE,pString);
+
+	delete[] pString;
+	delete[] pDatabases;
+
+}
+
 
 void CLocateDlg::OnComputeMD5Sums(BOOL bForSameSizeFilesOnly)
 {

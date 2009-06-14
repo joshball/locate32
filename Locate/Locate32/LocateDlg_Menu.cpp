@@ -330,7 +330,7 @@ BOOL CLocateDlg::GetContextMenuForItems(CLocateDlg::ContextMenuInformation* pCon
 	LPITEMIDLIST* ppSimpleIDLs=new LPITEMIDLIST[nItems];
 	int nParentIDLLevel=-1;
 
-	BOOL bRet=TRUE;
+	BOOL bRet=FALSE;
 	if (GetSimpleIDLsandParentfromIDLs(nItems,ppFullIDLs,&pParentIDL,ppSimpleIDLs,&nParentIDLLevel))
 	{
 		bRet=GetContextMenuForFiles(pContextMenuInfo,nItems,pParentIDL,ppSimpleIDLs,nParentIDLLevel);
@@ -532,7 +532,7 @@ BOOL CLocateDlg::HandleShellCommands(WORD wID)
 	{
 		// Try shell execute
 		for (int i=0;i<nSelected;i++)
-			ShellFunctions::ShellExecute(*this,szVerb[0]!='\0'?szVerb:NULL,pItems[i]->GetPath(),NULL,pItems[i]->GetParent(),SW_SHOW);
+			ShellFunctions::ShellExecute(*this,szVerb[0]!='\0'?szVerb:NULL,pItems[i]->GetPath(),NULL,pItems[i]->GetParentSafe(),SW_SHOW);
 	}
 	
 	

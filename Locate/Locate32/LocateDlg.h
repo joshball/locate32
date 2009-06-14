@@ -588,6 +588,7 @@ protected:
 	////////////////////////////////////////////////////////////
 	// Virtual message handlers
 public:
+	virtual void OnActivate(WORD fActive,BOOL fMinimized,HWND hwnd);
 	virtual void OnActivateApp(BOOL fActive,DWORD dwThreadID); 
 	virtual void OnChangeCbChain(HWND hWndRemove,HWND hWndAfter );
 	virtual BOOL OnClose();
@@ -638,6 +639,7 @@ protected:
 	void OnCopyMD5SumsToClipboard();
 	void OnShowFileInformation();
 	void OnRemoveDeletedFiles();
+	void OnUpdateDatabasesOfSelectedFiles();
 	void OnRenameFile(int nItem=-1);
 	void OnCopy(BOOL bCut,int nItem=-1);
 	void OnCreateShortcut();

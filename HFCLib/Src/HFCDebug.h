@@ -151,7 +151,7 @@ void operator delete[](void *p);
 #endif
 
 
-#if !defined(HFC_NODEBUGNEW)
+#if !defined(HFC_NODEBUGNEW) && !defined(HFC_NOALLOCTRACKING)
 	#define new DEBUG_NEW
 #endif
 

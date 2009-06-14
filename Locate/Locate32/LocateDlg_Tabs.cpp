@@ -2001,14 +2001,17 @@ BOOL CLocateDlg::CNameDlg::CheckAndAddDirectory(LPCWSTR pFolder,DWORD dwLength,B
 			ci.iItem++;
 		}
 
-		//if (bAlsoSet)
-		//{
-			m_LookIn.SetCurSel(nSel);
-			m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(nSel));
-		//}
-		//else
-		//	m_LookIn.SetCurSel(nCurSel);
-	
+		CLocateDlg* pLocateDlg=GetLocateDlg();
+		BOOL bActivateInstantSearchListening=!pLocateDlg->IsInstantSearchingFlagSet(CLocateDlg::isIgnoreChangeMessages);
+		pLocateDlg->AddInstantSearchingFlags(CLocateDlg::isIgnoreChangeMessages);
+
+		m_LookIn.SetCurSel(nSel);
+		m_LookIn.SetItemText(-1,m_LookIn.GetItemTextW(nSel));
+
+		if (bActivateInstantSearchListening)
+			pLocateDlg->RemoveInstantSearchingFlags(CLocateDlg::isIgnoreChangeMessages);
+
+		
 	}			
 	
 	LeaveCriticalSection(&m_cBrowse);

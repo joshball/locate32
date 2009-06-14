@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,9,6030
- PRODUCTVERSION 3,1,9,6030
+ FILEVERSION 3,1,9,6140
+ PRODUCTVERSION 3,1,9,6140
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 RC3g build 9.6030"
+            VALUE "FileVersion", "3.1 RC3h build 9.6140"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2009 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 RC3g build 9.6030"
+            VALUE "ProductVersion", "3.1 RC3h build 9.6140"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1022,7 +1022,7 @@ BEGIN
         MENUITEM "&Select Details", IDM_SELECTDETAILS
         MENUITEM "&Refresh",     IDM_REFRESH    
 	END
-    POPUP "&Tools"
+    POPUP "T&ools"
     BEGIN
         MENUITEM "&Settings", IDM_SETTINGS
 		MENUITEM "Settings &Backup tool", IDM_SETTOOL
@@ -1126,6 +1126,7 @@ BEGIN
 			MENUITEM "Compute MD5 sums for equal size files",         IDM_MD5SUMSFORSAMESIZEFILES
 			MENUITEM "Copy MD5 sums to clipboard",         IDM_COPYMD5SUMTOCLIPBOARD
 			MENUITEM "Remove deleted files"	IDM_REMOVEDELETEDFILES
+			MENUITEM "Update databases of selected files" IDM_UPDATEDATABASESOFSELECTEDFILES
         END
 		MENUITEM SEPARATOR
     END
@@ -1481,7 +1482,7 @@ BEGIN
     IDS_ADVANCED            "Advanced"
     IDS_SIZEDATE            "Size and Date"
     IDS_BYEXTENSION         "(by extension)"
-    IDS_BUILDINTYPES        "Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps wmf odg otg|0|Web Files|html htm asp shtm css|6|Document files|doc docx dot xls xlw ppt pps wpd rtf pdf odt ods odp sxw sxc stw stc sxi sti|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h hxx hpp inl rc pas java pl py|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 mp2 wma voc aif aiff cda ogg mpa mpc ape flac aac ac3 m4a|3|Video files|mpeg mpg avi mov ogm rm rmvb wmv asf m4v mkv vob ts|4||"
+    IDS_BUILDINTYPES        "Text files|txt log|1|Image files|jpg jpeg gif bmp pcx ico cur ani png tif tiff tga emf ps eps wmf odg otg|0|Web Files|html htm asp shtm css|6|Document files|doc docx dot xls xlw ppt pps wpd rtf pdf odt ods odp sxw sxc stw stc sxi sti|2|Executable files|exe com dll ocx bat|5|Source files|c cpp h hxx hpp inl rc pas java pl py|7|Archive files|zip arj lha lzh ace rar tgz tar gz bz2 jar cab|8|Sound files|wav mid mp3 mp2 wma voc aif aiff cda ogg mpa mpc ape flac aac ac3 m4a|3|Video files|mpeg mpg avi mov ogm rm rmvb wmv asf m4v mkv vob ts flv|4||"
     IDS_FILENAMESONLY       "Files only"
     IDS_FILEANDFOLDERNAMES  "Files and folders"
     IDS_FOLDERNAMESONLY     "Folders only"

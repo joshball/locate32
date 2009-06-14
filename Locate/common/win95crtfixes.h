@@ -9,7 +9,7 @@ See http://louis.steelbytes.com/vs2008_vs_win40.html for more information.
 #define WIN95CRTFIXES_H
 
 #ifndef _WIN64 // All 64 bit systems are 5.0 systems
-#ifndef _DEBUG // Do not add fix for _DEBUG
+#if !defined(_DEBUG) && !defined(_DEBUG_LOGGING) // Do not add fix for _DEBUG
 
 extern "C" __declspec(noinline) HMODULE __cdecl _crt_waiting_on_module_handle(LPCWSTR szModuleName)
 {
