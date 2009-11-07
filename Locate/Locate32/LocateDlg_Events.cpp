@@ -92,6 +92,8 @@ BOOL CLocateDlg::OnClose()
 
 BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 {
+	DebugFormatMessage("CDialog::OnCommand wID=%d",wID);
+
 	if (HandleContextMenuCommand(wID))
 		return 0;
 
@@ -275,6 +277,8 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		// IDM_ should be in descending order
 		if (wID>=IDM_DEFSHORTCUTITEM && wID<IDM_DEFSHORTCUTITEM+m_aActiveShortcuts.GetSize())
 		{
+			DebugFormatMessage("CDialog::OnCommand going to check keyboard shortcuts, wID=%d",wID);
+
 			CShortcut** pShortcutList=m_aActiveShortcuts[wID-IDM_DEFSHORTCUTITEM];
 			BOOL bSendBackToControl=TRUE;
 
@@ -321,14 +325,19 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 
 BOOL CLocateDlg::HandleContextMenuCommand(WORD wID)
 {
+	DebugFormatMessage("CLocateDlg::HandleContextMenuCommand(%d)",wID);
+
 	// Check if wID corresponds to Send to menu item
 	if (HandleSendToCommand(wID))
 		return TRUE;
+	
+	DebugMessage("p1");
 
 	// Check if wID corresponds to shell context menu command
 	if (HandleShellCommands(wID))
 		return TRUE;
 
+	DebugMessage("p2");
 	
 	switch(wID)
 	{
@@ -336,107 +345,67 @@ BOOL CLocateDlg::HandleContextMenuCommand(WORD wID)
 		return FALSE;
 	case IDM_CUT:
 	case IDM_EDIT_CUT:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnCopy(TRUE);
 		break;
 	case IDM_COPY:
 	case IDM_EDIT_COPY:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnCopy(FALSE);
 		break;
 	case IDM_OPENCONTAININGFOLDER:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
-		OpenSelectedFolder(TRUE,-1,m_pActiveContextMenu->bForParents);
+		OpenSelectedFolder(TRUE,-1,m_pActiveContextMenu!=NULL?m_pActiveContextMenu->bForParents:FALSE);
 		break;
 	case IDM_CREATESHORTCUT:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnCreateShortcut();
 		break;
 	case IDM_DELETE:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnDelete();
 		break;
 	case IDM_RENAME:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnRenameFile();
 		break;
 	case IDM_REMOVEFROMTHISLIST:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnRemoveFromThisList();
 		break;
 	case IDM_COPYPATHTOCB:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnCopyPathToClipboard(FALSE);
 		break;
 	case IDM_COPYSHORTPATHTOCB:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnCopyPathToClipboard(TRUE);
 		break;
 	case IDM_CHANGECASE:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnChangeFileNameCase();
 		break;
 	case IDM_FORCEUPDATE:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnUpdateLocatedItem();
 		break;
 	case IDM_COMPUTEMD5SUM:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnComputeMD5Sums(FALSE);
 		break;
 	case IDM_MD5SUMSFORSAMESIZEFILES:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnComputeMD5Sums(TRUE);
 		break;
 	case IDM_COPYMD5SUMTOCLIPBOARD:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnCopyMD5SumsToClipboard();
 		break;
 	case IDM_SHOWFILEINFORMATION:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnShowFileInformation();
 		break;
 	case IDM_REMOVEDELETEDFILES:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnRemoveDeletedFiles();
 		break;
 	case IDM_CHANGEFILENAME:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnChangeFileName();
 		break;
 	case IDM_UPDATEDATABASESOFSELECTEDFILES:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnUpdateDatabasesOfSelectedFiles();
 		break;
 	case IDM_PROPERTIES:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
 		OnProperties();
 		break;
 	case IDM_DEFOPEN:
-		ASSERT_VALID(m_pActiveContextMenu);
-		ASSERT_VALID(m_pActiveContextMenu->hPopupMenu);
-		if (m_pActiveContextMenu->bForParents)
+		if (m_pActiveContextMenu!=NULL && m_pActiveContextMenu->bForParents)
 			OpenSelectedFolder(TRUE,-1);
-		else	
+		else 
 			OnExecuteFile(NULL);
 		break;
 	}
@@ -1664,6 +1633,7 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		SetShortcuts();
 		break;
 	case WM_RESULTLISTACTION:
+		DebugMessage("CLocateDlg::WindowProc(WM_RESULTLISTACTION,...)");
 		OnExecuteResultAction((CAction::ActionResultList)wParam,(void*)lParam);
         break;
 	case WM_GETSELECTEDITEMPATH:
@@ -2431,7 +2401,11 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 			while(iItem!=-1)
 			{
 				CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(iItem);
-	
+				if (pItem==NULL) 
+				{
+					iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
+					continue;
+				}
 
 				BOOL bDelete=FALSE;
 				for (int i=0;i<aPaths.GetSize();i++)
@@ -2456,7 +2430,12 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 				}
 
 				if (bDelete)
+				{
+					if (m_pBackgroundUpdater!=NULL)
+						m_pBackgroundUpdater->RemoveFromUpdateList(pItem);
+					
 					m_pListCtrl->DeleteItem(iItem); 
+				}
 				else
 					iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
 			}

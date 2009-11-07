@@ -204,6 +204,7 @@
 #define IDS_PRIORITYBELOWNORMAL         393
 #define IDS_PRIORITYLOW                 394
 #define IDS_PRIORITYIDLE                395
+#define IDS_PRIORITYBACKGROUND          396
 #define IDS_NOTIFYLOCATEWITHNAMED       399
 #define IDS_NOTIFYLOCATE                400
 #define IDS_NOTIFYUPDATING              401

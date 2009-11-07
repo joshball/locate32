@@ -1528,7 +1528,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 	
 	// Format time to szTime
 	// If wTime is 0 or -1, skip time
-	if (wTime!=WORD(-1) && wTime!=0)
+	if (wTime!=WORD(-1))
 	{
 		// Using GetTimeFormat as default
 		SYSTEMTIME st;

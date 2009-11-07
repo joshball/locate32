@@ -121,6 +121,7 @@ public:
 		SpecialComputeMD5SumsForSameSizeFiles = MAKELONG(IDM_MD5SUMSFORSAMESIZEFILES,IDS_SHORTCUTMENUSPECIAL),
 		SpecialCopyMD5SumsToClipboard = MAKELONG(IDM_COPYMD5SUMTOCLIPBOARD,IDS_SHORTCUTMENUSPECIAL),
 		SpecialRemoveDeletedFiles = MAKELONG(IDM_REMOVEDELETEDFILES,IDS_SHORTCUTMENUSPECIAL),
+		SpecialUpdateDatabasesOfSelectedFiles = MAKELONG(IDM_UPDATEDATABASESOFSELECTEDFILES,IDS_SHORTCUTMENUSPECIAL),
 
 		EditCut = MAKELONG(IDM_EDIT_CUT,IDS_SHORTCUTMENUEDIT),
 		EditCopy = MAKELONG(IDM_EDIT_COPY,IDS_SHORTCUTMENUEDIT),
@@ -170,7 +171,7 @@ public:
 			SpecialCopyShortPathToClibboard,SpecialChangeFileName,SpecialChangeCase,
 			SpecialShowFileInformation,SpecialForceUpdate,SpecialComputeMD5Sum,
 			SpecialComputeMD5SumsForSameSizeFiles,SpecialCopyMD5SumsToClipboard,
-			SpecialRemoveDeletedFiles,
+			SpecialRemoveDeletedFiles,SpecialUpdateDatabasesOfSelectedFiles,
 			EditCut,EditCopy,EditSelectAll,EditInvertSelection,ViewExtraLargeIcons,
 			ViewLargeIcons,ViewMediumIcons,ViewSmallIcons,
             ViewList,ViewDetails,ViewArrangeIconsByName,ViewArrangeIconsByFolder,

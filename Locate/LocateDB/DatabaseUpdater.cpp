@@ -89,6 +89,10 @@ UpdateError CDatabaseUpdater::UpdatingProc()
 	InterlockedExchange(&m_lForceQuit,FALSE);
 #endif
 
+	// Set priority
+	SetThreadPriority(GetCurrentThread(),m_nThreadPriority);
+			
+
 	ASSERT(dbFile==NULL);
 
 	for (m_dwCurrentDatabase=0;m_dwCurrentDatabase<DWORD(m_aDatabases.GetSize());m_dwCurrentDatabase++)
@@ -472,6 +476,7 @@ DWORD WINAPI CDatabaseUpdater::UpdateThreadProc(LPVOID lpParameter)
 UpdateError CDatabaseUpdater::Update(BOOL bThreaded,int nThreadPriority)
 {
 	m_pProc(m_dwData,Initializing,ueSuccess,this);
+	m_nThreadPriority=nThreadPriority;
 	if (bThreaded)
 	{
 		DWORD dwThreadID;
@@ -482,7 +487,6 @@ UpdateError CDatabaseUpdater::Update(BOOL bThreaded,int nThreadPriority)
 
 		if (m_hThread!=NULL)
 		{
-			SetThreadPriority(m_hThread,nThreadPriority);
 			ResumeThread(m_hThread);
 			return ueSuccess;
 		}

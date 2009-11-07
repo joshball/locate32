@@ -1359,3 +1359,20 @@ void CBackgroundUpdater::AddToUpdateList(CLocatedItem* pItem, int iItem,DetailTy
 	m_aUpdateList.Add(pNewItem);
 	LeaveCriticalSection(&m_csUpdateList);
 }
+
+void CBackgroundUpdater::RemoveFromUpdateList(CLocatedItem* pItem)
+{
+	EnterCriticalSection(&m_csUpdateList);
+
+	for (int i=m_aUpdateList.GetSize()-1;i>=0;i--)
+	{
+		Item* pListItem=m_aUpdateList.GetAt(i);
+		if (pListItem->m_pItem==pItem)
+		{
+			m_aUpdateList.RemoveAt(i);
+			break;
+		}
+	}
+
+	LeaveCriticalSection(&m_csUpdateList);
+}

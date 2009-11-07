@@ -1775,8 +1775,10 @@ BOOL FileSystem::IsFile(LPCWSTR szFileName)
 			ret=FindNextFileW(hFind,&fd);
 		FindClose(hFind);	
 		DebugCloseHandle(dhtFileFind,hFind,szFileName);
+		DebugFormatMessage("FileSystem::IsFile: ret for %S is %d",szFileName,ret);
 		return ret;
 	}
+	DebugFormatMessage("FileSystem::IsFile: no file %S",szFileName);
 	return FALSE;
 #else
 	struct ffblk fd;

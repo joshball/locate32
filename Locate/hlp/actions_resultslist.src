@@ -24,7 +24,7 @@ This action copies/cuts the selected files and directories to the clipboard. </p
 <p><b><a name="alist4"></a>$STRACTION_RECYCLE@M$</b>:
 This action moves the selected files and directories to the recycle bin (a confirmation will be asked). 
 The deleted files and folders can be restored using Recycle bin. This action is assigned for the 
-DEL key (in the results list and also in Widnows Explorer). Note that databases are not updated 
+DEL key (in the results list and also in Windows Explorer). Note that databases are not updated 
 and files and folders are shown in deleted files/directories in subsequent searches. 
 </p>
 
@@ -44,7 +44,7 @@ for the selected file type. </p>
 
 <p><b><a name="alist8"></a>$STRACTION_OPENFOLDER@M$</b>:
 If the selected item in the results list is directory, 
-this action will the directory. </p>
+this action will open the directory. </p>
 
 <p><b><a name="alist9"></a>$STRACTION_OPENCONTAININGFOLDER@M$</b>:
 This action opens the parent directories for the selected files and directories. 

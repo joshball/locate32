@@ -11,7 +11,6 @@ The value depends on the type of control as follows.
 <ul>
 <li>Text fields or a combo box with editable text: give a value as an text</li>
 <li>Check boxes: enter 1 to check or 0 to uncheck</li>
-<li>Check boxes: enter 1 to check or 0 to uncheck</li>
 <li>Combo boxes: give an index as number (0,1,2,...)</li>
 <li>Date: give date in the form YYYYMMDD. You can also give a "relative date", e.g., 
 type '0' for today, 'N' for N'th in future or '-N' for N'th day before this day. </li>

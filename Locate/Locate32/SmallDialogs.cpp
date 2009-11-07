@@ -869,6 +869,8 @@ BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 		Combo.AddString(ID2W(IDS_PRIORITYBELOWNORMAL));		
 		Combo.AddString(ID2W(IDS_PRIORITYLOW));		
 		Combo.AddString(ID2W(IDS_PRIORITYIDLE));	
+		if (GetSystemFeaturesFlag()&efWinVista)
+			Combo.AddString(ID2W(IDS_PRIORITYBACKGROUND));	
 
 		switch (m_nThreadPriority)
 		{
@@ -889,6 +891,9 @@ BOOL CSelectDatabasesDlg::OnInitDialog(HWND hwndFocus)
 			break;
 		case THREAD_PRIORITY_IDLE:
             Combo.SetCurSel(5);
+			break;
+		case THREAD_MODE_BACKGROUND_BEGIN:
+			Combo.SetCurSel(6);
 			break;
 		default:
 		    Combo.SetCurSel(2);
@@ -1036,6 +1041,9 @@ void CSelectDatabasesDlg::OnOK()
             break;
 		case 5:
             m_nThreadPriority=THREAD_PRIORITY_IDLE;
+            break;
+		case 6:
+			m_nThreadPriority=THREAD_MODE_BACKGROUND_BEGIN;
             break;
 		default:
 		    m_nThreadPriority=THREAD_PRIORITY_NORMAL;

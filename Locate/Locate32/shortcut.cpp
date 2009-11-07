@@ -970,6 +970,8 @@ void CSubAction::ClearExtraInfo(DWORD nAction)
 
 void CAction::ExecuteAction()
 {
+	DebugFormatMessage("CAction::ExecuteAction() this=%X",DWORD(this));
+	DebugFormatMessage("m_nAction=%d",m_nAction);
 	switch (m_nAction)
 	{
 	case None:
@@ -1418,6 +1420,8 @@ void CSubAction::DoPresets()
 
 void CSubAction::DoResultListItems()
 {
+	DebugFormatMessage("CSubAction::DoResultListItems() this=%X",DWORD(this));
+	DebugFormatMessage("m_nResultsList=%d",m_nResultList);
 	if (m_nResultList==ExecuteCommand)
 	{
 		if (m_szCommand!=NULL)
@@ -1429,10 +1433,8 @@ void CSubAction::DoResultListItems()
 	if (pLocateDlg==NULL)
 		return;
 
-	/*if (GetCurrentThreadId()==GetTrayIconWnd()->m_pLocateDlgThread->m_nThreadID)
-		pLocateDlg->OnExecuteResultAction(m_nResultList,m_pExtraInfo);
-	else*/
-		pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_pExtraInfo);
+	DebugFormatMessage("Sending message, pExtraInfo=%X",DWORD(m_pExtraInfo));
+	pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_pExtraInfo);
 }
 
 void * __cdecl gmalloc(size_t size) { return GlobalAlloc(GPTR,size+1); }

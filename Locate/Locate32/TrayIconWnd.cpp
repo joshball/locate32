@@ -2616,7 +2616,7 @@ void CTrayIconWnd::CUpdateStatusWnd::SetPosition()
 	if (pLocateDlg!=NULL)
 	{
 		SetWindowPos(HWND_TOP,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,
-			GetForegroundWindow()==*pLocateDlg?SWP_NOACTIVATE:SWP_NOACTIVATE|SWP_NOZORDER);
+			GetForegroundWindow()==*pLocateDlg?SWP_NOACTIVATE:(SWP_NOACTIVATE|SWP_NOZORDER));
 	}
 	else 
 		SetWindowPos(NULL,ptUpperLeft.x,ptUpperLeft.y,szSize.cx,szSize.cy,SWP_NOZORDER|SWP_NOACTIVATE);

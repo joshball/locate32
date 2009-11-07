@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,9,6140
- PRODUCTVERSION 3,1,9,6140
+ FILEVERSION 3,1,9,11070
+ PRODUCTVERSION 3,1,9,11070
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 RC3h build 9.6140"
+            VALUE "FileVersion", "3.1 RC3i build 9.11070"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2009 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 RC3h build 9.6140"
+            VALUE "ProductVersion", "3.1 RC3i build 9.11070"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -159,7 +159,7 @@ BEGIN
     CONTROL         "Replace &spaces with asterisk",IDC_REPLACESPACES,"Button",
                     BS_CHECKBOX | WS_TABSTOP,205+0+0,21,180,9
     LTEXT           "&Type of file:",IDC_FILETYPESTATIC,8,32,80,8
-    COMBOBOX        IDC_FILETYPE,8,42,185,103,CBS_DROPDOWNLIST | 
+    COMBOBOX        IDC_FILETYPE,8,42,185,203,CBS_DROPDOWNLIST | 
                     CBS_OWNERDRAWVARIABLE | CBS_SORT | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "File containing te&xt:",IDC_CONTAINDATACHECK,
@@ -1126,7 +1126,7 @@ BEGIN
 			MENUITEM "Compute MD5 sums for equal size files",         IDM_MD5SUMSFORSAMESIZEFILES
 			MENUITEM "Copy MD5 sums to clipboard",         IDM_COPYMD5SUMTOCLIPBOARD
 			MENUITEM "Remove deleted files"	IDM_REMOVEDELETEDFILES
-			MENUITEM "Update databases of selected files" IDM_UPDATEDATABASESOFSELECTEDFILES
+			MENUITEM "Update database(s) of selected file(s)" IDM_UPDATEDATABASESOFSELECTEDFILES
         END
 		MENUITEM SEPARATOR
     END
@@ -1566,7 +1566,7 @@ BEGIN
 	IDS_NAMEALREADYEXISTS	"Name '%s' already exists."
 	IDS_FILEALREADYEXISTS   "File '%s' is already used for databases."
 	IDS_INVALIDFILENAME		"'%s' is not valid file name."
-	IDS_INVALIDFILENAMEISOK	"The given file name '%s' (in ""File:"" box) is not valid or it points to a drive or network share which is not currently available. Is this intentional?"
+	IDS_INVALIDFILENAMEISOK	"The given file name '%s' (in ""File:"" box) is not valid or it points to a drive or network share which is not currently available. Is this intentional?\n\nThe file name cannot be empty. It must be a proper file name such that you have rights to write to the file. If you don't know what name to use, try to type, for example, ""database.dbs"" in which case the default location is used.\n\nYou can ignore this message by choosing ""Yes"", but that may lead to other errors when you are trying to use the database. You have been warned!"
 	IDS_INVALIDDBNAME       "'%s' is not valid name for database."
 	IDS_NAMEISRESERVED		"Names 'DEFAULTX??' and 'PARAMX??' are reserved."
 	IDS_COMMANDLINEARGUMENT "Command line"
@@ -2144,6 +2144,7 @@ BEGIN
 	IDS_PRIORITYBELOWNORMAL		"below normal"
 	IDS_PRIORITYLOW				"low"
 	IDS_PRIORITYIDLE			"idle"
+	IDS_PRIORITYBACKGROUND		"background"
 END
 
 STRINGTABLE 

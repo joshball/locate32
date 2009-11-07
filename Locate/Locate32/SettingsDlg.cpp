@@ -1682,6 +1682,9 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateThreadPriorityPr
 			cb.AddString(ID2W(IDS_PRIORITYBELOWNORMAL));		
 			cb.AddString(ID2W(IDS_PRIORITYLOW));		
 			cb.AddString(ID2W(IDS_PRIORITYIDLE));		
+			if (GetSystemFeaturesFlag()&efWinVista)
+				cb.AddString(ID2W(IDS_PRIORITYBACKGROUND));		
+				
 		}
 		break;
 	case BASICPARAMS::Get:
@@ -1704,6 +1707,9 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateThreadPriorityPr
 			break;
 		case THREAD_PRIORITY_IDLE:
             pParams->lValue=5;
+			break;
+		case THREAD_MODE_BACKGROUND_BEGIN:
+            pParams->lValue=6;
 			break;
 		default:
 			pParams->lValue=2;
@@ -1731,7 +1737,10 @@ BOOL CALLBACK CSettingsProperties::CAdvancedSettingsPage::UpdateThreadPriorityPr
             *((int*)pParams->lParam)=THREAD_PRIORITY_LOWEST;
 			break;
 		case 5:
-            *((int*)pParams->lParam)=THREAD_PRIORITY_IDLE;
+			*((int*)pParams->lParam)=THREAD_PRIORITY_IDLE;
+			break;
+		case 6:
+			*((int*)pParams->lParam)=THREAD_MODE_BACKGROUND_BEGIN;
 			break;
 		}
 		break;
@@ -4004,7 +4013,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 		// Path was not ok, is this intended
 		CStringW msg;
 		msg.Format(IDS_INVALIDFILENAMEISOK,pText);
-		if (MessageBox(msg,ID2W(IDS_DATABASESETTINGS),MB_YESNO|MB_ICONINFORMATION)==IDNO)
+		if (MessageBox(msg,ID2W(IDS_DATABASESETTINGS),MB_YESNO|MB_ICONINFORMATION|MB_DEFBUTTON2)==IDNO)
 		{
 			SetFocus(IDC_DBFILE);
 			delete[] pText;
@@ -5938,6 +5947,10 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 	Combo.AddString(ID2W(IDS_PRIORITYBELOWNORMAL));
 	Combo.AddString(ID2W(IDS_PRIORITYLOW));
 	Combo.AddString(ID2W(IDS_PRIORITYIDLE));
+	if (GetSystemFeaturesFlag()&efWinVista)
+		Combo.AddString(ID2W(IDS_PRIORITYBACKGROUND));
+
+
 	switch (m_pSchedule->m_nThreadPriority)
 	{
 	case THREAD_PRIORITY_HIGHEST:
@@ -5957,6 +5970,9 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnInitDia
 		break;
 	case THREAD_PRIORITY_IDLE:
 		Combo.SetCurSel(5);
+		break;
+	case THREAD_MODE_BACKGROUND_BEGIN:
+		Combo.SetCurSel(6);
 		break;
 	default:
 		Combo.SetCurSel(2);
@@ -6373,6 +6389,9 @@ BOOL CSettingsProperties::CAutoUpdateSettingsPage::CCheduledUpdateDlg::OnOK()
         break;
 	case 5:
         m_pSchedule->m_nThreadPriority=THREAD_PRIORITY_IDLE;
+        break;
+	case 6:
+		m_pSchedule->m_nThreadPriority=THREAD_MODE_BACKGROUND_BEGIN;
         break;
 	default:
 		m_pSchedule->m_nThreadPriority=THREAD_PRIORITY_NORMAL;

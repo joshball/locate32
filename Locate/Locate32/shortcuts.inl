@@ -191,6 +191,7 @@ inline BOOL CShortcut::IsModifiersOk(BOOL bAltDown,BOOL bControlDown,BOOL bShift
 
 inline void CShortcut::ExecuteAction()
 {
+	DebugMessage("CShortcut::ExecuteAction()");
 	for (int i=0;i<m_apActions.GetSize();i++)
 		m_apActions[i]->ExecuteAction();
 }

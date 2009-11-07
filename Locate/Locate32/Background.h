@@ -128,6 +128,7 @@ public:
 	BOOL IsWaiting() const;
 
 	void AddToUpdateList(CLocatedItem* pItem, int iItem,DetailType nDetail);
+	void RemoveFromUpdateList(CLocatedItem* pItem);
 	DWORD GetUpdateListSize() const;
 
 public:

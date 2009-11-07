@@ -120,15 +120,15 @@ public:
 	BOOL IsSymlink() const { return wAttribs&LITEMATTRIB_SYMLINK; }
 	BOOL IsJunkction() const { return wAttribs&LITEMATTRIB_JUNCTION; }
 	
-	LPWSTR GetName() const { return szName; }
-	DWORD GetNameLen() const { return bNameLength; }
-	LPWSTR GetPath() const { szName[-1]=L'\\'; return szPath; }
-	DWORD GetPathLen() const { return bNameLength+DWORD(szName-szPath); }
-	LPWSTR GetParent() const { szName[-1]=L'\0'; return szPath; }
-	CAutoPtrA<WCHAR> GetParentSafe() const { return alloccopy(szPath,DWORD(szName-szPath)); }
-	LPWSTR GetFileTitle() const { return szFileTitle; }
-	LPWSTR GetFileTitleSafe() const { if (szFileTitle==NULL) return szName; return szFileTitle; }
-	LPWSTR GetType() const { return szType; }
+	LPWSTR GetName() const { ASSERT_VALID(this); return szName; }
+	DWORD GetNameLen() const { ASSERT_VALID(this); return bNameLength; }
+	LPWSTR GetPath() const { ASSERT_VALID(this); szName[-1]=L'\\'; return szPath; }
+	DWORD GetPathLen() const { ASSERT_VALID(this); return bNameLength+DWORD(szName-szPath); }
+	LPWSTR GetParent() const { ASSERT_VALID(this); szName[-1]=L'\0'; return szPath; }
+	CAutoPtrA<WCHAR> GetParentSafe() const { ASSERT_VALID(this); return alloccopy(szPath,DWORD(szName-szPath)); }
+	LPWSTR GetFileTitle() const { ASSERT_VALID(this); return szFileTitle; }
+	LPWSTR GetFileTitleSafe() const { ASSERT_VALID(this); if (szFileTitle==NULL) return szName; return szFileTitle; }
+	LPWSTR GetType() const { ASSERT_VALID(this);  return szType; }
 	
 	LPWSTR GetDetailText(DetailType nDetailType) const;
 	LPWSTR GetToolTipText() const;

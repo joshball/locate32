@@ -3658,8 +3658,22 @@ void CLocateDlg::CAdvancedDlg::AddBuildInFileTypes()
 		}
 	}
 
+
 	while (*pPtr!=L'\0')
 		SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(new FileType(pPtr,il)));
+	
+	if (GetLocateDlg()->m_dwFlags&CLocateDlg::fgLoadRegistryTypes) 
+	{
+		// Add some NULL items to add some space
+		SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(NULL));
+		SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(NULL));
+		SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(NULL));
+		SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(NULL));
+		SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(NULL));
+		SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(NULL));
+		SendDlgItemMessage(IDC_FILETYPE,CB_ADDSTRING,0,LPARAM(NULL));
+	}
+	
 	il.DeleteImageList();
 
 	m_dwFlags|=fgBuildInTypesAdded;
@@ -3674,10 +3688,19 @@ LRESULT CLocateDlg::CAdvancedDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lPara
 		FileType* ft1=((FileType*)((COMPAREITEMSTRUCT*)lParam)->itemData1);
 		FileType* ft2=((FileType*)((COMPAREITEMSTRUCT*)lParam)->itemData2);
 
-		if (ft1==NULL || ft1==(FileType*)szwEmpty)
+		// NULLs to end
+		if (ft1==NULL)
+			return 1; 
+		if (ft2==NULL)
 			return -1;
-		if (ft2==NULL || ft2==(FileType*)szwEmpty)
+
+		// (No extension) first
+		if (ft1==(FileType*)szwEmpty)
+			return -1; 
+		if (ft2==(FileType*)szwEmpty)
 			return 1;
+
+
 		if (ft1->szType==NULL)
 		{
 			if (ft2->szType!=NULL)
@@ -4622,7 +4645,9 @@ DWORD WINAPI CLocateDlg::CAdvancedDlg::UpdaterProc(CLocateDlg::CAdvancedDlg* pAd
 	for (int i=(int)pAdvancedDlg->SendDlgItemMessage(IDC_FILETYPE,CB_GETCOUNT)-1;i>=0;i--)
 	{
 		FileType* pParam=(FileType*)pAdvancedDlg->SendDlgItemMessage(IDC_FILETYPE,CB_GETITEMDATA,i);
-		if (pParam!=NULL && pParam!=(FileType*)szwEmpty && pParam->szType!=NULL)
+		if (pParam==NULL)
+			pAdvancedDlg->SendDlgItemMessage(IDC_FILETYPE,CB_DELETESTRING,i);
+		else if (pParam!=(FileType*)szwEmpty && pParam->szType!=NULL)
 			aFileTypes.Add(pParam);
 	}
 

@@ -31,7 +31,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2009 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.1 RC3h build 9.6140
+FILEVERSION=3.1 RC3i build 9.11070
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -1107,7 +1107,7 @@ MENUPOPUP_CONTEXTMENU_MD5SUMSFORSAMESIZEFILES=Compute MD5 sums for equal size fi
 MENUPOPUP_CONTEXTMENU_COPYMD5SUMTOCLIPBOARD=Copy MD5 sums to clipboard
 MENUPOPUP_CONTEXTMENU_SHOWFILEINFORMATION=Show total size of selected files
 MENUPOPUP_CONTEXTMENU_REMOVEDELETEDFILES=Remove deleted files
-MENUPOPUP_CONTEXTMENU_UPDATEDATABASESOFSELECTEDFILES=Update databases of selected files
+MENUPOPUP_CONTEXTMENU_UPDATEDATABASESOFSELECTEDFILES=Update database(s) of selected file(s)
 
 MENUPOPUP_NOITEMCONTEXTMENU_VIEW=&View
 MENUPOPUP_NOITEMCONTEXTMENU_VIEW_EXTRALARGEICONS=E&xtra Large Icons
@@ -1292,7 +1292,7 @@ STRERROR_NOCULUMNSSELECTED=No any columns selected. Select at least one.
 STRERROR_CANNOTADDITEM=Cannot add item.
 STRERROR_CANNOTADDITEM2=Cannot add item '%s'.
 STRERROR_INVALIDFILENAME='%s' is not valid file name.
-STRERROR_ISINTENDEDFILENAME=The given file name '%s' (in "File:" box) is not valid or it points to a drive or network share which is not currently available. Is this intentional?
+STRERROR_ISINTENDEDFILENAME=The given file name '%s' (in "File:" box) is not valid or it points to a drive or network share which is not currently available. Is this intentional?\n\nThe file name cannot be empty. It must be a proper file name such that you have rights to write to the file. If you don't know what name to use, try to type, for example, "database.dbs" in which case the default location is used.\n\nYou can ignore this message by choosing "Yes", but that may lead to other errors when you are trying to use the database. You have been warned!
 STRERROR_NODATABASESSELECTED=No databases are selected.
 STRERROR_DIRECTORYNOTFOUND=Directory '%s' not found.
 STRERROR_ROOTNOTAVAILABLE=Drive or directory '%s' is not available while updating database '%s'. Do you want to continue updating this database (information of this drive/directory stored in the database will be lost)?
@@ -1339,6 +1339,7 @@ STR_PRIORITY_NORMAL=normal
 STR_PRIORITY_BELOWNORMAL=below normal
 STR_PRIORITY_LOW=low
 STR_PRIORITY_IDLE=idle
+STR_PRIORITY_BACKGROUND=background
 
 
 # Text in this help dialog is in a file named helptext.txt, translate this file also

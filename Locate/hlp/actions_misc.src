@@ -15,7 +15,7 @@ to the window (e.g., "0x00345A45") or one of the following: HWND_BROADCAST, LOCA
 Find(class,name) (finding a window which class contains text "class" and name contais "name").
 <b>Msg</b> is the message (integer value). <b>wParam</b> and <b>lParam</b> can be DWORD values 
 (e.g., 0x0123A34B) or data in the same form as in "File containing text" field (see <A href="issue_datasearch.htm">this</A>). 
-<b>These actions can cause Locate32, other programs or even Widnows 
+<b>These actions can cause Locate32, other programs or even Windows 
 to crash or function improperly. USE ONLY IF YOU KNOW WHAT YOU ARE DOING!</b>
 </p>
 

@@ -295,6 +295,7 @@ private:
 	DWORD_PTR m_dwData;
 #ifdef WIN32
 	HANDLE m_hThread;
+	int m_nThreadPriority;
 	volatile LONG m_lForceQuit;
 #endif
 

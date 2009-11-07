@@ -1772,6 +1772,7 @@ void CLocateDlg::SaveResultlistActions()
 
 void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo,int nItem,DetailType nDetail)
 {
+	DebugFormatMessage("CLocateDlg::OnExecuteResultAction(%d,%X,%d,%d)",m_nResultAction,pExtraInfo,nItem,nDetail);
 	switch (m_nResultAction)
 	{
 	case CAction::Execute:
@@ -2206,8 +2207,7 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 		struct FolderInfo{
 			CStringW sFolder;
 			CArrayFAP<LPCWSTR> aItems;
-
-			FolderInfo(LPCWSTR szFolder) { sFolder=szFolder;}
+			FolderInfo(LPCWSTR szFolder) { sFolder=szFolder;  }
 		};
 		CArrayFP<FolderInfo*> aFolders;
 
@@ -2260,11 +2260,8 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 				{
 					if (aFolders[j]->sFolder.Compare(pItems[i]->GetParent())==0)
 					{
-						if (!pItems[i]->IsDeleted())
-						{
-							DebugFormatMessage("New dir for existing item: %S",pItems[i]->GetName());
-							aFolders[j]->aItems.Add(alloccopy(pItems[i]->GetName()));
-						}
+						DebugFormatMessage("New dir for existing item: %S",pItems[i]->GetName());
+						aFolders[j]->aItems.Add(alloccopy(pItems[i]->GetName()));
 						break;
 					}
 				}
@@ -2273,8 +2270,7 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 				{
 					DebugFormatMessage("New parent/dir pair %S / %S",(LPCWSTR)pItems[i]->GetParentSafe(),pItems[i]->GetName());
 					aFolders.Add(new FolderInfo(pItems[i]->GetParent()));
-					if (!pItems[i]->IsDeleted())
-						aFolders.GetLast()->aItems.Add(alloccopy(pItems[i]->GetName()));
+					aFolders.GetLast()->aItems.Add(alloccopy(pItems[i]->GetName()));
 				}
 			}
 		}
@@ -2342,8 +2338,12 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 						// Opening folder and selecting items
 						if (nPids>0)
 							hRes=pSHOpenFolderAndSelectItems(pParentIDList,nPids,pItemPids,0);
-						else
+						else 
+						{
+							if (aFolders[i]->aItems.GetSize()>0) 
+								OpenFolder(sFolder); // All files deleted, just open directory
 							hRes=S_OK;
+						}
 						
 						// Free 
 						for (int j=0;j<nPids;j++)
