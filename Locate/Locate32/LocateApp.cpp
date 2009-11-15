@@ -91,6 +91,9 @@ BOOL CLocateApp::InitInstance()
 	
 	// Initializing locater library
 	InitLocaterLibrary();
+	
+	// Initialize buffers
+	InitializeBuffers();
 
 
 	if (!IsUnicodeSystem())
@@ -281,6 +284,10 @@ int CLocateApp::ExitInstance()
 	}
 
 	FinalizeCommonRegKey();
+
+	// DeInitialize buffers
+	DeinitializeBuffers();
+
 	return 0;
 }
 
@@ -1671,11 +1678,12 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 		
 	}
 
-	if (dwTimeLen==0 && dwDateLen>0)
+	if (dwTimeLen==0 && dwDateLen>0) 
 		return alloccopy(szDate,dwDateLen);
+
 	if (dwDateLen==0 && dwTimeLen>0)
 		return alloccopy(szTime,dwTimeLen);
-
+	
 	// Combine date and time
 	WCHAR* pRet=new WCHAR[dwDateLen+dwTimeLen+2];
 	MemCopyW(pRet,szDate,dwDateLen);
@@ -1687,7 +1695,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 
 LPWSTR CLocateApp::FormatFileSizeString(DWORD dwFileSizeLo,DWORD bFileSizeHi) const
 {
- 	WCHAR* szRet=new WCHAR[40];
+	WCHAR* szRet=new WCHAR[40];
 	WCHAR szUnit[10];
 	BOOL bDigits=0;
 		

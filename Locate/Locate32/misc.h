@@ -47,6 +47,27 @@ BOOL GetIMAPIBurningDevices(CArray<LPWSTR>& aDevicePaths);
 BOOL RegisterDataTimeExCltr();
 
 
+////////////////////////////////////////////////////////////
+// Buffer allocation
+void InitializeBuffers();
+void DeinitializeBuffers();
+
+void AssignBuffer(void* pBuffer,DWORD id=0); // id=0, use thread ID
+void FreeBuffers(DWORD id=0);
+
+inline LPSTR GetBuffer(size_t len,DWORD id=0)
+{
+	LPSTR pBuffer=new char[len];
+	AssignBuffer(pBuffer,id);
+	return pBuffer;
+}
+
+inline LPWSTR GetBufferW(size_t len,DWORD id=0)
+{
+	LPWSTR pBuffer=new WCHAR[len];
+	AssignBuffer(pBuffer,id);
+	return pBuffer;
+}
 
 ////////////////////////////////////////////////////////////
 // Classes

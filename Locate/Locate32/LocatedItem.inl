@@ -12,12 +12,8 @@ inline LPWSTR CLocatedItem::FormatAttributes() const
 {
 	if (!IsDeleted())
 	{
-		ISDLGTHREADOK
-		if (g_szwBuffer!=NULL)
-			delete[] g_szwBuffer;
-		g_szwBuffer=new WCHAR[12];
-
-		LPWSTR pPtr=g_szwBuffer;
+		LPWSTR szwBuffer=GetBufferW(12);;
+		LPWSTR pPtr=szwBuffer;
 
 		if (IsJunkction())
 			*(pPtr++)=L'J';
@@ -38,7 +34,7 @@ inline LPWSTR CLocatedItem::FormatAttributes() const
 		if (IsEncrypted())
 			*(pPtr++)=L'E';
 		*pPtr=L'\0';
-		return g_szwBuffer;
+		return szwBuffer;
 	}
 	return const_cast<LPWSTR>(szwEmpty);
 }
@@ -54,11 +50,9 @@ inline LPWSTR CLocatedItem::FormatImageInformation() const
 		if (dim.cx==0 || dim.cy==0)
 			return const_cast<LPWSTR>(szwEmpty);	
 		
-		if (g_szwBuffer!=NULL)
-			delete[] g_szwBuffer;
-		g_szwBuffer=new WCHAR[30];
-		StringCbPrintfW(g_szwBuffer,30*sizeof(WCHAR),L"%dx%d",dim.cx,dim.cy);
-		return g_szwBuffer;
+		LPWSTR szwBuffer=GetBufferW(30);
+		StringCbPrintfW(szwBuffer,30*sizeof(WCHAR),L"%dx%d",dim.cx,dim.cy);
+		return szwBuffer;
 	}
     return const_cast<LPWSTR>(szwEmpty);	
 }
@@ -74,13 +68,11 @@ inline LPWSTR CLocatedItem::FormatPages() const
 		if (pInfo->nPages==0)
 			return const_cast<LPWSTR>(szwEmpty);	
 
-		if (g_szwBuffer!=NULL)
-			delete[] g_szwBuffer;
-		g_szwBuffer=new WCHAR[11];
-		_ultow_s(pInfo->nPages,g_szwBuffer,11,10);
-		return g_szwBuffer;
+		LPWSTR szwBuffer=GetBufferW(11);
+		_ultow_s(pInfo->nPages,szwBuffer,11,10);
+		return szwBuffer;
 	}
-	return const_cast<LPWSTR>(szwEmpty);	
+	return const_cast<LPWSTR>(szwEmpty);		
 }
 
 inline LPWSTR CLocatedItem::GetDetailText(DetailType nDetailType) const
@@ -100,35 +92,39 @@ inline LPWSTR CLocatedItem::GetDetailText(DetailType nDetailType) const
 	case FullPath:
 		return GetPath();
 	case FileSize:
-		ISDLGTHREADOK
-		if (GetFileSizeLo()==DWORD(-1))
-			return const_cast<LPWSTR>(szwEmpty);
-		if (g_szwBuffer!=NULL)
-			delete[] g_szwBuffer;
-		return (g_szwBuffer=((CLocateApp*)GetApp())->FormatFileSizeString(
-			GetFileSizeLo(),GetFileSizeHi()));
+		{
+			if (GetFileSizeLo()==DWORD(-1))
+				return const_cast<LPWSTR>(szwEmpty);
+			LPWSTR pBuffer=((CLocateApp*)GetApp())->FormatFileSizeString(
+				GetFileSizeLo(),GetFileSizeHi());
+			AssignBuffer(pBuffer);
+			return pBuffer;
+		}
 	case FileType:
 		if (GetType()==NULL)
 			return const_cast<LPWSTR>(szwEmpty);
 		return GetType();
 	case DateModified:
-		ISDLGTHREADOK
-		if (g_szwBuffer!=NULL)
-			delete[] g_szwBuffer;
-		return (g_szwBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
-			GetModifiedDate(),GetModifiedTime()));
+		{
+			LPWSTR pBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
+				GetModifiedDate(),GetModifiedTime());
+			AssignBuffer(pBuffer);
+			return pBuffer;
+		}
 	case DateCreated:
-		ISDLGTHREADOK
-		if (g_szwBuffer!=NULL)
-			delete[] g_szwBuffer;
-		return (g_szwBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
-			GetCreatedDate(),GetCreatedTime()));
+		{
+			LPWSTR pBuffer=(((CLocateApp*)GetApp())->FormatDateAndTimeString(
+				GetCreatedDate(),GetCreatedTime()));
+			AssignBuffer(pBuffer);
+			return pBuffer;
+		}
 	case DateAccessed:
-		ISDLGTHREADOK
-		if (g_szwBuffer!=NULL)
-			delete[] g_szwBuffer;
-		return (g_szwBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
-			GetAccessedDate(),GetAccessedTime()));
+		{
+			LPWSTR pBuffer=((CLocateApp*)GetApp())->FormatDateAndTimeString(
+				GetAccessedDate(),GetAccessedTime());
+			AssignBuffer(pBuffer);
+			return pBuffer;
+		}
 	case Attributes:
 		return FormatAttributes();				
 	case Owner:

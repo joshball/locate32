@@ -164,9 +164,81 @@ void CResults::InitializeSystemImageList(int cx)
 }
 
 
-
-void CResults::Close()
+BOOL CResults::OnInitDialog(HWND hwndFocus)
 {
+	CDialog::OnInitDialog(hwndFocus);
+	SetTimer(0,100);
+	ResumeThread(m_hThread);
+	return FALSE;
+}
+
+void CResults::OnTimer(DWORD wTimerID)
+{
+	SendDlgItemMessage(IDC_PROGRESS,PBM_SETPOS,m_nProgressState);
+}
+	
+BOOL CResults::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
+{
+	switch (wID)
+	{
+	case IDCANCEL:
+		{
+			InterlockedExchange((LONG*)&m_bQuit,TRUE);
+			
+			DWORD status=0;
+			BOOL bRet=::GetExitCodeThread(m_hThread,&status);
+			if (bRet && status==STILL_ACTIVE)
+				WaitForSingleObject(m_hThread,750);
+			
+			bRet=::GetExitCodeThread(m_hThread,&status);
+			if (bRet && status==STILL_ACTIVE)
+			{
+				TerminateThread(m_hThread,1,TRUE);
+
+				CFile* p=dynamic_cast<CFile*>(m_pOutput);
+				if (p!=NULL)
+				{
+					CancelIo(*p);
+				}
+			
+				p=dynamic_cast<CFile*>(m_pTemplate);
+				if (p!=NULL)
+				{
+					CancelIo(*p);
+				}
+			
+				p=dynamic_cast<CFile*>(m_pTmpFile);
+				if (p!=NULL)
+				{
+					CancelIo(*p);
+				}
+			}
+
+			EndDialog(1);
+			break;
+		}
+	}
+	return CDialog::OnCommand(wID,wNotifyCode,hControl);
+}
+
+void CResults::ClearVariables()
+{
+	if (m_pTmpFile!=NULL)
+	{
+		delete m_pTmpFile;
+		m_pTmpFile=NULL;
+	}
+
+	if (!m_sFile.IsEmpty() && m_pOutput!=NULL)
+		delete m_pOutput;
+	m_pOutput=NULL;
+
+	if (m_pTemplate!=NULL)
+	{
+		delete m_pTemplate;
+		m_pTemplate=NULL;
+	}
+
 	if (m_pSelectedDetails!=NULL)
 	{
 		delete[] m_pSelectedDetails;
@@ -207,7 +279,7 @@ BOOL CResults::Create(CListCtrl* pList,int* pSelectedDetails,int nSelectedDetail
 	if (bDataToTmpFile)
 	{
 		// Save details to temporary file
-		CFile tmpFile(m_sTempFile,CFile::defWrite,TRUE);
+		m_pTmpFile=new CFile(m_sTempFile,CFile::defWrite,TRUE);
 		int nItem=pList->GetNextItem(-1,mask);
 		while (nItem!=-1)
 		{
@@ -229,8 +301,8 @@ BOOL CResults::Create(CListCtrl* pList,int* pSelectedDetails,int nSelectedDetail
 						m_pLengths[i]=dwLength;
 					
 					//Writing detail to temp file
-					tmpFile.Write(dwLength);
-					tmpFile.Write(szDetail,dwLength);
+					m_pTmpFile->Write(dwLength);
+					m_pTmpFile->Write(szDetail,dwLength);
 				}
 				
 				// Count results
@@ -256,6 +328,9 @@ BOOL CResults::Create(CListCtrl* pList,int* pSelectedDetails,int nSelectedDetail
 			}
 			nItem=pList->GetNextItem(nItem,mask);
 		}
+
+		delete m_pTmpFile;
+		m_pTmpFile=NULL;
 	}
 	else
 	{
@@ -294,32 +369,164 @@ BOOL CResults::Create(CListCtrl* pList,int* pSelectedDetails,int nSelectedDetail
 	return TRUE;
 }
 
-BOOL CResults::SaveToFile(LPCWSTR szFile) const
+BOOL CResults::SaveToFile(LPCWSTR szFile,BOOL bHTML,LPCWSTR szTemplate)
 {
-	ASSERT(m_Items.GetSize()==0);
+	ASSERT(m_pOutput==NULL);
 
 	// Opening files
-	CFileEncode outFile(szFile,CFile::defWrite,TRUE);
-	CFile tmpFile(m_sTempFile,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
-	outFile.CloseOnDelete();
-	tmpFile.CloseOnDelete();
-
+	m_sFile=szFile;
+	CFileEncode *pFile=new CFileEncode(szFile,CFile::defWrite,TRUE);
+	m_pOutput=pFile;
+	pFile->CloseOnDelete();
+	
 	if (m_dwFlags&RESULT_ENCODINGUTF8)
-		outFile.SetEncoding(CFileEncode::UTF8);
+		pFile->SetEncoding(CFileEncode::UTF8);
 	else if (m_dwFlags&RESULT_ENCODINGUNICODE)
-		outFile.SetEncoding(CFileEncode::Unicode);
+		pFile->SetEncoding(CFileEncode::Unicode);
 	else
-		outFile.SetEncoding(CFileEncode::ANSI);
+		pFile->SetEncoding(CFileEncode::ANSI);
 	
+	return Start(bHTML,szTemplate);
+}
 
 
+BOOL CResults::SaveToStream(CStream* stream,BOOL bHTML,LPCWSTR szTemplate)
+{
+	ASSERT(m_pOutput==NULL);
+
+	m_pOutput=stream;
+	m_sFile.Empty();
+	return Start(bHTML,szTemplate);
+}
+
+BOOL CResults::Start(BOOL bHTML,LPCWSTR szTemplate)
+{
+	ASSERT(m_pOutput!=NULL);
+
+	m_bSaveHTML=bHTML;
+	if (szTemplate!=NULL)
+		m_sTemplateFile=szTemplate;
+	else
+		m_sTemplateFile.Empty();
+	m_bQuit=FALSE;
 	
+	// Start process
+	DWORD dwThreadID;
+	m_hThread=CreateThread(NULL,0,SaveToFileProc,this,CREATE_SUSPENDED,&dwThreadID);
+
+	// Open progress dialog
+	DoModal(GetLocateDlg()!=NULL?(HWND)*GetLocateDlg():NULL);
+	return TRUE;
+}
+
+
+
+
+DWORD WINAPI CResults::SaveToFileProc(LPVOID lpParameter)
+{
+	try {
+		if (!((CResults*)lpParameter)->m_bSaveHTML)
+			((CResults*)lpParameter)->SaveToFile();
+		else if (((CResults*)lpParameter)->m_sTemplateFile.IsEmpty())
+			((CResults*)lpParameter)->SaveToHtml();
+		else
+			((CResults*)lpParameter)->SaveToHtmlTemplate();
+	}
+	catch (CFileException ex)
+	{
+		if (ex.m_cause==CFileException::invalidFile)
+		{
+			((CResults*)lpParameter)->ShowErrorMessage(IDS_SAVERESULTSINVALIDFORMAT,IDS_ERROR);
+			return 0;
+		}
+		else if (ex.m_lOsError!=-1)
+		{
+			WCHAR* pError=CLocateApp::FormatLastOsError();
+			if (pError!=NULL)
+			{
+				CStringW str;
+				str.Format(IDS_SAVERESULTSCANNOTSAVERESULTS,pError);
+				while (str.LastChar()=='\n' || str.LastChar()=='\r')
+				str.DelLastChar();
+				((CResults*)lpParameter)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+				LocalFree(pError);
+				return 0;
+			}
+			
+		}
+		
+		char szError[2000];
+		ex.GetErrorMessage(szError,2000);
+		((CResults*)lpParameter)->MessageBox(A2W(szError),ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+		return 0;
+
+	}
+	catch (CException ex)
+	{
+		if (ex.m_lOsError!=-1)
+		{
+			WCHAR* pError=CLocateApp::FormatLastOsError();
+			if (pError!=NULL)
+			{
+				CStringW str;
+				str.Format(IDS_SAVERESULTSCANNOTSAVERESULTS,pError);
+				while (str.LastChar()=='\n' || str.LastChar()=='\r')
+				str.DelLastChar();
+				((CResults*)lpParameter)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+				LocalFree(pError);
+				return 0;
+			}
+			
+		}
+		
+		char szError[2000];
+		ex.GetErrorMessage(szError,2000);
+		((CResults*)lpParameter)->MessageBox(A2W(szError),ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+	}
+	catch (...)
+	{
+		WCHAR* pError=CLocateApp::FormatLastOsError();
+		CStringW str;
+		if (pError!=NULL)
+		{
+			str.Format(IDS_SAVERESULTSCANNOTSAVERESULTS,pError);
+			LocalFree(pError);
+		}
+		else
+			str.Format(IDS_SAVERESULTSCANNOTSAVERESULTS,(LPCWSTR)ID2W(IDS_UNKNOWN));
+
+		while (str.LastChar()=='\n' || str.LastChar()=='\r')
+		str.DelLastChar();
+		((CResults*)lpParameter)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
+		return 0;
+	}
+
+	((CResults*)lpParameter)->SendDlgItemMessage(IDC_PROGRESS,PBM_SETPOS,((CResults*)lpParameter)->m_nProgressState);
+	((CResults*)lpParameter)->EndDialog(1);
+	return 1;
+}
+
+
+
+BOOL CResults::SaveToFile()
+{
+	ASSERT(m_Items.GetSize()==0);
+	ASSERT_VALID(m_pOutput);
+
+	SendDlgItemMessage(IDC_PROGRESS,PBM_SETRANGE32,0,m_nResults+3);
+	m_nProgressState=0;
+	
+	m_pTmpFile=new CFile(m_sTempFile,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
+	((CFile*)m_pTmpFile)->CloseOnDelete();
+
+
 	// Writing header
+	if (m_dwFlags&RESULT_INCLUDESUMMARY)
 	{
 		CStringW str;
 		str.Format(IDS_SAVERESULTSHEADER,m_nResults,m_nFiles,m_nDirectories);
-		outFile.Write(str);
-		outFile.Write(L"\r\n",2);
+		m_pOutput->Write(str);
+		m_pOutput->Write(L"\r\n",2);
 	}
 
 
@@ -339,7 +546,9 @@ BOOL CResults::SaveToFile(LPCWSTR szFile) const
 		}
 	}
 
-	
+	if (m_bQuit) 
+		return FALSE;
+
 	// Checking the fields tallest length
 	DWORD dwMaxLength=0;
 	for (int i=0;i<m_nSelectedDetails;i++)
@@ -348,6 +557,8 @@ BOOL CResults::SaveToFile(LPCWSTR szFile) const
 			dwMaxLength=m_pLengths[i];
 	}
 
+	m_nProgressState=1;
+	
 	// Initializing buffers
 	CAllocArrayTmpl<WCHAR> szBuffer(dwMaxLength+3,TRUE);
 	CAllocArrayTmpl<WCHAR> szSpaces(dwMaxLength+2,TRUE);
@@ -356,8 +567,8 @@ BOOL CResults::SaveToFile(LPCWSTR szFile) const
 	if (m_dwFlags&RESULT_INCLUDEDATE)
 	{
 		WCHAR szDate[200];
-		outFile.Write(ID2W(IDS_SAVERESULTSDATE));
-		outFile.Write(L' ');
+		m_pOutput->Write(ID2W(IDS_SAVERESULTSDATE));
+		m_pOutput->Write(L" ");
 		DWORD dwLength;
 		if (IsUnicodeSystem())
 			dwLength=GetDateFormatW(NULL,DATE_SHORTDATE,NULL,NULL,szDate,200);
@@ -368,7 +579,7 @@ BOOL CResults::SaveToFile(LPCWSTR szFile) const
 			MemCopyAtoW(szDate,szDateA,dwLength);
 		}
 		szDate[dwLength-1]=' ';
-		outFile.Write(szDate,dwLength);
+		m_pOutput->Write(szDate,dwLength);
 		if (IsUnicodeSystem())
 			dwLength=GetTimeFormatW(NULL,0,NULL,NULL,szDate,200)-1;
 		else
@@ -379,20 +590,20 @@ BOOL CResults::SaveToFile(LPCWSTR szFile) const
 		}
 		szDate[dwLength++]='\r';
 		szDate[dwLength++]='\n';
-		outFile.Write(szDate,dwLength);
+		m_pOutput->Write(szDate,dwLength);
 	}
 
 	if (m_dwFlags&RESULT_INCLUDEDESCRIPTION)
 	{
-		outFile.Write(m_strDescription);
-		outFile.Write(L"\r\n",2);
+		m_pOutput->Write(m_strDescription);
+		m_pOutput->Write(L"\r\n",2);
 	}
 
 	if (m_dwFlags&RESULT_INCLUDEDBINFO && m_aFromDatabases.GetSize()>0)
 	{
 		CStringW str(IDS_SAVERESULTSDBCAPTION);
-		outFile.Write(str);
-		outFile.Write(L"\r\n",2);
+		m_pOutput->Write(str);
+		m_pOutput->Write(L"\r\n",2);
 
 		for (int i=0;i<m_aFromDatabases.GetSize();i++)
 		{
@@ -400,133 +611,143 @@ BOOL CResults::SaveToFile(LPCWSTR szFile) const
 			str.Format(IDS_SAVERESULTSDB,pDatabase->GetName(),
 				pDatabase->GetCreator(),pDatabase->GetDescription(),
 				pDatabase->GetArchiveName());
-			outFile.Write(str);
-			outFile.Write(L"\r\n",2);
+			m_pOutput->Write(str);
+			m_pOutput->Write(L"\r\n",2);
 		}
 	}
 
-	outFile.Write(L"\r\n",2);
+	m_nProgressState=2;
+	
+	if (m_bQuit) 
+		return FALSE;
+
+	if (m_dwFlags&(RESULT_INCLUDEDATE|RESULT_INCLUDEDBINFO|RESULT_INCLUDEDESCRIPTION|RESULT_INCLUDESUMMARY))
+		m_pOutput->Write(L"\r\n",2);
 
 	if (m_dwFlags&RESULT_INCLUDELABELS && m_nSelectedDetails>0)
 	{
 		int i;
 		for (i=0;i<m_nSelectedDetails-1;i++)
 		{
-			outFile.Write((LPCWSTR)pLabels[i],(DWORD)pLabels[i].GetLength());
-			outFile.Write(szSpaces,m_pLengths[i]-(DWORD)pLabels[i].GetLength()+2);
+			m_pOutput->Write((LPCWSTR)pLabels[i],(DWORD)pLabels[i].GetLength());
+			m_pOutput->Write((LPCWSTR)szSpaces,m_pLengths[i]-(DWORD)pLabels[i].GetLength()+2);
 		}
 
-		outFile.Write(pLabels[i]);
-		outFile.Write(L"\r\n",2);
+		m_pOutput->Write(pLabels[i]);
+		m_pOutput->Write(L"\r\n",2);
 	}
 
 	if (m_nSelectedDetails==0)
 		return TRUE;
 
+	m_nProgressState=3;
+	
 	// Saving data to files
-	for (int nRes=0;nRes<m_nResults;nRes++)
+	for (int nRes=0;nRes<m_nResults && !m_bQuit;nRes++)
 	{
 		DWORD dwLength;
 		    
 		for (int i=0;i<m_nSelectedDetails-1;i++)
 		{
 			// Reading length and data
-			tmpFile.Read(dwLength);
-			tmpFile.Read((void*)(LPWSTR)szBuffer,dwLength*2);
+			m_pTmpFile->Read(dwLength);
+			m_pTmpFile->Read((void*)(LPWSTR)szBuffer,dwLength*2);
 
-			outFile.Write(szBuffer,dwLength);
-			outFile.Write(szSpaces,m_pLengths[i]-dwLength+2);
+			m_pOutput->Write((LPCWSTR)szBuffer,dwLength);
+			m_pOutput->Write((LPCWSTR)szSpaces,m_pLengths[i]-dwLength+2);
 		}
 
-		tmpFile.Read(dwLength);
-		tmpFile.Read((void*)(LPWSTR)szBuffer,dwLength*2);
+		m_pTmpFile->Read(dwLength);
+		m_pTmpFile->Read((void*)(LPWSTR)szBuffer,dwLength*2);
 
 		szBuffer[dwLength++]='\r';
 		szBuffer[dwLength++]='\n';
-		outFile.Write(szBuffer,dwLength);
+		m_pOutput->Write((LPCWSTR)szBuffer,dwLength);
+
+
+		m_nProgressState++;
+	
 	}
 
 	return TRUE;
 }
 
-BOOL CResults::SaveToHtmlFile(LPCWSTR szFile) const
+BOOL CResults::SaveToHtml()
 {
 	ASSERT(m_Items.GetSize()==0);
+	ASSERT_VALID(m_pOutput);
+	
+	SendDlgItemMessage(IDC_PROGRESS,PBM_SETRANGE32,0,m_nResults+3);
+	m_nProgressState=0;
 
-	// Opening files
-	CFileEncode outFile(szFile,CFile::defWrite,TRUE);
-	CFile tmpFile(m_sTempFile,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
-	outFile.CloseOnDelete();
-	tmpFile.CloseOnDelete();
-
-	LPCWSTR pCharset;
-	if (m_dwFlags&RESULT_ENCODINGUTF8)
-	{
-		outFile.SetEncoding(CFileEncode::UTF8);
-		pCharset=L"UTF-8";
-	}
-	else if (m_dwFlags&RESULT_ENCODINGUNICODE)
-	{
-		outFile.SetEncoding(CFileEncode::Unicode);
-		pCharset=L"UTF-16";
-	}
-	else
-	{
-		outFile.SetEncoding(CFileEncode::ANSI);
-		pCharset=L"iso-8859-1";
-	}
-
-
+	m_pTmpFile=new CFile(m_sTempFile,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
+	((CFile*)m_pTmpFile)->CloseOnDelete();
+	
+	
 	CStringW str;
 	
 	/* Header section BEGIN */
 	{
 		WCHAR pStr[]=L"<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n";
-		outFile.Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
+		m_pOutput->Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
 	}
 	{
 		WCHAR pStr[]=L"<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n";
-		outFile.Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
+		m_pOutput->Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
 	}
 	
-	str.Format(L"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\" />\n<style type=\"text/css\">\n",pCharset);
-	outFile.Write(str);
-	
+	{
+		LPCWSTR pCharset;
+		if (m_dwFlags&RESULT_ENCODINGUTF8)
+			pCharset=L"UTF-8";
+		else if (m_dwFlags&RESULT_ENCODINGUNICODE)
+			pCharset=L"UTF-16";
+		else
+			pCharset=L"iso-8859-1";
+		str.Format(L"<meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\" />\n<style type=\"text/css\">\n",pCharset);
+		m_pOutput->Write(str);
+	}	
+
 	{
 		WCHAR pStr[]=L"body { font-size: 11pt; }\ntable { border-style: none; margin-left: -10pt;} \n";
-		outFile.Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
+		m_pOutput->Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
 	}
 	{
 		WCHAR pStr[]=L"td { spacing: 10pt 2pt; padding: 1pt 10pt;}\n#databasetable_header { font-size: 12pt; font-weight: bold;}\n";
-		outFile.Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
+		m_pOutput->Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
 	}
 	{
 		WCHAR pStr[]=L"#resultstable_header { font-size: 12pt; font-weight: bold;}\n</style>\n";
-		outFile.Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
+		m_pOutput->Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
 	}
 	{
 		WCHAR pStr[]=L"<link rel=\"stylesheet\" href=\"loc_res.css\" type=\"text/css\" />\n<title>";
-		outFile.Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
+		m_pOutput->Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
 	}
 	str.LoadString(IDS_SAVERESULTSTITLE);
-	outFile.Write(str);
+	m_pOutput->Write(str);
 
 	{
 		WCHAR pStr[]=L"</title>\n</head>\n<body>\n<div id=\"header\">\n<h1>";
-		outFile.Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
+		m_pOutput->Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
 	}
 
 	str.LoadString(IDS_SAVERESULTSTITLE2);
-	outFile.Write(str);
+	m_pOutput->Write(str);
+	m_pOutput->Write(L"</h1>\n",6);
 
+	if (m_dwFlags&(RESULT_INCLUDEDATE|RESULT_INCLUDEDBINFO|RESULT_INCLUDEDESCRIPTION|RESULT_INCLUDESUMMARY))
+		m_pOutput->Write(L"<ul>\n",5);
+	
+	m_nProgressState=1;
+
+	if (m_dwFlags&RESULT_INCLUDESUMMARY)
 	{
-		WCHAR pStr[]=L"</h1>\n<ul>\n<li id=\"head_results\">";
-		outFile.Write(pStr,sizeof(pStr)/sizeof(WCHAR)-1);
+		m_pOutput->Write(L"<li id=\"head_results\">");
+		str.Format(IDS_SAVERESULTSHEADER,m_nResults,m_nFiles,m_nDirectories);
+		m_pOutput->Write(str);
+		m_pOutput->Write(L"</li>\n",6);
 	}
-
-	str.Format(IDS_SAVERESULTSHEADER,m_nResults,m_nFiles,m_nDirectories);
-	outFile.Write(str);
-	outFile.Write(L"</li>\n",6);
 
 	/* Header section END */
 
@@ -534,11 +755,11 @@ BOOL CResults::SaveToHtmlFile(LPCWSTR szFile) const
 	
 	if (m_dwFlags&RESULT_INCLUDEDATE)
 	{
-		outFile.Write(L"<li id=\"head_date\">");
+		m_pOutput->Write(L"<li id=\"head_date\">");
 
 		WCHAR szDate[200];
 		str.LoadString(IDS_SAVERESULTSDATE);
-		outFile.Write(str);
+		m_pOutput->Write(str);
 		DWORD dwLength;
 		if (IsUnicodeSystem())
 			dwLength=GetDateFormatW(NULL,DATE_SHORTDATE,NULL,NULL,szDate,200);
@@ -550,7 +771,7 @@ BOOL CResults::SaveToHtmlFile(LPCWSTR szFile) const
 		}
 
         szDate[dwLength-1]=L' ';
-		outFile.Write(szDate,dwLength);
+		m_pOutput->Write(szDate,dwLength);
 		if (IsUnicodeSystem())
 			dwLength=GetTimeFormatW(NULL,0,NULL,NULL,szDate,200)-1;
 		else
@@ -559,8 +780,8 @@ BOOL CResults::SaveToHtmlFile(LPCWSTR szFile) const
 			dwLength=GetTimeFormatA(NULL,0,NULL,NULL,szDateA,200)-1;
 			MemCopyAtoW(szDate,szDateA,dwLength);
 		}
-		outFile.Write(szDate,dwLength);
-		outFile.Write(L"</li>\n");
+		m_pOutput->Write(szDate,dwLength);
+		m_pOutput->Write(L"</li>\n",6);
 		
 	}
 	/* Date section END */
@@ -568,31 +789,31 @@ BOOL CResults::SaveToHtmlFile(LPCWSTR szFile) const
 	/* Description section BEGIN */
 	if (m_dwFlags&RESULT_INCLUDEDESCRIPTION)
 	{
-		outFile.Write(L"<li id=\"head_description\">");
-		outFile.Write(m_strDescription);
-		outFile.Write(L"</li>\n");
+		m_pOutput->Write(L"<li id=\"head_description\">");
+		m_pOutput->Write(m_strDescription);
+		m_pOutput->Write(L"</li>\n",6);
 	}
 	/* Description section END */
 	
 	/* Database section BEGIN */
 	if (m_dwFlags&RESULT_INCLUDEDBINFO && m_aFromDatabases.GetSize()>0)
 	{
-		outFile.Write(L"<li id=\"head_databases\">");
+		m_pOutput->Write(L"<li id=\"head_databases\">");
 		str.LoadString(IDS_SAVERESULTSDBCAPTION);
-		outFile.Write(str);
-		outFile.Write(L"\n<table id=\"databasetable\">\n<tr id=\"databasetable_header\">\n</td><td>");
+		m_pOutput->Write(str);
+		m_pOutput->Write(L"\n<table id=\"databasetable\">\n<tr id=\"databasetable_header\">\n</td><td>");
 		str.LoadString(IDS_SAVERESULTSDBNAME);
-		outFile.Write(str);
-		outFile.Write(L"</td><td>",9);
+		m_pOutput->Write(str);
+		m_pOutput->Write(L"</td><td>",9);
 		str.LoadString(IDS_SAVERESULTSDBCREATOR);
-		outFile.Write(str);
-		outFile.Write(L"</td><td>",9);
+		m_pOutput->Write(str);
+		m_pOutput->Write(L"</td><td>",9);
 		str.LoadString(IDS_SAVERESULTSDBDESCRIPTION);
-		outFile.Write(str);
-		outFile.Write(L"</td><td>",9);
+		m_pOutput->Write(str);
+		m_pOutput->Write(L"</td><td>",9);
 		str.LoadString(IDS_SAVERESULTSDBFILE);
-		outFile.Write(str);
-		outFile.Write(L"</td></tr>\n",11);
+		m_pOutput->Write(str);
+		m_pOutput->Write(L"</td></tr>\n",11);
 		
 		
 		
@@ -600,71 +821,84 @@ BOOL CResults::SaveToHtmlFile(LPCWSTR szFile) const
 		{
 			const CDatabase* pDatabase=GetLocateApp()->GetDatabase(m_aFromDatabases[i]);
 
-			outFile.Write(L"<tr><td>",8);
-			outFile.Write(pDatabase->GetName());
-			outFile.Write(L"</td><td>",9);
-			outFile.Write(pDatabase->GetCreator());
-			outFile.Write(L"</td><td>",9);
-			outFile.Write(pDatabase->GetDescription());
-			outFile.Write(L"</td><td>",9);
-			outFile.Write(pDatabase->GetArchiveName());
-			outFile.Write(L"</td></tr>",10);
+			m_pOutput->Write(L"<tr><td>",8);
+			m_pOutput->Write(pDatabase->GetName());
+			m_pOutput->Write(L"</td><td>",9);
+			m_pOutput->Write(pDatabase->GetCreator());
+			m_pOutput->Write(L"</td><td>",9);
+			m_pOutput->Write(pDatabase->GetDescription());
+			m_pOutput->Write(L"</td><td>",9);
+			m_pOutput->Write(pDatabase->GetArchiveName());
+			m_pOutput->Write(L"</td></tr>",10);
 
 		}
 		
-		outFile.Write(L"</table>\n</li>\n");
+		m_pOutput->Write(L"</table>\n</li>\n");
 		
 	}
-	outFile.Write(L"</ul>\n</div>\n");
+
+	if (m_dwFlags&(RESULT_INCLUDEDATE|RESULT_INCLUDEDBINFO|RESULT_INCLUDEDESCRIPTION|RESULT_INCLUDESUMMARY))
+		m_pOutput->Write(L"</ul>\n",6);
+	
+	m_pOutput->Write(L"</div>\n",7);
 	/* Database section END */
 	
+	m_nProgressState=2;
+
+	if (m_bQuit) 
+		return FALSE;
+
 
 	/* Results section BEGIN  */
-	outFile.Write(L"<div id=\"resultslist\">\n<table id=\"resulttable\">\n");
+	m_pOutput->Write(L"<div id=\"resultslist\">\n<table id=\"resulttable\">\n");
 	
 	if (m_dwFlags&RESULT_INCLUDELABELS && m_nSelectedDetails>0)
 	{
 		CAutoPtrA<CLocateDlg::ViewDetails> pDetails(CLocateDlg::GetDefaultDetails());
-		outFile.Write(L"<tr id=\"resultstable_header\">\n");
+		m_pOutput->Write(L"<tr id=\"resultstable_header\">\n");
 		
 		for (int i=0;i<m_nSelectedDetails;i++)
 		{
-			outFile.Write(L"<td>",4);
+			m_pOutput->Write(L"<td>",4);
 			str.LoadString(m_AllDetails[m_pSelectedDetails[i]].nString,LanguageSpecificResource);
-			outFile.Write(str);
-			outFile.Write(L"</td>",5);
+			m_pOutput->Write(str);
+			m_pOutput->Write(L"</td>",5);
 		}
 		
-		outFile.Write(L"\n</tr>\n",7);
+		m_pOutput->Write(L"\n</tr>\n",7);
 	}
 
-	
-	for (int nRes=0;nRes<m_nResults;nRes++)
+	m_nProgressState=3;
+
+	for (int nRes=0;nRes<m_nResults && !m_bQuit;nRes++)
 	{
-		outFile.Write(L"<tr>",4);
+		m_pOutput->Write(L"<tr>",4);
 		DWORD dwLength;
 			
 		for (int i=0;i<m_nSelectedDetails;i++)
 		{
-			outFile.Write(L"<td>",4);
+			m_pOutput->Write(L"<td>",4);
 
 			// Reading length and data
-			tmpFile.Read(dwLength);
+			m_pTmpFile->Read(dwLength);
 			
 			if (dwLength>0)
 			{
 				WCHAR* szBuffer=new WCHAR[dwLength];
-				tmpFile.Read((LPSTR)szBuffer,dwLength*2);
-				outFile.Write(szBuffer,dwLength);
+				m_pTmpFile->Read((LPSTR)szBuffer,dwLength*2);
+				m_pOutput->Write(szBuffer,dwLength);
 				delete[] szBuffer;
 			}
-			outFile.Write(L"</td>",5);			
+			m_pOutput->Write(L"</td>",5);			
 		}
 
-		outFile.Write(L"</tr>\n",6);
+		m_pOutput->Write(L"</tr>\n",6);
+
+
+		m_nProgressState++;
 	}
 	
-	outFile.Write(L"</table>\n</div>\n</body>\n</html>\n");
+	m_pOutput->Write(L"</table>\n</div>\n</body>\n</html>\n");
 	
 	/* Results section END */
 	
@@ -672,36 +906,31 @@ BOOL CResults::SaveToHtmlFile(LPCWSTR szFile) const
 }
 
 
-BOOL CResults::SaveToHtmlFile(LPCWSTR szFile,LPCWSTR szTemplate)
+BOOL CResults::SaveToHtmlTemplate()
 {	
 	ASSERT(m_nResults==m_Items.GetSize());
-
+	ASSERT_VALID(m_pOutput);
+	
+	SendDlgItemMessage(IDC_PROGRESS,PBM_SETRANGE32,0,m_nResults);
+	m_nProgressState=0;
+	
+	
 	// Opening files
 	CStringW str;
 	CAutoPtrA<WCHAR> pBuffer;
 	DWORD dwTemplateLen=0;
-	CFileEncode outFile(szFile,CFile::defWrite,TRUE);
-	CFile tmpFile(m_sTempFile,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
-	outFile.CloseOnDelete();
-	tmpFile.CloseOnDelete();
-	
-	if (m_dwFlags&RESULT_ENCODINGUTF8)
-	{
-		outFile.SetEncoding(CFileEncode::UTF8);
-		SetVariable("CHARSET",L"UTF-8");
-	}
-	else if (m_dwFlags&RESULT_ENCODINGUNICODE)
-	{
-		outFile.SetEncoding(CFileEncode::Unicode);
-		SetVariable("CHARSET",L"UTF-16");
-	}
-	else
-	{
-		outFile.SetEncoding(CFileEncode::ANSI);
-		SetVariable("CHARSET",L"iso-8859-1");
-	}
 
+	m_pTmpFile=new CFile(m_sTempFile,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
+	((CFile*)m_pTmpFile)->CloseOnDelete();
+	
+	
 	// Initialize variables
+	if (m_dwFlags&RESULT_ENCODINGUTF8)
+		SetVariable("CHARSET",L"UTF-8");
+	else if (m_dwFlags&RESULT_ENCODINGUNICODE)
+		SetVariable("CHARSET",L"UTF-16");
+	else
+		SetVariable("CHARSET",L"iso-8859-1");
 	
 	// Labels
 	SetVariable("TOOLBARTITLE",ID2W(IDS_SAVERESULTSTITLE));
@@ -714,18 +943,19 @@ BOOL CResults::SaveToHtmlFile(LPCWSTR szFile,LPCWSTR szTemplate)
 	SetVariable("DBFILELABEL",ID2W(IDS_SAVERESULTSDBFILE));
 	
 	
+	SetVariable("INCLUDESUMMARY",(m_dwFlags&RESULT_INCLUDESUMMARY)?TRUE:FALSE);
 	SetVariable("INCLUDEDATE",(m_dwFlags&RESULT_INCLUDEDATE)?TRUE:FALSE);
 	SetVariable("INCLUDEDESCRIPTION",(m_dwFlags&RESULT_INCLUDEDESCRIPTION)?TRUE:FALSE);
 	SetVariable("INCLUDEDBINFO",(m_dwFlags&RESULT_INCLUDEDBINFO)?TRUE:FALSE);
 	SetVariable("INCLUDECOLUMNLABELS",(m_dwFlags&RESULT_INCLUDELABELS)?TRUE:FALSE);
 
 	
-	int nDirectoryLen=LastCharIndex(szFile,L'\\');
-	LPCWSTR szFileName=szFile+nDirectoryLen+1;
+	int nDirectoryLen=m_sFile.FindLast(L'\\');
+	LPCWSTR szFileName=(LPCWSTR)m_sFile+nDirectoryLen+1;
 	int nExtensionPos=LastCharIndex(szFileName,L'.');
 	
-	SetVariable("RESULTSFILE_PATH",szFile);
-	SetVariable("RESULTSFILE_DIRECTORY",CStringW(szFile,nDirectoryLen));
+	SetVariable("RESULTSFILE_PATH",m_sFile);
+	SetVariable("RESULTSFILE_DIRECTORY",CStringW(m_sFile,nDirectoryLen));
 	SetVariable("RESULTSFILE_NAME",szFileName);
 	if (nExtensionPos>0)
 	{
@@ -782,64 +1012,72 @@ BOOL CResults::SaveToHtmlFile(LPCWSTR szFile,LPCWSTR szTemplate)
 
 	
 
+	if (m_bQuit) 
+		return FALSE;
 
 
 
 	{
 		// Read template file to memory
-		CFile tmlFile(szTemplate,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
-		tmlFile.CloseOnDelete();
-		dwTemplateLen=tmlFile.GetLength();
+		m_pTemplate=new CFile(m_sTemplateFile,CFile::defRead|CFile::otherErrorWhenEOF,TRUE);
+		m_pTemplate->CloseOnDelete();
+		dwTemplateLen=m_pTemplate->GetLength();
 		
 		// Check encoding
 		BYTE pTestBuffer[4];
-		tmlFile.Read(pTestBuffer,4);
+		m_pTemplate->Read(pTestBuffer,4);
 		if (pTestBuffer[0]==0xFF && pTestBuffer[1]==0xFE)
 		{
 			// Unicode file
-			tmlFile.Seek(2,CFile::begin);
+			m_pTemplate->Seek(2,CFile::begin);
 			dwTemplateLen-=2;
 			dwTemplateLen/=2;
 			pBuffer.Attach(new WCHAR[dwTemplateLen+2]);
-			tmlFile.Read((BYTE*)(WCHAR*)pBuffer,dwTemplateLen*2);
+			m_pTemplate->Read((BYTE*)(WCHAR*)pBuffer,dwTemplateLen*2);
 		}
 		else if (pTestBuffer[0]!=0 && pTestBuffer[1]==0 && pTestBuffer[2]!=0 && pTestBuffer[3]==0)
 		{
 			// Probable Unicode
-			tmlFile.SeekToBegin();
+			m_pTemplate->SeekToBegin();
 			dwTemplateLen/=2;
 			pBuffer.Attach(new WCHAR[dwTemplateLen+2]);
-			tmlFile.Read((BYTE*)(WCHAR*)pBuffer,dwTemplateLen*2);
+			m_pTemplate->Read((BYTE*)(WCHAR*)pBuffer,dwTemplateLen*2);
 		}
 		else
 		{
 			// ANSI
 			CAutoPtrA<char> pBufferA;
-			tmlFile.SeekToBegin();
+			m_pTemplate->SeekToBegin();
 			pBufferA.Attach(new char[dwTemplateLen+2]);
 			pBuffer.Attach(new WCHAR[dwTemplateLen+2]);
-			tmlFile.Read((char*)pBufferA,dwTemplateLen);
+			m_pTemplate->Read((char*)pBufferA,dwTemplateLen);
 			MultiByteToWideChar(CP_ACP,0,pBufferA,dwTemplateLen,pBuffer,dwTemplateLen);
 		}
 		
 		pBuffer[dwTemplateLen]='\0';
 		pBuffer[dwTemplateLen+1]='\0';
-		tmlFile.Close();
+	
+		delete m_pTemplate;
+		m_pTemplate=NULL;		
 	}
 
-	return ParseBuffer(outFile,pBuffer,dwTemplateLen);
+	CoInitialize(NULL);
+	ParseBuffer(pBuffer,dwTemplateLen);
+	CoUninitialize();
+
+	return TRUE;
 }
 
 
-BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen)
+BOOL CResults::ParseBuffer(LPCWSTR pBuffer,int iBufferLen)
 {
 	LPCWSTR pPtr=pBuffer;
-	while (iBufferLen>0)
+	while (iBufferLen>0 && !m_bQuit)
 	{
 		switch (*pPtr)
 		{
 		case L'\\':
-			stream.Write(pPtr+1,1);
+			m_pOutput->Write(pPtr+1,1);
 			pPtr+=2;
 			iBufferLen-=2;
 			break;
@@ -866,12 +1104,12 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen)
 				{
 					if (int(Condition))
 					{
-						if (!ParseBuffer(stream,pPtr+1,iBlockLength))
+						if (!ParseBuffer(pPtr+1,iBlockLength))
 							throw CFileException(CFileException::invalidFile);
 					}
 				}
 				else
-					stream.Write(L"INVALIDARGUMENT");
+					m_pOutput->Write(L"INVALIDARGUMENT");
 
 				pPtr+=iBlockLength+2;
 				iBufferLen-=iBlockLength+2;
@@ -914,7 +1152,7 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen)
 				for (int i=nMin;i<=nMax;i++)
 				{
 					SetVariable(W2A(sVariable),i);
-					if (!ParseBuffer(stream,pPtr+1,iBlockLength))
+					if (!ParseBuffer(pPtr+1,iBlockLength))
 						throw CFileException(CFileException::invalidFile);
 				}
 
@@ -929,13 +1167,13 @@ BOOL CResults::ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen)
 				if (pValue==NULL)
 					return FALSE;
 				
-				pValue->Write(stream);
+				pValue->Write(*m_pOutput);
 				if (bFree)
 					delete pValue;
 			}
 			break;
 		default:
-			stream.Write(pPtr++,1);
+			m_pOutput->Write(pPtr++,1);
 			iBufferLen--;
 			break;
 		}
@@ -1154,6 +1392,12 @@ CResults::Value* CResults::ParseFunctionsAndVariables(LPCWSTR& pPtr,int& iBuffer
 
 			if (iFile>=0 && iFile<m_nResults && iDetail>=0 && iDetail<TypeCount)
 			{
+				if (m_nAccessedItems.GetSize()==0 || m_nAccessedItems.GetLast()!=iFile || !m_nAccessedItems.Find(iFile))
+				{
+					m_nProgressState++;
+					m_nAccessedItems.Add(iFile);
+				}
+
 				// Updating if necessary
 				if (m_Items[iFile]->ShouldUpdateByDetail((DetailType)iDetail))
 					m_Items[iFile]->UpdateByDetail((DetailType)iDetail);
@@ -1986,17 +2230,26 @@ void CResults::Value::Write(CStream& stream)
 
 	
 		
-CSaveResultsDlg::CSaveResultsDlg()
+CSaveResultsDlg::CSaveResultsDlg(BOOL bClipboard)
 :	CFileDialog(FALSE,L"*",szwEmpty,OFN_EXPLORER|OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT|OFN_NOREADONLYRETURN|OFN_ENABLESIZING,IDS_SAVERESULTSFILTERS,TRUE),
-	m_nFlags(IDC_TITLE|RESULT_INCLUDEDATE|RESULT_INCLUDELABELS),m_pList(NULL)
+	m_pList(NULL)
 {
-	DWORD nFlags=GetSystemFeaturesFlag();
-	EnableFeatures(nFlags);
-	if (nFlags&(efWin2000|efWinME))
-		SetTemplate(IDD_RESULTSAVEDIALOG2000);
-	else
-		SetTemplate(IDD_RESULTSAVEDIALOG);
-
+	if (bClipboard)
+	{
+		m_nFlags=RESULT_CLIPBOARD;	
+		m_lpszTemplateName=MAKEINTRESOURCE(IDD_RESULTSAVEDIALOGFRAMES);
+	}
+	else 
+	{
+		m_nFlags=IDC_TITLE|RESULT_INCLUDEDATE|RESULT_INCLUDELABELS;	
+	
+		DWORD nFlags=GetSystemFeaturesFlag();
+		EnableFeatures(nFlags);
+		if (nFlags&(efWin2000|efWinME))
+			SetTemplate(IDD_RESULTSAVEDIALOG2000);
+		else
+			SetTemplate(IDD_RESULTSAVEDIALOG);
+	}
 	
 	SetTitle(ID2W(IDS_SAVERESULTS));
 	
@@ -2004,6 +2257,47 @@ CSaveResultsDlg::CSaveResultsDlg()
 	m_aDetails.Add(FullPath);
 	m_aDetails.Add(FileSize);
 	m_aDetails.Add(DateModified);
+
+
+	// Loading previous state
+	CRegKey2 RegKey;
+	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
+	{
+		if (bClipboard)
+		{
+			RegKey.QueryValue("SaveDataCbFlags",(LPTSTR)&m_nFlags,4);
+			m_nFlags&=RESULT_SAVESTATE;
+			m_nFlags|=RESULT_CLIPBOARD;
+		
+			DWORD dwTemp=RegKey.QueryValueLength("SaveDataCbDetails");
+			if (dwTemp>0)
+			{
+				m_aDetails.SetSize(dwTemp/sizeof(int));
+				RegKey.QueryValue("SaveResultsDetails",(LPSTR)(LPINT)m_aDetails,dwTemp);
+			}
+
+			RegKey.QueryValue(L"SaveDataCbTemplate",m_strTemplate);
+		}
+		else 
+		{
+			RegKey.QueryValue("SaveResultsFlags",(LPTSTR)&m_nFlags,4);
+			m_nFlags&=RESULT_SAVESTATE;
+
+			DWORD dwTemp=RegKey.QueryValueLength("SaveResultsDetails");
+			if (dwTemp>0)
+			{
+				m_aDetails.SetSize(dwTemp/sizeof(int));
+				RegKey.QueryValue("SaveResultsDetails",(LPSTR)(LPINT)m_aDetails,dwTemp);
+			}
+
+			if (RegKey.QueryValue("SaveResultsExtension",dwTemp))
+				m_pofn->nFilterIndex=dwTemp<3?WORD(dwTemp):0;
+
+			RegKey.QueryValue(L"SaveResultsTemplate",m_strTemplate);
+		}
+
+		RegKey.CloseKey();
+	}
 
 
 }
@@ -2018,6 +2312,50 @@ CSaveResultsDlg::~CSaveResultsDlg()
 
 	if (m_pList!=NULL)
 		delete m_pList;
+}
+
+BOOL CSaveResultsDlg::DoModal(HWND hParentWnd)
+{
+	BOOL bRet=FALSE;
+	if (m_nFlags&RESULT_CLIPBOARD)
+		bRet=CDialog::DoModal(hParentWnd);
+	else
+		bRet=CFileDialog::DoModal(hParentWnd);
+
+	if (bRet) 
+	{
+		// Saving state
+		CRegKey2 RegKey;
+
+		if(RegKey.OpenKey(HKCU,"\\General",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
+		{
+			if (m_nFlags&RESULT_CLIPBOARD)
+			{
+				RegKey.SetValue("SaveDataCbFlags",m_nFlags&RESULT_SAVESTATE);
+				RegKey.SetValue("SaveDataCbDetails",(LPCTSTR)(const int*)m_aDetails,
+					m_aDetails.GetSize()*sizeof(int),REG_BINARY);
+				if (m_strTemplate.IsEmpty())
+					RegKey.DeleteValue(L"SaveDataCnTemplate");
+				else
+					RegKey.SetValue(L"SaveDataCbTemplate",LPCWSTR(m_strTemplate)+m_strTemplate.FindLast(L'\\')+1);
+			}
+			else 
+			{
+				RegKey.SetValue("SaveResultsFlags",m_nFlags&RESULT_SAVESTATE);
+				RegKey.SetValue("SaveResultsDetails",(LPCTSTR)(const int*)m_aDetails,
+					m_aDetails.GetSize()*sizeof(int),REG_BINARY);
+				RegKey.SetValue("SaveResultsExtension",DWORD(GetFilterIndex()));
+				if (m_strTemplate.IsEmpty())
+					RegKey.DeleteValue(L"SaveResultsTemplate");
+				else
+					RegKey.SetValue(L"SaveResultsTemplate",LPCWSTR(m_strTemplate)+m_strTemplate.FindLast(L'\\')+1);
+			}
+
+			RegKey.CloseKey();
+		}
+	}	
+
+	return bRet;
 }
 
 BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
@@ -2064,6 +2402,8 @@ BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
 	AddTemplates();
 	
 	// Setting dialog items to correspond with m_nFlags
+	if (m_nFlags&RESULT_INCLUDESUMMARY)
+		CheckDlgButton(IDC_SUMMARY,1);
 	if (m_nFlags&RESULT_INCLUDEDATE)
 		CheckDlgButton(IDC_DATE,1);
 	if (m_nFlags&RESULT_INCLUDELABELS)
@@ -2079,18 +2419,23 @@ BOOL CSaveResultsDlg::OnInitDialog(HWND hwndFocus)
 	else
 		EnableDlgItem(IDC_DESCRIPTION,0);
 
-	if (m_nFlags&RESULT_ACTIVATESELECTEDITEMS)
+
+	if (m_nFlags&RESULT_CLIPBOARD)
 	{
-		if (m_nFlags&RESULT_INCLUDESELECTEDITEMS)
-			CheckDlgButton(IDC_SELECTEDITEMS,1);
-		else
-			CheckDlgButton(IDC_ALLITEMS,1);
+		CheckDlgButton(m_nFlags&RESULT_CLIPBOARDASHTML?IDC_FORMATHTML:IDC_FORMATTEXT,1);
+		EnableDlgItem(IDC_TEMPLATE,m_nFlags&RESULT_CLIPBOARDASHTML?1:0);
 	}
 	else
 	{
-		CheckDlgButton(IDC_ALLITEMS,1);
-		EnableDlgItem(IDC_SELECTEDITEMS,FALSE);
+		if (m_nFlags&RESULT_ACTIVATESELECTEDITEMS)
+			CheckDlgButton(m_nFlags&RESULT_INCLUDESELECTEDITEMS?IDC_SELECTEDITEMS:IDC_ALLITEMS,1);
+		else
+			{
+			CheckDlgButton(IDC_ALLITEMS,1);
+			EnableDlgItem(IDC_SELECTEDITEMS,FALSE);
+		}
 	}
+
 
 	CLocateDlg::ViewDetails* pDetails=CLocateDlg::GetDefaultDetails();
 
@@ -2192,9 +2537,12 @@ BOOL CSaveResultsDlg::ItemUpOrDown(BOOL bUp)
 
 BOOL CSaveResultsDlg::OnFileNameOK()
 {
-	m_nFlags=0;
+	m_nFlags&=RESULT_CLIPBOARD;
+	
+	if (IsDlgButtonChecked(IDC_SUMMARY))
+		m_nFlags|=RESULT_INCLUDESUMMARY;
 	if (IsDlgButtonChecked(IDC_DATE))
-		m_nFlags=RESULT_INCLUDEDATE;
+		m_nFlags|=RESULT_INCLUDEDATE;
 	if (IsDlgButtonChecked(IDC_LABELS))
 		m_nFlags|=RESULT_INCLUDELABELS;
 	if (IsDlgButtonChecked(IDC_DBINFO))
@@ -2206,8 +2554,6 @@ BOOL CSaveResultsDlg::OnFileNameOK()
 	}
 	else
 		m_strDescription.Empty();
-	if (IsDlgButtonChecked(IDC_SELECTEDITEMS))
-		m_nFlags|=RESULT_INCLUDESELECTEDITEMS;
 
 	int nTemplateSel=(int)SendDlgItemMessage(IDC_TEMPLATE,CB_GETCURSEL)-1;
 	if (nTemplateSel>=0 && nTemplateSel<m_TemplateFiles.GetSize())
@@ -2215,17 +2561,26 @@ BOOL CSaveResultsDlg::OnFileNameOK()
 	else
 		m_strTemplate.Empty();
 
-
-	switch (SendDlgItemMessage(IDC_ENCODING,CB_GETCURSEL))
+	if (m_nFlags&RESULT_CLIPBOARD)
 	{
-	case 2:
-		m_nFlags|=RESULT_ENCODINGUTF8;
-		break;
-	case 1:
-		m_nFlags|=RESULT_ENCODINGUNICODE;
-		break;
-	}	
-	
+		if (IsDlgButtonChecked(IDC_FORMATHTML))
+			m_nFlags|=RESULT_CLIPBOARDASHTML;
+	}
+	else 
+	{
+		if (IsDlgButtonChecked(IDC_SELECTEDITEMS))
+			m_nFlags|=RESULT_INCLUDESELECTEDITEMS;
+
+		switch (SendDlgItemMessage(IDC_ENCODING,CB_GETCURSEL))
+		{
+		case 2:
+			m_nFlags|=RESULT_ENCODINGUTF8;
+			break;
+		case 1:
+			m_nFlags|=RESULT_ENCODINGUNICODE;
+			break;
+		}	
+	}
 
 	int nItem=m_pList->GetNextItem(-1,LVNI_ALL);
 	m_aDetails.RemoveAll();
@@ -2304,12 +2659,25 @@ BOOL CSaveResultsDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 	{
 	case IDC_DESCRIPTIONTOGGLE:
 		EnableDlgItem(IDC_DESCRIPTION,IsDlgButtonChecked(IDC_DESCRIPTIONTOGGLE));
+		SetFocus(IDC_DESCRIPTION);
 		break;
 	case IDC_UP:
 		ItemUpOrDown(TRUE);
 		break;
 	case IDC_DOWN:
 		ItemUpOrDown(FALSE);
+		break;
+	case IDC_OK:
+		OnFileNameOK();
+		EndDialog(1);
+		break;
+	case IDCANCEL:
+	case IDC_CANCEL:
+		EndDialog(0);
+		break;
+	case IDC_FORMATHTML:
+	case IDC_FORMATTEXT:
+		EnableDlgItem(IDC_TEMPLATE,wID==IDC_FORMATHTML);
 		break;
 	}
 	return CFileDialog::OnCommand(wID,wNotifyCode,hControl);

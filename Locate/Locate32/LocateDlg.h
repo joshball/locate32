@@ -615,7 +615,7 @@ protected:
 	void OnOk(BOOL bShortcut,BOOL bForceSelectDatabases);
 	void OnStop();
 	void OnNewSearch();
-	void OnPresets();
+	BOOL OnPresets();
 	
 
 	// Menu events
@@ -625,11 +625,11 @@ protected:
 	void OnSettings() { GetTrayIconWnd()->OnSettings(); }
 	void OnSettingsTool();
 	void OnDeletePrivateData();
-	void OnProperties(int nItem=1);
+	BOOL OnProperties(int nItem=1);
 	void OnRemoveFromThisList();
 	void OnSelectAll();
 	void OnInvertSelection();
-	void OnSaveResults();
+	void OnSaveResults(BOOL bClipboard=FALSE);
 	void OnSelectDetails();
 	void OnCopyPathToClipboard(BOOL bShortPath);
 	void OnChangeFileName();
@@ -640,11 +640,11 @@ protected:
 	void OnShowFileInformation();
 	void OnRemoveDeletedFiles();
 	void OnUpdateDatabasesOfSelectedFiles();
-	void OnRenameFile(int nItem=-1);
-	void OnCopy(BOOL bCut,int nItem=-1);
-	void OnCreateShortcut();
+	BOOL OnRenameFile(int nItem=-1);
+	BOOL OnCopy(BOOL bCut,int nItem=-1);
+	BOOL OnCreateShortcut();
 	enum DeleteFlag {Recycle = 0,Delete = 1,BasedOnShift = 2};
-	void OnDelete(DeleteFlag DeleteFlag=BasedOnShift,int nItem=-1);
+	BOOL OnDelete(DeleteFlag DeleteFlag=BasedOnShift,int nItem=-1);
 	
 		
 	////////////////////////////////////////////////////////////
@@ -718,7 +718,7 @@ protected:
 protected:
 	void OnPresetsSave();
 	void OnPresetsSelection(int nPreset);
-	void LoadPreset(LPCWSTR szPreset);
+	BOOL LoadPreset(LPCWSTR szPreset);
 	static DWORD CheckExistenceOfPreset(LPCWSTR szName,DWORD* pdwPresets); // Returns index to preset or FFFFFFFF
 	void LoadDialogTexts();
 	void SaveDialogTexts();
@@ -837,13 +837,13 @@ protected:
 	void ClearResultlistActions();
 	void SetDefaultActions(CSubAction*** pActions) const;
 
-	void OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo,int nItem=-1,DetailType nDetail=Name);
-	void OnExecuteFile(LPCWSTR szVerb,int nItem=-1);
+	BOOL OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo,int nItem=-1,DetailType nDetail=Name);
+	BOOL OnExecuteFile(LPCWSTR szVerb,int nItem=-1);
 			
 	
 	// Helpers
-	void OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile=NULL);
-	void OpenSelectedFolder(BOOL bContaining,int nItem=-1,BOOL bForParents=FALSE);
+	BOOL OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile=NULL);
+	BOOL OpenSelectedFolder(BOOL bContaining,int nItem=-1,BOOL bForParents=FALSE);
 	CLocatedItem** GetSelectedItems(int& nItems,int nIncludeIfNoneSelected=-1);
 	void MakeItemSelected(int nItem);
 public:
@@ -1121,7 +1121,7 @@ public:
 	////////////////////////////////////////////////////////////
 	// Misc helpers
 protected:
-	static void ExecuteCommand(LPCWSTR szCommand,int nItem=-1);
+	static BOOL ExecuteCommand(LPCWSTR szCommand,int nItem=-1);
 	// Returns IDropTarget for item id list
 	IDropTarget* GetDropTarget(LPITEMIDLIST pidl) const;
 

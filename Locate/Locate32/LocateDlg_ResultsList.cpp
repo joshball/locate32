@@ -262,10 +262,6 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			{
 				ItemDebugFormatMessage1("LVN_GETDISPINFOA %d BEGIN1",nDetail);
 			
-				// Update detail instantaneously
-				if (g_szBuffer!=NULL)
-					delete[] g_szBuffer;
-
 				switch (nDetail)
 				{
 				// Title and parent are special since they have icons
@@ -279,9 +275,10 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
 					if (pItem->GetFileTitle()!=NULL)
-						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetFileTitle());
+						pLvdi->item.pszText=alloccopyWtoA(pItem->GetFileTitle());
 					else
-						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetName());
+						pLvdi->item.pszText=alloccopyWtoA(pItem->GetName());
+					AssignBuffer(pLvdi->item.pszText);
 					
 					pLvdi->item.iImage=pItem->GetIcon();
 
@@ -297,7 +294,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 						pItem->UpdateParentIcon();
 
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
-					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetParent());
+					pLvdi->item.pszText=alloccopyWtoA(pItem->GetParent());
+					AssignBuffer(pLvdi->item.pszText);
 					pLvdi->item.iImage=pItem->GetParentIcon();
 					break;
 				default:
@@ -306,7 +304,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					if (pItem->ShouldUpdateByDetail(nDetail))
 						pItem->UpdateByDetail(nDetail);
 					pLvdi->item.mask=LVIF_TEXT;
-					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetDetailText(nDetail));
+					pLvdi->item.pszText=alloccopyWtoA(pItem->GetDetailText(nDetail));
+					AssignBuffer(pLvdi->item.pszText);
 					break;
 				}
 				
@@ -316,10 +315,6 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			{
 				ItemDebugFormatMessage1("LVN_GETDISPINFOA %d BEGIN2",nDetail);
 			
-				// Update detail instantaneously
-				if (g_szBuffer!=NULL)
-					delete[] g_szBuffer;
-
 				// Delayed updating
 				switch (nDetail)
 				{
@@ -347,9 +342,10 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
 					if (pItem->GetFileTitle()!=NULL)
-						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetFileTitle());
+						pLvdi->item.pszText=alloccopyWtoA(pItem->GetFileTitle());
 					else
-						pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetName());
+						pLvdi->item.pszText=alloccopyWtoA(pItem->GetName());
+					AssignBuffer(pLvdi->item.pszText);
 					pLvdi->item.iImage=pItem->GetIcon();
 
 					if (pItem->GetAttributes()&(LITEMATTRIB_CUTTED|LITEMATTRIB_HIDDEN))
@@ -370,7 +366,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					}
 
 					pLvdi->item.mask=LVIF_TEXT|LVIF_IMAGE;
-					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetParent());
+					pLvdi->item.pszText=alloccopyWtoA(pItem->GetParent());
+					AssignBuffer(pLvdi->item.pszText);
 					pLvdi->item.iImage=pItem->GetParentIcon();
 					break;
 				default:
@@ -385,7 +382,8 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 							m_pBackgroundUpdater->StopWaiting();
 					}
 					pLvdi->item.mask=LVIF_TEXT;
-					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pItem->GetDetailText(nDetail));
+					pLvdi->item.pszText=alloccopyWtoA(pItem->GetDetailText(nDetail));
+					AssignBuffer(pLvdi->item.pszText);
 					break;
 				}
 				ItemDebugMessage("LVN_GETDISPINFOA END2");
@@ -532,7 +530,11 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 		}
 	case LVN_DELETEITEM:
 		if (pNm->lParam!=NULL)
+		{
+			if (m_pBackgroundUpdater!=NULL)
+				m_pBackgroundUpdater->RemoveFromUpdateList((CLocatedItem*)pNm->lParam);
 			delete (CLocatedItem*)pNm->lParam;
+		}
 		break;
 	case LVN_BEGINDRAG:
 	case LVN_BEGINRDRAG:
@@ -1770,26 +1772,21 @@ void CLocateDlg::SaveResultlistActions()
 
 }
 
-void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo,int nItem,DetailType nDetail)
+BOOL CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction,void* pExtraInfo,int nItem,DetailType nDetail)
 {
 	DebugFormatMessage("CLocateDlg::OnExecuteResultAction(%d,%X,%d,%d)",m_nResultAction,pExtraInfo,nItem,nDetail);
 	switch (m_nResultAction)
 	{
 	case CAction::Execute:
-		OnExecuteFile((LPCWSTR)pExtraInfo,nItem);
-		break;
+		return OnExecuteFile((LPCWSTR)pExtraInfo,nItem);
 	case CAction::Copy:
-		OnCopy(FALSE,nItem);
-		break;
+		return OnCopy(FALSE,nItem);
 	case CAction::Cut:
-		OnCopy(TRUE,nItem);
-		break;
+		return OnCopy(TRUE,nItem);
 	case CAction::MoveToRecybleBin:
-		OnDelete(Recycle,nItem);
-		break;
+		return OnDelete(Recycle,nItem);
 	case CAction::DeleteFile:
-		OnDelete(Delete,nItem);
-		break;
+		return OnDelete(Delete,nItem);
 	case CAction::OpenContextMenu:
 	case CAction::OpenContextMenuSimple:
 		{
@@ -1800,28 +1797,26 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 			CAutoPtrA<CLocatedItem*> pSelectedItems=GetSelectedItems(nSelectedItems);
 			if (!CreateFileContextMenu(NULL,pSelectedItems,nSelectedItems,
 				m_nResultAction==CAction::OpenContextMenuSimple,int(pExtraInfo)==CAction::Parent))
-				break;
+				return FALSE;
 
 			POINT pos;
 			GetCursorPos(&pos);
 			int nCmd=TrackPopupMenu(*m_pActiveContextMenu,TPM_LEFTALIGN|TPM_RIGHTBUTTON|TPM_RETURNCMD,
 				pos.x,pos.y,0,*this,NULL);	
 
+			BOOL bRet=FALSE;
 			if (nCmd>0)
-				HandleContextMenuCommand(nCmd);
+				bRet=HandleContextMenuCommand(nCmd);
 
 			ClearMenuVariables();
-			break;
+			return bRet;
 		}
 	case CAction::OpenFolder:
-		OpenSelectedFolder(FALSE,nItem,FALSE);
-		break;
+		return OpenSelectedFolder(FALSE,nItem,FALSE);
 	case CAction::OpenContainingFolder:
-		OpenSelectedFolder(TRUE,nItem,FALSE);
-		break;
+		return OpenSelectedFolder(TRUE,nItem,FALSE);
 	case CAction::Properties:
-		OnProperties(nItem);
-		break;
+		return OnProperties(nItem);
 	case CAction::ShowSpecialMenu:
 		if (m_pListCtrl->GetSelectedCount()==0)
 			m_pListCtrl->SetItemState(nItem,LVIS_SELECTED,LVIS_SELECTED);
@@ -1838,10 +1833,9 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 			TrackPopupMenu(::GetSubMenu(m_Menu.GetSubMenu(SUBMENU_EXTRACONTEXTMENUITEMS),SUBMENU_SPECIALMENU),TPM_LEFTALIGN|TPM_RIGHTBUTTON,
 				pos.x,pos.y,0,*this,NULL);	
 		}
-		break;
+		return TRUE;
 	case CAction::ExecuteCommand:
-		ExecuteCommand((LPCWSTR)pExtraInfo,nItem);
-		break;
+		return ExecuteCommand((LPCWSTR)pExtraInfo,nItem);
 	case CAction::SelectFile:
 		{
 			int nItem,nSelectedItem=m_pListCtrl->GetNextItem(-1,LVNI_SELECTED);
@@ -1883,7 +1877,7 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 						nItem=m_pListCtrl->GetNextItem(nItem,LVNI_BELOW);
 
 					if (nItem==-1|| nSelectedItem==nItem)
-						return;
+						return FALSE;
 
 					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
 					if (pItem!=NULL)
@@ -1908,7 +1902,7 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 						nItem=m_pListCtrl->GetNextItem(nItem,LVNI_ABOVE);
 
 					if (nItem==-1|| nSelectedItem==nItem)
-						return;
+						return FALSE;
 
 					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(nItem);
 					if (pItem!=NULL)
@@ -1921,20 +1915,16 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 			}
 
 			if (nItem==-1 || nSelectedItem==nItem)
-				return;
+				return FALSE;
 			
 			if (nSelectedItem!=-1)
 				m_pListCtrl->SetItemState(nSelectedItem,0,LVIS_SELECTED|LVIS_FOCUSED);
 			m_pListCtrl->SetItemState(nItem,LVIS_SELECTED|LVIS_FOCUSED,LVIS_SELECTED|LVIS_FOCUSED);
 			m_pListCtrl->EnsureVisible(nItem,FALSE);
-			
-			break;
-
-
+			return TRUE;
 		} 
 	case CAction::RenameFile:
-		OnRenameFile(nItem);
-		break;
+		return OnRenameFile(nItem);
 	case CAction::SelectNthFile:
 	case CAction::ExecuteNthFile:
 		{
@@ -1954,13 +1944,15 @@ void CLocateDlg::OnExecuteResultAction(CAction::ActionResultList m_nResultAction
 			
 			// Execute item
 			if (m_nResultAction==CAction::ExecuteNthFile)
-				OnExecuteFile(NULL,(int)pExtraInfo);
-			break;
+				return OnExecuteFile(NULL,(int)pExtraInfo);
+
+			return TRUE;
 		}
 	}
+	return TRUE;
 }
 
-void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
+BOOL CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 {
 	CWaitCursor wait;
 
@@ -2077,6 +2069,8 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 		}
 
 	}
+
+	return TRUE;
 }
 
 
@@ -2087,7 +2081,7 @@ void CLocateDlg::OnExecuteFile(LPCWSTR szVerb,int nItem)
 ////////////////////////////////////////////////////////////
 
 
-void CLocateDlg::OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile)
+BOOL CLocateDlg::OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile)
 {
 	CStringW sProgram;
 	
@@ -2113,9 +2107,11 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile)
 		sxi.lpFile=NULL;
 		sxi.lpIDList=ShellFunctions::GetIDList(szFolder);
 		sxi.lpVerb=L"open";
-		ShellFunctions::ShellExecuteEx(&sxi);	
-
+		
+		BOOL bRet=ShellFunctions::ShellExecuteEx(&sxi);	
 		CoTaskMemFree(sxi.lpIDList);
+		return bRet;
+
 	}
 	else
 	{
@@ -2161,30 +2157,27 @@ void CLocateDlg::OpenFolder(LPCWSTR szFolder,LPCWSTR szSelectedFile)
 		
 		if (IsUnicodeSystem())
 		{
-			if (CreateProcessW(NULL,sTemp.GetBuffer(),NULL,
+			if (!CreateProcessW(NULL,sTemp.GetBuffer(),NULL,
 				NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
 				NULL,NULL,(STARTUPINFOW*)&si,&pi))
-			{
-				CloseHandle(pi.hThread);
-				CloseHandle(pi.hProcess);
-			}
+				return FALSE;
 		}
 		else
 		{
-			if (CreateProcessA(NULL,(LPSTR)(LPCSTR)W2A(sTemp.GetBuffer()),NULL,
+			if (!CreateProcessA(NULL,(LPSTR)(LPCSTR)W2A(sTemp.GetBuffer()),NULL,
 				NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
 				NULL,NULL,&si,&pi))
-			{
-				CloseHandle(pi.hThread);
-				CloseHandle(pi.hProcess);
-			}
+				return FALSE;
 		}
 
+		CloseHandle(pi.hThread);
+		CloseHandle(pi.hProcess);
 	}
+	return TRUE;
 }
 
 
-void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
+BOOL CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 {
 	CWaitCursor wait;
 
@@ -2194,7 +2187,7 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 	CAutoPtrA<CLocatedItem*> pItems=GetSelectedItems(nSelectedItems,nItem);
 
 	if (nSelectedItems==0 || pItems==NULL)
-		return;
+		return FALSE;
 	
 	DebugFormatMessage("nSelectedItems=%d bContaining=%d nItem=%d bForParents=%d",
 		nSelectedItems,bContaining,nItem,bForParents);
@@ -2362,7 +2355,7 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 					}
 
 					if (bAllOK)
-						return;
+						return TRUE;
 				}
 				
 				CStringW sArg;
@@ -2387,7 +2380,7 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 					}
 				}
 				
-				return;
+				return TRUE;
 			}
 			
 		}
@@ -2425,6 +2418,8 @@ void CLocateDlg::OpenSelectedFolder(BOOL bContaining,int nItem,BOOL bForParents)
 				OpenFolder(bForParents?pItems[i]->GetParent():pItems[i]->GetPath());
 		}
 	}
+
+	return TRUE;
 
 }
 

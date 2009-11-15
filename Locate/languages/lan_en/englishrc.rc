@@ -1,4 +1,4 @@
-// Microsoft Visual C++ generated resource script.
+ // Microsoft Visual C++ generated resource script.
 //
 #include "lan_resources.h"
 
@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,9,11070
- PRODUCTVERSION 3,1,9,11070
+ FILEVERSION 3,1,9,11150
+ PRODUCTVERSION 3,1,9,11150
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 RC3i build 9.11070"
+            VALUE "FileVersion", "3.1 RC3j build 9.11150"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2009 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 RC3i build 9.11070"
+            VALUE "ProductVersion", "3.1 RC3j build 9.11150"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -171,7 +171,7 @@ BEGIN
                     0x894d,149,59,14,13
 END
 
-IDD_RESULTSAVEDIALOG DIALOGEX 0, 0, 239, 157
+IDD_RESULTSAVEDIALOG DIALOGEX 0, 0, 259, 157
 STYLE DS_SETFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | 
     WS_CLIPSIBLINGS
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -183,12 +183,14 @@ BEGIN
     COMBOBOX        IDC_TEMPLATE,94,18,134,90,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
 	LTEXT           "Include:",IDC_STATIC,2,16+20,30,8
-    CONTROL         "date",IDC_DATE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,37,16+20,37,10
+    CONTROL         "summary",IDC_SUMMARY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,37,16+20,50,10
+	CONTROL         "date",IDC_DATE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,87,16+20,37,10
     CONTROL         "column labels",IDC_LABELS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,77,16+20,70,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,127,16+20,70,10
     CONTROL         "database info",IDC_DBINFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,148,16+20,93,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,198,16+20,100,10
     CONTROL         "Description:",IDC_DESCRIPTIONTOGGLE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,2,29+20,75,12
     EDITTEXT        IDC_DESCRIPTION,78,29+20,158,12,ES_AUTOHSCROLL
@@ -202,10 +204,10 @@ BEGIN
                     0x894d,200,55+20,30,13
     CONTROL         "",IDC_DETAILS,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | 
-                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,2,68+20,227,64
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,2,68+20,247,64
 END
 
-IDD_RESULTSAVEDIALOG2000 DIALOGEX 0, 0, 302, 157
+IDD_RESULTSAVEDIALOG2000 DIALOGEX 0, 0, 322, 157
 STYLE DS_SETFONT | DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | 
     WS_CLIPSIBLINGS
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -217,12 +219,14 @@ BEGIN
     COMBOBOX        IDC_TEMPLATE,66+94,18,134,90,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP
 	LTEXT           "Include:",IDC_STATIC,66+2,16+20,30,8
+    CONTROL         "summary",IDC_SUMMARY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,66+37,16+20,50,10
     CONTROL         "date",IDC_DATE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,66+37,16+20,37,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,66+87,16+20,40,10
     CONTROL         "column labels",IDC_LABELS,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,66+77,16+20,70,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,66+127,16+20,70,10
     CONTROL         "database info",IDC_DBINFO,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,66+148,16+20,100,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,66+198,16+20,100,10
     CONTROL         "Description:",IDC_DESCRIPTIONTOGGLE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,66+2,29+20,65,12
     EDITTEXT        IDC_DESCRIPTION,66+67,29+20,155,12,ES_AUTOHSCROLL
@@ -236,7 +240,52 @@ BEGIN
                     0x894d,66+200,55+20,30,13
     CONTROL         "",IDC_DETAILS,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | 
-                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,66+2,68+20,227,64
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,66+2,68+20,247,64
+END
+
+IDD_RESULTSAVEDIALOGFRAMES DIALOGEX 100, 100, 279, 187
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+CAPTION "Save results to clipboard"
+BEGIN
+    LTEXT           "Format:",IDC_STATIC,12,12,30,10
+    CONTROL         "text",IDC_FORMATTEXT,"Button",BS_AUTORADIOBUTTON,52,
+                    12,50,10
+    CONTROL         "HTML",IDC_FORMATHTML,"Button",
+                    BS_AUTORADIOBUTTON,103,12,60,10
+    LTEXT           "Template (HTML only):",IDC_STATIC,12,30,90,8
+    COMBOBOX        IDC_TEMPLATE,104,28,134,90,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+	LTEXT           "Include:",IDC_STATIC,12,16+30,30,8
+    CONTROL         "summary",IDC_SUMMARY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,47,16+30,50,10
+	CONTROL         "date",IDC_DATE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,97,16+30,37,10
+    CONTROL         "column labels",IDC_LABELS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,137,16+30,70,10
+    CONTROL         "database info",IDC_DBINFO,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,208,16+30,100,10
+    CONTROL         "Description:",IDC_DESCRIPTIONTOGGLE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,12,29+30,75,12
+    EDITTEXT        IDC_DESCRIPTION,88,29+30,158,12,ES_AUTOHSCROLL
+	LTEXT           "Details:",IDC_STATIC,12,47+30,50,8
+    CONTROL         "",IDC_TOOLBAR,"ToolbarWindow32",WS_CLIPSIBLINGS | 
+                    0x894d,210,45+30,30,13
+    CONTROL         "",IDC_DETAILS,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | 
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,12,58+30,252,74
+    DEFPUSHBUTTON   "OK",IDC_OK,83,170,55,13
+    PUSHBUTTON      "Cancel",IDC_CANCEL,143,170,55,13
+END
+
+
+IDD_SAVERESULTSPROGRESS DIALOGEX 100,100, 230, 49
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Saving results"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Cancel",IDCANCEL,88,28,50,14
+    CONTROL         "",IDC_PROGRESS,"msctls_progress32",WS_BORDER,7,7,216,17
 END
 
 
@@ -1118,6 +1167,7 @@ BEGIN
         BEGIN
             MENUITEM "&Copy path to clipboard",        IDM_COPYPATHTOCB
             MENUITEM "Copy &short path to clipboard",        IDM_COPYSHORTPATHTOCB
+            MENUITEM "Copy &data to clipboard",        IDM_COPYDATATOCB
             MENUITEM "Change &filename",         IDM_CHANGEFILENAME
             MENUITEM "Change c&ase for filename",         IDM_CHANGECASE
 			MENUITEM "Show total size of selected files", IDM_SHOWFILEINFORMATION

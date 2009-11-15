@@ -499,10 +499,8 @@ BOOL CSelectColumnsDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 			ColumnItem* pItem=(ColumnItem*)pLvdi->item.lParam;
 			if (pItem==NULL)
 				break;
-			if (g_szBuffer!=NULL)
-				delete[] g_szBuffer;
-			g_szBuffer=alloccopyWtoA(pItem->m_strName,pItem->m_strName.GetLength());
-			pLvdi->item.pszText=g_szBuffer;
+			pLvdi->item.pszText=alloccopyWtoA(pItem->m_strName,pItem->m_strName.GetLength());
+			AssignBuffer(pLvdi->item.pszText);
 			break;
 		}
 	case LVN_GETDISPINFOW:
@@ -2608,14 +2606,14 @@ DWORD WINAPI CPropertiesSheet::StartThreadProc(LPVOID lpParameter)
 	return 0;
 }
 
-void CPropertiesSheet::Open()
+BOOL CPropertiesSheet::Open()
 {
 	DWORD dwThreadID;
 	m_hThread=CreateThread(NULL,0,StartThreadProc,this,0,&dwThreadID);
 	DebugOpenThread(m_hThread);
 
 	DebugFormatMessage("PROPERTIES: thread started ID=%X",dwThreadID);
-	
+	return TRUE;
 }
 	
 CPropertiesSheet::CPropertiesPage::CPropertiesPage(int nItems,CLocatedItem** pItems,BOOL bForParents)

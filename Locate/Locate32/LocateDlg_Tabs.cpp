@@ -1194,8 +1194,8 @@ BOOL CLocateDlg::CNameDlg::GetDirectoriesFromCustomText(CArray<LPWSTR>& aDirecto
 	}
 	while (dwLength>0 && pPtr[dwLength-1]==' ')
 		dwLength--;
-	if (dwLength>0 && pPtr[dwLength-1]=='\\')
-		dwLength--;
+	//if (dwLength>0 && pPtr[dwLength-1]=='\\')
+	//	dwLength--;
 
 	if (!CheckAndAddDirectory(pPtr,dwLength,bSaveAndSet,bNoWarning))
 		return FALSE;
@@ -4342,7 +4342,7 @@ void CLocateDlg::CAdvancedDlg::OnDrawItem(UINT idCtl,LPDRAWITEMSTRUCT lpdis)
 			ASSERT(lpdis->itemData==LPARAM(szwEmpty));
 			Text.LoadString(IDS_BYEXTENSION);
 		}
-		else
+		else if (lpdis->itemData!=NULL)
 		{
 			Text=((FileType*)lpdis->itemData)->szTitle;
 			if (((FileType*)lpdis->itemData)->hIcon==NULL)
@@ -4382,9 +4382,8 @@ void CLocateDlg::CAdvancedDlg::OnMeasureItem(int nIDCtl,LPMEASUREITEMSTRUCT lpMe
 	if (nIDCtl==IDC_FILETYPE)
 	{
 		CDC dc(&CWnd(GetDlgItem(IDC_FILETYPE)));
-		
 		CSize sz;
-		if (lpMeasureItemStruct->itemID==0)
+		if (lpMeasureItemStruct->itemID==0 || lpMeasureItemStruct->itemData==NULL)
 			sz=dc.GetTextExtent(CStringW(IDS_BYEXTENSION));
 		else
 			sz=dc.GetTextExtent(((FileType*)lpMeasureItemStruct->itemData)->szTitle,istrlenw(((FileType*)lpMeasureItemStruct->itemData)->szTitle));
@@ -4556,8 +4555,6 @@ void CLocateDlg::CAdvancedDlg::UpdateTypeList()
 
 int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCWSTR szKey,CArray<FileType*>& aFileTypes)
 {
-	DebugFormatMessage(L"CAdvancedDlg::AddTypeToList(szKey=%s) ",szKey);
-
 	CRegKey RegKey;
 	if (RegKey.OpenKey(HKCR,szKey,CRegKey::openExist|CRegKey::samQueryValue|CRegKey::samExecute)!=ERROR_SUCCESS)
 		return CB_ERR;
@@ -4573,17 +4570,13 @@ int CLocateDlg::CAdvancedDlg::AddTypeToList(LPCWSTR szKey,CArray<FileType*>& aFi
 		if (sType.Compare(pType->szType)==0)
 		{
 			pType->AddExtension(szKey+1,istrlenw(szKey));
-			DebugMessage("AddTypeToList: 1err");
 			return -2;
 		}
 	}
 
 	if (RegKey.OpenKey(HKCR,sType,CRegKey::openExist|CRegKey::samQueryValue|CRegKey::samExecute)!=ERROR_SUCCESS)
-	{
-		DebugMessage("AddTypeToList: 3err");
 		return CB_ERR;
-	}
-
+	
 	
 	if (!RegKey.QueryValue(L"",sTitle))
 		return CB_ERR;

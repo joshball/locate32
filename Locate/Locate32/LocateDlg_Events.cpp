@@ -192,8 +192,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		GetTrayIconWnd()->PostMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
 		break;
 	case IDC_PRESETS:
-		OnPresets();
-		break;
+		return !OnPresets();
 	case IDM_DATABASEINFO:
 		{
 			CDatabaseInfos info(*this);
@@ -260,7 +259,8 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		//::SetFocus(GetNextDlgTabItem(GetFocus(),TRUE));
 		break;
 	case IDM_SAVERESULT:
-		OnSaveResults();
+	case IDM_COPYDATATOCB:
+		OnSaveResults(wID==IDM_COPYDATATOCB);
 		break;
 	case IDM_PROPERTIES:
 		OnProperties();
@@ -314,13 +314,14 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 				// Shortcut was not executed, send message to control
 				(*m_aActiveShortcuts[wID-IDM_DEFSHORTCUTITEM])->SendEventBackToControl();
 			}
-
+			return 0;
 		}
 		else if (wID>=IDM_DEFUPDATEDBITEM && wID<IDM_DEFUPDATEDBITEM+1000)
-			GetTrayIconWnd()->SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
-		break;
+			return GetTrayIconWnd()->SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
+		else 
+			return CDialog::OnCommand(wID,wNotifyCode,hControl);
 	}
-	return CDialog::OnCommand(wID,wNotifyCode,hControl);
+	return 0;
 }
 
 BOOL CLocateDlg::HandleContextMenuCommand(WORD wID)
@@ -331,13 +332,10 @@ BOOL CLocateDlg::HandleContextMenuCommand(WORD wID)
 	if (HandleSendToCommand(wID))
 		return TRUE;
 	
-	DebugMessage("p1");
-
 	// Check if wID corresponds to shell context menu command
 	if (HandleShellCommands(wID))
 		return TRUE;
 
-	DebugMessage("p2");
 	
 	switch(wID)
 	{
@@ -371,6 +369,9 @@ BOOL CLocateDlg::HandleContextMenuCommand(WORD wID)
 		break;
 	case IDM_COPYSHORTPATHTOCB:
 		OnCopyPathToClipboard(TRUE);
+		break;
+	case IDM_COPYDATATOCB:
+		OnSaveResults(TRUE);
 		break;
 	case IDM_CHANGECASE:
 		OnChangeFileNameCase();
@@ -609,16 +610,7 @@ void CLocateDlg::OnDestroy()
 
 
 	// Buffers
-	if (g_szBuffer!=NULL)
-	{
-		delete[] g_szBuffer;
-		g_szBuffer=NULL;
-	}
-	if (g_szwBuffer!=NULL)
-	{
-		delete[] g_szwBuffer;
-		g_szwBuffer=NULL;
-	}
+	FreeBuffers();
 
 	// SendTo list related stuff
 	if (m_hSendToListFont!=NULL)
@@ -1210,10 +1202,9 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_iTooltipItem);
 					if (pItem!=NULL)
 					{
-						if (g_szBuffer!=NULL)
-							delete[] g_szBuffer;
-						g_szBuffer=alloccopyWtoA((LPCWSTR)pItem->GetToolTipText());
-						((NMTTDISPINFO*)pnmh)->lpszText=g_szBuffer;
+						LPSTR szBuffer=alloccopyWtoA((LPCWSTR)pItem->GetToolTipText());
+						AssignBuffer(szBuffer);
+						((NMTTDISPINFO*)pnmh)->lpszText=szBuffer;
 					}
 					else
 						((NMTTDISPINFO*)pnmh)->lpszText=(LPSTR)szEmpty;
@@ -1223,12 +1214,10 @@ BOOL CLocateDlg::OnNotify(int idCtrl,LPNMHDR pnmh)
 					CLocatedItem* pItem=(CLocatedItem*)m_pListCtrl->GetItemData(m_iTooltipItem);
 					if (pItem!=NULL)
 					{
-						if (g_szBuffer!=NULL)
-							delete[] g_szBuffer;
-						
-						g_szBuffer=alloccopyWtoA((LPCWSTR)pItem->GetDetailText(
+						LPSTR szBuffer=alloccopyWtoA((LPCWSTR)pItem->GetDetailText(
 							DetailType(m_pListCtrl->GetColumnIDFromSubItem(m_iTooltipSubItem))));
-						((NMTTDISPINFO*)pnmh)->lpszText=g_szBuffer;
+						AssignBuffer(szBuffer);
+						((NMTTDISPINFO*)pnmh)->lpszText=szBuffer;
 					}
 					else
 						((NMTTDISPINFO*)pnmh)->lpszText=(LPSTR)szEmpty;
@@ -1322,17 +1311,7 @@ void CLocateDlg::OnSize(UINT nType, int cx, int cy)
 		//StopBackgroundOperations();
 		ChangeBackgroundOperationsPriority(TRUE);
 
-		// Free buffers
-		if (g_szBuffer!=NULL)
-		{
-			delete[] g_szBuffer;
-			g_szBuffer=NULL;
-		}
-		if (g_szwBuffer!=NULL)
-		{
-			delete[] g_szwBuffer;
-			g_szwBuffer=NULL;
-		}
+		FreeBuffers();
 
 		if (m_hSendToListFont!=NULL)
 		{
@@ -1634,8 +1613,7 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 		break;
 	case WM_RESULTLISTACTION:
 		DebugMessage("CLocateDlg::WindowProc(WM_RESULTLISTACTION,...)");
-		OnExecuteResultAction((CAction::ActionResultList)wParam,(void*)lParam);
-        break;
+		return OnExecuteResultAction((CAction::ActionResultList)wParam,(void*)lParam);
 	case WM_GETSELECTEDITEMPATH:
 		if (lParam!=NULL && wParam!=NULL)
 		{
@@ -1929,7 +1907,7 @@ void CLocateDlg::OnNewSearch()
 	
 }
 
-void CLocateDlg::OnPresets()
+BOOL CLocateDlg::OnPresets()
 {
 	CMenu Menu;
 	int nPresets=0;
@@ -2003,6 +1981,8 @@ void CLocateDlg::OnPresets()
 
 	switch (wID)
 	{
+	case 0:
+		return FALSE;
 	case IDM_PRESETSAVE:
 		OnPresetsSave();
 		break;
@@ -2038,6 +2018,8 @@ void CLocateDlg::OnPresets()
 			break;
 		}
 	}
+
+	return TRUE;
 }
 
 void CLocateDlg::OnSelectAll()
@@ -2125,10 +2107,10 @@ void CLocateDlg::OnDeletePrivateData()
 }
 
 
-void CLocateDlg::OnProperties(int nItem)
+BOOL CLocateDlg::OnProperties(int nItem)
 {
 	if (m_pListCtrl->GetSelectedCount()==0)
-		return;
+		return FALSE;
 
 	
 	int nItems;
@@ -2158,7 +2140,7 @@ void CLocateDlg::OnProperties(int nItem)
 			DestroyMenu(hMenu);
 			
 			if (SUCCEEDED(hRes))
-				return;
+				return TRUE;
 			
 		}
 	}
@@ -2166,7 +2148,7 @@ void CLocateDlg::OnProperties(int nItem)
 	
 	CPropertiesSheet* fileprops=new CPropertiesSheet(nItems,pItems,ci.bForParents);
 
-	fileprops->Open();
+	return fileprops->Open();
 }
 
 void CLocateDlg::OnAutoArrange()
@@ -2212,7 +2194,7 @@ void CLocateDlg::OnRefresh()
 	m_pListCtrl->UpdateWindow();
 }	
 		
-void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
+BOOL CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 {
 	if (DeleteFlag==BasedOnShift)
 	{
@@ -2239,7 +2221,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 	if (iItem==-1)
 	{
 		if (nItem==-1)
-			return;
+			return FALSE;
 		
 		iItem=nItem;
 		bOnlyOne=TRUE;
@@ -2304,7 +2286,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 		// Junctions and Windows Vista not in use
 		int nRet=MessageBox(ID2W(IDS_ERRORJUNCTIONS),0,MB_ICONEXCLAMATION|MB_YESNOCANCEL);
 		if (nRet==IDCANCEL)
-			return;
+			return FALSE;
 
 		for (int i=aSymlinksOrJunctions.GetSize()-1;i>=0;i--)
 		{
@@ -2328,7 +2310,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 	
 	// No files anymore? then return
 	if (aPaths.GetSize()==0) // No files
-		return;
+		return TRUE;
 
 
 	// Filling OPSTRUCT fields
@@ -2430,12 +2412,7 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 				}
 
 				if (bDelete)
-				{
-					if (m_pBackgroundUpdater!=NULL)
-						m_pBackgroundUpdater->RemoveFromUpdateList(pItem);
-					
 					m_pListCtrl->DeleteItem(iItem); 
-				}
 				else
 					iItem=m_pListCtrl->GetNextItem(iItem,LVNI_ALL);
 			}
@@ -2448,6 +2425,8 @@ void CLocateDlg::OnDelete(CLocateDlg::DeleteFlag DeleteFlag,int nItem)
 	
 	m_pListCtrl->UpdateWindow();
 	m_pBackgroundUpdater->StopWaiting();
+
+	return TRUE;
 
 }
 
@@ -2488,29 +2467,27 @@ void CLocateDlg::OnRemoveDeletedFiles()
 	}
 }
 
-void CLocateDlg::OnRenameFile(int nItem)
+BOOL CLocateDlg::OnRenameFile(int nItem)
 {
 	if (m_pListCtrl->GetSelectedCount()==0 && nItem==-1)
-		return;
+		return FALSE;
 	
 
 	if (!(GetFlags()&fgLVAllowInPlaceRenaming) || (m_pActiveContextMenu!=NULL && m_pActiveContextMenu->bForParents))
 		OnChangeFileName();
-	else
-	{
-		if (m_pListCtrl->GetSelectedCount()>0)
-			m_pListCtrl->EditLabel(m_pListCtrl->GetNextItem(-1,LVNI_SELECTED));
-		else if (nItem!=-1)
-			m_pListCtrl->EditLabel(nItem);
-	}
+	else if (m_pListCtrl->GetSelectedCount()>0)
+		return m_pListCtrl->EditLabel(m_pListCtrl->GetNextItem(-1,LVNI_SELECTED))!=NULL;
+	else if (nItem!=-1)
+		return m_pListCtrl->EditLabel(nItem)!=NULL;
+	return FALSE;
 }
 	
 
 
-void CLocateDlg::OnCopy(BOOL bCut,int nItem)
+BOOL CLocateDlg::OnCopy(BOOL bCut,int nItem)
 {
 	if (m_pListCtrl->GetSelectedCount()==0 && nItem==-1)
-		return;
+		return FALSE;
 
 	CWaitCursor wait;
 	CArray<CLocatedItem*> aItems;
@@ -2525,14 +2502,14 @@ void CLocateDlg::OnCopy(BOOL bCut,int nItem)
 		if (m_pActiveContextMenu!=NULL && m_pActiveContextMenu->bForParents)
 		{
 			if (!FileSystem::IsDirectory(pItem->GetParent()))
-				return;
+				return TRUE;
 			fo.SetFile(pItem->GetParent());
 		}
 		else
 		{
 			if (!FileSystem::IsFile(pItem->GetPath()) &&
 				!FileSystem::IsDirectory(pItem->GetPath()))
-				return;
+				return TRUE;
 			fo.SetFile(pItem->GetPath());
 		}
 	}
@@ -2557,15 +2534,17 @@ void CLocateDlg::OnCopy(BOOL bCut,int nItem)
 	
 	// Closing clipboard
 	CloseClipboard();
+
+	return TRUE;
 }
 	
 typedef HRESULT (__stdcall * PFNSHGETFOLDERPATHA)(HWND, int, HANDLE, DWORD, LPSTR);  // "SHGetFolderPathA"
 typedef HRESULT (__stdcall * PFNSHGETFOLDERPATHW)(HWND, int, HANDLE, DWORD, LPWSTR);  // "SHGetFolderPathW"
 
-void CLocateDlg::OnCreateShortcut()
+BOOL CLocateDlg::OnCreateShortcut()
 {
 	if (m_pListCtrl->GetSelectedCount()==0)
-		return;
+		return FALSE;
 	
 	CWaitCursor wait;
 	CStringW sTargetFolder;
@@ -2620,7 +2599,7 @@ void CLocateDlg::OnCreateShortcut()
 		switch(ShowErrorMessage(IDS_SHORTCUTTODESKTOP,IDS_SHORTCUT,MB_YESNOCANCEL|MB_ICONQUESTION))
 		{
 		case IDCANCEL:
-			return;
+			return FALSE;
 		case IDNO:
 			sTargetFolder.Empty();
 			break;
@@ -2631,10 +2610,10 @@ void CLocateDlg::OnCreateShortcut()
 	{
 		CFolderDialog fd(IDS_GETFOLDER,BIF_RETURNONLYFSDIRS|BIF_USENEWUI|BIF_NONEWFOLDERBUTTON);
 		if (!fd.DoModal(*this))
-			return;
+			return FALSE;
 
 		if (!fd.GetFolder(sTargetFolder))
-			return;
+			return FALSE;
 	}
 
 	if (sTargetFolder.LastChar()!=L'\\')
@@ -2647,21 +2626,21 @@ void CLocateDlg::OnCreateShortcut()
 	{
 		// Creating instance to shell link handler
 		if (!SUCCEEDED(CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLinkW,(void**)&pslw)))
-			return; 
+			return FALSE; 
 
 		// Creating instance to PersistFile interface
 		if (!SUCCEEDED(pslw->QueryInterface(IID_IPersistFile,(void**)&ppf)))
-			return;
+			return FALSE;
 	}
 	else
 	{
 		// Creating instance to shell link handler
 		if (!SUCCEEDED(CoCreateInstance(CLSID_ShellLink,NULL,CLSCTX_INPROC_SERVER,IID_IShellLink,(void**)&psl)))
-			return;
+			return FALSE;
 
 		// Creating instance to PersistFile interface
 		if (!SUCCEEDED(psl->QueryInterface(IID_IPersistFile,(void**)&ppf)))
-			return;
+			return FALSE;
 
 	}
 	
@@ -2684,21 +2663,21 @@ void CLocateDlg::OnCreateShortcut()
 				if (IsUnicodeSystem())
 				{
 					if (!SUCCEEDED(pslw->SetPath(pItem->GetParent())))
-						return;
+						return FALSE;
 					
 					pslw->SetDescription(CStringW(IDS_SHORTCUTTO)+szTitle);
 				}
 				else
 				{
 					if (!SUCCEEDED(psl->SetPath(W2A(pItem->GetParent()))))
-						return;
+						return FALSE;
 					
 					psl->SetDescription(CStringA(IDS_SHORTCUTTO)+W2A(szTitle));
 				}
 
 				
 				if (!SUCCEEDED(ppf->Save(sTargetFolder+szTitle+L".lnk",TRUE)))
-					return;
+					return FALSE;
 				
 			}
 			nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
@@ -2718,62 +2697,42 @@ void CLocateDlg::OnCreateShortcut()
 				if (IsUnicodeSystem())
 				{
 					if (!SUCCEEDED(pslw->SetPath(pItem->GetPath())))
-						return;
+						return FALSE;
 
 					pslw->SetDescription(CStringW(IDS_SHORTCUTTO)+pItem->GetFileTitle());
 				}
 				else
 				{
 					if (!SUCCEEDED(psl->SetPath(W2A(pItem->GetPath()))))
-						return;
+						return FALSE;
 				
 					psl->SetDescription(CStringA(IDS_SHORTCUTTO)+W2A(pItem->GetFileTitle()));
 				}
 
 				
 				if (!SUCCEEDED(ppf->Save(sTargetFolder+pItem->GetFileTitle()+L".lnk",TRUE)))
-					return;
+					return FALSE;
 
 			}
 			nItem=m_pListCtrl->GetNextItem(nItem,LVNI_SELECTED);
 		}
 	}
 	
+	return TRUE;
 }
 
 
-void CLocateDlg::OnSaveResults()
+void CLocateDlg::OnSaveResults(BOOL bClipboard)
 {
-	CSaveResultsDlg SaveResultsDlg;
-	
-	// Loading previous state
-	CRegKey2 RegKey;
-	
-	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
-	{
-		RegKey.QueryValue("SaveResultsFlags",(LPTSTR)&SaveResultsDlg.m_nFlags,4);
-		SaveResultsDlg.m_nFlags&=RESULT_SAVESTATE;
-
-		DWORD dwTemp=RegKey.QueryValueLength("SaveResultsDetails");
-		if (dwTemp>0)
-		{
-			SaveResultsDlg.m_aDetails.SetSize(dwTemp/sizeof(int));
-			RegKey.QueryValue("SaveResultsDetails",
-				(LPSTR)(LPINT)SaveResultsDlg.m_aDetails,dwTemp);
-		}
-
-		if (RegKey.QueryValue("SaveResultsExtension",dwTemp))
-			SaveResultsDlg.m_pofn->nFilterIndex=dwTemp<3?WORD(dwTemp):0;
-
-		RegKey.QueryValue(L"SaveResultsTemplate",SaveResultsDlg.m_strTemplate);
-
-		RegKey.CloseKey();
-	}
+	CSaveResultsDlg SaveResultsDlg(bClipboard);
 
 	
 	// Activating selected items feature if possible
-	if (m_pListCtrl->GetSelectedCount()>0)
-		SaveResultsDlg.m_nFlags|=RESULT_ACTIVATESELECTEDITEMS;
+	if (!bClipboard)
+	{
+		if (m_pListCtrl->GetSelectedCount()>0 && !bClipboard)
+			SaveResultsDlg.m_nFlags|=RESULT_ACTIVATESELECTEDITEMS;
+	}
 
 	// Opening dialog
 	if (!SaveResultsDlg.DoModal(*this))
@@ -2782,43 +2741,49 @@ void CLocateDlg::OnSaveResults()
 	// Activating wait cursor
 	CWaitCursor wait;
 
-	// Saving state
-	if(RegKey.OpenKey(HKCU,"\\General",CRegKey::createNew|CRegKey::samAll)==ERROR_SUCCESS)
-	{
-		RegKey.SetValue("SaveResultsFlags",SaveResultsDlg.m_nFlags&RESULT_SAVESTATE);
-		RegKey.SetValue("SaveResultsDetails",(LPCTSTR)(const int*)SaveResultsDlg.m_aDetails,
-			SaveResultsDlg.m_aDetails.GetSize()*sizeof(int),REG_BINARY);
-		RegKey.SetValue("SaveResultsExtension",DWORD(SaveResultsDlg.GetFilterIndex()));
-		if (SaveResultsDlg.m_strTemplate.IsEmpty())
-			RegKey.DeleteValue(L"SaveResultsTemplate");
-		else
-			RegKey.SetValue(L"SaveResultsTemplate",LPCWSTR(SaveResultsDlg.m_strTemplate)+SaveResultsDlg.m_strTemplate.FindLast(L'\\')+1);
-
-		RegKey.CloseKey();
-	}
-
 	try {
 		// Initializing results
-		CResults Results(SaveResultsDlg.m_nFlags,SaveResultsDlg.m_strDescription,TRUE);
-		int nFilter=SaveResultsDlg.GetFilterIndex(); 
+		CResults Results(SaveResultsDlg.m_nFlags|(bClipboard?RESULT_INCLUDESELECTEDITEMS:0),SaveResultsDlg.m_strDescription,TRUE);
+		BOOL bHTML=SaveResultsDlg.IsHTML(); 
 
 		Results.Create(m_pListCtrl,SaveResultsDlg.m_aDetails,SaveResultsDlg.m_aDetails.GetSize(),
-			nFilter!=2 || SaveResultsDlg.m_strTemplate.IsEmpty());
+			!bHTML || SaveResultsDlg.m_strTemplate.IsEmpty());
 
-		CStringW File;
-		SaveResultsDlg.GetFilePath(File);
-		switch (nFilter)
+		if (SaveResultsDlg.m_nFlags&RESULT_CLIPBOARD)
 		{
-		case 2:
-			if (!SaveResultsDlg.m_strTemplate.IsEmpty())
-				Results.SaveToHtmlFile(File,SaveResultsDlg.m_strTemplate);
-			else
-				Results.SaveToHtmlFile(File);
+			CMemoryStream stream;
+			Results.SaveToStream(&stream,bHTML,SaveResultsDlg.m_strTemplate.IsEmpty()?NULL:LPCWSTR(SaveResultsDlg.m_strTemplate));
+	
+			stream.Write(L"\0",1);
 
-			break;
-		default:
-			Results.SaveToFile(File);
-			break;
+			// Opening clipboard
+			OpenClipboard();
+			EmptyClipboard();
+
+			HGLOBAL hGlobal=GlobalAlloc(GMEM_MOVEABLE,stream.GetLength()+2);
+			if (hGlobal!=NULL)
+			{
+				BYTE* pData=(BYTE*)GlobalLock(hGlobal);
+				if (pData!=NULL)
+				{
+					CopyMemory(pData,stream.GetData(),stream.GetLength());
+					*((WORD*)(pData+stream.GetLength()))=0;
+					GlobalUnlock(hGlobal);
+					SetClipboardData(CF_UNICODETEXT,hGlobal);
+				}
+				else
+					GlobalFree(hGlobal);
+			}
+
+			
+			// Closing clipboard
+			CloseClipboard();
+		}
+		else
+		{
+			CStringW File;
+			SaveResultsDlg.GetFilePath(File);
+			Results.SaveToFile(File,bHTML,SaveResultsDlg.m_strTemplate.IsEmpty()?NULL:LPCWSTR(SaveResultsDlg.m_strTemplate));
 		}
 	}
 	catch (CFileException ex)

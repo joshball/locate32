@@ -108,7 +108,6 @@ inline CTrayIconWnd* GetTrayIconWnd()
 }
 
 
-
 ////////////////////////////////////////////////////////////
 // CRekKey2 - These two function access to theApp object 
 // and need to be here

@@ -16,6 +16,145 @@
 #define IDC_RELATIVEDATESPIN	102
 
 ////////////////////////////////////////////////////////////
+// Buffer allocation
+////////////////////////////////////////////////////////////
+
+struct BUFFER {
+	char* pData;
+	DWORD id;
+	BUFFER* pNextBuffer;
+};
+BUFFER* pFirstBuffer=NULL;
+BUFFER* pLatestBuffer=NULL;
+CRITICAL_SECTION csBuffers;
+
+void InitializeBuffers()
+{
+	InitializeCriticalSection(&csBuffers);
+}
+
+void DeinitializeBuffers()
+{
+	EnterCriticalSection(&csBuffers);
+	
+	while (pFirstBuffer!=NULL)
+	{
+		BUFFER* pTmp=pFirstBuffer;
+		pFirstBuffer=pTmp->pNextBuffer;
+
+		if (pTmp->pData!=NULL)
+			delete[] pTmp->pData;
+		delete pTmp;
+	}
+	pLatestBuffer=NULL;
+
+	LeaveCriticalSection(&csBuffers);
+}
+
+void AssignBuffer(void* pBuffer,DWORD id)
+{
+	if (id==0)
+		id=GetCurrentThreadId();
+
+	EnterCriticalSection(&csBuffers);
+
+	if (pFirstBuffer==NULL)
+	{
+		pFirstBuffer=pLatestBuffer=new BUFFER;
+		pFirstBuffer->pData=(char*)pBuffer;
+		pFirstBuffer->id=id;
+		pFirstBuffer->pNextBuffer=NULL;
+		LeaveCriticalSection(&csBuffers);
+		return;
+	}
+
+	if (pLatestBuffer->id==id)
+	{
+		if (pLatestBuffer->pData!=NULL)
+		{
+			ASSERT(pLatestBuffer->pData!=pBuffer);
+			delete[] pLatestBuffer->pData;
+		}
+		pLatestBuffer->pData=(char*)pBuffer;
+		LeaveCriticalSection(&csBuffers);
+		return;
+	}
+
+
+	pLatestBuffer=pFirstBuffer;
+	for (;;)
+	{
+		if (pLatestBuffer->id==id)
+		{
+			if (pLatestBuffer->pData!=NULL)
+			{
+				ASSERT(pLatestBuffer->pData!=pBuffer);
+				delete[] pLatestBuffer->pData;
+			}
+			pLatestBuffer->pData=(char*)pBuffer;
+			LeaveCriticalSection(&csBuffers);
+			return;
+		}
+
+		if (pLatestBuffer->pNextBuffer==NULL)
+		{
+			pLatestBuffer=pLatestBuffer->pNextBuffer=new BUFFER;
+			pLatestBuffer->pData=(char*)pBuffer;
+			pLatestBuffer->id=id;
+			pLatestBuffer->pNextBuffer=NULL;
+			LeaveCriticalSection(&csBuffers);
+			return;
+		}
+
+		pLatestBuffer=pLatestBuffer->pNextBuffer;
+	}
+
+	LeaveCriticalSection(&csBuffers);
+}
+
+
+void FreeBuffers(DWORD id)
+{
+	if (pFirstBuffer==NULL)
+		return;
+
+	if (id==0)
+		id=GetCurrentThreadId();
+
+	EnterCriticalSection(&csBuffers);
+
+	if (pFirstBuffer->id==id)
+	{
+		BUFFER* pTmp=pFirstBuffer;
+		pLatestBuffer=pFirstBuffer=pFirstBuffer->pNextBuffer;
+		if (pTmp->pData!=NULL)
+			delete[] pTmp->pData;
+		delete pTmp;
+		LeaveCriticalSection(&csBuffers);
+		return;
+	}
+		
+	pLatestBuffer=pFirstBuffer;
+	while (pLatestBuffer->pNextBuffer!=NULL)
+	{
+		BUFFER* pTmp=pLatestBuffer->pNextBuffer;
+		if (pTmp->id==id)
+		{
+			pLatestBuffer->pNextBuffer=pTmp->pNextBuffer;
+			if (pTmp->pData!=NULL)
+				delete[] pTmp->pData;
+			delete pTmp;
+			LeaveCriticalSection(&csBuffers);
+			return;
+		}
+
+		pLatestBuffer=pLatestBuffer->pNextBuffer;
+	}
+
+	LeaveCriticalSection(&csBuffers);
+}
+
+////////////////////////////////////////////////////////////
 // Functions
 ////////////////////////////////////////////////////////////
 
@@ -1088,3 +1227,4 @@ int STDAPICALLTYPE _StrCmpW(LPCWSTR a,LPCWSTR b)
 {
 	return wcscmp(a,b);
 }
+

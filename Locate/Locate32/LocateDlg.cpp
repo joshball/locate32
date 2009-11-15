@@ -7,12 +7,7 @@
 
 
 
-////////////////////////////////////////////////////////////
-// Global variables	
-////////////////////////////////////////////////////////////
 
-LPSTR g_szBuffer=NULL; 
-LPWSTR g_szwBuffer=NULL; 
 
 
 
@@ -699,17 +694,7 @@ void CLocateDlg::SetDialogMode(BOOL bLarge,BOOL bForceRepositionIfMaximized)
 			// Now, terminate available background updater
 			RemoveResultsFromList();
 			
-			ISDLGTHREADOK
-			if (g_szBuffer!=NULL)
-			{
-				delete[] g_szBuffer;
-				g_szBuffer=NULL;
-			}
-			if (g_szwBuffer!=NULL)
-			{
-				delete[] g_szwBuffer;
-				g_szwBuffer=NULL;
-			}
+			FreeBuffers();
 			m_pListCtrl->ShowWindow(swHide);
 		}
 	}
@@ -1125,14 +1110,14 @@ void CLocateDlg::OnPresetsSelection(int nPreset)
 
 }
 
-void CLocateDlg::LoadPreset(LPCWSTR szPreset)
+BOOL CLocateDlg::LoadPreset(LPCWSTR szPreset)
 {
 	CRegKey2 RegKey;
 	CRegKey PresetKey;
 
 
 	if (RegKey.OpenKey(HKCU,"\\Dialogs\\SearchPresets",CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
-		return;
+		return FALSE;
 	
 	// Finding registry entry for the preset
 	for (int nPreset=0;;nPreset++) 
@@ -1141,7 +1126,7 @@ void CLocateDlg::LoadPreset(LPCWSTR szPreset)
 		StringCbPrintf(szBuffer,30,"Preset %03d",nPreset);
 
 		if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
-			return;
+			return FALSE;
 
 		CStringW Name;
 		if (PresetKey.QueryValue(L"",Name))
@@ -1163,6 +1148,8 @@ void CLocateDlg::LoadPreset(LPCWSTR szPreset)
 	// Give focus for "Named:" if the button is used
 	if (GetFocus()==GetDlgItem(IDC_PRESETS))
 		SetFocus(IDC_NAME);
+
+	return TRUE;
 }
 
 DWORD CLocateDlg::CheckExistenceOfPreset(LPCWSTR szName,DWORD* pdwPresets) // Returns index to preset or FFFFFFFF
@@ -3085,10 +3072,10 @@ void CLocateDlg::CancelInstantSearch()
 // CLocateDlg - Misc helpers
 ////////////////////////////////////////////////////////////
 
-void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
+BOOL CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 {
 	if (szCommand==NULL)
-		return;
+		return TRUE;
 	
 	int nIndexToPercent=nIndexToPercent=(int)FirstCharIndex(szCommand,L'%');
 	if (nIndexToPercent==-1)
@@ -3110,24 +3097,24 @@ void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 			if (!CreateProcessW(NULL,LPWSTR(szCommand),NULL,
 				NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
 				NULL,NULL,(STARTUPINFOW*)&si,&pi))
-				return;
+				return FALSE;
 		}
 		else
 		{
 			if (!CreateProcess(NULL,(LPSTR)(LPCSTR)W2A(szCommand),NULL,
 				NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
 				NULL,NULL,&si,&pi))
-				return;
+				return FALSE;
 		}
 
 		CloseHandle(pi.hThread);
 		CloseHandle(pi.hProcess);
-		return;		
+		return TRUE;		
 	}
 
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL)
-		return;
+		return FALSE;
 
 	int nItems;
 	CAutoPtrA<CLocatedItem*> pItems=pLocateDlg->GetSelectedItems(nItems,nItem);
@@ -3207,33 +3194,33 @@ void CLocateDlg::ExecuteCommand(LPCWSTR szCommand,int nItem)
 			si.dwFlags=STARTF_USESHOWWINDOW;
 			si.wShowWindow=SW_SHOWDEFAULT;
 			
+			BOOL bRet=FALSE;
 			if (IsUnicodeSystem())
 			{
-				if (CreateProcessW(NULL,pCommand,NULL,
+				bRet=CreateProcessW(NULL,pCommand,NULL,
 					NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
-					NULL,NULL,(STARTUPINFOW*)&si,&pi))
-				{
-					CloseHandle(pi.hThread);
-					CloseHandle(pi.hProcess);
-				}
+					NULL,NULL,(STARTUPINFOW*)&si,&pi);
 			}
-			else
+			else 
 			{
-				if (CreateProcess(NULL,(LPSTR)(LPCSTR)W2A(pCommand),NULL,
+				bRet=CreateProcess(NULL,(LPSTR)(LPCSTR)W2A(pCommand),NULL,
 					NULL,FALSE,CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
-					NULL,NULL,&si,&pi))
-				{
-					CloseHandle(pi.hThread);
-					CloseHandle(pi.hProcess);
-				}
+					NULL,NULL,&si,&pi);
 			}
-
-		
-
+			
 			if (pCommand!=szCommand)
 				delete[] pCommand;
+
+			if (bRet)
+			{
+				CloseHandle(pi.hThread);
+				CloseHandle(pi.hProcess);
+			} else
+				return FALSE;
 		}
 	}
+
+	return TRUE;
 
 }
 

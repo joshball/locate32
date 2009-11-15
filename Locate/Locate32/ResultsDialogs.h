@@ -7,7 +7,25 @@
 #pragma once
 #endif 
 
-class CResults : public CExceptionObject
+
+#define RESULT_INCLUDEDATE				0x1
+#define RESULT_INCLUDELABELS			0x2
+#define RESULT_INCLUDEDBINFO			0x4
+#define RESULT_INCLUDEDESCRIPTION		0x8
+#define RESULT_INCLUDESUMMARY			0x10
+
+
+#define RESULT_ENCODINGANSI				0x0
+#define RESULT_ENCODINGUNICODE			0x100
+#define RESULT_ENCODINGUTF8				0x200
+#define RESULT_CLIPBOARDASHTML			0x100
+#define RESULT_SAVESTATE				0x317
+
+#define RESULT_ACTIVATESELECTEDITEMS	0x1000
+#define RESULT_INCLUDESELECTEDITEMS		0x2000
+#define RESULT_CLIPBOARD				0x4000
+
+class CResults : public CExceptionObject, CDialog
 {
 public:
 	CResults(BOOL bThrowExceptions=FALSE);
@@ -15,7 +33,7 @@ public:
 	~CResults();
 
 	BOOL Initialize(DWORD dwFlags,LPCWSTR szDescription);
-	void Close();
+	void ClearVariables();
 
 
 	// Initialize structures. bDataToTmpFile has to be FALSE if SaveToHtmlFile
@@ -23,11 +41,22 @@ public:
 	BOOL Create(CListCtrl* pList,int* pSelectedDetails,int nSelectedDetails,BOOL bDataToTmpFile);
 
 
-	BOOL SaveToFile(LPCWSTR szFile) const;
-	BOOL SaveToHtmlFile(LPCWSTR szFile) const;
-	BOOL SaveToHtmlFile(LPCWSTR szFile,LPCWSTR szTemplateFile);
+	BOOL SaveToFile(LPCWSTR szFile,BOOL bHTML,LPCWSTR szTemplate);
+	BOOL SaveToStream(CStream* stream,BOOL bHTML,LPCWSTR szTemplate);
 	
 private:
+	static DWORD WINAPI SaveToFileProc(LPVOID lpParameter);
+
+	BOOL Start(BOOL bHTML,LPCWSTR szTemplate);
+	BOOL SaveToFile();
+	BOOL SaveToHtml();
+	BOOL SaveToHtmlTemplate();
+
+	virtual BOOL OnInitDialog(HWND hwndFocus);
+	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
+	virtual void OnTimer(DWORD wTimerID); 
+	
+
 	DWORD m_dwFlags;
 	CStringW m_strDescription;
 
@@ -37,15 +66,22 @@ private:
 	int m_nResults;
 	int m_nFiles;
 	int m_nDirectories;
-	
-	CWordArray m_aFromDatabases;
 
-	CStringW m_sTempFile;
+	volatile int m_nProgressState;
+	CIntArray m_nAccessedItems;
 	
-	
-	
+	CStringW m_sFile,m_sTempFile,m_sTemplateFile;
+	CStream* m_pOutput;
+	CFile* m_pTmpFile,*m_pTemplate;
+	HANDLE m_hThread;
+	BOOL m_bSaveHTML;
+	volatile BOOL m_bQuit;
+
+	CWordArray m_aFromDatabases;
 	CAutoPtrA<CLocateDlg::ViewDetails> m_AllDetails;
 	CArray<CLocatedItem*> m_Items;	
+	
+
 
 private:
 	class Value {
@@ -143,7 +179,7 @@ private:
 	BOOL SetVariable(LPCSTR szName,LPCWSTR pString);
 	BOOL SetVariable(LPCSTR szName,LPCWSTR pString,DWORD nLen);
 	
-	BOOL ParseBuffer(CStream& stream,LPCWSTR pBuffer,int iBufferLen);
+	BOOL ParseBuffer(LPCWSTR pBuffer,int iBufferLen);
 	BOOL ParseBlockLength(LPCWSTR& pBuffer,int& iBufferLen,int& riBlockLen) const;
 	Value* ParseFunctionsAndVariables(LPCWSTR& pPtr,int& iBufferLen,BOOL& bFreeReturnedValue);
 	
@@ -164,13 +200,16 @@ private:
 class CSaveResultsDlg : public CFileDialog  
 {
 public:
-	CSaveResultsDlg();
+	CSaveResultsDlg(BOOL bClipboard);
 	virtual ~CSaveResultsDlg();
 	virtual BOOL OnInitDialog(HWND hwndFocus);
 	virtual BOOL OnFileNameOK();
 	virtual BOOL OnNotify(int idCtrl,LPNMHDR pnmh);
 	virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 	
+	BOOL DoModal(HWND hParentWnd);
+	BOOL IsHTML() const;
+
 	BOOL ListNotifyHandler(NMLISTVIEW *pNm);
 	BOOL ItemUpOrDown(BOOL bUp);
 	void AddTemplates();
@@ -363,20 +402,24 @@ inline CResults::Value CResults::Value::MakeStatic()
 
 inline CResults::CResults(BOOL bThrowExceptions)
 :	m_nSelectedDetails(0),m_pSelectedDetails(NULL),m_pLengths(NULL),
-	m_dwFlags(0),m_hSystemImageList(NULL),CExceptionObject(bThrowExceptions)
+	m_dwFlags(0),m_hSystemImageList(NULL),CExceptionObject(bThrowExceptions),
+	m_pOutput(NULL),m_pTmpFile(NULL),m_pTemplate(NULL),m_hThread(NULL),
+	m_nProgressState(0),CDialog(IDD_SAVERESULTSPROGRESS)
 {
 }
 
 inline CResults::CResults(DWORD dwFlags,LPCWSTR szDescription,BOOL bThrowExceptions)
 :	m_nSelectedDetails(0),m_pSelectedDetails(NULL),m_pLengths(NULL),
-	m_hSystemImageList(NULL),CExceptionObject(bThrowExceptions)
+	m_hSystemImageList(NULL),CExceptionObject(bThrowExceptions),
+	m_pOutput(NULL),m_pTmpFile(NULL),m_pTemplate(NULL),m_hThread(NULL),
+	m_nProgressState(0),CDialog(IDD_SAVERESULTSPROGRESS)
 {
 	Initialize(dwFlags,szDescription);
 }
 
 inline CResults::~CResults()
 {
-	Close();
+	ClearVariables();
 }
 
 inline CResults::Value* CResults::GetVariable(LPCSTR szName) const
@@ -426,6 +469,19 @@ inline BOOL CResults::SetVariable(LPCSTR szName,LPCWSTR pString,DWORD nLen)
 		m_Variables.AddTail(szName,new Value(pString,nLen));
 	return TRUE;
 }
+
+/////////////////////////////////////////////////////
+// Inline function for CSaveResultsDlg
+
+
+inline BOOL CSaveResultsDlg::IsHTML() const
+{
+	if (m_nFlags&RESULT_CLIPBOARD)
+		return m_nFlags&RESULT_CLIPBOARDASHTML?TRUE:FALSE;
+	else
+		return GetFilterIndex()==2;
+}
+
 
 
 #endif

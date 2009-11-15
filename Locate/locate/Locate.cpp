@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2009 Janne Huttunen
-   database locater v3.1.9.6070              */
+   database locater v3.1.9.11150              */
 
-const char* szVersionStr="locate 3.1 RC3g build 9.6070";
+const char* szVersionStr="locate 3.1 RC3j build 9.11150";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -958,7 +958,7 @@ int wmain (int argc,wchar_t * argv[])
 				locater.AddAdvancedFlags(LOCATE_LOGICALOPERATIONS);
 
 				// Insert '+' for string which does not have '+' or '-'
-				for (int i=0;i<aStrings.GetSize();)
+				for (int i=0;i<aStrings.GetSize();i++)
 				{
 					if (aStrings[i][0]!=L'+' && aStrings[i][0]!=L'-')
 					{

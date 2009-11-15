@@ -141,7 +141,8 @@ class CStream : public CExceptionObject
 public:
 	CStream();
 	CStream(BOOL bThrow);
-	
+	virtual ~CStream();
+
 public:
 	// Set length
 	virtual DWORD GetLength(DWORD* pHigh=NULL) const=0;
@@ -378,6 +379,7 @@ public:
 	CFileEncode(HANDLE hFile,BOOL bThrowExceptions=TRUE,CFileException* e=NULL);
 	CFileEncode(LPCSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions=TRUE,CFileException* e=NULL);
 	CFileEncode(LPCWSTR lpszFileName,int nOpenFlags,BOOL bThrowExceptions=TRUE,CFileException* e=NULL);
+	virtual ~CFileEncode();
 
 	void SetEncoding(Encoding nEncoding) { m_nEncoding=nEncoding; }
 

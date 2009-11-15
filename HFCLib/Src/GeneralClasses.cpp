@@ -5,6 +5,15 @@
 #include "HFCLib.h"
 
 
+////////////////////////////////////////////
+// CStream
+////////////////////////////////////////////
+
+CStream::~CStream()
+{
+}
+
+
 
 ////////////////////////////////////////////
 // CTime
@@ -947,7 +956,7 @@ LONG CRegKey::OpenKey(HKEY hKey,LPCWSTR lpszSubKey,DWORD fStatus,LPSECURITY_ATTR
 	if (m_hKey!=NULL)
 	{
 		RegCloseKey(m_hKey);
-		DebugCloseHandle(dhtRegKey,&m_hKey,lpszSubKey);
+		DebugCloseHandle(dhtRegKey,m_hKey,lpszSubKey);
 	}
 	if (fStatus==samAll)
 		samDesired=KEY_ALL_ACCESS;
@@ -1435,6 +1444,5 @@ LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData,DWORD cbDataAsChars,D
 		}
 	}
 }
-
 
 #endif

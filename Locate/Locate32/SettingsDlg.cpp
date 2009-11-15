@@ -117,17 +117,7 @@ CSettingsProperties::~CSettingsProperties()
 	
 	m_Schedules.RemoveAll();
 
-	// Free buffers
-	if (g_szBuffer!=NULL)
-	{
-		delete[] g_szBuffer;
-		g_szBuffer=NULL;
-	}
-	if (g_szwBuffer!=NULL)
-	{
-		delete[] g_szwBuffer;
-		g_szwBuffer=NULL;
-	}
+
 }
 
 BOOL CSettingsProperties::LoadSettings()
@@ -2247,21 +2237,23 @@ BOOL CSettingsProperties::CLanguageSettingsPage::ListNotifyHandler(NMLISTVIEW *p
 			
 			pLvdi->item.mask=LVIF_TEXT|LVIF_DI_SETITEM;
 
-			if (g_szBuffer!=NULL)
-				delete[] g_szBuffer;
 			switch (pLvdi->item.iSubItem)
 			{
 			case 0:
-				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->sLanguage,li->sLanguage.GetLength());
+				pLvdi->item.pszText=alloccopyWtoA(li->sLanguage,li->sLanguage.GetLength());
+				AssignBuffer(pLvdi->item.pszText);
 				break;
 			case 1:
-				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->sFile,li->sFile.GetLength());
+				pLvdi->item.pszText=alloccopyWtoA(li->sFile,li->sFile.GetLength());
+				AssignBuffer(pLvdi->item.pszText);
 				break;
 			case 2:
-				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->sDescription,li->sDescription.GetLength());
+				pLvdi->item.pszText=alloccopyWtoA(li->sDescription,li->sDescription.GetLength());
+				AssignBuffer(pLvdi->item.pszText);
 				break;
 			case 3:
-				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(li->sForVersion,li->sForVersion.GetLength());
+				pLvdi->item.pszText=alloccopyWtoA(li->sForVersion,li->sForVersion.GetLength());
+				AssignBuffer(pLvdi->item.pszText);
 				break;
 			}
 			break;
@@ -3308,50 +3300,40 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 			if (pDatabase==NULL)
 				break;
 				
-			ISDLGTHREADOK
-			if (g_szBuffer!=NULL)
-			{
-				delete[] g_szBuffer;
-				g_szBuffer=NULL;
-			}
-			
-			
 			switch (pLvdi->item.iSubItem)
 			{
 			case 0:
 				if (!m_pSettings->IsSettingsFlagSet(CSettingsProperties::settingsDatabasesOverridden))
-					pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pDatabase->GetName());
+				{
+					pLvdi->item.pszText=alloccopyWtoA(pDatabase->GetName());
+					AssignBuffer(pLvdi->item.pszText);
+				}
 				else
 				{
-					g_szBuffer=new char[40];
-					LoadString(IDS_COMMANDLINEARGUMENT,g_szBuffer,40);
-					pLvdi->item.pszText=g_szBuffer;
+					pLvdi->item.pszText=GetBuffer(40);
+					LoadString(IDS_COMMANDLINEARGUMENT,pLvdi->item.pszText,40);
 				}
 				break;
 			case 1:
-				pLvdi->item.pszText=g_szBuffer=alloccopyWtoA(pDatabase->GetArchiveName());
+				pLvdi->item.pszText=alloccopyWtoA(pDatabase->GetArchiveName());
+				AssignBuffer(pLvdi->item.pszText);
 				break;
 			case 2:
-				g_szBuffer=new char[100];
-				LoadString(pDatabase->IsGloballyUpdated()?IDS_YES:IDS_NO,g_szBuffer,100);
-				pLvdi->item.pszText=g_szBuffer;
+				pLvdi->item.pszText=GetBuffer(100);
+				LoadString(pDatabase->IsGloballyUpdated()?IDS_YES:IDS_NO,pLvdi->item.pszText,100);
 				break;
 			case 3:
 				if (ReadModificationDate(pLvdi->item.iItem,pDatabase))
 				{
-					if (g_szBuffer!=NULL)
-						delete[] g_szBuffer;
-					g_szBuffer=new char[100];
-					LoadString(IDS_UNKNOWN,g_szBuffer,100);
-					pLvdi->item.pszText=g_szBuffer;
+					pLvdi->item.pszText=GetBuffer(100);
+					LoadString(IDS_UNKNOWN,pLvdi->item.pszText,100);
 				}
 				else
 					pLvdi->item.pszText=const_cast<LPSTR>(szEmpty);
 				break;
 			case 4:
-				g_szBuffer=new char[20];
-				_itoa_s(pDatabase->GetThreadId()+1,g_szBuffer,20,10);
-				pLvdi->item.pszText=g_szBuffer;
+				pLvdi->item.pszText=GetBuffer(20);
+				_itoa_s(pDatabase->GetThreadId()+1,pLvdi->item.pszText,20,10);
 				break;
 			}
 			break;
@@ -3371,43 +3353,30 @@ BOOL CSettingsProperties::CDatabasesSettingsPage::ListNotifyHandler(NMLISTVIEW *
 					pLvdi->item.pszText=const_cast<LPWSTR>(pDatabase->GetName());
 				else
 				{
-					ISDLGTHREADOK
-					if (g_szwBuffer!=NULL)
-						delete[] g_szwBuffer;
-					g_szwBuffer=new WCHAR[40];
-					LoadString(IDS_COMMANDLINEARGUMENT,g_szwBuffer,40);
-					pLvdi->item.pszText=g_szwBuffer;
+					pLvdi->item.pszText=GetBufferW(40);
+					LoadString(IDS_COMMANDLINEARGUMENT,pLvdi->item.pszText,40);
 				}
 				break;
 			case 1:
 				pLvdi->item.pszText=const_cast<LPWSTR>(pDatabase->GetArchiveName());
 				break;
 			case 2:
-				if (g_szwBuffer!=NULL)
-					delete[] g_szwBuffer;
-				g_szwBuffer=new WCHAR[100];
-				LoadString(pDatabase->IsGloballyUpdated()?IDS_YES:IDS_NO,g_szwBuffer,100);
-				pLvdi->item.pszText=g_szwBuffer;
+				pLvdi->item.pszText=GetBufferW(100);
+				LoadString(pDatabase->IsGloballyUpdated()?IDS_YES:IDS_NO,pLvdi->item.pszText,100);
 				break;
 			case 3:
 				if (ReadModificationDate(pLvdi->item.iItem,pDatabase))
 				{
-					if (g_szwBuffer!=NULL)
-						delete[] g_szwBuffer;
-					g_szwBuffer=new WCHAR[100];
-					LoadString(IDS_UNKNOWN,g_szwBuffer,100);
-					pLvdi->item.pszText=g_szwBuffer;
+					pLvdi->item.pszText=GetBufferW(100);
+					LoadString(IDS_UNKNOWN,pLvdi->item.pszText,100);
 				}
 				else
 					pLvdi->item.pszText=const_cast<LPWSTR>(szwEmpty);
 							
 				break;
 			case 4: // Thread 
-				if (g_szwBuffer!=NULL)
-					delete[] g_szwBuffer;
-				g_szwBuffer=new WCHAR[20];
-				_itow_s(pDatabase->GetThreadId()+1,g_szwBuffer,20,10);
-				pLvdi->item.pszText=g_szwBuffer;
+				pLvdi->item.pszText=GetBufferW(20);
+				_itow_s(pDatabase->GetThreadId()+1,pLvdi->item.pszText,20,10);
 				break;
 			}
 			break;
@@ -7376,65 +7345,59 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::OnNotify(int idCtrl,LPNMHDR pn
 	default:
 		if (pnmh->code==TTN_NEEDTEXT)
 		{
-			if (g_szBuffer!=NULL)
-				delete[] g_szBuffer;
-
 			switch (pnmh->idFrom)
 			{
 			case IDC_ADDACTION:
-				g_szBuffer=allocstring(IDS_SHORTCUTADDACTION);
+				((LPTOOLTIPTEXT)pnmh)->lpszText=allocstring(IDS_SHORTCUTADDACTION);
 				break;
 			case IDC_REMOVEACTION:
-				g_szBuffer=allocstring(IDS_SHORTCUTREMOVEACTION);
+				((LPTOOLTIPTEXT)pnmh)->lpszText=allocstring(IDS_SHORTCUTREMOVEACTION);
 				break;
 			case IDC_NEXT:
-				g_szBuffer=allocstring(IDS_SHORTCUTNEXTACTION);
+				((LPTOOLTIPTEXT)pnmh)->lpszText=allocstring(IDS_SHORTCUTNEXTACTION);
 				break;
 			case IDC_PREV:
-				g_szBuffer=allocstring(IDS_SHORTCUTPREVACTION);
+				((LPTOOLTIPTEXT)pnmh)->lpszText=allocstring(IDS_SHORTCUTPREVACTION);
 				break;
 			case IDC_SWAPWITHPREVIOUS:
-				g_szBuffer=allocstring(IDS_SHORTCUTSWAPWITHPREVIOUS);
+				((LPTOOLTIPTEXT)pnmh)->lpszText=allocstring(IDS_SHORTCUTSWAPWITHPREVIOUS);
 				break;
 			case IDC_SWAPWITHNEXT:
-				g_szBuffer=allocstring(IDS_SHORTCUTSWAPWITHNEXT);
+				((LPTOOLTIPTEXT)pnmh)->lpszText=allocstring(IDS_SHORTCUTSWAPWITHNEXT);
 				break;
 			default:
-				g_szBuffer=allocstring(IDS_UNKNOWN);
+				((LPTOOLTIPTEXT)pnmh)->lpszText=allocstring(IDS_UNKNOWN);
 				break;
 			}
-			((LPTOOLTIPTEXT)pnmh)->lpszText=g_szBuffer;				
+			AssignBuffer(((LPTOOLTIPTEXT)pnmh)->lpszText);
 		}
 		else if (pnmh->code==TTN_NEEDTEXTW)
 		{
-			if (g_szwBuffer!=NULL)
-				delete[] g_szwBuffer;
-
 			switch (pnmh->idFrom)
 			{
 			case IDC_ADDACTION:
-				g_szwBuffer=allocstringW(IDS_SHORTCUTADDACTION);
+				((LPTOOLTIPTEXTW)pnmh)->lpszText=allocstringW(IDS_SHORTCUTADDACTION);
 				break;
 			case IDC_REMOVEACTION:
-				g_szwBuffer=allocstringW(IDS_SHORTCUTREMOVEACTION);
+				((LPTOOLTIPTEXTW)pnmh)->lpszText=allocstringW(IDS_SHORTCUTREMOVEACTION);
 				break;
 			case IDC_NEXT:
-				g_szwBuffer=allocstringW(IDS_SHORTCUTNEXTACTION);
+				((LPTOOLTIPTEXTW)pnmh)->lpszText=allocstringW(IDS_SHORTCUTNEXTACTION);
 				break;
 			case IDC_PREV:
-				g_szwBuffer=allocstringW(IDS_SHORTCUTPREVACTION);
+				((LPTOOLTIPTEXTW)pnmh)->lpszText=allocstringW(IDS_SHORTCUTPREVACTION);
 				break;
 			case IDC_SWAPWITHPREVIOUS:
-				g_szwBuffer=allocstringW(IDS_SHORTCUTSWAPWITHPREVIOUS);
+				((LPTOOLTIPTEXTW)pnmh)->lpszText=allocstringW(IDS_SHORTCUTSWAPWITHPREVIOUS);
 				break;
 			case IDC_SWAPWITHNEXT:
-				g_szwBuffer=allocstringW(IDS_SHORTCUTSWAPWITHNEXT);
+				((LPTOOLTIPTEXTW)pnmh)->lpszText=allocstringW(IDS_SHORTCUTSWAPWITHNEXT);
 				break;
 			default:
-				g_szwBuffer=allocstringW(IDS_UNKNOWN);
+				((LPTOOLTIPTEXTW)pnmh)->lpszText=allocstringW(IDS_UNKNOWN);
 				break;
 			}
-			((LPTOOLTIPTEXTW)pnmh)->lpszText=g_szwBuffer;				
+			AssignBuffer(((LPTOOLTIPTEXTW)pnmh)->lpszText);				
 		}
 	}
 	return CPropertyPage::OnNotify(idCtrl,pnmh);
@@ -7457,8 +7420,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 			//CShortcut* pShortcut=(CShortcut*)pLvdi->item.lParam;
 			if (pLvdi->item.lParam==NULL)
 				break;
-			if (g_szBuffer!=NULL)
-				delete[] g_szBuffer;
+			LPSTR szBuffer=NULL;
 			
 			// Retrieving state
 			pLvdi->item.mask=LVIF_STATE;
@@ -7478,7 +7440,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 						WORD wKey=(WORD)SendDlgItemMessage(IDC_SHORTCUTKEY,HKM_GETHOTKEY,0,0);
 						CShortcut::FormatKeyLabel(m_pVirtualKeyNames,LOBYTE(wKey),CShortcut::HotkeyModifiersToModifiers(HIBYTE(wKey)),
 							(m_pCurrentShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode)?TRUE:FALSE,Buffer);
-						g_szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
+						szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
 					}
 					else
 					{
@@ -7496,27 +7458,27 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 							bModifiers|=CShortcut::ModifierWin;
 						CStringW Buffer;
 						CShortcut::FormatKeyLabel(m_pVirtualKeyNames,bVKey,bModifiers,bScancode,Buffer);
-						g_szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
+						szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
 					}
 				}
 				else
 				{
 					CStringW Buffer;
 					((CShortcut*)pLvdi->item.lParam)->FormatKeyLabel(m_pVirtualKeyNames,Buffer);
-					g_szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
+					szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
 				}
 				break;
 			case 1: // Type
 				switch (((CShortcut*)pLvdi->item.lParam)->m_dwFlags&CShortcut::sfKeyTypeMask)
 				{
 				case CShortcut::sfGlobalHotkey:
-					g_szBuffer=allocstring(IDS_ADVSHORTCUTGLOBALHOTKEY);
+					szBuffer=allocstring(IDS_ADVSHORTCUTGLOBALHOTKEY);
 					break;
 				case CShortcut::sfGlobalHook:
-					g_szBuffer=allocstring(IDS_ADVSHORTCUTGLOBALHOOK);
+					szBuffer=allocstring(IDS_ADVSHORTCUTGLOBALHOOK);
 					break;
 				case CShortcut::sfLocal:
-					g_szBuffer=allocstring(IDS_ADVSHORTCUTLOCAL);
+					szBuffer=allocstring(IDS_ADVSHORTCUTLOCAL);
 					break;
 				}
 				break;
@@ -7525,7 +7487,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 				{
 					if (((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize()>1)
 					{
-						g_szBuffer=allocstring(IDS_SHORTCUTMULTIPLEACTIONS);
+						szBuffer=allocstring(IDS_SHORTCUTMULTIPLEACTIONS);
 						break;
 					}
 					
@@ -7534,7 +7496,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 					CAction::Action nAction=GetSelectedAction();
 					if (nAction==CAction::None)
 					{
-						g_szBuffer=allocstring(IDS_NONE);
+						szBuffer=allocstring(IDS_NONE);
 						break;
 					}
 					if ((nSubAction=IndexToSubAction(nAction,nCurSel))!=UINT(-1))
@@ -7556,11 +7518,11 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 								pExtraInfo=(void*)(nItem-1);							
 						}
 						FormatActionLabel(Buffer,nAction,nSubAction,pExtraInfo);
-						g_szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
+						szBuffer=alloccopyWtoA(Buffer,Buffer.GetLength());
 						break;
 					}
 					
-					g_szBuffer=allocstring(IDS_UNKNOWN);
+					szBuffer=allocstring(IDS_UNKNOWN);
 				}				
 				else
 				{
@@ -7577,14 +7539,15 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 						Buffer << Action;
 					}
 
-					g_szBuffer=Buffer.GiveBuffer();
+					szBuffer=Buffer.GiveBuffer();
 				}
 				break;
 			default:
-				g_szBuffer=allocstring(IDS_UNKNOWN);
+				szBuffer=allocstring(IDS_UNKNOWN);
 				break;
 			}
-			pLvdi->item.pszText=g_szBuffer;
+			AssignBuffer(szBuffer);
+			pLvdi->item.pszText=szBuffer;
 			break;
 		}
 	case LVN_GETDISPINFOW:
@@ -7593,9 +7556,8 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 			//CShortcut* pShortcut=(CShortcut*)pLvdi->item.lParam;
 			if (pLvdi->item.lParam==NULL)
 				break;
-			if (g_szwBuffer!=NULL)
-				delete[] g_szwBuffer;
-			
+			LPWSTR szwBuffer=NULL;
+
 			// Retrieving state
 			pLvdi->item.mask=LVIF_STATE;
 			pLvdi->item.stateMask=LVIS_SELECTED;
@@ -7614,7 +7576,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 						CStringW Buffer;
 						CShortcut::FormatKeyLabel(m_pVirtualKeyNames,LOBYTE(wKey),CShortcut::HotkeyModifiersToModifiers(HIBYTE(wKey)),
 							(m_pCurrentShortcut->m_dwFlags&CShortcut::sfVirtualKeyIsScancode)?TRUE:FALSE,Buffer);
-						g_szwBuffer=Buffer.GiveBuffer();
+						szwBuffer=Buffer.GiveBuffer();
 					}
 					else
 					{
@@ -7632,27 +7594,27 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 							bModifiers|=CShortcut::ModifierWin;
 						CStringW Buffer;
 						CShortcut::FormatKeyLabel(m_pVirtualKeyNames,bVKey,bModifiers,bScancode,Buffer);
-						g_szwBuffer=Buffer.GiveBuffer();
+						szwBuffer=Buffer.GiveBuffer();
 					}
 				}
 				else
 				{
 					CStringW Buffer;
 					((CShortcut*)pLvdi->item.lParam)->FormatKeyLabel(m_pVirtualKeyNames,Buffer);
-					g_szwBuffer=Buffer.GiveBuffer();
+					szwBuffer=Buffer.GiveBuffer();
 				}
 				break;
 			case 1: // Type
 				switch (((CShortcut*)pLvdi->item.lParam)->m_dwFlags&CShortcut::sfKeyTypeMask)
 				{
 				case CShortcut::sfGlobalHotkey:
-					g_szwBuffer=allocstringW(IDS_ADVSHORTCUTGLOBALHOTKEY);
+					szwBuffer=allocstringW(IDS_ADVSHORTCUTGLOBALHOTKEY);
 					break;
 				case CShortcut::sfGlobalHook:
-					g_szwBuffer=allocstringW(IDS_ADVSHORTCUTGLOBALHOOK);
+					szwBuffer=allocstringW(IDS_ADVSHORTCUTGLOBALHOOK);
 					break;
 				case CShortcut::sfLocal:
-					g_szwBuffer=allocstringW(IDS_ADVSHORTCUTLOCAL);
+					szwBuffer=allocstringW(IDS_ADVSHORTCUTLOCAL);
 					break;
 				}
 				break;
@@ -7661,7 +7623,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 				{
 					if (((CShortcut*)pLvdi->item.lParam)->m_apActions.GetSize()>1)
 					{
-						g_szwBuffer=allocstringW(IDS_SHORTCUTMULTIPLEACTIONS);
+						szwBuffer=allocstringW(IDS_SHORTCUTMULTIPLEACTIONS);
 						break;
 					}
 				
@@ -7670,7 +7632,7 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 					CAction::Action nAction=GetSelectedAction();
 					if (nAction==CAction::None)
 					{
-						g_szwBuffer=allocstringW(IDS_NONE);
+						szwBuffer=allocstringW(IDS_NONE);
 						break;
 					}
 					if ((nSubAction=IndexToSubAction(nAction,nCurSel))!=UINT(-1))
@@ -7692,11 +7654,11 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 								pExtraInfo=(void*)(nItem-1);					
 						}
 						FormatActionLabel(Buffer,nAction,nSubAction,pExtraInfo);
-						g_szwBuffer=Buffer.GiveBuffer();
+						szwBuffer=Buffer.GiveBuffer();
 						break;
 					}
 					
-					g_szwBuffer=allocstringW(IDS_UNKNOWN);
+					szwBuffer=allocstringW(IDS_UNKNOWN);
 				}				
 				else
 				{
@@ -7711,14 +7673,15 @@ BOOL CSettingsProperties::CKeyboardShortcutsPage::ListNotifyHandler(NMLISTVIEW *
 							Buffer << L", ";
 						Buffer << Action;
 					}
-					g_szwBuffer=Buffer.GiveBuffer();
+					szwBuffer=Buffer.GiveBuffer();
 				}
 				break;
 			default:
-				g_szwBuffer=allocstringW(IDS_UNKNOWN);
+				szwBuffer=allocstringW(IDS_UNKNOWN);
 				break;
 			}
-			pLvdi->item.pszText=g_szwBuffer;
+			AssignBuffer(szwBuffer);
+			pLvdi->item.pszText=szwBuffer;
 			break;
 		}
 	case LVN_ITEMCHANGED:

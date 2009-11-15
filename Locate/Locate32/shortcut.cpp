@@ -968,76 +968,68 @@ void CSubAction::ClearExtraInfo(DWORD nAction)
 	m_pExtraInfo=NULL;
 }
 
-void CAction::ExecuteAction()
+BOOL CAction::ExecuteAction()
 {
 	DebugFormatMessage("CAction::ExecuteAction() this=%X",DWORD(this));
 	DebugFormatMessage("m_nAction=%d",m_nAction);
 	switch (m_nAction)
 	{
 	case None:
-		break;
+		return TRUE;
 	case ActivateControl:
-		DoActivateControl();
-		break;
+		return DoActivateControl();
 	case ActivateTab:
-		DoActivateTab();
-		break;
+		return DoActivateTab();
 	case MenuCommand:
-		DoMenuCommand();
-		break;
+		return DoMenuCommand();
 	case ShowHideDialog:
-		DoShowHideDialog();
-		break;
+		return DoShowHideDialog();
 	case ResultListItems:
-		DoResultListItems();
-		break;
+		return DoResultListItems();
 	case Misc:
-		DoMisc();
-		break;
+		return DoMisc();
 	case ChangeValue:
-		DoChangeValue();
-		break;
+		return DoChangeValue();
 	case Presets:
-		DoPresets();
-		break;
+		return DoPresets();
 	case Help:
-		DoHelp();
-		break;
+		return DoHelp();
 	case Settings:
-		DoSettings();
-		break;
+		return DoSettings();
 	default:
 		ASSERT(0);
-		break;
+		return FALSE;
 	}
 }
 
-void CSubAction::DoActivateControl()
+BOOL CSubAction::DoActivateControl()
 {
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL)
-		return;
+		return FALSE;
 	
 	if (GetCurrentThreadId()==GetTrayIconWnd()->GetLocateDlgThread()->GetThreadId())
-		pLocateDlg->OnCommand(LOWORD(m_nControl),1,NULL);
+		return !pLocateDlg->OnCommand(LOWORD(m_nControl),1,NULL);
 	else
-		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nControl),1),0);
+		return !pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nControl),1),0);
+	return TRUE;
 }
 
 
-void CSubAction::DoMenuCommand()
+BOOL CSubAction::DoMenuCommand()
 {
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL)
-		return;
+		return FALSE;
 
 	if (GetCurrentThreadId()==GetTrayIconWnd()->GetLocateDlgThread()->GetThreadId())
 		pLocateDlg->OnCommand(LOWORD(m_nMenuCommand),0,NULL);
 	else
 		pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nMenuCommand),0),0);
+	return TRUE;
 }
 
-void CSubAction::DoShowHideDialog()
+BOOL CSubAction::DoShowHideDialog()
 {
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	
@@ -1139,10 +1131,12 @@ void CSubAction::DoShowHideDialog()
 		}
 		break;
 	}
+
+	return TRUE;
 }
 
 
-void CSubAction::DoHelp()
+BOOL CSubAction::DoHelp()
 {
 	CTargetWnd* pWnd=GetLocateDlg();
 	if (pWnd==NULL)
@@ -1177,38 +1171,36 @@ void CSubAction::DoHelp()
 			h.dwContextId=0;
 			GetCursorPos(&h.MousePos);
 			pWnd->OnHelp(&h);
-			break;
+			return TRUE;
 		}
 	case HelpCloseHelp:
 		pWnd->HtmlHelp(HH_CLOSE_ALL,0);
-		break;
+		return TRUE;
 	case HelpShowTopics:
-		pWnd->HtmlHelp(HH_DISPLAY_TOPIC,0);
-		break;
+		return pWnd->HtmlHelp(HH_DISPLAY_TOPIC,0)!=NULL;
 	case HelpIndex:
-		pWnd->HtmlHelp(HH_DISPLAY_INDEX,0);
-		break;
+		return pWnd->HtmlHelp(HH_DISPLAY_INDEX,0)!=NULL;
 	case HelpTOC:
-		pWnd->HtmlHelp(HH_DISPLAY_TOC,0);
-		break;
+		return pWnd->HtmlHelp(HH_DISPLAY_TOC,0)!=NULL;
 	case HelpSearch:
 		{
 			HH_FTS_QUERY q;
 			ZeroMemory(&q,sizeof(HH_FTS_QUERY));
 			q.cbStruct=sizeof(HH_FTS_QUERY);
 
-			pWnd->HtmlHelp(HH_DISPLAY_SEARCH,(DWORD_PTR)&q);
-			break;
+			return pWnd->HtmlHelp(HH_DISPLAY_SEARCH,(DWORD_PTR)&q)!=NULL;
 		}
 	};
+	return FALSE;
 
 }
 
-void CSubAction::DoSettings()
+BOOL CSubAction::DoSettings()
 {
 	CTrayIconWnd* pWnd=GetTrayIconWnd();
 	if (pWnd!=NULL)
-		pWnd->OnSettings(m_nSettings);
+		return pWnd->OnSettings(m_nSettings);
+	return FALSE;
 }
 
 LPWSTR CSubAction::GetPathFromExplorer()
@@ -1312,11 +1304,11 @@ BOOL CALLBACK CSubAction::EnumExplorerChilds(HWND hWnd,LPARAM lParam)
 	return TRUE;
 }
 
-void CSubAction::DoChangeValue()
+BOOL CSubAction::DoChangeValue()
 {
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL || m_szValue==NULL)
-		return;
+		return FALSE;
 	
 	// Get handle to control
 	CWnd Control(pLocateDlg->GetDlgItem(LOWORD(m_nControl)));
@@ -1332,7 +1324,7 @@ void CSubAction::DoChangeValue()
 	ASSERT(Control.GetHandle()!=NULL);
 
 	if (!Control.IsWindowEnabled())
-		return;
+		return TRUE;
 
 	char szClass[100];
 	GetClassName(Control,szClass,100);
@@ -1407,34 +1399,37 @@ void CSubAction::DoChangeValue()
 		}
 		Control.SendMessage(DTM_SETSYSTEMTIME,GDT_VALID,LPARAM(&st));
 	}
+
+	return TRUE;
 }
 
 
-void CSubAction::DoPresets()
+BOOL CSubAction::DoPresets()
 {
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg!=NULL && m_szPreset!=NULL)
-		pLocateDlg->LoadPreset(m_szPreset);
+		return pLocateDlg->LoadPreset(m_szPreset);
+	return FALSE;
 }
 
 
-void CSubAction::DoResultListItems()
+BOOL CSubAction::DoResultListItems()
 {
 	DebugFormatMessage("CSubAction::DoResultListItems() this=%X",DWORD(this));
 	DebugFormatMessage("m_nResultsList=%d",m_nResultList);
 	if (m_nResultList==ExecuteCommand)
 	{
 		if (m_szCommand!=NULL)
-			CLocateDlg::ExecuteCommand(m_szCommand);
-		return;
+			return CLocateDlg::ExecuteCommand(m_szCommand);
+		return TRUE;
 	}
 	
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL)
-		return;
+		return FALSE;
 
 	DebugFormatMessage("Sending message, pExtraInfo=%X",DWORD(m_pExtraInfo));
-	pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_pExtraInfo);
+	return pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_pExtraInfo);
 }
 
 void * __cdecl gmalloc(size_t size) { return GlobalAlloc(GPTR,size+1); }
@@ -1473,19 +1468,15 @@ BOOL CALLBACK WindowEnumProc(HWND hwnd,LPARAM lParam)
 	return FALSE;
 }
 
-void CSubAction::DoMisc()
+BOOL CSubAction::DoMisc()
 {
 	if (m_nMisc==ExecuteCommandMisc)
-	{
-		if (m_szCommand!=NULL)
-			CLocateDlg::ExecuteCommand(m_szCommand);
-		return;
-	}
+		return CLocateDlg::ExecuteCommand(m_szCommand);
 	else if (m_nMisc==InsertAsterisks)
 	{
 		CLocateDlg* pLocateDlg=GetLocateDlg();
 		if (pLocateDlg==NULL)
-			return;
+			return FALSE;
 
 		CStringW Text;
 		pLocateDlg->m_NameDlg.m_Name.GetText(Text);
@@ -1533,7 +1524,7 @@ void CSubAction::DoMisc()
 		pLocateDlg->m_NameDlg.m_Name.SetText(Text);
 		pLocateDlg->m_NameDlg.m_Name.SetEditSel(dwSelStart,wSelEnd);
 		pLocateDlg->OnFieldChange(CLocateDlg::isNameChanged);
-		return;
+		return TRUE;
 	}
 	
 
@@ -1670,6 +1661,9 @@ void CSubAction::DoMisc()
 	if (bFreeLParam)
 		GlobalFree((HANDLE)lParam);
 
+
+
+	return TRUE;
 }
 
 

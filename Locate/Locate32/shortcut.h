@@ -113,6 +113,7 @@ public:
 		
 		SpecialCopyPathToClibboard = MAKELONG(IDM_COPYPATHTOCB,IDS_SHORTCUTMENUSPECIAL),
 		SpecialCopyShortPathToClibboard = MAKELONG(IDM_COPYSHORTPATHTOCB,IDS_SHORTCUTMENUSPECIAL),
+		SpecialCopyDataToClipboard = MAKELONG(IDM_COPYDATATOCB,IDS_SHORTCUTMENUSPECIAL),
 		SpecialChangeFileName = MAKELONG(IDM_CHANGEFILENAME,IDS_SHORTCUTMENUSPECIAL),
         SpecialChangeCase = MAKELONG(IDM_CHANGECASE,IDS_SHORTCUTMENUSPECIAL),
 		SpecialShowFileInformation = MAKELONG(IDM_SHOWFILEINFORMATION,IDS_SHORTCUTMENUSPECIAL),
@@ -168,7 +169,8 @@ public:
 			FileCreateShortcut,FileRename,FileDelete,FileProperties,FileSaveResults,
             FileFindUsingDatabase,FileUpdateDatabases,FileUpdateSelectedDatabase,
             FileStopUpdating,FileDatabaseInfo,FileClose,FileExit,SpecialCopyPathToClibboard,
-			SpecialCopyShortPathToClibboard,SpecialChangeFileName,SpecialChangeCase,
+			SpecialCopyShortPathToClibboard,SpecialCopyDataToClipboard,
+			SpecialChangeFileName,SpecialChangeCase,
 			SpecialShowFileInformation,SpecialForceUpdate,SpecialComputeMD5Sum,
 			SpecialComputeMD5SumsForSameSizeFiles,SpecialCopyMD5SumsToClipboard,
 			SpecialRemoveDeletedFiles,SpecialUpdateDatabasesOfSelectedFiles,
@@ -334,16 +336,16 @@ public:
 	static void GetSettingsActionLabelString(ActionSettings uSubAction,CStringW& str);
 #endif
 
-	void DoActivateControl();
-	void DoActivateTab();
-	void DoMenuCommand();
-    void DoShowHideDialog();
-	void DoResultListItems();
-	void DoMisc();
-	void DoChangeValue();
-	void DoPresets();
-	void DoHelp();
-	void DoSettings();
+	BOOL DoActivateControl();
+	BOOL DoActivateTab();
+	BOOL DoMenuCommand();
+    BOOL DoShowHideDialog();
+	BOOL DoResultListItems();
+	BOOL DoMisc();
+	BOOL DoChangeValue();
+	BOOL DoPresets();
+	BOOL DoHelp();
+	BOOL DoSettings();
 
 
 	DWORD GetData(DWORD nAction,BYTE* pData,BOOL bHeader=TRUE) const;
@@ -400,7 +402,7 @@ protected:
 	static CAction* FromData(const BYTE* pData,DWORD dwDataLen,DWORD& dwUsed);
 	CAction(void* pVoid); // Empty constructor
 
-	void ExecuteAction();
+	BOOL ExecuteAction();
 
 
 	friend class CShortcut;

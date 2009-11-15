@@ -10,8 +10,8 @@ class CLocateApp;
 class CCheckFileNotificationsThread;
 class CBackgroundUpdater;
 
-extern LPSTR g_szBuffer; 
-extern LPWSTR g_szwBuffer; 
+
+
 
 
 
@@ -124,17 +124,6 @@ extern LPWSTR g_szwBuffer;
 
 
 
-#define RESULT_INCLUDEDATE			0x1
-#define RESULT_INCLUDELABELS		0x2
-#define RESULT_INCLUDEDBINFO		0x4
-#define RESULT_INCLUDEDESCRIPTION	0x8
-#define RESULT_INCLUDESELECTEDITEMS	0x10
-#define RESULT_ENCODINGANSI			0x0
-#define RESULT_ENCODINGUNICODE		0x100
-#define RESULT_ENCODINGUTF8			0x200
-
-
-#define RESULT_SAVESTATE			0x307
 
 #define SUBMENU_FILEMENU					0
 #define SUBMENU_FILEMENUNOITEMS				1
@@ -149,7 +138,6 @@ extern LPWSTR g_szwBuffer;
 // Special menu in SUBMENU_EXTRACONTEXTMENUITEMS
 #define	SUBMENU_SPECIALMENU					2
 
-#define RESULT_ACTIVATESELECTEDITEMS	0x1000
 
 
 
@@ -161,6 +149,8 @@ extern LPWSTR g_szwBuffer;
 #define sstrlen(str,len)		dstrlen(str,len)
 
 #define sstrlenW				dwstrlen
+
+
 
 
 #endif

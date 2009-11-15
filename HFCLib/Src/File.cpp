@@ -790,15 +790,11 @@ BOOL CFile::SetFileTime(const SYSTEMTIME* lpCreationTime,const SYSTEMTIME* lpLas
 
 #ifdef DEF_WCHAR
 
-/*
-BOOL Read(CStringW& str) const
-{
-}
 
-BOOL Read(LPWSTR szBuffer,DWORD nBufferLength)
+
+CFileEncode::~CFileEncode()
 {
 }
-*/
 
 BOOL CFileEncode::Write(WCHAR ch)
 {

@@ -193,14 +193,17 @@ inline void CShortcut::ExecuteAction()
 {
 	DebugMessage("CShortcut::ExecuteAction()");
 	for (int i=0;i<m_apActions.GetSize();i++)
-		m_apActions[i]->ExecuteAction();
+	{
+		if (!m_apActions[i]->ExecuteAction())
+			break;
+	}
 }
 
 
-inline void CSubAction::DoActivateTab()
+inline BOOL CSubAction::DoActivateTab()
 {
 	if (GetTrayIconWnd()->GetLocateDlgThread()==NULL)
-		return;
+		return FALSE;
 
 	if (m_nActivateTab==PrevTab)
 		GetTrayIconWnd()->GetLocateDlgThread()->m_pLocate->OnActivateNextTab(TRUE);
@@ -208,6 +211,8 @@ inline void CSubAction::DoActivateTab()
 		GetTrayIconWnd()->GetLocateDlgThread()->m_pLocate->OnActivateNextTab(FALSE);
 	else
 		GetTrayIconWnd()->GetLocateDlgThread()->m_pLocate->OnActivateTab((int)m_nActivateTab);
+
+	return TRUE;
 }
 
 inline void CShortcut::ResolveMnemonics(CArrayFP<CShortcut*>& aShortcuts,HWND* hDialogs)

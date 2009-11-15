@@ -610,7 +610,7 @@ inline BOOL CExceptionObject::IsThrowing() const
 
 
 ///////////////////////////
-// Class CRegKey
+// Class CStream
 
 
 inline CStream::CStream()

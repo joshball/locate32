@@ -2190,13 +2190,11 @@ LPWSTR CLocatedItem::GetToolTipText() const
 	
 	if (IsDeleted())
 	{
-		if (g_szwBuffer!=NULL)
-			delete[] g_szwBuffer;
 		CStringW str(IsFolder()?IDS_TOOLTIPFORDIRECTORYDELETED:IDS_TOOLTIPFORFILEDELETED);
 		int nLen=(int)str.GetLength()+GetPathLen()+(int)istrlenw(GetType())+2;
-		g_szwBuffer=new WCHAR[nLen];
-		swprintfex(g_szwBuffer,nLen,str,GetName(),GetParent(),GetType());
-		return g_szwBuffer;
+		LPWSTR szwBuffer=GetBufferW(nLen);
+		swprintfex(szwBuffer,nLen,str,GetName(),GetParent(),GetType());
+		return szwBuffer;
 	}
 
 	
@@ -2208,15 +2206,13 @@ LPWSTR CLocatedItem::GetToolTipText() const
 
 	WCHAR* szDate=GetLocateApp()->FormatDateAndTimeString(GetModifiedDate(),GetModifiedTime());
 	
-
+	LPWSTR szwBuffer;
 	if (IsFolder())
 	{
 		CStringW str(IDS_TOOLTIPFORDIRECTORY);
 		int nLen=(int)str.GetLength()+GetPathLen()+(int)istrlenw(GetType())+(int)istrlenw(szDate)+2;
-		if (g_szwBuffer!=NULL)
-			delete[] g_szwBuffer;
-		g_szwBuffer=new WCHAR[nLen];
-		swprintfex(g_szwBuffer,nLen,str,GetName(),GetParent(),GetType(),szDate);
+		szwBuffer=GetBufferW(nLen);
+		swprintfex(szwBuffer,nLen,str,GetName(),GetParent(),GetType(),szDate);
 	}
 	else 
 	{
@@ -2330,13 +2326,12 @@ LPWSTR CLocatedItem::GetToolTipText() const
 			}
 		}
 
-		if (g_szwBuffer!=NULL)
-			delete[] g_szwBuffer;
-		g_szwBuffer=text.GiveBuffer();
+		szwBuffer=GetBufferW(text.GetLength()+1);
+		MemCopyW(szwBuffer,LPCWSTR(text),text.GetLength()+1);
 	}
 
 	delete[] szDate;
-	return g_szwBuffer;
+	return szwBuffer;
 }
 
 WORD CLocatedItem::GetAttributesFromSystemAttributes(DWORD dwSystemAttributes)

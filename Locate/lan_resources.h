@@ -165,6 +165,7 @@
 #define IDI_YES                         204
 #define IDI_NO                          205
 #define IDD_RESULTSAVEDIALOG2000        206
+#define IDD_RESULTSAVEDIALOGFRAMES      207
 #define IDS_REMOVEFROMTHISLIST          210
 #define IDS_OPENCONTAININGFOLDER        211
 #define IDS_OPEN                        212
@@ -183,6 +184,7 @@
 #define IDD_PRESETNAME                  234
 #define IDD_PRESETREMOVE                235
 #define IDD_DELETEPRIVATEDATA           236
+#define IDD_SAVERESULTSPROGRESS			237
 #define IDS_UPDATINGDATABASE            300
 #define IDS_UPDATINGDATABASE2           301
 #define IDS_UPDATINGWRITINGDATABASE     302
@@ -388,6 +390,7 @@
 #define IDC_OFTHEMONTHS2                1106
 #define IDC_RUNON                       1107
 #define IDC_DELETEAFTERRUN              1108
+#define IDC_SUMMARY                     1109
 #define IDC_LASTRUN                     1109
 #define IDC_TITLE                       1110
 #define IDC_UPDATEWHENPOSSIBLE          1110
@@ -593,6 +596,8 @@
 #define IDC_USEDATABASESONCE            1253
 #define IDC_STATICCONTEXTMENUFOR        1254
 #define IDC_CONTEXTMENUFOR              1255
+#define IDC_FORMATTEXT					1256
+#define IDC_FORMATHTML					1257
 #define IDC_FINDTEXT					1300
 #define IDC_FINDNEXT					1301
 #define IDC_SEARCHUP					1302
@@ -600,6 +605,7 @@
 #define IDC_CLEARNAMED					1400
 #define IDC_CLEAREXTENSTIONS			1401
 #define IDC_CLEARLOOKIN					1402
+#define IDC_PROGRESS					1403
 #define IDS_LASTERROR                   1900
 #define IDS_LASTERRORUNKNOWN            1901
 #define IDS_LASTERRORINVALIDDB          1902
@@ -1205,6 +1211,7 @@
 #define IDM_COPYSHORTPATHTOCB           40067
 #define IDM_FORCEUPDATE                 40068
 #define IDM_UPDATEDATABASESOFSELECTEDFILES 40069
+#define IDM_COPYDATATOCB				40070
 #define IDM_SHOWFILEINFORMATION         40073
 #define IDM_REMOVEDELETEDFILES          40074
 #define IDM_EXPLICITDATE				40075

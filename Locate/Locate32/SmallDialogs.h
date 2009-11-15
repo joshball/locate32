@@ -308,7 +308,7 @@ public:
 	
 
 	static DWORD WINAPI StartThreadProc(LPVOID lpParameter);
-	void Open();
+	BOOL Open();
 	
 	HANDLE m_hThread;
 
