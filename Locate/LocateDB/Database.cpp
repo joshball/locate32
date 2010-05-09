@@ -1,4 +1,4 @@
-/* Copyright (c) 1997-2008 Janne Huttunen
+/* Copyright (c) 1997-2010 Janne Huttunen
    database updater v3.1.8.9210              */
 
 #include <HFCLib.h>
@@ -889,7 +889,10 @@ LPSTR CDatabase::GetValidKey(DWORD dwUniqueNum) const
 	for (i=0,j=0;m_szName[i]!='\0';i++)
 	{
 		if (ISVALIDFORKEY(m_szName[i]))
-			MemCopyWtoA(key+(j++),m_szName+i,1);
+		{
+			MemCopyWtoA(key+j,dwValid+1-j,m_szName+i,1);
+			j++;
+		}
 	}
 	key[j]='\0';
 	return key;

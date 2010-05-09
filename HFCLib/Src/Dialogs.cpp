@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2010 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -770,10 +770,7 @@ void CInputDialog::SetInputText(LPCSTR szText)
 
 int CInputDialog::GetInputText(LPSTR szText,int nTextLen) const
 {
-	int i=min(nTextLen-1,(int)m_Input.GetLength());
-	MemCopyWtoA(szText,(LPCWSTR)m_Input,i);
-	szText[i]='\0';
-	return i;
+	return WideCharToMultiByte(CP_ACP,0,(LPCWSTR)m_Input,-1,szText,nTextLen,NULL,NULL);
 }
 
 void CInputDialog::SetOKButtonText(LPCSTR szText)
@@ -2567,21 +2564,10 @@ BOOL CFolderDialog::GetDisplayName(LPSTR szDisplayName,DWORD nSize)
 		return FALSE;
 	
 	if (IsUnicodeSystem())
-	{
-		int nDisplayNameLen=istrlenw(m_szwDisplayName);
-
-		if ((int)nSize<=nDisplayNameLen)
-		{
-			MemCopyWtoA(szDisplayName,m_szwDisplayName,nSize-1);
-			szDisplayName[nSize-1]='\0';
-		}
-		else
-			MemCopyWtoA(szDisplayName,m_szwDisplayName,nDisplayNameLen+1);
-	}
+		WideCharToMultiByte(CP_ACP,0,m_szwDisplayName,-1,szDisplayName,nSize,NULL,NULL);
 	else
 	{
 		int nDisplayNameLen=istrlen(m_szDisplayName);
-
 		if ((int)nSize<=nDisplayNameLen)
 		{
 			MemCopy(szDisplayName,m_szDisplayName,nSize-1);
@@ -2612,17 +2598,7 @@ BOOL CFolderDialog::GetDisplayName(LPWSTR szDisplayName,DWORD nSize)
 			MemCopyW(szDisplayName,m_szwDisplayName,nDisplayNameLen+1);
 	}
 	else
-	{
-		int nDisplayNameLen=istrlen(m_szDisplayName);
-
-		if ((int)nSize<=nDisplayNameLen)
-		{
-			MemCopyAtoW(szDisplayName,m_szDisplayName,nSize-1);
-			szDisplayName[nSize-1]='\0';
-		}
-		else
-			MemCopyAtoW(szDisplayName,m_szDisplayName,nDisplayNameLen+1);
-	}
+		MultiByteToWideChar(CP_ACP,0,m_szDisplayName,-1,szDisplayName,nSize);
 
 	return TRUE;
 }
@@ -2846,8 +2822,7 @@ COptionsPropertyPage::Item::Item(
 			nCurLen+=50;
 			szText=new char[nCurLen];
 		}
-		pString=new WCHAR[iLength];
-		MemCopyAtoW(pString,szText,iLength);
+		pString=alloccopyAtoW(szText,iLength);
 		delete[] szText;
 	}
 	else
@@ -3171,9 +3146,7 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
         			
 		if (!IsUnicodeSystem())
 		{
-			SIZE_T iStrLen=istrlenw(pItems[i]->pString);
-			tisa.itemex.pszText=new char [iStrLen+2];
-			MemCopyWtoA(tisa.itemex.pszText,pItems[i]->pString,iStrLen+1);
+			tisa.itemex.pszText=alloccopyWtoA(pItems[i]->pString);
 			tisa.itemex.cChildren=pItems[i]->pChilds==0?0:1;
 			tisa.itemex.lParam=LPARAM(pItems[i]);
 			tisa.itemex.state=TVIS_EXPANDED|INDEXTOSTATEIMAGEMASK(pItems[i]->GetStateImage(&m_Images));
@@ -3536,13 +3509,7 @@ BOOL COptionsPropertyPage::InsertItemsToTree(HTREEITEM hParent,COptionsPropertyP
 		if (pCurText!=pItems[i]->pString)
 		{
 			if (!IsUnicodeSystem())
-			{
-				int iStrLen=istrlenw(pCurText);
-				tisa.itemex.pszText=new char[iStrLen+2];
-				MemCopyWtoA(tisa.itemex.pszText,pCurText,iStrLen+1);
-				m_pTree->SetItemText(tisa.hInsertAfter,tisa.itemex.pszText);
-				delete[] tisa.itemex.pszText;
-			}
+				m_pTree->SetItemText(tisa.hInsertAfter,W2A(pCurText));
 			else
 				m_pTree->SetItemText(tisw.hInsertAfter,pCurText);
 			
@@ -4063,14 +4030,7 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 					// Setting text
 					WCHAR* pText=pItem->GetText(FALSE);
 					if (!IsUnicodeSystem())
-					{
-						int iStrLen=istrlenw(pText);
-						char* paText=new char [iStrLen+2];
-						MemCopyWtoA(paText,pText,iStrLen+1);
-						m_pTree->SetItemText(pNm->itemOld.hItem,paText);
-						delete[] paText;
-					
-					}
+						m_pTree->SetItemText(pNm->itemOld.hItem,W2A(pText));
 					else
 						m_pTree->SetItemText(pNm->itemOld.hItem,pText);
 					pItem->FreeText(pText);
@@ -4110,14 +4070,7 @@ BOOL COptionsPropertyPage::TreeNotifyHandler(NMTVDISPINFO *pTvdi)
 					// Setting text
 					WCHAR* pText=pItem->GetText(TRUE);
 					if (!IsUnicodeSystem())
-					{
-						int iStrLen=istrlenw(pText);
-						char* paText=new char [iStrLen+2];
-						MemCopyWtoA(paText,pText,iStrLen+1);
-						m_pTree->SetItemText(pNm->itemNew.hItem,paText);
-						delete[] paText;
-					
-					}
+						m_pTree->SetItemText(pNm->itemNew.hItem,W2A(pText));
 					else
 						m_pTree->SetItemText(pNm->itemNew.hItem,pText);
 					
@@ -4701,7 +4654,7 @@ WCHAR* COptionsPropertyPage::Item::GetText(BOOL bActive) const
 				// 9x
 				char* pTemp=new char[iLength+2];
 				::GetWindowText(hControl,pTemp,iLength);
-				MemCopyAtoW(pText+iLabelLen,pTemp,iLength);
+				MemCopyAtoW(pText+iLabelLen,iLength+2-iLabelLen,pTemp,iLength);
 				delete[] pTemp;
 			}
 			else

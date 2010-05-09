@@ -1,7 +1,7 @@
 TITLE=Search terms
 STYLES=ul li { margin: 4pt 0 4pt 0; }
 CONTENT=
-<H1><A NAME="issue_searchterms"></A>Search terms</H1>
+<H1><A NAME="issue_searchterms"></A>Search syntax</H1>
 
 <p>
 Basiclly, if you want to find files containing, say, "bar" (e.g. 

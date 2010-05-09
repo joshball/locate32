@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -3500,7 +3500,7 @@ BOOL CLocateDlg::CAdvancedDlg::OnInitDialog(HWND hwndFocus)
 	
 
 	// Loading m_aReplaceChars array and change label
-	LoadReplaceCharsFromRegistry();
+	LoadRegistry();
 	RenameReplaceSpaces();
 
 
@@ -3876,10 +3876,15 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		if (GetKeyState(VK_CONTROL) & 0x8000)
 		{
 			CheckDlgButton(IDC_REPLACESPACES,TRUE);
-			CReplaceCharsDlg d(m_aReplaceChars);
+			CReplaceCharsDlg d(m_aReplaceChars,m_dwFlags&fgReplaceUseQuestionMark?TRUE:FALSE);
 			if (d.DoModal(*this))
+			{
+				if (d.UseQuestionMark())
+					m_dwFlags|=fgReplaceUseQuestionMark;
+				else
+					m_dwFlags&=~fgReplaceUseQuestionMark;
 				RenameReplaceSpaces();
-
+			}
 		}
 		else
 		{
@@ -3891,24 +3896,16 @@ BOOL CLocateDlg::CAdvancedDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl
 		pLocateDlg->OnFieldChange(isOtherChanged);
 		break;
 	case IDC_MATCHWHOLENAME:
+	case IDC_MATCHCASE:
+	case IDC_DATAMATCHCASE:
 		if (hControl==NULL && wNotifyCode==1) // Accelerator
 		{
-			CheckDlgButton(IDC_MATCHWHOLENAME,!IsDlgButtonChecked(IDC_MATCHWHOLENAME));
-			SetFocus(IDC_MATCHWHOLENAME);
+			CheckDlgButton(wID,!IsDlgButtonChecked(wID));
+			SetFocus(wID);
 		}
 		HilightTab(IsChanged());
 		pLocateDlg->OnFieldChange(isOtherChanged);
 		break;
-	case IDC_DATAMATCHCASE:
-		if (hControl==NULL && wNotifyCode==1 && IsDlgButtonChecked(IDC_CONTAINDATACHECK)) // Accelerator
-		{
-			CheckDlgButton(IDC_DATAMATCHCASE,!IsDlgButtonChecked(IDC_DATAMATCHCASE));
-			SetFocus(IDC_DATAMATCHCASE);
-		}
-		HilightTab(IsChanged());
-		pLocateDlg->OnFieldChange(isDataChanged);
-		break;
-
 	}
 	
 	return CDialog::OnCommand(wID,wNotifyCode,hControl);
@@ -4032,12 +4029,13 @@ LRESULT CALLBACK CLocateDlg::CAdvancedDlg::TypeWindowProc(HWND hWnd,UINT uMsg,
 
 BOOL CLocateDlg::CAdvancedDlg::IsChanged()
 {
-	DWORD dwDefaultCheck=1,dwDefaultMatchWholeName=0,dwDefaultReplaceSpaces=0,dwDefaultUseWholePath=0;
+	DWORD dwDefaultCheck=1,dwDefaultMatchCase=0,dwDefaultMatchWholeName=0,dwDefaultReplaceSpaces=0,dwDefaultUseWholePath=0;
 
 	CRegKey2 RegKey;
 	if (RegKey.OpenKey(HKCU,"\\General",CRegKey::openExist|CRegKey::samRead)==ERROR_SUCCESS)
 	{
 		RegKey.QueryValue("Default CheckIn",dwDefaultCheck);
+		RegKey.QueryValue("Default MatchCase",dwDefaultMatchCase);
 		RegKey.QueryValue("Default MatchWholeName",dwDefaultMatchWholeName);
 		RegKey.QueryValue("Default ReplaceSpaces",dwDefaultReplaceSpaces);
 		RegKey.QueryValue("Default UseWholePath",dwDefaultUseWholePath);
@@ -4050,6 +4048,9 @@ BOOL CLocateDlg::CAdvancedDlg::IsChanged()
 			return TRUE;
 	}
 
+	if (IsDlgButtonChecked(IDC_MATCHCASE)!=dwDefaultMatchCase)
+		return TRUE;
+
 	if (IsDlgButtonChecked(IDC_MATCHWHOLENAME)!=dwDefaultMatchWholeName)
 		return TRUE;
 
@@ -4059,9 +4060,7 @@ BOOL CLocateDlg::CAdvancedDlg::IsChanged()
 	if (IsDlgButtonChecked(IDC_USEWHOLEPATH)!=dwDefaultUseWholePath)
 		return TRUE;
 
-	if (IsDlgButtonChecked(IDC_CONTAINDATACHECK))
-		return TRUE;
-
+	
 	if (IsDlgItemEnabled(IDC_FILETYPE))
 	{
 		if (SendDlgItemMessage(IDC_FILETYPE,CB_GETCURSEL)>0)
@@ -4151,6 +4150,7 @@ DWORD CLocateDlg::CAdvancedDlg::SetAdvancedFlagsForLocater(CLocater* pLocater,BO
 		pLocater->AddAdvancedFlags(LOCATE_CHECKWHOLEPATH);
 
 	return (IsDlgButtonChecked(IDC_MATCHWHOLENAME)?flagMatchWholeNameOnly:0)|
+		(IsDlgButtonChecked(IDC_MATCHCASE)?flagMatchCase:0)|
 		(IsDlgButtonChecked(IDC_REPLACESPACES)?flagReplaceSpaces:0);
 
 }
@@ -4167,6 +4167,9 @@ void CLocateDlg::CAdvancedDlg::OnClear(BOOL bInitial)
         nTemp=0;
 		RegKey.QueryValue("Default MatchWholeName",nTemp);
 		CheckDlgButton(IDC_MATCHWHOLENAME,nTemp);
+		nTemp=0;
+		RegKey.QueryValue("Default MatchCase",nTemp);
+		CheckDlgButton(IDC_MATCHCASE,nTemp);
 		nTemp=1;
 		RegKey.QueryValue("Default DataMatchCase",nTemp);
 		CheckDlgButton(IDC_DATAMATCHCASE,nTemp);
@@ -4181,6 +4184,7 @@ void CLocateDlg::CAdvancedDlg::OnClear(BOOL bInitial)
 	{
 		SendDlgItemMessage(IDC_CHECK,CB_SETCURSEL,1);
 		CheckDlgButton(IDC_MATCHWHOLENAME,0);
+		CheckDlgButton(IDC_MATCHCASE,0);
 		CheckDlgButton(IDC_DATAMATCHCASE,1);
 		CheckDlgButton(IDC_REPLACESPACES,0);
 		CheckDlgButton(IDC_USEWHOLEPATH,0);
@@ -4235,6 +4239,17 @@ void CLocateDlg::CAdvancedDlg::SetStartData(const CLocateApp::CStartData* pStart
 		rdwChanged|=isOtherChanged;
 	}
 
+	if (pStartData->m_nStatus&CLocateApp::CStartData::statusMatchCase)
+	{
+		CheckDlgButton(IDC_MATCHCASE,1);
+		rdwChanged|=isOtherChanged;
+	}
+	else if (pStartData->m_nStatus&CLocateApp::CStartData::statusNoMatchCase)
+	{
+		CheckDlgButton(IDC_MATCHCASE,0);
+		rdwChanged|=isOtherChanged;
+	}
+
 	if (pStartData->m_nStatus&CLocateApp::CStartData::statusReplaceSpacesWithAsterisks)
 	{
 		CheckDlgButton(IDC_REPLACESPACES,1);
@@ -4271,6 +4286,7 @@ void CLocateDlg::CAdvancedDlg::EnableItems(BOOL bEnable)
 		EnableDlgItem(IDC_MATCHWHOLENAME,bEnable);
 	EnableDlgItem(IDC_REPLACESPACES,bEnable);
 	EnableDlgItem(IDC_USEWHOLEPATH,bEnable);
+	EnableDlgItem(IDC_MATCHCASE,bEnable);
 
 
 	EnableDlgItem(IDC_FILETYPE,bEnable);
@@ -4420,7 +4436,7 @@ void CLocateDlg::CAdvancedDlg::OnDestroy()
 	m_ToolbarIL.DeleteImageList();
 
 
-	SaveReplaceCharsSaveRegistry();
+	SaveRegistry();
 	m_aReplaceChars.RemoveAll();
 
 }
@@ -4438,6 +4454,10 @@ void CLocateDlg::CAdvancedDlg::LoadControlStates(CRegKey& RegKey)
 	if (!RegKey.QueryValue("Advanced/MatchWholeName",dwTemp))
 		dwTemp=0;
 	CheckDlgButton(IDC_MATCHWHOLENAME,dwTemp);
+	
+	if (!RegKey.QueryValue("Advanced/MatchCase",dwTemp))
+		dwTemp=0;
+	CheckDlgButton(IDC_MATCHCASE,dwTemp);
 	
 	if (!RegKey.QueryValue("Advanced/ReplaceSpaces",dwTemp))
 		dwTemp=0;
@@ -4505,6 +4525,7 @@ void CLocateDlg::CAdvancedDlg::SaveControlStates(CRegKey& RegKey)
 	// Advanced dialog
 	RegKey.SetValue("Advanced/Check",(DWORD)SendDlgItemMessage(IDC_CHECK,CB_GETCURSEL));
 	RegKey.SetValue("Advanced/MatchWholeName",IsDlgButtonChecked(IDC_MATCHWHOLENAME));
+	RegKey.SetValue("Advanced/MatchCase",IsDlgButtonChecked(IDC_MATCHCASE));
 	RegKey.SetValue("Advanced/ReplaceSpaces",IsDlgButtonChecked(IDC_REPLACESPACES));
 	RegKey.SetValue("Advanced/UseWholePath",IsDlgButtonChecked(IDC_USEWHOLEPATH));
 	if (IsDlgButtonChecked(IDC_CONTAINDATACHECK))
@@ -4686,11 +4707,9 @@ DWORD WINAPI CLocateDlg::CAdvancedDlg::UpdaterProc(CLocateDlg::CAdvancedDlg* pAd
 
 void CLocateDlg::CAdvancedDlg::RenameReplaceSpaces()
 {
-	CRegKey2 RegKey;
-	
+	CStringW Label,Chars;
 	if (m_aReplaceChars.GetSize()>0)
 	{
-		CStringW Chars,Label;
 		for (int i=0;i<m_aReplaceChars.GetSize();i++)
 		{
 			if (i+1==m_aReplaceChars.GetSize())
@@ -4699,16 +4718,17 @@ void CLocateDlg::CAdvancedDlg::RenameReplaceSpaces()
 				Chars << L", ";
 			Chars << L'\'' << m_aReplaceChars[i] << L'\'';
 		}
-
-		Label.Format(IDS_REPLACEOTHER,(LPCWSTR)Chars);
-		SetDlgItemText(IDC_REPLACESPACES,Label);
 	}
 	else
-		SetDlgItemText(IDC_REPLACESPACES,ID2W(IDS_REPLACESPACES));
+		Chars.LoadString(IDS_REPLACESPACES);
+
+	Label.FormatEx(IDS_REPLACECHARS,(LPCWSTR)Chars,
+		(LPCWSTR)ID2W(m_dwFlags&fgReplaceUseQuestionMark?IDS_REPLACEQMARK:IDS_REPLACEASTERISKS));
+	SetDlgItemText(IDC_REPLACESPACES,Label);
 }
 
 
-BOOL CLocateDlg::CAdvancedDlg::LoadReplaceCharsFromRegistry()
+BOOL CLocateDlg::CAdvancedDlg::LoadRegistry()
 {
 
 	m_aReplaceChars.RemoveAll();
@@ -4718,6 +4738,12 @@ BOOL CLocateDlg::CAdvancedDlg::LoadReplaceCharsFromRegistry()
 	if (RegKey.OpenKey(HKCU,"\\Locate",CRegKey::defRead)!=ERROR_SUCCESS)
 		return FALSE;
 
+	// Flags
+	DWORD dwTemp=0;
+	if (RegKey.QueryValue("AdvancedDlgFlags",dwTemp))
+		m_dwFlags=BYTE((m_dwFlags&~fgSave)|dwTemp);
+
+	// ReplaceCharsWithAsterisks
 	DWORD dwLength=RegKey.QueryValueLength("ReplaceCharsWithAsterisks");
 
 	if (dwLength==0)
@@ -4744,11 +4770,13 @@ BOOL CLocateDlg::CAdvancedDlg::LoadReplaceCharsFromRegistry()
 	return TRUE;
 }
 
-BOOL CLocateDlg::CAdvancedDlg::SaveReplaceCharsSaveRegistry()
+BOOL CLocateDlg::CAdvancedDlg::SaveRegistry()
 {
 	CRegKey2 RegKey;
 	if (RegKey.OpenKey(HKCU,"\\Locate",CRegKey::defWrite)!=ERROR_SUCCESS)
 		return FALSE;
+
+	RegKey.SetValue("AdvancedDlgFlags",m_dwFlags&fgSave);
 
 	if (m_aReplaceChars.GetSize()>0)
 	{
@@ -4776,11 +4804,11 @@ BOOL CLocateDlg::CAdvancedDlg::SaveReplaceCharsSaveRegistry()
 void CLocateDlg::CAdvancedDlg::ReplaceCharsWithAsterisks(CStringW& sString)
 {
 	// Replace all desired char in sString
-
+	WCHAR ch=m_dwFlags&fgReplaceUseQuestionMark?L'?':L'*';
 	if (m_aReplaceChars.GetSize()==0)
 	{
 		// Just replace space
-		sString.ReplaceChars(L' ',L'*');
+		sString.ReplaceChars(L' ',ch);
 	}
 	else
 	{
@@ -4797,7 +4825,7 @@ void CLocateDlg::CAdvancedDlg::ReplaceCharsWithAsterisks(CStringW& sString)
 				while (nIndex!=-1)
 				{
 					CStringW sNewString(sString,nIndex);
-					sNewString << L'*' << ((LPCWSTR)sString)+nIndex+nLen;
+					sNewString << ch << ((LPCWSTR)sString)+nIndex+nLen;
 					sString.Swap(sNewString);
 					nIndex=sString.Find(m_aReplaceChars[i]);
 				}
@@ -4854,6 +4882,8 @@ BOOL CLocateDlg::CAdvancedDlg::CReplaceCharsDlg::OnInitDialog(HWND hwndFocus)
 	}
 	else
 		CheckDlgButton(IDC_SPACE,TRUE);
+
+	CheckDlgButton(IDC_QUESTIONMARK,m_bUseQuestionMark);
 
 	if (!LoadPosition(HKCU,CRegKey2::GetCommonKey()+"\\Dialogs","ReplaceCharsPos",fgOnlyNormalPosition|fgNoSize))
 		CenterWindow();
@@ -4926,6 +4956,8 @@ BOOL CLocateDlg::CAdvancedDlg::CReplaceCharsDlg::OnCommand(WORD wID,WORD wNotify
 					m_raChars.RemoveAll();
 				}
 			}
+
+			m_bUseQuestionMark=IsDlgButtonChecked(IDC_QUESTIONMARK);
 
 			EndDialog(1);
 			break;

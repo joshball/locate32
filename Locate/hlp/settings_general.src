@@ -117,13 +117,19 @@ check box in the Advanced tab of the main dialog is enabled by default.
 </p>
 
 <p>
+<b><A NAME="sg_matchcase"></A>Match case</b>:
+This option specifies the default state for <a href="tab_advanced.htm#ta_usewholepath">Match case</a>
+ check box in the Advanced tab in the main dialog. 
+</p>
+
+<p>
 <b><A NAME="sg_wholepath"></A>Use whole path</b>:
-If this option is enabled, <a href="tab_advanced.htm#ta_usewholepath">Use whole path</a>
+If this option is enabled, <a href="tab_advanced.htm#ta_usewholepath">Use entire path</a>
  check box in the Advanced tab of the main dialog is enabled by default. 
 </p>
 
 <p>
-<b><A NAME="sg_matchcase"></A>Match case (for "File containing text")</b>:
+<b><A NAME="sg_datamatchcase"></A>Match case (for "File containing text")</b>:
 This option specifies the default state for <a href="tab_advanced.htm#ta_usewholepath">Match case</a>
  check box on right of <a href="tab_advanced.htm#ta_fileconttext">File containing text</a> check box (in the Advanced tab in the main dialog). 
 </p>

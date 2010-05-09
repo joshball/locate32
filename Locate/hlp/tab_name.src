@@ -12,7 +12,7 @@ You can also use wildcards '*' (any characters) or '?' (any one character) as us
 can be specified by using comma ',' or semicolon ';' as the separator (space is also acceptable
 separator if <b><a href="settings_advanced.htm#sa_spaceisseparator">$STRADVANCEDSETTINGS_SPACEISSEPARATOR@C$</a></b> 
 option in Advanced settings is enabled). All slashes '/' are replaces with backslashes '\'. You can use apostrophes "" if file 
-name contains special characters such as commas. <b>See also <a href="issue_searchterms.htm">searching terms</a></b>.
+name contains special characters such as commas. <b>See <a href="issue_searchterms.htm">search syntax</a></b>.
 </P>
 
 <H2><A NAME="tn_type"></A>$DLGNAME_EXTENSIONS@M$</H2>

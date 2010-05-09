@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2010 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 // All definitions for manipulating strings
 ////////////////////////////////////////////////////////////////////
@@ -34,24 +34,22 @@ inline BOOL IsUnicodeSystem()
 
 #ifdef DEF_WCHAR
 
-inline void MemCopyW(LPWSTR dst,LPCWSTR src,int len)
-{
-	sMemCopy((LPVOID)dst,(LPCVOID)src,len*sizeof(WCHAR));
-}
 
-#define MemCopyWtoA(dst,src,len) \
-	WideCharToMultiByte(CP_ACP,0,(src),(int)(len),(dst),(int)(len),NULL,NULL)
-#define MemCopyAtoW(dst,src,len) \
-	MultiByteToWideChar(CP_ACP,0,(src),(int)(len),(dst),(int)(len))
+#define MemCopyWtoA(dst,dstlen,src,len) \
+	WideCharToMultiByte(CP_ACP,0,(src),(int)(len),(dst),(int)(dstlen),NULL,NULL)
+#define MemCopyAtoW(dst,dstlen,src,len) \
+	MultiByteToWideChar(CP_ACP,0,(src),(int)(len),(dst),(int)(dstlen))
 
 // No type check
 #define _MemCopyW(dst,src,len) \
 	sMemCopy((dst),(src),(len)*sizeof(WCHAR))
-#define _MemCopyWtoA(dst,src,len) \
-	WideCharToMultiByte(CP_ACP,0,(LPCWSTR)(src),(int)(len),(LPSTR)(dst),(int)(len),NULL,NULL)
-#define _MemCopyAtoW(dst,src,len) \
-	MultiByteToWideChar(CP_ACP,0,(LPCSTR)(src),(int)(len),(LPWSTR)(dst),(int)(len))
+#define _MemCopyWtoA(dst,dstlen,src,len) \
+	WideCharToMultiByte(CP_ACP,0,(LPCWSTR)(src),(int)(len),(LPSTR)(dst),(int)(dstlen),NULL,NULL)
+#define _MemCopyAtoW(dst,dstlen,src,len) \
+	MultiByteToWideChar(CP_ACP,0,(LPCSTR)(src),(int)(len),(LPWSTR)(dst),(int)(dstlen))
 #endif
+
+
 
 
 ////////////////////////////////////////
@@ -71,6 +69,16 @@ int strcasencmp(LPCSTR s1,LPCSTR s2,DWORD n);
 #ifdef DEF_WCHAR
 int strcasecmp(LPCWSTR,LPCWSTR);
 int strcasencmp(LPCWSTR s1,LPCWSTR s2,DWORD n);
+
+LPWSTR alloccopyAtoW(LPCSTR szString);
+LPWSTR alloccopyAtoW(LPCSTR szString,int iLength);
+LPWSTR alloccopyAtoW(LPCSTR szString,int iLength,int& iNewLen);
+LPSTR alloccopyWtoA(LPCWSTR szString);
+LPSTR alloccopyWtoA(LPCWSTR szString,int iLength);
+LPSTR alloccopyWtoA(LPCWSTR szString,int iLength,int& iNewLen);
+LPSTR alloccopymultiWtoA(LPCWSTR szMultiString);
+LPWSTR alloccopymultiAtoW(LPCSTR szMultiString);
+
 #endif
 
 BYTE* dataparser(LPCSTR pString,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataLength=NULL);

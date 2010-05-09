@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -25,9 +25,9 @@ void CLocatedItem::SetFolder(const CLocater* pLocater)
 	bNameLength=BYTE(pLocater->GetFolderNameLen());
 	szPath=new WCHAR[nPathLen+bNameLength+2];
 	
-	MemCopyAtoW(szPath,pLocater->GetCurrentPath(),nPathLen);
-	szName=szPath+(++nPathLen);
-	MemCopyAtoW(szName,pLocater->GetFolderName(),DWORD(bNameLength)+1);
+	int nLen=MemCopyAtoW(szPath,nPathLen+bNameLength+2,pLocater->GetCurrentPath(),nPathLen++);
+	szName=szPath+nLen+1;
+	MemCopyAtoW(szName,bNameLength+1,pLocater->GetFolderName(),DWORD(bNameLength)+1);
 	
 	for (bExtensionPos=bNameLength-1; szName[bExtensionPos-1]!='.' && bExtensionPos>0 ;bExtensionPos--);
 	if (bExtensionPos==0)
@@ -128,9 +128,9 @@ void CLocatedItem::SetFile(const CLocater* pLocater)
 	DWORD nPathLen=pLocater->GetCurrentPathLen();
 	bNameLength=BYTE(pLocater->GetFileNameLen());
 	szPath=new WCHAR[nPathLen+bNameLength+2];
-	MemCopyAtoW(szPath,pLocater->GetCurrentPath(),nPathLen);
-	szName=szPath+(++nPathLen);
-	MemCopyAtoW(szName,pLocater->GetFileName(),DWORD(bNameLength)+1);
+	int nLen=MemCopyAtoW(szPath,nPathLen+bNameLength+2,pLocater->GetCurrentPath(),nPathLen++);
+	szName=szPath+nLen+1;
+	MemCopyAtoW(szName,bNameLength+1,pLocater->GetFileName(),DWORD(bNameLength)+1);
 	bExtensionPos=pLocater->GetFileExtensionPos();
 	if (bExtensionPos==0 && *szName!='.')
 		bExtensionPos=bNameLength;
@@ -290,6 +290,7 @@ void CLocatedItem::UpdateByDetail(DetailType nDetail)
 	case Subject:
 	case Pages:
 	case Comments:
+	case Keywords:
 		UpdateSummaryProperties();
 		break;
 	case Category:
@@ -1438,15 +1439,16 @@ void CLocatedItem::UpdateSummaryProperties()
 	
 	ItemDebugMessage("CLocatedItem::UpdateSummaryProperties BEGIN");
 	
-	ExtraInfo* pFields[5];
+	ExtraInfo* pFields[6];
 	pFields[0]=CreateExtraInfoField(Author);
 	pFields[1]=CreateExtraInfoField(Title);
 	pFields[2]=CreateExtraInfoField(Subject);
 	pFields[3]=CreateExtraInfoField(Comments);
-	pFields[4]=CreateExtraInfoField(Pages);
+	pFields[4]=CreateExtraInfoField(Keywords);
+	pFields[5]=CreateExtraInfoField(Pages);
 	
 
-	for (int i=0;i<4;i++)
+	for (int i=0;i<5;i++)
 	{
 		pFields[i]->bShouldUpdate=FALSE;
 		if (pFields[i]->szText!=NULL)
@@ -1456,8 +1458,8 @@ void CLocatedItem::UpdateSummaryProperties()
 			delete[] pTmp;
 		}
 	}	
-	pFields[4]->bShouldUpdate=FALSE;
-	pFields[4]->nPages=0;
+	pFields[5]->bShouldUpdate=FALSE;
+	pFields[5]->nPages=0;
 
 
 	
@@ -1492,10 +1494,10 @@ void CLocatedItem::UpdateSummaryProperties()
 	}
 
 	
-	PROPSPEC rgpspec[5];
-	PROPVARIANT rgpropvar[5];
+	PROPSPEC rgpspec[6];
+	PROPVARIANT rgpropvar[6];
 	
-	for (int i=0;i<5;i++)
+	for (int i=0;i<6;i++)
 	{
 		rgpspec[i].ulKind=PRSPEC_PROPID;
 		PropVariantInit(&rgpropvar[i]);
@@ -1505,12 +1507,13 @@ void CLocatedItem::UpdateSummaryProperties()
 	rgpspec[1].propid=PIDSI_TITLE;
 	rgpspec[2].propid=PIDSI_SUBJECT;
 	rgpspec[3].propid=PIDSI_COMMENT;
-	rgpspec[4].propid=PIDSI_PAGECOUNT;
-
-	hRes=pps->ReadMultiple(5,rgpspec,rgpropvar);
+	rgpspec[4].propid=PIDSI_KEYWORDS;
+	rgpspec[5].propid=PIDSI_PAGECOUNT;
+	
+	hRes=pps->ReadMultiple(6,rgpspec,rgpropvar);
 	if (SUCCEEDED(hRes))
 	{
-		for (int i=0;i<4;i++) // Last is pages
+		for (int i=0;i<5;i++) // Last is pages
 		{
 			switch (rgpropvar[i].vt)
 			{
@@ -1526,30 +1529,30 @@ void CLocatedItem::UpdateSummaryProperties()
 			PropVariantClear(&rgpropvar[i]);
 		}
 
-		switch (rgpropvar[4].vt)
+		switch (rgpropvar[5].vt)
 		{
 		case VT_I2:
-			pFields[4]->nPages=rgpropvar[4].iVal;
+			pFields[5]->nPages=rgpropvar[5].iVal;
 			break;
 		case VT_I4:
 		case VT_INT:
-			pFields[4]->nPages=rgpropvar[4].lVal;
+			pFields[5]->nPages=rgpropvar[5].lVal;
 			break;
 		case VT_I8:
-			pFields[4]->nPages=(INT)rgpropvar[4].hVal.LowPart;
+			pFields[5]->nPages=(INT)rgpropvar[5].hVal.LowPart;
 			break;
 		case VT_UI2:
-			pFields[4]->nPages=rgpropvar[4].uiVal;
+			pFields[5]->nPages=rgpropvar[5].uiVal;
 			break;
 		case VT_UI4:
 		case VT_UINT:
-			pFields[4]->nPages=rgpropvar[4].ulVal;
+			pFields[5]->nPages=rgpropvar[5].ulVal;
 			break;
 		case VT_UI8:
-			pFields[4]->nPages=(DWORD)rgpropvar[4].uhVal.LowPart;
+			pFields[5]->nPages=(DWORD)rgpropvar[5].uhVal.LowPart;
 			break;
 		}
-		PropVariantClear(&rgpropvar[4]);
+		PropVariantClear(&rgpropvar[5]);
 		
 	}
 

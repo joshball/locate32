@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #if !defined(LOCATEDLG_TABS_INL)
 #define LOCATEDLG_TABS_INL
@@ -104,13 +104,13 @@ inline BOOL CLocateDlg::CSizeDateDlg::LookOnlyFiles() const
 //////////////////////////////////////////////////////////////////////////////
 
 inline CLocateDlg::CAdvancedDlg::CAdvancedDlg()
-:	CDialog(IDD_ADVANCED),m_hTypeUpdaterThread(NULL),m_hDefaultTypeIcon(NULL),m_dwFlags(0)
+:	CDialog(IDD_ADVANCED),m_hTypeUpdaterThread(NULL),m_hDefaultTypeIcon(NULL),m_dwFlags(fgDefault)
 {
 }
 
 
-inline CLocateDlg::CAdvancedDlg::CReplaceCharsDlg::CReplaceCharsDlg(CArrayFAP<LPWSTR>& raChars)
-:	CDialog(IDD_REPLACECHARS),m_raChars(raChars)
+inline CLocateDlg::CAdvancedDlg::CReplaceCharsDlg::CReplaceCharsDlg(CArrayFAP<LPWSTR>& raChars,BOOL bUseQuestionMark)
+:	CDialog(IDD_REPLACECHARS),m_raChars(raChars),m_bUseQuestionMark(bUseQuestionMark)
 {
 }
 

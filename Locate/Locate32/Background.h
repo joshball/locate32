@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #if !defined(BACKGROUND_H)
 #define BACKGROUND_H

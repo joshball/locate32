@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2010 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -8,12 +8,12 @@
 
 // Library variables
 #define  HFCVERSIONMS		MAKEVERSION(6,50)
-#define  HFCVERSIONLS		MAKEVERSION(9,11150)
+#define  HFCVERSIONLS		MAKEVERSION(9,12120)
 
 #ifdef _DEBUG
-#define  HFCVERSIONSTR		"HFC Library (DEBUG) v6.50.9.11150";
+#define  HFCVERSIONSTR		"HFC Library (DEBUG) v6.50.9.12120";
 #else
-#define  HFCVERSIONSTR		"HFC Library v6.50.9.11150";
+#define  HFCVERSIONSTR		"HFC Library v6.50.9.12120";
 #endif
 
 LPCSTR szEmpty="";

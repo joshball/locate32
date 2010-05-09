@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #ifndef DATA_H
 #define DATA_H
@@ -41,8 +41,9 @@ enum DetailType {
 	ProductName=28,
 	ProductVersion=29,
 	Extension=30,
+	Keywords=31,
 
-	LastType=30,
+	LastType=31,
 
 	TypeCount=LastType+1,
 

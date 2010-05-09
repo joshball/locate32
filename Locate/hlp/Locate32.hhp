@@ -60,6 +60,7 @@ hid_help_index.htm
 hid_systemtray_openlocate.htm
 hid_special_copypathtoclipboard.htm
 hid_special_copyshortpathtoclipboard.htm
+hid_special_copydatatoclipboard.htm
 hid_special_changefilename.htm
 hid_special_changecaseforfilename.htm
 hid_special_showtotalsize.htm
@@ -174,6 +175,7 @@ hid_help_index						= hid_help_index.htm
 hid_systemtray_openlocate			= hid_systemtray_openlocate.htm
 hid_special_copypathtoclipboard		= hid_special_copypathtoclipboard.htm
 hid_special_copyshortpathtoclipboard= hid_special_copyshortpathtoclipboard.htm
+hid_special_copydatatoclipboard		= hid_special_copydatatoclipboard.htm
 hid_special_changefilename			= hid_special_changefilename.htm
 hid_special_changecaseforfilename	= hid_special_changecaseforfilename.htm
 hid_special_showtotalsize			= hid_special_showtotalsize.htm
@@ -276,6 +278,7 @@ IDM_HELPTOPICS						= hid_help_index.htm
 IDM_OPENLOCATE						= hid_systemtray_openlocate.htm
 IDM_COPYPATHTOCB					= hid_special_copypathtoclipboard.htm
 IDM_COPYSHORTPATHTOCB				= hid_special_copyshortpathtoclipboard.htm
+IDM_COPYDATATOCB					= hid_special_copydatatoclipboard.htm
 IDM_CHANGEFILENAME					= hid_special_changefilename.htm
 IDM_CHANGECASE						= hid_special_changecaseforfilename.htm
 IDM_SHOWFILEINFORMATION				= hid_special_showtotalsize.htm

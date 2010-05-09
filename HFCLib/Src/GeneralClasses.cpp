@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2010 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -1423,18 +1423,7 @@ LONG CRegKey::SetValue(LPCWSTR lpValueName,LPCWSTR strData,DWORD cbDataAsChars,D
 			}
 		case REG_MULTI_SZ:
 			{
-				SIZE_T i;
-				for (i=0;(((LPCWSTR)strData)[i]!='\0' || ((LPCWSTR)strData)[i+1]!='\0') && i<cbDataAsChars;i++);
-				char* pDataA=new char[i+2];
-				ULONG_PTR ind=0;			
-				while (((LPCWSTR)strData)[ind]!='\0' && ind<cbDataAsChars)
-				{
-					SIZE_T nlen=wcslen(((LPCWSTR)strData)+ind);
-					MemCopyWtoA(pDataA+ind,((LPCWSTR)strData)+ind,nlen);
-					ind+=nlen;
-					pDataA[ind++]='\0';
-				}
-				pDataA[ind]='\0';
+				char* pDataA=alloccopymultiWtoA(strData);
 				LONG lRet=::RegSetValueExA(m_hKey,W2A(lpValueName),0,dwType,(CONST BYTE*)pDataA,cbDataAsChars);
 				delete[] pDataA;
 				return lRet;

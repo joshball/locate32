@@ -86,14 +86,16 @@
 #define IDS_FILEINFORMATIONFMT          72
 #define IDS_ERROROCCURED				73
 #define IDS_ERROROCCUREDWITHDB			74
+#define IDS_LISTKEYWORDS				75
 #define IDS_SELECTEDONEFILE				76
 #define IDS_SELECTEDONEFOLDER			77
-#define IDS_REPLACESPACES				78
-#define IDS_REPLACEOTHER				79
+#define IDS_REPLACECHARS				78
+#define IDS_REPLACEASTERISKS			79
 #define IDS_NAME                        80
 #define IDS_ADVANCED                    81
 #define IDS_SIZEDATE                    82
 #define IDS_DATETODAY					83
+#define IDS_REPLACESPACES				84
 #define IDS_BYEXTENSION                 85
 #define IDS_BUILDINTYPES                86
 #define IDS_FILENAMESONLY               87
@@ -109,6 +111,7 @@
 #define IDS_DATEDAY						97
 #define IDS_DATENDAYS					98
 #define IDS_COPYRIGHT                   99
+#define IDS_REPLACEQMARK				100   
 #define IDD_MAIN                        101
 #define IDS_YES                         101
 #define IDR_MAINMENU                    102
@@ -517,6 +520,7 @@
 #define IDC_MODWIN                      1195
 #define IDC_REMOVEUPMESSAGE             1196
 #define IDC_EXECUTEWHENSTATIC           1197
+#define IDC_QUESTIONMARK                1197
 #define IDC_REMOVEMESSAGESTATIC         1198
 #define IDC_RADIO1                      1199
 #define IDC_SENDKEYRELEASEBEFOREWIN		1199

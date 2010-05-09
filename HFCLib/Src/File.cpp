@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2010 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -798,78 +798,66 @@ CFileEncode::~CFileEncode()
 
 BOOL CFileEncode::Write(WCHAR ch)
 {
-	switch (m_nEncoding)
+	if (m_nEncoding==Unicode)
+		return CFile::Write((const void*)&ch,2);
+	else
 	{
-	case Unicode:
-		return CFile::Write(WORD(ch));
-	case UTF8:
-		{
-			char szBuffer[4];
-			int nRet=WideCharToMultiByte(CP_UTF8,0,&ch,1,szBuffer,4,NULL,NULL);
-			return CFile::Write(szBuffer,nRet-1);
-		}
-	case ANSI:
-	default:
-		return CFile::Write(W2Ac(ch));
-	}		
+		int iNewLen=WideCharToMultiByte(m_nEncoding==UTF8?CP_UTF8:CP_ACP,0,&ch,1,NULL,0,NULL,NULL);
+		CHAR* psz=new CHAR[iNewLen+1];
+		WideCharToMultiByte(m_nEncoding==UTF8?CP_UTF8:CP_ACP,0,&ch,1,psz,iNewLen+1,NULL,NULL);
+		psz[iNewLen]=L'\0';
+		int iRet=CFile::Write(psz,iNewLen);
+		delete[] psz;
+		return iRet;
+	}
 }
 
 BOOL CFileEncode::Write(const CStringW& str)
 {
-	switch (m_nEncoding)
-	{
-	case Unicode:
+	if (m_nEncoding==Unicode)
 		return CFile::Write((const void*)(LPCWSTR)str,(str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0))*2);
-	case UTF8:
-		{
-			int nLen=str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0);
-			int nBufferLen=nLen*3;
-			char* szBuffer=new char[nBufferLen];
-			int nRet=WideCharToMultiByte(CP_UTF8,0,str,nLen,szBuffer,nBufferLen,NULL,NULL);
-			return CFile::Write(szBuffer,nRet);
-		}
-	case ANSI:
-	default:
-		return CFile::Write(W2A(str));
-	}		
+	else
+	{
+		int nLen=str.GetLength()+(m_nOpenFlags&otherStrNullTerminated?1:0);
+		int iNewLen=WideCharToMultiByte(m_nEncoding==UTF8?CP_UTF8:CP_ACP,0,(LPCWSTR)str,nLen,NULL,0,NULL,NULL);
+		CHAR* psz=new CHAR[iNewLen+1];
+		WideCharToMultiByte(m_nEncoding==UTF8?CP_UTF8:CP_ACP,0,(LPCWSTR)str,nLen,psz,iNewLen+1,NULL,NULL);
+		psz[iNewLen]=L'\0';
+		int iRet=CFile::Write(psz,iNewLen);
+		delete[] psz;
+		return iRet;
+	}
 }
 
 BOOL CFileEncode::Write(LPCWSTR szNullTerminatedString)
 {
-	switch (m_nEncoding)
-	{
-	case Unicode:
+	if (m_nEncoding==Unicode)
 		return CFile::Write((const void*)(LPCWSTR)szNullTerminatedString,(istrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0))*2);
-	case UTF8:
-		{
-			int nLen=istrlen(szNullTerminatedString)+(m_nOpenFlags&otherStrNullTerminated?1:0);
-			int nBufferLen=nLen*3;
-			char* szBuffer=new char[nBufferLen];
-			int nRet=WideCharToMultiByte(CP_UTF8,0,szNullTerminatedString,nLen,szBuffer,nBufferLen,NULL,NULL);
-			return CFile::Write(szBuffer,nRet);
-		}
-	case ANSI:
-	default:
-		return CFile::Write(W2A(szNullTerminatedString));
-	}		
+	else
+	{
+		int iNewLen=WideCharToMultiByte(m_nEncoding==UTF8?CP_UTF8:CP_ACP,0,szNullTerminatedString,-1,NULL,0,NULL,NULL);
+		CHAR* psz=new CHAR[iNewLen+1];
+		WideCharToMultiByte(m_nEncoding==UTF8?CP_UTF8:CP_ACP,0,szNullTerminatedString,-1,psz,iNewLen+1,NULL,NULL);
+		psz[iNewLen]=L'\0';
+		int iRet=CFile::Write(psz,iNewLen);
+		delete[] psz;
+		return iRet;
+	}
 }
 
 BOOL CFileEncode::Write(LPCWSTR szString,DWORD nCount)
 {
-	switch (m_nEncoding)
-	{
-	case Unicode:
+	if (m_nEncoding==Unicode)
 		return CFile::Write((const void*)(LPCWSTR)szString,nCount*2);
-	case UTF8:
-		{
-			int nBufferLen=nCount*3+3;
-			char* szBuffer=new char[nBufferLen];
-			int nRet=WideCharToMultiByte(CP_UTF8,0,szString,nCount,szBuffer,nBufferLen,NULL,NULL);
-			return CFile::Write(szBuffer,nRet);
-		}
-	case ANSI:
-	default:
-		return CFile::Write(W2A(szString,nCount),nCount);
+	else 
+	{
+		int iNewLen=WideCharToMultiByte(m_nEncoding==UTF8?CP_UTF8:CP_ACP,0,szString,nCount,NULL,0,NULL,NULL);
+		CHAR* psz=new CHAR[iNewLen+1];
+		WideCharToMultiByte(m_nEncoding==UTF8?CP_UTF8:CP_ACP,0,szString,nCount,psz,iNewLen+1,NULL,NULL);
+		psz[iNewLen]=L'\0';
+		int iRet=CFile::Write(psz,iNewLen);
+		delete[] psz;
+		return iRet;
 	}	
 }
 
@@ -2150,7 +2138,7 @@ DWORD FileSystem::ParseExistingPath(LPCWSTR szPath)
 			else
 			{
 				CHAR szTemp[]="X:\\";
-				MemCopyWtoA(szTemp,szPath,1);
+				MemCopyWtoA(szTemp,sizeof(szTemp),szPath,1);
 				return GetDriveTypeA(szTemp)==DRIVE_NO_ROOT_DIR?0:2;
 			}
 		}

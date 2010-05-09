@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #if !defined(LOCATEAPP_H)
 #define LOCATEAPP_H
@@ -36,7 +36,10 @@ public:
 			statusNoReplaceSpacesWithAsterisks=0x400,
 			statusUseWholePath=0x800,
 			statusNoUseWholePath=0x1000,
-			statusNoExtension=0x2000
+			statusNoExtension=0x2000,
+			statusMatchCase=0x4000,
+			statusNoMatchCase=0x8000
+			
 		};
 
 		enum StartupFlags {

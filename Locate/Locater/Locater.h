@@ -1,4 +1,4 @@
-/* Copyright (c) 1997-2009 Janne Huttunen
+/* Copyright (c) 1997-2010 Janne Huttunen
    database locater v3.1.9.6070              */
 
 #if !defined(LOCATER_H)
@@ -43,6 +43,7 @@ typedef BOOL (CALLBACK* LOCATEFOUNDPROC)(DWORD_PTR dwParam,BOOL bFolder,const CL
 #define LOCATE_CHECKWHOLEPATH			0x00001000
 #define LOCATE_REGULAREXPRESSIONSEARCH  0x00002000 // Contain data is regular expression
 #define LOCATE_NAMEREGEXPISUTF8			0x00004000 
+#define LOCATE_NAMEMATCHCASE			0x00008000 
 #define LOCATE_LOGICALOPERATIONS		0x00010000 
 #define LOCATE_REGEXPCASESENSITIVE		0x00020000 // Regular expression for name is case sensitive
 #define LOCATE_LOGICALOPERATIONSINEXT	0x00100000 // Extensions may contain - to mean that exclude extension

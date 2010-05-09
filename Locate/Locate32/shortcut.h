@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #ifndef SHORTCUT_H
 #define SHORTCUT_H
@@ -54,6 +54,7 @@ public:
 		// Advanced
 		CheckFilesOrFolders = MAKELONG(IDC_CHECK,IDC_CHECKSTATIC),
 		MatchWholeName = MAKELONG(IDC_MATCHWHOLENAME,IDC_MATCHWHOLENAME),
+		MatchCase = MAKELONG(IDC_MATCHCASE,IDC_MATCHCASE),
 		ReplaceSpaces = MAKELONG(IDC_REPLACESPACES,IDC_REPLACESPACES),
 		UseWholePath = MAKELONG(IDC_USEWHOLEPATH,IDC_USEWHOLEPATH),
 		TypeOfFile = MAKELONG(IDC_FILETYPE,IDC_FILETYPESTATIC),

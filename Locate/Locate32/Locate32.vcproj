@@ -1389,6 +1389,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\hlp\hid_special_copydatatoclipboard.src"
+				>
+			</File>
+			<File
 				RelativePath="..\hlp\hid_special_copyMD5sumstoclipboard.src"
 				>
 			</File>

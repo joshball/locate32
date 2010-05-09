@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -576,7 +576,7 @@ BOOL CResults::SaveToFile()
 		{
 			char szDateA[200];
 			dwLength=GetDateFormat(NULL,DATE_SHORTDATE,NULL,NULL,szDateA,200);
-			MemCopyAtoW(szDate,szDateA,dwLength);
+			MemCopyAtoW(szDate,200,szDateA,dwLength);
 		}
 		szDate[dwLength-1]=' ';
 		m_pOutput->Write(szDate,dwLength);
@@ -586,7 +586,7 @@ BOOL CResults::SaveToFile()
 		{
 			char szDateA[200];
 			dwLength=GetTimeFormat(NULL,0,NULL,NULL,szDateA,200)-1;
-			MemCopyAtoW(szDate,szDateA,dwLength);
+			MemCopyAtoW(szDate,200,szDateA,dwLength);
 		}
 		szDate[dwLength++]='\r';
 		szDate[dwLength++]='\n';
@@ -767,7 +767,7 @@ BOOL CResults::SaveToHtml()
 		{
 			char szDateA[200];
 			dwLength=GetDateFormat(NULL,DATE_SHORTDATE,NULL,NULL,szDateA,200);
-			MemCopyAtoW(szDate,szDateA,dwLength);
+			dwLength=MemCopyAtoW(szDate,200,szDateA,dwLength);
 		}
 
         szDate[dwLength-1]=L' ';
@@ -778,7 +778,7 @@ BOOL CResults::SaveToHtml()
 		{
 			char szDateA[200];
 			dwLength=GetTimeFormatA(NULL,0,NULL,NULL,szDateA,200)-1;
-			MemCopyAtoW(szDate,szDateA,dwLength);
+			dwLength=MemCopyAtoW(szDate,200,szDateA,dwLength);
 		}
 		m_pOutput->Write(szDate,dwLength);
 		m_pOutput->Write(L"</li>\n",6);
@@ -992,7 +992,7 @@ BOOL CResults::SaveToHtmlTemplate()
 		{
 			char szDateA[200];
 			dwLength=GetDateFormat(NULL,DATE_SHORTDATE,NULL,NULL,szDateA,200);
-			MemCopyAtoW(szDate,szDateA,dwLength);
+			dwLength=MemCopyAtoW(szDate,200,szDateA,dwLength);
 		}
         szDate[dwLength-1]=L'\0';
 		SetVariable("DATE",szDate);
@@ -1003,7 +1003,7 @@ BOOL CResults::SaveToHtmlTemplate()
 		{
 			char szDateA[200];
 			dwLength=GetTimeFormatA(NULL,0,NULL,NULL,szDateA,200)-1;
-			MemCopyAtoW(szDate,szDateA,dwLength);
+			dwLength=MemCopyAtoW(szDate,200,szDateA,dwLength);
 		}
 
         szDate[dwLength]=L'\0';
@@ -2318,7 +2318,7 @@ BOOL CSaveResultsDlg::DoModal(HWND hParentWnd)
 {
 	BOOL bRet=FALSE;
 	if (m_nFlags&RESULT_CLIPBOARD)
-		bRet=CDialog::DoModal(hParentWnd);
+		bRet=(BOOL)CDialog::DoModal(hParentWnd);
 	else
 		bRet=CFileDialog::DoModal(hParentWnd);
 

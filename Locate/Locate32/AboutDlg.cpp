@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -67,10 +67,10 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 	{
 		CStringW str;
 #ifdef _DEBUG
-		str.Format(L"%s © 1997-2009 Janne Huttunen\nTHIS IS DEBUG VERSION, %s %s",
+		str.Format(L"%s © 1997-2010 Janne Huttunen\nTHIS IS DEBUG VERSION, %s %s",
 			(LPCWSTR)ID2W(IDS_COPYRIGHT),(LPCWSTR)A2W(__DATE__),(LPCWSTR)A2W(__TIME__));
 #else
-		str.Format(L"%s © 1997-2009 Janne Huttunen",(LPCWSTR)ID2W(IDS_COPYRIGHT));
+		str.Format(L"%s © 1997-2010 Janne Huttunen",(LPCWSTR)ID2W(IDS_COPYRIGHT));
 #endif
 		SetDlgItemText(IDC_COPYRIGHT,str);
 

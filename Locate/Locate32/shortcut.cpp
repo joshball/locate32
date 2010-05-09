@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 
 #ifndef KEYHOOK_EXPORTS
@@ -1007,12 +1007,20 @@ BOOL CSubAction::DoActivateControl()
 	CLocateDlg* pLocateDlg=GetLocateDlg();
 	if (pLocateDlg==NULL)
 		return FALSE;
-	
+	DebugFormatMessage("DoActivateControl: activating control %d",m_nControl);
+
 	if (GetCurrentThreadId()==GetTrayIconWnd()->GetLocateDlgThread()->GetThreadId())
-		return !pLocateDlg->OnCommand(LOWORD(m_nControl),1,NULL);
+	{
+		int nRet=(int)pLocateDlg->OnCommand(LOWORD(m_nControl),1,NULL);
+		DebugFormatMessage("DoActivateControl: OnCommand returned %d",nRet);
+		return !nRet;
+	}
 	else
-		return !pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nControl),1),0);
-	return TRUE;
+	{
+		int nRet=(int)pLocateDlg->SendMessage(WM_COMMAND,MAKEWPARAM(LOWORD(m_nControl),1),0);
+		DebugFormatMessage("DoActivateControl: WM_COMMAND returned %d",nRet);
+		return !nRet;
+	}
 }
 
 
@@ -1429,7 +1437,7 @@ BOOL CSubAction::DoResultListItems()
 		return FALSE;
 
 	DebugFormatMessage("Sending message, pExtraInfo=%X",DWORD(m_pExtraInfo));
-	return pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_pExtraInfo);
+	return (int)pLocateDlg->SendMessage(WM_RESULTLISTACTION,m_nSubAction,(LPARAM)m_pExtraInfo);
 }
 
 void * __cdecl gmalloc(size_t size) { return GlobalAlloc(GPTR,size+1); }

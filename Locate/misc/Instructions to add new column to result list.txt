@@ -18,4 +18,4 @@ lres_base.rc and english.rlf files
 
 7. add code to CLocatedItem::GetDetailText function to format text (check CLocateDlg::ListNotifyHandler)
 
-8. add code to CLocateDlg::ListViewCompareProc to handle sorting
+8. add code to CLocateDlg::ListCompareProc to handle sorting

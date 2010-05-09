@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #if !defined(LOCATEDLG_H)
 #define LOCATEDLG_H
@@ -406,15 +406,18 @@ public:
 		class CReplaceCharsDlg: public CDialog  
 		{
 		public:
-			CReplaceCharsDlg(CArrayFAP<LPWSTR>& raChars);
+			CReplaceCharsDlg(CArrayFAP<LPWSTR>& raChars,BOOL bUseQuestionMark);
 
 			virtual BOOL OnInitDialog(HWND hwndFocus);
 			virtual BOOL OnCommand(WORD wID,WORD wNotifyCode,HWND hControl);
 			virtual BOOL OnClose();
 			virtual void OnDestroy();
 
+			BOOL UseQuestionMark() const { return m_bUseQuestionMark; }
 		private:
 			CArrayFAP<LPWSTR>& m_raChars;
+			BOOL m_bUseQuestionMark;
+
 		};
 
 	public:
@@ -432,15 +435,16 @@ public:
 		void HilightTab(BOOL bHilight);
 
 		void RenameReplaceSpaces();
-		BOOL LoadReplaceCharsFromRegistry();
-		BOOL SaveReplaceCharsSaveRegistry();
+		BOOL LoadRegistry();
+		BOOL SaveRegistry();
 		void ReplaceCharsWithAsterisks(CStringW& sString);
 
 	public:
 		// Return codes for OnOk
 		enum {
 			flagMatchWholeNameOnly=0x1,
-			flagReplaceSpaces=0x2
+			flagReplaceSpaces=0x2,
+			flagMatchCase=0x4
 		};
 		DWORD SetAdvancedFlagsForLocater(CLocater* pLocater,BOOL bForInstantSearch);
 		void OnClear(BOOL bInitial=FALSE);
@@ -507,7 +511,11 @@ public:
 		
 		enum {
 			fgBuildInTypesAdded=0x1,
-			fgOtherTypeAdded=0x2
+			fgOtherTypeAdded=0x2,
+			fgReplaceUseQuestionMark=0x4,
+
+			fgDefault=0,
+			fgSave=fgReplaceUseQuestionMark
 		};
 		BYTE m_dwFlags;
 
@@ -716,8 +724,8 @@ protected:
 	////////////////////////////////////////////////////////////
 	// Presets
 protected:
-	void OnPresetsSave();
-	void OnPresetsSelection(int nPreset);
+	BOOL OnPresetsSave();
+	BOOL OnPresetsSelection(int nPreset);
 	BOOL LoadPreset(LPCWSTR szPreset);
 	static DWORD CheckExistenceOfPreset(LPCWSTR szName,DWORD* pdwPresets); // Returns index to preset or FFFFFFFF
 	void LoadDialogTexts();

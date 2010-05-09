@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -66,9 +66,7 @@ CSchedule::CSchedule(BYTE*& pData,BYTE nVersion)
 				dwLength+=iStrLen;
 				pData+=iStrLen;
 			}
-			
-			m_pDatabases=new WCHAR[dwLength];
-			MemCopyAtoW(m_pDatabases,(LPCSTR)pOrig,dwLength);
+			m_pDatabases=alloccopyAtoW((LPCSTR)pOrig,dwLength);
 		}
 		else
 			m_pDatabases=NULL;
@@ -128,10 +126,10 @@ DWORD CSchedule::GetData(BYTE* pData) const
 		while (*pPtr!='\0')
 		{
 			int iStrLen=(int)istrlenw(pPtr)+1;
-			MemCopyWtoA((LPSTR)pData,pPtr,iStrLen);
+			pData+=MemCopyWtoA((LPSTR)pData,iStrLen*2,pPtr,iStrLen);
+			
 			dwLength+=iStrLen;
 			pPtr+=iStrLen;
-			pData+=iStrLen;
 		}
 	}
 

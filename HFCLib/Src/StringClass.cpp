@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2010 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -152,13 +152,13 @@ CString::CString(const CStringW& str)
 		m_nDataLen=str.m_nDataLen;
 		OUTPUT(m_nDataLen)
 		m_nBase=str.m_nBase;
-		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		m_pData=alloccopyWtoA(str,str.m_nDataLen,m_nDataLen);
+		m_nAllocLen=m_nDataLen+1;
 		if (m_pData==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return;
 		}
-		MemCopyWtoA(m_pData,str.m_pData,m_nDataLen+1);
 	}
 	else
 	{
@@ -173,17 +173,9 @@ CString::CString(LPCWSTR lpsz)
 {
 	if (lpsz!=NULL)
 	{
-		//m_nDataLen=wcslen(lpsz);
-		m_nDataLen=istrlenw(lpsz);
-		
 		OUTPUT(m_nDataLen)
-		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
-		if (m_pData==NULL)
-		{
-			SetHFCError(HFC_CANNOTALLOCATE);
-			return;
-		}
-		MemCopyWtoA(m_pData,lpsz,m_nDataLen+1);
+		m_pData=alloccopyWtoA(lpsz,istrlenw(lpsz),m_nDataLen);
+		m_nAllocLen=m_nDataLen+1;
 	}
 	else
 	{
@@ -214,7 +206,7 @@ CString::CString(WCHAR ch,int nRepeat)
 		}
 		
 		CHAR nch;
-		MemCopyWtoA(&nch,&ch,2);
+		WideCharToMultiByte(CP_ACP,0,&ch,1,&nch,1,NULL,NULL);
 
 		for (m_nDataLen=0;m_nDataLen<nRepeat;m_nDataLen++)
 			m_pData[m_nDataLen]=nch;
@@ -330,9 +322,8 @@ CString& CString::Copy(LPCWSTR str)
 	}
 	if (m_pData!=NULL)
 		delete[] m_pData;
-	m_nDataLen=istrlenw(str);
-	m_pData=new char[m_nAllocLen=m_nDataLen+1];
-	MemCopyWtoA(m_pData,str,m_nDataLen+1);
+	m_pData=alloccopyWtoA(str,istrlen(str),m_nDataLen);
+	m_nAllocLen=m_nDataLen+1;
 	return *this;
 }
 
@@ -349,8 +340,9 @@ CString& CString::Copy(LPCWSTR str,int iLength)
 		m_nDataLen=istrlenw(str);
 	else
 		m_nDataLen=iLength;
+	m_nDataLen=WideCharToMultiByte(CP_ACP,0,str,iLength,NULL,0,NULL,NULL);
 	m_pData=new char[m_nAllocLen=m_nDataLen+1];
-	MemCopyWtoA(m_pData,str,m_nDataLen);
+	WideCharToMultiByte(CP_ACP,0,str,iLength,m_pData,m_nAllocLen,NULL,NULL);
 	m_pData[m_nDataLen]='\0';
 	return *this;
 }
@@ -505,9 +497,8 @@ const CString& CString::operator=(WCHAR ch)
 			return *this;
 		}
 	}
-	MemCopyWtoA(m_pData,&ch,2);
+	m_nDataLen=WideCharToMultiByte(CP_ACP,0,&ch,1,m_pData,m_nAllocLen,NULL,NULL);
 	m_pData[1]='\0';
-	m_nDataLen=1;
 	return *this;
 }
 
@@ -844,9 +835,10 @@ const CString& CString::operator+=(const CStringW& str)
 {
 	if (str.m_nDataLen==0)
 		return *this;	
+	int len2=WideCharToMultiByte(CP_ACP,0,str.m_pData,str.m_nDataLen,NULL,0,NULL,NULL);
 	if (m_pData!=NULL)
 	{
-		int templen=m_nDataLen+str.m_nDataLen;
+		int templen=m_nDataLen+len2;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -859,21 +851,21 @@ const CString& CString::operator+=(const CStringW& str)
 			sMemCopy(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyWtoA(&m_pData[m_nDataLen],str.m_pData,str.m_nDataLen+1);
-		m_nDataLen+=str.m_nDataLen;
+		WideCharToMultiByte(CP_ACP,0,str.m_pData,str.m_nDataLen+1,m_pData+m_nDataLen,m_nAllocLen,NULL,NULL);
+		m_nDataLen+=len2;
 		OUTPUT(m_nDataLen)
 		return *this;	
 	}
 	else
 	{
-		m_nDataLen=str.m_nDataLen;
+		m_nDataLen=len2;
 		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return *this;
 		}
-		MemCopyWtoA(m_pData,str.m_pData,m_nDataLen+1);
+		WideCharToMultiByte(CP_ACP,0,str.m_pData,str.m_nDataLen+1,m_pData,m_nAllocLen,NULL,NULL);
 		OUTPUT(m_nDataLen)
 		return *this;
 	}
@@ -883,7 +875,8 @@ const CString& CString::operator+=(WCHAR ch)
 {
 	if (m_pData!=NULL)
 	{
-		if (m_nDataLen+1>=m_nAllocLen)
+		int lench=WideCharToMultiByte(CP_ACP,0,&ch,1,NULL,0,NULL,NULL);
+		if (m_nDataLen+lench>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
 			m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
@@ -895,22 +888,23 @@ const CString& CString::operator+=(WCHAR ch)
 			sMemCopy(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyWtoA(m_pData+m_nDataLen,&ch,2);
-		m_pData[++m_nDataLen]='\0';
+		WideCharToMultiByte(CP_ACP,0,&ch,1,m_pData+m_nDataLen,m_nAllocLen-m_nDataLen,NULL,NULL);
+		m_nDataLen+=lench;
+		m_pData[m_nDataLen]='\0';
 		OUTPUT(m_nDataLen)
 		return *this;	
 	}
 	else
 	{
-		m_nDataLen=1;
+		m_nDataLen=WideCharToMultiByte(CP_ACP,0,&ch,1,NULL,0,NULL,NULL);
 		m_pData=new CHAR[m_nAllocLen=STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return *this;
 		}
-		MemCopyWtoA(m_pData,&ch,2);
-		m_pData[1]='\0';
+		WideCharToMultiByte(CP_ACP,0,&ch,2,m_pData,m_nAllocLen,NULL,NULL);
+		m_pData[m_nDataLen]='\0';
 		OUTPUT(m_nDataLen)
 		return *this;
 	}
@@ -921,14 +915,14 @@ const CString& CString::operator+=(LPCWSTR str)
 	if (str==NULL)
 		return *this;	
 	
-	int nStrLen=istrlenw(str);
+	int nStrLen=WideCharToMultiByte(CP_ACP,0,str,-1,NULL,0,NULL,NULL);
 
-	if (nStrLen==0)
+	if (nStrLen<=1)
 		return *this;
 	if (m_pData!=NULL)
 	{
 		int templen=m_nDataLen+nStrLen;
-		if (templen>=m_nAllocLen)
+		if (templen>m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
 			m_pData=new CHAR[m_nAllocLen=templen+STR_EXTRAALLOC];
@@ -940,21 +934,21 @@ const CString& CString::operator+=(LPCWSTR str)
 			sMemCopy(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyWtoA(&m_pData[m_nDataLen],str,nStrLen+1);
-		m_nDataLen+=nStrLen;
+		WideCharToMultiByte(CP_ACP,0,str,nStrLen,m_pData+m_nDataLen,m_nAllocLen-m_nDataLen,NULL,NULL);
+		m_nDataLen+=nStrLen-1;
 		OUTPUT(m_nDataLen)
 		return *this;	
 	}
 	else
 	{
-		m_nDataLen=nStrLen;
+		m_nDataLen=nStrLen-1;
 		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return *this;
 		}
-		MemCopyWtoA(m_pData,str,m_nDataLen+1);
+		WideCharToMultiByte(CP_ACP,0,str,nStrLen,m_pData,m_nAllocLen,NULL,NULL);
 		OUTPUT(m_nDataLen)
 		return *this;
 	}
@@ -970,10 +964,11 @@ void CString::Append(LPCWSTR str,int nStrLen)
 
 	if (nStrLen==0)
 		return;
+	int nNewLen=LenWtoA(str,nStrLen);
 	if (m_pData!=NULL)
 	{
-		int templen=m_nDataLen+nStrLen;
-		if (templen>=m_nAllocLen)
+		int templen=m_nDataLen+nNewLen;
+		if (templen>m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
 			m_pData=new CHAR[m_nAllocLen=templen+STR_EXTRAALLOC];
@@ -985,20 +980,20 @@ void CString::Append(LPCWSTR str,int nStrLen)
 			sMemCopy(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyWtoA(&m_pData[m_nDataLen],str,nStrLen+1);
-		m_nDataLen+=nStrLen;
+		MemCopyWtoA(m_pData+m_nDataLen,m_nAllocLen,str,nStrLen+1);
+		m_nDataLen+=nNewLen;
 		OUTPUT(m_nDataLen)
 	}
 	else
 	{
-		m_nDataLen=nStrLen;
+		m_nDataLen=nNewLen;
 		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return;
 		}
-		MemCopyWtoA(m_pData,str,m_nDataLen+1);
+		MemCopyWtoA(m_pData,m_nAllocLen,str,nStrLen+1);
 		OUTPUT(m_nDataLen)
 	}
 }
@@ -1294,9 +1289,11 @@ CString& CString::operator<<(const CStringW& str)
 {
 	if (str.m_nDataLen==0)
 		return *this;	
+	int iNewLen=LenWtoA(str.m_pData,str.m_nDataLen);
+
 	if (m_pData!=NULL)
 	{
-		int templen=m_nDataLen+str.m_nDataLen;
+		int templen=m_nDataLen+iNewLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1309,21 +1306,21 @@ CString& CString::operator<<(const CStringW& str)
 			sMemCopy(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyWtoA(&m_pData[m_nDataLen],str.m_pData,str.m_nDataLen+1);
+		MemCopyWtoA(m_pData+m_nDataLen,m_nAllocLen-m_nDataLen,str.m_pData,str.m_nDataLen+1);
 		m_nDataLen+=str.m_nDataLen;
 		OUTPUT(m_nDataLen)
 		return *this;	
 	}
 	else
 	{
-		m_nDataLen=str.m_nDataLen;
+		m_nDataLen=iNewLen;
 		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return *this;
 		}
-		MemCopyWtoA(m_pData,str.m_pData,m_nDataLen+1);
+		MemCopyWtoA(m_pData,m_nAllocLen,str.m_pData,m_nDataLen+1);
 		OUTPUT(m_nDataLen)
 		return *this;
 	}
@@ -1345,7 +1342,7 @@ CString& CString::operator<<(WCHAR ch)
 			sMemCopy(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyWtoA(m_pData+m_nDataLen,&ch,2);
+		MemCopyWtoA(m_pData+m_nDataLen,m_nAllocLen,&ch,1);
 		m_pData[m_nDataLen]='\0';
 		OUTPUT(m_nDataLen)
 		return *this;	
@@ -1359,7 +1356,7 @@ CString& CString::operator<<(WCHAR ch)
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return *this;
 		}
-		MemCopyWtoA(m_pData,&ch,2);
+		MemCopyWtoA(m_pData,m_nAllocLen,&ch,1);
 		m_pData[1]='\0';
 		OUTPUT(m_nDataLen)
 		return *this;
@@ -1375,9 +1372,12 @@ CString& CString::operator<<(LPCWSTR str)
 
 	if (nStrLen==0)
 		return *this;
+
+	int iNewLen=LenWtoA(str);
+
 	if (m_pData!=NULL)
 	{
-		int templen=m_nDataLen+nStrLen;
+		int templen=m_nDataLen+iNewLen;
 		if (templen>=m_nAllocLen)
 		{
 			LPSTR temp=m_pData;
@@ -1390,21 +1390,21 @@ CString& CString::operator<<(LPCWSTR str)
 			sMemCopy(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyWtoA(&m_pData[m_nDataLen],str,nStrLen+1);
+		MemCopyWtoA(m_pData+m_nDataLen,m_nAllocLen-m_nDataLen,str,nStrLen+1);
 		m_nDataLen+=nStrLen;
 		OUTPUT(m_nDataLen)
 		return *this;	
 	}
 	else
 	{
-		m_nDataLen=nStrLen;
+		m_nDataLen=iNewLen;
 		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return *this;
 		}
-		MemCopyWtoA(m_pData,str,m_nDataLen+1);
+		MemCopyWtoA(m_pData,m_nAllocLen,str,nStrLen+1);
 		OUTPUT(m_nDataLen)
 		return *this;
 	}
@@ -1485,16 +1485,9 @@ int CString::Compare(LPCWSTR lpsz) const
 	}
 	if (lpsz==NULL)
 		return 1;
-	WCHAR* lpwsz=new WCHAR[m_nDataLen+2];
-	if (lpwsz==NULL)
-	{
-		SetHFCError(HFC_CANNOTALLOCATE);
-		return -1;
-	}
-	MemCopyAtoW(lpwsz,m_pData,m_nDataLen);
-	int ret=wcsncmp(lpwsz,lpsz,m_nDataLen);
-	delete[] lpwsz;
-	return ret;
+
+
+	return wcsncmp(A2W(m_pData),lpsz,m_nDataLen);
 }
 
 int CString::CompareNoCase(LPCWSTR lpsz) const
@@ -1513,18 +1506,14 @@ int CString::CompareNoCase(LPCWSTR lpsz) const
 	}
 	if (lpsz==NULL)
 		return 1;
-	WCHAR *tmp1,*tmp2;
-	int ret=istrlenw(lpsz);
-	tmp1=new WCHAR[m_nDataLen+2];
-	tmp2=new WCHAR[ret+2];
+	WCHAR *tmp1=alloccopyAtoW(m_pData,m_nDataLen);
+	int len=istrlen(lpsz);
+	WCHAR* tmp2=alloccopy(lpsz,len);
 	if (tmp1==NULL || tmp2==NULL)
 	{
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return -1;
 	}
-	MemCopyAtoW(tmp1,m_pData,m_nDataLen+1);
-	MemCopyW(tmp2,lpsz,ret+1);
-
 	if (IsUnicodeSystem())
 	{
 		CharLowerW(tmp1);
@@ -1533,14 +1522,14 @@ int CString::CompareNoCase(LPCWSTR lpsz) const
 	else
 	{
 		_wcslwr_s(tmp1,m_nDataLen+2);
-		_wcslwr_s(tmp2,ret+2);
+		_wcslwr_s(tmp2,len+2);
 	}
 
 
-	int ret2=wcsncmp(tmp1,tmp2,min(m_nDataLen,ret));
+	int ret2=wcsncmp(tmp1,tmp2,min(m_nDataLen,len));
 	delete[] tmp1;
 	delete[] tmp2;
-	return ret2!=0?ret2:ret-UINT(m_nDataLen);
+	return ret2!=0?ret2:len-UINT(m_nDataLen);
 }
 
 #endif
@@ -1575,20 +1564,7 @@ BOOL CString::operator==(const CStringW& str)
 		return FALSE;
 	if (m_nDataLen!=str.m_nDataLen)
 		return FALSE;
-	WCHAR* lpwsz=new WCHAR[m_nDataLen+2];
-	if (lpwsz==NULL)
-	{
-		SetHFCError(HFC_CANNOTALLOCATE);
-		return FALSE;
-	}
-	MemCopyAtoW(lpwsz,m_pData,m_nDataLen);
-	if (wcsncmp(lpwsz,str.m_pData,m_nDataLen)==0)
-	{
-		delete[] lpwsz;
-		return TRUE;
-	}
-	delete[] lpwsz;
-	return FALSE;
+	return wcsncmp(A2W(m_pData),str.m_pData,m_nDataLen)==0;
 }
 
 #endif
@@ -2257,24 +2233,19 @@ CString::CString(int nID,BOOL bLoadAsUnicode)
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return;
 		}
-		m_nDataLen=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
-		if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
+		
+		int len=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
+		if (len>=STR_LOADSTRINGBUFLEN-2)
 		{
-			for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+			for (int i=2;len>=i*STR_LOADSTRINGBUFLEN-2;i++)
 			{
 				delete[] szBuffer;
 				szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];
-				m_nDataLen=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,i*STR_LOADSTRINGBUFLEN);
+				len=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,i*STR_LOADSTRINGBUFLEN);
 			}
 		}
-		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
-		if (m_pData==NULL)
-		{
-			SetHFCError(HFC_CANNOTALLOCATE);
-			return;;
-		}
-		MemCopyWtoA(m_pData,szBuffer,m_nDataLen+1);
-		delete[] szBuffer;
+		m_pData=alloccopyWtoA(szBuffer,len,m_nDataLen);
+		m_nAllocLen=m_nDataLen+1;
 		return;
 	}
 	
@@ -2317,23 +2288,18 @@ CString::CString(UINT nID,BOOL bLoadAsUnicode)
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return;
 		}
-		m_nDataLen=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
-		if (m_nDataLen>=STR_LOADSTRINGBUFLEN-2)
+		int len=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,STR_LOADSTRINGBUFLEN);
+		if (len>=STR_LOADSTRINGBUFLEN-2)
 		{
-			for (int i=2;m_nDataLen>=i*STR_LOADSTRINGBUFLEN-2;i++)
+			for (int i=2;len>=i*STR_LOADSTRINGBUFLEN-2;i++)
 			{
 				delete[] szBuffer;
 				szBuffer=new WCHAR[i*STR_LOADSTRINGBUFLEN];
-				m_nDataLen=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,i*STR_LOADSTRINGBUFLEN);
+				len=::LoadStringW(GetLanguageSpecificResourceHandle(),nID,szBuffer,i*STR_LOADSTRINGBUFLEN);
 			}
 		}
-		m_pData=new CHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
-		if (m_pData==NULL)
-		{
-			SetHFCError(HFC_CANNOTALLOCATE);
-			return;;
-		}
-		MemCopyWtoA(m_pData,szBuffer,m_nDataLen+1);
+		m_pData=alloccopyWtoA(szBuffer,len,m_nDataLen);
+		m_nAllocLen=m_nDataLen+1;
 		delete[] szBuffer;
 		return;
 	}
@@ -2608,14 +2574,13 @@ CStringW::CStringW(const CString& str)
 	{
 		m_nDataLen=str.m_nDataLen;
 		m_nBase=str.m_nBase;
-		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		m_pData=alloccopyAtoW(str,str.m_nDataLen,m_nDataLen);
+		m_nAllocLen=m_nDataLen+1;
 		if (m_pData==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return;
 		}
-		MemCopyAtoW(m_pData,str.m_pData,m_nDataLen);
-		m_pData[m_nDataLen]='\0';
 	}
 	else
 	{
@@ -2631,16 +2596,8 @@ CStringW::CStringW(LPCSTR lpsz,int nLength)
 {
 	if (lpsz!=NULL)
 	{
-		m_nDataLen=nLength;
-		
-		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
-		if (m_pData==NULL)
-		{
-			SetHFCError(HFC_CANNOTALLOCATE);
-			return;
-		}
-		MemCopyAtoW(m_pData,lpsz,m_nDataLen);
-		m_pData[m_nDataLen]='\0';
+		m_pData=alloccopyAtoW(lpsz,nLength,m_nDataLen);
+		m_nAllocLen=m_nDataLen+1;
 	}
 	else
 	{
@@ -2656,15 +2613,13 @@ CStringW::CStringW(LPCSTR lpsz)
 	if (lpsz!=NULL)
 	{
 		m_nDataLen=istrlen(lpsz);
-		
-		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		m_pData=alloccopyAtoW(lpsz,istrlen(lpsz),m_nDataLen);
+		m_nAllocLen=m_nDataLen+1;
 		if (m_pData==NULL)
 		{
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return;
 		}
-		MemCopyAtoW(m_pData,lpsz,m_nDataLen);
-		m_pData[m_nDataLen]='\0';
 	}
 	else
 	{
@@ -2693,7 +2648,7 @@ CStringW::CStringW(CHAR ch,int nRepeat)
 			return;
 		}
 		WCHAR wch;
-		MemCopyAtoW(&wch,&ch,1);
+		MemCopyAtoW(&wch,1,&ch,1);
 		for (m_nDataLen=0;m_nDataLen<nRepeat;m_nDataLen++)
 			m_pData[m_nDataLen]=wch;
 		m_pData[m_nDataLen]='\0';
@@ -2809,10 +2764,9 @@ CStringW& CStringW::Copy(LPCSTR str)
 	}
 	if (m_pData!=NULL)
 		delete[] m_pData;
-	for (m_nDataLen=0;str[m_nDataLen]!='\0';m_nDataLen++);
-	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+1];
-	MemCopyAtoW(m_pData,str,m_nDataLen);
-	m_pData[m_nDataLen]='\0';
+
+	m_pData=alloccopyAtoW(str,istrlen(str),m_nDataLen);
+	m_nAllocLen=m_nDataLen+1;
 	return *this;
 }
 
@@ -2829,9 +2783,8 @@ CStringW& CStringW::Copy(LPCSTR str,int iLength)
 		m_nDataLen=istrlen(str);
 	else
 		m_nDataLen=iLength;
-	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+1];
-	MemCopyAtoW(m_pData,str,m_nDataLen);
-	m_pData[m_nDataLen]='\0';
+	m_pData=alloccopyAtoW(str,istrlen(str),m_nDataLen);
+	m_nAllocLen=m_nDataLen+1;
 	return *this;
 }
 
@@ -2844,10 +2797,8 @@ CStringW& CStringW::Copy(const BYTE* str)
 	}
 	if (m_pData!=NULL)
 		delete[] m_pData;
-	for (m_nDataLen=0;str[m_nDataLen]!='\0';m_nDataLen++);
-	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+1];
-	MemCopyAtoW(m_pData,(char*)str,m_nDataLen);
-	m_pData[m_nDataLen]=L'\0';
+	m_pData=alloccopyAtoW((LPCSTR)str,istrlen(str),m_nDataLen);
+	m_nAllocLen=m_nDataLen+1;
 	return *this;
 }
 
@@ -2864,10 +2815,8 @@ CStringW& CStringW::Copy(const BYTE* str,int iLength)
 		m_nDataLen=istrlen((LPCSTR)str);
 	else
 		m_nDataLen=iLength;
-	m_pData=new WCHAR[m_nAllocLen=m_nDataLen+1];
-	
-	MemCopyAtoW(m_pData,(char*)str,m_nDataLen);
-	m_pData[m_nDataLen]=L'\0';
+	m_pData=alloccopyAtoW((LPCSTR)str,iLength,m_nDataLen);
+	m_nAllocLen=m_nDataLen+1;
 	return *this;
 }
 	
@@ -2979,9 +2928,8 @@ const CStringW& CStringW::operator=(CHAR ch)
 			return *this;
 		}
 	}
-	MemCopyAtoW(m_pData,&ch,2);
-	m_pData[1]='\0';
-	m_nDataLen=1;
+	m_pData=alloccopyAtoW(&ch,1,m_nDataLen);
+	m_nAllocLen=m_nDataLen+1;
 	return *this;
 }
 
@@ -3277,7 +3225,6 @@ const CStringW& CStringW::operator+=(ULONGLONG iNum)
 	else
 	{
 		m_nDataLen=istrlenw(szBuffer);
-		
 		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{	
@@ -3309,21 +3256,19 @@ const CStringW& CStringW::operator+=(const CString& str)
 			sMemCopyW(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyAtoW(&m_pData[m_nDataLen],str.m_pData,str.m_nDataLen);
-		m_nDataLen+=str.m_nDataLen;
+		m_nDataLen=MemCopyAtoW(m_pData+m_nDataLen,m_nAllocLen-m_nDataLen,str.m_pData,str.m_nDataLen);
 		m_pData[m_nDataLen]='\0';
 		return *this;	
 	}
 	else
 	{
-		m_nDataLen=str.m_nDataLen;
-		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		m_pData=new WCHAR[m_nAllocLen=str.m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{	
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return *this;
 		}
-		MemCopyAtoW(m_pData,str.m_pData,m_nDataLen);
+		m_nDataLen=MemCopyAtoW(m_pData,m_nAllocLen,str.m_pData,m_nDataLen);
 		m_pData[m_nDataLen]='\0';
 		return *this;
 	}
@@ -3345,21 +3290,20 @@ const CStringW& CStringW::operator+=(CHAR ch)
 			sMemCopyW(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyAtoW(m_pData+m_nDataLen,&ch,1);
-		m_pData[++m_nDataLen]='\0';
+		m_nDataLen+=MemCopyAtoW(m_pData+m_nDataLen,m_nAllocLen-m_nDataLen,&ch,1);
+		m_pData[m_nDataLen]='\0';
 		return *this;	
 	}
 	else
 	{
-		m_nDataLen=1;
 		m_pData=new WCHAR[m_nAllocLen=STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{	
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return *this;
 		}
-		MemCopyAtoW(m_pData,&ch,1);
-		m_pData[1]='\0';
+		m_nDataLen=MemCopyAtoW(m_pData,m_nAllocLen,&ch,1);
+		m_pData[m_nDataLen]='\0';
 		return *this;
 	}
 }
@@ -3387,21 +3331,19 @@ const CStringW& CStringW::operator+=(LPCSTR str)
 			sMemCopyW(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyAtoW(&m_pData[m_nDataLen],str,nStrLen);
-		m_nDataLen+=nStrLen;
+		m_nDataLen+=MemCopyAtoW(m_pData+m_nDataLen,m_nAllocLen-m_nDataLen,str,nStrLen);
 		m_pData[m_nDataLen]='\0';
 		return *this;	
 	}
 	else
 	{
-		m_nDataLen=nStrLen;
-		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		m_pData=new WCHAR[m_nAllocLen=nStrLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{	
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return *this;
 		}
-		MemCopyAtoW(m_pData,str,m_nDataLen);
+		m_nDataLen=MemCopyAtoW(m_pData,m_nAllocLen,str,nStrLen);
 		m_pData[m_nDataLen]='\0';
 		return *this;
 	}
@@ -3431,20 +3373,18 @@ void CStringW::Append(LPCSTR str,int nStrLen)
 			sMemCopyW(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyAtoW(&m_pData[m_nDataLen],str,nStrLen);
-		m_nDataLen+=nStrLen;
+		m_nDataLen+=MemCopyAtoW(m_pData+m_nDataLen,m_nAllocLen-m_nDataLen,str,nStrLen);
 		m_pData[m_nDataLen]='\0';
 	}
 	else
 	{
-		m_nDataLen=nStrLen;
-		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		m_pData=new WCHAR[m_nAllocLen=nStrLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{	
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return;
 		}
-		MemCopyAtoW(m_pData,str,m_nDataLen);
+		m_nDataLen=MemCopyAtoW(m_pData,m_nAllocLen,str,nStrLen);
 		m_pData[m_nDataLen]='\0';
 	}
 }
@@ -3739,21 +3679,19 @@ CStringW& CStringW::operator<<(const CString& str)
 			sMemCopyW(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyAtoW(&m_pData[m_nDataLen],str.m_pData,str.m_nDataLen);
-		m_nDataLen+=str.m_nDataLen;
+		m_nDataLen+=MemCopyAtoW(m_pData+m_nDataLen,m_nAllocLen-m_nDataLen,str.m_pData,str.m_nDataLen);
 		m_pData[m_nDataLen]='\0';
 		return *this;	
 	}
 	else
 	{
-		m_nDataLen=str.m_nDataLen;
-		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		m_pData=new WCHAR[m_nAllocLen=str.m_nDataLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{	
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return *this;
 		}
-		MemCopyAtoW(m_pData,str.m_pData,m_nDataLen);
+		m_nDataLen=MemCopyAtoW(m_pData,m_nAllocLen,str.m_pData,m_nDataLen);
 		m_pData[m_nDataLen]='\0';
 		return *this;
 	}
@@ -3775,21 +3713,20 @@ CStringW& CStringW::operator<<(CHAR ch)
 			sMemCopyW(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyAtoW(m_pData+m_nDataLen,&ch,1);
-		m_pData[++m_nDataLen]='\0';
+		m_nDataLen+=MemCopyAtoW(m_pData+m_nDataLen,m_nAllocLen-m_nDataLen,&ch,1);
+		m_pData[m_nDataLen]='\0';
 		return *this;	
 	}
 	else
 	{
-		m_nDataLen=1;
 		m_pData=new WCHAR[m_nAllocLen=STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{	
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return *this;
 		}
-		MemCopyAtoW(m_pData,&ch,1);
-		m_pData[1]='\0';
+		m_nDataLen=MemCopyAtoW(m_pData,m_nAllocLen,&ch,1);
+		m_pData[m_nDataLen]='\0';
 		return *this;
 	}
 }
@@ -3817,21 +3754,19 @@ CStringW& CStringW::operator<<(LPCSTR str)
 			sMemCopyW(m_pData,temp,m_nDataLen);
 			delete[] temp;
 		}
-		MemCopyAtoW(&m_pData[m_nDataLen],str,nStrLen);
-		m_nDataLen+=nStrLen;
+		m_nDataLen+=MemCopyAtoW(m_pData+m_nDataLen,m_nAllocLen-m_nDataLen,str,nStrLen);
 		m_pData[m_nDataLen]='\0';
 		return *this;	
 	}
 	else
 	{
-		m_nDataLen=nStrLen;
-		m_pData=new WCHAR[m_nAllocLen=m_nDataLen+STR_EXTRAALLOC];
+		m_pData=new WCHAR[m_nAllocLen=nStrLen+STR_EXTRAALLOC];
 		if (m_pData==NULL)
 		{	
 			SetHFCError(HFC_CANNOTALLOCATE);
 			return *this;
 		}
-		MemCopyAtoW(m_pData,str,m_nDataLen);
+		m_nDataLen=MemCopyAtoW(m_pData,m_nAllocLen,str,m_nDataLen);
 		m_pData[m_nDataLen]='\0';
 		return *this;
 	}
@@ -3917,16 +3852,7 @@ int CStringW::Compare(LPCSTR lpsz) const
 	}
 	if (lpsz==NULL)
 		return 1;
-	CHAR* lpasz=new CHAR[m_nDataLen+2];
-	if (lpasz==NULL)
-	{	
-		SetHFCError(HFC_CANNOTALLOCATE);
-		return -1;
-	}
-	MemCopyWtoA(lpasz,m_pData,m_nDataLen+1);
-	int ret=strcmp(lpasz,lpsz);
-	delete[] lpasz;
-	return ret;
+	return wcscmp(m_pData,A2W(lpsz));
 }
 
 int CStringW::CompareNoCase(LPCSTR lpsz) const
@@ -3945,22 +3871,17 @@ int CStringW::CompareNoCase(LPCSTR lpsz) const
 	}
 	if (lpsz==NULL)
 		return 1;
-	CHAR *tmp1,*tmp2;
-	tmp1=new CHAR[m_nDataLen+2];
-
-	int ret=(int)istrlen(lpsz);
-	tmp2=new CHAR[ret+2];
-	
+	WCHAR* tmp1=alloccopy(m_pData,m_nDataLen);
+	WCHAR* tmp2=alloccopyAtoW(lpsz,istrlenw(lpsz));
 	if (tmp1==NULL || tmp2==NULL)
 	{	
 		SetHFCError(HFC_CANNOTALLOCATE);
 		return -1;
 	}
-	MemCopyWtoA(tmp1,m_pData,m_nDataLen+1);
-	sMemCopy(tmp2,lpsz,ret+1);
-	::CharLowerA(tmp1);
-	::CharLowerA(tmp2);
-	ret=strcmp(tmp1,tmp2);
+	
+	::CharLowerW(tmp1);
+	::CharLowerW(tmp2);
+	int ret=wcscmp(tmp1,tmp2);
 	delete[] tmp1;
 	delete[] tmp2;
 	return ret;
@@ -3993,21 +3914,8 @@ BOOL CStringW::operator==(const CString& str)
 	}
 	if (str.m_pData==NULL)
 		return FALSE;
-	if (m_nDataLen!=str.m_nDataLen)
-		return FALSE;
-	CHAR* lpasz=new CHAR[m_nDataLen+2];
-	if (lpasz==NULL)
-	{	
-		SetHFCError(HFC_CANNOTALLOCATE);
-		return FALSE;
-	}
-	MemCopyWtoA(lpasz,m_pData,m_nDataLen+1);
-	if (strcmp(lpasz,str.m_pData)==0)
-	{
-		delete[] lpasz;
+	if (wcscmp(m_pData,A2W(str.m_pData))==0)
 		return TRUE;
-	}
-	delete[] lpasz;
 	return FALSE;
 }
 

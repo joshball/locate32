@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -1048,11 +1048,11 @@ void CLocateDlg::DeleteTooltipTools()
 // CLocateDlg - Presets
 ////////////////////////////////////////////////////////////
 
-void CLocateDlg::OnPresetsSave()
+BOOL CLocateDlg::OnPresetsSave()
 {
 	CSavePresetDlg PresetDialog;
 	if (!PresetDialog.DoModal(*this))
-		return; // Cancel pressed
+		return FALSE; // Cancel pressed
 
 
 
@@ -1067,7 +1067,7 @@ void CLocateDlg::OnPresetsSave()
 
 	if (MainKey.OpenKey(HKCU,"\\Dialogs\\SearchPresets",
 		CRegKey::createNew|CRegKey::samAll)!=ERROR_SUCCESS)
-		return;
+		return FALSE;
 
 	char szKeyName[30];
 	StringCbPrintf(szKeyName,30,"Preset %03d",dwID);
@@ -1076,28 +1076,29 @@ void CLocateDlg::OnPresetsSave()
 	MainKey.DeleteKey(szKeyName);
 	
 	if (PresetKey.OpenKey(MainKey,szKeyName,CRegKey::createNew|CRegKey::samAll)!=ERROR_SUCCESS)
-		return;
+		return FALSE;
 	
 	PresetKey.SetValue(L"",PresetDialog.m_sReturnedPreset);
 	m_NameDlg.SaveControlStates(PresetKey);
 	m_SizeDateDlg.SaveControlStates(PresetKey);
 	m_AdvancedDlg.SaveControlStates(PresetKey);
 
+	return TRUE;
 }
 
-void CLocateDlg::OnPresetsSelection(int nPreset)
+BOOL CLocateDlg::OnPresetsSelection(int nPreset)
 {
 	CRegKey2 RegKey;
 	CRegKey PresetKey;
 	
 	if (RegKey.OpenKey(HKCU,"\\Dialogs\\SearchPresets",CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
-		return;
+		return FALSE;
 
 	char szBuffer[30];
 	StringCbPrintf(szBuffer,30,"Preset %03d",nPreset);
 
 	if (PresetKey.OpenKey(RegKey,szBuffer,CRegKey::openExist|CRegKey::samRead)!=ERROR_SUCCESS)
-		return;
+		return FALSE;
 
 	m_NameDlg.LoadControlStates(PresetKey);
 	m_NameDlg.EnableItems(TRUE);
@@ -1108,6 +1109,7 @@ void CLocateDlg::OnPresetsSelection(int nPreset)
 	m_AdvancedDlg.LoadControlStates(PresetKey);
 	m_AdvancedDlg.EnableItems(TRUE);
 
+	return TRUE;
 }
 
 BOOL CLocateDlg::LoadPreset(LPCWSTR szPreset)
@@ -1547,6 +1549,8 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 	m_SizeDateDlg.SetSizesAndDaterForLocater(pLocater);
 	DWORD dwAdvancedFlags=m_AdvancedDlg.SetAdvancedFlagsForLocater(pLocater,bForInstantSearch);
 
+	if (dwAdvancedFlags&CAdvancedDlg::flagMatchCase)
+		pLocater->AddAdvancedFlags(LOCATE_NAMEMATCHCASE);
 	if (IsExtraFlagSet(efMatchWhileNameIfAsterisks) && Name.Find(L'*')!=-1)
 		dwAdvancedFlags|=CAdvancedDlg::flagMatchWholeNameOnly;
 	
@@ -1585,7 +1589,6 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 			// replace ' ' -> '*'
 			if (dwAdvancedFlags&CAdvancedDlg::flagReplaceSpaces)
 			{
-
 				m_AdvancedDlg.ReplaceCharsWithAsterisks(Name);
 
 				// Remove multiple (and therefore
@@ -2432,7 +2435,7 @@ BOOL CALLBACK CLocateDlg::LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const C
 				{
 					ASSERT(pItem->GetPathLen()<MAX_PATH);
 
-					MemCopyWtoA(szPath2,pItem->GetPath(),pItem->GetPathLen()+1);
+					MemCopyWtoA(szPath2,MAX_PATH+2,pItem->GetPath(),pItem->GetPathLen()+1);
 					MakeLower(szPath2);
 				
 					

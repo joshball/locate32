@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -242,6 +242,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 		return (BOOL)m_SizeDateDlg.SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),(LPARAM)hControl);
 	case IDC_CHECK:
 	case IDC_MATCHWHOLENAME:
+	case IDC_MATCHCASE:
 	case IDC_FILETYPE:
 	case IDC_CONTAINDATACHECK:
 	case IDC_CONTAINDATA:
@@ -317,7 +318,7 @@ BOOL CLocateDlg::OnCommand(WORD wID,WORD wNotifyCode,HWND hControl)
 			return 0;
 		}
 		else if (wID>=IDM_DEFUPDATEDBITEM && wID<IDM_DEFUPDATEDBITEM+1000)
-			return GetTrayIconWnd()->SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
+			return (BOOL)GetTrayIconWnd()->SendMessage(WM_COMMAND,MAKEWPARAM(wID,wNotifyCode),LPARAM(hControl));
 		else 
 			return CDialog::OnCommand(wID,wNotifyCode,hControl);
 	}
@@ -801,12 +802,13 @@ void CLocateDlg::OnHelp(LPHELPINFO lphi)
 		{IDC_MAXTYPE,"tab_sizedate.htm#ts_filesolderthan"},
 		{IDC_CHECK,"tab_advanced.htm#ta_check"},
 		{IDC_MATCHWHOLENAME,"tab_advanced.htm#ta_matchwholename"},
+		{IDC_MATCHCASE,"tab_advanced.htm#ta_matchcase"},
 		{IDC_REPLACESPACES,"tab_advanced.htm#ta_replacespaces"},
 		{IDC_USEWHOLEPATH,"tab_advanced.htm#ta_usewholepath"},
 		{IDC_FILETYPE,"tab_advanced.htm#ta_typeoffile"},
 		{IDC_CONTAINDATACHECK,"tab_advanced.htm#ta_fileconttext"},
 		{IDC_CONTAINDATA,"tab_advanced.htm#ta_fileconttext"},
-		{IDC_DATAMATCHCASE,"tab_advanced.htm#ta_matchcase"},
+		{IDC_DATAMATCHCASE,"tab_advanced.htm#ta_datamatchcase"},
 		{IDC_HELPTOOLBAR,"tab_advanced.htm#ta_fileconttext"}
 	};
 
@@ -1979,26 +1981,31 @@ BOOL CLocateDlg::OnPresets()
 	int wID=TrackPopupMenu(Menu,TPM_LEFTALIGN|TPM_LEFTBUTTON|TPM_NONOTIFY|TPM_RETURNCMD,rcButton.left,rcButton.bottom,0,*this,NULL);	
 	Menu.DestroyMenu();
 
+	DebugFormatMessage("OnPresets: wID=%d",wID);
+
+	BOOL bRet=FALSE;
 	switch (wID)
 	{
 	case 0:
 		return FALSE;
 	case IDM_PRESETSAVE:
-		OnPresetsSave();
+		bRet=OnPresetsSave();
 		break;
 	case IDM_PRESETREMOVE:
 		{
 			// Dialog handles everything
 			CRemovePresetDlg RemovePreset;
-			RemovePreset.DoModal();
+			bRet=(BOOL)RemovePreset.DoModal();
 			break;
 		}
 	default:
 		if (wID>=IDM_DEFMENUITEM)
 		{
 			ASSERT(wID-IDM_DEFMENUITEM<nPresets);
-			OnPresetsSelection(wID-IDM_DEFMENUITEM);
+			bRet=OnPresetsSelection(wID-IDM_DEFMENUITEM);
 		}
+		else 
+			return FALSE;
 		break;
 	}
 
@@ -2019,7 +2026,8 @@ BOOL CLocateDlg::OnPresets()
 		}
 	}
 
-	return TRUE;
+	DebugFormatMessage("OnPresets: will return %d",bRet);
+	return bRet;
 }
 
 void CLocateDlg::OnSelectAll()

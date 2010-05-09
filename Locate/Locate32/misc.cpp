@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -896,6 +896,7 @@ int CComboBoxAutoComplete::SetTopIndex(int nSelect)
 	return CComboBox::SetTopIndex(nSelect);
 }
 
+/*
 
 int CComboBoxAutoComplete::GetLBText(int nIndex, LPSTR lpszText) const
 {
@@ -920,7 +921,7 @@ int CComboBoxAutoComplete::GetLBText(int nIndex, CStringA& rString) const
 	
 	rString.Copy(m_pACData->aItems[nIndex]);
 	return rString.GetLength();
-}
+}*/
 
 #ifdef DEF_WCHAR
 int CComboBoxAutoComplete::GetLBText(int nIndex, LPWSTR lpszText) const

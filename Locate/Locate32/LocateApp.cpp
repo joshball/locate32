@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -1437,7 +1437,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 				m_strDateFormat.IsEmpty()?NULL:(LPCSTR)W2A(m_strDateFormat),szDateA,200);
 			if (dwDateLen>0) 
 			{
-				MemCopyAtoW(szDate,szDateA,dwDateLen);
+				MemCopyAtoW(szDate,201,szDateA,dwDateLen);
 				dwDateLen--;
 			}
 		}
@@ -1561,7 +1561,7 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 				m_strTimeFormat.IsEmpty()?NULL:(LPCSTR)W2A(m_strTimeFormat),szTimeA,200);
 			if (dwTimeLen>0) 
 			{
-				MemCopyAtoW(szTime,szTimeA,dwTimeLen);
+				MemCopyAtoW(szTime,201,szTimeA,dwTimeLen);
 				dwTimeLen--;
 			}
 		}

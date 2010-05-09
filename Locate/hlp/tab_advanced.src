@@ -19,6 +19,14 @@ The default state for this field can be specified in the
 <a href="settings_general.htm">General settings</a>.
 </P>
 
+<H2><A NAME="ta_matchcase"></A>$DLGADVANCED_MATCHCASE@M$</H2>
+<P>If this check box is enabled, the case of a given search term should match. For example, if 
+enabled, "EX" match to "EXAMPLE", "EXample", but not "example" or "Example".
+The default state for this field can be specified in the 
+<a href="settings_general.htm">General settings</a>.
+</P>
+
+
 <H2><A NAME="ta_usewholepath"></A>$DLGADVANCED_USEWHOLEPATH@M$</H2>
 <P>If check box field is selected, the given search term is compared to the whole path 
 (instead of just file name). For example, "*foo*bar*" will
@@ -34,7 +42,7 @@ in the <a href="settings_general.htm">General settings</a>.
 <br><br>
 You can also specify other characters which are replaced with '*'. Hold Ctrl key 
 down when you click the check box to open a dialog which be used to specify 
-which characters are replaced. 
+which characters are replaced. You also specigy that questions marks '?' are used instead of asterisks '*'. 
 </P>
 
 
@@ -48,7 +56,7 @@ corresponding to the chosen file type are shown in this "$DLGNAME_EXTENSIONS@M$"
 <P>Use this field to find texts inside of files. See <A href="issue_datasearch.htm">details</A>.
 </P>
 
-<H2><A NAME="ta_matchcase"></A>$DLGADVANCED_MATCHCASE@M$</H2>
+<H2><A NAME="ta_datamatchcase"></A>$DLGADVANCED_DATAMATCHCASE@M$</H2>
 <P>Use this field to specify whether the text fiven in <b>$DLGADVANCED_CONTAININGTEXT@M$</b> field is 
 case sensitive or not. The default state for this field can be specified 
 in the <a href="settings_general.htm">General settings</a>.

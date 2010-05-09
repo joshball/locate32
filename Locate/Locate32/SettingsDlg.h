@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #if !defined(SETTINGSDLG_H)
 #define SETTINGSDLG_H
@@ -544,12 +544,13 @@ public:
 		defaultFolderNames=2,
 		defaultCheckInFlag=0x3,
 		defaultWholeName=0x4,
-		defaultMatchCase=0x8,
+		defaultDataMatchCase=0x8,
 		defaultReplaceSpaces=0x10,
 		defaultTextIsCaseSensetive=0x20,
 		defaultUseWholePath=0x40,
+		defaultMatchCase=0x80,
 
-		defaultDefault=defaultMatchCase|defaultFileAndFolderNames
+		defaultDefault=defaultDataMatchCase|defaultFileAndFolderNames
 	};
 	DWORD m_dwSettingsFlags;
 	BYTE m_bAdvancedAndContextMenuFlag;

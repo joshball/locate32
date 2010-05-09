@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -619,7 +619,7 @@ BOOL CLocateDlg::ListNotifyHandler(NMLISTVIEW *pNm)
 					ASSERT(pItem->GetNameLen()>=(UINT)nOldTitleLen);
 
 					WCHAR* pNewName=new WCHAR[nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1];
-					MemCopyAtoW(pNewName,pDistInfo->item.pszText,nNewTitleLen);
+					nNewTitleLen=MemCopyAtoW(pNewName,nNewTitleLen,pDistInfo->item.pszText,nNewTitleLen);
 					MemCopyW(pNewName+nNewTitleLen,pItem->GetName()+nOldTitleLen,pItem->GetNameLen()-nOldTitleLen+1);
 					bOK=pItem->ChangeName(this,pNewName,nNewTitleLen+pItem->GetNameLen()-nOldTitleLen+1);
 					delete[] pNewName;
@@ -1396,6 +1396,7 @@ int CALLBACK CLocateDlg::ListCompareProc(LPARAM lParam1, LPARAM lParam2, LPARAM 
 	case FileVersion:
 	case ProductName:
 	case ProductVersion:
+	case Keywords:
 		{
 			if (pItem1->ShouldUpdateExtra(nDetail))
 				pItem1->UpdateByDetail(nDetail);
@@ -2583,7 +2584,8 @@ CLocateDlg::ViewDetails* CLocateDlg::GetDefaultDetails()
 		{/*FileVersion,*/IDS_LISTFILEVERSION,FALSE,LVCFMT_LEFT,100},
 		{/*ProductName,*/IDS_LISTPRODUCTNAME,FALSE,LVCFMT_LEFT,100},
 		{/*ProductVersion,*/IDS_LISTPRODUCTVERSION,FALSE,LVCFMT_LEFT,100},
-		{/*Extension,*/IDS_LISTEXTENSION,FALSE,LVCFMT_LEFT,60}
+		{/*Extension,*/IDS_LISTEXTENSION,FALSE,LVCFMT_LEFT,60},
+		{/*Keywords,*/IDS_LISTKEYWORDS,FALSE,LVCFMT_LEFT,100}
 	};
 
 	ViewDetails* pRet=new ViewDetails[sizeof(aDetails)/sizeof(ViewDetails)];

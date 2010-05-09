@@ -171,10 +171,11 @@ LPSTR ReadIniFile(LPSTR* pFile,LPCSTR szSection,BYTE& bFileIsReg)
 				if (Value.FindFirst('\\')==-1)
 				{
 					int nDirLength=LastCharIndex((LPCWSTR)pIniFile,L'\\')+1;
-					*pFile=new CHAR[nDirLength+Value.GetLength()+1];
-
-					MemCopyWtoA(*pFile,pIniFile,nDirLength);
-					MemCopy(*pFile+nDirLength,(LPCSTR)Value,Value.GetLength()+1);
+					int nDirLengthA=WideCharToMultiByte(CP_ACP,0,(LPCWSTR)pIniFile,nDirLength,0,NULL,NULL,NULL);
+					
+					*pFile=new CHAR[nDirLengthA+Value.GetLength()+1];
+					MemCopyWtoA(*pFile,nDirLengthA,pIniFile,nDirLength);
+					MemCopy(*pFile+nDirLengthA,(LPCSTR)Value,Value.GetLength()+1);
 
 				}
 				else

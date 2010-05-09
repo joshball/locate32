@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -427,7 +427,7 @@ HGLOBAL CFileObject::GetHDrop()
 	else
 	{
 		for (int i=0;i<m_Files.GetSize();i++)
-			nDataLength+=(DWORD)m_Files[i]->GetLength()+1;
+			nDataLength+=(DWORD)LenWtoA((LPCWSTR)*m_Files[i])+1;
 		hGlobal=GlobalAlloc(GHND|GMEM_SHARE,nDataLength);
 		BYTE* pLock=(BYTE*)GlobalLock(hGlobal);
 
@@ -439,10 +439,7 @@ HGLOBAL CFileObject::GetHDrop()
 		((DROPFILES*)pLock)->pFiles=sizeof(DROPFILES);
 		LPSTR pDst=(LPSTR)pLock+sizeof(DROPFILES);
 		for (int i=0;i<m_Files.GetSize();i++)
-		{
-			MemCopyWtoA(pDst,(LPCWSTR)*m_Files[i],m_Files[i]->GetLength()+1);
-			pDst+=m_Files[i]->GetLength()+1;
-		}
+			pDst+=MemCopyWtoA(pDst,nDataLength,(LPCWSTR)*m_Files[i],m_Files[i]->GetLength()+1);
 		*pDst='\0';
 
 		GlobalUnlock(hGlobal);
@@ -457,9 +454,10 @@ HGLOBAL CFileObject::GetFileNameA()
 	if (m_Files.GetSize()==0)
 		return NULL;
 
-	HGLOBAL hGlobal=GlobalAlloc(GHND|GMEM_SHARE,m_Files.GetAt(0)->GetLength()+1);
+	int nLen=LenWtoA((LPCWSTR)*m_Files.GetAt(0))+1;
+	HGLOBAL hGlobal=GlobalAlloc(GHND|GMEM_SHARE,nLen);
 	LPSTR pStr=(LPSTR)GlobalLock(hGlobal);
-	MemCopyWtoA(pStr,m_Files.GetAt(0)->GetBuffer(),m_Files.GetAt(0)->GetLength()+1);
+	MemCopyWtoA(pStr,nLen,m_Files.GetAt(0)->GetBuffer(),m_Files.GetAt(0)->GetLength()+1);
 	GlobalUnlock(hGlobal);
 	return hGlobal;
 }

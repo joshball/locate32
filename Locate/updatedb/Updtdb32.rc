@@ -46,7 +46,7 @@ BEGIN
             VALUE "FileDescription", "Database updater"
             VALUE "FileVersion", "3, 1, 9, 11150"
             VALUE "InternalName", "Updtdb32"
-            VALUE "LegalCopyright", "Copyright © 1997-2009 Janne Huttunen"
+            VALUE "LegalCopyright", "Copyright © 1997-2010 Janne Huttunen"
             VALUE "OriginalFilename", "updtdb32.exe"
             VALUE "ProductName", "Updatedb"
             VALUE "ProductVersion", "3.1 RC3j build 9.11150"

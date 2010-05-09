@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #include <HFCLib.h>
 #include "Locate32.h"
@@ -16,7 +16,6 @@ inline BOOL operator!=(const SYSTEMTIME& s1,const SYSTEMTIME& s2)
 		s1.wHour==s2.wHour && s1.wMinute==s2.wMinute && s1.wSecond==s2.wSecond &&
 		s1.wMilliseconds==s2.wMilliseconds);
 }
-
 
 
 
@@ -252,9 +251,13 @@ BOOL CSettingsProperties::LoadSettings()
 		LocRegKey.QueryValue("Default MatchWholeName",nTemp);
 		if (nTemp) m_bDefaultFlag|=defaultWholeName;
 		
+		nTemp=0;
+		LocRegKey.QueryValue("Default MatchCase",nTemp);
+		if (nTemp) m_bDefaultFlag|=defaultMatchCase;
+		
 		nTemp=1;
 		LocRegKey.QueryValue("Default DataMatchCase",nTemp);
-		if (nTemp) m_bDefaultFlag|=defaultMatchCase;
+		if (nTemp) m_bDefaultFlag|=defaultDataMatchCase;
 		
 		nTemp=0;
 		LocRegKey.QueryValue("Default ReplaceSpaces",nTemp);
@@ -465,7 +468,8 @@ BOOL CSettingsProperties::SaveSettings()
 		// Default flags
 		LocRegKey.SetValue("Default CheckIn",m_bDefaultFlag&defaultCheckInFlag);
 		LocRegKey.SetValue("Default MatchWholeName",m_bDefaultFlag&defaultWholeName?1:0);
-		LocRegKey.SetValue("Default DataMatchCase",m_bDefaultFlag&defaultMatchCase?1:0);
+		LocRegKey.SetValue("Default MatchCase",m_bDefaultFlag&defaultMatchCase?1:0);
+		LocRegKey.SetValue("Default DataMatchCase",m_bDefaultFlag&defaultDataMatchCase?1:0);
 		LocRegKey.SetValue("Default ReplaceSpaces",m_bDefaultFlag&defaultReplaceSpaces?1:0);
 		LocRegKey.SetValue("Default UseWholePath",m_bDefaultFlag&defaultUseWholePath?1:0);
 		LocRegKey.SetValue("Default Sorting",DWORD(m_bSorting));
@@ -852,9 +856,10 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnInitDialog(HWND hwndFocus)
 	Checkin.SetCurSel(m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultCheckInFlag);
 	
 	CheckDlgButton(IDC_MATCHWHOLEFILENAMEONLY,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultWholeName);
+	CheckDlgButton(IDC_MATCHCASE,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultMatchCase);
 	CheckDlgButton(IDC_REPLACESPACES,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultReplaceSpaces);
 	CheckDlgButton(IDC_USEWHOLEPATH,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultUseWholePath);
-	CheckDlgButton(IDC_MATCHCASE,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultMatchCase);
+	CheckDlgButton(IDC_DATAMATCHCASE,m_pSettings->m_bDefaultFlag&CSettingsProperties::defaultDataMatchCase);
 	
 	return FALSE;
 }
@@ -936,12 +941,14 @@ BOOL CSettingsProperties::CGeneralSettingsPage::OnApply()
 	m_pSettings->m_bDefaultFlag=(BYTE)SendDlgItemMessage(IDC_CHECKIN,CB_GETCURSEL);
 	if (IsDlgButtonChecked(IDC_MATCHWHOLEFILENAMEONLY))
 		m_pSettings->m_bDefaultFlag|=CSettingsProperties::defaultWholeName;
+	if (IsDlgButtonChecked(IDC_MATCHCASE))
+		m_pSettings->m_bDefaultFlag|=CSettingsProperties::defaultMatchCase;
 	if (IsDlgButtonChecked(IDC_REPLACESPACES))
 		m_pSettings->m_bDefaultFlag|=CSettingsProperties::defaultReplaceSpaces;
 	if (IsDlgButtonChecked(IDC_USEWHOLEPATH))
 		m_pSettings->m_bDefaultFlag|=CSettingsProperties::defaultUseWholePath;
-	if (IsDlgButtonChecked(IDC_MATCHCASE))
-		m_pSettings->m_bDefaultFlag|=CSettingsProperties::defaultMatchCase;
+	if (IsDlgButtonChecked(IDC_DATAMATCHCASE))
+		m_pSettings->m_bDefaultFlag|=CSettingsProperties::defaultDataMatchCase;
 	
 	CPropertyPage::OnApply();
 	return TRUE;
@@ -1044,8 +1051,9 @@ void CSettingsProperties::CGeneralSettingsPage::OnHelp(LPHELPINFO lphi)
 		{ IDC_CHECKIN,"sg_check" },
 		{ IDC_CHECKINLABEL,"sg_check" },
 		{ IDC_REPLACESPACES,"sg_repspaces" },
+		{ IDC_MATCHCASE,"sg_matchcase" },
 		{ IDC_USEWHOLEPATH,"sg_wholepath" },
-		{ IDC_MATCHCASE,"sg_matchcase" }
+		{ IDC_DATAMATCHCASE,"sg_datamatchcase" }
 	};
 	
 	if (CLocateApp::OpenHelp(*this,"settings_general.htm",lphi,id,sizeof(id)/sizeof(CLocateApp::HelpID)))
@@ -8113,12 +8121,16 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsRelativeToMnemonics()
 	if (IsDlgButtonChecked(IDC_FROMMNEMONIC))
 	{
 		char cMnemonic=m_pCurrentShortcut->GetMnemonicForAction(hDialogs);
-		ASSERT(cMnemonic!=0);
+		
+		if (cMnemonic==0)
+		{
+			m_pCurrentShortcut->m_dwFlags&=~CShortcut::sfUseMemonic;
+			CheckDlgButton(IDC_FROMMNEMONIC,FALSE);
+			return;
+		}
 
 		m_pCurrentShortcut->m_dwFlags|=CShortcut::sfUseMemonic;
 		
-
-
 		// Convert to virtual key
 		m_pCurrentShortcut->m_bVirtualKey=LOBYTE(VkKeyScan(cMnemonic));
 		if (m_pCurrentShortcut->m_bVirtualKey==0)

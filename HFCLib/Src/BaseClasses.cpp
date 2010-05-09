@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2010 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -701,8 +701,7 @@ BOOL CMenu::GetMenuItemInfo(UINT uItem,BOOL fByPosition,LPMENUITEMINFOW lpmii) c
 			lpmii->dwItemData=miia.dwItemData;
 			lpmii->cch=miia.cch;
 			lpmii->hbmpItem=miia.hbmpItem;
-
-			MemCopyAtoW(lpmii->dwTypeData,miia.dwTypeData,lpmii->cch+1);
+			MemCopyAtoW(lpmii->dwTypeData,lpmii->cch+1,miia.dwTypeData,miia.cch);
 		}
 		delete[] miia.dwTypeData;
 		return bRet;

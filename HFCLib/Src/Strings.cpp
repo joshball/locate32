@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2010 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 
 #include "HFCLib.h"
@@ -59,6 +59,98 @@ int strcasecmp(LPCWSTR s1,LPCWSTR s2)
 	delete[] tmp1;
 	delete[] tmp2;
 	return ret;
+}
+
+LPSTR alloccopyWtoA(LPCWSTR szString)
+{
+	if (szString==NULL)
+		return NULL;
+	int nLen=WideCharToMultiByte(CP_ACP,0,szString,-1,NULL,0,NULL,NULL);
+	CHAR* psz=new CHAR[nLen];
+	WideCharToMultiByte(CP_ACP,0,szString,-1,psz,nLen,NULL,NULL);
+	return psz;
+}
+
+LPSTR alloccopyWtoA(LPCWSTR szString,int iLength)
+{
+	ASSERT(iLength!=-1);
+	if (szString==NULL)
+		return NULL;
+	int nLen=WideCharToMultiByte(CP_ACP,0,szString,iLength,NULL,0,NULL,NULL);
+	CHAR* psz=new CHAR[nLen+1];
+	WideCharToMultiByte(CP_ACP,0,szString,iLength,psz,nLen+1,NULL,NULL);
+	psz[nLen]=L'\0';
+	return psz;
+}
+
+LPSTR alloccopyWtoA(LPCWSTR szString,int iLength,int& iNewLen)
+{
+	ASSERT(iLength!=-1);
+	if (szString==NULL)
+		return NULL;
+	iNewLen=WideCharToMultiByte(CP_ACP,0,szString,iLength,NULL,0,NULL,NULL);
+	CHAR* psz=new CHAR[iNewLen+1];
+	WideCharToMultiByte(CP_ACP,0,szString,iLength,psz,iNewLen+1,NULL,NULL);
+	psz[iNewLen]=L'\0';
+	return psz;
+}
+
+LPWSTR alloccopyAtoW(LPCSTR szString)
+{
+	if (szString==NULL)
+		return NULL;
+	int nLen=MultiByteToWideChar(CP_ACP,0,szString,-1,NULL,0);
+	WCHAR* psz=new WCHAR[nLen];
+	MultiByteToWideChar(CP_ACP,0,szString,-1,psz,nLen);
+	return psz;
+}
+
+LPWSTR alloccopyAtoW(LPCSTR szString,int iLength)
+{
+	ASSERT(iLength!=-1);
+	if (szString==NULL)
+		return NULL;
+	int nLen=MultiByteToWideChar(CP_ACP,0,szString,iLength,NULL,0);
+	WCHAR* psz=new WCHAR[nLen+1];
+	MultiByteToWideChar(CP_ACP,0,szString,iLength,psz,nLen+1);
+	psz[nLen]=L'\0';
+	return psz;
+}
+
+LPWSTR alloccopyAtoW(LPCSTR szString,int iLength,int& iNewLen)
+{
+	ASSERT(iLength!=-1);
+	if (szString==NULL)
+		return NULL;
+	iNewLen=MultiByteToWideChar(CP_ACP,0,szString,iLength,NULL,0);
+	WCHAR* psz=new WCHAR[iNewLen+1];
+	MultiByteToWideChar(CP_ACP,0,szString,iLength,psz,iNewLen+1);
+	psz[iNewLen]=L'\0';
+	return psz;
+}
+
+LPSTR alloccopymultiWtoA(LPCWSTR szMultiString)
+{
+	int nTotLen;
+	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
+	nTotLen+=2;
+
+	int nLen=WideCharToMultiByte(CP_ACP,0,szMultiString,nTotLen,NULL,0,NULL,NULL);
+	char* psz=new char[nLen];
+	WideCharToMultiByte(CP_ACP,0,szMultiString,nTotLen,psz,nLen,NULL,NULL);
+	return psz;
+}
+
+LPWSTR alloccopymultiAtoW(LPCSTR szMultiString)
+{
+	int nTotLen;
+	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
+	nTotLen+=2;
+
+	int nLen=MultiByteToWideChar(CP_ACP,0,szMultiString,nTotLen,NULL,0);
+	WCHAR* psz=new WCHAR[nLen];
+	MultiByteToWideChar(CP_ACP,0,szMultiString,nTotLen,psz,nLen);
+	return psz;
 }
 #endif
 
@@ -915,9 +1007,10 @@ BYTE* dataparser(LPCWSTR pStr,DWORD dwStrLen,MALLOC_FUNC pMalloc,DWORD* pdwDataL
 		if (pdwDataLength!=NULL)
 			*pdwDataLength=dwStrLen;
 
-		char* pNew=(char*)pMalloc(dwStrLen+1);
-		MemCopyWtoA(pNew,pStr,dwStrLen);
-		pNew[dwStrLen]='\0';
+		int nAllocLen=LenWtoA(pStr,dwStrLen);
+		char* pNew=(char*)pMalloc(nAllocLen+1);
+		MemCopyWtoA(pNew,nAllocLen+1,pStr,dwStrLen);
+		pNew[nAllocLen]='\0';
 		return (BYTE*)pNew;
 	}
 }
@@ -1180,7 +1273,7 @@ BYTE* dataparser2(LPCSTR pStr,DWORD* pdwDataLength)
 				}
 				else
 				{	
-					_MemCopyAtoW(pDataPtr,pStr,1);
+					_MemCopyAtoW(pDataPtr,nAllocLen,pStr,1);
 					pDataPtr+=2;
 				}
 			}

@@ -1,4 +1,4 @@
-/* Copyright (c) 1997-2009 Janne Huttunen
+/* Copyright (c) 1997-2010 Janne Huttunen
    database updater v3.1.9.6070		*/
 
 #include <HFCLib.h>

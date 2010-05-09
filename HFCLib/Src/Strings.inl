@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////
-// HFC Library - Copyright (C) 1999-2009 Janne Huttunen
+// HFC Library - Copyright (C) 1999-2010 Janne Huttunen
 ////////////////////////////////////////////////////////////////////
 // Inline funktions for manipulating strings
 ////////////////////////////////////////////////////////////////////
@@ -53,7 +53,32 @@ inline BOOL IsCharUpper(WCHAR ch)
 #endif
 
 
+inline void MemCopyW(LPWSTR dst,LPCWSTR src,int len)
+{
+	sMemCopy((LPVOID)dst,(LPCVOID)src,len*sizeof(WCHAR));
+}
 
+inline int LenWtoA(LPCWSTR src)
+{
+	int nLen=WideCharToMultiByte(CP_ACP,0,src,-1,NULL,0,NULL,NULL);
+	return nLen>0?nLen-1:0;
+}
+
+inline int LenWtoA(LPCWSTR src,int len)
+{
+	return WideCharToMultiByte(CP_ACP,0,src,len,NULL,0,NULL,NULL);
+}
+
+inline int LenAtoW(LPCSTR src)
+{
+	int nLen=MultiByteToWideChar(CP_ACP,0,src,-1,NULL,0);
+	return nLen>0?nLen-1:0;
+}
+
+inline int LenAtoW(LPCSTR src,int len)
+{
+	return MultiByteToWideChar(CP_ACP,0,src,len,NULL,0);
+}
 
 // copyers with allocation
 inline char* alloccopy(const char* szString)
@@ -113,60 +138,6 @@ inline WCHAR* alloccopy(const WCHAR* szString,DWORD dwLength)
 	WCHAR* psz=new WCHAR[max(dwLength,1)+1];
 	CopyMemory(psz,szString,dwLength*sizeof(WCHAR));
 	psz[dwLength]='\0';
-	return psz;
-}
-
-inline LPSTR alloccopyWtoA(LPCWSTR szString)
-{
-	if (szString==NULL)
-		return NULL;
-	int dwLength=istrlenw(szString);
-	CHAR* psz=new CHAR[max(dwLength,1)+1];
-	MemCopyWtoA(psz,szString,dwLength+1);
-	return psz;
-}
-
-inline LPSTR alloccopyWtoA(LPCWSTR szString,DWORD dwLength)
-{
-	CHAR* psz=new CHAR[max(dwLength,1)+1];
-	MemCopyWtoA(psz,szString,dwLength);
-	psz[dwLength]=L'\0';
-	return psz;
-}
-
-inline LPWSTR alloccopyAtoW(LPCSTR szString)
-{
-	if (szString==NULL)
-		return NULL;
-	int dwLength=(int)istrlen(szString);
-	WCHAR* psz=new WCHAR[max(dwLength,1)+1];
-	MultiByteToWideChar(CP_ACP,0,szString,dwLength+1,psz,dwLength+1);
-	return psz;
-}
-
-inline LPWSTR alloccopyAtoW(LPCSTR szString,DWORD dwLength)
-{
-	WCHAR* psz=new WCHAR[max(dwLength,1)+1];
-	MemCopyAtoW(psz,szString,dwLength);
-	psz[dwLength]='\0';
-	return psz;
-}
-
-inline LPSTR alloccopymultiWtoA(LPCWSTR szMultiString)
-{
-	SIZE_T nTotLen;
-	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
-	char* psz=new char[nTotLen+2];
-	MemCopyWtoA(psz,szMultiString,nTotLen+2);
-	return psz;
-}
-
-inline LPWSTR alloccopymultiAtoW(LPCSTR szMultiString)
-{
-	SIZE_T nTotLen;
-	for (nTotLen=0;szMultiString[nTotLen]!='\0' || szMultiString[nTotLen+1]!='\0';nTotLen++);
-	WCHAR* psz=new WCHAR[nTotLen+2];
-	MemCopyAtoW(psz,szMultiString,nTotLen+2);
 	return psz;
 }
 

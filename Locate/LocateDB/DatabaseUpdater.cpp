@@ -1,4 +1,4 @@
-/* Copyright (c) 1997-2009 Janne Huttunen
+/* Copyright (c) 1997-2010 Janne Huttunen
    database updater v3.1.9.6070                 */
 
 #include <HFCLib.h>
@@ -583,7 +583,7 @@ UpdateError CDatabaseUpdater::CRootDirectory::ScanRoot(volatile LONG& lForceQuit
 
 	// Scanning folder
 	char szPath[MAX_PATH+20];
-	MemCopyWtoA(szPath,(LPCWSTR)m_Path,m_Path.GetLength()+1);
+	MemCopyWtoA(szPath,MAX_PATH+20,(LPCWSTR)m_Path,m_Path.GetLength()+1);
 	
 	UpdDebugMessage("CDatabaseUpdater::CRootDirectory::ScanRoot: started to scan root folder");
 	UpdateError ueResult=ScanFolder(szPath,m_Path.GetLength(),lForceQuit);

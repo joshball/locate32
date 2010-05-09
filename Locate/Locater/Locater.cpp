@@ -1,4 +1,4 @@
-/* Copyright (c) 1997-2009 Janne Huttunen
+/* Copyright (c) 1997-2010 Janne Huttunen
    database locater v3.1.9.6070              */
 
 #include <HFCLib.h>
@@ -508,8 +508,8 @@ BOOL CLocater::LocatingProc()
 							m_pCurrentDatabase->szRootMaps,A2W(szCurrentPath),nActualPathLen,bFree);
 						if (pActualPath!=NULL)
 						{
-							MemCopyWtoA(szCurrentPath,pActualPath,nActualPathLen);
-							MemCopyWtoA(szCurrentPathLower,pActualPath,nActualPathLen);
+							MemCopyWtoA(szCurrentPath,260,pActualPath,nActualPathLen);
+							MemCopyWtoA(szCurrentPathLower,260,pActualPath,nActualPathLen);
 							szCurrentPathW[nPathLen=nActualPathLen]=L'\0';
 						
 							if (bFree)
@@ -820,7 +820,8 @@ BOOL CLocater::LocateFiles(BOOL bThreaded,LPCWSTR* szNames,DWORD nNames,
 				{
 					m_piNameLengths[m_dwNamesCount]=istrlen(szNames[i]);
 					m_ppNames[m_dwNamesCount]=alloccopy(szNames[i],m_piNameLengths[m_dwNamesCount]);
-					MakeLower(m_ppNames[m_dwNamesCount]);
+					if (!(m_dwFlags&LOCATE_NAMEMATCHCASE))
+						MakeLower(m_ppNames[m_dwNamesCount]);
 					m_dwNamesCount++;
 				}
 			}
@@ -936,9 +937,9 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 				WCHAR* szPathW=new WCHAR[nTotalLength];
 				char* szPathUTF8=new char[nTotalLength*3];
 				
-				MemCopyAtoW(szPathW,szCurrentPath,dwCurrentPathLen);
-				szPathW[dwCurrentPathLen]=L'\\';
-				MemCopyAtoW(szPathW+dwCurrentPathLen+1,GetFileName(),GetFileNameLen());
+				int len=MemCopyAtoW(szPathW,nTotalLength,szCurrentPath,dwCurrentPathLen);
+				szPathW[len++]=L'\\';
+				MemCopyAtoW(szPathW+len,nTotalLength-len,GetFileName(),GetFileNameLen());
 				
 				nTotalLength=WideCharToMultiByte(CP_UTF8,0,szPathW,nTotalLength,
 					szPathUTF8,nTotalLength*3,NULL,NULL);
@@ -955,11 +956,11 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 			else
 			{
 				// Converting to UTF8
-				WCHAR* szNameW=new WCHAR[GetFileNameLen()];
-				char* szNameUTF8=new char[GetFileNameLen()*2];
-				MemCopyAtoW(szNameW,GetFileName(),GetFileNameLen());
-				int nLen=WideCharToMultiByte(CP_UTF8,0,szNameW,GetFileNameLen(),
-					szNameUTF8,GetFileNameLen()*2,NULL,NULL);
+				WCHAR* szNameW=new WCHAR[GetFileNameLen()+2];
+				int nLen=MemCopyAtoW(szNameW,GetFileNameLen()+2,GetFileName(),GetFileNameLen());
+				
+				char* szNameUTF8=new char[nLen*2];
+				nLen=WideCharToMultiByte(CP_UTF8,0,szNameW,nLen,szNameUTF8,nLen*2,NULL,NULL);
 
 				int rc=pcre_exec(m_regexp,m_regextra,szNameUTF8,nLen,
 					0,0,ovector,OVECCOUNT);
@@ -1057,7 +1058,8 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 		szName[dwCurrentPathLen]='\\';
 		sMemCopy(szName+dwCurrentPathLen+1,GetFileName(),GetFileNameLen());
 		szName[dwNameLength]='\0';
-		MakeLower(szName,dwNameLength);
+		if (!(m_dwFlags&LOCATE_NAMEMATCHCASE))
+			MakeLower(szName,dwNameLength);
 	}
 	else
 	{
@@ -1073,7 +1075,8 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 		
 		// Copying to buffer
 		szName=alloccopy(GetFileName(),dwNameLength);
-		MakeLower(szName,dwNameLength);
+		if (!(m_dwFlags&LOCATE_NAMEMATCHCASE))
+			MakeLower(szName,dwNameLength);
 	}
 
 
@@ -1177,9 +1180,9 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 			if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
 			{
 				char szPath[MAX_PATH];
-				MemCopyWtoA(szPath,szCurrentPathW,dwCurrentPathLen);
-				szPath[dwCurrentPathLen]='\\';
-				MemCopyWtoA(szPath+dwCurrentPathLen+1,GetFileNameW(),GetFileNameLen()+1);
+				int nLen=MemCopyWtoA(szPath,MAX_PATH,szCurrentPathW,dwCurrentPathLen);
+				szPath[nLen++]='\\';
+				MemCopyWtoA(szPath+nLen,MAX_PATH-nLen,GetFileNameW(),GetFileNameLen()+1);
 				return pcre_exec(m_regexp,m_regextra,szPath,dwCurrentPathLen+GetFileNameLen()+1,
 					0,0,ovector,OVECCOUNT)>=0;
 			}
@@ -1256,7 +1259,8 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 		szName[dwCurrentPathLen]=L'\\';
 		MemCopyW(szName+dwCurrentPathLen+1,GetFileNameW(),GetFileNameLen());
 		szName[dwNameLength]=L'\0';
-		MakeLower(szName,dwNameLength);
+		if (!(m_dwFlags&LOCATE_NAMEMATCHCASE))
+			MakeLower(szName,dwNameLength);
 	}
 	else
 	{
@@ -1272,7 +1276,8 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 		
 		// Copying to buffer
 		szName=alloccopy(GetFileNameW(),dwNameLength);
-		MakeLower(szName,dwNameLength);
+		if (!(m_dwFlags&LOCATE_NAMEMATCHCASE))
+			MakeLower(szName,dwNameLength);
 	}
 	
 
@@ -1349,10 +1354,10 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 			if (m_dwFlags&LOCATE_CHECKWHOLEPATH)
 			{
 				WCHAR* szPathW=new WCHAR[dwCurrentPathLen];
-				char* szPathUTF8=new char[dwCurrentPathLen*3];
-				MemCopyAtoW(szPathW,szCurrentPath,dwCurrentPathLen);
-				int nTotalLength=WideCharToMultiByte(CP_UTF8,0,szPathW,dwCurrentPathLen,
-					szPathUTF8,dwCurrentPathLen*3,NULL,NULL);
+				int nLen=MemCopyAtoW(szPathW,dwCurrentPathLen,szCurrentPath,dwCurrentPathLen);
+				
+				char* szPathUTF8=new char[nLen*3];
+				int nTotalLength=WideCharToMultiByte(CP_UTF8,0,szPathW,nLen,szPathUTF8,nLen*3,NULL,NULL);
 				int rc = pcre_exec(m_regexp,m_regextra,szPathUTF8,nTotalLength,0,0,
 					ovector,OVECCOUNT);
 				delete[] szPathW;
@@ -1363,10 +1368,11 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 			{
 				// Converting to UTF8
 				WCHAR* szNameW=new WCHAR[GetFolderNameLen()];
-				char* szNameUTF8=new char[GetFolderNameLen()*3];
-				MemCopyAtoW(szNameW,GetFolderName(),GetFolderNameLen());
-				int nLen=WideCharToMultiByte(CP_UTF8,0,szNameW,GetFolderNameLen(),
-					szNameUTF8,GetFolderNameLen()*3,NULL,NULL);
+				int nLen=MemCopyAtoW(szNameW,GetFolderNameLen(),GetFolderName(),GetFolderNameLen());
+				
+				
+				char* szNameUTF8=new char[nLen*3];
+				nLen=WideCharToMultiByte(CP_UTF8,0,szNameW,nLen,szNameUTF8,nLen*3,NULL,NULL);
 				int rc=pcre_exec(m_regexp,m_regextra,szNameUTF8,nLen,
 					0,0,ovector,OVECCOUNT);
 				delete[] szNameW;
@@ -1447,7 +1453,8 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingFor() const
 	else
 	{
 		szName=alloccopy(GetFolderName(),GetFolderNameLen());
-		MakeLower(szName);
+		if (!(m_dwFlags&LOCATE_NAMEMATCHCASE))
+			MakeLower(szName);
 	}
 
 	if (m_dwFlags&LOCATE_LOGICALOPERATIONS)
@@ -1583,7 +1590,8 @@ inline BOOL CLocater::IsFolderNameWhatAreWeLookingForW() const
 	else
 	{
 		szName=alloccopy(GetFolderNameW(),GetFolderNameLen());
-		MakeLower(szName);
+		if (!(m_dwFlags&LOCATE_NAMEMATCHCASE))
+			MakeLower(szName);
 	}
 
 	if (m_dwFlags&LOCATE_LOGICALOPERATIONS)

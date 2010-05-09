@@ -1,4 +1,4 @@
-/* Locate32 - Copyright (c) 1997-2009 Janne Huttunen */
+/* Locate32 - Copyright (c) 1997-2010 Janne Huttunen */
 
 #if !defined(LOCATEDITEM_INL)
 #define LOCATEDITEM_INL
@@ -140,6 +140,7 @@ inline LPWSTR CLocatedItem::GetDetailText(DetailType nDetailType) const
 	case FileVersion:
 	case ProductName:
 	case ProductVersion:
+	case Keywords:
 		{
 			LPWSTR ret=GetExtraText(nDetailType);
 			if (ret==NULL)
@@ -374,6 +375,7 @@ inline void CLocatedItem::ExtraSetUpdateWhenFileSizeChanged()
 		case FileVersion:
 		case ProductName:
 		case ProductVersion:
+        case Keywords:
             pTmp->bShouldUpdate=TRUE;
 			break;
 		case MD5sum:
@@ -424,6 +426,7 @@ inline CLocatedItem::ExtraInfo::~ExtraInfo()
 	case FileVersion:
 	case ProductName:
 	case ProductVersion:
+	case Keywords:
 		if (szText!=NULL && szText!=szwEmpty)
 			delete[] szText;
 		break;
