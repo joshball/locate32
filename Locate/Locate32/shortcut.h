@@ -125,8 +125,9 @@ public:
 		SpecialRemoveDeletedFiles = MAKELONG(IDM_REMOVEDELETEDFILES,IDS_SHORTCUTMENUSPECIAL),
 		SpecialUpdateDatabasesOfSelectedFiles = MAKELONG(IDM_UPDATEDATABASESOFSELECTEDFILES,IDS_SHORTCUTMENUSPECIAL),
 
-		EditCut = MAKELONG(IDM_EDIT_CUT,IDS_SHORTCUTMENUEDIT),
-		EditCopy = MAKELONG(IDM_EDIT_COPY,IDS_SHORTCUTMENUEDIT),
+		EditCut = MAKELONG(IDM_CUT,IDS_SHORTCUTMENUEDIT),
+		EditCopy = MAKELONG(IDM_COPY,IDS_SHORTCUTMENUEDIT),
+		EditPaste = MAKELONG(IDM_PASTE,IDS_SHORTCUTMENUEDIT),
 		EditSelectAll = MAKELONG(IDM_EDIT_SELECTALL,IDS_SHORTCUTMENUEDIT),
 		EditInvertSelection = MAKELONG(IDM_EDIT_INVERTSELECTION,IDS_SHORTCUTMENUEDIT),
 
@@ -175,7 +176,7 @@ public:
 			SpecialShowFileInformation,SpecialForceUpdate,SpecialComputeMD5Sum,
 			SpecialComputeMD5SumsForSameSizeFiles,SpecialCopyMD5SumsToClipboard,
 			SpecialRemoveDeletedFiles,SpecialUpdateDatabasesOfSelectedFiles,
-			EditCut,EditCopy,EditSelectAll,EditInvertSelection,ViewExtraLargeIcons,
+			EditCut,EditCopy,EditPaste,EditSelectAll,EditInvertSelection,ViewExtraLargeIcons,
 			ViewLargeIcons,ViewMediumIcons,ViewSmallIcons,
             ViewList,ViewDetails,ViewArrangeIconsByName,ViewArrangeIconsByFolder,
             ViewArrangeIconsByType,ViewArrangeIconsByDate,ViewArrangeIconsBySize,

@@ -343,13 +343,18 @@ BOOL CLocateDlg::HandleContextMenuCommand(WORD wID)
 	default:
 		return FALSE;
 	case IDM_CUT:
-	case IDM_EDIT_CUT:
-		OnCopy(TRUE);
-		break;
 	case IDM_COPY:
-	case IDM_EDIT_COPY:
-		OnCopy(FALSE);
+		OnCopy(wID==IDM_CUT);
 		break;
+	case IDM_PASTE:
+		{
+			HWND hFocus=GetFocus();
+			char szClass[100];
+			::GetClassName(hFocus,szClass,100);
+			if (_stricmp(szClass,"EDIT")==0)
+				::SendMessage(hFocus,WM_PASTE,0,0);
+			break;
+		}
 	case IDM_OPENCONTAININGFOLDER:
 		OpenSelectedFolder(TRUE,-1,m_pActiveContextMenu!=NULL?m_pActiveContextMenu->bForParents:FALSE);
 		break;
@@ -1076,7 +1081,6 @@ void CLocateDlg::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
 
 	HMENU hMainMenu=GetMenu();
 	HMENU hFileMenu=GetSubMenu(hMainMenu,0);
-	HMENU hEditMenu=GetSubMenu(hMainMenu,1);
 	// m_hActivePopupMenu points to last activate menu 
 	
 	if (nIndex>0 && GetSubMenu(GetMenu(),nIndex)==hPopupMenu)
@@ -1088,7 +1092,7 @@ void CLocateDlg::OnInitMenuPopup(HMENU hPopupMenu,UINT nIndex,BOOL bSysMenu)
 
 	CDialog::OnInitMenuPopup(hPopupMenu,nIndex,bSysMenu);
 	
-	if (hPopupMenu==GetSubMenu(GetMenu(),0))
+	if (hPopupMenu==hFileMenu)
 	{
 		// File menu in main menu bar
 		DWORD dwSimpleMenu=FALSE;

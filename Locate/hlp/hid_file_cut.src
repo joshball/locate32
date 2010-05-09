@@ -1,7 +1,7 @@
-TITLE=Open (File menu/File Context menu)
+TITLE=Open (File Context menu)
 CONTENT=
 <div id="menucommands">
-<H1><A NAME="hid_file_cut"></A>Cut (File menu/File Context menu)</H1>
+<H1><A NAME="hid_file_cut"></A>Cut (File Context menu)</H1>
 
 <P>Use this command to copy select files to clipboard. The selected files moved when 
 a file operation is executed (e.g., by using Windows Explorer). 

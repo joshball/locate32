@@ -134,8 +134,8 @@ inline LPWSTR CLocatedItem::GetDetailText(DetailType nDetailType) const
 	case Author:
 	case Title:
 	case Subject:
-	case Category:
 	case Comments:
+	case Category:
 	case Description:
 	case FileVersion:
 	case ProductName:

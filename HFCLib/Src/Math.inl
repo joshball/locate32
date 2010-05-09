@@ -1049,6 +1049,7 @@ CMatrix<TYPE> CMatrix<TYPE>::Diagonal(UINT m,...)
 				mat.pMatrix[i*m+j]=0;
 		}
 	}
+	va_end(argList);
 	return mat;
 }
 

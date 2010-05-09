@@ -1443,8 +1443,8 @@ void CLocatedItem::UpdateSummaryProperties()
 	pFields[0]=CreateExtraInfoField(Author);
 	pFields[1]=CreateExtraInfoField(Title);
 	pFields[2]=CreateExtraInfoField(Subject);
-	pFields[3]=CreateExtraInfoField(Comments);
-	pFields[4]=CreateExtraInfoField(Keywords);
+	pFields[3]=CreateExtraInfoField(Keywords);
+	pFields[4]=CreateExtraInfoField(Comments);
 	pFields[5]=CreateExtraInfoField(Pages);
 	
 
@@ -1461,10 +1461,114 @@ void CLocatedItem::UpdateSummaryProperties()
 	pFields[5]->bShouldUpdate=FALSE;
 	pFields[5]->nPages=0;
 
-
-	
 	if (IsDeleted())
 		return;
+
+	// Fisrt, check if there is descript.ion file and read comment from the file
+
+	// Read file
+	CFile File(TRUE);
+	BYTE* pContent=NULL;
+	DWORD dwFileSize;
+	File.CloseOnDelete();
+	try {
+		// Read file
+		File.Open((CStringW(GetParent())+L"\\descript.ion"),CFile::defRead);
+		dwFileSize=File.GetLength();
+		pContent=new BYTE[dwFileSize+2];
+		File.Read(pContent,dwFileSize);
+		*((WORD*)(pContent+dwFileSize))=0;
+		File.Close();
+	}
+	catch (...)
+	{
+		if (pContent!=NULL)
+			delete[] pContent;
+		pContent=NULL;
+	}
+
+
+	// Parse file		
+	if (pContent!=NULL && dwFileSize>=4)
+	{
+		LPCWSTR pPtr;
+		
+		// Check encoding
+		if (pContent[1]=='\0' || (pContent[0]==0xff && pContent[1]==0xfe)) 
+		{
+			// This is UTF16
+			pPtr=(LPCWSTR)pContent;
+		}
+		else
+		{
+			// UTF8 or ANSI
+			UINT cp=(pContent[0]==0xef && pContent[1]==0xbb && pContent[2]==0xbf)?CP_UTF8:CP_ACP;
+			int nDataLen=MultiByteToWideChar(cp,0,(char*)pContent,dwFileSize,NULL,0);
+			LPWSTR pNewData=(LPWSTR)new char[(nDataLen+2)*sizeof(WCHAR)];
+			MultiByteToWideChar(cp,0,(char*)pContent,dwFileSize,pNewData,nDataLen);
+			pNewData[nDataLen]=L'\0';
+			delete[] pContent;
+			pContent=(BYTE*)pNewData;		
+			pPtr=pNewData;
+		}
+
+		if (pPtr[0]==0xff && pPtr[1]==0xfe)
+			pPtr+=2;
+
+		for (;;)
+		{
+			for (;*pPtr==L' ' || *pPtr==L'\t' || *pPtr==L'\r' || *pPtr==L'\n';pPtr++)
+				pPtr++;
+			if (*pPtr==L'\0')
+				break;
+
+			BOOL bFileFound;
+			if (*pPtr==L'\"')
+			{
+				// Long file name 
+				pPtr++;
+				int nFileNameLen;
+				for (nFileNameLen=0;pPtr[nFileNameLen]!=L'\0' && pPtr[nFileNameLen]!=L'\"';nFileNameLen++);
+
+				if (pPtr[nFileNameLen]==L'\0')
+					break;
+				
+				bFileFound=nFileNameLen==GetNameLen()?_wcsnicmp(pPtr,GetName(),nFileNameLen)==0:FALSE;
+				pPtr+=nFileNameLen+1;
+			} 
+			else
+			{
+				// Short file name
+				int nFileNameLen;
+				for (nFileNameLen=0;pPtr[nFileNameLen]!=L'\0' && pPtr[nFileNameLen]!=L' ';nFileNameLen++);
+
+				if (pPtr[nFileNameLen]==L'\0')
+					break;
+				
+				bFileFound=nFileNameLen==GetNameLen()?_wcsnicmp(pPtr,GetName(),nFileNameLen)==0:FALSE;
+				pPtr+=nFileNameLen;
+			}
+
+			// Scan to end of line
+			int nCommentLen;
+			if (*pPtr==L' ') pPtr++;
+			for (nCommentLen=0;pPtr[nCommentLen]!=L'\0' && pPtr[nCommentLen]!=L'\r' && pPtr[nCommentLen]!=L'\n';nCommentLen++);
+
+			if (bFileFound)
+			{
+				// Insert comment
+				if (nCommentLen>2 && pPtr[nCommentLen-2]==0x04 && pPtr[nCommentLen-1]==0xc2)
+					nCommentLen-=2;
+				InterlockedExchangePointer((PVOID*)&pFields[4]->szText,alloccopy(pPtr,nCommentLen));
+				break;
+			}
+
+			pPtr+=nCommentLen;			
+		}
+
+		delete[] pContent;
+	}
+	
 
 	IPropertySetStorage* ppss;
 	IPropertyStorage* pps;
@@ -1506,14 +1610,14 @@ void CLocatedItem::UpdateSummaryProperties()
 	rgpspec[0].propid=PIDSI_AUTHOR;
 	rgpspec[1].propid=PIDSI_TITLE;
 	rgpspec[2].propid=PIDSI_SUBJECT;
-	rgpspec[3].propid=PIDSI_COMMENT;
-	rgpspec[4].propid=PIDSI_KEYWORDS;
+	rgpspec[3].propid=PIDSI_KEYWORDS;
+	rgpspec[4].propid=PIDSI_COMMENT;
 	rgpspec[5].propid=PIDSI_PAGECOUNT;
 	
 	hRes=pps->ReadMultiple(6,rgpspec,rgpropvar);
 	if (SUCCEEDED(hRes))
 	{
-		for (int i=0;i<5;i++) // Last is pages
+		for (int i=0;i<4;i++) // Last two are comment and number of pages, handling those separately
 		{
 			switch (rgpropvar[i].vt)
 			{
@@ -1529,6 +1633,47 @@ void CLocatedItem::UpdateSummaryProperties()
 			PropVariantClear(&rgpropvar[i]);
 		}
 
+		// Handle comment
+		LPWSTR pComment=NULL;
+		switch (rgpropvar[4].vt)
+		{
+		case VT_LPSTR:
+			pComment=alloccopyAtoW(rgpropvar[4].pszVal);
+			break;
+		case VT_LPWSTR:
+			pComment=alloccopy(rgpropvar[4].pwszVal);
+			break;
+		}
+		PropVariantClear(&rgpropvar[4]);
+		
+		if (pComment!=NULL)
+		{
+			if (pFields[4]->szText!=NULL)
+			{
+				// Combine both comments
+				LPWSTR pOldComment=pFields[4]->szText;
+				InterlockedExchangePointer((PVOID*)&pFields[4]->szText,NULL);
+
+				int nComment1Len=istrlen(pComment);
+				int nComment2Len=istrlen(pOldComment);
+				
+
+				LPWSTR pNewComment=new WCHAR[nComment1Len+nComment2Len+4];
+				MemCopyW(pNewComment,pComment,nComment1Len);
+				MemCopyW(pNewComment+nComment1Len,L" | ",3);
+				MemCopyW(pNewComment+nComment1Len+3,pOldComment,nComment2Len+1);
+				
+				delete[] pComment;
+				delete[] pOldComment;
+
+				InterlockedExchangePointer((PVOID*)&pFields[4]->szText,pNewComment);
+			}
+			else
+				InterlockedExchangePointer((PVOID*)&pFields[4]->szText,pComment);
+		}
+
+
+		// Handle pages			
 		switch (rgpropvar[5].vt)
 		{
 		case VT_I2:
@@ -1560,6 +1705,7 @@ void CLocatedItem::UpdateSummaryProperties()
 	pps->Release();
 	ppss->Release();
 				
+
 }
 
 
@@ -2190,13 +2336,12 @@ LPWSTR CLocatedItem::GetToolTipText() const
 {
 	ISDLGTHREADOK
 
-	
 	if (IsDeleted())
 	{
 		CStringW str(IsFolder()?IDS_TOOLTIPFORDIRECTORYDELETED:IDS_TOOLTIPFORFILEDELETED);
 		int nLen=(int)str.GetLength()+GetPathLen()+(int)istrlenw(GetType())+2;
 		LPWSTR szwBuffer=GetBufferW(nLen);
-		swprintfex(szwBuffer,nLen,str,GetName(),GetParent(),GetType());
+		swprintfex(szwBuffer,nLen,str,GetName(),GetParent(),GetType(),GetLocateApp()->GetDatabase(GetDatabaseID())->GetName());
 		return szwBuffer;
 	}
 
@@ -2206,7 +2351,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 		((CLocatedItem*)this)->UpdateFileSizeAndTime();
 	if (ShouldUpdateType())
 		((CLocatedItem*)this)->UpdateType();
-
+	
 	WCHAR* szDate=GetLocateApp()->FormatDateAndTimeString(GetModifiedDate(),GetModifiedTime());
 	
 	LPWSTR szwBuffer;
@@ -2215,7 +2360,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 		CStringW str(IDS_TOOLTIPFORDIRECTORY);
 		int nLen=(int)str.GetLength()+GetPathLen()+(int)istrlenw(GetType())+(int)istrlenw(szDate)+2;
 		szwBuffer=GetBufferW(nLen);
-		swprintfex(szwBuffer,nLen,str,GetName(),GetParent(),GetType(),szDate);
+		swprintfex(szwBuffer,nLen,str,GetName(),GetParent(),GetType(),szDate,GetLocateApp()->GetDatabase(GetDatabaseID())->GetName());
 	}
 	else 
 	{
@@ -2263,7 +2408,7 @@ LPWSTR CLocatedItem::GetToolTipText() const
 				szSize[0]='\0';
 		}
 
-		text.FormatEx(IDS_TOOLTIPFORFILE,GetName(),GetParent(),GetType(),szDate,szSize);
+		text.FormatEx(IDS_TOOLTIPFORFILE,GetName(),GetParent(),GetType(),szDate,szSize,GetLocateApp()->GetDatabase(GetDatabaseID())->GetName());
 			
 		if (IsItemShortcut())
 		{
@@ -2329,6 +2474,67 @@ LPWSTR CLocatedItem::GetToolTipText() const
 			}
 		}
 
+		// Add comment
+		
+
+		if (ShouldUpdateExtra(Author) || ShouldUpdateExtra(Comments))
+			((CLocatedItem*)this)->UpdateSummaryProperties();
+		
+		if (ShouldUpdateExtra(FileVersion) || ShouldUpdateExtra(ProductVersion) || ShouldUpdateExtra(Description))
+			((CLocatedItem*)this)->UpdateVersionInformation();
+		
+		LPCWSTR pText=GetExtraText(Description);
+		if (pText!=NULL)
+			text << L"\r\n" << ID2W(IDS_TOOLTIPDESCRIPTION) << L' ' << pText;
+		
+		pText=GetExtraText(FileVersion);
+		if (pText!=NULL)
+			text << L"\r\n" << ID2W(IDS_TOOLTIPFILEVERSION) << L' ' << pText;
+		
+		pText=GetExtraText(ProductVersion);
+		if (pText!=NULL)
+			text << L"\r\n" << ID2W(IDS_TOOLTIPPRODUCTVERSION) << L' ' << pText;
+		
+		pText=GetExtraText(Author);
+		if (pText!=NULL)
+			text << L"\r\n" << ID2W(IDS_TOOLTIPAUTHOR) << L' ' << pText;
+		
+		pText=GetExtraText(Title);
+		if (pText!=NULL)
+			text << L"\r\n" << ID2W(IDS_TOOLTIPTITLE) << L' ' << pText;
+		
+		
+		pText=GetExtraText(Comments);
+		if (pText!=NULL)
+		{
+			text << L"\r\n" << ID2W(IDS_TOOLTIPCOMMENTS);
+
+			int nIndex=FirstCharIndex(pText,L'\\');
+			if (nIndex!=-1) 
+			{
+				// Parse line feeds
+				for (;;)
+				{
+					text << L"\r\n";
+					text.Append(pText,nIndex);
+
+					if (nIndex==-1)
+						break;
+
+					pText+=nIndex+1;
+
+					if (*pText=='n')
+						pText++;
+
+					nIndex=FirstCharIndex(pText,L'\\');
+				}
+				
+			}
+			else	
+				text << pText;
+		}
+		
+		// Finally, copy text to a buffer
 		szwBuffer=GetBufferW(text.GetLength()+1);
 		MemCopyW(szwBuffer,LPCWSTR(text),text.GetLength()+1);
 	}

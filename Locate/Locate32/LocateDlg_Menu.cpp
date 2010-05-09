@@ -54,15 +54,29 @@ void CLocateDlg::OnInitMainMenu(HMENU hPopupMenu,UINT nIndex)
 	switch (nIndex)
 	{
 	case 1:
-		if (m_pListCtrl->GetSelectedCount())
 		{
-			EnableMenuItem(hPopupMenu,IDM_CUT,MF_BYCOMMAND|MF_ENABLED);
-			EnableMenuItem(hPopupMenu,IDM_COPY,MF_BYCOMMAND|MF_ENABLED);
-		}
-		else
-		{
-			EnableMenuItem(hPopupMenu,IDM_CUT,MF_BYCOMMAND|MF_GRAYED);
-			EnableMenuItem(hPopupMenu,IDM_COPY,MF_BYCOMMAND|MF_GRAYED);
+			HWND hFocus=GetFocus();
+			char szClass[100];
+			::GetClassName(hFocus,szClass,100);
+			if (_stricmp(szClass,"EDIT")==0)
+			{
+				EnableMenuItem(hPopupMenu,IDM_CUT,MF_BYCOMMAND|MF_ENABLED);
+				EnableMenuItem(hPopupMenu,IDM_COPY,MF_BYCOMMAND|MF_ENABLED);
+				EnableMenuItem(hPopupMenu,IDM_PASTE,MF_BYCOMMAND|MF_ENABLED);
+			} 
+			else if (hFocus==*m_pListCtrl)
+			{
+				BOOL bEnable=m_pListCtrl->GetSelectedCount()>0;
+				EnableMenuItem(hPopupMenu,IDM_CUT,MF_BYCOMMAND|(bEnable?MF_ENABLED:MF_GRAYED));
+				EnableMenuItem(hPopupMenu,IDM_COPY,MF_BYCOMMAND|(bEnable?MF_ENABLED:MF_GRAYED));
+				EnableMenuItem(hPopupMenu,IDM_PASTE,MF_BYCOMMAND|MF_GRAYED);
+			} 
+			else
+			{
+				EnableMenuItem(hPopupMenu,IDM_CUT,MF_BYCOMMAND|MF_GRAYED);
+				EnableMenuItem(hPopupMenu,IDM_COPY,MF_BYCOMMAND|MF_GRAYED);
+				EnableMenuItem(hPopupMenu,IDM_PASTE,MF_BYCOMMAND|MF_GRAYED);
+			}
 		}
 		break;
 	case 2:

@@ -13,6 +13,7 @@ Language=0x0409 English (United States)
 [FILES]
 hid_edit_copy.htm
 hid_edit_cut.htm
+hid_edit_paste.htm
 hid_edit_invertselection.htm
 hid_edit_selectall.htm
 hid_file_opencontainingfolder.htm
@@ -231,16 +232,14 @@ IDC_STATUS							= dialog_locate.htm
 
 
 
-
-IDM_EDIT_COPY						= hid_edit_copy.htm
-IDM_EDIT_CUT						= hid_edit_cut.htm
+IDM_CUT								= hid_edit_cut.htm
+IDM_COPY							= hid_edit_copy.htm
+IDM_PASTE							= hid_edit_paste.htm
 IDM_EDIT_SELECTALL					= hid_edit_selectall.htm
 IDM_EDIT_INVERTSELECTION			= hid_edit_invertselection.htm
 IDM_OPENCONTAININGFOLDER			= hid_file_opencontainingfolder.htm
 IDM_REMOVEFROMTHISLIST		        = hid_file_removefromlist.htm
 IDM_DEFOPEN					        = hid_file_open.htm
-IDM_CUT								= hid_file_cut.htm
-IDM_COPY							= hid_file_copy.htm
 IDM_CREATESHORTCUT					= hid_file_createshortcut.htm
 IDM_DELETE							= hid_file_delete.htm
 IDM_RENAME							= hid_file_rename.htm

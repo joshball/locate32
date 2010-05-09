@@ -31,7 +31,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2010 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.1 RC3j build 9.11150
+FILEVERSION=3.1 RC3l build 10.5090
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -91,7 +91,7 @@ STRMAIN_FILELISTCOLUMN_SUBJECT=Subject
 STRMAIN_FILELISTCOLUMN_CATEGORY=Category
 STRMAIN_FILELISTCOLUMN_PAGES=Pages
 STRMAIN_FILELISTCOLUMN_COMMENTS=Comments
-STRMAIN_FILELISTCOLUMN_DESCRIPTION=Description
+STRMAIN_FILELISTCOLUMN_DESCRIPTION=File Description
 STRMAIN_FILELISTCOLUMN_FILEVERSION=File Version
 STRMAIN_FILELISTCOLUMN_PRODUCTNAME=Product Name
 STRMAIN_FILELISTCOLUMN_PRODUCTVERSION=Product Version
@@ -1071,6 +1071,7 @@ MENUMAIN_FILE_EXIT=E&xit
 MENUMAIN_EDIT=&Edit
 MENUMAIN_EDIT_CUT=Cu&t
 MENUMAIN_EDIT_COPY=&Copy
+MENUMAIN_EDIT_PASTE=&Paste
 MENUMAIN_EDIT_SELECTALL=Select &All
 MENUMAIN_EDIT_INVERTSELECTION=&Invert Selection
 MENUMAIN_VIEW=&View
@@ -1181,12 +1182,18 @@ STR_NTH='th
 
 ###########################
 # Tooltips
-STR_TOOLTIP_FILE=File: %s\r\nPath: %s\r\nType: %s\r\nDate Modified: %s\r\nSize: %s
-STR_TOOLTIP_DIRECTORY=Directory: %s\r\nPath: %s\r\nType: %s\r\nDate Modified: %s
-STR_TOOLTIP_DELETEDFILE=File: %s\r\nPath: %s\r\nType: %s
-STR_TOOLTIP_DELETEDDIRECTORY=Directory: %s\r\nPath: %s\r\nType: %s
+STR_TOOLTIP_FILE=File: %1:s\r\nPath: %2:s\r\nType: %3:s\r\nDate Modified: %4:s\r\nSize: %5:s  Database: %6:s
+STR_TOOLTIP_DIRECTORY=Directory: %1:s\r\nPath: %2:s\r\nType: %3:s\r\nDate Modified: %4:s  Database: %5:s
+STR_TOOLTIP_DELETEDFILE=File: %1:s\r\nPath: %2:s\r\nType: %3:s  Database: %4:s
+STR_TOOLTIP_DELETEDDIRECTORY=Directory: %1:s\r\nPath: %2:s\r\nType: %3:s  Database: %4:s
 STR_TOOLTIP_DESCRIPTION=Description:
 STR_TOOLTIP_TARGET=Target:
+STR_TOOLTIP_AUTHOR=Author:
+STR_TOOLTIP_TITLE=Title:
+STR_TOOLTIP_COMMENTS=Comments:
+STR_TOOLTIP_FILEVERSION=File version:
+STR_TOOLTIP_PRODUCTVERSION=Product version:
+
 
 ###########################
 # File size, type and date
@@ -1197,7 +1204,7 @@ STR_FILESIZE_MB=MB
 STR_FILESIZE_GB=GB
 STR_FILETYPE_FILE=File
 STR_FILETYPE_DIRECTORY=Directory
-STR_FILETYPE_DELETED=Deleted / Moved / Offline file
+STR_FILETYPE_DELETED=Deleted / Moved / Offline
 STR_FILETYPE_SYMLINK=Symbolic link
 STR_FILETYPE_SYMLINKDIR=Symbolic link (directory)
 STR_FILETYPE_JUNCTION=Junction / Mount point

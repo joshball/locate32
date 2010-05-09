@@ -360,6 +360,9 @@ void DebugFormatMessage(LPCSTR text,...)
 		char buf[2000];
 		StringCbVPrintf(buf,2000,text,argList);
 		DebugMessage(buf);
+
+		va_end(argList);
+		
 	}
 }
 
@@ -408,10 +411,11 @@ void DebugFormatMessage(LPCWSTR text,...)
 	{
 		va_list argList;
 		va_start(argList,text);
-		
 		WCHAR buf[2000];
 		StringCbVPrintfW(buf,2000,text,argList);
 		DebugMessage(buf);
+		
+		va_end(argList);
 	}
 }
 #endif

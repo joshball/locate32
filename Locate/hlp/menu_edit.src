@@ -11,13 +11,18 @@ CONTENT=
 
 <TR VALIGN="top">
 <TD width=15%><A HREF="hid_edit_cut.htm">Cut</A></TD>
-<TD width=85%>Copy selected results to clipboard. 
+<TD width=85%>Copy selected text or files to the clipboard. 
 Files are removed if a file operation is executed.</TD>
 </TR>
 
 <TR VALIGN="top">
 <TD width=15%><A HREF="hid_edit_copy.htm">Copy</A></TD>
-<TD width=85%>Copy selected results to clipboard.</TD>
+<TD width=85%>Copy selected text or files to the clipboard.</TD>
+</TR>
+
+<TR VALIGN="top">
+<TD width=15%><A HREF="hid_edit_paste.htm">Paste</A></TD>
+<TD width=85%>Paste text from the clipboard. This command works only with text boxes.</TD>
 </TR>
 
 <TR VALIGN="top">

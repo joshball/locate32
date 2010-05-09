@@ -3,10 +3,10 @@ CONTENT=
 <div id="menucommands">
 <H1><A NAME="hid_edit_copy"></A>Copy command (Edit menu)</H1>
 
-<P>Use this command to copy selected files to clipboard. The selected files copied when 
-file operation is executed (e.g., by using Windows Explorer). 
+<P>When a text box has keyboard focus, use this command to copy selected text to the clipboard. </P>
 
-This command is unavailable if no files is selected.</P>
+<P>When files are selected, use this command to copy selected files to clipboard. The selected files are copied when 
+file operation is executed (e.g., by using Windows Explorer). </P>
 
 <P>Copying data to the clipboard replaces the contents previously stored there.</P>
 

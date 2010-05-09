@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="locate32"
 	ProjectGUID="{CA6495C9-9B2D-406A-8DCD-9AF07EDD18FC}"
 	RootNamespace="locate32"
@@ -73,7 +73,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="locater.lib locatedb.lib"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateManifest="false"
 				GenerateDebugInformation="true"
@@ -160,7 +160,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="locater.lib locatedb.lib"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateManifest="false"
 				GenerateDebugInformation="true"
@@ -1282,6 +1282,10 @@
 			</File>
 			<File
 				RelativePath="..\hlp\hid_edit_invertselection.src"
+				>
+			</File>
+			<File
+				RelativePath="..\hlp\hid_edit_paste.src"
 				>
 			</File>
 			<File

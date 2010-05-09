@@ -228,6 +228,11 @@
 #define IDS_TOOLTIPFORDIRECTORYDELETED  503
 #define IDS_TOOLTIPDESCRIPTION          504
 #define IDS_TOOLTIPTARGET               505
+#define IDS_TOOLTIPAUTHOR               506
+#define IDS_TOOLTIPTITLE		        507
+#define IDS_TOOLTIPCOMMENTS             508
+#define IDS_TOOLTIPFILEVERSION	        509
+#define IDS_TOOLTIPPRODUCTVERSION       510
 #define IDC_NAMESTATIC                  601
 #define IDC_TYPESTATIC                  602
 #define IDC_LOOKINSTATIC                603
@@ -1176,10 +1181,10 @@
 #define IDM_ARRANGEDATE                 40019
 #define IDM_AUTOARRANGE                 40020
 #define IDM_LOOKINNEXTSELECTION         40021
-#define IDM_EDIT_CUT                    40022
+#define IDM_CUT							40022
 #define IDM_LOOKINPREVSELECTION			40023
 #define IDM_EDIT_SELECTALL              40024
-#define IDM_EDIT_COPY                   40025
+#define IDM_COPY						40025
 #define IDM_EDIT_INVERTSELECTION        40026
 #define IDM_PRESETSAVE                  40027
 #define IDM_PRESETREMOVE                40028
@@ -1190,6 +1195,7 @@
 #define IDM_SETTOOL						40034
 #define IDM_DATABASEINFO                40035
 #define IDM_DELETEPRIVATEDATA			40036
+#define IDM_PASTE						40037
 #define IDM_SAVERESULT                  40038
 #define IDM_HELPTOPICS					40039
 #define IDM_EXIT                        40040
@@ -1220,8 +1226,6 @@
 #define IDM_REMOVEDELETEDFILES          40074
 #define IDM_EXPLICITDATE				40075
 #define IDM_RELATIVEDATE				40077
-#define IDM_CUT							40078
-#define IDM_COPY						40079
 #define IDM_DEFSHORTCUTITEM             49000
 #define IDM_DEFMENUITEM                 50000
 #define IDM_DEFCONTEXTITEM              51000

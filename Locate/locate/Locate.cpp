@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2010 Janne Huttunen
-   database locater v3.1.9.11150              */
+   database locater v3.1.10.5090              */
 
-const char* szVersionStr="locate 3.1 RC3j build 9.11150";
+const char* szVersionStr="locate 3.1 RC3l build 10.5090";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -431,17 +431,38 @@ int wmain (int argc,wchar_t * argv[])
 				}
 				break;
 			case 't':
-			case 'T':
-                if (argv[i][2]==L'\0')
+			case 'T': // Extensions
 				{
-					if (i>=argc-1)
-						aExtensions.Add(allocemptyW());
+					LPCWSTR szExtensions=NULL;				
+					if (argv[i][2]==L'\0')
+					{
+						if (i>=argc-1)
+						{
+							aExtensions.Add(allocemptyW());
+							break;
+						}
+						else
+							szExtensions=argv[++i];
+					}
 					else
-						aExtensions.Add(alloccopy(argv[++i]));
+						szExtensions=argv[i]+2;
+
+					ASSERT_VALID(szExtensions);
+					
+					// Parse spaces
+					for (;;) 
+					{
+						int nLen=FirstCharIndex(szExtensions,L' ');
+						if (nLen==-1)
+						{
+							aExtensions.Add(alloccopy(szExtensions));
+							break;
+						}
+						aExtensions.Add(alloccopy(szExtensions,nLen));
+						szExtensions+=nLen+1;
+					}
+					break;
 				}
-                else
-                    aExtensions.Add(alloccopy(argv[i]+2));
-				break;
 			case L'r':
 				dwFlags|=LOCATE_NAMEREGULAREXPRESSION;
 				if (argv[i][2]==L'c' || argv[i][2]==L'C')

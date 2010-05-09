@@ -389,6 +389,22 @@ table#actionstable {
 .action_description {
     /*width: 60%;*/
 }
+table#detailstable {
+    background-color:#FFFFFF;
+	border-spacing: 0px;
+    border-collapse: collapse;
+	width: 95%;
+	margin: 12px 6px 16px 8px;
+}
+
+.detail_name {
+    width: 150px;
+}
+
+.detail_description {
+    /*width: 60%;*/
+}
+
     
 table#variablestable {
     background-color:#FFFFFF;

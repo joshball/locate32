@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="updatedb"
 	ProjectGUID="{3CE2632C-D046-4536-AA45-0AF46123039E}"
 	RootNamespace="updatedb"
@@ -66,7 +66,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\Updtdb32.exe"
 				Version=""
-				LinkIncremental="2"
+				LinkIncremental="1"
 				GenerateManifest="false"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"
@@ -144,7 +144,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)\Updtdb32.exe"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				GenerateManifest="false"
 				GenerateDebugInformation="true"
 				GenerateMapFile="true"

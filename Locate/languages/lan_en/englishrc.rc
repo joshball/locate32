@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,9,12120
- PRODUCTVERSION 3,1,9,12120
+ FILEVERSION 3,1,10,5090
+ PRODUCTVERSION 3,1,10,5090
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 RC3j build 9.11150"
+            VALUE "FileVersion", "3.1 RC3l build 10.5090"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2010 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 RC3j build 9.12120"
+            VALUE "ProductVersion", "3.1 RC3l build 10.5090"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -430,7 +430,7 @@ BEGIN
     CONTROL         "&Match case",IDC_MATCHCASE,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,255,70,10
     CONTROL         "&Use entire path",IDC_USEWHOLEPATH,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,198,255,89+10,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,198,255,82+10,10
 	CONTROL         "R&eplace spaces with '*'",IDC_REPLACESPACES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,270,119,10
     LTEXT           "&Check:",IDC_CHECKINLABEL,128,270,54,10
@@ -1040,8 +1040,9 @@ BEGIN
     END
     POPUP "&Edit"
     BEGIN
-        MENUITEM "Cu&t",         IDM_EDIT_CUT
-        MENUITEM "&Copy",        IDM_EDIT_COPY
+        MENUITEM "Cu&t",         IDM_CUT
+        MENUITEM "&Copy",        IDM_COPY
+        MENUITEM "&Paste",       IDM_PASTE
         MENUITEM SEPARATOR
         MENUITEM "Select &All",   IDM_EDIT_SELECTALL
         MENUITEM "&Invert Selection", IDM_EDIT_INVERTSELECTION
@@ -1328,7 +1329,7 @@ BEGIN
 	IDS_LISTCATEGORY		"Category"
 	IDS_LISTPAGES			"Pages"
 	IDS_LISTCOMMENTS		"Comments"
-	IDS_LISTDESCRIPTION		"Description"
+	IDS_LISTDESCRIPTION		"File Description"
 	IDS_LISTFILEVERSION		"File Version"
 	IDS_LISTPRODUCTNAME		"Product Name"
 	IDS_LISTPRODUCTVERSION	"Product Version"
@@ -1387,7 +1388,7 @@ BEGIN
     IDS_DIRECTORIESFOUND    "%d directories found"
     IDS_ITEMSFOUND          "%d files and %d directories found"
 	IDS_NORESULTS	        "no results"
-    IDS_DELETEDFILE         "Deleted / Moved / Offline file"
+    IDS_DELETEDFILE         "Deleted / Moved / Offline"
     IDS_UNKNOWNTYPE         "File"
     IDS_DIRECTORYTYPE       "Directory"
 	IDS_SYMLINK				"Symbolic link"
@@ -1510,12 +1511,18 @@ END
 
 STRINGTABLE 
 BEGIN
-	IDS_TOOLTIPFORFILE				"File: %s\r\nPath: %s\r\nType: %s\r\nDate Modified: %s\r\nSize: %s"
-	IDS_TOOLTIPFORFILEDELETED		"File: %s\r\nPath: %s\r\nType: %s"
-	IDS_TOOLTIPFORDIRECTORY			"Directory: %s\r\nPath: %s\r\nType: %s\r\nDate Modified: %s"
-	IDS_TOOLTIPFORDIRECTORYDELETED	"Directory: %s\r\nPath: %s\r\nType: %s"
+	IDS_TOOLTIPFORFILE				"File: %1:s\r\nPath: %2:s\r\nType: %3:s\r\nDate Modified: %4:s\r\nSize: %5:s  Database: %6:s"
+	IDS_TOOLTIPFORFILEDELETED		"File: %1:s\r\nPath: %2:s\r\nType: %3:s  Database: %4:s"
+	IDS_TOOLTIPFORDIRECTORY			"Directory: %1:s\r\nPath: %2:s\r\nType: %3:s\r\nDate Modified: %4:s  Database: %5:s"
+	IDS_TOOLTIPFORDIRECTORYDELETED	"Directory: %1:s\r\nPath: %2:s\r\nType: %3:s  Database: %4:s"
 	IDS_TOOLTIPDESCRIPTION			"Description:"
 	IDS_TOOLTIPTARGET				"Target:"
+	IDS_TOOLTIPAUTHOR               "Author:"
+	IDS_TOOLTIPTITLE		        "Title:" 
+	IDS_TOOLTIPCOMMENTS             "Comments:" 
+	IDS_TOOLTIPPRODUCTVERSION		        "Product version:" 
+	IDS_TOOLTIPFILEVERSION		        "File version:" 
+
 END
 
 STRINGTABLE 
