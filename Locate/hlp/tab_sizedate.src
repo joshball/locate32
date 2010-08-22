@@ -29,6 +29,12 @@ older than a given date are ignored. You can specify explicit date or
 relative date (with respect to the current date) by pressing the down arrow 
 button on the right of the date field.
 </P>
+<P>
+<b>Note:</b> all dates before 1.1.1980 are consider as same and are shown as "Before 1.1.1980". 
+If you specify, say, 1.1.1970 as "files older than" date, all files older than 1.1.1980 are shown.
+</P>
+
+
 
 <div id="controls">
 <H2><A NAME="ts_filesolderthan"></A>$DLGSIZEDATE_FILEDATEATMOST@M$</H2>
@@ -37,6 +43,10 @@ Files and folder which modification, creation or last access dates are
 newer than a given date are ignored. You can specify explicit date or 
 relative date (with respect to the current date) by pressing the down arrow 
 button on the right of the date field.</P>
+<P>
+<b>Note:</b> all dates before 1.1.1980 are consider as same and are shown as "Before 1.1.1980". 
+If you specify, say, 1.1.1970 as "files newer than" date, all files newer than 31.12.1979 are shown.
+</P>
 
 
 </div>

@@ -851,13 +851,32 @@ void CLocatedItem::UpdateFileTime()
 			DebugCloseHandle(dhtFileFind,hFind,GetPath());
 			FILETIME ft2;
 			
-			
 			FileTimeToLocalFileTime(&fd.ftLastWriteTime,&ft2);
-			FileTimeToDosDateTime(&ft2,&wModifiedDate,&wModifiedTime);
+			if (ft2.dwHighDateTime<27846560)// Date before 1.1.1980
+			{
+				wModifiedDate=-2;
+				wModifiedTime=-2;
+			}
+			else
+				FileTimeToDosDateTime(&ft2,&wModifiedDate,&wModifiedTime);
+			
 			FileTimeToLocalFileTime(&fd.ftCreationTime,&ft2);
-			FileTimeToDosDateTime(&ft2,&wCreatedDate,&wCreatedTime);
+			if (ft2.dwHighDateTime<27846560)// Date before 1.1.1980
+			{
+				wModifiedDate=-2;
+				wModifiedTime=-2;
+			}
+			else
+				FileTimeToDosDateTime(&ft2,&wCreatedDate,&wCreatedTime);
+			
 			FileTimeToLocalFileTime(&fd.ftLastAccessTime,&ft2);
-			FileTimeToDosDateTime(&ft2,&wAccessedDate,&wAccessedTime);
+			if (ft2.dwHighDateTime<27846560)// Date before 1.1.1980
+			{
+				wModifiedDate=-2;
+				wModifiedTime=-2;
+			}
+			else
+				FileTimeToDosDateTime(&ft2,&wAccessedDate,&wAccessedTime);
 			
 			if (wAccessedTime==0)
 				wAccessedTime=WORD(-1);

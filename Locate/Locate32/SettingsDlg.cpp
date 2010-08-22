@@ -5458,6 +5458,9 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::CAdvancedDial
 		// Setting focus to list
 		SetFocus(IDC_DIRECTORYNAME);
 	}
+
+	
+
 }
 
 ////////////////////////////////////////

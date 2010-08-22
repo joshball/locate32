@@ -1,7 +1,7 @@
 /* Copyright (c) 1997-2010 Janne Huttunen
-   database locater v3.1.10.5090              */
+   database locater v3.1.10.8220              */
 
-const char* szVersionStr="locate 3.1 RC3l build 10.5090";
+const char* szVersionStr="locate 3.1 RC3m build 10.8220";
 
 #include <hfclib.h>
 #ifndef WIN32
@@ -35,6 +35,7 @@ HANDLE hStdOut;
 HANDLE hStdIn;
 volatile BOOL nShouldQuit=FALSE;
 
+UINT g_uiOriginalConsoleCP;
 LPSTR g_szRegKey;
 LPSTR g_szRegFile;
 BYTE g_bFileIsReg;
@@ -142,6 +143,18 @@ BOOL CALLBACK LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ue
 {          
 	switch (crReason)
 	{
+	case ScanningDatabase:
+		if (IsUnicodeSystem())
+		{
+			BOOL (WINAPI *pSetConsoleOutputCP)(UINT)=
+				(BOOL (WINAPI *)(UINT))GetProcAddress(GetModuleHandle("kernel32.dll"),"SetConsoleOutputCP");
+
+			if (pSetConsoleOutputCP!=NULL)
+				pSetConsoleOutputCP(pLocater->IsCurrentDatabaseUnicode()?CP_UTF8:g_uiOriginalConsoleCP);
+			else
+				_wsetlocale(LC_CTYPE,L".OCP"); 
+		}
+		break;
 	case ErrorOccured:
 		switch (ue)
 		{
@@ -161,36 +174,6 @@ BOOL CALLBACK LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ue
 		break;
 	}
     return TRUE;
-}
-
-BOOL CALLBACK LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater)
-{
-	if (nShouldQuit)
-		return FALSE;
-
-	if (dwMainFlags&flagOutputIsPaged)
-	{
-#ifdef WIN32
-		if (Lines>int(GetConsoleLines()-1))
-#else
-		if (Lines>(_farpeekb(_dos_ds,0x484)-1))
-#endif
-		{
-			DWORD nTmp=1;char szbuf[2];
-			SetConsoleMode(hStdIn,0);
-			ReadConsole(hStdIn,szbuf,1,&nTmp,NULL);
-			SetConsoleMode(hStdIn,ENABLE_PROCESSED_INPUT);
-			if (szbuf[0]==3) // Ctrl+C
-				return FALSE;
-			Lines=0;
-		}
-		Lines++;
-	}
-	if (bFolder)
-		printf("%s\\%s\n",pLocater->GetCurrentPath(),pLocater->GetFolderName());
-	else
-		printf("%s\\%s\n",pLocater->GetCurrentPath(),pLocater->GetFileName());
-	return TRUE;
 }
 
 #ifdef WIN32
@@ -240,7 +223,7 @@ void showverbose(LPCWSTR* ppStrings,UINT nStrings,LPCWSTR* ppExtensions,UINT nEx
 	putchar('\n');
 }
 
-BOOL CALLBACK LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater)
+BOOL CALLBACK LocateFoundProc(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater)
 {
 	if (nShouldQuit)
 		return FALSE;
@@ -264,9 +247,52 @@ BOOL CALLBACK LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pL
 		Lines++;
 	}
 	if (bFolder)
+		printf("%s\\%s\n",pLocater->GetCurrentPath(),pLocater->GetFolderName());
+	else
+		printf("%s\\%s\n",pLocater->GetCurrentPath(),pLocater->GetFileName());
+	return TRUE;
+}
+
+
+
+BOOL CALLBACK LocateFoundProcW(DWORD_PTR dwParam,BOOL bFolder,const CLocater* pLocater)
+{
+	if (nShouldQuit)
+		return FALSE;
+
+	if (dwMainFlags&flagOutputIsPaged)
+	{
+#ifdef WIN32
+		if (Lines>int(GetConsoleLines()-1))
+#else
+		if (Lines>(_farpeekb(_dos_ds,0x484)-1))
+#endif
+		{
+			DWORD nTmp=1;char szbuf[2];
+			SetConsoleMode(hStdIn,0);
+			ReadConsole(hStdIn,szbuf,1,&nTmp,NULL);
+			SetConsoleMode(hStdIn,ENABLE_PROCESSED_INPUT);
+			if (szbuf[0]==3) // Ctrl+C
+				return FALSE;
+			Lines=0;
+		}
+		Lines++;
+	}
+	
+	
+	/*if (bFolder)
 		wprintf(L"%s\\%s\n",pLocater->GetCurrentPathW(),pLocater->GetFolderNameW());
 	else
-		wprintf(L"%s\\%s\n",pLocater->GetCurrentPathW(),pLocater->GetFileNameW());
+		wprintf(L"%s\\%s\n",pLocater->GetCurrentPathW(),pLocater->GetFileNameW());*/
+	
+	
+	
+
+	if (bFolder)
+		wprintf(L"%S\\%S\n",(LPCSTR)W2UTF8(pLocater->GetCurrentPathW()),(LPCSTR)W2UTF8(pLocater->GetFolderNameW()));
+	else
+		wprintf(L"%S\\%S\n",(LPCSTR)W2UTF8(pLocater->GetCurrentPathW()),(LPCSTR)W2UTF8(pLocater->GetFileNameW()));
+
 	return TRUE;
 }
 
@@ -279,13 +305,16 @@ int wmain (int argc,wchar_t * argv[])
 	CAppData::stdfunc();
 #endif
 
-	_wsetlocale(LC_CTYPE,L".OCP"); 
+	//_wsetlocale(LC_CTYPE,L".OCP"); 
 
 #ifdef WIN32
 	hStdOut=GetStdHandle(STD_OUTPUT_HANDLE);
 	hStdIn=GetStdHandle(STD_INPUT_HANDLE);
 	SetConsoleMode(hStdIn,ENABLE_PROCESSED_INPUT);
 	SetConsoleCtrlHandler(HandlerRoutine,TRUE);
+
+	g_uiOriginalConsoleCP=GetConsoleOutputCP();
+	
 #endif
 
 	InitLocaterLibrary();
@@ -1033,5 +1062,13 @@ int wmain (int argc,wchar_t * argv[])
 	FinishRegKey();
 
 	FreeLibrary(GetLanguageSpecificResourceHandle());
+
+	if (IsUnicodeSystem())
+	{
+		BOOL (WINAPI *pSetConsoleOutputCP)(UINT)=
+			(BOOL (WINAPI *)(UINT))GetProcAddress(GetModuleHandle("kernel32.dll"),"SetConsoleOutputCP");
+		if (pSetConsoleOutputCP!=NULL)
+			pSetConsoleOutputCP(g_uiOriginalConsoleCP);
+	}
 	return 0;
 }

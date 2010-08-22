@@ -27,8 +27,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 3,1,10,5090
- PRODUCTVERSION 3,1,10,5090
+ FILEVERSION 3,1,10,8220
+ PRODUCTVERSION 3,1,10,8220
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x3L
@@ -44,12 +44,12 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "FileDescription", "English language file for Locate32"
-            VALUE "FileVersion", "3.1 RC3l build 10.5090"
+            VALUE "FileVersion", "3.1 RC3m build 10.8220"
             VALUE "InternalName", "lan_en"
             VALUE "LegalCopyright", "Copyright © 1997-2010 Janne Huttunen"
             VALUE "OriginalFilename", "lan_en.dll"
             VALUE "ProductName", "Locate32"
-            VALUE "ProductVersion", "3.1 RC3l build 10.5090"
+            VALUE "ProductVersion", "3.1 RC3m build 10.8220"
             VALUE "ProvidesLanguage", "English"
         END
     END
@@ -1878,7 +1878,7 @@ BEGIN
 	IDS_ADVSETSELECTPROGRAM			"Select a program"
 	IDS_ADVSETALLOWINPLACERENAMING	"Explorer style renaming"
 	IDS_ADVSETHEADERINALLVIEWMODES  "Show column headers in all view modes"
-	IDS_ADVSETICONSNOFILEACCESS		"Avoid to access files when reading icons "
+	IDS_ADVSETICONSNOFILEACCESS		"Avoid file access when reading icons "
 	IDS_ADVSETUSEDEFDIRECTORYICON	"Use default icons for directories (use with slow network drives)"
 	IDS_ADVSETWHILESORTINGDONOTREADINFO	"Do not read information from files when sorting results"
 	IDS_ADVSETDONTRESOLVEDRIVEICONS	"Do not resolve icon for local drives"
@@ -2196,6 +2196,7 @@ BEGIN
 	IDS_SECOND					"'nd"
 	IDS_THIRD					"'rd"
 	IDS_NTH						"'th"
+   	IDS_OLDFILE					"Before 1.1.1980"
    	IDS_DOCUMENTFOLDERS			"Document Folders"
     IDS_GETFOLDER				"Get Folder:"
 	IDS_EVERYWERE				"Everywhere"

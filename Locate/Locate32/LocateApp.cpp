@@ -1409,6 +1409,11 @@ LPWSTR CLocateApp::FormatDateAndTimeString(WORD wDate,WORD wTime)
 	DWORD dwDateLen=0,dwTimeLen=0;
 
 	// First, format date to szDate
+	
+	// If wDate is -2, file date older than 1.1.1980
+	if (wDate==WORD(-2))
+		return allocstringW(IDS_OLDFILE);
+
 	// If wDate is 0 or -1, skip date
 	if (wDate!=WORD(-1) && wDate!=0)
 	{

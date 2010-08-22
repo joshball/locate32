@@ -1811,7 +1811,7 @@ CLocater* CLocateDlg::ResolveParametersAndInitializeLocater(CArrayFAP<LPWSTR>& a
 	{
 		for (int i=0;i<aExtensions.GetSize();i++)
 		{
-			if (aExtensions[0][0]==L'-')
+			if (aExtensions[i][0]==L'-')
 			{
 				pLocater->AddAdvancedFlags(LOCATE_LOGICALOPERATIONSINEXT);
 				break;
@@ -1900,7 +1900,7 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 	
 	switch (crReason)
 	{
-	case BeginningDatabase:
+	case StartedDatabase:
 		while (GetLocateApp()->IsWritingDatabases())
 		{
 			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2W(IDS_LOCATINGWAITDBWRITING),STATUSBAR_OPERATIONSTATUS,0);
@@ -2156,7 +2156,7 @@ BOOL CLocateDlg::LocateInstantProc(DWORD_PTR dwParam,CallingReason crReason,Upda
 {
 	switch (crReason)
 	{
-	case BeginningDatabase:
+	case StartedDatabase:
 		while (GetLocateApp()->IsWritingDatabases())
 		{
 			((CLocateDlg*)dwParam)->m_pStatusCtrl->SetText(ID2W(IDS_LOCATINGWAITDBWRITING),STATUSBAR_OPERATIONSTATUS,0);

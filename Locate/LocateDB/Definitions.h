@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2010 Janne Huttunen
-   database updater v3.1.9.6070              */
+   database updater v3.1.10.8220              */
 
 #if !defined(DBDEFINITIONS_H)
 #define DBDEFINITIONS_H
@@ -12,11 +12,11 @@
 enum CallingReason {
 	Initializing=0,
 	ClassShouldDelete=1,
-	StartedDatabase=2,
+	StartedDatabase=2, // New database, header info not read
 	FinishedDatabase=3,
 	FinishedUpdating=4,
 	FinishedLocating=4,
-	BeginningDatabase=5, 
+	ScanningDatabase=5, // Header info has been read
 	ErrorOccured=6,
 	RootChanged=7,
 

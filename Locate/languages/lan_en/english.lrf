@@ -31,7 +31,7 @@ CODEPAGE=1252
 ORIGINALFILENAME=lan_en.dll
 LEGALCOPYRIGHT=Copyright © 1997-2010 Janne Huttunen
 INTERNALNAME=lan_en
-FILEVERSION=3.1 RC3l build 10.5090
+FILEVERSION=3.1 RC3m build 10.8220
 FILEDESCRIPTION=English language file for Locate32
 
 
@@ -391,7 +391,7 @@ STRADVANCEDSETTINGS_DONTSHOWEXTINRENAME=Do not show an extension in the rename d
 STRADVANCEDSETTINGS_SHOWCRITICALERRORS=Show critical errors (e.g., cannot write database, ...)
 STRADVANCEDSETTINGS_SHOWNONCRITICALERRORS=Show non-critical errors (e.g., drive/directory is not available, ...)
 STRADVANCEDSETTINGS_CONFIRMATIONFORUPDATEDATABASES=Ask confirmation when "Update databases" is chosen
-STRADVANCEDSETTINGS_ICONSNOFILEACCESS=Avoid to access files when reading icons 
+STRADVANCEDSETTINGS_ICONSNOFILEACCESS=Avoid file access when reading icons 
 STRADVANCEDSETTINGS_USEDEFAULTDIRECTORYICON=Use default icons for directories (use with slow network drives)
 STRADVANCEDSETTINGS_SIMPLEFILEMENU=Simple File menu (no special shell items for files)
 STRADVANCEDSETTINGS_DONTMOVETOOLTIPS=Prevent moving tooltips (use if tooltips steal focus)
@@ -1178,6 +1178,7 @@ STR_FIRST='st
 STR_SECOND='nd
 STR_THIRD='rd
 STR_NTH='th
+STR_OLDFILE=Before 1.1.1980
 
 
 ###########################

@@ -581,6 +581,21 @@ public:
 	operator LPCWSTR() const;
 };
 
+class W2UTF8 
+{
+private:
+	char* pAStr;
+
+public:
+	W2UTF8(LPCWSTR sA);
+	W2UTF8(LPCWSTR sA,int len);
+	W2UTF8(CStringW& sA);
+
+	~W2UTF8();
+
+	operator LPCSTR() const;
+};
+
 class ID2A
 {
 private:

@@ -473,7 +473,6 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 		
         // Found
 		LPCWSTR pPtr=szExtraBlock+i+9;
-        int length,keylen;
 
 		CDatabase* pDatabase=new CDatabase;
 		CArrayFAP<LPWSTR> aRoots;
@@ -481,22 +480,28 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 
 		for (;;)
 		{
-			// Counting field length
-            for (length=0;pPtr[length]!=L'$' && pPtr[length]!=L'$';length++);
-			if (length==0)
-				break;
+			LPCWSTR pKey=pPtr;		
+			int length;
+			CStringW sValue;
 
-			// Find ':'
-			for (keylen=0;keylen<length && pPtr[keylen]!=L':';keylen++);
-			if (pPtr[keylen]!=L':')
+			// Determine key length, i.e., find ':'
+			for (length=0;pPtr[length]!=L':' && pPtr[length]!=L'$' && pPtr[length]!=L'\0';length++);
+			if (pPtr[length]!=L':')
 			{
-				// Not correct field
-				pPtr+=length+1;
-				continue;
+				// Not correct key
+				break;
 			}
-			CStringW sValue(pPtr+keylen+1,length-keylen-1);
+			pPtr+=length+1;
+		    
+			
+			while (*pPtr!='$') 
+			{
+				if (*pPtr=='*')
+					++pPtr;
+				sValue << *(pPtr++);
+			}
 
-			switch (*pPtr)
+			switch (*pKey)
 			{
 			case L'T': // Thread
 			case L't': 
@@ -617,7 +622,7 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 				break;
 			case L'A': // Archive
 			case L'a':
-				if (pPtr[1]==L'F')
+				if (pKey[1]==L'F')
 				{
 					// File:
 					pDatabase->m_ArchiveType=CDatabase::archiveFile;
@@ -651,21 +656,21 @@ CDatabase* CDatabase::FromExtraBlock(LPCWSTR szExtraBlock)
 				break;
 			case L'I':
 			case L'i':
-                if (pPtr[1]==L'F')
+                if (pKey[1]==L'F')
 					pDatabase->m_szIncludedFiles=sValue.GiveBuffer();
-				else if (pPtr[1]==L'D')
+				else if (pKey[1]==L'D')
 					pDatabase->m_szIncludedDirectories=sValue.GiveBuffer();
 				break;
 			case L'E':
 			case L'e':
-                if (pPtr[1]==L'F')
+                if (pKey[1]==L'F')
 					pDatabase->m_szExcludedFiles=sValue.GiveBuffer();
 				else
 					pDatabase->m_aExcludedDirectories.Add(sValue.GiveBuffer());
 				break;
 			}
 
-			pPtr+=length+1;
+			pPtr++;
 				
 		}
 
@@ -1397,8 +1402,8 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		str << L"N:";
 		for (int i=0;m_szName[i]!=L'\0';i++)
 		{
-			if (m_szName[i]==L'$')
-				str << L'\\';
+			if (m_szName[i]==L'$' || m_szName[i]==L'*')
+				str << L'*';
 			str << m_szName[i];
 		}
 		str << L'$';
@@ -1410,8 +1415,8 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		str << L"AF:";
 		for (int i=0;m_szArchiveName[i]!=L'\0';i++)
 		{
-			if (m_szArchiveName[i]==L'$')
-				str << L'\\';
+			if (m_szArchiveName[i]==L'$' || m_szArchiveName[i]==L'*')
+				str << L'*';
 			str << m_szArchiveName[i];
 		}
 		str << L'$';
@@ -1423,8 +1428,8 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		str << L"C:";
 		for (int i=0;m_szCreator[i]!=L'\0';i++)
 		{
-			if (m_szCreator[i]==L'$')
-				str << L'\\';
+			if (m_szCreator[i]==L'$' || m_szCreator[i]==L'*')
+				str << L'*';
 			str << m_szCreator[i];
 		}
 		str << L'$';
@@ -1435,8 +1440,8 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		str << L"D:";
 		for (int i=0;m_szDescription[i]!=L'\0';i++)
 		{
-			if (m_szDescription[i]==L'$')
-				str << L'\\';
+			if (m_szDescription[i]==L'$' || m_szDescription[i]==L'*')
+				str << L'*';
 			str << m_szDescription[i];
 		}
 		str << L'$';
@@ -1453,8 +1458,8 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 			str << L"R:";
 			while (*pStr!=L'\0')
 			{
-				if (*pStr==L'$')
-					str << L'$';
+				if (*pStr==L'$' || *pStr==L'*')
+					str << L'*';
 				str << *pStr;
 				pStr++;
 			}
@@ -1470,8 +1475,8 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		str << L"IF:";
 		for (int i=0;m_szIncludedFiles[i]!=L'\0';i++)
 		{
-			if (m_szIncludedFiles[i]==L'$')
-				str << L'\\';
+			if (m_szIncludedFiles[i]==L'$' || m_szIncludedFiles[i]==L'*')
+				str << L'*';
 			str << m_szIncludedFiles[i];
 		}
 		str << L'$';
@@ -1484,8 +1489,8 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		str << L"ID:";
 		for (int i=0;m_szIncludedDirectories[i]!=L'\0';i++)
 		{
-			if (m_szIncludedDirectories[i]==L'$')
-				str << L'\\';
+			if (m_szIncludedDirectories[i]==L'$' || m_szIncludedDirectories[i]==L'*')
+				str << L'*';
 			str << m_szIncludedDirectories[i];
 		}
 		str << L'$';
@@ -1498,8 +1503,8 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		str << L"EF:";
 		for (int i=0;m_szExcludedFiles[i]!=L'\0';i++)
 		{
-			if (m_szExcludedFiles[i]==L'$')
-				str << L'\\';
+			if (m_szExcludedFiles[i]==L'$' || m_szExcludedFiles[i]==L'*')
+				str << L'*';
 			str << m_szExcludedFiles[i];
 		}
 		str << L'$';
@@ -1513,8 +1518,8 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		str << L"E:";
 		for (int j=0;m_aExcludedDirectories[i][j]!=L'\0';j++)
 		{
-			if (m_aExcludedDirectories[i][j]==L'$')
-				str << L'\\';
+			if (m_aExcludedDirectories[i][j]==L'$' || m_aExcludedDirectories[i][j]==L'*')
+				str << L'*';
 			str << m_aExcludedDirectories[i][j];
 		}
 		str << L'$';
@@ -1527,8 +1532,8 @@ LPWSTR CDatabase::ConstructExtraBlock(DWORD* pdwLen) const
 		str << L"M:";
 		for (int i=0;m_szRootMaps[i]!=L'\0';i++)
 		{
-			if (m_szRootMaps[i]==L'$')
-				str << L'\\';
+			if (m_szRootMaps[i]==L'$' || m_szRootMaps[i]==L'*')
+				str << L'*';
 			str << m_szRootMaps[i];
 		}
 		str << L'$';

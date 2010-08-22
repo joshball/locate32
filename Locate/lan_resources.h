@@ -57,6 +57,7 @@
 #define IDS_REGULAREXPRESSION           42
 #define IDS_REGULAREXPRESSIONFULLPATH   43
 #define IDS_DEFAULT                     44
+#define IDS_OLDFILE						45
 #define IDS_FIRST						46
 #define IDS_SECOND						47
 #define	IDS_THIRD						48

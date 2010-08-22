@@ -434,7 +434,7 @@ public:
 	CFolderDialog(UINT nTitleID,UINT ulFlags,LPCITEMIDLIST pidlRoot=NULL);
 	virtual ~CFolderDialog();
 
-	void DontFreeLPIL() { m_lpil=NULL; } // GetFolder() must call before this
+	void DontFreeLPIL() { m_lpil=NULL; } // GetFolder() must be called before this
 	union {
 		BROWSEINFOA m_bi;
 		BROWSEINFOW m_biw;

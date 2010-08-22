@@ -1,5 +1,5 @@
 /* Copyright (c) 1997-2010 Janne Huttunen
-   database locater v3.1.9.6070              */
+   database locater v3.1.10.8220              */
 
 #include <HFCLib.h>
 
@@ -296,7 +296,7 @@ BOOL CLocater::LocatingProc()
 		m_wCurrentDatabaseID=m_pCurrentDatabase->wID;
 		m_wCurrentRootIndex=0;
         
-		m_pProc(m_dwData,BeginningDatabase,ueStillWorking,(DWORD_PTR)m_pCurrentDatabase->szName,this);
+		m_pProc(m_dwData,StartedDatabase,ueStillWorking,(DWORD_PTR)m_pCurrentDatabase->szName,this);
 
 
 		
@@ -340,6 +340,8 @@ BOOL CLocater::LocatingProc()
 			dbFile->Read(dwBlockSize);
 			dbFile->Seek(dwBlockSize,CFile::current);
 			
+			m_pProc(m_dwData,ScanningDatabase,ueStillWorking,(DWORD_PTR)m_pCurrentDatabase->szName,this);
+
 			
 			
 			// Reading root data
@@ -1031,7 +1033,8 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingFor() const
 				else if (ContainString(szExtension,m_ppExtensions[i]))
 				{
 					bFound=TRUE;
-					break;
+					if (!(m_dwFlags&LOCATE_LOGICALOPERATIONSINEXT))
+						break;
 				}
 			}
 		}
@@ -1232,7 +1235,8 @@ inline BOOL CLocater::IsFileNameWhatAreWeLookingForW() const
 				else if (ContainString(szExtension,m_ppExtensions[i]))
 				{
 					bFound=TRUE;
-					break;
+					if (!(m_dwFlags&LOCATE_LOGICALOPERATIONSINEXT))
+						break;
 				}
 			}
 		}
@@ -1634,39 +1638,40 @@ inline BOOL CLocater::IsFileAdvancedWhatAreWeLookingFor() const
 	}
 	if (m_wMaxDate!=WORD(-1))
 	{
+		WORD wDate;
 		if (m_dwFlags&LOCATE_MAXCREATIONDATE)
-		{
-			if (GetFileCreatedDate()>m_wMaxDate)
-				return FALSE;
-		}
+			wDate=GetFileCreatedDate();
 		else if (m_dwFlags&LOCATE_MAXACCESSDATE)
-		{
-			if (GetFileAccessedDate()>m_wMaxDate)
-				return FALSE;
-		}
+			wDate=GetFileAccessedDate();
 		else
+			wDate=GetFileModifiedDate();
+		
+		if (m_wMaxDate==WORD(-2))
 		{
-			if (GetFileModifiedDate()>m_wMaxDate)
+			// Files before 1.1.1980
+			if (wDate!=WORD(-2))
 				return FALSE;
-		}
+		} 
+		else if (wDate!=WORD(-2) && wDate>m_wMaxDate)
+			return FALSE;
 	}
 	if (m_wMinDate!=WORD(-1))
 	{
+		WORD wDate;
 		if (m_dwFlags&LOCATE_MINCREATIONDATE)
-		{
-			if (GetFileCreatedDate()<m_wMinDate)
-				return FALSE;
-		}
+			wDate=GetFileCreatedDate();
 		else if (m_dwFlags&LOCATE_MINACCESSDATE)
-		{
-			if (GetFileAccessedDate()<m_wMinDate)
-				return FALSE;
-		}
+			wDate=GetFileAccessedDate();
 		else
+			wDate=GetFileModifiedDate();
+		
+		if (m_wMinDate==WORD(-2))
 		{
-			if (GetFileModifiedDate()<m_wMinDate)
+			if (wDate==WORD(-2))
 				return FALSE;
 		}
+		else if (wDate==WORD(-2) || wDate<m_wMinDate)
+			return FALSE;
 	}
 	if (m_pContentSearcher!=NULL)
 	{
@@ -1700,39 +1705,40 @@ inline BOOL CLocater::IsFileAdvancedWhatAreWeLookingForW() const
 	}
 	if (m_wMaxDate!=WORD(-1))
 	{
+		WORD wDate;
 		if (m_dwFlags&LOCATE_MAXCREATIONDATE)
-		{
-			if (GetFileCreatedDateW()>m_wMaxDate)
-				return FALSE;
-		}
+			wDate=GetFileCreatedDateW();
 		else if (m_dwFlags&LOCATE_MAXACCESSDATE)
-		{
-			if (GetFileAccessedDateW()>m_wMaxDate)
-				return FALSE;
-		}
+			wDate=GetFileAccessedDateW();
 		else
+			wDate=GetFileModifiedDateW();
+		
+		if (m_wMaxDate==WORD(-2))
 		{
-			if (GetFileModifiedDateW()>m_wMaxDate)
+			// Files before 1.1.1980
+			if (wDate!=WORD(-2))
 				return FALSE;
-		}
+		} 
+		else if (wDate!=WORD(-2) && wDate>m_wMaxDate)
+			return FALSE;
 	}
 	if (m_wMinDate!=WORD(-1))
 	{
+		WORD wDate;
 		if (m_dwFlags&LOCATE_MINCREATIONDATE)
-		{
-			if (GetFileCreatedDateW()<m_wMinDate)
-				return FALSE;
-		}
+			wDate=GetFileCreatedDateW();
 		else if (m_dwFlags&LOCATE_MINACCESSDATE)
-		{
-			if (GetFileAccessedDateW()<m_wMinDate)
-				return FALSE;
-		}
+			wDate=GetFileAccessedDateW();
 		else
+			wDate=GetFileModifiedDateW();
+		
+		if (m_wMinDate==WORD(-2))
 		{
-			if (GetFileModifiedDateW()<m_wMinDate)
+			if (wDate==WORD(-2))
 				return FALSE;
 		}
+		else if (wDate==WORD(-2) || wDate<m_wMinDate)
+			return FALSE;
 	}
 	if (m_pContentSearcher!=NULL)
 	{

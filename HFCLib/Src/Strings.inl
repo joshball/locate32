@@ -541,6 +541,44 @@ inline W2A::operator LPCSTR() const
 }
 
 ///////////////////////////////////////////
+// W2UTF8
+
+inline W2UTF8::W2UTF8(LPCWSTR sA)
+{
+	int nLen=WideCharToMultiByte(CP_UTF8,0,sA,-1,NULL,0,NULL,NULL);
+	pAStr=new char[nLen+1];
+	WideCharToMultiByte(CP_UTF8,0,sA,-1,pAStr,nLen+1,NULL,NULL);
+}
+
+inline W2UTF8::W2UTF8(LPCWSTR sA,int len)
+{
+	int nLen=WideCharToMultiByte(CP_UTF8,0,sA,len,NULL,0,NULL,NULL);
+	pAStr=new char[nLen+1];
+	WideCharToMultiByte(CP_UTF8,0,sA,-1,pAStr,nLen+1,NULL,NULL);
+	pAStr[nLen]='\0';
+}
+
+
+inline W2UTF8::W2UTF8(CStringW& sA)
+{
+	int nLen=WideCharToMultiByte(CP_UTF8,0,sA,sA.GetLength(),NULL,0,NULL,NULL);
+	pAStr=new char[nLen+1];
+	WideCharToMultiByte(CP_UTF8,0,sA,-1,pAStr,nLen+1,NULL,NULL);
+	pAStr[nLen]='\0';
+}
+
+
+inline W2UTF8::~W2UTF8()
+{
+	if (pAStr!=NULL)
+		delete[] pAStr;
+}
+
+inline W2UTF8::operator LPCSTR() const
+{
+	return pAStr;
+}
+///////////////////////////////////////////
 // A2W
 
 inline A2W::A2W(LPCSTR sA)

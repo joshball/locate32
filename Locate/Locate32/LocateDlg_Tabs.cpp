@@ -995,8 +995,6 @@ BOOL CLocateDlg::CNameDlg::GetNameExtensionsAndDirectories(CStringW& sName,CArra
 		aExtensions.Add(allocemptyW());
 	else
 	{
-		BOOL bPlusOrMinusFound=FALSE; // String contains logical operations '+' and '-':
-
 		CStringW sType;
 		m_Type.GetText(sType);
 	
@@ -3072,7 +3070,7 @@ BOOL CLocateDlg::CSizeDateDlg::SetSizesAndDaterForLocater(CLocater* pLocater)
 	{
 		SYSTEMTIME st;
 		SendDlgItemMessage(IDC_MINDATE,DTM_GETSYSTEMTIME,0,(LPARAM)&st);
-		wMinDate=SYSTEMTIMETODOSDATE(st);
+		wMinDate=st.wYear<1980?WORD(-2):SYSTEMTIMETODOSDATE(st);
 		int nCurSel=(int)SendDlgItemMessage(IDC_MINTYPE,CB_GETCURSEL,0,0);
 		if (nCurSel==1)
 			dwFlags|=LOCATE_MINCREATIONDATE;
@@ -3083,7 +3081,8 @@ BOOL CLocateDlg::CSizeDateDlg::SetSizesAndDaterForLocater(CLocater* pLocater)
 	{
 		SYSTEMTIME st;
 		SendDlgItemMessage(IDC_MAXDATE,DTM_GETSYSTEMTIME,0,(LPARAM)&st);
-		wMaxDate=SYSTEMTIMETODOSDATE(st);
+		wMaxDate=st.wYear<1980?WORD(-2):SYSTEMTIMETODOSDATE(st);
+		
 		int nCurSel=(int)SendDlgItemMessage(IDC_MAXTYPE,CB_GETCURSEL,0,0);
 		if (nCurSel==1)
 			dwFlags|=LOCATE_MAXCREATIONDATE;
@@ -4316,15 +4315,33 @@ void CLocateDlg::CAdvancedDlg::ChangeEnableStateForCheck()
 	int nCurSel=GetLocateDlg()->m_NameDlg.m_Type.GetCurSel();
 	if (nCurSel==0)
 		bEnable=FALSE; // (none)
-	else if (nCurSel==CB_ERR)
+	else 
 	{
-		if (GetLocateDlg()->m_NameDlg.m_Type.GetTextLength()>0)
-			bEnable=FALSE;
-	}
-	else
-	{
-		if (GetLocateDlg()->m_NameDlg.m_Type.GetLBTextLen(nCurSel)>0)
-			bEnable=FALSE;
+		// If extensions are specified, let 'Check' field be enabled if all extensions are excluded
+		CStringW Extensions;
+		
+		if (nCurSel==CB_ERR)
+			GetLocateDlg()->m_NameDlg.m_Type.GetText(Extensions);
+		else
+			GetLocateDlg()->m_NameDlg.m_Type.GetLBText(nCurSel,Extensions);
+
+		LPCWSTR pExt=Extensions;
+		while (*pExt!='\0')
+		{
+			if (*pExt==' ')
+			{
+				pExt++;
+				continue;
+			}
+
+			if (*pExt!='-')
+			{
+				// Extension without '-' found
+				bEnable=FALSE;
+				break;
+			}
+			for (;*pExt!='\0' && *pExt!=' ';pExt++);
+		}
 	}
 	
 	if (bEnable)

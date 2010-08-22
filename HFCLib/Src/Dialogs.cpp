@@ -2410,7 +2410,7 @@ CFolderDialog::CFolderDialog(LPCSTR lpszTitle,UINT ulFlags,LPCITEMIDLIST pidlRoo
 :	m_hWnd(NULL),m_lpil(NULL),m_lpDefaultIL(NULL),
 	m_szTitle(NULL),m_szDefaultFolder(NULL)
 {
-	CoInitializeEx(NULL,COINIT_MULTITHREADED);
+	CoInitialize(NULL);
 	m_szwDisplayName[0]='\0';
 	
 	
@@ -2439,7 +2439,7 @@ CFolderDialog::CFolderDialog(LPCWSTR lpszTitle,UINT ulFlags,LPCITEMIDLIST pidlRo
 :	m_hWnd(NULL),m_lpil(NULL),m_lpDefaultIL(NULL),
 	m_szTitle(NULL),m_szDefaultFolder(NULL)
 {
-	CoInitializeEx(NULL,COINIT_MULTITHREADED);
+	CoInitialize(NULL);
 	m_szwDisplayName[0]='\0';
 	
 	
@@ -2468,7 +2468,7 @@ CFolderDialog::CFolderDialog(UINT nTitleID,UINT ulFlags,LPCITEMIDLIST pidlRoot)
 :	m_hWnd(NULL),m_lpil(NULL),m_lpDefaultIL(NULL),
 	m_szTitle(NULL),m_szDefaultFolder(NULL)
 {
-	CoInitializeEx(NULL,COINIT_MULTITHREADED);
+	CoInitialize(NULL);
 	m_szwDisplayName[0]='\0';
 
 	if (IsUnicodeSystem())
@@ -2518,6 +2518,12 @@ CFolderDialog::~CFolderDialog()
 
 BOOL CFolderDialog::DoModal(HWND hOwner)
 {
+	if (m_lpil!=NULL)
+	{
+		CoTaskMemFree(m_lpil);
+		m_lpil=NULL;
+	}
+	
 	if (IsUnicodeSystem())
 	{
 		m_biw.lpszTitle=m_szwTitle;
@@ -2706,7 +2712,7 @@ BOOL CFolderDialog::SetStatusText(LPCWSTR lpStatus)
 BOOL CFolderDialog::OnInitialized()
 {
 	if (m_hWnd==NULL)
-		return FALSE;
+		return TRUE;
 	if (m_szwDefaultFolder!=NULL)
 	{
 		if (IsUnicodeSystem())

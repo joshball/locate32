@@ -91,10 +91,12 @@ XWORD         last accessed date (WORD if ANSI charset, DWORD if Unicode)
 
 
 
+
 4. Notes
 
 - All strings are null-terminated ANSI, Unicode or OEM (old DOS versions) strings depending on the 
   third field in the header (exceptions are mentioned above). 
+- If creation/modification/last access date is older than 1.1.1980, WORD value is -2 (or arbitrary in versions before 3.1.10.8220)
 - Briefly, to read file do following
 1. Read header 
 2. While next byte is not zero read root struct as follows:

@@ -411,21 +411,33 @@ inline void CDatabaseUpdater::CRootDirectory::_FindGetLastWriteDosDateTime(FIND_
 {
 	FILETIME ft;
 	FileTimeToLocalFileTime(&fd->ftLastWriteTime,&ft);
-	FileTimeToDosDateTime(&ft,pwDate,pwTime);
+	if (ft.dwHighDateTime<27846560) // Date before 1.1.1980
+	{
+		*pwDate=WORD(-2);
+		*pwTime=WORD(-2);
+	}
+	else
+		FileTimeToDosDateTime(&ft,pwDate,pwTime);
 }
 inline void CDatabaseUpdater::CRootDirectory::_FindGetCreationDosDate(FIND_DATA* fd,WORD* pwDate)
 {
 	FILETIME ft;
 	WORD wTemp;
 	FileTimeToLocalFileTime(&fd->ftCreationTime,&ft);
-	FileTimeToDosDateTime(&ft,pwDate,&wTemp);
+	if (ft.dwHighDateTime<27846560) // Date before 1.1.1980
+		*pwDate=WORD(-2);
+	else
+		FileTimeToDosDateTime(&ft,pwDate,&wTemp);
 }
 inline void CDatabaseUpdater::CRootDirectory::_FindGetLastAccessDosDate(FIND_DATA* fd,WORD* pwDate)
 {
 	FILETIME ft;
 	WORD wTemp;
 	FileTimeToLocalFileTime(&fd->ftLastAccessTime,&ft);
-	FileTimeToDosDateTime(&ft,pwDate,&wTemp);
+	if (ft.dwHighDateTime<27846560) // Date before 1.1.1980
+		*pwDate=WORD(-2);
+	else
+		FileTimeToDosDateTime(&ft,pwDate,&wTemp);
 }
 
 
@@ -433,19 +445,31 @@ inline void CDatabaseUpdater::CRootDirectory::_FindGetLastWriteDosDateTime(FIND_
 {
 	FILETIME ft;
 	FileTimeToLocalFileTime(&fd->ftLastWriteTime,&ft);
-	FileTimeToDosDateTime(&ft,pwDate,pwTime);
+	if (ft.dwHighDateTime<27846560)// Date before 1.1.1980
+	{
+		*pwDate=WORD(-2);
+		*pwTime=WORD(-2);
+	}
+	else
+		FileTimeToDosDateTime(&ft,pwDate,pwTime);
 }
 inline void CDatabaseUpdater::CRootDirectory::_FindGetCreationDosDate(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime)
 {
 	FILETIME ft;
 	FileTimeToLocalFileTime(&fd->ftCreationTime,&ft);
-	FileTimeToDosDateTime(&ft,pwDate,pwTime);
+	if (ft.dwHighDateTime<27846560) // Date before 1.1.1980
+		*pwDate=WORD(-2);
+	else
+		FileTimeToDosDateTime(&ft,pwDate,pwTime);
 }
 inline void CDatabaseUpdater::CRootDirectory::_FindGetLastAccessDosDate(FIND_DATAW* fd,WORD* pwDate,WORD* pwTime)
 {
 	FILETIME ft;
 	FileTimeToLocalFileTime(&fd->ftLastAccessTime,&ft);
-	FileTimeToDosDateTime(&ft,pwDate,pwTime);
+	if (ft.dwHighDateTime<27846560) // Date before 1.1.1980
+		*pwDate=WORD(-2);
+	else
+		FileTimeToDosDateTime(&ft,pwDate,pwTime);
 }
 
 inline DWORD CDatabaseUpdater::CRootDirectory::_FindGetFileSizeLo(FIND_DATA* fd)
