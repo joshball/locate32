@@ -1694,6 +1694,7 @@ void CLocateDlg::CNameDlg::OnLookInRemoveSelection()
 void CLocateDlg::CNameDlg::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType,cx,cy);
+	
 	CRect rc;
 	m_Name.GetWindowRect(&rc);
 	m_Name.SetWindowPos(HWND_BOTTOM,0,0,cx-m_nFieldLeft-8,rc.Height(),SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);

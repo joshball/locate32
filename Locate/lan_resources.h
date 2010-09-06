@@ -1132,6 +1132,7 @@
 #define IDS_SYSWIN2003SERVER            27011
 #define IDS_SYSWINVISTA		            27012
 #define IDS_SYSWINSERVERLONGHORN		27013
+#define IDS_SYSWIN7			            27014
 #define IDS_SYSPAGEDMEM                 27030
 #define IDS_SYSPHYSMEM                  27031
 #define IDS_VERSION                     27032

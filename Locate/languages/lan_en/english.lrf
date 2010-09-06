@@ -200,8 +200,9 @@ STRABOUT_SYSTEMINFO_WIN2KSERV=Running on Windows 2000 Server %d.%d Build %d
 STRABOUT_SYSTEMINFO_WIN2KADVS=Running on Windows 2000 Advanced Server  %d.%d Build %d
 STRABOUT_SYSTEMINFO_WINXP=Running on Windows XP %d.%d Build %d
 STRABOUT_SYSTEMINFO_WIN2003SERVER=Running on Windows 2003 Server %d.%d Build %d
-STRABOUT_SYSTEMINFO_WINVISTA=Running on Windows Vista %d.%d Build %d
-STRABOUT_SYSTEMINFO_WINSERVERLONGHORN=Running on Windows Server "Longhorn" %d.%d Build %d
+STRABOUT_SYSTEMINFO_WINVISTA=Running on Windows Vista (Version %d.%d Build %d)
+STRABOUT_SYSTEMINFO_WIN7=Running on Windows 7 (Version %d.%d Build %d)
+STRABOUT_SYSTEMINFO_WINSERVERLONGHORN=Running on Windows Server 2008 (Version %d.%d Build %d)
 STRABOUT_SYSTEMINFO_PAGEDMEM=\nPaged memory: %d KB Free: %d KB
 STRABOUT_SYSTEMINFO_PHYSMEM=\nPhysical memory: %d KB Free: %d KB
 
@@ -339,7 +340,7 @@ STRADVANCEDSETTINGS_TRACKFILESYSTEMCHANGESOLD=Track file system changes (old met
 STRADVANCEDSETTINGS_WHILESORTINGDONOTREADINFO=Do not read information from files when sorting results
 
 STRADVANCEDSETTINGS_LOCATEDIALOG=Locate dialog
-STRADVANCEDSETTINGS_ALWAYSSHOWRESULTLIST=Results list is always shown
+STRADVANCEDSETTINGS_ALWAYSSHOWRESULTLIST=Show results list always 
 STRADVANCEDSETTINGS_NUMBEROFNAMESINNAMEDLG=Number of items in the drop-down list of the "Named" combo box:
 STRADVANCEDSETTINGS_NUMBEROFTYPESINNAMEDLG=Number of items in the drop-down list of the "Type" combo box:
 STRADVANCEDSETTINGS_LOOKINCOMBO="Look In" combo box (Name tab):

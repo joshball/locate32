@@ -136,13 +136,15 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 			{
 				if (ver.dwMajorVersion==6)
 				{
-					// Windows XP products
+					// Windows Vista products
 					OSVERSIONINFOEX osx;
 					osx.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);
 					GetVersionEx((OSVERSIONINFO*)&osx);
 					if (osx.wProductType==VER_NT_SERVER)
 						text.Format(IDS_SYSWINSERVERLONGHORN,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
-					else
+					else if (ver.dwMinorVersion>=1)
+						text.Format(IDS_SYSWIN7,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+					else 
 						text.Format(IDS_SYSWINVISTA,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
 					text << ' ' << osx.szCSDVersion;
 				}

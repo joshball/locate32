@@ -1309,6 +1309,7 @@ void CLocateDlg::OnSize(UINT nType, int cx, int cy)
 	//DebugFormatMessage("CLocateDlg::OnSize(%d,%d,%d) BEGIN",nType,cx,cy);
 	
 	CDialog::OnSize(nType,cx,cy);
+
 	switch (nType)
 	{
 	case SIZE_MINIMIZED:
@@ -1342,6 +1343,8 @@ void CLocateDlg::OnSize(UINT nType, int cx, int cy)
 		}
 		break;
 	case SIZE_RESTORED:
+		DebugMessage("CLocateDlg::OnSize: SIZE_RESTORED");
+		
 		GetTrayIconWnd()->SetTrayIcon(NULL,IDS_NOTIFYLOCATE,NULL);
 		if (m_dwFlags&fgLargeMode)
 		{
@@ -1357,7 +1360,9 @@ void CLocateDlg::OnSize(UINT nType, int cx, int cy)
 				if (m_pBackgroundUpdater!=NULL)
 					m_pBackgroundUpdater->StopWaiting();
 			}
+
 		}
+		
 
 		SetControlPositions(nType,cx,cy);
 		break;
@@ -1372,6 +1377,49 @@ void CLocateDlg::OnSize(UINT nType, int cx, int cy)
 					m_pBackgroundUpdater->StopWaiting();
 			}
 		}
+		else 
+		{
+			// If maximized, be sure that the window is not over the tray window
+			HWND hShellTrayWnd=FindWindow("Shell_TrayWnd",NULL); // Whole tray window
+			if (hShellTrayWnd!=NULL)
+			{
+				CRect rcWindowRect,rcTrayRect;
+				GetWindowRect(&rcWindowRect);
+				::GetWindowRect(hShellTrayWnd,&rcTrayRect);
+				int nFullScreenCX=GetSystemMetrics(SM_CXFULLSCREEN);
+					
+				if (rcTrayRect.top<4 && rcTrayRect.left<4)
+				{
+					if (rcTrayRect.right>=nFullScreenCX) // Tray top
+					{
+						if (rcWindowRect.top<=0)
+							SetWindowPos(NULL,rcWindowRect.left,rcWindowRect.top+rcTrayRect.Height(),0,0,SWP_NOSIZE|SWP_NOZORDER);
+
+					}
+					else // Tray on left
+					{
+						if (cx>nFullScreenCX)
+						{
+							rcWindowRect.left+=cx-nFullScreenCX;
+							SetWindowPos(NULL,rcWindowRect.left,rcWindowRect.top,rcWindowRect.Width(),rcWindowRect.Height(),
+								SWP_NOZORDER);
+							cx=nFullScreenCX;
+						}
+					}
+				} 
+				else if (rcTrayRect.left>=nFullScreenCX) // Tray on right
+				{
+					if (cx>nFullScreenCX)
+					{
+						rcWindowRect.right-=cx-nFullScreenCX;
+						SetWindowPos(NULL,rcWindowRect.left,rcWindowRect.top,rcWindowRect.Width(),rcWindowRect.Height(),
+							SWP_NOZORDER);
+						cx=nFullScreenCX;
+					}
+				}
+			}
+		}
+		
 		SetControlPositions(nType,cx,cy);
 		break;
 	default:
@@ -1543,10 +1591,19 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			if (m_nMaxYMaximized==0)
 				m_nMaxYMaximized=WORD(((LPMINMAXINFO)lParam)->ptMaxTrackSize.y);
 			((LPMINMAXINFO)lParam)->ptMaxTrackSize.y=m_nMaxYMinimized;
-
-			//((LPMINMAXINFO)lParam)->ptMinTrackSize.y=((LPMINMAXINFO)lParam)->ptMaxSize.y;
-			//((LPMINMAXINFO)lParam)->ptMaxTrackSize.y=((LPMINMAXINFO)lParam)->ptMaxSize.y;
 			((LPMINMAXINFO)lParam)->ptMinTrackSize.y=m_nMaxYMinimized;
+
+			/*
+			// Check if the tray is on right. If so, restirct the width
+			HWND hShellTrayWnd=FindWindow("Shell_TrayWnd",NULL); // Whole tray window
+			if (hShellTrayWnd!=NULL)
+			{
+				CRect rcTrayRect;
+				::GetWindowRect(hShellTrayWnd,&rcTrayRect);
+				if (rcTrayRect.top==0 && rcTrayRect.left>5)
+					((LPMINMAXINFO)lParam)->ptMaxTrackSize.x=GetSystemMetrics(SM_CXFULLSCREEN);
+			}
+			*/
 		}
 		else
 		{
@@ -1554,6 +1611,11 @@ LRESULT CLocateDlg::WindowProc(UINT msg,WPARAM wParam,LPARAM lParam)
 			m_pStatusCtrl->GetClientRect(&rc);
 			((LPMINMAXINFO)lParam)->ptMinTrackSize.y=m_nMaxYMinimized+rc.bottom-rc.top;
 		}		
+	
+		DebugFormatMessage("CLocateDlg::WM_GETMINMAXINFO: ptMaxSize=(%d,%d) ptMinTrackSize=(%d,%d) ptMaxTrackSize=(%d,%d)",
+				((LPMINMAXINFO)lParam)->ptMaxSize.x,((LPMINMAXINFO)lParam)->ptMaxSize.y,
+				((LPMINMAXINFO)lParam)->ptMinTrackSize.x,((LPMINMAXINFO)lParam)->ptMinTrackSize.y,
+				((LPMINMAXINFO)lParam)->ptMaxTrackSize.x,((LPMINMAXINFO)lParam)->ptMaxTrackSize.y);
 		return FALSE;
 	case WM_EXITMENULOOP:
 		if (m_hSendToListFont!=NULL)

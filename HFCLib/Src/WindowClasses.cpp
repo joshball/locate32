@@ -154,31 +154,58 @@ BOOL CWnd::LoadPosition(HKEY hRootKey,LPCSTR lpKey,LPCSTR lpSubKey,DWORD fFlags)
 		switch (wp.showCmd)
 		{
 		case SW_MAXIMIZE:
-			if (fFlags&fgOnlySpecifiedPosition)
 			{
-				if (fFlags&fgAllowMaximized)
-					ShowWindow(swMaximize);
-				if (lpKey==NULL)
-					RegKey.m_hKey=NULL;
-                return TRUE;
+				if (fFlags&fgOnlySpecifiedPosition)
+				{
+					if (fFlags&fgAllowMaximized)
+						ShowWindow(swMaximize);
+					if (lpKey==NULL)
+						RegKey.m_hKey=NULL;
+					return TRUE;
+				}
+
+
+				// If tray on left or on top, adjust position such that it won't go over the tray
+				HWND hShellTrayWnd=FindWindow("Shell_TrayWnd",NULL); // Whole tray window
+				if (hShellTrayWnd!=NULL)
+				{
+					CRect rcWindowRect,rcTrayRect;
+					GetWindowRect(&rcWindowRect);
+					::GetWindowRect(hShellTrayWnd,&rcTrayRect);
+					int nFullScreenCX=GetSystemMetrics(SM_CXFULLSCREEN);
+						
+					if (rcTrayRect.top<4 && rcTrayRect.left<4)
+					{
+						if (rcTrayRect.right>=nFullScreenCX) // Tray top
+						{
+							wp.rcNormalPosition.top+=rcTrayRect.Height();
+							wp.rcNormalPosition.bottom+=rcTrayRect.Height();
+						}
+						else // Tray on left
+						{
+							wp.rcNormalPosition.left+=rcTrayRect.Width();
+							wp.rcNormalPosition.right+=rcTrayRect.Width();
+						}
+					} 
+				}
+
+
+				SetWindowPos(HWND_TOP,wp.rcNormalPosition.left,wp.rcNormalPosition.top,
+					wp.rcNormalPosition.right-wp.rcNormalPosition.left,wp.rcNormalPosition.bottom-wp.rcNormalPosition.top,
+					SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOREDRAW);
+				if (fFlags&fgOnlyNormalPosition)
+				{
+					if (lpKey==NULL)
+						RegKey.m_hKey=NULL;
+					return TRUE;
+				}
+
+
+
+				if (!(fFlags&fgAllowMaximized))
+					wp.showCmd=SW_SHOWNORMAL;
+				break;
 			}
-
-
-			SetWindowPos(HWND_TOP,wp.rcNormalPosition.left,wp.rcNormalPosition.top,
-				wp.rcNormalPosition.right-wp.rcNormalPosition.left,wp.rcNormalPosition.bottom-wp.rcNormalPosition.top,
-				SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOREDRAW);
-			if (fFlags&fgOnlyNormalPosition)
-			{
-				if (lpKey==NULL)
-					RegKey.m_hKey=NULL;
-                return TRUE;
-			}
-
-
-
-			if (!(fFlags&fgAllowMaximized))
-				wp.showCmd=SW_SHOWNORMAL;
-			break;
 		case SW_SHOWMINIMIZED:
 		case SW_MINIMIZE:
 			if (fFlags&fgOnlySpecifiedPosition)

@@ -1720,8 +1720,9 @@ BEGIN
     IDS_SYSWINME				"Running on Windows Millenium %d.%d.%d"
     IDS_SYSWIN2000WORKSTATION	"Running on Windows 2000 Workstation %d.%d Build %d"
 	IDS_SYSWIN2003SERVER		"Running on Windows 2003 Server %d.%d Build %d"
-	IDS_SYSWINVISTA				"Running on Windows Vista %d.%d Build %d"
-	IDS_SYSWINSERVERLONGHORN	"Running on Windows Server ""Longhorn"" %d.%d Build %d"
+	IDS_SYSWINVISTA				"Running on Windows Vista (Version %d.%d Build %d)"
+	IDS_SYSWIN7					"Running on Windows 7 (Version %d.%d Build %d)"
+	IDS_SYSWINSERVERLONGHORN	"Running on Windows Server 2008 (Version %d.%d Build %d)"
 
 END
 
@@ -1837,7 +1838,7 @@ BEGIN
 	IDS_ADVSETNEVERSHOWEXT			"Never show extensions"
 	IDS_ADVSETDIALOGS				"Locate dialog"
 	IDS_ADVSETLOADTYPES				"Load file types from registry (""Type of file"" combo box)"
-	IDS_ADVSETLARGEMODEONLY			"Results list is always shown"
+	IDS_ADVSETLARGEMODEONLY			"Show results list always "
 	IDS_ADVSETNUMBEROFDIRECTORIES	"Number of saved folders:"
 	IDS_ADVSETDONTSAVENETWORKDRIVES	"Do not save network drives and directories"
 	IDS_ADVSETNUMBEROFNAMES			"Number of items in the drop-down list of the ""Named"" combo box:"
