@@ -43,7 +43,7 @@ FILEDESCRIPTION=English language file for Locate32
 # translation. Those strings are passed to sprintf function and program may hang  
 # are strings are not valid (i.e. too many "%s"). 
 #
-# In those strings %s means integer value, %s is string etc (for more information, 
+# In those strings %d means integer value, %s is string etc (for more information, 
 # see the refenrece of sprintf function (e.g. from MSDN library).
  
 
@@ -267,7 +267,7 @@ STRADVANCEDSETTINGS_ISENABLE=Search as you type
 STRADVANCEDSETTINGS_ISLIMIT=Limit the number of results (0 = no limit):
 STRADVANCEDSETTINGS_ISDELAY=Delay before searching (ms):
 STRADVANCEDSETTINGS_ISCHARS=Required characters in "Named:" before starting to search:
-STRADVANCEDSETTINGS_ISUPDOWNGOESTORESULTLIST=Up/Down key and mouse wheen in "Named:" activates the first found file
+STRADVANCEDSETTINGS_ISUPDOWNGOESTORESULTLIST=Up/Down key and mouse wheel in "Named:" activates the first found file
 STRADVANCEDSETTINGS_ISUPDATETITLE=Update title bar when executing search
 STRADVANCEDSETTINGS_ISDISABLEIFDATASEARCH=Disable if "File containing text:" is enabled
 STRADVANCEDSETTINGS_ISNAMECHANGED=Search if "Named:" is changed
@@ -480,6 +480,7 @@ STRAUTOUPDATESETTINGS_LASTRUN=Last run: %s %s
 STRAUTOUPDATESETTINGS_LASTRUNNEVER=Last run: Never
 STRAUTOUPDATESETTINGS_DELAY=Delay in seconds before starting updates at startup:
 STRAUTOUPDATESETTINGS_DELAYEXTRALEN=0
+ERROR CHECK THIS! \\
 DLGAUTOUPDATESETTINGS_NOTE=Note that, to use scheduled updates, you need to keep Locate32.exe running. \nYou can also use Windows' own Task Scheduler, for example, with command: "C:\Program Files\Locate\locate32" -U.
 
 
