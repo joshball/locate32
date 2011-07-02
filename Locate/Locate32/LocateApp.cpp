@@ -2103,7 +2103,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			{
 				CStringW str;
 
-				str.Format(IDS_UPDATINGDATABASE2,
+				str.FormatEx(IDS_UPDATINGDATABASE2,
 					pUpdater->GetCurrentDatabaseName(),
 					pUpdater->GetCurrentRoot()!=NULL?
 					(LPCWSTR)pUpdater->GetCurrentRoot()->m_Path:
@@ -2123,7 +2123,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 			if (pLocateDlg!=NULL)
 			{
 				CStringW str;
-				str.Format(IDS_UPDATINGDATABASE2,
+				str.FormatEx(IDS_UPDATINGDATABASE2,
 					pUpdater->GetCurrentDatabaseName(),
 					(LPCWSTR)ID2W(IDS_UPDATINGWRITINGDATABASE));
 				
@@ -2149,7 +2149,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 				if (hThread!=NULL)
 				{
 					CStringW str;
-					str.Format(IDS_UPDATINGDATABASE2,
+					str.FormatEx(IDS_UPDATINGDATABASE2,
 						pUpdater->GetCurrentDatabaseName(),
 						(LPCWSTR)ID2W(IDS_UPDATINGDELAYWRITING));
 
@@ -2170,7 +2170,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 				if (ueCode==ueStopped)
 				{
 					CStringW str;
-					str.Format(IDS_UPDATINGDATABASE2,
+					str.FormatEx(IDS_UPDATINGDATABASE2,
 						pUpdater->GetCurrentDatabaseName(),
 						(LPCWSTR)ID2W(IDS_UPDATINGCANCELLED2));
 
@@ -2180,7 +2180,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 				else if (ueCode!=ueSuccess)
 				{
 					CStringW str;
-					str.Format(IDS_UPDATINGDATABASE2,
+					str.FormatEx(IDS_UPDATINGDATABASE2,
 						pUpdater->GetCurrentDatabaseName(),
 						(LPCWSTR)ID2W(IDS_UPDATINGFAILED));
 
@@ -2188,7 +2188,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 					return FALSE;
 				}
 				CStringW str;
-				str.Format(IDS_UPDATINGDATABASE2,
+				str.FormatEx(IDS_UPDATINGDATABASE2,
 					pUpdater->GetCurrentDatabaseName(),
 					(LPCWSTR)ID2W(IDS_UPDATINGDONE));
 
@@ -2283,7 +2283,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 						state.Format(IDS_ERRORUNKNOWNSCANROOT,pUpdater->GetCurrentRootPath());
 					
 					
-					str.Format(IDS_ERRORUNKNOWNOS,pError);
+					str.FormatEx(IDS_ERRORUNKNOWNOS,pError);
 					while (str.LastChar()=='\n' || str.LastChar()=='\r')
 						str.DelLastChar();
 					str << state;
@@ -2305,7 +2305,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 				CStringW str;
 				WCHAR* pError=CLocateApp::FormatLastOsError();
 				if (pError!=NULL)
-					str.Format(IDS_ERRORCANNOTOPENDBFORWRITE,pUpdater->GetCurrentDatabaseFile(),pError);
+					str.FormatEx(IDS_ERRORCANNOTOPENDBFORWRITE,pUpdater->GetCurrentDatabaseFile(),pError);
 				else
 					str.Format(IDS_ERRORCANNOTOPENDB,pUpdater->GetCurrentDatabaseFile());
 				ErrorBox(str);
@@ -2317,7 +2317,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 				CStringW str;
 				WCHAR* pError=CLocateApp::FormatLastOsError();
 				if (pError!=NULL)
-					str.Format(IDS_ERRORCANNOTREADDBWITHOSERROR,pUpdater->GetCurrentDatabaseFile(),pError);
+					str.FormatEx(IDS_ERRORCANNOTREADDBWITHOSERROR,pUpdater->GetCurrentDatabaseFile(),pError);
 				else
 					str.Format(IDS_ERRORCANNOTREADDB,pUpdater->GetCurrentDatabaseFile());
 				ErrorBox(str);
@@ -2329,7 +2329,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 				CStringW str;
 				WCHAR* pError=CLocateApp::FormatLastOsError();
 				if (pError!=NULL)
-					str.Format(IDS_ERRORCANNOTWRITEDBWITHOSERROR,pUpdater->GetCurrentDatabaseFile(),pError);
+					str.FormatEx(IDS_ERRORCANNOTWRITEDBWITHOSERROR,pUpdater->GetCurrentDatabaseFile(),pError);
 				else
 					str.Format(IDS_ERRORCANNOTWRITEDB,pUpdater->GetCurrentDatabaseFile());
 				ErrorBox(str);
@@ -2375,7 +2375,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 
 							if (nRoot<aRoots.GetSize())
 							{
-								str.Format(IDS_ERRORROOTNOTAVAILABLEASKREMOVE,
+								str.FormatEx(IDS_ERRORROOTNOTAVAILABLEASKREMOVE,
 									pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():ID2W(IDS_UNKNOWN),
 									pUpdater->GetCurrentDatabaseName()!=NULL?pUpdater->GetCurrentDatabaseName():ID2W(IDS_UNKNOWN));
 								switch(ErrorBox(str,MB_ICONERROR|MB_YESNOCANCEL|(pUpdater->IsStopIfUnuavailableSet()?MB_DEFBUTTON3:MB_DEFBUTTON2)))
@@ -2397,7 +2397,7 @@ BOOL CALLBACK CLocateApp::UpdateProc(DWORD_PTR dwParam,CallingReason crReason,Up
 					}
 				}
 
-				str.Format(IDS_ERRORROOTNOTAVAILABLE,
+				str.FormatEx(IDS_ERRORROOTNOTAVAILABLE,
 						pUpdater->GetCurrentRootPath()!=NULL?pUpdater->GetCurrentRootPath():L"",
 						pUpdater->GetCurrentDatabaseName()!=NULL?pUpdater->GetCurrentDatabaseName():L"");
 				return ErrorBox(str,MB_ICONERROR|MB_YESNO|(pUpdater->IsStopIfUnuavailableSet()?MB_DEFBUTTON2:MB_DEFBUTTON1))==IDYES?1:-1;
@@ -2597,7 +2597,7 @@ void CLocateApp::OnInitDatabaseMenu(CMenu& PopupMenu)
 	// Starting to insert database items 
 	for (int i=0;i<m_aDatabases.GetSize();i++)
 	{
-		title.Format(L"&%d: %s",i+1,m_aDatabases[i]->GetName());
+		title.FormatEx(L"&%d: %s",i+1,m_aDatabases[i]->GetName());
 		mi.dwTypeData=(LPWSTR)(LPCWSTR)title;
 		mi.dwItemData=m_aDatabases[i]->GetID();
 		mi.wID=IDM_DEFUPDATEDBITEM+i;

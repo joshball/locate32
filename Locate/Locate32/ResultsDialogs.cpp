@@ -524,7 +524,7 @@ BOOL CResults::SaveToFile()
 	if (m_dwFlags&RESULT_INCLUDESUMMARY)
 	{
 		CStringW str;
-		str.Format(IDS_SAVERESULTSHEADER,m_nResults,m_nFiles,m_nDirectories);
+		str.FormatEx(IDS_SAVERESULTSHEADER,m_nResults,m_nFiles,m_nDirectories);
 		m_pOutput->Write(str);
 		m_pOutput->Write(L"\r\n",2);
 	}
@@ -744,7 +744,7 @@ BOOL CResults::SaveToHtml()
 	if (m_dwFlags&RESULT_INCLUDESUMMARY)
 	{
 		m_pOutput->Write(L"<li id=\"head_results\">");
-		str.Format(IDS_SAVERESULTSHEADER,m_nResults,m_nFiles,m_nDirectories);
+		str.FormatEx(IDS_SAVERESULTSHEADER,m_nResults,m_nFiles,m_nDirectories);
 		m_pOutput->Write(str);
 		m_pOutput->Write(L"</li>\n",6);
 	}
@@ -979,7 +979,7 @@ BOOL CResults::SaveToHtmlTemplate()
 	
 
 	
-	str.Format(IDS_SAVERESULTSHEADER,m_nResults,m_nFiles,m_nDirectories);
+	str.FormatEx(IDS_SAVERESULTSHEADER,m_nResults,m_nFiles,m_nDirectories);
 	SetVariable("RESULTSSTRING",str);
 	
 	// Date and time

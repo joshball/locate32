@@ -124,11 +124,11 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 		case VER_PLATFORM_WIN32_WINDOWS:
 			{
 				if (ver.dwMajorVersion>=4 && ver.dwMinorVersion>=90)
-					text.Format(IDS_SYSWINME,ver.dwMajorVersion,ver.dwMinorVersion,(WORD)ver.dwBuildNumber);
+					text.FormatEx(IDS_SYSWINME,ver.dwMajorVersion,ver.dwMinorVersion,(WORD)ver.dwBuildNumber);
 				else if (ver.dwMajorVersion==4 && ver.dwMinorVersion>=10)
-					text.Format(IDS_SYSWIN98,ver.dwMajorVersion,ver.dwMinorVersion,(WORD)ver.dwBuildNumber);
+					text.FormatEx(IDS_SYSWIN98,ver.dwMajorVersion,ver.dwMinorVersion,(WORD)ver.dwBuildNumber);
 				else
-					text.Format(IDS_SYSWIN95,ver.dwMajorVersion,ver.dwMinorVersion,(WORD)ver.dwBuildNumber);
+					text.FormatEx(IDS_SYSWIN95,ver.dwMajorVersion,ver.dwMinorVersion,(WORD)ver.dwBuildNumber);
 				text << ver.szCSDVersion;
 				break;
 			}
@@ -141,11 +141,11 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 					osx.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);
 					GetVersionEx((OSVERSIONINFO*)&osx);
 					if (osx.wProductType==VER_NT_SERVER)
-						text.Format(IDS_SYSWINSERVERLONGHORN,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+						text.FormatEx(IDS_SYSWINSERVERLONGHORN,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
 					else if (ver.dwMinorVersion>=1)
-						text.Format(IDS_SYSWIN7,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+						text.FormatEx(IDS_SYSWIN7,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
 					else 
-						text.Format(IDS_SYSWINVISTA,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+						text.FormatEx(IDS_SYSWINVISTA,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
 					text << ' ' << osx.szCSDVersion;
 				}
 				else if (ver.dwMajorVersion==5 && ver.dwMinorVersion>=1)
@@ -155,9 +155,9 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 					osx.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);
 					GetVersionEx((OSVERSIONINFO*)&osx);
 					if (osx.wProductType==VER_NT_SERVER)
-						text.Format(IDS_SYSWIN2003SERVER,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+						text.FormatEx(IDS_SYSWIN2003SERVER,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
 					else
-						text.Format(IDS_SYSWINXP,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+						text.FormatEx(IDS_SYSWINXP,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
 					text << ' ' << osx.szCSDVersion;
 				}
 				else if (ver.dwMajorVersion==5)
@@ -168,16 +168,16 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 					GetVersionEx((OSVERSIONINFO*)&osx);
 
 					if (osx.wProductType==VER_NT_SERVER && osx.wSuiteMask&VER_SUITE_ENTERPRISE)
-						text.Format(IDS_SYSWIN2000ENTEPRISE,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+						text.FormatEx(IDS_SYSWIN2000ENTEPRISE,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
 					else if (osx.wProductType==VER_NT_SERVER)
-						text.Format(IDS_SYSWIN2000SERVER,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+						text.FormatEx(IDS_SYSWIN2000SERVER,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
 					else
-						text.Format(IDS_SYSWIN2000WORKSTATION,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
+						text.FormatEx(IDS_SYSWIN2000WORKSTATION,osx.dwMajorVersion,osx.dwMinorVersion,osx.dwBuildNumber);
 					text << ' ' << osx.szCSDVersion;
 				}
 				else
 				{
-					text.Format(IDS_SYSWINNT,ver.dwMajorVersion,ver.dwMinorVersion,ver.dwBuildNumber);
+					text.FormatEx(IDS_SYSWINNT,ver.dwMajorVersion,ver.dwMinorVersion,ver.dwBuildNumber);
 					text << ver.szCSDVersion;
 				}
 				break;
@@ -186,9 +186,9 @@ BOOL CAboutDlg::OnInitDialog(HWND hwndFocus)
 	}
 	mem.dwLength=sizeof(MEMORYSTATUS);
 	GlobalMemoryStatus(&mem);
-	text2.Format(IDS_SYSPHYSMEM,mem.dwTotalPhys>>10,mem.dwAvailPhys>>10);
+	text2.FormatEx(IDS_SYSPHYSMEM,mem.dwTotalPhys>>10,mem.dwAvailPhys>>10);
 	text<<text2;
-	text2.Format(IDS_SYSPAGEDMEM,mem.dwTotalPageFile>>10,mem.dwAvailPageFile>>10);
+	text2.FormatEx(IDS_SYSPAGEDMEM,mem.dwTotalPageFile>>10,mem.dwAvailPageFile>>10);
 	text<<text2;
 	SetDlgItemText(IDC_SYSINFO,text);
 	SetIcon(NULL,TRUE);

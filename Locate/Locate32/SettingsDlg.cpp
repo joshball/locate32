@@ -4064,7 +4064,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 				if (FileSystem::IsSubDirectory(szPath,pAddedPath))
 				{
 					CStringW str;
-					str.Format(IDS_SUBFOLDER,szPath,pAddedPath,szPath);
+					str.FormatEx(IDS_SUBFOLDER,szPath,pAddedPath,szPath);
 					MessageBox(str,ID2W(IDS_DATABASESETTINGS),MB_ICONINFORMATION|MB_OK);
 					bDoNotAdd=TRUE;
 					break;
@@ -4072,7 +4072,7 @@ void CSettingsProperties::CDatabasesSettingsPage::CDatabaseDialog::OnOK()
 				else if (FileSystem::IsSubDirectory(pAddedPath,szPath))
 				{
 					CStringW str;
-					str.Format(IDS_SUBFOLDER,pAddedPath,szPath,pAddedPath);
+					str.FormatEx(IDS_SUBFOLDER,pAddedPath,szPath,pAddedPath);
 					MessageBox(str,ID2W(IDS_DATABASESETTINGS),MB_ICONINFORMATION|MB_OK);
 					aRoots.RemoveAt(i--);
 					continue;
@@ -8586,7 +8586,7 @@ void CSettingsProperties::CKeyboardShortcutsPage::SetFieldsForAction(CAction* pA
 	if (m_pCurrentShortcut->m_apActions.GetSize()>1)
 	{
 		CStringW str;
-		str.Format(IDS_SHORTCUTACTION2,m_nCurrentAction+1,m_pCurrentShortcut->m_apActions.GetSize());
+		str.FormatEx(IDS_SHORTCUTACTION2,m_nCurrentAction+1,m_pCurrentShortcut->m_apActions.GetSize());
 		SetDlgItemText(IDC_STATICACTIONS,str);
 	}
 	else

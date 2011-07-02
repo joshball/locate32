@@ -1966,12 +1966,12 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 		if (pLocater->GetNumberOfFoundFiles()>0)
 		{
 			if (pLocater->GetNumberOfFoundDirectories()>0)
-				NumberOfFiles.Format(IDS_ITEMSFOUND,pLocater->GetNumberOfFoundFiles(),pLocater->GetNumberOfFoundDirectories());
+				NumberOfFiles.FormatEx(IDS_ITEMSFOUND,pLocater->GetNumberOfFoundFiles(),pLocater->GetNumberOfFoundDirectories());
 			else
 				NumberOfFiles.Format(IDS_FILESFOUND,pLocater->GetNumberOfFoundFiles());
 		}
 		else if (pLocater->GetNumberOfFoundDirectories()>0)
-			NumberOfFiles.Format(IDS_DIRECTORIESFOUND,pLocater->GetNumberOfFoundDirectories());
+			NumberOfFiles.FormatEx(IDS_DIRECTORIESFOUND,pLocater->GetNumberOfFoundDirectories());
 		else
 			NumberOfFiles.LoadString(IDS_NORESULTS);
 
@@ -2103,7 +2103,7 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 				{
 					WCHAR* pError=CLocateApp::FormatLastOsError();
 					if (pError!=NULL)
-						str.Format(IDS_ERRORCANNOTOPENDBFORREAD,pLocater->GetCurrentDatabaseFile(),pError);
+						str.FormatEx(IDS_ERRORCANNOTOPENDBFORREAD,pLocater->GetCurrentDatabaseFile(),pError);
 					((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
 				}
 			}
@@ -2117,7 +2117,7 @@ BOOL CLocateDlg::LocateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError
 				{
 					WCHAR* pError=CLocateApp::FormatLastOsError();
 					if (pError!=NULL)
-						str.Format(IDS_ERRORCANNOTREADDBWITHOSERROR,pLocater->GetCurrentDatabaseFile(),pError);
+						str.FormatEx(IDS_ERRORCANNOTREADDBWITHOSERROR,pLocater->GetCurrentDatabaseFile(),pError);
 					((CLocateDlg*)dwParam)->MessageBox(str,ID2W(IDS_ERROR),MB_ICONERROR|MB_OK);
 				}				
 				return FALSE;
@@ -2218,12 +2218,12 @@ BOOL CLocateDlg::LocateInstantProc(DWORD_PTR dwParam,CallingReason crReason,Upda
 		if (pLocater->GetNumberOfFoundFiles()>0)
 		{
 			if (pLocater->GetNumberOfFoundDirectories()>0)
-				NumberOfFiles.Format(IDS_ITEMSFOUND,pLocater->GetNumberOfFoundFiles(),pLocater->GetNumberOfFoundDirectories());
+				NumberOfFiles.FormatEx(IDS_ITEMSFOUND,pLocater->GetNumberOfFoundFiles(),pLocater->GetNumberOfFoundDirectories());
 			else
 				NumberOfFiles.Format(IDS_FILESFOUND,pLocater->GetNumberOfFoundFiles());
 		}
 		else if (pLocater->GetNumberOfFoundDirectories()>0)
-			NumberOfFiles.Format(IDS_DIRECTORIESFOUND,pLocater->GetNumberOfFoundDirectories());
+			NumberOfFiles.FormatEx(IDS_DIRECTORIESFOUND,pLocater->GetNumberOfFoundDirectories());
 		else
 			NumberOfFiles.LoadString(IDS_NORESULTS);
 

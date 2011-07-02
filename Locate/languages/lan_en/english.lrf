@@ -480,7 +480,6 @@ STRAUTOUPDATESETTINGS_LASTRUN=Last run: %s %s
 STRAUTOUPDATESETTINGS_LASTRUNNEVER=Last run: Never
 STRAUTOUPDATESETTINGS_DELAY=Delay in seconds before starting updates at startup:
 STRAUTOUPDATESETTINGS_DELAYEXTRALEN=0
-ERROR CHECK THIS! \\
 DLGAUTOUPDATESETTINGS_NOTE=Note that, to use scheduled updates, you need to keep Locate32.exe running. \nYou can also use Windows' own Task Scheduler, for example, with command: "C:\Program Files\Locate\locate32" -U.
 
 
@@ -1368,9 +1367,6 @@ STR_PRIORITY_BELOWNORMAL=below normal
 STR_PRIORITY_LOW=low
 STR_PRIORITY_IDLE=idle
 STR_PRIORITY_BACKGROUND=background
-
-
-# Text in this help dialog is in a file named helptext.txt, translate this file also
 
 ###########################
 # String which apprears in context menus of Explorer ("Locate..." and "Update Database...")

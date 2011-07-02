@@ -1473,7 +1473,7 @@ void CLocateDlg::OnTimer(DWORD dwTimerID)
 
 						LPWSTR pFileSize=GetLocateApp()->FormatFileSizeString((DWORD)nSize,(DWORD)(nSize>>32));
 					
-						str.Format(IDS_SELECTEDONEFILE,pFileSize,pItem->GetParent());
+						str.FormatEx(IDS_SELECTEDONEFILE,pFileSize,pItem->GetParent());
 						delete[] pFileSize;
 					}
 
@@ -1509,7 +1509,7 @@ void CLocateDlg::OnTimer(DWORD dwTimerID)
 				else if (nFolders==nSelecetedCount)
 					str.Format(IDS_SELECTEDCOUNT2,nSelecetedCount);
 				else
-					str.Format(IDS_SELECTEDCOUNT3,nSelecetedCount-nFolders,nFolders);
+					str.FormatEx(IDS_SELECTEDCOUNT3,nSelecetedCount-nFolders,nFolders);
 
 				
 				if (nTotalSize>0)

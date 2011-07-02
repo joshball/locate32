@@ -308,7 +308,7 @@ BEGIN
     COMBOBOX        IDC_TYPE,7,16,71,76,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     CONTROL         "",IDC_TIME,"SysDateTimePick32",DTS_UPDOWN | WS_TABSTOP | DTS_TIMEFORMAT,
-                    89,16,61,12,WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE
+                    89,16,61+0,12,WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE
     GROUPBOX        "Schedule_update:",IDC_FRAME,7,35,213+0,71
     LTEXT           "&Every",
                     IDC_EVERYTXT,15,50,25+0 ,11
@@ -628,7 +628,7 @@ BEGIN
     LTEXT           "Enter directory to be excluded and press ""Add Directory"" ('*', '?' allowed):",IDC_STATIC,10,91,246+0,8
     EDITTEXT        IDC_DIRECTORYNAME,9,103,187+0,13,ES_AUTOHSCROLL
     PUSHBUTTON      "&Browse",IDC_BROWSE,203+0,102,55,14
-    LTEXT           "Excluded directories:",IDC_STATIC,10,122,111,8
+    LTEXT           "Exclude directories:",IDC_STATIC,10,122,111,8
     PUSHBUTTON      "&Add Directory",IDC_ADDFOLDER,105+0,120,75,13
     PUSHBUTTON      "&Remove",IDC_REMOVEFOLDER,182+0,120,75,13
     LISTBOX         IDC_DIRECTORIES,9,135,250+0,53-12,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
@@ -1181,8 +1181,8 @@ BEGIN
 			MENUITEM "Compute MD5 sums",         IDM_COMPUTEMD5SUM
 			MENUITEM "Compute MD5 sums for equal size files",         IDM_MD5SUMSFORSAMESIZEFILES
 			MENUITEM "Copy MD5 sums to clipboard",         IDM_COPYMD5SUMTOCLIPBOARD
-			MENUITEM "Remove deleted files"	IDM_REMOVEDELETEDFILES
-			MENUITEM "Update database(s) of selected file(s)" IDM_UPDATEDATABASESOFSELECTEDFILES
+			MENUITEM "Remove deleted files",	IDM_REMOVEDELETEDFILES
+			MENUITEM "Update database(s) of selected file(s)", IDM_UPDATEDATABASESOFSELECTEDFILES
         END
 		MENUITEM SEPARATOR
     END
@@ -1447,7 +1447,7 @@ STRINGTABLE
 BEGIN
     IDS_ERROR						"Error"
     IDS_ERRORCANNOTOPENDB			"Cannot open database file '%s'. "
-    IDS_ERRORCANNOTOPENDBFORREAD	"Cannot open database file '%s'. \n\nThis error usually happens if you are trying to execute a search before databases are created. In this case, choose ""Update databases"" from File menu to create database files and wait until update process is finished). \n\nLast system error: %s"
+    IDS_ERRORCANNOTOPENDBFORREAD	"Cannot open database file '%s'. \n\nThis error usually happens if you are trying to execute a search before databases are created. In this case, choose ""Update databases"" from File menu to create database files and wait until update process is finished. \n\nLast system error: %s"
     IDS_ERRORCANNOTOPENDBFORWRITE	"Cannot open database file '%s'. \n\nCheck that the file path is correct and you have permissions to write into the file. \n\nLast system error: %s"
     IDS_ERRORCANNOTREADDB			"Cannot read database file '%s'."
     IDS_ERRORCANNOTREADDBWITHOSERROR "Cannot read database file '%s'. \n\nLast system error: %s"
@@ -1892,7 +1892,7 @@ BEGIN
 	IDS_ADVSETISLIMIT				"Limit the number of results (0 = no limit):"
 	IDS_ADVSETISDELAY				"Delay before searching (ms):"
 	IDS_ADVSETISCHARS				"Required characters in ""Named:"" before starting to search:"
-	IDS_ADVSETISUPDOWNGORESULTS		"Up/Down key and mouse wheen in ""Named:"" activates the first found file"
+	IDS_ADVSETISUPDOWNGORESULTS		"Up/Down key and mouse wheel in ""Named:"" activates the first found file"
 	IDS_ADVSETISUPDATETITLE			"Update title bar when executing search"
 	IDS_ADVSETISNAMEDCHANGED		"Search if ""Named:"" is changed"
 	IDS_ADVSETISTYPECHANGED			"Search if ""Extensions:"" is changed"

@@ -120,7 +120,7 @@ BOOL CALLBACK UpdateProc(DWORD_PTR dwParam,CallingReason crReason,UpdateError ue
 		if (!nQuiet)
 		{
 			CStringW msg;
-			msg.Format(IDS_UPDATEDB32UPDATINGDATABASE,pUpdater->GetCurrentDatabaseName(),pUpdater->GetCurrentDatabaseFile());
+			msg.FormatEx(IDS_UPDATEDB32UPDATINGDATABASE,pUpdater->GetCurrentDatabaseName(),pUpdater->GetCurrentDatabaseFile());
 			if (pUpdater->IsIncrementUpdate())
 				msg.AddString(IDS_UPDATEDB32INCREMENTALUPDATE);
 			_putws(msg);

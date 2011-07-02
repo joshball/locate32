@@ -172,17 +172,17 @@ void CSchedule::GetString(CStringW& str) const
 		if (m_tMinutely.wEvery==1)
 			str.LoadString(IDS_MINUTELYEVERYMINUTE);
 		else
-			str.FormatEx(IDS_MINUTELYEVERYXMINUTE,(long)m_tMinutely.wEvery);
+			str.Format(IDS_MINUTELYEVERYXMINUTE,(long)m_tMinutely.wEvery);
 		break;
 	case typeHourly:
 		if (m_tHourly.wEvery==1)
-			str.FormatEx(IDS_HOURLYLYEVERYHOUR,(long)m_tHourly.wMinute);
+			str.Format(IDS_HOURLYLYEVERYHOUR,(long)m_tHourly.wMinute);
 		else
 			str.FormatEx(IDS_HOURLYLYEVERYXHOUR,(long)m_tHourly.wEvery,(long)m_tHourly.wMinute);
 		break;
 	case typeDaily:
 		if (m_tDaily.wEvery==1)
-			str.FormatEx(IDS_DAILYEVERYDAY,(LPCWSTR)time);
+			str.Format(IDS_DAILYEVERYDAY,(LPCWSTR)time);
 		else
 			str.FormatEx(IDS_DAILYEVERYXDAYS,(LPCWSTR)time,(long)m_tDaily.wEvery);
 		break;

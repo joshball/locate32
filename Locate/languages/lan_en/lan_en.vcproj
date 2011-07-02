@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="9,00"
 	Name="lan_en"
 	ProjectGUID="{052CC9F2-987F-4F60-8537-AA7CBD319A4B}"
 	RootNamespace="lan_en"
@@ -677,10 +677,6 @@
 					Outputs="englishrc.rc"
 				/>
 			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="HELPTEXT.TXT"
-			>
 		</File>
 		<File
 			RelativePath=".\usage_loc.txt"
